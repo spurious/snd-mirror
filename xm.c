@@ -7,9 +7,11 @@
   #include <config.h>
 #endif
 
-#define XM_DATE "04-Mar-03"
+#define XM_DATE "31-Mar-03"
+
 
 /* HISTORY: 
+ *   31-Mar:    added WITH_GTK_AND_X11 switch for xg+local X funcs.
  *   4-Mar:     xm-ruby XM_DEFINE_ACCESSOR quoted SetName bugfix (Michael Scholz).
  *   1-Feb-03:  XChangeProperty data (arg7) can be list of ints as well as string.
  *   ----------
@@ -23046,6 +23048,7 @@ static void define_strings(void)
 
 #define S_add_resource "add-resource"
 
+#if HAVE_MOTIF
 static XEN g_add_resource(XEN nam, XEN typ)
 {
   #define H_add_resource "(" S_add_resource " name type) adds the resource 'name' with the libxm type 'type'. \
@@ -23057,6 +23060,7 @@ The types are defined in xm.c around line 679.  To add XmNhiho as an integer: \n
   hash_resource(XEN_TO_C_STRING(nam), XEN_TO_C_INT(typ));
   return(nam);
 }
+#endif
 
 #if HAVE_RUBY
   XEN_NARGIFY_2(g_add_resource_w, g_add_resource)
@@ -24925,12 +24929,22 @@ static void define_Atoms(void)
 
 static int xm_already_inited = FALSE;
 
+#if WITH_GTK_AND_X11
+#if HAVE_GUILE
+ void init_x11(void);
+ void init_x11(void)
+#else
+ void Init_libx11(void);
+ void Init_libx11(void)
+#endif
+#else
 #if HAVE_GUILE
  void init_xm(void);
  void init_xm(void)
 #else
  void Init_libxm(void);
  void Init_libxm(void)
+#endif
 #endif
 {
   /* perhaps nicer here to check the features list for 'xm */
@@ -24978,8 +24992,8 @@ static int xm_already_inited = FALSE;
       XEN_EVAL_C_STRING("def RXmSetWMProtocolHooks(s, p, preh, prec, posth, postc) \
                             RXmSetProtocolHooks(s, RXInternAtom(RXtDisplay(s), \"WM_PROTOCOLS\", false), p, preh, prec, posth, postc); end");
 #endif
-#endif
       XEN_DEFINE_PROCEDURE(S_add_resource, g_add_resource_w, 2, 0, 0, H_add_resource);
+#endif
       XEN_YES_WE_HAVE("xm");
 #if HAVE_GUILE
       XEN_EVAL_C_STRING("(define xm-version \"" XM_DATE "\")");

@@ -157,11 +157,16 @@
 (define (output-type score) #f)
 (define (declare args) #f)
 (define sound-comment comment)
-(define comment 
-  (lambda args 
-    (if (or (not (= (length args) 2))
-	    (not (string? (cadr args))))
-	(apply sound-comment args))))
+(define comment
+  (make-procedure-with-setter
+   (lambda* (#:optional (scr #f) (msg 0))
+     (if (or (number? msg)
+	     (not scr))
+	 (sound-comment scr)))
+   (lambda* (snd #:optional (val #f))
+     (if (not val)
+	 (apply (setter sound-comment) (list #f snd))
+	 (apply (setter sound-comment) (list snd val))))))
 
 (use-modules (ice-9 syncase))
 (define-syntax progn

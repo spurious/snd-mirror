@@ -876,6 +876,7 @@ Optional Packages:
   --with-modules	  use if sndlib uses modules
   --with-editres	  include editres in xm
   --with-ladspa  	  include support for LADSPA plugins
+  --with-x11		  include X funcs from xm.c with xg.c
   --with-float-samples	  use floats as the internal sample respresentation
   --with-sample-width=N   use N bits of samples
   --with-motif-prefix=PFX where Motif is installed
@@ -2804,6 +2805,7 @@ _ACEOF
 #   --with-modules        accommodate sndlib that was built with modules
 #   --with-editres 	  include EditRes in xm
 #   --with-shared-sndlib  load sndlib.so if possible
+#   --with-x11            if gtk, this also includes X funcs from xm.c
 #   GUILE_CONFIG_path     where to look for guile-config
 #   SNDLIB_CONFIG_path    where to look for sndlib-config
 #--------------------------------------------------------------------------------
@@ -2908,6 +2910,12 @@ fi;
 # Check whether --with-ladspa or --without-ladspa was given.
 if test "${with_ladspa+set}" = set; then
   withval="$with_ladspa"
+
+fi;
+
+# Check whether --with-x11 or --without-x11 was given.
+if test "${with_x11+set}" = set; then
+  withval="$with_x11"
 
 fi;
 
@@ -12207,6 +12215,13 @@ fi
 
 	# gtk 2.1
 
+        if test "$with_x11" = yes ; then
+	  cat >>confdefs.h <<\_ACEOF
+#define WITH_GTK_AND_X11 1
+_ACEOF
+
+        fi
+
 	if test "$with_html" = yes ; then
 	  # Extract the first word of "mozilla-config", so it can be a program name with args.
 set dummy mozilla-config; ac_word=$2
@@ -12370,7 +12385,11 @@ _ACEOF
 
 
       	if test "$with_static_xm" = yes ; then
-          GX_FILES="XG_O_FILES"
+          if test "$with_x11" = yes ; then
+            GX_FILES="XMG_O_FILES"
+          else
+            GX_FILES="XG_O_FILES"
+          fi
           cat >>confdefs.h <<\_ACEOF
 #define HAVE_STATIC_XM 1
 _ACEOF

@@ -2565,7 +2565,7 @@ XEN_NARGIFY_1(g_disk_kspace_w, g_disk_kspace)
 XEN_ARGIFY_1(g_open_file_dialog_w, g_open_file_dialog)
 XEN_ARGIFY_1(g_mix_file_dialog_w, g_mix_file_dialog)
 XEN_NARGIFY_0(g_previous_files_sort_w, g_previous_files_sort)
-XEN_ARGIFY_1(g_set_previous_files_sort_w, g_set_previous_files_sort)
+XEN_NARGIFY_1(g_set_previous_files_sort_w, g_set_previous_files_sort)
 #else
 #define g_add_sound_file_extension_w g_add_sound_file_extension
 #define g_file_write_date_w g_file_write_date
@@ -2599,7 +2599,7 @@ void g_init_file(void)
 				   S_setB S_sound_loop_info, g_set_sound_loop_info_w,  0, 1, 1, 1);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_previous_files_sort, g_previous_files_sort_w, H_previous_files_sort,
-				   S_setB S_previous_files_sort, g_set_previous_files_sort_w,  0, 0, 0, 1);
+				   S_setB S_previous_files_sort, g_set_previous_files_sort_w,  0, 0, 1, 0);
 
   XEN_DEFINE_VARIABLE(S_memo_sound, memo_sound, XEN_FALSE);
 

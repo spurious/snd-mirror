@@ -36,6 +36,7 @@
  * TODO: test suite (snd-test 24)
  *
  * HISTORY:
+ *     31-Mar:    gchar* -> xen string bugfix (thanks to Friedrich Delgado Friedrichs).
  *     10-Mar:    Ruby Xm_Version.
  *     6-Jan-03:  gtk 2.2 changes.
  *     --------
@@ -211,7 +212,7 @@ static void define_xm_obj(void)
 #define C_TO_XEN_GtkDestroyNotify(Arg) WRAP_FOR_XEN("GtkDestroyNotify", Arg)
 #define XEN_TO_C_GdkFilterReturn(Arg) (GdkFilterReturn)XEN_TO_C_INT(Arg)
 #define XEN_TO_C_String(Arg) ((XEN_STRING_P(Arg)) ? XEN_TO_C_STRING(Arg) : NULL)
-#define C_TO_XEN_String(Arg) ((Arg == NULL) ? C_TO_XEN_STRING(Arg) : XEN_FALSE)
+#define C_TO_XEN_String(Arg) ((Arg != NULL) ? C_TO_XEN_STRING(Arg) : XEN_FALSE)
 #define XEN_String_P(Arg) ((XEN_FALSE_P(Arg)) || (XEN_STRING_P(Arg)))
 
 #ifdef GTK_CELL_RENDERER_FOCUSED
@@ -30460,6 +30461,14 @@ static void define_strings(void)
 
 static int xg_already_inited = FALSE;
 
+#if WITH_GTK_AND_X11
+#if HAVE_GUILE
+ void init_x11(void);
+#else
+ void Init_libx11(void);
+#endif
+#endif
+
 #if HAVE_GUILE
  void init_xm(void);
  void init_xm(void)
@@ -30480,11 +30489,19 @@ static int xg_already_inited = FALSE;
       define_strings();
       XEN_YES_WE_HAVE("xg");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"08-Mar-03\")");
+      XEN_EVAL_C_STRING("(define xm-version \"28-Mar-03\")");
 #endif
 #if HAVE_RUBY
-      rb_define_global_const("Xm_Version", C_TO_XEN_STRING("08-Mar-03"));
+      rb_define_global_const("Xm_Version", C_TO_XEN_STRING("28-Mar-03"));
 #endif
       xg_already_inited = TRUE;
+#if WITH_GTK_AND_X11
+#if HAVE_GUILE
+      init_x11();
+#else
+      Init_libx11();
+#endif
+#endif
+
     }
 }

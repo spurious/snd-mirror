@@ -359,10 +359,21 @@ XEN snd_catch_any(XEN_CATCH_BODY_TYPE body, void *body_data, const char *caller)
   return(snd_internal_stack_catch(XEN_TRUE, body, body_data, snd_catch_scm_error, (void *)caller));
 }
 #else
+#if HAVE_RUBY
 XEN snd_catch_any(XEN_CATCH_BODY_TYPE body, void *body_data, const char *caller)
 {
   return((*body)(body_data));
 }
+#else
+/* no extension language but user managed to try to evaluate something -- one way is to
+ *   activate the minibuffer (via click) and type an expression into it
+ */
+XEN snd_catch_any(XEN_CATCH_BODY_TYPE body, void *body_data, const char *caller)
+{
+  snd_error("This version of Snd has no extension language, so there's no way for %s to evaluate anything", caller);
+  return(XEN_FALSE);
+}
+#endif
 #endif
 
 
@@ -2733,11 +2744,11 @@ XEN_NARGIFY_1(g_set_region_graph_style_w, g_set_region_graph_style)
 XEN_NARGIFY_0(g_ask_before_overwrite_w, g_ask_before_overwrite)
 XEN_NARGIFY_1(g_set_ask_before_overwrite_w, g_set_ask_before_overwrite)
 XEN_NARGIFY_0(g_audio_output_device_w, g_audio_output_device)
-XEN_ARGIFY_1(g_set_audio_output_device_w, g_set_audio_output_device)
+XEN_NARGIFY_1(g_set_audio_output_device_w, g_set_audio_output_device)
 XEN_NARGIFY_0(g_audio_input_device_w, g_audio_input_device)
-XEN_ARGIFY_1(g_set_audio_input_device_w, g_set_audio_input_device)
+XEN_NARGIFY_1(g_set_audio_input_device_w, g_set_audio_input_device)
 XEN_NARGIFY_0(g_minibuffer_history_length_w, g_minibuffer_history_length)
-XEN_ARGIFY_1(g_set_minibuffer_history_length_w, g_set_minibuffer_history_length)
+XEN_NARGIFY_1(g_set_minibuffer_history_length_w, g_set_minibuffer_history_length)
 XEN_NARGIFY_0(g_emacs_style_save_as_w, g_emacs_style_save_as)
 XEN_NARGIFY_1(g_set_emacs_style_save_as_w, g_set_emacs_style_save_as)
 XEN_NARGIFY_0(g_auto_resize_w, g_auto_resize)
@@ -2747,39 +2758,39 @@ XEN_NARGIFY_1(g_set_auto_update_w, g_set_auto_update)
 XEN_NARGIFY_0(g_filter_env_in_hz_w, g_filter_env_in_hz)
 XEN_NARGIFY_1(g_set_filter_env_in_hz_w, g_set_filter_env_in_hz)
 XEN_NARGIFY_0(g_color_cutoff_w, g_color_cutoff)
-XEN_ARGIFY_1(g_set_color_cutoff_w, g_set_color_cutoff)
+XEN_NARGIFY_1(g_set_color_cutoff_w, g_set_color_cutoff)
 XEN_NARGIFY_0(g_color_inverted_w, g_color_inverted)
 XEN_NARGIFY_1(g_set_color_inverted_w, g_set_color_inverted)
 XEN_NARGIFY_0(g_color_scale_w, g_color_scale)
-XEN_ARGIFY_1(g_set_color_scale_w, g_set_color_scale)
+XEN_NARGIFY_1(g_set_color_scale_w, g_set_color_scale)
 XEN_NARGIFY_0(g_auto_update_interval_w, g_auto_update_interval)
-XEN_ARGIFY_1(g_set_auto_update_interval_w, g_set_auto_update_interval)
+XEN_NARGIFY_1(g_set_auto_update_interval_w, g_set_auto_update_interval)
 XEN_NARGIFY_0(g_default_output_chans_w, g_default_output_chans)
-XEN_ARGIFY_1(g_set_default_output_chans_w, g_set_default_output_chans)
+XEN_NARGIFY_1(g_set_default_output_chans_w, g_set_default_output_chans)
 XEN_NARGIFY_0(g_default_output_srate_w, g_default_output_srate)
-XEN_ARGIFY_1(g_set_default_output_srate_w, g_set_default_output_srate)
+XEN_NARGIFY_1(g_set_default_output_srate_w, g_set_default_output_srate)
 XEN_NARGIFY_0(g_default_output_type_w, g_default_output_type)
-XEN_ARGIFY_1(g_set_default_output_type_w, g_set_default_output_type)
+XEN_NARGIFY_1(g_set_default_output_type_w, g_set_default_output_type)
 XEN_NARGIFY_0(g_default_output_format_w, g_default_output_format)
-XEN_ARGIFY_1(g_set_default_output_format_w, g_set_default_output_format)
+XEN_NARGIFY_1(g_set_default_output_format_w, g_set_default_output_format)
 XEN_NARGIFY_0(g_audio_state_file_w, g_audio_state_file)
-XEN_ARGIFY_1(g_set_audio_state_file_w, g_set_audio_state_file)
+XEN_NARGIFY_1(g_set_audio_state_file_w, g_set_audio_state_file)
 XEN_NARGIFY_0(g_selection_creates_region_w, g_selection_creates_region)
 XEN_NARGIFY_1(g_set_selection_creates_region_w, g_set_selection_creates_region)
 XEN_NARGIFY_0(g_print_length_w, g_print_length)
-XEN_ARGIFY_1(g_set_print_length_w, g_set_print_length)
+XEN_NARGIFY_1(g_set_print_length_w, g_set_print_length)
 XEN_NARGIFY_0(g_show_indices_w, g_show_indices)
 XEN_NARGIFY_1(g_set_show_indices_w, g_set_show_indices)
 XEN_NARGIFY_0(g_show_backtrace_w, g_show_backtrace)
 XEN_NARGIFY_1(g_set_show_backtrace_w, g_set_show_backtrace)
 XEN_NARGIFY_0(g_colormap_w, g_colormap)
-XEN_ARGIFY_1(g_set_colormap_w, g_set_colormap)
+XEN_NARGIFY_1(g_set_colormap_w, g_set_colormap)
 XEN_NARGIFY_0(g_temp_dir_w, g_temp_dir)
-XEN_ARGIFY_1(g_set_temp_dir_w, g_set_temp_dir)
+XEN_NARGIFY_1(g_set_temp_dir_w, g_set_temp_dir)
 XEN_NARGIFY_0(g_save_dir_w, g_save_dir)
-XEN_ARGIFY_1(g_set_save_dir_w, g_set_save_dir)
+XEN_NARGIFY_1(g_set_save_dir_w, g_set_save_dir)
 XEN_NARGIFY_0(g_ladspa_dir_w, g_ladspa_dir)
-XEN_ARGIFY_1(g_set_ladspa_dir_w, g_set_ladspa_dir)
+XEN_NARGIFY_1(g_set_ladspa_dir_w, g_set_ladspa_dir)
 XEN_NARGIFY_0(g_trap_segfault_w, g_trap_segfault)
 XEN_NARGIFY_1(g_set_trap_segfault_w, g_set_trap_segfault)
 XEN_NARGIFY_0(g_show_selection_transform_w, g_show_selection_transform)
@@ -2793,33 +2804,33 @@ XEN_NARGIFY_1(g_set_with_background_processes_w, g_set_with_background_processes
 XEN_NARGIFY_0(g_data_clipped_w, g_data_clipped)
 XEN_NARGIFY_1(g_set_data_clipped_w, g_set_data_clipped)
 XEN_NARGIFY_0(g_window_x_w, g_window_x)
-XEN_ARGIFY_1(g_set_window_x_w, g_set_window_x)
+XEN_NARGIFY_1(g_set_window_x_w, g_set_window_x)
 XEN_NARGIFY_0(g_window_y_w, g_window_y)
-XEN_ARGIFY_1(g_set_window_y_w, g_set_window_y)
+XEN_NARGIFY_1(g_set_window_y_w, g_set_window_y)
 XEN_NARGIFY_0(g_zoom_focus_style_w, g_zoom_focus_style)
-XEN_ARGIFY_1(g_set_zoom_focus_style_w, g_set_zoom_focus_style)
+XEN_NARGIFY_1(g_set_zoom_focus_style_w, g_set_zoom_focus_style)
 XEN_NARGIFY_0(g_help_text_font_w, g_help_text_font)
-XEN_ARGIFY_1(g_set_help_text_font_w, g_set_help_text_font)
+XEN_NARGIFY_1(g_set_help_text_font_w, g_set_help_text_font)
 XEN_NARGIFY_0(g_tiny_font_w, g_tiny_font)
-XEN_ARGIFY_1(g_set_tiny_font_w, g_set_tiny_font)
+XEN_NARGIFY_1(g_set_tiny_font_w, g_set_tiny_font)
 XEN_NARGIFY_0(g_button_font_w, g_button_font)
-XEN_ARGIFY_1(g_set_button_font_w, g_set_button_font)
+XEN_NARGIFY_1(g_set_button_font_w, g_set_button_font)
 XEN_NARGIFY_0(g_bold_button_font_w, g_bold_button_font)
-XEN_ARGIFY_1(g_set_bold_button_font_w, g_set_bold_button_font)
+XEN_NARGIFY_1(g_set_bold_button_font_w, g_set_bold_button_font)
 XEN_NARGIFY_0(g_peaks_font_w, g_peaks_font)
-XEN_ARGIFY_1(g_set_peaks_font_w, g_set_peaks_font)
+XEN_NARGIFY_1(g_set_peaks_font_w, g_set_peaks_font)
 XEN_NARGIFY_0(g_bold_peaks_font_w, g_bold_peaks_font)
-XEN_ARGIFY_1(g_set_bold_peaks_font_w, g_set_bold_peaks_font)
+XEN_NARGIFY_1(g_set_bold_peaks_font_w, g_set_bold_peaks_font)
 XEN_NARGIFY_0(g_axis_label_font_w, g_axis_label_font)
-XEN_ARGIFY_1(g_set_axis_label_font_w, g_set_axis_label_font)
+XEN_NARGIFY_1(g_set_axis_label_font_w, g_set_axis_label_font)
 XEN_NARGIFY_0(g_axis_numbers_font_w, g_axis_numbers_font)
-XEN_ARGIFY_1(g_set_axis_numbers_font_w, g_set_axis_numbers_font)
+XEN_NARGIFY_1(g_set_axis_numbers_font_w, g_set_axis_numbers_font)
 XEN_NARGIFY_0(g_listener_font_w, g_listener_font)
-XEN_ARGIFY_1(g_set_listener_font_w, g_set_listener_font)
+XEN_NARGIFY_1(g_set_listener_font_w, g_set_listener_font)
 XEN_NARGIFY_0(g_window_width_w, g_window_width)
-XEN_ARGIFY_1(g_set_window_width_w, g_set_window_width)
+XEN_NARGIFY_1(g_set_window_width_w, g_set_window_width)
 XEN_NARGIFY_0(g_window_height_w, g_window_height)
-XEN_ARGIFY_1(g_set_window_height_w, g_set_window_height)
+XEN_NARGIFY_1(g_set_window_height_w, g_set_window_height)
 #if (!USE_NO_GUI)
 XEN_NARGIFY_0(g_selection_color_w, g_selection_color)
 XEN_NARGIFY_1(g_set_selection_color_w, g_set_selection_color)
@@ -3130,13 +3141,13 @@ void g_initialize_gh(void)
 				   S_setB S_ask_before_overwrite, g_set_ask_before_overwrite_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_audio_output_device, g_audio_output_device_w, H_audio_output_device,
-				   S_setB S_audio_output_device, g_set_audio_output_device_w,  0, 0, 0, 1);
+				   S_setB S_audio_output_device, g_set_audio_output_device_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_audio_input_device, g_audio_input_device_w, H_audio_input_device,
-				   S_setB S_audio_input_device, g_set_audio_input_device_w,  0, 0, 0, 1);
+				   S_setB S_audio_input_device, g_set_audio_input_device_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_minibuffer_history_length, g_minibuffer_history_length_w, H_minibuffer_history_length,
-				   S_setB S_minibuffer_history_length, g_set_minibuffer_history_length_w,  0, 0, 0, 1);
+				   S_setB S_minibuffer_history_length, g_set_minibuffer_history_length_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_emacs_style_save_as, g_emacs_style_save_as_w, H_emacs_style_save_as,
 				   S_setB S_emacs_style_save_as, g_set_emacs_style_save_as_w,  0, 0, 1, 0);
@@ -3151,37 +3162,37 @@ void g_initialize_gh(void)
 				   S_setB S_filter_env_in_hz, g_set_filter_env_in_hz_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_color_cutoff, g_color_cutoff_w, H_color_cutoff,
-				   S_setB S_color_cutoff, g_set_color_cutoff_w,  0, 0, 0, 1);
+				   S_setB S_color_cutoff, g_set_color_cutoff_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_color_inverted, g_color_inverted_w, H_color_inverted,
 				   S_setB S_color_inverted, g_set_color_inverted_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_color_scale, g_color_scale_w, H_color_scale,
-				   S_setB S_color_scale, g_set_color_scale_w,  0, 0, 0, 1);
+				   S_setB S_color_scale, g_set_color_scale_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_auto_update_interval, g_auto_update_interval_w, H_auto_update_interval,
-				   S_setB S_auto_update_interval, g_set_auto_update_interval_w,  0, 0, 0, 1);
+				   S_setB S_auto_update_interval, g_set_auto_update_interval_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_default_output_chans, g_default_output_chans_w, H_default_output_chans,
-				   S_setB S_default_output_chans, g_set_default_output_chans_w,  0, 0, 0, 1);
+				   S_setB S_default_output_chans, g_set_default_output_chans_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_default_output_srate, g_default_output_srate_w, H_default_output_srate,
-				   S_setB S_default_output_srate, g_set_default_output_srate_w,  0, 0, 0, 1);
+				   S_setB S_default_output_srate, g_set_default_output_srate_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_default_output_type, g_default_output_type_w, H_default_output_type,
-				   S_setB S_default_output_type, g_set_default_output_type_w,  0, 0, 0, 1);
+				   S_setB S_default_output_type, g_set_default_output_type_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_default_output_format, g_default_output_format_w, H_default_output_format,
-				   S_setB S_default_output_format, g_set_default_output_format_w,  0, 0, 0, 1);
+				   S_setB S_default_output_format, g_set_default_output_format_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_audio_state_file, g_audio_state_file_w, H_audio_state_file,
-				   S_setB S_audio_state_file, g_set_audio_state_file_w,  0, 0, 0, 1);
+				   S_setB S_audio_state_file, g_set_audio_state_file_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_selection_creates_region, g_selection_creates_region_w, H_selection_creates_region,
 				   S_setB S_selection_creates_region, g_set_selection_creates_region_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_print_length, g_print_length_w, H_print_length,
-				   S_setB S_print_length, g_set_print_length_w,  0, 0, 0, 1);
+				   S_setB S_print_length, g_set_print_length_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_show_indices, g_show_indices_w, H_show_indices,
 				   S_setB S_show_indices, g_set_show_indices_w,  0, 0, 1, 0);
@@ -3190,16 +3201,16 @@ void g_initialize_gh(void)
 				   S_setB S_show_backtrace, g_set_show_backtrace_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_colormap, g_colormap_w, H_colormap,
-				   S_setB S_colormap, g_set_colormap_w,  0, 0, 0, 1);
+				   S_setB S_colormap, g_set_colormap_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_temp_dir, g_temp_dir_w, H_temp_dir,
-				   S_setB S_temp_dir, g_set_temp_dir_w,  0, 0, 0, 1);
+				   S_setB S_temp_dir, g_set_temp_dir_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_save_dir, g_save_dir_w, H_save_dir,
-				   S_setB S_save_dir, g_set_save_dir_w,  0, 0, 0, 1);
+				   S_setB S_save_dir, g_set_save_dir_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_ladspa_dir, g_ladspa_dir_w, H_ladspa_dir,
-				   S_setB S_ladspa_dir, g_set_ladspa_dir_w,  0, 0, 0, 1);
+				   S_setB S_ladspa_dir, g_set_ladspa_dir_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_trap_segfault, g_trap_segfault_w, H_trap_segfault,
 				   S_setB S_trap_segfault, g_set_trap_segfault_w,  0, 0, 1, 0);
@@ -3220,46 +3231,46 @@ void g_initialize_gh(void)
 				   S_setB S_data_clipped, g_set_data_clipped_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_window_x, g_window_x_w, H_window_x,
-				   S_setB S_window_x, g_set_window_x_w,  0, 0, 0, 1);
+				   S_setB S_window_x, g_set_window_x_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_window_y, g_window_y_w, H_window_y,
-				   S_setB S_window_y, g_set_window_y_w,  0, 0, 0, 1);
+				   S_setB S_window_y, g_set_window_y_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_zoom_focus_style, g_zoom_focus_style_w, H_zoom_focus_style,
-				   S_setB S_zoom_focus_style, g_set_zoom_focus_style_w,  0, 0, 0, 1);
+				   S_setB S_zoom_focus_style, g_set_zoom_focus_style_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_help_text_font, g_help_text_font_w, H_help_text_font,
-				   S_setB S_help_text_font, g_set_help_text_font_w,  0, 0, 0, 1);
+				   S_setB S_help_text_font, g_set_help_text_font_w,  0, 0, 1, 0);
   
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_tiny_font, g_tiny_font_w, H_tiny_font,
-				   S_setB S_tiny_font, g_set_tiny_font_w,  0, 0, 0, 1);
+				   S_setB S_tiny_font, g_set_tiny_font_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_button_font, g_button_font_w, H_button_font,
-				   S_setB S_button_font, g_set_button_font_w,  0, 0, 0, 1);
+				   S_setB S_button_font, g_set_button_font_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_bold_button_font, g_bold_button_font_w, H_bold_button_font,
-				   S_setB S_bold_button_font, g_set_bold_button_font_w,  0, 0, 0, 1);
+				   S_setB S_bold_button_font, g_set_bold_button_font_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_peaks_font, g_peaks_font_w, H_peaks_font,
-				   S_setB S_peaks_font, g_set_peaks_font_w,  0, 0, 0, 1);
+				   S_setB S_peaks_font, g_set_peaks_font_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_bold_peaks_font, g_bold_peaks_font_w, H_bold_peaks_font,
-				   S_setB S_bold_peaks_font, g_set_bold_peaks_font_w,  0, 0, 0, 1);
+				   S_setB S_bold_peaks_font, g_set_bold_peaks_font_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_axis_label_font, g_axis_label_font_w, H_axis_label_font,
-				   S_setB S_axis_label_font, g_set_axis_label_font_w,  0, 0, 0, 1);
+				   S_setB S_axis_label_font, g_set_axis_label_font_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_axis_numbers_font, g_axis_numbers_font_w, H_axis_numbers_font,
-				   S_setB S_axis_numbers_font, g_set_axis_numbers_font_w,  0, 0, 0, 1);
+				   S_setB S_axis_numbers_font, g_set_axis_numbers_font_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_listener_font, g_listener_font_w, H_listener_font,
-				   S_setB S_listener_font, g_set_listener_font_w,  0, 0, 0, 1);
+				   S_setB S_listener_font, g_set_listener_font_w,  0, 0, 1, 0);
   
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_window_width, g_window_width_w, H_window_width,
-				   S_setB S_window_width, g_set_window_width_w,  0, 0, 0, 1);  
+				   S_setB S_window_width, g_set_window_width_w,  0, 0, 1, 0);  
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_window_height, g_window_height_w, H_window_height,
-				   S_setB S_window_height, g_set_window_height_w,  0, 0, 0, 1);
+				   S_setB S_window_height, g_set_window_height_w,  0, 0, 1, 0);
 
 
 #if (!USE_NO_GUI)

@@ -573,7 +573,7 @@ XEN_NARGIFY_0(g_clear_listener_w, g_clear_listener);
 XEN_NARGIFY_0(g_show_listener_w, g_show_listener)
 XEN_NARGIFY_1(g_set_show_listener_w, g_set_show_listener)
 XEN_NARGIFY_0(g_listener_prompt_w, g_listener_prompt)
-XEN_ARGIFY_1(g_set_listener_prompt_w, g_set_listener_prompt)
+XEN_NARGIFY_1(g_set_listener_prompt_w, g_set_listener_prompt)
 #else
 #define g_save_listener_w g_save_listener
 #define g_clear_listener_w g_clear_listener
@@ -592,7 +592,7 @@ void g_init_listener(void)
 				   S_setB S_show_listener, g_set_show_listener_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_listener_prompt, g_listener_prompt_w, H_listener_prompt,
-				   S_setB S_listener_prompt, g_set_listener_prompt_w,  0, 0, 0, 1);
+				   S_setB S_listener_prompt, g_set_listener_prompt_w,  0, 0, 1, 0);
 
   #define H_read_hook S_read_hook " (text): called each time a line is typed into the listener (triggered by the carriage return). \
 If it returns #t, Snd assumes you've dealt the text yourself, and does not try to evaluate it. \n\

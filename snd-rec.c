@@ -1739,11 +1739,11 @@ XEN_NARGIFY_1(g_recorder_out_amp_w, g_recorder_out_amp)
 XEN_NARGIFY_2(g_set_recorder_out_amp_w, g_set_recorder_out_amp)
 XEN_NARGIFY_0(g_recorder_dialog_w, g_recorder_dialog)
 XEN_NARGIFY_0(g_vu_font_w, g_vu_font)
-XEN_ARGIFY_1(g_set_vu_font_w, g_set_vu_font)
+XEN_NARGIFY_1(g_set_vu_font_w, g_set_vu_font)
 XEN_NARGIFY_0(g_vu_font_size_w, g_vu_font_size)
-XEN_ARGIFY_1(g_set_vu_font_size_w, g_set_vu_font_size)
+XEN_NARGIFY_1(g_set_vu_font_size_w, g_set_vu_font_size)
 XEN_NARGIFY_0(g_vu_size_w, g_vu_size)
-XEN_ARGIFY_1(g_set_vu_size_w, g_set_vu_size)
+XEN_NARGIFY_1(g_set_vu_size_w, g_set_vu_size)
 #else
 #define g_recorder_autoload_w g_recorder_autoload
 #define g_set_recorder_autoload_w g_set_recorder_autoload
@@ -1824,13 +1824,13 @@ void g_init_recorder(void)
   XEN_DEFINE_PROCEDURE(S_recorder_dialog, g_recorder_dialog_w, 0, 0, 0, H_recorder_dialog);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_vu_font, g_vu_font_w, H_vu_font,
-				   S_setB S_vu_font, g_set_vu_font_w,  0, 0, 0, 1);
+				   S_setB S_vu_font, g_set_vu_font_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_vu_font_size, g_vu_font_size_w, H_vu_font_size,
-				   S_setB S_vu_font_size, g_set_vu_font_size_w,  0, 0, 0, 1);
+				   S_setB S_vu_font_size, g_set_vu_font_size_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_vu_size, g_vu_size_w, H_vu_size,
-				   S_setB S_vu_size, g_set_vu_size_w,  0, 0, 0, 1);
+				   S_setB S_vu_size, g_set_vu_size_w,  0, 0, 1, 0);
 
 }
 

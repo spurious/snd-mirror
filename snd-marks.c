@@ -1806,8 +1806,7 @@ static XEN mark_set(XEN mark_n, XEN val, int fld, char *caller)
 {
   chan_info *cp[1];
   mark *m;
-  m = find_mark_from_id(XEN_TO_C_INT_OR_ELSE_WITH_CALLER(mark_n, 0, caller), 
-			cp, -1);
+  m = find_mark_from_id(XEN_TO_C_INT(mark_n), cp, -1);
   if (m == NULL) 
     return(snd_no_such_mark_error(caller, mark_n));
   switch (fld)
@@ -1853,7 +1852,7 @@ static XEN g_mark_sample(XEN mark_n, XEN pos_n)
 
 static XEN g_set_mark_sample(XEN mark_n, XEN samp_n) 
 {
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(mark_n), mark_n, XEN_ARG_1, S_setB S_mark_sample, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(mark_n), mark_n, XEN_ARG_1, S_setB S_mark_sample, "an integer");
   XEN_ASSERT_TYPE(XEN_OFF_T_P(samp_n) || XEN_NOT_BOUND_P(samp_n), samp_n, XEN_ARG_2, S_setB S_mark_sample, "an integer");
   return(mark_set(mark_n, samp_n, MARK_SAMPLE, S_setB S_mark_sample));
 }
@@ -1881,7 +1880,7 @@ static XEN g_mark_name(XEN mark_n)
 
 static XEN g_set_mark_name(XEN mark_n, XEN name) 
 {
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(mark_n), mark_n, XEN_ARG_1, S_setB S_mark_name, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(mark_n), mark_n, XEN_ARG_1, S_setB S_mark_name, "an integer");
   XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_2, S_setB S_mark_name, "a string");
   return(mark_set(mark_n, name, MARK_NAME, S_setB S_mark_name));
 }
@@ -2221,11 +2220,11 @@ static XEN g_save_marks(XEN snd_n)
 
 #ifdef XEN_ARGIFY_1
 XEN_ARGIFY_2(g_mark_sample_w, g_mark_sample)
-XEN_ARGIFY_2(g_set_mark_sample_w, g_set_mark_sample)
+XEN_NARGIFY_2(g_set_mark_sample_w, g_set_mark_sample)
 XEN_ARGIFY_1(g_mark_sync_w, g_mark_sync)
-XEN_ARGIFY_2(g_set_mark_sync_w, g_set_mark_sync)
+XEN_NARGIFY_2(g_set_mark_sync_w, g_set_mark_sync)
 XEN_ARGIFY_1(g_mark_name_w, g_mark_name)
-XEN_ARGIFY_2(g_set_mark_name_w, g_set_mark_name)
+XEN_NARGIFY_2(g_set_mark_name_w, g_set_mark_name)
 XEN_NARGIFY_4(g_restore_marks_w, g_restore_marks)
 XEN_NARGIFY_0(g_mark_sync_max_w, g_mark_sync_max)
 XEN_ARGIFY_1(g_mark_home_w, g_mark_home)
@@ -2271,13 +2270,13 @@ void g_init_marks(void)
   XEN_DEFINE_HOOK(mark_hook, S_mark_hook, 4, H_mark_hook);                /* args = id snd chn reason */
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mark_sample, g_mark_sample_w, H_mark_sample,
-				   S_setB S_mark_sample, g_set_mark_sample_w, 0, 2, 1, 1);
+				   S_setB S_mark_sample, g_set_mark_sample_w, 0, 2, 2, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mark_sync, g_mark_sync_w, H_mark_sync,
 				   S_setB S_mark_sync, g_set_mark_sync_w, 0, 1, 2, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mark_name, g_mark_name_w, H_mark_name,
-				   S_setB S_mark_name, g_set_mark_name_w, 0, 1, 1, 1);
+				   S_setB S_mark_name, g_set_mark_name_w, 0, 1, 2, 0);
 
   XEN_DEFINE_PROCEDURE(S_restore_marks, g_restore_marks_w, 4, 0, 0, "internal func used in save-state, restores marks");
   XEN_DEFINE_PROCEDURE(S_mark_sync_max, g_mark_sync_max_w, 0, 0, 0, H_mark_sync_max);

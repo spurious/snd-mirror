@@ -168,6 +168,7 @@ static void execute_named_macro(chan_info *cp, char *name, off_t count)
   if (!(execute_named_macro_1(cp, name, count)))
     /* not a macro...*/
     {
+#if HAVE_EXTENSION_LANGUAGE
       one_edit = cp->edit_ctr + 1;
       form = string_to_form(name);
       for (i = 0; i < count; i++)
@@ -180,6 +181,10 @@ static void execute_named_macro(chan_info *cp, char *name, off_t count)
 	  while (cp->edit_ctr > one_edit) backup_edit_list(cp);
 	  if (cp->mixes) backup_mix_list(cp, one_edit);
 	}
+#else
+      /* not sure it's possible to get here at all -- execute undefined named macro?? */
+      snd_error("This version of Snd has no extension language, so there's no way to evaluate %s", name);
+#endif
     }
 }
 
@@ -794,6 +799,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta)
 	  if (str) free(str);
 	  return;
 	}
+#if HAVE_EXTENSION_LANGUAGE
       if (sp->macroing)
 	{
 	  len = CURSOR(active_chan);
@@ -805,6 +811,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta)
 	  if (str) free(str);
 	  return;
 	}
+#endif
     }
 #if HAVE_EXTENSION_LANGUAGE
   /* strlen can be 0 here if <cr> response to prompt */

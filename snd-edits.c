@@ -8567,6 +8567,7 @@ static XEN g_as_one_edit(XEN proc, XEN origin)
   char *errmsg;
   XEN errstr;
   XEN_ASSERT_TYPE((XEN_PROCEDURE_P(proc)), proc, XEN_ARG_1, S_as_one_edit, "a procedure");
+  XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(origin), origin, XEN_ARG_2, S_as_one_edit, "a string");
   errmsg = procedure_ok(proc, 0, S_as_one_edit, "edit", 1);
   if (errmsg)
     {
@@ -9493,7 +9494,7 @@ void g_init_edits(void)
   XEN_DEFINE_PROCEDURE(S_insert_samples_with_origin, g_insert_samples_with_origin_w, 4, 3, 0, "internal function used in save-state");
 
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_sample, g_sample_w, H_sample,
-					    S_setB S_sample, g_set_sample_w, g_set_sample_reversed, 0, 4, 0, 5);
+					    S_setB S_sample, g_set_sample_w, g_set_sample_reversed, 0, 4, 1, 4);
 
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_samples, g_samples_w, H_samples,
 					    S_setB S_samples, g_set_samples_w, g_set_samples_reversed, 0, 5, 3, 6);

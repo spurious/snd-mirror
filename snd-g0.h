@@ -14,7 +14,6 @@
 #include <GL/glu.h>
 #endif
 
-#define HAVE_XPM 1
 #define LOTSA_PIXELS 10000
 #define POINT_BUFFER_SIZE 4096
 

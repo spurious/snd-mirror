@@ -765,7 +765,7 @@ static XEN g_set_selection_position(XEN pos, XEN snd, XEN chn)
   int i;
   off_t beg;
   ASSERT_CHANNEL(S_setB S_selection_position, snd, chn, 2);
-  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(pos), pos, XEN_ARG_1, S_selection_position, "a number");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(pos), pos, XEN_ARG_1, S_selection_position, "a number");
   beg = beg_to_sample(pos, S_setB S_selection_position);
   if (XEN_NOT_BOUND_P(snd))
     {
@@ -818,7 +818,7 @@ static XEN g_set_selection_frames(XEN samps, XEN snd, XEN chn)
   sync_info *si = NULL;
   int i;
   off_t len;
-  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samps), samps, XEN_ARG_1, S_setB S_selection_frames, "a number");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(samps), samps, XEN_ARG_1, S_setB S_selection_frames, "a number");
   len = XEN_TO_C_OFF_T_OR_ELSE(samps, 0);
   if (len <= 0)
     XEN_WRONG_TYPE_ARG_ERROR(S_setB S_selection_frames, XEN_ARG_1, samps, "a positive integer");

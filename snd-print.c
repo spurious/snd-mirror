@@ -632,11 +632,11 @@ XEN_ARGIFY_1(g_graph2ps_w, g_graph2ps)
 XEN_NARGIFY_0(g_eps_file_w, g_eps_file)
 XEN_NARGIFY_1(g_set_eps_file_w, g_set_eps_file)
 XEN_NARGIFY_0(g_eps_left_margin_w, g_eps_left_margin)
-XEN_ARGIFY_1(g_set_eps_left_margin_w, g_set_eps_left_margin)
+XEN_NARGIFY_1(g_set_eps_left_margin_w, g_set_eps_left_margin)
 XEN_NARGIFY_0(g_eps_size_w, g_eps_size)
-XEN_ARGIFY_1(g_set_eps_size_w, g_set_eps_size)
+XEN_NARGIFY_1(g_set_eps_size_w, g_set_eps_size)
 XEN_NARGIFY_0(g_eps_bottom_margin_w, g_eps_bottom_margin)
-XEN_ARGIFY_1(g_set_eps_bottom_margin_w, g_set_eps_bottom_margin)
+XEN_NARGIFY_1(g_set_eps_bottom_margin_w, g_set_eps_bottom_margin)
 #else
 #define g_graph2ps_w g_graph2ps
 #define g_eps_file_w g_eps_file
@@ -657,11 +657,11 @@ void g_init_print(void)
 				   S_setB S_eps_file, g_set_eps_file_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_eps_left_margin, g_eps_left_margin_w, H_eps_left_margin,
-				   S_setB S_eps_left_margin, g_set_eps_left_margin_w,  0, 0, 0, 1);
+				   S_setB S_eps_left_margin, g_set_eps_left_margin_w,  0, 0, 1, 0);
   
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_eps_bottom_margin, g_eps_bottom_margin_w, H_eps_bottom_margin,
-				   S_setB S_eps_bottom_margin, g_set_eps_bottom_margin_w,  0, 0, 0, 1);
+				   S_setB S_eps_bottom_margin, g_set_eps_bottom_margin_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_eps_size, g_eps_size_w, H_eps_size,
-				   S_setB S_eps_size, g_set_eps_size_w,  0, 0, 0, 1);
+				   S_setB S_eps_size, g_set_eps_size_w,  0, 0, 1, 0);
 }

@@ -4629,9 +4629,9 @@ it in conjunction with mixer to scale/envelope all the various ins and outs."
 
 #ifdef XEN_ARGIFY_1
 XEN_NARGIFY_0(g_srate_w, g_srate)
-XEN_ARGIFY_1(g_set_srate_w, g_set_srate)
+XEN_NARGIFY_1(g_set_srate_w, g_set_srate)
 XEN_NARGIFY_0(g_array_print_length_w, g_array_print_length)
-XEN_ARGIFY_1(g_set_array_print_length_w, g_set_array_print_length)
+XEN_NARGIFY_1(g_set_array_print_length_w, g_set_array_print_length)
 XEN_NARGIFY_1(g_radians2hz_w, g_radians2hz)
 XEN_NARGIFY_1(g_hz2radians_w, g_hz2radians)
 XEN_NARGIFY_1(g_radians2degrees_w, g_radians2degrees)
@@ -5182,14 +5182,14 @@ void mus_xen_init(void)
   init_keywords();
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_srate, g_srate_w, H_mus_srate,
-				   S_mus_set_srate, g_set_srate_w,  0, 0, 0, 1);
+				   S_mus_set_srate, g_set_srate_w,  0, 0, 1, 0);
 
 #if HAVE_GUILE
   XEN_DEFINE_PROCEDURE(S_mus_set_srate, g_set_srate_w, 0, 1, 0, H_mus_srate);
 #endif
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_array_print_length, g_array_print_length_w, H_mus_array_print_length,
-				   S_mus_set_array_print_length, g_set_array_print_length_w,  0, 0, 0, 1);
+				   S_mus_set_array_print_length, g_set_array_print_length_w,  0, 0, 1, 0);
 
 #if HAVE_GUILE
   XEN_DEFINE_PROCEDURE(S_mus_set_array_print_length, g_set_array_print_length_w, 0, 1, 0, H_mus_array_print_length);

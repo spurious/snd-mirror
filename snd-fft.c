@@ -1,13 +1,9 @@
 #include "snd.h"
 
-/* handling of "beta" changed drastically 28-June-98 
- *   it is now a number between 0 and 1 from ss point of view, and is scaled by the window max before being applied 
- * returned to old wavelet code 18-Apr-01
- * added fftw support and removed fht 6-June-02
- * greatly simplified 8-June-02: no more cached windows, single fft background functions etc, zero pad made sensible
- */
-
 #if HAVE_FFTW && WITH_SHARED_SNDLIB
+/* copied from clm.c -- sndlib configure process does not include fftw, so the
+ *   shared sndlib clm.c version does not include mus_fftw.
+ */
 #include <rfftw.h>
 /* save old plans both ways */
 static fftw_real *rdata = NULL, *idata = NULL;

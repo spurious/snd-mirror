@@ -4245,7 +4245,7 @@ XEN_ARGIFY_5(g_filter_sound_w, g_filter_sound)
 XEN_ARGIFY_2(g_filter_selection_w, g_filter_selection)
 XEN_ARGIFY_7(g_clm_channel_w, g_clm_channel)
 XEN_NARGIFY_0(g_sinc_width_w, g_sinc_width)
-XEN_ARGIFY_1(g_set_sinc_width_w, g_set_sinc_width)
+XEN_NARGIFY_1(g_set_sinc_width_w, g_set_sinc_width)
 XEN_ARGIFY_9(g_ptree_channel_w, g_ptree_channel)
 #else
 #define g_scan_chan_w g_scan_chan
@@ -4357,7 +4357,7 @@ void g_init_sig(void)
   XEN_DEFINE_PROCEDURE(S_pad_channel,             g_pad_channel_w, 2, 3, 0,             H_pad_channel);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_sinc_width, g_sinc_width_w, H_sinc_width,
-				   S_setB S_sinc_width, g_set_sinc_width_w,  0, 0, 0, 1);
+				   S_setB S_sinc_width, g_set_sinc_width_w,  0, 0, 1, 0);
 }
 
 

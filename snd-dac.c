@@ -2404,7 +2404,7 @@ XEN_ARGIFY_3(g_start_playing_w, g_start_playing)
 XEN_NARGIFY_1(g_stop_player_w, g_stop_player)
 XEN_NARGIFY_1(g_player_p_w, g_player_p)
 XEN_NARGIFY_0(g_dac_size_w, g_dac_size)
-XEN_ARGIFY_1(g_set_dac_size_w, g_set_dac_size)
+XEN_NARGIFY_1(g_set_dac_size_w, g_set_dac_size)
 XEN_NARGIFY_0(g_dac_combines_channels_w, g_dac_combines_channels)
 XEN_NARGIFY_1(g_set_dac_combines_channels_w, g_set_dac_combines_channels)
 XEN_NARGIFY_0(g_disable_play_w, g_disable_play)
@@ -2445,7 +2445,7 @@ void g_init_dac(void)
   XEN_DEFINE_PROCEDURE(S_player_p,       g_player_p_w, 1, 0, 0,       H_player_p);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_dac_size, g_dac_size_w, H_dac_size,
-				   S_setB S_dac_size, g_set_dac_size_w,  0, 0, 0, 1);
+				   S_setB S_dac_size, g_set_dac_size_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_dac_combines_channels, g_dac_combines_channels_w, H_dac_combines_channels,
 				   S_setB S_dac_combines_channels, g_set_dac_combines_channels_w,  0, 0, 1, 0);

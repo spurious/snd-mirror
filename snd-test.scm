@@ -238,6 +238,15 @@
 	 (or (caddr arity)
 	     (<= args (+ (car arity) (cadr arity)))))))
 
+(define (set-arity-ok func args)
+  (let ((arity (if (procedure-with-setter? func)
+		   (procedure-property (setter func) 'arity)
+		   (procedure-property func 'arity))))
+    (and (list-p arity)
+	 (>= args (car arity))
+	 (or (caddr arity)
+	     (<= args (+ (car arity) (cadr arity)))))))
+
 (if (and (> (length (script-args)) 0)
 	 (> (script-arg) 0))
     (let ((arg (script-arg))
@@ -33315,6 +33324,8 @@ EDITS: 2
 	      (if (or (not str) 
 		      (not (string=? (snd-version) str)))
 		  (snd-display ";SND_VERSION: ~A ~A" str (snd-version))))
+	    (if (not (string=? "STRING" (gdk_atom_name GDK_TARGET_STRING)))
+		(snd-display ";gdk_atom_name: ~A" (gdk_atom_name GDK_TARGET_STRING)))
 
 	    (close-sound ind)
 
@@ -33703,13 +33714,13 @@ EDITS: 2
 	  :synthesize :analyze :interp :overlap :pitch))
 
 (define procs0 (remove-if (lambda (n) (or (not (procedure? n)) (not (arity-ok n 0)))) procs))
-(define set-procs0 (remove-if (lambda (n) (or (not (procedure? n)) (not (arity-ok n 0)))) set-procs))
+(define set-procs0 (remove-if (lambda (n) (or (not (procedure? n)) (not (set-arity-ok n 1)))) set-procs))
 (define procs1 (remove-if (lambda (n) (or (not (procedure? n)) (not (arity-ok n 1)))) procs))
-(define set-procs1 (remove-if (lambda (n) (or (not (procedure? n)) (not (arity-ok n 1)))) set-procs))
+(define set-procs1 (remove-if (lambda (n) (or (not (procedure? n)) (not (set-arity-ok n 2)))) set-procs))
 (define procs2 (remove-if (lambda (n) (or (not (procedure? n)) (not (arity-ok n 2)))) procs))
-(define set-procs2 (remove-if (lambda (n) (or (not (procedure? n)) (not (arity-ok n 2)))) set-procs))
+(define set-procs2 (remove-if (lambda (n) (or (not (procedure? n)) (not (set-arity-ok n 3)))) set-procs))
 (define procs3 (remove-if (lambda (n) (or (not (procedure? n)) (not (arity-ok n 3)))) procs))
-(define set-procs3 (remove-if (lambda (n) (or (not (procedure? n)) (not (arity-ok n 3)))) set-procs))
+(define set-procs3 (remove-if (lambda (n) (or (not (procedure? n)) (not (set-arity-ok n 4)))) set-procs))
 (define procs4 (remove-if (lambda (n) (or (not (procedure? n)) (not (arity-ok n 4)))) procs))
 (define procs5 (remove-if (lambda (n) (or (not (procedure? n)) (not (arity-ok n 5)))) procs))
 (define procs6 (remove-if (lambda (n) (or (not (procedure? n)) (not (arity-ok n 6)))) procs))
@@ -34679,10 +34690,12 @@ EDITS: 2
 	;; ---------------- 0 Args
 	(for-each 
 	 (lambda (n)
-	   (catch #t
-		  (lambda ()
-		    (n))
-		  (lambda args (car args))))
+	   (let ((err (catch #t
+			     (lambda ()
+			       (n))
+			     (lambda args (car args)))))
+	     (if (eq? err 'wrong-number-of-args)
+		 (snd-display ";procs0: ~A ~A" err (procedure-property n 'documentation)))))
 	 procs0)
 	(dismiss-all-dialogs)
 	(gc)
@@ -34692,9 +34705,11 @@ EDITS: 2
 	 (lambda (arg)
 	   (for-each 
 	    (lambda (n)
-	      (catch #t
-		     (lambda () (n arg))
-		     (lambda args (car args))))
+	      (let ((err (catch #t
+				(lambda () (n arg))
+				(lambda args (car args)))))
+		(if (eq? err 'wrong-number-of-args)
+		    (snd-display ";procs1: ~A ~A" err (procedure-property n 'documentation)))))
 	    procs1))
 	 (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color .95 .95 .95)  '#(0 1) 3/4 'mus-error (sqrt -1.0) (make-delay 32)
 	       (lambda () #t) (current-module) (make-sound-data 2 3) :order 0 1 -1 (make-hook 2) #f #t #\c 0.0 1.0 -1.0 
@@ -34734,9 +34749,11 @@ EDITS: 2
 	 (lambda (arg)
 	   (for-each 
 	    (lambda (n)
-	      (catch #t
-		     (lambda () (set! (n) arg))
-		     (lambda args (car args))))
+	      (let ((err (catch #t
+				(lambda () (set! (n) arg))
+				(lambda args (car args)))))
+		    (if (eq? err 'wrong-number-of-args)
+			(snd-display ";set-procs0: ~A ~A" err (procedure-property n 'documentation)))))
 	    set-procs0))
 	 (if all-args
 	     (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color .95 .95 .95)  '#(0 1) 3/4 'mus-error (sqrt -1.0) (make-delay 32)
@@ -34754,9 +34771,11 @@ EDITS: 2
 	    (lambda (arg2)
 	      (for-each 
 	       (lambda (n)
-		 (catch #t
-			(lambda () (set! (n arg1) arg2))
-			(lambda args (car args))))
+		 (let ((err (catch #t
+				   (lambda () (set! (n arg1) arg2))
+				   (lambda args (car args)))))
+		       (if (eq? err 'wrong-number-of-args)
+			(snd-display ";set-procs1: ~A ~A" err (procedure-property n 'documentation)))))
 	       set-procs1))
 	    (if all-args
 		(list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color .95 .95 .95)  '#(0 1) 3/4 'mus-error (sqrt -1.0) (make-delay 32)
@@ -34783,9 +34802,11 @@ EDITS: 2
 	       (lambda (arg3)
 		 (for-each 
 		  (lambda (n)
-		    (catch #t
-			   (lambda () (set! (n arg1 arg2) arg3))
-			   (lambda args (car args))))
+		    (let ((err (catch #t
+				      (lambda () (set! (n arg1 arg2) arg3))
+				      (lambda args (car args)))))
+		      (if (eq? err 'wrong-number-of-args)
+			  (snd-display ";set-procs2: ~A ~A" err (procedure-property n 'documentation)))))
 		  set-procs2))
 	       (if all-args
 		   (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color .95 .95 .95)  '#(0 1) 3/4 'mus-error (sqrt -1.0) (make-delay 32)

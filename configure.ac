@@ -49,6 +49,7 @@ AC_SUBST(VERSION)
 #   --with-modules        accommodate sndlib that was built with modules
 #   --with-editres 	  include EditRes in xm
 #   --with-shared-sndlib  load sndlib.so if possible
+#   --with-x11            if gtk, this also includes X funcs from xm.c
 #   GUILE_CONFIG_path     where to look for guile-config
 #   SNDLIB_CONFIG_path    where to look for sndlib-config
 #--------------------------------------------------------------------------------
@@ -70,6 +71,7 @@ AC_ARG_WITH(static-motif,[  --with-static-motif	  use libXm.a to build Snd])
 AC_ARG_WITH(modules,    [  --with-modules	  use if sndlib uses modules])
 AC_ARG_WITH(editres,    [  --with-editres	  include editres in xm])
 AC_ARG_WITH(ladspa,	[  --with-ladspa  	  include support for LADSPA plugins])
+AC_ARG_WITH(x11,	[  --with-x11		  include X funcs from xm.c with xg.c])
 
 if test "$with_doubles" = yes; then
   AC_DEFINE(Float,double)
@@ -489,6 +491,10 @@ else
 	AC_CHECK_LIB(gdk, gdk_draw_pixbuf, [AC_DEFINE(HAVE_GDK_DRAW_PIXBUF)], ,$GTK_LIBS)
 	# gtk 2.1
 
+        if test "$with_x11" = yes ; then
+	  AC_DEFINE(WITH_GTK_AND_X11)
+        fi
+
 	if test "$with_html" = yes ; then
 	  AC_PATH_PROG(MOZILLA_CONFIG, mozilla-config, no)
 	  if test "$MOZILLA_CONFIG" = no ; then
@@ -536,7 +542,11 @@ else
       	AC_SUBST(XLIBS)
       	AC_SUBST(XFLAGS)
       	if test "$with_static_xm" = yes ; then
-          GX_FILES="XG_O_FILES"
+          if test "$with_x11" = yes ; then
+            GX_FILES="XMG_O_FILES"
+          else
+            GX_FILES="XG_O_FILES"
+          fi
           AC_DEFINE(HAVE_STATIC_XM)
       	fi
      fi

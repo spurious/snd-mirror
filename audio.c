@@ -8195,7 +8195,7 @@ char *device_name(AudioDeviceID deviceID, int input_case)
       mfg = (char *)MALLOC(msize + 2);
       err = AudioDeviceGetProperty(deviceID, 0, input_case, kAudioDevicePropertyDeviceManufacturer, &msize, mfg);
       full_name = (char *)MALLOC(size + msize + 4);
-      trans_size = sizeof(trans);
+      trans_size = sizeof(UInt32);
       err = AudioDeviceGetProperty(deviceID, 0, input_case, kAudioDevicePropertyTransportType, &trans_size, &trans);
       if (err != noErr) 
 	trans = 0;
@@ -8213,7 +8213,7 @@ char *device_name(AudioDeviceID deviceID, int input_case)
 static void describe_audio_state_1(void) 
 {
   OSStatus err = noErr;
-  UInt32 num_devices = 0, size = 0, buffer_size = 0, mute = 0, alive = 0;
+  UInt32 num_devices = 0, msize = 0, size = 0, buffer_size = 0, mute = 0, alive = 0;
   Float32 vol;
   int i, j, k;
   pid_t hogger = 0;
@@ -8222,19 +8222,18 @@ static void describe_audio_state_1(void)
   AudioStreamBasicDescription desc;
   AudioStreamBasicDescription *descs = NULL;
   int formats = 0, input_case = FALSE, m;
-  err = AudioHardwareGetPropertyInfo(kAudioHardwarePropertyDevices, &size, NULL);	
+  err = AudioHardwareGetPropertyInfo(kAudioHardwarePropertyDevices, &msize, NULL);
   if (err != noErr) return;
-  num_devices = size / sizeof(AudioDeviceID);
+  num_devices = msize / sizeof(AudioDeviceID);
   if (num_devices <= 0) return;
-  devices = (AudioDeviceID *)MALLOC(size);
-  size = sizeof(default_input);
+  devices = (AudioDeviceID *)MALLOC(msize);
+  size = sizeof(AudioDeviceID);
   err = AudioHardwareGetProperty(kAudioHardwarePropertyDefaultInputDevice, &size, &default_input);
   if (err != noErr) default_input = -1;
-  size = sizeof(default_output);
+  size = sizeof(AudioDeviceID);
   err = AudioHardwareGetProperty(kAudioHardwarePropertyDefaultOutputDevice, &size, &default_output);
   if (err != noErr) default_output = -1;
-  size = sizeof(*devices);
-  err = AudioHardwareGetProperty(kAudioHardwarePropertyDevices, &size, (void *)devices);	
+  err = AudioHardwareGetProperty(kAudioHardwarePropertyDevices, &msize, (void *)devices);	
   mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, "found %d audio device%s", 
 	       num_devices, (num_devices != 1) ? "s" : "");
   pprint(audio_strbuf);
@@ -8256,21 +8255,21 @@ static void describe_audio_state_1(void)
 		pprint(" (default output)"); 
 	      else pprint(" (output)");
 	    }
-	  size = sizeof(hogger);
+	  size = sizeof(pid_t);
 	  err = AudioDeviceGetProperty(device, 0, input_case, kAudioDevicePropertyHogMode, &size, &hogger);
 	  if ((err == noErr) && (hogger >= 0))
 	    {
 	      mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, " currently owned (exclusively) by process %d", (int)hogger);
 	      pprint(audio_strbuf); 
 	    }
-	  size = sizeof(alive);
+	  size = sizeof(UInt32);
 	  err = AudioDeviceGetProperty(device, 0, input_case, kAudioDevicePropertyDeviceIsAlive, &size, &alive);
 	  if ((err == noErr) && (alive == 0))
 	    pprint(" disconnected?");
-	  size = sizeof(buffer_size);
+	  size = sizeof(UInt32);
 	  err = AudioDeviceGetProperty(device, 0, input_case, kAudioDevicePropertyBufferSize, &size, &buffer_size);
 	  if (err != noErr) buffer_size = -1;
-	  size = sizeof(desc);
+	  size = sizeof(AudioStreamBasicDescription);
 	  err = AudioDeviceGetProperty(device, 0, input_case, kAudioDevicePropertyStreamFormat, &size, &desc);
 	  if (err == noErr) 
 	    {
@@ -8290,7 +8289,7 @@ static void describe_audio_state_1(void)
 		  pprint("\n    vols:");
 		  for (j = 0; j <= (int)(desc.mChannelsPerFrame); j++)
 		    {
-		      size = sizeof(vol);
+		      size = sizeof(Float32);
 		      err = AudioDeviceGetProperty(device, j, input_case, kAudioDevicePropertyVolumeScalar, &size, &vol);
 		      if (err == noErr) 
 			{
@@ -8302,7 +8301,7 @@ static void describe_audio_state_1(void)
 		      
 		      if (j > 0)
 			{
-			  size = sizeof(mute);
+			  size = sizeof(UInt32);
 			  err = AudioDeviceGetProperty(device, j, input_case, kAudioDevicePropertyMute, &size, &mute);
 			  if ((err == noErr) && (mute == 1))
 			    {
@@ -8319,15 +8318,15 @@ static void describe_audio_state_1(void)
 	  if (formats > 1)
 	    {
 	      descs = (AudioStreamBasicDescription *)CALLOC(formats, sizeof(AudioStreamBasicDescription));
-	      size = sizeof(descs);
-	      err = AudioDeviceGetProperty(device, 0, input_case, kAudioDevicePropertyStreamFormats, &size, &descs);
+	      size = formats * sizeof(AudioStreamBasicDescription);
+	      err = AudioDeviceGetProperty(device, 0, input_case, kAudioDevicePropertyStreamFormats, &size, descs);
 	      if (err == noErr) 
 		{
-		  mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, "\nThis device supports %d formats: ", formats); 
+		  mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, "\n    This device supports %d formats: ", formats); 
 		  pprint(audio_strbuf);
 		  for (k = 0; k < formats; k++)
 		    {
-		      mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, "\n    srate: %d, chans: %d, frames: %d",
+		      mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, "\n      srate: %d, chans: %d, frames: %d",
 				   (int)(descs[k].mSampleRate), 
 				   (int)(descs[k].mChannelsPerFrame), 
 				   (int)(descs[k].mFramesPerPacket));
@@ -8336,10 +8335,10 @@ static void describe_audio_state_1(void)
 		}
 	      FREE(descs);
 	    }
+	  pprint("\n");
 	}
       input_case = TRUE;
     }
-  pprint("\n");
   if (devices) FREE(devices);
 }
 
@@ -8447,8 +8446,8 @@ int mus_audio_open_output(int dev, int srate, int chans, int format, int size)
 {
   OSStatus err = noErr;
   UInt32 sizeof_device, sizeof_format, sizeof_bufsize;
-  sizeof_device = sizeof(device);
-  sizeof_bufsize = sizeof(bufsize);
+  sizeof_device = sizeof(AudioDeviceID);
+  sizeof_bufsize = sizeof(unsigned int);
   err = AudioHardwareGetProperty(kAudioHardwarePropertyDefaultOutputDevice, &sizeof_device, (void *)(&device));
   if (err == noErr) 
     err = AudioDeviceGetProperty(device, 0, false, kAudioDevicePropertyBufferSize, &sizeof_bufsize, &bufsize);
@@ -8611,8 +8610,8 @@ int mus_audio_open_input(int dev, int srate, int chans, int format, int size)
   OSStatus err = noErr;
   UInt32 sizeof_device;
   UInt32 sizeof_format, sizeof_bufsize;
-  sizeof_device = sizeof(device);
-  sizeof_bufsize = sizeof(bufsize);
+  sizeof_device = sizeof(AudioDeviceID);
+  sizeof_bufsize = sizeof(unsigned int);
   err = AudioHardwareGetProperty(kAudioHardwarePropertyDefaultInputDevice, &sizeof_device, (void *)(&device));
   if (err == noErr) 
     err = AudioDeviceGetProperty(device, 0, true, kAudioDevicePropertyBufferSize, &sizeof_bufsize, &bufsize);
@@ -8662,7 +8661,7 @@ int mus_audio_read(int line, char *buf, int bytes)
   if (in_buf == out_buf)
     {
       bp = out_buf;
-      sizeof_running = sizeof(running);
+      sizeof_running = sizeof(UInt32);
       while (bp == out_buf)
 	{
 	  err = AudioDeviceGetProperty(device, 0, true, kAudioDevicePropertyDeviceIsRunning, &sizeof_running, &running);
@@ -8689,7 +8688,7 @@ int mus_audio_mixer_read(int dev1, int field, int chan, float *val)
   switch (field) 
     {
     case MUS_AUDIO_AMP:   
-      size = sizeof(dev);
+      size = sizeof(AudioDeviceID);
       err = AudioHardwareGetProperty(kAudioHardwarePropertyDefaultOutputDevice, &size, (void *)(&dev));
       size = sizeof(Float32);
       err = AudioDeviceGetProperty(dev, chan + 1, false, kAudioDevicePropertyVolumeScalar, &size, &amp);
@@ -8730,7 +8729,7 @@ int mus_audio_mixer_write(int dev1, int field, int chan, float *val)
   switch (field) 
     {
     case MUS_AUDIO_AMP:   
-      size = sizeof(dev);
+      size = sizeof(AudioDeviceID);
       err = AudioHardwareGetProperty(kAudioHardwarePropertyDefaultOutputDevice, &size, (void *)(&dev));
       err = AudioDeviceGetPropertyInfo(dev, chan + 1, false, kAudioDevicePropertyVolumeScalar, NULL, &writable); /* "false" -> output */
       amp = (Float32)(val[0]);

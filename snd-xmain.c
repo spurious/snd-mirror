@@ -417,7 +417,9 @@ static Cessate startup_funcs(XtPointer context)
       (ss->sgx)->wait_cursor = XCreateFontCursor(XtDisplay(MAIN_SHELL(ss)), XC_watch);
       break;
     case 1:
+#if HAVE_EXTENSION_LANGUAGE
       snd_load_init_file(ss, noglob, noinit);
+#endif
 #if HAVE_SIGNAL && HAVE_EXTENSION_LANGUAGE
       if (!nostdin)
 	{
