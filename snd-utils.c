@@ -666,8 +666,6 @@ int io_fclose(FILE *stream, const char *func, const char *file, int line)
   return(fclose(stream));
 }
 
-/* TODO: gtk side of the remove_menu unprotect callback stuff */
-
 void dump_protection(FILE *Fp);
 
 void mem_report(void)

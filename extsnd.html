@@ -90,7 +90,7 @@ lisp listener.  The easiest way to get acquainted
 with this aspect of Snd is to open the listener
 (via the View:Open listener menu option), and type
 experiments in its window.  Its prompt is "&gt;". So,
-say we've opened the listener, and (my typing is 
+say we've opened the listener (my typing is 
 in <em class=typing>this font</em> and Snd's responses
 are in <em class=listener>this font</em>):
 </p>
@@ -126,8 +126,8 @@ sections, each of the basic entities is treated in a separate
 section with cross-references where needed.  The <a href="index.html">index</a>
 provides alphabetical entry.</p>
 
-<p>There are many examples in <a href="sndscm.html#exampdoc">examp.scm</a> and <a href="sndscm.html#sndtestdoc">snd-test.scm</a>.  In addition,
-various examples of and extensions to Snd can be found in the contrib directory, and in:
+<p>There are many examples in <a href="sndscm.html#exampdoc">examp.scm</a> and <a href="sndscm.html#sndtestdoc">snd-test.scm</a>. 
+Extensions to Snd can be found in the contrib directory, and in:
 </p>
 
 <table border=8 bordercolor="lightsteelblue">
@@ -186,7 +186,7 @@ author included) grumble "just do it".  There are two ways
 this kind of situation is handled in Snd; variables and hooks.
 A hook is a list of "callbacks" invoked whenever the associated
 event happens.  When Snd exits, for example, any functions found
-on the exit-hook list are evaluated; if any of them returns #t,
+on the <a href="#exithook">exit-hook</a> list are evaluated; if any of them returns #t,
 Snd does not exit.</p>
 
 <table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
@@ -200,22 +200,22 @@ Snd does not exit.</p>
 	    (unsaved-edits? (cdr lst)))
 	#f)))
 
-(add-hook! exit-hook (lambda () (unsaved-edits? (sounds))))
+(add-hook! <em class=red>exit-hook</em> (lambda () (unsaved-edits? (sounds))))
 </pre></td></tr></table>
 
 <p>Now when Snd is told to exit, it checks exit-hook, runs
 unsaved-edits?, and if the latter returns #t, if prints
 a worried message in the minibuffer, and refuses to
 exit.  Similar hooks customize actions such as closing
-a sound (close-hook), clicking a mark (mark-click-hook),
-pressing a key (key-press-hook), and so on.</p>
+a sound (<a href="#closehook">close-hook</a>), clicking a mark (<a href="#markclickhook">mark-click-hook</a>),
+pressing a key (<a href="#keypresshook">key-press-hook</a>), and so on.</p>
 
 <p>The global variables handle various customizations that aren't callback-oriented.
 For example, 
 <A NAME="autoexpl"></a>as panes (sounds) come and go, Snd's overall size may change (this is
-partly determined by the window manager, but is to some extent also
-up to Snd); many people find this distracting -- they would rather the
-overall window size try to stay the same.  The Snd variable associated
+partly determined by the window manager, but is also
+up to Snd); many people find this distracting -- they would rather that the
+overall window stick to one size.  The Snd variable associated
 with this is "auto-resize"; it can be accessed as follows (we're typing
 to the listener here, as described above):</p>
 
@@ -228,18 +228,18 @@ to the listener here, as described above):</p>
 
 <p>As this illustrates, 
 variables in Snd are accessed as though each were a function, and set using set!.  auto-resize's current
-value is accessed above via <code>(auto-resize)</code>, and set to a
+value is accessed via <code>(auto-resize)</code>, and set to a
 new value via <code>(set! (auto-resize) #f)</code>. #t is Scheme for "true"
-(often 1 in C, t in Lisp), #f is "false" (0 in C, nil in Lisp).
-A statement like <code>(set! (auto-resize) #f)</code> can be placed in your ~/.snd initialization file
+(often 1 in C, t in Lisp, true in Ruby), #f is "false" (0 in C, nil in Lisp, false in Ruby).
+The statement <code>(set! (auto-resize) #f)</code> can be placed in your ~/.snd initialization file
 to make it the default setting for your version of Snd, or placed
 in a separate file of Scheme code and loaded at any time via the load
-function.  </p>
+function. </p>
 
 <br>
 <span class=cbox><h4><A NAME="sndglobalvars">Global variables</a></h4></span>
 
-<p>The main variables affecting Snd's overall behavior are:</p>
+<p>The variables affecting Snd's overall behavior are:</p>
 
 <!-- -------------------------------- GLOBAL VARIABLE TABLE -------------------------------- -->
 
@@ -299,7 +299,7 @@ is turned off.
 <!-- dac-combines-channels -->
 <tr><td><code><em class=def><a name="dacfolding">dac-combines-channels</a></em></code></td>
 <td><code>#t</code></td>
-<td>channels mixed into available channels upon dac output if necessary.
+<td>are channels mixed into available channels upon dac output.
 </td></tr>
 <tr><td colspan=3></td></tr>
 
@@ -552,7 +552,7 @@ a sine wave at (say) 55 Hz, then <code>(src-sound '(0 3 1 1))</code> with sinc-w
 <tr><td colspan=3></td></tr>
 
 <!-- temp-dir -->
-<tr><td><code><em class=def><a name="tempdir">temp-dir</a></em></code></td>
+<tr><td valign=top><code><em class=def><a name="tempdir">temp-dir</a></em></code></td>
 <td><code>#f</code></td>
 <td>Name of directory for temporary files.  #f usually means "/tmp" or "/var/tmp".  
 See <a href="#sndtempnam">snd-tempnam</a>, and autosave.scm.
@@ -648,7 +648,7 @@ See <a href="snd.html#zoomoption">Zoom options</a>.</td></tr>
 
 <span class=cbox><h4><A NAME="sndhooks">Hooks</a></h4></span>
 
-<p>When some user-interface action takes place, some code is called that responds to that action;
+<p>When some user-interface action takes place, code is called that responds to that action;
 these functions are sometimes called callbacks; in Guile the variable that holds a list of such
 callbacks is known as a hook.  
 A hook provides
@@ -702,7 +702,7 @@ called after a graph is updated or redisplayed; see <a href="#displaysampsinred"
 <span class=defbox><code><em class=def><a name="afteropenhook">after-open-hook</a></em> (snd)</code></span><td></td>
 </td></tr>
 <tr><td></td><td colspan=2>
-called just before the new file's window is displayed.
+called just before a newly opened sound's window is displayed.
 This provides a way to set various sound-specific defaults.  
 For example, the following causes Snd to default to locally 
 sync'd channels (that is, each sound's channels are sync'd 
@@ -731,7 +731,7 @@ examples in snd-motif.scm.
 <span class=defbox><code><em class=def><a name="badheaderhook">bad-header-hook</a></em> (filename)</code></span><td align=right><b>or</b></td>
 </td></tr>
 <tr><td></td><td colspan=2>
-called if a file has some bogus-looking header. Return #t to give up on that file. <br><br><code>(add-hook! bad-header-hook (lambda (n) #t))</code>
+called if a file has a bogus-looking header. Return #t to give up on that file. <br><br><code>(add-hook! bad-header-hook (lambda (n) #t))</code>
 </td></tr>
 <tr><td colspan=3></td></tr>
 
@@ -865,8 +865,8 @@ Each time a breakpoint is changed in the envelope editor, this hook
 is called; if it returns a list, that list defines the new envelope, 
 otherwise the breakpoint is moved (but not beyond the neighboring 
 breakpoint), leaving other points untouched.  The kind of change
-is <i>reason</i> which can be enved-move-point, enved-delete-point,
-or enved-add-point.  This hook makes it possible to define attack 
+is <i>reason</i> which can be <b>enved-move-point</b>, <b>enved-delete-point</b>,
+or <b>enved-add-point</b>.  This hook makes it possible to define attack 
 and decay portions in the envelope editor, or use functions such as 
 stretch-envelope from env.scm:
 </td></tr>
@@ -960,8 +960,8 @@ The <i>dur</i> argument is the total length in seconds of the channel, so to cau
 entire sound to be displayed initially:
 <pre>(add-hook! initial-graph-hook (lambda (snd chn dur) (list 0.0 dur)))</pre>
 To get the data limits (rather than the default -1.0 to 1.0 as above), you can use <a href="mussoundmaxamp">mus-sound-maxamp</a>,
-but that can in some cases require a long process of reading the underlying file. The following hook procedure
-uses the max amp data only if it is already available:
+but if that sound's maxamp isn't already known, it can require a long process of reading the file. The following hook procedure
+uses the maxamp data only if it is already available:
 </td></tr><tr><td></td><td colspan=2>
 <table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
 (add-hook! <em class=red>initial-graph-hook</em>
@@ -1062,7 +1062,7 @@ So, we read and write the entire peak-env-info contents ourselves (see peak-env.
 </td></tr>
 <tr><td></td><td colspan=2>
 This writes the peak-env data when a file is closed, and reads
-it upon opening the file, if it exists; it provides essentially
+it upon opening the file, if it exists:
 immediate display of any size file.
 </td></tr><tr><td colspan=3></td></tr>
 
@@ -1093,7 +1093,7 @@ don't provide a way to specialize the directory read.
 <span class=defbox><code><em class=def><a name="keypresshook">key-press-hook</a></em> (snd chn key state)</code></span><td align=right><b>or</b></td>
 </td></tr>
 <tr><td></td><td colspan=2>
-called upon key press while mouse is in lisp graph.
+called upon key press while the mouse is in the lisp graph.
 If it returns #t, the key press is not passed to the main handler.
 <i>state</i> refers to the control, meta, and shift keys.
 </td></tr>
@@ -1127,7 +1127,7 @@ If it returns a function (of no arguments), that function is called rather than 
 <span class=defbox><code><em class=def><a name="markclickhook">mark-click-hook</a></em> (id)</code></span><td align=right><b>progn</b></td>
 </td></tr>
 <tr><td></td><td colspan=2>
-called when a mark is clicked, return #t to squelch message.
+called when a mark is clicked; return #t to squelch message.
 </td></tr>
 <tr><td></td><td colspan=2>
 <table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
@@ -1143,7 +1143,7 @@ called when a mark is clicked, return #t to squelch message.
 <span class=defbox><code><em class=def><a name="markdraghook">mark-drag-hook</a></em> (id)</code></span><td></td>
 </td></tr>
 <tr><td></td><td colspan=2>
-called when mark id is dragged.
+called when a mark is dragged.
 </td></tr>
 <tr><td></td><td colspan=2>
 <table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
@@ -1198,8 +1198,8 @@ and if the mark-sync is active, the hook is called on each syncd mark.
 <span class=defbox><code><em class=def><a name="mixampchangedhook">mix-amp-changed-hook</a></em> (id)</code></span><td align=right><b>progn</b></td>
 </td></tr>
 <tr><td></td><td colspan=2>
-called when mix amp changes via mouse (id = mix id).
-If #t, the actual remix is the hook's responsibility.
+called when a mix's amp changes via the mouse (id = mix id).
+If it returns #t, the actual remix is the hook's responsibility.
 </td></tr>
 <tr><td colspan=3></td></tr>
 
@@ -1208,8 +1208,8 @@ If #t, the actual remix is the hook's responsibility.
 <span class=defbox><code><em class=def><a name="mixpositionchangedhook">mix-position-changed-hook</a></em> (id samps)</code></span><td align=right><b>progn</b></td>
 </td></tr>
 <tr><td></td><td colspan=2>
-called when mix moves via mouse (id = mix id, 
-samps = samps moved).  If #t, the actual remix is the 
+called when a mix moves via the mouse (id = mix id, 
+samps = samps moved).  If it returns #t, the actual remix is the 
 hook's responsibility (see, for example, <i>reposition-track</i> in mix.scm).
 </td></tr>
 <tr><td colspan=3></td></tr>
@@ -1219,8 +1219,8 @@ hook's responsibility (see, for example, <i>reposition-track</i> in mix.scm).
 <span class=defbox><code><em class=def><a name="mixspeedchangedhook">mix-speed-changed-hook</a></em> (id)</code></span><td align=right><b>progn</b></td>
 </td></tr>
 <tr><td></td><td colspan=2>
-called when mix speed changes via mouse (id = mix id).
-If #t, the actual remix is the hook's responsibility (see, for example, <i>respeed-track</i> in mix.scm).
+called when a mix's speed changes via the mouse (id = mix id).
+If it returns #t, the actual remix is the hook's responsibility (see, for example, <i>respeed-track</i> in mix.scm).
 </td></tr>
 <tr><td colspan=3></td></tr>
 
@@ -1229,7 +1229,7 @@ If #t, the actual remix is the hook's responsibility (see, for example, <i>respe
 <span class=defbox><code><em class=def><a name="mouseclickhook">mouse-click-hook</a></em> (snd chn button state x y axis) </code></span><td align=right><b>or</b></td>
 </td></tr>
 <tr><td></td><td colspan=2>
-called upon mouse button click (press and release without drag).  If it returns #t, the click is ignored by Snd.
+called upon a mouse button click (press and release without drag).  If it returns #t, the click is ignored by Snd.
 See the <i>current-window-location</i> procedures in draw.scm.  Here's a simpler example:</td></tr>
 <tr><td></td><td colspan=2>
 <table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
@@ -1253,7 +1253,7 @@ See the <i>current-window-location</i> procedures in draw.scm.  Here's a simpler
 <span class=defbox><code><em class=def><a name="mousedraghook">mouse-drag-hook</a></em> (snd chn button state x y) </code></span><td></td>
 </td></tr>
 <tr><td></td><td colspan=2>
-called upon mouse motion (with button pressed) within lisp graph (see, for example, enved.scm or rtio.scm).
+called when the mouse is dragged within the lisp graph (see, for example, enved.scm or rtio.scm).
 </td></tr>
 <tr><td colspan=3></td></tr>
 
@@ -1375,7 +1375,7 @@ called when the mouse leaves a text widget.
 <span class=defbox><code><em class=def><a name="mousepresshook">mouse-press-hook</a></em> (snd chn button state x y) </code></span><td></td>
 </td></tr>
 <tr><td></td><td colspan=2>
-called upon mouse button press within lisp graph (see, for example, enved.scm).
+called upon a mouse button press within the lisp graph (see, for example, enved.scm).
 </td></tr>
 <tr><td colspan=3></td></tr>
 
@@ -1384,7 +1384,7 @@ called upon mouse button press within lisp graph (see, for example, enved.scm).
 <span class=defbox><code><em class=def><a name="mousereleasehook">mouse-release-hook</a></em> (snd chn button state x y) </code></span><td></td>
 </td></tr>
 <tr><td></td><td colspan=2>
-called upon mouse button release within lisp graph (see, for example, enved.scm).
+called upon a mouse button release within the lisp graph (see, for example, enved.scm).
 </td></tr>
 <tr><td colspan=3></td></tr>
 
@@ -1393,7 +1393,7 @@ called upon mouse button release within lisp graph (see, for example, enved.scm)
 <span class=defbox><code><em class=def><a name="multichannelmixhook">multichannel-mix-hook</a></em> (ids)</code></span><td></td>
 </td></tr>
 <tr><td></td><td colspan=2>
-called when a multichannel mix happens in a sync'd sound.
+called when a multichannel sound is mixed into a sync'd sound.
 <i>ids</i> is a list of mix id numbers.  See <a href="sndscm.html#mixpanelappliestotrack">mix-panel-applies-to-track</a> in mix.scm for an example.
 </td></tr>
 <tr><td colspan=3></td></tr>
@@ -1414,7 +1414,7 @@ This hook is used in <i>play-sound</i> in play.scm to flush an error message tha
 <span class=defbox><code><em class=def><a name="nameclickhook">name-click-hook</a></em> (snd)</code></span><td align=right><b>or</b></td>
 </td></tr>
 <tr><td></td><td colspan=2>
-called when sound name clicked.
+called when the sound name is clicked.
 If it returns #t, the usual informative minibuffer babbling is squelched.
 </td></tr>
 <tr><td></td><td colspan=2>
@@ -1483,7 +1483,7 @@ See also <a href="sndscm.html#exopenbuffer">open-buffer</a> in examp.scm.
 <span class=defbox><code><em class=def><a name="openrawsoundhook">open-raw-sound-hook</a></em> (filename current-choices)</code></span><td align=right><b>progn</b></td>
 </td></tr>
 <tr><td></td><td colspan=2>
-called each time open-sound encounters a headerless file.
+called each time <a href="#sndopen">open-sound</a> encounters a headerless file.
 Its result can be a list describing the raw file's attributes (thereby bypassing the Raw File Dialog and so on). 
 The list is interpreted as '(chans srate data-format data-location data-length) where trailing elements can 
 be omitted (location defaults to 0, and length defaults to the file length in bytes).
@@ -1517,7 +1517,7 @@ called whenever one of the variables associated with the orientation dialog chan
 <span class=defbox><code><em class=def><a name="outputcommenthook">output-comment-hook</a></em> (str)</code></span><td align=right><b>concat</b></td>
 </td></tr>
 <tr><td></td><td colspan=2>
-called in Save-As dialog, passed current sound's comment, if any.
+called in the Save-As dialog. <i>str</i> is the current sound's comment.
 If there is more than one hook function, results are concatenated (return #f to leave the original string unchanged).  
 If the hook is empty, the current comment is used.
 </td></tr>
@@ -1536,7 +1536,7 @@ If the hook is empty, the current comment is used.
 <span class=defbox><code><em class=def><a name="outputnamehook">output-name-hook</a></em> ()</code></span><td align=right><b>progn</b></td>
 </td></tr>
 <tr><td></td><td colspan=2>
-called in File New dialog, setting the file name in the associated text widget.
+called in the New File dialog, setting the file name in the associated text widget.
 </td></tr>
 <tr><td></td><td colspan=2>
 <table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
@@ -1653,7 +1653,7 @@ This is intended to make it possible to read user-typing in the listener.
 <tr><td></td><td colspan=2>
 called each time a file is about to be saved.
 If it returns #t, the file is not saved.  <i>name</i> is #f unless 
-the file is being saved under a new name (as in sound-save-as).  (See the auto-save code in autosave.scm).
+the file is being saved under a new name (as in <a href="#sndsaveas">save-sound-as</a>).  (See the auto-save code in autosave.scm).
 </td></tr>
 <tr><td colspan=3></td></tr>
 
@@ -1742,9 +1742,9 @@ reported it via the hook).
 <span class=defbox><code><em class=def><a name="starthook">start-hook</a></em> (filename)</code></span><td align=right><b>or</b></td>
 </td></tr>
 <tr><td></td><td colspan=2>
-called upon start-up.
+called when Snd starts.
 If it returns #t, Snd exits immediately.
-Say we are so annoyed by the X/Motif file browser that we want
+Say we are so annoyed with the X/Motif file browser that we want
 Snd to exit back to the shell if its file argument is not
 found (this code obviously has to be in the ~/.snd init file):
 </td></tr>
@@ -1765,7 +1765,7 @@ found (this code obviously has to be in the ~/.snd init file):
 </td></tr>
 <tr><td></td><td colspan=2>
 called when a play request is triggered.
-If it returns #t, snd does not play (see, for example, <i>report-mark-names</i> in marks.scm).
+If it returns #t, Snd does not play (see, for example, <i>report-mark-names</i> in marks.scm).
 </td></tr>
 <tr><td colspan=3></td></tr>
 
@@ -2004,10 +2004,10 @@ useful hook-related functions.
 <br>
 <span class=bbox><h3><A NAME="sndobjects">Snd's objects</a></h3></span>
 
-<p>Snd presents its various data structures to you as a list
+<p>Snd presents its various data structures as a list
 of sounds, each with a list of channels, each with lists of edits,
 marks, and mixes.  The sound data itself is accessed through
-a variety of structure and functions, each aimed at a particular
+a variety of structures and functions, each aimed at a particular
 kind of use.  One of the most commonly used is the <i>vct</i>.
 But before launching into vcts, I need to explain a few things
 about the following documentation.
@@ -2017,17 +2017,17 @@ about the following documentation.
 netscape sometimes displays them in bold face for some reason).
 Each sound has an
 associated "index" used to refer to it in all the
-functions.  This somewhat arbitrary number is more
+functions.  This arbitrary number is more
 or less related to the sound's position in the
-display of sounds (set the variable <a href="#showindices">show-indices</a>
-to cause it to be displayed in front of the sound's name).
+display of sounds (if the variable <a href="#showindices">show-indices</a> is #t,
+the index is displayed in front of the sound's name).
 In the argument lists
 below, <i>snd</i> as an argument refers to the sound's index, and defaults to the currently
 selected sound.  Similarly, <i>chn</i> is the channel number, starting from 0, and defaults
-to the currently selected channel.  So if there's only one sound active, and it has only
+to the currently selected channel.  So if there's only one sound active (say it's index is 0), and it has only
 one channel, (cursor) (cursor 0), and (cursor 0 0) all refer to the same
 thing.  If you want to refer to the currently selected sound, either use #f
-as the sound index or the function selected-sound.
+as the sound index or <a href="#sndselectedsound">selected-sound</a>.
 </p>
 <p>
 If the <i>snd</i> argument is a list, the first element of the list is
@@ -2039,9 +2039,9 @@ the currently selected sound by .5; (scale-by .5 (list 0) 2) scales the 3rd chan
 of mix 0's input sound by .5.  I keep saying "underlying" because normally a
 mix is viewed after it has gone through its panel of controls (the set of widgets displayed
 in the Mix Panel dialog -- these can affect the
-amplitude, amplitude envelope, and sampling rate) -- next-mix-sample, for
+amplitude, amplitude envelope, and sampling rate).  next-mix-sample, for
 example, refers to the processed form of the mix data, whereas next-sample
-would refer to the original form.  I may extend this to accept a list of (more than one) mixes (i.e. a "track" 
+would refer to the original form.  I may extend this to accept a list of mixes (i.e. a "track" 
 in the terminology of mix.scm).
 </p>
 
@@ -2056,21 +2056,22 @@ turns on the fft display in all channels of all sounds.
 
 <p>When an error occurs, in most cases the function throws a tag such as 'no-such-sound,
 'impossible-bounds, 'no-active-selection, etc.
-All the functions that take sound and channel args ("snd chn" below) can return the errors
+All the functions that take sound and channel args (<i>snd chn</i> below) can return the errors
 'no-such-sound and 'no-such-channel; all the mix-related functions can return 'no-such-mix;
-all the region-related functions can return 'no-such-region; to reduce clutter, I'll omit mention
+all the region-related functions can return 'no-such-region; all selection-oriented functions
+can return 'no-active-selection. To reduce clutter, I'll omit mention
 of these below.  
 </p>
 
 <br>
 <span class=cbox><h3><A NAME="Vcts">Vcts</a></h3></span>
 <p>
-Many of the Snd and CLM functions handle vectors (arrays) of data; 
-by defining a new vector type, named vct, and providing a package
+Many of the Snd and CLM functions handle vectors (arrays) of data.
+By defining a new vector type, named vct, and providing a package
 of old-style array-processing calls upon that type, we can speed up many
 operations by a factor of 30.  This is enough of a difference to warrant
 the added complexity, I think.  A vct object can be viewed as a vector;
-to make one, call <i>make-vct</i>.  It will be freed by the
+to make one, call <i>make-vct</i>.  It is freed by the
 garbage collector when it can't be referenced any further.  To get 
 an element of a vct, use <i>vct-ref</i>; similarly <i>vct-set!</i>
 sets an element (the "!" appended to the setter functions is standard in Scheme;
@@ -2110,7 +2111,7 @@ functions:</p>
 
 <!-- vct-add! -->
 <tr><td><span class=defbox><code><em class=def><a name="vctadd">vct-add!</a></em> (vobj1 vobj2 <i>off</i>)</code></span></td>
-<td><code>vobj1[i+off] += vobj2[i]</code>, returns vobj1.</td></tr>
+<td><code>vobj1[i + off] += vobj2[i]</code>, returns vobj1.</td></tr>
 
 <!-- vct-copy -->
 <tr><td><span class=defbox><code><em class=def><a name="vctcopy">vct-copy</a></em> (obj)</code></span></td>
@@ -2146,11 +2147,11 @@ functions:</p>
 
 <!-- vct-peak -->
 <tr><td><span class=defbox><code><em class=def><a name="vctpeak">vct-peak</a></em> (vobj)</code></span></td>
-<td>abs max val in vobj</td></tr>
+<td>max abs val in vobj</td></tr>
 
 <!-- vct-ref -->
 <tr><td><span class=defbox><code><em class=def><a name="vctref">vct-ref</a></em> (vobj pos)</code></span></td>
-<td>value in vobj's data at location pos.</td></tr>
+<td>value in vobj's data at location pos (vobj[pos]).</td></tr>
 
 <!-- vct-scale! -->
 <tr><td><span class=defbox><code><em class=def><a name="vctscale">vct-scale!</a></em> (vobj scl)</code></span></td>
@@ -2158,7 +2159,7 @@ functions:</p>
 
 <!-- vct-set! -->
 <tr><td><span class=defbox><code><em class=def><a name="vctset">vct-set!</a></em> (vobj pos val)</code></span></td>
-<td>set vobj's data at location pos to val (same as <code>(set! (vct-ref ...) val)</code>).</td></tr>
+<td>set vobj's data at location pos to val (vobj[pos] = val). (same as <code>(set! (vct-ref ...) val)</code>).</td></tr>
 
 <!-- vct-subtract! -->
 <tr><td><span class=defbox><code><em class=def><a name="vctsubtract">vct-subtract!</a></em> (vobj1 vobj2)</code></span></td>
@@ -2216,7 +2217,7 @@ there are also several functions that create and fill vcts with data:</p>
 </pre>
 <p>There is one slightly
 unusual function in this family: <i>vct-map!</i>.
-This is essentially providing a do-loop (or for-each) over a vct, calling some 
+This is a do-loop (or for-each) over a vct, calling some 
 function to get the values to assign into the vct.  For example</p>
 <pre>
   (vct-map! out-data (lambda () 
@@ -2603,7 +2604,7 @@ a given position in a sound's channel.  This simplicity, however, comes at
 a price in computation:  if the desired sample is not in Snd's
 in-core (already loaded) view of the data, it has to access the sample,
 which can sometimes involve opening, reading, and closing a sound file.
-The result is that in some cases, <i>sample</i> will bring your function
+The result is that in some cases, <i>sample</i> will bring your code
 to a grinding halt.  There are two alternatives, leaving aside the scanning
 and mapping functions mentioned below.  One involves keeping the buffer of
 data around explicitly (<i>samples-&gt;vct</i>), and the other involves the
@@ -2611,12 +2612,12 @@ use of a special object known as a <i>sample-reader</i>.  The former is
 better if you're jumping around in the data, the latter if you're treating
 it generally as a stream of samples, read in order.  The <a href="grfsnd.html#expsrc">expsrc</a>
 function below shows how to use <i>samples-&gt;vct</i>; there are numerous
-examples of <i>sample-readers</i> in <a href="sndscm.html#exampdoc">examp.scm</a>.  The basic idea is that
-you create a reader (via <i>make-sample-reader</i> or <i>make-region-sample-reader</i>) giving it the start position, the sound and channel
+examples of <i>sample-readers</i> in <a href="sndscm.html#exampdoc">examp.scm</a>. 
+You create a reader (via <i>make-sample-reader</i> or <i>make-region-sample-reader</i>) giving it the start position, the sound and channel
 to read, and the initial read direction, then get data via <i>read-sample</i> (which remembers the
 read direction passed to make-sample-reader), or <i>next-sample</i> (read forward) and
 <i>previous-sample</i> (read backward), finally closing the reader with <i>free-sample-reader</i>.
-It is not strictly necessary to call <i>free-sample-reader</i> yourself; the
+It is not necessary to call <i>free-sample-reader</i> yourself; the
 garbage collector will take care of it if you forget to.
 A standard way to add something to the current
 data is:</p>
@@ -2628,7 +2629,7 @@ data is:</p>
    (free-sample-reader sf)
    (vct-&gt;samples start len out-data)
 </pre>
-<p>This is largely equivalent to the clm call</p>
+<p>This is equivalent to the clm call</p>
 <pre>
   (outa (+ start i) &lt;new-stuff&gt;)
 </pre>
@@ -4164,16 +4165,16 @@ specifications, usually involving big/little endian or signed/unsigned data conf
 If you encounter a sound that is clipping crazily, try changing these settings.
 For example, some NeXT/Sun (au) header files using the data format for byte-wide data
 assume the byte is unsigned, whereas most others assume it is signed.  Sndlib
-treats it as signed by default, so to make one of these files playable,
+treats it as signed by default, so to make one of the unsigned-byte files playable,
 <br><br><code>(set! (data-format) mus-ubyte)</code>.<br><br>
 Float data is another source of confusion;
 there is apparently no agreement on whether the data is between -1.0 and 1.0, or -32768.0 and 32767.0 or anything else.
 In this case, Snd assumes -1.0 to 1.0 (except in one special case involving IRCAM headers), and you may have to set y-bounds to see the actual data.
 Yet another: files with 32-bit integers.  Some programs (Glame, apparently, and perhaps Ardour) assume the "fraction" is
-31 bits wide, others (Snd) use whatever its sample-width is configured to be; there is no "correct" 
+31 bits wide, others (Snd) use whatever its sample-width is configured to be; there is no correct or standard
 placement of the fixed point, but not to worry!  Your data is ok:
 <code>(set! (y-bounds) (list -256.0 256.0))</code>. There are several ways you can handle
-these files in Snd.  Perhaps the simplest is to use one of the open hooks:
+these files automatically in Snd.  Perhaps the simplest is to use one of the open hooks:
 </td></tr>
 
 <tr><td></td><td>
@@ -4199,12 +4200,12 @@ or (an alternative that sets the underlying database entry, rather than the curr
 </pre></td></tr></table>
 </td></tr>
 <tr><td></td><td>
-If you set any of these fields, it is possible that the sound's index may change (there can be an embedded update-sound).
+If you set any of these fields, the sound's index may change (there can be an embedded update-sound).
 To deal with MPEG or OGG files, see examp.scm (mpg) or contrib/dlp/misc.scm (mpg123 and ogg123).
 <br><br>
 To turn a data-format number into a string, use <a href="#soundformatname">mus-data-format-name</a>. To get
 the data format of some sound file, use <a href="#sounddataformat">mus-sound-data-format</a>.
-The default output (new-sound, sound-save-as) data-format is <a href="#defaultoutputformat">default-output-format</a>.
+The default output (new-sound, save-sound-as) data-format is <a href="#defaultoutputformat">default-output-format</a>.
 </td></tr>
 
 <tr><td colspan=2></td></tr>
@@ -4605,7 +4606,7 @@ see headers.c; for examples, see sf.tar.gz at ccrma-ftp.
 To turn a type number into a string, use <a href="#soundtypename">mus-header-type-name</a>. To get
 the header type of some sound file, use <a href="#soundheadertype">mus-sound-header-type</a>.
 If you set the header-type, the sound file is rewritten with the new header.  The default output
-(new-sound, sound-save-as) header type is <a href="#defaultoutputtype">default-output-type</a>.
+(new-sound, save-sound-as) header type is <a href="#defaultoutputtype">default-output-type</a>.
 <br><br>
 To read or write your own headers (or some header that isn't built-in),
 I recommend using either <a href="#openhook">open-hook</a> or <a href="#openrawsoundhook">open-raw-sound-hook</a>:

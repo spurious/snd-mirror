@@ -123,7 +123,7 @@ resources are also available:</p>
 </table>
 
 <p>You can experiment with other choices by
-using the -xrm command line argument:</p>
+using the -xrm switch:</p>
 
 <pre>
   snd -xrm '*Highlightcolor: Red' oboe.snd
@@ -144,15 +144,15 @@ the black text back with:
 ./snd -xrm '*foreground: Black'
 </pre>
 <p>or put the equivalent line in your .Xdefaults file.  The listener text color can be set
-via <code>(set! (listener-text-color) (make-color 0 0 0))</code> in ~/.snd.
+via <code>(set! (<a href="extsnd.html#listenertextcolor">listener-text-color</a>) (<a href="extsnd.html#makecolor">make-color</a> 0 0 0))</code> in ~/.snd.
 </p>
 
 <p>The colors are defined in <a href="sndscm.html#rgbdoc">rgb.scm</a>. 
 "useSchemes" refers to SGI color schemes.
 It's unfortunate that
 there is the language Scheme implemented by Guile, and the notion of an SGI color scheme -- there is
-no connection between the two. Other systems (Linux, Solaris) use the term "theme" here;
-you can get Snd to honor your current window manager theme by setting useSchemes to all.  
+no connection between the two. Other systems (Linux, Solaris) use the term "theme" instead.
+You can get Snd to honor your current window manager theme by setting useSchemes to all.  
 The last example above sets the window title to "hiho", rather than
 "snd", displays the window on the machine hummer.hiho (presumably accessible over the net),
 and tiles the graph backgrounds with the contents of text.xpm.  To get the -geometry argument
@@ -176,7 +176,7 @@ The <A NAME="xautoresize">autoResize resource</a> determines how Snd acts when f
 are added to or removed from its overall display.  The default (1)
 causes Snd to expand or contract the main window's size to accommodate
 the sounds; many people find this distracting.  If <i>autoResize</i> is 0, the outer window size remains the
-same, and the sounds try to fit as best they can.  See also
+same, and the sounds try to fit as best they can (to some extent the window manager controls this stuff).  See also
 the variable <a href="extsnd.html#autoresize">auto-resize</a>.
 If <i>overwriteCheck</i> is 1, Snd asks before overwriting existing files.
 The <A NAME="horizontalpanes">horizontalPanes resource</a>
@@ -197,26 +197,26 @@ help-text-font    "Monospace 14"
 <p><A NAME="aboutcolors"></a>The various color resources are:</p>
 
 <table cellspacing=0 cellpadding=0>
-<tr><td width=200>basiccolor</td><td width=350>default background color everywhere</td><td><code>basic-color</code></td></tr>
-<tr><td>cursorcolor</td>         <td>color of the cursor</td>                   <td><code>cursor-color</code></td></tr>
-<tr><td>datacolor</td>           <td>unselected data color</td>                 <td><code>data-color</code></td></tr>
-<tr><td>envedwaveformcolor</td>  <td>color of envelope editor waveform</td>     <td><code>enved-waveform-color</code></td></tr>
-<tr><td>filterwaveformcolor</td> <td>color of control panel filter waveform</td><td><code>filter-waveform-color</code></td></tr>
-<tr><td>graphcolor</td>          <td>unselected channels' graph background</td> <td><code>graph-color</code></td></tr>
-<tr><td>highlightcolor</td>      <td>highlighting here and there</td>           <td><code>highlight-color</code></td></tr>
-<tr><td>listenercolor</td>       <td>background color of the listener</td>      <td><code>listener-color</code></td></tr>
-<tr><td>listenertextcolor</td>   <td>text color in the listener</td>            <td><code>listener-text-color</code></td></tr>
-<tr><td>markcolor</td>           <td>color of the mark indicator</td>           <td><code>mark-color</code></td></tr>
-<tr><td>mixcolor</td>            <td>used for mix waveforms</td>                <td><code>mix-color</code></td></tr>
-<tr><td>selectedmixcolor</td>    <td>selected mix waveforms</td>                <td><code>selected-mix-color</code></td></tr>
-<tr><td>positioncolor</td>       <td>color of position sliders</td>             <td><code>position-color</code></td></tr>
-<tr><td>pushedbuttoncolor</td>   <td>color of pushed button</td>                <td><code>pushed-button-color</code></td></tr>
-<tr><td>sashcolor</td>           <td>color of paned window sash handles</td>    <td><code>sash-color</code></td></tr>
-<tr><td>selecteddatacolor</td>   <td>color of the data in selected channel</td> <td><code>selected-data-color</code></td></tr>
-<tr><td>selectedgraphcolor</td>  <td>background of selected channel's graph</td><td><code>selected-graph-color</code></td></tr>
-<tr><td>selectioncolor</td>      <td>color of an active selection</td>          <td><code>selection-color</code></td></tr>
-<tr><td>textfocuscolor</td>      <td>color of text field with focus</td>        <td><code>text-focus-color</code></td></tr>
-<tr><td>zoomcolor</td>           <td>color of zoom sliders</td>                 <td><code>zoom-color</code></td></tr>
+<tr><td width=200>basiccolor</td><td width=350>default background color everywhere</td><td><code><a href="extsnd.html#basiccolor">basic-color</a></code></td></tr>
+<tr><td>cursorcolor</td>         <td>color of the cursor</td>                   <td><code><a href="extsnd.html#cursorcolor">cursor-color</a></code></td></tr>
+<tr><td>datacolor</td>           <td>unselected data color</td>                 <td><code><a href="extsnd.html#datacolor">data-color</a></code></td></tr>
+<tr><td>envedwaveformcolor</td>  <td>color of envelope editor waveform</td>     <td><code><a href="extsnd.html#envedwaveformcolor">enved-waveform-color</a></code></td></tr>
+<tr><td>filterwaveformcolor</td> <td>color of control panel filter waveform</td><td><code><a href="extsnd.html#filterwaveformcolor">filter-waveform-color</a></code></td></tr>
+<tr><td>graphcolor</td>          <td>unselected channels' graph background</td> <td><code><a href="extsnd.html#graphcolor">graph-color</a></code></td></tr>
+<tr><td>highlightcolor</td>      <td>highlighting here and there</td>           <td><code><a href="extsnd.html#highlightcolor">highlight-color</a></code></td></tr>
+<tr><td>listenercolor</td>       <td>background color of the listener</td>      <td><code><a href="extsnd.html#listenercolor">listener-color</a></code></td></tr>
+<tr><td>listenertextcolor</td>   <td>text color in the listener</td>            <td><code><a href="extsnd.html#listenertextcolor">listener-text-color</a></code></td></tr>
+<tr><td>markcolor</td>           <td>color of the mark indicator</td>           <td><code><a href="extsnd.html#markcolor">mark-color</a></code></td></tr>
+<tr><td>mixcolor</td>            <td>used for mix waveforms</td>                <td><code><a href="extsnd.html#mixcolor">mix-color</a></code></td></tr>
+<tr><td>selectedmixcolor</td>    <td>selected mix waveforms</td>                <td><code><a href="extsnd.html#selectedmixcolor">selected-mix-color</a></code></td></tr>
+<tr><td>positioncolor</td>       <td>color of position sliders</td>             <td><code><a href="extsnd.html#positioncolor">position-color</a></code></td></tr>
+<tr><td>pushedbuttoncolor</td>   <td>color of pushed button</td>                <td><code><a href="extsnd.html#pushedbuttoncolor">pushed-button-color</a></code></td></tr>
+<tr><td>sashcolor</td>           <td>color of paned window sash handles</td>    <td><code><a href="extsnd.html#sashcolor">sash-color</a></code></td></tr>
+<tr><td>selecteddatacolor</td>   <td>color of the data in selected channel</td> <td><code><a href="extsnd.html#selecteddatacolor">selected-data-color</a></code></td></tr>
+<tr><td>selectedgraphcolor</td>  <td>background of selected channel's graph</td><td><code><a href="extsnd.html#selectedgraphcolor">selected-graph-color</a></code></td></tr>
+<tr><td>selectioncolor</td>      <td>color of an active selection</td>          <td><code><a href="extsnd.html#selectioncolor">selection-color</a></code></td></tr>
+<tr><td>textfocuscolor</td>      <td>color of text field with focus</td>        <td><code><a href="extsnd.html#textfocuscolor">text-focus-color</a></code></td></tr>
+<tr><td>zoomcolor</td>           <td>color of zoom sliders</td>                 <td><code><a href="extsnd.html#zoomcolor">zoom-color</a></code></td></tr>
 </table>
 <p>
 Each of these colors can be set in Guile using the second name given above ("basic-color").
@@ -226,7 +226,7 @@ the overall background color of Snd to red.  <a href="sndscm.html#rgbdoc">rgb.sc
 (you probably don't want to load the whole thing; just use the names as needed). 
 </p>
 
-<p>There are several other resources that set various widget sizes: zoomSliderWidth,
+<p>There are several other resources that set widget sizes: zoomSliderWidth,
 positionSliderWidth, toggleSize, sashSize, sashIndent, channelSashSize, channelSashIndent, and
 envedPointSize.  And several more color resources: whitecolor (list background),
 blackcolor (recorder VU meter text), redcolor (buttons, VU clipping, etc), 
@@ -240,6 +240,8 @@ yellowcolor (a few envelope editor buttons), lightbluecolor (the recorder), and 
 <pre>
   (parse-rc-file "/home/bil/test/gtk+-1.2.9/gtk/testgtkrc")
 </pre>
+<p>I've never used this.  If it's broken, please let me know!
+</p>
 
         <!-- I(print file):O(epsFile resource)(epsresource) -->
 
@@ -257,12 +259,12 @@ the usual Xt/X-related flags like -xrm).</p>
 <tr><td><code>--help</code></td>                  <td>print some help, version info, and exit</td></tr>
 <tr><td><code>--version</code></td>               <td>print version info</td></tr>
 <tr><td><code>-noglob</code></td>                 <td>don't read /etc/snd.conf</td></tr>
-<tr><td><code>-noinit</code></td>                 <td>don't read ~/.snd, if any</td></tr>
+<tr><td><code>-noinit</code></td>                 <td>don't read ~/.snd</td></tr>
 <tr><td><code>-nostdin</code></td>                <td>don't watch for possible input from stdin</td></tr>
 <tr><td><code>-p -preload &lt;dir&gt;</code></td> <td>preload sound files in directory &lt;dir&gt; (for example, snd -p .)</td></tr>
-<tr><td><code>-l -load &lt;file&gt;</code></td>   <td>load guile (scheme) code in &lt;file&gt; (for example, snd -l test.scm)</td></tr>
+<tr><td><code>-l -load &lt;file&gt;</code></td>   <td>load Scheme or Ruby code in &lt;file&gt; (for example, snd -l test.scm)</td></tr>
 <tr><td><code>-e -eval expr</code></td>           <td>evaluate expr</td></tr>
-<tr><td><code>-b -batch &lt;file&gt;</code></td>  <td>load guile (scheme) code in &lt;file&gt; as a batch (no GUI) job</td></tr>
+<tr><td><code>-b -batch &lt;file&gt;</code></td>  <td>load Scheme or Ruby code in &lt;file&gt; as a batch (no GUI) job</td></tr>
 <tr><td><code>-I &lt;dir&gt;</code></td>          <td>add &lt;dir&gt; to the load search list</td></tr>
 </table>
 
@@ -290,13 +292,13 @@ snd -e '(add-sound-file-extension "WAV")' -p /home/bil/sounds
 
 <span class=bbox><h3><A NAME="sndinitfile">The initialization file</a></h3></span>
 <p>
-When Snd starts up, it looks for an "initialization file", normally named "~/.snd" (its name can be set
+When Snd starts, it looks for an initialization file, normally named "~/.snd" (its name can be set
 via the X resource mechanism, or through the environment variable SND_INIT_FILE).  This optional file is
 supposed to be just like Emacs' .emacs file, containing any customizations or
-extensions that you want loaded when Snd starts.  For example, say we
+extensions that you want loaded whenever Snd starts.  For example, say we
 want the Snd window to start out 800x500, want to predefine an envelope named
 "env1", and want the file selection box to
-default to showing just sound files.  We make ~/.snd and put in it:</p>
+show just sound files.  We make ~/.snd and put in it:</p>
 <pre>
 (set! (window-width) 800)
 (set! (window-height) 500)
@@ -521,7 +523,7 @@ print 5 in the minibuffer.
 </p>
 
 <p><A NAME="sndgsl"></a>
-As a slightly more useful example, let's import the bessel J0 function
+As a slightly more useful example, let's import the Bessel J0 function
 from GSL (Gnu Scientific Library); in this case, we need to build Snd
 with GSL (the easiest way is to include the --with-gsl option to configure).
 Then make a file (say "gsl-ex.c"):</p>
@@ -621,7 +623,8 @@ passing it the input and output filenames, then pass its output back
 to Snd.  Snd then replaces the current data with the data our instrument wrote, as if it had incorporated that
 instrument as an editing operation from the beginning.
 </p>
-<p>To write out the current data, we use either save-sound-as or save-selection.  Our
+<p>To write out the current data, we use either <a href="extsnd.html#sndsaveas">save-sound-as</a> 
+or <a href="extsnd.html#sndsaveselection">save-selection</a>.  Our
 program then writes its changes, and Snd reads these back in as edits using
 set! samples.  We can delete the Snd output at that point, though the
 input (changed) files should be left for Snd to handle.  Here are some examples,
@@ -925,7 +928,7 @@ saw.c has an example.</p>
 
 <p>The files clm.c, clm.h, and clm2xen.c implement CLM (a Common Lisp Music V implementation
 described in clm.html, available in clm-2.tar.gz at ccrma-ftp) as a Guile-loadable module.
-They are normally loaded into Snd when it is built.
+They are loaded into Snd when it is built.
 You can see what a generator does, or a group of generators, by running them in the
 lisp listener, and using the graph and spectrum functions.  For example, say we have
 these declarations in ~/.snd:
@@ -958,7 +961,7 @@ these declarations in ~/.snd:
 (runf (lambda () (oscil hi (* .5 (oscil ho)))))
 </pre>
 <p>Obviously, any CLM instrument or function can be used in this way 
-to edit sounds, and so on.  Say we want an echo effect:</p>
+to edit sounds.  Say we want an echo effect:</p>
 
 <table border=1 cellpadding=5><tr><td bgcolor="#FEFEF6"><pre>
 (define echo 
@@ -1423,7 +1426,9 @@ a shared library named xm.so; you can load this at any time into Snd:
 &gt; <em class=typing>(dlinit hxm "init_xm")</em>
 <em class=listener>#t</em>
 </pre>
-<p>and now we have access to all of X and Motif.
+<p>and now we have access to all of X and Motif.  Alternatively, use the
+configure switch --with-static-xm, and the xm module will be included
+in the base Snd image.
 As a very simple example, here's dialog window with a slider:</p>
 <pre>
 (define scale-dialog #f)
@@ -1476,7 +1481,7 @@ As a very simple example, here's dialog window with a slider:</p>
 
 (create-scale-dialog (cadr (main-widgets)))
 </pre>
-<p>In Ruby, this would be:</p>
+<p>In Ruby, this is:</p>
 <pre>
 $scale_dialog = false
 $current_scaler = 1.0
@@ -1626,7 +1631,7 @@ how the "marshaller" works in Gtk, I may be able to fix this.
 
 <p>If Snd is built without a graphical user interface (either by specifying
 --with-no-gui to configure, or by setting the USE_NO_GUI compile-time flag),
-it runs Guile's "repl" (read-eval-print loop) (or Ruby's equivalent) with input from stdin.  All
+it runs Guile's "repl" (read-eval-print loop), or Ruby's equivalent, with input from stdin.  All
 the non-interface related functions are available, so you can do things
 like:
 </p>
@@ -1913,8 +1918,8 @@ env lookup from the env name,
 and
 many cute methods.  The RubyInline module might serve as a run-macro replacement.
 I'm slowly translating snd-test.scm to Ruby: see snd_test.rb.  bird.rb is the
-Ruby version of bird.scm. (My very informal timing tests indicate that
-Guile and Ruby run at essentially the same speed).
+Ruby version of bird.scm. My very informal timing tests indicate that
+Guile and Ruby run at essentially the same speed.
 Michael Scholz has translated bess.scm to Ruby: contrib/bess.rb,
 and much of examp.scm: contrib/examp.rb.
 </p>
@@ -2045,12 +2050,12 @@ than one input is required, the first argument to apply-ladspa should be a list 
 
 <span class=bbox><h3><A NAME="sndandx">Driving Snd remotely</a></h3></span>
 
-<p>It is possible to send Snd arbitrary scheme code from any other program;
+<p>It is possible to send Snd arbitrary Scheme or Ruby code from any other program;
 the program sndctrl.c is a simple example.  Snd has two X window properties:
 "SND_VERSION" and "SND_COMMAND"; the former is the Snd version (a date),
 and the latter is the communication path for other programs.  Any time
 such a program changes the SND_COMMAND property, Snd notices and evaluates
-the new value (as a string, as if typed in the Snd lisp listener).  To get
+the new value (as a string, as if typed in the Snd listener).  To get
 a response from Snd, use the function change-property(consat,name,command) where
 consat is the property name Snd should search for, name is the property to change, and command is the string
 that replaces the current property value.  For example, CLM's communication

@@ -911,6 +911,29 @@ static XEN g_snd_print(XEN msg)
   return(msg);
 }
 
+#if 0
+static XEN format_func = XEN_UNDEFINED;
+static XEN g_clm_print(XEN args)
+{
+  #define H_clm_print "(" S_clm_print " . args) applies 'format' to 'args' and appends the result in the listener."
+  XEN str, format_var;
+  if (XEN_NOT_BOUND_P(format_func))
+    {
+      format_var = XEN_VAR_NAME_TO_VAR("format");
+      if ((!(XEN_FALSE_P(format_var))) &&
+	  (XEN_PROCEDURE_P(XEN_VARIABLE_REF(format_var))))
+	format_func = XEN_VARIABLE_REF(format_var);
+      else XEN_ERROR(XEN_ERROR_TYPE("no-such-function"),
+		     XEN_LIST_2(C_TO_XEN_STRING("format"),
+				C_TO_XEN_STRING(S_clm_print)));
+    }
+  str = XEN_APPLY(format_func, args);
+  if (XEN_STRING_P(str))
+    listener_append(XEN_TO_C_STRING(str));
+  return(str);
+}
+#endif
+
 static XEN print_hook;
 static int print_depth = 0;
 
@@ -3311,6 +3334,7 @@ void g_initialize_gh(void)
   XEN_DEFINE_PROCEDURE(S_mus_audio_describe,  g_mus_audio_describe_w, 0, 0, 0,  H_mus_audio_describe);
   XEN_DEFINE_PROCEDURE("little-endian?",      g_little_endian_w, 0, 0, 0,       "return #t if host is little endian");
   XEN_DEFINE_PROCEDURE("snd-completion",      g_snd_completion_w, 1, 0, 0,      "return completion of arg");
+  /* XEN_DEFINE_PROCEDYRE(S_clm_print,           g_clm_print, 0, 0, 1,             H_clm_print); */
 
   #define H_during_open_hook S_during_open_hook " (fd name reason) is called after file is opened, \
 but before data has been read. \n\
@@ -3405,7 +3429,6 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   /* this is trying to keep track of envelopes for the envelope editor */
 
   XEN_EVAL_C_STRING("(define (clm-print . args) (snd-print (apply format #f args)))");
-
   XEN_EVAL_C_STRING("(define (" S_snd_apropos " val)\
                        (snd-print (with-output-to-string\
                                     (lambda ()\

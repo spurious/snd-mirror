@@ -410,14 +410,26 @@ is most enjoyable if you can edit and retry expressions
 easily.  Old-time Lispers called this special kind of
 text widget a "listener".  There is one in Snd -- see
 the View:Open Listener menu.  The listener has a prompt ("&gt;") 
-at which you can type any expression ("(+ 1 2)"),
+at which you can type any expression: (+ 1 2)
 which it then evaluates, returning the result.
-I normally work in the listener, leaving the menus
-untouched, and using the mouse mainly to scan quickly
+I normally work in the listener, leave the menus
+untouched, and use the mouse to scan
 through the current sound data.
 </p>
-<p>Dave Phillips has written a tutorial for Snd: see the 
+<p>The rest of this document describes the user interface; extsnd.html
+presents the programming interface; grfsnd.html describes Snd's connection
+to various other programs and X; sndscm.html has brief descriptions of
+most of the Scheme/Ruby code included in the Snd tarball; fm.html
+is an introduction to FM; clm.html is the basic generator documentation,
+but it is aimed more at the Common Lisp version of that code than at Snd;
+sndlib.html describes the underlying sound IO library; libxm.html
+describes the user-interface extension library.
+</p>
+<p>
+Dave Phillips has written a tutorial for Snd: see the 
 <a href="contrib/tutorial/1_intro_and_build_snd.html">contrib/tutorial</a> directory of the Snd sources.
+I recommend that you start with the tutorial.  I find it very hard to read snd.html without
+falling asleep, but I don't know how to fix it -- the hard-nosed programmer in me is grumbling "user interfaces are either obvious or broken".
 </p>
         <!-- I(show freq domain):A(fw) --><!-- I(show time domain):A(fw) -->
         <!-- I(show freq domain):O('f' button)(fw) --><!-- I(show time domain):O('w' button)(fw) -->
@@ -1220,6 +1232,7 @@ See <a href="extsnd.html#editlists">Edit Lists</a> for more details.
 <br>
 <span class=bbox><h3><A NAME="howtoedit">How to...</a></h3></span>
 
+<table><tr><td>
 <ul>
 <li><a href="#saveopen">Save, open, close, print</a>
 <li><a href="#deleteinsert">Delete, insert, mix</a>
@@ -1227,12 +1240,16 @@ See <a href="extsnd.html#editlists">Edit Lists</a> for more details.
 <li><a href="#ampenvs">Amplitude envelopes and scaling</a>
 <li><a href="#find">Find</a>
 <li><a href="#changesamples">Change samples</a>
+</ul></td><td>
+<ul>
 <li><a href="#undoredo">Undo, redo, revert</a>
 <li><a href="#play">Play</a>
 <li><a href="#mixingfiles">Mix Files</a>
 <li><a href="#kbdmacros">Keyboard macros</a>
 <li><a href="#changeformat">Change file format</a>
 <li><a href="#extendfile">Extend a file</a>
+</ul></td><td>
+<ul>
 <li><a href="#recordfile">Record a file</a>
 <li><a href="#editenvelope">Edit or view an envelope</a>
 <li><a href="#editheader">Edit, add, or remove the header</a>
@@ -1241,6 +1258,8 @@ See <a href="extsnd.html#editlists">Edit Lists</a> for more details.
 <li><a href="#misccommands">Miscellaneous commands</a>
 <li>
 </ul>
+</td></tr></table>
+
         <!-- I(amp env):A(ampenvs) --><!-- I(undo edit):A(undoredo) --><!-- I(redo edit):A(undoredo) -->
         <!-- I(find):A(find) --><!-- I(play file):A(play) --><!-- I(keyboard macros):A(kbdmacros) -->
         <!-- I(amp env):M(Edit: Edit Env)(editenvelope) -->
@@ -1591,7 +1610,7 @@ manner as C-j moves through marks, use <A NAME="cxcj">C-x C-j</a>.
 ends it, and C-x e executes the last keyboard macro.  Unlike
 Emacs, C-x C-e prompts for a name for the last defined
 macro; M-x name invokes the macro "name", the
-function save-macros saves all current named macros, and
+function save-macros saves all currently named macros, and
 save-macro saves one (named) macro
 in the <a href="grfsnd.html#sndinitfile">initialization file</a>
 ~/.snd. See the <a href="extsnd.html#lisplistener">lisp</a> section for
@@ -1605,22 +1624,24 @@ more details.</p>
 <p>To change the sound file's header or data format, use the File or Edit menu Save as option.
 Choose the header type you want, then the data format,
 (the data format list will change depending on the header
-choice).  The File version saves the current selected file.
-The Edit version saves the currently selected region.</p>
+choice).  The File:Save dialog saves the currently selected sound.
+The Edit:Save dialog saves the selection in a new file.
+</p>
         <!-- I(save file as):A(changeformat) -->
         <!-- I(change format):A(changeformat) -->
 
 <h4><A NAME="extendfile">Extend a File</a></h4>
 
-<p>Normally Snd keeps the current cursor, and therefore most
-actions you can perform on the current channel, within the
-current channel's bounds.  The easiest way to extend the
+<p>
+The easiest way to extend the
 file is to pad it with zeros.  Go to the end of the file,
 via the C-&gt; command, then use the C-u command with a float
 argument, giving the number of seconds to add to the end
 of the file, followed by C-o (insert zeros): for example,
 to add a second, C-&gt; C-u 1.0 C-o.  The same sequence
 can be used to add silence to the start of a file.
+Functions such as <a href="extsnd.html#sndinsertfile">insert-sound</a>
+automatically pad with zeros, if necessary.
 	<!-- I(extend file):A(extendfile) --><!-- I(extend file):K(C-o)(co) -->
 </p>
 
@@ -1651,15 +1672,14 @@ hardware can't handle input from that device at the same time as
 it reads other "radio" button devices.  So, in that case, opening
 the panel via the button also turns off the other incompatible
 device.  The '<A NAME="Xautoload">autoload</a>' button, if set,
-causes the recorded file to be loaded automatically into Snd.</p>
+causes the newly recorded file to be loaded automatically into Snd.</p>
 
 <p>The fifth
 pane contains a history of whatever the recorder thought worth
 reporting.  The duration field gives the current output file's
 duration.  The bottom row of buttons dismiss the window, start
-recording, cancel the current take, and provide some help.  There's
-also a slider on the far right that controls the speaker output volume
-(independent of the output file volume).  </p>
+recording, cancel the current take, and provide some help.
+</p>
 
 <p>To make a recording, choose the inputs and outputs you want; for
 example, to record channel A from the microphone to channel A
@@ -2121,23 +2141,23 @@ sound data is consumed during playback.
 Another term might be 'srate'.  Snd normally uses
 sinc interpolation to perform the speed
 change, but slow machines may not be able to handle the computational
-burden; in that case, <code>(set! (use-sinc-interp) #f)</code>; the
+burden; in that case, <code>(set! (<a href="extsnd.html#usesincinterp">use-sinc-interp</a>) #f)</code>; the
 fallback (lo-fi) method is linear interpolation.
 The arrow button on the right determines
 the direction Snd moves through the data.
 The scroll bar position is normally interpreted
 as a float between .05 and 20.  The Options
-Speed Style menu (or the speed-control-style variable)
+Speed Style menu (or the <a href="extsnd.html#lspeedstyle">speed-control-style</a> variable)
 can change this to use semitones (actually microtones)
 or just-intonation ratios.  The number of equal
 divisions to the octave in the semitone case is
-set by the variable speed-control-tones (normally 12).
+set by the variable <a href="extsnd.html#speedtones">speed-control-tones</a> (normally 12).
         <!-- I(change pitch):O(see 'speed' control)(speed) --><!-- I(change pitch):A(speed) -->
         <!-- I(change srate):O(see 'speed' control)(speed) --><!-- I(change srate):A(speed) -->
         <!-- I(change srate):M(Edit: Edit Env)(editenvelope) --><!-- I(change pitch):M(Edit: Edit Env)(editenvelope) -->
 </p>
 
-<p><A NAME="expand"></a>'Expand' refers to a kind of granular
+<p><A NAME="expand"></a>'Expand' refers to granular
 synthesis used to change the tempo of events
 in the sound without changing pitch.  Successive
 short slices of the file are overlapped with
@@ -2172,7 +2192,7 @@ cases make it sound sharper or brighter.
 For softer sounds, it causes only an amplitude
 change.  To scale a soft sound up before
 being 'contrasted', use the variable
-contrast-control-amp.  The function maxamp
+<a href="extsnd.html#sndcontrastamp">contrast-control-amp</a>.  The function <a href="extsnd.html#sndmaxamp">maxamp</a>
 returns the channel's maximum amplitude, so the
 inverse of that is a good first guess for
 contrast-control-amp. Contrast is on only if the contrast
@@ -2190,19 +2210,19 @@ a graph is revealed beneath the filter text field;
 this is an envelope editor like the envelope editor dialog
 but specialized for filtering.  The actual frequency response
 is displayed in blue.  As with all the user interface text entry widgets,
-anything you type in the filter envelope text field is evaluated as
-a scheme expression, returning a list of breakpoints; you can, for example,
+anything you type in the filter envelope text field is evaluated,
+returning in this case a list of breakpoints; you can, for example,
 define a function that returns the list you want, then call that function
 in the text field.
 The filter is on only if the filter button is set.
         <!-- I(filter):O(see filter controls)(filter) --><!-- I(filter):A(filter) -->
 </p>
 <p>There are many variables that reflect or control
-the panel's various sliders; each also has a default or
-initial value.  The reverb and expand functions also have
+the panel's various sliders; each also has a default
+value.  The reverb and expand functions also have
 several aspects that aren't brought out to sliders or
 buttons on the panel, but that can be accessed through
-these variables.  See the <a href="extsnd.html#lisplistener">lisp</a> section for details.</p>
+these variables.  See the <a href="extsnd.html#customcontrols">control panel</a> section for details.</p>
 
 <A NAME="savcontrols"></a>
 <p>The 'Remember' button saves the current control
@@ -2210,8 +2230,8 @@ panel state for a subsequent 'Restore'.
 The 'Reset' button returns the control
 panel to a clean (no-change) condition.
 To take the current panel settings
-and turn them into an 'edit' of the
-file, click the 'Apply' button.  Apply may change
+and turn them into an edit of the
+sound, click the 'Apply' button.  Apply may change
 the length of the file; for example, if reverb is
 on, the reverb decay length is added onto
 the end.  Once Apply has taken effect, the

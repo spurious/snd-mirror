@@ -4802,6 +4802,10 @@ static void display_int(int *args, int *ints, Float *dbls) {fprintf(stderr, "%d"
 static char *descr_display_int(int *args, int *ints, Float *dbls) {return(mus_format("display(" INT_PT ")", args[1], INT_ARG_1));}
 static void display_flt(int *args, int *ints, Float *dbls) {fprintf(stderr, "%.6f", FLOAT_ARG_1);}
 static char *descr_display_flt(int *args, int *ints, Float *dbls) {return(mus_format("display(" FLT_PT ")", args[1], FLOAT_ARG_1));}
+static void display_lst(int *args, int *ints, Float *dbls) {fprintf(stderr, "%s", (INT_ARG_1) ? (XEN_AS_STRING((XEN)(INT_ARG_1))) : "null");}
+static char *descr_display_lst(int *args, int *ints, Float *dbls) {return(mus_format("display(l%d(%s))", args[1], (INT_ARG_1) ? (XEN_AS_STRING(((XEN)(INT_ARG_1)))) : "null"));}
+static void display_key(int *args, int *ints, Float *dbls) {fprintf(stderr, "%s", (INT_ARG_1) ? (XEN_AS_STRING((XEN)(INT_ARG_1))) : "null");}
+static char *descr_display_key(int *args, int *ints, Float *dbls) {return(mus_format("display(k%d(%s))", args[1], (INT_ARG_1) ? (XEN_AS_STRING(((XEN)(INT_ARG_1)))) : "null"));}
 static void display_clm(int *args, int *ints, Float *dbls) {fprintf(stderr, "%s", mus_describe((mus_any *)(INT_ARG_1)));}
 static char *descr_display_clm(int *args, int *ints, Float *dbls) {return(mus_format("display(" PTR_PT ")", args[1], ((mus_any *)(INT_ARG_1))));}
 static void display_vct(int *args, int *ints, Float *dbls) {fprintf(stderr, "%s", vct_to_string((vct *)(INT_ARG_1)));}
@@ -4835,6 +4839,9 @@ static xen_value *display_1(ptree *pt, xen_value **args, int num_args)
     case R_INT:        return(package(pt, R_BOOL, display_int, descr_display_int, args, 1));   break;
     case R_FLOAT:      return(package(pt, R_BOOL, display_flt, descr_display_flt, args, 1));   break;
     case R_CLM:        return(package(pt, R_BOOL, display_clm, descr_display_clm, args, 1));   break;
+    case R_PAIR:
+    case R_LIST:       return(package(pt, R_BOOL, display_lst, descr_display_lst, args, 1));   break;
+    case R_KEYWORD:    return(package(pt, R_BOOL, display_key, descr_display_key, args, 1));   break;
     case R_READER:     return(package(pt, R_BOOL, display_rd, descr_display_rd, args, 1));     break;
     case R_FLOAT_VECTOR:
     case R_VCT:        return(package(pt, R_BOOL, display_vct, descr_display_vct, args, 1));   break;
@@ -4848,7 +4855,6 @@ static xen_value *display_1(ptree *pt, xen_value **args, int num_args)
     }
   return(NULL);
 }
-/* TODO: display list/pair/keyword? */
 
 static void snd_print_s(int *args, int *ints, Float *dbls) {listener_append(STRING_ARG_1);}
 static char *descr_snd_print_s(int *args, int *ints, Float *dbls) {return(mus_format("snd_print(" STR_PT ")", args[1], STRING_ARG_1));}
