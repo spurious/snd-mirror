@@ -1,7 +1,6 @@
 #include "snd.h"
 
 /* 
- * TODO: create more amp chans if > 4 chans input
  * TODO: make amp env display editable -- each change would affect the original
  *        (not an edit history addition to the mixed sound), but would each be
  *        a separate edit of the underlying sound? (Then we'd need a stack of

@@ -397,7 +397,6 @@ void snd_doit(snd_state *ss, int argc, char **argv)
   if (ss->init_file == NULL)
     ss->init_file = INIT_FILE_NAME;
 
-  /* TODO: add Ruby no-gui inits (just a list of dummy names?) */
 #if HAVE_GUILE
   XEN_EVAL_C_STRING("(set! scm-repl-prompt \"snd> \")");
 
@@ -451,9 +450,6 @@ void snd_doit(snd_state *ss, int argc, char **argv)
                (define " S_enved_selected_env " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
                (define " S_just_sounds " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
                (define " S_html_dir " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
-               (define " S_time_graph " 0)\
-               (define " S_transform_graph " 1)\
-               (define " S_lisp_graph " 2)\
                (define " S_copy_context " 0)\
                (define " S_cursor_context " 3)\
                (define " S_selection_context " 2)\
@@ -461,6 +457,9 @@ void snd_doit(snd_state *ss, int argc, char **argv)
                (define (" S_change_property " . args) #f)\
                (define (" S_dialog_widgets ") #f)\
                (define (" S_channel_widgets " . args) #f)\
+               (define (" S_sound_widgets " . args) #f)\
+               (define (" S_menu_widgets " . args) #f)\
+               (define (" S_main_widgets " . args) #f)\
                (define (" S_current_font ") #f)\
                (define (" S_reset_listener_cursor ") #f)\
                (define (set-" S_enved_filter " val) #f)\
@@ -487,6 +486,37 @@ void snd_doit(snd_state *ss, int argc, char **argv)
                (define " S_graph_cursor " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
                (define " S_mix_color " (make-procedure-with-setter (lambda args #f) (lambda args #f)))\
                (define " S_selected_mix_color " (make-procedure-with-setter (lambda args #f) (lambda args #f)))");
+#endif
+#if HAVE_RUBY
+  XEN_EVAL_C_STRING("def region_dialog () false end");
+  XEN_EVAL_C_STRING("def make_color (r g b) false end");
+  XEN_EVAL_C_STRING("def color_p (a) false end");
+  XEN_EVAL_C_STRING("def color2list (a) false end");
+  XEN_EVAL_C_STRING("def axis_info (s c a) false end");
+  XEN_EVAL_C_STRING("def change_property (s) false end");
+  XEN_EVAL_C_STRING("def dialog_widgets () false end");
+  XEN_EVAL_C_STRING("def channel_widgets (s c) false end");
+  XEN_EVAL_C_STRING("def sound_widgets (s) false end");
+  XEN_EVAL_C_STRING("def menu_widgets (s) false end");
+  XEN_EVAL_C_STRING("def main_widgets (s) false end");
+  XEN_EVAL_C_STRING("def current_font () false end");
+  XEN_EVAL_C_STRING("def reset_listener_cursor () false end");
+
+  XEN_EVAL_C_STRING("$mouse_enter_graph_hook = false");
+  XEN_EVAL_C_STRING("$mouse_leave_graph_hook = false");
+  XEN_EVAL_C_STRING("$mouse_enter_label_hook = false");
+  XEN_EVAL_C_STRING("$mouse_leave_label_hook = false");
+  XEN_EVAL_C_STRING("$mouse_enter_listener_hook = false");
+  XEN_EVAL_C_STRING("$mouse_leave_listener_hook = false");
+  XEN_EVAL_C_STRING("$mouse_enter_text_hook = false");
+  XEN_EVAL_C_STRING("$mouse_leave_text_hook = false");
+  XEN_EVAL_C_STRING("$drop_hook = false");
+  XEN_EVAL_C_STRING("$menu_hook = false");
+  XEN_EVAL_C_STRING("$property_changed_hook = false");
+
+  XEN_EVAL_C_STRING("Copy_context = 0");
+  XEN_EVAL_C_STRING("Cursor_context = 3");
+  XEN_EVAL_C_STRING("Selection_context = 2");
 #endif
   set_button_font(ss, FALLBACK_FONT);
   set_tiny_font(ss, FALLBACK_FONT);

@@ -6,7 +6,6 @@
 /* TODO: selection-oriented Xt callbacks
  * TODO: more regression tests (snd-test.scm test 22)
  * TODO: XEvent fields should be settable
- * TODO: struct accessors for XIconSize (see min_height)?
  * TODO: XmVaCreateSimple* (need special arglist handlers)
  * TODO: XtAppAddActions currently only handles 8 actions (globally)
  */
@@ -517,8 +516,6 @@ static void define_xm_obj(void)
 #define C_TO_XEN_Position(Arg)   (C_TO_XEN_INT((int)Arg))
 #define XEN_Position_P(Arg)      (XEN_INTEGER_P(Arg))
 
-#define C_TO_XEN_XIconSize(Arg)  WRAP_FOR_XEN("XIconSize", Arg)
-
 #define XEN_TO_C_char(Arg)       (char)(XEN_TO_C_CHAR(Arg))
 #define C_TO_XEN_char(Arg)       (C_TO_XEN_INT(Arg))
 #define XEN_char_P(Arg)          (XEN_CHAR_P(Arg))
@@ -595,6 +592,7 @@ XM_TYPE(XStandardColormap, XStandardColormap *)
 XM_TYPE(KeyCode, KeyCode)
 XM_TYPE(XContext, XContext)
 XM_TYPE(Substitution, Substitution)
+XM_TYPE(XIconSize, XIconSize *)
 
 #if HAVE_XP
 XM_TYPE(XPContext, XPContext)
@@ -7836,8 +7834,8 @@ definitions stored in the specified property on the named window."
 
 static XEN gxm_XGetIconSizes(XEN arg1, XEN arg2)
 {
-  #define H_XGetIconSizes "Status XGetIconSizes(display, w, size_list_return, count_return) returns zero if a window manager has not \
-set icon sizes; otherwise, it return nonzero."
+  #define H_XGetIconSizes "Status XGetIconSizes(display, w) returns #f if the window manager has not \
+set icon sizes; otherwise, it return nonzero and a list of XIconSize structs."
   /* DIFF: XGetIconSizes omit last 2 args, return list of XIconSizes
    */
   XIconSize *sizes;
@@ -19099,14 +19097,47 @@ static XEN gxm_min_bounds(XEN ptr)
   return(XEN_FALSE);
 }
 
-#if 0
 static XEN gxm_min_height(XEN ptr)
 {
   if (XEN_XIconSize_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XIconSize(ptr))->min_height)));
   XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "min_height", "XIconSize");
   return(XEN_FALSE);
 }
-#endif
+
+static XEN gxm_min_width(XEN ptr)
+{
+  if (XEN_XIconSize_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XIconSize(ptr))->min_width)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "min_width", "XIconSize");
+  return(XEN_FALSE);
+}
+
+static XEN gxm_max_height(XEN ptr)
+{
+  if (XEN_XIconSize_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XIconSize(ptr))->max_height)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "max_height", "XIconSize");
+  return(XEN_FALSE);
+}
+
+static XEN gxm_max_width(XEN ptr)
+{
+  if (XEN_XIconSize_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XIconSize(ptr))->max_width)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "max_width", "XIconSize");
+  return(XEN_FALSE);
+}
+
+static XEN gxm_height_inc(XEN ptr)
+{
+  if (XEN_XIconSize_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XIconSize(ptr))->height_inc)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "height_inc", "XIconSize");
+  return(XEN_FALSE);
+}
+
+static XEN gxm_width_inc(XEN ptr)
+{
+  if (XEN_XIconSize_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XIconSize(ptr))->width_inc)));
+  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "width_inc", "XIconSize");
+  return(XEN_FALSE);
+}
 
 static XEN gxm_properties(XEN ptr)
 {
@@ -21542,6 +21573,14 @@ static void define_structs(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "family" XM_POSTFIX, gxm_family, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "address" XM_POSTFIX, gxm_address, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "data" XM_POSTFIX, gxm_data, 1, 0, 0, NULL);
+
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "min_height" XM_POSTFIX, gxm_min_height, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "max_height" XM_POSTFIX, gxm_max_height, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "min_width" XM_POSTFIX, gxm_min_width, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "max_width" XM_POSTFIX, gxm_max_width, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "height_inc" XM_POSTFIX, gxm_height_inc, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "width_inc" XM_POSTFIX, gxm_width_inc, 1, 0, 0, NULL);
+
 #if HAVE_MOTIF
 #if MOTIF_2
   XEN_DEFINE_PROCEDURE(XM_PREFIX "page_number" XM_POSTFIX, gxm_page_number, 1, 0, 0, NULL);
@@ -24301,6 +24340,7 @@ static void muffle_compiler(void)
   XEN_XSetWindowAttributes_p(xval);
   XEN_XUnmapEvent_p(xval);
   XEN_XVisibilityEvent_p(xval);
+  XEN_XIconSize_p(xval);
 #if HAVE_MOTIF
   XEN_XmAnyCallbackStruct_p(xval);
   XEN_XmArrowButtonCallbackStruct_p(xval);

@@ -208,6 +208,7 @@ static void play_selected_callback(Widget w, XtPointer context, XtPointer info)
       if (filename)
 	{
 	  fd->file_play_sp = make_sound_readable(ss, filename, FALSE);
+	  fd->file_play_sp->delete_me = 1;
 	  if (fd->file_play_sp)
 	    play_sound(fd->file_play_sp, 0, 
 		       NO_END_SPECIFIED, IN_BACKGROUND, 

@@ -2823,8 +2823,6 @@ static XEN g_sound_widgets(XEN snd)
 }
 #endif
 
-/* TODO: peak-amp envs assume sndlib sample type (and byte order) does not change */
-
 static XEN g_peak_env_info(XEN snd, XEN chn, XEN pos)
 {
   #define H_peak_env_info "(" S_peak_env_info " snd chn pos) -> '(complete ymin ymax)"
@@ -2844,6 +2842,26 @@ static XEN g_peak_env_info(XEN snd, XEN chn, XEN pos)
 		      C_TO_XEN_DOUBLE(MUS_SAMPLE_TO_FLOAT(ep->fmax))));
   /* don't throw an error here since the env may be in progress */
   return(XEN_EMPTY_LIST);
+}
+
+static int pack_mus_sample_type(void)
+{
+  /* put MUS_SAMPLE_TYPE decription in peak-env info file (in case user opens it on from incompatible machine) */
+  int val = MUS_SAMPLE_BITS;
+#if MUS_LITTLE_ENDIAN
+  val |= (1 << 8);
+#endif
+#if SNDLIB_USE_FLOATS
+  val |= (1 << 9);
+#endif
+  val |= (sizeof(MUS_SAMPLE_TYPE) << 10);
+  return(val);
+}
+
+static int mus_sample_type_ok(int val)
+{
+  return((val == 0) ||                            /* for backwards compatibility */
+	 (val == pack_mus_sample_type()));
 }
 
 static XEN g_write_peak_env_info_file(XEN snd, XEN chn, XEN name)
@@ -2874,7 +2892,7 @@ static XEN g_write_peak_env_info_file(XEN snd, XEN chn, XEN name)
 	}
       if (fullname) FREE(fullname);
       ep = cp->amp_envs[0];
-      ibuf[0] = ep->completed;
+      ibuf[0] = ep->completed | (pack_mus_sample_type() << 16);
       ibuf[1] = ep->amp_env_size;
       ibuf[2] = ep->samps_per_bin;
       ibuf[3] = ep->bin;
@@ -2898,20 +2916,21 @@ static XEN g_write_peak_env_info_file(XEN snd, XEN chn, XEN name)
 static env_info *get_peak_env_info(char *fullname)
 {
   env_info *ep;
-  int fd;
+  int fd, hdr = 0;
   int ibuf[5];
   MUS_SAMPLE_TYPE mbuf[2];
   fd = mus_file_open_read(fullname);
   if (fd == -1) return(NULL);
   read(fd, (char *)ibuf, (5 * sizeof(int)));
-  if (((ibuf[0] != 0) && (ibuf[0] != 1)) ||
+  hdr = ibuf[0];
+  if ((((hdr & 0xff) != 0) && ((hdr & 0xff) != 1)) || (!(mus_sample_type_ok(hdr >> 16))) ||
       (ibuf[1] <= 0) ||
       (!(POWER_OF_2_P(ibuf[1]))) ||
       (ibuf[2] <= 0) ||
       (ibuf[4] > ibuf[1]))
     return(NULL);
   ep = (env_info *)CALLOC(1, sizeof(env_info));
-  ep->completed = ibuf[0];
+  ep->completed = hdr & 0xff;
   ep->amp_env_size = ibuf[1];
   ep->samps_per_bin = ibuf[2];
   ep->bin = ibuf[3];

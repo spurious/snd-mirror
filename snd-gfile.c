@@ -260,6 +260,8 @@ static file_dialog_info *make_file_dialog(snd_state *ss, int read_only, char *ti
 					  file_ok_proc,
 					  file_dismiss_proc);
 #if (!HAVE_GTKEXTRA)
+  /* play selected button needs to be outside the frame that holds the labels */
+
   fd->dialog_frame = gtk_frame_new(NULL);
   gtk_box_pack_start(GTK_BOX(GTK_FILE_SELECTION(fd->dialog)->main_vbox), fd->dialog_frame, TRUE, TRUE, 0);
   /* gtk+extra/gtkiconfilesel.h says action_area as gtk table here? */

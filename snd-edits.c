@@ -353,11 +353,6 @@ static void edit_data_to_file(FILE *fd, ed_list *ed, chan_info *cp)
     }
 }
 
-/* TODO: edit_list_to_function (branch-sound with place of branching)
- *          if edits->function, the current edit sequence could be applied to any sound
- *            but to do this we need "true" edit history info (which may mean saving user-functions etc)
- */
-
 void edit_history_to_file(FILE *fd, chan_info *cp)
 {
   /* write edit list as a snd-guile program to fd (open for writing) for subsequent load */

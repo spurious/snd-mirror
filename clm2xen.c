@@ -662,8 +662,12 @@ XEN_MAKE_OBJECT_FREE_PROCEDURE(mus_xen, free_mus_xen, mus_xen_free)
 #if HAVE_GUILE
 static int print_mus_xen(XEN obj, XEN port, scm_print_state *pstate)
 {
+  char *str;
   scm_puts("#<", port);
-  scm_puts(mus_describe(MUS_XEN_TO_CLM(obj)), port);
+  str = mus_describe(MUS_XEN_TO_CLM(obj));
+  if (str)
+    scm_puts(str, port);
+  else scm_puts("nil", port);
   scm_puts(">", port);
   return(1);
 }

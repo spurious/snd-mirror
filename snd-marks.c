@@ -42,18 +42,20 @@ static mark *map_over_marks(chan_info *cp, mark_map_func *func, void *m, int dir
 	  if (direction == READ_FORWARD)
 	    {
 	      for (i = 0; i <= marks; i++) 
-		{
-		  mp = (*func)(cp, mps[i], m);
-		  if (mp) return(mp);
-		}
+		if (mps[i]) /* can be null if we're running delete_marks at a higher level and draw-mark-hook is active */
+		  {
+		    mp = (*func)(cp, mps[i], m);
+		    if (mp) return(mp);
+		  }
 	    }
 	  else
 	    {
 	      for (i = marks; i >= 0; i--) 
-		{
-		  mp = (*func)(cp, mps[i], m);
-		  if (mp) return(mp);
-		}
+		if (mps[i])
+		  {
+		    mp = (*func)(cp, mps[i], m);
+		    if (mp) return(mp);
+		  }
 	    }
 	}
     }
@@ -201,7 +203,7 @@ static void draw_mark_1(chan_info *cp, axis_info *ap, mark *mp, int show)
     {
       res = g_c_run_progn_hook(draw_mark_hook,
 			       XEN_LIST_1(C_TO_SMALL_XEN_INT(mark_id(mp))),
-			       S_transform_hook);
+			       S_draw_mark_hook);
       if (XEN_TRUE_P(res))
 	{
 	  if (show) mp->id |= MARK_VISIBLE; else mp->id &= (~MARK_VISIBLE);

@@ -267,6 +267,7 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+6-Dec:   play.scm.\n\
 3-Dec:   snd-5.5.\n\
 28-Nov:  add-tooltip in snd-motif.scm.\n\
 23-Nov:  draw-mark-hook.\n\

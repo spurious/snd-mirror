@@ -1701,7 +1701,7 @@ the hook.
 (define (snap-mark-to-beat)
   ;; when a mark is dragged, its end position is always on a beat
   (let ((mark-release 4))
-    (add-hook! mark-hook 
+    (add-hook! <em class=red>mark-hook</em>
 	       (lambda (mrk snd chn reason)
 		 (if (= reason mark-release)
 		     (let* ((samp (mark-sample mrk))
@@ -4182,9 +4182,9 @@ The following substitutions can be made:
   (lambda (n speed) 
     (if (&gt; n 0) 
 	(begin 
-	  (bomb) 
+	  (<em class=red>bomb</em>) 
 	  (in speed (lambda () (show-bomb (- n 1) speed))))
-	(bomb 0 #f))))
+	(<em class=red>bomb</em> 0 #f))))
 
 (show-bomb 20 200)
 <!-- --></pre></td></tr></table>
@@ -4239,7 +4239,7 @@ The following substitutions can be made:
 <!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
 (define* (selection-&gt;vct #:optional snd chn)
   (if (selection-member? snd chn)
-      (channel-&gt;vct (selection-position snd chn)
+      (<em class=red>channel-&gt;vct</em> (selection-position snd chn)
 		    (selection-length snd chn)
 		    snd chn)
       (if (selection?)
@@ -4283,7 +4283,7 @@ The following substitutions can be made:
 	 (cgen (make-convolve :filter kernel 
                               :input (lambda (dir)
 				       (next-sample reader)))))
-    (clm-channel cgen beg dur snd chn edpos)
+    (<em class=red>clm-channel</em> cgen beg dur snd chn edpos)
     (free-sample-reader reader)))
 <!-- --></pre></td></tr></table>
 <!-- --></td></tr>
@@ -4717,7 +4717,7 @@ The following substitutions can be made:
            (sr (srate snd))
 	   (y-max (y-zoom-slider snd chn)))
       (vct-multiply! data data)
-      (graph data "energy" (/ ls sr) (/ rs sr) 0.0 (* y-max y-max) snd chn #f))))
+      (<em class=red>graph</em> data "energy" (/ ls sr) (/ rs sr) 0.0 (* y-max y-max) snd chn #f))))
 
 (add-hook! <a href="#lispgraphhook">lisp-graph-hook</a> display-energy)
 <!-- --></pre></td></tr></table><br>
@@ -4896,7 +4896,7 @@ The following substitutions can be made:
 (define* (<a name="cchannel">c-channel</a> func #:optional (beg 0) dur snd chn edpos call-data)
   (let ((reader (make-sample-reader beg snd chn edpos))
         (samps (or dur (frames snd chn edpos))))
-    (loop-samples reader func samps "c-channel" call-data)))
+    (<em class=red>loop-samples</em> reader func samps "c-channel" call-data)))
 <!-- --></pre></td></tr></table>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -5144,7 +5144,7 @@ The following substitutions can be made:
   (lambda (mpgfile rawfile chans)
     "(mpg file tmpname chans) converts file from MPEG-3 to raw 16-bit samples using mpg123"
     (system (format #f "mpg123 -s ~A &gt; ~A" mpgfile rawfile))
-    (open-raw-sound rawfile 1 44100 (if (little-endian?) mus-lshort mus-bshort))))
+    (<em class=red>open-raw-sound</em> rawfile 1 44100 (if (little-endian?) mus-lshort mus-bshort))))
 <!-- --></pre></td></tr></table>
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
@@ -7023,7 +7023,7 @@ one, and are exposed in many functions described above as the <i>pos</i> argumen
 	 (scm (string-append (substring tmpf 0 (- (string-length tmpf) 3)) "scm"))
 	 (oldsnd (or snd (selected-sound))))
     (if (not (string? (save-dir))) (set! (save-dir) "/tmp"))
-    (save-edit-history scm oldsnd)
+    (<em class=red>save-edit-history</em> scm oldsnd)
     (copy-file (file-name oldsnd) new-name)
     (set! sfile (open-sound new-name))
     (load scm)
@@ -7156,7 +7156,7 @@ And an example that lets us see the result of filtering the waveform:
 
 <tr><td></td><td>
 <table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
-(add-transform "low-pass" "filtered" 0.0 1.0
+(<em class=red>add-transform</em> "low-pass" "filtered" 0.0 1.0
   (lambda (len fd)
     (let ((v (make-vct len))
           (flt (make-fir-filter :order 80 
@@ -7454,7 +7454,7 @@ And an example that lets us see the result of filtering the waveform:
 <!-- --><tr><td></td><td><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
 (define (red-alert msg)
   ;; this only works in the gtk version (in Motif all existing text changes color)
-  (let ((old-color (listener-text-color)))
+  (let ((old-color (<em class=red>listener-text-color</em>)))
     (set! (listener-text-color) (make-color 1 0 0))
     (snd-print msg)
     (set! (listener-text-color) old-color)))
@@ -8150,7 +8150,7 @@ variable %load-verbosely to #t.
 <!-- --><tr><td></td><td>
 <!-- --><table border=1 cellpadding=5><tr><td bgcolor="#FCFCF0"><pre>
 (add-hook! after-open-hook 
-  (lambda (n) (if (&gt; (channels n) 3) (equalize-panes))))
+  (lambda (n) (if (&gt; (channels n) 3) (<em class=red>equalize-panes</em>))))
 <!-- --></pre></td></tr></table></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
