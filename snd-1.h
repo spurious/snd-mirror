@@ -228,7 +228,7 @@ typedef struct chan__info {
   void *sonogram_data;
   void *last_sonogram, *temp_sonogram;
   void *fft_data;          /* parallels sonogram -- try to avoid repeating large ffts needlessly */
-  int printing;
+  int printing, fft_unchanged;
   Float gsy, gzy;
   void *mix_dragging;
   int height, mixes;
@@ -330,7 +330,7 @@ typedef struct snd__state {
   int max_sounds;
   snd_info *mx_sp;
   char *pending_change;
-  int print_choice, apply_choice, just_time, memory_available;
+  int print_choice, apply_choice, just_time, memory_available, gl_has_double_buffer;
   int stopped_explicitly, checking_explicitly, reloading_updated_file;
   Latus init_window_width, init_window_height;
   Locus init_window_x, init_window_y;

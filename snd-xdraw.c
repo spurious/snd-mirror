@@ -486,12 +486,9 @@ void set_sono_rectangle(int j, int color, Locus x, Locus y, Latus width, Latus h
   r[j].height = height;
 }
 
-void allocate_sono_rects(snd_state *ss, int size)
+void allocate_sono_rects(int size)
 {
   int i;
-  if (color_map(ss) != BLACK_AND_WHITE) 
-    allocate_color_map(ss, color_map(ss));
-  else allocate_color_map(ss, 0);
   if (size > sono_size)
     {
       for (i = 0; i < COLORMAP_SIZE; i++)
@@ -641,6 +638,12 @@ void set_color_map(snd_state *ss, int val)
     map_over_chans(ss, update_graph, NULL);
 }
 
+static int update_graph_clearing_fft_unchanged(chan_info *cp, void *ptr)
+{
+  cp->fft_unchanged = FFT_CHANGE_LOCKED;
+  return(update_graph(cp, ptr));
+}
+
 static void cutoff_color_callback(Widget w, XtPointer context, XtPointer info) /* cutoff point */
 {
   /* cutoff point for color chooser */
@@ -650,7 +653,7 @@ static void cutoff_color_callback(Widget w, XtPointer context, XtPointer info) /
   ASSERT_WIDGET_TYPE(XmIsScale(w), w);
   ss = cd->state;
   in_set_color_cutoff(ss, (Float)(cbs->value) / 1000.0);
-  map_over_chans(ss, update_graph, NULL);
+  map_over_chans(ss, update_graph_clearing_fft_unchanged, NULL);
 }
 
 void set_color_cutoff(snd_state *ss, Float val)

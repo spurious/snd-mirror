@@ -8647,6 +8647,7 @@ run
 <!-- -->return spectrum (vct) of <i>data</i> (also a vct) using fft-window <i>win</i>.
 <!-- -->length of data (and fft) is <i>length</i>. <code>(let ((spectr (snd-spectrum data rectangular-window (transform-size)))) ...)</code>
 <!-- -->If <i>linear</i> is #f (default is #t), the spectrum is returned as dB values.
+<!-- --><i>beta</i> is the fft data window "family" parameter; it is scaled internally so here it should be between 0.0 and 1.0.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->

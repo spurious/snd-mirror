@@ -1066,6 +1066,10 @@ static void cleanup_dac_hook(void)
     }
 }
 
+#if HAVE_OSS
+  int mus_audio_oss_buffer_size(void);
+#endif
+
 static int fill_dac_buffers(dac_state *dacp, int write_ok)
 {
   int i, j, cursor_change;
@@ -1113,8 +1117,16 @@ static int fill_dac_buffers(dac_state *dacp, int write_ok)
 		  (sp->cursor_follows_play != DONT_FOLLOW) &&
 		  (!(read_sample_eof(dp->chn_fd))) &&
 		  (dp->chn_fd->cb))
+#if HAVE_OSS
+		{
+		  off_t loc;
+		  loc = current_location(dp->chn_fd) - (off_t)mus_audio_oss_buffer_size();
+		  if (loc < 0) loc = 0;
+		  cursor_moveto_without_verbosity(dp->cp, loc);
+		}
+#else
 		cursor_moveto_without_verbosity(dp->cp, current_location(dp->chn_fd));
-	      /* TODO: make this more accurate by taking fragments (soundcard buffers) into account */
+#endif
 
 	      /* add a buffer's worth from the current source into dp->audio_chan */
 	      buf = dac_buffers[dp->audio_chan];

@@ -3325,9 +3325,10 @@ return magnitude spectrum of data (vct) in data using fft-window win and fft len
   if (!(MUS_FFT_WINDOW_OK(wtype)))
     mus_misc_error(S_snd_spectrum, "unknown fft window", win);
   if (XEN_NUMBER_P(beta)) b = XEN_TO_C_DOUBLE(beta);
+  if (b < 0.0) b = 0.0; else if (b > 1.0) b = 1.0;
   idat = (Float *)CALLOC(n, sizeof(Float));
   window = (Float *)CALLOC(n, sizeof(Float));
-  make_fft_window_1(window, n, wtype, b);
+  make_fft_window_1(window, n, wtype, b); /* this multiplies by beta max, so beta here should be between 0.0 and 1.0 */
   for (i = 0; i < n; i++) rdat[i] *= window[i];
   FREE(window);
 
@@ -3341,9 +3342,6 @@ return magnitude spectrum of data (vct) in data using fft-window win and fft len
       for (i = 1, j = n - 1; i < n2; i++, j--)
 	{
 	  rdat[i] = 0.5 * ((rdat[i] * rdat[i]) + (rdat[j] * rdat[j]));
-#if HAVE_ISNAN
-	  if (isnan(rdat[i])) rdat[i] = 0.0;
-#endif
 	  rdat[j] = rdat[i];
 	}
     }
@@ -3356,13 +3354,9 @@ return magnitude spectrum of data (vct) in data using fft-window win and fft len
       for (i = 1, j = n - 1; i < n2; i++, j--)
 	{
 	  rdat[i] = rdat[i] * rdat[i] + idat[i] * idat[i];
-#if HAVE_ISNAN
-	  if (isnan(rdat[i])) rdat[i] = 0.0;
-#endif
 	  rdat[j] = rdat[i];
 	}
     }
-
   lowest = 0.000001;
   maxa = 0.0;
   n = n / 2;
@@ -3374,9 +3368,6 @@ return magnitude spectrum of data (vct) in data using fft-window win and fft len
       else 
 	{
 	  idat[i] = sqrt(val);
-#if HAVE_ISNAN
-	  if (isnan(idat[i])) idat[i] = 0.0;
-#endif
 	  if (idat[i] > maxa) maxa = idat[i];
 	}
     }

@@ -1779,7 +1779,7 @@ static int display_transform_peaks(chan_info *ucp, char *filename)
   return(err);
 }
 
-static Float skew_color(snd_state *ss, Float x)
+static int skew_color(snd_state *ss, Float x)
 {
   Float base, val;
   int pos;
@@ -1799,7 +1799,7 @@ static Float skew_color(snd_state *ss, Float x)
 static int js[COLORMAP_SIZE];
 
 static void make_sonogram(chan_info *cp, snd_info *sp, snd_state *ss)
-{ /* colormap allocated in snd-fft via allocate_sono_rects in snd-xchn */
+{ 
   sono_info *si;
   int i, slice, fwidth, fheight, j, bins;
   Latus rectw, recth;
@@ -1816,6 +1816,8 @@ static void make_sonogram(chan_info *cp, snd_info *sp, snd_state *ss)
     {
       bins = (int)(si->target_bins * cp->spectro_cutoff);
       if (cp->printing) ps_allocate_grf_points();
+      allocate_sono_rects(si->total_bins);
+      allocate_color_map(ss, color_map(ss));
       if (cp->fft_log_frequency) scaler = 1.0 / log(LOG_FACTOR + 1.0);
       scl = si->scale; 
       fp = cp->fft;
@@ -1960,15 +1962,15 @@ static void make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
   Float xyz[3];
   Float xoff, yoff, x, y, xincr, yincr, x0, y0, binval, scl = 1.0;
   Float fwidth, fheight, zscl, yval, xval;
-  int bins, slice, i, j, xx, yy;
+  int bins = 0, slice, i, j, xx, yy;
   if (chan_fft_in_progress(cp)) return;
   si = (sono_info *)(cp->sonogram_data);
   if ((si) && (si->scale > 0.0))
     {
 #if HAVE_GL
-      /* TODO: draggable y axis,
+      /* TODO: draggable y axis (within_graph below depends on x_axis_x0 et al set in make_axes_1 in snd-axis.c)
 	 TODO: axis ticks and labels
-	 TODO: multi-channel gl spectros
+	 TODO: multi-channel (combined) gl spectros
 	 TODO: gl wavogram, sonogram
 	 TODO: gl xrec labels
 	 TODO: lighting, texture?
@@ -1977,28 +1979,32 @@ static void make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
 	 TODO: fix the regraph problem (glClear of partial window?)
 	 TODO: printing support (doesn't GL->ps already exist?)
 	 TODO: semi-transparent coloring for spectrogram
-	 TODO: added-transform self-display option 
+	 TODO: configure --with-gl on SGI, check for needed libs
 	 SOMEDAY: gl in gtk
+	 TODO: two sets of spectro-defaults (currently toggling with-gl = silly output)
       */
-      if ((sp->nchans == 1) && 
+      if (((sp->nchans == 1) || (sp->channel_style == CHANNELS_SEPARATE)) &&
 	  (color_map(ss) != BLACK_AND_WHITE) &&
 	  (with_gl(ss)))
 	{
+	  unsigned int id;
 	  float x1, y1;
-	  int **js;
+	  int **js = NULL;
 	  scl = si->scale; /* unnormalized fft doesn't make much sense here (just washes out the graph) */
 	  fp = cp->fft;
 	  fap = fp->axis;
-	  fwidth = (fap->x_axis_x1 - fap->x_axis_x0);
-	  fheight = (fap->y_axis_y0 - fap->y_axis_y1);
-	  bins = (int)(si->target_bins * cp->spectro_cutoff);
-	  if (bins <= 0) bins = 1;
-	  js = (int **)CALLOC(si->active_slices, sizeof(int *));
-	  for (i = 0; i < si->active_slices; i++)
+	  id = (sp->index << 16) + cp->chan; /* TODO: might need field here for sono/wavo or force update etc? */
+	  if (cp->fft_unchanged == FFT_CHANGED)
 	    {
-	      js[i] = (int *)CALLOC(bins, sizeof(int));
-	      for (j = 0; j < bins; j++)
-		js[i][j] = skew_color(ss, si->data[i][j]);
+	      bins = (int)(si->target_bins * cp->spectro_cutoff);
+	      if (bins <= 0) bins = 1;
+	      js = (int **)CALLOC(si->active_slices, sizeof(int *));
+	      for (i = 0; i < si->active_slices; i++)
+		{
+		  js[i] = (int *)CALLOC(bins, sizeof(int));
+		  for (j = 0; j < bins; j++)
+		    js[i][j] = skew_color(ss, si->data[i][j]);
+		}
 	    }
 	  glXMakeCurrent(MAIN_DISPLAY(ss), XtWindow(channel_graph(cp)), ss->sgx->cx);
 	  glEnable(GL_DEPTH_TEST);
@@ -2022,67 +2028,77 @@ static void make_spectrogram(chan_info *cp, snd_info *sp, snd_state *ss)
 			 0.0);
 	  }
 	  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	  glViewport(fap->x_axis_x0 - 4, 4, fwidth, fheight + 4);
+	  if (cp->fft_unchanged == FFT_CHANGED)
+	    {
+	      glNewList(id, GL_COMPILE);
+	      /* a kludge for some axes */
+	      glBegin(GL_POLYGON);
+	      glColor3f(0.0, 0.0, 0.0);
+	      glVertex3f(-0.51, 0.0, -0.51);
+	      glVertex3f(0.51, 0.0, -0.51);
+	      glVertex3f(0.51, 0.0, -0.52);
+	      glVertex3f(-0.51, 0.0, -0.52);
+	      glEnd();
+	      glBegin(GL_POLYGON);
+	      glColor3f(0.0, 0.0, 0.0);
+	      glVertex3f(-0.51, 0.0, -0.51);
+	      glVertex3f(-0.51, 0.0, 0.51);
+	      glVertex3f(-0.52, 0.0, 0.51);
+	      glVertex3f(-0.52, 0.0, -0.51);
+	      glEnd();
+	      
+	      xincr = 1.0 / (float)(si->active_slices);
+	      yincr = 1.0 / (float)bins;
+	      for (x0 = -0.5, slice = 0; slice < si->active_slices - 1; slice++, x0 += xincr)
+		{
+		  fdata = si->data[slice];
+		  for (i = 0, y0 = -0.5; i < bins - 1; i++, y0 += yincr)
+		    {
+		      unsigned short r, g, b;
+		      glBegin(GL_POLYGON);
+		      x1 = x0 + xincr;
+		      y1 = y0 + yincr;
+		  
+		      get_current_color(color_map(ss), js[slice][i], &r, &g, &b);
+		      glColor3us(r, g, b);
+		      glVertex3f(x0, (si->data[slice][i] / scl), y0);
+		      
+		      get_current_color(color_map(ss), js[slice + 1][i], &r, &g, &b);
+		      glColor3us(r, g, b);
+		      glVertex3f(x1, (si->data[slice + 1][i] / scl), y0);
+		  
+		      get_current_color(color_map(ss), js[slice + 1][i + 1], &r, &g, &b);
+		      glColor3us(r, g, b);
+		      glVertex3f(x1, (si->data[slice + 1][i + 1] / scl), y1);
+		  
+		      get_current_color(color_map(ss), js[slice][i + 1], &r, &g, &b);
+		      glColor3us(r, g, b);
+		      glVertex3f(x0, (si->data[slice][i + 1] /scl), y1);
+		      
+		      glEnd();
+		    }
+		}
+	      glEndList();
+	    }
+	  glViewport(fap->graph_x0, 0, fap->width, fap->height);
 	  glMatrixMode(GL_PROJECTION);
 	  glLoadIdentity();
 	  glRotatef(cp->spectro_x_angle, 1.0, 0.0, 0.0);
 	  glRotatef(cp->spectro_y_angle, 0.0, 1.0, 0.0);
 	  glRotatef(cp->spectro_z_angle, 0.0, 0.0, 1.0);
 	  glScalef(cp->spectro_x_scale, cp->spectro_z_scale, cp->spectro_y_scale);
-
-	  /* a kludge for some axes */
-	  glBegin(GL_POLYGON);
-	  glColor3f(0.0, 0.0, 0.0);
-	  glVertex3f(-0.51, 0.0, -0.51);
-	  glVertex3f(0.51, 0.0, -0.51);
-	  glVertex3f(0.51, 0.0, -0.52);
-	  glVertex3f(-0.51, 0.0, -0.52);
-	  glEnd();
-	  glBegin(GL_POLYGON);
-	  glColor3f(0.0, 0.0, 0.0);
-	  glVertex3f(-0.51, 0.0, -0.51);
-	  glVertex3f(-0.51, 0.0, 0.51);
-	  glVertex3f(-0.52, 0.0, 0.51);
-	  glVertex3f(-0.52, 0.0, -0.51);
-	  glEnd();
-	  
-	  xincr = 1.0 / (float)(si->active_slices);
-	  yincr = 1.0 / (float)bins;
-	  for (x0 = -0.5, slice = 0; slice < si->active_slices - 1; slice++, x0 += xincr)
-	    {
-	      fdata = si->data[slice];
-	      for (i = 0, y0 = -0.5; i < bins - 1; i++, y0 += yincr)
-		{
-		  unsigned short r, g, b;
-		  glBegin(GL_POLYGON);
-		  x1 = x0 + xincr;
-		  y1 = y0 + yincr;
-		  
-		  get_current_color(color_map(ss), js[slice][i], &r, &g, &b);
-		  glColor3us(r, g, b);
-		  glVertex3f(x0, (si->data[slice][i] / scl), y0);
-		  
-		  get_current_color(color_map(ss), js[slice + 1][i], &r, &g, &b);
-		  glColor3us(r, g, b);
-		  glVertex3f(x1, (si->data[slice + 1][i] / scl), y0);
-		  
-		  get_current_color(color_map(ss), js[slice + 1][i + 1], &r, &g, &b);
-		  glColor3us(r, g, b);
-		  glVertex3f(x1, (si->data[slice + 1][i + 1] / scl), y1);
-		  
-		  get_current_color(color_map(ss), js[slice][i + 1], &r, &g, &b);
-		  glColor3us(r, g, b);
-		  glVertex3f(x0, (si->data[slice][i + 1] /scl), y1);
-		  
-		  glEnd();
-		}
-	    }
-	  glXSwapBuffers(MAIN_DISPLAY(ss), XtWindow(channel_graph(cp)));
+	  glCallList(id);
+	  if (ss->gl_has_double_buffer)
+	    glXSwapBuffers(MAIN_DISPLAY(ss), XtWindow(channel_graph(cp)));
+	  else glFlush();
 	  /* a kludge to get the normal graph drawn (again...) */
 	  if (cp->graph_time_p)
 	    display_channel_time_data(cp, cp->sound, cp->state); 
-	  for (i = 0; i < si->active_slices; i++) FREE(js[i]);
-	  FREE(js);
+	  if (cp->fft_unchanged == FFT_CHANGED)
+	    {
+	      for (i = 0; i < si->active_slices; i++) FREE(js[i]);
+	      FREE(js);
+	    }
 	  return;
 	}
 #endif
@@ -2624,20 +2640,21 @@ static void display_channel_data_with_size (chan_info *cp, snd_info *sp, snd_sta
     {
       if (with_fft)
 	{
-	  make_axes(cp, fap,
-		    ((cp->x_axis_style == X_AXIS_IN_SAMPLES) || 
-		     (cp->x_axis_style == X_AXIS_IN_BEATS)) ? X_AXIS_IN_SECONDS : (cp->x_axis_style),
+	  if ((with_gl(ss) == FALSE) || (cp->transform_graph_type != GRAPH_TRANSFORM_AS_SPECTROGRAM))
+	    make_axes(cp, fap,
+		      ((cp->x_axis_style == X_AXIS_IN_SAMPLES) || 
+		       (cp->x_axis_style == X_AXIS_IN_BEATS)) ? X_AXIS_IN_SECONDS : (cp->x_axis_style),
 #if USE_MOTIF
-		    ((cp->chan == (sp->nchans - 1)) || (sp->channel_style != CHANNELS_SUPERIMPOSED)));
-	            /* Xt documentation says the most recently added work proc runs first, but we're
-		     *   adding fft work procs in channel order, normally, so the channel background
-		     *   clear for the superimposed case needs to happen on the highest-numbered 
-		     *   channel, since it will complete its fft first.  It also needs to notice the
-		     *   selected background, if any of the current sound's channels is selected.
-		     */
+		      ((cp->chan == (sp->nchans - 1)) || (sp->channel_style != CHANNELS_SUPERIMPOSED)));
+	              /* Xt documentation says the most recently added work proc runs first, but we're
+		       *   adding fft work procs in channel order, normally, so the channel background
+		       *   clear for the superimposed case needs to happen on the highest-numbered 
+		       *   channel, since it will complete its fft first.  It also needs to notice the
+		       *   selected background, if any of the current sound's channels is selected.
+		       */
 #else
-		    ((cp->chan == 0) || (sp->channel_style != CHANNELS_SUPERIMPOSED)));
-                    /* In Gtk+ (apparently) the first proc added is run, not the most recent */
+	              ((cp->chan == 0) || (sp->channel_style != CHANNELS_SUPERIMPOSED)));
+                      /* In Gtk+ (apparently) the first proc added is run, not the most recent */
 #endif
 
         if ((!cp->graph_time_p) || (just_fft))

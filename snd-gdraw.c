@@ -450,12 +450,9 @@ void set_sono_rectangle(int j, int color, Locus x, Locus y, Latus width, Latus h
   r[j].height = height;
 }
 
-void allocate_sono_rects(snd_state *ss, int size)
+void allocate_sono_rects(int size)
 {
   int i;
-  if (color_map(ss) != BLACK_AND_WHITE) 
-    allocate_color_map(ss, color_map(ss));
-  else allocate_color_map(ss, 0);
   if (size > sono_size)
     {
       for (i = 0; i < COLORMAP_SIZE; i++)

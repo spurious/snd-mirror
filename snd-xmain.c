@@ -724,15 +724,21 @@ void snd_doit(snd_state *ss, int argc, char **argv)
     int snglBuf[] = {GLX_RGBA, GLX_DEPTH_SIZE, 16, None};
     int dblBuf[] = {GLX_RGBA, GLX_DEPTH_SIZE, 16, GLX_DOUBLEBUFFER, None};
     vi = glXChooseVisual(dpy, DefaultScreen(dpy), dblBuf);
-    if (vi == NULL) vi = glXChooseVisual(dpy, DefaultScreen(dpy), snglBuf);
+    if (vi) 
+      ss->gl_has_double_buffer = TRUE;
+    else
+      {
+	ss->gl_has_double_buffer = FALSE;
+	vi = glXChooseVisual(dpy, DefaultScreen(dpy), snglBuf);
+      }
     if (vi == NULL) 
-      snd_error("no RGB visual with depth buffer");
+      fprintf(stderr, "no RGB visual with desired depth\n"); /* not snd_error -- shell not ready yet */
     else
       {
 	/* create an OpenGL rendering context */
 	cx = glXCreateContext(dpy, vi, /* no display list sharing */ None, /* favor direct */ GL_TRUE);
 	if (cx == NULL) 
-	  snd_error("could not create rendering context");
+	  fprintf(stderr, "could not create rendering context\n");
 	else
 	  {
 	    /* create an X colormap since probably not using default visual */

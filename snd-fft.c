@@ -1,5 +1,7 @@
 #include "snd.h"
 
+/* TODO: added-transform self-display option */
+
 /* handling of "beta" changed drastically 28-June-98 
  * it is now a number between 0 and 1 from ss point of view,
  * and is scaled by the window max before being applied 
@@ -1782,6 +1784,7 @@ void *make_fft_state(chan_info *cp, int simple)
   off_t dbeg = 0, dlen = 0;
   ss = cp->state;
   ap = cp->axis;
+  cp->fft_unchanged = FFT_CHANGED;
   if ((show_selection_transform(ss)) && 
       (cp->transform_graph_type == GRAPH_TRANSFORM_ONCE) && 
       (selection_is_active_in_channel(cp)))
@@ -1823,7 +1826,10 @@ void *make_fft_state(chan_info *cp, int simple)
 	reuse_old = 1;
     }
   if (reuse_old)
-    fs->slice = 8;
+    {
+      fs->slice = 8;
+      cp->fft_unchanged = FFT_UNCHANGED;
+    }
   else
     {
       if (cp->fft_data) cp->fft_data = free_fft_state((fft_state *)(cp->fft_data));
@@ -2042,6 +2048,7 @@ static int set_up_sonogram(sonogram_state *sg)
   sonogram_state *lsg = NULL;
   int i, tempsize, dpys = 1;
   cp = sg->cp;
+  cp->fft_unchanged = (cp->fft_unchanged != FFT_CHANGE_LOCKED);
   if ((cp->graph_transform_p == 0) || (cp->transform_size <= 1)) return(2);
   ss = cp->state;
   ap = cp->axis;
@@ -2103,7 +2110,6 @@ static int set_up_sonogram(sonogram_state *sg)
   si->active_slices = 0;
   si->target_slices = sg->outlim;
   si->scale = 0.0;
-  allocate_sono_rects(ss, si->total_bins);
   if (cp->last_sonogram)                               /* there was a previous run */
     {
       lsg = (sonogram_state *)(cp->last_sonogram);
@@ -2129,6 +2135,7 @@ static int set_up_sonogram(sonogram_state *sg)
 	  return(2);                                   /* so skip the ffts! */
 	}
     }
+  cp->fft_unchanged = FFT_CHANGED;
   start_progress_report(cp->sound, NOT_FROM_ENVED);
   return(1);
 }

@@ -5851,6 +5851,7 @@ void mus_fft (Float *rl, Float *im, int n, int is)
       for (i2 = 0; i2 < ldm; i2++)
 	{
 #if (HAVE_ISNAN) || (LINUX) || defined(__bsdi__)
+	  /* TODO: is this still necessary? */
 	  if (isnan(ui)) ui = 0.0;
 #endif
 	  i = i2;
@@ -5879,14 +5880,14 @@ void mus_fft (Float *rl, Float *im, int n, int is)
 
 #if HAVE_GSL
 #include <gsl/gsl_sf_bessel.h>
-static Float mus_bessi0(Float x)
+static double mus_bessi0(Float x)
 {
   gsl_sf_result res;
   gsl_sf_bessel_I0_e(x, &res);
   return(res.val);
 }
 #else
-static Float mus_bessi0(Float x)
+static double mus_bessi0(Float x)
 { 
   Float z, denominator, numerator;
   if (x == 0.0) return(1.0);
@@ -5983,7 +5984,8 @@ Float *mus_make_fft_window_with_window(int type, int size, Float beta, Float *wi
       break;
     case MUS_KAISER_WINDOW:
       I0beta = mus_bessi0(beta); /* Harris multiplies beta by pi */
-      for (i = 0, j = size - 1, angle = 1.0; i <= midn; i++, j--, angle -= rate) window[j] = (window[i] = mus_bessi0(beta * sqrt(1.0 - sqr(angle))) / I0beta);
+      for (i = 0, j = size - 1, angle = 1.0; i <= midn; i++, j--, angle -= rate) 
+	window[j] = (window[i] = mus_bessi0(beta * sqrt(1.0 - sqr(angle))) / I0beta);
       break;
     case MUS_CAUCHY_WINDOW:
       for (i = 0, j = size - 1, angle = 1.0; i <= midn; i++, j--, angle -= rate) window[j] = (window[i] = 1.0 / (1.0 + sqr(beta * angle)));
@@ -6079,7 +6081,8 @@ Float *mus_make_fft_window(int type, int size, Float beta)
 void mus_spectrum(Float *rdat, Float *idat, Float *window, int n, int type)
 {
   int i;
-  Float maxa, todb, lowest, val;
+  Float maxa, todb, lowest;
+  double val;
   if (window) mus_multiply_arrays(rdat, window, n);
   mus_clear_array(idat, n);
   mus_fft(rdat, idat, n, 1);
@@ -6093,11 +6096,8 @@ void mus_spectrum(Float *rdat, Float *idat, Float *window, int n, int type)
       if (idat[i] < lowest) idat[i] = 0.0;
 #endif
       val = rdat[i] * rdat[i] + idat[i] * idat[i];
-#if HAVE_ISNAN
-      if (isnan(val)) val = 0.0;
-#endif
       if (val < lowest)
-	rdat[i] = .0001;
+	rdat[i] = 0.001;
       else 
 	{
 	  rdat[i] = sqrt(val);
