@@ -57,7 +57,8 @@
 (use-modules (ice-9 debug))
 (use-modules (ice-9 format))
 (use-modules (ice-9 optargs))
-
+(debug-enable 'debug 'backtrace)
+(read-enable 'positions)
 (read-set! keywords 'prefix) ;this so we can use ":" as the keyword prefix
 
 ;;; -------- snd.html examples made harder to break --------

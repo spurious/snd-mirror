@@ -445,10 +445,9 @@ CVS: (I haven't tested this).
 To follow the Snd CVS repository, the first time you need to
 
        cvs -d:pserver:anonymous@cvs.snd.sourceforge.net:/cvsroot/snd login 
-       cvs -d:pserver:anonymous@cvs.snd.sourceforge.net:/cvsroot/snd co cvs-snd
+       cvs -z3 -d:pserver:anonymous@cvs.snd.sourceforge.net:/cvsroot/snd co cvs-snd
 
+When prompted for a password for anonymous, simply press the Enter key. 
 After that, you simply go to the local cvs-snd directory and
 
        cvs update 
-
-

@@ -146,6 +146,8 @@ static chan_info *free_chan_info(chan_info *cp)
   return(cp);  /* pointer is left for possible future re-use */
 }
 
+static int file_maxamps(snd_state *ss, char *ifile, Float *vals, int ichans, int format);
+
 snd_info *make_snd_info(snd_info *sip, snd_state *state, char *filename, file_info *hdr, int snd_slot)
 {
   snd_info *sp = NULL;
@@ -756,5 +758,50 @@ void display_info(snd_info *sp)
 	  FREE(buffer);
 	}
     }
+}
+
+static int file_maxamps(snd_state *ss, char *ifile, Float *vals, int ichans, int format)
+{
+  int ifd,idataloc,bufnum,n,cursamples,idatasize,loc,i,samples,chn;
+  MUS_SAMPLE_TYPE fc;
+  MUS_SAMPLE_TYPE *buffer,*amps;
+  MUS_SAMPLE_TYPE **ibufs;
+  if ((ifd=mus_file_open_read(ifile)) == -1) return(0);
+  mus_file_open_descriptors(ifd,format,mus_data_format_to_bytes_per_sample(format),mus_sound_data_location(ifile));
+  idataloc = mus_sound_data_location(ifile);
+  idatasize = mus_sound_samples(ifile);
+  samples = (idatasize / ichans);
+  if (samples <= 0) {mus_file_close(ifd); return(0);}
+  loc=mus_file_seek(ifd,idataloc,SEEK_SET);
+  if (loc<idataloc) {mus_file_close(ifd); return(0);}
+  ibufs = (MUS_SAMPLE_TYPE **)CALLOC(ichans,sizeof(MUS_SAMPLE_TYPE *));
+  for (i=0;i<ichans;i++) ibufs[i] = (MUS_SAMPLE_TYPE *)CALLOC(FILE_BUFFER_SIZE,sizeof(MUS_SAMPLE_TYPE));
+  amps = (MUS_SAMPLE_TYPE *)CALLOC(ichans,sizeof(MUS_SAMPLE_TYPE));
+  bufnum = (FILE_BUFFER_SIZE);
+  for (n=0;n<samples;n+=bufnum)
+    {
+      if ((n+bufnum)<samples) cursamples = bufnum; else cursamples = (samples-n);
+      mus_file_read(ifd,0,cursamples-1,ichans,ibufs);
+      for (chn=0;chn<ichans;chn++)
+	{
+	  buffer = (MUS_SAMPLE_TYPE *)(ibufs[chn]);
+	  fc=amps[chn];
+	  for (i=0;i<cursamples;i++) 
+	    {
+	      if ((buffer[i] > fc) || (fc < -buffer[i])) 
+		{
+		  fc=buffer[i]; 
+		  if (fc < MUS_SAMPLE_0) fc = -fc;
+		}
+	    }
+	  amps[chn]=fc;
+	}
+    }
+  mus_file_close(ifd);
+  for (chn=0;chn<ichans;chn++) vals[chn] = MUS_SAMPLE_TO_FLOAT(amps[chn]);
+  for (i=0;i<ichans;i++) FREE(ibufs[i]);
+  FREE(ibufs);
+  FREE(amps);
+  return(1);
 }
 

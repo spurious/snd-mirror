@@ -180,6 +180,7 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+22-Jun:  version renamed snd-version (old name collides with guile).\n\
 21-Jun:  marks.scm.\n\
 19-Jun:  changes to GC handling for new guile.\n\
          added sync field to marks, and changed much of the Guile interface to marks.\n\
@@ -1269,6 +1270,7 @@ all refer to the same thing.\n\
   " S_snd_error "         (str)\n\
   " S_snd_print "         (str)\n\
   " S_snd_spectrum "      (data window length linear)\n\
+  " S_snd_version "       ()\n\
   " S_snd_warning "       (str)\n\
   " S_speed "             (snd)\n\
   " S_squelch_update "    (snd chn)\n\
@@ -1311,7 +1313,6 @@ all refer to the same thing.\n\
   " S_vcts_doB "          (obj ... proc)\n\
   " S_vcts_mapB "         (obj ... proc)\n\
   " S_vector2vct "       (vect)\n\
-  " S_version "           ()\n\
   " S_view_sound "        (filename)\n\
   " S_waving "            (snd chn()\n\
   " S_window_height "     ()\n\

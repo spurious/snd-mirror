@@ -107,6 +107,14 @@ static void activate_mixmark_widgets(mixmark *m)
     }
 }
 
+mix_context *make_mix_context(chan_info *cp)
+{
+  mix_context *g;
+  g = (mix_context *)CALLOC(1,sizeof(mix_context));
+  g->graph = channel_graph_parent(cp);
+  return(g);
+}
+
 mix_context *set_mixdata_context(chan_info *cp)
 {
   snd_info *sp;

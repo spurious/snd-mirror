@@ -677,7 +677,6 @@ static int paste_fix_region(int n) {if (n > regions_size) return(0); return(n);}
 static Float paste_fix_scaler(int n, chan_info *cp) {if (n > regions_size) return((Float)n/(Float)SND_SRATE(cp->sound)); return(1.0);}
 
 void paste_region(int n, chan_info *cp,char *origin) {paste_region_1(paste_fix_region(n),cp,FALSE,cp->cursor,paste_fix_scaler(n,cp),origin);}
-void insert_region(int n, int samp, chan_info *cp, char *origin) {paste_region_1(n,cp,FALSE,samp,1.0,origin);}
 int add_region(int n, chan_info *cp, char *origin) {return(paste_region_1(paste_fix_region(n),cp,TRUE,cp->cursor,paste_fix_scaler(n,cp),origin));}
 int mix_region(int n, chan_info *cp, int beg, Float scaler) {return(paste_region_1(n,cp,TRUE,beg,scaler,S_mix_region));}
 
@@ -1437,7 +1436,9 @@ void save_region_backpointer(snd_info *sp)
 }
 
 #if HAVE_GUILE
-SCM g_restore_region(SCM n, SCM chans, SCM len, SCM srate, SCM maxamp, SCM name, SCM start, SCM end, SCM data)
+#include "sg.h"
+
+static SCM g_restore_region(SCM n, SCM chans, SCM len, SCM srate, SCM maxamp, SCM name, SCM start, SCM end, SCM data)
 {
   region *r;
   int i,j,k;
@@ -1479,4 +1480,33 @@ SCM g_restore_region(SCM n, SCM chans, SCM len, SCM srate, SCM maxamp, SCM name,
   reflect_regions_in_menu();
   return(SCM_BOOL_F);
 }
+
+static SCM g_insert_region(SCM samp_n, SCM reg_n, SCM snd_n, SCM chn_n) /* opt reg_n */
+{
+  #define H_insert_region "("  S_insert_region " &optional (start-samp 0) (region 0) snd chn) inserts region data\n\
+   into snd's channel chn starting at 'start-samp'"
+
+  chan_info *cp;
+  int rg,samp;
+  ERRB1(samp_n,S_insert_region);
+  ERRB2(reg_n,S_insert_region);
+  ERRCP(S_insert_region,snd_n,chn_n,3);
+  cp = get_cp(snd_n,chn_n);
+  if (cp == NULL) return(NO_SUCH_CHANNEL);
+  finish_keyboard_selection();
+  rg = g_scm2intdef(reg_n,0);
+  if (!(region_ok(rg))) return(NO_SUCH_REGION);
+  samp = g_scm2intdef(samp_n,0);
+  paste_region_1(rg,cp,FALSE,samp,1.0,S_insert_region);
+  update_graph(cp,NULL);
+  return(SCM_BOOL_T);
+}
+
+
+void g_init_regions(SCM local_doc)
+{
+  DEFINE_PROC(gh_new_procedure(S_restore_region,SCM_FNC g_restore_region,9,0,0),"restores a region");
+  DEFINE_PROC(gh_new_procedure(S_insert_region,g_insert_region,0,4,0),H_insert_region);
+}
+
 #endif

@@ -6,7 +6,7 @@
 (if (file-exists? "sndlib.gdbm") (delete-file "sndlib.gdbm"))
 (read-set! keywords 'prefix)
 
-(define tests 1)
+(define tests 6)
 (set! full-test #t)
 ;(set! snd-test 10)
 ;;; to run a specific test: ./snd -e "(set! snd-test 4) (set! full-test #f)" -l snd-test.scm
@@ -42,7 +42,7 @@
 
 ;;; preliminaries -- check constants, default variable values (assumes -noinit), sndlib and clm stuff
 
-(snd-print (format #f ";;~A" (version)))
+(snd-print (format #f ";;~A" (snd-version)))
 
 ;;; constants
 (if (or full-test (= snd-test 0))
@@ -3334,7 +3334,7 @@
 	    (if (not (every-sample? (lambda (y) (< y maxval)))) (snd-print (format #f ";every-sample: ~A?" maxval))))
 	  (scan-across-all-chans (data-max))
 	  (map-chan (echo .5 .75) 0 60000)
-	  (if (= (transform-type) normal-fft)
+	  (if (and (ffting) (= (transform-type) normal-fft))
 	      (if (not (= (transform-size) (fft-size))) 
 		  (snd-print (format #f "transform-size: ~A, but fft-size: ~A?" (transform-size) (fft-size)))))
 	  (reset-hook! fft-hook)

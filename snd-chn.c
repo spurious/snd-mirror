@@ -21,7 +21,7 @@ void report_in_minibuffer(snd_info *sp, char *message)
   /* leave sp->minibuffer off so that keyboard_command doesn't clear it */
 }
 
-void append_to_minibuffer(snd_info *sp, char *message)
+static void append_to_minibuffer(snd_info *sp, char *message)
 {
   char *str=NULL;
   sprintf(expr_str,"%s%s",str=get_minibuffer_string(sp),message);
@@ -56,7 +56,7 @@ static int prompt(snd_info *sp, char *msg, char *preload)
 }
 
 #if HAVE_GUILE
-void g_prompt(snd_info *sp, char *prompt)
+static void g_prompt(snd_info *sp, char *prompt)
 {
   make_minibuffer_label(sp,prompt);
   sp->minibuffer_on = 1;
@@ -2512,7 +2512,7 @@ static sync_state *get_active_chans_sync_state(snd_state *ss, int beg)
   return(sc);
 }
 
-SCM series_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, int beg, int end)
+static SCM series_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, int beg, int end)
 {
   sync_state *sc=NULL;
   sync_info *si;
@@ -2598,7 +2598,7 @@ SCM series_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, int beg
   return(g_call1(proc,SCM_BOOL_F));
 }
 
-SCM parallel_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, int beg, int end)
+static SCM parallel_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, int beg, int end)
 {
   /* here we need to load the arglist in order */
   sync_state *sc=NULL;
@@ -2795,7 +2795,7 @@ static output_state *end_output(snd_state *ss, output_state *os, int beg, chan_i
   return(NULL);
 }
 
-SCM series_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, int beg, int end, char *origin)
+static SCM series_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, int beg, int end, char *origin)
 {
   sync_state *sc=NULL;
   sync_info *si;
@@ -2890,7 +2890,7 @@ SCM series_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, int beg,
 }
 
 
-SCM parallel_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, int beg, int end, char *origin)
+static SCM parallel_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, int beg, int end, char *origin)
 {
   sync_state *sc=NULL;
   sync_info *si;
@@ -3393,7 +3393,9 @@ void scale_to(snd_state *ss, snd_info *sp, chan_info *cp, Float *ur_scalers, int
   free_sync_state(sc);
 }
 
-snd_exf *snd_to_temp(chan_info *cp, int selection, int one_file, int header_type, int data_format)
+typedef struct {int selection; int files; char **old_filenames; char **new_filenames; void *sc;} snd_exf;
+
+static snd_exf *snd_to_temp(chan_info *cp, int selection, int one_file, int header_type, int data_format)
 {
   /* save current state starting at cp and following sync buttons
    *   just current selection if selection, else entire channel
@@ -3459,7 +3461,7 @@ snd_exf *snd_to_temp(chan_info *cp, int selection, int one_file, int header_type
   return(data);
 }
 
-int temp_to_snd(snd_state *ss, snd_exf *data, char *origin)
+static int temp_to_snd(snd_state *ss, snd_exf *data, char *origin)
 {
   sync_state *sc;
   sync_info *si;
@@ -4899,11 +4901,12 @@ static int prompt_named_mark(chan_info *cp)
 }
 
 
+static int defining_macro = 0;
 
+#if HAVE_GUILE
 /* -------- Keyboard Macros -------- */
 /* optimized for the most common case (pure keyboard commands) */
 
-static int defining_macro = 0;
 static int macro_cmd_size = 0;
 static int macro_size = 0;
 typedef struct {int keysym; int state; char *sndop;} macro_cmd;
@@ -4939,12 +4942,6 @@ static void stop_defining_macro (void)
   /* the last C-x ) went into the macro before we noticed it should not have */
   macro_size -= 2;
   defining_macro = 0;
-}
-
-static void cancel_macro (void)
-{
-  defining_macro = 0;
-  /* should we back up to previous here ? */
 }
 
 static void execute_last_macro (chan_info *cp, int count)
@@ -5025,21 +5022,6 @@ static void save_macro_1(named_macro *nm, FILE *fd)
   fprintf(fd,")\n");
 }
 
-void save_macro_state (snd_state *ss, FILE *fd)
-{
-  int i;
-  for (i=0;i<named_macro_ctr;i++) save_macro_1(named_macros[i],fd);
-}
-
-void save_macros(snd_state *ss)
-{
-  /* write out macro as quasi-lisp at end of current init file */
-  FILE *fd;
-  fd = open_snd_init_file(ss);
-  save_macro_state(ss,fd);
-  fclose(fd);
-}
-
 static int execute_named_macro_1(chan_info *cp, char *name, int count)
 {
   int i,j,k;
@@ -5071,14 +5053,6 @@ static int execute_named_macro_1(chan_info *cp, char *name, int count)
   return(0);
 }
 
-#if (!HAVE_GUILE)
-int execute_macro(chan_info *cp, char *name, int count)
-{
-  return(execute_named_macro_1(cp,name,count));
-  /* if called from snd_eval_str, don't recurse! */
-}
-#endif
-
 static void execute_named_macro(chan_info *cp, char *name, int count)
 {
   int one_edit;
@@ -5095,11 +5069,7 @@ static void execute_named_macro(chan_info *cp, char *name, int count)
     }
 }
 
-#if HAVE_GUILE
-  typedef struct {int key; int state; int ignore_prefix; SCM func;} key_entry;
-#else
-  typedef struct {int key; int state; int ignore_prefix; char *code;} key_entry;
-#endif
+typedef struct {int key; int state; int ignore_prefix; SCM func;} key_entry;
 static key_entry *user_keymap = NULL;
 static int keymap_size = 0;
 static int keymap_top = 0;
@@ -5110,21 +5080,13 @@ static int in_user_keymap(int key, int state)
   if (keymap_top == 0) return(-1);
   for (i=0;i<keymap_top;i++)
     {
-#if HAVE_GUILE
       if ((user_keymap[i].key == key) && (user_keymap[i].state == state) && (user_keymap[i].func != SCM_UNDEFINED))
 	return(i);
-#else
-      if ((user_keymap[i].key == key) && (user_keymap[i].state == state) && (user_keymap[i].code)) return(i);
-#endif
     }
   return(-1);
 }
 
-#if HAVE_GUILE
-void set_keymap_entry(int key, int state, int ignore, SCM func)
-#else
-void set_keymap_entry(int key, int state, char *val, int ignore)
-#endif
+static void set_keymap_entry(int key, int state, int ignore, SCM func)
 {
   int i;
   i = in_user_keymap(key,state);
@@ -5136,9 +5098,7 @@ void set_keymap_entry(int key, int state, char *val, int ignore)
 	  if (keymap_top == 0)
 	    {
 	      user_keymap = (key_entry *)CALLOC(keymap_size,sizeof(key_entry));
-#if HAVE_GUILE
 	      for (i=0;i<keymap_size;i++) user_keymap[i].func = SCM_UNDEFINED;
-#endif
 	    }
 	  else 
 	    {
@@ -5147,20 +5107,13 @@ void set_keymap_entry(int key, int state, char *val, int ignore)
 		{
 		  user_keymap[i].key=0; 
 		  user_keymap[i].state=0; 
-#if HAVE_GUILE
 		  user_keymap[i].func = SCM_UNDEFINED;
-#else
-		  user_keymap[i].code=NULL;
-#endif
 		}
 	    }
 	}
       user_keymap[keymap_top].key = key;
       user_keymap[keymap_top].state = state;
       user_keymap[keymap_top].ignore_prefix = ignore;
-#if (!(HAVE_GUILE))
-      user_keymap[keymap_top].code = copy_string(val);
-#else
       if ((func != SCM_UNDEFINED) &&
 	  (procedure_ok(func,0,0,S_bind_key,"func",3)))
 	{
@@ -5168,15 +5121,10 @@ void set_keymap_entry(int key, int state, char *val, int ignore)
 	  snd_protect(func);
 	}
       else user_keymap[keymap_top].func = SCM_UNDEFINED;
-#endif
       keymap_top++;
     }
   else
     {
-#if (!(HAVE_GUILE))
-      if (user_keymap[i].code) FREE(user_keymap[i].code);
-      user_keymap[i].code = copy_string(val);
-#else
       if ((user_keymap[i].func) && (gh_procedure_p(user_keymap[i].func))) snd_unprotect(user_keymap[i].func);
       if ((func != SCM_UNDEFINED) &&
 	  (procedure_ok(func,0,0,S_bind_key,"func",3)))
@@ -5185,7 +5133,6 @@ void set_keymap_entry(int key, int state, char *val, int ignore)
 	  snd_protect(func);
 	}
       else user_keymap[i].func = SCM_UNDEFINED;
-#endif
       user_keymap[i].ignore_prefix = ignore;
     }
 }
@@ -5195,15 +5142,21 @@ static int call_user_keymap(int hashedsym, int count, chan_info *cp)
   int i,res = KEYBOARD_NO_ACTION;
   /* if guile call the associated scheme code, else see if basic string parser can handle it */
   if (user_keymap[hashedsym].ignore_prefix) count=1;
-#if HAVE_GUILE
   if (user_keymap[hashedsym].func != SCM_UNDEFINED)
-    for (i=0;i<count;i++) res = handle_keymap(cp,user_keymap[hashedsym].func);
-#else
-  snd_eval_str(cp->state,user_keymap[hashedsym].code,count);
-#endif
+    for (i=0;i<count;i++) res = g_scm2intdef(g_call0(user_keymap[hashedsym].func),KEYBOARD_NO_ACTION);
   /* in emacs, apparently, prefix-arg refers to the next command, and current-prefix-arg is this command */
   return(res);
 }
+#endif
+
+void save_macro_state (snd_state *ss, FILE *fd)
+{
+#if HAVE_GUILE
+  int i;
+  for (i=0;i<named_macro_ctr;i++) save_macro_1(named_macros[i],fd);
+#endif
+}
+
 
 static char *dir_from_tempnam(snd_state *ss)
 {
@@ -5395,7 +5348,9 @@ void snd_minibuffer_activate(snd_info *sp, int keysym)
 		}
 	      FREE(str1);
 	      break;
+#if HAVE_GUILE
 	    case MACRO_FILING: name_last_macro(str); clear_minibuffer(sp); break;
+#endif
 	    default: snd_error("%s[%d] %s: unknown filing option: %d",__FILE__,__LINE__,__FUNCTION__,sp->filing); break;
 	    }
 	  sp->filing = NOT_FILING;
@@ -5418,6 +5373,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym)
 	  if (str) free(str);
 	  return;
 	}
+#if HAVE_GUILE
       if (sp->macroing)
 	{
 	  len = active_chan->cursor;
@@ -5436,7 +5392,6 @@ void snd_minibuffer_activate(snd_info *sp, int keysym)
 	  if (str) free(str);
 	  return;
 	}
-#if HAVE_GUILE
       if (sp->prompting)
 	{
 	  proc = parse_proc(str);
@@ -5570,7 +5525,9 @@ int keyboard_command (chan_info *cp, int keysym, int state)
   ap = cp->axis;
   if (keysym >= snd_K_Shift_L) return(KEYBOARD_NO_ACTION); 
   /* this happens when the user presses Control or Shift etc prior to hitting the actual (modified) key */
+#if HAVE_GUILE
   if (defining_macro) continue_macro(keysym,state);
+#endif
   if (!m) count = 1; else m=0;
   if (u_count == 0) set_prefix_arg(ss,0);
   
@@ -5599,9 +5556,10 @@ int keyboard_command (chan_info *cp, int keysym, int state)
       sp->macroing = count;
       return(KEYBOARD_NO_ACTION);
     }
-
+#if HAVE_GUILE
   hashloc = in_user_keymap(keysym,state);
   if (hashloc != -1) {return(call_user_keymap(hashloc,count,cp));}
+#endif
   if (sp->minibuffer_temp) clear_minibuffer(sp);
   if (state & snd_ControlMask)
     {
@@ -5629,7 +5587,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	      counting = 0; 
 	      dot_seen = 0; 
 	      cks(); 
-	      cancel_macro(); 
+	      defining_macro = 0;
 	      if (ss->checking_explicitly) ss->stopped_explicitly = 1; 
 	      /* this tries to break out of long filter/src computations (and perhaps others) */
 	      if (sp->playing) stop_playing_all_sounds();
@@ -5786,7 +5744,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	      number_ctr = 0;
 	      counting = 0; 
 	      dot_seen = 0; 
-	      cancel_macro(); 
+	      defining_macro = 0;
 	      if (ss->checking_explicitly) ss->stopped_explicitly = 1; 
 	      break;
 	    case snd_K_H: case snd_K_h: break;
@@ -5992,11 +5950,13 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	    case snd_K_B: case snd_K_b: cp->cursor_on = 1; redisplay = CURSOR_ON_LEFT; break;
 	    case snd_K_C: case snd_K_c: mark_define_region(cp,ext_count); redisplay = CURSOR_CLAIM_SELECTION; break;
 	    case snd_K_D: case snd_K_d: redisplay = prompt(sp,STR_temp_dir_p,NULL); sp->filing = TEMP_FILING; searching = 1; break;
+#if HAVE_GUILE
 	    case snd_K_E: case snd_K_e: 
 	      execute_last_macro(cp,ext_count); 
 	      redisplay = cursor_decision(cp);
 	      if (redisplay == CURSOR_IN_VIEW) redisplay = CURSOR_UPDATE_DISPLAY; 
 	      break;
+#endif
 	    case snd_K_F: case snd_K_f: cp->cursor_on = 1; redisplay = CURSOR_ON_RIGHT; break;
 	    case snd_K_H: case snd_K_h: 
 	      break;
@@ -6063,6 +6023,7 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 	    case snd_K_less: cp->cursor_on = 1; redisplay = cursor_moveto_beginning(cp); break;
 	    case snd_K_greater: cp->cursor_on = 1; redisplay = cursor_moveto_end(cp); break;
 	    case snd_K_openparen:
+#if HAVE_GUILE
 	      if (defining_macro) 
 		report_in_minibuffer(sp,STR_macro_definition_already_in_progress);
 	      else
@@ -6070,14 +6031,17 @@ int keyboard_command (chan_info *cp, int keysym, int state)
 		  start_defining_macro(); 
 		  report_in_minibuffer(sp,STR_defining_kbd_macro); 
 		}
+#endif
 	      return(KEYBOARD_NO_ACTION); 
 	      break;
 	    case snd_K_closeparen: 
+#if HAVE_GUILE
 	      if (defining_macro)
 		{
 		  stop_defining_macro(); 
 		  clear_minibuffer(sp); 
 		}
+#endif
 	      return(KEYBOARD_NO_ACTION);
 	      break;
 	    case snd_K_slash: 
@@ -6729,3 +6693,469 @@ void display_frequency_response(snd_state *ss, env *e, axis_info *ap, axis_conte
   FREE(coeffs);
 }
 
+#if HAVE_GUILE
+#include "sg.h"
+
+
+/* -------- EXTERNAL PROGRAMS -------- */
+
+#define USE_FULL_FILE 0
+#define USE_SELECTION 1
+#define USE_ONE_FILE 1
+#define USE_MANY_FILES 0
+
+static SCM g_temp_filenames(SCM data)
+{
+  #define H_temp_filenames "(" S_temp_filenames " data) -> vector of temp filenames (used by sound-to-temp et al)"
+  snd_exf *program_data;
+  int i;
+  SCM lst;
+  program_data = (snd_exf *)(gh_scm2ulong(data));
+  lst = gh_make_vector(gh_int2scm(program_data->files),SCM_BOOL_F);
+  for (i=0;i<program_data->files;i++)
+    gh_vector_set_x(lst,gh_int2scm(i),gh_str02scm(program_data->old_filenames[i]));
+  return(lst);
+}
+
+static SCM g_sound_to_temp_1(SCM ht, SCM df, int selection, int one_file)
+{
+  snd_exf *program_data;
+  chan_info *cp;
+  int type,format;
+  snd_state *ss;
+  if ((selection) && (selection_is_current() == 0)) return(NO_ACTIVE_SELECTION);
+  ss = get_global_state();
+  cp = current_channel(ss);
+  if (cp)
+    {
+      type = g_scm2intdef(ht,MUS_UNSUPPORTED);
+      format = g_scm2intdef(df,MUS_UNSUPPORTED);
+      program_data = snd_to_temp(cp,selection,one_file,type,format);
+      if (program_data)
+	return((SCM)(gh_ulong2scm((unsigned long)program_data)));
+    }
+  return(SCM_BOOL_F);
+}
+
+static SCM g_sound_to_temp(SCM ht, SCM df) 
+{
+  #define H_sound_to_temp "(" S_sound_to_temp " &optional header-type data-format) writes the syncd data to a temp file\n\
+   with the indicated header type and data format; returns temp file name"
+
+  return(g_sound_to_temp_1(ht,df,USE_FULL_FILE,USE_ONE_FILE));
+}
+
+static SCM g_sound_to_temps(SCM ht, SCM df) 
+{
+  #define H_sound_to_temps "(" S_sound_to_temps " &optional header-type data-format) writes the syncd data to mono temp files\n\
+   with the indicated header type and data format; returns temp file names"
+
+  return(g_sound_to_temp_1(ht,df,USE_FULL_FILE,USE_MANY_FILES));
+}
+
+static SCM g_selection_to_temp(SCM ht, SCM df) 
+{
+  #define H_selection_to_temp "(" S_selection_to_temp " &optional header-type data-format) writes the selected data to a temp file\n\
+   with the indicated header type and data format; returns temp file name"
+
+  return(g_sound_to_temp_1(ht,df,USE_SELECTION,USE_ONE_FILE));
+}
+
+static SCM g_selection_to_temps(SCM ht, SCM df) 
+{
+  #define H_selection_to_temps "(" S_selection_to_temps " &optional header-type data-format) writes the selected data to mono temp files\n\
+   with the indicated header type and data format; returns temp file names"
+
+  return(g_sound_to_temp_1(ht,df,USE_SELECTION,USE_MANY_FILES));
+}
+
+static SCM g_temp_to_sound(SCM data, SCM new_name, SCM origin)
+{
+  #define H_temp_to_sound "(" S_temp_to_sound " data new-name origin) reads new-name to complete the edit begun by " S_sound_to_temp "\n\
+   using data returned by the latter and origin as the edit history entry for the edit"
+
+  snd_exf *program_data;
+  snd_state *ss;
+  ERRS2(new_name,S_temp_to_sound);
+  ERRS3(origin,S_temp_to_sound);
+  ss = get_global_state();
+  program_data = (snd_exf *)(gh_scm2ulong(data));
+  program_data->new_filenames[0] = gh_scm2newstr(new_name,NULL);
+  temp_to_snd(ss,program_data,gh_scm2newstr(origin,NULL));
+  return(SCM_BOOL_T);
+}
+
+static SCM g_temps_to_sound(SCM data, SCM new_names, SCM origin)
+{
+  #define H_temps_to_sound "(" S_temps_to_sound " data new-names origin) reads new-names to complete the edit begun by " S_sound_to_temps "\n\
+   using data returned by the latter and origin as the edit history entry for the edit"
+
+  snd_exf *program_data;
+  int i;
+  snd_state *ss;
+  ERRVECT2(new_names,S_temps_to_sound);
+  ERRS3(origin,S_temps_to_sound);
+  ss = get_global_state();
+  program_data = (snd_exf *)(gh_scm2ulong(data));
+  for (i=0;i<(int)gh_vector_length(new_names);i++)
+    program_data->new_filenames[i] = gh_scm2newstr(gh_vector_ref(new_names,gh_int2scm(i)),NULL);
+  temp_to_snd(ss,program_data,gh_scm2newstr(origin,NULL));
+  return(SCM_BOOL_T);
+}
+
+static SCM g_sp_scan(SCM proc, int chan_choice, SCM s_beg, SCM s_end, int series, int scan, SCM org, SCM snd, SCM chn)
+{
+  snd_state *ss;
+  chan_info *cp;
+  int beg,end;
+  SCM result;
+  char *origin=NULL,*ed_origin = NULL;
+  if (scan)
+    {
+      switch (chan_choice)
+	{
+	case SCAN_CURRENT_CHAN: origin = S_scan_chan; break;
+	case SCAN_SOUND_CHANS: if (series) origin = S_scan_sound_chans; else origin = S_scan_across_sound_chans; break;
+	case SCAN_ALL_CHANS: if (series) origin = S_scan_all_chans; else origin = S_scan_across_all_chans; break;
+	case SCAN_SYNCD_CHANS: if (series) origin = S_scan_chans; else origin = S_scan_across_chans; break;
+	}
+    }
+  else
+    {
+      switch (chan_choice)
+	{
+	case SCAN_CURRENT_CHAN: origin = S_map_chan; break;
+	case SCAN_SOUND_CHANS: if (series) origin = S_map_sound_chans; else origin = S_map_across_sound_chans; break;
+	case SCAN_ALL_CHANS: if (series) origin = S_map_all_chans; else origin = S_map_across_all_chans; break;
+	case SCAN_SYNCD_CHANS: if (series) origin = S_map_chans; else origin = S_map_across_chans; break;
+	}
+      if (gh_string_p(org)) ed_origin = gh_scm2newstr(org,NULL); else ed_origin = copy_string(origin);
+    }
+  SCM_ASSERT((gh_procedure_p(proc)),proc,SCM_ARG1,origin);
+  SCM_ASSERT((gh_number_p(s_beg)) || (gh_boolean_p(s_beg)) || (SCM_UNBNDP(s_beg)),s_beg,SCM_ARG2,origin);
+  SCM_ASSERT((gh_number_p(s_end)) || (gh_boolean_p(s_end)) || (SCM_UNBNDP(s_end)),s_end,SCM_ARG3,origin);
+  ss = get_global_state();
+  cp = get_cp(snd,chn);
+  if (cp == NULL) return(NO_SUCH_CHANNEL);
+  beg = g_scm2intdef(s_beg,0);
+  end = g_scm2intdef(s_end,0);
+  if (scan)
+    {
+      if (series)
+	return(series_scan(ss,cp,proc,chan_choice,beg,end));
+      else return(parallel_scan(ss,cp,proc,chan_choice,beg,end));
+    }
+  else
+    {
+      if (series)
+	result = series_map(ss,cp,proc,chan_choice,beg,end,ed_origin);
+      else result = parallel_map(ss,cp,proc,chan_choice,beg,end,ed_origin);
+      if (ed_origin) FREE(ed_origin);
+      return(result);
+    }
+}
+
+static SCM g_scan_chan(SCM proc, SCM beg, SCM end, SCM snd, SCM chn) 
+{ 
+  #define H_scan_chan "(" S_scan_chan " func &optional (start 0) end snd chn)\n\
+   apply func to samples in current channel (or the specified channel)\n\
+   func is a function of one argument, either the current sample, or #f (to indicate end-of-data)\n\
+   if func returns non-#f, the scan stops, and the value is returned to the caller with the sample number"
+
+  ERRCP(S_scan_chan,snd,chn,4); 
+  return(g_sp_scan(proc,SCAN_CURRENT_CHAN,beg,end,TRUE,TRUE,SCM_BOOL_F,snd,chn));
+}
+
+static SCM g_scan_chans(SCM proc, SCM beg, SCM end) 
+{ 
+  #define H_scan_chans "(" S_scan_chans " func &optional (start 0) end)\n\
+   apply func to samples in all sync'd channels, one channel after another"
+   
+  return(g_sp_scan(proc,SCAN_SYNCD_CHANS,beg,end,TRUE,TRUE,SCM_BOOL_F,SCM_BOOL_F,SCM_BOOL_F));
+}
+
+static SCM g_scan_all_chans(SCM proc, SCM beg, SCM end) 
+{ 
+  #define H_scan_all_chans "(" S_scan_all_chans " func &optional (start 0) end)\n\
+   apply func to samples in all channels, one after the other"
+
+  return(g_sp_scan(proc,SCAN_ALL_CHANS,beg,end,TRUE,TRUE,SCM_BOOL_F,SCM_BOOL_F,SCM_BOOL_F));
+}
+
+static SCM g_scan_sound_chans(SCM proc, SCM beg, SCM end, SCM snd) 
+{ 
+  #define H_scan_sound_chans "(" S_scan_sound_chans " func &optional (start 0) end snd)\n\
+   apply func to samples in all of sound snd's channels"
+
+  ERRSP(S_scan_sound_chans,snd,4); 
+  return(g_sp_scan(proc,SCAN_SOUND_CHANS,beg,end,TRUE,TRUE,SCM_BOOL_F,snd,SCM_BOOL_F));
+}
+
+static SCM g_scan_across_chans(SCM proc, SCM beg, SCM end) 
+{ 
+  #define H_scan_across_chans "(" S_scan_across_chans " func &optional (start 0) end)\n\
+   apply func to samples in all sync'd channels in parallel"
+
+  return(g_sp_scan(proc,SCAN_SYNCD_CHANS,beg,end,FALSE,TRUE,SCM_BOOL_F,SCM_BOOL_F,SCM_BOOL_F));
+}
+
+static SCM g_scan_across_all_chans(SCM proc, SCM beg, SCM end) 
+{ 
+  #define H_scan_across_all_chans "(" S_scan_across_all_chans " func &optional (start 0) end)\n\
+   apply func to samples in all channels in parallel"
+
+  return(g_sp_scan(proc,SCAN_ALL_CHANS,beg,end,FALSE,TRUE,SCM_BOOL_F,SCM_BOOL_F,SCM_BOOL_F));
+}
+
+static SCM g_scan_across_sound_chans(SCM proc, SCM beg, SCM end, SCM snd) 
+{ 
+  #define H_scan_across_sound_chans "(" S_scan_across_sound_chans " func &optional (start 0) end snd)\n\
+   apply func to samples in sound snd's channels in parallel"
+
+  ERRSP(S_scan_across_sound_chans,snd,4); 
+  return(g_sp_scan(proc,SCAN_SOUND_CHANS,beg,end,FALSE,TRUE,SCM_BOOL_F,snd,SCM_BOOL_F));
+}
+
+static SCM g_map_chan(SCM proc, SCM beg, SCM end, SCM org, SCM snd, SCM chn) 
+{ 
+  #define H_map_chan "(" S_map_chan "func &optional (start 0) end edname snd chn)\n\
+   apply func to samples in current channel, edname is the edit history name for this editing operation"
+
+  ERRCP(S_map_chan,snd,chn,5); 
+  return(g_sp_scan(proc,SCAN_CURRENT_CHAN,beg,end,TRUE,FALSE,org,snd,chn));
+}
+
+static SCM g_map_chans(SCM proc, SCM beg, SCM end, SCM org) 
+{ 
+  #define H_map_chans "(" S_map_chans "func &optional (start 0) end edname)\n\
+   apply func to currently sync'd channels, edname is the edit history name for this editing operation"
+
+  return(g_sp_scan(proc,SCAN_SYNCD_CHANS,beg,end,TRUE,FALSE,org,SCM_BOOL_F,SCM_BOOL_F));
+}
+
+static SCM g_map_all_chans(SCM proc, SCM beg, SCM end, SCM org) 
+{ 
+  #define H_map_all_chans "(" S_map_all_chans "func &optional (start 0) end edname)\n\
+    apply func to all channels, edname is the edit history name for this editing operation"
+
+  return(g_sp_scan(proc,SCAN_ALL_CHANS,beg,end,TRUE,FALSE,org,SCM_BOOL_F,SCM_BOOL_F));
+}
+
+static SCM g_map_sound_chans(SCM proc, SCM beg, SCM end, SCM org,SCM snd) 
+{
+  #define H_map_sound_chans "(" S_map_sound_chans "func &optional (start 0) end edname snd)\n\
+    apply func to sound snd's channels, edname is the edit history name for this editing operation"
+
+  ERRSP(S_map_sound_chans,snd,5); 
+  return(g_sp_scan(proc,SCAN_SOUND_CHANS,beg,end,TRUE,FALSE,org,snd,SCM_BOOL_F));
+}
+
+static SCM g_map_across_chans(SCM proc, SCM beg, SCM end, SCM org) 
+{
+  #define H_map_across_chans "(" S_map_across_chans "func &optional (start 0) end edname)\n\
+   apply func to currently sync'd channels in parallel, edname is the edit history name for this editing operation"
+
+  return(g_sp_scan(proc,SCAN_SYNCD_CHANS,beg,end,FALSE,FALSE,org,SCM_BOOL_F,SCM_BOOL_F));
+}
+
+static SCM g_map_across_all_chans(SCM proc, SCM beg, SCM end, SCM org) 
+{
+  #define H_map_across_all_chans "(" S_map_across_all_chans "func &optional (start 0) end edname)\n\
+   apply func to all channels in parallel, edname is the edit history name for this editing operation"
+
+  return(g_sp_scan(proc,SCAN_ALL_CHANS,beg,end,FALSE,FALSE,org,SCM_BOOL_F,SCM_BOOL_F));
+}
+
+static SCM g_map_across_sound_chans(SCM proc, SCM beg, SCM end, SCM org, SCM snd) 
+{
+  #define H_map_across_sound_chans "(" S_map_across_sound_chans "func &optional (start 0) end edname snd)\n\
+   apply func to sound snd's channels in parallel, edname is the edit history name for this editing operation"
+
+  ERRSP(S_map_across_sound_chans,snd,5); 
+  return(g_sp_scan(proc,SCAN_SOUND_CHANS,beg,end,FALSE,FALSE,org,snd,SCM_BOOL_F));
+}
+
+static SCM g_find(SCM expr, SCM sample, SCM snd_n, SCM chn_n)
+{
+  #define H_find "(" S_find " func &optional (start-samp 0) snd chn) applyies func, a function of one argument,\n\
+   the current sample, to each sample in snd's channel chn, starting at 'start-samp' until func returns #t"
+
+  /* no free here -- it's handled as ss->search_expr in snd-find.c */
+  chan_info *cp = NULL;
+  SCM_ASSERT((gh_string_p(expr) || gh_procedure_p(expr)),expr,SCM_ARG1,S_find);
+  ERRB2(sample,S_find);
+  ERRCP(S_find,snd_n,chn_n,3);
+  if (gh_string_p(expr))
+    {
+      cp = get_cp(snd_n,chn_n);
+      if (cp) 
+	RTNINT(snd_find_1(cp,gh_scm2newstr(expr,NULL),g_scm2intdef(sample,0),FALSE)); 
+      else return(NO_SUCH_CHANNEL);
+    }
+  else return(g_scan_chan(expr,sample,SCM_BOOL_F,snd_n,chn_n));
+  return(SCM_BOOL_F);
+}
+
+static SCM g_count_matches(SCM expr, SCM sample, SCM snd_n, SCM chn_n)
+{
+  #define H_count_matches "(" S_count_matches " func &optional (start-samp 0) snd chn) returns how many\n\
+   samples satisfy func (a function of one argument, the current sample, returning #t upon match)"
+
+  chan_info *cp = NULL;
+  int samp = 0,matches,lim;
+  SCM match,cursamp;
+  SCM_ASSERT((gh_string_p(expr) || gh_procedure_p(expr)),expr,SCM_ARG1,S_count_matches);
+  ERRB2(sample,S_count_matches);
+  ERRCP(S_count_matches,snd_n,chn_n,3);
+  cp = get_cp(snd_n,chn_n);
+  if (cp == NULL) return(NO_SUCH_CHANNEL);
+  samp = g_scm2intdef(sample,0);
+  if (gh_string_p(expr))
+    RTNINT(snd_find_1(cp,gh_scm2newstr(expr,NULL),g_scm2intdef(sample,0),TRUE));
+  else
+    {
+      matches = 0;
+      lim = current_ed_samples(cp);
+      while (samp < lim)
+	{
+	  cursamp = gh_int2scm(samp);
+	  match = g_scan_chan(expr,cursamp,SCM_BOOL_F,snd_n,chn_n);
+	  if ((gh_list_p(match)) && (SCM_TRUE_P(scm_list_ref(match,gh_int2scm(0)))))
+	    {
+	      matches++;
+	      samp = g_scm2int(scm_list_ref(match,gh_int2scm(1))) + 1;
+	    }
+	  else break;
+	}
+      return(gh_int2scm(matches));
+    }
+  return(SCM_BOOL_F);
+}
+
+static SCM g_prompt_in_minibuffer(SCM msg, SCM callback, SCM snd_n)
+{
+  #define H_prompt_in_minibuffer "(" S_prompt_in_minibuffer " msg callback &optional snd) posts msg in snd's minibuffer\n\
+   then when the user eventually responds, invokes the function callback with the response and snd (the index)"
+
+  snd_info *sp;
+  char *str;  
+  ERRS1(msg,S_prompt_in_minibuffer);
+  SCM_ASSERT((SCM_UNBNDP(callback)) || (gh_boolean_p(callback)) || gh_procedure_p(callback),callback,SCM_ARG2,S_prompt_in_minibuffer);
+  ERRSP(S_prompt_in_minibuffer,snd_n,3);
+  sp = get_sp(snd_n);
+  if (sp == NULL) return(NO_SUCH_SOUND);
+  if ((sp->prompt_callback) && (gh_procedure_p(sp->prompt_callback))) snd_unprotect(sp->prompt_callback);
+  if (gh_procedure_p(callback)) 
+    {
+      sp->prompt_callback = callback;
+      snd_protect(sp->prompt_callback);
+    }
+  else sp->prompt_callback = SCM_BOOL_F;
+  str = gh_scm2newstr(msg,NULL);
+  g_prompt(sp,str);
+  free(str);
+  return(SCM_BOOL_F);
+}
+
+static SCM g_report_in_minibuffer(SCM msg, SCM snd_n)
+{
+  #define H_report_in_minibuffer "(" S_report_in_minibuffer " msg &optional snd) displays msg in snd's minibuffer"
+  snd_info *sp;
+  char *str;  
+  ERRS1(msg,S_report_in_minibuffer);
+  ERRSP(S_report_in_minibuffer,snd_n,2);
+  sp = get_sp(snd_n);
+  if (sp == NULL) return(NO_SUCH_SOUND);
+  str = gh_scm2newstr(msg,NULL);
+  report_in_minibuffer(sp,str);
+  free(str);
+  return(msg);
+}
+
+static SCM g_append_to_minibuffer(SCM msg, SCM snd_n)
+{
+  #define H_append_to_minibuffer "(" S_append_to_minibuffer " msg &optional snd) appends msg to snd's minibuffer"
+  snd_info *sp;
+  char *str;
+  ERRS1(msg,S_append_to_minibuffer);
+  ERRSP(S_append_to_minibuffer,snd_n,2);
+  sp = get_sp(snd_n);
+  if (sp == NULL) return(NO_SUCH_SOUND);
+  str = gh_scm2newstr(msg,NULL);
+  append_to_minibuffer(sp,str);
+  free(str);
+  return(msg);
+}
+
+static SCM g_bind_key(SCM key, SCM state, SCM code, SCM ignore_prefix)
+{
+  #define H_bind_key "(" S_bind_key " key modifiers func (ignore-prefix #f)) causes 'key' (an integer)\n\
+   when typed with 'modifiers' (1:shift, 4:control, 8:meta) to invoke 'func', a function of\n\
+   no arguments.  If ignore-prefix is #t, preceding C-u arguments are not handled by Snd itself.\n\
+   The function should return one of the cursor choices (e.g. cursor-no-action)."
+
+  int ip;
+  ERRN1(key,S_bind_key);
+  ERRN2(state,S_bind_key);
+  SCM_ASSERT((SCM_FALSEP(code) || gh_procedure_p(code)),code,SCM_ARG3,S_bind_key);
+  if ((SCM_FALSEP(ignore_prefix)) || (SCM_UNBNDP(ignore_prefix)) ||  
+      ((gh_number_p(ignore_prefix)) && (g_scm2int(ignore_prefix) == 0)))
+    ip = 0;
+  else ip = 1;
+  if (SCM_FALSEP(code))
+    set_keymap_entry(g_scm2int(key),g_scm2int(state),ip,SCM_UNDEFINED);
+  else 
+    if (procedure_ok(code,0,0,S_bind_key,"func",3))
+      set_keymap_entry(g_scm2int(key),g_scm2int(state),ip,code);
+  return(SCM_BOOL_T);
+}
+
+static SCM g_save_macros(void) 
+{
+  #define H_save_macros "(" S_save_macros ") saves keyboard macros in Snd's init file (.snd)"
+  FILE *fd;
+  snd_state *ss;
+  ss = get_global_state();
+  fd = open_snd_init_file(ss);
+  save_macro_state(ss,fd);
+  fclose(fd);
+  return(SCM_BOOL_F);
+}
+
+
+
+void g_init_chn(SCM local_doc)
+{
+  DEFINE_PROC(gh_new_procedure(S_temp_filenames,g_temp_filenames,1,0,0),H_temp_filenames);
+  DEFINE_PROC(gh_new_procedure(S_sound_to_temp,g_sound_to_temp,0,2,0),H_sound_to_temp);
+  DEFINE_PROC(gh_new_procedure(S_sound_to_temps,g_sound_to_temps,0,2,0),H_sound_to_temps);
+  DEFINE_PROC(gh_new_procedure(S_selection_to_temp,g_selection_to_temp,0,2,0),H_selection_to_temp);
+  DEFINE_PROC(gh_new_procedure(S_selection_to_temps,g_selection_to_temps,0,2,0),H_selection_to_temps);
+  DEFINE_PROC(gh_new_procedure(S_temp_to_sound,g_temp_to_sound,3,0,0),H_temp_to_sound);
+  DEFINE_PROC(gh_new_procedure(S_temps_to_sound,g_temps_to_sound,3,0,0),H_temps_to_sound);
+  DEFINE_PROC(gh_new_procedure(S_temp_to_selection,g_temp_to_sound,3,0,0),H_temp_to_sound);
+  DEFINE_PROC(gh_new_procedure(S_temps_to_selection,g_temps_to_sound,3,0,0),H_temps_to_sound);
+  DEFINE_PROC(gh_new_procedure(S_scan_chan,g_scan_chan,1,4,0),H_scan_chan);
+  DEFINE_PROC(gh_new_procedure(S_scan_chans,g_scan_chans,1,2,0),H_scan_chans);
+  DEFINE_PROC(gh_new_procedure(S_scan_all_chans,g_scan_all_chans,1,2,0),H_scan_all_chans);
+  DEFINE_PROC(gh_new_procedure(S_scan_sound_chans,g_scan_sound_chans,1,3,0),H_scan_sound_chans);
+  DEFINE_PROC(gh_new_procedure(S_scan_across_chans,g_scan_across_chans,1,2,0),H_scan_across_chans);
+  DEFINE_PROC(gh_new_procedure(S_scan_across_all_chans,g_scan_across_all_chans,1,2,0),H_scan_across_all_chans);
+  DEFINE_PROC(gh_new_procedure(S_scan_across_sound_chans,g_scan_across_sound_chans,1,3,0),H_scan_across_sound_chans);
+  DEFINE_PROC(gh_new_procedure(S_map_chan,g_map_chan,1,5,0),H_map_chan);
+  DEFINE_PROC(gh_new_procedure(S_map_chans,g_map_chans,1,3,0),H_map_chans);
+  DEFINE_PROC(gh_new_procedure(S_map_all_chans,g_map_all_chans,1,3,0),H_map_all_chans);
+  DEFINE_PROC(gh_new_procedure(S_map_sound_chans,g_map_sound_chans,1,4,0),H_map_sound_chans);
+  DEFINE_PROC(gh_new_procedure(S_map_across_chans,g_map_across_chans,1,3,0),H_map_across_chans);
+  DEFINE_PROC(gh_new_procedure(S_map_across_all_chans,g_map_across_all_chans,1,3,0),H_map_across_all_chans);
+  DEFINE_PROC(gh_new_procedure(S_map_across_sound_chans,g_map_across_sound_chans,1,4,0),H_map_across_sound_chans);
+  DEFINE_PROC(gh_new_procedure(S_find,g_find,1,3,0),H_find);
+  DEFINE_PROC(gh_new_procedure(S_count_matches,g_count_matches,1,3,0),H_count_matches);
+  DEFINE_PROC(gh_new_procedure(S_report_in_minibuffer,g_report_in_minibuffer,1,1,0),H_report_in_minibuffer);
+  DEFINE_PROC(gh_new_procedure(S_prompt_in_minibuffer,g_prompt_in_minibuffer,1,2,0),H_prompt_in_minibuffer);
+  DEFINE_PROC(gh_new_procedure(S_append_to_minibuffer,g_append_to_minibuffer,1,1,0),H_append_to_minibuffer);
+  DEFINE_PROC(gh_new_procedure(S_bind_key,g_bind_key,3,1,0),H_bind_key);
+  DEFINE_PROC(gh_new_procedure(S_save_macros,g_save_macros,0,0,0),H_save_macros);
+}
+
+#endif

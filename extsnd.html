@@ -1082,6 +1082,7 @@ would refer to the original form.  I may extend this to accept a list of (more t
   <a name="sndspectrum">snd-spectrum</a>      (data window length <i>linear</i>)
                                   return spectrum of <i>data</i> (type vct) using fft-window <i>win</i>.
                                   length of data (and fft) is <i>length</i>.
+  <a name="sndversion">snd-version</a>       ()            Snd version (a string).
   <a name="sndwarning">snd-warning</a>       (str)         report warning message <i>str</i>, return <i>str</i>.
   <a name="soundfilesindirectory">sound-files-in-directory</a> (dir)  return a vector of sound file names.
                                   This is useful for "batch" processing of sounds.  The following,
@@ -1150,7 +1151,6 @@ would refer to the original form.  I may extend this to accept a list of (more t
   <a name="sndupdate">update-sound</a>      (snd)         update <i>snd</i> (re-reads data from disk, flushing any pending edits).
   <a name="sndupdatefft">update-fft</a>        (<i>snd chn</i>)     recalculate <i>chn's</i> fft.
   <a name="sndupdategraph">update-graph</a>      (<i>snd chn</i>)     redisplay <i>chn's</i> graph(s).
-  <a name="sndversion">version</a>           ()            Snd version (a string).
   <a name="vctp">vct?</a>              (vobj)        #t if <i>vobj</i> is a <a href="#Vcts">vct</a> struct.
   <a name="vctadd">vct-add!</a>          (vobj1 vobj2) vobj1[i] += vobj2[i], returns vobj1.
   <a name="vctcopy">vct-copy</a>          (obj)         return a copy of <i>obj</i>.
@@ -1441,7 +1441,7 @@ envelope editor). </p>
 useful in conjunction with the format module:</p>
 <pre>
   (use-modules (ice-9 format))
-  (snd-print (format #f ";;~A" (version)))
+  (snd-print (format #f ";;~A" (snd-version)))
 </pre>
 <p>
 There are a number of functions that return information about

@@ -469,6 +469,7 @@ void set_apply_button(snd_info *sp, int val);
 /* -------- snd-gmix.c -------- */
 
 void release_mixmark_widgets(mixmark *m);
+mix_context *make_mix_context(chan_info *cp);
 mix_context *set_mixdata_context(chan_info *cp);
 void select_mix(snd_state *ss, mixdata *md);
 void color_selected_mix(snd_state *ss);

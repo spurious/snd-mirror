@@ -158,18 +158,6 @@ static void release_mixmark(mixmark *m)
   release_mixmark_widgets(m);
 }
 
-mix_context *make_mix_context(chan_info *cp)
-{
-  mix_context *g;
-  g = (mix_context *)CALLOC(1,sizeof(mix_context));
-#if USE_MOTIF
-  g->graph = channel_graph(cp);
-#else
-  g->graph = channel_graph_parent(cp);
-#endif
-  return(g);
-}
-
 mix_context *free_mix_context(mix_context *ms)
 {
   if (ms->p0) {FREE(ms->p0); ms->p0 = NULL;}
@@ -226,6 +214,22 @@ static void release_pending_consoles(mixdata *md)
 
 
 /* ---------------- MIX READ ---------------- */
+
+typedef struct {
+  int type;
+  mixdata *md;
+  console_state *cs;
+  snd_fd **sfs;
+  int chans;                           /* chans of input */
+  int calc,base;
+  Float x,sr;
+  MUS_SAMPLE_TYPE *lst,*nxt;
+  src_state **srcs;
+  mus_any **segs;
+  int *ctr,*samples;
+  MUS_SAMPLE_TYPE **idata;
+  Float samps_per_bin;
+} mix_fd;
 
 static env_info *make_mix_input_amp_env(chan_info *cp)
 {
@@ -317,7 +321,7 @@ static MUS_SAMPLE_TYPE next_mix_input_amp_env_sample(mix_fd *mf, int chan)
   return(0);
 }
 
-MUS_SAMPLE_TYPE next_mix_sample(mix_fd *mf)
+static MUS_SAMPLE_TYPE next_mix_sample(mix_fd *mf)
 {
   int i,j,move;
   MUS_SAMPLE_TYPE val,sum = MUS_SAMPLE_0;
@@ -557,7 +561,7 @@ static mix_fd *init_mix_read_1(mixdata *md, int old, int type, int hi)
   return(mf);
 }
 
-mix_fd *init_mix_read(mixdata *md, int old)
+static mix_fd *init_mix_read(mixdata *md, int old)
 {
   return(init_mix_read_1(md,old,MIX_INPUT_SOUND,0));
 }
@@ -588,7 +592,7 @@ static mix_fd *init_mix_input_amp_env_read(mixdata *md, int old, int hi)
   return(mf);
 }
 
-mix_fd *free_mix_fd(mix_fd *mf)
+static mix_fd *free_mix_fd(mix_fd *mf)
 {
   int i;
   if (mf)
@@ -872,7 +876,7 @@ static mixdata *add_mix(chan_info *cp, int chan, int beg, int num,
   return(md);
 }
 
-mixdata *file_mix_samples(int beg, int num, char *tempfile, chan_info *cp, int chan, int temp, int out_chans, char *origin, int with_console)
+static mixdata *file_mix_samples(int beg, int num, char *tempfile, chan_info *cp, int chan, int temp, int out_chans, char *origin, int with_console)
 {
   /* open tempfile, current data, write to new temp file mixed, close others, open and use new as change case */
   /* used for clip-region temp file incoming and C-q in snd-chn.c (i.e. mix in file) so sync not relevant */
@@ -2372,30 +2376,6 @@ int goto_mix(chan_info *cp,int count)
 }
 
 
-/* ---------------- MIX TO GUILE ---------------- */
-
-mixdata *md_from_int(int n) {if ((n>=0) && (n<mixdatas_size)) return(mixdatas[n]); else return(NULL);}
-
-static console_state *cs_from_int(int n)
-{
-  mixdata *md;
-  md = md_from_int(n);
-  if (md) return(md->current_cs);
-  return(NULL);
-}
-
-static int mix_position(int n) {console_state *cs; cs = cs_from_int(n); if (cs) return(cs->orig); return(-1);}
-int mix_length(int n) {console_state *cs; cs = cs_from_int(n); if (cs) return(cs->len); return(-1);}
-static int mix_chans(int n) {console_state *cs; cs = cs_from_int(n); if (cs) return(cs->chans); return(0);}
-static int mix_anchor(int n) {mixdata *md; md = md_from_int(n); if (md) return(md->anchor); return(-1);}
-static char *mix_name(int n) {mixdata *md; md = md_from_int(n); if (md) return(md->name); return(NULL);}
-static int mix_track(int n) {mixdata *md; md = md_from_int(n); if (md) return(md->track); return(-1);}
-static int mix_console_state(int n) {mixdata *md; md = md_from_int(n); if (md) return(md->state); return(-1);}
-static Float mix_speed(int n) {console_state *cs; cs = cs_from_int(n); if (cs) return(cs->speed); return(0.0);}
-static int mix_sound_channel(int n) {mixdata *md; md = md_from_int(n); if (md) return((md->cp)->chan); return(-1);}
-static int mix_sound_index(int n) {mixdata *md; md = md_from_int(n); if (md) return(((md->cp)->sound)->index); return(-1);}
-static int mix_console_y(int n) {mixdata *md; md = md_from_int(n); if (md) return(md->y); return(-1);}
-
 static int mix_ok(int n) 
 {
   mixdata *md; 
@@ -2414,212 +2394,28 @@ int any_mix_id(void)
   return(-1);
 }
 
-static Float mix_amp(int n, int chan) 
+void draw_mix_waveform(mixdata *md, int xspot, int yspot) 
 {
-  console_state *cs; 
-  cs = cs_from_int(n); 
-  if (cs) 
-    {
-      if (chan < cs->chans)
-	return(cs->scalers[chan]); 
-    }
-  return(0.0);
+  display_mix_waveform(md->cp,md,md->current_cs,yspot+20,mix_waveform_height(md->ss),TRUE);
 }
 
-env *mix_amp_env(int n, int chan) 
+void erase_mix_waveform(mixdata *md, int xspot, int yspot) 
 {
-  console_state *cs; 
-  cs = cs_from_int(n); 
-  if (cs) 
-    {
-      if (chan < cs->chans)
-	{
-	  if (cs->amp_envs)
-	    return(cs->amp_envs[chan]);
-	  else return(NULL);
-	}
-    }
-  return(NULL);
+  display_mix_waveform(md->cp,md,md->current_cs,yspot+20,mix_waveform_height(md->ss),FALSE);
 }
 
-/* should a locked mix be settable? Currently it is. */
-
-static int set_mix_position(int n, int val)
-{
-  mixdata *md;
-  console_state *cs = NULL;
-  md = md_from_int(n);
-  if (md) cs = md->current_cs;
-  if (cs)
-    {
-      if (val >= 0) cs->beg = val; else cs->beg = 0;
-      if (md->mixer) set_mix_title_beg(md,md->mixer);
-      remix_file(md,S_set_mix_position); 
-    }
-  return(val);
-}
-
-static int set_mix_length(int n, int val)
-{
-  mixdata *md;
-  console_state *cs = NULL;
-  md = md_from_int(n);
-  if (md) cs = md->current_cs;
-  if ((cs) && (val >= 0))
-    {
-      cs->len = val;
-      if (md->mixer) set_mix_title_beg(md,md->mixer);
-      remix_file(md,S_set_mix_length); 
-    }
-  return(val);
-}
-
-static int set_mix_anchor(int n, int val)
-{
-  mixdata *md;
-  console_state *cs = NULL;
-  md = md_from_int(n);
-  if (md) cs = md->current_cs;
-  if ((cs) && (val >= 0))
-    {
-      md->anchor = val;
-      update_graph(md->cp,NULL);
-    }
-  return(val);
-}
-
-static char *set_mix_name(int n, char *new_name)
-{
-  mixdata *md;
-  md = md_from_int(n);
-  if (md)
-    {
-      if (md->name) FREE(md->name);
-      md->name = copy_string(new_name);
-      reflect_mix_name(md);
-    }
-  return(new_name);
-}
-
-static int set_mix_console_state(int n, int val)
-{
-  mixdata *md;
-  console_state *cs = NULL;
-  md = md_from_int(n);
-  if (md) cs = md->current_cs;
-  if ((cs) && (val >= 0) && (val < 3))
-    {
-      md->state = val;
-      fixup_mixmark(md);
-    }
-  return(val);
-}
-
-static int set_mix_console_y(int n, int val)
-{
-  mixdata *md;
-  md = md_from_int(n);
-  if (md)
-    {
-      md->y = val;
-      if (md->mixer) move_mix_y(md->mixer,md->y);
-    }
-  return(val);
-}
-
-static int set_mix_track(int n, int val)
-{
-  mixdata *md;
-  md = md_from_int(n);
-  if (md)
-    {
-      md->track = val;
-      set_mix_track_button_color(md,val);
-    }
-  return(val);
-}
-
-static Float set_mix_speed(int n, Float val)
-{
-  mixdata *md;
-  md = md_from_int(n);
-  if ((md) && (val != 0.0))
-    {
-      respeed(md,val);
-      remix_file(md,S_set_mix_speed);
-    }
-  return(val);
-}
-
-static Float set_mix_amp(int n, int chan, Float val)
-{
-  mixdata *md;
-  md = md_from_int(n);
-  if ((md) && (val >= 0.0))
-    {
-      if (md->in_chans > chan)
-	{
-	  reamp(md,chan,val);
-	  remix_file(md,S_set_mix_amp);
-	}
-    }
-  return(val);
-}
-
-env *set_mix_amp_env(int n, int chan, env *val)
-{
-  mixdata *md;
-  console_state *cs;
-  md = md_from_int(n);
-  if (md)
-    {
-      if (chan == NO_SELECTION) chan = md->selected_chan;
-      if (md->in_chans > chan)
-	{
-	  cs = md->current_cs;
-	  if ((cs->amp_envs) && (cs->amp_envs[chan])) free_env(cs->amp_envs[chan]);
-	  if (cs->amp_envs == NULL) cs->amp_envs = (env **)CALLOC(cs->chans,sizeof(env *));
-	  cs->amp_envs[chan] = copy_env(val);
-	  remix_file(md,S_set_mix_amp_env);
-	}
-    }
-  return(val);
-}
-
-static int mix_locked(int n) 
-{
-  mixdata *md;
-  console_state *cs;
-  md = md_from_int(n);
-  if (md) 
-    {
-      cs = md->current_cs;
-      return(cs->locked);
-    }
-  return(0);
-}
-
-static int set_mix_locked(int n, int on)
-{
-  console_state *cs;
-  mixdata *md;
-  md = md_from_int(n);
-  if (md)
-    {
-      cs = md->states[md->curcons];
-      cs->locked = on;
-      cs = md->current_cs;
-      cs->locked = on;
-      display_channel_mixes(md->cp);
-    }
-  return(on);
-}
 
 
 /* ---------------- TRACKS ---------------- */
 /* track reader: an array of mix readers with state: active, waiting, null (done) */
 
-track_fd *init_track_reader(chan_info *cp, int track_num, int global) /* edit-position? direction? */
+typedef struct {
+  int mixes;
+  int *state,*len;
+  mix_fd **fds;
+} track_fd;
+
+static track_fd *init_track_reader(chan_info *cp, int track_num, int global) /* edit-position? direction? */
 {
   track_fd *fd = NULL;
   snd_state *ss;
@@ -2669,7 +2465,7 @@ track_fd *init_track_reader(chan_info *cp, int track_num, int global) /* edit-po
   return(fd);
 }
 
-track_fd *free_track_fd(track_fd *fd)
+static track_fd *free_track_fd(track_fd *fd)
 {
   int i;
   if (fd)
@@ -2689,7 +2485,7 @@ track_fd *free_track_fd(track_fd *fd)
   return(NULL);
 }
 
-MUS_SAMPLE_TYPE next_track_sample(track_fd *fd)
+static MUS_SAMPLE_TYPE next_track_sample(track_fd *fd)
 {
   int i;
   MUS_SAMPLE_TYPE sum=MUS_SAMPLE_0;
@@ -2712,7 +2508,7 @@ MUS_SAMPLE_TYPE next_track_sample(track_fd *fd)
   return(sum);
 }
 
-void play_track(snd_state *ss, chan_info **ucps, int chans, int track_num)
+static void play_track(snd_state *ss, chan_info **ucps, int chans, int track_num)
 {
   track_fd **fds;
   chan_info **cps;
@@ -2834,28 +2630,65 @@ void play_mix(snd_state *ss, mixdata *md)
 }
 
 
-void draw_mix_waveform(mixdata *md, int xspot, int yspot) 
+mixdata *md_from_int(int n) 
 {
-  display_mix_waveform(md->cp,md,md->current_cs,yspot+20,mix_waveform_height(md->ss),TRUE);
+  if ((n>=0) && (n<mixdatas_size)) 
+    return(mixdatas[n]); 
+  else return(NULL);
 }
 
-void erase_mix_waveform(mixdata *md, int xspot, int yspot) 
+static console_state *cs_from_int(int n)
 {
-  display_mix_waveform(md->cp,md,md->current_cs,yspot+20,mix_waveform_height(md->ss),FALSE);
+  mixdata *md;
+  md = md_from_int(n);
+  if (md) return(md->current_cs);
+  return(NULL);
 }
 
-static int update_mix_waveforms(chan_info *cp, void *ptr)
+int mix_length(int n) 
 {
-  if ((cp) && (cp->mixes)) update_graph(cp,NULL);
-  return(0);
+  console_state *cs; 
+  cs = cs_from_int(n); 
+  if (cs) 
+    return(cs->len); 
+  return(-1);
 }
 
-static void set_mix_waveform_height(snd_state *ss, int val)
+env *mix_amp_env(int n, int chan) 
 {
-  in_set_mix_waveform_height(ss,val);
-  map_over_chans(ss,update_mix_waveforms,NULL);
+  console_state *cs; 
+  cs = cs_from_int(n); 
+  if (cs) 
+    {
+      if (chan < cs->chans)
+	{
+	  if (cs->amp_envs)
+	    return(cs->amp_envs[chan]);
+	  else return(NULL);
+	}
+    }
+  return(NULL);
 }
 
+env *set_mix_amp_env(int n, int chan, env *val)
+{
+  mixdata *md;
+  console_state *cs;
+  md = md_from_int(n);
+  if (md)
+    {
+      if (chan == NO_SELECTION) chan = md->selected_chan;
+      if (md->in_chans > chan)
+	{
+	  cs = md->current_cs;
+	  if ((cs->amp_envs) && (cs->amp_envs[chan])) free_env(cs->amp_envs[chan]);
+	  if (cs->amp_envs == NULL) cs->amp_envs = (env **)CALLOC(cs->chans,sizeof(env *));
+	  cs->amp_envs[chan] = copy_env(val);
+	  remix_file(md,S_set_mix_amp_env);
+	}
+    }
+  return(val);
+}
 
 #if HAVE_GUILE
 #include "sg.h"
@@ -2863,21 +2696,21 @@ static void set_mix_waveform_height(snd_state *ss, int val)
 static SCM g_mix_position(SCM n) 
 {
   #define H_mix_position "(" S_mix_position " id) -> sample number of start of mix"
-  int pos;
+  console_state *cs; 
   ERRB1(n,S_mix_position); 
-  pos = mix_position(g_scm2intdef(n,0));
-  if (pos == -1) return(NO_SUCH_MIX);
-  RTNINT(pos);
+  cs = cs_from_int(g_scm2intdef(n,0));
+  if (cs) RTNINT(cs->orig); 
+  return(NO_SUCH_MIX);
 }
 
 static SCM g_mix_chans(SCM n) 
 {
   #define H_mix_chans "(" S_mix_chans " id) -> (input) channels in mix"
-  int chans;
+  console_state *cs; 
   ERRB1(n,S_mix_chans); 
-  chans = mix_chans(g_scm2intdef(n,0));
-  if (chans == 0) return(NO_SUCH_MIX);
-  RTNINT(chans);
+  cs = cs_from_int(g_scm2intdef(n,0));
+  if (cs) RTNINT(cs->chans);
+  return(NO_SUCH_MIX);
 }
 
 static SCM g_mix_ok(SCM n) 
@@ -2900,65 +2733,71 @@ static SCM g_mix_length(SCM n)
 static SCM g_mix_locked(SCM n) 
 {
   #define H_mix_locked "(" S_mix_locked " id) -> #t if mix cannot be moved (due to subsequent edits overlapping it)"
+  mixdata *md;
   ERRB1(n,S_mix_locked); 
-  RTNBOOL(mix_locked(g_scm2intdef(n,0)));
+  md = md_from_int(g_scm2intdef(n,0));
+  if (md) RTNBOOL((md->current_cs)->locked);
+  return(NO_SUCH_MIX);
 }
 
 static SCM g_mix_anchor(SCM n) 
 {
   #define H_mix_anchor "(" S_mix_anchor " id) -> location of mix 'anchor' (determines console position within mix)"
-  int anchor;
+  mixdata *md; 
   ERRB1(n,S_mix_anchor); 
-  anchor = mix_anchor(g_scm2intdef(n,0));
-  if (anchor == -1) return(NO_SUCH_MIX);
-  RTNINT(anchor);
+  md = md_from_int(g_scm2intdef(n,0));
+  if (md) RTNINT(md->anchor);
+  return(NO_SUCH_MIX);
 }
 
 static SCM g_mix_name(SCM n) 
 {
   #define H_mix_name "(" S_mix_name " id) -> name associated with mix"
+  mixdata *md; 
   ERRB1(n,S_mix_name); 
-  RTNSTR(mix_name(g_scm2intdef(n,0)));
+  md = md_from_int(g_scm2intdef(n,0));
+  if (md) RTNSTR(md->name);
+  return(NO_SUCH_MIX);
 }
 
 static SCM g_mix_track(SCM n) 
 {
   #define H_mix_track "(" S_mix_track " id) -> track that mix is a member of"
-  int track;
+  mixdata *md; 
   ERRB1(n,S_mix_track); 
-  track = mix_track(g_scm2intdef(n,0));
-  if (track == -1) return(NO_SUCH_MIX);
-  RTNINT(track);
+  md = md_from_int(g_scm2intdef(n,0));
+  if (md) RTNINT(md->track);
+  return(NO_SUCH_MIX);
 }
 
 static SCM g_mix_console_state(SCM n) 
 {
   #define H_mix_console_state "(" S_mix_console_state " id) -> display state of mix's console (0=open, 1=title, 2=named)"
-  int cstate;
+  mixdata *md; 
   ERRB1(n,S_mix_console_state); 
-  cstate = mix_console_state(g_scm2intdef(n,0));
-  if (cstate == -1) return(NO_SUCH_MIX);
-  RTNINT(cstate);
+  md = md_from_int(g_scm2intdef(n,0));
+  if (md) RTNINT(md->state);
+  return(NO_SUCH_MIX);
 }
 
 static SCM g_mix_console_y(SCM n) 
 {
   #define H_mix_console_y "(" S_mix_console_y " id) -> height of mix's console"
-  int y;
+  mixdata *md; 
   ERRB1(n,S_mix_console_y); 
-  y = mix_console_y(g_scm2intdef(n,0));
-  if (y == -1) return(NO_SUCH_MIX);
-  RTNINT(y);
+  md = md_from_int(g_scm2intdef(n,0));
+  if (md) RTNINT(md->y);
+  return(NO_SUCH_MIX);
 }
 
 static SCM g_mix_speed(SCM n) 
 {
   #define H_mix_speed "(" S_mix_speed " id) -> srate (speed slider setting) of mix"
-  Float spd;
+  console_state *cs; 
   ERRB1(n,S_mix_speed); 
-  spd = mix_speed(g_scm2intdef(n,0));
-  if (spd == 0.0) return(NO_SUCH_MIX);
-  RTNFLT(spd);
+  cs = cs_from_int(g_scm2intdef(n,0));
+  if (cs) RTNFLT(cs->speed);
+  return(NO_SUCH_MIX);
 }
 
 static SCM g_mixes(void) 
@@ -2970,31 +2809,40 @@ static SCM g_mixes(void)
 static SCM g_mix_sound_index(SCM n) 
 {
   #define H_mix_sound_index "(" S_mix_sound_index " id) -> index of sound affected by mix"
-  int ind;
+  mixdata *md; 
   ERRB1(n,S_mix_sound_index); 
-  ind = mix_sound_index(g_scm2intdef(n,0));
-  if (ind == -1) return(NO_SUCH_MIX);
-  RTNINT(ind);
+  md = md_from_int(g_scm2intdef(n,0));
+  if (md) RTNINT(((md->cp)->sound)->index);
+  return(NO_SUCH_MIX);
 }
 
 static SCM g_mix_sound_channel(SCM n) 
 {
   #define H_mix_sound_channel "(" S_mix_sound_channel " id) -> channel affected by mix"
-  int chan;
-  ERRB1(n,S_mix_sound_channel); 
-  chan = mix_sound_channel(g_scm2intdef(n,0));
-  if (chan == -1) return(NO_SUCH_MIX);
-  RTNINT(chan);
+  mixdata *md; 
+  ERRB1(n,S_mix_sound_channel);
+  md = md_from_int(g_scm2intdef(n,0));
+  if (md) RTNINT((md->cp)->chan);
+  return(NO_SUCH_MIX);
 }
 
 /* these last two refer to the mix output location, not the underlying mix (input) data */
 
-static SCM g_mix_amp(SCM n, SCM chan) 
+static SCM g_mix_amp(SCM n, SCM uchan) 
 {
   #define H_mix_amp "(" S_mix_amp " id &optional (chan 0)) -> amp (console slider setting) of mix's channel chan"
+  console_state *cs; 
+  int chan;
   ERRB1(n,S_mix_amp);
-  ERRB2(chan,S_mix_amp);
-  RTNFLT(mix_amp(g_scm2intdef(n,0),g_scm2intdef(chan,0)));
+  ERRB2(uchan,S_mix_amp);
+  cs = cs_from_int(g_scm2intdef(n,0));
+  if (cs) 
+    {
+      chan = g_scm2intdef(uchan,0);
+      if (chan < cs->chans) RTNFLT(cs->scalers[chan]);
+      return(NO_SUCH_CHANNEL);
+    }
+  return(NO_SUCH_MIX);
 }
 
 static SCM g_mix_amp_env(SCM n, SCM chan) 
@@ -3008,89 +2856,228 @@ static SCM g_mix_amp_env(SCM n, SCM chan)
   return(SCM_EOL);
 }
 
-static SCM g_set_mix_position(SCM n, SCM val) 
+static SCM g_set_mix_position(SCM n, SCM uval) 
 {
+  /* should a locked mix be settable? Currently it is. */
   #define H_set_mix_position "(" S_set_mix_position " id val) sets mix's begin time (sample number) to val (moves the mix)"
+  mixdata *md;
+  int val;
+  console_state *cs = NULL;
   ERRN1(n,S_set_mix_position);
-  ERRN2(val,S_set_mix_position);
-  RTNINT(set_mix_position(g_scm2int(n),g_scm2int(val)));
+  ERRN2(uval,S_set_mix_position);
+  md = md_from_int(g_scm2int(n));
+  if (md)
+    {
+      cs = md->current_cs;
+      if (cs)
+	{
+	  val = g_scm2int(uval);
+	  if (val >= 0) cs->beg = val; else cs->beg = 0;
+	  if (md->mixer) set_mix_title_beg(md,md->mixer);
+	  remix_file(md,S_set_mix_position); 
+	}
+      return(uval);
+    }
+  return(NO_SUCH_MIX);
 }
 
-static SCM g_set_mix_length(SCM n, SCM val) 
+static SCM g_set_mix_length(SCM n, SCM uval) 
 {
   #define H_set_mix_length "(" S_set_mix_length " id val) sets the mix's length (truncating -- dangerous!)"
+  mixdata *md;
+  int val;
+  console_state *cs = NULL;
   ERRN1(n,S_set_mix_length);
-  ERRN2(val,S_set_mix_length);
-  RTNINT(set_mix_length(g_scm2int(n),g_scm2int(val)));
+  ERRN2(uval,S_set_mix_length);
+  md = md_from_int(g_scm2int(n));
+  if (md)
+    {
+      cs = md->current_cs;
+      if (cs)
+	{
+	  val = g_scm2int(uval);
+	  if (val >= 0)
+	    {
+	      cs->len = val;
+	      if (md->mixer) set_mix_title_beg(md,md->mixer);
+	      remix_file(md,S_set_mix_length); 
+	    }
+	}
+      return(uval);
+    }
+  return(NO_SUCH_MIX);
 }
 
 static SCM g_set_mix_locked(SCM n, SCM val) 
 {
   #define H_set_mix_locked "(" S_set_mix_locked " id &optional (val #t)) sets whether the mix can be changed"
+  console_state *cs;
+  mixdata *md;
+  int on;
   ERRN1(n,S_set_mix_locked);
   ERRB2(val,S_set_mix_locked);
-  RTNBOOL(set_mix_locked(g_scm2int(n),bool_int_or_one(val)));
+  md = md_from_int(g_scm2int(n));
+  if (md)
+    {
+      on = bool_int_or_one(val);
+      cs = md->states[md->curcons];
+      cs->locked = on;
+      cs = md->current_cs;
+      cs->locked = on;
+      display_channel_mixes(md->cp);
+      return(val);
+    }
+  return(NO_SUCH_MIX);
 }
 
-static SCM g_set_mix_anchor(SCM n, SCM val) 
+static SCM g_set_mix_anchor(SCM n, SCM uval) 
 {
   #define H_set_mix_anchor "(" S_set_mix_anchor " id val) sets the mix console position (sample) within the mix"
+  mixdata *md;
+  console_state *cs = NULL;
+  int val;
   ERRN1(n,S_set_mix_anchor);
-  ERRN2(val,S_set_mix_anchor);
-  RTNINT(set_mix_anchor(g_scm2int(n),g_scm2int(val)));
+  ERRN2(uval,S_set_mix_anchor);
+  md = md_from_int(g_scm2int(n));
+  if (md)
+    {
+      cs = md->current_cs;
+      if (cs)
+	{
+	  val = g_scm2int(uval);
+	  if (val >= 0)
+	    {
+	      md->anchor = val;
+	      update_graph(md->cp,NULL);
+	    }
+	}
+      return(uval);
+    }
+  return(NO_SUCH_MIX);
 }
 
 static SCM g_set_mix_name(SCM n, SCM val) 
 {
   #define H_set_mix_name "(" S_set_mix_name " id name) sets the mix's name"
   char *name;
+  mixdata *md;
   ERRN1(n,S_set_mix_name);
   ERRS2(val,S_set_mix_name);
-  name = gh_scm2newstr(val,NULL);
-  set_mix_name(g_scm2int(n),name);
-  free(name);
-  return(val);
+  md = md_from_int(g_scm2int(n));
+  if (md)
+    {
+      if (md->name) FREE(md->name);
+      name = gh_scm2newstr(val,NULL);
+      md->name = copy_string(name);
+      free(name);
+      reflect_mix_name(md);
+      return(val);
+    }
+  return(NO_SUCH_MIX);
 }
 
 static SCM g_set_mix_track(SCM n, SCM val) 
 {
   #define H_set_mix_track "(" S_set_mix_track " id track) sets the track that mix is a member of"
+  mixdata *md;
   ERRN1(n,S_set_mix_track);
   ERRN2(val,S_set_mix_track);
-  RTNINT(set_mix_track(g_scm2int(n),g_scm2int(val)));
+  md = md_from_int(g_scm2int(n));
+  if (md)
+    {
+      md->track = g_scm2int(val);
+      set_mix_track_button_color(md,md->track);
+      return(val);
+    }
+  return(NO_SUCH_MIX);
 }
 
-static SCM g_set_mix_console_state(SCM n, SCM val) 
+static SCM g_set_mix_console_state(SCM n, SCM uval) 
 {
   #define H_set_mix_console_state "(" S_set_mix_console_state " id state) sets the mix's console display state"
+  mixdata *md;
+  console_state *cs = NULL;
+  int val;
   ERRN1(n,S_set_mix_console_state);
-  ERRN2(val,S_set_mix_console_state);
-  RTNINT(set_mix_console_state(g_scm2int(n),g_scm2int(val)));
+  ERRN2(uval,S_set_mix_console_state);
+  md = md_from_int(g_scm2int(n));
+  if (md) 
+    {
+      val = g_scm2int(uval);
+      cs = md->current_cs;
+      if ((cs) && (val >= 0) && (val < 3))
+	{
+	  md->state = val;
+	  fixup_mixmark(md);
+	}
+      return(uval);
+    }
+  return(NO_SUCH_MIX);
 }
 
 static SCM g_set_mix_console_y(SCM n, SCM val) 
 {
   #define H_set_mix_console_y "(" S_set_mix_console_y " id y) sets the mix console's height"
+  mixdata *md;
   ERRN1(n,S_set_mix_console_y);
   ERRN2(val,S_set_mix_console_y);
-  RTNINT(set_mix_console_y(g_scm2int(n),g_scm2int(val)));
+  md = md_from_int(g_scm2int(n));
+  if (md)
+    {
+      md->y = g_scm2int(val);
+      if (md->mixer) move_mix_y(md->mixer,md->y);
+      return(val);
+    }
+  return(NO_SUCH_MIX);
 }
 
-static SCM g_set_mix_speed(SCM n, SCM val) 
+static SCM g_set_mix_speed(SCM n, SCM uval) 
 {
   #define H_set_mix_speed "(" S_set_mix_speed " id speed) sets the mix's speed (console slider setting)"
+  mixdata *md;
+  Float val;
   ERRN1(n,S_set_mix_speed);
-  ERRN2(val,S_set_mix_speed);
-  RTNFLT(set_mix_speed(g_scm2int(n),gh_scm2double(val)));
+  ERRN2(uval,S_set_mix_speed);
+  md = md_from_int(g_scm2int(n));
+  if (md)
+    {
+      val = gh_scm2double(uval);
+      if (val != 0.0)
+	{
+	  respeed(md,val);
+	  remix_file(md,S_set_mix_speed);
+	}
+      return(uval);
+    }
+  return(NO_SUCH_MIX);
 }
 
-static SCM g_set_mix_amp(SCM n, SCM chan, SCM val) 
+static SCM g_set_mix_amp(SCM n, SCM uchan, SCM uval) 
 {
   #define H_set_mix_amp "(" S_set_mix_amp " id chan val) sets mix channel chan's amp (console slider setting)"
+  mixdata *md;
+  Float val;
+  int chan;
   ERRN1(n,S_set_mix_amp);
-  ERRN2(chan,S_set_mix_amp);
-  ERRN3(val,S_set_mix_amp);
-  RTNFLT(set_mix_amp(g_scm2int(n),g_scm2int(chan),gh_scm2double(val)));
+  ERRN2(uchan,S_set_mix_amp);
+  ERRN3(uval,S_set_mix_amp);
+  md = md_from_int(g_scm2int(n));
+  if (md)
+    {
+      chan = g_scm2int(uchan);
+      val = gh_scm2double(uval);
+      if (val >= 0.0)
+	{
+	  if (md->in_chans > chan)
+	    {
+	      reamp(md,chan,val);
+	      remix_file(md,S_set_mix_amp);
+	    }
+	  else return(NO_SUCH_CHANNEL);
+	  return(uval);
+	}
+    }
+  return(NO_SUCH_MIX);
 }
 
 static SCM g_set_mix_amp_env(SCM n, SCM chan, SCM val) 
@@ -3123,19 +3110,402 @@ static SCM g_mix_sound(SCM file, SCM start_samp, SCM scaler)
   RTNINT(err);
 }
 
-static SCM g_mix_waveform_height(void) {RTNINT(mix_waveform_height(get_global_state()));}
+static int update_mix_waveforms(chan_info *cp, void *ptr)
+{
+  if ((cp) && (cp->mixes)) update_graph(cp,NULL);
+  return(0);
+}
+
+static SCM g_mix_waveform_height(void) {snd_state *ss; ss = get_global_state(); RTNINT(mix_waveform_height(ss));}
 static SCM g_set_mix_waveform_height(SCM val) 
 {
   #define H_mix_waveform_height "(" S_mix_waveform_height ") -> max height (pixels) of mix waveforms (20)"
   #define H_set_mix_waveform_height "(" S_set_mix_waveform_height " val) sets " S_mix_waveform_height
+  snd_state *ss; 
   ERRN1(val,S_set_mix_waveform_height); 
-  set_mix_waveform_height(get_global_state(),g_scm2int(val));
-  RTNINT(mix_waveform_height(get_global_state()));
+  ss = get_global_state(); 
+  in_set_mix_waveform_height(ss,g_scm2int(val));
+  map_over_chans(ss,update_mix_waveforms,NULL);
+  RTNINT(mix_waveform_height(ss));
+}
+
+static SCM g_select_mix(SCM id)
+{
+  #define H_select_mix "(" S_select_mix " id) makes mix is the selected mix"
+  ERRN1(id,S_select_mix);
+  select_mix(get_global_state(),md_from_int(g_scm2int(id)));
+  return(id);
+}
+
+static SCM g_selected_mix(void)
+{
+  #define H_selected_mix "(" S_selected_mix ") -> the id of the currently selected mix"
+  snd_state *ss;
+  ss = get_global_state();
+  return(gh_int2scm(ss->selected_mix));
+}
+
+static SCM g_forward_mix(SCM count, SCM snd, SCM chn) 
+{
+  #define H_forward_mix "(" S_forward_mix " &optional (count 1) snd chn) moves the cursor forward count mix consoles"
+  int val;
+  chan_info *cp;
+  ERRB1(count,S_forward_mix); 
+  ERRCP(S_forward_mix,snd,chn,2);
+  cp = get_cp(snd,chn);
+  val = g_scm2intdef(count,1); 
+  if (cp) handle_cursor(cp,goto_mix(cp,val)); else return(NO_SUCH_CHANNEL);
+  RTNINT(val);
+}
+
+static SCM g_backward_mix(SCM count, SCM snd, SCM chn) 
+{
+  #define H_backward_mix "(" S_backward_mix " &optional (count 1) snd chn) moves the cursor back count mix consoles"
+  int val; 
+  chan_info *cp;
+  ERRB1(count,S_backward_mix); 
+  ERRCP(S_backward_mix,snd,chn,2);
+  cp = get_cp(snd,chn);
+  val = -(g_scm2intdef(count,1)); 
+  if (cp) handle_cursor(cp,goto_mix(cp,val)); else return(NO_SUCH_CHANNEL);
+  RTNINT(val);
+}
+
+
+static SCM g_mix(SCM file, SCM chn_samp_n, SCM file_chn, SCM snd_n, SCM chn_n, SCM console)
+{
+  #define H_mix "(" S_mix " file &optional (chn-start 0) (file-chan 0) snd chn with-console)) mixes file\n\
+   channel file-chan into snd's channel chn starting at chn-start (or at the cursor location if chan-start\n\
+   is omitted), returning the new mix's id.  if with-console is #f, the data is mixed (no console is created).\n\
+   If chn is omitted, file's channels are mixed until snd runs out of channels"
+
+  chan_info *cp = NULL;
+  char *urn,*name = NULL;
+  int chans,id=-1;
+  int with_mixer = 1;
+  snd_state *ss;
+  mixdata *md;
+  ERRS1(file,S_mix);
+  ERRB2(chn_samp_n,S_mix);
+  ERRB3(file_chn,S_mix);
+  ERRCP(S_mix,snd_n,chn_n,4);
+  SCM_ASSERT((gh_number_p(console)) || (gh_boolean_p(console)) || (SCM_UNBNDP(console)),console,SCM_ARG6,S_mix);
+  urn = gh_scm2newstr(file,NULL);
+  name = mus_file_full_name(urn);
+  free(urn);
+  ss = get_global_state();
+  if (SCM_UNBNDP(console))
+    with_mixer = with_mix_consoles(ss);
+  else with_mixer = bool_int_or_one(console);
+  if (SCM_UNBNDP(chn_samp_n))
+    {
+      id = mix_complete_file(any_selected_sound(ss),name,S_mix,with_mixer);
+    }
+  else
+    {
+      cp = get_cp(snd_n,chn_n);
+      if (cp)
+	{
+	  chans = mus_sound_chans(name);
+	  if (chans > 0)
+	    {
+	      md = file_mix_samples(g_scm2intdef(chn_samp_n,0),
+				    mus_sound_samples(name)/chans,name,
+				    cp,g_scm2intdef(file_chn,0),
+				    DONT_DELETE_ME,1,S_mix,
+				    with_mixer);
+	      if (md) id = md->id;
+	    }
+	  else return(NO_SUCH_FILE);
+	}
+    }
+  if (name) FREE(name);
+  if (cp == NULL) return(NO_SUCH_CHANNEL);
+  RTNINT(id);
+}
+
+
+
+/* ---------------- mix sample readers ---------------- */
+
+static int mf_tag = 0;
+static SCM mark_mf(SCM obj) {SCM_SETGC8MARK(obj); return(SCM_BOOL_F);}
+static int mf_p(SCM obj) {return((SCM_NIMP(obj)) && (GH_TYPE_OF(obj) == (SCM)mf_tag));}
+
+static SCM g_mf_p(SCM obj) 
+{
+  #define H_mf_p "(" S_mix_sample_readerQ " obj) -> #t if obj is a mix-sample-reader"
+  RTNBOOL(mf_p(obj));
+}
+
+static mix_fd *get_mf(SCM obj) {if (mf_p(obj)) return((mix_fd *)GH_VALUE_OF(obj)); else return(NULL);}
+static SCM equalp_mf(SCM obj1, SCM obj2) {RTNBOOL(get_mf(obj1) == get_mf(obj2));}
+
+static int print_mf(SCM obj, SCM port, scm_print_state *pstate) 
+{
+  mix_fd *fd;
+  mixdata *md;
+  char *desc;
+  fd = get_mf(obj);
+  if (fd == NULL)
+    scm_puts("<null>",port);
+  else
+    {
+      md = fd->md;
+      desc = (char *)CALLOC(128,sizeof(char));
+      sprintf(desc,"<mix-sample-reader %p: %s via mix %d>",
+	      fd,
+	      md->in_filename,
+	      md->id);
+      scm_puts(desc,port); 
+      FREE(desc);
+    }
+  return(1);
+}
+
+static scm_sizet free_mf(SCM obj) 
+{
+  mix_fd *fd = (mix_fd *)GH_VALUE_OF(obj); 
+  if (fd) 
+    {
+#ifdef DEBUGGING
+      snd_warning("Guile's GC is freeing a mix sample reader!");
+#endif
+      free_mix_fd(fd); 
+    }
+  return(0);
+}
+
+#if HAVE_GUILE_1_3_0
+static scm_smobfuns mf_smobfuns = {
+  &mark_mf,
+  &free_mf,
+  &print_mf,
+  &equalp_mf};
+#endif
+
+static SCM g_make_mix_sample_reader(SCM mix_id)
+{
+  #define H_make_mix_sample_reader "(" S_make_mix_sample_reader " id) returns a reader ready to access mix 'id'"
+  mixdata *md = NULL;
+  mix_fd *mf = NULL;
+#if HAVE_GUILE_1_3_0
+  SCM new_mf;
+#endif
+  ERRN1(mix_id,S_make_mix_sample_reader);
+  md = md_from_int(g_scm2int(mix_id));
+  if (md) mf = init_mix_read(md,FALSE); else return(NO_SUCH_MIX);
+  if (mf)
+    {
+#if (!HAVE_GUILE_1_3_0)
+      SCM_RETURN_NEWSMOB(mf_tag,(SCM)mf);
+#else
+      SCM_NEWCELL(new_mf);
+      SCM_SETCDR(new_mf,(SCM)mf);
+      SCM_SETCAR(new_mf,mf_tag);
+      return(new_mf);
+#endif
+    }
+  return(SCM_BOOL_F);
+}
+
+static SCM g_next_mix_sample(SCM obj)
+{
+  #define H_next_mix_sample "(" S_next_mix_sample " reader) -> next sample from mix reader"
+  SCM_ASSERT(mf_p(obj),obj,SCM_ARG1,S_next_mix_sample);
+  return(gh_double2scm(MUS_SAMPLE_TO_FLOAT(next_mix_sample(get_mf(obj)))));
+}
+
+static SCM g_free_mix_sample_reader(SCM obj)
+{
+  #define H_free_mix_sample_reader "(" S_free_mix_sample_reader " reader) frees mix sample reader 'reader'"
+  SCM_ASSERT(mf_p(obj),obj,SCM_ARG1,S_free_mix_sample_reader);
+  free_mix_fd(get_mf(obj));
+  GH_SET_VALUE_OF(obj,(SCM)NULL);
+  return(SCM_BOOL_F);
+}
+
+
+
+/* ---------------- track sample readers ---------------- */
+
+static int tf_tag = 0;
+static SCM mark_tf(SCM obj) {SCM_SETGC8MARK(obj); return(SCM_BOOL_F);}
+static int tf_p(SCM obj) {return((SCM_NIMP(obj)) && (GH_TYPE_OF(obj) == (SCM)tf_tag));}
+
+static SCM g_tf_p(SCM obj) 
+{
+  #define H_tf_p "(" S_track_sample_readerQ " obj) -> #t if obj is a track-sample-reader"
+  RTNBOOL(tf_p(obj));
+}
+
+static track_fd *get_tf(SCM obj) {if (tf_p(obj)) return((track_fd *)GH_VALUE_OF(obj)); else return(NULL);}
+static SCM equalp_tf(SCM obj1, SCM obj2) {RTNBOOL(get_tf(obj1) == get_tf(obj2));}
+
+static int print_tf(SCM obj, SCM port, scm_print_state *pstate) 
+{
+  track_fd *fd;
+  mixdata *md;
+  mix_fd *mf;
+  char *desc;
+  int i,len;
+  fd = get_tf(obj);
+  if (fd == NULL)
+    scm_puts("<null>",port);
+  else
+    {
+      desc = (char *)CALLOC(128,sizeof(char));
+      mf = fd->fds[0];
+      md = mf->md;
+      sprintf(desc,"<track-sample-reader %p: %s chan %d via mixes '(",
+	      fd,
+	      md->in_filename,
+	      (md->cp)->chan);
+      scm_puts(desc,port); 
+      len = fd->mixes;
+      if (len > 0)
+	{
+	  for (i=0;i<len-1;i++)
+	    {
+	      mf = fd->fds[i];
+	      sprintf(desc,"%d ",(mf->md)->id);
+	      scm_puts(desc,port); 
+	    }
+	  mf = fd->fds[len-1];
+	  sprintf(desc,"%d)>",(mf->md)->id);
+	}
+      else sprintf(desc,")>");
+      scm_puts(desc,port); 
+      FREE(desc);
+    }
+  return(1);
+}
+
+static scm_sizet free_tf(SCM obj) 
+{
+  track_fd *fd = (track_fd *)GH_VALUE_OF(obj); 
+  if (fd) 
+    {
+#ifdef DEBUGGING
+      snd_warning("Guile's GC is freeing a track sample reader!");
+#endif
+      free_track_fd(fd); 
+    }
+  return(0);
+}
+
+#if HAVE_GUILE_1_3_0
+static scm_smobfuns tf_smobfuns = {
+  &mark_tf,
+  &free_tf,
+  &print_tf,
+  &equalp_tf};
+#endif
+
+static SCM g_make_track_sample_reader(SCM track_id, SCM samp, SCM snd, SCM chn)
+{
+  #define H_make_track_sample_reader "(" S_make_track_sample_reader " track &optional (start-samp 0) snd chn)\n\
+   returns a reader ready to access track's data associated with snd's channel chn starting at 'start-samp'"
+
+  track_fd *tf = NULL;
+  chan_info *cp;
+#if HAVE_GUILE_1_3_0
+  SCM new_tf;
+#endif
+  ERRN1(track_id,S_make_track_sample_reader);
+  ERRCP(S_make_track_sample_reader,snd,chn,3); 
+  cp = get_cp(snd,chn);
+  tf = init_track_reader(cp,g_scm2int(track_id),g_scm2intdef(samp,0));
+  if (tf)
+    {
+#if (!HAVE_GUILE_1_3_0)
+      SCM_RETURN_NEWSMOB(tf_tag,(SCM)tf);
+#else
+      SCM_NEWCELL(new_tf);
+      SCM_SETCDR(new_tf,(SCM)tf);
+      SCM_SETCAR(new_tf,tf_tag);
+      return(new_tf);
+#endif
+    }
+  return(SCM_BOOL_F);
+}
+
+static SCM g_next_track_sample(SCM obj)
+{
+  #define H_next_track_sample "(" S_next_track_sample " reader) -> next sample from track reader"
+  SCM_ASSERT(tf_p(obj),obj,SCM_ARG1,S_next_track_sample);
+  return(gh_double2scm(MUS_SAMPLE_TO_FLOAT(next_track_sample(get_tf(obj)))));
+}
+
+static SCM g_free_track_sample_reader(SCM obj)
+{
+  #define H_free_track_sample_reader "(" S_free_track_sample_reader " reader) frees the track sample reader 'reader'"
+  SCM_ASSERT(tf_p(obj),obj,SCM_ARG1,S_free_track_sample_reader);
+  free_track_fd(get_tf(obj));
+  GH_SET_VALUE_OF(obj,(SCM)NULL);
+  return(SCM_BOOL_F);
+}
+
+static SCM g_play_track(SCM num, SCM snd, SCM chn)
+{
+  #define H_play_track "(" S_play_track " track &optional snd chn) plays track"
+  /* just a dummy for testing */
+  chan_info *cp;
+  /* in this case if snd=#t, play all associated mixes in all chans */
+  if (SCM_TRUE_P(snd))
+    play_track(get_global_state(),NULL,0,g_scm2int(num));
+  else 
+    {
+      cp = get_cp(snd,chn);
+      if (cp) play_track(cp->state,&cp,1,g_scm2int(num)); else return(NO_SUCH_CHANNEL);
+    }
+  return(num);
+}
+
+static SCM g_play_mix(SCM num)
+{
+  #define H_play_mix "(" S_play_mix " id) plays mix"
+  mixdata *md;
+  md = md_from_int(g_scm2intdef(num,0));
+  if (md) play_mix(md->ss,md); else return(NO_SUCH_MIX);
+  return(num);
 }
 
 
 void g_init_mix(SCM local_doc)
 {
+#if (!HAVE_GUILE_1_3_0)
+  /* mf_tag = scm_make_smob_type_mfpe("mf",sizeof(SCM),mark_mf,free_mf,print_mf,equalp_mf); */
+  mf_tag = scm_make_smob_type("mf",sizeof(SCM));
+  scm_set_smob_mark(mf_tag,mark_mf);
+  scm_set_smob_print(mf_tag,print_mf);
+  scm_set_smob_free(mf_tag,free_mf);
+  scm_set_smob_equalp(mf_tag,equalp_mf);
+#else
+  mf_tag = scm_newsmob(&mf_smobfuns);
+#endif
+  DEFINE_PROC(gh_new_procedure1_0(S_make_mix_sample_reader,g_make_mix_sample_reader),H_make_mix_sample_reader);
+  DEFINE_PROC(gh_new_procedure1_0(S_next_mix_sample,g_next_mix_sample),H_next_mix_sample);
+  DEFINE_PROC(gh_new_procedure1_0(S_free_mix_sample_reader,g_free_mix_sample_reader),H_free_mix_sample_reader);
+  DEFINE_PROC(gh_new_procedure1_0(S_mix_sample_readerQ,g_mf_p),H_mf_p);
+
+#if (!HAVE_GUILE_1_3_0)
+  /* tf_tag = scm_make_smob_type_mfpe("tf",sizeof(SCM),mark_tf,free_tf,print_tf,equalp_tf); */
+  tf_tag = scm_make_smob_type("tf",sizeof(SCM));
+  scm_set_smob_mark(tf_tag,mark_tf);
+  scm_set_smob_print(tf_tag,print_tf);
+  scm_set_smob_free(tf_tag,free_tf);
+  scm_set_smob_equalp(tf_tag,equalp_tf);
+#else
+  tf_tag = scm_newsmob(&tf_smobfuns);
+#endif
+  DEFINE_PROC(gh_new_procedure(S_make_track_sample_reader,g_make_track_sample_reader,1,3,0),H_make_track_sample_reader);
+  DEFINE_PROC(gh_new_procedure1_0(S_next_track_sample,g_next_track_sample),H_next_track_sample);
+  DEFINE_PROC(gh_new_procedure1_0(S_free_track_sample_reader,g_free_track_sample_reader),H_free_track_sample_reader);
+  DEFINE_PROC(gh_new_procedure1_0(S_track_sample_readerQ,g_tf_p),H_tf_p);
+  DEFINE_PROC(gh_new_procedure0_1(S_play_mix,g_play_mix),H_play_mix);
+  DEFINE_PROC(gh_new_procedure1_2(S_play_track,g_play_track),H_play_track);
+
   DEFINE_PROC(gh_new_procedure0_1(S_mix_position,g_mix_position),H_mix_position);
   DEFINE_PROC(gh_new_procedure0_1(S_mix_length,g_mix_length),H_mix_length);
   DEFINE_PROC(gh_new_procedure0_1(S_mix_locked,g_mix_locked),H_mix_locked);
@@ -3166,6 +3536,11 @@ void g_init_mix(SCM local_doc)
   DEFINE_PROC(gh_new_procedure2_1(S_mix_sound,g_mix_sound),H_mix_sound);
   DEFINE_PROC(gh_new_procedure1_0(S_set_mix_waveform_height,g_set_mix_waveform_height),H_set_mix_waveform_height);
   DEFINE_PROC(gh_new_procedure0_0(S_mix_waveform_height,g_mix_waveform_height),H_mix_waveform_height);
+  DEFINE_PROC(gh_new_procedure1_0(S_select_mix,g_select_mix),H_select_mix);
+  DEFINE_PROC(gh_new_procedure0_0(S_selected_mix,g_selected_mix),H_selected_mix);
+  DEFINE_PROC(gh_new_procedure(S_forward_mix,g_forward_mix,0,3,0),H_forward_mix);
+  DEFINE_PROC(gh_new_procedure(S_backward_mix,g_backward_mix,0,3,0),H_backward_mix);
+  DEFINE_PROC(gh_new_procedure(S_mix,g_mix,1,5,0),H_mix);
 }
 
 #endif

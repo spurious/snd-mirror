@@ -1037,6 +1037,7 @@ Snd is currently in flux.
   snd-spectrum      (data window length linear)
                                   return spectrum of data (type vct) using fft-window win.
                                   length of data (and fft) is length.
+  snd-version       ()            Snd version (a string).
   snd-warning       (str)         report warning message str, return str.
   sound-files-in-directory (dir)  return a vector of sound file names.
                                   This is useful for "batch" processing of sounds.  The following,
@@ -1105,7 +1106,6 @@ Snd is currently in flux.
   update-sound      (snd)         update snd (re-reads data from disk, flushing any pending edits).
   update-fft        (snd chn)     recalculate chn's fft.
   update-graph      (snd chn)     redisplay chn's graph(s).
-  version           ()            Snd version (a string).
   vct?              (vobj)        #t if vobj is a vct struct.
   vct-add!          (vobj1 vobj2) vobj1[i] += vobj2[i], returns vobj1.
   vct-copy          (obj)         return a copy of obj.
@@ -1838,6 +1838,7 @@ set of marks to sync, then (stop-sync).
 Now control-click and drag one of them, and all move together deleting data,
 or inserting zeros; or click the "play" triangle, and all play together
 starting from the respective marks (which need not be in separate channels).
+See marks.scm for more examples.
 
   ------------------------------------------------------------------------
 

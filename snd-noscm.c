@@ -1,3 +1,6 @@
+/* this file will gradually wither away... */
+/* it could be omitted now with no great loss */
+
 #include "snd.h"
 
 #if (!HAVE_GUILE)
@@ -685,14 +688,6 @@ int snd_eval_str(snd_state *ss, char *buf, int count)
 	}
       if (tok[0] == NULL) return(-1); /* probably white space with a <cr> */
       err = symit(ss,tok);
-      if ((err == -1) && (cp)) 
-	{
-	  for (ctr=0;ctr<count;ctr++)
-	    {
-	      err = execute_macro(cp,buf,1);
-	      if (err == -1) break;
-	    }
-	}
     }
   return(err);
 }
@@ -729,7 +724,6 @@ static int symit(snd_state *ss,char **str)
       if (strcmp(tok,S_add_mark) == 0) {cp = get_cp(ss,str[2],str[3]); if (cp) isym(ss,mark_id(add_mark(istr(str[1]),NULL,cp))); return(0);}
       if (strcmp(tok,S_add_sound_file_extension) == 0) {add_sound_file_extension(sstr(str[1])); isym(ss,0); return(0);}
       if (strcmp(tok,S_amp) == 0) {sp = get_sp(ss,str[1]); if (sp) fsym(ss,sp->amp); else isym(ss,0); return(0);}
-      if (strcmp(tok,S_append_to_minibuffer) == 0) {sp = get_sp(ss,str[2]); if (sp) append_to_minibuffer(sp,sstr(str[1])); isym(ss,0); return(0);}
       if (strcmp(tok,S_ask_before_overwrite) == 0) {isym(ss,ask_before_overwrite(ss)); return(0);}
       if (strcmp(tok,S_audio_output_device) == 0) {isym(ss,audio_output_device(ss)); return(0);}
       if (strcmp(tok,S_audio_state_file) == 0) {ssym(ss,audio_state_file(ss)); return(0);}
@@ -742,7 +736,6 @@ static int symit(snd_state *ss,char **str)
       if (strcmp(tok,S_backward_mix) == 0) {goto_mix(current_channel(ss),-prefix_fix(str[1])); isym(ss,0); return(0);}
       if (strcmp(tok,S_backward_sample) == 0) 
 	{cp = current_channel(ss); if (cp) handle_cursor(cp,cursor_move(cp,-prefix_fix(str[1]))); isym(ss,0); return(0);}
-      if (strcmp(tok,S_bind_key) == 0) {set_keymap_entry(istr(str[1]),istr(str[2]),sstr(str[3]),istr(str[4])); isym(ss,0); return(0);}
       break;
     case 'c':
       if (strcmp(tok,S_call_apply) == 0) {sp = get_sp(ss,str[1]); if (sp) run_apply_to_completion(sp); isym(ss,0); return(0);}
@@ -977,23 +970,6 @@ static int symit(snd_state *ss,char **str)
 	  isym(ss,0);
 	  return(0);
 	}
-      if (strcmp(tok,S_insert_region) == 0) 
-	{
-	  ival = istr(str[2]); 
-	  if (region_ok(ival))
-	    {
-	      cp = get_cp(ss,str[3],str[4]); 
-	      if (cp) 
-		{
-		  finish_keyboard_selection(); 
-		  insert_region(ival,istr(str[1]),cp,S_insert_region); 
-		  update_graph(cp,NULL);
-		} 
-	    }
-	  else display_results(ss,"no such region");
-	  isym(ss,0);
-	  return(0);
-	}
       if (strcmp(tok,S_insert_sound) == 0) 
 	{
 	  cp = get_cp(ss,str[3],str[4]);
@@ -1030,24 +1006,6 @@ static int symit(snd_state *ss,char **str)
       if (strcmp(tok,S_max_regions) == 0) {isym(ss,max_regions(ss)); return(0);}
       if (strcmp(tok,S_max_sounds) == 0) {isym(ss,ss->max_sounds); return(0);}
       if (strcmp(tok,S_memo_sound) == 0) {isym(ss,0); return(0);}
-      if (strcmp(tok,S_mix) == 0) /* file samp chan snd chn */
-	{
-	  md = NULL;
-	  cp = get_cp(ss,str[4],str[5]);
-	  if (cp)
-	    {
-	      filename = mus_file_full_name(sstr(str[1]));
-	      ival = mus_sound_chans(filename);
-	      if (ival > 0)
-		md = file_mix_samples(istr(str[2]),mus_sound_samples(filename)/ival,filename,cp,istr(str[3]),DONT_DELETE_ME,1,S_mix,with_mix_consoles(ss));
-	      else display_results(ss,"no such file");
-	      if (filename) FREE(filename);
-	    }
-	  if (md) 
-	    isym(ss,md->id);
-	  else isym(ss,0);
-	  return(0);
-	}
       if (strcmp(tok,S_maxamp) == 0) {cp = get_cp(ss,str[1],str[2]); if (cp) fsym(ss,get_maxamp(ss,cp->sound,cp)); else isym(ss,0); return(0);}
       if (strcmp(tok,S_min_dB) == 0) {fsym(ss,ss->min_dB); return(0);}
       if (strcmp(tok,S_mix_region) == 0) 
@@ -1252,7 +1210,6 @@ static int symit(snd_state *ss,char **str)
       if (strcmp(tok,S_save_control_panel) == 0) {sp = get_sp(ss,str[1]); if (sp) save_control_panel(sp); isym(ss,0); return(0);}
       if (strcmp(tok,S_save_dir) == 0) {ssym(ss,save_dir(ss)); return(0);}
       if (strcmp(tok,S_save_envelopes) == 0) {g_save_envelopes(ss,str[1]); isym(ss,0); return(0);}
-      if (strcmp(tok,S_save_macros) == 0) {save_macros(ss); isym(ss,0); return(0);}
       if (strcmp(tok,S_save_marks) == 0) {sp = get_sp(ss,str[1]); if (sp) save_marks(sp); isym(ss,0); return(0);}
       if (strcmp(tok,S_save_options) == 0) 
 	{
@@ -1410,6 +1367,7 @@ static int symit(snd_state *ss,char **str)
 	  snd_append_command(ss,sstr(str[1]));
 	  return(0);
 	}
+      if (strcmp(tok,S_snd_version) == 0) {ssym(ss,SND_VERSION); return(0);}
       if (strcmp(tok,S_spectro_cutoff) == 0) {fsym(ss,spectro_cutoff(ss)); return(0);}
       if (strcmp(tok,S_spectro_start) == 0) {fsym(ss,spectro_cutoff(ss)); return(0);}
       if (strcmp(tok,S_spectro_hop) == 0) {isym(ss,spectro_hop(ss));  return(0);}
@@ -1473,11 +1431,9 @@ static int symit(snd_state *ss,char **str)
 	  isym(ss,0);
 	  return(0);
 	}
-      if (strcmp(tok,S_unbind_key) == 0) {set_keymap_entry(istr(str[1]),istr(str[2]),"5",0); isym(ss,0); return(0);} /* 5=cursor_no_action */
       break;
     case 'v':
       if (strcmp(tok,S_verbose_cursor) == 0) {isym(ss,verbose_cursor(ss)); return(0);}
-      if (strcmp(tok,S_version) == 0) {ssym(ss,SND_VERSION); return(0);}
       if (strcmp(tok,S_vu_font) == 0) {ssym(ss,vu_font(ss)); return(0);}
       if (strcmp(tok,S_vu_font_size) == 0) {fsym(ss,vu_font_size(ss)); return(0);}
       if (strcmp(tok,S_vu_size) == 0) {fsym(ss,vu_size(ss)); return(0);}

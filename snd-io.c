@@ -308,16 +308,6 @@ void snd_close(int fd)
   close(fd);
 }
 
-#if 0
-int snd_write(chan_info *cp, int tfd, int beg, int end, int chans, MUS_SAMPLE_TYPE **bufs, int datum_size)
-{ /* not currently used anywhere */
-  int err;
-  err = disk_space_p(cp->sound,tfd,((end-beg)*chans*datum_size),0);
-  if (err != GIVE_UP) mus_file_write(tfd,beg,end,chans,bufs);
-  return(err);
-}
-#endif
-
 int snd_write_header(snd_state *ss, char *name, int type, int srate, int chans, int loc, int size, int format, char *comment, int len, int *loops)
 {
   int fd;
@@ -333,49 +323,3 @@ int snd_write_header(snd_state *ss, char *name, int type, int srate, int chans, 
   mus_header_set_aiff_loop_info(NULL);
   return(fd);
 }
-
-int file_maxamps(snd_state *ss, char *ifile, Float *vals, int ichans, int format)
-{
-  int ifd,idataloc,bufnum,n,cursamples,idatasize,loc,i,samples,chn;
-  MUS_SAMPLE_TYPE fc;
-  MUS_SAMPLE_TYPE *buffer,*amps;
-  MUS_SAMPLE_TYPE **ibufs;
-  if ((ifd=mus_file_open_read(ifile)) == -1) return(0);
-  mus_file_open_descriptors(ifd,format,mus_data_format_to_bytes_per_sample(format),mus_sound_data_location(ifile));
-  idataloc = mus_sound_data_location(ifile);
-  idatasize = mus_sound_samples(ifile);
-  samples = (idatasize / ichans);
-  if (samples <= 0) {mus_file_close(ifd); return(0);}
-  loc=mus_file_seek(ifd,idataloc,SEEK_SET);
-  if (loc<idataloc) {mus_file_close(ifd); return(0);}
-  ibufs = (MUS_SAMPLE_TYPE **)CALLOC(ichans,sizeof(MUS_SAMPLE_TYPE *));
-  for (i=0;i<ichans;i++) ibufs[i] = (MUS_SAMPLE_TYPE *)CALLOC(FILE_BUFFER_SIZE,sizeof(MUS_SAMPLE_TYPE));
-  amps = (MUS_SAMPLE_TYPE *)CALLOC(ichans,sizeof(MUS_SAMPLE_TYPE));
-  bufnum = (FILE_BUFFER_SIZE);
-  for (n=0;n<samples;n+=bufnum)
-    {
-      if ((n+bufnum)<samples) cursamples = bufnum; else cursamples = (samples-n);
-      mus_file_read(ifd,0,cursamples-1,ichans,ibufs);
-      for (chn=0;chn<ichans;chn++)
-	{
-	  buffer = (MUS_SAMPLE_TYPE *)(ibufs[chn]);
-	  fc=amps[chn];
-	  for (i=0;i<cursamples;i++) 
-	    {
-	      if ((buffer[i] > fc) || (fc < -buffer[i])) 
-		{
-		  fc=buffer[i]; 
-		  if (fc < MUS_SAMPLE_0) fc = -fc;
-		}
-	    }
-	  amps[chn]=fc;
-	}
-    }
-  mus_file_close(ifd);
-  for (chn=0;chn<ichans;chn++) vals[chn] = MUS_SAMPLE_TO_FLOAT(amps[chn]);
-  for (i=0;i<ichans;i++) FREE(ibufs[i]);
-  FREE(ibufs);
-  FREE(amps);
-  return(1);
-}
-

@@ -161,7 +161,7 @@ static char *snd_commands[NUM_COMMANDS]={
   S_short_file_name,S_short_file_names,S_show_axes,S_show_fft_peaks,S_show_listener,S_show_marks,
   S_show_mix_consoles,S_show_mix_waveforms,S_show_selection_transform,S_show_usage_stats,S_show_y_zero,
   S_showing_controls,S_sinc_width,S_smooth,S_smooth_selection,
-  S_snd_error,S_snd_error_hook,S_snd_spectrum,S_snd_warning,S_snd_warning_hook,
+  S_snd_error,S_snd_error_hook,S_snd_spectrum,S_snd_version,S_snd_warning,S_snd_warning_hook,
   S_sonogram,S_sound_files_in_directory,
   S_sound_to_temp,S_sound_to_temps,S_soundfont_info,
   S_spectro_cutoff,S_spectro_hop,S_spectro_start,S_spectro_x_angle,S_spectro_x_scale,S_spectro_y_angle,S_spectro_y_scale,
@@ -179,7 +179,7 @@ static char *snd_commands[NUM_COMMANDS]={
 
   S_vct_samples,S_vct_sound_file,S_vct_addB,S_vct_copy,S_vct_doB,S_vct_fillB,S_vct_length,S_vct_mapB,
   S_vct_multiplyB,S_vct_offsetB,S_vct_peak,S_vct_ref,S_vct_scaleB,S_vct_setB,S_vct_subtractB,S_vct_p,S_vcts_doB,S_vcts_mapB,
-  S_verbose_cursor,S_version,S_view_sound,S_vu_font,S_vu_font_size,S_vu_size,
+  S_verbose_cursor,S_view_sound,S_vu_font,S_vu_font_size,S_vu_size,
 
   S_walsh_transform,S_wavelet_transform,S_wavelet_type,S_waving,S_wavo,S_wavo_hop,S_wavo_trace,
   S_window_height,S_window_width,S_window_x,S_window_y,S_with_mix_consoles,

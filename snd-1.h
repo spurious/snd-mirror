@@ -66,7 +66,6 @@ typedef struct {
 } snd_fd;
 
 typedef struct {Float freq; Float amp;} fft_peak;
-typedef struct {int selection; int files; char **old_filenames; char **new_filenames; void *sc;} snd_exf;
 
 typedef struct {
   Float y0,y1;                         /* scroller-dependent axis bounds */
@@ -390,28 +389,6 @@ typedef struct {
 } src_state;
 
 typedef struct {
-  int type;
-  mixdata *md;
-  console_state *cs;
-  snd_fd **sfs;
-  int chans;                           /* chans of input */
-  int calc,base;
-  Float x,sr;
-  MUS_SAMPLE_TYPE *lst,*nxt;
-  src_state **srcs;
-  mus_any **segs;
-  int *ctr,*samples;
-  MUS_SAMPLE_TYPE **idata;
-  Float samps_per_bin;
-} mix_fd;
-
-typedef struct {
-  int mixes;
-  int *state,*len;
-  mix_fd **fds;
-} track_fd;
-
-typedef struct {
   int slice; 
   int samples;  
   env_info *ep; 
@@ -431,7 +408,6 @@ int snd_reopen_write(snd_state *ss, char *arg);
 void snd_close(int fd);
 int snd_write_header(snd_state *ss, char *name, int type, int srate, int chans, int loc, int size, int format, char *comment, int len, int *loops);
 int snd_overwrite_ok(snd_state *ss, char *ofile);
-int file_maxamps(snd_state *ss, char *ifile, Float *vals, int ichans, int format);
 
 
 /* -------- snd-help.c -------- */
@@ -775,7 +751,6 @@ char *added_transform_name(int type);
 
 #if HAVE_GUILE
   SCM parse_proc(char *buf);
-  int handle_keymap(chan_info *cp, SCM func);
   int ignore_mus_error(int type, char *msg);
   int ignore_snd_error(char *msg);
   int ignore_snd_warning(char *msg);
@@ -784,6 +759,7 @@ char *added_transform_name(int type);
   MUS_SAMPLE_TYPE *g_floats_to_samples(SCM obj, int *size, char *caller, int position);
   void set_memo_sound(snd_info *sp);
   void ERRCP(char *origin, SCM snd, SCM chn, int off);
+  void ERRSP(char *origin, SCM snd, int off);
   chan_info *get_cp(SCM scm_snd_n, SCM scm_chn_n);
   snd_info *get_sp(SCM scm_snd_n);
   SCM g_c_make_sample_reader(snd_fd *fd);
@@ -872,7 +848,6 @@ int save_region(snd_state *ss, int n, char *ofile, int data_format);
 int delete_selection(char *origin, int regraph);
 void paste_region(int n, chan_info *cp, char *origin);
 int add_region(int n, chan_info *cp, char *origin);
-void insert_region(int n, int samp, chan_info *cp, char *origin);
 int mix_region(int n, chan_info *cp, int beg, Float scaler);
 void finish_keyboard_selection(void);
 int cancel_keyboard_selection(void);
@@ -899,7 +874,7 @@ void region_edit(snd_state *ss, int reg);
 void clear_region_backpointer(snd_info *sp);
 void save_region_backpointer(snd_info *sp);
 #if HAVE_GUILE
-  SCM g_restore_region(SCM n, SCM chans, SCM len, SCM srate, SCM maxamp, SCM name, SCM start, SCM end, SCM data);
+  void g_init_regions(SCM local_doc);
 #endif
 
 
@@ -976,7 +951,6 @@ int run_apply(snd_info *sp, int ofd);
 /* -------- snd-chn.c -------- */
 
 void report_in_minibuffer(snd_info *sp, char *message);
-void append_to_minibuffer(snd_info *sp, char *message);
 void clear_minibuffer(snd_info *sp);
 void clear_minibuffer_prompt(snd_info *sp);
 int set_dot_size(snd_state *ss, int val);
@@ -1012,14 +986,7 @@ int cursor_moveto (chan_info *cp,int samp);
 int cursor_move (chan_info *cp,int samps);
 int keyboard_command (chan_info *cp, int keysym, int state);
 #if HAVE_GUILE
-  SCM series_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, int beg, int num);
-  SCM parallel_scan(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, int beg, int num);
-  SCM series_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, int beg, int num, char *origin);
-  SCM parallel_map(snd_state *ss, chan_info *cp, SCM proc, int chan_choice, int beg, int num, char *origin);
-  void set_keymap_entry(int key, int state, int ignore_prefix,SCM func);
-  void g_prompt(snd_info *sp, char *prompt);
-#else
-  void set_keymap_entry(int key, int state, char *val, int ignore_prefix);
+  void g_init_chn(SCM local_doc);
 #endif
 int save_selection(snd_state *ss, char *ofile,int type, int format, int srate, char *comment);
 void convolve_with(char *filename, Float amp, chan_info *cp);
@@ -1027,8 +994,6 @@ void cos_smooth(chan_info *cp, int beg, int num, int regexpr,char *origin);
 void scale_by(snd_state *ss, snd_info *sp, chan_info *cp, Float *scalers, int len, int selection);
 void scale_to(snd_state *ss, snd_info *sp, chan_info *cp, Float *scalers, int len, int selection);
 Float get_maxamp(snd_state *ss, snd_info *sp, chan_info *cp);
-int temp_to_snd(snd_state *ss, snd_exf *data, char *origin);
-snd_exf *snd_to_temp(chan_info *cp, int selection, int one_file, int header_type, int data_format);
 src_state *make_src(snd_state *ss, Float srate, snd_fd *sf);
 Float run_src(src_state *sr, Float sr_change);
 src_state *free_src(src_state *sr);
@@ -1036,10 +1001,6 @@ void src_env_or_num(snd_state *ss, chan_info *cp, env *e, Float ratio, int just_
 void apply_filter(chan_info *ncp, int order, env *e, int from_enved, char *origin, int over_selection, Float *ur_a);
 void reverse_sound(chan_info *ncp, int over_selection);
 void apply_env(chan_info *cp, env *e, int beg, int dur, Float scaler, int regexpr, int from_enved, char *origin);
-void save_macros(snd_state *ss);
-#if (!HAVE_GUILE)
-  int execute_macro(chan_info *cp, char *name, int count);
-#endif
 void save_macro_state (snd_state *ss, FILE *fd);
 void snd_minibuffer_activate(snd_info *sp, int keysym);
 void fftb(chan_info *cp, int on);
@@ -1208,16 +1169,11 @@ char *kmg (int num);
 
 chan_info *m_to_cp(mixmark *m);
 snd_info *make_mix_readable(mixdata *md);
-MUS_SAMPLE_TYPE next_mix_sample(mix_fd *mf);
-mix_fd *init_mix_read(mixdata *md, int old);
-mix_fd *free_mix_fd(mix_fd *mf);
-mix_context *make_mix_context(chan_info *cp);
 mix_context *free_mix_context(mix_context *ms);
 int map_over_mixes(int (*func)(mixdata *,void *), void *ptr);
 void free_mix_list(chan_info *cp);
 void free_mixes(chan_info *cp);
 int mixes(void);
-mixdata *file_mix_samples(int beg, int num, char *tempfile, chan_info *cp, int chan, int temp, int out_chans, char *origin, int with_console);
 int mix_complete_file(snd_info *sp, char *str, char *origin, int with_console);
 int mix_array(int beg, int num, MUS_SAMPLE_TYPE **data, chan_info **out_cps, int in_chans, int out_chans, int nominal_srate, char *origin, int with_console);
 int mix_file(int beg, int num, char *file, chan_info **cps, int out_chans, char *origin, int with_console);
@@ -1241,10 +1197,6 @@ int mix_length(int n);
 int any_mix_id(void);
 env *set_mix_amp_env(int n, int chan, env *val);
 env *mix_amp_env(int n, int chan);
-track_fd *free_track_fd(track_fd *fd);
-MUS_SAMPLE_TYPE next_track_sample(track_fd *fd);
-track_fd *init_track_reader(chan_info *cp, int track_num, int samp);
-void play_track(snd_state *ss, chan_info **cps, int chans, int track_num);
 void play_mix(snd_state *ss, mixdata *md);
 void draw_mix_waveform(mixdata *md, int xspot, int yspot);
 void erase_mix_waveform(mixdata *md, int xspot, int yspot);

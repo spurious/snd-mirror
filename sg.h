@@ -32,12 +32,27 @@
 #define ERRN1(a,b) SCM_ASSERT(SCM_NFALSEP(scm_real_p(a)),a,SCM_ARG1,b)
 #define ERRN2(a,b) SCM_ASSERT(SCM_NFALSEP(scm_real_p(a)),a,SCM_ARG2,b)
 #define ERRN3(a,b) SCM_ASSERT(SCM_NFALSEP(scm_real_p(a)),a,SCM_ARG3,b)
+#define ERRN4(a,b) SCM_ASSERT(SCM_NFALSEP(scm_real_p(a)),a,SCM_ARG4,b)
+
 #define ERRS1(a,b) SCM_ASSERT((gh_string_p(a)),a,SCM_ARG1,b)
 #define ERRS2(a,b) SCM_ASSERT((gh_string_p(a)),a,SCM_ARG2,b)
+#define ERRS3(a,b) SCM_ASSERT((gh_string_p(a)),a,SCM_ARG3,b)
+
 #define ERRVCT1(a,b) SCM_ASSERT((vct_p(a)),a,SCM_ARG1,b)
 #define ERRVCT2(a,b) SCM_ASSERT((vct_p(a)),a,SCM_ARG2,b)
+
 #define ERRB1(a,b) SCM_ASSERT((gh_number_p(a)) || (gh_boolean_p(a)) || (SCM_UNBNDP(a)),a,SCM_ARG1,b)
 #define ERRB2(a,b) SCM_ASSERT((gh_number_p(a)) || (gh_boolean_p(a)) || (SCM_UNBNDP(a)),a,SCM_ARG2,b)
+#define ERRB3(a,b) SCM_ASSERT((gh_number_p(a)) || (gh_boolean_p(a)) || (SCM_UNBNDP(a)),a,SCM_ARG3,b)
+#define ERRB4(a,b) SCM_ASSERT((bool_or_arg_p(a)),a,SCM_ARG4,b)
+
+#define ERRV1(a,b) SCM_ASSERT(((vct_p(a)) || (gh_vector_p(a))),a,SCM_ARG1,b)
+#define ERRV2(a,b) SCM_ASSERT(((vct_p(a)) || (gh_vector_p(a))),a,SCM_ARG2,b)
+#define ERRV3(a,b) SCM_ASSERT(((vct_p(a)) || (gh_vector_p(a))),a,SCM_ARG3,b)
+
+#define ERRVECT1(a,b) SCM_ASSERT((gh_vector_p(a)),a,SCM_ARG1,b)
+#define ERRVECT2(a,b) SCM_ASSERT((gh_vector_p(a)),a,SCM_ARG2,b)
+#define ERRVECT4(a,b) SCM_ASSERT((gh_vector_p(a)),a,SCM_ARG4,b)
 
 #define RTNBOOL(a) return((a) ? SCM_BOOL_T : SCM_BOOL_F)
 #define RTNINT(a) return(gh_int2scm(a))
