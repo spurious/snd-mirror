@@ -378,6 +378,7 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+28-Nov:  pan-mix-selection|region|vct in mix.scm.\n\
 26-Nov:  rtio.rb thanks to Michael Scholz.\n\
 25-Nov:  copy-sample-reader, region-sample-reader?, read-region-sample.\n\
          removed free-mix|track-sample-reader (use free-sample-reader).\n\

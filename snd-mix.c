@@ -1768,9 +1768,7 @@ static Locus local_grf_y(Float val, axis_info *ap)
   return((Locus)(ap->y_base + val * ap->y_scale));
 }
 
-
-static int make_temporary_amp_env_mixed_graph(chan_info *cp, axis_info *ap, mix_info *md, Float samples_per_pixel,
-						     off_t newbeg, off_t newend, off_t oldbeg, off_t oldend)
+static int make_temporary_amp_env_mixed_graph(chan_info *cp, axis_info *ap, mix_info *md, Float samples_per_pixel, off_t newbeg, off_t newend)
 {
   /* temp graph using cp->amp_env and mix (sample-by-sample) data */
   off_t main_start, new_start;
@@ -1782,27 +1780,23 @@ static int make_temporary_amp_env_mixed_graph(chan_info *cp, axis_info *ap, mix_
   int j, main_loc;
   Locus lastx;
   env_info *ep;
-
   lo = ap->losamp;
   hi = ap->hisamp;
-
-  new_fd = init_mix_read(md, CURRENT_MIX, 0);
+  if (newbeg < lo)
+    new_fd = init_mix_read(md, CURRENT_MIX, lo - newbeg);
+  else new_fd = init_mix_read(md, CURRENT_MIX, 0);
   if (!new_fd) return(0);
-
   ep = cp->amp_envs[cp->edit_ctr];
   main_loc = (int)((double)(ap->losamp) / (double)(ep->samps_per_bin));
   main_start = ap->losamp;
-  
   if ((lo > newbeg) && (lo < newend)) 
     {
       for (i = newbeg; i < lo; i++) next_mix_sample(new_fd);
       new_start = lo;
     }
   else new_start = newbeg;
-
   lastx = ap->x_axis_x0;
   xfinc = samples_per_pixel / (Float)SND_SRATE(cp->sound);
-
   for (j = 0, xi = (double)lo, xf = ap->x0; 
        xi < (double)hi; 
        xi += samples_per_pixel, lastx++, xf += xfinc, j++)
@@ -1826,7 +1820,6 @@ static int make_temporary_amp_env_mixed_graph(chan_info *cp, axis_info *ap, mix_
 	  new_ymin = 0.0;
 	  new_ymax = 0.0;
 	}
-
       while (main_start <= xi)
 	{
 	  val = MUS_SAMPLE_TO_FLOAT(ep->data_min[main_loc]);
@@ -1837,22 +1830,17 @@ static int make_temporary_amp_env_mixed_graph(chan_info *cp, axis_info *ap, mix_
 	    main_loc++;
 	  main_start += ep->samps_per_bin;
 	}
-
       set_grf_points(lastx, j,
 		     local_grf_y(main_ymin + new_ymin, ap),
 		     local_grf_y(main_ymax + new_ymax, ap));
 
     }
-
   erase_and_draw_both_grf_points(md->wg, cp, j);
-
   free_mix_fd(new_fd);
-
   return(j);
 }
 
-static int make_temporary_amp_env_graph(chan_info *cp, axis_info *ap, mix_info *md, Float samples_per_pixel,
-					off_t newbeg, off_t newend, off_t oldbeg, off_t oldend)
+static int make_temporary_amp_env_graph(chan_info *cp, axis_info *ap, mix_info *md, Float samples_per_pixel, off_t newbeg, off_t newend)
 {
   /* temp graph using cp->amp_env and mix input amp envs */
   off_t main_start, new_start;
@@ -1865,17 +1853,13 @@ static int make_temporary_amp_env_graph(chan_info *cp, axis_info *ap, mix_info *
   int main_loc, j;
   Locus lastx;
   env_info *ep;
-
   lo = ap->losamp;
   hi = ap->hisamp;
-
   new_min_fd = init_mix_input_amp_env_read(md, CURRENT_MIX, LO_PEAKS); 
   new_max_fd = init_mix_input_amp_env_read(md, CURRENT_MIX, HI_PEAKS); 
-
   ep = cp->amp_envs[cp->edit_ctr];
   main_loc = (int)((double)(ap->losamp) / (double)(ep->samps_per_bin));
   main_start = ap->losamp;
-
   if (lo > newbeg) 
     {
       for (x = lo; x < newbeg; x += new_max_fd->samps_per_bin) 
@@ -1893,10 +1877,8 @@ static int make_temporary_amp_env_graph(chan_info *cp, axis_info *ap, mix_info *
       new_ymax = 0.0;
       new_start = newbeg;
     }
-
   lastx = ap->x_axis_x0;
   xfinc = samples_per_pixel / (Float)SND_SRATE(cp->sound);
-
   for (j = 0, xi = (double)lo, xf = ap->x0; 
        xi < (double)hi; 
        xi += samples_per_pixel, lastx++, xf += xfinc, j++)
@@ -1921,7 +1903,6 @@ static int make_temporary_amp_env_graph(chan_info *cp, axis_info *ap, mix_info *
 	  new_ymin = 0.0;
 	  new_ymax = 0.0;
 	}
-
       while (main_start <= xi)
 	{
 	  val = MUS_SAMPLE_TO_FLOAT(ep->data_min[main_loc]);
@@ -1932,15 +1913,12 @@ static int make_temporary_amp_env_graph(chan_info *cp, axis_info *ap, mix_info *
 	    main_loc++;
 	  main_start += ep->samps_per_bin;
 	}
-
       set_grf_points(lastx, j,
 		     local_grf_y(main_ymin + new_ymin, ap),
 		     local_grf_y(main_ymax + new_ymax, ap));
 
     }
-
   erase_and_draw_both_grf_points(md->wg, cp, j);
-
   free_mix_fd(new_min_fd);
   free_mix_fd(new_max_fd);
   return(j);
@@ -1948,7 +1926,7 @@ static int make_temporary_amp_env_graph(chan_info *cp, axis_info *ap, mix_info *
 
 static void make_temporary_graph(chan_info *cp, mix_info *md, mix_state *cs)
 {
-  off_t oldbeg, newbeg, oldend, newend;
+  off_t newbeg, newend;
   off_t i, samps;
   int j;
   Locus xi;
@@ -1972,9 +1950,7 @@ static void make_temporary_graph(chan_info *cp, mix_info *md, mix_state *cs)
    */
   ms = md->wg;
   if (!(ms->p0)) return;
-  oldbeg = cs->orig;
   newbeg = cs->beg;
-  oldend = cs->end;
   newend = newbeg + cs->len;
   sp = cp->sound;
   ap = cp->axis;
@@ -1992,7 +1968,9 @@ static void make_temporary_graph(chan_info *cp, mix_info *md, mix_state *cs)
     {
       sf = init_sample_read(ap->losamp, cp, READ_FORWARD);
       if (sf == NULL) return;
-      add = init_mix_read(md, CURRENT_MIX, 0); /* TODO: what if tag position in middle, so lo>newbeg? */
+      if (newbeg < lo)
+	add = init_mix_read(md, CURRENT_MIX, lo - newbeg);
+      else add = init_mix_read(md, CURRENT_MIX, 0); 
       if (!add) return;
 
       if (samples_per_pixel < 1.0)
@@ -2023,14 +2001,16 @@ static void make_temporary_graph(chan_info *cp, mix_info *md, mix_state *cs)
       if (amp_env_usable(cp, samples_per_pixel, ap->hisamp, true, cp->edit_ctr, (samps > AMP_ENV_CUTOFF)))
 	{
 	  if (mix_input_amp_env_usable(md, samples_per_pixel))
-	    j = make_temporary_amp_env_graph(cp, ap, md, samples_per_pixel, newbeg, newend, oldbeg, oldend);
-	  else j = make_temporary_amp_env_mixed_graph(cp, ap, md, samples_per_pixel, newbeg, newend, oldbeg, oldend);
+	    j = make_temporary_amp_env_graph(cp, ap, md, samples_per_pixel, newbeg, newend);
+	  else j = make_temporary_amp_env_mixed_graph(cp, ap, md, samples_per_pixel, newbeg, newend);
 	}
       else
 	{
 	  sf = init_sample_read(ap->losamp, cp, READ_FORWARD);
 	  if (sf == NULL) return;
-	  add = init_mix_read(md, CURRENT_MIX, 0);
+	  if (newbeg < lo)
+	    add = init_mix_read(md, CURRENT_MIX, lo - newbeg);
+	  else add = init_mix_read(md, CURRENT_MIX, 0);
 	  if (!add) return;
 
 	  j = 0;      /* graph point counter */
@@ -2225,7 +2205,6 @@ static void draw_mix_tag(mix_info *md)
     draw_string(ax, md->tagx - width, md->tagy + height + 3, lab, strlen(lab));
   draw_string(ax, md->x - width, md->y + height + 3, lab, strlen(lab));
   if (cp->printing) ps_draw_string(cp->axis, md->x - width, md->y + height + 3, lab);
-  /* TODO: inverse video or something for number of current mix in (active) mix dialog */
   md->tagx = md->x;
   md->tagy = md->y;
 }
@@ -3411,7 +3390,6 @@ static int set_mix_speed(int mix_id, Float val, bool from_gui, bool remix)
 	  if (origin) FREE(origin);
 	  if (!from_gui)
 	    reflect_mix_or_track_change(mix_id, ANY_TRACK_ID, false);
-	  /* TODO: and update_graph? */
 	}
       return(mix_id);
     }
@@ -4989,6 +4967,11 @@ static env *gather_track_amp_env(mix_state *cs)
     {
       track_beg = track_position(id, -1);
       track_dur = track_frames(id, -1);
+      /*
+      fprintf(stderr,"track amp env " OFF_TD " " OFF_TD " " OFF_TD " " OFF_TD " (inverted: %s): %s\n", 
+	      mix_beg, mix_dur, track_beg, track_dur,
+	  (inverted) ? "#t" : "#f", env_to_string(active_track_amp_env(id)));
+      */
       if (active_track_amp_env(id))
 	{
 	  /* track amps can be left until later (gather track amp) */
@@ -5008,6 +4991,9 @@ static env *gather_track_amp_env(mix_state *cs)
 	    {
 	      temp = e;
 	      e = invert_env(e);
+	      /*
+	      fprintf(stderr,"invert env ");
+	      */
 	      temp = free_env(temp);
 	    }
 	  inverted = false;
@@ -5015,6 +5001,9 @@ static env *gather_track_amp_env(mix_state *cs)
       /* if intermediate track has no env, that's as if it were a flat env -- a no-op, not a break in the chain */
       id = active_track_track(id);      
     }
+  /*
+  fprintf(stderr,"-> %s\n", env_to_string(e));
+  */
   return(e);
 }
 
@@ -5497,7 +5486,8 @@ static void remix_track_with_preset_times(int id, off_t new_position, off_t new_
       tr->beg = new_position;
       tr->end = new_position + new_frames;
       tr->trk = trk;
-      map_over_track_mixes(trk, init, (void *)tr);
+      if (init)
+	map_over_track_mixes(trk, init, (void *)tr);
       tracks[trk]->beg = (off_t *)CALLOC(1, sizeof(off_t));
       tracks[trk]->dur = (off_t *)CALLOC(1, sizeof(off_t));
       tracks[trk]->beg[0] = tr->beg;
@@ -7069,8 +7059,13 @@ static XEN g_lock_track(XEN id)
 {
   #define H_lock_track "(" S_lock_track " id) locks all mixes associated with track 'id'."
   int track_id;
+  off_t track_beg, track_dur;
   track_id = xen_to_c_track(id, S_lock_track);
-  remix_track(track_id, lock_track_1, NULL);
+  track_beg = track_position(track_id, -1);
+  track_dur = track_frames(track_id, -1);
+  if (found_track_amp_env(track_id))
+    remix_track_with_preset_times(track_id, track_beg, track_dur, NULL, 0.0, lock_track_1, NULL);
+  else remix_track(track_id, lock_track_1, NULL);
   redisplay_track(track_id);
   return(id);
 }
@@ -7928,25 +7923,18 @@ void g_init_track(void)
    mix/track stuff:
    SOMEDAY: how to save|restore-(mix|track)-state? -- mixes are not currently saved, but the track states could be
    SOMEDAY: what about saving all dialog state? mix|track-properties? (see marks.scm save-mark-properties)
-   TODO: autotest save/restore with track ops (drag esp)
+   TODO: autotest save/restore with track ops (drag esp) -- see tmp17.scm for as-one-edit save-state bugs
    SOMEDAY: pan choices with sinusoidal, exponential envs
    TODO: synchronization across mixes ("snap")
    SOMEDAY: choice of y-style (i.e. split out tracks vertically -- track all at same height)
    SOMEDAY: timing grid
-   TODO: first and last samples of mix-peak-amp-waveform don't cancel
-   TODO: mix waveform not fixed up alongside waveform if track dragging (and lags in mix dialog)
+   TODO: mix waveform not fixed up alongside waveform if track speed dragging (and lags in mix dialog)
    TODO: some way to squelch mix-tag/wave in 2nd chan (less clutter in track etc)
    TODO: axis movement stops if track drag motion stops when outside axis?
    TODO: initial dpy leaves start|end points unerased?
-   TODO: pan-mix selection region vct channel sound sound-data?
-     "(" S_mix_selection " (beg 0) (snd #f) (chn #f) (track 0)): mix the currently selected portion starting at beg"
-     so: either read desired selection channel directly, or add a selection-channel arg to mix-selection|region
-   TODO: pan-mix C-x q example
    TODO: initialization for drag is slow if 100 mixes in track -- 100 edits added to list?
 
-   somewhat unrelated stuff:
    TODO: vct-map! and backtrace troubles in new guile
-   TODO: run non-gl case (test 25) through efence/new guile
-   SOMEDAY: copy-*? [have mix|track|region|sample-reader, vct-copy]
-   TODO: xref tables for copy
+   SOMEDAY: copy-*? [have mix|track|region|sample-reader, copy-mix|track|file, vct-copy, clone-sound-as], xref tables for copy
+   TODO: get openmcl 0.14, OSX 10.3
 */

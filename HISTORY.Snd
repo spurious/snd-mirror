@@ -1,5 +1,6 @@
 Snd change log
 
+  28-Nov:    pan-mix-selection|region|vct in mix.scm.
   26-Nov:    rtio.rb thanks to Michael Scholz.
   25-Nov:    copy-sample-reader, read-region-sample, region-sample-reader?.
              removed free-mix|track-sample-reader (use free-sample-reader).

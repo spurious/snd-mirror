@@ -3493,9 +3493,13 @@ static char *Mixing_xrefs[] = {
   "mix data to vct: {mix->ct}",
   "save mix data in file: {save-mix}",
   "mix property list: {mix-property} in mix.scm",
-  "pan mono into stereo: see {place-sound} in examp.scm",
-  "pan mix data with envelope: {pan-mix}",
+  "pan mono sound into stereo: see {place-sound} in examp.scm",
+  "pan mix file with envelope: {pan-mix}",
+  "pan mix selection: {pan-mix-selection}",
+  "pan mix region: {pan-mix-region}",
+  "pan mix vct: {pan-mix-vct}",
   "the mix dialog: {Mix Dialog}",
+  "use pan-mix in File:Mix dialog: {use-pan-mix-in-mix-menu}",
   "mix menu: see dlp/mix-menu.scm",
   "cross-fade in frequency: cross-fade and dissolve-fade in {fade.scm}",
   "zipper cross-fade: {zipper.scm}",
@@ -3517,7 +3521,11 @@ static char *Mixing_urls[] = {
   "sndscm.html#mixproperty",
   "sndscm.html#placesound",
   "sndscm.html#panmix",
+  "sndscm.html#panmixselection",
+  "sndscm.html#panmixregion",
+  "sndscm.html#panmixvct",
   "snd.html#mixdialog",
+  "extsnd.html#usepanmixinmixmenu",
   NULL,
   "sndscm.html#fadedoc",
   "sndscm.html#zipdoc",
@@ -3534,7 +3542,8 @@ static char *Tracks_xrefs[] = {
   "maxamp of track data: {track-maxamp}",
   "track property list: {track-property}",
   "reverse track: {reverse-track}",
-  "various dialogs for track operations: dlp/mix-menu.scm and dlp/track-colors.scm",
+  "the track dialog: {The Mix Dialog}",
+  "various other dialogs for track operations: dlp/mix-menu.scm and dlp/track-colors.scm",
   NULL};
 
 static char *Tracks_urls[] = {
@@ -3546,6 +3555,7 @@ static char *Tracks_urls[] = {
   "sndscm.html#trackmaxamp",
   "sndscm.html#trackproperty",
   "sndscm.html#reversetrack",
+  "snd.html#mixdialog",
   NULL,
   NULL};
 

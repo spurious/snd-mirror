@@ -16370,9 +16370,19 @@ EDITS: 5
 		    (if (not (vequal (channel->vct 20 20 ind 0) (vct 0.000 0.010 0.040 0.090 0.160 0.250 0.360 0.490 0.640 0.810 
 								     1.000 1.000 1.000 1.000 1.000 1.000 1.000 1.000 1.000 1.000)))
 			(snd-display ";make-track again overrides vals: ~A" (channel->vct 20 20 ind 0)))
+		    (save-state "s61.scm")
+		    (close-sound ind)
+		    (load "s61.scm")
+		    ;; this currently screws up when there's a track amp-env and a mix-track change resets the env bounds
+		    (set! ind (find-sound "test.snd"))
+		    (if (not (sound? ind))
+			(snd-display ";can't restore test.snd: ~A?" (sounds))
+			(if (not (vequal (channel->vct 20 20 ind 0) (vct 0.000 0.010 0.040 0.090 0.160 0.250 0.360 0.490 0.640 0.810 
+								     1.000 1.000 1.000 1.000 1.000 1.000 1.000 1.000 1.000 1.000)))
+			    (snd-display ";track save/restore: ~A" (channel->vct 20 20 ind 0))))
 		    ))
 
-	      (close-sound ind))))
+	      (if (sound? ind) (close-sound ind)))))
 
 	  ;; track-tempo tests
 	  (let* ((ind (new-sound "test.snd" mus-next mus-bfloat 22050 1 "track tests" 1000))
@@ -16598,6 +16608,65 @@ EDITS: 5
 	    (if (not (equal? (track trk) (list id0 id1)))
 		(snd-display ";pan-mix 1->4 track: ~A ~A" (track trk) id0))
 	    (close-sound ind)))
+
+	(let* ((ind (new-sound "test.snd" mus-next mus-bshort 22050 1 "pan-mix-* tests"))
+	       (id0 (pan-mix-vct (make-vct 100 .3))))
+	  (if (or (not (= (mix-track id0) 0))
+		  (fneq (mix-amp id0 0) 1.0)
+		  (not (equal? (mix-amp-env id0 0) '())))
+	      (snd-display ";pan-mix-vct 1->1 all opt: ~A ~A ~A" (mix-track id0) (mix-amp id0 0) (mix-amp-env id0 0)))
+	  (if (or (fneq (maxamp ind 0) (mix-maxamp id0)) 
+		  (fneq (maxamp ind 0) 0.3))
+	      (snd-display ";pan-mix-vct 1->1 maxamps: ~A ~A" (maxamp ind 0) (mix-maxamp id0)))
+	  (if (not (= (mix-position id0) 0)) (snd-display ";pan-mix-vct 1->1 pos: ~A" (mix-position id0)))
+	  (if (not (= (mix-chans id0) 1)) (snd-display ";pan-mix-vct 1->1 mix chans: ~A" (mix-chans id0)))
+	  (let ((ind1 (new-sound "fmv.snd" mus-next mus-bshort 22050 1 "pan-mix-* tests")))
+	    (let ((reg (make-region 0 50 ind 0)))
+	      (let ((id1 (pan-mix-region reg)))
+		(if (or (fneq (maxamp ind1 0) (mix-maxamp id1)) 
+			(fneq (maxamp ind1 0) 0.3))
+		    (snd-display ";pan-mix-region 1->1 maxamps: ~A ~A" (maxamp ind1 0) (mix-maxamp id1)))
+		(select-all)
+		(revert-sound ind)
+		(set! id0 (pan-mix-selection 0 1.0 ind 0))
+		(if (or (fneq (maxamp ind 0) (mix-maxamp id0)) 
+			(fneq (maxamp ind 0) 0.3))
+		    (snd-display ";pan-mix-selection 1->1 maxamps: ~A ~A" (maxamp ind 0) (mix-maxamp id0)))
+		(close-sound ind)
+		(close-sound ind1)))))
+
+	(let ((old-mix-tag (with-mix-tags)))
+	  (dynamic-wind
+	   (lambda () (set! (with-mix-tags) #f))
+	   (lambda ()
+	     (let* ((ind (new-sound "fmv.snd" mus-next mus-bshort 22050 1 "locked pan-mix tests"))
+		    (id0 (pan-mix "1a.snd"))
+		    (max1a (cadr (mus-sound-maxamp "1a.snd")))
+		    (max2a (cadr (mus-sound-maxamp "2a.snd"))))
+	       (if (or (not (mix? id0))
+		       (not (mix-locked? id0)))
+		   (snd-display "no tag pan-mix: ~A ~A" id0 (mixes)))
+	       (if (fneq (maxamp ind 0) max1a) (snd-display ";no-tag pan-mix 1->1 maxamps: ~A ~A" (maxamp ind 0) max1a))
+	       (if (not (mix-locked? id0)) (snd-display ";no-tag pan-mix 1->1 not locked?"))
+	       (revert-sound ind)
+	       (set! id0 (pan-mix "2a.snd" 100))
+	       (if (fneq (maxamp ind 0) max2a) (snd-display ";no-tag pan-mix 2->1 maxamps: ~A ~A" (maxamp ind 0) max2a))
+	       (if (not (vequal (channel->vct 3000 10) (make-vct 10 0.0)))
+		   (snd-display ";no-tag pan-mix 2->1 channel 2: ~A" (channel->vct 3000 10)))
+	       (if (not (mix-locked? id0)) (snd-display ";no-tag pan-mix 2->1 not locked?"))
+	       (close-sound ind)
+	       (set! ind (new-sound "fmv.snd" mus-next mus-bshort 22050 2 "locked pan-mix tests"))
+	       (set! id0 (pan-mix "1a.snd"))
+	       (if (not (feql (maxamp ind #t) (list max1a 0.0)))
+		   (snd-display ";no-tag pan-mix 1->2 maxamps: ~A ~A" (maxamp ind #t) max1a))
+	       (if (not (mix-locked? id0)) (snd-display ";no-tag pan-mix 1->2 not locked?"))
+	       (revert-sound ind)
+	       (set! id0 (pan-mix "2a.snd" 100))
+	       (if (not (feql (maxamp ind #t) (list max1a 0.0)))
+		   (snd-display ";no-tag pan-mix 2->2 maxamps: ~A ~A" (maxamp ind #t) max1a))
+	       (if (not (mix-locked? id0)) (snd-display ";no-tag pan-mix 2->2 not locked?"))
+	       (close-sound ind)))
+	   (lambda () (set! (with-mix-tags) old-mix-tag))))
 
 	(let ((ind (new-sound "test.snd" mus-next mus-bfloat 22050 2 "copy sample-reader tests" 1000)))
 	  (vct->channel (vct .1 .2 .3 .4 .5 .6 .7 .8 .9 1.0) 101 10 ind 0)
@@ -36848,11 +36917,11 @@ EDITS: 2
 			(if (not (= (XmStringByteStreamLength (cadr ho)) 39)) 
 			    (snd-display ";XmStringByteStreamLength: ~A" (XmStringByteStreamLength (cadr ho))))
 			(set! val (XmStringUnparse (XmCvtByteStreamToXmString (cadr ho)) #f XmCHARSET_TEXT XmCHARSET_TEXT #f 0 XmOUTPUT_ALL))
-			(if (not (string=? val "hiho")) (snd-display ";XmStringUnparse null tag of bytestream: ~A" val))))			
+			(if (not (string=? val "hiho")) (snd-display ";XmStringUnparse null tag of bytestream: ~A" val))))
 		    (let* ((ind (open-sound "oboe.snd"))
-			   (grf (car (channel-widgets)))
-			   (dpy (XtDisplay grf))
-			   (win (XtWindow grf))
+			   (grf1 (car (channel-widgets)))
+			   (dpy (XtDisplay grf1))
+			   (win (XtWindow grf1))
 			   (scr (DefaultScreenOfDisplay dpy))
 			   (scrn (XScreenNumberOfScreen scr))
 			   (gv (XGCValues)))
@@ -36910,7 +36979,7 @@ EDITS: 2
 		      (set! (.foreground gv) (data-color))
 		      (set! (.background gv) (basic-color))
 		      (set! (.function gv) GXcopy)
-		      (let* ((gc (XtAllocateGC grf 
+		      (let* ((gc (XtAllocateGC grf1
 					       (XDefaultDepth dpy scrn) 
 					       (logior GCForeground GCBackground GCFunction)
 					       gv
@@ -36927,7 +36996,7 @@ EDITS: 2
 			(XCopyGC dpy gc GCFunction gc)
 			(XCopyArea dpy win win gc 0 0 100 100 0 0)
 			(XCopyPlane dpy win win gc 0 0 100 100 0 0 1)
-			(XtReleaseGC grf gc))
+			(XtReleaseGC grf1 gc))
 		      (close-sound ind))
 		    (let ((lc (XmStringLineCount (XmStringCreateLocalized "hiho"))))
 		      (if (not (= lc 1)) (snd-display ";XmStringLineCount: ~A" lc)))
@@ -37066,14 +37135,14 @@ EDITS: 2
 	      (XCreateBitmapFromData dpy win mouse_bits mouse_width mouse_height)
 	      (XCreatePixmapFromBitmapData dpy win mouse_bits 32 32 (white-pixel) (black-pixel) 8))
 	    
-	    (let* ((grf (car (channel-widgets)))
-		   (dpy (XtDisplay grf))
-		   (win (XtWindow grf))
+	    (let* ((grf1 (car (channel-widgets)))
+		   (dpy (XtDisplay grf1))
+		   (win (XtWindow grf1))
 		   (gc (car (snd-gcs)))
 		   (shell (cadr (main-widgets)))
 		   (scr (DefaultScreen dpy))
 		   (vis (DefaultVisual dpy scr))
-		   (depth (cadr (XtGetValues grf (list XmNdepth 0))))
+		   (depth (cadr (XtGetValues grf1 (list XmNdepth 0))))
 		   (pix (XCreatePixmap dpy win 10 10 depth))
 		   (rotpix (XCreatePixmap dpy win 10 10 depth)))
 	      
@@ -37108,7 +37177,7 @@ EDITS: 2
 	      (XmObjectAtPoint shell 100 100)
 	      (if (not (string=? (XmGetAtomName dpy XA_STRING) "STRING")) (snd-display ";XmGetAtomName: ~A" (XmGetAtomName dpy XA_STRING)))
 	      (if (not (XmTargetsAreCompatible dpy (list XA_STRING) 1 (list XA_STRING) 1)) (snd-display ";XmTargetsAreCompatible"))
-	      (XmUpdateDisplay grf)
+	      (XmUpdateDisplay grf1)
 	      (let ((lines (XmWidgetGetBaselines (list-ref (main-widgets) 4))))
 		(if (not lines) (snd-display ";XmWidgetGetBaselines?"))
 		(if (< (length lines) 4) (snd-display ";no listener text?? ~A" lines)))
@@ -37133,7 +37202,7 @@ EDITS: 2
 		(if (> (.bits_per_pixel before) 123) (snd-display ";bits_per_pixel: ~A" (.bits_per_pixel before)))
 		(XmInstallImage before "before_image")
 		(XmUninstallImage before)
-		(let ((i1 (XGetImage dpy (list 'Window (cadr pix)) 0 0 10 10 AllPlanes XYPixmap))
+		(let ((i11 (XGetImage dpy (list 'Window (cadr pix)) 0 0 10 10 AllPlanes XYPixmap))
 		      (attr (XpmAttributes))
 		      (vals (XtGetValues (cadr (main-widgets)) (list XmNcolormap 0 XmNdepth 0)))
 		      (sym (XpmColorSymbol "basiccolor" #f (basic-color))))
@@ -37216,7 +37285,7 @@ EDITS: 2
 		       (list 'valuemask 'depth 'width 'x_hotspot 'y_hotspot 'cpp 'npixels 'ncolors)))
 		    )
 		  
-		  (XDestroyImage i1))
+		  (XDestroyImage i11))
 		(XDestroyImage before)
 		(XFreePixmap dpy pix)
 		(XVisualIDFromVisual vis)
@@ -37244,13 +37313,13 @@ EDITS: 2
 		))
 	    
 	    (let* ((gc (car (snd-gcs)))
-		   (grf (car (channel-widgets)))
-		   (dpy (XtDisplay grf))
-		   (win (XtWindow grf))
+		   (grf1 (car (channel-widgets)))
+		   (dpy (XtDisplay grf1))
+		   (win (XtWindow grf1))
 		   (shl (cadr (main-widgets))))
 	      (let ((wid (XtWindowToWidget dpy win)))
-		(if (not (equal? wid grf))
-		    (snd-display ";XtWindowToWidget: ~A ~A" grf win)))
+		(if (not (equal? wid grf1))
+		    (snd-display ";XtWindowToWidget: ~A ~A" grf1 win)))
 	      (if (not (equal? (XGetTransientForHint dpy win) (list 0 #f)))
 		  (snd-display ";XGetTransientForHint: ~A" (XGetTransientForHint dpy win)))
 	      (if (not (equal? (XGetErrorText dpy BadColor #f 9) (list 0 "BadColor")))
@@ -39242,7 +39311,6 @@ EDITS: 2
 		 (lambda (arg)
 		   (for-each 
 		    (lambda (n name)
-		      (snd-display "~A " name)
 		      (let ((tag 
 			     (catch #t
 				    (lambda () (n arg))
@@ -41259,3 +41327,53 @@ EDITS: 2
 (if with-exit (exit))
 
 
+
+#!
+;;; TODO: as-one-edit save-state bugs:
+(for-each 
+ (lambda (func test)
+   (let ((ind (new-sound "test.snd" mus-next mus-bfloat 22050 1 "save-state tests" 100)))
+	  (as-one-edit (lambda () (func ind)))
+	  (save-state "s61.scm")
+	  (close-sound ind)
+	  (load "s61.scm")
+	  (set! ind (find-sound "test.snd"))
+	  (if (not (sound? ind))
+	      (snd-display ";as-one-edit save-state can't find test.snd?")
+	      (begin
+		(test ind)
+		(close-sound ind)))))
+ (list 
+  (lambda (ind)
+    ;; change
+    (vct->channel (vct .1 .2 .3 .4 .5 .6 .7 .8 .9 1.0) 0 10 ind 0)
+    (vct->channel (vct .1 .2 .3 .4 .5 .6 .7 .8 .9 1.0) 20 10 ind 0))
+
+  (lambda (ind)
+    ;; scale
+    (vct->channel (vct .1 .2 .3 .4 .5 .6 .7 .8 .9 1.0) 0 10 ind 0)
+    (scale-by .5))
+
+  (lambda (ind)
+    ;; delete
+    (vct->channel (vct .1 .2 .3 .4 .5 .6 .7 .8 .9 1.0) 0 10 ind 0)
+    (delete-samples 5 5))
+  )
+	  
+ (list
+  (lambda (ind)
+    (if (not (vequal (channel->vct 0 10 ind 0) (vct .1 .2 .3 .4 .5 .6 .7 .8 .9 1.0)))
+	(snd-display ";as-one-edit save-state 1: ~A" (channel->vct 0 10 ind 0)))
+    (if (not (vequal (channel->vct 20 10 ind 0) (vct .1 .2 .3 .4 .5 .6 .7 .8 .9 1.0)))
+	(snd-display ";as-one-edit save-state 2: ~A" (channel->vct 0 10 ind 0))))
+
+  (lambda (ind)
+    (if (not (vequal (channel->vct 0 10 ind 0) (vct-scale! (vct .1 .2 .3 .4 .5 .6 .7 .8 .9 1.0) .5)))
+	(snd-display ";as-one-edit save-state 3: ~A" (channel->vct 0 10 ind 0))))
+
+  (lambda (ind)
+    (if (not (vequal (channel->vct 0 10 ind 0) (vct .1 .2 .3 .4 .5 0 0 0 0 0)))
+	(snd-display ";as-one-edit save-state 4: ~A" (channel->vct 0 10 ind 0))))
+  
+  ))
+!#

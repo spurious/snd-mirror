@@ -1914,7 +1914,10 @@ Max Mathews.
   <em class=def><a name="mixproperty">mix-property</a></em> key id
   <em class=def><A NAME="mixclicksetsamp">mix-click-sets-amp</A></em>
   <em class=def><a name="mix2vct">mix-&gt;vct</a></em> id
-  <em class=def><a name="panmix">pan-mix</a></em> file (frame 0) (env 1.0) snd
+  <em class=def><a name="panmix">pan-mix</a></em> file (frame 0) (env 1.0) snd (chn 0)
+  <em class=def><A NAME="panmixselection">pan-mix-selection</A></em> (frame 0) (env 1.0) snd (chn 0)
+  <em class=def><A NAME="panmixregion">pan-mix-region</A></em> region (frame 0) (env 1.0) snd (chn 0)
+  <em class=def><A NAME="panmixvct">pan-mix-vct</A></em> vct (frame 0) (env 1.0) snd (chn 0)
   <em class=def><a name="snapmixtobeat">snap-mix-to-beat</a></em> (at-anchor)
   <em class=def><A NAME="deleteallmixes">delete-all-mixes</a></em>
   <em class=def><a name="findmix">find-mix</a></em> sample snd chn
@@ -1943,7 +1946,12 @@ To tie this into C-x C-q, in place of the default "mix" function,
 </pre>
 <p>
 See <a href="#usepanmixinmixmenu">use-pan-mix-in-mix-menu</a> to change the
-File:Mix menu to use pan-mix.
+File:Mix menu to use pan-mix.  The other pan-mix-* functions perform the
+same operation on a region (<b>pan-mix-region</b>), the current selection
+(<b>pan-mix-selection</b>), or a vct assumed to represent one channel of
+sound (<b>pan-mix-vct</b>).
+</p>
+<p>
 <b>snap-mix-to-beat</b> forces a dragged mix to end up on a beat.
 If <i>at-anchor</i> is #t, the anchor point, rather than the mix beginning falls on the beat.
 <b>mix-property</b> associates a property list with each mix.
@@ -2549,7 +2557,7 @@ minibuffer area which shows the current amount of disk space available
 on the partition of the associated sound.
 </p><p><b>keep-file-dialog-open-upon-ok</b> changes File:Open so that clicking "ok" does not unmanage (dismiss) the dialog.
 <b>keep-mix-file-dialog-open-upon-ok</b> does the same for the File:Mix dialog.
-<b>use-pan-mix-in-mix-menu</b> changes the File:Mix dialog to use <a href="#panmix">pan-mix</a> rather than <a href="extsnd.html#sndmix">mix<a>.
+<b>use-pan-mix-in-mix-menu</b> changes the File:Mix dialog to use <a href="#panmix">pan-mix</a> rather than <a href="extsnd.html#sndmix">mix</a>.
 </p><p><b>add-amp-controls</b> adds amp sliders to the control panel
 for multi-channel sounds (each channel gets its own amp control slider).
 </p><p><b>add-rename-option</b> adds a "Rename" option to the File menu; similarly

@@ -886,7 +886,6 @@ static void edit_data_to_file(FILE *fd, ed_list *ed, chan_info *cp)
   if (snd < cp->sound_size)
     {
       sd = cp->sounds[snd];
-
       if (sd->type == SND_DATA_BUFFER)
 	{
 	  if ((ed->len > BUFFER_NOT_FILE_LIMIT) && (save_dir(ss)))

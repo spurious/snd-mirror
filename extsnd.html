@@ -3159,12 +3159,14 @@ that has actively mixed data, the associated mix tag goes away until you undo th
 Mix in region <i>reg</i> at sample <i>samp</i> (defaulting to the cursor sample), 
 in <i>snd</i>'s channel <i>chn</i>.  mix-region returns the id of the first channel's 
 mix (subsequent channels simply increment this number).
+See also <a href="sndscm.html#panmixregion">pan-mix-region</a> in mix.scm.
 </td></tr>
 
 <!-- mix-selection -->
 <tr><td colspan=2><span class=defbox><code><em class=def>mix-selection</em> (<i>beg snd chn track</i>)</code></span></td></tr>
 <tr><td></td><td>
 mix (add) selection starting at beg in snd's channel chn.  Return new mix id.
+See also <a href="sndscm.html#panmixselection">pan-mix-selection</a> in mix.scm.
 </td></tr>
 
 <!-- mix-speed -->
@@ -3205,6 +3207,7 @@ Return the id of the new mix, or -1 if some error occurred.
 If <i>with-mix-tags</i> is #f (default is #t), the data is simply
 mixed without creating any mix tags, and without returning a mix id.
 If <i>track</i> is the id of an existing track, the subsequent mix is placed in that track.
+See also <a href="sndscm.html#panmixvct">pan-mix-vct</a> in mix.scm.
 </td></tr>
 
 <!-- mix-waveform-height -->
@@ -3246,9 +3249,13 @@ mix data maxamp: <a href="sndscm.html#mixmaxamp">mix-maxamp</a><br>
 mix data to vct: <a href="sndscm.html#mix2vct">mix-&gt;vct</a><br>
 save mix data in file: <a href="sndscm.html#savemix">save-mix</a><br>
 mix property list: <a href="sndscm.html#mixproperty">mix-property</a> in mix.scm<br>
-pan mono into stereo: see <a href="sndscm.html#placesound">place-sound</a> in examp.scm<br>
-pan mix data with envelope: <a href="sndscm.html#panmix">pan-mix</a><br>
+pan mono sound into stereo: see <a href="sndscm.html#placesound">place-sound</a> in examp.scm<br>
+pan mix file with envelope: <a href="sndscm.html#panmix">pan-mix</a><br>
+pan mix selection: <a href="sndscm.html#panmixselection">pan-mix-selection</a><br>
+pan mix region: <a href="sndscm.html#panmixregion">pan-mix-region</a><br>
+pan mix vct: <a href="sndscm.html#panmixvct">pan-mix-vct</a><br>
 the mix dialog: <a href="snd.html#mixdialog">Mix Dialog</a><br>
+use pan-mix in File:Mix dialog: <a href="sndscm.html#usepanmixinmixmenu">use-pan-mix-in-mix-menu</a><br>
 mix menu: see dlp/mix-menu.scm<br>
 cross-fade in frequency: <i>cross-fade</i> and <i>dissolve-fade</i> in <a href="sndscm.html#fadedoc">fade.scm</a><br>
 zipper cross-fade: <a href="sndscm.html#zipdoc">zipper.scm</a><br>
@@ -3426,7 +3433,8 @@ change track tempo: <a href="sndscm.html#retempotrack">retempo-track</a><br>
 maxamp of track data: <a href="sndscm.html#trackmaxamp">track-maxamp</a><br>
 track property list: <a href="sndscm.html#trackproperty">track-property</a><br>
 reverse track: <a href="sndscm.html#reversetrack">reverse-track</a><br>
-various dialogs for track operations: dlp/mix-menu.scm and dlp/track-colors.scm<br>
+the track dialog: <a href="snd.html#mixdialog">The Mix Dialog</a><br>
+various other dialogs for track operations: dlp/mix-menu.scm and dlp/track-colors.scm<br>
 <br>
 </small></blockquote>
 </td></tr></TABLE>
@@ -3480,6 +3488,7 @@ create a <a href="#samplereaders">sample-reader</a> reading region <i>reg</i>'s 
 Mix in region <i>reg</i> at sample <i>samp</i> (defaulting to the cursor sample), 
 in <i>snd</i>'s channel <i>chn</i>.  mix-region returns the id of the first channel's 
 mix (subsequent channels simply increment this number).
+See also <a href="sndscm.html#panmixregion">pan-mix-region</a> in mix.scm.
 </td></tr>
 
 <!-- play-region -->
@@ -3626,6 +3635,7 @@ insert selection starting at beg in snd's channel chn.
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="sndmixselection">mix-selection</a></em> (<i>beg snd chn track</i>)</code></span></td></tr>
 <tr><td></td><td>
 mix (add) selection starting at beg in snd's channel chn.  Return new mix id.
+See also <a href="sndscm.html#panmixselection">pan-mix-selection</a> in mix.scm.
 </td></tr>
 
 <!-- play-selection -->
@@ -8918,6 +8928,8 @@ want to back up the the saved state, it's safer to delete all the regions first 
 then load the saved-state file (see snd-test.scm).
 <a href="#savestatehook">save-state-hook</a> is called during the saving process (once on each temp file), and
 and <a href="#aftersavestatehook">after-save-state-hook</a> is called afterwards.
+It is a serious bug in save-state that it is not currently compatible with <a href="#asoneedit">as-one-edit</a>,
+or any embedded version of it (this affects mixes and tracks primarily).  I hope to fix this bug someday!
 </td></tr>
 
 <!-- script-arg -->

@@ -81,7 +81,7 @@ typedef struct {
   off_t selection_beg, selection_end;  /* selection needs to follow edit list */
   Float maxamp, selection_maxamp;
   int edpos;
-  bool ptree_env_too;
+  bool ptree_env_too, backed_up;
 } ed_list;
 
 typedef struct snd_fd {
@@ -95,7 +95,7 @@ typedef struct snd_fd {
   bool at_eof;
   mus_sample_t *data;
   snd_data *current_sound;
-  off_t initial_samp; /* only real use (outside descriptions) is in apply-ladspa (sigh...) */
+  off_t initial_samp;
   struct chan_info *cp;
   struct snd_info *local_sp;
   Float fscaler, rscaler;

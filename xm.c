@@ -1117,7 +1117,7 @@ static char **XEN_TO_C_Strings(XEN v, int len)
   str = (char **)CALLOC(len, sizeof(char *));
   for (i = 0; (i < len) && (XEN_NOT_NULL_P(v)); i++, v = XEN_CDR(v))
     if (XEN_STRING_P(XEN_CAR(v)))
-      str[i] = XEN_TO_C_STRING(XEN_CAR(v)); /* TODO: protect */
+      str[i] = XEN_TO_C_STRING(XEN_CAR(v)); /* should this be protected? */
     else 
       {
 	FREE(str);
@@ -1597,7 +1597,7 @@ static Arg *XEN_TO_C_Args(XEN inargl)
     {
       xname = XEN_CAR(inarg);
       XEN_ASSERT_TYPE(XEN_STRING_P(xname), xname, 0, c__FUNCTION__, "string");
-      name = XEN_TO_C_STRING(xname); /* TODO: protect */
+      name = XEN_TO_C_STRING(xname); /* should this be protectd? */
       type = resource_type(name);
       value = XEN_CADR(inarg);
       switch (type)
