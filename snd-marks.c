@@ -1026,6 +1026,8 @@ void mark_define_region(chan_info *cp, int count)
     }
 }
 
+/* TODO: cp mark size starts at 16?  makes long empty lists in save-marks */
+
 void save_mark_list(FILE *fd, chan_info *cp)
 {
   /* assumes we're calling from the edit history list maker in snd-edits.c */
@@ -1084,9 +1086,10 @@ void save_mark_list(FILE *fd, chan_info *cp)
 			  fprintf(fd, "[\"%s\", " OFF_TD ", %d, %d]", m->name, m->samp, mark_id(m), mark_sync(m));
 			else fprintf(fd, "[false, " OFF_TD ", %d, %d]", m->samp, mark_id(m), mark_sync(m));
 		      }
-		    else fprintf(fd, "[false false false false]");
+ 		    else fprintf(fd, "[false, false, false, false]");
 		    need_comma = true;
 		  }
+		need_comma = false;
 	      }
 	    fprintf(fd, "]]");
 	    need_cr = true;

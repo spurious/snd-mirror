@@ -4534,15 +4534,20 @@ static char *edit_data_to_file(FILE *fd, ed_list *ed, chan_info *cp)
 	    }
 	  else
 	    {
-	      fprintf(fd, VECTOR_OPEN);
-	      for (i = 0; i < ed->len; i++) 
-		{
+  	      fprintf(fd, VECTOR_OPEN);
 #if SNDLIB_USE_FLOATS
-		  fprintf(fd, "%f" PROC_SEP, sd->buffered_data[i]);
+ 	      fprintf(fd, "%f", sd->buffered_data[0]);
 #else
-		  fprintf(fd, "%d" PROC_SEP, sd->buffered_data[i]);
+ 	      fprintf(fd, "%d", sd->buffered_data[0]);
 #endif
-		}
+ 	      for (i = 1; i < ed->len; i++) 
+  		{
+#if SNDLIB_USE_FLOATS
+ 		  fprintf(fd, PROC_SEP "%f", sd->buffered_data[i]);
+#else
+ 		  fprintf(fd, PROC_SEP "%d", sd->buffered_data[i]);
+#endif
+  		}
 	      fprintf(fd, VECTOR_CLOSE);
 	      return(NULL);
 	    }
@@ -4594,12 +4599,17 @@ static char *edit_data_to_file(FILE *fd, ed_list *ed, chan_info *cp)
 		  if ((n + bufnum) < samples) cursamples = bufnum; else cursamples = (samples - n);
 		  mus_file_read(ifd, 0, cursamples - 1, 1, ibufs);
 		  buffer = (mus_sample_t *)(ibufs[0]);
-		  for (i = 0; i < cursamples; i++) 
-		    {
 #if SNDLIB_USE_FLOATS
-		      fprintf(fd, "%f" PROC_SEP, MUS_SAMPLE_TO_FLOAT(buffer[i]));
+ 		  fprintf(fd, "%f", MUS_SAMPLE_TO_FLOAT(buffer[0]));
 #else
-		      fprintf(fd, "%d" PROC_SEP, MUS_SAMPLE_TO_INT(buffer[i]));
+ 		  fprintf(fd, "%d", MUS_SAMPLE_TO_INT(buffer[0]));
+#endif
+ 		  for (i = 1; i < cursamples; i++) 
+  		    {
+#if SNDLIB_USE_FLOATS
+ 		      fprintf(fd, PROC_SEP "%f", MUS_SAMPLE_TO_FLOAT(buffer[i]));
+#else
+		      fprintf(fd, PROC_SEP "%d", MUS_SAMPLE_TO_INT(buffer[i]));
 #endif
 		      sample++;
 		      if (sample == ed->len) goto ALL_DONE;
@@ -4767,7 +4777,7 @@ void edit_history_to_file(FILE *fd, chan_info *cp)
 		}
 	      if ((ed->edpos != AT_CURRENT_EDIT_POSITION) &&
 		  (ed->edpos != (i - 1)))
-		fprintf(fd, " %d", ed->edpos);
+		fprintf(fd, PROC_SEP " %d", ed->edpos);
 #if HAVE_RUBY
 	      else fprintf(fd, ", false");
 #else

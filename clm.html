@@ -19,6 +19,9 @@
 </style>
 </head>
 
+<!-- TODO: document (file->array file-name channel start num-samples arr) and (array->file file-name arr num-samples srate chans)
+-->
+
 <!-- 
      The index at the end is generated automatically by index.cl which notices all names, and
      special comments labelled INDEX. 
@@ -2528,7 +2531,7 @@ matrix multiply, and so on.
 
   <a class=def name="file-&gt;array">file-&gt;array</a> <i>filename channel start-sample samples array</i>
   <a class=def name="array-&gt;file">array-&gt;file</a> <i>file data len srate channels</i>
-  ;; these two read and write entire files to or from float arrays
+  ;; these two read and write sample (sound) files to or from float arrays
 
   <a class=def name="continue-frame-&gt;file">continue-frame-&gt;file</a> <i>file</i>      ;reopen <i>file</i> for more output
   <a class=def name="continue-sample-&gt;file">continue-sample-&gt;file</a> <i>file</i>     ;reopen <i>file</i> for more output
