@@ -1953,7 +1953,7 @@ static void record_button_callback(GtkWidget *w, gpointer context)
 		if (!(p->active[i]))
 		  {
 		    wd->chan = i;
-		    meter_button_callback(p->on_buttons[i], (gpointer)wd); /* callData not used */
+		    meter_button_callback(p->on_buttons[i], (gpointer)wd);
 		  }
 	      FREE(wd);
 	    }

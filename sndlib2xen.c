@@ -1138,6 +1138,30 @@ static XEN g_mus_error_to_string(XEN err)
   return(C_TO_XEN_STRING((char *)mus_error_to_string(XEN_TO_C_INT(err))));
 }
 
+
+static XEN new_sound_hook;
+static void g_new_sound_hook(const char *filename)
+{
+  if (XEN_HOOKED(new_sound_hook))
+    {
+#if HAVE_GUILE
+      XEN procs = XEN_HOOK_PROCEDURES(new_sound_hook);
+      while (XEN_NOT_NULL_P(procs))
+	{
+	  XEN_CALL_1(XEN_CAR(procs), 
+		     C_TO_XEN_STRING(filename),
+		     S_new_sound_hook);
+	  procs = XEN_CDR (procs);
+	}
+#else
+      XEN_CALL_1(new_sound_hook, 
+		 C_TO_XEN_STRING(filename), 
+		 S_new_sound_hook);
+#endif
+    }
+}
+
+
 #if DEBUGGING && HAVE_GUILE
 static XEN g_mus_header_original_format_name(XEN format, XEN type)
 {
@@ -1559,6 +1583,10 @@ void mus_sndlib2xen_initialize(void)
 #if DEBUGGING && HAVE_GUILE
   XEN_DEFINE_PROCEDURE("mus-header-original-format-name", g_mus_header_original_format_name, 2, 0, 0, "internal testing function");
 #endif
+
+  #define H_new_sound_hook S_new_sound_hook "(filename) is called when a new sound file is being created"
+  XEN_DEFINE_HOOK(new_sound_hook, S_new_sound_hook, 1, H_new_sound_hook);    /* arg = filename */
+  mus_header_write_set_hook(g_new_sound_hook);
 
   XEN_YES_WE_HAVE("sndlib");
 

@@ -1406,6 +1406,15 @@ the hook.
 <!-- --></pre></td></tr></table></td></tr>
 <!-- --><tr><td colspan=3></td></tr>
 <!-- -->
+<!-- new-sound-hook -->
+<!-- --><tr><td colspan=2>
+<!-- --><span class=defbox><code><em class=def><a name="newsoundhook">new-sound-hook</a></em> (filename)</code></span><td></td>
+<!-- --></td></tr>
+<!-- --><tr><td></td><td colspan=2>
+<!-- -->called whenever a new sound file is being created.
+<!-- --></td></tr>
+<!-- --><tr><td colspan=3></td></tr>
+<!-- -->
 <!-- new-widget-hook -->
 <!-- --><tr><td colspan=2>
 <!-- --><span class=defbox><code><em class=def><a name="newwidgethook">new-widget-hook</a></em> (widget)</code></span><td></td>
@@ -4780,6 +4789,7 @@ the direction argument between the channel and edit-position:
 <!-- --><pre>
 <!-- -->mus-next mus-aifc mus-riff mus-nist mus-raw mus-ircam mus-aiff mus-soundfont mus-bicsf mus-voc mus-svx
 <!-- --></pre>
+<!-- -->To be informed whenever a new sound is created, use <a href="#newsoundhook">new-sound-hook</a>.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->

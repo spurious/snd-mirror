@@ -27,8 +27,8 @@
 
 
 #define SNDLIB_VERSION 17
-#define SNDLIB_REVISION 0
-#define SNDLIB_DATE "11-Nov-02"
+#define SNDLIB_REVISION 1
+#define SNDLIB_DATE "2-Dec-02"
 
 /* try to figure out what type of machine (and in worst case, what OS) we're running on */
 
@@ -624,6 +624,9 @@ int mus_header_change_format        PROTO((const char *filename, int new_format)
 int mus_header_change_location      PROTO((const char *filename, off_t new_location));
 int mus_header_change_comment       PROTO((const char *filename, char *new_comment));
 int mus_header_change_samples       PROTO((const char *filename, off_t new_samples));
+
+typedef void mus_header_write_hook_t(const char *filename);
+mus_header_write_hook_t *mus_header_write_set_hook PROTO((mus_header_write_hook_t *new_hook));
 
 
 /* -------- midi.c -------- */

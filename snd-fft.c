@@ -551,7 +551,7 @@ int find_and_sort_peaks(Float *buf, fft_peak *found, int num_peaks, int size)
       j = inds[i];
       ca = buf[j];
       found[i].amp = buf[j];
-      found[i].freq = j;
+      found[i].freq = (Float)j;
     }
   if (pks > 0) qsort((void *)found, pks, sizeof(fft_peak), compare_peaks);
   FREE(peaks);

@@ -1,5 +1,7 @@
 #include "snd.h"
 
+/* TODO: highlight_unbalanced_paren */
+
 static GtkWidget *completion_dialog = NULL;
 static int first_time = TRUE;
 static GtkWidget *listener_text = NULL, *completion_list = NULL;

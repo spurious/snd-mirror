@@ -3039,18 +3039,13 @@ The global variables that parallel CLM's *clm-...* are:
   <em class=def><A NAME="wssndsrate">*srate*</a></em> (default-output-srate)
   <em class=def><A NAME="wssndfilename">*file-name*</a></em> "test.snd"
   <em class=def><A NAME="wssndchannels">*channels*</a></em> (default-output-chans)
-  <em class=def><A NAME="wssndexplode">*explode*</a></em> #f                          
   <em class=def><A NAME="wssnddataformat">*data-format*</a></em> (default-output-format)
   <em class=def><A NAME="wssndheadertype">*header-type*</a></em> (default-output-type)
-</pre>
-<p>*explode* here refers to the <a href="extsnd.html#withmixtags">with-mix-tags</a> setting.
-</p>
-<pre>
- <em class=def><A NAME="wswithsound">with-sound</a></em>
+
+  <em class=def><A NAME="wswithsound">with-sound</a></em>
     #:key (srate *srate*) 
           (output *file-name*)   ; default="test.snd"
 	  (channels *channels*)
-	  (explode *explode*)
 	  (header-type *header-type*)
 	  (data-format *data-format*)
 	  (comment #f)
@@ -3095,8 +3090,9 @@ latter is going through the C intermediate file!
 (with-sound (:continue-old-file #t) (fm-violin 0 1 440 .1))
 </pre>
 <p>with-sound returns the output file name.</p>
-<p>ws.scm also has a scheme version of <b>def-clm-struct</b>; the field references
-work in run (the optimizer) on reading, but not yet writing.
+<p>ws.scm also has a scheme version of <a href="clm.html#def-clm-struct">def-clm-struct</a>
+and <a href="clm.html#sound-let">sound-let</a>.  with-sounds and sound-lets can be nested --
+see clm.html for examples.
 </p>
 <br>
 

@@ -272,6 +272,7 @@ typedef struct {
   void (*function)(int *arg_addrs, int *ints, Float *dbls);
   int *args;
   char *(*descr)(int *arg_addrs, int *ints, Float *dbls); /* for debugging */
+  int no_opt;
 } triple;
 
 static triple *free_triple(triple *trp)
@@ -719,6 +720,8 @@ static char *describe_xen_value(xen_value *v, int *ints, Float *dbls)
     case R_CHAR:    buf = (char *)CALLOC(32, sizeof(char)); mus_snprintf(buf, 32, CHR_PT , v->addr, (char)(ints[v->addr]));                break;
     case R_STRING:  buf = (char *)CALLOC(256, sizeof(char)); mus_snprintf(buf, 256, STR_PT , v->addr, (char *)(ints[v->addr]));            break;
     case R_FLOAT:   buf = (char *)CALLOC(32, sizeof(char)); mus_snprintf(buf, 32, FLT_PT , v->addr, dbls[v->addr]);                        break;
+    case R_LIST:
+    case R_PAIR:    buf = (char *)CALLOC(512, sizeof(char)); mus_snprintf(buf, 512, "l%d%s", v->addr, XEN_AS_STRING((XEN)(ints[v->addr]))); break;
     case R_FLOAT_VECTOR:
     case R_VCT:     buf = vct_to_string((vct *)(ints[v->addr]));                                                                           break;
     case R_READER:  if (ints[v->addr]) buf = sf_to_string((snd_fd *)(ints[v->addr])); else buf = copy_string("null");                      break;
@@ -902,6 +905,8 @@ static void free_vct_vct(vct_vct *v)
     }
 }
 
+static void clm_struct_restore(ptree *prog, xen_var *var);
+
 static xen_var *free_xen_var(ptree *prog, xen_var *var)
 {
   XEN val;
@@ -952,6 +957,10 @@ static xen_var *free_xen_var(ptree *prog, xen_var *var)
 		val = symbol_to_value(prog->code, C_STRING_TO_XEN_SYMBOL(var->name), &local_var);
 		if (XEN_VECTOR_P(val))
 		  int_vct_into_vector((int_vct *)(prog->ints[var->v->addr]), val);
+		break;
+	      case R_LIST:
+		/* this can be "unclean" only if it represents a clm struct that had some field set */
+		clm_struct_restore(prog, var);
 		break;
 	      }
 	}
@@ -1678,16 +1687,17 @@ static xen_value *convert_dbl_to_int(ptree *prog, xen_value *i, int exact)
   return(v);
 }
 
-static void set_var(ptree *pt, xen_value *var, xen_value *init_val)
+static triple *set_var(ptree *pt, xen_value *var, xen_value *init_val)
 {
   if (var->type == R_FLOAT)
-    add_triple_to_ptree(pt, va_make_triple(store_f, descr_store_f, 2, var, init_val));
+    return(add_triple_to_ptree(pt, va_make_triple(store_f, descr_store_f, 2, var, init_val)));
   else
     {
       if (var->type == R_STRING)
-	add_triple_to_ptree(pt, va_make_triple(store_s, descr_store_s, 2, var, init_val));
-      else add_triple_to_ptree(pt, va_make_triple(store_i, descr_store_i, 2, var, init_val));
+	return(add_triple_to_ptree(pt, va_make_triple(store_s, descr_store_s, 2, var, init_val)));
+      else return(add_triple_to_ptree(pt, va_make_triple(store_i, descr_store_i, 2, var, init_val)));
     }
+  return(NULL);
 }
 
 static xen_value *walk(ptree *prog, XEN form, int need_result);
@@ -2749,8 +2759,12 @@ static xen_value *set_form(ptree *prog, XEN form, int need_result)
 	  /* this limitation could be removed, but is it worth the bother? */
 	}
       if (((v->type == R_FLOAT) || (v->type == R_INT)) &&
-	  (XEN_LIST_P(setval)) && 
-	  (prog->triple_ctr > 0))
+	  (XEN_LIST_P(setval)) && /* this by itself assumes that any list represents an expression (i.e. a temp in effect)
+				   *   but clm-def-struct field references are lists that can be the target of a set
+				   *   so we set the no_opt flag when producing the set
+				   */
+	  (prog->triple_ctr > 0) &&
+	  (prog->program[prog->triple_ctr - 1]->no_opt == FALSE))
 	{
 	  /* if possible, simply redirect the previous store to us (implicit set) */
 	  /* (run '(let ((a 2) (b 1)) (set! a (+ b 1)))) */
@@ -4149,7 +4163,7 @@ static char *descr_lcm_in(int *args, int *ints, Float *dbls) {return(descr_max_m
 
 static xen_value *lcm_1(ptree *prog, xen_value **args, int constants, int num_args)
 {
-  int i;
+  int i, mx;
   if (num_args == 0)
     return(make_xen_value(R_INT, add_int_to_ptree(prog, 1), R_CONSTANT)); /* (lcm) -> 1 */
   for (i = 1; i <= num_args; i++)
@@ -4170,7 +4184,6 @@ static xen_value *lcm_1(ptree *prog, xen_value **args, int constants, int num_ar
     }
   if (constants == num_args)
     {
-      int i, mx;
       mx = c_lcm(prog->ints[args[1]->addr], prog->ints[args[2]->addr]);
       for (i = 3; i <= num_args; i++)
 	{
@@ -7106,6 +7119,8 @@ static int find_clm_var(ptree *prog, XEN lst, XEN lst_ref, int offset, int run_t
       if ((run_type == R_BOOL) || 
 	  (run_type == R_INT) ||
 	  (run_type == R_CHAR) ||
+	  (run_type == R_CLM) ||
+	  (run_type == R_READER) ||
 	  (run_type == R_VCT))
 	addr = add_int_to_ptree(prog, 0);
       else
@@ -7138,6 +7153,8 @@ static int find_clm_var(ptree *prog, XEN lst, XEN lst_ref, int offset, int run_t
 	case R_CHAR:   prog->ints[addr] = (int)(XEN_TO_C_CHAR(lst_ref)); break;
 	case R_STRING: prog->ints[addr] = (int)copy_string(XEN_TO_C_STRING(lst_ref)); break;
 	case R_VCT:    prog->ints[addr] = (int)(get_vct(lst_ref)); break;
+	case R_READER: prog->ints[addr] = (int)(get_sf(lst_ref)); break;
+	case R_CLM:    prog->ints[addr] = (int)(MUS_XEN_TO_CLM(lst_ref)); break;
 	}
     }
   return(addr);
@@ -7159,6 +7176,29 @@ static xen_value *clm_struct_ref(ptree *prog, xen_value *v, int struct_loc)
 		    XEN_AS_STRING(lst_ref),
 		    XEN_AS_STRING(lst)));
   return(make_xen_value(run_type, addr, R_VARIABLE));
+}
+
+static void clm_struct_restore(ptree *prog, xen_var *var)
+{
+  XEN lst;
+  int i, loc, addr, run_type;
+  lst = (XEN)(prog->ints[var->v->addr]);
+  for (i = 0; i < clm_ref_top; i++)
+    if (clm_ref_vars[i] == lst)
+      {
+	/* restore this field */
+	loc = clm_ref_offsets[i];    /* list-set index */
+	addr = clm_ref_addrs[i];     /* ptree val addr */
+	run_type = clm_ref_types[i]; /* val type */
+	switch (run_type)
+	  {
+	  case R_BOOL:   XEN_LIST_SET(lst, loc, C_TO_XEN_BOOLEAN(prog->ints[addr])); break;
+	  case R_INT:    XEN_LIST_SET(lst, loc, C_TO_XEN_INT(prog->ints[addr])); break;
+	  case R_FLOAT:  XEN_LIST_SET(lst, loc, C_TO_XEN_DOUBLE(prog->dbls[addr])); break;
+	  case R_CHAR:   XEN_LIST_SET(lst, loc, C_TO_XEN_CHAR(prog->ints[addr])); break;
+	  case R_STRING: XEN_LIST_SET(lst, loc, C_TO_XEN_STRING((char *)(prog->ints[addr]))); break; /* FREE? */
+	  }
+      }
 }
 
 
@@ -7946,23 +7986,20 @@ static xen_value *lookup_generalized_set(ptree *prog, char *accessor, xen_value 
 	  {
 	    if (v->type == sv->type)
 	      {
-		if ((v->type == R_BOOL) || 
-		    (v->type == R_INT) ||
-		    (v->type == R_CHAR) ||
-		    (v->type == R_VCT))
-		  add_triple_to_ptree(prog, va_make_triple(store_i, descr_store_i, 2, sv, v));
-		else
-		  {
-		    if (v->type == R_FLOAT)
-		      add_triple_to_ptree(prog, va_make_triple(store_f, descr_store_f, 2, sv, v));
-		    else add_triple_to_ptree(prog, va_make_triple(store_s, descr_store_s, 2, sv, v));
-		  }
+		triple *trp;
+		trp = set_var(prog, sv, v);
+		trp->no_opt = TRUE;
 	      }
 	    else sv = NULL;
 	  }
-	/* TODO: need to set flag to export the new values to the outer environment
-	 *       add snd-test cases for sets (all types)
-	 */
+	if (sv)
+	  {
+	    xen_var *lst;
+	    lst = find_var_in_ptree_via_addr(prog, FALSE, in_v->addr);
+	    if (lst)
+	      lst->unclean = TRUE;
+	    else fprintf(stderr,"where is %s ?\n", accessor);
+	  }
 	break;
       }
   if (sv == NULL) 

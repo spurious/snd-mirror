@@ -126,6 +126,9 @@
 #define S_mus_ubyte                     "mus-ubyte"
 #define S_mus_ulshort                   "mus-ulshort"
 #define S_mus_voc                       "mus-voc"
+
+#define S_new_sound_hook                "new-sound-hook"
+
 #define S_sound_data2vct                "sound-data->vct"
 #define S_sound_data_chans              "sound-data-chans"
 #define S_sound_data_length             "sound-data-length"

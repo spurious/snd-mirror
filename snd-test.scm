@@ -10357,6 +10357,7 @@
   (add-hook! help-hook arg2) (carg2 help-hook)
 
   (add-hook! save-state-hook arg1) (carg1 save-state-hook)
+  (add-hook! new-sound-hook arg1) (carg1 new-sound-hook)
   (add-hook! after-open-hook arg1) (carg1 after-open-hook)
   (add-hook! update-hook arg1) (carg1 update-hook)
   (add-hook! close-hook arg1) (carg1 close-hook)
@@ -19221,6 +19222,7 @@ EDITS: 2
       
       (def-clm-struct st3 one two)
       (define svar (make-st3 :one 1 :two 2))
+      (define svar1 #f)
       (define bst3 #f)
       (let ((tst 0))
 	(run (lambda () (set! tst (st3-one svar))))
@@ -19243,7 +19245,7 @@ EDITS: 2
 	(if (fneq tst 2.0) (snd-display ";run st3-one (2.0 vector): ~A ~A" tst (st3-two svar))))
 
       (def-clm-struct st4 (one 1) (two 2.0))
-      (define svar (make-st4))
+      (set! svar (make-st4))
       (define bst4 #f)
       (let ((tst 0))
 	(run (lambda () (set! tst (st4-one svar))))
@@ -19257,6 +19259,69 @@ EDITS: 2
 	(run (lambda () (set! tst (st4-one svar))))
 	(if (fneq tst 1.5) (snd-display ";run st4-one (1.5): ~A ~A" tst (st4-one svar)))
 	(ftst '(st4-two svar) 2.0))
+
+      (set! svar (make-st3 :one 1 :two 2))
+      (set! svar1 (make-st3 :one 2 :two 3))
+      (let ((tst 0)
+	    (tst1 0)
+	    (tst2 0)
+	    (tst3 0))
+	(run (lambda () 
+	       (set! tst (st3-two svar)) ;2
+	       (set! tst1 (st3-two svar1)) ;3
+	       (set! (st3-two svar) (st3-two svar1))
+	       (set! tst2 (st3-two svar)) ;3
+	       (set! (st3-one svar1) 123)
+	       (set! tst3 (st3-one svar1)))) ;123
+	(if (not (= tst 2)) (snd-display ";run st3-two (2): ~A ~A" tst (st3-two svar)))
+	(if (not (= tst1 3)) (snd-display ";run st3-two (3): ~A ~A" tst (st3-two svar1)))
+	(if (not (= tst2 3)) (snd-display ";run st3-two (2->3): ~A ~A" tst (st3-two svar)))
+	(if (not (= tst3 123)) (snd-display ";run st3-one (123): ~A ~A" tst (st3-one svar1))))
+
+      ;; restore tests
+      (if (not (= (st3-one svar) 1)) (snd-display ";restore st3-one (1): ~A" (st3-one svar)))
+      (if (not (= (st3-one svar1) 123)) (snd-display ";restore st3-one (123): ~A" (st3-one svar1)))
+      (if (not (= (st3-two svar) 3)) (snd-display ";restore st3-two (2->3): ~A" (st3-two svar)))
+      (if (not (= (st3-two svar1) 3)) (snd-display ";restore st3-two (3): ~A" (st3-two svar1)))
+
+      (set! svar (make-st3 :one 1.5 :two "hi"))
+      (set! svar1 (make-st3 :one 2 :two 3))
+      (let ((tst 0.0)
+	    (tst1 0)
+	    (tst2 "asdf")
+	    (tst3 0))
+	(run (lambda () 
+	       (set! tst (st3-one svar)) ;1.5
+	       (set! tst1 (st3-two svar1)) ;3
+	       (set! (st3-two svar) (number->string (st3-two svar1))) ;"3"
+	       (set! tst2 (st3-two svar)) ;"3"
+	       (set! (st3-one svar1) 123)
+	       (set! tst3 (st3-one svar1)))) ;123
+	(if (fneq tst 1.5) (snd-display ";run st3-one (1.5): ~A ~A" tst (st3-two svar)))
+	(if (not (= tst1 3)) (snd-display ";run st3-two (3, a): ~A ~A" tst (st3-two svar1)))
+	(if (not (string=? tst2 "3")) (snd-display ";run st3-two (\"3\"): ~A ~A" tst (st3-two svar)))
+	(if (not (= tst3 123)) (snd-display ";run st3-one (123): ~A ~A" tst (st3-one svar1))))
+
+      ;; restore tests
+      (if (fneq (st3-one svar) 1.5) (snd-display ";restore st3-one (1.5): ~A" (st3-one svar)))
+      (if (not (= (st3-one svar1) 123)) (snd-display ";restore st3-one (123): ~A" (st3-one svar1)))
+      (if (not (string=? (st3-two svar) "3")) (snd-display ";restore st3-two (\"3\"): ~A" (st3-two svar)))
+      (if (not (= (st3-two svar1) 3)) (snd-display ";restore st3-two (3): ~A" (st3-two svar1)))
+
+      (set! svar (make-st3 :one #\c :two #f))
+      (let ((tst #f)
+	    (tst1 #\z))
+	(run (lambda () 
+	       (set! tst1 (st3-one svar)) ;#\c
+	       (set! tst (not (st3-two svar))) ;#t
+	       (set! (st3-one svar) #\f)
+	       (set! (st3-two svar) #t)))
+	(if (not (char=? tst1 #\c)) (snd-display ";run st3-one (#\c): ~A ~A" tst1 (st3-one svar)))
+	(if (not tst) (snd-display ";run st3-two (#t): ~A ~A" tst (st3-two svar))))
+
+      ;; restore tests
+      (if (not (char=? (st3-one svar) #\f)) (snd-display ";restore st3-one (#\f): ~A" (st3-one svar))) 
+      (if (not (st3-two svar)) (snd-display ";restore st3-two (#t): ~A" (st3-two svar))) 
 
 
       (let ((lst (list 1 2 (vct-fill! (make-vct 4) 3.14) 3))
@@ -20454,6 +20519,33 @@ EDITS: 2
 	(set! var (make-st2 :two 3))
 	(IF (not (= (st2-one var) 11)) (snd-display ";st2-one 11 (def): ~A" (st2-one var)))  
 	(IF (not (= (st2-two var) 3)) (snd-display ";st2-two (3): ~A" (st2-two var))))
+
+      (let ((outer (with-sound () 
+			       (sound-let ((a () (fm-violin 0 .1 440 .1))) 
+					  (mus-mix "test.snd" a)))))
+	(if (not (string=? outer "test.snd"))
+	    (snd-display ";with-sound returns: ~A" outer))
+	(let ((ind (find-sound outer)))
+	  (if (or (not (sound? ind))
+		  (not (= (frames ind) (inexact->exact (* (mus-srate) .1)))))
+	      (snd-display ";sound-let: ~A" (frames ind)))
+	  (close-sound ind)))
+
+      (let ((outer (with-sound () 
+			       (sound-let ((a () (fm-violin 0 .1 440 .1))
+					   (b 100))
+				  (mus-mix "test.snd" a b)
+					  (sound-let ((c (:channels 1 :output "temp.snd") (fm-violin 0 .1 110.0 .1)))
+					     (mus-mix "test.snd" c))))))
+	(if (not (string=? outer "test.snd"))
+	    (snd-display ";with-sound (2) returns: ~A" outer))
+	(let ((ind (find-sound outer)))
+	  (if (or (not (sound? ind))
+		  (not (= (frames ind) (+ 100 (inexact->exact (* (mus-srate) .1))))))
+	      (snd-display ";sound-let (2): ~A" (frames ind)))
+	  (if (file-exists? "temp.snd")
+	      (snd-display ";sound-let explicit output exists?"))
+	  (close-sound ind)))
 
       ))
 
@@ -28129,6 +28221,7 @@ EDITS: 2
 			(list stop-playing-channel-hook 'stop-playing-channel-hook)
 			(list save-hook 'save-hook)
 			(list save-state-hook 'save-state-hook)
+			(list new-sound-hook 'new-sound-hook)
 			(list mus-error-hook 'mus-error-hook)
 			(list mouse-enter-graph-hook 'mouse-enter-graph-hook)
 			(list mouse-leave-graph-hook 'mouse-leave-graph-hook)

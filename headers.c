@@ -4761,11 +4761,23 @@ int mus_header_read_with_fd(int chan)
   return(mus_header_read_with_fd_and_name(chan, NULL));
 }
 
+static mus_header_write_hook_t *mus_header_write_hook = NULL;
+
+mus_header_write_hook_t *mus_header_write_set_hook(mus_header_write_hook_t *new_hook) 
+{
+  mus_header_write_hook_t *old_hook;
+  old_hook = mus_header_write_hook;
+  mus_header_write_hook = new_hook;
+  return(old_hook);
+}
+
 static int mus_header_write_with_fd_and_name(int chan, int type, int in_srate, int in_chans, 
 					     off_t loc, off_t size_in_samples, int format, const char *comment, 
 					     int len, const char *filename)
 {
   off_t siz;
+  if (mus_header_write_hook)
+    (*mus_header_write_hook)(filename);
   siz = mus_samples_to_bytes(format, size_in_samples);
   switch (type)
     {

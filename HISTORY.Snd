@@ -1,6 +1,8 @@
 Snd change log
 
   1-Dec:     removed Chebyshev transform.
+             def-clm-struct support in run completed.
+	     new-sound-hook, sound-let (ws.scm).
   22-Nov:    added contrib/v.rb thanks to Michael Scholz.
   13-Nov:    snd 6.3.
   8-Nov:     gtk-effects.scm.

@@ -212,7 +212,7 @@ static XtResource resources[] = {
 
 
 #ifndef SND_AS_WIDGET
-static void window_close(Widget w, XtPointer context, XtPointer callData)
+static void window_close(Widget w, XtPointer context, XtPointer info)
 {
   snd_exit_cleanly((snd_state *)context, TRUE);
 }

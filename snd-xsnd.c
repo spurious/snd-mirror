@@ -1358,9 +1358,9 @@ static int *inner_panes = NULL;
 static int *outer_sizes = NULL;
 static int **inner_sizes = NULL;
 
-static void watch_sash(Widget w, XtPointer closure, XtPointer callData)
+static void watch_sash(Widget w, XtPointer closure, XtPointer info)
 {
-  SashCallData call_data = (SashCallData)callData;
+  SashCallData call_data = (SashCallData)info;
   int i, k;
   Widget child;
   snd_state *ss;

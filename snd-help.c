@@ -268,14 +268,14 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
-1-Dec:  removed Chebyshev transform.\n\
+1-Dec:   removed Chebyshev transform.\n\
+         def-clm-struct support in run completed.\n\
+         new-sound-hook, sound-let (ws.scm).\n\
 22-Nov:  added contrib/v.rb thanks to Michael Scholz.\n\
 13-Nov:  snd 6.3.\n\
 8-Nov:   gtk-effects.scm.\n\
 1-Nov:   snd-gtk.scm.\n\
 31-Oct:  gtk-popup.scm.\n\
-28-Oct:  added peaks-font and bold-peaks-font.\n\
-25-Oct:  added -I switch to add dir to load path.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",
@@ -1120,6 +1120,7 @@ user-interface manipulations.\n\
   " S_multichannel_mix_hook " (ids)\n\
   " S_mus_error_hook " (type msg)\n\
   " S_name_click_hook " (snd)\n\
+  " S_new_sound_hook " (filename)\n\
   " S_open_hook " (filename)\n\
   " S_output_comment_hook " (str)\n\
   " S_output_name_hook "()\n\
