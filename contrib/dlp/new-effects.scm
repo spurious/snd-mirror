@@ -61,7 +61,7 @@
 	 (dur (if (eq? target 'sound)
 		  (1- (frames))
 		  (if (eq? target 'selection)
-		      (+ (selection-position) (selection-length))
+		      (+ (selection-position) (selection-frames))
 		      (cadr ms))))
 	 (overlap (if decay
 		      (inexact->exact (* (srate) decay))
@@ -88,7 +88,7 @@
 	       (let ((dur (if (eq? target 'sound)
 			      (1- (frames snd chn))
 			      (if (eq? target 'selection)
-				  (+ (selection-position) (selection-length))
+				  (+ (selection-position) (selection-frames))
 				  (cadr ms)))))
 		 (if (= (sync snd) snc)
 		     (map-chan (func dur) 
@@ -250,7 +250,7 @@
   (if (eq? target 'sound)
       (1- (frames))
       (if (eq? target 'selection)
-          (selection-length)
+          (selection-frames)
           (+ 1 (abs (apply - (plausible-mark-samples)))))))
 
 ;;; -------- log scaler widget
@@ -2922,7 +2922,7 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
           (if (eq? robotize-target 'sound)
               (1- (frames))
               (if (eq? robotize-target 'selection)
-                  (+ (selection-position) (selection-length))
+                  (+ (selection-position) (selection-frames))
                   (cadr ms))))))
 (if (provided? 'xm) ; if xm module is loaded, popup a dialog here
     (begin
@@ -3096,7 +3096,7 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
      (if (eq? wobble-target 'sound)
          (1- (frames))
          (if (eq? wobble-target 'selection)
-             (+ (selection-position) (selection-length))
+             (+ (selection-position) (selection-frames))
              (cadr ms))))))
 
 (if (provided? 'xm) ; if xm module is loaded, popup a dialog here

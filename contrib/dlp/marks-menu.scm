@@ -420,7 +420,7 @@
 ;              (set! (selection-member #t) #f)) ; clear entire current selection, if any
           (set! (selection-member? snd chn) #t)
           (set! (selection-position snd chn) beg)
-          (set! (selection-length snd chn) (1+ (- end beg)))))))
+          (set! (selection-frames snd chn) (1+ (- end beg)))))))
 
 (define (cp-define-by-marks)
  (define-selection-via-marks define-by-mark-one define-by-mark-two))

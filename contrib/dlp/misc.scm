@@ -308,7 +308,7 @@
 
 (define (replace-with-selection)
   (let ((beg (cursor))
-        (len (selection-length)))
+        (len (selection-frames)))
     (delete-samples beg len)
     (insert-selection beg)))
 

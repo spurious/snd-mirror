@@ -145,7 +145,7 @@
 
 #include "snd-strings.h"
 
-#define SND_VERSION "23-Jul-02"
+#define SND_VERSION "24-Jul-02"
 #define SND_RPM_VERSION "6.0"
 #define SND_MAJOR_VERSION 6
 #define SND_MINOR_VERSION 0

@@ -66,6 +66,7 @@
 (define with-big-file #t)
 (define have-libguile-so #t) ; set to #f if loading libguile.a
 (define debugging-device-channels 8)
+(define pi 3.141592653589793)
 
 (define home-dir "/home")
 (define sf-dir "/sf1")

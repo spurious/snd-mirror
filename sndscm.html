@@ -2207,6 +2207,7 @@ function to take stereo sounds:
   <em class=def><A NAME="marksynccolor">mark-sync-color</a></em> new-color
   <em class=def><A NAME="addtooltip">add-tooltip</a></em> widget tip
   <em class=def><A NAME="menuoption">menu-option</a></em> menu-name
+  <em class=def><A NAME="showallatoms">show-all-atoms</a></em>
 </pre>
 
 <p>snd-motif.scm has procedures that rely on the Motif module (xm.c).
@@ -2275,7 +2276,8 @@ by contrib/dlp/new-buttons.scm).
 <b>mark-sync-color</b> uses the draw-mark-hook to set the color of sync'd marks.
 <b>add-tooltip</b> adds a tooltip (also known as bubble-help) to a widget.  Once added,
 set the variable <b>with-tooltips</b> to #f to turn it off.
-<b>menu-option</b> returns the widget associated with a given menu item name ("Print" for example)
+<b>menu-option</b> returns the widget associated with a given menu item name ("Print" for example).
+<b>show-all-atoms</b> displays (via Guile's <i>display</i>) all current X atom names.
 </p>
 
 <A NAME="sndtestdoc"></a><span class=box><h2>snd-test.scm and event.scm</h2></span>

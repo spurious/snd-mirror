@@ -7401,6 +7401,7 @@ vct-map! provides."
 /* that Scheme code would have worked except I don't currently optimize "(func)",
    so, we need (at least for now), a C version:
 */
+
 static XEN g_vct_map(XEN proc_and_code, XEN arglist)
 {
   #define H_vct_map "(" S_vct_map " thunk v ...) calls 'thunk' which should return a frame; the frame result \
@@ -7465,7 +7466,6 @@ in multi-channel situations where you want the optimization that vct-map! provid
 
   for (i = 0; i < min_len; i++) 
     {
-      /* TODO: dynwind around vct-map (has local vs array) */
       obj = XEN_CALL_0_NO_CATCH(code, S_vct_map);
       if (mus_xen_p(obj))
 	{

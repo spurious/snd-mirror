@@ -164,10 +164,10 @@
 		 (XtSetSensitive child (selection?))
 		 (if (string=? (XtName child) "Crop")
 		     (XtSetSensitive child (and (selected-sound)
-						 (> (length (marks (selected-sound) (selected-channel))) 1)))
+						(> (length (marks (selected-sound) (selected-channel))) 1)))
 		     (if (or (string=? (XtName child) "Trim front")
 			     (string=? (XtName child) "Trim back"))
 			 (XtSetSensitive child (and (selected-sound)
-						     (>= (length (marks (selected-sound) (selected-channel))) 1))))))))))))
+						    (>= (length (marks (selected-sound) (selected-channel))) 1))))))))))))
 
 
