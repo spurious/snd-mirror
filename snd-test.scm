@@ -4619,19 +4619,11 @@
 		 (lambda (ptr)
 		   ptr)
 		 )
-               (set-expand-funcs 
-                 (lambda (ptr inval expval)
-                   (* expval inval))
-                 (lambda (snd srate expval)
-                   snd)
-                 (lambda (ptr)
-                   ptr))
 		(set-contrast-func (lambda (a b) (* a b))))
 	      (begin
 		(set! rev-funcs-set #f)
 		(set-reverb-funcs #f #f #f)
-		(set-contrast-func #f)
-		(set-expand-funcs #f #f #f)))
+		(set-contrast-func #f)))
 
 	  (add-hook! (edit-hook) (lambda () #f))
 	  (as-one-edit (lambda () (set! (sample 200) .2) (set! (sample 300) .3)))

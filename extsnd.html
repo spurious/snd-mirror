@@ -2004,22 +2004,6 @@ sets its value to val.
                                   Pass #f to return to the built-in version. Contrast-func returns 
                                   this function.
 
-  <b><a name="expandfuncs">set-expand-funcs</a></b>  (expand make-expand free-expand)
-                                  This function replaces the built-in Snd (control panel) expand with your own.
-                                  See set-reverb-funcs below for an example.  The three arguments are
-                                  the expand replacement, the function that makes or initializes any
-                                  state the new expand function will need, and the function to free that
-                                  state.  Set these to #f to return to the built-in versions.  The
-                                  make-expand function takes three arguments, the current sound index,
-                                  the current sampling-rate, and the initial expansion value (from the
-                                  control panel); it can return an SCM object that is subsequently
-                                  passed to the expand and free-expand functions.  The expand function
-                                  takes 3 arguments, the thing returned by make-expand, the current
-                                  sample (a float), and the current expansion slider value; it should
-                                  return a float representing the new sample value.  The corresponding
-                                  function reverb-funcs returns a list containing the three functions.
-                                  expand-funcs returns a list containing these three functions.
-
   <b><a name="reverbfuncs">set-reverb-funcs</a></b>  (reverb make-reverb free-reverb)
                                   This function replaces the built-in Snd reverb with your own.
 <small>
@@ -2049,6 +2033,13 @@ sets its value to val.
                                   arguments, the thing returned by make-reverb, the current reverb input
                                   sample, and the number of channels of output needed; it should return
                                   a vector of output reverb contributions.
+
+                                  If Snd was built with -DUSE_GWRAPPED_FUNCS then the built-in functions
+                                  are treated exactly like a user-supplied set; their names are snd-nrev,
+                                  make-snd-nrev, and free-snd-nrev.  This flag defaults to 0 because I still
+                                  haven't figured out how to reduce the Guile function call and Scheme-to-C
+                                  float conversion overhead to the point where it has no effect on performance.
+                                  If you include this flag, you may get dropouts etc.
 
   <b><a name="sndsetsamples">set-samples</a></b>       (samp samps data <i>snd chn trunc</i>) 
                                   set <i>snd</i>'s channel <i>chn</i>'s samples starting from
@@ -2308,22 +2299,8 @@ interface controls, and variables such as expand-hop, you can also
 change this sequence by replacing the contrast, expand, or reverb
 functions with your own.  <b>set-contrast-func</b> replaces the
 contrast-enhancement function; <b>set-reverb-funcs</b> replaces
-the reverb, and <b>set-expand-funcs</b> replaces the expand function
-(mus_granulate in CLM).  
+the reverb.
 </p>
-
-<pre>
-(set-expand-funcs 
-  (lambda (ptr inval expval) (* expval inval))
-  (lambda (snd srate expval) snd)
-  (lambda (ptr) ptr))
-</pre>
-
-<p>turns the expand slider into another amplitude control.  There are
-limits on what is possible here; on my old (132 MHz) SGI, even the
-simplest function causes interruptions and stuttering.
-</p>
-
 
 <br>
 <span class=cbox><h3><A NAME="editlists">Edit Lists</a></h3></span>

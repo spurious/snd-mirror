@@ -391,7 +391,6 @@
 #define S_exit                          "exit"
 #define S_exit_hook                     "exit-hook"
 #define S_expand                        "expand"
-#define S_expand_funcs                  "expand-funcs"
 #define S_expand_hop                    "expand-hop"
 #define S_expand_length                 "expand-length"
 #define S_expand_ramp                   "expand-ramp"
@@ -689,11 +688,6 @@
 #define S_selection_to_temp             "selection-to-temp"
 #define S_selection_to_temps            "selection-to-temps"
 #define S_selectionQ                    "selection?"
-
-#define S_contrast_func                 "contrast-func"
-#define S_expand_funcs                  "expand-funcs"
-#define S_reverb_funcs                  "reverb-funcs"
-
 #define S_short_file_name               "short-file-name"
 #define S_show_all_axes                 "show-all-axes"
 #define S_show_axes                     "show-axes"

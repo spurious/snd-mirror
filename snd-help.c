@@ -250,6 +250,7 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+6-Feb:   removed expand-funcs: it could not have worked given the \"hidden controls\" exposure.\n\
 30-Jan:  rtio.scm.\n\
 29-Jan:  pvf headers.\n\
 23-Jan:  no-gui version now reads ~/.snd (thanks to Eliot Handelman)\n\

@@ -18,7 +18,7 @@
   #endif
 #endif
       
-#define NUM_COMMANDS 563
+#define NUM_COMMANDS 562
 
 static char *snd_commands[NUM_COMMANDS]={
   S_abort,S_activate_listener,S_add_mark,S_add_player,S_add_sound_file_extension,S_add_to_main_menu,S_add_to_menu,S_add_transform,
@@ -49,7 +49,7 @@ static char *snd_commands[NUM_COMMANDS]={
   S_edit_fragment,S_edit_header_dialog,S_edit_hook,S_edit_position,S_edit_tree,S_edits,
   S_env_selection,S_env_sound,S_enved_active_env,S_enved_base,S_enved_clipping,S_enved_dBing,
   S_enved_dialog,S_enved_exping,S_enved_power,S_enved_selected_env,S_enved_target,
-  S_enved_waveform_color,S_enved_waving,S_eps_bottom_margin,S_eps_file,S_eps_left_margin,S_exit,S_exit_hook,S_expand,S_expand_funcs,S_expand_hop,
+  S_enved_waveform_color,S_enved_waving,S_eps_bottom_margin,S_eps_file,S_eps_left_margin,S_exit,S_exit_hook,S_expand,S_expand_hop,
   S_expand_length,S_expand_ramp,S_expanding,
 
   S_fft,S_fft_beta,S_fft_hook,S_fft_log_frequency,S_fft_log_magnitude,

@@ -444,7 +444,7 @@ The various play hooks can be used to play sounds over and over.
 (bind-key (char->integer #\p) 0 (lambda () (pl (max 1 (prefix-arg)))) #t)
 (bind-key (char->integer #\r) 0 (lambda () (play-region-forever (max 0 (prefix-arg)))) #t)
 
-Now C-u 31 p plays the current sound 31 time; C-u 3 r plays region 3 until
+Now C-u 31 p plays the current sound 31 times; C-u 3 r plays region 3 until
 we type C-g. pl uses stop-playing-hook, and play-region-forever uses
 stop-playing-region-hook. With a sufficiently fast computer, it's possible
 to create the samples to be played in "real-time". play-fun starts and stops
@@ -882,6 +882,10 @@ samples.
 (shell "df")
 (add-hook! close-hook (lambda (snd) (shell \"sndplay wood16.wav\")))
 (mpg "mpeg.mpg" "mpeg.raw" 1)
+
+Presumably a similar function could be written to call TiMidity to translate
+MIDI files to something Snd can read, but I'm not having any luck getting it
+to work.
 
 Several of the functions in this section are slight robustifications of the
 corresponding code in extsnd.html. These include:

@@ -539,7 +539,7 @@ as a kind of extended piano, we could map keys to sounds:
 (bind-key (char-&gt;integer #\p) 0 (lambda () (pl (max 1 (prefix-arg)))) #t)
 (bind-key (char-&gt;integer #\r) 0 (lambda () (play-region-forever (max 0 (prefix-arg)))) #t)
 </pre>
-<p>Now C-u 31 p plays the current sound 31 time; C-u 3 r plays region 3 until we type C-g.
+<p>Now C-u 31 p plays the current sound 31 times; C-u 3 r plays region 3 until we type C-g.
 <i>pl</i> uses stop-playing-hook, and <i>play-region-forever</i> uses stop-playing-region-hook.
 With a sufficiently fast computer, it's possible to create the samples to be played 
 in "real-time".  <i>play-fun</i> starts and stops the DAC, <i>ampit</i> and <i>amprt</i>
@@ -1022,7 +1022,13 @@ format sound file to a headerless ("raw") file containing 16-bit samples.
 (add-hook! close-hook (lambda (snd) (shell \"sndplay wood16.wav\")))
 (mpg "mpeg.mpg" "mpeg.raw" 1)
 </pre>
-<p>Several of the functions in this section are slight robustifications of the
+<p>
+Presumably a similar function could be written to call TiMidity to translate
+MIDI files to something Snd can read, but I'm not having any luck getting it
+to work.
+</p>
+<p>
+Several of the functions in this section are slight robustifications of the
 corresponding code in extsnd.html.  These include:
 </p>
 <pre>

@@ -760,7 +760,6 @@
     (list "send-and-receive-snd" "clm.html#send-and-receive-snd")
     (list "send-snd" "clm.html#send-snd")
     (list "set-contrast-func" "extsnd.html#contrastfunc")
-    (list "set-expand-funcs" "extsnd.html#expandfuncs")
     (list "set-oss-buffers" "extsnd.html#setossbuffers")
     (list "set-reverb-funcs" "extsnd.html#reverbfuncs")
     (list "set-samples" "extsnd.html#sndsetsamples")

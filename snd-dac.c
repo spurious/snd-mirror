@@ -3,6 +3,11 @@
  *         then as running, at each block reset to initial - new scaled
  *         (negative pm = longer delay)
  * TODO  play with expand is cutoff too soon (and reverb?)
+ * TODO  tie non-gwrapped form into same syntax (so set-reverb-funcs can use snd-nrev, etc) (and fix docs/tests!)
+ * TODO  find some way to avoid consing in gwraps
+ * TODO  add freeverb in both versions (and reflect in control panel name)
+ * TODO  perhaps add special JUST_EXPAND/JUST_REVERB/JUST_FILTER cases?
+ * TODO  filter should be settable like reverb (especially as clm-gen)
  */
 
 /* this was sound-oriented; changed to be channel-oriented 31-Aug-00 */
@@ -14,6 +19,24 @@
 
 #include "snd.h"
 
+#ifndef DEFAULT_NEVER_SPED
+  #define DEFAULT_NEVER_SPED 1
+#endif
+/* the default case is to bypass the sample-rate converter if the user hasn't changed it from 1.0;
+ *   since the default src method is sinc-interpolation, this can save tons of cycles during most
+ *   normal plays, but introduces a click if the user subsequently moves the speed slider.  To
+ *   have the src process running all the time (the default before 5-Feb-01), pass the compiler
+ *   -DDEFAULT_NEVER_SPED=0
+ */
+
+#ifndef USE_GWRAPPED_FUNCS
+  #define USE_GWRAPPED_FUNCS 0
+#endif
+/* in the best of all worlds, the default reverb-funcs (nrev) and others would be accessed 
+ *   just like a user-supplied reverb-func; this is still slow, unfortunately. Set USE_GWRAPPED_FUNCS
+ *   to 1 to get it installed in the correct-but-marginal form.
+ * this also affects contrast-func
+ */
 
 static int prime (int num)
 {
@@ -124,33 +147,6 @@ static SCM g_set_contrast_func(SCM func)
   return(func);
 }
 
-/* user hooks into expand */
-static SCM g_expand = SCM_UNDEFINED, g_make_expand = SCM_UNDEFINED, g_free_expand = SCM_UNDEFINED;
-static int use_g_expand = 0;
-static SCM g_expand_funcs(void) {return(SCM_LIST3(g_expand,g_make_expand,g_free_expand));}
-static SCM g_set_expand_funcs(SCM expnd, SCM make_expnd, SCM free_expnd)
-{
-  #define H_expand_funcs "(" S_expand_funcs ") -> list of the 3 expand funcs (expand make-expand free-expand)"
-  #define H_set_expand_funcs "(" "set-" S_expand_funcs " expand make-expand free-expand) sets the current expand functions"
-  if (gh_procedure_p(g_expand)) snd_unprotect(g_expand);
-  if (gh_procedure_p(g_make_expand)) snd_unprotect(g_make_expand);
-  if (gh_procedure_p(g_free_expand)) snd_unprotect(g_free_expand);
-  if ((procedure_ok(expnd,3,0,"set-" S_expand_funcs,"expand",1)) &&
-      (procedure_ok(make_expnd,3,0,"set-" S_expand_funcs,"make-expand",2)) &&
-      (procedure_ok(free_expnd,1,0,"set-" S_expand_funcs,"free-expand",3)))
-    {
-      g_expand = expnd;
-      g_make_expand = make_expnd;
-      g_free_expand = free_expnd;
-      snd_protect(g_expand);
-      snd_protect(g_make_expand);
-      snd_protect(g_free_expand);
-      use_g_expand = 1;
-    }
-  else use_g_expand = 0;
-  return(expnd);
-}
-
 #if HAVE_HOOKS
   static void call_stop_playing_hook(snd_info *sp);
   static void call_stop_playing_region_hook(int n);
@@ -182,6 +178,9 @@ typedef struct {
   int num_allpasses;
   mus_any **allpasses;
   mus_any *onep;
+#if USE_GWRAPPED_FUNCS
+  Float *vals;
+#endif
 } rev_info;
 
 static void *global_reverb = NULL;
@@ -207,7 +206,7 @@ typedef struct dac__info {
   snd_info *sp;        /* needed to see button callback changes etc */
   chan_info *cp;
   snd_state *ss;
-  int end,no_scalers;
+  int end,no_scalers,never_sped;
 #if DEBUGGING
   char *desc;
 #endif
@@ -244,6 +243,8 @@ static Float speed(dac_info *dp, Float sr)
 {
   int move,i;
   Float result = 0.0;
+  if (dp->never_sped)
+    return(next_sample_to_float(dp->chn_fd));
   if ((use_sinc_interp((dp->ss))) && (dp->src))
     result = run_src(dp->src,sr);
   else
@@ -303,10 +304,6 @@ static int max_expand_len(snd_info *sp)
 static void *make_expand(snd_info *sp, Float sampling_rate, Float initial_ex, dac_info *dp)
 {
   spd_info *spd;
-#if HAVE_GUILE
-  if (use_g_expand)
-    return((void *)g_call3(g_make_expand,gh_int2scm(sp->index),gh_double2scm(sampling_rate),gh_double2scm(initial_ex)));
-#endif
   spd = (spd_info *)CALLOC(1,sizeof(spd_info));
   spd->gen = mus_make_granulate(&expand_input_as_needed,
 				initial_ex,sp->expand_length,
@@ -323,15 +320,8 @@ static void free_expand(void *ur_spd)
   spd_info *spd = (spd_info *)ur_spd;
   if (ur_spd)
     {
-#if HAVE_GUILE
-      if (use_g_expand)
-	g_call1(g_free_expand,(SCM)ur_spd);
-      else
-#endif
-	{
-	  mus_free(spd->gen);
-	  FREE(spd);
-	}
+      mus_free(spd->gen);
+      FREE(spd);
     }
 }
 
@@ -341,30 +331,157 @@ static Float expand(dac_info *dp, Float sr, Float ex)
   int speeding;
   snd_info *sp;
   spd_info *spd;
-  Float fval;
   sp = dp->sp;
   speeding = ((sp->play_direction != 1) || (sp->srate != 1.0) || (dp->cur_srate != 1.0));
-#if HAVE_GUILE
-  if (use_g_expand)
-    {
-      /* if speeding, pick up speed vals first, else read direct */
-      if (speeding) 
-	fval = speed(dp,sr);
-      else fval = next_sample_to_float(dp->chn_fd);
-      return(TO_C_DOUBLE(g_call3(g_expand,(SCM)(dp->spd),gh_double2scm(fval),gh_double2scm(ex))));
-    }
-  else
-#endif
-    {
-      spd = dp->spd;
-      spd->speeding = speeding;
-      spd->sr = sr;
-      return(mus_granulate(spd->gen,&expand_input_as_needed));
-    }
+  spd = dp->spd;
+  spd->speeding = speeding;
+  spd->sr = sr;
+  return(mus_granulate(spd->gen,&expand_input_as_needed));
 }
 
 
 /* -------- reverb -------- */
+#if USE_GWRAPPED_FUNCS
+
+#define BASE_DLY_LEN 14
+static int base_dly_len[BASE_DLY_LEN] = {1433, 1601, 1867, 2053, 2251, 2399, 347, 113, 37, 59, 43, 37, 29, 19};
+static int dly_len[BASE_DLY_LEN];
+static Float comb_factors[6] = {0.822,0.802,0.773,0.753,0.753,0.733};
+
+static void *make_nrev(Float revlen, Float sampling_rate, int chans)
+{
+  /* Mike McNabb's nrev from Mus10 days (ca. 1978) */
+  Float srscale;
+  int i,j,len;
+  rev_info *r;
+  srscale = reverb_length*sampling_rate/25641.0;
+  for (i=0;i<BASE_DLY_LEN;i++) 
+    dly_len[i] = get_prime((int)(srscale*base_dly_len[i]));
+  r=(rev_info *)CALLOC(1,sizeof(rev_info));
+  r->num_combs = 6;
+  r->combs = (mus_any **)CALLOC(r->num_combs,sizeof(mus_any *));
+  r->num_allpasses = 4+chans;
+  r->allpasses = (mus_any **)CALLOC(r->num_allpasses,sizeof(mus_any *));
+  for (i=0;i<r->num_combs;i++) 
+    r->combs[i] = mus_make_comb(comb_factors[i]*reverb_factor,dly_len[i],NULL,dly_len[i]);
+  r->onep = mus_make_one_pole(lp_coeff,lp_coeff-1.0);
+  for (i=0,j=r->num_combs;i<4;i++,j++) 
+    r->allpasses[i] = mus_make_all_pass(-0.700,0.700,dly_len[j],NULL,dly_len[j]);
+  for (i=0,j=10;i<chans;i++)
+    {
+      if (j<BASE_DLY_LEN) 
+	len = dly_len[j]; 
+      else len = get_prime((int)(40 + mus_random(20.0)));
+      r->allpasses[i+4] = mus_make_all_pass(-0.700,0.700,len,NULL,len);
+    }
+  r->vals = (Float *)CALLOC(chans,sizeof(Float));
+  return((void *)r);
+}
+
+static void free_nrev(void *ur)
+{
+  int i;
+  rev_info *r = (rev_info *)ur;
+  if (r)
+    {
+      for (i=0;i<r->num_combs;i++) if (r->combs[i]) mus_free(r->combs[i]);
+      FREE(r->combs);
+      mus_free(r->onep);
+      for (i=0;i<r->num_allpasses;i++) if (r->allpasses[i]) mus_free(r->allpasses[i]);
+      FREE(r->allpasses);
+      FREE(r->vals);
+      FREE(r);
+    }
+}
+
+static Float *nrev(void *ur, Float rin, int chans)
+{
+  rev_info *r = (rev_info *)ur;
+  Float rout;
+  int i;
+  rout = mus_all_pass(r->allpasses[3],
+	   mus_one_pole(r->onep,
+	     mus_all_pass(r->allpasses[2],
+	       mus_all_pass(r->allpasses[1],
+		 mus_all_pass(r->allpasses[0],
+		   mus_comb(r->combs[0],rin,0.0) + 
+	 	   mus_comb(r->combs[1],rin,0.0) + 
+		   mus_comb(r->combs[2],rin,0.0) + 
+ 		   mus_comb(r->combs[3],rin,0.0) + 
+		   mus_comb(r->combs[4],rin,0.0) + 
+		   mus_comb(r->combs[5],rin,0.0),
+		 0.0),
+	       0.0),
+	     0.0)),
+	   0.0);
+  for (i=0;i<chans;i++)
+    r->vals[i] = mus_all_pass(r->allpasses[i+4],rout,0.0);
+  return(r->vals);
+}
+
+static SCM s_nrev_out;
+static SCM *nrev_out;
+
+static SCM g_nrev(SCM ptr, SCM val, SCM chans)
+{
+  int i;
+  Float *vals;
+#ifdef SCM_REAL_VALUE
+  vals = nrev((void *)gh_scm2ulong(ptr),SCM_REAL_VALUE(val),SCM_INUM(chans));
+#else
+  vals = nrev((void *)gh_scm2ulong(ptr),TO_C_DOUBLE(val),TO_C_INT(chans));
+#endif
+  for (i=0;i<chans;i++)
+    nrev_out[i] = gh_double2scm(vals[i]);
+  return(s_nrev_out);
+}
+
+static SCM g_make_nrev(SCM len, SCM srate, SCM chans) 
+{
+  s_nrev_out = gh_make_vector(gh_int2scm(chans),gh_double2scm(0.0));
+  snd_protect(s_nrev_out);
+  nrev_out = SCM_VELTS(s_nrev_out);
+  return(gh_ulong2scm((unsigned long)make_nrev(TO_C_DOUBLE(len),TO_C_DOUBLE(srate),TO_C_INT(chans))));
+}
+
+static SCM g_free_nrev(SCM ptr) 
+{
+  free_nrev((void *)gh_scm2ulong(ptr));
+  snd_unprotect(s_nrev_out);
+  return(SCM_BOOL_T);
+}
+
+static void *make_reverb(snd_info *sp, Float sampling_rate, int chans)
+{ 
+  reverb_factor = sp->revfb;
+  lp_coeff = sp->revlp;
+  revchans = chans;
+  revdecay = 0;
+  global_reverbing = 1;
+  return((void *)g_call3(g_make_reverb,gh_double2scm(reverb_length),gh_double2scm(sampling_rate),gh_int2scm(chans)));
+}
+
+static void free_reverb(void *ur)
+{
+  global_reverbing = 0;
+  g_call1(g_free_reverb,(SCM)ur);
+}
+
+static void reverb(void *ur, Float rin, MUS_SAMPLE_TYPE **outs, int ind, int chans)
+{
+  int i;
+  SCM outputs;
+  SCM *vdata;
+  outputs = g_call3(g_reverb,(SCM)ur,gh_double2scm(rin),gh_int2scm(chans));
+  vdata = SCM_VELTS(outputs);
+  for (i=0;i<chans;i++) 
+    outs[i][ind] += MUS_FLOAT_TO_SAMPLE(((Float)(TO_C_DOUBLE(vdata[i]))));
+}
+
+
+#else
+
+/* NOT GWRAPPED */
 #define BASE_DLY_LEN 14
 static int base_dly_len[BASE_DLY_LEN] = {1433, 1601, 1867, 2053, 2251, 2399, 347, 113, 37, 59, 43, 37, 29, 19};
 static int dly_len[BASE_DLY_LEN];
@@ -468,19 +585,44 @@ static void reverb(void *ur, Float rin, MUS_SAMPLE_TYPE **outs, int ind, int cha
         outs[i][ind] += MUS_FLOAT_TO_SAMPLE(mus_all_pass(r->allpasses[i+4],rout,0.0));
     }
 }
+#endif
+
 
 /* -------- contrast-enhancement -------- */
+#if USE_GWRAPPED_FUNCS
+
+static Float contrast (dac_info *dp, Float amp, Float index, Float inval)
+{
+  return(amp * TO_C_DOUBLE(g_call2(g_contrast,
+				   gh_double2scm(dp->contrast_amp * inval),
+				   gh_double2scm(index))));
+}
+
+static SCM g_mus_contrast(SCM inval, SCM index)
+{
+#ifdef SCM_REAL_VALUE
+  return(gh_double2scm(mus_contrast_enhancement(SCM_REAL_VALUE(inval),SCM_REAL_VALUE(index))));
+#else
+  return(gh_double2scm(mus_contrast_enhancement(TO_C_DOUBLE(inval),TO_C_DOUBLE(index))));
+#endif
+}
+
+#else
+
+/* NOT GWRAPPED */
 static Float contrast (dac_info *dp, Float amp, Float index, Float inval)
 {
 #if HAVE_GUILE
   if (use_g_contrast)
     return(amp * TO_C_DOUBLE(g_call2(g_contrast,
-				       gh_double2scm(dp->contrast_amp * inval),
-				       gh_double2scm(index))));
+				     gh_double2scm(dp->contrast_amp * inval),
+				     gh_double2scm(index))));
   else
 #endif
     return(amp * mus_contrast_enhancement(dp->contrast_amp * inval,index));
 }
+
+#endif
 
 static dac_info *make_dac_info(chan_info *cp, snd_info *sp, snd_fd *fd)
 {
@@ -491,6 +633,7 @@ static dac_info *make_dac_info(chan_info *cp, snd_info *sp, snd_fd *fd)
   dp->a = NULL;
   dp->no_scalers = no_ed_scalers(cp);
   dp->audio_chan = cp->chan;
+  dp->never_sped = DEFAULT_NEVER_SPED;
   if (sp)
     {
       dp->expanding = sp->expanding;
@@ -813,6 +956,7 @@ static dac_info *init_dp(int slot, chan_info *cp, snd_info *sp, snd_fd *fd, int 
   if (sp)
     {
       dp->cur_srate = sp->srate*sp->play_direction;
+      if (dp->cur_srate != 1.0) dp->never_sped = 0;
       dp->cur_amp = sp->amp;
       dp->cur_index = sp->contrast;
       dp->cur_exp = sp->expand;
@@ -1215,6 +1359,7 @@ static int fill_dac_buffers(dac_state *dacp, int write_ok)
 		case JUST_SPEED:
 		  /* includes amp changes */
 		  /* sp->srate is current UI value, dp->cur_srate is current local value */
+		  dp->never_sped = 0;
 		  amp = dp->cur_amp;
 		  incr = (sp->amp - amp) / (Float)(frames);
 		  sr = dp->cur_srate;
@@ -1233,10 +1378,9 @@ static int fill_dac_buffers(dac_state *dacp, int write_ok)
 		  incr = (sp->amp - amp) / (Float)(frames);
 		  sr = dp->cur_srate;
 		  sincr = (sp->srate*sp->play_direction - sr) / (Float)(frames);
+		  if ((sincr != 0.0) || (sr != 1.0)) dp->never_sped = 0;
 		  ind = dp->cur_index;
 		  indincr = (sp->contrast - ind) / (Float)(frames);
-		  ex = dp->cur_exp;
-		  exincr = (sp->expand - ex) / (Float)(frames);
 		  rev = dp->cur_rev;
 		  revincr = (sp->revscl - rev) / (Float)(frames);
 		  if ((dp->filtering) && (sp->filter_changed))
@@ -1246,18 +1390,70 @@ static int fill_dac_buffers(dac_state *dacp, int write_ok)
 		      FREE(data);
 		      sp->filter_changed = 0;
 		    }
-		  for (j=0;j<frames;j++,amp+=incr,sr+=sincr,ind+=indincr,ex+=exincr,rev+=revincr) 
+		  if (dp->expanding)
 		    {
-		      if (dp->expanding) fval = expand(dp,sr,ex); else fval = speed(dp,sr);
-		      if (sp->contrasting) fval = contrast(dp,amp,ind,fval); else fval *= amp;
-		      if (dp->filtering) fval = mus_fir_filter(dp->flt,fval);
-		      if (dp->reverbing) revin[j] += fval*rev;
-		      buf[j] += MUS_FLOAT_TO_SAMPLE(fval);
+		      ex = dp->cur_exp;
+		      exincr = (sp->expand - ex) / (Float)(frames);
+		      for (j=0;j<frames;j++,amp+=incr,sr+=sincr,ind+=indincr,ex+=exincr,rev+=revincr) 
+			{
+			  fval = expand(dp,sr,ex);
+			  if (sp->contrasting) fval = contrast(dp,amp,ind,fval); else fval *= amp;
+			  if (dp->filtering) fval = mus_fir_filter(dp->flt,fval);
+			  if (dp->reverbing) revin[j] += fval*rev;
+			  buf[j] += MUS_FLOAT_TO_SAMPLE(fval);
+			}
+		      dp->cur_exp = ex;
+		    }
+		  else
+		    {
+		      if (dp->filtering)
+			{
+			  for (j=0;j<frames;j++,amp+=incr,sr+=sincr,ind+=indincr,rev+=revincr) 
+			    {
+			      fval = speed(dp,sr);
+			      if (sp->contrasting) fval = contrast(dp,amp,ind,fval); else fval *= amp;
+			      fval = mus_fir_filter(dp->flt,fval);
+			      if (dp->reverbing) revin[j] += fval*rev;
+			      buf[j] += MUS_FLOAT_TO_SAMPLE(fval);
+			    }
+			}
+		      else
+			{
+			  if (sp->contrasting)
+			    {
+			      for (j=0;j<frames;j++,amp+=incr,sr+=sincr,ind+=indincr,rev+=revincr) 
+				{
+				  fval = contrast(dp,amp,ind,speed(dp,sr));
+				  if (dp->reverbing) revin[j] += fval*rev;
+				  buf[j] += MUS_FLOAT_TO_SAMPLE(fval);
+				}
+			    }
+			  else
+			    {
+			      if (dp->never_sped)
+				{
+				  for (j=0;j<frames;j++,amp+=incr,rev+=revincr) 
+				    {
+				      fval = amp * next_sample_to_float(dp->chn_fd);
+				      revin[j] += fval*rev;
+				      buf[j] += MUS_FLOAT_TO_SAMPLE(fval);
+				    }
+				}
+			      else
+				{
+				  for (j=0;j<frames;j++,amp+=incr,sr+=sincr,rev+=revincr) 
+				    {
+				      fval = amp * speed(dp,sr);
+				      revin[j] += fval*rev;
+				      buf[j] += MUS_FLOAT_TO_SAMPLE(fval);
+				    }
+				}
+			    }
+			}
 		    }
 		  dp->cur_srate = sr;
 		  dp->cur_amp = amp;
 		  dp->cur_rev = rev;
-		  dp->cur_exp = ex;
 		  dp->cur_index = ind;
 		  break;
 		}
@@ -2219,10 +2415,8 @@ static int call_start_playing_hook(snd_info *sp)
 void g_init_dac(SCM local_doc)
 {
   DEFINE_PROC(gh_new_procedure("set-" S_reverb_funcs,SCM_FNC g_set_reverb_funcs,3,0,0),H_set_reverb_funcs);
-  DEFINE_PROC(gh_new_procedure("set-" S_expand_funcs,SCM_FNC g_set_expand_funcs,3,0,0),H_set_expand_funcs);
   DEFINE_PROC(gh_new_procedure("set-" S_contrast_func,SCM_FNC g_set_contrast_func,1,0,0),H_set_contrast_func);
   DEFINE_PROC(gh_new_procedure(S_reverb_funcs,SCM_FNC g_reverb_funcs,0,0,0),H_reverb_funcs);
-  DEFINE_PROC(gh_new_procedure(S_expand_funcs,SCM_FNC g_expand_funcs,0,0,0),H_expand_funcs);
   DEFINE_PROC(gh_new_procedure(S_contrast_func,SCM_FNC g_contrast_func,0,0,0),H_contrast_func);
 
   DEFINE_PROC(gh_new_procedure(S_play,SCM_FNC g_play,0,5,0),H_play);
@@ -2247,6 +2441,18 @@ void g_init_dac(SCM local_doc)
   stop_playing_channel_hook = gh_define(S_stop_playing_channel_hook,SCM_BOOL_F);
   stop_playing_region_hook = gh_define(S_stop_playing_region_hook,SCM_BOOL_F);
   start_playing_hook = gh_define(S_start_playing_hook,SCM_BOOL_F);
+#endif
+
+#if USE_GWRAPPED_FUNCS
+  DEFINE_PROC(gh_new_procedure("make-snd-nrev",SCM_FNC g_make_nrev,3,0,0),"make-snd-nrev is the default reverb make function");
+  DEFINE_PROC(gh_new_procedure("snd-nrev",SCM_FNC g_nrev,3,0,0),"snd-nrev is the default reverb");
+  DEFINE_PROC(gh_new_procedure("free-snd-nrev",SCM_FNC g_free_nrev,1,0,0),"free-snd-nrev is the default reverb free function");
+
+  gh_eval_str("(set-reverb-funcs snd-nrev make-snd-nrev free-snd-nrev)");
+
+  DEFINE_PROC(gh_new_procedure("snd-contrast",SCM_FNC g_mus_contrast,2,0,0),"snd-contrast is the default contrast function");
+
+  gh_eval_str("(set-contrast-func snd-contrast)");
 #endif
 }
 

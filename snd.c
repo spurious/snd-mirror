@@ -264,6 +264,8 @@ static void mus_print2snd(char *msg)
   ss->catch_exists = 0;
   g_initialize_gh(ss);
   ss->search_proc = SCM_UNDEFINED;
+#else
+  init_mus_module();
 #endif
 #if DEBUGGING
   check_snd_commands();

@@ -41,7 +41,9 @@
   #endif
   #ifndef _MSC_VER
     #ifndef NEXT
-      #define TRAP_SEGFAULT 1
+      #ifndef TRAP_SEGFAULT
+        #define TRAP_SEGFAULT 1
+      #endif
       #define HAVE_TEMPNAM 1
     #endif
     #define HAVE_READLINK 1

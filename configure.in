@@ -680,3 +680,4 @@ dnl if no motif, search for gtk (could use locate)
 dnl need to be able to set both HAVE_ALSA and HAVE_OSS?
 dnl support for sndlib.so needs to decide whether clm2scm/clm are available
 dnl make with-gsl the default
+dnl perhaps also make with-ladspa the default
