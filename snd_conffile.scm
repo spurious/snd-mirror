@@ -293,6 +293,9 @@
      #f)))
 
 
+(define (c-redraw)
+  (set! (cursor-color) (cursor-color)))
+
 ;; Selection-position and selection-frames doesn't allways work properly.
 (define (c-selection-position)
   (selection-position (selected-sound)))
@@ -300,20 +303,27 @@
   (selection-frames (selected-sound)))
 
 (define* (c-set-selection-position! snd ch val #:optional (dassync (c-sync? snd)))
-  (if dassync
-      (let ((chans (chans snd)))
-	(do ((chan 0 (1+ chan)))
-	    ((= chan chans))
-	  (set! (selection-position snd chan) val)))
-      (set! (selection-position snd ch) val)))
+  (let ((mustredraw #f))
+    (c-for 0 < (chans snd) 1
+	   (lambda (n)
+	     (if (or dassync
+		     (= n ch))
+		 (set! (selection-position snd n) val)
+		 (if (selection-member? snd n)
+		     (begin
+		       (set! mustredraw #t)
+		       (set! (selection-member? snd n) #f))))))
+    (if mustredraw	
+	(c-redraw))))
+
 
 (define* (c-set-selection-frames! snd ch val #:optional (dassync (c-sync? snd)))
-  (if dassync
-      (let ((chans (chans snd)))
-	(do ((chan 0 (1+ chan)))
-	    ((= chan chans))
-	  (set! (selection-frames snd chan) val)))
-      (set! (selection-frames snd ch) val)))
+  (c-for 0 < (chans snd) 1
+	 (lambda (n)
+	   (if (or dassync
+		   (= n ch))
+	       (set! (selection-frames snd n) val)))))
+
 
 (define* (c-set-selection! snd ch start end #:optional (dassync (c-sync? snd)))
   (c-set-selection-position! snd ch start dassync)
@@ -344,8 +354,8 @@
 	(legalpos (min (frames) (max 0 pos))))
     (if isplaying
 	(begin
-	  (c-stop-playing legalpos)
-	  (c-play legalpos #t))
+	  (c-pause legalpos)
+	  (c-stop-pause legalpos))
 	(begin
 	  (c-show-times legalpos #f)
 	  (c-set-cursor-pos legalpos)))))
@@ -505,22 +515,22 @@
 		      (= axis time-graph))
 		 (let ((samp (max 0 (c-integer (* (srate snd) (position->x x snd chn)))))
 		       (dasspeed (speed-control)))
-		   (c-stop-playing samp)
+		   (c-pause samp)
 		   (cond ((= button 4)
 			  (if (< dasspeed 0)
 			      (set! (speed-control) (* -1 dasspeed)))
-			  (c-play samp))
+			  (c-stop-pause samp))
 			 ((= button 5)
 			  (if (> dasspeed 0)
 			      (set! (speed-control) (* -1 dasspeed)))
-			  (c-play samp)))))
+			  (c-stop-pause samp)))))
 	     #f))
 	
 
 
 
 ;;##############################################################
-;; Playing
+;; Playing (Lots of chaotic code)
 ;;##############################################################
 
 (define c-playstartpos 0)
@@ -584,10 +594,17 @@
     (play startpos #f #f #f endpos #f
 	  (lambda (x)
 	    (if (and (= x 0) c-islooping)
-		(c-play-do (if (not replaypos) start c-playstartpos) end replaypos))))))
+		(c-play-do (if (not replaypos) start replaypos) end replaypos))))))
 
-(define (c-play-selection)
-  (c-play-do #f #f #f))
+
+(define c-playtype 'all)
+
+(define* (c-play-selection #:optional pos)
+  (set! c-playtype 'selection)
+  (set! c-playstartpos (if (< (speed-control) 0) (+ (c-selection-position) (c-selection-frames)) (c-selection-position)))
+  (if pos
+      (c-play-do pos #f c-playstartpos)
+      (c-play-do #f #f #f)))
 
 
 (add-hook! stop-playing-hook
@@ -599,20 +616,32 @@
 
 
 (define* (c-play pos #:optional dontsetstartpos)
+  (set! c-playtype 'all)
   (if (not dontsetstartpos)
       (set! c-playstartpos pos))
   (if (< (speed-control) 0)
-      (c-play-do pos 0 #t)
-      (c-play-do pos (frames) #t)))
+      (c-play-do pos 0 c-playstartpos)
+      (c-play-do pos (frames) c-playstartpos)))
 
+
+(define c-dac-was-running #f)
+(define c-pause-pos 0)
+(define* (c-pause #:optional pausepos)
+  (set! c-dac-was-running (dac-is-running))
+  (set! c-pause-pos (if pausepos pausepos (cursor)))
+  (c-stop-playing c-pause-pos))
+
+(define* (c-stop-pause #:optional pausepos)
+  (if (eq? 'all c-playtype)
+      (c-play (if pausepos pausepos c-pause-pos) #t)
+      (if pausepos
+	  (c-play-selection pausepos)
+	  (c-play-selection c-pause-pos))))
 
 (define (c-dosomepause func)
-  (let ((isplaying (dac-is-running)))
-    (if isplaying
-	(c-stop-playing (cursor)))
-    (func)
-    (if isplaying
-	(c-play (cursor) #t))))
+  (c-pause)
+  (func)
+  (c-stop-pause))
 
 
 ;; Replace the old space binding with one that starts playing from the current cursor position,
@@ -1114,6 +1143,9 @@ Does not work.
 			(let ((old-color (foreground-color))
 			      (height 10)
 			      (new-report-value (/ (floor (* 100 pct)) 100)))
+			  (if (and (defined? 'rational?)
+				   (rational? new-report-value))
+			      (set! new-report-value (exact->inexact new-report-value)))
 			  (set! (foreground-color) blue)
 			  (fill-rectangle minx miny (* pct width) height)
 			  (set! (foreground-color) old-color)
@@ -1526,13 +1558,13 @@ Does not work.
 			     (set! must-wait-more #f)
 			     (waitfunc))
 			   (begin
-			     (c-play (cursor) #t)
+			     (c-stop-pause)
 			     (set! iswaiting #f))))))
 	       (<slider> control-panel "dac-size" 1 (dac-size) 8192
 			 (lambda (val)
 			   (let ((isplaying (dac-is-running)))
 			     (if isplaying
-				 (c-stop-playing (cursor)))
+				 (c-pause))
 			     (set! (dac-size) (c-integer val))
 			     (focus-widget (c-editor-widget snd))
 			     (if isplaying

@@ -273,17 +273,13 @@
 	   (start (selection-position snd))
 	   (length (selection-frames snd))
 	   (end (+ start length))
-	   (chans (if (= 0 (sync snd))
-		      1
-		      (channels snd)))
-	   (startchan (if (= 0 (sync snd))
-			  (selected-channel snd)
-			  (get-startchan snd 0)))
+	   (startchan #f)
+	   (chans #f)
 	   (tempfilename #f)
 	   (new-file #f)
 	   (buflen (if parset-func 32 ladspa-maxbuf))
 	   (vct-out (make-vct buflen))
-	   (sdobj (make-sound-data chans buflen))
+	   (sdobj #f)
 	   (isbreaked #f)
 	   (readers '()))
       
@@ -291,6 +287,21 @@
 	(if (not (string=? "vst" libname))
 	    (open (minimum-num-handles chans min_num_audios))
 	    #t))
+
+      (c-for 0 < (channels snd) 1
+	     (lambda (ch)
+	       (if (selection-member? snd ch)
+		   (if (not startchan)
+		       (begin
+			 (set! startchan ch)
+			 (set! chans 1))
+		       (set! chans (1+ (- ch startchan)))))))
+      (if (not startchan)
+	  (begin
+	    (set! startchan 0)
+	    (set! chans (chans snd))))
+
+      (set! sdobj (make-sound-data chans buflen))
 
       (if (not (apply-open))
 	  (begin
@@ -369,6 +380,9 @@
 
 
 	    ;; Let snd know about the new file.
+	    (if (defined? 'c-report-and-clear)
+		(c-report-and-clear "Please wait, inserting new data."))
+
 	    (if (not isbreaked)
 		(c-for 0 < chans 1
 		       (lambda (ch)
@@ -571,17 +585,19 @@
 	(stop-playing)
 	(disableplugin)
 	(-> onoffbutton set #f)
-	(-> ladspa apply!
-	    (lambda (snd pos)
-	      (hash-fold (lambda (portnum nodeline s)
-			   (let ((lo (-> ladspa get-lo portnum))
-				 (hi (-> ladspa get-hi portnum)))
-			     (-> ladspa input-control-set!
-				 portnum
-				 (c-scale (-> nodeline get-val (c-scale pos 0 (frames snd 0) 0 1))
-					  0 1
-					  hi lo))))
-			 '() nodelines))))
+	(if (null? (hash-fold acons '() nodelines))
+	    (-> ladspa apply!)
+	    (-> ladspa apply!
+		(lambda (snd pos)
+		  (hash-fold (lambda (portnum nodeline s)
+			       (let ((lo (-> ladspa get-lo portnum))
+				     (hi (-> ladspa get-hi portnum)))
+				 (-> ladspa input-control-set!
+				     portnum
+				     (c-scale (-> nodeline get-val (c-scale pos 0 (frames snd 0) 0 1))
+					      0 1
+					      hi lo))))
+			     '() nodelines)))))
       
       (define (Close)
 	(set! open-portnums (hash-fold (lambda (portnum nodeline s) (nodeline-off portnum) (cons portnum s))
