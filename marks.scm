@@ -385,9 +385,6 @@
 						     all-mark-properties)))
 	     #f))
 
-;;; TODO: save/restore all properties in sound header? -- could be separate write/read-eval functions
-;;;   what about "temporary" properties like 'inset-envelope (draw.scm)?
-
 (define (save-mark-properties)
   "(save-mark-properties) sets up an after-save-state-hook function to save any mark-properties"
   (add-hook! after-save-state-hook 
@@ -439,3 +436,48 @@
 			     ""))))
   #t)
 
+
+#!
+;;; this code saves mark info in the sound file header, and reads it back in when the sound is later reopened
+
+(define (eval-header sndf)
+  (and (string? (comment sndf))
+       (catch #t
+	      (lambda ()
+		(eval-string (comment sndf)))
+	      (lambda args #f))))
+
+(define (marks->string sndf)
+  (let ((str (format #f "(if (not (defined? 'mark-property)) (load \"marks.scm\"))~%(let ((m #f))~%"))
+	(chan 0))
+    (for-each
+     (lambda (chan-marks)
+       (for-each 
+	(lambda (m)
+	  (set! str 
+		(string-append str 
+			       (format #f
+				       "  (set! m (add-mark ~A #f ~D))~%" 
+				       (mark-sample m)
+				       chan)))
+	  (if (and (string? (mark-name m))
+		   (> (string-length (mark-name m)) 0))
+	      (set! str 
+		    (string-append str 
+				   (format #f
+					   "  (set! (mark-name m) ~S)~%"
+					   (mark-name m)))))
+	  (if (not (null? (mark-properties m)))
+	      (set! str
+		    (string-append str 
+				   (format #f
+					   "  (set! (mark-properties m) '~A)~%"
+					   (mark-properties m))))))
+	  chan-marks)
+       (set! chan (1+ chan)))
+     (marks sndf))
+    (string-append str (format #f "  m)~%"))))
+		   
+(add-hook! output-comment-hook (lambda (str) (marks->string (selected-sound))))
+(add-hook! after-open-hook (lambda (snd) (eval-header snd)))
+!#

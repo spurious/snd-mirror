@@ -11,7 +11,7 @@ static int dont_edit(chan_info *cp)
 }
 
 static XEN save_hook;
-static int dont_save(snd_info *sp, char *newname)
+static int dont_save(snd_info *sp, const char *newname)
 {
   XEN res = XEN_FALSE;
   if (XEN_HOOKED(save_hook))
@@ -97,7 +97,7 @@ static int add_sound_buffer_to_edit_list(chan_info *cp, mus_sample_t *data, int 
   return(cp->sound_ctr);
 }
 
-static int add_sound_file_to_edit_list(chan_info *cp, char *name, snd_io *io, file_info *hdr, int temp, int chan)
+static int add_sound_file_to_edit_list(chan_info *cp, const char *name, snd_io *io, file_info *hdr, int temp, int chan)
 {
   prepare_sound_list(cp);
   cp->sounds[cp->sound_ctr] = make_snd_data_file(name, io, hdr, temp, cp->edit_ctr, chan);

@@ -2448,6 +2448,8 @@ Reverb-feedback sets the scaler on the feedback.\n\
    #f))
 
 
+;;; -------- add text widget to notebook "status" area --------
+
 (define (add-text-to-status-area)
   ;; it might be a better use of this space to put dlp's icon row in it
   (let ((notebook (list-ref (main-widgets) 3)))
@@ -2626,10 +2628,9 @@ Reverb-feedback sets the scaler on the feedback.\n\
       ((= k 11))
     (variable-display (* k .02) wid2))
 !#
-;;; TODO: macro to auto declare (cur arg, function/file name)
+
 ;;; TODO: if many vars, scrolled window?
 ;;; TODO: bess examples via vardpy
-;;; TODO: panel-control wid -> current value (this just needs run support?)
 
 
 (define with-minmax-button

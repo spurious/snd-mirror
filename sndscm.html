@@ -1795,6 +1795,8 @@ between the leftmost marks in <i>snd</i>.
 </p><p><b>snap-mark-to-beat</b> forces a dragged mark to end up on a beat.
 </p><p><b>mark-explode</b> splits a sound into a bunch of separate files based on mark placements.
 </p><p><b>mark-property</b> associates a property list with each mark.
+There is also some code (look for "eval-header") that saves mark info in the
+sound file header, and reads it when the file is subsequently reopened.
 </p><p><b>mark-click-info</b> is a mark-click-hook function that describes a mark and its properties.  It
 is used by with-marked-sound in ws.scm.
 </p><p><b>save-mark-properties</b> sets up an <a href="extsnd.html#aftersavestatehook">after-save-state-hook</a> function to save any mark-properties.

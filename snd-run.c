@@ -186,7 +186,7 @@ static XEN walk_sym = XEN_FALSE;
 
 /* find and set (Guile) variable values */
 
-static void xen_symbol_name_set_value(char *a, XEN b)
+static void xen_symbol_name_set_value(const char *a, XEN b)
 {
   XEN var = XEN_FALSE;
   var = XEN_VAR_NAME_TO_VAR(a);
@@ -307,7 +307,7 @@ static void init_type_names(void)
     type_names[i] = basic_type_names[i];
 }
 static char* type_name(int id) {if ((id >= R_UNSPECIFIED) && (id <= last_type)) return(type_names[id]); return("unknown");}
-static int add_new_type(char *new_type)
+static int add_new_type(const char *new_type)
 {
   int i;
   if (last_type == (type_names_size - 1))
@@ -320,7 +320,7 @@ static int add_new_type(char *new_type)
   type_names[last_type] = copy_string(new_type);
   return(last_type);
 }
-static int name_to_type(char *name)
+static int name_to_type(const char *name)
 {
   int i;
   for (i = 0; i <= last_type; i++)
@@ -383,7 +383,7 @@ static xen_value *make_xen_value(int typ, int address, int constant)
 
 #define OPTIMIZER_WARNING_BUFFER_SIZE 1024
 static char optimizer_warning_buffer[OPTIMIZER_WARNING_BUFFER_SIZE];
-static xen_value *run_warn(char *format, ...)
+static xen_value *run_warn(const char *format, ...)
 {
   va_list ap;
   run_warned = TRUE;
@@ -501,7 +501,7 @@ typedef struct {
   int constants, float_result, need_result;
 } ptree;
 
-static xen_var *find_var_in_ptree(ptree *pt, char *name)
+static xen_var *find_var_in_ptree(ptree *pt, const char *name)
 {
   /* search backwards for shadowing */
   int i;
@@ -1292,7 +1292,7 @@ static int add_dbl_to_ptree(ptree *pt, Float value)
   return(cur);
 }
 
-static xen_var *new_xen_var(char *name, xen_value *v)
+static xen_var *new_xen_var(const char *name, xen_value *v)
 {
   xen_var *var;
   var = (xen_var *)CALLOC(1, sizeof(xen_var));
@@ -1304,7 +1304,7 @@ static xen_var *new_xen_var(char *name, xen_value *v)
   return(var);
 }
 
-static int add_var_to_ptree(ptree *pt, char *name, xen_value *v)
+static int add_var_to_ptree(ptree *pt, const char *name, xen_value *v)
 {
   int cur;
   /*
@@ -1326,7 +1326,7 @@ static int add_var_to_ptree(ptree *pt, char *name, xen_value *v)
   return(cur);
 }
 
-static int add_outer_var_to_ptree(ptree *pt, char *name, xen_value *v)
+static int add_outer_var_to_ptree(ptree *pt, const char *name, xen_value *v)
 {
   int cur;
   xen_var *var;
@@ -1367,7 +1367,7 @@ static int remember_string(ptree *pt, int addr)
   return(addr);
 }
 
-static int add_string_to_ptree(ptree *pt, char *str)
+static int add_string_to_ptree(ptree *pt, const char *str)
 {
   return(remember_string(pt, add_int_to_ptree(pt, (Int)(str))));
 }
@@ -1675,7 +1675,7 @@ static xen_value *add_global_var_to_ptree(ptree *prog, XEN form, XEN *rtn)
   return(v);
 }
 
-static continuation *add_goto_to_ptree(ptree *pt, char *name)
+static continuation *add_goto_to_ptree(ptree *pt, const char *name)
 {
   continuation *c;
   int old_size, i;
@@ -1702,7 +1702,7 @@ static continuation *add_goto_to_ptree(ptree *pt, char *name)
   return(c);
 }
 
-static void erase_goto(ptree *prog, char *name)
+static void erase_goto(ptree *prog, const char *name)
 {
   int i;
   continuation *c = NULL;
@@ -1950,7 +1950,7 @@ static triple *set_var(ptree *pt, xen_value *var, xen_value *init_val)
 
 static xen_value *walk(ptree *prog, XEN form, int need_result);
 
-static xen_value *walk_sequence(ptree *prog, XEN body, int need_result, char *name)
+static xen_value *walk_sequence(ptree *prog, XEN body, int need_result, const char *name)
 {
   xen_value *v;
   int i, body_forms;
@@ -2178,7 +2178,7 @@ static void undefine_locals(ptree *prog, int locals_loc)
   prog->var_ctr = locals_loc;
 }
 
-static xen_value *walk_then_undefine(ptree *prog, XEN form, int need_result, char *name, int locals_loc)
+static xen_value *walk_then_undefine(ptree *prog, XEN form, int need_result, const char *name, int locals_loc)
 {
   xen_value *v;
   v = walk_sequence(prog, handle_defines(prog, form), need_result, name);
@@ -3083,7 +3083,7 @@ static xen_value *package_n(ptree *prog,
   return(args[0]);
 }
 
-static char *describe_dbl_args(char *func, int num_args, int *args, Float *dbls, int start)
+static char *describe_dbl_args(const char *func, int num_args, int *args, Float *dbls, int start)
 {
   char *buf, *str;
   int i, len;
@@ -3102,7 +3102,7 @@ static char *describe_dbl_args(char *func, int num_args, int *args, Float *dbls,
   return(buf);
 }
 
-static char *describe_int_args(char *func, int num_args, int *args, Int *ints, int start)
+static char *describe_int_args(const char *func, int num_args, int *args, Int *ints, int start)
 {
   char *buf, *str;
   int i, len;
@@ -3598,7 +3598,7 @@ static xen_value *divide(ptree *prog, xen_value **args, int num_args)
 }
 
 
-static char *describe_rel_f_args(char *func, int num_args, int *args, Int *ints, Float *dbls, int start)
+static char *describe_rel_f_args(const char *func, int num_args, int *args, Int *ints, Float *dbls, int start)
 {
   char *buf, *str;
   int i, len;
@@ -3617,7 +3617,7 @@ static char *describe_rel_f_args(char *func, int num_args, int *args, Int *ints,
   return(buf);
 }
 
-static char *describe_rel_i_args(char *func, int num_args, int *args, Int *ints, int start)
+static char *describe_rel_i_args(const char *func, int num_args, int *args, Int *ints, int start)
 {
   return(describe_int_args(func, num_args, args, ints, start));
 }
@@ -3752,7 +3752,7 @@ static void max_fn(int *args, Int *ints, Float *dbls)
     if (dbls[args[i + 1]] > mx) mx = dbls[args[i + 1]];
   FLOAT_RESULT = mx;
 }
-static char *descr_max_min_fn(int *args, Int *ints, Float *dbls, char *which) 
+static char *descr_max_min_fn(int *args, Int *ints, Float *dbls, const char *which) 
 {
   char *buf, *str;
   int i, n, len;
@@ -3786,7 +3786,7 @@ static void max_in(int *args, Int *ints, Float *dbls)
     if (ints[args[i + 1]] > mx) mx = ints[args[i + 1]];
   INT_RESULT = mx;
 }
-static char *descr_max_min_in(int *args, Int *ints, Float *dbls, char *which)
+static char *descr_max_min_in(int *args, Int *ints, Float *dbls, const char *which)
 {
   char *buf, *str;
   int i, n, len;
@@ -5068,7 +5068,7 @@ static xen_value *make_string_1(ptree *pt, xen_value **args, int num_args)
   return(package(pt, R_STRING, strmake_2, descr_strmake_2, args, 2));
 }
 
-static char *substring(char *str, int start, int end)
+static char *substring(const char *str, int start, int end)
 {
   int i, len;
   char *newstr;
@@ -5121,7 +5121,7 @@ static xen_value *substring_1(ptree *pt, xen_value **args, int num_args)
 }
 
 
-static char *descr_strn(int *args, Int *ints, Float *dbls, char *which, int bool_result)
+static char *descr_strn(int *args, Int *ints, Float *dbls, const char *which, int bool_result)
 {
   int i, n, len;
   char *buf, *temp;
@@ -5825,7 +5825,7 @@ static xen_value *report_in_minibuffer_1(ptree *pt, xen_value **args, int num_ar
 /* ---------------- sample-reader stuff ---------------- */
 
 static void reader_f(int *args, Int *ints, Float *dbls) {FLOAT_RESULT = read_sample_to_float(((snd_fd *)(INT_ARG_1)));}
-static char *descr_reader(int *args, Int *ints, Float *dbls, char *which) 
+static char *descr_reader(int *args, Int *ints, Float *dbls, const char *which) 
 {
   return(mus_format( FLT_PT " = %s(" PTR_PT ")", args[0], FLOAT_RESULT, which, args[1], ((snd_fd *)(INT_ARG_1))));
 }
@@ -6312,7 +6312,7 @@ static xen_value *vct_convolve_1(ptree *prog, xen_value **args, int num_args)
 
 /* ---------------- CLM stuff ---------------- */
 
-static char *descr_gen(int *args, Int *ints, Float *dbls, char *which, int num_args) 
+static char *descr_gen(int *args, Int *ints, Float *dbls, const char *which, int num_args) 
 {
   char *buf, *str;
   int i, len;
@@ -6442,7 +6442,7 @@ static xen_value *tap_1(ptree *prog, xen_value **args, int num_args)
     return(package(prog, R_FLOAT, Name ## _0f, descr_ ## Name ## _0f, args, 1)); \
   }
 
-static char *descr_int_gen0(int *args, Int *ints, Float *dbls, char *which)
+static char *descr_int_gen0(int *args, Int *ints, Float *dbls, const char *which)
 {
   return(mus_format( INT_PT " = %s(" PTR_PT , args[0], INT_RESULT, which, args[1], (void *)(INT_ARG_1)));
 }
@@ -6551,7 +6551,7 @@ static xen_value *move_locsig_1(ptree *prog, xen_value **args, int num_args)
 }
 
 
-static char *descr_str_gen0(int *args, Int *ints, Float *dbls, char *which)
+static char *descr_str_gen0(int *args, Int *ints, Float *dbls, const char *which)
 {
   return(mus_format( STR_PT " = %s(" PTR_PT ")", args[0], STRING_RESULT, which, args[1], (mus_any *)(INT_ARG_1)));
 }
@@ -6569,7 +6569,7 @@ STR_GEN0(inspect)
 STR_GEN0(file_name)
 
 
-static char *descr_ref_gen0(int *args, Int *ints, Float *dbls, char *which)
+static char *descr_ref_gen0(int *args, Int *ints, Float *dbls, const char *which)
 {
   return(mus_format( FLT_PT " = %s(" PTR_PT ", " INT_PT ")", args[0], FLOAT_RESULT, which, args[1], (mus_any *)(INT_ARG_1), args[2], INT_ARG_2));
 }
@@ -6586,7 +6586,7 @@ REF_GEN0(locsig_ref)
 REF_GEN0(locsig_reverb_ref)
 
 
-static char *descr_set_gen0(int *args, Int *ints, Float *dbls, char *which)
+static char *descr_set_gen0(int *args, Int *ints, Float *dbls, const char *which)
 {
   return(mus_format("%s(" PTR_PT ", " INT_PT ", " FLT_PT ")", which, args[1], (mus_any *)(INT_ARG_1), args[2], INT_ARG_2, args[3], FLOAT_ARG_3));
 }
@@ -6640,7 +6640,7 @@ static void mixer_set_1(ptree *prog, xen_value *in_v, xen_value *in_v1, xen_valu
 }
 
 
-static char *descr_set_int_gen0(int *args, Int *ints, Float *dbls, char *which)
+static char *descr_set_int_gen0(int *args, Int *ints, Float *dbls, const char *which)
 {
   return(mus_format("mus-%s(" PTR_PT ") = " INT_PT , which, args[0], (mus_any *)(INT_RESULT), args[1], INT_ARG_1));
 }
@@ -6658,7 +6658,7 @@ SET_INT_GEN0(hop)
 SET_INT_GEN0(length)
 SET_INT_GEN0(cosines)
 
-static char *descr_set_dbl_gen0(int *args, Int *ints, Float *dbls, char *which)
+static char *descr_set_dbl_gen0(int *args, Int *ints, Float *dbls, const char *which)
 {
   return(mus_format("mus-%s(" PTR_PT ") = " FLT_PT , which, args[0], (mus_any *)(INT_RESULT), args[1], FLOAT_ARG_1));
 }
@@ -8260,7 +8260,7 @@ static XEN g_add_clm_type(XEN name)
   return(name);
 }
 
-static int check_clm_type(XEN sym, char *type)
+static int check_clm_type(XEN sym, const char *type)
 {
   return(strcmp(type, XEN_SYMBOL_TO_C_STRING(sym)) == 0);
 }
@@ -8487,7 +8487,7 @@ static int isvowel(char b)
   return((b == 'a') || (b == 'e') || (b == 'i') || (b == 'o') || (b == 'u'));
 }
 
-static xen_value *arg_warn(ptree *prog, char *funcname, int arg_num, xen_value **args, char *correct_type)
+static xen_value *arg_warn(ptree *prog, char *funcname, int arg_num, xen_value **args, const char *correct_type)
 {
   char *xb, *tb;
   xb = describe_xen_value(args[arg_num], prog->ints, prog->dbls);

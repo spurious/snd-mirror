@@ -2802,7 +2802,7 @@ static void erase_mix_waveform(mix_info *md)
 /* track reader: an array of mix readers with state: active, waiting, null (done) */
 
 typedef struct {
-  int mixes;
+  int mixes, track;
   off_t *state;
   off_t *len;
   mix_fd **fds;
@@ -2811,8 +2811,9 @@ typedef struct {
 static void list_mix_reader(mix_fd *fd);
 static void unlist_mix_reader(mix_fd *fd);
 
-static track_fd *init_track_reader(chan_info *cp, int track_num, int global) /* edit-position? direction? */
+static track_fd *init_track_reader(chan_info *cp, int track_num, int global, off_t beg) /* edit-position? direction? */
 {
+  /* beg is offset within track which starts within overall sound(s) at track_beg */
   track_fd *fd = NULL;
   int mixes = 0, i, mix;
   off_t track_beg;
@@ -2835,6 +2836,7 @@ static track_fd *init_track_reader(chan_info *cp, int track_num, int global) /* 
   if (mixes > 0)
     {
       fd = (track_fd *)CALLOC(1, sizeof(track_fd));
+      fd->track = track_num;
       fd->mixes = mixes;
       fd->state = (off_t *)CALLOC(mixes, sizeof(off_t));
       fd->len = (off_t *)CALLOC(mixes, sizeof(off_t));
@@ -2847,10 +2849,21 @@ static track_fd *init_track_reader(chan_info *cp, int track_num, int global) /* 
 	    if ((md->track == track_num) && 
 		(md->cp == cp))
 	      {
-		fd->fds[mix] = init_mix_read(md, CURRENT_MIX, 0);
+		off_t true_beg, mix_start;
+		true_beg = track_beg + beg;
 		cs = md->current_cs;
-		fd->state[mix] = cs->orig - track_beg;
-		fd->len[mix] = cs->len;
+		mix_start = true_beg - cs->orig;
+		fd->state[mix] = -mix_start;
+		if (mix_start > 0)
+		  {
+		    fd->fds[mix] = init_mix_read(md, CURRENT_MIX, mix_start);
+		    fd->len[mix] = cs->len - mix_start;
+		  }
+		else 
+		  {
+		    fd->fds[mix] = init_mix_read(md, CURRENT_MIX, 0);
+		    fd->len[mix] = cs->len;
+		  }
 		mix++;
 	      }
 	  }
@@ -2982,7 +2995,7 @@ static int play_track(snd_state *ss, chan_info **ucps, int chans, int track_num)
 #endif
   for (i = 0; i < chans; i++)
     {
-      fds[i] = init_track_reader(cps[i], track_num, need_free);
+      fds[i] = init_track_reader(cps[i], track_num, need_free, 0);
       if (fds[i]) /* perhaps bad track number? */
 	for (n = 0; n < fds[i]->mixes; n++)
 	  {
@@ -4123,16 +4136,20 @@ static char *mf_to_string(mix_fd *fd)
   mix_info *md;
   char *desc;
   desc = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
-  if (fd == NULL)
+  if ((fd == NULL) || (fd->sfs == NULL) || (fd->sfs[0] == NULL))
     sprintf(desc, "#<mix-sample-reader: null>");
   else
     {
       md = fd->md;
       if ((md) && (MIX_TYPE_OK(fd->type)))
-	mus_snprintf(desc, PRINT_BUFFER_SIZE, "#<mix-sample-reader %p: %s via mix %d>",
-		     fd,
+	mus_snprintf(desc, PRINT_BUFFER_SIZE, "#<mix-sample-reader mix %d, (from " OFF_TD ", at " OFF_TD "%s): %s, %d chan%s>",
+		     md->id,
+		     fd->sfs[0]->initial_samp,
+		     fd->sfs[0]->loc,
+		     (fd->sfs[0]->at_eof) ? ", at eof" : "",
 		     md->in_filename,
-		     md->id);
+		     fd->chans,
+		     (fd->chans > 1) ? "s" : "");
       else sprintf(desc, "#<mix-sample-reader: inactive>");
     }
   return(desc);
@@ -4332,8 +4349,8 @@ static char *tf_to_string(track_fd *fd)
 		  if (!banner)
 		    {
 
-		      mus_snprintf(desc, PRINT_BUFFER_SIZE, "#<track-sample-reader %p: %s chan %d via mixes '(",
-				   fd,
+		      mus_snprintf(desc, PRINT_BUFFER_SIZE, "#<track-sample-reader track %d: %s chan %d via mixes '(",
+				   fd->track,
 				   md->in_filename,
 				   (md->cp)->chan);
 		      banner = TRUE;
@@ -4370,22 +4387,24 @@ static void tf_free(track_fd *fd)
 
 XEN_MAKE_OBJECT_FREE_PROCEDURE(track_fd, free_tf, tf_free)
 
-/* SOMEDAY: make-track-sample-reader could take a begin time (needs to be passed down to each init_mix_read, etc */
-
-static XEN g_make_track_sample_reader(XEN track_id, XEN snd, XEN chn)
+static XEN g_make_track_sample_reader(XEN track_id, XEN snd, XEN chn, XEN beg)
 {
-  #define H_make_track_sample_reader "(" S_make_track_sample_reader " track (snd #f) (chn #f)): \
-return a reader ready to access track's data associated with snd's channel chn"
+  #define H_make_track_sample_reader "(" S_make_track_sample_reader " track (snd #f) (chn #f) (beg 0)): \
+return a reader ready to access track's data associated with snd's channel chn, starting in the track from beg"
 
   track_fd *tf = NULL;
   chan_info *cp;
   int i;
+  off_t samp;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(track_id), track_id, XEN_ARG_1, S_make_track_sample_reader, "an integer");
   ASSERT_JUST_CHANNEL(S_make_track_sample_reader, snd, chn, 2); 
   cp = get_cp(snd, chn, S_make_track_sample_reader);
+  ASSERT_SAMPLE_TYPE(S_make_track_sample_reader, beg, XEN_ARG_4);
+  samp = beg_to_sample(beg, S_make_track_sample_reader);
   tf = init_track_reader(cp, 
 			 XEN_TO_C_INT(track_id), 
-			 FALSE); /* true to track all chans in parallel (assuming different starting points) */
+			 FALSE, /* true to track all chans in parallel (assuming different starting points) */
+			 samp); 
   if (tf == NULL)
     XEN_ERROR(NO_SUCH_TRACK,
 	      XEN_LIST_2(C_TO_XEN_STRING(S_make_track_sample_reader),
@@ -4595,7 +4614,7 @@ XEN_NARGIFY_1(g_read_mix_sample_w, g_read_mix_sample)
 XEN_NARGIFY_1(g_next_mix_sample_w, g_next_mix_sample)
 XEN_NARGIFY_1(g_free_mix_sample_reader_w, g_free_mix_sample_reader)
 XEN_NARGIFY_1(g_mf_p_w, g_mf_p)
-XEN_ARGIFY_3(g_make_track_sample_reader_w, g_make_track_sample_reader)
+XEN_ARGIFY_4(g_make_track_sample_reader_w, g_make_track_sample_reader)
 XEN_NARGIFY_1(g_next_track_sample_w, g_next_track_sample)
 XEN_NARGIFY_1(g_read_track_sample_w, g_read_track_sample)
 XEN_NARGIFY_1(g_free_track_sample_reader_w, g_free_track_sample_reader)
@@ -4732,7 +4751,7 @@ void g_init_mix(void)
 #endif
 #endif
 
-  XEN_DEFINE_PROCEDURE(S_make_track_sample_reader, g_make_track_sample_reader_w, 1, 2, 0, H_make_track_sample_reader);
+  XEN_DEFINE_PROCEDURE(S_make_track_sample_reader, g_make_track_sample_reader_w, 1, 3, 0, H_make_track_sample_reader);
   XEN_DEFINE_PROCEDURE(S_next_track_sample,        g_next_track_sample_w, 1, 0, 0,        H_next_track_sample);
   XEN_DEFINE_PROCEDURE(S_read_track_sample,        g_read_track_sample_w, 1, 0, 0,        H_read_track_sample);
   XEN_DEFINE_PROCEDURE(S_free_track_sample_reader, g_free_track_sample_reader_w, 1, 0, 0, H_free_track_sample_reader);

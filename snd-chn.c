@@ -1,10 +1,9 @@
 #include "snd.h"
 
-/* TODO: multichan case can get in state where initial expose updates are ignored in chan>0 */
 /* TODO: if united chans, select chan should set edit_history to reflect selected chan (label also to show which is affected) */
 /* TODO: if superimposed, how to see edit history pane of >1 chan (more panes? arrows?) */
 /* TODO: if superimposed, selected portion is wrong color (white) */
-/* TODO: if superimposed and 2chn cursor set, 1chan is xor'd, subsequent click sets both */
+/* TODO: if superimposed and 2chn cursor set, 1chan is xor'd, subsequent click sets both (and chan1 cursor takes precedence?) */
 
 
 enum {NOGRAPH, WAVE, FFT_AXIS, LISP, FFT_MAIN};    /* for marks, regions, mouse click detection */
