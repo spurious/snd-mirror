@@ -318,11 +318,18 @@ Once you have ILISP, put this code in your .emacs file:</p>
   (setq ilisp-load-command "(load \"%s\")")
   (setq ilisp-init-hook '((lambda () (ilisp-init nil nil nil))))
   (setq comint-prompt-regexp "^>+")
-  (setq ilisp-directory-command "(getcwd)"
-	ilisp-set-directory-command "(chdir \"%s\")"
-	ilisp-complete-command
-	"(map (lambda (sym) (list (symbol-&gt;string sym))) (apropos-internal \"^%s\"))"))
-(if (not snd-program) (setq snd-program "snd"))
+  (setq ilisp-directory-command "(getcwd)")
+  (setq	ilisp-set-directory-command "(chdir \"%s\")")
+  (setq	ilisp-complete-command
+	"(map (lambda (sym) 
+                (list (symbol-&gt;string sym))) 
+              (apropos-internal \"^%s\"))")
+  (local-set-key "\C-x\C-h" '(lambda (s)
+			       (interactive "sSnd help: ")
+			       (insert "(snd-help " s ")")
+			       (comint-send-input))))
+
+  (setq snd-program "snd")
 </pre>
 <p>You can bind this to some key via:</p>
 <pre>
@@ -331,6 +338,8 @@ Once you have ILISP, put this code in your .emacs file:</p>
 <p>Now C-x C-l in Emacs starts Snd as a subjob; anything you type in the Emacs
 <b>*snd*</b> buffer is sent to Snd (very much as if you were running CLM as
 an Emacs subjob), and Snd's output is appended to the <b>*snd*</b> buffer.
+Also, C-x C-h prompts for some Snd entity and appends the help text for that
+entity in the snd buffer.
 This connection still needs some work -- 
 it would be nice to have
 Snd's command completion available in the *snd* buffer.
