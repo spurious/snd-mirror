@@ -489,8 +489,8 @@ void reflect_resize(snd_state *ss)
   XtVaSetValues(MAIN_SHELL(ss),XmNallowShellResize,auto_resize(ss),NULL);
 }
 
-void set_sensitive(Widget wid, int val) {XtSetSensitive(wid,val);}
-int is_sensitive(Widget wid) {return(XtIsSensitive(wid));}
+void set_sensitive(Widget wid, int val) {if (wid) XtSetSensitive(wid,val);}
+int is_sensitive(Widget wid) {if (wid) return(XtIsSensitive(wid)); return(0);}
 void set_toggle_button(Widget wid, int val, int passed, void *data) {XmToggleButtonSetState(wid,val,passed);}
 
 

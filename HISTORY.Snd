@@ -1,6 +1,7 @@
 snd change log
 
-  24-Oct:    added eps-bottom-margin and eps-left-margin (for Print command).
+  25-Oct:    emacs subjob 'read: unexpected ")"' bugfix.
+  24-Oct:    eps-bottom-margin and eps-left-margin (for Print command). menu-hook.
   23-Oct:    interface to mixes changed:
                mix consoles are now in a separate dialog, each mix displayed with a tag and its waveform.
                removed mix-console-state, mix-console-state-changed-hook, show-mix-consoles.
@@ -14,13 +15,13 @@ snd change log
              removed Show Marks menu item.
   16-Oct:    snd 4.7.  
              added optional environ arg to loop-samples and clm example to grfsnd.html.
-  11-Oct:    added delete button in envelope editor.
+  11-Oct:    delete button in envelope editor.
   10-Oct:    removed scaler arg to mix-region and associated kbd scaler arg.
   9-Oct:     bird.scm.  added origin arg to as-one-edit.
   6-Oct:     removed chans arg to mix-vct.
-  4-Oct:     added enved-active-env and enved-selected-env.
+  4-Oct:     enved-active-env and enved-selected-env.
   3-Oct:     scale-by and scale-to now use embedded fragment scalers.
-  2-Oct:     added audio-input-device.
+  2-Oct:     audio-input-device.
   27-Sep:    showing-controls -> show-controls. data-format and header-type now return just the sndlib int.
   22-Sep:    removed override-data-format|header-type|data-location and replaced with
                generalized set! of header fields.

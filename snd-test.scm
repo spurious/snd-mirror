@@ -20,11 +20,9 @@
 ;;; test 17: guile-gtk dialogs
 
 
-;;; TODO: test of set! selected-mix
 ;;; TODO  add to test-spectral-difference set (reading o2 etc)
 ;;; TODO  test active selection mix/insert as opposed to region mix/paste
 ;;; TODO  also mix-selection (from menu) is untested currently
-;;; TODO  set! of enved-active-env
 ;;; TODO  formant-bank
 ;;; TODO  cscm + eff test (i.e. dynamically loaded code)
 ;;; TODO  mix-tag-width|height+mixes (also mix-amp or whatever with '() as mix indicator)
@@ -212,6 +210,8 @@
 	'enved-power (enved-power) 3.0
 	'enved-target (enved-target) 0 
 	'enved-waving (enved-waving) #f 
+	'enved-active-env (enved-active-env) '()
+	'enved-selected-env (enved-selected-env) '()
 	'eps-file (eps-file) "snd.eps" 
 	'eps-bottom-margin (eps-bottom-margin) 0.0
 	'eps-left-margin (eps-left-margin) 0.0
@@ -601,6 +601,9 @@
 
       (set! (show-controls) #t)
       (enved-dialog) 
+      (set! (enved-active-env) '(0.0 0.0 1.0 1.0 2.0 0.0))
+      (if (not (equal? (enved-active-env) (list 0.0 0.0 1.0 1.0 2.0 0.0)))
+	  (snd-print (format #f "set enved-active-env: ~A?" (enved-active-env))))
       (orientation-dialog) 
 
       (letrec ((test-vars
@@ -2668,6 +2671,9 @@
 	      (if (not (equal? (mix-amp-env mix-id 0) '(0.0 0.0 1.0 1.0))) (snd-print (format #f ";set-mix-amp-env: ~A?" (mix-amp-env mix-id 0))))
 	      (if (not (string=? nam "asdf")) (snd-print (format #f ";set-mix-name: ~A?" nam)))
 	      (if (= mix-id (selected-mix)) (snd-print (format #f ";selected-mix: ~A?" mix-id)))
+	      (set! (selected-mix) mix-id)
+	      (if (not (= mix-id (selected-mix))) (snd-print (format #f ";set! select-mix: ~A ~A?" mix-id (selected-mix))))
+	      (set! (selected-mix) -1)
 	      (select-mix mix-id)
 	      (if (not (= mix-id (selected-mix))) (snd-print (format #f ";select-mix: ~A ~A?" mix-id (selected-mix)))))
 	    (make-region 0 100) 
@@ -3159,18 +3165,19 @@
 	    (let* ((len (length open-files))
 		   (open-chance (* (- 8 len) .125))
 		   (close-chance (* len .125)))
-	      
-	      (if (or (= len 0) (rs open-chance))
+	      (if (or (= len 0) (> (random 1.0) .5))
 		  (let* ((choice (inexact->exact (floor (my-random sf-dir-len))))
 			 (name (string-append sf-dir (vector-ref sf-dir-files choice)))
 			 (ht (mus-sound-header-type name))
 			 (df (mus-sound-data-format name))
-			 (fd (if (or (= ht mus-raw) (= df -1)) -1 (view-sound name))))
+			 (fd (if (or (= ht mus-raw) (= df -1)) 
+				 -1 
+				 (view-sound name))))
 		    (if (not (= fd -1))
 			(begin
 			  (set! open-ctr (+ open-ctr 1))
 			  (set! open-files (cons fd open-files)))))
-		  (if (and (> len 0) (rs close-chance))
+		  (if (and (> len 0) (> (random 1.0) 0.3))
 		      (let* ((choice (inexact->exact (floor (my-random (exact->inexact (length open-files))))))
 			     (fd (list-ref open-files choice)))
 			(close-sound fd)
@@ -3184,7 +3191,6 @@
 	  (let ((fd (open-raw-sound (string-append sf-dir "addf8.nh") 1 8012 mus-mulaw)))
 	    (if (not (= (data-format fd) mus-mulaw)) (snd-print (format #f ";open-raw-sound: ~A?" (data-format fd))))
 	    (close-sound fd))
-
 	  (test-spectral-difference "oboe.snd" (string-append sf-dir "oboe.g723_24") 20.0)
 	  (test-spectral-difference "oboe.snd" (string-append sf-dir "oboe.g723_40") 3.0)
 	  (test-spectral-difference "oboe.snd" (string-append sf-dir "oboe.g721") 6.0)

@@ -143,7 +143,7 @@ static void string_to_stdout(snd_state *ss, char *msg)
 {
   char *str;
   write(fileno(stdout),msg,snd_strlen(msg));
-  str = (char *)CALLOC(8,sizeof(char));
+  str = (char *)CALLOC(4+snd_strlen(listener_prompt(ss)),sizeof(char));
   sprintf(str,"\n%s",listener_prompt(ss));
   write(fileno(stdout),str,snd_strlen(str));
   FREE(str);
@@ -528,25 +528,54 @@ void snd_eval_listener_str(snd_state *ss, char *buf)
     }
 }
 
+static char *stdin_str = NULL;
+
+static char *stdin_check_for_full_expression(char *newstr)
+{
+  char *str;
+  int end_of_text;
+  if (stdin_str)
+    {
+      str = stdin_str;
+      stdin_str = (char *)CALLOC(snd_strlen(str) + snd_strlen(newstr) + 2,sizeof(char));
+      strcat(stdin_str,str);
+      strcat(stdin_str,newstr);
+      FREE(str);
+    }
+  else stdin_str = copy_string(newstr);
+  end_of_text = check_balance(stdin_str,0,strlen(stdin_str)); /* can be strlen! */
+  if (end_of_text > 0)
+    {
+      if (end_of_text+1 < strlen(stdin_str)) /* is this needed?  see warning above */
+	stdin_str[end_of_text+1] = 0;
+      return(stdin_str);
+    }
+  else return(NULL);
+}
 
 void snd_eval_stdin_str(snd_state *ss, char *buf)
 {
+  /* we may get incomplete expressions here */
+  /*   (Ilisp always sends a complete expression, but it may be broken into two or more pieces from read's point of view) */
   SCM result;
   char *str = NULL;
-#if DEBUGGING
-  fprintf(stderr,"received [%s]\n",buf);
-#endif
   if ((snd_strlen(buf) == 0) || ((snd_strlen(buf) == 1) && (buf[0] == '\n'))) return;
-  send_error_output_to_stdout = 1;
-  result = snd_internal_stack_catch(SCM_BOOL_T,eval_str_wrapper,buf,snd_catch_scm_error,buf);
-  send_error_output_to_stdout = 0;
-  if (g_error_occurred)
-    g_error_occurred = 0;
-  else
+  str = stdin_check_for_full_expression(buf);
+  if (str)
     {
-      str = gh_print(result);
-      string_to_stdout(ss,str);
-      if (str) free(str);
+      send_error_output_to_stdout = 1;
+      result = snd_internal_stack_catch(SCM_BOOL_T,eval_str_wrapper,str,snd_catch_scm_error,str);
+      send_error_output_to_stdout = 0;
+      FREE(stdin_str); /* same as str in this case */
+      stdin_str = NULL;
+      if (g_error_occurred)
+	g_error_occurred = 0;
+      else
+	{
+	  str = gh_print(result);
+	  string_to_stdout(ss,str);
+	  if (str) free(str);
+	}
     }
 }
 

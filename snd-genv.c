@@ -27,7 +27,7 @@ static env* active_env = NULL;   /* env currently being edited */
 static chan_info *axis_cp = NULL;
 static axis_info *gray_ap = NULL;
 
-void enved_make_axis_cp(snd_state *ss, char *name, axis_context *ax, int ex0, int ey0, int width, int height, Float xmin, Float xmax, Float ymin, Float ymax)
+chan_info *enved_make_axis_cp(snd_state *ss, char *name, axis_context *ax, int ex0, int ey0, int width, int height, Float xmin, Float xmax, Float ymin, Float ymax)
 {
   /* conjure up minimal context for axis drawer in snd-axis.c */
   if (!axis_cp) 
@@ -41,6 +41,7 @@ void enved_make_axis_cp(snd_state *ss, char *name, axis_context *ax, int ex0, in
       fixup_axis_context(gray_ap->ax,drawer,ggc);
     }
   init_env_axes(axis_cp,name,ex0,ey0,width,height,xmin,xmax,ymin,ymax);
+  return(axis_cp);
 }
 
 static void display_env(snd_state *ss, env *e, char *name, GdkGC *cur_gc, int x0, int y0, int width, int height, int dots)

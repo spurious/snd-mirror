@@ -679,7 +679,7 @@ void display_enved_env(snd_state *ss, env *e, axis_context *ax, chan_info *axis_
 
   if (enved_dBing(ss)) {ey0 = ss->min_dB; ey1 = 0.0;}
 
-  enved_make_axis_cp(ss, name, ax, x0, y0, width, height, ex0, ex1, ey0, ey1); 
+  axis_cp = enved_make_axis_cp(ss, name, ax, x0, y0, width, height, ex0, ex1, ey0, ey1); 
   /* grf_x and grf_y (x|y, ap) can be used directly with XDrawLine */
 
   if (e)

@@ -488,14 +488,9 @@ void add_channel_data_1(chan_info *cp, snd_info *sp, snd_state *ss, int graphed)
   else
     {
       if (x1 == 0.0) x1 = gdur;
-#if 0
-      ymax = 1.0;
-      ymin = -1.0;
-#else
-      /* surely these should follow user-set initial y vals? */
+      /* these should follow user-set initial y vals(?) */
       if (y1 > 1.0) ymax = y1; else ymax = 1.0;
       if (y0 < -1.0) ymin = y0; else ymin = -1.0;
-#endif
     }
   if (dur <= 0.0)
     {
@@ -2409,7 +2404,7 @@ static void draw_graph_cursor(chan_info *cp)
 	  break;
 	}
     }
-  cp->cx = grf_x((double)(cp->cursor)/(double)SND_SRATE(cp->sound),ap); /* not Float -- this matters in very long files (i.e. > 40 minutes) */
+  cp->cx = grf_x((double)(cp->cursor)/(double)SND_SRATE(cp->sound),ap); /* not float -- this matters in very long files (i.e. > 40 minutes) */
   cp->cy = grf_y(sample(cp->cursor,cp),ap);
   switch (cp->cursor_style)
     {

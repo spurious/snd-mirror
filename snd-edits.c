@@ -3,6 +3,7 @@
 /* TODO   undo-hook is not very useful until we can make channel-specific GUI indications
  * TODO   add more general SCM func mechanism? or add a way to extend the pre-parsed cases
  * TODO   cursor_zeros should use the auto-zero business. (what about amp_envs in these cases?)
+ * TODO     similarly scale selection etc
  *
  * the latter is under the WITH_PARSE_TREES switch.  ed_list has 2 extra fields:
  *      MUS_SAMPLE_TYPE (*func)(struct chan__info *cp, int pos, struct snd__fd *sf,void *env);
@@ -24,7 +25,7 @@
  *   (problem is that amp env reads new form and that's just as expensive as writing it out in some cases --
  *   reverse and amp-env can be done directly).
  *
- * step func as amp env: split input into pieces following the steps and set scalers (no loss if ampenv ampenv here)
+ * step func as amp env: split input into pieces following the steps and set scalers (no loss ampenv)
  *   seg envs could be similar, but add incr (so now + * not just *)
  * reverse could set read-dir and loc based on assumed reverse; if subsequent edit, perform the reverse
  *   or do the reverse as a background op until it's needed (whereupon force completion)

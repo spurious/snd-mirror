@@ -256,6 +256,7 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+25-Oct:  emacs subjob 'read: unexpected \")\"' bugfix, I hope.\n\
 24-Oct:  eps-bottom-margin and eps-left-margin (for Print command).\n\
          menu-hook\n\
 23-Oct:  interface to mixes changed:\n\
@@ -275,13 +276,6 @@ void news_help(snd_state *ss)
 9-Oct:   bird.scm.  added origin arg to as-one-edit.\n\
 6-Oct:   removed chans arg to mix-vct.\n\
 4-Oct:   added enved-active-env and enved-selected-env.\n\
-3-Oct:   scale-by and scale-to now use embedded fragment scalers.\n\
-2-Oct:   added audio-input-device.\n\
-27-Sep:  showing-controls -> show-controls. \n\
-         data-format and header-type now return just the sndlib int.\n\
-22-Sep:  removed override-data-format|header-type|data-location and replaced with\n\
-           generalized set! of header fields.\n\
-18-Sep:  snd 4.6.\n\
 ",
 NULL);
   FREE(info);

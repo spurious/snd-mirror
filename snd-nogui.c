@@ -245,7 +245,7 @@ int file_dialog_is_active(void) {return(0);}
 file_info *get_raw_file_info(char *filename, snd_state *ss) {return(NULL);}
 file_info *get_reasonable_file_info(char *filename, snd_state *ss, file_info *hdr) {return(NULL);}
 void edit_header(snd_info *sp) {}
-void enved_make_axis_cp(snd_state *ss, char *name, axis_context *ax, int ex0, int ey0, int width, int height, Float xmin, Float xmax, Float ymin, Float ymax) {}
+chan_info *enved_make_axis_cp(snd_state *ss, char *name, axis_context *ax, int ex0, int ey0, int width, int height, Float xmin, Float xmax, Float ymin, Float ymax) {}
 void display_enved_env_with_selection(snd_state *ss, env *e, char *name, int x0, int y0, int width, int height, int dots) {}
 void set_enved_redo_sensitive(int val) {}
 void set_enved_revert_sensitive(int val) {}

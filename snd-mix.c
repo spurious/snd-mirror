@@ -346,14 +346,21 @@ static void select_mix(mix_info *md)
 {
   mix_info *old_md = NULL;
   snd_state *ss;
-  if (!(md)) return;
   ss = get_global_state();
-  if ((ss->selected_mix != NO_SELECTION) && (ss->selected_mix != md->id))
+  if ((ss->selected_mix != NO_SELECTION) && 
+      ((md == NULL) || (ss->selected_mix != md->id)))
     old_md = md_from_id(ss->selected_mix);
-  ss->selected_mix = md->id;
-  if ((old_md) && (old_md->cp->show_mix_waveforms)) draw_mix_waveform(old_md);
-  if (md->cp->show_mix_waveforms) draw_mix_waveform(md);
-  reflect_mix_in_mix_panel(md->id);
+  if (md) 
+    ss->selected_mix = md->id; 
+  else ss->selected_mix = NO_SELECTION;
+  if ((old_md) && (old_md->cp->show_mix_waveforms)) 
+    draw_mix_waveform(old_md);
+  if (md)
+    {
+      if (md->cp->show_mix_waveforms) 
+	draw_mix_waveform(md);
+      reflect_mix_in_mix_panel(md->id);
+    }
 }
 
 void select_mix_from_id(int mix_id) {select_mix(md_from_id(mix_id));}
