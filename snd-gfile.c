@@ -245,7 +245,8 @@ static void save_as_data_format_Callback(GtkWidget *w, gint row, gint column, Gd
   fd->current_format = data_format_from_position(fd->header_pos, row);
 }
 
-file_data *sndCreateFileDataForm(snd_state *ss, GtkWidget *parent, char *name, int with_chan, int header_type, int data_format, int with_loc, int comment_as_entry)
+file_data *sndCreateFileDataForm(snd_state *ss, GtkWidget *parent, char *name, 
+				 int with_chan, int header_type, int data_format, int with_loc, int comment_as_entry)
 {
   GtkWidget *form, *hlab, *dlab, *slab, *clab, *comment_label, *loclab,
     *hscroll, *dscroll, *scbox, *combox, *table, *hscrollbar, *vscrollbar;
@@ -504,9 +505,6 @@ void make_file_save_as_dialog(snd_state *ss)
 			     (hdr) ? hdr->srate : region_srate(0), 0, -1, output_comment(hdr));
   gtk_widget_show(save_as_dialog);
 }
-
-
-/* -------- edit save as dialog -------- */
 
 void make_edit_save_as_dialog(snd_state *ss)
 {
@@ -976,7 +974,7 @@ void make_prevfiles_list (snd_state *ss)
 	}
     }
   lim = get_max_prevfile_end();
-  for (i = get_prevfile_end()+1; i <= lim; i++)
+  for (i = get_prevfile_end() + 1; i <= lim; i++)
     if ((r = prev_name_row[i]))
       if (GTK_WIDGET_VISIBLE(r->rw)) 
 	gtk_widget_hide(r->rw);

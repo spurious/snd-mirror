@@ -48,9 +48,9 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound, snd_state *
       cp->mixes = 0;
       cp->last_sonogram = NULL;
       cp->temp_sonogram = NULL;
-      cp->edit_hook = scm_make_hook(TO_SMALL_SCM_INT(0));
+      cp->edit_hook = MAKE_HELPLESS_HOOK(0);
       snd_protect(cp->edit_hook);
-      cp->undo_hook = scm_make_hook(TO_SMALL_SCM_INT(0));
+      cp->undo_hook = MAKE_HELPLESS_HOOK(0);
       snd_protect(cp->undo_hook);
     }
   else cp = cip;

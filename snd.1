@@ -1,0 +1,44 @@
+.\" Written by Bill Schottstaedt (bil@ccrma.stanford.edu)
+.TH SND 1 "April 2001" "4.13"
+.SH NAME
+snd \- a sound editor
+.SH SYNOPSIS
+.B snd 
+.I [\-l FILE] [\-p DIR] [\-v] [\-h] [\-notebook] [\-separate] [\-noglob] [\-noinit] [\-\-help] [\-\-version]
+.SH DESCRIPTION
+Snd is a sound editor modelled loosely after Emacs and an old, sorely-missed
+PDP-10 sound editor named Dpysnd. It can accommodate any number of sounds
+each with any number of channels, and can be customized and extended
+using guile and guile-gtk.
+.PP
+.B snd
+is free software (LGPL, Artistic License, whatever...).
+It's available as source, prebuilt images, and rpm packages
+at http://www-ccrma.stanford.edu/ and ftp://ccrma-ftp.stanford.edu/pub/Lisp/.
+
+.SH USAGE
+snd oboe.snd
+loads oboe.snd into Snd.
+
+.SH OPTIONS
+.IP \-l
+Load scheme code in file.
+.IP \-p
+Preload sound files found in directory dir.
+.IP \-noglob
+Don't load any global configuration files.
+.IP \-noinit
+Don't load any initialization file (~/.snd)
+.IP \-\-help
+Give some help.
+.IP \-\-version
+Describe current Snd.
+
+.SH FILES
+.I ~/.snd 
+is a scheme file that can contain local customization code.
+
+.SH AUTHORS
+Bill Schottstaedt <bil@ccrma.stanford.edu>
+with many generous far-flung helpers.
+

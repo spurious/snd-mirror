@@ -449,8 +449,8 @@ static mus_any *mus_make_fcomb (Float scaler, int size, Float a0, Float a1)
         {
           #define H_fcomb "(" S_fcomb " gen &optional (val 0.0)) comb filters val with low pass on feeback."
           Float in1 = 0.0;
-          SCM_ASSERT(((mus_scm_p(obj)) && (mus_fcomb_p(TO_CLM(obj)))), obj, SCM_ARG1, S_fcomb);
-          if (NOT_FALSE_P(scm_real_p(input))) in1 = TO_C_DOUBLE(input); else if (BOUND_P(input)) scm_wrong_type_arg(S_fcomb, 2, input);
+          ASSERT_TYPE(((mus_scm_p(obj)) && (mus_fcomb_p(TO_CLM(obj)))), obj, SCM_ARG1, S_fcomb, "a comb filter");
+          if (NUMBER_P(input)) in1 = TO_C_DOUBLE(input); else if (BOUND_P(input)) WRONG_TYPE_ERROR(S_fcomb, 2, input, "a number");
           return(TO_SCM_DOUBLE(mus_fcomb(TO_CLM(obj), in1, 0.0)));
         }
         
@@ -473,7 +473,7 @@ static mus_any *mus_make_fcomb (Float scaler, int size, Float a0, Float a1)
         static void init_fcomb(void)
         {
           SCM local_doc;
-          local_doc = scm_permanent_object(DOCUMENTATION);
+          local_doc = MAKE_PERMANENT(DOCUMENTATION);
           DEFINE_PROC(S_fcomb_p, g_fcomb_p, 1, 0, 0, H_fcomb_p);
           DEFINE_PROC(S_make_fcomb, g_make_fcomb, 4, 0, 0, H_make_fcomb);
           DEFINE_PROC(S_fcomb, g_fcomb, 2, 0, 0, H_fcomb);
@@ -2552,7 +2552,7 @@ static SCM g_play_1(SCM samp_n, SCM snd_n, SCM chn_n, int background, int syncd,
     }
   else
     {
-      SCM_ASSERT(NUMBER_IF_BOUND_P(samp_n), samp_n, SCM_ARG1, S_play);
+      ASSERT_TYPE(NUMBER_IF_BOUND_P(samp_n), samp_n, SCM_ARG1, S_play, "a number");
       SND_ASSERT_CHAN(S_play, snd_n, chn_n, 2);
       sp = get_sp(snd_n);
       if (sp == NULL) 
@@ -2600,7 +2600,7 @@ if 'end' is not given, it plays to the end of the sound."
 static SCM g_play_selection(SCM wait) 
 {
   #define H_play_selection "(" S_play_selection " &optional (wait #f)) plays the current selection"
-  SCM_ASSERT(BOOLEAN_IF_BOUND_P(wait), wait, SCM_ARG1, S_play_selection);
+  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(wait), wait, SCM_ARG1, S_play_selection, "a boolean");
   if (selection_is_active())
     {
       play_selection(!(TO_C_BOOLEAN_OR_F(wait)));
@@ -2622,7 +2622,7 @@ static SCM g_stop_playing(SCM snd_n)
 {
   #define H_stop_playing "(" S_stop_playing " &optional snd) stops play in progress"
   snd_info *sp = NULL;
-  SCM_ASSERT(INTEGER_IF_BOUND_P(snd_n), snd_n, SCM_ARG1, S_stop_playing);
+  ASSERT_TYPE(INTEGER_IF_BOUND_P(snd_n), snd_n, SCM_ARG1, S_stop_playing, "an integer");
   if (INTEGER_P(snd_n)) sp = get_sp(snd_n);
   if (sp) 
     stop_playing_sound(sp); 
@@ -2727,9 +2727,9 @@ static SCM g_add_player(SCM snd_chn, SCM start, SCM end)
   snd_info *sp = NULL;
   chan_info *cp;
   int index;
-  SCM_ASSERT(INTEGER_P(snd_chn), snd_chn, SCM_ARG1, S_add_player);
-  SCM_ASSERT(NUMBER_IF_BOUND_P(start), start, SCM_ARG2, S_add_player);
-  SCM_ASSERT(NUMBER_IF_BOUND_P(end), end, SCM_ARG3, S_add_player);
+  ASSERT_TYPE(INTEGER_P(snd_chn), snd_chn, SCM_ARG1, S_add_player, "an integer");
+  ASSERT_TYPE(NUMBER_IF_BOUND_P(start), start, SCM_ARG2, S_add_player, "a number");
+  ASSERT_TYPE(NUMBER_IF_BOUND_P(end), end, SCM_ARG3, S_add_player, "a number");
   index = -TO_SMALL_C_INT(snd_chn);
   if ((index > 0) && (index < players_size)) sp = players[index];
   if (sp)
@@ -2750,9 +2750,9 @@ static SCM g_start_playing(SCM Chans, SCM Srate, SCM In_Background)
 
   #define H_start_playing "(" S_start_playing " &optional chans srate in-background)"
   int chans, srate;
-  SCM_ASSERT(INTEGER_IF_BOUND_P(Chans), Chans, SCM_ARG1, S_start_playing);
-  SCM_ASSERT(NUMBER_IF_BOUND_P(Srate), Srate, SCM_ARG2, S_start_playing);
-  SCM_ASSERT(BOOLEAN_IF_BOUND_P(In_Background), In_Background, SCM_ARG3, S_start_playing);
+  ASSERT_TYPE(INTEGER_IF_BOUND_P(Chans), Chans, SCM_ARG1, S_start_playing, "an integer");
+  ASSERT_TYPE(NUMBER_IF_BOUND_P(Srate), Srate, SCM_ARG2, S_start_playing, "a number");
+  ASSERT_TYPE(BOOLEAN_IF_BOUND_P(In_Background), In_Background, SCM_ARG3, S_start_playing, "a boolean");
   chans = TO_C_INT_OR_ELSE(Chans, 1);
   if (chans <= 0)
     mus_misc_error(S_start_playing, "invalid chans arg", Chans);
@@ -2768,7 +2768,7 @@ static SCM g_stop_player(SCM snd_chn)
   #define H_stop_player "(" S_stop_player " player) stops player"
   int index;
   snd_info *sp = NULL;
-  SCM_ASSERT(INTEGER_P(snd_chn), snd_chn, SCM_ARG1, S_stop_player);
+  ASSERT_TYPE(INTEGER_P(snd_chn), snd_chn, SCM_ARG1, S_stop_player, "an integer");
   index = -TO_SMALL_C_INT(snd_chn);
   if ((index > 0) && (index < players_size)) sp = players[index];
   if (sp) 
@@ -2783,7 +2783,7 @@ static SCM g_player_p(SCM snd_chn)
 {
   #define H_playerQ "(" S_playerQ " obj) -> is obj an active player"
   int index;
-  SCM_ASSERT(INTEGER_P(snd_chn), snd_chn, SCM_ARG1, S_playerQ);
+  ASSERT_TYPE(INTEGER_P(snd_chn), snd_chn, SCM_ARG1, S_playerQ, "an integer");
   index = -TO_SMALL_C_INT(snd_chn);
   return(TO_SCM_BOOLEAN((index > 0) && 
 			(index < players_size) && 

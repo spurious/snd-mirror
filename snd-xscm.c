@@ -26,7 +26,7 @@ static void timed_eval(XtPointer in_code, XtIntervalId *id)
 static SCM g_in(SCM ms, SCM code)
 {
   #define H_in "(" S_in " msecs thunk) invokes thunk in msecs milliseconds"
-  SCM_ASSERT(INTEGER_P(ms), ms, SCM_ARG1, S_in);
+  ASSERT_TYPE(INTEGER_P(ms), ms, SCM_ARG1, S_in, "an integer");
   if (procedure_fits(code, 0))
     {
       XtAppAddTimeOut(MAIN_APP(state), 
@@ -108,7 +108,7 @@ static SCM g_color2list(SCM obj)
   Colormap cmap;
   XColor tmp_color;
   Display *dpy;
-  SCM_ASSERT(COLOR_P(obj), obj, SCM_ARG1, S_color2list); 
+  ASSERT_TYPE(COLOR_P(obj), obj, SCM_ARGn, S_color2list, "a color object"); 
   v = (snd_color *)SND_VALUE_OF(obj);
   dpy = XtDisplay(MAIN_SHELL(state));
   cmap = DefaultColormap(dpy, DefaultScreen(dpy));
@@ -136,10 +136,10 @@ static SCM g_make_snd_color(SCM r, SCM g, SCM b)
   XColor tmp_color;
   Display *dpy;
   snd_color *new_color;
-  SCM_ASSERT(NUMBER_P(r), r, SCM_ARG1, S_make_color);
+  ASSERT_TYPE(NUMBER_P(r), r, SCM_ARG1, S_make_color, "a number");
   /* someday accept a list as r */
-  SCM_ASSERT(NUMBER_P(g), g, SCM_ARG2, S_make_color);
-  SCM_ASSERT(NUMBER_P(b), b, SCM_ARG3, S_make_color);
+  ASSERT_TYPE(NUMBER_P(g), g, SCM_ARG2, S_make_color, "a number");
+  ASSERT_TYPE(NUMBER_P(b), b, SCM_ARG3, S_make_color, "a number");
   new_color = (snd_color *)CALLOC(1, sizeof(snd_color));
   dpy = XtDisplay(MAIN_SHELL(state));
   cmap = DefaultColormap(dpy, DefaultScreen(dpy));
@@ -263,7 +263,7 @@ static SCM g_load_colormap(SCM colors)
   Pixel *xcs;
   snd_color *v = NULL;
   SCM *vdata;
-  SCM_ASSERT(VECTOR_P(colors), colors, SCM_ARG1, S_load_colormap);
+  ASSERT_TYPE(VECTOR_P(colors), colors, SCM_ARGn, S_load_colormap, "a vector of color objects");
   len = VECTOR_LENGTH(colors);
   xcs = (Pixel *)CALLOC(len, sizeof(Pixel));
   vdata = SCM_VELTS(colors);
@@ -293,7 +293,7 @@ static SCM g_graph_cursor(void)
 static SCM g_set_graph_cursor(SCM curs)
 {
   int val;
-  SCM_ASSERT(NUMBER_P(curs), curs, SCM_ARG1, "set-" S_graph_cursor);
+  ASSERT_TYPE(NUMBER_P(curs), curs, SCM_ARGn, "set-" S_graph_cursor, "a number");
   /* X11/cursorfont.h has various even-numbered glyphs, but the odd numbers are ok, and XC_num_glyphs is a lie */
   /*   if you use too high a number here, Goddamn X dies */
   val = TO_C_INT(curs);
@@ -314,7 +314,7 @@ static SCM g_set_sounds_horizontal(SCM val)
 {
   int horizontal = 0;
   snd_state *ss;
-  SCM_ASSERT(BOOLEAN_P(val), val, SCM_ARG1, "set-" S_sounds_horizontal);
+  ASSERT_TYPE(BOOLEAN_P(val), val, SCM_ARGn, "set-" S_sounds_horizontal, "a boolean");
   horizontal = (NOT_FALSE_P(val));
   ss = get_global_state();
   XtVaSetValues(SOUND_PANE(ss), XmNorientation, (horizontal) ? XmHORIZONTAL : XmVERTICAL, NULL);
@@ -337,6 +337,7 @@ static SCM g_make_bg(SCM wid, SCM hgt)
 void g_initialize_xgh(snd_state *ss, SCM local_doc)
 {
   state = ss;
+#if HAVE_GUILE
   snd_color_tag = scm_make_smob_type("col" STR_OR, sizeof(snd_color));
   scm_set_smob_mark(snd_color_tag, mark_snd_color);
   scm_set_smob_print(snd_color_tag, print_snd_color);
@@ -344,6 +345,7 @@ void g_initialize_xgh(snd_state *ss, SCM local_doc)
   scm_set_smob_equalp(snd_color_tag, equalp_snd_color);
 #if HAVE_APPLICABLE_SMOB
   scm_set_smob_apply(snd_color_tag, SCM_FNC g_color2list, 0, 0, 0);
+#endif
 #endif
 
   DEFINE_PROC(S_region_dialog, g_region_dialog, 0, 0, 0,  H_region_dialog);

@@ -21,7 +21,7 @@ static gint timed_eval(gpointer in_code)
 static SCM g_in(SCM ms, SCM code)
 {
   #define H_in "(" S_in " msecs thunk) invokes thunk in msecs milliseconds"
-  SCM_ASSERT(NUMBER_P(ms), ms, SCM_ARG1, S_in);
+  ASSERT_TYPE(NUMBER_P(ms), ms, SCM_ARG1, S_in, "a number");
   if (procedure_fits(code, 0))
     {
       gtk_timeout_add((guint32)TO_C_UNSIGNED_LONG(ms), timed_eval, (gpointer)code);
@@ -86,7 +86,7 @@ static SCM g_color2list(SCM obj)
 {
   #define H_color2list "(" S_color2list " obj) -> col" STR_OR " rgb values as a list of floats"
   snd_color *v;
-  SCM_ASSERT(COLOR_P(obj), obj, SCM_ARG1, S_color2list); 
+  ASSERT_TYPE(COLOR_P(obj), obj, SCM_ARGn, S_color2list, "a color object"); 
   v = (snd_color *)SND_VALUE_OF(obj);
   return(scm_return_first(SCM_LIST3(TO_SCM_DOUBLE((float)(v->color->red) / 65535.0),
 				    TO_SCM_DOUBLE((float)(v->color->green) / 65535.0),
@@ -107,10 +107,10 @@ static SCM g_make_snd_color(SCM r, SCM g, SCM b)
   #define H_make_color "(" S_make_color " r g b) -> a col" STR_OR " object with the indicated rgb values"
   snd_color *new_color;
   GdkColor gcolor;
-  SCM_ASSERT(NUMBER_P(r), r, SCM_ARG1, S_make_color);
+  ASSERT_TYPE(NUMBER_P(r), r, SCM_ARG1, S_make_color, "a number");
   /* someday accept a list as r */
-  SCM_ASSERT(NUMBER_P(g), g, SCM_ARG2, S_make_color);
-  SCM_ASSERT(NUMBER_P(b), b, SCM_ARG3, S_make_color);
+  ASSERT_TYPE(NUMBER_P(g), g, SCM_ARG2, S_make_color, "a number");
+  ASSERT_TYPE(NUMBER_P(b), b, SCM_ARG3, S_make_color, "a number");
   new_color = (snd_color *)CALLOC(1, sizeof(snd_color));
   gcolor.red = (unsigned short)(65535 * TO_C_DOUBLE(r));
   gcolor.green = (unsigned short)(65535 * TO_C_DOUBLE(g));
@@ -203,7 +203,7 @@ static SCM g_load_colormap(SCM colors)
   GdkColor **xcs;
   snd_color *v = NULL;
   SCM *vdata;
-  SCM_ASSERT(VECTOR_P(colors), colors, SCM_ARG1, S_load_colormap);
+  ASSERT_TYPE(VECTOR_P(colors), colors, SCM_ARGn, S_load_colormap, "a vector of color objects");
   len = VECTOR_LENGTH(colors);
   xcs = (GdkColor **)CALLOC(len, sizeof(GdkColor *));
   vdata = SCM_VELTS(colors);
@@ -232,7 +232,7 @@ static SCM g_graph_cursor(void)
 static SCM g_set_graph_cursor(SCM curs)
 {
   int val;
-  SCM_ASSERT(NUMBER_P(curs), curs, SCM_ARG1, "set-" S_graph_cursor);
+  ASSERT_TYPE(NUMBER_P(curs), curs, SCM_ARGn, "set-" S_graph_cursor, "a number");
   /* X11/cursorfont.h has various even-numbered glyphs, but the odd numbers are ok, and XC_num_glyphs is a lie */
   /*   if you use too high a number here, Goddamn X dies */
   /* gdk/gdkcursors.h is just a capitalization of the original so I assume it has the same great features */
@@ -249,6 +249,7 @@ static SCM g_set_graph_cursor(SCM curs)
 void g_initialize_xgh(snd_state *ss, SCM local_doc)
 {
   state = ss;
+#if HAVE_GUILE
   snd_color_tag = scm_make_smob_type("col" STR_OR, sizeof(snd_color));
   scm_set_smob_mark(snd_color_tag, mark_snd_color);
   scm_set_smob_print(snd_color_tag, print_snd_color);
@@ -256,6 +257,7 @@ void g_initialize_xgh(snd_state *ss, SCM local_doc)
   scm_set_smob_equalp(snd_color_tag, equalp_snd_color);
 #if HAVE_APPLICABLE_SMOB
   scm_set_smob_apply(snd_color_tag, SCM_FNC g_color2list, 0, 0, 0);
+#endif
 #endif
 
   DEFINE_PROC(S_region_dialog, g_region_dialog, 0, 0, 0,  H_region_dialog);

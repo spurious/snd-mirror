@@ -111,7 +111,7 @@ void snd_error(char *format, ...)
 static SCM g_snd_error(SCM msg)
 {
   #define H_snd_error "(" S_snd_error " str) reports error message str"
-  SCM_ASSERT(STRING_P(msg), msg, SCM_ARG1, S_snd_error);
+  ASSERT_TYPE(STRING_P(msg), msg, SCM_ARGn, S_snd_error, "a string");
   snd_error(TO_C_STRING(msg));
   return(msg);
 }
@@ -119,7 +119,7 @@ static SCM g_snd_error(SCM msg)
 static SCM g_snd_warning(SCM msg)
 {
   #define H_snd_warning "(" S_snd_warning " str) reports warning message str"
-  SCM_ASSERT(STRING_P(msg), msg, SCM_ARG1, S_snd_warning);
+  ASSERT_TYPE(STRING_P(msg), msg, SCM_ARGn, S_snd_warning, "a string");
   snd_warning(TO_C_STRING(msg));
   return(msg);
 }

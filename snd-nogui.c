@@ -375,7 +375,7 @@ void snd_doit(snd_state *ss, int argc, char **argv)
   int i;
   SCM local_doc;
   ss->sgx = (state_context *)CALLOC(1, sizeof(state_context));
-  local_doc = scm_permanent_object(DOCUMENTATION);
+  local_doc = MAKE_PERMANENT(DOCUMENTATION);
 
   ss->init_file = getenv(SND_INIT_FILE_ENVIRONMENT_NAME);
   if (ss->init_file == NULL)

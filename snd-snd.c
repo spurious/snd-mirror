@@ -1382,7 +1382,7 @@ static SCM g_find_sound(SCM filename)
   #define H_find_sound "(" S_find_sound " name) returns the id of the sound associated with file 'name'"
   snd_state *ss;
   snd_info *sp;
-  SCM_ASSERT(STRING_P(filename), filename, SCM_ARG1, S_find_sound);
+  ASSERT_TYPE(STRING_P(filename), filename, SCM_ARGn, S_find_sound, "a string");
   ss = get_global_state();
   sp = find_sound(ss, TO_C_STRING(filename));
   if (sp) return(TO_SCM_INT(sp->index));
@@ -1424,7 +1424,7 @@ static SCM sp_iread(SCM snd_n, int fld, char *caller)
 	  if ((sp) && (sp->inuse))
 	    res = CONS(sp_iread(TO_SMALL_SCM_INT(i), fld, caller), res);
 	}
-      return(scm_reverse(res));
+      return(REVERSE_LIST(res));
     }
   SND_ASSERT_SND(caller, snd_n, 1);
   sp = get_sp(snd_n);
@@ -1590,7 +1590,7 @@ static SCM g_channels(SCM snd_n)
 
 static SCM check_number(SCM val, char *caller)
 {
-  SCM_ASSERT(NUMBER_P(val), val, SCM_ARG1, caller);
+  ASSERT_TYPE(NUMBER_P(val), val, SCM_ARG1, caller, "a number");
   return(val);
 }
 
@@ -1695,7 +1695,7 @@ static SCM g_syncing(SCM snd_n)
 
 static SCM g_set_syncing(SCM on, SCM snd_n) 
 {
-  SCM_ASSERT(INTEGER_OR_BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_sync);
+  ASSERT_TYPE(INTEGER_OR_BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_sync, "an integer");
   return(sp_iwrite(snd_n, on, SP_SYNC, "set-" S_sync));
 }
 
@@ -1709,7 +1709,7 @@ static SCM g_uniting(SCM snd_n)
 
 static SCM g_set_uniting(SCM on, SCM snd_n) 
 {
-  SCM_ASSERT(INTEGER_OR_BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_uniting);
+  ASSERT_TYPE(INTEGER_OR_BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_uniting, "an integer");
   return(sp_iwrite(snd_n, on, SP_UNITE, "set-" S_uniting));
 }
 
@@ -1723,7 +1723,7 @@ static SCM g_read_only(SCM snd_n)
 
 static SCM g_set_read_only(SCM on, SCM snd_n) 
 {
-  SCM_ASSERT(INTEGER_OR_BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_read_only);
+  ASSERT_TYPE(INTEGER_OR_BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_read_only, "an integer");
   return(sp_iwrite(snd_n, on, SP_READ_ONLY, "set-" S_read_only));
 }
 
@@ -1737,7 +1737,7 @@ static SCM g_contrasting(SCM snd_n)
 
 static SCM g_set_contrasting(SCM on, SCM snd_n) 
 {
-  SCM_ASSERT(INTEGER_OR_BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_contrasting);
+  ASSERT_TYPE(INTEGER_OR_BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_contrasting, "an integer");
   return(sp_iwrite(snd_n, on, SP_CONTRASTING, "set-" S_contrasting));
 }
 
@@ -1751,7 +1751,7 @@ static SCM g_expanding(SCM snd_n)
 
 static SCM g_set_expanding(SCM on, SCM snd_n) 
 {
-  SCM_ASSERT(INTEGER_OR_BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_expanding);
+  ASSERT_TYPE(INTEGER_OR_BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_expanding, "an integer");
   return(sp_iwrite(snd_n, on, SP_EXPANDING, "set-" S_expanding));
 }
 
@@ -1765,7 +1765,7 @@ static SCM g_reverbing(SCM snd_n)
 
 static SCM g_set_reverbing(SCM on, SCM snd_n) 
 {
-  SCM_ASSERT(INTEGER_OR_BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_reverbing);
+  ASSERT_TYPE(INTEGER_OR_BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_reverbing, "an integer");
   return(sp_iwrite(snd_n, on, SP_REVERBING, "set-" S_reverbing));
 }
 
@@ -1779,7 +1779,7 @@ static SCM g_filtering(SCM snd_n)
 
 static SCM g_set_filtering(SCM on, SCM snd_n) 
 {
-  SCM_ASSERT(INTEGER_OR_BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_filtering);
+  ASSERT_TYPE(INTEGER_OR_BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_filtering, "an integer");
   return(sp_iwrite(snd_n, on, SP_FILTERING, "set-" S_filtering));
 }
 
@@ -1793,7 +1793,7 @@ static SCM g_filter_dBing(SCM snd_n)
 
 static SCM g_set_filter_dBing(SCM on, SCM snd_n) 
 {
-  SCM_ASSERT(INTEGER_OR_BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_filter_dBing);
+  ASSERT_TYPE(INTEGER_OR_BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_filter_dBing, "an integer");
   return(sp_iwrite(snd_n, on, SP_FILTER_DBING, "set-" S_filter_dBing));
 }
 
@@ -1807,7 +1807,7 @@ static SCM g_filter_order(SCM snd_n)
 
 static SCM g_set_filter_order(SCM on, SCM snd_n) 
 {
-  SCM_ASSERT(INTEGER_P(on), on, SCM_ARG1, "set-" S_filter_order); 
+  ASSERT_TYPE(INTEGER_P(on), on, SCM_ARG1, "set-" S_filter_order, "an integer"); 
   return(sp_iwrite(snd_n, on, SP_FILTER_ORDER, "set-" S_filter_order));
 }
 
@@ -1821,7 +1821,7 @@ static SCM g_cursor_follows_play(SCM snd_n)
 
 static SCM g_set_cursor_follows_play(SCM on, SCM snd_n) 
 {
-  SCM_ASSERT(INTEGER_OR_BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_cursor_follows_play);
+  ASSERT_TYPE(INTEGER_OR_BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_cursor_follows_play, "an integer");
   return(sp_iwrite(snd_n, on, SP_CURSOR_FOLLOWS_PLAY, "set-" S_cursor_follows_play));
 }
 
@@ -1835,7 +1835,7 @@ static SCM g_show_controls(SCM snd_n)
 
 static SCM g_set_show_controls(SCM on, SCM snd_n)
 {
-  SCM_ASSERT(INTEGER_OR_BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_show_controls);
+  ASSERT_TYPE(INTEGER_OR_BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_show_controls, "an integer");
   return(sp_iwrite(snd_n, on, SP_SHOW_CONTROLS, "set-" S_show_controls));
 }
 
@@ -1959,7 +1959,7 @@ static SCM g_open_sound(SCM filename)
   char *fname = NULL;
   snd_state *ss;
   snd_info *sp;
-  SCM_ASSERT(STRING_P(filename), filename, SCM_ARG1, S_open_sound);
+  ASSERT_TYPE(STRING_P(filename), filename, SCM_ARGn, S_open_sound, "a string");
   ss = get_global_state();
   fname = mus_expand_filename(TO_C_STRING(filename));
   if (!(mus_file_probe(fname)))
@@ -1982,10 +1982,10 @@ opens filename assuming the data matches the attributes indicated unless the fil
   snd_state *ss;
   snd_info *sp;
   int os, oc, ofr, ou, ofit;
-  SCM_ASSERT(STRING_P(filename), filename, SCM_ARG1, S_open_raw_sound);
-  SCM_ASSERT(NUMBER_P(srate), srate, SCM_ARG2, S_open_raw_sound);
-  SCM_ASSERT(INTEGER_P(chans), chans, SCM_ARG3, S_open_raw_sound);
-  SCM_ASSERT(INTEGER_P(format), format, SCM_ARG4, S_open_raw_sound);
+  ASSERT_TYPE(STRING_P(filename), filename, SCM_ARG1, S_open_raw_sound, "a string");
+  ASSERT_TYPE(NUMBER_P(srate), srate, SCM_ARG2, S_open_raw_sound, "a number");
+  ASSERT_TYPE(INTEGER_P(chans), chans, SCM_ARG3, S_open_raw_sound, "an integer");
+  ASSERT_TYPE(INTEGER_P(format), format, SCM_ARG4, S_open_raw_sound, "an integer");
   ss = get_global_state();
   ou = use_raw_defaults(ss);
   os = raw_srate(ss);
@@ -2026,7 +2026,7 @@ static SCM g_open_alternate_sound(SCM filename)
   char *fname = NULL;
   snd_state *ss;
   snd_info *sp;
-  SCM_ASSERT(STRING_P(filename), filename, SCM_ARG1, S_open_alternate_sound);
+  ASSERT_TYPE(STRING_P(filename), filename, SCM_ARGn, S_open_alternate_sound, "a string");
   ss = get_global_state();
   sp = any_selected_sound(ss);
   if (sp) snd_close_file(sp, ss); /* should we ask about saving edits here? */
@@ -2048,7 +2048,7 @@ static SCM g_view_sound(SCM filename)
   char *fname = NULL;
   snd_info *sp = NULL;
   snd_state *ss;
-  SCM_ASSERT(STRING_P(filename), filename, SCM_ARG1, S_view_sound);
+  ASSERT_TYPE(STRING_P(filename), filename, SCM_ARGn, S_view_sound, "a string");
   ss = get_global_state();
   fname = mus_expand_filename(TO_C_STRING(filename));
   if (!(mus_file_probe(fname)))
@@ -2086,7 +2086,7 @@ saves snd in filename using the indicated attributes.  If channel is specified, 
   file_info *hdr;
   int ht, df, sr, chan;
   char *fname = NULL;
-  SCM_ASSERT(STRING_P(newfile), newfile, SCM_ARG1, S_save_sound_as);
+  ASSERT_TYPE(STRING_P(newfile), newfile, SCM_ARG1, S_save_sound_as, "a string");
   SND_ASSERT_SND(S_save_sound_as, index, 2);
   sp = get_sp(index);
   if (sp == NULL) 
@@ -2148,7 +2148,7 @@ creates a new sound file with the indicated attributes; if any are omitted, the 
   int chan, size;
   unsigned char* buf;
   char *str = NULL, *com = NULL;
-  SCM_ASSERT(STRING_P(name), name, SCM_ARG1, S_new_sound);
+  ASSERT_TYPE(STRING_P(name), name, SCM_ARG1, S_new_sound, "a string");
   ss = get_global_state();
   str = mus_expand_filename(TO_C_STRING(name));
   if (snd_overwrite_ok(ss, str))
@@ -2225,7 +2225,7 @@ static SCM g_speed_style(SCM snd)
 static SCM g_set_speed_style(SCM speed, SCM snd) 
 {
   snd_state *ss;
-  SCM_ASSERT(INTEGER_P(speed), speed, SCM_ARG1, "set-" S_speed_style); 
+  ASSERT_TYPE(INTEGER_P(speed), speed, SCM_ARG1, "set-" S_speed_style, "an integer"); 
   if (BOUND_P(snd))
     return(sp_iwrite(snd, speed, SP_SPEED_STYLE, "set-" S_speed_style));
   else
@@ -2251,7 +2251,7 @@ static SCM g_speed_tones(SCM snd)
 static SCM g_set_speed_tones(SCM val, SCM snd)
 {
   snd_state *ss;
-  SCM_ASSERT(NUMBER_P(val), val, SCM_ARG1, "set-" S_speed_tones); 
+  ASSERT_TYPE(NUMBER_P(val), val, SCM_ARG1, "set-" S_speed_tones, "a number"); 
   if (BOUND_P(snd))
     return(sp_iwrite(snd, val, SP_SPEED_TONES, "set-" S_speed_tones));
   else
@@ -2284,7 +2284,7 @@ static SCM sp_fread(SCM snd_n, int fld, char *caller)
 	  if ((sp) && (sp->inuse))
 	    res = CONS(sp_fread(TO_SMALL_SCM_INT(i), fld, caller), res);
 	}
-      return(scm_reverse(res));
+      return(REVERSE_LIST(res));
     }
   SND_ASSERT_SND(caller, snd_n, 1);
   sp = get_sp(snd_n);
@@ -2405,7 +2405,7 @@ static SCM g_amp(SCM snd_n)
 
 static SCM g_set_amp(SCM on, SCM snd_n) 
 {
-  SCM_ASSERT(NUMBER_P(on), on, SCM_ARG1, "set-" S_amp); 
+  ASSERT_TYPE(NUMBER_P(on), on, SCM_ARG1, "set-" S_amp, "a number"); 
   return(sp_fwrite(snd_n, on, SP_AMP, "set-" S_amp));
 }
 
@@ -2419,7 +2419,7 @@ static SCM g_contrast(SCM snd_n)
 
 static SCM g_set_contrast(SCM on, SCM snd_n) 
 {
-  SCM_ASSERT(NUMBER_P(on), on, SCM_ARG1, "set-" S_contrast); 
+  ASSERT_TYPE(NUMBER_P(on), on, SCM_ARG1, "set-" S_contrast, "a number"); 
   return(sp_fwrite(snd_n, on, SP_CONTRAST, "set-" S_contrast));
 }
 
@@ -2435,7 +2435,7 @@ static SCM g_contrast_amp(SCM snd_n)
 
 static SCM g_set_contrast_amp(SCM on, SCM snd_n) 
 {
-  SCM_ASSERT(NUMBER_P(on), on, SCM_ARG1, "set-" S_contrast_amp);
+  ASSERT_TYPE(NUMBER_P(on), on, SCM_ARG1, "set-" S_contrast_amp, "a number");
   return(sp_fwrite(snd_n, on, SP_CONTRAST_AMP, "set-" S_contrast_amp));
 }
 
@@ -2449,7 +2449,7 @@ static SCM g_expand(SCM snd_n)
 
 static SCM g_set_expand(SCM on, SCM snd_n) 
 {
-  SCM_ASSERT(NUMBER_P(on), on, SCM_ARG1, "set-" S_expand); 
+  ASSERT_TYPE(NUMBER_P(on), on, SCM_ARG1, "set-" S_expand, "a number"); 
   return(sp_fwrite(snd_n, on, SP_EXPAND, "set-" S_expand));
 }
 
@@ -2463,7 +2463,7 @@ static SCM g_expand_length(SCM snd_n)
 
 static SCM g_set_expand_length(SCM on, SCM snd_n) 
 {
-  SCM_ASSERT(NUMBER_P(on), on, SCM_ARG1, "set-" S_expand_length); 
+  ASSERT_TYPE(NUMBER_P(on), on, SCM_ARG1, "set-" S_expand_length, "a number"); 
   return(sp_fwrite(snd_n, on, SP_EXPAND_LENGTH, "set-" S_expand_length));
 }
 
@@ -2477,7 +2477,7 @@ static SCM g_expand_ramp(SCM snd_n)
 
 static SCM g_set_expand_ramp(SCM on, SCM snd_n) 
 {
-  SCM_ASSERT(NUMBER_P(on), on, SCM_ARG1, "set-" S_expand_ramp);
+  ASSERT_TYPE(NUMBER_P(on), on, SCM_ARG1, "set-" S_expand_ramp, "a number");
   return(sp_fwrite(snd_n, on, SP_EXPAND_RAMP, "set-" S_expand_ramp));
 }
 
@@ -2491,7 +2491,7 @@ static SCM g_expand_hop(SCM snd_n)
 
 static SCM g_set_expand_hop(SCM on, SCM snd_n) 
 {
-  SCM_ASSERT(NUMBER_P(on), on, SCM_ARG1, "set-" S_expand_hop); 
+  ASSERT_TYPE(NUMBER_P(on), on, SCM_ARG1, "set-" S_expand_hop, "a number"); 
   return(sp_fwrite(snd_n, on, SP_EXPAND_HOP, "set-" S_expand_hop));
 }
 
@@ -2505,7 +2505,7 @@ static SCM g_speed(SCM snd_n)
 
 static SCM g_set_speed(SCM on, SCM snd_n) 
 {
-  SCM_ASSERT(NUMBER_P(on), on, SCM_ARG1, "set-" S_speed); 
+  ASSERT_TYPE(NUMBER_P(on), on, SCM_ARG1, "set-" S_speed, "a number"); 
   return(sp_fwrite(snd_n, on, SP_SPEED, "set-" S_speed));
 }
 
@@ -2519,7 +2519,7 @@ static SCM g_reverb_length(SCM snd_n)
 
 static SCM g_set_reverb_length(SCM on, SCM snd_n) 
 {
-  SCM_ASSERT(NUMBER_P(on), on, SCM_ARG1, "set-" S_reverb_length); 
+  ASSERT_TYPE(NUMBER_P(on), on, SCM_ARG1, "set-" S_reverb_length, "a number"); 
   return(sp_fwrite(snd_n, on, SP_REVERB_LENGTH, "set-" S_reverb_length));
 }
 
@@ -2533,7 +2533,7 @@ static SCM g_reverb_feedback(SCM snd_n)
 
 static SCM g_set_reverb_feedback(SCM on, SCM snd_n) 
 {
-  SCM_ASSERT(NUMBER_P(on), on, SCM_ARG1, "set-" S_reverb_feedback); 
+  ASSERT_TYPE(NUMBER_P(on), on, SCM_ARG1, "set-" S_reverb_feedback, "a number"); 
   return(sp_fwrite(snd_n, on, SP_REVERB_FEEDBACK, "set-" S_reverb_feedback));
 }
 
@@ -2547,7 +2547,7 @@ static SCM g_reverb_scale(SCM snd_n)
 
 static SCM g_set_reverb_scale(SCM on, SCM snd_n) 
 {
-  SCM_ASSERT(NUMBER_P(on), on, SCM_ARG1, "set-" S_reverb_scale); 
+  ASSERT_TYPE(NUMBER_P(on), on, SCM_ARG1, "set-" S_reverb_scale, "a number"); 
   return(sp_fwrite(snd_n, on, SP_REVERB_SCALE, "set-" S_reverb_scale));
 }
 
@@ -2561,7 +2561,7 @@ static SCM g_reverb_lowpass(SCM snd_n)
 
 static SCM g_set_reverb_lowpass(SCM on, SCM snd_n) 
 {
-  SCM_ASSERT(NUMBER_P(on), on, SCM_ARG1, "set-" S_reverb_lowpass); 
+  ASSERT_TYPE(NUMBER_P(on), on, SCM_ARG1, "set-" S_reverb_lowpass, "a number"); 
   return(sp_fwrite(snd_n, on, SP_REVERB_LOW_PASS, "set-" S_reverb_lowpass));
 }
 
@@ -2578,7 +2578,7 @@ static SCM g_reverb_decay(SCM snd)
 static SCM g_set_reverb_decay(SCM val, SCM snd)
 {
   snd_state *ss;
-  SCM_ASSERT(NUMBER_P(val), val, SCM_ARG1, "set-" S_reverb_decay); 
+  ASSERT_TYPE(NUMBER_P(val), val, SCM_ARG1, "set-" S_reverb_decay, "a number"); 
   if (BOUND_P(snd))
     return(sp_fwrite(snd, val, SP_REVERB_DECAY, "set-" S_reverb_decay));
   else
@@ -2623,7 +2623,7 @@ static SCM g_call_apply(SCM snd, SCM choice)
   snd_info *sp;
   snd_state *ss;
   SND_ASSERT_SND(S_call_apply, snd, 1);
-  SCM_ASSERT(INTEGER_IF_BOUND_P(choice), choice, SCM_ARG2, S_call_apply);
+  ASSERT_TYPE(INTEGER_IF_BOUND_P(choice), choice, SCM_ARG2, S_call_apply, "an integer");
   sp = get_sp(snd);
   if (sp) 
     {
@@ -2669,7 +2669,7 @@ static SCM g_peak_env_info(SCM snd, SCM chn, SCM pos)
   env_info *ep;
   chan_context *cgx;
   SND_ASSERT_CHAN(S_peak_env_info, snd, chn, 1);
-  SCM_ASSERT(INTEGER_IF_BOUND_P(pos), pos, SCM_ARG3, S_peak_env_info);
+  ASSERT_TYPE(INTEGER_IF_BOUND_P(pos), pos, SCM_ARG3, S_peak_env_info, "an integer");
   cp = get_cp(snd, chn, S_peak_env_info);
   cgx = cp->cgx;
   if ((!cgx) || (!(cp->amp_envs))) 
@@ -2694,7 +2694,7 @@ static SCM g_write_peak_env_info_file(SCM snd, SCM chn, SCM name)
   MUS_SAMPLE_TYPE mbuf[2];
   SND_ASSERT_CHAN(S_write_peak_env_info_file, snd, chn, 1);
   cp = get_cp(snd, chn, S_write_peak_env_info_file);
-  SCM_ASSERT(STRING_P(name), name, SCM_ARG2, S_write_peak_env_info_file);
+  ASSERT_TYPE(STRING_P(name), name, SCM_ARG2, S_write_peak_env_info_file, "a string");
   if ((cp->amp_envs) && (cp->amp_envs[0]))
     {
       fullname = mus_expand_filename(TO_C_STRING(name));

@@ -2218,7 +2218,7 @@ static SCM g_autocorrelate(SCM reals)
   int n, i;
   SCM *vdata;
   Float *rl;
-  SCM_ASSERT(((VCT_P(reals)) || (VECTOR_P(reals))), reals, SCM_ARG1, S_autocorrelate);
+  ASSERT_TYPE(((VCT_P(reals)) || (VECTOR_P(reals))), reals, SCM_ARGn, S_autocorrelate, "a vct or vector");
   if (VCT_P(reals))
     {
       v1 = (vct *)SND_VALUE_OF(reals);
@@ -2259,11 +2259,11 @@ to be displayed goes from low to high (normally 0.0 to 1.0)"
       FREE(errmsg);
       snd_bad_arity_error(S_add_transform, errstr, proc);
     }
-  SCM_ASSERT(STRING_P(name), name, SCM_ARG1, S_add_transform);
-  SCM_ASSERT(STRING_P(xlabel), xlabel, SCM_ARG2, S_add_transform);
-  SCM_ASSERT(NUMBER_P(lo), lo, SCM_ARG3, S_add_transform);
-  SCM_ASSERT(NUMBER_P(hi), hi, SCM_ARG4, S_add_transform);
-  SCM_ASSERT(PROCEDURE_P(proc), proc, SCM_ARG5, S_add_transform);
+  ASSERT_TYPE(STRING_P(name), name, SCM_ARG1, S_add_transform, "a string");
+  ASSERT_TYPE(STRING_P(xlabel), xlabel, SCM_ARG2, S_add_transform, "a string");
+  ASSERT_TYPE(NUMBER_P(lo), lo, SCM_ARG3, S_add_transform, "a number");
+  ASSERT_TYPE(NUMBER_P(hi), hi, SCM_ARG4, S_add_transform, "a number");
+  ASSERT_TYPE(PROCEDURE_P(proc), proc, SCM_ARG5, S_add_transform, "a procedure");
   return(TO_SMALL_SCM_INT(add_transform(TO_C_STRING(name),
 					TO_C_STRING(xlabel),
 					TO_C_DOUBLE(lo),
@@ -2301,8 +2301,8 @@ returns the current transform sample at bin and slice in snd channel chn (assumi
   fft_info *fp;
   sono_info *si;
   int fbin, fslice;
-  SCM_ASSERT(INTEGER_IF_BOUND_P(bin), bin, SCM_ARG1, S_transform_sample);
-  SCM_ASSERT(INTEGER_IF_BOUND_P(slice), slice, SCM_ARG2, S_transform_sample);
+  ASSERT_TYPE(INTEGER_IF_BOUND_P(bin), bin, SCM_ARG1, S_transform_sample, "an integer");
+  ASSERT_TYPE(INTEGER_IF_BOUND_P(slice), slice, SCM_ARG2, S_transform_sample, "an integer");
   SND_ASSERT_CHAN(S_transform_sample, snd_n, chn_n, 3);
   cp = get_cp(snd_n, chn_n, S_transform_sample);
   if (cp->ffting)
@@ -2445,8 +2445,8 @@ static SCM g_snd_transform(SCM type, SCM data, SCM hint)
   int trf, i, j, hnt, n2;
   vct *v;
   Float *dat;
-  SCM_ASSERT(INTEGER_P(type), type, SCM_ARG1, "snd-transform");
-  SCM_ASSERT(VCT_P(data), data, SCM_ARG2, "snd-transform");
+  ASSERT_TYPE(INTEGER_P(type), type, SCM_ARG1, "snd-transform", "an integer");
+  ASSERT_TYPE(VCT_P(data), data, SCM_ARG2, "snd-transform", "a vct");
   trf = TO_SMALL_C_INT(type);
   if ((trf < 0) || (trf > HAAR))
     mus_misc_error("snd-transform", "invalid transform choice", type);

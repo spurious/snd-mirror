@@ -266,6 +266,7 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+25-Apr:  snd.1 (and mandir business in makefile.in)\n\
 24-Apr:  added mouse-enter|leave-text-hook.\n\
 23-Apr:  snd 4.13.\n\
 19-Apr:  use GSL_IEEE_MODE if it exists.\n\
@@ -283,13 +284,6 @@ void news_help(snd_state *ss)
 21-Mar:  mus-expand-filename.\n\
          open-raw-sound-hook (old raw-* variables are obsolete).\n\
 20-Mar:  mouse-enter-label hook function needs full filename (thanks to Anders Vinjar).\n\
-19-Mar:  snd 4.12.\n\
-         removed gdbm support from sndlib.\n\
-16-Mar:  read|write-peak-env-info-file.\n\
-15-Mar:  src-sound with negative envelope bugfix, also the interpretation of the\n\
-           envelope arg is changed to be consistent with the envelope editor src function.\n\
-           '(0 1 1 1) now returns no change (src ratio of 1 throughout -- the value is used\n\
-           directly, rather than being an offset from 1.0.\n\
 ",
 NULL);
   FREE(info);
@@ -2694,7 +2688,7 @@ the functions html and ? can be used in place of help to go to the HTML descript
 	}
       else value = text;
       local_doc = TO_SCM_SYMBOL("documentation");
-      
+#if HAVE_GUILE      
       help_text = scm_object_property(value, local_doc);         /* (object-property ...) */
       if ((FALSE_P(help_text)) &&
 	  (PROCEDURE_P(value)))
@@ -2706,6 +2700,7 @@ the functions html and ? can be used in place of help to go to the HTML descript
       if ((FALSE_P(help_text)) &&
 	  (str))
 	help_text = scm_object_property(TO_SCM_SYMBOL(str), local_doc);
+#endif
     }
   
   /* help strings are always processed through the word-wrapper to fit whichever widget they are posted to */

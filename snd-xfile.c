@@ -14,16 +14,43 @@ char *read_file_data_choices(file_data *fdat, int *srate, int *chans, int *type,
   int res;
   int *ns = NULL;
   char *comment = NULL;
-  if (fdat->srate_text) {str = XmTextGetString(fdat->srate_text); if (str) {(*srate) = string2int(str); XtFree(str);}}
-  if (fdat->chans_text) {str = XmTextGetString(fdat->chans_text); if (str) {(*chans) = string2int(str); XtFree(str);}}
-  if (fdat->location_text) {str = XmTextGetString(fdat->location_text); if (str) {(*location) = string2int(str); XtFree(str);}}
-  if (fdat->comment_text) {comment = XmTextGetString(fdat->comment_text);}
+  if (fdat->srate_text) 
+    {
+      str = XmTextGetString(fdat->srate_text); 
+      if (str) 
+	{
+	  (*srate) = string2int(str); 
+	  XtFree(str);
+	}
+    }
+  if (fdat->chans_text) 
+    {
+      str = XmTextGetString(fdat->chans_text); 
+      if (str) 
+	{
+	  (*chans) = string2int(str); 
+	  XtFree(str);
+	}
+    }
+  if (fdat->location_text) 
+    {
+      str = XmTextGetString(fdat->location_text); 
+      if (str) 
+	{
+	  (*location) = string2int(str); 
+	  XtFree(str);
+	}
+    }
+  if (fdat->comment_text) 
+    {
+      comment = XmTextGetString(fdat->comment_text);
+    }
   if (fdat->header_list)
     {
       res = XmListGetSelectedPos(fdat->header_list, &ns, &n);
       if (res == True)
 	{
-	  (*type) = header_type_from_position(ns[0]-1);
+	  (*type) = header_type_from_position(ns[0] - 1);
 	  fdat->current_type = (*type);
 	  free(ns); ns = NULL;
 	}
@@ -33,7 +60,7 @@ char *read_file_data_choices(file_data *fdat, int *srate, int *chans, int *type,
       res = XmListGetSelectedPos(fdat->format_list, &ns, &n);
       if (res == True)
 	{
-	  (*format) = data_format_from_position(fdat->current_type, ns[0]-1);
+	  (*format) = data_format_from_position(fdat->current_type, ns[0] - 1);
 	  fdat->current_format = (*format);
 	  free(ns); ns = NULL;
 	}
@@ -57,7 +84,7 @@ static void load_header_and_data_lists(file_data *fdat, int type, int format, in
   fdat->current_format = format;
   fl = set_header_and_data_positions(fdat, type, format); 
   XmListSelectPos(fdat->header_list, fdat->header_pos + 1, FALSE);
-  strs = (XmString *)CALLOC(fdat->formats, sizeof(XmString)); 
+  strs = (XmString *)MALLOC(fdat->formats * sizeof(XmString)); 
   for (i = 0; i < fdat->formats; i++) 
     strs[i] = XmStringCreate(fl[i], XmFONTLIST_DEFAULT_TAG);
   XtVaSetValues(fdat->format_list, 
@@ -99,8 +126,14 @@ static void color_file_selection_box(Widget w, snd_state *ss)
   if (!(ss->using_schemes)) 	
     {
       map_over_children(w, set_main_color_of_widget, (void *)ss);
-      XtVaSetValues(XmFileSelectionBoxGetChild(w, XmDIALOG_DIR_LIST), XmNbackground, (ss->sgx)->white, XmNforeground, (ss->sgx)->black, NULL);
-      XtVaSetValues(XmFileSelectionBoxGetChild(w, XmDIALOG_LIST), XmNbackground, (ss->sgx)->white, XmNforeground, (ss->sgx)->black, NULL);
+      XtVaSetValues(XmFileSelectionBoxGetChild(w, XmDIALOG_DIR_LIST), 
+		    XmNbackground, (ss->sgx)->white, 
+		    XmNforeground, (ss->sgx)->black, 
+		    NULL);
+      XtVaSetValues(XmFileSelectionBoxGetChild(w, XmDIALOG_LIST), 
+		    XmNbackground, (ss->sgx)->white, 
+		    XmNforeground, (ss->sgx)->black, 
+		    NULL);
       XtVaSetValues(XtNameToWidget(w, "Apply"), XmNarmColor, (ss->sgx)->pushed_button_color, NULL);
       XtVaSetValues(XtNameToWidget(w, "Cancel"), XmNarmColor, (ss->sgx)->pushed_button_color, NULL);
       XtVaSetValues(XtNameToWidget(w, "Help"), XmNarmColor, (ss->sgx)->pushed_button_color, NULL);
@@ -255,7 +288,8 @@ static void sound_file_search(Widget FSB_w, XmFileSelectionBoxCallbackStruct *in
 	    if (last_pattern) {FREE(last_pattern); last_pattern = NULL;}
 	    last_pattern = copy_string(pattern);
 	    if (current_files)  current_files = free_dir(current_files);
-	    if ((sound_files) && (sound_files->len > 0)) current_files = filter_sound_files(sound_files, pattern);
+	    if ((sound_files) && (sound_files->len > 0)) 
+	      current_files = filter_sound_files(sound_files, pattern);
 	    need_update = 1;
 	  }
       cdp = current_files;
@@ -285,10 +319,17 @@ static void sound_file_search(Widget FSB_w, XmFileSelectionBoxCallbackStruct *in
 	    }
 	}
       else names = NULL;
-      if (cdp) XtVaSetValues(FSB_w, XmNfileListItems, names, XmNfileListItemCount, cdp->len, XmNlistUpdated, TRUE, NULL);
+      if (cdp) 
+	XtVaSetValues(FSB_w, 
+		      XmNfileListItems, names, 
+		      XmNfileListItemCount, cdp->len, 
+		      XmNlistUpdated, TRUE, 
+		      NULL);
       if (names)
 	{
-	  for (i = 0; i < cdp->len; i++) if (names[i]) XmStringFree(names[i]);
+	  for (i = 0; i < cdp->len; i++) 
+	    if (names[i]) 
+	      XmStringFree(names[i]);
 	  FREE(names);
 	}
     }
@@ -315,17 +356,18 @@ static void just_sounds_Callback(Widget w, XtPointer context, XtPointer info)
 static Widget just_sounds_button = NULL;
 static int just_sounds_state = FALSE;
 
-void CreateOpenDialog(Widget w, XtPointer context)
+void make_open_file_dialog(snd_state *ss)
 {
-  /* file selection dialog box with added "Just Sound Files" toggle button */
+  Widget w;
   Arg args[20];
   int n;
   XmString s1;
   Widget wtmp = NULL;
-  snd_state *ss = (snd_state *)context;
-  n = 0;
-  if (!open_dialog)
+  if (!open_dialog) 
     {
+      /* file selection dialog box with added "Just Sound Files" toggle button */
+      w = MAIN_SHELL(ss);
+      n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
       if (just_sounds_state)
 	{
@@ -356,24 +398,20 @@ void CreateOpenDialog(Widget w, XtPointer context)
 
       if (!(ss->using_schemes)) XtVaSetValues(just_sounds_button, XmNselectColor, (ss->sgx)->pushed_button_color, NULL);
       XtVaGetValues(open_dialog, XmNfileSearchProc, &default_search_proc, NULL);
-      XtAddCallback(open_dialog, XmNokCallback, File_Open_OK_Callback, context);
-      XtAddCallback(open_dialog, XmNcancelCallback, File_Open_Cancel_Callback, context);
-      XtAddCallback(open_dialog, XmNhelpCallback, File_Open_Help_Callback, context);
+      XtAddCallback(open_dialog, XmNokCallback, File_Open_OK_Callback, (XtPointer)ss);
+      XtAddCallback(open_dialog, XmNcancelCallback, File_Open_Cancel_Callback, (XtPointer)ss);
+      XtAddCallback(open_dialog, XmNhelpCallback, File_Open_Help_Callback, (XtPointer)ss);
       XtAddCallback(just_sounds_button, XmNvalueChangedCallback, just_sounds_Callback, NULL);
-      XtAddCallback(just_sounds_button, XmNhelpCallback, just_sounds_help_Callback, context);
+      XtAddCallback(just_sounds_button, XmNhelpCallback, just_sounds_help_Callback, (XtPointer)ss);
       add_dialog(ss, open_dialog);
     }
-}
-
-void make_open_file_dialog(snd_state *ss)
-{
-  if (!open_dialog) CreateOpenDialog(MAIN_SHELL(ss), (XtPointer)ss);
   if (new_file_written) 
     {
       force_directory_reread();
       new_file_written = 0;
     }
-  if (!(XtIsManaged(open_dialog))) XtManageChild(open_dialog);
+  if (!(XtIsManaged(open_dialog))) 
+    XtManageChild(open_dialog);
 }
 
 
@@ -444,7 +482,7 @@ static void file_data_Format_Callback(Widget w, XtPointer context, XtPointer inf
   XmListCallbackStruct *cbs = (XmListCallbackStruct *)info;
   file_data *fd;
   XtVaGetValues(w, XmNuserData, &fd, NULL);
-  fd->current_format = data_format_from_position(fd->current_type, cbs->item_position-1);
+  fd->current_format = data_format_from_position(fd->current_type, cbs->item_position - 1);
 }
 
 static void file_header_help_callback(Widget w, XtPointer context, XtPointer info) 
@@ -568,7 +606,8 @@ file_data *sndCreateFileDataForm(snd_state *ss, Widget parent, char *name, Arg *
   /* what is selected depends on current type */
   hdrtyps = num_header_types();
   strs = (XmString *)CALLOC(hdrtyps, sizeof(XmString)); 
-  for (i = 0; i < hdrtyps; i++) strs[i] = XmStringCreate(header_short_name(i), XmFONTLIST_DEFAULT_TAG);
+  for (i = 0; i < hdrtyps; i++) 
+    strs[i] = XmStringCreate(header_short_name(i), XmFONTLIST_DEFAULT_TAG);
   XtSetArg(args[n], XmNitems, strs); n++;
   XtSetArg(args[n], XmNitemCount, num_header_types()); n++;
   XtSetArg(args[n], XmNvisibleItemCount, NUM_VISIBLE_HEADERS); n++;
@@ -613,11 +652,12 @@ file_data *sndCreateFileDataForm(snd_state *ss, Widget parent, char *name, Arg *
   /* what is displayed and selected depends on current type */
   XtAddCallback(dlist, XmNhelpCallback, file_data_help_callback, ss);
   strs = (XmString *)CALLOC(dformats, sizeof(XmString)); 
-  for (i = 0; i < dformats; i++) strs[i] = XmStringCreate(formats[i], XmFONTLIST_DEFAULT_TAG);
+  for (i = 0; i < dformats; i++) 
+    strs[i] = XmStringCreate(formats[i], XmFONTLIST_DEFAULT_TAG);
   XtVaSetValues(dlist, XmNitems, strs, XmNitemCount, dformats, NULL);
   for (i = 0; i < dformats; i++) XmStringFree(strs[i]);
   FREE(strs);
-  XmListSelectPos(dlist, fdat->format_pos+1, FALSE);
+  XmListSelectPos(dlist, fdat->format_pos + 1, FALSE);
   XtManageChild(dlist);
   fdat->format_list = dlist;
   XtAddCallback(fdat->format_list, XmNbrowseSelectionCallback, file_data_Format_Callback, ss);
@@ -835,8 +875,6 @@ void make_file_save_as_dialog(snd_state *ss)
   if (!XtIsManaged(save_as_dialog)) XtManageChild(save_as_dialog);
 }
 
-/* -------- edit save as dialog -------- */
-
 void make_edit_save_as_dialog(snd_state *ss)
 {
   save_as_dialog_type = EDIT_SAVE_AS;
@@ -850,8 +888,6 @@ void make_edit_save_as_dialog(snd_state *ss)
 			     0, -1, NULL);
   if (!XtIsManaged(save_as_dialog)) XtManageChild(save_as_dialog);
 }
-
-
 
 
 /* -------- files browser and regions list widgetry -------- */
@@ -1452,7 +1488,7 @@ void make_prevfiles_list (snd_state *ss)
 	}
     }
   lim = get_max_prevfile_end();
-  for (i = get_prevfile_end()+1; i <= lim; i++)
+  for (i = get_prevfile_end() + 1; i <= lim; i++)
     {
       if ((r = prev_name_row[i]))
 	{
@@ -1806,7 +1842,7 @@ static void make_raw_data_dialog(char *filename, snd_state *ss)
   for (i = 1; i < num_data_formats(); i++) 
     formats[i-1] = XmStringCreate(data_format_name(i), XmFONTLIST_DEFAULT_TAG);
   lst = XmCreateScrolledList(rform, "raw-data-format-list", args, n);
-  XtVaSetValues(lst, XmNitems, formats, XmNitemCount, num_data_formats()-1, XmNvisibleItemCount, 6, NULL);
+  XtVaSetValues(lst, XmNitems, formats, XmNitemCount, num_data_formats() - 1, XmNvisibleItemCount, 6, NULL);
   XtManageChild(lst); 
   XmListSelectPos(lst, raw_format(ss), FALSE);
   for (i = 1; i < num_data_formats(); i++) 
@@ -2200,7 +2236,7 @@ static SCM g_just_sounds(void)
 static SCM g_set_just_sounds(SCM on) 
 {
   int n;
-  SCM_ASSERT(INTEGER_OR_BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_just_sounds);
+  ASSERT_TYPE(INTEGER_OR_BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_just_sounds, "an integer");
   n = TO_C_BOOLEAN_OR_T(on);
   if (just_sounds_button)
     XmToggleButtonSetState(just_sounds_button, n, TRUE);

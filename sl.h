@@ -19,37 +19,11 @@
 #define scm_print_state int
 #define scm_sizet int
 
-#define scm_listofnull Qnil
-#define scm_make_hook(a) Qnil
 #define scm_puts(a, b) rep_princ_val(Qstandard_output, TO_SCM_STRING(a))
-#define scm_wrong_type_arg(a, b, c) rep_signal_arg_error(c, b)
-#define scm_wrong_num_args(a) rep_signal_missing_arg(a)
-#define scm_out_of_range(a, b) exit(0)
-#define scm_make_smob_type(a, b) Qnil
-#define scm_set_smob_mark(a, b)
-#define scm_set_smob_print(a, b)
-#define scm_set_smob_free(a, b)
-#define scm_set_smob_equalp(a, b) 
-#define scm_permanent_object(a) a
 #define scm_throw(a, b) Fthrow(a, b)
-#define scm_set_object_property_x(a, b, c) Fput(a, b, c)
 #define scm_apply(a, b, c) rep_apply(a, b)
-#define scm_internal_stack_catch(a, b, c, d, e) Qnil
-#define scm_vector_set_x(a, b, c) Faset(a, b, c)
-#define scm_reverse(a) Freverse(a)
-#define scm_object_property(a, b) Fget(a, b)
-#define scm_vector_to_list(a) Qnil
-#define scm_gc_mark(a)
-#define scm_procedure_documentation(a) Qnil
-#define scm_procedure_property(a, b) Qnil
-
 #define scm_return_first(a, ...) a
 
-#define gh_new_procedure(a, b, c, d, e) Qnil
-#define gh_define(a, b) Qnil
-#define gh_eval_file(a) Fload(TO_SCM_STRING(a), Qnil, Qnil, Qnil, Qnil)
-
-#define SCM_ASSERT(a, b, c, d)
 #define SCM_EQ_P(a, b) ((a) == (b))
 #define SCM_LIST0 Qnil
 #define SCM_LIST1(Arg1) rep_LIST_1(Arg1)
@@ -76,6 +50,7 @@
 #endif
 
 #define MAKE_HOOK(Name, Args, Help) Qnil
+#define MAKE_HELPLESS_HOOK(a) Qnil
 #define SND_RETURN_NEWSMOB(Tag, Val) Qnil
 #define SND_VALUE_OF(a) Qnil
 #define SND_SET_VALUE_OF(a, b) 
@@ -152,6 +127,8 @@
 #define NO_SUCH_AXIS_CONTEXT TO_SCM_SYMBOL("no-such-graphics-context")
 #define BAD_ARITY            TO_SCM_SYMBOL("bad-arity")
 
+#define WRONG_TYPE_ERROR(Caller, Position, Arg, Correct_Type) rep_signal_arg_error(Arg, Position)
+
 #define BOOLEAN_P(Arg) (((Arg) == Qt) || ((Arg) == Qnil))
 #define NUMBER_P(Arg) ((Arg) && (rep_NUMBERP(Arg)))
 #define INTEGER_P(Arg) ((Arg) && (rep_INTEGERP(Arg)))
@@ -174,8 +151,10 @@
 #define CONS2(Arg1, Arg2, Arg3) Fcons(Arg1, Fcons(Arg2, Arg3))
 #define LIST_REF(Lst, Num) Fnth(Num, Lst)
 #define VECTOR_REF(Vect, Num) Faref(Vect, Num)
+#define VECTOR_SET(Vect, Num, Val) Faset(Vect, Num, Val) 
 #define EVAL_STRING(Arg) librep_eval_string(Arg)
 #define MAKE_VECTOR(Num, Fill) rep_make_vector(Num)
+#define VECTOR_TO_LIST(a) Qnil
 #define CHAR_P(Arg) ((Arg) && (STRING_P(Arg)))
 #define TO_C_CHAR(Arg) (TO_C_STRING(Arg))[0]
 #define SND_ASSERT_SND(Origin, Snd, Offset)
@@ -185,11 +164,16 @@
 #define CALL2(Func, Arg1, Arg2, Caller) rep_call_lisp2(Func, Arg1, Arg2)
 #define CALL3(Func, Arg1, Arg2, Arg3, Caller) rep_call_lisp3(Func, Arg1, Arg2, Arg3)
 #define APPLY(Func, Args, Caller) rep_apply(Func, Args)
+#define APPLY_EOL Qnil
 #define ARITY(Func) Qnil
 #define KEYWORD_P(Obj) ((Obj) && (rep_KEYWORDP(Obj)))
 #define MAKE_KEYWORD(Arg) Fmake_keyword(TO_SCM_SYMBOL(Arg))
 #define CLEAR_HOOK(a)
 #define YES_WE_HAVE(a) Fprovide(TO_SCM_SYMBOL(a))
-#define DOCUMENTATION
+#define DOCUMENTATION Qnil
+#define ASSERT_TYPE(Assertion, Arg, Position, Caller, Correct_Type)
+#define REVERSE_LIST(a) Freverse(a)
+#define MAKE_PERMANENT(a) a
+#define LOAD_SCM_FILE(a) Fload(TO_SCM_STRING(a), Qnil, Qnil, Qnil, Qnil)
 
 #endif

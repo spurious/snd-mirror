@@ -204,8 +204,8 @@ static SCM g_key_binding(SCM key, SCM state)
 {
   #define H_key_binding "(" S_key_binding " key state) -> function bound to this key"
   int i;
-  SCM_ASSERT(INTEGER_P(key), key, SCM_ARG1, S_key_binding);
-  SCM_ASSERT(INTEGER_P(state), state, SCM_ARG2, S_key_binding);
+  ASSERT_TYPE(INTEGER_P(key), key, SCM_ARG1, S_key_binding, "an integer");
+  ASSERT_TYPE(INTEGER_P(state), state, SCM_ARG2, S_key_binding, "an integer");
   i = in_user_keymap(TO_SMALL_C_INT(key),
 		     TO_SMALL_C_INT(state));
   if (i >= 0) 
@@ -1880,9 +1880,9 @@ The function should return one of the cursor choices (e.g. cursor-no-action)."
   int ip;
   char *errmsg;
   SCM errstr;
-  SCM_ASSERT(INTEGER_P(key), key, SCM_ARG1, S_bind_key);
-  SCM_ASSERT(INTEGER_P(state), state, SCM_ARG2, S_bind_key);
-  SCM_ASSERT((FALSE_P(code) || PROCEDURE_P(code)), code, SCM_ARG3, S_bind_key);
+  ASSERT_TYPE(INTEGER_P(key), key, SCM_ARG1, S_bind_key, "an integer");
+  ASSERT_TYPE(INTEGER_P(state), state, SCM_ARG2, S_bind_key, "an integer");
+  ASSERT_TYPE((FALSE_P(code) || PROCEDURE_P(code)), code, SCM_ARG3, S_bind_key, "#f or a procedure");
   if ((FALSE_P(ignore_prefix)) || 
       (NOT_BOUND_P(ignore_prefix)) ||  
       ((NUMBER_P(ignore_prefix)) && 
@@ -1913,8 +1913,8 @@ static SCM g_key(SCM kbd, SCM buckybits, SCM snd, SCM chn)
 {
   #define H_key "(" S_key " key modifiers &optional snd chn) simulates typing 'key' with 'modifiers' in snd's channel chn"
   chan_info *cp;
-  SCM_ASSERT(INTEGER_P(kbd), kbd, SCM_ARG1, S_key);
-  SCM_ASSERT(INTEGER_P(buckybits), buckybits, SCM_ARG2, S_key);
+  ASSERT_TYPE(INTEGER_P(kbd), kbd, SCM_ARG1, S_key, "an integer");
+  ASSERT_TYPE(INTEGER_P(buckybits), buckybits, SCM_ARG2, S_key, "an integer");
   SND_ASSERT_CHAN(S_key, snd, chn, 3);
   cp = get_cp(snd, chn, S_key);
   return(TO_SCM_INT(keyboard_command(cp, 
@@ -1944,8 +1944,8 @@ static SCM g_prompt_in_minibuffer(SCM msg, SCM callback, SCM snd_n)
 then when the user eventually responds, invokes the function callback with the response and snd (the index)"
 
   snd_info *sp;
-  SCM_ASSERT(STRING_P(msg), msg, SCM_ARG1, S_prompt_in_minibuffer);
-  SCM_ASSERT((NOT_BOUND_P(callback)) || (BOOLEAN_P(callback)) || PROCEDURE_P(callback), callback, SCM_ARG2, S_prompt_in_minibuffer);
+  ASSERT_TYPE(STRING_P(msg), msg, SCM_ARG1, S_prompt_in_minibuffer, "a string");
+  ASSERT_TYPE((NOT_BOUND_P(callback)) || (BOOLEAN_P(callback)) || PROCEDURE_P(callback), callback, SCM_ARG2, S_prompt_in_minibuffer, "#f or a procedure");
   SND_ASSERT_SND(S_prompt_in_minibuffer, snd_n, 3);
   sp = get_sp(snd_n);
   if (sp == NULL) 
@@ -1971,7 +1971,7 @@ static SCM g_report_in_minibuffer(SCM msg, SCM snd_n)
 {
   #define H_report_in_minibuffer "(" S_report_in_minibuffer " msg &optional snd) displays msg in snd's minibuffer"
   snd_info *sp;
-  SCM_ASSERT(STRING_P(msg), msg, SCM_ARG1, S_report_in_minibuffer);
+  ASSERT_TYPE(STRING_P(msg), msg, SCM_ARG1, S_report_in_minibuffer, "a string");
   SND_ASSERT_SND(S_report_in_minibuffer, snd_n, 2);
   sp = get_sp(snd_n);
   if (sp == NULL) 
@@ -1985,7 +1985,7 @@ static SCM g_append_to_minibuffer(SCM msg, SCM snd_n)
   #define H_append_to_minibuffer "(" S_append_to_minibuffer " msg &optional snd) appends msg to snd's minibuffer"
   snd_info *sp;
   char *str1 = NULL, *expr_str;
-  SCM_ASSERT(STRING_P(msg), msg, SCM_ARG1, S_append_to_minibuffer);
+  ASSERT_TYPE(STRING_P(msg), msg, SCM_ARG1, S_append_to_minibuffer, "a string");
   SND_ASSERT_SND(S_append_to_minibuffer, snd_n, 2);
   sp = get_sp(snd_n);
   if (sp == NULL) 
@@ -2004,7 +2004,7 @@ static SCM g_forward_graph(SCM count, SCM snd, SCM chn)
   #define H_forward_graph "(" S_forward_graph " &optional (count 1) snd chn) moves the 'selected' graph forward by count"
   int val;
   chan_info *cp;
-  SCM_ASSERT(INTEGER_IF_BOUND_P(count), count, SCM_ARG1, S_forward_graph);
+  ASSERT_TYPE(INTEGER_IF_BOUND_P(count), count, SCM_ARG1, S_forward_graph, "an integer");
   SND_ASSERT_CHAN(S_forward_graph, snd, chn, 2);
   cp = get_cp(snd, chn, S_forward_graph);
   val = TO_C_INT_OR_ELSE(count, 1);
@@ -2017,7 +2017,7 @@ static SCM g_backward_graph(SCM count, SCM snd, SCM chn)
   #define H_backward_graph "(" S_backward_graph " &optional (count 1) snd chn) moves the 'selected' graph back by count"
   int val;
   chan_info *cp;
-  SCM_ASSERT(INTEGER_IF_BOUND_P(count), count, SCM_ARG1, S_backward_graph);
+  ASSERT_TYPE(INTEGER_IF_BOUND_P(count), count, SCM_ARG1, S_backward_graph, "an integer");
   SND_ASSERT_CHAN(S_backward_graph, snd, chn, 2);
   cp = get_cp(snd, chn, S_backward_graph);
   val = -(TO_C_INT_OR_ELSE(count, 1));

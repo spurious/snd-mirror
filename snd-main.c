@@ -633,7 +633,7 @@ static SCM g_save_state(SCM filename)
 
   char *error;
   SCM result;
-  SCM_ASSERT(STRING_P(filename), filename, SCM_ARG1, S_save_state);
+  ASSERT_TYPE(STRING_P(filename), filename, SCM_ARGn, S_save_state, "a string");
   error = save_state_or_error(get_global_state(), 
 			      TO_C_STRING(filename));
   if (error)
@@ -653,7 +653,7 @@ static SCM g_save_options(SCM filename)
   #define H_save_options "(" S_save_options " filename) saves Snd options in filename"
   char *name = NULL;
   FILE *fd;
-  SCM_ASSERT(STRING_P(filename), filename, SCM_ARG1, S_save_options);
+  ASSERT_TYPE(STRING_P(filename), filename, SCM_ARGn, S_save_options, "a string");
   name = mus_expand_filename(TO_C_STRING(filename));
   fd = fopen(name, "w");
   if (name) FREE(name);

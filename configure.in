@@ -752,6 +752,8 @@ AC_OUTPUT(makefile)
 
 
 dnl if no motif, search for gtk (could use locate)
+dnl if neither, pass no-gui
+dnl librep/ruby?
 dnl need to be able to set both HAVE_ALSA and HAVE_OSS?
 dnl support for sndlib.so needs to decide whether clm2scm/clm are available
 dnl perhaps also make with-ladspa the default

@@ -1,4 +1,5 @@
 srcdir = @srcdir@
+mandir = @mandir@
 VPATH = @srcdir@
 
 CC = @CC@

@@ -5616,7 +5616,8 @@ sets its value to val.
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->return the current value of the transform (if any) in <i>bin</i> and (if a 
-<!-- -->sonogram or spectrogram) <i>slice</i> in <i>snd</i>'s channel <i>chn</i> [<em class=error>no-such-sample</em>].
+<!-- -->sonogram or spectrogram) <i>slice</i> in <i>snd</i>'s channel <i>chn</i>.  
+<!-- -->Use <a href="#sndupdatefft">update-fft</a> to make sure the transform has run to completion. [<em class=error>no-such-sample</em>].
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -5627,6 +5628,7 @@ sets its value to val.
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
 <!-- -->return the transform data currently in <i>snd</i>'s channel <i>chn</i>.
+<!-- -->Use <a href="#sndupdatefft">update-fft</a> to make sure the transform has run to completion.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -5638,6 +5640,7 @@ sets its value to val.
 <!-- --><tr><td></td><td>
 <!-- -->return vct struct with the transform data currently in <i>snd</i>'s channel <i>chn</i>.
 <!-- -->If v (a vct) is provided, it is filled, rather than creating a new vct.
+<!-- -->Use <a href="#sndupdatefft">update-fft</a> to make sure the transform has run to completion.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -5690,7 +5693,7 @@ sets its value to val.
 <!-- --><span class=defbox><code><em class=def><a name="sndupdatefft">update-fft</a></em> (<i>snd chn</i>)</code></span>
 <!-- --></td></tr>
 <!-- --><tr><td></td><td>
-<!-- -->recalculate <i>chn's</i> fft.
+<!-- -->recalculate <i>chn's</i> fft, forcing it to completion.
 <!-- --></td></tr>
 <!-- --><tr><td colspan=2></td></tr>
 <!-- -->
@@ -7508,8 +7511,23 @@ variable %load-verbosely to #t.
   <b><a name="listenerselection">listener-selection</a></b> ()
 </pre>
 <p>These are still experimental; <i>add-input</i> causes <i>callback</i> (a function of one argument, the file number)
-to be called whenever input is available on <i>file</i> (a file number, as returned by open). <i>remove-input</i>
+to be called whenever input is available on <i>file</i> (a file number, as returned by C's open). <i>remove-input</i>
 removes the callback.  Eventually I hope to add MIDI controls to Snd, using these two functions.
+Here's a somewhat contrived example; since Scheme uses ports, not bare Unix file numbers, we
+have to translate back and forth:
+</p>
+<pre>
+(let ((p (open-input-pipe "ls -l *.h"))
+      (func #f))
+  (set! func (add-input 
+	      (fileno p) 
+	      (lambda (f) 
+		(let ((instr (read-line (fdes-&gt;inport f))))
+		  (if (string? instr)
+		      (display (format #f "~%~S" instr))
+		      (remove-input func)))))))
+</pre>
+<p>
 <i>add-idler</i> adds a background process running <i>code</i> (a Scheme function of no arguments).
 As long as the function returns #t, the process keeps calling it; <i>remove-idler</i> takes as its
 argument the thing returned by <i>add-idler</i> (the identifier of that process), and kills the

@@ -32,6 +32,7 @@ audinfo: $(SNDLIB_HEADERS) headers.o io.o audio.o sound.o audinfo.o
 
 install: snd
 	$(INSTALL) snd $(bindir)/snd
+	$(INSTALL) snd.1 $(mandir)/man1
 
 uninstall:
 	rm -f $(bindir)/snd

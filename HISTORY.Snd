@@ -1,5 +1,6 @@
 snd change log
 
+  25-Apr:    snd.1 (and mandir business in makefile.in)
   24-Apr:    added mouse-enter|leave-text-hook.
   23-Apr:    snd 4.13.
   19-Apr:    use GSL_IEEE_MODE if it exists.

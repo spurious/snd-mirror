@@ -2010,7 +2010,7 @@ char *raw_data_explanation(char *filename, snd_state *ss, file_info *hdr)
 static SCM g_add_sound_file_extension(SCM ext)
 {
   #define H_add_sound_file_extension "(" S_add_sound_file_extension " ext)  adds the file extension ext to the list of sound file extensions"
-  SCM_ASSERT(STRING_P(ext), ext, SCM_ARG1, S_add_sound_file_extension);
+  ASSERT_TYPE(STRING_P(ext), ext, SCM_ARGn, S_add_sound_file_extension, "a string");
   add_sound_file_extension(TO_C_STRING(ext));
   return(ext);
 }
@@ -2020,7 +2020,7 @@ static SCM g_file_write_date(SCM file)
   #define S_file_write_date "file-write-date"
   #define H_file_write_date "(" S_file_write_date " file) -> write date"
   time_t date;
-  SCM_ASSERT(STRING_P(file), file, SCM_ARG1, S_file_write_date);
+  ASSERT_TYPE(STRING_P(file), file, SCM_ARGn, S_file_write_date, "a string");
   date = file_write_date(TO_C_STRING(file));
   return(scm_return_first(TO_SCM_INT(date), file));
 }
@@ -2053,7 +2053,7 @@ static SCM g_set_sound_loop_info(SCM snd, SCM vals)
   int type, len = 0;
   SCM start0 = SCM_UNDEFINED, end0 = SCM_UNDEFINED, start1 = SCM_UNDEFINED, end1 = SCM_UNDEFINED;
   SND_ASSERT_SND("set-" S_sound_loop_info, snd, 1);
-  SCM_ASSERT(NOT_BOUND_P(vals) || LIST_P_WITH_LENGTH(vals, len), vals, SCM_ARG2, "set-" S_sound_loop_info);
+  ASSERT_TYPE(NOT_BOUND_P(vals) || LIST_P_WITH_LENGTH(vals, len), vals, SCM_ARG2, "set-" S_sound_loop_info, "a list");
   if (NOT_BOUND_P(vals))
     {
       vals = snd;
@@ -2127,7 +2127,7 @@ each inner list has the form: (name start loopstart loopend)"
 static SCM g_preload_directory(SCM directory) 
 {
   #define H_preload_directory "(" S_preload_directory " dir) preloads (into the View:Files dialog) any sounds in dir"
-  SCM_ASSERT(STRING_P(directory), directory, SCM_ARG1, S_preload_directory);
+  ASSERT_TYPE(STRING_P(directory), directory, SCM_ARGn, S_preload_directory, "a string");
   add_directory_to_prevlist(get_global_state(), 
 			    TO_C_STRING(directory));
   return(directory);
@@ -2137,7 +2137,7 @@ static SCM g_preload_file(SCM file)
 {
   #define H_preload_file "(" S_preload_file " file) preloads file (into the View:Files dialog)"
   char *name = NULL;
-  SCM_ASSERT(STRING_P(file), file, SCM_ARG1, S_preload_file);
+  ASSERT_TYPE(STRING_P(file), file, SCM_ARGn, S_preload_file, "a string");
   name = mus_expand_filename(TO_C_STRING(file));
   remember_me(get_global_state(), 
 	      filename_without_home_directory(name), 
@@ -2154,7 +2154,7 @@ static SCM g_sound_files_in_directory(SCM dirname)
   int i, numfiles;
   SCM vect = SCM_BOOL_F;
   SCM *vdata;
-  SCM_ASSERT(STRING_P(dirname), dirname, SCM_ARG1, S_sound_files_in_directory);
+  ASSERT_TYPE(STRING_P(dirname), dirname, SCM_ARGn, S_sound_files_in_directory, "a string");
   name = TO_C_STRING(dirname);
   if (name)
     {
@@ -2183,8 +2183,9 @@ void g_init_file(SCM local_doc)
 
   define_procedure_with_setter(S_sound_loop_info, SCM_FNC g_sound_loop_info, H_sound_loop_info,
 			       "set-" S_sound_loop_info, SCM_FNC g_set_sound_loop_info, local_doc, 0, 1, 1, 1);
-
+#if HAVE_GUILE
   memo_sound = gh_define(S_memo_sound, SCM_BOOL_F);
+#endif
 
   #define H_open_hook S_open_hook " (filename) is called each time a file is opened (before the actual open). \
 If it returns #t, the file is not opened."

@@ -1253,7 +1253,7 @@ env *name_to_env(char *str)
 static SCM g_define_envelope(SCM a, SCM b)
 {
   #define H_define_envelope "(" S_define_envelope " name data) defines 'name' to be the envelope 'data', a list of breakpoints"
-  SCM_ASSERT(STRING_P(a), a, SCM_ARG1, S_define_envelope);
+  ASSERT_TYPE(STRING_P(a), a, SCM_ARG1, S_define_envelope, "a string");
   if (LIST_P(b)) 
     alert_envelope_editor(get_global_state(), 
 			  TO_C_STRING(a), 
@@ -1266,7 +1266,7 @@ static SCM g_env_base(SCM name)
   #define H_env_base "(" S_env_base " 'env) is the base of the envelope env"
   int i;
   char *urn = NULL;
-  SCM_ASSERT(SYMBOL_P(name) || STRING_P(name), name, SCM_ARG1, S_env_base);
+  ASSERT_TYPE(SYMBOL_P(name) || STRING_P(name), name, SCM_ARGn, S_env_base, "a symbol or a string");
   if (STRING_P(name))
     urn = TO_C_STRING(name);
   else urn = SYMBOL_TO_C_STRING(name);
@@ -1282,8 +1282,8 @@ static SCM g_set_env_base(SCM name, SCM val)
 {
   int i;
   char *urn = NULL;
-  SCM_ASSERT(SYMBOL_P(name) || STRING_P(name), name, SCM_ARG1, "set-" S_env_base);
-  SCM_ASSERT(NUMBER_P(val), val, SCM_ARG2, "set-" S_env_base);
+  ASSERT_TYPE(SYMBOL_P(name) || STRING_P(name), name, SCM_ARG1, "set-" S_env_base, "a symbol or a string");
+  ASSERT_TYPE(NUMBER_P(val), val, SCM_ARG2, "set-" S_env_base, "a number");
   if (STRING_P(name))
     urn = TO_C_STRING(name);
   else urn = SYMBOL_TO_C_STRING(name);
@@ -1337,7 +1337,7 @@ env *get_env(SCM e, SCM base, char *origin) /* list or vector in e */
   env *newenv = NULL;
   SCM *vdata;
   SCM lst;
-  SCM_ASSERT(((VECTOR_P(e)) || (LIST_P_WITH_LENGTH(e, len))), e, SCM_ARG1, origin);
+  ASSERT_TYPE(((VECTOR_P(e)) || (LIST_P_WITH_LENGTH(e, len))), e, SCM_ARG1, origin, "a vector or a list");
   if (VECTOR_P(e))
     {
       len = VECTOR_LENGTH(e);
@@ -1369,7 +1369,7 @@ static SCM g_save_envelopes(SCM filename)
   #define H_save_envelopes "(" S_save_envelopes " filename) saves the envelopes known to the envelope editor in filename"
   char *name = NULL;
   FILE *fd;
-  SCM_ASSERT((STRING_P(filename) || (FALSE_P(filename)) || (NOT_BOUND_P(filename))), filename, SCM_ARG1, S_save_envelopes);
+  ASSERT_TYPE((STRING_P(filename) || (FALSE_P(filename)) || (NOT_BOUND_P(filename))), filename, SCM_ARGn, S_save_envelopes, "a string or #f");
   if (STRING_P(filename)) 
     name = mus_expand_filename(TO_C_STRING(filename));
   else name = copy_string("envs.save");

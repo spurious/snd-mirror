@@ -303,6 +303,9 @@ Here's a more extended example:
 (add-hook! mouse-enter-listener-hook 
   (lambda (widget) 
     (focus-widget widget)))
+(add-hook! mouse-enter-text-hook
+  (lambda (w)
+    (focus-widget w)))
 </pre>
 <p>
 If you loaded Snd with GSL, and have set the GSL_IEEE_MODE environment variable,

@@ -1285,10 +1285,35 @@
 	(graph (list #(0 1 2) #(3 2 1) #(1 2 3)))
 	(graph (list #(0 1 2) #(3 2 1))))
       (if (= (transform-size) 0) (snd-display (format #f ";ffting transform-size ~A?" (transform-size))))
+      (update-fft)
       (peaks "tmp.peaks")
-      (if (file-exists? "tmp.peaks")
-	  (delete-file "tmp.peaks")
-	  (snd-display (format #f ";peaks->tmp.peaks failed?")))
+      (let ((p (open-input-file "tmp.peaks")))
+	(if (not p)
+	    (snd-display (format #f ";peaks->tmp.peaks failed?"))
+	    (let ((line (read-line p)))
+	      (if (not (string=? "Snd: fft peaks" (substring line 0 14)))
+		  (snd-display line))
+	      (set! line (read-line p))
+	      (set! line (read-line p))
+	      (if (not (string=? "oboe.snd, fft 256 points beginning at sample 0 (0.000 secs)" line))
+		  (snd-display line))
+	      (set! line (read-line p))
+	      (set! line (read-line p))
+	      (if (not (string=? "  86.132812  1.00000" line))
+		  (snd-display line))
+	      (close-port p)
+	      (delete-file "tmp.peaks"))))
+      (let* ((num-transforms 9)
+	     (num-fft-styles 3))
+	(set! (ffting index 0) #t)
+	(set! (fft-size index 0) 64)
+	(do ((i 0 (1+ i)))
+	    ((= i num-transforms))
+	  (set! (transform-type) i)
+	  (do ((j 0 (1+ j)))
+	      ((= j num-fft-styles))
+	    (set! (fft-style index 0) j)
+	    (update-fft index 0))))
       (if (read-only index) (snd-display (format #f ";read-only open-sound: ~A?" (read-only index))))
       (set! (read-only index) #t)
       (if (not (read-only index)) (snd-display (format #f ";set-read-only: ~A?" (read-only index))))
@@ -3626,6 +3651,36 @@
  		    (phase-vocoder pv (lambda (dir) 
 					(next-sample reader)))
 		    #f))
+	(if (fneq (pv-ampinc pv 0) (vct-ref (pv-ampinc-1 pv) 0))
+	    (snd-display (format #f ";pvoc ampinc: ~A ~A?" (pv-ampinc pv 0) (vct-ref (pv-ampinc-1 pv) 0))))
+	(set-pv-ampinc pv 0 .1)
+	(if (fneq (pv-ampinc pv 0) .1)
+	    (snd-display (format #f ";set-pv-ampinc: ~A?" (pv-ampinc pv 0))))
+	(if (fneq (pv-amps pv 0) (vct-ref (pv-amps-1 pv) 0))
+	    (snd-display (format #f ";pvoc amps: ~A ~A?" (pv-amps pv 0) (vct-ref (pv-amps-1 pv) 0))))
+	(set-pv-amps pv 0 .1)
+	(if (fneq (pv-amps pv 0) .1)
+	    (snd-display (format #f ";set-pv-amps: ~A?" (pv-amps pv 0))))
+	(if (fneq (pv-phases pv 0) (vct-ref (pv-phases-1 pv) 0))
+	    (snd-display (format #f ";pvoc phases: ~A ~A?" (pv-phases pv 0) (vct-ref (pv-phases-1 pv) 0))))
+	(set-pv-phases pv 0 .1)
+	(if (fneq (pv-phases pv 0) .1)
+	    (snd-display (format #f ";set-pv-phases: ~A?" (pv-phases pv 0))))
+	(if (fneq (pv-phaseinc pv 0) (vct-ref (pv-phaseinc-1 pv) 0))
+	    (snd-display (format #f ";pvoc phaseinc: ~A ~A?" (pv-phaseinc pv 0) (vct-ref (pv-phaseinc-1 pv) 0))))
+	(set-pv-phaseinc pv 0 .1)
+	(if (fneq (pv-phaseinc pv 0) .1)
+	    (snd-display (format #f ";set-pv-phaseinc: ~A?" (pv-phaseinc pv 0))))
+	(if (fneq (pv-lastphase pv 0) (vct-ref (pv-lastphase-1 pv) 0))
+	    (snd-display (format #f ";pvoc lastphase: ~A ~A?" (pv-lastphase pv 0) (vct-ref (pv-lastphase-1 pv) 0))))
+	(set-pv-lastphase pv 0 .1)
+	(if (fneq (pv-lastphase pv 0) .1)
+	    (snd-display (format #f ";set-pv-lastphase: ~A?" (pv-lastphase pv 0))))
+	(if (fneq (pv-freqs pv 0) (vct-ref (pv-freqs-1 pv) 0))
+	    (snd-display (format #f ";pvoc freqs: ~A ~A?" (pv-freqs pv 0) (vct-ref (pv-freqs-1 pv) 0))))
+	(set-pv-freqs pv 0 .1)
+	(if (fneq (pv-freqs pv 0) .1)
+	    (snd-display (format #f ";set-pv-freqs: ~A?" (pv-freqs pv 0))))
 	(undo 1)
 	(free-sample-reader reader)
 	(set! pv (make-phase-vocoder #f
@@ -4543,7 +4598,7 @@
       (if (procedure? trace-hook) (trace-hook 13))
       (set! (cursor fd) 2000)
       (set! (fft-style) normal-fft)
-      (set! (ffting #t)fd)
+      (set! (ffting fd) #t)
       (add-to-menu mb "fm-violin" (lambda () (if (sound?) (clm-fm-violin .1 660 .1))))
       (add-to-menu mb "not here" (lambda () (snd-display ";oops")))
       (set! (menu-sensitive mb "not here") #f)
@@ -4564,18 +4619,20 @@
 	(copyfile-1 #t)
 	(if (not (equal? (edit-fragment) '("(cp)" "set" 0 50828))) (snd-display (format #f ";copyfile-1 (select): ~A?" (edit-fragment))))
 	(if (not (equal? (edits) (list (+ (car eds) 1) (cadr eds)))) (snd-display (format #f ";copyfile-1 (select eds): ~A ~A?" eds (edits)))))
-      (if (not full-test)
-	  ;; these are causing the test process to hang for some reason
-	  (let ((v0 (transform-samples->vct fd))
-		(vc (transform-samples fd))
-		(val (transform-sample 50 0 fd)))
-	    (if (and v0 vc)
-		(begin
-		  (if (fneq val (vector-ref vc 50)) (snd-display (format #f ";transform-sample: ~A ~A?" val (vector-ref vc 50))))
-		  (do ((i 0 (1+ i))) ((= i 100)) 
-		    (if (fneq (vector-ref vc i) (vct-ref v0 i)) 
-			(snd-display (format #f ";transform-samples[~D]: ~A ~A?" i (vector-ref vc i) (vct-ref v0 i))))))
-		(snd-display (format #f ";fft not ready yet: ~A ~A" v0 vc)))))
+      
+      (update-fft fd)
+      (let ((v0 (transform-samples->vct fd))
+	    (vc (transform-samples fd))
+	    (val (transform-sample 50 0 fd)))
+	(if (and v0 vc)
+	    (begin
+	      (if (fneq val (vector-ref vc 50)) (snd-display (format #f ";transform-sample: ~A ~A?" val (vector-ref vc 50))))
+	      (do ((i 0 (1+ i))) ((= i 100)) 
+		(if (fneq (vector-ref vc i) (vct-ref v0 i)) 
+		    (snd-display (format #f ";transform-samples[~D]: ~A ~A?" i (vector-ref vc i) (vct-ref v0 i))))))
+	    (snd-display (format #f ";fft not ready yet: ~A ~A" v0 vc))))
+      ;; TODO: much more complete checks here!
+
       (close-sound fd)
       (set! fd (open-sound "obtest.snd"))
       (let ((names (short-file-name #t)))
@@ -5981,6 +6038,13 @@
 	(let ((id (select-all)))
 	  (if (not (= (id-region (region-id 0)) 0)) (snd-display (format #f ";region-id: ~A ~A?" (region-id 0) (id-region (region-id 0)))))
 	  (if (not (= id (region-id 0))) (snd-display (format #f ";region-id(0): ~A ~A?" (region-id 0) id))))
+	(let ((tag
+	       (catch #t
+		      (lambda ()
+			(id-region (1+ (max-regions))))
+		      (lambda args (car args)))))
+	  (if (not (eq? tag 'no-such-region))
+	      (snd-display (format #f ";id-region of non-region: ~A?" (id-region (1+ (max-regions)))))))
 	(do ((i (1- (max-regions)) (1- i)))
 	    ((< i 0))
 	  (if (region? i)
@@ -6440,13 +6504,17 @@
       (load "draw.scm")
       (add-hook! after-graph-hook display-previous-edits)
       (add-hook! lisp-graph-hook display-energy)
-      (let ((ind (open-sound "oboe.snd")))
+      (let* ((ind (open-sound "oboe.snd"))
+	     (wids (channel-widgets))
+	     (wids1 (channel-widgets (selected-sound)))
+	     (wids2 (channel-widgets (selected-sound) (selected-channel))))
 	(do ((i 1 (1+ i)))
 	    ((= i 4))
 	  (scale-by 0.5)
 	  (set! (x-bounds) (list 0 (* i .3))))
 	(revert-sound ind)
 	(draw-bass-clef 100 100 100 0 ind 0)
+	(update-graph ind 0)
 	(draw-fermata 200 100 60 0 ind 0)
 	(draw-line 100 100 200 200 ind 0)
 	(draw-dot 300 300 10 ind 0)
@@ -6454,8 +6522,22 @@
 	(fill-rectangle 20 20 100 100 ind 0)
 	(erase-rectangle 30 30 20 20 ind 0)
 	(make-bezier 0 0 20 20 40 30 60 10 10)
+	(update-graph ind 0)
 	(reset-hook! after-graph-hook)
 	(reset-hook! lisp-graph-hook)
+	(let* ((ind1 (open-sound "2.snd"))
+	       (wids3 (channel-widgets ind1 0))
+	       (wids4 (channel-widgets ind1 1)))
+	  (if (or (not (list? wids))
+		  (not (list? wids3))
+		  (not (= (length wids1) 1))
+		  (not (= (length wids2) 1))
+		  (= (car wids3) (car wids4))
+		  (= (car wids3) (car wids))
+		  (not (= (car wids) (car wids1)))
+		  (not (= (car wids) (car wids2))))
+	      (snd-display (format #f ";channel-widgets confused: ~A ~A ~A ~A ~A" wids wids1 wids2 wids3 wids4)))
+	  (close-sound ind1))
 	(close-sound ind))))
 
 
@@ -6771,7 +6853,8 @@ EDITS: 3
 							  (n arg1 arg2))
 							(lambda args (car args)))))
 					    (if (not (or (eq? tag 'wrong-type-arg)
-							 (eq? tag 'wrong-number-of-args)))
+							 (eq? tag 'wrong-number-of-args)
+							 (eq? tag 'mus-error)))
 						(snd-display (format #f ";vct 1 wrong-whatever ~A: ~A ~A ~A" n tag arg1 arg2)))))
 					(list vct-add! vct-subtract! vct-multiply! vct-ref vct-scale! vct-fill! vct-do! vcts-do! vct-map! vcts-map!)))
 			    (list (current-module) "hiho" (sqrt -1.0) 1.5 (list 1 0) #(0 1))))
@@ -6794,7 +6877,7 @@ EDITS: 3
 		      (lambda ()
 			(make-vct -23))
 		      (lambda args (car args)))))
-	  (if (not (eq? tag 'out-of-range))
+	  (if (not (eq? tag 'mus-error))
 	      (snd-display (format #f ";make-vct -23: ~A" tag))))
 
         (let* ((v (make-vct 3)))
@@ -8176,25 +8259,19 @@ EDITS: 3
 
 
 ;;; TODO: these aren't tested at all yet (except as bare error checks in a few cases):
-;;;   mus-sound-set-max-amp mus-audio-read mus-audio-open-input mus-sound-print-cache
-;;;   gc-off gc-on play play-selection stop-player make-snd-nrev snd-nrev free-snd-nrev
-;;;   make-snd-freeverb snd-freeverb free-snd-freeverb pv-ampinc pv-ampinc-1 set-pv-ampinc pv-amps pv-amps-1 set-pv-amps pv-freqs-1
-;;;   pv-phases pv-phases-1 set-pv-phases pv-phaseinc pv-phaseinc-1 set-pv-phaseinc pv-lastphase-1 send-netscape channel-widgets
+;;;   mus-sound-set-max-amp mus-audio-read mus-audio-open-input mus-sound-print-cache stop-player send-netscape
 ;;;   sound-to-temp selection-to-temp temp-to-sound temp-to-selection scan-all-chans map-all-chans map-across-sound-chans
-;;;   transform-samples transform-sample transform-samples->vct loop-samples save-listener
-;;;   draw-dots fill-polygon hide-widget show-widget focus-widget add-idler remove-idler graph-data channel-info
+;;;   loop-samples save-listener draw-dots fill-polygon hide-widget show-widget focus-widget graph-data
 ;;;   add-input remove-input dlopen dlclose dlerror dlinit
 ;;;
-;;;  these are only called (successfully) once:
-;;;   convolve-files map-across-all-chans map-chans scan-across-chans describe-audio map-sound-chans scan-sound-chans scan-chans
-;;;   play-mix selection-to-temps samples->sound-data forward-mix smooth-selection convolve-selection-with save-state open-alternate-sound
-;;;   recorder-dialog sound-data->vct vct->sound-data mus-sound-datum-size mus-sound-length mus-sound-type-specifier mus-sound-reopen-output
-;;;   mus-sound-seek mus-sound-seek-frame update-lisp-graph update-fft close-sound-file vct->sound-file start-progress-report finish-progress-report
-;;;   save-marks id-region save-region delete-selection insert-selection mix-selection save-selection reverb-funcs vct-do! vcts-map!
+;;; only touched upon:
+;;;   convolve-files map-across-all-chans map-chans scan-across-chans map-sound-chans scan-sound-chans scan-chans
+;;;   selection-to-temps samples->sound-data forward-mix smooth-selection convolve-selection-with save-state open-alternate-sound
+;;;   sound-data->vct vct->sound-data mus-sound-reopen-output mus-sound-seek mus-sound-seek-frame close-sound-file vct->sound-file
+;;;   save-marks save-region delete-selection insert-selection mix-selection save-selection vct-do! vcts-map!
 ;;;   mus-set-rand-seed buffer->frame frame->buffer mixer* mixer-set! frame->frame restart-env locsig-set! locsig-reverb-set!
-;;;   ina inb outc outd mus-channel load-colormap make-track-sample-reader free-track-sample-reader mix-sound-channel mix-sound-index
-;;;   backward-mix peaks forward-sample backward-sample cursor-position save-macros prompt-in-minibuffer
-;;;   append-to-minibuffer scan-across-sound-chans change-menu-label update-sound write-peak-env-info-file
+;;;   ina inb outc outd mus-channel make-track-sample-reader free-track-sample-reader mix-sound-channel mix-sound-index
+;;;   backward-mix peaks forward-sample backward-sample cursor-position prompt-in-minibuffer
+;;;   append-to-minibuffer scan-across-sound-chans change-menu-label update-sound erase-rectangle load-font
 ;;;   soundfont-info menu-widgets x->position y->position position->y axis-info listener-selection draw-line draw-string fill-rectangle
-;;;   erase-rectangle load-font main-widgets dialog-widgets
 

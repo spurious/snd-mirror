@@ -8,12 +8,26 @@
  *   (or not many) internal code changes.  Perhaps other Scheme extension
  *   systems could also work. (see sl.h for librep equivalents -- I think
  *   I'll stay with "SCM" in Snd code, defining SCM as repv etc.  A major
- *   problem with librep: no setf, no defsetf, no defmacro... This has just
- *   been moved to a back burner.)
+ *   problem with librep: no setf, no defsetf, no defmacro... 
  */
 
-#define MAKE_HOOK(Name, Args, Help) snd_set_object_property(scm_create_hook(Name, Args), local_doc, TO_SCM_STRING(Help))
-#define CLEAR_HOOK(Arg) scm_reset_hook_x(Arg)
+#ifdef __cplusplus
+  #define SCM_FNC (SCM (*)())
+#else
+  #define SCM_FNC
+#endif
+
+#ifndef __GNUC__
+  #ifndef __FUNCTION__
+    #define __FUNCTION__ ""
+  #endif
+#endif
+
+#ifndef SCM_EQ_P
+  #define SCM_EQ_P(a, b) ((a) == (b))
+  /* SCM_UNPACK used here in later Guile's */
+#endif
+
 #define SND_RETURN_NEWSMOB(Tag, Val) SCM_RETURN_NEWSMOB(Tag, (SCM)Val)
 #define SND_VALUE_OF(a) SCM_SMOB_DATA(a)
 /* remember to check the smob type agreement before calling SND_VALUE_OF! */
@@ -32,11 +46,6 @@
 
 #define SMOB_TYPE_P(Obj, Type) ((SCM_NIMP(Obj)) && (SND_SMOB_TYPE(Type, Obj)))
 
-#ifndef SCM_EQ_P
-  #define SCM_EQ_P(a, b) ((a) == (b))
-  /* SCM_UNPACK used here in later Guile's */
-#endif
-
 #define TRUE_P(a) SCM_EQ_P(a, SCM_BOOL_T)
 #define FALSE_P(a) SCM_EQ_P(a, SCM_BOOL_F)
 #define NOT_TRUE_P(a) (!(TRUE_P(a)))
@@ -46,18 +55,6 @@
 #define BOUND_P(Arg) (!(SCM_UNBNDP(Arg)))
 #define NOT_BOUND_P(Arg) SCM_UNBNDP(Arg)
 #define INTEGER_ZERO SCM_INUM0
-
-#ifdef __cplusplus
-  #define SCM_FNC (SCM (*)())
-#else
-  #define SCM_FNC
-#endif
-
-#ifndef __GNUC__
-  #ifndef __FUNCTION__
-    #define __FUNCTION__ ""
-  #endif
-#endif
 
 #define TO_C_DOUBLE(a) scm_num2dbl(a, __FUNCTION__)
 #define TO_C_DOUBLE_WITH_ORIGIN(a, b) scm_num2dbl(a, b)
@@ -177,6 +174,14 @@ static SCM name_reversed(SCM arg1, SCM arg2, SCM arg3) \
 #define NO_SUCH_AXIS_CONTEXT TO_SCM_SYMBOL("no-such-graphics-context")
 #define BAD_ARITY            TO_SCM_SYMBOL("bad-arity")
 
+#ifdef SCM_ASSERT_TYPE
+  #define WRONG_TYPE_ERROR(Caller, Position, Arg, Correct_Type) scm_wrong_type_arg_msg(Caller, Position, Arg, Correct_Type)
+  #define ASSERT_TYPE(Assertion, Arg, Position, Caller, Correct_Type) SCM_ASSERT_TYPE(Assertion, Arg, Position, Caller, Correct_Type)
+#else
+  #define WRONG_TYPE_ERROR(Caller, Position, Arg, Correct_Type) scm_wrong_type_arg(Caller, Position, Arg)
+  #define ASSERT_TYPE(Assertion, Arg, Position, Caller, Correct_Type) SCM_ASSERT(Assertion, Arg, Position, Caller)
+#endif
+
 #ifndef SCM_BOOLP
   #define SCM_BOOLP(Arg) gh_boolean_p(Arg)
   /* the next exist in 1.3.4 but are not usable in this context (need SCM_NIMP check) */
@@ -214,6 +219,9 @@ static SCM name_reversed(SCM arg1, SCM arg2, SCM arg3) \
 #define CONS2(Arg1, Arg2, Arg3) scm_cons2(Arg1, Arg2, Arg3)
 #define LIST_REF(Lst, Num) scm_list_ref(Lst, TO_SMALL_SCM_INT(Num))
 #define VECTOR_REF(Vect, Num) scm_vector_ref(Vect, TO_SCM_INT(Num))
+#define VECTOR_SET(Vect, Num, Val) scm_vector_set_x(Vect, TO_SCM_INT(Num), Val)
+#define VECTOR_TO_LIST(Vect) scm_vector_to_list(Vect)
+#define REVERSE_LIST(Lst) scm_reverse(Lst)
 #define EVAL_STRING(Arg) scm_eval_0str(Arg)
 #if HAVE_SCM_C_MAKE_VECTOR
   #define MAKE_VECTOR(Num, Fill) scm_c_make_vector(Num, Fill)
@@ -231,6 +239,11 @@ static SCM name_reversed(SCM arg1, SCM arg2, SCM arg3) \
 #define MAKE_KEYWORD(Arg) scm_c_make_keyword(Arg)
 #define YES_WE_HAVE(Feature) scm_add_feature(Feature)
 #define DOCUMENTATION scm_string_to_symbol(TO_SCM_STRING("documentation"))
+#define MAKE_PERMANENT(Obj) scm_permanent_object(Obj)
+#define LOAD_SCM_FILE(File) gh_eval_file(File)
+#define MAKE_HOOK(Name, Args, Help) snd_set_object_property(scm_create_hook(Name, Args), local_doc, TO_SCM_STRING(Help))
+#define MAKE_HELPLESS_HOOK(Args) scm_make_hook(TO_SMALL_SCM_INT(Args))
+#define CLEAR_HOOK(Arg) scm_reset_hook_x(Arg)
 
 #define SND_ASSERT_SND(Origin, Snd, Offset) \
   if (!((INTEGER_P(Snd)) || (FALSE_P(Snd)) || (NOT_BOUND_P(Snd)) || (LIST_P(Snd)))) \
@@ -255,7 +268,10 @@ static SCM name_reversed(SCM arg1, SCM arg2, SCM arg3) \
   #define CALL2(Func, Arg1, Arg2, Caller) gh_call2(Func, Arg1, Arg2)
   #define CALL3(Func, Arg1, Arg2, Arg3, Caller) gh_call3(Func, Arg1, Arg2, Arg3)
   #define APPLY(Func, Args, Caller) gh_apply(Func, Args)
+  /* gh_apply is scm_apply(proc, args, SCM_EOL) */
 #endif
+
+#define APPLY_EOL scm_listofnull
 
 #ifndef USE_OPT_APPLY
   #define USE_OPT_APPLY 1

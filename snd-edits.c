@@ -2626,7 +2626,7 @@ associated with snd's channel chn; this is a list (origin type start-sample samp
   ed_list *ed;
   int ctr;
   SND_ASSERT_CHAN(S_edit_fragment, snd, chn, 2);
-  SCM_ASSERT(INTEGER_IF_BOUND_P(uctr), uctr, SCM_ARG1, S_edit_fragment);
+  ASSERT_TYPE(INTEGER_IF_BOUND_P(uctr), uctr, SCM_ARG1, S_edit_fragment, "an integer");
   cp = get_cp(snd, chn, S_edit_fragment);
   ctr = TO_C_INT_OR_ELSE(uctr, cp->edit_ctr);
   if ((ctr < cp->edit_size) && 
@@ -2752,7 +2752,7 @@ static scm_sizet free_sf(SCM obj)
 static SCM g_sample_reader_at_end(SCM obj) 
 {
   #define H_sample_reader_at_end "(" S_sample_reader_at_endQ " obj) -> #t if sample-reader has reached the end of its data"
-  SCM_ASSERT(SAMPLE_READER_P(obj), obj, SCM_ARG1, S_sample_reader_at_endQ);
+  ASSERT_TYPE(SAMPLE_READER_P(obj), obj, SCM_ARGn, S_sample_reader_at_endQ, "a sample-reader");
   return(TO_SCM_BOOLEAN(read_sample_eof(TO_SAMPLE_READER(obj))));
 }
 
@@ -2774,12 +2774,12 @@ snd can be a filename, a sound index number, or a list with a mix id number."
   snd_state *ss;
   char *filename;
   snd_info *loc_sp = NULL;
-  SCM_ASSERT(NUMBER_IF_BOUND_P(samp_n), samp_n, SCM_ARG1, S_make_sample_reader);
-  SCM_ASSERT(INTEGER_OR_BOOLEAN_IF_BOUND_P(dir1), dir1, SCM_ARG4, S_make_sample_reader);
+  ASSERT_TYPE(NUMBER_IF_BOUND_P(samp_n), samp_n, SCM_ARG1, S_make_sample_reader, "a number");
+  ASSERT_TYPE(INTEGER_OR_BOOLEAN_IF_BOUND_P(dir1), dir1, SCM_ARG4, S_make_sample_reader, "an integer");
   ss = get_global_state();
   if (STRING_P(snd))
     {
-      if (!(INTEGER_OR_BOOLEAN_IF_BOUND_P(chn))) scm_wrong_type_arg(S_make_sample_reader, 3, chn);
+      if (!(INTEGER_OR_BOOLEAN_IF_BOUND_P(chn))) WRONG_TYPE_ERROR(S_make_sample_reader, 3, chn, "an integer or boolean");
       filename = TO_C_STRING(snd);
       if (mus_file_probe(filename))
 	loc_sp = make_sound_readable(ss, filename, FALSE);
@@ -2817,10 +2817,10 @@ returns a reader ready to access region's channel chn data starting at 'start-sa
 
   snd_fd *fd = NULL;
   int reg_n, chn_n;
-  SCM_ASSERT(NUMBER_IF_BOUND_P(samp_n), samp_n, SCM_ARG1, S_make_sample_reader);
-  SCM_ASSERT(INTEGER_IF_BOUND_P(reg), reg, SCM_ARG2, S_make_sample_reader);
-  SCM_ASSERT(INTEGER_IF_BOUND_P(chn), chn, SCM_ARG3, S_make_sample_reader);
-  SCM_ASSERT(INTEGER_OR_BOOLEAN_IF_BOUND_P(dir1), dir1, SCM_ARG4, S_make_sample_reader);
+  ASSERT_TYPE(NUMBER_IF_BOUND_P(samp_n), samp_n, SCM_ARG1, S_make_sample_reader, "a number");
+  ASSERT_TYPE(INTEGER_IF_BOUND_P(reg), reg, SCM_ARG2, S_make_sample_reader, "an integer");
+  ASSERT_TYPE(INTEGER_IF_BOUND_P(chn), chn, SCM_ARG3, S_make_sample_reader, "an integer");
+  ASSERT_TYPE(INTEGER_OR_BOOLEAN_IF_BOUND_P(dir1), dir1, SCM_ARG4, S_make_sample_reader, "an integer");
 
   reg_n = TO_C_INT_OR_ELSE(reg, 0);
   if (!(region_ok(reg_n))) 
@@ -2846,14 +2846,14 @@ returns a reader ready to access region's channel chn data starting at 'start-sa
 static SCM g_next_sample(SCM obj)
 {
   #define H_next_sample "(" S_next_sample " reader) -> next sample from reader"
-  SCM_ASSERT(SAMPLE_READER_P(obj), obj, SCM_ARG1, S_next_sample);
+  ASSERT_TYPE(SAMPLE_READER_P(obj), obj, SCM_ARGn, S_next_sample, "a sample-reader");
   return(TO_SCM_DOUBLE(next_sample_to_float(TO_SAMPLE_READER(obj))));
 }
 
 static SCM g_previous_sample(SCM obj)
 {
   #define H_previous_sample "(" S_previous_sample " reader) -> previous sample from reader"
-  SCM_ASSERT(SAMPLE_READER_P(obj), obj, SCM_ARG1, S_previous_sample);
+  ASSERT_TYPE(SAMPLE_READER_P(obj), obj, SCM_ARGn, S_previous_sample, "a sample-reader");
   return(TO_SCM_DOUBLE(previous_sample_to_float(TO_SAMPLE_READER(obj))));
 }
 
@@ -2862,7 +2862,7 @@ static SCM g_free_sample_reader(SCM obj)
   #define H_free_sample_reader "(" S_free_sample_reader " reader) frees sample reader 'reader'"
   snd_fd *fd;
   snd_info *sp = NULL;
-  SCM_ASSERT(SAMPLE_READER_P(obj), obj, SCM_ARG1, S_free_sample_reader);
+  ASSERT_TYPE(SAMPLE_READER_P(obj), obj, SCM_ARGn, S_free_sample_reader, "a sample-reader");
   fd = TO_SAMPLE_READER(obj);
   sp = fd->local_sp; 
   fd->local_sp = NULL;
@@ -2897,17 +2897,17 @@ replacing current data with the function results; origin is the edit-history nam
   file_info *hdr;
   MUS_SAMPLE_TYPE **data;
   MUS_SAMPLE_TYPE *idata;
-  SCM_ASSERT(SAMPLE_READER_P(reader), reader, SCM_ARG1, S_loop_samples);
-  SCM_ASSERT(SND_WRAPPED(proc), proc, SCM_ARG2, S_loop_samples);
-  SCM_ASSERT(INTEGER_P(calls), calls, SCM_ARG3, S_loop_samples);
-  SCM_ASSERT(STRING_P(origin), origin, SCM_ARG4, S_loop_samples);
+  ASSERT_TYPE(SAMPLE_READER_P(reader), reader, SCM_ARG1, S_loop_samples, "a sample-reader");
+  ASSERT_TYPE(SND_WRAPPED(proc), proc, SCM_ARG2, S_loop_samples, "a wrapped object");
+  ASSERT_TYPE(INTEGER_P(calls), calls, SCM_ARG3, S_loop_samples, "an integer");
+  ASSERT_TYPE(STRING_P(origin), origin, SCM_ARG4, S_loop_samples, "a string");
   num = TO_C_INT(calls);
   sf = TO_SAMPLE_READER(reader);
   cp = sf->cp;
   ss = cp->state;
   if (BOUND_P(environ))
     {
-      SCM_ASSERT(SND_WRAPPED(environ), environ, SCM_ARG5, S_loop_samples);
+      ASSERT_TYPE(SND_WRAPPED(environ), environ, SCM_ARG5, S_loop_samples, "a wrapped object");
       envp = (void *)SND_UNWRAP(environ);
       func_env = (g_plug_env)SND_UNWRAP(proc);
     }
@@ -2973,7 +2973,7 @@ static SCM g_save_edit_history(SCM filename, SCM snd, SCM chn)
   chan_info *cp;
   char *mcf = NULL;
   snd_state *ss;
-  SCM_ASSERT(STRING_P(filename), filename, SCM_ARG1, S_save_edit_history);
+  ASSERT_TYPE(STRING_P(filename), filename, SCM_ARG1, S_save_edit_history, "a string");
   SND_ASSERT_CHAN(S_save_edit_history, snd, chn, 2);
   mcf = mus_expand_filename(TO_C_STRING(filename));
   fd = fopen(mcf, "w");
@@ -3081,7 +3081,7 @@ static SCM g_as_one_edit(SCM proc, SCM origin)
   int *cur_edits;
   snd_state *ss;
   SCM result = SCM_BOOL_F;
-  SCM_ASSERT(PROCEDURE_P(proc), proc, SCM_ARG1, S_as_one_edit);
+  ASSERT_TYPE(PROCEDURE_P(proc), proc, SCM_ARG1, S_as_one_edit, "a procedure");
   ss = get_global_state();
   chans = active_channels(ss, WITH_VIRTUAL_CHANNELS);
   if (chans > 0)
@@ -3151,7 +3151,7 @@ MUS_SAMPLE_TYPE *g_floats_to_samples(SCM obj, int *size, const char *caller, int
 	      for (i = 0; i < num; i++) 
 		vals[i] = MUS_FLOAT_TO_SAMPLE(v->data[i]);
 	    }
-	  else scm_wrong_type_arg(caller, position, obj);
+	  else WRONG_TYPE_ERROR(caller, position, obj, "a vct, vector, or list");
 	}
     }
   (*size) = num;
@@ -3162,7 +3162,7 @@ static SCM g_sample(SCM samp_n, SCM snd_n, SCM chn_n)
 {
   #define H_sample "(" S_sample " samp &optional snd chn) -> sample samp in snd's channel chn (slow access -- use sample-readers for speed)"
   chan_info *cp;
-  SCM_ASSERT(NUMBER_P(samp_n), samp_n, SCM_ARG1, S_sample);
+  ASSERT_TYPE(NUMBER_P(samp_n), samp_n, SCM_ARG1, S_sample, "a number");
   SND_ASSERT_CHAN(S_sample, snd_n, chn_n, 2);
   cp = get_cp(snd_n, chn_n, S_sample);
   return(TO_SCM_DOUBLE(sample(TO_C_INT_OR_ELSE(samp_n, 0), cp)));
@@ -3173,8 +3173,8 @@ static SCM g_set_sample(SCM samp_n, SCM val, SCM snd_n, SCM chn_n)
   /* each call consitutes a separate edit from the undo/redo point-of-view */
   chan_info *cp;
   MUS_SAMPLE_TYPE ival[1];
-  SCM_ASSERT(NUMBER_P(samp_n), samp_n, SCM_ARG1, "set-" S_sample);
-  SCM_ASSERT(NUMBER_P(val), val, SCM_ARG2, "set-" S_sample);
+  ASSERT_TYPE(NUMBER_P(samp_n), samp_n, SCM_ARG1, "set-" S_sample, "a number");
+  ASSERT_TYPE(NUMBER_P(val), val, SCM_ARG2, "set-" S_sample, "a number");
   SND_ASSERT_CHAN("set-" S_sample, snd_n, chn_n, 3);
   cp = get_cp(snd_n, chn_n, "set-" S_sample);
   ival[0] = MUS_FLOAT_TO_SAMPLE(TO_C_DOUBLE(val));
@@ -3212,8 +3212,8 @@ history position to read (defaults to current position)."
   int i, len, beg, edpos;
   SCM new_vect;
   SCM *vdata;
-  SCM_ASSERT(NUMBER_IF_BOUND_P(samp_0), samp_0, SCM_ARG1, S_samples);
-  SCM_ASSERT(NUMBER_IF_BOUND_P(samps), samps, SCM_ARG2, S_samples);
+  ASSERT_TYPE(NUMBER_IF_BOUND_P(samp_0), samp_0, SCM_ARG1, S_samples, "a number");
+  ASSERT_TYPE(NUMBER_IF_BOUND_P(samps), samps, SCM_ARG2, S_samples, "a number");
   SND_ASSERT_CHAN(S_samples, snd_n, chn_n, 3);
   cp = get_cp(snd_n, chn_n, S_samples);
   edpos = TO_C_INT_OR_ELSE(pos, cp->edit_ctr);
@@ -3242,8 +3242,8 @@ the new data's end"
   MUS_SAMPLE_TYPE *ivals;
   int len, beg, curlen, override = 0;
   char *fname;
-  SCM_ASSERT(NUMBER_P(samp_0), samp_0, SCM_ARG1, "set-" S_samples);
-  SCM_ASSERT(NUMBER_P(samps), samps, SCM_ARG2, "set-" S_samples);
+  ASSERT_TYPE(NUMBER_P(samp_0), samp_0, SCM_ARG1, "set-" S_samples, "a number");
+  ASSERT_TYPE(NUMBER_P(samps), samps, SCM_ARG2, "set-" S_samples, "a number");
   SND_ASSERT_CHAN("set-" S_samples, snd_n, chn_n, 4);
   cp = get_cp(snd_n, chn_n, "set-" S_samples);
   beg = TO_C_INT_OR_ELSE(samp_0, 0);
@@ -3292,10 +3292,10 @@ static SCM g_change_samples_with_origin(SCM samp_0, SCM samps, SCM origin, SCM v
   MUS_SAMPLE_TYPE *ivals;
   int i, len, beg;
   SCM *vdata;
-  SCM_ASSERT(INTEGER_P(samp_0), samp_0, SCM_ARG1, S_change_samples_with_origin);
-  SCM_ASSERT(INTEGER_P(samps), samps, SCM_ARG2, S_change_samples_with_origin);
-  SCM_ASSERT(STRING_P(origin), origin, SCM_ARG3, S_change_samples_with_origin);
-  SCM_ASSERT((VECTOR_P(vect)) || (STRING_P(vect)), vect, SCM_ARG4, S_change_samples_with_origin);
+  ASSERT_TYPE(INTEGER_P(samp_0), samp_0, SCM_ARG1, S_change_samples_with_origin, "an integer");
+  ASSERT_TYPE(INTEGER_P(samps), samps, SCM_ARG2, S_change_samples_with_origin, "an integer");
+  ASSERT_TYPE(STRING_P(origin), origin, SCM_ARG3, S_change_samples_with_origin, "a string");
+  ASSERT_TYPE((VECTOR_P(vect)) || (STRING_P(vect)), vect, SCM_ARG4, S_change_samples_with_origin, "a vector or a string");
   SND_ASSERT_CHAN(S_change_samples_with_origin, snd_n, chn_n, 5);
   cp = get_cp(snd_n, chn_n, S_change_samples_with_origin);
   beg = TO_C_INT_OR_ELSE(samp_0, 0);
@@ -3333,9 +3333,9 @@ inserts channel 'file-chan' of 'file' (or all chans file-chan not given) into sn
   snd_info *sp;
   char *filename = NULL;
   int nc, len, fchn, beg = 0, i;
-  SCM_ASSERT(STRING_P(file), file, SCM_ARG1, S_insert_sound);
-  SCM_ASSERT(NUMBER_IF_BOUND_P(ubeg), ubeg, SCM_ARG2, S_insert_sound);
-  SCM_ASSERT(INTEGER_IF_BOUND_P(file_chn), file_chn, SCM_ARG3, S_insert_sound);
+  ASSERT_TYPE(STRING_P(file), file, SCM_ARG1, S_insert_sound, "a string");
+  ASSERT_TYPE(NUMBER_IF_BOUND_P(ubeg), ubeg, SCM_ARG2, S_insert_sound, "a number");
+  ASSERT_TYPE(INTEGER_IF_BOUND_P(file_chn), file_chn, SCM_ARG3, S_insert_sound, "an integer");
   SND_ASSERT_CHAN(S_insert_sound, snd_n, chn_n, 4);
   cp = get_cp(snd_n, chn_n, S_insert_sound);
   filename = mus_expand_filename(TO_C_STRING(file));
@@ -3385,7 +3385,7 @@ static SCM g_delete_sample(SCM samp_n, SCM snd_n, SCM chn_n)
   #define H_delete_sample "(" S_delete_sample " samp &optional snd chn) deletes sample 'samp' from snd's channel chn"
   chan_info *cp;
   int samp;
-  SCM_ASSERT(NUMBER_P(samp_n), samp_n, SCM_ARG1, S_delete_sample);
+  ASSERT_TYPE(NUMBER_P(samp_n), samp_n, SCM_ARG1, S_delete_sample, "a number");
   SND_ASSERT_CHAN(S_delete_sample, snd_n, chn_n, 2);
   cp = get_cp(snd_n, chn_n, S_delete_sample);
   samp = TO_C_INT_OR_ELSE(samp_n, 0);
@@ -3405,8 +3405,8 @@ static SCM g_delete_sample(SCM samp_n, SCM snd_n, SCM chn_n)
 static SCM g_delete_samples_1(SCM samp_n, SCM samps, SCM snd_n, SCM chn_n, const char *origin)
 {
   chan_info *cp;
-  SCM_ASSERT(NUMBER_P(samp_n), samp_n, SCM_ARG1, origin);
-  SCM_ASSERT(NUMBER_P(samps), samps, SCM_ARG2, origin);
+  ASSERT_TYPE(NUMBER_P(samp_n), samp_n, SCM_ARG1, origin, "a number");
+  ASSERT_TYPE(NUMBER_P(samps), samps, SCM_ARG2, origin, "a number");
   SND_ASSERT_CHAN(origin, snd_n, chn_n, 3);
   cp = get_cp(snd_n, chn_n, origin);
   delete_samples(TO_C_INT_OR_ELSE(samp_n, 0),
@@ -3427,7 +3427,7 @@ deletes 'samps' samples from snd's channel chn starting at 'start-samp'"
 static SCM g_delete_samples_with_origin(SCM samp_n, SCM samps, SCM origin, SCM snd_n, SCM chn_n)
 {
   SCM res;
-  SCM_ASSERT(STRING_P(origin), origin, SCM_ARG3, S_delete_samples_with_origin);
+  ASSERT_TYPE(STRING_P(origin), origin, SCM_ARG3, S_delete_samples_with_origin, "a string");
   res = g_delete_samples_1(samp_n, samps, snd_n, chn_n, TO_C_STRING(origin));
   return(scm_return_first(res, origin));
 }
@@ -3438,8 +3438,8 @@ static SCM g_insert_sample(SCM samp_n, SCM val, SCM snd_n, SCM chn_n)
   chan_info *cp;
   int beg;
   MUS_SAMPLE_TYPE ival[1];
-  SCM_ASSERT(NUMBER_P(samp_n), samp_n, SCM_ARG1, S_insert_sample);
-  SCM_ASSERT(NUMBER_P(val), val, SCM_ARG2, S_insert_sample);
+  ASSERT_TYPE(NUMBER_P(samp_n), samp_n, SCM_ARG1, S_insert_sample, "a number");
+  ASSERT_TYPE(NUMBER_P(val), val, SCM_ARG2, S_insert_sample, "a number");
   SND_ASSERT_CHAN(S_insert_sample, snd_n, chn_n, 3);
   cp = get_cp(snd_n, chn_n, S_insert_sample);
   beg = TO_C_INT_OR_ELSE(samp_n, 0);
@@ -3462,8 +3462,8 @@ inserts data (either a vector, vct, or list of samples, or a filename) into snd'
   chan_info *cp;
   MUS_SAMPLE_TYPE *ivals;
   int beg, len;
-  SCM_ASSERT(NUMBER_P(samp), samp, SCM_ARG1, S_insert_samples);
-  SCM_ASSERT(NUMBER_P(samps), samps, SCM_ARG2, S_insert_samples);
+  ASSERT_TYPE(NUMBER_P(samp), samp, SCM_ARG1, S_insert_samples, "a number");
+  ASSERT_TYPE(NUMBER_P(samps), samps, SCM_ARG2, S_insert_samples, "a number");
   SND_ASSERT_CHAN(S_insert_samples, snd_n, chn_n, 4);
   cp = get_cp(snd_n, chn_n, S_insert_samples);
   beg = TO_C_INT_OR_ELSE(samp, 0);
@@ -3488,10 +3488,10 @@ static SCM g_insert_samples_with_origin(SCM samp, SCM samps, SCM origin, SCM vec
   MUS_SAMPLE_TYPE *ivals;
   int i, beg, len;
   SCM *vdata;
-  SCM_ASSERT(INTEGER_P(samp), samp, SCM_ARG1, S_insert_samples_with_origin);
-  SCM_ASSERT(INTEGER_P(samps), samps, SCM_ARG2, S_insert_samples_with_origin);
-  SCM_ASSERT(STRING_P(origin), origin, SCM_ARG3, S_insert_samples_with_origin);
-  SCM_ASSERT((VECTOR_P(vect)) || (STRING_P(vect)) || FALSE_P(vect), vect, SCM_ARG4, S_insert_samples_with_origin);
+  ASSERT_TYPE(INTEGER_P(samp), samp, SCM_ARG1, S_insert_samples_with_origin, "an integer");
+  ASSERT_TYPE(INTEGER_P(samps), samps, SCM_ARG2, S_insert_samples_with_origin, "an integer");
+  ASSERT_TYPE(STRING_P(origin), origin, SCM_ARG3, S_insert_samples_with_origin, "a string");
+  ASSERT_TYPE((VECTOR_P(vect)) || (STRING_P(vect)) || FALSE_P(vect), vect, SCM_ARG4, S_insert_samples_with_origin, "a vector or a string");
   SND_ASSERT_CHAN(S_insert_samples_with_origin, snd_n, chn_n, 5);
   cp = get_cp(snd_n, chn_n, S_insert_samples_with_origin);
   beg = TO_C_INT_OR_ELSE(samp, 0);
@@ -3544,6 +3544,7 @@ static int dont_save(snd_state *ss, snd_info *sp, char *newname)
 
 void g_init_edits(SCM local_doc)
 {
+#if HAVE_GUILE
   sf_tag = scm_make_smob_type("sf", sizeof(SCM));
   scm_set_smob_mark(sf_tag, mark_sf);
   scm_set_smob_print(sf_tag, print_sf);
@@ -3551,6 +3552,7 @@ void g_init_edits(SCM local_doc)
   scm_set_smob_equalp(sf_tag, equalp_sf);
 #if HAVE_APPLICABLE_SMOB
   scm_set_smob_apply(sf_tag, SCM_FNC g_next_sample, 0, 0, 0);
+#endif
 #endif
 
   DEFINE_PROC(S_make_sample_reader,        g_make_sample_reader, 0, 5, 0,        H_make_sample_reader);

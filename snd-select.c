@@ -687,7 +687,7 @@ static SCM g_insert_selection(SCM beg, SCM snd, SCM chn)
   if (selection_is_active())
     {
       SND_ASSERT_CHAN(S_insert_selection, snd, chn, 2);
-      SCM_ASSERT(NUMBER_IF_BOUND_P(beg), beg, SCM_ARG1, S_insert_selection);
+      ASSERT_TYPE(NUMBER_IF_BOUND_P(beg), beg, SCM_ARG1, S_insert_selection, "a number");
       ss = get_global_state();
       cp = get_cp(snd, chn, S_insert_selection);
       if (cp == NULL) 
@@ -711,7 +711,7 @@ static SCM g_mix_selection(SCM beg, SCM snd, SCM chn)
   if (selection_is_active())
     {
       SND_ASSERT_CHAN(S_mix_selection, snd, chn, 2);
-      SCM_ASSERT(NUMBER_IF_BOUND_P(beg), beg, SCM_ARG1, S_mix_selection);
+      ASSERT_TYPE(NUMBER_IF_BOUND_P(beg), beg, SCM_ARG1, S_mix_selection, "a number");
       ss = get_global_state();
       cp = get_cp(snd, chn, S_mix_selection);
       if (cp == NULL) 
@@ -757,7 +757,7 @@ static SCM g_set_selection_position(SCM pos, SCM snd, SCM chn)
   sync_info *si = NULL;
   int i, beg;
   SND_ASSERT_CHAN("set-" S_selection_position, snd, chn, 2);
-  SCM_ASSERT(NUMBER_IF_BOUND_P(pos), pos, SCM_ARG1, S_selection_position);
+  ASSERT_TYPE(NUMBER_IF_BOUND_P(pos), pos, SCM_ARG1, S_selection_position, "a number");
   beg = TO_C_INT_OR_ELSE(pos, 0);
   if (NOT_BOUND_P(snd))
     {
@@ -810,7 +810,7 @@ static SCM g_set_selection_length(SCM samps, SCM snd, SCM chn)
   chan_info *cp;
   sync_info *si = NULL;
   int i, len;
-  SCM_ASSERT(NUMBER_IF_BOUND_P(samps), samps, SCM_ARG1, "set-" S_selection_length);
+  ASSERT_TYPE(NUMBER_IF_BOUND_P(samps), samps, SCM_ARG1, "set-" S_selection_length, "a number");
   len = TO_C_INT_OR_ELSE(samps, 0);
   if (NOT_BOUND_P(snd))
     {
@@ -853,7 +853,7 @@ static SCM g_set_selection_member(SCM on, SCM snd, SCM chn)
 {
   chan_info *cp;
   SND_ASSERT_CHAN("set-" S_selection_member, snd, chn, 2);
-  SCM_ASSERT(INTEGER_OR_BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_selection_member);
+  ASSERT_TYPE(INTEGER_OR_BOOLEAN_IF_BOUND_P(on), on, SCM_ARG1, "set-" S_selection_member, "an integer");
   cp = get_cp(snd, chn, "set-" S_selection_member);
   if (TO_C_INT_OR_ELSE(on, 1))
     {
@@ -901,10 +901,10 @@ saves the current selection in filename using the indicated file attributes"
   snd_state *ss;
   int type, format, sr, err;
   char *com = NULL, *fname = NULL;
-  SCM_ASSERT(STRING_P(filename), filename, SCM_ARG1, S_save_selection);
-  SCM_ASSERT(INTEGER_IF_BOUND_P(header_type), header_type, SCM_ARG2, S_save_selection);
-  SCM_ASSERT(INTEGER_IF_BOUND_P(data_format), data_format, SCM_ARG3, S_save_selection);
-  SCM_ASSERT(NUMBER_IF_BOUND_P(srate), srate, SCM_ARG4, S_save_selection);
+  ASSERT_TYPE(STRING_P(filename), filename, SCM_ARG1, S_save_selection, "a string");
+  ASSERT_TYPE(INTEGER_IF_BOUND_P(header_type), header_type, SCM_ARG2, S_save_selection, "an integer");
+  ASSERT_TYPE(INTEGER_IF_BOUND_P(data_format), data_format, SCM_ARG3, S_save_selection, "an integer");
+  ASSERT_TYPE(NUMBER_IF_BOUND_P(srate), srate, SCM_ARG4, S_save_selection, "a number");
   if (selection_is_active() == 0)
     snd_no_active_selection_error(S_save_selection);
   ss = get_global_state();

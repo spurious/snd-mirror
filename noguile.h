@@ -10,8 +10,6 @@
  *   ways to get/set/load C vars/funcs, and so on)
  */
 
-/* these are the left-over scm/gh entities */
-
 #define SCM int
 #define SCM_BOOL_F 0
 #define SCM_BOOL_T 1
@@ -31,28 +29,9 @@
 #define scm_print_state int
 #define scm_sizet int
 
-#define scm_make_hook(a) 0
 #define scm_puts(a, b)
-#define scm_wrong_type_arg(a, b, c) exit(0)
-#define scm_wrong_num_args(a) exit(0)
-#define scm_out_of_range(a, b) exit(0)
-#define scm_make_smob_type(a, b) 0
-#define scm_set_smob_mark(a, b)
-#define scm_set_smob_print(a, b)
-#define scm_set_smob_free(a, b)
-#define scm_set_smob_equalp(a, b)
-#define scm_permanent_object(a) 0
 #define scm_throw(a, b) exit(a)
-#define scm_set_object_property_x(a, b, c)
 #define scm_apply(a, b, c) 0
-#define scm_internal_stack_catch(a, b, c, d, e) 0
-#define scm_vector_set_x(a, b, c)
-#define scm_reverse(a) a
-#define scm_object_property(a, b) 0
-#define scm_vector_to_list(a) 0
-#define scm_gc_mark(a)
-#define scm_procedure_documentation(a) 0
-#define scm_procedure_property(a, b) 0
 
 #if HAVE_MACRO_VARARGS
 #ifdef __GNUC__
@@ -64,11 +43,6 @@
   SCM scm_return_first(SCM a, ...);
 #endif
 
-#define gh_new_procedure(a, b, c, d, e) 0
-#define gh_define(a, b) 0
-#define gh_eval_file(a) 0
-
-#define SCM_ASSERT(a, b, c, d)
 #define SCM_EQ_P(a, b) 0
 #define SCM_LIST0 0
 #define SCM_LIST1(a) 0
@@ -91,8 +65,6 @@
 
 /* this is the sg.h replacement */
 
-#define MAKE_HOOK(Name, Args, Help) 0
-#define CLEAR_HOOK(Arg)
 #define SND_RETURN_NEWSMOB(Tag, Val) 0
 #define SND_VALUE_OF(a) 0
 #define SND_SET_VALUE_OF(a, b) 
@@ -184,8 +156,13 @@
 #define CONS2(Arg1, Arg2, Arg3) 0
 #define LIST_REF(Lst, Num) 0
 #define VECTOR_REF(Vect, Num) 0
+#define VECTOR_SET(a, b, c)
 #define EVAL_STRING(Arg) 0
 #define MAKE_VECTOR(Num, Fill) 0
+#define VECTOR_TO_LIST(Vect) 0
+#define MAKE_HOOK(Name, Args, Help) 0
+#define MAKE_HELPLESS_HOOK(Args) 0
+#define CLEAR_HOOK(Arg)
 #define CHAR_P(Arg) 0
 #define TO_C_CHAR(Arg) 0
 #define SND_ASSERT_SND(Origin, Snd, Offset)
@@ -195,10 +172,16 @@
 #define CALL2(Func, Arg1, Arg2, Caller) 0
 #define CALL3(Func, Arg1, Arg2, Arg3, Caller) 0
 #define APPLY(Func, Args, Caller) 0
+#define APPLY_EOL 0
 #define ARITY(Func) 0
 #define KEYWORD_P(Obj) 0
 #define MAKE_KEYWORD(Arg) 0
 #define YES_WE_HAVE(Feature)
 #define DOCUMENTATION 0
+#define WRONG_TYPE_ERROR(Caller, Position, Arg, Correct_Type) 
+#define ASSERT_TYPE(Assertion, Arg, Position, Caller, Correct_Type)
+#define REVERSE_LIST(a) a
+#define MAKE_PERMANENT(a) 0
+#define LOAD_SCM_FILE(a) 0
 
 #endif

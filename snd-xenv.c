@@ -1837,7 +1837,7 @@ static SCM g_enved_active_env(void)
 
 static SCM g_set_enved_active_env(SCM e)
 {
-  SCM_ASSERT(LIST_P(e) || STRING_P(e), e, SCM_ARG1, "set-" S_enved_active_env);
+  ASSERT_TYPE(LIST_P(e) || STRING_P(e), e, SCM_ARGn, "set-" S_enved_active_env, "a list or string");
   if (active_env) active_env = free_env(active_env);
   if (STRING_P(e))
     active_env = copy_env(find_named_env(e));
@@ -1855,7 +1855,7 @@ static SCM g_enved_selected_env(void)
 
 static SCM g_set_enved_selected_env(SCM name)
 {
-  SCM_ASSERT(STRING_P(name), name, SCM_ARG1, "set-" S_enved_selected_env);
+  ASSERT_TYPE(STRING_P(name), name, SCM_ARGn, "set-" S_enved_selected_env, "a string");
   selected_env = find_named_env(name);
   return(name);
 }
