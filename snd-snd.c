@@ -3334,7 +3334,7 @@ The 'choices' are 0 (apply to sound), 1 (apply to channel), and 2 (apply to sele
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(choice), choice, XEN_ARG_2, S_apply_controls, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(beg), beg, XEN_ARG_3, S_apply_controls, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(dur), dur, XEN_ARG_4, S_apply_controls, "an integer");
-  sp = get_sp(snd, PLAYERS_OK);
+  sp = get_sp(snd, NO_PLAYERS); /* control changes make sense, but not 'apply' -- expecting just 'play' if a player */
   if (sp)
     {
       if (XEN_OFF_T_P(beg)) apply_beg = XEN_TO_C_OFF_T(beg); else apply_beg = 0;

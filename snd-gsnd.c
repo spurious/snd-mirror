@@ -156,6 +156,7 @@ void snd_file_bomb_icon(snd_info *sp, bool on)
 
 static void snd_file_glasses_icon(snd_info *sp, bool on, int glass)
 {
+  if (!(sp->sgx)) return;
   if (on)
     {
       if (mini_glasses[glass]) 
@@ -215,7 +216,7 @@ char *get_minibuffer_string(snd_info *sp)
 static char stupid[1] = {'\0'};
 void set_minibuffer_string(snd_info *sp, char *str) 
 {
-  if (sp->inuse != SOUND_NORMAL) return;
+  if ((sp->inuse != SOUND_NORMAL) || (!(sp->sgx))) return;
   if (str)
     gtk_entry_set_text(GTK_ENTRY(MINIBUFFER_TEXT(sp)), str);
   else gtk_entry_set_text(GTK_ENTRY(MINIBUFFER_TEXT(sp)), stupid);

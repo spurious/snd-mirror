@@ -524,6 +524,24 @@ and config.guess to the main fftw directory (clobbering its ancient
 versions), then configure --disable-shared, and ignore the (bogus)
 error messages.
 
+Here's some info from Josh (last name?):
+
+    "It turns out everything required for snd is now in fink! 
+
+     sudo fink install openmotif3 fftw guile guile-dev 
+
+    So... after a loooong compilation process (fftw required g77) I had
+    everything in place.  But ./configure couldn't find them, d'oh.  My
+    simple solution was to pass in the CFLAGS and LDFLAGS as so:
+    
+    CFLAGS=-I/sw/include LDFLAGS="-L/sw/lib -lmx -bind_at_load" ./configure \ 
+         --with-gl --with-editres --with-static-xm --with-guile
+    
+    This was after a bit of trial and error.  The linker couldn't find
+    some symbols that turned out to be in libmx, so I added that, and the
+    linker also suggested the bind_at_load (though I'm not totally sure
+    what that means)."
+
 
 On a Mac running 10.2 with the developers environment (i.e. gcc),
 I installed these programs:

@@ -2071,7 +2071,7 @@ static XEN g_play_1(XEN samp_n, XEN snd_n, XEN chn_n, bool back, bool syncd, XEN
       sp = get_sp(snd_n, PLAYERS_OK);
       if (sp == NULL) 
 	return(snd_no_such_sound_error(caller, snd_n));
-      if ((syncd) && (sp->sync != 0))
+      if ((syncd) && (sp->sync != 0) && (!(IS_PLAYER(sp))))
 	{
 	  si = snd_sync(sp->sync);
 	  if (end != NO_END_SPECIFIED)

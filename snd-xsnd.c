@@ -82,7 +82,7 @@ void goto_minibuffer(snd_info *sp)
 
 void set_minibuffer_string(snd_info *sp, char *str) 
 {
-  if (sp->inuse != SOUND_NORMAL) return;
+  if ((sp->inuse != SOUND_NORMAL) || (!(sp->sgx))) return;
   XmTextSetString(MINIBUFFER_TEXT(sp), str);
   XmUpdateDisplay(MINIBUFFER_TEXT(sp));
 }
@@ -1411,6 +1411,8 @@ static void snd_file_glasses_icon(snd_info *sp, bool on, int glass)
 {
   Widget w;
   snd_context *sx;
+  sx = sp->sgx;
+  if (!sx) return;
   w = NAME_ICON(sp);
   if (on)
     {
@@ -1422,7 +1424,6 @@ static void snd_file_glasses_icon(snd_info *sp, bool on, int glass)
     }
   else
     {
-      sx = sp->sgx;
       XtVaSetValues(w, XmNlabelPixmap, sx->file_pix, NULL);
       XmUpdateDisplay(w);
     }

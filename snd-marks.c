@@ -2271,11 +2271,13 @@ static XEN g_save_marks(XEN snd_n, XEN filename)
       fd = FOPEN(newname, "w");
       if (fd == NULL)
 	{
+	  XEN lname;
+	  lname = C_TO_XEN_STRING(newname);
 	  FREE(newname);
 	  XEN_ERROR(CANNOT_SAVE,
 		    XEN_LIST_3(C_TO_XEN_STRING(S_save_marks),
 			       C_TO_XEN_STRING("open ~A: ~A"),
-			       XEN_LIST_2(C_TO_XEN_STRING(newname),
+			       XEN_LIST_2(lname,
 					  C_TO_XEN_STRING(strerror(errno)))));
 	}
       else

@@ -335,6 +335,7 @@ void report_in_minibuffer(snd_info *sp, char *format, ...)
   char *buf;
   va_list ap;
   if (!(sp->active)) return;
+  if (!(sp->sgx)) return;
   va_start(ap, format);
   buf = vstr(format, ap);
   va_end(ap);
@@ -349,6 +350,7 @@ void report_in_minibuffer_and_save(snd_info *sp, char *format, ...)
   char *buf;
   va_list ap;
   if (!(sp->active)) return;
+  if (!(sp->sgx)) return;
   va_start(ap, format);
   buf = vstr(format, ap);
   va_end(ap);

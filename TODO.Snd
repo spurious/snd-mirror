@@ -44,4 +44,4 @@ It should be possible to build Snd in Windows with either
 A CD building script.
 
 sdif file support (all I need is a routine to translate from
-sdif to aifc or some such format).
+  sdif to aifc or some such format).
