@@ -3,8 +3,6 @@
 
 /* TODO:   user-loaded colormaps need to be added to the Color dialog list, etc
  * TODO    colored marks etc (requires 2 pixels for selected/unselected graphs)?
- * TODO    colormaps applied to lisp or data graph?
- * TODO    option to set the background-colour in the fft/transform-window?
  */
 
 static snd_state *state;
@@ -313,9 +311,9 @@ static XEN g_set_graph_cursor(XEN curs)
 }
 
 #if 0
-/* the docs say the XmNorientation field can be set at any time, but it seems to be ignored except at widget creation */
+/* the docs say the XmNorientation field can be set at any time, but it is a bit buggy (sashes get confused) */
 #if (XmVERSION > 1)
-#define "set-" S_sounds_horizontal "set-sounds-horizontal"
+#define S_sounds_horizontal "sounds-horizontal"
 static XEN g_set_sounds_horizontal(XEN val)
 {
   int horizontal = 0;
@@ -323,7 +321,9 @@ static XEN g_set_sounds_horizontal(XEN val)
   XEN_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, XEN_ONLY_ARG, "set-" S_sounds_horizontal, "a boolean");
   horizontal = (XEN_NOT_FALSE_P(val));
   ss = get_global_state();
+  XtUnmanageChild(SOUND_PANE(ss));
   XtVaSetValues(SOUND_PANE(ss), XmNorientation, (horizontal) ? XmHORIZONTAL : XmVERTICAL, NULL);
+  XtManageChild(SOUND_PANE(ss));
   return(C_TO_XEN_BOOLEAN(horizontal));
 }
 #endif
@@ -389,6 +389,9 @@ void g_initialize_xgh(snd_state *ss)
   XEN_DEFINE_PROCEDURE(S_load_colormap, g_load_colormap_w, 1, 0, 0,  H_load_colormap);
 
   XEN_DEFINE_PROCEDURE("snd-pixel", g_snd_pixel, 1, 0, 0, NULL);
+#if 0
+  XEN_DEFINE_PROCEDURE("set-sounds-horizontal", g_set_sounds_horizontal, 1, 0, 0, NULL);
+#endif
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_graph_cursor, g_graph_cursor_w, H_graph_cursor,
 			       "set-" S_graph_cursor, g_set_graph_cursor_w,  0, 0, 1, 0);

@@ -1,53 +1,57 @@
-# RPM spec file for Snd
+# RPM spec file for Snd by Fernando Lopez-Lezcano <nando@ccrma.stanford.edu>
+#
+# yes, this is crazy and patches to make this simpler gladly accepted, 
+# provided the whole thing can still be used in all currently
+# supported distros. 
 
 %define prefix  /usr
-%define ver     4.13
-%define rel     2
-%define alsaapi 0.5
+%define ver     5.1
+%define rel     1
+%define tarname snd-5
+
+# autodetection of installed alsa library version:
+
+%define alsa_api %(if [ -e /usr/lib/libasound.so.2 ] ; then echo "0.9" ; elif [ -e /usr/lib/libasound.so.1 ] ; then echo "0.5" ; else echo "" ; fi)
+
+# autodetection of distribution we are building in:
+
+%define linux_flavor %(%{_sourcedir}/snd-detect-flavor)
 
 # these constants define which binary rpm's are going to be generated,
-# you can enable type of gui [motif|gtk] and type of sound driver support
-# [oss|alsa] and whether the command line utilities are built as well. 
+# you can enable the type of gui [motif|gtk] and whether the command
+# line utilities are built as well. 
 
 %define build_motif_gui 1
 %define build_static_motif_gui 1
 %define build_gtk_gui 1
 %define build_utils 1
 
-%define build_oss_api 1
-%define build_alsa_api 1
+# set to 1 if you also want to build packages that support only oss
+# even if you have alsa installed in the system
 
-# special cases for requirements: if the distribution you're compiling for
-# is named here set that definition to 1 and all others to 0
+%define build_oss 0
 
-# SuSE 7.0
-#   I installed the DEMO cd and then the following additional packages:
-#     motif/motifdev, guile, guilegtk
-#     gtk/gtkdev 1.2.8 55
-#     glib/glibdev 1.2.8 57
-#     alsa/alsadev 0.5.9 20
+# set this to 1 if you want to link statically against gsl
 
-%define linux_SuSE_7_0 0
+%define with_static_gsl 1
 
-# RedHat 7.0
-#   Additional packages:
-#     openmotif 2.1.30-6 (from the PowerTools cdrom)
-#     installed alsa-0.5.10 (driver, lib, utils)
-#   We require installation of
-#     snd-guile
-#     snd-guile-gtk
-#     [while out-of-the-box redhat7 comes with 
-#      guile 1.3.4 it does not have guilegtk
-#      so we would have to install that anyway]
+# set this to 1 if you want to link statically against alsa
+#
+#   if the binary is statically linked then the requirement
+#   for alsa to be preinstalled can be dropped and the resulting
+#   binary can run in either an alsa or oss only environment, 
+#   snd will autoswitch to the existing driver giving alsa
+#   priority. But it will make the executable bigger so if you
+#   have alsa installed you might want to set this to 0
 
-%define linux_RedHat_7_0 0
-
-# Mandrake 7.2
-#   Additional packages:
-#     openmotif 2.1.30-5mdk (from the Applications 1 cdrom)
-#     used the installed alsa-0.5.9 (driver, lib, utils)
-
-%define linux_Mandrake_7_2 1
+%if "%{alsa_api}" == "0.5"
+    %define with_static_alsa 1
+%endif
+# for now the default for 0.9 is to link dynamically as the libraries
+# and api are still changing a bit [as of 7/27/2001]
+%if "%{alsa_api}" == "0.9"
+    %define with_static_alsa 0
+%endif
 
 # set this to 0 if you want to build the spec file with required libraries
 # and packages automatically discovered by rpm
@@ -61,7 +65,7 @@
 # The following incantation will list all shared libraries a given snd 
 # executable is linking with and the rpm packages (if any) they belong to:
 # 
-# ldd snd | awk '{printf $3 " "; system("rpm -q -f " $3);}' | awk '{print $2 " " $1}' | sort
+# ldd snd | awk '{printf $3 " "; system("rpm -q -f " $3);}' | awk '{print $2 " -> " $1}' | sort
 #
 # If you're compiling this spec file for a new distribution, first do a
 # compilation with build_with_autoreqs set to 1 , then do an install of
@@ -74,15 +78,30 @@
 # the example for SuSE 7.0 that I created. Let me know so I can add it
 # to this spec file <nando@ccrma.stanford.edu>. 
 #
-# here's a list of what we currently require, the defaults and why:
+# here's a list of what we currently require under RedHat 6.2, the defaults
+# used and a rationale for them:
 
-# alsa: the alsa driver libraries. Hmmm, I guess this should be statically
-#       linked so that snd-*-alsa can run in an oss only environment. At
-#       this point the alsa version autoswitches into oss if no alsa driver
-#       is found (or if the alsa driver reports 0 installed cards). We
-#       require alsa 0.5.*
+# alsa: the alsa driver libraries. The requirement is only defined if
+#       the library is dynamically linked. At this point the program 
+#       autoswitches into oss if no alsa driver is found (or if the 
+#       alsa library reports no installed cards). We support both alsa 
+#       0.5.* or 0.9.*
 
+%if "%{alsa_api}" == "0.5" && %{with_static_alsa} == 0
   %define req_alsa libasound.so.1
+%endif
+%if "%{alsa_api}" == "0.9" && %{with_static_alsa} == 0
+  %define req_alsa libasound.so.2
+%endif
+
+# gsl: the GNU Scientific Library, the requirement is only defined
+#      if we are dynamically linking against gsl (and this is only
+#      valid for gsl 0.8, if you use < 0.8 you will have to change
+#      the names of the libraries. 
+
+%if %{with_static_gsl} == 0
+  %define req_gsl libgsl.so.0 libgslcblas.so.0
+%endif
 
 # guile:    the guile interpreter
 # guilegtk: the gtk glue library for guile
@@ -118,7 +137,14 @@
 # SuSE 7.0
 ##########
 
-%if %{linux_SuSE_7_0}
+# SuSE 7.0
+#   I installed the DEMO cd and then the following additional packages:
+#     motif/motifdev, guile, guilegtk
+#     gtk/gtkdev 1.2.8 55
+#     glib/glibdev 1.2.8 57
+#     alsa/alsadev 0.5.9 20
+
+%if "%{linux_flavor}" == "SuSE-7.0"
   # guile 1.3.4
   %define req_guile libguile.so.6
   # openmotif with broken libXm.so.2 provides
@@ -132,12 +158,23 @@
 %endif
 
 ############
-# RedHat 7.0
+# RedHat 7.x
 ############
 
-%if %{linux_RedHat_7_0}
-  # rh7 is based on 2.2
-  %define req_glibc glibc = 2.2
+# RedHat 7.0-7.1
+#   Additional packages:
+#     openmotif 2.1.30-6 (from the PowerTools cdrom)
+#     installed alsa (driver, lib, utils, either 0.5 or 0.9)
+#   We require these packages to be installed:
+#     snd-guile
+#     snd-guile-gtk
+#     [while out-of-the-box redhat7 comes with 
+#      guile 1.3.4 it does not have guilegtk
+#      so we would have to install that anyway]
+
+%if "%{linux_flavor}" == "RedHat-7.0" || "%{linux_flavor}" == "RedHat-7.1" 
+  # rh7.x is based on 2.2
+  %define req_glibc glibc >= 2.2
   # comes with 1.2.8
   %define req_gtk gtk+ >= 1.2.8 glib >= 1.2.8
   # just require XFree86 libraries, xpm is part of them
@@ -148,12 +185,17 @@
 # Mandrake 7.2
 ##############
 
-%if %{linux_Mandrake_7_2}
+# Mandrake 7.2
+#   Additional packages installed:
+#     openmotif 2.1.30-5mdk (from the Applications 1 cdrom)
+#     used the existing alsa-0.5.9 (driver, lib, utils)
+
+%if "%{linux_flavor}" == "Mandrake-7.2"
   # mdk is based on 2.1
   %define req_glibc glibc >= 2.1
   # comes with 1.2.8
   %define req_gtk gtk+ >= 1.2.8 glib >= 1.2.8
-  # just require XFree86 libraries, xpm is part of them
+  # require XFree86 libraries and xpm
   %define req_x XFree86-libs xpm
 %endif
 
@@ -163,6 +205,19 @@
 %define req_X_motif %{req_glibc} %{req_x} %{req_motif}
 %define req_X_gtk %{req_glibc} %{req_x} %{req_gtk} %{req_guilegtk}
 
+# command line options for static linking
+
+%if %{with_static_gsl} == 1
+    %define static_gsl "--with-static-gsl=yes"
+%else
+    %define static_gsl ""
+%endif
+%if %{with_static_alsa} == 1
+    %define static_alsa "--with-static-alsa=yes"
+%else
+    %define static_alsa ""
+%endif
+
 
 Summary:	A sound editor
 Name:		snd
@@ -170,19 +225,23 @@ Version:	%{ver}
 Release:	%{rel}
 Copyright:	LGPL
 Group:		Applications/Sound
-Source:		ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-4.tar.gz
-URL:		http://ccrma-www/CCRMA/Software/snd/snd.html
+Source:		ftp://ccrma-ftp.stanford.edu/pub/Lisp/%{tarname}.tar.gz
+Source1:        snd-detect-flavor
+URL:		http://www-ccrma.stanford.edu/software/snd/
 Vendor:		CCRMA/Music Stanford University
 Packager:	Fernando Lopez-Lezcano <nando@ccrma.stanford.edu>
 Buildroot:      %{_tmppath}/%{name}-root
 Prefix:         %{prefix}
+%if %{build_with_AutoReqProvOff}
+AutoReqProv:    off
+%endif
 
 %description
 Snd is a sound editor modelled loosely after Emacs and an old, sorely-missed
 PDP-10 sound editor named Dpysnd. It can accomodate any number of sounds
 each with any number of channels, and can be customized and extended
-using Guile or Ruby. Snd is free (LGPL); the code is available via
-anonymous ftp at ccrma-ftp.stanford.edu as pub/Lisp/snd-4.tar.gz.
+using guile and guile-gtk. Snd is free (LGPL); the code is available via
+anonymous ftp at ccrma-ftp.stanford.edu as pub/Lisp/%{tarname}.tar.gz.
 
 %package oss
 Summary:        Motif/OSS version of snd
@@ -190,23 +249,33 @@ Group:		Applications/Sound
 %if %{build_with_AutoReqProvOff}
 AutoReqProv:    off
 Requires:       snd == %{ver} %{req_X} %{req_guile}
+%if %{with_static_gsl} == 0
+Requires:       %{req_gsl}
+%endif
 %endif
 
 %description oss
 A version of the Snd editor compiled with the Motif gui (statically
 linked), and support for the OSS api sound driver. 
 
-%package alsa-%{alsaapi}
+%package oss-alsa%{alsa_api}
 Summary:        Motif/ALSA version of snd
 Group:		Applications/Sound
 %if %{build_with_AutoReqProvOff}
 AutoReqProv:    off
-Requires:       snd == %{ver} %{req_X} %{req_guile} %{req_alsa}
+Requires:       snd == %{ver} %{req_X} %{req_guile}
+%if %{with_static_alsa} == 0
+Requires:       %{req_alsa}
+%endif
+%if %{with_static_gsl} == 0
+Requires:       %{req_gsl}
+%endif
 %endif
 
-%description alsa-%{alsaapi}
+%description oss-alsa%{alsa_api}
 A version of the Snd editor compiled with the Motif gui (statically
-linked), and support for the ALSA 0.5.x api sound driver. 
+linked), and support for both the OSS and the ALSA %{alsa_api} api 
+sound drivers. 
 
 %package motif-oss
 Summary:        Motif/OSS version of snd
@@ -214,6 +283,9 @@ Group:		Applications/Sound
 %if %{build_with_AutoReqProvOff}
 AutoReqProv:    off
 Requires:       snd == %{ver} %{req_X_motif} %{req_guile}
+%if %{with_static_gsl} == 0
+Requires:       %{req_gsl}
+%endif
 %endif
 
 %description motif-oss
@@ -221,18 +293,24 @@ A version of the Snd editor compiled with the Motif gui and support for
 the OSS api sound driver. You will need to have an implementation of
 Motif already installed. 
 
-%package motif-alsa-%{alsaapi}
+%package motif-oss-alsa%{alsa_api}
 Summary:        Motif/ALSA version of snd
 Group:		Applications/Sound
 %if %{build_with_AutoReqProvOff}
 AutoReqProv:    off
-Requires:       snd == %{ver} %{req_X_motif} %{req_guile} %{req_alsa}
+Requires:       snd == %{ver} %{req_X_motif} %{req_guile}
+%if %{with_static_alsa} == 0
+Requires:       %{req_alsa}
+%endif
+%if %{with_static_gsl} == 0
+Requires:       %{req_gsl}
+%endif
 %endif
 
-%description motif-alsa-%{alsaapi}
+%description motif-oss-alsa%{alsa_api}
 A version of the Snd editor compiled with the Motif gui and support for
-the ALSA 0.5.x api sound driver. You will need to have an implementation 
-of Motif already installed. 
+both the OSS and the ALSA %{alsa_api} api sound drivers. You will need
+to have an implementation of Motif already installed. 
 
 %package gtk-oss
 Summary:        Gtk/OSS version of snd
@@ -240,23 +318,32 @@ Group:		Applications/Sound
 %if %{build_with_AutoReqProvOff}
 AutoReqProv:    off
 Requires:       snd == %{ver} %{req_X_gtk} %{req_guile}
+%if %{with_static_gsl} == 0
+Requires:       %{req_gsl}
+%endif
 %endif
 
 %description gtk-oss
 A version of the Snd editor compiled with the gtk gui and support for
 the OSS api sound driver. 
 
-%package gtk-alsa-%{alsaapi}
+%package gtk-oss-alsa%{alsa_api}
 Summary:        Gtk/ALSA version of snd
 Group:		Applications/Sound
 %if %{build_with_AutoReqProvOff}
 AutoReqProv:    off
-Requires:       snd == %{ver} %{req_X_gtk} %{req_guile} %{req_alsa}
+Requires:       snd == %{ver} %{req_X_gtk} %{req_guile}
+%if %{with_static_alsa} == 0
+Requires:       %{req_alsa}
+%endif
+%if %{with_static_gsl} == 0
+Requires:       %{req_gsl}
+%endif
 %endif
 
-%description gtk-alsa-%{alsaapi}
+%description gtk-oss-alsa%{alsa_api}
 A version of the Snd editor compiled with the gtk gui and support for
-the ALSA api sound driver. 
+both the OSS and the ALSA %{alsa_api} api sound drivers. 
 
 %package utils-oss
 Summary:        OSS version of sndplay and friends
@@ -264,28 +351,39 @@ Group:		Applications/Sound
 %if %{build_with_AutoReqProvOff}
 AutoReqProv:    off
 Requires:       snd == %{ver} %{req_glibc}
+%if %{with_static_gsl} == 0
+Requires:       %{req_gsl}
+%endif
 %endif
 
 %description utils-oss
 Command line utilities included with the snd sound editor compiled with
 support for the OSS api sound driver. 
 
-%package utils-alsa-%{alsaapi}
+%package utils-oss-alsa%{alsa_api}
 Summary:        ALSA versions of sndplay and friends
 Group:		Applications/Sound
 %if %{build_with_AutoReqProvOff}
 AutoReqProv:    off
-Requires:       snd == %{ver} %{req_glibc} %{req_alsa}
+Requires:       snd == %{ver} %{req_glibc}
+%if %{with_static_alsa} == 0
+Requires:       %{req_alsa}
+%endif
+%if %{with_static_gsl} == 0
+Requires:       %{req_gsl}
+%endif
 %endif
 
-%description utils-alsa-%{alsaapi}
+%description utils-oss-alsa%{alsa_api}
 Command line utilities included with the snd sound editor compiled with
-support for the ALSA api sound driver. 
+support for both the OSS and the ALSA %{alsa_api} api sound drivers. 
 
 %prep
-%setup -n snd-4
+%setup -n %{tarname}
 
 %build snd
+echo "Building on %{linux_flavor}"
+
 %ifos Linux
 %ifarch i386 i586 i686
 
@@ -293,7 +391,7 @@ support for the ALSA api sound driver.
 %define guilepath PATH=/usr/lib/snd/bin:${PATH}
 
 #--- build OSS api utilities
-%if %{build_utils} && %{build_oss_api}
+%if %{build_utils} && "%{alsa_api}" == ""
     %{guilepath} ./configure --prefix=%{prefix} 
     make sndplay sndrecord sndinfo sndsine audinfo
     mv sndplay sndplay-oss
@@ -306,7 +404,7 @@ support for the ALSA api sound driver.
 %endif
 
 #--- build Motif/OSS version
-%if %{build_motif_gui} && %{build_oss_api}
+%if %{build_motif_gui} && "%{alsa_api}" == ""
     %{guilepath} ./configure --prefix=%{prefix} 
     make
     mv snd snd-motif-oss
@@ -315,59 +413,59 @@ support for the ALSA api sound driver.
 %endif
 
 #--- build static Motif/OSS version
-%if %{build_static_motif_gui} && %{build_oss_api}
-    %{guilepath} ./configure --prefix=%{prefix} --with-static-motif=yes
+%if %{build_static_motif_gui} && "%{alsa_api}" == ""
+    %{guilepath} ./configure --prefix=%{prefix} --with-static-motif=yes %{static_gsl}
     make
     mv snd snd-oss
     make clean
     rm -f config.cache
 %endif
 
-#--- build ALSA api utilities
-%if %{build_utils} && %{build_alsa_api}
-    %{guilepath} ./configure --prefix=%{prefix} --with-alsa=yes
+#--- build OSS/ALSA api utilities
+%if %{build_utils} && "%{alsa_api}" != ""
+    %{guilepath} ./configure --prefix=%{prefix} --with-alsa=yes %{static_alsa} %{static_gsl}
     make sndplay sndrecord sndinfo sndsine audinfo
-    mv sndplay sndplay-alsa
-    mv sndrecord sndrecord-alsa
-    mv sndinfo sndinfo-alsa
-    mv sndsine sndsine-alsa
-    mv audinfo audinfo-alsa
+    mv sndplay sndplay-oss-alsa
+    mv sndrecord sndrecord-oss-alsa
+    mv sndinfo sndinfo-oss-alsa
+    mv sndsine sndsine-oss-alsa
+    mv audinfo audinfo-oss-alsa
     make clean
     rm -f config.cache
 %endif
 
-#--- build Motif/ALSA version
-%if %{build_motif_gui} && %{build_alsa_api}
-    %{guilepath} ./configure --prefix=%{prefix} --with-alsa=yes
+#--- build Motif/OSS/ALSA version
+%if %{build_motif_gui} && "%{alsa_api}" != ""
+    %{guilepath} ./configure --prefix=%{prefix} --with-alsa=yes %{static_alsa} %{static_gsl}
     make
-    mv snd snd-motif-alsa
+    mv snd snd-motif-oss-alsa
     make clean
     rm -f config.cache
 %endif
 
-#--- build static Motif/ALSA version
-%if %{build_static_motif_gui} && %{build_alsa_api}
-    %{guilepath} ./configure --prefix=%{prefix} --with-alsa=yes --with-static-motif=yes
+#--- build static Motif/OSS/ALSA version
+%if %{build_static_motif_gui} &&  "%{alsa_api}" != ""
+    %{guilepath} ./configure --prefix=%{prefix} --with-alsa=yes %{static_alsa}  --with-static-motif=yes %{static_gsl}
     make
-    mv snd snd-alsa
+    mv snd snd-oss-alsa
     make clean
     rm -f config.cache
 %endif
 
 #--- build Gtk/OSS version
-%if %{build_gtk_gui} && %{build_oss_api} 
-    %{guilepath} ./configure --prefix=%{prefix} --with-gtk=yes
+%if %{build_gtk_gui} && "%{alsa_api}" == ""
+    %{guilepath} ./configure --prefix=%{prefix} --with-gtk=yes %{static_gsl}
     make
     mv snd snd-gtk-oss
     make clean
     rm -f config.cache
 %endif
 
-#--- build Gtk/ALSA version
-%if %{build_gtk_gui} && %{build_alsa_api}
-    %{guilepath} ./configure --prefix=%{prefix} --with-gtk=yes --with-alsa=yes
+#--- build Gtk/OSS/ALSA version
+%if %{build_gtk_gui} && "%{alsa_api}" != ""
+    %{guilepath} ./configure --prefix=%{prefix} --with-gtk=yes --with-alsa=yes %{static_alsa} %{static_gsl}
     make
-    mv snd snd-gtk-alsa
+    mv snd snd-gtk-oss-alsa
     make clean
     rm -f config.cache
 %endif
@@ -380,29 +478,29 @@ make -f makefile.ppcrpm
 %install snd
 rm -rf ${RPM_BUILD_ROOT}
 install -m 755 -d ${RPM_BUILD_ROOT}%{prefix}/bin/
-%if %{build_motif_gui} && %{build_oss_api}
+%if %{build_motif_gui} && "%{alsa_api}" == ""
     install -m 755 snd-motif-oss ${RPM_BUILD_ROOT}%{prefix}/bin/
 %endif
-%if %{build_static_motif_gui} && %{build_oss_api}
+%if %{build_static_motif_gui} && "%{alsa_api}" == ""
     install -m 755 snd-oss ${RPM_BUILD_ROOT}%{prefix}/bin/
 %endif
-%if %{build_motif_gui} && %{build_alsa_api}
-    install -m 755 snd-motif-alsa ${RPM_BUILD_ROOT}%{prefix}/bin/
+%if %{build_motif_gui} && "%{alsa_api}" != ""
+    install -m 755 snd-motif-oss-alsa ${RPM_BUILD_ROOT}%{prefix}/bin/
 %endif
-%if %{build_static_motif_gui} && %{build_alsa_api}
-    install -m 755 snd-alsa ${RPM_BUILD_ROOT}%{prefix}/bin/
+%if %{build_static_motif_gui} && "%{alsa_api}" != ""
+    install -m 755 snd-oss-alsa ${RPM_BUILD_ROOT}%{prefix}/bin/
 %endif
-%if %{build_gtk_gui} && %{build_oss_api}
+%if %{build_gtk_gui} && "%{alsa_api}" == ""
     install -m 755 snd-gtk-oss ${RPM_BUILD_ROOT}%{prefix}/bin/
 %endif
-%if %{build_gtk_gui} && %{build_alsa_api}
-    install -m 755 snd-gtk-alsa ${RPM_BUILD_ROOT}%{prefix}/bin/
+%if %{build_gtk_gui} && "%{alsa_api}" != ""
+    install -m 755 snd-gtk-oss-alsa ${RPM_BUILD_ROOT}%{prefix}/bin/
 %endif
-%if %{build_utils} && %{build_oss_api}
+%if %{build_utils} && "%{alsa_api}" == ""
     install -m 755 sndplay-oss sndrecord-oss sndinfo-oss sndsine-oss audinfo-oss ${RPM_BUILD_ROOT}%{prefix}/bin/
 %endif
-%if %{build_utils} && %{build_alsa_api}
-    install -m 755 sndplay-alsa sndrecord-alsa sndinfo-alsa sndsine-alsa audinfo-alsa ${RPM_BUILD_ROOT}%{prefix}/bin/
+%if %{build_utils} && "%{alsa_api}" != ""
+    install -m 755 sndplay-oss-alsa sndrecord-oss-alsa sndinfo-oss-alsa sndsine-oss-alsa audinfo-oss-alsa ${RPM_BUILD_ROOT}%{prefix}/bin/
 %endif
 
 %clean
@@ -411,12 +509,12 @@ rm -rf ${RPM_BUILD_ROOT}
 #--- snd package, just documentation
 %files
 %defattr(-, root, root)
-%doc README.Snd HISTORY.Snd Snd.ad *.html
+%doc COPYING README.Snd HISTORY.Snd Snd.ad TODO.Snd *.html
 %doc *.png
 %doc *.scm
 
 #--- snd-oss (motif statically linked)
-%if %{build_static_motif_gui} && %{build_oss_api} 
+%if %{build_static_motif_gui} && "%{alsa_api}" == "" 
 %post oss
 if [ -L %{prefix}/bin/snd ] ; then
     rm -f %{prefix}/bin/snd
@@ -437,7 +535,7 @@ fi
 %endif
 
 #--- snd-motif-oss (motif dynamically linked)
-%if %{build_motif_gui} && %{build_oss_api} 
+%if %{build_motif_gui} && "%{alsa_api}" == "" 
 %post motif-oss
 if [ -L %{prefix}/bin/snd ] ; then
     rm -f %{prefix}/bin/snd
@@ -457,50 +555,50 @@ fi
 %{prefix}/bin/snd-motif-oss
 %endif
 
-#--- snd-alsa (motif statically linked)
-%if %{build_static_motif_gui} && %{build_alsa_api}
-%post alsa-%{alsaapi}
+#--- snd-oss-alsa (motif statically linked)
+%if %{build_static_motif_gui} && "%{alsa_api}" != ""
+%post oss-alsa%{alsa_api}
 if [ -L %{prefix}/bin/snd ] ; then
     rm -f %{prefix}/bin/snd
 fi
 if [ ! -e %{prefix}/bin/snd ] ; then
-    ln -s %{prefix}/bin/snd-alsa %{prefix}/bin/snd
+    ln -s %{prefix}/bin/snd-oss-alsa %{prefix}/bin/snd
 fi
-%postun alsa-%{alsaapi}
+%postun oss-alsa%{alsa_api}
 if [ -L %{prefix}/bin/snd ] ; then
     link=`ls -l %{prefix}/bin/snd | awk '{print $11}'`
-    if [ `basename ${link}` = "snd-alsa" ] ; then
+    if [ `basename ${link}` = "snd-oss-alsa" ] ; then
 	rm -f %{prefix}/bin/snd
     fi
 fi
-%files alsa-%{alsaapi}
+%files oss-alsa%{alsa_api}
 %defattr(-, root, root)
-%{prefix}/bin/snd-alsa
+%{prefix}/bin/snd-oss-alsa
 %endif
 
-#--- snd-motif-alsa (motif dynamically linked)
-%if %{build_motif_gui} && %{build_alsa_api}
-%post motif-alsa-%{alsaapi}
+#--- snd-motif-oss-alsa (motif dynamically linked)
+%if %{build_motif_gui} && "%{alsa_api}" != ""
+%post motif-oss-alsa%{alsa_api}
 if [ -L %{prefix}/bin/snd ] ; then
     rm -f %{prefix}/bin/snd
 fi
 if [ ! -e %{prefix}/bin/snd ] ; then
-    ln -s %{prefix}/bin/snd-motif-alsa %{prefix}/bin/snd
+    ln -s %{prefix}/bin/snd-motif-oss-alsa %{prefix}/bin/snd
 fi
-%postun motif-alsa-%{alsaapi}
+%postun motif-oss-alsa%{alsa_api}
 if [ -L %{prefix}/bin/snd ] ; then
     link=`ls -l %{prefix}/bin/snd | awk '{print $11}'`
-    if [ `basename ${link}` = "snd-motif-alsa" ] ; then
+    if [ `basename ${link}` = "snd-motif-oss-alsa" ] ; then
 	rm -f %{prefix}/bin/snd
     fi
 fi
-%files motif-alsa-%{alsaapi}
+%files motif-oss-alsa%{alsa_api}
 %defattr(-, root, root)
-%{prefix}/bin/snd-motif-alsa
+%{prefix}/bin/snd-motif-oss-alsa
 %endif
 
 #--- snd-gtk-oss
-%if %{build_gtk_gui} && %{build_oss_api} 
+%if %{build_gtk_gui} && "%{alsa_api}" == "" 
 %post gtk-oss
 if [ -L %{prefix}/bin/snd ] ; then
     rm -f %{prefix}/bin/snd
@@ -520,29 +618,29 @@ fi
 %{prefix}/bin/snd-gtk-oss
 %endif
 
-#--- snd-gtk-alsa
-%if %{build_gtk_gui} && %{build_alsa_api} 
-%post gtk-alsa-%{alsaapi}
+#--- snd-gtk-oss-alsa
+%if %{build_gtk_gui} && "%{alsa_api}" != "" 
+%post gtk-oss-alsa%{alsa_api}
 if [ -L %{prefix}/bin/snd ] ; then
     rm -f %{prefix}/bin/snd
 fi
 if [ ! -e %{prefix}/bin/snd ] ; then
-    ln -s %{prefix}/bin/snd-gtk-alsa %{prefix}/bin/snd
+    ln -s %{prefix}/bin/snd-gtk-oss-alsa %{prefix}/bin/snd
 fi
-%postun gtk-alsa-%{alsaapi}
+%postun gtk-oss-alsa%{alsa_api}
 if [ -L %{prefix}/bin/snd ] ; then
     link=`ls -l %{prefix}/bin/snd | awk '{print $11}'`
-    if [ `basename ${link}` = "snd-gtk-alsa" ] ; then
+    if [ `basename ${link}` = "snd-gtk-oss-alsa" ] ; then
 	rm -f %{prefix}/bin/snd
     fi
 fi
-%files gtk-alsa-%{alsaapi}
+%files gtk-oss-alsa%{alsa_api}
 %defattr(-, root, root)
-%{prefix}/bin/snd-gtk-alsa
+%{prefix}/bin/snd-gtk-oss-alsa
 %endif
 
 #--- snd-utils-oss
-%if %{build_utils} && %{build_oss_api}
+%if %{build_utils} && "%{alsa_api}" == ""
 %post utils-oss
 for util in sndplay sndrecord sndinfo sndsine audinfo
 do 
@@ -572,38 +670,47 @@ done
 %{prefix}/bin/audinfo-oss
 %endif
 
-#--- snd-utils-alsa
-%if %{build_utils} && %{build_alsa_api}
-%post utils-alsa-%{alsaapi}
+#--- snd-utils-oss-alsa
+%if %{build_utils} && "%{alsa_api}" != ""
+%post utils-oss-alsa%{alsa_api}
 for util in sndplay sndrecord sndinfo sndsine audinfo
 do 
     if [ -L %{prefix}/bin/${util} ] ; then
 	rm -f %{prefix}/bin/${util}
     fi
     if [ ! -e %{prefix}/bin/${util} ] ; then
-	ln -s %{prefix}/bin/${util}-alsa %{prefix}/bin/${util}
+	ln -s %{prefix}/bin/${util}-oss-alsa %{prefix}/bin/${util}
     fi
 done
-%postun utils-alsa-%{alsaapi}
+%postun utils-oss-alsa%{alsa_api}
 for util in sndplay sndrecord sndinfo sndsine audinfo
 do 
     if [ -L %{prefix}/bin/${util} ] ; then
 	link=`ls -l %{prefix}/bin/${util} | awk '{print $11}'`
-	if [ `basename ${link}` = "${util}-alsa" ] ; then
+	if [ `basename ${link}` = "${util}-oss-alsa" ] ; then
 	    rm -f %{prefix}/bin/${util}
 	fi
     fi
 done
-%files utils-alsa-%{alsaapi}
+%files utils-oss-alsa%{alsa_api}
 %defattr(-, root, root)
-%{prefix}/bin/sndplay-alsa
-%{prefix}/bin/sndrecord-alsa
-%{prefix}/bin/sndinfo-alsa
-%{prefix}/bin/sndsine-alsa
-%{prefix}/bin/audinfo-alsa
+%{prefix}/bin/sndplay-oss-alsa
+%{prefix}/bin/sndrecord-oss-alsa
+%{prefix}/bin/sndinfo-oss-alsa
+%{prefix}/bin/sndsine-oss-alsa
+%{prefix}/bin/audinfo-oss-alsa
 %endif
 
 %changelog
+* Thu Jul 26 2001 Fernando Lopez-Lezcano <nando@ccrma.stanford.edu>
+- snd-5.1, alsa 0.9
+- added autodetect of installed alsa version (%alsa_api)
+- added autodetect of linux flavor
+- autobuild oss only or oss/alsa binary packages
+- changed naming of packages and executables to reflect the fact that
+  the statically linked alsa package also supports the oss api
+* Thu Jul 12 2001 Fernando Lopez-Lezcano <nando@ccrma.stanford.edu>
+- first try at snd-5, snd-guile-1.6, alsa 0.9
 * Wed Apr 02 2001 Fernando Lopez-Lezcano <nando@ccrma.stanford.edu>
 - compiled for rh7, snd-4.tar.gz, version 4.12, dated 4/2/2001
 * Wed Mar 07 2001 Fernando Lopez-Lezcano <nando@ccrma.stanford.edu>

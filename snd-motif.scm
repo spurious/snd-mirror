@@ -4,7 +4,7 @@
 ;;; (zync) and (unzync) -- cause y-zoom sliders to move together
 ;;; (for-each-child w func) -- apply func to w and all its children
 ;;; (make-hidden-controls-dialog) -- add Options menu "Hidden controls" item that creates dialog to control these variables
-;;; (create-fmv-dialog) for "real-time" control of th fm-violin in fmv.scm
+;;; (create-fmv-dialog) for "real-time" control of the fm-violin in fmv.scm
 ;;; (make-pixmap strs) turns xpm-style description into pixmap
 ;;; (display-scanned-synthesis) opens a scanned-synthesis viewer
 
@@ -23,19 +23,18 @@
 ;;;    (install-searcher (lambda (file) (= (mus-sound-srate file) 44100)))
 ;;;    (install-searcher (lambda (file) (= (mus-sound-chans file) 4)))
 
-(define match-sound-files
-  (lambda args
-    "(match-sound-files func &optional dir) applies func to each sound file in dir and returns a list of files for which func does not return #f"
-    (let* ((func (car args))
-	   (matches '()))
-      (for-each
-       (lambda (file)
-	 (if (func file)
-	     (set! matches (cons file matches))))
-       (sound-files-in-directory (if (null? (cdr args)) "." (cadr args))))
-      matches)))
-
 (define (install-searcher proc)
+  (define match-sound-files
+    (lambda args
+      "(match-sound-files func &optional dir) applies func to each sound file in dir and returns a list of files for which func does not return #f"
+      (let* ((func (car args))
+	     (matches '()))
+	(for-each
+	 (lambda (file)
+	   (if (func file)
+	       (set! matches (cons file matches))))
+	 (sound-files-in-directory (if (null? (cdr args)) "." (cadr args))))
+	matches)))
   (define (XmString->string str)
     (cadr (|XmStringGetLtoR str |XmFONTLIST_DEFAULT_TAG)))
   (define (XmStringTable->list st len)
@@ -139,11 +138,13 @@
 (define (add-main-pane name type args)
   (|XtCreateManagedWidget name type (|Widget (list-ref (main-widgets) 3)) args))
 
-
 ;(add-channel-pane "new-pane" 
 ;		  |xmDrawingAreaWidgetClass 
 ;		  (list |XmNbackground (|Pixel (snd-pixel (graph-color)))
 ;			|XmNforeground (|Pixel (snd-pixel (data-color)))))
+
+(define (remove-menu-bar-menu which)
+  (|XtUnmanageChild (|Widget (list-ref (menu-widgets) which))))
 
 
 ;;; -------- apply func to every widget belonging to w (and w) --------
@@ -157,7 +158,25 @@
        (cadr (|XtGetValues w (list |XmNchildren 0) 1)))))
 
 
-;;; -------- bring possible-obscured dialog to top
+
+;;; -------- disable control panel --------
+
+(define (disable-control-panel snd)
+  (let ((swc (|Widget (caddr (sound-widgets snd)))))
+    (for-each-child 
+     swc 
+     (lambda (n) 
+       (if (and (not (string=? (|XtName n) "snd-name-form")) 
+		(not (string=? (|XtName (|XtParent n)) "snd-name-form")))
+	   (|XtUnmanageChild n))))
+    (|XtSetValues swc (list |XmNpaneMaximum 18 
+			    |XmNpaneMinimum 18))
+    (remove-from-menu 2 "Show controls")
+    (|XtManageChild swc)))
+
+
+
+;;; -------- bring possibly-obscured dialog to top
 
 (define (raise-dialog w)
   (if (and (|Widget? w) 
@@ -405,8 +424,16 @@ Reverb-feedback sets the scaler on the feedback.\n\
     (set! (|valuemask attr) (logior |XpmColorSymbols |XpmDepth |XpmColormap |XpmVisual))
     (|XpmCreatePixmapFromData dpy win strs attr)))
 
-;;; (let ((pix (make-pixmap (|Widget (cadr (main-widgets))) arrow-strs)))
-;;;   (|XtSetValues (|Widget (list-ref (sound-widgets) 8)) (list |XmNlabelPixmap (cadr pix))))
+; (|XtSetValues (|Widget (list-ref (sound-widgets) 8)) (list |XmNlabelPixmap (make-pixmap (|Widget (cadr (main-widgets))) arrow-strs)))
+
+(define right-arrow (list
+   #x00 #x04 #x10 #x08 #x00 #x10 #x04 #x20 #x00 #x40 #xa5 #xbf
+   #x00 #x40 #x04 #x20 #x00 #x10 #x10 #x08 #x00 #x04 #x00 #x00))
+
+(define (bitmap->pixmap widget bits width height)
+  (|XCreateBitmapFromData (|XtDisplay widget) (|XtWindow widget) bits width height))
+
+; (|XtSetValues (|Widget (list-ref (sound-widgets) 8)) (list |XmNlabelPixmap (bitmap->pixmap (|Widget (list-ref (sound-widgets) 8)) iconw right-arrow 16 12)))
 
 
 
@@ -455,6 +482,9 @@ Reverb-feedback sets the scaler on the feedback.\n\
 	 (xspring 0.1)
 	 (damp 0.0)
 	 (bounds '())
+	 (pts0 #f)
+	 (pts1 #f)
+	 (ax0 0) (ax1 0) (ay0 0) (ay1 0)
 	 (gc (|GC (car (snd-gcs))))
 	 (egc (|GC (list-ref (snd-gcs) 7)))
 	 (app (|XtAppContext (car (main-widgets))))
@@ -497,46 +527,47 @@ Reverb-feedback sets the scaler on the feedback.\n\
 	 (gx0 (make-vct size))	   
 	 (gx1 (make-vct size))	   
 	 (gx2 (make-vct size))
+	 (vect (make-vector (* 2 size)))
 	 (work-proc 0))
 
-    (define (x->grfx x)
-      (inexact->exact 
-       (+ (car bounds)
-	  (* x (- (caddr bounds) (car bounds))))))
-
-    (define (y->grfy y)
-      (min (cadr bounds)
-	   (max (cadddr bounds)
+    (define (y->grfy y range)
+      (min ay1
+	   (max ay0
 		(inexact->exact
-		 (+ (cadddr bounds)
-		    (* 0.05 (- 10.0 y)
-		       (- (cadr bounds) (cadddr bounds))))))))
+		 (+ ay0
+		    (* range (- 10.0 y)))))))
 
     (define (draw-graph)
-      (if (and (> (caddr bounds) (car bounds))
-	       (> (cadr bounds) (cadddr bounds)))
-	  (let ((x0 (x->grfx 0.0))
-		(y0 (y->grfy (vct-ref gx0 0)))
-		(x1 0)
-		(y1 0)
+      (if (and (> ax1 ax0)
+	       (> ay1 ay0))
+	  (let ((diff (* 0.05 (- ay1 ay0))) ; assuming -10 to 10 
 		(dpy (|XtDisplay scan-pane))
 		(wn (|XtWindow scan-pane))
-		(xincr (/ 1.0 size)))
-	    (|XFillRectangle dpy wn egc ; erase previous graph
-			     (+ (car bounds) 2) (cadddr bounds) 
-			     (- (caddr bounds) (car bounds))
-			     (- (cadr bounds) (cadddr bounds)))
-	    (do ((i 1 (1+ i))
-		 (xi xincr (+ xi xincr)))
+		(xincr (/ (- ax1 ax0) size)))
+	    (if pts1
+		(|XDrawLinesDirect dpy wn egc pts1 size 0)
+		(|XFillRectangle dpy wn egc ; erase previous graph
+				 (+ ax0 2)
+				 ay0
+				 (- ax1 ax0 2)
+				 (- ay1 ay0)))
+	    (do ((i 0 (1+ i))
+		 (j 0 (+ j 2))
+		 (xi ax0 (+ xi xincr)))
 		((= i size))
-	      (set! x1 (x->grfx xi))
-	      (set! y1 (y->grfy (vct-ref gx0 i)))
-	      (|XDrawLine dpy wn gc x0 y0 x1 y1)
-	      (set! x0 x1)
-	      (set! y0 y1)))))
+	      (vector-set! vect j (inexact->exact xi))
+	      (vector-set! vect (+ j 1) (y->grfy (vct-ref gx0 i) diff)))
+	    (if pts1 (|freeXPoints pts1))
+	    (set! pts0 (|vector->XPoints vect))
+	    (set! pts1 pts0)
+	    (|XDrawLinesDirect dpy wn gc pts0 size 0))))
 
     (define (redraw-graph)
       (set! bounds (draw-axes scan-pane gc "scanned synthesis" 0.0 1.0 -10.0 10.0))
+      (set! ax0 (+ (car bounds) 2))
+      (set! ax1 (caddr bounds))
+      (set! ay1 (cadr bounds))
+      (set! ay0 (cadddr bounds))
       (draw-graph))
 
     (define (tick-synthesis n)
@@ -617,7 +648,8 @@ Reverb-feedback sets the scaler on the feedback.\n\
 			(set! size (string->number (cadr (|XtGetValues scan-text (list |XmNvalue 0)))))
 			(set! gx0 (make-vct size))	   
 			(set! gx1 (make-vct size))	   
-			(set! gx2 (make-vct size)))))
+			(set! gx2 (make-vct size))
+			(set! vect (make-vector (* size 2))))))
 
     (|XtAddCallback scan-pane |XmNresizeCallback (lambda (w context info) (redraw-graph)))
     (|XtAddCallback scan-pane |XmNexposeCallback (lambda (w context info) (redraw-graph)))
@@ -632,21 +664,116 @@ Reverb-feedback sets the scaler on the feedback.\n\
     (|XtAddCallback scan-start |XmNactivateCallback (lambda (w c i) (start-synthesis)))
     (|XtAddCallback scan-continue |XmNactivateCallback (lambda (w c i) (continue-synthesis)))
     (|XtAddCallback scan-stop |XmNactivateCallback (lambda (w c i) (stop-synthesis)))
+    #t ; for slightly prettier listener output
     ))
+
+
+
+;;; -------- run-spectro-display -------- 
+;;; running spectrogram display, but ugly -- using XFillPolygon for hidden-line removal was flashing too much
+(define spectro-micro-drawer #f)
+
+(define (run-spectro-display fft-size traces)
+
+  (define (add-main-pane name type args)
+    (|XtCreateManagedWidget name type (|Widget (list-ref (main-widgets) 3)) args))
+
+  (let ((ffts (make-vector traces #f))
+	(vf (make-vct fft-size))
+	(vect (make-vector (/ fft-size 2)))
+	(gc (|GC (car (snd-gcs))))
+	(egc (|GC (list-ref (snd-gcs) 7)))
+	(app (|XtAppContext (car (main-widgets))))
+	(x0 0)
+	(x1 0)
+	(y0 0)
+	(y1 0)
+	(yhop 2)
+	(num (inexact->exact (/ 22050 (* 10 fft-size))))
+	(numctr 0)
+	(drawer #f))
+
+    (define (redraw-graph)
+      (set! x1 (- (cadr (|XtGetValues drawer (list |XmNwidth 0))) 10))
+      (set! y0 (- (cadr (|XtGetValues drawer (list |XmNheight 0))) 10))
+      (do ((i 0 (1+ i)))
+	  ((= i traces))
+	(if (vector-ref ffts i)
+	    (|freeXPoints (vector-ref ffts i))))
+      (set! traces (inexact->exact (/ (- y0 y1) yhop)))
+      (set! ffts (make-vector traces #f)))
+
+    (define (y->grfy y)
+      (min y0
+	   (max y1
+		(inexact->exact
+		 (- y0 (* y 20))))))
+
+    (if (not spectro-micro-drawer)
+	(set! spectro-micro-drawer 
+	      (add-main-pane "Scanned Synthesis" |xmDrawingAreaWidgetClass
+			     (list |XmNbackground    (|Pixel (snd-pixel (graph-color)))
+				   |XmNforeground    (|Pixel (snd-pixel (data-color)))
+				   |XmNpaneMinimum   200))))
+    
+    (set! drawer spectro-micro-drawer)
+
+    (|XtAddCallback drawer |XmNresizeCallback (lambda (w context info) (redraw-graph)))
+    (|XtAddCallback drawer |XmNexposeCallback (lambda (w context info) (redraw-graph)))
+
+    (set! x0 10)
+    (set! x1 (- (cadr (|XtGetValues drawer (list |XmNwidth 0))) 10))
+    (set! y1 10)
+    (set! y0 (- (cadr (|XtGetValues drawer (list |XmNheight 0))) 10))
+
+    (let* ((in-port (mus-audio-open-input mus-audio-default 22050 1 mus-lshort (* 2 fft-size)))
+	   (data (make-sound-data 1 fft-size))
+	   (ind 0)
+	   (dpy (|XtDisplay drawer))
+	   (wn (|XtWindow drawer))
+	   (xincr (/ (* 4 (- x1 x0 traces)) fft-size)))
+      (do ()
+	  ((c-g?))
+	(mus-audio-read in-port data fft-size)
+	(set! numctr (+ numctr 1))
+	(if (>= numctr num)
+	    (begin
+	      (sound-data->vct data 0 vf)
+	      (snd-spectrum vf blackman2-window fft-size #t)
+	      (vct-scale! vf fft-size)
+	      (do ((i 0 (1+ i))
+		   (xi x0 (+ xi xincr))
+		   (j 0 (+ j 2)))
+		  ((= j (/ fft-size 2)))
+		(vector-set! vect j (inexact->exact xi))
+		(vector-set! vect (+ j 1) (y->grfy (vct-ref vf i))))
+	      (if (vector-ref ffts 0) 
+		  (begin
+		    (|XDrawLinesDirect dpy wn egc (vector-ref ffts 0) (/ fft-size 4) 0)
+		    (|freeXPoints (vector-ref ffts 0))))
+	      (do ((i 0 (1+ i))
+		   (yy0 (- y0 2) (- yy0 2)))
+		  ((= i (- traces 1)))
+		(vector-set! ffts i (vector-ref ffts (+ i 1)))
+		(if (vector-ref ffts i)
+		    (begin
+		      (|XDrawLinesDirect dpy wn egc (vector-ref ffts i) (/ fft-size 4) 0)
+		      (|moveXPoints (vector-ref ffts i) (/ fft-size 4) 1 -2)
+		      (|XDrawLinesDirect dpy wn gc (vector-ref ffts i) (/ fft-size 4) 0))))
+	      (vector-set! ffts (- traces 1) (|vector->XPoints vect))
+	      (|XDrawLinesDirect dpy wn gc (vector-ref ffts (- traces 1)) (/ fft-size 4) 0)
+	      (set! numctr 0))))
+      (mus-audio-close in-port))))
+
+
 
 
 
 
 
 ;;; animated pixmaps
-;;; disable control panel
 ;;; spectral editing in new window
-;;; running spectrogram in recorder
-;;; flashier rtio.scm graphics
 ;;; panel of effects-buttons[icons] on right? (normalize, reverse, etc)
 ;;; panel of icons at top (cut/paste/undo/redo/save/play/play-selection
 ;;; bess-translations
 ;;; separate chan amp controls (from snd-gtk.scm)
-
-
-

@@ -281,6 +281,8 @@
  *    XDrawLines XPoint* arg (arg 4) is list of XPoints
  *    XDrawArcs Arc* arg (arg 4) is list of XArcs
  *    XDisplayKeycodes omit and rtn arg 2 and 3
+ *    XCreateBitmapFromData takes list of chars as arg3 (not char *)
+ *    XCreatePixmapFromBitmapData takes list of chars as arg3 (not char *)
  *    XCheckWindowEvent dpy win mask [ev] -> (list val ev)
  *    XCheckTypedWindowEvent dpy win mask [ev] -> (list val ev)
  *    XCheckTypedEvent dpy mask [ev] -> (list val ev)
@@ -374,6 +376,10 @@
  *    XArc XRectangle XPoint XSegment XEvent Pixel GC
  *    XTextItem XpmImage XpmColorSymbol
  *    XmStringTableFree
+ *    XDrawLinesDirect same as XDrawLines but takes (opaque) ptr to XPoint array
+ *    vector->XPoints vect packages point data in vector as (opaque) array of XPoints 
+ *    freeXPoints to free (opaque) XPoint array created by vector->Xpoints
+ *    moveXPoints to move XPoint array created by vector->Xpoints
  *
  *    XtAppContext? XtRequestId? XtWorkProcId? XtInputId? XtIntervalId? Screen? XEvent? XRectangle? XArc?
  *    XPoint? XSegment? XColor? XmTab? Atom? Colormap? Depth? Display? Drawable? Font? GC? KeySym? Pixel? Pixmap? Region?
@@ -9659,6 +9665,82 @@ static XEN gxm_XDrawLines(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN 
   return(C_TO_XEN_INT(len));
 }
 
+static XEN gxm_XDrawLinesDirect(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6)
+{
+  /* ADD: XDrawLinesDirect same as XDrawLines but takes (opaque) ptr to XPoint array
+   */
+  XPoint *pt;
+  int len;
+  XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XDrawLinesDirect", "Display*");
+  XEN_ASSERT_TYPE(XEN_Drawable_P(arg2), arg2, 2, "XDrawLinesDirect", "Drawable");
+  XEN_ASSERT_TYPE(XEN_GC_P(arg3), arg3, 3, "XDrawLinesDirect", "GC");
+  XEN_ASSERT_TYPE(XEN_ULONG_P(arg4), arg4, 4, "XDrawLinesDirect", "array of XPoints");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg5), arg5, 5, "XDrawLines", "int");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg6), arg6, 6, "XDrawLines", "int");
+  len = XEN_TO_C_INT(arg5);
+  pt = (XPoint *)XEN_TO_C_ULONG(arg4);
+  XDrawLines(XEN_TO_C_Display(arg1), 
+	     XEN_TO_C_Drawable(arg2), 
+	     XEN_TO_C_GC(arg3), 
+	     pt, len, 
+	     XEN_TO_C_INT(arg6));
+  return(C_TO_XEN_INT(len));
+}
+
+static XEN gxm_Vector2XPoints(XEN arg1)
+{
+  /* ADD: vector->XPoints vect packages point data in vector as (opaque) array of XPoints
+   */
+  int i, j, len;
+  XEN *velts;
+  /* vector assumed to be sequence of x y pairs (not XPoints from local view)
+   */
+  XPoint *pt;
+  XEN_ASSERT_TYPE(XEN_VECTOR_P(arg1), arg1, XEN_ONLY_ARG, "vector->XPoints", "vector of x,y values");
+  len = XEN_VECTOR_LENGTH(arg1) / 2;
+  velts = XEN_VECTOR_ELEMENTS(arg1);
+  pt = (XPoint *)calloc(len, sizeof(XPoint));
+  for (i = 0, j = 0; i < len; i++, j += 2)
+    {
+      pt[i].x = XEN_TO_C_INT(velts[j]);
+      pt[i].y = XEN_TO_C_INT(velts[j + 1]);
+    }
+  return(C_TO_XEN_ULONG((unsigned long)pt));
+}
+
+static XEN gxm_FreeXPoints(XEN arg1)
+{
+  /* ADD: freeXPoints to free (opaque) XPoint array created by vector->Xpoints
+   */
+  XEN_ASSERT_TYPE(XEN_ULONG_P(arg1), arg1, XEN_ONLY_ARG, "freeXPoints", "opaque XPoint array");
+  free((void *)(XEN_TO_C_ULONG(arg1)));
+  return(XEN_FALSE);
+}
+
+
+static XEN gxm_MoveXPoints(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+{
+  /* ADD: moveXPoints to move XPoint array created by vector->Xpoints
+   */
+  XPoint *pt;
+  int i, len, x, y;
+  XEN_ASSERT_TYPE(XEN_ULONG_P(arg1), arg1, XEN_ARG_1, "moveXPoints", "opaque XPoint array");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, XEN_ARG_2, "moveXPoints", "int");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, XEN_ARG_3, "moveXPoints", "int");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg4), arg4, XEN_ARG_4, "moveXPoints", "int");
+  pt = ((XPoint *)(XEN_TO_C_ULONG(arg1)));
+  len = XEN_TO_C_INT(arg2);
+  x = XEN_TO_C_INT(arg3);
+  y = XEN_TO_C_INT(arg4);
+  for (i = 0; i < len; i++)
+    {
+      pt[i].x += x;
+      pt[i].y += y;
+    }
+  return(XEN_FALSE);
+}
+
+
 static XEN gxm_XDrawLine(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7)
 {
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XDrawLine", "Display*");
@@ -10979,28 +11061,56 @@ static XEN gxm_XCreateSimpleWindow(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN a
 
 static XEN gxm_XCreatePixmapFromBitmapData(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7, XEN arg8)
 {
+  /* DIFF: XCreatePixmapFromBitmapData takes list of chars as arg3 (not char *)
+   */
+  char *bits;
+  int i, len;
+  Pixmap p;
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XCreatePixmapFromBitmapData", "Display*");
   XEN_ASSERT_TYPE(XEN_Drawable_P(arg2), arg2, 2, "XCreatePixmapFromBitmapData", "Drawable");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg3), arg3, 3, "XCreatePixmapFromBitmapData", "char*");
+  XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XCreatePixmapFromBitmapData", "list of char");
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg4), arg4, 4, "XCreatePixmapFromBitmapData", "unsigned int");
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg5), arg5, 5, "XCreatePixmapFromBitmapData", "unsigned int");
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg6), arg6, 6, "XCreatePixmapFromBitmapData", "ulong");
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg7), arg7, 7, "XCreatePixmapFromBitmapData", "ulong");
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg8), arg8, 8, "XCreatePixmapFromBitmapData", "unsigned int");
-  return(C_TO_XEN_Pixmap(XCreatePixmapFromBitmapData(XEN_TO_C_Display(arg1), XEN_TO_C_Drawable(arg2), 
-						     XEN_TO_C_STRING(arg3), XEN_TO_C_ULONG(arg4), XEN_TO_C_ULONG(arg5), 
-						     XEN_TO_C_ULONG(arg6), XEN_TO_C_ULONG(arg7), XEN_TO_C_ULONG(arg8))));
+  len = XEN_LIST_LENGTH(arg3);
+  bits = (char *)calloc(len, sizeof(char));
+  for (i = 0; i < len; i++, arg3 = XEN_CDR(arg3))
+    bits[i] = (char)XEN_TO_C_INT(XEN_CAR(arg3));
+  p = XCreatePixmapFromBitmapData(XEN_TO_C_Display(arg1), 
+				  XEN_TO_C_Drawable(arg2), 
+				  bits,
+				  XEN_TO_C_ULONG(arg4), XEN_TO_C_ULONG(arg5), 
+				  XEN_TO_C_ULONG(arg6), XEN_TO_C_ULONG(arg7), 
+				  XEN_TO_C_ULONG(arg8));
+  free(bits);
+  return(C_TO_XEN_Pixmap(p));
 }
 
 static XEN gxm_XCreateBitmapFromData(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
 {
+  /* DIFF: XCreateBitmapFromData takes list of chars as arg3 (not char *)
+   */
+  char *bits;
+  int i, len;
+  Pixmap p;
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XCreateBitmapFromData", "Display*");
   XEN_ASSERT_TYPE(XEN_Drawable_P(arg2), arg2, 2, "XCreateBitmapFromData", "Drawable");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg3), arg3, 3, "XCreateBitmapFromData", "char*");
+  XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XCreateBitmapFromData", "list of char");
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg4), arg4, 4, "XCreateBitmapFromData", "unsigned int");
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg5), arg5, 5, "XCreateBitmapFromData", "unsigned int");
-  return(C_TO_XEN_Pixmap(XCreateBitmapFromData(XEN_TO_C_Display(arg1), XEN_TO_C_Drawable(arg2),
-					       XEN_TO_C_STRING(arg3), XEN_TO_C_ULONG(arg4), XEN_TO_C_ULONG(arg5))));
+  len = XEN_LIST_LENGTH(arg3);
+  bits = (char *)calloc(len, sizeof(char));
+  for (i = 0; i < len; i++, arg3 = XEN_CDR(arg3))
+    bits[i] = (char)XEN_TO_C_INT(XEN_CAR(arg3));
+  p = XCreateBitmapFromData(XEN_TO_C_Display(arg1), 
+			    XEN_TO_C_Drawable(arg2),
+			    bits, 
+			    XEN_TO_C_ULONG(arg4), 
+			    XEN_TO_C_ULONG(arg5));
+  free(bits);
+  return(C_TO_XEN_Pixmap(p));
 }
 
 static XEN gxm_XCreatePixmap(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
@@ -15255,6 +15365,10 @@ static void define_procedures(void)
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XDrawImageString" XM_POSTFIX, gxm_XDrawImageString, 7, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XDrawLine" XM_POSTFIX, gxm_XDrawLine, 7, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XDrawLines" XM_POSTFIX, gxm_XDrawLines, 6, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "XDrawLinesDirect" XM_POSTFIX, gxm_XDrawLinesDirect, 6, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "freeXPoints" XM_POSTFIX, gxm_FreeXPoints, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "moveXPoints" XM_POSTFIX, gxm_MoveXPoints, 4, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE(XM_PREFIX "vector->XPoints" XM_POSTFIX, gxm_Vector2XPoints, 1, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XDrawPoint" XM_POSTFIX, gxm_XDrawPoint, 5, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XDrawPoints" XM_POSTFIX, gxm_XDrawPoints, 6, 0, 0, NULL);
   XEN_DEFINE_PROCEDURE(XM_PREFIX "XDrawRectangle" XM_POSTFIX, gxm_XDrawRectangle, 7, 0, 0, NULL);

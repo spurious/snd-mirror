@@ -214,3 +214,32 @@
       ))))
 
 ;;; ex: change pos/range scrollbar algorithm, change action of ypos, add wave to vu
+
+(define mouse_width 32)
+(define mouse_height 32)
+(define mouse_bits (list
+   #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00
+   #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00
+   #x80 #xff #xff #x01 #x80 #x00 #x01 #x01 #x80 #x00 #x01 #x01
+   #x80 #x00 #x01 #x01 #x80 #x00 #x01 #x01 #x80 #x00 #x01 #x01
+   #x80 #x00 #x01 #x01 #x80 #xff #xff #x01 #x80 #x00 #x00 #x01
+   #x80 #x00 #x00 #x01 #x80 #x00 #x00 #x01 #x80 #x00 #x00 #x01
+   #x80 #x00 #x00 #x01 #x80 #x00 #x00 #x01 #x80 #x00 #x00 #x01
+   #x80 #x00 #x00 #x01 #x00 #x01 #x80 #x00 #x00 #x01 #x80 #x00
+   #x00 #x06 #x60 #x00 #x00 #xf8 #x1f #x00 #x00 #x00 #x00 #x00
+   #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00
+   #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00))
+
+(define rb (list
+   #x00 #x04 #x10 #x08 #x00 #x10 #x04 #x20 #x00 #x40 #xa5 #xbf
+   #x00 #x40 #x04 #x20 #x00 #x10 #x10 #x08 #x00 #x04 #x00 #x00))
+
+
+(define (bitmap->pixmap widget bits width height)
+  (|XCreateBitmapFromData (|XtDisplay widget) (|XtWindow widget) bits width height))
+
+;;;   (|XtSetValues (|Widget (list-ref (sound-widgets) 8)) (list |XmNlabelPixmap (cadr pix))))
+
+(define iconw (|Widget (list-ref (sound-widgets) 8)))
+(define speedr (bitmap->pixmap iconw rb 16 12))
+(define m (bitmap->pixmap iconw mouse_bits mouse_width mouse_height))
