@@ -1219,10 +1219,11 @@ formants: (map-channel (osc-formants .99 '(400 800 1200) '(400 800 1200) '(4 2 3
 	 (s (make-src :srate sr))
 	 (len (frames snd chn))
 	 (sf (make-sample-reader 0 snd chn))
-	 (out-data (make-vct len)))
+	 (out-data (make-vct len))
+	 (amp osamp))
     (vct-map! out-data
 	      (lambda () 
-		(src s (* osamp (oscil os))
+		(src s (* amp (oscil os))
 		     (lambda (dir)
 		       (if (> dir 0)
 			   (next-sample sf)

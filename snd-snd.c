@@ -2164,7 +2164,7 @@ static XEN sound_get(XEN snd_n, sp_field_t fld, char *caller)
     case SP_SELECTED_CHANNEL:    if (sp->selected_channel != NO_SELECTION) return(C_TO_XEN_INT(sp->selected_channel)); else return(XEN_FALSE); break;
     case SP_FILE_NAME:           return(C_TO_XEN_STRING(sp->filename));                break;
     case SP_SHORT_FILE_NAME:     return(C_TO_XEN_STRING(sp->short_filename));          break;
-    case SP_CLOSE:               if (!(IS_PLAYER(sp))) snd_close_file(sp);  break;
+    case SP_CLOSE:               if (!(IS_PLAYER(sp))) snd_close_file(sp);             break;
     case SP_SAVE:                if (!(IS_PLAYER(sp))) save_edits(sp, NULL);           break;
     case SP_UPDATE:              
       if (!(IS_PLAYER(sp))) 
@@ -3888,9 +3888,6 @@ static XEN g_set_filter_control_envelope(XEN val, XEN snd)
 }
 
 WITH_REVERSED_ARGS(g_set_filter_control_envelope_reversed, g_set_filter_control_envelope)
-
-/* TODO: ladspa->channel + edit/doc/test stuff
-*/
 
 #if HAVE_GUILE_DYNAMIC_WIND
 static void before_controls_to_channel(void *ignore) {}

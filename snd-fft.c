@@ -965,9 +965,13 @@ static void display_fft(fft_state *fs)
 	}
       if (cp->fft_log_magnitude) 
 	{
+	  /*
+	   * this looks very dumb...
 	  if (cp->transform_normalization == DONT_NORMALIZE)
 	    max_val = in_dB(cp->min_dB, cp->lin_dB, data_max);
 	  else max_val = 0.0;
+	  */
+	  max_val = 0.0;
 	  min_val = cp->min_dB;
 	}
       else 
@@ -1208,8 +1212,10 @@ void single_fft(chan_info *cp, bool update_display, bool force_recalc)
    behind the times, if so cleanup and exit, else jump back to outer loop.
    */
 
+typedef enum {SONO_INIT, SONO_RUN, SONO_QUIT, SONO_DONE} sono_slice_t;
+
 typedef struct {
-  int slice;
+  sono_slice_t slice;
   int outlim, outer;
   fft_state *fs;
   chan_info *cp;
@@ -1226,6 +1232,7 @@ typedef struct {
   int transform_type, w_choice;
   bool old_logxing;
   bool minibuffer_needs_to_be_cleared;
+  bool force_recalc;
 } sonogram_state;
 
 void clear_transform_edit_ctrs(chan_info *cp)
@@ -1244,13 +1251,14 @@ void clear_transform_edit_ctrs(chan_info *cp)
     }
 }
 
-void *make_sonogram_state(chan_info *cp)
+void *make_sonogram_state(chan_info *cp, bool force_recalc)
 {
   sonogram_state *sg;
   fft_state *fs;
   sg = (sonogram_state *)CALLOC(1, sizeof(sonogram_state));
   sg->cp = cp;
   sg->done = false;
+  sg->force_recalc = force_recalc;
   fs = make_fft_state(cp, true);
   cp->fft_data = NULL;
   sg->fs = fs;
@@ -1298,9 +1306,9 @@ void free_sono_info(chan_info *cp)
     }
 }
 
-static int set_up_sonogram(sonogram_state *sg)
+static sono_slice_t set_up_sonogram(sonogram_state *sg)
 {
-  /* return 1 to go on, 2 to quit early */
+  /* return SONO_RUN to go on, SONO_QUIT to quit early */
   sono_info *si;
   axis_info *ap;
   chan_info *cp;
@@ -1310,9 +1318,9 @@ static int set_up_sonogram(sonogram_state *sg)
   if (cp->fft_changed != FFT_CHANGE_LOCKED)
     cp->fft_changed = FFT_UNCHANGED;
   else cp->fft_changed = FFT_CHANGED;
-  if ((!(cp->graph_transform_p)) || (cp->transform_size <= 1)) return(2);
+  if ((!(cp->graph_transform_p)) || (cp->transform_size <= 1)) return(SONO_QUIT);
   ap = cp->axis;
-  sg->slice = 0;
+  sg->slice = SONO_INIT;
   sg->outer = 0;
   sg->beg = ap->losamp;
   sg->losamp = ap->losamp;
@@ -1324,14 +1332,14 @@ static int set_up_sonogram(sonogram_state *sg)
   if (cp->transform_graph_type == GRAPH_AS_SPECTROGRAM)
     sg->outlim = ap->height / cp->spectro_hop;
   else sg->outlim = ap->window_width / dpys;
-  if (sg->outlim <= 1) return(2);
+  if (sg->outlim <= 1) return(SONO_QUIT);
   sg->hop = (int)(ceil((double)(ap->hisamp - ap->losamp + 1) / (double)(sg->outlim)));
   /* if fewer samps than pixels, draw rectangles */
   if ((cp->transform_type == FOURIER) || 
       (cp->transform_type == AUTOCORRELATION))
     sg->spectrum_size = (cp->transform_size) / 2;
   else sg->spectrum_size = cp->transform_size;
-  if (sg->spectrum_size <= 0) return(2);
+  if (sg->spectrum_size <= 0) return(SONO_QUIT);
   sg->edit_ctr = cp->edit_ctr;
   si = (sono_info *)(cp->sonogram_data);
   if (!si)
@@ -1370,7 +1378,7 @@ static int set_up_sonogram(sonogram_state *sg)
   si->active_slices = 0;
   si->target_slices = sg->outlim;
   si->scale = 0.0;
-  if (cp->last_sonogram)                               /* there was a previous run */
+  if ((!(sg->force_recalc)) && (cp->last_sonogram))    /* there was a previous run */
     {
       lsg = (sonogram_state *)(cp->last_sonogram);
       if ((lsg->done) &&                               /* it completed all ffts */
@@ -1392,15 +1400,15 @@ static int set_up_sonogram(sonogram_state *sg)
 	    make_sonogram_axes(cp);                    /* may need to fixup frequency axis labels */
 	  sg->graph_type = cp->transform_graph_type;
 	  sg->old_logxing = cp->fft_log_frequency;
-	  return(2);                                   /* so skip the ffts! */
+	  return(SONO_QUIT);                                   /* so skip the ffts! */
 	}
     }
   cp->fft_changed = FFT_CHANGED;
   start_progress_report(cp->sound, NOT_FROM_ENVED);
-  return(1);
+  return(SONO_RUN);
 }
 
-static int run_all_ffts(sonogram_state *sg)
+static sono_slice_t run_all_ffts(sonogram_state *sg)
 {
   fft_state *fs;
   sono_info *si;
@@ -1408,7 +1416,6 @@ static int run_all_ffts(sonogram_state *sg)
   axis_info *ap;
   Float val;
   int i;
-  /* return 0 until done with all ffts, then 1 -- 1 causes cleanup whether done or not */
   /* check for losamp/hisamp change? */
   one_fft((fft_state *)(sg->fs));
   fs = sg->fs;
@@ -1426,7 +1433,7 @@ static int run_all_ffts(sonogram_state *sg)
 		      NOT_FROM_ENVED);
       sg->minibuffer_needs_to_be_cleared = true;
       sg->msg_ctr = 8;
-      if (!(cp->graph_transform_p)) return(1);
+      if (!(cp->graph_transform_p)) return(SONO_QUIT);
     }
   if (si->active_slices < si->total_slices)
     {
@@ -1452,18 +1459,18 @@ static int run_all_ffts(sonogram_state *sg)
       si->active_slices++;
     }
   sg->outer++;
-  if ((sg->outer == sg->outlim) || (!(cp->graph_transform_p)) || (cp->transform_graph_type == GRAPH_ONCE)) return(1);
+  if ((sg->outer == sg->outlim) || (!(cp->graph_transform_p)) || (cp->transform_graph_type == GRAPH_ONCE)) return(SONO_QUIT);
   fs->beg += sg->hop;
   ap = cp->axis;
   if ((sg->losamp != ap->losamp) || (sg->hisamp != ap->hisamp)) 
     {
       fs->beg = 0;
-      return(-1);
+      return(SONO_INIT);
     }
-  return(0);
+  return(SONO_RUN);
 }
 
-static int cleanup_sonogram(sonogram_state *sg)
+static sono_slice_t cleanup_sonogram(sonogram_state *sg)
 {
   if (sg)
     {
@@ -1472,7 +1479,7 @@ static int cleanup_sonogram(sonogram_state *sg)
       if (!(cp->graph_transform_p))
 	{
 	  if (sg->fs) sg->fs = free_fft_state(sg->fs);
-	  return(1);
+	  return(SONO_DONE);
 	}
       if ((sg->scp != NULL) && (sg->outlim > 1))
 	make_sonogram_axes(cp);
@@ -1494,14 +1501,13 @@ static int cleanup_sonogram(sonogram_state *sg)
 	  sg->minibuffer_needs_to_be_cleared = false;
 	}
     }
-  return(1);
+  return(SONO_DONE);
 }
 
 Cessate sonogram_in_slices(void *sono)
 {
   sonogram_state *sg = (sonogram_state *)sono;
   chan_info *cp;
-  int res = 0;
   cp = sg->cp;
   cp->temp_sonogram = NULL;
   if (!(cp->graph_transform_p))
@@ -1511,16 +1517,18 @@ Cessate sonogram_in_slices(void *sono)
     }
   switch (sg->slice)
     {
-    case 0: res = set_up_sonogram(sg); break; /* return 1 to go on, 2 to quit early */
-    case 1: res = run_all_ffts(sg);    break; /* return 0 until done with all ffts, then 1 -- 1 causes cleanup whether done or not */
-    case 2: res = cleanup_sonogram(sg); return(BACKGROUND_QUIT); break;
+    case SONO_INIT: sg->slice = set_up_sonogram(sg);                           break; 
+    case SONO_RUN:  sg->slice = run_all_ffts(sg);                              break; 
+    case SONO_QUIT: sg->slice = cleanup_sonogram(sg); return(BACKGROUND_QUIT); break;
     default: 
-      snd_error("runaway sonogram? (%d) ", sg->slice); 
+#if DEBUGGING
+      fprintf(stderr, "runaway sonogram? (%d) ", (int)(sg->slice)); 
+      abort();
+#endif
       cleanup_sonogram(sg); 
       return(BACKGROUND_QUIT); 
       break;
     }
-  sg->slice += res;
   return(BACKGROUND_CONTINUE);
 }
 

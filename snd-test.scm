@@ -1,40 +1,40 @@
 ;;; Snd tests
 ;;;
-;;;  test 0: constants                          [358]
-;;;  test 1: defaults                           [907]
-;;;  test 2: headers                            [1080]
-;;;  test 3: variables                          [1379]
-;;;  test 4: sndlib                             [1766]
-;;;  test 5: simple overall checks              [3557]
-;;;  test 6: vcts                               [10796]
-;;;  test 7: colors                             [11046]
-;;;  test 8: clm                                [11542]
-;;;  test 9: mix                                [17775]
-;;;  test 10: marks                             [20771]
-;;;  test 11: dialogs                           [21469]
-;;;  test 12: extensions                        [21779]
-;;;  test 13: menus, edit lists, hooks, etc     [22193]
-;;;  test 14: all together now                  [23462]
-;;;  test 15: chan-local vars                   [24513]
-;;;  test 16: regularized funcs                 [25773]
-;;;  test 17: dialogs and graphics              [30110]
-;;;  test 18: enved                             [30184]
-;;;  test 19: save and restore                  [30204]
-;;;  test 20: transforms                        [31556]
-;;;  test 21: new stuff                         [32640]
-;;;  test 22: run                               [33399]
-;;;  test 23: with-sound                        [38481]
-;;;  test 24: user-interface                    [39466]
-;;;  test 25: X/Xt/Xm                           [42641]
-;;;  test 26: Gtk                               [47160]
-;;;  test 27: GL                                [50271]
-;;;  test 28: errors                            [50375]
-;;;  test all done                              [52375]
+;;;  test 0: constants                          [360]
+;;;  test 1: defaults                           [909]
+;;;  test 2: headers                            [1082]
+;;;  test 3: variables                          [1381]
+;;;  test 4: sndlib                             [1768]
+;;;  test 5: simple overall checks              [3559]
+;;;  test 6: vcts                               [10798]
+;;;  test 7: colors                             [11048]
+;;;  test 8: clm                                [11544]
+;;;  test 9: mix                                [17776]
+;;;  test 10: marks                             [20772]
+;;;  test 11: dialogs                           [21470]
+;;;  test 12: extensions                        [21780]
+;;;  test 13: menus, edit lists, hooks, etc     [22194]
+;;;  test 14: all together now                  [23463]
+;;;  test 15: chan-local vars                   [24514]
+;;;  test 16: regularized funcs                 [25774]
+;;;  test 17: dialogs and graphics              [30111]
+;;;  test 18: enved                             [30185]
+;;;  test 19: save and restore                  [30205]
+;;;  test 20: transforms                        [31577]
+;;;  test 21: new stuff                         [32661]
+;;;  test 22: run                               [33420]
+;;;  test 23: with-sound                        [38502]
+;;;  test 24: user-interface                    [39487]
+;;;  test 25: X/Xt/Xm                           [42662]
+;;;  test 26: Gtk                               [47181]
+;;;  test 27: GL                                [50292]
+;;;  test 28: errors                            [50396]
+;;;  test all done                              [52396]
 ;;;
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 ;;; need all html example code in autotests
 ;;; need some way to check that graphs are actually drawn (region dialog etc)
-;;; TODO: set-sample with edpos test, oscope.scm somehow
+;;; TODO: oscope.scm somehow
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
@@ -23150,7 +23150,8 @@ EDITS: 5
 	(set! (auto-update) #t)
 	(sleep 1) ; make sure write dates differ(!)
 	(system "cp oboe.snd fmv1.snd") ; ind1 needs auto-update now
-	(set! (sample 100 ind 0) 0.5)
+	(set-sample 100 0.5 ind 0 #f)
+	(if (fneq (sample 100 ind 0) 0.5) (snd-display ";set-sample: ~A" (sample 100 ind 0)))
 	(save-sound ind) ; this should cause auto-update scan of all files
 	(set! ind1 (find-sound "fmv1.snd")) ; hmmm auto-update can change any file's index!
 	(if (not (= (frames ind1) (mus-sound-frames "oboe.snd")))

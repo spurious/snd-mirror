@@ -838,7 +838,7 @@ void sono_update(chan_info *cp);
 void set_spectro_cutoff_and_redisplay(Float val);
 void c_convolve(char *fname, Float amp, int filec, off_t filehdr, int filterc, off_t filterhdr, int filtersize,
 		 int fftsize, int filter_chans, int filter_chan, int data_size, snd_info *gsp, enved_progress_t from_enved, int ip, int total_chans);
-void *make_sonogram_state(chan_info *cp);
+void *make_sonogram_state(chan_info *cp, bool force_recalc);
 void single_fft(chan_info *cp, bool update_display, bool force_recalc);
 Cessate sonogram_in_slices(void *sono);
 char *added_transform_name(int type);

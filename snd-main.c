@@ -1,10 +1,6 @@
 #include "snd.h"
 #include "clm2xen.h"
 
-/* TODO: we could use the "files" list here to make sure all previously loaded code is available:
- *         in Guile: files = XEN_AS_STRING(XEN_EVAL_C_STRING("snd-loaded-files"))
- */
-
 static void remove_temp_files(chan_info *cp)
 {
   free_sound_list(cp);
@@ -52,6 +48,22 @@ void sound_not_current(snd_info *sp, void *ignore)
 }
 
 /* ---------------- save sound state (options, or entire state) ---------------- */
+
+#if HAVE_GUILE
+static void save_loaded_files_list(FILE *fd)
+{
+  /* make sure all previously loaded code is available */
+  char *files;
+  files = XEN_AS_STRING(XEN_EVAL_C_STRING("snd-loaded-files"));
+  if (files)
+    {
+      fprintf(fd, ";;; reload any missing files\n");
+      fprintf(fd, "(for-each\n  (lambda (file)\n");
+      fprintf(fd, "    (if (and (not (member file snd-loaded-files))\n             (file-exists? file))\n        (load file)))\n");
+      fprintf(fd, "  '%s)\n\n", files);
+    }
+}
+#endif
 
 static bool fneq(Float a, Float b)
 {
@@ -781,6 +793,10 @@ static char *save_state_or_error (char *save_state_name)
 		      strerror(errno)));
   else
     {
+#if HAVE_GUILE
+      /* try to make sure all previously loaded files are now loaded */
+      save_loaded_files_list(save_fd);
+#endif
 #if HAVE_SETLOCALE
       locale = copy_string(setlocale(LC_NUMERIC, "C")); /* must use decimal point in floats since Scheme assumes that format */
 #endif

@@ -390,8 +390,9 @@
 
 (define* (effects-squelch-channel amount gate-size #:optional snd chn)
   (let ((f0 (make-average gate-size))
-	(f1 (make-average gate-size :initial-element 1.0)))
-    (map-channel (lambda (y) (* y (average f1 (if (< (average f0 (* y y)) amount) 0.0 1.0))))
+	(f1 (make-average gate-size :initial-element 1.0))
+	(amp amount))
+    (map-channel (lambda (y) (* y (average f1 (if (< (average f0 (* y y)) amp) 0.0 1.0))))
 		 0 #f snd chn #f
 		 (format #f "effects-squelch-channel ~A ~A" amount gate-size))))
 
@@ -624,12 +625,13 @@
 (define* (effects-echo input-samps-1 delay-time echo-amount #:optional beg dur snd chn)
   (let ((del (make-delay (inexact->exact (round (* delay-time (srate))))))
 	(samp 0)
-	(input-samps (or input-samps-1 dur (frames snd chn))))
+	(input-samps (or input-samps-1 dur (frames snd chn)))
+	(amp echo-amount))
     (map-channel (lambda (inval)
 		   (set! samp (1+ samp))
 		   (+ inval
 		      (delay del
-			     (* echo-amount (+ (tap del) (if (<= samp input-samps) inval 0.0))))))
+			     (* amp (+ (tap del) (if (<= samp input-samps) inval 0.0))))))
 		 beg dur snd chn #f
 		 (format #f "effects-echo ~A ~A ~A ~A ~A" input-samps-1 delay-time echo-amount beg dur))))
 
@@ -637,26 +639,29 @@
   (let* ((flt (make-fir-filter :order 4 :xcoeffs (vct .125 .25 .25 .125)))
 	 (del (make-delay  (inexact->exact (round (* secs (srate))))))
 	 (samp 0)
-	 (input-samps (or input-samps-1 dur (frames snd chn))))
+	 (input-samps (or input-samps-1 dur (frames snd chn)))
+	 (amp scaler))
     (map-channel (lambda (inval)
 		   (set! samp (1+ samp))
 		   (+ inval 
 		      (delay del 
-			     (fir-filter flt (* scaler (+ (tap del) (if (<= samp input-samps) inval 0.0)))))))
+			     (fir-filter flt (* amp (+ (tap del) (if (<= samp input-samps) inval 0.0)))))))
 		 beg dur snd chn #f
 		 (format #f "effects-flecho-1 ~A ~A ~A ~A ~A" scaler secs input-samps-1 beg dur))))
 
-(define* (effects-zecho-1 scaler secs frq amp input-samps-1 #:optional beg dur snd chn)
+(define* (effects-zecho-1 scaler secs frq amp-1 input-samps-1 #:optional beg dur snd chn)
   (let* ((os (make-oscil frq))
+	 (amp amp-1)
 	 (len (round (inexact->exact (* secs (srate)))))
 	 (del (make-delay len :max-size (+ len amp 1)))
 	 (samp 0)
-	 (input-samps (or input-samps-1 dur (frames snd chn))))
+	 (input-samps (or input-samps-1 dur (frames snd chn)))
+	 (scl scaler))
     (map-channel (lambda (inval)
 		   (set! samp (1+ samp))
 		   (+ inval 
 		      (delay del 
-			     (* scaler (+ (tap del) (if (<= samp input-samps) inval 0.0)))
+			     (* scl (+ (tap del) (if (<= samp input-samps) inval 0.0)))
 			     (* amp (oscil os)))))
 		 beg dur snd chn #f
     		 (format #f "effects-zecho-1 ~A ~A ~A ~A ~A ~A ~A" scaler secs frq amp input-samps-1 beg dur))))
@@ -918,9 +923,11 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 ;;; FILTERS
 ;;;
 
-(define* (effects-comb-filter scaler size #:optional beg dur snd chn)
-  (let ((delay-line (make-vct size 0.0))
-	(delay-loc 0))
+(define* (effects-comb-filter scaler-1 size-1 #:optional beg dur snd chn)
+  (let ((delay-line (make-vct size-1 0.0))
+	(delay-loc 0)
+	(size size-1)
+	(scaler scaler-1))
     (map-channel (lambda (x)
 		   (let ((result (vct-ref delay-line delay-loc)))
 		     (vct-set! delay-line delay-loc (+ x (* scaler result)))
@@ -930,10 +937,11 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 		 beg dur snd chn #f
 		 (format #f "effects-comb-filter ~A ~A ~A ~A" scaler size beg dur))))
 
-(define* (effects-comb-chord scaler size amp interval-one interval-two #:optional beg dur snd chn)
+(define* (effects-comb-chord scaler size amp-1 interval-one interval-two #:optional beg dur snd chn)
   (let ((c1 (make-comb scaler size))
 	(c2 (make-comb scaler (* size interval-one)))
-	(c3 (make-comb scaler (* size interval-two))))
+	(c3 (make-comb scaler (* size interval-two)))
+	(amp amp-1))
     (map-channel (lambda (x)
 		   (* amp (+ (comb c1 x) (comb c2 x) (comb c3 x))))
 		 beg dur snd chn #f
@@ -2001,9 +2009,6 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
       max-samp)))
   
 ;;; TODO: finish effects origins: jcrev cross-synthesis
-;;; TODO: make effects optimizable throughout
-
-
 
 (let* ((reverb-menu-list '())
        (reverb-menu (XmCreatePulldownMenu (main-menu effects-menu) "Reverbs"
@@ -2277,10 +2282,11 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
 	 (sr (make-src :srate srf))
 	 (sf (make-sample-reader beg))
 	 (len (or dur (frames snd chn)))
-	 (out-data (make-vct len)))
+	 (out-data (make-vct len))
+	 (amp osamp))
     (vct-map! out-data
 	      (lambda ()
-		(src sr (* osamp (oscil os))
+		(src sr (* amp (oscil os))
 		     (lambda (dir)
 		       (if (> dir 0)
 			   (next-sample sf)
@@ -2289,9 +2295,10 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
     (vct->channel out-data beg len snd chn #f
 		  (format #f "effects-fp ~A ~A ~A ~A ~A" srf osamp osfrq beg (if (= len (frames snd chn)) #f len)))))
 
-(define* (effects-position-sound mono-snd pos #:optional snd chn)
+(define* (effects-position-sound mono-snd pos-1 #:optional snd chn)
   (let ((len (frames mono-snd))
-	(reader1 (make-sample-reader 0 mono-snd)))
+	(reader1 (make-sample-reader 0 mono-snd))
+	(pos pos-1))
     (if (number? pos)
 	(map-channel (lambda (y)
 		       (+ y (* pos (read-sample reader1))))

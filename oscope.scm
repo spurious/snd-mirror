@@ -157,3 +157,4 @@
 (define oscope (make-oscope))
 
 ;;; TODO: sine tone out
+;;; TODO: gl checks ("waterfall"), gtk version, rb cases

@@ -384,10 +384,6 @@ void about_snd_help(void)
 30-Sep:  mus-audio-mixer-read|write vector arg is now a vct.\n\
 27-Sep:  do? (examp.scm -- do that can be interrupted and continued)\n\
 20-Sep:  show-sonogram-cursor\n\
-13-Sep:  removed buffer generator.\n\
-         log-freq-start.\n\
-9-Sep:   vct-reverse!\n\
-8-Sep:   create-ssb-dialog in snd-motif.scm.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",

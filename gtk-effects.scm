@@ -23,7 +23,6 @@
 				      0
 				      (g_cclosure_new func data #f)
 				      #f)))
-;;; SOMEDAY: finish the g_signal_closure cleanup
 
 (define effects-list '()) ; menu labels are updated to show current settings
 
@@ -521,10 +520,7 @@
 	;; echo-decay? -- using (* 4 delay-time) currently
     (gtk_menu_shell_append (GTK_MENU_SHELL delay-cascade) child)
     (gtk_widget_show child)
-    (g_signal_connect_closure_by_id 
-     (GPOINTER child)
-     (g_signal_lookup "activate" (G_OBJECT_TYPE (GTK_OBJECT child))) 0
-     (g_cclosure_new 
+    (g_signal_connect child "activate"
       (lambda (w d) 
 	(if (not echo-dialog)
 	    (let ((initial-delay-time 0.5)
@@ -570,7 +566,7 @@
 			  (lambda (target) (set! echo-target target))
 			  (lambda (truncate) (set! echo-truncate truncate)))))
 	(activate-dialog echo-dialog))
-      #f #f) #f)
+      #f)
     (set! delay-menu-list (cons (lambda ()
 				  (let ((new-label (format #f "Echo (~1,2F ~1,2F)" 
 							   delay-time echo-amount)))
@@ -587,10 +583,7 @@
 	(flecho-truncate #t))
     (gtk_menu_shell_append (GTK_MENU_SHELL delay-cascade) child)
     (gtk_widget_show child)
-    (g_signal_connect_closure_by_id 
-     (GPOINTER child)
-     (g_signal_lookup "activate" (G_OBJECT_TYPE (GTK_OBJECT child))) 0
-     (g_cclosure_new 
+    (g_signal_connect child "activate"
       (lambda (w d) 
 	(if (not flecho-dialog)
 	    (let ((initial-flecho-scaler 0.5)
@@ -638,7 +631,7 @@
 			  (lambda (target) (set! flecho-target target))
 			  (lambda (truncate) (set! flecho-truncate truncate)))))
 	(activate-dialog flecho-dialog))
-      #f #f) #f)
+      #f)
     (set! delay-menu-list (cons (lambda ()
 				  (let ((new-label (format #f "Filtered echo (~1,2F ~1,2F)"
 							   flecho-scaler flecho-delay)))
@@ -657,10 +650,7 @@
 	(zecho-truncate #t))
     (gtk_menu_shell_append (GTK_MENU_SHELL delay-cascade) child)
     (gtk_widget_show child)
-    (g_signal_connect_closure_by_id 
-     (GPOINTER child)
-     (g_signal_lookup "activate" (G_OBJECT_TYPE (GTK_OBJECT child))) 0
-     (g_cclosure_new 
+    (g_signal_connect child "activate"
       (lambda (w d) 
 	(if (not zecho-dialog)
 	    (let ((initial-zecho-scaler 0.5)
@@ -727,7 +717,7 @@ the modulation frequency, and the echo amplitude."))
 			  (lambda (target) (set! zecho-target target))
 			  (lambda (truncate) (set! zecho-truncate truncate)))))
 	(activate-dialog zecho-dialog))
-      #f #f) #f)
+      #f)
 
     (set! delay-menu-list (cons (lambda ()
 				  (let ((new-label (format #f "Modulated echo (~1,2F ~1,2F ~1,2F ~1,2F)" 
@@ -747,13 +737,7 @@ the modulation frequency, and the echo amplitude."))
   (gtk_menu_shell_append (GTK_MENU_SHELL (main-menu effects-menu)) filter-menu)
   (gtk_widget_show filter-menu)
   (gtk_menu_item_set_submenu (GTK_MENU_ITEM filter-menu) filter-cascade)
-  (g_signal_connect_closure_by_id 
-   (GPOINTER filter-menu)
-   (g_signal_lookup "activate" (G_OBJECT_TYPE (GTK_OBJECT filter-menu))) 0
-   (g_cclosure_new (lambda (w d) 
-		     (update-label filter-menu-list))
-		   #f #f)
-   #f)
+  (g_signal_connect filter-menu "activate" (lambda (w d) (update-label filter-menu-list)) #f)
 
   ;; -------- Butterworth band-pass filter
 
@@ -764,10 +748,7 @@ the modulation frequency, and the echo amplitude."))
 	(band-pass-target 'sound))
     (gtk_menu_shell_append (GTK_MENU_SHELL filter-cascade) child)
     (gtk_widget_show child)
-    (g_signal_connect_closure_by_id 
-     (GPOINTER child)
-     (g_signal_lookup "activate" (G_OBJECT_TYPE (GTK_OBJECT child))) 0
-     (g_cclosure_new 
+    (g_signal_connect child "activate"
       (lambda (w d) 
 	(if (not band-pass-dialog)
 	    (let ((initial-band-pass-freq 1000)
@@ -805,8 +786,7 @@ the modulation frequency, and the echo amplitude."))
 			  (lambda (target) (set! band-pass-target target)) 
 			  #f)))
 	(activate-dialog band-pass-dialog))
-      #f #f)
-     #f)
+      #f)
     (set! filter-menu-list (cons (lambda ()
 				   (let ((new-label (format #f "Band-pass filter (~,2F ~1,2D)" 
 							    band-pass-freq band-pass-bw)))
@@ -822,10 +802,7 @@ the modulation frequency, and the echo amplitude."))
 	(notch-target 'sound))
     (gtk_menu_shell_append (GTK_MENU_SHELL filter-cascade) child)
     (gtk_widget_show child)
-    (g_signal_connect_closure_by_id 
-     (GPOINTER child)
-     (g_signal_lookup "activate" (G_OBJECT_TYPE (GTK_OBJECT child))) 0
-     (g_cclosure_new 
+    (g_signal_connect child "activate"
       (lambda (w d) 
 	(if (not notch-dialog)
 	    (let ((initial-notch-freq 100)
@@ -863,7 +840,6 @@ the modulation frequency, and the echo amplitude."))
 			  (lambda (target) (set! notch-target target)) 
 			  #f)))
 	(activate-dialog notch-dialog))
-      #f #f)
      #f)
     (set! filter-menu-list (cons (lambda ()
 				   (let ((new-label (format #f "Band-reject filter (~,2F ~1,2D)" notch-freq notch-bw)))
@@ -878,10 +854,7 @@ the modulation frequency, and the echo amplitude."))
 	(high-pass-target 'sound))
     (gtk_menu_shell_append (GTK_MENU_SHELL filter-cascade) child)
     (gtk_widget_show child)
-    (g_signal_connect_closure_by_id 
-     (GPOINTER child)
-     (g_signal_lookup "activate" (G_OBJECT_TYPE (GTK_OBJECT child))) 0
-     (g_cclosure_new 
+    (g_signal_connect child "activate"
       (lambda (w d) 
 	(if (not high-pass-dialog)
 	    (let ((initial-high-pass-freq 100)
@@ -911,7 +884,6 @@ the modulation frequency, and the echo amplitude."))
 			  (lambda (target) (set! high-pass-target target)) 
 			  #f)))
 	(activate-dialog high-pass-dialog))
-      #f #f)
      #f)
     (set! filter-menu-list (cons (lambda ()
 				   (let ((new-label (format #f "High-pass filter (~,2F)" high-pass-freq)))
@@ -926,10 +898,7 @@ the modulation frequency, and the echo amplitude."))
 	(low-pass-target 'sound))
     (gtk_menu_shell_append (GTK_MENU_SHELL filter-cascade) child)
     (gtk_widget_show child)
-    (g_signal_connect_closure_by_id 
-     (GPOINTER child)
-     (g_signal_lookup "activate" (G_OBJECT_TYPE (GTK_OBJECT child))) 0
-     (g_cclosure_new 
+    (g_signal_connect child "activate"
       (lambda (w d) 
 	(if (not low-pass-dialog)
 	    (let ((initial-low-pass-freq 1000)
@@ -959,7 +928,6 @@ the modulation frequency, and the echo amplitude."))
 			  (lambda (target) (set! low-pass-target target)) 
 			  #f)))
 	(activate-dialog low-pass-dialog))
-      #f #f)
      #f)
     (set! filter-menu-list (cons (lambda ()
 				   (let ((new-label (format #f "Low-pass filter (~,2F)" low-pass-freq)))
@@ -975,10 +943,7 @@ the modulation frequency, and the echo amplitude."))
 	(comb-target 'sound))
     (gtk_menu_shell_append (GTK_MENU_SHELL filter-cascade) child)
     (gtk_widget_show child)
-    (g_signal_connect_closure_by_id 
-     (GPOINTER child)
-     (g_signal_lookup "activate" (G_OBJECT_TYPE (GTK_OBJECT child))) 0
-     (g_cclosure_new 
+    (g_signal_connect child "activate"
       (lambda (w d) 
 	(if (not comb-dialog)
 	    (let ((initial-comb-scaler 0.1)
@@ -1023,7 +988,6 @@ the modulation frequency, and the echo amplitude."))
 			  (lambda (target) (set! comb-target target)) 
 			  #f)))
 	(activate-dialog comb-dialog))
-      #f #f)
      #f)
     (set! filter-menu-list (cons (lambda ()
 				   (let ((new-label (format #f "Comb filter (~1,2F ~1,2D)" comb-scaler comb-size)))
@@ -1042,10 +1006,7 @@ the modulation frequency, and the echo amplitude."))
 	(new-comb-chord-target 'sound))
     (gtk_menu_shell_append (GTK_MENU_SHELL filter-cascade) child)
     (gtk_widget_show child)
-    (g_signal_connect_closure_by_id 
-     (GPOINTER child)
-     (g_signal_lookup "activate" (G_OBJECT_TYPE (GTK_OBJECT child))) 0
-     (g_cclosure_new 
+    (g_signal_connect child "activate"
       (lambda (w d) 
 	(if (not new-comb-chord-dialog)
 	    (let ((initial-new-comb-chord-scaler 0.95)
@@ -1113,7 +1074,6 @@ Move the sliders to set the comb chord parameters."))
 			  (lambda (target) (set! new-comb-chord-target target))
 			  #f)))
 	(activate-dialog new-comb-chord-dialog))
-      #f #f)
      #f)
     (set! filter-menu-list (cons (lambda ()
 				   (let ((new-label (format #f "Comb chord filter (~1,2F ~1,2D ~1,2F ~1,2F ~1,2F)"  
@@ -1131,10 +1091,7 @@ Move the sliders to set the comb chord parameters."))
 	(moog-target 'sound))
     (gtk_menu_shell_append (GTK_MENU_SHELL filter-cascade) child)
     (gtk_widget_show child)
-    (g_signal_connect_closure_by_id 
-     (GPOINTER child)
-     (g_signal_lookup "activate" (G_OBJECT_TYPE (GTK_OBJECT child))) 0
-     (g_cclosure_new 
+    (g_signal_connect child "activate"
       (lambda (w d) 
 	(if (not moog-dialog)
 	    (let ((initial-moog-cutoff-frequency 10000)
@@ -1175,7 +1132,6 @@ Move the sliders to set the filter cutoff frequency and resonance."))
 			  (lambda (target) (set! moog-target target)) 
 			  #f)))
 	(activate-dialog moog-dialog))
-      #f #f)
      #f)
     (set! filter-menu-list (cons (lambda ()
 				   (let ((new-label (format #f "Moog filter (~,2F ~1,2F)" moog-cutoff-frequency moog-resonance)))
@@ -1192,13 +1148,7 @@ Move the sliders to set the filter cutoff frequency and resonance."))
   (gtk_menu_shell_append (GTK_MENU_SHELL (main-menu effects-menu)) freq-menu)
   (gtk_widget_show freq-menu)
   (gtk_menu_item_set_submenu (GTK_MENU_ITEM freq-menu) freq-cascade)
-  (g_signal_connect_closure_by_id 
-   (GPOINTER freq-menu)
-   (g_signal_lookup "activate" (G_OBJECT_TYPE (GTK_OBJECT freq-menu))) 0
-   (g_cclosure_new (lambda (w d) 
-		     (update-label freq-menu-list))
-		   #f #f)
-   #f)
+  (g_signal_connect freq-menu "activate" (lambda (w d) (update-label freq-menu-list)) #f)
 
   ;; -------- Adaptive saturation
 
@@ -1208,10 +1158,7 @@ Move the sliders to set the filter cutoff frequency and resonance."))
 	(adsat-target 'sound))
     (gtk_menu_shell_append (GTK_MENU_SHELL freq-cascade) child)
     (gtk_widget_show child)
-    (g_signal_connect_closure_by_id 
-     (GPOINTER child)
-     (g_signal_lookup "activate" (G_OBJECT_TYPE (GTK_OBJECT child))) 0
-     (g_cclosure_new 
+    (g_signal_connect child "activate"
       (lambda (w d) 
 	(if (not adsat-dialog)
 	    (let ((initial-adsat-size 4)
@@ -1262,7 +1209,6 @@ Move the sliders to set the filter cutoff frequency and resonance."))
 			  (lambda (target) (set! adsat-target target)) 
 			  #f)))
 	(activate-dialog adsat-dialog))
-      #f #f)
      #f)
     (set! freq-menu-list (cons (lambda ()
 				 (let ((new-label (format #f "Adaptive saturation (~1,2D)" adsat-size)))
@@ -1277,10 +1223,7 @@ Move the sliders to set the filter cutoff frequency and resonance."))
 	(src-target 'sound))
     (gtk_menu_shell_append (GTK_MENU_SHELL freq-cascade) child)
     (gtk_widget_show child)
-    (g_signal_connect_closure_by_id 
-     (GPOINTER child)
-     (g_signal_lookup "activate" (G_OBJECT_TYPE (GTK_OBJECT child))) 0
-     (g_cclosure_new 
+    (g_signal_connect child "activate"
       (lambda (w d) 
 	(if (not src-dialog)
 	    (let ((initial-src-amount 0.0)
@@ -1314,7 +1257,6 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 			  (lambda (target) (set! src-target target)) 
 			  #f)))
 	(activate-dialog src-dialog))
-      #f #f)
      #f)
     (set! freq-menu-list (cons (lambda ()
 				 (let ((new-label (format #f "Sample rate scaling (~1,2F)" src-amount)))
@@ -1333,10 +1275,7 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 	(expsrc-target 'sound))
     (gtk_menu_shell_append (GTK_MENU_SHELL freq-cascade) child)
     (gtk_widget_show child)
-    (g_signal_connect_closure_by_id 
-     (GPOINTER child)
-     (g_signal_lookup "activate" (G_OBJECT_TYPE (GTK_OBJECT child))) 0
-     (g_cclosure_new 
+    (g_signal_connect child "activate"
       (lambda (w d) 
 	(if (not expsrc-dialog)
 	    (let ((initial-time-scale 1.0)
@@ -1411,7 +1350,6 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 			  (lambda (target) (set! expsrc-target target)) 
 			  #f)))
 	(activate-dialog expsrc-dialog))
-      #f #f)
      #f)
     (set! freq-menu-list (cons (lambda ()
 				 (let ((new-label (format #f "Time/pitch scaling (~1,2F ~1,2F)" time-scale pitch-scale)))
@@ -1435,10 +1373,7 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 
     (gtk_menu_shell_append (GTK_MENU_SHELL freq-cascade) child)
     (gtk_widget_show child)
-    (g_signal_connect_closure_by_id 
-     (GPOINTER child)
-     (g_signal_lookup "activate" (G_OBJECT_TYPE (GTK_OBJECT child))) 0
-     (g_cclosure_new 
+    (g_signal_connect child "activate"
       (lambda (w d) 
 	(if (not src-timevar-dialog)
 	    (let ((initial-src-timevar-scale 1.0)
@@ -1487,7 +1422,6 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 			    (set! src-timevar-target target))
 			  #f)))
 	(activate-dialog src-timevar-dialog))
-      #f #f)
      #f)
     (set! freq-menu-list (cons (lambda ()
 				(let ((new-label (format #f "Src-Timevar")))
@@ -1503,13 +1437,7 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
   (gtk_menu_shell_append (GTK_MENU_SHELL (main-menu effects-menu)) mod-menu)
   (gtk_widget_show mod-menu)
   (gtk_menu_item_set_submenu (GTK_MENU_ITEM mod-menu) mod-cascade)
-  (g_signal_connect_closure_by_id 
-   (GPOINTER mod-menu)
-   (g_signal_lookup "activate" (G_OBJECT_TYPE (GTK_OBJECT mod-menu))) 0
-   (g_cclosure_new (lambda (w d) 
-		     (update-label mod-menu-list))
-		   #f #f)
-   #f)
+  (g_signal_connect mod-menu "activate" (lambda (w d) (update-label mod-menu-list)) #f)
 
   ;; -------- Amplitude modulation
 
@@ -1520,10 +1448,7 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 	(am-effect-envelope #f))
     (gtk_menu_shell_append (GTK_MENU_SHELL mod-cascade) child)
     (gtk_widget_show child)
-    (g_signal_connect_closure_by_id 
-     (GPOINTER child)
-     (g_signal_lookup "activate" (G_OBJECT_TYPE (GTK_OBJECT child))) 0
-     (g_cclosure_new 
+    (g_signal_connect child "activate"
       (lambda (w d) 
 	(if (not am-effect-dialog)
 	    (let ((initial-am-effect-amount 100.0)
@@ -1567,7 +1492,6 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 			  (lambda (target) (set! am-effect-target target))
 			  #f)))
 	(activate-dialog am-effect-dialog))
-      #f #f)
      #f)
     (set! mod-menu-list (cons (lambda ()
 				(let ((new-label (format #f "Amplitude modulation (~1,2F)"  am-effect-amount)))
@@ -1584,10 +1508,7 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 	(rm-envelope #f))
     (gtk_menu_shell_append (GTK_MENU_SHELL mod-cascade) child)
     (gtk_widget_show child)
-    (g_signal_connect_closure_by_id 
-     (GPOINTER child)
-     (g_signal_lookup "activate" (G_OBJECT_TYPE (GTK_OBJECT child))) 0
-     (g_cclosure_new 
+    (g_signal_connect child "activate"
       (lambda (w d) 
 	(if (not rm-dialog)
 	    (let ((initial-rm-frequency 100)
@@ -1643,7 +1564,6 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 			  (lambda (target) (set! rm-target target)) 
 			  #f)))
 	(activate-dialog rm-dialog))
-      #f #f)
      #f)
     (set! mod-menu-list (cons (lambda ()
 				(let ((new-label (format #f "Ring modulation (~1,2D ~1,2D)"
@@ -1661,13 +1581,7 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
   (gtk_menu_shell_append (GTK_MENU_SHELL (main-menu effects-menu)) reverb-menu)
   (gtk_widget_show reverb-menu)
   (gtk_menu_item_set_submenu (GTK_MENU_ITEM reverb-menu) reverb-cascade)
-  (g_signal_connect_closure_by_id 
-   (GPOINTER reverb-menu)
-   (g_signal_lookup "activate" (G_OBJECT_TYPE (GTK_OBJECT reverb-menu))) 0
-   (g_cclosure_new (lambda (w d) 
-		     (update-label reverb-menu-list))
-		   #f #f)
-   #f)
+  (g_signal_connect reverb-menu "activate" (lambda (w d) (update-label reverb-menu-list)) #f)
 
   ;; -------- Reverb from Michael McNabb's Nrev 
 
@@ -1679,10 +1593,7 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 	(reverb-target 'sound))
     (gtk_menu_shell_append (GTK_MENU_SHELL reverb-cascade) child)
     (gtk_widget_show child)
-    (g_signal_connect_closure_by_id 
-     (GPOINTER child)
-     (g_signal_lookup "activate" (G_OBJECT_TYPE (GTK_OBJECT child))) 0
-     (g_cclosure_new 
+    (g_signal_connect child "activate"
       (lambda (w d) 
 	;; add reverb-control-decay (with ramp?) and reverb-truncate
 	(if (not reverb-dialog)
@@ -1738,7 +1649,6 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
 			  (lambda (target) (set! reverb-target target)) 
 			  #f)))
 	(activate-dialog reverb-dialog))
-      #f #f)
      #f)
     (set! reverb-menu-list (cons (lambda ()
 				   (let ((new-label (format #f "McNabb reverb (~1,2F ~1,2F ~1,2F)" reverb-amount reverb-filter reverb-feedback)))
@@ -1788,10 +1698,7 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
     
     (gtk_menu_shell_append (GTK_MENU_SHELL reverb-cascade) child)
     (gtk_widget_show child)
-    (g_signal_connect_closure_by_id 
-     (GPOINTER child)
-     (g_signal_lookup "activate" (G_OBJECT_TYPE (GTK_OBJECT child))) 0
-     (g_cclosure_new 
+    (g_signal_connect child "activate"
       (lambda (w d) 
 	(if (not jc-reverb-dialog)
 	    (let ((initial-jc-reverb-decay 2.0)
@@ -1827,7 +1734,6 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
 			  (lambda (target) (set! jc-reverb-target target))
 			  (lambda (truncate) (set! jc-reverb-truncate truncate)))))
 	(activate-dialog jc-reverb-dialog))
-      #f #f)
      #f)
     (set! reverb-menu-list (cons (lambda ()
 				   (let ((new-label (format #f "Chowning reverb (~1,2F ~1,2F)" jc-reverb-decay jc-reverb-volume)))
@@ -1843,10 +1749,7 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
 	(convolve-dialog #f))
     (gtk_menu_shell_append (GTK_MENU_SHELL reverb-cascade) child)
     (gtk_widget_show child)
-    (g_signal_connect_closure_by_id 
-     (GPOINTER child)
-     (g_signal_lookup "activate" (G_OBJECT_TYPE (GTK_OBJECT child))) 0
-     (g_cclosure_new 
+    (g_signal_connect child "activate"
       (lambda (w d) 
 	(if (not convolve-dialog)
 	    (let ((initial-convolve-sound-one 0)
@@ -1902,7 +1805,6 @@ http://www.bright.net/~dlphilp/linux_csound.html under Impulse Response Data."))
 					       (set! convolve-amp (.value (GTK_ADJUSTMENT (list-ref sliders 2)))))
 					     1000))))))
 	(activate-dialog convolve-dialog))
-      #f #f)
      #f)
     (set! reverb-menu-list (cons (lambda ()
 				   (let ((new-label (format #f "Convolution (~1,2D ~1,2D ~1,2F)" convolve-sound-one convolve-sound-two convolve-amp)))
@@ -1919,13 +1821,7 @@ http://www.bright.net/~dlphilp/linux_csound.html under Impulse Response Data."))
   (gtk_menu_shell_append (GTK_MENU_SHELL (main-menu effects-menu)) misc-menu)
   (gtk_widget_show misc-menu)
   (gtk_menu_item_set_submenu (GTK_MENU_ITEM misc-menu) misc-cascade)
-  (g_signal_connect_closure_by_id 
-   (GPOINTER misc-menu)
-   (g_signal_lookup "activate" (G_OBJECT_TYPE (GTK_OBJECT misc-menu))) 0
-   (g_cclosure_new (lambda (w d) 
-		     (update-label misc-menu-list))
-		   #f #f)
-   #f)
+  (g_signal_connect misc-menu "activate" (lambda (w d) (update-label misc-menu-list)) #f)
 
   ;; -------- Place sound
 
@@ -1965,10 +1861,7 @@ a number, the sound is split such that 0 is all in channel 0 and 90 is all in ch
 
     (gtk_menu_shell_append (GTK_MENU_SHELL misc-cascade) child)
     (gtk_widget_show child)
-    (g_signal_connect_closure_by_id 
-     (GPOINTER child)
-     (g_signal_lookup "activate" (G_OBJECT_TYPE (GTK_OBJECT child))) 0
-     (g_cclosure_new 
+    (g_signal_connect child "activate"
       (lambda (w d) 
 	(if (not place-sound-dialog)
 	    (let ((initial-mono-snd 0)
@@ -2017,7 +1910,6 @@ a number, the sound is split such that 0 is all in channel 0 and 90 is all in ch
 							  '(0.0 1.0 0.0 1.0)))
 	      (set! (xe-envelope place-sound-envelope) (list 0.0 1.0 1.0 1.0))))
 	(activate-dialog place-sound-dialog))
-      #f #f)
      #f)
     (set! misc-menu-list (cons (lambda ()
 				 (let ((new-label (format #f "Place sound (~1,2D ~1,2D ~1,2D)" mono-snd stereo-snd pan-pos)))
@@ -2031,10 +1923,7 @@ a number, the sound is split such that 0 is all in channel 0 and 90 is all in ch
 	(silence-dialog #f))
     (gtk_menu_shell_append (GTK_MENU_SHELL misc-cascade) child)
     (gtk_widget_show child)
-    (g_signal_connect_closure_by_id 
-     (GPOINTER child)
-     (g_signal_lookup "activate" (G_OBJECT_TYPE (GTK_OBJECT child))) 0
-     (g_cclosure_new 
+    (g_signal_connect child "activate"
       (lambda (w d) 
 	(if (not silence-dialog)
 	    (let ((initial-silence-amount 1.0)
@@ -2058,7 +1947,6 @@ a number, the sound is split such that 0 is all in channel 0 and 90 is all in ch
 					       (set! silence-amount (.value (GTK_ADJUSTMENT (list-ref sliders 0)))))
 					     100))))))
 	(activate-dialog silence-dialog))
-      #f #f)
      #f)
     (set! misc-menu-list (cons (lambda ()
 				 (let ((new-label (format #f "Add silence (~1,2F)" silence-amount)))
@@ -2074,10 +1962,7 @@ a number, the sound is split such that 0 is all in channel 0 and 90 is all in ch
 	(contrast-target 'sound))
     (gtk_menu_shell_append (GTK_MENU_SHELL misc-cascade) child)
     (gtk_widget_show child)
-    (g_signal_connect_closure_by_id 
-     (GPOINTER child)
-     (g_signal_lookup "activate" (G_OBJECT_TYPE (GTK_OBJECT child))) 0
-     (g_cclosure_new 
+    (g_signal_connect child "activate"
       (lambda (w d) 
 	(if (not contrast-dialog)
 	    (let ((initial-contrast-amount 1.0)
@@ -2116,7 +2001,6 @@ a number, the sound is split such that 0 is all in channel 0 and 90 is all in ch
 			  (lambda (target) (set! contrast-target target))
 			  #f)))
 	(activate-dialog contrast-dialog))
-      #f #f)
      #f)
     (set! misc-menu-list (cons (lambda ()
 				 (let ((new-label (format #f "Contrast enhancement (~1,2F)" contrast-amount)))
@@ -2164,10 +2048,7 @@ a number, the sound is split such that 0 is all in channel 0 and 90 is all in ch
 
     (gtk_menu_shell_append (GTK_MENU_SHELL misc-cascade) child)
     (gtk_widget_show child)
-    (g_signal_connect_closure_by_id 
-     (GPOINTER child)
-     (g_signal_lookup "activate" (G_OBJECT_TYPE (GTK_OBJECT child))) 0
-     (g_cclosure_new 
+    (g_signal_connect child "activate"
       (lambda (w d) 
 	(if (not cross-synth-dialog)
 	    (let ((initial-cross-synth-sound 1)
@@ -2216,7 +2097,6 @@ the synthesis amplitude, the FFT size, and the radius value."))
 			  (lambda (target) (set! cross-synth-target target)) 
 			  #f)))
 	(activate-dialog cross-synth-dialog))
-      #f #f)
      #f)
     (set! misc-menu-list (cons (lambda ()
 				 (let ((new-label (format #f "Cross synthesis (~1,2D ~1,2F ~1,2D ~1,2F)" 
@@ -2234,10 +2114,7 @@ the synthesis amplitude, the FFT size, and the radius value."))
 	(flange-target 'sound))
     (gtk_menu_shell_append (GTK_MENU_SHELL misc-cascade) child)
     (gtk_widget_show child)
-    (g_signal_connect_closure_by_id 
-     (GPOINTER child)
-     (g_signal_lookup "activate" (G_OBJECT_TYPE (GTK_OBJECT child))) 0
-     (g_cclosure_new 
+    (g_signal_connect child "activate"
       (lambda (w d) 
 	(if (not flange-dialog)
 	    (let ((initial-flange-speed 2.0)
@@ -2291,7 +2168,6 @@ the synthesis amplitude, the FFT size, and the radius value."))
 			  (lambda (target) (set! flange-target target)) 
 			  #f)))
 	(activate-dialog flange-dialog))
-      #f #f)
      #f)
     (set! misc-menu-list (cons (lambda ()
 				 (let ((new-label (format #f "Flange (~1,2F ~1,2F ~1,3F)" flange-speed flange-amount flange-time)))
@@ -2305,10 +2181,7 @@ the synthesis amplitude, the FFT size, and the radius value."))
 	(random-phase-dialog #f))
     (gtk_menu_shell_append (GTK_MENU_SHELL misc-cascade) child)
     (gtk_widget_show child)
-    (g_signal_connect_closure_by_id 
-     (GPOINTER child)
-     (g_signal_lookup "activate" (G_OBJECT_TYPE (GTK_OBJECT child))) 0
-     (g_cclosure_new 
+    (g_signal_connect child "activate"
       (lambda (w d) 
 	(if (not random-phase-dialog)
 	    (let ((initial-random-phase-amp-scaler 3.14)
@@ -2332,7 +2205,6 @@ the synthesis amplitude, the FFT size, and the radius value."))
 					       (set! random-phase-amp-scaler (.value (GTK_ADJUSTMENT (list-ref sliders 0)))))
 					     100))))))
 	(activate-dialog random-phase-dialog))
-      #f #f)
      #f)
     (set! misc-menu-list (cons (lambda ()
 				 (let ((new-label (format #f "Randomize phase (~1,2F)"  random-phase-amp-scaler)))
@@ -2367,10 +2239,7 @@ the synthesis amplitude, the FFT size, and the radius value."))
 
     (gtk_menu_shell_append (GTK_MENU_SHELL misc-cascade) child)
     (gtk_widget_show child)
-    (g_signal_connect_closure_by_id 
-     (GPOINTER child)
-     (g_signal_lookup "activate" (G_OBJECT_TYPE (GTK_OBJECT child))) 0
-     (g_cclosure_new 
+    (g_signal_connect child "activate"
       (lambda (w d) 
 	(if (not robotize-dialog)
 	    (let ((initial-samp-rate 1.0)
@@ -2425,7 +2294,6 @@ the synthesis amplitude, the FFT size, and the radius value."))
 			  (lambda (target) (set! robotize-target target)) 
 			  #f)))
 	(activate-dialog robotize-dialog))
-      #f #f)
      #f)
     (set! misc-menu-list (cons (lambda ()
 				 (let ((new-label (format #f "Robotize (~1,2F ~1,2F ~1,2F)" samp-rate osc-amp osc-freq)))
@@ -2440,10 +2308,7 @@ the synthesis amplitude, the FFT size, and the radius value."))
 	(rubber-target 'sound))
     (gtk_menu_shell_append (GTK_MENU_SHELL misc-cascade) child)
     (gtk_widget_show child)
-    (g_signal_connect_closure_by_id 
-     (GPOINTER child)
-     (g_signal_lookup "activate" (G_OBJECT_TYPE (GTK_OBJECT child))) 0
-     (g_cclosure_new 
+    (g_signal_connect child "activate"
       (lambda (w d) 
 	(if (not rubber-dialog)
 	    (let ((initial-rubber-factor 1.0)
@@ -2470,7 +2335,6 @@ the synthesis amplitude, the FFT size, and the radius value."))
 			  (lambda (target) (set! rubber-target target)) 
 			  #f)))
 	(activate-dialog rubber-dialog))
-      #f #f)
      #f)
     (set! misc-menu-list (cons (lambda ()
 				 (let ((new-label (format #f "Rubber sound (~1,2F)"  rubber-factor)))
@@ -2509,10 +2373,7 @@ the synthesis amplitude, the FFT size, and the radius value."))
 
     (gtk_menu_shell_append (GTK_MENU_SHELL misc-cascade) child)
     (gtk_widget_show child)
-    (g_signal_connect_closure_by_id 
-     (GPOINTER child)
-     (g_signal_lookup "activate" (G_OBJECT_TYPE (GTK_OBJECT child))) 0
-     (g_cclosure_new 
+    (g_signal_connect child "activate"
       (lambda (w d) 
 	(if (not wobble-dialog)
 	    (let ((initial-wobble-frequency 50)
@@ -2560,7 +2421,6 @@ the synthesis amplitude, the FFT size, and the radius value."))
 			  (lambda (target) (set! wobble-target target)) 
 			  #f)))
 	(activate-dialog wobble-dialog))
-      #f #f)
      #f)
     (set! misc-menu-list (cons (lambda ()
 				 (let ((new-label (format #f "Wobble (~1,2F ~1,2F)" wobble-frequency wobble-amplitude)))

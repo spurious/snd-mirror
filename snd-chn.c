@@ -388,7 +388,7 @@ static int calculate_fft_1(chan_info *cp, bool update_display)
 	single_fft(cp, update_display, DONT_FORCE_REFFT);
       else set_chan_fft_in_progress(cp,
 				    BACKGROUND_ADD(sonogram_in_slices,
-						   make_sonogram_state(cp)));
+						   make_sonogram_state(cp, DONT_FORCE_REFFT)));
     }
   return(0);
 }
@@ -4624,13 +4624,10 @@ static XEN channel_get(XEN snd_n, XEN chn_n, cp_field_t fld, char *caller)
 		  
 		  ss->checking_explicitly = true;  /* do not allow UI events to intervene here! */
 		  if (cp->transform_graph_type == GRAPH_ONCE)
-		    single_fft(cp, FORCE_REDISPLAY, FORCE_REFFT); /* TODO: need force recalc for sono */
-		  /* TODO: need reasonable spectro/sono update in WRAPPER
-		   * TODO: unnormalized + db = dumb fft dpy
-		   */
+		    single_fft(cp, FORCE_REDISPLAY, FORCE_REFFT);
 		  else
 		    {
-		      val = (void *)make_sonogram_state(cp);
+		      val = (void *)make_sonogram_state(cp, FORCE_REFFT);
 		      while (sonogram_in_slices(val) == BACKGROUND_CONTINUE);
 		    }
 		  ss->checking_explicitly = false;
