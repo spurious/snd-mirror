@@ -38,7 +38,6 @@ XEN_NARGIFY_2(gxg_glLineStipple_w, gxg_glLineStipple)
 XEN_NARGIFY_2(gxg_glPolygonMode_w, gxg_glPolygonMode)
 XEN_NARGIFY_2(gxg_glPolygonOffset_w, gxg_glPolygonOffset)
 XEN_NARGIFY_1(gxg_glPolygonStipple_w, gxg_glPolygonStipple)
-XEN_ARGIFY_1(gxg_glGetPolygonStipple_w, gxg_glGetPolygonStipple)
 XEN_NARGIFY_1(gxg_glEdgeFlag_w, gxg_glEdgeFlag)
 XEN_NARGIFY_4(gxg_glScissor_w, gxg_glScissor)
 XEN_NARGIFY_2(gxg_glClipPlane_w, gxg_glClipPlane)
@@ -342,40 +341,6 @@ XEN_NARGIFY_3(gxg_gluTessProperty_w, gxg_gluTessProperty)
 XEN_NARGIFY_3(gxg_gluTessVertex_w, gxg_gluTessVertex)
 #endif
 XEN_NARGIFY_9(gxg_gluUnProject_w, gxg_gluUnProject)
-XEN_NARGIFY_1(gxg_glActiveTextureARB_w, gxg_glActiveTextureARB)
-XEN_NARGIFY_1(gxg_glClientActiveTextureARB_w, gxg_glClientActiveTextureARB)
-XEN_NARGIFY_2(gxg_glMultiTexCoord1dARB_w, gxg_glMultiTexCoord1dARB)
-XEN_NARGIFY_2(gxg_glMultiTexCoord1dvARB_w, gxg_glMultiTexCoord1dvARB)
-XEN_NARGIFY_2(gxg_glMultiTexCoord1fARB_w, gxg_glMultiTexCoord1fARB)
-XEN_NARGIFY_2(gxg_glMultiTexCoord1fvARB_w, gxg_glMultiTexCoord1fvARB)
-XEN_NARGIFY_2(gxg_glMultiTexCoord1iARB_w, gxg_glMultiTexCoord1iARB)
-XEN_NARGIFY_2(gxg_glMultiTexCoord1ivARB_w, gxg_glMultiTexCoord1ivARB)
-XEN_NARGIFY_2(gxg_glMultiTexCoord1sARB_w, gxg_glMultiTexCoord1sARB)
-XEN_NARGIFY_2(gxg_glMultiTexCoord1svARB_w, gxg_glMultiTexCoord1svARB)
-XEN_NARGIFY_3(gxg_glMultiTexCoord2dARB_w, gxg_glMultiTexCoord2dARB)
-XEN_NARGIFY_2(gxg_glMultiTexCoord2dvARB_w, gxg_glMultiTexCoord2dvARB)
-XEN_NARGIFY_3(gxg_glMultiTexCoord2fARB_w, gxg_glMultiTexCoord2fARB)
-XEN_NARGIFY_2(gxg_glMultiTexCoord2fvARB_w, gxg_glMultiTexCoord2fvARB)
-XEN_NARGIFY_3(gxg_glMultiTexCoord2iARB_w, gxg_glMultiTexCoord2iARB)
-XEN_NARGIFY_2(gxg_glMultiTexCoord2ivARB_w, gxg_glMultiTexCoord2ivARB)
-XEN_NARGIFY_3(gxg_glMultiTexCoord2sARB_w, gxg_glMultiTexCoord2sARB)
-XEN_NARGIFY_2(gxg_glMultiTexCoord2svARB_w, gxg_glMultiTexCoord2svARB)
-XEN_NARGIFY_4(gxg_glMultiTexCoord3dARB_w, gxg_glMultiTexCoord3dARB)
-XEN_NARGIFY_2(gxg_glMultiTexCoord3dvARB_w, gxg_glMultiTexCoord3dvARB)
-XEN_NARGIFY_4(gxg_glMultiTexCoord3fARB_w, gxg_glMultiTexCoord3fARB)
-XEN_NARGIFY_2(gxg_glMultiTexCoord3fvARB_w, gxg_glMultiTexCoord3fvARB)
-XEN_NARGIFY_4(gxg_glMultiTexCoord3iARB_w, gxg_glMultiTexCoord3iARB)
-XEN_NARGIFY_2(gxg_glMultiTexCoord3ivARB_w, gxg_glMultiTexCoord3ivARB)
-XEN_NARGIFY_4(gxg_glMultiTexCoord3sARB_w, gxg_glMultiTexCoord3sARB)
-XEN_NARGIFY_2(gxg_glMultiTexCoord3svARB_w, gxg_glMultiTexCoord3svARB)
-XEN_NARGIFY_5(gxg_glMultiTexCoord4dARB_w, gxg_glMultiTexCoord4dARB)
-XEN_NARGIFY_2(gxg_glMultiTexCoord4dvARB_w, gxg_glMultiTexCoord4dvARB)
-XEN_NARGIFY_5(gxg_glMultiTexCoord4fARB_w, gxg_glMultiTexCoord4fARB)
-XEN_NARGIFY_2(gxg_glMultiTexCoord4fvARB_w, gxg_glMultiTexCoord4fvARB)
-XEN_NARGIFY_5(gxg_glMultiTexCoord4iARB_w, gxg_glMultiTexCoord4iARB)
-XEN_NARGIFY_2(gxg_glMultiTexCoord4ivARB_w, gxg_glMultiTexCoord4ivARB)
-XEN_NARGIFY_5(gxg_glMultiTexCoord4sARB_w, gxg_glMultiTexCoord4sARB)
-XEN_NARGIFY_2(gxg_glMultiTexCoord4svARB_w, gxg_glMultiTexCoord4svARB)
 static void define_functions(void)
 {
   #define GL_DEFINE_PROCEDURE(Name, Value, A1, A2, A3, Help) XEN_DEFINE_PROCEDURE(XL_PRE #Name XL_POST, Value, A1, A2, A3, Help)
@@ -417,7 +382,6 @@ static void define_functions(void)
   GL_DEFINE_PROCEDURE(glPolygonMode, gxg_glPolygonMode_w, 2, 0, 0, H_glPolygonMode);
   GL_DEFINE_PROCEDURE(glPolygonOffset, gxg_glPolygonOffset_w, 2, 0, 0, H_glPolygonOffset);
   GL_DEFINE_PROCEDURE(glPolygonStipple, gxg_glPolygonStipple_w, 1, 0, 0, H_glPolygonStipple);
-  GL_DEFINE_PROCEDURE(glGetPolygonStipple, gxg_glGetPolygonStipple_w, 0, 1, 0, H_glGetPolygonStipple);
   GL_DEFINE_PROCEDURE(glEdgeFlag, gxg_glEdgeFlag_w, 1, 0, 0, H_glEdgeFlag);
   GL_DEFINE_PROCEDURE(glScissor, gxg_glScissor_w, 4, 0, 0, H_glScissor);
   GL_DEFINE_PROCEDURE(glClipPlane, gxg_glClipPlane_w, 2, 0, 0, H_glClipPlane);
@@ -721,39 +685,5 @@ static void define_functions(void)
   GL_DEFINE_PROCEDURE(gluTessVertex, gxg_gluTessVertex_w, 3, 0, 0, H_gluTessVertex);
 #endif
   GL_DEFINE_PROCEDURE(gluUnProject, gxg_gluUnProject_w, 9, 0, 0, H_gluUnProject);
-  GL_DEFINE_PROCEDURE(glActiveTextureARB, gxg_glActiveTextureARB_w, 1, 0, 0, H_glActiveTextureARB);
-  GL_DEFINE_PROCEDURE(glClientActiveTextureARB, gxg_glClientActiveTextureARB_w, 1, 0, 0, H_glClientActiveTextureARB);
-  GL_DEFINE_PROCEDURE(glMultiTexCoord1dARB, gxg_glMultiTexCoord1dARB_w, 2, 0, 0, H_glMultiTexCoord1dARB);
-  GL_DEFINE_PROCEDURE(glMultiTexCoord1dvARB, gxg_glMultiTexCoord1dvARB_w, 2, 0, 0, H_glMultiTexCoord1dvARB);
-  GL_DEFINE_PROCEDURE(glMultiTexCoord1fARB, gxg_glMultiTexCoord1fARB_w, 2, 0, 0, H_glMultiTexCoord1fARB);
-  GL_DEFINE_PROCEDURE(glMultiTexCoord1fvARB, gxg_glMultiTexCoord1fvARB_w, 2, 0, 0, H_glMultiTexCoord1fvARB);
-  GL_DEFINE_PROCEDURE(glMultiTexCoord1iARB, gxg_glMultiTexCoord1iARB_w, 2, 0, 0, H_glMultiTexCoord1iARB);
-  GL_DEFINE_PROCEDURE(glMultiTexCoord1ivARB, gxg_glMultiTexCoord1ivARB_w, 2, 0, 0, H_glMultiTexCoord1ivARB);
-  GL_DEFINE_PROCEDURE(glMultiTexCoord1sARB, gxg_glMultiTexCoord1sARB_w, 2, 0, 0, H_glMultiTexCoord1sARB);
-  GL_DEFINE_PROCEDURE(glMultiTexCoord1svARB, gxg_glMultiTexCoord1svARB_w, 2, 0, 0, H_glMultiTexCoord1svARB);
-  GL_DEFINE_PROCEDURE(glMultiTexCoord2dARB, gxg_glMultiTexCoord2dARB_w, 3, 0, 0, H_glMultiTexCoord2dARB);
-  GL_DEFINE_PROCEDURE(glMultiTexCoord2dvARB, gxg_glMultiTexCoord2dvARB_w, 2, 0, 0, H_glMultiTexCoord2dvARB);
-  GL_DEFINE_PROCEDURE(glMultiTexCoord2fARB, gxg_glMultiTexCoord2fARB_w, 3, 0, 0, H_glMultiTexCoord2fARB);
-  GL_DEFINE_PROCEDURE(glMultiTexCoord2fvARB, gxg_glMultiTexCoord2fvARB_w, 2, 0, 0, H_glMultiTexCoord2fvARB);
-  GL_DEFINE_PROCEDURE(glMultiTexCoord2iARB, gxg_glMultiTexCoord2iARB_w, 3, 0, 0, H_glMultiTexCoord2iARB);
-  GL_DEFINE_PROCEDURE(glMultiTexCoord2ivARB, gxg_glMultiTexCoord2ivARB_w, 2, 0, 0, H_glMultiTexCoord2ivARB);
-  GL_DEFINE_PROCEDURE(glMultiTexCoord2sARB, gxg_glMultiTexCoord2sARB_w, 3, 0, 0, H_glMultiTexCoord2sARB);
-  GL_DEFINE_PROCEDURE(glMultiTexCoord2svARB, gxg_glMultiTexCoord2svARB_w, 2, 0, 0, H_glMultiTexCoord2svARB);
-  GL_DEFINE_PROCEDURE(glMultiTexCoord3dARB, gxg_glMultiTexCoord3dARB_w, 4, 0, 0, H_glMultiTexCoord3dARB);
-  GL_DEFINE_PROCEDURE(glMultiTexCoord3dvARB, gxg_glMultiTexCoord3dvARB_w, 2, 0, 0, H_glMultiTexCoord3dvARB);
-  GL_DEFINE_PROCEDURE(glMultiTexCoord3fARB, gxg_glMultiTexCoord3fARB_w, 4, 0, 0, H_glMultiTexCoord3fARB);
-  GL_DEFINE_PROCEDURE(glMultiTexCoord3fvARB, gxg_glMultiTexCoord3fvARB_w, 2, 0, 0, H_glMultiTexCoord3fvARB);
-  GL_DEFINE_PROCEDURE(glMultiTexCoord3iARB, gxg_glMultiTexCoord3iARB_w, 4, 0, 0, H_glMultiTexCoord3iARB);
-  GL_DEFINE_PROCEDURE(glMultiTexCoord3ivARB, gxg_glMultiTexCoord3ivARB_w, 2, 0, 0, H_glMultiTexCoord3ivARB);
-  GL_DEFINE_PROCEDURE(glMultiTexCoord3sARB, gxg_glMultiTexCoord3sARB_w, 4, 0, 0, H_glMultiTexCoord3sARB);
-  GL_DEFINE_PROCEDURE(glMultiTexCoord3svARB, gxg_glMultiTexCoord3svARB_w, 2, 0, 0, H_glMultiTexCoord3svARB);
-  GL_DEFINE_PROCEDURE(glMultiTexCoord4dARB, gxg_glMultiTexCoord4dARB_w, 5, 0, 0, H_glMultiTexCoord4dARB);
-  GL_DEFINE_PROCEDURE(glMultiTexCoord4dvARB, gxg_glMultiTexCoord4dvARB_w, 2, 0, 0, H_glMultiTexCoord4dvARB);
-  GL_DEFINE_PROCEDURE(glMultiTexCoord4fARB, gxg_glMultiTexCoord4fARB_w, 5, 0, 0, H_glMultiTexCoord4fARB);
-  GL_DEFINE_PROCEDURE(glMultiTexCoord4fvARB, gxg_glMultiTexCoord4fvARB_w, 2, 0, 0, H_glMultiTexCoord4fvARB);
-  GL_DEFINE_PROCEDURE(glMultiTexCoord4iARB, gxg_glMultiTexCoord4iARB_w, 5, 0, 0, H_glMultiTexCoord4iARB);
-  GL_DEFINE_PROCEDURE(glMultiTexCoord4ivARB, gxg_glMultiTexCoord4ivARB_w, 2, 0, 0, H_glMultiTexCoord4ivARB);
-  GL_DEFINE_PROCEDURE(glMultiTexCoord4sARB, gxg_glMultiTexCoord4sARB_w, 5, 0, 0, H_glMultiTexCoord4sARB);
-  GL_DEFINE_PROCEDURE(glMultiTexCoord4svARB, gxg_glMultiTexCoord4svARB_w, 2, 0, 0, H_glMultiTexCoord4svARB);
 }
 

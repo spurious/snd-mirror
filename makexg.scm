@@ -439,7 +439,7 @@
 	(cons "gchar" "CHAR")
 	(cons "char*" "STRING")
 	(cons "gchar*" "STRING")
-	(cons "guchar*" "STRING") ; added 30-Jul-02
+	;(cons "guchar*" "STRING") ; added 30-Jul-02 then removed (const char crap)
 	(cons "guint" "ULONG")
 	(cons "guint16" "INT")
 	(cons "gint" "INT")
@@ -1776,7 +1776,7 @@
 
 (define (array->list type)
   (check-gtk1 (no-arg-or-stars (deref-type (list type))))
-  (hey "  if (strcmp(ctype, ~S) == 0)~%" type)
+  (hey "  if (strcmp(ctype, ~S) == 0)~%" (no-stars type))
   (hey "    {~%")
   (hey "      ~A arr; arr = (~A)XEN_TO_C_ULONG(XEN_CADR(val)); ~%" type type)
   (hey "      for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_~A(arr[i]), result);~%" (no-stars (deref-type (list type))))
@@ -1784,7 +1784,7 @@
 
 (define (list->array type)
   (check-gtk1 (no-arg-or-stars (deref-type (list type))))
-  (hey "  if (strcmp(ctype, ~S) == 0)~%" (no-stars type)) ; changed 30-Jul-02
+  (hey "  if (strcmp(ctype, ~S) == 0)~%" type)
   (hey "    {~%")
   (hey "      ~A arr; arr = (~A)CALLOC(len, sizeof(~A));~%" type type (deref-type (list type)))
   (hey "      for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_~A(XEN_CAR(val));~%" (no-stars (deref-type (list type))))
@@ -1798,6 +1798,7 @@
 (hey "  int i, len;~%")
 (hey "  char *ctype;~%")
 (hey "  len = XEN_TO_C_INT(clen);~%")
+(hey "  if (!(XEN_LIST_P(val))) return(XEN_FALSE); /* type:location cons */~%")
 (hey "  ctype = XEN_SYMBOL_TO_C_STRING(XEN_CAR(val));~%")
 (for-each array->list listable-types)
 (for-each

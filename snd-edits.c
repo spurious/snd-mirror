@@ -26,8 +26,6 @@ static void after_edit(chan_info *cp)
     run_hook(cp->after_edit_hook, XEN_EMPTY_LIST, S_after_edit_hook);
 }
 
-
-
 void free_sound_list(chan_info *cp)
 {
   int i;
@@ -1424,7 +1422,7 @@ int ramp_or_ptree_fragments_in_use(chan_info *cp, off_t beg, off_t dur, int pos)
       typ = FRAGMENT_TYPE(ed, i);
       if ((typ != ED_SIMPLE) && (loc >= beg))                 /* loc not beyond end, but is beyond beg, so this ramp falls into our segment */
 	return(TRUE);
-      loc = FRAGMENT_GLOBAL_POSITION(ed, i + 1);            /* i.e. next loc = current fragment end point */
+      loc = FRAGMENT_GLOBAL_POSITION(ed, i + 1);              /* i.e. next loc = current fragment end point */
       if ((typ != ED_SIMPLE) && (loc >= beg) && (loc <= end)) /* current ramp fragment ends in segment */
 	return(TRUE);
     }

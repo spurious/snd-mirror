@@ -620,6 +620,7 @@ int mus_file_close(int fd)
 
 off_t mus_file_seek(int tfd, off_t offset, int origin)
 {
+  /* not used in Snd */
   io_fd *fd;
   int siz; /* datum size */
   off_t loc, true_loc, header_end;
@@ -1158,6 +1159,7 @@ static int checked_write(int tfd, char *buf, int chars)
 
 off_t mus_file_write_zeros(int tfd, off_t num)
 {
+  /* not used in Snd */
   off_t lim;
   int err, curnum;
   io_fd *fd;

@@ -203,7 +203,11 @@ char *version_info(void)
       #if HAVE_GDK_GL_FONT_USE_GDK_FONT
 	  "0.2",
       #else
-	  "0.3 or later",
+        #if HAVE_GDK_GL_CONTEXT_COPY
+	  "0.4 or later",
+        #else
+	  "0.3",
+        #endif
       #endif
     #endif
   #endif
@@ -267,6 +271,7 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+1-Aug:   def-clm-struct (ws.scm).\n\
 31-Jul:  snd 6.0 (in progress).\n\
 19-Jul:  contrib/rmsgain.scm thanks to Fabio Furlanete.\n\
          with-relative-panes.\n\

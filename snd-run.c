@@ -69,9 +69,6 @@
  *              procedure-property? -- this has name and arity
  *         would also need an initialization process(?)
  * TODO: possible Snd additions: cursor sample samples(2vct) add-mark report-in-minibuffer[see snd-print] frames maxamp sample-reader-position snd-warning
- * TODO: def-clm-struct equivalent:
- *         need a way to add list-ref+offset to table of func names
- *         macro to create the make func and all accessors
  * TODO: split Scheme from Snd/Clm here and do the latter via an FFI of some sort
  *
  * LIMITATIONS: <insert anxious lucubration here about DSP context and so on>
@@ -291,6 +288,7 @@ typedef struct {
   int gc;
 } xen_value;
 
+
 static xen_value *make_xen_value(int typ, int address, int constant)
 {
   xen_value *v;
@@ -316,7 +314,6 @@ static xen_value *make_xen_value_1(int typ, int address, int constant, const cha
 }
 #define make_xen_value(a,b,c) make_xen_value_1(a,b,c,__FUNCTION__,__LINE__)
 #endif
-
 
 #define OPTIMIZER_WARNING_BUFFER_SIZE 1024
 static char optimizer_warning_buffer[OPTIMIZER_WARNING_BUFFER_SIZE];
@@ -1005,21 +1002,24 @@ void *free_ptree(void *upt)
 	    {
 	      xen_value *v;
 	      v = pt->gcs[i];
-	      if ((v) && (v->gc) && (pt->ints[v->addr]))
+	      if ((v) && (v->gc))
 		{
-		  switch (v->type)
+		  if (pt->ints[v->addr])
 		    {
-		    case R_VCT:          c_free_vct((vct *)(pt->ints[v->addr]));            break;
-		    case R_READER:       free_snd_fd((snd_fd *)(pt->ints[v->addr]));        break;
-		    case R_FUNCTION:     free_embedded_ptree((ptree *)(pt->ints[v->addr])); break;
-		    case R_CLM:          mus_free((mus_any *)(pt->ints[v->addr]));          break;
-		    case R_FLOAT_VECTOR: c_free_vct((vct *)(pt->ints[v->addr]));            break;
-		    case R_INT_VECTOR:   free_int_vct((int_vct *)(pt->ints[v->addr]));      break;
-		    case R_CLM_VECTOR:   free_clm_vct((clm_vct *)(pt->ints[v->addr]));      break;
-		    case R_VCT_VECTOR:   free_vct_vct((vct_vct *)(pt->ints[v->addr]));      break;
-		    default: fprintf(stderr," free %s?\n", type_name(v->type));             break;
+		      switch (v->type)
+			{
+			case R_VCT:          c_free_vct((vct *)(pt->ints[v->addr]));            break;
+			case R_READER:       free_snd_fd((snd_fd *)(pt->ints[v->addr]));        break;
+			case R_FUNCTION:     free_embedded_ptree((ptree *)(pt->ints[v->addr])); break;
+			case R_CLM:          mus_free((mus_any *)(pt->ints[v->addr]));          break;
+			case R_FLOAT_VECTOR: c_free_vct((vct *)(pt->ints[v->addr]));            break;
+			case R_INT_VECTOR:   free_int_vct((int_vct *)(pt->ints[v->addr]));      break;
+			case R_CLM_VECTOR:   free_clm_vct((clm_vct *)(pt->ints[v->addr]));      break;
+			case R_VCT_VECTOR:   free_vct_vct((vct_vct *)(pt->ints[v->addr]));      break;
+			default: fprintf(stderr," free %s?\n", type_name(v->type));             break;
+			}
+		      pt->ints[v->addr] = 0;
 		    }
-		  pt->ints[v->addr] = 0;
 		  v->gc = 0;
 		  FREE(v);
 		  pt->gcs[i] = NULL;
@@ -2226,6 +2226,7 @@ static xen_value *case_form(ptree *prog, XEN form, int need_result)
 	      FREE(fixups[j]);
 	  FREE(fixups);
 	  FREE(locations);
+	  if (result) FREE(result);
 	  return(NULL);
 	}
       FREE(v);
@@ -2244,7 +2245,17 @@ static xen_value *case_form(ptree *prog, XEN form, int need_result)
 	{
 	  if (strcmp(XEN_AS_STRING(keys), "else") == 0)
 	    elseval = make_xen_value(R_INT, i, R_CONSTANT);
-	  else return(run_warn("bad case key: %s", XEN_AS_STRING(keys)));
+	  else 
+	    {
+	      for (i = 0; i < body_len; i++)
+		if (fixups[i])
+		  FREE(fixups[i]);
+	      FREE(fixups);
+	      FREE(locations);
+	      FREE(selval);
+	      if (result) FREE(result);
+	      return(run_warn("bad case key: %s", XEN_AS_STRING(keys)));
+	    }
 	}
       else
 	{
@@ -2255,11 +2266,12 @@ static xen_value *case_form(ptree *prog, XEN form, int need_result)
 	      if (!(XEN_INTEGER_P(key)))
 		{
 		  FREE(selval);
-		  for (j = 0; j < i; j++) 
+		  for (j = 0; j < body_len; j++) 
 		    if (fixups[j])
 		      FREE(fixups[j]);
 		  FREE(fixups);
 		  FREE(locations);
+		  if (result) FREE(result);
 		  return(run_warn("case only accepts integer selectors: %s", XEN_AS_STRING(key)));
 		}
 	      cur_key = XEN_TO_C_INT(key);
@@ -2287,6 +2299,7 @@ static xen_value *case_form(ptree *prog, XEN form, int need_result)
 	FREE(fixups[i]);
       }
   if (fixups) FREE(fixups);
+  if (selval) FREE(selval);
   if (need_result)
     return(result);
   return(make_xen_value(R_UNSPECIFIED, -1, R_CONSTANT));
@@ -5080,6 +5093,8 @@ static char *descr_frames_i(int *args, int *ints, Float *dbls)
 static xen_value *frames_1(ptree *pt, xen_value **args, int num_args)
 {
   xen_value *true_args[4];
+  xen_value *rtn;
+  int k;
   if (num_args > 3) 
     return(run_warn("frames: too many args"));
   if (num_args < 3)
@@ -5102,7 +5117,9 @@ static xen_value *frames_1(ptree *pt, xen_value **args, int num_args)
       true_args[1] = args[1];
     }
   true_args[0] = args[0];
-  return(package(pt, R_INT, frames_i, descr_frames_i, true_args, 3));
+  rtn = package(pt, R_INT, frames_i, descr_frames_i, true_args, 3);
+  for (k = num_args + 1; k <= 3; k++) FREE(true_args[k]);
+  return(rtn);
 }
 
 
@@ -5168,6 +5185,7 @@ static void make_sample_reader_r(int *args, int *ints, Float *dbls)
 static xen_value *make_sample_reader_1(ptree *pt, xen_value **args, int num_args)
 {
   xen_value *true_args[6];
+  int k;
   xen_value *rtn;
   if (num_args > 5) return(run_warn("too many args for make-sample-reader"));
   if (num_args < 5) 
@@ -5198,6 +5216,7 @@ static xen_value *make_sample_reader_1(ptree *pt, xen_value **args, int num_args
   true_args[0] = args[0];
   rtn = package(pt, R_READER, make_sample_reader_r, descr_make_sample_reader_r, true_args, 5);
   add_obj_to_gcs(pt, R_READER, rtn->addr);
+  for (k = num_args + 1; k <= 5; k++) FREE(true_args[k]);
   return(rtn);
 }
 
@@ -6801,6 +6820,71 @@ static xen_value *mus_set_srate_1(ptree *prog, xen_value *in_v, xen_value *v)
   return(run_warn("mus-set-srate: wrong type arg"));
 }
 
+/* def-clm-struct support */
+/* TODO: test def-clm-struct in run (more) */
+/* TODO: tie setter from def-clm-struct into run (needs list-set!) */
+
+static int clm_structs = 0;
+static int clm_struct_top = 0;
+static int *clm_struct_offsets = NULL;
+static char **clm_struct_names = NULL;
+
+#define S_add_clm_field "add-clm-field"
+static XEN g_add_clm_field(XEN name, XEN offset)
+{
+  #define H_add_clm_field "def-clm-struct tie-in to run optimizer"
+  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_1, S_add_clm_field, "string");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(offset), offset, XEN_ARG_2, S_add_clm_field, "int");
+  if (clm_structs == 0)
+    {
+      clm_structs = 4;
+      clm_struct_offsets = (int *)CALLOC(clm_structs, sizeof(int));
+      clm_struct_names = (char **)CALLOC(clm_structs, sizeof(char *));
+    }
+  else
+    {
+      if (clm_struct_top >= clm_structs)
+	{
+	  clm_structs = clm_struct_top + 4;
+	  clm_struct_offsets = (int *)REALLOC(clm_struct_offsets, clm_structs * sizeof(int));
+	  clm_struct_names = (char **)REALLOC(clm_struct_names, clm_structs * sizeof(char *));
+	}
+    }
+  clm_struct_offsets[clm_struct_top] = XEN_TO_C_INT(offset);
+  clm_struct_names[clm_struct_top++] = copy_string(XEN_TO_C_STRING(name));
+  return(name);
+}
+
+static char **clm_types = NULL;
+static int clm_types_size = 0;
+static int clm_types_top = 0;
+
+#define S_add_clm_type "add-clm-type"
+static XEN g_add_clm_type(XEN name)
+{
+  #define H_add_clm_type "def-clm-struct tie-in to run optimizer"
+  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_1, S_add_clm_type, "string");
+  if (clm_types_size == 0)
+    {
+      clm_types_size = 4;
+      clm_types = (char **)CALLOC(clm_types_size, sizeof(char *));
+    }
+  else
+    {
+      if (clm_types_top >= clm_types_size)
+	{
+	  clm_types_size = clm_types_top + 4;
+	  clm_types = (char **)REALLOC(clm_types, clm_types_size * sizeof(char *));
+	}
+    }
+  clm_types[clm_types_top++] = copy_string(XEN_TO_C_STRING(name));
+  return(name);
+}
+
+static int check_clm_type(XEN sym, char *type)
+{
+  return(strcmp(type, XEN_SYMBOL_TO_C_STRING(sym)) == 0);
+}
 
 
 /* ---------------- the code walker ---------------- */
@@ -7027,32 +7111,50 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
 	  XEN lst;
 	  lst = (XEN)(prog->ints[args[1]->addr]);
 	  if ((num_args == 2) && (strcmp(funcname, "list-ref") == 0) && (XEN_EXACT_P(XEN_CADDR(form))))
-	    return(unwrap_xen_object(prog, XEN_LIST_REF_WRAPPED(lst, XEN_CADDR(form)), funcname));
+	    return(clean_up(unwrap_xen_object(prog, XEN_LIST_REF_WRAPPED(lst, XEN_CADDR(form)), funcname), args, num_args));
 	  /* TODO: if loc arg is not constant, we could check the list, get its contents types (all the same...)
 	   *       then set up a list-ref run-time accessor with that type built in.
 	   *       this way run-time (list-ref data i) would work
 	   */
 	  if (num_args == 1)
 	    {
-	      if (strcmp(funcname, "car") == 0) return(unwrap_xen_object(prog, XEN_CAR(lst), funcname));
-	      if (strcmp(funcname, "caar") == 0) return(unwrap_xen_object(prog, XEN_CAAR(lst), funcname));
-	      if (strcmp(funcname, "cadr") == 0) return(unwrap_xen_object(prog, XEN_CADR(lst), funcname));
-	      if (strcmp(funcname, "caaar") == 0) return(unwrap_xen_object(prog, XEN_CAAAR(lst), funcname));
-	      if (strcmp(funcname, "caadr") == 0) return(unwrap_xen_object(prog, XEN_CAADR(lst), funcname));
-	      if (strcmp(funcname, "cadar") == 0) return(unwrap_xen_object(prog, XEN_CADAR(lst), funcname));
-	      if (strcmp(funcname, "caddr") == 0) return(unwrap_xen_object(prog, XEN_CADDR(lst), funcname));
-	      if (strcmp(funcname, "caaaar") == 0) return(unwrap_xen_object(prog, XEN_CAAAAR(lst), funcname));
-	      if (strcmp(funcname, "caaadr") == 0) return(unwrap_xen_object(prog, XEN_CAAADR(lst), funcname));
-	      if (strcmp(funcname, "caadar") == 0) return(unwrap_xen_object(prog, XEN_CAADAR(lst), funcname));
-	      if (strcmp(funcname, "caaddr") == 0) return(unwrap_xen_object(prog, XEN_CAADDR(lst), funcname));
-	      if (strcmp(funcname, "cadaar") == 0) return(unwrap_xen_object(prog, XEN_CADAAR(lst), funcname));
-	      if (strcmp(funcname, "cadadr") == 0) return(unwrap_xen_object(prog, XEN_CADADR(lst), funcname));
-	      if (strcmp(funcname, "caddar") == 0) return(unwrap_xen_object(prog, XEN_CADDAR(lst), funcname));
-	      if (strcmp(funcname, "cadddr") == 0) return(unwrap_xen_object(prog, XEN_CADDDR(lst), funcname));
-	      if (strcmp(funcname, "length") == 0) return(make_xen_value(R_INT, add_int_to_ptree(prog, XEN_LIST_LENGTH(lst)), R_CONSTANT));
-	      if (strcmp(funcname, "null?") == 0) return(make_xen_value(R_BOOL, add_int_to_ptree(prog, XEN_NULL_P(lst)), R_CONSTANT));
+	      int k;
+	      if (strcmp(funcname, "car") == 0) return(clean_up(unwrap_xen_object(prog, XEN_CAR(lst), funcname), args, num_args));
+	      if (strcmp(funcname, "caar") == 0) return(clean_up(unwrap_xen_object(prog, XEN_CAAR(lst), funcname), args, num_args));
+	      if (strcmp(funcname, "cadr") == 0) return(clean_up(unwrap_xen_object(prog, XEN_CADR(lst), funcname), args, num_args));
+	      if (strcmp(funcname, "caaar") == 0) return(clean_up(unwrap_xen_object(prog, XEN_CAAAR(lst), funcname), args, num_args));
+	      if (strcmp(funcname, "caadr") == 0) return(clean_up(unwrap_xen_object(prog, XEN_CAADR(lst), funcname), args, num_args));
+	      if (strcmp(funcname, "cadar") == 0) return(clean_up(unwrap_xen_object(prog, XEN_CADAR(lst), funcname), args, num_args));
+	      if (strcmp(funcname, "caddr") == 0) return(clean_up(unwrap_xen_object(prog, XEN_CADDR(lst), funcname), args, num_args));
+	      if (strcmp(funcname, "caaaar") == 0) return(clean_up(unwrap_xen_object(prog, XEN_CAAAAR(lst), funcname), args, num_args));
+	      if (strcmp(funcname, "caaadr") == 0) return(clean_up(unwrap_xen_object(prog, XEN_CAAADR(lst), funcname), args, num_args));
+	      if (strcmp(funcname, "caadar") == 0) return(clean_up(unwrap_xen_object(prog, XEN_CAADAR(lst), funcname), args, num_args));
+	      if (strcmp(funcname, "caaddr") == 0) return(clean_up(unwrap_xen_object(prog, XEN_CAADDR(lst), funcname), args, num_args));
+	      if (strcmp(funcname, "cadaar") == 0) return(clean_up(unwrap_xen_object(prog, XEN_CADAAR(lst), funcname), args, num_args));
+	      if (strcmp(funcname, "cadadr") == 0) return(clean_up(unwrap_xen_object(prog, XEN_CADADR(lst), funcname), args, num_args));
+	      if (strcmp(funcname, "caddar") == 0) return(clean_up(unwrap_xen_object(prog, XEN_CADDAR(lst), funcname), args, num_args));
+	      if (strcmp(funcname, "cadddr") == 0) return(clean_up(unwrap_xen_object(prog, XEN_CADDDR(lst), funcname), args, num_args));
+	      if (strcmp(funcname, "length") == 0) 
+		return(clean_up(make_xen_value(R_INT, add_int_to_ptree(prog, XEN_LIST_LENGTH(lst)), R_CONSTANT), args, num_args));
+	      if (strcmp(funcname, "null?") == 0) 
+		return(clean_up(make_xen_value(R_BOOL, add_int_to_ptree(prog, XEN_NULL_P(lst)), R_CONSTANT), args, num_args));
+
+	      for (k = 0; k < clm_struct_top; k++)
+		{
+		  if (strcmp(funcname, clm_struct_names[k]) == 0)
+		    return(clean_up(unwrap_xen_object(prog, XEN_LIST_REF(lst, clm_struct_offsets[k]), funcname), args, num_args));
+		}
+	      for (k = 0; k < clm_types_top; k++)
+		{
+		  if (strcmp(funcname, clm_types[k]) == 0)
+		    return(clean_up(make_xen_value(R_BOOL, 
+						   add_int_to_ptree(prog, 
+								    check_clm_type(XEN_CAR(lst), clm_types[k])), 
+						   R_CONSTANT), 
+				    args, num_args));
+		}
 	    }
-	  /* TODO: add port ops? hyperbolics? struct refs?
+	  /* TODO: add port ops?
 	   * TODO: list could be added if all args are constants (list included)
 	   */
 	}
@@ -7061,8 +7163,8 @@ static xen_value *walk(ptree *prog, XEN form, int need_result)
 	{
 	  XEN lst;
 	  lst = (XEN)(prog->ints[args[1]->addr]);
-	  if (strcmp(funcname, "car") == 0) return(unwrap_xen_object(prog, XEN_CAR(lst), funcname));
-	  if (strcmp(funcname, "cdr") == 0) return(unwrap_xen_object(prog, XEN_CDR(lst), funcname));
+	  if (strcmp(funcname, "car") == 0) return(clean_up(unwrap_xen_object(prog, XEN_CAR(lst), funcname), args, num_args));
+	  if (strcmp(funcname, "cdr") == 0) return(clean_up(unwrap_xen_object(prog, XEN_CDR(lst), funcname), args, num_args));
 	}
 
       if ((lists > 0) || (pairs > 0)) return(clean_up(run_warn("can't handle list or pair arg"), args, num_args));
@@ -7857,6 +7959,8 @@ void g_init_run(void)
   XEN_DEFINE_PROCEDURE("vct-map-2",     g_vct_map, 2, 0, 0,      H_vct_map);
   XEN_EVAL_C_STRING("(defmacro* " S_vct_map " (thunk #:rest args) `(vct-map-2 (list ',thunk ,thunk) (list ,@args)))");
   XEN_SET_DOCUMENTATION(S_vct_map, H_vct_map);
+  XEN_DEFINE_PROCEDURE(S_add_clm_field, g_add_clm_field, 2, 0, 0, H_add_clm_field);
+  XEN_DEFINE_PROCEDURE(S_add_clm_type, g_add_clm_type, 1, 0, 0, H_add_clm_type);
 #else
   XEN_DEFINE_PROCEDURE(S_vct_map, g_vct_map, 1, 0, 1, H_vct_map);
 #endif

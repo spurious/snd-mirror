@@ -389,9 +389,7 @@ XM_TYPE_PTR(gchar__, gchar**)
 #define C_TO_XEN_GdkNativeWindow(Arg) C_TO_XEN_ULONG(Arg)
 #define XEN_TO_C_GdkNativeWindow(Arg) (GdkNativeWindow)(XEN_TO_C_ULONG(Arg))
 #define XEN_GdkNativeWindow_P(Arg) XEN_ULONG_P(Arg)
-#define C_TO_XEN_guchar_(Arg) C_TO_XEN_STRING(Arg)
-#define XEN_TO_C_guchar_(Arg) (guchar*)(XEN_TO_C_STRING(Arg))
-#define XEN_guchar__P(Arg) XEN_STRING_P(Arg)
+XM_TYPE_PTR(guchar_, guchar*)
 #define C_TO_XEN_GdkPropMode(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GdkPropMode(Arg) (GdkPropMode)(XEN_TO_C_INT(Arg))
 #define XEN_GdkPropMode_P(Arg) XEN_INTEGER_P(Arg)
@@ -23008,183 +23006,184 @@ static XEN c_array_to_xen_list(XEN val, XEN clen)
   int i, len;
   char *ctype;
   len = XEN_TO_C_INT(clen);
+  if (!(XEN_LIST_P(val))) return(XEN_FALSE); /* type:location cons */
   ctype = XEN_SYMBOL_TO_C_STRING(XEN_CAR(val));
-  if (strcmp(ctype, "gint*") == 0)
+  if (strcmp(ctype, "gint_") == 0)
     {
       gint* arr; arr = (gint*)XEN_TO_C_ULONG(XEN_CADR(val)); 
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_gint(arr[i]), result);
     }
-  if (strcmp(ctype, "gboolean*") == 0)
+  if (strcmp(ctype, "gboolean_") == 0)
     {
       gboolean* arr; arr = (gboolean*)XEN_TO_C_ULONG(XEN_CADR(val)); 
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_gboolean(arr[i]), result);
     }
-  if (strcmp(ctype, "GType*") == 0)
+  if (strcmp(ctype, "GType_") == 0)
     {
       GType* arr; arr = (GType*)XEN_TO_C_ULONG(XEN_CADR(val)); 
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_GType(arr[i]), result);
     }
-  if (strcmp(ctype, "guint*") == 0)
+  if (strcmp(ctype, "guint_") == 0)
     {
       guint* arr; arr = (guint*)XEN_TO_C_ULONG(XEN_CADR(val)); 
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_guint(arr[i]), result);
     }
-  if (strcmp(ctype, "GQuark*") == 0)
+  if (strcmp(ctype, "GQuark_") == 0)
     {
       GQuark* arr; arr = (GQuark*)XEN_TO_C_ULONG(XEN_CADR(val)); 
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_GQuark(arr[i]), result);
     }
-  if (strcmp(ctype, "GdkDragProtocol*") == 0)
+  if (strcmp(ctype, "GdkDragProtocol_") == 0)
     {
       GdkDragProtocol* arr; arr = (GdkDragProtocol*)XEN_TO_C_ULONG(XEN_CADR(val)); 
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_GdkDragProtocol(arr[i]), result);
     }
-  if (strcmp(ctype, "GdkModifierType*") == 0)
+  if (strcmp(ctype, "GdkModifierType_") == 0)
     {
       GdkModifierType* arr; arr = (GdkModifierType*)XEN_TO_C_ULONG(XEN_CADR(val)); 
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_GdkModifierType(arr[i]), result);
     }
-  if (strcmp(ctype, "gdouble*") == 0)
+  if (strcmp(ctype, "gdouble_") == 0)
     {
       gdouble* arr; arr = (gdouble*)XEN_TO_C_ULONG(XEN_CADR(val)); 
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_gdouble(arr[i]), result);
     }
-  if (strcmp(ctype, "gint8*") == 0)
+  if (strcmp(ctype, "gint8_") == 0)
     {
       gint8* arr; arr = (gint8*)XEN_TO_C_ULONG(XEN_CADR(val)); 
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_gint8(arr[i]), result);
     }
-  if (strcmp(ctype, "gchar**") == 0)
+  if (strcmp(ctype, "gchar__") == 0)
     {
       gchar** arr; arr = (gchar**)XEN_TO_C_ULONG(XEN_CADR(val)); 
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_gchar_(arr[i]), result);
     }
-  if (strcmp(ctype, "guchar*") == 0)
+  if (strcmp(ctype, "guchar_") == 0)
     {
       guchar* arr; arr = (guchar*)XEN_TO_C_ULONG(XEN_CADR(val)); 
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_guchar(arr[i]), result);
     }
-  if (strcmp(ctype, "guint32*") == 0)
+  if (strcmp(ctype, "guint32_") == 0)
     {
       guint32* arr; arr = (guint32*)XEN_TO_C_ULONG(XEN_CADR(val)); 
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_guint32(arr[i]), result);
     }
-  if (strcmp(ctype, "GdkVisualType*") == 0)
+  if (strcmp(ctype, "GdkVisualType_") == 0)
     {
       GdkVisualType* arr; arr = (GdkVisualType*)XEN_TO_C_ULONG(XEN_CADR(val)); 
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_GdkVisualType(arr[i]), result);
     }
-  if (strcmp(ctype, "GdkWMDecoration*") == 0)
+  if (strcmp(ctype, "GdkWMDecoration_") == 0)
     {
       GdkWMDecoration* arr; arr = (GdkWMDecoration*)XEN_TO_C_ULONG(XEN_CADR(val)); 
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_GdkWMDecoration(arr[i]), result);
     }
-  if (strcmp(ctype, "char**") == 0)
+  if (strcmp(ctype, "char__") == 0)
     {
       char** arr; arr = (char**)XEN_TO_C_ULONG(XEN_CADR(val)); 
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_char_(arr[i]), result);
     }
-  if (strcmp(ctype, "guint8*") == 0)
+  if (strcmp(ctype, "guint8_") == 0)
     {
       guint8* arr; arr = (guint8*)XEN_TO_C_ULONG(XEN_CADR(val)); 
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_guint8(arr[i]), result);
     }
-  if (strcmp(ctype, "GtkPackType*") == 0)
+  if (strcmp(ctype, "GtkPackType_") == 0)
     {
       GtkPackType* arr; arr = (GtkPackType*)XEN_TO_C_ULONG(XEN_CADR(val)); 
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_GtkPackType(arr[i]), result);
     }
-  if (strcmp(ctype, "gfloat*") == 0)
+  if (strcmp(ctype, "gfloat_") == 0)
     {
       gfloat* arr; arr = (gfloat*)XEN_TO_C_ULONG(XEN_CADR(val)); 
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_gfloat(arr[i]), result);
     }
-  if (strcmp(ctype, "GtkIconSize*") == 0)
+  if (strcmp(ctype, "GtkIconSize_") == 0)
     {
       GtkIconSize* arr; arr = (GtkIconSize*)XEN_TO_C_ULONG(XEN_CADR(val)); 
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_GtkIconSize(arr[i]), result);
     }
-  if (strcmp(ctype, "guint16*") == 0)
+  if (strcmp(ctype, "guint16_") == 0)
     {
       guint16* arr; arr = (guint16*)XEN_TO_C_ULONG(XEN_CADR(val)); 
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_guint16(arr[i]), result);
     }
-  if (strcmp(ctype, "int*") == 0)
+  if (strcmp(ctype, "int_") == 0)
     {
       int* arr; arr = (int*)XEN_TO_C_ULONG(XEN_CADR(val)); 
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_int(arr[i]), result);
     }
-  if (strcmp(ctype, "GtkStateType*") == 0)
+  if (strcmp(ctype, "GtkStateType_") == 0)
     {
       GtkStateType* arr; arr = (GtkStateType*)XEN_TO_C_ULONG(XEN_CADR(val)); 
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_GtkStateType(arr[i]), result);
     }
-  if (strcmp(ctype, "GtkPathPriorityType*") == 0)
+  if (strcmp(ctype, "GtkPathPriorityType_") == 0)
     {
       GtkPathPriorityType* arr; arr = (GtkPathPriorityType*)XEN_TO_C_ULONG(XEN_CADR(val)); 
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_GtkPathPriorityType(arr[i]), result);
     }
-  if (strcmp(ctype, "GtkSortType*") == 0)
+  if (strcmp(ctype, "GtkSortType_") == 0)
     {
       GtkSortType* arr; arr = (GtkSortType*)XEN_TO_C_ULONG(XEN_CADR(val)); 
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_GtkSortType(arr[i]), result);
     }
-  if (strcmp(ctype, "gunichar*") == 0)
+  if (strcmp(ctype, "gunichar_") == 0)
     {
       gunichar* arr; arr = (gunichar*)XEN_TO_C_ULONG(XEN_CADR(val)); 
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_gunichar(arr[i]), result);
     }
-  if (strcmp(ctype, "GdkPixmap**") == 0)
+  if (strcmp(ctype, "GdkPixmap__") == 0)
     {
       GdkPixmap** arr; arr = (GdkPixmap**)XEN_TO_C_ULONG(XEN_CADR(val)); 
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_GdkPixmap_(arr[i]), result);
     }
-  if (strcmp(ctype, "GdkGC**") == 0)
+  if (strcmp(ctype, "GdkGC__") == 0)
     {
       GdkGC** arr; arr = (GdkGC**)XEN_TO_C_ULONG(XEN_CADR(val)); 
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_GdkGC_(arr[i]), result);
     }
-  if (strcmp(ctype, "GtkWidget**") == 0)
+  if (strcmp(ctype, "GtkWidget__") == 0)
     {
       GtkWidget** arr; arr = (GtkWidget**)XEN_TO_C_ULONG(XEN_CADR(val)); 
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_GtkWidget_(arr[i]), result);
     }
-  if (strcmp(ctype, "PangoFontDescription**") == 0)
+  if (strcmp(ctype, "PangoFontDescription__") == 0)
     {
       PangoFontDescription** arr; arr = (PangoFontDescription**)XEN_TO_C_ULONG(XEN_CADR(val)); 
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_PangoFontDescription_(arr[i]), result);
     }
-  if (strcmp(ctype, "PangoAttrList**") == 0)
+  if (strcmp(ctype, "PangoAttrList__") == 0)
     {
       PangoAttrList** arr; arr = (PangoAttrList**)XEN_TO_C_ULONG(XEN_CADR(val)); 
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_PangoAttrList_(arr[i]), result);
     }
-  if (strcmp(ctype, "GtkTreeModel**") == 0)
+  if (strcmp(ctype, "GtkTreeModel__") == 0)
     {
       GtkTreeModel** arr; arr = (GtkTreeModel**)XEN_TO_C_ULONG(XEN_CADR(val)); 
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_GtkTreeModel_(arr[i]), result);
     }
-  if (strcmp(ctype, "char***") == 0)
+  if (strcmp(ctype, "char___") == 0)
     {
       char*** arr; arr = (char***)XEN_TO_C_ULONG(XEN_CADR(val)); 
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_char__(arr[i]), result);
     }
-  if (strcmp(ctype, "char**") == 0)
+  if (strcmp(ctype, "char__") == 0)
     {
       char** arr; arr = (char**)XEN_TO_C_ULONG(XEN_CADR(val)); 
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_char_(arr[i]), result);
     }
-  if (strcmp(ctype, "gchar**") == 0)
+  if (strcmp(ctype, "gchar__") == 0)
     {
       gchar** arr; arr = (gchar**)XEN_TO_C_ULONG(XEN_CADR(val)); 
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_gchar_(arr[i]), result);
     }
-  if (strcmp(ctype, "GdkBitmap**") == 0)
+  if (strcmp(ctype, "GdkBitmap__") == 0)
     {
       GdkBitmap** arr; arr = (GdkBitmap**)XEN_TO_C_ULONG(XEN_CADR(val)); 
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_GdkBitmap_(arr[i]), result);
     }
-  if (strcmp(ctype, "gchar***") == 0)
+  if (strcmp(ctype, "gchar___") == 0)
     {
       gchar*** arr; arr = (gchar***)XEN_TO_C_ULONG(XEN_CADR(val)); 
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_gchar__(arr[i]), result);
@@ -23205,217 +23204,217 @@ static XEN xen_list_to_c_array(XEN val, XEN type)
   char *ctype;
   len = XEN_LIST_LENGTH(val);
   ctype = XEN_TO_C_STRING(type);
-  if (strcmp(ctype, "gint_") == 0)
+  if (strcmp(ctype, "gint*") == 0)
     {
       gint* arr; arr = (gint*)CALLOC(len, sizeof(gint));
       for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_gint(XEN_CAR(val));
       return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("gint_"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
     }
-  if (strcmp(ctype, "gboolean_") == 0)
+  if (strcmp(ctype, "gboolean*") == 0)
     {
       gboolean* arr; arr = (gboolean*)CALLOC(len, sizeof(gboolean));
       for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_gboolean(XEN_CAR(val));
       return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("gboolean_"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
     }
-  if (strcmp(ctype, "GType_") == 0)
+  if (strcmp(ctype, "GType*") == 0)
     {
       GType* arr; arr = (GType*)CALLOC(len, sizeof(GType));
       for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_GType(XEN_CAR(val));
       return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("GType_"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
     }
-  if (strcmp(ctype, "guint_") == 0)
+  if (strcmp(ctype, "guint*") == 0)
     {
       guint* arr; arr = (guint*)CALLOC(len, sizeof(guint));
       for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_guint(XEN_CAR(val));
       return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("guint_"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
     }
-  if (strcmp(ctype, "GQuark_") == 0)
+  if (strcmp(ctype, "GQuark*") == 0)
     {
       GQuark* arr; arr = (GQuark*)CALLOC(len, sizeof(GQuark));
       for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_GQuark(XEN_CAR(val));
       return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("GQuark_"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
     }
-  if (strcmp(ctype, "GdkDragProtocol_") == 0)
+  if (strcmp(ctype, "GdkDragProtocol*") == 0)
     {
       GdkDragProtocol* arr; arr = (GdkDragProtocol*)CALLOC(len, sizeof(GdkDragProtocol));
       for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_GdkDragProtocol(XEN_CAR(val));
       return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("GdkDragProtocol_"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
     }
-  if (strcmp(ctype, "GdkModifierType_") == 0)
+  if (strcmp(ctype, "GdkModifierType*") == 0)
     {
       GdkModifierType* arr; arr = (GdkModifierType*)CALLOC(len, sizeof(GdkModifierType));
       for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_GdkModifierType(XEN_CAR(val));
       return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("GdkModifierType_"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
     }
-  if (strcmp(ctype, "gdouble_") == 0)
+  if (strcmp(ctype, "gdouble*") == 0)
     {
       gdouble* arr; arr = (gdouble*)CALLOC(len, sizeof(gdouble));
       for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_gdouble(XEN_CAR(val));
       return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("gdouble_"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
     }
-  if (strcmp(ctype, "gint8_") == 0)
+  if (strcmp(ctype, "gint8*") == 0)
     {
       gint8* arr; arr = (gint8*)CALLOC(len, sizeof(gint8));
       for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_gint8(XEN_CAR(val));
       return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("gint8_"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
     }
-  if (strcmp(ctype, "gchar__") == 0)
+  if (strcmp(ctype, "gchar**") == 0)
     {
       gchar** arr; arr = (gchar**)CALLOC(len, sizeof(gchar*));
       for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_gchar_(XEN_CAR(val));
       return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("gchar__"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
     }
-  if (strcmp(ctype, "guchar_") == 0)
+  if (strcmp(ctype, "guchar*") == 0)
     {
       guchar* arr; arr = (guchar*)CALLOC(len, sizeof(guchar));
       for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_guchar(XEN_CAR(val));
       return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("guchar_"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
     }
-  if (strcmp(ctype, "guint32_") == 0)
+  if (strcmp(ctype, "guint32*") == 0)
     {
       guint32* arr; arr = (guint32*)CALLOC(len, sizeof(guint32));
       for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_guint32(XEN_CAR(val));
       return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("guint32_"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
     }
-  if (strcmp(ctype, "GdkVisualType_") == 0)
+  if (strcmp(ctype, "GdkVisualType*") == 0)
     {
       GdkVisualType* arr; arr = (GdkVisualType*)CALLOC(len, sizeof(GdkVisualType));
       for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_GdkVisualType(XEN_CAR(val));
       return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("GdkVisualType_"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
     }
-  if (strcmp(ctype, "GdkWMDecoration_") == 0)
+  if (strcmp(ctype, "GdkWMDecoration*") == 0)
     {
       GdkWMDecoration* arr; arr = (GdkWMDecoration*)CALLOC(len, sizeof(GdkWMDecoration));
       for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_GdkWMDecoration(XEN_CAR(val));
       return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("GdkWMDecoration_"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
     }
-  if (strcmp(ctype, "char__") == 0)
+  if (strcmp(ctype, "char**") == 0)
     {
       char** arr; arr = (char**)CALLOC(len, sizeof(char*));
       for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_char_(XEN_CAR(val));
       return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("char__"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
     }
-  if (strcmp(ctype, "guint8_") == 0)
+  if (strcmp(ctype, "guint8*") == 0)
     {
       guint8* arr; arr = (guint8*)CALLOC(len, sizeof(guint8));
       for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_guint8(XEN_CAR(val));
       return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("guint8_"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
     }
-  if (strcmp(ctype, "GtkPackType_") == 0)
+  if (strcmp(ctype, "GtkPackType*") == 0)
     {
       GtkPackType* arr; arr = (GtkPackType*)CALLOC(len, sizeof(GtkPackType));
       for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_GtkPackType(XEN_CAR(val));
       return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("GtkPackType_"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
     }
-  if (strcmp(ctype, "gfloat_") == 0)
+  if (strcmp(ctype, "gfloat*") == 0)
     {
       gfloat* arr; arr = (gfloat*)CALLOC(len, sizeof(gfloat));
       for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_gfloat(XEN_CAR(val));
       return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("gfloat_"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
     }
-  if (strcmp(ctype, "GtkIconSize_") == 0)
+  if (strcmp(ctype, "GtkIconSize*") == 0)
     {
       GtkIconSize* arr; arr = (GtkIconSize*)CALLOC(len, sizeof(GtkIconSize));
       for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_GtkIconSize(XEN_CAR(val));
       return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("GtkIconSize_"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
     }
-  if (strcmp(ctype, "guint16_") == 0)
+  if (strcmp(ctype, "guint16*") == 0)
     {
       guint16* arr; arr = (guint16*)CALLOC(len, sizeof(guint16));
       for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_guint16(XEN_CAR(val));
       return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("guint16_"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
     }
-  if (strcmp(ctype, "int_") == 0)
+  if (strcmp(ctype, "int*") == 0)
     {
       int* arr; arr = (int*)CALLOC(len, sizeof(int));
       for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_int(XEN_CAR(val));
       return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("int_"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
     }
-  if (strcmp(ctype, "GtkStateType_") == 0)
+  if (strcmp(ctype, "GtkStateType*") == 0)
     {
       GtkStateType* arr; arr = (GtkStateType*)CALLOC(len, sizeof(GtkStateType));
       for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_GtkStateType(XEN_CAR(val));
       return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("GtkStateType_"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
     }
-  if (strcmp(ctype, "GtkPathPriorityType_") == 0)
+  if (strcmp(ctype, "GtkPathPriorityType*") == 0)
     {
       GtkPathPriorityType* arr; arr = (GtkPathPriorityType*)CALLOC(len, sizeof(GtkPathPriorityType));
       for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_GtkPathPriorityType(XEN_CAR(val));
       return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("GtkPathPriorityType_"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
     }
-  if (strcmp(ctype, "GtkSortType_") == 0)
+  if (strcmp(ctype, "GtkSortType*") == 0)
     {
       GtkSortType* arr; arr = (GtkSortType*)CALLOC(len, sizeof(GtkSortType));
       for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_GtkSortType(XEN_CAR(val));
       return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("GtkSortType_"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
     }
-  if (strcmp(ctype, "gunichar_") == 0)
+  if (strcmp(ctype, "gunichar*") == 0)
     {
       gunichar* arr; arr = (gunichar*)CALLOC(len, sizeof(gunichar));
       for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_gunichar(XEN_CAR(val));
       return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("gunichar_"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
     }
-  if (strcmp(ctype, "GdkPixmap__") == 0)
+  if (strcmp(ctype, "GdkPixmap**") == 0)
     {
       GdkPixmap** arr; arr = (GdkPixmap**)CALLOC(len, sizeof(GdkPixmap*));
       for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_GdkPixmap_(XEN_CAR(val));
       return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("GdkPixmap__"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
     }
-  if (strcmp(ctype, "GdkGC__") == 0)
+  if (strcmp(ctype, "GdkGC**") == 0)
     {
       GdkGC** arr; arr = (GdkGC**)CALLOC(len, sizeof(GdkGC*));
       for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_GdkGC_(XEN_CAR(val));
       return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("GdkGC__"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
     }
-  if (strcmp(ctype, "GtkWidget__") == 0)
+  if (strcmp(ctype, "GtkWidget**") == 0)
     {
       GtkWidget** arr; arr = (GtkWidget**)CALLOC(len, sizeof(GtkWidget*));
       for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_GtkWidget_(XEN_CAR(val));
       return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("GtkWidget__"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
     }
-  if (strcmp(ctype, "PangoFontDescription__") == 0)
+  if (strcmp(ctype, "PangoFontDescription**") == 0)
     {
       PangoFontDescription** arr; arr = (PangoFontDescription**)CALLOC(len, sizeof(PangoFontDescription*));
       for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_PangoFontDescription_(XEN_CAR(val));
       return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("PangoFontDescription__"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
     }
-  if (strcmp(ctype, "PangoAttrList__") == 0)
+  if (strcmp(ctype, "PangoAttrList**") == 0)
     {
       PangoAttrList** arr; arr = (PangoAttrList**)CALLOC(len, sizeof(PangoAttrList*));
       for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_PangoAttrList_(XEN_CAR(val));
       return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("PangoAttrList__"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
     }
-  if (strcmp(ctype, "GtkTreeModel__") == 0)
+  if (strcmp(ctype, "GtkTreeModel**") == 0)
     {
       GtkTreeModel** arr; arr = (GtkTreeModel**)CALLOC(len, sizeof(GtkTreeModel*));
       for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_GtkTreeModel_(XEN_CAR(val));
       return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("GtkTreeModel__"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
     }
-  if (strcmp(ctype, "char___") == 0)
+  if (strcmp(ctype, "char***") == 0)
     {
       char*** arr; arr = (char***)CALLOC(len, sizeof(char**));
       for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_char__(XEN_CAR(val));
       return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("char___"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
     }
-  if (strcmp(ctype, "char__") == 0)
+  if (strcmp(ctype, "char**") == 0)
     {
       char** arr; arr = (char**)CALLOC(len, sizeof(char*));
       for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_char_(XEN_CAR(val));
       return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("char__"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
     }
-  if (strcmp(ctype, "gchar__") == 0)
+  if (strcmp(ctype, "gchar**") == 0)
     {
       gchar** arr; arr = (gchar**)CALLOC(len, sizeof(gchar*));
       for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_gchar_(XEN_CAR(val));
       return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("gchar__"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
     }
-  if (strcmp(ctype, "GdkBitmap__") == 0)
+  if (strcmp(ctype, "GdkBitmap**") == 0)
     {
       GdkBitmap** arr; arr = (GdkBitmap**)CALLOC(len, sizeof(GdkBitmap*));
       for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_GdkBitmap_(XEN_CAR(val));
       return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("GdkBitmap__"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
     }
-  if (strcmp(ctype, "gchar___") == 0)
+  if (strcmp(ctype, "gchar***") == 0)
     {
       gchar*** arr; arr = (gchar***)CALLOC(len, sizeof(gchar**));
       for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_gchar__(XEN_CAR(val));
@@ -29974,7 +29973,7 @@ static int xg_already_inited = 0;
       define_strings();
       XEN_YES_WE_HAVE("xg");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xm-version \"30-Jul-02\")");
+      XEN_EVAL_C_STRING("(define xm-version \"31-Jul-02\")");
 #endif
       xg_already_inited = 1;
     }

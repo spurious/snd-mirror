@@ -34,6 +34,7 @@
 ;;; TODO: mix panel env editor (apply button (XmMessageBoxGetChild mix_panel XmDIALOG_CANCEL_BUTTON)
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 popen) (ice-9 optargs) (ice-9 syncase))
+;should this be (use-syntax (ice-9 syncase))?
 
 ;;; redefine 'if' for tracing and so on (backtrace is sometimes very confused)
 ;(define-syntax IF
@@ -15543,6 +15544,8 @@ EDITS: 5
 
 ;;; ---------------- test 22: run ----------------
 
+(load "ws.scm")
+
 (defmacro time-it (a) 
   `(let ((start (get-internal-real-time))) 
    ,a 
@@ -17473,7 +17476,24 @@ EDITS: 5
       (itst '(length list-var) 2)
       (let ((lv (list 321 123))) (run (lambda () (set! int-var (length lv)))))
       (if (not (= int-var 2)) (snd-display "length run local lst: ~A" int-var))
+      (set! list-var (list 2.5 3 "hiho" #t))
+      (run (lambda () (set! int-var (cadr list-var))))
+      (if (not (= int-var 3)) (snd-display "cadr run lst: ~A" int-var))
+      (ftsta '(lambda (y) (car list-var)) 0.0 2.5)
+      (itsta '(lambda (y) (cadr list-var)) 0.0 3)
+      (ststa '(lambda (y) (caddr list-var)) 0.0 "hiho")
+      (btsta '(lambda (y) (cadddr list-var)) 0.0 #t)
       
+      (def-clm-struct st3 one two)
+      (define svar (make-st3 :one 1 :two 2))
+      (define bst3 #f)
+      (let ((tst 0))
+	(run (lambda () (set! tst (st3-one svar))))
+	(if (not (= tst 1)) (snd-display ";run st3-one: ~A" (st3-one svar)))
+	(itst '(st3-two svar) 2)
+	(run (lambda () (set! bst3 (st3? svar))))
+	(if (not bst3) (snd-display ";st3? ~A" (st3? svar))))
+
       (itst '(mus-sound-samples "oboe.snd") 50828)
       (itst '(mus-sound-length "oboe.snd") 101684)
       (itst '(mus-sound-frames "oboe.snd") 50828)
@@ -18403,7 +18423,6 @@ EDITS: 5
 
 ;;; ---------------- test 23: with-sound ----------------
 
-(load "ws.scm")
 (load "v.scm")
 (load "jcrev.scm") ; redefines jc-reverb (different from examp.scm version used above)
 
@@ -18501,6 +18520,38 @@ EDITS: 5
 	    (map close-sound (sounds))
 	    (delete-file "test.snd")
 	    (delete-file "test.rev")))
+
+      (def-clm-struct st1 one two)
+      (let ((var (make-st1 :one 1 :two 2)))
+	(if (not (= (st1-one var) 1)) (snd-display ";st1-one: ~A" (st1-one var)))
+	(if (not (= (st1-two var) 2)) (snd-display ";st1-two: ~A" (st1-two var)))
+	(if (not (st1? var)) (snd-display ";st1? ~A (~A)" (st1? var) var))
+	(set! (st1-one var) 321)
+	(set! (st1-two var) "hiho")
+	(if (not (= (st1-one var) 321)) (snd-display ";st1-one (321): ~A" (st1-one var)))
+	(if (not (string=? (st1-two var) "hiho")) (snd-display ";st1-two (hiho): ~A" (st1-two var)))
+	(set! var (make-st1))
+	(if (not (eq? (st1-one var) #f)) (snd-display ";st1-one #f: ~A" (st1-one var)))
+	(if (st1-two var) (snd-display ";st1-two #f: ~A" (st1-two var)))
+	(set! var (make-st1 :two 3))
+	(if (not (eq? (st1-one var) #f)) (snd-display ";st1-one #f (def): ~A" (st1-one var)))  
+	(if (not (= (st1-two var) 3)) (snd-display ";st1-two (3): ~A" (st1-two var))))
+      (def-clm-struct st2 (one 11) (two 22))
+      (let ((var (make-st2 :one 1 :two 2)))
+	(if (not (= (st2-one var) 1)) (snd-display ";st2-one: ~A" (st2-one var)))
+	(if (not (= (st2-two var) 2)) (snd-display ";st2-two: ~A" (st2-two var)))
+	(if (not (st2? var)) (snd-display ";st2? ~A (~A)" (st1? var) var))
+	(if (st1? var) (snd-display "st1? (not ~A): ~A" (st1? var) var))
+	(set! (st2-one var) 321)
+	(set! (st2-two var) "hiho")
+	(if (not (= (st2-one var) 321)) (snd-display ";st2-one (321): ~A" (st2-one var)))
+	(if (not (string=? (st2-two var) "hiho")) (snd-display ";st2-two (hiho): ~A" (st2-two var)))
+	(set! var (make-st2))
+	(if (not (= (st2-one var) 11)) (snd-display ";st2-one 11: ~A" (st2-one var)))
+	(if (not (= (st2-two var) 22)) (snd-display ";st2-two 22: ~A" (st2-two var)))
+	(set! var (make-st2 :two 3))
+	(if (not (= (st2-one var) 11)) (snd-display ";st2-one 11 (def): ~A" (st2-one var)))  
+	(if (not (= (st2-two var) 3)) (snd-display ";st2-two (3): ~A" (st2-two var))))
 
       ))
 
@@ -24317,6 +24368,16 @@ EDITS: 5
 	       (provided? 'xg))
 	  (begin
 	    (IF (not (GTK_IS_WIDGET (cadr (main-widgets)))) (snd-display ";GTK_IS_WIDGET?"))
+
+	    (let* ((win (car (main-widgets)))
+		   (vals (gdk_property_get win (gdk_atom_intern "SND_VERSION" #f) GDK_TARGET_STRING 0 1024 0))
+		   (lst (c-array->list (list-ref vals 4) (list-ref vals 3)))
+		   (str (make-string (1- (length lst)))))
+	      (do ((i 0 (1+ i)))
+		  ((= i (1- (length lst))))
+		(string-set! str i (integer->char (list-ref lst i))))
+	      (if (not (string=? (snd-version) str)) (snd-display ";SND_VERSION: ~A ~A" str (snd-version))))
+
 	    ))))
 
 
@@ -24366,13 +24427,8 @@ EDITS: 5
 		    glConvolutionParameteri glCopyConvolutionFilter1D glCopyConvolutionFilter2D glSeparableFilter2D gluBeginPolygon gluBuild1DMipmaps
 		    gluBuild2DMipmaps gluDeleteTess gluEndPolygon gluErrorString gluGetString gluGetTessProperty gluLookAt gluNewTess gluNextContour
 		    gluOrtho2D gluPerspective gluPickMatrix gluProject gluScaleImage gluTessBeginContour gluTessBeginPolygon gluTessEndContour
-		    gluTessEndPolygon gluTessNormal gluTessProperty gluTessVertex gluUnProject glActiveTextureARB glClientActiveTextureARB
-		    glMultiTexCoord1dARB glMultiTexCoord1dvARB glMultiTexCoord1fARB glMultiTexCoord1fvARB glMultiTexCoord1iARB glMultiTexCoord1ivARB
-		    glMultiTexCoord1sARB glMultiTexCoord1svARB glMultiTexCoord2dARB glMultiTexCoord2dvARB glMultiTexCoord2fARB glMultiTexCoord2fvARB
-		    glMultiTexCoord2iARB glMultiTexCoord2ivARB glMultiTexCoord2sARB glMultiTexCoord2svARB glMultiTexCoord3dARB glMultiTexCoord3dvARB
-		    glMultiTexCoord3fARB glMultiTexCoord3fvARB glMultiTexCoord3iARB glMultiTexCoord3ivARB glMultiTexCoord3sARB glMultiTexCoord3svARB
-		    glMultiTexCoord4dARB glMultiTexCoord4dvARB glMultiTexCoord4fARB glMultiTexCoord4fvARB glMultiTexCoord4iARB glMultiTexCoord4ivARB
-		    glMultiTexCoord4sARB glMultiTexCoord4svARB)))
+		    gluTessEndPolygon gluTessNormal gluTessProperty gluTessVertex gluUnProject
+		    )))
 
 	      ;; ---------------- 1 Arg
 	      (for-each 
