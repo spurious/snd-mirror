@@ -51,6 +51,7 @@ MAKE_TARGET="snd"
 #   --with-no-gui         make Snd without any graphics support
 #   --with-motif-prefix   set location of Motif (untested as yet)
 #   --with-static-gsl     try to statically load GSL
+#   --with-guile          try to use Guile as the extension language (default=yes)
 #   --with-ruby           try to use Ruby as the extension language
 #   --with-ruby-prefix    set location of Ruby
 #   --with-static-xm      include xm module
@@ -66,6 +67,7 @@ AC_ARG_WITH(no-gui,     [  --with-no-gui  	  make Snd without any graphics suppo
 AC_ARG_WITH(doubles,    [  --with-doubles	  use doubles throughout])
 AC_ARG_WITH(static-gsl, [  --with-static-gsl	  use libgsl.a to build Snd])
 AC_ARG_WITH(xm,         [  --with-static-xm	  include the xm module])
+AC_ARG_WITH(guile,      [  --with-guile		  use Guile])
 
 if test "$with_doubles" = yes; then
   AC_DEFINE(Float,double)
@@ -304,8 +306,6 @@ AC_PROG_INSTALL
 
 AC_CHECK_LIB(m,main)
 AC_CHECK_LIB(c,main)
-AC_CHECK_LIB(ucb,main)
-dnl ucb no longer needed (for early Unixware versions)
 AC_CHECK_LIB(dl,main)
 LIBS=""
 
@@ -797,7 +797,7 @@ AC_SUBST(A_LD_FLAGS)
 
 dnl statfs is a mess
 statfs_args=0
-AC_MSG_CHECKING([fstafs args])
+AC_MSG_CHECKING([stafs args])
 AC_TRY_COMPILE(
   [#include <sys/statfs.h>],
   [struct statfs buf; 

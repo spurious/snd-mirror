@@ -1282,7 +1282,7 @@ static void save_audio_settings_help_callback(Widget w, XtPointer context, XtPoi
 "Normally, Snd saves the state of the audio hardware (the 'mixer' in Linux jargon) before opening the \
 recorder window, then restores it upon closing that window.  This means that any changes you make via \
 the sliders will be erased upon exit.  To save the current state, press this button.  The mixer state \
-will be written to the file .snd-mixer which can be deleted to cancel the save.  This file will also be read by CLM, someday.");	   
+will be written to the file .snd-mixer which can be deleted to cancel the save.");	   
 }
 #endif
 

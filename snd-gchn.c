@@ -371,11 +371,7 @@ static void graph_mouse_leave(GtkWidget *w, GdkEventCrossing *ev, gpointer data)
 static void history_select_callback(GtkWidget *w, gint row, gint column, GdkEventButton *event, gpointer context)
 {
   /* undo/redo to reach selected position */
-  chan_info *cp = (chan_info *)context;
-#if DEBUGGING
-  if (event == NULL) return;
-#endif
-  edit_select_callback(cp, row, (event->state & snd_ControlMask));
+  edit_select_callback((chan_info *)context, row, (event->state & snd_ControlMask));
 }
 
 static void hide_gz_scrollbars(snd_info *sp)
@@ -557,9 +553,7 @@ static void graph_button_motion(GtkWidget *w, GdkEventMotion *ev, gpointer data)
   if (ev->state & GDK_BUTTON1_MASK)
     {
       if (ev->is_hint)
-	{
-	  gdk_window_get_pointer(ev->window, &x, &y, &state);
-	}
+	gdk_window_get_pointer(ev->window, &x, &y, &state);
       else
 	{
 	  x = (int)(ev->x);

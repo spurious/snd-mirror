@@ -62,7 +62,7 @@ In HPUX, fixup the makefile.hpux include and library paths, then:
 If you have Guile 1.3.4 add -DHAVE_GUILE_1_3.  (The default is now
 Guile 1.4).  If you don't have Guile or Ruby, Snd can still be built, but it's
 severely limited in what it can do (there is a configure switch
---with-no-guile, and there's the compiler switch HAVE_EXTENSION_LANGUAGE).
+--with-guile=no, and there's the compiler switch HAVE_EXTENSION_LANGUAGE).
 
 
 Snd builds in Mac OS-X, but is not very useful yet,
@@ -442,6 +442,7 @@ Snd:
   http://www-ccrma.stanford.edu/software/snd/
   http://sourceforge.net/projects/snd/
 
+  http://linux.oreillynet.com/pub/a/linux/2001/10/05/snd_partone.html
   http://www.saunalahti.fi/~mjkoskin/
   http://www.cosy.sbg.ac.at/~gwesp/mma-sound.html (Mathematica)
   http://www.linuxpower.com/display_item.phtml?id=139 (Movies)

@@ -310,7 +310,7 @@
 ;;; -------- add our own pane to the overall Snd window (underneath the listener in this case) --------
 
 (define (add-main-pane name type args)
-  (|XtCreateManagedWidget name type (|Widget (list-ref (main-widgets) 3)) args))
+  (|XtCreateManagedWidget name type (|Widget (or (list-ref (main-widgets) 5) (list-ref (main-widgets) 3))) args))
 
 ;(add-channel-pane "new-pane" 
 ;		  |xmDrawingAreaWidgetClass 

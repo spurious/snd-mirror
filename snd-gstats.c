@@ -114,9 +114,7 @@ void check_stats_window(snd_state *ss, int val)
 	gtk_widget_hide(stats_window);
     }
   else
-    {
-      update_stats_display(ss, TRUE);
-    }
+    update_stats_display(ss, TRUE);
 }
 
 #if DEBUGGING

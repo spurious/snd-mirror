@@ -2406,7 +2406,7 @@ XEN_ARGIFY_1(g_set_just_sounds_w, g_set_just_sounds)
 void g_initialize_xgfile(void)
 {
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_just_sounds, g_just_sounds_w, H_just_sounds,
-			       "set-" S_just_sounds, g_set_just_sounds_w,  0, 0, 0, 1);
+				   "set-" S_just_sounds, g_set_just_sounds_w,  0, 0, 0, 1);
 
   #define H_mouse_enter_label_hook S_mouse_enter_label_hook " (type position label) is called when a file viewer or region label \
 is entered by the mouse. The 'type' is 0 for the current files list, 1 for previous files, and 2 for regions. The 'position' \

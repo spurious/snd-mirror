@@ -785,13 +785,11 @@ static gint mouse_name(XEN hook, GtkWidget *w, const char *caller)
 		gtk_label_get(GTK_LABEL(GTK_BIN(w)->child), &label);
 	    }
 	  if (label)
-	    {
-	      g_c_run_progn_hook(hook,
-				 XEN_LIST_3(C_TO_SMALL_XEN_INT(r->parent),
-					    C_TO_SMALL_XEN_INT(r->pos),
-					    C_TO_XEN_STRING(label)),
-				 caller);
-	    }
+	    g_c_run_progn_hook(hook,
+			       XEN_LIST_3(C_TO_SMALL_XEN_INT(r->parent),
+					  C_TO_SMALL_XEN_INT(r->pos),
+					  C_TO_XEN_STRING(label)),
+			       caller);
 	}
     }
   return(0);
@@ -1489,7 +1487,7 @@ snd_info *make_new_file_dialog(snd_state *ss, char *newname, int header_type, in
       gtk_entry_set_text(GTK_ENTRY(new_file_name), newname);
 
       new_dialog_data = make_file_data_panel(ss, GTK_DIALOG(new_dialog)->vbox, "data-form", TRUE, 
-					      default_output_type(ss), default_output_format(ss), FALSE, FALSE);
+					     default_output_type(ss), default_output_format(ss), FALSE, FALSE);
     }
   else
     {
@@ -1591,7 +1589,7 @@ GtkWidget *edit_header(snd_info *sp)
       gtk_widget_show(help_button);
 
       edit_header_data = make_file_data_panel(ss, GTK_DIALOG(edit_header_dialog)->vbox, STR_Edit_Header, TRUE, 
-					       hdr->type, hdr->format, TRUE, FALSE);
+					      hdr->type, hdr->format, TRUE, FALSE);
       load_header_and_data_lists(edit_header_data, hdr->type, hdr->format, hdr->srate, hdr->chans, hdr->data_location, hdr->comment);
     }
 
@@ -1626,7 +1624,7 @@ XEN_ARGIFY_1(g_set_just_sounds_w, g_set_just_sounds)
 void g_initialize_xgfile(void)
 {
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_just_sounds, g_just_sounds_w, H_just_sounds,
-			       "set-" S_just_sounds, g_set_just_sounds_w,  0, 0, 0, 1);
+				   "set-" S_just_sounds, g_set_just_sounds_w,  0, 0, 0, 1);
 
   #define H_mouse_enter_label_hook S_mouse_enter_label_hook " (type position label) is called when a file viewer or region label \
 is entered by the mouse. The 'type' is 0 for the current files list, 1 for previous files, and 2 for regions. The 'position' \

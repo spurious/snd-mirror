@@ -529,7 +529,7 @@ is opened. The file types listed above as "automatically translated" are
 decoded upon being opened, rewritten in Sun 16-bit format
 to a new file with an added (possibly redundant) extension .snd,
 and that form is the one the editor sees from then on. To read
-mepg files, see the mpg function in <a href="sndscm.html#exampdoc">examp.scm</a>.
+mpeg files, see the mpg function in <a href="sndscm.html#exampdoc">examp.scm</a>.
 </p>
 
 <p><A NAME="panelayout"></a>Each file has its own
@@ -595,7 +595,7 @@ overwritten.  If you try to overwrite a file, and
 that file has active edits in a different Snd window, you'll be asked
 for confirmation.
 If you want Snd to ask before overwriting
-a file in any case, set the resource <A NAME="overwrite">overwriteCheck</a> to #t,
+a file in any case, set the resource <A NAME="overwrite">overwriteCheck</a> to 1,
 or include the expression (set! (<a href="extsnd.html#askbeforeoverwrite">ask-before-overwrite</a>) #t) in your Snd initialization file.
         <!-- I(overwrite check):L(ask-before-overwrite)(overwrite) -->
 If you edit a write-protected file and try to save the edits, Snd will

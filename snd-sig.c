@@ -2906,8 +2906,9 @@ sampling-rate converts the currently selected data by ratio (which can be an env
 	}
       else
 	{
-	  XEN_ASSERT_TYPE((mus_xen_p(ratio_or_env)) && (mus_env_p(egen = mus_xen_to_clm(ratio_or_env))), 
-		      ratio_or_env, XEN_ARG_1, S_src_selection, "a number, list, or env generator");
+	  XEN_ASSERT_TYPE((mus_xen_p(ratio_or_env)) && 
+			  (mus_env_p(egen = mus_xen_to_clm(ratio_or_env))), 
+			  ratio_or_env, XEN_ARG_1, S_src_selection, "a number, list, or env generator");
 	  src_env_or_num(cp->state, cp, NULL,
 			 (mus_phase(egen) >= 0.0) ? 1.0 : -1.0,
 			 FALSE, NOT_FROM_ENVED, S_src_selection, 

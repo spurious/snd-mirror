@@ -81,7 +81,7 @@ static PANE **all_panes = NULL;
 static int out_file_pane;
 
 static GtkWidget *rec_size_text, *trigger_scale, *trigger_label;
-static GtkWidget *file_duration, *messages, *record_button, *reset_button, *file_text;
+static GtkWidget *file_duration, *messages = NULL, *record_button, *reset_button, *file_text;
 static GtkWidget **device_buttons;
 static GtkObject *trigger_adj;
 static int device_buttons_size = 0;
@@ -131,7 +131,7 @@ static void record_report(GtkWidget *text, ...)
 
 void recorder_error(char *msg)
 {
-  if (recorder)
+  if ((recorder) && (messages))
     record_report(messages, msg, NULL);
 }
 
@@ -756,9 +756,7 @@ static void internal_trigger_set(Float val)
   rp->triggering = (val > 0.0);
   rp->triggered = (!rp->triggering);
   if (!(rp->recording)) /* else wait for current session to end (via click) */
-    {
-      set_button_label(record_button, (rp->triggering) ? STR_Triggered_Record : STR_Record);
-    }
+    set_button_label(record_button, (rp->triggering) ? STR_Triggered_Record : STR_Record);
 }
 
 static void change_trigger_callback(GtkAdjustment *adj, gpointer context)
@@ -842,7 +840,7 @@ static void device_button_callback(GtkWidget *w, gpointer context)
 	      set_recorder_srate(rp, (int)val[0]);
 	    }
 	  rp->input_ports[0] = mus_audio_open_input(MUS_AUDIO_PACK_SYSTEM(0) | p->device,
-					  rp->srate, rp->input_channels[0], rp->in_format, rp->buffer_size);
+						    rp->srate, rp->input_channels[0], rp->in_format, rp->buffer_size);
 	  if (rp->input_ports[0] == -1)
 	    record_report(messages, recorder_device_name(p->device), NULL);
 	  else
@@ -859,7 +857,7 @@ static void device_button_callback(GtkWidget *w, gpointer context)
 	      if (!rp->monitoring)
 		{
 		  rp->monitor_port = mus_audio_open_output(MUS_AUDIO_PACK_SYSTEM(0) | MUS_AUDIO_DAC_OUT,
-						 rp->srate, rp->monitor_chans, rp->out_format, rp->buffer_size);
+							   rp->srate, rp->monitor_chans, rp->out_format, rp->buffer_size);
 		  if (rp->monitor_port == -1)
 		    {
 		      record_report(messages, "open output", NULL);
@@ -1148,9 +1146,7 @@ static void meter_button_callback(GtkWidget *w, gpointer context)
       rp->chan_out_active[wd->chan] = val;
       str = gtk_entry_get_text(GTK_ENTRY(recdat->chans_text)); 
       if (str) 
-	{
-	  n = string2int(str);
-	}
+	n = string2int(str);
       else n = 0;
       val = 0;
       for (i = 0; i < p->active_size; i++) 
@@ -1533,7 +1529,7 @@ static void make_vu_meters(snd_state *ss, PANE *p, int vu_meters,
 }
 
 static void make_vertical_gain_sliders(snd_state *ss, recorder_info *rp, PANE *p, 
-					     int num_gains, int gain_ctr, int *mixflds, int input, GtkWidget *gv)
+				       int num_gains, int gain_ctr, int *mixflds, int input, GtkWidget *gv)
 {
   int i, chan, this_device = 0, last_device = 0;
   GtkWidget *sbox, *slabel, *spix;
@@ -1769,9 +1765,7 @@ static int make_amp_sliders(snd_state *ss, recorder_info *rp, PANE *p, int input
 
       a->wd = wd;
       if ((!input) || (p->active_sliders[in_chan][out_chan]))
-	{
-	  make_recorder_slider(ss, p, a, input);
-	}
+	make_recorder_slider(ss, p, a, input);
       else
 	{
 	  a->label = NULL;
@@ -1955,13 +1949,11 @@ static void record_button_callback(GtkWidget *w, gpointer context)
 	      wd->device = p->device;
 	      wd->system = 0;
 	      for (i = 0; i < rp->out_chans; i++)
-		{
-		  if (!(p->active[i]))
-		    {
-		      wd->chan = i;
-		      meter_button_callback(p->on_buttons[i], (gpointer)wd); /* callData not used */
-		    }
-		}
+		if (!(p->active[i]))
+		  {
+		    wd->chan = i;
+		    meter_button_callback(p->on_buttons[i], (gpointer)wd); /* callData not used */
+		  }
 	      FREE(wd);
 	    }
 	  if (in_chans_active() == 0)

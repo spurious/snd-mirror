@@ -435,7 +435,8 @@ in the drawing mode graphic-style."
 
 static XEN g_main_widgets(void)
 {
-  #define H_main_widgets "(" S_main_widgets ") -> top level widgets (list (0)main-app (1)main-shell (2)main-pane (3)sound-pane (4)listener-pane)"
+  #define H_main_widgets "(" S_main_widgets ") -> top level widgets \
+(list (0)main-app (1)main-shell (2)main-pane (3)sound-pane (4)listener-pane or #f (5)notebook-outer-pane or #f)"
   snd_state *ss;
   XEN main_win;
   ss = get_global_state();
@@ -449,7 +450,8 @@ static XEN g_main_widgets(void)
              XEN_CONS(XEN_WRAP_C_POINTER(MAIN_PANE(ss)),
                XEN_CONS(XEN_WRAP_C_POINTER(SOUND_PANE(ss)),
 		 XEN_CONS((ss->sgx->listener_pane) ? XEN_WRAP_C_POINTER(ss->sgx->listener_pane) : XEN_FALSE,
-		   XEN_EMPTY_LIST))))));
+		   XEN_CONS(SOUND_PANE_BOX(ss) ? XEN_WRAP_C_POINTER(SOUND_PANE_BOX(ss)) : XEN_FALSE,
+		     XEN_EMPTY_LIST)))))));
 }
 
 static XEN dialog_widgets;
