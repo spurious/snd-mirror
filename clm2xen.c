@@ -5393,14 +5393,22 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_frame_p,        g_frame_p_w, 1, 0, 0,        H_frame_p);
   XEN_DEFINE_PROCEDURE(S_frame_add,      g_frame_add_w, 2, 1, 0,      H_frame_add);
   XEN_DEFINE_PROCEDURE(S_frame_multiply, g_frame_multiply_w, 2, 1, 0, H_frame_multiply);
+#if HAVE_GUILE
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_frame_ref, g_frame_ref_w, H_frame_ref, "set-" S_frame_ref, g_set_frame_ref_w,  2, 0, 3, 0);
+#else
   XEN_DEFINE_PROCEDURE(S_frame_ref,      g_frame_ref_w, 2, 0, 0,      H_frame_ref);
+#endif
   XEN_DEFINE_PROCEDURE(S_frame_set,      g_set_frame_ref_w, 3, 0, 0,  H_frame_set);
 
 
   XEN_DEFINE_PROCEDURE(S_make_mixer,     g_make_mixer_w, 0, 0, 1,     H_make_mixer);
   XEN_DEFINE_PROCEDURE(S_mixer_p,        g_mixer_p_w, 1, 0, 0,        H_mixer_p);
   XEN_DEFINE_PROCEDURE(S_mixer_multiply, g_mixer_multiply_w, 2, 1, 0, H_mixer_multiply);
+#if HAVE_GUILE
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mixer_ref, g_mixer_ref_w, H_mixer_ref, "set-" S_mixer_ref, g_set_mixer_ref_w,  3, 0, 4, 0);
+#else
   XEN_DEFINE_PROCEDURE(S_mixer_ref,      g_mixer_ref_w, 3, 0, 0,      H_mixer_ref);
+#endif
   XEN_DEFINE_PROCEDURE(S_mixer_set,      g_set_mixer_ref_w, 4, 0, 0,  H_mixer_set);
   XEN_DEFINE_PROCEDURE(S_frame2sample,   g_frame2sample_w, 2, 0, 0,   H_frame2sample);
   XEN_DEFINE_PROCEDURE(S_frame2list,     g_frame2list_w, 1, 0, 0,     H_frame2list);
@@ -5461,9 +5469,18 @@ the closer the radius is to 1.0, the narrower the resonance."
   XEN_DEFINE_PROCEDURE(S_make_locsig,       g_make_locsig_w, 0, 0, 1,       H_make_locsig);
   XEN_DEFINE_PROCEDURE(S_move_locsig,       g_move_locsig_w, 3, 0, 0,       H_move_locsig);
   XEN_DEFINE_PROCEDURE(S_mus_channels,      g_channels_w, 1, 0, 0,          H_mus_channels);
+#if HAVE_GUILE
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_locsig_ref, g_locsig_ref_w, H_locsig_ref, "set-" S_locsig_ref, g_locsig_set_w,  2, 0, 3, 0);
+#else
   XEN_DEFINE_PROCEDURE(S_locsig_ref,        g_locsig_ref_w, 2, 0, 0,        H_locsig_ref);
-  XEN_DEFINE_PROCEDURE(S_locsig_reverb_ref, g_locsig_reverb_ref_w, 2, 0, 0, H_locsig_reverb_ref);
+#endif
   XEN_DEFINE_PROCEDURE(S_locsig_set,        g_locsig_set_w, 3, 0, 0,        H_locsig_set);
+#if HAVE_GUILE
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_locsig_reverb_ref, g_locsig_reverb_ref_w, H_locsig_reverb_ref, 
+				   S_locsig_reverb_set, g_locsig_reverb_set_w,  2, 0, 3, 0);
+#else
+  XEN_DEFINE_PROCEDURE(S_locsig_reverb_ref, g_locsig_reverb_ref_w, 2, 0, 0, H_locsig_reverb_ref);
+#endif
   XEN_DEFINE_PROCEDURE(S_locsig_reverb_set, g_locsig_reverb_set_w, 3, 0, 0, H_locsig_reverb_set);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_locsig_type, g_locsig_type_w, H_locsig_type, S_set_locsig_type, g_set_locsig_type_w,  0, 0, 1, 0);
 

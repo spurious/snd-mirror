@@ -1,5 +1,6 @@
 Snd change log
 
+  13-Aug:    snd 6.0.
   1-Aug:     def-clm-struct (ws.scm).
   30-Jul:    list constant ops in optimizer.
   23-Jul:    "|" removed from *.scm (r5rs restriction).

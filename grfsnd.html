@@ -137,6 +137,16 @@ using the -xrm command line argument:</p>
   snd oboe.snd pistol.snd -xrm '*selectedgraphcolor: black' -xrm '*selecteddatacolor: white'
   snd oboe.snd -title hiho -display hummer.hiho:0.0 -xrm '*chn-graph*backgroundPixmap: text.xpm'
 </pre>
+<p>Perhaps this is most useful when your window manager assumes white text for labels (menus);
+since Snd defaults to an off-white background, this makes everything unreadable. You can get
+the black text back with:
+</p>
+<pre>
+./snd -xrm '*foreground: Black'
+</pre>
+<p>or put the equivalent line in your .Xdefaults file.  The listener text color can be set
+via <code>(set! (listener-text-color) (make-color 0 0 0))</code> in ~/.snd or wherever.
+</p>
 
 <p>The color names can be found in <a href="sndscm.html#rgbdoc">rgb.scm</a>. 
 If you use SGI color schemes (the useSchemes resource), most of the color resources mentioned above are ignored 

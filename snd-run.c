@@ -68,7 +68,7 @@
  *         (set-object-property! <func> 'ptree pt) [scm_set_object_property_x in objprop]
  *              procedure-property? -- this has name and arity
  *         would also need an initialization process(?)
- * TODO: possible Snd additions: cursor sample samples(2vct) add-mark report-in-minibuffer[see snd-print] frames maxamp sample-reader-position snd-warning
+ * TODO: possible Snd additions: cursor sample samples(2vct) add-mark report-in-minibuffer[see snd-print] maxamp sample-reader-position snd-warning
  * TODO: split Scheme from Snd/Clm here and do the latter via an FFI of some sort
  *
  * LIMITATIONS: <insert anxious lucubration here about DSP context and so on>
@@ -102,37 +102,37 @@ static XEN optimization_hook = XEN_FALSE;
 /* this code assumes a void* is the same size as int */
 #if HAVE_GUILE && WITH_RUN && HAVE_STRINGIZE
 
-#define C_TO_XEN_CHAR(c)           SCM_MAKE_CHAR(c)
-#define XEN_CDDDR(a)               SCM_CDDDR(a)
-#define XEN_CAAR(a)                XEN_CAR(XEN_CAR(a))
-#define XEN_CDAR(a)                XEN_CDR(XEN_CAR(a))
-#define XEN_CDADR(a)               XEN_CDR(XEN_CADR(a))
-#define XEN_CAAAR(a)               SCM_CAAAR(a)
-#define XEN_CAADR(a)               SCM_CAADR(a)
-#define XEN_CADAR(a)               SCM_CADAR(a)
-#define XEN_CADDR(a)               SCM_CADDR(a)
-#define XEN_CAAAAR(a)              SCM_CAAAAR(a)
-#define XEN_CAAADR(a)              SCM_CAAADR(a)
-#define XEN_CAADAR(a)              SCM_CAADAR(a)
-#define XEN_CAADDR(a)              SCM_CAADDR(a)
-#define XEN_CADAAR(a)              SCM_CADAAR(a)
-#define XEN_CADADR(a)              SCM_CADADR(a)
-#define XEN_CADDAR(a)              SCM_CADDAR(a)
-#define XEN_CADDDR(a)              SCM_CADDDR(a)
-#define XEN_PAIR_P(a)              XEN_TRUE_P(scm_pair_p(a))
-#define XEN_APPLICABLE_SMOB_P(a)   (SCM_TYP7(a) == scm_tc7_smob)
-#define XEN_ENV(a)                 SCM_ENV(a)
-#define XEN_VAR_NAME_TO_VAR(a)     scm_sym2var(scm_str2symbol(a), scm_current_module_lookup_closure(), XEN_FALSE)
-#define XEN_SYMBOL_TO_VAR(a)       scm_sym2var(a, scm_current_module_lookup_closure(), XEN_FALSE)
-#define XEN_SET_CDR(pair, new_val) scm_set_cdr_x(pair, new_val)
-#define XEN_FRANDOM(a)             (a * scm_c_uniform01(scm_c_default_rstate()))
-#define XEN_IRANDOM(a)             scm_c_random(scm_c_default_rstate(), a)
-#define INTEGER_TO_STRING(a)       XEN_TO_C_STRING(scm_number_to_string(C_TO_XEN_INT(a), XEN_UNDEFINED))
-#define INTEGER_TO_STRING_WITH_RADIX(a, b) XEN_TO_C_STRING(scm_number_to_string(C_TO_XEN_INT(a), C_TO_XEN_INT(b)))
-#define DOUBLE_TO_STRING(a)        XEN_TO_C_STRING(scm_number_to_string(C_TO_XEN_DOUBLE(a), XEN_UNDEFINED))
-#define DOUBLE_TO_STRING_WITH_RADIX(a, b) XEN_TO_C_STRING(scm_number_to_string(C_TO_XEN_DOUBLE(a), C_TO_XEN_INT(b)))
+#define C_TO_XEN_CHAR(c)                    SCM_MAKE_CHAR(c)
+#define XEN_CDDDR(a)                        SCM_CDDDR(a)
+#define XEN_CAAR(a)                         XEN_CAR(XEN_CAR(a))
+#define XEN_CDAR(a)                         XEN_CDR(XEN_CAR(a))
+#define XEN_CDADR(a)                        XEN_CDR(XEN_CADR(a))
+#define XEN_CAAAR(a)                        SCM_CAAAR(a)
+#define XEN_CAADR(a)                        SCM_CAADR(a)
+#define XEN_CADAR(a)                        SCM_CADAR(a)
+#define XEN_CADDR(a)                        SCM_CADDR(a)
+#define XEN_CAAAAR(a)                       SCM_CAAAAR(a)
+#define XEN_CAAADR(a)                       SCM_CAAADR(a)
+#define XEN_CAADAR(a)                       SCM_CAADAR(a)
+#define XEN_CAADDR(a)                       SCM_CAADDR(a)
+#define XEN_CADAAR(a)                       SCM_CADAAR(a)
+#define XEN_CADADR(a)                       SCM_CADADR(a)
+#define XEN_CADDAR(a)                       SCM_CADDAR(a)
+#define XEN_CADDDR(a)                       SCM_CADDDR(a)
+#define XEN_PAIR_P(a)                       XEN_TRUE_P(scm_pair_p(a))
+#define XEN_APPLICABLE_SMOB_P(a)            (SCM_TYP7(a) == scm_tc7_smob)
+#define XEN_ENV(a)                          SCM_ENV(a)
+#define XEN_VAR_NAME_TO_VAR(a)              scm_sym2var(scm_str2symbol(a), scm_current_module_lookup_closure(), XEN_FALSE)
+#define XEN_SYMBOL_TO_VAR(a)                scm_sym2var(a, scm_current_module_lookup_closure(), XEN_FALSE)
+#define XEN_SET_CDR(pair, new_val)          scm_set_cdr_x(pair, new_val)
+#define XEN_FRANDOM(a)                      (a * scm_c_uniform01(scm_c_default_rstate()))
+#define XEN_IRANDOM(a)                      scm_c_random(scm_c_default_rstate(), a)
+#define INTEGER_TO_STRING(a)                XEN_TO_C_STRING(scm_number_to_string(C_TO_XEN_INT(a), XEN_UNDEFINED))
+#define INTEGER_TO_STRING_WITH_RADIX(a, b)  XEN_TO_C_STRING(scm_number_to_string(C_TO_XEN_INT(a), C_TO_XEN_INT(b)))
+#define DOUBLE_TO_STRING(a)                 XEN_TO_C_STRING(scm_number_to_string(C_TO_XEN_DOUBLE(a), XEN_UNDEFINED))
+#define DOUBLE_TO_STRING_WITH_RADIX(a, b)   XEN_TO_C_STRING(scm_number_to_string(C_TO_XEN_DOUBLE(a), C_TO_XEN_INT(b)))
 #define XEN_PROCEDURE_SOURCE_TO_C_STRING(a) XEN_AS_STRING(scm_procedure_source(a))
-#define XEN_LIST_REF_WRAPPED(a, b) scm_list_ref(a, b)
+#define XEN_LIST_REF_WRAPPED(a, b)          scm_list_ref(a, b)
 
 #define INT_PT "i%d(%d)"
 #define FLT_PT "d%d(%.4f)"
@@ -5037,6 +5037,7 @@ static xen_value *goto_0(ptree *prog, xen_value **args, xen_value *sf)
 
 /* ---------------- edit-position ---------------- */
 
+/* TODO: edit-position with opt args */
 static void edit_position_i(int *args, int *ints, Float *dbls) 
 {
   snd_state *ss;
@@ -7619,14 +7620,20 @@ static xen_value *lookup_generalized_set(ptree *prog, char *accessor, xen_value 
       if (strcmp(accessor, "mus-length") == 0) v = mus_set_length_1(prog, in_v, v);
     }
   if (strcmp(accessor, "mus-srate") == 0) v = mus_set_srate_1(prog, in_v, v);
-  /* TODO: list-set! for def-clm-struct [needs to retain old type]
-	      for (k = 0; k < clm_struct_top; k++)
-		{
-		  if (strcmp(accessor, clm_struct_names[k]) == 0)
-		    return(clean_up(unwrap_xen_object(prog, XEN_LIST_SET(lst, clm_struct_offsets[k], in_v, v), accessor), args, num_args));
-		}
+  /* TODO: list-set! for def-clm-struct [needs to retain old type] -- in_v: accessor-arg, v:new val [also needs runtime list-ref]
+     lst = (XEN)(prog->ints[in_v->addr]);
+     (set! (fd-loc arg) 123) -- arg is a list, fd-loc gives the offset
+     accessor: "fd-loc", in_v: arg, v: 123
+     for (k = 0; k < clm_struct_top; k++)
+       {
+         if (strcmp(accessor, clm_struct_names[k]) == 0)
+         check types (run-wise v->type and xen-wise XEN_LIST_REF(lst, clm_struct_offsets[k]))
+         return(clean_up(unwrap_xen_object(prog, XEN_LIST_SET(lst, clm_struct_offsets[k], c_to_xen(v)), accessor), args, num_args));
+       }
    */
   /* TODO: (set! (vct-ref...)) and frame-ref, locsig-ref etc in run */
+  /*       these would require that set_form pass us the 2nd (and 3rd) arg(s) to the accessor as well */
+  /*       then something like set_dbl_gen0 as the call */
   if (v == NULL) run_warn("can't set! %s", accessor);
   if (in_v) FREE(in_v);
   if (accessor) FREE(accessor);

@@ -271,17 +271,14 @@ void news_help(snd_state *ss)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+13-Aug:  snd 6.0.\n\
 1-Aug:   def-clm-struct (ws.scm).\n\
-31-Jul:  snd 6.0 (in progress).\n\
 19-Jul:  contrib/rmsgain.scm thanks to Fabio Furlanete.\n\
          with-relative-panes.\n\
 17-Jul:  mix-length -> mix-frames, region-length -> region-frames, selection-length -> selection-frames.\n\
 15-Jul:  snd 5.12.\n\
          continue-sample->file, read/write-ogg in examp.scm.\n\
 11-Jul:  run macro for Snd.\n\
-8-Jul:   update-transform changed to update-transform-graph.\n\
-         added sample-reader-position.\n\
-3-Jul:   added contrib/DotEmacs thanks to Fernando.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",

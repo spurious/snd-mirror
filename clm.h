@@ -2,10 +2,11 @@
 #define MUS_H
 
 #define MUS_VERSION 2
-#define MUS_REVISION 14
-#define MUS_DATE "29-July-02"
+#define MUS_REVISION 15
+#define MUS_DATE "13-Aug-02"
 
 /* 
+ * 13-Aug:     added set! (*-ref) for frame, locsig, mixer, locsig-reverb.
  * 29-Jul:     added various *_1 cases for the optimizer.
  * 15-Jul:     mus_continue_sample2file.
  * 10-Jul:     mus_file_name.
