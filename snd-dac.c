@@ -1117,16 +1117,18 @@ static int fill_dac_buffers(dac_state *dacp, int write_ok)
 		  (sp->cursor_follows_play != DONT_FOLLOW) &&
 		  (!(read_sample_eof(dp->chn_fd))) &&
 		  (dp->chn_fd->cb))
-#if HAVE_OSS
 		{
 		  off_t loc;
-		  loc = current_location(dp->chn_fd) - (off_t)mus_audio_oss_buffer_size();
+		  dp->cp->just_zero = TRUE;
+		  loc = current_location(dp->chn_fd);
+#if HAVE_OSS
+		  /* just a wild guess... */
+		  loc -= (int)(mus_audio_oss_buffer_size() * fabs(dp->cur_srate) / (2 * dacp->channels));
 		  if (loc < 0) loc = 0;
-		  cursor_moveto_without_verbosity(dp->cp, loc);
-		}
-#else
-		cursor_moveto_without_verbosity(dp->cp, current_location(dp->chn_fd));
 #endif
+		  cursor_moveto_without_verbosity(dp->cp, loc);
+		  dp->cp->just_zero = FALSE;
+		}
 
 	      /* add a buffer's worth from the current source into dp->audio_chan */
 	      buf = dac_buffers[dp->audio_chan];

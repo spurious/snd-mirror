@@ -565,10 +565,8 @@ void mem_report(void)
   char time_buf[TIME_STR_SIZE];
   snd_state *ss;
   ss = get_global_state();
-#if WITH_RUN
   if (ss->search_tree)
     ss->search_tree = free_ptree(ss->search_tree);
-#endif
   for (i = 0; i < mem_size; i++)
     if (stacks[i])
       {

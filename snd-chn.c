@@ -3120,7 +3120,9 @@ static void draw_graph_cursor(chan_info *cp)
 	}
     }
   cp->cx = local_grf_x((double)(cp->cursor) / (double)SND_SRATE(cp->sound), ap); /* not float -- this matters in very long files (i.e. > 40 minutes) */
-  cp->cy = local_grf_y(chn_sample(cp->cursor, cp, cp->edit_ctr), ap);
+  if (cp->just_zero)
+    cp->cy = local_grf_y(0.0, ap);
+  else cp->cy = local_grf_y(chn_sample(cp->cursor, cp, cp->edit_ctr), ap);
   switch (cp->cursor_style)
     {
     case CURSOR_CROSS:
@@ -3237,11 +3239,14 @@ void cursor_move(chan_info *cp, off_t samps)
 
 void cursor_moveto_without_verbosity(chan_info *cp, off_t samp)
 {
-  int old_verbose;
+  int old_verbose, old_sync;
   old_verbose = cp->verbose_cursor;
+  old_sync = cp->sound->sync;
   cp->verbose_cursor = 0;
+  cp->sound->sync = 0;
   cursor_moveto(cp, samp);
   cp->verbose_cursor = old_verbose;
+  cp->sound->sync = old_sync;
 }
 
 void show_cursor_info(chan_info *cp)

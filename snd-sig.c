@@ -3195,6 +3195,7 @@ static XEN g_env_channel(XEN gen, XEN samp_n, XEN samps, XEN snd_n, XEN chn_n, X
   #define H_env_channel "(" S_env_channel " clm-env-gen &optional beg dur snd chn edpos)\n\
 applies amplitude envelope 'clm-env-gen' to snd's channel chn starting at beg for dur samples."
 
+  /* TODO: env-channel should accept a list (envelope) */
   chan_info *cp;
   snd_info *sp;
   off_t beg = 0, dur;

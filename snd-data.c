@@ -66,6 +66,8 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound, snd_state *
   cp->sound_ctr = -1;
   cp->edit_ctr = -1;
   cp->sound_size = 0;
+  cp->ptrees = NULL;
+  cp->ptree_size = 0;
   cp->edit_size = 0;
   cp->cursor_on = 0;
   cp->cursor_visible = 0;
@@ -162,8 +164,8 @@ static chan_info *free_chan_info(chan_info *cp)
   if (cp->samples) {FREE(cp->samples); cp->samples = NULL;}
   if (cp->edits) free_edit_list(cp);
   if (cp->sounds) free_sound_list(cp);
+  if (cp->ptrees) free_ptree_list(cp);
   free_mark_list(cp, -1);
-  if (cp->sounds) {FREE(cp->sounds); cp->sounds = NULL;}
   free_mixes(cp);
   cp->sound = NULL;  /* a backpointer */
   cp->state = NULL;
@@ -316,9 +318,7 @@ snd_info *make_snd_info(snd_info *sip, snd_state *state, char *filename, file_in
   sp->env_anew = 0;
   sp->search_expr = NULL;
   sp->lacp = NULL;
-#if WITH_RUN
   sp->search_tree = NULL;
-#endif
   sp->search_proc = XEN_UNDEFINED;
   sp->prompt_callback = XEN_UNDEFINED;
   sp->delete_me = 0;
@@ -374,11 +374,9 @@ void free_snd_info(snd_info *sp)
       FREE(sp->search_expr); 
       sp->search_expr = NULL;
     }
-#if WITH_RUN
   if (sp->search_tree)
     free_ptree(sp->search_tree);
   sp->search_tree = NULL;
-#endif
   if (XEN_PROCEDURE_P(sp->search_proc))
     snd_unprotect(sp->search_proc);
   sp->search_proc = XEN_UNDEFINED;

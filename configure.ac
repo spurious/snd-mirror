@@ -425,6 +425,7 @@ if test "$with_gl" = yes || test "$with_just_gl" = yes ; then
     GL_LIBS="-lGLU -lGL"
     if test "$with_gtk" = yes; then
       GL_LIBS="$GL_LIBS -lgdkglext-x11-0.x -lgtkglext-x11-0.x"
+      AC_CHECK_LIB(m, gdk_window_get_gl_config, [AC_DEFINE(HAVE_GTK_GL_EXT_0_1)], , $GL_LIBS)
     fi
   fi
 fi

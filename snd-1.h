@@ -70,7 +70,7 @@ typedef struct {
 typedef struct {
   off_t out, beg, end;
   Float scl, rmp0, rmp1;
-  int snd, typ;
+  int snd, typ, loc;
 } ed_fragment;
 
 typedef struct {
@@ -78,7 +78,7 @@ typedef struct {
   ed_fragment **fragments;
   off_t beg, len;
   char *origin;
-  int sfnum;
+  int edit_type, sound_location;
   off_t selection_beg, selection_end;  /* selection needs to follow edit list */
   Float maxamp, selection_maxamp;
 } ed_list;
@@ -102,9 +102,7 @@ typedef struct snd__fd {
   int iscaler;
   off_t frag_pos;
   double incr, curval;
-#if WITH_RUN
   void *ptree;
-#endif
 } snd_fd;
 
 typedef struct {Float freq; Float amp;} fft_peak;
@@ -214,6 +212,9 @@ typedef struct chan__info {
   int sound_size;          /* edit_list associated temp sound buffers */
   int sound_ctr;           /* current location in sounds list */
   snd_data **sounds;       /* the associated temp buffer/file/struct list */
+  int ptree_size;          /* ditto for ptrees */
+  int ptree_ctr;
+  void **ptrees;
   fft_info *fft;           /* possibly null fft data */
   struct snd__info *sound; /* containing sound */
   struct snd__state *state;
@@ -252,7 +253,7 @@ typedef struct chan__info {
   int selection_visible, active;
   Locus old_x0, old_x1;
   Float *amp_control; /* local amp controls in snd-dac; should it be extended to other controls? */
-  int last_search_result;
+  int last_search_result, just_zero;
 #if HAVE_GL
   int gl_fft_list;
 #endif
@@ -684,6 +685,7 @@ void free_edit_list(chan_info *cp);
 void backup_edit_list(chan_info *cp);
 void as_one_edit(chan_info *cp, int one_edit, char *one_edit_origin);
 void free_sound_list (chan_info *cp);
+void free_ptree_list(chan_info *cp);
 off_t current_ed_samples(chan_info *cp);
 void extend_with_zeros(chan_info *cp, off_t beg, off_t num, const char *origin, int edpos);
 void file_insert_samples(off_t beg, off_t num, char *tempfile, chan_info *cp, int chan, int auto_delete, const char *origin, int edpos);
@@ -1343,7 +1345,6 @@ off_t end_to_sample(XEN end, chan_info *cp, int edpos, const char *caller);
 
 /* -------- snd-run.c -------- */
 
-#if WITH_RUN
 void *form_to_ptree_1f2b(XEN code);
 void *form_to_ptree_1f2b_without_env(XEN code);
 void *form_to_ptree_1f2f(XEN code);
@@ -1352,7 +1353,6 @@ void *form_to_ptree_0f2f(XEN code);
 Float evaluate_ptree_1f2f(void *upt, Float arg);
 int evaluate_ptree_1f2b(void *upt, Float arg);
 void *free_ptree(void *upt);
-#endif
 void g_init_run(void);
 
 

@@ -22,11 +22,7 @@ static int run_global_search (snd_state *ss, gfd *g)
   Float samp;
   XEN res;
   snd_fd *sf;
-#if WITH_RUN
   if ((XEN_PROCEDURE_P(ss->search_proc)) || (ss->search_tree))
-#else
-  if (XEN_PROCEDURE_P(ss->search_proc))
-#endif
     {
       for (i = 0; i < g->chans; i++)
 	{
@@ -35,7 +31,6 @@ static int run_global_search (snd_state *ss, gfd *g)
 	      if (!((g->cps[i])->sound)) return(-1);
 	      sf = g->fds[i]; 
 	      samp = read_sample_to_float(sf);
-#if WITH_RUN
 	      if (ss->search_tree)
 		{
 		  if (evaluate_ptree_1f2b(ss->search_tree, samp))
@@ -46,29 +41,27 @@ static int run_global_search (snd_state *ss, gfd *g)
 		}
 	      else
 		{
-#endif
-	      res = XEN_CALL_1(ss->search_proc,
-			       C_TO_XEN_DOUBLE((double)(samp)), 
-			       "global search func");
-	      if (XEN_TRUE_P(res))
-		{
-		  g->n = i;
-		  return(1);
-		}
-	      else
-		{
-		  if (XEN_INTEGER_P(res))
+
+		  res = XEN_CALL_1(ss->search_proc,
+				   C_TO_XEN_DOUBLE((double)(samp)), 
+				   "global search func");
+		  if (XEN_TRUE_P(res))
 		    {
-		      g->n = i; /* channel number */
-		      if (g->direction == READ_FORWARD)
-			g->inc += XEN_TO_C_INT(res);
-		      else g->inc -= XEN_TO_C_INT(res);
+		      g->n = i;
 		      return(1);
 		    }
+		  else
+		    {
+		      if (XEN_INTEGER_P(res))
+			{
+			  g->n = i; /* channel number */
+			  if (g->direction == READ_FORWARD)
+			    g->inc += XEN_TO_C_INT(res);
+			  else g->inc -= XEN_TO_C_INT(res);
+			  return(1);
+			}
+		    }
 		}
-#if WITH_RUN
-		}
-#endif
 	      if (read_sample_eof(sf))
 		{
 		  free_snd_fd(sf);
@@ -127,24 +120,20 @@ char *global_search(snd_state *ss, int direction)
    * (This causes one redundant evaluation the first time around)
    *    perhaps its should save the form, and evaluate that?
    */
-#if WITH_RUN
   if (ss->search_tree == NULL)
     {
-#endif
-  if (ss->search_expr)
-    {
-      /* search_expr can be null if user set search_proc directly */
-      if (XEN_PROCEDURE_P(ss->search_proc))
+      if (ss->search_expr)
 	{
-	  snd_unprotect(ss->search_proc);
-	  ss->search_proc = XEN_UNDEFINED;
+	  /* search_expr can be null if user set search_proc directly */
+	  if (XEN_PROCEDURE_P(ss->search_proc))
+	    {
+	      snd_unprotect(ss->search_proc);
+	      ss->search_proc = XEN_UNDEFINED;
+	    }
+	  ss->search_proc = snd_catch_any(eval_str_wrapper, ss->search_expr, ss->search_expr);
+	  snd_protect(ss->search_proc);
 	}
-      ss->search_proc = snd_catch_any(eval_str_wrapper, ss->search_expr, ss->search_expr);
-      snd_protect(ss->search_proc);
     }
-#if WITH_RUN
-    }
-#endif
   search_in_progress = 1;
   chans = active_channels(ss, WITH_VIRTUAL_CHANNELS);
   search_message[0] = '\0';
@@ -224,7 +213,6 @@ static off_t cursor_find_forward(snd_info *sp, chan_info *cp, int count)
       return(-1);
     }
   end = current_ed_samples(cp);
-#if WITH_RUN
   if (sp->search_tree)
     {
       for (i = start; i < end; i++)
@@ -236,29 +224,26 @@ static off_t cursor_find_forward(snd_info *sp, chan_info *cp, int count)
     }
   else
     {
-#endif
-  for (i = start, passes = 0; i < end; i++, passes++)
-    {
-      res = XEN_CALL_1(sp->search_proc, 
-		       C_TO_XEN_DOUBLE((double)(read_sample_to_float(sf))), 
-		       "local search func");
-      if (XEN_NOT_FALSE_P(res)) 
+      for (i = start, passes = 0; i < end; i++, passes++)
 	{
-	  count--; 
-	  if (count == 0) break;
+	  res = XEN_CALL_1(sp->search_proc, 
+			   C_TO_XEN_DOUBLE((double)(read_sample_to_float(sf))), 
+			   "local search func");
+	  if (XEN_NOT_FALSE_P(res)) 
+	    {
+	      count--; 
+	      if (count == 0) break;
+	    }
+	  if (passes >= 100)
+	    {
+	      check_for_event(ss);
+	      /* if user types C-s during an active search, we risk stomping on our current pointers */
+	      if (!(sp->active)) break;
+	      passes = 0;
+	    }
+	  if (ss->stopped_explicitly) break;
 	}
-      if (passes >= 100)
-	{
-	  check_for_event(ss);
-	  /* if user types C-s during an active search, we risk stomping on our current pointers */
-	  if (!(sp->active)) break;
-	  passes = 0;
-	}
-      if (ss->stopped_explicitly) break;
     }
-#if WITH_RUN
-    }
-#endif
   ss->stopped_explicitly = 0;
   free_snd_fd(sf);
   search_in_progress = 0;
@@ -291,7 +276,6 @@ static off_t cursor_find_backward(snd_info *sp, chan_info *cp, int count)
       search_in_progress = 0;
       return(-1);
     }
-#if WITH_RUN
   if (sp->search_tree)
     {
       for (i = start; i >= 0; i--)
@@ -303,30 +287,27 @@ static off_t cursor_find_backward(snd_info *sp, chan_info *cp, int count)
     }
   else
     {
-#endif
-  for (i = start, passes = 0; i >= 0; i--, passes++)
-    {
-      /* sp search proc as ptree */
-      res = XEN_CALL_1(sp->search_proc, 
-		       C_TO_XEN_DOUBLE((double)(read_sample_to_float(sf))), 
-		       "local search func");
-      if (XEN_NOT_FALSE_P(res)) 
+      for (i = start, passes = 0; i >= 0; i--, passes++)
 	{
-	  count--; 
-	  if (count == 0) break;
+	  /* sp search proc as ptree */
+	  res = XEN_CALL_1(sp->search_proc, 
+			   C_TO_XEN_DOUBLE((double)(read_sample_to_float(sf))), 
+			   "local search func");
+	  if (XEN_NOT_FALSE_P(res)) 
+	    {
+	      count--; 
+	      if (count == 0) break;
+	    }
+	  if (passes >= 100)
+	    {
+	      check_for_event(ss);
+	      /* if user types C-s during an active search, we risk stomping on our current pointers */
+	      if (!(sp->active)) break;
+	      passes = 0;
+	    }
+	  if (ss->stopped_explicitly) break;
 	}
-      if (passes >= 100)
-	{
-	  check_for_event(ss);
-	  /* if user types C-s during an active search, we risk stomping on our current pointers */
-	  if (!(sp->active)) break;
-	  passes = 0;
-	}
-      if (ss->stopped_explicitly) break;
     }
-#if WITH_RUN
-    }
-#endif  
   ss->stopped_explicitly = 0;
   free_snd_fd(sf);
   search_in_progress = 0;
@@ -360,11 +341,7 @@ void cursor_search(chan_info *cp, int count)
     {
       if (sp->searching)
 	{
-#if WITH_RUN
 	  if ((!(XEN_PROCEDURE_P(sp->search_proc))) && (sp->search_tree == NULL)) return; /* no search expr */
-#else
-	  if (!(XEN_PROCEDURE_P(sp->search_proc)))
-#endif
 	  if (sp->search_expr)
 	    {
 	      /* see note above about closures */
@@ -373,7 +350,6 @@ void cursor_search(chan_info *cp, int count)
 		  snd_unprotect(sp->search_proc);
 		  sp->search_proc = XEN_UNDEFINED;
 		}
-#if WITH_RUN
 	      ss = sp->state;
 	      if (sp->search_tree)
 		sp->search_tree = free_ptree(sp->search_tree);
@@ -381,12 +357,9 @@ void cursor_search(chan_info *cp, int count)
 		sp->search_tree = form_to_ptree_1f2b_without_env(C_STRING_TO_XEN_FORM(sp->search_expr));
 	      if (sp->search_tree == NULL)
 		{
-#endif
-	      sp->search_proc = snd_catch_any(eval_str_wrapper, sp->search_expr, sp->search_expr);
-	      snd_protect(sp->search_proc);
-#if WITH_RUN
+		  sp->search_proc = snd_catch_any(eval_str_wrapper, sp->search_expr, sp->search_expr);
+		  snd_protect(sp->search_proc);
 		}
-#endif
 	    }
 
 	  if (count > 0)

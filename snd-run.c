@@ -7195,6 +7195,15 @@ static XEN g_run_eval(XEN code, XEN arg)
 	    code);
   return(XEN_FALSE);
 }
+#else
+void *form_to_ptree_1f2b(XEN code) {return(NULL);}
+void *form_to_ptree_1f2b_without_env(XEN code) {return(NULL);}
+void *form_to_ptree_1f2f(XEN code) {return(NULL);}
+Float evaluate_ptree_0f2f(void *upt) {return(0.0);}
+void *form_to_ptree_0f2f(XEN code) {return(NULL);}
+Float evaluate_ptree_1f2f(void *upt, Float arg) {return(0.0);}
+int evaluate_ptree_1f2b(void *upt, Float arg) {return(0);}
+void *free_ptree(void *upt) {return(NULL);}
 #endif
 /* end with_run && have_guile and so on */
 

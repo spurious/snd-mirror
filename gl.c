@@ -9,6 +9,7 @@
  * TODO: glGet* returning more than one value
  *
  * HISTORY:
+ *     18-June:   GL 1.1 stubs.
  *     4-June:    GtkGLext support.
  *     20-May-02: initial version.
  */
@@ -26,6 +27,266 @@
   #include <GL/glx.h>
 #endif
 #include <string.h>
+
+/* kludges for GL 1.1 */
+#ifndef GL_VERSION_1_2
+#define GL_TEXTURE_BINDING_3D 0
+#define GL_TEXTURE0_ARB 0
+#define GL_TEXTURE1_ARB 0
+#define GL_TEXTURE2_ARB 0
+#define GL_TEXTURE3_ARB 0
+#define GL_TEXTURE4_ARB 0
+#define GL_TEXTURE5_ARB 0
+#define GL_TEXTURE6_ARB 0
+#define GL_TEXTURE7_ARB 0
+#define GL_TEXTURE8_ARB 0
+#define GL_TEXTURE9_ARB 0
+#define GL_TEXTURE10_ARB 0
+#define GL_TEXTURE11_ARB 0
+#define GL_TEXTURE12_ARB 0
+#define GL_TEXTURE13_ARB 0
+#define GL_TEXTURE14_ARB 0
+#define GL_TEXTURE15_ARB 0
+#define GL_TEXTURE16_ARB 0
+#define GL_TEXTURE17_ARB 0
+#define GL_TEXTURE18_ARB 0
+#define GL_TEXTURE19_ARB 0
+#define GL_TEXTURE20_ARB 0
+#define GL_TEXTURE21_ARB 0
+#define GL_TEXTURE22_ARB 0
+#define GL_TEXTURE23_ARB 0
+#define GL_TEXTURE24_ARB 0
+#define GL_TEXTURE25_ARB 0
+#define GL_TEXTURE26_ARB 0
+#define GL_TEXTURE27_ARB 0
+#define GL_TEXTURE28_ARB 0
+#define GL_TEXTURE29_ARB 0
+#define GL_TEXTURE30_ARB 0
+#define GL_TEXTURE31_ARB 0
+#define GL_ACTIVE_TEXTURE_ARB 0
+#define GL_CLIENT_ACTIVE_TEXTURE_ARB 0
+#define GL_MAX_TEXTURE_UNITS_ARB 0
+#define GL_COLOR_TABLE_FORMAT_EXT 0
+#define GL_COLOR_TABLE_WIDTH_EXT 0
+#define GL_COLOR_TABLE_RED_SIZE_EXT 0
+#define GL_COLOR_TABLE_GREEN_SIZE_EXT 0
+#define GL_COLOR_TABLE_BLUE_SIZE_EXT 0
+#define GL_COLOR_TABLE_ALPHA_SIZE_EXT 0
+#define GL_COLOR_TABLE_LUMINANCE_SIZE_EXT 0
+#define GL_COLOR_TABLE_INTENSITY_SIZE_EXT 0
+#define GL_TEXTURE_INDEX_SIZE_EXT 0
+#define GL_COLOR_INDEX1_EXT 0
+#define GL_COLOR_INDEX2_EXT 0
+#define GL_COLOR_INDEX4_EXT 0
+#define GL_COLOR_INDEX8_EXT 0
+#define GL_COLOR_INDEX12_EXT 0
+#define GL_COLOR_INDEX16_EXT 0
+#define GL_CLIP_VOLUME_CLIPPING_HINT_EXT 0
+#define GL_INCR_WRAP_EXT 0
+#define GL_DECR_WRAP_EXT 0
+#define GL_NORMAL_MAP_NV 0
+#define GL_REFLECTION_MAP_NV 0
+#define GL_CONSTANT_COLOR 0
+#define GL_ONE_MINUS_CONSTANT_COLOR 0
+#define GL_CONSTANT_ALPHA 0
+#define GL_ONE_MINUS_CONSTANT_ALPHA 0
+#define GL_PACK_SKIP_IMAGES 0
+#define GL_PACK_IMAGE_HEIGHT 0
+#define GL_UNPACK_SKIP_IMAGES 0
+#define GL_UNPACK_IMAGE_HEIGHT 0
+#define GL_TEXTURE_3D 0
+#define GL_PROXY_TEXTURE_3D 0
+#define GL_TEXTURE_DEPTH 0
+#define GL_TEXTURE_WRAP_R 0
+#define GL_MAX_3D_TEXTURE_SIZE 0
+#define GL_RESCALE_NORMAL 0
+#define GL_CLAMP_TO_EDGE 0
+#define GL_MAX_ELEMENTS_VERTICES 0
+#define GL_MAX_ELEMENTS_INDICES 0
+#define GL_BGR 0
+#define GL_BGRA 0
+#define GL_UNSIGNED_BYTE_3_3_2 0
+#define GL_UNSIGNED_BYTE_2_3_3_REV 0
+#define GL_UNSIGNED_SHORT_5_6_5 0
+#define GL_UNSIGNED_SHORT_5_6_5_REV 0
+#define GL_UNSIGNED_SHORT_4_4_4_4 0
+#define GL_UNSIGNED_SHORT_4_4_4_4_REV 0
+#define GL_UNSIGNED_SHORT_5_5_5_1 0
+#define GL_UNSIGNED_SHORT_1_5_5_5_REV 0
+#define GL_UNSIGNED_INT_8_8_8_8 0
+#define GL_UNSIGNED_INT_8_8_8_8_REV 0
+#define GL_UNSIGNED_INT_10_10_10_2 0
+#define GL_UNSIGNED_INT_2_10_10_10_REV 0
+#define GL_LIGHT_MODEL_COLOR_CONTROL 0
+#define GL_SINGLE_COLOR 0
+#define GL_SEPARATE_SPECULAR_COLOR 0
+#define GL_TEXTURE_MIN_LOD 0
+#define GL_TEXTURE_MAX_LOD 0
+#define GL_TEXTURE_BASE_LEVEL 0
+#define GL_TEXTURE_MAX_LEVEL 0
+#define GL_COLOR_TABLE 0
+#define GL_POST_CONVOLUTION_COLOR_TABLE 0
+#define GL_POST_COLOR_MATRIX_COLOR_TABLE 0
+#define GL_PROXY_COLOR_TABLE 0
+#define GL_PROXY_POST_CONVOLUTION_COLOR_TABLE 0
+#define GL_PROXY_POST_COLOR_MATRIX_COLOR_TABLE 0
+#define GL_COLOR_TABLE_SCALE 0
+#define GL_COLOR_TABLE_BIAS 0
+#define GL_COLOR_TABLE_FORMAT 0
+#define GL_COLOR_TABLE_WIDTH 0
+#define GL_COLOR_TABLE_RED_SIZE 0
+#define GL_COLOR_TABLE_GREEN_SIZE 0
+#define GL_COLOR_TABLE_BLUE_SIZE 0
+#define GL_COLOR_TABLE_ALPHA_SIZE 0
+#define GL_COLOR_TABLE_LUMINANCE_SIZE 0
+#define GL_COLOR_TABLE_INTENSITY_SIZE 0
+#define GL_CONVOLUTION_1D 0
+#define GL_CONVOLUTION_2D 0
+#define GL_SEPARABLE_2D 0
+#define GL_CONVOLUTION_BORDER_MODE 0
+#define GL_CONVOLUTION_FILTER_SCALE 0
+#define GL_CONVOLUTION_FILTER_BIAS 0
+#define GL_REDUCE 0
+#define GL_CONVOLUTION_FORMAT 0
+#define GL_CONVOLUTION_WIDTH 0
+#define GL_CONVOLUTION_HEIGHT 0
+#define GL_MAX_CONVOLUTION_WIDTH 0
+#define GL_MAX_CONVOLUTION_HEIGHT 0
+#define GL_POST_CONVOLUTION_RED_SCALE 0
+#define GL_POST_CONVOLUTION_GREEN_SCALE 0
+#define GL_POST_CONVOLUTION_BLUE_SCALE 0
+#define GL_POST_CONVOLUTION_ALPHA_SCALE 0
+#define GL_POST_CONVOLUTION_RED_BIAS 0
+#define GL_POST_CONVOLUTION_GREEN_BIAS 0
+#define GL_POST_CONVOLUTION_BLUE_BIAS 0
+#define GL_POST_CONVOLUTION_ALPHA_BIAS 0
+#define GL_CONSTANT_BORDER 0
+#define GL_REPLICATE_BORDER 0
+#define GL_CONVOLUTION_BORDER_COLOR 0
+#define GL_COLOR_MATRIX 0
+#define GL_COLOR_MATRIX_STACK_DEPTH 0
+#define GL_MAX_COLOR_MATRIX_STACK_DEPTH 0
+#define GL_POST_COLOR_MATRIX_RED_SCALE 0
+#define GL_POST_COLOR_MATRIX_GREEN_SCALE 0
+#define GL_POST_COLOR_MATRIX_BLUE_SCALE 0
+#define GL_POST_COLOR_MATRIX_ALPHA_SCALE 0
+#define GL_POST_COLOR_MATRIX_RED_BIAS 0
+#define GL_POST_COLOR_MATRIX_GREEN_BIAS 0
+#define GL_POST_COLOR_MATRIX_BLUE_BIAS 0
+#define GL_POST_COLOR_MATRIX_ALPHA_BIAS 0
+#define GL_HISTOGRAM 0
+#define GL_PROXY_HISTOGRAM 0
+#define GL_HISTOGRAM_WIDTH 0
+#define GL_HISTOGRAM_FORMAT 0
+#define GL_HISTOGRAM_RED_SIZE 0
+#define GL_HISTOGRAM_GREEN_SIZE 0
+#define GL_HISTOGRAM_BLUE_SIZE 0
+#define GL_HISTOGRAM_ALPHA_SIZE 0
+#define GL_HISTOGRAM_LUMINANCE_SIZE 0
+#define GL_HISTOGRAM_SINK 0
+#define GL_MINMAX 0
+#define GL_MINMAX_FORMAT 0
+#define GL_MINMAX_SINK 0
+#define GL_TABLE_TOO_LARGE 0
+#define GL_BLEND_EQUATION 0
+#define GL_MIN 0
+#define GL_MAX 0
+#define GL_FUNC_ADD 0
+#define GL_FUNC_SUBTRACT 0
+#define GL_FUNC_REVERSE_SUBTRACT 0
+#define GL_BLEND_COLOR 0
+#define GL_POINT_SIZE_MIN_EXT 0
+#define GL_POINT_SIZE_MAX_EXT 0
+#define GL_POINT_FADE_THRESHOLD_SIZE_EXT 0
+#define GL_DISTANCE_ATTENUATION_EXT 0
+#define GL_SHARED_TEXTURE_PALETTE_EXT 0
+static void glDrawRangeElements( GLenum mode, GLuint start,GLuint end, GLsizei count, GLenum type, const GLvoid *indices ) {}
+static void glTexImage3D( GLenum target, GLint level, GLint internalFormat, GLsizei width, GLsizei height,
+                                      GLsizei depth, GLint border, GLenum format, GLenum type, const GLvoid *pixels ) {}
+static void glTexSubImage3D( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth,
+                                         GLenum format, GLenum type, const GLvoid *pixels) {}
+static void glCopyTexSubImage3D( GLenum target, GLint level, GLint xoffset, GLint yoffset,
+                                             GLint zoffset, GLint x, GLint y, GLsizei width, GLsizei height ) {}
+static void glColorTable( GLenum target, GLenum internalformat, GLsizei width, GLenum format, GLenum type, const GLvoid *table ) {}
+static void glColorSubTable( GLenum target, GLsizei start, GLsizei count, GLenum format, GLenum type, const GLvoid *data ) {}
+static void glColorTableParameteriv(GLenum target, GLenum pname, const GLint *params) {}
+static void glColorTableParameterfv(GLenum target, GLenum pname, const GLfloat *params) {}
+static void glCopyColorSubTable( GLenum target, GLsizei start, GLint x, GLint y, GLsizei width ) {}
+static void glCopyColorTable( GLenum target, GLenum internalformat, GLint x, GLint y, GLsizei width ) {}
+static void glGetColorTable( GLenum target, GLenum format, GLenum type, GLvoid *table ) {}
+static void glGetColorTableParameterfv( GLenum target, GLenum pname, GLfloat *params ) {}
+static void glGetColorTableParameteriv( GLenum target, GLenum pname, GLint *params ) {}
+static void glBlendEquation( GLenum mode ) {}
+static void glBlendColor( GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha ) {}
+static void glHistogram( GLenum target, GLsizei width, GLenum internalformat, GLboolean sink ) {}
+static void glResetHistogram( GLenum target ) {}
+static void glGetHistogram( GLenum target, GLboolean reset, GLenum format, GLenum type, GLvoid *values ) {}
+static void glGetHistogramParameterfv( GLenum target, GLenum pname, GLfloat *params ) {}
+static void glGetHistogramParameteriv( GLenum target, GLenum pname, GLint *params ) {}
+static void glMinmax( GLenum target, GLenum internalformat, GLboolean sink ) {}
+static void glResetMinmax( GLenum target ) {}
+static void glGetMinmax( GLenum target, GLboolean reset, GLenum format, GLenum types, GLvoid *values ) {}
+static void glGetMinmaxParameterfv( GLenum target, GLenum pname, GLfloat *params ) {}
+static void glGetMinmaxParameteriv( GLenum target, GLenum pname, GLint *params ) {}
+static void glConvolutionFilter1D( GLenum target, GLenum internalformat, GLsizei width, GLenum format, GLenum type, const GLvoid *image ) {}
+static void glConvolutionFilter2D( GLenum target, GLenum internalformat, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *image ) {}
+static void glConvolutionParameterf( GLenum target, GLenum pname, GLfloat params ) {}
+static void glConvolutionParameterfv( GLenum target, GLenum pname, const GLfloat *params ) {}
+static void glConvolutionParameteri( GLenum target, GLenum pname, GLint params ) {}
+static void glConvolutionParameteriv( GLenum target, GLenum pname, const GLint *params ) {}
+static void glCopyConvolutionFilter1D( GLenum target,GLenum internalformat, GLint x, GLint y, GLsizei width ) {}
+static void glCopyConvolutionFilter2D( GLenum target,GLenum internalformat, GLint x, GLint y, GLsizei width,GLsizei height) {}
+static void glGetConvolutionFilter( GLenum target, GLenum format,GLenum type, GLvoid *image ) {}
+static void glGetConvolutionParameterfv( GLenum target, GLenum pname,GLfloat *params ) {}
+static void glGetConvolutionParameteriv( GLenum target, GLenum pname,GLint *params ) {}
+static void glSeparableFilter2D( GLenum target,GLenum internalformat, GLsizei width, GLsizei height, GLenum format,
+				 GLenum type, const GLvoid *row, const GLvoid *column ) {}
+static void glGetSeparableFilter( GLenum target, GLenum format,GLenum type, GLvoid *row, GLvoid *column, GLvoid *span ) {}
+static void glActiveTextureARB(GLenum texture) {}
+static void glClientActiveTextureARB(GLenum texture) {}
+static void glMultiTexCoord1dARB(GLenum target, GLdouble s) {}
+static void glMultiTexCoord1dvARB(GLenum target, const GLdouble *v) {}
+static void glMultiTexCoord1fARB(GLenum target, GLfloat s) {}
+static void glMultiTexCoord1fvARB(GLenum target, const GLfloat *v) {}
+static void glMultiTexCoord1iARB(GLenum target, GLint s) {}
+static void glMultiTexCoord1ivARB(GLenum target, const GLint *v) {}
+static void glMultiTexCoord1sARB(GLenum target, GLshort s) {}
+static void glMultiTexCoord1svARB(GLenum target, const GLshort *v) {}
+static void glMultiTexCoord2dARB(GLenum target, GLdouble s, GLdouble t) {}
+static void glMultiTexCoord2dvARB(GLenum target, const GLdouble *v) {}
+static void glMultiTexCoord2fARB(GLenum target, GLfloat s, GLfloat t) {}
+static void glMultiTexCoord2fvARB(GLenum target, const GLfloat *v) {}
+static void glMultiTexCoord2iARB(GLenum target, GLint s, GLint t) {}
+static void glMultiTexCoord2ivARB(GLenum target, const GLint *v) {}
+static void glMultiTexCoord2sARB(GLenum target, GLshort s, GLshort t) {}
+static void glMultiTexCoord2svARB(GLenum target, const GLshort *v) {}
+static void glMultiTexCoord3dARB(GLenum target, GLdouble s, GLdouble t, GLdouble r) {}
+static void glMultiTexCoord3dvARB(GLenum target, const GLdouble *v) {}
+static void glMultiTexCoord3fARB(GLenum target, GLfloat s, GLfloat t, GLfloat r) {}
+static void glMultiTexCoord3fvARB(GLenum target, const GLfloat *v) {}
+static void glMultiTexCoord3iARB(GLenum target, GLint s, GLint t, GLint r) {}
+static void glMultiTexCoord3ivARB(GLenum target, const GLint *v) {}
+static void glMultiTexCoord3sARB(GLenum target, GLshort s, GLshort t, GLshort r) {}
+static void glMultiTexCoord3svARB(GLenum target, const GLshort *v) {}
+static void glMultiTexCoord4dARB(GLenum target, GLdouble s, GLdouble t, GLdouble r, GLdouble q) {}
+static void glMultiTexCoord4dvARB(GLenum target, const GLdouble *v) {}
+static void glMultiTexCoord4fARB(GLenum target, GLfloat s, GLfloat t, GLfloat r, GLfloat q) {}
+static void glMultiTexCoord4fvARB(GLenum target, const GLfloat *v) {}
+static void glMultiTexCoord4iARB(GLenum target, GLint s, GLint t, GLint r, GLint q) {}
+static void glMultiTexCoord4ivARB(GLenum target, const GLint *v) {}
+static void glMultiTexCoord4sARB(GLenum target, GLshort s, GLshort t, GLshort r, GLshort q) {}
+static void glMultiTexCoord4svARB(GLenum target, const GLshort *v) {}
+static void glLockArraysEXT( GLint first, GLsizei count ) {}
+static void glUnlockArraysEXT( void ) {}
+static void glPointParameterfEXT( GLenum pname, GLfloat param ) {}
+static void glPointParameterfvEXT( GLenum pname, const GLfloat *params ) {}
+static void glColorTableEXT( GLenum target, GLenum internalformat, GLsizei width, GLenum format, GLenum type, const GLvoid *table ) {}
+static void glColorSubTableEXT( GLenum target, GLsizei start, GLsizei count, GLenum format, GLenum type, const GLvoid *data ) {}
+static void glGetColorTableEXT( GLenum target, GLenum format, GLenum type, GLvoid *table ) {}
+static void glGetColorTableParameterfvEXT( GLenum target, GLenum pname, GLfloat *params ) {}
+static void glGetColorTableParameterivEXT( GLenum target, GLenum pname, GLint *params ) {}
+#endif
+/* end of 1.1 kludgery */
 
 #if USE_SND
   /* USE_SND causes xm to use Snd's error handlers which are much smarter than xen's fallback versions */
@@ -5395,7 +5656,7 @@ static int gl_already_inited = 0;
       define_functions();
       XEN_YES_WE_HAVE("gl");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define gl-version \"03-Jun-02\")");
+      XEN_EVAL_C_STRING("(define gl-version \"18-Jun-02\")");
 #endif
       gl_already_inited = 1;
     }
