@@ -3307,6 +3307,7 @@ Float *mus_partials2waveshape(int npartials, Float *partials, int size, Float *t
   int i, hnum;
   Float sum = 0.0, maxI2, temp, x, Tn, Tn1;
   Float *data;
+  if (partials == NULL) return(NULL);
   for (i = 0; i < npartials; i++) sum += partials[i];
   if (sum != 0.0) for (i = 0; i < npartials; i++) partials[i] /= sum;
   for (i = 2; i < npartials; i += 4)
@@ -3317,6 +3318,7 @@ Float *mus_partials2waveshape(int npartials, Float *partials, int size, Float *t
   if (table == NULL)
     data = (Float *)clm_calloc(size, sizeof(Float), "waveshape table");
   else data = table;
+  if (data == NULL) return(NULL);
   maxI2 = 2.0 / (Float)size;
   for (i = 0, x = -1.0; i < size; i++, x += maxI2)
     {

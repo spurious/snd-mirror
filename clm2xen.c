@@ -29,6 +29,11 @@
   #define PRINT_BUFFER_SIZE 512
   #define LABEL_BUFFER_SIZE 64
 #endif
+#if DEBUGGING
+#define MAX_TABLE_SIZE (1024 * 256)
+#else
+#define MAX_TABLE_SIZE (1024 * 1024 * 20) /* delay line allocation etc */
+#endif
 
 #include <stddef.h>
 #include <math.h>
@@ -617,6 +622,8 @@ static XEN *make_vcts(int size)
   return(vcts);
 }
 
+enum {INPUT_FUNCTION, ANALYZE_FUNCTION, EDIT_FUNCTION, SYNTHESIZE_FUNCTION, SELF_WRAPPER};
+
 static XEN_MARK_OBJECT_TYPE mark_mus_xen(XEN obj) 
 {
   int i;
@@ -630,7 +637,7 @@ static XEN_MARK_OBJECT_TYPE mark_mus_xen(XEN obj)
   if (ms->vcts) 
     {
       for (i = 0; i < ms->nvcts; i++) 
-	if (XEN_BOUND_P(ms->vcts[i]))
+	if ((i != SELF_WRAPPER) && (XEN_BOUND_P(ms->vcts[i])))
 	  xen_gc_mark(ms->vcts[i]);
     }
 #if HAVE_RUBY
@@ -640,12 +647,9 @@ static XEN_MARK_OBJECT_TYPE mark_mus_xen(XEN obj)
 #endif
 }
 
-#define DONT_FREE_FRAME -1
-#define FREE_FRAME 1
-
 static void mus_xen_free(mus_xen *ms)
 {
-  if (ms->nvcts != DONT_FREE_FRAME) mus_free(ms->gen);
+  if (!(ms->dont_free_gen)) mus_free(ms->gen);
   ms->gen = NULL;
   if (ms->vcts) FREE(ms->vcts); 
   ms->vcts = NULL;
@@ -928,6 +932,11 @@ static XEN g_mus_bank(XEN gens, XEN amps, XEN inp, XEN inp2)
   if (scls == NULL)
     XEN_ASSERT_TYPE(0, amps, XEN_ARG_2, S_mus_bank, "a vct, vector, number, or procedure(!)");
   gs = (mus_any **)CALLOC(size, sizeof(mus_any *));
+  if (gs == NULL)
+    {
+      if (scls) FREE(scls);
+      mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate mus-bank gens array");
+    }
   data = XEN_VECTOR_ELEMENTS(gens);
   for (i = 0; i < size; i++) 
     if (MUS_XEN_P(data[i]))
@@ -1077,6 +1086,10 @@ static XEN g_make_delay_1(int choice, XEN arglist)
 	  break;
 	}
       size = ikeyarg(keys[keyn], caller, orig_arg[keyn] + 1, size);
+      if (size < 0)
+	mus_misc_error(caller, "size < 0?", keys[size_key]);
+      if (size > MAX_TABLE_SIZE)
+	mus_misc_error(caller, "size too large", keys[size_key]);
       size_key = keyn;
       keyn++;
       if (!(XEN_KEYWORD_P(keys[keyn])))
@@ -1091,8 +1104,10 @@ static XEN g_make_delay_1(int choice, XEN arglist)
 		  if (len == 0) 
 		    mus_misc_error(caller, "initial-contents empty?", initial_contents);
 		  line = (Float *)CALLOC(len, sizeof(Float));
-		  for (i = 0, lst = XEN_COPY_ARG(initial_contents); (i < len) && (XEN_NOT_NULL_P(lst)); i++, lst = XEN_CDR(lst)) 
-		    line[i] = XEN_TO_C_DOUBLE(XEN_CAR(lst));
+		  if (line == NULL)
+		    mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate delay line");
+		  for (i = 0, lst = XEN_COPY_ARG(initial_contents); (i < len) && (XEN_NOT_NULL_P(lst)); i++, lst = XEN_CDR(lst))
+		    line[i] = XEN_TO_C_DOUBLE_OR_ELSE(XEN_CAR(lst), 0.0);
 		}
 	    }
 	}
@@ -1116,18 +1131,17 @@ static XEN g_make_delay_1(int choice, XEN arglist)
       else
 	{
 	  if (XEN_NUMBER_P(keys[keyn]))
-	    max_size = XEN_TO_C_INT_OR_ELSE_WITH_CALLER(keys[keyn], 0, caller);
+	    {
+	      max_size = XEN_TO_C_INT_OR_ELSE_WITH_CALLER(keys[keyn], 0, caller);
+	      if (max_size > MAX_TABLE_SIZE)
+		mus_misc_error(caller, "max-size too large", keys[keyn]);
+	    }
 	  else
 	    {
 	      if (line) FREE(line);
 	      XEN_ASSERT_TYPE(XEN_NUMBER_P(keys[keyn]), keys[keyn], orig_arg[keyn] + 1, caller, "a number");
 	    }
 	}
-    }
-  if (size < 0)
-    {
-      if (line) FREE(line);
-      mus_misc_error(caller, "size < 0?", keys[size_key]);
     }
   if (max_size == -1) max_size = size;
   if ((max_size <= 0) || (max_size < size))
@@ -1138,6 +1152,8 @@ static XEN g_make_delay_1(int choice, XEN arglist)
   if (line == NULL)
     {
       line = (Float *)CALLOC(max_size, sizeof(Float));
+      if (line == NULL)
+	mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate delay line");
       need_free = TRUE;
       if (initial_element != 0.0) 
 	for (i = 0; i < max_size; i++) 
@@ -1480,13 +1496,17 @@ a new one is created.  If normalize is #t, the resulting waveform goes between -
   if ((XEN_NOT_BOUND_P(utable)) || (!(VCT_P(utable))))
     {
       wave = (Float *)CALLOC(DEFAULT_TABLE_SIZE, sizeof(Float));
+      if (wave == NULL)
+	mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate wave table");
       table = make_vct(DEFAULT_TABLE_SIZE, wave);
     }
   else table = utable;
   f = TO_VCT(table);
   partial_data = (Float *)CALLOC(len, sizeof(Float));
+  if (partial_data == NULL)
+    mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate partials table");
   for (i = 0, lst = XEN_COPY_ARG(partials); i < len; i++, lst = XEN_CDR(lst)) 
-    partial_data[i] = XEN_TO_C_DOUBLE(XEN_CAR(lst));
+    partial_data[i] = XEN_TO_C_DOUBLE_OR_ELSE(XEN_CAR(lst), 0.0);
   mus_partials2wave(partial_data, len / 2, f->data, f->length, (XEN_TRUE_P(normalize)));
   FREE(partial_data);
   return(table);
@@ -1513,13 +1533,17 @@ a new one is created.  If normalize is #t, the resulting waveform goes between -
   if ((XEN_NOT_BOUND_P(utable)) || (!(VCT_P(utable))))
     {
       wave = (Float *)CALLOC(DEFAULT_TABLE_SIZE, sizeof(Float));
+      if (wave == NULL)
+	mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate wave table");
       table = make_vct(DEFAULT_TABLE_SIZE, wave);
     }
   else table = utable;
   f = TO_VCT(table);
   partial_data = (Float *)CALLOC(len, sizeof(Float));
+  if (partial_data == NULL)
+    mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate partials table");
   for (i = 0, lst = XEN_COPY_ARG(partials); i < len; i++, lst = XEN_CDR(lst)) 
-    partial_data[i] = XEN_TO_C_DOUBLE(XEN_CAR(lst));
+    partial_data[i] = XEN_TO_C_DOUBLE_OR_ELSE(XEN_CAR(lst), 0.0);
   mus_phasepartials2wave(partial_data, len / 3, f->data, f->length, (XEN_TRUE_P(normalize)));
   FREE(partial_data);
   return(table);
@@ -1561,6 +1585,8 @@ is the same in effect as " S_make_oscil "."
   if (table == NULL) 
     {
       table = (Float *)CALLOC(table_size, sizeof(Float));
+      if (table == NULL)
+	mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate table-lookup table");
       need_free = TRUE;
     }
   old_error_handler = mus_error_set_handler(local_mus_error); /* currently not needed (no recoverable errors from mus_make_table_lookup) */
@@ -2215,7 +2241,7 @@ static XEN g_wrap_frame(mus_any *val, int dealloc)
   mus_xen *gn;
   gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
   gn->gen = (mus_any *)val;
-  gn->nvcts = dealloc;           /* free_mus_xen checks this before deallocating */
+  gn->dont_free_gen = dealloc;           /* free_mus_xen checks this before deallocating */
   return(mus_xen_to_object(gn));
 }
 
@@ -2233,7 +2259,7 @@ if outf is not given, a new frame is created. outf[i] = f1[i] + f2[i]"
   return(g_wrap_frame(mus_frame_add((mus_any *)XEN_TO_MUS_ANY(uf1),
 				    (mus_any *)XEN_TO_MUS_ANY(uf2),
 				    res),
-		      (res) ? DONT_FREE_FRAME : FREE_FRAME));
+		      (int)res));
 }
 
 static XEN g_frame_multiply(XEN uf1, XEN uf2, XEN ures) /* optional res */
@@ -2250,7 +2276,7 @@ if outf is not given, a new frame is created. outf[i] = f1[i] * f2[i]."
   return(g_wrap_frame(mus_frame_multiply((mus_any *)XEN_TO_MUS_ANY(uf1),
 					 (mus_any *)XEN_TO_MUS_ANY(uf2),
 					 res),
-		      (res) ? DONT_FREE_FRAME : FREE_FRAME));
+		      (int)res));
 }
 
 static XEN g_frame_ref(XEN uf1, XEN uchan)
@@ -2312,7 +2338,7 @@ static XEN g_wrap_mixer(mus_any *val, int dealloc)
   mus_xen *gn;
   gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
   gn->gen = (mus_any *)val;
-  gn->nvcts = dealloc;
+  gn->dont_free_gen = dealloc;
   return(mus_xen_to_object(gn));
 }
 
@@ -2330,7 +2356,7 @@ static XEN g_mixer_multiply(XEN uf1, XEN uf2, XEN ures) /* optional res */
   return(g_wrap_mixer(mus_mixer_multiply((mus_any *)XEN_TO_MUS_ANY(uf1),
 					 (mus_any *)XEN_TO_MUS_ANY(uf2),
 					 res),
-		      (res) ? DONT_FREE_MIXER : FREE_MIXER));
+		      (int)res));
 }
 
 static XEN g_frame2frame(XEN mx, XEN infr, XEN outfr) /* optional outfr */
@@ -2347,7 +2373,7 @@ returning frame outf (or creating a new frame if necessary); this is a matrix mu
   return(g_wrap_frame(mus_frame2frame((mus_any *)XEN_TO_MUS_ANY(mx),
 				      (mus_any *)XEN_TO_MUS_ANY(infr),
 				      res),
-		      (res) ? DONT_FREE_FRAME : FREE_FRAME));
+		      (int)res));
 }
 
 static XEN g_frame2list(XEN fr)
@@ -2388,7 +2414,7 @@ returning frame outf (creating it if necessary)"
   return(g_wrap_frame(mus_sample2frame(XEN_TO_MUS_ANY(mx),
 				       XEN_TO_C_DOUBLE(insp),
 				       res),
-		      (res) ? DONT_FREE_FRAME : FREE_FRAME));
+		      (int)res));
 }
 
 static XEN g_make_mixer(XEN arglist)
@@ -2488,8 +2514,11 @@ processing normally involving overlap-adds."
       siz = ikeyarg(keys[0], S_make_buffer, orig_arg[0] + 1, siz);
       filltime = fkeyarg(keys[1], S_make_buffer, orig_arg[1] + 1, 0.0);
     }
-  if (siz <= 0) return(XEN_FALSE);
+  if ((siz <= 0) || (siz > MAX_TABLE_SIZE))
+    return(XEN_FALSE);
   buf = (Float *)CALLOC(siz, sizeof(Float));
+  if (buf == NULL)
+    mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate buffer");
   old_error_handler = mus_error_set_handler(local_mus_error); /* currently not needed */
   ge = mus_make_buffer(buf, siz, filltime);
   mus_error_set_handler(old_error_handler);
@@ -2599,6 +2628,8 @@ the repetition rate of the wave found in wave. Successive waves can overlap."
   if (wave == NULL) 
     {
       wave = (Float *)CALLOC(wsize, sizeof(Float));
+      if (wave == NULL)
+	mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate wave-train table");
       need_free = TRUE;
     }
   old_error_handler = mus_error_set_handler(local_mus_error); /* currently not needed */
@@ -2652,11 +2683,13 @@ static Float *list2partials(XEN harms, int *npartials)
     }
   if (maxpartial < 0) return(NULL);
   partials = (Float *)CALLOC(maxpartial + 1, sizeof(Float));
+  if (partials == NULL)
+    mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate waveshape partials list");
   (*npartials) = maxpartial + 1;
   for (i = 0, lst = XEN_COPY_ARG(harms); i < listlen; i += 2, lst = XEN_CDDR(lst))
     {
       curpartial = XEN_TO_C_INT_OR_ELSE(XEN_CAR(lst), 0);
-      partials[curpartial] = XEN_TO_C_DOUBLE(XEN_CADR(lst));
+      partials[curpartial] = XEN_TO_C_DOUBLE_OR_ELSE(XEN_CADR(lst), 0.0);
     }
   return(partials);
 }
@@ -2779,8 +2812,8 @@ that will produce the harmonic spectrum given by the partials argument"
   if (XEN_INTEGER_P(s_size))
     size = XEN_TO_C_INT(s_size);
   else size = DEFAULT_TABLE_SIZE;
-  if (size <= 0)
-    mus_misc_error(S_partials2waveshape, "size <= 0?", s_size);
+  if ((size <= 0) || (size > MAX_TABLE_SIZE))
+    mus_misc_error(S_partials2waveshape, "bad size?", s_size);
   if (len == 0)
     mus_misc_error(S_partials2waveshape, "partials list empty?", amps);
   partials = list2partials(amps, &npartials);
@@ -3125,10 +3158,14 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
 	    mus_misc_error(S_make_env, "null env?", keys[0]);
 	  npts = len / 2;
 	  brkpts = (Float *)CALLOC(len, sizeof(Float));
+	  if (brkpts == NULL)
+	    mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate env list");
 	  odata = (Float *)CALLOC(len, sizeof(Float));
+	  if (odata == NULL)
+	    mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate env copy");
 	  for (i = 0, lst = XEN_COPY_ARG(keys[0]); (i < len) && (XEN_NOT_NULL_P(lst)); i++, lst = XEN_CDR(lst))
 	    {
-	      brkpts[i] = XEN_TO_C_DOUBLE(XEN_CAR(lst));
+	      brkpts[i] = XEN_TO_C_DOUBLE_OR_ELSE(XEN_CAR(lst), 0.0);
 	      odata[i] = brkpts[i];
 	    }
         }
@@ -3436,7 +3473,7 @@ static XEN g_file2frame(XEN obj, XEN samp, XEN outfr)
   return(g_wrap_frame(mus_file2frame(XEN_TO_MUS_ANY(obj),
 				     XEN_TO_C_OFF_T_OR_ELSE(samp, 0),
 				     res),
-		      (res) ? DONT_FREE_FRAME : FREE_FRAME));
+		      (int)res));
 }
 
 static XEN g_make_frame2file(XEN name, XEN chans, XEN out_format, XEN out_type)
@@ -3478,7 +3515,7 @@ handled by the output generator 'obj' at frame 'samp'"
   return(g_wrap_frame(mus_frame2file(XEN_TO_MUS_ANY(obj),
 				     XEN_TO_C_OFF_T_OR_ELSE(samp, 0),
 				     (mus_any *)XEN_TO_MUS_ANY(val)),
-		      DONT_FREE_FRAME));
+		      TRUE));
 }
 
 static XEN g_array2file(XEN filename, XEN data, XEN len, XEN srate, XEN channels)
@@ -3721,7 +3758,7 @@ static XEN g_locsig(XEN obj, XEN loc, XEN val)
   return(g_wrap_frame(mus_locsig(XEN_TO_MUS_ANY(obj),
 				 XEN_TO_C_OFF_T_OR_ELSE(loc, 0),
 				 XEN_TO_C_DOUBLE(val)),
-		      DONT_FREE_FRAME));
+		      TRUE));
 }
 
 static int clm_locsig_type = MUS_LINEAR;
@@ -3846,8 +3883,6 @@ static XEN g_move_locsig(XEN obj, XEN degree, XEN distance)
 
 /* ---------------- src ---------------- */
 
-enum {INPUT_FUNCTION, ANALYZE_FUNCTION, EDIT_FUNCTION, SYNTHESIZE_FUNCTION, SELF_WRAPPER};
-
 static Float funcall1 (void *ptr, int direction) /* intended for "as-needed" input funcs */
 {
   /* if this is called, it's a callback from C, where ptr is a mus_xen object whose vcts[0]
@@ -3936,6 +3971,7 @@ width (effectively the steepness of the low-pass filter), normally between 10 an
     }
   if (srate <= 0) mus_misc_error(S_make_src, "srate <= 0.0?", keys[1]);
   if (wid < 0) mus_misc_error(S_make_src, "width < 0?", keys[2]);
+  if (wid > 2000) mus_misc_error(S_make_src, "width > 2000?", keys[2]);
   gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
   /* mus_make_src assumes it can invoke the input function! */
   gn->vcts = make_vcts(1);
@@ -4323,7 +4359,7 @@ is run.  'synthesize' is a function of 1 arg, the generator; it is called to get
   mus_error_set_handler(old_error_handler);
   if (ge)
     {
-      gn->nvcts = 5;
+      gn->nvcts = 5; /* don't mark self twice (not sure this matters) */
       gn->vcts = make_vcts(gn->nvcts);
       gn->vcts[INPUT_FUNCTION] = in_obj;
       gn->vcts[EDIT_FUNCTION] = edit_obj;

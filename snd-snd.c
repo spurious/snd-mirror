@@ -3265,9 +3265,9 @@ static XEN g_write_peak_env_info_file(XEN snd, XEN chn, XEN name)
   XEN errstr;
   int ibuf[5];
   mus_sample_t mbuf[2];
+  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_2, S_write_peak_env_info_file, "a string");
   ASSERT_CHANNEL(S_write_peak_env_info_file, snd, chn, 1);
   cp = get_cp(snd, chn, S_write_peak_env_info_file);
-  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_2, S_write_peak_env_info_file, "a string");
   if ((cp->amp_envs) && (cp->amp_envs[0]))
     {
       fullname = mus_expand_filename(XEN_TO_C_STRING(name));

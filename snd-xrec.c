@@ -3239,8 +3239,11 @@ void reflect_recorder_mixer_gain(int ind, Float val)
   if ((recorder) && (ind < rp->num_mixer_gains))
     {
       wd = gain_sliders[ind];
-      XtVaSetValues(wd->wg, XmNvalue, mus_iclamp(0, (int)(val * 100), 100), NULL);
-      set_mixer_gain(wd->system, wd->device, wd->chan, wd->gain, wd->field, val);
+      if (wd)
+	{
+	  XtVaSetValues(wd->wg, XmNvalue, mus_iclamp(0, (int)(val * 100), 100), NULL);
+	  set_mixer_gain(wd->system, wd->device, wd->chan, wd->gain, wd->field, val);
+	}
     }
 }
 

@@ -1274,7 +1274,7 @@ env *get_env(XEN e, char *origin) /* list in e */
     mus_misc_error(origin, "null env", e);
   buf = (Float *)CALLOC(len, sizeof(Float));
   for (i = 0, lst = XEN_COPY_ARG(e); i < len; i++, lst = XEN_CDR(lst)) 
-    buf[i] = XEN_TO_C_DOUBLE(XEN_CAR(lst));
+    buf[i] = XEN_TO_C_DOUBLE_OR_ELSE(XEN_CAR(lst), 0.0);
   newenv = make_envelope(buf, len);
   if (buf) FREE(buf);
   return(newenv);

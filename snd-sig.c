@@ -3703,10 +3703,15 @@ static XEN g_fft_1(XEN reals, XEN imag, XEN sign, int use_fft)
   int ipow, n, n2, i, isign = 1, need_free = FALSE;
   Float *rl, *im;
   XEN *rvdata; XEN *ivdata;
-  XEN_ASSERT_TYPE(((VCT_P(reals)) || (XEN_VECTOR_P(reals))), reals, XEN_ARG_1, ((use_fft) ? S_fft : S_vct_convolve), "a vct");
-  XEN_ASSERT_TYPE(((VCT_P(imag)) || (XEN_VECTOR_P(imag))), imag, XEN_ARG_2, ((use_fft) ? S_fft : S_vct_convolve), "a vct");
-  if (XEN_NUMBER_P(sign)) isign = XEN_TO_C_INT_OR_ELSE(sign, 0);
-  if (isign == 0) isign = 1;
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(sign), sign, XEN_ARG_3, (use_fft) ? S_fft : S_vct_convolve, "an integer");
+  if (!(((VCT_P(reals)) && (VCT_P(imag))) || 
+	((XEN_VECTOR_P(reals)) && (XEN_VECTOR_P(imag)))))
+    XEN_ERROR(BAD_TYPE,
+	      XEN_LIST_4(C_TO_XEN_STRING(((use_fft) ? S_fft : S_vct_convolve)),
+			 reals, 
+			 imag,
+			 C_TO_XEN_STRING("both vct or vector")));
+  isign = XEN_TO_C_INT_OR_ELSE(sign, 1);
   if ((VCT_P(reals)) && (VCT_P(imag)))
     {
       v1 = (vct *)XEN_OBJECT_REF(reals);
@@ -3744,8 +3749,8 @@ static XEN g_fft_1(XEN reals, XEN imag, XEN sign, int use_fft)
       ivdata = XEN_VECTOR_ELEMENTS(imag);
       for (i = 0; i < n; i++)
 	{
-	  rl[i] = XEN_TO_C_DOUBLE(rvdata[i]);
-	  im[i] = XEN_TO_C_DOUBLE(ivdata[i]);
+	  rl[i] = XEN_TO_C_DOUBLE_OR_ELSE(rvdata[i], 0.0);
+	  im[i] = XEN_TO_C_DOUBLE_OR_ELSE(ivdata[i], 0.0);
 	}
     }
   else

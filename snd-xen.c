@@ -1956,10 +1956,14 @@ reading edit version edit-position (defaulting to the current version)"
   cp = get_cp(snd_n, chn_n, S_samples2sound_data);
   pos = to_c_edit_position(cp, edpos, S_samples2sound_data, 6);
   beg = XEN_TO_C_OFF_T_OR_ELSE(samp_0, 0);
+  if (beg < 0)
+    mus_misc_error(S_samples2sound_data, "invalid begin sample", samp_0);
   len = XEN_TO_C_INT_OR_ELSE(samps, (int)(cp->samples[pos] - beg));
   if (len > 0)
     {
       chn = XEN_TO_C_INT_OR_ELSE(sdchan, 0);
+      if (chn < 0)
+	mus_misc_error(S_samples2sound_data, "invalid channel", sdchan);
       if (sound_data_p(sdobj))
 	sd = (sound_data *)XEN_OBJECT_REF(sdobj);
       else
@@ -1987,8 +1991,9 @@ static XEN vct2soundfile(XEN g_fd, XEN obj, XEN g_nums)
 {
   #define H_vct2sound_file "(" S_vct2sound_file " fd vct-obj samps) writes samps samples from vct-obj to the sound file controlled by fd"
   int fd, nums, i;
+  off_t err;
   float *vals;
-  vct *v;
+  vct *v = NULL;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(g_fd), g_fd, XEN_ARG_1, S_vct2sound_file, "an integer");
   XEN_ASSERT_TYPE((VCT_P(obj)), obj, XEN_ARG_2, S_vct2sound_file, "a vct");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(g_nums), g_nums, XEN_ARG_3, S_vct2sound_file, "a number");
@@ -1996,8 +2001,15 @@ static XEN vct2soundfile(XEN g_fd, XEN obj, XEN g_nums)
   if ((fd < 0) || (fd == fileno(stdin)) || (fd == fileno(stdout)) || (fd == fileno(stderr)))
     mus_misc_error(S_vct2sound_file, "invalid file", g_fd);
   nums = XEN_TO_C_INT_OR_ELSE(g_nums, 0);
+  if (nums == 0) return(XEN_FALSE);
   v = TO_VCT(obj);
-  lseek(fd, 0L, SEEK_END);
+  if (v == NULL)
+    mus_misc_error(S_vct2sound_file, "no data?", obj);
+  if ((nums < 0) || (nums > v->length))
+    mus_misc_error(S_vct2sound_file, "invalid len", g_nums);
+  err = lseek(fd, 0L, SEEK_END);
+  if (err == -1)
+    mus_misc_error(S_vct2sound_file, "IO error", C_TO_XEN_STRING(strerror(errno)));
   if (sizeof(Float) == 4) /* Float can be either float or double */
     nums = write(fd, (char *)(v->data), nums * 4);
   else
