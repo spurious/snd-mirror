@@ -135,6 +135,7 @@ pvoc.scm          phase-vocoder examples
 rgb.scm           color definitions
 snd-gtk.scm       various Guile-Gtk examples
 v.scm             fm-violin (from CLM)
+ws.scm            with-sound implementation
 zip.scm           the zipper (a cross-fader, sort of) (from CLM)
 </pre>
 
@@ -343,18 +344,17 @@ when you save a sound via the "save" dialog.</p>
                                 representation's notion of -1.0 to just less than 1.0.  The default
                                 causes wrap-around which makes the out-of-range values very obvious.
 
-  <b><a name="defaultoutputchans">default-output-chans</a></b>  -1      The default number of channels when a new or temporary file is created, 
+  <b><a name="defaultoutputchans">default-output-chans</a></b>  1       The default number of channels when a new or temporary file is created, 
                                 or a save dialog is opened.
 
-  <b><a name="defaultoutputformat">default-output-format</a></b> -1      The default data format when a new or temporary file is created, 
-                                or a save dialog is opened. -1 here means try to use the current 
-                                sound's data format (or no default).
+  <b><a name="defaultoutputformat">default-output-format</a></b> 1       The default data format when a new or temporary file is created, 
+                                or a save dialog is opened. (1 = mus-bshort).
 
-  <b><a name="defaultoutputsrate">default-output-srate</a></b>  -1      The default srate when a new or temporary file is created, 
+  <b><a name="defaultoutputsrate">default-output-srate</a></b>  22050   The default srate when a new or temporary file is created, 
                                 or a save dialog is opened.
 
-  <b><a name="defaultoutputtype">default-output-type</a></b>   -1      The default header type when a new or temporary file is created, 
-                                or a save dialog is opened. -1 means use the current sound's type.
+  <b><a name="defaultoutputtype">default-output-type</a></b>   0       The default header type when a new or temporary file is created, 
+                                or a save dialog is opened. (0 = mus-next).
 
   <b><a name="epsbottommargin">eps-bottom-margin</a></b>     0.0     bottom margin used in snd.eps (Print command) (PS units).
                                 PostScript units are 1/72 of an inch (a "point" in printer jargon); 
@@ -1707,7 +1707,7 @@ sets its value to val.
 
                                     (play-with-amps 0 1.0 0.5) ;plays channel 2 of stereo sound at half amplitude
 </small>
-                                  See also make-amp-controls in snd-gtk.scm.
+                                  See also make-amp-controls in snd-gtk.scm, and play-syncd-marks in marks.scm.
 
   <b><a name="mapacrossallchans">map-across-all-chans</a></b> (func <i>start end edname</i>) 
                                   apply func to all open channels in parallel (see <a href="#scanning">Scanning Data</a>).
@@ -2610,37 +2610,20 @@ a list of them with cross-references.</p>
                                            (do ((i 0 (1+ i))) ((= i len) v)
        	                                     (vct-set! v i (fir-filter flt (next-sample fd)))))))
 </small>
-  <a href="#sndffting">ffting</a> (<em class=targ>snd chn</em>)
-  <a href="#fftbeta">fft-beta</a>
-  <a href="#ffthook">fft-hook</a> (snd chn scaler)
-  <a href="#fftlogfrequency">fft-log-frequency</a>
-  <a href="#fftlogmagnitude">fft-log-magnitude</a>
-  <a href="#lfftsize">fft-size</a>
-  <a href="#lfftstyle">fft-style</a>
-  <a href="#lfftwindow">fft-window</a>
-  <a href="#maxfftpeaks">max-fft-peaks</a>
-  <a href="#mindb">min-dB</a>
-  <a href="#normalizefft">normalize-fft</a>
-  <a href="#showfftpeaks">show-fft-peaks</a>
-  <a href="#lshowselectiontransform">show-selection-transform</a>
-  <a href="#spectrocutoff">spectro-cutoff</a>
-  <a href="#spectrohop">spectro-hop</a>
-  <a href="#spectrostart">spectro-start</a>
-  <a href="#spectroxangle">spectro-x-angle</a>
-  <a href="#spectroxscale">spectro-x-scale</a>
-  <a href="#spectroyangle">spectro-y-angle</a>
-  <a href="#spectroyscale">spectro-y-scale</a>
-  <a href="#spectrozangle">spectro-z-angle</a>
-  <a href="#spectrozscale">spectro-z-scale</a>
-  <a href="#sndtransformsample">transform-sample</a> (<i>bin slice snd chn</i>)
-  <a href="#sndtransformsamples">transform-samples</a> (<i>snd chn</i>)
-  <a href="#transformsamples2vct">transform-samples-&gt;vct</a> (<i>snd chn v</i>)
-  <a href="#transformsize">transform-size</a> (<i>snd chn</i>)
-  <a href="#ltransformtype">transform-type</a>
-  <a href="#sndupdatefft">update-fft</a> (<i>snd chn</i>)
-  <a href="#normalizefft">normalize-fft</a>
-  <a href="#zeropad">zero-pad</a>
-  <a href="#wavelettype">wavelet-type</a>
+</pre>
+<p>Other related variables:</p>
+<pre>
+  <a href="#sndffting">ffting</a> (<em class=targ>snd chn</em>)           <a href="#showfftpeaks">show-fft-peaks</a>             <a href="#sndtransformsample">transform-sample</a> (<i>bin slice snd chn</i>)
+  <a href="#fftbeta">fft-beta</a>                  <a href="#lshowselectiontransform">show-selection-transform</a>   <a href="#sndtransformsamples">transform-samples</a> (<i>snd chn</i>)
+  <a href="#ffthook">fft-hook</a> (snd chn scaler) <a href="#spectrocutoff">spectro-cutoff</a>             <a href="#transformsamples2vct">transform-samples-&gt;vct</a> (<i>snd chn v</i>)
+  <a href="#fftlogfrequency">fft-log-frequency</a>         <a href="#spectrohop">spectro-hop</a>                <a href="#transformsize">transform-size</a> (<i>snd chn</i>)
+  <a href="#fftlogmagnitude">fft-log-magnitude</a>         <a href="#spectrostart">spectro-start</a>              <a href="#ltransformtype">transform-type</a>
+  <a href="#lfftsize">fft-size</a>                  <a href="#spectroxangle">spectro-x-angle</a>            <a href="#sndupdatefft">update-fft</a> (<i>snd chn</i>)
+  <a href="#lfftstyle">fft-style</a>                 <a href="#spectroxscale">spectro-x-scale</a>            <a href="#normalizefft">normalize-fft</a>
+  <a href="#lfftwindow">fft-window</a>                <a href="#spectroyangle">spectro-y-angle</a>            <a href="#zeropad">zero-pad</a>
+  <a href="#maxfftpeaks">max-fft-peaks</a>             <a href="#spectroyscale">spectro-y-scale</a>            <a href="#wavelettype">wavelet-type</a>
+  <a href="#mindb">min-dB</a>                    <a href="#spectrozangle">spectro-z-angle</a>
+  <a href="#normalizefft">normalize-fft</a>             <a href="#spectrozscale">spectro-z-scale</a>
 </pre>
 
 <br>
@@ -2695,6 +2678,8 @@ View:Listener:
   <b><a name="listenerprompt">listener-prompt</a></b>       "&gt;"     lisp listener prompt
   <b><a name="printlength">print-length</a></b>          12      number of elements of lists and vectors that are printed.
   <b><a name="sndshowlistener">show-listener</a></b>         ()      open the lisp listener pane.
+  <b><a href="sndsavelistener">save-listener</a></b>         (filename) 
+                                save listener text in filename.
 
 View:Mix Panel:
   <b><a name="sndmixpanel">mix-panel</a></b>             ()      start the Mix Panel.
@@ -3019,6 +3004,8 @@ Axis choice:
   <b><a name="sndpreloadfile">preload-file</a></b>      (file)        preload <i>file</i> (see View menu's <a href="snd.html#prevfiles">View Files</a> option).
 
   <b><a name="sndsaveenvelopes">save-envelopes</a></b>    (filename)    save envelope editor contents in <i>filename</i> [<em class=error>cannot-save</em>].
+
+  <b><a name="sndsavelistener">save-listener</a></b>     (filename)    save listener contents in <i>filename</i> [<em class=error>cannot-save</em>].
 
   <b><a name="sndsavemacros">save-macros</a></b>       ()            save <a href="snd.html#kbdmacros">keyboard macros</a> in Snd's init file (~/.snd).
 

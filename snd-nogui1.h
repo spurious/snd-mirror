@@ -61,6 +61,7 @@ void reflect_spectro(snd_state *ss);
 /* -------- snd-xlistener.c -------- */
 
 void append_listener_text(int end, char *msg);
+void save_listener_text(FILE *fp);
 void snd_append_command(snd_state *ss, char *msg);
 void goto_listener(void);
 void snd_append_char(snd_state *ss, char *msg);

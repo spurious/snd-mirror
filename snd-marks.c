@@ -1,6 +1,5 @@
 /* TODO  drag via mark could still use amp-env opts
  * TODO  sync colors? could use 6-7 bits of id+table (or local mark context)
- * TODO  play-syncd-marks (scm -- pause arg here?)
  * TODO  mark fixups -- test negative src env mark fixups (probably broken)
  * TODO  control panel apply from mark?
  * TODO  syncd play when syncd triangle dragged?
@@ -1534,7 +1533,7 @@ static SCM iwrite_mark(SCM mark_n, SCM val, int fld, char *caller)
   switch (fld)
     {
     case MARK_SAMPLE: 
-      m->samp = g_scm2int(val);
+      m->samp = iclamp(0,g_scm2int(val),current_ed_samples(cp[0]));
       sort_marks(cp[0]); /* update and re-sort current mark list */
       update_graph(cp[0],NULL);
       break;

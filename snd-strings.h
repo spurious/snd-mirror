@@ -646,6 +646,7 @@
 #define S_save_edit_history             "save-edit-history"
 #define S_save_envelopes                "save-envelopes"
 #define S_save_hook                     "save-hook"
+#define S_save_listener                 "save-listener"
 #define S_save_macros                   "save-macros"
 #define S_save_marks                    "save-marks"
 #define S_save_options                  "save-options"

@@ -1,5 +1,8 @@
 snd change log
 
+  12-Dec:    ws.scm (more elaborate with-sound implementation).
+             save-listener.
+             play-syncd-marks (marks.scm).
   11-Dec:    snd 4.9.
   7-Dec:     zero-pad bugfixes.
   29-Nov:    before-fft-hook, string completion from help list.

@@ -21,7 +21,7 @@ If you select one, it will be used to complete the current name.\n\
 static void completion_help_browse_callback(Widget w,XtPointer clientData,XtPointer callData) 
 {
   int choice,i,j,old_len,new_len;
-  char *text,*old_text;
+  char *text=NULL,*old_text=NULL;
   XmListCallbackStruct *cbs = (XmListCallbackStruct *)callData;
   choice = cbs->item_position - 1;
   XmStringGetLtoR(cbs->item,XmFONTLIST_DEFAULT_TAG,&text);
@@ -35,7 +35,8 @@ static void completion_help_browse_callback(Widget w,XtPointer clientData,XtPoin
       else i--;
     }
   append_listener_text(XmTextGetLastPosition(listener_text),(char *)(text - 1 + old_len - i));
-  XtFree(text);
+  if (text) XtFree(text);
+  if (old_text) XtFree(old_text);
   XtUnmanageChild(completion_help_dialog);
 }
 
@@ -411,6 +412,17 @@ void append_listener_text(int end, char *msg)
 {
   XmTextInsert(listener_text,end,msg);
   XmTextSetCursorPosition(listener_text,XmTextGetLastPosition(listener_text));
+}
+
+void save_listener_text(FILE *fp)
+{
+  char *str=NULL;
+  str = XmTextGetString(listener_text);
+  if (str)
+    {
+      fwrite((void *)str,sizeof(char),snd_strlen(str),fp);
+      XtFree(str);
+    }
 }
 
 static void Listener_completion(Widget w, XEvent *event, char **str, Cardinal *num) 

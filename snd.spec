@@ -238,7 +238,7 @@ install -m 755 -o 0 -g 0 -d ${RPM_BUILD_ROOT}%{prefix}/bin/
 %doc README.Snd HISTORY.Snd snd.html snd.txt extsnd.html extsnd.txt sndlib.html sndlib.txt grfsnd.html grfsnd.txt clm.html
 %doc title.png controls.png auto.png files.png regions.png mixer.png rec.png reclin.png hfft.png energy.png s.png n.png d.png env.png bgd.png note.png
 %doc bell.scm glfft.scm loop.scm old-sndlib2scm.scm zip.scm env.scm gm.scm marks.scm pqwvox.scm snd-gtk.scm
-%doc examp.scm goopsnd.scm mix.scm pvoc.scm snd-test.scm fmv.scm index.scm moog.scm rgb.scm v.scm effects.scm bird.scm
+%doc examp.scm goopsnd.scm mix.scm pvoc.scm snd-test.scm fmv.scm index.scm moog.scm rgb.scm v.scm effects.scm bird.scm ws.scm
 
 
 #--- snd-oss (motif statically linked)

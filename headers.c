@@ -3,9 +3,7 @@
  * TODO  avi and asf code seriously incomplete
  * TODO  avr doesn't match actual files
  * TODO  esignal not tackled yet (need an example file)
- * TODO  get examples of little endian DEC header
  * TODO  (not sure how soundfont stereo works)
- * TODO  Psion epoc32 appears to have RECORD.APP at 42, then alaw data after 72 (or thereabouts)
  *
  * --------------------------------
  * int mus_header_read (const char *name)
@@ -5132,6 +5130,7 @@ from_base64(char* cs, int *buf)
 
 /*
  * real audio: http://www1.real.com/devzone/sdks/rmsdk/guide/index.html
+ * Psion epoc32 appears to have RECORD.APP at 42, then alaw data after 72 (or thereabouts)
 */
 /*
 {

@@ -133,3 +133,21 @@
 		      (home (mark->sound n)))
 		  (insert-samples samp silence-length silence-samps (car home) (cadr home))))
 	      ids))))))
+
+
+;;; -------- play-syncd-marks
+
+(define (play-syncd-marks sync)
+  "(play-syncd-marks sync) starts playing from all marks sharing sync"
+  (let ((chans 1)
+	(rate 22050))
+    (map (lambda (m)
+	   (let* ((mark-home (mark->sound m))
+		  (sound (car mark-home))
+		  (channel (cadr mark-home))
+		  (new-player (make-player sound channel)))
+	     (add-player new-player (mark-sample m))
+	     (set! chans (max chans (1+ channel)))
+	     (set! rate (max rate (srate sound)))))
+	 (syncd-marks sync))
+    (start-playing chans rate)))

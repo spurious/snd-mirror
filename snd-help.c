@@ -256,6 +256,9 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+12-Dec:  ws.scm (more elaborate with-sound implementation).\n\
+         save-listener.\n\
+         play-syncd-marks (marks.scm)\n\
 11-Dec:  snd 4.9.\n\
 7-Dec:   zero-pad bugfixes.\n\
 29-Nov:  before-fft-hook, string completion from help list.\n\
@@ -1278,6 +1281,7 @@ all refer to the same thing.\n\
   " S_samples_vct "      (samp samps snd chn)\n\
   " S_save_control_panel "(snd)\n\
   " S_save_edit_history " (file snd chn)\n\
+  " S_save_listener "     (filename)\n\
   " S_save_macros "       ()\n\
   " S_save_marks "        (snd)\n\
   " S_save_region "       (reg filename format)\n\

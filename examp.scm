@@ -74,7 +74,6 @@
 ;;;       adaptive notch filter
 ;;;       ins: singer piano flute prc-toolkit fade
 ;;;       data-file rw case for pvoc.scm
-;;;       with-sound needs all the bells and whistles
 
 
 (use-modules (ice-9 debug))
@@ -96,7 +95,7 @@
       (list sndlist chnlist))))
 
 
-;;; -------- snd.html examples made harder to break --------
+;;; -------- (ext)snd.html examples made harder to break --------
 ;;;
 ;;; this mainly involves keeping track of the current sound/channel
 
@@ -2607,8 +2606,6 @@
 
 ;;; now instrument calls (outa etc) need to write (mix) to the currently selected sounds,
 ;;;   or to a newly opened sound
-;;; TODO: if not explode, don't save intermediate temps
-;;; TODO: should old-srate be *clm-srate* (i.e. nested calls carry down the outer setting?)
 
 ;;; here's a better version courtesy of Kalle Olavi Niemitalo
 ;;; but it doesn't seem to work in Guile 1.4 (it needs 1.4.1)
@@ -2622,6 +2619,8 @@
 ;;;(defmacro with-sound (args . body)
 ;;;  `(with-sound-helper (lambda () ,@body)
 ;;;                      ,@args))
+;;;
+;;; see ws.scm for an elaboration of this version.
 ;;;
 ;;; this could save (current-load-port) somewhere, and if it's not #f, report
 ;;;   port-filename and port-line on it in case of error (since backtrace sometimes

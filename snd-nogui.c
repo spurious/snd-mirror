@@ -46,6 +46,7 @@ int orientation_dialog_is_active(void) {return(0);}
 void reflect_spectro(snd_state *ss) {}
 void snd_append_command(snd_state *ss, char *msg) {fprintf(stderr,"%s",msg);}
 void goto_listener(void) {}
+void save_listener_text(FILE *fp) {}
 void append_listener_text(int end, char *msg) {}
 void snd_append_char(snd_state *ss, char *msg) {fprintf(stderr,"%s",msg);}
 void handle_listener(snd_state *ss, int new_state) {}

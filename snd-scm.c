@@ -3,6 +3,7 @@
 
 /* TODO: perhaps fit-data-on-open should be fit-data, callable via hooks at open time
  *         but would be much faster if we can wait until the amp-env is computed
+ *         via after-open-hook?
  * TODO  sample-color?
  * TODO  should snd-out soft-port (examp.scm) be built-in?
  */
@@ -1304,7 +1305,7 @@ static SCM g_save_state(SCM filename)
 {
   #define H_save_state "(" S_save_state " filename) saves the current Snd state in filename; (load filename) restores it)"
   if (save_state(state,gh_scm2newstr(filename,NULL)) == -1) 
-    return(SCM_BOOL_F);  /* THROW CANNOT_SAVE */
+    return(SCM_BOOL_F);  /* THROW CANNOT_SAVE or should this be built into snd-error? (as in muserror in snd.c) */
   else return(filename);
 }
 

@@ -83,6 +83,7 @@ void textfield_unfocus_Callback(Widget w,XtPointer clientData,XtPointer callData
 void add_completer_to_textfield(snd_state *ss, Widget w, int completer);
 void snd_completion_help(snd_state *ss,int matches,char **buffer);
 void snd_append_command(snd_state *ss, char *msg);
+void save_listener_text(FILE *fp);
 void append_listener_text(int end, char *msg);
 void goto_listener(void);
 void color_listener(Pixel pix);

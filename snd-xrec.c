@@ -1,14 +1,11 @@
-/* TODO  multiple inputs in new sgi al on properly equipped machines (how do Indys behave in this case?)
+/* 
  * TODO  smoothed amp sliders(?)
- * TODO  clicks upon swap or whatever (set process priority?)
  * TODO  on-going output sonogram (this is just an fft+running display)?
- * TODO  CD input if supported (i.e. on the Sun)
  * TODO  continuous record (flushing output until some indication)
  * TODO  output panel should support max chans found in all output devices, and have some way to send output anywhere
  * TODO  recorder-defaults device {function} -> layout, chans, whether included and active, etc (using sndlib device numbers)
  * TODO  dB in VUs
  * TODO  syncd sliders ("master" volume control basically)
- * TODO  in kde, recorder not re-drawn upon desktop switch
  * TODO  if mono microphone, both chans of analog in are seeing input?
  */
 

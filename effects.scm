@@ -12,7 +12,7 @@
 ;;;      echo (echo-length, echo-amount)
 ;;;      trim front and trim back (to/from marks)
 ;;;      crop (first and last marks)
-;;;      squelch (squelch-amount)
+;;;      squelch (squelch-amount, omit-silence)
 ;;;      selection->new
 ;;;      cut selection->new
 ;;;      add silence (at cursor) (silence-amount)
@@ -318,6 +318,9 @@
 
 
 ;;; -------- squelch (silencer set by squelch-amount -- this is a kind of "gate" in music-dsp-jargon)
+
+(define omit-silence #f) ; if #t, the silences will be omitted from the result
+
 (define (squelch-one-channel silence snd chn)
   (let* ((buffer-size 128)
 	 (buffer0 #f)
@@ -338,7 +341,7 @@
 	    (vct-set! buffer1 j val)
 	    (set! sum (+ sum (* val val)))))
 	(if buffer0
-	    (begin
+	    (let ((all-zeros #f))
 	      (if (> sum silence)
 		  (if (<= sum0 silence)
 		      (do ((j 0 (+ j 1))
@@ -346,12 +349,15 @@
 			  ((= j buffer-size))
 			(vct-set! buffer0 j (* (vct-ref buffer0 j) incr))))
 		  (if (<= sum0 silence)
-		      (vct-fill! buffer0 0.0)
+		      (begin
+			(vct-fill! buffer0 0.0)
+			(set! all-zeros #t))
 		      (do ((j 0 (+ j 1))
 			   (incr 1.0 (- incr (/ 1.0 buffer-size))))
 			  ((= j buffer-size))
 			(vct-set! buffer0 j (* (vct-ref buffer0 j) incr)))))
-	      (vct->sound-file new-file buffer0 buffer-size))
+	      (if (not (and omit-silence all-zeros))
+		  (vct->sound-file new-file buffer0 buffer-size)))
 	    (set! buffer0 (make-vct buffer-size)))
 	(set! tmp buffer0)
 	(set! buffer0 buffer1)

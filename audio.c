@@ -1,12 +1,7 @@
 /* Audio hardware handlers (SGI, OSS, ALSA, Sun, NeXT, Mac, Windows, Be, HPUX, Mac OS-X, ESD) */
 
-/* TODO  w95 input, read/write state
- * TODO  sgi/w95/mac? also may have multiple systems/cards
- * TODO  check for Mac OS changes
- * TODO  re-implement BeOS support
- * TODO  when reading device_field, put default input device first, or mark somehow 
- *
- * ALSA errors should be updated to new form
+/* TODO  windoze input, read/write state
+ * TODO  sgi/mac? also may have multiple systems/cards
  */
 
 /*
@@ -18,7 +13,6 @@
  *    NeXT
  *    Sun (has switches for OPENBSD, but they're untested)
  *    Mac (Mac OS 8.1) (apparently there are important differences in subsequent versions)
- *    Be (release 5 underway)
  *    HPUX
  *    W95/98
  *    AIX, NEC EWS, SONY NEWS, OS2, AF, NetBSD etc -- untested and incomplete
@@ -800,9 +794,6 @@ int mus_audio_mixer_read(int ur_dev, int field, int chan, float *val)
       /* in this case, chan == length of incoming val array.  Number of devices is returned as val[0],
        * and the rest of the available area (if needed) is filled with the device ids.
        */
-
-      /* TODO: get current AL_INPUT_SOURCE and output device and put these at the head of the list */
-
       i = 0;
       if (alGetResourceByName(AL_SYSTEM,"Microphone",AL_DEVICE_TYPE) != 0) {if ((i+1)<chan) val[i+1] = MUS_AUDIO_MICROPHONE; i++;}
       if (alGetResourceByName(AL_SYSTEM,"Analog Out",AL_DEVICE_TYPE) != 0) {if ((i+1)<chan) val[i+1] = MUS_AUDIO_DAC_OUT;    i++;}
@@ -1177,7 +1168,6 @@ int mus_audio_mixer_read(int ur_dev, int field, int chan, float *val)
       break;
     case MUS_AUDIO_PORT:
       /* how to tell which machine we're on? */
-      /* TODO: put default in/out devices first */
       val[0] = 4; 
       if (chan>1) val[1]=MUS_AUDIO_LINE_IN; 
       if (chan>2) val[2]=MUS_AUDIO_MICROPHONE; 

@@ -1,11 +1,22 @@
 #include "snd.h"
 
-/* TODO  make completions list mouse sensitive as in Motif version
+/* TODO  make completions list mouse sensitive as in Motif version (gad I'm sick of dialogs)
  */
 
 static GtkWidget *listener_text = NULL;
 static GtkWidget *listener_pane = NULL; 
 static int last_prompt;
+
+void save_listener_text(FILE *fp)
+{
+  char *str=NULL;
+  str = gtk_editable_get_chars(GTK_EDITABLE(listener_text),0,-1);
+  if (str)
+    {
+      fwrite((void *)str,sizeof(char),snd_strlen(str),fp);
+      g_free(str);
+    }
+}
 
 void append_listener_text(int end, char *msg)
 {

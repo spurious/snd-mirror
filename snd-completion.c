@@ -18,7 +18,7 @@
   #endif
 #endif
       
-#define NUM_COMMANDS 559
+#define NUM_COMMANDS 560
 
 static char *snd_commands[NUM_COMMANDS]={
   S_abort,S_activate_listener,S_add_mark,S_add_player,S_add_sound_file_extension,S_add_to_main_menu,S_add_to_menu,S_add_transform,
@@ -112,7 +112,7 @@ static char *snd_commands[NUM_COMMANDS]={
 
   S_sample,S_sample_reader_at_endQ,S_sample_readerQ,S_samples,S_samples2sound_data,S_samples_vct,S_sash_color,
   S_save_control_panel,S_save_dir,S_save_edit_history,S_save_envelopes,S_save_hook,
-  S_save_macros,S_save_marks,S_save_options,
+  S_save_listener,S_save_macros,S_save_marks,S_save_options,
   S_save_region,S_save_selection,S_save_sound,S_save_sound_as,S_save_state,S_save_state_file,
   S_save_state_on_exit,S_scale_by,S_scale_selection_by, S_scale_selection_to,S_scale_to,
   S_scan_across_all_chans,S_scan_across_chans,S_scan_across_sound_chans,S_scan_all_chans,S_scan_chan,S_scan_chans,S_scan_sound_chans,
@@ -620,8 +620,26 @@ static SCM g_apropos(SCM text)
   return(val);
 }
 
+static SCM g_save_listener(SCM filename)
+{
+  #define H_save_listener "(" S_save_listener " filename) saves the current listener text in filename"
+  char *urn;
+  FILE *fp;
+  SCM_ASSERT(gh_string_p(filename),filename,SCM_ARG1,S_save_listener);
+  urn = gh_scm2newstr(filename,NULL);
+  fp = fopen(urn,"w");
+  if (fp)
+    {
+      save_listener_text(fp);
+      fclose(fp);
+    }
+  else scm_throw(CANNOT_SAVE,SCM_LIST3(gh_str02scm(S_save_listener),filename,gh_str02scm(strerror(errno))));
+  return(filename);
+}
+
 void g_init_completions(SCM local_doc)
 {
   DEFINE_PROC(gh_new_procedure(S_snd_apropos,SCM_FNC g_apropos,1,0,0),H_apropos);
+  DEFINE_PROC(gh_new_procedure(S_save_listener,SCM_FNC g_save_listener,1,0,0),H_save_listener);
 }
 #endif

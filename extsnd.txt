@@ -86,6 +86,7 @@ pvoc.scm          phase-vocoder examples
 rgb.scm           color definitions
 snd-gtk.scm       various Guile-Gtk examples
 v.scm             fm-violin (from CLM)
+ws.scm            with-sound implementation
 zip.scm           the zipper (a cross-fader, sort of) (from CLM)
 
 Customizing Snd's appearance
@@ -271,18 +272,17 @@ The main variables affecting Snd's overall behavior are:
                                 representation's notion of -1.0 to just less than 1.0.  The default
                                 causes wrap-around which makes the out-of-range values very obvious.
 
-  default-output-chans  -1      The default number of channels when a new or temporary file is created,
+  default-output-chans  1       The default number of channels when a new or temporary file is created,
                                 or a save dialog is opened.
 
-  default-output-format -1      The default data format when a new or temporary file is created,
-                                or a save dialog is opened. -1 here means try to use the current
-                                sound's data format (or no default).
+  default-output-format 1       The default data format when a new or temporary file is created,
+                                or a save dialog is opened. (1 = mus-bshort).
 
-  default-output-srate  -1      The default srate when a new or temporary file is created,
+  default-output-srate  22050   The default srate when a new or temporary file is created,
                                 or a save dialog is opened.
 
-  default-output-type   -1      The default header type when a new or temporary file is created,
-                                or a save dialog is opened. -1 means use the current sound's type.
+  default-output-type   0       The default header type when a new or temporary file is created,
+                                or a save dialog is opened. (0 = mus-next).
 
   eps-bottom-margin     0.0     bottom margin used in snd.eps (Print command) (PS units).
                                 PostScript units are 1/72 of an inch (a "point" in printer jargon);
@@ -1583,7 +1583,7 @@ value to val.
 
                                     (play-with-amps 0 1.0 0.5) ;plays channel 2 of stereo sound at half amplitude
 
-                                  See also make-amp-controls in snd-gtk.scm.
+                                  See also make-amp-controls in snd-gtk.scm, and play-syncd-marks in marks.scm.
 
   map-across-all-chans (func start end edname)
                                   apply func to all open channels in parallel (see Scanning Data).
@@ -2457,37 +2457,19 @@ treated above, so this is just a list of them with cross-references.
                                            (do ((i 0 (1+ i))) ((= i len) v)
                                              (vct-set! v i (fir-filter flt (next-sample fd)))))))
 
-  ffting (snd chn)
-  fft-beta
-  fft-hook (snd chn scaler)
-  fft-log-frequency
-  fft-log-magnitude
-  fft-size
-  fft-style
-  fft-window
-  max-fft-peaks
-  min-dB
-  normalize-fft
-  show-fft-peaks
-  show-selection-transform
-  spectro-cutoff
-  spectro-hop
-  spectro-start
-  spectro-x-angle
-  spectro-x-scale
-  spectro-y-angle
-  spectro-y-scale
-  spectro-z-angle
-  spectro-z-scale
-  transform-sample (bin slice snd chn)
-  transform-samples (snd chn)
-  transform-samples->vct (snd chn v)
-  transform-size (snd chn)
-  transform-type
-  update-fft (snd chn)
-  normalize-fft
-  zero-pad
-  wavelet-type
+Other related variables:
+
+  ffting (snd chn)           show-fft-peaks             transform-sample (bin slice snd chn)
+  fft-beta                  show-selection-transform   transform-samples (snd chn)
+  fft-hook (snd chn scaler) spectro-cutoff             transform-samples->vct (snd chn v)
+  fft-log-frequency         spectro-hop                transform-size (snd chn)
+  fft-log-magnitude         spectro-start              transform-type
+  fft-size                  spectro-x-angle            update-fft (snd chn)
+  fft-style                 spectro-x-scale            normalize-fft
+  fft-window                spectro-y-angle            zero-pad
+  max-fft-peaks             spectro-y-scale            wavelet-type
+  min-dB                    spectro-z-angle
+  normalize-fft             spectro-z-scale
 
 Dialogs
 
@@ -2541,6 +2523,8 @@ View:Listener:
   listener-prompt       ">"     lisp listener prompt
   print-length          12      number of elements of lists and vectors that are printed.
   show-listener         ()      open the lisp listener pane.
+  save-listener         (filename)
+                                save listener text in filename.
 
 View:Mix Panel:
   mix-panel             ()      start the Mix Panel.
@@ -2854,6 +2838,8 @@ These functions don't seem to fit anywhere else:
   preload-file      (file)        preload file (see View menu's View Files option).
 
   save-envelopes    (filename)    save envelope editor contents in filename [cannot-save].
+
+  save-listener     (filename)    save listener contents in filename [cannot-save].
 
   save-macros       ()            save keyboard macros in Snd's init file (~/.snd).
 

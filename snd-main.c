@@ -526,6 +526,7 @@ int save_state (snd_state *ss, char *save_state_name)
        */
       /* TODO save search proc et al? */
       /* TODO save added menus? added transforms? */
+      /* TODO save and restore listener text?? */
       if (locale)
 	{
 #if HAVE_SETLOCALE

@@ -92,6 +92,7 @@ void handle_listener(snd_state *ss, int new_state);
 void snd_completion_help(snd_state *ss,int matches,char **buffer);
 int listener_height(void);
 void goto_listener(void);
+void save_listener_text(FILE *fp);
 void append_listener_text(int end, char *msg);
 void snd_append_char(snd_state *ss, char *msg);
 void snd_append_command(snd_state *ss, char *msg);
