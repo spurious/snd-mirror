@@ -319,8 +319,11 @@ static void minibuffer_mouse_leave(GtkWidget *w, GdkEventCrossing *ev, gpointer 
 
 void set_play_button(snd_info *sp, int val)
 {
-  set_toggle_button(w_snd_play(sp),val,FALSE,(void *)sp);
-  set_file_browser_play_button(sp->shortname,val);
+  if (!(IS_PLAYER(sp)))
+    {
+      set_toggle_button(w_snd_play(sp),val,FALSE,(void *)sp);
+      set_file_browser_play_button(sp->shortname,val);
+    }
 }
 
 static int last_play_state = 0;
@@ -424,8 +427,11 @@ static void set_sync_color(snd_info *sp)
 void syncb(snd_info *sp, int on)
 {
   sp->syncing = on;
-  set_sync_color(sp);
-  set_toggle_button(w_snd_sync(sp),(on == 0) ? FALSE : TRUE,FALSE,(void *)sp);
+  if (!(IS_PLAYER(sp)))
+    {
+      set_sync_color(sp);
+      set_toggle_button(w_snd_sync(sp),(on == 0) ? FALSE : TRUE,FALSE,(void *)sp);
+    }
 }
 
 static int last_sync_state = 0;
@@ -529,7 +535,12 @@ static void set_snd_amp_1(snd_info *sp, Float amp, int setadj)
     }
 }
 
-void set_snd_amp(snd_info *sp, Float amp) {set_snd_amp_1(sp,amp,TRUE);}
+void set_snd_amp(snd_info *sp, Float amp) 
+{
+  if (IS_PLAYER(sp))
+    sp->amp = amp;
+  else set_snd_amp_1(sp,amp,TRUE);
+}
 
 static Float get_snd_amp(Float scrollval)
 {
@@ -570,14 +581,17 @@ void set_snd_srate(snd_info *sp, Float amp)
   Float scrollval;
   GtkObject *adj;
   sp->srate = amp;
-  if (amp > 0.0)
-    scrollval = .45 + .15 * log(amp);
-  else scrollval = 0.0;
-  sprintf(srate_number_buffer,"%.3f",amp);
-  gtk_label_set_text(GTK_LABEL(w_snd_srate_number(sp)),srate_number_buffer);
-  adj = w_srate_adj(sp);
-  GTK_ADJUSTMENT(adj)->value = scrollval;
-  gtk_adjustment_value_changed(GTK_ADJUSTMENT(adj));
+  if (!(IS_PLAYER(sp)))
+    {
+      if (amp > 0.0)
+	scrollval = .45 + .15 * log(amp);
+      else scrollval = 0.0;
+      sprintf(srate_number_buffer,"%.3f",amp);
+      gtk_label_set_text(GTK_LABEL(w_snd_srate_number(sp)),srate_number_buffer);
+      adj = w_srate_adj(sp);
+      GTK_ADJUSTMENT(adj)->value = scrollval;
+      gtk_adjustment_value_changed(GTK_ADJUSTMENT(adj));
+    }
 }
 
 static void srate_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
@@ -628,7 +642,7 @@ void toggle_direction_arrow(snd_info *sp, int state)
 {
   int dir = 1;
   if (state) dir = -1;
-  if (sp->play_direction != dir)
+  if ((sp->play_direction != dir) && (!(IS_PLAYER(sp))))
     {
       if (dir == 1)
 	gtk_pixmap_set(GTK_PIXMAP(w_snd_srate_pix(sp)),speed_r,speed_r_mask);
@@ -664,7 +678,12 @@ static void set_snd_expand_1(snd_info *sp, Float expand, int setadj)
     }
 }
 
-void set_snd_expand(snd_info *sp, Float val) {set_snd_expand_1(sp,val,TRUE);}
+void set_snd_expand(snd_info *sp, Float val) 
+{
+  if (IS_PLAYER(sp))
+    sp->expand = val;
+  else set_snd_expand_1(sp,val,TRUE);
+}
 
 static Float get_snd_expand(Float scrollval)
 {
@@ -708,7 +727,9 @@ static void expand_button_callback(GtkWidget *w, gpointer clientData)
 
 void toggle_expand_button(snd_info *sp, int state)
 {
-  set_toggle_button(w_snd_expand_button(sp),state,TRUE,(void *)sp);
+  if (IS_PLAYER(sp))
+    sp->expanding = state;
+  else set_toggle_button(w_snd_expand_button(sp),state,TRUE,(void *)sp);
 }
 
 
@@ -735,7 +756,12 @@ static void set_snd_contrast_1(snd_info *sp, Float val, int setadj)
     }
 }
 
-void set_snd_contrast(snd_info *sp, Float amp) {set_snd_contrast_1(sp,amp,TRUE);}
+void set_snd_contrast(snd_info *sp, Float amp) 
+{
+  if (IS_PLAYER(sp))
+    sp->contrast = amp;
+  else set_snd_contrast_1(sp,amp,TRUE);
+}
 
 static Float get_snd_contrast(Float scrollval)
 {
@@ -778,7 +804,9 @@ static void contrast_button_callback(GtkWidget *w, gpointer clientData)
 
 void toggle_contrast_button(snd_info *sp, int state)
 {
-  set_toggle_button(w_snd_contrast_button(sp),state,TRUE,(void *)sp);
+  if (IS_PLAYER(sp))
+    sp->contrasting = state;
+  else set_toggle_button(w_snd_contrast_button(sp),state,TRUE,(void *)sp);
 }
 
 
@@ -818,7 +846,12 @@ static void set_snd_revscl_1(snd_info *sp, Float val, int setadj)
     }
 }
 
-void set_snd_revscl(snd_info *sp, Float amp) {set_snd_revscl_1(sp,amp,TRUE);}
+void set_snd_revscl(snd_info *sp, Float amp) 
+{
+  if (IS_PLAYER(sp))
+    sp->revscl = amp;
+  else set_snd_revscl_1(sp,amp,TRUE);
+}
 
 static Float get_snd_revscl(Float scrollval)
 {
@@ -869,7 +902,12 @@ static void set_snd_revlen_1(snd_info *sp, Float val, int setadj)
     }
 }
 
-void set_snd_revlen(snd_info *sp, Float amp) {set_snd_revlen_1(sp,amp,TRUE);}
+void set_snd_revlen(snd_info *sp, Float amp) 
+{
+  if (IS_PLAYER(sp))
+    sp->revlen = amp;
+  else set_snd_revlen_1(sp,amp,TRUE);
+}
 
 static Float get_snd_revlen(Float scrollval)
 {
@@ -918,7 +956,9 @@ static void reverb_button_callback(GtkWidget *w, gpointer clientData)
 
 void toggle_reverb_button(snd_info *sp, int state)
 {
-  set_toggle_button(w_snd_reverb_button(sp),state,TRUE,(void *)sp);
+  if (IS_PLAYER(sp))
+    sp->reverbing = state;
+  else set_toggle_button(w_snd_reverb_button(sp),state,TRUE,(void *)sp);
 }
 
 
@@ -932,6 +972,7 @@ void sp_display_env(snd_info *sp)
   axis_context *ax;
   int height,width;
   GtkWidget *drawer;
+  if (IS_PLAYER(sp)) return;
   ss = sp->state;
   if (ss == NULL) return;
   drawer = w_snd_filter_env(sp);
@@ -979,7 +1020,8 @@ static void filter_drawer_button_release(GtkWidget *w, GdkEventButton *ev, gpoin
 
 void set_filter_text(snd_info *sp, char *str)
 {
-  gtk_entry_set_text(GTK_ENTRY(w_snd_filter(sp)),str);
+  if (!(IS_PLAYER(sp)))
+    gtk_entry_set_text(GTK_ENTRY(w_snd_filter(sp)),str);
 }
 
 static void filter_drawer_expose(GtkWidget *w, GdkEventExpose *ev, gpointer data)
@@ -1002,7 +1044,9 @@ static void filter_button_callback(GtkWidget *w, gpointer clientData)
 
 void toggle_filter_button(snd_info *sp, int state)
 {
-  set_toggle_button(w_snd_filter_button(sp),state,TRUE,(void *)sp);
+  if (IS_PLAYER(sp))
+    sp->filtering = state;
+  else set_toggle_button(w_snd_filter_button(sp),state,TRUE,(void *)sp);
 }
 
 static void filter_db_callback(GtkWidget *w, gpointer clientData)
@@ -1015,8 +1059,11 @@ static void filter_db_callback(GtkWidget *w, gpointer clientData)
 void set_filter_dBing(snd_info *sp, int val)
 {
   sp->filter_dBing = val;
-  set_toggle_button(w_snd_filter_dB(sp),val,FALSE,(void *)sp);
-  sp_display_env(sp);
+  if (!(IS_PLAYER(sp)))
+    {
+      set_toggle_button(w_snd_filter_dB(sp),val,FALSE,(void *)sp);
+      sp_display_env(sp);
+    }
 }
 
 static void set_snd_filter_order_1(snd_info *sp, int order, int setadj)
@@ -1028,7 +1075,12 @@ static void set_snd_filter_order_1(snd_info *sp, int order, int setadj)
   sp->filter_changed = 1;
 }  
 
-void set_snd_filter_order(snd_info *sp, int order) {set_snd_filter_order_1(sp,order,TRUE);}
+void set_snd_filter_order(snd_info *sp, int order) 
+{
+  if (IS_PLAYER(sp))
+    sp->filter_order = order;
+  else set_snd_filter_order_1(sp,order,TRUE);
+}
 
 static void filter_order_callback(GtkWidget *w, gpointer data)
 {
@@ -1056,11 +1108,14 @@ void filter_env_changed(snd_info *sp, env *e)
 {
   /* turn e back into a string for textfield widget */
   char *tmpstr;
-  tmpstr=env_to_string(e);
-  gtk_entry_set_text(GTK_ENTRY(w_snd_filter(sp)),tmpstr);
-  if (tmpstr) FREE(tmpstr);
-  sp_display_env(sp);
-  /* this is called also from snd-scm.c */
+  if (!(IS_PLAYER(sp)))
+    {
+      tmpstr=env_to_string(e);
+      gtk_entry_set_text(GTK_ENTRY(w_snd_filter(sp)),tmpstr);
+      if (tmpstr) FREE(tmpstr);
+      sp_display_env(sp);
+      /* this is called also from snd-scm.c */
+    }
   sp->filter_changed = 1;
 }
 

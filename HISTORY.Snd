@@ -1,6 +1,8 @@
 snd change log
 
-  6-Sep:     added gtk menu accelerators, stop-playing-channel-hook, just-sounds-hook.
+  8-Sep:     make-player, add-player, stop-player, start-playing (and make-amp-controls example in snd-gtk.scm).
+             changed setf.scm to use Guile 1.4's generalized set! (rather than setf).
+  6-Sep:     gtk menu accelerators, stop-playing-channel-hook, just-sounds-hook.
   5-Sep:     changed Apply button handling -- control-click now for selection.
              HAVE_GTKEXTRA to support libgtkextra's icon-oriented file selector.
   31-Aug:    gtk popup menu fixed.

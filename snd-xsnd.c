@@ -264,7 +264,9 @@ static int snd_amp_changed(snd_info *sp, int val)
 
 void set_snd_amp(snd_info *sp, Float val)
 {
-  XtVaSetValues(w_snd_amp(sp),XmNvalue,snd_amp_changed(sp,snd_amp_to_int(val)),NULL);
+  if (IS_PLAYER(sp))
+    sp->amp = val;
+  else XtVaSetValues(w_snd_amp(sp),XmNvalue,snd_amp_changed(sp,snd_amp_to_int(val)),NULL);
 }
 
 static void W_amp_Click_Callback(Widget w,XtPointer clientData,XtPointer callData) 
@@ -327,7 +329,9 @@ static int snd_srate_changed(snd_info *sp, int ival)
 
 void set_snd_srate(snd_info *sp, Float val)
 {
-  XtVaSetValues(w_snd_srate(sp),XmNvalue,snd_srate_changed(sp,snd_srate_to_int(val)),NULL);
+  if (IS_PLAYER(sp))
+    sp->srate = val;
+  else XtVaSetValues(w_snd_srate(sp),XmNvalue,snd_srate_changed(sp,snd_srate_to_int(val)),NULL);
 }
 
 static void W_srate_Click_Callback(Widget w,XtPointer clientData,XtPointer callData) 
@@ -360,7 +364,9 @@ static void W_srate_ValueChanged_Callback(Widget w,XtPointer clientData,XtPointe
 
 void toggle_direction_arrow(snd_info *sp, int state)
 {
-  XmToggleButtonSetState(w_snd_srate_arrow(sp),state,TRUE);
+  if (IS_PLAYER(sp))
+    sp->play_direction = ((state) ? -1 : 1);
+  else XmToggleButtonSetState(w_snd_srate_arrow(sp),state,TRUE);
 }
 
 
@@ -394,7 +400,9 @@ static int snd_expand_changed(snd_info *sp, int val)
 
 void set_snd_expand(snd_info *sp, Float val)
 {
-  XtVaSetValues(w_snd_expand(sp),XmNvalue,snd_expand_changed(sp,snd_expand_to_int(val)),NULL);
+  if (IS_PLAYER(sp))
+    sp->expand = val;
+  else XtVaSetValues(w_snd_expand(sp),XmNvalue,snd_expand_changed(sp,snd_expand_to_int(val)),NULL);
 }
 
 static void W_expand_Click_Callback(Widget w,XtPointer clientData,XtPointer callData) 
@@ -438,7 +446,9 @@ static void Expand_button_Callback(Widget w,XtPointer clientData,XtPointer callD
 
 void toggle_expand_button(snd_info *sp, int state)
 {
-  XmToggleButtonSetState(w_snd_expand_button(sp),state,TRUE);
+  if (IS_PLAYER(sp))
+    sp->expanding = state;
+  else XmToggleButtonSetState(w_snd_expand_button(sp),state,TRUE);
 }
 
 
@@ -465,7 +475,9 @@ static int snd_contrast_changed(snd_info *sp, int val)
 
 void set_snd_contrast(snd_info *sp, Float val)
 {
-  XtVaSetValues(w_snd_contrast(sp),XmNvalue,snd_contrast_changed(sp,snd_contrast_to_int(val)),NULL);
+  if (IS_PLAYER(sp))
+    sp->contrast = val;
+  else XtVaSetValues(w_snd_contrast(sp),XmNvalue,snd_contrast_changed(sp,snd_contrast_to_int(val)),NULL);
 }
 
 static void W_contrast_Click_Callback(Widget w,XtPointer clientData,XtPointer callData) 
@@ -509,7 +521,9 @@ static void Contrast_button_Callback(Widget w,XtPointer clientData,XtPointer cal
 
 void toggle_contrast_button(snd_info *sp, int state)
 {
-  XmToggleButtonSetState(w_snd_contrast_button(sp),state,TRUE);
+  if (IS_PLAYER(sp))
+    sp->contrasting = state;
+  else XmToggleButtonSetState(w_snd_contrast_button(sp),state,TRUE);
 }
 
 
@@ -548,7 +562,9 @@ static int snd_revscl_changed(snd_info *sp, int val)
 
 void set_snd_revscl(snd_info *sp, Float val)
 {
-  XtVaSetValues(w_snd_revscl(sp),XmNvalue,snd_revscl_changed(sp,snd_revscl_to_int(val)),NULL);
+  if (IS_PLAYER(sp))
+    sp->revscl = val;
+  else XtVaSetValues(w_snd_revscl(sp),XmNvalue,snd_revscl_changed(sp,snd_revscl_to_int(val)),NULL);
 }
 
 static void W_revscl_Click_Callback(Widget w,XtPointer clientData,XtPointer callData) 
@@ -602,7 +618,9 @@ static int snd_revlen_changed(snd_info *sp, int val)
 
 void set_snd_revlen(snd_info *sp, Float val)
 {
-  XtVaSetValues(w_snd_revlen(sp),XmNvalue,snd_revlen_changed(sp,snd_revlen_to_int(val)),NULL);
+  if (IS_PLAYER(sp))
+    sp->revlen = val;
+  else XtVaSetValues(w_snd_revlen(sp),XmNvalue,snd_revlen_changed(sp,snd_revlen_to_int(val)),NULL);
 }
 
 static void W_revlen_Click_Callback(Widget w,XtPointer clientData,XtPointer callData) 
@@ -651,7 +669,9 @@ static void Reverb_button_Callback(Widget w,XtPointer clientData,XtPointer callD
 
 void toggle_reverb_button(snd_info *sp, int state)
 {
-  XmToggleButtonSetState(w_snd_reverb_button(sp),state,TRUE);
+  if (IS_PLAYER(sp))
+    sp->reverbing = state;
+  else XmToggleButtonSetState(w_snd_reverb_button(sp),state,TRUE);
 }
 
 static void Filter_button_Callback(Widget w,XtPointer clientData,XtPointer callData) 
@@ -663,7 +683,9 @@ static void Filter_button_Callback(Widget w,XtPointer clientData,XtPointer callD
 
 void toggle_filter_button(snd_info *sp, int state)
 {
-  XmToggleButtonSetState(w_snd_filter_button(sp),state,TRUE);
+  if (IS_PLAYER(sp))
+    sp->filtering = state;
+  else XmToggleButtonSetState(w_snd_filter_button(sp),state,TRUE);
 }
 
 static void filter_textfield_deactivate(snd_info *sp)
@@ -703,7 +725,8 @@ void sp_display_env(snd_info *sp)
 
 void set_filter_text(snd_info *sp, char *str)
 {
-  XmTextSetString(w_snd_filter(sp),str);
+  if (!(IS_PLAYER(sp)))
+    XmTextSetString(w_snd_filter(sp),str);
 }
 
 static void filter_drawer_help_Callback(Widget w,XtPointer clientData,XtPointer callData) 
@@ -750,8 +773,11 @@ static void filter_dB_Callback(Widget w,XtPointer clientData,XtPointer callData)
 void set_filter_dBing(snd_info *sp, int val)
 {
   sp->filter_dBing = val;
-  XmToggleButtonSetState(w_snd_filter_dB(sp),val,FALSE);
-  sp_display_env(sp);
+  if (!(IS_PLAYER(sp)))
+    {
+      XmToggleButtonSetState(w_snd_filter_dB(sp),val,FALSE);
+      sp_display_env(sp);
+    }
 }
 
 
@@ -760,12 +786,15 @@ void set_snd_filter_order(snd_info *sp, int order)
   char *fltorder;
   if (order&1) order++;
   if (order<=0) order=2;
-  fltorder = (char *)CALLOC(4,sizeof(char));
-  sprintf(fltorder,"%d",order);
-  XmTextSetString(w_snd_filter_order(sp),fltorder);
   sp->filter_order = order;
-  FREE(fltorder);
-  sp_display_env(sp);
+  if (!(IS_PLAYER(sp)))
+    {
+      fltorder = (char *)CALLOC(4,sizeof(char));
+      sprintf(fltorder,"%d",order);
+      XmTextSetString(w_snd_filter_order(sp),fltorder);
+      FREE(fltorder);
+      sp_display_env(sp);
+    }
   sp->filter_changed = 1;
 }
 
@@ -852,17 +881,23 @@ void filter_env_changed(snd_info *sp, env *e)
 {
   /* turn e back into a string for textfield widget */
   char *tmpstr=NULL;
-  XmTextSetString(w_snd_filter(sp),tmpstr=env_to_string(e));
-  if (tmpstr) FREE(tmpstr);
-  sp_display_env(sp);
-  /* this is called also from snd-scm.c */
+  if (!(IS_PLAYER(sp)))
+    {
+      XmTextSetString(w_snd_filter(sp),tmpstr=env_to_string(e));
+      if (tmpstr) FREE(tmpstr);
+      sp_display_env(sp);
+      /* this is called also from snd-scm.c */
+    }
   sp->filter_changed = 1;
 }
 
 void set_play_button(snd_info *sp, int val)
 {
-  XmToggleButtonSetState(w_snd_play(sp),val,FALSE);
-  set_file_browser_play_button(sp->shortname,val);
+  if (!(IS_PLAYER(sp)))
+    {
+      XmToggleButtonSetState(w_snd_play(sp),val,FALSE);
+      set_file_browser_play_button(sp->shortname,val);
+    }
 }
 
 static void Play_button_Callback(Widget w,XtPointer clientData,XtPointer callData)
@@ -916,7 +951,7 @@ static int set_play_button_pause(snd_info *sp, void *ptr)
   pause_data *pd = (pause_data *)ptr;
   snd_state *ss;
   Widget w;
-  if (sp->playing)
+  if ((sp->playing) && (!(IS_PLAYER(sp))))
     {
       ss = pd->ss;
       w = w_snd_play(sp);
@@ -966,8 +1001,11 @@ static void set_sync_color(snd_info *sp)
 void syncb(snd_info *sp, int on)
 {
   sp->syncing = on;
-  set_sync_color(sp);
-  XmToggleButtonSetState(w_snd_sync(sp),(on == 0) ? FALSE : TRUE,FALSE);
+  if (!(IS_PLAYER(sp)))
+    {
+      set_sync_color(sp);
+      XmToggleButtonSetState(w_snd_sync(sp),(on == 0) ? FALSE : TRUE,FALSE);
+    }
 }
 
 static void Sync_button_Callback(Widget w,XtPointer clientData,XtPointer callData)

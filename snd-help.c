@@ -251,7 +251,10 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
-6-Sep:   added gtk menu accelerators, stop-playing-channel-hook, just-sounds-hook.\n\
+8-Sep:   make-player, add-player, stop-player, start-playing.\n\
+           (and make-amp-controls example in snd-gtk.scm).\n\
+         changed setf.scm to use Guile 1.4's generalized set! (rather than setf).\n\
+6-Sep:   gtk menu accelerators, stop-playing-channel-hook, just-sounds-hook.\n\
 5-Sep:   changed Apply button handling -- control-click now for selection.\n\
          HAVE_GTKEXTRA to support libgtkextra's icon-oriented file selector.\n\
 31-Aug:  gtk popup menu fixed.\n\
@@ -1088,6 +1091,7 @@ all refer to the same thing.\n\
   " S_abortQ "            ()\n\
   " S_activate_listener " ()\n\
   " S_add_mark "          (sample snd chn)\n\
+  " S_add_player "        (player start end)\n\
   " S_add_to_main_menu "  (menu-label)\n\
   " S_add_to_menu "       (top-menu menu-label callback)\n\
   " S_add_transform "     (name xlab lo hi transform)\n\
@@ -1176,6 +1180,7 @@ all refer to the same thing.\n\
   " S_loop_samples "      (reader function calls origin)\n\
   " S_mus_sound_length "      (snd chn)\n\
   " S_make_color "        (r g b)\n\
+  " S_make_player "       (snd chn)\n\
   " S_make_region "       (beg end snd chn)\n\
   " S_make_region_sample_reader "(start snd chn dir)\n\
   " S_make_sample_reader "(start snd chn dir)\n\
@@ -1364,6 +1369,8 @@ all refer to the same thing.\n\
   " S_srate "             (snd)\n\
   " S_src_selection "     (num-or-env base)\n\
   " S_src_sound "         (num-or-env base)\n\
+  " S_start_playing "     (chans srate background)\n\
+  " S_stop_player "       (player)\n\
   " S_stop_playing "      (snd)\n\
   " S_swap_channels "     (snd1 chn1 snd2 chn2 beg dur)\n\
   " S_syncd_marks "       (sync)\n\

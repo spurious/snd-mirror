@@ -121,7 +121,7 @@ moog.scm          Moog filter (from CLM)
 pqwvox.scm        phase-quadrature waveshaping (from CLM)
 pvoc.scm          phase-vocoder examples
 rgb.scm           color definitions
-setf.scm          implement Common Lisp's setf for Snd functions
+setf.scm          use generalize set! rather than set-* functions
 snd-gtk.scm       various Guile-Gtk examples
 v.scm             fm-violin (from CLM)
 zip.scm           the zipper (a cross-fader, sort of) (from CLM)
@@ -156,9 +156,9 @@ to the variable name.  auto-resize's current
 value is accessed above via <code>(auto-resize)</code>, and set to a
 new value via <code>(set-auto-resize #f)</code>. #t is Scheme for "true"
 (often 1 in C, t in Lisp), #f is "false" (0 in C, nil in Lisp).
-If you'd rather use
-Common Lisp's setf, see setf.scm; if it is loaded 
-you can say <code>(setf (auto-resize) #f)</code> instead of
+If you'd rather use a generalized set! (and have Guile 1.4 or later)
+see setf.scm; if it is loaded 
+you can say <code>(set! (auto-resize) #f)</code> instead of
 <code>(set-auto-resize #f)</code>.
 A statement like <code>(set-auto-resize #f)</code> can be placed in your ~/.snd initialization file
 to make it the default setting for your version of Snd, or placed
@@ -1233,6 +1233,7 @@ sets its value to val.
 
 
 <pre>
+  <a name="addplayer">add-player</a>        (player)      add <i>player</i> to the play-list (see <a href="#makeplayer">make-player</a>). 
   <a name="sndamp">amp</a>               (<em class=targ>snd</em>)         current amp (control panel slider) value.
 <small>
                                   It is possible to use these controls (in "real-time") in your own functions.
@@ -1392,6 +1393,30 @@ sets its value to val.
                                   (C) float function that takes one float argument (the current sample), 
                                   the number of times to call that function, and a name for the editing 
                                   operation for the edit history list.
+  <a name="makeplayer">make-player</a>       (<em class=narg>snd chn</em>)     make a new player associated with <i>snd</i>'s channel <i>chn</i>.
+                                  A <i>player</i> is a sort of wrapper for a channel of a sound that supports
+                                  all the control-panel functions.  Once created, you can set these
+                                  fields, then call <a href="#addplayer">add-player</a> to add this channel to the list of
+                                  channels either being played (if a play is in progress) or about
+                                  to be played.  Once some player is in the play-list, you can start 
+                                  the play with <a href="#startplaying">start-playing</a>, and stop it prematurely with either 
+                                  <a href="#stopplayer">stop-player</a> or <a href="#sndstop">stop-playing</a>.  These functions make it possible 
+                                  to build custom control panels.  Here's a simple example that plays a 
+                                  sound with individual amplitudes for the channels:
+<small>
+                                    (define play-with-amps
+                                      (lambda (sound . amps)
+                                        (let ((chans (chans sound)))
+                                          (do ((chan 0 (1+ chan)))
+                                              ((= chan chans))
+                                            (let ((player (make-player sound chan)))
+                                              (set-amp (list-ref amps chan) player)
+                                              (add-player player)))
+                                          (start-playing chans (srate sound)))))
+
+                                    (play-with-amps 0 1.0 0.5) ;plays channel 2 of stereo sound at half amplitude
+</small>
+                                  See also make-amp-controls in snd-gtk.scm.
   <a name="mapacrossallchans">map-across-all-chans</a> (func <i>start end edname</i>) 
                                   apply func to all open channels in parallel (see <a href="#scanning">Scanning Data</a>).
   <a name="mapacrosschans">map-across-chans</a>  (func <i>start end edname</i>) 
@@ -1705,8 +1730,13 @@ sets its value to val.
                                   (if any) represents the difference of the new srate from 1.0 -- that is,
                                   (src-sound '(0 0 1 0)) is a no-op, whereas (src-sound '(0 0 1 1) moves
                                   up an octave over the course of the sound.
+  <a name="startplaying">start-playing</a>     (<i>chans srate background</i>)  
+                                  if a play-list is waiting, start it.  <i>chans</i> defaults to 1, 
+                                  <i>srate</i> defaults to 44100, <i>background</i> defaults to #t.
   <a name="startprogressreport">start-progress-report</a> (<i>snd</i>)     see <a href="#progressreport">progress-report</a>.
-  <a name="sndstop">stop-playing</a>      (<i>snd</i>)         if <i>snd</i> is playing, stop [<em class=error>no-such-sound</em>].
+  <a name="stopplayer">stop-player</a>       (player)      remove <i>player</i> from play-list(see <a href="#makeplayer">make-player</a>).
+  <a name="sndstop">stop-playing</a>      (<i>snd</i>)         if <i>snd</i> is playing, stop it [<em class=error>no-such-sound</em>].
+                                  If no argument is given, stop all sounds (channels) in progress.
   <a name="swapchannels">swap-channels</a>     (<i>snd1 chn1 snd2 chn2 beg dur</i>)
                                   Swap the indicated channels, between beg and beg+dur.
   <a name="sndsyncing">syncing</a>           (<em class=targ>snd</em>)         <i>snd</i>'s 'sync' value (an integer, 0=off)

@@ -919,6 +919,7 @@ void finalize_apply(snd_info *sp);
 int run_apply(int ofd);
 #if HAVE_GUILE
   void g_init_dac(SCM local_doc);
+  snd_info *player(int index);
 #endif
 void dac_set_expand(snd_info *sp, Float newval);
 void dac_set_expand_length(snd_info *sp, Float newval);

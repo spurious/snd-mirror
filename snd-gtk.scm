@@ -3,6 +3,7 @@
 ;;; make-amp-dialog: create a dialog with an amplitude control on playback and a play button
 ;;; make-control-dialog: create a dialog that controls all the "hidden" control-panel variables
 ;;; control the fm-violin's amplitude from a slider
+;;; provide separate amplitude control for each channel (an extension of the control panel)
 
 
 (use-modules (gtk gtk) (gtk gdk))
@@ -10,6 +11,7 @@
 
 ;;; --------------------------------
 ;;; make a dialog connected to a menu item that controls playback amp
+;;;   (see also make-amp-controls below)
 
 (define make-amp-dialog
   (lambda ()
@@ -158,3 +160,74 @@
 			    (set! running #f)))))))
 	    (gtk-widget-show button)
 	    (gtk-widget-show window)))))))
+
+
+;;; --------------------------------
+;;; provide separate amplitude control for each channel (an extension of the control panel)
+
+(define make-amp-controls
+  ;; makes a dialog with a slider for each channel, controlling the amplitude"
+  (lambda () 
+    (let ((players (make-vector 8))
+	  (controls (make-vector 8))
+	  (playing #f))
+      (define (player? snd) (and (number? snd) (< snd 0)))
+      (define control-dialog-menu (gtk-menu-item-new-with-label "controls"))
+      (define add-control
+	(lambda (container name adjs)
+	  (let* ((adj (apply gtk-adjustment-new adjs))
+		 (lab (gtk-label-new name))
+		 (scl (gtk-hscale-new adj))
+		 (hb (gtk-hbox-new #f 0)))
+	    (gtk-box-pack-start container hb #t #t 2)
+	    (gtk-widget-show hb)
+	    (gtk-box-pack-start hb lab #f #f 2)
+	    (gtk-widget-show lab)
+	    (gtk-box-pack-start hb scl #t #t 2)
+	    (gtk-widget-show scl)
+	    (gtk-range-set-update-policy scl 'continuous)
+	    (gtk-scale-set-digits scl 2)
+	    (gtk-scale-set-draw-value scl #t)
+	    adj)))
+      (add-hook! stop-playing-channel-hook
+	(lambda (snd chn)
+	  (set! playing #f)
+	  (if (player? snd)
+	      (vector-set! players chn 0))))
+      (gtk-menu-append (sg-options-menu-widget) control-dialog-menu)
+      (gtk-widget-show control-dialog-menu)
+      (gtk-signal-connect control-dialog-menu "activate"
+	(lambda ()
+	  (let* ((window (gtk-dialog-new))
+		 (outer-vbox (gtk-vbox-new #f 0))
+		 (button (gtk-button-new-with-label "play"))
+		 (chns (chans 0)))
+	    (gtk-box-pack-start (gtk-dialog-action-area window) outer-vbox #t #t 0)
+	    (gtk-widget-show outer-vbox)
+	    (gtk-box-pack-start outer-vbox button #f #f 2)
+	    (gtk-signal-connect button "clicked"
+	      (lambda ()
+		(if playing
+		    (stop-playing)
+		    (let ((chns (chans 0)))
+		      (do ((chan 0 (1+ chan)))
+			  ((= chan chns))
+			(let ((player (make-player 0 chan)))
+			  (vector-set! players chan player)
+			  (set-amp (gtk-adjustment-value (vector-ref controls chan)) player)
+			  (add-player (vector-ref players chan))))
+		      (set! playing #t)
+		      (start-playing chns (srate))))))
+	    (gtk-widget-show button)
+	    (do ((chan 0 (1+ chan)))
+		((= chan chns))
+	      (let ((adj (add-control outer-vbox "amp" '(1.0 0.0 3.01 .01 .01 .01))))
+		(vector-set! controls chan adj)
+		(gtk-signal-connect adj "value_changed"
+		  (lambda ()
+		    (let ((snd (vector-ref players chan)))
+		      (if (player? snd)
+			  (set-amp (gtk-adjustment-value adj) snd)))))))
+	    (gtk-widget-show window)))))))
+
+; (make-amp-controls)

@@ -680,7 +680,7 @@ static void reflect_play_stop (snd_info *sp)
 }
 
 #if HAVE_GUILE
-/* static int free_player(snd_info *sp); */
+  static void free_player(snd_info *sp);
 #endif
 
 static void stop_playing_with_toggle(dac_info *dp, int toggle)
@@ -721,7 +721,7 @@ static void stop_playing_with_toggle(dac_info *dp, int toggle)
       if (sp_stopping)
 	call_stop_playing_hook(sp);
       call_stop_playing_channel_hook(sp,cp);
-      /* if (sp->index < 0) {free_player(sp); sp = NULL;} */
+      if (sp->index < 0) {free_player(sp); sp = NULL;}
     }
 #endif
   free_dac_info(dp);
@@ -2002,14 +2002,15 @@ static SCM g_stop_playing(SCM snd_n)
 }
 
 
-#if 0
+/* -------- players -------- */
+
 static snd_info **players = NULL;
 static int *player_chans = NULL;
 static int players_size = 0;
 
 static int new_player_index(void)
 {
-  int i,loc=-1,old_size;
+  int i,old_size;
   if (players_size == 0)
     {
       players_size = 8;
@@ -2022,8 +2023,8 @@ static int new_player_index(void)
       return(-i);
   old_size = players_size;
   players_size += 8;
-  players = (snd_info **)REALLOC(players_size,sizeof(snd_info *));
-  player_chans = (int *)REALLOC(players_size,sizeof(int));
+  players = (snd_info **)REALLOC(players,players_size * sizeof(snd_info *));
+  player_chans = (int *)REALLOC(player_chans,players_size * sizeof(int));
   for (i=old_size;i<players_size;i++)
     {
       players[i] = NULL;
@@ -2035,9 +2036,9 @@ static int new_player_index(void)
 static int make_player(snd_info *sp, chan_info *cp)
 {
   /* store sp so we can access it via find_sound (get_sp) later */
-  players[-(sp->index)] = sp;
-  players[-(sp->index)] = cp->chan;
-  return(sp->index)
+  players[PLAYER(sp)] = sp;
+  player_chans[PLAYER(sp)] = cp->chan;
+  return(sp->index);
 }
 
 snd_info *player(int index)
@@ -2047,21 +2048,17 @@ snd_info *player(int index)
   return(NULL);
 }
 
-static int free_player(snd_info *sp)
+static void free_player(snd_info *sp)
 {
-  players[-(sp->index)] = NULL;
-  player_chans[-(sp->index)] = 0;
+  players[PLAYER(sp)] = NULL;
+  player_chans[PLAYER(sp)] = 0;
   FREE(sp->fullname);
-  FREE(sp->sgx);
   FREE(sp->chans);
   FREE(sp);
 }
 
 
-#define S_make_player                      "make-player"
-#define S_add_player                       "add-player"
-#define S_stop_player                      "stop-player"
-#define S_start_playing                    "start-playing"
+/* add-player make-player stop-player start-playing */
 
 static SCM g_make_player(SCM snd, SCM chn)
 {
@@ -2075,16 +2072,19 @@ static SCM g_make_player(SCM snd, SCM chn)
   if (cp)
     {
       new_sp = make_snd_info(NULL,get_global_state(),"wrapper",true_sp->hdr,new_player_index());
+      FREE(new_sp->sgx); /* no built-in GUI */
+      new_sp->sgx = NULL;
       new_sp->chans[cp->chan] = cp;
       return(gh_int2scm(make_player(new_sp,cp)));
     }
-  else return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST3(gh_str02scm(S_wrap_channel),snd,chn)));
+  else return(scm_throw(NO_SUCH_CHANNEL,SCM_LIST3(gh_str02scm(S_make_player),snd,chn)));
 }
 
 static SCM g_add_player(SCM snd_chn, SCM start, SCM end)
 {
   #define H_add_player "(" S_add_player " &optional player start end) starts playing snd's channel chn"
   snd_info *sp;
+  chan_info *cp;
   int index;
   ERRN1(snd_chn,S_add_player);
   index = -gh_scm2int(snd_chn);
@@ -2109,18 +2109,15 @@ static SCM g_stop_player(SCM snd_chn)
 {
   #define H_stop_player "(" S_stop_player " player) stops player"
   int index;
+  snd_info *sp;
   index = -gh_scm2int(snd_chn);
   sp = players[index];
   if (sp) stop_playing_sound(sp);
+  return(snd_chn);
 }
 
-  DEFINE_PROC(gh_new_procedure0_2(S_make_player,SCM_FNC g_make_player),H_make_player);
-  DEFINE_PROC(gh_new_procedure1_2(S_add_player,SCM_FNC g_add_player),H_add_player);
-  DEFINE_PROC(gh_new_procedure0_3(S_start_playing,SCM_FNC g_start_playing),H_start_playing);
-  DEFINE_PROC(gh_new_procedure1_0(S_stop_player,SCM_FNC g_stop_player),H_stop_player);
 /* also the dac filler needs to run on empty buffers in this case? */
 
-#endif
 
 
 static SCM start_playing_hook,stop_playing_hook,stop_playing_region_hook,stop_playing_channel_hook;
@@ -2155,17 +2152,23 @@ static int call_start_playing_hook(snd_info *sp)
 
 void g_init_dac(SCM local_doc)
 {
-  DEFINE_PROC(gh_new_procedure3_0(S_set_reverb_funcs,SCM_FNC g_set_reverb_funcs),H_set_reverb_funcs);
-  DEFINE_PROC(gh_new_procedure3_0(S_set_expand_funcs,SCM_FNC g_set_expand_funcs),H_set_expand_funcs);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_contrast_func,SCM_FNC g_set_contrast_func),H_set_contrast_func);
-  DEFINE_PROC(gh_new_procedure0_0(S_reverb_funcs,SCM_FNC g_reverb_funcs),H_reverb_funcs);
-  DEFINE_PROC(gh_new_procedure0_0(S_expand_funcs,SCM_FNC g_expand_funcs),H_expand_funcs);
-  DEFINE_PROC(gh_new_procedure0_0(S_contrast_func,SCM_FNC g_contrast_func),H_contrast_func);
+  DEFINE_PROC(gh_new_procedure(S_set_reverb_funcs,SCM_FNC g_set_reverb_funcs,3,0,0),H_set_reverb_funcs);
+  DEFINE_PROC(gh_new_procedure(S_set_expand_funcs,SCM_FNC g_set_expand_funcs,3,0,0),H_set_expand_funcs);
+  DEFINE_PROC(gh_new_procedure(S_set_contrast_func,SCM_FNC g_set_contrast_func,1,0,0),H_set_contrast_func);
+  DEFINE_PROC(gh_new_procedure(S_reverb_funcs,SCM_FNC g_reverb_funcs,0,0,0),H_reverb_funcs);
+  DEFINE_PROC(gh_new_procedure(S_expand_funcs,SCM_FNC g_expand_funcs,0,0,0),H_expand_funcs);
+  DEFINE_PROC(gh_new_procedure(S_contrast_func,SCM_FNC g_contrast_func,0,0,0),H_contrast_func);
 
   DEFINE_PROC(gh_new_procedure(S_play,SCM_FNC g_play,0,5,0),H_play);
   DEFINE_PROC(gh_new_procedure(S_play_selection,SCM_FNC g_play_selection,0,1,0),H_play_selection);
   DEFINE_PROC(gh_new_procedure(S_play_and_wait,SCM_FNC g_play_and_wait,0,5,0),H_play_and_wait);
-  DEFINE_PROC(gh_new_procedure0_1(S_stop_playing,SCM_FNC g_stop_playing),H_stop_playing);
+  DEFINE_PROC(gh_new_procedure(S_stop_playing,SCM_FNC g_stop_playing,0,1,0),H_stop_playing);
+
+  DEFINE_PROC(gh_new_procedure(S_make_player,SCM_FNC g_make_player,0,2,0),H_make_player);
+  DEFINE_PROC(gh_new_procedure(S_add_player,SCM_FNC g_add_player,1,2,0),H_add_player);
+  DEFINE_PROC(gh_new_procedure(S_start_playing,SCM_FNC g_start_playing,0,3,0),H_start_playing);
+  DEFINE_PROC(gh_new_procedure(S_stop_player,SCM_FNC g_stop_player,1,0,0),H_stop_player);
+
 #if (!HAVE_GUILE_1_3_0)
   stop_playing_hook = scm_create_hook(S_stop_playing_hook,1);                     /* arg = sound */
   stop_playing_channel_hook = scm_create_hook(S_stop_playing_channel_hook,2);     /* args = sound channel */

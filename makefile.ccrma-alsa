@@ -2,7 +2,7 @@
 
 CC = gcc
 CFLAGS = -g -O2 -DLINUX -DCCRMA -DHAVE_ALSA -I/usr/lib/snd/include
-LIBS = -L/usr/lib/snd/lib -lguile -L/usr/X11R6/lib -lXm -lXp -lXpm -lXext -lXt -lSM -lICE -lX11 -lasound -lm -ldl
+LIBS = -Xlinker -rpath -Xlinker /usr/lib/snd/lib -L/usr/lib/snd/lib -lguile -L/usr/X11R6/lib -lXm -lXp -lXpm -lXext -lXt -lSM -lICE -lX11 -lasound -lm -ldl
 
 include makesnd.files
 

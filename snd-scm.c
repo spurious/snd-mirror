@@ -1576,9 +1576,7 @@ snd_info *get_sp(SCM scm_snd_n)
 	    return(state->sounds[snd_n]);
 	  else return(NULL);
 	}
-#if HAVE_GUILE
-	/* return(player(snd_n)); */
-#endif
+      else return(player(snd_n));
       return(NULL);
     }
   else

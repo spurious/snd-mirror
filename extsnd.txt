@@ -80,7 +80,7 @@ moog.scm          Moog filter (from CLM)
 pqwvox.scm        phase-quadrature waveshaping (from CLM)
 pvoc.scm          phase-vocoder examples
 rgb.scm           color definitions
-setf.scm          implement Common Lisp's setf for Snd functions
+setf.scm          use generalize set! rather than set-* functions
 snd-gtk.scm       various Guile-Gtk examples
 v.scm             fm-violin (from CLM)
 zip.scm           the zipper (a cross-fader, sort of) (from CLM)
@@ -111,11 +111,12 @@ function, and set using a function with "set-" prepended to the variable
 name. auto-resize's current value is accessed above via (auto-resize), and
 set to a new value via (set-auto-resize #f). #t is Scheme for "true" (often
 1 in C, t in Lisp), #f is "false" (0 in C, nil in Lisp). If you'd rather use
-Common Lisp's setf, see setf.scm; if it is loaded you can say (setf
-(auto-resize) #f) instead of (set-auto-resize #f). A statement like
-(set-auto-resize #f) can be placed in your ~/.snd initialization file to
-make it the default setting for your version of Snd, or placed in a separate
-file of Scheme code and loaded at any time via the load function.
+a generalized set! (and have Guile 1.4 or later) see setf.scm; if it is
+loaded you can say (set! (auto-resize) #f) instead of (set-auto-resize #f).
+A statement like (set-auto-resize #f) can be placed in your ~/.snd
+initialization file to make it the default setting for your version of Snd,
+or placed in a separate file of Scheme code and loaded at any time via the
+load function.
 
 In the sections below, the variable or function name is followed by either
 its default value or the function arguments, then some brief description of
@@ -1140,6 +1141,7 @@ settable prepend "set-" to the accessor name and place the new value as the
 first argument. That is, (amp snd) returns the control-panel amp setting,
 and (set-amp val snd) sets its value to val.
 
+  add-player        (player)      add player to the play-list (see make-player).
   amp               (snd)         current amp (control panel slider) value.
 
                                   It is possible to use these controls (in "real-time") in your own functions.
@@ -1299,6 +1301,30 @@ and (set-amp val snd) sets its value to val.
                                   (C) float function that takes one float argument (the current sample),
                                   the number of times to call that function, and a name for the editing
                                   operation for the edit history list.
+  make-player       (snd chn)     make a new player associated with snd's channel chn.
+                                  A player is a sort of wrapper for a channel of a sound that supports
+                                  all the control-panel functions.  Once created, you can set these
+                                  fields, then call add-player to add this channel to the list of
+                                  channels either being played (if a play is in progress) or about
+                                  to be played.  Once some player is in the play-list, you can start
+                                  the play with start-playing, and stop it prematurely with either
+                                  stop-player or stop-playing.  These functions make it possible
+                                  to build custom control panels.  Here's a simple example that plays a
+                                  sound with individual amplitudes for the channels:
+
+                                    (define play-with-amps
+                                      (lambda (sound . amps)
+                                        (let ((chans (chans sound)))
+                                          (do ((chan 0 (1+ chan)))
+                                              ((= chan chans))
+                                            (let ((player (make-player sound chan)))
+                                              (set-amp (list-ref amps chan) player)
+                                              (add-player player)))
+                                          (start-playing chans (srate sound)))))
+
+                                    (play-with-amps 0 1.0 0.5) ;plays channel 2 of stereo sound at half amplitude
+
+                                  See also make-amp-controls in snd-gtk.scm.
   map-across-all-chans (func start end edname)
                                   apply func to all open channels in parallel (see Scanning Data).
   map-across-chans  (func start end edname)
@@ -1612,8 +1638,13 @@ and (set-amp val snd) sets its value to val.
                                   (if any) represents the difference of the new srate from 1.0 -- that is,
                                   (src-sound '(0 0 1 0)) is a no-op, whereas (src-sound '(0 0 1 1) moves
                                   up an octave over the course of the sound.
+  start-playing     (chans srate background)
+                                  if a play-list is waiting, start it.  chans defaults to 1,
+                                  srate defaults to 44100, background defaults to #t.
   start-progress-report (snd)     see progress-report.
-  stop-playing      (snd)         if snd is playing, stop [no-such-sound].
+  stop-player       (player)      remove player from play-list(see make-player).
+  stop-playing      (snd)         if snd is playing, stop it [no-such-sound].
+                                  If no argument is given, stop all sounds (channels) in progress.
   swap-channels     (snd1 chn1 snd2 chn2 beg dur)
                                   Swap the indicated channels, between beg and beg+dur.
   syncing           (snd)         snd's 'sync' value (an integer, 0=off)

@@ -371,6 +371,21 @@ If you're running linux-snd, you'll need guile 1.4 (it will appear
 as libguile.so.8 in ldd).
 
 
+> Other thing is that configure doesn't find guile-1.4.
+> For some reason it thinks it's an older version and I have to manually edit
+> config.h
+
+It's using guile-config to find guile; if you've got more
+than one guile-config, it's up to your PATH setting, or
+something, which one gets called.  In Redhat, an ancient
+version gets installed in /usr/bin, then if you install
+your own using the defaults, it ends up in /usr/local/bin,
+and in many cases, the new version is not noticed. You
+could delete or rename /usr/bin/guile-config or change the
+relevant environment variable.  To see what configure sees,
+in a shell try guile-config link or guile-config --version.
+
+
 ----------------------------------------------------------------
 If you hit a bug, don't just sit there weeping -- send me
 (bil@ccrma.stanford.edu) a description of it!  If it's something like

@@ -3,7 +3,6 @@
  *      exs: red for changed portion in time domain, 
  *        annotation boxes (see grfsnd)
  *        popup info in file viewer
- *        added amp in control panel (chans separate -- requires snd-dac support)
  *        special lisp graph effects
  *        own fft peaks info
  */
@@ -676,22 +675,6 @@ static SCM g_set_graph_cursor(SCM curs)
 
 #if HAVE_GUILE_GTK
 static void init_guile_gtk(SCM local_doc);
-
-static SCM gtk_catch_scm_error(void *data, SCM tag, SCM throw_args)
-{
-  return(tag);
-}
-
-static SCM eval_str_wrapper(void *data)
-{
-  return(gh_eval_str((char *)data));
-}
-
-static SCM eval_str(char *buf)
-{
-  return(scm_internal_stack_catch(SCM_BOOL_T,eval_str_wrapper,buf,gtk_catch_scm_error,buf));
-}
-
 #endif
 
 void g_initialize_xgh(snd_state *ss, SCM local_doc)

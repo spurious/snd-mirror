@@ -4370,6 +4370,29 @@
 	(close-sound snd1)
 	(close-sound snd2)
 	(close-sound snd3))
+
+      (define play-with-amps
+	(lambda (sound . amps)
+	  (let ((chans (chans sound)))
+	    (do ((chan 0 (1+ chan)))
+		((= chan chans))
+	      (let ((player (make-player sound chan)))
+		(set-amp (list-ref amps chan) player)
+		(set-speed .5 player)
+		(set-expanding #t player)
+		(set-expand 2.0 player)
+		(set-contrasting #t player)
+		(set-contrast 1.0 player)
+		(set-reverbing #t player)
+		(set-reverb-scale .02 player)
+		(add-player player)))
+	    (start-playing chans (srate sound) #f))))
+
+      (let ((snd2 (open-sound "2.snd")))
+	(if (sound? snd2)
+	    (play-with-amps snd2 0.2 0.1))
+	(close-sound snd2))
+
       ))
 
 
