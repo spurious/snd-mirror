@@ -1747,52 +1747,6 @@ static SCM g_set_x_axis_style(SCM val)
   RTNINT(x_axis_style(state));
 }
 
-static SCM g_xmax(void) {RTNFLT(xmax(state));}
-static SCM g_set_xmax(SCM val) 
-{
-  #define H_xmax "(" S_xmax ") -> x axis max (truncates sound if necessary)"
-  #define H_set_xmax "(" S_set_xmax " val) sets " S_xmax
-  Float fval;
-  ERRN1(val,S_set_xmax); 
-  fval = gh_scm2double(val);
-  if (fval >= 0.0) /* sigh... 0.0 is the "no xmax" flag */
-    set_xmax(state,fval);
-  RTNFLT(xmax(state));
-}
-
-static SCM g_xmin(void) {RTNFLT(xmin(state));}
-static SCM g_set_xmin(SCM val) 
-{
-  #define H_xmin "(" S_xmin ") -> x axis min"
-  #define H_set_xmin "(" S_set_xmin " val) sets " S_xmin
-  Float fval;
-  ERRN1(val,S_set_xmin); 
-  fval = gh_scm2double(val);
-  if (fval >= 0.0)
-    set_xmin(state,fval);
-  RTNFLT(xmin(state));
-}
-
-static SCM g_ymax(void) {RTNFLT(ymax(state));}
-static SCM g_set_ymax(SCM val)
-{
-  #define H_ymax "(" S_ymax ") -> y axis max (used to narrow the slider range)"
-  #define H_set_ymax "(" S_set_ymax " val) sets " S_ymax
-  ERRN1(val,S_set_ymax); 
-  set_ymax(state,gh_scm2double(val));
-  RTNFLT(ymax(state));
-}
-
-static SCM g_ymin(void) {RTNFLT(ymin(state));}
-static SCM g_set_ymin(SCM val) 
-{
-  #define H_ymin "(" S_ymin ") -> y axis min"
-  #define H_set_ymin "(" S_set_ymin " val) sets " S_ymin
-  ERRN1(val,S_set_ymin); 
-  set_ymin(state,gh_scm2double(val));
-  RTNFLT(ymin(state));
-}
-
 static SCM g_zero_pad(void) {RTNINT(zero_pad(state));}
 static SCM g_set_zero_pad(SCM val) 
 {
@@ -4173,14 +4127,6 @@ void g_initialize_gh(snd_state *ss)
   DEFINE_PROC(gh_new_procedure1_0(S_set_window_y,g_set_window_y),H_set_window_y);
   DEFINE_PROC(gh_new_procedure0_0(S_x_axis_style,g_x_axis_style),H_x_axis_style);
   DEFINE_PROC(gh_new_procedure1_0(S_set_x_axis_style,g_set_x_axis_style),H_set_x_axis_style);
-  DEFINE_PROC(gh_new_procedure0_0(S_xmax,g_xmax),H_xmax);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_xmax,g_set_xmax),H_set_xmax);
-  DEFINE_PROC(gh_new_procedure0_0(S_xmin,g_xmin),H_xmin);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_xmin,g_set_xmin),H_set_xmin);
-  DEFINE_PROC(gh_new_procedure0_0(S_ymax,g_ymax),H_ymax);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_ymax,g_set_ymax),H_set_ymax);
-  DEFINE_PROC(gh_new_procedure0_0(S_ymin,g_ymin),H_ymin);
-  DEFINE_PROC(gh_new_procedure1_0(S_set_ymin,g_set_ymin),H_set_ymin);
   DEFINE_PROC(gh_new_procedure0_0(S_min_dB,g_min_dB),H_min_dB);
   DEFINE_PROC(gh_new_procedure1_0(S_set_min_dB,g_set_min_dB),H_set_min_dB);
   DEFINE_PROC(gh_new_procedure0_0(S_zero_pad,g_zero_pad),H_zero_pad);

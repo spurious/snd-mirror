@@ -318,7 +318,7 @@ typedef struct snd__state {
   int Color_Inverted,Speed_Style,Movies,Normalize_Fft,Show_Mix_Waveforms,Mix_Waveform_Height,Fit_Data_On_Open;
   int Speed_Tones,Sinc_Width,X_Axis_Style,Zoom_Focus_Style,Save_State_On_Exit,Graph_Style;
   int Normalize_On_Open,Auto_Resize,Auto_Update,Max_Regions,Max_Fft_Peaks;
-  Float Initial_X0,Initial_X1,Initial_Y0,Initial_Y1,Xmin,Xmax,Ymin,Ymax,Reverb_Decay;
+  Float Initial_X0,Initial_X1,Initial_Y0,Initial_Y1,Reverb_Decay;
   int Raw_Srate,Raw_Chans,Raw_Format,Use_Raw_Defaults,Audio_Output_Device;
   int Print_Length,Show_Mix_Consoles,Dac_Size,Dac_Folding,Previous_Files_Sort,Show_Selection_Transform,With_Mix_Consoles;
   char *Recorder_File,*Save_State_File,*Listener_Prompt;

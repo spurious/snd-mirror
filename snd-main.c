@@ -230,10 +230,6 @@ static void save_snd_state_options (snd_state *ss, FILE *fd)
   if (fneq(initial_x1(ss),DEFAULT_INITIAL_X1)) fprintf(fd,"(%s %.4f)\n",S_set_initial_x1,initial_x1(ss));
   if (fneq(initial_y0(ss),DEFAULT_INITIAL_Y0)) fprintf(fd,"(%s %.4f)\n",S_set_initial_y0,initial_y0(ss));
   if (fneq(initial_y1(ss),DEFAULT_INITIAL_Y1)) fprintf(fd,"(%s %.4f)\n",S_set_initial_y1,initial_y1(ss));
-  if (fneq(xmax(ss),DEFAULT_XMAX)) fprintf(fd,"(%s %.4f)\n",S_set_xmax,xmax(ss));
-  if (fneq(xmin(ss),DEFAULT_XMIN)) fprintf(fd,"(%s %.4f)\n",S_set_xmin,xmin(ss));
-  if (fneq(ymax(ss),DEFAULT_YMAX)) fprintf(fd,"(%s %.4f)\n",S_set_ymax,ymax(ss));
-  if (fneq(ymin(ss),DEFAULT_YMIN)) fprintf(fd,"(%s %.4f)\n",S_set_ymin,ymin(ss));
   if (fneq(ss->min_dB,DEFAULT_MIN_DB)) fprintf(fd,"(%s %.4f)\n",S_set_min_dB,ss->min_dB);
   if (fneq(color_cutoff(ss),DEFAULT_COLOR_CUTOFF)) fprintf(fd,"(%s %.4f)\n",S_set_color_cutoff,color_cutoff(ss));
   if (fneq(color_scale(ss),DEFAULT_COLOR_SCALE)) fprintf(fd,"(%s %.4f)\n",S_set_color_scale,color_scale(ss));

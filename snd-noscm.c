@@ -554,10 +554,6 @@ static int handle_set(snd_state *ss, char *tok, char **str)
     }
   if (strcmp(tok,S_set_with_mix_consoles) == 0) {set_with_mix_consoles(ss,istr(str[1])); isym(ss,0); return(0);}
   if (strcmp(tok,S_set_x_axis_style) == 0) {in_set_x_axis_style(ss,istr(str[1])); isym(ss,0); return(0);}
-  if (strcmp(tok,S_set_xmax) == 0) {set_xmax(ss,fstr(str[1])); isym(ss,0); return(0);}
-  if (strcmp(tok,S_set_xmin) == 0) {set_xmin(ss,fstr(str[1])); isym(ss,0); return(0);}
-  if (strcmp(tok,S_set_ymax) == 0) {set_ymax(ss,fstr(str[1])); isym(ss,0); return(0);}
-  if (strcmp(tok,S_set_ymin) == 0) {set_ymin(ss,fstr(str[1])); isym(ss,0); return(0);}
   if (strcmp(tok,S_set_zero_pad) == 0) {set_zero_pad(ss,istr(str[1])); isym(ss,0); return(0);}
   if (strcmp(tok,S_set_zoom_focus_style) == 0) {activate_focus_menu(ss,istr(str[1])); isym(ss,0); return(0);}
   if (strcmp(tok,S_set_amp) == 0) 
@@ -1290,13 +1286,9 @@ static int symit(snd_state *ss,char **str)
     case 'x':
       if (strcmp(tok,S_x_axis_style) == 0) {isym(ss,x_axis_style(ss)); return(0);}
       if (strcmp(tok,S_x_bounds) == 0) {cp = get_cp(ss,str[3],str[4]); if (cp) fsym(ss,(cp->axis)->x0); else isym(ss,0); return(0);}
-      if (strcmp(tok,S_xmax) == 0) {fsym(ss,xmax(ss)); return(0);}
-      if (strcmp(tok,S_xmin) == 0) {fsym(ss,xmin(ss)); return(0);}
       break;
     case 'y':
       if (strcmp(tok,S_y_bounds) == 0) {cp = get_cp(ss,str[3],str[4]); if (cp) fsym(ss,(cp->axis)->y0); else isym(ss,0); return(0);}
-      if (strcmp(tok,S_ymax) == 0) {fsym(ss,ymax(ss)); return(0);}
-      if (strcmp(tok,S_ymin) == 0) {fsym(ss,ymin(ss)); return(0);}
       break;
     case 'z':
       if (strcmp(tok,S_zero_pad) == 0) {isym(ss,zero_pad(ss)); return(0);}

@@ -361,13 +361,6 @@ Lisp-like setf, see setf.scm; if it is loaded you can say (setf
                                 (x-in-seconds), in samples (x-in-samples), or expressed
                                 as a percentage of the overall duration (useful in envelope definitions).
                                 The latter is x-to-one. This is the View menu 'X-axis units' option.
-  xmax                  0.0     Sets the x axis maximum (truncates the display if the sound is longer).
-                                That is, you can display anything below xmax normally, but
-                                Snd refuses to go past that point.  Not sure why you'd want this...
-                                The default of 0.0 turns off this feature.
-  xmin                  0.0     Sets the x axis minimum.
-  ymax                  1.0     Sets the y axis maximum (useful to narrow the range of slider action).
-  ymin                 -1.0     Sets the y axis minimum.
   zero-pad              0       fft zero pad size as a multiple of the fft size; (set-zero-pad 1) gives you
                                 half data, half zeros.
   zoom-color            ivory4  zoom slider color.
@@ -403,9 +396,10 @@ one) mixes.
 In the control panel functions such as amp and set-contrast, the snd
 argument can be #t. In this case the set-<field> functions affect all sounds
 at once, and the <field> functions return a list of all the current control
-panels settings for that field. Similarly for the channel functions such as
-ffting, so (set-ffting #t #t #t) turns on the fft display in all channels of
-all sounds.
+panels settings for that field. The channel functions and region functions
+such as 'ffting' and 'region-chans' are handled similarly, so (set-ffting #t
+#t #t) turns on the fft display in all channels of all sounds. The functions
+that accept #t in this regard use snd chn below.
 
 When an error occurs, in most cases the function throws a tag such as
 'no-such-sound, 'impossible-bounds, 'no-active-selection, etc. The error tag

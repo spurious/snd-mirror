@@ -269,16 +269,12 @@ void add_channel_data_1(chan_info *cp, snd_info *sp, snd_state *ss, int graphed)
 {
   /* initialize channel, including edit/sound lists */
   axis_info *ap;
-  Float ymin,ymax,xmin,xmax,y0,y1,x0,x1,dur,gdur;
+  Float ymin,ymax,xmax,y0,y1,x0,x1,dur,gdur;
   char *label;
   file_info *hdr;
   int samples_per_channel;
   hdr = sp->hdr;
   samples_per_channel = hdr->samples/hdr->chans;
-  ymax = ymax(ss);
-  ymin = ymin(ss);
-  xmax = xmax(ss);
-  xmin = xmin(ss);
   x0 = initial_x0(ss);
   x1 = initial_x1(ss);
   y0 = initial_y0(ss);
@@ -286,22 +282,27 @@ void add_channel_data_1(chan_info *cp, snd_info *sp, snd_state *ss, int graphed)
   label = STR_time;
   dur = (Float)samples_per_channel/(Float)hdr->srate;
   if (dur == 0.0) gdur = .001; else gdur = dur;
-  if (xmax == 0.0) xmax = gdur;
-  if (x1 == 0.0) x1 = gdur;
+  xmax = gdur;
   if ((sp->fit_data_amps) && (fit_data_on_open(ss)))
     {
       ymax = sp->fit_data_amps[cp->chan];
-      if ((ymax == 0.0) || (ymax == FALSE)) ymax = 1.0;
+      if (ymax == 0.0) ymax = 1.0;
       ymin = -ymax;
-      xmax = gdur;
-      xmin = 0.0;
-      y0 = ymin; y1 = ymax; x0 = xmin; x1 = xmax;
+      y0 = ymin; 
+      y1 = ymax; 
+      x0 = 0.0;
+      x1 = xmax;
+    }
+  else
+    {
+      if (x1 == 0.0) x1 = gdur;
+      ymax = 1.0;
+      ymin = -1.0;
     }
   if (dur <= 0.0)
     {
       /* empty sound */
       label = STR_no_data;
-      xmin = 0.0;
       xmax = .001;
     }
   else
@@ -309,10 +310,10 @@ void add_channel_data_1(chan_info *cp, snd_info *sp, snd_state *ss, int graphed)
       if (xmax > dur) xmax = dur;
       if (x0 >= x1) x0 = x1-.01;
     }
-  if (xmax <= xmin) xmax = xmin+.001;
+  if (xmax <= 0.0) xmax = .001;
   if (ymin >= ymax) ymin = ymax-.01;
   if (y0 >= y1) y0 = y1-.01;
-  ap = make_axis_info(cp,xmin,xmax,ymin,ymax,label,x0,x1,y0,y1,NULL);
+  ap = make_axis_info(cp,0.0,xmax,ymin,ymax,label,x0,x1,y0,y1,NULL);
   if (dur == 0)
     {
       ap->zx = 1.0;

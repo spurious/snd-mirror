@@ -500,22 +500,6 @@ enum {SCAN_CURRENT_CHAN,SCAN_SOUND_CHANS,SCAN_SYNCD_CHANS,SCAN_ALL_CHANS};
 #define in_set_x_axis_style(ss,a) ss->X_Axis_Style = a
 #define DEFAULT_AXIS_STYLE X_IN_SECONDS
 
-#define xmax(ss) ss->Xmax
-#define set_xmax(ss,a) ss->Xmax = a
-#define DEFAULT_XMAX 0.0
-
-#define xmin(ss) ss->Xmin
-#define set_xmin(ss,a) ss->Xmin = a
-#define DEFAULT_XMIN 0.0
-
-#define ymax(ss) ss->Ymax
-#define set_ymax(ss,a) ss->Ymax = a
-#define DEFAULT_YMAX 1.0
-
-#define ymin(ss) ss->Ymin
-#define set_ymin(ss,a) ss->Ymin = a
-#define DEFAULT_YMIN -1.0
-
 #define zero_pad(ss) ss->Zero_Pad
 #define set_zero_pad(ss,a) ss->Zero_Pad = a
 #define DEFAULT_ZERO_PAD 0

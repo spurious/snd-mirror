@@ -15,7 +15,7 @@
 #endif
       
 
-#define NUM_COMMANDS 752
+#define NUM_COMMANDS 744
 
 static char *snd_commands[NUM_COMMANDS]={
   S_abort,S_abortQ,S_activate_listener,S_add_mark,S_add_sound_file_extension,S_add_to_main_menu,S_add_to_menu,S_add_transform,
@@ -157,8 +157,8 @@ static char *snd_commands[NUM_COMMANDS]={
   S_set_uniting,S_set_use_raw_defaults,S_set_use_sinc_interp,S_set_verbose_cursor,S_set_vu_font,
   S_set_vu_font_size,S_set_vu_size,S_set_wavelet_type,S_set_waving,S_set_wavo,S_set_wavo_hop,S_set_wavo_trace,S_set_window_height,
   S_set_window_width,S_set_window_x,S_set_window_y,S_set_with_mix_consoles,
-  S_set_x_axis_style,S_set_x_bounds,S_set_xmax,S_set_xmin,S_set_y_bounds,
-  S_set_ymax,S_set_ymin,S_set_zero_pad,S_set_zoom_color,S_set_zoom_focus_style,
+  S_set_x_axis_style,S_set_x_bounds,S_set_y_bounds,
+  S_set_zero_pad,S_set_zoom_color,S_set_zoom_focus_style,
 
   S_short_file_name,S_short_file_names,S_show_all_axes,S_show_axes,S_show_fft_peaks,S_show_indices,S_show_listener,S_show_marks,
   S_show_mix_consoles,S_show_mix_waveforms,S_show_no_axes,S_show_selection_transform,S_show_usage_stats,S_show_x_axis,S_show_y_zero,
@@ -186,9 +186,9 @@ static char *snd_commands[NUM_COMMANDS]={
   S_walsh_transform,S_wavelet_transform,S_wavelet_type,S_waving,S_wavo,S_wavo_hop,S_wavo_trace,
   S_window_height,S_window_width,S_window_x,S_window_y,S_with_mix_consoles,
 
-  S_x_axis_style,S_x_bounds,S_x_in_samples,S_x_in_seconds,S_x_position_slider,S_x_to_one,S_x_zoom_slider,S_xmax,S_xmin,
+  S_x_axis_style,S_x_bounds,S_x_in_samples,S_x_in_seconds,S_x_position_slider,S_x_to_one,S_x_zoom_slider,
 
-  S_y_bounds,S_y_position_slider,S_y_zoom_slider,S_yes_or_no_p,S_ymax,S_ymin,
+  S_y_bounds,S_y_position_slider,S_y_zoom_slider,S_yes_or_no_p,
 
   S_zero_pad,S_zoom_color,S_zoom_focus_style
 };

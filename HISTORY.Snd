@@ -1,5 +1,6 @@
 snd change log
 
+  1-Aug:     removed xmin,xmax,ymin,ymax (redundant and pointless).
   31-Jul:    amp env subsampling, C-x v, and superimposed fft bugs (thanks to Daniel Aronovitch).
              control panel funcs (set-amp etc) can take snd arg = #t -> all sounds.
              snd-gtk.scm make-control-dialog to expose hidden control-panel variables.

@@ -5,6 +5,7 @@
 <!-- 
 	EM.red {color:red; font-style:normal}
         EM.error {color:chocolate; font-style:normal}
+        EM.targ {color:darkgreen; font-style:italic}
 	H1 {text-align: center}
 	UL {list-style-type: none}
 -->
@@ -408,13 +409,6 @@ you can say (setf (auto-resize) #f) instead of
                                 (<i>x-in-seconds</i>), in samples (<i>x-in-samples</i>), or expressed
                                 as a percentage of the overall duration (useful in envelope definitions).
                                 The latter is <i>x-to-one</i>. This is the View menu 'X-axis units' option.
-  <a name="xmax">xmax</a>                  0.0     Sets the x axis maximum (truncates the display if the sound is longer).
-                                That is, you can display anything below <i>xmax</i> normally, but
-                                Snd refuses to go past that point.  Not sure why you'd want this...
-                                The default of 0.0 turns off this feature.
-  <a name="xmin">xmin</a>                  0.0     Sets the x axis minimum.
-  <a name="ymax">ymax</a>                  1.0     Sets the y axis maximum (useful to narrow the range of slider action).
-  <a name="ymin">ymin</a>                 -1.0     Sets the y axis minimum.
   <a name="zeropad">zero-pad</a>              0       fft zero pad size as a multiple of the fft size; (set-zero-pad 1) gives you
                                 half data, half zeros.
   <a name="zoomcolor">zoom-color</a>            ivory4  zoom slider color.
@@ -451,7 +445,8 @@ can be #t.  In this case the set-&lt;field&gt; functions affect all sounds at on
 &lt;field&gt; functions return a list of all the current control panels settings for that
 field.  The channel functions and region functions such as 'ffting' and 'region-chans'
 are handled similarly, so <code>(set-ffting #t #t #t)</code>
-turns on the fft display in all channels of all sounds.
+turns on the fft display in all channels of all sounds.  The functions that accept #t
+in this regard use <em class=targ>snd chn</em> below.
 </p>
 
 <p>When an error occurs, in most cases the function throws a tag such as 'no-such-sound,
@@ -519,7 +514,7 @@ of these below.
                                            (do ((i 0 (1+ i))) ((= i len) v)
        	                                     (vct-set! v i (fir-filter flt (next-sample fd)))))))
 
-  <a name="sndamp">amp</a>               (<i>snd</i>)         current amp (control panel slider) value.
+  <a name="sndamp">amp</a>               (<em class=targ>snd</em>)         current amp (control panel slider) value.
                                   It is possible to use these controls (in "real-time") in your own functions.
                                   See amprt in examp.scm for a simple example.  In all the control-panel functions,
                                   the <i>snd</i> argument can be #t meaning "all sounds".
@@ -560,18 +555,18 @@ of these below.
                                         (<em class=red>call-apply</em>)))
 
   <a name="sndchangemenulabel">change-menu-label</a> (top-menu old-label new-label) 
-  <a name="sndchannels">channels</a>          (<i>snd</i>)         number of channels in <i>snd</i>.
-  <a name="sndchans">chans</a>             (<i>snd</i>)         same as <i>channels</i> (the forgetful programmer's friend).
+  <a name="sndchannels">channels</a>          (<em class=targ>snd</em>)         number of channels in <i>snd</i>.
+  <a name="sndchans">chans</a>             (<em class=targ>snd</em>)         same as <i>channels</i> (the forgetful programmer's friend).
   <a name="sndclearaudioinputs">clear-audio-inputs</a>()            in Linux/OSS, try to reduce soundcard background racket.
-  <a name="sndclose">close-sound</a>       (<i>snd</i>)         close <i>snd</i> (same as File menu Close).
+  <a name="sndclose">close-sound</a>       (<em class=targ>snd</em>)         close <i>snd</i> (same as File menu Close).
   <a name="sndclosesoundfile">close-sound-file</a>  (fd bytes)    close file updating header to report <i>bytes</i> bytes of data. (See <a href="#sndopensoundfile">open-sound-file</a>).
   <a name="colorp">color?</a>            (obj)         #t if <i>obj</i> is a color object (see <a href="#makecolor">make-color</a>).
   <a name="color3list">color-&gt;list</a>       (obj)         return list (r g b) of color components.
   <a name="sndcolordialog">color-dialog</a>      ()            fire up the Color dialog.
-  <a name="sndcomment">comment</a>           (<i>snd</i>)         <i>snd</i>'s comment, if any.
-  <a name="sndcontrast">contrast</a>          (<i>snd</i>)         current <a href="snd.html#contrast">contrast</a> (control panel slider) value.
-  <a name="sndcontrastamp">contrast-amp</a>      (<i>snd</i>)         <i>snd</i>'s <a href="snd.html#contrast">contrast-amp</a> (control panel variable).
-  <a name="sndcontrasting">contrasting</a>       (<i>snd</i>)         #t if <i>snd</i> has <a href="snd.html#contrast">contrast</a> turned on (control panel)
+  <a name="sndcomment">comment</a>           (<em class=targ>snd</em>)         <i>snd</i>'s comment, if any.
+  <a name="sndcontrast">contrast</a>          (<em class=targ>snd</em>)         current <a href="snd.html#contrast">contrast</a> (control panel slider) value.
+  <a name="sndcontrastamp">contrast-amp</a>      (<em class=targ>snd</em>)         <i>snd</i>'s <a href="snd.html#contrast">contrast-amp</a> (control panel variable).
+  <a name="sndcontrasting">contrasting</a>       (<em class=targ>snd</em>)         #t if <i>snd</i> has <a href="snd.html#contrast">contrast</a> turned on (control panel)
   <a name="sndconvolve">convolve-arrays</a>   (rl1 rl2)     convolve vectors <i>rl1</i> with <i>rl2</i>.  Result returned in rl1.
                                   rl1 should be large enough to hold the full convolution result.
                                   As a special dispensation for forgetful users, if rl1 is a file
@@ -598,9 +593,9 @@ of these below.
 
                                      (count-matches (lambda (y) (&gt; (or y 0.0) .1)))
 
-  <a name="sndcursor">cursor</a>            (<i>snd chn</i>)     cursor location (samples) of channel <i>chn</i> of <i>snd</i>.
-  <a name="sndcursorfollowsplay">cursor-follows-play</a> (<i>snd</i>)       #t if cursor is following along in the sound as it plays.
-  <a name="cursorstyle">cursor-style</a>      (<i>snd chn</i>)     cursor style (cursor-cross or cursor-line)
+  <a name="sndcursor">cursor</a>            (<em class=targ>snd chn</em>)     cursor location (samples) of channel <i>chn</i> of <i>snd</i>.
+  <a name="sndcursorfollowsplay">cursor-follows-play</a> (<em class=targ>snd</em>)       #t if cursor is following along in the sound as it plays.
+  <a name="cursorstyle">cursor-style</a>      (<em class=targ>snd chn</em>)     cursor style (cursor-cross or cursor-line)
                                   The following hooks set the cursor-style to cursor-line while playing if
                                   cursor-follows-play is #t:
 
@@ -616,8 +611,8 @@ of these below.
                                       (lambda (snd) (set-sound-cursor snd <em class=red>cursor-cross</em>)))
 
   <a name="sndcut">cut</a>               ()            cut the current selection (a no-op if no active selection) [<em class=error>no-active-selection</em>].
-  <a name="snddataformat">data-format</a>       (<i>snd</i>)         <i>snd</i>'s data format (a list of the format number and its name).
-  <a name="snddatalocation">data-location</a>     (<i>snd</i>)         <i>snd</i>'s data location (bytes).
+  <a name="snddataformat">data-format</a>       (<em class=targ>snd</em>)         <i>snd</i>'s data format (a list of the format number and its name).
+  <a name="snddatalocation">data-location</a>     (<em class=targ>snd</em>)         <i>snd</i>'s data location (bytes).
   <a name="snddeletemark">delete-mark</a>       (<i>id</i>)          delete mark <i>id</i> (- C-m).
   <a name="snddeletemarks">delete-marks</a>      (<i>snd chn</i>)     delete all marks in <i>snd</i>'s channel <i>chn</i>
   <a name="snddeleteregion">delete-region</a>     (<i>reg</i>)         delete region number <i>reg</i> (which defaults to 0).  This removes the
@@ -625,13 +620,13 @@ of these below.
   <a name="snddeletesample">delete-sample</a>     (samp <i>snd chn</i>) delete sample <i>samp</i> in <i>snd</i>'s channel <i>chn</i> [<em class=error>no-such-sample</em>].
   <a name="snddeletesamples">delete-samples</a>    (samp samps <i>snd chn</i>) delete <i>samps</i> samples starting at sample <i>samp</i>.
   <a name="dismissalldialogs">dismiss-all-dialogs</a> ()          deactivate all dialogs.
-  <a name="sndeditfragment">edit-fragment</a>     (<i>num snd chn</i>) return a list similar to that displayed in the edit history window giving 
+  <a name="sndeditfragment">edit-fragment</a>     (<i>num</i> <em class=targ>snd chn</em>) return a list similar to that displayed in the edit history window giving 
                                   the origin of the specified edit, its type (delete, insert, etc), its begin sample 
                                   (given the current edit tree), and the number of samples affected.  If num is omitted,
                                   return the last (currently active) edit [<em class=error>no-such-edit</em>].
   <a name="sndeditheaderdialog">edit-header-dialog</a>()            fire up Edit Header dialog.
-  <a name="sndeditposition">edit-position</a>     (<i>snd chn</i>)     return a current position in edit history list.
-  <a name="sndedits">edits</a>             (<i>snd chn</i>)     return a list with number of undo-able edits and redo-able edits.
+  <a name="sndeditposition">edit-position</a>     (<em class=targ>snd chn</em>)     return a current position in edit history list.
+  <a name="sndedits">edits</a>             (<em class=targ>snd chn</em>)     return a list with number of undo-able edits and redo-able edits.
   <a name="sndenv">env-sound</a>         (envelope <i>samp samps env-base snd chn</i>)
                                   apply (in amplitude) <i>envelope</i> to <i>snd</i>'s channel <i>chn</i> starting
                                   at sample <i>samp</i> for <i>samps</i> samples with connecting segments
@@ -645,26 +640,26 @@ of these below.
                                   apply <i>envelope</i> to the currently selected portion of <i>snd</i>'s channel <i>chn</i> [<em class=error>no-active-selection</em>].
   <a name="sndenveddialog">enved-dialog</a>      ()            fire up the Envelope editor dialog.
   <a name="sndexit">exit</a>              ()            exit Snd.
-  <a name="sndexpand">expand</a>            (<i>snd</i>)         current <a href="snd.html#expand">expansion</a> amount (control panel).
-  <a name="sndexpandhop">expand-hop</a>        (<i>snd</i>)         <i>snd</i>'s <a href="snd.html#expand">expansion</a> hop amount (seconds).
-  <a name="sndexpandlength">expand-length</a>     (<i>snd</i>)         <i>snd</i>'s <a href="snd.html#expand">expansion</a> segment length (seconds).
-  <a name="sndexpandramp">expand-ramp</a>       (<i>snd</i>)         <i>snd</i>'s <a href="snd.html#expand">expansion</a> ramp amount (between 0 and .5).
+  <a name="sndexpand">expand</a>            (<em class=targ>snd</em>)         current <a href="snd.html#expand">expansion</a> amount (control panel).
+  <a name="sndexpandhop">expand-hop</a>        (<em class=targ>snd</em>)         <i>snd</i>'s <a href="snd.html#expand">expansion</a> hop amount (seconds).
+  <a name="sndexpandlength">expand-length</a>     (<em class=targ>snd</em>)         <i>snd</i>'s <a href="snd.html#expand">expansion</a> segment length (seconds).
+  <a name="sndexpandramp">expand-ramp</a>       (<em class=targ>snd</em>)         <i>snd</i>'s <a href="snd.html#expand">expansion</a> ramp amount (between 0 and .5).
                                   This affects the smoothness of the grain overlaps -- .001 gives a 
                                   rattling effect (see make-control-dialog in snd-gtk.scm).
-  <a name="sndexpanding">expanding</a>         (<i>snd</i>)         #t if <i>snd</i>'s expand button is on.
+  <a name="sndexpanding">expanding</a>         (<em class=targ>snd</em>)         #t if <i>snd</i>'s expand button is on.
   <a name="sndfft">fft</a>               (rl im <i>sgn</i>)   perform an FFT on <i>rl</i> and <i>im</i> (the real and imaginary parts 
                                   of the input data. <i>sgn</i> is 1 for an FFT, -1 for an inverse FFT; (default 1).
-  <a name="sndffting">ffting</a>            (<i>snd chn</i>)     #t if <i>snd</i>'s channel <i>chn</i> is displaying a spectrum (the 'f' button).
+  <a name="sndffting">ffting</a>            (<em class=targ>snd chn</em>)     #t if <i>snd</i>'s channel <i>chn</i> is displaying a spectrum (the 'f' button).
   <a name="sndfiledialog">file-dialog</a>       ()            fire up the <a href="snd.html#prevfiles">list</a> of current and previous files (not the file browser).
-  <a name="sndfilename">file-name</a>         (<i>snd</i>)         <i>snd</i>'s complete file name.
-  <a name="sndfilterenv">filter-env</a>        (<i>snd</i>)         <i>snd</i>'s <a href="snd.html#filter">filter</a> envelope (control panel).
-  <a name="sndfilterdbing">filter-dBing</a>      (<i>snd</i>)         <i>snd</i>'s <a href="snd.html#filter">filter</a> dB button state (control panel).
-  <a name="sndfilterorder">filter-order</a>      (<i>snd</i>)         <i>snd</i>'s <a href="snd.html#filter">filter</a> order (control panel).
+  <a name="sndfilename">file-name</a>         (<em class=targ>snd</em>)         <i>snd</i>'s complete file name.
+  <a name="sndfilterenv">filter-env</a>        (<em class=targ>snd</em>)         <i>snd</i>'s <a href="snd.html#filter">filter</a> envelope (control panel).
+  <a name="sndfilterdbing">filter-dBing</a>      (<em class=targ>snd</em>)         <i>snd</i>'s <a href="snd.html#filter">filter</a> dB button state (control panel).
+  <a name="sndfilterorder">filter-order</a>      (<em class=targ>snd</em>)         <i>snd</i>'s <a href="snd.html#filter">filter</a> order (control panel).
   <a name="sndfilter">filter-sound</a>      (env order <i>snd chn</i>)
                                   apply an FIR filter of order <i>order</i> and frequency response <i>env</i>
                                   to <i>snd</i>'s channel <i>chn</i>.  <i>env</i> can also be the filter coefficients
                                   themselves, in a vct object with at least order elements (see <a href="grfsnd.html#gmeteor">gmeteor</a>).
-  <a name="sndfiltering">filtering</a>         (<i>snd</i>)         #t if <i>snd</i> is filtering (control panel filter button).
+  <a name="sndfiltering">filtering</a>         (<em class=targ>snd</em>)         #t if <i>snd</i> is filtering (control panel filter button).
   <a name="sndfilterselection">filter-selection</a>  (env order)   apply an FIR filter of order <i>order</i> and frequency response <i>env</i>
                                   to the current selection.  <i>env</i> can also be the filter coefficients
                                   themselves, in a vct object with at least order elements [<em class=error>no-active-selection</em>].
@@ -683,7 +678,7 @@ of these below.
   <a name="sndforwardmark">forward-mark</a>      (<i>count snd chn</i>) move forward <i>count</i> marks (C-j).
   <a name="sndforwardmix">forward-mix</a>       (<i>count snd chn</i>) move forward <i>count</i> mix consoles (C-x C-j).
   <a name="sndforwardsample">forward-sample</a>    (<i>count snd chn</i>) move forward <i>count</i> samples (C-f), return new cursor position.
-  <a name="sndframes">frames</a>            (<i>snd chn</i>)     <i>chn</i>'s current length in samples.
+  <a name="sndframes">frames</a>            (<em class=targ>snd chn</em>)     <i>chn</i>'s current length in samples.
   <a name="freemixsamplereader">free-mix-sample-reader</a>(obj)     release <a href="#samplereaders">mix-sample-reader</a> <i>obj</i>.
   <a name="freesamplereader">free-sample-reader</a>(obj)         release <a href="#samplereaders">sample-reader</a> <i>obj</i>.
   <a name="freetracksamplereader">free-track-sample-reader</a>(obj)   release <a href="#samplereaders">track-sample-reader</a> <i>obj</i>.
@@ -701,7 +696,7 @@ of these below.
                                   colors used when channels are superimposed.  See superimpose-ffts in examp.scm.
   <a name="sndgraphing">graphing</a>          (<i>snd chn</i>)     #t if (lisp) graph data is being displayed.
   <a name="sndgraph2ps">graph-&gt;ps</a>         ()            create Postscript description of current display (see <a href="#epsfile">eps-file</a>).
-  <a name="sndheadertype">header-type</a>       (<i>snd</i>)         return (type . name)
+  <a name="sndheadertype">header-type</a>       (<em class=targ>snd</em>)         return (type . name)
   <a name="sndhelpdialog">help-dialog</a>       (subject help) fire up the help dialog with title <i>subject</i> and body <i>help</i>.
                                       (help-dialog "xyzzy" "are we having fun?")
   <a name="sndhidelistener">hide-listener</a>     ()            close the lisp listener pane.
@@ -719,7 +714,7 @@ of these below.
   <a name="sndkey">key</a>               (key state <i>snd chn</i>) 
                                   execute the keyboard command <i>key</i> with modifier keys <i>state</i>.
                                   shift: 1, control: 4, meta: 8 (see /usr/include/X11/X.h ControlMask et al).
-  <a name="sndleftsample">left-sample</a>       (<i>snd chn</i>)     return the position in samples of the left edge of the time domain
+  <a name="sndleftsample">left-sample</a>       (<em class=targ>snd chn</em>)     return the position in samples of the left edge of the time domain
                                   waveform for <i>snd</i>'s channel <i>chn</i>.
   <a name="sndlist2vct">list-&gt;vct</a>         (lst)         return vct object with elements of list <i>lst</i>
   <a name="loadcolormap">load-colormap</a>     (colors)      use colors in <i>colors</i> (a vector) as current colormap.
@@ -790,7 +785,7 @@ of these below.
                                   of lists is returned, representing each sound and its channels.
   <a name="sndmarkok">mark?</a>             (<i>id</i>)          #t if mark <i>id</i> is active.
   <a name="sndmaxsounds">max-sounds</a>        ()            current size of sound array (grows as required, may contain holes).
-  <a name="sndmaxamp">maxamp</a>            (<i>snd chn</i>)     max amp of <i>snd</i>'s channel <i>chn</i>.
+  <a name="sndmaxamp">maxamp</a>            (<em class=targ>snd chn</em>)     max amp of <i>snd</i>'s channel <i>chn</i>.
   <a name="sndmix">mix</a>               (file <i>samp in_chan snd chn with-mix-consoles</i>)
                                   mix <i>file</i>'s channel <i>in_chan</i> starting at <i>samp</i> in <i>snd</i>'s channel <i>chn</i>.
                                   if only the <i>file</i> argument is given, this is equivalent to the File menu's 
@@ -895,39 +890,39 @@ of these below.
                                   See eval-over-selection in examp.scm for a more useful example.
 
   <a name="sndprotectregion">protect-region</a>    (reg protect) protect/unprotect region <i>reg</i> from deletion in the <a href="snd.html#regionbrowser">region browser</a>.
-  <a name="sndreadonly">read-only</a>         (<i>snd</i>)         #t if <i>snd</i> is read-only, #f otherwise.
+  <a name="sndreadonly">read-only</a>         (<em class=targ>snd</em>)         #t if <i>snd</i> is read-only, #f otherwise.
   <a name="sndrecorderdialog">recorder-dialog</a>   ()            fire up <a href="snd.html#recordfile">recorder</a> window.
   <a name="sndrecordergain">recorder-gain</a>     (gain)        recorder input (soundcard-audio) gain <i>gain</i>.
   <a name="sndrecorderinamp">recorder-in-amp</a>   (in out)      recorder input channel <i>in</i> to output channel <i>out</i> amplitude.
   <a name="sndrecorderoutamp">recorder-out-amp</a>  (out)         recorder file output channel <i>out</i> amplitude.
   <a name="sndredo">redo</a>              (<i>edits snd chn</i>) redo <i>edits</i> edits (default is 1) in <i>snd</i>'s channel <i>chn</i>.
-  <a name="sndregionchans">region-chans</a>      (<i>reg</i>)         number of channels in region <i>reg</i>.
+  <a name="sndregionchans">region-chans</a>      (<em class=targ>reg</em>)         number of channels in region <i>reg</i>.
   <a name="sndregiondialog">region-dialog</a>     ()            fire up <a href="snd.html#regionbrowser">region browser</a> (a no-op if no regions).
-  <a name="sndregionid">region-id</a>         (<i>reg</i>)         unique identifier attached to region <i>reg</i>.
-  <a name="sndregionlength">region-length</a>     (<i>reg</i>)         number of samples (per channel) in region <i>reg</i>.
-  <a name="sndregionmaxamp">region-maxamp</a>     (<i>reg</i>)         maximum amplitude of region <i>reg</i>.
+  <a name="sndregionid">region-id</a>         (<em class=targ>reg</em>)         unique identifier attached to region <i>reg</i>.
+  <a name="sndregionlength">region-length</a>     (<em class=targ>reg</em>)         number of samples (per channel) in region <i>reg</i>.
+  <a name="sndregionmaxamp">region-maxamp</a>     (<em class=targ>reg</em>)         maximum amplitude of region <i>reg</i>.
   <a name="sndregionsample">region-sample</a>     (<i>samp reg chn</i>) value of sample <i>samp</i> in region <i>reg</i> in channel <i>chn</i>.
   <a name="sndregionsamples">region-samples</a>    (<i>samp samps reg chn</i>)
                                   return vector of <i>samps</i> samples starting at <i>samp</i> in region <i>reg</i>'s channel <i>chn</i>.
   <a name="sndregionsamples2vct">region-samples-&gt;vct</a> (<i>samp samps reg chn v</i>)
                                   return vct struct of <i>samps</i> samples starting at <i>samp</i> in region <i>reg</i>'s channel <i>chn</i>.
                                   If v (a vct object) is provided, it is filled, rather than creating a new vct object.
-  <a name="sndregionsrate">region-srate</a>      (<i>reg</i>)         original (nominal) sampling rate of region <i>reg</i>.
+  <a name="sndregionsrate">region-srate</a>      (<em class=targ>reg</em>)         original (nominal) sampling rate of region <i>reg</i>.
   <a name="sndregions">regions</a>           ()            list of ids of regions currently active.
   <a name="regionok">region?</a>           (<i>reg</i>)         #t if region <i>reg</i> has data.
   <a name="sndremovefrommenu">remove-from-menu</a>  (top-menu menu-label) 
                                   remove menu <i>menu-label</i> from the top top-level menu whose index is <i>top-menu</i>.
   <a name="sndreportinminibuffer">report-in-minibuffer</a> (msg <i>snd</i>)  post <i>msg</i> in <i>snd</i>'s minibuffer [<em class=error>no-such-sound</em>].
-  <a name="sndcontrolpanelrestore">restore-control-panel</a> (<i>snd</i>)     same as pushing the control panel '<a href="snd.html#savcontrols">r</a>' button.
-  <a name="sndreverbfeedback">reverb-feedback</a>   (<i>snd</i>)         <i>snd</i>'s reverb feedback coefficient.
-  <a name="sndreverblength">reverb-length</a>     (<i>snd</i>)         <a href="snd.html#reverb">reverb</a> delay line length scaler (control panel).
-  <a name="sndreverblowpass">reverb-lowpass</a>    (<i>snd</i>)         reverb low pass filter coefficient.
-  <a name="sndreverbscale">reverb-scale</a>      (<i>snd</i>)         <a href="snd.html#reverb">reverb</a> amount (control panel).
-  <a name="sndreverbing">reverbing</a>         (<i>snd</i>)         #t if <i>snd</i>'s reverb button is on.
+  <a name="sndcontrolpanelrestore">restore-control-panel</a> (<em class=targ>snd</em>)     same as pushing the control panel '<a href="snd.html#savcontrols">r</a>' button.
+  <a name="sndreverbfeedback">reverb-feedback</a>   (<em class=targ>snd</em>)         <i>snd</i>'s reverb feedback coefficient.
+  <a name="sndreverblength">reverb-length</a>     (<em class=targ>snd</em>)         <a href="snd.html#reverb">reverb</a> delay line length scaler (control panel).
+  <a name="sndreverblowpass">reverb-lowpass</a>    (<em class=targ>snd</em>)         reverb low pass filter coefficient.
+  <a name="sndreverbscale">reverb-scale</a>      (<em class=targ>snd</em>)         <a href="snd.html#reverb">reverb</a> amount (control panel).
+  <a name="sndreverbing">reverbing</a>         (<em class=targ>snd</em>)         #t if <i>snd</i>'s reverb button is on.
   <a name="sndreverseselection">reverse-selection</a> ()            reverse data delineated by current selection [<em class=error>no-active-selection</em>].
   <a name="sndreverse">reverse-sound</a>     (<i>snd chn</i>)     reverse data.
   <a name="sndrevert">revert-sound</a>      (<i>snd</i>)         revert <i>snd</i> to saved state (undo all edits).
-  <a name="sndrightsample">right-sample</a>      (<i>snd chn</i>)     position (samples) of right edge of time domain waveform.
+  <a name="sndrightsample">right-sample</a>      (<em class=targ>snd chn</em>)     position (samples) of right edge of time domain waveform.
   <a name="sndsample">sample</a>            (samp <i>snd chn</i>) value of sample <i>samp</i> in <i>snd</i>'s channel <i>chn</i>.
                                   If the desired sample happens to fall outside the current in-core buffer 
                                   for the indicated channel, this function grinds to a halt -- if you're 
@@ -945,7 +940,7 @@ of these below.
                                   return vct struct with same data as in <i>samples</i> call above.  If v (a vct object)
                                   is provided, it is filled, rather than creating a new vct object.
                                   <i>pos</i> is the edit history position to read (defaults to current position).
-  <a name="sndcontrolpanelsave">save-control-panel</a>(<i>snd</i>)         same as pushing the control panel '<a href="snd.html#savcontrols">s</a>' button.
+  <a name="sndcontrolpanelsave">save-control-panel</a>(<em class=targ>snd</em>)         same as pushing the control panel '<a href="snd.html#savcontrols">s</a>' button.
   <a name="sndsaveedithistory">save-edit-history</a> (filename <i>snd chn</i>) save current edit list(s) in <i>filename</i>.
                                   If <i>chn</i> is omitted, all <i>snd</i>'s channels are saved; if <i>snd</i> is omitted,
                                   all edit list are saved.  If the underlying files are not subsequently 
@@ -959,7 +954,7 @@ of these below.
                                   save region <i>reg</i> in <i>filename</i> in data format <i>format</i> (default mus-bshort) [<em class=error>cannot-save</em>].
   <a name="sndsaveselection">save-selection</a>    (file <i>header-type data-format srate comment</i>)
                                   save the currently selected data in <i>file</i> [<em class=error>no-active-selection</em>].
-  <a name="sndsave">save-sound</a>        (<i>snd</i>)         save <i>snd</i>; same as File menu's Save option.
+  <a name="sndsave">save-sound</a>        (<em class=targ>snd</em>)         save <i>snd</i>; same as File menu's Save option.
   <a name="sndsaveas">save-sound-as</a>     (filename <i>snd header-type data-format srate channel</i>) 
                                   save <i>snd</i> as <i>filename</i> (same as File Save as option).  If channel is specified,
                                   only that channel is saved (extracted).
@@ -1003,20 +998,20 @@ of these below.
   ;;     means that the command (set-contrasting) turns on contrasting, rather than
   ;;     turning it off (doesn't that make more sense?).
 
-  <a name="sndsetamp">set-amp</a>           (amp <i>snd</i>)           set <i>snd</i>'s amp to <i>amp</i> (control panel).
-  <a name="sndsetcontrast">set-contrast</a>      (contrast <i>snd</i>)      set <i>snd</i>'s contrast amount to <i>contrast</i> (control panel).
-  <a name="sndsetcontrastamp">set-contrast-amp</a>  (contrast-amp <i>snd</i>)  set <i>snd</i>'s <i>contrast-amp</i> (control panel).
+  <a name="sndsetamp">set-amp</a>           (amp <em class=targ>snd</em>)           set <i>snd</i>'s amp to <i>amp</i> (control panel).
+  <a name="sndsetcontrast">set-contrast</a>      (contrast <em class=targ>snd</em>)      set <i>snd</i>'s contrast amount to <i>contrast</i> (control panel).
+  <a name="sndsetcontrastamp">set-contrast-amp</a>  (contrast-amp <em class=targ>snd</em>)  set <i>snd</i>'s <i>contrast-amp</i> (control panel).
   <a name="contrastfunc">set-contrast-func</a> (func)              <i>func</i>, a function of two arguments, the current sample
                                  and the current 'contrast' slider setting, returns a new sample, the result of the
                                  control panel contrast function; <i>func</i> replaces the built-in contrast function.
                                  Pass #f to return to the built-in version. Contrast-func returns this function.
-  <a name="sndsetcontrasting">set-contrasting</a>   (<i>contrasting snd</i>)   set <i>snd</i>'s contrast button to <i>contrasting</i> (default #t).
-  <a name="sndsetcursor">set-cursor</a>        (samp <i>snd chn</i>)      place <i>snd</i>'s channel <i>chn</i>'s cursor at <i>samp</i>.
+  <a name="sndsetcontrasting">set-contrasting</a>   (<i>contrasting</i> <em class=targ>snd</em>)   set <i>snd</i>'s contrast button to <i>contrasting</i> (default #t).
+  <a name="sndsetcursor">set-cursor</a>        (samp <em class=targ>snd chn</em>)      place <i>snd</i>'s channel <i>chn</i>'s cursor at <i>samp</i>.
   <a name="sndsetcursorfollowsplay">set-cursor-follows-play</a> (<i>cursor-follows snd</i>) 
                                  if #t, the cursor runs alongside the waveform as the sound if played (default #t).
-  <a name="setcursorstyle">set-cursor-style</a>  (val <i>snd chn</i>)    set cursor style (cursor-cross or cursor-line).
+  <a name="setcursorstyle">set-cursor-style</a>  (val <em class=targ>snd chn</em>)    set cursor style (cursor-cross or cursor-line).
                                  
-  <a name="sndsetexpand">set-expand</a>        (expand-amount <i>snd</i>) set <i>snd</i>'s expansion amount to <i>expand-amount</i>.
+  <a name="sndsetexpand">set-expand</a>        (expand-amount <em class=targ>snd</em>) set <i>snd</i>'s expansion amount to <i>expand-amount</i>.
   <a name="expandfuncs">set-expand-funcs</a>  (expand make-expand free-expand)
                                  This function replaces the built-in Snd (control panel) expand with your own.
                                  See set-reverb-funcs below for an example.  The three arguments are
@@ -1032,22 +1027,22 @@ of these below.
                                  return a float representing the new sample value.  The corresponding
                                  function reverb-funcs returns a list containing the three functions.
                                  expand-funcs returns a list containing these three functions.
-  <a name="sndsetexpandhop">set-expand-hop</a>    (expand-hop <i>snd</i>)    set <i>snd</i>'s expand-hop to <i>expand-hop</i>.  This is the amount the
+  <a name="sndsetexpandhop">set-expand-hop</a>    (expand-hop <em class=targ>snd</em>)    set <i>snd</i>'s expand-hop to <i>expand-hop</i>.  This is the amount the
                                  expander moves forward in the output on each segment.  If hop &gt; length, 
                                  you get a series of individual (isolated) grains.
-  <a name="sndsetexpandlength">set-expand-length</a> (expand-length <i>snd</i>) set <i>snd</i>'s expand-length (segment length) to <i>expand-length</i>.
+  <a name="sndsetexpandlength">set-expand-length</a> (expand-length <em class=targ>snd</em>) set <i>snd</i>'s expand-length (segment length) to <i>expand-length</i>.
                                  This is the length (seconds) of each grain.
-  <a name="sndsetexpandramp">set-expand-ramp</a>   (expand-ramp <i>snd</i>)   set <i>snd</i>'s expand-ramp (ramp time) to <i>expand-ramp</i>.
-  <a name="sndsetexpanding">set-expanding</a>     (<i>contrasting snd</i>)   set <i>snd</i>'s expand button (default #t).
-  <a name="sndsetffting">set-ffting</a>        (<i>on snd chn</i>)        set <i>snd</i>'s channel <i>chn</i>'s 'f' button (default #t).
-  <a name="sndsetfilterdbing">set-filter-dBing</a>  (dB <i>snd</i>)            set <i>snd</i>'s filter dB button state.
-  <a name="sndsetfilterorder">set-filter-order</a>  (filter-order <i>snd</i>)  set <i>snd</i>'s filter-order.
-  <a name="sndsetfilterenv">set-filter-env</a>    (filter-env <i>snd</i>)    set <i>snd</i>'s filter frequency response envelope (a list).
-  <a name="sndsetfiltering">set-filtering</a>     (filtering <i>snd</i>)     set <i>snd</i>'s filter button (default #t).
-  <a name="sndsetgraphing">set-graphing</a>      (<i>on snd chn</i>)        if #t (1), <i>snd</i>'s channel <i>chn</i>'s displays any lisp-generated
+  <a name="sndsetexpandramp">set-expand-ramp</a>   (expand-ramp <em class=targ>snd</em>)   set <i>snd</i>'s expand-ramp (ramp time) to <i>expand-ramp</i>.
+  <a name="sndsetexpanding">set-expanding</a>     (<i>contrasting</i> <em class=targ>snd</em>)   set <i>snd</i>'s expand button (default #t).
+  <a name="sndsetffting">set-ffting</a>        (<i>on</i> <em class=targ>snd chn</em>)        set <i>snd</i>'s channel <i>chn</i>'s 'f' button (default #t).
+  <a name="sndsetfilterdbing">set-filter-dBing</a>  (dB <em class=targ>snd</em>)            set <i>snd</i>'s filter dB button state.
+  <a name="sndsetfilterorder">set-filter-order</a>  (filter-order <em class=targ>snd</em>)  set <i>snd</i>'s filter-order.
+  <a name="sndsetfilterenv">set-filter-env</a>    (filter-env <em class=targ>snd</em>)    set <i>snd</i>'s filter frequency response envelope (a list).
+  <a name="sndsetfiltering">set-filtering</a>     (filtering <em class=targ>snd</em>)     set <i>snd</i>'s filter button (default #t).
+  <a name="sndsetgraphing">set-graphing</a>      (<i>on</i> <em class=targ>snd chn</em>)        if #t (1), <i>snd</i>'s channel <i>chn</i>'s displays any lisp-generated
                                  graphics data (see <a href="#graphhook">graph-hook</a> and <a href="#sndgraph">graph</a>).
   <a name="sndsetjustsounds">set-just-sounds</a>   (<i>just-sounds</i>)       set just-sounds button in file browser (default #t).
-  <a name="sndsetleftsample">set-left-sample</a>   (samp <i>snd chn</i>)      set <i>snd</i>'s <i>chn</i>'s left sample (the window bound) to <i>samp</i>.
+  <a name="sndsetleftsample">set-left-sample</a>   (samp <em class=targ>snd chn</em>)      set <i>snd</i>'s <i>chn</i>'s left sample (the window bound) to <i>samp</i>.
   <a name="sndsetmarkname">set-mark-name</a>     (id name)           set mark <i>id</i>'s name to <i>name</i> (in <i>snd</i>'s channel <i>chn</i>).
   <a name="sndsetmarksample">set-mark-sample</a>   (id sample)         set mark <i>id</i>'s position to <i>sample</i> (in <i>snd</i>'s channel <i>chn</i>).
   <a name="sndsetmarksync">set-mark-sync</a>     (id sync)           set mark <i>id</i>'s sync value (in <i>snd</i>'s channel <i>chn</i>).
@@ -1063,11 +1058,11 @@ of these below.
   <a name="sndsetmixposition">set-mix-position</a>  (mix samp)          set <i>mix</i>'s position (begin time in samples).
   <a name="sndsetmixspeed">set-mix-speed</a>     (mix speed)         set <i>mix</i>'s speed.
   <a name="sndsetmixtrack">set-mix-track</a>     (mix track)         set <i>mix</i>'s track.
-  <a name="sndsetreadonly">set-read-only</a>     (<i>read-only snd</i>)     set <i>snd</i>'s write-protection to be <i>read-only</i> (default #t).
+  <a name="sndsetreadonly">set-read-only</a>     (<i>read-only</i> <em class=targ>snd</em>)     set <i>snd</i>'s write-protection to be <i>read-only</i> (default #t).
   <a name="sndsetrecordergain">set-recorder-gain</a>(gain amp)           set recorder's hardware gain <i>gain</i> to <i>amp</i>.
   <a name="sndsetrecorderinamp">set-recorder-in-amp</a>(in out amp)       set recorder's input <i>in</i> to output <i>out</i> amp to <i>amp</i>.
   <a name="sndsetrecorderoutamp">set-recorder-out-amp</a>(out amp)         set recorder's file output channel <i>out</i> to <i>amp</i>.
-  <a name="sndsetreverbfeedback">set-reverb-feedback</a>(feedback <i>snd</i>)     set <i>snd</i>'s reverb feedback coefficient to <i>feedback</i>.
+  <a name="sndsetreverbfeedback">set-reverb-feedback</a>(feedback <em class=targ>snd</em>)     set <i>snd</i>'s reverb feedback coefficient to <i>feedback</i>.
   <a name="reverbfuncs">set-reverb-funcs</a>  (reverb make-reverb free-reverb)
                                   This function replaces the built-in Snd reverb with your own.
 
@@ -1098,11 +1093,11 @@ of these below.
                                  sample, and the number of channels of output needed; it should return
                                  a vector of output reverb contributions.
 
-  <a name="sndsetreverblength">set-reverb-length</a> (length <i>snd</i>)        set <i>snd</i>'s reverb delay line length scaler to <i>length</i>.
-  <a name="sndsetreverblowpass">set-reverb-lowpass</a>(lowpass <i>snd</i>)       set <i>snd</i>'s lowpass coefficient to <i>lowpass</i>.
-  <a name="sndsetreverbscale">set-reverb-scale</a>(scale <i>snd</i>)           set <i>snd</i>'s reverb amount to <i>scale</i>.
-  <a name="sndsetreverbing">set-reverbing</a>     (<i>on snd</i>)            set <i>snd</i>'s reverb button (default #t).
-  <a name="sndsetrightsample">set-right-sample</a>  (samp <i>snd chn</i>)      set <i>snd</i>'s channel <i>chn</i>'s right sample position to <i>samp</i>.
+  <a name="sndsetreverblength">set-reverb-length</a> (length <em class=targ>snd</em>)        set <i>snd</i>'s reverb delay line length scaler to <i>length</i>.
+  <a name="sndsetreverblowpass">set-reverb-lowpass</a>(lowpass <em class=targ>snd</em>)       set <i>snd</i>'s lowpass coefficient to <i>lowpass</i>.
+  <a name="sndsetreverbscale">set-reverb-scale</a>(scale <em class=targ>snd</em>)           set <i>snd</i>'s reverb amount to <i>scale</i>.
+  <a name="sndsetreverbing">set-reverbing</a>     (<i>on</i> <em class=targ>snd</em>)            set <i>snd</i>'s reverb button (default #t).
+  <a name="sndsetrightsample">set-right-sample</a>  (samp <em class=targ>snd chn</em>)      set <i>snd</i>'s channel <i>chn</i>'s right sample position to <i>samp</i>.
   <a name="sndsetsample">set-sample</a>        (samp value <i>snd chn</i>) set <i>snd</i>'s channel <i>chn</i>'s sample <i>samp</i> to <i>value</i>.
   <a name="sndsetsamples">set-samples</a>       (samp samps data <i>snd chn trunc</i>) set <i>snd</i>'s channel <i>chn</i>'s samples starting from
                                 sample <i>samp</i> for <i>samps</i> samples to the values in <i>data</i>.
@@ -1110,20 +1105,20 @@ of these below.
                                 <i>data</i> can be a filename; Snd assumes any such file is temporary; it will be 
                                 deleted when no longer needed.  If <i>trunc</i> is #t and <i>samp</i> is 0, the
                                 sound is truncated (if necessary) to reflect the end of <i>data</i>.
-  <a name="sndsetshowingcontrols">set-showing-controls</a> (<i>showing snd</i>)    open or close the control panel (default #t).
+  <a name="sndsetshowingcontrols">set-showing-controls</a> (<i>showing</i> <em class=targ>snd</em>)    open or close the control panel (default #t).
   <a name="setsoundloopinfo">set-sound-loop-info</a> (start0 end0 <i>start1 end1 snd</i>)   
                                 set loop points in header -- start0 refers to the "sustain" loop, start1 to the "release".
-  <a name="sndsetspeed">set-speed</a>         (speed <i>snd</i>)         set <i>snd</i>'s speed to <i>speed</i> (control panel).
-  <a name="sndsetsquelchupdate">set-squelch-update</a>(<i>val snd chn</i>)       if val is not #f, turn off graphics updates else turn them on.
-  <a name="sndsetsyncing">set-syncing</a>       (<i>syncing snd</i>)       set <i>snd</i>'s 'sync' button (default 1).
-  <a name="sndsetuniting">set-uniting</a>       (<i>style snd</i>)         set <i>snd</i>'s 'unite' button (default channels-combined).
-  <a name="sndsetwaving">set-waving</a>        (<i>on snd chn</i>)        set <i>snd</i>'s channel <i>chn</i>'s 'w' button (default #t).
+  <a name="sndsetspeed">set-speed</a>         (speed <em class=targ>snd</em>)         set <i>snd</i>'s speed to <i>speed</i> (control panel).
+  <a name="sndsetsquelchupdate">set-squelch-update</a>(<i>val</i> <em class=targ>snd chn</em>)       if val is not #f, turn off graphics updates else turn them on.
+  <a name="sndsetsyncing">set-syncing</a>       (<i>syncing</i> <em class=targ>snd</em>)       set <i>snd</i>'s 'sync' button (default 1).
+  <a name="sndsetuniting">set-uniting</a>       (<i>style</i> <em class=targ>snd</em>)         set <i>snd</i>'s 'unite' button (default channels-combined).
+  <a name="sndsetwaving">set-waving</a>        (<i>on</i> <em class=targ>snd chn</em>)        set <i>snd</i>'s channel <i>chn</i>'s 'w' button (default #t).
   <a name="sndsetxbounds">set-x-bounds</a>      (x0 x1 <i>snd chn</i>)     set the display window x axis bounds to x0 and x1 (seconds) [<em class=error>impossible-bounds</em>].
   <a name="sndsetybounds">set-y-bounds</a>      (<i>y0 y1 snd chn</i>)     set the display window y axis bounds to y0 and y1. If y1 is 
                                 omitted, it is set from y0; if y0 is also omitted, the y axis bounds 
                                 are set to reflect the channel's current max amp [<em class=error>impossible-bounds</em>].
-  <a name="sndshortfilename">short-file-name</a>   (<i>snd</i>)         return the brief (no directory) form of <i>snd</i>'s filename.
-  <a name="sndshowingcontrols">showing-controls</a>  (<i>snd</i>)         #t if <i>snd</i>'s control panel is open.
+  <a name="sndshortfilename">short-file-name</a>   (<em class=targ>snd</em>)         return the brief (no directory) form of <i>snd</i>'s filename.
+  <a name="sndshowingcontrols">showing-controls</a>  (<em class=targ>snd</em>)         #t if <i>snd</i>'s control panel is open.
   <a name="sndshowlistener">show-listener</a>     ()            open the lisp listener pane.
   <a name="sndsmoothselection">smooth-selection</a>  ()            apply a smoothing function to the current selection [<em class=error>no-active-selection</em>].
   <a name="sndsmooth">smooth</a>            (beg num <i>snd chn</i>) apply a smoothing function to the indicated data.
@@ -1194,9 +1189,9 @@ of these below.
 
                                       (apply map maxamp (all-chans))
 
-  <a name="sndspeed">speed</a>             (<i>snd</i>)         current <a href="snd.html#speed">speed</a> (control panel).
-  <a name="squelchupdate">squelch-update</a>    (<i>snd chn</i>)     #t graphic updates are currently squelched (turned off).
-  <a name="sndsrate">srate</a>             (<i>snd</i>)         <i>snd</i>'s sampling rate.
+  <a name="sndspeed">speed</a>             (<em class=targ>snd</em>)         current <a href="snd.html#speed">speed</a> (control panel).
+  <a name="squelchupdate">squelch-update</a>    (<em class=targ>snd chn</em>)     #t graphic updates are currently squelched (turned off).
+  <a name="sndsrate">srate</a>             (<em class=targ>snd</em>)         <i>snd</i>'s sampling rate.
   <a name="sndsrc">src-sound</a>         (num-or-env <i>base snd chn</i>) sampling rate conversion using 'warped sinc interpolation'.  The
                                   argument <i>num-or-env</i> can be either a number or an envelope.  In 
                                   the latter case, <i>base</i> sets the segment base (default is 1.0 = linear).
@@ -1211,7 +1206,7 @@ of these below.
   <a name="swapchannels">swap-channels</a>     (<i>snd1 chn1 snd2 chn2 beg dur</i>)
                                   Swap the indicated channels, between beg and beg+dur (default is whole channel).
   <a name="syncdmarks">syncd-marks</a>       (sync)        list of marks (ids) that share sync.
-  <a name="sndsyncing">syncing</a>           (<i>snd</i>)         <i>snd</i>'s 'sync' value (an integer, 0=off)
+  <a name="sndsyncing">syncing</a>           (<em class=targ>snd</em>)         <i>snd</i>'s 'sync' value (an integer, 0=off)
   <a name="sndtempfilenames">temp-filenames</a>    (data)        return vector of temp file names (see <a href="#programs">external programs</a>).
   <a name="temptoselection">temp-to-selection</a> (data name origin) read selected data from temp file (see <a href="#programs">external programs</a>).
   <a name="tempstoselection">temps-to-selection</a>(data names origin) read selected data from temp files (see <a href="#programs">external programs</a>).
@@ -1230,7 +1225,7 @@ of these below.
   <a name="sndunbindkey">unbind-key</a>  (key state) cause <i>key</i> with modifiers <i>state</i> to be a no-op.
 
   <a name="sndundo">undo</a>              (<i>edits snd chn</i>) undo <i>edits</i> edits (default 1) in <i>snd</i>'s channel <i>chn</i>.
-  <a name="snduniting">uniting</a>           (<i>snd</i>)         0 if channels are not superimposed or combined ('unite' button is off).
+  <a name="snduniting">uniting</a>           (<em class=targ>snd</em>)         0 if channels are not superimposed or combined ('unite' button is off).
   <a name="sndupdate">update-sound</a>      (snd)         update <i>snd</i> (re-reads data from disk, flushing any pending edits).
   <a name="sndupdatefft">update-fft</a>        (<i>snd chn</i>)     recalculate <i>chn's</i> fft.
   <a name="sndupdategraph">update-graph</a>      (<i>snd chn</i>)     redisplay <i>chn's</i> graph(s).
@@ -1256,13 +1251,13 @@ of these below.
   <a name="vctsmap">vcts-map!</a>         (vobj... proc) vobj[vi][i] = (nth vi (funcall proc num)).
   <a name="sndvector2vct">vector-&gt;vct</a>       (vect)        return vct object with elements of vector <i>vect</i>
   <a name="sndview">view</a>              (filename)    open <i>filename</i> read-only.
-  <a name="sndwaving">waving</a>            (<i>snd chn</i>)     the state of <i>snd</i>'s channel <i>chn</i>'s 'w' button.
+  <a name="sndwaving">waving</a>            (<em class=targ>snd chn</em>)     the state of <i>snd</i>'s channel <i>chn</i>'s 'w' button.
   <a name="sndxbounds">x-bounds</a>          (<i>snd chn</i>)     return (x0 . x1) -- current x axis time domain bounds in seconds.
-  <a name="xpositionslider">x-position-slider</a> (<i>snd chn</i>)     value of x axis position slider.
-  <a name="xzoomslider">x-zoom-slider</a>     (<i>snd chn</i>)     value of x axis zoom slider.
+  <a name="xpositionslider">x-position-slider</a> (<em class=targ>snd chn</em>)     value of x axis position slider.
+  <a name="xzoomslider">x-zoom-slider</a>     (<em class=targ>snd chn</em>)     value of x axis zoom slider.
   <a name="sndybounds">y-bounds</a>          (<i>snd chn</i>)     return (y0 . y1) -- current y axis bounds.
-  <a name="ypositionslider">y-position-slider</a> (<i>snd chn</i>)     value of y axis position slider.
-  <a name="yzoomslider">y-zoom-slider</a>     (<i>snd chn</i>)     value of y axis zoom slider.
+  <a name="ypositionslider">y-position-slider</a> (<em class=targ>snd chn</em>)     value of y axis position slider.
+  <a name="yzoomslider">y-zoom-slider</a>     (<em class=targ>snd chn</em>)     value of y axis zoom slider.
   <a name="sndyesornop">yes-or-no-p</a>       (ques)        modal error dialog, #t if user clicks "ok", otherwise #f.
 
   <a name="ldefvar">defvar</a>            (var val)     same as (define var val) except that the envelope editor keeps track
@@ -1504,7 +1499,7 @@ data handling, whatever.
 
 <p>Snd's overall appearance is controlled first by the startup <a href="grfsnd.html#sndswitches">switches</a> that
 choose the outermost widget; normally this is a paned window with a sound
-in each pane; -separate tries to put each
+in each pane; -separate puts each
 sound in a separate window, and -notebook
 puts each sound on a separate page of a notebook widget.  Similarly -horizontal
 and -vertical determine which way the outer panes are layed out.  The initial

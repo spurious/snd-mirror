@@ -271,10 +271,6 @@
 	'mix-waveform-height (mix-waveform-height) 20 
 	'audio-output-device (audio-output-device) 0 
 	'selected-mix (selected-mix) -1
-	'xmax (xmax) 0.0 
-	'xmin (xmin) 0.0 
-	'ymax (ymax) 1.0 
-	'ymin (ymin) -1.0 
 	'prefix-arg (prefix-arg) 0
 	))))
 
@@ -688,10 +684,6 @@
 	  (list 'wavo-hop wavo-hop 3 set-wavo-hop 6)
 	  (list 'wavo-trace wavo-trace 64 set-wavo-trace 128)
 	  (list 'x-axis-style x-axis-style 0 set-x-axis-style 1)
-	  (list 'xmax xmax 0.0 set-xmax 1.0)
-	  (list 'xmin xmin 0.0 set-xmin 1.0)
-	  (list 'ymax ymax 1.0 set-ymax .5)
-	  (list 'ymin ymin -1.0 set-ymin -.5)
 	  (list 'zero-pad zero-pad 0 set-zero-pad 1)
 	  (list 'zoom-focus-style zoom-focus-style 2 set-zoom-focus-style 1))))
     
@@ -747,8 +739,6 @@
 	  (list 'transform-type transform-type 0 set-transform-type '(-1 123))
 	  (list 'wavelet-type wavelet-type 0 set-wavelet-type '(-1 123))
 	  (list 'x-axis-style x-axis-style 0 set-x-axis-style '(-1 123))
-	  (list 'xmax xmax 0.0 set-xmax '(-1.0))
-	  (list 'xmin xmin 0.0 set-xmin '(-1.0))
 	  (list 'zoom-focus-style zoom-focus-style 2 set-zoom-focus-style '(-1 123)))))
 
       (set-window-width 300)

@@ -482,6 +482,7 @@
     (list "mus-sun" "clm.html#mus-sun")
     (list "mus-xcoeffs" "clm.html#mus-xcoeffs")
     (list "mus-ycoeffs" "clm.html#mus-ycoeffs")
+    (list "name-click-hook" "extsnd.html#nameclickhook")
     (list "new-sound" "extsnd.html#sndnew")
     (list "next-mix-sample" "extsnd.html#nextmixsample")
     (list "next-sample" "extsnd.html#nextsample")
@@ -736,6 +737,7 @@
     (list "short-file-name" "extsnd.html#sndshortfilename")
     (list "show-axes" "extsnd.html#showaxes")
     (list "show-fft-peaks" "extsnd.html#showfftpeaks")
+    (list "show-indices" "extsnd.html#showindices")
     (list "show-listener" "extsnd.html#sndshowlistener")
     (list "show-marks" "extsnd.html#showmarks")
     (list "show-mix-consoles" "extsnd.html#showmixconsoles")
@@ -915,18 +917,15 @@
     (list "x-bounds" "extsnd.html#sndxbounds")
     (list "x-position-slider" "extsnd.html#xpositionslider")
     (list "x-zoom-slider" "extsnd.html#xzoomslider")
-    (list "xmax" "extsnd.html#xmax")
-    (list "xmin" "extsnd.html#xmin")
     (list "y-bounds" "extsnd.html#sndybounds")
     (list "y-position-slider" "extsnd.html#ypositionslider")
     (list "y-zoom-slider" "extsnd.html#yzoomslider")
     (list "yes-or-no-p" "extsnd.html#sndyesornop")
-    (list "ymax" "extsnd.html#ymax")
-    (list "ymin" "extsnd.html#ymin")
     (list "zero-pad" "extsnd.html#zeropad")
     (list "zoom-color" "extsnd.html#zoomcolor")
     (list "zoom-focus-style" "extsnd.html#zoomfocusstyle")
   ))
+
 
 
 

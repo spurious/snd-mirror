@@ -192,6 +192,7 @@ void news_help(snd_state *ss)
 	    "\n",
 	    "Recent changes include:\n\
 \n\
+1-Aug:   removed xmin,xmax,ymin,ymax (redundant and pointless).\n\
 31-Jul:  amp env subsampling, C-x v, and superimposed fft bugs (thanks to Daniel Aronovitch).\n\
          control panel funcs (set-amp etc) can take snd arg = #t -> all sounds.\n\
          snd-gtk.scm make-control-dialog to expose hidden control-panel variables.\n\
@@ -981,10 +982,6 @@ new value via (" S_set_auto_resize " #t). \n\
   " S_window_y "             -1\n\
   " S_with_mix_consoles "     #t\n\
   " S_x_axis_style "          " S_x_in_seconds "\n\
-  " S_xmax "                  0.0\n\
-  " S_xmin "                  0.0\n\
-  " S_ymax "                  1.0\n\
-  " S_ymin "                  1.0\n\
   " S_zero_pad "              0\n\
   " S_zoom_color "            ivory4\n\
   " S_zoom_focus_style "      " S_focus_active "\n\
