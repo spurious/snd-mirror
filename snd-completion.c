@@ -403,7 +403,7 @@ char *info_completer(char *text)
 	      if ((beg > 0) && (parens & 1))            /* i.e. there is a string and we're in it */
 		{
 		  if (new_text) FREE(new_text);
-		  new_file = filename_completer((char *)(text+beg));
+		  new_file = filename_completer((char *)(text + beg));
 		  len = beg + 2 + snd_strlen(new_file);
 		  new_text = (char *)CALLOC(len, sizeof(char));
 		  strncpy(new_text, text, beg);
@@ -490,7 +490,7 @@ char *complete_listener_text(char *old_text, int end, int *try_completion, char 
 	  if (text_pos < spaces)
 	    {
 	      file_text = (char *)CALLOC(spaces + 2, sizeof(char));
-	      for (k = text_pos+1; k < spaces; k++) 
+	      for (k = text_pos + 1; k < spaces; k++) 
 		file_text[k - text_pos - 1] = ' ';
 	      file_text[spaces] = ';';
 	      file_text[spaces + 1] = 0;

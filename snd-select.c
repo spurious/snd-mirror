@@ -1001,16 +1001,16 @@ XEN_ARGIFY_6(g_save_selection_w, g_save_selection)
 void g_init_selection(void)
 {
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_selection_position, g_selection_position_w, H_selection_position,
-					"set-" S_selection_position, g_set_selection_position_w, g_set_selection_position_reversed,
-					0, 2, 1, 2);
+					    "set-" S_selection_position, g_set_selection_position_w, g_set_selection_position_reversed,
+					    0, 2, 1, 2);
 
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_selection_length, g_selection_length_w, H_selection_length,
-					"set-" S_selection_length, g_set_selection_length_w, g_set_selection_length_reversed,
-					0, 2, 1, 2);
+					    "set-" S_selection_length, g_set_selection_length_w, g_set_selection_length_reversed,
+					    0, 2, 1, 2);
 
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_selection_member, g_selection_member_w, H_selection_member,
-					"set-" S_selection_member, g_set_selection_member_w, g_set_selection_member_reversed,
-					0, 2, 1, 2);
+					    "set-" S_selection_member, g_set_selection_member_w, g_set_selection_member_reversed,
+					    0, 2, 1, 2);
 
   XEN_DEFINE_PROCEDURE(S_selection_p,      g_selection_p_w, 0, 0, 0,      H_selection_p);
   XEN_DEFINE_PROCEDURE(S_selection_chans,  g_selection_chans_w, 0, 0, 0,  H_selection_chans);

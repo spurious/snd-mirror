@@ -240,6 +240,12 @@ If Snd using Lesstif is messed up, that's Lesstif's problem!  I'm
 not trying to support this anymore.
 
 
+ALSA:
+Not all versions of ALSA are supported.  If you get a compile-time
+complaint about snd_pcm_hw_params (ALSA 0.9beta4) you need to get
+a newer version of ALSA.
+
+
 Gtk+:
 Gtk+ is not as sophisticated as Motif, and the port is still somewhat new, so
 there are a number of differences and rough-edges in that version of Snd.
@@ -266,6 +272,9 @@ you can find where it occurs by:
 If you configure Snd --with-html as well as --with-gtk, and
 get an error in snd-ghelp about gtkmozembed.h, it probably
 means you don't have the mozilla-devel package installed.
+Currently, the only completely supported versions of Gtk in
+Snd are 1.2.8 and 1.2.10.  Snd can be built with 1.3.n, but
+many of the 1.3 changes are not yet handled in Snd.
 
 
 GSL:
@@ -424,6 +433,15 @@ some complaint about undefined xmNotebook class.  This is a major
 bug in Redhat 7.2.
 
 
+
+So to sum up:  
+  GSL 0.8 or later
+  Gtk+ 1.2.8 or 1.2.10
+  any Motif but not Lesstif
+  ALSA 0.9beta8 or later (or any version of OSS)
+  Guile 1.3.4 or later but Snd's Scheme files need 1.5.0 or later
+  Ruby 1.6.4 or later
+  
 
 ----------------------------------------------------------------
 If you hit a bug, don't just sit there weeping -- send me

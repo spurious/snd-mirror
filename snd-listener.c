@@ -442,9 +442,11 @@ void update_stats_with_widget(snd_state *ss, GUI_WIDGET stats_form)
   if (stats_form == NULL) return;
   GUI_SET_TEXT(stats_form, "file chn: mem(#bufs), main, temp(#files), amp envs\n\n");
   for (i = 0; i < ss->max_sounds; i++)
-    if ((sp = ((snd_info *)(ss->sounds[i]))) &&	(sp->inuse))
-      for (j = 0; j<(sp->nchans); j++)
-	if ((cp = ((chan_info *)(sp->chans[j]))) && (cp->stats))
+    if ((sp = ((snd_info *)(ss->sounds[i]))) &&	
+	(sp->inuse))
+      for (j = 0; j < (sp->nchans); j++)
+	if ((cp = ((chan_info *)(sp->chans[j]))) && 
+	    (cp->stats))
 	  {
 	    pos = GUI_TEXT_END(stats_form);
 	    str = update_chan_stats(cp);

@@ -792,10 +792,7 @@ void snd_doit(snd_state *ss, int argc, char **argv)
 #ifdef UW2
   XtSetArg(args[n], XmNforeground, sx->black); n++;
 #endif
-  XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
-  XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
-  XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
-  XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+  n = attach_all_sides(args, n);
   XtSetArg(args[n], XmNallowResize, TRUE); n++;
   sx->mainpane = XtCreateManagedWidget("mainpane", xmFormWidgetClass, shell, args, n);
   XtAddEventHandler(sx->mainpane, KeyPressMask, FALSE, ss_graph_key_press, (XtPointer)ss);

@@ -2002,7 +2002,7 @@ static void scan_audio_devices(void)
 	  /* scan all devices in the card */
 	  for (d = 0; d < devs; d++) 
 	    {
-	      dev = (int)(val[d+1]);
+	      dev = (int)(val[d + 1]);
 	      if ((err = mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(card) | dev, 
 					      MUS_AUDIO_DIRECTION, 
 					      0, 

@@ -747,7 +747,8 @@
 (define mark-loops
   (lambda ()
     "(mark-loops) places marks at loop points found in the selected sound's header"
-    (let ((loops (mus-sound-loop-info (file-name))))
+    (let ((loops (or (sound-loop-info)
+		     (mus-sound-loop-info (file-name)))))
       (if (not (null? loops))
 	  (begin
 	    (if (not (and (= (car loops) 0) (= (cadr loops) 0)))

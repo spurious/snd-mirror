@@ -353,8 +353,8 @@ BEGIN_DECLS
 
 #ifdef __GNUC__
   void mus_error(int error, const char *format, ...) __attribute__ ((format (printf, 2, 3)));
-  void mus_print(const char *format, ...) __attribute__ ((format (printf, 1, 2)));
-  char *mus_format(const char *format, ...) __attribute__ ((format (printf, 1, 2)));
+  void mus_print(const char *format, ...)            __attribute__ ((format (printf, 1, 2)));
+  char *mus_format(const char *format, ...)          __attribute__ ((format (printf, 1, 2)));
   void mus_snprintf(char *buffer, int buffer_len, const char *format, ...)  __attribute__ ((format (printf, 3, 4)));
 #else
   void mus_error              PROTO((int error, const char *format, ...));

@@ -1027,7 +1027,6 @@ static int read_oki_adpcm(char *oldname, char *newname, char *hdr)
 
 static int read_12bit(char *oldname, char *newname, char *hdr)
 {
-  /* TODO: if original has loop info, save as temp aifc file to preserve it (also for aifc adpcm etc) */
   int loc, chans, samps, totalin, i, j, fs = -1, fd = -1;
   unsigned char *buf = NULL;
   short *buf1;

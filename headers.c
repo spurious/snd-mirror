@@ -854,7 +854,7 @@ static void double_to_ieee_80(double val, unsigned char *p)
   if(val != 0.0)	/* val identically zero -> all elements zero */
     {
       lexp = (short)(log(val)/log(2.0) + 16383.0);
-      val *= pow(2.0, 31.0+16383.0-(double)lexp);
+      val *= pow(2.0, 31.0 + 16383.0 - (double)lexp);
       mant1 = myDoubleToUlong(val);
       val -= myUlongToDouble(mant1);
       val *= pow(2.0, 32.0);
@@ -2304,7 +2304,7 @@ static int read_nist_header (int chan)
       /* much as in xIFF files, march through the file looking for the data we're after */
       /* in this case we munch a character at a time... */
       str[k] = hdrbuf[n];
-      if ((((str[k] == '\0') || (str[k] == '\n')) || ((curbase+n+1) >= data_location)) || (k == 79))
+      if ((((str[k] == '\0') || (str[k] == '\n')) || ((curbase + n + 1) >= data_location)) || (k == 79))
 	{
 	  /* got a complete record (assuming no embedded newlines, of course) */
 	  /* now look for a record we care about and decode it */
@@ -2333,7 +2333,7 @@ static int read_nist_header (int chan)
 		      if (strcmp(name, "sample_byte_format") == 0) byte_format = decode_nist_value(str, nm, k);
 	  for (j = 0; j <= k; j++) str[j] =' ';
 	  k = 0;
-	  if ((curbase+n+1) > 1024) happy = 0;
+	  if ((curbase + n + 1) > 1024) happy = 0;
 	}
       else
 	k++;
@@ -3212,14 +3212,14 @@ static int read_esps_header (int chan)
   lseek(chan, 333, SEEK_SET);
   read(chan, hdrbuf, HDRBUFSIZ);
   curbase = 333;
-  hend = curbase+HDRBUFSIZ;
+  hend = curbase + HDRBUFSIZ;
   k = 0;
   n = 0;
   for (j = 0; j < 80; j++) str[j] =' ';  
   while (happy) 
     {
       str[k] = hdrbuf[n];
-      if ((str[k] == 'q') || (str[k] == 3) || ((curbase+n+1) >= data_location) || (k == 78))
+      if ((str[k] == 'q') || (str[k] == 3) || ((curbase + n + 1) >= data_location) || (k == 78))
 	{ /* 3 = C-C marks end of record */
 	  str[k + 1] = 0;
 	  if (strcmp(str, "record_freq") == 0) 
@@ -3485,7 +3485,7 @@ static int read_file_samp_header (int chan)
   read(chan, locbuf, 1024);
   while (i < 1024)
     {
-      if (strncmp((char *)(locbuf+i), "sftot", 5) == 0)
+      if (strncmp((char *)(locbuf + i), "sftot", 5) == 0)
 	sscanf((const char *)(&locbuf[i + 6]), "%d", &srate);
       if (strncmp((char *)(locbuf + i), "nchans", 6) == 0)
 	sscanf((const char *)(&locbuf[i + 7]), "%d", &chans);
@@ -4034,7 +4034,7 @@ static int read_pvf_header(int chan, int loc)
   for (i = 6; i < INITIAL_READ_SIZE; i++)
     if (hdrbuf[i] == '\n')
       {
-	data_location = i+1;
+	data_location = i + 1;
 	break;
       }
   if (data_location == 0)
@@ -4052,7 +4052,7 @@ static int read_pvf_header(int chan, int loc)
       data_format = MUS_BSHORT;
     else data_format = MUS_BINT;
   true_file_length = SEEK_FILE_LENGTH(chan);
-  data_size = mus_long_bytes_to_samples(data_format, true_file_length-data_location);
+  data_size = mus_long_bytes_to_samples(data_format, true_file_length - data_location);
   return(MUS_NO_ERROR);
 }
 

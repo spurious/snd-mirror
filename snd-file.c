@@ -148,14 +148,18 @@ file_info *copy_header(char *fullname, file_info *ohdr)
 static file_info *translate_file(char *filename, snd_state *ss, int type)
 {
   char *newname, *tempname;
+  int *loops = NULL;
   file_info *hdr = NULL;
   int err, len, fd;
   len = strlen(filename);
+  loops = mus_sound_loop_info(filename);
   newname = (char *)CALLOC(len + 5, sizeof(char));
   mus_snprintf(newname, len + 5, "%s.snd", filename);
   /* too many special cases to do anything smart here -- I'll just tack on '.snd' */
   /* before calling the translator we need to check for write-access to the current directory,
-   * and if none, try to find a temp directory we can write to
+   * and if none, try to find a temp directory we can write to.
+   *
+   * loop info across translation: 4-Dec-01
    */
   fd = creat(newname, 0666);
   if (fd == -1)
@@ -185,11 +189,17 @@ static file_info *translate_file(char *filename, snd_state *ss, int type)
       if (err == MUS_NO_ERROR)
 	{
 	  hdr = make_file_info_1(newname);
-	  if (hdr) ss->pending_change = copy_string(newname);
+	  if (hdr) 
+	    {
+	      if (hdr->loops == NULL) hdr->loops = loops;
+	      loops = NULL;
+	      ss->pending_change = copy_string(newname);
+	    }
 	}
     }
   else snd_remove(newname);
   if (newname) FREE(newname);
+  if (loops) FREE(loops);
   return(hdr);
 }
 
@@ -418,8 +428,8 @@ static void add_snd_file_to_dir_list(dir *dp, char *name)
   if (dp->len == dp->size) 
     {
       dp->size += 32;
-      dp->files = (char **)REALLOC(dp->files, dp->size*sizeof(char *));
-      for (i = dp->size-32; i < dp->size; i++) dp->files[i] = NULL;
+      dp->files = (char **)REALLOC(dp->files, dp->size * sizeof(char *));
+      for (i = dp->size - 32; i < dp->size; i++) dp->files[i] = NULL;
     }
 }
 
@@ -1331,7 +1341,7 @@ static void remember_me(snd_state *ss, char *shortname, char *fullname)
     {
       if (curnames[i]) FREE(curnames[i]);
       curnames[i] = NULL;
-      for (j = i; j < curfile_end-1; j++)
+      for (j = i; j < curfile_end - 1; j++)
 	{
 	  curnames[j] = curnames[j + 1];
 	  a_big_star[j] = a_big_star[j + 1];
@@ -2257,21 +2267,17 @@ static XEN g_sound_loop_info(XEN snd)
   #define H_sound_loop_info "(" S_sound_loop_info " snd) returns the sound's loop points as a \
 list: (sustain-start sustain-end release-start release-end baseNote detune)"
   int *res;
-  XEN sres = XEN_EMPTY_LIST;
   snd_info *sp;
   ASSERT_SOUND(S_sound_loop_info, snd, 1);
   sp = get_sp(snd);
   if (sp == NULL)
     return(snd_no_such_sound_error(S_sound_loop_info, snd));
-  res = mus_sound_loop_info(sp->filename);
+  res = sp->hdr->loops; /* used to call mus_sound_loop_info which does not parallel other header-reader functions */
   if (res)
-    {
-      sres = XEN_LIST_8(C_TO_XEN_INT(res[0]), C_TO_XEN_INT(res[1]), C_TO_XEN_INT(res[2]),
-                        C_TO_XEN_INT(res[3]), C_TO_XEN_INT(res[4]), C_TO_XEN_INT(res[5]),
-                        C_TO_XEN_INT(res[6]), C_TO_XEN_INT(res[7]));
-      FREE(res);
-    }
-  return(sres);
+    return(XEN_LIST_8(C_TO_XEN_INT(res[0]), C_TO_XEN_INT(res[1]), C_TO_XEN_INT(res[2]),
+		      C_TO_XEN_INT(res[3]), C_TO_XEN_INT(res[4]), C_TO_XEN_INT(res[5]),
+		      C_TO_XEN_INT(res[6]), C_TO_XEN_INT(res[7])));
+  return(XEN_EMPTY_LIST);
 }
 
 static XEN g_set_sound_loop_info(XEN snd, XEN vals)

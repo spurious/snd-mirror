@@ -334,9 +334,9 @@ static int find_mem_location(const char *func, const char *file, int line)
 	  lines = (int *)realloc(lines, (mem_location + 1024)*sizeof(int));
 	  for (i = 0; i < 1024; i++) 
 	    {
-	      functions[i+mem_locations] = NULL;
-	      files[i+mem_locations] = NULL;
-	      lines[i+mem_locations] = 0;
+	      functions[i + mem_locations] = NULL;
+	      files[i + mem_locations] = NULL;
+	      lines[i + mem_locations] = 0;
 	    }
 	  mem_locations += 1024;
 	}

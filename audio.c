@@ -3288,7 +3288,7 @@ AUDIO_INFO:
 	      pprint("            sample        srate\n  channels   size      min      max\n");
 	      for (channels = 1; channels <= 2; channels++)
 		{
-		  for (bits = 8; bits <= 16; bits+=8)
+		  for (bits = 8; bits <= 16; bits += 8)
 		    {
 		      min_rate = 1;
 		      if (set_dsp(fd, channels, bits, &min_rate) == -1) continue;
@@ -10149,9 +10149,7 @@ char *mus_audio_moniker(void) {return("OS2 audio");}
 
 /* ------------------------------- MAC_OSX ----------------------------------------- */
 
-/* this code under development (under protest...)
- *    based on coreaudio.pdf, HAL/Daisy examples, portaudio pa_mac_core.c
- */
+/* this code based on coreaudio.pdf, HAL/Daisy examples, portaudio pa_mac_core.c */
 
 #ifdef MAC_OSX
 #define AUDIO_OK 1

@@ -546,10 +546,7 @@ Widget fire_up_transform_dialog(snd_state *ss, int managed)
 
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
-      XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
+      n = attach_all_sides(args, n);
       type_form = XtCreateManagedWidget("type-form", xmFormWidgetClass, type_frame, args, n);
       /* needed because XmFrame only accepts one child */
       XtAddCallback(type_form, XmNhelpCallback, transform_type_help_callback, ss);
@@ -607,10 +604,7 @@ Widget fire_up_transform_dialog(snd_state *ss, int managed)
 
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
-      XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
+      n = attach_all_sides(args, n);
       size_form = XtCreateManagedWidget("size-form", xmFormWidgetClass, size_frame, args, n);
       XtAddCallback(size_form, XmNhelpCallback, size_help_callback, ss);
 
@@ -662,10 +656,7 @@ Widget fire_up_transform_dialog(snd_state *ss, int managed)
 
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->zoom_color); n++;}
-      XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
+      n = attach_all_sides(args, n);
       display_form = XtCreateManagedWidget("display-form", xmFormWidgetClass, display_frame, args, n);
 
       n = 0;
@@ -842,10 +833,7 @@ Widget fire_up_transform_dialog(snd_state *ss, int managed)
 
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
-      XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
+      n = attach_all_sides(args, n);
       wavelet_form = XtCreateManagedWidget("wavelet-form", xmFormWidgetClass, wavelet_frame, args, n);
       XtAddCallback(wavelet_form, XmNhelpCallback, wavelet_help_callback, ss);
 
@@ -899,10 +887,7 @@ Widget fire_up_transform_dialog(snd_state *ss, int managed)
 
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
-      XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
+      n = attach_all_sides(args, n);
       window_form = XtCreateManagedWidget("window-form", xmFormWidgetClass, window_frame, args, n);
       XtAddCallback(window_form, XmNhelpCallback, window_help_callback, ss);
 
@@ -972,10 +957,7 @@ Widget fire_up_transform_dialog(snd_state *ss, int managed)
 
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
-      XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
+      n = attach_all_sides(args, n);
       graph_form = XtCreateManagedWidget("graph-form", xmFormWidgetClass, graph_frame, args, n);
 
       n = 0;

@@ -84,7 +84,7 @@ static void init_sine (void)
       else
 	{
 	  incr = TWO_PI/(Float)SINE_SIZE;
-	  for (i = 0, phase = 0.0; i < SINE_SIZE + 1; i++, phase+=incr)
+	  for (i = 0, phase = 0.0; i < SINE_SIZE + 1; i++, phase += incr)
 	    sine_table[i] = (Float)sin(phase);
 	}
     }
@@ -460,10 +460,7 @@ Float *mus_set_data(mus_any *gen, Float *new_data)
 Float mus_ring_modulate(Float sig1, Float sig2) {return(sig1 * sig2);}
 Float mus_amplitude_modulate(Float carrier, Float sig1, Float sig2) {return(sig1 * (carrier + sig2));}
 Float mus_contrast_enhancement(Float sig, Float index) {return(mus_sin((sig * M_PI_2) + (index * mus_sin(sig * TWO_PI))));}
-void mus_clear_array(Float *arr, int size) 
-{
-  memset((void *)arr, 0, size * sizeof(Float));
-}
+void mus_clear_array(Float *arr, int size) {memset((void *)arr, 0, size * sizeof(Float));}
 
 Float mus_dot_product(Float *data1, Float *data2, int size)
 {
@@ -3396,7 +3393,7 @@ mus_any *mus_make_env(Float *brkpts, int npts, Float scaler, Float offset, Float
       e->core = &ENV_CLASS;
       if (duration != 0.0)
 	dur_in_samples = (int)(duration * sampling_rate);
-      else dur_in_samples = (end-start + 1);
+      else dur_in_samples = (end - start + 1);
       e->init_y = offset + scaler * brkpts[1];
       e->current_value = e->init_y;
       e->rate = 0.0;
@@ -5887,8 +5884,8 @@ Float mus_granulate(mus_any *ptr, Float (*input)(void *arg, int direction))
 	    spd->in_data[i] = spd->in_data[k];
 	}
       if (input)
-	for (i=(len-start); i < len; i++) spd->in_data[i] = (*input)(spd->environ, 1);
-      else for (i=(len-start); i < len; i++) spd->in_data[i] = (*(spd->rd))(spd->environ, 1);
+	for (i = (len - start); i < len; i++) spd->in_data[i] = (*input)(spd->environ, 1);
+      else for (i = (len - start); i < len; i++) spd->in_data[i] = (*(spd->rd))(spd->environ, 1);
       spd->in_data_start = spd->input_hop;
 
       amp = 0.0;

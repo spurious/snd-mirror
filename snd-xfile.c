@@ -1047,11 +1047,7 @@ static void make_save_as_dialog(snd_state *ss, char *sound_name, int header_type
       XtAddCallback(save_as_dialog, XmNcancelCallback, save_as_cancel_callback, ss);
       XtAddCallback(save_as_dialog, XmNokCallback, save_as_ok_callback, ss);
       
-      n = 0;
-      XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+      n = attach_all_sides(args, 0);
       save_as_file_data = make_file_data_panel(ss, save_as_dialog, "data-form", args, n, FALSE, header_type, format_type, FALSE);
 
       color_file_selection_box(save_as_dialog, ss);
@@ -1158,10 +1154,7 @@ ww_info *make_title_row(snd_state *ss, Widget formw, char *first_str, char *seco
 
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
-      XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
+      n = attach_all_sides(args, n);
       XtSetArg(args[n], XmNpaneMinimum, 40); n++;
       wwi->toppane = XtCreateManagedWidget("toppane", xmFormWidgetClass, wwi->panes, args, n);
       formw = wwi->toppane;
@@ -1309,11 +1302,7 @@ ww_info *make_title_row(snd_state *ss, Widget formw, char *first_str, char *seco
   XtSetArg(args[n], XmNscrollBarDisplayPolicy, XmSTATIC); n++;
   wwi->list = XmCreateScrolledWindow(formw, "reglist", args, n);
 
-  n = 0;
-  XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
-  XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-  XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
-  XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
+  n = attach_all_sides(args, 0);
   wwi->ww = XtCreateManagedWidget("ww", xmFormWidgetClass, wwi->list, args, n);
   XtVaSetValues(wwi->list, XmNworkWindow, wwi->ww, NULL);
   
@@ -2218,11 +2207,7 @@ snd_info *make_new_file_dialog(snd_state *ss, char *newname, int header_type, in
       XtAddCallback(new_dialog, XmNcancelCallback, new_file_cancel_callback, NULL);
       XtAddCallback(new_dialog, XmNokCallback, new_file_ok_callback, NULL);
 
-      n = 0;
-      XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+      n = attach_all_sides(args, 0);
       form = XtCreateManagedWidget("newfile", xmFormWidgetClass, new_dialog, args, n);
 
       n = 0;
@@ -2377,10 +2362,7 @@ Widget edit_header(snd_info *sp)
 
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
-      XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+      n = attach_all_sides(args, n);
       edit_header_data = make_file_data_panel(ss, edit_header_dialog, STR_Edit_Header, args, n, TRUE, hdr->type, hdr->format, TRUE);
       load_header_and_data_lists(edit_header_data, hdr->type, hdr->format, hdr->srate, hdr->chans, hdr->data_location, hdr->comment);
 

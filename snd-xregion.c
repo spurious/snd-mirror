@@ -478,10 +478,7 @@ static void make_region_dialog(snd_state *ss)
 
   n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->white); n++;}
-  XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
-  XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-  XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
-  XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
+  n = attach_all_sides(args, n);
   XtSetArg(args[n], XmNpaneMinimum, 150); n++;
   region_grf = XtCreateManagedWidget("grf", xmFormWidgetClass, wwl->panes, args, n);
 

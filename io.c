@@ -949,7 +949,7 @@ int mus_ptr2table(MUS_SAMPLE_TYPE *arr)
   if (loc == -1)
     {
       loc = long_int_p_table_size;
-      long_int_p_table_size+=16;
+      long_int_p_table_size += 16;
       if (long_int_p_table)
 	{
 	  long_int_p_table = (MUS_SAMPLE_TYPE **)REALLOC(long_int_p_table, long_int_p_table_size * sizeof(MUS_SAMPLE_TYPE *));

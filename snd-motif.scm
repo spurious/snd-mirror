@@ -2097,6 +2097,9 @@ Reverb-feedback sets the scaler on the feedback.\n\
 ;	     (|XtUnmanageChild play-button)
 ;	     (|XtVaSetValues sync-button (list |XmNrightAttachment |XmATTACH_FORM)))))
 
+
+;;; -------- mark-sync-color
+
 (define (mark-sync-color new-color)
   (define get-color
     (lambda (color)
@@ -2166,16 +2169,16 @@ Reverb-feedback sets the scaler on the feedback.\n\
 			      (if (not tooltip-shell)
 				  (begin
 				    (set! tooltip-shell (|XtCreatePopupShell 
-						     tip 
-						     |overrideShellWidgetClass 
-						     (|Widget (cadr (main-widgets))) 
-						     '()))
+							  tip 
+							  |overrideShellWidgetClass 
+							  (|Widget (cadr (main-widgets))) 
+							  '()))
 				    (set! tooltip-label
 					  (|XtCreateManagedWidget 
 					    tip
 					    |xmLabelWidgetClass 
-					     tooltip-shell
-					     (list |XmNbackground (|Pixel (snd-pixel (highlight-color)))))))
+					    tooltip-shell
+					    (list |XmNbackground (|Pixel (snd-pixel (highlight-color)))))))
 				  (change-label tooltip-label tip))
 			      (let ((loc (|XtTranslateCoords widget (|x ev) (|y ev))))
 				(|XtVaSetValues tooltip-shell (list |XmNx (car loc) |XmNy (cadr loc))))

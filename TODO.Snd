@@ -40,8 +40,6 @@ Gettext support, if there's interest. How does gettext handle Scheme-style
   does msgfmt know about things like ~A and scm_list_2?  Gnucash uses guile and gettext --
   maybe they've solved this problem.
 
-Translate the rest of env.lisp to env.scm.
-
 A "master volume" control in the recorder.  Also a running spectrogram display --
 see snd-motif.scm for an ugly first pass.
 

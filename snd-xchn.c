@@ -834,10 +834,7 @@ void add_channel_window(snd_info *sp, int channel, snd_state *ss, int chan_y, in
 	  n = 0;
 	  if (need_colors) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
 	  n = no_padding(args, n);
-	  XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
-	  XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
-	  XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
-	  XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+	  n = attach_all_sides(args, n);
 	  XtSetArg(args[n], XmNsashIndent, 2); n++;
 	  XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
 	  cw[W_top] = XtCreateManagedWidget("chn-main-window", xmPanedWindowWidgetClass, cw[W_form], args, n);

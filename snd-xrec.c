@@ -197,7 +197,7 @@ static Pixmap transform_text (Widget w, char *str, XFontStruct *font, Float angl
   /* find extent of original text, expand out to byte boundaries */
   XSetFont(dp, draw_gc, font->fid);
   width = XTextWidth(font, str, strlen(str));
-  height = (font->ascent+font->descent);
+  height = (font->ascent + font->descent);
   if (width % 8) width = 8 * (1 + (int)(width / 8));
   if (height % 8) height = 8 * (1 + (int)(height / 8));
 
@@ -575,8 +575,8 @@ static void allocate_meter_1(snd_state *ss, vu_label *vu)
 	  for (j = 0; j < 6; j++) 
 	    { 
 	      /* set up initial portion of next polygon */
-	      pts[j].x = pts[j+6].x;
-	      pts[j].y = pts[j+6].y;
+	      pts[j].x = pts[j + 6].x;
+	      pts[j].y = pts[j + 6].y;
 	    }
 	}
     }
@@ -1007,10 +1007,7 @@ static Widget make_message_pane(snd_state *ss, Widget message_pane)
   Widget msg;
   n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
-  XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
-  XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
-  XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
-  XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+  n = attach_all_sides(args, n);
   XtSetArg(args[n], XmNeditMode, XmMULTI_LINE_EDIT); n++;
   XtSetArg(args[n], XmNscrollBarDisplayPolicy, XmAS_NEEDED); n++;
   XtSetArg(args[n], XmNeditable, FALSE); n++;
@@ -1348,10 +1345,7 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, Widget file_pa
 
   n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
-  XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
-  XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
-  XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
-  XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+  n = attach_all_sides(args, n);
   file_form = XtCreateManagedWidget("file-data", xmFormWidgetClass, file_pane, args, n);
 
   n = 0;
@@ -1559,10 +1553,7 @@ static void make_file_info_pane(snd_state *ss, recorder_info *rp, Widget file_pa
 
   n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->highlight_color); n++;}
-  XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
-  XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
-  XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
-  XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+  n = attach_all_sides(args, n);
   XtSetArg(args[n], XmNorientation, XmVERTICAL); n++;
   XtSetArg(args[n], XmNspacing, 0); n++;
   button_holder = XtCreateManagedWidget("button-holder", xmRowColumnWidgetClass, button_frame, args, n);
@@ -2152,10 +2143,7 @@ static Widget make_button_matrix(snd_state *ss, PANE *p, char *name, Widget pare
 
   n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
-  XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
-  XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-  XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
-  XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
+  n = attach_all_sides(args, n);
   XtSetArg(args[n], XmNheight, (Dimension)height); n++;
   XtSetArg(args[n], XmNwidth, (Dimension)width); n++;
   XtSetArg(args[n], XmNresizePolicy, XmRESIZE_NONE); n++;
@@ -2258,10 +2246,7 @@ static Widget make_button_matrix(snd_state *ss, PANE *p, char *name, Widget pare
 
   n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
-  XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
-  XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-  XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
-  XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
+  n = attach_all_sides(args, n);
   XtSetArg(args[n], XmNfractionBase, ins*outs); n++;
   inner_form = XtCreateManagedWidget("inner-form", xmFormWidgetClass, inner_frame, args, n);
 
@@ -2369,10 +2354,7 @@ static PANE *make_pane(snd_state *ss, recorder_info *rp, Widget paned_window, in
 
   n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
-  XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
-  XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-  XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
-  XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
+  n = attach_all_sides(args, n);
   XtSetArg(args[n], XmNallowResize, TRUE); n++;
   p->pane = XtCreateManagedWidget("pane", xmFormWidgetClass, paned_window, args, n);
   
@@ -2506,10 +2488,7 @@ static Widget make_vu_meters(snd_state *ss, PANE *p, int vu_meters, Widget *fram
       n = 0;
       XtSetArg(args[n], XmNbackground, (ss->sgx)->white); n++;
       XtSetArg(args[n], XmNforeground, (ss->sgx)->black); n++;
-      XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+      n = attach_all_sides(args, n);
       XtSetArg(args[n], XmNwidth, 120 * 2 * meter_size); n++;
       XtSetArg(args[n], XmNheight, 100 * meter_size); n++;
       XtSetArg(args[n], XmNallowResize, FALSE); n++;
@@ -2518,7 +2497,7 @@ static Widget make_vu_meters(snd_state *ss, PANE *p, int vu_meters, Widget *fram
       vu = p->meters[i];
 
       if (input)
-	rec_in_VU[overall_input_ctr+i] = vu;
+	rec_in_VU[overall_input_ctr + i] = vu;
       else rec_out_VU[i] = vu;
       XtAddCallback(meter, XmNexposeCallback, meter_display_callback, vu);
       XtAddCallback(meter, XmNresizeCallback, meter_display_callback, vu);
@@ -3429,10 +3408,7 @@ void snd_record_file(snd_state *ss)
       /* then make file_info_pane and message_pane at the bottom */
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
-      XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
+      n = attach_all_sides(args, n);
       XtSetArg(args[n], XmNallowResize, TRUE); n++;
 
       file_info_pane = XtCreateManagedWidget("file-pane", xmFormWidgetClass, rec_panes, args, n);

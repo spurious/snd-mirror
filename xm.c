@@ -1374,7 +1374,7 @@ static void gxm_XtSelectionCallbackProc(Widget w, XtPointer x, Atom* a1, Atom* a
 
 static XEN xm_XtConvertSelectionIncr_Descr = XEN_FALSE;
 static void gxm_XtConvertSelectionIncrProc(Widget w, Atom* a1, Atom* a2, Atom* a3, XtPointer* x, 
-					    unsigned long* l, int* i, unsigned long* l1, XtPointer x1, XtRequestId* id)
+					   unsigned long* l, int* i, unsigned long* l1, XtPointer x1, XtRequestId* id)
 {
 #if 0
   /* TODO: need to handle returned values (a3 etc) */

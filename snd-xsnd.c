@@ -1457,10 +1457,7 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
 
       n = 0;      
       if (need_colors) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
-      XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+      n = attach_all_sides(args, n);
       XtSetArg(args[n], XmNallowResize, TRUE); n++;
       XtSetArg(args[n], XmNsashIndent, ss->channel_sash_indent); n++;
       if (ss->channel_sash_size != 0)
@@ -2408,10 +2405,7 @@ static snd_info *add_sound_window_with_parent (Widget parent, char *filename, sn
 
       n = 0;
       if (need_colors) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
-      XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+      n = attach_all_sides(args, n);
       XtSetArg(args[n], XmNallowResize, TRUE); n++;
       sw[W_filter_env] = XtCreateManagedWidget("filter-window", xmDrawingAreaWidgetClass, sw[W_filter_frame], args, n);
       XtAddCallback(sw[W_filter_env], XmNhelpCallback, filter_drawer_help_callback, ss);

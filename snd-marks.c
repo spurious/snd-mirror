@@ -1079,7 +1079,7 @@ void ripple_trailing_marks(chan_info *cp, int beg, int old_len, int new_len)
 	  for (i = 0; i <= marks; i++) 
 	    {
 	      m = mps[i];
-	      if (m->samp > (beg+old_len)) m->samp += (new_len - old_len);
+	      if (m->samp > (beg + old_len)) m->samp += (new_len - old_len);
 	    }
 	}
     }
@@ -1798,7 +1798,7 @@ static int *syncd_marks(snd_state *ss, int sync)
   int i;
   sd = make_syncdata(sync);
   map_over_chans(ss, gather_chan_syncd_marks, (void *)sd);
-  ids = (int *)CALLOC(1+sd->mark_ctr, sizeof(int));
+  ids = (int *)CALLOC(1 + sd->mark_ctr, sizeof(int));
   ids[0] = sd->mark_ctr;
   for (i = 0; i < sd->mark_ctr; i++) ids[i + 1] = mark_id(sd->marks[i]);
   free_syncdata(sd);

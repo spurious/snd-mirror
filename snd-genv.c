@@ -1179,7 +1179,7 @@ void set_enved_filter_order(snd_state *ss, int order)
   if ((order > 0) && (order < 2000))
     {
       if (order & 1) 
-	in_set_enved_filter_order(ss, order+1);
+	in_set_enved_filter_order(ss, order + 1);
       else in_set_enved_filter_order(ss, order);
       if (enved_dialog)
 	{

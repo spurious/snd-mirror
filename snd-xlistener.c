@@ -192,7 +192,7 @@ static void Yank(Widget w, XEvent *ev, char **str, Cardinal *num)
     {
       curpos = XmTextGetCursorPosition(w);
       XmTextInsert(w, curpos, listener_selection);
-      curpos+=strlen(listener_selection);
+      curpos += strlen(listener_selection);
       XmTextShowPosition(w, curpos);
       XmTextSetCursorPosition(w, curpos);
       XmTextClearSelection(w, ev->xkey.time); /* so C-y + edit doesn't forbid the edit */
@@ -218,7 +218,7 @@ static void Begin_of_line(Widget w, XEvent *ev, char **ustr, Cardinal *num)
       str = (char *)CALLOC(prompt_len + 3, sizeof(char));
       XmTextGetSubstring(w, loc + 1, prompt_len, prompt_len + 2, str);
       if (strncmp(listener_prompt(ss), str, prompt_len) == 0)
-	XmTextSetCursorPosition(w, loc+prompt_len + 1);
+	XmTextSetCursorPosition(w, loc + prompt_len + 1);
       else XmTextSetCursorPosition(w, loc + 1);
       FREE(str);
     }
@@ -338,7 +338,7 @@ static void Word_upper(Widget w, XEvent *event, char **str, Cardinal *num)
 	  buf[j] = '\0';
 	  XmTextReplace(w, curpos + wstart, curpos + wend, buf);
 	}
-      XmTextSetCursorPosition(w, curpos+wend);
+      XmTextSetCursorPosition(w, curpos + wend);
     }
 }
 
@@ -420,7 +420,7 @@ static void Name_completion(Widget w, XEvent *event, char **str, Cardinal *num)
 		  XTranslateCoordinates(XtDisplay(w), XtWindow(w), DefaultRootWindow(XtDisplay(w)), 0, 0, &xoff, &yoff, &wn);
 		  wx += xoff; 
 		  wy += yoff;
-		  XtVaSetValues(completion_help_dialog, XmNx, wx, XmNy, wy+40, NULL);
+		  XtVaSetValues(completion_help_dialog, XmNx, wx, XmNy, wy + 40, NULL);
 		}
 	    }
 	  else
@@ -929,11 +929,7 @@ static void make_command_widget(snd_state *ss, int height)
     {
       if (!actions_loaded) {XtAppAddActions(MAIN_APP(ss), acts, NUM_ACTS); actions_loaded = 1;}
 
-      n = 0;
-      XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+      n = attach_all_sides(args, 0);
       XtSetArg(args[n], XmNheight, height); n++;
       if ((sound_style(ss) == SOUNDS_IN_NOTEBOOK) || (sound_style(ss) == SOUNDS_HORIZONTAL))
 	listener_pane = XtCreateManagedWidget("frm", xmFormWidgetClass, SOUND_PANE_BOX(ss), args, n);
@@ -947,10 +943,7 @@ static void make_command_widget(snd_state *ss, int height)
 	  XtSetArg(args[n], XmNforeground, (ss->sgx)->listener_text_color); n++;
 	}
       if ((ss->sgx)->listener_fontlist) {XtSetArg(args[n], XM_FONT_RESOURCE, (ss->sgx)->listener_fontlist); n++;}
-      XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+      n = attach_all_sides(args, n);
       XtSetArg(args[n], XmNactivateCallback, n1 = make_callback_list(remember_event, (XtPointer)ss)); n++;
       XtSetArg(args[n], XmNeditMode, XmMULTI_LINE_EDIT); n++;
       XtSetArg(args[n], XmNskipAdjust, TRUE); n++;

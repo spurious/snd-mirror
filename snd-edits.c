@@ -1474,7 +1474,7 @@ static ed_list *delete_samples_1(int beg, int num, ed_list *current_state, chan_
   ripple_selection(new_state, beg, -num);
   reflect_sample_change_in_axis(cp);
   check_for_first_edit(cp);
-  new_state->size = len+len_fixup; /* don't propogate useless trailing blocks */
+  new_state->size = len + len_fixup; /* don't propogate useless trailing blocks */
   
   if (FRAGMENT_SOUND(new_state, (new_state->size - 1)) != EDIT_LIST_END_MARK)
     {

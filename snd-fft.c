@@ -189,13 +189,13 @@ gsl_dht_init_1(gsl_dht * t, double nu, double xmax)
       stat_bz = dht_bessel_zeros_1(t);
     }
 
-    jN = t->j[t->size+1];
+    jN = t->j[t->size + 1];
 
     t->xmax = xmax;
     t->kmax = jN / xmax;
 
     t->J2[0] = 0.0;
-    for(m=1; m<t->size+1; m++) {
+    for(m=1; m<t->size + 1; m++) {
       gsl_sf_result J;
       stat_J += gsl_sf_bessel_Jnu_e(nu + 1.0, t->j[m], &J);
       t->J2[m] = J.val * J.val;

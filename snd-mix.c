@@ -902,7 +902,7 @@ static mix_info *add_mix(chan_info *cp, int chan, int beg, int num,
   md->console_state_size = 1;
   md->states = (console_state **)CALLOC(md->console_state_size, sizeof(console_state *));
   cs = make_console_state(input_chans, cp->edit_ctr, beg, beg + num - 1);
-  md->current_cs = make_console_state(input_chans, cp->edit_ctr, beg, beg+num-1);
+  md->current_cs = make_console_state(input_chans, cp->edit_ctr, beg, beg + num - 1);
   md->states[0] = cs;
   if (chan < input_chans)
     cs->scalers[chan] = 1.0;
@@ -1381,7 +1381,7 @@ static void remix_file(mix_info *md, const char *origin)
   extend_console_list(md);
   cs = copy_console(cs);
   cs->edit_ctr = cp->edit_ctr;
-  cs->orig = new_beg+beg;
+  cs->orig = new_beg + beg;
   cs->beg = cs->orig;
   cs->end = cs->beg + cs->len - 1;
 
@@ -1695,7 +1695,7 @@ static void make_temporary_graph(chan_info *cp, mix_info *md, console_state *cs)
   x_end = local_grf_x((double)(ap->hisamp) / cur_srate, ap);
   lo = ap->losamp;
   hi = ap->hisamp;
-  samps = ap->hisamp-ap->losamp + 1;
+  samps = ap->hisamp - ap->losamp + 1;
   samples_per_pixel = (Float)(samps - 1) / (Float)(x_end - x_start);
   if ((samples_per_pixel < 5.0) && 
       (samps < POINT_BUFFER_SIZE))
@@ -1972,7 +1972,7 @@ static int display_mix_waveform(chan_info *cp, mix_info *md, console_state *cs, 
   x_start = ap->x_axis_x0;
   x_end = ap->x_axis_x1;
   if (newend > hi) newend = hi;
-  samps = ap->hisamp-ap->losamp + 1;
+  samps = ap->hisamp - ap->losamp + 1;
   samples_per_pixel = (Float)(samps - 1) / (Float)(x_end - x_start);
   yoff = md->y;
 

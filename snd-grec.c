@@ -368,8 +368,8 @@ static void allocate_meter_1(snd_state *ss, vu_label *vu)
 	  for (j = 0; j < 6; j++) 
 	    { 
 	      /* set up initial portion of next polygon */
-	      pts[j].x = pts[j+6].x;
-	      pts[j].y = pts[j+6].y;
+	      pts[j].x = pts[j + 6].x;
+	      pts[j].y = pts[j + 6].y;
 	    }
 	}
     }
@@ -1419,9 +1419,9 @@ static PANE *make_pane(snd_state *ss, recorder_info *rp, GtkWidget *paned_window
   p->in_chan_loc = overall_input_ctr;
   if (input) overall_input_ctr += p->in_chans;
 #if (HAVE_OSS || HAVE_ALSA)
-  p->pane_size = pane_max+20;
+  p->pane_size = pane_max + 20;
 #else
-  p->pane_size = pane_max+50;
+  p->pane_size = pane_max + 50;
 #endif
 
   return(p);
@@ -1499,7 +1499,7 @@ static void make_vertical_gain_sliders(snd_state *ss, recorder_info *rp, PANE *p
       this_device = recorder_sort_mixer_device((void *)wd, i, chan, input, p->device, mixflds);
       wd->ss = ss;
       wd->p = p;
-      wd->gain = gain_ctr+chan;
+      wd->gain = gain_ctr + chan;
       if (wd->gain > rp->num_mixer_gains) 
 	snd_error("%s[%d] %s: overflow %d > %d", 
 		  __FILE__, __LINE__, __FUNCTION__, 
