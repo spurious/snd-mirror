@@ -965,7 +965,7 @@ static VALUE xen_rb_make_hook(int argc, VALUE *argv, VALUE klass)
   if (argc <= 4) {
     hook = xen_rb_hook_initialize(argc, argv, hook_alloc(xen_rb_cHook));
   }
-  else if (argc == 4 && rb_block_given_p()) {
+  else if (argc < 4 && rb_block_given_p()) {
     hook = xen_rb_hook_initialize(3, argv, hook_alloc(xen_rb_cHook));
     argv[0] = argv[3];
     argv[1] = argv[4];
