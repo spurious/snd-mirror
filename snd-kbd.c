@@ -644,7 +644,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, int with_meta)
 	  if (m)
 	    {
 	      report_in_minibuffer(sp, "%s placed at sample %d", str, sp->marking - 1);
-	      draw_mark(active_chan, active_chan->axis, m);
+	      display_channel_marks(active_chan);
 	    }
 	  else report_in_minibuffer(sp, "There is already a mark at sample %d", sp->marking - 1);
 	  sp->marking = 0;
@@ -1128,7 +1128,7 @@ void keyboard_command (chan_info *cp, int keysym, int state)
 		  cp->cursor_on = TRUE;
 		  set_show_marks(ss, 1);
 		  mk = add_mark(CURSOR(cp), NULL, cp);
-		  if (mk) draw_mark(cp, cp->axis, mk);
+		  display_channel_marks(cp);
 		}
 	      else delete_mark_samp(CURSOR(cp), cp);
 	      if ((keysym == snd_K_M) && 
@@ -1146,7 +1146,7 @@ void keyboard_command (chan_info *cp, int keysym, int state)
 			    if (mk)
 			      {
 				set_mark_sync(mk, sync_num);
-				draw_mark(si->cps[i], (si->cps[i])->axis, mk);
+				display_channel_marks(si->cps[i]);
 			      }
 			  }
 			else delete_mark_samp(CURSOR(cp), si->cps[i]);

@@ -2778,15 +2778,23 @@ for the gory details."
 	XEN_ERROR(BAD_ARITY,
 		  XEN_LIST_2(C_TO_XEN_STRING(S_ptree_channel),
 			     C_TO_XEN_STRING("init-func must take 2 args")));
-      pt = form_to_ptree_3_f(proc_and_list);
-      if ((pt != NULL) && (!ptrees_present))
-	ptree_channel(cp, pt, beg, dur, pos, XEN_TRUE_P(env_too), init_func, FALSE);
-      else 
+      if (!ptrees_present)
 	{
-	  if ((XEN_FALSE_P(use_map_channel_fallback)) && (!ptrees_present))
-	    ptree_channel(cp, (void *)proc, beg, dur, pos, XEN_TRUE_P(env_too), init_func, TRUE);
-	  else g_map_chan_ptree_fallback(proc, init_func, cp, beg, dur, pos);
+	  pt = form_to_ptree_3_f(proc_and_list);
+	  if (pt)
+	    {
+	      ptree_channel(cp, pt, beg, dur, pos, XEN_TRUE_P(env_too), init_func, FALSE);
+	      return(proc_and_list);
+	    }
+	  /* ptree not ok -- use map chan? */
+	  if (XEN_FALSE_P(use_map_channel_fallback))
+	    {
+	      ptree_channel(cp, (void *)proc, beg, dur, pos, XEN_TRUE_P(env_too), init_func, TRUE);
+	      return(proc_and_list);
+	    }
 	}
+      /* fallback on map chan */
+      g_map_chan_ptree_fallback(proc, init_func, cp, beg, dur, pos);
       return(proc_and_list);
     }
 
@@ -2796,7 +2804,7 @@ for the gory details."
       if (ptrees_present)
 	{
 	  run_channel(cp, pt, beg, dur, pos);
-	  free_ptree(pt);
+	  pt = free_ptree(pt);
 	}
       else ptree_channel(cp, pt, beg, dur, pos, XEN_TRUE_P(env_too), init_func, FALSE);
     }

@@ -606,7 +606,6 @@ int mark_id(mark *m);
 int mark_sync_max(void);
 int set_mark_sync(mark *m, int val);
 void marks_off(chan_info *cp);
-void draw_mark(chan_info *cp, axis_info *ap, mark *mp);
 mark *hit_mark(chan_info *cp, int x, int y, int key_state);
 mark *hit_triangle(chan_info *cp, int x, int y);
 void move_mark(chan_info *cp, mark *mp, int x);

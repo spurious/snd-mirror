@@ -435,7 +435,16 @@
   #define XEN_APPLY_NO_CATCH(Func, Args, Caller)              scm_apply(Func, Args, XEN_EMPTY_LIST)
 #endif
 
-#define XEN_APPLY_ARG_LIST_END            scm_listofnull
+#ifdef WINDOZE
+/* can't use scm_listofnull in Windows because the loader can't deal with it:
+ *    snd-xen.o(.text+0x1456): In function `g_call1_1':
+ *    snd-xen.c:482: variable '_scm_sys_protects' can't be auto-imported.
+ * this definition taken from eval.c, listofnull is in root.h, set to SCM_BOOL_F in gc.c
+ */
+  #define XEN_APPLY_ARG_LIST_END            scm_cons(SCM_EOL, SCM_EOL)
+#else
+  #define XEN_APPLY_ARG_LIST_END            scm_listofnull
+#endif
 
 #define XEN_PUTS(Str, Port)      scm_puts(Str, Port)
 #define XEN_DISPLAY(Val, Port)   scm_display(Val, Port)

@@ -897,7 +897,7 @@ method combination.
 <tr><td></td><td colspan=2>
 called upon exit.
 If it returns #t, Snd does not exit.  This can be used to check 
-for unsaved edits, or to perform cleanup activities (see, for example, <a href="#unsavededitsp">unsaved-edits?</a>).
+for unsaved edits, or to perform cleanup activities (see, for example, autosave.scm, extensions.scm, or <a href="#unsavededitsp">unsaved-edits?</a>).
 </td></tr>
 <tr><td colspan=3></td></tr>
 
@@ -1952,7 +1952,7 @@ up protected portions of the edit history:
 
 <p><a href="sndscm.html#enveddoc">enved.scm</a> uses several of these hooks to implement an envelope editor in lisp.
 <i>add-mark-pane</i> in snd-motif.scm uses them to make sure the mark list reflects the current edit history location.
-See also <a href="#menuhook">menu-hook</a> below.
+See also <a href="#menuhook">menu-hook</a> and autosave.scm.
 </p>
 <p>
 You can find out what's on a given hook with the following (which is mostly adding carriage returns to the
@@ -2656,7 +2656,9 @@ edited) sound can be accessed by a normal sample-reader.
 <!-- make-mix-sample-reader -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="makemixsamplereader">make-mix-sample-reader</a></em> (mix)</code></span></td>
 </tr><tr><td></td>
-<td>create a mix-sample-reader object reading <i>mix</i></td></tr>
+<td>create a mix-sample-reader object reading <i>mix</i>.
+See <i>mix-&gt;vct</i> in mix.scm.
+</td></tr>
 
 <!-- make-region-sample-reader -->
 <tr><td colspan=2><span class=defbox><code><em class=def><a name="makeregionsamplereader">make-region-sample-reader</a></em> (<i>start reg chn dir</i>)</code></span></td>
@@ -4337,7 +4339,7 @@ its value here should fall between 0.0 and 1.0.
 </td></tr>
 <tr><td></td><td>
 <i>snd</i>'s complete (or "absolute") file name (that is, the directory is included; see <a href="#shortfilename">short-file-name</a>
-if you don't want all the directory junk).
+if you don't want all the directory junk).  See examp.scm for many examples.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -7143,6 +7145,7 @@ edit.
 <tr><td></td><td>
 current position in edit history list (can be set).  <code>(set! (edit-position) 0)</code> is equivalent
 to <code>(revert-sound)</code>.
+See, for example, <a href="#makesamplereader">make-sample-reader</a>.
 </td></tr>
 <tr><td></td><td></td></tr>
 
@@ -7575,7 +7578,9 @@ The wave shown is the time domain display, even when filtering.
 <!-- html-dir -->
 
 <tr><td><span class=defbox><code><em class=def><a name="htmldir">html-dir</a></em> ()</code></span></td>
-<td>If an HTML widget is in use, the directory to search for documentation.</td></tr>
+<td>If an HTML widget is in use, the directory to search for documentation.
+See <i>html</i> in index.scm.
+</td></tr>
 
 <!-- listener-color -->
 
@@ -9235,7 +9240,8 @@ See <i>show-hiho</i> below.
 <span class=defbox><code><em class=def><a name="drawlines">draw-lines</a></em> (lines size snd chn context)</code></span></td></tr>
 
 <tr><td></td><td>
-draws lines following the (x y) pairs in the vector <i>lines</i> in the given context.
+draws lines following the (x y) pairs in the vector <i>lines</i> in the given graphics context (copy-context is the default).
+See <i>make-current-window-display</i> in draw.scm.
 <i>make-bezier-1</i> in <a href="sndscm.html#musglyphs">musglyphs.scm</a> can be used to draw Bezier curves.
 </td></tr>
 <tr><td colspan=2></td></tr>
@@ -9277,7 +9283,9 @@ with the text "hiho":
 <span class=defbox><code><em class=def><a name="fillrectangle">fill-rectangle</a></em> (x0 y0 width height snd chn context)</code></span></td></tr>
 
 <tr><td></td><td>
-draws a filled rectangle (in the current foreground color) from (x0 y0) of size (width height).</td></tr>
+draws a filled rectangle (in the current foreground color) from (x0 y0) of size (width height).
+See draw.scm, snd-motif.scm, or <a href="#showoriginal">show-original</a>.
+</td></tr>
 <tr><td colspan=2></td></tr>
 
 <!-- fill-polygon -->

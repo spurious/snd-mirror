@@ -8,8 +8,6 @@
  * "current" can change at any time.
  */
 
-/* TODO: 2 marks on same sample should not erase each other */
-
 typedef mark *mark_map_func(chan_info *cp, mark *mp, void *m);
 
 static XEN mark_drag_hook;
@@ -244,14 +242,14 @@ static void draw_play_triangle(chan_info *cp, Locus x)
 	       x,                   y0);
 }
 
-void draw_mark(chan_info *cp, axis_info *ap, mark *mp)
+static void draw_mark(chan_info *cp, axis_info *ap, mark *mp)
 {
-  if (!(mp->id & MARK_VISIBLE)) draw_mark_1(cp, ap, mp, 1);
+  if (!(mp->id & MARK_VISIBLE)) draw_mark_1(cp, ap, mp, TRUE);
 }
 
 static void erase_mark(chan_info *cp, axis_info *ap, mark *mp)
 {
-  if (mp->id & MARK_VISIBLE) draw_mark_1(cp, ap, mp, 0);
+  if (mp->id & MARK_VISIBLE) draw_mark_1(cp, ap, mp, FALSE);
 }
 
 
@@ -803,29 +801,35 @@ off_t mark_beg(chan_info *cp)
   return(-1);
 }
 
-static mark *display_channel_marks_1(chan_info *cp,  mark *mp, void *m)
+typedef struct {
+  off_t last_samp;
+} dpy_last;
+
+static mark *display_channel_marks_1(chan_info *cp, mark *mp, void *m)
 {
   axis_info *ap;
-  off_t last_samp = (*((off_t *)m));
+  dpy_last *ls = (dpy_last *)m;
   ap = cp->axis;
   if (mp->samp > ap->hisamp) return(mp); /* terminates loop */
-  if (mp->samp == last_samp)
+  /* fprintf(stderr,"mark %d: samp: " OFF_TD ", last: " OFF_TD "\n", mark_id(mp), mp->samp, ls->last_samp); */
+  if (mp->samp == ls->last_samp)
     return(NULL); 
-  else last_samp = mp->samp;          /* avoid drawing twice at same point == erase */
+  /* actually this should notice how wide in samples the mark stem is and avoid any redraw until we get to the next clear pixel */
+  else ls->last_samp = mp->samp;         /* avoid drawing twice at same point == erase */
   if ((mp->samp >= ap->losamp) && 
       (mp->samp <= ap->hisamp) && 
-      (mp != moving_mark)) 
+      (mp != moving_mark))
     draw_mark(cp, ap, mp);
   return(NULL);
 }
 
 void display_channel_marks(chan_info *cp)
 {
-  off_t last_samp;
+  dpy_last ls;
   if ((cp->marks) && (cp->show_marks))
     {
-      last_samp = -1;
-      map_over_marks(cp, display_channel_marks_1, (void *)(&last_samp), READ_FORWARD);
+      ls.last_samp = -1;
+      map_over_marks(cp, display_channel_marks_1, (void *)(&ls), READ_FORWARD);
     }
 }
 

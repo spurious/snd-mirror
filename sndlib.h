@@ -345,6 +345,9 @@ enum {MUS_NO_ERROR, MUS_NO_FREQUENCY, MUS_NO_PHASE, MUS_NO_GEN, MUS_NO_LENGTH,
     #define REALLOC(a, b) realloc(a, (size_t)(b))
 
     #ifdef WINDOZE
+      #ifdef FOPEN
+        #undef FOPEN
+      #endif
       #define OPEN(File, Flags, Mode) open((File), (Flags))
     #else
       #define OPEN(File, Flags, Mode) open((File), (Flags), (Mode))
