@@ -5397,14 +5397,14 @@ off_t mus_set_location(mus_any *gen, off_t loc)
 
 /* ---------------- in-any ---------------- */
 
-Float mus_in_any(off_t frame, int chan, mus_any *IO)
+Float mus_in_any(off_t samp, int chan, mus_any *IO)
 {
-  if (IO) return(mus_file_to_sample(IO, frame, chan));
+  if (IO) return(mus_file_to_sample(IO, samp, chan));
   return(0.0);
 }
 
-Float mus_ina(off_t frame, mus_any *inp) {return(mus_in_any(frame, 0, inp));}
-Float mus_inb(off_t frame, mus_any *inp) {return(mus_in_any(frame, 1, inp));}
+Float mus_ina(off_t samp, mus_any *inp) {return(mus_in_any(samp, 0, inp));}
+Float mus_inb(off_t samp, mus_any *inp) {return(mus_in_any(samp, 1, inp));}
 
 
 
@@ -5756,16 +5756,16 @@ int mus_close_file(mus_any *ptr)
 
 /* ---------------- out-any ---------------- */
 
-Float mus_out_any(off_t frame, Float val, int chan, mus_any *IO)
+Float mus_out_any(off_t samp, Float val, int chan, mus_any *IO)
 {
-  if (IO) return(mus_sample_to_file(IO, frame, chan, val));
+  if (IO) return(mus_sample_to_file(IO, samp, chan, val));
   return(0.0);
 }
 
-Float mus_outa(off_t frame, Float val, mus_any *IO) {return(mus_out_any(frame, val, 0, IO));}
-Float mus_outb(off_t frame, Float val, mus_any *IO) {return(mus_out_any(frame, val, 1, IO));}
-Float mus_outc(off_t frame, Float val, mus_any *IO) {return(mus_out_any(frame, val, 2, IO));}
-Float mus_outd(off_t frame, Float val, mus_any *IO) {return(mus_out_any(frame, val, 3, IO));}
+Float mus_outa(off_t samp, Float val, mus_any *IO) {return(mus_out_any(samp, val, 0, IO));}
+Float mus_outb(off_t samp, Float val, mus_any *IO) {return(mus_out_any(samp, val, 1, IO));}
+Float mus_outc(off_t samp, Float val, mus_any *IO) {return(mus_out_any(samp, val, 2, IO));}
+Float mus_outd(off_t samp, Float val, mus_any *IO) {return(mus_out_any(samp, val, 3, IO));}
 
 
 

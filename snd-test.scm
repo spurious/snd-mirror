@@ -12007,6 +12007,7 @@ EDITS: 5
 			       (vct-ref im i) (vct-ref im-copy i)))))
 	  (close-sound ind)))
       
+      (if (defined? 'edot-product) ; needs complex numbers in C
       (let* ((vals (make-vct 1 1.0))
 	     (v1 (edot-product 0.0 vals)))
 	(if (fneq v1 1.0) ; exp 0.0 * 1.0
@@ -12048,7 +12049,7 @@ EDITS: 5
 		     (* 2+i (exp (* 0.25 2 pi 0.0-i)))
 		     (* 3+i (exp (* 0.5 2 pi 0.0-i)))
 		     (* 4+i (exp (* 0.75 2 pi 0.0-i))))))
-	  (if (cneq v1 v2) (snd-display ";edot 4 -i * i: ~A ~A" v1 v2))))
+	  (if (cneq v1 v2) (snd-display ";edot 4 -i * i: ~A ~A" v1 v2)))))
 
       (let ((v0 (make-vct 3)))
 	(vct-set! v0 0 1.0)

@@ -128,7 +128,7 @@ switch.
 
 
 There are RPM packages of Snd available at the ccrma-ftp site
-mentioned above: snd-7-4.i386.rpm and snd-7-4.src.rpm.  These RPM
+mentioned above: snd-7-5.i386.rpm and snd-7-5.src.rpm.  These RPM
 files have been superseded by Fernando Lopez-Lezcano's set available
 at http://ccrma.stanford.edu/planetccrma/software/
 
@@ -170,7 +170,7 @@ Bill Schottstaedt
 Michael Scholz: the German translation, the Ruby code, inf-snd.el, and the Forth version of sndlib.
 Fernando Lopez-Lezcano: the current ALSA support.
 Dave Phillips: the tutorial, new-effects.scm, and many other files.
-Kjetil S. Matheussen: snd_conffile.scm, ladspa.scm, gui.scm, and the Jack audio support.
+Kjetil S. Matheussen: snd_conffile.scm, ladspa.scm, gui.scm, snd-hobbit.scm, and the Jack audio support.
 Richard W.E. Furse: the original LADSPA support.
 Nick Bailey: the ESD support.
 Volker Kuhlmann and Seppo Ingalsuo: the Solaris port.
@@ -577,6 +577,76 @@ Also, you can check the "about Snd" option under the Help menu
 to find out where Guile is finding its boot files.
 
 
+So, here's the detailed step-by-step method, thanks to Cris Ewing:
+
+    This build was done on a Mac G4 Powerbook with OS X 10.3 (panther).
+    
+    The first step (and it is a vital one) is to make sure that your version
+    of fink is fully up-to-date.  Start by running
+    
+    $ fink selfupdate
+    $ fink update-all
+    
+    Next, verify that you have a working version of X11 on your machine.  This
+    must include the development libs found in the X11SDK.  If you are using
+    apple's version of X11, the SDK package is _not_ installed by default when
+    you install X11.  You have to do a custom install from the XCode disk to
+    get the package.
+    
+    Once all this is in place, use fink to install openmotif3
+    
+    $ fink install openmotif3
+    
+    Next, install guile16
+    
+    $ fink install guile16
+    
+    And you need to add the guile development libraries, they don't get
+    installed with the rest of the packages.
+    
+    $ fink install guile16-dev
+    
+    You can also use fink to install the fftw package.  It takes a really long
+    time to build, but helps to speed up the fft-based functions in snd.
+    
+    $ fink install fftw
+    
+    Next, download and untar the latest snd sources from ccrma
+    
+    Configuration has been aided quite a bit by Bill since I had my problems,
+    he's added a number of command-line variables that you can set that will
+    help with naming problems in guile16 (the guile binaries are named
+    differently than in earlier versions of guile).  If you have trouble with
+    the configure process, you may want to check to make sure what the guile
+    binaries are named.  All the information you will need to get configure to
+    work successfully is in README.Snd inside the snd distribution.  It seems
+    important to use the switch --disable-nls.  I'm not sure why, but I
+    couldn't get the build to work with nls enabled.  This is the
+    configuration command that I used after following the instructions above:
+    
+    $ ./configure CFLAGS=-I/sw/include LDFLAGS=-L/sw/lib -lmx -bind_at_load \
+    GUILE_CONFIG_path=/sw/bin GUILE_CONFIG_name=guile-1.6-config \
+    GUILE_name=guile-1.6 --disable-nls --with-guile --with-motif \
+    --with-static-xm --with-motif-prefix=/sw
+    
+    This config was run from a bash shell.  If you are using tcsh (and you
+    might be if you upgraded to panther) then you will have to omit the part
+    about CFLAGS and LDFLAGS above.  Instead, you can set these through the
+    shell by running
+    
+    % setenv LDFLAGS "-L/sw/lib -lmx -bind_at_load""
+    % setenv CFLAGS "-I/sw/include"
+    
+    After this, you're nearly home:
+    
+    $ make
+    
+    $ sudo make-install
+    
+    (you need to sudo make-install, because it will install an snd-executable
+    in /usr/local/bin)
+
+
 
 ---- Motif: ----
 If you installed OpenMotif, then upgraded to RedHat 7.2, Redhat
@@ -678,6 +748,7 @@ Guile/Scheme:
   http://www.cs.utexas.edu/users/wilson/schintro/schintro_toc.html
   http://www.swiss.ai.mit.edu/~jaffer/SLIB.html
   http://mitpress.mit.edu/sicp/full-text/book/book.html
+  http://cvs.zeit.de/guile-hobbit-latest.tar.gz (Hobbit for Guile 1.6.4)
 
 Motif:
   http://www.motifzone.net

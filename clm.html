@@ -3046,7 +3046,6 @@ do this is with with-sound or clm-load.
    (<i>clipped</i> *clm-clipped*)   ; if t, clip output rather than allowing data to wrap-around (has no effect in no-ffi versions)
    (<i>verbose</i> <em class=emdef>*clm-verbose*</em>)
    (<i>force-recomputation</i> nil) ; if t, force with-mix calls to recompute
-   (<i>explode</i> *clm-explode*)   ; if t, produce "exploded" output -- each instrument call becomes a separately mixed file in Snd
 </pre>
 <p><b>with-sound</b> is a macro that performs all the various services needed to
 produce and play a sound file; it also wraps an unwind-protect around its body to

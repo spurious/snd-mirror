@@ -120,7 +120,6 @@ name of the sound file.
   int mus_sound_type_specifier (const char *arg)   /* original header type identifier */
   int mus_sound_bits_per_sample(const char *arg)   /* bits per sample */
   int mus_bytes_per_sample(int format)             /* bytes per sample */
-  int mus_sound_maxamp(const char *arg, int *vals) /* return list of maxamp sample pairs */
   int *mus_sound_loop_info(const char *arg)        /* 6 loop vals (mode,start,end) then base-detune and base-note  (empty list if no loop info found) */
   int mus_sound_initialize(void)                   /* initialize everything */
 </pre>
@@ -1011,8 +1010,6 @@ see headers.c or sndlib.h for details.  The next functions handle various IO cal
   int mus_file_read_any (int tfd, int beg, int chans, int nints, mus_sample_t **bufs, mus_sample_t *cm)
   int mus_file_write_zeros (int tfd, off_t num)
   int mus_file_write (int tfd, int beg, int end, int chans, mus_sample_t **bufs)
-  int mus_sound_maxamp (char *ifile, mus_sample_t *vals)
-  int mus_sound_maxamp_exists (char *ifile)
   float mus_file_prescaler(int tfd)
   float mus_file_set_prescaler(int tfd, float val)
 </pre>

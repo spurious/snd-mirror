@@ -2,8 +2,8 @@
 #define SNDLIB_H
 
 #define SNDLIB_VERSION 19
-#define SNDLIB_REVISION 1
-#define SNDLIB_DATE "27-Apr-04"
+#define SNDLIB_REVISION 2
+#define SNDLIB_DATE "30-Jun-04"
 
 /* try to figure out what type of machine (and in worst case, what OS) we're running on */
 
@@ -430,7 +430,6 @@ int mus_sound_close_output(int fd, off_t bytes_of_data);
 int mus_sound_read(int fd, int beg, int end, int chans, mus_sample_t **bufs);
 int mus_sound_write(int tfd, int beg, int end, int chans, mus_sample_t **bufs);
 off_t mus_sound_seek_frame(int tfd, off_t frame);
-off_t mus_sound_maxamp(const char *ifile, mus_sample_t *vals);
 off_t mus_sound_maxamps(const char *ifile, int chans, mus_sample_t *vals, off_t *times);
 int mus_sound_set_maxamps(const char *ifile, int chans, mus_sample_t *vals, off_t *times);
 bool mus_sound_maxamp_exists(const char *ifile);

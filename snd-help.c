@@ -379,6 +379,8 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+30-Jun:  snd-hobbit.scm thanks to Kjetil\n\
+         snd 7.5.\n\
 23-Jun:  new configure variables GUILE_CONFIG_name and GUILE_name (for OSX/fink)\n\
          cursor-location-offset\n\
 18-Jun:  ssb-fm in dsp.scm.\n\

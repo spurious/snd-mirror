@@ -1,5 +1,7 @@
 Snd change log
 
+  30-Jun:    snd-hobbit.scm thanks to Kjetil
+             snd 7.5.
   23-Jun:    new configure variables GUILE_CONFIG_name and GUILE_name (for OSX/fink)
 	     cursor-location-offset.
   18-Jun:    ssb-fm in dsp.scm.
