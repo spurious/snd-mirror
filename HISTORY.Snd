@@ -1,5 +1,7 @@
 Snd change log
 
+  21-Aug:    added snd->sample and xen->sample (Snd-specific) generators to redirect
+               ina and friends automatically to Snd data.
   19-Aug:    removed mouse-release-hook (use mouse-click-hook).
   15-Aug:    snd 6.11.
   11-Aug:    start-playing-selection-hook (suggested by Kjetil S. Matheussen).

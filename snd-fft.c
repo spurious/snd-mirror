@@ -758,7 +758,7 @@ typedef struct {
   Float cutoff;
 } fft_state;
 
-#if (!HAVE_HYPOT)
+#if (!HAVE_DECL_HYPOT)
 static double hypot(double r, double i) {return(sqrt(r * r + i * i));}
 #endif
 

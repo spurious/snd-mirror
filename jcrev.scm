@@ -20,9 +20,11 @@
 	 (all-sums 0.0)
 	 (delA 0.0)
 	 (delB 0.0)
+	 (file-dur (mus-sound-frames (mus-file-name *reverb*)))
 	 (decay-dur (mus-srate))
 	 (envA (if amp-env (make-env :envelope amp-env :scaler volume :duration dur) #f))
-	 (len (+ decay-dur (mus-sound-frames (mus-file-name *reverb*)))))
+	 (scl volume)
+	 (len (+ decay-dur file-dur)))
     (ws-interrupt?)
     (if (or amp-env low-pass)
 	(run
@@ -54,7 +56,7 @@
 			(comb comb2 allpass-sum)
 			(comb comb3 allpass-sum)
 			(comb comb4 allpass-sum)))
-	       (outa i (delay outdel1 comb-sum) *output*)
-	       (if (> chns 1) (outb i (delay outdel2 comb-sum) *output*)))))))))
+	       (outa i (* scl (delay outdel1 comb-sum)) *output*)
+	       (if (> chns 1) (outb i (* scl (delay outdel2 comb-sum)) *output*)))))))))
 
 ;;; (with-sound (:reverb jc-reverb) (fm-violin 0 .1 440 .1 :reverb-amount .3))

@@ -9521,54 +9521,332 @@ static XEN g_insert_samples_with_origin(XEN samp, XEN samps, XEN origin, XEN vec
  * to use CLM-instruments (based on outa, ina and *output*, *reverb*) as editing functions,
  *  we need at least to be able to recognize the instrument call outside with-sound (*output* #f),
  *  and fixup *reverb* so that it reads the current sound.  To do the latter, we specialize
- *  the CLM sample->file class, changing it to call read-sample, rather than read-file.
+ *  the CLM sample->file process (mus_read_sample).
  */
 
-#if 0
-/* TODO: access methods, reader loc handler, make/?/run funcs for clm2xen connection */
-/* TODO: tests, documentation */
+#include "clm2xen.h"
 
-static int MUS_SND2SAMPLE = -1; /* our new class type id */
+static int SND2SAMPLE = 0, XEN2SAMPLE = 0;
 
 typedef struct {
   mus_any_class *core;
+  snd_info *sp;
   snd_fd **sfs;
   int chans;
-  off_t samp;
+  off_t *samps;
 } snd2sample;
 
-static bool mus_snd2sample_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_SND2SAMPLE));}
-static char *describe_snd2sample(void *ptr) {return(sf_to_string((snd_fd *)ptr));}
+typedef struct {
+  mus_any_class *core;
+  XEN reader;
+  int gc_loc;
+} xen2sample;
 
-/* need array of readers -- will get chan/samp as args -- set these up only as needed */
+static bool snd2sample_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == SND2SAMPLE));}
+static bool xen2sample_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == XEN2SAMPLE));}
+
+static bool snd2sample_equalp(mus_any *p1, mus_any *p2) {return(p1 == p2);}
+static bool xen2sample_equalp(mus_any *p1, mus_any *p2) {return(p1 == p2);}
+
+static int snd2sample_channels(mus_any *ptr) {return(((snd2sample *)ptr)->chans);}
+static off_t snd2sample_location(mus_any *ptr) {return(((snd2sample *)ptr)->samps[0]);}
+static char *snd2sample_file_name(mus_any *ptr) {return(((snd2sample *)ptr)->sp->filename);}
+
+static int snd2sample_free(mus_any *ptr)
+{
+  snd2sample *spl = (snd2sample *)ptr;
+  int i;
+  if (spl)
+    {
+      if (spl->sfs)
+	{
+	  for (i = 0; i < spl->chans; i++)
+	    if (spl->sfs[i])
+	      spl->sfs[i] = free_snd_fd_almost(spl->sfs[i]); /* mimic free-sample-reader */
+	  FREE(spl->sfs);
+	  spl->sfs = NULL;
+	}
+      if (spl->samps)
+	{
+	  FREE(spl->samps);
+	  spl->samps = NULL;
+	}
+    }
+  return(0);
+}
+
+static int xen2sample_free(mus_any *ptr)
+{
+  xen2sample *xpl = (xen2sample *)ptr;
+  if (xpl)
+    {
+      if ((xpl->gc_loc >= 0) && (XEN_PROCEDURE_P(xpl->reader)))
+	{
+	  snd_unprotect_at(xpl->gc_loc);
+	  xpl->gc_loc = -1;
+	  xpl->reader = XEN_FALSE;
+	}
+    }
+  return(0);
+}
+
+static char *snd2sample_buf = NULL;
+static char *snd2sample_describe(mus_any *ptr)
+{
+  int i, len = PRINT_BUFFER_SIZE;
+  snd2sample *spl = (snd2sample *)ptr;
+  if (snd2sample_buf)
+    {
+      FREE(snd2sample_buf);
+      snd2sample_buf = NULL;
+    }
+  if (spl->sfs)
+    {
+      len += spl->chans * 8;
+      for (i = 0; i < spl->chans; i++)
+	if (spl->sfs[i])
+	  len += snd_strlen(sf_to_string(spl->sfs[i]));
+    }
+  snd2sample_buf = (char *)CALLOC(len, sizeof(char));
+  snprintf(snd2sample_buf, len, "%s: reading %s (%d chan%s) at " OFF_TD ":[", 
+	   S_snd2sample, 
+	   spl->sp->short_filename, 
+	   spl->chans, 
+	   (spl->chans > 1) ? "s" : "",
+	   spl->samps[0]);
+  if (spl->sfs)
+    {
+      for (i = 0; i < spl->chans; i++)
+	if (spl->sfs[i])
+	  {
+	    strcat(snd2sample_buf, sf_to_string(spl->sfs[i]));
+	    if (i < spl->chans - 1) 
+	      strcat(snd2sample_buf, ", ");
+	    else strcat(snd2sample_buf, "]");
+	  }
+	else strcat(snd2sample_buf, "nil, ");
+    }
+  else strcat(snd2sample_buf, "no readers]");
+  return(snd2sample_buf);
+}
+
+static char *xen2sample_describe(mus_any *ptr)
+{
+  xen2sample *xpl = (xen2sample *)ptr;
+  char *desc;
+  if (snd2sample_buf)
+    {
+      FREE(snd2sample_buf);
+      snd2sample_buf = NULL;
+    }
+  desc = XEN_AS_STRING(xpl->reader);
+  snd2sample_buf = (char *)CALLOC(snd_strlen(desc) + PRINT_BUFFER_SIZE, sizeof(char));
+  sprintf(snd2sample_buf, S_xen2sample ": %s", desc);
+  return(snd2sample_buf);
+}
+
+static Float snd2sample_read(mus_any *ptr, off_t frame, int chan);
+static Float xen2sample_read(mus_any *ptr, off_t frame, int chan);
 
 static mus_any_class SND2SAMPLE_CLASS = {
   -1,
   "snd->sample",
   &snd2sample_free,
   &snd2sample_describe,
-  &snd2sample_inspect,
+  &snd2sample_describe,
   &snd2sample_equalp,
   0, 0,
-  &snd2sample_length, 0, /* int length */
+  0, 0,               /* int length */
   0, 0, 0, 0,
-  0, 0
   0, 0,
-  0, /* run (ptr Float arg1 arg2) */
+  0, 0,
+  0,
   MUS_INPUT,
-  NULL, /* environ */
-  &snd2sample_channels, /* int chans(ptr) */
+  NULL,               /* environ */
+  &snd2sample_channels,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  &snd2sample_read, /* read sample (ptr, samp, chan) */
+  &snd2sample_read,
   0,
-  0,  /* char *file_name (ptr) */
+  &snd2sample_file_name,
   0,
-  &snd2sample_location,  /* off_t location (ptr) */
+  &snd2sample_location,
   0,  /* set location (ptr, off_t loc) */
   0
 };
 
-#endif
+static mus_any_class XEN2SAMPLE_CLASS = {
+  -1,
+  "snd->sample",
+  &xen2sample_free,
+  &xen2sample_describe,
+  &xen2sample_describe,
+  &xen2sample_equalp,
+  0, 0,
+  0, 0,               /* int length */
+  0, 0, 0, 0,
+  0, 0,
+  0, 0,
+  0,
+  MUS_INPUT,
+  NULL,
+  0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  &xen2sample_read, /* read sample (ptr, samp, chan) */
+  0, 0, 0, 0, 0, 0
+};
+
+static mus_any *make_snd2sample(snd_info *sp)
+{
+  snd2sample *gen;
+  gen = (snd2sample *)CALLOC(1, sizeof(snd2sample));
+  gen->core = &SND2SAMPLE_CLASS;
+  if (SND2SAMPLE == 0) 
+    {
+      SND2SAMPLE = mus_make_class_tag();
+      gen->core->type = SND2SAMPLE;
+    }
+  gen->chans = sp->nchans;
+  gen->sp = sp;
+  gen->samps = (off_t *)CALLOC(sp->nchans, sizeof(off_t));
+  gen->sfs = NULL; /* created as needed */
+  return((mus_any *)gen);
+}
+
+static mus_any *make_xen2sample(XEN reader)
+{
+  xen2sample *gen;
+  gen = (xen2sample *)CALLOC(1, sizeof(xen2sample));
+  gen->core = &XEN2SAMPLE_CLASS;
+  if (XEN2SAMPLE == 0) 
+    {
+      XEN2SAMPLE = mus_make_class_tag();
+      gen->core->type = XEN2SAMPLE;
+    }
+  gen->gc_loc = snd_protect(reader);
+  gen->reader = reader;
+  return((mus_any *)gen);
+}
+
+static Float snd2sample_read(mus_any *ptr, off_t frame, int chan) 
+{
+  snd2sample *spl = (snd2sample *)ptr;
+  off_t diff, i;
+  if (!(spl->sfs)) 
+    spl->sfs = (snd_fd **)CALLOC(spl->chans, sizeof(snd_fd *));
+  if (!(spl->sfs[chan])) 
+    {
+      spl->sfs[chan] = init_sample_read(frame, spl->sp->chans[chan], READ_FORWARD);
+      spl->samps[chan] = frame;
+      return(next_sample_to_float(spl->sfs[chan]));
+    }
+  diff = frame - spl->samps[chan];
+  if (diff == 1)
+    {
+      spl->samps[chan]++;
+      return(next_sample_to_float(spl->sfs[chan]));
+    }
+  if (diff > 1)
+    {
+      for (i = 1; i < diff; i++) next_sample_unscaled(spl->sfs[chan]); /* just push pointer forward */
+      spl->samps[chan] = frame;
+      return(next_sample_to_float(spl->sfs[chan]));
+    }
+  diff = -diff;
+  for (i = 0; i <= diff; i++) previous_sample_unscaled(spl->sfs[chan]); /* just push pointer backward (one too far) */
+  spl->samps[chan] = frame;
+  return(next_sample_to_float(spl->sfs[chan])); /* always end up going forward (for simpler code) */
+}
+
+static Float xen2sample_read(mus_any *ptr, off_t frame, int chan)
+{
+  xen2sample *xpl = (xen2sample *)ptr;
+  XEN result;
+  result = XEN_CALL_2(xpl->reader,
+		      C_TO_XEN_OFF_T(frame),
+		      C_TO_XEN_INT(chan),
+		      S_xen2sample);
+  return(XEN_TO_C_DOUBLE(result));
+}
+
+
+static XEN g_snd2sample_p(XEN os) 
+{
+  #define H_snd2sample_p "(" S_snd2sample_p " gen): #t if gen is an " S_snd2sample " generator"
+  return(C_TO_XEN_BOOLEAN((mus_xen_p(os)) && (snd2sample_p(XEN_TO_MUS_ANY(os)))));
+}
+
+static XEN g_xen2sample_p(XEN os) 
+{
+  #define H_xen2sample_p "(" S_xen2sample_p " gen): #t if gen is an " S_xen2sample " generator"
+  return(C_TO_XEN_BOOLEAN((mus_xen_p(os)) && (xen2sample_p(XEN_TO_MUS_ANY(os)))));
+}
+
+static XEN g_snd2sample(XEN os, XEN frame, XEN chan)
+{
+  #define H_snd2sample "(" S_snd2sample " gen frame chan): input sample at frame in channel chan"
+  XEN_ASSERT_TYPE((mus_xen_p(os)) && (snd2sample_p(XEN_TO_MUS_ANY(os))), os, XEN_ARG_1, S_snd2sample, "a " S_snd2sample " gen");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(frame), frame, XEN_ARG_2, S_snd2sample, "a number");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chan), chan, XEN_ARG_3, S_snd2sample, "an integer");
+  return(C_TO_XEN_DOUBLE(snd2sample_read((mus_any *)XEN_TO_MUS_ANY(os), XEN_TO_C_OFF_T(frame), XEN_TO_C_INT_OR_ELSE(chan, 0))));
+}
+
+static XEN g_xen2sample(XEN os, XEN frame, XEN chan)
+{
+  #define H_xen2sample "(" S_xen2sample " gen frame chan): input sample at frame in channel chan"
+  XEN_ASSERT_TYPE((mus_xen_p(os)) && (xen2sample_p(XEN_TO_MUS_ANY(os))), os, XEN_ARG_1, S_xen2sample, "a " S_xen2sample " gen");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(frame), frame, XEN_ARG_2, S_snd2sample, "a number");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chan), chan, XEN_ARG_3, S_snd2sample, "an integer");
+  return(C_TO_XEN_DOUBLE(xen2sample_read((mus_any *)XEN_TO_MUS_ANY(os), XEN_TO_C_OFF_T(frame), XEN_TO_C_INT_OR_ELSE(chan, 0))));
+}
+
+static XEN g_make_snd2sample(XEN snd)
+{
+  #define H_make_snd2sample "(" S_make_snd2sample " (snd #f)): return a new " S_snd2sample " (input) generator"
+  mus_xen *gn;
+  mus_any *ge;
+  snd_info *sp;
+  ASSERT_SOUND(S_make_snd2sample, snd, 1);
+  sp = get_sp(snd, NO_PLAYERS);
+  if (sp == NULL)
+    return(snd_no_such_sound_error(S_make_snd2sample, snd));
+  ge = make_snd2sample(sp);
+  if (ge)
+    {
+      gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
+      gn->gen = ge;
+      gn->nvcts = 0;
+      return(mus_xen_to_object(gn));
+    }
+  return(XEN_FALSE);
+}
+
+static XEN g_make_xen2sample(XEN reader)
+{
+  #define H_make_xen2sample "(" S_make_xen2sample " reader): return a new " S_xen2sample " (input) generator.  'reader' should \
+be a function of 2 args: the sample to read (a long int), and the channel."
+  mus_xen *gn;
+  mus_any *ge;
+  char *errmsg;
+  XEN errstr;
+  errmsg = procedure_ok(reader, 2, S_make_xen2sample, "reader", 1);
+  if (errmsg)
+    {
+      errstr = C_TO_XEN_STRING(errmsg);
+      FREE(errmsg);
+      return(snd_bad_arity_error(S_make_xen2sample, errstr, reader));
+    }
+  ge = make_xen2sample(reader);
+  if (ge)
+    {
+      gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
+      gn->gen = ge;
+      gn->nvcts = 0;
+      return(mus_xen_to_object(gn));
+    }
+  return(XEN_FALSE);
+}
+
+
 
 #ifdef XEN_ARGIFY_1
 XEN_ARGIFY_5(g_make_sample_reader_w, g_make_sample_reader)
@@ -9608,6 +9886,12 @@ XEN_ARGIFY_4(g_sample_w, g_sample)
 XEN_ARGIFY_5(g_set_sample_w, g_set_sample)
 XEN_ARGIFY_5(g_samples_w, g_samples)
 XEN_ARGIFY_10(g_set_samples_w, g_set_samples)
+XEN_NARGIFY_1(g_snd2sample_p_w, g_snd2sample_p)
+XEN_NARGIFY_1(g_xen2sample_p_w, g_xen2sample_p)
+XEN_NARGIFY_3(g_snd2sample_w, g_snd2sample)
+XEN_NARGIFY_3(g_xen2sample_w, g_xen2sample)
+XEN_ARGIFY_1(g_make_snd2sample_w, g_make_snd2sample)
+XEN_NARGIFY_1(g_make_xen2sample_w, g_make_xen2sample)
 #else
 #define g_make_sample_reader_w g_make_sample_reader
 #define g_make_region_sample_reader_w g_make_region_sample_reader
@@ -9646,6 +9930,12 @@ XEN_ARGIFY_10(g_set_samples_w, g_set_samples)
 #define g_set_sample_w g_set_sample
 #define g_samples_w g_samples
 #define g_set_samples_w g_set_samples
+#define g_snd2sample_p_w g_snd2sample_p
+#define g_xen2sample_p_w g_xen2sample_p
+#define g_make_snd2sample_w g_make_snd2sample
+#define g_make_xen2sample_w g_make_xen2sample
+#define g_snd2sample_w g_snd2sample
+#define g_xen2sample_w g_xen2sample
 #endif
 
 void g_init_edits(void)
@@ -9715,6 +10005,14 @@ void g_init_edits(void)
 #if HAVE_GUILE
   XEN_DEFINE_PROCEDURE("set-samples", g_set_samples_w, 3, 7, 0, H_samples);
 #endif
+
+  XEN_DEFINE_PROCEDURE(S_snd2sample_p,    g_snd2sample_p_w, 1, 0, 0,    H_snd2sample_p);
+  XEN_DEFINE_PROCEDURE(S_xen2sample_p,    g_xen2sample_p_w, 1, 0, 0,    H_xen2sample_p);
+  XEN_DEFINE_PROCEDURE(S_make_snd2sample, g_make_snd2sample_w, 0, 1, 0, H_make_snd2sample);
+  XEN_DEFINE_PROCEDURE(S_make_xen2sample, g_make_xen2sample_w, 1, 0, 0, H_make_xen2sample);
+  XEN_DEFINE_PROCEDURE(S_snd2sample,      g_snd2sample_w, 2, 1, 0,      H_snd2sample);
+  XEN_DEFINE_PROCEDURE(S_xen2sample,      g_xen2sample_w, 2, 1, 0,      H_xen2sample);
+
 
   #define H_save_hook S_save_hook " (snd name): called each time a file is about to be saved. \
 If it returns #t, the file is not saved.  'name' is #f unless the file is being saved under a new name (as in sound-save-as)."

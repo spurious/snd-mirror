@@ -33,7 +33,7 @@
   #define HAVE_MEMMOVE 1
   #define HAVE_STRINGIZE 1
   #define HAVE_LSTAT 1
-  #define HAVE_HYPOT 1
+  #define HAVE_DECL_HYPOT 1
   #define HAVE_STRDUP 1
   #define HAVE_FILENO 1
   #if defined(LINUX) && (!(defined(HAVE_SCHED_H)))
@@ -64,13 +64,13 @@
     #define HAVE_CLOCK 1
   #endif
   #if defined(LINUX) || defined(__bsdi__)
-    #define HAVE_ISNAN 1
+    #define HAVE_DECL_ISNAN 1
   #endif
   #define HAVE_X 1
 #endif
 
-#if defined(__bsdi__) && (!HAVE_ISNAN)
-  #define HAVE_ISNAN 1
+#if defined(__bsdi__) && (!HAVE_DECL_ISNAN)
+  #define HAVE_DECL_ISNAN 1
 #endif
 
 #ifndef STATFS_ARGS

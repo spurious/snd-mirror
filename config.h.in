@@ -23,7 +23,6 @@
 #undef HAVE_ACCESS
 #undef HAVE_OPENDIR
 #undef HAVE_SIGNAL
-#undef HAVE_ISNAN
 #undef HAVE_STATFS
 #undef HAVE_STATVFS
 #undef HAVE_CLOCK
@@ -34,7 +33,8 @@
 #undef HAVE_STRDUP
 #undef HAVE_FILENO
 #undef HAVE_LSTAT
-#undef HAVE_HYPOT
+#undef HAVE_DECL_HYPOT
+#undef HAVE_DECL_ISNAN
 
 #undef STDC_HEADERS
 #undef TM_IN_SYS_TIME

@@ -871,6 +871,7 @@ In Guile <b>frame?</b> is part of the debugger; it is renamed <b>%frame?</b> her
 <tr><td><a href="clm.html#make-sample-&gt;file">make-sample-&gt;file</a></td><td colspan=2>(name chans format type <i>comment</i>)</td></tr>
 <tr><td><a href="clm.html#make-sawtooth-wave">make-sawtooth-wave</a></td><td colspan=2>(frequency amplitude initial-phase)</td></tr>
 <tr><td><a href="clm.html#make-sine-summation">make-sine-summation</a></td><td colspan=2>(frequency initial-phase n a ratio)</td></tr>
+<tr><td><a href="extsnd.html#makesnd2sample">make-snd-&gt;sample</a></td><td colspan=2>((index #f))</td></tr>
 <tr><td><a href="clm.html#make-square-wave">make-square-wave</a></td><td colspan=2>(frequency amplitude initial-phase)</td></tr>
 <tr><td><a href="clm.html#make-src">make-src</a></td><td colspan=2>(input srate width)</td></tr>
 <tr><td><a href="clm.html#make-sum-of-cosines">make-sum-of-cosines</a></td><td colspan=2>(frequency initial-phase cosines)</td></tr>
@@ -880,6 +881,7 @@ In Guile <b>frame?</b> is part of the debugger; it is renamed <b>%frame?</b> her
 <tr><td><a href="clm.html#make-two-zero">make-two-zero</a></td><td colspan=2>(a0 a1 a2)</td></tr>
 <tr><td><a href="clm.html#make-wave-train">make-wave-train</a></td><td colspan=2>(frequency initial-phase wave size)</td></tr>
 <tr><td><a href="clm.html#make-waveshape">make-waveshape</a></td><td colspan=2>(frequency partials wave size)</td></tr>
+<tr><td><a href="extsnd.html#makexen2sample">make-xen-&gt;sample</a></td><td colspan=2>(reader)</td></tr>
 <tr><td><a href="clm.html#make-zpolar">make-zpolar</a></td><td colspan=2>(radius frequency)</td></tr>
 <tr><td><a href="clm.html#mixer*">mixer*</a></td><td>(mix1 mix2 <i>outmx</i>)</td><td>matrix multiply of mix1 and mix2</td></tr>
 <tr><td><a href="clm.html#mixer-ref">mixer-ref</a></td><td>(mix in out)</td><td>mix-scaler[in,out]</td></tr>
@@ -976,6 +978,8 @@ In Ruby <b>rand</b> is a built-in method; it is aliased to <b>kernel_rand</b> he
 <tr><td><a href="clm.html#sawtooth-wave?">sawtooth-wave?</a></td><td>(gen)</td><td>#t if gen is sawtooth-wave generator</td></tr>
 <tr><td><a href="clm.html#sine-summation">sine-summation</a></td><td>(gen <i>fm</i>)</td><td>sine-summation generator</td></tr>
 <tr><td><a href="clm.html#sine-summation?">sine-summation?</a></td><td>(gen)</td><td>#t if gen is sine-summation generator</td></tr>
+<tr><td><a href="extsnd.html#snd2sample">snd-&gt;sample</a></td><td>(loc (chan 0))</td><td>return sample from sound (index=snd) at loc</td></tr>
+<tr><td><a href="extsnd.html#snd2sample?">snd-&gt;sample?</a></td><td>(gen)</td><td>#t if gen is snd-&gt;sample generator</td></tr>
 <tr><td><a href="clm.html#spectrum">spectrum</a></td><td>(rl im win type)</td><td>produce spectrum of data in rl (return rl)</td></tr>
 <tr><td><a href="clm.html#square-wave">square-wave</a></td><td>(gen <i>fm</i>)</td><td>square-wave generator</td></tr>
 <tr><td><a href="clm.html#square-wave?">square-wave?</a></td><td>(gen)</td><td>#t if gen is square-wave generator</td></tr>
@@ -997,6 +1001,8 @@ In Ruby <b>rand</b> is a built-in method; it is aliased to <b>kernel_rand</b> he
 <tr><td><a href="clm.html#wave-train?">wave-train?</a></td><td>(gen)</td><td>#t if gen is wave-train generator</td></tr>
 <tr><td><a href="clm.html#waveshape">waveshape</a></td><td>(gen <i>index fm</i>)</td><td>waveshaping generator</td></tr>
 <tr><td><a href="clm.html#waveshape?">waveshape?</a></td><td>(gen)</td><td>#t if gen is waveshape generator</td></tr>
+<tr><td><a href="extsnd.html#xen2sample">xen-&gt;sample</a></td><td>(loc (chan 0))</td><td>return sample from xen func at loc in chan</td></tr>
+<tr><td><a href="extsnd.html#xen2sample?">xen-&gt;sample?</a></td><td>(gen)</td><td>#t if gen is xen-&gt;sample generator</td></tr>
 </table>
 <br>
 
@@ -1153,6 +1159,12 @@ You can load Rick Taube's CM into Snd as Scheme code:
 <pre>snd -l /home/bil/test/cm-2.4.0/src/cm.scm
 </pre>
 <p>and all of CM is at your disposal! See also <a href="#sndwithcm">Snd and Common Music</a>.
+</p>
+<p>In most CLM instruments, including all those in clm-ins.scm, the assumption is that 
+you're reading and writing a temp file, calling the instruments within with-sound.
+The special generators snd-&gt;sample and xen-&gt;sample provide a way to redirect
+the CLM input handlers (in-any in particular) to either a Snd sound (via its index),
+or an arbitrary function.
 </p>
 <br>
 

@@ -2834,6 +2834,34 @@ See <a href="#scanagain">scan-again</a> and <a href="newcp">find-zero</a>.
 <p>The <i>read-sample</i> functions can be omitted: <code>(reader)</code> is the same as <code>(read-sample reader)</code>.
 </p>
 
+<p>There are two Snd-specific CLM-style generators that redirect CLM instrument input (via in-any, ina, etc)
+to Snd data:
+</p>
+<pre>
+<!-- TODO: finish snd2sample docs -->
+<a name="makexen2sample">make-xen-&gt;sample</a> (reader)
+<a name="xen2sample">xen-&gt;sample</a> (loc (chan 0)) return sample from xen func at loc in chan
+<a name="xen2sample?">xen-&gt;sample?</a> (gen) #t if gen is xen-&gt;sample generator
+
+<a name="makesnd2sample">make-snd-&gt;sample</a> ((index #f))
+<a name="snd2sample">snd-&gt;sample</a> (loc (chan 0)) return sample from sound (index=snd) at loc
+<a name="snd2sample?">snd-&gt;sample?</a> (gen) #t if gen is snd-&gt;sample generator
+</pre>
+
+<!--
+(define (map-rev amount)
+  (let ((out-file (snd-tempnam)))
+    (save-sound-as out-file)
+    (set! *output* (continue-sample->file out-file))
+    (set! (mus-srate) (srate))
+    (set! *reverb* (make-snd->sample))
+    (jc-reverb #f amount)
+    (mus-close *reverb*)
+    (mus-close *output*)
+    (set! (samples 0 (mus-sound-frames out-file) #f #f #f #f 0 #f #t) out-file) ; last #t = auto-delete
+    ))
+-->
+
 <br>
 <table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h3><A NAME="sndmarks">Marks</a></h3></td></tr></table>
 
@@ -9265,10 +9293,17 @@ them to Scheme/Ruby.  But, for now, here are some of them:
 The four "-widgets" procedures return lists of possibly useful widgets:
 </p>
 <pre>
-  main-widgets:    '(0:top-level-application 1:top-level-shell 2:main-pane 3:main-sound-pane 4:listener-pane 5:notebook-outer-pane)
-  menu-widgets:    '(0:top-level-menu-bar 1:file-menu 2:edit-menu 3:view-menu 4:options-menu 5:help-menu)
-  sound-widgets:   '(0:main-pane 1:name-label 2:control-panel 3:minibuffer 4:play 5:filter-graph 6:unite 7:minibuffer-label 8:name-icon 9:sync)
+  main-widgets:    '(0:top-level-application 1:top-level-shell 2:main-pane 3:main-sound-pane 
+                     4:listener-pane 5:notebook-outer-pane)
+
+  menu-widgets:    '(0:top-level-menu-bar 1:file-menu 2:edit-menu 3:view-menu 
+                     4:options-menu 5:help-menu)
+
+  sound-widgets:   '(0:main-pane 1:name-label 2:control-panel 3:minibuffer 
+                     4:play 5:filter-graph 6:unite 7:minibuffer-label 8:name-icon 9:sync)
+
   channel-widgets: '(0:graph 1:w 2:f 3:sx 4:sy 5:zx 6:zy 7:edhist 8:gsy 9:gzy) + others in gtk
+
   dialog-widgets:  '(0:color_dialog 1:orientation_dialog 2:enved_dialog 3:error_dialog 
                      4:yes_or_no_dialog 5:transform_dialog 6:file_open_dialog 
                      7:file_save_as_dialog 8:view_files_dialog 9:raw_data_dialog 

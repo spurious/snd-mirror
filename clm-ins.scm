@@ -5,6 +5,8 @@
 (if (not (defined? '*output*)) (load-from-path "ws.scm"))
 (if (not (defined? 'stretch-envelope)) (load-from-path "env.scm"))
 
+;;; TODO: snd->sample if not in with-sound here and in all ins
+
 ;;; -------- pluck
 ;;;
 ;;; The Karplus-Strong algorithm as extended by David Jaffe and Julius Smith -- see 

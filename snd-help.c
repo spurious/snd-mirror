@@ -298,6 +298,8 @@ void news_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+21-Aug:  added snd->sample and xen->sample (Snd-specific) generators to redirect\n\
+           ina and friends automatically to Snd data.\n\
 19-Aug:  removed mouse-release-hook (use mouse-click-hook).\n\
 15-Aug:  snd 6.11.\n\
 11-Aug:  start-playing-selection-hook (suggested by Kjetil S. Matheussen).\n\
@@ -308,8 +310,6 @@ void news_help(void)
          ladspa struct constants and accessors.\n\
 28-Jul:  Sun disk space bugfix (thanks to Russell Aspinwall).\n\
 22-Jul:  removed protect-region.\n\
-18-Jul:  removed button-font and buttonFont resource, help-text-font and helpTextFont.\n\
-10-Jul:  record->raw file segfault bugfix (thanks to Russell Aspinwall).\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",

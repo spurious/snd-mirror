@@ -569,7 +569,7 @@ void set_x_bounds(axis_info *ap)
     }
   range = ap->zx * ap->x_ambit;
   ap->x0 = ap->xmin + ap->sx * ap->x_ambit;
-#if HAVE_ISNAN
+#if HAVE_DECL_ISNAN
   if (isnan(ap->x0)) ap->x0 = 0.0;
 #endif
   ap->x1 = (ap->x0 + range);
@@ -645,7 +645,7 @@ static void set_x_axis_x0(chan_info *cp, off_t left)
 	{
 	  x1x0 = ap->x1 - ap->x0; 
 	  ap->x0 = (double)left / (double)SND_SRATE(cp->sound); 
-#if HAVE_ISNAN
+#if HAVE_DECL_ISNAN
 	  if (isnan(ap->x0)) ap->x0 = 0.0;
 #endif
 	  set_x_axis_x0x1(cp, ap->x0, ap->x0 + x1x0);
@@ -812,7 +812,7 @@ void focus_x_axis_change(axis_info *ap, chan_info *cp, int focus_style)
 	    }
 	  break;
 	}
-#if HAVE_ISNAN
+#if HAVE_DECL_ISNAN
       if (isnan(ap->x0)) ap->x0 = 0.0;
 #endif
       if (ap->x0 < 0.0) ap->x0 = 0.0;
@@ -3801,8 +3801,6 @@ void graph_button_press_callback(chan_info *cp, int x, int y, int key_state, int
 			    C_TO_XEN_DOUBLE(ungrf_x(((lisp_grf *)(cp->lisp_info))->axis, x)),
 			    C_TO_XEN_DOUBLE(ungrf_y(((lisp_grf *)(cp->lisp_info))->axis, y))),
 		 S_mouse_press_hook);
-      /* TODO: mouse-press-hook add axis, pass in unaltered x,y */
-      /* TODO: mouse-click-hook rename as mouse-press-hook? */
       break;
     case WAVE:
       if ((mouse_mark == NULL) && 
@@ -4008,9 +4006,6 @@ static Tempus first_time = 0;
 static off_t mouse_cursor = 0;
 static XEN mark_drag_triangle_hook;
 
-/* TODO: add raw-mouse-[press/motion/release]-hook? press/motion/release, any axis xy etc time? */
-/*       could this be done via xm? -- how to pre-empt existing callbacks and restore? */
-
 void graph_button_motion_callback(chan_info *cp, int x, int y, Tempus time, Tempus click_time)
 {
   snd_info *sp;
@@ -4140,7 +4135,6 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, Tempus time, Temp
 				    C_TO_XEN_DOUBLE(ungrf_x(((lisp_grf *)(cp->lisp_info))->axis, x)),
 				    C_TO_XEN_DOUBLE(ungrf_y(((lisp_grf *)(cp->lisp_info))->axis, y))),
 			 S_mouse_drag_hook);
-	      /* TODO: mouse-drag-hook: pass in unaltered x y, add axis */
 	      break;
 	    case FFT_MAIN:
 	      if ((cp->verbose_cursor) && 

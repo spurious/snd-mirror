@@ -4100,7 +4100,7 @@ typedef struct {
  *   it defines most of the built-in "generic" functions like mus-describe.
  * The next set of functions implement the core functions/
  *   The address of the function is stored in the class's core struct.
- *   For example, the scaler method is defined as Float (*scaler)(void *ptr);
+ *   For example, the scaler method is defined as Float (*scaler)(mus_any *ptr);
  *   in the mus_any_class declaration (clm.h); for fcomb it will correspond
  *   to the fcomb_scaler function below; it is invoked via mus_scaler(gen)
  *   where gen is an fcomb generator (the actual call is (*((gen-&gt;core)-&gt;scaler))(gen)).
@@ -4111,7 +4111,7 @@ typedef struct {
 
 static bool mus_fcomb_p(mus_any *ptr) {return((ptr) &amp;&amp; ((ptr-&gt;core)-&gt;type == MUS_FCOMB));}
 
-static char *describe_fcomb(void *ptr) 
+static char *describe_fcomb(mus_any *ptr) 
 {
   char *desc = NULL;
   fcomb *gen = (fcomb *)ptr;
@@ -4126,13 +4126,13 @@ static char *describe_fcomb(void *ptr)
   return(desc);
 }
 
-static bool fcomb_equalp(void *p1, void *p2) {return(p1 == p2);}
-static int fcomb_length(void *ptr) {return(((fcomb *)ptr)-&gt;size);}
-static Float *fcomb_data(void *ptr) {return(((fcomb *)ptr)-&gt;line);}
-static Float fcomb_scaler(void *ptr) {return(((fcomb *)ptr)-&gt;xscl);}
-static Float set_fcomb_scaler(void *ptr, Float val) {((fcomb *)ptr)-&gt;xscl = val; return(val);}
+static bool fcomb_equalp(mus_any *p1, mus_any *p2) {return(p1 == p2);}
+static int fcomb_length(mus_any *ptr) {return(((fcomb *)ptr)-&gt;size);}
+static Float *fcomb_data(mus_any *ptr) {return(((fcomb *)ptr)-&gt;line);}
+static Float fcomb_scaler(mus_any *ptr) {return(((fcomb *)ptr)-&gt;xscl);}
+static Float set_fcomb_scaler(mus_any *ptr, Float val) {((fcomb *)ptr)-&gt;xscl = val; return(val);}
 
-static int free_fcomb(void *uptr) 
+static int free_fcomb(mus_any *uptr) 
 {
   fcomb *ptr = (fcomb *)uptr;
   if (ptr)

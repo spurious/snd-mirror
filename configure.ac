@@ -253,7 +253,8 @@ AC_CHECK_HEADER(gnu/libc-version.h,[AC_DEFINE(HAVE_GNU_LIBC_VERSION_H)])
 AC_CHECK_HEADER(alsa/asoundlib.h,[AC_DEFINE(HAVE_ALSA_ASOUNDLIB_H)])
 AC_HEADER_TIME
 
-AC_CHECK_LIB(m, hypot, [AC_DEFINE(HAVE_HYPOT)])
+AC_CHECK_DECLS(hypot,,,[#include <math.h>]) 
+AC_CHECK_DECLS(isnan,,,[#include <math.h>])
 
 AC_C_CONST
 AC_TYPE_MODE_T
@@ -275,14 +276,6 @@ AC_CHECK_SIZEOF(float)
 AC_CHECK_SIZEOF(void *)
 AC_CHECK_SIZEOF(off_t)
 
-dnl from gsl's configure.in
-AC_CHECK_FUNCS(isnan, ,[
-    AC_MSG_CHECKING([for isnan with <math.h>])
-    AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <math.h>],
-                                    [float f = 0.0; isnan(f)])],
-        	[AC_MSG_RESULT(yes)
-         	 AC_DEFINE(HAVE_ISNAN)],
-         	[AC_MSG_RESULT(no)])])
 SAVELIBS=$LIBS
 FFTW_LIBS=""
 if test "$with_fftw" != no; then

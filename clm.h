@@ -2,10 +2,11 @@
 #define CLM_H
 
 #define MUS_VERSION 2
-#define MUS_REVISION 35
-#define MUS_DATE "11-Aug-03"
+#define MUS_REVISION 36
+#define MUS_DATE "21-Aug-03"
 
 /* 
+ * 21-Aug:     export MUS_INPUT and friends (needed for specialized INA handlers).
  * 11-Aug:     int -> bool.
  * 7-Aug:      removed mus_type.
  * 20-July:    more run methods.
@@ -129,6 +130,8 @@
   #define M_PI_2 (M_PI / 2.0)
 #endif
 
+typedef enum {MUS_NOT_SPECIAL, MUS_SIMPLE_FILTER, MUS_FULL_FILTER, MUS_OUTPUT, MUS_INPUT, MUS_DELAY_LINE} mus_clm_extended_t;
+
 typedef struct {
   struct mus__any_class *core;
 } mus_any;
@@ -153,7 +156,7 @@ typedef struct mus__any_class {
   Float (*increment)(mus_any *ptr);
   Float (*set_increment)(mus_any *ptr, Float val);
   Float (*run)(mus_any *gen, Float arg1, Float arg2);
-  int extended_type;
+  mus_clm_extended_t extended_type;
   void* (*environ)(mus_any *gen);
   int (*channels)(mus_any *ptr);
   Float (*offset)(mus_any *ptr);
