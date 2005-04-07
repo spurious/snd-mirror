@@ -40,6 +40,9 @@
 				      (g_cclosure_new func data #f)
 				      #f)))
 
+(define (load-font name)
+  (pango_font_description_from_string name))
+
 (define (g-list-foreach glist func)
   (let ((len (g_list_length glist)))
     (do ((i 0 (1+ i)))

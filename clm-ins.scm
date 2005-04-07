@@ -2610,18 +2610,18 @@ mjkoskin@sci.fi
 !#
 
 
-(definstrument (fullmix in-file #:optional (beg 0.0) outdur (inbeg 0.0) matrix srate reverb-amount)
+(definstrument (fullmix in-file #:optional beg outdur inbeg matrix srate reverb-amount)
   ;; "matrix" can be a simple amplitude or a list of lists
   ;;     each inner list represents one input channel's amps into one output channel
   ;;     each element of the list can be a number, a list (turned into an env) or an env
-  (let* ((st (inexact->exact (floor (* (mus-srate) beg))))
+  (let* ((st (inexact->exact (floor (* (mus-srate) (or beg 0.0)))))
 	 (dur (or outdur
-		  (/ (mus-sound-duration in-file)
+		  (/ (- (mus-sound-duration in-file) (or inbeg 0.0))
 		     (or (and srate (abs srate)) 1.0))))
 	 (samps (inexact->exact (floor (* (mus-srate) dur))))
 	 (nd (+ st samps))
 	 (in-chans (mus-sound-chans in-file))
-	 (inloc (inexact->exact (floor (* inbeg (mus-sound-srate in-file)))))
+	 (inloc (inexact->exact (floor (* (or inbeg 0.0) (mus-sound-srate in-file)))))
 	 (file (if (not srate) 
 		   (make-file->frame in-file)
 		   (let ((vect (make-vector in-chans)))
@@ -2630,7 +2630,9 @@ mjkoskin@sci.fi
 		       (vector-set! vect i (make-readin in-file i inloc)))
 		     vect)))
 	 (out-chans (mus-channels *output*))
-	 (mx (make-mixer (max in-chans out-chans)))
+	 (mx (if matrix
+		 (make-mixer (max in-chans out-chans))
+		 #f))
 	 (rev-mx (if (and *reverb* reverb-amount (> reverb-amount 0.0))
 		     (let ((rmx (make-mixer in-chans)))
 		       (do ((i 0 (1+ i)))
@@ -2665,13 +2667,10 @@ mjkoskin@sci.fi
 					(vector-set! (vector-ref envs inp) outp outn)
 					(vector-set! (vector-ref envs inp) outp (make-env outn :duration dur))))
 				  (snd-warning (format #f "unknown element in matrix: ~A" outn)))))))))
-	      (do ((inp 0 (1+ inp))) ; matrix is a number (global scaler)
+	      (do ((inp 0 (1+ inp))) ; matrix is a number in this case (a global scaler)
 		  ((= inp in-chans))
 		(if (< inp out-chans)
-		    (mixer-set! mx inp inp matrix))))) ; this is different from CLM fullmix.ins which puts scaler in all entries??
-	(do ((inp 0 (1+ inp)))
-	    ((= inp in-chans))
-	  (mixer-set! mx inp inp 1.0)))
+		    (mixer-set! mx inp inp matrix))))))
     (if (not srate)
 	(begin
 	  (mus-mix *output* file st samps inloc mx envs)

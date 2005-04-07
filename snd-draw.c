@@ -287,18 +287,6 @@ static XEN g_set_foreground_color_reversed(XEN arg1, XEN arg2, XEN arg3, XEN arg
 
 #if USE_MOTIF
 
-static XEN g_load_font(XEN font)
-{
-  #define H_load_font "(" S_load_font " name): load font 'name' and return its font-id"
-  XFontStruct *fs = NULL;
-  XEN_ASSERT_TYPE(XEN_STRING_P(font), font, XEN_ONLY_ARG, S_load_font, "a string");
-  fs = XLoadQueryFont(MAIN_DISPLAY(ss), 
-		      XEN_TO_C_STRING(font));
-  if (fs) return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("Font"),
-			    C_TO_XEN_ULONG(fs->fid)));
-  return(XEN_FALSE);
-}
-
 static XEN g_set_current_font(XEN id, XEN snd, XEN chn, XEN ax_id)
 {
   axis_context *ax;
@@ -338,16 +326,6 @@ static XEN g_current_font(XEN snd, XEN chn, XEN ax_id)
 
 
 #else
-
-static XEN g_load_font(XEN font)
-{
-  #define H_load_font "(" S_load_font " name): load font 'name' and return its font-id"
-  PangoFontDescription *fs = NULL;
-  XEN_ASSERT_TYPE(XEN_STRING_P(font), font, XEN_ONLY_ARG, S_load_font, "a string");
-  fs = pango_font_description_from_string(XEN_TO_C_STRING(font));
-  if (fs) return(XEN_WRAP_C_POINTER(fs));
-  return(XEN_FALSE);
-}
 
 static XEN g_set_current_font(XEN id, XEN snd, XEN chn, XEN ax_id)
 {
@@ -799,7 +777,6 @@ XEN_ARGIFY_7(g_fill_rectangle_w, g_fill_rectangle)
 XEN_ARGIFY_4(g_fill_polygon_w, g_fill_polygon)
 XEN_ARGIFY_3(g_foreground_color_w, g_foreground_color)
 XEN_ARGIFY_4(g_set_foreground_color_w, g_set_foreground_color)
-XEN_NARGIFY_1(g_load_font_w, g_load_font)
 XEN_ARGIFY_3(g_current_font_w, g_current_font)
 XEN_ARGIFY_4(g_set_current_font_w, g_set_current_font)
 XEN_NARGIFY_0(g_main_widgets_w, g_main_widgets)
@@ -827,7 +804,6 @@ XEN_NARGIFY_0(g_snd_gcs_w, g_snd_gcs)
 #define g_fill_polygon_w g_fill_polygon
 #define g_foreground_color_w g_foreground_color
 #define g_set_foreground_color_w g_set_foreground_color
-#define g_load_font_w g_load_font
 #define g_current_font_w g_current_font
 #define g_set_current_font_w g_set_current_font
 #define g_main_widgets_w g_main_widgets
@@ -863,7 +839,6 @@ void g_init_draw(void)
   XEN_DEFINE_PROCEDURE(S_draw_string,      g_draw_string_w,    3, 3, 0, H_draw_string);
   XEN_DEFINE_PROCEDURE(S_fill_rectangle,   g_fill_rectangle_w, 4, 3, 0, H_fill_rectangle);
   XEN_DEFINE_PROCEDURE(S_fill_polygon,     g_fill_polygon_w,   1, 3, 0, H_fill_polygon);
-  XEN_DEFINE_PROCEDURE(S_load_font,        g_load_font_w,      1, 0, 0, H_load_font);
   XEN_DEFINE_PROCEDURE(S_main_widgets,     g_main_widgets_w,   0, 0, 0, H_main_widgets);
   XEN_DEFINE_PROCEDURE(S_dialog_widgets,   g_dialog_widgets_w, 0, 0, 0, H_dialog_widgets);
   XEN_DEFINE_PROCEDURE(S_hide_widget,      g_hide_widget_w,    1, 0, 0, H_hide_widget);

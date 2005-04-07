@@ -52,6 +52,10 @@
 (if (not (provided? 'snd-extensions.scm)) (load-from-path "extensions.scm"))
 (if (not (provided? 'snd-play.scm)) (load-from-path "play.scm"))
 
+(define (load-font name)
+  (let ((fs (XLoadQueryFont (XtDisplay (cadr (main-widgets))) name)))
+    (and (XFontStruct? fs) (.fid fs))))
+
 (define (current-screen)
   "(current-screen) returns the current X screen number of the current display"
   (DefaultScreenOfDisplay 

@@ -164,7 +164,7 @@ static mark *find_next_mark (off_t current_sample, chan_info *cp)
   return(map_over_marks(cp, find_next_mark_1, (void *)(&current_sample), READ_FORWARD));
 }
 
-static mark* marks_off_1(chan_info *cp, mark *mp, void *m)
+static mark* marks_off_1(chan_info *cp, mark *mp, void *ignore)
 {
   mp->id &= (~MARK_VISIBLE);
   return(NULL);
@@ -822,7 +822,7 @@ void goto_named_mark(chan_info *cp, const char *name)
   if (mp) cursor_moveto(cp, mp->samp);
 }
 
-static mark *active_mark_1(chan_info *cp, mark *mp, void *m)
+static mark *active_mark_1(chan_info *cp, mark *mp, void *ignore)
 {
   axis_info *ap;
   ap = cp->axis;
@@ -2314,7 +2314,7 @@ mark list is: channel given: (id id ...), snd given: ((id id) (id id ...)), neit
   return(res1);
 }
 
-static bool find_any_marks (chan_info *cp, void *ptr)
+static bool find_any_marks (chan_info *cp, void *ignore)
 {
   if (cp->marks) 
     return(cp->mark_ctr[cp->edit_ctr] >= 0); /* initialized to -1 -- 0 is first mark */

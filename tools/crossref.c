@@ -538,7 +538,9 @@ int main(int argc, char **argv)
 	}
       else
 	{
-	  if ((qs[i]->results == 0) && (qs[i]->proc > 0) && (qs[i]->calls > 0))
+	  if ((qs[i]->results == 0) && (qs[i]->proc > 0) && (qs[i]->calls > 0) &&
+	      (strncmp(qs[i]->name, "set_", 4) != 0) &&
+	      (strncmp(qs[i]->name, "in_set_", 7) != 0))
 	    fprintf(FD, " (not void but result not used?)");
 	}
       for (j=0;j<files_ctr;j++)

@@ -274,7 +274,6 @@
 #define S_listener_prompt               "listener-prompt"
 #define S_listener_selection            "listener-selection"
 #define S_listener_text_color           "listener-text-color"
-#define S_load_font                     "load-font"
 #define S_lock_track                    "lock-track"
 #define S_log_freq_start                "log-freq-start"
 #define S_main_menu                     "main-menu"

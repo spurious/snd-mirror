@@ -358,7 +358,6 @@ typedef struct {
   } data;
 } vect;
 
-
 typedef struct ptree {
   struct triple **program;
   Int *ints; 
@@ -575,73 +574,6 @@ static xen_var *find_var_in_ptree_via_addr(ptree *pt, int type, int addr)
   return(NULL);
 }
 
-static char *add_comments(ptree *pt, char *str)
-{
-  xen_var *var;
-  int addr, i, j, len;
-  char *new_buf;
-  char name[64];
-  bool name_pending = false;
-  if (str == NULL) return(NULL);
-  /* look for i%n(...) or d%n(...), if found, look for addr in pt tables, if found add name to buf */
-  len = snd_strlen(str);
-  new_buf = (char *)CALLOC(len + 256, sizeof(char));
-  for (i = 0, j = 0; i < len; i++)
-    {
-      if (((str[i] != 'i') && (str[i] != 'd')) ||
-	  (!(isdigit((int)(str[i + 1])))))
-	{
-	  new_buf[j++] = str[i];
-	  if ((name_pending) && (str[i] == ')'))
-	    {
-	      int k, name_len;
-	      name_len = snd_strlen(name);
-	      new_buf[j++] = '[';
-	      for (k = 0; k < name_len; k++)
-		new_buf[j++] = name[k];
-	      new_buf[j++] = ']';
-	      name_pending = false;
-	      name[0] = '\0';
-	    }
-	}
-      else
-	{
-	  int k;
-	  addr = 0;
-	  k = i + 1;
-	  do
-	    {
-	      addr = 10 * addr + (str[k++] - '0');
-	    }
-	  while (isdigit((int)(str[k])));
-	  if (str[k] == '(')
-	    {
-	      var = find_var_in_ptree_via_addr(pt, 
-					       ((str[i] == 'd') ? R_FLOAT : 
-						((str[i] == 's') ? R_STRING : 
-						 ((str[i] == 'v') ? R_VCT :
-						  ((str[i] == 'c') ? R_CLM :
-						   ((str[i] == 'r') ? R_READER :
-						    ((str[i] == 'm') ? R_MIX_READER :
-						     ((str[i] == 't') ? R_TRACK_READER :
-						      ((str[i] == 'a') ? R_SOUND_DATA :
-						       ((str[i] == 'f') ? R_FUNCTION :
-							((str[i] == 'x') ? R_LIST :
-							 R_INT)))))))))),
-					       addr);
-	      if (var)
-		{
-		  strcpy(name, var->name);
-		  name_pending = true;
-		}
-	    }
-	  new_buf[j++] = str[i];
-	}
-    }
-  FREE(str);
-  return(new_buf);
-}
-
 static char *str_append(char *oldstr, int *oldsize, char *newstr)
 {
   oldstr = snd_strcat(oldstr, newstr, oldsize);
@@ -733,7 +665,7 @@ static char *describe_ptree(ptree *pt)
     }
   for (i = 0; i < pt->triple_ctr; i++)
     {
-      temp = add_comments(pt, describe_triple(((triple **)(pt->program))[i], pt));
+      temp = describe_triple(((triple **)(pt->program))[i], pt);
       if (temp)
 	{
 	  buf = str_append(buf, &size, mus_format("  %d: %s\n", i, temp));
@@ -10737,13 +10669,14 @@ static struct ptree *form_to_ptree(XEN code)
       add_triple_to_ptree(prog, make_triple(quit, descr_quit, NULL, 0));
       /* now check that we were able to nail down all global variable types */
 #ifdef DESCRIBE_PTREE
-      {
-	char *msg;
-	msg = describe_ptree(prog);
-	if (ptree_on == STDERR_PTREE_DISPLAY) fprintf(stderr, msg);
-	else if (ptree_on == LISTENER_PTREE_DISPLAY) listener_append(msg);
-	FREE(msg);
-      }
+      if (ptree_on != NO_PTREE_DISPLAY)
+	{
+	  char *msg;
+	  msg = describe_ptree(prog);
+	  if (ptree_on == STDERR_PTREE_DISPLAY) fprintf(stderr, msg);
+	  else if (ptree_on == LISTENER_PTREE_DISPLAY) listener_append(msg);
+	  FREE(msg);
+	}
 #endif
       prog->form = form;
       prog->form_loc = snd_protect(prog->form);
@@ -11428,13 +11361,14 @@ static XEN g_run_eval(XEN code, XEN arg, XEN arg1, XEN arg2)
     {
       add_triple_to_ptree(pt, make_triple(quit, descr_quit, NULL, 0));
 #ifdef DESCRIBE_PTREE
-      {
-	char *msg;
-	msg = describe_ptree(pt);
-	if (ptree_on == STDERR_PTREE_DISPLAY) fprintf(stderr, msg);
-	else if (ptree_on == LISTENER_PTREE_DISPLAY) listener_append(msg);
-	FREE(msg);
-      }
+      if (ptree_on != NO_PTREE_DISPLAY)
+	{
+	  char *msg;
+	  msg = describe_ptree(pt);
+	  if (ptree_on == STDERR_PTREE_DISPLAY) fprintf(stderr, msg);
+	  else if (ptree_on == LISTENER_PTREE_DISPLAY) listener_append(msg);
+	  FREE(msg);
+	}
 #endif
       if (pt->args)
 	{

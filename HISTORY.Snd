@@ -1,5 +1,6 @@
 Snd change log
 
+  7-Apr:     moved load-font to snd-motif.scm and snd-gtk.scm.
   6-Apr:     volterra-filter in dsp.scm
   4-Apr:     rt-examples.scm (Kjetil Matheussen).
   30-Mar:    marks.rb (Mike Scholz).

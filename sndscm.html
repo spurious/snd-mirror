@@ -725,7 +725,7 @@ we could type <code>(undo)</code>.  Nothing daunted, we use:
 <code>(filter-channel (invert-filter (vct .5 .25 .125)))</code>.
 There are a million gotchas here.  The primary one is that the inverse filter
 can "explode" -- the coefficients can grow without bound.  For example, any
-filter returned by spectrum->coeffs will be problematic.
+filter returned by spectrum-&gt;coeffs will be problematic.
 </p>
 
 <p><b>make-volterra-filter</b> and <b>volterra-filter</b> implement one form

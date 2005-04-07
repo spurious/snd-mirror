@@ -7265,7 +7265,7 @@ resample via FFT: <a href="sndscm.html#exdownoct">down-oct</a><br>
 resample through env: <a href="sndscm.html#exsoundinterp">sound-interp</a> and <a href="sndscm.html#exenvsoundinterp">env-sound-interp</a><br>
 resample through list: <a href="sndscm.html#scratch">scratch</a><br>
 resample step-size through a function: <a href="#setsamples">step-src</a><br>
-predict duration of resampled sound: <a href="#exsrcduration">src-duration</a><br>
+predict duration of resampled sound: <a href="sndscm.html#exsrcduration">src-duration</a><br>
 <br>
 </blockquote></small>
 </td></tr></TABLE>
@@ -10682,7 +10682,7 @@ The font variables are:
 (set! (<a class=quiet href="#axisnumbersfont">axis-numbers-font</a>) "9x15")
 </pre></td></tr></table></center>
 
-<p>See also <a href="#loadfont">load-font</a> and <a href="#currentfont">current-font</a> below.
+<p>See also <a href="#currentfont">current-font</a> below.
 In Gtk2, Pango-style names are used for the fonts: "Monospace 8" for example.
 If the requested font can't be loaded, the set! statement returns the old (unchanged) font name.
 </p>
@@ -11028,28 +11028,6 @@ The following gives us a green cursor:
 <pre>
   (set! (<em class=red>foreground-color</em> 0 0 <a class=quiet href="#cursorcontext">cursor-context</a>) (<a class=quiet href="#makecolor">make-color</a> 1 0 1))
 </pre>
-We can goof around with colors and fonts:
-</td></tr>
-<tr><td></td><td>
-<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
-(define new-font (<a class=quiet href="#loadfont">load-font</a> "-*-helvetica-bold-r-*-*-14-*-*-*-*-*-*-*"))
-
-(define show-hiho
-  ;; show a red "hiho" in the helvetica bold font on a gray background
-  (lambda (snd chn)
-    (let ((ls (<a class=quiet href="#leftsample">left-sample</a> snd chn))
-          (rs (<a class=quiet href="#rightsample">right-sample</a> snd chn)))
-      (if (and (&lt; ls 1000)
-               (&gt; rs 1000))
-	  (let ((pos (<a class=quiet href="#x_to_position">x-&gt;position</a> (/ 1000.0 (<a class=quiet href="#srate">srate</a>))))
-		(old-color (<a class=quiet href="#foregroundcolor">foreground-color</a>)))
-	    (set! (<em class=red>foreground-color</em>) (<a class=quiet href="#makecolor">make-color</a> .75 .75 .75))
-            (<a class=quiet href="#fillrectangle">fill-rectangle</a> pos 10 50 20)
-	    (set! (<em class=red>foreground-color</em>) (<a class=quiet href="#makecolor">make-color</a> 1 0 0))
-	    (if new-font (set! (<em class=red>current-font</em>) new-font))
-            (<a class=quiet href="#drawstring">draw-string</a> "hiho" (+ pos 5) 24)
-	    (set! (<em class=red>foreground-color</em>) old-color))))))
-</pre></td></tr></table>
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -11114,26 +11092,6 @@ sound over another at an arbitrary point, and so on (see draw.scm):
 </pre></td></tr></table></td></tr>
 <tr><td></td><td align=center>
 </td></tr>
-<tr><td colspan=2></td></tr>
-
-<!-- load-font -->
-<tr><td colspan=2>
-<code><a class=def name="loadfont">load-font</a> (font-name)</code></td></tr>
-<tr><td></td><td>
-load the font <i>font-name</i> (an X-style font spec), and return a handle for it (for <a href="#currentfont">current-font</a>).
-<pre>
-  (define new-font (<em class=red>load-font</em> "-*-helvetica-bold-r-*-*-14-*-*-*-*-*-*-*"))
-</pre>
-load-font could be (should have been!) defined using the xm module as:
-</td></tr>
-<tr><td></td><td>
-<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
-(define (load-font name)
-  (let ((fs (XLoadQueryFont (XtDisplay (cadr (<a class=quiet href="#mainwidgets">main-widgets</a>))) name)))
-    (and (XFontStruct? fs) (.fid fs))))
-</pre></td></tr></table>
-</td></tr>
-<tr><td colspan=2></td></tr>
 <tr><td colspan=2></td></tr>
 
 <!-- make-graph-data -->
