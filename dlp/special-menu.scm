@@ -1,6 +1,8 @@
 (use-modules (ice-9 format))
 (provide 'snd-special-menu.scm)
 
+(if (not (provided? 'snd-edit-menu.scm)) (load-from-path "edit-menu.scm"))
+
 (define special-list '()) ; menu labels are updated to show current default settings
 
 (define special-menu (add-to-main-menu "Special" (lambda ()

@@ -24,6 +24,7 @@ foreach file (*.h *.c *.cl *.el *.html makefile.* make.* *.gtkrc *.in *.scm *.li
     diff -bcw $curdir/dlp/$file $snddlp/$file >> $curdir/hi
     find $curdir/dlp/$file -newer $snddlp/$file -exec echo ' updating ' dlp/$file \;
     find $curdir/dlp/$file -newer $snddlp/$file -exec cp $curdir/dlp/$file $snddlp \;
+    find $curdir/$file -newer $snddlp/$file -exec echo ' out of date? ' dlp/$file \;
   endif
 end
 

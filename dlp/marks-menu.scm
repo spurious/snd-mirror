@@ -1,6 +1,8 @@
 (use-modules (ice-9 format))
 (provide 'snd-marks-menu.scm)
 
+(if (not (defined? 'mark-loops)) (load-from-path "examp.scm"))
+
 (define marks-list '()) ; menu labels are updated to show current default settings
 
 (define marks-menu (add-to-main-menu "Marks" (lambda ()
@@ -190,7 +192,7 @@
                          (frm (XtCreateManagedWidget "frm" xmFormWidgetClass frame
                                 (list XmNleftAttachment      XmATTACH_FORM
                                       XmNrightAttachment     XmATTACH_FORM
-  XmNtopAttachment       XmATTACH_FORM
+				      XmNtopAttachment       XmATTACH_FORM
                                       XmNbottomAttachment    XmATTACH_FORM
                                       XmNbackground          (basic-color))))
                          (lab (XtCreateManagedWidget "Buffer size" xmLabelWidgetClass frm
@@ -809,7 +811,7 @@
 ;;; -------- Delete all marks 
 ;;;
 
-(add-to-menu marks-menu "Delete all marks" delete-marks)
+(add-to-menu marks-menu "Delete all marks" (lambda () (delete-marks)))
 
 (add-to-menu marks-menu #f #f)
 

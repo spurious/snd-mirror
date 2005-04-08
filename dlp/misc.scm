@@ -23,8 +23,8 @@
 (if (not (provided? 'snd-mix-menu.scm))(load-from-path "mix-menu.scm"))
 (if (not (provided? 'snd-new-buttons.scm)) (load-from-path "new-buttons.scm"))
 (if (not (provided? 'snd-panic.scm)) (load-from-path "panic.scm"))
-(if (not (provided? 'snd-ladspa.scm)) (load-from-path "ladspa.scm"))
-(if (not (provided? 'snd-ladspa-help.scm)) (load-from-path "ladspa-help.scm"))
+(if (and (provided? 'snd-gtk) (not (provided? 'snd-ladspa.scm))) (load-from-path "ladspa.scm"))
+(if (and (provided? 'snd-gtk) (not (provided? 'snd-ladspa-help.scm))) (load-from-path "ladspa-help.scm"))
 (if (not (provided? 'snd-fft-menu.scm)) (load-from-path "fft-menu.scm"))
 (if (not (provided? 'snd-edit123.scm)) (load-from-path "edit123.scm"))
 
