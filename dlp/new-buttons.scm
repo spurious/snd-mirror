@@ -55,12 +55,12 @@
                   (list XmNbackground (black-pixel)
                         XmNorientation XmHORIZONTAL))))
     (load-from-path "new-icons.scm")
-    (let ((play-pixmap (make-pixmap tools full-go))
-          (stop-pixmap (make-pixmap tools full-stop))
-          (play-forward-pixmap (make-pixmap tools play-direction-forward))
-          (play-backward-pixmap (make-pixmap tools play-direction-backward))
-          (loop-pixmap (make-pixmap tools loop-play))
-          (loop-stop-pixmap (make-pixmap tools loop-stop)))
+    (let ((play-pixmap (make-pixmap tools icon-full-go))
+          (stop-pixmap (make-pixmap tools icon-full-stop))
+          (play-forward-pixmap (make-pixmap tools icon-play-direction-forward))
+          (play-backward-pixmap (make-pixmap tools icon-play-direction-backward))
+          (loop-pixmap (make-pixmap tools icon-loop-play))
+          (loop-stop-pixmap (make-pixmap tools icon-loop-stop)))
     (for-each
      (lambda (icon callback-and-tooltip)
        (let ((button
@@ -72,7 +72,7 @@
          (XtAddCallback button XmNactivateCallback (car callback-and-tooltip))
          (if (string? (cadr callback-and-tooltip))
              (add-tooltip button (cadr callback-and-tooltip)))))
-     (list open-file close-file save-as open-mix-file rec-pane env-edit regions-browser mix-pane undo-it redo-it full-go play-direction-forward loop-play start-of-file start-of-window back-one-window back-one-sample mid-window forward-one-sample forward-one-window end-of-window end-of-file last-mix-point next-mix-point zooming-in zooming-out exit-it)
+     (list icon-open-file icon-close-file icon-save-as icon-open-mix-file icon-rec-pane icon-env-edit icon-regions-browser icon-mix-pane icon-undo-it icon-redo-it icon-full-go icon-play-direction-forward icon-loop-play icon-start-of-file icon-start-of-window icon-back-one-window icon-back-one-sample icon-mid-window icon-forward-one-sample icon-forward-one-window icon-end-of-window icon-end-of-file icon-last-mix-point icon-next-mix-point icon-zooming-in icon-zooming-out icon-exit-it)
      (list
            (list (lambda (w c i) (open-file-dialog)) "Open file")
            (list (lambda (w c i) (close-sound)) "Close file")

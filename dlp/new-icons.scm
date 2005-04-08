@@ -1,6 +1,6 @@
 (provide 'snd-new-icons.scm)
 
-(define save-as (list
+(define icon-save-as (list
 "32 25 5 1"
 "       c white"
 ".      c lightslategrey"
@@ -33,7 +33,7 @@
 " ..............................X"
 " XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"))
 
-(define env-edit (list
+(define icon-env-edit (list
 "32 25 4 1"
 "       c white"
 ".      c yellow"
@@ -65,7 +65,7 @@
 " ..............................X"
 " XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"))
 
-(define no-fear (list
+(define icon-no-fear (list
 "32 25 3 1"
 "       c white"
 ".      c red"
@@ -97,7 +97,7 @@
 " XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"))
 
 
-(define regions-browser (list
+(define icon-regions-browser (list
 "32 25 4 1"
 "       c white"
 ".      c yellow"
@@ -129,7 +129,7 @@
 " ..............................X"
 " XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"))
 
-(define mix-pane (list
+(define icon-mix-pane (list
 "32 25 4 1"
 "       c white"
 ".      c yellow"
@@ -162,7 +162,7 @@
 " XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"))
 
 
-(define rec-pane (list
+(define icon-rec-pane (list
 "32 25 4 1"
 "       c white"
 ".      c blue"
@@ -194,7 +194,7 @@
 " ..............................X"
 " XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"))
 
-(define undo-it (list
+(define icon-undo-it (list
 "32 25 3 1"
 "       c white"
 ".      c antiquewhite"
@@ -225,7 +225,7 @@
 " ..............................X"
 " XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"))
 
-(define redo-it (list
+(define icon-redo-it (list
 "32 25 3 1"
 "       c white"
 "X      c antiquewhite"
@@ -257,7 +257,7 @@
 " XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"))
 
 
-(define exit-it (list
+(define icon-exit-it (list
 "32 25 4 1"
 "       c white"
 ".      c black"
@@ -289,7 +289,7 @@
 " ..............................X"
 " XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"))
 
-(define full-go (list
+(define icon-full-go (list
 "32 25 4 1"
 "X      c white"
 "       c grey"
@@ -322,7 +322,7 @@
 "................................"))
 
 
-(define play-direction-forward (list
+(define icon-play-direction-forward (list
 "32 25 4 1"
 "       c grey"
 ".      c black"
@@ -355,7 +355,7 @@
 "................................"))
 
 
-(define play-direction-backward (list
+(define icon-play-direction-backward (list
 "32 25 4 1"
 "       c grey"
 ".      c black"
@@ -387,7 +387,7 @@
 "                                "
 "................................"))
 
-(define loop-play (list
+(define icon-loop-play (list
 "32 25 11 1"
 
 ". c black"
@@ -429,7 +429,7 @@
 "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"))
 
 
-(define loop-stop (list
+(define icon-loop-stop (list
 "32 25 11 1"
 
 ". c black"
@@ -475,7 +475,7 @@
 
 
 
-(define full-stop (list
+(define icon-full-stop (list
 "32 25 4 1"
 "X      c white"
 "       c grey"
@@ -508,7 +508,7 @@
 "................................"))
 
 
-(define open-file (list
+(define icon-open-file (list
 "32 25 4 1"
 "x      c white"
 "       c lightslategrey"
@@ -541,7 +541,7 @@
 "................................"))
 
 
-(define close-file (list
+(define icon-close-file (list
 "32 25 4 1"
 "       c white"
 ".      c lightslategrey"
@@ -573,7 +573,7 @@
 " ..............................X"
 " XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"))
 
-(define start-of-window (list
+(define icon-start-of-window (list
 "32 25 3 1"
 "       c lightblue"
 ".      c black"
@@ -604,7 +604,7 @@
 "                                "
 "................................"))
 
-(define mid-window (list
+(define icon-mid-window (list
 "32 25 3 1"
 "       c lightblue"
 ".      c black"
@@ -636,7 +636,7 @@
 "................................"))
 
 
-(define end-of-window (list
+(define icon-end-of-window (list
 "32 25 3 1"
 "       c lightblue"
 ".      c black"
@@ -667,7 +667,7 @@
 "                                "
 "................................"))
 
-(define start-of-file (list
+(define icon-start-of-file (list
 "32 25 3 1"
 "       c lightblue"
 ".      c black"
@@ -699,7 +699,7 @@
 "................................"))
 
 
-(define end-of-file (list
+(define icon-end-of-file (list
 "32 25 3 1"
 "       c lightblue"
 ".      c black"
@@ -730,7 +730,7 @@
 "                                "
 "................................"))
 
-(define forward-one-sample (list
+(define icon-forward-one-sample (list
 "32 25 3 1"
 "       c lightblue"
 ".      c black"
@@ -761,7 +761,7 @@
 "                                "
 "................................"))
 
-(define back-one-sample (list
+(define icon-back-one-sample (list
 "32 25 3 1"
 "       c lightblue"
 ".      c black"
@@ -792,7 +792,7 @@
 "                                "
 "................................"))
 
-(define forward-one-window (list
+(define icon-forward-one-window (list
 "32 25 3 1"
 "       c lightblue"
 ".      c black"
@@ -824,7 +824,7 @@
 "................................"))
 
 
-(define back-one-window (list
+(define icon-back-one-window (list
 "32 25 3 1"
 "       c lightblue"
 ".      c black"
@@ -856,7 +856,7 @@
 "................................"))
 
 
-(define next-mix-point (list
+(define icon-next-mix-point (list
 "32 25 4 1"
 "       c lightblue"
 "x      c white"
@@ -889,7 +889,7 @@
 "................................"))
 
 
-(define last-mix-point (list
+(define icon-last-mix-point (list
 "32 25 4 1"
 "       c lightblue"
 "x      c white"
@@ -922,7 +922,7 @@
 "................................"))
 
 
-(define mixer (list
+(define icon-mixer (list
 "32 25 5 1"
 "       c white"
 ".      c grey"
@@ -955,7 +955,7 @@
 " ..............................X"
 " XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"))
 
-(define zooming-in (list
+(define icon-zooming-in (list
 "32 25 4 1"
 "       c lightblue"
 ".      c black"
@@ -987,7 +987,7 @@
 "                                "
 "................................"))
 
-(define zooming-out (list
+(define icon-zooming-out (list
 "32 25 4 1"
 "       c lightblue"
 ".      c black"
@@ -1020,7 +1020,7 @@
 "................................"))
 
 
-(define open-mix-file (list
+(define icon-open-mix-file (list
 "32 25 5 1"
 "x      c white"
 "       c lightslategrey"

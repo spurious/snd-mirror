@@ -398,6 +398,7 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+8-Apr:   poly.scm.\n\
 7-Apr:   moved load-font to snd-motif.scm and snd-gtk.scm.\n\
 6-Apr:   volterra-filter in dsp.scm.\n\
 4-Apr:   rt-examples.scm (Kjetil Matheussen).\n\

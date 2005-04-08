@@ -508,7 +508,7 @@ the listener?
 <p>A DSP grabbag, mostly filters.
 </p>
 <table border=1>
-  <tr><td><a class=def name="src-duration">src-duration</a> env</td><td>predict duration after src by env</td></tr>
+  <tr><td><a class=def name="srcduration">src-duration</a> env</td><td>predict duration after src by env</td></tr>
   <tr><td><A class=def NAME="exdolph">dolph</a> n gamma</td><td>Dolph-Chebyshev fft data window</td></tr>
   <tr><td><A class=def NAME="exdownoct">down-oct</a> n, <em class=emdef>stretch-sound-via-dft</em></td><td>move sound down a factor of n using fft/dft</td></tr>
   <tr><td><em class=emdef>freqdiv</em> n</td><td>"frequency division" effect</td></tr>
@@ -2291,6 +2291,8 @@ mixed in sound is filtered, then the mix takes place).
 </p>
 
 
+<!-- INDEX mixerdoc:Matrices -->
+
 <A NAME="mixerdoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>mixer.scm</h2></td></tr></table>
 
 <p>mixer.scm has functions related to mixers and frames (linear algebra).  There are some
@@ -2298,7 +2300,7 @@ others in the relevant section of snd-test.
 </p>
 <pre>
   <a class=def NAME="frame-reverse">frame-reverse</a> frame
-  <a class=def NAME="make-zero-mixer">make-zero-mixer</a> size
+  <em class=emdef>make-zero-mixer</em> size
   <a class=def NAME="mixer-diagonal">mixer-diagonal?</a> mixer
   <a class=def name="mixer-transpose">mixer-transpose</a> mixer
   <a class=def name="mixer-determinant">mixer-determinant</a> mixer
@@ -2314,12 +2316,48 @@ If passed a mixer representing the coefficients of a set of simultaneous
 linear equations, and a frame representing the values thereof, it
 returns (in the original frame) the values of the independent
 variables, and (in the original mixer) the inverse of the matrix
-of coefficients.  The rest should be obvious -- these are mostly
+of coefficients.  
+</p>
+<pre>
+:<em class=typing>(mixer-inverse (make-mixer 2  2.0 0.0  0.0 1.4))</em>
+<em class=listener>#&lt;mixer: chans: 2, vals: [
+ 0.500 0.000
+ 0.000 0.714
+]&gt;</em>
+:<em class=typing>(mixer-solve (make-mixer 2 1.0 1.0 2.0 1.0) (make-frame 2 4.0 5.0))</em>
+<em class=listener>#&lt;frame[2]: [1.000 3.000]&gt;</em>
+</pre>
+<p>
+The rest should be obvious -- these are mostly
 treating mixers as square matrices, and frames as row or column
 vectors, then performing the usual tricks upon them.  There are
 more such functions in snd-test.
 </p>
-
+<pre>
+:<em class=typing>(mixer-determinant (make-mixer 2 1.0 0.0 2.0 1.0))</em>
+<em class=listener>1.0</em>
+:<em class=typing>(mixer-trace (make-mixer 2 1.0 0.0 2.0 1.5))</em>
+<em class=listener>2.5</em>
+:<em class=typing>(mixer-transpose (make-mixer 2 1.0 0.0 2.0 1.5))</em>
+<em class=listener>#&lt;mixer: chans: 2, vals: [
+ 1.000 2.000
+ 0.000 1.500
+]&gt;</em>
+:<em class=typing>(mixer-diagonal? (make-mixer 2 1.0 0.0 2.0 1.5))</em>
+<em class=listener>#f</em>
+:<em class=typing>(mixer-poly (make-mixer 2  1.0 0.0 0.0 1.0)  0.5 2.0)</em>
+<em class=listener>#&lt;mixer: chans: 2, vals: [
+ 2.500 0.000
+ 0.000 2.500
+]&gt;</em>
+</pre>
+<p><b>mixer-poly</b> treats its mixer argument as the variable in a polynomial.
+The rest of the arguments are the polynomial coefficients starting with the constant term,
+so the example above computes 
+</p>
+<pre>
+  2.0 * <b>M</b> + 0.5 * <b>I</b>
+</pre>
 <br>
 
 
@@ -2992,6 +3030,7 @@ you could bind the arrow keys:
   <em class=emdef>notebook-with-top-tabs</em>
   <A class=def NAME="makefontselectordialog">make-font-selector-dialog</A>
   <A class=def NAME="makecolorselectordialog">make-color-selector-dialog</A>
+  <em class=emdef>load-font</em> font-name
 </pre>
 <!-- INDEX variabledisplay:Debugging (instruments) -->
 <p>snd-motif.scm has procedures that rely on the Motif module (xm.c).
@@ -3176,6 +3215,30 @@ actual original frequency.  If this were slightly faster and smarter, I'd
 replace the "expand" control (which currently uses granular synthesis) with
 this idea.
 </p>
+
+<p>
+<b>load-font</b> loads a font and returns a handle for it.
+</p>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
+(define new-font (<em class=red>load-font</em> "-*-helvetica-bold-r-*-*-14-*-*-*-*-*-*-*"))
+
+(define show-hiho
+  ;; show a red "hiho" in the helvetica bold font on a gray background
+  (lambda (snd chn)
+    (let ((ls (<a class=quiet href="extsnd.html#leftsample">left-sample</a> snd chn))
+          (rs (<a class=quiet href="extsnd.html#rightsample">right-sample</a> snd chn)))
+      (if (and (&lt; ls 1000)
+               (&gt; rs 1000))
+	  (let ((pos (<a class=quiet href="extsnd.html#x_to_position">x-&gt;position</a> (/ 1000.0 (<a class=quiet href="extsnd.html#srate">srate</a>))))
+		(old-color (<a class=quiet href="extsnd.html#foregroundcolor">foreground-color</a>)))
+	    (set! (<a class=quiet href="extsnd.html#foregroundcolor">foreground-color</a>) (<a class=quiet href="extsnd.html#makecolor">make-color</a> .75 .75 .75))
+            (<a class=quiet href="extsnd.html#fillrectangle">fill-rectangle</a> pos 10 50 20)
+	    (set! (<a class=quiet href="extsnd.html#foregroundcolor">foreground-color</a>) (<a class=quiet href="extsnd.html#makecolor">make-color</a> 1 0 0))
+	    (if new-font (set! (<a class=quiet href="extsnd.html#currentfont">current-font</a>) new-font))
+            (<a class=quiet href="extsnd.html#drawstring">draw-string</a> "hiho" (+ pos 5) 24)
+	    (set! (<a class=quiet href="extsnd.html#foregroundcolor">foreground-color</a>) old-color))))))
+</pre></td></tr></table>
+
 <br>
 
 <A NAME="sndtestdoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>snd-test.scm and event.scm</h2></td></tr></table>

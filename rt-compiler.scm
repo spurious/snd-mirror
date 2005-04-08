@@ -104,8 +104,8 @@ Limitations
 -A variable can not change type.
 -No allocation (consing, vectors, etc.)
 -No closures
--No optional arguments or keyword arguments. (Optional arguments
- is supported with the help of macros though.)
+-No optional arguments or keyword arguments. (Optional and keyword arguments
+ are supported with the help of macros though.)
 -#f=0, #t=1
 -Not possible to call Guile functions.
 -Not possible to set Guile variables. (There are ways around this though)
@@ -131,9 +131,8 @@ define-rt     => (define-rt (a b c) (* b c))
 	         (a 2 3)
                  => 6.0
 
-rt-safety     => rt-safety is a setter function. If set to 0, no runtime error checking is being performed.
+rt-safety     => rt-safety is a setter function. If set to 0, no runtime error checking is performed.
                  For operations on lists and pairs, this can have a huge impact on the performance.
-
 
 rt-rt         => Creates a subclass of <realtime> :
 
@@ -150,27 +149,27 @@ rt-run        => Creates a subclass of <realtime> .
 
 
 
-The <realtime> class has the following methods:
+* The <realtime> class has the following methods:
 
-play [start] [end]       => Starts playing at the absolute time "start", stopping at the absolute time "end". Default value for "start" is the current time.
-                            If "end" is not specified, a stop command is not scheduled.
-stop [end]               => Stop playing at the abolute time "end". Default value for "end" is the current time.
-play-now [start] [end]   => Start playing "start" seconds into the future from the current time, stopping at "end" seconds into the future from the current time.
-                            Default value for "start" is the current time.
-                            If "end" is not specified, a stop command is not scheduled.
-stop-now [end]           => Stop playing "end" seconds into the future from the current time. Default value for "end" is the current time.
+  play [start] [end]       => Starts playing at the absolute time "start", stopping at the absolute time "end". Default value for "start" is the current time.
+                              If "end" is not specified, a stop command is not scheduled.
+  stop [end]               => Stop playing at the abolute time "end". Default value for "end" is the current time.
+  play-now [start] [end]   => Start playing "start" seconds into the future from the current time, stopping at "end" seconds into the future from the current time.
+                              Default value for "start" is the current time.
+                              If "end" is not specified, a stop command is not scheduled.
+  stop-now [end]           => Stop playing "end" seconds into the future from the current time. Default value for "end" is the current time.
 
 
-For define-rt, I have the following lines in my .emacs file:
+* For define-rt, I have the following lines in my .emacs file:
 
-(font-lock-add-keywords
- 'scheme-mode
- '(("(\\(define-rt\\)\\>\\s-*(?\\(\\sw+\\)?"
-    (1 font-lock-keyword-face)
-    (2 (cond ((match-beginning 1) font-lock-function-name-face)
-	     ((match-beginning 2) font-lock-variable-name-face)
+  (font-lock-add-keywords
+   'scheme-mode
+   '(("(\\(define-rt\\)\\>\\s-*(?\\(\\sw+\\)?"
+      (1 font-lock-keyword-face)
+      (2 (cond ((match-beginning 1) font-lock-function-name-face)
+  	     ((match-beginning 2) font-lock-variable-name-face)
 	     (t font-lock-type-face))
-       nil t))))
+         nil t))))
 
 
 * Compiled rt-functions are cached into memory (currently not to disk).
@@ -195,7 +194,7 @@ rte-reset     => Stops and starts engine. Call this function if you have stuck s
                  (theres currently a huge memory-leak in this function though.)
 
 rte-time       => Returns the time in seconds since the engine was started.
-                  ((rte-time) = (rte-frames) / (rte-time))
+                  ((rte-time) = (rte-frames) / (rte-samplerate))
 
 rte-samplerate => Returns the samplerate.
 
@@ -204,44 +203,44 @@ rte-frames     => Returns the number of frames since the engine was started.
 rte-is-running? => Returns true if engine is running. (Ie. not paused)
 
 rte-info         => Returns a list of 5 elements:
-                   1. Current size of the priority queue.
-                   2. Maximum size of the priority queue.
-                   3. Number of lost events because the priority queue was full.
-                   4. Number of events waiting to be run.
-                   5. Number of <realtime> instances currently running.
+                    1. Current size of the priority queue.
+                    2. Maximum size of the priority queue.
+                    3. Number of lost events because the priority queue was full.
+                    4. Number of events waiting to be run.
+                    5. Number of <realtime> instances currently running.
 
 
 ***************************************************************
 Types
 *****
 
-*The rt-language does not support dynamic typing.
+* The rt-language does not support dynamic typing.
 
-*There is no boolean type, so #f=0 and #t=1.
+* There is no boolean type, so #f=0 and #t=1.
 
-*Use "declare" and "the" to specify types, just like in common lisp.
- See below for usage of "declare" and "the".
+* Use "declare" and "the" to specify types, just like in common lisp.
+  See below for usage of "declare" and "the".
 
-*It is no point to declare non-numeric variables. But it won't hurt
- either, unless wrongly declared, which will make the compilation stop.
+* It is no point to declare non-numeric variables. But it won't hurt
+  either, unless wrongly declared, which will only make the compilation stop.
 
-*Supported numeric types: <int>, <float> and <double> . These are
- directly mapped to the int, float and double C-types.
+* Supported numeric types: <int>, <float> and <double> . These are
+  directly mapped to the int, float and double C-types.
 
-*If there are more alternative types than one for a variable, and
- its type has not been declared with "declare", the type will
- be determined based on the following rules for merging different types:
- <int>      + <float>                     -> <float>
- <float>    + <double>                    -> <double>
- <int>      + <double>                    -> <double>
- <void>     + <[non-void]>                -> <void>    (is only legal for the returntype of a function)
- Everything else is illegal.
+* If there are more alternative types than one for a variable, and
+  its type has not been declared with "declare", the type will
+  be determined based on the following rules for merging different types:
+  <int>      + <float>                     -> <float>
+  <float>    + <double>                    -> <double>
+  <int>      + <double>                    -> <double>
+  <void>     + Any type                    -> <void>
+  Everything else is illegal.
 
-*I guess there can be a need for an int variable that is guaranteed
- to be at least, or exactly, 64 bits wide. Please tell me if you need such a type,
- and what its name should be.
+* I guess there can be a need for an int variable that is guaranteed
+  to be at least, or exactly, 64 bits wide. Please tell me if you need such a type,
+  and what its name should be.
 
-* Guile variables (<SCM>) are automatically converted on the fly to the
+* Guile variables (ie. of type <SCM>) are automatically converted on the fly to the
   proper types:
    (let ((a (the <int> (vector-ref vec 2))))
      a)
@@ -264,8 +263,8 @@ Types
 Closures:
 *********
 Closures are not supported. And worse, there is currently
-no checking if what you are trying to do is possible in a non-closure
-supported language.
+no checking whether the code is safe in a language
+that doesn't support closures.
 
 The following code:
 
@@ -280,7 +279,7 @@ The following code:
 ...gave me a segfault.
 
 
-(I manually had to add "(declare (<int> b))" to make it compile
+(Note, I manually had to add "(declare (<int> b))" to make it compile
 because of a bug in the compiler.)
 
 
@@ -320,11 +319,10 @@ Macros:
  but should be used in a lot of other macros as well.
 
 
-*By setting and argument variable name to start with the prefix "expand/",
- like this:
+*When letting a variable name start with the prefix "expand/", like this:
  (define-rt-macro (add expand/a expand/b)
    `(+ a b))
-  a and b are macroexpanded automatically. In some situations, this can cause
+  ..a and b are macroexpanded automatically. In some situations, this can cause
   increased performance. (But not in the short add macro above though.)
 
 
@@ -384,7 +382,7 @@ declare => Works as in common lisp, except that the name of the types are differ
         be necesarry to use "declare" on all numeric variables and "the" for every expression, although it shouldn't hurt.
 
 
-define => Works nearly as in scheme, but unlike scheme,
+define => Works nearly as in scheme, but unlike scheme it can be placed anywhere in a block. For example:
 
           (begin
 	    (set! a 2)
@@ -547,7 +545,7 @@ printf (Using c's fprintf with stderr as the first argument. Warning, this one i
 
 vct-length vct-ref vct-set! vct-scale! vct-offset! vct-fill!
 
-vector-ref
+vector? vector-length vector-ref
 
 pair? null?
 car cdr
@@ -601,10 +599,10 @@ This will return an error:
 
 
 **************************************************************************
-Using Common Lisp Music:
-************************
+Using CLM
+*********
 
-Almost all common lisp music classes are supported, as well as all their methods,
+Almost all CLM classes are supported, as well as all their methods,
 and other functions. Most things should work as expected, hopefully.
 
 Exceptions:
@@ -860,6 +858,11 @@ Notes
 (use-modules (srfi srfi-1))
 
 
+;;; Implementation detail: map must run its arguments in order. There must be no
+;;; difference between map-in-order and map. (stupid map, luckily guile maps in proper order)
+;;; In case guile change this nice behaviour of map, do: (define map map-in-order)
+
+
 (if (not (provided? 'snd-oo.scm)) (load-from-path "oo.scm"))
 
 (c-load-from-path eval-c)
@@ -886,23 +889,6 @@ Notes
 ;; Various general functions and macros
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-
-;; An immediate is something that is not a function-call.
-
-(define rt-immediates (make-hash-table 219))
-(define (rt-add-immediate funcname)
-  (hashq-set! rt-immediates funcname #t))
-
-(define (rt-immediate? . rest)
-  (if (null? rest)
-      #t
-      (and (or (not (list? (car rest)))
-	       (and (not (null? (car rest))) ;; In case, there is most probably an error, but I'm not sure.
-		    (hashq-ref rt-immediates (car (car rest)))))
-	   (apply rt-immediate? (cdr rest)))))
-
-(rt-add-immediate 'is-type?)
-		  
 
 (eval-c  (string-append "-I" snd-header-files-path)
 	 "#include <clm.h>"
@@ -982,6 +968,7 @@ Notes
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define rt-verbose #f)
+(define rt-very-verbose #f)
 
 (define rt-operators '(+ - * / = < > <= >=))
 
@@ -1010,13 +997,35 @@ Notes
 (define (rt-print . rest)
   (if rt-verbose
       (apply c-display rest)))
-  
+
+(define (rt-print2 . rest)
+  (if rt-very-verbose
+      (apply c-display rest)))
+
 
 (define rt-gensym
   (let ((num 0))
     (lambda ()
       (set! num (1+ num))
       (string->symbol (<-> "rt_gen" (number->string num))))))
+
+
+;; An immediate is something that is not a function-call.
+
+(define rt-immediates (make-hash-table 219))
+(define (rt-add-immediate funcname)
+  (hashq-set! rt-immediates funcname #t))
+
+(define (rt-immediate? . rest)
+  (if (null? rest)
+      #t
+      (and (or (not (list? (car rest)))
+	       (and (not (null? (car rest))) ;; In case, there is most probably an error, but I'm not sure.
+		    (hashq-ref rt-immediates (car (car rest)))))
+	   (apply rt-immediate? (cdr rest)))))
+
+(rt-add-immediate 'is-type?)
+		  
 
 
 
@@ -1041,119 +1050,6 @@ Notes
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; rt-remove-unused++ removes unused variables and numbers.
-;;
-;; + evaluate is-type?, returning either 0 or 1.
-;; 
-;; rt-check-calls must have been called on the term before calling
-;;
-;; (begin 2 4) -> (begin 4)
-;; (if (not 0) some thing) -> some
-;; (if 0 some thing) -> thing
-;; 
-(define (rt-remove-unused++ term globals)
-
-  (call-with-current-continuation
-   (lambda (return)
-     
-     (define (check-failed . args)
-       (newline)
-       (apply c-display (cons "rt-compiler.scm/rt-remove-unused++:" args))
-       (return #f))
-     
-     (define vars (make-hash-table 219))
-     
-     (define (das-remove t)
-       (cond ((null? t) t)
-	     ((= (length t) 1) (list (remove++ (car t))))
-	     ((not (list? (car t))) ;; Removed here.
-	      (das-remove (cdr t)))
-	     (else
-	      (cons (remove++ (car t))
-		    (das-remove (cdr t))))))
-     
-     (define (remove++ term)
-       ;;(c-display "remove++" term)
-       (cond ((not (list? term)) term)
-	     ((null? term) term)
-
-	     ;; begin
-	     ((eq? 'rt-begin_p/begin_p (car term))
-	      `(rt-begin_p/begin_p ,@(das-remove (cdr term))))
-
-	     ;; is-type?
-	     ((eq? 'is-type? (car term))
-	      (let ((type (hashq-ref vars (caddr term))))
-		(if (not type)
-		    (check-failed (caddr term) "not found in term" term)
-		    (if (eq? type (cadr term))
-			1
-			0))))
-
-	     ;; let*
-	     ((eq? 'let* (car term))
-	      (for-each (lambda (var)
-			  (if (and (list? (caddr var))
-				   (or (eq? 'lambda (car (caddr var)))
-				       (eq? 'rt-lambda-decl/lambda_decl (car (caddr var)))))
-			      (hashq-set! vars (car var) (list (cadr var)
-							       (map car (cadr (caddr var)))))
-			      (hashq-set! vars (car var) (cadr var))))
-			(cadr term))
-	      (let ((vardecl (map (lambda (var)
-				    (list (car var) (cadr var) (remove++ (caddr var))))
-				  (cadr term))))
-		`(let* ,vardecl
-		   ,@(das-remove (cddr term)))))
-
-	     ;; not
-	     ((eq? 'not (car term))
-	      (let ((a (remove++ (cadr term))))  ;; This can be a is-type? test.
-		(if (number? a)
-		    (if (= 0 a)
-			1
-			0)
-		    `(not ,a))))
-
-	     ;; if
-	     ((eq? 'rt-if/?kolon (car term))
-	      (let ((a (remove++ (cadr term)))) ;; This can be a is-type? test.
-		(if (number? a)
-		    (if (= 0 a)
-			(remove++ (cadddr term))
-			(remove++ (caddr term)))
-		    `(rt-if/?kolon ,a
-				   ,(remove++ (caddr term))
-				   ,(remove++ (cadddr term))))))
-
-	     ;; lambda-decl
-	     ((eq? 'rt-lambda-decl/lambda_decl (car term))
-	      (for-each (lambda (var)
-			  (hashq-set! vars (cadr var) (car var)))
-			(cadr term))
-	      term)
-
-	     ;; lambda
-	     ((eq? 'lambda (car term))
-	      (for-each (lambda (var)
-			  (hashq-set! vars (car var) (cadr var)))
-			(cadr term))
-	      `(lambda ,(cadr term)
-		 ,@(das-remove (cddr term))))
-
-	     (else
-	      (map remove++ term))))
-
-     (for-each (lambda (g)
-		 (hashq-set! vars (car g) (-> (cadr g) rt-type)))
-	       globals)
-     
-     (remove++ term))))
-
-
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Last Hacks, last step before code is completely evalycified.
 ;; 
 ;; -Fix the type for _rt_breakcontsig from float to jmp_buf
@@ -1165,7 +1061,7 @@ Notes
 ;; -Surround strings with the eval-c macro "string".
 ;;  "gakk" -> (string "gakk")
 ;; -Remove all rt-dummy/dummy calls completely.
-;; -Replace all '<undefined> types with <int>s.
+;; -Replace all '<undefined> types with <SCM>s.
 ;; -Replace all rt type-names with theire c type names.
 ;; 
 (define (rt-last-hacks term)
@@ -1191,12 +1087,14 @@ Notes
 	((not (list? term)) term)
 	((null? term) term)
 	((eq? 'let* (car term))
-	 `(let* ,(map (lambda (t)
-			(if (eq? '_rt_breakcontsig (car t))
-			    '(_rt_breakcontsig <jmp_buf>)
-			    (list (car t)
-				  (make-proper-type (cadr t) (car t))
-				  (rt-last-hacks (caddr t)))))
+	 `(let* ,(map (lambda (vardecl)
+			(if (and (= 3 (length vardecl))
+				 (list? (caddr vardecl)))
+			    (list (car vardecl)
+				  (make-proper-type (cadr vardecl) (car vardecl))
+				  (rt-last-hacks (caddr vardecl)))
+			    (list (car vardecl)
+				  (make-proper-type (cadr vardecl) (car vardecl)))))
 		      (cadr term))
 	    ,@(rt-last-hacks (cddr term))))
 
@@ -1247,14 +1145,12 @@ Notes
 			   (eq? 'let* (car (car body))))
 
 		      (let* ((bodybody (cddr (car body)))
-			     (vardecls (map-in-order (lambda (vardecl)
-						       (let* ((name (car vardecl))
-							      (type (cadr vardecl))
-							      (bodybodybody (caddr vardecl)))
-							 (if (list? bodybodybody)
-							     `(,name ,type ,(insert bodybodybody type))
-							     `(,name ,type ,bodybodybody))))
-						     (cadr (car body)))))
+			     (vardecls (map (lambda (vardecl)
+					      (if (and (= 3 (length vardecl))
+						       (list? (caddr vardecl)))
+						  `(,(car vardecl) ,(cadr vardecl) ,(insert (caddr vardecl) (cadr vardecl)))
+						  (list-copy vardecl)))
+					    (cadr (car body)))))
 			`(lambda ,(cadr term)
 			   (let* ,vardecls
 			     ,(if (= 1 (length bodybody))
@@ -1299,6 +1195,304 @@ Notes
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; rt-lambda-lifter lifts up all lambda-functions so they
+;; are not inside another lambda function anymore.
+;;
+;; This is strictly
+;; not necesarry because gcc support local functions, but it
+;; speeds up the access to local functions a lot. For example,
+;; I think mus_src can run 2-3 times as fast...
+;;
+;; The function puts all local functions and variables that need to be global into the top-level.
+;;
+;; A consequence of this is that the function will not
+;; be thread-safe anymore. But thread-safety is not needed. And if it turns out not
+;; that thread-safety is needed sometime into the future, it can be quite easely fixed.
+;; 
+;; (lambda ()
+;;  (let* ((a <int> 0)
+;;	   (b <int> (lambda ((c <int>))
+;;	              (let* ((d <int> (lambda ()
+;;		                       (+ c 2)))))
+;;		         (set! a (d))))
+;;         (e <int> 0))
+;;    (set! a 3)
+;;    (set! e 9)
+;;    (b e)))
+;;
+;;->
+;;
+;;;; The first let*-block contains global variables and functions. The rest is the main-function.
+;;(lambda ()
+;;    (let* ((a <int> 0)
+;;           (c <int> 0)
+;;           (d <int> (lambda ()
+;;		        (+ c 2)))
+;;	     (b <int> (lambda ((_rt_local_c <int>))
+;;		        (set! c _rt_local_c)
+;;		        (set! a (d)))))
+;;      (let* ((e <int> 0))
+;;	  (set! a 3)
+;;	  (set! e 9)
+;;	  (b e))))
+;;
+;; rt-remove-unused++ must have been called on the term before calling. (So that the unused variables can be catched more easely, I think.)
+;;
+(define (rt-lambda-lifter term)
+
+  (define globals '())   ;; Just the names: (varname1 varname2)
+  (define globals2 '())  ;; With type: ((varname1 <int>)(varname2 <float))
+  (define globalfuncs '())
+
+  (define (add-global var)
+    (if (not (memq var globals))
+	(set! globals (cons var globals))))
+  
+  (define (find-globals varlist term)
+    (cond ((symbol? term)
+	   (if (not (memq term varlist))
+	       (add-global term)))
+	  
+	  ((not (list? term)) #t)
+	  ((null? term) #t)
+
+	  ((eq? 'lambda (car term))
+	   (let ((newvarlist (map car (cadr term))))
+	     (for-each (lambda (t)
+			 (find-globals newvarlist t))
+		       (cddr term))))
+	   
+	  ((eq? 'let* (car term))
+	   (let* ((newvarlist varlist))
+	     (for-each (lambda (vardecl)
+			 (if (and (= 3 (length vardecl))
+				  (list? (caddr vardecl)))
+			     (find-globals '() (caddr vardecl))
+			     (set! newvarlist (cons (car vardecl) newvarlist))))
+		       (cadr term))
+	     (for-each (lambda (t)
+			 (find-globals newvarlist t))
+		       (cddr term))))
+
+	  ((eq? 'is-type? (car term))
+	   (find-globals varlist (caddr term)))
+	  
+	  (else
+	   (for-each (lambda (t)
+		       (find-globals varlist t))
+		     (cdr term)))))
+
+  (define (lifter term)
+    (cond ((not (list? term)) term)
+	  ((null? term) term)
+
+	  ((eq? 'rt-lambda-decl/lambda_decl (car term))
+	   term)
+	  
+	  ((eq? 'lambda (car term))
+	   (let* ((globsets '())
+		  (vars (map (lambda (var)
+			       (if (memq (car var) globals)
+				   (let ((tempname (symbol-append '_rt_local_ (car var))))
+				     (set! globsets (cons `(set! ,(car var) ,tempname) globsets))
+				     (set! globals2 (cons var globals2))
+				     (list tempname (cadr var)))
+				   var))
+			     (cadr term)))
+		  (body (map lifter (cddr term))))
+
+	     (if (eq? 'let* (car (car body)))
+		 `(lambda ,vars
+		    (let* ,(cadr (car body))
+		      ,@(reverse! globsets)
+		      ,@(cddr (car body))))
+		 `(lambda ,vars
+		    ,@(reverse! globsets)
+		    ,@body))))
+	     
+	  ((eq? 'let* (car term))
+	   (let* ((vardecls '()))
+	     (for-each (lambda (var)
+			 (if (and (= 3 (length var))
+				  (list? (caddr var)))
+			     (begin
+			       (set! globalfuncs (cons (list (car var) (cadr var) (lifter (caddr var)))
+						       globalfuncs)))
+			     (if (memq (car var) globals)
+				 (set! globals2 (cons var globals2))
+				 (set! vardecls (cons var vardecls)))))
+		       (cadr term))
+	     (set! vardecls (reverse! vardecls))
+	     (if (null? vardecls)
+		 `(rt-begin_p/begin_p
+		    ,@(cddr term))
+		 `(let* ,vardecls
+		    ,@(cddr term)))))
+
+	  (else
+	   (map lifter term))))
+
+  (find-globals '() term)
+
+  (let ((res (lifter term)))
+    `(lambda ,(cadr res)
+       (let* ,(append globals2 (reverse! globalfuncs))
+	 ,@(cddr res)))))
+
+
+#!
+
+(rt-lambda-lifter '(lambda ((f <int>))
+		     (let* ((a <int> 0)
+			    (b <int> 0)
+			    (c <int> (lambda ()
+				       (+ f b))))
+		       (set! b 9)
+		       (c))))
+
+(rt-lambda-lifter '(lambda ((f <int>))
+		     (let* ((a <int> 0)
+			    (b <int> (lambda ((c <int>))
+				       (let* ((d <int> (lambda ()
+							 (+ c f 2))))
+					 (set! a (d)))))
+			    ;;(e <int> 0)
+			    )
+		       (set! a 3)
+		       ;;(set! e 9)
+		       (b e))))
+->
+(lambda ((_rt_local_f <int>))
+  (let* ((c <int>)
+	 (a <int> 0)
+	 (f <int>)
+	 (d <int> (lambda ()
+		    (+ c f 2)))
+	 (b <int> (lambda ((_rt_local_c <int>))
+		    (set! c _rt_local_c)
+		    (rt-begin_p/begin_p
+		     (set! a (d))))))
+    (set! f _rt_local_f)
+    (let* ((e <int> 0))
+      (set! a 3)
+      (set! e 9)
+      (b e))))
+
+!#
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; rt-remove-unused++ removes unused variables and numbers.
+;;
+;; + evaluate is-type?, returning either 0 or 1.
+;; 
+;; rt-check-calls must have been called on the term before calling
+;;
+;; (begin 2 4) -> (begin 4)
+;; (if (not 0) some thing) -> some
+;; (if 0 some thing) -> thing
+;; 
+(define (rt-remove-unused++ term)
+
+  (call-with-current-continuation
+   (lambda (return)
+     
+     (define (check-failed . args)
+       (newline)
+       (apply c-display (cons "rt-compiler.scm/rt-remove-unused++:" args))
+       (return #f))
+     
+     (define vars (make-hash-table 219))
+     
+     (define (das-remove t)
+       (cond ((null? t) t)
+	     ((= (length t) 1) (list (remove++ (car t))))
+	     ((not (list? (car t))) ;; Removed here.
+	      (das-remove (cdr t)))
+	     (else
+	      (cons (remove++ (car t))
+		    (das-remove (cdr t))))))
+     
+     (define (remove++ term)
+       (rt-print2 "remove++" term)
+       (cond ((not (list? term)) term)
+	     ((null? term) term)
+
+	     ;; begin
+	     ((eq? 'rt-begin_p/begin_p (car term))
+	      `(rt-begin_p/begin_p ,@(das-remove (cdr term))))
+
+	     ;; is-type?
+	     ((eq? 'is-type? (car term))
+	      (let ((type (hashq-ref vars (caddr term))))
+		(if (not type)
+		    (check-failed (caddr term) "not found in term" term)
+		    (if (eq? type (cadr term))
+			1
+			0))))
+
+	     ;; let*
+	     ((eq? 'let* (car term))
+	      (for-each (lambda (var)
+			  (if (and (= 3 (length var))
+				   (list? (caddr var))
+				   (or (eq? 'lambda (car (caddr var)))
+				       (eq? 'rt-lambda-decl/lambda_decl (car (caddr var)))))
+			      (hashq-set! vars (car var) (list (cadr var)
+							       (map car (cadr (caddr var)))))
+			      (hashq-set! vars (car var) (cadr var))))
+			(cadr term))
+	      (let ((vardecl (map (lambda (var)
+				    (list (car var) (cadr var) (remove++ (caddr var))))
+				  (cadr term))))
+		`(let* ,vardecl
+		   ,@(das-remove (cddr term)))))
+
+	     ;; not
+	     ((eq? 'not (car term))
+	      (let ((a (remove++ (cadr term))))  ;; This can be a is-type? test.
+		(if (number? a)
+		    (if (= 0 a)
+			1
+			0)
+		    `(not ,a))))
+
+	     ;; if
+	     ((eq? 'rt-if/?kolon (car term))
+	      (let ((a (remove++ (cadr term)))) ;; This can be a is-type? test.
+		(if (number? a)
+		    (if (= 0 a)
+			(remove++ (cadddr term))
+			(remove++ (caddr term)))
+		    `(rt-if/?kolon ,a
+				   ,(remove++ (caddr term))
+				   ,(remove++ (cadddr term))))))
+
+	     ;; lambda-decl
+	     ((eq? 'rt-lambda-decl/lambda_decl (car term))
+	      (for-each (lambda (var)
+			  (hashq-set! vars (cadr var) (car var)))
+			(cadr term))
+	      term)
+
+	     ;; lambda
+	     ((eq? 'lambda (car term))
+	      (for-each (lambda (var)
+			  (hashq-set! vars (car var) (cadr var)))
+			(cadr term))
+	      `(lambda ,(cadr term)
+		 ,@(das-remove (cddr term))))
+
+	     (else
+	      (map remove++ term))))
+
+     (remove++ term))))
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; rt-replace-define-with-letrecs replaces all defines with
 ;; letrecs. (function copied from snd-hobbit.scm (and sligthly modified))
 ;;
@@ -1330,7 +1524,7 @@ Notes
 			(lambda (defines afterdefines)
 			  (append beforedefines
 				  (list (append (list 'letrec
-						      (map-in-order (lambda (t)
+						      (map (lambda (t)
 								      (if (list? (cadr t))
 									  (list (car (cadr t)) `(lambda ,(cdadr t)
 													   ,@(cddr t)))
@@ -1510,7 +1704,7 @@ Notes
 ;; (set! (asetter 5) 2)     -> (setter!-asetter 5 2)
 ;;
 (define (rt-expand-macros term)
-  ;;(c-display "expand" term)
+  (rt-print2 "expand" term)
   (call-with-current-continuation
    (lambda (return)
 
@@ -1730,7 +1924,7 @@ Notes
 			  
 			  (cond ((eq? 'rt-let/let* (car term))
 				 (let* ((newvarlist varlist)
-					(vardecls (map-in-order (lambda (vardecl)
+					(vardecls (map (lambda (vardecl)
 								  (let* ((uname (get-new-name (car vardecl)))
 									 (ret `(,uname ,(fix varlist (cadr vardecl) #t))))
 								    (set! newvarlist (cons (list (car vardecl) uname) newvarlist))
@@ -1743,7 +1937,7 @@ Notes
 				
 				((eq? 'let* (car term))
 				 (let* ((body (cddr term))
-					(vardecls (map-in-order (lambda (vardecl)
+					(vardecls (map (lambda (vardecl)
 								  (let* ((uname (get-new-name (car vardecl)))
 									 (ret `(,uname ,(fix varlist (cadr vardecl) #t))))
 								    (set! varlist (cons (list (car vardecl) uname) varlist))
@@ -1763,7 +1957,7 @@ Notes
 								   (set! newvarlist (cons (list (car vardecl) uname) newvarlist))
 								   (cons uname (cdr vardecl))))
 							       das-vardecls))
-					(vardecls (map-in-order (lambda (vardecl)
+					(vardecls (map (lambda (vardecl)
 								  (let ((uname (car vardecl)))
 								    (if (and (list? (cadr vardecl))
 									     (eq? 'lambda (car (cadr vardecl))))
@@ -1785,7 +1979,7 @@ Notes
 				((eq? 'letrec* (car term))
 				 (let* ((newvarlist varlist)
 					(funclist '())
-					(vardecls (map-in-order (lambda (vardecl)
+					(vardecls (map (lambda (vardecl)
 								  (let* ((uname (get-new-name (car vardecl))))
 								    (set! newvarlist (cons (list (car vardecl) uname) newvarlist))
 								    (if (and (list? (caddr vardecl))
@@ -1817,10 +2011,10 @@ Notes
 			 
 		    (cons funcname args))))))
      
-     ;;(c-display "fix-term:" term)
+     (rt-print2 "fix-term:" term)
      (let ((ret (fix '() term #t)))
-       ;;(c-display "fixed term" ret)
-       ;;(c-display "renamed:" renamed-guile-vars)
+       (rt-print2 "fixed term" ret)
+       ;;(rt-print2 "renamed:" renamed-guile-vars)
        (list (map (lambda (var)
 		    (list (cadr var) (car var)))
 		  renamed-guile-vars)
@@ -1929,7 +2123,7 @@ Notes
 
      (define (debug . rest)
        (if #f
-	   (apply c-display rest)))
+	   (apply rt-print2 rest)))
      
      (define (check-failed . args)
        (newline)
@@ -2159,7 +2353,7 @@ Notes
 			
 			(else
 			 (let ((func (assq (car term) varlist)))
-			   ;;(c-display "got func for " (car term) ":" func)
+			   (rt-print2 "got func for " (car term) ":" func)
 			   (if func
 			       (if (and (list? (cadr func))
 					(or (= 2 (length func))
@@ -2263,7 +2457,7 @@ Notes
 			 (check-failed "Illegal number of argumentes to local function \"" funcname "\":" term))
 		     
 		     ;; Then check arg-types.
-		     (let ((ret (map-in-order (lambda (t)
+		     (let ((ret (map (lambda (t)
 						(insert varlist t))
 					      term)))
 
@@ -2291,7 +2485,7 @@ Notes
 			 (check-failed "Unknown function \"" funcname "\": " term)
 			 (if (not (-> func legal-number-of-arguments? term))
 			     (return #f)
-			     (let ((ret (map-in-order (lambda (t)
+			     (let ((ret (map (lambda (t)
 							(insert varlist t))
 						      term)))
 			       (cons (car ret) (map (lambda (t argtype)
@@ -2327,7 +2521,7 @@ Notes
 	     ((eq? 'let* (car term))
 	      (let* ((newvarlist varlist)
 		     (lambda_decls '())
-		     (vardecls (map-in-order (lambda (var)
+		     (vardecls (map (lambda (var)
 					       (let ((ret (if (list? (cadr var))
 							      (if (eq? 'rt-lambda-decl/lambda_decl (car (cadr var)))
 								  ;; A lambda declaration. (as the result of a letrec function)
@@ -2398,7 +2592,7 @@ Notes
 		;; not determine its return-type right away because the type for a is not always known at the evaluation time for the function.
 		(set! vardecls
 		      (let ((newvarlist varlist))
-			(map-in-order (lambda (var)
+			(map (lambda (var)
 					(let ((ret (if (and (eq? '<undefined> (cadr var))
 							    (list? (caddr var))
 							    (eq? 'lambda (car (caddr var))))
@@ -2413,7 +2607,7 @@ Notes
 				      vardecls)))
 						     
 		;; Fill in lambda-decls types
-		(set! vardecls (map-in-order (lambda (var)
+		(set! vardecls (map (lambda (var)
 					       (let ((decl (assq (car var) lambda_decls)))
 						 (if decl
 						     (let ((real (assq (car var) (reverse vardecls))))
@@ -2426,8 +2620,8 @@ Notes
 		(let ((vardecls (remove (lambda (var)
 					  (eq? (cadr var) '<undefined>))
 					vardecls)))
-		  ;;(c-display "vardecls" vardecls)
-		  ;;(c-display "newvarlist" newvarlist)
+		  (rt-print2 "vardecls" vardecls)
+		  (rt-print2 "newvarlist" newvarlist)
 		  (if (null? vardecls)
 		      `(rt-begin_p/begin_p
 			 ,@body)
@@ -2866,9 +3060,9 @@ Notes
      (if (not (eq? 'lambda (car term)))
 	 (check-failed "This is not a lambda function: " term))
 
-     ;;(c-display)
-     ;;(c-display "check-calls term" term)
-     ;;(c-display)
+     (rt-print2)
+     (rt-print2 "check-calls term" term)
+     (rt-print2)
      
      (check-calls term))))
 
@@ -3734,8 +3928,29 @@ Notes
 
 ;; VECTORS
 
+(rt-renamefunc vector? SCM_VECTORP '<int> '(<SCM>))
+(rt-renamefunc vector-length SCM_VECTOR_LENGTH '<int> '(<SCM>))
+
 (define-rt-macro (vector-ref vec pos)
-  `(rt-vector-ref/vector-ref ,vec (rt-castint/castint ,pos)))
+  (if (rt-is-safety?)
+      (if (not (rt-immediate? vec pos))
+	  (let ((das-vec (rt-gensym))
+		(das-pos (rt-gensym)))
+	    `(let ((,das-vec ,vec)
+		   (,das-pos ,pos))
+	       (if (not (vector? ,das-vec))
+		   (rt-error "Operation vector-ref failed because first argument is not a vector."))
+	       (if (>= ,das-pos (vector-length ,das-vec))
+		   (rt-error "Operation vector-ref failed because the length of the vector is to small"))
+	       `(rt-vector-ref/vector-ref ,das-vec (rt-castint/castint ,das-pos))))
+	  `(begin
+	     (if (not (vector? ,das-vec))
+		 (rt-error "Operation vector-ref failed because first argument is not a vector."))
+	     (if (>= ,das-pos (vector-length ,das-vec))
+		 (rt-error "Operation vector-ref failed because the length of the vector is to small"))
+	     `(rt-vector-ref/vector-ref ,das-vec (rt-castint/castint ,das-pos))))
+      `(rt-vector-ref/vector-ref ,vec (rt-castint/castint ,pos))))
+
 (define-c-macro (rt-vector-ref/vector-ref vec pos)
   `(SCM_VECTOR_REF ,vec ,pos))
 (<rt-func> 'rt-vector-ref/vector-ref '<SCM> '(<SCM> <int>))
@@ -3866,14 +4081,18 @@ Notes
     (if (rt-immediate? val)
 	`(begin
 	  ,@(map (lambda (ch)
-		   `(if (> (rt-num_outs/num_outs) ,ch)
-			(rt-set-outs! ,ch (+ (rt-outs/outs ,ch) ,val))))
+		   (if (rt-is-safety?)
+		       `(if (> (rt-num_outs/num_outs) ,ch)
+			    (rt-set-outs! ,ch (+ (rt-outs/outs ,ch) ,val)))
+		       `(rt-set-outs! ,ch (+ (rt-outs/outs ,ch) ,val))))
 		 channels))
 	(let ((varname (rt-gensym)))
 	  `(let* ((,varname ,val))
 	     ,@(map (lambda (ch)
-		      `(if (> (rt-num_outs/num_outs) ,ch)
-			   (rt-set-outs! ,ch (+ (rt-outs/outs ,ch) ,varname))))
+		      (if (rt-is-safety?)
+			  `(if (> (rt-num_outs/num_outs) ,ch)
+			       (rt-set-outs! ,ch (+ (rt-outs/outs ,ch) ,varname)))
+			  `(rt-set-outs! ,ch (+ (rt-outs/outs ,ch) ,varname))))
 		    channels))))))
 
 (define-c-macro (rt-outs/outs n)
@@ -4033,7 +4252,7 @@ Notes
 				     (let ((n -1))
 				       (append (list ',macroname osc)
 					       (list ,@args1)
-					       (map-in-order (lambda (arg)
+					       (map (lambda (arg)
 							       (set! n (1+ n))
 							       (if (> (length rest) n)
 								   (list-ref rest n)
@@ -4079,13 +4298,12 @@ Notes
 				 (symbol-append rt-name '/ c-name)
 				 (symbol-append 'rt- rt-name '/ c-name))))
 	      (<rt-func> funcname returntype args)
-	      (if (and #f
-		       (or (eq? name 'set_location)
-			   (eq? name 'location)))
+	      (if (or (eq? name 'set_location)
+		      (eq? name 'location))
 		  (begin
-		    (c-display "c-name" c-name)
-		    (c-display "funcname" funcname)
-		    (c-display "rt-name" rt-name)))
+		    (rt-print2 "c-name" c-name)
+		    (rt-print2 "funcname" funcname)
+		    (rt-print2 "rt-name" rt-name)))
 	      (primitive-eval `(define-c-macro ,(cons funcname 'rest )
 				 `(,',c-name ,@rest)))
 	      (primitive-eval `(define-rt-macro ,(cons rt-name 'rest)
@@ -4604,6 +4822,12 @@ Notes
   (<-> (symbol->string gen) "->increment=" (eval-c-parse val)))
 
 
+
+
+
+
+
+
 #!
 
 (define file (make-readin "/home/kjetil/t1.wav"))
@@ -4816,7 +5040,7 @@ setter!-rt-mus-location/mus_location
 
 	      
        (set! orgargs (map (lambda (org new)
-			    ;;(c-display "org/new" org new)
+			    (rt-print2 "org/new" org new)
 			    (list org (-> (hashq-ref rt-types (cadr new)) c-type)))
 			  (cadr term)
 			  (cadr (car insert-types-res))))
@@ -4827,9 +5051,24 @@ setter!-rt-mus-location/mus_location
        (set! extpointers (cadddr insert-types-res))
        (set! extnumbers-writing (car (cdr (cdddr insert-types-res))))
        
+       (rt-print2 "before" (cadr term))
+       (set-car! (cdr term)
+		 (append (map (lambda (var)
+				(list (car var)
+				      (-> (cadr var) rt-type)))
+			      (append extnumbers-writing extpointers extnumbers))
+			 orgargs))
+       (rt-print2 "after" (cadr term))
+       
        (rt-print "*RT: Removing unused stuff" term orgargs (map (lambda (a) (-> (cadr a) rt-type)) extpointers))
        
-       (set! term (rt-remove-unused++ term (append extnumbers extpointers extnumbers-writing)))
+       (set! term (rt-remove-unused++ term))
+       (if (not term)
+	   (return #f))
+
+       (rt-print "*RT: Lifting lambdas.")
+       
+       (set! term (rt-lambda-lifter term))
        (if (not term)
 	   (return #f))
        
@@ -4843,15 +5082,6 @@ setter!-rt-mus-location/mus_location
        (if (not term)
 	   (return #f))
 
-       ;;(c-display "before" (cadr term))
-       (set-car! (cdr term)
-		 (append (map (lambda (var)
-				(list (car var)
-				      (-> (cadr var) c-type)))
-			      (append extnumbers-writing extpointers extnumbers))
-			 orgargs))
-       ;;(c-display "after" (cadr term))
-       
        (rt-print "RT: Final term:" term)
        (list extnumbers
 	     extpointers
@@ -4886,11 +5116,11 @@ setter!-rt-mus-location/mus_location
 	       
 	       (funcarg (rt-gensym))
 	       (publicargs (append (map (lambda (extvar)
-					  ;;(c-display "extvar1" extvar)
+					  (rt-print2 "extvar1" extvar)
 					  `(<SCM> ,(symbol-append '_rt_scm_ (car extvar))))
 					extnumbers-writing)
 				   (map (lambda (extvar)
-					  ;;(c-display "extvar2" extvar)
+					  (rt-print2 "extvar2" extvar)
 					  (list (-> (cadr extvar) c-type) (car extvar)))
 					(append extpointers extnumbers))
 				   (map (lambda (a)
@@ -4898,7 +5128,7 @@ setter!-rt-mus-location/mus_location
 					orgargs)))
 	       (i 0)
 	       (types (map (lambda (var)
-			     ;;(c-display "var" var)
+			     (rt-print2 "var" var)
 			     (list (eval-c-to-scm
 				    (string-trim-right
 				     (eval-c-get-propertype
@@ -4906,9 +5136,9 @@ setter!-rt-mus-location/mus_location
 				   (cadr var)))
 			   publicargs)))
 
-	  ;;(c-display "publicargs" publicargs)
+	  (rt-print2 "publicargs" publicargs)
 	  
-	  ;;(c-display "term" term)
+	  (rt-print2 "term" term)
 	  (newline)
 	  
 	  (list funcname
@@ -4931,102 +5161,114 @@ setter!-rt-mus-location/mus_location
 
 		   (shared-struct <mus_rt_readin>)
 
+		   (<struct-func_args-*> _rt_funcarg NULL)
 		   (<nonstatic-extern-scm_t_bits> rt_readin_tag)
 
 		   "extern float rt_readin(struct mus_rt_readin*)"
 		   
 		   "typedef float (*ThreadFunc)(void)"
 		   "typedef float (*ReadinFunc)(struct mus_rt_readin*)"
-			     
-		   (<void> ,das-funcname (lambda ,(cons `(<struct-func_args-*> _rt_funcarg) publicargs)
 
-					   (<jmp_buf> _rt_errorvar)
-					   (<void> rt_error (lambda ((<char-*> msg))
-							      (<static-int> errordisplayed 0)
-							      (if (not errordisplayed)
-								  (fprintf stderr (string "RT RUNTIME ERROR: %s.\\n") msg))
-							      (set! errordisplayed 1)
-							      (longjmp _rt_errorvar 5)))
 
-						
-					   (<struct-mus_rt_readin-*> rt_scm_to_rt_readin (lambda ((<SCM> name))
-											   ,(if (rt-is-safety?)
-												`(if (not (SCM_SMOB_PREDICATE rt_readin_tag name))
-												     (begin
-												       (rt_error (string "Variable is not an rt-readin generator"))
-												       (return NULL))
-												     (return (cast <void-*> (SCM_SMOB_DATA name))))
-												`(return (cast <void-*> (SCM_SMOB_DATA name))))))
+		   (<jmp_buf> _rt_errorvar)
+		   (<void> rt_error (lambda ((<char-*> msg))
+				      (<static-int> errordisplayed 0)
+				      (if (not errordisplayed)
+					  (fprintf stderr (string "RT RUNTIME ERROR: %s.\\n") msg))
+				      (set! errordisplayed 1)
+				      (longjmp _rt_errorvar 5)))
+		   
+		   
+		   (<struct-mus_rt_readin-*> rt_scm_to_rt_readin (lambda ((<SCM> name))
+								   ,(if (rt-is-safety?)
+									`(if (not (SCM_SMOB_PREDICATE rt_readin_tag name))
+									     (begin
+									       (rt_error (string "Variable is not an rt-readin generator"))
+									       (return NULL))
+									     (return (cast <void-*> (SCM_SMOB_DATA name))))
+									`(return (cast <void-*> (SCM_SMOB_DATA name))))))
+		   
+		   (<double> rt_scm_to_double (lambda ((<SCM> name))
+						(if (SCM_INUMP name)
+						    (return (SCM_INUM name))
+						    (if (SCM_REALP name)
+							(return (SCM_REAL_VALUE name))
+							(begin
+							  (rt_error (string "Variable is not a number (to_double)"))
+							  (return 0))))))
+		   (<float> rt_scm_to_float (lambda ((<SCM> name))
+					      (if (SCM_INUMP name)
+						  (return (SCM_INUM name))
+						  (if (SCM_REALP name)
+						      (return (SCM_REAL_VALUE name))
+						      (begin
+							(rt_error (string "Variable is not a number (to_float)"))
+							(return 0))))))
+		   (<int> rt_scm_to_int (lambda ((<SCM> name))
+					  (if (SCM_INUMP name)
+					      (return (SCM_INUM name))
+					      (if (SCM_REALP name)
+						  (return (SCM_REAL_VALUE name))
+						  (begin
+						    (rt_error (string "Variable is not a number (to_int)"))
+						    (return 0))))))
+		   (<vct-*> rt_scm_to_vct (lambda ((<SCM> name))
+					    ,(if (rt-is-safety?)
+						 `(if (vct_p name)
+						      (return (TO_VCT name))
+						      (begin
+							(rt_error (string "Variable is not a VCT."))
+							(return NULL)))
+						 `(return (TO_VCT name)))))
+		   
+		   (<mus_any-*> rt_scm_to_mus_any (lambda ((<SCM> name))
+						    (if (mus_xen_p name)
+							(return (cast <void-*> (XEN_TO_MUS_ANY name)))
+							(if (not (SCM_SMOB_PREDICATE rt_readin_tag name))
+							    (begin
+							      (rt_error (string "Variable is not a CLM generator or rt-readin generator"))
+							      (return NULL))
+							    (return (cast <void-*> (SCM_SMOB_DATA name)))))))
+		   
+		   
+		   (<void> rt_create_thread (lambda ((<ThreadFunc> func))
+					      "pthread_t _rt_thread={0}"
+					      (<int> isrunning 0)
+					      (<void-*> threadfunc (lambda ((<void-*> arg))
+								     (<ThreadFunc> dasfunc arg)
+								     (set! isrunning 1)
+								     (dasfunc)
+								     (return NULL)))
+					      (pthread_create &_rt_thread NULL threadfunc func)
+					      (while (not isrunning) ;; I'm not quite sure why...
+						     (usleep 50))
+					      ))
+		   
+		   ,@(map (lambda (vardecl)
+			    (if (= 3 (length vardecl))
+				(list (cadr vardecl) (car vardecl) (caddr vardecl))
+				(list (cadr vardecl) (car vardecl))))
+			  (cadr (caddr term)))
+			  
+			    
+		   (,returntype ,rt-innerfuncname (lambda ,(cadr term)
+						    ,@(cddr (caddr term))))
+
+
+		   (<void> ,das-funcname (lambda ,(cons `(<struct-func_args-*> _rt_local_rt_funcarg) publicargs)
 					   
-					   (<double> rt_scm_to_double (lambda ((<SCM> name))
-									(if (SCM_INUMP name)
-									  (return (SCM_INUM name))
-									  (if (SCM_REALP name)
-									      (return (SCM_REAL_VALUE name))
-									      (begin
-										(rt_error (string "Variable is not a number (to_double)"))
-										(return 0))))))
-					   (<float> rt_scm_to_float (lambda ((<SCM> name))
-								      (if (SCM_INUMP name)
-									  (return (SCM_INUM name))
-									  (if (SCM_REALP name)
-									      (return (SCM_REAL_VALUE name))
-									      (begin
-										(rt_error (string "Variable is not a number (to_float)"))
-										(return 0))))))
-					   (<int> rt_scm_to_int (lambda ((<SCM> name))
-								  (if (SCM_INUMP name)
-								      (return (SCM_INUM name))
-								      (if (SCM_REALP name)
-									  (return (SCM_REAL_VALUE name))
-									  (begin
-									    (rt_error (string "Variable is not a number (to_int)"))
-									    (return 0))))))
-					   (<vct-*> rt_scm_to_vct (lambda ((<SCM> name))
-								    ,(if (rt-is-safety?)
-									 `(if (vct_p name)
-									      (return (TO_VCT name))
-									      (begin
-										(rt_error (string "Variable is not a VCT."))
-										(return NULL)))
-									 `(return (TO_VCT name)))))
+					   (set! _rt_funcarg _rt_local_rt_funcarg)
 					   
-					   (<mus_any-*> rt_scm_to_mus_any (lambda ((<SCM> name))
-									    (if (mus_xen_p name)
-										(return (cast <void-*> (XEN_TO_MUS_ANY name)))
-										(if (not (SCM_SMOB_PREDICATE rt_readin_tag name))
-										    (begin
-										      (rt_error (string "Variable is not a CLM generator or rt-readin generator"))
-										      (return NULL))
-										    (return (cast <void-*> (SCM_SMOB_DATA name)))))))
-					   
-					   
-					   (<void> rt_create_thread (lambda ((<ThreadFunc> func))
-								      "pthread_t _rt_thread={0}"
-								      (<int> isrunning 0)
-								      (<void-*> threadfunc (lambda ((<void-*> arg))
-											     (<ThreadFunc> dasfunc arg)
-											     (set! isrunning 1)
-											     (dasfunc)
-											     (return NULL)))
-								      (pthread_create &_rt_thread NULL threadfunc func)
-								      (while (not isrunning) ;; I'm not quite sure why...
-									     (usleep 50))
-								      ))
-								      
 					   ;;,@(map (lambda (extvar)
 					   ;;	    `(<float> ,(car extvar)))
 					   ;;	  extnumbers-writing)
 					   
-					   (,returntype ,rt-innerfuncname (lambda ()
-									,@(cddr term)))
-
 					   (if (> (setjmp _rt_errorvar) 0)
 					       return)
 					   
 					   ;; Code for writing guile-variables. Not used anymore.
 					   ;;,@(let ((n -1))
-					   ;;    (map-in-order (lambda (extvar)
+					   ;;    (map (lambda (extvar)
 					   ;;		       (let ((name (symbol-append '_rt_scm_ (car extvar))))
 					   ;;			 (set! n (1+ n))
 					   ;;			 `(if (|| (SCM_INUMP ,name)
@@ -5047,8 +5289,8 @@ setter!-rt-mus-location/mus_location
 					   ;;	  extnumbers-writing)
 					   
 					   ,(if (rt-is-number? returntype)
-						`(set! _rt_funcarg->res (,rt-innerfuncname))
-						`(,rt-innerfuncname))
+						`(set! _rt_funcarg->res (,rt-innerfuncname ,@(map cadr publicargs)))
+						`(,rt-innerfuncname ,@(map cadr publicargs)))
 						   
 
 					   ;; This is for writing guile-variables. Commented, because it didn't quite work.
@@ -5102,7 +5344,7 @@ setter!-rt-mus-location/mus_location
 						(iota (length publicargs))
 						publicargs)
 							      
-					 ,@(map-in-order (lambda (das-type)
+					 ,@(map (lambda (das-type)
 							   (let* ((type (car das-type))
 								  (name (cadr das-type)))
 							     (cond ((string=? "UNSPECIFIED" type)
@@ -5370,11 +5612,11 @@ setter!-rt-mus-location/mus_location
 ;; rt-1 + compiled code cache handling.
 (define rt-cached-funcs (make-hash-table 997))
 (define (rt-1 term)
-  (let ((cached (hash-ref rt-cached-funcs term)))
+  (let ((cached (hash-ref rt-cached-funcs (list (rt-safety) term))))
     (if cached
-	cached
+	(cadr cached)
 	(let ((new (rt-2 term)))
-	  (hash-set! rt-cached-funcs term new)
+	  (hash-set! rt-cached-funcs (list (rt-safety) term) new)
 	  new))))
 (define (rt-clear-cache!)
   (set! rt-cached-funcs (make-hash-table 997)))
@@ -5980,6 +6222,139 @@ rt-name setter!-mus-location
 (-> g stop)
 
 (rte-info)
+
+
+----
+Slik fungerer det:
+
+
+_En_ struct med "globale" variable.
+
+For en slik en:
+(lambda ()
+  (let* ((a 3)
+	 (b (lambda (c)
+	      (set! a c))))
+    (b 5)))
+
+Den globale structen inneholder a: {int a},
+og sliken expanderes til:
+
+(define b (lambda (global c)
+	    (set! global->a c)))
+(define main (lambda (global)
+	       (set! global-> a 3)
+	       (b global 5)))
+
+"global" inneholder alle variabler som brukes i mer enn 1 funksjon.
+
+
+Og videre:
+
+(lambda ()
+  (let* ((a 3)
+	 (b (lambda (c)
+	      (let ((d (lambda ()
+			 (+ c 2))))
+		(set! a (d))))))
+    (b 5)))
+
+->
+
+struct global={int a, int c}
+
+(define d (lambda (global)
+	    (+ global->c 2)))
+(define b (lambda (global c)
+	    (set! global->c c)
+	    (set! global->a (d global))))
+(define main (lambda (global)
+	       (set! global->a 3)
+	       (b global 5)))
+
+
+--> eller ->
+
+static int a;
+static int c;
+
+(define d (lambda ()
+	    (+ c 2)))
+(define b (lambda (_rt_local_c)
+	    (set! c _rt_local_c)
+	    (set! a (d))))
+(define main (lambda ()
+	       (set! a 3)
+	       (b 5)))
+
+(lambda ()
+  (let* ((a 0)
+	 (c 0)
+	 (d (lambda ...))
+	 (b (lambda :::))
+	 (main (lambda ...)))))
+
+
+Merk: Det vil ikke gå an å optimalisere bort global som første argument, siden funksjoner
+      kan sendes rundt omkring som pekere. Altså:
+
+        Første argument til _alle_ funksjoner må være global.
+        Forskjellige typer global vil heller ikke være mulig.
+
+
+Optimaliseringer.
+-Finn ut om en variabel er skrivbar, og bruk lokal variant hvis ikke.
+-Finn ut om en variable er skrivbar, og merk den som "const" hvis ikke.
+-Sorter rekkefølga på de globale variablene, og plasser de flest brukte først. (tja....)
+-global kan jo faktisk _være_ global, ikke bare hete global. Sånn som situasjonen er nå,
+ så kan jo aldri en funksjon bli akksessert samtidig av to tråder.
+    Ups, jo faktisk-> hvis både kallt med rt-rt og rt-funcall. Men det går an å løse. (eller overse...)
+    Det går også an hvis man har flere servere, med forskjellige drivere.... Værre. Nei, går an å løse hvis det skulle bli aktuellt.
+        Kan jo bare dloade objekt-fila flere ganger, en gang for hver server eller noe slikt.
+-Og da kan jo alle variabler i struct global bare være globale variabler!?
+--> Dette gjør jo at lambda-lifter funksjonene blir hyperenkel å programmere også.
+-----> Hvis det skulle være aktuelt å avglobalisere "global" seinere, så blir jo ikke det
+       særlig mye mer arbeid enn å lage en uglobal "global" nå.
+--> Altså, global blir bare globale variabler. Enkelt og genialt.
+
+Forresten:
+-Ufattelig enkelt å lage closures med dette systemet, bare å ta kopi av global. :-)
+-Et begrenset closure-support er faktisk mulig. Lag 200 (eller noe) globals på stacken før oppstart,
+ og legg pekere til de i alle globalsene. Nåvel. Nei, så enkelt er det vel ikke, men uansett ikke
+ så veldig vanskelig. Uansett, ikke nødvendig med closures.
+
+
+(set! (rt-safety) 0)
+(rte-reset)
+
+(define gl 5)
+(define osc (make-oscil))
+
+(define a (rt-2 '(lambda ()
+		   (let* ((ai (lambda ()
+				(oscil osc))))
+		     (ai)))))
+
+(rt-funcall a)
+
+(lambda ((_rt_localosc_u2 <mus_oscil-*>))
+  (let* ((osc_u2 <mus_oscil-*>)
+	 (ai_u1 <float> (lambda ()
+			  (rt-oscil/mus_oscil osc_u2 0 0))))
+    (set! osc_u2 _rt_localosc_u2)
+    (rt-begin_p/begin_p
+     (rt-begin_p/begin_p
+      (ai_u1)))))
+
+(lambda ((<mus_any-*> _rt_local_osc_u2))
+  (let* ((osc_u2 <mus_any-*>)
+	 (ai_u1 <float> (lambda ()
+			  (return (rt-oscil/mus_oscil osc_u2 0 0)))))
+    (return (rt-begin_p/begin_p
+	     (set! osc_u2 _rt_local_osc_u2)
+	     (rt-begin_p/begin_p
+	      (rt-begin_p/begin_p
+	       (ai_u1)))))))
 
 !#
 

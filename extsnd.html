@@ -286,7 +286,7 @@ function. </p>
 
 <!-- -------------------------------- GLOBAL VARIABLE TABLE -------------------------------- -->
 
-<table border=0 cellspacing=4>
+<table border=0 cellspacing=6>
 
 <!-- ask-before-overwrite -->
 <tr><td colspan=2><code><a class=def name="askbeforeoverwrite">ask-before-overwrite</a></code></td>
@@ -745,7 +745,7 @@ after-apply-hook list each take one argument, a sound index.
 
 <!-- -------------------------------- HOOK TABLE -------------------------------- -->
 
-<table border=0 cellspacing=10>
+<table border=0 cellspacing=12>
 
 <!-- after-apply-hook -->
 <tr><td colspan=2>
@@ -2128,7 +2128,7 @@ functions:</p>
 
 <!-- -------------------------------- VCT TABLE -------------------------------- -->
 
-<table border=0 cellspacing=5>
+<table border=0 cellspacing=12>
 
 <!-- list->vct -->
 <tr><td colspan=2><code><a class=def name="list_to_vct">list-&gt;vct</a> (lst)</code></td></tr>
@@ -2350,7 +2350,7 @@ an oscil or a sawtooth-wave:
 
 <!-- -------------------------------- SOUND-DATA TABLE -------------------------------- -->
 
-<table border=0 cellspacing=10>
+<table border=0 cellspacing=12>
 
 <tr><td colspan=2><code><a class=def name="makesounddata">make-sound-data</a> (chans frames)</code></td></tr>
 <tr><td width=50><br>
@@ -2394,7 +2394,7 @@ See play.scm and rtio.scm. The most important Sndlib functions for Snd are:</p>
 
 <!-- -------------------------------- SNDLIB TABLE -------------------------------- -->
 
-<table border=0 cellspacing=10>
+<table border=0 cellspacing=12>
 <!-- mus-audio-close -->
 <tr><td colspan=2><code><a class=def name="musaudioclose">mus-audio-close</a> (line)</code></td></tr>
 <tr><td width=50><br>
@@ -2756,7 +2756,7 @@ and <i>read-track-sample</i>.
 
 <!-- -------------------------------- SAMPLE-READER TABLE -------------------------------- -->
 
-<table border=0 cellspacing=10>
+<table border=0 cellspacing=12>
 
 <!-- copy-sample-reader -->
 <tr><td colspan=2><code><a class=def name="copysamplereader">copy-sample-reader</a> (obj)</code></td></tr>
@@ -2941,7 +2941,7 @@ After implementing these, I realized the CLM instruments could just as easily us
 files; I'm not sure these have any real use after all.
 </p>
 
-<table border=0 cellspacing=10>
+<table border=0 cellspacing=12>
 
 <!-- makesnd_to_sample -->
 <tr><td colspan=2><code><a class=def name="makesnd_to_sample">make-snd-&gt;sample</a> (<i>snd edpos</i>)</code></td></tr>
@@ -2998,7 +2998,7 @@ for an overview and key bindings associated with marks.
 
 <!-- -------------------------------- MARKS TABLE -------------------------------- -->
 
-<table border=0 cellspacing=10>
+<table border=0 cellspacing=12>
 
 <!-- add-mark -->
 <tr><td colspan=2><code><a class=def name="addmark">add-mark</a> (sample <i>snd chn</i>)</code></td></tr>
@@ -3237,7 +3237,7 @@ sets mix 123's channel 0 amplitude scaler to .5.
 
 <!-- -------------------------------- MIX FUNCTION TABLE -------------------------------- -->
 
-<table border=0 cellspacing=10>
+<table border=0 cellspacing=12>
 
 <!-- copy-mix -->
 <tr><td colspan=2><code><a class=def name="copymix">copy-mix</a> (mix <i>beg</i>)</code></td></tr>
@@ -3450,7 +3450,7 @@ with it.  Tracks can be nested indefinitely, so multi-level phrase operations ar
 
 <!-- -------------------------------- TRACK FUNCTION TABLE -------------------------------- -->
 
-<table border=0 cellspacing=10>
+<table border=0 cellspacing=12>
 
 <!-- copy-track -->
 <tr><td colspan=2><code><a class=def name="copytrack">copy-track</a> (track <i>beg</i>)</code></td></tr>
@@ -3624,7 +3624,7 @@ Most of the region arguments default to the current region (the top of the regio
 <!-- -------------------------------- REGION TABLE -------------------------------- -->
 
 <A NAME="regionstuff"></a>
-<table border=0 cellspacing=10>
+<table border=0 cellspacing=12>
 
 <!-- forget-region -->
 <tr><td colspan=2><code><a class=def name="forgetregion">forget-region</a> (<i>reg</i>)</code></td></tr>
@@ -3793,7 +3793,7 @@ region-play-list and region-play-sequence in examp.scm<br>
 <!-- -------------------------------- SELECTION TABLE -------------------------------- -->
 
 <A NAME="selectionstuff"></a>
-<table border=0 cellspacing=10>
+<table border=0 cellspacing=12>
 
 <!-- convolve-selection-with -->
 <tr><td colspan=2><code><a class=def name="convolveselectionwith">convolve-selection-with</a> (file <i>amp</i>)</code></td></tr>
@@ -4104,7 +4104,7 @@ the direction argument between the channel and edit-position:
 
 <!-- -------------------------------- SOUND AND CHANNEL TABLE -------------------------------- -->
 
-<table border=0 cellspacing=10>
+<table border=0 cellspacing=12>
 
 
 <!-- add-player -->
@@ -6400,11 +6400,11 @@ reverse vct: <a href="#vctreverse">vct-reverse!</a><br>
 <code><a class=def name="reversesound">reverse-sound</a> (<i>snd chn edpos</i>)</code>
 </td></tr>
 <tr><td></td><td>
-reverse data.  There are some interesting non-causal effects you can get with this:
+<p>reverse data.  There are some interesting non-causal effects you can get with this:
 take a voice sound, reverse it, reverberate it, reverse it again, and you get the original with
 reversed reverb.  As a hack, you can reverse a sound (modulo a one sample rotation) by doing two ffts
 (DSP-ers call this a "flip"):
-<br>
+</p>
 <table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define* (<A NAME="sillyreverse">silly-reverse</a> #:optional snd)
   (let* ((len (<a class=quiet href="#frames">frames</a> snd 0))
@@ -7265,7 +7265,7 @@ resample via FFT: <a href="sndscm.html#exdownoct">down-oct</a><br>
 resample through env: <a href="sndscm.html#exsoundinterp">sound-interp</a> and <a href="sndscm.html#exenvsoundinterp">env-sound-interp</a><br>
 resample through list: <a href="sndscm.html#scratch">scratch</a><br>
 resample step-size through a function: <a href="#setsamples">step-src</a><br>
-predict duration of resampled sound: <a href="sndscm.html#exsrcduration">src-duration</a><br>
+predict duration of resampled sound: <a href="sndscm.html#srcduration">src-duration</a><br>
 <br>
 </blockquote></small>
 </td></tr></TABLE>
@@ -7930,7 +7930,7 @@ the final result is sent to the speakers.
 The control panel procedures are:
 </p>
 <!-- -------------------------------- CONTROL PANEL -------------------------------- -->
-<table border=0 cellspacing=10>
+<table border=0 cellspacing=12>
 
 <!-- amp-control -->
 <tr><td colspan=2>
@@ -8408,7 +8408,7 @@ The edit list functions are:</p>
 
 <!-- -------------------------------- EDIT-LIST TABLE -------------------------------- -->
 
-<table border=0 cellspacing=10>
+<table border=0 cellspacing=12>
 
 <!-- as-one-edit -->
 <tr><td colspan=2>
@@ -8631,7 +8631,7 @@ sound).  <a href="#ptreechannel">ptree-channel</a> (still in the experimental st
 
 <!-- -------------------------------- TRANSFORM TABLE -------------------------------- -->
 
-<table border=0 cellspacing=10>
+<table border=0 cellspacing=12>
 
 <!-- add-transform -->
 <tr><td colspan=2>
@@ -8800,7 +8800,7 @@ to the File:Open dialog, first makes sure the dialog exists with <code>(open-fil
 
 
 <!-- -------------------------------- DIALOG TABLE -------------------------------- -->
-<table border=0 cellspacing=10>
+<table border=0 cellspacing=12>
 
 <!-- color-dialog -->
 <tr><td colspan=2><code><a class=def name="colordialog">color-dialog</a> (<i>managed</i>)</code></td></tr>
@@ -9367,7 +9367,7 @@ Here is a partial list of the dialogs scattered around Snd.
 <p>The main menus can be extended, and new menus added with the following functions:</p>
 
 <!-- -------------------------------- MENU TABLE -------------------------------- -->
-<table border=0 cellspacing=10>
+<table border=0 cellspacing=12>
 
 <!-- add-to-main-menu -->
 <tr><td colspan=2><code><a class=def name="addtomainmenu">add-to-main-menu</a> (menu-label <i>update-callback</i>)</code></td></tr>
@@ -9432,7 +9432,7 @@ to do!
 
 <!-- -------------------------------- MISCELLANEOUS TABLE -------------------------------- -->
 
-<table border=0 cellspacing=10>
+<table border=0 cellspacing=12>
 
 <!-- abort -->
 <tr><td colspan=2>
@@ -10594,7 +10594,7 @@ are:</p>
 <p>In addition, the various transforms can be displayed using colormaps.  The following
 variables and functions control this:</p>
 
-<table border=0 cellspacing=4>
+<table border=0 cellspacing=6>
 
 <tr><td width=180><code><a class=def name="colorcutoff">color-cutoff</a></code></td><td width=100>0.003</td>
 <td>In spectra, sets the lowest data value that will be colored.</td></tr>
@@ -10614,7 +10614,7 @@ These names are defined (with '-colormap' appended) in rgb.scm and rgb.rb.
 
 <p>The color object handlers are:</p>
 
-<table border=0 cellspacing=4>
+<table border=0 cellspacing=6>
 <tr>
 <td width="20%"><code><a class=def name="colorp">color?</a> (obj)</code></td>
 <td>#t if <i>obj</i> is a color (this is the same as Pixel? in xm), (see <a href="#makecolor">make-color</a>).</td></tr>
@@ -10767,7 +10767,7 @@ The lowest level procedures are:
 </p>
 
 <!-- -------------------------------- GRAPHICS TABLE -------------------------------- -->
-<table border=0 cellspacing=4>
+<table border=0 cellspacing=6>
 
 <!-- add-colormap -->
 <tr><td colspan=2>

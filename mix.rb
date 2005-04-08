@@ -692,9 +692,9 @@ module Mixer_matrix
   def mixer_poly(mx, *coeffs)
     n = coeffs.length
     nmx = make_scalar_mixer(mx.length, coeffs[-1])
-    x = mixer_scale(mx, 1.0)
+    x = mixer_multiply(mx, 1.0)
     (n - 2).downto(0) do |i|
-      nmx = mixer_add(nmx, mixer_scale(x, coeffs[i]))
+      nmx = mixer_add(nmx, mixer_multiply(x, coeffs[i]))
       x = mixer_multiply(mx, x)
     end
     nmx

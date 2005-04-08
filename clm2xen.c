@@ -2748,15 +2748,28 @@ static XEN g_wrap_mixer(mus_any *val, bool dealloc)
 
 static XEN g_mixer_multiply(XEN uf1, XEN uf2, XEN ures) /* optional res */
 {
-  #define H_mixer_multiply "(" S_mixer_multiply " m1 m2 (outm #f)): multiply mixers m1 and m2 \
-(a matrix multiply), returning the mixer outm, or creating a new mixer if outm is not given."
+  #define H_mixer_multiply "(" S_mixer_multiply " m1 m2 (outm #f)): multiply mixers m1 and m2 (a matrix multiply), \
+returning the mixer outm, or creating a new mixer if outm is not given.  Either m1 or m2 can be a float, rather than a mixer."
 
   mus_any *res = NULL;
-  XEN_ASSERT_TYPE((MUS_XEN_P(uf1)) && (mus_mixer_p(XEN_TO_MUS_ANY(uf1))), uf1, XEN_ARG_1, S_mixer_multiply, "a mixer");
-  XEN_ASSERT_TYPE((MUS_XEN_P(uf2)) && (mus_mixer_p(XEN_TO_MUS_ANY(uf2))), uf2, XEN_ARG_2, S_mixer_multiply, "a mixer");
   if ((MUS_XEN_P(ures)) && 
       (mus_mixer_p(XEN_TO_MUS_ANY(ures))))
     res = (mus_any *)XEN_TO_MUS_ANY(ures);
+  if (XEN_NUMBER_P(uf1))
+    {
+      XEN_ASSERT_TYPE((MUS_XEN_P(uf2)) && (mus_mixer_p(XEN_TO_MUS_ANY(uf2))), uf2, XEN_ARG_2, S_mixer_multiply, "a mixer");
+      return(g_wrap_mixer(mus_mixer_scale((mus_any *)XEN_TO_MUS_ANY(uf2), XEN_TO_C_DOUBLE(uf1), res), (res) ? true : false));
+    }
+  else
+    {
+      if (XEN_NUMBER_P(uf2))
+	{
+	  XEN_ASSERT_TYPE((MUS_XEN_P(uf1)) && (mus_mixer_p(XEN_TO_MUS_ANY(uf1))), uf1, XEN_ARG_1, S_mixer_multiply, "a mixer");
+	  return(g_wrap_mixer(mus_mixer_scale((mus_any *)XEN_TO_MUS_ANY(uf1), XEN_TO_C_DOUBLE(uf2), res), (res) ? true : false));
+	}
+    }
+  XEN_ASSERT_TYPE((MUS_XEN_P(uf1)) && (mus_mixer_p(XEN_TO_MUS_ANY(uf1))), uf1, XEN_ARG_1, S_mixer_multiply, "a mixer");
+  XEN_ASSERT_TYPE((MUS_XEN_P(uf2)) && (mus_mixer_p(XEN_TO_MUS_ANY(uf2))), uf2, XEN_ARG_2, S_mixer_multiply, "a mixer");
   return(g_wrap_mixer(mus_mixer_multiply((mus_any *)XEN_TO_MUS_ANY(uf1),
 					 (mus_any *)XEN_TO_MUS_ANY(uf2),
 					 res),
@@ -2777,22 +2790,6 @@ returning the mixer outm, or creating a new mixer if outm is not given."
   return(g_wrap_mixer(mus_mixer_add((mus_any *)XEN_TO_MUS_ANY(uf1),
 				    (mus_any *)XEN_TO_MUS_ANY(uf2),
 				    res),
-		      (res) ? true : false));
-}
-
-static XEN g_mixer_scale(XEN mx, XEN val, XEN ures)
-{
-  #define H_mixer_scale "(" S_mixer_scale " mx scl (outm #f)): scale all components of mixer 'mx' by 'scl'"
-
-  mus_any *res = NULL;
-  XEN_ASSERT_TYPE((MUS_XEN_P(mx)) && (mus_mixer_p(XEN_TO_MUS_ANY(mx))), mx, XEN_ARG_1, S_mixer_scale, "a mixer");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, S_mixer_scale, "a number");
-  if ((MUS_XEN_P(ures)) && 
-      (mus_mixer_p(XEN_TO_MUS_ANY(ures))))
-    res = (mus_any *)XEN_TO_MUS_ANY(ures);
-  return(g_wrap_mixer(mus_mixer_scale((mus_any *)XEN_TO_MUS_ANY(mx),
-				      XEN_TO_C_DOUBLE(val),
-				      res),
 		      (res) ? true : false));
 }
 
@@ -5359,7 +5356,6 @@ XEN_NARGIFY_3(g_set_frame_ref_w, g_set_frame_ref)
 XEN_VARGIFY(g_make_mixer_w, g_make_mixer)
 XEN_NARGIFY_1(g_mixer_p_w, g_mixer_p)
 XEN_ARGIFY_3(g_mixer_multiply_w, g_mixer_multiply)
-XEN_ARGIFY_3(g_mixer_scale_w, g_mixer_scale)
 XEN_ARGIFY_3(g_mixer_add_w, g_mixer_add)
 XEN_NARGIFY_2(g_make_scalar_mixer_w, g_make_scalar_mixer)
 XEN_NARGIFY_3(g_mixer_ref_w, g_mixer_ref)
@@ -5617,7 +5613,6 @@ XEN_NARGIFY_1(g_mus_generator_p_w, g_mus_generator_p)
 #define g_make_mixer_w g_make_mixer
 #define g_mixer_p_w g_mixer_p
 #define g_mixer_multiply_w g_mixer_multiply
-#define g_mixer_scale_w g_mixer_scale
 #define g_mixer_add_w g_mixer_add
 #define g_make_scalar_mixer_w g_make_scalar_mixer
 #define g_mixer_ref_w g_mixer_ref
@@ -6037,7 +6032,6 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_mixer_p,           g_mixer_p_w,           1, 0, 0, H_mixer_p);
   XEN_DEFINE_PROCEDURE(S_mixer_multiply,    g_mixer_multiply_w,    2, 1, 0, H_mixer_multiply);
   XEN_DEFINE_PROCEDURE(S_mixer_add,         g_mixer_add_w,         2, 1, 0, H_mixer_add);
-  XEN_DEFINE_PROCEDURE(S_mixer_scale,       g_mixer_scale_w,       2, 1, 0, H_mixer_scale);
   XEN_DEFINE_PROCEDURE(S_make_scalar_mixer, g_make_scalar_mixer_w, 2, 0, 0, H_make_scalar_mixer);
 #if HAVE_GUILE
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mixer_ref, g_mixer_ref_w, H_mixer_ref, S_setB S_mixer_ref, g_set_mixer_ref_w,  3, 0, 4, 0);
@@ -6342,7 +6336,6 @@ the closer the radius is to 1.0, the narrower the resonance."
 	       S_mixer_multiply,
 	       S_mixer_p,
 	       S_mixer_ref,
-	       S_mixer_scale,
 	       S_mixer_set,
 	       S_move_locsig,
 	       S_multiply_arrays,

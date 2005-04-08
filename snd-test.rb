@@ -12733,12 +12733,12 @@ def test078
       fneq(mixer_ref(nmx, 1, 1), 2.4)
     snd_display("mixer_add: %s?", nmx)
   end
-  mx1 = mixer_scale(mx1, 0.5)
+  mx1 = mixer_multiply(mx1, 0.5)
   if fneq(mixer_ref(mx1, 0, 0), 1.0) or
       fneq(mixer_ref(mx1, 0, 1), 0.0) or
       fneq(mixer_ref(mx1, 1, 0), 0.0) or
       fneq(mixer_ref(mx1, 1, 1), 1.0)
-    snd_display("mixer_scaler (identity): %s?", mx1)
+    snd_display("mixer_multiply (identity): %s?", mx1)
   end
   mx1.reset
   if fneq(mixer_ref(mx1, 0, 0), 0.0)

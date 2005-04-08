@@ -8162,7 +8162,7 @@ FRAME_OP(mus_mixer_multiply, mixer*)
 FRAME_OP(mus_mixer_add, mixer+)
 
 
-
+/* TODO: scale arg for mixer*, remove mixer-scale */
 /* ---------------- mixer-scale ---------------- */
 static char *descr_mixer_scale_2(int *args, ptree *pt) 
 {
@@ -11180,7 +11180,6 @@ static void init_walkers(void)
   INIT_WALKER(S_frame_multiply, make_walker(mus_frame_multiply_1, NULL, NULL, 2, 3, R_CLM, false, 3, R_CLM, R_CLM, R_CLM));
   INIT_WALKER(S_mixer_multiply, make_walker(mus_mixer_multiply_1, NULL, NULL, 2, 3, R_CLM, false, 3, R_CLM, R_CLM, R_CLM));
   INIT_WALKER(S_mixer_add, make_walker(mus_mixer_add_1, NULL, NULL, 2, 3, R_CLM, false, 3, R_CLM, R_CLM, R_CLM));
-  INIT_WALKER(S_mixer_scale, make_walker(mixer_scale_1, NULL, NULL, 2, 3, R_CLM, false, 3, R_CLM, R_FLOAT, R_CLM)); 
   INIT_WALKER(S_frame_to_frame, make_walker(mus_frame_to_frame_1, NULL, NULL, 2, 3, R_CLM, false, 3, R_CLM, R_CLM, R_CLM));
   INIT_WALKER(S_frame_to_sample, make_walker(frame_to_sample_1, NULL, NULL, 2, 2, R_FLOAT, false, 2, R_CLM, R_CLM));
   INIT_WALKER(S_sample_to_frame, make_walker(sample_to_frame_1, NULL, NULL, 2, 3, R_FLOAT, false, 3, R_CLM, R_FLOAT, R_CLM));

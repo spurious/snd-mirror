@@ -1011,7 +1011,7 @@
 		   (> (abs (- (mixer-ref nmx 1 0) 0.3)) .001)
 		   (> (abs (- (mixer-ref nmx 1 1) 2.4)) .001))
 	       (clm-print ";mixer add ~A ~A: ~A" (mus-describe mx1) (mus-describe mx2) (mus-describe nmx)))
-	   (mixer-scale mx1 .5 mx1)
+	   (mixer* mx1 .5 mx1)
 	   (if (or (> (abs (- (mixer-ref mx1 0 0) 1.0)) .001)
 		   (> (abs (- (mixer-ref mx1 0 1) 0.0)) .001)
 		   (> (abs (- (mixer-ref mx1 1 0) 0.0)) .001)

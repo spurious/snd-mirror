@@ -91,10 +91,10 @@
 (define* (mixer-poly mx #:rest coeffs)
   (let* ((n (length coeffs))
 	 (nmx (make-scalar-mixer (mus-length mx) (list-ref coeffs (1- n))))
-	 (x (mixer-scale mx 1.0)))
+	 (x (mixer* mx 1.0)))
     (do ((i (- n 2) (1- i)))
 	((< i 0))
-      (set! nmx (mixer+ nmx (mixer-scale x (list-ref coeffs i))))
+      (set! nmx (mixer+ nmx (mixer* x (list-ref coeffs i))))
       (set! x (mixer* mx x)))
     nmx))
 

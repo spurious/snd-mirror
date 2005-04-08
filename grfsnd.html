@@ -147,7 +147,6 @@ Here's a more elaborate initialization file:
 <table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (use-modules (ice-9 debug) (ice-9 format) (ice-9 optargs))
 (debug-set! stack 0)                ;turn off Guile's stack-size check
-(set! snd-remember-paths #t)        ;remember paths making "load" smarter
 
 (set! (<a class=quiet href="extsnd.html#windowwidth">window-width</a>) 800)           ;these set the initial window size
 (set! (<a class=quiet href="extsnd.html#windowheight">window-height</a>) 500)
@@ -925,7 +924,6 @@ In Guile <b>frame?</b> is part of the debugger; it is renamed <b>%frame?</b> her
 <tr><td><a href="clm.html#mixermultiply">mixer*</a></td><td>(mix1 mix2 <i>outmx</i>)</td><td>matrix multiply of mix1 and mix2</td></tr>
 <tr><td><a href="clm.html#mixeradd">mixer+</a></td><td>(mix1 mix2 <i>outmx</i>)</td><td>add mixers mix1 and mix2</td></tr>
 <tr><td><a href="clm.html#mixer-ref">mixer-ref</a></td><td>(mixer in out)</td><td>mix-scaler[in,out]</td></tr>
-<tr><td><a href="clm.html#mixerscale">mixer-scale</a></td><td>(mix1 scl <i>outmx</i>)</td><td>scale mixer mix1 by scl</td></tr>
 <tr><td><a href="clm.html#mixer-set!">mixer-set!</a></td><td>(mixer in out val)</td><td>mix-scaler[in,out] = val</td></tr>
 <tr><td><a href="clm.html#mixer?">mixer?</a></td><td>(gen)</td><td>#t if gen is mixer object</td></tr>
 <tr><td><a href="clm.html#move-locsig">move-locsig</a></td><td colspan=2>(gen degree distance)</td></tr>

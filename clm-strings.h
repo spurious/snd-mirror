@@ -144,7 +144,6 @@
 #endif
 #define S_mixer_p                    "mixer?"
 #define S_mixer_ref                  "mixer-ref"
-#define S_mixer_scale                "mixer-scale"
 #define S_mixer_set                  "mixer-set!"
 #define S_move_locsig                "move-locsig"
 #define S_multiply_arrays            "multiply-arrays"

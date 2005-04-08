@@ -53974,7 +53974,7 @@ EDITS: 2
 		     make-iir-filter make-locsig move-locsig make-mixer make-notch make-one-pole make-one-zero make-oscil make-ppolar
 		     make-pulse-train make-rand make-rand-interp make-readin make-sample->file make-sawtooth-wave
 		     make-sine-summation make-square-wave make-src make-sum-of-cosines make-sum-of-sines make-ssb-am make-table-lookup make-triangle-wave
-		     make-two-pole make-two-zero make-wave-train make-waveshape make-zpolar mixer* mixer-ref mixer-set! mixer? mixer+ mixer-scale
+		     make-two-pole make-two-zero make-wave-train make-waveshape make-zpolar mixer* mixer-ref mixer-set! mixer? mixer+
 		     multiply-arrays mus-array-print-length mus-channel mus-channels make-polyshape
 		     mus-close mus-cosines mus-data mus-feedback mus-feedforward mus-fft mus-formant-radius mus-frequency
 		     mus-hop mus-increment mus-input? mus-file-name mus-length mus-location mus-mix mus-order mus-output?  mus-phase
@@ -54469,7 +54469,7 @@ EDITS: 2
 			    make-iir-filter make-locsig make-notch make-one-pole make-one-zero make-oscil make-phase-vocoder
 			    make-ppolar make-pulse-train make-rand make-rand-interp make-readin make-sawtooth-wave make-average
 			    make-sine-summation make-square-wave make-src make-sum-of-cosines make-sum-of-sines make-table-lookup make-triangle-wave
-			    make-two-pole make-two-zero make-wave-train make-waveshape make-zpolar mixer* mixer+ mixer-scale multiply-arrays
+			    make-two-pole make-two-zero make-wave-train make-waveshape make-zpolar mixer* mixer+ multiply-arrays
 			    notch one-pole one-zero oscil partials->polynomial partials->wave partials->waveshape make-polyshape
 			    phase-partials->wave phase-vocoder polynomial pulse-train rand rand-interp rectangular->polar
 			    ring-modulate sample->frame sawtooth-wave sine-summation square-wave src sum-of-cosines sum-of-sines 

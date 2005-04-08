@@ -337,3 +337,6 @@
 
 (if (not (defined? 'in-hz)) (define in-hz hz->radians))
 (if (not (defined? 'restart-env)) (define restart-env mus-reset))
+
+(define* (mixer-scale mx scl #:optional nmx)
+  (mixer* mx scl nmx))

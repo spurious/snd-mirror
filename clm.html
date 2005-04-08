@@ -2475,7 +2475,6 @@ data IO.
   <a class=def name="mixer?">mixer?</a> obj                             ;is <i>obj a mixer</i>
   <a class=def name="mixermultiply">mixer*</a> m1 m2 &amp;optional <i>outm</i>            ;matrix multiply of <i>m1</i> and <i>m2</i>, return new mixer (or <i>outm</i>)
   <a class=def name="mixeradd">mixer+</a> m1 m2 &amp;optional <i>outm</i>            ;matrix add of <i>m1</i> and <i>m2</i>, return new mixer (or <i>outm</i>)
-  <a class=def name="mixerscale">mixer-scale</a> m1 scl &amp;optional <i>outm</i>      ;scale matrix <i>m1</i> by <i>scl</i>, return new mixer (or <i>outm</i>)
   <a class=def name="mixer-ref">mixer-ref</a> m1 in out                    ;<i>m1</i>[<i>in</i>,<i>out</i>] (use setf to change)
   <a class=def name="mixer-set!">mixer-set!</a> m1 in out val               ;<i>m1</i>[<i>in,out</i>] = <i>val</i> (also setf with mixer-ref)
 
@@ -2854,6 +2853,7 @@ at a particular point (x).
 <i>coeffs</i> is an array of coefficients where
 coeffs[0] is the constant term, and so on.  For
 waveshaping, use the function <a href="#partials-&gt;polynomial">partials-&gt;polynomial</a>.
+poly.scm has a variety of polynomial-related functions.
 Abramowitz and Stegun, "A Handbook of Mathematical Functions" is a
 treasure-trove of interesting polynomials.
 See also the <a href="#brighten">brighten</a> instrument.
@@ -4482,7 +4482,7 @@ To get around this problem, call
   <tr><td><em class=tab><a href="clm.html#clm-load">clm-load</a></em></td><td><em class=tab><a href="clm.html#frame?">frame?</a></em></td><td><em class=tab><a href="clm.html#mixermultiply">mixer*</a></em></td><td><em class=tab><a href="clm.html#*output*">*output*</a></em></td><td><em class=tab><a href="clm.html#sound-samples">sound-samples</a></em></td></tr>
   <tr><td><em class=tab><a href="clm.html#*clm-locsig-type*">*clm-locsig-type*</a></em></td><td><em class=tab><a href="clm.html#generators"><b>Generators</b></a></em></td><td><em class=tab><a href="clm.html#mixeradd">mixer+</a></em></td><td><em class=tab><a href="clm.html#partials-&gt;polynomial">partials-&gt;polynomial</a></em></td><td><em class=tab><a href="clm.html#sound-srate">sound-srate</a></em></td></tr>
   <tr><td><em class=tab><a href="clm.html#*clm-news*">*clm-news*</a></em></td><td><em class=tab><a href="clm.html#grains"><b>Granular synthesis</b></a></em></td><td><em class=tab><a href="clm.html#mixer-ref">mixer-ref</a></em></td><td><em class=tab><a href="clm.html#partials-&gt;wave">partials-&gt;wave</a></em></td><td><em class=tab><a href="clm.html#spectrum">spectrum</a></em></td></tr>
-  <tr><td><em class=tab><a href="clm.html#*clm-notehook*">*clm-notehook*</a></em></td><td><em class=tab><a href="clm.html#granulate">granulate</a></em></td><td><em class=tab><a href="clm.html#mixerscale">mixer-scale</a></em></td><td><em class=tab><a href="clm.html#partials-&gt;waveshape">partials-&gt;waveshape</a></em></td><td><em class=tab><a href="clm.html#square-wave">square-wave</a></em></td></tr>
+  <tr><td><em class=tab><a href="clm.html#*clm-notehook*">*clm-notehook*</a></em></td><td><em class=tab><a href="clm.html#granulate">granulate</a></em></td><td><em class=tab></em></td><td><em class=tab><a href="clm.html#partials-&gt;waveshape">partials-&gt;waveshape</a></em></td><td><em class=tab><a href="clm.html#square-wave">square-wave</a></em></td></tr>
   <tr><td><em class=tab><a href="clm.html#*clm-play*">*clm-play*</a></em></td><td><em class=tab><a href="clm.html#granulate?">granulate?</a></em></td><td><em class=tab><a href="clm.html#mixer-set!">mixer-set!</a></em></td><td><em class=tab><a href="clm.html#phase-partials-&gt;wave">phase-partials-&gt;wave</a></em></td><td><em class=tab><a href="clm.html#square-wave?">square-wave?</a></em></td></tr>
   <tr><td><em class=tab><a href="clm.html#*clm-player*">*clm-player*</a></em></td><td><em class=tab><a href="clm.html#header-types"><b>Headers </b></a></em></td><td><em class=tab><a href="clm.html#mixer?">mixer?</a></em></td><td><em class=tab><a href="clm.html#phase-vocoder">phase-vocoder</a></em></td><td><em class=tab><a href="clm.html#src">src</a></em></td></tr>
   <tr><td><em class=tab><a href="clm.html#clm-print">clm-print</a></em></td><td><em class=tab><a href="clm.html#hz-&gt;radians">hz-&gt;radians</a></em></td><td><em class=tab><a href="clm.html#move-locsig">move-locsig</a></em></td><td><em class=tab><a href="clm.html#phase-vocoder?">phase-vocoder?</a></em></td><td><em class=tab><a href="clm.html#src?">src?</a></em></td></tr>
