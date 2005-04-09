@@ -278,10 +278,10 @@ enum {R_UNSPECIFIED, R_INT, R_FLOAT, R_BOOL, R_CHAR, R_STRING, R_LIST, R_PAIR,
       R_SYMBOL, R_KEYWORD, R_FUNCTION, R_GOTO, R_VCT, 
       R_READER, R_MIX_READER, R_TRACK_READER, R_SOUND_DATA,
       R_CLM, R_FLOAT_VECTOR, R_INT_VECTOR, R_VCT_VECTOR, R_CLM_VECTOR, 
-      R_NUMBER, R_CONS, R_VECTOR, R_XEN, R_ANY}; /* last 5 for walker arg checks */
+      R_NUMBER, R_CONS, R_VECTOR, R_XEN, R_NUMBER_CLM, R_ANY}; /* last 6 for walker arg checks */
 
 
-#define BUILT_IN_TYPES 27
+#define BUILT_IN_TYPES 28
 static int last_type = R_ANY;
 static int type_names_size = BUILT_IN_TYPES;
 static char **type_names = NULL;
@@ -290,7 +290,7 @@ static char *basic_type_names[BUILT_IN_TYPES] = {"unspecified", "int", "float", 
 						 "sample-reader", "mix-sample-reader", "track-sample-reader",
 						 "sound-data", "clm", 
 						 "float-vector", "int-vector", "vct-vector", "clm-vector", 
-						 "number", "cons", "vector", "xen", "any"};
+						 "number", "cons", "vector", "xen", "number or clm", "any"};
 static void init_type_names(void)
 {
   int i;
@@ -8129,59 +8129,95 @@ static xen_value *env_interp_1(ptree *prog, xen_value **args, int num_args)
 
 /* ---------------- frame+ etc ---------------- */
 
-#define FRAME_OP(CName, SName) \
-static char *descr_ ## CName ## _2(int *args, ptree *pt) \
+#define FRAME_OP(CName, SName, cfName) \
+static char *descr_ ## CName ## _2cc(int *args, ptree *pt) \
 { \
-  return(mus_format( CLM_PT " = " #SName "(" CLM_PT ", " CLM_PT ")", \
-		    args[0], DESC_CLM_RESULT, args[1], DESC_CLM_ARG_1, args[2], DESC_CLM_ARG_2)); \
+  return(mus_format( CLM_PT " = " #SName "(" CLM_PT ", " CLM_PT ")", args[0], DESC_CLM_RESULT, args[1], DESC_CLM_ARG_1, args[2], DESC_CLM_ARG_2)); \
 } \
-static char *descr_ ## CName ## _3(int *args, ptree *pt) \
+static char *descr_ ## CName ## _2cf(int *args, ptree *pt) \
+{ \
+  return(mus_format( CLM_PT " = " #SName "(" CLM_PT ", " FLT_PT ")", args[0], DESC_CLM_RESULT, args[1], DESC_CLM_ARG_1, args[2], FLOAT_ARG_2)); \
+} \
+static char *descr_ ## CName ## _2fc(int *args, ptree *pt) \
+{ \
+  return(mus_format( CLM_PT " = " #SName "(" FLT_PT ", " CLM_PT ")", args[0], DESC_CLM_RESULT, args[1], FLOAT_ARG_1, args[2], DESC_CLM_ARG_2)); \
+} \
+static char *descr_ ## CName ## _3cc(int *args, ptree *pt) \
 { \
   return(mus_format( CLM_PT " = " #SName "(" CLM_PT ", " CLM_PT ", " CLM_PT ")", \
 		    args[0], DESC_CLM_RESULT, args[1], DESC_CLM_ARG_1, args[2], DESC_CLM_ARG_2, args[3], DESC_CLM_ARG_3)); \
 } \
-static void CName ## _2(int *args, ptree *pt) \
+static char *descr_ ## CName ## _3cf(int *args, ptree *pt) \
 { \
-  if (CLM_RESULT) mus_free(CLM_RESULT); \
-  CLM_RESULT = CName(CLM_ARG_1, CLM_ARG_2, NULL); \
+  return(mus_format( CLM_PT " = " #SName "(" CLM_PT ", " FLT_PT ", " CLM_PT ")", \
+		    args[0], DESC_CLM_RESULT, args[1], DESC_CLM_ARG_1, args[2], FLOAT_ARG_2, args[3], DESC_CLM_ARG_3)); \
 } \
-static void CName ## _3(int *args, ptree *pt) \
+static char *descr_ ## CName ## _3fc(int *args, ptree *pt) \
 { \
-  CLM_RESULT = CName(CLM_ARG_1, CLM_ARG_2, CLM_ARG_3); \
+  return(mus_format( CLM_PT " = " #SName "(" FLT_PT ", " CLM_PT ", " CLM_PT ")", \
+		    args[0], DESC_CLM_RESULT, args[1], FLOAT_ARG_1, args[2], DESC_CLM_ARG_2, args[3], DESC_CLM_ARG_3)); \
 } \
+static void CName ## _2cc(int *args, ptree *pt) {if (CLM_RESULT) mus_free(CLM_RESULT); CLM_RESULT = CName(CLM_ARG_1, CLM_ARG_2, NULL);} \
+static void CName ## _2cf(int *args, ptree *pt) {if (CLM_RESULT) mus_free(CLM_RESULT); CLM_RESULT = cfName(CLM_ARG_1, FLOAT_ARG_2, NULL);} \
+static void CName ## _2fc(int *args, ptree *pt) {if (CLM_RESULT) mus_free(CLM_RESULT); CLM_RESULT = cfName(CLM_ARG_2, FLOAT_ARG_1, NULL);} \
+static void CName ## _3cc(int *args, ptree *pt) {CLM_RESULT = CName(CLM_ARG_1, CLM_ARG_2, CLM_ARG_3);} \
+static void CName ## _3cf(int *args, ptree *pt) {CLM_RESULT = cfName(CLM_ARG_1, FLOAT_ARG_2, CLM_ARG_3);} \
+static void CName ## _3fc(int *args, ptree *pt) {CLM_RESULT = cfName(CLM_ARG_2, FLOAT_ARG_1, CLM_ARG_3);} \
 static xen_value * CName ## _1(ptree *prog, xen_value **args, int num_args) \
 { \
-  if (num_args == 2) return(package(prog, R_CLM, CName ## _2, descr_ ## CName ## _2, args, 2)); \
-  return(package(prog, R_CLM, CName ## _3, descr_ ## CName ## _3, args, 3)); \
+  xen_value *temp; \
+  if (args[1]->type == R_INT) {temp = args[1]; args[1] = convert_int_to_dbl(prog, args[1]); FREE(temp);} \
+  if (args[2]->type == R_INT) {temp = args[2]; args[2] = convert_int_to_dbl(prog, args[2]); FREE(temp);} \
+  if (args[1]->type == R_FLOAT) \
+    { \
+      if (args[2]->type == R_FLOAT) return(run_warn("no mixer or frame passed to " #SName)); \
+      if (num_args == 2) \
+	return(package(prog, R_CLM, CName ## _2fc, descr_ ## CName ## _2fc, args, 2)); \
+      return(package(prog, R_CLM, CName ## _3fc, descr_ ## CName ## _3fc, args, 3)); \
+    } \
+  if (args[2]->type == R_FLOAT) \
+    { \
+      if (num_args == 2) \
+	return(package(prog, R_CLM, CName ## _2cf, descr_ ## CName ## _2cf, args, 2)); \
+      return(package(prog, R_CLM, CName ## _3cf, descr_ ## CName ## _3cf, args, 3)); \
+    } \
+  if (num_args == 2) \
+    return(package(prog, R_CLM, CName ## _2cc, descr_ ## CName ## _2cc, args, 2)); \
+  return(package(prog, R_CLM, CName ## _3cc, descr_ ## CName ## _3cc, args, 3)); \
 }
 
-FRAME_OP(mus_frame_add, frame+)
-FRAME_OP(mus_frame_multiply, frame*)
-FRAME_OP(mus_frame_to_frame, frame->frame)
-FRAME_OP(mus_mixer_multiply, mixer*)
-FRAME_OP(mus_mixer_add, mixer+)
+FRAME_OP(mus_frame_add, frame+, mus_frame_offset)
+FRAME_OP(mus_frame_multiply, frame*, mus_frame_scale)
+FRAME_OP(mus_mixer_multiply, mixer*, mus_mixer_scale)
+FRAME_OP(mus_mixer_add, mixer+, mus_mixer_offset)
 
 
-/* TODO: scale arg for mixer*, remove mixer-scale */
-/* ---------------- mixer-scale ---------------- */
-static char *descr_mixer_scale_2(int *args, ptree *pt) 
+
+/* ---------------- frame->frame ---------------- */
+static char *descr_frame_to_frame_2(int *args, ptree *pt)
 {
-  return(mus_format( CLM_PT " = mixer-scale(" CLM_PT ", " FLT_PT ")", args[0], DESC_CLM_RESULT, args[1], DESC_CLM_ARG_1, args[2], FLOAT_ARG_2));
+  return(mus_format( CLM_PT " = frame->frame(" CLM_PT ", " CLM_PT ")", args[0], DESC_CLM_RESULT, args[1], DESC_CLM_ARG_1, args[2], DESC_CLM_ARG_2));
 }
-static void mixer_scale_2(int *args, ptree *pt) {CLM_RESULT = mus_mixer_scale(CLM_ARG_1, FLOAT_ARG_2, NULL);}
-static char *descr_mixer_scale_3(int *args, ptree *pt) 
+static char *descr_frame_to_frame_3(int *args, ptree *pt)
 {
-  return(mus_format( CLM_PT " = mixer-scale(" CLM_PT ", " FLT_PT ", " CLM_PT ")", 
-		     args[0], DESC_CLM_RESULT, args[1], DESC_CLM_ARG_1, args[2], FLOAT_ARG_2, args[3], DESC_CLM_ARG_3));
+  return(mus_format( CLM_PT " = frame->frame(" CLM_PT ", " CLM_PT ", " CLM_PT ")",
+		    args[0], DESC_CLM_RESULT, args[1], DESC_CLM_ARG_1, args[2], DESC_CLM_ARG_2, args[3], DESC_CLM_ARG_3));
 }
-static void mixer_scale_3(int *args, ptree *pt) {CLM_RESULT = mus_mixer_scale(CLM_ARG_1, FLOAT_ARG_2, CLM_ARG_3);}
-static xen_value *mixer_scale_1(ptree *prog, xen_value **args, int num_args) 
+static void frame_to_frame_2(int *args, ptree *pt)
 {
-  if (run_safety == RUN_SAFE) safe_package(prog, R_BOOL, mixer_check, descr_mixer_check, args, 1);
-  if (num_args == 2)
-    return(package(prog, R_CLM, mixer_scale_2, descr_mixer_scale_2, args, 2));
-  return(package(prog, R_CLM, mixer_scale_3, descr_mixer_scale_3, args, 3));
+  if (CLM_RESULT) mus_free(CLM_RESULT);
+  CLM_RESULT = mus_frame_to_frame(CLM_ARG_1, CLM_ARG_2, NULL);
 }
+static void frame_to_frame_3(int *args, ptree *pt)
+{
+  CLM_RESULT = mus_frame_to_frame(CLM_ARG_1, CLM_ARG_2, CLM_ARG_3);
+}
+static xen_value *frame_to_frame_1(ptree *prog, xen_value **args, int num_args)
+{
+  if (num_args == 2) return(package(prog, R_CLM, frame_to_frame_2, descr_frame_to_frame_2, args, 2));
+  return(package(prog, R_CLM, frame_to_frame_3, descr_frame_to_frame_3, args, 3));
+}
+
 
 /* ---------------- frame->sample ---------------- */
 static char *descr_frame_to_sample_2(int *args, ptree *pt) 
@@ -10394,6 +10430,7 @@ static xen_value *walk(ptree *prog, XEN form, walk_result_t walk_result)
 	  if ((w->num_arg_types == 1) &&
 	      (w->arg_types[0] < 0))
 	    {
+	      /* check all #:rest args */
 	      true_type = -(w->arg_types[0]);
 	      for (i = 1; i <= num_args; i++)
 		if ((args[i]->type != true_type) &&
@@ -10441,8 +10478,18 @@ static xen_value *walk(ptree *prog, XEN form, walk_result_t walk_result)
 					  (args[i + 1]->type != R_PAIR))
 					return(clean_up(arg_warn(prog, funcname, i + 1, args, "cons"), args, num_args));
 				    }
-				  else 
-				    return(clean_up(arg_warn(prog, funcname, i + 1, args, type_name(w->arg_types[i])), args, num_args));
+				  else
+				    {
+				      if (w->arg_types[i] == R_NUMBER_CLM)
+					{
+					  if ((args[i + 1]->type != R_INT) &&
+					      (args[i + 1]->type != R_FLOAT) &&
+					      (args[i + 1]->type != R_CLM))
+					    return(clean_up(arg_warn(prog, funcname, i + 1, args, "clm or number"), args, num_args));
+					}
+				      else 
+					return(clean_up(arg_warn(prog, funcname, i + 1, args, type_name(w->arg_types[i])), args, num_args));
+				    }
 				}
 			    }
 			}
@@ -11176,11 +11223,11 @@ static void init_walkers(void)
   INIT_WALKER(S_spectrum, make_walker(mus_spectrum_1, NULL, NULL, 2, 4, R_VCT, false, 4, R_VCT, R_VCT, R_ANY, R_INT));
   INIT_WALKER(S_convolution, make_walker(convolution_1, NULL, NULL, 2, 3, R_VCT, false, 3, R_VCT, R_VCT, R_INT));
   INIT_WALKER(S_formant_bank, make_walker(formant_bank_1,NULL, NULL, 3, 3, R_FLOAT, false, 2, R_VCT, R_CLM_VECTOR));
-  INIT_WALKER(S_frame_add, make_walker(mus_frame_add_1, NULL, NULL, 2, 3, R_CLM, false, 3, R_CLM, R_CLM, R_CLM));
-  INIT_WALKER(S_frame_multiply, make_walker(mus_frame_multiply_1, NULL, NULL, 2, 3, R_CLM, false, 3, R_CLM, R_CLM, R_CLM));
-  INIT_WALKER(S_mixer_multiply, make_walker(mus_mixer_multiply_1, NULL, NULL, 2, 3, R_CLM, false, 3, R_CLM, R_CLM, R_CLM));
-  INIT_WALKER(S_mixer_add, make_walker(mus_mixer_add_1, NULL, NULL, 2, 3, R_CLM, false, 3, R_CLM, R_CLM, R_CLM));
-  INIT_WALKER(S_frame_to_frame, make_walker(mus_frame_to_frame_1, NULL, NULL, 2, 3, R_CLM, false, 3, R_CLM, R_CLM, R_CLM));
+  INIT_WALKER(S_frame_add, make_walker(mus_frame_add_1, NULL, NULL, 2, 3, R_CLM, false, 3, R_NUMBER_CLM, R_NUMBER_CLM, R_CLM));
+  INIT_WALKER(S_frame_multiply, make_walker(mus_frame_multiply_1, NULL, NULL, 2, 3, R_CLM, false, 3, R_NUMBER_CLM, R_NUMBER_CLM, R_CLM));
+  INIT_WALKER(S_mixer_multiply, make_walker(mus_mixer_multiply_1, NULL, NULL, 2, 3, R_CLM, false, 3, R_NUMBER_CLM, R_NUMBER_CLM, R_CLM));
+  INIT_WALKER(S_mixer_add, make_walker(mus_mixer_add_1, NULL, NULL, 2, 3, R_CLM, false, 3, R_NUMBER_CLM, R_NUMBER_CLM, R_CLM));
+  INIT_WALKER(S_frame_to_frame, make_walker(frame_to_frame_1, NULL, NULL, 2, 3, R_CLM, false, 3, R_CLM, R_CLM, R_CLM));
   INIT_WALKER(S_frame_to_sample, make_walker(frame_to_sample_1, NULL, NULL, 2, 2, R_FLOAT, false, 2, R_CLM, R_CLM));
   INIT_WALKER(S_sample_to_frame, make_walker(sample_to_frame_1, NULL, NULL, 2, 3, R_FLOAT, false, 3, R_CLM, R_FLOAT, R_CLM));
   INIT_WALKER(S_locsig, make_walker(locsig_1, NULL, NULL, 3, 3, R_CLM, false, 3, R_CLM, R_NUMBER, R_NUMBER));

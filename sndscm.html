@@ -81,6 +81,7 @@
 <tr><td><a href="#peakenvdoc">peak-env.scm</a></td>                    <td>peak envelope support</td></tr>
 <tr><td><a href="#pianodoc">piano.scm, piano.rb</a></td>               <td>piano physical model</td></tr>
 <tr><td><a href="#playdoc">play.scm</a></td>                           <td>play-related functions</td></tr>
+<tr><td><a href="#polydoc">poly.scm</a></td>                           <td>polynomial-related stuff</td></tr>
 <tr><td><a href="#popupdoc">popup.scm, gtk-popup.scm, popup.rb</a></td><td>Popup menu specializations</td></tr>
 <tr><td><a href="#prc95doc">prc95.scm</a></td>                         <td>Perry Cook's physical model examples</td></tr>
 <tr><td><a href="#pvocdoc">pvoc.scm, pvoc.rb</a></td>                  <td>phase-vocoder</td></tr>
@@ -2300,6 +2301,8 @@ others in the relevant section of snd-test.
 </p>
 <pre>
   <a class=def NAME="frame-reverse">frame-reverse</a> frame
+  <em class=emdef>frame-copy</em> frame
+
   <em class=emdef>make-zero-mixer</em> size
   <a class=def NAME="mixer-diagonal">mixer-diagonal?</a> mixer
   <a class=def name="mixer-transpose">mixer-transpose</a> mixer
@@ -2308,6 +2311,7 @@ others in the relevant section of snd-test.
   <a class=def name="mixer-poly">mixer-poly</a> mixer coeffs
   <a class=def name="mixer-inverse">mixer-inverse</a> mixer
   <a class=def name="mixer-solve">mixer-solve</a> mixer frame
+  <em class=emdef>mixer-copy</em> mixer
 </pre>
 
 <p>
@@ -2558,6 +2562,18 @@ It reads any number of sound files, using a function to
 decide which one to send to the DAC.
 </p>
 
+
+<A NAME="polydoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>poly.scm</h2></td></tr></table>
+
+<pre>
+  <em class=emdef>poly+</em> p1 p2
+  <em class=emdef>poly*</em> p1 p2
+  <em class=emdef>poly/</em> p1 p2
+  <em class=emdef>poly-derivative</em> p1
+</pre>
+
+<p>This file contains various functions related to the CLM polynomial function.
+</p>
 
 
 <A NAME="popupdoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>popup.scm and gtk-popup.scm</h2></td></tr></table>

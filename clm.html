@@ -2494,6 +2494,9 @@ data IO.
 </table>
 
 <p>In Ruby, frame* is frame_multiply, frame+ is frame_add, and mixer* is mixer_multiply.
+The arguments to frame*, frame+, mixer*, and mixer+ can be floats as well as mixers and
+frames. In that case, the mixer or frame is either scaled by the float, or the float is
+added to each element.
 </p>
 
 <p>fullmix.ins uses these functions to provide a mixer able to handle any number

@@ -2,10 +2,11 @@
 #define CLM_H
 
 #define MUS_VERSION 3
-#define MUS_REVISION 15
-#define MUS_DATE "23-Mar-05"
+#define MUS_REVISION 16
+#define MUS_DATE "11-Apr-05"
 
 /*
+ * 11-Apr:     mus_mixer|frame_offset, mus_frame_scale (for higher level generic functions).
  * 23-Mar:     frame_to_frame arg interpretation changed.
  * 21-Mar:     mus_make_readin|file_to_sample|file_to_frame_with_buffer_size.
  * 16-Mar:     polyshape generator (waveshaper as polynomial + oscil)
@@ -494,6 +495,8 @@ mus_any *mus_make_frame(int chans, ...);
 mus_any *mus_make_frame_with_data(int chans, Float *data);
 mus_any *mus_frame_add(mus_any *f1, mus_any *f2, mus_any *res);
 mus_any *mus_frame_multiply(mus_any *f1, mus_any *f2, mus_any *res);
+mus_any *mus_frame_scale(mus_any *uf1, Float scl, mus_any *ures);
+mus_any *mus_frame_offset(mus_any *uf1, Float offset, mus_any *ures);
 Float mus_frame_ref(mus_any *f, int chan);
 Float mus_frame_set(mus_any *f, int chan, Float val);
 
@@ -510,6 +513,7 @@ Float mus_frame_to_sample(mus_any *f, mus_any *in);
 mus_any *mus_mixer_multiply(mus_any *f1, mus_any *f2, mus_any *res);
 mus_any *mus_mixer_add(mus_any *f1, mus_any *f2, mus_any *res);
 mus_any *mus_mixer_scale(mus_any *uf1, Float scaler, mus_any *ures);
+mus_any *mus_mixer_offset(mus_any *uf1, Float offset, mus_any *ures);
 mus_any *mus_make_scalar_mixer(int chans, Float scalar);
 
 bool mus_file_to_sample_p(mus_any *ptr);

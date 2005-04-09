@@ -1,7 +1,9 @@
 ;;; mixer and frame stuff, mostly oriented toward linear algebra (see also snd-test)
 ;;;
 ;;; frame-reverse, make-zero-mixer, mixer-diagonal?, mixer-transpose, mixer-determinant,
-;;; mixer-solve, mixer-inverse, invert-matrix, mixer-trace, mixer-poly
+;;; mixer-solve, mixer-inverse, invert-matrix, mixer-trace, mixer-poly, mixer-copy, frame-copy
+
+(provide 'snd-mixer.scm)
 
 (define (frame-reverse fr)
   (let ((len (mus-length fr)))
@@ -12,6 +14,16 @@
 	(frame-set! fr i (frame-ref fr j))
 	(frame-set! fr j temp)))
     fr))
+
+(define (frame-copy fr)
+  (let* ((len (mus-length fr))
+	 (nfr (make-frame len)))
+    (do ((i 0 (1+ i)))
+	((= i len))
+      (frame-set! nfr i (frame-ref fr i)))
+    fr))
+
+
 
 (define (make-zero-mixer n) (make-mixer n))
 
@@ -186,3 +198,14 @@
 (define (mixer-inverse A)
   (let ((val (invert-matrix A)))
     (and val (car val))))
+
+(define (mixer-copy umx)
+  (let* ((size (mus-length umx))
+	 (mx (make-mixer size)))
+    (do ((i 0 (1+ i)))
+	((= i size))
+      (do ((j 0 (1+ j)))
+	  ((= j size))
+	(mixer-set! mx i j (mixer-ref umx i j))))
+    mx))
+

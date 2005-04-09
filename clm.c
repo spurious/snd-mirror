@@ -4687,6 +4687,38 @@ mus_any *mus_frame_multiply(mus_any *uf1, mus_any *uf2, mus_any *ures)
   return((mus_any *)res);
 }
 
+mus_any *mus_frame_scale(mus_any *uf1, Float scl, mus_any *ures)
+{
+  int chans, i;
+  mus_frame *f1 = (mus_frame *)uf1;
+  mus_frame *res = (mus_frame *)ures;
+  chans = f1->chans;
+  if (res)
+    {
+      if (res->chans < chans) chans = res->chans;
+    }
+  else res = (mus_frame *)mus_make_empty_frame(chans);
+  for (i = 0; i < chans; i++) 
+    res->vals[i] = f1->vals[i] * scl;
+  return((mus_any *)res);
+}
+
+mus_any *mus_frame_offset(mus_any *uf1, Float offset, mus_any *ures)
+{
+  int chans, i;
+  mus_frame *f1 = (mus_frame *)uf1;
+  mus_frame *res = (mus_frame *)ures;
+  chans = f1->chans;
+  if (res)
+    {
+      if (res->chans < chans) chans = res->chans;
+    }
+  else res = (mus_frame *)mus_make_empty_frame(chans);
+  for (i = 0; i < chans; i++) 
+    res->vals[i] = f1->vals[i] + offset;
+  return((mus_any *)res);
+}
+
 Float mus_frame_ref(mus_any *uf, int chan) 
 {
   mus_frame *f = (mus_frame *)uf;
@@ -5104,6 +5136,23 @@ mus_any *mus_mixer_scale(mus_any *uf1, Float scaler, mus_any *ures)
   for (i = 0; i < chans; i++)
     for (j = 0; j < chans; j++)
       res->vals[i][j] = f1->vals[i][j] * scaler;
+  return((mus_any *)res);
+}
+
+mus_any *mus_mixer_offset(mus_any *uf1, Float offset, mus_any *ures)
+{
+  int i, j, chans;
+  mus_mixer *f1 = (mus_mixer *)uf1;
+  mus_mixer *res = (mus_mixer *)ures;
+  chans = f1->chans;
+  if (res)
+    {
+      if (res->chans < chans) chans = res->chans;
+    }
+  else res = (mus_mixer *)mus_make_empty_mixer(chans);
+  for (i = 0; i < chans; i++)
+    for (j = 0; j < chans; j++)
+      res->vals[i][j] = f1->vals[i][j] + offset;
   return((mus_any *)res);
 }
 
