@@ -104,7 +104,7 @@ Limitations
 -A variable can not change type.
 -No allocation (consing, vectors, etc.)
 -No closures
--No optional arguments or keyword arguments. (Optional and keyword arguments
+-No optional arguments or keyword arguments. (Optional arguments
  are supported with the help of macros though.)
 -#f=0, #t=1
 -Not possible to call Guile functions.
@@ -276,7 +276,7 @@ The following code:
 		     ((a 50))))))
 (rt-funcall a)
 
-...gave me a segfault.
+...returns 0 for me. [4]
 
 
 (Note, I manually had to add "(declare (<int> b))" to make it compile
@@ -829,10 +829,20 @@ Wait
 pthread_cond_wait(&cond,&mutex);
 
 
-*******************
-In addition, theres a bounch of very internal functions and macros
-that used wrongly can hang your machine or destroy your harddisk.
-Most of them start with the prefix "rt-".
+
+
+**************************************************************************
+Various
+********
+
+* In addition to the functions and macros described above, heres a bounch of very internal functions and macros
+  that used wrongly can hang your machine or destroy your harddisk.
+  Most of them start with the prefix "rt-".
+
+* Theres still a lot of smaller optimalisations thats possible to do. However,
+  gcc (V>=3) should be able to fix most of these.
+
+
 
 
 **************************************************************************
@@ -845,6 +855,8 @@ Notes
     probably isn't correct. (?)
 [3] Paul Graham, "ANSI Common Lisp", 1996, p. 313: "Not an operator,
     but resembles one (...)". (About declare)
+[4] The return value is actually undefined, not 0 though, at least
+    according to the generated C-code.
 
 
 **************************************************************************
@@ -1093,8 +1105,13 @@ Notes
 			    (list (car vardecl)
 				  (make-proper-type (cadr vardecl) (car vardecl))
 				  (rt-last-hacks (caddr vardecl)))
-			    (list (car vardecl)
-				  (make-proper-type (cadr vardecl) (car vardecl)))))
+			    (if (and (= 3 (length vardecl))
+				     (not (number? (caddr vardecl))))
+				(list (car vardecl)
+				      (make-proper-type (cadr vardecl) (car vardecl))
+				      (caddr vardecl))
+				(list (car vardecl)
+				      (make-proper-type (cadr vardecl) (car vardecl))))))
 		      (cadr term))
 	    ,@(rt-last-hacks (cddr term))))
 
@@ -1181,8 +1198,17 @@ Notes
 		     term))))
 
        (insert term returntype))))
-	       
+
 #!
+(rt-insert-returns '(lambda ()
+		      (if 2
+			  3
+			  4))
+		   '<int>)
+(rt-insert-returns '(lambda ()
+		      (+ 2 35))
+		   '<int>)
+
 (rt-insert-returns '() '(lambda ()
 			  (let* ((a <int> (lambda ((<int> b))
 					    2
@@ -1275,49 +1301,121 @@ Notes
 		       (cddr term))))
 
 	  ((eq? 'is-type? (car term))
-	   (find-globals varlist (caddr term)))
+	   #t)
 	  
 	  (else
 	   (for-each (lambda (t)
 		       (find-globals varlist t))
 		     (cdr term)))))
 
+  (define* (lambdalifter name type term #:optional dontcapsulate)
+    (let* ((globsets '())      ;; Bunch of set!-commands.
+	   (globvars-here '()) ;; Global variables handled in this spesific lambda function.
+	   (vars (map (lambda (var)
+			(if (memq (car var) globals)
+			    (let ((tempname (symbol-append '_rt_local_ (car var))))
+			      (set! globsets (cons `(set! ,(car var) ,tempname) globsets))
+			      (set! globals2 (cons var globals2))
+			      (set! globvars-here (cons var globvars-here))
+			      (list tempname (cadr var)))
+			    var))
+		      (cadr term)))
+
+	   (das-func #f)
+	   
+	   (body (map lifter (cddr term)))
+
+	   (is-first-let*? (and (list? (car body))
+				(eq? 'let* (car (car body))))))
+      
+      
+      ;;(if (not (list? (car body)))
+      ;;	  (set! body `(rt-begin_p/begin_p
+      ;;		       ,@body)))
+      
+      ;; Find any global variables defined in the let*-block in the function.
+      (if is-first-let*?
+	  (for-each (lambda (var)
+		      (if (memq (car var) globals)
+			  (set! globvars-here (cons var globvars-here))))
+		    (cadr (car body))))
+
+      (set! das-func (if is-first-let*?
+			 `(lambda ,vars
+			    (let* ,(cadr (car body))
+			      ,@(reverse! globsets)
+			      ,@(cddr (car body))))
+			 `(lambda ,vars
+			    ,@(reverse! globsets)
+			    ,@body)))
+
+      (if (or (null? globvars-here)
+	      dontcapsulate) ;; For some reason, we know that its safe not to put global accessible local variables on the stack. (Ie. its the main function. :-)
+	  das-func
+	  (let* ((realfuncname (rt-gensym))
+		 (letbody (map (lambda (name)
+				 (cons (rt-gensym) (reverse name)))
+			       globvars-here))
+		 (funccall `(,realfuncname ,@(map car vars)))
+		 (capspart #f))
+			     
+	    (set! globalfuncs (cons `(,name ,type (rt-lambda-decl/lambda_decl ,(cadr term)))
+				    globalfuncs))
+	    (set! globalfuncs (cons `(,realfuncname ,type ,das-func)
+				    globalfuncs))
+
+	    
+	    (set! capspart `(let* ,(if (eq? '<void> type)
+				       letbody
+				       (append letbody
+					       (list (list '_rt_ret type funccall))))
+			      ,@(if (eq? '<void> type)
+				    (append funccall
+					    (map (lambda (letb)
+						   `(set! ,(caddr letb) ,(car letb)))
+						 letbody))
+				    (append (map (lambda (letb)
+						   `(set! ,(caddr letb) ,(car letb)))
+						 letbody)
+					    (list '_rt_ret)))))
+
+	    (if (< (length globvars-here) 1000)
+		`(lambda ,vars
+		   ,capspart)
+		(let ((recnum (rt-gensym)))
+		  (set! globals2 (cons (list recnum '<int> 0) globals2))
+		  `(lambda ,vars
+		     (if ,recnum
+			 ,capspart
+			 ,(if (eq? '<void type)
+			      `(begin
+				 (set! ,recnum 1)
+				 ,funccall
+				 (set! ,recnum 0))
+			      `(let* ((_rt_ret ,type))
+				 (set! ,recnum 1)
+				 (set! _rt_ret ,funccall)
+				 (set! ,recnum 0)
+				 _rt_ret))))))))))
+			    
+			       
+		 
+  
   (define (lifter term)
     (cond ((not (list? term)) term)
 	  ((null? term) term)
 
-	  ((eq? 'rt-lambda-decl/lambda_decl (car term))
-	   term)
-	  
-	  ((eq? 'lambda (car term))
-	   (let* ((globsets '())
-		  (vars (map (lambda (var)
-			       (if (memq (car var) globals)
-				   (let ((tempname (symbol-append '_rt_local_ (car var))))
-				     (set! globsets (cons `(set! ,(car var) ,tempname) globsets))
-				     (set! globals2 (cons var globals2))
-				     (list tempname (cadr var)))
-				   var))
-			     (cadr term)))
-		  (body (map lifter (cddr term))))
-
-	     (if (eq? 'let* (car (car body)))
-		 `(lambda ,vars
-		    (let* ,(cadr (car body))
-		      ,@(reverse! globsets)
-		      ,@(cddr (car body))))
-		 `(lambda ,vars
-		    ,@(reverse! globsets)
-		    ,@body))))
-	     
 	  ((eq? 'let* (car term))
 	   (let* ((vardecls '()))
 	     (for-each (lambda (var)
+			 (c-display var)
 			 (if (and (= 3 (length var))
 				  (list? (caddr var)))
-			     (begin
-			       (set! globalfuncs (cons (list (car var) (cadr var) (lifter (caddr var)))
-						       globalfuncs)))
+			     (if (eq? 'rt-lambda-decl/lambda_decl (car (caddr var)))
+				 (set! globalfuncs (cons var
+							 globalfuncs))
+				 (set! globalfuncs (cons (list (car var) (cadr var) (apply lambdalifter var))
+							 globalfuncs)))
 			     (if (memq (car var) globals)
 				 (set! globals2 (cons var globals2))
 				 (set! vardecls (cons var vardecls)))))
@@ -1332,9 +1430,10 @@ Notes
 	  (else
 	   (map lifter term))))
 
+
   (find-globals '() term)
 
-  (let ((res (lifter term)))
+  (let ((res (lambdalifter 'nameignored '<doesntmatter> term #t)))
     `(lambda ,(cadr res)
        (let* ,(append globals2 (reverse! globalfuncs))
 	 ,@(cddr res)))))
@@ -1363,6 +1462,35 @@ Notes
 		       (b e))))
 ->
 (lambda ((_rt_local_f <int>))
+  (let* ((rt_gen300 <int> 0)
+	 (c <int>)
+	 (a <int> 0)
+	 (f <int>)
+	 (d <int> (lambda ()
+		    (+ c f 2)))
+	 (b <int> (rt-lambda-decl/lambda_decl ((c <int>))))
+	 (rt_gen298 <int> (lambda ((_rt_local_c <int>))
+			    (set! c _rt_local_c)
+			    (rt-begin_p/begin_p
+			     (set! a (d)))))
+	 (b <int> (lambda ((_rt_local_c <int>))
+		    (if rt_gen300
+			(let* ((rt_gen299 <int> c)
+			       (_rt_ret <int> (rt_gen298 _rt_local_c)))
+			  (set! <int> rt_gen299)
+			  _rt_ret)
+			(let* ((_rt_ret <int>))
+			  (set! rt_gen300 1)
+			  (set! _rt_ret (rt_gen298 _rt_local_c))
+			  (set! rt_gen300 0)
+			  _rt_ret)))))
+    (set! f _rt_local_f)
+    (rt-begin_p/begin_p
+     (set! a 3)
+     (b e))))
+
+
+(lambda ((_rt_local_f <int>))
   (let* ((c <int>)
 	 (a <int> 0)
 	 (f <int>)
@@ -1377,6 +1505,28 @@ Notes
       (set! a 3)
       (set! e 9)
       (b e))))
+
+(lambda () (let* ((b_u3 <float>)
+		  (a_u1 <float> (rt-lambda-decl/lambda_decl ()))
+		  (c_u2 <float> (rt-lambda-decl/lambda_decl ((b_u3 <float>))))
+		  (inner_u4 <void> (lambda ((n_u5 <int>))
+				     (set! b_u3 n_u5)))
+		  (c_u2 <float> (rt-lambda-decl/lambda_decl ((b_u3 <float>))))
+		  (rt_gen350 <float> (lambda ((_rt_local_b_u3 <float>))
+				       (set! b_u3 _rt_local_b_u3)
+				       (rt-begin_p/begin_p
+					(rt-begin_p/begin_p
+					 (rt-if/?kolon (rt-=/== 0 b_u3)
+						       (c_u2 1)
+						       (inner_u4 2))
+					 b_u3))))
+		  (c_u2 <float> (lambda ((_rt_local_b_u3 <float>))
+				  (let* ((rt_gen351 <float> b_u3)
+					 (_rt_ret <float> (rt_gen350 _rt_local_b_u3)))
+				    (set! <float> rt_gen351)
+				    _rt_ret)))
+		  (a_u1 <float> (lambda () (rt-begin_p/begin_p (rt-begin_p/begin_p (c_u2 0)))))) (rt-begin_p/begin_p (rt-begin_p/begin_p (a_u1)))))
+
 
 !#
 
@@ -3349,6 +3499,7 @@ Notes
   (<rt-func> 'rt_scm_to_vct '<vct-*> '(<SCM>))
   (<rt-func> 'rt-mus-any?/mus_xen_p '<mus_any-*> '(<SCM>))
   (<rt-func> 'rt_scm_to_mus_any '<mus_any-*> '(<SCM>))
+  (<rt-func> 'rt_out '<void> '(<int> <float>))
   )
 
 
@@ -3928,8 +4079,8 @@ Notes
 
 ;; VECTORS
 
-(rt-renamefunc vector? SCM_VECTORP '<int> '(<SCM>))
-(rt-renamefunc vector-length SCM_VECTOR_LENGTH '<int> '(<SCM>))
+(rt-renamefunc vector? SCM_VECTORP <int> (<SCM>))
+(rt-renamefunc vector-length SCM_VECTOR_LENGTH <int> (<SCM>))
 
 (define-rt-macro (vector-ref vec pos)
   (if (rt-is-safety?)
@@ -3944,11 +4095,11 @@ Notes
 		   (rt-error "Operation vector-ref failed because the length of the vector is to small"))
 	       `(rt-vector-ref/vector-ref ,das-vec (rt-castint/castint ,das-pos))))
 	  `(begin
-	     (if (not (vector? ,das-vec))
+	     (if (not (vector? ,vec))
 		 (rt-error "Operation vector-ref failed because first argument is not a vector."))
-	     (if (>= ,das-pos (vector-length ,das-vec))
+	     (if (>= ,pos (vector-length ,vec))
 		 (rt-error "Operation vector-ref failed because the length of the vector is to small"))
-	     `(rt-vector-ref/vector-ref ,das-vec (rt-castint/castint ,das-pos))))
+	     (rt-vector-ref/vector-ref ,vec (rt-castint/castint ,pos))))
       `(rt-vector-ref/vector-ref ,vec (rt-castint/castint ,pos))))
 
 (define-c-macro (rt-vector-ref/vector-ref vec pos)
@@ -4078,22 +4229,18 @@ Notes
 	(val (last rest)))
     (if (null? channels)
 	(set! channels '(0 1)))
-    (if (rt-immediate? val)
-	`(begin
-	  ,@(map (lambda (ch)
-		   (if (rt-is-safety?)
-		       `(if (> (rt-num_outs/num_outs) ,ch)
-			    (rt-set-outs! ,ch (+ (rt-outs/outs ,ch) ,val)))
-		       `(rt-set-outs! ,ch (+ (rt-outs/outs ,ch) ,val))))
-		 channels))
-	(let ((varname (rt-gensym)))
-	  `(let* ((,varname ,val))
-	     ,@(map (lambda (ch)
-		      (if (rt-is-safety?)
-			  `(if (> (rt-num_outs/num_outs) ,ch)
-			       (rt-set-outs! ,ch (+ (rt-outs/outs ,ch) ,varname)))
-			  `(rt-set-outs! ,ch (+ (rt-outs/outs ,ch) ,varname))))
-		    channels))))))
+    (if (= 1 (length channels))
+	`(rt_out ,(car channels) ,val)
+	(if (rt-immediate? val)
+	    `(begin
+	       ,@(map (lambda (ch)
+			`(rt_out ,ch ,val))
+		      channels))
+	    (let ((varname (rt-gensym)))
+	      `(let* ((,varname ,val))
+		 ,@(map (lambda (ch)
+			  `(rt_out ,ch ,varname))
+			channels)))))))
 
 (define-c-macro (rt-outs/outs n)
   (<-> "_rt_funcarg->outs[" (eval-c-parse n) "]"))
@@ -5176,7 +5323,9 @@ setter!-rt-mus-location/mus_location
 				      (if (not errordisplayed)
 					  (fprintf stderr (string "RT RUNTIME ERROR: %s.\\n") msg))
 				      (set! errordisplayed 1)
-				      (longjmp _rt_errorvar 5)))
+				      ,(if (rt-is-safety?)
+					   '(longjmp _rt_errorvar 5)
+					   "/* */")))
 		   
 		   
 		   (<struct-mus_rt_readin-*> rt_scm_to_rt_readin (lambda ((<SCM> name))
@@ -5243,7 +5392,19 @@ setter!-rt-mus-location/mus_location
 					      (while (not isrunning) ;; I'm not quite sure why...
 						     (usleep 50))
 					      ))
-		   
+
+		   (<void> rt_out (lambda ((<int> ch)(<float> val))
+				    ,(if (rt-is-safety?)
+					 '(if (< ch 0)
+					      (rt_error (string "Channel number for Out less than zero")))
+					 "/* */")
+				    ,(if (rt-is-safety?)
+					 '(if (> ch _rt_funcarg->num_outs)
+					      (rt_error (string "Illegal channel number for Out")))
+					 "/* */")
+				    (+= _rt_funcarg->outs[ch] val)))
+
+				    
 		   ,@(map (lambda (vardecl)
 			    (if (= 3 (length vardecl))
 				(list (cadr vardecl) (car vardecl) (caddr vardecl))
@@ -5262,9 +5423,11 @@ setter!-rt-mus-location/mus_location
 					   ;;,@(map (lambda (extvar)
 					   ;;	    `(<float> ,(car extvar)))
 					   ;;	  extnumbers-writing)
-					   
-					   (if (> (setjmp _rt_errorvar) 0)
-					       return)
+
+					   ,(if (rt-safety)
+						`(if (> (setjmp _rt_errorvar) 0)
+						     return)
+						"/* */")
 					   
 					   ;; Code for writing guile-variables. Not used anymore.
 					   ;;,@(let ((n -1))
@@ -6355,6 +6518,210 @@ Forresten:
 	     (rt-begin_p/begin_p
 	      (rt-begin_p/begin_p
 	       (ai_u1)))))))
+
+
+Oops 1:
+-------
+(define a2 (lambda ()
+	     (letrec ((c (lambda (b)
+			   (let ((inner (lambda (n)
+					  (set! b n))))
+			     (if (= 0 b)
+				 (c 1)
+				 (inner 2))
+			     b))))
+	       (c 0))))
+
+(define a (rt-2 '(lambda ()
+		   (define a (include-guile-func a2))
+		   (a))))
+
+(list (a2)
+      (rt-funcall a))
+
+
+
+Oops 2:
+-------
+(define b2 (lambda ()
+		   (letrec ((c (lambda (b)
+				 (let ((inner (lambda (n)
+						(let ((ret (c 2)))
+						  (+ b ret)))))
+				   (if (= 0 b)
+				       (inner 1)
+				       b)))))
+		     (c 0))))
+
+(define b (rt-2 '(lambda ()
+		   (define a (include-guile-func b2))
+		   (a))))
+		      
+
+(list (b2)
+      (rt-funcall b))
+
+
+Løsning
+-------
+Optimalisering: Sjekk om peker til en funksjon er brukt, eller om funksjonen er kallt fra seg selv eller i en inner-function.
+                Da er den potensiell rekursiv, og kan føre til de to scenarioene over.
+                (Veldig enkelt å sjekke)
+
+
+Argument-variablene og de deklarerte variablene til slike funksjoner må handteres via indirekte pekere:
+
+(lambda (a)
+  (let* ((b 0)
+	 (c (lambda ()
+	      (set! b 9)
+	      (+ a b))))
+    (set! b 5)
+    (* (c) a b)))
+
+->
+
+
+(let*-globals ((a_pointer <int-*> 0)
+	       (b_pointer <int-*> 0)
+	       (c (lambda ()
+		    (let* ((b b_pointer)
+			   (a a_pointer))
+		      (set! *b 9)
+		      (+ *a *b))))))
+(lambda (a)
+  (let* ((b 0))
+    (set! a_pointer (pointer-to a))
+    (set! b_pointer (pointer-to b))
+    (set! b 5)
+    (* (c) a b)))
+
+
+Litt usikker...
+Nei, en helt annen funksjon kan jo ha kallt (self), før (c) blir kallt. Og da vil a_pointer og b_pointer ha feil
+verdier. Men blir ikke det closures? Uansett, dette løser jo bare problem 2, og ikke 1, faktisk.
+
+
+(letrec ((a (lambda (n)
+	      (1+ n)))
+	 (b (lambda (n)
+	      (c (1+ n))))
+	 (c (lambda (n)
+	      (a (1+ n)))))
+  (b 5))
+
+
+
+Forslag 2:
+----------
+Kapsulere rekursive (og potensiellt rekursive) funksjoner: (manuell stack)
+
+
+(let* ((self (lambda (a)
+	       (let* ((b 0)
+		      (c (lambda ()
+			   (set! b 9)
+			   (+ a b))))
+		 (set! b 5)
+		 (* (c) a b))))))
+->
+
+(let* ((a 0)
+       (b 0)
+       (c (lambda ()
+	    (set! b 9)
+	    (+ a b)))
+       (self (lambda-decl (_rt_local_a)))
+       (_rt_realfunc_self (lambda (_rt_local_a)
+			    (set! a  _rt_local_a)
+			    (set! b 5)
+			    (+ (c) a b)))
+       (self (lambda (_rt_local_a)
+	       (let* ((old_a a)
+		      (old_b b)
+		      (ret (_rt_realfunc_self _rt_local_a)))
+		 (set! a old_a)
+		 (set! b old_b)
+		 ret)))))
+
+
+Ser riktig ut. Tror dette skulle virke...
+
+
+
+Forsøk med egen funksjon før lambda-lifter:
+-------------------------------------------
+
+(let* ((self (lambda (a)
+	       (1+ a)))))
+
+->
+
+(let* ((self (lambda (a)
+	       (let* ((old_a a)
+		      (rt_gen234 (lambda ()
+				   (1+ a)))
+		      (ret (rt_gen234 a)))
+		 (set! a old_a)
+		 ret)))))
+
+Alle _berørte_ variabler må kapsuleres. I en to-stegs prosess kan dette ordnes ved å flytte
+find-globals til toplevel. Eller, heller flytte lambda-lifter inn. Ja, ikke noe problem i hvert fall.
+
+Hva med variabler som er definert i inner-functions? Må de kapsuleres på hoved-funksjonen?
+
+(let* ((self (lambda ()
+	       (let* ((a (lambda (b)
+			   (let ((c (lambda ()
+				      b)))
+			     (1+ (c))))))
+		 ...)))))
+
+Må "b" kapsuleres i self her hvis self er potensielt rekursiv?
+
+(Og hva hvis a eller c er potensielt rekursive? Tja, dobbel kapsulering burde ikke gi feil resultat, så det er vel greit.)
+
+Nei, "b" trenger da aldeles ikke kapsuleres der. Den globale varianten blir jo ikke satt.
+
+
+Oops 3:
+-------
+
+(lambda ()
+  (let ((p #f)
+	(self (lambda (a)
+		(let ((b (lambda ()
+			   (p))))
+		  ...)))
+	(g (lambda ()
+	     (self))))
+    (set! p g)
+    (self)))
+
+Hvilket betyr: Så godt som umulig å finne ut ved kompileringstid om en funksjon (i dette tilfellet "self") er potensielt rekursiv. Arrgh.
+
+Runtime-sjekk:
+
+(let* ((self (lambda (_rt_local_a)
+	       (if _rt_realfunc_self_rec
+		   (let* ((old_a a)
+			  (old_b b)
+			  (ret (_rt_realfunc_self _rt_local_a)))
+		     (set! a old_a)
+		     (set! b old_b)
+		     ret)
+		   (let* ((ret 0))
+		     (set! _rt_realfunc_self_rec 1)
+		     (set! ret (_rt_realfunc_self _rt_local_a))
+		     (set! _rt_realfunc_self_rec 0)
+		     ret))))))
+
+
+	       
+
+
+
+
 
 !#
 

@@ -42,6 +42,12 @@
  * the Snd package; others can be found in the CLM package (clm2xen.c).
  */
 
+
+/* PERHAPS: vct-offset! (-> vct-add!|subtract! -> vct+), vct-scale! (-> vct-multiply! -> vct*)
+ *   should these return a new vct?
+ */
+
+
 #include <config.h>
 
 #if USE_SND

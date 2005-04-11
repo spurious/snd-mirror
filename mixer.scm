@@ -3,6 +3,10 @@
 ;;; frame-reverse, make-zero-mixer, mixer-diagonal?, mixer-transpose, mixer-determinant,
 ;;; mixer-solve, mixer-inverse, invert-matrix, mixer-trace, mixer-poly, mixer-copy, frame-copy
 
+
+;;; PERHAPS: mixer* could handle all frame->frame cases
+
+
 (provide 'snd-mixer.scm)
 
 (define (frame-reverse fr)
@@ -24,6 +28,16 @@
     fr))
 
 
+
+(define (mixer-copy umx)
+  (let* ((size (mus-length umx))
+	 (mx (make-mixer size)))
+    (do ((i 0 (1+ i)))
+	((= i size))
+      (do ((j 0 (1+ j)))
+	  ((= j size))
+	(mixer-set! mx i j (mixer-ref umx i j))))
+    mx))
 
 (define (make-zero-mixer n) (make-mixer n))
 
@@ -198,14 +212,4 @@
 (define (mixer-inverse A)
   (let ((val (invert-matrix A)))
     (and val (car val))))
-
-(define (mixer-copy umx)
-  (let* ((size (mus-length umx))
-	 (mx (make-mixer size)))
-    (do ((i 0 (1+ i)))
-	((= i size))
-      (do ((j 0 (1+ j)))
-	  ((= j size))
-	(mixer-set! mx i j (mixer-ref umx i j))))
-    mx))
 

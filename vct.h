@@ -24,6 +24,13 @@
 #define S_vct            "vct"
 #define S_vct_reverse    "vct-reverse!"
 #define S_vct_to_string  "vct->string"
+#if HAVE_RUBY
+  #define S_vct_times    "vct_multiply"
+  #define S_vct_plus     "vct_add"
+#else
+  #define S_vct_times    "vct*"
+  #define S_vct_plus     "vct+"
+#endif
 
 #ifndef Float
   #define Float float

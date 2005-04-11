@@ -2570,9 +2570,16 @@ decide which one to send to the DAC.
   <em class=emdef>poly*</em> p1 p2
   <em class=emdef>poly/</em> p1 p2
   <em class=emdef>poly-derivative</em> p1
+  <em class=emdef>poly-reduce</em> p1
 </pre>
 
 <p>This file contains various functions related to the CLM polynomial function.
+<b>poly+</b> adds two polynomials, and <b>poly*</b> multiplies two polynomials.
+<b>poly/</b> divides two polynomials, with a few restrictions, and returns
+a list containing the quotient and remainder polynomials.  <b>poly-derivative</b>
+returns the derivative of a polynomial.  In all these cases, the resultant
+polynomials may have extra high-degree entries whose coefficients are zero.
+To remove these pointless coefficients, use <b>poly-reduce</b>.
 </p>
 
 

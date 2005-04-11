@@ -583,6 +583,57 @@ static void save_property_list(FILE *fd, XEN property_list, int chan)
       snd_unprotect_at(gc_loc);
     }
 }
+#else
+#if HAVE_RUBY
+static void save_property_list(FILE *fd, XEN property_list, int chan)
+{
+  XEN ignore_list;
+  ignore_list = rb_ary_assoc(property_list, C_STRING_TO_XEN_SYMBOL("save_state_ignore"));
+  if (!(XEN_LIST_P(ignore_list)))
+    {
+      if (chan == -1)
+	fprintf(fd, "%sset_%s(%s, sfile)\n",
+		white_space,
+		TO_PROC_NAME(S_sound_properties),
+		XEN_AS_STRING(property_list));
+      else fprintf(fd, "%sset_%s(%s, sfile, %d)\n",
+		   white_space,
+		   TO_PROC_NAME(S_channel_properties),
+		   XEN_AS_STRING(property_list),
+		   chan);
+    }
+  else
+    {
+      XEN new_properties = XEN_EMPTY_LIST;
+      int i, property_len, gc_loc;
+      gc_loc = snd_protect(new_properties);
+      property_len = XEN_LIST_LENGTH(property_list);
+      for (i = 0; i < property_len; i++)
+	{
+	  XEN property;
+	  property = XEN_LIST_REF(property_list, i);
+	  if (XEN_FALSE_P(rb_ary_includes(XEN_VECTOR_REF(ignore_list, 1), XEN_CAR(property))))
+	    new_properties = XEN_CONS(property, new_properties);
+	}
+      if (!(XEN_NULL_P(new_properties)))
+	{
+	  if (chan == -1)
+	    fprintf(fd, "%sset_%s(%s, sfile)\n",
+		    white_space,
+		    TO_PROC_NAME(S_sound_properties),
+		    XEN_AS_STRING(new_properties));
+	  else fprintf(fd, "%sset_%s(%s, sfile, %d)\n",
+		       white_space,
+		       TO_PROC_NAME(S_channel_properties),
+		       XEN_AS_STRING(new_properties),
+		       chan);
+	}
+      snd_unprotect_at(gc_loc);
+    }
+}
+#else
+static void save_property_list(FILE *fd, XEN property_list, int chan) {}
+#endif
 #endif
 
 static void check_selection(FILE *fd, chan_info *cp)
@@ -733,15 +784,7 @@ static void save_sound_state (snd_info *sp, void *ptr)
       (XEN_LIST_P(XEN_VECTOR_REF(sp->properties, 0))) &&
       (!(XEN_NULL_P(XEN_VECTOR_REF(sp->properties, 0)))))
     {
-#if HAVE_RUBY
-      fprintf(fd, "%sset_%s([%s], sfile)\n", white_space, TO_PROC_NAME(S_sound_properties), XEN_AS_STRING(XEN_VECTOR_REF(sp->properties, 0)));
-#else
-#if HAVE_GUILE
       save_property_list(fd, XEN_VECTOR_REF(sp->properties, 0), -1);
-#else
-      fprintf(fd, "%s(set! (%s sfile) \'%s)\n", white_space, S_sound_properties, XEN_AS_STRING(XEN_VECTOR_REF(sp->properties, 0)));
-#endif
-#endif
     }
   for (chan = 0; chan < sp->nchans; chan++)
     {
@@ -780,12 +823,14 @@ static void save_sound_state (snd_info *sp, void *ptr)
       if (fneq(cp->fft_window_beta, fft_window_beta(ss))) pcp_sf(fd, S_fft_window_beta, cp->fft_window_beta, chan);
       if (cp->spectro_hop != spectro_hop(ss)) pcp_sd(fd, S_spectro_hop, cp->spectro_hop, chan);
       if (cp->transform_size != transform_size(ss)) pcp_sd(fd, S_transform_size, cp->transform_size, chan);
-      if (cp->transform_graph_type != transform_graph_type(ss)) pcp_ss(fd, S_transform_graph_type, transform_graph_type_name(cp->transform_graph_type), chan);
+      if (cp->transform_graph_type != transform_graph_type(ss)) 
+	pcp_ss(fd, S_transform_graph_type, transform_graph_type_name(cp->transform_graph_type), chan);
       if (cp->time_graph_type != time_graph_type(ss)) pcp_ss(fd, S_time_graph_type, time_graph_type_name(cp->time_graph_type), chan);
       if (cp->fft_window != fft_window(ss)) pcp_ss(fd, S_fft_window, TO_VAR_NAME(mus_fft_window_name(cp->fft_window)), chan);
       if (cp->transform_type != transform_type(ss)) pcp_ss(fd, S_transform_type, TO_VAR_NAME(transform_program_name(cp->transform_type)), chan);
       /* this is assuming the added transform definition (if any) can be found -- maybe not a good idea */
-      if (cp->transform_normalization != transform_normalization(ss)) pcp_ss(fd, S_transform_normalization, transform_normalization_name(cp->transform_normalization), chan);
+      if (cp->transform_normalization != transform_normalization(ss)) 
+	pcp_ss(fd, S_transform_normalization, transform_normalization_name(cp->transform_normalization), chan);
       if (cp->time_graph_style != graph_style(ss)) pcp_ss(fd, S_time_graph_style, graph_style_name(cp->time_graph_style), chan);
       if (cp->lisp_graph_style != graph_style(ss)) pcp_ss(fd, S_lisp_graph_style, graph_style_name(cp->lisp_graph_style), chan);
       if (cp->transform_graph_style != graph_style(ss)) pcp_ss(fd, S_transform_graph_style, graph_style_name(cp->transform_graph_style), chan);
@@ -800,23 +845,7 @@ static void save_sound_state (snd_info *sp, void *ptr)
 	  (XEN_LIST_P(XEN_VECTOR_REF(cp->properties, 0))) &&
 	  (!(XEN_NULL_P(XEN_VECTOR_REF(cp->properties, 0)))))
 	{
-#if HAVE_RUBY
-	  fprintf(fd, "%sset_%s([%s], sfile, %d)\n", 
-		  white_space, 
-		  TO_PROC_NAME(S_channel_properties), 
-		  XEN_AS_STRING(XEN_VECTOR_REF(cp->properties, 0)),
-		  chan);
-#else
-#if HAVE_GUILE
 	  save_property_list(fd, XEN_VECTOR_REF(cp->properties, 0), chan);
-#else
-	  fprintf(fd, "%s(set! (%s sfile %d) \'%s)\n", 
-		  white_space, 
-		  S_channel_properties, 
-		  chan,
-		  XEN_AS_STRING(XEN_VECTOR_REF(cp->properties, 0)));
-#endif
-#endif
 	}
       edit_history_to_file(fd, cp);
       check_selection(fd, cp);
