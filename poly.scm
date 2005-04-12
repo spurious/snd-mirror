@@ -190,12 +190,13 @@
 			    (set! ones (1+ ones))))
 		      (if (= ones 1)             ; x^n - b -- "linear" in x^n -- do the roots-of-unity shuffle
 			  (let* ((n (expt (/ (- (vector-ref p1 0)) (vector-ref p1 deg)) (/ 1.0 deg)))
+				 (mag (magnitude n))
 				 (roots (list n))
 				 (incr (/ (* pi 2.0) deg)))
 			    (do ((i 1 (1+ i))
 				 (ang incr (+ ang incr)))
 				((= i deg))
-			      (set! roots (cons (simplify-complex (make-polar (magnitude n) ang)) roots)))
+			      (set! roots (cons (simplify-complex (make-polar mag ang)) roots)))
 			    roots)
 			  (if (and (= ones 2)
 				   (even? deg)
@@ -217,10 +218,11 @@
 					 (do ((i 0 (1+ i))
 					      (ang 0.0 (+ ang incr)))
 					     ((= i n))
-					   (set! roots (cons (make-polar mag ang) roots))))))
+					   (set! roots (cons (simplify-complex (make-polar mag ang)) roots))))))
 				 quad-roots)
 				roots)
 			  (if (= deg 3)
+			      ;; it may be better to just fall into Newton's method here
 			      ;; Abramowitz & Stegun 3.8.2
 			      (let* ((a0 (/ (vector-ref p1 0) (vector-ref p1 3)))
 				     (a1 (/ (vector-ref p1 1) (vector-ref p1 3)))
@@ -242,61 +244,16 @@
 					    (* (- s1 s2) -0.5 (sqrt 3.0) (make-rectangular 0.0 1.0)))))
 				      (list z1 z2 z3))
 
-			      ;; is it useful to try cubic in x^(n/3) ?
-
-			      (if (= deg 4)
-				  (let* ((a0 (/ (vector-ref p1 0) (vector-ref p1 4)))
-					 (a1 (/ (vector-ref p1 1) (vector-ref p1 4)))
-					 (a2 (/ (vector-ref p1 2) (vector-ref p1 4)))
-					 (a3 (/ (vector-ref p1 3) (vector-ref p1 4)))
-					 (cr (poly-roots (vct (- (+ (* a1 a1) (* a0 a3 a3) (* -4.0 a0 a2)))
-							      (- (* a1 a3) (* 4.0 a0))
-							      (- a2)
-							      1.0)))
-					 (all-real (and (real? (car cr)) (real? (cadr cr)) (real? (caddr cr))))
-					 (u1 (or (and (real? (car cr)) (car cr))
-						 (and (real? (cadr cr)) (cadr cr))
-						 (and (real? (caddr cr) (caddr cr))))))
-
-				    (if all-real
-					(letrec ((b2-4ac (lambda (a b c)
-							   (- (* b b) (* 4 a c))))
-						 (quadpos? (lambda (y)
-							     (let ((a 1.0)
-								   (b (- (* a3 0.5) (sqrt (+ (* a3 a3 .25) y (- a2)))))
-								   (c (- (* 0.5 y) (sqrt (- (* y y .25) a0)))))
-							       (or #t (>= (b2-4ac a b c) 0.0))))))
-					  (if (not (quadpos? u1))
-					      (begin
-						(set! u1 (cadr cr))
-						(if (not (quadpos? u1))
-						    (set! u1 (caddr cr)))))))
-						
-				    (display (format #f "all: ~A, u1: ~A, cr: ~A ~A ~A~%" all-real u1 cr
-						     (map (lambda (y) (- (* y y .25) a0)) cr)
-						     (map (lambda (y) (- (+ (* a3 a3 .25) y) a2)) cr)))
-
-				    (let* ((au0 (sqrt (- (* u1 u1 .25) a0)))
-					   (au1 (sqrt (+ (* a3 a3 .25) u1 (- a2))))
-					   (p1 (vector (- (* 0.5 u1) au0)
-						       (- (* a3 0.5) au1)
-						       1.0))
-					   (p2 (vector (+ (* 0.5 u1) au0)
-						       (+ (* a3 0.5) au1)
-						       1.0))
-					   (qr1 (poly-as-vector-roots p1))
-					   (qr2 (poly-as-vector-roots p2)))
-				      (append qr1 qr2)))
-				  (let ((roots (make-vector deg 0.0)))
-
-				    ;; TODO: poly-gcd of p1 and derivative to find repeated roots, remove and retry
-				    ;; (poly/ p1 (poly-gcd p1 (poly-derivative p1)))
-
-				    ;; assume reduced poly here
-				    ;; from Cohen, "Computational Algebraic Number Theory"
+			      (let ((roots (make-vector deg 0.0)))
+				
+				;; TODO: poly-gcd of p1 and derivative to find repeated roots, remove and retry
+				;; (poly/ p1 (poly-gcd p1 (poly-derivative p1)))
+				
+				;; assume reduced poly here
+				;; from Cohen, "Computational Algebraic Number Theory"
 
 				    
-				    ))))))))))))
+				)))))))))))
     
 
 (define (poly-roots p1) (poly-as-vector-roots (vct->vector p1)))

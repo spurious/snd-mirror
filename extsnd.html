@@ -855,11 +855,29 @@ called if a file has a bogus-looking header. Return #t to give up on that file. 
 </td></tr>
 <tr><td colspan=3></td></tr>
 
+<!-- before-save-state-hook -->
+<tr><td colspan=2>
+<code><a class=def name="beforesavestatehook">before-save-state-hook</a> (filename)</code></td><td align=right><b>or</b></td></tr>
+<tr><td></td><td colspan=2>
+called before Snd saves its state (<a href="#savestate">save-state</a>).  'filename' is the saved state
+file.  If the hook functions return #t, the save state file is opened in append mode (rather than create/truncate),
+so you can write preliminary stuff via this hook, then instruct Snd not to clobber it during the save process.
+</td></tr>
+
+<tr><td></td><td colspan=2>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
+(add-hook! <em class=red>before-save-state-hook</em>
+  (lambda (name) 
+    (with-output-to-file name
+      (lambda ()
+        (display (format #f ";this comment will be at the top of the saved state file.~%~%"))
+	#t))))
+</pre></td></tr></table></td></tr>
+<tr><td colspan=3></td></tr>
+
 <!-- before-transform-hook -->
 <tr><td colspan=2>
-<code><a class=def name="beforetransformhook">before-transform-hook</a> (snd chn)</code></td><td align=right><b>progn</b></td>
-</tr>
-
+<code><a class=def name="beforetransformhook">before-transform-hook</a> (snd chn)</code></td><td align=right><b>progn</b></td></tr>
 <tr><td></td><td colspan=2>
 called just before an FFT (or spectrum) is calculated.  If it returns 
 an integer, that value is used as the starting point of the fft.  Normally,

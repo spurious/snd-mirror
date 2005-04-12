@@ -4952,11 +4952,17 @@ static char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
 	  /* most of these depend on the caller to supply a usable re-call string (origin). */
 	  /*   In insert/change/ptree/xen cases, there's basically no choice */
 	  if (ed->backed_up)
-	    {
-	      if ((ed->origin) && (strncmp(ed->origin, "set!", 4) == 0))
-		function = mus_format("%s%s %s", function, (first) ? "" : ";", ed->origin);
-	      else function = mus_format("%s%s %s, snd, chn)", function, (first) ? "" : ";", ed->origin);
-	    }
+  	    {
+ 	      if ((ed->origin) &&
+ 		  ((strncmp(ed->origin, "set_mix", 7) == 0) ||
+ 		   (strncmp(ed->origin, "set_track", 9) == 0)))
+  		function = mus_format("%s%s %s", function, (first) ? "" : ";", ed->origin);
+ 	      else function = mus_format("%s%s %s%ssnd, chn)",
+ 					 function,
+ 					 (first) ? "" : ";",
+ 					 ed->origin,
+ 					 (ed->origin[strlen(ed->origin) - 1] == '(') ? "" : ", ");
+  	    }
 	  else
 	    {
 	      switch (ed->edit_type)
@@ -4965,9 +4971,15 @@ static char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
 		  function = mus_format("%s%s %s, snd, chn)", function, (first) ? "" : ";", ed->origin);
 		  break;
 		case CHANGE_EDIT:
-		  if ((ed->origin) && (strncmp(ed->origin, "set!", 4) == 0))
-		    function = mus_format("%s%s %s()", function, (first) ? "" : ";", ed->origin);
-		  else function = mus_format("%s%s %s, snd, chn)", function, (first) ? "" : ";", ed->origin);
+ 		  if ((ed->origin) &&
+ 		      ((strncmp(ed->origin, "set_mix", 7) == 0) ||
+ 		       (strncmp(ed->origin, "set_track", 9) == 0)))
+ 		    function = mus_format("%s%s %s", function, (first) ? "" : ";", ed->origin);
+ 		  else function = mus_format("%s%s %s%ssnd, chn)",
+ 					     function,
+ 					     (first) ? "" : ";",
+ 					     ed->origin,
+ 					     (ed->origin[strlen(ed->origin) - 1] == '(') ? "" : ", ");
 		  break;
 		case DELETION_EDIT:
 		  /* what about delete-mix? */
@@ -9130,6 +9142,9 @@ static XEN g_edit_list_to_function(XEN snd, XEN chn, XEN start, XEN end)
   end_pos = XEN_TO_C_INT_OR_ELSE(end, -1);
   funcstr = edit_list_to_function(cp, start_pos, end_pos);
   func = XEN_EVAL_C_STRING(funcstr);
+#if HAVE_RUBY
+  rb_set_property(rb_obj_id(func), C_STRING_TO_XEN_SYMBOL("proc_source"), C_TO_XEN_STRING(funcstr));
+#endif
   FREE(funcstr);
   return(func);
 }

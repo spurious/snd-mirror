@@ -9,7 +9,7 @@
   "(snd-hooks) -> list of all global (not channel-specific) hooks"
   (list after-graph-hook lisp-graph-hook before-transform-hook mix-release-hook save-hook mus-error-hook
 	mouse-enter-graph-hook mouse-leave-graph-hook open-raw-sound-hook select-channel-hook after-open-hook close-hook drop-hook update-hook
-	just-sounds-hook mark-click-hook mark-drag-hook name-click-hook open-hook help-hook
+	just-sounds-hook mark-click-hook mark-drag-hook name-click-hook open-hook help-hook before-save-state-hook
 	output-comment-hook play-hook snd-error-hook snd-warning-hook start-hook start-playing-hook stop-playing-hook
 	mouse-enter-listener-hook mouse-leave-listener-hook window-property-changed-hook select-sound-hook
 	print-hook exit-hook output-name-hook during-open-hook after-transform-hook mouse-enter-label-hook mouse-leave-label-hook initial-graph-hook

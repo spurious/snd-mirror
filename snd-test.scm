@@ -23526,6 +23526,7 @@ EDITS: 5
   (add-hook! listener-click-hook arg1) (carg1 listener-click-hook)
   (add-hook! mix-click-hook arg1) (carg1 mix-click-hook)
   (add-hook! after-save-state-hook arg1) (carg1 after-save-state-hook)
+  (add-hook! before-save-state-hook arg1) (carg1 before-save-state-hook)
   (add-hook! mark-drag-hook arg1) (carg1 mark-drag-hook)
   (add-hook! mix-drag-hook arg1) (carg1 mix-drag-hook)
   (add-hook! name-click-hook arg1) (carg1 name-click-hook)
@@ -31707,6 +31708,12 @@ EDITS: 1
 	(set! (sound-property 'ho nind) 1234)
 	(set! (channel-property :ha nind 0) 3.14)
 	(reset-hook! after-save-state-hook)
+	(add-hook! before-save-state-hook 
+		   (lambda (name) 
+		     (with-output-to-file name
+		       (lambda ()
+			 (display (format #f ";this comment will be at the top of the saved state file.~%~%"))
+			 #t))))
 	(add-hook! after-save-state-hook
 		   (lambda (filename)
 		     (let ((fd (open filename (logior O_RDWR O_APPEND))))
@@ -31743,6 +31750,7 @@ EDITS: 1
 	  (if (not (= after-save-state-hook-var 1234))
 	      (snd-display ";after-save-state-hook: ~A" after-save-state-hook-var))
 	  (reset-hook! after-save-state-hook)
+	  (reset-hook! before-save-state-hook)
 	  
 	  (let ((err (catch 'cannot-save
 			    (lambda () 
@@ -55008,6 +55016,7 @@ EDITS: 2
 			    (list listener-click-hook 'listener-click-hook)
 			    (list mix-click-hook 'mix-click-hook)
 			    (list after-save-state-hook 'after-save-state-hook)
+			    (list before-save-state-hook 'before-save-state-hook)
 			    (list mark-hook 'mark-hook)
 			    (list mark-drag-hook 'mark-drag-hook)
 			    (list mark-drag-triangle-hook 'mark-drag-triangle-hook)

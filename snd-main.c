@@ -864,12 +864,23 @@ static void save_sound_state (snd_info *sp, void *ptr)
 }
 
 static XEN after_save_state_hook;
+static XEN before_save_state_hook;
+/* TODO: test before-save-state-hook, check out the save-state-ignore business in draw.scm etc */
 
 static char *save_state_or_error (char *save_state_name)
 {
   FILE *save_fd;
   char *locale = NULL;
-  save_fd = open_restart_file(save_state_name, false);
+  bool append_new_state = false;
+  if (XEN_HOOKED(before_save_state_hook))
+    {
+      XEN res = XEN_FALSE;
+      res = run_or_hook(before_save_state_hook, 
+			XEN_LIST_1(C_TO_XEN_STRING(save_state_name)),
+			S_before_save_state_hook);
+      append_new_state = XEN_TO_C_BOOLEAN(res);
+    }
+  save_fd = open_restart_file(save_state_name, append_new_state);
   if (save_fd == NULL) 
     return(mus_format(_("can't write %s: %s"), 
 		      save_state_name, 
@@ -1214,6 +1225,10 @@ If it returns #t, Snd does not exit.  This can be used to check for unsaved edit
   #define H_after_save_state_hook S_after_save_state_hook " (filename): called after Snd state has been saved; \
 filename is the save state file."
   XEN_DEFINE_HOOK(after_save_state_hook, S_after_save_state_hook, 1, H_after_save_state_hook);
+
+  #define H_before_save_state_hook S_before_save_state_hook " (filename): called before Snd state is saved. If \
+the hook functions return #t, the save state process opens 'filename' for appending, rather than truncating."
+  XEN_DEFINE_HOOK(before_save_state_hook, S_before_save_state_hook, 1, H_before_save_state_hook);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_script_arg, g_script_arg_w, H_script_arg, S_setB S_script_arg, g_set_script_arg_w,  0, 0, 1, 0);
   XEN_DEFINE_PROCEDURE(S_script_args, g_script_args_w, 0, 0, 0, H_script_args);

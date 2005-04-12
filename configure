@@ -12782,7 +12782,7 @@ _ACEOF
 
 fi
 
-	# gtk 2.6.0|1|2|3|4
+	# gtk 2.6.0|1|2|3|4|5|6
 
         if test "$with_x11" = yes ; then
 	  cat >>confdefs.h <<\_ACEOF
@@ -15890,7 +15890,7 @@ _ACEOF
 
         LDSO_FLAGS="-shared"
         LIBS="-lm"
-#     This ^ used to be "" but in redhat 7 the -lm needs it to be explicit
+#     This ^ used to be "" but redhat 7 the -lm needs to be explicit
 #     it was "" to cancel -lXpm without the needed -L<dir> for the same case
 
         audio_system=OSS
@@ -16401,7 +16401,9 @@ fi
 _ACEOF
 
                fi
-               audio_system=JACK
+	       if test "$with_alsa" != yes ; then
+                 audio_system=JACK
+               fi
             fi
         fi
 
