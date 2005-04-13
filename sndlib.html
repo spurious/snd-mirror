@@ -56,7 +56,7 @@
 
 <p>The sound library is a collection of sound file and audio hardware
 handlers written in C and running currently on SGI (either
-audio library), Sun, OSS or ALSA (Linux and others), Mac, Mac OSX, HPUX, LinuxPPC, and Windoze systems.  
+audio library), Sun, OSS or ALSA (Linux and others), Mac OSX, HPUX, LinuxPPC, and Windoze systems.  
 It provides relatively straightforward access to many sound file headers and data
 types, and most of the features of the audio hardware. </p>
 
@@ -120,7 +120,7 @@ name of the sound file.
   int mus_sound_type_specifier (const char *arg)   /* original header type identifier */
   int mus_sound_bits_per_sample(const char *arg)   /* bits per sample */
   int mus_bytes_per_sample(int format)             /* bytes per sample */
-  int *mus_sound_loop_info(const char *arg)        /* 6 loop vals (mode,start,end) then base-detune and base-note  (empty list if no loop info found) */
+  int *mus_sound_loop_info(const char *arg)        /* 8 loop vals (mode,start,end) then base-detune and base-note  (empty list if no loop info found) */
   int mus_sound_initialize(void)                   /* initialize everything */
 </pre>
 <p>The following can be used to provide user-understandable descriptions
@@ -905,7 +905,6 @@ of Snd and CLM, both of which are freely available.
   <tr><th>System</th><th>SndSine</th><th>SndInfo</th><th>Audinfo</th><th>SndPlay</th><th>SndRecord</th><th>CLM</th><th>MIDI</th></tr>
   <tr><td>SGI old and new AL</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td>partly tested</td></tr>
   <tr><td>OSS (Linux et al)</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td>untested</td></tr>
-  <tr><td>Mac</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td>not written</td></tr>
   <tr><td>Windoze</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>not written</td><td align=middle>ok</td><td>not written</td></tr>
   <tr><td>Sun</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td>not written</td></tr>
   <tr><td>LinuxPPC</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>untested</td><td align=middle>ok</td><td>untested</td></tr>
@@ -944,7 +943,7 @@ of Snd and CLM, both of which are freely available.
 
 <pre>
 <small>
-Incomplete: OMF, AVI, ASF, QuickTime, SoundFont 2.0, TwinVQ.
+Incomplete: OMF, AVI, ASF, SoundFont 2.0.
 Handled by Snd: Mus10, IEEE text, HCOM, various compression schemes.
 </small>
 </pre>

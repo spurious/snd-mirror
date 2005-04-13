@@ -5724,7 +5724,7 @@ setter!-rt-mus-location/mus_location
 						      
 						      ret))))))
 	  
-	  (apply eval-c-non-macro (append (list (<-> "-I" snd-header-files-path " -Werror")
+	  (apply eval-c-non-macro (append (list (<-> "-I" snd-header-files-path " -Werror -Wno-unused-function")
 						"#include <math.h>"
 						"#include <clm.h>"
 						"#include <xen.h>"

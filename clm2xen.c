@@ -2680,7 +2680,7 @@ if outf is not given, a new frame is created. outf[i] = f1[i] + f2[i].  Either f
 
 static XEN g_frame_multiply(XEN uf1, XEN uf2, XEN ures) /* optional res */
 {
-  #define H_frame_multiply "(" S_frame_multiply " f1 f2 (outf #f)): multiply f1 and f2 returning outf; \
+  #define H_frame_multiply "(" S_frame_multiply " f1 f2 (outf #f)): multiply f1 and f2 (elementwise) returning outf; \
 if outf is not given, a new frame is created. outf[i] = f1[i] * f2[i]."
 
   mus_any *res = NULL;

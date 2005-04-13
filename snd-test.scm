@@ -24109,7 +24109,8 @@ EDITS: 5
 	  (reset-hook! after-save-as-hook)
 	  (if save-as-dialog (snd-display ";after-save-as-hook dialog: ~A" save-as-dialog))
 	  (if (not (= ind save-as-index)) (snd-display ";after-save-as-hook index: ~A ~A" ind save-as-index))
-	  (if (not (string=? (string-append home-dir "/test.snd") save-as-name)) (snd-display ";after-save-as-hook name: ~A" save-as-name))
+	  (if (not (string=? (string-append home-dir "/cl/test.snd") save-as-name)) 
+	      (snd-display ";after-save-as-hook name: ~A (~A)" save-as-name (string-append home-dir "/cl/test.snd")))
 	  (add-hook! open-raw-sound-hook 
 		     (lambda (file choice)
 		       (if (not (string=? (substring file (- (string-length file) 8)) "test.snd"))
