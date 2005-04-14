@@ -9,27 +9,27 @@
 ;;;  test 6: vcts                               [10966]
 ;;;  test 7: colors                             [11257]
 ;;;  test 8: clm                                [11759]
-;;;  test 9: mix                                [18965]
-;;;  test 10: marks                             [22023]
-;;;  test 11: dialogs                           [22725]
-;;;  test 12: extensions                        [23042]
-;;;  test 13: menus, edit lists, hooks, etc     [23457]
-;;;  test 14: all together now                  [24757]
-;;;  test 15: chan-local vars                   [25822]
-;;;  test 16: regularized funcs                 [27082]
-;;;  test 17: dialogs and graphics              [31449]
-;;;  test 18: enved                             [31524]
-;;;  test 19: save and restore                  [31544]
-;;;  test 20: transforms                        [33018]
-;;;  test 21: new stuff                         [34666]
-;;;  test 22: run                               [35544]
-;;;  test 23: with-sound                        [40962]
-;;;  test 24: user-interface                    [41966]
-;;;  test 25: X/Xt/Xm                           [45127]
-;;;  test 26: Gtk                               [49623]
-;;;  test 27: GL                                [53615]
-;;;  test 28: errors                            [53726]
-;;;  test all done                              [55819]
+;;;  test 9: mix                                [19224]
+;;;  test 10: marks                             [22282]
+;;;  test 11: dialogs                           [22984]
+;;;  test 12: extensions                        [23301]
+;;;  test 13: menus, edit lists, hooks, etc     [23717]
+;;;  test 14: all together now                  [25018]
+;;;  test 15: chan-local vars                   [26083]
+;;;  test 16: regularized funcs                 [27343]
+;;;  test 17: dialogs and graphics              [31710]
+;;;  test 18: enved                             [31785]
+;;;  test 19: save and restore                  [31805]
+;;;  test 20: transforms                        [33286]
+;;;  test 21: new stuff                         [34944]
+;;;  test 22: run                               [35822]
+;;;  test 23: with-sound                        [41267]
+;;;  test 24: user-interface                    [42271]
+;;;  test 25: X/Xt/Xm                           [45432]
+;;;  test 26: Gtk                               [49928]
+;;;  test 27: GL                                [53920]
+;;;  test 28: errors                            [54031]
+;;;  test all done                              [56125]
 ;;;
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 ;;; need all html example code in autotests
@@ -11762,6 +11762,118 @@ EDITS: 5
 (if (not (provided? 'snd-mixer.scm)) (load "mixer.scm"))
 (if (not (provided? 'snd-poly.scm)) (load "poly.scm"))
 
+
+
+
+(define (poly-roots-tests)
+  (letrec ((ceql (lambda (a b)
+		   (if (null? a)
+		       (null? b)
+		       (if (null? b)
+			   #f
+			   (if (or (fneq (real-part (car a)) (real-part (car b)))
+				   (fneq (imag-part (car a)) (imag-part (car b))))
+			       #f
+			       (ceql (cdr a) (cdr b))))))))
+
+    ;; degree=0
+    (let ((val (poly-roots (vct 0.0))))
+      (if (not (null? val)) (snd-display ";poly-roots 0.0: ~A" val)))
+    (let ((val (poly-roots (vct 12.3))))
+      (if (not (null? val)) (snd-display ";poly-roots 12.3: ~A" val)))
+    
+    ;; degree 0 + x=0
+    (let ((val (poly-roots (vct 0.0 1.0))))
+      (if (not (feql val (list 0.0))) (snd-display ";poly-roots 0.0 1.0: ~A" val)))
+    (let ((val (poly-roots (vct 0.0 0.0 0.0 121.0))))
+      (if (not (feql val (list 0.0 0.0 0.0))) (snd-display ";poly-roots 0.0 0.0 0.0 121.0: ~A" val)))
+    
+    ;; degree=1
+    (let ((val (poly-roots (vct -1.0 1.0))))
+      (if (not (feql val (list 1.0))) (snd-display ";poly-roots -1.0 1.0: ~A" val)))
+    (let ((val (poly-roots (vct -2.0 4.0))))
+      (if (not (feql val (list 0.5))) (snd-display ";poly-roots -2.0 4.0: ~A" val)))
+    (let ((val (poly-as-vector-roots (vector 0.0-i 1))))
+      (if (not (ceql val (list -0.0+1.0i))) (snd-display ";poly-roots: -i 1: ~A" val)))
+    
+    ;; linear x^n
+    (let ((val (poly-roots (vct -1.0 0.0 0.0 0.0 1.0))))
+      (if (not (feql val (list 0.0-1.0i -1.0 0.0+1.0i 1.0))) (snd-display ";poly-roots -1.0 0.0 0.0 0.0 1.0: ~A" val)))
+    (let ((val (poly-roots (vct -16.0 0.0 0.0 0.0 1.0))))
+      (if (not (feql val (list 0.0-2.0i -2.0 0.0+2.0i 2.0))) (snd-display ";poly-roots -16.0 0.0 0.0 0.0 1.0: ~A" val)))
+    (let ((val (poly-roots (vct 1.0 0.0 0.0 0.0 1.0))))
+      (if (not (ceql val (list 0.0-1.0i -1.0 0.0+1.0i 0.70710+0.70710i))) (snd-display ";poly-roots 1 0 0 0 1: ~A" val)))
+    (let ((val (poly-roots (vct -32.0 0 0 0 0 0 0.5))))
+      (if (not (ceql val (list 1.0-1.7320i -1.0-1.7320i -2.0 -1.0+1.7320i 1.0+1.7320i 2.0))) (snd-display ";poly-roots 32 0 0 0 0 0 0.5: ~A" val)))
+    
+    ;; linear + x=0
+    (let ((val (poly-roots (vct 0.0 -2.0 4.0))))
+      (if (not (feql val (list 0.0 0.5))) (snd-display ";poly-roots 0.0 -2.0 4.0: ~A" val)))
+    
+    ;; degree=2
+    (let ((val (poly-roots (vct -1.0 0.0 1.0))))
+      (if (not (feql val (list 1.0 -1.0))) (snd-display ";poly-roots -1.0 0.0 1.0: ~A" val)))
+    (let ((val (poly-roots (vct 15.0 -8.0 1.0))))
+      (if (not (feql val (list 5.0 3.0))) (snd-display ";poly-roots 15.0 -8.0 1.0: ~A" val)))
+    (let ((val (poly-roots (vct 1 -2 1))))
+      (if (not (feql val (list 1.0 1.0))) (snd-display ";poly-roots 1 -2 1: ~A" val)))
+    (let ((val (poly-as-vector-roots (vector -1 0.0+2i 1))))
+      (if (not (ceql val (list 0.0-1.0i 0.0-1.0i))) (snd-display ";poly-roots -1 2i 1: ~A" val)))
+    (let ((val (poly-roots (vct 1 1 5))))
+      (if (not (ceql val (list -0.1+0.43589i -0.1-0.43589i))) (snd-display ";poly-roots 1 1 5: ~A" val)))
+    
+    ;; 2 + x=0
+    (let ((val (poly-roots (vct 0.0 0.0 -1.0 0.0 1.0))))
+      (if (not (feql val (list 0.0 0.0 1.0 -1.0))) (snd-display ";poly-roots 0.0 0.0 -1.0 0.0 1.0: ~A" val)))
+    
+    ;; quadratic in x^(n/2)
+    (let ((vals (poly-roots (vct 1.0 0.0 -2.0 0.0 1.0))))
+      (if (not (feql vals (list 1.0 -1.0 1.0 -1.0))) (snd-display ";poly-roots 1 0 -2 0 1: ~A" vals)))
+    (let ((vals (poly-roots (vct 64.0 0.0 0.0 -16.0 0.0 0.0 1.0))))
+      (if (not (ceql vals (list -1.0-1.73205i -1.0+1.73205i 2.0 -1.0-1.73205i -1.0+1.73205i 2.0)))
+	  (snd-display ";poly-roots 64 0 0 -16 0 0 1: ~A" vals)))
+    (let ((vals (poly-roots (vct 8.0 0.0 0.0 -9.0 0.0 0.0 1.0))))
+      (if (not (ceql vals (list -0.5-0.86602i -0.5+0.86602i 1.0 -1.0-1.73205i -1.0+1.73205i 2.0)))
+	  (snd-display ";poly-roots 8 9 9 -9 0 0 1: ~A" vals)))
+    
+    ;; degree=3
+    (let ((val (poly-roots (vct -15.0 23.0 -9.0 1.0))))
+      (if (not (feql val (list 5.0 1.0 3.0))) (snd-display ";poly-roots 5 1 3: ~A" val)))
+    (let ((val (poly-roots (vct -126 -15 0 1))))
+      (if (not (ceql val (list 6.0 -3.0+3.46410i -3.0-3.46410i))) (snd-display ";poly-roots -126 -15 0 1: ~A" val)))
+    (let ((val (poly-roots (vct -1 3 -3 1))))
+      (if (not (feql val (list 1.0 1.0 1.0))) (snd-display ";poly-roots -1 3 -3 1: ~A" val))) 
+    (let ((val (poly-roots (vct 1 -1 -1 1))))
+      (if (not (feql val (list -1.0 1.0 1.0))) (snd-display ";poly-roots 1 -1 -1 1: ~A" val)))
+    (let ((val (poly-roots (vct 2 -2 -2 2))))
+      (if (not (feql val (list -1.0 1.0 1.0))) (snd-display ";poly-roots 2 -2 -2 2: ~A" val)))
+    
+    ;; degree=4
+    (let ((vals (poly-roots (vct -15 8 14 -8 1))))
+      (if (not (feql vals (list 5.0 3.0 1.0 -1.0))) (snd-display ";poly-roots -15 8 14 -8 1: ~A" vals)))
+    (let ((vals (poly-roots (poly-reduce (poly* (poly* (vct 2 1) (vct -3 1)) (poly* (vct 8 1) (vct -9 1)))))))
+      (if (not (feql vals (list 9.0 3.0 -2.0 -8.0))) (snd-display ";poly-roots 4(1): ~A" vals)))
+    (let ((vals (poly-roots (poly-reduce (poly* (poly* (vct .2 1) (vct -3 1)) (poly* (vct .8 1) (vct -9 1)))))))
+      (if (not (feql vals (list 9.0 3.0 -0.2 -0.8))) (snd-display ";poly-roots 4(2): ~A" vals)))
+    (let ((vals (poly-roots (poly-reduce (poly* (poly* (vct .02 1) (vct -32 1)) (poly* (vct .8 1) (vct -9 1)))))))
+      (if (not (feql vals (list 32.0 9.0 -0.02 -0.8))) (snd-display ";poly-roots 4(3): ~A" vals)))
+    
+    ;; degree>4
+    (let ((vals (poly-roots (poly-reduce (poly* (vct 1 1) (poly* (poly* (vct 2 1) (vct -3 1)) (poly* (vct -1 1) (vct -2 1))))))))
+      (if (not (feql vals (list 3.0 2.0 -1.0 -2.0 1.0))) (snd-display ";poly-roots n(1): ~A" vals)))
+    (let ((vals (poly-roots (poly-reduce (poly* (vct 1 1) (poly* (poly* (vct 2 1) (vct -3 1)) (poly* (vct 8 1) (vct -9 1))))))))
+      (if (not (feql vals (list 9.0 3.0 -2.0 -8.0 -1.0))) (snd-display ";poly-roots n(2): ~A" vals)))
+    (let ((vals (poly-roots (poly-reduce (poly* (vct -1 0 1) (poly* (poly* (vct 9 1) (vct -3 1)) (poly* (vct -10 1) (vct -2 1))))))))
+      (if (not (feql vals (list 10.0 3.0 -1.0 -9.0 2.0 1.0))) (snd-display ";poly-roots n(3): ~A" vals)))
+    (let ((vals (poly-roots (poly-reduce (poly* (vct -1 0 1) (poly* (poly* (vct -4 0 1) (vct -3 1)) (poly* (vct -10 1) (vct -9 0 1))))))))
+      (if (not (feql vals (list 10.0 3.0 -2.0 -3.0 -1.0 3.0 2.0 1.0))) (snd-display ";poly-roots n(4): ~A" vals)))
+    (let ((vals (poly-roots (poly-reduce (poly* (vct -1 0 1) (poly* (poly* (vct -4 0 1) (vct -16 0 1)) (poly* (vct -25 0 1) (vct -9 0 1))))))))
+      (if (not (feql vals (list 5.0 -3.0 -4.0 -5.0 4.0 -2.0 3.0 -1.0 2.0 1.0))) (snd-display ";poly-roots n(5): ~A" vals)))
+    (let ((vals (poly-roots (poly-reduce (poly* (vct 1 1) (poly* (poly* (vct 2 1) (vct -3 1)) (poly* (vct 1 1) (vct -2 1))))))))
+      (if (not (feql vals (list 3.0 -1.0 -1.0 -2.0 2.0))) (snd-display ";poly-roots n(6): ~A" vals)))
+    
+    ))
+  
 (define (jc-reverb decay-dur low-pass volume amp-env)
   "(jc-reverb decay-dur low-pass volume amp-env) is the old Chowning reverberator: (jc-reverb 2.0 #f .1 #f)"
   (let* ((allpass1 (make-all-pass -0.700 0.700 1051))
@@ -12463,6 +12575,24 @@ EDITS: 5
       (let ((val (poly-reduce (vct 0 0 0 0 1 0))))
 	(if (not (vequal val (vct 0.000 0.000 0.000 0.000 1.000))) (snd-display ";poly-reduce 3: ~A" val)))
 
+      (let ((vals (poly-gcd (poly-reduce (poly* (vct 2 1) (vct -3 1))) (vct 2 1))))
+	(if (not (vequal vals (vct 2.000 1.000))) (snd-display ";poly-gcd 1: ~A" vals)))
+      (let ((vals (poly-gcd (poly-reduce (poly* (vct 2 1) (vct -3 1))) (vct 3 1))))
+	(if (not (vequal vals (vct 0.000))) (snd-display ";poly-gcd 2: ~A" vals)))
+      (let ((vals (poly-gcd (poly-reduce (poly* (vct 2 1) (vct -3 1))) (vct -3 1))))
+	(if (not (vequal vals (vct -3.000 1.000))) (snd-display ";poly-gcd 2: ~A" vals)))
+      (let ((vals (poly-gcd (poly-reduce (poly* (vct 8 1) (poly* (vct 2 1) (vct -3 1)))) (vct -3 1))))
+	(if (not (vequal vals (vct -3.000 1.000))) (snd-display ";poly-gcd 3: ~A" vals)))
+      (let ((vals (poly-gcd (poly-reduce (poly* (vct 8 1) (poly* (vct 2 1) (vct -3 1)))) (poly-reduce (poly* (vct 8 1) (vct -3 1))))))
+	(if (not (vequal vals (vct -24.000 5.000 1.000))) (snd-display ";poly-gcd 4: ~A" vals)))
+      (let ((vals (poly-gcd (vct -1 0 1) (vct 2 -2 -1 1))))
+	(if (not (vequal vals (vct 0.000))) (snd-display ";poly-gcd 5: ~A" vals)))
+      (let ((vals (poly-gcd (vct 2 -2 -1 1) (vct -1 0 1))))
+	(if (not (vequal vals (vct 1.000 -1.000))) (snd-display ";poly-gcd 6: ~A" vals)))
+      (let ((vals (poly-gcd (vct 2 -2 -1 1) (vct -2.5 1))))
+	(if (not (vequal vals (vct 0.000))) (snd-display ";poly-gcd 7: ~A" vals)))
+
+      (poly-roots-tests)
 
       (let ((v0 (make-vct 10)))
 	(do ((i 0 (1+ i))) ((= i 10))
