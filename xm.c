@@ -5,10 +5,11 @@
 
 #include <config.h>
 
-#define XM_DATE "28-Mar-05"
+#define XM_DATE "15-Apr-05"
 
 /* HISTORY: 
  *
+ *   15-Apr:    XGetWindowProperty free bugfix.
  *   28-Mar:    fixed some Ruby error strings (#f->false).
  *   31-Jan:    removed Motif 1 support, and Lesstif.
  *   4-Jan:     replace XEN_VECTOR_ELEMENTS usages.
@@ -10694,7 +10695,7 @@ actually returned."
       if (a == XA_STRING)
 	result = C_TO_XEN_STRING((char *)data[0]);
       else result = C_TO_XEN_STRINGN((char *)data[0], len * ret / 8); /* is this a good idea? -- perhaps a void pointer here? */
-      if (data) XFree(data);
+      if (data[0]) XFree(data[0]);
     }
   return(XEN_LIST_6(C_TO_XEN_INT(val),
 		    C_TO_XEN_Atom(a),

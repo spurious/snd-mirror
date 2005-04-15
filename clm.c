@@ -1834,8 +1834,6 @@ Float *mus_partials_to_waveshape(int npartials, Float *partials, int size, Float
   return(array_normalize(data, size));
 }
 
-/* PERHAPS: add various other polynomials to partials->polynomial */
-
 Float *mus_partials_to_polynomial(int npartials, Float *partials, mus_polynomial_t kind)
 {
   /* coeffs returned in partials */
@@ -3058,12 +3056,6 @@ mus_any *mus_make_pulse_train(Float freq, Float amp, Float phase) /* TWO_PI init
   gen->current_value = 0.0;
   return((mus_any *)gen);
 }
-
-/* PERHAPS: bl-pulse-train (blit code) 
- *          bl-sawtooth etc -- perhaps a band-limited arg to the existing make-*?
- *    named? "band_limited_saw..." or "bl_saw..."?
- */
-
 
 
 
@@ -5152,9 +5144,6 @@ mus_any *mus_mixer_offset(mus_any *uf1, Float offset, mus_any *ures)
   return((mus_any *)res);
 }
 
-/* PERHAPS: spinner (gyrator?) -- a frame + a rotation mixer + an oscil or something to drive it
- *            this could be done in Scheme -- perhaps makes more sense at that level
- */
 
 
 /* ---------------- input/output ---------------- */
@@ -8448,9 +8437,3 @@ void mus_set_local_frequency_method(mus_any *gen, Float (*frequency)(mus_any *pt
 }
 
 #endif
-
-/* PERHAPS: leap-frogger as gen (mlbvoi.ins) -- extension of envelope, but needs to return 4 vals (frqs/amps)
- *          this is used in vox.ins, pqw.ins, pqw-vox.ins -- what name?
- *
- * PERHAPS: ramp gen as in examp.scm
- */

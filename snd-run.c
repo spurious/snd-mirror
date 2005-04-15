@@ -3531,6 +3531,7 @@ static xen_value *set_form(ptree *prog, XEN form, walk_result_t ignore)
 	}
       if (val_type != var_type)
 	{
+	  char *str = NULL;
 	  /* here #f is ok for pointer val */
  	  if ((val_type == R_GOTO) && 
  	      (var_type == R_BOOL))
@@ -3547,10 +3548,13 @@ static xen_value *set_form(ptree *prog, XEN form, walk_result_t ignore)
 	      return(v);
 	    }
 	  /* variables have only one type in this context */
-	  run_warn("set! can't change var's type (%s -> %s): %s", 
+	  run_warn("set! can't change var's type (%s (%s) = %s (%s)): %s", 
+		   var->name, 
 		   type_name(var->v->type), 
+		   str = describe_xen_value(v, prog), 
 		   type_name(v->type), 
 		   XEN_AS_STRING(form));
+	  if (str) FREE(str);
 	  FREE(v);
 	  return(NULL);
 	  /* this limitation could be removed, but is it worth the bother? */

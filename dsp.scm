@@ -258,9 +258,10 @@
 
 ;;; -------- "frequency division" -- an effect from sed_sed@my-dejanews.com
 
-(define* (freqdiv n #:optional snd chn)
+(define* (freqdiv n1 #:optional snd chn)
   "(freqdiv n) repeats each nth sample n times (clobbering the intermediate samples): (freqdiv 8)"
   (let ((div 0)
+	(n n1) ; for run
 	(curval 0.0))
     (map-channel (lambda (val)
 		   (if (= div 0)

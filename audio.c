@@ -3433,12 +3433,6 @@ static int probe_api(void)
 
 #if SND_LIB_VERSION < ((0<<16)|(6<<8)|(0))
   #error ALSA version is too old -- audio.c needs 0.9 or later
-#else
-  #define ALSA_9 1
-#endif
-
-#ifndef SND_CARDS
-  #define SND_CARDS (8)
 #endif
 
 static int alsa_mus_error(int type, char *message)
@@ -3821,6 +3815,7 @@ static char *alsa_mus_audio_system_name(int system)
     return(alsa_playback_device_name);
 }
 
+#if 0
 static void alsa_dump_hardware_params(snd_pcm_hw_params_t *params, const char *msg) 
 {
     snd_output_t *out;
@@ -3836,6 +3831,7 @@ static void alsa_dump_software_params(snd_pcm_sw_params_t *params, const char *m
     fprintf(stderr, "%s\n", msg);
     snd_pcm_sw_params_dump(params, out);
 }
+#endif
 
 /* get hardware params for a pcm */
 
