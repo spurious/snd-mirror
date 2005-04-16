@@ -2744,24 +2744,7 @@ to read, and the initial read direction, then get data via <i>read-sample</i> (w
 read direction passed to make-sample-reader), or <i>next-sample</i> (read forward) and
 <i>previous-sample</i> (read backward); when done, you can close the reader with <i>free-sample-reader</i>, 
 but it's not necessary; the
-garbage collector will take care of it if you forget to.
-</p>
-<p>
-A standard way to add something to the current
-data is:</p>
-<pre>
-   ...
-   (sf (<a class=quiet href="#makesamplereader">make-sample-reader</a> start))
-   ...
-   (<a class=quiet href="#vctmap">vct-map!</a> out-data (lambda () (+ (<a class=quiet href="#readsample">read-sample</a> sf) &lt;new stuff&gt;)))
-   (<a class=quiet href="#freesamplereader">free-sample-reader</a> sf)
-   (<a class=quiet href="#vct_to_channel">vct-&gt;channel</a> out-data start)
-</pre>
-<p>This is equivalent to the clm call</p>
-<pre>
-  (<a class=quiet href="clm.html#outa">outa</a> (+ start i) &lt;new-stuff&gt;)
-</pre>
-<p>but is applied as an edit to the current state in Snd. 
+garbage collector will take care of it if you forget.
 </p>
 
 <p>There is a similar set of functions giving access to the mix data.
@@ -2953,11 +2936,8 @@ If it is a mix reader, return the mix's id.  If it is a track reader, return a l
 </p>
 <hr>
 
-<p>There are two Snd-specific CLM-style generators that redirect CLM instrument input (via in-any, ina, etc)
-to Snd data, snd-&gt;sample and xen-&gt;sample.  Instruments that use ina or file-&gt;sample to read *reverb*
-or some similar stream can be redirected elsewhere by these two functions.
-After implementing these, I realized the CLM instruments could just as easily use temporary
-files; I'm not sure these have any real use after all.
+<p>There is a Snd-specific CLM-style generator that redirects CLM instrument input (via in-any, ina, etc)
+to Snd data, snd-&gt;sample. 
 </p>
 
 <table border=0 cellspacing=12>
@@ -2966,13 +2946,6 @@ files; I'm not sure these have any real use after all.
 <tr><td colspan=2><code><a class=def name="makesnd_to_sample">make-snd-&gt;sample</a> (<i>snd edpos</i>)</code></td></tr>
 <tr><td width=50><br></td>
 <td>create a Snd data reader for CLM's in-any, file-&gt;sample, etc.
-</td></tr>
-
-<!-- makexen_to_sample -->
-<tr><td colspan=2><code><a class=def name="makexen_to_sample">make-xen-&gt;sample</a> (reader)</code></td></tr>
-<tr><td><br></td>
-<td>create a function-based input method for CLM's input generators. <i>reader</i> is a function
-of two arguments, the sample and the channel (much as in <a href="clm.html#ina">ina</a>).
 </td></tr>
 
 <!-- snd_to_sample -->
@@ -2987,18 +2960,6 @@ If *reverb* is a snd-&gt;sample generator, for example,
 <tr><td colspan=2><code><a class=def name="snd_to_samplep">snd-&gt;sample?</a> (obj)</code></td></tr>
 <tr><td><br></td>
 <td>#t if <i>obj</i> is a snd-&gt;sample generator.
-</td></tr>
-
-<!-- xen_to_sample -->
-<tr><td colspan=2><code><a class=def name="xen_to_sample">xen-&gt;sample</a> (gen frame <i>chan</i>)</code></td></tr>
-<tr><td><br></td>
-<td>Similar to snd-&gt;sample, but the accessor is a xen-&gt;sample generator.
-</td></tr>
-
-<!-- xen_to_samplep -->
-<tr><td colspan=2><code><a class=def name="xen_to_samplep">xen-&gt;sample?</a> (obj)</code></td></tr>
-<tr><td><br></td>
-<td>#t if <i>obj</i> is a xen-&gt;sample generator.
 </td></tr>
 
 </table>
@@ -8487,6 +8448,26 @@ save the edit list, make a change, then re-run the saved edit sequence.  Eventua
 interface support for this "sound spreadsheet" approach to editing.  This facility is not finished!
 The function returned takes 2 arguments, a sound index and channel number.
 </td></tr>
+
+<tr><td></td><td>
+<pre>
+:<em class=typing>(scale-channel 2.0)</em>
+<em class=listener>2.0</em>
+:<em class=typing>(delete-samples 100 200)</em>
+<em class=listener>100</em>
+:<em class=typing>(set! (sample 150) .5)</em>
+<em class=listener>0.5</em>
+:<em class=typing>(define our-edits (</em><em class=red>edit-list-&gt;function</em><em class=typing>))</em>
+<em class=listener>#&lt;unspecified&gt;</em>
+:<em class=typing>our-edits</em>
+<em class=listener>#&lt;procedure our-edits ((snd chn) (scale-channel 2.0 0 #f snd chn) (delete-samples 100 200 snd chn) (set-sample 150 0.5 snd chn))&gt;</em>
+:<em class=typing>(undo)</em>
+<em class=listener>1</em>
+:<em class=typing>(our-edits 0 0)</em>
+<em class=listener>0.5</em>
+</pre>
+</td></tr>
+
 <tr><td></td><td></td></tr>
 
 <!-- edit-position -->

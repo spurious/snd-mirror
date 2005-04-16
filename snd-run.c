@@ -9898,13 +9898,16 @@ static int xen_to_addr(ptree *pt, XEN arg, int type, int addr)
 	  switch (type)
 	    {
 	      /* these special cases we handle in set_var (line 2474) */
+	    case R_FLOAT_VECTOR:
 	    case R_VCT:          pt->vcts[addr] = NULL;          break;
 	    case R_SOUND_DATA:   pt->sds[addr] = NULL;           break;
 	    case R_CLM:          pt->clms[addr] = NULL;          break;
 	    case R_READER:       pt->readers[addr] = NULL;       break;
 	    case R_MIX_READER:   pt->mix_readers[addr] = NULL;   break;
 	    case R_TRACK_READER: pt->track_readers[addr] = NULL; break;
-	      /* PERHAPS: add vector cases here */
+	    case R_INT_VECTOR: 
+	    case R_VCT_VECTOR:
+	    case R_CLM_VECTOR:   pt->vects[addr] = NULL;         break;
 	    default: XEN_WRONG_TYPE_ARG_ERROR("run", 0, arg, type_name(type)); break;
 	    }
 	  return(addr);

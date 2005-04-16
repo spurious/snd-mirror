@@ -69,6 +69,9 @@
 </td></tr></table>
 <br>
 
+<!-- INDEX sndandruby:Ruby -->
+<!-- INDEX sndwithcm:Common Music -->
+
 <table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2><A NAME="startup">Snd Startup</a></h2></td></tr></table>
 <br>
 <!-- INDEX sndswitches:Invocation flags -->
@@ -919,7 +922,6 @@ In Guile <b>frame?</b> is part of the debugger; it is renamed <b>%frame?</b> her
 <tr><td><a href="clm.html#make-two-zero">make-two-zero</a></td><td colspan=2>(a0 a1 a2)</td></tr>
 <tr><td><a href="clm.html#make-wave-train">make-wave-train</a></td><td colspan=2>(frequency initial-phase wave size)</td></tr>
 <tr><td><a href="clm.html#make-waveshape">make-waveshape</a></td><td colspan=2>(frequency partials wave size)</td></tr>
-<tr><td><a href="extsnd.html#makexen_to_sample">make-xen-&gt;sample</a></td><td colspan=2>(reader)</td></tr>
 <tr><td><a href="clm.html#make-zpolar">make-zpolar</a></td><td colspan=2>(radius frequency)</td></tr>
 <tr><td><a href="clm.html#mixermultiply">mixer*</a></td><td>(mix1 mix2 <i>outmx</i>)</td><td>matrix multiply of mix1 and mix2</td></tr>
 <tr><td><a href="clm.html#mixeradd">mixer+</a></td><td>(mix1 mix2 <i>outmx</i>)</td><td>add mixers mix1 and mix2</td></tr>
@@ -1044,8 +1046,6 @@ In Ruby <b>rand</b> is a built-in method; it is aliased to <b>kernel_rand</b> he
 <tr><td><a href="clm.html#wave-train?">wave-train?</a></td><td>(gen)</td><td>#t if gen is wave-train generator</td></tr>
 <tr><td><a href="clm.html#waveshape">waveshape</a></td><td>(gen <i>index fm</i>)</td><td>waveshaping generator</td></tr>
 <tr><td><a href="clm.html#waveshape?">waveshape?</a></td><td>(gen)</td><td>#t if gen is waveshape generator</td></tr>
-<tr><td><a href="extsnd.html#xen_to_sample">xen-&gt;sample</a></td><td>(loc <i>chan</i>)</td><td>return sample from xen func at loc in chan</td></tr>
-<tr><td><a href="extsnd.html#xen_to_samplep">xen-&gt;sample?</a></td><td>(gen)</td><td>#t if gen is xen-&gt;sample generator</td></tr>
 </table>
 <br>
 
@@ -1193,9 +1193,8 @@ You can load Rick Taube's CM into Snd as Scheme code:
 </p>
 <p>In most CLM instruments, including all those in clm-ins.scm, the assumption is that 
 you're reading and writing a temp file, calling the instruments within with-sound.
-The special generators snd-&gt;sample and xen-&gt;sample provide a way to redirect
-the CLM input handlers (<a class=quiet href="clm.html#in-any">in-any</a> in particular) to either a Snd sound (via its index),
-or an arbitrary function.
+The special generator snd-&gt;sample provides a way to redirect
+the CLM input handlers (<a class=quiet href="clm.html#in-any">in-any</a> in particular) to a Snd sound (via its index).
 </p>
 <br>
 

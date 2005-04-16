@@ -829,8 +829,6 @@ void reflect_file_change_in_label(chan_info *cp);
 void update_track_lists(chan_info *cp, int top_ctr);
 
 bool snd_to_sample_p(mus_any *ptr);
-bool xen_to_sample_p(mus_any *ptr);
-Float xen_to_sample_read(mus_any *ptr, off_t frame, int chan);
 Float snd_to_sample_read(mus_any *ptr, off_t frame, int chan);
 
 

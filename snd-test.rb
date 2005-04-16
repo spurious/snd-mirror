@@ -14173,26 +14173,6 @@ end
 
 def test118
   fgen = make_file2sample("oboe.snd", 512)
-  gen = make_xen2sample(lambda do |samp, chan| 2.0 * file2sample(fgen, samp, chan) end)
-  gen1 = make_xen2sample(lambda do |s, c| 1.0 end)
-  gen2 = gen
-  print_and_check(gen,
-                  "xen->sample",
-                  "xen->sample: (lambda (samp chan) (* 2.0 (file->sample fgen samp chan)))")
-  snd_display("xen2sample not eql? itself?") unless gen.eql?(gen)
-  snd_display("xen2sample eql? not %s %s?", gen, gen1) if gen.eql?(gen1)
-  snd_display("xen2sample not eql? %s %s?", gen, gen2) unless gen.eql?(gen2)
-  snd_display("%s not xen2sample?", gen) unless xen2sample?(gen)
-  snd_display("%s not input?", gen) unless mus_input?(gen)
-  v0 = make_vct!(10) do |i| xen2sample(gen, 1490 + i, 0) end
-  snd_display("%s not xen2sample?", gen) unless xen2sample?(gen)
-  if fneq(v0[1], 2 * -0.009) or fneq(v0[7], 2 * 0.029)
-    snd_display("xen2sample output: %s?", v0)
-  end
-  v0.map_with_index! do |val, i| ina(1490 + i, gen) end
-  if fneq(v0[1], 2 * -0.009) or fneq(v0[7], 2 * 0.029)
-    snd_display("xen2sample output ina: %s?", v0)
-  end
   #
   gen = make_file2frame("oboe.snd")
   print_and_check(gen, "file->frame", "file->frame: oboe.snd")

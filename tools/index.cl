@@ -97,7 +97,8 @@
 	"mark-hook" "previous-files-select-hook" "dac-hook" "stop-dac-hook" "stop-playing-selection-hook" "after-apply-hook" "before-apply-hook"
 	"draw-mark-hook" "bad-header-hook" "save-state-hook" "new-sound-hook" "color-hook" "orientation-hook" "listener-click-hook"
 	"mix-click-hook" "after-save-state-hook" "mouse-enter-text-hook" "mouse-leave-text-hook" "optimization-hook" "mix-drag-hook"
-	"mark-drag-triangle-hook" "start-playing-selection-hook" "recorder-file-hook" "selection-changed-hook" "*current-sound*"))
+	"mark-drag-triangle-hook" "start-playing-selection-hook" "recorder-file-hook" "selection-changed-hook" "*current-sound*"
+	"before-save-state-hook" "after-save-as-hook" "after-transform-hook"))
 
 (defvar scm-constant-names
   (list "mus-out-format" "mus-unsupported" "mus-next" "mus-aifc" "mus-riff" "mus-nist" "mus-raw" "mus-ircam" "mus-aiff" "mus-bicsf"
@@ -113,7 +114,7 @@
 	"mus-audio-line" "mus-audio-synth" "mus-audio-bass" "mus-audio-treble" "rectangular-window" "hann-window" "welch-window"
 	"parzen-window" "bartlett-window" "hamming-window" "blackman2-window" "blackman3-window" "blackman4-window" "exponential-window"
 	"riemann-window" "kaiser-window" "cauchy-window" "poisson-window" "gaussian-window" "tukey-window" "dolph-chebyshev-window"
-	"mus-linear" "mus-sinusoidal" "zoom-focus-left" "zoom-focus-right" "zoom-focus-active" "zoom-focus-middle" "graph-once"
+	"zoom-focus-left" "zoom-focus-right" "zoom-focus-active" "zoom-focus-middle" "graph-once"
 	"graph-as-wavogram" "graph-as-sonogram" "graph-as-spectrogram" "cursor-cross" "cursor-line" "graph-lines" "graph-dots"
 	"graph-filled" "graph-dots-and-lines" "graph-lollipops" "x-axis-in-seconds" "x-axis-in-samples" "x-axis-in-beats"
 	"x-axis-as-percentage" "show-all-axes" "show-all-axes-unlabelled" "show-no-axes" "show-x-axis" "show-x-axis-unlabelled"
@@ -123,7 +124,8 @@
 	"channels-combined" "channels-superimposed" "speed-control-as-float" "speed-control-as-ratio" "speed-control-as-semitone"
 	"enved-amplitude" "enved-spectrum" "enved-srate" "envelope-linear" "envelope-exponential" "enved-add-point"
 	"enved-delete-point" "enved-move-point" "time-graph" "transform-graph" "lisp-graph" "copy-context" "cursor-context"
-	"selection-context" "mark-context"))
+	"selection-context" "mark-context" "mus-interp-all-pass" "mus-interp-bezier" "mus-interp-hermite" "mus-interp-lagrange"
+	"mus-interp-linear" "mus-interp-none" "mus-interp-sinusoidal"))	
 
 (defun scm->rb (scm-name)
   (if (string= scm-name "frame*")

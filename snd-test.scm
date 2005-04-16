@@ -16430,28 +16430,6 @@ EDITS: 5
 	(if (not (= (mus-location gen) 1499)) (snd-display ";snd->sample location (2): ~A" (mus-location gen)))
 	(close-sound ind))
       
-      (let* ((fgen (make-file->sample "oboe.snd" 512))
-	     (gen (make-xen->sample (lambda (samp chan) (* 2.0 (file->sample fgen samp chan)))))
-	     (gen1 (make-xen->sample (lambda (s c) 1.0)))
-	     (gen2 gen)
-	     (v0 (make-vct 10)))
-	(print-and-check gen 
-			 "xen->sample"
-			 "xen->sample: (lambda (samp chan) (* 2.0 (file->sample fgen samp chan)))")
-	(if (not (mus-input? gen)) (snd-display ";xen->sample ~A not input?" gen))
-	(if (not (equal? gen gen)) (snd-display ";xen->sample not eq? itself?"))
-	(if (equal? gen gen1) (snd-display ";xen->sample eq? ~A ~A" gen gen1))
-	(if (not (equal? gen gen2)) (snd-display ";xen->sample not eq? ~A ~A" gen gen2))
-	(do ((i 0 (1+ i)))
-	    ((= i 10))
-	  (vct-set! v0 i (xen->sample gen (+ 1490 i) 0)))
-	(if (not (xen->sample? gen)) (snd-display ";~A not xen->sample?" gen))
-	(if (or (fneq (vct-ref v0 1) (* 2 -0.009)) (fneq (vct-ref v0 7) (* 2 .029))) (snd-display ";xen->sample output: ~A" v0))
-	(do ((i 0 (1+ i)))
-	    ((= i 10))
-	  (vct-set! v0 i (ina (+ 1490 i) gen)))
-	(if (or (fneq (vct-ref v0 1) (* 2 -0.009)) (fneq (vct-ref v0 7) (* 2 .029))) (snd-display ";xen->sample ina output: ~A" v0)))
-      
       (let ((gen (make-file->frame "oboe.snd"))
 	    (v0 (make-vct 10)))
 	(print-and-check gen 
@@ -54260,7 +54238,7 @@ EDITS: 2
 		     clm-channel env-channel map-channel scan-channel play-channel reverse-channel seconds->samples samples->seconds
 		     smooth-channel vct->channel channel->vct src-channel scale-channel ramp-channel pad-channel normalize-channel
 		     cursor-position clear-listener mus-sound-prune mus-sound-forget xramp-channel ptree-channel
-		     snd->sample xen->sample snd->sample? xen->sample? make-snd->sample make-xen->sample make-scalar-mixer
+		     snd->sample snd->sample? make-snd->sample make-scalar-mixer
 		     
 		     beats-per-minute channel-amp-envs convolve-files filter-control-coeffs 
 		     locsig-type make-phase-vocoder mus-audio-mixer-read
@@ -54364,7 +54342,7 @@ EDITS: 2
 			 ))
       
       (define make-procs (list
-			  make-all-pass make-asymmetric-fm make-snd->sample make-xen->sample make-average
+			  make-all-pass make-asymmetric-fm make-snd->sample make-average
 			  make-comb make-convolve make-delay make-env make-fft-window make-file->frame
 			  make-file->sample make-filter make-fir-filter make-formant make-frame make-frame->file make-granulate
 			  make-iir-filter make-locsig make-mixer make-notch make-one-pole make-one-zero make-oscil make-ppolar
@@ -54623,7 +54601,7 @@ EDITS: 2
 						  (lambda args (car args)))))
 				      (if tag
 					  (snd-display ";?proc ~A: ~A" n tag))))
-				  (list all-pass? asymmetric-fm? comb? convolve? delay? env? file->frame? file->sample? snd->sample? xen->sample? 
+				  (list all-pass? asymmetric-fm? comb? convolve? delay? env? file->frame? file->sample? snd->sample?
 					filter? fir-filter? formant? frame->file? frame? granulate? iir-filter? locsig? mixer? mus-input? 
 					mus-output? notch? one-pole? one-zero? oscil? phase-vocoder? pulse-train? rand-interp? rand? readin? 
 					sample->file? sawtooth-wave? sine-summation? square-wave? src? sum-of-cosines? sum-of-sines? table-lookup? 
@@ -54640,7 +54618,7 @@ EDITS: 2
 				      (lambda args (car args)))))
 			  (if tag
 			      (snd-display ";oscil?proc ~A: ~A" n tag))))
-		      (list all-pass? asymmetric-fm? comb? convolve? delay? env? file->frame? file->sample? snd->sample? xen->sample?
+		      (list all-pass? asymmetric-fm? comb? convolve? delay? env? file->frame? file->sample? snd->sample?
 			    filter? fir-filter? formant? frame->file? frame? granulate? iir-filter? locsig? mixer? mus-input? 
 			    mus-output? notch? one-pole? one-zero? phase-vocoder? pulse-train? rand-interp? rand? readin? 
 			    sample->file? sawtooth-wave? sine-summation? square-wave? src? sum-of-cosines? sum-of-sines? table-lookup? 
@@ -54731,7 +54709,7 @@ EDITS: 2
 				       (eq? tag 'mus-error)))
 			      (snd-display ";clm-1 ~A: ~A" n tag))))
 		      (list all-pass array-interp asymmetric-fm comb contrast-enhancement convolution convolve average
-			    convolve-files delay dot-product env-interp file->frame file->sample snd->sample xen->sample filter fir-filter formant
+			    convolve-files delay dot-product env-interp file->frame file->sample snd->sample filter fir-filter formant
 			    formant-bank frame* frame+ frame->frame frame-ref frame->sample granulate iir-filter ina
 			    inb locsig-ref locsig-reverb-ref make-all-pass make-asymmetric-fm make-comb 
 			    make-delay make-env make-fft-window make-filter make-fir-filter make-formant make-frame make-granulate

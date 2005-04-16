@@ -231,8 +231,6 @@ instrument: bird { f: start f: dur f: freq f: freq-skew f: amp freq-env amp-enve
     start dur run  amp-env env  gls-env env os oscil-1  f*  i loc locsig  loop
 ;instrument
 </pre></td></tr></table>
-
-
 <br>
 
 <A NAME="clminsdoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>clm-ins.scm, clm-ins.rb</h2></td></tr></table>
@@ -355,8 +353,7 @@ the differences between the CL and Scheme instruments.
 </p>
 <p>
 <b>bes-fm</b> is J1(J1) essentially -- using the Bessel functions where FM uses sinusoids.
-The <a name="besselfuncs">Bessel functions</a> I0, Jn, and Yn are built-in; Kn and In are implemented in Scheme in snd-test.scm
-(or in CL in bessel.lisp).
+The <a name="besselfuncs">Bessel functions</a> I0, Jn, and Yn are built-in; Kn and In are implemented in Scheme in snd-test.scm.
 </p>
 <br>
 
@@ -469,8 +466,80 @@ include:
   <em class=emdef>new-buttons.scm</em>        sets the icon box actions
   <em class=emdef>README</em>                 loading info
 </pre>
-<p>See the individual files and Dave's tutorial (in the tutorial directory) for more details.
+<p>For a full discussion, with pictures, see Dave's tutorial (in the tutorial directory).
+Here's a brief description of each of the files:
 </p>
+
+<p>
+misc.scm loads up all the auxiliary files needed by the rest of the dlp files,
+adds a bunch of sound file extensions, and sets up numerous interface customizations.
+It also defines <b>paint-all-widgets</b> which makes sure all the widget backgrounds
+reflect the current background choice (metal, granite, wood, etc); <b>add-delete-option</b>
+which adds a Delete menu item to the File menu; <b>add-rename-option</b> which adds
+a File:Rename menu entry; <b>change-selection-popup-color</b> and <b>change-fft-popup-color</b>
+to make these context-sensitive popup menus jump out at you; <b>cut-selection-&gt;new</b>
+which deletes the current selection and makes a new sound with that data as its contents;
+<b>append-selection</b> which appends a copy of the current selection at the end of
+the current sound; <b>replace-with-selection</b> which puts a copy of the current selection
+at the cursor; and <b>deselect-all</b> which unselects everything.
+</p>
+
+<p>
+new-icons.scm provides all the xpm icon definitions used to draw the icon bar at
+the bottom of the Snd window (<b>icon-save-as</b>, and so on).
+</p>
+
+<p>
+special-menu.scm defines the Special menu, added to the top-level menu bar.
+It has entries for "Insert file", "Append file", "MIDI to WAV" (using timidity),
+"Record input channel", "Play panned", "Save as MP3" (using bladeenc),
+"Save as OGG" (using oggenc), and "Explode SF2" (using the code explode-sf2
+in examp.scm) -- the latter finds the samples in a SoundFont 2 file, and
+writes each as a separate sound (AIFC) file.
+</p>
+
+<p>
+mix-menu.scm adds a top-level "Mix/Track" menu; it has entries for
+"Delete mix", "Snap mix to beat", "Assign all tracks", "Delete track",
+"Play track",  "Reverse track", "Set track amplitude", "Set track speed",
+"Set track tempo", "Transpose track", "Save track", "Colorize tracks",
+and "Delete all mixes and tracks".
+</p>
+
+<p>
+panic.scm adds a brief "Panic Control" top-level menu with two
+entries: "Stop play!" and "Stop all!".
+</p>
+
+<p>
+track-colors.scm defines the color choices for the tracks, based on rgb.scm.
+</p>
+
+<p>
+fft-menu.scm adds an "FFT Edits" top-level menu.  It has entries for
+"FFT notch filter", "FFT squelch", and "Squelch vowels".
+</p>
+
+<p>
+new-backgrounds.scm defines some background pictures that can be applied to all the
+Snd widgets: wood, granite, rough, blueish, and smoke.  I think "rough" is the
+default used by misc.scm.
+</p>
+
+<p>
+marks-menu.scm adds a "Marks" top-level menu with entries for "Play between marks",
+"Loop play between marks", "Trim before mark", "Trim behind mark", "Crop around marks",
+"Fit selection to marks", "Define selection by marks", "Mark sync", "Mark sample
+loop points", "Show loop editor" (the associated dialog is not really functional
+yet), "Delete all marks", and "Explode marks to files" which writes a separate
+file for each set of marks.
+</p>
+
+<p>
+new-buttons.scm builds the menu bar full of icons providing convenient access
+to things like Zoom, and Quit.
+</p>
+<br>
 
 
 <A NAME="drawdoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>draw.scm</h2></td></tr></table>
@@ -508,23 +577,23 @@ the listener?
 
 <p>A DSP grabbag, mostly filters.
 </p>
-<table border=1>
-  <tr><td><a class=def name="srcduration">src-duration</a> env</td><td>predict duration after src by env</td></tr>
-  <tr><td><A class=def NAME="exdolph">dolph</a> n gamma</td><td>Dolph-Chebyshev fft data window</td></tr>
+<table border=1 cellpadding=3>
+  <tr><td><a class=def name="srcduration">src-duration</a> env</td>  <td>predict duration after src by env</td></tr>
+  <tr><td><A class=def NAME="exdolph">dolph</a> n gamma</td>         <td>Dolph-Chebyshev fft data window</td></tr>
   <tr><td><A class=def NAME="exdownoct">down-oct</a> n, <em class=emdef>stretch-sound-via-dft</em></td><td>move sound down a factor of n using fft/dft</td></tr>
-  <tr><td><em class=emdef>freqdiv</em> n</td><td>"frequency division" effect</td></tr>
-  <tr><td><em class=emdef>adsat</em> size</td><td>"adaptive saturation" effect</td></tr>
-  <tr><td><em class=emdef>spike</em></td><td>spikey sound effect</td></tr>
+  <tr><td><em class=emdef>freqdiv</em> n</td>                        <td>"frequency division" effect</td></tr>
+  <tr><td><em class=emdef>adsat</em> size</td>                       <td>"adaptive saturation" effect</td></tr>
+  <tr><td><em class=emdef>spike</em></td>                            <td>spikey sound effect</td></tr>
   <tr><td><A class=def NAME="excomputeuniformcircularstring">compute-uniform-circular-string</a> size ...</td><td>scanned synthesis</td></tr>
-  <tr><td><em class=emdef>compute-string</em> size ...</td><td></td></tr>
-  <tr><td><em class=emdef>spot-freq</em></td><td>easily-fooled autocorrelation-based pitch tracker</td></tr>
+  <tr><td><em class=emdef>compute-string</em> size ...</td>          <td></td></tr>
+  <tr><td><em class=emdef>spot-freq</em></td>                        <td>easily-fooled autocorrelation-based pitch tracker</td></tr>
   <tr><td><A class=def NAME="zerophase">zero-phase, rotate-phase</a></td><td>phase-based effects</td></tr>
-  <tr><td><em class=emdef>both forms of asymmetric-fm</em></td><td></td></tr>
-  <tr><td><em class=emdef>cosine-summation</em></td><td>sum-of-cosines stuff</td></tr>
-  <tr><td><em class=emdef>kosine-summation</em></td><td>more sum-of-cosines stuff</td></tr>
-  <tr><td><em class=emdef>legendre-sum</em></td><td></td></tr>
-  <tr><td><em class=emdef>fejer-sum</em></td><td></td></tr>
-  <tr><td><em class=emdef>brighten-slightly</em> amount</td><td>add harmonics</td></tr>
+  <tr><td><em class=emdef>both forms of asymmetric-fm</em></td>      <td></td></tr>
+  <tr><td><em class=emdef>cosine-summation</em></td>                 <td>sum-of-cosines stuff</td></tr>
+  <tr><td><em class=emdef>kosine-summation</em></td>                 <td>more sum-of-cosines stuff</td></tr>
+  <tr><td><em class=emdef>legendre-sum</em></td>                     <td></td></tr>
+  <tr><td><em class=emdef>fejer-sum</em></td>                        <td></td></tr>
+  <tr><td><em class=emdef>brighten-slightly</em> amount</td>         <td>add harmonics</td></tr>
   <tr><td><em class=emdef>spectrum-&gt;coeffs</em> order spectrum-envelope</td><td>frequency-response envelope -&gt; FIR coeffs</td></tr>
   <tr><td><a class=def name="makehilberttransform">make-hilbert-transform</a> length</td><td>Hilbert transform</td></tr>
   <tr><td><a class=def name="makelowpass">make-lowpass</a> fc length</td><td>FIR lowpass</td></tr>
@@ -537,37 +606,37 @@ the listener?
   <tr><td><em class=emdef>make-butter-low-pass</em> freq</td><td>2nd order Butterworth lowpass</td></tr>
   <tr><td><em class=emdef>make-butter-band-pass</em> freq bandwidth</td><td>2nd order Butterworth bandpass</td></tr>
   <tr><td><em class=emdef>make-butter-band-reject</em> freq bandwidth</td><td>2nd order Butterworth bandstop</td></tr>
-  <tr><td><em class=emdef>fltit-1</em></td><td></td></tr>
-  <tr><td><em class=emdef>make-iir-low-pass-1</em> fc</td><td>IIR 1st order lowpass</td></tr>
-  <tr><td><em class=emdef>make-iir-high-pass-1</em> fc</td><td>IIR 1st order highpass</td></tr>
-  <tr><td><em class=emdef>make-iir-low-pass-2</em> fc d</td><td>IIR 2nd order lowpass</td></tr>
-  <tr><td><em class=emdef>make-iir-high-pass-2</em> fc d</td><td>IIR 2nd order highpass</td></tr>
-  <tr><td><em class=emdef>make-iir-band-pass-2</em> f1 f2</td><td>IIR 2nd order bandpass</td></tr>
-  <tr><td><em class=emdef>make-iir-band-stop-2</em> f1 f2</td><td>IIR 2nd order bandstop</td></tr>
-  <tr><td><em class=emdef>make-eliminate-hum</em> freq ...</td><td>hum eliminator (cascaded bandstops)</td></tr>
-  <tr><td><em class=emdef>make-peaking-2</em> f1 f2 m</td><td>slight resonance effect</td></tr>
-  <tr><td><em class=emdef>cascade-&gt;canonical</em> coeffs</td><td>convert cascade coeffs to canonical (for CLM's filter gen)</td></tr>
-  <tr><td><em class=emdef>make-butter-lp</em> M fc</td><td>any even order Butterworth lowpass</td></tr>
-  <tr><td><em class=emdef>make-butter-hp</em> M fc</td><td>any even order Butterworth highpass</td></tr>
-  <tr><td><em class=emdef>make-butter-bp</em> M f1 f2</td><td>any even order Butterworth bandpass</td></tr>
-  <tr><td><em class=emdef>make-butter-bs</em> M f1 f2</td><td>any even order Butterworth bandstop</td></tr>
+  <tr><td><em class=emdef>fltit-1</em></td>                          <td></td></tr>
+  <tr><td><em class=emdef>make-iir-low-pass-1</em> fc</td>           <td>IIR 1st order lowpass</td></tr>
+  <tr><td><em class=emdef>make-iir-high-pass-1</em> fc</td>          <td>IIR 1st order highpass</td></tr>
+  <tr><td><em class=emdef>make-iir-low-pass-2</em> fc d</td>         <td>IIR 2nd order lowpass</td></tr>
+  <tr><td><em class=emdef>make-iir-high-pass-2</em> fc d</td>        <td>IIR 2nd order highpass</td></tr>
+  <tr><td><em class=emdef>make-iir-band-pass-2</em> f1 f2</td>       <td>IIR 2nd order bandpass</td></tr>
+  <tr><td><em class=emdef>make-iir-band-stop-2</em> f1 f2</td>       <td>IIR 2nd order bandstop</td></tr>
+  <tr><td><em class=emdef>make-eliminate-hum</em> freq ...</td>      <td>hum eliminator (cascaded bandstops)</td></tr>
+  <tr><td><em class=emdef>make-peaking-2</em> f1 f2 m</td>           <td>slight resonance effect</td></tr>
+  <tr><td><em class=emdef>cascade-&gt;canonical</em> coeffs</td>     <td>convert cascade coeffs to canonical (for CLM's filter gen)</td></tr>
+  <tr><td><em class=emdef>make-butter-lp</em> M fc</td>              <td>any even order Butterworth lowpass</td></tr>
+  <tr><td><em class=emdef>make-butter-hp</em> M fc</td>              <td>any even order Butterworth highpass</td></tr>
+  <tr><td><em class=emdef>make-butter-bp</em> M f1 f2</td>           <td>any even order Butterworth bandpass</td></tr>
+  <tr><td><em class=emdef>make-butter-bs</em> M f1 f2</td>           <td>any even order Butterworth bandstop</td></tr>
   <tr><td><a class=def name="notchchannel">notch-channel</a> freqs order beg dur s c e trunc width</td><td>arbitrary notch filter applied to channel</td></tr>
   <tr><td><a class=def name="notchsound">notch-sound</a> freqs order s c width</td><td>arbitrary notch filter applied to sound</td></tr>
   <tr><td><a class=def name="notchselection">notch-selection</a> freqs order width</td><td>arbitrary notch filter applied to selection</td></tr>
   <tr><td><a class=def name="fractionalfouriertransform">fractional-fourier-transform</a> rl im size angle</td><td>fractional dft</td></tr>
-  <tr><td><a class=def name="ztransform">z-transform</a> rl size z</td></tr>
-  <tr><td><A class=def NAME="exdht">dht</A> data</td><td>slow Hartley transform </td></tr>
-  <tr><td><em class=emdef>find-sine</em> freq beg dur</td><td>DFT at a particular frequency</td></tr>
+  <tr><td><a class=def name="ztransform">z-transform</a> rl size z</td><td></td></tr>
+  <tr><td><A class=def NAME="exdht">dht</A> data</td>                <td>slow Hartley transform </td></tr>
+  <tr><td><em class=emdef>find-sine</em> freq beg dur</td>           <td>DFT at a particular frequency</td></tr>
   <tr><td><a class=def name="goertzel">goertzel</a> freq beg dur</td><td>same as find-sine but faster</td></tr>
-  <tr><td><em class=emdef>make-spencer-filter</em></td><td>return FIR filter with Spencer coefficients</td></tr>
-  <tr><td><A class=def NAME="anyrandom">any-random</A></td><td>random numbers of arbitrary distribution using rejection method</td></tr>
-  <tr><td><em class=emdef>channel-variance</em> etc</td><td> miscellaneous funcs from Julius Smith, Mathematics of the DFT</td></tr>
-  <tr><td><em class=emdef>channel-distance</em> s0 c0 s1 c1</td><td> a measure of the difference between two sounds (Euclidean distance)</td></tr>
-  <tr><td><em class=emdef>shift-channel-pitch</em></td><td>shift all components by some frequency ("single-sideband amplitude modulation")</td></tr>
-  <tr><td><a class=def name="ssbbank">ssb-bank</a></td><td>time/pitch changes using ssb-am gens</td></tr>
-  <tr><td><a class=def name="ssbbankenv">ssb-bank-env</a></td><td>time/pitch changes using ssb-am gens and a frequency envelope</td></tr>
-  <tr><td><a class=def name="ssbfm">make-ssb-fm, ssb-fm</a></td><td>quasi-single-sideband FM</td></tr>
-  <tr><td><em class=emdef>periodogram</em> N</td><td>periodogram displayed in "lisp graph"</td></tr>
+  <tr><td><em class=emdef>make-spencer-filter</em></td>              <td>return FIR filter with Spencer coefficients</td></tr>
+  <tr><td><A class=def NAME="anyrandom">any-random</A></td>          <td>random numbers of arbitrary distribution using rejection method</td></tr>
+  <tr><td><em class=emdef>channel-variance</em> etc</td>             <td>miscellaneous funcs from Julius Smith, Mathematics of the DFT</td></tr>
+  <tr><td><em class=emdef>channel-distance</em> s0 c0 s1 c1</td>     <td>a measure of the difference between two sounds (Euclidean distance)</td></tr>
+  <tr><td><em class=emdef>shift-channel-pitch</em></td>              <td>shift all components by some frequency ("single-sideband amplitude modulation")</td></tr>
+  <tr><td><a class=def name="ssbbank">ssb-bank</a></td>              <td>time/pitch changes using ssb-am gens</td></tr>
+  <tr><td><a class=def name="ssbbankenv">ssb-bank-env</a></td>       <td>time/pitch changes using ssb-am gens and a frequency envelope</td></tr>
+  <tr><td><a class=def name="ssbfm">make-ssb-fm, ssb-fm</a></td>     <td>quasi-single-sideband FM</td></tr>
+  <tr><td><em class=emdef>periodogram</em> N</td>                    <td>periodogram displayed in "lisp graph"</td></tr>
   <tr><td><a class=def name="vctpolynomial">vct-polynomial</a> v coeffs</td><td>polynomial evaluation of entire vct</td></tr>
   <tr><td><a class=def name="channelpolynomial">channel-polynomial</a> coeffs snd chn</td><td>polynomial evaluation of entire channel</td></tr>
   <tr><td><a class=def name="spectralpolynomial">spectral-polynomial</a> coeffs snd chn</td><td>polynomial evaluation of entire channel in frequency domain (convolution)</td></tr>

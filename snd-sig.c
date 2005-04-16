@@ -2,13 +2,6 @@
 #include "clm2xen.h"
 #include "clm-strings.h"
 
-/* SOMEDAY: continuable src/convolution/etc 
- * It would be neat if long computations could be interrupted and continued -- currently
- *   the interrupt (C-g) breaks out of the computation, but there's no way to return to
- *   the C-g point and go on.  My earlier attempts to use scm_make_continuation for this
- *   got segfaults that were not easy to understand. 
- */
-
 /* collect syncd chans */
 typedef struct {
   sync_info *si;
