@@ -359,7 +359,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; set up a region play list
-;;; TODO: a GUI for this feature !
+;;; SOMEDAY: a GUI for region-play-list
 ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

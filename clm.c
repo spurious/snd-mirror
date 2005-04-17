@@ -351,6 +351,13 @@ void *mus_environ(mus_any *gen)
   return(NULL);
 }
 
+void *mus_set_environ(mus_any *gen, void *e)
+{
+  if (check_gen(gen, S_setB "mus-environ")) 
+    return((*(gen->core->set_closure))(gen, e));
+  return(NULL);
+}
+
 struct mus_xen *mus_wrapper(mus_any *gen)
 {
   if ((gen->core)->wrapper)
@@ -963,7 +970,8 @@ static mus_any_class OSCIL_CLASS = {
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0,
   &_mus_wrap_no_vcts,
-  &oscil_reset
+  &oscil_reset,
+  0
 };
 
 mus_any *mus_make_oscil(Float freq, Float phase)
@@ -1069,7 +1077,8 @@ static mus_any_class SUM_OF_COSINES_CLASS = {
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0,
   &_mus_wrap_no_vcts,
-  &sum_of_cosines_reset
+  &sum_of_cosines_reset,
+  0
 };
 
 mus_any *mus_make_sum_of_cosines(int cosines, Float freq, Float phase)
@@ -1182,7 +1191,8 @@ static mus_any_class SUM_OF_SINES_CLASS = {
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0,
   &_mus_wrap_no_vcts,
-  &sum_of_cosines_reset
+  &sum_of_cosines_reset,
+  0
 };
 
 mus_any *mus_make_sum_of_sines(int sines, Float freq, Float phase)
@@ -1301,7 +1311,8 @@ static mus_any_class ASYMMETRIC_FM_CLASS = {
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0,
   &_mus_wrap_no_vcts,
-  &asyfm_reset
+  &asyfm_reset,
+  0
 };
 
 mus_any *mus_make_asymmetric_fm(Float freq, Float phase, Float r, Float ratio) /* r default 1.0, ratio 1.0 */
@@ -1428,7 +1439,8 @@ static mus_any_class SINE_SUMMATION_CLASS = {
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0,
   &_mus_wrap_no_vcts,
-  &sss_reset
+  &sss_reset,
+  0
 };
 
 mus_any *mus_make_sine_summation(Float frequency, Float phase, int n, Float a, Float b_ratio)
@@ -1617,7 +1629,8 @@ static mus_any_class TABLE_LOOKUP_CLASS = {
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0,
   &_mus_wrap_one_vct_wrapped,
-  &table_lookup_reset
+  &table_lookup_reset,
+  0
 };
 
 mus_any *mus_make_table_lookup (Float freq, Float phase, Float *table, int table_size, mus_interp_t type)
@@ -1743,7 +1756,8 @@ static mus_any_class WAVESHAPE_CLASS = {
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0,
   &_mus_wrap_one_vct_wrapped,
-  &ws_reset
+  &ws_reset,
+  0
 };
 
 bool mus_waveshape_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_WAVESHAPE));}
@@ -1995,7 +2009,8 @@ static mus_any_class POLYSHAPE_CLASS = {
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0,
   &_mus_wrap_one_vct_wrapped,
-  &poly_reset
+  &poly_reset,
+  0
 };
 
 mus_any *mus_make_polyshape(Float frequency, Float phase, Float *coeffs, int size)
@@ -2167,7 +2182,8 @@ static mus_any_class WAVE_TRAIN_CLASS = {
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0,
   &_mus_wrap_one_vct_wrapped,
-  &wt_reset
+  &wt_reset,
+  0
 };
 
 mus_any *mus_make_wave_train(Float freq, Float phase, Float *wave, int wave_size, mus_interp_t type)
@@ -2473,7 +2489,8 @@ static mus_any_class DELAY_CLASS = {
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0,
   &_mus_wrap_one_vct_wrapped,
-  &delay_reset
+  &delay_reset,
+  0
 };
 
 mus_any *mus_make_delay(int size, Float *preloaded_line, int line_size, mus_interp_t type) 
@@ -2548,7 +2565,8 @@ static mus_any_class COMB_CLASS = {
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0,
   &_mus_wrap_one_vct_wrapped,
-  &delay_reset
+  &delay_reset,
+  0
 };
 
 mus_any *mus_make_comb(Float scaler, int size, Float *line, int line_size, mus_interp_t type)
@@ -2588,7 +2606,8 @@ static mus_any_class NOTCH_CLASS = {
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0,
   &_mus_wrap_one_vct_wrapped,
-  &delay_reset
+  &delay_reset,
+  0
 };
 
 Float mus_notch(mus_any *ptr, Float input, Float pm) 
@@ -2660,7 +2679,8 @@ static mus_any_class ALL_PASS_CLASS = {
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0,
   &_mus_wrap_one_vct_wrapped,
-  &delay_reset
+  &delay_reset,
+  0
 };
 
 mus_any *mus_make_all_pass (Float backward, Float forward, int size, Float *line, int line_size, mus_interp_t type)
@@ -2717,7 +2737,8 @@ static mus_any_class AVERAGE_CLASS = {
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0,
   &_mus_wrap_one_vct_wrapped,
-  &average_reset
+  &average_reset,
+  0
 };
 
 mus_any *mus_make_average(int size, Float *line)
@@ -2835,7 +2856,8 @@ static mus_any_class SAWTOOTH_WAVE_CLASS = {
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0,
   &_mus_wrap_no_vcts,
-  &sawtooth_reset
+  &sawtooth_reset,
+  0
 };
 
 mus_any *mus_make_sawtooth_wave(Float freq, Float amp, Float phase) /* M_PI as initial phase, normally */
@@ -2902,7 +2924,8 @@ static mus_any_class SQUARE_WAVE_CLASS = {
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0,
   &_mus_wrap_no_vcts,
-  &square_wave_reset
+  &square_wave_reset,
+  0
 };
 
 mus_any *mus_make_square_wave(Float freq, Float amp, Float phase)
@@ -2974,7 +2997,8 @@ static mus_any_class TRIANGLE_WAVE_CLASS = {
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0,
   &_mus_wrap_no_vcts,
-  &triangle_wave_reset
+  &triangle_wave_reset,
+  0
 };
 
 mus_any *mus_make_triangle_wave(Float freq, Float amp, Float phase)
@@ -3042,7 +3066,8 @@ static mus_any_class PULSE_TRAIN_CLASS = {
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0,
   &_mus_wrap_no_vcts,
-  &pulse_train_reset
+  &pulse_train_reset,
+  0
 };
 
 mus_any *mus_make_pulse_train(Float freq, Float amp, Float phase) /* TWO_PI initial phase, normally */
@@ -3235,7 +3260,8 @@ static mus_any_class RAND_INTERP_CLASS = {
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0,
   &_mus_wrap_no_vcts,
-  &noi_reset
+  &noi_reset,
+  0
 };
 
 static mus_any_class RAND_CLASS = {
@@ -3260,7 +3286,8 @@ static mus_any_class RAND_CLASS = {
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0,
   &_mus_wrap_no_vcts,
-  &noi_reset
+  &noi_reset,
+  0
 };
 
 mus_any *mus_make_rand(Float freq, Float base)
@@ -3412,7 +3439,8 @@ static mus_any_class ONE_ZERO_CLASS = {
   0, 0, 
   &smp_xcoeffs, &smp_ycoeffs,
   &_mus_wrap_no_vcts,
-  &smpflt_reset
+  &smpflt_reset,
+  0
 };
 
 mus_any *mus_make_one_zero(Float a0, Float a1)
@@ -3456,7 +3484,8 @@ static mus_any_class ONE_POLE_CLASS = {
   &smp_ycoeff, &smp_set_ycoeff, 
   &smp_xcoeffs, &smp_ycoeffs,  
   &_mus_wrap_no_vcts,
-  &smpflt_reset
+  &smpflt_reset,
+  0
 };
 
 mus_any *mus_make_one_pole(Float a0, Float b1)
@@ -3504,7 +3533,8 @@ static mus_any_class TWO_ZERO_CLASS = {
   0, 0,
   &smp_xcoeffs, &smp_ycoeffs,
   &_mus_wrap_no_vcts,
-  &smpflt_reset
+  &smpflt_reset,
+  0
 };
 
 mus_any *mus_make_two_zero(Float a0, Float a1, Float a2)
@@ -3557,7 +3587,8 @@ static mus_any_class TWO_POLE_CLASS = {
   &smp_ycoeff, &smp_set_ycoeff, 
   &smp_xcoeffs, &smp_ycoeffs,
   &_mus_wrap_no_vcts,
-  &smpflt_reset
+  &smpflt_reset,
+  0
 };
 
 mus_any *mus_make_two_pole(Float a0, Float b1, Float b2)
@@ -3699,7 +3730,8 @@ static mus_any_class FORMANT_CLASS = {
   &smp_ycoeff, &smp_set_ycoeff, 
   &smp_xcoeffs, &smp_ycoeffs,
   &_mus_wrap_no_vcts,
-  &smpflt_reset
+  &smpflt_reset,
+  0
 };
 
 mus_any *mus_make_formant(Float radius, Float frequency, Float gain)
@@ -3948,7 +3980,8 @@ static mus_any_class FILTER_CLASS = {
   0, 0, 0, 0, 0, 0, 0,
   &filter_ycoeff, &filter_set_ycoeff, &filter_xcoeffs, &filter_ycoeffs,
   &wrap_filter,
-  &filter_reset
+  &filter_reset,
+  0
 };
 
 static mus_any_class FIR_FILTER_CLASS = {
@@ -3972,7 +4005,8 @@ static mus_any_class FIR_FILTER_CLASS = {
   0, 0, 0, 0, 0, 0, 0,
   0, 0, &filter_xcoeffs, 0,
   &wrap_filter,
-  &filter_reset
+  &filter_reset,
+  0
 };
 
 static mus_any_class IIR_FILTER_CLASS = {
@@ -3996,7 +4030,8 @@ static mus_any_class IIR_FILTER_CLASS = {
   0, 0, 0, 0, 0, 0, 0,
   &filter_ycoeff, &filter_set_ycoeff, 0, &filter_ycoeffs,
   &wrap_filter,
-  &filter_reset
+  &filter_reset,
+  0
 };
 
 static mus_any *make_filter(mus_any_class *cls, const char *name, int order, Float *xcoeffs, Float *ycoeffs, Float *state) /* if state null, allocated locally */
@@ -4377,7 +4412,8 @@ static mus_any_class ENV_CLASS = {
   0,
   0, 0, 0, 0,
   &_mus_wrap_one_vct_wrapped,
-  &env_reset
+  &env_reset,
+  0
 };
 
 
@@ -4590,7 +4626,8 @@ static mus_any_class FRAME_CLASS = {
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0,
   &_mus_wrap_one_vct_wrapped,
-  &frame_reset
+  &frame_reset,
+  0
 };
 
 mus_any *mus_make_empty_frame(int chans)
@@ -4842,7 +4879,8 @@ static mus_any_class MIXER_CLASS = {
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0,
   &_mus_wrap_no_vcts,
-  &mixer_reset
+  &mixer_reset,
+  0
 };
 
 mus_any *mus_make_mixer_with_data(int chans, Float *data)
@@ -5278,7 +5316,8 @@ static mus_any_class FILE_TO_SAMPLE_CLASS = {
   0, /* channel */
   0, 0, 0, 0,
   &_mus_wrap_no_vcts,
-  &no_reset
+  &no_reset,
+  0
 };
 
 static Float file_sample(mus_any *ptr, off_t samp, int chan)
@@ -5441,7 +5480,8 @@ static mus_any_class READIN_CLASS = {
   &rd_channel,
   0, 0, 0, 0,
   &_mus_wrap_no_vcts,
-  &no_reset
+  &no_reset,
+  0
 };
 
 bool mus_readin_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_READIN));}
@@ -5537,7 +5577,8 @@ static mus_any_class FILE_TO_FRAME_CLASS = {
   0, /* channel */
   0, 0, 0, 0,
   &_mus_wrap_no_vcts,
-  &no_reset
+  &no_reset,
+  0
 };
 
 mus_any *mus_make_file_to_frame_with_buffer_size(const char *filename, int buffer_size)
@@ -5643,7 +5684,8 @@ static mus_any_class SAMPLE_TO_FILE_CLASS = {
   0, 0, 0,
   0, 0, 0, 0,
   &_mus_wrap_no_vcts,
-  &no_reset
+  &no_reset,
+  0
 };
 
 static void flush_buffers(rdout *gen)
@@ -5887,7 +5929,8 @@ static mus_any_class FRAME_TO_FILE_CLASS = {
   0, 0, 0,
   0, 0, 0, 0,
   &_mus_wrap_no_vcts,
-  &no_reset
+  &no_reset,
+  0
 };
 
 mus_any *mus_make_frame_to_file(const char *filename, int chans, int out_format, int out_type)
@@ -6145,7 +6188,8 @@ static mus_any_class LOCSIG_CLASS = {
   0, 0, 
   &locsig_xcoeffs, 0,
   &_mus_wrap_no_vcts,
-  &locsig_reset
+  &locsig_reset,
+  0
 };
 
 bool mus_locsig_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == MUS_LOCSIG));}
@@ -6400,6 +6444,7 @@ static char *describe_src(mus_any *ptr)
 static off_t src_length(mus_any *ptr) {return(((sr *)ptr)->width);}
 static Float run_src_gen(mus_any *srptr, Float sr_change, Float unused) {return(mus_src(srptr, sr_change, NULL));}
 static void *src_closure(mus_any *rd) {return(((sr *)rd)->closure);}
+static void *src_set_closure(mus_any *rd, void *e) {((sr *)rd)->closure = e; return(e);}
 static Float src_increment(mus_any *rd) {return(((sr *)rd)->incr);}
 static Float src_set_increment(mus_any *rd, Float val) {((sr *)rd)->incr = val; return(val);}
 static Float *src_sinc_table(mus_any *rd) {return(((sr *)rd)->sinc_table);}
@@ -6440,7 +6485,8 @@ static mus_any_class SRC_CLASS = {
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 
   &wrap_max_vcts,
-  &src_reset
+  &src_reset,
+  &src_set_closure
 };
 
 mus_any *mus_make_src(Float (*input)(void *arg, int direction), Float srate, int width, void *closure)
@@ -6703,6 +6749,7 @@ static Float grn_set_scaler(mus_any *ptr, Float val) {((grn_info *)ptr)->amp = v
 static Float grn_frequency(mus_any *ptr) {return(((Float)((grn_info *)ptr)->output_hop) / (Float)sampling_rate);}
 static Float grn_set_frequency(mus_any *ptr, Float val) {((grn_info *)ptr)->output_hop = (int)((Float)sampling_rate * val); return(val);}
 static void *grn_closure(mus_any *rd) {return(((grn_info *)rd)->closure);}
+static void *grn_set_closure(mus_any *rd, void *e) {((grn_info *)rd)->closure = e; return(e);}
 static Float grn_increment(mus_any *rd) {return(((Float)(((grn_info *)rd)->output_hop)) / ((Float)((grn_info *)rd)->input_hop));}
 static Float grn_set_increment(mus_any *rd, Float val) {((grn_info *)rd)->input_hop = (int)(((grn_info *)rd)->output_hop / val); return(val);}
 static off_t grn_hop(mus_any *ptr) {return(((grn_info *)ptr)->output_hop);}
@@ -6757,7 +6804,8 @@ static mus_any_class GRANULATE_CLASS = {
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0,
   &wrap_max_vcts,
-  &grn_reset
+  &grn_reset,
+  &grn_set_closure
 };
 
 mus_any *mus_make_granulate(Float (*input)(void *arg, int direction), 
@@ -7468,6 +7516,7 @@ static int free_convolve(mus_any *ptr)
 static off_t conv_length(mus_any *ptr) {return(((conv *)ptr)->fftsize);}
 static Float run_convolve(mus_any *ptr, Float unused1, Float unused2) {return(mus_convolve(ptr, NULL));}
 static void *conv_closure(mus_any *rd) {return(((conv *)rd)->closure);}
+static void *conv_set_closure(mus_any *rd, void *e) {((conv *)rd)->closure = e; return(e);}
 
 static void convolve_reset(mus_any *ptr)
 {
@@ -7498,7 +7547,8 @@ static mus_any_class CONVOLVE_CLASS = {
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0,
   &_mus_wrap_no_vcts,
-  &convolve_reset
+  &convolve_reset,
+  &conv_set_closure
 };
 
 Float mus_convolve(mus_any *ptr, Float (*input)(void *arg, int direction))
@@ -7709,6 +7759,7 @@ static off_t pv_set_hop(mus_any *ptr, off_t val) {((pv_info *)ptr)->D = (int)val
 static Float pv_frequency(mus_any *ptr) {return(((pv_info *)ptr)->pitch);}
 static Float pv_set_frequency(mus_any *ptr, Float val) {((pv_info *)ptr)->pitch = val; return(val);}
 static void *pv_closure(mus_any *rd) {return(((pv_info *)rd)->closure);}
+static void *pv_set_closure(mus_any *rd, void *e) {((pv_info *)rd)->closure = e; return(e);}
 
 Float *mus_phase_vocoder_amp_increments(mus_any *ptr) {return(((pv_info *)ptr)->ampinc);}
 Float *mus_phase_vocoder_amps(mus_any *ptr) {return(((pv_info *)ptr)->amps);}
@@ -7760,7 +7811,8 @@ static mus_any_class PHASE_VOCODER_CLASS = {
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0,
   &_mus_wrap_no_vcts,
-  &pv_reset
+  &pv_reset,
+  &pv_set_closure
 };
 
 mus_any *mus_make_phase_vocoder(Float (*input)(void *arg, int direction), 
@@ -8040,7 +8092,8 @@ static mus_any_class SSB_AM_CLASS = {
   0, 0, 
   &ssb_am_xcoeffs, 0,
   &_mus_wrap_no_vcts,
-  &ssb_reset
+  &ssb_reset,
+  0
 };
 
 mus_any *mus_make_ssb_am(Float freq, int order)

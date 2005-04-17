@@ -2,10 +2,11 @@
 #define CLM_H
 
 #define MUS_VERSION 3
-#define MUS_REVISION 16
-#define MUS_DATE "11-Apr-05"
+#define MUS_REVISION 17
+#define MUS_DATE "18-Apr-05"
 
 /*
+ * 18-Apr:     mus_set_environ.
  * 11-Apr:     mus_mixer|frame_offset, mus_frame_scale (for higher level generic functions).
  * 23-Mar:     frame_to_frame arg interpretation changed.
  * 21-Mar:     mus_make_readin|file_to_sample|file_to_frame_with_buffer_size.
@@ -223,6 +224,7 @@ typedef struct mus_any_class {
   Float* (*ycoeffs)(mus_any *ptr);
   struct mus_xen* (*wrapper)(mus_any *gen);
   void (*reset)(mus_any *ptr);
+  void* (*set_closure)(mus_any *gen, void *e);
 } mus_any_class;
 
 typedef enum {MUS_INTERP_NONE, MUS_INTERP_LINEAR, MUS_INTERP_SINUSOIDAL, MUS_INTERP_ALL_PASS, 
@@ -636,6 +638,7 @@ Float mus_ssb_am(mus_any *ptr, Float insig, Float fm);
 
 void mus_clear_sinc_tables(void);
 void *mus_environ(mus_any *gen);
+void *mus_set_environ(mus_any *gen, void *e);
 struct mus_xen *mus_wrapper(mus_any *gen);
 
 /* for internal use */

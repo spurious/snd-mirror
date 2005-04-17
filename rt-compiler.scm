@@ -95,7 +95,9 @@ Features
 -Error checking. If there is an error in your code that
  cause the compilation to stop, you sometimes get a human readable
  explanation about it, if you are lucky.
-
+-The compiled code is so fast, that theres normally nothing to gain by
+ writing it as a function in C instead of writing it as a macro
+ or a function.
 
 
 ***************************************************************
@@ -132,7 +134,14 @@ define-rt     => (define-rt (a b c) (* b c))
                  => 6.0
 
 rt-safety     => rt-safety is a setter function. If set to 0, no runtime error checking is performed.
-                 For operations on lists and pairs, this can have a huge impact on the performance.
+                 Its safe to set (rt-safety) to 0 if you don't get any "RT RUNTIME ERROR" error
+                 messages to stderr when running your function, and you are sure thats impossible to happen.
+                 On the other hand, if you do see an "RT RUNTIME ERROR" message printed to stderr when running
+                 your function, theres a good chance you will lock up your machine by setting (rt-safety)
+                 to 0.
+                 For operations on lists, pairs and vectors, this could have an impact on the performance.
+                 But, generally, don't expect to see any improvement in the performance by setting it to 0.
+
 
 rt-rt         => Creates a subclass of <realtime> :
 
@@ -147,6 +156,8 @@ rt-run        => Creates a subclass of <realtime> .
 			   (out (- (random 1.8) 0.9))))
                  [one second later, white noise is heard for ten seconds]
 
+                 (rt-run is really just a small macro that calls rt-rt, check out its implementation if you are in doubt about what
+		  it does exactly)
 
 
 * The <realtime> class has the following methods:
@@ -995,6 +1006,16 @@ Notes
 
 ;;; Various functions
 
+(define (rt-symbol-starts-with? sym s)
+  (let* ((das-string1 (symbol->string sym))
+	 (das-string2 (symbol->string s))
+	 (len (min (string-length das-string1) (string-length das-string2))))
+    (string= das-string1 das-string2 0 len 0 len)))
+
+#!
+(symbol-starts-with? 'abwe4wei 'aiai)
+!#
+
 (define rt-safety
   (let ((safety 1))
     (make-procedure-with-setter
@@ -1041,6 +1062,7 @@ Notes
 
 
 
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;; Conversion "scheme"->eval-c ;;;;;;;;;;;;
@@ -1064,8 +1086,6 @@ Notes
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Last Hacks, last step before code is completely evalycified.
 ;; 
-;; -Fix the type for _rt_breakcontsig from float to jmp_buf
-;; -Remove assignment of 0 to _rt_breakcontsig
 ;; -Change the order of type and variable name for lambda-args. eval-c requires the opposite order of rt:
 ;;  (lambda ((a <int>)(b <float>))...) -> (lambda ((<int> a)(<float> b))...)
 ;; -Remove variable names for function types:
@@ -1073,7 +1093,7 @@ Notes
 ;; -Surround strings with the eval-c macro "string".
 ;;  "gakk" -> (string "gakk")
 ;; -Remove all rt-dummy/dummy calls completely.
-;; -Replace all '<undefined> types with <SCM>s.
+;; -Replace all '<undefined> types with <SCM>s, but give warnings.
 ;; -Replace all rt type-names with theire c type names.
 ;; 
 (define (rt-last-hacks term)
@@ -1116,7 +1136,7 @@ Notes
 	    ,@(rt-last-hacks (cddr term))))
 
 	((or (eq? 'lambda (car term))
-	     (eq? 'rt-lambda-decl/lambda_decl (car term)))
+	     (eq? 'rt-lambda-decl (car term)))
 	 (let ((vardecl (map (lambda (t)
 			       (list (make-proper-type (cadr t) (car t))
 				     (car t)))
@@ -1124,7 +1144,7 @@ Notes
 	   (if (eq? 'lambda (car term))
 	       `(lambda ,vardecl
 		  ,@(map2 (cddr term)))
-	       `(rt-lambda-decl/lambda_decl ,vardecl))))
+	       `(rt-lambda-decl ,vardecl))))
 	     
 	(else
 	 (map2 term))))
@@ -1135,11 +1155,7 @@ Notes
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Insert return calls and fix begin and if blocks
 ;;
-;; Begin is only inserted after a let*-block. Or, after a lambda-block
-;; if theres no let*-block in the lambda-block.
 ;;
-;; A while-hack is performed here as well.
-;; 
 
 (define (rt-insert-returns term returntype)
 
@@ -1152,68 +1168,124 @@ Notes
        (return #f))
      
 
-       (define (insert term returntype)
-	 (cond ((not (list? term)) term)
-	       ((null? term) term)
+     (define (insert term returntype)
+       (define (default-behaviour)
+	 (if (eq? '<void> returntype)
+	     term
+	     `(return ,term)))
 
-	       ((eq? 'lambda (car term))
-		(let ((body (cddr term)))
-		  (if (and (list? (car body))
-			   (eq? 'let* (car (car body))))
+       ;;(c-display "term" term returntype)
+       (cond ((not (list? term)) (default-behaviour))
+	     ((null? term) (default-behaviour))
+	     
+	     ;; Can not happen
+	     ((eq? 'rt-lambda-decl (car term))
+	      (check-failed "Somethings wrong"))
+	     ;;term)
 
-		      (let* ((bodybody (cddr (car body)))
-			     (vardecls (map (lambda (vardecl)
-					      (if (and (= 3 (length vardecl))
-						       (list? (caddr vardecl)))
-						  `(,(car vardecl) ,(cadr vardecl) ,(insert (caddr vardecl) (cadr vardecl)))
-						  (list-copy vardecl)))
-					    (cadr (car body)))))
-			`(lambda ,(cadr term)
-			   (let* ,vardecls
-			     ,(if (= 1 (length bodybody))
-				  (if (eq? '<void> returntype)
-				      (insert (car bodybody) returntype)
-				      (list 'return (insert (car bodybody) returntype)))
-				  (if (eq? '<void> returntype)
-				      (insert (cons 'rt-begin_p/begin_p bodybody) returntype)
-				      (list 'return (insert (cons 'rt-begin_p/begin_p bodybody) returntype)))))))
+	     ((eq? 'lambda (car term))
+	      (let ((body (cddr term)))
+		`(lambda ,(cadr term)
+		   ,@(map (lambda (t)
+			    (insert t '<void>))
+			  (c-butlast body))
+		   ,(insert (last body) returntype))))
 
-		      (if (and (list? (car body))
-			       (eq? 'rt-while/while (car (car body))))
-			  `(lambda ,(cadr term)
-			     ,(car body))
-			  `(lambda ,(cadr term)
-			     ,(if (= 1 (length body))
-				  (if (eq? '<void> returntype)
-				      (insert (car body) returntype)
-				      (list 'return (insert (car body) returntype)))
-				  (if (eq? '<void> returntype)
-				      (insert (cons 'rt-begin_p/begin_p body) returntype)
-				      (list 'return (insert (cons 'rt-begin_p/begin_p body) returntype)))))))))
-		     
+	     ((eq? 'begin (car term))
+	      (let ((body (cdr term)))
+		`(begin
+		   ,@(map (lambda (t)
+			    (insert t '<void>))
+			  (c-butlast body))
+		   ,(insert (last body) returntype))))
 
-	       (else
-		(map (lambda (t)
-		       (insert t returntype))
-		     term))))
+	     ((eq? 'let* (car term))
+	      (let* ((body (cddr term))
+		     (vardecls (map (lambda (vardecl)
+				      (if (and (= 3 (length vardecl))
+					       (list? (caddr vardecl))
+					       (eq? 'lambda (car (caddr vardecl))))
+					  `(,(car vardecl) ,(cadr vardecl) ,(insert (caddr vardecl) (cadr vardecl)))
+					  (list-copy vardecl)))
+				    (cadr term))))
+		`(let* ,vardecls
+		   ,@(map (lambda (t)
+			    (insert t '<void>))
+			  (c-butlast body))
+		   ,(insert (last body) returntype))))
 
-       (insert term returntype))))
+	     ;; ifs are translated to rt-if (a?b:c) by the if-macro, but normal ifs can still be generated in the compiling-processs.
+	     ((eq? 'if (car term))
+	      (if (= 4 (length term))
+		  `(if ,(cadr term)
+		       ,(insert (caddr term) returntype)
+		       ,(insert (cadddr term) returntype))
+		  (if (eq? '<void> returntype)
+		      `(if ,(cadr term)
+			   ,(insert (caddr term) returntype))
+		      (begin
+			(c-display "Undefined return value in some function because of missing else-block in non-void returning if sentence.")
+			(check-failed "The error is not supposed to show up here. Please send your code to k.s.matheussen@notam02.no ")))))
+	     
+	     ((and (eq? 'rt-if (car term))
+		   (eq? '<void> returntype))
+	      (insert `(if ,@(cdr term)) returntype))
+	      	      
+	     ((and (eq? 'rt-begin (car term))
+		   (eq? '<void> returntype))
+	      (insert `(begin ,@(cdr term)) returntype))
+	     
+	     (else
+	      (default-behaviour))))
+     
+     (insert term returntype))))
 
 #!
 (rt-insert-returns '(lambda ()
-		      (if 2
-			  3
-			  4))
+		      (rt-if (rt-= 0 b)
+			     3
+			     4))
 		   '<int>)
 (rt-insert-returns '(lambda ()
 		      (+ 2 35))
 		   '<int>)
 
-(rt-insert-returns '() '(lambda ()
-			  (let* ((a <int> (lambda ((<int> b))
-					    2
-					    (set! a 9))))
-			    (set! a 9))))
+(rt-insert-returns '(lambda ()
+		      (let* ((a <void> (lambda ((<int> b))
+					2
+					(set! a 9))))
+			(set! a 9)))
+		   '<void>)
+
+
+(rt-insert-returns '(lambda ((_rt_local_f <int>))
+		      (let* ((rt_gen300 <int> 0)
+			     (c <int>)
+			     (a <int> 0)
+			     (f <int>)
+			     (d <int> (lambda ()
+					(+ c f 2)))
+			     (b <int> (rt-lambda-decl ((c <int>))))
+			     (rt_gen298 <int> (lambda ((_rt_local_c <int>))
+						(set! c _rt_local_c)
+						(rt-begin_p
+						 (set! a (d)))))
+			     (b <int> (lambda ((_rt_local_c <int>))
+					(if rt_gen300
+					    (let* ((rt_gen299 <int> c)
+						   (_rt_ret <int> (rt_gen298 _rt_local_c)))
+					      (set! <int> rt_gen299)
+					      _rt_ret)
+					    (let* ((_rt_ret <int>))
+					      (set! rt_gen300 1)
+					      (set! _rt_ret (rt_gen298 _rt_local_c))
+					      (set! rt_gen300 0)
+					      _rt_ret)))))
+			(set! f _rt_local_f)
+			(rt-begin_p
+			 (set! a 3)
+			 (b e))))
+		   '<int>)
 
 !#
     
@@ -1330,7 +1402,7 @@ Notes
       
       
       ;;(if (not (list? (car body)))
-      ;;	  (set! body `(rt-begin_p/begin_p
+      ;;	  (set! body `(rt-begin_p
       ;;		       ,@body)))
       
       ;; Find any global variables defined in the let*-block in the function.
@@ -1350,7 +1422,7 @@ Notes
 			    ,@body)))
 
       (if (or (null? globvars-here)
-	      dontcapsulate) ;; For some reason, we know that its safe not to put global accessible local variables on the stack. (Ie. its the main function. :-)
+	      dontcapsulate) ;; For some reason, we know that its safe not to put global accessible local variables on the stack. (Ie. its the main function. :-) )
 	  das-func
 	  (let* ((realfuncname (rt-gensym))
 		 (letbody (map (lambda (name)
@@ -1359,7 +1431,7 @@ Notes
 		 (funccall `(,realfuncname ,@(map car vars)))
 		 (capspart #f))
 			     
-	    (set! globalfuncs (cons `(,name ,type (rt-lambda-decl/lambda_decl ,(cadr term)))
+	    (set! globalfuncs (cons `(,name ,type (rt-lambda-decl ,(cadr term)))
 				    globalfuncs))
 	    (set! globalfuncs (cons `(,realfuncname ,type ,das-func)
 				    globalfuncs))
@@ -1379,15 +1451,15 @@ Notes
 						 letbody)
 					    (list '_rt_ret)))))
 
-	    (if (< (length globvars-here) 1000)
-		`(lambda ,vars
-		   ,capspart)
-		(let ((recnum (rt-gensym)))
+	    (if (< (length globvars-here) 5)  ;; Performance is dependent on this number. Perhaps 5 is a good value. Haven't done any benchmark.
+	 	`(lambda ,vars                ;; It should be set quite high, because of larger amount of code and branching in the second version.
+		   ,capspart)                 ;; On the other hand, stacking up these variables are probably usually unnecesarry (it just has to be done),
+		(let ((recnum (rt-gensym)))   ;; so the program counter usually jumps into the second version. Hard to say whats best...
 		  (set! globals2 (cons (list recnum '<int> 0) globals2))
 		  `(lambda ,vars
 		     (if ,recnum
 			 ,capspart
-			 ,(if (eq? '<void type)
+			 ,(if (eq? '<void> type)
 			      `(begin
 				 (set! ,recnum 1)
 				 ,funccall
@@ -1408,10 +1480,9 @@ Notes
 	  ((eq? 'let* (car term))
 	   (let* ((vardecls '()))
 	     (for-each (lambda (var)
-			 (c-display var)
 			 (if (and (= 3 (length var))
 				  (list? (caddr var)))
-			     (if (eq? 'rt-lambda-decl/lambda_decl (car (caddr var)))
+			     (if (eq? 'rt-lambda-decl (car (caddr var)))
 				 (set! globalfuncs (cons var
 							 globalfuncs))
 				 (set! globalfuncs (cons (list (car var) (cadr var) (apply lambdalifter var))
@@ -1422,7 +1493,7 @@ Notes
 		       (cadr term))
 	     (set! vardecls (reverse! vardecls))
 	     (if (null? vardecls)
-		 `(rt-begin_p/begin_p
+		 `(rt-begin_p
 		    ,@(cddr term))
 		 `(let* ,vardecls
 		    ,@(cddr term)))))
@@ -1468,10 +1539,10 @@ Notes
 	 (f <int>)
 	 (d <int> (lambda ()
 		    (+ c f 2)))
-	 (b <int> (rt-lambda-decl/lambda_decl ((c <int>))))
+	 (b <int> (rt-lambda-decl ((c <int>))))
 	 (rt_gen298 <int> (lambda ((_rt_local_c <int>))
 			    (set! c _rt_local_c)
-			    (rt-begin_p/begin_p
+			    (rt-begin_p
 			     (set! a (d)))))
 	 (b <int> (lambda ((_rt_local_c <int>))
 		    (if rt_gen300
@@ -1485,7 +1556,7 @@ Notes
 			  (set! rt_gen300 0)
 			  _rt_ret)))))
     (set! f _rt_local_f)
-    (rt-begin_p/begin_p
+    (rt-begin_p
      (set! a 3)
      (b e))))
 
@@ -1498,7 +1569,7 @@ Notes
 		    (+ c f 2)))
 	 (b <int> (lambda ((_rt_local_c <int>))
 		    (set! c _rt_local_c)
-		    (rt-begin_p/begin_p
+		    (rt-begin_p
 		     (set! a (d))))))
     (set! f _rt_local_f)
     (let* ((e <int> 0))
@@ -1507,25 +1578,31 @@ Notes
       (b e))))
 
 (lambda () (let* ((b_u3 <float>)
-		  (a_u1 <float> (rt-lambda-decl/lambda_decl ()))
-		  (c_u2 <float> (rt-lambda-decl/lambda_decl ((b_u3 <float>))))
+		  (a_u1 <float> (rt-lambda-decl ()))
+		  (c_u2 <float> (rt-lambda-decl ((b_u3 <float>))))
 		  (inner_u4 <void> (lambda ((n_u5 <int>))
 				     (set! b_u3 n_u5)))
-		  (c_u2 <float> (rt-lambda-decl/lambda_decl ((b_u3 <float>))))
+		  (c_u2 <float> (rt-lambda-decl ((b_u3 <float>))))
 		  (rt_gen350 <float> (lambda ((_rt_local_b_u3 <float>))
 				       (set! b_u3 _rt_local_b_u3)
-				       (rt-begin_p/begin_p
-					(rt-begin_p/begin_p
-					 (rt-if/?kolon (rt-=/== 0 b_u3)
-						       (c_u2 1)
-						       (inner_u4 2))
+				       (rt-begin_p
+					(rt-begin_p
+					 (rt-if (rt-=/== 0 b_u3)
+						(c_u2 1)
+						(inner_u4 2))
 					 b_u3))))
 		  (c_u2 <float> (lambda ((_rt_local_b_u3 <float>))
 				  (let* ((rt_gen351 <float> b_u3)
 					 (_rt_ret <float> (rt_gen350 _rt_local_b_u3)))
 				    (set! <float> rt_gen351)
 				    _rt_ret)))
-		  (a_u1 <float> (lambda () (rt-begin_p/begin_p (rt-begin_p/begin_p (c_u2 0)))))) (rt-begin_p/begin_p (rt-begin_p/begin_p (a_u1)))))
+		  (a_u1 <float> (lambda ()
+				  (rt-begin_p
+				   (rt-begin_p
+				    (c_u2 0))))))
+	     (rt-begin_p
+	      (rt-begin_p
+	       (a_u1)))))
 
 
 !#
@@ -1569,17 +1646,24 @@ Notes
 	     ((null? term) term)
 
 	     ;; begin
-	     ((eq? 'rt-begin_p/begin_p (car term))
-	      `(rt-begin_p/begin_p ,@(das-remove (cdr term))))
+	     ((eq? 'rt-begin_p (car term))
+	      `(rt-begin_p ,@(das-remove (cdr term))))
 
 	     ;; is-type?
 	     ((eq? 'is-type? (car term))
-	      (let ((type (hashq-ref vars (caddr term))))
-		(if (not type)
-		    (check-failed (caddr term) "not found in term" term)
-		    (if (eq? type (cadr term))
-			1
-			0))))
+	      (if (list? (caddr term))
+		  (let ((func (hashq-ref rt-funcs (car (caddr term)))))
+		    (if (not func)
+			(check-failed (caddr term) "not found in term (1)" term)
+			(if (eq? (cadr term) (-> func return-type))
+			    1
+			    0)))
+		  (let ((type (hashq-ref vars (caddr term))))
+		    (if (not type)
+			(check-failed (caddr term) "not found in term (2)" term)
+			(if (eq? type (cadr term))
+			    1
+			    0)))))
 
 	     ;; let*
 	     ((eq? 'let* (car term))
@@ -1587,7 +1671,7 @@ Notes
 			  (if (and (= 3 (length var))
 				   (list? (caddr var))
 				   (or (eq? 'lambda (car (caddr var)))
-				       (eq? 'rt-lambda-decl/lambda_decl (car (caddr var)))))
+				       (eq? 'rt-lambda-decl (car (caddr var)))))
 			      (hashq-set! vars (car var) (list (cadr var)
 							       (map car (cadr (caddr var)))))
 			      (hashq-set! vars (car var) (cadr var))))
@@ -1608,18 +1692,18 @@ Notes
 		    `(not ,a))))
 
 	     ;; if
-	     ((eq? 'rt-if/?kolon (car term))
+	     ((eq? 'rt-if (car term))
 	      (let ((a (remove++ (cadr term)))) ;; This can be a is-type? test.
 		(if (number? a)
 		    (if (= 0 a)
 			(remove++ (cadddr term))
 			(remove++ (caddr term)))
-		    `(rt-if/?kolon ,a
-				   ,(remove++ (caddr term))
-				   ,(remove++ (cadddr term))))))
-
+		    `(rt-if ,a
+			    ,(remove++ (caddr term))
+			    ,(remove++ (cadddr term))))))
+	     
 	     ;; lambda-decl
-	     ((eq? 'rt-lambda-decl/lambda_decl (car term))
+	     ((eq? 'rt-lambda-decl (car term))
 	      (for-each (lambda (var)
 			  (hashq-set! vars (cadr var) (car var)))
 			(cadr term))
@@ -1783,9 +1867,12 @@ Notes
 		 (values (append (map (lambda (l)
 					(if (and (list? (cadr l))
 						 (or (eq? 'lambda (car (cadr l)))
-						     (eq? 'rt-lambda-decl/lambda_decl (car (cadr l)))))
+						     (eq? 'rt-lambda-decl (car (cadr l)))))
 					    l
-					    (list (car l) (cond ((and (number? (cadr l))    ;; Quick way to determine type. Type doesn't need to be determined here, but it
+					    (list (car l) (cond ((rt-symbol-starts-with? '_rt_breakcontsig (car l))
+								 '<jmp_buf>)
+								
+								((and (number? (cadr l))    ;; Quick way to determine type. Type doesn't need to be determined here, but it
 								      (exact? (cadr l)))    ;; can speed up things if its possible to know type already at this stage.
 								 '<int>)                    ;; The type does not need to be correct either, but a number must be
 								                            ;; a number, etc.
@@ -1806,13 +1893,13 @@ Notes
 				      lets)
 				 values-letlist
 				 letlist)
-			 `(rt-begin_p/begin_p ,@(map (lambda (l)
+			 `(rt-begin_p ,@(map (lambda (l)
 						       `(rt-set*! ,(car l) ,(cadr l)))
 						     (remove (lambda (l)
 							       (or (and (list? (cadr l))
 									(or (eq? 'lambda (car (cadr l)))
-									    (eq? 'rt-lambda-decl/lambda_decl (car (cadr l)))))
-								   (eq? '_rt_breakcontsig (car l))))
+									    (eq? 'rt-lambda-decl (car (cadr l)))))
+								   (rt-symbol-starts-with? '_rt_breakcontsig (car l))))
 							     lets))
 					      ,@term))))))
 	  (else
@@ -1934,8 +2021,8 @@ Notes
 	   (lambda (orgname)
 	     (set! n (1+ n))
 	     (let ((das-string (symbol->string orgname)))
-	       (if (and (> (string-length das-string) 4) ;; Very special situation. Don't rename internal rt-variables (starting with "_rt_")
-			(string= "_rt_" das-string 0 4 0 4))
+	       (if (and (> (string-length das-string) 7) ;; Very special situation. Don't rename internal rt-variables (starting with "_rt_dr_")
+			(string= "_rt_rn_" das-string 0 7 0 7))
 		   orgname
 		   (string->symbol (string-append das-string "_u" (number->string n))))))))
        
@@ -2034,15 +2121,15 @@ Notes
 				   (,funcname ,@(cdr term))))))
 	      
 
-	     ((eq? 'rt-begin_p/begin_p (car term))
-	      `(rt-begin_p/begin_p ,@(map (lambda (t)
+	     ((eq? 'rt-begin_p (car term))
+	      `(rt-begin_p ,@(map (lambda (t)
 					    (fix varlist t))
 					  (cdr term))))
 	     
-	     ((eq? 'rt-if/?kolon (car term))
-	      `(rt-if/?kolon ,@(map (lambda (t)
-				      (fix varlist t))
-				    (cdr term))))
+	     ((eq? 'rt-if (car term))
+	      `(rt-if ,@(map (lambda (t)
+			       (fix varlist t))
+			     (cdr term))))
 	     
 	     ((eq? 'is-type? (car term))
 	      `(is-type? ,(cadr term) ,(fix varlist (caddr term))))
@@ -2114,7 +2201,7 @@ Notes
 									(begin
 									  (set! funclist (cons (list uname (cadr vardecl))
 											       funclist))
-									  `(,uname (rt-lambda-decl/lambda_decl ,(cadr (cadr vardecl)))))
+									  `(,uname (rt-lambda-decl ,(cadr (cadr vardecl)))))
 									`(,uname ,(fix newvarlist (cadr vardecl))))))
 								
 								das-das-vardecls)))
@@ -2137,7 +2224,7 @@ Notes
 									(begin
 									  (set! funclist (cons (list uname (cadr vardecl))
 											       funclist))
-									  `(,uname (rt-lambda-decl/lambda_decl ,(cadr (cadr vardecl)))))
+									  `(,uname (rt-lambda-decl ,(cadr (cadr vardecl)))))
 									`(,uname ,(fix newvarlist (cadr vardecl))))))
 								das-vardecls)))
 				   `(let* ,(append vardecls (map (lambda (funcdecl)
@@ -2477,15 +2564,15 @@ Notes
 					 follow-variable))
 			
 			;; begin
-			((eq? 'rt-begin_p/begin_p (car term))
+			((eq? 'rt-begin_p (car term))
 			 (get-returntype varlist (last term)))
 
 			;; while
-			((eq? 'rt-while/while (car term))
+			((eq? 'rt-while (car term))
 			 '<void>)
 			
 			;; if
-			((eq? 'rt-if/?kolon (car term))
+			((eq? 'rt-if (car term))
 			 (merge-types (get-returntype varlist (caddr term) follow-variable)
 				      (get-returntype varlist (cadddr term) follow-variable)
 				      term))
@@ -2673,7 +2760,7 @@ Notes
 		     (lambda_decls '())
 		     (vardecls (map (lambda (var)
 					       (let ((ret (if (list? (cadr var))
-							      (if (eq? 'rt-lambda-decl/lambda_decl (car (cadr var)))
+							      (if (eq? 'rt-lambda-decl (car (cadr var)))
 								  ;; A lambda declaration. (as the result of a letrec function)
 								  (let ((ret (list (car var) '<undefined>
 										   (append (list (car (cadr var)))
@@ -2699,8 +2786,10 @@ Notes
 								    (set! body (insert newvarlist `(lambda ,decl ,@(cddr body))))
 								    (set! type (get-returntype newvarlist body))
 								    (list name type body)))
-							      (if (eq? (car var) '_rt_breakcontsig)
-								  '(_rt_breakcontsig <int> 0)
+							      (if (rt-symbol-starts-with? (car var) '_rt_breakcontsig)
+								  (begin
+								    (list (car var) '<jmp_buf> 0)
+								    )
 								  (list (car var) (cadr var) 0)))))
 						 (set! newvarlist (cons ret newvarlist))
 						 ret))
@@ -2763,7 +2852,7 @@ Notes
 						     (let ((real (assq (car var) (reverse vardecls))))
 						       (set! lambda_decls (delete decl lambda_decls))
 						       ;;(debug "var/real" (car var) real (reverse vardecls))
-						       `(,(car var) ,(cadr real) (rt-lambda-decl/lambda_decl ,(cadr (caddr real)))))
+						       `(,(car var) ,(cadr real) (rt-lambda-decl ,(cadr (caddr real)))))
 						     var)))
 					     vardecls))
 		
@@ -2773,7 +2862,7 @@ Notes
 		  (rt-print2 "vardecls" vardecls)
 		  (rt-print2 "newvarlist" newvarlist)
 		  (if (null? vardecls)
-		      `(rt-begin_p/begin_p
+		      `(rt-begin_p
 			 ,@body)
 		      `(let* ,vardecls
 			 ,@body)))))
@@ -2872,8 +2961,8 @@ Notes
 
 	     ;; BEGIN
 	     ;;;;;;;;;;;;;;;;;;;;;;
-	     ((eq? 'rt-begin_p/begin_p (car term))
-	      `(rt-begin_p/begin_p ,@(map (lambda (t)
+	     ((eq? 'rt-begin_p (car term))
+	      `(rt-begin_p ,@(map (lambda (t)
 					    (insert varlist t))
 					  (cdr term))))
 
@@ -2959,45 +3048,45 @@ Notes
 		       (rt-set*! a 9)
 		       (< a 7))))
 (rt-insert-types2 '(lambda (a b)
-		     (rt-if/?kolon 1
-				   (set! a 9)
-				   (set! a 3.9))
+		     (rt-if 1
+			    (set! a 9)
+			    (set! a 3.9))
 		     (set! b 2.3)
 		     (+ a b)))
 		      
 (rt-insert-types2 '(lambda (n1)
-	 (let* ((fib (rt-lambda-decl/lambda_decl (n2)))
+	 (let* ((fib (rt-lambda-decl (n2)))
 		(fib (lambda (n2)
-		       (rt-if/?kolon (< n2 2)
-				     n2
-				     (+ (fib (rt--/- n2 1))
-					(fib (rt--/- n2 2)))))))
+		       (rt-if (< n2 2)
+			      n2
+			      (+ (fib (rt--/- n2 1))
+				 (fib (rt--/- n2 2)))))))
 	   (fib n1))))
 
 (rt-2 '(lambda (n1)
 	 (letrec ((fib (lambda (n2)
-			 (rt-if/?kolon (< n2 2)
-				       (+ a n2)
-				       (+ (fib (rt--/- n2 1))
-					  (fib (rt--/- n2 2)))))))
+			 (rt-if (< n2 2)
+				(+ a n2)
+				(+ (fib (rt--/- n2 1))
+				   (fib (rt--/- n2 2)))))))
 	   (fib n1))))
 
 (lambda ((<float> n1_u1))
   (let* ((fib_u3 <float> (lambda ((<float> n2_u4))
 			   (return
-			    (rt-if/?kolon (< n2_u4 2)
-					  n2_u4
-					  (+ (fib_u2 (rt--/- n2_u4 1))
-					     (fib_u2 (rt--/- n2_u4 2))))))))
+			    (rt-if (< n2_u4 2)
+				   n2_u4
+				   (+ (fib_u2 (rt--/- n2_u4 1))
+				      (fib_u2 (rt--/- n2_u4 2))))))))
     (return
-     (rt-begin_p/begin_p
+     (rt-begin_p
       (fib_u3 n1_u1)))))
 
 (rt-insert-types2 '(lambda ()
 		     (let* ((a (lambda ()
-				 (rt-if/?kolon 1
-					       (* 2 3)
-					       (+ 2 3)))))
+				 (rt-if 1
+					(* 2 3)
+					(+ 2 3)))))
 		       (a))))
 
 (define a (rt-2 '(lambda ()
@@ -3016,7 +3105,7 @@ Notes
 
 (lambda (n)
   (letrec ((fib (lambda (n)
-		  (rt-if/?kolon (< n 2)
+		  (rt-if (< n 2)
 				n
 				(+ (fib (rt--/- n 1))
 				   (fib (rt--/- n 2)))))))
@@ -3040,7 +3129,7 @@ Notes
 		       )))
 
 (rt-insert-types '(lambda ()
-		    (let* ((fib (rt-lambda-decl/lambda_decl (n)))
+		    (let* ((fib (rt-lambda-decl (n)))
 			   (ai (lambda (g)
 				 (declare (<double> g))
 				 (fib 6)
@@ -3050,7 +3139,7 @@ Notes
 			   (fib (lambda (n)
 				  (declare (<int> n))
 				  (the <double>
-				       (rt-if/?kolon (< n 2)
+				       (rt-if (< n 2)
 						      n
 						      (+ (fib (rt--/- n 1))
 							 (fib (rt--/- n 2)))))))
@@ -3090,7 +3179,7 @@ Notes
 
 (rt-insert-types '(lambda ()
 		    (let* ((d 0)
-			   ;;(a_u1 (rt-lambda-decl/lambda_decl (b_u3)))
+			   ;;(a_u1 (rt-lambda-decl (b_u3)))
 			   (a_u1 (lambda (b_u2)
 				   c_u2)))
 		      (a_u1 (+ c_u2 2.9))
@@ -3148,12 +3237,12 @@ Notes
 	     ((null? term) #t)
 
 	     ;; RT_WHILE/WHILE
-	     ;((eq? 'rt-while/while (car term))
+	     ;((eq? 'rt-while (car term))
 	     ; (check-calls varlist (cadr term))
 	     ; (check-calls varlist (caddr term)))
 	      
 	     ;; RT-LAMBDA_DECL/LAMBDA_DECL	
-	     ((eq? 'rt-lambda-decl/lambda_decl (car term))
+	     ((eq? 'rt-lambda-decl (car term))
 	      #t)
 	     
 	     ;; LAMBDA 
@@ -3180,7 +3269,7 @@ Notes
 		      (check-failed "Illegal set!(3) term: " term))))
 
 	     ;; BEGIN
-	     ((eq? 'rt-begin_p/begin_p (car term))
+	     ((eq? 'rt-begin_p (car term))
 	      (if (null? (cdr term))
 		  (check-failed "begin needs a body: " term ".")
 		  (for-each check-calls (cdr term))))
@@ -3194,7 +3283,7 @@ Notes
 	      (for-each check-calls (cddr term)))
 	     
 	     ;; IF
-	     ((eq? 'rt-if/?kolon (car term))
+	     ((eq? 'rt-if (car term))
 	      (if (< (length term) 3)
 		  (check-failed "To few arguments for if:" term ".")
 		  (if (> (length term) 4)
@@ -3223,7 +3312,7 @@ Notes
  (<float> a))
 
 (rt-check-calls '(lambda ()
-		   (rt-if/?kolon a
+		   (rt-if a
 				 a
 				 a))
 		'((a ai)))
@@ -3372,6 +3461,7 @@ Notes
 	     #f #:c-type '<SCM>)
   (<rt-type> '<void> c-nevercalled-true? #f)
   (<rt-type> '<SCM> (lambda (t) #t) #f)
+  (<rt-type> '<jmp_buf> c-nevercalled-true? #f)
   ;;(<rt-type> '<pair> pair? #f #:c-type '<SCM> #:subtype-of '<SCM>)      ;; Some checking is needed here. I don't think this is safe.
   )
 
@@ -3456,14 +3546,6 @@ Notes
 
   (<rt-func> 'set! '<void> '(<float> <float>))
   
-   ;; Testing
-  (<rt-func> '< '<int> '(<float> <float>))
-  (<rt-func> '> '<int> '(<float> <float>))
-  (<rt-func> '<= '<int> '(<float> <float>))
-  (<rt-func> '>= '<int> '(<float> <float>))
-  
-  (<rt-func> 'rt-=/== '<int> '(<float> <float>))
-  
   (<rt-func> 'not '<int> '(<float>))
   
   
@@ -3481,16 +3563,16 @@ Notes
   (<rt-func> 'rt-ash/>> '<int> '(<int> <int>))
 
   ;; Various
-  (<rt-func> 'rt-if/?kolon '<float> '(<int> <float> <float>)) ;; Special form, only return-type is checked
-  (<rt-func> 'rt-begin_p/begin_p '<float> '(<float>) #:min-arguments 1) ;; Special form, only return-type is checked
-  (<rt-func> 'rt-lambda-decl/lambda_decl '<float> '())
-  (<rt-func> 'rt-while/while '<int> '(<int> <float>))
+  (<rt-func> 'rt-if '<float> '(<int> <float> <float>)) ;; Special form, only return-type is checked
+  (<rt-func> 'rt-begin_p '<float> '(<float>) #:min-arguments 1) ;; Special form, only return-type is checked
+  (<rt-func> 'rt-lambda-decl '<float> '())
+  (<rt-func> 'rt-while '<int> '(<int> <float>))
   (<rt-func> 'rt-break/break '<void> '(<int>))
   (<rt-func> 'rt-break/return '<void> '(<float>))
   (<rt-func> 'rt-contbreakvar/jmp_buf '<void> '())
-  (<rt-func> 'rt-setjmp/setjmp '<int> '())
-  (<rt-func> 'rt-break/longjmp '<void> '())
-  (<rt-func> 'rt-continue/longjmp '<void> '())
+  (<rt-func> 'rt-setjmp/setjmp '<int> '(<jmp_buf>))
+  (<rt-func> 'rt-break/longjmp '<void> '(<jmp_buf>))
+  (<rt-func> 'rt-continue/longjmp '<void> '(<jmp_buf>))
   (<rt-func> 'rt-printf/fprintf '<int> '(<char-*> <float>) #:min-arguments 1)
 
   (<rt-func> 'rt_scm_to_int '<int> '(<SCM>))
@@ -3665,7 +3747,6 @@ Notes
   `(- ,@rest))
 
 
-(rt-renamefunc = == <int> (<float> <float>))
 (rt-renamefunc expt pow <float> (<float> <float>))
 (rt-renamefunc abs fabsf <float> (<float>))
 
@@ -3678,7 +3759,26 @@ Notes
   
 (rt-renamefunc remainder % <int> (<int> <int>))
 
-				   
+
+
+;; < > <= >= =
+(for-each (lambda (op)
+	    (let ((rt-op (symbol-append 'rt- op)))
+	      (<rt-func> rt-op '<int> '(<float> <float>))
+	      (primitive-eval `(define-c-macro ,(cons rt-op 'rest)
+				 `(,',op ,@rest)))
+	      (primitive-eval `(define-rt-macro (,op expand/a expand/b)
+				 (if (and (number? a)
+					  (number? b))
+				     (if (,op a b)
+					 1
+					 0)
+				     `(,',rt-op ,a ,b))))))
+	  '(< > <= >= =))
+
+(define-c-macro (rt-= a b)
+  `(== ,a ,b))
+
 
 (define-rt-macro (zero? expand/z)
   (if (number? z)
@@ -3725,6 +3825,7 @@ Notes
   `(not (odd? ,n)))
 
 
+	 
 ;; truncate-logic picked up from snd-run.c
 (define-rt-macro (truncate expand/a)
   (if (rt-immediate? a)
@@ -3917,7 +4018,7 @@ Notes
   (expand rest))
 
 
-;; if is a macro, rt-if/?kolon is a special form
+;; if is a macro, rt-if is a special form
 (define-rt-macro (if a b . c)
   (if (> (length c) 1)
       (begin
@@ -3931,10 +4032,10 @@ Notes
 		    (car c))
 		b)
 	    (if (null? c)
-		`(rt-if/?kolon ,ae ,b (rt-dummy/dummy))
-		`(rt-if/?kolon ,ae ,b ,(car c)))))))
+		`(rt-if ,ae ,b (rt-dummy/dummy))
+		`(rt-if ,ae ,b ,(car c)))))))
 
-(define-c-macro (rt-if/?kolon . rest)
+(define-c-macro (rt-if . rest)
   `(?kolon ,@rest))
 
 (define (rt-cond->if terms)
@@ -3967,17 +4068,17 @@ Notes
 		    terms)))))
 		  
 
-;; begin and begin_p are macros, while rt-begin_p/begin_p is a special form
+;; begin and begin_p are macros, while rt-begin_p is a special form
 (define-rt-macro (begin . rest)
   `(begin_p ,@rest))
 
 (define-rt-macro (begin_p . rest)
-  `(rt-begin_p/begin_p ,@rest))
+  `(rt-begin_p ,@rest))
 
-(define-c-macro (rt-begin_p/begin_p . rest)
+(define-c-macro (rt-begin_p . rest)
   `(begin_p ,@rest))
 
-(define-c-macro (rt-lambda-decl/lambda_decl rest)
+(define-c-macro (rt-lambda-decl rest)
   `(lambda ,rest decl))
 
 
@@ -3988,26 +4089,26 @@ Notes
     `(let* ((,whilefunc (lambda ()
 			 (let* ((_rt_breakcontsig 0)
 				(,dasfunc (lambda ()
-					    (rt-while/while ,test
-							    (begin
-							      ,@body)))))
-			   (if (< (rt-setjmp/setjmp) 2)
+					    (rt-while ,test
+						      (begin
+							,@body)))))
+			   (if (< (rt-setjmp/setjmp _rt_breakcontsig) 2)
 			       (,dasfunc))))))
        (,whilefunc))))
     
-(define-c-macro (rt-while/while test . body)
+(define-c-macro (rt-while test . body)
   `(while ,test ,@body))
-(define-c-macro (rt-setjmp/setjmp)
-  `(setjmp _rt_breakcontsig))
+(define-c-macro (rt-setjmp/setjmp das-sig)
+  `(setjmp ,das-sig))
 
 (define-rt-macro (break)
-  `(rt-break/longjmp))
-(define-c-macro (rt-break/longjmp)
-  `(longjmp _rt_breakcontsig 2))
+  `(rt-break/longjmp _rt_breakcontsig))
+(define-c-macro (rt-break/longjmp das-sig)
+  `(longjmp ,das-sig 2))
 (define-rt-macro (continue)
-  `(rt-continue/longjmp))
-(define-c-macro (rt-continue/longjmp)
-  `(longjmp _rt_breakcontsig 1))
+  `(rt-continue/longjmp _rt_breakcontsig))
+(define-c-macro (rt-continue/longjmp das-sig)
+  `(longjmp ,das-sig 1))
 
 
 
@@ -4051,7 +4152,7 @@ Notes
 			     (set! ,res retval)
 			     (break)))
 	    (,thunk (lambda () ,@(cddr func))))
-       (if (= (rt-setjmp/setjmp) 0)
+       (if (= (rt-setjmp/setjmp _rt_breakcontsig) 0)
 	   (set! ,res (,thunk)))
        ,res)))
 
@@ -4066,7 +4167,7 @@ Notes
 (define-rt-macro (let a b . c)
   (if (not (symbol? a))
       `(rt-let/let* ,a ,b ,@c)
-      `(letrec ((,a (lambda ,(map car b)
+      `(letrec ((,a (lambda ,(map car b)   ;; Named let
 		      ,@c)))
 	 (,a ,@(map cadr b)))))
 
@@ -4077,12 +4178,152 @@ Notes
 
 
 
+;; Oh, horror. This implemenation is ugly...
+;; '(a b c) -> '( (a b c) (a c) (a b) (a) (b c) (b) (c) ())
+(define (permutate alist)
+  (cond ((null? alist)
+	 (list '()))
+	((<= (length alist) 1)
+	 (list alist '()))
+	(else
+	 (let ((ret (list (list (car alist))))
+	       (alist2 (list (list (last alist)))))
+	   (for-each (lambda (s)
+		       (set! alist2 (cons (cons s (car alist2))
+					  alist2)))
+		     (cdr (reverse (cdr alist))))
+	   ;;(set! alist2 (append! alist2 (list '())))
+	   (for-each (lambda (s rest)
+		       (set! ret (append ret (permutate rest)))
+		       (for-each (lambda (r)				
+				   (set! ret (cons (cons s r)
+						   ret)))
+				 (permutate rest)))
+		     alist
+		     alist2)
+	   (delete-duplicates! ret)))))
+
+
+#!
+(begin
+  (define a-val a)
+  (define b-val b)
+  (cond ((and (rt-immidiate? a)
+	      (rt-immidiate? b))
+	 (let ((a (gensym))
+	       (b (gensym)))
+	   ...))
+	((and (rt-immidiate? a)
+	      (not (rt-immidiate? b)))
+	 (let ((a (gensym)))
+	   ...))
+	((and (not (rt-immidiate? a))
+	      (rt-immidiate? b))
+	 (let ((b (gensym)))
+	   ...))
+	(else
+	 (begin
+	   ...))))
+!#
+
+
+(define-macro (rt-automate-immediate . rest)
+  (let* ((vars (c-butlast rest))
+	 (tempvars (map (lambda (var)
+			  (cons var (rt-gensym)))
+			vars))
+	 (body (last rest))
+	 (perm (permutate vars)))
+    (c-display "vars/body" vars body perm)
+    `(cond ,@(map (lambda (immediates)
+		    (if (null? immediates)
+			`(else ,body)
+			`( (and ,@(map (lambda (var)
+					 (if (member var immediates)
+					     `(rt-immediate? ,var)
+					     `(not (rt-immediate? ,var))))
+				       vars))
+			   (let ,(append (map (lambda (im)
+						`(list ,(cdr (assq im tempvars)) ,im))
+					      immediates)
+					 (map (lambda (im)
+						`(list ,im `(rt-gensym)))
+					      immediates))
+			     `(let ,(map (lambda (im)
+					   (c-display "tempvars:" ,tempvars)
+					   (let ((n (cdr (assq im ,tempvars))))
+					     (list im n)))
+					 ',immediates)
+				,,body)))))
+		  perm))))
+
+#!
+(define-macro (ai a b)
+  (rt-automate-immediate a
+			 `(+ ,a ,b)))
+
+(macroexpand '(ai 9 3))
+
+(macroexpand '(rt-automate-immediate a
+				     `(+ 2 5)))
+(begin `,`(+ 2 3))
+
+(cond ((and (rt-immediate? a))
+       (let ((rt_gen45 a)
+	     (a (rt-gensym)))
+	 (quasiquote (let (unquote (map (lambda (im)
+					  (let ((n (cdr (assq im ((a . rt_gen45))))))
+					    (quasiquote (list (unquote im) (unquote n)))))
+					(quote (a))))
+		       (unquote (quasiquote (+ 2 5)))))))
+      (else
+       (quasiquote (+ 2 5))))
+
+
+(cond ((and (rt-immediate? a))
+       (let ((rt_gen24 a)
+	     (a (rt-gensym))
+	     (varnames (map (lambda (im)
+			      (let ((n (cdr (assq im tempvars))))
+				(list im n)))
+			    (a))))
+	 (quasiquote (let (unquote (map (lambda (s) (list (car s) (cadr s))) varnames)) (unquote (quasiquote (+ (unquote a) 5))))))) (else (quasiquote (+ (unquote a) 5))))
+
+(let ((newbody `(+ ,a 5)))
+  (cond ((and (rt-immediate? a))
+	 (let ((rt_gen152 a)
+	       (a (rt-gensym))
+	       (varnames ((a rt_gen152))))
+	   `(let ,(map (lambda (s)
+			 (list (car s) (cadr s)))
+		       varnames)
+	      ,newbody)))
+	(else
+	 `(+ ,a 5)))))
+!#
+
+
+#!
+
+(define-rt-macro (vector-ref expand/vec expand/pos)
+  (if (rt-is-safety?)
+      (rt-automate-immediate vec pos
+			     `(begin
+				(if (not (vector? ,vec))
+				    (rt-error "Operation vector-ref failed because first argument is not a vector."))
+				(if (>= ,pos (vector-length ,vec))
+				    (rt-error "Operation vector-ref failed because the length of the vector is to small"))
+				(rt-vector-ref/vector-ref ,vec (rt-castint/castint ,pos))))
+      `(rt-vector-ref/vector-ref ,vec (rt-castint/castint ,pos))))
+!#
+
+
 ;; VECTORS
 
 (rt-renamefunc vector? SCM_VECTORP <int> (<SCM>))
 (rt-renamefunc vector-length SCM_VECTOR_LENGTH <int> (<SCM>))
 
-(define-rt-macro (vector-ref vec pos)
+(define-rt-macro (vector-ref expand/vec expand/pos)
   (if (rt-is-safety?)
       (if (not (rt-immediate? vec pos))
 	  (let ((das-vec (rt-gensym))
@@ -4243,11 +4484,11 @@ Notes
 			channels)))))))
 
 (define-c-macro (rt-outs/outs n)
-  (<-> "_rt_funcarg->outs[" (eval-c-parse n) "]"))
+  (<-> "_rt_outs[" (eval-c-parse n) "]"))
 (define-c-macro (rt-set-outs! n val)
-  (<-> "_rt_funcarg->outs[" (eval-c-parse n) "]=" (eval-c-parse val)))
+  (<-> "_rt_outs[" (eval-c-parse n) "]=" (eval-c-parse val)))
 (define-c-macro (rt-num_outs/num_outs)
-  "_rt_funcarg->num_outs")
+  "_rt_num_outs")
 
 
 (define-rt-macro (in . channels)
@@ -4264,9 +4505,9 @@ Notes
 		 channels))))
 
 (define-c-macro (rt-ins/ins n)
-  (<-> "_rt_funcarg->ins[" (eval-c-parse n) "]"))
+  (<-> "_rt_ins[" (eval-c-parse n) "]"))
 (define-c-macro (rt-num_ins/num_ins)
-  "_rt_funcarg->num_ins")
+  "_rt_num_ins")
 
 
 (<rt-func> 'rt-outs/outs '<float> '(<int>))
@@ -4529,7 +4770,7 @@ Notes
 ;; mus-srate
 (<rt-func> 'mus-srate '<float> '() #:is-immediate #t)
 (define-c-macro (mus-srate)
-  "_rt_funcarg->samplerate")
+  "_rt_samplerate")
 
 ;; move-locsig
 (rt-renamefunc move-locsig mus_move_locsig <void> (<mus_locsig-*> <float> <float>))
@@ -4924,7 +5165,8 @@ Notes
 					      (,',(symbol-append 'rt-readin- funcname) ,gen)
 					      (,',(symbol-append 'rt-mus- funcname '/mus_ funcname) ,gen)))))))
 	      
-	      (<rt-func> (symbol-append 'rt-readin- funcname) rettype '(<rt-readin>) #:is-immediate #t)
+	      ;;(<rt-func> (symbol-append 'rt-readin- funcname) rettype '(<rt-readin>) #:is-immediate #t)
+	      (<rt-func> (symbol-append 'rt-readin- funcname) rettype '(<mus_any-*>) #:is-immediate #t)
 	      (primitive-eval `(define-c-macro (,(symbol-append 'rt-readin- funcname) agen2)
 				 (<-> (symbol->string ,'agen2) "->" ,(symbol->string elname))))))
 	  '((channels <int>)
@@ -5294,21 +5536,35 @@ setter!-rt-mus-location/mus_location
 		extpointers
 		extnumbers
 		
-		`( (define-struct <func_args>
-		     <int> num_outs
-		     <float-*> outs
-		     <int> num_ins
-		     <float-*> ins
-		     <float> time
-		     <float> samplerate
-		     <float> res
-		     <char-*> error
-		     <SCM> errorvariable
-		     <int> errorvarnum)
+		`( ;;(define-struct <func_args>
+		   ;;  <int> num_outs
+		   ;;  <float-*> outs
+		   ;;  <int> num_ins
+		   ;;  <float-*> ins
+		   ;;  <float> time
+		   ;;  <float> samplerate
+		   ;;  <float> res
+		   ;;  <char-*> error
+		   ;;  <SCM> errorvariable
+		   ;;  <int> errorvarnum)
 
 		   (shared-struct <mus_rt_readin>)
+		   
+		   ;;(<struct-func_args-*> _rt_funcarg NULL)
+		   
+		   (<int> _rt_num_outs)
+		   (<float-*> _rt_outs)
+		   (<int> _rt_num_ins)
+		   (<float-*> _rt_ins)
+		   (<float> _rt_time)
+		   (<float> _rt_samplerate)
+		   (<float> _rt_res)
+		   (<char-*> _rt_error)
+		   (<SCM> _rt_errorvariable)
+		   (<int> _rt_errorvarnum)
 
-		   (<struct-func_args-*> _rt_funcarg NULL)
+
+
 		   (<nonstatic-extern-scm_t_bits> rt_readin_tag)
 
 		   "extern float rt_readin(struct mus_rt_readin*)"
@@ -5399,10 +5655,10 @@ setter!-rt-mus-location/mus_location
 					      (rt_error (string "Channel number for Out less than zero")))
 					 "/* */")
 				    ,(if (rt-is-safety?)
-					 '(if (> ch _rt_funcarg->num_outs)
+					 '(if (> ch _rt_num_outs)
 					      (rt_error (string "Illegal channel number for Out")))
 					 "/* */")
-				    (+= _rt_funcarg->outs[ch] val)))
+				    (+= _rt_outs[ch] val)))
 
 				    
 		   ,@(map (lambda (vardecl)
@@ -5416,9 +5672,9 @@ setter!-rt-mus-location/mus_location
 						    ,@(cddr (caddr term))))
 
 
-		   (<void> ,das-funcname (lambda ,(cons `(<struct-func_args-*> _rt_local_rt_funcarg) publicargs)
+		   (<void> ,das-funcname (lambda ,publicargs
 					   
-					   (set! _rt_funcarg _rt_local_rt_funcarg)
+					   ;;(set! _rt_funcarg _rt_local_rt_funcarg)
 					   
 					   ;;,@(map (lambda (extvar)
 					   ;;	    `(<float> ,(car extvar)))
@@ -5438,9 +5694,9 @@ setter!-rt-mus-location/mus_location
 					   ;;				  (SCM_BIGP ,name)
 					   ;;				  (! (SCM_REALP ,name)))
 					   ;;			      (begin
-					   ;;				(set! _rt_funcarg->errorvariable ,name)
-					   ;;				(set! _rt_funcarg->errorvarnum ,n)
-					   ;;				(set! _rt_funcarg->error (string ,(string-append "\\\""
+					   ;;				(set! _rt_errorvariable ,name)
+					   ;;				(set! _rt_errorvarnum ,n)
+					   ;;				(set! _rt_error (string ,(string-append "\\\""
 					   ;;										 (symbol->string (car extvar))
 					   ;;										 "\\\" is not a real float")))
 					   ;;				return))))
@@ -5452,7 +5708,7 @@ setter!-rt-mus-location/mus_location
 					   ;;	  extnumbers-writing)
 					   
 					   ,(if (rt-is-number? returntype)
-						`(set! _rt_funcarg->res (,rt-innerfuncname ,@(map cadr publicargs)))
+						`(set! _rt_res (,rt-innerfuncname ,@(map cadr publicargs)))
 						`(,rt-innerfuncname ,@(map cadr publicargs)))
 						   
 
@@ -5472,7 +5728,14 @@ setter!-rt-mus-location/mus_location
 						   (<float> samplerate))
 					   ,(if (null? orgargs)
 						`(begin
-						   (<struct-func_args> funcarg (struct-set num_outs outs num_ins ins time samplerate 0 NULL 0 0))
+						   (set! _rt_num_outs num_outs)
+						   (set! _rt_outs outs)
+						   (set! _rt_num_ins num_ins)
+						   (set! _rt_ins ins)
+						   (set! _rt_time time)
+						   (set! _rt_samplerate samplerate)
+
+						   ;;(<struct-func_args> funcarg (struct-set num_outs outs num_ins ins time samplerate 0 NULL 0 0))
 						   ,(if (not (null? extnumbers-writing))
 							'(<SCM> setfloats (SCM_VECTOR_REF vector 0))
 							"/* */")
@@ -5482,8 +5745,7 @@ setter!-rt-mus-location/mus_location
 						    ,(if (not (null? extnumbers))
 							 '(<SCM> readfloats (SCM_VECTOR_REF vector 2))
 							 "/* */")
-						    (,das-funcname &funcarg
-								   ,@(map (lambda (n) `(SCM_VECTOR_REF setfloats ,n)) (iota (length extnumbers-writing)))
+						    (,das-funcname ,@(map (lambda (n) `(SCM_VECTOR_REF setfloats ,n)) (iota (length extnumbers-writing)))
 								   ,@(map (lambda (n extvar)
 									    (if (eq? '<SCM> (-> (cadr extvar) c-type))
 										`(SCM_VECTOR_REF pointers ,n)
@@ -5491,11 +5753,11 @@ setter!-rt-mus-location/mus_location
 									  (iota (length extpointers))
 									  extpointers)
 								   ,@(map (lambda (n) `(SCM_REAL_VALUE(SCM_VECTOR_REF readfloats ,n))) (iota (length extnumbers)))))
-						 'return))))
+						'return))))
 		   
 		   (public			      
 		    (<float> ,funcname (lambda ((<SCM> argvect))
-					 (<struct-func_args> ,funcarg "{0}")
+					 ;;(<struct-func_args> ,funcarg "{0}")
 
 					 (SCM_ASSERT (== ,(length publicargs) (SCM_VECTOR_LENGTH argvect))
 						     argvect
@@ -5525,15 +5787,19 @@ setter!-rt-mus-location/mus_location
 										 (string ,type))))))
 							 types)
 					 
-					 (,das-funcname ,(string-append "&" (symbol->string funcarg)) ,@(map (lambda (type)
-													       (list (string->symbol (<-> "GET_" (car type)))
-														     (cadr type)))
-													     types))
-					 (SCM_ASSERT (== NULL ,(symbol-append funcarg '.error))
-						     ,(symbol-append funcarg '.errorvariable)
-						     ,(symbol-append funcarg '.errorvarnum)
-						     ,(symbol-append funcarg '.error))
-					 (return ,(symbol-append funcarg '.res)))))))))))
+					 (,das-funcname ,@(map (lambda (type)
+								 (list (string->symbol (<-> "GET_" (car type)))
+								       (cadr type)))
+							       types))
+					 (SCM_ASSERT (== NULL _rt_error)
+						     _rt_errorvariable
+						     _rt_errorvarnum
+						     _rt_error)
+					 ;;(SCM_ASSERT (== NULL ,(symbol-append funcarg '.error))
+					 ;;	     ,(symbol-append funcarg '.errorvariable)
+					 ;;	     ,(symbol-append funcarg '.errorvarnum)
+					 ;;	     ,(symbol-append funcarg '.error))
+					 (return _rt_res))))))))))
 
 
 
@@ -5631,100 +5897,102 @@ setter!-rt-mus-location/mus_location
 	       (extpointers (cadddr rt-3-result))
 	       (extnumbers (append (caddr rt-3-result) (cadr  (cdddr rt-3-result))))
 	       (term       (caddr (cdddr rt-3-result)))
-	       (callmacro (procedure->macro (lambda (x env)
-					      (if (null? extnumbers-writing)
-						  `(,funcname (vector ,@(map (lambda (extvar)
-									       (let ((name (cadddr extvar))
-										     (type (cadr extvar)))
-										 `(-> ,type transform ,name)))
-									     (append extnumbers-writing extpointers extnumbers))
-								      ,@(cdr x)))
-						  `(begin
-						     ;;,@(map (lambda (extvar)
-						     ;;	      `(if (number? ,(cadddr extvar))
-						     ;;		   (set! ,(cadddr extvar) (exact->inexact ,(car extvar)))))
-						     ;;	    extnumbers-writing)
-						     (,funcname (vector ,@(map (lambda (extvar)
-										 (let ((name (cadddr extvar))
-										       (type (cadr extvar)))
-										   `(-> ,type transform ,name)))
-									       (append extnumbers-writing extpointers extnumbers))
-									,@(cdr x))))))))
-	       (rt-callmacro (procedure->macro (lambda (x env)
-						 `(begin
-						    (let* ((writing-vector (vector ,@(map (lambda (ext)
-											    (exact->inexact ext))
-											  (iota (length extnumbers-writing)))))
-							   (reading-vector (vector ,@(map (lambda (ext)
-											    (exact->inexact ext))
-											  (iota (length extnumbers)))))
-							   (ret (<realtime> (,rt-funcname)
-									    ;; Note, the vector below is gc-marked manually in the funcall smob.
-									    (let* ((extra-gc-vars '())
-										   (transformed-pointers (vector ,@(map (lambda (extvar)
-															  (let ((name (cadddr extvar))
-																(type (cadr extvar)))
-															    `(-> ,type transform
-																 ,name
-																 (lambda (var)
-																   (set! extra-gc-vars
-																	 (cons var
-																	       extra-gc-vars))))))
-															extpointers))))
-									      ;;(c-display "1" ,extpointers)
-									      ;;(c-display "2" (list ,@(map cadddr extpointers)))
-									      (vector writing-vector
-										      transformed-pointers
-										      reading-vector
-										      ;; Keep extra-gv-vars and untransformed values here so they can be gc-marked.
-										      (append extra-gc-vars (list ,@(map cadddr extpointers))))))))
-						      ,@(map (lambda (n extvar)
-							       (let ((name (cadddr extvar))
-								     (type (cadr extvar)))
-								 `(rt-set-float! (vector-ref writing-vector ,n)
-										 (-> ,type transform ,name))))
-							     (iota (length extnumbers-writing))
-							     extnumbers-writing)
-						      
-						      ,@(map (lambda (n extvar)
-							       (let ((name (cadddr extvar))
-								     (type (cadr extvar)))
-								 `(rt-set-float! (vector-ref reading-vector ,n)
-										 (-> ,type transform ,name))))
-							     (iota (length extnumbers))
-							     extnumbers)
-
-						      ;;(c-display "jepp, creating" ,(length extnumbers) "-" reading-vector (object-address (vector-ref reading-vector 0))
-						      ;;	 (object-address (vector-ref reading-vector 0)))
-																	  
-						      ;;(apply c-display ,@(map cadddr extnumbers))
-						      
-						      ,@(map (lambda (n extvar)
-							       `(-> ret add-method ',extvar (make-procedure-with-setter
-											     (lambda ()
-											       (vector-ref writing-vector ,n))
-											     (lambda (newval)
-											       (rt-set-float! (vector-ref writing-vector ,n) newval)))))
-							     (iota (length extnumbers-writing))
-							     (map cadddr extnumbers-writing))
-						      
-						      ,@(map (lambda (n extvar)
-							       `(-> ret add-method ',extvar (make-procedure-with-setter
-											     (lambda ()
-											       (vector-ref reading-vector ,n))
-											     (lambda (newval)
-											       (rt-set-float! (vector-ref reading-vector ,n) newval)))))
-							     (iota (length extnumbers))
-							     (map cadddr extnumbers))
-							     
-						      ,@(map (lambda (pointer)
-							       `(-> ret add-method ',pointer (lambda ()
-											       ,pointer)))
-							     (map cadddr extpointers))
-						      
-						      ret))))))
+	       (callmacro (procedure->macro
+			   (lambda (x env)
+			     (if (null? extnumbers-writing)
+				 `(,funcname (vector ,@(map (lambda (extvar)
+							      (let ((name (cadddr extvar))
+								    (type (cadr extvar)))
+								`(-> ,type transform ,name)))
+							    (append extnumbers-writing extpointers extnumbers))
+						     ,@(cdr x)))
+				 `(begin
+				    ;;,@(map (lambda (extvar)
+				    ;;	      `(if (number? ,(cadddr extvar))
+				    ;;		   (set! ,(cadddr extvar) (exact->inexact ,(car extvar)))))
+				    ;;	    extnumbers-writing)
+				    (,funcname (vector ,@(map (lambda (extvar)
+								(let ((name (cadddr extvar))
+								      (type (cadr extvar)))
+								  `(-> ,type transform ,name)))
+							      (append extnumbers-writing extpointers extnumbers))
+						       ,@(cdr x))))))))
+	       (rt-callmacro (procedure->macro
+			      (lambda (x env)
+				`(begin
+				   (let* ((writing-vector (vector ,@(map (lambda (ext)
+									   (exact->inexact ext))
+									 (iota (length extnumbers-writing)))))
+					  (reading-vector (vector ,@(map (lambda (ext)
+									   (exact->inexact ext))
+									 (iota (length extnumbers)))))
+					  (ret (<realtime> (,rt-funcname)
+							   ;; Note, the vector below is gc-marked manually in the funcall smob.
+							   (let* ((extra-gc-vars '())
+								  (transformed-pointers (vector ,@(map (lambda (extvar)
+													 (let ((name (cadddr extvar))
+													       (type (cadr extvar)))
+													   `(-> ,type transform
+														,name
+														(lambda (var)
+														  (set! extra-gc-vars
+															(cons var
+															      extra-gc-vars))))))
+												       extpointers))))
+							     ;;(c-display "1" ,extpointers)
+							     ;;(c-display "2" (list ,@(map cadddr extpointers)))
+							     (vector writing-vector
+								     transformed-pointers
+								     reading-vector
+								     ;; Keep extra-gv-vars and untransformed values here so they can be gc-marked.
+								     (append extra-gc-vars (list ,@(map cadddr extpointers))))))))
+				     ,@(map (lambda (n extvar)
+					      (let ((name (cadddr extvar))
+						    (type (cadr extvar)))
+						`(rt-set-float! (vector-ref writing-vector ,n)
+								(-> ,type transform ,name))))
+					    (iota (length extnumbers-writing))
+					    extnumbers-writing)
+				     
+				     ,@(map (lambda (n extvar)
+					      (let ((name (cadddr extvar))
+						    (type (cadr extvar)))
+						`(rt-set-float! (vector-ref reading-vector ,n)
+								(-> ,type transform ,name))))
+					    (iota (length extnumbers))
+					    extnumbers)
+				     
+				     ;;(c-display "jepp, creating" ,(length extnumbers) "-" reading-vector (object-address (vector-ref reading-vector 0))
+				     ;;	 (object-address (vector-ref reading-vector 0)))
+				     
+				     ;;(apply c-display ,@(map cadddr extnumbers))
+				     
+				     ,@(map (lambda (n extvar)
+					      `(-> ret add-method ',extvar (make-procedure-with-setter
+									    (lambda ()
+									      (vector-ref writing-vector ,n))
+									    (lambda (newval)
+									      (rt-set-float! (vector-ref writing-vector ,n) newval)))))
+					    (iota (length extnumbers-writing))
+					    (map cadddr extnumbers-writing))
+				     
+				     ,@(map (lambda (n extvar)
+					      `(-> ret add-method ',extvar (make-procedure-with-setter
+									    (lambda ()
+									      (vector-ref reading-vector ,n))
+									    (lambda (newval)
+									      (rt-set-float! (vector-ref reading-vector ,n) newval)))))
+					    (iota (length extnumbers))
+					    (map cadddr extnumbers))
+				     
+				     ,@(map (lambda (pointer)
+					      `(-> ret add-method ',pointer (lambda ()
+									      ,pointer)))
+					    (map cadddr extpointers))
+				     
+				     ret))))))
 	  
-	  (apply eval-c-non-macro (append (list (<-> "-I" snd-header-files-path " -Werror -Wno-unused-function")
+	  (apply eval-c-non-macro (append (list (<-> "-I" snd-header-files-path " ") ;; " -Werror "
 						"#include <math.h>"
 						"#include <clm.h>"
 						"#include <xen.h>"
@@ -5916,29 +6184,25 @@ setter!-rt-mus-location/mus_location
 			  (b a))
 		     (b)))))
 
-(rt-2 '(lambda ()
-	 (let ((a (lambda ()
-		    5)))
-	   a)))
+(define a (rt-2 '(lambda ()
+		   (let ((a (lambda ()
+			      5)))
+		     a))))
 
-(rt-2 '(lambda ()
-	 (((lambda ()
-	     (lambda ()
-	       5))))))
-
-
-(rt-2 '(lambda ()
-	 (let ((a (let ((b (lambda ()
-			     9)))
-		    b)))
-	   (a))))
+(define a (rt-2 '(lambda ()
+		   (((lambda ()
+		       (lambda ()
+			 5)))))))
 
 
+(define a (rt-2 '(lambda ()
+		   (let ((a (let ((b (lambda ()
+				       9)))
+			      b)))
+		     (a)))))
 
-(let* ((a (lambda (b)
-	    (lambda ()
-	      b))))
-  ((a 50)))
+(rt-funcall a)
+
 
 
 ;; Closure: (is not supposed to work)
@@ -5948,7 +6212,7 @@ setter!-rt-mus-location/mus_location
 				 (the <int> b))
 			       )))
 		     ((a 50))))))
-;; Segfault:
+;; Wrong result:
 (rt-funcall a)
 
 
@@ -5980,8 +6244,11 @@ setter!-rt-mus-location/mus_location
 					  2))))
 
 
-(rt-2 '(lambda ()
-	 (locsig locs 5)))
+(rt-expand-macros '(mus-channels locs))
+
+(rt-expand-macros '(lambda ()
+		     (locsig locs 5)))
+
 (rt-2 '(lambda ()
 	 (begin
 	   (range i 0 (mus-channels loc)
@@ -6076,6 +6343,7 @@ setter!-rt-mus-location/mus_location
 		     (while (< a 9)
 			    (set! a (1+ a)))
 		     a))))
+(rt-funcall a)
 
 
 (define readfloat 2)
@@ -6292,17 +6560,19 @@ Kræsj2:
 (rt-expand-macros '(truncate (and 2 3)))
 (rt-expand-macros '(modulo 5 2))
 
+
+;; Oh boy!
 (define a (rt-2 '(lambda ()
 		   (+ 0 (list-ref alist 13)))))
 (define alist '(10 1 2 3 4 5 6 7 8 9 10 11 12 13))
 
 (rt-funcall a)
 
-(rt-2 '(lambda ()
-	 (let ((a 9))
-	   (if (and 1 (or 5 (is-type? <int> a)))
-	       5
-	       6))))
+(define a (rt-2 '(lambda ()
+		   (let ((a 9))
+		     (if (and 1 (or 5 (is-type? <int> a)))
+			 5
+			 6)))))
 
 (define vars (make-hash-table 219))
 (begin vars)
@@ -6327,11 +6597,6 @@ Kræsj2:
 		   (oscil gen))))
 
 
-
-
-(list ((macro-transformer rt-old-mus-location) gen))
-(defmacro-transformer rt-old-mus-location)
-(procedure-source (defmacro-transformer rt-old-mus-location))
 
 
 (define gen (make-readin "/home/kjetil/t1.wav"))
@@ -6505,18 +6770,18 @@ Forresten:
 	 (ai_u1 <float> (lambda ()
 			  (rt-oscil/mus_oscil osc_u2 0 0))))
     (set! osc_u2 _rt_localosc_u2)
-    (rt-begin_p/begin_p
-     (rt-begin_p/begin_p
+    (rt-begin_p
+     (rt-begin_p
       (ai_u1)))))
 
 (lambda ((<mus_any-*> _rt_local_osc_u2))
   (let* ((osc_u2 <mus_any-*>)
 	 (ai_u1 <float> (lambda ()
 			  (return (rt-oscil/mus_oscil osc_u2 0 0)))))
-    (return (rt-begin_p/begin_p
+    (return (rt-begin_p
 	     (set! osc_u2 _rt_local_osc_u2)
-	     (rt-begin_p/begin_p
-	      (rt-begin_p/begin_p
+	     (rt-begin_p
+	      (rt-begin_p
 	       (ai_u1)))))))
 
 
@@ -6722,6 +6987,7 @@ Runtime-sjekk:
 
 
 
+(rt-expand-macros '(= a 3))
 
 !#
 
