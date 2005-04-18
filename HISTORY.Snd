@@ -1,6 +1,7 @@
 Snd change log
 
   18-Apr:    removed xen->sample generator.
+	     changed moog.scm to use def-clm-struct, rather than a list.
   12-Apr:    before-save-state-hook.
   8-Apr:     poly.scm.
   7-Apr:     moved load-font to snd-motif.scm and snd-gtk.scm.

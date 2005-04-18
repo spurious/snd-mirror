@@ -93,6 +93,9 @@
    (let ((gen (make-oscil 440.0)))
      (run (lambda () (let ((g1 gen) (g2 #f)) (oscil g1) (set! g2 g1) (oscil g2)))))
  *   -> opt: can't set pointer var (g2) to alias other such var
+ *
+ * PERHAPS: count-matches and friends? (func itself is already optimized)
+ * PERHAPS: float_or_boolean return type mainly for map-channel funcs
  */
 
 #include "snd.h"
@@ -1667,7 +1670,7 @@ static xen_value *add_empty_var_to_ptree(ptree *prog, int type)
     case R_INT_VECTOR:
     case R_VCT_VECTOR:   return(make_xen_value(type, add_vect_to_ptree(prog, NULL), R_VARIABLE));         break;
     default:
-      if (type > R_ANY)
+      if (type > R_ANY) /* def-clm-struct */
 	return(make_xen_value(type, add_xen_to_ptree(prog, XEN_FALSE), R_VARIABLE)); 
       break;
     }
@@ -1702,7 +1705,7 @@ static xen_value *transfer_value(ptree *prog, xen_value *v)
       return(make_xen_value(v->type, v->addr, R_VARIABLE)); 
       break;
     default: 
-      if (v->type > R_ANY)
+      if (v->type > R_ANY) /* def-clm-struct */
 	return(make_xen_value(v->type, add_xen_to_ptree(prog, prog->xens[v->addr]), R_VARIABLE));
       break;
     }
@@ -3586,7 +3589,7 @@ static xen_value *set_form(ptree *prog, XEN form, walk_result_t ignore)
       return(v);
     }
   if ((var) && (var->unsettable))
-    return(run_warn("set!: can't set local or list vars: %s", XEN_AS_STRING(settee)));
+    return(run_warn("set!: can't set: %s", XEN_AS_STRING(settee)));
   return(run_warn("set! variable problem: %s", XEN_AS_STRING(form)));
 }
 
@@ -6113,7 +6116,10 @@ static void funcall_nf(int *args, ptree *pt)
  	pt->track_readers[func->args[i]] = pt->track_readers[args[i + 2]]; 
  	break;
       default:      
-	pt->ints[func->args[i]] = pt->ints[args[i + 2]]; 
+	/* def-clm-struct list can be passed here -> xens */
+	if (func->arg_types[i] > R_ANY)
+	  pt->xens[func->args[i]] = pt->xens[args[i + 2]]; 
+	else pt->ints[func->args[i]] = pt->ints[args[i + 2]]; 
 	break;
       }
   eval_embedded_ptree(func, pt);
@@ -6164,7 +6170,9 @@ static void funcall_nf(int *args, ptree *pt)
       TRACK_READER_RESULT = pt->track_readers[fres->addr];   
       break;
     default:      
-      INT_RESULT = pt->ints[fres->addr];   
+      if (fres->type > R_ANY)
+	XEN_RESULT = pt->xens[fres->addr];
+      else INT_RESULT = pt->ints[fres->addr];   
       break;
     }
 }
@@ -10297,6 +10305,9 @@ static xen_value *arg_warn(ptree *prog, char *funcname, int arg_num, xen_value *
 	     (vowel_p(correct_type[0])) ? "n" : "", correct_type);
   return(NULL);
 }
+
+/* TODO: walk (g|setter moog-y) as clm_struct ref
+ */
 
 static xen_value *walk(ptree *prog, XEN form, walk_result_t walk_result)
 {

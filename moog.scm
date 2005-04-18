@@ -7,10 +7,12 @@
 ;;;   Fernando Lopez-Lezcano, nando@ccrma.stanford.edu
 ;;;   http://ccrma.stanford.edu/~nando/clm/moog
 ;;;
-;;; translated to Snd scheme function by Bill
+;;; translated to Snd scheme function by Bill,
+;;;   changed 17-Apr-05 to use def-clm-struct (for the optimizer's benefit)
 
 (provide 'snd-moog.scm)
 (if (not (provided? 'snd-env.scm)) (load-from-path "env.scm"))
+(if (not (provided? 'snd-ws.scm)) (load-from-path "ws.scm"))
 
 (define moog-gaintable (vct 0.999969 0.990082 0.980347 0.970764 0.961304 0.951996 0.94281 0.933777 0.924866 0.916077 
 			    0.90741 0.898865 0.890442 0.882141  0.873962 0.865906 0.857941 0.850067 0.842346 0.834686
@@ -66,45 +68,50 @@
 ;;;       I prefered to translate Hz into the internal parameter rather than controlling
 ;;;       the cutoff frequency in terms of a number that goes between -1 and 1. 
 
+(def-clm-struct moog
+  (freq 0.0 :type float)
+  (Q 0.0 :type float)
+  (s #f :type vct)
+  (y 0.0 :type float)
+  (fc 0.0 :type float))
+
 (define (make-moog-filter frequency Q)
   "(make-moog-filter frequency Q) makes a new moog-filter generator. 'frequency' is the cutoff in Hz,
 'Q' sets the resonance: 0 = no resonance, 1: oscillates at 'frequency'"
-  (list frequency Q (make-vct 4) 0.0 (envelope-interp (/ frequency (* (srate) 0.5)) moog-freqtable)))
+  (make-moog :freq frequency 
+	     :Q Q 
+	     :s (make-vct 4) 
+	     :y 0.0 
+	     :fc (envelope-interp (/ frequency (* (mus-srate) 0.5)) moog-freqtable)))
 
 (define moog-frequency
   (make-procedure-with-setter
    (lambda (gen)
-     (list-ref gen 0))
+     (moog-freq gen))
    (lambda (gen frq)
-     (list-set! gen 0 frq)
-     (list-set! gen 4 (envelope-interp (/ frq (* (srate) 0.5)) moog-freqtable)))))
-
-(define moog-Q
-  (make-procedure-with-setter
-   (lambda (gen)
-     (list-ref gen 1))
-   (lambda (gen Q)
-     (list-set! gen 1 Q))))
+     (set! (moog-freq gen) frq)
+     (set! (moog-fc gen) (envelope-interp (/ frq (* (mus-srate) 0.5)) moog-freqtable)))))
 
 (define (moog-filter m sig)
-  "(moog-filter m sig) is the generator associated with make-moog-filter"
-  (let* ((fc (list-ref m 4))
-	 (s (list-ref m 2))
-	 (A (* 0.25 (- sig (list-ref m 3)))))
+  ;"(moog-filter m sig) is the generator associated with make-moog-filter"
+  (let ((A (* 0.25 (- sig (moog-y m))))
+	(st 0.0))
     (do ((cell 0 (1+ cell)))
 	((= cell 4))
-      (let ((st (vct-ref s cell)))
-	(set! A (min (max -0.95 (+ A (* fc (- A st)))) 0.95))
-	(vct-set! s cell A)
-	(set! A (min (max -0.95 (+ A st)) 0.95))))
-    (let* ((out A))
-      (let* ((ix (* fc 99.0))
-	     (ixint (inexact->exact (floor ix)))
-	     (ixfrac (- ix ixint)))
-	(list-set! m 3 (* A
-			  (list-ref m 1)
+      (set! st (vct-ref (moog-s m) cell))
+      (set! A (min (max -0.95 (+ A (* (moog-fc m) (- A st)))) 0.95))
+      (vct-set! (moog-s m) cell A)
+      (set! A (min (max -0.95 (+ A st)) 0.95)))
+    (let* ((ix (* (moog-fc m) 99.0))
+	   (ixint (inexact->exact (floor ix)))
+	   (ixfrac (- ix ixint)))
+      (set! (moog-y m) (* A (moog-Q m)
 			  (+ (* (- 1 ixfrac)
 				(vct-ref moog-gaintable (+ ixint 99)))
 			     (* ixfrac (vct-ref moog-gaintable (+ ixint 100)))))))
-      out)))
+    A))
 
+
+;;; (define gen (make-moog-filter 500.0 .1))
+;;; (map-channel (lambda (y) (moog-filter gen y)))
+;;; (run (lambda () (moog-filter gen 1.0)))

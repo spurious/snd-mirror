@@ -2522,8 +2522,8 @@ static bool make_spectrogram(chan_info *cp)
 	      y = yoff;
 	      for (i = 0; i < bins; i++, x += xincr)
 		{
-		  xyz[0] = x - x0; 
-		  xyz[1] = y - y0;  /* add log freq here I assume [2034 sono] */
+		  xyz[0] = x - x0; /* add log freq here? -- x is freq axis in this case */
+		  xyz[1] = y - y0;  
 		  if (!(cp->fft_log_magnitude))
 		    xyz[2] = fdata[i];
 		  else 
