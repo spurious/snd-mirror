@@ -100,6 +100,7 @@
 (define full-test (< snd-test 0))
 (define total-tests 28)
 (if (not (defined? 'with-exit)) (define with-exit (< snd-test 0)))
+(define test-number -1)
 
 (set! (with-background-processes) #f)
 (set! (show-backtrace) #t)
@@ -142,11 +143,18 @@
 (if (file-exists? "optimizer.log")
     (delete-file "optimizer.log"))
 (define optimizer-log (open-output-file "optimizer.log"))
+(define optimizer-test -1)
 (reset-hook! optimization-hook)
 (add-hook! optimization-hook 
 	   (lambda (msg)
-	     (display msg optimizer-log)
-	     (newline optimizer-log)))
+	     (if (= (optimization) max-optimization)
+		 (begin
+		   (if (not (= test-number optimizer-test))
+		       (begin
+			 (display (format #f "-------- test ~A --------~%" test-number) optimizer-log)
+			 (set! optimizer-test test-number)))
+		   (display msg optimizer-log)
+		   (newline optimizer-log)))))
 
 (define (real-time) (exact->inexact (/ (get-internal-real-time) internal-time-units-per-second)))
 (define (hundred n) (inexact->exact (round (* 100 n))))
@@ -272,7 +280,6 @@
 (define timings (make-vector (+ total-tests 1) 0))
 
 (snd-display ";;~A" (snd-version))
-(define test-number -1)
 (if (not (defined? 'before-test-hook)) (define before-test-hook (make-hook 1)))
 (if (not (defined? 'after-test-hook)) (define after-test-hook (make-hook 1)))
 (add-hook! before-test-hook (lambda (n)
@@ -10749,7 +10756,7 @@ EDITS: 5
 		  (snd-display ";dithering: ~A" mx)))
 	    (revert-sound ind)
 	    (map-channel (ring-mod 10 (list 0 0 1 (hz->radians 100))))
-	    (map-channel (osc-formants .99 '(400 800 1200) '(400 800 1200) '(4 2 3)))
+	    (map-channel (osc-formants .99 (vct 400.0 800.0 1200.0) (vct 400.0 800.0 1200.0) (vct 4.0 2.0 3.0)))
 	    (map-channel (zecho .5 .75 6 10.0))
 	    (map-channel (flecho .5 .9))
 	    (filtered-env '(0 0 1 1 2 0))
@@ -35967,6 +35974,7 @@ EDITS: 2
        (if (fneq (mus-frequency sb) 220.0) (display ";sb freq messed up"))
        ))))
 
+;;; TODO: this is not being optimized?
 (define (ssb-fm-no-gen gen modsig)
   (let* ((am0 (oscil (list-ref gen 0)))
 	 (am1 (oscil (list-ref gen 1)))
@@ -40968,9 +40976,21 @@ EDITS: 2
 	(if (not (= val 5)) (snd-display ";set let 10: ~A" val)))
       (let ((val (run-eval '(let ((a 0) (hi 3)) (set! a (if (< hi 2) (if (< a 1) 2 3) (if (< a 1) 4 5))) a))))
 	(if (not (= val 4)) (snd-display ";set let 10: ~A" val)))
+      (let ((val (run-eval '(or 1 2))))
+	(if (not (= val 1)) (snd-display ";or 1 2: ~A" val)))
+      (let ((val (run-eval '(or #f 2))))
+	(if (not val) (snd-display ";or #f 2: ~A" val)))
+      (let ((val (run-eval '(and #f 2))))
+	(if (not (eq? val #f)) (snd-display ";and #f 2: ~A" val)))
+      (let ((a 0))
+	(let ((val (run (lambda () (and (let ((b 32)) (if (< a 0) (set! a b) (set! a (1+ b))) #t) #f)))))
+	  (if val (snd-display ";run side-effect and result: ~A" val))
+	  (if (not (= a 33)) (snd-display ";run side-effect and a: ~A" a))))
+      (let ((a 0))
+	(let ((val (run (lambda () (or (let ((b 32)) (if (< a 0) (set! a b) (set! a (1+ b))) #f) #t)))))
+	  (if (not val) (snd-display ";run side-effect or result: ~A" val))
+	  (if (not (= a 33)) (snd-display ";run side-effect or a: ~A" a))))
 
-      (let ((tag (catch #t (lambda () (run-eval '(let ((a 0)) (set! a (or 1 3)) a))) (lambda args (car args)))))
-	(if (not (equal? tag 'cannot-parse)) (snd-display ";set or not bool: ~A" tag)))
       (let ((tag (catch #t (lambda () (run-eval '(let ((a 0)) (set! a (and 1 3)) a))) (lambda args (car args)))))
 	(if (not (equal? tag 'cannot-parse)) (snd-display ";set and not bool: ~A" tag)))
       (let ((val (run-eval '(if 1 2 3))))

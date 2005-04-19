@@ -1,153 +1,344 @@
-# xm-enved.rb -- Translation of xm-enved.scm
+# xm-enved.rb -- Translation of xm-enved.scm and enved.scm -*- snd-ruby -*-
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Tue Mar 18 00:18:35 CET 2003
-# Last: Fri Feb 27 14:12:51 CET 2004
+# Last: Fri Apr 15 18:57:38 CEST 2005
 
 # Commentary:
 #
-# You can use class Enved without Motif or Gtk.  If you want drawing
-# panes, Xenved requires --with-motif or --with-gtk and module
-# libxm.so or --with-static-xm.
+# Tested with Snd 7.12, Motif 2.2.2, Gtk+ 2.2.1, Ruby 1.6.6, 1.6.8 and 1.9.0.
 #
-# Tested with Snd 7.3, Motif 2.2.2, Gtk+ 2.2.1, Ruby 1.6.6, 1.6.8 and 1.9.0.
+# module Snd_enved
+#  channel_enved(snd, chn)
+#  set_channel_enved(new_env, snd, chn)
+#  remove_channel_enved(snd, chn)
+#  channel_envelope(snd, chn)
+#  set_channel_envelope(new_env, snd, chn)
+#  mouse_press_envelope(snd, chn, button, state, x, y)
+#  mouse_drag_envelope(snd, chn, button, state, x, y)
+#  mouse_release_envelope(snd, chn, button, state, x, y, axis)
+#  create_initial_envelopes(snd)
+#  enveloping_key_press(snd, chn, key, state)
+#  start_enveloping
+#  stop_enveloping
+#  play_with_envs(snd = false)
+#  play_panned(snd)
 #
-# type: xe = xenved_test
-#       xe.help
-#
-# make_enved(env)
+#  envelope?(obj)
+#  make_enved(enved = [0, 0, 1, 1])
+#  enved?(obj)
+#  make_graph_enved(enved = [0, 0, 1, 1], snd = snd_snd, chn = snd_chn)
+#  graph_enved?(obj)
+#  make_xenved(name, parent, *rest)
+#  xenved?(obj)
+#  xenved_test(name = "xenved")
 #
 # class Enved
-#   initialize(env)
+#  initialize(enved = [0, 0, 1, 1])
+#  inspect
+#  envelope
+#  envelope=(new_env)
+#  reset
+#  interp(x, base = 0)
+#  stretch(old_att = nil, new_att = nil, old_dec = nil, new_dec = nil)
+#  stretch!(old_att = nil, new_att = nil, old_dec = nil, new_dec = nil)
+#  scale(scale = 1.0, offset = 0.0)
+#  scale!(scale = 1.0, offset = 0.0)
+#  normalize(new_max = 1.0)
+#  normalize!(new_max = 1.0)
+#  reverse
+#  reverse!
+#  point(idx, *args)
+#  min
+#  max
+#  length
+#  first
+#  last
+#  first_x
+#  last_x
+#  first_y
+#  last_y
+#  in_range?(x)
+#  each
+#  each_with_index
+#  map
+#  map!
 #
-# getter and setter:
-#   envelope=(new_env)
-#   envelope
+#   class Graph_enved < Enved
+#    initialize(enved, snd, chn)
+#    click_time
+#    click_time=(val)
+#    before_enved_hook
+#    after_enved_hook
+#    inspect
+#    reset
+#    redraw
+#    mouse_press_cb(x, y)
+#    mouse_drag_cb(x, y)
+#    mouse_release_cb
 #
-# methods:
-#   interp(x, base)
-#   stretch(oatt, natt, odec, ndec) stretch!(oatt, natt, odec, ndec)
-#   scale(scale, offset)            scale!(scale, offset)
-#   normalize(new_max)              normalize!(new_max)
-#   reverse                         reverse!
-#   max                             min
-#   first   (first [x, y])          last   (last [x, y])
-#   first_x                         last_x
-#   each do |x, y| ... end          map do |x, y| ... end
-#   length
-#   point(idx, *args)               # point(idx) --> [x, y]
-#                                   # point(idx, :x, x_val, :y, y_val)
-#                                   # sets x, y or both and returns new [x, y]
-#   in_range?(x)   (x > first_x and x < last_x)
-#   help           (alias info and description)
-#
-# make_xenved(name, parent, *rest)
-#   name     String
-#   parent   Widget
-#   *rest
-#     :envelope,    [0, 0, 1, 1]   x0, y0, x1, y1, ...
-#     :axis_bounds, [0, 1, 0, 1]   x0, x1, y0, y1
-#     :args,        []             Motif properties
-#     :axis_label,  nil            if axes labels should have
-#                                  other values than axis_bounds,
-#                                  (see dlocsig.rb)
-#
-# class Xenved < Enved (see xm-enved.scm)
-#   initialize(name, parent, enved, axis_bounds, args, axis_label)
-#   before_enved_hook              lambda do |pos, x, y, reason| ... end
-#   after_enved_hook               lambda do |pos, reason| ... end
-#
-# getter and setter:
-#   click_time=(val)
-#   click_time
-#   axis_bounds=(new_bounds)
-#   axis_bounds
-#
-# interactive methods:
-#   create   (alias open)
-#   close
-#   clear
-#   help     (alias info and description)
-
-=begin
-# more examples in effects.rb
-
-xe = xenved_test
-xe.envelope                         # --> [0.0, 0.0, 1.0, 1.0]
-xe.click_time                       # --> 0.2
-xe.envelope = [0, 1, 1, 1]
-# three clicks later
-xe.envelope                         # --> [0.0, 1.0,
-                                    #      0.190735694822888, 0.562264150943396,
-                                    #      0.632152588555858, 0.932075471698113,
-                                    #      0.848773841961853, 0.316981132075472,
-                                    #      1.0, 1.0]
-xe.help                             # this help
-=end
+#     class Xenved < Graph_enved
+#      initialize(name, parent, enved, bounds, args, axis_label)
+#      inspect
+#      clear
+#      envelope=(new_env)
+#      axis_bounds
+#      axis_bounds=(bounds)
+#      point(idx, *args)
+#      create
+#      close
 
 # Code:
 
 require "examp"
 require "env"
 require "hooks"
+require "extensions"
 
-if provided? "snd-motif" or provided? "snd-gtk"
+if provided? :snd_motif or provided? :snd_gtk
   require "snd-xm"
   include Snd_XM
 end
 
-def make_enved(enved = [0, 0, 1, 1])
-  unless enved.kind_of?(Array) and enved.length >= 4 and enved.length.even?
-    error("%s: need at least two points [x0, y0, x1, y1, ...], %s", get_func_name, enved.inspect)
+module Snd_enved
+  # returns Graph_enved object or nil
+  def channel_enved(snd = false, chn = false)
+    channel_property(:enved_envelope, snd, chn)
   end
-  Enved.new(enved)
-end
 
-if provided? "xm" or provided? "xg"
-  def xenved_test(name = "xenved")
-    widget = if provided? "xm"
-               add_main_pane(name, RxmFormWidgetClass, [RXmNheight, 200])
+  # sets Graph_enved object
+  def set_channel_enved(new_ge, snd = false, chn = false)
+    set_channel_property_save_state_ignore(:enved_envelope, snd, chn)
+    set_channel_property(:enved_envelope, new_ge, snd, chn)
+  end
+  
+  add_help(:channel_envelope,
+           "channel_envelope(snd, chn)  \
+returns the current enved envelope associated with snd's channel chn")
+  def channel_envelope(snd = false, chn = false)
+    if graph_enved?(ge = channel_enved(snd, chn))
+      ge.envelope
+    elsif envelope?(en = channel_property(:channel_envelope, snd, chn))
+      set_channel_enved(make_graph_enved(en, snd, chn), snd, chn)
+      en
+    else
+      nil
+    end
+  end
+
+  def set_channel_envelope(new_env, snd = false, chn = false)
+    set_channel_property(:channel_envelope, new_env, snd, chn)
+    if graph_enved?(ge = channel_enved(snd, chn))
+      ge.envelope = new_env
+    else
+      ge = make_graph_enved(new_env, snd, chn)
+      set_channel_enved(ge, snd, chn)
+    end
+    ge
+  end
+
+  #   left button: set/delete point
+  # middle button: reset to original env
+  def mouse_press_envelope(snd, chn, button, state, x, y)
+    case button
+    when 1
+      graph_enved?(ge = channel_enved(snd, chn)) and ge.mouse_press_cb(x, y)
+    when 2
+      graph_enved?(ge = channel_enved(snd, chn)) and ge.reset
+    end
+  end
+
+  def mouse_drag_envelope(snd, chn, button, state, x, y)
+    graph_enved?(ge = channel_enved(snd, chn)) and ge.mouse_drag_cb(x, y)
+  end
+
+  def mouse_release_envelope(snd, chn, button, state, x, y, axis)
+    if axis == Lisp_graph
+      graph_enved?(ge = channel_enved(snd, chn)) and ge.mouse_release_cb
+      true
+    else
+      false
+    end
+  end
+
+  def create_initial_envelopes(snd)
+    channels(snd).times do |chn|
+      set_dot_size(8, snd, chn)
+      set_channel_envelope([0.0, 1.0, 1.0, 1.0], snd, chn)
+    end
+  end
+
+  def enveloping_key_press(snd, chn, key, state)
+    # C-g returns to original env
+    # C-. applies current env to amplitude
+    if key == ?. and state == 4
+      env_channel((channel_envelope(snd, chn) or [0, 1, 1, 1]), 0, frames(snd, chn), snd, chn)
+      true
+    else
+      if key == ?g and state == 4
+        graph_enved?(ge = channel_enved(snd, chn)) and ge.reset
+        true
+      else
+        false
+      end
+    end
+  end
+
+  Hook_name = "graph-enved"
+  
+  add_help(:start_enveloping,
+           "start_enveloping()  \
+starts the enved processes, displaying an envelope editor in each channel")
+  def start_enveloping
+    unless $after_open_hook.member?(Hook_name)
+      $after_open_hook.add_hook!(Hook_name) do |snd|
+        create_initial_envelopes(snd)
+      end
+      $mouse_press_hook.add_hook!(Hook_name) do |snd, chn, button, state, x, y|
+        mouse_press_envelope(snd, chn, button, state, x, y)
+      end
+      $mouse_drag_hook.add_hook!(Hook_name) do |snd, chn, button, state, x, y|
+        mouse_drag_envelope(snd, chn, button, state, x, y)
+      end
+      $mouse_click_hook.add_hook!(Hook_name) do |snd, chn, button, state, x, y, axis|
+        mouse_release_envelope(snd, chn, button, state, x, y, axis)
+      end
+      $key_press_hook.add_hook!(Hook_name) do |snd, chn, key, state|
+        enveloping_key_press(snd, chn, key, state)
+      end
+      true
+    else
+      false
+    end
+  end
+
+  add_help(:stop_enveloping,
+           "stop_enveloping()  turns off the enved channel-specific envelope editors")
+  def stop_enveloping
+    $after_open_hook.remove_hook!(Hook_name)
+    $mouse_press_hook.remove_hook!(Hook_name)
+    $mouse_drag_hook.remove_hook!(Hook_name)
+    $mouse_click_hook.remove_hook!(Hook_name)
+    $key_press_hook.remove_hook!(Hook_name)
+    snd_catch do set_lisp_graph?(false, snd_snd, snd_chn) end
+    nil
+  end
+
+  # some examples of using this envelope editor
+
+  add_help(:play_with_envs,
+           "play_with_envs([snd=false])  \
+sets channel amps during playback from the associated enved envelopes")
+  def play_with_envs(snd = false)
+    channel_envelope(snd, 0) or create_initial_envelopes(snd)
+    channels(snd).times do |chn|
+      player = make_player(snd, chn)
+      e = make_env(:envelope, channel_envelope(snd, chn),
+                   :end, (frames(snd, chn).to_f / dac_size).floor)
+      add_player(player, 0, -1, -1, lambda { |reason| $play_hook.reset_hook! })
+      $play_hook.add_hook!(get_func_name) { |fr| set_amp_control(env(e), player) }
+    end
+    start_playing(channels(snd), srate(snd))
+  end
+
+  add_help(:play_panned,
+           "play_panned(snd)  \
+pans a mono sound following its enved envelope into a stereo sound")
+  def play_panned(snd)
+    bufsize = 256
+    data = make_sound_data(2, bufsize)
+    bytes = bufsize * 4
+    audio_fd = mus_audio_open_output(Mus_audio_default, srate(snd), 2, Mus_lshort, bytes)
+    samp = 0
+    len = frames(snd, 0)
+    if audio_fd != -1
+      channel_envelope(snd, 0) or create_initial_envelopes(snd)
+      e = make_env(:envelope, channel_envelope(snd, 0), :end, (len.to_f / dac_size).floor)
+      while samp < len
+        scaler = env(e)
+        samps0 = channel2vct(samp, bufsize)
+        samps1 = samps0.dup
+        vct2sound_data(samps0.scale(scaler), data, 0)
+        vct2sound_data(samps1.scale(1.0 - scaler), data, 1)
+        mus_audio_write(audio_fd, data, bufsize)
+        samp += bufsize
+      end
+      mus_audio_close(audio_fd)
+    end
+  end
+
+  def envelope?(obj)
+    array?(obj) and obj.length >= 4 and obj.length.even?
+  end
+
+  def make_enved(enved = [0, 0, 1, 1])
+    assert_type(envelope?(enved), enved, 0, "an envelope, at least 2 points [x0, y0, x1, y1, ...]")
+    Enved.new(enved)
+  end
+
+  def enved?(obj)
+    obj.instance_of?(Enved)
+  end
+
+  def make_graph_enved(enved = [0, 0, 1, 1], snd = snd_snd, chn = snd_chn)
+    assert_type(envelope?(enved), enved, 0, "an envelope, at least 2 points [x0, y0, x1, y1, ...]")
+    (ge = Graph_enved.new(enved, snd, chn)).redraw
+    ge
+  end
+
+  def graph_enved?(obj)
+    obj.instance_of?(Graph_enved)
+  end
+
+  if provided? :xm or provided? :xg
+    def make_xenved(name, parent, *rest)
+      envelope = get_args(rest, :envelope, [0, 0, 1, 1])
+      bounds   = get_args(rest, :axis_bounds, [0, 1, 0, 1])
+      args     = get_args(rest, :args, [])
+      label    = get_args(rest, :axis_label, nil)
+      name = "xenved" unless string?(name) and (not name.empty?)
+      assert_type(widget?(parent), parent, 1, "a widget")
+      assert_type((array?(bounds) and bounds.length == 4),
+                  bounds, 3, "an array of 4 elements [x0, x1, y0, y1]")
+      unless array?(label) and label.length == 4
+        label = bounds
+      end
+      Xenved.new(name, parent, envelope, bounds, args, label)
+    end
+
+    def xenved?(obj)
+      obj.instance_of?(Xenved)
+    end
+
+    def xenved_test(name = "xenved")
+      widget = if provided? :xm
+                 add_main_pane(name, RxmFormWidgetClass, [RXmNheight, 200])
+               else
+                 add_main_pane(name)
+               end
+      args = if provided? :xm
+               [RXmNleftAttachment, RXmATTACH_WIDGET,
+                RXmNtopAttachment, RXmATTACH_WIDGET,
+                RXmNbottomAttachment, RXmATTACH_WIDGET,
+                RXmNrightAttachment, RXmATTACH_WIDGET]
              else
-               add_main_pane(name)
+               []
              end
-    args = if provided? "xm"
-             [RXmNleftAttachment, RXmATTACH_WIDGET,
-              RXmNtopAttachment, RXmATTACH_WIDGET,
-              RXmNbottomAttachment, RXmATTACH_WIDGET,
-              RXmNrightAttachment, RXmATTACH_WIDGET]
-           else
-             []
-           end
-    make_xenved(name, widget, :envelope, [0, 0, 1, 1], :axis_bounds, [0, 1, 0, 1], :args, args)
-  end
-
-  def make_xenved(name, parent, *rest)
-    envelope = get_args(rest, :envelope, [0, 0, 1, 1])
-    bounds   = get_args(rest, :axis_bounds, [0, 1, 0, 1])
-    args     = get_args(rest, :args, [])
-    label    = get_args(rest, :axis_label, nil)
-    name = "xenved" unless name.kind_of?(String) and !name.empty?
-    unless widget?(parent)
-      error("%s: arg 2, %s, need a widget", get_func_name, parent.inspect)
+      make_xenved(name, widget, :envelope, [0, 0, 1, 1], :axis_bounds, [0, 1, 0, 1], :args, args)
     end
-    unless bounds.kind_of?(Array) and bounds.length == 4
-      error("%s: axis_bounds, %s, need an array of four numbers [x0, x1, y0, y1]",
-            get_func_name, bounds.inspect)
-    end
-    unless label.kind_of?(Array) and label.length == 4
-      label = bounds
-    end
-    Xenved.new(name, parent, envelope, bounds, args, label)
   end
 end
+
+include Snd_enved
 
 class Enved
-  include Env
+  include Enumerable
   include Info
 
   def initialize(enved = [0, 0, 1, 1])
-    @envelope = enved.map do |x| x.to_f end
-    set_help
+    (@envelope = enved).map! do |x| x.to_f end
+    @init = @envelope.dup
+    set_enved_help
   end
   attr_reader :envelope
   
@@ -155,13 +346,13 @@ class Enved
     format("#<%s: envelope: %s>", self.class, @envelope.to_string)
   end
 
-  def envelope=(new_env)
-    if new_env.kind_of?(Array) and new_env.length >= 4 and new_env.length.even?
-      @envelope = new_env.map do |x| x.to_f end
-    else
-      error("%s#%s: need at least two points [x0, y0, x1, y1, ...], %s",
-            self.class, get_func_name, new_env.inspect)
-    end
+  def envelope=(enved)
+    assert_type(envelope?(enved), enved, 0, "an envelope, at least 2 points [x0, y0, x1, y1, ...]")
+    @envelope = enved.map do |x| x.to_f end
+  end
+
+  def reset
+    @envelope = @init.dup
   end
 
   def interp(x, base = 0)
@@ -243,9 +434,17 @@ class Enved
   def first_x
     @envelope[0]
   end
+
+  def first_y
+    @envelope[1]
+  end
   
   def last_x
     @envelope[-2]
+  end
+  
+  def last_y
+    @envelope[-1]
   end
 
   def in_range?(x)
@@ -257,14 +456,24 @@ class Enved
     @envelope
   end
 
+  def each_with_index
+    0.step(@envelope.length - 1, 2) do |i| yield(@envelope[i, 2] + [i]) end
+    @envelope
+  end
+
   def map
-    res = []
-    0.step(@envelope.length - 1, 2) do |i| res.push(yield(@envelope[i, 2])) end
+    res = make_array(@envelope.length)
+    0.step(@envelope.length - 1, 2) do |i| res[i, 2] = yield(@envelope[i, 2]) end
     res
+  end
+
+  def map!
+    0.step(@envelope.length - 1, 2) do |i| @envelope[i, 2] = yield(@envelope[i, 2]) end
+    @envelope
   end
   
   private
-  def set_help
+  def set_enved_help
     self.description = "\
 # make_enved(env)
 #
@@ -284,7 +493,9 @@ class Enved
 #   max                             min
 #   first   (first [x, y])          last   (last [x, y])
 #   first_x                         last_x
-#   each do |x, y| ... end          map do |x, y| ... end
+#   first_y                         last_y
+#   map do |x, y| ... end           map! do |x, y| ... end
+#   each do |x, y| ... end          each_with_index do |x, y, i| ... end
 #   length
 #   point(idx, *args)               # point(idx) --> [x, y]
 #                                   # point(idx, :x, x_val, :y, y_val)
@@ -292,30 +503,16 @@ class Enved
 #   in_range?(x)   (x > first_x and x < last_x)
 #   help           (alias info and description)
 "
+    add_help(:Enved, self.description)
   end
 end
 
-class Xenved < Enved
-  def initialize(name, parent, enved, bounds, args, axis_label)
+class Graph_enved < Enved
+  def initialize(enved, snd = false, chn = false)
     super(enved)
-    @name = name
-    @parent = parent
-    @x0, @x1, @y0, @y1 = bounds.map do |x| x.to_f end
-    @args = args
-    if provided? "xm"
-      @args += [RXmNforeground, data_color] unless @args.member?(RXmNforeground)
-      @args += [RXmNbackground, graph_color] unless @args.member?(RXmNbackground)
-    end
-    @lx0, @lx1, @ly0, @ly1 = axis_label.map do |x| x.to_f end
-    @init = @envelope.dup
-    @mouse_up = 0.0
-    @mouse_down = 0.0
-    @click_time = 0.2
-    @mouse_pos = 0
-    @mouse_new = false
-    @gc = snd_gcs[0]
-    @drawer = @dpy = @window = nil
-    @px0 = @px1 = @py0 = @py1 = nil
+    @graph_name = short_file_name(snd)
+    @snd = snd
+    @chn = chn
     @before_enved_hook = Hook.new("@before_enved_hook", 4, "\
 lambda do |pos, x, y, reason| ... end: called before changing a
 breakpoint in @envelope.  This hook runs the global $enved_hook as
@@ -372,10 +569,10 @@ end")
       else
         e = nil
         $enved_hook.run_hook do |prc|
-          case e = prc.call(@envelope, pos, x, y, reason)
+          case e = prc.call(@envelope.dup, pos, x, y, reason)
           when Array
             self.envelope = e
-          when Enved, Xenved
+          when Enved, Graph_enved, Xenved
             self.envelope = e.envelope
           end
         end
@@ -386,22 +583,197 @@ end")
 lambda do |pos, reason| ... end: called after redrawing new or changed
 breakpoints.  POS is @envelope's x-position, and REASON is one of
 Enved_add_point, Enved_delete_point, Enved_move_point.")
-    set_help
-    create
+    init
+    set_enved_help
   end
+  alias help description
   attr_accessor :click_time
   attr_reader :before_enved_hook
   attr_reader :after_enved_hook
+  
+  def inspect
+    format("#<%s: %s[%s:%s]: %s>", self.class, @graph_name, @snd, @chn, @envelope.to_string)
+  end
+
+  def init
+    @mouse_up = 0.0
+    @mouse_down = 0.0
+    @click_time = 0.5
+    @mouse_pos = 0
+    @mouse_new = false
+  end
+
+  def envelope=(new_env)
+    super
+    self.redraw
+    @envelope
+  end
+  
+  def reset
+    super
+    self.redraw
+    init
+    @envelope
+  end
+
+  def redraw
+    graph(@envelope, @graph_name, 0.0, 1.0, 0.0, 1.0, @snd, @chn)
+    update_lisp_graph(@snd, @chn)
+  end
+  
+  Mouse_radius = 0.03
+
+  # To prevent unexpected point movements if position is near first or
+  # last point.
+  Secure_distance = 0.001
+
+  def mouse_press_cb(x, y)
+    x = [0.0, [x, 1.0].min].max
+    y = [0.0, [y, 1.0].min].max
+    pos = false
+    self.each_with_index do |x1, y1, i|
+      if (x1 - x).abs < Mouse_radius and (y1 - y).abs < Mouse_radius
+        pos = i
+        break
+      end
+    end
+    @mouse_new = (not pos)
+    @mouse_down = Time.now.to_f
+    if pos
+      @mouse_pos = pos
+    else
+      x = [Secure_distance, [x, 1.0 - Secure_distance].min].max
+      if run_before_enved_hook(x, y, Enved_add_point)
+        add_envelope_point(x, y)
+      end
+      self.redraw
+      @after_enved_hook.call(@mouse_pos / 2, Enved_add_point)
+    end
+  end
+  
+  def mouse_drag_cb(x, y)
+    lx = if @mouse_pos.zero?
+           @envelope[0]
+         elsif @mouse_pos >= (@envelope.length - 2)
+           @envelope[-2]
+         else
+           [@envelope[@mouse_pos - 2] + Secure_distance,
+            [x, @envelope[@mouse_pos + 2] - Secure_distance].min].max
+         end
+    #ly = [0.0, [y, 1.0].min].max
+    ly = y
+    if run_before_enved_hook(lx, ly, Enved_move_point)
+      @envelope[@mouse_pos, 2] = [lx, ly]
+    end
+    self.redraw
+    @after_enved_hook.call(@mouse_pos / 2, Enved_move_point)
+  end
+  
+  def mouse_release_cb
+    @mouse_up = Time.now.to_f
+    if (not @mouse_new) and (@mouse_up - @mouse_down) <= @click_time and
+        @mouse_pos.nonzero? and @mouse_pos < (@envelope.length - 2)
+      if run_before_enved_hook(@envelope[@mouse_pos], @envelope[@mouse_pos + 1],
+                               Enved_delete_point)
+        @envelope.slice!(@mouse_pos, 2)
+      end
+      self.redraw
+      @after_enved_hook.call(@mouse_pos / 2, Enved_delete_point)
+    end
+    @mouse_new = false
+  end
+
+  protected
+  # If the last hook procedure returns false, change the envelope,
+  # otherwise the hook procedure is responsible.
+  def run_before_enved_hook(x, y, reason)
+    if @before_enved_hook.empty?
+      true
+    else
+      e = nil
+      @before_enved_hook.run_hook do |prc| e = prc.call(@mouse_pos / 2, x, y, reason) end
+      e.class == FalseClass
+    end
+  end
+  
+  def add_envelope_point(x, y)
+    idx = @mouse_pos
+    test_env = @envelope.to_pairs
+    if cur_pair = test_env.assoc(x)
+      idx = test_env.index(cur_pair) * 2
+      @envelope[idx + 1] = y
+    else
+      if cur_pair = test_env.detect do |pair| x < pair[0] end
+        idx = test_env.index(cur_pair) * 2
+        @envelope.insert(idx, x, y)
+      end
+    end
+    @mouse_pos = idx
+  end
+
+  private
+  def set_enved_help
+    super
+    self.description += "\
+#
+# make_graph_enved(enved, snd, chn)
+#
+# class Graph_enved < Enved (see enved.scm)
+#   initialize(enved, snd, chn)
+#   before_enved_hook              lambda do |pos, x, y, reason| ... end
+#   after_enved_hook               lambda do |pos, reason| ... end
+#
+# getter and setter:
+#   click_time=(val)
+#   click_time
+#
+# interactive methods:
+#   init
+#   reset
+#   redraw
+#   mouse_press_cb(x, y)
+#   mouse_drag_cb(x, y)
+#   mouse_release_cb
+#   help     (alias info and description)
+
+# more examples in xm-enved.rb, module Snd_enved
+
+ge = make_graph_enved([0, 0, 1, 1], 0, 0)
+ge.envelope                         # --> [0.0, 0.0, 1.0, 1.0]
+ge.click_time                       # --> 0.2
+ge.envelope = [0, 1, 1, 1]
+ge.help                             # this help
+"
+    add_help(:Graph_enved, self.description)
+  end
+end
+
+class Xenved < Graph_enved
+  def initialize(name, parent, enved, bounds, args, axis_label)
+    super(enved)
+    @name = name
+    @parent = parent
+    @x0, @x1, @y0, @y1 = bounds.map do |x| x.to_f end
+    @args = args
+    if provided? :xm
+      @args += [RXmNforeground, data_color] unless @args.member?(RXmNforeground)
+      @args += [RXmNbackground, graph_color] unless @args.member?(RXmNbackground)
+    end
+    @lx0, @lx1, @ly0, @ly1 = if envelope?(axis_label)
+                               axis_label.map do |x| x.to_f end
+                             else
+                               [0.0, 1.0, -1.0, 1.0]
+                             end
+    @gc = snd_gcs[0]
+    @drawer = @dpy = @window = nil
+    @px0 = @px1 = @py0 = @py1 = nil
+    set_enved_help
+    create
+  end
   alias help description
   
   def inspect
     format("#<%s: name: %s, envelope: %s>", self.class, @name.inspect, @envelope.to_string)
-  end
-  
-  def envelope=(new_env)
-    super
-    redraw
-    self.envelope
   end
 
   def axis_bounds
@@ -409,13 +781,10 @@ Enved_add_point, Enved_delete_point, Enved_move_point.")
   end
   
   def axis_bounds=(bounds)
-    if bounds.kind_of?(Array) and bounds.length == 4
-      @x0, @x1, @y0, @y1 = bounds.map do |x| x.to_f end
-      self.envelope = @init
-    else
-      error("%s#%s: need an array of four numbers [x0, x1, y0, y1], %s",
-            self.class, get_func_name, bounds.inspect)
-    end
+    assert_type((array?(bounds) and bounds.length == 4),
+                bounds, 0, "an array of 4 elements [x0, x1, y0, y1]")
+    @x0, @x1, @y0, @y1 = bounds.map do |x| x.to_f end
+    self.envelope = @init
   end
 
   def point(idx, *args)
@@ -439,12 +808,27 @@ Enved_add_point, Enved_delete_point, Enved_move_point.")
     hide_widget(@drawer)
   end
 
-  def clear
-    self.envelope = @init
+  Mouse_d = 10
+  Mouse_r = 5
+
+  protected
+  def redraw
+    if is_managed(@drawer) and @px0 and @py0 > @py1
+      clear_window
+      draw_axes(@drawer, @gc, @name, @lx0, @lx1, @ly0, @ly1)
+      lx = ly = nil
+      @envelope.each_pair do |x, y|
+        cx = grfx(x)
+        cy = grfy(y)
+        fill_arc(cx - Mouse_r, cy - Mouse_r, Mouse_d, Mouse_d, 0, 360 * 64)
+        draw_line(lx, ly, cx, cy) if lx
+        lx, ly = cx, cy
+      end
+    end
   end
   
   private
-  def set_help
+  def set_enved_help
     super
     self.description += "\
 #
@@ -459,21 +843,17 @@ Enved_add_point, Enved_delete_point, Enved_move_point.")
 #                                  other values than axis_bounds,
 #                                  (see dlocsig.rb)
 #
-# class Xenved < Enved (see xm-enved.scm)
+# class Xenved < Graph_enved (see xm-enved.scm)
 #   initialize(name, parent, env, axis_bounds, args, axis_label)
-#   before_enved_hook              lambda do |pos, x, y, reason| ... end
-#   after_enved_hook               lambda do |pos, reason| ... end
 #
 # getter and setter:
-#   click_time=(val)
-#   click_time
 #   axis_bounds=(new_bounds)
 #   axis_bounds
 #
 # interactive methods:
 #   create   (alias open)
 #   close
-#   clear
+#   reset
 #   help     (alias info and description)
 
 # more examples in effects.rb
@@ -490,9 +870,10 @@ xe.envelope                         # --> [0.0, 1.0,
                                     #      1.0, 1.0]
 xe.help                             # this help
 "
+    add_help(:Xenved, self.description)
   end
 
-  if provided? "xm"
+  if provided? :xm
     def create_enved
       @drawer = RXtCreateManagedWidget(@name, RxmDrawingAreaWidgetClass, @parent, @args)
       @dpy = RXtDisplay(@drawer)
@@ -523,7 +904,7 @@ xe.help                             # this help
     def draw_line(x1, y1, x2, y2)
       RXDrawLine(@dpy, @window, @gc, x1, y1, x2, y2)
     end
-  elsif provided? "xg"
+  elsif provided? :xg
     def create_enved
       @drawer = Rgtk_drawing_area_new()
       Rgtk_widget_set_events(@drawer, RGDK_ALL_EVENTS_MASK)
@@ -588,122 +969,24 @@ xe.help                             # this help
       Rgdk_draw_line(RGDK_DRAWABLE(@window), @gc, x1, y1, x2, y2)
     end
   else
-    error "neither Motif nor Gtk?"
+    snd_raise(:ruby_error, "neither Motif nor Gtk?")
   end
-
-  # If the last hook procedure returns false, change the envelope,
-  # otherwise the hook procedure is responsible.
-  def run_before_enved_hook(x, y, reason)
-    if @before_enved_hook.empty?
-      true
-    else
-      e = nil
-      @before_enved_hook.run_hook do |prc| e = prc.call(@mouse_pos / 2, x, y, reason) end
-      e.class == FalseClass
-    end
-  end
-  
-  def add_envelope_point(x, y)
-    idx = @mouse_pos
-    test_env = @envelope.to_pairs
-    if cur_pair = test_env.assoc(x)
-      idx = test_env.index(cur_pair) * 2
-      @envelope[idx + 1] = y
-    else
-      if cur_pair = test_env.detect do |pair| x < pair[0] end
-        idx = test_env.index(cur_pair) * 2
-        @envelope.insert(idx, x, y)
-      end
-    end
-    @mouse_pos = idx
-  end
-  
-  Mouse_radius = 0.03
 
   def mouse_press_cb(e)
-    x = ungrfx(Rx(e))
-    y = ungrfy(Ry(e))
-    pos = false
-    @envelope.to_pairs.each_with_index do |pair, idx|
-      if (pair[0] - x).abs < Mouse_radius and (pair[1] - y).abs < Mouse_radius
-        pos = idx * 2
-        break
-      end
-    end
-    @mouse_new = (not pos)
-    @mouse_down = Time.now.to_f
-    if pos
-      @mouse_pos = pos
-    else
-      if run_before_enved_hook(x, y, Enved_add_point)
-        add_envelope_point(x, y)
-      end
-      redraw
-      @after_enved_hook.call(@mouse_pos / 2, Enved_add_point)
-    end
+    super(ungrfx(Rx(e)), ungrfy(Ry(e)))
   end
-
-  # To prevent unexpected point movements if position is near first or
-  # last point.
-  Secure_distance = 0.0001
   
   def mouse_drag_cb(e, gtk = false)
     if gtk
-      x = ungrfx(e)
-      y = ungrfy(gtk)
+      super(ungrfx(e), ungrfy(gtk))
     else
-      x = ungrfx(Rx(e))
-      y = ungrfy(Ry(e))
+      super(ungrfx(Rx(e)), ungrfy(Ry(e)))
     end
-    lx = if @mouse_pos.zero?
-           @envelope[0]
-         elsif @mouse_pos >= (@envelope.length - 2)
-           @envelope[-2]
-         else
-           [@envelope[@mouse_pos - 2],
-            [x + Secure_distance, @envelope[@mouse_pos + 2] - Secure_distance].min].max
-         end
-    if run_before_enved_hook(lx, y, Enved_move_point)
-      @envelope[@mouse_pos, 2] = [lx, y]
-    end
-    redraw
-    @after_enved_hook.call(@mouse_pos / 2, Enved_move_point)
-  end
-  
-  def mouse_release_cb
-    @mouse_up = Time.now.to_f
-    if (not @mouse_new) and (@mouse_up - @mouse_down) <= @click_time and
-        @mouse_pos.nonzero? and @mouse_pos < (@envelope.length - 2)
-      if run_before_enved_hook(@envelope[@mouse_pos], @envelope[@mouse_pos + 1], Enved_delete_point)
-        @envelope.slice!(@mouse_pos, 2)
-      end
-      redraw
-      @after_enved_hook.call(@mouse_pos / 2, Enved_delete_point)
-    end
-    @mouse_new = false
   end
 
   def draw_axes_cb
     @px0, @py0, @px1, @py1 = draw_axes(@drawer, @gc, @name, @lx0, @lx1, @ly0, @ly1)
     redraw
-  end
-
-  Mouse_d = 10
-  Mouse_r = 5
-  
-  def redraw
-    if is_managed(@drawer) and @px0 and @py0 > @py1
-      clear_window
-      draw_axes(@drawer, @gc, @name, @lx0, @lx1, @ly0, @ly1)
-      lx = ly = nil
-      @envelope.each_pair do |x, y|
-        cx = grfx(x)
-        cy = grfy(y)
-        fill_arc(cx - Mouse_r, cy - Mouse_r, Mouse_d, Mouse_d, 0, 360 * 64)
-        draw_line(lx, ly, cx, cy) if lx
-        lx, ly = cx, cy
-      end
-    end
   end
 
   def ungrfx(x)
@@ -737,6 +1020,6 @@ xe.help                             # this help
       [@py0, [@py1, (@py1 + (@py0 - @py1) * (y - @y1) / (@y0 - @y1)).round].max].min
     end
   end
-end if provided? "xm" or provided? "xg"
+end if provided? :xm or provided? :xg
 
 # xm-enved.rb ends here

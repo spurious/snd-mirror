@@ -1,7 +1,7 @@
 # env.rb -- snd-7/env.scm
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
-# Last: Sun Mar 13 14:36:18 CET 2005
+# Last: Thu Apr 07 00:11:20 CEST 2005
 
 # Commentary:
 #
@@ -126,7 +126,7 @@ window_envelope(1.0, 3.0, [0.0, 0.0, 5.0, 1.0]) -> [1.0, 0.2, 3.0, 0.6]")
 maps func over the breakpoints in env1 and env2 returning a new envelope")
   def map_envelopes(en1, en2, &func)
     en1.map! do |x| x.to_f end unless en1.empty?
-    en2.map! do |x| x.to_f end if en2.kind_of?(Array) and (not en2.empty?)
+    en2.map! do |x| x.to_f end if array?(en2) and (not en2.empty?)
     xs = []
     at0 = lambda do |e|
       diff = e.first
@@ -207,7 +207,7 @@ stretch_envelope([0, 0, 1, 1], 0.1, 0.2) -> [0, 0, 0.2, 0.1, 1.0, 1]
 stretch_envelope([0, 0, 1, 1, 2, 0], 0.1, 0.2, 1.5, 1.6)
                  -> [0, 0, 0.2, 0.1, 1.1, 1, 1.6, 0.5, 2.0, 0]")
   def stretch_envelope(fn, old_att = false, new_att = false, old_dec = false, new_dec = false)
-    unless fn.kind_of?(Array)
+    unless array?(fn)
       error("%s: need an envelope, %s", get_func_name, fn.inspect)
     end
     fn.map! do |x| x.to_f end unless fn.empty?
@@ -299,12 +299,14 @@ scales y axis values by SCALER and optionally adds OFFSET")
       xoff = 0.0
       ren = []
       envs.each do |en|
-        en.map! do |x| x.to_f end unless en.empty?
+        (en or []).map! do |x| x.to_f end
         firstx = en.first
-        0.step(en.length - 1, 2) do |i|
-          ren.push(xoff + (en[i] - firstx), en[i + 1])
+        if ren[-1] == en[1]
+          xoff -= 0.01
+          en = en[2..-1]
         end
-        xoff = 0.01 + ren[-2]
+        0.step(en.length - 1, 2) do |i| ren.push(xoff + (en[i] - firstx), en[i + 1]) end
+        xoff += 0.01 + ren[-2]
       end
       ren
     end
@@ -320,41 +322,39 @@ a quick ramp is inserted between repeats. \
 X_NORMALIZED causes the new envelope's x axis to have the same extent as the original's. \
 REFLECTED causes every other repetition to be in reverse.")
   def repeat_envelope(ur_env, repeats, reflected = false, x_normalized = false)
-    tms = (reflected ? (repeats / 2) : repeats)
+    (ur_env or []).map! do |x| x.to_f end
+    tms = (reflected ? (repeats / 2).floor : repeats)
     en = if reflected
-           lastx = ur_env[-2].to_f
-           new_env = ur_env.reverse
-           rev_env = new_env[2..-1]
+           lastx = ur_env[-2]
+           new_env = ur_env.dup
+           rev_env = ur_env[0..-3].reverse
            0.step(rev_env.length - 1, 2) do |i|
-        new_env.unshift(lastx + (lastx - rev_env[i + 1]))
-        new_env.unshift(rev_env[i])
-      end
-           new_env.reverse
+             new_env.push(lastx + (lastx - rev_env[i + 1]), rev_env[i])
+           end
+           new_env
          else
            ur_env
          end
-    first_y = en[1].to_f
-    x_max = en[-2].to_f
-    x = en.first.to_f
+    (en or []).map! do |x| x.to_f end
+    first_y = en[1]
+    x_max = en[-2]
+    x = en.first
     first_y_is_last_y = (first_y == en.last)
     new_env = [first_y, x]
     len = en.length
     tms.times do |i|
       2.step(len - 1, 2) do |j|
         x += en[j] - en[j - 2]
-        new_env.unshift(x)
-        new_env.unshift(en[j + 1])
+        new_env.push(x, en[j + 1])
       end
       if (i < tms - 1) and (not first_y_is_last_y)
         x += x_max / 100.0
-        new_env.unshift(x)
-        new_env.unshift(first_y)
+        new_env.push(x, first_y)
       end
     end
-    new_env.reverse!
     if x_normalized
       scl = x_max / x
-      0.step(new_env.length - 1, 2) do |i| new_env[i] += scl end
+      0.step(new_env.length - 1, 2) do |i| new_env[i] *= scl end
     end
     new_env
   end
@@ -460,8 +460,8 @@ REFLECTED causes every other repetition to be in reverse.")
     en.map! do |x| x.to_f end unless en.empty?
     mn = min_envelope(en)
     largest_diff = max_envelope(en) - mn
-    x_min = en.first.to_f
-    x_max = en[-2].to_f
+    x_min = en.first
+    x_max = en[-2]
     x_incr = (x_max - x_min) / xgrid.to_f
     new_en = []
     x_min.step(x_max, x_incr) do |x|

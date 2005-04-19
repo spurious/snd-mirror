@@ -66,6 +66,7 @@
 (use-modules (ice-9 common-list))
 
 (provide 'snd-examp.scm)
+(if (not (provided? 'snd-ws.scm)) (load-from-path "ws.scm"))
 
 (debug-enable 'debug)
 (debug-enable 'backtrace)
@@ -897,15 +898,15 @@ then inverse ffts."
   ;;  at 1.0, and a ramp down when 'up' is #f, sticking at 0.0
   ;;
   ;; this could use the average generator, though the resultant envelopes would be slightly less bumpy
-  (let* ((ctr (car gen))
-	 (size (cadr gen))
+  (let* ((ctr (vct-ref gen 0))
+	 (size (vct-ref gen 1))
 	 (val (/ ctr size)))
-    (list-set! gen 0 (min size (max 0 (+ ctr (if up 1 -1)))))
+    (vct-set! gen 0 (min size (max 0 (+ ctr (if up 1 -1)))))
     val))
 
 (define* (make-ramp #:optional (size 128))
   "(make-ramp #:optional (size 128)) returns a ramp generator"
-  (list 0 size))
+  (vct 0.0 size))
 
 (define* (squelch-vowels #:optional snd chn)
   "(squelch-vowels) suppresses portions of a sound that look like steady-state"
@@ -1104,14 +1105,14 @@ is: (filter-sound (make-formant .99 2400))"
 
 (define (osc-formants radius bases amounts freqs)
   "(osc-formants radius bases amounts freqs) set up any number of independently oscillating 
-formants: (map-channel (osc-formants .99 '(400 800 1200) '(400 800 1200) '(4 2 3)))"
-  (let* ((len (length bases))
+formants: (map-channel (osc-formants .99 (vct 400.0 800.0 1200.0) (vct 400.0 800.0 1200.0) (vct 4.0 2.0 3.0)))"
+  (let* ((len (vct-length bases))
 	 (frms (make-vector len))
 	 (oscs (make-vector len)))
     (do ((i 0 (1+ i)))
 	((= i len))
-      (vector-set! frms i (make-formant radius (list-ref bases i)))
-      (vector-set! oscs i (make-oscil (list-ref freqs i))))
+      (vector-set! frms i (make-formant radius (vct-ref bases i)))
+      (vector-set! oscs i (make-oscil (vct-ref freqs i))))
     (lambda (x)
       (let ((val 0.0))
 	(do ((i 0 (1+ i)))
@@ -1119,8 +1120,8 @@ formants: (map-channel (osc-formants .99 '(400 800 1200) '(400 800 1200) '(4 2 3
 	  (let ((frm (vector-ref frms i)))
 	    (set! val (+ val (formant frm x)))
 	    (set! (mus-frequency frm) 
-		  (+ (list-ref bases i) ;(this is not optimized for speed!)
-		     (* (list-ref amounts i) 
+		  (+ (vct-ref bases i)
+		     (* (vct-ref amounts i) 
 			(oscil (vector-ref oscs i)))))))
 	val))))
 

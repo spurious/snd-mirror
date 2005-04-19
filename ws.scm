@@ -379,7 +379,6 @@ returning you to the true top-level."
   ;; (def-clm-struct fd loc (chan 1))
   ;; (def-clm-struct hiho i x (s "hiho") (ii 3 :type int) (xx 0.0 :type float))
   ;; we need the :type indication if Snd's run macro is to have any hope of handling these structs as function args
-  ;; should this code enforce the type indication?
   (let* ((sname (if (string? name) name (symbol->string name)))
 	 (field-names (map (lambda (n)
 			     (symbol->string (if (list? n) (car n) n)))

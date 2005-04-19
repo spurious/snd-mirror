@@ -2,7 +2,7 @@
 
 # Translator: Michael Scholz <scholz-micha@gmx.de>
 # Created: Tue Feb 22 13:40:33 CET 2005
-# Last: Sat Mar 26 16:19:24 CET 2005
+# Last: Tue Apr 12 23:58:51 CEST 2005
 
 # Commentary:
 #
@@ -114,7 +114,7 @@ and deleted when the mix is no longer accessible.")
       incoming_chans = mus_sound_chans(name)
       receiving_chans = channels(index)
       old_sync = sync(index)
-      track_func = if envelope.kind_of?(Array)
+      track_func = if array?(envelope)
                      envelope
                    else
                      [0, envelope, 1, envelope]
@@ -122,7 +122,7 @@ and deleted when the mix is no longer accessible.")
       if receiving_chans == 1
         if incoming_chans == 1
           id = mix(name, beg, 0, index, 0, true, auto_delete)
-          if envelope.kind_of?(Array)
+          if array?(envelope)
             set_mix_amp_env(id, 0, envelope)
           else
             set_mix_amp(id, 0, envelope)
@@ -295,7 +295,7 @@ reset $mix_release_hook to cancel")
   end
 
   def remove_mix_properties(id)
-    if mix_properties(id).kind_of?(Hash)
+    if hash?(mix_properties(id))
       properties.delete(id)
       $all_mix_properties.delete(id)
     end
@@ -306,7 +306,7 @@ reset $mix_release_hook to cancel")
 returns the value associated with 'key' in the given mix's property list, or false")
   def mix_property(key, id)
     snd_raise(:no_such_mix, id) unless mix?(id)
-    (h = mix_properties(id)).kind_of?(Hash) and h[key]
+    hash?(h = mix_properties(id)) and h[key]
   end
 
   add_help(:set_mix_property,
@@ -314,11 +314,10 @@ returns the value associated with 'key' in the given mix's property list, or fal
 sets the value 'val' to 'key' in the given mix's property list")
   def set_mix_property(key, val, id)
     snd_raise(:no_such_mix, id) unless mix?(id)
-    unless (h = mix_properties(id)).kind_of?(Hash) and h.store(key, val)
+    unless hash?(h = mix_properties(id)) and h.store(key, val)
       $all_mix_properties.push(id)
-      h = {:mixid, id, key, val}
+      set_mix_properties(id, {key, val})
     end
-    set_mix_properties(id, h)
   end
 
   add_help(:remove_mix_property,
@@ -326,7 +325,11 @@ sets the value 'val' to 'key' in the given mix's property list")
 removes the key-value pair in the given mix's property list")
   def remove_mix_property(key, id)
     snd_raise(:no_such_mix, id) unless mix?(id)
-    (h = mix_properties(id)).kind_of?(Hash) and h.delete(key)
+    if hash?(h = mix_properties(id))
+      h.delete(key)
+    else
+      $all_mix_properties.delete(id)
+    end
   end
   
 =begin  
@@ -417,7 +420,7 @@ reverses the order of its mixes (it changes various mix begin times)")
   def save_track(trk, filename, chn = true)
     snd_raise(:no_such_track, trk) unless track?(trk)
     chans = track_chans(trk)
-    if chn == true and chans == 1 or chn.kind_of?(Numeric) and chn < chans
+    if chn == true and chans == 1 or number?(chn) and chn < chans
       v = track2vct(trk, (chn == true ? 0 : chn))
       fd = open_sound_file(filename, 1, srate, format("written by %s", get_func_name))
       vct2sound_file(fd, v, v.length)
@@ -500,7 +503,7 @@ filters track data using FIR filter coeffs: filter_track(track-id, [0.1, 0.2, 0.
   end
 
   def remove_track_properties(id)
-    if track_properties(id).kind_of?(Hash)
+    if hash?(track_properties(id))
       properties.delete(id)
       $all_track_properties.delete(id)
     end
@@ -511,7 +514,7 @@ filters track data using FIR filter coeffs: filter_track(track-id, [0.1, 0.2, 0.
 returns the value associated with 'key' in the given track's property list, or false")
   def track_property(key, id)
     snd_raise(:no_such_track, id) unless track?(id)
-    (h = track_properties(id)).kind_of?(Hash) and h[key]
+    hash?(h = track_properties(id)) and h[key]
   end
 
   add_help(:set_track_property,
@@ -519,11 +522,10 @@ returns the value associated with 'key' in the given track's property list, or f
 sets the value 'val' to 'key' in the given track's property list")
   def set_track_property(key, val, id)
     snd_raise(:no_such_track, id) unless track?(id)
-    unless (h = track_properties(id)).kind_of?(Hash) and h.store(key, val)
+    unless hash?(h = track_properties(id)) and h.store(key, val)
       $all_track_properties.push(id)
-      h = {:trackid, id, key, val}
+      set_track_properties(id, {key, val})
     end
-    set_track_properties(id, h)
   end
 
   add_help(:remove_track_property,
@@ -531,7 +533,11 @@ sets the value 'val' to 'key' in the given track's property list")
 removes the key-value pair in the given track's property list")
   def remove_track_property(key, id)
     snd_raise(:no_such_track, id) unless track?(id)
-    (h = track_properties(id)).kind_of?(Hash) and h.delete(key)
+    if hash?(h = track_properties(id))
+      h.delete(key)
+    else
+      $all_track_properties.delete(id)
+    end
   end
   
 =begin  
@@ -744,9 +750,26 @@ module Mixer_matrix
     fr
   end
 
-  def make_zero_mixer(n)
-    make_mixer(n)
+  def frame_copy(fr)
+    len = fr.length
+    nfr = make_frame(len)
+    len.times do |i| frame_set!(nfr, i, frame_ref(fr, i)) end
+    nfr
   end
+
+  def mixer_copy(mx)
+    len = mx.length
+    nmx = make_mixer(len)
+    len.times do |i|
+      len.times do |i|
+        mixer_set!(nmx, i, j, mixer_ref(mx, i, j))
+      end
+    end
+    nmx
+  end
+
+  alias make_zero_mixer make_mixer
+
 end
 
 # mix.rb ends here

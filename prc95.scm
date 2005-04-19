@@ -4,6 +4,9 @@
 (use-modules (ice-9 optargs) (ice-9 format))
 (provide 'snd-prc95.scm)
 (if (not (provided? 'snd-ws.scm)) (load-from-path "ws.scm"))
+
+;;; TODO: make these optimizable
+
 (define pi 3.141592653589793)
 
 

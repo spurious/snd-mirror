@@ -2,7 +2,7 @@
 
 # Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Sun Dec 21 13:48:01 CET 2003
-# Last: Sat Mar 26 03:44:21 CET 2005
+# Last: Tue Apr 12 17:47:50 CEST 2005
 
 # Commentary:
 #
@@ -38,6 +38,8 @@ end
 
 # Code:
 
+require "examp"
+
 unless defined?(Hook)
   class Hook
     include Enumerable
@@ -45,20 +47,12 @@ unless defined?(Hook)
     def initialize(name, arity = 0, help = "")
       @name = name
       @arity = arity
-      @help = help
       @procs = []
+      if string?(help) and (not help.empty?) then add_help(name, help) end
     end
-    attr_reader :name, :arity, :help
+    attr_reader :name, :arity
     
     def add_hook!(name, &body)
-      # We can't test any longer body.arity, because Proc#arity
-      # returns -1 in any case (as of CVS-Ruby 1.9.0, Mar 04, 2004).
-
-      # if body.arity == @arity
-      #   @procs.push([name, body])
-      # else
-      #   raise format("need a procedure of %d args, not %d", @arity, body.arity)
-      # end
       @procs.push([name, body])
     end
     
@@ -82,7 +76,7 @@ unless defined?(Hook)
     end
     
     def to_a
-      @procs.map do |x| x.last end
+      @procs.map do |ary| ary.last end
     end
     
     def length
@@ -95,18 +89,17 @@ unless defined?(Hook)
     end
 
     def describe
-      @help
+      get_help(@name)
     end
     alias documentation describe
     
     def names
-      @procs.map do |x| x.first end
+      @procs.map do |ary| ary.first end
     end
-    private :names
     
     def inspect
       format("#<%s name: %s, arity: %d, procs[%d]: %s>",
-             self.class, @name.inspect, @arity, self.length, names().inspect)
+             self.class, @name.inspect, @arity, self.length, self.names.inspect)
     end
   end
 
@@ -199,6 +192,7 @@ need a String or Symbol, not %s"
   $orientation_hook             = Hook.new("$orientation_hook", 0)
   $listener_click_hook          = Hook.new("$listener_click_hook", 1)
   $mix_click_hook               = Hook.new("$mix_click_hook", 1)
+  $before_save_state_hook       = Hook.new("$before_save_state_hook", 1)
   $after_save_state_hook        = Hook.new("$after_save_state_hook", 1)
   $mouse_enter_text_hook        = Hook.new("$mouse_enter_text_hook", 1)
   $mouse_leave_text_hook        = Hook.new("$mouse_leave_text_hook", 1)
@@ -214,11 +208,13 @@ need a String or Symbol, not %s"
   $gtk_popup_hook               = Hook.new("$gtk_popup_hook", 5)
 end
 
-require "examp"
-
 class Hook
+  def to_names
+    @procs.map do |ary| ary.first end
+  end
+
   def member?(name)
-    @procs.map do |ary| ary.first end.member?(name)
+    to_names.member?(name)
   end
   alias included? member?
 
@@ -302,6 +298,7 @@ if defined? $after_graph_hook
     $orientation_hook,
     $listener_click_hook,
     $mix_click_hook,
+    $before_save_state_hook,
     $after_save_state_hook,
     $mouse_enter_text_hook,
     $mouse_leave_text_hook,

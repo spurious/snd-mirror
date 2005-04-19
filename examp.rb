@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Wed Sep 04 18:34:00 CEST 2002
-# Last: Mon Mar 28 04:54:27 CEST 2005
+# Last: Tue Apr 19 01:37:43 CEST 2005
 
 # Commentary:
 #
@@ -13,41 +13,71 @@
 # all_features
 # 
 # array?(obj)   alias list?(obj)
+# hash?(obj)
 # string?(obj)
 # symbol?(obj)
 # number?(obj)
 # integer?(obj)
 # float?(obj)
+# complex?(obj)
 # proc?(obj)
 # thunk?(obj)
+# method?(obj)
+# func?(obj)
 # mus?(obj)
+# get_func_name(n)
+# assert_type(condition, value, pos, msg)
 #
+# class Object
+#  null?
+#
+# class NilClass
+#  each, each_with_index
+#  map, map_with_index
+#  map!, map_with_index!
+#  apply(*rest)
+#  empty?
+#  zero?
+#  nonzero?
+#  
 # backward compatibility methods:
 #  String#to_sym, Symbol#to_sym
 #  make_array(len, init) do |i| ... end
 #  Array#zip, Array#insert
+#  Float#step do |i| ... end
 #
 # extensions to existing classes
 # 
 # class Array
-#   to_pairs
-#   each_pair do |x, y| ... end
-#   to_string(len)
-#   first=(val)
-#   last=(val)
+#  to_pairs
+#  each_pair do |x, y| ... end
+#  to_string(len)
+#  first=(val)
+#  last=(val)
+#  pick
+#  rand
+#  rand!
+#  apply(*rest, &func)
 #
 # make_vct!(len, init) do |i| ... end
+#
+# class String
+#  to_vct
+#
+# class Vct
+#  to_sound_data(chn, chns)
 #
 # sound_data2string(sd)
 #
 # class SoundData
-#   length
-#   each(chn = nil)
-#   each_with_index(chn = nil)
-#   map(chn = nil)
-#   map!(chn = nil)
-#   to_a
-#   to_s
+#  length
+#  each(chn)
+#  each_with_index(chn)
+#  map(chn)
+#  map!(chn)
+#  to_vct(chn)
+#  to_a
+#  to_s
 #
 # mus_a0(gen)
 # set_mus_a0(gen, val)
@@ -61,15 +91,16 @@
 # set_mus_b2(gen, val)
 #
 # class Mus
-#   run(arg1 = 0.0, arg2 = 0.0)
-#   inspect
-#   xcoeff=(index, val)
-#   ycoeff=(index, val)
-#   a0  a0=(val)
-#   a1  a1=(val)
-#   a2  a2=(val)
-#   b1  b1=(val)
-#   b2  b2=(val)
+#  run(arg1 = 0.0, arg2 = 0.0)
+#  apply(*rest)
+#  inspect
+#  xcoeff=(index, val)
+#  ycoeff=(index, val)
+#  a0  a0=(val)
+#  a1  a1=(val)
+#  a2  a2=(val)
+#  b1  b1=(val)
+#  b2  b2=(val)
 #
 # class Integer
 #  even?
@@ -79,10 +110,12 @@
 # module Enumerable
 #  map_with_index do |x, i| ... end
 #  map_with_index! do |x, i| ... end
-#  cycle(n)
+#  cycle
+#  cycle=(val)
 #
 # as_one_edit_rb(*origin, &body)
 # map_channel_rb(beg, dur, snd, chn, edpos, edname, &body)
+# map_chan_rb(beg, dur, edpos, snd, chn, &body)
 #
 # with_silence(exception) do |old_verbose, old_debug| ... end
 # 
@@ -94,11 +127,17 @@
 #  to_method(name, klass)
 #  to_str
 #  to_body
+#  source
+#
+# proc_source(prc)
+# make_proc(name, prc)
+# make_proc_with_setter(name, getter, setter)
+# make_proc_with_source(string, bind)
+# let(*rest) do |*rest| ... end
 #
 # Utilities:
 #
 # close_sound_extend(snd)
-# get_func_name(n)
 # times2samples(start, dur)
 # random(n)
 # logn(r, b)
@@ -108,15 +147,15 @@
 #
 # sounds2array
 # regions2array
+# marks2array(snd = false, chn = false)
 # snd_snd(snd)
 # snd_chn(chn)
-# snd_var(name, snd, chn)
-# set_snd_var(name, val, snd, chn)
+# snd_func(name, *rest)
+# set_snd_func(name, val, *rest)
 # snd_catch(tag, retval = nil, &body)
 # snd_throw(tag, *args)
 # snd_raise(tag, *args)
 # c_g?() (if not in Snd)
-# let(*args) do |*args| ... end
 # gloop(*args) do |args| ... end
 # get_args(args, key, default)
 # get_shift_args(args, key, default)
@@ -269,19 +308,14 @@
 #  moog(freq, q)
 # 
 # Code:
-
-##
-## Extensions to Ruby
-##
  
 def provided?(feature)
+  assert_type((symbol?(feature) or string?(feature)), feature, 0, "a symbol or a string")
   case feature
   when Symbol
     $".member?(feature.to_s.tr("_", "-"))
   when String
     $".member?(feature)
-  else
-    raise(ArgumentError, "provided?: expect a Symbol or String")
   end
 end
 
@@ -297,10 +331,24 @@ def all_features
   $"
 end
 
+require "complex"
+
+def make_polar(r, theta)
+  Complex.new(cos(theta) * r, sin(theta) * r)
+end
+
+def make_rectangular(re, im)
+  Complex.new(re, im)
+end
+
 def array?(obj)
   obj.kind_of?(Array)
 end
 alias list? array?
+
+def hash?(obj)
+  obj.kind_of?(Hash)
+end
 
 def string?(obj)
   obj.kind_of?(String)
@@ -322,6 +370,10 @@ def float?(obj)
   obj.kind_of?(Float)
 end
 
+def complex?(obj)
+  obj.kind_of?(Complex)
+end
+
 def proc?(obj)
   obj.kind_of?(Proc)
 end
@@ -330,13 +382,81 @@ def thunk?(obj)
   obj.kind_of?(Proc) and obj.arity.zero?
 end
 
+def method?(obj)
+  obj.kind_of?(Method)
+end
+
+def func?(obj)
+  (obj.kind_of?(String) or obj.kind_of?(Symbol)) and
+    (public_methods.member?(obj.to_s) or private_methods.member?(obj.to_s))
+end
+
 def mus?(obj)
   obj.kind_of?(Mus)
 end
 
+def get_func_name(n = 1)
+  if ca = caller(n)[0].scan(/^.*:in `(.*)'/).first
+    ca.first
+  else
+    "main"
+  end
+end
+
+def assert_type(condition, value, pos, msg)
+  condition or raise(TypeError, format("%s: wrong type arg %d, %s, wanted %s",
+                                       get_func_name(2), pos, value.inspect, msg))
+end
+
+class Object
+  def null?
+    self.nil? or
+      (self.respond_to?(:zero?) and self.zero?) or
+      (self.respond_to?(:empty?) and self.empty?)
+  end
+
+  # Float(nil) ==> 0.0 like Integer(nil) ==> 0
+  def new_Float(numb)
+    if numb.kind_of?(NilClass)
+      0.0
+    else
+      old_Float(numb)
+    end
+  end
+  alias old_Float Float
+  alias Float new_Float
+end
+
+class NilClass
+  def each
+    nil
+  end
+  alias each_with_index each
+  alias map each
+  alias map_with_index each
+  alias map! each
+  alias map_with_index! each
+
+  def apply(*rest)
+    nil
+  end
+  
+  def empty?
+    true
+  end
+
+  # Integer(nil) ==> 0
+  def zero?
+    true
+  end
+  
+  def nonzero?
+    false
+  end
+end
+
 # If $DEBUG = true, on older Ruby versions warnings occur about
 # missing NilClass#to_str and Symbol#to_str
-
 if $DEBUG and RUBY_VERSION < "1.8.0"
   class Object
     def method_missing(id, *args)
@@ -402,7 +522,7 @@ module Info
   alias info= description=
   
   def description
-    if defined?(@description) and @description.kind_of?(String) and (not @description.empty?)
+    if defined?(@description) and string?(@description) and (not @description.empty?)
       @description
     else
       "no description available"
@@ -429,11 +549,8 @@ end unless defined? set_print_length
 # make_array(10, 1.0)
 # make_array(10) do |i| ... end
 def make_array(len = 0, init = nil)
-  len = if len.kind_of?(Numeric)
-          len.abs.to_i
-        else
-          0
-        end
+  assert_type((number?(len) and len >= 0), len, 0, "a number")
+  len = Integer(len)
   if block_given?
     Array.new(len, init).map_with_index do |x, i| yield(i) end
   else
@@ -530,6 +647,57 @@ class Array
   def last=(val)
     self[-1] = val
   end
+
+  # ary.pick       ==> random value
+  # ary.pick(3)    ==> [x, y, z]
+  # ary.pick(true) ==> whole ary randomized
+  def array_pick(n = 1)
+    n = self.length if n == true
+    if n == 1
+      self[kernel_rand(self.length)]
+    else
+      (0...n).map do |i| self[kernel_rand(self.length)] end
+    end
+  end
+  alias pick array_pick
+
+  def array_rand
+    tmp = self.dup
+    tmp.each_index do |i|
+      r = kernel_rand(tmp.length)
+      tmp[r], tmp[i] = tmp[i], tmp[r]
+    end
+    tmp
+  end
+  alias rand array_rand
+  
+  def array_rand!
+    self.each_index do |i|
+      r = kernel_rand(self.length)
+      self[r], self[i] = self[i], self[r]
+    end
+    self
+  end
+  alias rand! array_rand!
+  
+  add_help(:apply,
+           "apply(*rest) do |*a| ... end
+apply(:func, *rest)
+[0, 1, 2, 3].apply(\"%s: %d\\n\", 'number') do |fmt, arg, item| printf(fmt, arg, item) end
+[0, 1, 2, 3].apply(:printf, \"%s: %d\\n\", 'number')")
+  def apply(*rest)
+    if block_given?
+      self.map do |item| yield(*rest + [item]) end
+    else
+      assert_type((func?(rest.first) or proc?(rest.first)), rest.first, 0, "a proc or a func name")
+      case func = rest.shift
+      when Proc
+        self.map do |item| func.call(*rest + [item]) end
+      when Symbol, String
+        self.map do |item| snd_func(func, *rest + [item]) end
+      end
+    end
+  end
 end
 
 def make_vct!(len, init = 0.0, &body)
@@ -537,6 +705,22 @@ def make_vct!(len, init = 0.0, &body)
     Vct.new(len, &body)
   else
     Vct.new(len, init)
+  end
+end
+
+class String
+  def to_vct
+    if self.scan(/^vct\([-+,.)\d\s]+/).null?
+      nil
+    else
+      eval(self)
+    end
+  end
+end
+
+class Vct
+  def to_sound_data(chn = 0, chns = 1)
+    vct2sound_data(self, SoundData.new(chns, self.length), chn)
   end
 end
 
@@ -594,6 +778,10 @@ class SoundData
     self
   end
 
+  def to_vct(chn = 0)
+    sound_data2vct(self, chn, Vct.new(self.length))
+  end
+  
   # returns an array of sd.chans vcts
   def to_a
     make_array(self.chans) do |chn| sound_data2vct(self, chn, Vct.new(self.length)) end
@@ -603,13 +791,7 @@ class SoundData
   alias inspect to_s
   # returns a string containing an array of sd.chans vcts
   def to_s
-    str = ""
-    self.to_a.each do |vc| str += "%s, " % vc.to_s end
-    if str.chop!.chop!
-      "[" + str + "]"
-    else
-      "nil"
-    end
+    self.to_a.to_s
   end
 end
 
@@ -662,6 +844,10 @@ class Mus
     mus_run(self, arg1, arg2)
   end
 
+  def apply(*rest)
+    mus_apply(self, *rest)
+  end
+  
   alias old_inspect inspect
   def inspect
     "#<" + mus_describe(self) + ">"
@@ -735,6 +921,18 @@ class Integer
   end
 end
 
+class Float
+  # step accepts floats as arguments (still implemented in newer versions)
+  def step(upto, step)
+    counter = self
+    while counter < upto
+      yield(counter)
+      counter += step
+    end
+    counter
+  end unless 1.1.respond_to?(:step)
+end
+
 module Enumerable
   def map_with_index
     i = -1
@@ -746,23 +944,20 @@ module Enumerable
     self.map! do |x| yield(x, i += 1) end
   end
 
-  def cycle(n = 1)
-    unless defined? @cycle_index
-      @cycle_index = -1
-    end
-    if n == 1
-      self[@cycle_index = (@cycle_index + 1) % self.length]
-    else
-      (0...n).map do |i| self.cycle end
-    end
+  def cycle
+    unless defined? @cycle_index then @cycle_index = 0 end
+    val = self[@cycle_index % self.length]
+    @cycle_index += 1
+    if @cycle_index == self.length then @cycle_index = 0 end
+    val
   end
 
-  # FIXME: @cycle_index needs work
   def cycle=(val)
-    unless defined? @cycle_index
-      @cycle_index = -1
-    end
-    self[@cycle_index = (@cycle_index + 1) % self.length] = val
+    unless defined? @cycle_index then @cycle_index = 0 end
+    self[@cycle_index % self.length] = val
+    @cycle_index += 1
+    if @cycle_index == self.length then @cycle_index = 0 end
+    val
   end
   attr_accessor :cycle_index
 end
@@ -775,8 +970,16 @@ def as_one_edit_rb(*origin, &body)
 end
 
 def map_channel_rb(beg = 0, dur = false,
-                   snd = false, chn = false, edpos = false, edname = false, &body)
-  map_channel(body, beg, dur, snd, chn, edpos, edname) 
+                   snd = false, chn = false, edpos = false, edname = false, &func)
+  map_channel(func, beg, dur, snd, chn, edpos, edname) 
+end
+
+add_help(:map_chan,
+         "map_chan(func,[start=0,[end=false,[edname=false,[snd=false,[chn=false,[edpos=false]]]]]])\
+  map_chan applies func to samples in the specified channel.\
+  It is the old (\"irregular\") version of map_channel.")
+def map_chan_rb(beg = 0, dur = false, ednam = false, snd = false, chn = false, edpos = false, &func)
+  map_chan(func, beg, dur, ednam, snd, chn, edpos) 
 end
 
 class Proc
@@ -793,14 +996,12 @@ class Proc
   # lambda do |x| p x end.to_method("bar") bar("text2") --> "text2"
   
   def to_method(name, klass = Object)
+    assert_type((symbol?(name) or string?(name)), name, 0, "a symbol or a string")
     name = case name
            when String
              name.intern
            when Symbol
              name
-           else
-             error("%s#%s(name, klass = Object): `name' must be a String or Symbol",
-                   self.class, get_func_name)
            end
     body = self
     klass.class_eval do define_method(name, body) end
@@ -914,6 +1115,72 @@ Proc#inspect must return #<Proc:0x01234567@xxx:x> not only #{self.inspect}!"
     end
     body
   end
+
+  def source
+    property(self.object_id, :proc_source)
+  end
+end
+
+def proc_source(prc)
+  assert_type(proc?(prc), prc, 0, "a proc")
+  prc.source
+end
+
+def make_proc(name, prc)
+  assert_type((string?(name) or symbol?(name)), name, 0, "a string")
+  assert_type(proc?(prc), prc, 1, "a proc")
+  prc.to_method(name)
+end
+
+# produces two new functions: NAME and SET_NAME
+# val = 10
+# make_proc_with_setter(:foo, lambda { puts val }, lambda { |a| val = a })
+# foo ==> 10
+# set_foo(12)
+# foo ==> 12
+def make_proc_with_setter(name, getter, setter)
+  assert_type((string?(name) or symbol?(name)), name, 0, "a string")
+  assert_type(proc?(getter), getter, 1, "a proc")
+  assert_type(proc?(setter), setter, 2, "a proc")
+  getter.to_method(name)
+  setter.to_method(format("set_%s", name).intern)
+end
+
+# prc = make_proc_with_source(%(lambda do |a, b, c| puts a, b, c end))
+# prc.call(1, 2, 3)
+# prc.source ==> "lambda do |a, b, c| puts a, b, c end"
+# 
+# With the second argument BIND one can use local variables known in
+# the current (or other) environment in the proc string:
+# 
+# os = make_oscil(:frequency, 330)
+# prc = make_proc_with_source(%(lambda do 10.times do |i| p os.run end end), binding)
+# puts prc.source
+# prc.call
+# puts
+# prc.call
+def make_proc_with_source(string, bind = binding)
+  assert_type(string?(string), string, 0, "a string")
+  assert_type(bind.kind_of?(Binding), bind, 1, "a binding")
+  if proc?(prc = (res = snd_catch(:all) do eval(string, bind) end).first)
+    set_property(prc.object_id, :proc_source, string)
+    prc
+  else
+    raise string
+  end
+end
+
+# let(8, :foo, "bar") do |a, b, c|
+#   printf("a: %d, b: %s, c: %s\n", a, b, c)
+# end
+def let(*rest)
+  yield(*rest)
+end
+
+let(-1) do |count|
+  # see rotate_phase(func, snd, chn) in dsp.rb
+  # it's necessary to produce a uniq method name
+  make_proc_with_setter(:edit_list_proc_counter, lambda { count }, lambda { count += 1 })
 end
 
 include Math
@@ -938,7 +1205,7 @@ require "rgb"
 ## Utilities
 ##
 
-if provided? "snd-nogui"
+if provided? :snd_nogui
   alias close_sound_extend close_sound
 else
   def close_sound_extend(snd)
@@ -954,11 +1221,6 @@ else
   end
 end
 
-add_help(:get_func_name, "get_func_name([n=1]) returns function name string")
-def get_func_name(n = 1)
-  caller(n)[0].scan(/^.*:in `(.*)'/)[0][0]
-end
-
 add_help(:times2samples,
          "times2samples(start, dur) \
 START and DUR are in seconds; returns array [beg, len] in samples")
@@ -967,18 +1229,23 @@ def times2samples(start, dur = nil)
   [beg, beg + seconds2samples(dur)]
 end
 
-def random(n)
-  if n.zero?
-    0.0
+def random(val)
+  if val.zero?
+    val
   else
-    n < 0 ? -mus_random(n).abs : mus_random(n).abs
+    case val
+    when Integer
+      kernel_rand(val)
+    when Float
+      val < 0 ? -mus_random(val).abs : mus_random(val).abs
+    end
   end
 end
 alias rbm_random random
 
 def logn(r, b = 10)
-  error("r must be > 0 (r = %s)", r.inspect) if r <= 0
-  error("b must be > 0 (b = %s)", b.inspect) if b <= 0
+  if r <= 0 then snd_raise(:ruby_error, r, "r must be > 0") end
+  if b <= 0 or b == 1 then snd_raise(:ruby_error, b, "b must be > 0 and != 1") end
   log(r) / log(b)
 end
 
@@ -1017,7 +1284,7 @@ end
 
 def warn(*args)
   str = "Warning: " << verbose_message_string($VERBOSE, "", *args)
-  if provided? "snd"
+  if provided? :snd
     snd_warning(str)
     nil
   else
@@ -1027,7 +1294,7 @@ end
 
 def die(*args)
   rbm_message(verbose_message_string(true, "", *args))
-  exit(1) unless provided? "snd"
+  exit(1) unless provided? :snd
 end
 
 def error(*args)
@@ -1037,7 +1304,7 @@ end
 # like printf(*args)
 
 def rbm_message(*args)
-  if provided?("snd") and (!(ENV["EMACS"] or provided?("snd-nogui")))
+  if provided?(:snd) and (!(ENV["EMACS"] or provided?(:snd_nogui)))
     snd_print("\n" + args.empty? ? "" : format(*args))
     nil
   else
@@ -1055,7 +1322,7 @@ end
 # debug(var1, var2)                       --> #<DEBUG: ClassName: value1, ClassName: value2>
 
 def debug(*args)
-  if args[0].kind_of?(String) and /%/.match(args[0])
+  if string?(args[0]) and /%/.match(args[0])
     fmt = args.shift
     fmt = format(fmt, *args.map do |x| x.inspect end)
   else
@@ -1082,6 +1349,10 @@ def regions2array
   (regions or []).reverse
 end
 
+def marks2array(snd = false, chn = false)
+  (marks(snd, chn) or [])
+end
+
 def snd_snd(snd = false)
   snd or selected_sound or (sounds and sounds[0])
 end
@@ -1090,49 +1361,16 @@ def snd_chn(chn = false)
   chn or selected_channel or 0
 end
 
-# snd_var(:cursor_size) # => value
-
-def snd_var(name, snd = :no_snd, chn = :no_chn)
-  case name
-  when Symbol
-    if chn != :no_chn and chn != :no_chn
-      # channel variables
-      send(name, snd, chn)
-    elsif snd != :no_snd and chn == :no_chn
-      # sound variables
-      send(name, snd)
-    else
-      # global variables
-      send(name)
-    end
-  when String
-    if chn != :no_chn and chn != :no_chn
-      send(name, snd, chn)
-    elsif snd != :no_snd and chn == :no_chn
-      send(name, snd)
-    else
-      send(name.intern)
-    end
-  else
-    raise(TypeError, "snd_var(name, [snd, [chn]]): NAME must be String or Symbol")
-  end
+# snd_func(:cursor_size) # => value
+def snd_func(name, *rest)
+  assert_type((string?(name) or symbol?(name)), name, 0, "a string or a symbol")
+  send(name.to_s.intern, *rest)
 end
 
-# set_snd_var(:cursor_size, value) # => set_cursor_size(value)
-
-def set_snd_var(name, val, snd = :no_snd, chn = :no_chn)
-  if name.kind_of?(Symbol) or name.kind_of?(String)
-    func = format("set_%s", name.to_s).intern
-    if snd != :no_snd and chn != :no_chn
-      send(func, val, snd, chn)
-    elsif snd != :no_snd and chn == :no_chn
-      send(func, val, snd)
-    else
-      send(func, val)
-    end
-  else
-    raise(TypeError, "set_snd_var(name, val, [snd, [chn]]): NAME must be String or Symbol")
-  end
+# set_snd_func(:cursor_size, value) # => set_cursor_size(value)
+def set_snd_func(name, val, *rest)
+  assert_type((string?(name) or symbol?(name)), name, 0, "a string or a symbol")
+  send(format("set_%s", name.to_s).intern, val, *rest)
 end
 
 Snd_error_tags = [
@@ -1173,56 +1411,59 @@ Snd_error_tags = [
   :wrong_type_arg]
 
 def rb_error_to_mus_tag
-  case $!.inspect
+  case $!.class.to_s
     # case 1
     # #<StandardError: No_such_file: file->array /baddy/hiho No such file or directory
     # case 2
     # #<StandardError: insert_region: No_such_region: 1004>
     # case 3 (snd_error)
     # #<StandardError: mus_ycoeff__invalid_index_123__order___3?: Mus_error>
-  when /^#<StandardError/
-    err = $!.inspect.downcase.split(/:/)[1, 2].map do |e| e.strip.chomp(">") end
-    Snd_error_tags.detect do |tag| tag.to_s == err[0] or tag.to_s == err[1] end
-  when /^#<RangeError/
+  when "StandardError"
+    err = $!.message.downcase.split(/:/).map do |e| e.strip.delete("\n").chomp(">") end
+    Snd_error_tags.detect do |tag| err.member?(tag.to_s) end or :standard_error
+  when "RangeError"
     :out_of_range
-  when /^#<TypeError/
+  when "TypeError"
     :wrong_type_arg
   else
-    nil
+    # converts ruby exceptions to symbols: NoMethodError --> :no_method_error
+    $!.class.to_s.gsub(/([A-Z])/) do |c| "_" + c.tr("A-Z", "a-z") end[1..-1].intern
   end
 end
 
 def rb_error_to_message_array
   # case 2 from rb_error_to_mus_tag above
   # "#<RangeError: make-all-pass: arg 6, -1, out of range: size ~A < 0?\n>"
-  err = *$!.inspect.split(/:/)[1..-1].map do |e| e.strip.chomp("\n>").sub("~A", "%s") end
-  if err.kind_of?(Array) and err.length > 2 and (str = err.delete_at(1).split(/,/))[1]
+  err = *$!.message.split(/:/)[1..-1].map do |e|
+    e.strip.delete("\n").chomp(">").gsub("~A", "%s")
+  end
+  if array?(err) and err.length > 2 and (str = err.delete_at(1).split(/,/))[1]
     err.push(str[1].strip)
-    # ["make-all-pass", "size ~A < 0?", "-1"]
+    # ==> ["make-all-pass", "size ~A < 0?", "-1"]
   end
   err
 end
 
 # if something goes wrong
-# returns [:tag_name, message(-array)] or [retval] if not nil
-
-def snd_catch(tag = :all, retval = nil, &body)
+# returns [:tag_name, message(-array)] or [retval] if retval != :undefined
+# otherwise returns [value]
+def snd_catch(tag = :all, retval = :undefined)
   old_debug = $DEBUG
   $DEBUG = false
-  ret = catch(tag) do body.call end
+  val = catch(tag) do yield end
   # catch/throw
-  if ret.kind_of?(Array) and ret[0] == :snd_throw
-    if retval
+  if array?(val) and val[0] == :snd_throw
+    if retval != :undefined
       [retval]
     else
-      ret[1..-1]
+      val[1..-1]
     end
   else
-    [ret]
+    [val]
   end
-rescue StandardError, RangeError, TypeError
-  # rescue
-  if tag == (mus_tag = rb_error_to_mus_tag) and retval 
+rescue
+  # raise
+  if tag == (mus_tag = rb_error_to_mus_tag) and retval != :undefined
     [retval]
   else
     [mus_tag, rb_error_to_message_array].flatten
@@ -1235,38 +1476,47 @@ def snd_throw(tag, *args)
   throw(tag, [:snd_throw, tag, get_func_name(2), *args])
 end
 
+Ruby_exceptions = {
+  :script_error,        ScriptError,
+  :load_error,          LoadError,
+  :name_error,          NameError,
+  :syntax_error,        SyntaxError,
+  :standard_error,      StandardError,
+  :argument_error,      ArgumentError,
+  :float_domain_error,  FloatDomainError,
+  :index_error,         IndexError,
+  :io_error,            IOError,
+  :eof_error,           EOFError,
+  :local_jump_error,    LocalJumpError,
+  :range_error,         RangeError,
+  :regexp_error,        RegexpError,
+  :runtime_error,       RuntimeError,
+  :security_error,      SecurityError,
+  :thread_error,        ThreadError,
+  :type_error,          TypeError,
+  :zero_division_error, ZeroDivisionError}
+
 def snd_raise(tag, *args)
-  str = format("%s: %s:", get_func_name(2), tag.to_s.capitalize)
-  args.each do |s| str += format(" %s", s.inspect) end
+  msg = format("%s: %s:", get_func_name(2), tag)
+  args.each do |s| msg += format(" %s,", s) end
+  msg.chomp!(",")
   exception = case tag
               when :out_of_range
                 RangeError
               when :wrong_type_arg
                 TypeError
-              else
+              when *Snd_error_tags
                 StandardError
+              else
+                Ruby_exceptions[tag] or RuntimeError
               end
-  raise(exception, str)
+  raise(exception, msg)
 end
 
 # for irb
 def c_g?
   false
 end unless defined? c_g?
-
-#
-# let(*args) do |*args| ... end
-# a local environment
-#
-# let(8, :foo, "bar") do |a, b, c|
-#   printf("a: %d, b: %s, c: %s\n", a, b, c)
-# end
-
-def let(*args, &body)
-  body.call(*args)
-rescue
-  error("%s: args: %s", get_func_name, args.inspect)
-end
 
 # general purpose loop
 
@@ -1312,7 +1562,7 @@ def gloop(*args, &body)
   step   = get_shift_args(args, :step, 1)
   before = get_shift_args(args, :before, nil)
   after  = get_shift_args(args, :after, nil)
-  do_extra = lambda do |thunk| thunk.kind_of?(Proc) ? thunk.call : send(thunk) end
+  do_extra = lambda do |thunk| thunk?(thunk) ? thunk.call : snd_func(thunk) end
   result = []
   case args[0]
   when Range
@@ -1354,13 +1604,9 @@ end
 # returns value, whether default VAL or value of KEY found in ARGS
 
 def get_args(args, key, default)
-  if(key == :help and (args == key or args.member?(key) or args.assoc(key)))
-    default = true
-  elsif(args.member?(key))
+  if args.member?(key)
     x = args[args.index(key) + 1]
     default = ((x == nil) ? default : x)
-  elsif(args.assoc(key))
-    default = (args.assoc(key)[1] rescue default)
   end
   default
 end
@@ -1396,13 +1642,11 @@ end
 #                               [Numeric, :number, 1],
 #                               [Array, :list, [0, 1, 2, 3]])
 
-$strict_args = $DEBUG unless defined? $strict_args
-
 def Args(args, *rest)
   result = rest.map do |keys| get_class_or_key(args, *keys) end
   unless args.empty?
-    if $strict_args
-      error("rest args: %s", args.inspect)
+    if $DEBUG
+      snd_raise(:ruby_error, args, "rest args")
     else
       warn("rest args ignored: %s", args.inspect)
     end
@@ -1416,9 +1660,9 @@ Returns false if file doesn't exist, otherwise loads it. \
 File may reside in current working dir or in $HOME dir.")
 def load_init_file(file)
   if File.exist?(file)
-    load(file)
+    snd_catch do load(file) end
   elsif File.exist?(f = ENV["HOME"] + "/" + file)
-    load(f)
+    snd_catch do load(f) end
   else
     false
   end
@@ -1603,7 +1847,7 @@ end")
     add_to_menu($buffer_menu, file, lambda do | | select_sound(find_sound(file)) end)
     $buffer_names.push(file)
     if provided? "snd-xm.rb"
-      if provided? "xm"
+      if provided? :xm
         set_label_sensitive(menu_widgets[0], "Buffers", true)
       else
         set_sensitive(main_menu($buffer_menu), true)
@@ -1621,7 +1865,7 @@ end")
     remove_from_menu($buffer_menu, file_name(snd))
     $buffer_names.delete(file_name(snd))
     if provided? "snd-xm.rb" and $buffer_menu
-      if provided? "xm"
+      if provided? :xm
         set_label_sensitive(menu_widgets[0], "Buffers", !$buffer_names.empty?)
       else
         set_sensitive(main_menu($buffer_menu), !$buffer_names.empty?)
@@ -1660,7 +1904,7 @@ end")
         remove_from_menu($reopen_menu, $reopen_names.shift)
       end
       if provided? "snd-xm.rb"
-        if provided? "xm"
+        if provided? :xm
           set_label_sensitive(menu_widgets[0], "Reopen", true)
         else
           set_sensitive(main_menu($reopen_menu), true)
@@ -1683,7 +1927,7 @@ end")
       $reopen_names.delete(brief_name)
     end
     if provided? "snd-xm.rb" and $reopen_menu
-      if provided? "xm"
+      if provided? :xm
         set_label_sensitive(menu_widgets[0], "Reopen", !$reopen_names.empty?)
       else
         set_sensitive(main_menu($reopen_menu), !$reopen_names.empty?)
@@ -1743,23 +1987,24 @@ end")
     maxsync = sounds2array.map do |s| sync(s) end.max
     if sync(snd) > 0 and
         snd == sounds2array.map do |s| sync(snd) == sync(s) ? s : maxsync + 1 end.min
-    end
-    ls = left_sample(snd, chn)
-    rs = right_sample(snd, chn)
-    pow2 = (log(rs - ls) / log(2)).ceil
-    fftlen = (2 ** pow2).to_i
-    if pow2 > 2
-      ffts = []
-      sounds2array.each do |s|
-        if sync(snd) == sync(s) and chans(s) > chn
-          fdr = channel2vct(ls, fftlen, s, chn)
-          fdi = make_vct(fftlen)
-          spectr = make_vct(fftlen / 2)
-          ffts.push(vct_add!(spectr, spectrum(fdr, fdi, false, 2)))
+      ls = left_sample(snd, chn)
+      rs = right_sample(snd, chn)
+      pow2 = (log(rs - ls) / log(2)).ceil
+      fftlen = (2 ** pow2).to_i
+      if pow2 > 2
+        ffts = []
+        sounds2array.each do |s|
+          if sync(snd) == sync(s) and channels(s) > chn
+            fdr = channel2vct(ls, fftlen, s, chn)
+            fdi = make_vct(fftlen)
+            spectr = make_vct(fftlen / 2)
+            ffts.push(spectr.add(spectrum(fdr, fdi, false, 2)))
+          end
         end
+        graph(ffts, "spectra", 0.0, 0.5, false, false, snd, chn)
       end
-      graph(ffts, "spectra", 0.0, 0.5, false, false, snd, chn)
     end
+    false
   end
 
   # c-g? example (Anders Vinjar)
@@ -1772,8 +2017,10 @@ looks for successive samples that sum to less than 'limit', moving the cursor if
     sf = make_sample_reader(start)
     val0 = sf.call.abs
     val1 = sf.call.abs
+    n = start
     until sample_reader_at_end?(sf) or c_g? or val0 + val1 < limit
       val0, val1 = val1, sf.call.abs
+      n += 1
     end
     free_sample_reader(sf)
     set_cursor(n)
@@ -1986,15 +2233,15 @@ bind_key(?m, 0, lambda do | | first_mark_in_window_at_left end)")
     keychn = snd_chn
     current_left_sample = left_sample(keysnd, keychn)
     chan_marks = marks(keysnd, keychn)
-    if chan_marks.zero?
-      report_in_minibuffer("no marks")
+    if chan_marks.null?
+      report_in_minibuffer("no marks!")
     else
       leftmost = chan_marks.map do |m| mark_sample(m) end.detect do |m| m > current_left_sample end
-      if leftmost
+      if leftmost.null?
+        report_in_minibuffer("no mark in window")
+      else
         set_left_sample(leftmost, keysnd, keychn)
         Keyboard_no_action
-      else
-        report_in_minibuffer("no mark in window")
       end
     end
   end
@@ -2063,7 +2310,7 @@ applies func to all sync'd channels using edhist as the edit history indication"
       sounds2array.each do |snd|
         channels(snd).times do |chn|
           if sync(snd) == snc
-            map_channel(func, 0, false, snd, chn, false, format(*origin))
+            map_channel(func, 0, false, snd, chn, false, (origin.empty? ? "" : format(*origin)))
           end
         end
       end
@@ -2077,18 +2324,22 @@ applies func to all sync'd channels using edhist as the edit history indication"
 applies func to all selected channels using edhist as the edit history indication")
   def do_sound_chans(*origin, &func)
     if snd = selected_sound
-      channels(snd).times do |chn| map_channel(func, 0, false, snd, chn, false, format(*origin)) end
+      channels(snd).times do |chn|
+        map_channel(func, 0, false, snd, chn, false, (origin.empty? ? "" : format(*origin)))
+      end
     else
       snd_warning("no selected sound")
     end
   end
 
   add_help(:every_sample?,
-           "every_sample(&func) \
+           "every_sample?(&func) \
 -> true if func is not false for all samples in the current channel, \
 otherwise it moves the cursor to the first offending sample")
   def every_sample?(&func)
-    if baddy = scan_channel(lambda do |y| (not func.call(y)) end)
+    snd = snd_snd
+    chn = snd_chn
+    if baddy = scan_channel(lambda do |y| (not func.call(y)) end, 0, frames(snd, chn), snd, chn)
       set_cursor(baddy[1])
     end
     (not baddy)
@@ -2115,7 +2366,7 @@ If 'pan-env' is a number, the sound is split such that 0 is all in channel 0 \
 and 90 is all in channel 1.")
   def place_sound(mono_snd, stereo_snd, pan_env)
     len = frames(mono_snd)
-    if pan_env.kind_of?(Numeric)
+    if number?(pan_env)
       pos = pan_env / 90.0
       rd0 = make_sample_reader(0, mono_snd)
       rd1 = make_sample_reader(0, mono_snd)
@@ -2159,7 +2410,7 @@ ffts an entire sound, removes all energy below low-Hz and all above high-Hz, the
     end
     fft(rdata, idata, -1)
     vct_scale!(rdata, 1.0 / fsize)
-    vct2channel(rdata, 0, len - 1, snd, chn, false, format("fft_edit %s %s", bottom, top))
+    vct2channel(rdata, 0, len - 1, snd, chn, false, format("%s(%s, %s", get_func_name, bottom, top))
   end
 
   add_help(:fft_squelch,
@@ -2188,7 +2439,7 @@ ffts an entire sound, sets all bins to 0.0 whose energy is below squelch, then i
     end
     fft(rdata, idata, -1)
     vct_scale!(rdata, 1.0 / fsize)
-    vct2channel(rdata, 0, len - 1, snd, chn, false, format("fft_squelch %s", squelch))
+    vct2channel(rdata, 0, len - 1, snd, chn, false, format("%s(%s", get_func_name, squelch))
     scaler
   end
 
@@ -2216,7 +2467,8 @@ ffts an entire sound, sets the bin(s) representing lo_freq to hi_freq to 0.0, th
     end
     fft(rdata, idata, -1)
     vct_scale!(rdata, 1.0 / fsize)
-    vct2channel(rdata, 0, len - 1, snd, chn, false, format("fft_cancel %s %s", lo_freq, hi_freq))
+    vct2channel(rdata, 0, len - 1, snd, chn, false,
+                format("%s(%s, %s", get_func_name, lo_freq, hi_freq))
   end
 
   # same idea but used to distinguish vowels (steady-state) from consonants
@@ -2264,7 +2516,7 @@ suppresses portions of a sound that look like steady-state")
                     ctr = 0
                   end
                   y * (1.0 - ramp(ramper, in_vowel))
-                end, 0, false, snd, chn, false, "squelch_vowels")
+                end, 0, false, snd, chn, false, "squelch_vowels(")
   end
 
   add_help(:fft_env_data,
@@ -2297,7 +2549,7 @@ applies fft_env as spectral env to current sound, returning vct of new data")
 edits (filters) current chan using fft_env")
   def fft_env_edit(fft_env, snd = false, chn = false)
     vct2channel(fft_env_data(fft_env, snd, chn), 0, frames(snd, chn) - 1, snd, chn, false,
-                format("%s %s", get_func_name, fft_env.inspect))
+                format("%s(%s", get_func_name, fft_env.inspect))
   end
 
   add_help(:fft_env_interp,
@@ -2314,7 +2566,7 @@ following interp (an env between 0 and 1)")
       (1.0 - pan) * data1[i] + pan * data2[i]
     end
     vct2channel(new_data, 0, len - 1, snd, chn, false,
-                format("%s %s %s %s", get_func_name, env1.inspect, env2.inspect, interp.inspect))
+                format("%s(%s, %s, %s", get_func_name, env1.inspect, env2.inspect, interp.inspect))
   end
 
   add_help(:fft_smoother,
@@ -2536,7 +2788,7 @@ varies the sampling rate randomly, making a voice sound quavery: hello_dentist(4
                     val
                   end)
     vct2channel(vct_map!(out_data, lambda do | | src(rd, rand_interp(rn)) end),
-                0, len, snd, chn, false, format("%s %f %f", get_func_name, freq, amp))
+                0, len, snd, chn, false, format("%s(%s, %s", get_func_name, freq, amp))
   end
 
   # a very similar function uses oscil instead of rand-interp, giving
@@ -2555,7 +2807,7 @@ varies the sampling rate via an oscil: fp(1.0, 0.3, 20)")
     end
     free_sample_reader(sf)
     vct2channel(out_data, 0, len, snd, chn, false,
-                format("%s %f %f %f", get_func_name, sr, osamp, osfreq))
+                format("%s(%s, %s, %s", get_func_name, sr, osamp, osfreq))
   end
 
   # compand, compand-channel
@@ -2575,7 +2827,7 @@ applies a standard compander to sound")
               0.000, 0.250, 0.450, 0.600, 0.720, 0.820, 0.900, 0.960, 1.000)
     ptree_channel(lambda { |inval| array_interp(tbl, 8.0 + 8.0 * inval, tbl.length)},
                   beg, dur, snd, chn, edpos, true, false,
-                  format("%s %s %s", get_func_name, beg, dur))
+                  format("%s(%s, %s", get_func_name, beg, dur))
   end
 
   # shift pitch keeping duration constant
@@ -2632,7 +2884,7 @@ uses the granulate generator to change tempo according to an envelope: expsnd([0
       val
     end
     free_sample_reader(sf)
-    vct2channel(out_data, 0, len, snd, chn, false, format("%s %s", get_func_name, gr_env.inspect))
+    vct2channel(out_data, 0, len, snd, chn, false, format("%s(%s", get_func_name, gr_env.inspect))
   end
 
   # cross-synthesis
@@ -2714,7 +2966,7 @@ turns a vocal sound into whispering: voiced2unvoiced(1.0, 256, 2.0, 2.0)")
       end
       vct_scale!(out_data, amp * (old_peak_amp / new_peak_amp))
       vct2channel(out_data, 0, [len, outlen].max, snd, chn, false,
-                  format("%s %s %s %s %s", get_func_name, amp, fftsize, r, tempo))
+                  format("%s(%s, %s, %s, %s", get_func_name, amp, fftsize, r, tempo))
     end
   end
 
@@ -2763,12 +3015,12 @@ convolves snd0 and snd1, scaling by amp, returns new max amp: cnvtest(0, 1, 0.1)
         snd_chn0 = find_selection_sound.call([])
         snd_chn1 = find_selection_sound.call(snd_chn0)
         if snd_chn1
-          swap_channel(snd_chn0[0], snd_chn0[1], snd_chn1[0], snd_chn1[1], beg, len)
+          swap_channels(snd_chn0[0], snd_chn0[1], snd_chn1[0], snd_chn1[1], beg, len)
         else
-          snd_raise(:wrong_number_of_channels, "needs two channels to swap")
+          snd_raise(:wrong_number_of_channels, "need two channels to swap")
         end
       else
-        snd_raise(:wrong_number_of_channels, "needs a stereo selection")
+        snd_raise(:wrong_number_of_channels, "need a stereo selection")
       end
     else
       snd_raise(:no_active_selection)
@@ -2849,11 +3101,11 @@ reads snd's channel chn according to env and time-scale")
       end
     end
     if data_ctr > 0
-      mus_sound_write(fil, 0, data-ctr - 1, 1, data)
+      mus_sound_write(fil, 0, data_ctr - 1, 1, data)
     end
     mus_sound_close_output(fil, 4 * newlen)
     set_samples(0, newlen, tempfilename, snd, chn, false,
-                format("%s %s %s", get_func_name, envelope.inspect, time_scale))
+                format("%s(%s, %s", get_func_name, envelope.inspect, time_scale))
     File.unlink(tempfilename)
   end
 
@@ -2894,7 +3146,7 @@ as env moves to 0.0, low-pass gets more intense; amplitude and low-pass amount m
                   set_mus_xcoeff(flt, 0, env_val)
                   set_mus_ycoeff(flt, 1, env_val - 1.0)
                   one_pole(flt, env_val * val)
-                end, 0, false, snd, chn, false, format("%s %s", get_func_name, en.inspect))
+                end, 0, false, snd, chn, false, format("%s(%s", get_func_name, en.inspect))
   end
 
   # lisp graph with draggable x axis
@@ -2984,9 +3236,8 @@ end")
       prompt_in_minibuffer(prompt,
                            lambda do |response|
                              width, heigth = widget_size(sound_widgets(@current_buffer[0])[0])
-                             debug(response)
                              callcc do |give_up|
-                               if (not response.kind_of?(String)) or response.empty?
+                               if (not string?(response)) or response.empty?
                                  temp = @current_buffer
                                  if @last_buffer
                                    @current_buffer = @last_buffer
@@ -3110,19 +3361,17 @@ end")
   add_help(:search_for_click, "search_for_click() looks for the next click (for use with C-s)")
   def search_for_click
     samp0 = samp1 = samp2 = 0.0
-    samps = make_vct(10)
+    samps = Vct.new(10)
     sctr = 0
     lambda do |val|
       samp0, samp1, samp2 = samp1, samp2, val
       samps[sctr] = val
       sctr += 1
-      if sctr >= 10
-        sctr 0
-      end
-      local_max = [0.1, vct_peak(samps)].max
-      if ((samp0 - samp1).abs > local_max) and
-          ((samp1 - samp2).abs > local_max) and
-          ((samp0 - samp2).abs < (local_max / 2))
+      if sctr >= 10 then sctr = 0 end
+      local_max = [0.1, samps.peak].max
+      if ((samp0 - samp1).abs >= local_max) and
+          ((samp1 - samp2).abs >= local_max) and
+          ((samp0 - samp2).abs <= (local_max / 2))
         -1
       else
         false
@@ -3148,9 +3397,8 @@ finds the next max or min point in the time-domain waveform (for use with C-s)")
   def next_peak
     last0 = last1 = false
     lambda do |n|
-      rtn = last0.kind_of?(Numeric) and
-        ((last0 < last1 and last1 > n) or (last0 > last1 and last1 < n)) and
-        -1
+      rtn = number?(last0) and
+        ((last0 < last1 and last1 > n) or (last0 > last1 and last1 < n)) and -1
       last0, last1 = last1, n
       rtn
     end
@@ -3216,12 +3464,13 @@ adds (mixes) 'notes' which is a list of lists of the form: \
 currently selected channel: add_notes([[\"oboe.snd\"], [\"pistol.snd\", 1.0, 2.0]])")
   def add_notes(notes, snd = false, chn = false)
     start = cursor(snd, chn)
-    as_one_edit_rb("%s %s", get_func_name, notes.inspect) do
+    as_one_edit_rb("%s(%s", get_func_name, notes.inspect) do
       (notes or []).each do |note|
         file, offset, amp = note
         beg = start + (srate(snd) * (offset or 0.0)).floor
         if amp and amp != 1.0
-          mix_vct(vct_scale!(file2vct(file), amp), beg, snd, chn, false, get_func_name)
+          mix_vct(vct_scale!(file2vct(file), amp), beg, snd, chn, false,
+                  format("%s(%s", get_func_name, notes.inspect))
         else
           mix(file, beg, 0, snd, chn, false)
         end
@@ -3371,7 +3620,7 @@ turns the currently selected soundfont file into a bunch of files of the form sa
 
   def chain_dsps(start, dur, *dsps)
     dsp_chain = dsps.map do |gen|
-      if gen.kind_of?(Array)
+      if array?(gen)
         make_env(:envelope, gen, :duration, dur)
       else
         gen
@@ -3482,14 +3731,15 @@ turns the currently selected soundfont file into a bunch of files of the form sa
                     data[1] = incr
                     data[0] = frag_beg * incr
                     data
-                  }, format("%s %s %s", get_func_name, beg, dur))
+                  }, format("%s(%s, %s", get_func_name, beg, dur))
   end
 
   # ring-modulate-channel (ring-mod as virtual op)
 
   def ring_modulate_channel(freq, beg = 0, dur = false, snd = false, chn = false, edpos = false)
     ptree_channel(lambda { |y, data, forward|
-                    angle, incr = data
+                    angle = data[0]
+                    incr = data[1]
                     val = y * sin(angle)
                     if forward
                       data[0] = angle + incr
@@ -3497,13 +3747,12 @@ turns the currently selected soundfont file into a bunch of files of the form sa
                       data[0] = angle - incr
                     end
                     val
-                  }, beg, dur, snd, snd, edpos, false,
+                  }, beg, dur, snd, chn, edpos, false,
                   lambda { |frag_beg, frag_dur|
                     incr = (TWO_PI * freq) / srate(snd)
                     vct((frag_beg * incr).divmod(TWO_PI).last, incr)
-                  }, format("%s %s %s", get_func_name, beg, dur))
+                  }, format("%s(%s, %s, %s", get_func_name, freq, beg, dur))
   end
-  
 
   # re-order channels
 
@@ -3693,8 +3942,8 @@ translated to Snd scheme function by Bill
 
   add_help(:moog_filter,
            "moog_filter(moog, [insig=0.0]) is the generator associated with make_moog_filter")
-  def moog_filter(moog, insig = 0.0)
-    moog.filter(insig)
+  def moog_filter(mg, insig = 0.0)
+    mg.filter(insig)
   end
   
   def moog(freq, q)

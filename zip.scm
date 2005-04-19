@@ -7,6 +7,8 @@
 
 (define (safe-srate) (if (not (null? (sounds))) (srate) (mus-srate)))
 
+;;; TODO: zip should use def-clm-struct
+
 (define* (make-zipper ramp-env #:optional frame-size frame-env)
   "(make-zipper ramp-env #:optional frame-size frame-env) makes a zipper generator.  'ramp-env' is 
 a thunk (normally a ramp from 0 to 1) which sets where we are in the zipping process, 

@@ -2,7 +2,7 @@
 
 # Translator: Michael Scholz <scholz-micha@gmx.de>
 # Created: Wed Mar 23 02:08:47 CET 2005
-# Last: Fri Mar 25 20:40:44 CET 2005
+# Last: Tue Apr 12 23:58:01 CEST 2005
 
 # Commentary:
 #
@@ -98,7 +98,7 @@ returns a description of the movements of mark id over the channel's edit histor
         end
       end
     end
-    if mark_setting.kind_of?(Array)
+    if array?(mark_setting)
       snd, chn = mark_setting
       max_edits = 0
       edits(snd, chn).each do |n| max_edits += n end
@@ -285,7 +285,7 @@ plays the portion between the marks (searching for plausible default marks)")
     
     def report_mark_names_play_hook(size)
       @samp += size
-      if @samplist.kind_of?(Array) and @samp >= @samplist.first
+      if array?(@samplist) and @samp >= @samplist.first
         report_in_minibuffer(mark_sample(@marklist.first), @snd)
         @marklist.unshift
         @samplist.unshift
@@ -320,17 +320,28 @@ plays the portion between the marks (searching for plausible default marks)")
   add_help(:eval_between_marks,
            "eval_between_marks(&func) \
 evaluates func between the leftmost marks; func takes one arg, the original sample")
-  def eval_between_marks(&func)
-    if func.kind_of?(Proc)
+  def eval_between_marks(func1 = nil, &func2)
+    func = if block_given?
+             func2
+           else
+             func1
+           end
+    if proc?(func)
       snd = snd_snd
       chn = snd_chn
       if chn < 0
         chn = 0
       end
-      if (mlist = marks(snd, chn)).kind_of?(Array) and mlist.length > 1
+      if array?(mlist = marks(snd, chn)) and mlist.length > 1
         left_samp = left_sample(snd, chn)
-        winl = mlist.detect do |n| mark_sample(n) > left_samp end
-        if winl.kind_of?(Array) and winl.length > 1
+        winl = []
+        mlist.each_with_index do |n, i|
+          if mark_sample(n) > left_samp
+            winl = mlist[i..-1]
+            break
+          end
+        end
+        if array?(winl) and winl.length > 1
           beg = mark_sample(winl[0])
           len = mark_sample(winl[1]) - beg
           old_data = channel2vct(beg, len, snd, chn)
@@ -452,7 +463,7 @@ splits a sound into a bunch of sounds based on mark placements")
   end
 
   def remove_mark_properties(id)
-    if mark_properties(id).kind_of?(Hash)
+    if hash?(mark_properties(id))
       properties.delete(id)
       $all_mark_properties.delete(id)
     end
@@ -463,7 +474,7 @@ splits a sound into a bunch of sounds based on mark placements")
 returns the value associated with 'key' in the given mark's property list, or false")
   def mark_property(key, id)
     snd_raise(:no_such_mark, id) unless mark?(id)
-    (h = mark_properties(id)).kind_of?(Hash) and h[key]
+    hash?(h = mark_properties(id)) and h[key]
   end
 
   add_help(:set_mark_property,
@@ -471,11 +482,10 @@ returns the value associated with 'key' in the given mark's property list, or fa
 sets the value 'val' to 'key' in the given mark's property list")
   def set_mark_property(key, val, id)
     snd_raise(:no_such_mark, id) unless mark?(id)
-    unless (h = mark_properties(id)).kind_of?(Hash) and h.store(key, val)
+    unless hash?(h = mark_properties(id)) and h.store(key, val)
       $all_mark_properties.push(id)
-      h = {:markid, id, key, val}
+      set_mark_properties(id, {key, val})
     end
-    set_mark_properties(id, h)
   end
 
   add_help(:remove_mark_property,
@@ -483,7 +493,11 @@ sets the value 'val' to 'key' in the given mark's property list")
 removes the key-value pair in the given mark's property list")
   def remove_mark_property(key, id)
     snd_raise(:no_such_mark, id) unless mark?(id)
-    (h = mark_properties(id)).kind_of?(Hash) and h.delete(key)
+    if hash?(h = mark_properties(id))
+      h.delete(key)
+    else
+      $all_mark_properties.delete(id)
+    end
   end
   
 =begin  
@@ -501,9 +515,9 @@ sets up an $after_save_state_hook function to save any mark-properties")
       File.open(File.expand_path(fname), "a+") do |f|
         f.printf("\n# from %s in %s\n", get_func_name, __FILE__)
         f.printf("require \"marks.rb\"\n")
-        marks and marks.each do |snd_m|
-          snd_m.each do |chn_m|
-            chn_m.each do |m|
+        (marks or []).each do |snds|
+          (snds or []).each do |chns|
+            (chns or []).each do |m|
               if mp = mark_properties(m)
                 snd, chn = mark_home(m)
                 msamp = mark_sample(m)
@@ -534,7 +548,7 @@ is a $mark_click_hook function that describes a mark and its properties")
                                     id,
                                     ((s = mark_name(id)) ?
                                      format("\n   mark name: %s", s.inspect) : ""),
-                                    mark_samples(id),
+                                    mark_sample(id),
                                     mark_sample(id) / srate(mark_home(id)[0]).to_f,
                                     (mark_sync(id).nonzero? ?
                                      format("\n        sync: %d", mark_sync(id)) : ""),
@@ -547,24 +561,30 @@ is a $mark_click_hook function that describes a mark and its properties")
   # back in when the sound is later reopened
 
   def eval_header(sndf)
-    (str = comment(sndf)).kind_of?(String) and snd_catch do eval(str) end.first
+    string?(str = comment(sndf)) and snd_catch do eval(str) end.first
   end
 
   def marks2string(sndf)
     str = "require \"marks.rb\"\n"
-    chn = 0
-    marks(sndf) and marks(sndf).each do |chan_marks|
-      chan_marks and chan_marks.each do |m|
-        str += format("m = add_mark(%d, false, %d)\n", mark_sample(m), chn)
-        if (mstr = mark_name(m)).kind_of?(String) and mstr.length > 0
-          str += format("set_mark_name(m, %s)\n", mstr.inspect)
+    (marks(sndf) or []).each do |chan_marks|
+      (chan_marks or []).each do |m|
+        if mark?(m)
+          snd, chn = mark_home(m)
+          str += format("if sound?(snd = find_sound(%s))\n", file_name(snd).inspect)
+          str += format("  if mark?(m = (find_mark(%d, snd, %d) or add_mark(%d, snd, %d)))\n",
+                        mark_sample(m), chn, mark_sample(m), chn)
+          if string?(mstr = mark_name(m)) and mstr.length > 0
+            str += format("    set_mark_name(m, %s)\n", mstr.inspect)
+          end
+          if props = mark_properties(m)
+            str += format("    set_mark_properties(m, %s)\n", props.inspect)
+          end
+          str += "  end\n"
+          str += "end\n"
         end
-        if props = mark_properties(m)
-          str += format("set_mark_properties(m, %s)\n", props.inspect)
-        end
-        str += "m\n"
       end
     end
+    str
   end
   # $output_comment_hook.add_hook!("marks2string") do |str| marks2string(selected_sound) end
   # $after_open_hook.add_hook!("marks2string") do |snd| eval_header(snd) end

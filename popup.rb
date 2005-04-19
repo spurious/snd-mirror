@@ -2,13 +2,13 @@
 
 # Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Thu Sep 05 22:28:49 CEST 2002
-# Last: Sat Jan 08 16:29:24 CET 2005
+# Last: Thu Apr 07 00:10:03 CEST 2005
 
 # Commentary:
 #
 # Requires --with-motif or --with-gtk and module libxm.so or --with-static-xm!
 #
-# Tested with Snd 7.10, Motif 2.2.2, Gtk+ 2.2.1, Ruby 1.6.6, 1.6.8 and 1.9.0.
+# Tested with Snd 7.12, Motif 2.2.2, Gtk+ 2.2.1, Ruby 1.6.6, 1.6.8 and 1.9.0.
 #
 # $info_comment_hook: lambda do |file, info_string| ...; new_info_string; end
 #
@@ -116,15 +116,15 @@ $info_comment_hook.add_hook!(\"snd-init-hook\") do |file, info|
   info
 end")
 
-def make_snd_popup(name, *rest, &body)
-  doc("make_snd_popup(name, *rest) do ... end
+add_help(:make_snd_popup, "make_snd_popup(name, *rest) do ... end
     name                               # menu name
     :parent, main_widgets[Main_pane]   # e.g. listener popup takes main_widgets[Listener_pane]
     :where,  :channels                 # :channels, :widget, :event
-    :args,   [RXmNbackground, highlight_color] # Motif arguments\n") if name == :help
+    :args,   [RXmNbackground, highlight_color] # Motif arguments")
+def make_snd_popup(name, *rest, &body)
   parent = get_args(rest, :parent, main_widgets[Main_pane_shell])
   where  = get_args(rest, :where, :channels)      # Motif :channels, :widget, :event, Gtk :channels
-  args = if provided? "xm"
+  args = if provided? :xm
            get_args(rest, :args, [RXmNbackground, highlight_color])
          else
            []
@@ -151,7 +151,7 @@ as well as the return value.  The menu will be posted in every case.
 
 On event-handler popups (see nb.rb): SND, CHN, and XE are meaningless.
 If it returns non-nil or non-false, the menu will be posted.")
-    if where.kind_of?(Symbol)
+    if symbol?(where)
       # no `create' on Cascade.new
       create(where, &body)
     end
@@ -160,7 +160,7 @@ If it returns non-nil or non-false, the menu will be posted.")
   
   def entry(name, *rest, &body)
     prc = get_args(rest, :proc, nil)
-    if provided? "xm"
+    if provided? :xm
       args = get_args(rest, :args, @args)
       child = RXtCreateManagedWidget(name, RxmPushButtonWidgetClass, @menu, args)
       if block_given?
@@ -190,7 +190,7 @@ If it returns non-nil or non-false, the menu will be posted.")
       end
     end
     @widget_names[child] = name
-    prc.call(child) if prc.kind_of?(Proc)
+    prc.call(child) if proc?(prc)
     child
   end
 
@@ -217,7 +217,7 @@ If it returns non-nil or non-false, the menu will be posted.")
   
   private
   def create(where, &body)
-    @menu = if provided? "xm"
+    @menu = if provided? :xm
               RXmCreatePopupMenu(@parent, @label, [RXmNpopupEnabled, true] + @args)
             else
               Rgtk_menu_new()
@@ -227,7 +227,7 @@ If it returns non-nil or non-false, the menu will be posted.")
       separator
     end
     instance_eval(&body) if block_given?
-    if provided? "xm"
+    if provided? :xm
       case where
       when :channels
         (sounds() or []).each do |snd| set_channel_popup(snd) end
@@ -244,7 +244,7 @@ If it returns non-nil or non-false, the menu will be posted.")
     end
   end
 
-  if provided? "xm"
+  if provided? :xm
     def channel_cb(w, c, i)
       snd, chn = *c
       e = Revent(i)
@@ -318,7 +318,7 @@ If it returns non-nil or non-false, the menu will be posted.")
     end
   end
 
-  if provided? "xm"
+  if provided? :xm
     # e.g. on listener
     def set_widget_popup
       RXtAddCallback(@parent, RXmNpopupHandlerCallback,
@@ -347,7 +347,7 @@ If it returns non-nil or non-false, the menu will be posted.")
   class Cascade < Snd_popup_menu
     def initialize(name, parent, args)
       super
-      if provided? "xm"
+      if provided? :xm
         @menu = RXmCreatePulldownMenu(@parent, @label, @args)
         @cascade = RXtCreateManagedWidget(@label, RxmCascadeButtonWidgetClass, @parent,
                                           [RXmNsubMenuId, @menu] + @args)
@@ -363,10 +363,10 @@ If it returns non-nil or non-false, the menu will be posted.")
     attr_reader :values
     
     def children(set_cb, rest = false, &body)
-      if set_cb.kind_of?(Proc) and body.kind_of?(Proc)
+      if proc?(set_cb) and proc?(body)
         case set_cb.arity
         when -1, 0
-          if provided? "xm"
+          if provided? :xm
             add_with_arity_1(rest, set_cb, &body)
           end
         when 3
@@ -415,12 +415,12 @@ If it returns non-nil or non-false, the menu will be posted.")
                        end
                      end)
       @values = [widget, @menu, @cascade, set_cb]
-    end if provided? "xm"
+    end if provided? :xm
     
     # transform: set_cb.arity and body.arity == 3 (snd, chn, val)
     def add_with_arity_3(list, set_cb, &body)
       list.each do |name, val|
-        if provided? "xm"
+        if provided? :xm
           wid = RXtCreateManagedWidget(name.to_s, RxmPushButtonWidgetClass, @menu, @args)
           RXtAddCallback(wid, RXmNactivateCallback,
                          lambda do |w, c, i|
@@ -437,7 +437,7 @@ If it returns non-nil or non-false, the menu will be posted.")
         @values.push(val)
         @children.push(wid)
       end
-      if provided? "xm"
+      if provided? :xm
         RXtAddCallback(@cascade, RXmNcascadingCallback,
                        lambda do |w, c, i|
                          @children.each_with_index do |child, idx|
@@ -910,7 +910,7 @@ written: %s\n", channels(snd), srate(snd), frames(snd) / srate(snd).to_f,
   #
   # Listener Popup (only with Motif)
   #
-  if provided?("xm")
+  if provided? :xm
     make_snd_popup("Listener",
                    :where, :widget,
                    :parent, if widget?(w = main_widgets[Listener_pane])

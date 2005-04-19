@@ -4,7 +4,7 @@
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Tue Mar 25 23:21:37 CET 2003
-# Last: Sun Mar 06 10:07:02 CET 2005
+# Last: Wed Apr 13 14:18:24 CEST 2005
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -242,8 +242,17 @@ require "complex"
 require "matrix"
 include Math
 
-provided?("snd-motif") and (not provided?("xm")) and require("libxm.so")
-provided?("snd-gtk")   and (not provided?("xg")) and require("libxg.so")
+provided?(:snd_motif) and (not provided?(:xm)) and require("libxm.so")
+provided?(:snd_gtk)   and (not provided?(:xg)) and require("libxg.so")
+
+class DlocsigError < StandardError
+end
+
+Ruby_exceptions[:dlocsig_error] = DlocsigError
+
+def dl_error(*msg)
+  snd_raise(:dlocsig_error, (msg.empty? ? "" : format(*msg)))
+end
 
 # module Inject, see Thomas, David, Hunt, Andrew: Programming Ruby --
 # The Pragmatic Programmer's Guide, 2001 Addison-Wesley, page 102n
@@ -361,9 +370,11 @@ class Gnuplot
   end
   
   def open
-    @@plot_stream = IO.popen("gnuplot", "w")
-  rescue
-    error("%s#%s: gnuplot not found?", self.class, get_func_name)
+    if (gnuplot = `which gnuplot`).empty?
+      dl_error("gnuplot not found?")
+    else
+      @@plot_stream = IO.popen(gnuplot, "w")
+    end
   end
 
   def close
@@ -473,8 +484,8 @@ class Gnuplot
     styles = get_args(args, :styles, "linespoints")
     labels = get_args(args, :labels, "")
     set_grid()
-    styles = curves.map do |i| styles end unless styles.kind_of?(Array)
-    labels = curves.map do |i| labels end unless labels.kind_of?(Array)
+    styles = curves.map do |i| styles end unless array?(styles)
+    labels = curves.map do |i| labels end unless array?(labels)
     command "plot"
     curves.each_with_index do |x, i|
       style = styles[i]
@@ -678,7 +689,7 @@ module DL
                            end
                          end)
       else
-        error("%s#%s: only 1 to 8 channels possible, %d", self.class, get_func_name, channels)
+        dl_error(channels, "only 1 to 8 channels possible")
       end
     end
     
@@ -688,8 +699,8 @@ module DL
       groups = args.shift
       @number = speakers.length
       @coords = speakers.map do |s|
-        a = (s.kind_of?(Array) ? s[0] : s).to_f
-        e = (s.kind_of?(Array) ? s[1] : 0).to_f
+        a = (array?(s) ? s[0] : s).to_f
+        e = (array?(s) ? s[1] : 0).to_f
         evec = cis((e / @one_turn) * TWO_PI)
         dxy = evec.real
         avec = cis((a / @one_turn) * TWO_PI)
@@ -837,25 +848,24 @@ module DL
       @rev_channels  = get_args(args, :rev_channels, 1)
       @clm           = get_args(args, :clm, true)
       if @render_using == B_format_ambisonics and @out_channels != 4
-        error("%s#%s: B_format_ambisonics requires 4 output channels", self.class, get_func_name)
+        dl_error("B_format_ambisonics requires 4 output channels")
       end
       if @render_using == B_format_ambisonics and
           @rev_channels.nonzero? and
           (not (@rev_channels == 1 or @rev_channels == 4))
-        error("%s#%s: B_format_ambisonics accepts only 0, 1 or 4 rev_channels",
-              self.class, get_func_name)
+        dl_error("B_format_ambisonics accepts only 0, 1 or 4 rev_channels")
       end
       if @rev_channels > @out_channels
-        error("%s#%s: more rev_channels than out_channels", self.class, get_func_name)
+        dl_error("more rev_channels than out_channels")
       end
       if @render_using == B_format_ambisonics
         scaler *= 0.8
       end
       unless path.kind_of?(Path)
-        if path.kind_of?(Array) and !path.empty?
+        if array?(path) and !path.empty?
           path = make_path(path)
         else
-          error("%s#%s: sorry, need a path, %s", self.class, get_func_name, path.inspect)
+          dl_error(path, "sorry, need a path")
         end
       end
       xpoints = path.path_x
@@ -1086,7 +1096,7 @@ module DL
                     if inside
                       push_gains(group, gains, di, ti)
                     else
-                      error("%s#%s: outside of both adjacent groups", self.class, get_func_name)
+                      dl_error("outside of both adjacent groups")
                     end
                   end
                 else
@@ -1108,7 +1118,7 @@ module DL
                     if inside
                       push_gains(group, gains, di, ti)
                     else
-                      error("%s#%s: outside of both adjacent groups", self.class, get_func_name)
+                      dl_error("outside of both adjacent groups")
                     end
                   end
                 else
@@ -1365,37 +1375,25 @@ module DL
     end
 
     def scale_path(scaling)
-      if scaling.kind_of?(Numeric)
-        scaling = [scaling, scaling, scaling]
-      end
-      if scaling.kind_of?(Array)
-        transform_path(:scaling, scaling)
-      else
-        error("%s#%s: need an array, %s", self.class, get_func_name, scaling.inspect)
-      end
+      assert_type((number?(scaling) or array?(scaling)), 0, scaling, "a number or an array")
+      if number?(scaling) then scaling = [scaling, scaling, scaling] end
+      transform_path(:scaling, scaling)
     end
 
     def translate_path(translation)
-      if translation.kind_of?(Numeric)
-        translation = [translation, translation, translation]
-      end
-      if translation.kind_of?(Array)
-        transform_path(:translation, translation)
-      else
-        error("%s#%s: need an array, %s", self.class, get_func_name, translation.inspect)
-      end
+      assert_type((number?(translation) or array?(translation)),
+                  0, translation, "a number or an array")
+      if number?(translation) then translation = [translation, translation, translation] end
+      transform_path(:translation, translation)
     end
 
     def rotate_path(rotation, *args)
-      if rotation.kind_of?(Numeric)
-        rotation_center = get_args(args, :rotation_center, nil)
-        rotation_axis   = get_args(args, :rotation_axis, [0.0, 0.0, 1.0])
-        transform_path(:rotation, rotation,
-                       :rotation_center, rotation_center,
-                       :rotation_axis, rotation_axis)
-      else
-        error("%s#%s: need a number, %s", self.class, get_func_name, rotation.inspect)
-      end
+      assert_type(number?(rotation), 0, rotation, "a number")
+      rotation_center = get_args(args, :rotation_center, nil)
+      rotation_axis   = get_args(args, :rotation_axis, [0.0, 0.0, 1.0])
+      transform_path(:rotation, rotation,
+                     :rotation_center, rotation_center,
+                     :rotation_axis, rotation_axis)
     end
     
     def path_trajectory
@@ -1587,8 +1585,7 @@ module DL
       if scaling or translation or rotation
         rotation = TWO_PI * (rotation / @one_turn) if rotation
         if rotation_axis and (rotation_axis.length != 3)
-          error("%s#%s: rotation axis has to have all three coordinates, %s",
-                self.class, get_func_name, rotation_axis.inspect)
+          dl_error(rotation_axis, "rotation axis has to have all three coordinates")
         end
         matrix = if rotation
                    rotation_matrix(rotation_axis[0], rotation_axis[1], rotation_axis[2], rotation)
@@ -1597,8 +1594,7 @@ module DL
         yc = path_y()
         zc = path_z()
         if rotation_center and (rotation_center.length != 3)
-          error("%s#%s: rotation center has to have all three coordinates, %s",
-                self.class, get_func_name, rotation_center.inspect)
+          dl_error(rotation_center, "rotation center has to have all three coordinates")
         end
         xtr = []
         ytr = []
@@ -1658,7 +1654,7 @@ module DL
     end
 
     def parse_cartesian_coordinates(points, d3)
-      if points[0].kind_of?(Array)
+      if array?(points[0])
         x = points.map do |p| p[0] end
         y = points.map do |p| p[1] end
         z = points.map do |p| d3 ? (p[2] or 0.0) : 0.0 end
@@ -1688,7 +1684,7 @@ module DL
     end
 
     def parse_polar_coordinates(points, d3)
-      if points[0].kind_of?(Array)
+      if array?(points[0])
         x = []
         y = []
         z = []
@@ -1739,8 +1735,8 @@ module DL
   class Bezier_path < Path
     def initialize(path, *args)
       @path = path
-      if (not @path) or (@path.kind_of?(Array) and @path.empty?)
-        error("%s#%s: can't define a path with no points in it", self.class, get_func_name)
+      if (not @path) or (array?(@path) and @path.empty?)
+        dl_error("can't define a path with no points in it")
       end
       super()
       @d3        = get_args(args, :d3, true)
@@ -2004,16 +2000,15 @@ module DL
         n, p, d = calculate_fit()
         c = @curvature
         cs = make_array(n)
-        if c.kind_of?(NilClass) or (c.kind_of?(Array) and c.empty?)
+        if c.kind_of?(NilClass) or (array?(c) and c.empty?)
           n.times do |i| cs[i] = [1.0, 1.0] end
-        elsif c.kind_of?(Numeric)
+        elsif number?(c)
           n.times do |i| cs[i] = [c, c] end
-        elsif c.kind_of?(Array) and c.length == n
+        elsif array?(c) and c.length == n
           c.each_with_index do |ci, i|
-            cs[i] = if ci.kind_of?(Array)
+            cs[i] = if array?(ci)
                       if ci.length != 2
-                        error("%s#%s: curvature sublist must have two elements %s",
-                              self.class, get_func_name, ci.inspect)
+                        dl_error(ci, "curvature sublist must have two elements")
                       else
                         ci
                       end
@@ -2022,8 +2017,7 @@ module DL
                     end
           end
         else
-          error("%s#%s: bad curvature argument %s to path, need %d elements",
-                self.class, get_func_name, c.inspect, n)
+          dl_error(c, "bad curvature argument to path, need #{n} elements")
         end
         @bx = (0...n).map do |i|
           [p[0][i], p[0][i] + d[0][i] * cs[i][0], p[0][i + 1] - d[0][i + 1] * cs[i][1], p[0][i + 1]]
@@ -2116,8 +2110,8 @@ module DL
   class Literal_path < Path
     def initialize(path, *args)
       @path  = path
-      if (not @path) or (@path.kind_of?(Array) and @path.empty?)
-        error("%s#%s: can't define a path with no points in it", self.class, get_func_name)
+      if (not @path) or (array?(@path) and @path.empty?)
+        dl_error("can't define a path with no points in it")
       end
       super()
       @d3    = get_args(args, :d3, true)
@@ -2290,7 +2284,7 @@ class Instrument
   end
 
   def move(start, file, path, *dlocsig_args)
-    ws_error("%s: need a path, %s", get_func_name, path.inspect) unless path.kind_of?(DL::Path)
+    dl_error(path, "need a path") unless path.kind_of?(DL::Path)
     dur = ws_duration(file)
     chns = ws_channels(file)
     rds = make_array(chns) do |chn| make_ws_reader(file, :start, start, :channel, chn) end
@@ -2299,13 +2293,14 @@ class Instrument
     end
   end
 
-  def move_sound(path, *args, &body)
-    doc("move_sound(path, *args) do ... end
+  add_help(:move_sound,
+           "move_sound(path, *args) do ... end
  sound_let-args:
      :channels,    1  # channels to move
  start time in output file:
      :startime,    0
- rest args: make_dlocsig") if get_args(args, :help, false)
+ rest args: make_dlocsig")
+  def move_sound(path, *args, &body)
     chns        = get_shift_args(args, :channels, 1)
     start       = get_shift_args(args, :startime, 0)
     sound_let([:channels, chns, body]) do |to_move|
@@ -2348,7 +2343,7 @@ end
 #   end
 # end
 
-if provided? "snd-motif" or provided? "snd-gtk"
+if provided? :snd_motif or provided? :snd_gtk
   class Dlocsig_menu
     require "snd-xm"
     include Snd_XM
@@ -2374,7 +2369,7 @@ if provided? "snd-motif" or provided? "snd-gtk"
       if @render_using == B_format_ambisonics
         set_scale_value(@sliders[0].scale, @out_chans = 4)
       end
-      comment_string = if $rbm_comment.kind_of?(String) and !$rbm_comment.empty?
+      comment_string = if string?($rbm_comment) and !$rbm_comment.empty?
                          format("%s; %s", $rbm_comment, format(*comment_args))
                        else
                          format(*comment_args)
@@ -2561,7 +2556,7 @@ For detailed information see clm-2/dlocsig.html.",
           create_path
           with_sound_target("%s: %s, path: %s", @which_path, dlocsig_strings, @snd_path.inspect)
         end
-        if provided? "xm"
+        if provided? :xm
           frame_args = [RXmNshadowThickness, 4,
                         RXmNshadowType, RXmSHADOW_ETCHED_OUT,
                         RXmNbackground, basic_color,
@@ -2745,7 +2740,7 @@ For detailed information see clm-2/dlocsig.html.",
           with_sound_target("spiral_path: %s, start: %d, turns: %1.1f",
                             dlocsig_strings, @start, @turns)
         end
-        add_with_sound_sliders(if provided? "xg"
+        add_with_sound_sliders(if provided? :xg
                                  @dialog.dialog
                                else
                                  @dialog.parent
@@ -2777,7 +2772,7 @@ For detailed information see clm-2/dlocsig.html.",
       end
     end
 
-    if provided? "xm"
+    if provided? :xm
       set_label_sensitive(menu_widgets[Top_menu_bar], "Dlocsig", ((sounds() or []).length > 1))
     else
       set_sensitive(snd_main.menu, ((sounds() or []).length > 1))
@@ -2785,7 +2780,7 @@ For detailed information see clm-2/dlocsig.html.",
     
     unless $open_hook.member?("dlocsig-menu-hook")
       $open_hook.add_hook!("dlocsig-menu-hook") do |snd|
-        if provided? "xm"
+        if provided? :xm
           set_label_sensitive(menu_widgets[Top_menu_bar], "Dlocsig", true)
         else
           set_sensitive(snd_main.menu, true)
@@ -2794,7 +2789,7 @@ For detailed information see clm-2/dlocsig.html.",
       end
       
       $close_hook.add_hook!("dlocsig-menu-hook") do |snd|
-        if provided? "xm"
+        if provided? :xm
           set_label_sensitive(menu_widgets[Top_menu_bar], "Dlocsig", ((sounds() or []).length > 1))
         else
           set_sensitive(snd_main.menu, ((sounds() or []).length > 1))

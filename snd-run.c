@@ -96,6 +96,9 @@
  *
  * PERHAPS: count-matches and friends? (func itself is already optimized)
  * PERHAPS: float_or_boolean return type mainly for map-channel funcs
+ *
+ * TODO: tests for clm-struct arg/return vals of funcs
+ * TODO: set for sample with at least samp arg (don't need the full thing)
  */
 
 #include "snd.h"
@@ -326,6 +329,7 @@ static int name_to_type(const char *name)
 
 #define POINTER_P(Type) (((Type) >= R_VCT) && ((Type) <= R_CLM_VECTOR)) /* exclude R_ANY */
 #define VECTOR_P(Type) (((Type) >= R_FLOAT_VECTOR) && ((Type) <= R_CLM_VECTOR))
+#define CLM_STRUCT_P(Type) ((Type) > R_ANY)
 
 typedef enum {R_VARIABLE, R_CONSTANT} xen_value_constant_t;
 typedef enum {DONT_NEED_RESULT, NEED_ANY_RESULT, NEED_INT_RESULT} walk_result_t;
@@ -803,7 +807,7 @@ static char *describe_xen_value_1(int type, int addr, ptree *pt)
     case R_CLM_VECTOR:  return(mus_format("vect " PTR_PT , addr, pt->vects[addr])); break;
     case R_UNSPECIFIED: return(copy_string("#<unspecified>")); break;
     default:
-      if (type > R_ANY)
+      if (CLM_STRUCT_P(type))
 	return(mus_format("xen%d(%s: clm-struct %p)", addr, type_name(type), pt->xens[addr]));
       else return(mus_format("?%d(unknown type: %d)", addr, type));            
       break;
@@ -1079,7 +1083,7 @@ static xen_var *free_xen_var(ptree *prog, xen_var *var)
 		  int_vect_into_vector(prog->vects[var->v->addr], val);
 		break;
 	      default:
-		if (var->v->type > R_ANY)
+		if (CLM_STRUCT_P(var->v->type))
 		  clm_struct_restore(prog, var);
 		break;
 	      }
@@ -1670,7 +1674,7 @@ static xen_value *add_empty_var_to_ptree(ptree *prog, int type)
     case R_INT_VECTOR:
     case R_VCT_VECTOR:   return(make_xen_value(type, add_vect_to_ptree(prog, NULL), R_VARIABLE));         break;
     default:
-      if (type > R_ANY) /* def-clm-struct */
+      if (CLM_STRUCT_P(type))
 	return(make_xen_value(type, add_xen_to_ptree(prog, XEN_FALSE), R_VARIABLE)); 
       break;
     }
@@ -1705,7 +1709,7 @@ static xen_value *transfer_value(ptree *prog, xen_value *v)
       return(make_xen_value(v->type, v->addr, R_VARIABLE)); 
       break;
     default: 
-      if (v->type > R_ANY) /* def-clm-struct */
+      if (CLM_STRUCT_P(v->type))
 	return(make_xen_value(v->type, add_xen_to_ptree(prog, prog->xens[v->addr]), R_VARIABLE));
       break;
     }
@@ -1895,7 +1899,7 @@ static int xen_to_run_type(XEN val)
 				    {
 				      int type;
 				      type = name_to_type(XEN_SYMBOL_TO_C_STRING(XEN_CAR(val)));
-				      if (type > R_ANY)
+				      if (CLM_STRUCT_P(type))
 					return(type);
 				    }
 				  return(R_LIST); 
@@ -1973,7 +1977,7 @@ static xen_value *add_global_var_to_ptree(ptree *prog, XEN form, XEN *rtn)
       }
       break;
     default:
-      if (type > R_ANY)
+      if (CLM_STRUCT_P(type))
 	v = make_xen_value(type, add_xen_to_ptree(prog, val), R_VARIABLE); 
       break;
     }
@@ -3371,6 +3375,13 @@ static xen_value *or_form(ptree *prog, XEN form, walk_result_t ignored)
 	  FREE(fixups);
 	  return(run_warn("or: can't handle %s", XEN_AS_STRING(XEN_CAR(body))));
 	}
+      if ((i == 0) &&
+	  (v->constant == R_CONSTANT) &&
+	  ((v->type != R_BOOL) || (prog->ints[v->addr] != 0)))
+	{
+	  FREE(fixups);
+	  return(v);
+	}
       if (v->type != R_BOOL)
 	v = coerce_to_boolean(prog, v);
       fixups[i] = make_xen_value(R_INT, add_int_to_ptree(prog, prog->triple_ctr), R_VARIABLE);
@@ -3417,6 +3428,14 @@ static xen_value *and_form(ptree *prog, XEN form, walk_result_t ignored)
 	  FREE(fixups);
 	  return(run_warn("and: can't handle %s", XEN_AS_STRING(XEN_CAR(body))));
 	}
+      if ((i == 0) &&
+	  (v->constant == R_CONSTANT) &&
+	  (v->type == R_BOOL) && 
+	  (prog->ints[v->addr] == 0))
+	{
+	  FREE(fixups);
+	  return(v);
+	}
       if (v->type != R_BOOL)
 	v = coerce_to_boolean(prog, v);
       fixups[i] = make_xen_value(R_INT, add_int_to_ptree(prog, prog->triple_ctr), R_VARIABLE);
@@ -3449,6 +3468,7 @@ static xen_value *generalized_set_form(ptree *prog, XEN form)
   XEN settee, setval;
   XEN in_settee;
   xen_value *in_v0 = NULL, *in_v1 = NULL, *in_v2 = NULL, *v = NULL;
+  /* fprintf(stderr,"set: %s\n", XEN_AS_STRING(form)); */
   settee = XEN_CADR(form);
   setval = XEN_CADDR(form);
   if ((XEN_LIST_P(settee)) && (XEN_SYMBOL_P(XEN_CAR(settee))) && (XEN_LIST_LENGTH(settee) <= 4))
@@ -5761,7 +5781,7 @@ static xen_value *display_1(ptree *pt, xen_value **args, int num_args)
     case R_VCT_VECTOR: return(package(pt, R_BOOL, display_vct_vect, descr_display_vect, args, 1)); break;
     case R_INT_VECTOR: return(package(pt, R_BOOL, display_int_vect, descr_display_vect, args, 1)); break;
     default:
-      if (args[1]->type > R_ANY)
+      if (CLM_STRUCT_P(args[1]->type))
 	return(package(pt, R_BOOL, display_lst, descr_display_lst, args, 1));
       break;
     }
@@ -6117,7 +6137,7 @@ static void funcall_nf(int *args, ptree *pt)
  	break;
       default:      
 	/* def-clm-struct list can be passed here -> xens */
-	if (func->arg_types[i] > R_ANY)
+	if (CLM_STRUCT_P(func->arg_types[i]))
 	  pt->xens[func->args[i]] = pt->xens[args[i + 2]]; 
 	else pt->ints[func->args[i]] = pt->ints[args[i + 2]]; 
 	break;
@@ -6170,7 +6190,7 @@ static void funcall_nf(int *args, ptree *pt)
       TRACK_READER_RESULT = pt->track_readers[fres->addr];   
       break;
     default:      
-      if (fres->type > R_ANY)
+      if (CLM_STRUCT_P(fres->type))
 	XEN_RESULT = pt->xens[fres->addr];
       else INT_RESULT = pt->ints[fres->addr];   
       break;
@@ -9483,7 +9503,7 @@ static bool xenable(xen_value *v)
       return(true);
       break;
     default:
-      return(v->type > R_ANY);
+      return(CLM_STRUCT_P(v->type));
       break;
     }
   return(false);
@@ -9525,7 +9545,7 @@ static XEN xen_value_to_xen(ptree *pt, xen_value *v)
       val = mus_wrap_generator(pt->clms[v->addr]);
       break;
     default:
-      if (v->type > R_ANY)
+      if (CLM_STRUCT_P(v->type))
 	val = pt->xens[v->addr];
       break;
     }
@@ -9950,7 +9970,7 @@ static int xen_to_addr(ptree *pt, XEN arg, int type, int addr)
       add_obj_to_gcs(pt, type, addr);
       break;
     default:
-      if (type > R_ANY)
+      if (CLM_STRUCT_P(type))
 	pt->xens[addr] = arg;
       break;
     }
@@ -10348,6 +10368,29 @@ static xen_value *walk(ptree *prog, XEN form, walk_result_t walk_result)
 	    }
 	  funcname = XEN_SYMBOL_TO_C_STRING(function);
 	}
+      /* check for ((setter ...) ...) before messing up the args */
+      if (XEN_LIST_P(function))
+	{
+	  XEN caar;
+	  char *caar_name;
+	  caar = XEN_CAR(function);
+	  if (XEN_SYMBOL_P(caar))
+	    {
+	      caar_name = XEN_SYMBOL_TO_C_STRING(caar);
+	      if (strcmp(caar_name, "setter") == 0)
+		{
+		  /* should be clm-struct ref: ((setter moog-y) gen .1) for example */
+		  /* transform (back) to (set! (moog-y gen) .1) */
+		  /* fprintf(stderr,"got setter: %s\n", XEN_AS_STRING(form)); */
+		  return(generalized_set_form(prog,
+					      XEN_APPEND(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("set!"),
+								    XEN_LIST_2(XEN_CADR(function),
+									       XEN_CAR(all_args))),
+							 XEN_CDR(all_args))));
+		  /* should this be all but last in accessor, then last as set value? */
+		}
+	    }
+	}
       args = (xen_value **)CALLOC(num_args + 1, sizeof(xen_value *));
       if (num_args > 0)
 	{
@@ -10385,8 +10428,10 @@ static xen_value *walk(ptree *prog, XEN form, walk_result_t walk_result)
 		}
 	      /* (let ((gen (make-oscil 440))) (vct-map! v (lambda () (gen 0.0)))) */
 	      else 
-		if (XEN_LIST_P(function))
-		  v = walk(prog, function, NEED_ANY_RESULT);
+		{
+		  if (XEN_LIST_P(function))
+		    v = walk(prog, function, NEED_ANY_RESULT);
+		}
 	      /* trying to support stuff like ((vector-ref gens 0) 0.0) here */
 	    }
 	  else v = var->v;
@@ -10601,7 +10646,7 @@ static xen_value *walk(ptree *prog, XEN form, walk_result_t walk_result)
 	case R_PAIR:    return(make_xen_value(R_PAIR, add_xen_to_ptree(prog, form), R_CONSTANT)); break;
 	case R_KEYWORD: return(make_xen_value(R_KEYWORD, add_xen_to_ptree(prog, form), R_CONSTANT)); break;
 	default:
-	  if (type > R_ANY)
+	  if (CLM_STRUCT_P(type))
 	    return(make_xen_value(type, add_xen_to_ptree(prog, form), R_CONSTANT));
 	  break;
 	}
@@ -10881,7 +10926,7 @@ static XEN eval_ptree_to_xen(ptree *pt)
       }
       break;
     default:
-      if (pt->result->type > R_ANY)
+      if (CLM_STRUCT_P(pt->result->type))
 	result = pt->xens[pt->result->addr]; 
       break;
     }

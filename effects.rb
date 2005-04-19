@@ -1,8 +1,8 @@
-# effects.rb -- Guile -> Ruby translation
+# effects.rb -- Guile -> Ruby translation -*- snd-ruby -*-
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Fri Feb 07 23:56:21 CET 2003
-# Last: Sat Mar 19 17:52:00 CET 2005
+# Last: Fri Apr 15 18:55:04 CEST 2005
 
 # Commentary:
 #
@@ -12,15 +12,34 @@
 #
 # module Effects (see new-effects.scm)
 #  plausible_mark_samples
-#  map_chan_over_target_with_sync(target, origin, decay) do |in| ... end
+#  map_chan_over_target_with_sync(target, decay, origin_func) do |in| ... end
 #  effect_frames(target)
-#  squelch_channel(amount, size, snd, chn)
-#  flecho_1(scaler, secs, in_samps)
-#  zecho_1(scaler, secs, frq, amp, in_samps)
-#  jc_reverb_1(in_samps)
-#  fp_1(sr, osamp, osfrq, beg, fin)
-#  hello_dentist_1(frq, amp, beg, fin)
-
+#  
+#  effects_squelch_channel(amount, size, snd, chn)
+#  effects_echo(input_samps, delay_time, echo_amoung, beg, dur, snd, chn)
+#  effects_flecho_1(scaler, secs, input_samps, beg, dur, snd, chn)
+#  effects_zecho_1(scaler, secs, frq, amp, input_samps, beg, dur, snd, chn)
+#
+#  effects_comb_filter(scaler, size, beg, dur, snd, chn)
+#  effects_comb_chord(scaler, size, amp, interval_one, interval_two, beg, dur, snd, chn)
+#  effects_moog(freq, q, beg, dur, snd, chn)
+#  
+#  effects_bbp(freq, bw, beg, dur, snd, chn)
+#  effects_bbr(freq, bw, beg, dur, snd, chn)
+#  effects_bhp(freq, beg, dur, snd, chn)
+#  effects_blp(freq, beg, dur, snd, chn)
+#  
+#  effects_am(freq, en, beg, dur, snd, chn)
+#  effects_rm(freq, en, beg, dur, snd, chn)
+#
+#  effects_cnv(snd0, amp, snd, chn)
+#  effects_jc_reverb_1(volume, beg, dur, snd, chn)
+#  effects_hello_dentist(frq, amp, beg, dur, snd, chn)
+#  effects_fp(srf, osamp, osfrq, beg, dur, snd, chn)
+#  effects_position_sound(mono_snd, pos, beg, dur, snd, chn)
+#  effects_flange(amount, speed, time, beg, dur, snd, chn)
+#  effects_cross_synthesis_1(cross_snd, amp, fftsize, r, beg, dur, snd, chn)
+#
 # Code:
 
 require "examp"
@@ -95,14 +114,15 @@ module Effects
     end
   end
 
-  def map_chan_over_target_with_sync(target, origin, decay, &func)
+  def map_chan_over_target_with_sync(target, decay, origin_func, &func)
     okay = case target
            when :sound
-             sounds or message("no sound")
+             (sounds or (message("no sound") and false))
            when :selection
-             selection? or message("no selection")
+             selection? or (message("no selection") and false)
            when :marks
-             sounds or marks(selected_sound, selected_channel).length < 2 or message("no marks")
+             (sounds or marks(selected_sound, selected_channel).length < 2 or
+               (message("no marks") and false))
            else
              true
            end
@@ -124,15 +144,15 @@ module Effects
       overlap = (decay ? (srate().to_f * decay).round : 0)
       sndlst, chnlst = (snc > 0 ? all_chans() : [[ssnd], [schn]])
       sndlst.zip(chnlst) do |snd, chn|
-        fin = if target == :sound or target == :cursor
+        dur = if target == :sound or target == :cursor
                 frames(snd, chn) - 1
               elsif target == :selection and selection?
                 selection_position + selection_frames
               else
-                (ms ? ms[1] : 0)
+                ms[1]
               end
         if sync(snd) == snc
-          map_chan(func.call(fin - beg), beg, fin + overlap, origin, snd, chn)
+          map_chan(func.call(dur - beg), beg, dur + overlap, origin_func.call(dur - beg), snd, chn)
         end
       end
     end
@@ -155,35 +175,162 @@ module Effects
     end
   end
 
-  def squelch_channel(amount, size, snd, chn)
+  def effects_squelch_channel(amount, size, snd = false, chn = false)
     f0 = make_average(size)
     f1 = make_average(size, :initial_element, 1.0)
-    map_channel(lambda do |y| y * average(f1, ((average(f0, y * y) < amount) ? 0.0 : 1.0)) end,
-                0, false, snd, chn)
+    map_channel(lambda { |y| y * average(f1, ((average(f0, y * y) < amount) ? 0.0 : 1.0)) },
+                0, false, snd, chn, false, format("%s(%s, %s", get_func_name, amount, size))
   end
 
-  def flecho_1(scaler, secs, in_samps)
-    flt = make_fir_filter(:order, 4, :xcoeffs, list2vct([0.125, 0.25, 0.25, 0.125]))
-    del = make_delay((secs * srate()).round)
+  def effects_echo(input_samps, delay_time, echo_amount,
+                   beg = 0, dur = false, snd = false, chn = false)
+    del = make_delay((delay_time.to_f * srate(snd)).round)
     samp = 0
-    lambda do |inval|
+    samps = (input_samps or dur or frames(snd, chn))
+    amp = echo_amount
+    map_channel_rb(beg, dur, snd, chn, false,
+                   format("%s(%s, %s, %s, %s, %s",
+                          get_func_name, input_samps, delay_time,
+                          echo_amount, beg, dur)) do |inval|
       samp += 1
-      inval + delay(del, fir_filter(flt, scaler * (tap(del) + (samp <= in_samps ? inval : 0.0))))
+      inval + delay(del, amp * (tap(del) + ((samp <= samps) ? inval : 0.0)))
+    end
+  end
+    
+  def effects_flecho_1(scaler, secs, input_samps,
+                       beg = 0, dur = false, snd = false, chn = false)
+    flt = make_fir_filter(:order, 4, :xcoeffs, [0.125, 0.25, 0.25, 0.125].to_vct)
+    del = make_delay((secs.to_f * srate(snd)).round)
+    samp = 0
+    samps = (input_samps or dur or frames(snd, chn))
+    amp = scaler
+    map_channel_rb(beg, dur, snd, chn, false,
+                   format("%s(%s, %s, %s, %s, %s",
+                          get_func_name, scaler, secs, input_samps, beg, dur)) do |inval|
+      samp += 1
+      inval + delay(del, fir_filter(flt, amp * (tap(del) + ((samp <= samps) ? inval : 0.0))))
     end
   end
 
-  def zecho_1(scaler, secs, frq, amp, in_samps)
-    os = make_oscil(frq)
+  def effects_zecho_1(scaler, secs, frq, amp, input_samps,
+                      beg = 0, dur = false, snd = false, chn = false)
+    os = make_oscil(:frequency, frq)
     len = (secs.to_f * srate()).round
     del = make_delay(len, :max_size, (len + amp + 1).to_i)
     samp = 0
-    lambda do |inval|
+    samps = (input_samps or dur or frames(snd, chn))
+    map_channel_rb(beg, dur, snd, chn, false,
+                   format("%s(%s, %s, %s, %s, %s, %s, %s",
+                          get_func_name, scaler, secs, frq,
+                          amp, input_samps, beg, dur)) do |inval|
       samp += 1
-      inval + delay(del, scaler * (tap(del) + (samp <= in_samps ? inval : 0.0)), amp * oscil(os))
+      inval + delay(del, amp * (tap(del) + ((samp <= samps) ? inval : 0.0)), amp * oscil(os))
     end
   end
 
-  def jc_reverb_1(in_samps, volume)
+  def effects_comb_filter(scaler, size, beg = 0, dur = false, snd = false, chn = false)
+    delay_line = Vct.new(size)
+    delay_loc = 0
+    map_channel_rb(beg, dur, snd, chn, false,
+                   format("%s(%s, %s, %s, %s", get_func_name, scaler, size, beg, dur)) do |inval|
+      result = delay_line[delay_loc]
+      delay_line[delay_loc] = inval + scaler * result
+      delay_loc += 1
+      if delay_loc >= size then delay_loc = 0 end
+      result
+    end
+  end
+
+  def effects_comb_chord(scaler, size, amp, interval_one, interval_two,
+                         beg = 0, dur = false, snd = false, chn = false)
+    c1 = make_comb(scaler, size)
+    c2 = make_comb(scaler, size * interval_one)
+    c3 = make_comb(scaler, size * interval_two)
+    map_channel_rb(beg, dur, snd, chn, false,
+                   format("%s(%s, %s, %s, %s, %s, %s, %s",
+                          get_func_name, scaler, size, amp,
+                          interval_one, interval_two, beg, dur)) do |inval|
+      amp * (comb(c1, inval) + comb(c2, inval) + comb(c3, inval))
+    end
+  end
+
+  def effects_moog(freq, q, beg = 0, dur = false, snd = false, chn = false)
+    gen = make_moog_filter(freq, q)
+    map_channel_rb(beg, dur, snd, chn, false,
+                   format("%s(%s, %s, %s, %s", get_func_name, freq, q, beg, dur)) do |inval|
+      moog_filter(gen, inval)
+    end
+  end
+
+  def effects_bbp(freq, bw, beg = 0, dur = false, snd = false, chn = false)
+    flt = make_butter_band_pass(freq, bw)
+    clm_channel(flt, beg, dur, snd, chn, false, false,
+                format("%s(%s, %s, %s, %s", get_func_name, freq, bw, beg, dur))
+  end
+
+  def effects_bbr(freq, bw, beg = 0, dur = false, snd = false, chn = false)
+    flt = make_butter_band_reject(freq, bw)
+    clm_channel(flt, beg, dur, snd, chn, false, false,
+                format("%s(%s, %s, %s, %s", get_func_name, freq, bw, beg, dur))
+  end
+
+  def effects_bhp(freq, beg = 0, dur = false, snd = false, chn = false)
+    flt = make_butter_high_pass(freq)
+    clm_channel(flt, beg, dur, snd, chn, false, false,
+                format("%s(%s, %s, %s", get_func_name, freq, beg, dur))
+  end
+
+  def effects_blp(freq, beg = 0, dur = false, snd = false, chn = false)
+    flt = make_butter_low_pass(freq)
+    clm_channel(flt, beg, dur, snd, chn, false, false,
+                format("%s(%s, %s, %s", get_func_name, freq, beg, dur))
+  end
+
+  def effects_am(freq, en, beg = 0, dur = false, snd = false, chn = false)
+    os = make_oscil(:frequency, freq)
+    e = (en and make_env(:envelope, en, :end, (dur or frames(snd, chn)) - 1))
+    func = if e
+             lambda do |inval| amplitude_modulate(1.0, inval, env(e) * oscil(os)) end
+           else
+             lambda do |inval| amplitude_modulate(1.0, inval, oscil(os)) end
+           end
+    map_channel(func, beg, dur, snd, chn, false,
+                format("%s(%s, %s, %s, %s",
+                       get_func_name, freq, (en ? en.inspect : "false"), beg, dur))
+  end
+  
+  def effects_rm(freq, gliss_env, beg = 0, dur = false, snd = false, chn = false)
+    os = make_oscil(:frequency, freq)
+    e = (gliss_env and make_env(:envelope, gliss_env, :end, (dur or frames(snd, chn)) - 1))
+    func = if e
+             lambda do |inval| inval * env(e) * oscil(os) end
+           else
+             lambda do |inval| inval * oscil(os) end
+           end
+    map_channel(func, beg, dur, snd, chn, false,
+                format("%s(%s, %s, %s, %s",
+                       get_func_name, freq, (gliss_env ? gliss_env.inspect : "false"), beg, dur))
+  end
+
+  def effects_cnv(snd0, amp, snd = false, chn = false)
+    snd0 = snd_snd
+    flt_len = frames(snd0)
+    total_len = flt_len + frames(snd, chn)
+    cnv = make_convolve(:filter, channel2vct, 0, flt_len, snd0)
+    sf = make_sample_reader(0, snd, chn)
+    out_data = Vct.new(total_len) do |i|
+      convolve(cnv, lambda { |dir| next_sample(sf) })
+    end
+    free_sample_reader(sf)
+    out_data.scale!(amp)
+    max_samp = out_data.peak
+    vct2channel(out_data, 0, total_len, snd, chn, false,
+                format("%s(%s, %s", get_func_name, snd0, amp))
+    if max_samp > 1.0 then set_y_bounds([-max_samp, max_samp], snd, chn) end
+    max_samp
+  end
+
+  def effects_jc_reverb(input_samps, volume)
     allpass1 = make_all_pass(-0.7, 0.7, 1051)
     allpass2 = make_all_pass(-0.7, 0.7, 337)
     allpass3 = make_all_pass(-0.7, 0.7, 113)
@@ -200,7 +347,7 @@ module Effects
       allpass_sum = all_pass(allpass3,
                              all_pass(allpass2,
                                       all_pass(allpass1,
-                                               (samp < in_samps ? inval : 0.0))))
+                                               (samp < input_samps ? inval : 0.0))))
       samp += 1
       comb_sum_2 = comb_sum_1
       comb_sum_1 = comb_sum
@@ -210,44 +357,118 @@ module Effects
     end
   end
 
-  def fp_1(sr, osamp, osfrq, beg, fin)
-    os = make_oscil(osfrq)
-    sr = make_src(:srate, sr)
-    len = fin - beg + 1
-    sf = make_sample_reader(beg)
-    out_data = make_vct(len)
-    vct_map!(out_data,
-             lambda do | |
-               src(sr, osamp * oscil(os),
-                   lambda do |dir|
-                     if dir > 0
-                       next_sample(sf)
-                     else
-                       previous_sample(sf)
-                     end
-                   end)
-             end)
-    free_sample_reader(sf)
-    vct2channel(out_data, beg, len)
+  def effects_jc_reverb_1(volume, beg = 0, dur = false, snd = false, chn = false)
+    map_channel(effects_jc_reverb((dur or frames(snd, chn)), volume),
+                beg, dur, snd, chn, false, format("%s(%s, %s, %s", get_func_name, volume, beg, dur))
   end
   
-  def hello_dentist_1(frq, amp, beg, fin)
+  def effects_hello_dentist(frq, amp, beg = 0, dur = false, snd = false, chn = false)
     rn = make_rand_interp(:frequency, frq, :amplitude, amp)
     i = j = 0
-    len = (fin - beg) + 1
-    in_data = channel2vct(beg, len)
-    out_len = (len * (1.0 + 2 * amp)).round
+    len = (dur or frames(snd, chn)) 
+    in_data = channel2vct(beg, len, snd, chn)
+    out_len = (len.to_f * (1.0 + 2.0 * amp)).round
     out_data = make_vct(out_len)
-    rd = make_src(:srate, 1.0, :input, lambda do |dir|
-                    val = ((i >= 0 and i < len) ? vct_ref(in_data, i) : 0.0)
+    rd = make_src(:srate, 1.0, :input, lambda { |dir|
+                    val = (i.between?(0, len - 1) ? in_data[i] : 0.0)
                     i += dir
                     val
-                  end)
+                  })
     until i == len or j == out_len
-      vct_set!(out_data, j, src(rd, rand_interp(rn)))
+      out_data[j] = src(rd, rand_interp(rn))
       j += 1
     end
-    vct2channel(out_data, beg, j)
+    vct2channel(out_data, beg, j, snd, chn, false,
+                format("%s(%s, %s, %s, %s",
+                       get_func_name, frq, amp, beg, (len == frames(snd, chn) ? "false" : len)))
+  end
+
+  def effects_fp(srf, osamp, osfrq, beg = 0, dur = false, snd = false, chn = false)
+    os = make_oscil(:frequency, osfrq)
+    sr = make_src(:srate, srf)
+    sf = make_sample_reader(beg)
+    len = (dur or frames(snd, chn))
+    out_data = Vct.new(len) do |i|
+      src(sr, osamp * oscil(os),
+          lambda do |dir|
+            if dir > 0
+              next_sample(sf)
+            else
+              previous_sample(sf)
+            end
+          end)
+    end
+    free_sample_reader(sf)
+    vct2channel(out_data, beg, len, snd, chn, false,
+                format("%s(%s, %s, %s, %s, %s",
+                       get_func_name, srf, osamp, osfrq, beg,
+                       (len == frames(snd, chn) ? "false" : len)))
+  end
+
+  def effects_position_sound(mono_snd, pos, beg = 0, dur = false, snd = false, chn = false)
+    assert_type((sound?(mono_snd) or mono_snd == false), mono_snd, 0, "a sound index")
+    assert_type((array?(pos) or number?(pos)), pos, 1, "an array or a number")
+    len = frames(mono_snd)
+    reader1 = make_sample_reader(0, mono_snd)
+    if number?(pos)
+      map_channel_rb(0, len, snd, chn, false,
+                     format("%s(%s, %s", get_func_name, mono_snd, pos)) do |inval|
+        inval + pos * read_sample(reader1)
+      end
+    else
+      if array?(pos)
+        e1 = make_env(:envelope, pos, :end, len - 1)
+        if number?(chn) and chn == 1
+          map_channel(0, len, snd, chn, false,
+                      format("%s(%s, %s", get_func_name, mono_snd, pos.inspect)) do |inval|
+            inval + env(e1) * read_sample(reader1)
+          end
+        else
+          map_channel(0, len, snd, chn, false,
+                      format("%s(%s, %s", get_func_name, mono_snd, pos.inspect)) do |inval|
+            inval + (1.0 - env(e1)) * read_sample(reader1)
+          end
+        end
+      end
+    end
+  end
+
+  def effects_flange(amount, speed, time, beg = 0, dur = false, snd = false, chn = false)
+    ri = make_rand_interp(:frequency, speed, :amplitude, amount)
+    len = (time.to_f * srate(snd)).round
+    del = make_delay(:size, len, :max_size, (len + amount + 1).round)
+    map_channel_rb(beg, dur, snd, chn, false,
+                   format("%s(%s, %s, %s, %s, %s",
+                          get_func_name, amount, speed, time, beg,
+                          (number?(dur) and
+                             (not dur == frames(snd, chn)) ? dur : "false"))) do |inval|
+      0.75 * (inval + delay(del, inval, rand_interp(ri)))
+    end
+  end
+
+  def effects_cross_synthesis_1(cross_snd, amp, fftsize, r,
+                                beg = 0, dur = false, snd = false, chn = false)
+    map_channel(effects_cross_synthesis(snd_snd(cross_snd), amp, fftsize, r),
+                beg, dur, snd, chn, false,
+                format("%s(%s, %s, %s, %s, %s, %s",
+                       get_func_name, cross_snd, amp, fftsize, r, beg, dur))
+  end
+
+  def effects_remove_dc(snd = false, chn = false)
+    lastx = lasty = 0.0
+    map_channel_rb(0, false, snd, chn, false, "effects_remove_dc(") do |inval|
+      lasty = inval + (0.999 * lasty - lastx)
+      lastx = inval
+      lasty
+    end
+  end
+
+  def effects_compand(snd = false, chn = false)
+    tbl = vct(-1.00, -0.96, -0.90, -0.82, -0.72, -0.60, -0.45, -0.25,
+              0.00, 0.25, 0.45, 0.60, 0.72, 0.82, 0.90, 0.96, 1.00)
+    map_channel_rb(0, false, snd, chn, false, "effects_compand(") do |inval|
+      array_interp(tbl, 8.0 + 8.0 * inval)
+    end
   end
   
   #
@@ -300,7 +521,7 @@ module Effects
         sliders[0] = @dlg.add_slider("gain", 0.0, init_amount, 5.0, 100) do |w, c, i|
           @amount = get_scale_value(w, i, 100.0)
         end
-        if provided? "xm"
+        if provided? :xm
           frame = @dlg.add_frame([RXmNheight, 200])
           @dlg.add_target() do |t| @target = t end
         else
@@ -310,7 +531,7 @@ module Effects
         @envelope = make_xenved("gain", frame,
                                 :envelope, [0.0, 1.0, 1.0, 1.0],
                                 :axis_bounds, [0.0, 1.0, 0.0, 1.0])
-        if provided? "xg"
+        if provided? :xg
           @dlg.add_target() do |t| @target = t end
         end
       else
@@ -386,10 +607,10 @@ Higher values gate more of the sound.",
           if (snc = sync()) > 0
             sndlst, chnlst = all_chans()
             sndlst.zip(chnlst) do |snd, chn|
-              squelch_channel(@amount * @amount, @size, snd, chn) if sync(snd) == snc
+              effects_squelch_channel(@amount * @amount, @size, snd, chn) if sync(snd) == snc
             end
           else
-            squelch_channel(@amount * @amount, @size, selected_sound, selected_channel)
+            effects_squelch_channel(@amount * @amount, @size, selected_sound, selected_channel)
           end
         end
         sliders[0] = @dlg.add_slider("gate", 0.0, init_amount, 0.1, 1000) do |w, c, i|
@@ -428,7 +649,13 @@ Higher values gate more of the sound.",
                              set_scale_value(sliders[0].scale, @delay_time = init_delay_time, 100.0)
                              set_scale_value(sliders[1].scale, @amount = init_amount, 100.0)
                            end) do |w, c, i|
-          map_chan_over_target_with_sync(@target, "echo", (!@truncate and 4 * @delay_time)) do |s|
+          map_chan_over_target_with_sync(@target,
+                                         (!@truncate and 4 * @delay_time),
+                                         lambda { |s|
+                                           format("effects_echo(%s, %s, %s",
+                                                  (@target == :sound ? false : s),
+                                                  @delay_time, @amount)
+                                         }) do |s|
             size = (@delay_time * srate()).round
             d = make_delay(size)
             samp = 0
@@ -469,6 +696,17 @@ Higher values gate more of the sound.",
     def inspect
       format("%s (%1.2f %1.2f)", @label, @scaler, @delay)
     end
+    
+    def flecho_1(scaler, secs, input_samps)
+      flt = make_fir_filter(:order, 4, :xcoeffs, [0.125, 0.25, 0.25, 0.125].to_vct)
+      del = make_delay((secs.to_f * srate(snd)).round)
+      samp = 0
+      lambda do |inval|
+        samp += 1
+        inval + delay(del,
+                      fir_filter(flt, scaler * (tap(del) + (samp <= input_samps ? inval : 0.0))))
+      end
+    end
 
     def post_dialog
       unless @dlg.kind_of?(Dialog) and widget?(@dlg.dialog)
@@ -482,7 +720,12 @@ delay time in seconds.",
                              set_scale_value(sliders[0].scale, @scaler = init_scaler, 100.0)
                              set_scale_value(sliders[1].scale, @delay = init_del, 100.0)
                            end) do |w, c, i|
-          map_chan_over_target_with_sync(@target, "flecho", (!@truncate and 4 * @delay)) do |s|
+          map_chan_over_target_with_sync(@target,
+                                         (!@truncate and 4 * @delay),
+                                         lambda { |s|
+                                           format("effects_flecho_1(%s, %s, %s",
+                                                  @scaler, @delay, (@target == :sound ? false : s))
+                                         }) do |s|
             flecho_1(@scaler, @delay, s)
           end
         end
@@ -515,6 +758,18 @@ delay time in seconds.",
       format("%s (%1.2f %1.2f %1.2f %1.2f)", @label, @scaler, @delay, @freq, @amp)
     end
 
+    def zecho_1(scaler, secs, frq, amp, input_samps)
+      os = make_oscil(:frequency, frq)
+      len = (secs.to_f * srate()).round
+      del = make_delay(len, :max_size, (len + amp + 1).to_i)
+      samp = 0
+      lambda do |inval|
+        samp += 1
+        inval + delay(del,
+                      scaler * (tap(del) + (samp <= input_samps ? inval : 0.0)), amp * oscil(os))
+      end
+    end
+
     def post_dialog
       unless @dlg.kind_of?(Dialog) and widget?(@dlg.dialog)
         init_scaler = 0.5
@@ -531,7 +786,14 @@ the delay time in seconds, the modulation frequency, and the echo amplitude.",
                              set_scale_value(sliders[2].scale, @freq = init_freq, 100.0)
                              set_scale_value(sliders[3].scale, @amp = init_amp, 100.0)
                            end) do |w, c, i|
-          map_chan_over_target_with_sync(@target, "zecho", (!@truncate and 4 * @delay)) do |s|
+          map_chan_over_target_with_sync(@target,
+                                         (!@truncate and 4 * @delay),
+                                         lambda { |s|
+                                           format("effects_zecho_1(%s, %s, %s, %s, %s",
+                                                  @scaler, @delay, @freq, @amp,
+                                                  (@target == :sound ? false : s))
+                                         }
+                                         ) do |s|
             zecho_1(@scaler, @delay, @freq, @amp, s)
           end
         end
@@ -583,21 +845,29 @@ Move the slider to change the center frequency and bandwidth.",
                            :reset_cb, lambda do |w, c, i|
                              @freq = init_freq
                              set_scale_value(sliders[0].scale, scale_log2linear(20, @freq, 22050))
-                             if provided? "xm"
+                             if provided? :xm
                                change_label(sliders[0].label, "%1.2f" % @freq)
                              end
                              set_scale_value(sliders[1].scale, @bw = init_bw)
                            end) do |w, c, i|
+          flt = make_butter_band_pass(@freq, @bw)
           case @target
           when :sound
-            filter_sound(make_butter_band_pass(@freq, @bw))
+            filter_sound(flt, false, false, false, false,
+                         format("effects_bbp(%s, %s, 0, false", @freq, @bw))
           when :selection
-            filter_selection(make_butter_band_pass(@freq, @bw))
+            filter_selection(flt)
+          else
+            ms = plausible_mark_samples
+            bg = ms[0]
+            nd = ms[1] - ms[0] + 1
+            clm_channel(flt, bg, nd, false, false, false, false,
+                        format("effects_bbp(%s, %s, %s, %s", @freq, @bw, bg, nd))
           end
         end
         sliders[0] = @dlg.add_slider("center frequency",
                                      20, init_freq, 22050, 1, :log) do |w, c, i|
-          @freq = if provided? "xm"
+          @freq = if provided? :xm
                     scale_linear2log(20, Rvalue(i), 22050)
                   else
                     scale_linear2log(20, Rvalue(RGTK_ADJUSTMENT(w)), 22050)
@@ -637,21 +907,29 @@ Move the slider to change the center frequency and bandwidth.",
                            :reset_cb, lambda do |w, c, i|
                              @freq = init_freq
                              set_scale_value(sliders[0].scale, scale_log2linear(20, @freq, 22050))
-                             if provided? "xm"
+                             if provided? :xm
                                change_label(sliders[0].label, "%1.2f" % @freq)
                              end
                              set_scale_value(sliders[1].scale, @bw = init_bw)
                            end) do |w, c, i|
+          flt = make_butter_band_reject(@freq, @bw)
           case @target
           when :sound
-            filter_sound(make_butter_band_reject(@freq, @bw))
+            filter_sound(flt, false, false, false, false,
+                         format("effects_bbr(%s, %s, 0, false", @freq, @bw))
           when :selection
-            filter_selection(make_butter_band_reject(@freq, @bw))
+            filter_selection(flt)
+          else
+            ms = plausible_mark_samples
+            bg = ms[0]
+            nd = ms[1] - ms[0] + 1
+            clm_channel(flt, bg, nd, false, false, false, false,
+                        format("effects_bbr(%s, %s, %s, %s", @freq, @bw, bg, nd))
           end
         end
         sliders[0] = @dlg.add_slider("center frequency",
                                      20, init_freq, 22050, 1, :log) do |w, c, i|
-          @freq = if provided? "xm"
+          @freq = if provided? :xm
                     scale_linear2log(20, Rvalue(i), 22050)
                   else
                     scale_linear2log(20, Rvalue(RGTK_ADJUSTMENT(w)), 22050)
@@ -689,20 +967,28 @@ Move the slider to change the high-pass cutoff frequency.",
                            :reset_cb, lambda do |w, c, i|
                              @freq = init_freq
                              set_scale_value(sliders[0].scale, scale_log2linear(20, @freq, 22050))
-                             if provided? "xm"
+                             if provided? :xm
                                change_label(sliders[0].label, "%1.2f" % @freq)
                              end
                            end) do |w, c, i|
+          flt = make_butter_high_pass(@freq)
           case @target
           when :sound
-            filter_sound(make_butter_high_pass(@freq))
+            filter_sound(flt, false, false, false, false,
+                         format("effects_bhp(%s, 0, false", @freq))
           when :selection
-            filter_selection(make_butter_high_pass(@freq))
+            filter_selection(flt)
+          else
+            ms = plausible_mark_samples
+            bg = ms[0]
+            nd = ms[1] - ms[0] + 1
+            clm_channel(flt, bg, nd, false, false, false, false,
+                        format("effects_bhp(%s, %s, %s", @freq, bg, nd))
           end
         end
         sliders[0] = @dlg.add_slider("high-pass cutoff frequency",
                                      20, init_freq, 22050, 1, :log) do |w, c, i|
-          @freq = if provided? "xm"
+          @freq = if provided? :xm
                     scale_linear2log(20, Rvalue(i), 22050)
                   else
                     scale_linear2log(20, Rvalue(RGTK_ADJUSTMENT(w)), 22050)
@@ -737,20 +1023,28 @@ Move the slider to change the low-pass cutoff frequency.",
                            :reset_cb, lambda do |w, c, i|
                              @freq = init_freq
                              set_scale_value(sliders[0].scale, scale_log2linear(20, @freq, 22050))
-                             if provided? "xm"
+                             if provided? :xm
                                change_label(sliders[0].label, "%1.2f" % @freq)
                              end
                            end) do |w, c, i|
+          flt = make_butter_low_pass(@freq)
           case @target
           when :sound
-            filter_sound(make_butter_low_pass(@freq))
+            filter_sound(flt, false, false, false, false,
+                         format("effects_blp(%s, 0, false", @freq))
           when :selection
-            filter_selection(make_butter_low_pass(@freq))
+            filter_selection(flt)
+          else
+            ms = plausible_mark_samples
+            bg = ms[0]
+            nd = ms[1] - ms[0] + 1
+            clm_channel(flt, bg, nd, false, false, false, false,
+                        format("effects_blp(%s, %s, %s", @freq, bg, nd))
           end
         end
         sliders[0] = @dlg.add_slider("low-pass cutoff frequency",
                                      20, init_freq, 22050, 1, :log) do |w, c, i|
-          @freq = if provided? "xm"
+          @freq = if provided? :xm
                     scale_linear2log(20, Rvalue(i), 22050)
                   else
                     scale_linear2log(20, Rvalue(RGTK_ADJUSTMENT(w)), 22050)
@@ -787,7 +1081,10 @@ Move the slider to change the low-pass cutoff frequency.",
                              set_scale_value(sliders[0].scale, @scaler = init_scaler, 100.0)
                              set_scale_value(sliders[1].scale, @size = init_size)
                            end) do |w, c, i|
-          map_chan_over_target_with_sync(@target, "comb-filter", false) do |ignored|
+          map_chan_over_target_with_sync(@target, false,
+                                         lambda { |s|
+                                           format("effects_comb_filter(%s, %s", @scaler, @size)
+                                         }) do |ignored|
             comb_filter(@scaler, @size)
           end
         end
@@ -839,7 +1136,12 @@ Move the sliders to set the comb chord parameters.",
                              set_scale_value(sliders[3].scale, @interval_one = init_one, 100.0)
                              set_scale_value(sliders[4].scale, @interval_two = init_two, 100.0)
                            end) do |w, c, i|
-          map_chan_over_target_with_sync(@target, "comb-chord", false) do |ignored|
+          map_chan_over_target_with_sync(@target, false,
+                                         lambda { |s|
+                                           format("effects_comb_chord(%s, %s, %s, %s, %s",
+                                                  @scaler, @size, @amp,
+                                                  @interval_one, @interval_two)
+                                         }) do |ignored|
             comb_chord(@scaler, @size, @amp, @interval_one, @interval_two)
           end
         end
@@ -890,18 +1192,22 @@ Move the sliders to set the filter cutoff frequency and resonance.",
                              @cutoff_freq = init_freq
                              set_scale_value(sliders[0].scale,
                                              scale_log2linear(20, @cutoff_freq, 22050))
-                             if provided? "xm"
+                             if provided? :xm
                                change_label(sliders[0].label, "%1.2f" % @cutoff_freq)
                              end
                              set_scale_value(sliders[1].scale, @resonance = init_resonance, 100.0)
                            end) do |w, c, i|
-          map_chan_over_target_with_sync(@target, "moog-filter", false) do |ignored|
+          map_chan_over_target_with_sync(@target, false,
+                                         lambda { |s|
+                                           format("effects_moog(%s, %s",
+                                                  @cutoff_freq, @resonance)
+                                         }) do |ignored|
             moog(@cutoff_freq, @resonance)
           end
         end
         sliders[0] = @dlg.add_slider("cutoff frequency",
                                      20, init_freq, 22050, 1, :log) do |w, c, i|
-          @cutoff_freq = if provided? "xm"
+          @cutoff_freq = if provided? :xm
                            scale_linear2log(20, Rvalue(i), 22050)
                          else
                            scale_linear2log(20, Rvalue(RGTK_ADJUSTMENT(w)), 22050)
@@ -940,7 +1246,10 @@ Move the sliders to set the filter cutoff frequency and resonance.",
                            :reset_cb, lambda do |w, c, i|
                              set_scale_value(sliders[0].scale, @size = init_size)
                            end) do |w, c, i|
-          map_chan_over_target_with_sync(@target, "adsat", false) do |ignored|
+          map_chan_over_target_with_sync(@target, false,
+                                         lambda { |s|
+                                           format("adsat(%s", @size)
+                                         }) do |ignored|
             mn = 0.0
             mx = 0.0
             n = 0
@@ -1135,7 +1444,7 @@ Values greater than 1.0 speed up file play, negative values reverse it.",
         sliders[0] = @dlg.add_slider("resample factor", 0.0, init_scale, 10.0, 100) do |w, c, i|
           @scale = get_scale_value(w, i, 100.0)
         end
-        if provided? "xm"
+        if provided? :xm
           frame = @dlg.add_frame([RXmNheight, 200])
           @dlg.add_target() do |t| @target = t end
         else
@@ -1147,7 +1456,7 @@ Values greater than 1.0 speed up file play, negative values reverse it.",
         @envelope = make_xenved("src-timevar", frame,
                                 :envelope, [0.0, 1.0, 1.0, 1.0],
                                 :axis_bounds, [0.0, 1.0, 0.0001, 1.0])
-        if provided? "xg"
+        if provided? :xg
           @dlg.add_target() do |t| @target = t end
         end
       end
@@ -1182,9 +1491,15 @@ Values greater than 1.0 speed up file play, negative values reverse it.",
                              @envelope.envelope = [0.0, 1.0, 1.0, 1.0]
                              set_scale_value(sliders[0].scale, @amount = init_amount)
                            end) do |w, c, i|
-          map_chan_over_target_with_sync(@target, "am", false) do |ignored|
+          need_env = (@envelope.envelope != [0.0, 1.0, 1.0, 1.0])
+          map_chan_over_target_with_sync(@target, false,
+                                         lambda { |s|
+                                           format("effects_am(%s, %s",
+                                                  @amount,
+                                                  ((need_env and @envelope.envelope) ?
+                                                   @envelope.envelope.inspect : "false"))
+                                         }) do |ignored|
             os = make_oscil(@amount)
-            need_env = (@envelope.envelope != [0.0, 1.0, 1.0, 1.0])
             e = (need_env and make_env(@envelope.envelope, :end, effect_frames(@target) - 1))
             if need_env
               lambda do |inval|
@@ -1200,7 +1515,7 @@ Values greater than 1.0 speed up file play, negative values reverse it.",
         sliders[0] = @dlg.add_slider("amplitude modulation", 0.0, init_amount, 1000.0) do |w, c, i|
           @amount = get_scale_value(w, i)
         end
-        if provided? "xm"
+        if provided? :xm
           frame = @dlg.add_frame([RXmNheight, 200])
           @dlg.add_target() do |t| @target = t end
         else
@@ -1210,7 +1525,7 @@ Values greater than 1.0 speed up file play, negative values reverse it.",
         @envelope = make_xenved("amplitude modulation", frame,
                                 :envelope, [0.0, 1.0, 1.0, 1.0],
                                 :axis_bounds, [0.0, 1.0, 0.0, 1.0])
-        if provided? "xg"
+        if provided? :xg
           @dlg.add_target() do |t| @target = t end
         end
       else
@@ -1246,20 +1561,22 @@ Values greater than 1.0 speed up file play, negative values reverse it.",
                              set_scale_value(sliders[0].scale, @frequency = init_frequency)
                              set_scale_value(sliders[1].scale, @radians = init_radians)
                            end) do |w, c, i|
-          map_chan_over_target_with_sync(@target, "ring-modulation", false) do |ignored|
+          need_env = (@envelope.envelope != [0.0, 1.0, 1.0, 1.0])
+          map_chan_over_target_with_sync(@target, false,
+                                         lambda { |s|
+                                           format("effects_rm(%s, %s",
+                                                  @frequency,
+                                                  ((need_env and @envelope.envelope) ?
+                                                   @envelope.envelope.inspect : "false"))
+                                         }) do |ignored|
             os = make_oscil(@frequency)
-            need_env = (@envelope.envelope != [0.0, 1.0, 1.0, 1.0])
             e = (need_env and make_env(@envelope.envelope, :end, effect_frames(@target) - 1))
             len = frames()
             genv = make_env([0, 0, 1, hz2radians(@radians)], :end, len)
             if need_env
-              lambda do |inval|
-                inval * (env(e) * oscil(os))
-              end
+              lambda do |inval| inval * (env(e) * oscil(os)) end
             else
-              lambda do |inval|
-                inval * oscil(os)
-              end
+              lambda do |inval| inval * oscil(os) end
             end
           end
         end
@@ -1269,7 +1586,7 @@ Values greater than 1.0 speed up file play, negative values reverse it.",
         sliders[1] = @dlg.add_slider("modulation radians", 0, init_radians, 360) do |w, c, i|
           @radians = get_scale_value(w, i)
         end
-        if provided? "xm"
+        if provided? :xm
           frame = @dlg.add_frame([RXmNheight, 200])
           @dlg.add_target() do |t| @target = t end
         else
@@ -1279,15 +1596,15 @@ Values greater than 1.0 speed up file play, negative values reverse it.",
         @envelope = make_xenved("ring modulation", frame,
                                 :envelope, [0.0, 1.0, 1.0, 1.0],
                                 :axis_bounds, [0.0, 1.0, 0.0, 1.0])
-        if provided? "xg"
+        if provided? :xg
           @dlg.add_target() do |t| @target = t end
         end
       else
         activate_dialog(@dlg.dialog)
       end
     end
-  end  
-
+  end
+  
   #
   # --- Reverbs ---
   #
@@ -1376,8 +1693,11 @@ Move the sliders to change the reverb parameters.",
                              set_scale_value(sliders[0].scale, @decay = init_decay, 100.0)
                              set_scale_value(sliders[1].scale, @volume = init_volume, 100.0)
                            end) do |w, c, i|
-          map_chan_over_target_with_sync(@target, "jc-reverb", (!@truncate and @decay)) do |x|
-            jc_reverb_1(x, @volume)
+          map_chan_over_target_with_sync(@target, (!@truncate and @decay),
+                                         lambda { |s|
+                                           format("effects_jc_reverb_1(%s, %s", s, @volume)
+                                         }) do |s|
+            effects_jc_reverb(s, @volume)
           end
         end
         sliders[0] = @dlg.add_slider("decay duration", 0.0, init_decay, 10.0, 100) do |w, c, i|
@@ -1430,7 +1750,7 @@ http://www.bright.net/~dlphilp/linux_csound.html under Impulse Response Data.",
                              set_scale_value(sliders[2].scale, @amp = init_amp, 100.0)
                            end) do |w, c, i|
           if sound?(@sound_one) and sound?(@sound_two)
-            cnvtest(@sound_one, @sound_two, @amp)
+            effects_cnv(@sound_one, @sound_two, @amp)
           else
             snd_warning(format("sound-one: %s, sound-two: %s",
                                sound?(@sound_one).to_s, sound?(@sound_two).to_s))
@@ -1468,6 +1788,17 @@ http://www.bright.net/~dlphilp/linux_csound.html under Impulse Response Data.",
       format("%s (%d %d %d)", @label, @mono_snd, @stereo_snd, @pan_pos)
     end
 
+    def place_sound(pan_env)
+      len = frames(@mono_snd)
+      if number?(pan_env)
+        effects_position_sound(@mono_snd, pos, @stereo_snd, 1)
+        effects_position_sound(@mono_snd, 1.0 - pos, @stereo_snd, 0)
+      else
+        effects_position_sound(@mono_snd, pan_env, @stereo_snd, 1)
+        effects_position_sound(@mono_snd, pan_env, @stereo_snd, 0)
+      end
+    end
+
     def post_dialog
       unless @dlg.kind_of?(Dialog) and widget?(@dlg.dialog)
         init_mono_snd = 0
@@ -1482,10 +1813,10 @@ http://www.bright.net/~dlphilp/linux_csound.html under Impulse Response Data.",
                              set_scale_value(sliders[1].scale, @stereo_snd = init_stereo_snd)
                              set_scale_value(sliders[2].scale, @pan_pos = init_pan_pos)
                            end) do |w, c, i|
-          unless (e = @envelope.envelope) == [0.0, 1.0, 1.0, 1.0]
-            place_sound(@mono_snd, @stereo_snd, e)
+          if (e = @envelope.envelope) != [0.0, 1.0, 1.0, 1.0]
+            place_sound(e)
           else
-            place_sound(@mono_snd, @stereo_snd, @pan_pos)
+            place_sound(@pan_pos)
           end
         end
         sliders[0] = @dlg.add_slider("mono sound", 0, init_mono_snd, 50) do |w, c, i|
@@ -1497,7 +1828,7 @@ http://www.bright.net/~dlphilp/linux_csound.html under Impulse Response Data.",
         sliders[2] = @dlg.add_slider("pan position", 0, init_pan_pos, 90) do |w, c, i|
         @pan_pos = get_scale_value(w, i)
         end
-        if provided? "xm"
+        if provided? :xm
           frame = @dlg.add_frame([RXmNheight, 200])
           @dlg.add_target() do |t| @target = t end
         else
@@ -1507,7 +1838,7 @@ http://www.bright.net/~dlphilp/linux_csound.html under Impulse Response Data.",
         @envelope = make_xenved("panning", frame,
                                 :envelope, [0.0, 1.0, 1.0, 1.0],
                                 :axis_bounds, [0.0, 1.0, 0.0, 1.0])
-        if provided? "xg"
+        if provided? :xg
           @dlg.add_target() do |t| @target = t end
         end
       end
@@ -1608,6 +1939,31 @@ of silence added at the cursor position.",
     def inspect
       format("%s (%d %1.2f %d %1.2f)", @label, @sound, @amp, @fft_size, @radius)
     end
+
+    def effects_cross_synthesis(cross_snd, amp, fftsize, r)
+      freq_inc = fftsize / 2
+      fdr = make_vct(fftsize)
+      fdi = make_vct(fftsize)
+      spectr = make_vct(freq_inc)
+      inctr = 0
+      ctr = freq_inc
+      radius = 1.0 - r / fftsize.to_f
+      bin = srate() / fftsize.to_f
+      formants = make_array(freq_inc) do |i| make_formant(radius, i * bin) end
+      lambda do |inval|
+        if ctr == freq_inc
+          fdr = channel2vct(inctr, fftsize, cross_snd, 0)
+          inctr += freq_inc
+          spectrum(fdr, fdi, false, 2)
+          fdr.subtract!(spectr)
+          fdr.scale!(1.0 / freq_inc)
+          ctr = 0
+        end
+        ctr += 1
+        spectr.add!(fdr)
+        amp * formant_bank(spectr, formants, inval)
+      end
+    end
     
     def post_dialog
       unless @dlg.kind_of?(Dialog) and widget?(@dlg.dialog)
@@ -1623,14 +1979,18 @@ to be cross_synthesized, the synthesis amplitude, the FFT size, and the radius v
                              set_scale_value(sliders[0].scale, @sound = init_sound)
                              set_scale_value(sliders[1].scale, @amp = init_amp, 100.0)
                              @fft_size = init_fft_size
-                             if provided? "xm"
+                             if provided? :xm
                                RXmToggleButtonSetState(@default_fft_widget, true, true)
                              end
                              set_scale_value(sliders[2].scale, @radius = init_radius, 100.0)
                            end) do |w, c, i|
           if sound?(@sound)
-            map_chan_over_target_with_sync(@target, "Cross synthesis", false) do |ignored|
-              cross_synthesis(@sound, @amp, @fft_size, @radius)
+            map_chan_over_target_with_sync(@target, false,
+                                           lambda { |s|
+                                             format("effects_cross_synthesis_1(%s, %s, %s, %s",
+                                                    @sound, @amp, @fft_size, @radius)
+                                           }) do |ignored|
+              effects_cross_synthesis(@sound, @amp, @fft_size, @radius)
             end
           else
             snd_warning(format("cross-snd: %s", sound?(@sound).to_s))
@@ -1645,7 +2005,7 @@ to be cross_synthesized, the synthesis amplitude, the FFT size, and the radius v
         sliders[2] = @dlg.add_slider("radius", 0.0, init_radius, 360.0, 100) do |w, c, i|
           @radius = get_scale_value(w, i, 100.0)
         end
-        if provided? "xm"
+        if provided? :xm
           frame = @dlg.add_frame([RXmNpositionIndex, 2])
           frm = RXtCreateManagedWidget("frm", RxmFormWidgetClass, frame,
                                        [RXmNleftAttachment, RXmATTACH_FORM,
@@ -1711,7 +2071,11 @@ to be cross_synthesized, the synthesis amplitude, the FFT size, and the radius v
                              set_scale_value(sliders[1].scale, @amount = init_amount, 10.0)
                              set_scale_value(sliders[2].scale, @time = init_time, 100.0)
                            end) do |w, c, i|
-          map_chan_over_target_with_sync(@target, "flange", false) do |ignored|
+          map_chan_over_target_with_sync(@target, false,
+                                         lambda { |s|
+                                           format("effects_flange(%s, %s, %s",
+                                                  @amount, @speed, @time)
+                                         }) do |ignored|
             ri = make_rand_interp(:frequency, @speed, :amplitude, @amount)
             len = (@time.to_f * srate()).round
             del = make_delay(len, :max_size, (len + @amount + 1).to_i)
@@ -1794,22 +2158,22 @@ oscillator amplitude, and oscillator frequency.",
                              set_scale_value(sliders[2].scale, @osc_freq = init_freq, 100.0)
                            end) do |w, c, i|
           ms = (@target == :marks and plausible_mark_samples)
-          fp_1(@samp_rate, @osc_amp, @osc_freq,
-             case @target
-             when :sound
-               0
-             when :selection
-               selection_position
-             else
-               (ms ? ms[0] : 0)
-             end, case @target
-                  when :sound
-                    frames() - 1
-                  when :selection
-                    selection_position + selection_frames
-                  else
-                    (ms ? ms[1] : 0)
-                  end)
+          effects_fp(@samp_rate, @osc_amp, @osc_freq,
+                     case @target
+                     when :sound
+                       0
+                     when :selection
+                       selection_position
+                     else
+                       ms[0]
+                     end, case @target
+                          when :sound
+                            frames
+                          when :selection
+                            selection_frames
+                          else
+                            ms[1] - ms[0]
+                          end)
         end
         sliders[0] = @dlg.add_slider("sample rate", 0.0, init_rate, 2.0, 100) do |w, c, i|
           @samp_rate = get_scale_value(w, i, 100.0)
@@ -1884,22 +2248,22 @@ Move the slider to change the stretch factor.",
                              set_scale_value(sliders[1].scale, @amplitude = init_amp, 100.0)
                            end) do |w, c, i|
           ms = (@target == :marks and plausible_mark_samples)
-          hello_dentist_1(@frequency, @amplitude,
-                          case @target
-                          when :sound
-                            0
-                          when :selection
-                            selection_position
-                          else
-                            (ms ? ms[0] : 0)
-                          end, case @target
-                               when :sound
-                                 frames() - 1
-                               when :selection
-                                 selection_position + selection_frames
-                               else
-                                 (ms ? ms[1] : 0)
-                               end)
+          effects_hello_dentist(@frequency, @amplitude,
+                                case @target
+                                when :sound
+                                  0
+                                when :selection
+                                  selection_position
+                                else
+                                  ms[0]
+                                end, case @target
+                                     when :sound
+                                       frames
+                                     when :selection
+                                       selection_frames
+                                     else
+                                       ms[1] - ms[0]
+                                     end)
         end
         sliders[0] = @dlg.add_slider("wobble frequency", 0, init_freq, 100, 100) do |w, c, i|
           @frequency = get_scale_value(w, i, 100.0)
@@ -1967,7 +2331,7 @@ unless defined? $__private_snd_menu__ and $__private_snd_menu__
       entry(Wobble, "Wobble")
     end
     separator
-    entry("Octave-down") do down_oct() end
+    entry("Octave-down") do down_oct(2) end
     entry("Remove clicks") do
       find_click = lambda do |loc|
         reader = make_sample_reader(loc)
@@ -1998,33 +2362,22 @@ unless defined? $__private_snd_menu__ and $__private_snd_menu__
         end
       end
       remove_click = lambda do |loc|
-        if click = find_click.call(loc) and !c_g?
+        if click = find_click.call(loc) and (not c_g?)
           smooth_sound(click - 2, 4)
           remove_click.call(click + 2)
         end
       end
       remove_click.call(2)
     end
-    entry("Remove DC") do
-      lastx = lasty = 0.0
-      map_chan(lambda do |inval|
-                 lasty = inval + (0.999 * lasty - lastx)
-                 lastx = inval
-                 lasty
-               end)
-    end
-    entry("Spiker") do spike() end
-    entry("Compand") do
-      tbl = vct(-1.00, -0.96, -0.90, -0.82, -0.72, -0.60, -0.45, -0.25,
-                0.00, 0.25, 0.45, 0.60, 0.72, 0.82, 0.90, 0.96, 1.00)
-      map_chan(lambda do |inval| array_interp(tbl, 8.0 + 8.0 * inval, tbl.length) end)
-    end
+    entry("Remove DC") do effects_remove_dc end
+    entry("Spiker") do spike end
+    entry("Compand") do effects_compand end
     entry("Invert") do scale_by(-1) end
-    entry("Reverse") do reverse_sound() end
-    entry("Null phase") do zero_phase() end
+    entry("Reverse") do reverse_sound end
+    entry("Null phase") do zero_phase end
   end
 
-  if provided? "xm"
+  if provided? :xm
     set_label_sensitive(menu_widgets[Top_menu_bar], "Effects", ((sounds() or []).length > 1))
   else
     set_sensitive(snd_main.menu, ((sounds() or []).length > 1))
@@ -2032,7 +2385,7 @@ unless defined? $__private_snd_menu__ and $__private_snd_menu__
   
   unless $open_hook.member?("effects-menu-hook")
     $open_hook.add_hook!("effects-menu-hook") do |snd| 
-      if provided? "xm"
+      if provided? :xm
         set_label_sensitive(menu_widgets[Top_menu_bar], "Effects", true)
       else
         set_sensitive(snd_main.menu, true)
@@ -2041,7 +2394,7 @@ unless defined? $__private_snd_menu__ and $__private_snd_menu__
     end
     
     $close_hook.add_hook!("effects-menu-hook") do |snd|
-      if provided? "xm"
+      if provided? :xm
         set_label_sensitive(menu_widgets[Top_menu_bar], "Effects", ((sounds() or []).length > 1))
       else
         set_sensitive(snd_main.menu, ((sounds() or []).length > 1))
