@@ -308,7 +308,7 @@ static void end_sgi_print(void)
         { \
           MUS_STANDARD_ERROR(Error_Type, Error_Message); FREE(Error_Message); \
         } \
-      else MUS_STANDARD_ERROR(Error_Type, mus_error_to_string(Error_Type)); \
+      else MUS_STANDARD_ERROR(Error_Type, mus_error_type_to_string(Error_Type)); \
       end_sgi_print(); \
       return(MUS_ERROR); \
       } while (false)
@@ -1350,7 +1350,7 @@ static void describe_audio_state_1(void)
            FREE(Message); \
          } \
        else mus_print("%s\n  [%s[%d] %s]", \
-                      mus_error_to_string(Message_Type), \
+                      mus_error_type_to_string(Message_Type), \
                       __FILE__, __LINE__, c__FUNCTION__); \
        return(MUS_ERROR); \
      } while (false)
@@ -4662,7 +4662,7 @@ void mus_audio_sun_outputs(int speakers, int headphones, int line_out)
     if (Audio_Line != -1) close(Audio_Line); \
     if (Error_Message) \
       {MUS_STANDARD_ERROR(Error_Type, Error_Message); FREE(Error_Message);} \
-    else MUS_STANDARD_ERROR(Error_Type, mus_error_to_string(Error_Type)); \
+    else MUS_STANDARD_ERROR(Error_Type, mus_error_type_to_string(Error_Type)); \
     return(MUS_ERROR); \
   } while (false)
 
@@ -6001,7 +6001,7 @@ static pascal void nextbuffer(SndChannelPtr cp, SndDoubleBufferPtr db)
   do { char *Error_Message; Error_Message = Ur_Error_Message; \
     if (Error_Message) \
       {MUS_STANDARD_ERROR(Error_Type, Error_Message); FREE(Error_Message);} \
-    else MUS_STANDARD_ERROR(Error_Type, mus_error_to_string(Error_Type)); \
+    else MUS_STANDARD_ERROR(Error_Type, mus_error_type_to_string(Error_Type)); \
     return(MUS_ERROR); \
   } while (false)
 
@@ -6500,7 +6500,7 @@ static void end_win_print(void)
   do { char *Error_Message; Error_Message = Ur_Error_Message; \
     if (Error_Message) \
       {MUS_STANDARD_ERROR(Error_Type, Error_Message); FREE(Error_Message);} \
-    else MUS_STANDARD_ERROR(Error_Type, mus_error_to_string(Error_Type)); \
+    else MUS_STANDARD_ERROR(Error_Type, mus_error_type_to_string(Error_Type)); \
     end_win_print(); \
     return(MUS_ERROR); \
   } while (false)
@@ -8216,7 +8216,7 @@ int mus_audio_api(void) {return(0);}
     if (esd_rec_sock != -1) close(esd_rec_sock); \
     if (Error_Message) \
       {MUS_STANDARD_ERROR(Error_Type, Error_Message); FREE(Error_Message);} \
-    else MUS_STANDARD_ERROR(Error_Type, mus_error_to_string(Error_Type)); \
+    else MUS_STANDARD_ERROR(Error_Type, mus_error_type_to_string(Error_Type)); \
     return(MUS_ERROR); \
   } while (false)
 
@@ -8950,7 +8950,7 @@ int jack_mus_audio_open_output(int dev, int srate, int chans, int format, int si
   }
 
   if(format!=MUS_BYTE && format!=MUS_COMP_SHORT && format!=MUS_COMP_FLOAT){
-    printf("Error, unable to handle format %s.\n",mus_short_data_format_name(format));
+    printf("Error, unable to handle format %s.\n",mus_data_format_to_string(format));
     return MUS_ERROR;
   }
 
@@ -9120,7 +9120,7 @@ int jack_mus_audio_open_input(int dev, int srate, int chans, int format, int siz
 
   printf("dev: %d\n" ,dev);
   if(format!=MUS_BYTE && format!=MUS_COMP_SHORT && format!=MUS_COMP_FLOAT){
-    printf("Error, unable to handle format %s.\n",mus_short_data_format_name(format));
+    printf("Error, unable to handle format %s.\n",mus_data_format_to_string(format));
     return MUS_ERROR;
   }
 
@@ -9156,8 +9156,8 @@ static void jack_describe_audio_state_1(void) {
   sprintf(temp,"\tCurrent cpu-load: %f\n",jack_cpu_load(sndjack_client));pprint(temp);
   sprintf(temp,"\tIs running realtime: %s\n",jack_is_realtime(sndjack_client)==1?"yes":"no");pprint(temp);
   sprintf(temp,"\tResample quality (only used when needed): %s (%s)\n",src_get_name(SRC_QUALITY),src_get_description(SRC_QUALITY));pprint(temp);
-  sprintf(temp,"\tIs able to handle the following audio formats: %s %s %s\n",mus_short_data_format_name(MUS_BYTE),mus_short_data_format_name(MUS_COMP_SHORT),mus_short_data_format_name(MUS_COMP_FLOAT));pprint(temp);
-  sprintf(temp,"\tPrefered audio format: %s\n",mus_short_data_format_name(MUS_COMP_FLOAT));pprint(temp);
+  sprintf(temp,"\tIs able to handle the following audio formats: %s %s %s\n",mus_data_format_to_string(MUS_BYTE),mus_data_format_to_string(MUS_COMP_SHORT),mus_data_format_to_string(MUS_COMP_FLOAT));pprint(temp);
+  sprintf(temp,"\tPrefered audio format: %s\n",mus_data_format_to_string(MUS_COMP_FLOAT));pprint(temp);
 }
 
 
@@ -9187,7 +9187,7 @@ char *jack_mus_audio_moniker(void) {return("jack");}
     if (Audio_Line != -1) close(Audio_Line); \
     if (Error_Message) \
       {MUS_STANDARD_ERROR(Error_Type, Error_Message); FREE(Error_Message);} \
-    else MUS_STANDARD_ERROR(Error_Type, mus_error_to_string(Error_Type)); \
+    else MUS_STANDARD_ERROR(Error_Type, mus_error_type_to_string(Error_Type)); \
     return(MUS_ERROR); \
   } while (false)
 

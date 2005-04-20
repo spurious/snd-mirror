@@ -2516,8 +2516,8 @@ number of bytes in each sample of <i>data-format</i>.
 </td></tr>
 
 <!-- mus-data-format-name -->
-<tr><td colspan=2><code><a class=def name="soundformatname">mus-data-format-name</a> (format)</code></td></tr>
-<tr><td></td><td>convert <i>format</i> from an integer to a string, e.g. "16-bit big endian linear".  The sndlib data formats are:</td></tr>
+<tr><td colspan=2><code><a class=def name="musdataformatname">mus-data-format-name</a> (format)</code></td></tr>
+<tr><td></td><td>convert <i>format</i> from an integer to an explanatory string, e.g. "16-bit big endian linear".  The sndlib data formats are:</td></tr>
 <tr><td></td><td>
 <pre>
   mus-bshort   mus-lshort   mus-mulaw   mus-alaw   mus-byte  
@@ -2526,8 +2526,13 @@ number of bytes in each sample of <i>data-format</i>.
   mus-ldouble  mus-unknown
 </pre></td></tr>
 
-<!-- mus-error-to-string -->
-<tr><td colspan=2><code><a class=def name="muserrortostring">mus-error-to-string</a> (error)</code></td></tr>
+<!-- mus-data-format->string -->
+<tr><td colspan=2><code><a class=def name="musdataformattostring">mus-data-format-&gt;string</a> (format)</code></td></tr>
+<tr><td></td><td>convert <i>format</i> from an integer to a string, e.g. "mus-mulaw".
+</td></tr>
+
+<!-- mus-error-type->string -->
+<tr><td colspan=2><code><a class=def name="muserrortypetostring">mus-error-type-&gt;string</a> (error)</code></td></tr>
 <tr><td></td><td>
 return a brief string description of <i>error</i> (a mus-error return type).
 </td></tr>
@@ -2555,12 +2560,17 @@ the sound file, but before trying to read any data, you need to use it in the co
 </td></tr>
 
 <!-- mus-header-type-name -->
-<tr><td colspan=2><code><a class=def name="soundtypename">mus-header-type-name</a> (type)</code></td></tr>
+<tr><td colspan=2><code><a class=def name="musheadertypename">mus-header-type-name</a> (type)</code></td></tr>
 <tr><td></td><td>convert <i>type</i>, an integer, to a string, e.g. "AIFF".  Some of the sndlib header types are:</td></tr>
 <tr><td></td><td><pre>
   mus-next  mus-aifc  mus-riff  mus-nist  mus-raw  mus-ircam  mus-aiff 
   mus-bicsf mus-soundfont mus-voc mus-svx mus-unsupported
 </pre></td></tr>
+
+<!-- mus-header-type->string -->
+<tr><td colspan=2><code><a class=def name="musheadertypetostring">mus-header-type-&gt;string</a> (type)</code></td></tr>
+<tr><td></td><td>convert <i>type</i>, an integer, to a string, e.g. "mus-aifc".
+</td></tr>
 
 <!-- mus-make-error -->
 <tr><td colspan=2><code><a class=def name="musmakeerror">mus-make-error</a> (error-string)</code></td></tr>
@@ -2712,8 +2722,8 @@ throw 'mus-error upon encountering an error, rather than returning -1 like the u
      file
      ": chans: " (number-&gt;string (<a class=quiet href="#soundchans">mus-sound-chans</a> file))
      ", srate: " (number-&gt;string (<a class=quiet href="#soundsrate">mus-sound-srate</a> file))
-     ", " (<a class=quiet href="#soundtypename">mus-header-type-name</a> (<a class=quiet href="#soundheadertype">mus-sound-header-type</a> file))
-     ", " (<a class=quiet href="#soundformatname">mus-data-format-name</a> (<a class=quiet href="#sounddataformat">mus-sound-data-format</a> file))
+     ", " (<a class=quiet href="#musheadertypename">mus-header-type-name</a> (<a class=quiet href="#soundheadertype">mus-sound-header-type</a> file))
+     ", " (<a class=quiet href="#musdataformatname">mus-data-format-name</a> (<a class=quiet href="#sounddataformat">mus-sound-data-format</a> file))
      ", len: " (number-&gt;string 
                 (/ (<a class=quiet href="#soundsamples">mus-sound-samples</a> file) 
                    (* (<a class=quiet href="#soundchans">mus-sound-chans</a> file) (<a class=quiet href="#soundsrate">mus-sound-srate</a> file)))))))
@@ -4607,7 +4617,7 @@ If you set any of these fields, the sound's index may change (there can be an em
 To deal with MPEG, OGG, Flac, or Speex files, see examp.scm (<a class=quiet href="sndscm.html#exmpg">mpg</a>) or dlp/misc.scm (mpg123 and ogg123).
 Octave/WaveLab ASCII files can be translated by read-ascii (examp.scm).
 <br><br>
-To turn a data-format number into a string, use <a href="#soundformatname">mus-data-format-name</a>. To get
+To turn a data-format number into a string, use <a href="#musdataformatname">mus-data-format-name</a>. To get
 the data format of some sound file, use <a href="#sounddataformat">mus-sound-data-format</a>.
 The default output (<a class=quiet href="#newsound">new-sound</a>, 
 <a class=quiet href="#savesoundas">save-sound-as</a>) data-format is <a href="#defaultoutputformat">default-output-format</a>.
@@ -5143,7 +5153,7 @@ and can handle any data format that Snd can write (whereas each of the others is
 The writable header types are mus-next, mus-nist (NIST Sphere), mus-aiff (obsolete, rarely needed), mus-aifc, mus-riff (MS wave),
 mus-ircam, and mus-raw (no header -- it's up to you to remember what's in the file).  For descriptions of the headers,
 see headers.c; for actual sound files, see sf.tar.gz at ccrma-ftp.
-To turn a type number into a string, use <a href="#soundtypename">mus-header-type-name</a>. To get
+To turn a type number into a string, use <a href="#musheadertypename">mus-header-type-name</a>. To get
 the header type of some sound file, use <a href="#soundheadertype">mus-sound-header-type</a>.
 If you set the header-type, the sound file is rewritten with the new header.  The default output
 (<a class=quiet href="#newsound">new-sound</a>, 

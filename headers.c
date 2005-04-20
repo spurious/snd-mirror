@@ -492,35 +492,62 @@ const char *mus_data_format_name(int format)
     }
 }
 
-const char *mus_short_data_format_name(int format)
+#if HAVE_RUBY
+  #define TO_LANG(Str) xen_scheme_constant_to_ruby(Str)
+#else
+  #define TO_LANG(Str) Str
+#endif
+
+char *mus_header_type_to_string(int type)
+{
+  switch (type)
+    {
+    case MUS_NEXT:      return(TO_LANG(S_mus_next));
+    case MUS_AIFF:      return(TO_LANG(S_mus_aiff));
+    case MUS_AIFC:      return(TO_LANG(S_mus_aifc));
+    case MUS_RIFF:      return(TO_LANG(S_mus_riff));
+    case MUS_NIST:      return(TO_LANG(S_mus_nist));
+    case MUS_IRCAM:     return(TO_LANG(S_mus_ircam));
+    case MUS_RAW:       return(TO_LANG(S_mus_raw));
+    case MUS_BICSF:     return(TO_LANG(S_mus_bicsf));
+    case MUS_VOC:       return(TO_LANG(S_mus_voc));
+    case MUS_SVX:       return(TO_LANG(S_mus_svx));
+    case MUS_SOUNDFONT: return(TO_LANG(S_mus_soundfont));
+    }
+  return(NULL);
+}
+
+char *mus_data_format_to_string(int format)
 {
   switch (format)
     {
-    case MUS_BSHORT:           return(S_mus_bshort);            break;
-    case MUS_MULAW:            return(S_mus_mulaw);             break;
-    case MUS_BYTE:             return(S_mus_byte);              break;
-    case MUS_BFLOAT:           return(S_mus_bfloat);            break;
-    case MUS_BFLOAT_UNSCALED:  return(S_mus_bfloat_unscaled);   break;
-    case MUS_BINT:             return(S_mus_bint);              break;
-    case MUS_ALAW:             return(S_mus_alaw);              break;
-    case MUS_UBYTE:            return(S_mus_ubyte);             break;
-    case MUS_B24INT:           return(S_mus_b24int);            break;
-    case MUS_BDOUBLE:          return(S_mus_bdouble);           break;
-    case MUS_BDOUBLE_UNSCALED: return(S_mus_bdouble_unscaled);  break;
-    case MUS_LSHORT:           return(S_mus_lshort);            break;
-    case MUS_LINT:             return(S_mus_lint);              break;
-    case MUS_LFLOAT_UNSCALED:  return(S_mus_lfloat_unscaled);   break;
-    case MUS_LDOUBLE_UNSCALED: return(S_mus_ldouble_unscaled);  break;
-    case MUS_LFLOAT:           return(S_mus_lfloat);            break;
-    case MUS_LDOUBLE:          return(S_mus_ldouble);           break;
-    case MUS_UBSHORT:          return(S_mus_ubshort);           break;
-    case MUS_ULSHORT:          return(S_mus_ulshort);           break;
-    case MUS_L24INT:           return(S_mus_l24int);            break;
-    case MUS_BINTN:            return(S_mus_bintn);             break;
-    case MUS_LINTN:            return(S_mus_lintn);             break;
-    default:                   return("unknown");               break;
+    case MUS_BSHORT:           return(TO_LANG(S_mus_bshort));
+    case MUS_LSHORT:           return(TO_LANG(S_mus_lshort));
+    case MUS_MULAW:            return(TO_LANG(S_mus_mulaw));
+    case MUS_ALAW:             return(TO_LANG(S_mus_alaw));
+    case MUS_BYTE:             return(TO_LANG(S_mus_byte));
+    case MUS_UBYTE:            return(TO_LANG(S_mus_ubyte));
+    case MUS_BFLOAT:           return(TO_LANG(S_mus_bfloat));
+    case MUS_LFLOAT:           return(TO_LANG(S_mus_lfloat));
+    case MUS_BINT:             return(TO_LANG(S_mus_bint));
+    case MUS_LINT:             return(TO_LANG(S_mus_lint));
+    case MUS_BINTN:            return(TO_LANG(S_mus_bintn));
+    case MUS_LINTN:            return(TO_LANG(S_mus_lintn));
+    case MUS_B24INT:           return(TO_LANG(S_mus_b24int));
+    case MUS_L24INT:           return(TO_LANG(S_mus_l24int));
+    case MUS_BDOUBLE:          return(TO_LANG(S_mus_bdouble));
+    case MUS_LDOUBLE:          return(TO_LANG(S_mus_ldouble));
+    case MUS_UBSHORT:          return(TO_LANG(S_mus_ubshort));
+    case MUS_ULSHORT:          return(TO_LANG(S_mus_ulshort));
+    case MUS_BDOUBLE_UNSCALED: return(TO_LANG(S_mus_bdouble_unscaled));
+    case MUS_LDOUBLE_UNSCALED: return(TO_LANG(S_mus_ldouble_unscaled));
+    case MUS_BFLOAT_UNSCALED:  return(TO_LANG(S_mus_bfloat_unscaled));
+    case MUS_LFLOAT_UNSCALED:  return(TO_LANG(S_mus_lfloat_unscaled));
     }
+  return(NULL);
 }
+
+/* TODO: rb side of mus_error_type2string */
 
 static const char *any_data_format_name(int sndlib_format)
 {

@@ -375,6 +375,8 @@ returning you to the true top-level."
 
 ;;; -------- def-clm-struct --------
 
+;;; TODO: if :type as 2nd, some sort of warning
+
 (defmacro* def-clm-struct (name #:rest fields)
   ;; (def-clm-struct fd loc (chan 1))
   ;; (def-clm-struct hiho i x (s "hiho") (ii 3 :type int) (xx 0.0 :type float))
@@ -567,42 +569,6 @@ returning you to the true top-level."
 
 
 ;;; -------- with-sound save state --------
-(define (mus-data-format->string df)
-  (cond ((= df mus-bshort) "mus-bshort")
-	((= df mus-mulaw) "mus-mulaw")
-	((= df mus-byte) "mus-byte")
-	((= df mus-bfloat) "mus-bfloat")
-	((= df mus-bfloat-unscaled) "mus-bfloat-unscaled")
-	((= df mus-bint) "mus-bint")
-	((= df mus-alaw) "mus-alaw")
-	((= df mus-ubyte) "mus-ubyte")
-	((= df mus-b24int) "mus-b24int")
-	((= df mus-bdouble) "mus-bdouble")
-	((= df mus-bdouble-unscaled) "mus-bdouble-unscaled")
-	((= df mus-lshort) "mus-lshort")
-	((= df mus-lint) "mus-lint")
-	((= df mus-lfloat-unscaled) "mus-lfloat-unscaled")
-	((= df mus-ldouble-unscaled) "mus-ldouble-unscaled")
-	((= df mus-lfloat) "mus-lfloat")
-	((= df mus-ldouble) "mus-ldouble")
-	((= df mus-ubshort) "mus-ubshort")
-	((= df mus-ulshort) "mus-ulshort")
-	((= df mus-l24int) "mus-l24int")
-	((= df mus-bintn) "mus-bintn")
-	((= df mus-lintn) "mus-lintn")
-	(#t df)))
-
-(define (mus-header-type->string ht)
-  ;; these are the writable headers
-  (cond ((= ht mus-next) "mus-next")
-	((= ht mus-aifc) "mus-aifc")
-	((= ht mus-riff) "mus-riff")
-	((= ht mus-aiff) "mus-aiff")
-	((= ht mus-nist) "mus-nist")
-	((= ht mus-raw)  "mus-raw")
-	((= ht mus-ircam) "mus-ircam")
-	((= ht mus-bicsf) "mus-bicsf")
-	(#t ht)))
 
 (define (ws-save-state filename)
   (let ((fd (open filename (logior O_RDWR O_APPEND))))

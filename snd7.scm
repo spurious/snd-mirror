@@ -339,3 +339,5 @@
 (if (not (defined? 'restart-env)) (define restart-env mus-reset))
 
 (define mixer-scale mixer*)
+
+(define mus-error-to-string mus-error-type->string)

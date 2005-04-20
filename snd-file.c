@@ -1940,19 +1940,19 @@ void initialize_format_lists(void)
 {
   int i;
   next_data_formats = (char **)CALLOC(NUM_NEXT_FORMATS, sizeof(char *));
-  for (i = 0; i < NUM_NEXT_FORMATS; i++) next_data_formats[i] = (char *)mus_short_data_format_name(next_dfs[i]);
+  for (i = 0; i < NUM_NEXT_FORMATS; i++) next_data_formats[i] = (char *)mus_data_format_to_string(next_dfs[i]);
   ircam_data_formats = (char **)CALLOC(NUM_IRCAM_FORMATS, sizeof(char *));
-  for (i = 0; i < NUM_IRCAM_FORMATS; i++) ircam_data_formats[i] = (char *)mus_short_data_format_name(ircam_dfs[i]);
+  for (i = 0; i < NUM_IRCAM_FORMATS; i++) ircam_data_formats[i] = (char *)mus_data_format_to_string(ircam_dfs[i]);
   wave_data_formats = (char **)CALLOC(NUM_WAVE_FORMATS, sizeof(char *));
-  for (i = 0; i < NUM_WAVE_FORMATS; i++) wave_data_formats[i] = (char *)mus_short_data_format_name(wave_dfs[i]);
+  for (i = 0; i < NUM_WAVE_FORMATS; i++) wave_data_formats[i] = (char *)mus_data_format_to_string(wave_dfs[i]);
   aiff_data_formats = (char **)CALLOC(NUM_AIFF_FORMATS, sizeof(char *));
-  for (i = 0; i < NUM_AIFF_FORMATS; i++) aiff_data_formats[i] = (char *)mus_short_data_format_name(aiff_dfs[i]);
+  for (i = 0; i < NUM_AIFF_FORMATS; i++) aiff_data_formats[i] = (char *)mus_data_format_to_string(aiff_dfs[i]);
   aifc_data_formats = (char **)CALLOC(NUM_AIFC_FORMATS, sizeof(char *));
-  for (i = 0; i < NUM_AIFC_FORMATS; i++) aifc_data_formats[i] = (char *)mus_short_data_format_name(aifc_dfs[i]);
+  for (i = 0; i < NUM_AIFC_FORMATS; i++) aifc_data_formats[i] = (char *)mus_data_format_to_string(aifc_dfs[i]);
   nist_data_formats = (char **)CALLOC(NUM_NIST_FORMATS, sizeof(char *));
-  for (i = 0; i < NUM_NIST_FORMATS; i++) nist_data_formats[i] = (char *)mus_short_data_format_name(nist_dfs[i]);
+  for (i = 0; i < NUM_NIST_FORMATS; i++) nist_data_formats[i] = (char *)mus_data_format_to_string(nist_dfs[i]);
   raw_data_formats = (char **)CALLOC(NUM_RAW_FORMATS, sizeof(char *));
-  for (i = 0; i < NUM_RAW_FORMATS; i++) raw_data_formats[i] = (char *)mus_short_data_format_name(raw_dfs[i]);
+  for (i = 0; i < NUM_RAW_FORMATS; i++) raw_data_formats[i] = (char *)mus_data_format_to_string(raw_dfs[i]);
 }
 
 int header_type_from_position(int position)
@@ -2218,7 +2218,9 @@ bool saved_file_needs_update(snd_info *sp, char *str, save_dialog_t save_type, i
       else result = save_selection(str, type, format, srate, comment, SAVE_ALL_CHANS);
       if (result != MUS_NO_ERROR)
 	{
-	  report_in_minibuffer_and_save(sp, "%s: %s", str, (errno != 0) ? strerror(errno) : mus_error_to_string(result));
+	  report_in_minibuffer_and_save(sp, "%s: %s", 
+					str, 
+					(errno != 0) ? strerror(errno) : mus_error_type_to_string(result));
 	  needs_update = false;
 	}
       else report_in_minibuffer(sp, _("%s saved as %s"),

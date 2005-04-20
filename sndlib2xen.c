@@ -237,11 +237,25 @@ static XEN g_mus_header_type_name(XEN type)
   return(C_TO_XEN_STRING(mus_header_type_name(XEN_TO_C_INT(type))));
 }
 
+static XEN g_mus_header_type_to_string(XEN type) 
+{
+  #define H_mus_header_type_to_string "(" S_mus_header_type_to_string " type): header type (e.g. " S_mus_aiff ") as a string"
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(type), type, XEN_ONLY_ARG, S_mus_header_type_to_string, "an integer (header-type id)"); 
+  return(C_TO_XEN_STRING(mus_header_type_to_string(XEN_TO_C_INT(type))));
+}
+
 static XEN g_mus_data_format_name(XEN format) 
 {
   #define H_mus_data_format_name "(" S_mus_data_format_name " format): data format (e.g. " S_mus_bshort ") as a string"
   XEN_ASSERT_TYPE(XEN_INTEGER_P(format), format, XEN_ONLY_ARG, S_mus_data_format_name, "an integer (data-format id)"); 
   return(C_TO_XEN_STRING(mus_data_format_name(XEN_TO_C_INT(format))));
+}
+
+static XEN g_mus_data_format_to_string(XEN format) 
+{
+  #define H_mus_data_format_to_string "(" S_mus_data_format_to_string " format): data format (e.g. " S_mus_bshort ") as a string"
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(format), format, XEN_ONLY_ARG, S_mus_data_format_to_string, "an integer (data-format id)"); 
+  return(C_TO_XEN_STRING(mus_data_format_to_string(XEN_TO_C_INT(format))));
 }
 
 static XEN g_mus_bytes_per_sample(XEN format) 
@@ -1157,11 +1171,11 @@ cache info to the file given or stdout"
   return(res);
 }
 
-static XEN g_mus_error_to_string(XEN err)
+static XEN g_mus_error_type_to_string(XEN err)
 {
-  #define H_mus_error_to_string "(" S_mus_error_to_string " err): string description of err (a sndlib error type)"
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(err), err, XEN_ONLY_ARG, S_mus_error_to_string, "an integer");
-  return(C_TO_XEN_STRING((char *)mus_error_to_string(XEN_TO_C_INT(err))));
+  #define H_mus_error_type_to_string "(" S_mus_error_type_to_string " err): string description of err (a sndlib error type)"
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(err), err, XEN_ONLY_ARG, S_mus_error_type_to_string, "an integer");
+  return(C_TO_XEN_STRING((char *)mus_error_type_to_string(XEN_TO_C_INT(err))));
 }
 
 static XEN g_array_to_file(XEN filename, XEN data, XEN len, XEN srate, XEN channels)
@@ -1305,7 +1319,9 @@ XEN_NARGIFY_2(g_mus_sound_set_data_format_w, g_mus_sound_set_data_format)
 XEN_NARGIFY_1(g_mus_sound_length_w, g_mus_sound_length)
 XEN_NARGIFY_1(g_mus_sound_type_specifier_w, g_mus_sound_type_specifier)
 XEN_NARGIFY_1(g_mus_header_type_name_w, g_mus_header_type_name)
+XEN_NARGIFY_1(g_mus_header_type_to_string_w, g_mus_header_type_to_string)
 XEN_NARGIFY_1(g_mus_data_format_name_w, g_mus_data_format_name)
+XEN_NARGIFY_1(g_mus_data_format_to_string_w, g_mus_data_format_to_string)
 XEN_NARGIFY_1(g_mus_sound_comment_w, g_mus_sound_comment)
 XEN_NARGIFY_1(g_mus_sound_write_date_w, g_mus_sound_write_date)
 XEN_NARGIFY_1(g_mus_bytes_per_sample_w, g_mus_bytes_per_sample)
@@ -1340,7 +1356,7 @@ XEN_NARGIFY_5(g_mus_audio_open_input_w, g_mus_audio_open_input)
 XEN_ARGIFY_1(g_mus_sound_report_cache_w, g_mus_sound_report_cache)
 XEN_NARGIFY_1(g_mus_sound_forget_w, g_mus_sound_forget)
 XEN_NARGIFY_0(g_mus_sound_prune_w, g_mus_sound_prune)
-XEN_NARGIFY_1(g_mus_error_to_string_w, g_mus_error_to_string)
+XEN_NARGIFY_1(g_mus_error_type_to_string_w, g_mus_error_type_to_string)
 XEN_NARGIFY_2(g_mus_audio_set_oss_buffers_w, g_mus_audio_set_oss_buffers)
 XEN_NARGIFY_5(g_array_to_file_w, g_array_to_file)
 XEN_NARGIFY_5(g_file_to_array_w, g_file_to_array)
@@ -1377,6 +1393,8 @@ XEN_NARGIFY_5(g_file_to_array_w, g_file_to_array)
 #define g_mus_sound_type_specifier_w g_mus_sound_type_specifier
 #define g_mus_header_type_name_w g_mus_header_type_name
 #define g_mus_data_format_name_w g_mus_data_format_name
+#define g_mus_header_type_to_string_w g_mus_header_type_to_string
+#define g_mus_data_format_to_string_w g_mus_data_format_to_string
 #define g_mus_sound_comment_w g_mus_sound_comment
 #define g_mus_sound_write_date_w g_mus_sound_write_date
 #define g_mus_bytes_per_sample_w g_mus_bytes_per_sample
@@ -1411,7 +1429,7 @@ XEN_NARGIFY_5(g_file_to_array_w, g_file_to_array)
 #define g_mus_sound_report_cache_w g_mus_sound_report_cache
 #define g_mus_sound_forget_w g_mus_sound_forget
 #define g_mus_sound_prune_w g_mus_sound_prune
-#define g_mus_error_to_string_w g_mus_error_to_string
+#define g_mus_error_type_to_string_w g_mus_error_type_to_string
 #define g_mus_audio_set_oss_buffers_w g_mus_audio_set_oss_buffers
 #define g_array_to_file_w g_array_to_file
 #define g_file_to_array_w g_file_to_array
@@ -1505,63 +1523,7 @@ static XEN g_rb_make_sound_data(XEN self, XEN chans, XEN frames)
 {
   return(g_make_sound_data(chans, frames));
 }
-
 #endif
-
-#if HAVE_RUBY
-  #define TO_LANG(Str) xen_scheme_constant_to_ruby(Str)
-#else
-  #define TO_LANG(Str) Str
-#endif
-
-char *mus_header_type_to_constant_name(int type)
-{
-  switch (type)
-    {
-    case MUS_NEXT:      return(TO_LANG(S_mus_next));
-    case MUS_AIFF:      return(TO_LANG(S_mus_aiff));
-    case MUS_AIFC:      return(TO_LANG(S_mus_aifc));
-    case MUS_RIFF:      return(TO_LANG(S_mus_riff));
-    case MUS_NIST:      return(TO_LANG(S_mus_nist));
-    case MUS_IRCAM:     return(TO_LANG(S_mus_ircam));
-    case MUS_RAW:       return(TO_LANG(S_mus_raw));
-    case MUS_BICSF:     return(TO_LANG(S_mus_bicsf));
-    case MUS_VOC:       return(TO_LANG(S_mus_voc));
-    case MUS_SVX:       return(TO_LANG(S_mus_svx));
-    case MUS_SOUNDFONT: return(TO_LANG(S_mus_soundfont));
-    }
-  return(NULL);
-}
-
-char *mus_data_format_to_constant_name(int format)
-{
-  switch (format)
-    {
-    case MUS_BSHORT:           return(TO_LANG(S_mus_bshort));
-    case MUS_LSHORT:           return(TO_LANG(S_mus_lshort));
-    case MUS_MULAW:            return(TO_LANG(S_mus_mulaw));
-    case MUS_ALAW:             return(TO_LANG(S_mus_alaw));
-    case MUS_BYTE:             return(TO_LANG(S_mus_byte));
-    case MUS_UBYTE:            return(TO_LANG(S_mus_ubyte));
-    case MUS_BFLOAT:           return(TO_LANG(S_mus_bfloat));
-    case MUS_LFLOAT:           return(TO_LANG(S_mus_lfloat));
-    case MUS_BINT:             return(TO_LANG(S_mus_bint));
-    case MUS_LINT:             return(TO_LANG(S_mus_lint));
-    case MUS_BINTN:            return(TO_LANG(S_mus_bintn));
-    case MUS_LINTN:            return(TO_LANG(S_mus_lintn));
-    case MUS_B24INT:           return(TO_LANG(S_mus_b24int));
-    case MUS_L24INT:           return(TO_LANG(S_mus_l24int));
-    case MUS_BDOUBLE:          return(TO_LANG(S_mus_bdouble));
-    case MUS_LDOUBLE:          return(TO_LANG(S_mus_ldouble));
-    case MUS_UBSHORT:          return(TO_LANG(S_mus_ubshort));
-    case MUS_ULSHORT:          return(TO_LANG(S_mus_ulshort));
-    case MUS_BDOUBLE_UNSCALED: return(TO_LANG(S_mus_bdouble_unscaled));
-    case MUS_LDOUBLE_UNSCALED: return(TO_LANG(S_mus_ldouble_unscaled));
-    case MUS_BFLOAT_UNSCALED:  return(TO_LANG(S_mus_bfloat_unscaled));
-    case MUS_LFLOAT_UNSCALED:  return(TO_LANG(S_mus_lfloat_unscaled));
-    }
-  return(NULL);
-}
 
 #if WITH_MODULES
 static void sndlib2xen_init(void *ignore)
@@ -1707,7 +1669,9 @@ void mus_sndlib_xen_initialize(void)
   XEN_DEFINE_PROCEDURE(S_mus_sound_length,         g_mus_sound_length_w,           1, 0, 0, H_mus_sound_length);
   XEN_DEFINE_PROCEDURE(S_mus_sound_type_specifier, g_mus_sound_type_specifier_w,   1, 0, 0, H_mus_sound_type_specifier);
   XEN_DEFINE_PROCEDURE(S_mus_header_type_name,     g_mus_header_type_name_w,       1, 0, 0, H_mus_header_type_name);
+  XEN_DEFINE_PROCEDURE(S_mus_header_type_to_string,g_mus_header_type_to_string_w,  1, 0, 0, H_mus_header_type_to_string);
   XEN_DEFINE_PROCEDURE(S_mus_data_format_name,     g_mus_data_format_name_w,       1, 0, 0, H_mus_data_format_name);
+  XEN_DEFINE_PROCEDURE(S_mus_data_format_to_string,g_mus_data_format_to_string_w,  1, 0, 0, H_mus_data_format_to_string);
   XEN_DEFINE_PROCEDURE(S_mus_sound_comment,        g_mus_sound_comment_w,          1, 0, 0, H_mus_sound_comment);
   XEN_DEFINE_PROCEDURE(S_mus_sound_write_date,     g_mus_sound_write_date_w,       1, 0, 0, H_mus_sound_write_date);
   XEN_DEFINE_PROCEDURE(S_mus_bytes_per_sample,     g_mus_bytes_per_sample_w,       1, 0, 0, H_mus_bytes_per_sample);
@@ -1737,7 +1701,7 @@ void mus_sndlib_xen_initialize(void)
   XEN_DEFINE_PROCEDURE(S_mus_audio_open_output,    g_mus_audio_open_output_w,      5, 0, 0, H_mus_audio_open_output);
   XEN_DEFINE_PROCEDURE(S_mus_audio_open_input,     g_mus_audio_open_input_w,       5, 0, 0, H_mus_audio_open_input);
   XEN_DEFINE_PROCEDURE(S_mus_sound_report_cache,   g_mus_sound_report_cache_w,     0, 1, 0, H_mus_sound_report_cache);
-  XEN_DEFINE_PROCEDURE(S_mus_error_to_string,      g_mus_error_to_string_w,        1, 0, 0, H_mus_error_to_string);
+  XEN_DEFINE_PROCEDURE(S_mus_error_type_to_string, g_mus_error_type_to_string_w,   1, 0, 0, H_mus_error_type_to_string);
   XEN_DEFINE_PROCEDURE(S_mus_audio_set_oss_buffers, g_mus_audio_set_oss_buffers_w, 2, 0, 0, H_mus_audio_set_oss_buffers);
   XEN_DEFINE_PROCEDURE(S_array_to_file,            g_array_to_file_w,              5, 0, 0, H_array_to_file);
   XEN_DEFINE_PROCEDURE(S_file_to_array,            g_file_to_array_w,              5, 0, 0, H_file_to_array);
@@ -1842,11 +1806,13 @@ void mus_sndlib_xen_initialize(void)
 	       S_mus_byte,
 	       S_mus_bytes_per_sample,
 	       S_mus_data_format_name,
-	       S_mus_error_to_string,
+	       S_mus_data_format_to_string,
+	       S_mus_error_type_to_string,
 	       S_mus_expand_filename,
 	       S_mus_file_data_clipped,
 	       S_mus_file_prescaler,
 	       S_mus_header_type_name,
+	       S_mus_header_type_to_string,
 	       S_mus_ircam,
 	       S_mus_l24int,
 	       S_mus_ldouble,

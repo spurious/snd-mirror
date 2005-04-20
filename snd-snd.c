@@ -1213,8 +1213,8 @@ void sp_name_click(snd_info *sp)
 			       ((hdr->chans > 1) ? "s" : ""),
 			       dur,
 			       ((dur == 1.0) ? "" : "s"),
-			       mus_header_type_name(hdr->type),
-			       mus_short_data_format_name(hdr->format),
+			       mus_header_type_to_string(hdr->type),
+			       mus_data_format_to_string(hdr->format),
 			       timebuf,
 			       (linked) ? ", (link to " : "",
 #if HAVE_READLINK

@@ -1,5 +1,9 @@
 Snd change log
 
+  20-Apr:    draw.rb, poly.rb, musglyphs.rb thanks to Mike Scholz.
+             zip.scm (zipper) changed (takes env args now, not thunks, uses def-clm-struct, etc).
+             changed mus-error-to-string to mus-error-type->string.
+               moved mus-data-format->string and mus-header-type->string from ws.scm to C.
   18-Apr:    removed xen->sample generator.
 	     changed moog.scm to use def-clm-struct, rather than a list.
   12-Apr:    before-save-state-hook.

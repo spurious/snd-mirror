@@ -32,7 +32,6 @@
 </center>
 <br>
 
-<!-- TODO: document oo.scm, gui.scm, rt-examples.scm, rt-compile.scm, rt-engine.scm, check ladspa.scm, eval-c.scm -->
 <!-- TODO: a tutorial for Guile and Ruby -- how to customize, how to use with-sound and so on -- more programmer related than dlp's tutorial -->
 <!-- TODO: a tutorial for the rt stuff -->
 
@@ -67,7 +66,7 @@
 <tr><td><a href="#indexdoc">index.scm, index.rb</a></td>               <td>snd-help extension</td></tr>
 <tr><td><a href="#dotemacs">inf-snd.el, DotEmacs</a></td>              <td>Emacs subjob support (Michael Scholz, Fernando Lopez-Lezcano)</td></tr>
 <tr><td><a href="#jcrevdoc">jcrev.scm</a></td>                         <td>John Chowning's ancient reverb</td></tr>
-<tr><td><a href="#ladspadoc">ladspa.scm, ladspa-help.scm</a></td>      <td>Kjetil S. Matheussen's LADSPA GUI-builder and previewer.</td></tr>
+<tr><td><a href="#ladspadoc">ladspa.scm, ladspa-help.scm, gui.scm</a></td><td>Kjetil S. Matheussen's LADSPA GUI-builder and previewer.</td></tr>
 <tr><td><a href="#maracadoc">maraca.scm</a></td>                       <td>Perry Cook's maraca physical model</td></tr>
 <tr><td><a href="#marksdoc">marks.scm, marks.rb</a></td>               <td>functions related to marks</td></tr>
 <tr><td><a href="#maxfdoc">maxf.scm, maxf.rb</a></td>                  <td>Max Mathews resonator</td></tr>
@@ -2102,17 +2101,134 @@ The function that actually passes the url to the reader is <a href="extsnd.html#
 <A NAME="dotemacs"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>inf-snd.el, DotEmacs</h2></td></tr></table>
 
 <p>These two files provide support for Snd as an Emacs subjob.  inf-snd.el is by Michael Scholz,
-and DotEmacs is by Fernando Lopez-Lezcano.
+and DotEmacs is by Fernando Lopez-Lezcano. Both can be loaded in your ~/.emacs file.
+DotEmacs sets up "dialects" for various versions of Common Lisp and for Snd, then
+binds C-x C-l to run ACL.  This is intended for CCRMA'S 220 class, but it might
+be of interest to others.  Much fancier is inf-snd.el.  What follows is taken almost
+verbatim from Mike Scholz's comments in that file:
 </p>
 
+<p>
+inf-snd.el defines a snd-in-a-buffer package for Emacs.
+It includes a Snd-Ruby mode (snd-ruby-mode) and a Snd-Guile mode
+(snd-guile-mode) for editing source files. 
+The commands <b>inf-snd-help</b> and <b>snd-help</b>
+access the description which Snd provides for many functions.
+Using the prefix key `C-u' you get the HTML version of Snd's help.
+With tab-completion in the minibuffer you can scan all functions at
+a glance. 
+A menu ``Snd/Ruby'' is placed in the Emacs menu bar.  Entries in this
+menu are disabled if no inferior Snd process exists.
+These variables may need to be customized to fit your system:
+</p>
+<pre>
+inf-snd-ruby-program-name   "snd-ruby"    Snd-Ruby program name
+inf-snd-guile-program-name  "snd-guile"   Snd-Guile program name
+inf-snd-working-directory   "~/"          where Ruby or Guile scripts reside
+inf-snd-index-path          "~/"          path to snd-xref.c
+inf-snd-prompt-char         ">"           listener prompt
+snd-ruby-mode-hook          nil           to customize snd-ruby-mode
+snd-guile-mode-hook         nil           to customize snd-guile-mode
+</pre>
+<p>
+You can start inf-snd-ruby-mode either with the prefix-key
+(C-u M-x run-snd-ruby) -- you will be asked for program name and
+optional arguments -- or directly via (M-x run-snd-ruby).  In the latter
+case, the variable inf-snd-ruby-program-name needs to be set correctly.
+inf-snd-guile-mode is handled in the same way.
+Here's an example for your ~/.emacs file:
+</p>
+
+<pre>
+(autoload 'run-snd-ruby     "inf-snd" "Start inferior Snd-Ruby process" t)
+(autoload 'run-snd-guile    "inf-snd" "Start inferior Snd-Guile process" t)
+(autoload 'snd-ruby-mode    "inf-snd" "Load snd-ruby-mode." t)
+(autoload 'snd-guile-mode   "inf-snd" "Load snd-guile-mode." t)
+
+(setq inf-snd-ruby-program-name "snd-ruby -notebook")
+(setq inf-snd-guile-program-name "snd-guile -separate")
+(setq inf-snd-working-directory "~/Snd/")
+(setq inf-snd-index-path "~/Snd/snd/")
+</pre>
+
+<p>
+See inf-snd.el for more info and examples of specializing these modes.
+You can change the mode while editing a Snd-Ruby or Snd-Guile source file with
+M-x snd-ruby-mode or M-x snd-guile-mode.  To have Emacs determine
+automatically which mode to set, you can use special
+file-extensions.  I use file-extension `.rbs' for Snd-Ruby source
+files and `.cms' for Snd-Guile.
+</p>
+
+<pre>
+(set-default 'auto-mode-alist
+	     (append '(("\\.rbs$" . snd-ruby-mode)
+                    ("\\.cms$" . snd-guile-mode))
+		     auto-mode-alist))
+</pre>
+
+<p>
+Or you can use the local mode variable in source files, e.g. by
+`-*- snd-ruby -*-' or `-*- snd-guile -*-' in first line.
+</p>
+
+<p>
+Key bindings for inf-* and snd-*-modes
+</p>
+<pre>
+\e\TAB        snd-completion    symbol completion at point
+C-h m         describe-mode     describe current major mode
+</pre>
+<p>
+Key bindings of inf-snd-ruby-mode and inf-snd-guile-mode:
+</p>
+<pre>
+C-c C-s   	 inf-snd-run-snd   (Snd-Ruby or Snd-Guile from a dead Snd process buffer)
+M-C-l		 inf-snd-load      load script in current working directory
+C-c C-f   	 inf-snd-file      open view-files-dialog of Snd
+M-C-p		 inf-snd-play      play current sound file
+C-c C-t 	 inf-snd-stop      stop playing all sound files
+C-c C-i   	 inf-snd-help      help on Snd-function (snd-help)
+C-u C-c C-i	 inf-snd-help-html help on Snd-function (html)
+C-c C-q   	 inf-snd-quit      send exit to Snd process
+C-c C-k   	 inf-snd-kill      kill Snd process and buffer
+</pre>
+<p>
+Key bindings of snd-ruby-mode and snd-guile-mode editing source
+files:
+</p>
+<pre>
+C-c C-s   	 snd-run-snd
+M-C-x     	 snd-send-definition
+C-x C-e   	 snd-send-last-sexp
+C-c M-e   	 snd-send-definition
+C-c C-e   	 snd-send-definition-and-go
+C-c M-r   	 snd-send-region
+C-c C-r   	 snd-send-region-and-go
+C-c M-o   	 snd-send-buffer
+C-c C-o   	 snd-send-buffer-and-go
+C-c M-b   	 snd-send-block          (Ruby only)
+C-c C-b   	 snd-send-block-and-go   (Ruby only)
+C-c C-z   	 snd-switch-to-snd
+C-c C-l   	 snd-load-file
+C-u C-c C-l 	 snd-load-file-protected (Ruby only)
+C-c C-f   	 snd-file    	   open view-files-dialog of Snd
+C-c C-p   	 snd-play    	   play current sound file
+C-c C-t   	 snd-stop    	   stop playing all sound files
+C-c C-i   	 snd-help    	   help on Snd-function (snd-help)
+C-u C-c C-i	 snd-help-html	   help on Snd-function (html)
+C-c C-q   	 snd-quit    	   send exit to Snd process
+C-c C-k   	 snd-kill    	   kill Snd process and buffer
+</pre>
+<br>
 
 <A NAME="jcrevdoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>jcrev.scm</h2></td></tr></table>
 <p>
 jc-reverb is a reverberator developed by John Chowning a long time ago
 (I can't actually remember when -- before 1976 probably). It "colors" the
-sound much more than <a href="#clminsdoc">nrev</a>, and has noticeable echos,
+sound much more than <a href="#clminsdoc">nrev</a>, and has noticeable echoes,
 but I liked the effect a lot.  new-effects.scm has a version of jc-reverb
-that run as a normal snd editing function (via <a href="extsnd.html#mapchannel">map-channel</a>), whereas the
+that runs as a normal snd editing function (via <a href="extsnd.html#mapchannel">map-channel</a>), whereas the
 jcrev.scm version assumes it is being called within with-sound:
 </p>
 <pre>
@@ -2174,10 +2290,11 @@ plate-reverb: ladspa.scm (a LADSPA effect)<br>
 </td></tr></TABLE>
 <br>
 
-<A NAME="ladspadoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>ladspa.scm, ladspa-help.scm</h2></td></tr></table>
+<A NAME="ladspadoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>ladspa.scm, ladspa-help.scm, gui.scm</h2></td></tr></table>
 
-<p>This file takes your LADSPA library and builds a set of dialogs
-to control and preview each effect.  The related help strings are in ladspa-help.scm.
+<p>ladspa.scm takes your LADSPA library and builds a set of dialogs
+to control and preview each effect.  The related help strings are in ladspa-help.scm, and
+the GUI extensions are in gui.scm.
 </p>
 
 
@@ -2802,6 +2919,7 @@ something like this:
 </pre>
 <br>
 
+<!-- TODO: document oo.scm, rt-examples.scm, rt-compile.scm, rt-engine.scm, eval-c.scm -->
 <A NAME="rtexdoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>rt-examples.scm and friends</h2></td></tr></table>
 
 <p>The files rt-compile.scm, rt-engine.scm, rt-examples.scm, oo.scm, gui.scm, and eval-c.scm, all
@@ -4241,9 +4359,8 @@ sound; the corresponding code in your instrument sets the mark's :ws property
 to contain any info you might find amusing.  You then click the mark to see
 that info.
 </p>
-<p>Also defined in ws.scm are the CLM functions <b>seconds-&gt;samples</b> and <b>time-&gt;samples</b>,
-and the saved-state-prettification functions <b>mus-data-format-&gt;string</b> and
-<b>mus-header-type-&gt;string</b>.  The *clm-* variables are saved in the save-state
+<p>Also defined in ws.scm are the CLM functions <b>seconds-&gt;samples</b> and <b>time-&gt;samples</b>.
+The *clm-* variables are saved in the save-state
 file by <b>ws-save-state</b>, which may not be a good idea -- feedback welcome!
 </p>
 <br>
@@ -4303,8 +4420,9 @@ an upward ramp and a downward ramp, then zips them together:
       (<a class=quiet href="extsnd.html#vctset">vct-set!</a> data i (- 1.0 (* i .0001))))
     (<a class=quiet href="extsnd.html#vct_to_channel">vct-&gt;channel</a> data 0 10000 1)
     (let* ((dur (<a class=quiet href="extsnd.html#frames">frames</a>))
-	   (zp (<em class=red>make-zipper</em> (let ((e (<a class=quiet href="clm.html#make-env">make-env</a> '(0 0 1 1) :end dur)))
-			      (lambda () (<a class=quiet href="clm.html#env">env</a> e)))))
+	   (zp (make-zipper (<a class=quiet href="clm.html#make-env">make-env</a> '(0 0 1 1) :end dur)
+			    0.05
+			    (<a class=quiet href="clm.html#make-env">make-env</a> (list 0 (* (<a class=quiet href="extsnd.html#srate">srate</a>) 0.05)) :end dur)))
 	  (reader0 (<a class=quiet href="extsnd.html#makesamplereader">make-sample-reader</a> 0 0 0))
 	  (reader1 (<a class=quiet href="extsnd.html#makesamplereader">make-sample-reader</a> 0 1 0)))
       (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (lambda (val) (<em class=red>zipper</em> zp reader0 reader1))))))

@@ -182,7 +182,7 @@ int mus_make_error(char *error_name)
   return(new_error);
 }
 
-const char *mus_error_to_string(int err)
+const char *mus_error_type_to_string(int err)
 {
   if (err >= 0)
     {

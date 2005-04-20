@@ -398,6 +398,10 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+20-Apr:  draw.rb, poly.rb, musglyphs.rb thanks to Mike Scholz.\n\
+         zip.scm (zipper) changed (takes env args now, not thunks, uses def-clm-struct, etc).\n\
+         changed mus-error-to-string to mus-error-type->string.\n\
+           moved mus-data-format->string and mus-header-type->string from ws.scm to C.\n\
 18-Apr:  removed xen->sample generator.\n\
          changed moog.scm to use def-clm-struct, rather than a list.\n\
 12-Apr:  before-save-state-hook.\n\
@@ -411,9 +415,6 @@ void about_snd_help(void)
          invert-filter in dsp.scm.\n\
 23-Mar:  changed interpretation of frame->frame args.\n\
 18-Mar:  snd 7.11\n\
-17-Mar:  gc-on|off are no-ops now in Guile.\n\
-         pvoc.rb thanks to Mike Scholz.\n\
-10-Mar:  dsp.rb thanks to Mike Scholz.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",

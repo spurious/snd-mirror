@@ -2,8 +2,8 @@
 #define SNDLIB_H
 
 #define SNDLIB_VERSION 19
-#define SNDLIB_REVISION 11
-#define SNDLIB_DATE "21-Mar-05"
+#define SNDLIB_REVISION 12
+#define SNDLIB_DATE "20-Apr-05"
 
 #include <config.h>
 
@@ -324,7 +324,7 @@ extern "C" {
 typedef void mus_error_handler_t(int type, char *msg);
 mus_error_handler_t *mus_error_set_handler (mus_error_handler_t *new_error_handler);
 int mus_make_error(char *error_name);
-const char *mus_error_to_string(int err);
+const char *mus_error_type_to_string(int err);
 
 typedef void mus_print_handler_t(char *msg);
 mus_print_handler_t *mus_print_set_handler (mus_print_handler_t *new_print_handler);
@@ -356,7 +356,8 @@ int mus_sound_set_samples(const char *arg, off_t val);
 
 const char *mus_header_type_name(int type);
 const char *mus_data_format_name(int format);
-const char *mus_short_data_format_name(int format);
+char *mus_header_type_to_string(int type);
+char *mus_data_format_to_string(int format);
 char *mus_sound_comment(const char *name);
 int mus_bytes_per_sample(int format);
 float mus_sound_duration(const char *arg);
@@ -597,6 +598,9 @@ int fileno(FILE *fp);
 #ifndef SNDLIB_DISABLE_DEPRECATED
 #define mus_sound_set_full_loop_info(Arg1, Arg2) mus_sound_set_loop_info(Arg1, Arg2)
 #define mus_header_set_full_aiff_loop_info(Arg1) mus_header_set_aiff_loop_info(Arg1)
+#define mus_data_format_to_constant_name(Format) mus_data_format_to_string(Format)
+#define mus_header_type_to_constant_name(Format) mus_header_type_to_string(Format)
+#define mus_short_data_format_name(Format) mus_data_format_to_string(Format)
 #endif
 
 #ifdef __cplusplus

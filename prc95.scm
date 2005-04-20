@@ -5,36 +5,26 @@
 (provide 'snd-prc95.scm)
 (if (not (provided? 'snd-ws.scm)) (load-from-path "ws.scm"))
 
-;;; TODO: make these optimizable
-
 (define pi 3.141592653589793)
 
 
 (define* (make-reed #:key (offset 0.6) (slope -0.8))
-  (let ((roffset offset)
-	(rslope slope))
-    (lambda (sample)
-      (min 1.0 (+ roffset (* rslope sample))))))
+  (vct offset slope))
 
-(define (reedtable r sample) (r sample))
-
+(define (reedtable r sample)
+  (min 1.0 (+ (vct-ref r 0) (* (vct-ref r 1) sample))))
 
 (define* (make-bowtable #:key (offset 0.0) (slope 1.0))
-  (let ((boffset offset)
-	(bslope slope))
-    (lambda (sample)
-      (max 0.0 (- 1.0 (abs (* bslope (+ sample boffset))))))))
+  (vct offset slope))
 
-(define (bowtable b sample) (b sample))
-
+(define (bowtable b sample)
+  (max 0.0 (- 1.0 (abs (* (vct-ref b 1) (+ sample (vct-ref b 0)))))))
 
 (define (jettable sample) 
   (max -1.0 (min 1.0 (* sample (- (* sample sample) 1.0)))))
 
-
 (define* (make-onezero #:key (gain 0.5) (zerocoeff 1.0))
   (make-one-zero gain (* gain zerocoeff)))
-
 
 (define* (make-onep #:key (polecoeff 0.9))
   (make-one-pole (- 1.0 polecoeff) (- polecoeff)))
@@ -59,37 +49,35 @@
 
 
 (define (make-dc-block)
-  (let ((input 0.0)
-	(output 0.0))
-    (lambda (sample)
-      (set! output (+ sample (- (* 0.99 output) input)))
-      (set! input sample)
-      output)))
+  (vct 0.0 0.0))
+
+(define (dc-block b sample)
+  (vct-set! b 1 (+ sample (- (* 0.99 (vct-ref b 1)) (vct-ref b 0))))
+  (vct-set! b 0 sample)
+  (vct-ref b 1))
 ;; we could also use a filter generator here: (make-filter 2 (vct 1 -1) (vct 0 -0.99))
 
-(define (dc-block b sample) (b sample))
 
 ;;; these are 0-based versions of the clm delays
+(def-clm-struct dlya (outp 0 :type float) (input #f :type clm))
+
 (define (make-delaya len lag) 
-  (let ((input (make-delay len :type mus-interp-all-pass :max-size (inexact->exact (ceiling (+ len lag 1)))))
-	(outp (- lag (+ len 1))))
-    (lambda (sample)
-      (delay-tick input sample)
-      (tap input outp))))
+  (make-dlya :input (make-delay len :type mus-interp-all-pass :max-size (inexact->exact (ceiling (+ len lag 1))))
+	     :outp (- lag (+ len 1))))
 
-(define (delaya d sample) (d sample))
-
+(define (delaya d sample)
+  (delay-tick (dlya-input d) sample)
+  (tap (dlya-input d) (dlya-outp d)))
 
 (define (make-delayl len lag)
   ;; Perry's original had linear interp bug, I think -- this form is more in tune
-  (let ((outpoint 0)
-	(input (make-delay len :max-size (inexact->exact (ceiling (+ len lag 1)))))
-	(outp (- lag len)))
-    (lambda (sample)
-      (delay-tick input sample)
-      (tap input outp))))
+  (make-dlya :input (make-delay len :max-size (inexact->exact (ceiling (+ len lag 1))))
+	     :outp (- lag len)))
 
-(define (delayl d sample) (d sample))
+(define (delayl d sample)
+  (delay-tick (dlya-input d) sample)
+  (tap (dlya-input d) (dlya-outp d)))
+
 
 
 ;;; now some example instruments

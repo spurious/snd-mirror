@@ -1712,10 +1712,16 @@ into a bunch of mono files:
 
 <br>
 
+
 <table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndandruby">Snd with Ruby</a></h3></td></tr></table>
 
 <p>Ruby is an extension language described as an "object-oriented Perl".
-It provides a different syntax from that of Guile/Scheme.  In Ruby, all
+It provides a different syntax from that of Guile/Scheme; all the *.scm
+files have corresponding *.rb files (written by Mike Scholz), so there's
+no penalty for using Ruby rather than Scheme.  The only drawback is that
+all the documentation assumes Scheme.  The differences however, are not
+too severe.
+In Ruby, all
 the "-" are "_", "-&gt;" is "2", hooks and current_sound have "$" prepended
 (since they are global variables from Ruby's point of view), and all the constants are capitalized
 (e.g. Autocorrelation).  The generalized set! functions are replaced
@@ -1724,7 +1730,7 @@ reordered in some cases to place the optional values after the new value.  That 
 <code>(set! (<a class=quiet href="extsnd.html#sync">sync</a> snd) 1)</code> becomes <code>set_sync(1, snd)</code>.
 Hooks in Ruby (which have little or nothing to do with Ruby's "hookable variables")
 are just procedures or nil, not lists of procedures as in Guile.
-Here's the Ruby version of the init file given
+Here's a Ruby version of the init file given
 above:
 </p>
 
@@ -1777,11 +1783,8 @@ simply set the variable to the procedure you want, or false to clear it.
 &gt;<em class=typing>v1.max</em>
 <em class=listener>1.0</em>
 </pre>
-<p>I'm thinking about making classes for things like sounds; you could then
-have <code>sound + sound</code> to mix, or <code>sound * 2</code> to scale it,
-a given channel could be treated as an array, accessed via <code>sound[0, 12345]</code> and so on,
-These are extremely easy to add, but I'd like to coordinate this with Guile's
-object system.  Keywords, CLM generic functions, and optional arguments work as in Scheme:
+<p>
+Keywords, CLM generic functions, and optional arguments work as in Scheme:
 </p>
 <pre>
 &gt;<em class=typing>osc = make_oscil(:frequency, 440)</em>
@@ -1849,12 +1852,9 @@ In Ruby you make a symbol by prepending ":", so Guile's
 <p>In the listener, everything is line-oriented (that is, I'm not trying to
 catch incomplete expressions).  And it appears that in Ruby, variables defined
 within a file are considered local to that file(?).
-The save state mechanism is incomplete, but the basic stuff works.
-The RubyInline module might serve as a run-macro replacement.
 My very informal timing tests indicate that
 Guile and Ruby run at the same speed.
-Michael Scholz has translated many of the Scheme files to Ruby -- see
-any of the .rb files.
+For Ruby as an Emacs subjob, see inf-snd.el.
 </p>
 <br>
 

@@ -40,13 +40,13 @@ static void mus_error2snd(int type, char *msg)
 	{
 	  if (msg == NULL)
 	    XEN_ERROR(MUS_MISC_ERROR,
-		      XEN_LIST_1(C_TO_XEN_STRING((char *)mus_error_to_string(type))));
+		      XEN_LIST_1(C_TO_XEN_STRING((char *)mus_error_type_to_string(type))));
 	  else XEN_ERROR(MUS_MISC_ERROR,
 			 XEN_LIST_1(C_TO_XEN_STRING(msg)));
 	}
       else
 	{
-	  snd_error("%s: %s", mus_error_to_string(type), msg);
+	  snd_error("%s: %s", mus_error_type_to_string(type), msg);
 #if HAVE_SETJMP_H
 	  ss->jump_ok = true;
 	  top_level_catch(1); /* sigh -- try to keep going */

@@ -3077,13 +3077,13 @@
 	     (lambda (quit)
 	       (do ((i 0 (1+ i)))
 		   ((= i 67))
-		 (if (not (string-=? (list-ref errs i) (mus-error-to-string i)))
+		 (if (not (string-=? (list-ref errs i) (mus-error-type->string i)))
 		     (begin
-		       (snd-display ";mus-error-to-string ~D: ~A ~A" i (list-ref errs i) (mus-error-to-string i))
+		       (snd-display ";mus-error-type->string ~D: ~A ~A" i (list-ref errs i) (mus-error-type->string i))
 		       (quit #f)))))))
 	  (let ((new-id (mus-make-error "hiho all messed up")))
-	    (if (not (string=? (mus-error-to-string new-id) "hiho all messed up"))
-		(snd-display ";mus-make-error :~A ~A" new-id (mus-error-to-string new-id))))
+	    (if (not (string=? (mus-error-type->string new-id) "hiho all messed up"))
+		(snd-display ";mus-make-error :~A ~A" new-id (mus-error-type->string new-id))))
 	  
 	  (let ((cur-srate (mus-sound-srate "oboe.snd"))
 		(cur-chans (mus-sound-chans "oboe.snd"))
@@ -35974,7 +35974,6 @@ EDITS: 2
        (if (fneq (mus-frequency sb) 220.0) (display ";sb freq messed up"))
        ))))
 
-;;; TODO: this is not being optimized?
 (define (ssb-fm-no-gen gen modsig)
   (let* ((am0 (oscil (list-ref gen 0)))
 	 (am1 (oscil (list-ref gen 1)))
@@ -42053,19 +42052,18 @@ EDITS: 2
 	(anoi "oboe.snd" 1 1)
 	(let* ((ind (open-sound "oboe.snd"))
 	       (ind1 (open-sound "now.snd"))
-	       (zp (make-zipper (let ((e (make-env '(0 0 1 1) :end (1- (frames ind)))))
-				  (lambda () 
-				    (env e)))
+	       (zp (make-zipper (make-env '(0 0 1 1) :end 22050)
 				0.05
-				(lambda () (* (mus-srate) 0.05))))
+				(make-env (list 0 (* (mus-srate) 0.05)) :end 22050)))
 	       (reader0 (make-sample-reader 0 ind 0))
 	       (reader1 (make-sample-reader 0 ind1 0)))
-	  (zip-sound 3 1 "fyow.snd" "now.snd" '(0 0 1 1) .05)
-	  (zip-sound 4 3 "mb.snd" "fyow.snd" '(0 0 1.0 0 1.5 1.0 3.0 1.0) .025)
-	  (map-channel (lambda (val) (zipper zp reader0 reader1)))
+	  (run (lambda () (do ((i 0 (1+ i))) ((= i 22050)) (outa i (zipper zp reader0 reader1) *output*))))
 	  (close-sound ind)
-	  (close-sound ind1))
-	)
+	  (close-sound ind1)))
+
+      (zip-sound 1 1 "fyow.snd" "now.snd" '(0 0 1 1) .05)
+      (zip-sound 2 3 "mb.snd" "fyow.snd" '(0 0 1.0 0 1.5 1.0 3.0 1.0) .025)
+
       (let* ((ind (open-sound "oboe.snd"))
 	     (pv (make-pvocoder 256 4 64))
 	     (rd (make-sample-reader 0)))
@@ -54218,7 +54216,7 @@ EDITS: 2
 		     vct->sound-file verbose-cursor view-sound vu-font vu-font-size vu-size wavelet-type
 		     time-graph?  time-graph-type wavo-hop wavo-trace window-height window-width window-x window-y
 		     with-mix-tags with-relative-panes with-gl write-peak-env-info-file x-axis-style 
-		     beats-per-minute x-bounds x-position-slider x->position x-zoom-slider
+		     beats-per-minute x-bounds x-position-slider x->position x-zoom-slider mus-header-type->string mus-data-format->string
 		     y-bounds y-position-slider y->position y-zoom-slider zero-pad zoom-color zoom-focus-style
 		     mus-sound-samples mus-sound-frames mus-sound-duration mus-sound-datum-size mus-sound-data-location data-size
 		     mus-sound-chans mus-sound-srate mus-sound-header-type mus-sound-data-format mus-sound-length
@@ -54262,7 +54260,7 @@ EDITS: 2
 		     
 		     beats-per-minute channel-amp-envs convolve-files filter-control-coeffs 
 		     locsig-type make-phase-vocoder mus-audio-mixer-read
-		     mus-describe mus-error-to-string mus-file-buffer-size mus-name mus-offset mus-out-format mus-reset
+		     mus-describe mus-error-type->string mus-file-buffer-size mus-name mus-offset mus-out-format mus-reset
 		     mus-rand-seed mus-width phase-vocoder?
 		     polar->rectangular previous-files-sort-procedure 
 		     phase-vocoder-amp-increments phase-vocoder-amps phase-vocoder-freqs phase-vocoder-outctr 
@@ -54768,7 +54766,7 @@ EDITS: 2
 			    mus-sound-data-location mus-sound-chans mus-sound-srate mus-sound-header-type mus-sound-data-format
 			    mus-sound-length mus-sound-type-specifier mus-header-type-name mus-data-format-name mus-sound-comment
 			    mus-sound-write-date mus-bytes-per-sample mus-sound-loop-info mus-sound-maxamp
-			    mus-sound-maxamp-exists?))
+			    mus-sound-maxamp-exists? mus-header-type->string mus-data-format->string))
 	    
 	    (for-each (lambda (n)
 			(let ((tag
@@ -54782,7 +54780,7 @@ EDITS: 2
 			    mus-sound-data-location mus-sound-chans mus-sound-srate mus-sound-header-type mus-sound-data-format
 			    mus-sound-length mus-sound-type-specifier mus-header-type-name mus-data-format-name mus-sound-comment
 			    mus-sound-write-date mus-bytes-per-sample mus-sound-loop-info mus-sound-maxamp
-			    mus-sound-maxamp-exists?))
+			    mus-sound-maxamp-exists? mus-header-type->string mus-data-format->string))
 	    
 	    (for-each (lambda (n)
 			(let ((tag

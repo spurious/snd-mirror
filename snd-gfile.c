@@ -283,8 +283,8 @@ static void update_preview_callback(GtkFileChooser *chooser)
       sprintf(timestr, "");
 #endif
       mus_snprintf(buf, LABEL_BUFFER_SIZE, "%s %s%s",
-		   mus_header_type_name(mus_sound_header_type(filename)),
-		   mus_short_data_format_name(mus_sound_data_format(filename)),
+		   mus_header_type_to_string(mus_sound_header_type(filename)),
+		   mus_data_format_to_string(mus_sound_data_format(filename)),
 		   timestr);
       gtk_label_set_text(GTK_LABEL(fd->dialog_info2), buf);
       FREE(buf);
@@ -323,8 +323,8 @@ static void dialog_select_callback(GtkTreeSelection *selection, gpointer context
       sprintf(timestr, "");
 #endif
       mus_snprintf(buf, LABEL_BUFFER_SIZE, "%s %s%s",
-		   mus_header_type_name(mus_sound_header_type(filename)),
-		   mus_short_data_format_name(mus_sound_data_format(filename)),
+		   mus_header_type_to_string(mus_sound_header_type(filename)),
+		   mus_data_format_to_string(mus_sound_data_format(filename)),
 		   timestr);
       gtk_label_set_text(GTK_LABEL(fd->dialog_info2), buf);
       FREE(buf);

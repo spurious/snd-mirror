@@ -97,8 +97,9 @@
  * PERHAPS: count-matches and friends? (func itself is already optimized)
  * PERHAPS: float_or_boolean return type mainly for map-channel funcs
  *
- * TODO: tests for clm-struct arg/return vals of funcs
  * TODO: set for sample with at least samp arg (don't need the full thing)
+ * TODO: clm-vector created/filled in run 
+ * TODO: is clm-struct ref handled solely as list-ref? (vct if all float?)
  */
 
 #include "snd.h"
@@ -7714,7 +7715,6 @@ static char *descr_tap_0f(int *args, ptree *pt) {return(descr_gen(args, pt, S_ta
 static void tap_0f(int *args, ptree *pt) {FLOAT_RESULT = mus_tap_1(CLM_ARG_1);}  
 static char *descr_tap_1f(int *args, ptree *pt) {return(descr_gen(args, pt, S_tap, 1));}
 static void tap_1f(int *args, ptree *pt) {FLOAT_RESULT = mus_tap(CLM_ARG_1, FLOAT_ARG_2);}
-
 static xen_value *tap_1(ptree *prog, xen_value **args, int num_args)
 {
   if (run_safety == RUN_SAFE) safe_package(prog, R_BOOL, delay_check, descr_delay_check, args, 1);
@@ -7722,6 +7722,15 @@ static xen_value *tap_1(ptree *prog, xen_value **args, int num_args)
     return(package(prog, R_FLOAT, tap_0f, descr_tap_0f, args, 1));
   if (args[2]->type == R_INT) single_to_float(prog, args, 2);
   return(package(prog, R_FLOAT, tap_1f, descr_tap_1f, args, 2));
+}
+
+static char *descr_delay_tick_1f(int *args, ptree *pt) {return(descr_gen(args, pt, S_delay_tick, 1));}
+static void delay_tick_1f(int *args, ptree *pt) {FLOAT_RESULT = mus_delay_tick(CLM_ARG_1, FLOAT_ARG_2);}
+static xen_value *delay_tick_1(ptree *prog, xen_value **args, int num_args)
+{
+  if (run_safety == RUN_SAFE) safe_package(prog, R_BOOL, delay_check, descr_delay_check, args, 1);
+  if (args[2]->type == R_INT) single_to_float(prog, args, 2);
+  return(package(prog, R_FLOAT, delay_tick_1f, descr_delay_tick_1f, args, 2));
 }
 
 GEN0(increment)
@@ -10326,9 +10335,6 @@ static xen_value *arg_warn(ptree *prog, char *funcname, int arg_num, xen_value *
   return(NULL);
 }
 
-/* TODO: walk (g|setter moog-y) as clm_struct ref
- */
-
 static xen_value *walk(ptree *prog, XEN form, walk_result_t walk_result)
 {
   /* walk form, storing vars, making program entries for operators etc */
@@ -11235,6 +11241,7 @@ static void init_walkers(void)
   INIT_WALKER(S_two_zero, make_walker(two_zero_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
   INIT_WALKER(S_two_pole, make_walker(two_pole_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
   INIT_WALKER(S_tap, make_walker(tap_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
+  INIT_WALKER(S_delay_tick, make_walker(delay_tick_1, NULL, NULL, 2, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
   INIT_WALKER(S_pulse_train, make_walker(pulse_train_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
   INIT_WALKER(S_phase_vocoder, make_walker(phase_vocoder_1, NULL, NULL, 1, 5, R_FLOAT, false, 5, R_CLM, R_FUNCTION, R_FUNCTION, R_FUNCTION, R_FUNCTION));
 

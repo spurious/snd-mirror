@@ -464,8 +464,8 @@ static void file_dialog_select_callback(Widget w, XtPointer context, XtPointer i
 	  sprintf(timestr, "");
 #endif
 	  mus_snprintf(buf, LABEL_BUFFER_SIZE, "%s %s%s",
-		       mus_header_type_name(mus_sound_header_type(filename)),
-		       mus_short_data_format_name(mus_sound_data_format(filename)),
+		       mus_header_type_to_string(mus_sound_header_type(filename)),
+		       mus_data_format_to_string(mus_sound_data_format(filename)),
 		       timestr);
 	  label = XmStringCreateLocalized(buf);
 	  XtVaSetValues(fd->dialog_info2, XmNlabelString, label, NULL);
