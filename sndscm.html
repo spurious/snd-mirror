@@ -48,7 +48,7 @@
 <tr><td><a href="#debugdoc">debug.scm</a></td>                         <td>debugging aids</td></tr>
 <tr><td><a href="#dlocsigdoc">dlocsig.rb</a></td>                      <td>moving sounds (Michael Scholz)</td></tr>
 <tr><td><a href="#dlpdoc">dlp</a></td>                                 <td>tutorial directories from Dave Phillips</td></tr>
-<tr><td><a href="#drawdoc">draw.scm</a></td>                           <td>graphics additions</td></tr>
+<tr><td><a href="#drawdoc">draw.scm, draw.rb</a></td>                  <td>graphics additions</td></tr>
 <tr><td><a href="#dspdoc">dsp.scm, dsp.rb</a></td>                     <td>various DSP-related procedures</td></tr>
 <tr><td><a href="#editmenudoc">edit-menu.scm</a></td>                  <td>Edit menu additions</td></tr>
 <tr><td><a href="#dotsnd">edit123.scm, snd_conffile.scm</a></td>       <td>.snd examples (Tom Roth, Kjetil S. Matheussen)</td></tr>
@@ -73,14 +73,14 @@
 <tr><td><a href="#mixdoc">mix.scm, mix.rb</a></td>                     <td>functions related to mixes and tracks</td></tr>
 <tr><td><a href="#mixerdoc">mixer.scm</a></td>                         <td>functions related to mixers and frames (linear algebra)</td></tr>
 <tr><td><a href="#moogdoc">moog.scm, moog.rb</a></td>                  <td>Moog filter</td></tr>
-<tr><td><a href="#musglyphs">musglyphs.scm</a></td>                    <td>Music notation symbols (from CMN)</td></tr>
+<tr><td><a href="#musglyphs">musglyphs.scm, musglyphs.rb</a></td>      <td>Music notation symbols (from CMN)</td></tr>
 <tr><td><a href="#nbdoc">nb.scm, nb.rb</a></td>                        <td>Popup File info etc</td></tr>
 <tr><td><a href="#noisedoc">noise.scm, noise.rb</a></td>               <td>noise.ins from CLM translated to Scheme/Ruby by Michael Scholz</td></tr>
 <tr><td><a href="#oscopedoc">oscope.scm</a></td>                       <td>an oscilloscope/spectrum analysis dialog</td></tr>
 <tr><td><a href="#peakenvdoc">peak-env.scm</a></td>                    <td>peak envelope support</td></tr>
 <tr><td><a href="#pianodoc">piano.scm, piano.rb</a></td>               <td>piano physical model</td></tr>
 <tr><td><a href="#playdoc">play.scm</a></td>                           <td>play-related functions</td></tr>
-<tr><td><a href="#polydoc">poly.scm</a></td>                           <td>polynomial-related stuff</td></tr>
+<tr><td><a href="#polydoc">poly.scm, poly.rb</a></td>                  <td>polynomial-related stuff</td></tr>
 <tr><td><a href="#popupdoc">popup.scm, gtk-popup.scm, popup.rb</a></td><td>Popup menu specializations</td></tr>
 <tr><td><a href="#prc95doc">prc95.scm</a></td>                         <td>Perry Cook's physical model examples</td></tr>
 <tr><td><a href="#pvocdoc">pvoc.scm, pvoc.rb</a></td>                  <td>phase-vocoder</td></tr>
@@ -151,7 +151,7 @@ Michael Scholz, based on CLM's bess5.cl and rt.lisp.
 </p>
 
 
-<A NAME="birddoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>bird.scm</h2></td></tr></table>
+<A NAME="birddoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>bird.scm, bird.rb</h2></td></tr></table>
 <pre>
   <em class=emdef>bird</em> start dur frequency freqskew amplitude freq-envelope amp-envelope
   <a class=def name="bigbird">bigbird</a> start dur frequency freqskew amplitude freq-envelope amp-envelope partials
@@ -541,7 +541,7 @@ to things like Zoom, and Quit.
 <br>
 
 
-<A NAME="drawdoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>draw.scm</h2></td></tr></table>
+<A NAME="drawdoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>draw.scm, draw.rb</h2></td></tr></table>
 
 <p>draw.scm has examples of graphics additions; some of these are shown in extsnd.html.
 </p><p><b>display-energy</b> is a lisp-graph-hook procedure that displays the current time
@@ -1157,7 +1157,7 @@ also Scheme implementations of some of the built-in functions (<a class=quiet hr
 </p>
 
 
-<A NAME="exampdoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>examp.scm</h2></td></tr></table>
+<A NAME="exampdoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>examp.scm, examp.rb</h2></td></tr></table>
 
 <p>examp.scm has become a bit of a grab-bag; rather than get organized, I just
 appended new stuff as it came to mind.  The following documentation is
@@ -2581,7 +2581,7 @@ faster.
 <p>The Ruby version of this is in examp.rb.
 </p>
 
-<A NAME="musglyphs"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>musglyphs.scm</h2></td></tr></table>
+<A NAME="musglyphs"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>musglyphs.scm, musglyphs.rb</h2></td></tr></table>
 
 <p>musglyphs.scm provides Scheme/Snd wrappers to load CMN's cmn-glyphs.lisp (directly!),
 thereby defining most of the standard music notation symbols.  Each of the original
@@ -2749,7 +2749,7 @@ decide which one to send to the DAC.
 </p>
 
 
-<A NAME="polydoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>poly.scm</h2></td></tr></table>
+<A NAME="polydoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>poly.scm, poly.rb</h2></td></tr></table>
 
 <pre>
   <em class=emdef>poly+</em> p1 p2
@@ -2773,7 +2773,7 @@ just for fun.
 </p>
 
 
-<A NAME="popupdoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>popup.scm and gtk-popup.scm</h2></td></tr></table>
+<A NAME="popupdoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>popup.scm, popup.rb, and gtk-popup.scm</h2></td></tr></table>
 <pre>
   <a class=def name="addselectionpopup">add-selection-popup</a> 
   <a class=def name="addlistenerpopup">add-listener-popup</a> 
@@ -2886,7 +2886,7 @@ to the current sound; <i>pitch</i> specifies the pitch transposition ratio,
 the gate value will not be synthesized), <i>hoffset</i> is a pitch offset in Hz.
 </p>
 
-<A NAME="rgbdoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>rgb.scm</h2></td></tr></table>
+<A NAME="rgbdoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>rgb.scm, rgb.rb</h2></td></tr></table>
 <p>rgb.scm (rgb.rb) is a simple translation of the standard X11 color names into Snd
 color objects.
 </p>
@@ -2928,7 +2928,7 @@ as well as numerous other extensions of Snd for user interface development, opti
 </p>
 <br>
 
-<A NAME="rtiodoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>rtio.scm</h2></td></tr></table>
+<A NAME="rtiodoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>rtio.scm, rtio.rb</h2></td></tr></table>
 
 <p>rtio.scm has a collection of functions oriented loosely around
 "real-time" operations.
@@ -3202,7 +3202,7 @@ you could bind the arrow keys:
 
 <br>
 
-<A NAME="sndmotifdoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>snd-motif.scm</h2></td></tr></table>
+<A NAME="sndmotifdoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>snd-motif.scm, snd-xm.rb</h2></td></tr></table>
 
 <pre>
   <A class=def NAME="installsearcher">install-searcher</a> proc
@@ -3485,7 +3485,7 @@ know what instrument some of the labels refer to.
 </p>
 <br>
 
-<A NAME="vdoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>v.scm</h2></td></tr></table>
+<A NAME="vdoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>v.scm, v.rb</h2></td></tr></table>
 
 <p>The fm violin was my favorite instrument while working in the 70's and 80's,
 primarily on the Samson box.  It was developed in Mus10 (ca 1977) based on ideas of John Chowning;

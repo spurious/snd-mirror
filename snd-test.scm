@@ -1940,6 +1940,10 @@
 		   (snd-display ";mus-bytes-per-sample ~A: ~A" (mus-data-format-name frm) siz)))
 	     formats
 	     sizes))
+	  (if (not (string=? (mus-data-format->string mus-bshort) "mus-bshort"))
+	      (snd-display ";mus-data-format->string: ~A" (mus-data-format->string mus-bshort)))
+	  (if (not (string=? (mus-header-type->string mus-aifc) "mus-aifc"))
+	      (snd-display ";mus-header-type->string: ~A" (mus-header-type->string mus-aifc)))
 	  (if (provided? 'snd-debug)
 	      (for-each
 	       (lambda (format type name)

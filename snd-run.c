@@ -98,7 +98,12 @@
  * PERHAPS: float_or_boolean return type mainly for map-channel funcs
  *
  * TODO: set for sample with at least samp arg (don't need the full thing)
- * TODO: clm-vector created/filled in run 
+ *        (set-samples beg dur vct), (samples beg dur) -> vct, (sample samp), (set! (sample samp) ...)
+ *        samples->sound-data, channel->vct, vct->channel
+ *        sample -> Float chn_sample(off_t samp, chan_info *cp, int pos)
+ *        samples -> init_sample_reader then fill data with read_sample snd-edit 8441
+ *        set sample(s) uses change_samples.
+ * TODO: clm-vector created/filled in run (osc-formants)
  * TODO: is clm-struct ref handled solely as list-ref? (vct if all float?)
  */
 
@@ -9190,6 +9195,35 @@ static xen_value *mus_data_format_name_1(ptree *prog, xen_value **args, int num_
 }
 
 
+static void mus_header_type_to_string_f(int *args, ptree *pt) 
+{
+  if (STRING_RESULT) FREE(STRING_RESULT);
+  STRING_RESULT = copy_string(mus_header_type_to_string(INT_ARG_1));
+}
+static char *descr_mus_header_type_to_string_f(int *args, ptree *pt)
+{
+  return(mus_format( STR_PT " = header-type->string(" INT_PT ")", args[0], STRING_RESULT, args[1], INT_ARG_1));
+}
+static xen_value *mus_header_type_to_string_1(ptree *prog, xen_value **args, int num_args)
+{
+  return(package(prog, R_STRING, mus_header_type_to_string_f, descr_mus_header_type_to_string_f, args, 1));
+}
+
+static void mus_data_format_to_string_f(int *args, ptree *pt) 
+{
+  if (STRING_RESULT) FREE(STRING_RESULT);
+  STRING_RESULT = copy_string(mus_data_format_to_string(INT_ARG_1));
+}
+static char *descr_mus_data_format_to_string_f(int *args, ptree *pt)
+{
+  return(mus_format( STR_PT " = data-format->string(" INT_PT ")", args[0], STRING_RESULT, args[1], INT_ARG_1));
+}
+static xen_value *mus_data_format_to_string_1(ptree *prog, xen_value **args, int num_args)
+{
+  return(package(prog, R_STRING, mus_data_format_to_string_f, descr_mus_data_format_to_string_f, args, 1));
+}
+
+
 /* ---------------- formant-bank ---------------- */
 static char *descr_formant_bank_f(int *args, ptree *pt) 
 {
@@ -11376,6 +11410,8 @@ static void init_walkers(void)
 
   INIT_WALKER(S_mus_header_type_name, make_walker(mus_header_type_name_1, NULL, NULL, 1, 1, R_STRING, false, 1, R_INT));
   INIT_WALKER(S_mus_data_format_name, make_walker(mus_data_format_name_1, NULL, NULL, 1, 1, R_STRING, false, 1, R_INT));
+  INIT_WALKER(S_mus_header_type_to_string, make_walker(mus_header_type_to_string_1, NULL, NULL, 1, 1, R_STRING, false, 1, R_INT));
+  INIT_WALKER(S_mus_data_format_to_string, make_walker(mus_data_format_to_string_1, NULL, NULL, 1, 1, R_STRING, false, 1, R_INT));
   INIT_WALKER(S_mus_bytes_per_sample, make_walker(mus_bytes_per_sample_1, NULL, NULL, 1, 1, R_INT, false, 1, R_INT));
 
   INIT_WALKER(S_vct_ref, make_walker(vct_ref_1, NULL, vct_set_1, 2, 2, R_FLOAT, false, 2, R_VCT, R_INT));

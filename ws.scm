@@ -376,6 +376,7 @@ returning you to the true top-level."
 ;;; -------- def-clm-struct --------
 
 ;;; TODO: if :type as 2nd, some sort of warning
+;;; PERHAPS: if all float, use vct for data, rather than list
 
 (defmacro* def-clm-struct (name #:rest fields)
   ;; (def-clm-struct fd loc (chan 1))

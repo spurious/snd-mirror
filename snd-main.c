@@ -585,7 +585,6 @@ static void save_property_list(FILE *fd, XEN property_list, int chan)
 }
 #else
 #if HAVE_RUBY
-/* TODO: replaced with the new versions? (mail410) */
 
 static void save_property_list(FILE *fd, XEN property_list, int chan)
 {
