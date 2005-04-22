@@ -10760,7 +10760,7 @@ EDITS: 5
 		  (snd-display ";dithering: ~A" mx)))
 	    (revert-sound ind)
 	    (map-channel (ring-mod 10 (list 0 0 1 (hz->radians 100))))
-	    (map-channel (osc-formants .99 (vct 400.0 800.0 1200.0) (vct 400.0 800.0 1200.0) (vct 4.0 2.0 3.0)))
+	    (osc-formants .99 (vct 400.0 800.0 1200.0) (vct 400.0 800.0 1200.0) (vct 4.0 2.0 3.0))
 	    (map-channel (zecho .5 .75 6 10.0))
 	    (map-channel (flecho .5 .9))
 	    (filtered-env '(0 0 1 1 2 0))

@@ -1305,12 +1305,12 @@ filter to filter-sound:</p>
 </pre>
 <p><b>formants</b> applies three formants in parallel.
 <b>moving-formant</b> moves a formant according to an envelope.
-<b>osc-formants</b> sets up any number of independently oscillating formants.
+<b>osc-formants</b> sets up any number of independently oscillating formants, then calls map-channel.
 </p>
 <pre>
 (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (formants .99 900 .98 1800 .99 2700))
 (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (moving-formant .99 '(0 1200 1 2400)))
-(<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (osc-formants .99 '(400 800 1200) '(400 800 1200) '(4 2 3)))
+(osc-formants .99 '(400 800 1200) '(400 800 1200) '(4 2 3))
 </pre>
 <pre>
   <em class=emdef>filtered-env</em> envelope

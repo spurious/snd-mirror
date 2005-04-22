@@ -1103,9 +1103,9 @@ is: (filter-sound (make-formant .99 2400))"
 	(set! (mus-frequency frm) (env menv))
 	val))))
 
-(define (osc-formants radius bases amounts freqs)
+(define (osc-formants radius bases amounts freqs) ; changed to call map-channel itself, 21-Apr-05
   "(osc-formants radius bases amounts freqs) set up any number of independently oscillating 
-formants: (map-channel (osc-formants .99 (vct 400.0 800.0 1200.0) (vct 400.0 800.0 1200.0) (vct 4.0 2.0 3.0)))"
+formants, then calls map-channel: (osc-formants .99 (vct 400.0 800.0 1200.0) (vct 400.0 800.0 1200.0) (vct 4.0 2.0 3.0)))"
   (let* ((len (vct-length bases))
 	 (frms (make-vector len))
 	 (oscs (make-vector len)))
@@ -1113,17 +1113,19 @@ formants: (map-channel (osc-formants .99 (vct 400.0 800.0 1200.0) (vct 400.0 800
 	((= i len))
       (vector-set! frms i (make-formant radius (vct-ref bases i)))
       (vector-set! oscs i (make-oscil (vct-ref freqs i))))
-    (lambda (x)
-      (let ((val 0.0))
-	(do ((i 0 (1+ i)))
-	    ((= i len))
-	  (let ((frm (vector-ref frms i)))
-	    (set! val (+ val (formant frm x)))
-	    (set! (mus-frequency frm) 
-		  (+ (vct-ref bases i)
-		     (* (vct-ref amounts i) 
-			(oscil (vector-ref oscs i)))))))
-	val))))
+    (map-channel
+     (lambda (x)
+       (let ((val 0.0))
+	 (do ((i 0 (1+ i)))
+	     ((= i len))
+	   (let ((frm (vector-ref frms i)))
+	     (set! val (+ val (formant frm x)))
+	     (set! (mus-frequency frm) 
+		   (+ (vct-ref bases i)
+		      (* (vct-ref amounts i) 
+			 (oscil (vector-ref oscs i)))))))
+	 val)))))
+
 
 
 ;;; -------- echo

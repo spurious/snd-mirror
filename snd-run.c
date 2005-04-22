@@ -95,15 +95,14 @@
  *   -> opt: can't set pointer var (g2) to alias other such var
  *
  * PERHAPS: count-matches and friends? (func itself is already optimized)
- * PERHAPS: float_or_boolean return type mainly for map-channel funcs
+ * PERHAPS: float_or_boolean_or_vct return type mainly for map-channel funcs
  *
  * TODO: set for sample with at least samp arg (don't need the full thing)
  *        (set-samples beg dur vct), (samples beg dur) -> vct, (sample samp), (set! (sample samp) ...)
  *        samples->sound-data, channel->vct, vct->channel
- *        sample -> Float chn_sample(off_t samp, chan_info *cp, int pos)
+ *        sample -> Float chn_sample(off_t samp, chan_info *cp, int pos) [6485 -- these opt args should not be a problem][(sample samp snd chn pos)]
  *        samples -> init_sample_reader then fill data with read_sample snd-edit 8441
  *        set sample(s) uses change_samples.
- * TODO: clm-vector created/filled in run (osc-formants)
  * TODO: is clm-struct ref handled solely as list-ref? (vct if all float?)
  */
 
