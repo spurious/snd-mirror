@@ -547,8 +547,6 @@ char *mus_data_format_to_string(int format)
   return(NULL);
 }
 
-/* TODO: rb side of mus_error_type2string */
-
 static const char *any_data_format_name(int sndlib_format)
 {
   if (MUS_DATA_FORMAT_OK(sndlib_format))

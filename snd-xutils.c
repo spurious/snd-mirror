@@ -548,3 +548,128 @@ void widget_off_t_to_text(Widget w, off_t val)
   FREE(str);
 }
 
+Pixmap rotate_text (Widget w, char *str, XFontStruct *font, Float angle_in_degrees, int *nw, int *nh, Pixel bg, Pixel fg, GC d_gc)
+{
+  /* rotate clockwise by angle_in_degrees degrees (i.e. 45 points text south-east), 
+   * new bounding box (text centered in it) returned in nw and nh
+   * bg = background color, fg = foreground (text) color) 
+   */
+  Float matrix[4];
+  Float angle_in_radians;
+  XImage *before, *after;
+  Pixmap pix, rotpix;
+  unsigned int width, height, depth, nwidth, nheight, x, y, nx, ny, tx, ty, depth_bytes;
+  char *data;
+  unsigned long px;
+  Display *dp;
+  Drawable wn;
+  Visual *vis;
+  int scr;
+  int bx0 = 0, bx1 = 0, by0 = 0, by1 = 0, b;
+  if (str == NULL) return(BadPixmap);
+
+  angle_in_radians = mus_degrees_to_radians(angle_in_degrees);
+  matrix[0] = cos(angle_in_radians);
+  matrix[1] = sin(angle_in_radians);
+  matrix[2] = -sin(angle_in_radians);
+  matrix[3] = cos(angle_in_radians);
+  dp = XtDisplay(w);
+  wn = XtWindow(w);
+  scr = DefaultScreen(dp);
+  vis = DefaultVisual(dp, scr);
+  XtVaGetValues(w, XmNdepth, &depth, NULL);
+  depth_bytes = (depth >> 3);
+  if (depth_bytes == 0) depth_bytes = 1; /* unsigned so can't be negative */
+
+  /* find extent of original text, expand out to byte boundaries */
+  XSetFont(dp, d_gc, font->fid);
+  width = XTextWidth(font, str, strlen(str));
+  height = (font->ascent + font->descent);
+  if (width % 8) width = 8 * (1 + (int)(width / 8));
+  if (height % 8) height = 8 * (1 + (int)(height / 8));
+
+  /* get bounding box of rotated text (this could be simplfied -- used to involve scaling) */
+  b = (int)(width * matrix[0]);
+  if (b < 0) bx0 = b; else bx1 = b;
+  b = (int)(height * matrix[2]);
+  if (b < 0) bx0 += b; else bx1 += b;
+  b = (int)(width * matrix[1]);
+  if (b < 0) by0 = b; else by1 = b;
+  b = (int)(height * matrix[3]);
+  if (b < 0) by0 += b; else by1 += b;
+  
+  /* set translation vector so we're centered in the resultant pixmap */
+  if (bx0 < 0) tx = -bx0; else tx = 0;
+  if (by0 < 0) ty = -by0; else ty = 0;
+  nx = bx1 - bx0;
+  ny = by1 - by0;
+
+  /* expand result bounds to byte boundaries */
+  if (nx % 8) nwidth = 8 * (1 + (int)(nx / 8)); else nwidth = nx;
+  if (ny % 8) nheight = 8 * (1 + (int)(ny / 8)); else nheight = ny;
+  (*nw) = nwidth;
+  (*nh) = nheight;
+
+  XSetBackground(dp, d_gc, bg); 
+  XSetForeground(dp, d_gc, bg); 
+
+  /* create pixmaps, fill with background color, write string to pix */
+  pix = XCreatePixmap(dp, wn, width, height, depth);
+  rotpix= XCreatePixmap(dp, wn, nwidth, nheight, depth);
+  XFillRectangle(dp, pix, d_gc, 0, 0, width, height);
+  XFillRectangle(dp, rotpix, d_gc, 0, 0, nwidth, nheight);
+#ifdef SUN
+  XSync(dp, 0);
+  /* needed to get the numbers drawn at all */
+#endif
+  XSetForeground(dp, d_gc, fg);
+  XDrawImageString(dp, pix, d_gc, 0, height, str, strlen(str));
+
+  /* dump pixmap bits into an image; image data will be freed automatically later */
+  data = (char *)calloc((width + 1) * (height + 1) * depth_bytes, sizeof(char)); /* not CALLOC since X will free this */
+  before = XCreateImage(dp, vis, depth, XYPixmap, 0, data, width, height, 8, 0);
+  XGetSubImage(dp, pix, 0, 0, width, height, AllPlanes, XYPixmap, before, 0, 0);
+  data = (char *)calloc((nwidth + 1) * (nheight + 1) * depth_bytes, sizeof(char));
+  after = XCreateImage(dp, vis, depth, XYPixmap, 0, data, nwidth, nheight, 8, 0);
+
+  /* clear background of result image */
+  for (x = 0; x < nwidth; x++) 
+    for (y = 0; y < nheight; y++) 
+      XPutPixel(after, x, y, bg);
+
+  /* write rotated pixels to result image */
+  for (x = 0; x < width; x++)
+    for (y = 0; y < height; y++)
+      {
+	px = XGetPixel(before, x, y);
+	if (px != bg)
+	  XPutPixel(after, 
+		    mus_iclamp(0, (int)(tx + x * matrix[0] + y * matrix[2]), nwidth - 1),
+		    mus_iclamp(0, (int)(ty + x * matrix[1] + y * matrix[3]), nheight - 1),
+		    px);
+      }
+
+  /* dump image into result pixmap (needed for later display) */
+  XPutImage(dp, rotpix, d_gc, after, 0, 0, 0, 0, nwidth, nheight);
+
+  /* cleanup */
+  XDestroyImage(before);  /* frees data as well */
+  XDestroyImage(after);
+  XFreePixmap(dp, pix);
+  return(rotpix);
+}
+
+/* TODO: rotated axis label is losing the descenders? */
+
+void draw_rotated_axis_label(Widget widget, GC gc, char *text, int x0, int y0)
+{
+  Pixmap pix;
+  int h, w;
+  XGCValues gv;
+  Display *dp;
+  dp = XtDisplay(widget);
+  XGetGCValues(MAIN_DISPLAY(ss), gc, GCForeground | GCBackground, &gv);
+  pix = rotate_text(widget, text, AXIS_LABEL_FONT(ss), -90.0, &w, &h, gv.background, gv.foreground, gc);
+  XCopyArea(dp, pix, XtWindow(widget), gc, 0, 0, w, h, x0, y0); /* XtWindow?? */
+  XFreePixmap(dp, pix);  
+}

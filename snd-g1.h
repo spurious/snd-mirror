@@ -395,6 +395,9 @@ GtkWidget *snd_gtk_label_new(const char *label, GdkColor *color);
 void widget_int_to_text(GtkWidget *w, int val);
 void widget_float_to_text(GtkWidget *w, Float val);
 void widget_off_t_to_text(GtkWidget *w, off_t val);
+void rotate_text(GdkDrawable *wn, GdkGC *gc, PangoFontDescription *font, char *text, int angle, gint x0, gint y0);
+void draw_rotated_axis_label(GtkWidget *w, GdkGC *gc, char *text, gint x0, gint y0);
+
 
 
 /* -------- snd-gsnd.c -------- */

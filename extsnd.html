@@ -7731,7 +7731,7 @@ a background process is launched to read the entire sound to get the needed data
 <tr><td colspan=2>
 <code><a class=def name="xaxislabel">x-axis-label</a> (snd chn context)</code></td></tr>
 <tr><td></td><td>
-return the current x axis label (also settable).
+return the current x axis label (also settable). <i>context</i> is one of time-graph (the default), lisp-graph, or transform-graph,
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -7766,7 +7766,8 @@ return (list x0 x1) -- current x axis time domain bounds in seconds.
 <code><a class=def name="x_to_position">x-&gt;position</a> (x snd chn axis)</code>
 </td></tr>
 <tr><td></td><td>
-return the graph (screen pixel) position that corresponds to the X axis value <i>x</i>. <i>axis</i> is one of time-graph, lisp-graph, or transform-graph.
+return the graph (screen pixel) position that corresponds to the X axis value <i>x</i>. 
+<i>axis</i> is one of time-graph (the default), lisp-graph, or transform-graph.
 See draw.scm or gtk-popup.scm for examples.
 </td></tr>
 <tr><td colspan=2></td></tr>
@@ -7800,6 +7801,15 @@ value of x axis zoom slider.  See <a href="#zoomonepixel">zoom-one-pixel</a>.
 <b>xramp-channel</b> is a slight extension of <a href="#rampchannel">ramp-channel</a>. It scales samples in the given sound/channel
 between beg and beg + dur by an exponential ramp going from rmp0 to rmp1 with the connecting segment curvature
 set by base. (<b>xramp-channel</b> underlies the virtual exponential envelope operations).
+</td></tr>
+<tr><td colspan=2></td></tr>
+
+
+<!-- y-axis-label -->
+<tr><td colspan=2>
+<code><a class=def name="yaxislabel">y-axis-label</a> (snd chn context)</code></td></tr>
+<tr><td></td><td>
+return the current y axis label (also settable). <i>context</i> is one of time-graph (the default), lisp-graph, or transform-graph,
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -7842,7 +7852,8 @@ Or to set each channel to its own maxamp:
 <code><a class=def name="y_to_position">y-&gt;position</a> (y snd chn axis)</code>
 </td></tr>
 <tr><td></td><td>
-return the graph (screen pixel) position that corresponds to the Y axis value <i>y</i>. <i>axis</i> is one of time-graph, lisp-graph, or transform-graph.
+return the graph (screen pixel) position that corresponds to the Y axis value <i>y</i>. 
+<i>axis</i> is one of time-graph (the default), lisp-graph, or transform-graph.
 This is used in <i>samples-via-colormap</i> in draw.scm to draw the time domain samples in many colors.
 </td></tr>
 <tr><td colspan=2></td></tr>

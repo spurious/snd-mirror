@@ -1443,7 +1443,7 @@ static void change_pixmap_background(Widget w, Pixmap orig, Pixel old_color, Pix
       if (XGetPixel(before, x, y) == old_color)
 	XPutPixel(before, x, y, new_color);
   XPutImage(dp, orig, draw_gc, before, 0, 0, 0, 0, width, height);
-  XDestroyImage(before);  /* frees data as well, or so claims the documentation */
+  XDestroyImage(before);  /* frees data as well */
   XFreeGC(dp, draw_gc);
 }
 

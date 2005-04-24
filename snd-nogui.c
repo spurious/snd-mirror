@@ -362,6 +362,22 @@ RETSIGTYPE top_level_catch(int ignore)
 }
 #endif
 
+#if DEBUGGING && HAVE_GUILE
+#define NO_GUI_DEFINITIONS 66
+static const char *no_gui_definitions[NO_GUI_DEFINITIONS] = {
+  S_color_hook, S_drop_hook, S_listener_click_hook, S_mouse_enter_graph_hook, S_mouse_enter_label_hook, S_mouse_enter_listener_hook,
+  S_mouse_enter_text_hook, S_mouse_leave_graph_hook, S_mouse_leave_label_hook, S_mouse_leave_listener_hook, S_mouse_leave_text_hook,
+  S_new_widget_hook, S_orientation_hook, S_recorder_file_hook, S_window_property_changed_hook, S_copy_context, S_cursor_context,
+  S_lisp_graph, S_mark_context, S_selection_context, S_time_graph, S_transform_graph, S_basic_color, S_colormap, S_colormap_size,
+  S_cursor_color, S_data_color, S_enved_envelope, S_enved_filter, S_enved_waveform_color, S_filter_control_waveform_color, S_graph_color,
+  S_graph_cursor, S_highlight_color, S_listener_color, S_listener_text_color, S_mark_color, S_position_color,
+  S_pushed_button_color, S_sash_color, S_selected_data_color, S_selected_graph_color, S_selection_color, S_text_focus_color,
+  S_x_axis_label, S_y_axis_label, S_zoom_color, S_axis_info, S_channel_widgets, S_color_p, S_color_to_list, S_colormap_p,
+  S_current_font, S_dialog_widgets, S_graph_data, S_in, S_main_widgets, S_make_color, S_make_graph_data, S_menu_widgets,
+  S_reset_listener_cursor, S_send_mozilla, S_sound_widgets, S_view_regions_dialog, S_widget_text, S_goto_listener_end
+};
+#endif
+
 #define FALLBACK_FONT "9x15"
 
 void snd_doit(int argc, char **argv)
@@ -374,111 +390,180 @@ void snd_doit(int argc, char **argv)
 #if HAVE_GUILE
   XEN_EVAL_C_STRING("(set! scm-repl-prompt \"snd> \")");
 
-  XEN_EVAL_C_STRING("(define (" S_view_regions_dialog " . args) #f)\
-               (define (" S_in " . args) #f)\
-               (define (" S_make_color " . args) #f)\
-               (define (" S_color_p " . args) #f)\
-               (define (goto-listener-end) #f)\
-               (define (" S_color_to_list " .args) #f)");
+#if DEBUGGING
+  {
+    int i;
+    for (i = 0; i < NO_GUI_DEFINITIONS; i++)
+      if (XEN_DEFINED_P(no_gui_definitions[i]))
+	fprintf(stderr, "%s is already defined\n", no_gui_definitions[i]);
+  }
+#endif
 
-  XEN_EVAL_C_STRING("(define " S_mouse_enter_graph_hook " (make-hook 2))\
-               (define " S_mouse_leave_graph_hook " (make-hook 2))\
+  XEN_EVAL_C_STRING("\
+               (define " S_color_hook " (make-hook 0))\
+               (define " S_drop_hook " (make-hook 1))\
+               (define " S_listener_click_hook " (make-hook 1)) \
+               (define " S_mouse_enter_graph_hook " (make-hook 2))\
                (define " S_mouse_enter_label_hook " (make-hook 3))\
-               (define " S_mouse_leave_label_hook " (make-hook 3))\
                (define " S_mouse_enter_listener_hook " (make-hook 1))\
-               (define " S_mouse_leave_listener_hook " (make-hook 1))\
                (define " S_mouse_enter_text_hook " (make-hook 1))\
+               (define " S_mouse_leave_graph_hook " (make-hook 2))\
+               (define " S_mouse_leave_label_hook " (make-hook 3))\
+               (define " S_mouse_leave_listener_hook " (make-hook 1))\
                (define " S_mouse_leave_text_hook " (make-hook 1))\
                (define " S_new_widget_hook " (make-hook 1))\
-               (define " S_drop_hook " (make-hook 1))\
-               (define " S_color_hook " (make-hook 0))\
                (define " S_orientation_hook " (make-hook 0))\
-               (define " S_listener_click_hook " (make-hook 1)) \
                (define " S_recorder_file_hook " (make-hook 1)) \
                (define " S_window_property_changed_hook " (make-hook 1))");
 
-  XEN_EVAL_C_STRING("(define " S_enved_envelope " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
-               (define " S_just_sounds " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
+  XEN_EVAL_C_STRING("\
                (define " S_copy_context " 0)\
                (define " S_cursor_context " 3)\
+               (define " S_lisp_graph " 2)\
                (define " S_mark_context " 4)\
                (define " S_selection_context " 2)\
                (define " S_time_graph " 0)\
-               (define " S_transform_graph " 1)\
-               (define " S_lisp_graph " 2)\
-               (define (" S_axis_info " . args) #f)\
-               (define (" S_dialog_widgets ") #f)\
-               (define (" S_channel_widgets " . args) #f)\
-               (define (" S_sound_widgets " . args) #f)\
-               (define (" S_menu_widgets " . args) #f)\
-               (define (" S_main_widgets " . args) #f)\
-               (define (" S_current_font ") #f)\
-               (define (" S_reset_listener_cursor ") #f)\
-               (define (" S_graph_data " . args) #f)\
-               (define (" S_make_graph_data " . args) #f)\
-               (define (" S_widget_text " . args) \"\")\
-               (define (" S_colormap_p " . args) #f)\
-               (define (" S_send_mozilla " . args) #f)\
-               (define " S_x_axis_label " (make-procedure-with-setter (lambda args \"\") (lambda args \"\")))\
+               (define " S_transform_graph " 1)");
+
+  XEN_EVAL_C_STRING("\
                (define " S_basic_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
-               (define " S_zoom_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
-               (define " S_position_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
-               (define " S_mark_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
-               (define " S_listener_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
-               (define " S_listener_text_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
-               (define " S_enved_waveform_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
-               (define " S_enved_filter " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
-               (define " S_filter_control_waveform_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
-               (define " S_highlight_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
-               (define " S_graph_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
-               (define " S_selected_graph_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
-               (define " S_data_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
-               (define " S_selected_data_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
-               (define " S_cursor_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
-               (define " S_selection_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
-               (define " S_pushed_button_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
-               (define " S_text_focus_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
-               (define " S_sash_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
-               (define " S_graph_cursor " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
                (define " S_colormap " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
                (define " S_colormap_size " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
-               (define " S_mix_color " (make-procedure-with-setter (lambda args #f) (lambda args #f)))");
+               (define " S_cursor_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
+               (define " S_data_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
+               (define " S_enved_envelope " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
+               (define " S_enved_filter " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
+               (define " S_enved_waveform_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
+               (define " S_filter_control_waveform_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
+               (define " S_graph_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
+               (define " S_graph_cursor " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
+               (define " S_highlight_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
+               (define " S_listener_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
+               (define " S_listener_text_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
+               (define " S_mark_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
+               (define " S_position_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
+               (define " S_pushed_button_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
+               (define " S_sash_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
+               (define " S_selected_data_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
+               (define " S_selected_graph_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
+               (define " S_selection_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
+               (define " S_text_focus_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
+               (define " S_x_axis_label " (make-procedure-with-setter (lambda args \"\") (lambda args \"\")))\
+               (define " S_y_axis_label " (make-procedure-with-setter (lambda args \"\") (lambda args \"\")))\
+               (define " S_zoom_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))\
+               (define (" S_axis_info " . args) #f)\
+               (define (" S_channel_widgets " . args) #f)\
+               (define (" S_color_p " . args) #f)\
+               (define (" S_color_to_list " .args) #f)\
+               (define (" S_colormap_p " . args) #f)\
+               (define (" S_current_font ") #f)\
+               (define (" S_dialog_widgets ") #f)\
+               (define (" S_graph_data " . args) #f)\
+               (define (" S_in " . args) #f)\
+               (define (" S_main_widgets " . args) #f)\
+               (define (" S_make_color " . args) #f)\
+               (define (" S_make_graph_data " . args) #f)\
+               (define (" S_menu_widgets " . args) #f)\
+               (define (" S_reset_listener_cursor ") #f)\
+               (define (" S_send_mozilla " . args) #f)\
+               (define (" S_sound_widgets " . args) #f)\
+               (define (" S_view_regions_dialog " . args) #f)\
+               (define (" S_widget_text " . args) \"\")\
+               (define (" S_goto_listener_end ") #f)");
 #endif
 #if HAVE_RUBY
-  XEN_EVAL_C_STRING("def view_regions_dialog () false end");
-  XEN_EVAL_C_STRING("def make_color (r g b) false end");
-  XEN_EVAL_C_STRING("def color_p (a) false end");
-  XEN_EVAL_C_STRING("def color_to_list (a) false end");
   XEN_EVAL_C_STRING("def axis_info (s c a) false end");
-  XEN_EVAL_C_STRING("def dialog_widgets () false end");
   XEN_EVAL_C_STRING("def channel_widgets (s c) false end");
-  XEN_EVAL_C_STRING("def sound_widgets (s) false end");
-  XEN_EVAL_C_STRING("def menu_widgets (s) false end");
-  XEN_EVAL_C_STRING("def main_widgets (s) false end");
+  XEN_EVAL_C_STRING("def color? (a) false end");
+  XEN_EVAL_C_STRING("def color_to_list (a) false end");
   XEN_EVAL_C_STRING("def current_font () false end");
-  XEN_EVAL_C_STRING("def reset_listener_cursor () false end");
+  XEN_EVAL_C_STRING("def dialog_widgets () false end");
   XEN_EVAL_C_STRING("def enved_filter () false end");
+  XEN_EVAL_C_STRING("def main_widgets (s) false end");
+  XEN_EVAL_C_STRING("def make_color (r g b) false end");
+  XEN_EVAL_C_STRING("def menu_widgets (s) false end");
+  XEN_EVAL_C_STRING("def reset_listener_cursor () false end");
+  XEN_EVAL_C_STRING("def sound_widgets (s) false end");
+  XEN_EVAL_C_STRING("def view_regions_dialog () false end");
+  XEN_EVAL_C_STRING("def x_axis_label () false end");
+  XEN_EVAL_C_STRING("def y_axis_label () false end");
 
+  XEN_EVAL_C_STRING("def basic_color () false end");
+  XEN_EVAL_C_STRING("def set_basic_color (a) false end");
+  XEN_EVAL_C_STRING("def colormap () false end");
+  XEN_EVAL_C_STRING("def set_colormap (a) false end");
+  XEN_EVAL_C_STRING("def colormap_size () false end");
+  XEN_EVAL_C_STRING("def set_colormap_size (a) false end");
+  XEN_EVAL_C_STRING("def cursor_color () false end");
+  XEN_EVAL_C_STRING("def set_cursor_color (a) false end");
+  XEN_EVAL_C_STRING("def data_color () false end");
+  XEN_EVAL_C_STRING("def set_data_color (a) false end");
+  XEN_EVAL_C_STRING("def enved_envelope () false end");
+  XEN_EVAL_C_STRING("def set_enved_envelope (a) false end");
+  XEN_EVAL_C_STRING("def enved_waveform_color () false end");
+  XEN_EVAL_C_STRING("def set_enved_waveform_color (a) false end");
+  XEN_EVAL_C_STRING("def filter_control_waveform_color () false end");
+  XEN_EVAL_C_STRING("def set_filter_control_waveform_color (a) false end");
+  XEN_EVAL_C_STRING("def graph_color () false end");
+  XEN_EVAL_C_STRING("def set_graph_color (a) false end");
+  XEN_EVAL_C_STRING("def graph_cursor () false end");
+  XEN_EVAL_C_STRING("def set_graph_cursor (a) false end");
+  XEN_EVAL_C_STRING("def highlight_color () false end");
+  XEN_EVAL_C_STRING("def set_highlight_color (a) false end");
+  XEN_EVAL_C_STRING("def listener_color () false end");
+  XEN_EVAL_C_STRING("def set_listener_color (a) false end");
+  XEN_EVAL_C_STRING("def listener_text_color () false end");
+  XEN_EVAL_C_STRING("def set_listener_text_color (a) false end");
+  XEN_EVAL_C_STRING("def mark_color () false end");
+  XEN_EVAL_C_STRING("def set_mark_color (a) false end");
+  XEN_EVAL_C_STRING("def position_color () false end");
+  XEN_EVAL_C_STRING("def set_position_color (a) false end");
+  XEN_EVAL_C_STRING("def pushed_button_color () false end");
+  XEN_EVAL_C_STRING("def set_pushed_button_color (a) false end");
+  XEN_EVAL_C_STRING("def sash_color () false end");
+  XEN_EVAL_C_STRING("def set_sash_color (a) false end");
+  XEN_EVAL_C_STRING("def selected_data_color () false end");
+  XEN_EVAL_C_STRING("def set_selected_data_color (a) false end");
+  XEN_EVAL_C_STRING("def selected_graph_color () false end");
+  XEN_EVAL_C_STRING("def set_selected_graph_color (a) false end");
+  XEN_EVAL_C_STRING("def selection_color () false end");
+  XEN_EVAL_C_STRING("def set_selection_color (a) false end");
+  XEN_EVAL_C_STRING("def text_focus_color () false end");
+  XEN_EVAL_C_STRING("def set_text_focus_color (a) false end");
+  XEN_EVAL_C_STRING("def zoom_color () false end");
+  XEN_EVAL_C_STRING("def set_zoom_color (a) false end");
+  XEN_EVAL_C_STRING("def colormap? (a) false end");
+  XEN_EVAL_C_STRING("def in (a b) false end");
+  XEN_EVAL_C_STRING("def send_mozilla (a) false end");
+  XEN_EVAL_C_STRING("def widget_text (a) false end");
+
+  XEN_EVAL_C_STRING("def make_graph_data (a b c) false end");
+  XEN_EVAL_C_STRING("def graph_data (a b c) false end");
+
+  XEN_EVAL_C_STRING("$drop_hook = false");
+  XEN_EVAL_C_STRING("$listener_click_hook = false");
   XEN_EVAL_C_STRING("$mouse_enter_graph_hook = false");
-  XEN_EVAL_C_STRING("$mouse_leave_graph_hook = false");
   XEN_EVAL_C_STRING("$mouse_enter_label_hook = false");
-  XEN_EVAL_C_STRING("$mouse_leave_label_hook = false");
   XEN_EVAL_C_STRING("$mouse_enter_listener_hook = false");
-  XEN_EVAL_C_STRING("$mouse_leave_listener_hook = false");
   XEN_EVAL_C_STRING("$mouse_enter_text_hook = false");
+  XEN_EVAL_C_STRING("$mouse_leave_graph_hook = false");
+  XEN_EVAL_C_STRING("$mouse_leave_label_hook = false");
+  XEN_EVAL_C_STRING("$mouse_leave_listener_hook = false");
   XEN_EVAL_C_STRING("$mouse_leave_text_hook = false");
   XEN_EVAL_C_STRING("$new_widget_hook = false");
-  XEN_EVAL_C_STRING("$drop_hook = false");
-  XEN_EVAL_C_STRING("$color_hook = false");
   XEN_EVAL_C_STRING("$orientation_hook = false");
-  XEN_EVAL_C_STRING("$listener_click_hook = false");
+  XEN_EVAL_C_STRING("$recorder_file_hook = false");
   XEN_EVAL_C_STRING("$window_property_changed_hook = false");
 
   XEN_EVAL_C_STRING("Copy_context = 0");
   XEN_EVAL_C_STRING("Cursor_context = 3");
+  XEN_EVAL_C_STRING("Lisp_graph = 2");
   XEN_EVAL_C_STRING("Mark_context = 4");
   XEN_EVAL_C_STRING("Selection_context = 2");
+  XEN_EVAL_C_STRING("Time_graph = 0");
+  XEN_EVAL_C_STRING("Transform_graph = 1");
 #endif
+
   set_peaks_font(FALLBACK_FONT);
   set_tiny_font(FALLBACK_FONT);
   set_bold_peaks_font(FALLBACK_FONT);

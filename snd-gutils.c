@@ -761,3 +761,25 @@ void widget_off_t_to_text(GtkWidget *w, off_t val)
   gtk_entry_set_text(GTK_ENTRY(w), str);
   FREE(str);
 }
+
+/* currently unused, known to be obsolete, but it works... */
+void rotate_text(GdkDrawable *wn, GdkGC *gc, PangoFontDescription *font, char *text, int angle, gint x0, gint y0)
+{
+  PangoLayout *layout;
+  PangoContext *context;
+  PangoMatrix matrix = PANGO_MATRIX_INIT;
+  context = gdk_pango_context_get();
+  layout = pango_layout_new(context);
+  pango_matrix_rotate(&matrix, angle);
+  pango_context_set_matrix(context, &matrix);
+  pango_layout_set_font_description(layout, font);
+  pango_layout_set_text(layout, text, -1);
+  gdk_draw_layout(wn, gc, x0, y0, layout);
+  g_object_unref(layout);
+  g_object_unref(context);
+}
+
+void draw_rotated_axis_label(GtkWidget *w, GdkGC *gc, char *text, gint x0, gint y0)
+{
+  rotate_text(w->window, gc, AXIS_LABEL_FONT(ss), text, 90, x0, y0);
+}

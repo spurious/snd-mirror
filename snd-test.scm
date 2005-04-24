@@ -7258,6 +7258,12 @@ EDITS: 5
 	(if (not (string=? (x-axis-label index 0 lisp-graph) "lisp")) (snd-display ";def lisp x-axis-label: ~A" (x-axis-label index 0 lisp-graph)))
 	(set! (x-axis-label index 0 lisp-graph) "no lisp")
 	(if (not (string=? (x-axis-label index 0 lisp-graph) "no lisp")) (snd-display ";lisp x-axis-label: ~A" (x-axis-label index 0 lisp-graph)))
+
+	(set! (y-axis-label index 0 time-graph) "no amp")
+	(if (not (string=? (y-axis-label) "no amp")) (snd-display ";time y-axis-label: ~A" (y-axis-label index 0 time-graph)))
+	(set! (y-axis-label index 0 lisp-graph) "no lamp")
+	(if (not (string=? (y-axis-label index 0 lisp-graph) "no lamp")) (snd-display ";lisp y-axis-label: ~A" (y-axis-label index 0 lisp-graph)))
+
 	(graph-data (make-vct 4))
 	(update-lisp-graph)
 	(graph (vct 0 0 1 1 2 0))
@@ -7284,9 +7290,18 @@ EDITS: 5
 		    (snd-display ";make-graph-data 50: ~A ~A" (vct-ref data 50) (sample 50))))))
 	(set! (x-bounds) (list 0.0 0.1))
 	(update-transform-graph)
-	(if (not (string=? (x-axis-label index 0 transform-graph) "frequency")) (snd-display ";def fft x-axis-label: ~A" (x-axis-label index 0 transform-graph)))
+	(if (not (string=? (x-axis-label index 0 transform-graph) "frequency")) 
+	    (snd-display ";def fft x-axis-label: ~A" (x-axis-label index 0 transform-graph)))
 	(set! (x-axis-label index 0 transform-graph) "fourier")
-	(if (not (string=? (x-axis-label index 0 transform-graph) "fourier")) (snd-display ";fft x-axis-label: ~A" (x-axis-label index 0 transform-graph)))
+	(if (not (string=? (x-axis-label index 0 transform-graph) "fourier")) 
+	    (snd-display ";fft x-axis-label: ~A" (x-axis-label index 0 transform-graph)))
+	(set! (x-axis-label) "hiho")
+
+	(set! (y-axis-label index 0 transform-graph) "spectra")
+	(if (not (string=? (y-axis-label index 0 transform-graph) "spectra")) 
+	    (snd-display ";fft y-axis-label: ~A" (y-axis-label index 0 transform-graph)))
+	(set! (y-axis-label) "hiho")
+
 	(if (and (number? (transform-frames))
 		 (= (transform-frames) 0))
 	    (snd-display ";transform-graph? transform-frames ~A?" (transform-frames)))
@@ -54271,7 +54286,7 @@ EDITS: 2
 		     phase-vocoder-phase-increments phase-vocoder-phases mus-generator?
 
 		     read-sample reset-listener-cursor goto-listener-end sample-reader-home selection-chans selection-srate snd-gcs
-		     snd-warning sine-bank vct-map make-variable-graph channel-data x-axis-label variable-graph? 
+		     snd-warning sine-bank vct-map make-variable-graph channel-data x-axis-label variable-graph? y-axis-label
 		     snd-url snd-urls tempo-control-bounds free-player
 		     quit-button-color help-button-color reset-button-color doit-button-color doit-again-button-color
 
@@ -54825,7 +54840,7 @@ EDITS: 2
 			      spectro-y-scale spectro-z-angle spectro-z-scale squelch-update transform-sample
 			      transform->vct transform-frames transform-type update-transform-graph update-time-graph
 			      update-lisp-graph update-sound wavelet-type time-graph? time-graph-type wavo-hop wavo-trace x-bounds
-			      x-position-slider x-zoom-slider x-axis-label y-bounds y-position-slider y-zoom-slider zero-pad))
+			      x-position-slider x-zoom-slider x-axis-label y-axis-label y-bounds y-position-slider y-zoom-slider zero-pad))
 	      (gc)(gc))
 	    
 	    (let ((ctr 0))
@@ -54852,7 +54867,7 @@ EDITS: 2
 			      spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle spectro-z-scale squelch-update  grid-density
 			      transform-sample transform->vct transform-frames transform-type
 			      update-transform-graph update-time-graph update-lisp-graph wavelet-type time-graph? time-graph-type
-			      wavo-hop wavo-trace x-bounds x-position-slider x-zoom-slider x-axis-label y-bounds y-position-slider
+			      wavo-hop wavo-trace x-bounds x-position-slider x-zoom-slider x-axis-label y-axis-label y-bounds y-position-slider
 			      y-zoom-slider zero-pad)))
 	    
 	    (let ((ctr 0))
@@ -54880,7 +54895,8 @@ EDITS: 2
 			      src-sound transform-sample transform->vct
 			      transform-frames transform-type undo update-transform-graph update-time-graph update-lisp-graph
 			      update-sound wavelet-type time-graph? time-graph-type wavo-hop wavo-trace x-bounds x-position-slider normalize-channel
-			      x->position x-zoom-slider y-bounds y-position-slider x-axis-label y->position y-zoom-slider zero-pad scale-channel)))
+			      x->position x-zoom-slider y-bounds y-position-slider x-axis-label y-axis-label y->position y-zoom-slider 
+			      zero-pad scale-channel)))
 	    
 	    (let ((ctr 0))
 	      (for-each (lambda (n)

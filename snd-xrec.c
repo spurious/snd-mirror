@@ -133,144 +133,6 @@ void recorder_error(char *msg)
     record_report(messages, msg, NULL);
 }
 
-static GC draw_gc, vu_gc;
-
-/* -------------------------------- ROTATE TEXT -------------------------------- */
-/* rotate and scale text */
-
-static Pixmap transform_text (Widget w, char *str, XFontStruct *font, Float angle_in_degrees, 
-		       Float xscl, Float yscl, int *nw, int *nh, Pixel bg, Pixel fg)
-{
-  /* scale str in font font by xscl and yscl, then rotate clockwise by angle_in_degrees degrees */
-  /* (i.e. 45 points text south-east), new bounding box (text centered in it) returned in nw and nh */
-  /* returned pixmap must be freed (if at all) by the caller */
-  /* bg = background color, fg = foreground (text) color) */
-  Float matrix[4];
-  Float angle_in_radians;
-  XImage *before, *after;
-  Pixmap pix, rotpix;
-  unsigned int width, height, depth, nwidth, nheight, x, y, nx, ny, tx, ty, depth_bytes;
-  int inx, iny;
-  char *data;
-  unsigned long px;
-  Display *dp;
-  Drawable wn;
-  Visual *vis;
-  int scr;
-  int bx0, bx1, by0, by1, b;
-  int i, j;
-  if (str == NULL) return(0);
-  /* set up transformation matrix */
-  angle_in_radians = mus_degrees_to_radians(angle_in_degrees);
-  matrix[0] = cos(angle_in_radians) * xscl;
-  matrix[1] = sin(angle_in_radians) * xscl;
-  matrix[2] = -sin(angle_in_radians) * yscl;
-  matrix[3] = cos(angle_in_radians) * yscl;
-  
-  /* get the usual X info */
-  dp = XtDisplay(w);
-  wn = XtWindow(w);
-  scr = DefaultScreen(dp);
-  vis = DefaultVisual(dp, scr);
-
-  XtVaGetValues(w, XmNdepth, &depth, NULL);
-  depth_bytes = (depth >> 3);
-  if (depth_bytes == 0) depth_bytes = 1; /* unsigned so can't be negative */
-
-  /* find extent of original text, expand out to byte boundaries */
-  XSetFont(dp, draw_gc, font->fid);
-  width = XTextWidth(font, str, strlen(str));
-  height = (font->ascent + font->descent);
-  if (width % 8) width = 8 * (1 + (int)(width / 8));
-  if (height % 8) height = 8 * (1 + (int)(height / 8));
-
-  /* get bounding box of transformed text */
-  bx0 = 0; bx1 = 0; by0 = 0; by1 = 0;
-  b = (int)(width * matrix[0]);
-  if (b < 0) bx0 = b; else bx1 = b;
-  b = (int)(height * matrix[2]);
-  if (b < 0) bx0 += b; else bx1 += b;
-  b = (int)(width * matrix[1]);
-  if (b < 0) by0 = b; else by1 = b;
-  b = (int)(height * matrix[3]);
-  if (b < 0) by0 += b; else by1 += b;
-  
-  /* set translation vector so we're centered in the resultant pixmap */
-  if (bx0 < 0) tx = -bx0; else tx = 0;
-  if (by0 < 0) ty = -by0; else ty = 0;
-  nx = bx1 - bx0;
-  ny = by1 - by0;
-
-  /* expand result bounds to byte boundaries */
-  if (nx % 8) nwidth = 8 * (1 + (int)(nx / 8)); else nwidth = nx;
-  if (ny % 8) nheight = 8 * (1 + (int)(ny / 8)); else nheight = ny;
-  (*nw) = nwidth;
-  (*nh) = nheight;
-
-  XSetBackground(dp, draw_gc, bg); 
-  XSetForeground(dp, draw_gc, bg); 
-
-  /* create pixmaps, fill with background color, write string to pix */
-  pix = XCreatePixmap(dp, wn, width, height, depth);
-  rotpix= XCreatePixmap(dp, wn, nwidth, nheight, depth);
-  XFillRectangle(dp, pix, draw_gc, 0, 0, width, height);
-  XFillRectangle(dp, rotpix, draw_gc, 0, 0, nwidth, nheight);
-#ifdef SUN
-  XSync(dp, 0);
-  /* needed to get the numbers drawn at all */
-#endif
-  XSetForeground(dp, draw_gc, fg);
-  XDrawImageString(dp, pix, draw_gc, 0, height, str, strlen(str));
-
-  /* dump pixmap bits into an "image", image data will be freed automatically later */
-  data = (char *)calloc((width + 1) * (height + 1) * depth_bytes, sizeof(char)); /* not CALLOC since X will free this */
-  before = XCreateImage(dp, vis, depth, XYPixmap, 0, data, width, height, 8, 0);
-  XGetSubImage(dp, pix, 0, 0, width, height, AllPlanes, XYPixmap, before, 0, 0);
-  data = (char *)calloc((nwidth + 1) * (nheight + 1) * depth_bytes, sizeof(char));
-  after = XCreateImage(dp, vis, depth, XYPixmap, 0, data, nwidth, nheight, 8, 0);
-
-  /* clear background of result image */
-  for (x = 0; x < nwidth; x++) 
-    for (y = 0; y < nheight; y++) 
-      XPutPixel(after, x, y, bg);
-
-  /* write transformed pixels to result image */
-  for (x = 0; x < width; x++)
-    for (y = 0; y < height; y++)
-      {
-	px = XGetPixel(before, x, y);
-	if (px != bg)
-	  {
-	    bx0 = (int)xscl; 
-	    if (bx0 == 0) bx0 = 1;  /* draw full lines if possible (i.e. fill in scaled gaps) */
-	    by0 = (int)yscl; 
-	    if (by0 == 0) by0 = 1;
-	    for (i = 0; i < bx0; i++)
-	      for (j = 0; j < by0; j++)
-		{
-		  inx = tx + snd_round((x + (Float)i / xscl) * matrix[0] + 
-				   (y + (Float)j / yscl) * matrix[2]);  
-		  if (inx < 0) inx = 0; 
-		  if (inx >= (int)nwidth) inx = nwidth - 1;
-		  iny = ty + snd_round((x + (Float)i / xscl) * matrix[1] + 
-				   (y + (Float)j / yscl) * matrix[3]); 
-		  if (iny < 0) iny = 0; 
-		  if (iny >= (int)nheight) iny = nheight - 1;
-		  XPutPixel(after, inx, iny, px);
-		}
-	  }
-      }
-
-  /* dump image into result pixmap (needed for later display) */
-  XPutImage(dp, rotpix, draw_gc, after, 0, 0, 0, 0, nwidth, nheight);
-
-  /* cleanup */
-  XDestroyImage(before);  /* frees data as well, or so claims the documentation */
-  XDestroyImage(after);
-  XFreePixmap(dp, pix);
-  return(rotpix);
-}
-
 /* -------------------------------- ICONS -------------------------------- */
 
 static unsigned char speaker_bits[] = {
@@ -313,6 +175,7 @@ static Pixmap speaker_icon, line_in_icon, mic_icon, aes_icon, adat_icon, digital
 
 
 static bool pixmaps_allocated = false;
+static GC draw_gc, vu_gc;
 
 static void make_record_icons(Widget w)
 {
@@ -524,21 +387,21 @@ static void allocate_meter_1(vu_label *vu)
     }
   /* need two versions of these, one with white bg and black fg for "off" state, then... */
   j = 0;
-  numbers[j] = transform_text(recorder, "0.0", vu->label_font, -40.0, 1.0, 1.0, &wids[j], &hgts[j], yellows[9], red); j++;
-  numbers[j] = transform_text(recorder, "0.25", vu->label_font, -25.0, 1.0, 1.0, &wids[j], &hgts[j], yellows[7], red); j++;
-  numbers[j] = transform_text(recorder, "0.5", vu->label_font, 0.0, 1.0, 1.0, &wids[j], &hgts[j], yellows[7], red); j++;
-  numbers[j] = transform_text(recorder, "0.75", vu->label_font, 23.0, 1.0, 1.0, &wids[j], &hgts[j], yellows[7], red); j++;
-  numbers[j] = transform_text(recorder, "1.0", vu->label_font, 40.0, 1.0, 1.0, &wids[j], &hgts[j], yellows[9], red); j++;
-  numbers[j] = transform_text(recorder, "0.0", vu->label_font, -40.0, 1.0, 1.0, &wids[j], &hgts[j], white, black); j++;
-  numbers[j] = transform_text(recorder, "0.25", vu->label_font, -25.0, 1.0, 1.0, &wids[j], &hgts[j], white, black); j++;
-  numbers[j] = transform_text(recorder, "0.5", vu->label_font, 0.0, 1.0, 1.0, &wids[j], &hgts[j], white, black); j++;
-  numbers[j] = transform_text(recorder, "0.75", vu->label_font, 23.0, 1.0, 1.0, &wids[j], &hgts[j], white, black); j++;
-  numbers[j] = transform_text(recorder, "1.0", vu->label_font, 40.0, 1.0, 1.0, &wids[j], &hgts[j], white, black); j++;
-  numbers[j] = transform_text(recorder, "0.0", vu->label_font, -40.0, 1.0, 1.0, &wids[j], &hgts[j], reds[9], black); j++;
-  numbers[j] = transform_text(recorder, "0.25", vu->label_font, -25.0, 1.0, 1.0, &wids[j], &hgts[j], reds[7], black); j++;
-  numbers[j] = transform_text(recorder, "0.5", vu->label_font, 0.0, 1.0, 1.0, &wids[j], &hgts[j], reds[7], black); j++;
-  numbers[j] = transform_text(recorder, "0.75", vu->label_font, 23.0, 1.0, 1.0, &wids[j], &hgts[j], reds[7], black); j++;
-  numbers[j] = transform_text(recorder, "1.0", vu->label_font, 40.0, 1.0, 1.0, &wids[j], &hgts[j], reds[9], black); j++;
+  numbers[j] = rotate_text(recorder, "0.0", vu->label_font, -40.0, &wids[j], &hgts[j], yellows[9], red, draw_gc); j++;
+  numbers[j] = rotate_text(recorder, "0.25", vu->label_font, -25.0, &wids[j], &hgts[j], yellows[7], red, draw_gc); j++;
+  numbers[j] = rotate_text(recorder, "0.5", vu->label_font, 0.0, &wids[j], &hgts[j], yellows[7], red, draw_gc); j++;
+  numbers[j] = rotate_text(recorder, "0.75", vu->label_font, 23.0, &wids[j], &hgts[j], yellows[7], red, draw_gc); j++;
+  numbers[j] = rotate_text(recorder, "1.0", vu->label_font, 40.0, &wids[j], &hgts[j], yellows[9], red, draw_gc); j++;
+  numbers[j] = rotate_text(recorder, "0.0", vu->label_font, -40.0, &wids[j], &hgts[j], white, black, draw_gc); j++;
+  numbers[j] = rotate_text(recorder, "0.25", vu->label_font, -25.0, &wids[j], &hgts[j], white, black, draw_gc); j++;
+  numbers[j] = rotate_text(recorder, "0.5", vu->label_font, 0.0, &wids[j], &hgts[j], white, black, draw_gc); j++;
+  numbers[j] = rotate_text(recorder, "0.75", vu->label_font, 23.0, &wids[j], &hgts[j], white, black, draw_gc); j++;
+  numbers[j] = rotate_text(recorder, "1.0", vu->label_font, 40.0, &wids[j], &hgts[j], white, black, draw_gc); j++;
+  numbers[j] = rotate_text(recorder, "0.0", vu->label_font, -40.0, &wids[j], &hgts[j], reds[9], black, draw_gc); j++;
+  numbers[j] = rotate_text(recorder, "0.25", vu->label_font, -25.0, &wids[j], &hgts[j], reds[7], black, draw_gc); j++;
+  numbers[j] = rotate_text(recorder, "0.5", vu->label_font, 0.0, &wids[j], &hgts[j], reds[7], black, draw_gc); j++;
+  numbers[j] = rotate_text(recorder, "0.75", vu->label_font, 23.0, &wids[j], &hgts[j], reds[7], black, draw_gc); j++;
+  numbers[j] = rotate_text(recorder, "1.0", vu->label_font, 40.0, &wids[j], &hgts[j], reds[9], black, draw_gc); j++;
       
   for (k = 0; k < 2; k++) 
     {

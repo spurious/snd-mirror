@@ -398,6 +398,7 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+25-Apr:  y-axis-label.\n\
 20-Apr:  draw.rb, poly.rb, musglyphs.rb thanks to Mike Scholz.\n\
          zip.scm (zipper) changed (takes env args now, not thunks, uses def-clm-struct, etc).\n\
          changed mus-error-to-string to mus-error-type->string.\n\

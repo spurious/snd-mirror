@@ -2796,12 +2796,12 @@ def test104
     "no ycoeff method",
     "no xcoeffs method",
     "no ycoeffs method"].each_with_index do |err, i|
-    if (res = mus_error_to_string(i)) != err
-      snd_display("mus_error_to_string %d: %s %s?", i, err, res)
+    if (res = mus_error_type2string(i)) != err
+      snd_display("mus_error_type2string %d: %s %s?", i, err, res)
     end
   end
   new_id = mus_make_error("hiho all messed up")
-  if (res = mus_error_to_string(new_id)) != "hiho all messed up"
+  if (res = mus_error_type2string(new_id)) != "hiho all messed up"
     snd_display("mus_make_error %d: %s?", new_id, res)
   end
   oboe_snd = "oboe.snd"

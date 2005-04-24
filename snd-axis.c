@@ -137,6 +137,11 @@ axis_info *free_axis_info(axis_info *ap)
       FREE(ap->xlabel); 
       ap->xlabel = NULL;
     }
+  if (ap->ylabel) 
+    {
+      FREE(ap->ylabel); 
+      ap->ylabel = NULL;
+    }
   FREE(ap);
   return(NULL);
 }
@@ -715,7 +720,20 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 	}
       else
 #endif
-      fill_rectangle(ax, ap->y_axis_x0, ap->y_axis_y1, axis_thickness, (unsigned int)(ap->y_axis_y0 - ap->y_axis_y1));
+	{
+#if (!USE_NO_GUI)
+	  if ((ap->ylabel) && (include_y_tick_labels))
+	    {
+	      int y_label_width = 0;
+	      y_label_width = label_width(ap->ylabel);
+	      if ((ap->y_axis_y0 - ap->y_axis_y1) > (y_label_width + 20))
+		draw_rotated_axis_label(channel_graph(ap->cp), ax->gc, ap->ylabel, 
+					ap->y_axis_x0 - tdy->maj_tick_len - tdy->min_label_width - inner_border_width,
+					(int)((ap->y_axis_y0 + ap->y_axis_y1 - y_label_width) * 0.5));
+	    }
+#endif
+	  fill_rectangle(ax, ap->y_axis_x0, ap->y_axis_y1, axis_thickness, (unsigned int)(ap->y_axis_y0 - ap->y_axis_y1));
+	}
     }
 
   if (printing) 
@@ -1187,7 +1205,7 @@ static XEN g_grf_x(XEN val, XEN snd, XEN chn, XEN ap)
   #define H_x_to_position "(" S_x_to_position " val (snd #f) (chn #f) (ax #f)): x pixel loc of val"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_1, S_x_to_position, "a number");
   ASSERT_CHANNEL(S_x_to_position, snd, chn, 2);
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ap), ap, XEN_ARG_4, S_x_to_position, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ap), ap, XEN_ARG_4, S_x_to_position, S_time_graph ", " S_transform_graph ", or " S_lisp_graph);
   return(C_TO_XEN_INT(grf_x(XEN_TO_C_DOUBLE(val),
 			    TO_C_AXIS_INFO(snd, chn, ap, S_x_to_position))));
 }
@@ -1197,7 +1215,7 @@ static XEN g_grf_y(XEN val, XEN snd, XEN chn, XEN ap)
 #define H_y_to_position "(" S_y_to_position " val (snd #f) (chn #f) (ax #f)): y pixel loc of val"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_1, S_y_to_position, "a number");
   ASSERT_CHANNEL(S_y_to_position, snd, chn, 2);
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ap), ap, XEN_ARG_4, S_y_to_position, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ap), ap, XEN_ARG_4, S_y_to_position, S_time_graph ", " S_transform_graph ", or " S_lisp_graph);
   return(C_TO_XEN_INT(grf_y(XEN_TO_C_DOUBLE(val),
 			    TO_C_AXIS_INFO(snd, chn, ap, S_y_to_position))));
 }
@@ -1207,7 +1225,7 @@ static XEN g_ungrf_x(XEN val, XEN snd, XEN chn, XEN ap)
   #define H_position_to_x "(" S_position_to_x " val (snd #f) (chn #f) (ax #f)): x axis value corresponding to pixel val"
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ARG_1, S_position_to_x, "an integer");
   ASSERT_CHANNEL(S_position_to_x, snd, chn, 2);
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ap), ap, XEN_ARG_4, S_position_to_x, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ap), ap, XEN_ARG_4, S_position_to_x, S_time_graph ", " S_transform_graph ", or " S_lisp_graph);
   return(C_TO_XEN_DOUBLE(ungrf_x(TO_C_AXIS_INFO(snd, chn, ap, S_position_to_x),
 				 XEN_TO_C_INT(val))));
 }
@@ -1217,7 +1235,7 @@ static XEN g_ungrf_y(XEN val, XEN snd, XEN chn, XEN ap)
   #define H_position_to_y "(" S_position_to_y " val (snd #f) (chn #f) (ax #f)): y axis value corresponding to pixel val"
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ARG_1, S_position_to_y, "an integer");
   ASSERT_CHANNEL(S_position_to_y, snd, chn, 2);
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ap), ap, XEN_ARG_4, S_position_to_y, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ap), ap, XEN_ARG_4, S_position_to_y, S_time_graph ", " S_transform_graph ", or " S_lisp_graph);
   return(C_TO_XEN_DOUBLE(ungrf_y(TO_C_AXIS_INFO(snd, chn, ap, S_position_to_y),
 				 XEN_TO_C_INT(val))));
 }
@@ -1228,7 +1246,7 @@ static XEN g_axis_info(XEN snd, XEN chn, XEN ap_id)
 x0 y0 x1 y1 xmin ymin xmax ymax pix_x0 pix_y0 pix_x1 pix_y1 y_offset xscale yscale label new-peaks)"
   axis_info *ap;
   ASSERT_CHANNEL(S_axis_info, snd, chn, 1);
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ap_id), ap_id, XEN_ARG_3, S_axis_info, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ap_id), ap_id, XEN_ARG_3, S_axis_info, S_time_graph ", " S_transform_graph ", or " S_lisp_graph);
   ap = TO_C_AXIS_INFO(snd, chn, ap_id, S_axis_info);
   if (ap == NULL) return(XEN_EMPTY_LIST);
   return(XEN_CONS(C_TO_XEN_OFF_T(ap->losamp),
@@ -1266,7 +1284,6 @@ x0 y0 x1 y1 xmin ymin xmax ymax pix_x0 pix_y0 pix_x1 pix_y1 y_offset xscale ysca
 #define AXIS_STYLE_OK(Id) (((Id) >= X_AXIS_IN_SECONDS) && ((Id) <= X_AXIS_IN_BEATS))
 #define SHOW_AXES_OK(Id) (((Id) >= SHOW_NO_AXES) && ((Id) <= SHOW_X_AXIS_UNLABELLED))
 
-#if (!USE_NO_GUI)
 static XEN g_draw_axes(XEN args)
 {
   #define H_draw_axes "(" S_draw_axes " wid gc label (x0 0.0) (x1 1.0) (y0 -1.0) (y1 1.0) (style " S_x_axis_in_seconds ") (axes " S_show_all_axes ")): \
@@ -1390,7 +1407,7 @@ static XEN g_x_axis_label(XEN snd, XEN chn, XEN ax)
   #define H_x_axis_label "(" S_x_axis_label " (snd #f) (chn #f) (ax #f)): current x axis label"
   axis_info *ap;
   ASSERT_CHANNEL(S_x_axis_label, snd, chn, 1);
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax), ax, XEN_ARG_3, S_x_axis_label, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax), ax, XEN_ARG_3, S_x_axis_label, S_time_graph ", " S_transform_graph ", or " S_lisp_graph);
   ap = TO_C_AXIS_INFO(snd, chn, ax, S_x_axis_label);
   return(C_TO_XEN_STRING(ap->xlabel));
 }
@@ -1400,11 +1417,11 @@ static XEN g_set_x_axis_label(XEN label, XEN snd, XEN chn, XEN ax)
   axis_info *ap;
   ASSERT_CHANNEL(S_setB S_x_axis_label, snd, chn, 2);
   XEN_ASSERT_TYPE(XEN_STRING_P(label), label, XEN_ARG_1, S_setB S_x_axis_label, "a string");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax), ax, XEN_ARG_4, S_setB S_x_axis_label, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax), ax, XEN_ARG_4, S_setB S_x_axis_label, S_time_graph ", " S_transform_graph ", or " S_lisp_graph);
   ap = TO_C_AXIS_INFO(snd, chn, ax, S_x_axis_label);
   if (ap->xlabel) FREE(ap->xlabel);
   ap->xlabel = copy_string(XEN_TO_C_STRING(label));
-  if ((XEN_TO_C_INT(ax)) == (int)TRANSFORM_AXIS_INFO)
+  if ((XEN_INTEGER_P(ax)) && (XEN_TO_C_INT(ax) == (int)TRANSFORM_AXIS_INFO))
     set_fft_info_xlabel(ap->cp, ap->xlabel);
   update_graph(ap->cp);
   return(label);
@@ -1428,11 +1445,55 @@ static XEN g_set_x_axis_label_reversed(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
     }
 }
 #endif
-/* have guile for reversed args */
 
+/* TODO: doesn't x-axis-label get clobbered? */
+/*       menu x-axis-style resets it to its default state [snd-menu] */
+/*       (set! (frames) 0) resets it to "no data", then "time" is the default if undo [snd-edits] */
+/* TODO: rotate-text for numbers in snd-grec vu meter labels */
+/* TODO: how to implement this in OpenGL? */
+/* TODO: why does descender get truncated in Motif? */
+
+static XEN g_y_axis_label(XEN snd, XEN chn, XEN ax)
+{
+  #define H_y_axis_label "(" S_y_axis_label " (snd #f) (chn #f) (ax #f)): current y axis label"
+  axis_info *ap;
+  ASSERT_CHANNEL(S_y_axis_label, snd, chn, 1);
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax), ax, XEN_ARG_3, S_y_axis_label, S_time_graph ", " S_transform_graph ", or " S_lisp_graph);
+  ap = TO_C_AXIS_INFO(snd, chn, ax, S_y_axis_label);
+  return(C_TO_XEN_STRING(ap->ylabel));
+}
+
+static XEN g_set_y_axis_label(XEN label, XEN snd, XEN chn, XEN ax)
+{
+  axis_info *ap;
+  ASSERT_CHANNEL(S_setB S_y_axis_label, snd, chn, 2);
+  XEN_ASSERT_TYPE(XEN_STRING_P(label), label, XEN_ARG_1, S_setB S_y_axis_label, "a string");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax), ax, XEN_ARG_4, S_setB S_y_axis_label, S_time_graph ", " S_transform_graph ", or " S_lisp_graph);
+  ap = TO_C_AXIS_INFO(snd, chn, ax, S_y_axis_label);
+  if (ap->ylabel) FREE(ap->ylabel);
+  ap->ylabel = copy_string(XEN_TO_C_STRING(label));
+  update_graph(ap->cp);
+  return(label);
+}
+
+#if HAVE_GUILE
+static XEN g_set_y_axis_label_reversed(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+{
+  if (XEN_NOT_BOUND_P(arg2))
+    return(g_set_y_axis_label(arg1, XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED));
+  else
+    {
+      if (XEN_NOT_BOUND_P(arg3))
+	return(g_set_y_axis_label(arg2, arg1, XEN_UNDEFINED, XEN_UNDEFINED));
+      else
+	{
+	  if (XEN_NOT_BOUND_P(arg4))
+	    return(g_set_y_axis_label(arg3, arg1, arg2, XEN_UNDEFINED));
+	  else return(g_set_y_axis_label(arg4, arg1, arg2, arg3));
+	}
+    }
+}
 #endif
-/* not use no gui */
-
 
 #ifdef XEN_ARGIFY_1
 XEN_ARGIFY_4(g_grf_x_w, g_grf_x)
@@ -1445,6 +1506,8 @@ XEN_VARGIFY(g_draw_axes_w, g_draw_axes)
 #endif
 XEN_ARGIFY_3(g_x_axis_label_w, g_x_axis_label)
 XEN_ARGIFY_4(g_set_x_axis_label_w, g_set_x_axis_label)
+XEN_ARGIFY_3(g_y_axis_label_w, g_y_axis_label)
+XEN_ARGIFY_4(g_set_y_axis_label_w, g_set_y_axis_label)
 #else
 #define g_grf_x_w g_grf_x
 #define g_grf_y_w g_grf_y
@@ -1454,6 +1517,8 @@ XEN_ARGIFY_4(g_set_x_axis_label_w, g_set_x_axis_label)
 #define g_draw_axes_w g_draw_axes
 #define g_x_axis_label_w g_x_axis_label
 #define g_set_x_axis_label_w g_set_x_axis_label
+#define g_y_axis_label_w g_y_axis_label
+#define g_set_y_axis_label_w g_set_y_axis_label
 
 #endif
 
@@ -1467,14 +1532,17 @@ void g_init_axis(void)
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_x_axis_label, g_x_axis_label_w, H_x_axis_label,
 					    S_setB S_x_axis_label, g_set_x_axis_label_w, g_set_x_axis_label_reversed, 0, 3, 1, 3);
 
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_y_axis_label, g_y_axis_label_w, H_y_axis_label,
+					    S_setB S_y_axis_label, g_set_y_axis_label_w, g_set_y_axis_label_reversed, 0, 3, 1, 3);
+
   XEN_DEFINE_CONSTANT(S_time_graph,      TIME_AXIS_INFO,      "time domain graph axis info");
   XEN_DEFINE_CONSTANT(S_transform_graph, TRANSFORM_AXIS_INFO, "frequency domain graph axis info");
   XEN_DEFINE_CONSTANT(S_lisp_graph,      LISP_AXIS_INFO,      "lisp graph axis info");
 
   XEN_DEFINE_PROCEDURE(S_axis_info,  g_axis_info_w, 0, 3, 0, H_axis_info);
 
-#if (!USE_NO_GUI)
   XEN_DEFINE_PROCEDURE(S_draw_axes,  g_draw_axes_w, 0, 0, 1,   H_draw_axes);
-#endif
 }
 #endif
+/* end no gui (covers entire xen section) */
+
