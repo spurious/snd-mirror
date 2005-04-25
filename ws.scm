@@ -375,7 +375,6 @@ returning you to the true top-level."
 
 ;;; -------- def-clm-struct --------
 
-;;; TODO: if :type as 2nd, some sort of warning
 ;;; PERHAPS: if all float, use vct for data, rather than list
 
 (defmacro* def-clm-struct (name #:rest fields)
@@ -387,6 +386,8 @@ returning you to the true top-level."
 			     (symbol->string (if (list? n) (car n) n)))
 			   fields))
 	 (field-types (map (lambda (n)
+			     (if (and (list? n) (cadr n) (eq? (cadr n) :type)) 
+				 (snd-error (format #f ":type indication for def-clm-struct (~A) field (~A) should be after the default value" name n)))
 			     (if (and (list? n)
 				      (= (length n) 4)
 				      (eq? (list-ref n 2) :type))

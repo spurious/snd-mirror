@@ -583,8 +583,8 @@ Pixmap rotate_text (Widget w, char *str, XFontStruct *font, Float angle_in_degre
 
   /* find extent of original text, expand out to byte boundaries */
   XSetFont(dp, d_gc, font->fid);
-  width = XTextWidth(font, str, strlen(str));
-  height = (font->ascent + font->descent);
+  width = XTextWidth(font, str, strlen(str)) + 8;
+  height = (font->ascent + font->descent) + 8;
   if (width % 8) width = 8 * (1 + (int)(width / 8));
   if (height % 8) height = 8 * (1 + (int)(height / 8));
 
@@ -623,7 +623,7 @@ Pixmap rotate_text (Widget w, char *str, XFontStruct *font, Float angle_in_degre
   /* needed to get the numbers drawn at all */
 #endif
   XSetForeground(dp, d_gc, fg);
-  XDrawImageString(dp, pix, d_gc, 0, height, str, strlen(str));
+  XDrawImageString(dp, pix, d_gc, 4, height - 4, str, strlen(str));
 
   /* dump pixmap bits into an image; image data will be freed automatically later */
   data = (char *)calloc((width + 1) * (height + 1) * depth_bytes, sizeof(char)); /* not CALLOC since X will free this */
@@ -644,8 +644,8 @@ Pixmap rotate_text (Widget w, char *str, XFontStruct *font, Float angle_in_degre
 	px = XGetPixel(before, x, y);
 	if (px != bg)
 	  XPutPixel(after, 
-		    mus_iclamp(0, (int)(tx + x * matrix[0] + y * matrix[2]), nwidth - 1),
-		    mus_iclamp(0, (int)(ty + x * matrix[1] + y * matrix[3]), nheight - 1),
+		    mus_iclamp(0, (int)snd_round(tx + x * matrix[0] + y * matrix[2]), nwidth - 1),
+		    mus_iclamp(0, (int)snd_round(ty + x * matrix[1] + y * matrix[3]), nheight - 1),
 		    px);
       }
 
@@ -658,8 +658,6 @@ Pixmap rotate_text (Widget w, char *str, XFontStruct *font, Float angle_in_degre
   XFreePixmap(dp, pix);
   return(rotpix);
 }
-
-/* TODO: rotated axis label is losing the descenders? */
 
 void draw_rotated_axis_label(Widget widget, GC gc, char *text, int x0, int y0)
 {

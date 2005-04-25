@@ -1451,7 +1451,6 @@ static XEN g_set_x_axis_label_reversed(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 /*       (set! (frames) 0) resets it to "no data", then "time" is the default if undo [snd-edits] */
 /* TODO: rotate-text for numbers in snd-grec vu meter labels */
 /* TODO: how to implement this in OpenGL? */
-/* TODO: why does descender get truncated in Motif? */
 
 static XEN g_y_axis_label(XEN snd, XEN chn, XEN ax)
 {

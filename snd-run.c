@@ -104,6 +104,7 @@
  *        samples -> init_sample_reader then fill data with read_sample snd-edit 8441
  *        set sample(s) uses change_samples.
  * TODO: is clm-struct ref handled solely as list-ref? (vct if all float?)
+ * TODO: if xen val protected in inner lambda, is it released at end?
  */
 
 #include "snd.h"
@@ -9592,10 +9593,7 @@ static XEN xen_value_to_xen(ptree *pt, xen_value *v)
       break;
     }
   if (XEN_BOUND_P(val))
-    {
-      add_loc_to_protected_list(pt, snd_protect(val));
-      return(val);
-    }
+    return(val);
   return(XEN_FALSE);
 }
 
