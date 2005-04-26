@@ -398,6 +398,7 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+26-Apr:  snd 7.12.\n\
 25-Apr:  y-axis-label.\n\
 20-Apr:  draw.rb, poly.rb, musglyphs.rb thanks to Mike Scholz.\n\
          zip.scm (zipper) changed (takes env args now, not thunks, uses def-clm-struct, etc).\n\
@@ -415,7 +416,6 @@ void about_snd_help(void)
            solve simultaneous linear equations, etc) as applied to mixers/frames.\n\
          invert-filter in dsp.scm.\n\
 23-Mar:  changed interpretation of frame->frame args.\n\
-18-Mar:  snd 7.11\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",

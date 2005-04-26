@@ -1,5 +1,6 @@
 Snd change log
 
+  26-Apr:    snd 7.12.
   25-Apr:    y-axis-label.
   20-Apr:    draw.rb, poly.rb, musglyphs.rb thanks to Mike Scholz.
              zip.scm (zipper) changed (takes env args now, not thunks, uses def-clm-struct, etc).

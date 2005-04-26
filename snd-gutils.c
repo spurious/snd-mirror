@@ -762,9 +762,9 @@ void widget_off_t_to_text(GtkWidget *w, off_t val)
   FREE(str);
 }
 
-/* currently unused, known to be obsolete, but it works... */
 void rotate_text(GdkDrawable *wn, GdkGC *gc, PangoFontDescription *font, char *text, int angle, gint x0, gint y0)
 {
+#if HAVE_PANGO_MATRIX_ROTATE
   PangoLayout *layout;
   PangoContext *context;
   PangoMatrix matrix = PANGO_MATRIX_INIT;
@@ -777,6 +777,7 @@ void rotate_text(GdkDrawable *wn, GdkGC *gc, PangoFontDescription *font, char *t
   gdk_draw_layout(wn, gc, x0, y0, layout);
   g_object_unref(layout);
   g_object_unref(context);
+#endif
 }
 
 void draw_rotated_axis_label(GtkWidget *w, GdkGC *gc, char *text, gint x0, gint y0)
