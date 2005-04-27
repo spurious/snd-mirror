@@ -2236,6 +2236,22 @@ is the same as <code>(<a class=quiet href="#vctfill">vct-fill!</a> v 3.0)</code>
 <tr><td></td><td>return a new vct (or <i>nv</i> if given) with the elements of <i>v</i> between <i>start</i> and <i>end</i> inclusive.  <i>end</i> defaults
 to the end of <i>v</i>.</td></tr>
 
+<!-- vct+ -->
+<tr><td colspan=2><code><a class=def name="vctplus">vct+</a> (obj1 obj2)</code></td></tr>
+<tr><td></td><td>
+combines <a class=quiet href="#vctadd">vct-add!</a> and <a class=quiet href="#vctoffset">vct-offset!</a>, depending on the type of its arguments.
+<code>(vct+ v 1.0)</code> or <code>(vct+ 1.0 v)</code> is the same as 
+<code>(vct-offset! v 1.0)</code>, and <code>(vct+ v1 v2)</code> is the same as <code>(vct-add! v1 v2)</code>.
+</td></tr>
+
+<!-- vct* -->
+<tr><td colspan=2><code><a class=def name="vcttimes">vct*</a> (obj1 obj2)</code></td></tr>
+<tr><td></td><td>
+combines <a class=quiet href="#vctmultiply">vct-multiply!</a> and <a class=quiet href="#vctscale">vct-scale!</a>, depending on the type of its arguments.
+<code>(vct* v 2.0)</code> or <code>(vct* 2.0 v)</code> is the same as <code>(vct-scale! v 2.0)</code>, and 
+<code>(vct* v1 v2)</code> is the same as <code>(vct-multiply! v1 v2)</code>.
+</td></tr>
+
 <!-- vct->channel -->
 <tr><td colspan=2><code><a class=def name="vct_to_channel">vct-&gt;channel</a> (v (beg 0) (dur len) (snd #f) (chn #f) (edpos #f) (origin #f))</code></td></tr>
 <tr><td></td><td>

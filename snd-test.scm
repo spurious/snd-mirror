@@ -1,35 +1,35 @@
 ;;; Snd tests
 ;;;
-;;;  test 0: constants                          [381]
-;;;  test 1: defaults                           [939]
-;;;  test 2: headers                            [1136]
-;;;  test 3: variables                          [1440]
-;;;  test 4: sndlib                             [1831]
-;;;  test 5: simple overall checks              [3631]
-;;;  test 6: vcts                               [10966]
-;;;  test 7: colors                             [11257]
-;;;  test 8: clm                                [11759]
-;;;  test 9: mix                                [19224]
-;;;  test 10: marks                             [22282]
-;;;  test 11: dialogs                           [22984]
-;;;  test 12: extensions                        [23301]
-;;;  test 13: menus, edit lists, hooks, etc     [23717]
-;;;  test 14: all together now                  [25018]
-;;;  test 15: chan-local vars                   [26083]
-;;;  test 16: regularized funcs                 [27343]
-;;;  test 17: dialogs and graphics              [31710]
-;;;  test 18: enved                             [31785]
-;;;  test 19: save and restore                  [31805]
-;;;  test 20: transforms                        [33286]
-;;;  test 21: new stuff                         [34944]
-;;;  test 22: run                               [35822]
-;;;  test 23: with-sound                        [41267]
-;;;  test 24: user-interface                    [42271]
-;;;  test 25: X/Xt/Xm                           [45432]
-;;;  test 26: Gtk                               [49928]
-;;;  test 27: GL                                [53920]
-;;;  test 28: errors                            [54031]
-;;;  test all done                              [56125]
+;;;  test 0: constants                          [388]
+;;;  test 1: defaults                           [946]
+;;;  test 2: headers                            [1143]
+;;;  test 3: variables                          [1447]
+;;;  test 4: sndlib                             [1838]
+;;;  test 5: simple overall checks              [3645]
+;;;  test 6: vcts                               [10995]
+;;;  test 7: colors                             [11286]
+;;;  test 8: clm                                [11788]
+;;;  test 9: mix                                [19232]
+;;;  test 10: marks                             [22290]
+;;;  test 11: dialogs                           [22992]
+;;;  test 12: extensions                        [23309]
+;;;  test 13: menus, edit lists, hooks, etc     [23725]
+;;;  test 14: all together now                  [25026]
+;;;  test 15: chan-local vars                   [26091]
+;;;  test 16: regularized funcs                 [27351]
+;;;  test 17: dialogs and graphics              [31718]
+;;;  test 18: enved                             [31793]
+;;;  test 19: save and restore                  [31813]
+;;;  test 20: transforms                        [33294]
+;;;  test 21: new stuff                         [34952]
+;;;  test 22: run                               [35828]
+;;;  test 23: with-sound                        [41275]
+;;;  test 24: user-interface                    [42278]
+;;;  test 25: X/Xt/Xm                           [45439]
+;;;  test 26: Gtk                               [49935]
+;;;  test 27: GL                                [53927]
+;;;  test 28: errors                            [54038]
+;;;  test all done                              [56133]
 ;;;
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 ;;; need all html example code in autotests
@@ -11143,6 +11143,25 @@ EDITS: 5
 	      (vct-subseq vn 1 8 vb)
 	      (if (fneq (vct-ref vb 0) 1.0) (snd-display ";vct-subseq[1:8->vb] ~A?" (vct-ref vb 0)))
 	      (if (fneq (vct-ref vb 8) 123.0) (snd-display ";vct-subseq[1:8->vb][8] ~A?" (vct-ref vb 8))))
+
+	    (let ((v1 (make-vct 3 .1))
+		  (v2 (make-vct 4 .2)))
+	      (let ((val (vct+ (vct-copy v1) v2)))
+		(if (not (vequal val (vct .3 .3 .3))) (snd-display ";vct+ .1 .2: ~A" val)))
+	      (vct-set! v1 1 .3)
+	      (let ((val (vct+ (vct-copy v1) v2)))
+		(if (not (vequal val (vct .3 .5 .3))) (snd-display ";vct+ .1 .2 (1): ~A" val)))
+	      (let ((val (vct+ (vct-copy v1) 2.0)))
+		(if (not (vequal val (vct 2.1 2.3 2.1))) (snd-display ";vct+ .1 2.0: ~A" val)))
+	      (let ((val (vct+ 2.0 (vct-copy v1))))
+		(if (not (vequal val (vct 2.1 2.3 2.1))) (snd-display ";vct+ .1 2.0 (1): ~A" val)))
+	      (let ((val (vct* 2.0 (vct-copy v1))))
+		(if (not (vequal val (vct .2 .6 .2))) (snd-display ";vct* 2.0: ~A" val)))
+	      (let ((val (vct* (vct-copy v1) 2.0)))
+		(if (not (vequal val (vct .2 .6 .2))) (snd-display ";vct* 2.0 (1): ~A" val)))
+	      (let ((val (vct* (vct-copy v1) v2)))
+		(if (not (vequal val (vct .02 .06 .02))) (snd-display ";vct* v1 v2: ~A" val))))
+
 	    (vct-map! v0 (lambda () 1.0))
 	    (do ((i 0 (1+ i)))
 		((= i 10))
@@ -12096,25 +12115,26 @@ EDITS: 5
 	 (set! freq (+ freq incr))
 	 (* .5 val))))))
 
-(define* (make-ssb-am-1 freq-1 #:optional (order 40))
-  (let* ((freq freq-1)
-	 (carrier-freq (abs freq-1))
-	 (cos-carrier (make-oscil carrier-freq (* .5 pi)))
-	 (sin-carrier (make-oscil carrier-freq))
-	 (dly (make-delay order))
-	 (hlb (make-hilbert-transform order)))
-    (lambda (y fm)
-      (let ((ccos (oscil cos-carrier fm))
-	    (csin (oscil sin-carrier fm))
-	    (yh (hilbert-transform hlb y))
-	    (yd (delay dly y)))
-	(if (> freq 0.0)
-	    (- (* ccos yd) ; shift up
-	       (* csin yh))
-	    (+ (* ccos yd) ; shift down
-	       (* csin yh)))))))
+(def-clm-struct sa1 (freq 0.0 :type float) (coscar #f :type clm) (sincar #f :type clm) (dly #f :type clm) (hlb #f :type clm))
 
-(define* (ssb-am-1 gen y #:optional (fm 0.0)) (gen y fm))
+(define* (make-ssb-am-1 freq #:optional (order 40))
+  (make-sa1 :freq (abs freq)
+	    :coscar (make-oscil freq (* .5 pi))
+	    :sincar (make-oscil freq)
+	    :dly (make-delay order)
+	    :hlb (make-hilbert-transform order)))
+
+(define* (ssb-am-1 gen y #:optional (fm-1 0.0))
+  (let* ((fm fm-1)
+	 (ccos (oscil (sa1-coscar gen) fm))
+	 (csin (oscil (sa1-sincar gen) fm))
+	 (yh (hilbert-transform (sa1-hlb gen) y))
+	 (yd (delay (sa1-dly gen) y)))
+    (if (> (sa1-freq gen) 0.0)
+	(- (* ccos yd) ; shift up
+	   (* csin yh))
+	(+ (* ccos yd) ; shift down
+	   (* csin yh)))))
 
 (define (rough-spectrum ind)
   (let ((r (make-sample-reader 0 ind 0))
@@ -15353,6 +15373,8 @@ EDITS: 5
 			       (make-scalar-mixer 3 1.0)))
 	    (snd-display ";mixer-inverse 7: ~A" 
 			 (mixer* (make-mixer 3 2 3 5 7 11 13 17 19 23) (mixer-inverse (make-mixer 3 2 3 5 7 11 13 17 19 23)))))
+	(if (invert-matrix (make-mixer 3 1 2 3 4 5 6 7 8 9))
+	    (snd-display ";invert-matrix missed singular case? ~A" (invert-matrix (make-mixer 3 1 2 3 4 5 6 7 8 9))))
 	
 	(if (not (mixer-diagonal? (make-scalar-mixer 2 2.0))) (snd-display ";mixer-diagonal 1"))
 	(if (not (mixer-diagonal? (make-mixer 3 1 0 0 0 1 0 0 0 1))) (snd-display ";mixer-diagonal 2"))
@@ -35993,16 +36015,6 @@ EDITS: 2
        (if (fneq (mus-frequency sb) 220.0) (display ";sb freq messed up"))
        ))))
 
-(define (ssb-fm-no-gen gen modsig)
-  (let* ((am0 (oscil (list-ref gen 0)))
-	 (am1 (oscil (list-ref gen 1)))
-	 (mod0 (hilbert-transform (list-ref gen 4) modsig))
-	 (mod1 (delay (list-ref gen 5) modsig))
-	 (car0 (oscil (list-ref gen 2) mod0))
-	 (car1 (oscil (list-ref gen 3) mod1)))
-    (+ (* am0 car0)
-       (* am1 car1))))
-
 (define unique-float 3.0)
 (define unique-int 3)
 (define unique-char #\c)
@@ -37971,17 +37983,23 @@ EDITS: 2
 	    (btst '(let ((v (make-vct 3))) (vct? (vct-scale! v 2.0))) #t)
 	    (ftst '(let ((v (make-vct 3))) (set! int-var 2) (vct-set! v 1 3.0) (vct-scale! v int-var) (vct-ref v 1)) 6.0)
 	    (ftst '(let ((v (make-vct 3))) (vct-set! v 1 3.0) (vct-add! v v) (vct-ref v 1)) 6.0)
+	    (ftst '(let ((v (make-vct 3))) (vct-set! v 1 3.0) (vct+ v v) (vct-ref v 1)) 6.0)
 	    (btst '(let ((v (make-vct 3))) (vct? (vct-add! v v))) #t)
 	    (ftst '(let ((v (make-vct 3))) (vct-set! v 1 3.0) (vct-multiply! v v) (vct-ref v 1)) 9.0)
+	    (ftst '(let ((v (make-vct 3))) (vct-set! v 1 3.0) (vct* v v) (vct-ref v 1)) 9.0)
 	    (btst '(let ((v (make-vct 3))) (vct? (vct-multiply! v v))) #t)
 	    (ftst '(let ((v (make-vct 3))) (vct-set! v 1 3.0) (vct-subtract! v v) (vct-ref v 1)) 0.0)
 	    (btst '(let ((v (make-vct 3))) (vct? (vct-subtract! v v))) #t)
 	    (ftst '(let ((v (make-vct 3))) (set! (vct-ref v 2) 3.0) (vct-offset! v 17) (vct-ref v 2)) 20.0)
+	    (ftst '(let ((v (make-vct 3))) (set! (vct-ref v 2) 3.0) (vct+ v 17) (vct-ref v 2)) 20.0)
+	    (ftst '(let ((v (make-vct 3))) (set! (vct-ref v 2) 3.0) (vct+ 17 v) (vct-ref v 2)) 20.0)
 	    (btst '(let ((v (make-vct 3))) (vct? (vct-offset! v 17))) #t)
 	    (ftst '(let ((v (make-vct 3))) (set! (vct-ref v 0) 3.0) (vct-fill! v 7) (vct-ref v 0)) 7.0)
 	    (btst '(let ((v (make-vct 3))) (vct? (vct-fill! v 7))) #t)
 	    (ftst '(let ((v (make-vct 3))) (vct-fill! v 3.14) (let ((v1 (vct-copy v))) (vct-ref v1 2))) 3.14)
 	    (ftst '(let ((v (make-vct 3))) (vct-fill! v 1.0) (vct-ref (vct-scale! v 2.0) 1)) 2.0)
+	    (ftst '(let ((v (make-vct 3))) (vct-fill! v 1.0) (vct-ref (vct* v 2.0) 1)) 2.0)
+	    (ftst '(let ((v (make-vct 3))) (vct-fill! v 1.0) (vct-ref (vct* 2.0 v) 1)) 2.0)
 	    (ftst '(let ((v (make-vct 3))) (vct-fill! v 1.0) (vct-ref (vct-scale! (vct-add! v v) 2.0) 1)) 4.0)
 	    (ftst '(let ((v (make-vct 3))) (set! (vct-ref v 1) 1.0) (vct-ref v 1)) 1.0)
 	    (ftst '(let ((v (make-vct 3)) (ind 0)) (set! (vct-ref v ind) 2.0) (vct-ref v ind)) 2.0)
@@ -40322,7 +40340,7 @@ EDITS: 2
 	     (gen (make-ssb-fm 1000))
 	     (ind (new-sound "tmp.snd" mus-next mus-bfloat 22050 1)))
 	(pad-channel 0 1000 ind 0)
-	(catch #t (lambda () (map-channel (lambda (y) (ssb-fm-no-gen gen (* .02 (oscil mg)))))) (lambda arg (display arg) arg))
+	(catch #t (lambda () (map-channel (lambda (y) (ssb-fm gen (* .02 (oscil mg)))))) (lambda arg (display arg) arg))
 	(close-sound ind))
 
       (let ((old-opt (optimization)))

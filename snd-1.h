@@ -124,7 +124,7 @@ typedef struct {
   Float ymin, ymax;                     /* data-dependent absolute limits */
   Float y_scale, y_base, y_ambit;
   double x_scale, x_base, x_ambit;
-  char *xlabel, *ylabel;
+  char *xlabel, *ylabel, *default_xlabel;
   Locus y_axis_x0, x_axis_x0, y_axis_y0, x_axis_y0, x_axis_x1, y_axis_y1, x_label_x, x_label_y;
   bool graph_active;
   off_t losamp, hisamp;                 /* displayed x-axis bounds in terms of sound sample numbers */

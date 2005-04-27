@@ -290,10 +290,10 @@ enum {R_UNSPECIFIED, R_INT, R_FLOAT, R_BOOL, R_CHAR, R_STRING, R_LIST, R_PAIR,
       R_SYMBOL, R_KEYWORD, R_FUNCTION, R_GOTO, R_VCT, 
       R_READER, R_MIX_READER, R_TRACK_READER, R_SOUND_DATA,
       R_CLM, R_FLOAT_VECTOR, R_INT_VECTOR, R_VCT_VECTOR, R_CLM_VECTOR, 
-      R_NUMBER, R_CONS, R_VECTOR, R_XEN, R_NUMBER_CLM, R_ANY}; /* last 6 for walker arg checks */
+      R_NUMBER, R_CONS, R_VECTOR, R_XEN, R_NUMBER_CLM, R_NUMBER_VCT, R_ANY}; /* last 7 for walker arg checks */
 
 
-#define BUILT_IN_TYPES 28
+#define BUILT_IN_TYPES 29
 static int last_type = R_ANY;
 static int type_names_size = BUILT_IN_TYPES;
 static char **type_names = NULL;
@@ -302,7 +302,7 @@ static char *basic_type_names[BUILT_IN_TYPES] = {"unspecified", "int", "float", 
 						 "sample-reader", "mix-sample-reader", "track-sample-reader",
 						 "sound-data", "clm", 
 						 "float-vector", "int-vector", "vct-vector", "clm-vector", 
-						 "number", "cons", "vector", "xen", "number or clm", "any"};
+						 "number", "cons", "vector", "xen", "number or clm", "number or vct", "any"};
 static void init_type_names(void)
 {
   int i;
@@ -7381,6 +7381,39 @@ static xen_value *vct_reverse_2(ptree *prog, xen_value **args, int num_args)
 }
 
 
+static xen_value *vct_times_1(ptree *prog, xen_value **args, int num_args)
+{
+  xen_value *temp;
+  if (args[1]->type == R_VCT)
+    {
+      if (args[2]->type == R_VCT)
+	return(vct_multiply_1(prog, args, num_args));
+      return(vct_scale_1(prog, args, num_args));
+    }
+  /* reorder args for vct_scale_1 */
+  temp = args[1];
+  args[1] = args[2];
+  args[2] = temp;
+  return(vct_scale_1(prog, args, num_args));
+}
+
+static xen_value *vct_plus_1(ptree *prog, xen_value **args, int num_args)
+{
+  xen_value *temp;
+  if (args[1]->type == R_VCT)
+    {
+      if (args[2]->type == R_VCT)
+	return(vct_add_1(prog, args, num_args));
+      return(vct_offset_1(prog, args, num_args));
+    }
+  /* reorder args for vct_offset_1 */
+  temp = args[1];
+  args[1] = args[2];
+  args[2] = temp;
+  return(vct_offset_1(prog, args, num_args));
+}
+
+
 
 /* ---------------- sound-data ---------------- */
 
@@ -10588,7 +10621,17 @@ static xen_value *walk(ptree *prog, XEN form, walk_result_t walk_result)
 					    return(clean_up(arg_warn(prog, funcname, i + 1, args, "clm or number"), args, num_args));
 					}
 				      else 
-					return(clean_up(arg_warn(prog, funcname, i + 1, args, type_name(w->arg_types[i])), args, num_args));
+					{
+					  if (w->arg_types[i] == R_NUMBER_VCT)
+					    {
+					      if ((args[i + 1]->type != R_INT) &&
+						  (args[i + 1]->type != R_FLOAT) &&
+						  (args[i + 1]->type != R_VCT))
+						return(clean_up(arg_warn(prog, funcname, i + 1, args, "vct or number"), args, num_args));
+					    }
+					  else
+					    return(clean_up(arg_warn(prog, funcname, i + 1, args, type_name(w->arg_types[i])), args, num_args));
+					}
 				    }
 				}
 			    }
@@ -11426,6 +11469,8 @@ static void init_walkers(void)
   INIT_WALKER(S_vct, make_walker(vct_1, NULL, NULL, 1, UNLIMITED_ARGS, R_VCT, false, 1, -R_FLOAT));
   INIT_WALKER(S_vct_p, make_walker(vct_p_1, NULL, NULL, 1, 1, R_BOOL, false, 0));
   INIT_WALKER(S_vct_reverse, make_walker(vct_reverse_2, NULL, NULL, 1, 2, R_VCT, false, 2, R_VCT, R_INT));
+  INIT_WALKER(S_vct_times, make_walker(vct_times_1, NULL, NULL, 2, 2, R_VCT, false, 2, R_NUMBER_VCT, R_NUMBER_VCT));
+  INIT_WALKER(S_vct_plus, make_walker(vct_plus_1, NULL, NULL, 2, 2, R_VCT, false, 2, R_NUMBER_VCT, R_NUMBER_VCT));
 
   INIT_WALKER(S_sound_data_length, make_walker(sound_data_length_1, NULL, NULL, 1, 1, R_INT, false, 1, R_SOUND_DATA));
   INIT_WALKER(S_sound_data_chans, make_walker(sound_data_chans_1, NULL, NULL, 1, 1, R_INT, false, 1, R_SOUND_DATA));

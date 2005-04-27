@@ -4,6 +4,7 @@
 (use-modules (ice-9 format))
 
 (provide 'snd-dsp.scm)
+(if (not (provided? 'snd-ws.scm)) (load-from-path "ws.scm"))
 
 ;;; src-duration (see src-channel in extsnd.html)
 
@@ -1697,23 +1698,24 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 
 ;;; this might be better named "quasi-ssb-fm" -- cancellations are not perfect
 
-(define* (make-ssb-fm freq)
-  (list (make-oscil freq 0)
-	(make-oscil freq (* 0.5 pi))
-	(make-oscil 0 0)
-	(make-oscil 0 (* 0.5 pi))
-	(make-hilbert-transform 40)
-	(make-delay 40)))
+(def-clm-struct sbfm 
+  (am0 #f :type clm) (am1 #f :type clm) 
+  (car0 #f :type clm) (car1 #f :type clm)
+  (mod0 #f :type clm) (mod1 #f :type clm))
+
+(define (make-ssb-fm freq)
+  (make-sbfm :am0 (make-oscil freq 0)
+	     :am1 (make-oscil freq (* 0.5 pi))
+	     :car0 (make-oscil 0 0)
+	     :car1 (make-oscil 0 (* 0.5 pi))
+	     :mod0 (make-hilbert-transform 40)
+	     :mod1 (make-delay 40)))
 
 (define (ssb-fm gen modsig)
-  (let* ((am0 (oscil (list-ref gen 0)))
-	 (am1 (oscil (list-ref gen 1)))
-	 (mod0 (hilbert-transform (list-ref gen 4) modsig))
-	 (mod1 (delay (list-ref gen 5) modsig))
-	 (car0 (oscil (list-ref gen 2) mod0))
-	 (car1 (oscil (list-ref gen 3) mod1)))
-    (+ (* am0 car0)
-       (* am1 car1))))
+  (+ (* (oscil (sbfm-am0 gen)) 
+	(oscil (sbfm-car0 gen) (hilbert-transform (sbfm-mod0 gen) modsig)))
+     (* (oscil (sbfm-am1 gen)) 
+	(oscil (sbfm-car1 gen) (delay (sbfm-mod1 gen) modsig)))))
 
 
 ;;; if all we want are asymmetric fm-generated spectra, we can just add 2 fm oscil pairs:

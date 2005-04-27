@@ -1,9 +1,4 @@
-;;; examples of Guile extensions to Snd
-;;;   for the Ruby version, see examp.rb by Michael Scholz
-;;;
-;;; (this file requires guile 1.5 -- it uses the generalized set! and newer optargs support)
-;;;
-;;;        contents
+;;; examples of Scheme extensions to Snd
 ;;;
 ;;; documentation examples made harder to break
 ;;; 'info' from extsnd.html using format

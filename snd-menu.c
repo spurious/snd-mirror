@@ -436,12 +436,17 @@ void chans_x_axis_style(chan_info *cp, void *ptr)
   if (ap)
     {
       if (ap->xlabel) FREE(ap->xlabel);
-      switch (new_style)
+      if (ap->default_xlabel)
+	ap->xlabel = copy_string(ap->default_xlabel);
+      else
 	{
-	case X_AXIS_IN_BEATS:      ap->xlabel = copy_string(_("time (beats)"));   break;
-	case X_AXIS_IN_SAMPLES:    ap->xlabel = copy_string(_("time (samples)")); break;
-	case X_AXIS_AS_PERCENTAGE: ap->xlabel = copy_string(_("time (percent)")); break;
-	default:                   ap->xlabel = copy_string(_("time"));           break;
+	  switch (new_style)
+	    {
+	    case X_AXIS_IN_BEATS:      ap->xlabel = copy_string(_("time (beats)"));   break;
+	    case X_AXIS_IN_SAMPLES:    ap->xlabel = copy_string(_("time (samples)")); break;
+	    case X_AXIS_AS_PERCENTAGE: ap->xlabel = copy_string(_("time (percent)")); break;
+	    default:                   ap->xlabel = copy_string(_("time"));           break;
+	    }
 	}
       update_graph(cp);
     }

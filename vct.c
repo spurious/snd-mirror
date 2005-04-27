@@ -37,16 +37,13 @@
  *   (vct-reverse v (len #f))         reverse contents (using len as end point if given)
  *   (vct->string v)                  scheme-readable description of vct
  *
+ *   (vct* obj1 obj2) combines vct-multiply and vct-scale
+ *   (vct+ obj1 obj2) combines vct-add and vct-offset
+ *
  * The intended use is a sort of latter-day array-processing system that handles huge
  * one-dimensional vectors -- fft's, etc.  Some of these functions can be found in
  * the Snd package; others can be found in the CLM package (clm2xen.c).
  */
-
-
-/* PERHAPS: vct-offset! (-> vct-add!|subtract! -> vct+), vct-scale! (-> vct-multiply! -> vct*)
- *   should these return a new vct?
- */
-
 
 #include <config.h>
 
@@ -646,6 +643,31 @@ static XEN vct_reverse(XEN vobj, XEN size)
   return(vobj);
 }
 
+static XEN vct_times(XEN obj1, XEN obj2)
+{
+  #define H_vct_times "(" S_vct_times " obj1 obj2) is either " S_vct_multiplyB " or " S_vct_scaleB ", depending on the types of its arguments"
+  if (VCT_P(obj1))
+    {
+      if (VCT_P(obj2))
+	return(vct_multiply(obj1, obj2));
+      return(vct_scale(obj1, obj2));
+    }
+  return(vct_scale(obj2, obj1));
+}
+
+static XEN vct_plus(XEN obj1, XEN obj2)
+{
+  #define H_vct_plus "(" S_vct_plus " obj1 obj2) is either " S_vct_addB " or " S_vct_offsetB ", depending on the types of its arguments"
+  if (VCT_P(obj1))
+    {
+      if (VCT_P(obj2))
+	return(vct_add(obj1, obj2, XEN_UNDEFINED));
+      return(vct_offset(obj1, obj2));
+    }
+  return(vct_offset(obj2, obj1));
+}
+
+
 #ifdef XEN_ARGIFY_1
 XEN_ARGIFY_2(g_make_vct_w, g_make_vct)
 XEN_NARGIFY_1(copy_vct_w, copy_vct)
@@ -670,6 +692,8 @@ XEN_ARGIFY_4(vct_subseq_w, vct_subseq)
 XEN_VARGIFY(g_vct_w, g_vct)
 XEN_ARGIFY_2(vct_reverse_w, vct_reverse)
 XEN_NARGIFY_1(g_vct_to_readable_string_w, g_vct_to_readable_string)
+XEN_NARGIFY_2(vct_times_w, vct_times)
+XEN_NARGIFY_2(vct_plus_w, vct_plus)
 #else
 #define g_make_vct_w g_make_vct
 #define copy_vct_w copy_vct
@@ -694,6 +718,8 @@ XEN_NARGIFY_1(g_vct_to_readable_string_w, g_vct_to_readable_string)
 #define g_vct_w g_vct
 #define vct_reverse_w vct_reverse
 #define g_vct_to_readable_string_w g_vct_to_readable_string
+#define vct_times_w vct_times
+#define vct_plus_w vct_plus
 #endif
 
 #if HAVE_RUBY
@@ -972,6 +998,8 @@ void vct_init(void)
 #endif
   XEN_DEFINE_PROCEDURE(S_vct_to_string, g_vct_to_readable_string_w, 1, 0, 0, H_vct_to_string);
   XEN_DEFINE_PROCEDURE(S_vct_setB,      vct_set_w,      3, 0, 0, H_vct_setB);
+  XEN_DEFINE_PROCEDURE(S_vct_times,     vct_times_w,    2, 0, 0, H_vct_times);
+  XEN_DEFINE_PROCEDURE(S_vct_plus,      vct_plus_w,     2, 0, 0, H_vct_plus);
 
 #if WITH_MODULES
   scm_c_export(S_make_vct,
@@ -997,6 +1025,8 @@ void vct_init(void)
 	       S_vct_setB,
 	       S_vct_reverse,
 	       S_vct_to_string,
+	       S_vct_times,
+	       S_vct_plus,
 #if WITH_RUN && USE_SND
 	       "vct-map-1",
 #endif

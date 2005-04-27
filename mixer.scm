@@ -162,6 +162,7 @@
 				 (set! biggest val))))
 			 (if (> (vector-ref pivots k) 1)
 			     (return #f)))))))
+	   (if (< biggest zero) (return #f)) ; this can be fooled (floats...): (invert-matrix (make-mixer 3 1 2 3 3 2 1 4 5 6))
 	   (vector-set! pivots col (+ (vector-ref pivots col) 1))
 	   (if (not (= row col))
 	       (let ((temp (if b (frame-ref b row) 0.0)))
@@ -204,6 +205,8 @@
 		 (set! (mat matrix k (vector-ref cols i)) temp)))))
        (list matrix b)))))
 
+;;; it would be faster to use invert-matrix to calculate the determinant, but that
+;;;   really forces us to use doubles throughout -- probably should anyway...
 
 (define (mixer-solve A b)
   (let ((val (invert-matrix A b)))

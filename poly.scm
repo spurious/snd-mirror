@@ -1,4 +1,6 @@
 ;;; polynomial-related stuff
+;;;
+;;; poly+ poly* poly/ poly-gcd poly-reduce poly-roots poly-derivative
 
 (provide 'snd-poly.scm)
 

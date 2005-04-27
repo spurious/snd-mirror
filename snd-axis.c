@@ -137,6 +137,11 @@ axis_info *free_axis_info(axis_info *ap)
       FREE(ap->xlabel); 
       ap->xlabel = NULL;
     }
+  if (ap->default_xlabel) 
+    {
+      FREE(ap->default_xlabel); 
+      ap->default_xlabel = NULL;
+    }
   if (ap->ylabel) 
     {
       FREE(ap->ylabel); 
@@ -1156,8 +1161,7 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 }
 
 axis_info *make_axis_info (chan_info *cp, double xmin, double xmax, Float ymin, Float ymax, 
-			   char *xlabel, double x0, double x1, Float y0, Float y1, 
-			   axis_info *old_ap)
+			   char *xlabel, double x0, double x1, Float y0, Float y1, axis_info *old_ap)
 {
   axis_info *ap;
   if (old_ap) 
@@ -1423,6 +1427,7 @@ static XEN g_set_x_axis_label(XEN label, XEN snd, XEN chn, XEN ax)
   ap->xlabel = copy_string(XEN_TO_C_STRING(label));
   if ((XEN_INTEGER_P(ax)) && (XEN_TO_C_INT(ax) == (int)TRANSFORM_AXIS_INFO))
     set_fft_info_xlabel(ap->cp, ap->xlabel);
+  ap->default_xlabel = copy_string(ap->xlabel);
   update_graph(ap->cp);
   return(label);
 }
@@ -1446,11 +1451,7 @@ static XEN g_set_x_axis_label_reversed(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 }
 #endif
 
-/* TODO: doesn't x-axis-label get clobbered? */
-/*       menu x-axis-style resets it to its default state [snd-menu] */
-/*       (set! (frames) 0) resets it to "no data", then "time" is the default if undo [snd-edits] */
-/* TODO: rotate-text for numbers in snd-grec vu meter labels */
-/* TODO: how to implement this in OpenGL? */
+/* TODO: how to implement rotate_text in OpenGL? */
 
 static XEN g_y_axis_label(XEN snd, XEN chn, XEN ax)
 {
@@ -1523,10 +1524,12 @@ XEN_ARGIFY_4(g_set_y_axis_label_w, g_set_y_axis_label)
 
 void g_init_axis(void)
 {
-  XEN_DEFINE_PROCEDURE(S_x_to_position, g_grf_x_w,   1, 3, 0, H_x_to_position);
-  XEN_DEFINE_PROCEDURE(S_y_to_position, g_grf_y_w,   1, 3, 0, H_y_to_position);
-  XEN_DEFINE_PROCEDURE(S_position_to_x, g_ungrf_x_w, 1, 3, 0, H_position_to_x);
-  XEN_DEFINE_PROCEDURE(S_position_to_y, g_ungrf_y_w, 1, 3, 0, H_position_to_y);
+  XEN_DEFINE_PROCEDURE(S_x_to_position, g_grf_x_w,     1, 3, 0, H_x_to_position);
+  XEN_DEFINE_PROCEDURE(S_y_to_position, g_grf_y_w,     1, 3, 0, H_y_to_position);
+  XEN_DEFINE_PROCEDURE(S_position_to_x, g_ungrf_x_w,   1, 3, 0, H_position_to_x);
+  XEN_DEFINE_PROCEDURE(S_position_to_y, g_ungrf_y_w,   1, 3, 0, H_position_to_y);
+  XEN_DEFINE_PROCEDURE(S_axis_info,     g_axis_info_w, 0, 3, 0, H_axis_info);
+  XEN_DEFINE_PROCEDURE(S_draw_axes,     g_draw_axes_w, 0, 0, 1, H_draw_axes);
 
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_x_axis_label, g_x_axis_label_w, H_x_axis_label,
 					    S_setB S_x_axis_label, g_set_x_axis_label_w, g_set_x_axis_label_reversed, 0, 3, 1, 3);
@@ -1537,10 +1540,6 @@ void g_init_axis(void)
   XEN_DEFINE_CONSTANT(S_time_graph,      TIME_AXIS_INFO,      "time domain graph axis info");
   XEN_DEFINE_CONSTANT(S_transform_graph, TRANSFORM_AXIS_INFO, "frequency domain graph axis info");
   XEN_DEFINE_CONSTANT(S_lisp_graph,      LISP_AXIS_INFO,      "lisp graph axis info");
-
-  XEN_DEFINE_PROCEDURE(S_axis_info,  g_axis_info_w, 0, 3, 0, H_axis_info);
-
-  XEN_DEFINE_PROCEDURE(S_draw_axes,  g_draw_axes_w, 0, 0, 1,   H_draw_axes);
 }
 #endif
 /* end no gui (covers entire xen section) */
