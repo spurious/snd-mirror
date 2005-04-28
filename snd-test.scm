@@ -1135,7 +1135,7 @@
 	))
       (if (not *snd-remember-paths*) (snd-display ";*snd-remember-paths*?"))
       (if *snd-opened-sound* (snd-display ";*snd-opened-sound*: ~A" *snd-opened-sound*))
-      (if (not *snd-loaded-files*) (snd-display ":*snd-loaded-files*?"))
+      (if (not *snd-loaded-files*) (snd-display ";*snd-loaded-files*?"))
       (run-hook after-test-hook 1)
       ))
 
@@ -7341,7 +7341,7 @@ EDITS: 5
 	  (do ((i 0 (1+ i)))
 	      ((= i num-transforms))
 	    (set! (transform-type) i)
-	    (if (not (transform? i)) (snd-display "transform? ~A?" i))
+	    (if (not (transform? i)) (snd-display ";transform? ~A?" i))
 	    (do ((j 0 (1+ j)))
 		((= j num-transform-graph-types))
 	      (set! (transform-graph-type index 0) j)
@@ -12918,7 +12918,7 @@ EDITS: 5
 	  (vct-set! data i (delay dly1 impulse 0.4)) ; longer line
 	  (set! impulse 0.0))
 	(if (not (vequal data (vct 0.0 0.0 0.6 0.4 0.0)))
-	    (snd-display "delay size 2, max 3, off 0.4: ~A" data))
+	    (snd-display ";delay size 2, max 3, off 0.4: ~A" data))
 	
 	(set! dly1 (make-delay :size 2 :max-size 3))
 	(set! impulse 1.0)
@@ -12927,7 +12927,7 @@ EDITS: 5
 	  (vct-set! data i (delay dly1 impulse -0.4)) ; shorter line
 	  (set! impulse 0.0))
 	(if (not (vequal data (vct 0.0 0.4 0.6 0.0 0.0)))
-	    (snd-display "delay size 2, max 3, off -0.4: ~A" data))
+	    (snd-display ";delay size 2, max 3, off -0.4: ~A" data))
 	
 	(set! dly1 (make-delay :size 1 :max-size 2))
 	(set! impulse 1.0)
@@ -12936,7 +12936,7 @@ EDITS: 5
 	  (vct-set! data i (delay dly1 impulse 0.4))
 	  (set! impulse 0.0))
 	(if (not (vequal data (vct 0.0 0.6 0.4 0.0 0.0)))
-	    (snd-display "delay size 1, max 2, off 0.4: ~A" data))
+	    (snd-display ";delay size 1, max 2, off 0.4: ~A" data))
 	
 	(set! dly1 (make-delay :size 1 :max-size 2))
 	(set! impulse 1.0)
@@ -12945,7 +12945,7 @@ EDITS: 5
 	  (vct-set! data i (delay dly1 impulse -0.4))
 	  (set! impulse 0.0))
 	(if (not (vequal data (vct 0.4 0.6 0.0 0.0 0.0)))
-	    (snd-display "delay size 1, max 2, off -0.4: ~A" data))
+	    (snd-display ";delay size 1, max 2, off -0.4: ~A" data))
 	
 	(set! dly1 (make-delay :size 0 :max-size 1))
 	(set! impulse 1.0)
@@ -12954,7 +12954,7 @@ EDITS: 5
 	  (vct-set! data i (delay dly1 impulse 0.4))
 	  (set! impulse 0.0))
 	(if (not (vequal data (vct 0.6 0.0 0.0 0.0 0.0)))
-	    (snd-display "delay size 0, max 1, off 0.4: ~A" data))
+	    (snd-display ";delay size 0, max 1, off 0.4: ~A" data))
 	
 	(set! dly1 (make-delay :size 0 :max-size 1))
 	(let ((val (delay dly1 0.0)))
@@ -12967,7 +12967,7 @@ EDITS: 5
 	  (vct-set! data i (delay dly1 impulse -0.4)) ; shorter than 0? should this be an error?
 	  (set! impulse 0.0))
 	(if (not (vequal data (vct 1.4 0.0 0.0 0.0 0.0))) ; hmmm -- they're asking for undefined values here 
-	    (snd-display "delay size 0, max 1, off -0.4: ~A" data))
+	    (snd-display ";delay size 0, max 1, off -0.4: ~A" data))
 	)
       
       (let ((gen (make-delay :size 0 :max-size 100))
@@ -15299,7 +15299,7 @@ EDITS: 5
 	(if (fneq (mixer-determinant (make-mixer 4 1 2 3 4 8 7 6 5 1 8 2 7 3 6 4 5)) -144.0) ; Eves Elementary Matrix Theory
 	    (snd-display ";mixer-determinant -144: ~A" (mixer-determinant (make-mixer 4 1 2 3 4 8 7 6 5 1 8 2 7 3 6 4 5))))
 	(if (fneq (mixer-determinant (make-mixer 5  2 3 5 7 11  13 17 19 23 29  31 37 41 43 47  53 59 61 67 71  73 79 83 89 97)) -4656.0)
-	    (snd-display "mixer-determinant -4656: ~A" (mixer-determinant (make-mixer 5  2 3 5 7 11  13 17 19 23 29  31 37 41 43 47  
+	    (snd-display ";mixer-determinant -4656: ~A" (mixer-determinant (make-mixer 5  2 3 5 7 11  13 17 19 23 29  31 37 41 43 47  
 										      53 59 61 67 71  73 79 83 89 97))))
 	(if (fneq (mixer-determinant (make-mixer 6  2 3 5 7 11 13   17 19 23 29 31 37  41 43 47 53 59 61  67 71 73 79 83 89  
 						 97 101 103 107 109 113  127 131 137 139 149 151)) -14304.0)
@@ -15336,7 +15336,7 @@ EDITS: 5
 			       (make-mixer 6 -1.355 0.020 -0.000 1.090 -1.153 0.333 0.092 -0.025 0.000 -0.042 0.070 -0.029 
 					   1.612 0.006 -0.250 -1.205 1.249 -0.264 0.079 0.002 0.250 -0.314 0.425 -0.241 
 					   -0.551 -0.011 0.250 0.200 -0.476 0.188 0.068 0.009 -0.250 0.306 -0.145 0.028)))
-	    (snd-display "slow-mixer-inverse 5: ~A" (slow-mixer-inverse (make-mixer 6  2 3 5 7 11 13   17 -19 23 29 31 37  41 43 47 53 59 61  
+	    (snd-display ";slow-mixer-inverse 5: ~A" (slow-mixer-inverse (make-mixer 6  2 3 5 7 11 13   17 -19 23 29 31 37  41 43 47 53 59 61  
 										    67 71 73 79 83 89  97 101 103 107 109 113  127 131 137 139 149 151))))
 	(if (not (mixer-equal? (mixer* (make-mixer 2 2 3 5 8) (slow-mixer-inverse (make-mixer 2 2 3 5 8)))
 			       (make-scalar-mixer 2 1.0)))
@@ -15364,7 +15364,7 @@ EDITS: 5
 			       (make-mixer 6 -1.355 0.020 -0.000 1.090 -1.153 0.333 0.092 -0.025 0.000 -0.042 0.070 -0.029 
 					   1.612 0.006 -0.250 -1.205 1.249 -0.264 0.079 0.002 0.250 -0.314 0.425 -0.241 
 					   -0.551 -0.011 0.250 0.200 -0.476 0.188 0.068 0.009 -0.250 0.306 -0.145 0.028)))
-	    (snd-display "mixer-inverse 5: ~A" (mixer-inverse (make-mixer 6  2 3 5 7 11 13   17 -19 23 29 31 37  41 43 47 53 59 61  
+	    (snd-display ";mixer-inverse 5: ~A" (mixer-inverse (make-mixer 6  2 3 5 7 11 13   17 -19 23 29 31 37  41 43 47 53 59 61  
 									  67 71 73 79 83 89  97 101 103 107 109 113  127 131 137 139 149 151))))
 	(if (not (mixer-equal? (mixer* (make-mixer 2 2 3 5 8) (mixer-inverse (make-mixer 2 2 3 5 8)))
 			       (make-scalar-mixer 2 1.0)))
@@ -16240,7 +16240,7 @@ EDITS: 5
 	       (gen (make-wave-train 1000.0 :wave table)))
 	  (map-channel (lambda (y) (wave-train gen)))
 	  (let ((mx (maxamp)))
-	    (if (fneq mx 0.6) (snd-display "wt 0 max: ~A" mx)))
+	    (if (fneq mx 0.6) (snd-display ";wt 0 max: ~A" mx)))
 	  (if (not (vequal (channel->vct 0 30) 
 			   (vct 0.000 0.100 0.200 0.300 0.400 0.500 0.600 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 
 				0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.100 0.200 0.300 0.400 0.500 0.600)))
@@ -16255,7 +16255,7 @@ EDITS: 5
 	       (gen (make-wave-train 1000.0 :initial-phase 3.14159 :wave table))) ; initial-phase is confusing in this context!
 	  (map-channel (lambda (y) (wave-train gen)))
 	  (let ((mx (maxamp)))
-	    (if (fneq mx 0.1) (snd-display "wt 1 max: ~A" mx)))
+	    (if (fneq mx 0.1) (snd-display ";wt 1 max: ~A" mx)))
 	  (if (not (vequal (channel->vct 0 30) 
 			   (vct 0.100 0.100 0.100 0.100 0.100 0.100 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 
 				0.000 0.000 0.000 0.000 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.000)))
@@ -16266,7 +16266,7 @@ EDITS: 5
 	       (gen (make-wave-train 2000.0 :wave table)))
 	  (map-channel (lambda (y) (wave-train gen)))
 	  (let ((mx (maxamp)))
-	    (if (fneq mx 0.1) (snd-display "wt 2 max: ~A" mx)))
+	    (if (fneq mx 0.1) (snd-display ";wt 2 max: ~A" mx)))
 	  (if (not (vequal (channel->vct 0 30) 
 			   (vct 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.000 0.000 0.100 0.100 0.100 
 				0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.000 0.100 0.100 0.100 0.100 0.100 0.100 0.100)))
@@ -16281,7 +16281,7 @@ EDITS: 5
 	       (gen (make-wave-train 3000.0 :wave table)))
 	  (map-channel (lambda (y) (wave-train gen)))
 	  (let ((mx (maxamp)))
-	    (if (fneq mx 0.2) (snd-display "wt 3 max: ~A" mx)))
+	    (if (fneq mx 0.2) (snd-display ";wt 3 max: ~A" mx)))
 	  (if (not (vequal (channel->vct 0 30) 
 			   (vct 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.200 0.200 0.100 0.100 0.100 0.100 0.100 
 				0.200 0.200 0.200 0.100 0.100 0.100 0.100 0.100 0.200 0.200 0.100 0.100 0.100 0.100 0.100)))
@@ -16296,7 +16296,7 @@ EDITS: 5
 	       (gen (make-wave-train 5000.0 :wave table)))
 	  (map-channel (lambda (y) (wave-train gen)))
 	  (let ((mx (maxamp)))
-	    (if (fneq mx 0.3) (snd-display "wt 4 max: ~A" mx)))
+	    (if (fneq mx 0.3) (snd-display ";wt 4 max: ~A" mx)))
 	  (if (not (vequal (channel->vct 0 30) 
 			   (vct 0.100 0.100 0.100 0.100 0.100 0.200 0.200 0.200 0.200 0.300 0.200 0.200 0.200 0.200 0.300 
 				0.200 0.200 0.200 0.300 0.200 0.200 0.200 0.200 0.300 0.200 0.200 0.200 0.300 0.200 0.200)))
@@ -16317,7 +16317,7 @@ EDITS: 5
 	       (set! (mus-frequency gen) (* base-freq (env e)))
 	       result)))
 	  (let ((mx (maxamp)))
-	    (if (fneq mx 0.1) (snd-display "wt 5 max: ~A" mx)))
+	    (if (fneq mx 0.1) (snd-display ";wt 5 max: ~A" mx)))
 	  (if (not (vequal (channel->vct 0 30) 
 			   (vct 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.000 0.000 0.000 0.000 0.000 
 				0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.100 0.100 0.100 0.100 0.100 0.100 0.100)))
@@ -16345,7 +16345,7 @@ EDITS: 5
 		   (set! ctr (1+ ctr)))
 	       result)))
 	  (let ((mx (maxamp)))
-	    (if (fneq mx 0.704) (snd-display "wt 6 max: ~A" mx)))
+	    (if (fneq mx 0.704) (snd-display ";wt 6 max: ~A" mx)))
 	  (if (not (vequal (channel->vct 0 30) 
 			   (vct 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.000 0.000 0.000 0.000 0.000 
 				0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000)))
@@ -17728,7 +17728,7 @@ EDITS: 5
 	(let ((gen (make-granulate :jitter 0.0 :hop .004 :length .001)))
 	  (map-channel (lambda (y) (granulate gen (lambda (dir) .1))))
 	  (let ((mx (maxamp)))
-	    (if (fneq mx 0.06) (snd-display "gran 0 max: ~A" mx)))
+	    (if (fneq mx 0.06) (snd-display ";gran 0 max: ~A" mx)))
 	  (if (not (vequal (channel->vct 0 30) 
 			   (vct 0.000 0.007 0.013 0.020 0.027 0.033 0.040 0.047 0.053 0.060 0.060 0.060 0.060 0.060 0.060 0.053 
 				0.047 0.040 0.033 0.027 0.020 0.013 0.007 0.000 0.000 0.000 0.000 0.000 0.000 0.000)))
@@ -17742,7 +17742,7 @@ EDITS: 5
 	(let ((gen (make-granulate :jitter 0.0 :hop .002 :length .001)))
 	  (map-channel (lambda (y) (granulate gen (lambda (dir) .1))))
 	  (let ((mx (maxamp)))
-	    (if (fneq mx 0.06) (snd-display "gran 1 max: ~A" mx)))
+	    (if (fneq mx 0.06) (snd-display ";gran 1 max: ~A" mx)))
 	  (if (not (vequal (channel->vct 0 30) 
 			   (vct 0.000 0.007 0.013 0.020 0.027 0.033 0.040 0.047 0.053 0.060 0.060 0.060 0.060 0.060 0.060 0.053 
 				0.047 0.040 0.033 0.027 0.020 0.013 0.007 0.000 0.000 0.000 0.000 0.000 0.000 0.000)))
@@ -17756,7 +17756,7 @@ EDITS: 5
 	(let ((gen (make-granulate :jitter 0.0 :hop .002 :length .001 :ramp .1)))
 	  (map-channel (lambda (y) (granulate gen (lambda (dir) .1))))
 	  (let ((mx (maxamp)))
-	    (if (fneq mx 0.06) (snd-display "gran 2 max: ~A" mx)))
+	    (if (fneq mx 0.06) (snd-display ";gran 2 max: ~A" mx)))
 	  (if (not (vequal (channel->vct 0 30) 
 			   (vct 0.000 0.030 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 
 				0.060 0.060 0.060 0.060 0.060 0.060 0.030 0.000 0.000 0.000 0.000 0.000 0.000 0.000)))
@@ -17770,7 +17770,7 @@ EDITS: 5
 	(let ((gen (make-granulate :jitter 0.0 :hop .002 :length .001 :ramp .5)))
 	  (map-channel (lambda (y) (granulate gen (lambda (dir) .1))))
 	  (let ((mx (maxamp)))
-	    (if (fneq mx 0.06) (snd-display "gran 3 max: ~A" mx)))
+	    (if (fneq mx 0.06) (snd-display ";gran 3 max: ~A" mx)))
 	  (if (not (vequal (channel->vct 0 30) 
 			   (vct 0.000 0.005 0.011 0.016 0.022 0.027 0.033 0.038 0.044 0.049 0.055 0.060 0.060 0.055 0.049 0.044 
 				0.038 0.033 0.027 0.022 0.016 0.011 0.005 0.000 0.000 0.000 0.000 0.000 0.000 0.000)))
@@ -17784,7 +17784,7 @@ EDITS: 5
 	(let ((gen (make-granulate :jitter 0.0 :hop .001 :length .001 :ramp .5)))
 	  (map-channel (lambda (y) (granulate gen (lambda (dir) .1))))
 	  (let ((mx (maxamp)))
-	    (if (fneq mx 0.06) (snd-display "gran 4 max: ~A" mx)))
+	    (if (fneq mx 0.06) (snd-display ";gran 4 max: ~A" mx)))
 	  (if (not (vequal (channel->vct 0 30) 
 			   (vct 0.000 0.005 0.011 0.016 0.022 0.027 0.033 0.038 0.044 0.049 0.055 0.060 0.060 0.055 0.049 0.044 
 				0.038 0.033 0.027 0.022 0.016 0.011 0.005 0.005 0.011 0.016 0.022 0.027 0.033 0.038)))
@@ -17798,7 +17798,7 @@ EDITS: 5
 	(let ((gen (make-granulate :jitter 0.0 :hop .001 :length .001 :ramp .25 :scaler 1.0)))
 	  (map-channel (lambda (y) (granulate gen (lambda (dir) .1))))
 	  (let ((mx (maxamp)))
-	    (if (fneq mx 0.1) (snd-display "gran 5 max: ~A" mx)))
+	    (if (fneq mx 0.1) (snd-display ";gran 5 max: ~A" mx)))
 	  (if (not (vequal (channel->vct 0 30) 
 			   (vct 0.000 0.020 0.040 0.060 0.080 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 
 				0.100 0.100 0.100 0.080 0.060 0.040 0.020 0.020 0.040 0.060 0.080 0.100 0.100 0.100)))
@@ -17812,7 +17812,7 @@ EDITS: 5
 	(let ((gen (make-granulate :jitter 0.0 :hop .001 :length .002 :ramp .5 :scaler 1.0)))
 	  (map-channel (lambda (y) (granulate gen (lambda (dir) .1))))
 	  (let ((mx (maxamp)))
-	    (if (fneq mx 0.105) (snd-display "gran 6 max: ~A" mx)))
+	    (if (fneq mx 0.105) (snd-display ";gran 6 max: ~A" mx)))
 	  (if (not (vequal (channel->vct 0 30) 
 			   (vct 0.000 0.005 0.009 0.014 0.018 0.023 0.027 0.032 0.036 0.041 0.045 0.050 0.055 0.059 0.064 0.068 
 				0.073 0.077 0.082 0.086 0.091 0.095 0.100 0.105 0.105 0.105 0.105 0.105 0.105 0.105)))
@@ -17826,7 +17826,7 @@ EDITS: 5
 	(let ((gen (make-granulate :jitter 0.0 :hop .001 :length .005 :ramp .5 :scaler 1.0)))
 	  (map-channel (lambda (y) (granulate gen (lambda (dir) .1))))
 	  (let ((mx (maxamp)))
-	    (if (fneq mx 0.264) (snd-display "gran 7 max: ~A" mx)))
+	    (if (fneq mx 0.264) (snd-display ";gran 7 max: ~A" mx)))
 	  (if (not (vequal (channel->vct 0 30) 
 			   (vct 0.000 0.002 0.004 0.005 0.007 0.009 0.011 0.013 0.015 0.016 0.018 0.020 0.022 0.024 0.025 0.027 
 				0.029 0.031 0.033 0.035 0.036 0.038 0.040 0.044 0.047 0.051 0.055 0.058 0.062 0.065)))
@@ -17840,7 +17840,7 @@ EDITS: 5
 	(let ((gen (make-granulate :jitter 0.0 :hop .01 :length .001 :ramp .5 :scaler 1.0 :expansion 2.0)))
 	  (map-channel (lambda (y) (granulate gen (lambda (dir) .1))))
 	  (let ((mx (maxamp)))
-	    (if (fneq mx 0.1) (snd-display "gran 8 max: ~A" mx)))
+	    (if (fneq mx 0.1) (snd-display ";gran 8 max: ~A" mx)))
 	  (if (not (vequal (channel->vct 0 30) 
 			   (vct 0.000 0.009 0.018 0.027 0.036 0.045 0.055 0.064 0.073 0.082 0.091 0.100 0.100 0.091 0.082 0.073 
 				0.064 0.055 0.045 0.036 0.027 0.018 0.009 0.000 0.000 0.000 0.000 0.000 0.000 0.000)))
@@ -17854,7 +17854,7 @@ EDITS: 5
 	(let ((gen (make-granulate :jitter 0.0 :hop .01 :length .001 :ramp .5 :scaler 1.0 :expansion 0.5)))
 	  (map-channel (lambda (y) (granulate gen (lambda (dir) .1))))
 	  (let ((mx (maxamp)))
-	    (if (fneq mx 0.1) (snd-display "gran 9 max: ~A" mx))) ; same as 8 because expansion hits the input counter
+	    (if (fneq mx 0.1) (snd-display ";gran 9 max: ~A" mx))) ; same as 8 because expansion hits the input counter
 	  (if (not (vequal (channel->vct 0 30) 
 			   (vct 0.000 0.009 0.018 0.027 0.036 0.045 0.055 0.064 0.073 0.082 0.091 0.100 0.100 0.091 0.082 0.073 
 				0.064 0.055 0.045 0.036 0.027 0.018 0.009 0.000 0.000 0.000 0.000 0.000 0.000 0.000)))
@@ -17877,7 +17877,7 @@ EDITS: 5
 						    (vct-set! grain i (* 2 (vct-ref grain i)))))
 						0))))
 	  (let ((mx (maxamp)))
-	    (if (fneq mx (* 2 0.264)) (snd-display "gran 10 max: ~A" mx)))
+	    (if (fneq mx (* 2 0.264)) (snd-display ";gran 10 max: ~A" mx)))
 	  (if (not (vequal (vct-scale! (channel->vct 0 30) 0.5)
 			   (vct 0.000 0.002 0.004 0.005 0.007 0.009 0.011 0.013 0.015 0.016 0.018 0.020 0.022 0.024 0.025 0.027 
 				0.029 0.031 0.033 0.035 0.036 0.038 0.040 0.044 0.047 0.051 0.055 0.058 0.062 0.065)))
@@ -17905,7 +17905,7 @@ EDITS: 5
 							(vct-reverse! grain len))) ; should get ramps going up then down across overall rising ramp
 						  len)))))
 	  (let ((mx (maxamp)))
-	    (if (> mx 0.6) (snd-display "gran 11 max: ~A" mx)))
+	    (if (> mx 0.6) (snd-display ";gran 11 max: ~A" mx)))
 	  (if (not (vequal (channel->vct 0 30)
 			   (vct -0.499 -0.498 -0.497 -0.496 -0.495 -0.494 -0.493 -0.492 -0.491 -0.490 -0.489 -0.488 -0.487 -0.486 
 				-0.485 -0.484 -0.483 -0.482 -0.481 -0.480 -0.479 -0.478 -0.477 -0.476 -0.475 -0.474 -0.473 -0.472 -0.471 -0.470)))
@@ -17923,7 +17923,7 @@ EDITS: 5
 				    :input (lambda (dir) (set! ctr (+ ctr incr)) ctr))))
 	  (map-channel (lambda (y) (granulate gen)))
 	  (let ((mx (maxamp)))
-	    (if (> mx 0.6) (snd-display "gran 12 max: ~A" mx)))
+	    (if (> mx 0.6) (snd-display ";gran 12 max: ~A" mx)))
 	  (if (not (vequal (channel->vct 0 30)
 			   (vct -0.499 -0.498 -0.497 -0.496 -0.495 -0.494 -0.493 -0.492 -0.491 -0.490 -0.489 -0.488 -0.487 -0.486 
 				-0.485 -0.484 -0.483 -0.482 -0.481 -0.480 -0.479 -0.478 -0.477 -0.476 -0.475 -0.474 -0.473 -0.472 -0.471 -0.470)))
@@ -17946,7 +17946,7 @@ EDITS: 5
 					   0))))
 	  (map-channel (lambda (y) (granulate gen)))
 	  (let ((mx (maxamp)))
-	    (if (> mx .6) (snd-display "gran 13 max: ~A" mx)))
+	    (if (> mx .6) (snd-display ";gran 13 max: ~A" mx)))
 	  (if (not (vequal (vct-scale! (channel->vct 0 30) 0.5)
 			   (vct 0.000 0.002 0.004 0.005 0.007 0.009 0.011 0.013 0.015 0.016 0.018 0.020 0.022 0.024 0.025 0.027 
 				0.029 0.031 0.033 0.035 0.036 0.038 0.040 0.044 0.047 0.051 0.055 0.058 0.062 0.065)))
@@ -17974,7 +17974,7 @@ EDITS: 5
 					      len)))))
 	  (map-channel (lambda (y) (granulate gen)))
 	  (let ((mx (maxamp)))
-	    (if (> mx 0.6) (snd-display "gran 14 max: ~A" mx)))
+	    (if (> mx 0.6) (snd-display ";gran 14 max: ~A" mx)))
 	  (if (not (vequal (channel->vct 0 30)
 			   (vct -0.499 -0.498 -0.497 -0.496 -0.495 -0.494 -0.493 -0.492 -0.491 -0.490 -0.489 -0.488 -0.487 -0.486 
 				-0.485 -0.484 -0.483 -0.482 -0.481 -0.480 -0.479 -0.478 -0.477 -0.476 -0.475 -0.474 -0.473 -0.472 -0.471 -0.470)))
@@ -17994,7 +17994,7 @@ EDITS: 5
 	       (set! (mus-ramp gen) (inexact->exact (round (* base-ramp-len (env e)))))
 	       result)))
 	  (let ((mx (maxamp)))
-	    (if (fneq mx 0.06) (snd-display "granf 0 max: ~A" mx)))
+	    (if (fneq mx 0.06) (snd-display ";granf 0 max: ~A" mx)))
 	  (if (> (abs (- (mus-ramp gen) (* .5 (mus-length gen)))) 1)
 	      (snd-display ";granf 0 ramp: ~A ~A" (mus-ramp gen) (mus-length gen)))
 	  (if (not (vequal (channel->vct 0 30) 
@@ -18021,7 +18021,7 @@ EDITS: 5
 	       (set! (mus-hop gen) (inexact->exact (round (* base-hop-len (env e)))))
 	       result)))
 	  (let ((mx (maxamp)))
-	    (if (fneq mx 0.06) (snd-display "granf 1 max: ~A" mx)))
+	    (if (fneq mx 0.06) (snd-display ";granf 1 max: ~A" mx)))
 	  (if (> (abs (- (mus-hop gen) (* .001 (srate)))) 1)
 	      (snd-display ";granf 1 hop: ~A" (mus-hop gen)))
 	  (if (not (vequal (channel->vct 0 30) 
@@ -18043,7 +18043,7 @@ EDITS: 5
 	       (set! (mus-frequency gen) (* base-freq (env e)))
 	       result)))
 	  (let ((mx (maxamp)))
-	    (if (fneq mx 0.06) (snd-display "granf 2 max: ~A" mx)))
+	    (if (fneq mx 0.06) (snd-display ";granf 2 max: ~A" mx)))
 	  (if (> (abs (- (mus-hop gen) (* .001 (srate)))) 1)
 	      (snd-display ";granf 2 hop: ~A" (mus-hop gen)))
 	  (if (not (vequal (channel->vct 0 30) 
@@ -18059,7 +18059,7 @@ EDITS: 5
 	(let ((gen (make-granulate :jitter 0.0 :hop .002 :length .001 :ramp 0.0 :scaler 1.0)))
 	  (map-channel (lambda (y) (granulate gen (lambda (dir) .1))))
 	  (let ((mx (maxamp)))
-	    (if (fneq mx 0.1) (snd-display "granf 3 max: ~A" mx)))
+	    (if (fneq mx 0.1) (snd-display ";granf 3 max: ~A" mx)))
 	  (if (not (vequal (channel->vct 0 30) 
 			   (vct 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 
 				0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.000 0.000 0.000 0.000 0.000 0.000 0.000)))
@@ -18074,7 +18074,7 @@ EDITS: 5
 	       (set! (mus-scaler gen) (env e))
 	       result)))
 	  (let ((mx (maxamp)))
-	    (if (fneq mx 0.1) (snd-display "granf 4 max: ~A" mx)))
+	    (if (fneq mx 0.1) (snd-display ";granf 4 max: ~A" mx)))
 	  (if (not (vequal (channel->vct 0 30) 
 			   (vct 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 
 				0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.000 0.000 0.000 0.000 0.000 0.000 0.000)))
@@ -18098,7 +18098,7 @@ EDITS: 5
 	       (set! (mus-length gen) (inexact->exact (round (* base-len (env e)))))
 	       result)))
 	  (let ((mx (maxamp)))
-	    (if (fneq mx 0.06) (snd-display "granf 5 max: ~A" mx)))
+	    (if (fneq mx 0.06) (snd-display ";granf 5 max: ~A" mx)))
 	  (if (> (abs (- (mus-length gen) (* 5 base-len))) 10)
 	      (snd-display ";granf 5 length: ~A ~A" (mus-length gen) (* 5 base-len)))
 	  (if (not (vequal (channel->vct 0 30) 
@@ -18124,7 +18124,7 @@ EDITS: 5
 	       (set! (mus-length gen) (inexact->exact (round (* base-len (env e)))))
 	       result)))
 	  (let ((mx (maxamp)))
-	    (if (fneq mx 0.06) (snd-display "granf 6 max: ~A" mx)))
+	    (if (fneq mx 0.06) (snd-display ";granf 6 max: ~A" mx)))
 	  (if (> (abs (- (mus-length gen) (* .2 base-len))) 4)
 	      (snd-display ";granf 6 length: ~A ~A" (mus-length gen) (* .2 base-len)))
 	  (if (not (vequal (channel->vct 0 30) 
@@ -25106,7 +25106,7 @@ EDITS: 5
 			   (set! mxpos (+ mxpos (edit-position snd chn)))))
 		     (if (or (> mxpos 100) (> chns 4))
 			 (begin
-			   (snd-display "revert ~A at ~A" (file-name snd) mxpos)
+			   (snd-display ";revert ~A at ~A" (file-name snd) mxpos)
 			   (revert-sound snd)))))
 		 (sounds))))
 	(clear-sincs)      
@@ -34898,7 +34898,7 @@ EDITS: 2
 		  (gen (make-oscil 440.0)))
 	      (map-chan (lambda (y) (oscil gen)))
 	      (down-oct 2)
-	      (if (not (= (frames) 200)) (snd-display "down-oct new len: ~A" (frames)))
+	      (if (not (= (frames) 200)) (snd-display ";down-oct new len: ~A" (frames)))
 	      (let ((r1 (make-sample-reader 0 ind 0 1 1))
 		    (r2 (make-sample-reader 0 ind 0 1 2)))
 		(do ((i 0 (+ i 2)))
@@ -40080,9 +40080,6 @@ EDITS: 2
 		       (display svar)
 		       (display #\newline) (display "---------------------------------------------------------------") (display #\newline)
 		       )))
-	      (if (defined? 'describe-walk-info)
-		  (if (not (string? (describe-walk-info '*)))
-		      (snd-display ";walk-info *: ~A" (describe-walk-info '*))))
 	      (close-sound ind)))
 	    
 	    (let ((val (run-eval '(lambda () (fneq .1 .1)))))
@@ -54433,7 +54430,7 @@ EDITS: 2
       (define procs10 (remove-if (lambda (n) (or (not (procedure? n)) (not (arity-ok n 10)))) procs))
 
       (if all-args
-	  (snd-display "procs 0: ~A ~A, 1: ~A ~A, 2: ~A ~A, 3: ~A ~A, 4: ~A ~A, 5: ~A, 6: ~A, 7: ~A, 8: ~A, 10: ~A"
+	  (snd-display ";procs 0: ~A ~A, 1: ~A ~A, 2: ~A ~A, 3: ~A ~A, 4: ~A ~A, 5: ~A, 6: ~A, 7: ~A, 8: ~A, 10: ~A"
 		       (length procs0) (length set-procs0) 
 		       (length procs1) (length set-procs1) 
 		       (length procs2) (length set-procs2) 
@@ -55809,7 +55806,6 @@ EDITS: 2
 		;; these can take awhile...
 		(begin
 
-		  (snd-display "3 args")
 		  ;; ---------------- 3 Args
 		  (for-each 
 		   (lambda (arg1)
@@ -55834,7 +55830,6 @@ EDITS: 2
 			 -1 0 3 #f #t '() vector-0 12345678901234567890 (log0) (nan)))
 		  (gc)(gc)
 
-		  (snd-display "set 3 args")
 		  ;; ---------------- set! 3 Args
 		  (for-each 
 		   (lambda (arg1)
@@ -55862,7 +55857,6 @@ EDITS: 2
 			 -1 0 3 16 #f #t '() vector-0 12345678901234567890 (log0) (nan)))
 		  (gc)(gc)
 
-		  (snd-display "4 args")
 		  ;; ---------------- 4 Args
 		  (for-each 
 		   (lambda (arg1)
@@ -55890,7 +55884,6 @@ EDITS: 2
 			 -1 0 #f #t '() vector-0 12345678901234567890 (log0) (nan)))
 		  (gc)(gc)
 
-		  (snd-display "set 4 args")
 		  ;; ---------------- set! 4 Args
 		  (for-each 
 		   (lambda (arg1)
@@ -55925,7 +55918,6 @@ EDITS: 2
 		  (clear-sincs)
 		  (stop-playing)
 
-		  (snd-display "5 args")
 		  ;; ---------------- 5 Args
 		  (for-each 
 		   (lambda (arg1)
@@ -55954,7 +55946,6 @@ EDITS: 2
 
 		  (clear-sincs)
 
-		  (snd-display "6 args")
 		  ;; ---------------- 6 Args
 		  (for-each 
 		   (lambda (arg1)
@@ -55984,7 +55975,6 @@ EDITS: 2
 		   (list 1.5 "/hiho" 1234 #f #t vct-5))
 		  (gc)(gc)
 
-		  (snd-display "8 args")
 		  ;; ---------------- 8 Args
 		  (for-each 
 		   (lambda (arg1)
@@ -56022,7 +56012,6 @@ EDITS: 2
 
 		  (clear-sincs)
 
-		  (snd-display "10 args")
 		  ;; ---------------- 10 Args
 		  (for-each 
 		   (lambda (arg1)

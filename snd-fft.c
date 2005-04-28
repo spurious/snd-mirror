@@ -1128,10 +1128,6 @@ static fft_state *make_fft_state(chan_info *cp, bool force_recalc)
       if ((cp->zero_pad == 0) && (POWER_OF_2_P(cp->transform_size)))
 	fftsize = cp->transform_size;
       else fftsize = snd_ipow2((int)(ceil(log((Float)(cp->transform_size * (1 + cp->zero_pad))) / log(2.0))));
-#if DEBUGGING
-      if (!(POWER_OF_2_P(fftsize))) {fprintf(stderr, "%d is not a power of 2", fftsize); abort();}
-      if (fftsize < cp->transform_size) {fprintf(stderr, "%d < %d (fft size)", fftsize, cp->transform_size); fftsize *= 2;}
-#endif
       if (fftsize < 2) fftsize = 2;
       cp->selection_transform_size = 0;
     }

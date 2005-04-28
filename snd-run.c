@@ -96,6 +96,7 @@
  *
  * PERHAPS: count-matches and friends? (func itself is already optimized)
  * PERHAPS: float_or_boolean_or_vct return type mainly for map-channel funcs
+ *          could we use R_NUMBER_VCT as the return type for this?
  *
  * TODO: set for sample with at least samp arg (don't need the full thing)
  *        (set-samples beg dur vct), (samples beg dur) -> vct, (sample samp), (set! (sample samp) ...)
@@ -9781,38 +9782,6 @@ typedef struct {
   int *arg_types;
 } walk_info;
 
-#if DEBUGGING
-static XEN g_describe_walk_info(XEN obj)
-{
-  XEN walker;
-  walk_info *w = NULL;
-  walker = XEN_OBJECT_PROPERTY(obj, walk_sym);
-  if (XEN_ULONG_P(walker))
-    {
-      w = (walk_info *)(XEN_TO_C_ULONG(walker));
-      if (w)
-	{
-	  char *buf;
-	  int i, len;
-	  len = 1024;
-	  buf = (char *)CALLOC(len, sizeof(char));
-	  sprintf(buf, "%p %p %p: req: %d, max: %d, result: %s, need_int: %s, num_arg_types: %d: ",
-		  w->walker, w->special_walker, w->set_walker, 
-		  w->required_args, w->max_args, type_name(w->result_type), (w->need_int_result) ? "#t" : "#f", w->num_arg_types);
-	  for (i = 0; i < w->num_arg_types; i++)
-	    {
-	      buf = snd_strcat(buf, type_name(w->arg_types[i]), &len);
-	      buf = snd_strcat(buf, " ", &len);
-	    }
-	  walker = C_TO_XEN_STRING(buf);
-	  FREE(buf);
-	  return(walker);
-	}
-    }
-  return(XEN_FALSE);
-}
-#endif
-
 static walk_info *make_walker(xen_value *(*walker)(ptree *prog, xen_value **args, int num_args),
 			      xen_value *(*special_walker)(ptree *prog, XEN form, walk_result_t need_result),
 			      void (*set_walker)(ptree *prog, xen_value *in_v, xen_value *in_v1, xen_value *in_v2, xen_value *v),
@@ -10985,6 +10954,7 @@ Float evaluate_ptreec(struct ptree *pt, Float arg, vct *v, bool dir)
 static XEN eval_ptree_to_xen(ptree *pt)
 {
   XEN result = XEN_FALSE;
+  eval_ptree(pt);
   switch (pt->result->type)
     {
     case R_FLOAT:   result = C_TO_XEN_DOUBLE(pt->dbls[pt->result->addr]);       break;
@@ -11010,6 +10980,7 @@ static XEN eval_ptree_to_xen(ptree *pt)
 	result = pt->xens[pt->result->addr]; 
       break;
     }
+  free_ptree(pt);
   return(result);
 }
 
@@ -11547,7 +11518,6 @@ static void init_walkers(void)
 static XEN g_run_eval(XEN code, XEN arg, XEN arg1, XEN arg2)
 {
   ptree *pt;
-  XEN result = XEN_FALSE;
   current_optimization = SOURCE_OK;
   pt = make_ptree(8);
   pt->result = walk(pt, code, NEED_ANY_RESULT);
@@ -11601,14 +11571,10 @@ static XEN g_run_eval(XEN code, XEN arg, XEN arg1, XEN arg2)
 	      return(XEN_FALSE);
 	    }
 	}
-      eval_ptree(pt);
-      result = eval_ptree_to_xen(pt);
-      free_ptree(pt);
-      return(result);
+      return(eval_ptree_to_xen(pt));
     }
   if (pt) free_ptree(pt);
-  XEN_ERROR(CANNOT_PARSE,
-	    code);
+  XEN_ERROR(CANNOT_PARSE, code);
   return(XEN_FALSE);
 }
 
@@ -11618,19 +11584,14 @@ static XEN g_run(XEN proc_and_code)
 then evaluate it; if the optimizer can't handle something in the procedure, it is passed \
 to Guile and is equivalent to (thunk)."
 
-  XEN code, result = XEN_FALSE;
+  XEN code;
   ptree *pt = NULL;
   code = XEN_CADR(proc_and_code);
   XEN_ASSERT_TYPE(XEN_PROCEDURE_P(code) && (XEN_REQUIRED_ARGS_OK(code, 0)), code, XEN_ONLY_ARG, S_run, "a thunk");
   pt = form_to_ptree(proc_and_code);
   if (pt)
-    {
-      eval_ptree(pt);
-      result = eval_ptree_to_xen(pt);
-      free_ptree(pt);
-    }
-  else result = XEN_CALL_0(code, S_run);
-  return(result);
+    return(eval_ptree_to_xen(pt));
+  return(XEN_CALL_0(code, S_run));
 }
 
 #else
@@ -11781,18 +11742,13 @@ void g_init_run(void)
   XEN_SET_DOCUMENTATION(S_vct_map, H_vct_map);
   XEN_DEFINE_PROCEDURE(S_add_clm_field, g_add_clm_field, 2, 1, 0, H_add_clm_field);
   XEN_DEFINE_PROCEDURE(S_add_clm_type, g_add_clm_type, 1, 0, 0, H_add_clm_type);
-#if DEBUGGING
-  XEN_DEFINE_PROCEDURE("describe-walk-info", g_describe_walk_info, 1, 0, 0, "internal debugging aid");
-#endif
   XEN_DEFINE_PROCEDURE("show-ptree", g_show_ptree, 1, 0, 0, "internal debugging stuff");
 #else
   XEN_DEFINE_PROCEDURE(S_vct_map, g_vct_map_w, 2, 0, 0, H_vct_map);
 #endif
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_optimization, g_optimization_w, H_optimization,
-				   S_setB S_optimization, g_set_optimization_w,  0, 0, 1, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_run_safety, g_run_safety_w, H_run_safety,
-				   S_setB S_run_safety, g_set_run_safety_w,  0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_optimization, g_optimization_w, H_optimization, S_setB S_optimization, g_set_optimization_w,  0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_run_safety, g_run_safety_w, H_run_safety, S_setB S_run_safety, g_set_run_safety_w,  0, 0, 1, 0);
 
 #if WITH_RUN
   #define H_optimization_hook S_optimization_hook " (msg): called if the run macro encounters \
@@ -11800,7 +11756,7 @@ something it can't optimize.  'msg' is a string description of the offending for
   (add-hook! optimization-hook (lambda (msg) (snd-print msg)))\n\
 You can often slightly rewrite the form to make run happy."
 #else
-#define H_optimization_hook S_optimization_hook " (msg): has no effect since 'run' is not included in this version of Snd."
+#define H_optimization_hook S_optimization_hook " (msg): this hook is ignored because 'run' is not included in this version of Snd."
 #endif
 
   XEN_DEFINE_HOOK(optimization_hook, S_optimization_hook, 1, H_optimization_hook);      /* arg = message */
