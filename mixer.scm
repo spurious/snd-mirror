@@ -3,10 +3,6 @@
 ;;; frame-reverse, make-zero-mixer, mixer-diagonal?, mixer-transpose, mixer-determinant,
 ;;; mixer-solve, mixer-inverse, invert-matrix, mixer-trace, mixer-poly, mixer-copy, frame-copy
 
-
-;;; PERHAPS: mixer* could handle all frame->frame cases
-
-
 (provide 'snd-mixer.scm)
 
 (define (frame-reverse fr)

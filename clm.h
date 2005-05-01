@@ -2,10 +2,11 @@
 #define CLM_H
 
 #define MUS_VERSION 3
-#define MUS_REVISION 17
-#define MUS_DATE "18-Apr-05"
+#define MUS_REVISION 18
+#define MUS_DATE "1-May-05"
 
 /*
+ * 1-May:      mus-scaler|feedback ok with delay and average.
  * 18-Apr:     mus_set_environ.
  * 11-Apr:     mus_mixer|frame_offset, mus_frame_scale (for higher level generic functions).
  * 23-Mar:     frame_to_frame arg interpretation changed.

@@ -43,6 +43,7 @@ typedef struct region {
   char *filename;           /* if region data is stored in a temp file */
   int use_temp_file;        /* REGION_FILE = in temp file 'filename', REGION_DEFERRED = in 'dr' */
   Float maxamp;
+  off_t maxamp_position;
   snd_info *editor_copy;
   char *editor_name;
   int id;
@@ -215,6 +216,19 @@ Float region_maxamp(int n)
       return(r->maxamp); 
     }
   return(0.0);
+}
+
+static off_t region_maxamp_position(int n) 
+{
+  region *r;
+  r = id_to_region(n);
+  if (r)
+    {
+      if ((r->maxamp < 0.0) && (r->use_temp_file == REGION_DEFERRED))
+	deferred_region_to_temp_file(r);
+      return(r->maxamp_position); 
+    }
+  return(0);
 }
 
 static Float region_sample(int reg, int chn, off_t samp)
@@ -698,6 +712,7 @@ int define_region(sync_info *si, off_t *ends)
   r->header_type = (sp0->hdr)->type;
   r->srate = SND_SRATE(sp0);
   r->maxamp = -1.0;
+  r->maxamp_position = 0;
   r->editor_copy = NULL;
   r->name = copy_string(sp0->short_filename);
   r->chans = si->chans;
@@ -817,12 +832,14 @@ static void deferred_region_to_temp_file(region *r)
 		    ymax = -ep->fmin;
 		}
 	      r->maxamp = MUS_SAMPLE_TO_FLOAT(ymax);
+	      /* TODO: r->maxamp_position */
 	    }
 	  snd_close(fdo, r->filename);
 	}
     }
   else
     {
+      off_t max_position = 0;
 #if DEBUGGING
       char *regstr;
       regstr = mus_format("region %d (%s: %s %s), from %s[%d]",
@@ -858,11 +875,15 @@ static void deferred_region_to_temp_file(region *r)
 		}
 	      for (i = 0; i < r->chans; i++)
 		{
-		  if (j <= r->lens[i])  /* ??? was < ends[i] */
+		  if (j <= r->lens[i])
 		    {
 		      data[i][k] = read_sample(sfs[i]);
 		      curval = mus_sample_abs(data[i][k]);
-		      if (curval > val) val = curval;
+		      if (curval > val) 
+			{
+			  val = curval;
+			  max_position = j;
+			}
 		    }
 		  else data[i][k] = MUS_SAMPLE_0;
 		}
@@ -871,6 +892,7 @@ static void deferred_region_to_temp_file(region *r)
 	    mus_file_write(ofd, 0, k - 1, r->chans, data);
 	  close_temp_file(r->filename, ofd, hdr->type, len * r->chans * datumb, drp->cps[0]->sound);
 	  r->maxamp = MUS_SAMPLE_TO_FLOAT(val);
+	  r->maxamp_position = max_position;
 	  for (i = 0; i < r->chans; i++) FREE(data[i]);
 	  for (i = 0; i < r->chans; i++) free_snd_fd(sfs[i]);
 	  FREE(sfs);
@@ -963,6 +985,8 @@ int snd_regions(void)
 }
 
 /* (restore-region n chans len srate maxamp name start end filename [date-and-length]) */
+
+/* TODO: restore maxamp_position as well */
 
 void save_regions(FILE *fd)
 {
@@ -1077,6 +1101,7 @@ void save_region_backpointer(snd_info *sp)
   free_region(r, CLEAR_REGION_DATA);
   r->use_temp_file = REGION_FILE;
   r->maxamp = 0.0;
+  /* TODO: r->maxamp_position */
   r->frames = CURRENT_SAMPLES(sp->chans[0]);
   for (i = 0; i < sp->nchans; i++)
     {
@@ -1232,7 +1257,7 @@ static XEN g_region_position(XEN n, XEN chan)
   return(C_TO_XEN_OFF_T(r->begs[chn]));
 }
 
-typedef enum {REGION_SRATE, REGION_CHANS, REGION_MAXAMP, REGION_FORGET, REGION_PLAY} region_field_t;
+typedef enum {REGION_SRATE, REGION_CHANS, REGION_MAXAMP, REGION_FORGET, REGION_PLAY, REGION_MAXAMP_POSITION} region_field_t;
 
 static XEN region_get(region_field_t field, XEN n, char *caller)
 {
@@ -1245,6 +1270,7 @@ static XEN region_get(region_field_t field, XEN n, char *caller)
     case REGION_SRATE:  return(C_TO_XEN_INT(region_srate(rg))); break;
     case REGION_CHANS:  return(C_TO_XEN_INT(region_chans(rg))); break;
     case REGION_MAXAMP: return(C_TO_XEN_DOUBLE(region_maxamp(rg))); break;
+    case REGION_MAXAMP_POSITION: return(C_TO_XEN_OFF_T(region_maxamp_position(rg))); break;
     case REGION_FORGET: delete_region_and_update_browser(region_id_to_list_position(rg)); return(n); break;
     default: break;
     }
@@ -1270,6 +1296,13 @@ static XEN g_region_maxamp(XEN n)
   #define H_region_maxamp "(" S_region_maxamp " (reg 0)): region maxamp"
   XEN_ASSERT_TYPE(XEN_REGION_IF_BOUND_P(n), n, XEN_ONLY_ARG, S_region_maxamp, "a region id");
   return(region_get(REGION_MAXAMP, n, S_region_maxamp));
+}
+
+static XEN g_region_maxamp_position(XEN n) 
+{
+  #define H_region_maxamp_position "(" S_region_maxamp " (reg 0)): first sample where region maxamp occurs"
+  XEN_ASSERT_TYPE(XEN_REGION_IF_BOUND_P(n), n, XEN_ONLY_ARG, S_region_maxamp_position, "a region id");
+  return(region_get(REGION_MAXAMP_POSITION, n, S_region_maxamp_position));
 }
 
 static XEN g_forget_region(XEN n) 
@@ -1554,6 +1587,7 @@ XEN_ARGIFY_2(g_region_position_w, g_region_position)
 XEN_ARGIFY_1(g_region_srate_w, g_region_srate)
 XEN_ARGIFY_1(g_region_chans_w, g_region_chans)
 XEN_ARGIFY_1(g_region_maxamp_w, g_region_maxamp)
+XEN_ARGIFY_1(g_region_maxamp_position_w, g_region_maxamp_position)
 XEN_ARGIFY_9(g_save_region_w, g_save_region)
 XEN_ARGIFY_1(g_forget_region_w, g_forget_region)
 XEN_ARGIFY_3(g_play_region_w, g_play_region)
@@ -1573,6 +1607,7 @@ XEN_NARGIFY_1(g_set_max_regions_w, g_set_max_regions)
 #define g_region_srate_w g_region_srate
 #define g_region_chans_w g_region_chans
 #define g_region_maxamp_w g_region_maxamp
+#define g_region_maxamp_position_w g_region_maxamp_position
 #define g_save_region_w g_save_region
 #define g_forget_region_w g_forget_region
 #define g_play_region_w g_play_region
@@ -1589,22 +1624,23 @@ void g_init_regions(void)
 {
   init_region_keywords();
 
-  XEN_DEFINE_PROCEDURE(S_restore_region,     g_restore_region_w,     9, 1, 0, "internal func used in save-state, restores a region");
-  XEN_DEFINE_PROCEDURE(S_insert_region,      g_insert_region_w,      0, 4, 0, H_insert_region);
-  XEN_DEFINE_PROCEDURE(S_regions,            g_regions_w,            0, 0, 0, H_regions);
-  XEN_DEFINE_PROCEDURE(S_region_frames,      g_region_frames_w,      0, 2, 0, H_region_frames);
-  XEN_DEFINE_PROCEDURE(S_region_position,    g_region_position_w,    0, 2, 0, H_region_position);
-  XEN_DEFINE_PROCEDURE(S_region_srate,       g_region_srate_w,       0, 1, 0, H_region_srate);
-  XEN_DEFINE_PROCEDURE(S_region_chans,       g_region_chans_w,       0, 1, 0, H_region_chans);
-  XEN_DEFINE_PROCEDURE(S_region_maxamp,      g_region_maxamp_w,      0, 1, 0, H_region_maxamp);
-  XEN_DEFINE_PROCEDURE(S_save_region,        g_save_region_w,        2, 7, 0, H_save_region);
-  XEN_DEFINE_PROCEDURE(S_forget_region,      g_forget_region_w,      0, 1, 0, H_forget_region);
-  XEN_DEFINE_PROCEDURE(S_play_region,        g_play_region_w,        0, 3, 0, H_play_region);
-  XEN_DEFINE_PROCEDURE(S_make_region,        g_make_region_w,        0, 4, 0, H_make_region);
-  XEN_DEFINE_PROCEDURE(S_mix_region,         g_mix_region_w,         0, 5, 0, H_mix_region);
-  XEN_DEFINE_PROCEDURE(S_region_sample,      g_region_sample_w,      0, 3, 0, H_region_sample);
-  XEN_DEFINE_PROCEDURE(S_region_to_vct,      g_region_to_vct_w,      0, 5, 0, H_region_to_vct);
-  XEN_DEFINE_PROCEDURE(S_region_p,           g_region_p_w,           1, 0, 0, H_region_p);
+  XEN_DEFINE_PROCEDURE(S_restore_region,         g_restore_region_w,         9, 1, 0, "internal func used in save-state, restores a region");
+  XEN_DEFINE_PROCEDURE(S_insert_region,          g_insert_region_w,          0, 4, 0, H_insert_region);
+  XEN_DEFINE_PROCEDURE(S_regions,                g_regions_w,                0, 0, 0, H_regions);
+  XEN_DEFINE_PROCEDURE(S_region_frames,          g_region_frames_w,          0, 2, 0, H_region_frames);
+  XEN_DEFINE_PROCEDURE(S_region_position,        g_region_position_w,        0, 2, 0, H_region_position);
+  XEN_DEFINE_PROCEDURE(S_region_srate,           g_region_srate_w,           0, 1, 0, H_region_srate);
+  XEN_DEFINE_PROCEDURE(S_region_chans,           g_region_chans_w,           0, 1, 0, H_region_chans);
+  XEN_DEFINE_PROCEDURE(S_region_maxamp,          g_region_maxamp_w,          0, 1, 0, H_region_maxamp);
+  XEN_DEFINE_PROCEDURE(S_region_maxamp_position, g_region_maxamp_position_w, 0, 1, 0, H_region_maxamp_position);
+  XEN_DEFINE_PROCEDURE(S_save_region,            g_save_region_w,            2, 7, 0, H_save_region);
+  XEN_DEFINE_PROCEDURE(S_forget_region,          g_forget_region_w,          0, 1, 0, H_forget_region);
+  XEN_DEFINE_PROCEDURE(S_play_region,            g_play_region_w,            0, 3, 0, H_play_region);
+  XEN_DEFINE_PROCEDURE(S_make_region,            g_make_region_w,            0, 4, 0, H_make_region);
+  XEN_DEFINE_PROCEDURE(S_mix_region,             g_mix_region_w,             0, 5, 0, H_mix_region);
+  XEN_DEFINE_PROCEDURE(S_region_sample,          g_region_sample_w,          0, 3, 0, H_region_sample);
+  XEN_DEFINE_PROCEDURE(S_region_to_vct,          g_region_to_vct_w,          0, 5, 0, H_region_to_vct);
+  XEN_DEFINE_PROCEDURE(S_region_p,               g_region_p_w,               1, 0, 0, H_region_p);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_max_regions, g_max_regions_w, H_max_regions, S_setB S_max_regions, g_set_max_regions_w, 0, 0, 1, 0);
 }

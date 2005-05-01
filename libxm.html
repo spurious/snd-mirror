@@ -20,7 +20,6 @@
 </head>
 <body bgcolor=white>
 
-<A NAME="xm"></a>
 <table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h1>xm</h1></td></tr></table>
 <br>
 <p>libxm provides Guile/Ruby bindings for Xlib, Xt, Xp, Xpm, and Xm (Motif);
@@ -33,18 +32,18 @@ providing a graphical user-interface for scripts.
 </p>
 <p>
 All libxm names are exactly the same as the C name except that
-a "." is prepended (in Guile) to struct field accessors -- the prefix and postfix can be set via the macros
+a "." is prepended (in Guile) to struct field accessors -- this prefix (and the postfix) can be set via the macros
 XM_PREFIX, XM_FIELD_PREFIX and XM_POSTFIX to whatever you like --
 "x:" or "&lt;" and "&gt;", etc.  In Ruby, I'm prepending "R".
 I chose not to try to make these names fit into the
 "Scheme culture" (i.e. adding random dashes and uncapitalizing everything)
 because it is already too hard to keep track of the thousands of names
-in these libraries.  By using the exact C name, ugly embedded caps and all,
-there's no hesitation or uncertainty about what the corresponding libxm name is;
+in these libraries.  By using the exact C name, embedded caps and all,
+there's no uncertainty about what the corresponding libxm name is;
 XmScaleSetValue becomes XmScaleSetValue.
 There are several differences between the C versions and the libxm
-versions; these are listed in detail at the start of xm.c and xg.c.  Briefly,
-an Arg list is a lisp list of name/value pairs and the "len" arg associated with it is optional;
+versions; these are listed at the start of xm.c and xg.c.  Briefly,
+an Arg list (in Motif) is a lisp list of name/value pairs and the "len" arg associated with it is optional;
 ref args are usually returned by the procedure in a list, and not passed in unless an initial value is needed;
 array args are passed as lists, and returned as lists;
 pointers to structs are '(type val) where val is opaque except via accessors  

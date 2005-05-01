@@ -80,6 +80,7 @@ typedef struct {
   int edit_type, sound_location, ptree_location;
   off_t selection_beg, selection_end;  /* selection needs to follow edit list */
   Float maxamp, selection_maxamp;
+  off_t maxamp_position, selection_maxamp_position;
   int edpos;
   bool ptree_env_too, backed_up;
 } ed_list;

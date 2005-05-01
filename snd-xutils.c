@@ -659,12 +659,16 @@ Pixmap rotate_text (Widget w, char *str, XFontStruct *font, Float angle_in_degre
   return(rotpix);
 }
 
-void draw_rotated_axis_label(Widget widget, GC gc, char *text, int x0, int y0)
+void draw_rotated_axis_label(chan_info *cp, GC gc, char *text, int x0, int y0)
 {
   Pixmap pix;
   int h, w;
   XGCValues gv;
   Display *dp;
+  Widget widget;
+  if ((cp->chan > 0) && (cp->sound->channel_style == CHANNELS_COMBINED))
+    widget = channel_graph(cp->sound->chans[0]);
+  else widget = channel_graph(cp);
   dp = XtDisplay(widget);
   XGetGCValues(MAIN_DISPLAY(ss), gc, GCForeground | GCBackground, &gv);
   pix = rotate_text(widget, text, AXIS_LABEL_FONT(ss), -90.0, &w, &h, gv.background, gv.foreground, gc);

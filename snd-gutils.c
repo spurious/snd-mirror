@@ -780,7 +780,11 @@ void rotate_text(GdkDrawable *wn, GdkGC *gc, PangoFontDescription *font, char *t
 #endif
 }
 
-void draw_rotated_axis_label(GtkWidget *w, GdkGC *gc, char *text, gint x0, gint y0)
+void draw_rotated_axis_label(chan_info *cp, GdkGC *gc, char *text, gint x0, gint y0)
 {
+  GtkWidget *w;
+  if ((cp->chan > 0) && (cp->sound->channel_style == CHANNELS_COMBINED))
+    w = channel_graph(cp->sound->chans[0]);
+  else w = channel_graph(cp);
   rotate_text(w->window, gc, AXIS_LABEL_FONT(ss), text, 90, x0, y0);
 }

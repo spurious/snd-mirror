@@ -375,8 +375,6 @@ returning you to the true top-level."
 
 ;;; -------- def-clm-struct --------
 
-;;; PERHAPS: if all float, use vct for data, rather than list
-
 (defmacro* def-clm-struct (name #:rest fields)
   ;; (def-clm-struct fd loc (chan 1))
   ;; (def-clm-struct hiho i x (s "hiho") (ii 3 :type int) (xx 0.0 :type float))

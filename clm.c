@@ -6,6 +6,8 @@
  *   a factor of 2.
  */
 
+/* TODO: windowed-maxamp gen based on delay */
+
 #include <config.h>
 
 #if USE_SND
@@ -2479,8 +2481,11 @@ static mus_any_class DELAY_CLASS = {
   &delay_set_data,
   &delay_length,
   &set_delay_length,
-  0, 0, 0, 0, 0, 0, /* freq phase scaler */
-  0, 0,
+  0, 0, 0, 0, /* freq phase */
+  &delay_scaler,
+  &set_delay_scaler,
+  &delay_fb,
+  &set_delay_fb,
   &mus_delay,
   MUS_DELAY_LINE,
   NULL, 
@@ -2728,8 +2733,11 @@ static mus_any_class AVERAGE_CLASS = {
   &delay_set_data,
   &delay_length,
   &set_delay_length,
-  0, 0, 0, 0, 0, 0, /* freq phase scaler */
-  0, 0,
+  0, 0, 0, 0, /* freq phase */
+  &delay_scaler,
+  &set_delay_scaler,
+  &delay_fb,
+  &set_delay_fb,
   &run_mus_average,
   MUS_DELAY_LINE,
   NULL, 0,

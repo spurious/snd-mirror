@@ -640,7 +640,7 @@ the listener?
   <tr><td><a class=def name="channelpolynomial">channel-polynomial</a> coeffs snd chn</td><td>polynomial evaluation of entire channel</td></tr>
   <tr><td><a class=def name="spectralpolynomial">spectral-polynomial</a> coeffs snd chn</td><td>polynomial evaluation of entire channel in frequency domain (convolution)</td></tr>
   <tr><td><a class=def name="scentroid">scentroid</a> file beg dur db-floor rfreq fftsize</td><td>spectral center of gravity (brightness)</td></tr>
-  <tr><td><a class=def NAME="invertfilter">invert-filter</a> coeffs</td><td>return inverse filter given original coeffs</td></tr>
+  <tr><td><em class=emdef>invert-filter</em> coeffs</td><td>return inverse filter given original coeffs</td></tr>
   <tr><td><a class=def NAME="volterrafilter">volterra-filter</a> flt x</td><td>Volterra (non-linear FIR) filter</td></tr>
 </table>
 
@@ -2486,14 +2486,14 @@ mixed in sound is filtered, then the mix takes place).
 others in the relevant section of snd-test. 
 </p>
 <pre>
-  <a class=def NAME="frame-reverse">frame-reverse</a> frame
+  <em class=emdef>frame-reverse</em> frame
   <em class=emdef>frame-copy</em> frame
 
   <em class=emdef>make-zero-mixer</em> size
-  <a class=def NAME="mixer-diagonal">mixer-diagonal?</a> mixer
+  <em class=emdef>mixer-diagonal?</em> mixer
   <a class=def name="mixer-transpose">mixer-transpose</a> mixer
   <a class=def name="mixer-determinant">mixer-determinant</a> mixer
-  <a class=def NAME="mixer-trace">mixer-trace</a> mixer
+  <em class=emdef>mixer-trace</em> mixer
   <a class=def name="mixer-poly">mixer-poly</a> mixer coeffs
   <a class=def name="mixer-inverse">mixer-inverse</a> mixer
   <a class=def name="mixer-solve">mixer-solve</a> mixer frame

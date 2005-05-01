@@ -2977,7 +2977,7 @@ to Snd data, snd-&gt;sample.
 <!-- snd_to_sample -->
 <tr><td colspan=2><code><a class=def name="snd_to_sample">snd-&gt;sample</a> (gen frame <i>chan</i>)</code></td></tr>
 <tr><td><br></td>
-<td>Return the next sample from the data accessed by <i>gen</i>, similar to file-&gt;sample.
+<td>get the next sample from the data accessed by <i>gen</i>, similar to file-&gt;sample.
 If *reverb* is a snd-&gt;sample generator, for example,
 <a class=quiet href="clm.html#ina">ina</a> and <a class=quiet href="clm.html#file-&gt;sample">file-&gt;sample</a> actually call snd-&gt;sample.
 </td></tr>
@@ -5423,10 +5423,25 @@ If every value returned for a given channel is #f, the data is not edited.
 <pre>
 &gt;<em class=typing>(map-channel (lambda (y) (+ y .2)))</em>
 <em class=listener>#f</em>
-
-&gt;<em class=typing>(map-channel (lambda (y) (if (&gt; y .1) (list .1 .2 .3) y))) </em>
-<em class=listener>#f</em>
 </pre>
+
+<p>
+In the next sequence, we replace a sound by the difference between successive
+samples (a high-pass effect), then undo that by adding them back together,
+then check to see how close our reconstruction is to the original:
+</p>
+
+<pre>
+<em class=listener>&gt;</em> <em class=typing>(let ((y0 0.0)) (map-channel (lambda (y) (let ((diff (- y y0))) (set! y0 y) diff))))</em>
+<em class=listener>0</em>
+<em class=listener>&gt;</em> <em class=typing>(let ((y0 0.0)) (map-channel (lambda (y) (let ((add (+ y y0))) (set! y0 add) add))))</em>
+<em class=listener>0</em>
+<em class=listener>&gt;</em> <em class=typing>(let ((rd (make-sample-reader 0 0 0 1 0))) (map-channel (lambda (y) (- y (rd)))))</em>
+<em class=listener>0</em>          ; the sample reader is reading the unedited form of the sound
+<em class=listener>&gt;</em> <em class=typing>(maxamp)</em> ; i.e. how big is the biggest difference
+<em class=listener>0.0</em>
+</pre>
+<br>
 
 <table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define* (<A NAME="cosinechannel">cosine-channel</a> #:optional (beg 0) (dur #f) (snd #f) (chn #f) (edpos #f))
@@ -5874,7 +5889,7 @@ return a list of currently active players.
 <code><a class=def name="position_to_x">position-&gt;x</a> (xpos snd chn axis)</code>
 </td></tr>
 <tr><td></td><td>
-return the X axis value that corresponds to the graph (screen pixel) position <i>xpos</i>.
+the X axis value that corresponds to the graph (screen pixel) position <i>xpos</i>.
 To find the sample that the mouse is pointing at, given the current mouse position,
 <code>(inexact-&gt;exact (* (srate snd) (position-&gt;x x snd chn)))</code>.
 See gui.scm for examples.
@@ -5887,7 +5902,7 @@ See gui.scm for examples.
 <code><a class=def name="position_to_y">position-&gt;y</a> (ypos snd chn axis)</code>
 </td></tr>
 <tr><td></td><td>
-return the Y axis value that corresponds to the graph (screen pixel) position <i>ypos</i>.
+the Y axis value that corresponds to the graph (screen pixel) position <i>ypos</i>.
 See gui.scm for examples.
 </td></tr>
 <tr><td colspan=2></td></tr>
@@ -6875,7 +6890,7 @@ it's probably simpler to use <a href="clm.html#with-sound">with-sound</a> (from 
 <code><a class=def name="shortfilename">short-file-name</a> (<em class=narg>snd</em>)</code>
 </td></tr>
 <tr><td></td><td>
-return the brief (no directory) form of <i>snd</i>'s filename.
+the brief (no directory) form of <i>snd</i>'s filename.
 <br><br>
 <table border=0><tr><td>
 <pre>
@@ -7249,6 +7264,7 @@ is the sampling rate of the ADC.
 <tr><td></td><td>
 sampling rate conversion using 'warped sinc interpolation'.  The
 argument <i>num-or-env</i> can be a number, an envelope, or a CLM env generator.
+<code>(src-channel 2.0)</code> makes the sound go twice as fast.
 This is the <a class=quiet href="#regularizedargs">regularized</a> version of <a href="#srcsound">src-sound</a>.
 
 <!-- INDEX resampleexamples:Resampling -->
@@ -7291,7 +7307,7 @@ A value greater than 1.0 causes the sound to be transposed up.
 A value less than 0.0 causes the sound to be reversed. 
 <br><br>
 <i>num-or-env</i> can also be a CLM env generator (its duration should
-be the same as the original sound).  The following function can be used to predict
+be the same as the original sound, and its segments should not pass through 0.0).  The following function can be used to predict
 how long the resultant note will be given an src envelope:
 </td></tr>
 <tr><td></td><td>
@@ -7536,7 +7552,7 @@ choose a y axis limit that makes successive displays move smoothly. The other ch
 <code><a class=def name="transformsample">transform-sample</a> (<i>bin slice snd chn</i>)</code>
 </td></tr>
 <tr><td></td><td>
-return the current value of the transform (if any) in <i>bin</i> and (if a 
+the current value of the transform (if any) in <i>bin</i> and (if a 
 sonogram or spectrogram) <i>slice</i> in <i>snd</i>'s channel <i>chn</i>.  
 </td></tr>
 <tr><td colspan=2></td></tr>
@@ -7747,7 +7763,7 @@ a background process is launched to read the entire sound to get the needed data
 <tr><td colspan=2>
 <code><a class=def name="xaxislabel">x-axis-label</a> (snd chn context)</code></td></tr>
 <tr><td></td><td>
-return the current x axis label (also settable). <i>context</i> is one of time-graph (the default), lisp-graph, or transform-graph,
+the current x axis label. <i>context</i> is one of time-graph (the default), lisp-graph, or transform-graph,
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -7782,7 +7798,7 @@ return (list x0 x1) -- current x axis time domain bounds in seconds.
 <code><a class=def name="x_to_position">x-&gt;position</a> (x snd chn axis)</code>
 </td></tr>
 <tr><td></td><td>
-return the graph (screen pixel) position that corresponds to the X axis value <i>x</i>. 
+the graph (screen pixel) position that corresponds to the X axis value <i>x</i>. 
 <i>axis</i> is one of time-graph (the default), lisp-graph, or transform-graph.
 See draw.scm or gtk-popup.scm for examples.
 </td></tr>
@@ -7825,7 +7841,7 @@ set by base. (<b>xramp-channel</b> underlies the virtual exponential envelope op
 <tr><td colspan=2>
 <code><a class=def name="yaxislabel">y-axis-label</a> (snd chn context)</code></td></tr>
 <tr><td></td><td>
-return the current y axis label (also settable). <i>context</i> is one of time-graph (the default), lisp-graph, or transform-graph,
+the current y axis label. <i>context</i> is one of time-graph (the default), lisp-graph, or transform-graph,
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -7868,7 +7884,7 @@ Or to set each channel to its own maxamp:
 <code><a class=def name="y_to_position">y-&gt;position</a> (y snd chn axis)</code>
 </td></tr>
 <tr><td></td><td>
-return the graph (screen pixel) position that corresponds to the Y axis value <i>y</i>. 
+the graph (screen pixel) position that corresponds to the Y axis value <i>y</i>. 
 <i>axis</i> is one of time-graph (the default), lisp-graph, or transform-graph.
 This is used in <i>samples-via-colormap</i> in draw.scm to draw the time domain samples in many colors.
 </td></tr>
@@ -8456,7 +8472,7 @@ to copy the last edit history string and use its associated bounds -- unlikely t
 <code><a class=def name="displayedits">display-edits</a> (<i>snd chn edpos with-source</i>)</code>
 </td></tr>
 <tr><td></td><td>
-return the current edit list contents as a string.  If <i>edpos</i> is specified, only that position is described.
+the current edit list contents as a string.  If <i>edpos</i> is specified, only that position is described.
 <i>with-source</i> (default #t) determines whether ptree source code is included in the output.
 </td></tr>
 <tr><td></td><td></td></tr>
@@ -8726,7 +8742,7 @@ And an example that ties the Hilbert transform in dsp.scm into the user-interfac
 <tr><td colspan=2>
 <code><a class=def name="autocorrelate">autocorrelate</a> (data)</code></td></tr>
 <tr><td></td><td>
-return the (in place) autocorrelation of <i>data</i> (a vct).  See <a href="sndscm.html#spotfreq">spot-freq</a> in dsp.scm, 
+perform an (in place) autocorrelation of <i>data</i> (a vct).  See <a href="sndscm.html#spotfreq">spot-freq</a> in dsp.scm, 
 or <a href="sndscm.html#rubberdoc">rubber.scm</a>.
 </td></tr>
 <tr><td colspan=2></td></tr>
@@ -10184,7 +10200,7 @@ return a new temp file name using Snd's <a href="#tempdir">temp-dir</a>.
 <tr><td colspan=2>
 <code><a class=def name="sndurl">snd-url</a> (name)</code></td></tr>
 <tr><td></td><td>
-return the url (in the Snd documentation) corresponding to <i>name</i>; <i>name</i> can be a string or a symbol.
+the url (in the Snd documentation) corresponding to <i>name</i>; <i>name</i> can be a string or a symbol.
 <pre>
 <em class=listener>:</em><em class=typing>(snd-url 'open-sound)</em>
 <em class=listener>"extsnd.html#opensound"</em>
@@ -10905,7 +10921,7 @@ See draw.scm or <a href="#displaysampsinred">display-samps-in-red</a>.
 <tr><td colspan=2>
 <code><a class=def name="currentfont">current-font</a> (snd chn context)</code></td></tr>
 <tr><td></td><td>
-return the current font (also settable).</td></tr>
+the current font.</td></tr>
 <tr><td colspan=2></td></tr>
 
 <!-- cursor-context -->
@@ -11060,7 +11076,7 @@ musglyphs.scm has some elaborate examples that use fill-polygon to draw music no
 <tr><td colspan=2>
 <code><a class=def name="foregroundcolor">foreground-color</a> (snd chn context)</code></td></tr>
 <tr><td></td><td>
-return the current foreground color (also settable).
+the current foreground color.
 The following gives us a green cursor:
 <pre>
   (set! (<em class=red>foreground-color</em> 0 0 <a class=quiet href="#cursorcontext">cursor-context</a>) (<a class=quiet href="#makecolor">make-color</a> 1 0 1))

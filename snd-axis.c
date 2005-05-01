@@ -732,9 +732,9 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 	      int y_label_width = 0;
 	      y_label_width = label_width(ap->ylabel);
 	      if ((ap->y_axis_y0 - ap->y_axis_y1) > (y_label_width + 20))
-		draw_rotated_axis_label(channel_graph(ap->cp), ax->gc, ap->ylabel, 
+		draw_rotated_axis_label(ap->cp,	ax->gc, ap->ylabel, 
 					ap->y_axis_x0 - tdy->maj_tick_len - tdy->min_label_width - inner_border_width,
-					(int)((ap->y_axis_y0 + ap->y_axis_y1 - y_label_width) * 0.5));
+					(int)((ap->y_axis_y0 + ap->y_axis_y1 - y_label_width) * 0.5) - 8);
 	    }
 #endif
 	  fill_rectangle(ax, ap->y_axis_x0, ap->y_axis_y1, axis_thickness, (unsigned int)(ap->y_axis_y0 - ap->y_axis_y1));
@@ -1165,14 +1165,7 @@ axis_info *make_axis_info (chan_info *cp, double xmin, double xmax, Float ymin, 
 {
   axis_info *ap;
   if (old_ap) 
-    {
-      ap = old_ap;
-      if (ap->xlabel) 
-	{
-	  FREE(ap->xlabel); 
-	  ap->xlabel = NULL;
-	}
-    }
+    ap = old_ap;
   else
     {
       ap = (axis_info *)CALLOC(1, sizeof(axis_info));
@@ -1183,7 +1176,13 @@ axis_info *make_axis_info (chan_info *cp, double xmin, double xmax, Float ymin, 
   if (ap->xmin == ap->xmax) ap->xmax += .001;
   ap->ymin = ymin;
   ap->ymax = ymax;
-  ap->xlabel = copy_string(xlabel);
+  if ((xlabel) && 
+      ((!(ap->xlabel)) || (strcmp(xlabel, ap->xlabel) !=0)))
+    {
+      /* this apparently should leave the default_xlabel and ylabels alone */
+      if (ap->xlabel) FREE(ap->xlabel);
+      ap->xlabel = copy_string(xlabel);
+    }
   ap->x0 = x0;
   ap->x1 = x1;
   if (ap->x0 == ap->x1) ap->x1 += .001;
@@ -1270,8 +1269,9 @@ x0 y0 x1 y1 xmin ymin xmax ymax pix_x0 pix_y0 pix_x1 pix_y1 y_offset xscale ysca
                        XEN_CONS(C_TO_XEN_INT(ap->y_offset),
 			XEN_CONS(C_TO_XEN_DOUBLE(ap->x_scale),
 			 XEN_CONS(C_TO_XEN_DOUBLE(ap->y_scale),
-			  XEN_CONS(C_TO_XEN_STRING(ap->xlabel),
+			  XEN_CONS((ap->xlabel) ? C_TO_XEN_STRING(ap->xlabel) : XEN_FALSE,
 			   XEN_CONS((ap->cp) ? C_TO_XEN_BOOLEAN(ap->cp->new_peaks) : XEN_FALSE,
+				    /* ylabel? */
 		            XEN_EMPTY_LIST))))))))))))))))))));
 }
 
@@ -1303,7 +1303,7 @@ Returns actual (pixel) axis bounds -- a list (x0 y0 x1 y1)."
   GtkWidget *w; 
   GdkGC *gc;
 #endif
-  XEN ref;
+  XEN label_ref;
   double x0 = 0.0, x1 = 1.0; 
   Float y0 = -1.0, y1 = 1.0; 
   x_axis_style_t x_style = X_AXIS_IN_SECONDS;
@@ -1325,8 +1325,8 @@ Returns actual (pixel) axis bounds -- a list (x0 y0 x1 y1)."
   w = (GtkWidget *)(XEN_UNWRAP_WIDGET(xwid));
   gc = (GdkGC *)(XEN_UNWRAP_GC(xgc));
 #endif
-  ref = XEN_LIST_REF(args, 2);
-  XEN_ASSERT_TYPE(XEN_STRING_P(ref), ref, XEN_ARG_3, S_draw_axes, "a string");
+  label_ref = XEN_LIST_REF(args, 2);
+  XEN_ASSERT_TYPE(XEN_STRING_P(label_ref) || XEN_FALSE_P(label_ref), label_ref, XEN_ARG_3, S_draw_axes, "a string");
   if (len > 3) 
     {
       xx0 = XEN_LIST_REF(args, 3);
@@ -1381,7 +1381,8 @@ Returns actual (pixel) axis bounds -- a list (x0 y0 x1 y1)."
   ap->ymax = y1;
   ap->y_ambit = y1 - y0;
   ap->x_ambit = x1 - x0;
-  ap->xlabel = copy_string(XEN_TO_C_STRING(XEN_LIST_REF(args, 2)));
+  if (XEN_STRING_P(label_ref))
+    ap->xlabel = copy_string(XEN_TO_C_STRING(label_ref));
   ap->x0 = x0;
   ap->x1 = x1;
   ap->y0 = y0;
@@ -1417,14 +1418,23 @@ static XEN g_set_x_axis_label(XEN label, XEN snd, XEN chn, XEN ax)
 {
   axis_info *ap;
   ASSERT_CHANNEL(S_setB S_x_axis_label, snd, chn, 2);
-  XEN_ASSERT_TYPE(XEN_STRING_P(label), label, XEN_ARG_1, S_setB S_x_axis_label, "a string");
+  XEN_ASSERT_TYPE(XEN_STRING_P(label) || XEN_FALSE_P(label), label, XEN_ARG_1, S_setB S_x_axis_label, "a string");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax), ax, XEN_ARG_4, S_setB S_x_axis_label, S_time_graph ", " S_transform_graph ", or " S_lisp_graph);
   ap = TO_C_AXIS_INFO(snd, chn, ax, S_x_axis_label);
   if (ap->xlabel) FREE(ap->xlabel);
-  ap->xlabel = copy_string(XEN_TO_C_STRING(label));
-  if ((XEN_INTEGER_P(ax)) && (XEN_TO_C_INT(ax) == (int)TRANSFORM_AXIS_INFO))
-    set_fft_info_xlabel(ap->cp, ap->xlabel);
-  ap->default_xlabel = copy_string(ap->xlabel);
+  if (ap->default_xlabel) FREE(ap->default_xlabel);
+  if (XEN_FALSE_P(label))
+    {
+      ap->xlabel = NULL;
+      ap->default_xlabel = NULL;
+    }
+  else
+    {
+      ap->xlabel = copy_string(XEN_TO_C_STRING(label));
+      if ((XEN_INTEGER_P(ax)) && (XEN_TO_C_INT(ax) == (int)TRANSFORM_AXIS_INFO))
+	set_fft_info_xlabel(ap->cp, ap->xlabel);
+      ap->default_xlabel = copy_string(ap->xlabel);
+    }
   update_graph(ap->cp);
   return(label);
 }
@@ -1449,6 +1459,8 @@ static XEN g_set_x_axis_label_reversed(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 #endif
 
 /* TODO: how to implement rotate_text in OpenGL? */
+/*       Mesa/progs/xdemos/xuserotfont.c gets pixmap, then calls glBitmap: glBitmap(bitmapWidth, bitmapHeight, xOrig, yOrig, xStep, yStep, bm) */
+/* TODO: both x|y-axis-label should apply to all chans of current sound if chn=#t or is unspecified? [need tests here] */
 
 static XEN g_y_axis_label(XEN snd, XEN chn, XEN ax)
 {
@@ -1464,11 +1476,13 @@ static XEN g_set_y_axis_label(XEN label, XEN snd, XEN chn, XEN ax)
 {
   axis_info *ap;
   ASSERT_CHANNEL(S_setB S_y_axis_label, snd, chn, 2);
-  XEN_ASSERT_TYPE(XEN_STRING_P(label), label, XEN_ARG_1, S_setB S_y_axis_label, "a string");
+  XEN_ASSERT_TYPE(XEN_STRING_P(label) || XEN_FALSE_P(label), label, XEN_ARG_1, S_setB S_y_axis_label, "a string");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax), ax, XEN_ARG_4, S_setB S_y_axis_label, S_time_graph ", " S_transform_graph ", or " S_lisp_graph);
   ap = TO_C_AXIS_INFO(snd, chn, ax, S_y_axis_label);
   if (ap->ylabel) FREE(ap->ylabel);
-  ap->ylabel = copy_string(XEN_TO_C_STRING(label));
+  if (XEN_FALSE_P(label))
+    ap->ylabel = NULL;
+  else ap->ylabel = copy_string(XEN_TO_C_STRING(label));
   update_graph(ap->cp);
   return(label);
 }

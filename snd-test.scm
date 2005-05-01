@@ -7263,6 +7263,7 @@ EDITS: 5
 	(if (not (string=? (y-axis-label) "no amp")) (snd-display ";time y-axis-label: ~A" (y-axis-label index 0 time-graph)))
 	(set! (y-axis-label index 0 lisp-graph) "no lamp")
 	(if (not (string=? (y-axis-label index 0 lisp-graph) "no lamp")) (snd-display ";lisp y-axis-label: ~A" (y-axis-label index 0 lisp-graph)))
+	(set! (y-axis-label) #f)
 
 	(graph-data (make-vct 4))
 	(update-lisp-graph)
@@ -7298,8 +7299,10 @@ EDITS: 5
 	(set! (x-axis-label) "hiho")
 
 	(set! (y-axis-label index 0 transform-graph) "spectra")
-	(if (not (string=? (y-axis-label index 0 transform-graph) "spectra")) 
-	    (snd-display ";fft y-axis-label: ~A" (y-axis-label index 0 transform-graph)))
+	(let ((val (y-axis-label index 0 transform-graph)))
+	  (if (or (not (string? val))
+		  (not (string=? val "spectra")))
+	    (snd-display ";fft y-axis-label: ~A" val)))
 	(set! (y-axis-label) "hiho")
 
 	(if (and (number? (transform-frames))
@@ -13784,12 +13787,12 @@ EDITS: 5
       (let ((var (catch #t (lambda () (set! (mus-frequency (make-one-pole)) 0)) (lambda args args))))
 	(if (not (eq? (car var) 'mus-error))
 	    (snd-display ";set mus-frequency bad gen: ~A" var)))
-      (let ((var (catch #t (lambda () (mus-scaler (make-delay 3))) (lambda args args))))
-	(if (not (eq? (car var) 'mus-error))
-	    (snd-display ";mus-scaler bad gen: ~A" var)))
-      (let ((var (catch #t (lambda () (set! (mus-scaler (make-delay 3)) 0)) (lambda args args))))
-	(if (not (eq? (car var) 'mus-error))
-	    (snd-display ";set mus-scaler bad gen: ~A" var)))
+;      (let ((var (catch #t (lambda () (mus-scaler (make-delay 3))) (lambda args args))))
+;	(if (not (eq? (car var) 'mus-error))
+;	    (snd-display ";mus-scaler bad gen: ~A" var)))
+;      (let ((var (catch #t (lambda () (set! (mus-scaler (make-delay 3)) 0)) (lambda args args))))
+;	(if (not (eq? (car var) 'mus-error))
+;	    (snd-display ";set mus-scaler bad gen: ~A" var)))
       (let ((var (catch #t (lambda () (make-delay (* 1024 1024 40))) (lambda args args))))
 	(if (not (eq? (car var) 'out-of-range))
 	    (snd-display ";make-delay huge line: ~A" var)))
@@ -22989,8 +22992,9 @@ EDITS: 5
 			(if (not (= (mark-sample m10) 1234)) (snd-display ";mark 10th: ~A" (mark-sample m10))))
 		    (if (not m11) (snd-display ";can't find 11th mark")
 			(if (not (= (mark-sample m11 1) 23)) (snd-display ";mark 11th: ~A" (mark-sample m11 1))))
-		    (if (mark? m12) (snd-display ";found 12th mark: ~A ~A ~A" m12 (mark-sample m12 2) (mark-name m12 2)))))))
-	    (close-sound ind))      
+		    (if (mark? m12) (snd-display ";found 12th mark: ~A ~A ~A" m12 (mark-sample m12 2) (mark-name m12 2)))))
+		(set! (mark-name m1) #f)))
+	    (close-sound ind))
 	  (if (provided? 'snd-debug)
 	      (let ((ind (open-sound "oboe.snd")))
 		(let ((m0 (add-mark 1223 ind 0)))
@@ -35848,6 +35852,12 @@ EDITS: 2
 
 ;;; ---------------- test 22: run ----------------
 
+(define (test-run-protection-release)
+       (let ((this-oscil-protected-by-run (make-oscil 1234.567))
+	     (this-window-protected-by-run (make-fft-window rectangular-window 16)))
+	 (* (vct-ref this-window-protected-by-run 8) 
+	    (oscil this-oscil-protected-by-run))))
+  
 (defmacro time-it (a) 
   `(let ((start (real-time))) 
      ,a 
@@ -41290,6 +41300,11 @@ EDITS: 2
 		   (declare (g sound-data) (g1 sound-data)) 
 		   (if (not g1) (clm-print ";lambda sound-data #f args 4"))) 
 		#f (make-sound-data 3 3))
+      
+      (run (lambda ()
+	     (do ((i 0 (1+ i)))
+		 ((= i 8))
+	       (test-run-protection-release))))
 
       (run-hook after-test-hook 22)
       ))
@@ -43474,7 +43489,7 @@ EDITS: 2
 		  (key-event minibuffer snd-return-key 0) (force-event)
 		  (if (not (= (frames) (- fr 6 12))) (snd-display ";4 x macro call wasn't effective?: ~A ~A" fr (frames))))
 		
-		(set! (widget-text minibuffer) "")
+		(set! (widget-text minibuffer) #f)
 		(key-event cwid (char->integer #\x) 8) (force-event)
 		(widget-string minibuffer "(short-")
 		(key-event minibuffer snd-tab-key 0) (force-event)

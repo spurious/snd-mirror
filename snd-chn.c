@@ -18,6 +18,8 @@
  * SOMEDAY: if chans superimposed, spectrogram might use offset planes? (sonogram?)
  * SOMEDAY: Options:Filter menu to give access to the various dsp.scm filters, graphs like the control panel etc
  * PERHAPS: channel-local colormaps (color-inverted color-scale color-cutoff as well?)
+ *
+ * TODO: add maxamp-position [doc/test/msg etc], also region|selection-maxamp-position
  */
 
 typedef enum {CLICK_NOGRAPH, CLICK_WAVE, CLICK_FFT_AXIS, CLICK_LISP, CLICK_FFT_MAIN} click_loc_t;    /* for marks, regions, mouse click detection */
@@ -6955,6 +6957,8 @@ to a standard Snd channel graph placed in the widget 'container'."
       ap = cp->axis;
       if (ap->xlabel) FREE(ap->xlabel);
       ap->xlabel = copy_string(sp->filename);
+      if (ap->default_xlabel) FREE(ap->default_xlabel); 
+      ap->default_xlabel = NULL;
       if (ap->ylabel) FREE(ap->ylabel);
       ap->ylabel = NULL;
     }

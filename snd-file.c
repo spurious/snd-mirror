@@ -17,18 +17,12 @@
 
 #if USE_STATVFS
   #include <sys/statvfs.h>
-#else
-  #if HAVE_SYS_STATFS_H
-    #include <sys/statfs.h>
-  #else
-    #if HAVE_SYS_VFS_H
-      #include <sys/vfs.h>
-    #endif
-  #endif
 #endif
+
 #if (__bsdi__ || HAVE_SYS_PARAM_H)
   #include <sys/param.h>
 #endif
+
 /* to handle mount.h correctly in autoconf I'd need to specialize the header checker for
  *   whatever headers mount.h needs, which I assume depends on the OS -- not worth the
  *   trouble!  Perhaps there's a better way to handle disk-kspace?
@@ -37,15 +31,10 @@
   #include <sys/mount.h>
 #endif
 
-#if (!HAVE_STATFS) && (!USE_STATVFS)
+#if (!USE_STATVFS)
   off_t disk_kspace (const char *filename) {return(1234567);}
-  bool link_p(const char *filename) {return(false);}
-  bool directory_p(const char *filename) {return(false);}
-  static bool empty_file_p(const char *filename) {return(false);}
-  static off_t file_bytes(const char *filename) {return(0);}
 #else
 
-#if USE_STATVFS
 off_t disk_kspace (const char *filename)
 {
 #if SUN
@@ -59,25 +48,6 @@ off_t disk_kspace (const char *filename)
     {
       if (buf.f_frsize == 1024) return(buf.f_bfree);
       else return((off_t)(buf.f_frsize * ((double)(buf.f_bfree) / 1024.0)));
-    }
-  return(err);
-}
-#else
-off_t disk_kspace (const char *filename)
-{
-  struct statfs buf;
-  off_t err = -1;
-#if (STATFS_ARGS == 4)
-  err = statfs(filename, &buf, sizeof(buf), 0);
-#else
-  err = statfs(filename, &buf);
-#endif
-  /* in 32 bit land, the number of bytes can easily go over 2^32, so we'll look at kbytes here */
-  if (err == 0) 
-    {
-      if (buf.f_bsize == 1024) return(buf.f_bfree);
-      else if (buf.f_bsize == 512) return(buf.f_bfree >> 1);
-      else return((off_t)(buf.f_bsize * ((double)(buf.f_bfree) / 1024.0)));
     }
   return(err);
 }
@@ -112,7 +82,6 @@ static bool empty_file_p(const char *filename)
 #endif
   return(false);
 }
-#endif
 
 time_t file_write_date(const char *filename)
 {

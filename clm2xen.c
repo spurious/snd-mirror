@@ -2777,29 +2777,38 @@ static XEN g_mixer_multiply(XEN uf1, XEN uf2, XEN ures) /* optional res */
   #define H_mixer_multiply "(" S_mixer_multiply " m1 m2 (outm #f)): multiply mixers m1 and m2 (a matrix multiply), \
 returning the mixer outm, or creating a new mixer if outm is not given.  Either m1 or m2 can be a float, rather than a mixer."
 
-  mus_any *res = NULL;
+  mus_any *res = NULL, *u1 = NULL, *u2 = NULL;
   if ((MUS_XEN_P(ures)) && 
       (mus_mixer_p(XEN_TO_MUS_ANY(ures))))
     res = (mus_any *)XEN_TO_MUS_ANY(ures);
-  if (XEN_NUMBER_P(uf1))
+  if (MUS_XEN_P(uf1))
     {
-      XEN_ASSERT_TYPE((MUS_XEN_P(uf2)) && (mus_mixer_p(XEN_TO_MUS_ANY(uf2))), uf2, XEN_ARG_2, S_mixer_multiply, "a mixer");
-      return(g_wrap_mixer(mus_mixer_scale((mus_any *)XEN_TO_MUS_ANY(uf2), XEN_TO_C_DOUBLE(uf1), res), (res) ? true : false));
+      u1 = XEN_TO_MUS_ANY(uf1);
+      XEN_ASSERT_TYPE(mus_mixer_p(u1) || mus_frame_p(u1), uf1, XEN_ARG_1, S_mixer_multiply, "a frame or mixer");
+    }
+  else XEN_ASSERT_TYPE(XEN_NUMBER_P(uf1), uf1, XEN_ARG_1, S_mixer_multiply, "a number, frame or mixer");
+  if (MUS_XEN_P(uf2))
+    {
+      u2 = XEN_TO_MUS_ANY(uf2);
+      XEN_ASSERT_TYPE(mus_mixer_p(u2) || mus_frame_p(u2), uf2, XEN_ARG_2, S_mixer_multiply, "a frame or mixer");
+    }
+  else XEN_ASSERT_TYPE(XEN_NUMBER_P(uf2), uf2, XEN_ARG_2, S_mixer_multiply, "a number, frame or mixer");
+  if (!u1)
+    {
+      XEN_ASSERT_TYPE((u2) && (mus_mixer_p(u2)), uf2, XEN_ARG_2, S_mixer_multiply, "a mixer");
+      return(g_wrap_mixer(mus_mixer_scale(u2, XEN_TO_C_DOUBLE(uf1), res), (res) ? true : false));
     }
   else
     {
-      if (XEN_NUMBER_P(uf2))
+      if (!u2)
 	{
-	  XEN_ASSERT_TYPE((MUS_XEN_P(uf1)) && (mus_mixer_p(XEN_TO_MUS_ANY(uf1))), uf1, XEN_ARG_1, S_mixer_multiply, "a mixer");
-	  return(g_wrap_mixer(mus_mixer_scale((mus_any *)XEN_TO_MUS_ANY(uf1), XEN_TO_C_DOUBLE(uf2), res), (res) ? true : false));
+	  XEN_ASSERT_TYPE((u1) && (mus_mixer_p(u1)), uf1, XEN_ARG_1, S_mixer_multiply, "a mixer");
+	  return(g_wrap_mixer(mus_mixer_scale(u1, XEN_TO_C_DOUBLE(uf2), res), (res) ? true : false));
 	}
     }
-  XEN_ASSERT_TYPE((MUS_XEN_P(uf1)) && (mus_mixer_p(XEN_TO_MUS_ANY(uf1))), uf1, XEN_ARG_1, S_mixer_multiply, "a mixer");
-  XEN_ASSERT_TYPE((MUS_XEN_P(uf2)) && (mus_mixer_p(XEN_TO_MUS_ANY(uf2))), uf2, XEN_ARG_2, S_mixer_multiply, "a mixer");
-  return(g_wrap_mixer(mus_mixer_multiply((mus_any *)XEN_TO_MUS_ANY(uf1),
-					 (mus_any *)XEN_TO_MUS_ANY(uf2),
-					 res),
-		      (res) ? true : false));
+  if ((mus_mixer_p(u1)) && (mus_mixer_p(u2)))
+    return(g_wrap_mixer(mus_mixer_multiply(u1, u2, res), (res) ? true : false));
+  return(g_wrap_frame(mus_frame_to_frame(u1, u2, res), (res) ? true : false));
 }
 
 static XEN g_mixer_add(XEN uf1, XEN uf2, XEN ures) /* optional res */

@@ -290,6 +290,7 @@ static int stored_strings_ctr = 0;
 char *xen_guile_to_c_string_with_eventual_free(XEN str)
 {
   char *result;
+  if (XEN_FALSE_P(str)) return(NULL);
   if (!xen_temp_strings)
     xen_temp_strings = (char **)calloc(XEN_TEMP_STRINGS_SIZE, sizeof(char *));
   else

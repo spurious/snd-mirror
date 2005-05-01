@@ -644,6 +644,15 @@
 		   (* mx (sin (* y brt))))
 		 0 #f snd chn #f (format #f "brighten-slightly ~A" amount))))
 
+(define (brighten-slightly-1 coeffs)
+  ;; another version: (brighten-slightly-1 '(1 .5 3 1))
+  (let ((pcoeffs (partials->polynomial coeffs))
+	(mx (maxamp)))
+    (map-channel
+     (lambda (y)
+       (* mx (polynomial pcoeffs (/ y mx)))))))
+
+
 
 ;;; -------- FIR filters
 
@@ -1597,7 +1606,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 	      (set! nmx (max nmx (abs sum)))
 	      sum))
 	  beg dur snd chn edpos)
-	 (scale-channel (/ mx nmx) beg dur snd chn edpos)))
+	 (scale-channel (/ mx nmx) beg dur snd chn))) ; not edpos here -- we're scaling the new stuff
      (format #f "ssb-bank ~A ~A ~A ~A ~A ~A ~A" old-freq new-freq pairs-1 order bw beg dur))))
 
 (define* (ssb-bank-env old-freq new-freq freq-env pairs-1 #:optional (order 40) (bw 50.0) (beg 0) dur snd chn edpos)
@@ -1635,7 +1644,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 	      (set! nmx (max nmx (abs sum)))
 	      sum))
 	  beg dur snd chn edpos)
-	 (scale-channel (/ mx nmx) beg dur snd chn edpos)))
+	 (scale-channel (/ mx nmx) beg dur snd chn)))
      (format #f "ssb-bank-env ~A ~A '~A ~A ~A ~A ~A ~A" old-freq new-freq freq-env pairs-1 order bw beg dur))))
 
 ;;; TODO: auto-detect main freq so ssb-bank can work semi-automatically (bw/pairs choices also automated)

@@ -1965,7 +1965,9 @@ static XEN mark_set(XEN mark_n, XEN val, mark_field_t fld, char *caller)
       break;
     case MARK_NAME:
       if (m->name) FREE(m->name);
-      m->name = copy_string(XEN_TO_C_STRING(val));
+      if (XEN_FALSE_P(val))
+	m->name = NULL;
+      else m->name = copy_string(XEN_TO_C_STRING(val));
       update_graph(cp[0]);
       break;
     default:
@@ -2056,7 +2058,7 @@ static XEN g_mark_name(XEN mark_n)
 static XEN g_set_mark_name(XEN mark_n, XEN name) 
 {
   XEN_ASSERT_TYPE(XEN_INTEGER_P(mark_n), mark_n, XEN_ARG_1, S_setB S_mark_name, "an integer");
-  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_2, S_setB S_mark_name, "a string");
+  XEN_ASSERT_TYPE(XEN_STRING_P(name) || XEN_FALSE_P(name), name, XEN_ARG_2, S_setB S_mark_name, "a string");
   return(mark_set(mark_n, name, MARK_NAME, S_setB S_mark_name));
 }
 

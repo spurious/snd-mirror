@@ -11810,12 +11810,12 @@ def test038
   if (res = snd_catch do set_mus_frequency(make_one_pole, 0) end).first != :mus_error
     snd_display("set_mus_frequency bad gen: %s", res.inspect)
   end
-  if (res = snd_catch do mus_scaler(make_delay(3)) end).first != :mus_error
-    snd_display("mus_scaler bad gen: %s", res.inspect)
-  end
-  if (res = snd_catch do set_mus_scaler(make_delay(3), 0) end).first != :mus_error
-    snd_display("set_mus_scaler bad gen: %s", res.inspect)
-  end
+#  if (res = snd_catch do mus_scaler(make_delay(3)) end).first != :mus_error
+#    snd_display("mus_scaler bad gen: %s", res.inspect)
+#  end
+#  if (res = snd_catch do set_mus_scaler(make_delay(3), 0) end).first != :mus_error
+#    snd_display("set_mus_scaler bad gen: %s", res.inspect)
+#  end
   if (res = snd_catch do make_delay(1024 * 1024 * 40) end).first != :out_of_range
     snd_display("make_delay huge line 1: %s", res.inspect)
   end

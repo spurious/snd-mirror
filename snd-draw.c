@@ -625,19 +625,21 @@ static XEN g_widget_text(XEN wid)
 static XEN g_set_widget_text(XEN wid, XEN text)
 {
   widget_t w;
+  char *str = NULL;
   XEN_ASSERT_TYPE(XEN_WIDGET_P(wid), wid, XEN_ARG_1, S_setB S_widget_text, "a Widget");
-  XEN_ASSERT_TYPE(XEN_STRING_P(text), text, XEN_ARG_2, S_setB S_widget_text, "a string");
+  XEN_ASSERT_TYPE(XEN_STRING_P(text) || XEN_FALSE_P(text), text, XEN_ARG_2, S_setB S_widget_text, "a string");
   w = (widget_t)(XEN_UNWRAP_WIDGET(wid));
   if (w)
     {
+      if (XEN_STRING_P(text)) str = XEN_TO_C_STRING(text);
 #if USE_MOTIF
       if ((XmIsText(w)) || (XmIsTextField(w)))
-	XmTextSetString(w, XEN_TO_C_STRING(text));
-      else set_button_label(w, XEN_TO_C_STRING(text));
+	XmTextSetString(w, str);
+      else set_button_label(w, str);
 #else
       if (GTK_IS_ENTRY(w))
-	gtk_entry_set_text(GTK_ENTRY(w), XEN_TO_C_STRING(text));
-      else set_button_label(w, XEN_TO_C_STRING(text));
+	gtk_entry_set_text(GTK_ENTRY(w), str);
+      else set_button_label(w, str);
 #endif
     }
   else XEN_ERROR(NO_SUCH_WIDGET,

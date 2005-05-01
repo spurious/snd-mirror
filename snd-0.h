@@ -5,10 +5,6 @@
   #define HAVE_DECL_ISNAN 1
 #endif
 
-#ifndef STATFS_ARGS
-  #define STATFS_ARGS 2
-#endif
-
 #if HAVE_RUBY
   #undef _
 #endif

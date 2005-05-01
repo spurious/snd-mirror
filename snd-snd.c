@@ -2374,7 +2374,9 @@ static XEN sound_set(XEN snd_n, XEN val, sp_field_t fld, char *caller)
       if (!(IS_PLAYER(sp))) 
 	{
 	  if (sp->hdr->comment) FREE(sp->hdr->comment);
-	  sp->hdr->comment = copy_string(XEN_TO_C_STRING(val));
+	  if (XEN_FALSE_P(val))
+	    sp->hdr->comment = NULL;
+	  else sp->hdr->comment = copy_string(XEN_TO_C_STRING(val));
 	}
       break;
     case SP_PROPERTIES:
@@ -2764,10 +2766,10 @@ static XEN g_set_comment(XEN snd_n, XEN val)
 {
   if (XEN_NOT_BOUND_P(val))
     {
-      XEN_ASSERT_TYPE(XEN_STRING_P(snd_n), snd_n, XEN_ARG_1, S_setB S_comment, "a string");
+      XEN_ASSERT_TYPE(XEN_STRING_P(snd_n) || XEN_FALSE_P(snd_n), snd_n, XEN_ARG_1, S_setB S_comment, "a string");
       return(sound_set(XEN_UNDEFINED, snd_n, SP_COMMENT, S_setB S_comment));
     }
-  XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ARG_2, S_setB S_comment, "a string");
+  XEN_ASSERT_TYPE(XEN_STRING_P(val) || XEN_FALSE_P(val), val, XEN_ARG_2, S_setB S_comment, "a string");
   return(sound_set(snd_n, val, SP_COMMENT, S_setB S_comment));
 }
 

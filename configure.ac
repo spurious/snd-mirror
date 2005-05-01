@@ -177,7 +177,7 @@ LIBS=""
 
 AC_HEADER_DIRENT
 AC_CHECK_HEADERS(fcntl.h limits.h unistd.h string.h sys/soundcard.h machine/soundcard.h gsl/gsl_version.h sys/mixer.h stdbool.h)
-AC_CHECK_HEADERS(libc.h sys/vfs.h sys/statfs.h sys/statvfs.h setjmp.h locale.h sys/fpu.h dlfcn.h sys/param.h byteswap.h stdint.h)
+AC_CHECK_HEADERS(libc.h sys/statvfs.h setjmp.h locale.h sys/fpu.h dlfcn.h sys/param.h byteswap.h stdint.h)
 AC_CHECK_HEADER(/usr/local/lib/oss/include/sys/soundcard.h,[AC_DEFINE(USR_LOCAL_LIB_OSS)])
 AC_CHECK_HEADER(/usr/lib/oss/include/sys/soundcard.h,[AC_DEFINE(USR_LIB_OSS)])
 AC_CHECK_HEADER(/opt/oss/include/sys/soundcard.h,[AC_DEFINE(OPT_OSS)])
@@ -205,7 +205,7 @@ AM_LANGINFO_DECIMAL_POINT
 AC_CHECK_SIZEOF(off_t)
 AC_TYPE_SIGNAL
 AC_FUNC_STRFTIME
-AC_CHECK_FUNCS(getcwd getwd strerror readlink setlocale access opendir sleep signal statfs statvfs clock)
+AC_CHECK_FUNCS(getcwd getwd strerror readlink setlocale access opendir sleep signal statvfs clock)
 AC_CHECK_FUNCS(vsnprintf snprintf memmove strdup lstat fileno strcasecmp)
 AC_FUNC_CLOSEDIR_VOID
 AC_FUNC_VPRINTF
@@ -1353,13 +1353,9 @@ AC_SUBST(A_LD_FLAGS)
 
 
 #--------------------------------------------------------------------------------
-# statfs special case
-#   it is also possible for statfs to take 3 args
-#   the libit configure.in and fsusage.c might be useful here.
-# I think statvfs is the new way to do this...
+# statvfs
 #--------------------------------------------------------------------------------
 
-# try to use statvfs
 statvfs_ok=0
 if test "$ac_cv_func_statvfs" = yes ; then
 if test "$ac_cv_header_sys_statvfs_h" = yes ; then
@@ -1375,49 +1371,6 @@ if test "$ac_cv_header_sys_statvfs_h" = yes ; then
     AC_MSG_RESULT(no)
   fi
 fi
-fi
-
-# SOMEDAY: abandon statfs!
-if test $statvfs_ok = 0; then
-  # statfs is a mess
-  statfs_args=0
-  AC_MSG_CHECKING([stafs args])
-  AC_COMPILE_IFELSE([AC_LANG_PROGRAM([#include <sys/statfs.h>],[struct statfs buf; statfs("test.snd",&buf,sizeof(buf),0)])],statfs_args=4)
-  if test $statfs_args = 0; then
-    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([#include <sys/vfs.h>],[struct statfs buf; statfs("test.snd",&buf,sizeof(buf),0)])],statfs_args=4)
-  fi
-  if test $statfs_args = 0; then
-    AC_COMPILE_IFELSE(
-      [AC_LANG_PROGRAM([#include <dirent.h>
-                        #include <sys/vfs.h>
-                        #include <sys/statfs.h>
-                       ],
-                       [struct statfs buf; statfs("test.snd",&buf,sizeof(buf),0)])],
-      statfs_args=4)
-  fi
-  if test $statfs_args = 0; then
-    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([#include <sys/statfs.h>],[struct statfs buf; statfs("test.snd",&buf)])],statfs_args=2)
-  fi
-  if test $statfs_args = 0; then
-    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([#include <sys/vfs.h>],[struct statfs buf; statfs("test.snd",&buf)])],statfs_args=2)
-  fi
-  if test $statfs_args = 0; then
-    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([#include <sys/mount.h>],[struct statfs buf; statfs("test.snd",&buf)])],statfs_args=2)
-  fi
-  if test $statfs_args = 0; then
-    AC_COMPILE_IFELSE(
-      [AC_LANG_PROGRAM([#include <dirent.h>
-                        #include <sys/vfs.h>
-                        #include <sys/statfs.h>
-                       ],
-                       [struct statfs buf; statfs("test.snd",&buf)])],
-      statfs_args=2)
-  fi
-  if test $statfs_args = 0; then
-    statfs_args=2
-  fi
-  AC_MSG_RESULT($statfs_args)
-  AC_DEFINE_UNQUOTED(STATFS_ARGS,$statfs_args)
 fi
 
 AC_ARG_ENABLE(snd-debug,

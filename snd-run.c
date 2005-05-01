@@ -94,7 +94,6 @@
      (run (lambda () (let ((g1 gen) (g2 #f)) (oscil g1) (set! g2 g1) (oscil g2)))))
  *   -> opt: can't set pointer var (g2) to alias other such var
  *
- * PERHAPS: count-matches and friends? (func itself is already optimized)
  * PERHAPS: float_or_boolean_or_vct return type mainly for map-channel funcs
  *          could we use R_NUMBER_VCT as the return type for this?
  *
@@ -105,7 +104,6 @@
  *        samples -> init_sample_reader then fill data with read_sample snd-edit 8441
  *        set sample(s) uses change_samples.
  * TODO: is clm-struct ref handled solely as list-ref? (vct if all float?)
- * TODO: if xen val protected in inner lambda, is it released at end?
  */
 
 #include "snd.h"
@@ -947,8 +945,6 @@ static void unattach_ptree(ptree *inner, ptree *outer)
   outer->track_readers_size = inner->track_readers_size;
   outer->xen_var_ctr = inner->xen_var_ctr;
   outer->xen_vars_size = inner->xen_vars_size;
-  outer->gc_protected_ctr = inner->gc_protected_ctr;
-  outer->gc_protected_size = inner->gc_protected_size;
 
   inner->ints_size = 0;
   inner->dbls_size = 0;
@@ -984,8 +980,6 @@ static void unattach_ptree(ptree *inner, ptree *outer)
   inner->track_readers_size = 0;
   inner->xen_var_ctr = 0;
   inner->xen_vars_size = 0;
-  inner->gc_protected_size = 0;
-  inner->gc_protected_ctr = 0;
 }
 
 
@@ -1752,7 +1746,12 @@ static void add_obj_to_gcs(ptree *pt, int type, int addr)
 
 static void add_loc_to_protected_list(ptree *pt, int loc)
 {
+  /* here the protected entities (clm gens and fft windows created within run) are created at eval time.
+   *   since we don't have an explicit list of such trees in the outer tree, we need to put the
+   *   protected loc in the outer-most tree.
+   */
   if (loc < 0) return;
+  while (pt->outer_tree) pt = pt->outer_tree;
   if (pt->gc_protected_ctr >= pt->gc_protected_size)
     {
       int old_size;
