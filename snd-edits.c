@@ -5036,7 +5036,9 @@ static ed_list *make_ed_list(int size)
     FRAGMENT(ed, i) = (ed_fragment *)calloc(1, sizeof(ed_fragment)); /* remove this from the memory tracker -- it's glomming up everything */
   ed->origin = NULL;
   ed->maxamp = -1.0;
+  ed->maxamp_position = -1;
   ed->selection_maxamp = -1.0;
+  ed->selection_maxamp_position = -1;
   return(ed);
 }
 
@@ -5054,6 +5056,20 @@ Float ed_maxamp(chan_info *cp, int edpos)
   return(ed->maxamp);
 }
 
+void set_ed_maxamp_position(chan_info *cp, int edpos, off_t val)
+{
+  ed_list *ed;
+  ed = cp->edits[edpos];
+  ed->maxamp_position = val;
+}
+
+off_t ed_maxamp_position(chan_info *cp, int edpos)
+{
+  ed_list *ed;
+  ed = cp->edits[edpos];
+  return(ed->maxamp_position);
+}
+
 void set_ed_selection_maxamp(chan_info *cp, Float val)
 {
   ed_list *ed;
@@ -5066,6 +5082,20 @@ Float ed_selection_maxamp(chan_info *cp)
   ed_list *ed;
   ed = cp->edits[cp->edit_ctr];
   return(ed->selection_maxamp);
+}
+
+void set_ed_selection_maxamp_position(chan_info *cp, off_t val)
+{
+  ed_list *ed;
+  ed = cp->edits[cp->edit_ctr];
+  ed->selection_maxamp_position = val;
+}
+
+off_t ed_selection_maxamp_position(chan_info *cp)
+{
+  ed_list *ed;
+  ed = cp->edits[cp->edit_ctr];
+  return(ed->selection_maxamp_position);
 }
 
 static ed_list *free_ed_list(ed_list *ed, chan_info *cp)
@@ -5480,6 +5510,7 @@ void extend_edit_list(chan_info *cp, int edpos)
   new_ed->selection_beg = old_ed->selection_beg;
   new_ed->selection_end = old_ed->selection_end;
   new_ed->maxamp = old_ed->maxamp;
+  new_ed->maxamp_position = old_ed->maxamp_position;
   ripple_all(cp, 0, 0); /* 0,0 -> copy marks */
   cp->amp_envs[cp->edit_ctr] = amp_env_copy(cp, false, edpos);
   after_edit(cp);
@@ -6877,6 +6908,7 @@ void copy_then_swap_channels(chan_info *cp0, chan_info *cp1, int pos0, int pos1)
   new_ed->sound_location = new1;
   new_ed->edpos = pos1;
   new_ed->maxamp = old_ed->maxamp;
+  new_ed->maxamp_position = old_ed->maxamp_position;
   new_ed->beg = 0;
   new_ed->len = old_ed->len;
   new_ed->origin = copy_string(TO_PROC_NAME(S_swap_channels));
@@ -6893,6 +6925,7 @@ void copy_then_swap_channels(chan_info *cp0, chan_info *cp1, int pos0, int pos1)
   new_ed->sound_location = new0;
   new_ed->edpos = pos0;
   new_ed->maxamp = old_ed->maxamp;
+  new_ed->maxamp_position = old_ed->maxamp_position;
   new_ed->beg = 0;
   new_ed->len = old_ed->len;
   new_ed->origin = copy_string(TO_PROC_NAME(S_swap_channels)); /* swap = stored change-edit at restore time, so no redundancy here */
@@ -8115,7 +8148,7 @@ scale samples in the given sound/channel between beg and beg + num to norm."
     }
   else 
     {
-      cur_max = channel_local_maxamp(cp, samp, samps, pos);
+      cur_max = channel_local_maxamp(cp, samp, samps, pos, NULL);
       origin = mus_format("%s" PROC_OPEN "%.3f" PROC_SEP OFF_TD PROC_SEP OFF_TD, TO_PROC_NAME(S_normalize_channel), norm, samp, samps);
     }
   if (cur_max != 0.0)
@@ -8124,11 +8157,11 @@ scale samples in the given sound/channel between beg and beg + num to norm."
   return(scl);
 }			  
 
-Float channel_local_maxamp(chan_info *cp, off_t beg, off_t num, int edpos)
+Float channel_local_maxamp(chan_info *cp, off_t beg, off_t num, int edpos, off_t *maxpos)
 {
   snd_fd *sf;
   mus_sample_t ymax, mval;
-  off_t i;
+  off_t i, mpos = -1;
   int j = 0;
   sf = init_sample_read_any(beg, cp, READ_FORWARD, edpos);
   if (sf == NULL) return(0.0);
@@ -8139,7 +8172,11 @@ Float channel_local_maxamp(chan_info *cp, off_t beg, off_t num, int edpos)
       for (i = 0; i < num; i++)
 	{
 	  mval = mus_sample_abs(read_sample(sf));
-	  if (mval > ymax) ymax = mval;
+	  if (mval > ymax) 
+	    {
+	      ymax = mval;
+	      mpos = i;
+	    }
 	  j++;
 	  if (j > 1000000)
 	    {
@@ -8158,9 +8195,14 @@ Float channel_local_maxamp(chan_info *cp, off_t beg, off_t num, int edpos)
       for (i = 0; i < num; i++)
 	{
 	  mval = mus_sample_abs(read_sample(sf));
-	  if (mval > ymax) ymax = mval;
+	  if (mval > ymax) 
+	    {
+	      ymax = mval;
+	      mpos = i;
+	    }
 	}
     }
+  if (maxpos) (*maxpos) = mpos;
   free_snd_fd(sf);
   return(MUS_SAMPLE_TO_FLOAT(ymax));
 }

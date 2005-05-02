@@ -1735,6 +1735,32 @@ where a <b>tap</b> is doing the actual delay line read.
 </pre>
 </td></tr></table>
 
+<p>The <b>mus-scaler</b> field is available for simple extensions of the delay.  For example,
+the following "windowed-maxamp" generator uses it to track the current maximum sample value
+in the delay line (the result is an envelope that tracks the peak amplitude in the
+last "size" samples).
+</p>
+
+<table border=2 bordercolor="tan" hspace=40 cellpadding=8 cellspacing=3><tr><td>
+<pre>
+(define* (make-windowed-maxamp #:optional (size 128))
+  (let ((gen (make-delay size)))
+    (set! (<em class=red>mus-scaler</em> gen) 0.0)
+    gen))
+
+(define (windowed-maxamp gen y)
+  (let ((absy (abs y))
+        (mx (delay gen absy))
+	(pk (- (<em class=red>mus-scaler</em> gen) .001)))
+    (if (&gt; absy pk)
+	(set! (<em class=red>mus-scaler</em> gen) absy)
+        (if (&gt;= mx pk)
+	    (set! (<em class=red>mus-scaler</em> gen) (<a class=quiet href="extsnd.html#vctpeak">vct-peak</a> (<a class=quiet href="#mus-data">mus-data</a> gen)))))
+    (<em class=red>mus-scaler</em> gen)))
+</pre>
+</td></tr></table>
+
+
 <p>In the Scheme version of CLM, the Scheme built-in function delay is available as %delay.
 </p>
 <br>
@@ -1855,7 +1881,6 @@ effect in new-effects.scm and in rms-envelope in env.scm (Snd).  It could also b
 <tr><td><em class=gen>mus-length</em></td><td>length of table</td></tr>
 <tr><td><em class=gen>mus-order</em></td><td>same as mus-length</td></tr>
 <tr><td><em class=gen>mus-data</em></td><td>table of last 'size' values</td></tr>
-<tr><td><em class=gen>mus-scaler</em></td><td>unused internally, but available for delay specializations</td></tr>
 </table>
 <br>
 <pre>

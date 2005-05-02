@@ -3712,6 +3712,12 @@ graph drawing choice for the region dialog's graph.
 maximum amplitude of region <i>reg</i>.
 </td></tr>
 
+<!-- region-maxamp-position -->
+<tr><td colspan=2><code><a class=def name="regionmaxampposition">region-maxamp-position</a> (<i>reg</i>)</code></td></tr>
+<tr><td></td><td>
+location (sample number) of maximum amplitude of region <i>reg</i>.
+</td></tr>
+
 <!-- region-position -->
 <tr><td colspan=2><code><a class=def name="regionposition">region-position</a> (<i>reg chan</i>)</code></td></tr>
 <tr><td></td><td>
@@ -3940,6 +3946,12 @@ selection length in samples.  You can set this to move the selection end point.
 <tr><td colspan=2><code><a class=def name="selectionmaxamp">selection-maxamp</a> (<i>snd chn</i>)</code></td></tr>
 <tr><td></td><td>
 maximum amplitude of selection in the given channel.
+</td></tr>
+
+<!-- selection-maxamp-position -->
+<tr><td colspan=2><code><a class=def name="selectionmaxampposition">selection-maxamp-position</a> (<i>snd chn</i>)</code></td></tr>
+<tr><td></td><td>
+location (sample number) of maximum amplitude of selection in the given channel.
 </td></tr>
 
 <!-- selection-member? -->
@@ -5566,9 +5578,19 @@ CLM's sound maxamp: <a href="clm.html#sound-maxamp">sound-maxamp</a> (same as mu
 To set the y axis bounds to reflect the channel's maxamp: <a href="#ybounds">y-bounds</a><br>
 Mix maxamp: <a href="sndscm.html#mixmaxamp">mix-maxamp</a><br>
 Track maxamp: <a href="sndscm.html#trackmaxamp">track-maxamp</a><br>
+maxamp locations: <a href="#maxampposition">maxamp-position</a>, <a href="#regionmaxampposition">region-maxamp-position</a>, <a href="#selectionmaxampposition">selection-maxamp-position</a>
 <br>
 </small></blockquote>
 </td></tr></TABLE>
+</td></tr>
+<tr><td colspan=2></td></tr>
+
+<!-- maxamp-position -->
+<tr><td colspan=2>
+<code><a class=def name="maxampposition">maxamp-position</a> (<em class=narg>snd chn</em> <i>edpos</i>)</code>
+</td></tr>
+<tr><td></td><td>
+location (sample number) of max amp in <i>snd</i>'s channel <i>chn</i>.
 </td></tr>
 <tr><td colspan=2></td></tr>
 

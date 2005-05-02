@@ -3763,13 +3763,24 @@
 
 (define (check-maxamp ind val name)
   (if (fneq (maxamp ind 0) val) (snd-display ";maxamp amp-env ~A: ~A should be ~A" name (maxamp ind) val))
-  (let ((pos (find (lambda (y) (>= (abs y) (- val .001))))))
+  (let ((pos (find (lambda (y) (>= (abs y) (- val .0001)))))
+	(maxpos (maxamp-position ind 0)))
     (if (not pos) (snd-display ";actual maxamp ~A vals not right" name))
-    (let ((mx 0.0))
+    (if (not (= maxpos (cadr pos)))
+	(snd-display ";~A: find and maxamp-position disagree: ~A (~A) ~A (~A)" 
+		     name pos (sample (cadr pos) ind 0) maxpos (sample maxpos ind 0)))
+    (let ((mx 0.0)
+	  (ctr 0)
+	  (mpos 0))
       (scan-chan (lambda (y) 
-		   (if (> (abs y) mx) 
-		       (set! mx (abs y))) 
+		   (if (> (abs y) mx)
+		       (begin
+			 (set! mpos ctr)
+			 (set! mx (abs y))))
+		   (set! ctr (1+ ctr))
 		   #f))
+      (if (not (= mpos maxpos))
+	  (snd-display ";scan-chan and maxamp-position disagree: ~A ~A" mpos maxpos))
       (if (fneq mx val) (snd-display ";actual ~A max: ~A (correct: ~A)" name mx val)))))
 
 (define (check-env-vals name gen)
@@ -7419,6 +7430,7 @@ EDITS: 5
 	(if (not (= (data-size index) (* 50828 2))) (snd-display ";oboe: size ~D?" (data-size index)))
 	(if (not (= (data-format index) mus-bshort)) (snd-display ";oboe: format ~A?" (data-format index)))
 	(if (fneq (maxamp index) .14724) (snd-display ";oboe: maxamp ~F?" (maxamp index)))
+	(if (not (= (maxamp-position index) 24971)) (snd-display ";oboe: maxamp-position ~A?" (maxamp-position index)))
 	(if (comment index) (snd-display ";oboe: comment ~A?" (comment index)))
 	(if (not (= (string-length "asdf") 4)) (snd-display ";string-length: ~A?" (string-length "asdf")))
 	(if (not (string=? (short-file-name index) "oboe.snd")) (snd-display ";oboe short name: ~S?" (short-file-name index)))
@@ -7447,7 +7459,11 @@ EDITS: 5
 	  (if (not (= (selection-chans) 1)) (snd-display ";selection-chans(1): ~A" (selection-chans)))
 	  (if (not (= (selection-srate) (srate index))) (snd-display ";selection-srate: ~A ~A" (selection-srate) (srate index)))
 	  (if (fneq (region-maxamp r0) (maxamp index)) (snd-display ";region-maxamp (1): ~A?" (region-maxamp r0)))
+	  (if (not (= (region-maxamp-position r0) (maxamp-position index)))
+	      (snd-display ";region-maxamp-position (1): ~A ~A?" (region-maxamp-position r0) (maxamp-position index)))
 	  (if (fneq (selection-maxamp index 0) (maxamp index)) (snd-display ";selection-maxamp (1): ~A?" (selection-maxamp index 0)))
+	  (if (not (= (selection-maxamp-position index 0) (maxamp-position index)))
+	      (snd-display ";selection-maxamp-position (1): ~A ~A?" (selection-maxamp-position index 0) (maxamp-position index)))
 	  (save-region r0 "temp.dat")
 	  (if (file-exists? "temp.dat")
 	      (delete-file "temp.dat")
@@ -8273,7 +8289,10 @@ EDITS: 5
 	  (close-sound ind))
 	
 	(let* ((obind (open-sound "4.aiff"))
-	       (amps (maxamp obind #t)))
+	       (amps (maxamp obind #t))
+	       (times (maxamp-position obind #t)))
+	  (if (not (equal? times (list 810071 810071 810071 810071)))
+	      (snd-display ";4.aiff times: ~A" times))
 	  (if (< (window-width) 600) 
 	      (set! (window-width) 600))
 	  (if (< (window-height) 600)
@@ -8769,6 +8788,34 @@ EDITS: 5
 		      0 (frames ind1) "ignore: cut 2" ind1 0))
 	  (if (> (abs (- (frames ind1) (* len 2))) 3)
 	      (snd-display ";map-chan double: ~A ~A?" len (frames ind1)))
+	  (revert-sound ind1)
+	  (let ((otime (maxamp-position ind1)))
+	    (set! (sample 1234) .9)
+	    (let* ((ntime (maxamp-position ind1))
+		   (nval (maxamp ind1))
+		   (npos (edit-position ind1 0)))
+	      (if (not (= ntime 1234)) (snd-display ";maxamp-position 1234: ~A" ntime))
+	      (let ((ootime (maxamp-position ind1 0 0)))
+		(if (not (= ootime otime)) (snd-display ";maxamp-position edpos 0: ~A ~A" otime ootime)))
+	      (let ((nntime (maxamp-position ind1 0 npos)))
+		(if (not (= nntime ntime)) (snd-display ";maxamp-position edpos ~D: ~A ~A" npos ntime nntime)))
+	      (if (fneq nval .9) (snd-display ";maxamp .9: ~A" nval)))
+	    (set! (sample 1234) 0.0)
+	    (env-channel '(0 0 1 1))
+	    (if (not (= (maxamp-position) 35062)) (snd-display ";env-channel maxamp-position: ~A" (maxamp-position)))
+	    (let ((ootime (maxamp-position ind1 0 0)))
+	      (if (not (= ootime otime)) (snd-display ";maxamp-position edpos 0(1): ~A ~A" otime ootime)))
+	    (let ((nntime (maxamp-position ind1 0 1)))
+	      (if (not (= nntime 1234)) (snd-display ";maxamp-position edpos 1(1): ~A ~A" 1234 nntime)))
+	    (let ((nntime (maxamp-position ind1 0 current-edit-position)))
+	      (if (not (= nntime 35062)) (snd-display ";maxamp-position edpos current: ~A ~A" 35062 nntime))))
+	  (revert-sound ind1)
+	  (make-selection 24000 25000)
+	  (if (not (= (selection-maxamp-position) 971))
+	      (snd-display ";selection maxamp position: ~A" (selection-maxamp-position)))
+	  (let ((reg (make-region 24000 25000)))
+	    (if (not (= (region-maxamp-position reg) 971))
+		(snd-display ";region maxamp position: ~A" (region-maxamp-position))))
 	  (close-sound ind1))
 	(let* ((ind1 (open-sound "oboe.snd")))
 	  (test-edpos maxamp 'maxamp (lambda () (scale-by 2.0 ind1 0)) ind1)
@@ -54226,7 +54273,7 @@ EDITS: 2
 		     main-widgets make-color make-graph-data make-mix-sample-reader make-player make-region
 		     make-region-sample-reader make-sample-reader make-track-sample-reader map-chan mark-color mark-name
 		     mark-sample mark-sync mark-sync-max mark-home marks mark?  max-transform-peaks max-regions
-		     maxamp menu-widgets minibuffer-history-length min-dB log-freq-start mix mixes mix-amp mix-amp-env
+		     maxamp maxamp-position menu-widgets minibuffer-history-length min-dB log-freq-start mix mixes mix-amp mix-amp-env
 		     mix-tag-position mix-chans mix-color mix-track mix-frames mix-locked? mix? view-mixes-dialog mix-position view-tracks-dialog
 		     track-dialog-track mix-dialog-mix mix-inverted?
 		     mix-region mix-sample-reader?  mix-selection mix-sound mix-home mix-speed mix-tag-height mix-tag-width mark-tag-height mark-tag-width
@@ -54240,7 +54287,8 @@ EDITS: 2
 		     recorder-in-device read-peak-env-info-file recorder-autoload recorder-buffer-size recorder-dialog
 		     recorder-file recorder-gain recorder-in-amp recorder-in-format recorder-max-duration recorder-out-amp
 		     recorder-out-chans recorder-out-format recorder-out-type recorder-srate recorder-trigger redo region-chans view-regions-dialog
-		     region-graph-style region-frames region-position region-maxamp selection-maxamp region-sample region->vct
+		     region-graph-style region-frames region-position region-maxamp region-maxamp-position 
+		     selection-maxamp selection-maxamp-position region-sample region->vct
 		     region-srate regions region?  remove-from-menu report-in-minibuffer reset-controls restore-controls
 		     restore-marks restore-region reverb-control-decay reverb-control-feedback recorder-in-chans
 		     reverb-control-length reverb-control-lowpass reverb-control-scale reverb-control?  reverse-sound
@@ -54862,7 +54910,7 @@ EDITS: 2
 			      fft-log-magnitude transform-size transform-graph-type fft-window transform-graph? find
 			      graph graph-style lisp-graph? insert-region insert-sound
 			      time-graph-style lisp-graph-style transform-graph-style
-			      left-sample make-graph-data map-chan max-transform-peaks maxamp min-dB mix-region
+			      left-sample make-graph-data map-chan max-transform-peaks maxamp maxamp-position min-dB mix-region
 			      transform-normalization peak-env-info peaks play play-and-wait position->x position->y reverse-sound
 			      revert-sound right-sample sample samples->sound-data save-sound save-sound-as scan-chan
 			      select-channel show-axes show-transform-peaks show-marks show-mix-waveforms show-y-zero show-grid show-sonogram-cursor
@@ -54889,7 +54937,7 @@ EDITS: 2
 			      transform-size transform-graph-type fft-window transform-graph? find 
 			      graph graph-style lisp-graph? insert-region insert-sound left-sample
 			      time-graph-style lisp-graph-style transform-graph-style
-			      make-graph-data map-chan max-transform-peaks maxamp min-dB mix-region transform-normalization
+			      make-graph-data map-chan max-transform-peaks maxamp maxamp-position min-dB mix-region transform-normalization
 			      peak-env-info peaks play play-and-wait position->x position->y reverse-sound right-sample sample
 			      samples->sound-data save-sound-as scan-chan show-axes show-transform-peaks show-marks
 			      show-mix-waveforms show-y-zero show-grid show-sonogram-cursor 
@@ -54916,7 +54964,7 @@ EDITS: 2
 			      transform-size transform-graph-type fft-window transform-graph? filter-sound
 			      graph-data graph-style lisp-graph? insert-region left-sample
 			      time-graph-style lisp-graph-style transform-graph-style
-			      make-graph-data max-transform-peaks maxamp min-dB transform-normalization peak-env-info play
+			      make-graph-data max-transform-peaks maxamp maxamp-position min-dB transform-normalization peak-env-info play
 			      play-and-wait position->x position->y redo reverse-sound revert-sound right-sample sample
 			      samples->sound-data save-sound scale-by scale-to show-axes show-transform-peaks
 			      show-marks show-mix-waveforms show-y-zero show-grid show-sonogram-cursor 
@@ -54972,7 +55020,7 @@ EDITS: 2
 			      dot-size edit-position edit-tree edits fft-window-beta fft-log-frequency fft-log-magnitude
 			      transform-size transform-graph-type fft-window transform-graph? graph-style lisp-graph? left-sample
 			      time-graph-style lisp-graph-style transform-graph-style
-			      make-graph-data max-transform-peaks maxamp min-dB transform-normalization peak-env-info
+			      make-graph-data max-transform-peaks maxamp maxamp-position min-dB transform-normalization peak-env-info
 			      reverse-sound right-sample show-axes show-transform-peaks show-marks 
 			      show-mix-waveforms show-y-zero show-grid show-sonogram-cursor  grid-density
 			      spectro-cutoff spectro-hop spectro-start spectro-x-angle spectro-x-scale spectro-y-angle
@@ -54995,7 +55043,7 @@ EDITS: 2
 			    (set! ctr (+ ctr 1))))
 			(list channel-widgets cursor cursor-position display-edits dot-size edit-tree edits
 			      fft-window-beta fft-log-frequency fft-log-magnitude transform-size transform-graph-type fft-window
-			      transform-graph? graph-style lisp-graph? left-sample make-graph-data max-transform-peaks maxamp
+			      transform-graph? graph-style lisp-graph? left-sample make-graph-data max-transform-peaks maxamp maxamp-position
 			      time-graph-style lisp-graph-style transform-graph-style
 			      min-dB transform-normalization peak-env-info reverse-sound right-sample show-axes  grid-density
 			      show-transform-peaks show-marks show-mix-waveforms show-y-zero show-grid show-sonogram-cursor spectro-cutoff spectro-hop
@@ -55114,7 +55162,7 @@ EDITS: 2
 					(if (not (eq? tag 'wrong-type-arg))
 					    (snd-display ";~D: region procs ~A: ~A ~A" ctr n tag arg))
 					(set! ctr (+ ctr 1))))
-				    (list play-region region-chans region-frames region-position region-maxamp region-sample 
+				    (list play-region region-chans region-frames region-position region-maxamp region-maxamp-position region-sample 
 					  region->vct region-srate forget-region))))
 		      (list vct-5 '#(0 1) (sqrt -1.0) "hiho" (list 0 1)))
 	    
@@ -55128,7 +55176,7 @@ EDITS: 2
 			    (if (not (eq? tag 'no-such-region))
 				(snd-display ";~D: (no) region procs ~A: ~A" ctr n tag))
 			    (set! ctr (+ ctr 1))))
-			(list play-region region-chans region-frames region-position region-maxamp region-srate forget-region))) 
+			(list play-region region-chans region-frames region-position region-maxamp region-maxamp-position region-srate forget-region))) 
 	    
 	    (let ((ctr 0))
 	      (for-each (lambda (n)

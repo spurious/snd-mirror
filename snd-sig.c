@@ -451,18 +451,34 @@ void scale_by(chan_info *cp, Float *ur_scalers, int len, bool over_selection)
   free_sync_info(si);
 }
 
-Float channel_maxamp(chan_info *cp, int edpos)
+static Float channel_maxamp_and_position(chan_info *cp, int edpos, off_t *maxpos)
 {
+  /* maxamp position is not tracked in peak env because it gloms up the code, and cannot easily be saved/restored in the peak env files */
   Float val;
   int pos;
   if (edpos == AT_CURRENT_EDIT_POSITION) pos = cp->edit_ctr; else pos = edpos;
-  if (amp_env_maxamp_ok(cp, pos)) 
+  if ((amp_env_maxamp_ok(cp, pos)) && (!maxpos))
     return(amp_env_maxamp(cp, pos));
   val = ed_maxamp(cp, pos);
-  if (val >= 0.0) return(val);
-  val = channel_local_maxamp(cp, 0, cp->samples[pos], pos);
+  if (maxpos) (*maxpos) = ed_maxamp_position(cp, pos);
+  if ((val >= 0.0) && ((!maxpos) || ((*maxpos) >= 0)))
+    return(val);
+  val = channel_local_maxamp(cp, 0, cp->samples[pos], pos, maxpos);
   set_ed_maxamp(cp, pos, val);
+  if (maxpos) set_ed_maxamp_position(cp, pos, (*maxpos));
   return(val);
+}
+
+Float channel_maxamp(chan_info *cp, int edpos)
+{
+  return(channel_maxamp_and_position(cp, edpos, NULL));
+}
+
+off_t channel_maxamp_position(chan_info *cp, int edpos)
+{
+  off_t maxpos = 0;
+  channel_maxamp_and_position(cp, edpos, &maxpos);
+  return(maxpos);
 }
 
 bool scale_to(snd_info *sp, chan_info *cp, Float *ur_scalers, int len, bool over_selection)

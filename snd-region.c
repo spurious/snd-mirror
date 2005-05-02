@@ -226,9 +226,32 @@ static off_t region_maxamp_position(int n)
     {
       if ((r->maxamp < 0.0) && (r->use_temp_file == REGION_DEFERRED))
 	deferred_region_to_temp_file(r);
-      return(r->maxamp_position); 
+      if ((r->maxamp_position == -1) && (r->filename)) /* not picked up elsewhere */
+	{
+	  /* it exists as r->filename, so just use sndlib... */
+	  mus_sample_t *vals;
+	  off_t *times;
+	  int i;
+	  off_t maxpos;
+	  mus_sample_t maxsamp;
+	  vals = (mus_sample_t *)CALLOC(r->chans, sizeof(mus_sample_t));
+	  times = (off_t *)CALLOC(r->chans, sizeof(off_t));
+	  mus_sound_maxamps(r->filename, r->chans, vals, times);
+	  maxpos = times[0];
+	  maxsamp = vals[0];
+	  for (i = 1; i < r->chans; i++)
+	    if (vals[i] > maxsamp)
+	      {
+		maxsamp = vals[i];
+		maxpos = times[i];
+	      }
+	  FREE(vals);
+	  FREE(times);
+	  r->maxamp_position = maxpos;
+	}
+      return(r->maxamp_position);
     }
-  return(0);
+  return(-1);
 }
 
 static Float region_sample(int reg, int chn, off_t samp)
@@ -712,7 +735,7 @@ int define_region(sync_info *si, off_t *ends)
   r->header_type = (sp0->hdr)->type;
   r->srate = SND_SRATE(sp0);
   r->maxamp = -1.0;
-  r->maxamp_position = 0;
+  r->maxamp_position = -1;
   r->editor_copy = NULL;
   r->name = copy_string(sp0->short_filename);
   r->chans = si->chans;
@@ -832,7 +855,7 @@ static void deferred_region_to_temp_file(region *r)
 		    ymax = -ep->fmin;
 		}
 	      r->maxamp = MUS_SAMPLE_TO_FLOAT(ymax);
-	      /* TODO: r->maxamp_position */
+	      r->maxamp_position = -1; /* not tracked in amp-env stuff */
 	    }
 	  snd_close(fdo, r->filename);
 	}
@@ -986,8 +1009,6 @@ int snd_regions(void)
 
 /* (restore-region n chans len srate maxamp name start end filename [date-and-length]) */
 
-/* TODO: restore maxamp_position as well */
-
 void save_regions(FILE *fd)
 {
   int i;
@@ -1101,7 +1122,7 @@ void save_region_backpointer(snd_info *sp)
   free_region(r, CLEAR_REGION_DATA);
   r->use_temp_file = REGION_FILE;
   r->maxamp = 0.0;
-  /* TODO: r->maxamp_position */
+  r->maxamp_position = -1;
   r->frames = CURRENT_SAMPLES(sp->chans[0]);
   for (i = 0; i < sp->nchans; i++)
     {
@@ -1159,6 +1180,7 @@ static XEN g_restore_region(XEN pos, XEN chans, XEN len, XEN srate, XEN maxamp, 
   regions[regn] = r;
   r->id = region_id_ctr++;
   r->maxamp = XEN_TO_C_DOUBLE(maxamp);
+  r->maxamp_position = -1; /* not saved/restored */
   r->chans = XEN_TO_C_INT(chans);
   r->rsp = NULL;
   r->editor_copy = NULL;

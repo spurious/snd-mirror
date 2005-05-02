@@ -18,8 +18,6 @@
  * SOMEDAY: if chans superimposed, spectrogram might use offset planes? (sonogram?)
  * SOMEDAY: Options:Filter menu to give access to the various dsp.scm filters, graphs like the control panel etc
  * PERHAPS: channel-local colormaps (color-inverted color-scale color-cutoff as well?)
- *
- * TODO: add maxamp-position [doc/test/msg etc], also region|selection-maxamp-position
  */
 
 typedef enum {CLICK_NOGRAPH, CLICK_WAVE, CLICK_FFT_AXIS, CLICK_LISP, CLICK_FFT_MAIN} click_loc_t;    /* for marks, regions, mouse click detection */
@@ -4510,7 +4508,8 @@ typedef enum {CP_GRAPH_TRANSFORM_P, CP_GRAPH_TIME_P, CP_FRAMES, CP_CURSOR, CP_GR
 	      CP_EDPOS_FRAMES, CP_X_AXIS_STYLE, CP_UPDATE_TIME, CP_UPDATE_TRANSFORM_GRAPH, CP_UPDATE_LISP, CP_PROPERTIES,
 	      CP_MIN_DB, CP_SPECTRO_X_ANGLE, CP_SPECTRO_Y_ANGLE, CP_SPECTRO_Z_ANGLE, CP_SPECTRO_X_SCALE, CP_SPECTRO_Y_SCALE, CP_SPECTRO_Z_SCALE,
 	      CP_SPECTRO_CUTOFF, CP_SPECTRO_START, CP_FFT_WINDOW_BETA, CP_AP_SX, CP_AP_SY, CP_AP_ZX, CP_AP_ZY, CP_MAXAMP, CP_EDPOS_MAXAMP,
-	      CP_BEATS_PER_MINUTE, CP_EDPOS_CURSOR, CP_SHOW_GRID, CP_SHOW_SONOGRAM_CURSOR, CP_GRID_DENSITY
+	      CP_BEATS_PER_MINUTE, CP_EDPOS_CURSOR, CP_SHOW_GRID, CP_SHOW_SONOGRAM_CURSOR, CP_GRID_DENSITY, CP_MAXAMP_POSITION,
+	      CP_EDPOS_MAXAMP_POSITION
 } cp_field_t;
 
 #define EDPOS_NOT_PROTECTED -1
@@ -4677,9 +4676,11 @@ static XEN channel_get(XEN snd_n, XEN chn_n, cp_field_t fld, char *caller)
 	    case CP_SPECTRO_CUTOFF:   return(C_TO_XEN_DOUBLE(cp->spectro_cutoff));               break;
 	    case CP_SPECTRO_START:    return(C_TO_XEN_DOUBLE(cp->spectro_start));                break;
 	    case CP_FFT_WINDOW_BETA:  return(C_TO_XEN_DOUBLE(cp->fft_window_beta));              break;
+	    case CP_BEATS_PER_MINUTE: return(C_TO_XEN_DOUBLE(cp->beats_per_minute));             break;
 	    case CP_MAXAMP:           return(C_TO_XEN_DOUBLE(channel_maxamp(cp, AT_CURRENT_EDIT_POSITION))); break;
 	    case CP_EDPOS_MAXAMP:     return(C_TO_XEN_DOUBLE(channel_maxamp(cp, to_c_edit_position(cp, cp_edpos, S_maxamp, 3)))); break;
-	    case CP_BEATS_PER_MINUTE: return(C_TO_XEN_DOUBLE(cp->beats_per_minute));             break;
+	    case CP_MAXAMP_POSITION:  return(C_TO_XEN_OFF_T(channel_maxamp_position(cp, AT_CURRENT_EDIT_POSITION))); break;
+	    case CP_EDPOS_MAXAMP_POSITION: return(C_TO_XEN_OFF_T(channel_maxamp_position(cp, to_c_edit_position(cp, cp_edpos, S_maxamp_position, 3)))); break;
 	    }
 	}
     }
@@ -5377,6 +5378,24 @@ static XEN g_set_maxamp(XEN on, XEN snd_n, XEN chn_n)
 }
 
 WITH_REVERSED_CHANNEL_ARGS(g_set_maxamp_reversed, g_set_maxamp)
+
+static XEN g_maxamp_position(XEN snd_n, XEN chn_n, XEN edpos) 
+{
+  #define H_maxamp_position "(" S_maxamp_position " (snd #f) (chn #f) (edpos #f)): location of maxamp of data in snd's channel chn"
+  if (XEN_BOUND_P(edpos))
+    {
+      XEN res;
+      if (cp_edpos_loc != EDPOS_NOT_PROTECTED)
+	snd_unprotect_at(cp_edpos_loc);
+      cp_edpos = edpos;
+      cp_edpos_loc = snd_protect(cp_edpos);
+      res = channel_get(snd_n, chn_n, CP_EDPOS_MAXAMP_POSITION, S_maxamp_position);
+      snd_unprotect_at(cp_edpos_loc);
+      cp_edpos_loc = EDPOS_NOT_PROTECTED;
+      return(res);
+    }
+  return(channel_get(snd_n, chn_n, CP_MAXAMP_POSITION, S_maxamp_position));
+}
 
 static XEN g_squelch_update(XEN snd_n, XEN chn_n) 
 {
@@ -7004,6 +7023,7 @@ XEN_ARGIFY_2(g_ap_zy_w, g_ap_zy)
 XEN_ARGIFY_3(g_set_ap_zy_w, g_set_ap_zy)
 XEN_ARGIFY_3(g_frames_w, g_frames)
 XEN_ARGIFY_3(g_set_frames_w, g_set_frames)
+XEN_ARGIFY_3(g_maxamp_position_w, g_maxamp_position)
 XEN_ARGIFY_3(g_maxamp_w, g_maxamp)
 XEN_ARGIFY_3(g_set_maxamp_w, g_set_maxamp)
 XEN_ARGIFY_2(g_cursor_position_w, g_cursor_position)
@@ -7142,6 +7162,7 @@ XEN_ARGIFY_2(g_update_transform_graph_w, g_update_transform_graph)
 #define g_set_ap_zy_w g_set_ap_zy
 #define g_frames_w g_frames
 #define g_set_frames_w g_set_frames
+#define g_maxamp_position_w g_maxamp_position
 #define g_maxamp_w g_maxamp
 #define g_set_maxamp_w g_set_maxamp
 #define g_cursor_position_w g_cursor_position
@@ -7297,6 +7318,7 @@ void g_init_chn(void)
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_maxamp, g_maxamp_w, H_maxamp,
 					    S_setB S_maxamp, g_set_maxamp_w, g_set_maxamp_reversed, 0, 3, 1, 2);
   
+  XEN_DEFINE_PROCEDURE(S_maxamp_position,   g_maxamp_position_w, 0, 3, 0,   H_maxamp_position);
   XEN_DEFINE_PROCEDURE(S_cursor_position,   g_cursor_position_w, 0, 2, 0,   H_cursor_position);
 
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_edit_position, g_edit_position_w, H_edit_position,

@@ -1951,3 +1951,70 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 
 ;;; (define flt (make-volterra-filter (vct .5 .1) (vct .3 .2 .1)))
 ;;; (map-channel (lambda (x) (volterra-filter flt x)))
+
+
+;;; ----------------
+;;;
+;;; windowed-maxamp generator
+
+(define* (make-windowed-maxamp #:optional (size 128))
+  (let ((gen (make-delay size)))
+    (set! (mus-scaler gen) 0.0)
+    gen))
+
+(define (windowed-maxamp gen y)
+  (let* ((absy (abs y))
+	 (mx (delay gen absy))
+	 (pk (- (mus-scaler gen) .001)))
+    (if (> absy pk)
+	(set! (mus-scaler gen) absy)
+	(if (>= mx pk)
+	    (set! (mus-scaler gen) (vct-peak (mus-data gen)))))
+    (mus-scaler gen)))
+
+
+;;; ----------------
+;;;
+;;; harmonicizer (each harmonic is split into a set of harmonics via Chebyshev polynomials)
+
+(define* (harmonicizer freq coeffs pairs-1 #:optional (order 40) (bw 50.0) (beg 0) dur snd chn edpos)
+  (let* ((pairs pairs-1) ; for run's benefit
+	 (bands (make-vector pairs))
+	 (pcoeffs (partials->polynomial coeffs))
+	 (avgs (make-vector pairs))
+	 (peaks (make-vector pairs))
+	 (flt (make-filter 2 (vct 1 -1) (vct 0 -0.9)))
+	 (old-mx (maxamp))
+	 (new-mx 0.0)
+	 (ctr 40))
+    (do ((i 1 (1+ i)))
+	((> i pairs))
+      (let* ((aff (* i freq))
+	     (bwf (* bw (+ 1.0 (/ i (* 2 pairs))))))
+	(vector-set! peaks (1- i) (make-windowed-maxamp 128))
+	(vector-set! avgs (1- i) (make-average 128))
+	(vector-set! bands (1- i) (make-bandpass (hz->2pi (- aff bwf)) 
+						 (hz->2pi (+ aff bwf)) 
+						 order))))
+    (as-one-edit
+     (lambda ()
+       (map-channel
+	(lambda (y)
+	  (let ((sum 0.0))
+	    (do ((i 0 (1+ i)))
+		((= i pairs))
+	      (let* ((sig (bandpass (vector-ref bands i) y))
+		     (mx (windowed-maxamp (vector-ref peaks i) sig)))
+		(let ((amp (average (vector-ref avgs i) (if (> mx 0.0) (min 100.0 (/ 1.0 mx)) 0.0))))
+		  (if (> amp 0.0)
+		      (set! sum (+ sum (* mx (polynomial pcoeffs (* amp sig)))))))))
+	    (let ((val (filter flt sum))) ; get rid of DC
+	      (set! new-mx (max new-mx (abs val)))
+	      (if (= ctr 0) ; flush filter initial junk
+		  val
+		  (begin
+		    (set! ctr (1- ctr))
+		    0.0)))))
+	beg dur snd chn edpos)
+       (if (> new-mx 0.0)
+	   (scale-channel (/ old-mx new-mx) beg dur snd chn))))))

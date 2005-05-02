@@ -1,5 +1,8 @@
 Snd change log
 
+  2-May:     maxamp-position, region|selection-maxamp-position.
+             windowed-maxamp generator (dsp.scm)
+	     harmonicizer (dsp.scm)
   26-Apr:    snd 7.12.
   25-Apr:    y-axis-label.
   20-Apr:    draw.rb, poly.rb, musglyphs.rb thanks to Mike Scholz.

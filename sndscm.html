@@ -576,6 +576,9 @@ the listener?
 
 <p>A DSP grabbag, mostly filters.
 </p>
+
+<!-- TODO: move the defs to the actual text, not the table entry, also in other tables add hrefs -->
+
 <table border=1 cellpadding=3>
   <tr><td><a class=def name="srcduration">src-duration</a> env</td>  <td>predict duration after src by env</td></tr>
   <tr><td><A class=def NAME="exdolph">dolph</a> n gamma</td>         <td>Dolph-Chebyshev fft data window</td></tr>
@@ -641,7 +644,9 @@ the listener?
   <tr><td><a class=def name="spectralpolynomial">spectral-polynomial</a> coeffs snd chn</td><td>polynomial evaluation of entire channel in frequency domain (convolution)</td></tr>
   <tr><td><a class=def name="scentroid">scentroid</a> file beg dur db-floor rfreq fftsize</td><td>spectral center of gravity (brightness)</td></tr>
   <tr><td><em class=emdef>invert-filter</em> coeffs</td><td>return inverse filter given original coeffs</td></tr>
-  <tr><td><a class=def NAME="volterrafilter">volterra-filter</a> flt x</td><td>Volterra (non-linear FIR) filter</td></tr>
+  <tr><td><a class=def name="volterrafilter">volterra-filter</a> flt x</td><td>Volterra (non-linear FIR) filter</td></tr>
+  <tr><td><a class=def name="windowedmaxamp">windowed-maxamp</a> gen y</td><td>envelope follower -- returns maxamp of last n samps</td></tr>
+  <tr><td><a class=def name="harmonicizer">harmonicizer</a> freq coeffs pairs ...</td><td>split each harmonic into a set of harmonics</td></tr>
 </table>
 
 <p><b>dolph</b> is the Dolph-Chebyshev fft data window, taken
@@ -831,6 +836,14 @@ a sort of asymmetric FM.
 <b>ssb-bank-env</b> is the same as ssb-bank, but includes a frequency envelope:
 <code>(ssb-bank-env 557 880 '(0 0 1 100.0) 7)</code>.
 There is a dialog that runs ssb-bank in snd-motif.scm: create-ssb-dialog.
+</p>
+
+<p><b>windowed-maxamp</b> is a specialization
+of the delay generator that produces an envelope that tracks the peak amplitude of the last n samples.
+<code>(make-windowed-maxamp 256)</code> returns the generator (this one's window size is 256),
+and <code>(windowed-maxamp gen y)</code> then returns the envelope traced out by the signal "y".
+The harmonicizer (below) uses this generator to normalize an in-coming signal to 1.0
+so that the Chebyshev polynomials it is driving will produce a full spectrum at all times.
 </p>
 
 <p><b>any-random</b> provides the same output as <a href="clm.html#rand">rand</a> if the latter's
