@@ -5460,8 +5460,9 @@ bool extend_with_zeros(chan_info *cp, off_t beg, off_t num, int edpos)
 {
   off_t len, new_len;
   ed_fragment *cb;
-  ed_list *ed;
+  ed_list *ed, *old_ed;
   if (num <= 0) return(true); /* false if can't edit, but this is a no-op */
+  old_ed = cp->edits[edpos];
   len = cp->samples[edpos];
   if (beg > len) 
     {
@@ -5478,6 +5479,7 @@ bool extend_with_zeros(chan_info *cp, off_t beg, off_t num, int edpos)
   ED_TYPE(cb) = ED_ZERO;
   ed->edit_type = ZERO_EDIT;
   ed->sound_location = 0;
+  ed->maxamp = old_ed->maxamp;
   check_for_first_edit(cp); /* needed to activate revert menu option */
   amp_env_insert_zeros(cp, beg, num, edpos);
   lock_affected_mixes(cp, beg, beg);
@@ -6111,6 +6113,7 @@ bool scale_channel_with_origin(chan_info *cp, Float scl, off_t beg, off_t num, i
 	  FRAGMENT_SCALER(new_ed, 0) = 0.0;
 	  FRAGMENT_TYPE(new_ed, 0) = ED_ZERO;
 	  new_ed->maxamp = 0.0;
+	  new_ed->maxamp_position = 0;
 	}
       else
 	{

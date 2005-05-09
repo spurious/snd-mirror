@@ -1973,9 +1973,14 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
     (mus-scaler gen)))
 
 
+;;; TODO: windowed-maxamp tests, harmonicizer tests
+;;; SOMEDAY: specialize windowed-maxamp mus-describe -- would require local class etc
+
+
 ;;; ----------------
 ;;;
 ;;; harmonicizer (each harmonic is split into a set of harmonics via Chebyshev polynomials)
+;;;   obviously very similar to ssb-bank above, but splits harmonics individually, rather than pitch-shifting them
 
 (define* (harmonicizer freq coeffs pairs-1 #:optional (order 40) (bw 50.0) (beg 0) dur snd chn edpos)
   (let* ((pairs pairs-1) ; for run's benefit

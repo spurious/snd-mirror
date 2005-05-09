@@ -6,8 +6,6 @@
  *   a factor of 2.
  */
 
-/* TODO: windowed-maxamp gen based on delay */
-
 #include <config.h>
 
 #if USE_SND
