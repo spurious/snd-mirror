@@ -4,6 +4,10 @@
 /* TODO  buttons that choose which devices to display are no-ops */
 /* TODO: rotate-text for numbers in grec vu meter labels (for non-default vu-size meters) */
 
+/* TODO: recorder-out-chans setting is ignored by Gtk version of record dialog */
+/* and if in-chans set, the VU label no longer fits the VU frame, but that is a minor glitch in this horrible mess! */
+
+
 #define SMALL_FONT "Monospace 10"
 #define SMALLER_FONT "Monospace 8"
 #define SMALLER_FONT_CUTOFF .7

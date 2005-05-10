@@ -1973,8 +1973,12 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
     (mus-scaler gen)))
 
 
-;;; TODO: windowed-maxamp tests, harmonicizer tests
-;;; SOMEDAY: specialize windowed-maxamp mus-describe -- would require local class etc
+;;; TODO: harmonicizer tests
+;;; SOMEDAY: specialize windowed-maxamp mus-describe
+;;;    would require local class (new tag, copy base class, add/customize methods, method call wrapper)
+;;;    nice would be added fields in struct; how to specify which class to copy? which method to change?
+;;;    mus_make_class_tag: auto decl for type checker?
+;;;    to what extent could this be done using goops?
 
 
 ;;; ----------------

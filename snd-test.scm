@@ -19294,6 +19294,16 @@ EDITS: 5
 		       random-args))
 		    random-args))
 		 random-args)))))
+
+      (let ((gen (make-windowed-maxamp 4)))
+	(let ((ov (make-vct 10))
+	      (iv (vct .1 .05 -.2 .15 -1.5 0.1 0.01 0.001 0.0 0.0))
+	      (tv (vct .1 .1 .2 .2 1.5 1.5 1.5 1.5 0.1 0.01)))
+	  (do ((i 0 (1+ i)))
+	      ((= i 10))
+	    (vct-set! ov i (windowed-maxamp gen (vct-ref iv i))))
+	  (if (not (vequal tv ov))
+	      (snd-display ";windowed-maxamp: ~A ~A" ov tv))))
       
       (run-hook after-test-hook 8)
       ))

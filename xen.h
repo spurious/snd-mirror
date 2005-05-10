@@ -11,8 +11,8 @@
  */
 
 #define XEN_MAJOR_VERSION 1
-#define XEN_MINOR_VERSION 32
-#define XEN_VERSION "1.32"
+#define XEN_MINOR_VERSION 33
+#define XEN_VERSION "1.33"
 
 /* HISTORY:
  *
@@ -66,6 +66,7 @@
 */
 
 #ifndef __cplusplus
+#include <sys/types.h>
 #if HAVE_STDBOOL_H
   #include <stdbool.h>
 #else

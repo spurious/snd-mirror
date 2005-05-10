@@ -58,7 +58,7 @@ AC_DEFINE_UNQUOTED(CONFIGURE_ARGS, "$INVOKED_ARGS")
 #   --with-modules        accommodate sndlib that was built with modules
 #   --with-editres 	  include EditRes in xm
 #   --with-shared-sndlib  load sndlib.so if possible
-#   --with-x11            if gtk, this also includes X funcs from xm.c
+#   --with-x11            if gtk, this also includes X funcs from xm.c, otherwise a no-op or confusion
 #   --with-builtin-gtkrc  include built-in gtkrc fallbacks (default=yes)
 #   --without-gsl         omit GSL even if it exists
 #   --without-fftw        omit FFTW even if it exists
@@ -91,7 +91,7 @@ AC_ARG_WITH(static-motif,[  --with-static-motif	  use libXm.a to build Snd])
 AC_ARG_WITH(modules,     [  --with-modules	  use if sndlib uses modules])
 AC_ARG_WITH(editres,     [  --with-editres	  include editres in xm])
 AC_ARG_WITH(ladspa,	 [  --with-ladspa  	  include support for LADSPA plugins, Linux only])
-AC_ARG_WITH(x11,	 [  --with-x11		  include X funcs from xm.c with xg.c -- for X hacks, not normal use])
+AC_ARG_WITH(x11,	 [  --with-x11		  include X funcs from xm.c with xg.c -- for X hacks, don't use this switch!])
 AC_ARG_WITH(hobbit,      [  --with-hobbit 	  include hobbit-style function arity checking, default=no])
 AC_ARG_WITH(builtin-gtkrc,[  --with-builtin-gtkrc	  include built-in gtkrc fallbacks, default=yes])
 AC_ARG_WITH(midi,        [  --with-midi		  include sndlib midi module])

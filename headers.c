@@ -70,7 +70,9 @@
 #if USE_SND
   #include "snd.h"
 #else
-  #include "xen.h"
+  #if HAVE_RUBY && (!CLM)
+    #include "xen.h"
+  #endif
   #define PRINT_BUFFER_SIZE 512
   #define LABEL_BUFFER_SIZE 64
 #endif
@@ -494,7 +496,7 @@ const char *mus_data_format_name(int format)
 }
 
 #if HAVE_RUBY
-  #define TO_LANG(Str) xen_scheme_constant_to_ruby(Str)
+  #define TO_LANG(Str) strdup(xen_scheme_constant_to_ruby(Str))
 #else
   #define TO_LANG(Str) Str
 #endif

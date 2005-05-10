@@ -119,7 +119,7 @@ static void save_macro_1(named_macro *nm, FILE *fd)
       mc = nm->cmds[i];
       if (mc->keysym != 0)
 	fprintf(fd, 
-		"  %s %d %d\n", 
+		"  %s %d, %d\n", 
 		S_key, (int)(mc->keysym), mc->state);
     }
   fprintf(fd, "end\n");
