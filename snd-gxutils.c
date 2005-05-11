@@ -53,7 +53,7 @@ static Window find_window(Display *display,
 }
 
 /* /usr/share/emacs/21.2/lisp/net/browse-url.el.htmlview: info on other browsers
- * TODO: extend send-mozilla to safari, maybe explorer, lynx etc (mosaic, konqueror, mmm, grail)? -> send-browser
+ * PERHAPS: extend send-mozilla to safari, maybe explorer, lynx etc (mosaic, konqueror, mmm, grail)? -> send-browser
  */
 
 bool send_mozilla(const char *html_viewer, const char *url)

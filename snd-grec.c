@@ -3,9 +3,7 @@
 
 /* TODO  buttons that choose which devices to display are no-ops */
 /* TODO: rotate-text for numbers in grec vu meter labels (for non-default vu-size meters) */
-
-/* TODO: recorder-out-chans setting is ignored by Gtk version of record dialog */
-/* and if in-chans set, the VU label no longer fits the VU frame, but that is a minor glitch in this horrible mess! */
+/* TODO: if in-chans set, the VU label no longer fits the VU frame */
 
 
 #define SMALL_FONT "Monospace 10"
@@ -1017,16 +1015,7 @@ static void meter_button_callback(GtkWidget *w, gpointer context)
 	if (p->active[i]) 
 	  val++;
       if ((val > 0) && (val != n))
-	{
-	  widget_int_to_text(recdat->chans_text, val);
-#ifdef HAVE_ALSA
-	  /* FIXME: this apparently is not necessary, we cannot
-	   * change the number of recorded channels on the fly
-	   * (but we can activate or deactivate them in the gui?
-	       rp->out_chans = val;
-	   */
-#endif
-	}
+	widget_int_to_text(recdat->chans_text, val);
     }
   else rp->chan_in_active[wd->gain] = on;
 }
@@ -1114,7 +1103,7 @@ static void matrix_button_callback(GtkWidget *mb, gpointer context)
   handle_matrix_slider(mb, p, si->in_chan, si->out_chan, curamp, (p->active_sliders[si->in_chan][si->out_chan]));
 }
 
-static GtkWidget *make_button_matrix(pane_t *p, char *name, GtkWidget *parent, Float meter_size)
+static GtkWidget *make_button_matrix(recorder_info *rp, pane_t *p, char *name, GtkWidget *parent, Float meter_size)
 {
   GtkWidget *outer_frame, *outer_vbox, *outer_hbox, *top_hbox, *left_vbox, *buttons;
   int ins = 2, outs = 2, row, col, vu_rows;
@@ -1174,6 +1163,7 @@ static GtkWidget *make_button_matrix(pane_t *p, char *name, GtkWidget *parent, F
 
   ins = p->in_chans;
   outs = p->out_chans;
+  if ((outs > rp->out_chans) && (rp->out_chans > 0)) outs = rp->out_chans;
   p->matrix_buttons = (GtkWidget ***)CALLOC(ins, sizeof(GtkWidget **));
   for (row = 0; row < ins; row++) p->matrix_buttons[row] = (GtkWidget **)CALLOC(outs, sizeof(GtkWidget *));
 
@@ -1253,7 +1243,13 @@ static pane_t *make_pane(recorder_info *rp, GtkWidget *paned_window, int device,
   else 
     {
       vu_meters = true_inputs;
-      if (vu_meters < rp->out_chans) vu_meters = rp->out_chans;
+      if (vu_meters < rp->out_chans) 
+	vu_meters = rp->out_chans;
+      else
+	{
+	  if ((rp->out_chans > 0) && (vu_meters > rp->out_chans))
+	    vu_meters = rp->out_chans;
+	}
       p->out_chans = vu_meters;
       if (num_gains > vu_meters) num_gains = vu_meters;
       p->in_chans = 1;
@@ -1298,7 +1294,7 @@ static pane_t *make_pane(recorder_info *rp, GtkWidget *paned_window, int device,
 	    p->active_sliders[i][k] = true;
 
       /* rather than default to posting 64 (or 256!) sliders, set up a channel matrix where desired sliders can be set */
-      matrix_frame = make_button_matrix(p, "channel-matrix", vuh, meter_size);
+      matrix_frame = make_button_matrix(rp, p, "channel-matrix", vuh, meter_size);
     }
   else 
     {
@@ -1755,24 +1751,28 @@ static void record_button_callback(GtkWidget *w, gpointer context)
       old_srate = rp->srate;
       comment = read_file_data_choices(recdat, &rs, &ochns, &rp->output_header_type, &ofmt, &oloc, &samples); 
       rp->output_data_format = ofmt;
-      if ((all_panes[out_file_pane]) && (all_panes[out_file_pane]->on_buttons_size < ochns))
+      if (rp->out_chans == 0)
 	{
-	  char *buf;
-	  rp->out_chans = all_panes[out_file_pane]->on_buttons_size;
-	  buf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
-	  mus_snprintf(buf, PRINT_BUFFER_SIZE, 
-		       "only %d out chan%s available",
-		       rp->out_chans, (rp->out_chans > 1) ? "s" : "");
-	  record_report(messages, buf, NULL);
-	  FREE(buf);
+	  if ((all_panes[out_file_pane]) && 
+	      (all_panes[out_file_pane]->on_buttons_size < ochns))
+	    {
+	      char *buf;
+	      rp->out_chans = all_panes[out_file_pane]->on_buttons_size;
+	      buf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
+	      mus_snprintf(buf, PRINT_BUFFER_SIZE, 
+			   "only %d out chan%s available",
+			   rp->out_chans, (rp->out_chans > 1) ? "s" : "");
+	      record_report(messages, buf, NULL);
+	      FREE(buf);
+	    }
+	  else rp->out_chans = ochns;
 	}
-      else rp->out_chans = ochns;
       if (rs != old_srate) 
 	{
 	  rp->srate = rs;
 	  recorder_set_audio_srate(MUS_AUDIO_DEFAULT, rp->srate, 0, rp->taking_input);
 	}
-      if (rp->out_chans <= 0)
+      if (rp->out_chans < 0)
 	{
 	  record_report(messages, _("can't record: you screwed up the output channel number!"), NULL);
 	  rp->recording = false;
@@ -1955,7 +1955,7 @@ widget_t snd_record_file(void)
       /* see note above (line 2809) about recorder out chans */
       n = device_channels(MUS_AUDIO_PACK_SYSTEM(rp->ordered_systems[out_file_pane]) |
 			  rp->ordered_devices[out_file_pane]);
-      if ((rp->out_chans == DEFAULT_RECORDER_OUT_CHANS) && (n > 2))
+      if (rp->out_chans == 0)
 	rp->out_chans = n;
 
       for (i = 0; i < rp->ordered_devices_size; i++)
