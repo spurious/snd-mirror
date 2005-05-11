@@ -2,13 +2,40 @@
 
 ;; Instructions:
 ;; 1. Start the jack sound server.
-;; 2. (load-from-path "rt-compiler.scm")
-;; 3. (load-from-path "rt-examples.scm")
-;; 4. Browse the file and evaluate commented blocks.
+;; 2. Start snd.
+;; 3. Evaluate (load-from-path "rt-compiler.scm")
+;; 4. Evaluate (load-from-path "rt-examples.scm")
+;; 5. Browse this file and evaluate commented blocks.
 ;;
 ;; In case of stuck sounds, evaluate (rte-reset)
 ;; 
 ;; K.Matheussen 2005.
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Oscilator
+
+(definstrument (oscilator start duration)
+  (let ((osc (make-oscil))
+	(vol 4/6))
+    (rt-play start duration
+	     (lambda ()
+	       (out (* (oscil osc)
+		       vol))))))
+
+
+#!
+(define i (oscilator 0 10))
+(set! (-> i vol) 0.3)
+(set! (mus-frequency (-> i osc)) 200)
+(-> i stop)
+
+(-> i osc)
+(-> i vol)
+
+!#
 
 
 
@@ -42,10 +69,10 @@
 	 (len (inexact->exact (round (* (mus-srate) dur))))
 	 (end (+ beg len)))
     (ws-interrupt?)
-    (rt-run start dur
-	    (lambda ()
-	      (out (* (env amp-env)
-		      (polyshape os 1.0 (env gls-env))))))))
+    (rt-play start dur
+	     (lambda ()
+	       (out (* (env amp-env)
+		       (polyshape os 1.0 (env gls-env))))))))
 
 (define bird-org bird)
 (definstrument (bird-new start dur frequency freqskew amplitude freq-envelope amp-envelope)
@@ -57,11 +84,11 @@
 	 (beg (inexact->exact (round (* (mus-srate) start))))
 	 (end (+ beg len)))
     (ws-interrupt?)
-    (rt-run start dur
-	    (lambda ()
-	      (out (* (env amp-env)
-		      (oscil os (env gls-env))))))))
-  
+    (rt-play start dur
+	     (lambda ()
+	       (out (* (env amp-env)
+		       (oscil os (env gls-env))))))))
+
 
 (define with-sound-org with-sound)
 (defmacro with-sound-new (args . body)
@@ -83,8 +110,8 @@
 
 #!
 (make-rt-birds)
-(rte-reset)
 (rte-info)
+(rte-reset)
 !#
 
 
@@ -163,30 +190,15 @@
 
 
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Oscilator
-
-(definstrument (oscilator)
-  (let ((osc (make-oscil))
-	(vol 0.8)
-	(fm 0))
-    (rt-play (lambda ()
-	       (out (* (oscil osc)
-		       vol))))))
-
-
-#!
-(define i (oscilator))
-(set! (-> i vol) 0.3)
-(set! (mus-frequency (-> i osc)) 200)
-(-> i stop)
-!#
-
-
-
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Fileplayers
+
+(definstrument (play-once filename)
+  (let* ((rs (make-readin filename)))
+    (rt-play (lambda ()
+	       (if (>= (mus-location rs) (mus-length rs))
+		   (remove-me)
+		   (out (readin rs)))))))
 
 (definstrument (loopplay filename)
   (let* ((rs (make-readin filename)))
@@ -194,7 +206,6 @@
 	       (if (>= (mus-location rs) (mus-length rs))
 		   (set! (mus-location rs) 0))
 	       (out (readin rs))))))
-
 
 (definstrument (backandforth-stereo filename pan)
   (let* ((read0 (make-readin filename #:channel 0))
@@ -220,6 +231,8 @@
 
 #!
 (define filename "/home/kjetil/t1.wav")
+
+(play-once filename))
 
 (define p (loopplay filename))
 (-> p stop)
@@ -306,12 +319,17 @@ This version of the fm-violin assumes it is running within with-sound (where *ou
 			   (integer? (inexact->exact (/ fm3-rat fm1-rat)))))
 	   (norm (or (and easy-case modulate 1.0) index1))
 	   (carrier (make-oscil frequency))
+	   (poly-fmosc1  (if modulate 
+			     (if easy-case 
+				 (make-polyshape :frequency (* fm1-rat frequency) 
+						 :coeffs (partials->polynomial (list (inexact->exact fm1-rat) index1
+										     (inexact->exact (floor (/ fm2-rat fm1-rat))) index2
+										     (inexact->exact (floor (/ fm3-rat fm1-rat))) index3)))
+				 (make-polyshape))
+			     (make-polyshape)))
 	   (fmosc1  (if modulate 
 			(if easy-case 
-			    (make-polyshape :frequency (* fm1-rat frequency) 
-					    :coeffs (partials->polynomial (list (inexact->exact fm1-rat) index1
-										(inexact->exact (floor (/ fm2-rat fm1-rat))) index2
-										(inexact->exact (floor (/ fm3-rat fm1-rat))) index3)))
+			    #f
 			    (make-oscil (* fm1-rat frequency)))
 			#f))
 	   (fmosc2  (and modulate (or easy-case (make-oscil (* fm2-rat frequency)))))
@@ -332,6 +350,9 @@ This version of the fm-violin assumes it is running within with-sound (where *ou
 	   (amp-noi (if (and (not (= 0.0 amp-noise-amount)) (not (= 0.0 amp-noise-freq)))
 			(make-rand-interp amp-noise-freq amp-noise-amount)
 			#f))
+	   (ind-noi? (if ind-noi #t #f))
+	   (amp-noi? (if amp-noi #t #f))
+
 	   ;;(locs (make-locsig degree distance reverb-amount *output* *reverb* (mus-channels *output*)))
 	   (locs (make-locsig degree distance reverb-amount *output* *reverb* 2))
 	   (vib 0.0) 
@@ -339,46 +360,68 @@ This version of the fm-violin assumes it is running within with-sound (where *ou
 	   (fuzz 0.0)
 	   (ind-fuzz 1.0)
 	   (amp-fuzz 1.0))
+      
       (ws-interrupt?)
+
+      (if (not ind-noi)
+	  (set! ind-noi (make-rand-interp)))
+      (if (not amp-noi)
+	  (set! amp-noi (make-rand-interp)))
+      (if (not fm-noi)
+	  (set! fm-noi (make-rand)))
+      (if (not (oscil? fmosc1))
+	  (set! fmosc1 (make-oscil)))
+      (if (not (oscil? fmosc2))
+	  (set! fmosc2 (make-oscil)))
+      (if (not (oscil? fmosc3))
+	  (set! fmosc3 (make-oscil)))
+      (if (not (env? indf1))
+	  (set! indf1 (make-env '(0 2) )))
+      (if (not (env? indf2))
+	  (set! indf2 (make-env '(0 2))))
+      (if (not (env? indf3))
+	  (set! indf3 (make-env '(0 2))))
+
       (if (or (not easy-case) ind-noi amp-noi (> noise-amount 0.0) (not modulate))
-	  (run
-	   (lambda ()
-	     (do ((i beg (1+ i)))
-		 ((= i end))
-	       (if (not (= 0.0 noise-amount))
-		   (set! fuzz (rand fm-noi)))
-	       (set! vib (+ (env frqf) (triangle-wave pervib) (rand-interp ranvib)))
-	       (if ind-noi (set! ind-fuzz (+ 1.0 (rand-interp ind-noi))))
-	       (if amp-noi (set! amp-fuzz (+ 1.0 (rand-interp amp-noi))))
-	       (if modulate
-		   (if easy-case
-		       (set! modulation
-			     (* (env indf1) 
-				(polyshape fmosc1 1.0 vib)))
-		       (set! modulation
-			     (+ (* (env indf1) (oscil fmosc1 (+ (* fm1-rat vib) fuzz)))
-				(* (env indf2) (oscil fmosc2 (+ (* fm2-rat vib) fuzz)))
-				(* (env indf3) (oscil fmosc3 (+ (* fm3-rat vib) fuzz)))))))
-	       (locsig locs i (* (env ampf) amp-fuzz
-				 (oscil carrier (+ vib (* ind-fuzz modulation))))))))
-	  (rt-run startime dur
-		  (lambda () 
-		    (let* ((vib (+ (env frqf) (triangle-wave pervib) (rand-interp ranvib))))
-		      (locsig locs (* (env ampf) 
-				      (oscil carrier (+ vib (* (env indf1) 
-							       (polyshape fmosc1 1.0 vib))))))))))))
+	  (rt-play startime dur
+		   (lambda ()
+		     (if (not (= 0.0 noise-amount))
+			 (set! fuzz (rand fm-noi)))
+		     (set! vib (+ (env frqf) (triangle-wave pervib) (rand-interp ranvib)))
+		     (if ind-noi? (set! ind-fuzz (+ 1.0 (rand-interp ind-noi))))
+		     (if amp-noi? (set! amp-fuzz (+ 1.0 (rand-interp amp-noi))))
+		     (if modulate
+			 (if easy-case
+			     (set! modulation
+				   (* (env indf1) 
+				      (polyshape poly-fmosc1 1.0 vib)))
+			     (set! modulation
+				   (+ (* (env indf1) (oscil fmosc1 (+ (* fm1-rat vib) fuzz)))
+				      (* (env indf2) (oscil fmosc2 (+ (* fm2-rat vib) fuzz)))
+				      (* (env indf3) (oscil fmosc3 (+ (* fm3-rat vib) fuzz)))))))
+		     (locsig locs (* (env ampf) amp-fuzz
+				     (oscil carrier (+ vib (* ind-fuzz modulation)))))))
+	  (rt-play startime dur
+		   (lambda () 
+		     (let* ((vib (+ (env frqf) (triangle-wave pervib) (rand-interp ranvib))))
+		       (locsig locs (* (env ampf) 
+				       (oscil carrier (+ vib (* (env indf1) 
+								(polyshape fmosc1 1.0 vib))))))))))))
 
 
 #!
 (c-for 0 < 60 1
        (lambda (i)
 	 (c-display i)
-	 (fm-violin i (max 0.5 (random 5)) (+ (* i 100) (random 840)) .1
+	 (fm-violin i (max 0.5 (random 15))
+		    (1+ (random (1+ (* i 20))))
+		    (max 0.02 (random .3))
 		    :degree (random 90)
+		    :noise-amount (* (random 8) (random 0.4))
 		    :fm-index (+ i 1))))
-(rte-reset)
 (rte-info)
+(rte-reset)
 
-(fm-violin 0 5 200 90 .1)
+
 
 !#

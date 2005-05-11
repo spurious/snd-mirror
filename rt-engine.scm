@@ -18,26 +18,26 @@ This file is normally loaded from "rt-compiler.scm".
 rt-engine drodle:
 -----------------
 (-> rt-engine frames)
-(-> rt-engine start)
-(-> rt-engine get-time)
-(-> rt-engine destructor)
+(-> *rt-engine* start)
+(-> *rt-engine* get-time)
+(-> *rt-engine* destructor)
 
-(-> rt-engine pause)
-(-> rt-engine continue)
+(-> *rt-engine* pause)
+(-> *rt-engine* continue)
 
 (list 
- (-> rt-engine queue_size)
- (-> rt-engine queue_fullsize)
- (-> rt-engine num_procfuncs)
- (-> rt-engine get-time))
+ (-> *rt-engine* queue_size)
+ (-> *rt-engine* queue_fullsize)
+ (-> *rt-engine* num_procfuncs)
+ (-> *rt-engine* get-time))
 
-(-> rt-engine events_noninserted2)
+(-> *rt-engine* events_noninserted2)
 
-(list (-> rt-engine frames)
-      (-> rt-engine get-time)
-      (-> rt-engine is_running)))
+(list (-> *rt-engine* frames)
+      (-> *rt-engine* get-time)
+      (-> *rt-engine* is_running)))
       
-(-> rt-engine dir)
+(-> *rt-engine* dir)
 
 (let* ((a 5)
        (b (rt (lambda ()
@@ -45,7 +45,7 @@ rt-engine drodle:
 		a))))
   (list a (rt-funcall b)))
 
-(<rt-engine> dir add-event get-method class-name add-method instance?
+(<*rt-engine*> dir add-event get-method class-name add-method instance?
 	     (<jack-rt-driver> dir get-method destructor class-name add-method instance? pause start num-inputs stop num-outputs
 			       continue get-time set-input-args set-output-args
 			       (<jack> dir get-method class-name add-method
@@ -58,10 +58,10 @@ rt-engine drodle:
 			  class-name add-method instance? ringbuffer_to_rt ringbuffer_from_rt
 			  num_events_rt events_rt next_switchtime))
 
-(-> rt-engine num_events_rt)
-(list (-> rt-engine get-time)
-      (-> rt-engine next_switchtime)
-      (-> rt-engine next_next_switchtime))
+(-> *rt-engine* num_events_rt)
+(list (-> *rt-engine* get-time)
+      (-> *rt-engine* next_switchtime)
+      (-> *rt-engine* next_next_switchtime))
 
 
 
@@ -88,11 +88,13 @@ rt-engine drodle:
 
 (define rt-pointer-size (ec-sizeof-pointer))
 
-(define rt-ringbuffer-size (* rt-pointer-size 8192))
+(define rt-to-ringbuffer-size (* rt-pointer-size 8192))
+(define rt-from-ringbuffer-size (* 1024 1024))
 
 (define rt-num-input-ports 8)
 (define rt-num-output-ports 8)
 
+(define rt-max-cpu-usage 80)
 
 
 
@@ -307,6 +309,8 @@ size_t jack_ringbuffer_write_space(const jack_ringbuffer_t *rb);
 		    (c-display "Could not create jack client with name \"" name "\".")
 		    (return #f)))
 
+	      (-> jack-arg client client)
+		    
 	      (if num-inports
 		  (-> jack-arg num_inports num-inports))
 	      (if num-outports
@@ -360,6 +364,8 @@ size_t jack_ringbuffer_write_space(const jack_ringbuffer_t *rb);
 
   <void-*> rt_callback
 
+  <jack_client_t-*> client
+  
   <int> num_inports
   <jack_port_t**> input_ports
   
@@ -377,7 +383,7 @@ size_t jack_ringbuffer_write_space(const jack_ringbuffer_t *rb);
 	"#include <jack/jack.h>"
 	(shared-struct <Jack_Arg>)
 
-	"typedef void (*Callback)(void *arg,int is_running,int num_outs, float **outs, int num_ins, float **ins,int num_frames,int base_time,float samplerate)"
+	"typedef void (*Callback)(void *arg,jack_client_t *client,int is_running,int num_outs, float **outs, int num_ins, float **ins,int num_frames,int base_time,float samplerate)"
 
 	(functions->public
 	 (<int> jack_rt_process_dummy (lambda ((<jack_nframes_t> nframes)
@@ -405,9 +411,12 @@ size_t jack_ringbuffer_write_space(const jack_ringbuffer_t *rb);
 						(set! in[ch] (jack_port_get_buffer jack_arg->input_ports[ch] nframes))))
 				    
 				    (callback jack_arg->rt_arg
+					      jack_arg->client
 					      jack_arg->is_running
-					      jack_arg->num_outports out
-					      jack_arg->num_inports in
+					      jack_arg->num_outports
+					      out
+					      jack_arg->num_inports
+					      in
 					      nframes
 					      jack_arg->frames
 					      jack_arg->samplerate)
@@ -541,7 +550,6 @@ size_t jack_ringbuffer_write_space(const jack_ringbuffer_t *rb);
   <struct-RT_Event-*> next
   <void-*> func
   <void-*> arg
-  <int> isremovedorinserted
   )
 
 ;; (The double linked-list operations on procfunc can be optimized.)
@@ -550,7 +558,8 @@ size_t jack_ringbuffer_write_space(const jack_ringbuffer_t *rb);
   <struct-RT_Procfunc-*> prev
   <int> visitors
   <void-*> func
-  <SCM> arg
+  <void-*> arg
+  <SCM> toprotect
   <SCM> smob
   )
 
@@ -579,13 +588,16 @@ size_t jack_ringbuffer_write_space(const jack_ringbuffer_t *rb);
   <int> num_ins
   <float-**> ins
   <int> time
-  <int> framenum
   <float> samplerate
   <float> res
   <char-*> error
   <SCM> errorvariable
   <int> errorvarnum
   <jmp_buf> error_jmp
+
+  <int> max_cpu_usage
+  <int> num_max_cpu_interrupts
+  ;;<int> temp
   
   )
 
@@ -594,6 +606,7 @@ size_t jack_ringbuffer_write_space(const jack_ringbuffer_t *rb);
 (eval-c ""
 	"#include <stdbool.h>"
 	"#include <jack/ringbuffer.h>"
+	"#include <jack/jack.h>"
 
 	(shared-struct <RT_Event>)
 	(shared-struct <RT_Procfunc>)
@@ -606,26 +619,28 @@ size_t jack_ringbuffer_write_space(const jack_ringbuffer_t *rb);
 	(<scm_t_bits> procfunc_tag)
 	
 	(public
+	 ;; Note, this function is used as a general GET_SMOB_DATA function as well!
 	 (<void-*> rt_get_procfunc_data (lambda ((<SCM> procfunc_smob))
 					  (let* ((procfunc <struct-RT_Procfunc-*> (cast <void-*> (SCM_SMOB_DATA procfunc_smob))))
 					    (return procfunc))))
 	 
-	 (<SCM> rt_make_procfunc (lambda ((<void-*> func)(<SCM> arg))
+	 (<SCM> rt_make_procfunc (lambda ((<void-*> func)(<void-*> arg)(<SCM> toprotect))
 				   (let* ((procfunc <struct-RT_Procfunc-*> (calloc 1 (sizeof <struct-RT_Procfunc>)))
 					  (smob <SCM>))
-				     ;;(scm_gc_protect_object arg)
 				     (set! procfunc->func func)
 				     (set! procfunc->arg arg)
+				     (set! procfunc->toprotect toprotect)
 				     (SCM_NEWSMOB smob procfunc_tag procfunc)
 				     (set! procfunc->smob smob)
 				     (return smob)))))
 
 	(<SCM> mark_procfunc (lambda ((<SCM> procfunc_smob))
 			       (let* ((procfunc <struct-RT_Procfunc-*> (cast <void-*> (SCM_SMOB_DATA procfunc_smob))))
-				 (return procfunc->arg))))
+				 (return procfunc->toprotect))))
 	(<size_t> free_procfunc (lambda ((<SCM> procfunc_smob))
 				  (let* ((procfunc <struct-RT_Procfunc-*> (cast <void-*> (SCM_SMOB_DATA procfunc_smob))))
 				    ;;(fprintf stderr (string "Freeing procfunc smob: %u\\n") procfunc)
+				    (free procfunc->arg)
 				    (free procfunc)
 				    (return 0))))
 	(<int> print_procfunc (lambda ((<SCM> procfunc_smob) (<SCM> port) (<scm_print_state-*> pstate))
@@ -644,15 +659,68 @@ size_t jack_ringbuffer_write_space(const jack_ringbuffer_t *rb);
 	;; Code running in hard realtime thread (or can be)
 	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	
-	"typedef void (*Callback)(SCM arg,struct RT_Engine*,int startframes, int endframe)"
+	"typedef int (*Callback)(void *arg,int startframes, int endframe)"
 	"typedef void (*Callback2)(struct RT_Engine *,struct RT_Event*)"
 
+
+	;; The data-type that is sent back to guile thru the ringbuffer_from_rt ringbuffer.
+
+	;; Types:
+	"#define RT_DATABACK_EVENT 0"
+	"#define RT_DATABACK_UNPROTECT_PROCFUNC 1"
 	
+	(define-struct <RT_databack>
+	  <int> type
+	  <void-*> data)
+	
+	(<void> rt_send_data_back (lambda ((<struct-RT_Engine-*> engine)
+					   (<int> type)
+					   (<void-*> data))
+				    (if (< (jack_ringbuffer_write_space engine->ringbuffer_from_rt) (sizeof <struct-RT_databack>))
+					(fprintf stderr
+						 (string "Error. from_rt-ringbuffer full. This should be rare, but please report it to me, k.s.matheussen@notam02.no\\n"))
+					(let* ((databack <struct-RT_databack>))
+					  (set! databack.type type)
+					  (set! databack.data data)
+					  (jack_ringbuffer_write engine->ringbuffer_from_rt
+								 (cast <char-*> &databack)
+								 (sizeof <struct-RT_databack>))))))
+	
+	(<void> rt_unprotect_procfunc (lambda ((<struct-RT_Engine-*> engine)
+					       (<struct-RT_Procfunc-*> toremove))
+					(rt_send_data_back engine RT_DATABACK_UNPROTECT_PROCFUNC
+							   toremove)))
+						
+	(<int> rt_remove_procfunc_do (lambda ((<struct-RT_Engine-*> engine)
+					       (<struct-RT_Procfunc-*> toremove))
+					  
+					  (if (> toremove->visitors 0)
+					      (begin
+						
+						;;(fprintf stderr (string "removing: %u, visitors: %d\\n") event toremove->visitors)
+						toremove->visitors--
 
-	(functions->public
+						(if (== 0 toremove->visitors)
+						    (begin
+						      engine->num_procfuncs--
+						      
+						      (rt_unprotect_procfunc engine toremove)
+						      
+						      (if (== toremove->prev NULL)
+							  (begin
+							    (set! engine->procfuncs toremove->next)
+							    (if (!= NULL engine->procfuncs)
+								(set! engine->procfuncs->prev NULL)))
+							  (begin
+							    (set! toremove->prev->next toremove->next)
+							    (if (!= toremove->next NULL)
+								(set! toremove->next->prev toremove->prev))))
+						      (return 1)))))
+					  (return 0)))
 
+	 (functions->public
 	 
-	 (<void> rt_insert_procfunc (lambda ((<struct-RT_Engine-*> engine)
+	  (<void> rt_insert_procfunc (lambda ((<struct-RT_Engine-*> engine)
 					     (<struct-RT_Event-*> event))
 				      (let* ((toinsert <struct-RT_Procfunc-*> event->arg))
 
@@ -663,41 +731,24 @@ size_t jack_ringbuffer_write_space(const jack_ringbuffer_t *rb);
 					(if (== 1 toinsert->visitors)
 					    (begin
 					      engine->num_procfuncs++
-					      (set! event->isremovedorinserted 1)
+
 					      (set! toinsert->prev NULL)
 					      (if (!= NULL engine->procfuncs)
 						  (set! engine->procfuncs->prev toinsert))
 					      (set! toinsert->next engine->procfuncs)
-					      (set! engine->procfuncs toinsert))))))
+					      (set! engine->procfuncs toinsert))
+
+					    ;; A procfunc is always protected when sent here, but since it was already playing, it needs to be unprotected
+					    ;; because protection/unprotection is nested functions.
+					    (rt_unprotect_procfunc engine toinsert)))))
 
 
-	 
+	  
 	 (<void> rt_remove_procfunc (lambda ((<struct-RT_Engine-*> engine)
 					     (<struct-RT_Event-*> event))
 				      (let* ((toremove <struct-RT_Procfunc-*> event->arg))
-					
-					(if (> toremove->visitors 0)
-					    (begin
-
-					      ;;(fprintf stderr (string "removing: %u, visitors: %d\\n") event toremove->visitors)
-										      
-					      toremove->visitors--
-					      					      
-					      (if (== 0 toremove->visitors)
-						  (begin
-						    engine->num_procfuncs--
-						    (set! event->isremovedorinserted 1)
-						    (if (== toremove->prev NULL)
-							(begin
-							  (set! engine->procfuncs toremove->next)
-							  (if (!= NULL engine->procfuncs)
-							      (set! engine->procfuncs->prev NULL)))
-							(begin
-							  (set! toremove->prev->next toremove->next)
-							  (if (!= toremove->next NULL)
-							      (set! toremove->next->prev toremove->prev))))))))))))
-
-
+					(rt_remove_procfunc_do engine toremove)))))
+	 
 	
 	;; Priority queue code
 	;; rt_insert_event and rt_deletmin_event logic taken from "Data Structures and Agloritm Analysis second edition" by Mark Allen Weiss.
@@ -778,8 +829,6 @@ size_t jack_ringbuffer_write_space(const jack_ringbuffer_t *rb);
 	(<void> rt_queue_event (lambda ((<struct-RT_Engine-*> engine)
 					(<struct-RT_Event-*> event))
 				 
-				 engine->num_events++
-
 				 (if (>= event->time engine->next_switchtime)
 				     (if (>= event->time engine->next_next_switchtime)
 					 (begin
@@ -809,6 +858,7 @@ size_t jack_ringbuffer_write_space(const jack_ringbuffer_t *rb);
 	(functions->public
 
 	 (<void> rt_callback (lambda ((<struct-RT_Engine-*> engine)
+				      (<jack_client_t-*> client)
 				      (<int> is_running)
 				      (<int> num_outs) (<float> **outs)
 				      (<int> num_ins) (<float> **ins)
@@ -816,6 +866,8 @@ size_t jack_ringbuffer_write_space(const jack_ringbuffer_t *rb);
 				      (<int> base_time)
 				      (<float> samplerate))
 
+			       (<int> max_cycle_usage (/ (* nframes engine->max_cpu_usage) 100))
+				      
 			       (<int> time (+ base_time nframes))
 			       
 			       ;; Check ringbuffer for new events. Put those into engine->events.
@@ -828,8 +880,10 @@ size_t jack_ringbuffer_write_space(const jack_ringbuffer_t *rb);
 					    ;; If event->time is less or equal to the current time, we can't just run the event, because there
 					    ;; might be events with even less time-value later in the ringbuffer or in the queue.
 					    ;; So, queue it:
+					    engine->num_events++
 					    (rt_queue_event engine event)))
-				   
+
+				   ;; one=some_function(numbers_remaining,next_switchtime)/nframes
 				   ;; Check for one noninserted events.
 				   (if (!= NULL engine->events_noninserted1)
 				       (let* ((event <struct-RT_Event-*> engine->events_noninserted1))
@@ -839,20 +893,22 @@ size_t jack_ringbuffer_write_space(const jack_ringbuffer_t *rb);
 					   (let* ((event <struct-RT_Event-*> engine->events_noninserted2))
 					     (set! engine->events_noninserted2 event->next)
 					     (rt_insert_event engine event)))))
-			       
+
 			       (if (>= time engine->next_switchtime)
-				   (begin
-				     ;; Insert remaining noninserted1 events.
-				     (while (!= NULL engine->events_noninserted1)
-					    (let* ((event <struct-RT_Event-*> engine->events_noninserted1))
-					      (set! engine->events_noninserted1 event->next)
-					      (rt_insert_event engine event)))
+				   (let* ((left <struct-RT_Event-*> engine->events_noninserted1))
 				     (set! engine->events_noninserted1 engine->events_noninserted2)
 				     (set! engine->events_noninserted2 NULL)
 				     (set! engine->next_switchtime engine->next_next_switchtime)
-				     (set! engine->next_next_switchtime (+ (* 1024 nframes) engine->next_next_switchtime))))
-			       
+				     (set! engine->next_next_switchtime (+ (* 1024 nframes) engine->next_next_switchtime))
+				     ;;(fprintf stderr (string "frames: %d\\n") nframes)
+				     ;; queue remaining noninserted1 events.
+				     (while (!= NULL left)
+					    (let* ((event <struct-RT_Event-*> left))
+					      (set! left event->next)
+					      (rt_queue_event engine event)))))
 
+			       ;;(fprintf stderr (string "engine: %u\\n") engine)
+			       
 			       (set! engine->num_outs num_outs)
 			       (set! engine->outs outs)
 			       (set! engine->num_ins num_ins)
@@ -877,24 +933,37 @@ size_t jack_ringbuffer_write_space(const jack_ringbuffer_t *rb);
 					    (if is_running
 						(let* ((procfunc <struct-RT_Procfunc-*> engine->procfuncs))
 						  (while (!= NULL procfunc)
-							 (let* ((callback <Callback> procfunc->func))
+							 (let* ((callback <Callback> procfunc->func)
+								(next <struct-RT_Procfunc-*> procfunc->next))
 							   (set! engine->time time)
-							   (callback procfunc->arg
-								     engine
-								     (- time base_time)
-								     (- next_stop base_time)))
-							 (set! procfunc procfunc->next))))
-					    
+
+							   ;; Run a <realtime> instance function.
+							   (if (== 1 (callback procfunc->arg
+									       (- time base_time)
+									       (- next_stop base_time)))
+							       (rt_remove_procfunc_do engine procfunc))
+
+							   ;; Check if too many cpu-cycles are used.
+							   (if (> (jack_frames_since_cycle_start client) max_cycle_usage)
+							       (begin
+								 engine->num_max_cpu_interrupts++
+								 break))
+
+							   (set! procfunc next)))))
+							 
 					    (set! time next_stop)
 					    (rt_run_queued_events engine time))))
 			       
+			       ;;(set! engine->temp (jack_frames_since_cycle_start client))
+			       
 			       ;; Put events-to-be-freed into freing-ringbuffer.
 			       (while (and (!= engine->events_non_rt NULL)
-					   (>= (jack_ringbuffer_write_space engine->ringbuffer_from_rt) (sizeof <void-*>)))
-				      (jack_ringbuffer_write engine->ringbuffer_from_rt
-							     (cast <char-*> &engine->events_non_rt)
-							     (sizeof <void-*>))
-				      (set! engine->events_non_rt engine->events_non_rt->next)))))
+					   ;;                                                  Be lazy. No rush to fill up the ringbuffer here.
+					   (>= (jack_ringbuffer_write_space engine->ringbuffer_from_rt) (/ ,rt-from-ringbuffer-size 2)))
+				      (let* ((next <struct-RT_Event-*> engine->events_non_rt->next))
+					(rt_send_data_back engine RT_DATABACK_EVENT
+							   engine->events_non_rt)
+					(set! engine->events_non_rt next))))))
 					       
 
 	(public
@@ -907,57 +976,49 @@ size_t jack_ringbuffer_write_space(const jack_ringbuffer_t *rb);
 					      (set! engine->queue[i] &rt_event_dummy))))))
 	
 	 
-	 ;; Freeing events, protecting and unprotecting procfunc-smobs. Gakk, this is complicated...
-	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+	 ;; Freeing events, protecting and unprotecting procfunc-smobs.
+	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	
 	(public
 
 	 ;; (scm_gc_protect_object/scm_gc_unprotect_object are nested functions.)
 	 (<void> rt_protect_var (lambda ((<SCM> var))
-				  (scm_gc_protect_object var)))
+				  (scm_gc_protect_object var)
+				  "/* */"
+				  ))
 	 (<void> rt_unprotect_var (lambda ((<SCM> var))
-				    (scm_gc_unprotect_object var)))
+				    (scm_gc_unprotect_object var)
+				    "/* */"
+				    ))
 	 
 	 (<void> rt_non_check_non_rt (lambda ((<struct-RT_Engine-*> engine))
 				       (while (>= (jack_ringbuffer_read_space engine->ringbuffer_from_rt)
-						  (sizeof <void-*>))
-					      (let* ((event <struct-RT_Event-*> NULL))
-						 (jack_ringbuffer_read engine->ringbuffer_from_rt (cast <char-*> &event) (sizeof <struct-RT_Event-*>))
-						 ;;(fprintf stderr (string "freeing event: %u \\n") event)
-						 
-						 ;; Two situations will unprotect a procfunc-smob here:
-						 ;;
-						 ;; 1. When adding a procfunc in scheme (-> <realtime> play), the smob is always protected.
-						 ;;    However, if the procfunc was already playing in the rt-thread (for example by calling the play method two
-						 ;;    times on a row), the protection needs to be undone with the help of an unprotection.
-						 ;;    (The smob can't be protected inside the realtime thread because rt_protect_var is not realtime safe, and
-						 ;;     that the smob can be gc-ed before its handled in the realtime thread.)
-						 ;;
-						 ;; 2. If a procfunc is stopped in the rt-thread, we unprotect it.
-						 ;; 
-						 (if (or (and (== 1 event->isremovedorinserted)
-							      (== event->func rt_remove_procfunc))
-							 (and (== 0 event->isremovedorinserted)
-							      (== event->func rt_insert_procfunc)))
-						     (let* ((procfunc <struct-RT_Procfunc-*> event->arg))
-						       (rt_unprotect_var procfunc->smob)))
-						 
-						 (free event)
-						 ))))))
-
+						  (sizeof <struct-RT_databack>))
+					      (let* ((databack <struct-RT_databack>))
+						(jack_ringbuffer_read engine->ringbuffer_from_rt (cast <char-*> &databack) (sizeof <struct-RT_databack>))
+						
+						(cond ((== RT_DATABACK_UNPROTECT_PROCFUNC databack.type)
+						       (let* ((procfunc <struct-RT_Procfunc-*> databack.data))
+							 (rt_unprotect_var procfunc->smob)))
+						      
+						      ((== RT_DATABACK_EVENT databack.type)
+						       (let* ((event <struct-RT_Event-*> databack.data))
+							 (free event)))))))))
+	)
 
 (define num-events 0)				      
 (def-class (<rt-engine> initdriver)
 
-  (define engine (<RT_Engine> #:ringbuffer_to_rt (jack_ringbuffer_create rt-ringbuffer-size)
-			      #:ringbuffer_from_rt (jack_ringbuffer_create rt-ringbuffer-size)
+  (define engine (<RT_Engine> #:ringbuffer_to_rt (jack_ringbuffer_create rt-to-ringbuffer-size)
+			      #:ringbuffer_from_rt (jack_ringbuffer_create rt-from-ringbuffer-size)
+			      #:max_cpu_usage rt-max-cpu-usage
 			      #:queue_fullsize 65536))
 									   
-  (define engine-c (-> engine get-c-object))
+  (def-var engine-c (-> engine get-c-object))
 
-  (rt_init_engine engine-c)
+  (rt_init_engine this->engine-c)
   
-  (define driver (initdriver engine-c))
+  (define driver (initdriver this->engine-c))
   
   (def-method (add-event frame-time func arg #:key after-run-func)
     (set! num-events (1+ num-events))
@@ -974,13 +1035,13 @@ size_t jack_ringbuffer_write_space(const jack_ringbuffer_t *rb);
 
       ;; Read from realtime thread
       ;;(c-display "non1")
-      (rt_non_check_non_rt engine-c)
+      (rt_non_check_non_rt this->engine-c)
       ;;(c-display "non2")
       )
     )
 
   (def-method (start)
-    (-> engine next_switchtime 4096)
+    (-> engine next_switchtime 4096)      ;; These numbers doesn't matter much as they'll adjust themself automatically, but next_next needs to be larger than next:
     (-> engine next_next_switchtime 8192)
     (-> driver start))
   
@@ -994,18 +1055,18 @@ size_t jack_ringbuffer_write_space(const jack_ringbuffer_t *rb);
   )
 
 
-(define rt-engine (<rt-engine> (lambda (rt-arg)
-				 (<jack-rt-driver> rt-num-input-ports rt-num-output-ports (rt_callback) rt-arg))))
+(define *rt-engine* (<rt-engine> (lambda (rt-arg)
+				   (<jack-rt-driver> rt-num-input-ports rt-num-output-ports (rt_callback) rt-arg))))
 
 (add-hook! exit-hook (lambda args
-		       (-> rt-engine destructor)))
+		       (-> *rt-engine* destructor)))
 
 
-(-> rt-engine start)
+(-> *rt-engine* start)
 
 
 #!
-(-> rt-engine destructor)
+(-> *rt-engine* destructor)
 !#
 
 
@@ -1014,7 +1075,7 @@ size_t jack_ringbuffer_write_space(const jack_ringbuffer_t *rb);
 
 (define RT (<RT_Engine> #:wef 5))
 (-> rt-jackdriver num-outputs)
-(-> rt-engine playback-engines)
+(-> *rt-engine* playback-engines)
 
 (define b (<Jack_Arg>))
 (define a (list (<RT_Engine>) (<RT_Engine>)))
@@ -1043,36 +1104,45 @@ size_t jack_ringbuffer_write_space(const jack_ringbuffer_t *rb);
 
 (define (rte-reset)
   (begin
-    (-> rt-engine destructor)
-    (set! rt-engine (<rt-engine> (lambda (rt-arg)
+    (-> *rt-engine* destructor)
+    (set! *rt-engine* (<rt-engine> (lambda (rt-arg)
 				   (<jack-rt-driver> rt-num-input-ports rt-num-output-ports (rt_callback) rt-arg))))
-    (-> rt-engine start)))
+    (-> *rt-engine* start)))
+
+(define rte-max-cpu-usage
+  (make-procedure-with-setter
+   (lambda ()
+     (-> *rt-engine* max_cpu_usage))
+   (lambda (n)
+     (-> *rt-engine* max_cpu_usage n))))
 
 (define (rte-pause)
-  (-> rt-engine pause))
+  (-> *rt-engine* pause))
 (define (rte-continue)
-  (-> rt-engine pause))
+  (-> *rt-engine* pause))
 (define (rte-time)
-  (-> rt-engine get-time))
+  (-> *rt-engine* get-time))
 (define (rte-frames)
-  (-> rt-engine frames))
+  (-> *rt-engine* frames))
 (define (rte-samplerate)
-  (-> rt-engine get-samplerate))
+  (-> *rt-engine* get-samplerate))
 (define (rte-is-running?)
-  (not (= 0 (-> rt-engine is_running))))
+  (not (= 0 (-> *rt-engine* is_running))))
 (define (rte-info)
-  (list  (-> rt-engine queue_size)
-	 (-> rt-engine queue_fullsize)
-	 (-> rt-engine num_lost_events)
-	 (-> rt-engine num_events)
-	 (-> rt-engine num_procfuncs)))
+  (list  (-> *rt-engine* queue_size)
+	 (-> *rt-engine* queue_fullsize)
+	 (-> *rt-engine* num_lost_events)
+	 (-> *rt-engine* num_events)
+	 (-> *rt-engine* num_procfuncs)
+	 (jack_cpu_load (-> *rt-engine* get-client))
+	 (-> *rt-engine* num_max_cpu_interrupts)))
 
   
   
 
 #!
 
-;;(def-class (<realtime> rt-rt #:key (engine rt-engine))
+;;(def-class (<realtime> rt-rt #:key (engine *rt-engine*))
 ;;  (Super (<realtime-2> (car rt-rt) (cadr rt-rt) engine))
 ;;  )
    
@@ -1107,7 +1177,7 @@ size_t jack_ringbuffer_write_space(const jack_ringbuffer_t *rb);
 	  (out (* 0.4 (oscil osc)))))
 
 (define instrument (<realtime> instrument-rt))
-(-> rt-engine start)
+(-> *rt-engine* start)
 (-> instrument play)
 (-> instrument stop)
 (set! (mus-frequency osc) 200)
@@ -1119,18 +1189,18 @@ size_t jack_ringbuffer_write_space(const jack_ringbuffer_t *rb);
 (-> d show)
 (-> d hide)
 				  
-(-> rt-engine get-time)
+(-> *rt-engine* get-time)
 				    
 (define instrument (<realtime-2> (test_generator)))
-(-> rt-engine start)
+(-> *rt-engine* start)
 (-> instrument play-now 2)
-(-> instrument play (+ (-> rt-engine get-time) 1))
+(-> instrument play (+ (-> *rt-engine* get-time) 1))
 (-> instrument play-now 1 3)
 (-> instrument play)
 (-> instrument stop)
-(-> instrument stop (+ (-> rt-engine get-time) 2))
+(-> instrument stop (+ (-> *rt-engine* get-time) 2))
 
-(-> rt-engine get-time)
+(-> *rt-engine* get-time)
 
 
 (let* ((amp 0.2)

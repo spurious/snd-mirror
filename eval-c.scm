@@ -146,6 +146,7 @@ Usually just "", but can be "-lsnd" or something if needed.
 (define eval-c-verbose #t)
 (define eval-c-very-verbose #f)
 (define eval-c-cleanup #f)
+(define eval-c-lazy-cleanup #t)
 (define eval-c-string-is-pointer #f)
 
 
@@ -279,6 +280,7 @@ Usually just "", but can be "-lsnd" or something if needed.
 	  ((member type eval-c-float-types) "FLOAT")
 	  ((member type eval-c-double-types) "DOUBLE")
 	  ((string=? type "SCM") "SCM")
+	  ((string=? type "jmp_buf") "JMP_BUF")
 	  (else
 	   "POINTER"))))
 
@@ -302,6 +304,7 @@ Usually just "", but can be "-lsnd" or something if needed.
 		  "FLOAT" <float>
 		  "DOUBLE" <double>
 		  "SCM" <SCM>
+		  "JMP_BUF" <jmp_buf>
 		  "POINTER" <void-*>))))
 
 #!
@@ -748,6 +751,10 @@ Usually just "", but can be "-lsnd" or something if needed.
        ")"))
 			 
 
+;; He he. :-)
+(define-c-macro (unquote something)
+  (primitive-eval something))
+
 (define-c-macro (arraydef name length)
   (<-> (eval-c-parse name) "[" (eval-c-parse length) "]"))
 		 
@@ -899,6 +906,7 @@ Usually just "", but can be "-lsnd" or something if needed.
 (eval-c-macro-result
  '(define-struct <gakk>
     <int> a
+    <jmp_buf> ai
     <int> b
     <char-*> c
     <struct-gakk> * d))
@@ -1174,6 +1182,7 @@ But, perhaps that last one shouldn't be allowed to work.
 						   (cond ((string=? "UNSPECIFIED" type)
 							  (c-display "\n\nError! eval-c.scm/eval-c-gen-public-func: Strange type for " das-type "\n\n"))
 							 ((string=? "SCM" type) "/* */")
+							 ((string=? "JMP_BUF" type) "/* *")
 							 (else
 							  `(SCM_ASSERT ,(cond ((string=? "STRING" type) `(|| (scm_is_false ,name) (XEN_STRING_P ,name)))
 									      ((string=? "POINTER" type) `(POINTER_P ,name))
@@ -1565,8 +1574,13 @@ int fgetc (FILE
 			   (string #\`) guile-config " compile" (string #\`) " "
 			   compile-options))
     (dynamic-call "das_init" (dynamic-link libfile))
+    (system (<-> "rm " libfile))
     (if eval-c-cleanup
-	(system (<-> "rm " libfile " " sourcefile)))
+	(system (<-> "rm " sourcefile))
+	(if eval-c-lazy-cleanup
+	    (add-hook! exit-hook (lambda args
+				   (system (<-> "rm " sourcefile))
+				   #f))))
     ))
 
 
@@ -1851,7 +1865,9 @@ int fgetc (FILE
 												 (set! ,(symbol-append 'arg-> name) newval))))
 					  (,type ,(symbol-append cleanname '_get_ name) (lambda ((,structname-pointer arg))
 											  (return ,(symbol-append 'arg-> name)))))))
-				    das-map)))))
+				    (remove (lambda (t)
+					      (eq? '<jmp_buf> (car t)))
+					    das-map))))))
     `(def-class  (,name #:key ,@(map cadr das-map))
 
        (define c-object (,(symbol-append cleanname '_new)))
@@ -1890,7 +1906,7 @@ int fgetc (FILE
 				    (begin
 				      (set! ,(symbol-append 'num- name) (length newval))
 				      (ec-make-array (if (procedure? (car newval))
-							 (map (lambda (a) (-> a get-c-object))
+							 (map (lambda (a) (->2 a get-c-object))
 							      newval)
 							 newval)
 						     #:das-make-func ,(cadr (member type*type
@@ -1925,9 +1941,9 @@ int fgetc (FILE
        ,@(map (lambda (def)
 		(let ((name (cadr def)))
 		  (if (eq? '<SCM> (car def))
-		      `(-> this ,name ,name)
+		      `(->2 this ,name ,name)
 		      `(if ,name
-			   (-> this ,name ,name)))))
+			   (->2 this ,name ,name)))))
 	      das-map))
     
     ))
@@ -2008,6 +2024,21 @@ int fgetc (FILE
 !#
 
 #!
+(eval-c-add-struct 'testing
+		   (map (lambda (a)
+			  (if (= 3 (length a))
+			      (list (caddr a) (car a) (cadr a))
+			      (list (cadr a) (car a))))
+			(eval-c-listify-struct '(<jmp_buf> ai))))
+(shared-struct-but-only-known-types 'testing)
+(map (lambda (def)
+       (if (= 3 (length def))
+	   (list '<void-*>
+		 (car def))
+	   (list (eval-c-get-known-type (cadr def))
+		 (car def))))
+     (eval-c-get-struct 'testing))
+(eval-c-get-known-type '<jmp_buf>)
 
 ;  int a(void){
 ;    return 5;

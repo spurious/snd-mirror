@@ -76,6 +76,7 @@
 (use-modules (ice-9 optargs)
 	     (ice-9 format)
 	     (srfi srfi-1))
+;;	     (srfi srfi-26))
 
 
 (define-macro (c-load-from-path filename)
@@ -109,11 +110,23 @@
       l
       (reverse! (cdr (reverse l)))))
 
+
+
+(define (c-integer somekindofnumberorsomething)
+;;    somekindofnumberorsomething)
+  (inexact->exact (floor somekindofnumberorsomething)))
+
+(define (c-integer2 somekindofnumberorsomething)
+  (inexact->exact (floor somekindofnumberorsomething)))
+
+
 ;; C-like for-iterator
 (define (c-for init pred least add proc)
   (do ((n init (+ n add)))
       ((not (pred n least)))
     (proc n)))
+
+
 #!
 (c-for 2 < 7 1
        (lambda (n) (display n)(newline)))
@@ -392,6 +405,11 @@
 
 
 ;; The -> macro caches the function pointer. Generally a little bit faster than ->2.
+;;
+;; Warning! When dynamically generating "->"-calls, its easy to make memory-leaking code.
+;; If you thing that is whats happening, rename "->3" to "->" and "->3" to "->", and see if that helps.
+;; If it did, change the "->"-calls thats causing the leak into "->2"-calls.
+;;
 (define-macro (-> object method . args)
   (if (number? object)
       `(list-set! ,method ,object ,(car args))
@@ -412,6 +430,12 @@
 
 ;; This one works just the same as ->, but doesn't cache the function pointer. Could be a tiny tiny little bit faster than -> in some situations.
 (define-macro (->2 object method . args)
+  (if (number? object)
+      `(list-set! ,method ,object ,(car args))
+      `(,object ',method ,@args)))
+
+;; Debugging.
+(define-macro (->3 object method . args)
   (if (number? object)
       `(list-set! ,method ,object ,(car args))
       `(,object ',method ,@args)))
