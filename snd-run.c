@@ -54,7 +54,7 @@
  *   char-upcase char-downcase char->integer integer->char
  *   string? string string-length string-copy string-fill! string-ref string-set!
  *   make-string substring string-append string=? string<=? string>=? string<? string>? and string-ci*
- *   display number->string format[as a callback into Guile]
+ *   display number->string format [as a callback into Guile]
  *   make-vector if 2nd arg exists and is float
  *   list|pair ops that reference constant lists and return something we can handle (like a number)
  *   throw with just the 1st arg (experimental...)
@@ -76,7 +76,7 @@
  * whenever the code-walker or tree initializer finds something it is unhappy about,
  *  it returns an error indication, and the caller should fallback on Guile's evaluator.
  *
- * so where does the speed-up come from? We're not getting/freeing any Guile memory so the gc is never
+ * so where does the speed-up come from? We're not getting/freeing any Guile memory so the gc is (well, almost) never
  *   triggered, we're doing math ops direct, no function args are cons'd, no run-time types are checked, no values are boxed/unboxed,
  *   no symbols are looked-up in the current environment, wherever possible we pre-convert
  *   args to same type (i.e. int->float done just once, if possible)

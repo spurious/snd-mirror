@@ -32,7 +32,7 @@
 #include <time.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#if HAVE_LOCALE_H && HAVE_SETLOCALE
+#if HAVE_SETLOCALE
   #include <locale.h>
 #endif
 
@@ -67,7 +67,7 @@
 
 #include "snd-strings.h"
 
-#define SND_DATE "12-May-05"
+#define SND_DATE "13-May-05"
 #define SND_VERSION "7.13"
 #define SND_MAJOR_VERSION "7"
 #define SND_MINOR_VERSION "13"

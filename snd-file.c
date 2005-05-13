@@ -2146,6 +2146,17 @@ bool saved_file_needs_update(snd_info *sp, char *str, save_dialog_t save_type, i
 	}
       /* it's possible also that the same-named file is open in several windows -- for now we'll ignore that */
       /* also what if a sound is write-protected in one window, and not in another? */
+
+      /* PERHAPS: before-save-as-hook (here and below): (lambda (ofile snd|selection=#t? type format srate comment) ...)
+       *            if -> #t, then skip the explicit save
+       *            provides a way to call last-minute stuff like src-sound
+       *            or should this be at a lower level? (snd-snd.c has after-save-as too as called from Scheme save-sound)
+       *            ideally there would be a secure communication path to any after-save-as-hook (for undo)
+       *               but that requires another arg to after-save-as (could be whatever is returned by before-save-as)
+       *               this could be backwards compatible by allowing 3 or 4 args -- say 4 in def, then #f in proc if 3 in user-func
+       *            also, lock out recursive hook call (user might call save-sound-as within hook func)
+       */
+
       ofile = snd_tempnam(); 
       if (save_type == FILE_SAVE_AS)
 	result = save_edits_without_display(sp, ofile, type, format, srate, comment, AT_CURRENT_EDIT_POSITION);
@@ -2182,6 +2193,9 @@ bool saved_file_needs_update(snd_info *sp, char *str, save_dialog_t save_type, i
 	  snd_close_file(collision->sp);
 	}
       mus_sound_forget(fullname);
+
+      /* save-as-hook? */
+
       if (save_type == FILE_SAVE_AS)
 	result = save_edits_without_display(sp, str, type, format, srate, comment, AT_CURRENT_EDIT_POSITION);
       else result = save_selection(str, type, format, srate, comment, SAVE_ALL_CHANS);

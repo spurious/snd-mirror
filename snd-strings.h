@@ -34,6 +34,7 @@
 #define S_bad_header_hook               "bad-header-hook"
 #define S_basic_color                   "basic-color"
 #define S_beats_per_minute              "beats-per-minute"
+#define S_before_save_as_hook           "before-save-as-hook"
 #define S_before_save_state_hook        "before-save-state-hook"
 #define S_before_transform_hook         "before-transform-hook"
 #define S_bind_key                      "bind-key"  

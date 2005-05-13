@@ -484,10 +484,19 @@ on the *features* list (in Guile):
 <tr><td>xm</td><td>Motif module (xm.c) included (--with-static-xm, or loaded dynamically)</td></tr>
 </table>
 
-<p>To check whether something is available in the current Snd, use <b>provided?</b>,
-as in <code>(if (provided? 'snd-gtk) ; do something involving gtk...</code>).
-In Ruby, the equivalent is <code>(if (provided? "snd-gtk")...)</code>.
+<p>To check whether something is available in the current Snd, use <b>provided?</b>:
 </p>
+<pre>
+  (if (provided? 'snd-gtk) ... )
+</pre>
+
+<p>
+In Ruby, the equivalent is:
+</p>
+<pre>
+  if provided? :snd-gtk ...
+</pre>
+
 
 <br>
 

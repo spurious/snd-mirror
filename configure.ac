@@ -177,7 +177,7 @@ LIBS=""
 
 AC_HEADER_DIRENT
 AC_CHECK_HEADERS(fcntl.h limits.h unistd.h string.h sys/soundcard.h machine/soundcard.h gsl/gsl_version.h sys/mixer.h stdbool.h)
-AC_CHECK_HEADERS(libc.h sys/statvfs.h setjmp.h locale.h sys/fpu.h dlfcn.h sys/param.h byteswap.h stdint.h)
+AC_CHECK_HEADERS(libc.h sys/statvfs.h setjmp.h sys/fpu.h dlfcn.h sys/param.h byteswap.h stdint.h)
 AC_CHECK_HEADER(/usr/local/lib/oss/include/sys/soundcard.h,[AC_DEFINE(USR_LOCAL_LIB_OSS)])
 AC_CHECK_HEADER(/usr/lib/oss/include/sys/soundcard.h,[AC_DEFINE(USR_LIB_OSS)])
 AC_CHECK_HEADER(/opt/oss/include/sys/soundcard.h,[AC_DEFINE(OPT_OSS)])
@@ -922,7 +922,6 @@ AC_ARG_WITH(ruby,
     	      LIBS="$GUILE_LIBS"
               OLD_CFLAGS="$CFLAGS"
               CFLAGS="$GUILE_CFLAGS -lm"
-              AC_CHECK_LIB(ruby, rb_num2ll, [AC_DEFINE(HAVE_RB_NUM2LL)])
               AC_CHECK_LIB(ruby, rb_gc_disable, [AC_DEFINE(HAVE_RB_GC_DISABLE)])
 	      AC_CHECK_LIB(ruby, rb_ary_dup, [AC_DEFINE(HAVE_RB_ARY_DUP)])
               LIBS="$OLD_LIBS"
@@ -1358,19 +1357,19 @@ AC_SUBST(A_LD_FLAGS)
 
 statvfs_ok=0
 if test "$ac_cv_func_statvfs" = yes ; then
-if test "$ac_cv_header_sys_statvfs_h" = yes ; then
-  AC_MSG_CHECKING([for statvfs])
-  AC_COMPILE_IFELSE(
-    [AC_LANG_PROGRAM([#include <sys/statvfs.h>],
-                     [struct statvfs buf; statvfs("test.snd", &buf)])], 
-    AC_DEFINE(USE_STATVFS)
-    statvfs_ok=1)
-  if test $statvfs_ok = 1; then
-    AC_MSG_RESULT(yes)
-  else
-    AC_MSG_RESULT(no)
+  if test "$ac_cv_header_sys_statvfs_h" = yes ; then
+    AC_MSG_CHECKING([for statvfs])
+    AC_COMPILE_IFELSE(
+      [AC_LANG_PROGRAM([#include <sys/statvfs.h>],
+                       [struct statvfs buf; statvfs("test.snd", &buf)])], 
+      AC_DEFINE(USE_STATVFS)
+      statvfs_ok=1)
+    if test $statvfs_ok = 1; then
+      AC_MSG_RESULT(yes)
+    else
+      AC_MSG_RESULT(no)
+    fi
   fi
-fi
 fi
 
 AC_ARG_ENABLE(snd-debug,
