@@ -223,10 +223,10 @@ static void allocate_meter_1(vu_label *vu)
   size = vu->size;
   BAND_X = 2.75 * size;
   BAND_Y = 3.25 * size;
-  red = (ss->sgx)->red;
+  red = ss->sgx->red;
   wn = recorder->window;
-  black = (ss->sgx)->black;
-  white = (ss->sgx)->white;
+  black = ss->sgx->black;
+  white = ss->sgx->white;
 
   if (!vu_colors_allocated)
     {
@@ -989,13 +989,13 @@ static void meter_button_callback(GtkWidget *w, gpointer context)
   vu = p->meters[wd->chan];
   if (vu->on_off == VU_OFF)
     {
-      gtk_widget_modify_bg(w, GTK_STATE_NORMAL, (ss->sgx)->red);
+      gtk_widget_modify_bg(w, GTK_STATE_NORMAL, ss->sgx->red);
       vu->on_off = VU_ON;
       vu->red_deg = 0.0;
     }
   else 
     {
-      gtk_widget_modify_bg(w, GTK_STATE_NORMAL, (ss->sgx)->basic_color);
+      gtk_widget_modify_bg(w, GTK_STATE_NORMAL, ss->sgx->basic_color);
       vu->on_off = VU_OFF;
     }
   display_vu_meter(vu);
@@ -1066,7 +1066,7 @@ static void handle_matrix_slider(GtkWidget *mb, pane_t *p, int bin, int bout, in
   a = p->amps[curamp];
   if (remove)
     {
-      gtk_widget_modify_bg(mb, GTK_STATE_NORMAL, (ss->sgx)->basic_color);
+      gtk_widget_modify_bg(mb, GTK_STATE_NORMAL, ss->sgx->basic_color);
       p->active_sliders[bin][bout] = false;
       gtk_widget_hide(a->label);
       gtk_widget_hide(a->number);
@@ -1074,7 +1074,7 @@ static void handle_matrix_slider(GtkWidget *mb, pane_t *p, int bin, int bout, in
     }
   else
     {
-      gtk_widget_modify_bg(mb, GTK_STATE_NORMAL, (ss->sgx)->green);
+      gtk_widget_modify_bg(mb, GTK_STATE_NORMAL, ss->sgx->green);
       p->active_sliders[bin][bout] = true;
       if (a->label)
 	{
@@ -1100,7 +1100,7 @@ static void matrix_button_callback(GtkWidget *mb, gpointer context)
   int curamp;
   p = si->p;
   curamp = si->out_chan * p->in_chans + si->in_chan;
-  handle_matrix_slider(mb, p, si->in_chan, si->out_chan, curamp, (p->active_sliders[si->in_chan][si->out_chan]));
+  handle_matrix_slider(mb, p, si->in_chan, si->out_chan, curamp, p->active_sliders[si->in_chan][si->out_chan]);
 }
 
 static GtkWidget *make_button_matrix(recorder_info *rp, pane_t *p, char *name, GtkWidget *parent, Float meter_size)
@@ -1179,8 +1179,8 @@ static GtkWidget *make_button_matrix(recorder_info *rp, pane_t *p, char *name, G
 
 	mb = gtk_button_new();
 	if (row == col)
-	  gtk_widget_modify_bg(mb, GTK_STATE_NORMAL, (ss->sgx)->green);
-	else gtk_widget_modify_bg(mb, GTK_STATE_NORMAL, (ss->sgx)->basic_color);
+	  gtk_widget_modify_bg(mb, GTK_STATE_NORMAL, ss->sgx->green);
+	else gtk_widget_modify_bg(mb, GTK_STATE_NORMAL, ss->sgx->basic_color);
 	gtk_table_attach_defaults(GTK_TABLE(buttons), mb, col, col + 1, row, row + 1);
 	gtk_widget_show(mb);
 	SG_SIGNAL_CONNECT(mb, "clicked", matrix_button_callback, si);
@@ -1656,7 +1656,7 @@ static void reset_record_callback(GtkWidget *w, gpointer context)
       rp->triggered = (!rp->triggering);
       sensitize_control_buttons();
       set_button_label(reset_button, _("Reset"));
-      gtk_widget_modify_bg(record_button, GTK_STATE_NORMAL, (ss->sgx)->basic_color);
+      gtk_widget_modify_bg(record_button, GTK_STATE_NORMAL, ss->sgx->basic_color);
       set_button_label(record_button, (rp->triggering) ? _("Triggered Record") : _("Record"));
       mus_file_close(rp->output_file_descriptor);
       rp->output_file_descriptor = -1;
@@ -1706,7 +1706,7 @@ void finish_recording(recorder_info *rp)
   char *str;
   Float duration;
   sensitize_control_buttons();
-  gtk_widget_modify_bg(record_button, GTK_STATE_NORMAL, (ss->sgx)->basic_color);
+  gtk_widget_modify_bg(record_button, GTK_STATE_NORMAL, ss->sgx->basic_color);
   set_button_label(reset_button, _("Reset"));
   set_button_label(record_button, (rp->triggering) ? _("Triggered Record") : _("Record"));
   mus_file_close(rp->output_file_descriptor);
@@ -1848,7 +1848,7 @@ static void record_button_callback(GtkWidget *w, gpointer context)
 	      return;
 	    }
 	}
-      gtk_widget_modify_bg(record_button, GTK_STATE_NORMAL, (ss->sgx)->red);
+      gtk_widget_modify_bg(record_button, GTK_STATE_NORMAL, ss->sgx->red);
       set_button_label(reset_button, _("Cancel"));
       set_button_label(record_button, _("Done"));
       recorder_start_output_file(comment);

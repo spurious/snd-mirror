@@ -57,9 +57,9 @@ bool set_listener_font(char *font)
       if (ss->sgx->listener_fontstruct) XFreeFont(MAIN_DISPLAY(ss), ss->sgx->listener_fontstruct);
       if (listener_font(ss)) FREE(listener_font(ss));
       in_set_listener_font(copy_string(font));
-      (ss->sgx)->listener_fontstruct = fs;
-      if ((ss->sgx)->listener_fontlist) XM_FONT_FREE((ss->sgx)->listener_fontlist);
-      (ss->sgx)->listener_fontlist = get_xm_font((ss->sgx)->listener_fontstruct, font, "listener_font");
+      ss->sgx->listener_fontstruct = fs;
+      if (ss->sgx->listener_fontlist) XM_FONT_FREE(ss->sgx->listener_fontlist);
+      ss->sgx->listener_fontlist = get_xm_font(ss->sgx->listener_fontstruct, font, "listener_font");
       set_listener_text_font();
       return(true);
     }
@@ -75,9 +75,9 @@ bool set_peaks_font(char *font)
       if (ss->sgx->peaks_fontstruct) XFreeFont(MAIN_DISPLAY(ss), ss->sgx->peaks_fontstruct);
       if (peaks_font(ss)) FREE(peaks_font(ss));
       in_set_peaks_font(copy_string(font));
-      (ss->sgx)->peaks_fontstruct = fs;
-      if ((ss->sgx)->peaks_fontlist) XM_FONT_FREE((ss->sgx)->peaks_fontlist);
-      (ss->sgx)->peaks_fontlist = get_xm_font((ss->sgx)->peaks_fontstruct, font, "peaks_font");
+      ss->sgx->peaks_fontstruct = fs;
+      if (ss->sgx->peaks_fontlist) XM_FONT_FREE(ss->sgx->peaks_fontlist);
+      ss->sgx->peaks_fontlist = get_xm_font(ss->sgx->peaks_fontstruct, font, "peaks_font");
       return(true);
     }
   return(false);
@@ -92,9 +92,9 @@ bool set_bold_peaks_font(char *font)
       if (ss->sgx->bold_peaks_fontstruct) XFreeFont(MAIN_DISPLAY(ss), ss->sgx->bold_peaks_fontstruct);
       if (bold_peaks_font(ss)) FREE(bold_peaks_font(ss));
       in_set_bold_peaks_font(copy_string(font));
-      (ss->sgx)->bold_peaks_fontstruct = fs;
-      if ((ss->sgx)->bold_peaks_fontlist) XM_FONT_FREE((ss->sgx)->bold_peaks_fontlist);
-      (ss->sgx)->bold_peaks_fontlist = get_xm_font((ss->sgx)->bold_peaks_fontstruct, font, "bold_peaks_font");
+      ss->sgx->bold_peaks_fontstruct = fs;
+      if (ss->sgx->bold_peaks_fontlist) XM_FONT_FREE(ss->sgx->bold_peaks_fontlist);
+      ss->sgx->bold_peaks_fontlist = get_xm_font(ss->sgx->bold_peaks_fontstruct, font, "bold_peaks_font");
       return(true);
     }
   return(false);
@@ -109,7 +109,7 @@ bool set_axis_label_font(char *font)
       if (ss->sgx->axis_label_fontstruct) XFreeFont(MAIN_DISPLAY(ss), ss->sgx->axis_label_fontstruct);
       if (axis_label_font(ss)) FREE(axis_label_font(ss));
       in_set_axis_label_font(copy_string(font));
-      (ss->sgx)->axis_label_fontstruct = fs;
+      ss->sgx->axis_label_fontstruct = fs;
 #if HAVE_GL
       reload_label_font();
 #endif
@@ -127,7 +127,7 @@ bool set_axis_numbers_font(char *font)
       if (ss->sgx->axis_numbers_fontstruct) XFreeFont(MAIN_DISPLAY(ss), ss->sgx->axis_numbers_fontstruct);
       if (axis_numbers_font(ss)) FREE(axis_numbers_font(ss));
       in_set_axis_numbers_font(copy_string(font));
-      (ss->sgx)->axis_numbers_fontstruct = fs;
+      ss->sgx->axis_numbers_fontstruct = fs;
 #if HAVE_GL
       reload_number_font();
 #endif
@@ -223,7 +223,7 @@ void set_main_color_of_widget (Widget w, void *userptr)
   if (XtIsWidget(w))
     {
       if (XmIsScrollBar(w)) 
-	XmChangeColor(w, (Pixel)(ss->sgx)->position_color);
+	XmChangeColor(w, (Pixel)ss->sgx->position_color);
       else 
 	{
 	  Pixel cur_color;
@@ -234,7 +234,7 @@ void set_main_color_of_widget (Widget w, void *userptr)
 	      (cur_color != ss->sgx->doit_again_button_color) &&
 	      (cur_color != ss->sgx->reset_button_color) &&
 	      (cur_color != ss->sgx->highlight_color))
-	    XmChangeColor(w, (Pixel)(ss->sgx)->basic_color);
+	    XmChangeColor(w, (Pixel)ss->sgx->basic_color);
 	}
     }
 }
@@ -277,7 +277,7 @@ void color_sashes(Widget w, void *ptr)
   if ((XtIsWidget(w)) && 
       (XtIsManaged(w)) && 
       (XtIsSubclass(w, xmSashWidgetClass)))
-    XmChangeColor(w, (Pixel)(ss->sgx)->sash_color);
+    XmChangeColor(w, (Pixel)ss->sgx->sash_color);
 }
 
 void check_for_event(void)

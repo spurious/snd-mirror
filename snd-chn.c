@@ -2896,11 +2896,11 @@ static void make_lisp_graph(chan_info *cp, XEN pixel_list)
 	      switch (graph)
 		{
 		case 0:  break;
-		case 1:  set_foreground_color(ax, (ss->sgx)->red);        break;
-		case 2:  set_foreground_color(ax, (ss->sgx)->green);      break;
-		case 3:  set_foreground_color(ax, (ss->sgx)->light_blue); break;
-		case 4:  set_foreground_color(ax, (ss->sgx)->yellow);     break;
-		default: set_foreground_color(ax, (ss->sgx)->black);      break;
+		case 1:  set_foreground_color(ax, ss->sgx->red);        break;
+		case 2:  set_foreground_color(ax, ss->sgx->green);      break;
+		case 3:  set_foreground_color(ax, ss->sgx->light_blue); break;
+		case 4:  set_foreground_color(ax, ss->sgx->yellow);     break;
+		default: set_foreground_color(ax, ss->sgx->black);      break;
 		}
 	    }
 	  /* check for up->len[graph] > pixels available and use ymin ymax if needed */

@@ -1973,7 +1973,6 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
     (mus-scaler gen)))
 
 
-;;; TODO: harmonicizer tests
 ;;; SOMEDAY: specialize windowed-maxamp mus-describe
 ;;;    would require local class (new tag, copy base class, add/customize methods, method call wrapper)
 ;;;    nice would be added fields in struct; how to specify which class to copy? which method to change?
@@ -2027,3 +2026,4 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 	beg dur snd chn edpos)
        (if (> new-mx 0.0)
 	   (scale-channel (/ old-mx new-mx) beg dur snd chn))))))
+

@@ -1956,6 +1956,11 @@ a new one is created.  If normalize is #t, the resulting waveform goes between -
 	      XEN_LIST_3(C_TO_XEN_STRING(S_partials_to_wave), 
 			 C_TO_XEN_STRING("partials list empty?"), 
 			 partials));
+  if (len & 1)
+    XEN_ERROR(BAD_TYPE,
+	      XEN_LIST_3(C_TO_XEN_STRING(S_partials_to_wave), 
+			 C_TO_XEN_STRING("odd length partials list?"), 
+			 partials));
   if (!(XEN_NUMBER_P(XEN_CAR(partials))))
     XEN_ASSERT_TYPE(false, partials, XEN_ARG_1, S_partials_to_wave, "a list of numbers (partial numbers with amplitudes)");
   if ((XEN_NOT_BOUND_P(utable)) || (!(VCT_P(utable))))
@@ -1998,6 +2003,11 @@ a new one is created.  If normalize is #t, the resulting waveform goes between -
     XEN_ERROR(NO_DATA,
 	      XEN_LIST_3(C_TO_XEN_STRING(S_phase_partials_to_wave), 
 			 C_TO_XEN_STRING("partials list empty?"),
+			 partials));
+  if (len & 1)
+    XEN_ERROR(BAD_TYPE,
+	      XEN_LIST_3(C_TO_XEN_STRING(S_phase_partials_to_wave), 
+			 C_TO_XEN_STRING("odd length partials list?"),
 			 partials));
   if (!(XEN_NUMBER_P(XEN_CAR(partials))))
     XEN_ASSERT_TYPE(false, partials, XEN_ARG_1, S_phase_partials_to_wave, "a list of numbers (partial numbers with amplitudes)");
@@ -3208,6 +3218,11 @@ returns partial 2 twice as loud as 3."
 	      XEN_LIST_3(C_TO_XEN_STRING(S_partials_to_waveshape), 
 			 C_TO_XEN_STRING("partials list empty?"), 
 			 amps));
+  if (len & 1)
+    XEN_ERROR(BAD_TYPE,
+	      XEN_LIST_3(C_TO_XEN_STRING(S_partials_to_waveshape), 
+			 C_TO_XEN_STRING("odd length partials list?"), 
+			 amps));
   if (!(XEN_NUMBER_P(XEN_CAR(amps))))
     XEN_ASSERT_TYPE(false, amps, XEN_ARG_1, S_partials_to_waveshape, "a list of numbers (partial numbers with amplitudes)");
   partials = list_to_partials(amps, &npartials);
@@ -3243,6 +3258,11 @@ to create (via waveshaping) the harmonic spectrum described by the partials argu
     XEN_ERROR(NO_DATA, 
 	      XEN_LIST_3(C_TO_XEN_STRING(S_partials_to_polynomial), 
 			 C_TO_XEN_STRING("partials list empty?"), 
+			 amps));
+  if (len & 1)
+    XEN_ERROR(BAD_TYPE,
+	      XEN_LIST_3(C_TO_XEN_STRING(S_partials_to_polynomial), 
+			 C_TO_XEN_STRING("odd length partials list?"), 
 			 amps));
   if (!(XEN_NUMBER_P(XEN_CAR(amps))))
     XEN_ASSERT_TYPE(false, amps, XEN_ARG_1, S_partials_to_polynomial, "a list of numbers (partial numbers with amplitudes)");

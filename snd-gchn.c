@@ -363,7 +363,7 @@ static gboolean graph_mouse_enter(GtkWidget *w, GdkEventCrossing *ev, gpointer d
 	     XEN_LIST_2(C_TO_XEN_INT(UNPACK_SOUND(pdata)),
 			C_TO_XEN_INT(UNPACK_CHANNEL(pdata))),
 	     S_mouse_enter_graph_hook);
-  gdk_window_set_cursor(w->window, (ss->sgx)->graph_cursor);
+  gdk_window_set_cursor(w->window, ss->sgx->graph_cursor);
   return(false);
 }
 
@@ -376,7 +376,7 @@ static gboolean graph_mouse_leave(GtkWidget *w, GdkEventCrossing *ev, gpointer d
 	     XEN_LIST_2(C_TO_XEN_INT(UNPACK_SOUND(pdata)),
 			C_TO_XEN_INT(UNPACK_CHANNEL(pdata))),
 	     S_mouse_leave_graph_hook);
-  gdk_window_set_cursor(w->window, (ss->sgx)->arrow_cursor);
+  gdk_window_set_cursor(w->window, ss->sgx->arrow_cursor);
   return(false);
 }
 
@@ -565,7 +565,7 @@ static gboolean real_graph_key_press(GtkWidget *w, GdkEventKey *ev, gpointer dat
   key_state = (GdkModifierType)(ev->state);
   keysym = ev->keyval;
   theirs = key_press_callback(cp, x, y, ev->state, keysym);
-  if (theirs) (ss->sgx)->graph_is_active = false;
+  if (theirs) ss->sgx->graph_is_active = false;
   g_signal_stop_emission(GTK_OBJECT(w), g_signal_lookup("key_press_event", G_OBJECT_TYPE(GTK_OBJECT(w))), 0);
   return(true);
 }
@@ -581,7 +581,7 @@ gboolean graph_key_press(GtkWidget *w, GdkEventKey *ev, gpointer data)
   key_state = (GdkModifierType)(ev->state);
   keysym = ev->keyval;
   theirs = key_press_callback(cp, x, y, ev->state, keysym);
-  if (theirs) (ss->sgx)->graph_is_active = true;
+  if (theirs) ss->sgx->graph_is_active = true;
   return(true);
 }
  
@@ -597,7 +597,7 @@ static gboolean graph_button_press(GtkWidget *w, GdkEventButton *ev, gpointer da
   else
     {
       chan_info *cp = (chan_info *)data;
-      (ss->sgx)->graph_is_active = true;
+      ss->sgx->graph_is_active = true;
       gtk_widget_grab_focus(w);
       if ((cp->sound) && (cp->sound->sgx))
 	((cp->sound)->sgx)->mini_active = false;

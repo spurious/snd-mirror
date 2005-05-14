@@ -2067,20 +2067,20 @@ static XEN g_set_cursor_color (XEN color)
 static XEN g_cursor_color(void) 
 {
   #define H_cursor_color "(" S_cursor_color "): cursor color"
-  return(XEN_WRAP_PIXEL((ss->sgx)->cursor_color));
+  return(XEN_WRAP_PIXEL(ss->sgx->cursor_color));
 }
 
 static XEN g_set_highlight_color (XEN color) 
 {
   XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, S_setB S_highlight_color, "a color"); 
-  (ss->sgx)->highlight_color = XEN_UNWRAP_PIXEL(color);
+  ss->sgx->highlight_color = XEN_UNWRAP_PIXEL(color);
   return(color);
 }
 
 static XEN g_highlight_color(void) 
 {
   #define H_highlight_color "(" S_highlight_color "): color of highlighted text or buttons"
-  return(XEN_WRAP_PIXEL((ss->sgx)->highlight_color));
+  return(XEN_WRAP_PIXEL(ss->sgx->highlight_color));
 }
 
 static XEN g_set_mark_color (XEN color) 
@@ -2094,13 +2094,13 @@ static XEN g_set_mark_color (XEN color)
 static XEN g_mark_color(void) 
 {
   #define H_mark_color "(" S_mark_color "): mark color"
-  return(XEN_WRAP_PIXEL((ss->sgx)->mark_color));
+  return(XEN_WRAP_PIXEL(ss->sgx->mark_color));
 }
 
 static XEN g_set_zoom_color (XEN color) 
 {
   XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, S_setB S_zoom_color, "a color"); 
-  (ss->sgx)->zoom_color = XEN_UNWRAP_PIXEL(color); 
+  ss->sgx->zoom_color = XEN_UNWRAP_PIXEL(color); 
   color_chan_components(ss->sgx->zoom_color, COLOR_ZOOM);
   return(color);
 }
@@ -2108,13 +2108,13 @@ static XEN g_set_zoom_color (XEN color)
 static XEN g_zoom_color(void) 
 {
   #define H_zoom_color "(" S_zoom_color "): color of zoom sliders"
-  return(XEN_WRAP_PIXEL((ss->sgx)->zoom_color));
+  return(XEN_WRAP_PIXEL(ss->sgx->zoom_color));
 }
 
 static XEN g_set_position_color (XEN color) 
 {
   XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, S_setB S_position_color, "a color"); 
-  (ss->sgx)->position_color = XEN_UNWRAP_PIXEL(color); 
+  ss->sgx->position_color = XEN_UNWRAP_PIXEL(color); 
   color_chan_components(ss->sgx->position_color, COLOR_POSITION);
   return(color);
 }
@@ -2122,7 +2122,7 @@ static XEN g_set_position_color (XEN color)
 static XEN g_position_color(void) 
 {
   #define H_position_color "(" S_position_color "): color of position sliders"
-  return(XEN_WRAP_PIXEL((ss->sgx)->position_color));
+  return(XEN_WRAP_PIXEL(ss->sgx->position_color));
 }
 
 static XEN g_set_listener_color (XEN color) 
@@ -2135,7 +2135,7 @@ static XEN g_set_listener_color (XEN color)
 static XEN g_listener_color(void) 
 {
   #define H_listener_color "(" S_listener_color "): background color of the lisp listener"
-  return(XEN_WRAP_PIXEL((ss->sgx)->listener_color));
+  return(XEN_WRAP_PIXEL(ss->sgx->listener_color));
 }
 
 static XEN g_set_listener_text_color (XEN color) 
@@ -2148,7 +2148,7 @@ static XEN g_set_listener_text_color (XEN color)
 static XEN g_listener_text_color(void) 
 {
   #define H_listener_text_color "(" S_listener_text_color "): text color in the lisp listener"
-  return(XEN_WRAP_PIXEL((ss->sgx)->listener_text_color));
+  return(XEN_WRAP_PIXEL(ss->sgx->listener_text_color));
 }
 
 static XEN g_set_enved_waveform_color (XEN color) 
@@ -2161,7 +2161,7 @@ static XEN g_set_enved_waveform_color (XEN color)
 static XEN g_enved_waveform_color(void) 
 {
   #define H_enved_waveform_color "(" S_enved_waveform_color "): color of the envelope editor wave display"
-  return(XEN_WRAP_PIXEL((ss->sgx)->enved_waveform_color));
+  return(XEN_WRAP_PIXEL(ss->sgx->enved_waveform_color));
 }
 
 static XEN g_set_filter_control_waveform_color (XEN color) 
@@ -2174,7 +2174,7 @@ static XEN g_set_filter_control_waveform_color (XEN color)
 static XEN g_filter_control_waveform_color(void) 
 {
   #define H_filter_control_waveform_color "(" S_filter_control_waveform_color "): color of the filter waveform"
-  return(XEN_WRAP_PIXEL((ss->sgx)->filter_control_waveform_color));
+  return(XEN_WRAP_PIXEL(ss->sgx->filter_control_waveform_color));
 }
 
 static XEN g_set_selection_color (XEN color) 
@@ -2188,33 +2188,33 @@ static XEN g_set_selection_color (XEN color)
 static XEN g_selection_color(void) 
 {
   #define H_selection_color "(" S_selection_color "): selection color"
-  return(XEN_WRAP_PIXEL((ss->sgx)->selection_color));
+  return(XEN_WRAP_PIXEL(ss->sgx->selection_color));
 }
 
 static XEN g_set_text_focus_color (XEN color) 
 {
   XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, S_setB S_text_focus_color, "a color"); 
-  (ss->sgx)->text_focus_color = XEN_UNWRAP_PIXEL(color);
+  ss->sgx->text_focus_color = XEN_UNWRAP_PIXEL(color);
   return(color);
 }
 
 static XEN g_text_focus_color(void) 
 {
   #define H_text_focus_color "(" S_text_focus_color "): color used to show a text field has focus"
-  return(XEN_WRAP_PIXEL((ss->sgx)->text_focus_color));
+  return(XEN_WRAP_PIXEL(ss->sgx->text_focus_color));
 }
 
 static XEN g_set_sash_color(XEN color) 
 {
   XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, S_setB S_sash_color, "a color"); 
-  (ss->sgx)->sash_color = XEN_UNWRAP_PIXEL(color);
+  ss->sgx->sash_color = XEN_UNWRAP_PIXEL(color);
   return(color);
 }
 
 static XEN g_sash_color(void) 
 {
   #define H_sash_color "(" S_sash_color "): color used to draw paned window sashes"
-  return(XEN_WRAP_PIXEL((ss->sgx)->sash_color));
+  return(XEN_WRAP_PIXEL(ss->sgx->sash_color));
 }
 
 static XEN g_set_data_color(XEN color) 
@@ -2229,73 +2229,73 @@ static XEN g_set_data_color(XEN color)
 static XEN g_set_help_button_color(XEN color) 
 {
   XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, S_setB S_help_button_color, "a color"); 
-  (ss->sgx)->help_button_color = XEN_UNWRAP_PIXEL(color);
+  ss->sgx->help_button_color = XEN_UNWRAP_PIXEL(color);
   return(color);
 }
 
 static XEN g_help_button_color(void) 
 {
   #define H_help_button_color "(" S_help_button_color "): color used to draw help buttons"
-  return(XEN_WRAP_PIXEL((ss->sgx)->help_button_color));
+  return(XEN_WRAP_PIXEL(ss->sgx->help_button_color));
 }
 
 static XEN g_set_quit_button_color(XEN color) 
 {
   XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, S_setB S_quit_button_color, "a color"); 
-  (ss->sgx)->quit_button_color = XEN_UNWRAP_PIXEL(color);
+  ss->sgx->quit_button_color = XEN_UNWRAP_PIXEL(color);
   return(color);
 }
 
 static XEN g_quit_button_color(void) 
 {
   #define H_quit_button_color "(" S_quit_button_color "): color used to draw quit (dismiss, cancel) buttons"
-  return(XEN_WRAP_PIXEL((ss->sgx)->quit_button_color));
+  return(XEN_WRAP_PIXEL(ss->sgx->quit_button_color));
 }
 
 static XEN g_set_doit_button_color(XEN color) 
 {
   XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, S_setB S_doit_button_color, "a color"); 
-  (ss->sgx)->doit_button_color = XEN_UNWRAP_PIXEL(color);
+  ss->sgx->doit_button_color = XEN_UNWRAP_PIXEL(color);
   return(color);
 }
 
 static XEN g_doit_button_color(void) 
 {
   #define H_doit_button_color "(" S_doit_button_color "): color used to draw doit (Ok, Apply) buttons"
-  return(XEN_WRAP_PIXEL((ss->sgx)->doit_button_color));
+  return(XEN_WRAP_PIXEL(ss->sgx->doit_button_color));
 }
 
 static XEN g_set_doit_again_button_color(XEN color) 
 {
   XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, S_setB S_doit_again_button_color, "a color"); 
-  (ss->sgx)->doit_again_button_color = XEN_UNWRAP_PIXEL(color);
+  ss->sgx->doit_again_button_color = XEN_UNWRAP_PIXEL(color);
   return(color);
 }
 
 static XEN g_doit_again_button_color(void) 
 {
   #define H_doit_again_button_color "(" S_doit_again_button_color "): color used to doit again (Undo&Apply) buttons"
-  return(XEN_WRAP_PIXEL((ss->sgx)->doit_again_button_color));
+  return(XEN_WRAP_PIXEL(ss->sgx->doit_again_button_color));
 }
 
 static XEN g_set_reset_button_color(XEN color) 
 {
   XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, S_setB S_reset_button_color, "a color"); 
-  (ss->sgx)->reset_button_color = XEN_UNWRAP_PIXEL(color);
+  ss->sgx->reset_button_color = XEN_UNWRAP_PIXEL(color);
   return(color);
 }
 
 static XEN g_reset_button_color(void) 
 {
   #define H_reset_button_color "(" S_reset_button_color "): color used to draw reset buttons"
-  return(XEN_WRAP_PIXEL((ss->sgx)->reset_button_color));
+  return(XEN_WRAP_PIXEL(ss->sgx->reset_button_color));
 }
 
 
 static XEN g_data_color(void) 
 {
   #define H_data_color "(" S_data_color "): color used to draw unselected data"
-  return(XEN_WRAP_PIXEL((ss->sgx)->data_color));
+  return(XEN_WRAP_PIXEL(ss->sgx->data_color));
 }
 
 static XEN g_set_selected_data_color(XEN color)
@@ -2312,7 +2312,7 @@ static XEN g_set_selected_data_color(XEN color)
 static XEN g_selected_data_color(void) 
 {
   #define H_selected_data_color "(" S_selected_data_color "): color used for selected data"
-  return(XEN_WRAP_PIXEL((ss->sgx)->selected_data_color));
+  return(XEN_WRAP_PIXEL(ss->sgx->selected_data_color));
 }
 
 static XEN g_set_graph_color(XEN color) 
@@ -2327,7 +2327,7 @@ static XEN g_set_graph_color(XEN color)
 static XEN g_graph_color(void) 
 {
   #define H_graph_color "(" S_graph_color "): background color used for unselected data"
-  return(XEN_WRAP_PIXEL((ss->sgx)->graph_color));
+  return(XEN_WRAP_PIXEL(ss->sgx->graph_color));
 }
 
 static XEN g_set_selected_graph_color(XEN color) 
@@ -2351,13 +2351,13 @@ static XEN g_set_selected_graph_color(XEN color)
 static XEN g_selected_graph_color(void) 
 {
   #define H_selected_graph_color "(" S_selected_graph_color "): background color of selected data"
-  return(XEN_WRAP_PIXEL((ss->sgx)->selected_graph_color));
+  return(XEN_WRAP_PIXEL(ss->sgx->selected_graph_color));
 }
 
 static XEN g_set_pushed_button_color(XEN color) 
 {
   XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, S_setB S_pushed_button_color, "a color"); 
-  (ss->sgx)->pushed_button_color = XEN_UNWRAP_PIXEL(color);
+  ss->sgx->pushed_button_color = XEN_UNWRAP_PIXEL(color);
 #if USE_MOTIF
   map_over_children(MAIN_SHELL(ss), recolor_button, NULL);
 #endif
@@ -2367,13 +2367,13 @@ static XEN g_set_pushed_button_color(XEN color)
 static XEN g_pushed_button_color(void) 
 {
   #define H_pushed_button_color "(" S_pushed_button_color "): color of a pushed button"
-  return(XEN_WRAP_PIXEL((ss->sgx)->pushed_button_color));
+  return(XEN_WRAP_PIXEL(ss->sgx->pushed_button_color));
 }
 
 static XEN g_basic_color(void) 
 {
   #define H_basic_color "(" S_basic_color "): Snd's basic color"
-  return(XEN_WRAP_PIXEL((ss->sgx)->basic_color));
+  return(XEN_WRAP_PIXEL(ss->sgx->basic_color));
 }
 
 static void recolor_everything(widget_t w, void *ptr)
@@ -2393,7 +2393,7 @@ static void recolor_everything(widget_t w, void *ptr)
     {
       XtVaGetValues(w, XmNbackground, &curcol, NULL);
       if (curcol == (Pixel)ptr)
-	XmChangeColor(w, (ss->sgx)->basic_color);
+	XmChangeColor(w, ss->sgx->basic_color);
     }
 #endif
 }
@@ -2403,8 +2403,8 @@ static XEN g_set_basic_color(XEN color)
 {
   color_t old_color;
   XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, S_setB S_basic_color, "a color"); 
-  old_color = (ss->sgx)->basic_color;
-  (ss->sgx)->basic_color = XEN_UNWRAP_PIXEL(color); 
+  old_color = ss->sgx->basic_color;
+  ss->sgx->basic_color = XEN_UNWRAP_PIXEL(color); 
 #if USE_MOTIF
   map_over_children(MAIN_SHELL(ss), recolor_everything, (void *)old_color);
 #endif

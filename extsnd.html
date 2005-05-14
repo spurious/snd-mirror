@@ -94,7 +94,7 @@ file, loaded at any time from a file of scheme code or a <a href="snd.html#saved
 specified via inter-process communication or from stdin
 from any other program (CLM and Emacs in particular),
 imbedded in a keyboard macro, or accessed in the
-lisp listener.  The easiest way to get acquainted
+listener.  The easiest way to get acquainted
 with this aspect of Snd is to open the listener
 (via the View:Open listener menu option), and type
 experiments in its window.  Its prompt is "&gt;". So,
@@ -1438,7 +1438,7 @@ to popup file info as follows:
 <code><a class=def name="mouseenterlistenerhook">mouse-enter-listener-hook</a> (widget) </code></td><td>
 </td></tr>
 <tr><td></td><td colspan=2>
-called when the mouse enters the lisp listener pane. This hook, along with the parallel graph hook
+called when the mouse enters the listener pane. This hook, along with the parallel graph hook
 makes it possible to set up Snd to behave internally like a window manager with pointer-focus.  That is, to
 ensure that the pane under the mouse is the one that receives keyboard input, we could define the following
 hook procedures:
@@ -1496,7 +1496,7 @@ called when the mouse exits one of the labels covered by mouse-enter-label-hook.
 <code><a class=def name="mousleavelistenerhook">mouse-leave-listener-hook</a> (widget) </code></td><td>
 </td></tr>
 <tr><td></td><td colspan=2>
-called when the mouse leaves the lisp listener pane.
+called when the mouse leaves the listener pane.
 </td></tr>
 <tr><td colspan=3></td></tr>
 
@@ -9022,7 +9022,7 @@ sound files (see <a href="#addsoundfileextension">add-sound-file-extension</a> a
 
 <!-- listener-color -->
 <tr><td colspan=2><code><a class=def name="listenercolor">listener-color</a> ()</code></td></tr>
-<tr><td></td><td>background color of lisp listener. <code>(set! (listener-color) (<a class=quiet href="#makecolor">make-color</a> 0 0 0))</code> is good too.</td></tr>
+<tr><td></td><td>background color of listener. <code>(set! (listener-color) (<a class=quiet href="#makecolor">make-color</a> 0 0 0))</code> is good too.</td></tr>
 
 <!-- listener-font -->
 <tr><td colspan=2><code><a class=def name="listenerfont">listener-font</a> ()</code></td></tr>
@@ -9030,11 +9030,11 @@ sound files (see <a href="#addsoundfileextension">add-sound-file-extension</a> a
 
 <!-- listener-prompt -->
 <tr><td colspan=2><code><a class=def name="listenerprompt">listener-prompt</a> ()</code></td></tr>
-<tr><td></td><td>lisp listener prompt (defaults to "&gt;").</td></tr>
+<tr><td></td><td>listener prompt (defaults to "&gt;").</td></tr>
 
 <!-- listener-text-color -->
 <tr><td colspan=2><code><a class=def name="listenertextcolor">listener-text-color</a> ()</code></td></tr>
-<tr><td></td><td>text color in lisp listener.</td></tr>
+<tr><td></td><td>text color in listener.</td></tr>
 
 <!-- mix-dialog-mix -->
 <tr><td colspan=2><code><a class=def name="mixdialogmix">mix-dialog-mix</a> ()</code></td></tr>
@@ -9216,7 +9216,7 @@ start the File Save-as dialog (to save the currently selected sound), return the
 
 <!-- show-listener -->
 <tr><td colspan=2><code><a class=def name="showlistener">show-listener</a> ()</code></td></tr>
-<tr><td></td><td>if #t, open the lisp listener pane, else close it.  For backwards compatibility, if called outside set!, it opens the pane.</td></tr>
+<tr><td></td><td>if #t, open the listener pane, else close it.  For backwards compatibility, if called outside set!, it opens the pane.</td></tr>
 
 <tr><td colspan=2><code><a href="#spectrocutoff">spectro-cutoff</a> ()</code></td></tr>
 <tr><td></td><td>The amount of the frequency domain to include in the spectrum display.
@@ -9569,7 +9569,7 @@ If you include a documentation string in the function, it is included in the Hel
 <tr><td></td><td>
 
 The modifier state is a combination of control = 4 and meta = 8, 
-so the first bind-key above causes C-a to print "hi" in the lisp listener.  The 
+so the first bind-key above causes C-a to print "hi" in the listener.  The 
 value returned should be one of the cursor choices telling Snd what 
 action (if any) to take after evaluating <i>code</i>.  
 Possible return values are:
@@ -10614,10 +10614,10 @@ are:</p>
     <td>highlighting color.</td></tr>
 <tr><td><code><em class=emdef>listener-color</em></code></td>
     <td><code>aliceblue</code></td>
-    <td>background color of lisp listener.</td></tr>
+    <td>background color of listener.</td></tr>
 <tr><td><code><em class=emdef>listener-text-color</em></code></td>
     <td><code>black</code></td>
-    <td>text color in lisp listener.</td></tr>
+    <td>text color in listener.</td></tr>
 <tr><td><code><a class=def name="markcolor">mark-color</a></code></td>
     <td><code>red</code></td>
     <td>color of mark indicator.</td></tr>

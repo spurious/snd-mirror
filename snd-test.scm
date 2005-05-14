@@ -12340,6 +12340,9 @@ EDITS: 5
 		    (fneq lower lower2))
 		(snd-display ";~A ~A, ~A ~A" upper upper2 lower lower2)))))
 
+      (let ((tag (catch #t (lambda () (harmonicizer 550.0 (list .5 .3 .2) 10)) (lambda args (car args)))))
+	(if (not (eq? tag 'bad-type)) (snd-display ";odd length arg to partials->polynomial: ~A" tag)))
+
       (let* ((amps (list->vct '(1.0)))
 	     (phases (list->vct '(0.0)))
 	     (val (sine-bank amps phases)))
@@ -15909,6 +15912,8 @@ EDITS: 5
       (test-gen-equal (make-table-lookup 440.0 :wave (partials->wave '(1 1 2 1)))
 		      (make-table-lookup 440.0 :wave (partials->wave '(1 1 2 1)))
 		      (make-table-lookup 440.0 :wave (partials->wave '(1 1 2 .5))))
+      (let ((tag (catch #t (lambda () (partials->wave (list .5 .3 .2))) (lambda args (car args)))))
+	(if (not (eq? tag 'bad-type)) (snd-display ";odd length arg to partials->wave: ~A" tag)))
       
       (let ((hi (make-table-lookup :size 256)))
 	(if (not (= (mus-length hi) 256)) (snd-display ";table-lookup set length: ~A?" (mus-length hi))))
@@ -16011,6 +16016,8 @@ EDITS: 5
       
       (test-gen-equal (make-waveshape 440.0 :partials '(1 1)) (make-waveshape 440.0 :partials '(1 1)) (make-waveshape 100.0 :partials '(1 1)))
       (test-gen-equal (make-waveshape 440.0 :partials '(1 1)) (make-waveshape 440.0 :partials '(1 1)) (make-waveshape 4400.0 :partials '(1 1 2 .5)))
+      (let ((tag (catch #t (lambda () (partials->waveshape (list .5 .3 .2))) (lambda args (car args)))))
+	(if (not (eq? tag 'bad-type)) (snd-display ";odd length arg to partials->waveshape: ~A" tag)))
       
       (let ((d11 (partials->waveshape '(1 1) 16)))
 	(if (not (vequal d11 (vct -1.000 -0.867 -0.733 -0.600 -0.467 -0.333 -0.200 -0.067 0.067 0.200 0.333 0.467 0.600 0.733 0.867 1.000)))
@@ -19304,6 +19311,10 @@ EDITS: 5
 	    (vct-set! ov i (windowed-maxamp gen (vct-ref iv i))))
 	  (if (not (vequal tv ov))
 	      (snd-display ";windowed-maxamp: ~A ~A" ov tv))))
+
+      (let ((ind (open-sound "oboe.snd")))
+	(harmonicizer 550.0 (list 1 .5 2 .3 3 .2) 10)
+	(close-sound ind))
       
       (run-hook after-test-hook 8)
       ))

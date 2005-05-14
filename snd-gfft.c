@@ -618,15 +618,15 @@ GtkWidget *fire_up_transform_dialog(bool managed)
 
       graph_drawer = gtk_drawing_area_new();
       gtk_container_add(GTK_CONTAINER(graph_frame), graph_drawer);
-      gtk_widget_modify_bg(graph_drawer, GTK_STATE_NORMAL, (ss->sgx)->white);
+      gtk_widget_modify_bg(graph_drawer, GTK_STATE_NORMAL, ss->sgx->white);
 
       fgc = gdk_gc_new(MAIN_WINDOW(ss));
-      gdk_gc_set_background(fgc, (ss->sgx)->white);
-      gdk_gc_set_foreground(fgc, (ss->sgx)->enved_waveform_color);
+      gdk_gc_set_background(fgc, ss->sgx->white);
+      gdk_gc_set_foreground(fgc, ss->sgx->enved_waveform_color);
 
       gc = gdk_gc_new(MAIN_WINDOW(ss));
-      gdk_gc_set_background(gc, (ss->sgx)->white);
-      gdk_gc_set_foreground(gc, (ss->sgx)->black);
+      gdk_gc_set_background(gc, ss->sgx->white);
+      gdk_gc_set_foreground(gc, ss->sgx->black);
 
       gtk_widget_show(graph_drawer);
       gtk_widget_show(graph_frame);

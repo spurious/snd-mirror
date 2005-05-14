@@ -84,7 +84,7 @@ the usual Xt/X-related flags like -xrm).</p>
 <tr><td width=200><code>-h -horizontal</code></td><td>layout sounds as horizontal panes</td></tr>
 <tr><td><code>-v -vertical</code></td>            <td>layout sounds vertically (the default)</td></tr>
 <tr><td><code>-notebook</code></td>               <td>layout sounds in a notebook widget (Motif 2.0 or later)</td></tr>
-<tr><td><code>-separate</code></td>               <td>layout sounds each in a separate window (lisp listener in main window)</td></tr>
+<tr><td><code>-separate</code></td>               <td>layout sounds each in a separate window (listener is in main window)</td></tr>
 <tr><td><code>--help</code></td>                  <td>print some help, version info, and exit</td></tr>
 <tr><td><code>--version</code></td>               <td>print version info</td></tr>
 <tr><td><code>-noglob</code></td>                 <td>don't read /etc/snd.conf</td></tr>
@@ -502,23 +502,15 @@ In Ruby, the equivalent is:
 
 <table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2><A NAME="snddynamic">Runtime modules and external programs</a></h2></td></tr></table>
 
-<p>It is possible to load your own C code into Snd at run-time or
-use any external program from within Snd as an editing function.
-And, perhaps most useful, you can run Snd as an Emacs subjob.
-</p>
-<br>
-
 <!-- INDEX emacssnd:Emacs and Snd -->
 <table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="emacssnd">Snd as an Emacs subjob</a></h3></td></tr></table>
 
 <p>Snd watches stdin; any input received
-is evaluated as if typed in Snd's lisp listener; any subsequent output
-is sent to stdout; presumably any process could communicate with
-Snd in this manner.  But the intention here is to make it possible to run Snd as a subjob of Emacs.
-The simplest way to enable that is to use inf-snd.el by Michael
+is evaluated as if typed in Snd's listener; any subsequent output
+is sent to stdout.  Presumably any process could communicate with
+Snd in this manner,  but the real reason for this is to make it possible to run Snd as a subjob of Emacs.
+The simplest way to enable that is to use <a href="sndscm.html#dotemacs">inf-snd.el</a> by Michael
 Scholz.  It starts with a long and detailed commentary.
-A simpler alternative is Fernando Lopez-Lezcano's DotEmacs,
-which also has comments on its use.
 </p>
 <br>
 <table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="dynamic">Dynamically loaded modules</a></h3></td></tr></table>
@@ -562,7 +554,7 @@ your code into a shared object (this is aimed at Linux):
   cc -c cscm.c 
   ld -shared -o cscm.so cscm.o -lguile
 </pre>
-<p>Now go to Snd's lisp listener and,</p>
+<p>Now go to Snd's listener and,</p>
 <pre>
   (define lib (<em class=red>dynamic-link</em> "/home/bil/cl/cscm.so"))
   (<em class=red>dynamic-call</em> "init_hiho" lib)
@@ -697,11 +689,10 @@ In Gtk, the arguments are different, but the basic idea is the same.
 <br>
 <table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndwithclm">Snd and the CLM module</a></h3></td></tr></table>
 
-<p>The files clm.c, clm.h, and clm2xen.c implement CLM (a Common Lisp Music V implementation
-described in clm.html, available in clm-3.tar.gz at ccrma-ftp) as a Guile-loadable module.
-They are loaded into Snd when it is built.
+<p>The files clm.c, clm.h, and clm2xen.c implement <a href="clm.html#clmtop">CLM</a> (a Music V implementation),
+included in Snd when it is built.
 You can see what a generator does, or a group of generators, by running them in the
-lisp listener, and using the graph and spectrum functions.  Say we have
+listener, and using the graph and spectrum functions.  Say we have
 these declarations in ~/.snd:
 </p>
 
@@ -709,7 +700,7 @@ these declarations in ~/.snd:
 (define data-size 1024)
 (define data (<a class=quiet href="extsnd.html#makevct">make-vct</a> data-size))
 
-(define run 
+(define rung
   (lambda (fun)
     (do ((i 0 (1+ i))) 
         ((= i data-size))
@@ -727,7 +718,7 @@ these declarations in ~/.snd:
 <p>Now we can open the listener, and type:</p>
 <pre>
 (define hi (<a class=quiet href="clm.html#make-oscil">make-oscil</a>))
-(<a class=quiet href="extsnd.html#run">run</a> (lambda () (<a class=quiet href="clm.html#oscil">oscil</a> hi)))
+(rung (lambda () (<a class=quiet href="clm.html#oscil">oscil</a> hi)))
 (define ho (<a class=quiet href="clm.html#make-oscil">make-oscil</a>))
 (runf (lambda () (<a class=quiet href="clm.html#oscil">oscil</a> hi (* .5 (<a class=quiet href="clm.html#oscil">oscil</a> ho)))))
 </pre>
@@ -772,7 +763,7 @@ producing the echo.
   (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (echo .5 .75) 0 44100)
   (<a class=quiet href="extsnd.html#reversesound">reverse-sound</a>)
 </pre>
-<p>The CLM (common lisp) version might be something like:</p>
+<p>The Common Lisp version would be:</p>
 
 <table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (<a class=quiet href="clm.html#definstrument">definstrument</a> echo (beg dur scaler secs file)
@@ -793,7 +784,7 @@ producing the echo.
 <!-- INDEX clmfuncs:CLM generators -->
 <table width="100%" border=1><tr><td bgcolor="lightgreen" valign="middle"><h4><A NAME="clmfuncs">CLM functions</a></h4></td></tr></table>
 
-<p>See <a href="clm.html">clm.html</a> for full details. Optional args are in italics.</p>
+<p>See <a href="clm.html">clm.html</a> for full details. Optional argumentss are in italics.</p>
 <br>
 
 <table border=0 cellpadding=0 cellspacing=0>

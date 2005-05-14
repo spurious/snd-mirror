@@ -2153,7 +2153,6 @@ bool saved_file_needs_update(snd_info *sp, char *str, save_dialog_t save_type, i
        *            or should this be at a lower level? (snd-snd.c has after-save-as too as called from Scheme save-sound)
        *            ideally there would be a secure communication path to any after-save-as-hook (for undo)
        *               but that requires another arg to after-save-as (could be whatever is returned by before-save-as)
-       *               this could be backwards compatible by allowing 3 or 4 args -- say 4 in def, then #f in proc if 3 in user-func
        *            also, lock out recursive hook call (user might call save-sound-as within hook func)
        */
 

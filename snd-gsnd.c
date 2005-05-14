@@ -927,7 +927,7 @@ void display_filter_env(snd_info *sp)
   if (height < MIN_FILTER_GRAPH_HEIGHT) return;
   width = widget_width(drawer);
   ax = (axis_context *)CALLOC(1, sizeof(axis_context));
-  ax->gc = (ss->sgx)->fltenv_basic_gc;
+  ax->gc = ss->sgx->fltenv_basic_gc;
   ax->wn = drawer->window;
   ax->w = drawer;
   gdk_window_clear(ax->wn);
@@ -937,7 +937,7 @@ void display_filter_env(snd_info *sp)
   env_editor_display_env(edp, sp->filter_control_envelope, ax, _("frequency response"), 0, 0, width, height, NOT_PRINTING);
   if (edp->edited)
     {
-      ax->gc = (ss->sgx)->fltenv_data_gc;
+      ax->gc = ss->sgx->fltenv_data_gc;
       display_frequency_response(sp->filter_control_envelope, 
 				 (SOUND_ENV_EDITOR(sp))->axis, ax, 
 				 sp->filter_control_order, 
@@ -1139,8 +1139,8 @@ void filter_env_changed(snd_info *sp, env *e)
 void color_filter_waveform(GdkColor *color)
 {
   int i;
-  gdk_gc_set_foreground((ss->sgx)->fltenv_data_gc, color);
-  (ss->sgx)->filter_control_waveform_color = color;
+  gdk_gc_set_foreground(ss->sgx->fltenv_data_gc, color);
+  ss->sgx->filter_control_waveform_color = color;
   for (i = 0; i < ss->max_sounds; i++)
     {
       snd_info *sp;
@@ -1613,7 +1613,7 @@ snd_info *add_sound_window(char *filename, bool read_only)
       
       sw[W_filter_env] = gtk_drawing_area_new();
       gtk_widget_set_events(sw[W_filter_env], GDK_ALL_EVENTS_MASK);
-      gtk_widget_modify_bg(sw[W_filter_env], GTK_STATE_NORMAL, (ss->sgx)->highlight_color);
+      gtk_widget_modify_bg(sw[W_filter_env], GTK_STATE_NORMAL, ss->sgx->highlight_color);
       gtk_container_add(GTK_CONTAINER(sw[W_filter_frame]), sw[W_filter_env]);
       gtk_widget_show(sw[W_filter_env]);
       SG_SIGNAL_CONNECT(sw[W_filter_env], "expose_event", filter_drawer_expose, sp);

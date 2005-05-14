@@ -798,8 +798,8 @@ static mus_sample_t next_sound(snd_fd *sf);
 static Float next_sound_as_float(snd_fd *sf);
 
 
-static mus_sample_t end_sample(snd_fd *sf) {return(MUS_SAMPLE_0);}
-static Float end_sample_to_float(snd_fd *sf) {return(0.0);}
+static mus_sample_t end_sample(snd_fd *ignore) {return(MUS_SAMPLE_0);}
+static Float end_sample_to_float(snd_fd *ignore) {return(0.0);}
 
 
 static mus_sample_t next_sample(snd_fd *sf)

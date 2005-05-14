@@ -774,7 +774,7 @@ chan_info *color_selected_channel(snd_info *sp)
   ncp = sp->chans[sp->selected_channel];
   recolor_graph(ncp, true);
   (ncp->cgx)->selected = true;
-  if ((ss->sgx)->data_color != (ss->sgx)->selected_data_color) 
+  if (ss->sgx->data_color != ss->sgx->selected_data_color)
     update_graph(ncp);
   return(ncp);
 }

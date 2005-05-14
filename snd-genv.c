@@ -316,8 +316,8 @@ static void reflect_segment_state (void)
 {
   if (enved_dialog)
     {
-      gtk_widget_modify_bg(expB, GTK_STATE_NORMAL, (enved_style(ss) == ENVELOPE_EXPONENTIAL) ? (ss->sgx)->yellow : (ss->sgx)->basic_color);
-      gtk_widget_modify_bg(linB, GTK_STATE_NORMAL, (enved_style(ss) == ENVELOPE_LINEAR) ? (ss->sgx)->yellow : (ss->sgx)->basic_color);
+      gtk_widget_modify_bg(expB, GTK_STATE_NORMAL, (enved_style(ss) == ENVELOPE_EXPONENTIAL) ? ss->sgx->yellow : ss->sgx->basic_color);
+      gtk_widget_modify_bg(linB, GTK_STATE_NORMAL, (enved_style(ss) == ENVELOPE_LINEAR) ? ss->sgx->yellow : ss->sgx->basic_color);
       if ((active_env) && (!(showing_all_envs))) env_redisplay();
     }
 }
@@ -477,7 +477,7 @@ static void show_button_pressed(GtkWidget *w, gpointer context)
 static void selection_button_pressed(GtkWidget *w, gpointer context)
 {
   apply_to_selection = (!apply_to_selection);
-  gtk_widget_modify_bg(selectionB, GTK_STATE_NORMAL, (apply_to_selection) ? (ss->sgx)->yellow : (ss->sgx)->basic_color);
+  gtk_widget_modify_bg(selectionB, GTK_STATE_NORMAL, (apply_to_selection) ? ss->sgx->yellow : ss->sgx->basic_color);
   set_sensitive(apply2B, true);
   if ((enved_wave_p(ss)) && 
       (!showing_all_envs)) 
@@ -533,9 +533,9 @@ static void redo_button_pressed(GtkWidget *w, gpointer context)
 static void reflect_apply_state (void)
 {
   gtk_label_set_text(GTK_LABEL(nameL), _(env_names[enved_target(ss)]));
-  gtk_widget_modify_bg(ampB, GTK_STATE_NORMAL, (enved_target(ss) == ENVED_AMPLITUDE) ? (ss->sgx)->yellow : (ss->sgx)->basic_color);
-  gtk_widget_modify_bg(fltB, GTK_STATE_NORMAL, (enved_target(ss) == ENVED_SPECTRUM) ? (ss->sgx)->yellow : (ss->sgx)->basic_color);
-  gtk_widget_modify_bg(srcB, GTK_STATE_NORMAL, (enved_target(ss) == ENVED_SRATE) ? (ss->sgx)->yellow : (ss->sgx)->basic_color);
+  gtk_widget_modify_bg(ampB, GTK_STATE_NORMAL, (enved_target(ss) == ENVED_AMPLITUDE) ? ss->sgx->yellow : ss->sgx->basic_color);
+  gtk_widget_modify_bg(fltB, GTK_STATE_NORMAL, (enved_target(ss) == ENVED_SPECTRUM) ? ss->sgx->yellow : ss->sgx->basic_color);
+  gtk_widget_modify_bg(srcB, GTK_STATE_NORMAL, (enved_target(ss) == ENVED_SRATE) ? ss->sgx->yellow : ss->sgx->basic_color);
   if ((!showing_all_envs) && (enved_wave_p(ss))) env_redisplay();
 }
 
@@ -761,16 +761,16 @@ GtkWidget *create_envelope_editor (void)
       gtk_widget_modify_bg(enved_dialog, GTK_STATE_NORMAL, ss->sgx->highlight_color);
 
       gc = gdk_gc_new(MAIN_WINDOW(ss));
-      gdk_gc_set_background(gc, (ss->sgx)->white);
-      gdk_gc_set_foreground(gc, (ss->sgx)->black);
+      gdk_gc_set_background(gc, ss->sgx->white);
+      gdk_gc_set_foreground(gc, ss->sgx->black);
 
       rgc = gdk_gc_new(MAIN_WINDOW(ss));
-      gdk_gc_set_background(rgc, (ss->sgx)->white);
-      gdk_gc_set_foreground(rgc, (ss->sgx)->red);
+      gdk_gc_set_background(rgc, ss->sgx->white);
+      gdk_gc_set_foreground(rgc, ss->sgx->red);
 
       ggc = gdk_gc_new(MAIN_WINDOW(ss));
-      gdk_gc_set_background(ggc, (ss->sgx)->white);
-      gdk_gc_set_foreground(ggc, (ss->sgx)->enved_waveform_color);
+      gdk_gc_set_background(ggc, ss->sgx->white);
+      gdk_gc_set_foreground(ggc, ss->sgx->enved_waveform_color);
 
       helpB = gtk_button_new_with_label(_("Help"));
       gtk_widget_set_name(helpB, "help_button");
@@ -818,8 +818,8 @@ GtkWidget *create_envelope_editor (void)
       drawer = gtk_drawing_area_new();
       gtk_box_pack_start(GTK_BOX(mainform), drawer, true, true, 0);
       gtk_widget_set_events(drawer, GDK_ALL_EVENTS_MASK);
-      gtk_widget_modify_bg(drawer, GTK_STATE_NORMAL, (ss->sgx)->white);
-      gtk_widget_modify_fg(drawer, GTK_STATE_NORMAL, (ss->sgx)->black);
+      gtk_widget_modify_bg(drawer, GTK_STATE_NORMAL, ss->sgx->white);
+      gtk_widget_modify_fg(drawer, GTK_STATE_NORMAL, ss->sgx->black);
       gtk_widget_show(drawer);
 
       showB = gtk_button_new_with_label(_("view envs"));
@@ -981,7 +981,7 @@ GtkWidget *create_envelope_editor (void)
 
       baseAdj = gtk_adjustment_new(0.5, 0.0, 1.0, 0.001, 0.01, .1);
       baseScale = gtk_hscrollbar_new(GTK_ADJUSTMENT(baseAdj));
-      gtk_widget_modify_bg(baseScale, GTK_STATE_NORMAL, (ss->sgx)->position_color);
+      gtk_widget_modify_bg(baseScale, GTK_STATE_NORMAL, ss->sgx->position_color);
       SG_SIGNAL_CONNECT(baseAdj, "value_changed", base_changed_callback, NULL);
       gtk_box_pack_start(GTK_BOX(bottomrow), baseScale, true, true, 4);
       gtk_widget_show(baseScale);
@@ -1097,7 +1097,7 @@ void enved_reflect_selection(bool on)
       if ((apply_to_selection) && (!on))
 	{
 	  apply_to_selection = false;
-	  gtk_widget_modify_bg(selectionB, GTK_STATE_NORMAL, (ss->sgx)->basic_color);
+	  gtk_widget_modify_bg(selectionB, GTK_STATE_NORMAL, ss->sgx->basic_color);
 	}
       if ((enved_target(ss) != ENVED_SPECTRUM) && 
 	  (enved_wave_p(ss)) && 
@@ -1108,7 +1108,7 @@ void enved_reflect_selection(bool on)
 
 void color_enved_waveform(GdkColor *pix)
 {
-  (ss->sgx)->enved_waveform_color = pix;
+  ss->sgx->enved_waveform_color = pix;
   if (enved_dialog)
     {
       gdk_gc_set_foreground(ggc, pix);
