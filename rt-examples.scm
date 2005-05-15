@@ -230,7 +230,7 @@
 
 
 #!
-(define filename "/home/kjetil/t1.wav")
+(define filename "/home/kjetil/cemb2.wav")
 
 (play-once filename))
 
@@ -244,6 +244,47 @@
 (-> p stop)
 
 !#
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Extremely Simple delay.
+;;
+
+(definstrument (extremely-simple-delay filename latency mix #:key (max-latency-in-seconds 2))
+  (let* ((rs (make-readin filename))
+	 (das-vct-length (c-integer (* (rte-samplerate) max-latency-in-seconds)))
+	 (das-vct (make-vct das-vct-length))
+	 (pos 0))
+    (rt-play (lambda ()
+	       (declare (<int> pos))
+	       
+	       (if (>= (mus-location rs) (mus-length rs))
+		   (set! (mus-location rs) 0))
+	       
+	       (let* ((frame-latency (the <int> (* (mus-srate) latency)))
+		      (write-pos (remainder (+ pos frame-latency)
+					    das-vct-length))
+		      (read-pos pos)
+		      (next-pos (remainder (1+ pos)
+					   das-vct-length))
+		      (sample (readin rs))
+		      (delayed-sample (vct-ref das-vct read-pos)))
+
+		 (vct-set! das-vct write-pos sample)
+		 (out (+ sample (* mix delayed-sample)))
+		 (set! pos next-pos))))))
+
+	     
+#!
+(define p (extremely-simple-delay filename 1 0.5))
+(set! (-> p mix) 1)
+(set! (-> p latency) 0.5)
+(-> p stop)
+(rte-info)
+(rte-reset)
+!#
+
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -421,6 +462,7 @@ This version of the fm-violin assumes it is running within with-sound (where *ou
 		    :fm-index (+ i 1))))
 (rte-info)
 (rte-reset)
+
 
 
 

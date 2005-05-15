@@ -1136,9 +1136,10 @@ Notes
 ;;  "gakk" -> (string "gakk")
 ;; -Remove all rt-dummy/dummy calls completely.
 ;; -Replace all '<undefined> types with <SCM>s, but give warnings.
-;; -Replace all rt type-names with theire c type names.
+;; -Replace all rt type-names with their C-type names.
 ;; -Insert <struct-RT_Globals> *rt_globals as the first argument for all functions.
 ;; -Insert rt_globals as the first argument in function-calls where required.
+;; -Transform global variable names: gakk -> rt_globals->gakk
 ;;
 (define (rt-last-hacks term)
 
@@ -1162,7 +1163,7 @@ Notes
   (define (last-hacks term)
     (define (map2 term)
       (delete '(rt-dummy/dummy) (map last-hacks term)))
-  
+
     (cond ((string? term) `(string ,term))
 	  ((symbol? term)
 	   (if (assq term globals)
@@ -1226,7 +1227,8 @@ Notes
   ;;(c-display "term" term)
   ;;(c-display "caddr term" (cadr (caddr term)))
   (for-each (lambda (vardecl)
-	      (if (= 2 (length vardecl))
+	      (if (or (= 2 (length vardecl))
+		      (not (list? (caddr vardecl))))
 		  (set! globals (cons vardecl globals))))
 	    (cadr (caddr term)))
 
@@ -1417,7 +1419,7 @@ Notes
 ;; are not inside another lambda function anymore.
 ;;
 ;; This is strictly
-;; not necesarry because gcc support local functions, but it
+;; not necesarry because gcc support local (nested) functions, but it
 ;; speeds up the access to local functions a lot. For example,
 ;; I think mus_src can run 2-3 times as fast...
 ;;
@@ -1436,14 +1438,6 @@ Notes
 ;;
 ;;->
 ;;
-;;;; The first let*-block contains global variables and functions. The rest is the main-function.
-;;;; (note that all global variables are put into its own struct later, so they are not really global variables though.)
-;;;; (note (again) that because the rt-language needs to support callbacks from c-code, it can't do the traditional lambda-lifting, (note to myself, insert references ([])),
-;;;;  (by adding extra arguments to the inner function when necessary), but the speed-penalty is probably very low because of this.
-;;;;  Supporting both traditional lambda-lifting and the variant below is possible though (by letting the variant below call the traditional version),
-;;;;  but that has not been implemented yet. I also
-;;;;  need to do some benchmarks to see if traditional lambda-lifting really is faster. Perhaps it isn't...)
-;;
 ;;(lambda ()
 ;;    (let* ((a <int> 0)
 ;;           (c <int> 0)
@@ -1456,6 +1450,16 @@ Notes
 ;;	  (set! a 3)
 ;;	  (set! e 9)
 ;;	  (b e))))
+;;
+;; Explanation for the above transformation:
+;;;; The first let*-block contains global variables and functions. The rest is the main-function.
+;;;; (note that all global variables are put into its own struct later, so they are not really global variables though.)
+;;;; (note (again) that because the rt-language needs to support callbacks from c-code, it can't do the traditional lambda-lifting, (note to myself, insert references ([])),
+;;;;  (by adding extra arguments to the inner function when necessary), but the speed-penalty is probably very low because of this.
+;;;;  Supporting both traditional lambda-lifting and the variant above is possible though (by letting the variant below call the traditional version),
+;;;;  but that has not been implemented yet. I also
+;;;;  need to do some benchmarks to see if traditional lambda-lifting really is faster. Perhaps it isn't...)
+;;
 ;;
 ;; rt-remove-unused++ must have been called on the term before calling. (So that the unused variables can be catched more easely, I think.)
 ;;
@@ -1583,7 +1587,7 @@ Notes
 					    (list '_rt_ret)))))
 
 	    (if (< (length globvars-here) 5)  ;; Performance is dependent on this number. Perhaps 5 is a good value. Haven't done any benchmark.
-	 	`(lambda ,vars                ;; It should be set quite high, because of larger amount of code and branching in the second version.
+	 	`(lambda ,vars                ;; It should be set quite high, because of larger amount of code, and branching, in the second version.
 		   ,capspart)                 ;; On the other hand, stacking up these variables are probably usually unnecesarry (but has to be done),
 		(let ((recnum (rt-gensym)))   ;; so the program counter usually jumps into the second version. Hard to say whats best...
 		  (set! globals2 (cons (list recnum '<int> 0) globals2))
@@ -3838,17 +3842,16 @@ Notes
 		  ,@body))))))))
 	    
 
-(define-macro (rt-renamefunc rt-name c-name returntype args)
+(define-macro (rt-renamefunc rt-name c-name returntype . args)
   (let ((funcname (symbol-append 'rt- rt-name '/ c-name)))
-    (<rt-func> funcname returntype args)
+    (apply <rt-func> (append (list funcname returntype) args))
     (primitive-eval `(define-c-macro ,(cons funcname 'rest )
 		       `(,',c-name ,@rest)))
     `(define-rt-macro ,(cons rt-name 'rest)
        `(,',funcname ,@rest))))
 
 
-(rt-renamefunc rt-error rt_error <void> (<char-*>))
-
+(rt-renamefunc rt-error rt_error <void> (<char-*>) #:needs-rt-globals #t)
 
 
 (define-c-macro (the type somethingmore)
@@ -5596,13 +5599,23 @@ setter!-rt-mus-location/mus_location
       ,body))
 
 
-(define-rt-macro (vct-set! das-vct pos val)
-  `(rt-vct-legal-pos ,das-vct ,pos "vct-set!"
-		     (rt-vct-set!/vct-set! ,das-vct (rt-castint/castint ,pos) ,val)))
+(define-rt-macro (vct-set! das-vct expand/pos val)
+  (if (rt-immediate? pos)
+      `(rt-vct-legal-pos ,das-vct ,pos "vct-set!"
+			 (rt-vct-set!/vct-set! ,das-vct (rt-castint/castint ,pos) ,val))
+      (let ((x (rt-gensym)))
+	`(let ((,x ,pos))
+	   (rt-vct-legal-pos ,das-vct ,x "vct-set!"
+			     (rt-vct-set!/vct-set! ,das-vct (rt-castint/castint ,x) ,val))))))
 
-(define-rt-macro (vct-ref vct pos)
-  `(rt-vct-legal-pos ,das-vct ,pos "vct-ref"
-		     (rt-vct-ref!/vct-ref ,das-vct (rt-castint/castint ,pos))))
+(define-rt-macro (vct-ref das-vct pos)
+  (if (rt-immediate? pos)
+      `(rt-vct-legal-pos ,das-vct ,pos "vct-ref"
+			 (rt-vct-ref/vct-ref ,das-vct (rt-castint/castint ,pos)))
+      (let ((x (rt-gensym)))
+	`(let ((,x ,pos))
+	   `(rt-vct-legal-pos ,das-vct ,pos "vct-ref"
+			      (rt-vct-ref/vct-ref ,das-vct (rt-castint/castint ,x)))))))
 
 (define-rt-macro (vct-scale! vct scl)
   `(rt-range2 i 0 (vct-length ,vct) 1
