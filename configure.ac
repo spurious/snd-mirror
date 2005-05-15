@@ -1307,7 +1307,11 @@ case "$host" in
 	;;
     *-*-openbsd*) 
         AC_DEFINE(OPENBSD)
-	audio_system=Sun
+	audio_system=OpenBSD
+        ;;
+    *-*-netbsd*) 
+        AC_DEFINE(NETBSD)
+	audio_system=NetBSD
         ;;
     *-*-cygwin*)
 	AC_DEFINE(WINDOZE)

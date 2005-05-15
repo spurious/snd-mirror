@@ -9541,6 +9541,86 @@ int mus_audio_read(int line, char *buf, int bytes)
 
 
 
+/* ------------------------------- NETBSD ----------------------------------------- */
+
+#if defined(NETBSD) && (!(defined(AUDIO_OK)))
+#define AUDIO_OK
+/* taken from Xanim */
+#include <errno.h>
+#include <fcntl.h>
+#include <sys/audioio.h>
+#include <sys/file.h>
+#include <sys/stat.h>
+#include <sys/ioctl.h>
+#include <sys/ioccom.h>
+
+int mus_audio_open_output(int dev, int srate, int chans, int format, int size) 
+{
+  audio_info_t a_info;
+  line = open("/dev/audio", O_WRONLY | O_NDELAY);
+  if (line == -1)
+    {
+      if (errno == EBUSY) 
+	return(mus_error(MUS_AUDIO_OUTPUT_BUSY, NULL));
+      else return(mus_error(MUS_AUDIO_DEVICE_NOT_AVAILABLE, NULL));
+    }
+  AUDIO_INITINFO(&a_info);
+  a_info.blocksize = 1024;
+  ioctl(line, AUDIO_SETINFO, &a_info);
+  AUDIO_INITINFO(&a_info);
+#ifndef AUDIO_ENCODING_SLINEAR
+  a_info.play.encoding = AUDIO_ENCODING_PCM16;
+#else
+  /* NetBSD-1.3 */
+  a_info.play.encoding = AUDIO_ENCODING_SLINEAR; /* Signed, nativeorder */
+#endif
+  ioctl(line, AUDIO_SETINFO, &a_info);
+  AUDIO_INITINFO(&a_info);
+  a_info.mode = AUMODE_PLAY | AUMODE_PLAY_ALL;
+  ioctl(line, AUDIO_SETINFO, &a_info);
+  AUDIO_INITINFO(&a_info);
+  a_info.play.precision = 16;
+  ioctl(line, AUDIO_SETINFO, &a_info);
+  AUDIO_INITINFO(&a_info);
+  a_info.play.sample_rate = srate;
+  a.info.play.port = AUDIO_SPEAKER | AUDIO_HEADPHONE | AUDIO_LINE_OUT;
+  ioctl(line, AUDIO_SETINFO, &a_info);
+  return(line);
+  /* a.info.blocksize after getinfo */
+}
+
+int mus_audio_write(int line, char *buf, int bytes) 
+{
+  write(line, buf, bytes);
+  return(MUS_NO_ERROR);
+}
+
+int mus_audio_close(int line) 
+{
+  close(line);
+  return(MUS_NO_ERROR);
+}
+
+/* set volume
+  a_info.play.gain = AUDIO_MIN_GAIN + (volume * (AUDIO_MAX_GAIN - AUDIO_MIN_GAIN));
+  ioctl(devAudio, AUDIO_SETINFO, &a_info);
+  */
+
+int mus_audio_open_input(int dev, int srate, int chans, int format, int size) {return(MUS_ERROR);}
+static void describe_audio_state_1(void) {pprint("NetBSD");}
+int mus_audio_read(int line, char *buf, int bytes) {return(MUS_ERROR);}
+int mus_audio_mixer_read(int dev, int field, int chan, float *val) {return(MUS_ERROR);}
+int mus_audio_mixer_write(int dev, int field, int chan, float *val) {return(MUS_ERROR);}
+void mus_audio_save(void) {}
+void mus_audio_restore(void) {}
+int mus_audio_initialize(void) {return(MUS_ERROR);}
+int mus_audio_systems(void) {return(1);}
+char *mus_audio_system_name(int system) {return("NetBSD");}
+char *mus_audio_moniker(void) {return("NetBSD audio");}
+
+#endif
+
+
 
 /* ------------------------------- STUBS ----------------------------------------- */
 

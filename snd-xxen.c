@@ -27,7 +27,7 @@ static XEN g_in(XEN ms, XEN code)
 			  (unsigned long)secs,
 			  (XtTimerCallbackProc)timed_eval, 
 			  (XtPointer)lst);
-	  /* this "code" can still be something misleading like an applicable smob */
+	  /* the "code" arg can still be something misleading like an applicable smob */
 	  /*   there's a way to catch that in snd-run.c line 129, but I'm not sure it's the "right thing" here */
 	}
     }
@@ -132,11 +132,11 @@ void recolor_button(widget_t w, void *ptr)
   if (XtIsWidget(w))
     {
       if (XmIsPushButton(w))
-	XtVaSetValues(w, XmNarmColor, (ss->sgx)->pushed_button_color, NULL);
+	XtVaSetValues(w, XmNarmColor, ss->sgx->pushed_button_color, NULL);
       else
 	{
 	  if (XmIsToggleButton(w))
-	    XtVaSetValues(w, XmNselectColor, (ss->sgx)->pushed_button_color, NULL);
+	    XtVaSetValues(w, XmNselectColor, ss->sgx->pushed_button_color, NULL);
 	}
     }
 }
@@ -158,7 +158,7 @@ static XEN g_set_graph_cursor(XEN curs)
   if ((val >= 0) && (val <= XC_xterm))
     {
       ss->Graph_Cursor = val;
-      (ss->sgx)->graph_cursor = XCreateFontCursor(XtDisplay(MAIN_SHELL(ss)), in_graph_cursor(ss));
+      ss->sgx->graph_cursor = XCreateFontCursor(XtDisplay(MAIN_SHELL(ss)), in_graph_cursor(ss));
     }
   else XEN_OUT_OF_RANGE_ERROR(S_setB S_graph_cursor, 1, curs, "~A: invalid cursor");
   return(curs);

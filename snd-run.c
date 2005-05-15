@@ -94,9 +94,6 @@
      (run (lambda () (let ((g1 gen) (g2 #f)) (oscil g1) (set! g2 g1) (oscil g2)))))
  *   -> opt: can't set pointer var (g2) to alias other such var
  *
- * PERHAPS: float_or_boolean_or_vct return type mainly for map-channel funcs
- *          could we use R_NUMBER_VCT as the return type for this?
- *
  * TODO: set for sample with at least samp arg (don't need the full thing)
  *        (set-samples beg dur vct), (samples beg dur) -> vct, (sample samp), (set! (sample samp) ...)
  *        samples->sound-data, channel->vct, vct->channel

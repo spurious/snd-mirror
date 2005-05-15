@@ -16694,7 +16694,14 @@ _ACEOF
 #define OPENBSD 1
 _ACEOF
 
-	audio_system=Sun
+	audio_system=OpenBSD
+        ;;
+    *-*-netbsd*)
+        cat >>confdefs.h <<\_ACEOF
+#define NETBSD 1
+_ACEOF
+
+	audio_system=NetBSD
         ;;
     *-*-cygwin*)
 	cat >>confdefs.h <<\_ACEOF
