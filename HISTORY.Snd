@@ -1,5 +1,6 @@
 Snd change log
 
+  16-May:    before-save-as-hook.
   2-May:     maxamp-position, region|selection-maxamp-position.
              windowed-maxamp generator (dsp.scm)
 	     harmonicizer (dsp.scm)

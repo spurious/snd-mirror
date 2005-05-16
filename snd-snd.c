@@ -3260,8 +3260,8 @@ Omitted arguments take their value from the sound being saved.\n\
 
   snd_info *sp;
   file_info *hdr;
-  int ht = -1, df = -1, sr = -1, chan = -1, err;
-  char *fname = NULL, *file = NULL;
+  int ht = -1, df = -1, sr = -1, chan = -1, err = MUS_NO_ERROR;
+  char *fname = NULL, *file = NULL, *outcom = NULL;
   XEN args[14]; 
   XEN keys[7];
   int orig_arg[7] = {0, 0, 0, 0, 0, 0, 0};
@@ -3325,17 +3325,17 @@ Omitted arguments take their value from the sound being saved.\n\
     return(snd_no_such_channel_error(S_save_sound_as, index, keys[5]));
   ss->catch_message = NULL;
   fname = mus_expand_filename(file);
-  if (chan >= 0)
-    err = save_channel_edits(sp->chans[chan], fname, to_c_edit_position(sp->chans[chan], edpos, S_save_sound_as, 7));
-  else 
+  outcom = output_comment(hdr);
+  if (!(run_before_save_as_hook(sp, fname, false, sr, ht, df, outcom)))
     {
-      char *outcom;
-      outcom = output_comment(hdr);
-      err = save_edits_without_display(sp, fname, ht, df, sr, outcom, to_c_edit_position(sp->chans[0], edpos, S_save_sound_as, 7));
-      if (outcom) FREE(outcom);
-      if (err == MUS_NO_ERROR) run_after_save_as_hook(sp, fname, false); /* true => from dialog */
+      if (chan >= 0)
+	err = save_channel_edits(sp->chans[chan], fname, to_c_edit_position(sp->chans[chan], edpos, S_save_sound_as, 7));
+      else err = save_edits_without_display(sp, fname, ht, df, sr, outcom, to_c_edit_position(sp->chans[0], edpos, S_save_sound_as, 7));
     }
-  if (err != MUS_NO_ERROR)
+  if (outcom) FREE(outcom);
+  if (err == MUS_NO_ERROR) 
+    run_after_save_as_hook(sp, fname, false); /* true => from dialog */
+  else
     {
       XEN errstr;
       errstr = C_TO_XEN_STRING(fname);
@@ -4080,6 +4080,14 @@ static int pack_mus_sample_type(void)
   return(val);
 }
 
+#define PEAK_ENV_VERSION 0
+
+/* TODO: include maxamp-position in peak-env file
+ *         add a version number in the low-order bits (currently only bit 0 is used)
+ *         version 0: old form, version 1: new with added maxamp-position field
+ *         but maxamp/maxamp_position aren't saved in the end_info data -- they are in the ed_lists
+ */
+
 static bool mus_sample_type_ok(int val)
 {
   return((val == 0) ||                            /* for backwards compatibility */
@@ -4117,7 +4125,7 @@ static XEN g_write_peak_env_info_file(XEN snd, XEN chn, XEN name)
     }
   if (fullname) FREE(fullname);
   ep = cp->amp_envs[0];
-  ibuf[0] = ((ep->completed) ? 1 : 0) | (pack_mus_sample_type() << 16);
+  ibuf[0] = ((ep->completed) ? 1 : 0) | PEAK_ENV_VERSION | (pack_mus_sample_type() << 16);
   ibuf[1] = ep->amp_env_size;
   ibuf[2] = ep->samps_per_bin;
   ibuf[3] = ep->bin;
@@ -4156,7 +4164,7 @@ static env_info *get_peak_env_info(char *fullname, peak_env_error_t *error)
     }
   hdr = ibuf[0];
   (*error) = PEAK_ENV_NO_ERROR;
-  if (((hdr & 0xff) != 0) && ((hdr & 0xff) != 1)) 
+  if (((hdr & 0xf) != 0) && ((hdr & 0xf) != 1)) 
     (*error) = PEAK_ENV_BAD_HEADER;
   else
     {
@@ -4179,7 +4187,7 @@ static env_info *get_peak_env_info(char *fullname, peak_env_error_t *error)
       return(NULL);
     }
   ep = (env_info *)CALLOC(1, sizeof(env_info));
-  ep->completed = (bool)(hdr & 0xff);
+  ep->completed = (bool)(hdr & 0xf); /* version number in higher bits */
   ep->amp_env_size = ibuf[1];
   ep->samps_per_bin = ibuf[2];
   ep->bin = ibuf[3];

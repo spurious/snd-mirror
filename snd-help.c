@@ -398,6 +398,7 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+16-May:  before-save-as-hook.\n\
 2-May:   maxamp-position, region|selection-maxamp-position.\n\
          windowed-maxamp generator (dsp.scm).\n\
          harmonicizer (dsp.scm).\n\
@@ -410,10 +411,6 @@ void about_snd_help(void)
 18-Apr:  removed xen->sample generator.\n\
          changed moog.scm to use def-clm-struct, rather than a list.\n\
 12-Apr:  before-save-state-hook.\n\
-8-Apr:   poly.scm.\n\
-7-Apr:   moved load-font to snd-motif.scm and snd-gtk.scm.\n\
-6-Apr:   volterra-filter in dsp.scm.\n\
-4-Apr:   rt-examples.scm (Kjetil Matheussen).\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",

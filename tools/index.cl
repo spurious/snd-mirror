@@ -98,7 +98,7 @@
 	"draw-mark-hook" "bad-header-hook" "save-state-hook" "new-sound-hook" "color-hook" "orientation-hook" "listener-click-hook"
 	"mix-click-hook" "after-save-state-hook" "mouse-enter-text-hook" "mouse-leave-text-hook" "optimization-hook" "mix-drag-hook"
 	"mark-drag-triangle-hook" "start-playing-selection-hook" "recorder-file-hook" "selection-changed-hook" "*current-sound*"
-	"before-save-state-hook" "after-save-as-hook" "after-transform-hook"))
+	"before-save-state-hook" "after-save-as-hook" "after-transform-hook" "before-save-as-hook"))
 
 (defvar scm-constant-names
   (list "mus-out-format" "mus-unsupported" "mus-next" "mus-aifc" "mus-riff" "mus-nist" "mus-raw" "mus-ircam" "mus-aiff" "mus-bicsf"
@@ -132,50 +132,56 @@
       "frame_multiply"
     (if (string= scm-name "frame+")
 	"frame_add"
-      (if (string= scm-name "mixer*")
-	  "mixer_multiply"
-	(if (string= scm-name "redo")
-	    "redo_edit"
-	  (if (string= scm-name "in")
-	      "call_in"
-	    (let* ((len (length scm-name))
-		   (var-case (member scm-name scm-variable-names :test #'string=))
-		   (strlen (if var-case (1+ len) len))
-		   (rb-name (make-string strlen :initial-element #\space))
-		   (i 0)
-		   (j 0))
-	      (if var-case
-		  (progn
-		    (setf (char rb-name 0) #\$)
-		    (setf j 1))
-		(if (member scm-name scm-constant-names :test #'string=)
-		    (progn
-		      (setf (char rb-name 0) (char-upcase (char scm-name 0)))
-		      (setf i 1)
-		      (setf j 1))))
-	      (do ()
-		  ((>= i len))
-		(let ((c (char scm-name i)))
-		  (if (or (alphanumericp c)
-			  (char= c #\?)
-			  (char= c #\!))
-		      (progn
-			(setf (char rb-name j) c)
-			(incf i)
-			(incf j))
-		    (if (and (char= c #\-)
-			     (char= (char scm-name (+ i 1)) #\>))
+      (if (string= scm-name "vct*")
+	  "vct_multiply"
+	(if (string= scm-name "vct+")
+	    "vct_add"
+	  (if (string= scm-name "mixer*")
+	      "mixer_multiply"
+	    (if (string= scm-name "mixer+")
+		"mixer_add"
+	      (if (string= scm-name "redo")
+		  "redo_edit"
+		(if (string= scm-name "in")
+		    "call_in"
+		  (let* ((len (length scm-name))
+			 (var-case (member scm-name scm-variable-names :test #'string=))
+			 (strlen (if var-case (1+ len) len))
+			 (rb-name (make-string strlen :initial-element #\space))
+			 (i 0)
+			 (j 0))
+		    (if var-case
 			(progn
-			  (setf (char rb-name j) #\2)
-			  (incf j)
-			  (setf i (+ i 2)))
-		      (progn
-			(setf (char rb-name j) #\_)
-			(incf i)
-			(incf j))))))
-	      (if (/= j strlen)
-		  (subseq rb-name 0 j)
-		rb-name))))))))
+			  (setf (char rb-name 0) #\$)
+			  (setf j 1))
+		      (if (member scm-name scm-constant-names :test #'string=)
+			  (progn
+			    (setf (char rb-name 0) (char-upcase (char scm-name 0)))
+			    (setf i 1)
+			    (setf j 1))))
+		    (do ()
+			((>= i len))
+		      (let ((c (char scm-name i)))
+			(if (or (alphanumericp c)
+				(char= c #\?)
+				(char= c #\!))
+			    (progn
+			      (setf (char rb-name j) c)
+			      (incf i)
+			      (incf j))
+			  (if (and (char= c #\-)
+				   (char= (char scm-name (+ i 1)) #\>))
+			      (progn
+				(setf (char rb-name j) #\2)
+				(incf j)
+				(setf i (+ i 2)))
+			    (progn
+			      (setf (char rb-name j) #\_)
+			      (incf i)
+			      (incf j))))))
+		    (if (/= j strlen)
+			(subseq rb-name 0 j)
+		      rb-name)))))))))))
 
 (defun clean-up-xref (xref file)
   (let* ((len (length xref))

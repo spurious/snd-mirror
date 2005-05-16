@@ -1324,6 +1324,31 @@ void run_after_save_as_hook(snd_info *sp, const char *already_saved_as_name, boo
     }
 }
 
+static XEN before_save_as_hook;
+static bool before_save_as_hook_active = false;
+
+bool run_before_save_as_hook(snd_info *sp, const char *save_as_filename, bool selection, int srate, int type, int format, char *comment)
+{
+  if (before_save_as_hook_active) return(false);
+  if (XEN_HOOKED(before_save_as_hook))
+    {
+      XEN result = XEN_FALSE;
+      before_save_as_hook_active = true;
+      result = run_progn_hook(before_save_as_hook,
+			      XEN_LIST_7(C_TO_XEN_INT(sp->index),
+					 C_TO_XEN_STRING(save_as_filename),
+					 C_TO_XEN_BOOLEAN(selection),
+					 C_TO_XEN_INT(srate),
+					 C_TO_XEN_INT(type),
+					 C_TO_XEN_INT(format),
+					 (comment) ? C_TO_XEN_STRING(comment) : XEN_FALSE),
+			      S_before_save_as_hook);
+      before_save_as_hook_active = false;
+      return(!(XEN_FALSE_P(result)));
+    }
+  return(false);
+}
+
 
 
 /* View:Files lists */
@@ -2130,91 +2155,87 @@ bool saved_file_needs_update(snd_info *sp, char *str, save_dialog_t save_type, i
       FREE(fullname); 
       return(false);
     }
-  if (strcmp(fullname, sp->filename) == 0)
+  if (!(run_before_save_as_hook(sp, fullname, save_type != FILE_SAVE_AS, srate, type, format, comment)))
     {
-      char *ofile;
-      /* normally save-as saves the current edit tree, merely saving the current state
-       * in a separate, presumably inactive file; here we're being asked to overwrite
-       * the current file in save-as; we can't have it both ways -- we'll save the edits 
-       * in a temp file, then rename/copy the temp, and call update 
-       */
-      if (sp->read_only)
+      if (strcmp(fullname, sp->filename) == 0)
 	{
-	  report_in_minibuffer_and_save(sp, _("can't save-as %s (%s is write-protected)"), fullname, sp->short_filename);
-	  FREE(fullname);
-	  return(false);
-	}
-      /* it's possible also that the same-named file is open in several windows -- for now we'll ignore that */
-      /* also what if a sound is write-protected in one window, and not in another? */
-
-      /* PERHAPS: before-save-as-hook (here and below): (lambda (ofile snd|selection=#t? type format srate comment) ...)
-       *            if -> #t, then skip the explicit save
-       *            provides a way to call last-minute stuff like src-sound
-       *            or should this be at a lower level? (snd-snd.c has after-save-as too as called from Scheme save-sound)
-       *            ideally there would be a secure communication path to any after-save-as-hook (for undo)
-       *               but that requires another arg to after-save-as (could be whatever is returned by before-save-as)
-       *            also, lock out recursive hook call (user might call save-sound-as within hook func)
-       */
-
-      ofile = snd_tempnam(); 
-      if (save_type == FILE_SAVE_AS)
-	result = save_edits_without_display(sp, ofile, type, format, srate, comment, AT_CURRENT_EDIT_POSITION);
-      else result = save_selection(ofile, type, format, srate, comment, SAVE_ALL_CHANS);
-      if (result != MUS_NO_ERROR)
-	report_in_minibuffer(sp, _("save as temp %s hit error: %s"), ofile, strerror(errno));
-      else move_file(ofile, sp->filename);
-      snd_update(sp);
-      needs_update = false;
-      FREE(ofile);
-      FREE(fullname);
-    }
-  else
-    {
-      collision = (same_name_info *)CALLOC(1, sizeof(same_name_info));
-      collision->filename = fullname;
-      collision->edits = 0;
-      collision->sp = NULL;
-      map_over_sounds(check_for_same_name, (void *)collision);
-      if (collision->sp)
-	{
-	  /* if no edits, we'll just close, overwrite, reopen */
-	  /* if edits, we need to ask luser what to do */
-	  /* we don't need to check for overwrites at this point */
-	  if (collision->edits > 0)
+	  char *ofile;
+	  /* normally save-as saves the current edit tree, merely saving the current state
+	   * in a separate, presumably inactive file; here we're being asked to overwrite
+	   * the current file in save-as; we can't have it both ways -- we'll save the edits 
+	   * in a temp file, then rename/copy the temp, and call update 
+	   */
+	  if (sp->read_only)
 	    {
-	      if (!(snd_yes_or_no_p(_("%s has unsaved edits. Clobber them?"), str)))
-		{
-		  FREE(fullname); 
-		  FREE(collision); 
-		  return(false);
-		}
+	      report_in_minibuffer_and_save(sp, _("can't save-as %s (%s is write-protected)"), fullname, sp->short_filename);
+	      FREE(fullname);
+	      return(false);
 	    }
-	  snd_close_file(collision->sp);
-	}
-      mus_sound_forget(fullname);
+	  /* it's possible also that the same-named file is open in several windows -- for now we'll ignore that */
+	  /* also what if a sound is write-protected in one window, and not in another? */
 
-      /* save-as-hook? */
-
-      if (save_type == FILE_SAVE_AS)
-	result = save_edits_without_display(sp, str, type, format, srate, comment, AT_CURRENT_EDIT_POSITION);
-      else result = save_selection(str, type, format, srate, comment, SAVE_ALL_CHANS);
-      if (result != MUS_NO_ERROR)
-	{
-	  report_in_minibuffer_and_save(sp, "%s: %s", 
-					str, 
-					(errno != 0) ? strerror(errno) : mus_error_type_to_string(result));
+	  ofile = snd_tempnam(); 
+	  if (save_type == FILE_SAVE_AS)
+	    result = save_edits_without_display(sp, ofile, type, format, srate, comment, AT_CURRENT_EDIT_POSITION);
+	  else result = save_selection(ofile, type, format, srate, comment, SAVE_ALL_CHANS);
+	  if (result != MUS_NO_ERROR)
+	    report_in_minibuffer(sp, _("save as temp %s hit error: %s"), ofile, strerror(errno));
+	  else move_file(ofile, sp->filename);
+	  snd_update(sp);
 	  needs_update = false;
+	  FREE(ofile);
+	  FREE(fullname);
 	}
-      else report_in_minibuffer(sp, _("%s saved as %s"),
-				(save_type == FILE_SAVE_AS) ? sp->short_filename : "selection",
-				str);
-      if (collision->sp) 
+      else
 	{
-	  snd_open_file(fullname, false);
-	  if (needs_update) needs_update = false;
+	  collision = (same_name_info *)CALLOC(1, sizeof(same_name_info));
+	  collision->filename = fullname;
+	  collision->edits = 0;
+	  collision->sp = NULL;
+	  map_over_sounds(check_for_same_name, (void *)collision);
+	  if (collision->sp)
+	    {
+	      /* if no edits, we'll just close, overwrite, reopen */
+	      /* if edits, we need to ask luser what to do */
+	      /* we don't need to check for overwrites at this point */
+	      if (collision->edits > 0)
+		{
+		  if (!(snd_yes_or_no_p(_("%s has unsaved edits. Clobber them?"), str)))
+		    {
+		      FREE(fullname); 
+		      FREE(collision); 
+		      return(false);
+		    }
+		}
+	      snd_close_file(collision->sp);
+	    }
+	  mus_sound_forget(fullname);
+	  if (save_type == FILE_SAVE_AS)
+	    result = save_edits_without_display(sp, str, type, format, srate, comment, AT_CURRENT_EDIT_POSITION);
+	  else result = save_selection(str, type, format, srate, comment, SAVE_ALL_CHANS);
+	  if (result != MUS_NO_ERROR)
+	    {
+	      report_in_minibuffer_and_save(sp, "%s: %s", 
+					    str, 
+					    (errno != 0) ? strerror(errno) : mus_error_type_to_string(result));
+	      needs_update = false;
+	    }
+	  else report_in_minibuffer(sp, _("%s saved as %s"),
+				    (save_type == FILE_SAVE_AS) ? sp->short_filename : "selection",
+				    str);
+	  if (collision->sp) 
+	    {
+	      snd_open_file(fullname, false);
+	      if (needs_update) needs_update = false;
+	    }
+	  FREE(fullname);
+	  FREE(collision);
 	}
+    }
+  else 
+    {
       FREE(fullname);
-      FREE(collision);
+      needs_update = false;
     }
   return(needs_update);
 }
@@ -2727,13 +2748,17 @@ the " S_just_sounds " button is set. Return #f to filter out filename. "
 Return #t to give up on that file."
 
   #define H_after_save_as_hook " (saved-sound-index save-as-full-filename from-save-as-dialog): called \
-upon File:Save as completion."
+upon File:Save as or " S_save_sound_as " completion."
+
+  #define H_before_save_as_hook " (index filename selection srate type format comment): called \
+before File:Save as or " S_save_sound_as ". Provides a way to fixup a sound just before it is saved."
 
   XEN_DEFINE_HOOK(open_hook, S_open_hook, 1, H_open_hook);                            /* arg = filename */
   XEN_DEFINE_HOOK(close_hook, S_close_hook, 1, H_close_hook);                         /* arg = sound index */
   XEN_DEFINE_HOOK(just_sounds_hook, S_just_sounds_hook, 1, H_just_sounds_hook);       /* arg = filename */
   XEN_DEFINE_HOOK(bad_header_hook, S_bad_header_hook, 1, H_bad_header_hook);          /* arg = filename */
   XEN_DEFINE_HOOK(after_save_as_hook, S_after_save_as_hook, 3, H_after_save_as_hook); /* args: index filename from-dialog */
+  XEN_DEFINE_HOOK(before_save_as_hook, S_before_save_as_hook, 7, H_before_save_as_hook); /* args: index filename selection srate type format comment */
 
   #define H_open_raw_sound_hook S_open_raw_sound_hook " (filename current-choices): called when a headerless sound file is opened. \
 Its result can be a list describing the raw file's attributes (thereby bypassing the Raw File Dialog and so on). \

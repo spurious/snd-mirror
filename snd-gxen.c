@@ -2,15 +2,19 @@
 
 static gint timed_eval(gpointer in_code)
 {
+#if HAVE_EXTENSION_LANGUAGE
+  /* #if needed on 64-bit machines */
   XEN lst = (XEN)in_code;
   XEN_CALL_0(XEN_CADR(lst), "timed callback func");
   snd_unprotect_at(XEN_TO_C_INT(XEN_CAR(lst)));
+#endif
   return(0);
 }
 
 static XEN g_in(XEN ms, XEN code)
 {
   #define H_in "(" S_in " msecs thunk): invoke thunk in msecs milliseconds (named call_in in Ruby)"
+#if HAVE_EXTENSION_LANGUAGE
   XEN_ASSERT_TYPE(XEN_NUMBER_P(ms), ms, XEN_ARG_1, S_in, "a number");
   XEN_ASSERT_TYPE(XEN_PROCEDURE_P(code), code, XEN_ARG_2, S_in, "a procedure");
   if (XEN_REQUIRED_ARGS_OK(code, 0))
@@ -28,6 +32,7 @@ static XEN g_in(XEN ms, XEN code)
 	}
     }
   else XEN_BAD_ARITY_ERROR(S_in, 2, code, "should take no args");
+#endif
   return(ms);
 }
 

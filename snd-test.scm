@@ -35,6 +35,8 @@
 ;;; need all html example code in autotests
 ;;; need some way to check that graphs are actually drawn (region dialog, oscope etc) and sounds played correctly
 
+;;; TODO: test before|after-save-as-hook
+
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
 
@@ -1995,7 +1997,7 @@
 	  (mus-audio-set-oss-buffers 4 12)
 	  
 	  (let ((str (strftime "%d-%b %H:%M %Z" (localtime (mus-sound-write-date "oboe.snd")))))
-	    (if (not (string=? str "01-Nov 06:10 PST"))
+	    (if (not (string=? str "15-May 07:30 PDT"))
 		(snd-display ";mus-sound-write-date oboe.snd: ~A?" str)))
 	  (let ((str (strftime "%d-%b %H:%M %Z" (localtime (mus-sound-write-date "pistol.snd")))))
 	    (if (not (string-=? str "01-Jul 13:06 PDT"))
@@ -2196,7 +2198,7 @@
 	  (if (and (not (= (mus-sound-type-specifier "oboe.snd") #x646e732e))  ;little endian reader
 		   (not (= (mus-sound-type-specifier "oboe.snd") #x2e736e64))) ;big endian reader
 	      (snd-display ";oboe: mus-sound-type-specifier: ~X?" (mus-sound-type-specifier "oboe.snd")))
-	  (if (not (string-=? (strftime "%d-%b-%Y %H:%M" (localtime (file-write-date "oboe.snd"))) "01-Nov-2004 06:10"))
+	  (if (not (string-=? (strftime "%d-%b-%Y %H:%M" (localtime (file-write-date "oboe.snd"))) "15-May-2005 07:30"))
 	      (snd-display ";oboe: file-write-date: ~A?" (strftime "%d-%b-%Y %H:%M" (localtime (file-write-date "oboe.snd")))))
 	  (play-sound-1 "oboe.snd")
 	  
@@ -23806,6 +23808,7 @@ EDITS: 5
   (add-hook! mouse-press-hook arg6) (carg6 mouse-press-hook)
   
   (add-hook! enved-hook arg5) (carg5 enved-hook)
+
   (reset-almost-all-hooks)
   (for-each 
    (lambda (n) 
@@ -55247,6 +55250,7 @@ EDITS: 2
 			    (list before-transform-hook 'before-transform-hook)
 			    (list mix-release-hook 'mix-release-hook)
 			    (list save-hook 'save-hook)
+			    (list before-save-as-hook 'before-save-as-hook)
 			    (list after-save-as-hook 'after-save-as-hook)
 			    (list save-state-hook 'save-state-hook)
 			    (list new-sound-hook 'new-sound-hook)

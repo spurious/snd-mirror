@@ -855,6 +855,35 @@ called if a file has a bogus-looking header. Return #t to give up on that file. 
 </td></tr>
 <tr><td colspan=3></td></tr>
 
+<!-- before-save-as-hook -->
+<tr><td colspan=2>
+<code><a class=def name="beforesaveashook">before-save-as-hook</a> (index filename selection srate type format comment)</code></td><td>
+</td></tr>
+<tr><td></td><td colspan=2>
+called before save-sound-as or File:Save as.  If it returns something other than #f, the
+save is not performed.  This hook provides a way to do last minute fixups (srate conversion for example)
+just before a sound is saved.  
+</td></tr>
+
+<tr><td></td><td colspan=2>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
+(define need-save-as-undo #f)
+(add-hook! <em class=red>before-save-as-hook</em>
+  (lambda (index filename selection sr type format comment)
+    (set! need-save-as-undo #f)
+    (if (not (= sr (<a class=quiet href="#srate">srate</a> index))) ; if srate is different, fixup outgoing version
+        (begin
+	  (<a class=quiet href="#srcsound">src-sound</a> (exact-&gt;inexact (/ (<a class=quiet href="#srate">srate</a> index) sr)) 1.0 index #t)
+          (set! need-save-as-undo #t)))
+    #f))
+
+(add-hook! after-save-as-hook ; now undo the last-minute srate fixup
+  (lambda (index filename dialog)
+    (if need-save-as-undo (<a class=quiet href="#undo">undo</a> index #t))))
+</pre></td></tr></table></td></tr>
+<tr><td colspan=3></td></tr>
+
+
 <!-- before-save-state-hook -->
 <tr><td colspan=2>
 <code><a class=def name="beforesavestatehook">before-save-state-hook</a> (filename)</code></td><td align=right><b>or</b></td></tr>
