@@ -1224,7 +1224,7 @@ at frame 'start' and reading 'samples' samples altogether."
     XEN_ERROR(NO_SUCH_FILE,
 	      XEN_LIST_3(C_TO_XEN_STRING(S_file_to_array),
 			 filename,
-			 C_TO_XEN_STRING(strerror(errno))));
+			 C_TO_XEN_STRING(STRERROR(errno))));
   v = TO_VCT(data);
   samps = XEN_TO_C_INT_OR_ELSE(samples, 1);
   if (samps <= 0) 

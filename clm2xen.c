@@ -170,7 +170,7 @@ char *mus_optkey_to_string(XEN key, const char *caller, int n, char *def)
   if ((!(XEN_KEYWORD_P(key))) && (!(XEN_FALSE_P(key))))
     {
       XEN_ASSERT_TYPE(XEN_STRING_P(key), key, n, caller, "a string");
-      return(XEN_TO_C_STRING(key)); /* technically, dangerous... */
+      return(XEN_TO_C_STRING(key));
     }
   return(def);
 }
@@ -3895,7 +3895,7 @@ static XEN g_make_file_to_sample(XEN name, XEN buffer_size)
     XEN_ERROR(NO_SUCH_FILE,
 	      XEN_LIST_3(C_TO_XEN_STRING(S_make_file_to_sample),
 			 name,
-			 C_TO_XEN_STRING(strerror(errno))));
+			 C_TO_XEN_STRING(STRERROR(errno))));
   if (XEN_INTEGER_P(buffer_size))
     {
       size = XEN_TO_C_INT(buffer_size);
@@ -4003,7 +4003,7 @@ static XEN g_make_file_to_frame(XEN name, XEN buffer_size)
     XEN_ERROR(NO_SUCH_FILE,
 	      XEN_LIST_3(C_TO_XEN_STRING(S_make_file_to_frame),
 			 name,
-			 C_TO_XEN_STRING(strerror(errno))));
+			 C_TO_XEN_STRING(STRERROR(errno))));
   if (XEN_INTEGER_P(buffer_size))
     {
       size = XEN_TO_C_INT(buffer_size);
@@ -4161,7 +4161,7 @@ return a new readin (file input) generator reading the sound file 'file' startin
     XEN_ERROR(NO_SUCH_FILE,
 	      XEN_LIST_3(C_TO_XEN_STRING(S_make_readin),
 			 C_TO_XEN_STRING(file),
-			 C_TO_XEN_STRING(strerror(errno))));
+			 C_TO_XEN_STRING(STRERROR(errno))));
   if (mus_sound_chans(file) <= 0)
     XEN_ERROR(BAD_HEADER,
 	      XEN_LIST_3(C_TO_XEN_STRING(S_make_readin),

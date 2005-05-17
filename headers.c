@@ -4609,7 +4609,7 @@ static int mus_header_read_1(const char *filename, int chan)
   bytes = read(chan, hdrbuf, INITIAL_READ_SIZE);
   /* if it's a 0 length file we need to get out */
   if (bytes < 0) 
-    return(mus_error(MUS_HEADER_READ_FAILED,	"%s: %s", filename, (errno) ? strerror(errno) : "bytes read < 0?"));
+    return(mus_error(MUS_HEADER_READ_FAILED,	"%s: %s", filename, (errno) ? STRERROR(errno) : "bytes read < 0?"));
   if (bytes == 0) 
     {
       header_type = MUS_RAW;
@@ -5021,12 +5021,12 @@ int mus_header_read(const char *name)
   int chan, err = 0;
   chan = mus_file_open_read(name);
   if (chan == -1) 
-    return(mus_error(MUS_CANT_OPEN_FILE, "mus_header_read: can't open %s: %s", name, strerror(errno)));
+    return(mus_error(MUS_CANT_OPEN_FILE, "mus_header_read: can't open %s: %s", name, STRERROR(errno)));
   old_error_handler = mus_error_set_handler(local_mus_error);
   err = mus_header_read_1(name, chan);
   mus_error_set_handler(old_error_handler);
   if (CLOSE(chan) != 0)
-    return(mus_error(MUS_CANT_CLOSE_FILE, "mus_header_read: can't close %s: %s", name, strerror(errno)));
+    return(mus_error(MUS_CANT_CLOSE_FILE, "mus_header_read: can't close %s: %s", name, STRERROR(errno)));
   if (err != MUS_NO_ERROR)
     return(mus_error(local_error_type, local_error_msg)); /* pass error info on up the chain now that we've cleaned up the open file descriptor */
   return(err);
@@ -5048,7 +5048,7 @@ int mus_header_write(const char *name, int type, int in_srate, int in_chans, off
   off_t siz;
   chan = mus_file_create(name);
   if (chan == -1) 
-    return(mus_error(MUS_CANT_OPEN_FILE, "mus_header_write for %s failed: %s", name, strerror(errno)));
+    return(mus_error(MUS_CANT_OPEN_FILE, "mus_header_write for %s failed: %s", name, STRERROR(errno)));
   if (mus_header_write_hook)
     (*mus_header_write_hook)(name);
   siz = mus_samples_to_bytes(format, size_in_samples);
@@ -5075,7 +5075,7 @@ int mus_header_write(const char *name, int type, int in_srate, int in_chans, off
       break;
     }
   if (CLOSE(chan) != 0)
-    return(mus_error(MUS_CANT_CLOSE_FILE, "mus_header_write: can't close %s: %s", name, strerror(errno)));
+    return(mus_error(MUS_CANT_CLOSE_FILE, "mus_header_write: can't close %s: %s", name, STRERROR(errno)));
   return(err);
 }
 
@@ -5100,7 +5100,7 @@ int mus_header_change_data_size(const char *filename, int type, off_t size) /* i
     }
   if (err == MUS_ERROR) return(err);
   chan = mus_file_reopen_write(filename);
-  if (chan == -1) return(mus_error(MUS_HEADER_WRITE_FAILED, "%s: %s", filename, strerror(errno)));
+  if (chan == -1) return(mus_error(MUS_HEADER_WRITE_FAILED, "%s: %s", filename, STRERROR(errno)));
   switch (type)
     {
     case MUS_NEXT: 
@@ -5180,7 +5180,7 @@ int mus_header_change_chans(const char *filename, int type, int new_chans)
   if (err == MUS_ERROR) return(err);
   fd = mus_file_reopen_write(filename);
   if (fd == -1) 
-    return(mus_error(MUS_CANT_OPEN_FILE, "mus_header_change_chans for %s failed: %s", filename, strerror(errno)));
+    return(mus_error(MUS_CANT_OPEN_FILE, "mus_header_change_chans for %s failed: %s", filename, STRERROR(errno)));
   switch (type)
     {
     case MUS_NEXT:
@@ -5236,7 +5236,7 @@ int mus_header_change_srate(const char *filename, int type, int new_srate)
   if (err == MUS_ERROR) return(err);
   fd = mus_file_reopen_write(filename);
   if (fd == -1) 
-    return(mus_error(MUS_CANT_OPEN_FILE, "mus_header_change_srate for %s failed: %s", filename, strerror(errno)));
+    return(mus_error(MUS_CANT_OPEN_FILE, "mus_header_change_srate for %s failed: %s", filename, STRERROR(errno)));
   switch (type)
     {
     case MUS_NEXT:
@@ -5314,7 +5314,7 @@ int mus_header_change_type(const char *filename, int new_type, int new_format)
 	  CLOSE(ofd);
 	  FREE(buf);
 	  if (comment) FREE(comment);
-	  rename(new_file, filename);
+	  RENAME(new_file, filename);
 	  FREE(new_file);
 	}
     }
@@ -5339,7 +5339,7 @@ int mus_header_change_format(const char *filename, int type, int new_format)
   if (err == MUS_ERROR) return(err);
   fd = mus_file_reopen_write(filename);
   if (fd == -1) 
-    return(mus_error(MUS_CANT_OPEN_FILE, "mus_header_change_format for %s failed: %s", filename, strerror(errno)));
+    return(mus_error(MUS_CANT_OPEN_FILE, "mus_header_change_format for %s failed: %s", filename, STRERROR(errno)));
   switch (type)
     {
     case MUS_NEXT:
@@ -5416,7 +5416,7 @@ int mus_header_change_location(const char *filename, int type, off_t new_locatio
   int err = MUS_NO_ERROR, fd;
   fd = mus_file_reopen_write(filename);
   if (fd == -1) 
-    return(mus_error(MUS_CANT_OPEN_FILE, "mus_header_change_location for %s failed: %s", filename, strerror(errno)));
+    return(mus_error(MUS_CANT_OPEN_FILE, "mus_header_change_location for %s failed: %s", filename, STRERROR(errno)));
   if (type == MUS_NEXT)
     {
       lseek(fd, 4L, SEEK_SET);
@@ -5482,7 +5482,7 @@ int mus_header_change_comment(const char *filename, int type, char *new_comment)
 	  CLOSE(ifd);
 	  CLOSE(ofd);
 	  FREE(buf);
-	  rename(new_file, filename);
+	  RENAME(new_file, filename);
 	  FREE(new_file);
 	}
     }
@@ -5649,7 +5649,7 @@ bool mus_header_no_header(const char *filename)
   bool ok = false;
   chan = mus_file_open_read(filename);
   if (chan == -1) 
-    return(mus_error(MUS_CANT_OPEN_FILE, "mus_header: can't open %s: %s", filename, strerror(errno)));
+    return(mus_error(MUS_CANT_OPEN_FILE, "mus_header: can't open %s: %s", filename, STRERROR(errno)));
   bytes = read(chan, hdrbuf, INITIAL_READ_SIZE);
   CLOSE(chan);
   if (bytes > 4) 

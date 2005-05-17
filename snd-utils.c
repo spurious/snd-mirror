@@ -97,6 +97,22 @@ char *snd_strcat(char *errmsg, const char *str, int *size)
   return(errmsg);
 }
 
+char *snd_strerror(void)
+{
+  if (ss->local_errno != 0)
+    return(strerror(ss->local_errno));
+  if (errno != 0)
+    return(strerror(errno));
+  return(NULL);
+}
+
+char *snd_open_strerror(void)
+{
+  if (ss->local_open_errno != 0)
+    return(strerror(ss->local_open_errno));
+  return(snd_strerror());
+}
+
 char *string_to_colon(char *val)
 {
   char *up_to_colon;
@@ -730,7 +746,7 @@ static void io_subtract(int fd, FILE *fl, const char *func, const char *file, in
 int io_open(const char *pathname, int flags, mode_t mode, const char *func, const char *file, int line)
 {
   int fd;
-  fd = open(pathname, flags, mode);
+  fd = snd_io_open(pathname, flags, mode);
   if (fd != -1) io_add(pathname, func, file, line, fd, NULL);
   return(fd);
 }
@@ -738,7 +754,7 @@ int io_open(const char *pathname, int flags, mode_t mode, const char *func, cons
 int io_creat(const char *pathname, mode_t mode, const char *func, const char *file, int line)
 {
   int fd;
-  fd = creat(pathname, mode);
+  fd = snd_io_creat(pathname, mode);
   if (fd != -1) io_add(pathname, func, file, line, fd, NULL);
   return(fd);
 }
@@ -746,13 +762,13 @@ int io_creat(const char *pathname, mode_t mode, const char *func, const char *fi
 int io_close(int fd, const char *func, const char *file, int line)
 {
   io_subtract(fd, NULL, func, file, line);
-  return(close(fd));
+  return(snd_io_close(fd));
 }
 
 FILE *io_fopen(const char *path, const char *mode, const char *func, const char *file, int line)
 {
   FILE *fp;
-  fp = fopen(path, mode);
+  fp = snd_io_fopen(path, mode);
   if (fp) io_add(path, func, file, line, -1, fp);
   return(fp);
 }
@@ -760,7 +776,7 @@ FILE *io_fopen(const char *path, const char *mode, const char *func, const char 
 int io_fclose(FILE *stream, const char *func, const char *file, int line)
 {
   io_subtract(-1, stream, func, file, line);
-  return(fclose(stream));
+  return(snd_io_fclose(stream));
 }
 
 void dump_protection(FILE *Fp);

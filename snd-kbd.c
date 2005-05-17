@@ -2038,7 +2038,7 @@ static XEN g_save_macros(XEN file)
     XEN_ERROR(CANNOT_SAVE,
 	      XEN_LIST_3(C_TO_XEN_STRING(S_save_macros),
 			 file,
-			 C_TO_XEN_STRING(strerror(errno))));
+			 C_TO_XEN_STRING(snd_strerror())));
   return(file);
 }
 

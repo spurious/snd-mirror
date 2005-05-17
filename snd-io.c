@@ -1,5 +1,93 @@
 #include "snd.h"
 
+/* low level IO stuff to keep track of errno */
+
+int snd_io_remove(const char *filename)
+{
+  int result = 0;
+  ss->local_errno = 0;
+  errno = 0;
+  result = remove(filename);
+  if (errno != 0) ss->local_errno = errno;
+  return(result);
+}
+
+int snd_io_rename(const char *old_name, const char *new_name)
+{
+  int result = 0;
+  ss->local_errno = 0;
+  errno = 0;
+  result = rename(old_name, new_name);
+  if (errno != 0) ss->local_errno = errno;
+  return(result);
+}
+
+int snd_io_fclose(FILE *fd)
+{
+  int result = 0;
+  ss->local_errno = 0;
+  errno = 0;
+  result = fclose(fd);
+  if (errno != 0) ss->local_errno = errno;
+  return(result);
+}
+
+FILE *snd_io_fopen(const char *filename, const char *modes)
+{
+  FILE *result = NULL;
+  ss->local_errno = 0;
+  ss->local_open_errno = 0;
+  errno = 0;
+  result = fopen(filename, modes);
+  if (errno != 0) 
+    {
+      ss->local_errno = errno;
+      ss->local_open_errno = errno;
+    }
+  return(result);
+}
+
+int snd_io_close(int fd)
+{
+  int result = 0;
+  ss->local_errno = 0;
+  errno = 0;
+  result = close(fd);
+  if (errno != 0) ss->local_errno = errno;
+  return(result);
+}
+
+int snd_io_open(const char *filename, int flags, mode_t mode)
+{
+  int result = 0;
+  ss->local_errno = 0;
+  ss->local_open_errno = 0;
+  errno = 0;
+  result = open(filename, flags, mode);
+  if (errno != 0) 
+    {
+      ss->local_errno = errno;
+      ss->local_open_errno = errno;
+    }
+  return(result);
+}
+
+int snd_io_creat(const char *filename, mode_t mode)
+{
+  int result = 0;
+  ss->local_errno = 0;
+  ss->local_open_errno = 0;
+  errno = 0;
+  result = creat(filename, mode);
+  if (errno != 0) 
+    {
+      ss->local_errno = errno;
+      ss->local_open_errno = errno;
+    }
+  return(result);
+}
+
+
 /* file buffers (i.e. a sliding window on a given file's data) */
 
 static void c_io_bufclr (snd_io *io, int beg)
@@ -53,7 +141,7 @@ static void reposition_file_buffers(snd_data *sd, off_t index)
       if (fd == -1) 
 	{
 	  /* our file has disappeared?!? */
-	  snd_error(_("%s is unreadable: %s?"), sd->filename, strerror(errno));
+	  snd_error(_("%s is unreadable: %s?"), sd->filename, snd_strerror());
 	  return;
 	}
       hdr = sd->hdr;
@@ -195,7 +283,7 @@ int snd_open_read(const char *arg)
       if (fd != -1) 
 	fd = OPEN(arg, O_RDONLY, 0);
       if (fd == -1) 
-	snd_error("%s: %s", arg, strerror(errno));
+	snd_error("%s: %s", arg, snd_strerror());
     }
   return(fd);
 }
@@ -227,7 +315,7 @@ int snd_reopen_write(const char *arg)
       if (fd != -1) 
 	fd = OPEN(arg, O_RDWR, 0);
       if (fd == -1) 
-	snd_error("%s: %s", arg, strerror(errno));
+	snd_error("%s: %s", arg, snd_strerror());
     }
   return(fd);
 }
@@ -269,9 +357,9 @@ int snd_remove(const char *name, cache_remove_t forget)
 {
   int err = 0;
   if (forget == REMOVE_FROM_CACHE) mus_sound_forget(name); /* no error here if not in sound tables */
-  err = remove(name);
+  err = REMOVE(name);
   if (err == -1)
-    snd_warning(_("can't remove file %s: %s"), name, strerror(errno));
+    snd_warning(_("can't remove file %s: %s"), name, snd_strerror());
   return(err);
 }
 
@@ -280,7 +368,7 @@ int snd_close(int fd, const char *name)
   int val;
   val = CLOSE(fd);
   if (val != 0)
-    snd_warning(_("can't close file %d (%s): %s"), fd, name, strerror(errno));
+    snd_warning(_("can't close file %d (%s): %s"), fd, name, snd_strerror());
   return(val);
 }
 
@@ -289,7 +377,7 @@ void snd_fclose(FILE *fd, const char *name)
   int val;
   val = FCLOSE(fd);
   if (val != 0)
-    snd_warning(_("can't close file %s: %s"), name, strerror(errno));
+    snd_warning(_("can't close file %s: %s"), name, snd_strerror());
 }
 
 
@@ -571,7 +659,7 @@ int close_temp_file(const char *filename, int ofd, int type, off_t bytes, snd_in
   mus_header_change_data_size(filename, type, bytes);
   kleft = disk_kspace(filename);
   if (kleft < 0)
-    snd_error(_("disk full?: %s"), strerror(errno));
+    snd_error(_("disk full?: %s"), snd_strerror());
   else
     {
       kused = bytes >> 10;

@@ -4383,11 +4383,7 @@ static int snd_make_file(const char *ofile, int chans, file_info *hdr, snd_fd **
   err = MUS_NO_ERROR;
   ofd = open_temp_file(ofile, chans, hdr);
   if (ofd == -1) 
-    {
-      if (errno)
-	ss->catch_message = strerror(errno);
-      return(MUS_CANT_OPEN_TEMP_FILE);
-    }
+    return(MUS_CANT_OPEN_TEMP_FILE);
   mus_file_set_data_clipped(ofd, data_clipped(ss));
   datumb = mus_bytes_per_sample(hdr->format);
   obufs = (mus_sample_t **)MALLOC(chans * sizeof(mus_sample_t *));
@@ -4575,7 +4571,7 @@ static char *edit_data_to_file(FILE *fd, ed_list *ed, chan_info *cp)
 		{
 		  snd_error(_("save edits: can't open %s: %s!"),
 			    sd->filename,
-			    strerror(errno));
+			    snd_strerror());
 		  return(NULL);
 		}
 	      idataloc = mus_sound_data_location(sd->filename);
@@ -4673,7 +4669,7 @@ void edit_history_to_file(FILE *fd, chan_info *cp)
 	      len = cp->samples[i];
 	      err = channel_to_file(cp, nfile, i);
 	      if (err != MUS_NO_ERROR)
-		report_in_minibuffer_and_save(cp->sound, _("edit history save data as %s hit error: %s"), nfile, strerror(errno));
+		report_in_minibuffer_and_save(cp->sound, _("edit history save data as %s hit error: %s"), nfile, snd_strerror());
 #if HAVE_RUBY
 	      fprintf(fd, "      %s(\"%s\", " OFF_TD ", sfile, %d, ", TO_PROC_NAME(S_override_samples_with_origin), nfile, len, cp->chan);
 	      if (ed->origin) 
@@ -5532,7 +5528,6 @@ bool file_insert_samples(off_t beg, off_t num, char *inserted_file, chan_info *c
     }
   if (!(prepare_edit_list(cp, len + num, edpos, origin))) return(false);
   cp->edits[cp->edit_ctr] = insert_samples_into_list(beg, num, edpos, cp, &cb, origin, 1.0);
-  ss->catch_message = NULL;
   hdr = make_file_info(inserted_file);
   if (hdr)
     {
@@ -5567,7 +5562,7 @@ bool file_insert_samples(off_t beg, off_t num, char *inserted_file, chan_info *c
     {
       XEN_ERROR(NO_SUCH_FILE,
 		XEN_LIST_2(C_TO_XEN_STRING(origin),
-			   C_TO_XEN_STRING(ss->catch_message)));
+			   C_TO_XEN_STRING(snd_strerror())));
     }
   return(true);
 }
@@ -5760,7 +5755,6 @@ bool file_mix_change_samples(off_t beg, off_t num, char *tempfile, chan_info *cp
 			     file_delete_t auto_delete, lock_mix_t lock, const char *origin, int edpos, bool with_mix)
 {
   file_info *hdr;
-  ss->catch_message = NULL;
   hdr = make_file_info(tempfile);
   if (hdr)
     {
@@ -5823,7 +5817,7 @@ bool file_mix_change_samples(off_t beg, off_t num, char *tempfile, chan_info *cp
     {
       XEN_ERROR(NO_SUCH_FILE,
 		XEN_LIST_2(C_TO_XEN_STRING(origin),
-			   C_TO_XEN_STRING(ss->catch_message)));
+			   C_TO_XEN_STRING(snd_strerror())));
     }
   return(true);
 }
@@ -5838,7 +5832,6 @@ bool file_change_samples(off_t beg, off_t num, char *tempfile, chan_info *cp, in
 bool file_override_samples(off_t num, char *tempfile, chan_info *cp, int chan, file_delete_t auto_delete, lock_mix_t lock, const char *origin)
 {
   file_info *hdr;
-  ss->catch_message = NULL;
   hdr = make_file_info(tempfile);
   if (hdr) 
     {
@@ -5878,7 +5871,7 @@ bool file_override_samples(off_t num, char *tempfile, chan_info *cp, int chan, f
     {
       XEN_ERROR(NO_SUCH_FILE,
 		XEN_LIST_2(C_TO_XEN_STRING(origin),
-			   C_TO_XEN_STRING(ss->catch_message)));
+			   C_TO_XEN_STRING(snd_strerror())));
     }
   return(true);
 }
@@ -6525,8 +6518,11 @@ snd_fd *free_snd_fd_almost(snd_fd *sf)
 
 snd_fd *free_snd_fd(snd_fd *sf)
 {
-  free_snd_fd_almost(sf);
-  FREE(sf);
+  if (sf)
+    {
+      free_snd_fd_almost(sf);
+      FREE(sf);
+    }
   return(NULL);
 }
 
@@ -7017,7 +7013,7 @@ static bool save_edits_and_update_display(snd_info *sp)
       if (cp->tracks) free_track_info_list(cp); /* needs to precede free_edit_list which clobbers cp->edit_size */
       if (cp->have_mixes) reset_mix_list(cp);
       if (cp->edits) free_edit_list(cp);
-      free_snd_fd(sf[i]);  /* must precede free_sound_list since it accesses the snd_data structs that free_sound_list frees */
+      sf[i] = free_snd_fd(sf[i]);  /* must precede free_sound_list since it accesses the snd_data structs that free_sound_list frees */
       if (cp->sounds) free_sound_list(cp);
       if (cp->samples) 
 	{
@@ -7138,7 +7134,7 @@ int save_channel_edits(chan_info *cp, char *ofile, int pos)
       nfile = snd_tempnam();
       err = channel_to_file(cp, nfile, pos);
       if (err != MUS_NO_ERROR)
-	report_in_minibuffer_and_save(sp, _("save channel as %s hit error: %s"), nfile, strerror(errno));
+	report_in_minibuffer_and_save(sp, _("save channel as %s hit error: %s"), nfile, snd_strerror());
       else 
 	{
 	  err = move_file(nfile, ofile);
@@ -7171,7 +7167,6 @@ void save_edits(snd_info *sp, void *ptr)
       if (need_save)
 	{
 	  time_t current_write_date;
-	  errno = 0;
 	  /* check for change to file while we were editing it */
 	  current_write_date = file_write_date(sp->filename);
 	  /* returns -1 if file does not exist (stat -> -1) */
@@ -7189,7 +7184,7 @@ void save_edits(snd_info *sp, void *ptr)
 	    }
 	  err = save_edits_and_update_display(sp);
 	  if (err)
-	    report_in_minibuffer_and_save(sp, "%s: %s", sp->filename, strerror(errno));
+	    report_in_minibuffer_and_save(sp, "%s: %s", sp->filename, snd_strerror());
 	  else
 	    {
 	      if (sp->edited_region) 
@@ -7376,7 +7371,7 @@ static XEN g_display_edits(XEN snd, XEN chn, XEN edpos, XEN with_source)
   else XEN_ERROR(CANNOT_SAVE,
 		 XEN_LIST_3(C_TO_XEN_STRING(S_display_edits),
 			    C_TO_XEN_STRING(name),
-			    C_TO_XEN_STRING(strerror(errno))));
+			    C_TO_XEN_STRING(snd_strerror())));
   fd = mus_file_open_read(name);
   len = lseek(fd, 0L, SEEK_END);
   buf = (char *)CALLOC(len + 1, sizeof(char));
@@ -7929,7 +7924,7 @@ static XEN g_save_edit_history(XEN filename, XEN snd, XEN chn)
     XEN_ERROR(CANNOT_SAVE,
 	      XEN_LIST_3(C_TO_XEN_STRING(S_save_edit_history),
 			 filename,
-			 C_TO_XEN_STRING(strerror(errno))));
+			 C_TO_XEN_STRING(snd_open_strerror())));
   return(filename);
 }
 
@@ -8869,8 +8864,7 @@ static int snd_to_sample_free(mus_any *ptr)
 	{
 	  int i;
 	  for (i = 0; i < spl->chans; i++)
-	    if (spl->sfs[i])
-	      spl->sfs[i] = free_snd_fd(spl->sfs[i]);
+	    spl->sfs[i] = free_snd_fd(spl->sfs[i]);
 	  FREE(spl->sfs);
 	  spl->sfs = NULL;
 	}

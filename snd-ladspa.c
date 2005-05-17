@@ -375,7 +375,7 @@ it can be useful when the plugins on the system have changed."
     Arg args[12];
     int n = 0;
     help_menu = menu_widget(4);
-    if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, (ss->sgx)->basic_color); n++;}
+    if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
     m = XtCreateManagedWidget(_("Plugins"), xmPushButtonWidgetClass, help_menu, args, n);
     XtAddCallback(m, XmNactivateCallback, ladspa_help_callback, NULL);
   }
@@ -718,7 +718,7 @@ Information about about parameters can be acquired using " S_analyse_ladspa "."
     XEN_ERROR(CANNOT_SAVE,
 	      XEN_LIST_3(C_TO_XEN_STRING(S_apply_ladspa),
 			 C_TO_XEN_STRING(ofile),
-			 C_TO_XEN_STRING(strerror(errno))));
+			 C_TO_XEN_STRING(snd_strerror())));
 
   /* Tidy up header. */
   datumb = mus_bytes_per_sample(hdr->format);

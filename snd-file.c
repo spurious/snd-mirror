@@ -266,7 +266,7 @@ file_info *make_file_info(const char *fullname)
 	      else
 		{
 		  snd_error(_("can't find raw (headerless) file %s: %s"),
-			    fullname, strerror(errno));
+			    fullname, snd_strerror());
 		  return(NULL);
 		}
 	    }
@@ -346,7 +346,7 @@ file_info *make_file_info(const char *fullname)
     }
   else
     {
-      snd_error(_("can't find file %s: %s"), fullname, strerror(errno));
+      snd_error(_("can't find file %s: %s"), fullname, snd_strerror());
       return(NULL);
     }
   return(hdr);
@@ -517,7 +517,7 @@ dir *find_sound_files_in_dir(const char *name)
 #else
       if (closedir(dpos) != 0) 
 	snd_error(_("closedir %s failed (%s)!"),
-		  name, strerror(errno));
+		  name, snd_strerror());
 #endif
     }
   return(dp);
@@ -864,7 +864,7 @@ int copy_file(const char *oldname, const char *newname)
   FREE(buf);
   total = total >> 10;
   if (wb < 0) 
-    snd_warning("%s: %s\n", newname, strerror(errno));
+    snd_warning("%s: %s\n", newname, snd_strerror());
   else
     if (total > wb) 
       snd_warning(_("disk is nearly full: used " PRId64 " Kbytes leaving " PRId64),
@@ -875,7 +875,7 @@ int copy_file(const char *oldname, const char *newname)
 int move_file(const char *oldfile, const char *newfile)
 {
   int err = 0;
-  if ((err = (rename(oldfile, newfile))))
+  if ((err = (RENAME(oldfile, newfile))))
     {
       if (errno == EXDEV)
 	{
@@ -885,7 +885,7 @@ int move_file(const char *oldfile, const char *newfile)
 	}
     }
   if (err != 0)
-    snd_error(_("error while overwriting %s: %s"), newfile, strerror(errno));
+    snd_error(_("error while overwriting %s: %s"), newfile, snd_strerror());
   return(err);
 }
 
@@ -944,7 +944,7 @@ snd_info *make_sound_readable(const char *filename, bool post_close)
 	  if (post_close) 
 	    {
 	      if (mus_file_close(fd) != 0)
-		snd_error(_("can't close file %s: %s"), filename, strerror(errno));
+		snd_error(_("can't close file %s: %s"), filename, snd_strerror());
 	      sd = cp->sounds[0]; 
 	      sd->open = FD_CLOSED; 
 	      io->fd = -1;
@@ -1453,7 +1453,7 @@ bool view_prevfiles_play(int pos, bool play)
 	{
 	  if (mus_file_probe(prevfullnames[pos]))
 	    play_sp = make_sound_readable(prevfullnames[pos], false);
-	  else snd_error(_("play previous file: can't find %s: %s"), prevfullnames[pos], strerror(errno));
+	  else snd_error(_("play previous file: can't find %s: %s"), prevfullnames[pos], snd_strerror());
 	}
       if (play_sp)
 	{
@@ -2179,7 +2179,7 @@ bool saved_file_needs_update(snd_info *sp, char *str, save_dialog_t save_type, i
 	    result = save_edits_without_display(sp, ofile, type, format, srate, comment, AT_CURRENT_EDIT_POSITION);
 	  else result = save_selection(ofile, type, format, srate, comment, SAVE_ALL_CHANS);
 	  if (result != MUS_NO_ERROR)
-	    report_in_minibuffer(sp, _("save as temp %s hit error: %s"), ofile, strerror(errno));
+	    report_in_minibuffer(sp, _("save as temp %s hit error: %s"), ofile, snd_strerror());
 	  else move_file(ofile, sp->filename);
 	  snd_update(sp);
 	  needs_update = false;
@@ -2217,7 +2217,7 @@ bool saved_file_needs_update(snd_info *sp, char *str, save_dialog_t save_type, i
 	    {
 	      report_in_minibuffer_and_save(sp, "%s: %s", 
 					    str, 
-					    (errno != 0) ? strerror(errno) : mus_error_type_to_string(result));
+					    snd_strerror());
 	      needs_update = false;
 	    }
 	  else report_in_minibuffer(sp, _("%s saved as %s"),
@@ -2292,7 +2292,7 @@ void edit_header_callback(snd_info *sp, file_data *edit_header_data)
       snd_update(sp);
     }
   else 
-    snd_error(_("can't write file %s: %s"), sp->short_filename, strerror(errno));
+    snd_error(_("can't write file %s: %s"), sp->short_filename, snd_strerror());
 }
 
 #if (!USE_NO_GUI)
@@ -2556,7 +2556,7 @@ static XEN g_set_sound_loop_info(XEN snd, XEN vals)
     XEN_ERROR(CANNOT_SAVE,
 	      XEN_LIST_3(C_TO_XEN_STRING(S_setB S_sound_loop_info),
 			 C_TO_XEN_STRING(tmp_file),
-			 C_TO_XEN_STRING(strerror(errno))));
+			 C_TO_XEN_STRING(snd_strerror())));
   move_file(tmp_file, sp->filename);
   snd_update(sp);
   FREE(tmp_file);

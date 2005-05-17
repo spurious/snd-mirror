@@ -21,21 +21,6 @@
   #include <console.h>
 #endif
 
-#if DEBUGGING
-void *mem_calloc(size_t len, size_t size, const char *func, const char *file, int line) {return(calloc(len, size));}
-void *mem_malloc(size_t len, const char *func, const char *file, int line) {return(malloc(len));}
-void mem_free(void *ptr, const char *func, const char *file, int line) {free(ptr);}
-void *mem_realloc(void *ptr, size_t size, const char *func, const char *file, int line) {return(realloc(ptr, size));}
-#include <fcntl.h>
-int io_open(const char *pathname, int flags, mode_t mode, const char *func, const char *file, int line) {return(open(pathname, flags, mode));}
-int io_creat(const char *pathname, mode_t mode, const char *func, const char *file, int line) {return(creat(pathname, mode));}
-int io_close(int fd, const char *func, const char *file, int line) {return(close(fd));}
-FILE *io_fopen(const char *path, const char *mode, const char *func, const char *file, int line) {return(fopen(path, mode));}
-int io_fclose(FILE *stream, const char *func, const char *file, int line) {return(fclose(stream));}
-char *copy_string(const char *str);
-char *copy_string(const char *str) {return(strdup(str));}
-#endif
-
 static char *display_maxamps(const char *filename, int chans)
 {
   char *ampstr;

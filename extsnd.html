@@ -867,19 +867,20 @@ just before a sound is saved.
 
 <tr><td></td><td colspan=2>
 <table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
-(define need-save-as-undo #f)
 (add-hook! <em class=red>before-save-as-hook</em>
   (lambda (index filename selection sr type format comment)
-    (set! need-save-as-undo #f)
-    (if (not (= sr (<a class=quiet href="#srate">srate</a> index))) ; if srate is different, fixup outgoing version
-        (begin
-	  (<a class=quiet href="#srcsound">src-sound</a> (exact-&gt;inexact (/ (<a class=quiet href="#srate">srate</a> index) sr)) 1.0 index #t)
-          (set! need-save-as-undo #t)))
-    #f))
-
-(add-hook! after-save-as-hook ; now undo the last-minute srate fixup
-  (lambda (index filename dialog)
-    (if need-save-as-undo (<a class=quiet href="#undo">undo</a> index #t))))
+    (if (not (= sr (<a class=quiet href="#srate">srate</a> index)))
+        (let ((chns (<a class=quiet href="#chans">chans</a> index)))
+	  (do ((i 0 (1+ i)))
+	      ((= i chns))
+	    (<a class=quiet href="srcchannel">src-channel</a> (exact->inexact (/ (<a class=quiet href="#srate">srate</a> index) sr)) 0 #f index i))
+	  (<a class=quiet href="savesoundas">save-sound-as</a> filename index :header-type type :data-format format :srate sr :comment comment) 
+	  ;; hook won't be invoked recursively
+	  (do ((i 0 (1+ i)))
+	      ((= i chns))
+	    (<a class=quiet href="#undo">undo</a> 1 index i))
+	  #t) ; already saved
+	#f)))
 </pre></td></tr></table></td></tr>
 <tr><td colspan=3></td></tr>
 
@@ -6653,7 +6654,7 @@ save the current fft peak info: <a href="#peaks">peaks</a><br>
 
 <!-- save-sound-as -->
 <tr><td colspan=2>
-<code><a class=def name="savesoundas">save-sound-as</a> (<a class=quiet href="clm.html#optional-key">&amp;optional-key</a> :file :sound :header-type :data-format :srate :channel :edit-position)</code>
+<code><a class=def name="savesoundas">save-sound-as</a> (<a class=quiet href="clm.html#optional-key">&amp;optional-key</a> :file :sound :header-type :data-format :srate :channel :edit-position :comment)</code>
 </td></tr>
 <tr><td></td><td>
 save <i>sound</i> as <i>file</i> (same as File Save as option).  If channel is specified,

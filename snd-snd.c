@@ -97,8 +97,7 @@ void free_env_state(chan_info *cp)
 	  es = cgx->amp_env_state;
 	  if (es)
 	    {
-	      if (es->sf) 
-		es->sf = free_snd_fd(es->sf);
+	      es->sf = free_snd_fd(es->sf);
 	      FREE(es);
 	    }
 	  cgx->amp_env_state = NULL;
@@ -253,7 +252,7 @@ static bool tick_amp_env(chan_info *cp, env_state *es)
 	{
 	  /* oops... */
 	  es->slice++;
-	  if (es->sf) es->sf = free_snd_fd(es->sf);
+	  es->sf = free_snd_fd(es->sf);
 	  ep->completed = true;
 	  return(true);
 	}
@@ -289,7 +288,7 @@ static bool tick_amp_env(chan_info *cp, env_state *es)
 	  ((ep->top_bin > 0) && (ep->bin >= ep->top_bin))) /* this applies to partial amp envs */
 	{
 	  es->slice++;
-	  if (es->sf) es->sf = free_snd_fd(es->sf);
+	  es->sf = free_snd_fd(es->sf);
 	  ep->completed = true;
 	  return(true);
 	}
@@ -973,7 +972,7 @@ env_info *make_mix_input_amp_env(chan_info *cp)
       env_state *es;
       es = make_env_state(cp, CURRENT_SAMPLES(cp)); /* sets cp->amp_envs[pos] */
       while (!(tick_amp_env(cp, es)));
-      if (es->sf) es->sf = free_snd_fd(es->sf);
+      es->sf = free_snd_fd(es->sf);
       FREE(es);
       return(cp->amp_envs[cp->edit_ctr]);
     }
@@ -1739,7 +1738,7 @@ static bool apply_controls(apply_state *ap)
 	  ap->ofd = open_temp_file(ap->ofile, ap->hdr->chans, ap->hdr);
 	  if (ap->ofd == -1)
 	    {
-	      snd_error(_("can't open apply temp file %s: %s\n"), ap->ofile, strerror(errno));
+	      snd_error(_("can't open apply temp file %s: %s\n"), ap->ofile, snd_open_strerror());
 	      sp->applying = false;
 	      ap = free_apply_state(ap);
 	      return(false);
@@ -3145,7 +3144,6 @@ open filename (as if opened from File:Open menu option), and return the new soun
   }
   if (!file_exists)
     return(snd_no_such_file_error(S_open_sound, filename));
-  ss->catch_message = NULL;
   sp = snd_open_file(fname, false); /* this will call mus_expand_filename */
   if (sp) 
     return(C_TO_XEN_INT(sp->index));
@@ -3189,7 +3187,7 @@ open file assuming the data matches the attributes indicated unless the file act
   for (i = 0; i < 8; i++) args[i] = XEN_UNDEFINED;
   arglist_len = XEN_LIST_LENGTH(arglist);
   for (i = 0; i < arglist_len; i++) args[i] = XEN_LIST_REF(arglist, i);
-  vals = mus_optkey_unscramble(S_save_sound_as, 4, keys, args, orig_arg);
+  vals = mus_optkey_unscramble(S_open_raw_sound, 4, keys, args, orig_arg);
   if (vals > 0)
     {
       file = mus_optkey_to_string(keys[0], S_open_raw_sound, orig_arg[0], NULL);
@@ -3214,7 +3212,6 @@ open file assuming the data matches the attributes indicated unless the file act
     return(snd_no_such_file_error(S_open_raw_sound, keys[0]));
   mus_header_set_raw_defaults(os, oc, ofr);
   ss->reloading_updated_file = -1;
-  ss->catch_message = NULL;
   sp = snd_open_file(file, false);
   set_fallback_chans(0);
   set_fallback_srate(0);
@@ -3244,7 +3241,6 @@ You can subsequently make it writable by (set! (" S_read_only ") #f)."
   }
   if (!file_exists)
     return(snd_no_such_file_error(S_view_sound, filename));
-  ss->catch_message = NULL;
   sp = snd_open_file(fname, true);
   if (sp) 
     return(C_TO_XEN_INT(sp->index));
@@ -3253,7 +3249,7 @@ You can subsequently make it writable by (set! (" S_read_only ") #f)."
 
 static XEN g_save_sound_as(XEN arglist)
 {
-  #define H_save_sound_as "("  S_save_sound_as " :file :sound :header-type :data-format :srate :channel :edit-position): \
+  #define H_save_sound_as "("  S_save_sound_as " :file :sound :header-type :data-format :srate :channel :edit-position :comment): \
 save sound in file using the indicated attributes.  If channel is specified, only that channel is saved (extracted). \
 Omitted arguments take their value from the sound being saved.\n\
   (save-sound-as \"test.snd\" index mus-next mus-bshort)"
@@ -3262,9 +3258,9 @@ Omitted arguments take their value from the sound being saved.\n\
   file_info *hdr;
   int ht = -1, df = -1, sr = -1, chan = -1, err = MUS_NO_ERROR;
   char *fname = NULL, *file = NULL, *outcom = NULL;
-  XEN args[14]; 
-  XEN keys[7];
-  int orig_arg[7] = {0, 0, 0, 0, 0, 0, 0};
+  XEN args[16]; 
+  XEN keys[8];
+  int orig_arg[8] = {0, 0, 0, 0, 0, 0, 0, 0};
   int vals, i, arglist_len;
   XEN edpos = XEN_UNDEFINED, index = XEN_UNDEFINED;
   keys[0] = kw_file;
@@ -3274,10 +3270,11 @@ Omitted arguments take their value from the sound being saved.\n\
   keys[4] = kw_srate;
   keys[5] = kw_channel;
   keys[6] = kw_edit_position;
-  for (i = 0; i < 14; i++) args[i] = XEN_UNDEFINED;
+  keys[7] = kw_comment;
+  for (i = 0; i < 16; i++) args[i] = XEN_UNDEFINED;
   arglist_len = XEN_LIST_LENGTH(arglist);
   for (i = 0; i < arglist_len; i++) args[i] = XEN_LIST_REF(arglist, i);
-  vals = mus_optkey_unscramble(S_save_sound_as, 7, keys, args, orig_arg);
+  vals = mus_optkey_unscramble(S_save_sound_as, 8, keys, args, orig_arg);
   if (vals > 0)
     {
       file = mus_optkey_to_string(keys[0], S_save_sound_as, orig_arg[0], NULL);
@@ -3292,8 +3289,10 @@ Omitted arguments take their value from the sound being saved.\n\
 			     C_TO_XEN_INT(sr)));
       chan = mus_optkey_to_int(keys[5], S_save_sound_as, orig_arg[5], chan);
       if (!(XEN_KEYWORD_P(keys[6]))) edpos = keys[6];
+      outcom = mus_optkey_to_string(keys[7], S_save_sound_as, orig_arg[7], NULL);
+      /* TODO: test save-sound-as with comment */
     }
-  if (file == NULL) 
+  if ((file == NULL) || (directory_p(file)))
     XEN_ERROR(MUS_MISC_ERROR,
 	      XEN_LIST_2(C_TO_XEN_STRING(S_save_sound_as),
 			 C_TO_XEN_STRING("no output file?")));
@@ -3308,7 +3307,8 @@ Omitted arguments take their value from the sound being saved.\n\
 	      XEN_LIST_3(C_TO_XEN_STRING(S_save_sound_as),
 			 C_TO_XEN_STRING(_("can't write this header type:")),
 			 C_TO_XEN_STRING(mus_header_type_name(ht))));
-  if (sr == -1) sr = hdr->srate;
+  if (sr == -1) 
+    sr = hdr->srate;
   if (df == -1) 
     {
       df = hdr->format;
@@ -3323,9 +3323,8 @@ Omitted arguments take their value from the sound being saved.\n\
 			 C_TO_XEN_STRING(mus_data_format_name(df))));
   if (chan >= sp->nchans)
     return(snd_no_such_channel_error(S_save_sound_as, index, keys[5]));
-  ss->catch_message = NULL;
   fname = mus_expand_filename(file);
-  outcom = output_comment(hdr);
+  if (outcom == NULL) outcom = output_comment(hdr);
   if (!(run_before_save_as_hook(sp, fname, false, sr, ht, df, outcom)))
     {
       if (chan >= 0)
@@ -3343,7 +3342,7 @@ Omitted arguments take their value from the sound being saved.\n\
       XEN_ERROR(CANNOT_SAVE,
 		XEN_LIST_3(C_TO_XEN_STRING(S_save_sound_as),
 			   errstr,
-			   C_TO_XEN_STRING(strerror(errno))));
+			   C_TO_XEN_STRING(snd_open_strerror())));
     }
   if (fname) FREE(fname);
   return(args[orig_arg[0] - 1]);
@@ -3410,14 +3409,11 @@ The 'size' argument sets the number of samples (zeros) in the newly created soun
     {
       unsigned char* buf;
       mus_sound_forget(str);
-      ss->catch_message = NULL;
       err = snd_write_header(str, ht, sr, ch, 0, len * ch, df, com, snd_strlen(com), NULL);
       if (err == -1)
 	{
 	  if (str) {FREE(str); str = NULL;}
-	  if (ss->catch_message)
-	    mus_misc_error(S_new_sound, ss->catch_message, keys[0]);
-	  else mus_misc_error(S_new_sound, strerror(errno), keys[0]);
+	  mus_misc_error(S_new_sound, snd_strerror(), keys[0]);
 	}
       chan = snd_reopen_write(str);
       lseek(chan, mus_header_data_location(), SEEK_SET);
@@ -4121,7 +4117,7 @@ static XEN g_write_peak_env_info_file(XEN snd, XEN chn, XEN name)
       XEN_ERROR(CANNOT_SAVE,
 		XEN_LIST_3(C_TO_XEN_STRING(S_write_peak_env_info_file),
 			   errstr,
-			   C_TO_XEN_STRING(strerror(errno))));
+			   C_TO_XEN_STRING(snd_open_strerror())));
     }
   if (fullname) FREE(fullname);
   ep = cp->amp_envs[0];
@@ -4295,7 +4291,7 @@ static Cessate tick_it(Indicium pet)
   val = tick_amp_env(cp, es);
   if (val)
     {
-      if (es->sf) free_snd_fd(es->sf);
+      free_snd_fd(es->sf);
       FREE(es);
       if (XEN_PROCEDURE_P(et->func))
 	{
@@ -4451,7 +4447,7 @@ If 'filename' is a sound index (an integer), 'size' is an edit-position, and the
 	      return(C_TO_XEN_INT(id));
 	    }
 	  while (!(tick_amp_env(cp, es)));
-	  if (es->sf) free_snd_fd(es->sf);
+	  free_snd_fd(es->sf);
 	  FREE(es);
 	  peak = g_env_info_to_vcts(cp->amp_envs[0], len);
 	}
@@ -4632,7 +4628,6 @@ create a new sound file 'file' (writing float data), return the file descriptor 
   hdr->type = type;
   if (comment)
     hdr->comment = copy_string(comment);
-  ss->catch_message = NULL;
   result = open_temp_file(filename, chans, hdr);
   if (result == -1) 
     {
@@ -4641,12 +4636,9 @@ create a new sound file 'file' (writing float data), return the file descriptor 
       if (mus_file_probe(filename)) snd_remove(filename, REMOVE_FROM_CACHE);
       FREE(filename);
       filename = NULL;
-      if (ss->catch_message)
-	XEN_ERROR(MUS_MISC_ERROR,
-		  XEN_LIST_2(C_TO_XEN_STRING(S_open_sound_file),
-			     C_TO_XEN_STRING(ss->catch_message)));
-      else
-	return(snd_no_such_file_error(S_open_sound_file, keys[0]));
+      XEN_ERROR(MUS_MISC_ERROR,
+		XEN_LIST_2(C_TO_XEN_STRING(S_open_sound_file),
+			   C_TO_XEN_STRING(snd_open_strerror())));
     }
   mus_file_set_data_clipped(result, data_clipped(ss));
   set_temp_fd(result, hdr);
@@ -4702,7 +4694,7 @@ static XEN g_vct2soundfile(XEN g_fd, XEN obj, XEN g_nums)
     XEN_OUT_OF_RANGE_ERROR(S_vct_to_sound_file, 3, g_nums, "len ~A < 0 or > vct length");
   err = lseek(fd, 0L, SEEK_END);
   if (err == -1)
-    mus_misc_error(S_vct_to_sound_file, "IO error", C_TO_XEN_STRING(strerror(errno)));
+    mus_misc_error(S_vct_to_sound_file, "IO error", C_TO_XEN_STRING(snd_strerror()));
   if (sizeof(Float) == 4) /* Float can be either float or double */
     nums = write(fd, (char *)(v->data), nums * 4);
   else

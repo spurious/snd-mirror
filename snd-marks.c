@@ -207,8 +207,8 @@ static void draw_mark_1(chan_info *cp, axis_info *ap, mark *mp, bool show)
   if (mp->name)
     {
 #if USE_MOTIF
-      ax->current_font = ((ss->sgx)->peaks_fontstruct)->fid;
-      XSetFont(ax->dp, ax->gc, ((ss->sgx)->peaks_fontstruct)->fid);
+      ax->current_font = ss->sgx->peaks_fontstruct->fid;
+      XSetFont(ax->dp, ax->gc, ss->sgx->peaks_fontstruct->fid);
 #else
   #if USE_GTK
       ax->current_font = PEAKS_FONT(ss);
@@ -1789,7 +1789,7 @@ static void make_mark_graph(chan_info *cp, off_t initial_sample, off_t current_s
 	  erase_and_draw_both_grf_points(mark_movers[which], cp, j);
 	}
     }
-  if (sf) {free_snd_fd(sf); sf = NULL;}
+  free_snd_fd(sf);
 }
 
 static XEN snd_no_such_mark_error(const char *caller, XEN id)
@@ -2362,7 +2362,7 @@ static XEN g_save_marks(XEN snd_n, XEN filename)
 		    XEN_LIST_3(C_TO_XEN_STRING(S_save_marks),
 			       C_TO_XEN_STRING("open ~A: ~A"),
 			       XEN_LIST_2(lname,
-					  C_TO_XEN_STRING(strerror(errno)))));
+					  C_TO_XEN_STRING(snd_open_strerror()))));
 	}
       else
 	{

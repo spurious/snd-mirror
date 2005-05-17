@@ -406,8 +406,7 @@ static void free_dac_info(dac_info *dp, play_stop_t reason)
       dp->stop_procedure = XEN_FALSE;
     }
   if (dp->a) {FREE(dp->a); dp->a = NULL;}
-  free_snd_fd(dp->chn_fd);
-  dp->chn_fd = NULL;
+  dp->chn_fd = free_snd_fd(dp->chn_fd);
   if (dp->spd) free_expand(dp->spd);
   if (dp->src) free_src(dp->src);
   if (dp->flt) mus_free(dp->flt);
@@ -785,7 +784,7 @@ static dac_info *init_dp(int slot, chan_info *cp, snd_info *sp, snd_fd *fd, off_
   dp = make_dac_info(cp, sp, fd, out_chan); /* sp == NULL if region */
   if (dp == NULL) 
     {
-      if (fd) free_snd_fd(fd);
+      free_snd_fd(fd);
       return(NULL);
     }
   play_list_members++;

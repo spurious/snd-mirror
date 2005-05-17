@@ -1354,7 +1354,7 @@ static int make_graph_1(chan_info *cp, double cur_srate, bool normal, bool *two_
 	}
       else (*two_sided) = true;
     }
-  if (sf) {free_snd_fd(sf); sf = NULL;}
+  sf = free_snd_fd(sf);
   if ((normal) && (sp->channel_style == CHANNELS_SUPERIMPOSED))
     {
       copy_context(cp); /* reset for axes etc */
@@ -1493,11 +1493,7 @@ XEN make_graph_data(chan_info *cp, int edit_pos, off_t losamp, off_t hisamp)
 	    }
 	}
     }
-  if (sf) 
-    {
-      free_snd_fd(sf); 
-      sf = NULL;
-    }
+  sf = free_snd_fd(sf); 
   if (data1)
     return(XEN_LIST_2(make_vct(data_size, data),
 		      make_vct(data_size, data1)));
@@ -1903,7 +1899,7 @@ static int display_transform_peaks(chan_info *ucp, char *filename)
       if (mcf) FREE(mcf);
       if (fd == NULL) 
 	{
-	  report_in_minibuffer_and_save(sp, _("can't write %s: %s"), filename, strerror(errno));
+	  report_in_minibuffer_and_save(sp, _("can't write %s: %s"), filename, snd_open_strerror());
 	  err = 1;
 	}
       else tmp_file = false;
@@ -1987,7 +1983,7 @@ static int display_transform_peaks(chan_info *ucp, char *filename)
 	    }
 	}
       if (FCLOSE(fd) != 0)
-	report_in_minibuffer_and_save(sp, _("can't close %s: %s"), filename, strerror(errno));
+	report_in_minibuffer_and_save(sp, _("can't close %s: %s"), filename, snd_strerror());
       if (tmp_file)
 	{
 	  int chars;

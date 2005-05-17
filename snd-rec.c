@@ -1467,7 +1467,7 @@ void recorder_start_output_file(const char *comment)
   if (err == -1)
     {
       msg = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
-      mus_snprintf(msg, PRINT_BUFFER_SIZE, "%s:\n %s", rp->output_file, strerror(errno));
+      mus_snprintf(msg, PRINT_BUFFER_SIZE, "%s:\n %s", rp->output_file, snd_strerror());
       recorder_error(msg);
       FREE(msg);
       rp->recording = false;

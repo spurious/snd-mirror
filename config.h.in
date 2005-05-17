@@ -204,5 +204,7 @@
 #undef SNDLIB_DISABLE_DEPRECATED
 #undef XEN_DISABLE_DEPRECATED
 
-#define USE_SND 1
+#ifndef USE_SND
+  #define USE_SND 1
+#endif
 #endif

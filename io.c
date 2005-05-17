@@ -64,7 +64,7 @@ void mus_bint_to_char(unsigned char *j, int x)
 #endif
 }
 
-int mus_char_to_bint (const unsigned char *inp)
+int mus_char_to_bint(const unsigned char *inp)
 {
   int o;
   unsigned char *outp = (unsigned char *)&o;
@@ -86,7 +86,7 @@ void mus_lint_to_char(unsigned char *j, int x)
 #endif
 }
 
-int mus_char_to_lint (const unsigned char *inp)
+int mus_char_to_lint(const unsigned char *inp)
 {
   int o;
   unsigned char *outp = (unsigned char *)&o;
@@ -98,7 +98,7 @@ int mus_char_to_lint (const unsigned char *inp)
   return(o);
 }
 
-int mus_char_to_uninterpreted_int (const unsigned char *inp)
+int mus_char_to_uninterpreted_int(const unsigned char *inp)
 {
   int o;
   unsigned char *outp = (unsigned char *)&o;
@@ -106,7 +106,7 @@ int mus_char_to_uninterpreted_int (const unsigned char *inp)
   return(o);
 }
 
-unsigned int mus_char_to_ubint (const unsigned char *inp)
+unsigned int mus_char_to_ubint(const unsigned char *inp)
 {
   unsigned int o;
   unsigned char *outp = (unsigned char *)&o;
@@ -118,7 +118,7 @@ unsigned int mus_char_to_ubint (const unsigned char *inp)
   return(o);
 }
 
-unsigned int mus_char_to_ulint (const unsigned char *inp)
+unsigned int mus_char_to_ulint(const unsigned char *inp)
 {
   unsigned int o;
   unsigned char *outp = (unsigned char *)&o;
@@ -141,7 +141,7 @@ void mus_bfloat_to_char(unsigned char *j, float x)
 #endif
 }
 
-float mus_char_to_bfloat (const unsigned char *inp)
+float mus_char_to_bfloat(const unsigned char *inp)
 {
   float o;
   unsigned char *outp = (unsigned char *)&o;
@@ -163,7 +163,7 @@ void mus_lfloat_to_char(unsigned char *j, float x)
 #endif
 }
 
-float mus_char_to_lfloat (const unsigned char *inp)
+float mus_char_to_lfloat(const unsigned char *inp)
 {
   float o;
   unsigned char *outp = (unsigned char *)&o;
@@ -185,7 +185,7 @@ void mus_bshort_to_char(unsigned char *j, short x)
 #endif
 }
 
-short mus_char_to_bshort (const unsigned char *inp)
+short mus_char_to_bshort(const unsigned char *inp)
 {
   short o;
   unsigned char *outp = (unsigned char *)&o;
@@ -207,7 +207,7 @@ void mus_lshort_to_char(unsigned char *j, short x)
 #endif
 }
 
-short mus_char_to_lshort (const unsigned char *inp)
+short mus_char_to_lshort(const unsigned char *inp)
 {
   short o;
   unsigned char *outp = (unsigned char *)&o;
@@ -229,7 +229,7 @@ void mus_ubshort_to_char(unsigned char *j, unsigned short x)
 #endif
 }
 
-unsigned short mus_char_to_ubshort (const unsigned char *inp)
+unsigned short mus_char_to_ubshort(const unsigned char *inp)
 {
   unsigned short o;
   unsigned char *outp = (unsigned char *)&o;
@@ -251,7 +251,7 @@ void mus_ulshort_to_char(unsigned char *j, unsigned short x)
 #endif
 }
 
-unsigned short mus_char_to_ulshort (const unsigned char *inp)
+unsigned short mus_char_to_ulshort(const unsigned char *inp)
 {
   unsigned short o;
   unsigned char *outp = (unsigned char *)&o;
@@ -263,7 +263,7 @@ unsigned short mus_char_to_ulshort (const unsigned char *inp)
   return(o);
 }
 
-double mus_char_to_ldouble (const unsigned char *inp)
+double mus_char_to_ldouble(const unsigned char *inp)
 {
   double o;
   unsigned char *outp = (unsigned char *)&o;
@@ -275,7 +275,7 @@ double mus_char_to_ldouble (const unsigned char *inp)
   return(o);
 }
 
-double mus_char_to_bdouble (const unsigned char *inp)
+double mus_char_to_bdouble(const unsigned char *inp)
 {
   double o;
   unsigned char *outp = (unsigned char *)&o;
@@ -1033,7 +1033,7 @@ static int checked_write(int tfd, char *buf, int chars)
 #ifndef MACOS
 	return(mus_error(MUS_WRITE_ERROR,
 			 "mus_write: write error for %s%s%s: only %d of %d bytes written",
-			 fd->name, (errno) ? ": " : "", (errno) ? strerror(errno) : "",
+			 fd->name, (errno) ? ": " : "", (errno) ? STRERROR(errno) : "",
 			 bytes, chars));
 #else
       return(mus_error(MUS_WRITE_ERROR,

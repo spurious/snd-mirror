@@ -525,7 +525,7 @@ void command_return(widget_t w, int last_prompt)
     {
       if (current_position < (last_position - 2))
 	GUI_LISTENER_TEXT_INSERT(w, GUI_TEXT_END(w), str);
-      GUI_SET_CURSOR(w, (ss->sgx)->wait_cursor);
+      GUI_SET_CURSOR(w, ss->sgx->wait_cursor);
       GUI_UPDATE(w); /* not sure about this... */
       if ((snd_strlen(str) > 1) || (str[0] != '\n'))
 	remember_listener_string(str);
@@ -555,7 +555,7 @@ void command_return(widget_t w, int last_prompt)
       snd_report_listener_result(form); /* used to check for unbound form here, but that's no good in Ruby,
 					 *   and doesn't seem sensible in Guile
 					 */
-      GUI_UNSET_CURSOR(w, (ss->sgx)->arrow_cursor);
+      GUI_UNSET_CURSOR(w, ss->sgx->arrow_cursor);
     }
   else
     {
@@ -580,7 +580,7 @@ static XEN g_save_listener(XEN filename)
     XEN_ERROR(CANNOT_SAVE,
 	      XEN_LIST_3(C_TO_XEN_STRING(S_save_listener),
 			 filename,
-			 C_TO_XEN_STRING(strerror(errno))));
+			 C_TO_XEN_STRING(snd_strerror())));
   return(filename);
 }
 

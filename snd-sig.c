@@ -286,7 +286,7 @@ static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp, XE
 	      ucp->edit_hook_checked = false;
 	      return(mus_format(_("convolve: save chan (%s[%d]) in %s hit error: %s\n"),
 				sp->short_filename, ucp->chan, 
-				saved_chan_file, strerror(errno)));
+				saved_chan_file, snd_open_strerror()));
 	    }
 	  else
 	    {
@@ -299,7 +299,7 @@ static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp, XE
 		  ucp->edit_hook_checked = false;
 		  return(mus_format(_("convolve: open saved chan (%s[%d]) file %s hit error: %s\n"),
 				    sp->short_filename, ucp->chan, 
-				    saved_chan_file, strerror(errno)));
+				    saved_chan_file, snd_open_strerror()));
 		}
 	      else
 		{
@@ -319,7 +319,7 @@ static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp, XE
 		      ucp->edit_hook_checked = false;
 		      free_sync_state(sc);
 		      return(mus_format(_("convolve: open filter file %s hit error: %s\n"), 
-					filename, strerror(errno)));
+					filename, snd_open_strerror()));
 		    }
 		  else
 		    {
@@ -354,7 +354,7 @@ static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp, XE
 			  free_sync_state(sc);
 			  ucp->edit_hook_checked = false;
 			  return(mus_format(_("convolve: close filter file %s hit error: %s\n"), 
-					    filename, strerror(errno)));
+					    filename, snd_strerror()));
 			}
 		    }
 		}
@@ -365,7 +365,7 @@ static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp, XE
 		  ucp->edit_hook_checked = false;
 		  return(mus_format(_("convolve: close saved chan (%s[%d]) file %s hit error: %s\n"),
 				    sp->short_filename, ucp->chan, 
-				    saved_chan_file, strerror(errno)));
+				    saved_chan_file, snd_strerror()));
 		}
 	    }
 	  snd_remove(saved_chan_file, REMOVE_FROM_CACHE);
@@ -628,7 +628,7 @@ static void swap_channels(chan_info *cp0, chan_info *cp1, off_t beg, off_t dur, 
 	  cp0->edit_hook_checked = false;
 	  cp1->edit_hook_checked = false;
 	  free_file_info(hdr0);
-	  snd_error(_("can't open " S_swap_channels " temp file %s: %s\n"), ofile0, strerror(errno));
+	  snd_error(_("can't open " S_swap_channels " temp file %s: %s\n"), ofile0, snd_open_strerror());
 	  return;
 	}
       datumb = mus_bytes_per_sample(hdr0->format);
@@ -643,7 +643,7 @@ static void swap_channels(chan_info *cp0, chan_info *cp1, off_t beg, off_t dur, 
 	  free_file_info(hdr0);
 	  free_file_info(hdr1);
 	  if (ofile0) FREE(ofile0);
-	  snd_error(_("can't open " S_swap_channels " temp file %s: %s\n"), ofile1, strerror(errno));
+	  snd_error(_("can't open " S_swap_channels " temp file %s: %s\n"), ofile1, snd_open_strerror());
 	  return;
 	}
     }
@@ -793,7 +793,7 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, off_t beg, off_t 
   if (ofd == -1)
     {
       cp->edit_hook_checked = false;
-      return(mus_format(_("can't open %s temp file %s: %s\n"), origin, ofile, strerror(errno)));
+      return(mus_format(_("can't open %s temp file %s: %s\n"), origin, ofile, snd_open_strerror()));
     }
   data = (mus_sample_t **)MALLOC(sizeof(mus_sample_t *));
   data[0] = (mus_sample_t *)CALLOC(MAX_BUFFER_SIZE, sizeof(mus_sample_t)); 
@@ -1045,11 +1045,7 @@ void src_env_or_num(chan_info *cp, env *e, Float ratio, bool just_num,
 	  else dur = scdur;
 	  if (dur == 0) 
 	    {
-	      if (sfs[i]) 
-		{
-		  free_snd_fd(sfs[i]); 
-		  sfs[i] = NULL;
-		}
+	      sfs[i] = free_snd_fd(sfs[i]); 
 	      continue;
 	    }
 	  if (!just_num)
@@ -1089,8 +1085,7 @@ void src_env_or_num(chan_info *cp, env *e, Float ratio, bool just_num,
 	}
     }
   for (i = 0; i < si->chans; i++) 
-    if (sfs[i]) 
-      free_snd_fd(sfs[i]);
+    free_snd_fd(sfs[i]);
   free_sync_state(sc);
 }
 
@@ -1196,7 +1191,7 @@ static char *clm_channel(chan_info *cp, mus_any *gen, off_t beg, off_t dur, int 
 	{
 	  cp->edit_hook_checked = false;
 	  free_snd_fd(sf); 
-	  return(mus_format(_("can't open %s temp file %s: %s\n"), S_clm_channel, ofile, strerror(errno)));
+	  return(mus_format(_("can't open %s temp file %s: %s\n"), S_clm_channel, ofile, snd_open_strerror()));
 	}
       datumb = mus_bytes_per_sample(hdr->format);
     }
@@ -1299,7 +1294,7 @@ static char *convolution_filter(chan_info *cp, int order, env *e, snd_fd *sf, of
   if (ofd == -1)
     {
       cp->edit_hook_checked = false;
-      return(mus_format(_("can't open %s temp file %s: %s\n"), origin, ofile, strerror(errno)));
+      return(mus_format(_("can't open %s temp file %s: %s\n"), origin, ofile, snd_open_strerror()));
     }
   if (fsize > MAX_SINGLE_FFT_SIZE)
     {
@@ -1418,7 +1413,7 @@ static char *direct_filter(chan_info *cp, int order, env *e, snd_fd *sf, off_t b
       if (ofd == -1)
 	{
 	  cp->edit_hook_checked = false;
-	  return(mus_format(_("can't open %s temp file %s: %s\n"), origin, ofile, strerror(errno)));
+	  return(mus_format(_("can't open %s temp file %s: %s\n"), origin, ofile, snd_open_strerror()));
 	}
       datumb = mus_bytes_per_sample(hdr->format);
     }
@@ -1666,7 +1661,7 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, enved_prog
 	  else dur = scdur;
 	  if (dur == 0) 
 	    {
-	      if (sfs[i]) {free_snd_fd(sfs[i]); sfs[i] = NULL;}
+	      sfs[i] = free_snd_fd(sfs[i]);
 	      continue;
 	    }
 	  errstr = convolution_filter(cp, order, e, sfs[i], si->begs[i], dur, (origin) ? origin : caller, from_enved, NULL);
@@ -1715,7 +1710,7 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, enved_prog
 	      else dur = scdur;
 	      if (dur == 0) 
 		{
-		  if (sfs[i]) {free_snd_fd(sfs[i]); sfs[i] = NULL;}
+		  sfs[i] = free_snd_fd(sfs[i]);
 		  continue;
 		}
 	      errstr = direct_filter(cp, order, e, sfs[i], si->begs[i], dur,
@@ -1790,7 +1785,7 @@ static char *reverse_channel(chan_info *cp, snd_fd *sf, off_t beg, off_t dur, XE
 	{
 	  if (ofile) FREE(ofile);
 	  cp->edit_hook_checked = false;	  
-	  return(mus_format(_("can't open %s temp file %s: %s\n"), caller, ofile, strerror(errno)));
+	  return(mus_format(_("can't open %s temp file %s: %s\n"), caller, ofile, snd_open_strerror()));
 	}
       datumb = mus_bytes_per_sample(hdr->format);
     }
@@ -1895,11 +1890,7 @@ static void reverse_sound(chan_info *ncp, bool over_selection, XEN edpos, int ar
 	  else dur = to_c_edit_samples(cp, edpos, caller, arg_pos);
 	  if (dur == 0) 
 	    {
-	      if (sfs[i]) 
-		{
-		  free_snd_fd(sfs[i]); 
-		  sfs[i] = NULL;
-		}
+	      sfs[i] = free_snd_fd(sfs[i]); 
 	      continue;
 	    }
 	  errmsg = reverse_channel(cp, sfs[i], si->begs[i], dur, edpos, caller, arg_pos);
@@ -2130,10 +2121,9 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool over_selection,
 	    {
 	      if (e) mus_free(egen);
 	      for (i = 0; i < si->chans; i++) 
-		if (sfs[i]) 
-		  free_snd_fd(sfs[i]);
+		sfs[i] = free_snd_fd(sfs[i]);
 	      free_sync_state(sc);
-	      snd_error(_("can't open %s temp file %s: %s\n"), origin, ofile, strerror(errno));
+	      snd_error(_("can't open %s temp file %s: %s\n"), origin, ofile, snd_open_strerror());
 	      FREE(ofile);
 	      if (e) mus_free(egen);
 	      return;
@@ -2599,7 +2589,7 @@ static char *run_channel(chan_info *cp, struct ptree *pt, off_t beg, off_t dur, 
 	{
 	  free_snd_fd(sf); 
 	  cp->edit_hook_checked = false;
-	  return(mus_format(_("can't open %s temp file %s: %s\n"), caller, ofile, strerror(errno)));
+	  return(mus_format(_("can't open %s temp file %s: %s\n"), caller, ofile, snd_open_strerror()));
 	}
       datumb = mus_bytes_per_sample(hdr->format);
     }
@@ -2772,7 +2762,7 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
 			  else
 			    {
 			      if (outgen) mus_free(outgen);
-			      if (sf) sf = free_snd_fd(sf);
+			      sf = free_snd_fd(sf);
 			      if (reporting) finish_progress_report(sp, NOT_FROM_ENVED);
 			      snd_remove(filename, REMOVE_FROM_CACHE);
 			      FREE(filename);
@@ -2798,7 +2788,7 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
 		break;
 	    }
 	  if (outgen) mus_free(outgen);
-	  if (sf) sf = free_snd_fd(sf);
+	  sf = free_snd_fd(sf);
 	  if (reporting) finish_progress_report(sp, NOT_FROM_ENVED);
 	  if (ss->stopped_explicitly) 
 	    ss->stopped_explicitly = false;
@@ -2868,7 +2858,7 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
 			  else
 			    {
 			      if (data) {FREE(data); data = NULL;}
-			      if (sf) sf = free_snd_fd(sf);
+			      sf = free_snd_fd(sf);
 			      cp->edit_hook_checked = false;
 			      XEN_ERROR(BAD_TYPE,
 					XEN_LIST_3(C_TO_XEN_STRING(caller),
@@ -2879,7 +2869,7 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
 		    }
 		}
 	    }
-	  if (sf) sf = free_snd_fd(sf);
+	  sf = free_snd_fd(sf);
 	  if (data_pos == num)
 	    change_samples(beg, data_pos, data, cp, LOCK_MIXES, caller, cp->edit_ctr);
 	  else
@@ -3189,7 +3179,7 @@ static XEN scan_body(void *context)
 static void after_scan(void *context)
 {
   scan_context *sc = (scan_context *)context;
-  if (sc->sf) sc->sf = free_snd_fd(sc->sf);
+  sc->sf = free_snd_fd(sc->sf);
   if (sc->reporting) finish_progress_report(sc->sp, NOT_FROM_ENVED);
   FREE(sc);
 }
@@ -3328,7 +3318,7 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn,
 	}
     }
   if (reporting) finish_progress_report(sp, NOT_FROM_ENVED);
-  if (sf) sf = free_snd_fd(sf);
+  sf = free_snd_fd(sf);
   if (counting)
     return(C_TO_XEN_INT(counts));
 #endif

@@ -661,7 +661,7 @@ XEN snd_no_such_file_error(const char *caller, XEN filename)
   XEN_ERROR(NO_SUCH_FILE,
 	    XEN_LIST_3(C_TO_XEN_STRING(caller),
 		       filename,
-		       C_TO_XEN_STRING(strerror(errno))));
+		       C_TO_XEN_STRING(snd_open_strerror())));
   return(XEN_FALSE);
 }
 
@@ -1084,7 +1084,7 @@ void snd_load_file(char *filename)
 	  FREE(str2);
 	  str2 = NULL;
 #endif
-	  snd_error(_("can't load %s: %s"), filename, strerror(errno));
+	  snd_error(_("can't load %s: %s"), filename, snd_open_strerror());
 	}
       /* snd_error ok here because all uses of this are user-interface generated (autoload, memo-file, etc) */
       else result = snd_catch_any(eval_file_wrapper, (void *)str1, str2);
@@ -1388,7 +1388,7 @@ static int snd_access(char *dir, char *caller)
     {
       XEN res;
       FREE(temp);
-      temp = mus_format(_("%s: directory %s is not writable: %s"), caller, dir, strerror(errno));
+      temp = mus_format(_("%s: directory %s is not writable: %s"), caller, dir, snd_open_strerror());
       res = C_TO_XEN_STRING(temp);
       FREE(temp);
       XEN_ERROR(NO_SUCH_FILE,
@@ -1882,7 +1882,7 @@ reading edit version edpos"
 	    {
 	      for (i = 0; i < len; i++) 
 		sd->data[chn][i] = read_sample(sf);
-	      free_snd_fd(sf);
+	      sf = free_snd_fd(sf);
 	    }
 	}
       else 

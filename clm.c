@@ -5347,7 +5347,7 @@ static Float file_sample(mus_any *ptr, off_t samp, int chan)
       if (fd == -1)
 	return((Float)mus_error(MUS_CANT_OPEN_FILE, 
 				"open(%s) -> %s", 
-				gen->file_name, strerror(errno)));
+				gen->file_name, STRERROR(errno)));
       else
 	{ 
 	  if (gen->ibufs == NULL) 
@@ -5704,7 +5704,7 @@ static void flush_buffers(rdout *gen)
       if (fd == -1)
 	mus_error(MUS_CANT_OPEN_FILE, 
 		  "open(%s) -> %s", 
-		  gen->file_name, strerror(errno));
+		  gen->file_name, STRERROR(errno));
       else
 	{
 	  mus_file_write(fd, 0, gen->out_end, gen->chans, gen->obufs);
@@ -5818,7 +5818,7 @@ static mus_any *mus_make_sample_to_file_with_comment_1(const char *filename, int
       if (fd == -1)
 	mus_error(MUS_CANT_OPEN_FILE, 
 		  "open(%s) -> %s", 
-		  filename, strerror(errno));
+		  filename, STRERROR(errno));
       else
 	{
 	  rdout *gen;
@@ -5840,7 +5840,7 @@ static mus_any *mus_make_sample_to_file_with_comment_1(const char *filename, int
 	  if (mus_file_close(fd) != 0)
 	    mus_error(MUS_CANT_CLOSE_FILE, 
 		      "close(%d, %s) -> %s", 
-		      fd, gen->file_name, strerror(errno));
+		      fd, gen->file_name, STRERROR(errno));
 	  return((mus_any *)gen);
 	}
     }

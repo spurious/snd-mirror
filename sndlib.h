@@ -244,14 +244,17 @@ enum {MUS_NO_ERROR, MUS_NO_FREQUENCY, MUS_NO_PHASE, MUS_NO_GEN, MUS_NO_LENGTH,
   Ptr NewPtr_realloc(Ptr p, Size newSize);
 
   #define OPEN(File, Flags, Mode) open((File), (Flags))
-  #define FOPEN(File, Flags) fopen((File), (Flags))
-  #define CLOSE(Fd) close(Fd)
-  #define FCLOSE(Fd) fclose(Fd)
+  #define FOPEN(File, Flags)      fopen((File), (Flags))
+  #define CLOSE(Fd)               close(Fd)
+  #define FCLOSE(Fd)              fclose(Fd)
   #ifdef MPW_C
-    #define CREAT(File, Flags) creat((File))
+    #define CREAT(File, Flags)    creat((File))
   #else
-    #define CREAT(File, Flags) creat((File), 0)
+    #define CREAT(File, Flags)    creat((File), 0)
   #endif
+  #define RENAME(OldF, NewF)      rename(OldF, NewF)
+  #define REMOVE(OldF)            remove(OldF)
+  #define STRERROR(Err)           strerror(Err)
 #else
   #if DEBUGGING
     #define CALLOC(a, b)  mem_calloc((a), (b), c__FUNCTION__, __FILE__, __LINE__)
@@ -260,10 +263,13 @@ enum {MUS_NO_ERROR, MUS_NO_FREQUENCY, MUS_NO_PHASE, MUS_NO_GEN, MUS_NO_LENGTH,
     #define REALLOC(a, b) mem_realloc(a, (b), c__FUNCTION__, __FILE__, __LINE__)
 
     #define OPEN(File, Flags, Mode) io_open((File), (Flags), (Mode), c__FUNCTION__, __FILE__, __LINE__)
-    #define FOPEN(File, Flags) io_fopen((File), (Flags), c__FUNCTION__, __FILE__, __LINE__)
-    #define CLOSE(Fd) io_close((Fd), c__FUNCTION__, __FILE__, __LINE__)
-    #define FCLOSE(Fd) io_fclose((Fd), c__FUNCTION__, __FILE__, __LINE__)
-    #define CREAT(File, Flags) io_creat((File), (Flags), c__FUNCTION__, __FILE__, __LINE__)
+    #define FOPEN(File, Flags)      io_fopen((File), (Flags), c__FUNCTION__, __FILE__, __LINE__)
+    #define CLOSE(Fd)               io_close((Fd), c__FUNCTION__, __FILE__, __LINE__)
+    #define FCLOSE(Fd)              io_fclose((Fd), c__FUNCTION__, __FILE__, __LINE__)
+    #define CREAT(File, Flags)      io_creat((File), (Flags), c__FUNCTION__, __FILE__, __LINE__)
+    #define RENAME(OldF, NewF)      rename(OldF, NewF)
+    #define REMOVE(OldF)            remove(OldF)
+    #define STRERROR(Err)           strerror(Err)
   #else
     #define CALLOC(a, b)  calloc((size_t)(a), (size_t)(b))
     #define MALLOC(a)     malloc((size_t)(a))
@@ -274,14 +280,35 @@ enum {MUS_NO_ERROR, MUS_NO_FREQUENCY, MUS_NO_PHASE, MUS_NO_GEN, MUS_NO_LENGTH,
       #ifdef FOPEN
         #undef FOPEN
       #endif
-      #define OPEN(File, Flags, Mode) open((File), (Flags))
+      #if USE_SND
+        #define OPEN(File, Flags, Mode) snd_io_open((File), (Flags))
+      #else
+        #define OPEN(File, Flags, Mode) open((File), (Flags))
+      #endif
     #else
-      #define OPEN(File, Flags, Mode) open((File), (Flags), (Mode))
+      #if USE_SND
+        #define OPEN(File, Flags, Mode) snd_io_open((File), (Flags), (Mode))
+      #else
+        #define OPEN(File, Flags, Mode) open((File), (Flags), (Mode))
+      #endif
     #endif
-    #define FOPEN(File, Flags) fopen((File), (Flags))
-    #define CLOSE(Fd) close(Fd)
-    #define FCLOSE(Fd) fclose(Fd)
-    #define CREAT(File, Flags) creat((File), (Flags))
+    #if USE_SND
+      #define FOPEN(File, Flags)        snd_io_fopen((File), (Flags))
+      #define CLOSE(Fd)                 snd_io_close(Fd)
+      #define FCLOSE(Fd)                snd_io_fclose(Fd)
+      #define CREAT(File, Flags)        snd_io_creat((File), (Flags))
+      #define RENAME(OldF, NewF)        snd_io_rename(OldF, NewF)
+      #define REMOVE(OldF)              snd_io_remove(OldF)
+      #define STRERROR(Err)             snd_strerror()
+    #else
+      #define FOPEN(File, Flags)        fopen((File), (Flags))
+      #define CLOSE(Fd)                 close(Fd)
+      #define FCLOSE(Fd)                fclose(Fd)
+      #define CREAT(File, Flags)        creat((File), (Flags))
+      #define RENAME(OldF, NewF)        rename(OldF, NewF)
+      #define REMOVE(OldF)              remove(OldF)
+      #define STRERROR(Err)             strerror(Err)
+    #endif
   #endif
 #endif 
 

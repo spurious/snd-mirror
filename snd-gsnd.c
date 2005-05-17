@@ -1217,7 +1217,6 @@ snd_info *add_sound_window(char *filename, bool read_only)
   int app_y, app_dy, screen_y, chan_min_y;
   /* these dimensions are used to try to get a reasonable channel graph size without falling off the screen bottom */
   snd_context *sx;
-  errno = 0;
   hdr = make_file_info(filename);
   if (!hdr) return(NULL);
   if (ss->pending_change) 

@@ -385,7 +385,7 @@ char *filename_completer(char *text)
       closedir(dpos);
 #else
       if (closedir(dpos) != 0) 
-	snd_error("closedir %s failed (%s)!", dir_name, strerror(errno));
+	snd_error("closedir %s failed (%s)!", dir_name, snd_strerror());
 #endif
     }
   if (dir_name) FREE(dir_name);

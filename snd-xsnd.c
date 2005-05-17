@@ -1500,7 +1500,6 @@ snd_info *add_sound_window(char *filename, bool read_only)
   snd_context *sx;
   Atom sound_delete;
   static bool first_window = true;
-  errno = 0;
   hdr = make_file_info(filename);
   if (!hdr) return(NULL);
   if (ss->pending_change) 

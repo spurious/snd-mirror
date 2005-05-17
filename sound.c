@@ -753,7 +753,7 @@ int mus_sound_open_input (const char *arg)
 {
   int fd = -1;
   if (!(mus_file_probe(arg)))
-    mus_error(MUS_CANT_OPEN_FILE, S_mus_sound_open_input " can't open %s: %s", arg, strerror(errno));
+    mus_error(MUS_CANT_OPEN_FILE, S_mus_sound_open_input " can't open %s: %s", arg, STRERROR(errno));
   else
     {
       sound_file *sf = NULL;

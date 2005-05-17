@@ -272,6 +272,7 @@ static Float region_sample(int reg, int chn, off_t samp)
 	      val = read_sample_to_float(sf);
 	      free_snd_fd(sf);
 	      return(val);
+	      break;
 	    case REGION_DEFERRED:
 	      drp = r->dr;
 	      return(chn_sample(samp + r->begs[chn], drp->cps[chn], drp->edpos[chn]));
@@ -385,7 +386,6 @@ static void make_region_readable(region *r)
       cp->edit_size = 1;
       cp->sound_size = 1;
       cp->hookable = WITHOUT_HOOK;
-      ss->catch_message = NULL;
       hdr = make_file_info(r->filename);
       if (hdr)
 	{
@@ -406,7 +406,7 @@ static void make_region_readable(region *r)
 	{
 	  XEN_ERROR(MUS_MISC_ERROR,
 		    XEN_LIST_2(C_TO_XEN_STRING(_("can't read region file!!")),
-			       C_TO_XEN_STRING(ss->catch_message)));
+			       C_TO_XEN_STRING(snd_open_strerror())));
 	}
     }
   r->rsp = regsp;
@@ -576,7 +576,7 @@ static int save_region_1(char *ofile, int type, int format, int srate, int reg, 
 	{
 	  snd_error(_("can't find region %d data file %s: %s"),
 		    reg, r->filename, 
-		    strerror(errno));
+		    snd_open_strerror());
 	  return(MUS_CANT_OPEN_TEMP_FILE);
 	}
       chans = mus_sound_chans(r->filename);
@@ -605,11 +605,11 @@ static int save_region_1(char *ofile, int type, int format, int srate, int reg, 
 	  if (err == -1) break; /* mus_file_write presumably posted an error message */
 	}
       if (mus_file_close(ifd) != 0)
-	snd_error(_("%s: can't close %s: %s!"), S_save_region, r->filename, strerror(errno));
+	snd_error(_("%s: can't close %s: %s!"), S_save_region, r->filename, snd_strerror());
       for (i = 0; i < chans; i++) FREE(bufs[i]);
       FREE(bufs);
       if (mus_file_close(ofd) != 0)
-	snd_error(_("%s: can't close %s: %s!"), S_save_region, ofile, strerror(errno));
+	snd_error(_("%s: can't close %s: %s!"), S_save_region, ofile, snd_strerror());
       alert_new_file();
     }
   return(MUS_NO_ERROR);
@@ -660,7 +660,7 @@ static int paste_region_1(int n, chan_info *cp, bool add, off_t beg, int trk)
       if (err != MUS_NO_ERROR)
 	{
 	  cp->edit_hook_checked = false;
-	  snd_error(_("can't save mix temp file (%s: %s)"), newname, strerror(errno));
+	  snd_error(_("can't save mix temp file (%s: %s)"), newname, snd_strerror());
 	}
       else 
 	{
@@ -681,7 +681,7 @@ static int paste_region_1(int n, chan_info *cp, bool add, off_t beg, int trk)
 	    {
 	      if (si) si = free_sync_info(si);
 	      cp->edit_hook_checked = false;
-	      snd_error(_("can't make region %d temp file (%s: %s)"), n, tempfile, strerror(errno));
+	      snd_error(_("can't make region %d temp file (%s: %s)"), n, tempfile, snd_strerror());
 	      return(INVALID_REGION);
 	    }
 	  else
@@ -826,13 +826,13 @@ static void deferred_region_to_temp_file(region *r)
       data_size = drp->len * r->chans * datumb;
       fdo = mus_file_create(r->filename);
       if (fdo == -1)
-	snd_error(_("can't write region temp file %s: %s"), r->filename, strerror(errno));
+	snd_error(_("can't write region temp file %s: %s"), r->filename, snd_strerror());
       else
 	{
 	  mus_header_write_next_header(fdo, r->srate, r->chans, 28, data_size, sp0->hdr->format, "region deferred temp", 20);
 	  fdi = mus_file_open_read(sp0->filename);
 	  if (fdi == -1)
-	    snd_error(_("can't read region's original sound? %s: %s"), sp0->filename, strerror(errno));
+	    snd_error(_("can't read region's original sound? %s: %s"), sp0->filename, snd_strerror());
 	  else
 	    {
 	      lseek(fdi, sp0->hdr->data_location + r->chans * datumb * r->begs[0], SEEK_SET);
@@ -876,7 +876,7 @@ static void deferred_region_to_temp_file(region *r)
 #endif
       ofd = open_temp_file(r->filename, r->chans, hdr);
       if (ofd == -1)
-	snd_error(_("can't write region temp file %s: %s"), r->filename, strerror(errno));
+	snd_error(_("can't write region temp file %s: %s"), r->filename, snd_strerror());
       else
 	{
 	  sfs = (snd_fd **)CALLOC(r->chans, sizeof(snd_fd *));
@@ -1083,11 +1083,11 @@ void region_edit(int pos)
 		  /* also, since it's a temp file, if closed, delete temp */
 		}
 	      else snd_error(_("edit region: can't open region %d temp sound %s: %s!"),
-			     r->id, temp_region_name, strerror(errno));
+			     r->id, temp_region_name, snd_strerror());
 	    }
 	  else 
 	    snd_error(_("edit region: can't save region %d in temp file (%s: %s)"),
-		      r->id, temp_region_name, strerror(errno));
+		      r->id, temp_region_name, snd_strerror());
 	  FREE(temp_region_name);
 	}
     }
@@ -1136,7 +1136,7 @@ void save_region_backpointer(snd_info *sp)
   if (err != MUS_NO_ERROR)
     snd_error(_("can't make region temp file (%s: %s)"), 
 	      r->filename, 
-	      strerror(errno));
+	      snd_strerror());
   else
     {
       make_region_readable(r);
@@ -1482,7 +1482,6 @@ using data format (default depends on machine byte order), header type (" S_mus_
 	      XEN_LIST_2(C_TO_XEN_STRING(S_save_region),
 			 C_TO_XEN_STRING("no output file?")));
   name = mus_expand_filename(file);
-  ss->catch_message = NULL;
   if (!(mus_header_writable(header_type, data_format))) 
     {
       if (mus_header_writable(MUS_NEXT, data_format))
@@ -1499,7 +1498,7 @@ using data format (default depends on machine byte order), header type (" S_mus_
   if (res != MUS_NO_ERROR)
     XEN_ERROR(CANNOT_SAVE,
 	      XEN_LIST_2(C_TO_XEN_STRING(S_save_region),
-			 C_TO_XEN_STRING(ss->catch_message)));
+			 C_TO_XEN_STRING(snd_open_strerror())));
   return(args[orig_arg[0] - 1]); /* -> filename, parallel save-selection */
 }
 
@@ -1527,7 +1526,6 @@ mix region into snd's channel chn starting at chn-samp; return new mix id."
     XEN_ERROR(NO_SUCH_TRACK,
 	      XEN_LIST_2(C_TO_XEN_STRING(S_mix_region),
 			 tid));
-  ss->catch_message = NULL;
   id = paste_region_1(rg, cp, true, samp, track_id);
   /* id might legitmately be invalid mix id if with_mix_tags is #f */
   return(C_TO_XEN_INT(id));

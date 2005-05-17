@@ -503,7 +503,7 @@ static snd_info *make_mix_readable(mix_info *md)
 	md->add_snd = make_sound_readable(md->in_filename, true);
       else 
 	{
-	  snd_error(_("mix reader can't find file %s: %s"), md->in_filename, strerror(errno));
+	  snd_error(_("mix reader can't find file %s: %s"), md->in_filename, snd_strerror());
 	  return(NULL);
 	}
       add_sp = md->add_snd;
@@ -886,8 +886,7 @@ static mix_fd *free_mix_fd_almost(mix_fd *mf)
       if (mf->sfs)
 	{
 	  for (i = 0; i < mf->chans; i++)
-	    if (mf->sfs[i]) 
-	      mf->sfs[i] = free_snd_fd(mf->sfs[i]);
+	    mf->sfs[i] = free_snd_fd(mf->sfs[i]);
 	  FREE(mf->sfs);
 	  mf->sfs = NULL;
 	}
@@ -971,7 +970,7 @@ disk_space_t disk_space_p(snd_info *sp, off_t bytes, off_t other_bytes, char *fi
   kfree = disk_kspace(filename);
   if (kfree < 0) 
     {
-      report_in_minibuffer_and_save(sp, strerror(errno)); 
+      report_in_minibuffer_and_save(sp, snd_strerror()); 
       return(NO_PROBLEM);  /* what?? -- disk_kspace => -1 if no such disk, etc -- not really a disk *space* problem */
     }
   kneeded = bytes >> 10;
@@ -1014,7 +1013,7 @@ static char *save_as_temp_file(mus_sample_t **raw_data, int chans, int len, int 
   if (no_space != GIVE_UP)
     mus_file_write(ofd, 0, len - 1, chans, raw_data);
   if (mus_file_close(ofd) != 0)
-    snd_error(_("mix save temp: can't close %s: %s!"), newname, strerror(errno));
+    snd_error(_("mix save temp: can't close %s: %s!"), newname, snd_strerror());
   return(newname);
 }
 
@@ -1148,7 +1147,7 @@ static mix_info *file_mix_samples(off_t beg, off_t num, char *mixfile, chan_info
     {
       free_file_info(ihdr);
       cp->edit_hook_checked = false;
-      snd_error(_("open mix temp file %s hit error: %s"), ofile, strerror(errno)); 
+      snd_error(_("open mix temp file %s hit error: %s"), ofile, snd_open_strerror()); 
       return(NULL);
     }
   if ((disk_space_p(sp, num * 4, 0, ofile)) != GIVE_UP)
@@ -1192,7 +1191,7 @@ static mix_info *file_mix_samples(off_t beg, off_t num, char *mixfile, chan_info
   if (j > 0) mus_file_write(ofd, 0, j - 1, 1, &chandata);
   close_temp_file(ofile, ofd, ohdr->type, num * mus_bytes_per_sample(ohdr->format), sp);
   mus_file_close(ifd);
-  free_snd_fd(csf);
+  csf = free_snd_fd(csf);
   FREE(data[chan]);
   FREE(data);
   free_file_info(ihdr);
@@ -1422,7 +1421,7 @@ void mix_complete_file_at_cursor(snd_info *sp, char *str, bool with_tag, int tra
       cp = any_selected_channel(sp);
       err = mix_complete_file(sp, CURSOR(cp), fullname, with_tag, DONT_DELETE_ME, track_id, false);
       if (err == MIX_FILE_NO_FILE) 
-	report_in_minibuffer_and_save(sp, _("can't mix file: %s, %s"), str, strerror(errno));
+	report_in_minibuffer_and_save(sp, _("can't mix file: %s, %s"), str, snd_strerror());
       if (fullname) FREE(fullname);
     }
 }
@@ -1553,7 +1552,7 @@ static void remix_file(mix_info *md, const char *origin, bool redisplay)
 	  free_file_info(ohdr);
 	  FREE(ofile);
 	  cp->edit_hook_checked = false;
-	  snd_error(_("can't write mix temp file %s: %s\n"), ofile, strerror(errno));
+	  snd_error(_("can't write mix temp file %s: %s\n"), ofile, snd_open_strerror());
 	  return;
 	}
       no_space = disk_space_p(cursp, num * 4, num * 2, ofile);
@@ -1605,8 +1604,8 @@ static void remix_file(mix_info *md, const char *origin, bool redisplay)
 		  free_file_info(ohdr);
 		  snd_remove(ofile, REMOVE_FROM_CACHE);
 		}
-	      if (add) free_mix_fd(add);
-	      if (sub) free_mix_fd(sub);
+	      add = free_mix_fd(add);
+	      sub = free_mix_fd(sub);
 	      cp->edit_hook_checked = false;
 	      if (ofile) {FREE(ofile); ofile = NULL;}
 	      if (true_new_beg != true_old_beg)
@@ -1644,8 +1643,8 @@ static void remix_file(mix_info *md, const char *origin, bool redisplay)
 	  free_file_info(ohdr);
 	  snd_remove(ofile, REMOVE_FROM_CACHE);
 	}
-      if (add) free_mix_fd(add);
-      if (sub) free_mix_fd(sub);
+      add = free_mix_fd(add);
+      sub = free_mix_fd(sub);
       if (ofile) FREE(ofile);
       return;
     }
@@ -1747,9 +1746,9 @@ static void remix_file(mix_info *md, const char *origin, bool redisplay)
 	}
     }
 
-  free_snd_fd(cur);
-  free_mix_fd(add);
-  free_mix_fd(sub);
+  cur = free_snd_fd(cur);
+  add = free_mix_fd(add);
+  sub = free_mix_fd(sub);
 
   if (use_temp_file)
     {
@@ -2146,9 +2145,8 @@ static void make_temporary_graph(chan_info *cp, mix_info *md, mix_state *cs)
 	  erase_and_draw_both_grf_points(md->wg, cp, j);
 	}
     }
-  if (sf) free_snd_fd(sf);
-  if (add) free_mix_fd(add);
-
+  free_snd_fd(sf);
+  free_mix_fd(add);
   ms->lastpj = j;
 }
 
@@ -2354,7 +2352,7 @@ static int prepare_mix_waveform(mix_info *md, mix_state *cs, axis_info *ap, Floa
 	    }
 	}
     }
-  if (add) free_mix_fd(add);
+  free_mix_fd(add);
   return(j);
 }
 
@@ -3245,7 +3243,7 @@ static void play_mix(mix_info *md, off_t beg, bool from_gui)
 	  mus_audio_close(play_fd);
 	  play_fd = -1;
 	}
-      free_mix_fd(mf);
+      mf = free_mix_fd(mf);
     }
   reflect_mix_play_stop();
 #if HAVE_ALSA
@@ -4320,7 +4318,6 @@ track-id is the track value for each newly created mix."
       if (name) FREE(name);
       return(snd_no_such_file_error(S_mix, file));
     }
-  ss->catch_message = NULL;
   if (XEN_NOT_BOUND_P(tag))
     with_mixer = with_mix_tags(ss);
   else with_mixer = XEN_TO_C_BOOLEAN(tag);
@@ -4346,11 +4343,10 @@ track-id is the track value for each newly created mix."
       if (id == MIX_FILE_NO_FILE) 
 	{
 	  if (name) FREE(name);
-	  if (ss->catch_message)
-	    XEN_ERROR(MUS_MISC_ERROR,
-		      XEN_LIST_2(C_TO_XEN_STRING(S_mix),
-				 C_TO_XEN_STRING(ss->catch_message)));
-	  return(snd_no_such_file_error(S_mix, file));
+	  XEN_ERROR(MUS_MISC_ERROR,
+		    XEN_LIST_3(C_TO_XEN_STRING(S_mix),
+			       file,
+			       C_TO_XEN_STRING(snd_strerror())));
 	}
     }
   else
@@ -4373,7 +4369,6 @@ track-id is the track value for each newly created mix."
       if (chans > 0)
 	{
 	  char *origin;
-	  ss->catch_message = NULL;
 	  origin = mus_format("%s" PROC_OPEN "\"%s\"" PROC_SEP OFF_TD PROC_SEP "%d", 
 			      TO_PROC_NAME(S_mix), name, beg, file_channel);
 	  md = file_mix_samples(beg,
@@ -4390,11 +4385,13 @@ track-id is the track value for each newly created mix."
 	  if (md) 
 	    id = md->id;
 	  else
-	    if (ss->catch_message)
-	      XEN_ERROR(MUS_MISC_ERROR,
-			XEN_LIST_2(C_TO_XEN_STRING(S_mix),
-				   C_TO_XEN_STRING(ss->catch_message)));
-
+	    {
+	      if (ss->local_errno != 0)
+		XEN_ERROR(MUS_MISC_ERROR,
+			  XEN_LIST_3(C_TO_XEN_STRING(S_mix),
+				     file,
+				     C_TO_XEN_STRING(snd_strerror())));
+	    }
 	}
       else 
 	{
@@ -4654,7 +4651,7 @@ mix data (a vct) into snd's channel chn starting at beg; return the new mix id"
       sf = init_sample_read(bg, cp, READ_FORWARD);
       for (i = 0; i < len; i++)
 	data[i] += read_sample(sf);
-      free_snd_fd(sf);
+      sf = free_snd_fd(sf);
       change_samples(bg, len, data, cp, LOCK_MIXES, (char *)((edname == NULL) ? S_mix_vct : edname), cp->edit_ctr);
     }
   else
@@ -4720,7 +4717,7 @@ static XEN g_mix_color(XEN mix_id)
   #define H_mix_color "(" S_mix_color "): color of mix tags"
   if (XEN_INTEGER_P(mix_id))
     return(XEN_WRAP_PIXEL(mix_to_color_from_id(XEN_TO_C_INT(mix_id))));
-  return(XEN_WRAP_PIXEL((ss->sgx)->mix_color));
+  return(XEN_WRAP_PIXEL(ss->sgx->mix_color));
 }
 
 static XEN g_with_mix_tags(void) {return(C_TO_XEN_BOOLEAN(with_mix_tags(ss)));}
@@ -7537,8 +7534,7 @@ static void free_track_fd_almost(track_fd *fd)
 	{
 	  int i;
 	  for (i = 0; i < fd->mixes; i++)
-	    if (fd->fds[i]) 
-	      fd->fds[i] = free_mix_fd(fd->fds[i]);
+	    fd->fds[i] = free_mix_fd(fd->fds[i]);
 	  FREE(fd->fds);
 	  fd->fds = NULL;
 	}
@@ -7548,13 +7544,14 @@ static void free_track_fd_almost(track_fd *fd)
     }
 }
 
-static void free_track_fd(track_fd *fd)
+static track_fd *free_track_fd(track_fd *fd)
 {
   if (fd)
     {
       free_track_fd_almost(fd);
       FREE(fd);
     }
+  return(NULL);
 }
 
 static Float next_track_sample(track_fd *fd)

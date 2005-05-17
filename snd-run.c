@@ -1176,8 +1176,7 @@ void free_ptree(struct ptree *pt)
 			      for (k = 0; k < pt->reader_ctr; k++)
 				if ((k != v->addr) && (pt->readers[k] == pt->readers[v->addr]))
 				  pt->readers[k] = NULL;
-			      free_snd_fd(pt->readers[v->addr]); 
-			      pt->readers[v->addr] = NULL;   
+			      pt->readers[v->addr] = free_snd_fd(pt->readers[v->addr]); 
 			    }
 			  break;
 			case R_MIX_READER: 
@@ -6730,7 +6729,7 @@ static void make_sample_reader_r(int *args, ptree *pt)
       if (INT_ARG_5 == -1)
 	pos = cp->edit_ctr;
       else pos = INT_ARG_5;
-      if (READER_RESULT) free_snd_fd(READER_RESULT);
+      free_snd_fd(READER_RESULT);
       if (INT_ARG_4 == -1) direction = READ_BACKWARD;
       READER_RESULT = init_sample_read_any(INT_ARG_1, cp, direction, pos);
     }
@@ -6771,7 +6770,7 @@ static char *descr_make_region_sample_reader_r(int *args, ptree *pt)
 }
 static void make_region_sample_reader_r(int *args, ptree *pt) 
 {
-  if (READER_RESULT) free_snd_fd(READER_RESULT);
+  free_snd_fd(READER_RESULT);
   READER_RESULT = init_region_read(INT_ARG_1, INT_ARG_2, INT_ARG_3, READ_FORWARD); /* beg reg chn */
 }
 static xen_value *make_region_sample_reader_1(ptree *pt, xen_value **args, int num_args)

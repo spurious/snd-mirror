@@ -688,7 +688,7 @@ int save_selection(char *ofile, int type, int format, int srate, const char *com
 	  lseek(ofd, oloc, SEEK_SET);
 	  fdi = mus_file_open_read(sp->filename); /* this does not read the header */
 	  if (fdi == -1)
-	    snd_error(_("can't read selection's original sound? %s: %s"), sp->filename, strerror(errno));
+	    snd_error(_("can't read selection's original sound? %s: %s"), sp->filename, snd_strerror());
 	  else
 	    {
 	      iloc = mus_sound_data_location(sp->filename);
@@ -774,7 +774,7 @@ int save_selection(char *ofile, int type, int format, int srate, const char *com
   FREE(ends);
   if (mus_file_close(ofd) != 0)
     {
-      snd_error(_("save selection: can't close %s: %s!"), ofile, strerror(errno));
+      snd_error(_("save selection: can't close %s: %s!"), ofile, snd_strerror());
       return(MUS_CANT_CLOSE_FILE);
     }
   alert_new_file();
@@ -1063,13 +1063,12 @@ save the current selection in file using the indicated file attributes.  If chan
 			 C_TO_XEN_STRING(_("srate can't be <= 0")),
 			 C_TO_XEN_INT(sr)));
   fname = mus_expand_filename(file);
-  ss->catch_message = NULL;
   err = save_selection(fname, type, format, sr, com, chn);
   if (fname) FREE(fname);
   if (err != MUS_NO_ERROR) 
     XEN_ERROR(CANNOT_SAVE,
 	      XEN_LIST_2(C_TO_XEN_STRING(S_save_selection),
-			 C_TO_XEN_STRING(ss->catch_message)));
+			 C_TO_XEN_STRING(snd_open_strerror())));
   return(args[orig_arg[0] - 1]);
 }
 

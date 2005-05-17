@@ -84,7 +84,7 @@ static bool run_global_search (gfd *g)
 		}
 	      if (sf->at_eof)
 		{
-		  free_snd_fd(sf);
+		  sf = free_snd_fd(sf);
 		  g->fds[i] = NULL;
 		  g->cps[i] = NULL;
 		  k = 0;
@@ -217,8 +217,7 @@ char *global_search(read_direction_t direction)
 	}
       ss->stopped_explicitly = false;
       for (i = 0; i < chans; i++) 
-	if (fd->cps[i]) 
-	  free_snd_fd(fd->fds[i]);
+	free_snd_fd(fd->fds[i]);
       FREE(fd->fds);
       FREE(fd->cps);
       FREE(fd);

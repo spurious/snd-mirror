@@ -360,8 +360,7 @@ typedef struct snd_state {
   struct ptree *search_tree;
   XEN search_proc;
   XEN file_sort_proc;
-  int catch_exists, file_sort_proc_loc, search_proc_loc;
-  char *catch_message;
+  int catch_exists, file_sort_proc_loc, search_proc_loc, local_errno, local_open_errno;
 #if (!USE_GTK)
   bool using_schemes;
 #endif
@@ -481,6 +480,14 @@ typedef struct {
 
 
 /* -------- snd-io.c -------- */
+
+int snd_io_creat(const char *filename, mode_t mode);
+int snd_io_remove(const char *filename);
+int snd_io_rename(const char *old_name, const char *new_name);
+int snd_io_fclose(FILE *fd);
+FILE *snd_io_fopen(const char *filename, const char *modes);
+int snd_io_close(int fd);
+int snd_io_open(const char *filename, int flags, mode_t mode);
 
 int snd_open_read(const char *arg);
 int snd_reopen_write(const char *arg);
@@ -1322,6 +1329,8 @@ Float in_dB(Float min_dB, Float lin_dB, Float py);
 char *copy_string(const char *str);
 int snd_strlen(const char *str);
 char *snd_strcat(char *errmsg, const char *str, int *err_size);
+char *snd_strerror(void);
+char *snd_open_strerror(void);
 char *string_to_colon(char *val);
 char *filename_without_home_directory(const char *name);
 char *just_filename(char *name);
