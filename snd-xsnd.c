@@ -26,40 +26,40 @@ enum {W_pane,
 
 #define NUM_SND_WIDGETS 45
 
-Widget unite_button(snd_info *sp) {return((sp->sgx)->snd_widgets[W_unite]);}
-Widget filter_graph(snd_info *sp) {return((sp->sgx)->snd_widgets[W_filter_env]);}
+Widget unite_button(snd_info *sp) {return(sp->sgx->snd_widgets[W_unite]);}
+Widget filter_graph(snd_info *sp) {return(sp->sgx->snd_widgets[W_filter_env]);}
 
-Widget w_snd_pane(snd_info *sp)   {return((sp->sgx)->snd_widgets[W_pane]);}
-Widget w_snd_name(snd_info *sp)   {return((sp->sgx)->snd_widgets[W_name]);}
+Widget w_snd_pane(snd_info *sp)   {return(sp->sgx->snd_widgets[W_pane]);}
+Widget w_snd_name(snd_info *sp)   {return(sp->sgx->snd_widgets[W_name]);}
 
-#define CONTROL_PANEL(Sp)        (Sp->sgx)->snd_widgets[W_control_panel]
-#define PLAY_BUTTON(Sp)          (Sp->sgx)->snd_widgets[W_play]
-#define NAME_ICON(Sp)            (Sp->sgx)->snd_widgets[W_name_icon]
-#define AMP_SCROLLBAR(Sp)        (Sp->sgx)->snd_widgets[W_amp]
-#define SPEED_SCROLLBAR(Sp)      (Sp->sgx)->snd_widgets[W_speed]
-#define SPEED_ARROW(Sp)          (Sp->sgx)->snd_widgets[W_speed_arrow]
-#define EXPAND_SCROLLBAR(Sp)     (Sp->sgx)->snd_widgets[W_expand]
-#define CONTRAST_SCROLLBAR(Sp)   (Sp->sgx)->snd_widgets[W_contrast]
-#define REVSCL_SCROLLBAR(Sp)     (Sp->sgx)->snd_widgets[W_revscl]
-#define REVLEN_SCROLLBAR(Sp)     (Sp->sgx)->snd_widgets[W_revlen]
-#define AMP_LABEL(Sp)            (Sp->sgx)->snd_widgets[W_amp_number]
-#define SPEED_LABEL(Sp)          (Sp->sgx)->snd_widgets[W_speed_number]
-#define EXPAND_LABEL(Sp)         (Sp->sgx)->snd_widgets[W_expand_number]
-#define EXPAND_BUTTON(Sp)        (Sp->sgx)->snd_widgets[W_expand_button]
-#define CONTRAST_LABEL(Sp)       (Sp->sgx)->snd_widgets[W_contrast_number]
-#define CONTRAST_BUTTON(Sp)      (Sp->sgx)->snd_widgets[W_contrast_button]
-#define REVSCL_LABEL(Sp)         (Sp->sgx)->snd_widgets[W_revscl_number]
-#define REVLEN_LABEL(Sp)         (Sp->sgx)->snd_widgets[W_revlen_number]
-#define REVERB_BUTTON(Sp)        (Sp->sgx)->snd_widgets[W_reverb_button]
-#define FILTER_ORDER_TEXT(Sp)    (Sp->sgx)->snd_widgets[W_filter_order]
-#define FILTER_COEFFS_TEXT(Sp)   (Sp->sgx)->snd_widgets[W_filter]
-#define FILTER_BUTTON(Sp)        (Sp->sgx)->snd_widgets[W_filter_button]
-#define FILTER_DB_BUTTON(Sp)     (Sp->sgx)->snd_widgets[W_filter_dB]
-#define FILTER_HZ_BUTTON(Sp)     (Sp->sgx)->snd_widgets[W_filter_hz]
-#define MINIBUFFER_SEPARATOR(Sp) (Sp->sgx)->snd_widgets[W_info_sep]
-#define MINIBUFFER_LABEL(Sp)     (Sp->sgx)->snd_widgets[W_info_label]
-#define MINIBUFFER_TEXT(Sp)      (Sp->sgx)->snd_widgets[W_info]
-#define SYNC_BUTTON(Sp)          (Sp->sgx)->snd_widgets[W_sync]
+#define CONTROL_PANEL(Sp)        Sp->sgx->snd_widgets[W_control_panel]
+#define PLAY_BUTTON(Sp)          Sp->sgx->snd_widgets[W_play]
+#define NAME_ICON(Sp)            Sp->sgx->snd_widgets[W_name_icon]
+#define AMP_SCROLLBAR(Sp)        Sp->sgx->snd_widgets[W_amp]
+#define SPEED_SCROLLBAR(Sp)      Sp->sgx->snd_widgets[W_speed]
+#define SPEED_ARROW(Sp)          Sp->sgx->snd_widgets[W_speed_arrow]
+#define EXPAND_SCROLLBAR(Sp)     Sp->sgx->snd_widgets[W_expand]
+#define CONTRAST_SCROLLBAR(Sp)   Sp->sgx->snd_widgets[W_contrast]
+#define REVSCL_SCROLLBAR(Sp)     Sp->sgx->snd_widgets[W_revscl]
+#define REVLEN_SCROLLBAR(Sp)     Sp->sgx->snd_widgets[W_revlen]
+#define AMP_LABEL(Sp)            Sp->sgx->snd_widgets[W_amp_number]
+#define SPEED_LABEL(Sp)          Sp->sgx->snd_widgets[W_speed_number]
+#define EXPAND_LABEL(Sp)         Sp->sgx->snd_widgets[W_expand_number]
+#define EXPAND_BUTTON(Sp)        Sp->sgx->snd_widgets[W_expand_button]
+#define CONTRAST_LABEL(Sp)       Sp->sgx->snd_widgets[W_contrast_number]
+#define CONTRAST_BUTTON(Sp)      Sp->sgx->snd_widgets[W_contrast_button]
+#define REVSCL_LABEL(Sp)         Sp->sgx->snd_widgets[W_revscl_number]
+#define REVLEN_LABEL(Sp)         Sp->sgx->snd_widgets[W_revlen_number]
+#define REVERB_BUTTON(Sp)        Sp->sgx->snd_widgets[W_reverb_button]
+#define FILTER_ORDER_TEXT(Sp)    Sp->sgx->snd_widgets[W_filter_order]
+#define FILTER_COEFFS_TEXT(Sp)   Sp->sgx->snd_widgets[W_filter]
+#define FILTER_BUTTON(Sp)        Sp->sgx->snd_widgets[W_filter_button]
+#define FILTER_DB_BUTTON(Sp)     Sp->sgx->snd_widgets[W_filter_dB]
+#define FILTER_HZ_BUTTON(Sp)     Sp->sgx->snd_widgets[W_filter_hz]
+#define MINIBUFFER_SEPARATOR(Sp) Sp->sgx->snd_widgets[W_info_sep]
+#define MINIBUFFER_LABEL(Sp)     Sp->sgx->snd_widgets[W_info_label]
+#define MINIBUFFER_TEXT(Sp)      Sp->sgx->snd_widgets[W_info]
+#define SYNC_BUTTON(Sp)          Sp->sgx->snd_widgets[W_sync]
 
 void goto_minibuffer(snd_info *sp)
 {
@@ -2542,8 +2542,8 @@ void snd_info_cleanup(snd_info *sp)
 	  sp->channel_style = CHANNELS_SEPARATE;
 	  if (sound_style(ss) == SOUNDS_IN_NOTEBOOK)
 	    {
-	      set_label((sp->sgx)->tab, _("none"));
-	      XmChangeColor((sp->sgx)->tab, ss->sgx->graph_color);
+	      set_label(sp->sgx->tab, _("none"));
+	      XmChangeColor(sp->sgx->tab, ss->sgx->graph_color);
 	    }
 	  XtUnmanageChild(w_snd_pane(sp));
 	}
@@ -2978,7 +2978,7 @@ void reflect_sound_selection(snd_info *sp)
 	      int page, current_page;
 	      XmNotebookPageStatus status;
 	      XmNotebookPageInfo info;
-	      XmChangeColor((sp->sgx)->tab, ss->sgx->selected_graph_color);
+	      XmChangeColor(sp->sgx->tab, ss->sgx->selected_graph_color);
 	      XtVaGetValues(SOUND_PANE(ss), XmNcurrentPageNumber, &current_page, NULL);
 	      XtVaGetValues(sp->sgx->tab, XmNpageNumber, &page, NULL);
 	      if (page != current_page)

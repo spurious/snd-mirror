@@ -4479,13 +4479,23 @@ static int channel_to_file(chan_info *cp, const char *ofile, int edpos)
 {
   snd_info *sp;
   snd_fd **sf;
-  int err;
+  int err = MUS_NO_ERROR;
   sp = cp->sound;
-  err = MUS_NO_ERROR;
   sf = (snd_fd **)MALLOC(sizeof(snd_fd *));
   sf[0] = init_sample_read_any(0, cp, READ_FORWARD, edpos);
   if (sf[0] == NULL)
-    err = MUS_ERROR;
+    {
+      err = MUS_ERROR;
+      FREE(sf);
+      sf = NULL;
+      XEN_ERROR(NO_SUCH_EDIT,
+		XEN_LIST_3(C_TO_XEN_STRING(S_save_sound_as),
+			   C_TO_XEN_STRING("edpos: ~A, but ~A chan ~A has ~A edits"),
+			   XEN_LIST_4(C_TO_XEN_INT(edpos),
+				      C_TO_XEN_STRING(cp->sound->short_filename),
+				      C_TO_XEN_INT(cp->chan),
+				      C_TO_XEN_INT(cp->edit_ctr))));
+    }
   else
     {
       err = snd_make_file(ofile, 1, sp->hdr, sf, cp->samples[edpos]);
@@ -7098,7 +7108,27 @@ int save_edits_without_display(snd_info *sp, char *new_name, int type, int forma
 	      if (pos == AT_CURRENT_EDIT_POSITION) local_pos = cp->edit_ctr; else local_pos = pos;
 	      sf[i] = init_sample_read_any(0, cp, READ_FORWARD, local_pos);
 	      if (frames < cp->samples[local_pos]) frames = cp->samples[local_pos];
-	      if (sf[i] == NULL) err = MUS_ERROR;
+	      if (sf[i] == NULL)
+		{
+		  err = MUS_ERROR;
+		  if ((pos != AT_CURRENT_EDIT_POSITION) && (pos != cp->edit_ctr))
+		    {
+		      int k;
+		      /* this can't happen from the GUI, so it's safe to throw an error */
+		      for (k = 0; k < sp->nchans; k++) 
+			sf[k] = free_snd_fd(sf[k]);
+		      FREE(sf);
+		      sf = NULL;
+		      hdr = free_file_info(hdr);
+		      XEN_ERROR(NO_SUCH_EDIT,
+				XEN_LIST_3(C_TO_XEN_STRING(S_save_sound_as),
+					   C_TO_XEN_STRING("edpos: ~A, but ~A chan ~A has ~A edits"),
+					   XEN_LIST_4(C_TO_XEN_INT(pos),
+						      C_TO_XEN_STRING(cp->sound->short_filename),
+						      C_TO_XEN_INT(cp->chan),
+						      C_TO_XEN_INT(cp->edit_ctr))));
+		    }
+		}
 	    }
 	  if (err == MUS_NO_ERROR)
 	    err = snd_make_file(new_name, sp->nchans, hdr, sf, frames);
@@ -8382,7 +8412,7 @@ the new data's end."
 
 static XEN g_set_samples(XEN samp_0, XEN samps, XEN vect, XEN snd_n, XEN chn_n, XEN truncate, XEN edname, XEN infile_chan, XEN edpos, XEN auto_delete)
 {
-  XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(edname) || XEN_STRING_P(edname) || XEN_BOOLEAN_P(edname), edname, XEN_ARG_7, "set-samples", "a string");
+  XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(edname) || XEN_STRING_P(edname) || XEN_FALSE_P(edname), edname, XEN_ARG_7, "set-samples", "a string");
   return(g_set_samples_with_origin(samp_0, samps, vect, snd_n, chn_n, truncate,
 				   (char *)((XEN_STRING_P(edname)) ? XEN_TO_C_STRING(edname) : "set-samples"),
 				   infile_chan, edpos, auto_delete));

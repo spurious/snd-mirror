@@ -1570,7 +1570,7 @@ static apply_state *free_apply_state(apply_state *ap)
     {
       if (ap->ofile) {FREE(ap->ofile); ap->ofile = NULL;}
       if (ap->origin) {FREE(ap->origin); ap->origin = NULL;}
-      if (ap->hdr) ap->hdr = free_file_info(ap->hdr);
+      ap->hdr = free_file_info(ap->hdr);
       FREE(ap);
     }
   return(NULL);
@@ -3263,6 +3263,7 @@ Omitted arguments take their value from the sound being saved.\n\
   int orig_arg[8] = {0, 0, 0, 0, 0, 0, 0, 0};
   int vals, i, arglist_len;
   XEN edpos = XEN_UNDEFINED, index = XEN_UNDEFINED;
+  bool got_edpos = false, free_outcom = false;
   keys[0] = kw_file;
   keys[1] = kw_sound;
   keys[2] = kw_header_type;
@@ -3288,9 +3289,13 @@ Omitted arguments take their value from the sound being saved.\n\
 			     C_TO_XEN_STRING(_("srate can't be <= 0")),
 			     C_TO_XEN_INT(sr)));
       chan = mus_optkey_to_int(keys[5], S_save_sound_as, orig_arg[5], chan);
-      if (!(XEN_KEYWORD_P(keys[6]))) edpos = keys[6];
+      if (!(XEN_KEYWORD_P(keys[6]))) 
+	{
+	  edpos = keys[6];
+	  if ((XEN_INTEGER_P(edpos)) || (XEN_PROCEDURE_P(edpos)))
+	    got_edpos = true;
+	}
       outcom = mus_optkey_to_string(keys[7], S_save_sound_as, orig_arg[7], NULL);
-      /* TODO: test save-sound-as with comment */
     }
   if ((file == NULL) || (directory_p(file)))
     XEN_ERROR(MUS_MISC_ERROR,
@@ -3324,14 +3329,28 @@ Omitted arguments take their value from the sound being saved.\n\
   if (chan >= sp->nchans)
     return(snd_no_such_channel_error(S_save_sound_as, index, keys[5]));
   fname = mus_expand_filename(file);
-  if (outcom == NULL) outcom = output_comment(hdr);
+  if (outcom == NULL) 
+    {
+      outcom = output_comment(hdr);
+      if (outcom) free_outcom = true;
+    }
   if (!(run_before_save_as_hook(sp, fname, false, sr, ht, df, outcom)))
     {
-      if (chan >= 0)
-	err = save_channel_edits(sp->chans[chan], fname, to_c_edit_position(sp->chans[chan], edpos, S_save_sound_as, 7));
-      else err = save_edits_without_display(sp, fname, ht, df, sr, outcom, to_c_edit_position(sp->chans[0], edpos, S_save_sound_as, 7));
+      if (got_edpos)
+	{
+	  if (chan >= 0)
+	    err = save_channel_edits(sp->chans[chan], fname, to_c_edit_position(sp->chans[chan], edpos, S_save_sound_as, 7));
+	  else err = save_edits_without_display(sp, fname, ht, df, sr, outcom, to_c_edit_position(sp->chans[0], edpos, S_save_sound_as, 7));
+	}
+      else
+	{
+	  /* channel edpos's may be different in multi-chan case, but we want to save all the latest versions */
+	  if (chan >= 0)
+	    err = save_channel_edits(sp->chans[chan], fname, AT_CURRENT_EDIT_POSITION);
+	  else err = save_edits_without_display(sp, fname, ht, df, sr, outcom, AT_CURRENT_EDIT_POSITION);
+	}
     }
-  if (outcom) FREE(outcom);
+  if (free_outcom) {FREE(outcom); outcom = NULL;}
   if (err == MUS_NO_ERROR) 
     run_after_save_as_hook(sp, fname, false); /* true => from dialog */
   else
@@ -3340,8 +3359,9 @@ Omitted arguments take their value from the sound being saved.\n\
       errstr = C_TO_XEN_STRING(fname);
       if (fname) {FREE(fname); fname = NULL;}
       XEN_ERROR(CANNOT_SAVE,
-		XEN_LIST_3(C_TO_XEN_STRING(S_save_sound_as),
+		XEN_LIST_4(C_TO_XEN_STRING(S_save_sound_as),
 			   errstr,
+			   C_TO_XEN_STRING(mus_error_type_to_string(err)),
 			   C_TO_XEN_STRING(snd_open_strerror())));
     }
   if (fname) FREE(fname);
@@ -3868,8 +3888,8 @@ where each inner list entry can also be #f."
   snd_info *sp;
   chan_info *cp;
   ASSERT_CHANNEL(S_controls_to_channel, snd, chn, 4);
-  XEN_ASSERT_TYPE(XEN_OFF_T_P(beg) || XEN_BOOLEAN_P(beg) || XEN_NOT_BOUND_P(beg), beg, XEN_ARG_2, S_controls_to_channel, "an integer");
-  XEN_ASSERT_TYPE(XEN_OFF_T_P(dur) || XEN_BOOLEAN_P(dur) || XEN_NOT_BOUND_P(dur), dur, XEN_ARG_3, S_controls_to_channel, "an integer");
+  XEN_ASSERT_TYPE(XEN_OFF_T_P(beg) || XEN_FALSE_P(beg) || XEN_NOT_BOUND_P(beg), beg, XEN_ARG_2, S_controls_to_channel, "an integer");
+  XEN_ASSERT_TYPE(XEN_OFF_T_P(dur) || XEN_FALSE_P(dur) || XEN_NOT_BOUND_P(dur), dur, XEN_ARG_3, S_controls_to_channel, "an integer");
   XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(origin), origin, XEN_ARG_7, S_controls_to_channel, "a string");
   sp = get_sp(snd, NO_PLAYERS); /* control changes make sense, but not 'apply' -- expecting just 'play' if a player */
   if (sp)
@@ -4077,6 +4097,8 @@ static int pack_mus_sample_type(void)
 }
 
 #define PEAK_ENV_VERSION 0
+#define PEAK_ENV_INTS 5
+#define PEAK_ENV_SAMPS 2
 
 /* TODO: include maxamp-position in peak-env file
  *         add a version number in the low-order bits (currently only bit 0 is used)
@@ -4097,8 +4119,8 @@ static XEN g_write_peak_env_info_file(XEN snd, XEN chn, XEN name)
   char *fullname = NULL;
   env_info *ep;
   int fd;
-  int ibuf[5];
-  mus_sample_t mbuf[2];
+  int ibuf[PEAK_ENV_INTS];
+  mus_sample_t mbuf[PEAK_ENV_SAMPS];
   XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_2, S_write_peak_env_info_file, "a string");
   ASSERT_CHANNEL(S_write_peak_env_info_file, snd, chn, 1);
   cp = get_cp(snd, chn, S_write_peak_env_info_file);
@@ -4128,8 +4150,8 @@ static XEN g_write_peak_env_info_file(XEN snd, XEN chn, XEN name)
   ibuf[4] = ep->top_bin;
   mbuf[0] = ep->fmin;
   mbuf[1] = ep->fmax;
-  write(fd, (char *)ibuf, (5 * sizeof(int)));
-  write(fd, (char *)mbuf, (2 * sizeof(mus_sample_t)));
+  write(fd, (char *)ibuf, (PEAK_ENV_INTS * sizeof(int)));
+  write(fd, (char *)mbuf, (PEAK_ENV_SAMPS * sizeof(mus_sample_t)));
   write(fd, (char *)(ep->data_min), (ep->amp_env_size * sizeof(mus_sample_t)));
   write(fd, (char *)(ep->data_max), (ep->amp_env_size * sizeof(mus_sample_t)));
   snd_close(fd, fullname);
@@ -4143,16 +4165,16 @@ static env_info *get_peak_env_info(char *fullname, peak_env_error_t *error)
 {
   env_info *ep;
   int fd, bytes, hdr = 0;
-  int ibuf[5];
-  mus_sample_t mbuf[2];
+  int ibuf[PEAK_ENV_INTS];
+  mus_sample_t mbuf[PEAK_ENV_SAMPS];
   fd = mus_file_open_read(fullname);
   if (fd == -1) 
     {
       (*error) = PEAK_ENV_NO_FILE;
       return(NULL);
     }
-  bytes = read(fd, (char *)ibuf, (5 * sizeof(int)));
-  if (bytes != (5 * sizeof(int)))
+  bytes = read(fd, (char *)ibuf, (PEAK_ENV_INTS * sizeof(int)));
+  if (bytes != (PEAK_ENV_INTS * sizeof(int)))
     {
       snd_close(fd, fullname);
       (*error) = PEAK_ENV_NO_DATA;
@@ -4188,7 +4210,7 @@ static env_info *get_peak_env_info(char *fullname, peak_env_error_t *error)
   ep->samps_per_bin = ibuf[2];
   ep->bin = ibuf[3];
   ep->top_bin = ibuf[4];
-  read(fd, (char *)mbuf, (2 * sizeof(mus_sample_t)));
+  read(fd, (char *)mbuf, (PEAK_ENV_SAMPS * sizeof(mus_sample_t)));
   ep->fmin = mbuf[0];
   ep->fmax = mbuf[1];
   ep->data_min = (mus_sample_t *)MALLOC(ep->amp_env_size * sizeof(mus_sample_t));

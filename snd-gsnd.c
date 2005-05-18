@@ -19,42 +19,42 @@ enum {W_amp_adj, W_speed_adj, W_contrast_adj, W_expand_adj, W_revscl_adj, W_revl
 #define NUM_SND_WIDGETS 57
 #define NUM_SND_ADJS 7
 
-GtkWidget *unite_button(snd_info *sp)   {return((sp->sgx)->snd_widgets[W_unite]);}
-GtkWidget *filter_graph(snd_info *sp)   {return((sp->sgx)->snd_widgets[W_filter_env]);}
+GtkWidget *unite_button(snd_info *sp)   {return(sp->sgx->snd_widgets[W_unite]);}
+GtkWidget *filter_graph(snd_info *sp)   {return(sp->sgx->snd_widgets[W_filter_env]);}
 
-GtkWidget *w_snd_pane(snd_info *sp)     {return((sp->sgx)->snd_widgets[W_pane]);}
-GtkWidget *w_snd_pane_box(snd_info *sp) {return((sp->sgx)->snd_widgets[W_pane_box]);}
-GtkWidget *w_snd_name(snd_info *sp)     {return((sp->sgx)->snd_widgets[W_name]);}
+GtkWidget *w_snd_pane(snd_info *sp)     {return(sp->sgx->snd_widgets[W_pane]);}
+GtkWidget *w_snd_pane_box(snd_info *sp) {return(sp->sgx->snd_widgets[W_pane_box]);}
+GtkWidget *w_snd_name(snd_info *sp)     {return(sp->sgx->snd_widgets[W_name]);}
 
-#define CONTROL_PANEL(Sp)        (Sp->sgx)->snd_widgets[W_control_panel]
-#define PLAY_BUTTON(Sp)          (Sp->sgx)->snd_widgets[W_play]
-#define NAME_PIX(Sp)             (Sp->sgx)->snd_widgets[W_name_pix]
-#define SPEED_ARROW(Sp)          (Sp->sgx)->snd_widgets[W_speed_pix]
-#define AMP_LABEL(Sp)            (Sp->sgx)->snd_widgets[W_amp_number]
-#define SPEED_LABEL(Sp)          (Sp->sgx)->snd_widgets[W_speed_number]
-#define EXPAND_LABEL(Sp)         (Sp->sgx)->snd_widgets[W_expand_number]
-#define EXPAND_BUTTON(Sp)        (Sp->sgx)->snd_widgets[W_expand_button]
-#define CONTRAST_LABEL(Sp)       (Sp->sgx)->snd_widgets[W_contrast_number]
-#define CONTRAST_BUTTON(Sp)      (Sp->sgx)->snd_widgets[W_contrast_button]
-#define REVSCL_LABEL(Sp)         (Sp->sgx)->snd_widgets[W_revscl_number]
-#define REVLEN_LABEL(Sp)         (Sp->sgx)->snd_widgets[W_revlen_number]
-#define REVERB_BUTTON(Sp)        (Sp->sgx)->snd_widgets[W_reverb_button]
-#define FILTER_ORDER_TEXT(Sp)    (Sp->sgx)->snd_widgets[W_filter_order]
-#define FILTER_COEFFS_TEXT(Sp)   (Sp->sgx)->snd_widgets[W_filter]
-#define FILTER_BUTTON(Sp)        (Sp->sgx)->snd_widgets[W_filter_button]
-#define FILTER_DB_BUTTON(Sp)     (Sp->sgx)->snd_widgets[W_filter_dB]
-#define FILTER_HZ_BUTTON(Sp)     (Sp->sgx)->snd_widgets[W_filter_hz]
-#define MINIBUFFER_SEPARATOR(Sp) (Sp->sgx)->snd_widgets[W_info_sep]
-#define MINIBUFFER_LABEL(Sp)     (Sp->sgx)->snd_widgets[W_info_label]
-#define MINIBUFFER_TEXT(Sp)      (Sp->sgx)->snd_widgets[W_info]
-#define SYNC_BUTTON(Sp)          (Sp->sgx)->snd_widgets[W_sync]
+#define CONTROL_PANEL(Sp)        Sp->sgx->snd_widgets[W_control_panel]
+#define PLAY_BUTTON(Sp)          Sp->sgx->snd_widgets[W_play]
+#define NAME_PIX(Sp)             Sp->sgx->snd_widgets[W_name_pix]
+#define SPEED_ARROW(Sp)          Sp->sgx->snd_widgets[W_speed_pix]
+#define AMP_LABEL(Sp)            Sp->sgx->snd_widgets[W_amp_number]
+#define SPEED_LABEL(Sp)          Sp->sgx->snd_widgets[W_speed_number]
+#define EXPAND_LABEL(Sp)         Sp->sgx->snd_widgets[W_expand_number]
+#define EXPAND_BUTTON(Sp)        Sp->sgx->snd_widgets[W_expand_button]
+#define CONTRAST_LABEL(Sp)       Sp->sgx->snd_widgets[W_contrast_number]
+#define CONTRAST_BUTTON(Sp)      Sp->sgx->snd_widgets[W_contrast_button]
+#define REVSCL_LABEL(Sp)         Sp->sgx->snd_widgets[W_revscl_number]
+#define REVLEN_LABEL(Sp)         Sp->sgx->snd_widgets[W_revlen_number]
+#define REVERB_BUTTON(Sp)        Sp->sgx->snd_widgets[W_reverb_button]
+#define FILTER_ORDER_TEXT(Sp)    Sp->sgx->snd_widgets[W_filter_order]
+#define FILTER_COEFFS_TEXT(Sp)   Sp->sgx->snd_widgets[W_filter]
+#define FILTER_BUTTON(Sp)        Sp->sgx->snd_widgets[W_filter_button]
+#define FILTER_DB_BUTTON(Sp)     Sp->sgx->snd_widgets[W_filter_dB]
+#define FILTER_HZ_BUTTON(Sp)     Sp->sgx->snd_widgets[W_filter_hz]
+#define MINIBUFFER_SEPARATOR(Sp) Sp->sgx->snd_widgets[W_info_sep]
+#define MINIBUFFER_LABEL(Sp)     Sp->sgx->snd_widgets[W_info_label]
+#define MINIBUFFER_TEXT(Sp)      Sp->sgx->snd_widgets[W_info]
+#define SYNC_BUTTON(Sp)          Sp->sgx->snd_widgets[W_sync]
 
-#define AMP_ADJUSTMENT(Sp)       (Sp->sgx)->snd_adjs[W_amp_adj]
-#define SPEED_ADJUSTMENT(Sp)     (Sp->sgx)->snd_adjs[W_speed_adj]
-#define EXPAND_ADJUSTMENT(Sp)    (Sp->sgx)->snd_adjs[W_expand_adj]
-#define CONTRAST_ADJUSTMENT(Sp)  (Sp->sgx)->snd_adjs[W_contrast_adj]
-#define REVSCL_ADJUSTMENT(Sp)    (Sp->sgx)->snd_adjs[W_revscl_adj]
-#define REVLEN_ADJUSTMENT(Sp)    (Sp->sgx)->snd_adjs[W_revlen_adj]
+#define AMP_ADJUSTMENT(Sp)       Sp->sgx->snd_adjs[W_amp_adj]
+#define SPEED_ADJUSTMENT(Sp)     Sp->sgx->snd_adjs[W_speed_adj]
+#define EXPAND_ADJUSTMENT(Sp)    Sp->sgx->snd_adjs[W_expand_adj]
+#define CONTRAST_ADJUSTMENT(Sp)  Sp->sgx->snd_adjs[W_contrast_adj]
+#define REVSCL_ADJUSTMENT(Sp)    Sp->sgx->snd_adjs[W_revscl_adj]
+#define REVLEN_ADJUSTMENT(Sp)    Sp->sgx->snd_adjs[W_revlen_adj]
 
 
 /* -------- PIXMAPS -------- */
@@ -179,7 +179,7 @@ void goto_minibuffer(snd_info *sp)
 {
   if (sp) 
     {
-      (sp->sgx)->mini_active = true;
+      sp->sgx->mini_active = true;
       goto_window(MINIBUFFER_TEXT(sp));
     }
 }
@@ -216,14 +216,14 @@ static void minibuffer_activate_callback(GtkWidget *w, gpointer data)
   snd_info *sp = (snd_info *)data;
   ss->mx_sp = sp; 
   snd_minibuffer_activate(sp, 0, false);
-  (sp->sgx)->mini_active = true;
+  sp->sgx->mini_active = true;
 }
 
 static gboolean minibuffer_key_callback(GtkWidget *w, GdkEventKey *event, gpointer data)
 {
   /* can't use M-p in gtk version because it's trapped by a menu accelerator (File:Print) -- M-n is File:New */
   snd_info *sp = (snd_info *)data;
-  if (((!(sp->sgx)->mini_active)) || 
+  if (((!sp->sgx->mini_active)) || 
       (((event->keyval == snd_K_s) || 
 	(event->keyval == snd_K_r)) && 
        (event->state & snd_ControlMask)))
@@ -247,7 +247,7 @@ static gboolean minibuffer_mouse_enter(GtkWidget *w, GdkEventCrossing *ev, gpoin
 {
   snd_info *sp = (snd_info *)data;
   if ((sp) && (sp->inuse == SOUND_NORMAL))
-    (sp->sgx)->mini_active = true;
+    sp->sgx->mini_active = true;
   return(false);
 }
 
@@ -255,7 +255,7 @@ static gboolean minibuffer_mouse_leave(GtkWidget *w, GdkEventCrossing *ev, gpoin
 {
   snd_info *sp = (snd_info *)data;
   if ((sp) && (sp->inuse == SOUND_NORMAL))
-    (sp->sgx)->mini_active = false;
+    sp->sgx->mini_active = false;
   return(false);
 }
 
@@ -1834,7 +1834,7 @@ pane-box (10)name-form"
 	        XEN_CONS(XEN_WRAP_WIDGET(MINIBUFFER_LABEL(sp)),
 	         XEN_CONS(XEN_WRAP_WIDGET(NAME_PIX(sp)),
 		  XEN_CONS(XEN_WRAP_WIDGET(w_snd_pane_box(sp)),
-		   XEN_CONS(XEN_WRAP_WIDGET((sp->sgx)->snd_widgets[W_name_form]),
+		   XEN_CONS(XEN_WRAP_WIDGET(sp->sgx->snd_widgets[W_name_form]),
 	            XEN_EMPTY_LIST))))))))))));
 }
 

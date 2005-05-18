@@ -10,19 +10,19 @@ enum {W_top, W_form, W_main_window, W_edhist, W_wf_buttons, W_f, W_w, W_left_scr
 
 Widget channel_main_pane(chan_info *cp)
 {
-  if ((cp) && (cp->cgx)) return((cp->cgx)->chan_widgets[W_form]);
+  if ((cp) && (cp->cgx)) return(cp->cgx->chan_widgets[W_form]);
   return(NULL);
 }
 
-Widget channel_graph(chan_info *cp)      {return((cp->cgx)->chan_widgets[W_graph]);}
-Widget channel_sx(chan_info *cp)         {return((cp->cgx)->chan_widgets[W_sx]);}
-Widget channel_sy(chan_info *cp)         {return((cp->cgx)->chan_widgets[W_sy]);}
-Widget channel_zx(chan_info *cp)         {return((cp->cgx)->chan_widgets[W_zx]);}
-Widget channel_zy(chan_info *cp)         {return((cp->cgx)->chan_widgets[W_zy]);}
-static Widget channel_gsy(chan_info *cp) {return((cp->cgx)->chan_widgets[W_gsy]);}
-static Widget channel_gzy(chan_info *cp) {return((cp->cgx)->chan_widgets[W_gzy]);}
-Widget channel_w(chan_info *cp)          {return((cp->cgx)->chan_widgets[W_w]);}
-Widget channel_f(chan_info *cp)          {return((cp->cgx)->chan_widgets[W_f]);}
+Widget channel_graph(chan_info *cp)      {return(cp->cgx->chan_widgets[W_graph]);}
+Widget channel_sx(chan_info *cp)         {return(cp->cgx->chan_widgets[W_sx]);}
+Widget channel_sy(chan_info *cp)         {return(cp->cgx->chan_widgets[W_sy]);}
+Widget channel_zx(chan_info *cp)         {return(cp->cgx->chan_widgets[W_zx]);}
+Widget channel_zy(chan_info *cp)         {return(cp->cgx->chan_widgets[W_zy]);}
+static Widget channel_gsy(chan_info *cp) {return(cp->cgx->chan_widgets[W_gsy]);}
+static Widget channel_gzy(chan_info *cp) {return(cp->cgx->chan_widgets[W_gzy]);}
+Widget channel_w(chan_info *cp)          {return(cp->cgx->chan_widgets[W_w]);}
+Widget channel_f(chan_info *cp)          {return(cp->cgx->chan_widgets[W_f]);}
 
 bool channel_graph_is_visible(chan_info *cp)
 {
@@ -1174,7 +1174,7 @@ GC copy_GC(chan_info *cp)
 {
   state_context *sx;
   sx = ss->sgx;
-  if ((cp->cgx)->selected) return(sx->selected_basic_gc);
+  if (cp->cgx->selected) return(sx->selected_basic_gc);
   return(sx->basic_gc);
 }
 
@@ -1185,7 +1185,7 @@ GC erase_GC(chan_info *cp)
   snd_info *sp;
   sp = cp->sound;
   sx = ss->sgx;
-  if (((cp->cgx)->selected) ||
+  if ((cp->cgx->selected) ||
       ((sp) && 
        (sp->channel_style == CHANNELS_SUPERIMPOSED) && 
        (sp->index == ss->selected_sound)))
@@ -1332,7 +1332,7 @@ void change_channel_style(snd_info *sp, channel_style_t new_style)
 
 bool fixup_cp_cgx_ax_wn(chan_info *cp) 
 {
-  ((cp->cgx)->ax)->wn = XtWindow((cp->cgx)->chan_widgets[W_graph]); 
+  (cp->cgx->ax)->wn = XtWindow(cp->cgx->chan_widgets[W_graph]); 
   return(true);
 }
 

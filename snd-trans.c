@@ -1492,4 +1492,6 @@ int snd_translate(const char *oldname, const char *newname, int type)
   return(err);
 }
 
-/* TODO: some way to call translator from Scheme or from File:Open dialog (g723 raw file etc) */
+/* TODO: some way to call translator from Scheme or from File:Open dialog (g723 raw file etc)
+ *         this requires passing all the nominal header info in, faking up a header etc
+ */

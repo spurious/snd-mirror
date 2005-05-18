@@ -2,15 +2,15 @@
 #define SND_1_H
 
 #define ASSERT_SOUND(Origin, Snd, Offset) \
-  if (!((XEN_INTEGER_P(Snd)) || (XEN_BOOLEAN_P(Snd)) || (XEN_NOT_BOUND_P(Snd)))) \
-    XEN_WRONG_TYPE_ARG_ERROR(Origin, Offset, Snd, "an integer (sound index), or a boolean");
+  if (!((XEN_INTEGER_P(Snd)) || (XEN_FALSE_P(Snd)) || (XEN_NOT_BOUND_P(Snd)))) \
+    XEN_WRONG_TYPE_ARG_ERROR(Origin, Offset, Snd, "an integer (sound index), or " PROC_FALSE);
 
 #define ASSERT_CHANNEL(Origin, Snd, Chn, Offset) \
-  if (!((XEN_INTEGER_P(Snd)) || (XEN_BOOLEAN_P(Snd)) || (XEN_NOT_BOUND_P(Snd)))) \
-    XEN_WRONG_TYPE_ARG_ERROR(Origin, Offset, Snd, "an integer (sound index), or a boolean"); \
+  if (!((XEN_INTEGER_P(Snd)) || (XEN_FALSE_P(Snd)) || (XEN_NOT_BOUND_P(Snd)))) \
+    XEN_WRONG_TYPE_ARG_ERROR(Origin, Offset, Snd, "an integer (sound index), or " PROC_FALSE); \
   else \
-    if (!((XEN_INTEGER_P(Chn)) || (XEN_BOOLEAN_P(Chn)) || (XEN_NOT_BOUND_P(Chn)))) \
-      XEN_WRONG_TYPE_ARG_ERROR(Origin, Offset + 1, Chn, "an integer (0-based channel number) or boolean");
+    if (!((XEN_INTEGER_P(Chn)) || (XEN_FALSE_P(Chn)) || (XEN_NOT_BOUND_P(Chn)))) \
+      XEN_WRONG_TYPE_ARG_ERROR(Origin, Offset + 1, Chn, "an integer (0-based channel number) or " PROC_FALSE);
 
 #if HAVE_GUILE
 #define WITH_REVERSED_CHANNEL_ARGS(name_reversed, name) \
@@ -28,7 +28,7 @@ static XEN name_reversed(XEN arg1, XEN arg2, XEN arg3) \
 #endif
 
 #define ASSERT_SAMPLE_TYPE(Origin, Beg, Offset) \
-  XEN_ASSERT_TYPE(XEN_NUMBER_OR_BOOLEAN_IF_BOUND_P(Beg), Beg, Offset, Origin, "a number or #f")
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(Beg) || XEN_FALSE_P(Beg) || XEN_NOT_BOUND_P(Beg), Beg, Offset, Origin, "a number or " PROC_FALSE)
 
 typedef struct {
   int samps_per_bin, amp_env_size;

@@ -873,8 +873,8 @@ just before a sound is saved.
         (let ((chns (<a class=quiet href="#chans">chans</a> index)))
 	  (do ((i 0 (1+ i)))
 	      ((= i chns))
-	    (<a class=quiet href="srcchannel">src-channel</a> (exact->inexact (/ (<a class=quiet href="#srate">srate</a> index) sr)) 0 #f index i))
-	  (<a class=quiet href="savesoundas">save-sound-as</a> filename index :header-type type :data-format format :srate sr :comment comment) 
+	    (<a class=quiet href="#srcchannel">src-channel</a> (exact-&gt;inexact (/ (<a class=quiet href="#srate">srate</a> index) sr)) 0 #f index i))
+	  (<a class=quiet href="#savesoundas">save-sound-as</a> filename index :header-type type :data-format format :srate sr :comment comment) 
 	  ;; hook won't be invoked recursively
 	  (do ((i 0 (1+ i)))
 	      ((= i chns))
@@ -4107,7 +4107,7 @@ nothing is guaranteed.
 <p>
 <small><A NAME="regularizedargs"></a>
 For not-very-good historical reasons (it took me awhile to decide how to organize things), some of the procedures here are unnecessarily inconsistent in
-what arguments they accept, whether a channel of #f signals application to all channels or just the
+what arguments they accept, whether a channel of #t signals application to all channels or just the
 selected one, whether the <a class=quiet href="#sync">sync</a> field is followed, and so on.  Rather than make a bunch of backwards
 incompatible changes, I decided to add a bunch of more-or-less synonymous functions that regularize
 these calls. The replacements always take arguments in the order begin time, duration (not end sample),

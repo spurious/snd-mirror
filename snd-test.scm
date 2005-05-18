@@ -6,36 +6,34 @@
 ;;;  test 3: variables                          [1447]
 ;;;  test 4: sndlib                             [1838]
 ;;;  test 5: simple overall checks              [3645]
-;;;  test 6: vcts                               [10995]
-;;;  test 7: colors                             [11286]
-;;;  test 8: clm                                [11788]
-;;;  test 9: mix                                [19232]
-;;;  test 10: marks                             [22290]
-;;;  test 11: dialogs                           [22992]
-;;;  test 12: extensions                        [23309]
-;;;  test 13: menus, edit lists, hooks, etc     [23725]
-;;;  test 14: all together now                  [25026]
-;;;  test 15: chan-local vars                   [26091]
-;;;  test 16: regularized funcs                 [27351]
-;;;  test 17: dialogs and graphics              [31718]
-;;;  test 18: enved                             [31793]
-;;;  test 19: save and restore                  [31813]
-;;;  test 20: transforms                        [33294]
-;;;  test 21: new stuff                         [34952]
-;;;  test 22: run                               [35828]
-;;;  test 23: with-sound                        [41275]
-;;;  test 24: user-interface                    [42278]
-;;;  test 25: X/Xt/Xm                           [45439]
-;;;  test 26: Gtk                               [49935]
-;;;  test 27: GL                                [53927]
-;;;  test 28: errors                            [54038]
-;;;  test all done                              [56133]
+;;;  test 6: vcts                               [11045]
+;;;  test 7: colors                             [11355]
+;;;  test 8: clm                                [11857]
+;;;  test 9: mix                                [19324]
+;;;  test 10: marks                             [22382]
+;;;  test 11: dialogs                           [23085]
+;;;  test 12: extensions                        [23402]
+;;;  test 13: menus, edit lists, hooks, etc     [23819]
+;;;  test 14: all together now                  [25169]
+;;;  test 15: chan-local vars                   [26234]
+;;;  test 16: regularized funcs                 [27494]
+;;;  test 17: dialogs and graphics              [31861]
+;;;  test 18: enved                             [31936]
+;;;  test 19: save and restore                  [31956]
+;;;  test 20: transforms                        [33461]
+;;;  test 21: new stuff                         [35119]
+;;;  test 22: run                               [35995]
+;;;  test 23: with-sound                        [41456]
+;;;  test 24: user-interface                    [42459]
+;;;  test 25: X/Xt/Xm                           [45620]
+;;;  test 26: Gtk                               [50116]
+;;;  test 27: GL                                [54108]
+;;;  test 28: errors                            [54219]
+;;;  test all done                              [56308]
 ;;;
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 ;;; need all html example code in autotests
 ;;; need some way to check that graphs are actually drawn (region dialog, oscope etc) and sounds played correctly
-
-;;; TODO: test before|after-save-as-hook
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
@@ -25050,6 +25048,55 @@ EDITS: 5
 		   (focus-widget w)))
       (describe-hook mouse-enter-text-hook)
       (reset-almost-all-hooks)
+
+      ;; before|after-save-as-hook
+      (let ((hook-called #f))
+	(add-hook! before-save-as-hook ; from docs
+		   (lambda (index filename selection sr type format comment)
+		     (if (not (= sr (srate index)))
+			 (let ((chns (chans index)))
+			   (do ((i 0 (1+ i)))
+			       ((= i chns))
+			     (src-channel (exact->inexact (/ (srate index) sr)) 0 #f index i))
+			   (save-sound-as filename index :header-type type :data-format format :srate sr :comment comment) 
+			   ;; hook won't be invoked recursively
+			   (do ((i 0 (1+ i)))
+			       ((= i chns))
+			     (undo 1 index i))
+			   (set! hook-called #t)
+			   #t)
+			 #f)))
+	(let ((ind (open-sound "2.snd")))
+	  (save-sound-as "test.snd" :srate 44100)
+	  (if (not (= (edit-position ind 0) 0)) (snd-display ";before-save-as-hook undo: ~A" (edit-position ind 0)))
+	  (if (not hook-called) (snd-display ";before-save-as-hook not called?"))
+	  (close-sound ind)
+	  (set! ind (open-sound "test.snd"))
+	  (if (not (= (srate ind) 44100)) (snd-display ";before-save-as-hook src: ~A" (srate ind)))
+	  (close-sound ind))
+	(reset-hook! before-save-as-hook))
+      
+      (let ((need-save-as-undo #f))
+	(add-hook! before-save-as-hook
+		   (lambda (index filename selection sr type format comment)
+		     (set! need-save-as-undo #f)
+		     (if (not (= sr (srate index)))
+			 (begin
+			   (src-sound (exact->inexact (/ (srate index) sr)) 1.0 index)
+			   (set! need-save-as-undo #t)))
+		     #f))
+	(add-hook! after-save-as-hook
+		   (lambda (index filename dialog)
+		     (if need-save-as-undo (undo))))
+	(let ((ind (open-sound "oboe.snd")))
+	  (save-sound-as "test.snd" :srate 44100)
+	  (if (not (= (edit-position ind 0) 0)) (snd-display ";after-save-as-hook undo: ~A" (edit-position ind 0)))
+	  (close-sound ind)
+	  (set! ind (open-sound "test.snd"))
+	  (if (not (= (srate ind) 44100)) (snd-display ";before|after-save-as-hook src: ~A" (srate ind)))
+	  (close-sound ind))
+	(reset-hook! before-save-as-hook)
+	(reset-hook! after-save-as-hook))
       
       (run-hook after-test-hook 13)
       ))
@@ -28315,7 +28362,7 @@ EDITS: 5
 			(lambda args (apply reverse-sound (list (if (> (length args) 2) (caddr args) #f))))
 			(lambda args (apply reverse-channel args)))
 	  (funcs-equal? "mix"
-			(lambda args (apply mix (list "pistol.snd" 0 0 (if (> (length args) 2) (caddr args) #t))))
+			(lambda args (apply mix (list "pistol.snd" 0 0 (if (> (length args) 2) (caddr args) #f))))
 			(lambda args (apply mix-channel "pistol.snd" args)))
 	  (funcs-equal? "insert-sound"
 			(lambda args (apply insert-sound (list "pistol.snd" 0 0 (if (> (length args) 2) (caddr args) #f))))
@@ -33378,10 +33425,34 @@ EDITS: 2
 			     (mixes ind 0) (and (not (null? (mixes ind 0))) (mix-speed (car (mixes ind 0)))))))
 	  (revert-sound ind)
 	  )
-	  
-	  
 	(close-sound ind))
-	
+
+      (let ((ind (open-sound "2.snd")))
+	(src-sound 3.0 1.0 ind)
+	(save-sound-as "test.snd")
+	(close-sound ind)
+	(set! ind (open-sound "test.snd"))
+	(if (not (= (chans ind) 2)) (snd-display ";src-sound/save-sound-as-> ~D chans" (chans ind)))
+	(let ((tag (scan-channel (lambda (y) (not (= y 0.0))) 8000 #f)))
+	  (if tag (snd-display ";src-sound/save-sound-as not zeros: ~A ~A" tag (sample (cadr tag) ind 0))))
+	(close-sound ind))
+
+      (let ((ind (open-sound "oboe.snd")))
+	(let ((tag (catch #t (lambda () (save-sound-as "test.snd" :edit-position 1)) (lambda args args))))
+	  (if (or (not tag)
+		  (not (eq? (car tag) 'no-such-edit)))
+	      (snd-display ";save-sound-as bad edpos: ~A" tag)))
+	(let ((tag (catch #t (lambda () (save-sound-as "test.snd" :channel 1 :edit-position 1)) (lambda args args))))
+	  (if (or (not tag)
+		  (not (eq? (car tag) 'no-such-channel)))
+	      (snd-display ";save-sound-as bad chan: ~A" tag)))
+	(save-sound-as "test.snd" :comment "this is a comment")
+	(close-sound ind)
+	(set! ind (open-sound "test.snd"))
+	(if (not (string=? (comment ind) "this is a comment"))
+	    (snd-display ";save-sound-as with comment: ~A" (comment ind)))
+	(close-sound ind))
+	  
       (mus-sound-prune)
       (run-hook after-test-hook 19)
       ))
@@ -55589,6 +55660,8 @@ EDITS: 2
 		(if (not (equal? (edits) eds)) (snd-display ";undo -inf): ~A" (edits))))
 	      (check-error-tag 'wrong-type-arg (lambda () (scale-by #f)))
 	      (check-error-tag 'wrong-type-arg (lambda () (scale-by (make-mixer 2 .1 .1 .2 .2))))
+	      (check-error-tag 'wrong-type-arg (lambda () (src-sound 3.0 1.0 #t)))
+	      (check-error-tag 'wrong-type-arg (lambda () (src-sound 3.0 1.0 ind #t)))
 	      (close-sound ind))
 	    (check-error-tag 'bad-arity (lambda () (add-transform "hiho" "time" 0 1 (lambda () 1.0))))
 	    (check-error-tag 'cannot-save (lambda () (save-options "/bad/baddy")))
@@ -55596,7 +55669,7 @@ EDITS: 2
 	    (check-error-tag 'no-such-menu (lambda () (add-to-menu 1234 "hi" (lambda () #f))))
 	    (check-error-tag 'bad-arity (lambda () (add-to-main-menu "hi" (lambda (a b) #f))))
 	    (check-error-tag 'bad-arity (lambda () (add-to-menu 1 "hi" (lambda (a b) #f))))
-	    (check-error-tag 'no-such-file (lambda () (open-sound-file "/bad/baddy.snd")))
+	    (check-error-tag 'mus-error (lambda () (open-sound-file "/bad/baddy.snd")))
 	    (check-error-tag 'out-of-range (lambda () (close-sound-file 0 0)))
 	    (check-error-tag 'out-of-range (lambda () (set! (transform-type) -1)))
 	    (check-error-tag 'out-of-range (lambda () (set! (transform-type) 123)))

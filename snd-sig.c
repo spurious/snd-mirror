@@ -29,7 +29,7 @@ int to_c_edit_position(chan_info *cp, XEN edpos, const char *caller, int arg_pos
 #if (!HAVE_EXTENSION_LANGUAGE)
   return(cp->edit_ctr);
 #endif
-  XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(edpos) || XEN_INTEGER_P(edpos) || XEN_PROCEDURE_P(edpos) || XEN_BOOLEAN_P(edpos), 
+  XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(edpos) || XEN_INTEGER_P(edpos) || XEN_PROCEDURE_P(edpos) || XEN_FALSE_P(edpos), 
 		  edpos, arg_pos, caller, "an integer, #f, or a procedure");
   if (XEN_PROCEDURE_P(edpos))
     {
@@ -3737,7 +3737,7 @@ apply gen to snd's channel chn starting at beg for dur samples. overlap is the '
   char *errmsg = NULL, *caller = NULL;
   ASSERT_SAMPLE_TYPE(S_clm_channel, samp_n, XEN_ARG_2);
   ASSERT_SAMPLE_TYPE(S_clm_channel, samps, XEN_ARG_3);
-  XEN_ASSERT_TYPE(XEN_NUMBER_OR_BOOLEAN_IF_BOUND_P(overlap), overlap, XEN_ARG_7, S_clm_channel, "a number or " PROC_FALSE);
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(overlap) || XEN_FALSE_P(overlap) || XEN_NOT_BOUND_P(overlap), overlap, XEN_ARG_7, S_clm_channel, "a number or " PROC_FALSE);
   XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(origin), origin, XEN_ARG_8, S_clm_channel, "a string");
   ASSERT_CHANNEL(S_clm_channel, snd_n, chn_n, 4);
   cp = get_cp(snd_n, chn_n, S_clm_channel);

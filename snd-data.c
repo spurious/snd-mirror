@@ -426,7 +426,7 @@ void free_snd_info(snd_info *sp)
   if (sp->name_string) FREE(sp->name_string);
   sp->name_string = NULL;
   sp->lacp = NULL;
-  if (sp->hdr) sp->hdr = free_file_info(sp->hdr);
+  sp->hdr = free_file_info(sp->hdr);
   if (sp->edited_region) clear_region_backpointer(sp);
   clear_mini_strings(sp);
   clear_filter_strings(sp);

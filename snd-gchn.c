@@ -22,27 +22,27 @@ enum {W_zy_adj, W_zx_adj, W_sy_adj, W_sx_adj, W_gzy_adj, W_gsy_adj};
 #define START_JUST_TIME(cp) ss->just_time = true
 #define END_JUST_TIME(cp) ss->just_time = false
 
-GtkWidget *channel_graph(chan_info *cp)      {return((cp->cgx)->chan_widgets[W_graph]);}
-GtkWidget *channel_sx(chan_info *cp)         {return((cp->cgx)->chan_widgets[W_sx]);}
-GtkWidget *channel_sy(chan_info *cp)         {return((cp->cgx)->chan_widgets[W_sy]);}
-GtkWidget *channel_zx(chan_info *cp)         {return((cp->cgx)->chan_widgets[W_zx]);}
-GtkWidget *channel_zy(chan_info *cp)         {return((cp->cgx)->chan_widgets[W_zy]);}
-static GtkWidget *channel_gsy(chan_info *cp) {return((cp->cgx)->chan_widgets[W_gsy]);}
-static GtkWidget *channel_gzy(chan_info *cp) {return((cp->cgx)->chan_widgets[W_gzy]);}
-GtkWidget *channel_w(chan_info *cp)          {return((cp->cgx)->chan_widgets[W_w]);}
-GtkWidget *channel_f(chan_info *cp)          {return((cp->cgx)->chan_widgets[W_f]);}
-GtkWidget *channel_up_arrow(chan_info *cp)   {return((cp->cgx)->chan_widgets[W_up_ev]);}
-GtkWidget *channel_down_arrow(chan_info *cp) {return((cp->cgx)->chan_widgets[W_down_ev]);}
+GtkWidget *channel_graph(chan_info *cp)      {return(cp->cgx->chan_widgets[W_graph]);}
+GtkWidget *channel_sx(chan_info *cp)         {return(cp->cgx->chan_widgets[W_sx]);}
+GtkWidget *channel_sy(chan_info *cp)         {return(cp->cgx->chan_widgets[W_sy]);}
+GtkWidget *channel_zx(chan_info *cp)         {return(cp->cgx->chan_widgets[W_zx]);}
+GtkWidget *channel_zy(chan_info *cp)         {return(cp->cgx->chan_widgets[W_zy]);}
+static GtkWidget *channel_gsy(chan_info *cp) {return(cp->cgx->chan_widgets[W_gsy]);}
+static GtkWidget *channel_gzy(chan_info *cp) {return(cp->cgx->chan_widgets[W_gzy]);}
+GtkWidget *channel_w(chan_info *cp)          {return(cp->cgx->chan_widgets[W_w]);}
+GtkWidget *channel_f(chan_info *cp)          {return(cp->cgx->chan_widgets[W_f]);}
+GtkWidget *channel_up_arrow(chan_info *cp)   {return(cp->cgx->chan_widgets[W_up_ev]);}
+GtkWidget *channel_down_arrow(chan_info *cp) {return(cp->cgx->chan_widgets[W_down_ev]);}
 
 #define EDIT_HISTORY_LIST(Cp) (Cp->cgx)->chan_widgets[W_edhist]
 
-static GtkWidget *channel_main_pane(chan_info *cp) {return((cp->cgx)->chan_widgets[W_main_window]);}
-static GtkObject *gsy_adj(chan_info *cp)           {return((cp->cgx)->chan_adjs[W_gsy_adj]);}
-static GtkObject *gzy_adj(chan_info *cp)           {return((cp->cgx)->chan_adjs[W_gzy_adj]);}
-static GtkObject *sy_adj(chan_info *cp)            {return((cp->cgx)->chan_adjs[W_sy_adj]);}
-static GtkObject *sx_adj(chan_info *cp)            {return((cp->cgx)->chan_adjs[W_sx_adj]);}
-static GtkObject *zy_adj(chan_info *cp)            {return((cp->cgx)->chan_adjs[W_zy_adj]);}
-static GtkObject *zx_adj(chan_info *cp)            {return((cp->cgx)->chan_adjs[W_zx_adj]);}
+static GtkWidget *channel_main_pane(chan_info *cp) {return(cp->cgx->chan_widgets[W_main_window]);}
+static GtkObject *gsy_adj(chan_info *cp)           {return(cp->cgx->chan_adjs[W_gsy_adj]);}
+static GtkObject *gzy_adj(chan_info *cp)           {return(cp->cgx->chan_adjs[W_gzy_adj]);}
+static GtkObject *sy_adj(chan_info *cp)            {return(cp->cgx->chan_adjs[W_sy_adj]);}
+static GtkObject *sx_adj(chan_info *cp)            {return(cp->cgx->chan_adjs[W_sx_adj]);}
+static GtkObject *zy_adj(chan_info *cp)            {return(cp->cgx->chan_adjs[W_zy_adj]);}
+static GtkObject *zx_adj(chan_info *cp)            {return(cp->cgx->chan_adjs[W_zx_adj]);}
 
 static Float sqr(Float a) {return(a * a);}
 static Float cube (Float a) {return(a * a * a);}
@@ -665,8 +665,8 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Gtk
     {
       cw = (GtkWidget **)CALLOC(NUM_CHAN_WIDGETS, sizeof(GtkWidget *));
       adjs = (GtkObject **)CALLOC(NUM_CHAN_ADJS, sizeof(GtkObject *));
-      (cp->cgx)->chan_widgets = cw;
-      (cp->cgx)->chan_adjs = adjs;
+      cp->cgx->chan_widgets = cw;
+      cp->cgx->chan_adjs = adjs;
     }
   else
     {
@@ -898,7 +898,7 @@ GdkGC *copy_GC(chan_info *cp)
 {
   state_context *sx;
   sx = ss->sgx;
-  if ((cp->cgx)->selected) return(sx->selected_basic_gc);
+  if (cp->cgx->selected) return(sx->selected_basic_gc);
   return(sx->basic_gc);
 }
 
@@ -908,7 +908,7 @@ GdkGC *erase_GC(chan_info *cp)
   snd_info *sp;
   sp = cp->sound;
   sx = ss->sgx;
-  if (((cp->cgx)->selected) ||
+  if ((cp->cgx->selected) ||
       ((sp) && (sp->channel_style == CHANNELS_SUPERIMPOSED) && (sp->index == ss->selected_sound)))
     return(sx->selected_erase_gc);
   return(sx->erase_gc);
@@ -1040,7 +1040,7 @@ bool fixup_cp_cgx_ax_wn(chan_info *cp)
 {
   GtkWidget *w; 
   axis_context *ax; 
-  ax = (cp->cgx)->ax;
+  ax = cp->cgx->ax;
   if (cp->tcgx) 
     w = channel_graph((cp->sound)->chans[0]);
   else w = channel_graph(cp);

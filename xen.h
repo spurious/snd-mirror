@@ -11,11 +11,12 @@
  */
 
 #define XEN_MAJOR_VERSION 1
-#define XEN_MINOR_VERSION 33
-#define XEN_VERSION "1.33"
+#define XEN_MINOR_VERSION 34
+#define XEN_VERSION "1.34"
 
 /* HISTORY:
  *
+ *  18-May-05: deprecate XEN_NUMBER_OR_BOOLEAN_IF_BOUND_P and XEN_NUMBER_OR_BOOLEAN_P.
  *  29-Mar-05: C_TO_XEN_STRINGN changes.
  *  24-Mar-05: Ruby properties (Mike Scholz).
  *  8-Mar-05:  Ruby improvements in keywords and hooks (Mike Scholz).
@@ -1561,20 +1562,14 @@ typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
   #define XEN_NUMBER_IF_BOUND_P(Arg)             ({ XEN _xen_h_16_ = Arg; ((XEN_NOT_BOUND_P(_xen_h_16_)) || (XEN_NUMBER_P(_xen_h_16_))); })
   #define XEN_STRING_IF_BOUND_P(Arg)             ({ XEN _xen_h_17_ = Arg; ((XEN_NOT_BOUND_P(_xen_h_17_)) || (XEN_STRING_P(_xen_h_17_))); })
   #define XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(Arg) ({ XEN _xen_h_18_ = Arg; ((XEN_BOOLEAN_P(_xen_h_18_)) || (XEN_NOT_BOUND_P(_xen_h_18_)) || (XEN_INTEGER_P(_xen_h_18_))); })
-  #define XEN_NUMBER_OR_BOOLEAN_IF_BOUND_P(Arg)  ({ XEN _xen_h_19_ = Arg; ((XEN_BOOLEAN_P(_xen_h_19_)) || (XEN_NOT_BOUND_P(_xen_h_19_)) || (XEN_NUMBER_P(_xen_h_19_))); })
-  #define XEN_NUMBER_OR_BOOLEAN_P(Arg)           ({ XEN _xen_h_20_ = Arg; ((XEN_BOOLEAN_P(_xen_h_20_))   || (XEN_NUMBER_P(_xen_h_20_))); })
   #define XEN_INTEGER_OR_BOOLEAN_P(Arg)          ({ XEN _xen_h_21_ = Arg; ((XEN_BOOLEAN_P(_xen_h_21_))   || (XEN_INTEGER_P(_xen_h_21_))); })
-  #define XEN_ULONG_IF_BOUND_P(Arg)              ({ XEN _xen_h_22_ = Arg; ((XEN_NOT_BOUND_P(_xen_h_22_)) || (XEN_ULONG_P(_xen_h_22_))); })
 #else
   #define XEN_BOOLEAN_IF_BOUND_P(Arg)            ((XEN_BOOLEAN_P(Arg))   || (XEN_NOT_BOUND_P(Arg)))
   #define XEN_INTEGER_IF_BOUND_P(Arg)            ((XEN_NOT_BOUND_P(Arg)) || (XEN_INTEGER_P(Arg)))
   #define XEN_NUMBER_IF_BOUND_P(Arg)             ((XEN_NOT_BOUND_P(Arg)) || (XEN_NUMBER_P(Arg)))
   #define XEN_STRING_IF_BOUND_P(Arg)             ((XEN_NOT_BOUND_P(Arg)) || (XEN_STRING_P(Arg)))
   #define XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(Arg) ((XEN_BOOLEAN_P(Arg))   || (XEN_NOT_BOUND_P(Arg)) || (XEN_INTEGER_P(Arg)))
-  #define XEN_NUMBER_OR_BOOLEAN_IF_BOUND_P(Arg)  ((XEN_BOOLEAN_P(Arg))   || (XEN_NOT_BOUND_P(Arg)) || (XEN_NUMBER_P(Arg)))
-  #define XEN_NUMBER_OR_BOOLEAN_P(Arg)           ((XEN_BOOLEAN_P(Arg))   || (XEN_NUMBER_P(Arg)))
   #define XEN_INTEGER_OR_BOOLEAN_P(Arg)          ((XEN_BOOLEAN_P(Arg))   || (XEN_INTEGER_P(Arg)))
-  #define XEN_ULONG_IF_BOUND_P(Arg)              ((XEN_NOT_BOUND_P(Arg)) || (XEN_ULONG_P(Arg)))
 #endif
 
 #define XEN_ONLY_ARG 0
@@ -1626,6 +1621,9 @@ void xen_gc_mark(XEN val);
   #define XEN_TO_C_BOOLEAN_OR_TRUE(a) (!(XEN_FALSE_P(a)))
   #define XEN_TO_C_INT_OR_ELSE_WITH_CALLER(a, b, c) XEN_TO_C_INT_OR_ELSE(a, b)
   #define XEN_TO_C_DOUBLE_WITH_CALLER(a, b) XEN_TO_C_DOUBLE(a)
+  #define XEN_NUMBER_OR_BOOLEAN_IF_BOUND_P(Arg)  ((XEN_BOOLEAN_P(Arg))     || (XEN_NOT_BOUND_P(Arg)) || (XEN_NUMBER_P(Arg)))
+  #define XEN_NUMBER_OR_BOOLEAN_P(Arg)           ((XEN_BOOLEAN_P(Arg))     || (XEN_NUMBER_P(Arg)))
+  #define XEN_ULONG_IF_BOUND_P(Arg)              ((XEN_NOT_BOUND_P(Arg)) || (XEN_ULONG_P(Arg)))
 
   #if HAVE_GUILE
     #if HAVE_SCM_IS_SIMPLE_VECTOR

@@ -244,7 +244,7 @@ file_info *make_file_info(const char *fullname)
 		  tmp = raw_data_explanation(fullname, tmp_hdr);
 		  hdr = raw_data_dialog_to_file_info(fullname, tmp);
 		  if (tmp) FREE(tmp);
-		  if (tmp_hdr) tmp_hdr = free_file_info(tmp_hdr);
+		  tmp_hdr = free_file_info(tmp_hdr);
 		  return(hdr);
 		}
 	    }

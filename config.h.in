@@ -12,7 +12,6 @@
 #undef size_t
 #undef off_t
 
-#undef WORDS_BIGENDIAN
 #undef HAVE_GETCWD
 #undef HAVE_GETWD
 #undef HAVE_STRFTIME
@@ -38,6 +37,7 @@
 #undef HAVE_DECL_ISINF
 #undef HAVE_COMPLEX_TRIG
 #undef HAVE_SPECIAL_FUNCTIONS
+#undef WORDS_BIGENDIAN
 
 #undef HAVE_DIRENT_H
 #undef HAVE_NDIR_H

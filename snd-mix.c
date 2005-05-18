@@ -7139,6 +7139,7 @@ static XEN g_set_track_position(XEN id, XEN pos, XEN chn)
       /* in this case, (set! (track-position id chn) pos) flips pos and chn */
       XEN_ASSERT_TYPE(XEN_OFF_T_P(chn), chn, XEN_ARG_3, S_setB S_track_position, "a sample number");
       XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(pos), pos, XEN_ARG_2, S_setB S_track_position, "int");
+      /* ASSERT_CHANNEL needs index, but it would be better if this only accepted #f */
       set_track_channel_position(track_id, XEN_TO_C_INT(pos), XEN_TO_C_OFF_T(chn));
       return(chn);
     }

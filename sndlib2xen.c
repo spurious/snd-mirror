@@ -768,7 +768,7 @@ data-location should be retrieved from a previous call to " S_mus_sound_data_loc
   XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_P(chans), chans, XEN_ARG_2, S_mus_sound_reopen_output, "an integer or " PROC_FALSE);
   XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_P(data_format), data_format, XEN_ARG_3, S_mus_sound_reopen_output, "an integer (data-format id) or " PROC_FALSE);
   XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_P(header_type), header_type, XEN_ARG_4, S_mus_sound_reopen_output, "an integer (header-type id) or " PROC_FALSE);
-  XEN_ASSERT_TYPE(XEN_NUMBER_OR_BOOLEAN_P(data_loc), data_loc, XEN_ARG_5, S_mus_sound_reopen_output, "an integer or " PROC_FALSE);
+  XEN_ASSERT_TYPE(XEN_OFF_T_P(data_loc) || XEN_FALSE_P(data_loc), data_loc, XEN_ARG_5, S_mus_sound_reopen_output, "an integer or " PROC_FALSE);
   df = XEN_TO_C_INT_OR_ELSE(data_format, MUS_OUT_FORMAT);
   if (MUS_DATA_FORMAT_OK(df))
     {

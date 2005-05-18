@@ -20207,7 +20207,7 @@ static XEN gxm_set_angle1(XEN ptr, XEN val)
 static XEN gxm_XColor(XEN pixel, XEN red, XEN green, XEN blue, XEN flags, XEN pad)
 {
   XColor *r;
-  XEN_ASSERT_TYPE(XEN_ULONG_IF_BOUND_P(pixel), pixel, 1, "XColor", "ulong");
+  XEN_ASSERT_TYPE(XEN_ULONG_P(pixel) || XEN_NOT_BOUND_P(pixel), pixel, 1, "XColor", "ulong");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(red), red, 2, "XColor", "int");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(green), green, 3, "XColor", "int");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(blue), blue, 4, "XColor", "int");
