@@ -1983,7 +1983,7 @@ static int display_transform_peaks(chan_info *ucp, char *filename)
 	    }
 	}
       if (FCLOSE(fd) != 0)
-	report_in_minibuffer_and_save(sp, _("can't close %s: %s"), filename, snd_strerror());
+	report_in_minibuffer_and_save(sp, _("can't close %s: %s"), filename, snd_io_strerror());
       if (tmp_file)
 	{
 	  int chars;

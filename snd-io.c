@@ -141,7 +141,7 @@ static void reposition_file_buffers(snd_data *sd, off_t index)
       if (fd == -1) 
 	{
 	  /* our file has disappeared?!? */
-	  snd_error(_("%s is unreadable: %s?"), sd->filename, snd_strerror());
+	  snd_error(_("%s is unreadable: %s?"), sd->filename, snd_io_strerror());
 	  return;
 	}
       hdr = sd->hdr;
@@ -283,7 +283,7 @@ int snd_open_read(const char *arg)
       if (fd != -1) 
 	fd = OPEN(arg, O_RDONLY, 0);
       if (fd == -1) 
-	snd_error("%s: %s", arg, snd_strerror());
+	snd_error("%s: %s", arg, snd_io_strerror());
     }
   return(fd);
 }
@@ -315,7 +315,7 @@ int snd_reopen_write(const char *arg)
       if (fd != -1) 
 	fd = OPEN(arg, O_RDWR, 0);
       if (fd == -1) 
-	snd_error("%s: %s", arg, snd_strerror());
+	snd_error("%s: %s", arg, snd_io_strerror());
     }
   return(fd);
 }
@@ -359,7 +359,7 @@ int snd_remove(const char *name, cache_remove_t forget)
   if (forget == REMOVE_FROM_CACHE) mus_sound_forget(name); /* no error here if not in sound tables */
   err = REMOVE(name);
   if (err == -1)
-    snd_warning(_("can't remove file %s: %s"), name, snd_strerror());
+    snd_warning(_("can't remove file %s: %s"), name, snd_io_strerror());
   return(err);
 }
 
@@ -368,7 +368,7 @@ int snd_close(int fd, const char *name)
   int val;
   val = CLOSE(fd);
   if (val != 0)
-    snd_warning(_("can't close file %d (%s): %s"), fd, name, snd_strerror());
+    snd_warning(_("can't close file %d (%s): %s"), fd, name, snd_io_strerror());
   return(val);
 }
 
@@ -377,7 +377,7 @@ void snd_fclose(FILE *fd, const char *name)
   int val;
   val = FCLOSE(fd);
   if (val != 0)
-    snd_warning(_("can't close file %s: %s"), name, snd_strerror());
+    snd_warning(_("can't close file %s: %s"), name, snd_io_strerror());
 }
 
 
@@ -659,7 +659,7 @@ int close_temp_file(const char *filename, int ofd, int type, off_t bytes, snd_in
   mus_header_change_data_size(filename, type, bytes);
   kleft = disk_kspace(filename);
   if (kleft < 0)
-    snd_error(_("disk full?: %s"), snd_strerror());
+    snd_error(_("disk full?: %s"), snd_io_strerror());
   else
     {
       kused = bytes >> 10;

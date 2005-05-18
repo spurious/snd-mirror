@@ -354,7 +354,7 @@ static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp, XE
 			  free_sync_state(sc);
 			  ucp->edit_hook_checked = false;
 			  return(mus_format(_("convolve: close filter file %s hit error: %s\n"), 
-					    filename, snd_strerror()));
+					    filename, snd_io_strerror()));
 			}
 		    }
 		}
@@ -365,7 +365,7 @@ static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp, XE
 		  ucp->edit_hook_checked = false;
 		  return(mus_format(_("convolve: close saved chan (%s[%d]) file %s hit error: %s\n"),
 				    sp->short_filename, ucp->chan, 
-				    saved_chan_file, snd_strerror()));
+				    saved_chan_file, snd_io_strerror()));
 		}
 	    }
 	  snd_remove(saved_chan_file, REMOVE_FROM_CACHE);

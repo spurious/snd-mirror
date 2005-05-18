@@ -1329,7 +1329,7 @@ Float in_dB(Float min_dB, Float lin_dB, Float py);
 char *copy_string(const char *str);
 int snd_strlen(const char *str);
 char *snd_strcat(char *errmsg, const char *str, int *err_size);
-char *snd_strerror(void);
+char *snd_io_strerror(void);
 char *snd_open_strerror(void);
 char *string_to_colon(char *val);
 char *filename_without_home_directory(const char *name);

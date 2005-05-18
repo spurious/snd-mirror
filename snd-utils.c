@@ -97,7 +97,7 @@ char *snd_strcat(char *errmsg, const char *str, int *size)
   return(errmsg);
 }
 
-char *snd_strerror(void)
+char *snd_io_strerror(void)
 {
   if (ss->local_errno != 0)
     return(strerror(ss->local_errno));
@@ -110,7 +110,7 @@ char *snd_open_strerror(void)
 {
   if (ss->local_open_errno != 0)
     return(strerror(ss->local_open_errno));
-  return(snd_strerror());
+  return(snd_io_strerror());
 }
 
 char *string_to_colon(char *val)

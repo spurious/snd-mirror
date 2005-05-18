@@ -299,7 +299,7 @@ enum {MUS_NO_ERROR, MUS_NO_FREQUENCY, MUS_NO_PHASE, MUS_NO_GEN, MUS_NO_LENGTH,
       #define CREAT(File, Flags)        snd_io_creat((File), (Flags))
       #define RENAME(OldF, NewF)        snd_io_rename(OldF, NewF)
       #define REMOVE(OldF)              snd_io_remove(OldF)
-      #define STRERROR(Err)             snd_strerror()
+      #define STRERROR(Err)             snd_io_strerror()
     #else
       #define FOPEN(File, Flags)        fopen((File), (Flags))
       #define CLOSE(Fd)                 close(Fd)

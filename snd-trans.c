@@ -35,7 +35,7 @@ static int snd_checked_write(int fd, unsigned char *buf, int bytes, const char *
     {
       mus_snprintf(write_error_buffer, PRINT_BUFFER_SIZE,
 		   _("no space left on device: %s"),
-		   snd_strerror()); 
+		   snd_io_strerror()); 
       return(MUS_ERROR);
     }
   if (kfree < (bytes >> 10))
@@ -50,7 +50,7 @@ static int snd_checked_write(int fd, unsigned char *buf, int bytes, const char *
     {
       mus_snprintf(write_error_buffer, PRINT_BUFFER_SIZE,
 		   _("write error (wrote %d of requested %d bytes): %s"),
-		   bytes_written, bytes, snd_strerror());
+		   bytes_written, bytes, snd_io_strerror());
       return(MUS_ERROR);
     }
   return(bytes_written);
@@ -72,7 +72,7 @@ static int be_snd_checked_write(int fd, unsigned char *buf, int bytes, const cha
   return(snd_checked_write(fd, buf, bytes, filename));
 }
 
-#define RETURN_MUS_IO_ERROR(IO_Func, IO_Name) return(mus_error(MUS_CANT_OPEN_FILE, "translator: %s(%s) %s", IO_Func, IO_Name, snd_strerror()))
+#define RETURN_MUS_IO_ERROR(IO_Func, IO_Name) return(mus_error(MUS_CANT_OPEN_FILE, "translator: %s(%s) %s", IO_Func, IO_Name, snd_io_strerror()))
 
 #define RETURN_MUS_WRITE_ERROR(OldName, NewName) \
   do { \

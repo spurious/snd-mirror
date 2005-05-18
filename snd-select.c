@@ -688,7 +688,7 @@ int save_selection(char *ofile, int type, int format, int srate, const char *com
 	  lseek(ofd, oloc, SEEK_SET);
 	  fdi = mus_file_open_read(sp->filename); /* this does not read the header */
 	  if (fdi == -1)
-	    snd_error(_("can't read selection's original sound? %s: %s"), sp->filename, snd_strerror());
+	    snd_error(_("can't read selection's original sound? %s: %s"), sp->filename, snd_io_strerror());
 	  else
 	    {
 	      iloc = mus_sound_data_location(sp->filename);
@@ -774,7 +774,7 @@ int save_selection(char *ofile, int type, int format, int srate, const char *com
   FREE(ends);
   if (mus_file_close(ofd) != 0)
     {
-      snd_error(_("save selection: can't close %s: %s!"), ofile, snd_strerror());
+      snd_error(_("save selection: can't close %s: %s!"), ofile, snd_io_strerror());
       return(MUS_CANT_CLOSE_FILE);
     }
   alert_new_file();

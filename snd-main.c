@@ -533,7 +533,7 @@ static char *save_options_or_error(void)
   if ((!fd) || (FCLOSE(fd) != 0))
     return(mus_format(_("save-options in %s hit error: %s"),
 		      ss->init_file,
-		      snd_strerror()));
+		      snd_io_strerror()));
   return(NULL);
 }
 
@@ -884,7 +884,7 @@ static char *save_state_or_error (char *save_state_name)
   if (save_fd == NULL) 
     return(mus_format(_("can't write %s: %s"), 
 		      save_state_name, 
-		      snd_strerror()));
+		      snd_io_strerror()));
   else
     {
 #if HAVE_GUILE
@@ -1177,7 +1177,7 @@ static XEN g_save_options(XEN filename)
     XEN_ERROR(CANNOT_SAVE, 
 	      XEN_LIST_3(C_TO_XEN_STRING(S_save_options),
 			 filename,
-			 C_TO_XEN_STRING(snd_strerror())));
+			 C_TO_XEN_STRING(snd_io_strerror())));
   return(filename);
 }
 

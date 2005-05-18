@@ -503,7 +503,7 @@ static snd_info *make_mix_readable(mix_info *md)
 	md->add_snd = make_sound_readable(md->in_filename, true);
       else 
 	{
-	  snd_error(_("mix reader can't find file %s: %s"), md->in_filename, snd_strerror());
+	  snd_error(_("mix reader can't find file %s: %s"), md->in_filename, snd_io_strerror());
 	  return(NULL);
 	}
       add_sp = md->add_snd;
@@ -970,7 +970,7 @@ disk_space_t disk_space_p(snd_info *sp, off_t bytes, off_t other_bytes, char *fi
   kfree = disk_kspace(filename);
   if (kfree < 0) 
     {
-      report_in_minibuffer_and_save(sp, snd_strerror()); 
+      report_in_minibuffer_and_save(sp, snd_io_strerror()); 
       return(NO_PROBLEM);  /* what?? -- disk_kspace => -1 if no such disk, etc -- not really a disk *space* problem */
     }
   kneeded = bytes >> 10;
@@ -1013,7 +1013,7 @@ static char *save_as_temp_file(mus_sample_t **raw_data, int chans, int len, int 
   if (no_space != GIVE_UP)
     mus_file_write(ofd, 0, len - 1, chans, raw_data);
   if (mus_file_close(ofd) != 0)
-    snd_error(_("mix save temp: can't close %s: %s!"), newname, snd_strerror());
+    snd_error(_("mix save temp: can't close %s: %s!"), newname, snd_io_strerror());
   return(newname);
 }
 
@@ -1421,7 +1421,7 @@ void mix_complete_file_at_cursor(snd_info *sp, char *str, bool with_tag, int tra
       cp = any_selected_channel(sp);
       err = mix_complete_file(sp, CURSOR(cp), fullname, with_tag, DONT_DELETE_ME, track_id, false);
       if (err == MIX_FILE_NO_FILE) 
-	report_in_minibuffer_and_save(sp, _("can't mix file: %s, %s"), str, snd_strerror());
+	report_in_minibuffer_and_save(sp, _("can't mix file: %s, %s"), str, snd_io_strerror());
       if (fullname) FREE(fullname);
     }
 }
@@ -4346,7 +4346,7 @@ track-id is the track value for each newly created mix."
 	  XEN_ERROR(MUS_MISC_ERROR,
 		    XEN_LIST_3(C_TO_XEN_STRING(S_mix),
 			       file,
-			       C_TO_XEN_STRING(snd_strerror())));
+			       C_TO_XEN_STRING(snd_io_strerror())));
 	}
     }
   else
@@ -4390,7 +4390,7 @@ track-id is the track value for each newly created mix."
 		XEN_ERROR(MUS_MISC_ERROR,
 			  XEN_LIST_3(C_TO_XEN_STRING(S_mix),
 				     file,
-				     C_TO_XEN_STRING(snd_strerror())));
+				     C_TO_XEN_STRING(snd_io_strerror())));
 	    }
 	}
       else 

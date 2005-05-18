@@ -3433,7 +3433,7 @@ The 'size' argument sets the number of samples (zeros) in the newly created soun
       if (err == -1)
 	{
 	  if (str) {FREE(str); str = NULL;}
-	  mus_misc_error(S_new_sound, snd_strerror(), keys[0]);
+	  mus_misc_error(S_new_sound, snd_io_strerror(), keys[0]);
 	}
       chan = snd_reopen_write(str);
       lseek(chan, mus_header_data_location(), SEEK_SET);
@@ -4716,7 +4716,7 @@ static XEN g_vct2soundfile(XEN g_fd, XEN obj, XEN g_nums)
     XEN_OUT_OF_RANGE_ERROR(S_vct_to_sound_file, 3, g_nums, "len ~A < 0 or > vct length");
   err = lseek(fd, 0L, SEEK_END);
   if (err == -1)
-    mus_misc_error(S_vct_to_sound_file, "IO error", C_TO_XEN_STRING(snd_strerror()));
+    mus_misc_error(S_vct_to_sound_file, "IO error", C_TO_XEN_STRING(snd_io_strerror()));
   if (sizeof(Float) == 4) /* Float can be either float or double */
     nums = write(fd, (char *)(v->data), nums * 4);
   else

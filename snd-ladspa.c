@@ -718,7 +718,7 @@ Information about about parameters can be acquired using " S_analyse_ladspa "."
     XEN_ERROR(CANNOT_SAVE,
 	      XEN_LIST_3(C_TO_XEN_STRING(S_apply_ladspa),
 			 C_TO_XEN_STRING(ofile),
-			 C_TO_XEN_STRING(snd_strerror())));
+			 C_TO_XEN_STRING(snd_io_strerror())));
 
   /* Tidy up header. */
   datumb = mus_bytes_per_sample(hdr->format);

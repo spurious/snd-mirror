@@ -2679,7 +2679,7 @@ static void reset_record_callback(Widget w, XtPointer context, XtPointer info)
       if (mus_file_close(rp->output_file_descriptor) != 0)
 	snd_error(_("Record Reset: can't close %s: %s!"),
 		  rp->output_file,
-		  snd_strerror());
+		  snd_io_strerror());
       rp->output_file_descriptor = -1;
       str = just_filename(rp->output_file);
       record_report(messages, str, _(" recording cancelled"), NULL);
@@ -2741,7 +2741,7 @@ void finish_recording(recorder_info *rp)
   if (mus_file_close(rp->output_file_descriptor) != 0)
     snd_error(_("Record Done: can't close %s: %s!"),
 	      rp->output_file,
-	      snd_strerror());
+	      snd_io_strerror());
   mus_header_change_data_size(rp->output_file,
 			      rp->output_header_type,
 			      rp->total_output_frames * rp->out_chans * mus_bytes_per_sample(rp->output_data_format));

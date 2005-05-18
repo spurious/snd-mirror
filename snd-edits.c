@@ -4581,7 +4581,7 @@ static char *edit_data_to_file(FILE *fd, ed_list *ed, chan_info *cp)
 		{
 		  snd_error(_("save edits: can't open %s: %s!"),
 			    sd->filename,
-			    snd_strerror());
+			    snd_io_strerror());
 		  return(NULL);
 		}
 	      idataloc = mus_sound_data_location(sd->filename);
@@ -4679,7 +4679,7 @@ void edit_history_to_file(FILE *fd, chan_info *cp)
 	      len = cp->samples[i];
 	      err = channel_to_file(cp, nfile, i);
 	      if (err != MUS_NO_ERROR)
-		report_in_minibuffer_and_save(cp->sound, _("edit history save data as %s hit error: %s"), nfile, snd_strerror());
+		report_in_minibuffer_and_save(cp->sound, _("edit history save data as %s hit error: %s"), nfile, snd_io_strerror());
 #if HAVE_RUBY
 	      fprintf(fd, "      %s(\"%s\", " OFF_TD ", sfile, %d, ", TO_PROC_NAME(S_override_samples_with_origin), nfile, len, cp->chan);
 	      if (ed->origin) 
@@ -5572,7 +5572,7 @@ bool file_insert_samples(off_t beg, off_t num, char *inserted_file, chan_info *c
     {
       XEN_ERROR(NO_SUCH_FILE,
 		XEN_LIST_2(C_TO_XEN_STRING(origin),
-			   C_TO_XEN_STRING(snd_strerror())));
+			   C_TO_XEN_STRING(snd_io_strerror())));
     }
   return(true);
 }
@@ -5827,7 +5827,7 @@ bool file_mix_change_samples(off_t beg, off_t num, char *tempfile, chan_info *cp
     {
       XEN_ERROR(NO_SUCH_FILE,
 		XEN_LIST_2(C_TO_XEN_STRING(origin),
-			   C_TO_XEN_STRING(snd_strerror())));
+			   C_TO_XEN_STRING(snd_io_strerror())));
     }
   return(true);
 }
@@ -5881,7 +5881,7 @@ bool file_override_samples(off_t num, char *tempfile, chan_info *cp, int chan, f
     {
       XEN_ERROR(NO_SUCH_FILE,
 		XEN_LIST_2(C_TO_XEN_STRING(origin),
-			   C_TO_XEN_STRING(snd_strerror())));
+			   C_TO_XEN_STRING(snd_io_strerror())));
     }
   return(true);
 }
@@ -7164,7 +7164,7 @@ int save_channel_edits(chan_info *cp, char *ofile, int pos)
       nfile = snd_tempnam();
       err = channel_to_file(cp, nfile, pos);
       if (err != MUS_NO_ERROR)
-	report_in_minibuffer_and_save(sp, _("save channel as %s hit error: %s"), nfile, snd_strerror());
+	report_in_minibuffer_and_save(sp, _("save channel as %s hit error: %s"), nfile, snd_io_strerror());
       else 
 	{
 	  err = move_file(nfile, ofile);
@@ -7214,7 +7214,7 @@ void save_edits(snd_info *sp, void *ptr)
 	    }
 	  err = save_edits_and_update_display(sp);
 	  if (err)
-	    report_in_minibuffer_and_save(sp, "%s: %s", sp->filename, snd_strerror());
+	    report_in_minibuffer_and_save(sp, "%s: %s", sp->filename, snd_io_strerror());
 	  else
 	    {
 	      if (sp->edited_region) 
@@ -7401,7 +7401,7 @@ static XEN g_display_edits(XEN snd, XEN chn, XEN edpos, XEN with_source)
   else XEN_ERROR(CANNOT_SAVE,
 		 XEN_LIST_3(C_TO_XEN_STRING(S_display_edits),
 			    C_TO_XEN_STRING(name),
-			    C_TO_XEN_STRING(snd_strerror())));
+			    C_TO_XEN_STRING(snd_io_strerror())));
   fd = mus_file_open_read(name);
   len = lseek(fd, 0L, SEEK_END);
   buf = (char *)CALLOC(len + 1, sizeof(char));
