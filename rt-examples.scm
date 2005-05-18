@@ -31,10 +31,6 @@
 (set! (-> i vol) 0.3)
 (set! (mus-frequency (-> i osc)) 200)
 (-> i stop)
-
-(-> i osc)
-(-> i vol)
-
 !#
 
 
@@ -111,7 +107,8 @@
 #!
 (make-rt-birds)
 (rte-info)
-(rte-reset)
+(rte-silence!)
+(rte-restart)
 !#
 
 
@@ -243,6 +240,8 @@
 (set! (-> p pan) 1)
 (-> p stop)
 
+(rte-silence!)
+
 !#
 
 
@@ -280,9 +279,8 @@
 (define p (extremely-simple-delay filename 1 0.5))
 (set! (-> p mix) 1)
 (set! (-> p latency) 0.5)
-(-> p stop)
 (rte-info)
-(rte-reset)
+(rte-silence!)
 !#
 
 
@@ -461,8 +459,8 @@ This version of the fm-violin assumes it is running within with-sound (where *ou
 		    :noise-amount (* (random 8) (random 0.4))
 		    :fm-index (+ i 1))))
 (rte-info)
-(rte-reset)
-
+(rte-silence!)
+(rte-restart)
 
 
 

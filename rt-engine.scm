@@ -4,66 +4,20 @@
 rt-engine.scm
 -Kjetil S. Matheussen/Notam, 2005
 
-rt-engine.scm is developed with support from Notam/Oslo:
-http://www.notam02.no
-
+rt-engine.scm is developed with support from Notam/Oslo [1]
+and the Arts Council Norway [2].
 
 rt-engine creates a realtime engine that should be suitable for hard real
 time signal processing.
 
 This file is normally loaded from "rt-compiler.scm".
 
+For documentation, check out
+http://www.notam02.no/arkiv/doc/snd/
 
 
-rt-engine drodle:
------------------
-(-> rt-engine frames)
-(-> *rt-engine* start)
-(-> *rt-engine* get-time)
-(-> *rt-engine* destructor)
-
-(-> *rt-engine* pause)
-(-> *rt-engine* continue)
-
-(list 
- (-> *rt-engine* queue_size)
- (-> *rt-engine* queue_fullsize)
- (-> *rt-engine* num_procfuncs)
- (-> *rt-engine* get-time))
-
-(-> *rt-engine* events_noninserted2)
-
-(list (-> *rt-engine* frames)
-      (-> *rt-engine* get-time)
-      (-> *rt-engine* is_running)))
-      
-(-> *rt-engine* dir)
-
-(let* ((a 5)
-       (b (rt (lambda ()
-		(set! a 9)
-		a))))
-  (list a (rt-funcall b)))
-
-(<*rt-engine*> dir add-event get-method class-name add-method instance?
-	     (<jack-rt-driver> dir get-method destructor class-name add-method instance? pause start num-inputs stop num-outputs
-			       continue get-time set-input-args set-output-args
-			       (<jack> dir get-method class-name add-method
-				       instance? close get-client get-arg get-samplerate
-				       (<Jack_Arg> output_ports dir get-c-object get-method get-size time
-						   is_running destructor rt_callback rt_arg class-name
-						   add-method instance? num_inports num_outports input_ports)))
-	     (<RT_Engine> next_next_switchtime events_noninserted1 events_noninserted2 dir
-			  events_non_rt get-c-object get-method get-size procfuncs destructor
-			  class-name add-method instance? ringbuffer_to_rt ringbuffer_from_rt
-			  num_events_rt events_rt next_switchtime))
-
-(-> *rt-engine* num_events_rt)
-(list (-> *rt-engine* get-time)
-      (-> *rt-engine* next_switchtime)
-      (-> *rt-engine* next_next_switchtime))
-
-
+[1] http://www.notam02.no
+[2] http://www.kulturradet.no
 
 !#
 
@@ -91,8 +45,11 @@ rt-engine drodle:
 (define rt-to-ringbuffer-size (* rt-pointer-size 8192))
 (define rt-from-ringbuffer-size (* 1024 1024))
 
-(define rt-num-input-ports 8)
-(define rt-num-output-ports 8)
+(if (not (defined? '*rt-num-input-ports*))
+    (primitive-eval '(define *rt-num-input-ports* 8)))
+
+(if (not (defined? '*rt-num-output-ports*))
+    (primitive-eval '(define *rt-num-output-ports* 8)))
 
 (define rt-max-cpu-usage 80)
 
@@ -719,7 +676,7 @@ size_t jack_ringbuffer_write_space(const jack_ringbuffer_t *rb);
 					  (return 0)))
 
 	 (functions->public
-	 
+
 	  (<void> rt_insert_procfunc (lambda ((<struct-RT_Engine-*> engine)
 					     (<struct-RT_Event-*> event))
 				      (let* ((toinsert <struct-RT_Procfunc-*> event->arg))
@@ -747,7 +704,16 @@ size_t jack_ringbuffer_write_space(const jack_ringbuffer_t *rb);
 	 (<void> rt_remove_procfunc (lambda ((<struct-RT_Engine-*> engine)
 					     (<struct-RT_Event-*> event))
 				      (let* ((toremove <struct-RT_Procfunc-*> event->arg))
-					(rt_remove_procfunc_do engine toremove)))))
+					(rt_remove_procfunc_do engine toremove))))
+
+	 (<void> rt_remove_all_procfuncs (lambda ((<struct-RT_Engine-*> engine)
+						  (<struct-RT_Event-*> event))
+					   (let* ((procfunc <struct-RT_Procfunc-*> engine->procfuncs)
+						  (next <struct-RT_Procfunc-*>))
+					     (while procfunc
+						    (set! next procfunc->next)
+						    (rt_remove_procfunc_do engine procfunc)
+						    (set! procfunc next))))))
 	 
 	
 	;; Priority queue code
@@ -967,6 +933,7 @@ size_t jack_ringbuffer_write_space(const jack_ringbuffer_t *rb);
 					       
 
 	(public
+
 	 (<void> rt_init_engine (lambda ((<struct-RT_Engine-*> engine))
 				  (set! engine->queue (calloc (sizeof <struct-RT_Event-*>) engine->queue_fullsize))
 				  (set! rt_event_dummy.time 0.0f)
@@ -974,6 +941,7 @@ size_t jack_ringbuffer_write_space(const jack_ringbuffer_t *rb);
 				  (for-each 0 engine->queue_fullsize
 					    (lambda (i)
 					      (set! engine->queue[i] &rt_event_dummy))))))
+
 	
 	 
 	 ;; Freeing events, protecting and unprotecting procfunc-smobs.
@@ -1003,7 +971,29 @@ size_t jack_ringbuffer_write_space(const jack_ringbuffer_t *rb);
 						      
 						      ((== RT_DATABACK_EVENT databack.type)
 						       (let* ((event <struct-RT_Event-*> databack.data))
-							 (free event)))))))))
+							 (free event))))))))
+
+	 ;; Dont use.
+	 (<void> rt_reset_engine (lambda ((<struct-RT_Engine-*> engine))
+				   
+				   (<struct-RT_Event-*> temp)
+				   
+				   ;; First wait for the ringbuffers to be empty.
+				   (while (or (>= (jack_ringbuffer_read_space engine->ringbuffer_to_rt) 0)
+					      (>= (jack_ringbuffer_read_space engine->ringbuffer_from_rt) 0))
+					  (rt_non_check_non_rt engine)
+					  ;;(usleep 50)
+					  )
+				   
+				   (free engine->queue)
+				   
+				   (set! temp engine->events_noninserted1)
+					 
+				   )))
+	  
+
+
+
 	)
 
 (define num-events 0)				      
@@ -1056,7 +1046,7 @@ size_t jack_ringbuffer_write_space(const jack_ringbuffer_t *rb);
 
 
 (define *rt-engine* (<rt-engine> (lambda (rt-arg)
-				   (<jack-rt-driver> rt-num-input-ports rt-num-output-ports (rt_callback) rt-arg))))
+				   (<jack-rt-driver> *rt-num-input-ports* *rt-num-output-ports* (rt_callback) rt-arg))))
 
 (add-hook! exit-hook (lambda args
 		       (-> *rt-engine* destructor)))
@@ -1102,13 +1092,21 @@ size_t jack_ringbuffer_write_space(const jack_ringbuffer_t *rb);
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
-(define (rte-reset)
+(define* (rte-restart #:key (num-input-ports *rt-num-input-ports*) (num-output-ports *rt-num-output-ports*))
+  (set! *rt-num-input-ports* num-input-ports)
+  (set! *rt-num-output-ports* num-output-ports)
   (begin
     (-> *rt-engine* destructor)
     (set! *rt-engine* (<rt-engine> (lambda (rt-arg)
-				   (<jack-rt-driver> rt-num-input-ports rt-num-output-ports (rt_callback) rt-arg))))
+				     (<jack-rt-driver> num-input-ports num-output-ports (rt_callback) rt-arg))))
     (-> *rt-engine* start)))
 
+(define (rte-silence!)
+  (-> *rt-engine* add-event
+      (rte-frames)
+      (rt_remove_all_procfuncs)
+      #f))
+  
 (define rte-max-cpu-usage
   (make-procedure-with-setter
    (lambda ()
