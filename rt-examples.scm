@@ -7,7 +7,7 @@
 ;; 4. Evaluate (load-from-path "rt-examples.scm")
 ;; 5. Browse this file and evaluate commented blocks.
 ;;
-;; In case of stuck sounds, evaluate (rte-reset)
+;; In case of stuck sounds, evaluate (rte-silence!)
 ;; 
 ;; K.Matheussen 2005.
 
@@ -20,10 +20,10 @@
 (definstrument (oscilator start duration)
   (let ((osc (make-oscil))
 	(vol 4/6))
-    (rt-play start duration
-	     (lambda ()
-	       (out (* (oscil osc)
-		       vol))))))
+    (<rt-play> start duration
+	       (lambda ()
+		 (out (* (oscil osc)
+			 vol))))))
 
 
 #!
@@ -65,10 +65,10 @@
 	 (len (inexact->exact (round (* (mus-srate) dur))))
 	 (end (+ beg len)))
     (ws-interrupt?)
-    (rt-play start dur
-	     (lambda ()
-	       (out (* (env amp-env)
-		       (polyshape os 1.0 (env gls-env))))))))
+    (<rt-play> start dur
+	       (lambda ()
+		 (out (* (env amp-env)
+			 (polyshape os 1.0 (env gls-env))))))))
 
 (define bird-org bird)
 (definstrument (bird-new start dur frequency freqskew amplitude freq-envelope amp-envelope)
@@ -80,10 +80,10 @@
 	 (beg (inexact->exact (round (* (mus-srate) start))))
 	 (end (+ beg len)))
     (ws-interrupt?)
-    (rt-play start dur
-	     (lambda ()
-	       (out (* (env amp-env)
-		       (oscil os (env gls-env))))))))
+    (<rt-play> start dur
+	       (lambda ()
+		 (out (* (env amp-env)
+			 (oscil os (env gls-env))))))))
 
 
 (define with-sound-org with-sound)
@@ -120,8 +120,8 @@
 (definstrument (make-osc-gui)
   (letrec* ((osc (make-oscil #:frequency 440))
 	    (vol 0.4)
-	    (instrument (rt-play (lambda ()
-				   (out (* vol (oscil osc))))))
+	    (instrument (<rt-play> (lambda ()
+				     (out (* vol (oscil osc))))))
 	    (exit (lambda ()
 		    (-> instrument stop)
 		    (-> d hide)))
@@ -138,9 +138,8 @@
     (-> d show)))
 
 
-(definstrument (make-fm-gui i)
-  (letrec* ((freq i)
-	    (amp 0.6)
+(definstrument (make-fm-gui freq)
+  (letrec* ((amp 0.6)
 	    (mc-ratio 0.1)
 	    (index 4)
 	    
@@ -148,31 +147,43 @@
 	    (carrier (make-oscil freq))
 	    (fm_index (* (hz->radians freq) mc-ratio index))
 	    
-	    (instrument (rt-play (lambda ()
-				   (out (* amp
-					   (oscil carrier (* fm_index
-							     (oscil fm))))))))
+	    (instrument (<rt-play> (lambda ()
+				     (out (* amp
+					     (oscil carrier (* fm_index
+							       (oscil fm))))))))
 	    (exit (lambda ()
 		    (-> instrument stop)
 		    (-> d hide)))
 	    
 	    (d (<dialog> "Hard Realtime Common Lisp Music!"  exit
 			 "Close" exit
-				"Stop" (<- instrument stop)
-				"Start" (<- instrument play))))
-    (c-display "amp/fm_index" amp fm_index)
-    (<slider> d "Fm Frequency" 2 (mus-frequency fm) 1200 (lambda (val) 
-							   (set! (mus-frequency fm) (* mc-ratio val)))
+			 "Stop" (<- instrument stop)
+			 "Start" (<- instrument play))))
+
+    (<slider> d "Fm Frequency"
+	      2 (mus-frequency fm) 1200
+	      (lambda (val) 
+		(set! (mus-frequency fm) (* mc-ratio val)))
 	      10)
-    (<slider> d "Carrier Frequency" 50 (mus-frequency carrier) 1200 (lambda (val) 
-								      (set! (mus-frequency carrier) val))
+
+    (<slider> d "Carrier Frequency"
+	      50 (mus-frequency carrier) 1200
+	      (lambda (val) 
+		(set! (mus-frequency carrier) val))
 	      10)
-    (<slider> d "Index" 0 (-> instrument fm_index) 50.0 (lambda (val) 
-							  (set! (-> instrument fm_index) (* (hz->radians freq) mc-ratio val)))
+    
+    (<slider> d "Index"
+	      0 (-> instrument fm_index) 50.0
+	      (lambda (val) 
+		(set! (-> instrument fm_index) (* (hz->radians freq) mc-ratio val)))
 	      100)
-    (<slider> d "Amplitude" 0 (-> instrument amp) 1.0 (lambda (val) 
-							(set! (-> instrument amp) val))
+    
+    (<slider> d "Amplitude" 
+	      0 (-> instrument amp) 1.0
+	      (lambda (val) 
+		(set! (-> instrument amp) val))
 	      1000)
+    
     (-> d show)))
 
 
@@ -192,37 +203,37 @@
 
 (definstrument (play-once filename)
   (let* ((rs (make-readin filename)))
-    (rt-play (lambda ()
-	       (if (>= (mus-location rs) (mus-length rs))
-		   (remove-me)
-		   (out (readin rs)))))))
+    (<rt-play> (lambda ()
+		 (if (>= (mus-location rs) (mus-length rs))
+		     (remove-me)
+		     (out (readin rs)))))))
 
 (definstrument (loopplay filename)
   (let* ((rs (make-readin filename)))
-    (rt-play (lambda ()
-	       (if (>= (mus-location rs) (mus-length rs))
-		   (set! (mus-location rs) 0))
-	       (out (readin rs))))))
+    (<rt-play> (lambda ()
+		 (if (>= (mus-location rs) (mus-length rs))
+		     (set! (mus-location rs) 0))
+		 (out (readin rs))))))
 
 (definstrument (backandforth-stereo filename pan)
   (let* ((read0 (make-readin filename #:channel 0))
 	 (read1 (make-readin filename #:channel 1)))
-    (rt-play (lambda ()
-	       (let ((readfunc (lambda (read)
-				 (if (>= (mus-location read) (mus-length read))
-				     (set! (mus-increment read) -1)
-				     (if (<= (mus-location read) 0)
-					 (set! (mus-increment read) 1)))
-				 (readin read))))
-		 ;; (Very stupid panner)
-		 (out 0 (* (readfunc read0)
-			   (if (< pan 0)
-			       1
-			       (- 1 pan))))
-		 (out 1 (* (readfunc read1)
-			   (if (> pan 0)
-			       1
-			       (+ 1 pan)))))))))
+    (<rt-play> (lambda ()
+		 (let ((readfunc (lambda (read)
+				   (if (>= (mus-location read) (mus-length read))
+				       (set! (mus-increment read) -1)
+				       (if (<= (mus-location read) 0)
+					   (set! (mus-increment read) 1)))
+				   (readin read))))
+		   ;; (Very stupid panner)
+		   (out 0 (* (readfunc read0)
+			     (if (< pan 0)
+				 1
+				 (- 1 pan))))
+		   (out 1 (* (readfunc read1)
+			     (if (> pan 0)
+				 1
+				 (+ 1 pan)))))))))
 
 
 
@@ -255,24 +266,24 @@
 	 (das-vct-length (c-integer (* (rte-samplerate) max-latency-in-seconds)))
 	 (das-vct (make-vct das-vct-length))
 	 (pos 0))
-    (rt-play (lambda ()
-	       (declare (<int> pos))
-	       
-	       (if (>= (mus-location rs) (mus-length rs))
-		   (set! (mus-location rs) 0))
-	       
-	       (let* ((frame-latency (the <int> (* (mus-srate) latency)))
-		      (write-pos (remainder (+ pos frame-latency)
-					    das-vct-length))
-		      (read-pos pos)
-		      (next-pos (remainder (1+ pos)
-					   das-vct-length))
-		      (sample (readin rs))
-		      (delayed-sample (vct-ref das-vct read-pos)))
-
-		 (vct-set! das-vct write-pos sample)
-		 (out (+ sample (* mix delayed-sample)))
-		 (set! pos next-pos))))))
+    (<rt-play> (lambda ()
+		 (declare (<int> pos))
+		 
+		 (if (>= (mus-location rs) (mus-length rs))
+		     (set! (mus-location rs) 0))
+		 
+		 (let* ((frame-latency (the <int> (* (mus-srate) latency)))
+			(write-pos (remainder (+ pos frame-latency)
+					      das-vct-length))
+			(read-pos pos)
+			(next-pos (remainder (1+ pos)
+					     das-vct-length))
+			(sample (readin rs))
+			(delayed-sample (vct-ref das-vct read-pos)))
+		   
+		   (vct-set! das-vct write-pos sample)
+		   (out (+ sample (* mix delayed-sample)))
+		   (set! pos next-pos))))))
 
 	     
 #!
@@ -422,30 +433,30 @@ This version of the fm-violin assumes it is running within with-sound (where *ou
 	  (set! indf3 (make-env '(0 2))))
 
       (if (or (not easy-case) ind-noi amp-noi (> noise-amount 0.0) (not modulate))
-	  (rt-play startime dur
-		   (lambda ()
-		     (if (not (= 0.0 noise-amount))
-			 (set! fuzz (rand fm-noi)))
-		     (set! vib (+ (env frqf) (triangle-wave pervib) (rand-interp ranvib)))
-		     (if ind-noi? (set! ind-fuzz (+ 1.0 (rand-interp ind-noi))))
-		     (if amp-noi? (set! amp-fuzz (+ 1.0 (rand-interp amp-noi))))
-		     (if modulate
-			 (if easy-case
-			     (set! modulation
-				   (* (env indf1) 
-				      (polyshape poly-fmosc1 1.0 vib)))
-			     (set! modulation
-				   (+ (* (env indf1) (oscil fmosc1 (+ (* fm1-rat vib) fuzz)))
-				      (* (env indf2) (oscil fmosc2 (+ (* fm2-rat vib) fuzz)))
-				      (* (env indf3) (oscil fmosc3 (+ (* fm3-rat vib) fuzz)))))))
-		     (locsig locs (* (env ampf) amp-fuzz
-				     (oscil carrier (+ vib (* ind-fuzz modulation)))))))
-	  (rt-play startime dur
-		   (lambda () 
-		     (let* ((vib (+ (env frqf) (triangle-wave pervib) (rand-interp ranvib))))
-		       (locsig locs (* (env ampf) 
-				       (oscil carrier (+ vib (* (env indf1) 
-								(polyshape fmosc1 1.0 vib))))))))))))
+	  (<rt-play> startime dur
+		     (lambda ()
+		       (if (not (= 0.0 noise-amount))
+			   (set! fuzz (rand fm-noi)))
+		       (set! vib (+ (env frqf) (triangle-wave pervib) (rand-interp ranvib)))
+		       (if ind-noi? (set! ind-fuzz (+ 1.0 (rand-interp ind-noi))))
+		       (if amp-noi? (set! amp-fuzz (+ 1.0 (rand-interp amp-noi))))
+		       (if modulate
+			   (if easy-case
+			       (set! modulation
+				     (* (env indf1) 
+					(polyshape poly-fmosc1 1.0 vib)))
+			       (set! modulation
+				     (+ (* (env indf1) (oscil fmosc1 (+ (* fm1-rat vib) fuzz)))
+					(* (env indf2) (oscil fmosc2 (+ (* fm2-rat vib) fuzz)))
+					(* (env indf3) (oscil fmosc3 (+ (* fm3-rat vib) fuzz)))))))
+		       (locsig locs (* (env ampf) amp-fuzz
+				       (oscil carrier (+ vib (* ind-fuzz modulation)))))))
+	  (<rt-play> startime dur
+		     (lambda () 
+		       (let* ((vib (+ (env frqf) (triangle-wave pervib) (rand-interp ranvib))))
+			 (locsig locs (* (env ampf) 
+					 (oscil carrier (+ vib (* (env indf1) 
+								  (polyshape fmosc1 1.0 vib))))))))))))
 
 
 #!

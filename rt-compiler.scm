@@ -14,7 +14,7 @@ Jack must be running before loading this file!
 
 
 For documentation, check out
-http://www.notam02.no/arkiv/doc/snd/
+http://www.notam02.no/arkiv/doc/snd-rt/
 
 
 *****
@@ -5574,7 +5574,8 @@ setter!-rt-mus-location/mus_location
 ;; rt
 (define-macro (rt-compile term)
   `(rt-1 ',term))
-(define-macro rt-c rt-compile)
+(define-macro (rt-c term)
+  `(rt-compile ,term))
 
 (define-macro (rt-func term)
   (let ((das-rt (rt-1 term)))
@@ -5592,7 +5593,7 @@ setter!-rt-mus-location/mus_location
 (define-macro (rt-funcall rt-func . args)
   `((cadr ,rt-func) ,@args))
 
-(define-macro (rt rt-func)
+(define-macro (<rt> rt-func)
   `((caddr (rt-compile ,rt-func))))
 
 
@@ -5617,10 +5618,10 @@ setter!-rt-mus-location/mus_location
 	      ,instrument)))))
 
 
-(define-macro (rt-play-abs . rest)
-  `(rt-play-macro play-abs (rt ,(last rest)) ,rest))
-(define-macro (rt-play . rest)
-  `(rt-play-macro play (rt ,(last rest)) ,rest))
+(define-macro (<rt-play-abs> . rest)
+  `(rt-play-macro play-abs (<rt> ,(last rest)) ,rest))
+(define-macro (<rt-play> . rest)
+  `(rt-play-macro play (<rt> ,(last rest)) ,rest))
 
 
 (define-macro (definstrument def . body)
@@ -5641,15 +5642,15 @@ setter!-rt-mus-location/mus_location
 	    ; (let ((func (add-rt-func (cadr term))))
 	    ;   `((cadr ,func))))
 	    
-	    ((eq? 'rt (car term))
+	    ((eq? '<rt> (car term))
 	     (let ((func (add-rt-func (cadr term))))
 	       `((caddr ,func))))
 	    
-	    ((eq? 'rt-play (car term))
+	    ((eq? '<rt-play> (car term))
 	     (let ((func (add-rt-func (last term))))
 	       `(rt-play-macro play ((caddr ,func)) ,(cdr term))))
 	    
-	    ((eq? 'rt-play-abs (car term))
+	    ((eq? '<rt-play-abs> (car term))
 	     (let ((func (add-rt-func (last term))))
 	       `(rt-play-macro play-abs ((caddr ,func)) ,(cdr term))))
 	    
@@ -5677,9 +5678,9 @@ setter!-rt-mus-location/mus_location
     (lambda (b c)
       2 3 4)))
 
-(rt-run start dur
-	(lambda ()
-	  (out (* (env amp-env)))))
+(<rt-play> start dur
+	   (lambda ()
+	     (out (* (env amp-env)))))
 !#
 
 

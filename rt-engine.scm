@@ -13,7 +13,7 @@ time signal processing.
 This file is normally loaded from "rt-compiler.scm".
 
 For documentation, check out
-http://www.notam02.no/arkiv/doc/snd/
+http://www.notam02.no/arkiv/doc/snd-rt/
 
 
 [1] http://www.notam02.no
@@ -420,7 +420,7 @@ size_t jack_ringbuffer_write_space(const jack_ringbuffer_t *rb);
     (c-display "<jack-rt-driver>: starting!")
     (-> jack-arg frames 0)
     (-> jack-arg is_running 1))
-
+  
   (def-method (stop)
     (c-display "<jack-rt-driver>: stop.")
     (-> jack-arg frames 0)
