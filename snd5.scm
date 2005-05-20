@@ -9,10 +9,10 @@
 (define (XtAppContext app) (if (list? app) app (list 'XtAppContext app)))
 (define (snd-pixel pix) pix)
 
-(define update-transform update-transform-graph)
-(define mix-length mix-frames)
-(define region-length region-frames)
-(define selection-length selection-frames)
+;(define update-transform update-transform-graph)
+;(define mix-length mix-frames)
+;(define region-length region-frames)
+;(define selection-length selection-frames)
 
 (define* (forward-sample #:optional (count 1) snd chn)
   (set! (cursor snd chn) (+ (cursor snd chn) count)))

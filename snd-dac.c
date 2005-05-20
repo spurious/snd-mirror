@@ -459,34 +459,34 @@ static void dac_set_field(snd_info *sp, Float newval, dac_field_t field)
 			{
 			case DAC_EXPAND: 
 			  if (dp->spd)
-			    mus_set_increment((dp->spd)->gen, newval); 
+			    mus_set_increment(dp->spd->gen, newval); 
 			  break;
 			case DAC_EXPAND_LENGTH: /* segment length */
 			  if (dp->spd)
 			    {
 			      val = (int)(SND_SRATE(sp) * newval);
-			      mus_set_length((dp->spd)->gen, val);
-			      mus_set_ramp((dp->spd)->gen, (int)(val * sp->expand_control_ramp));
+			      mus_set_length(dp->spd->gen, val);
+			      mus_set_ramp(dp->spd->gen, (int)(val * sp->expand_control_ramp));
 			    }
 			  break;
 			case DAC_EXPAND_RAMP: 
 			  if (dp->spd)
 			    {
 			      val = (int)(newval * sp->expand_control_length * SND_SRATE(sp));
-			      mus_set_ramp((dp->spd)->gen, val); 
+			      mus_set_ramp(dp->spd->gen, val); 
 			    }
 			  break;
 			case DAC_EXPAND_HOP: /* output hop */
 			  if (dp->spd)
 			    {
 			      val = (int)(SND_SRATE(sp) * newval);
-			      mus_set_hop((dp->spd)->gen, val); 
-			      mus_set_increment((dp->spd)->gen, sp->expand_control);
+			      mus_set_hop(dp->spd->gen, val); 
+			      mus_set_increment(dp->spd->gen, sp->expand_control);
 			    }
 			  break;
 			case DAC_EXPAND_SCALER:
 			  if (dp->spd)
-			    mus_set_scaler((dp->spd)->gen, newval); 
+			    mus_set_scaler(dp->spd->gen, newval); 
 			  break;
 			case DAC_CONTRAST_AMP:
 			  dp->contrast_amp = newval;

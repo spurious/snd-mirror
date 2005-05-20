@@ -1,15 +1,5 @@
 #include "snd.h"
 
-/* -------------------------------- DATA STRUCTURES -------------------------------- 
- *
- * axis_info: axis data
- * file_info: header data describing sound data in file
- * fft_info: data relating to one fft display
- * chan_info: state info for one channel
- * snd_info: state info for one sound
- * snd_state: overall state of program
- */
-
 chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound)
 {
   chan_info *cp; /* may be re-used */
@@ -17,7 +7,7 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound)
     {
       cp = (chan_info *)CALLOC(1, sizeof(chan_info)); 
       cp->cgx = (chan_context *)CALLOC(1, sizeof(chan_context));
-      (cp->cgx)->ax = (axis_context *)CALLOC(1, sizeof(axis_context));
+      cp->cgx->ax = (axis_context *)CALLOC(1, sizeof(axis_context));
       cp->have_mixes = false;
       cp->last_sonogram = NULL;
       cp->temp_sonogram = NULL;
@@ -447,8 +437,8 @@ snd_info *completely_free_snd_info(snd_info *sp)
 	{
 	  if (cp->cgx) 
 	    {
-	      if ((cp->cgx)->ax) 
-		FREE((cp->cgx)->ax);
+	      if (cp->cgx->ax) 
+		FREE(cp->cgx->ax);
 	      FREE(cp->cgx);
 	    }
 	  if (XEN_VECTOR_P(cp->properties))
@@ -483,11 +473,11 @@ bool map_over_chans(bool (*func)(chan_info *, void *), void *userptr)
       if ((sp) && (sp->inuse == SOUND_NORMAL))
 	for (j = 0; j < sp->nchans; j++)
 	  if ((cp = ((chan_info *)(sp->chans[j]))))
-	    {
-	      if (cp)
+	    if (cp)
+	      {
 		val = (*func)(cp, userptr);
-	      if (val) return(val);
-	    }
+		if (val) return(val);
+	      }
       }
   return(val);
 }
@@ -791,8 +781,8 @@ void select_channel(snd_info *sp, int chan)
       if (cp) 
 	{
 	  recolor_graph(cp, false);
-	  (cp->cgx)->selected = false;
-	  if (sp != cp->sound) (cp->sound)->selected_channel = NO_SELECTION;
+	  cp->cgx->selected = false;
+	  if (sp != cp->sound) cp->sound->selected_channel = NO_SELECTION;
 	  update_graph(cp);
 	}
       if (XEN_HOOKED(select_channel_hook))

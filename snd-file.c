@@ -917,7 +917,7 @@ snd_info *make_sound_readable(const char *filename, bool post_close)
     {
       cp = make_chan_info(NULL, i, sp);
       cp->editable = false;
-      FREE((cp->cgx)->ax);
+      FREE(cp->cgx->ax);
       FREE(cp->cgx);
       cp->cgx = NULL;
       sp->chans[i] = cp;

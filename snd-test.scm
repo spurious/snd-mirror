@@ -56368,7 +56368,11 @@ EDITS: 2
 (close-output-port optimizer-log)
 ;;;(mus-sound-report-cache "hiho.tmp")
 (gc)(gc)
-(if (defined? 'mem-report) (mem-report))
+(if (defined? 'mem-report) 
+    (mem-report))
+(if all-args 
+    (system "cp memlog memlog.full"))
+
 (if (and full-test
 	 (file-exists? "oldopt.log"))
     (system "diff -w optimizer.log oldopt.log"))

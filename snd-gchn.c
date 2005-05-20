@@ -600,7 +600,7 @@ static gboolean graph_button_press(GtkWidget *w, GdkEventButton *ev, gpointer da
       ss->sgx->graph_is_active = true;
       gtk_widget_grab_focus(w);
       if ((cp->sound) && (cp->sound->sgx))
-	((cp->sound)->sgx)->mini_active = false;
+	cp->sound->sgx->mini_active = false;
       graph_button_press_callback(cp, (int)(ev->x), (int)(ev->y), ev->state, ev->button, ev->time);
     }
   return(false);
@@ -1042,7 +1042,7 @@ bool fixup_cp_cgx_ax_wn(chan_info *cp)
   axis_context *ax; 
   ax = cp->cgx->ax;
   if (cp->tcgx) 
-    w = channel_graph((cp->sound)->chans[0]);
+    w = channel_graph(cp->sound->chans[0]);
   else w = channel_graph(cp);
   ax->wn = w->window;
   ax->w = w;

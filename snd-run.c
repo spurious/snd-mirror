@@ -100,7 +100,8 @@
  *        sample -> Float chn_sample(off_t samp, chan_info *cp, int pos) [6485 -- these opt args should not be a problem][(sample samp snd chn pos)]
  *        samples -> init_sample_reader then fill data with read_sample snd-edit 8441
  *        set sample(s) uses change_samples.
- * TODO: is clm-struct ref handled solely as list-ref? (vct if all float?)
+ * PERHAPS: is clm-struct ref handled solely as list-ref? (vct if all float?)
+ * PERHAPS: count-matches and find? -- requires extraction of search in snd-sig.c line 3247
  */
 
 #include "snd.h"

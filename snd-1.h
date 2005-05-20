@@ -343,7 +343,6 @@ typedef struct snd_info {
   chan_info *lacp;
   struct ctrl_state *saved_controls;
   bool apply_ok, applying;
-  /* moved from global to channel-local 4-Aug-00 */
   struct mini_history *minibuffer_history, *filter_history;
   bool active;
   char *name_string;

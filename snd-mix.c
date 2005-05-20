@@ -281,7 +281,7 @@ bool mix_ok(int n)
 	     (md->states) && 
 	     (md->states[0]) && 
 	     (md->cp) &&
-	     (((md->states[0])->edit_ctr) <= ((md->cp)->edit_ctr)));
+	     (((md->states[0])->edit_ctr) <= (md->cp->edit_ctr)));
     }
   return(false);
 }
@@ -2407,7 +2407,7 @@ static void display_mix_waveform(chan_info *cp, mix_info *md, bool draw)
   cs = md->active_mix_state;
   if (sp)
     cur_srate = (double)SND_SRATE(sp);
-  else cur_srate = (double)SND_SRATE((md->cp)->sound);
+  else cur_srate = (double)SND_SRATE(md->cp->sound);
   if ((ss->just_time) && (event_pending())) return;
   j = prepare_mix_waveform(md, cs, ap, md->height, md->y, cur_srate, (bool)sp, &two_sided);
   if (j == 0) return;
@@ -2812,7 +2812,7 @@ void display_channel_mixes(chan_info *cp)
   off_t lo, hi;
   int i, turnover, y, hgt;
   bool combined;
-  combined = (((snd_info *)(cp->sound))->channel_style == CHANNELS_SUPERIMPOSED);
+  combined = (cp->sound->channel_style == CHANNELS_SUPERIMPOSED);
   ap = cp->axis;
   lo = ap->losamp;
   hi = ap->hisamp;
@@ -3863,7 +3863,7 @@ static XEN g_mix_locked(XEN n)
   md = md_from_id(XEN_TO_C_INT(n));
   if (md == NULL)
     return(snd_no_such_mix_error(S_mix_locked_p, n));
-  return(C_TO_XEN_BOOLEAN((md->active_mix_state)->locked));
+  return(C_TO_XEN_BOOLEAN(md->active_mix_state->locked));
 }
 
 static XEN g_mix_inverted(XEN n) 
@@ -3874,7 +3874,7 @@ static XEN g_mix_inverted(XEN n)
   md = md_from_id(XEN_TO_C_INT(n));
   if (md == NULL)
     return(snd_no_such_mix_error(S_mix_inverted_p, n));
-  return(C_TO_XEN_BOOLEAN((md->active_mix_state)->inverted));
+  return(C_TO_XEN_BOOLEAN(md->active_mix_state->inverted));
 }
 
 static XEN g_mix_tag_position(XEN n) 
@@ -3969,8 +3969,8 @@ static XEN g_mix_home(XEN n)
   md = md_from_id(XEN_TO_C_INT(n));
   if (md == NULL)
     return(snd_no_such_mix_error(S_mix_home, n));
-  return(XEN_LIST_2(C_TO_XEN_INT(((md->cp)->sound)->index),
-		    C_TO_XEN_INT(((md->cp)->chan))));
+  return(XEN_LIST_2(C_TO_XEN_INT((md->cp->sound)->index),
+		    C_TO_XEN_INT((md->cp->chan))));
 }
 
 static XEN g_mix_amp(XEN n, XEN uchan) 
@@ -7781,10 +7781,10 @@ static char *tf_to_string(track_fd *fd)
 		      mus_snprintf(desc, PRINT_BUFFER_SIZE, "#<track-sample-reader track %d: %s chan %d via mixes '(",
 				   fd->track,
 				   md->in_filename,
-				   (md->cp)->chan);
+				   md->cp->chan);
 		      banner = true;
 		    }
-		  mus_snprintf(toi, 16, "%s%d", (previous) ? " ": "", (mf->md)->id);
+		  mus_snprintf(toi, 16, "%s%d", (previous) ? " ": "", mf->md->id);
 		  previous = true;
 		  desc = snd_strcat(desc, toi, &desc_len);
 		}

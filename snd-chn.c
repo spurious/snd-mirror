@@ -37,7 +37,7 @@ static void after_transform(chan_info *cp, Float scaler)
 {
   if (XEN_HOOKED(after_transform_hook))
     run_hook(after_transform_hook,
-	     XEN_LIST_3(C_TO_XEN_INT((cp->sound)->index),
+	     XEN_LIST_3(C_TO_XEN_INT(cp->sound->index),
 			C_TO_XEN_INT(cp->chan),
 			C_TO_XEN_DOUBLE(scaler)),
 	     S_after_transform_hook);
@@ -269,12 +269,12 @@ void set_sound_channel_style(snd_info *sp, channel_style_t val)
 bool chan_fft_in_progress(chan_info *cp)
 {
   /* fft_in_progress is a background process only if sonogram/spectrogram */
-  return((bool)((cp->cgx)->fft_in_progress));
+  return((bool)(cp->cgx->fft_in_progress));
 }
 
 void set_chan_fft_in_progress(chan_info *cp, Cessator fp) 
 {
-  (cp->cgx)->fft_in_progress = fp;
+  cp->cgx->fft_in_progress = fp;
 }
 
 void stop_amp_env(chan_info *cp)
@@ -291,11 +291,11 @@ void stop_amp_env(chan_info *cp)
 
 void force_fft_clear(chan_info *cp)
 {
-  if ((cp->cgx) && ((cp->cgx)->fft_in_progress))
+  if ((cp->cgx) && (cp->cgx->fft_in_progress))
     {
-      BACKGROUND_REMOVE((cp->cgx)->fft_in_progress);
+      BACKGROUND_REMOVE(cp->cgx->fft_in_progress);
       finish_progress_report(cp->sound, NOT_FROM_ENVED);
-      (cp->cgx)->fft_in_progress = 0;
+      cp->cgx->fft_in_progress = 0;
     }
   if (cp->fft) cp->fft = free_fft_info(cp->fft);
   cp_free_fft_state(cp);
@@ -458,7 +458,7 @@ void update_graph(chan_info *cp)
       if (ap->losamp < 0) ap->losamp = 0;
       ap->hisamp = (off_t)(ap->x1 * cur_srate);
     }
-  if (!(((cp->cgx)->ax)->wn)) 
+  if (!(cp->cgx->ax->wn)) 
     if (!(fixup_cp_cgx_ax_wn(cp))) 
       {
 	/* window not active yet (gtk) */
@@ -879,7 +879,7 @@ void focus_x_axis_change(axis_info *ap, chan_info *cp, int focus_style)
 	{
 	case ZOOM_FOCUS_PROC:
 	  ap->x0 = XEN_TO_C_DOUBLE(XEN_CALL_6(ss->zoom_focus_proc,
-					      C_TO_XEN_INT((cp->sound)->index),
+					      C_TO_XEN_INT(cp->sound->index),
 					      C_TO_XEN_INT(cp->chan),
 					      C_TO_XEN_DOUBLE(ap->zx),
 					      C_TO_XEN_DOUBLE(ap->x0),
@@ -2809,7 +2809,7 @@ typedef struct lisp_grf {
   int env_data;
 } lisp_grf;
 
-axis_info *lisp_info_axis(chan_info *cp) {return((cp->lisp_info)->axis);}
+axis_info *lisp_info_axis(chan_info *cp) {return(cp->lisp_info->axis);}
 
 void free_lisp_info(chan_info *cp)
 {
@@ -3025,8 +3025,8 @@ static void display_channel_data_with_size (chan_info *cp,
       res = run_progn_hook(graph_hook,
 			   XEN_LIST_4(C_TO_XEN_INT(sp->index),
 				      C_TO_XEN_INT(cp->chan),
-				      C_TO_XEN_DOUBLE((cp->axis)->y0),
-				      C_TO_XEN_DOUBLE((cp->axis)->y1)),
+				      C_TO_XEN_DOUBLE(cp->axis->y0),
+				      C_TO_XEN_DOUBLE(cp->axis->y1)),
 			   S_graph_hook);
       /* (add-hook! graph-hook (lambda (a b c d) (snd-print (format #f "~A ~A ~A ~A" a b c d)))) */
       ss->graph_hook_active = false;
@@ -3232,7 +3232,7 @@ static void display_channel_data_with_size (chan_info *cp,
 	  ss->lisp_graph_hook_active = true;
 	  /* inadvertent recursive call here can hang entire computer */
 	  pixel_list = run_progn_hook(lisp_graph_hook,
-				      XEN_LIST_2(C_TO_XEN_INT((cp->sound)->index),
+				      XEN_LIST_2(C_TO_XEN_INT(cp->sound->index),
 						 C_TO_XEN_INT(cp->chan)),
 				      S_lisp_graph_hook);
 	  ss->lisp_graph_hook_active = false;
@@ -3271,7 +3271,7 @@ static void display_channel_data_with_size (chan_info *cp,
       if ((cp->hookable == WITH_HOOK) &&
 	  (XEN_HOOKED(after_graph_hook)))
 	run_hook(after_graph_hook,
-		 XEN_LIST_2(C_TO_XEN_INT((cp->sound)->index),
+		 XEN_LIST_2(C_TO_XEN_INT(cp->sound->index),
 			    C_TO_XEN_INT(cp->chan)),
 		 S_after_graph_hook);
       /* (add-hook! after-graph-hook (lambda (a b) (snd-print (format #f "~A ~A" a b)))) */
@@ -3441,7 +3441,7 @@ kbd_cursor_t cursor_decision(chan_info *cp)
   len = CURRENT_SAMPLES(cp);
   if (CURSOR(cp) >= len) CURSOR(cp) = len - 1; /* zero based, but in 0-length files, len = 0 */
   if (CURSOR(cp) < 0) CURSOR(cp) = 0;        /* perhaps the cursor should be forced off in empty files? */
-  if (CURSOR(cp) < (cp->axis)->losamp)
+  if (CURSOR(cp) < cp->axis->losamp)
     {
       if (CURSOR(cp) == 0) return(CURSOR_ON_LEFT);
       else 
@@ -3451,7 +3451,7 @@ kbd_cursor_t cursor_decision(chan_info *cp)
 	  return(CURSOR_IN_MIDDLE);
 	}
     }
-  if (CURSOR(cp) > (cp->axis)->hisamp)
+  if (CURSOR(cp) > cp->axis->hisamp)
     {
       if (CURSOR(cp) >= (len - 1)) return(CURSOR_ON_RIGHT);
       else 
@@ -3739,7 +3739,7 @@ static click_loc_t within_graph(chan_info *cp, int x, int y)
     }
   if (((cp->graph_lisp_p) || (XEN_HOOKED(lisp_graph_hook))) && (cp->lisp_info))
     {
-      ap = (cp->lisp_info)->axis;
+      ap = cp->lisp_info->axis;
       if (((x0 <= ap->x_axis_x1) && (x1 >= ap->x_axis_x0)) && 
 	  ((y0 <= ap->y_axis_y0) && (y1 >= ap->y_axis_y1)))
 	return(CLICK_LISP);
@@ -4037,8 +4037,8 @@ void graph_button_press_callback(chan_info *cp, int x, int y, int key_state, int
 			    C_TO_XEN_INT(cp->chan),
 			    C_TO_XEN_INT(button),
 			    C_TO_XEN_INT(key_state),
-			    C_TO_XEN_DOUBLE(ungrf_x((cp->lisp_info)->axis, x)),
-			    C_TO_XEN_DOUBLE(ungrf_y((cp->lisp_info)->axis, y))),
+			    C_TO_XEN_DOUBLE(ungrf_x(cp->lisp_info->axis, x)),
+			    C_TO_XEN_DOUBLE(ungrf_y(cp->lisp_info->axis, y))),
 		 S_mouse_press_hook);
       break;
     case CLICK_WAVE:
@@ -4376,8 +4376,8 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, Tempus time)
 				    C_TO_XEN_INT(cp->chan),
 				    C_TO_XEN_INT(-1),
 				    C_TO_XEN_INT(-1),
-				    C_TO_XEN_DOUBLE(ungrf_x((cp->lisp_info)->axis, x)),
-				    C_TO_XEN_DOUBLE(ungrf_y((cp->lisp_info)->axis, y))),
+				    C_TO_XEN_DOUBLE(ungrf_x(cp->lisp_info->axis, x)),
+				    C_TO_XEN_DOUBLE(ungrf_y(cp->lisp_info->axis, y))),
 			 S_mouse_drag_hook);
 	      break;
 	    case CLICK_FFT_MAIN:
@@ -4448,7 +4448,7 @@ axis_context *set_context(chan_info *cp, chan_gc_t gc)
   if (!cx) cx = cp->cgx;
   ax = cx->ax;
   sx = ss->sgx;
-  if ((cp->cgx)->selected)
+  if (cp->cgx->selected)
     {
       switch (gc)
 	{
@@ -4556,8 +4556,8 @@ static XEN channel_get(XEN snd_n, XEN chn_n, cp_field_t fld, char *caller)
 	    case CP_EDPOS_CURSOR:            return(C_TO_XEN_OFF_T(cp->cursors[to_c_edit_position(cp, cp_edpos, S_cursor, 3)])); break;
 	    case CP_FRAMES:                  return(C_TO_XEN_OFF_T(CURRENT_SAMPLES(cp)));                      break;
 	    case CP_GRAPH_LISP_P:            return(C_TO_XEN_BOOLEAN(cp->graph_lisp_p));                       break;
-	    case CP_AP_LOSAMP:               if (cp->axis) return(C_TO_XEN_OFF_T((cp->axis)->losamp));         break;
-	    case CP_AP_HISAMP:               if (cp->axis) return(C_TO_XEN_OFF_T((cp->axis)->hisamp));         break;
+	    case CP_AP_LOSAMP:               if (cp->axis) return(C_TO_XEN_OFF_T(cp->axis->losamp));         break;
+	    case CP_AP_HISAMP:               if (cp->axis) return(C_TO_XEN_OFF_T(cp->axis->hisamp));         break;
 	    case CP_SQUELCH_UPDATE:          return(C_TO_XEN_BOOLEAN(cp->squelch_update));                     break;
 	    case CP_CURSOR_SIZE:             return(C_TO_XEN_INT(cp->cursor_size));                            break;
 	    case CP_CURSOR_STYLE:
@@ -4658,21 +4658,21 @@ static XEN channel_get(XEN snd_n, XEN chn_n, cp_field_t fld, char *caller)
 	      return(XEN_VECTOR_REF(cp->properties, 0));
 	      break;
 
-	    case CP_AP_SX:            if (cp->axis) return(C_TO_XEN_DOUBLE((cp->axis)->sx));     break;
-	    case CP_AP_SY:            if (cp->axis) return(C_TO_XEN_DOUBLE((cp->axis)->sy));     break;
-	    case CP_AP_ZX:            if (cp->axis) return(C_TO_XEN_DOUBLE((cp->axis)->zx));     break;
-	    case CP_AP_ZY:            if (cp->axis) return(C_TO_XEN_DOUBLE((cp->axis)->zy));     break;
-	    case CP_MIN_DB:           return(C_TO_XEN_DOUBLE(cp->min_dB));                       break;
-	    case CP_SPECTRO_X_ANGLE:  return(C_TO_XEN_DOUBLE(cp->spectro_x_angle));              break;
-	    case CP_SPECTRO_Y_ANGLE:  return(C_TO_XEN_DOUBLE(cp->spectro_y_angle));              break;
-	    case CP_SPECTRO_Z_ANGLE:  return(C_TO_XEN_DOUBLE(cp->spectro_z_angle));              break;
-	    case CP_SPECTRO_X_SCALE:  return(C_TO_XEN_DOUBLE(cp->spectro_x_scale));              break;
-	    case CP_SPECTRO_Y_SCALE:  return(C_TO_XEN_DOUBLE(cp->spectro_y_scale));              break;
-	    case CP_SPECTRO_Z_SCALE:  return(C_TO_XEN_DOUBLE(cp->spectro_z_scale));              break;
-	    case CP_SPECTRO_CUTOFF:   return(C_TO_XEN_DOUBLE(cp->spectro_cutoff));               break;
-	    case CP_SPECTRO_START:    return(C_TO_XEN_DOUBLE(cp->spectro_start));                break;
-	    case CP_FFT_WINDOW_BETA:  return(C_TO_XEN_DOUBLE(cp->fft_window_beta));              break;
-	    case CP_BEATS_PER_MINUTE: return(C_TO_XEN_DOUBLE(cp->beats_per_minute));             break;
+	    case CP_AP_SX:            if (cp->axis) return(C_TO_XEN_DOUBLE(cp->axis->sx)); break;
+	    case CP_AP_SY:            if (cp->axis) return(C_TO_XEN_DOUBLE(cp->axis->sy)); break;
+	    case CP_AP_ZX:            if (cp->axis) return(C_TO_XEN_DOUBLE(cp->axis->zx)); break;
+	    case CP_AP_ZY:            if (cp->axis) return(C_TO_XEN_DOUBLE(cp->axis->zy)); break;
+	    case CP_MIN_DB:           return(C_TO_XEN_DOUBLE(cp->min_dB));                 break;
+	    case CP_SPECTRO_X_ANGLE:  return(C_TO_XEN_DOUBLE(cp->spectro_x_angle));        break;
+	    case CP_SPECTRO_Y_ANGLE:  return(C_TO_XEN_DOUBLE(cp->spectro_y_angle));        break;
+	    case CP_SPECTRO_Z_ANGLE:  return(C_TO_XEN_DOUBLE(cp->spectro_z_angle));        break;
+	    case CP_SPECTRO_X_SCALE:  return(C_TO_XEN_DOUBLE(cp->spectro_x_scale));        break;
+	    case CP_SPECTRO_Y_SCALE:  return(C_TO_XEN_DOUBLE(cp->spectro_y_scale));        break;
+	    case CP_SPECTRO_Z_SCALE:  return(C_TO_XEN_DOUBLE(cp->spectro_z_scale));        break;
+	    case CP_SPECTRO_CUTOFF:   return(C_TO_XEN_DOUBLE(cp->spectro_cutoff));         break;
+	    case CP_SPECTRO_START:    return(C_TO_XEN_DOUBLE(cp->spectro_start));          break;
+	    case CP_FFT_WINDOW_BETA:  return(C_TO_XEN_DOUBLE(cp->fft_window_beta));        break;
+	    case CP_BEATS_PER_MINUTE: return(C_TO_XEN_DOUBLE(cp->beats_per_minute));       break;
 	    case CP_MAXAMP:           return(C_TO_XEN_DOUBLE(channel_maxamp(cp, AT_CURRENT_EDIT_POSITION))); break;
 	    case CP_EDPOS_MAXAMP:     return(C_TO_XEN_DOUBLE(channel_maxamp(cp, to_c_edit_position(cp, cp_edpos, S_maxamp, 3)))); break;
 	    case CP_MAXAMP_POSITION:  return(C_TO_XEN_OFF_T(channel_maxamp_position(cp, AT_CURRENT_EDIT_POSITION))); break;

@@ -7506,7 +7506,7 @@ char *sf_to_string(snd_fd *fd)
 	    {
 	      if (fd->region == INVALID_REGION)
 		{
-		  name = (cp->sound)->short_filename;
+		  name = cp->sound->short_filename;
 		  if (name == NULL)
 		    switch (cp->sound->inuse)
 		      {

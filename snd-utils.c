@@ -97,7 +97,7 @@ char *snd_strcat(char *errmsg, const char *str, int *size)
   return(errmsg);
 }
 
-char *snd_io_strerror(void)
+char *snd_io_strerror(void) /* "snd_strerror" is exported by ALSA! */
 {
   if (ss->local_errno != 0)
     return(strerror(ss->local_errno));

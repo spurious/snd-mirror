@@ -9,9 +9,6 @@
 
 #if USE_SND
   #include "snd.h"
-#else
-  #define PRINT_BUFFER_SIZE 512
-  #define LABEL_BUFFER_SIZE 64
 #endif
 
 #define MAX_TABLE_SIZE (1024 * 1024 * 20) /* delay line allocation etc */

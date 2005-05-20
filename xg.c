@@ -595,7 +595,6 @@ XM_TYPE_PTR_1(gfloat_, gfloat*)
 #define XEN_TO_C_GtkDialogFlags(Arg) (GtkDialogFlags)(XEN_TO_C_INT(Arg))
 #define XEN_GtkDialogFlags_P(Arg) XEN_INTEGER_P(Arg)
 #define XEN_etc_P(Arg) (XEN_LIST_P(Arg))
-#define XEN_TO_C_etc(Arg) ((gpointer)Arg)
 XM_TYPE_PTR_1(GtkDialog_, GtkDialog*)
 #define XEN_TO_C_GtkDestDefaults(Arg) (GtkDestDefaults)(XEN_TO_C_INT(Arg))
 #define XEN_GtkDestDefaults_P(Arg) XEN_INTEGER_P(Arg)
@@ -32321,10 +32320,10 @@ static bool xg_already_inited = false;
       define_strings();
       XEN_YES_WE_HAVE("xg");
 #if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xg-version \"28-Mar-05\")");
+      XEN_EVAL_C_STRING("(define xg-version \"19-May-05\")");
 #endif
 #if HAVE_RUBY
-      rb_define_global_const("Xg_Version", C_TO_XEN_STRING("28-Mar-05"));
+      rb_define_global_const("Xg_Version", C_TO_XEN_STRING("19-May-05"));
 #endif
       xg_already_inited = true;
 #if WITH_GTK_AND_X11

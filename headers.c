@@ -73,8 +73,6 @@
   #if HAVE_RUBY && (!CLM)
     #include "xen.h"
   #endif
-  #define PRINT_BUFFER_SIZE 512
-  #define LABEL_BUFFER_SIZE 64
 #endif
 
 #include <math.h>
@@ -357,25 +355,25 @@ static bool equal_big_or_little_endian(const unsigned char *n1, const unsigned i
   return((mus_char_to_ubint(n1) == n2) || (mus_char_to_ulint(n1) == n2));
 }
 
-static short big_or_little_endian_short (const unsigned char *n, bool little)
+static short big_or_little_endian_short(const unsigned char *n, bool little)
 {
   if (little) return(mus_char_to_lshort(n));
   return(mus_char_to_bshort(n));
 }
 
-static int big_or_little_endian_int (const unsigned char *n, bool little)
+static int big_or_little_endian_int(const unsigned char *n, bool little)
 {
   if (little) return(mus_char_to_lint(n));
   return(mus_char_to_bint(n));
 }
 
-static unsigned int big_or_little_endian_uint (const unsigned char *n, bool little)
+static unsigned int big_or_little_endian_uint(const unsigned char *n, bool little)
 {
   if (little) return(mus_char_to_ulint(n));
   return(mus_char_to_ubint(n));
 }
 
-static float big_or_little_endian_float (const unsigned char *n, bool little)
+static float big_or_little_endian_float(const unsigned char *n, bool little)
 {
   if (little) return(mus_char_to_lfloat(n));
   return(mus_char_to_bfloat(n));
@@ -610,31 +608,30 @@ static int read_next_header(const char *filename, int chan)
   original_data_format = mus_char_to_bint((unsigned char *)(hdrbuf + 12));
   switch (original_data_format) 
     {
-    case 1:  data_format = MUS_MULAW;       break;
-    case 2:  data_format = MUS_BYTE;        break; /* some sound files assume MUS_UBYTE here! (NAS from 1994 X11R6 contrib) */
-    case 3:  data_format = MUS_BSHORT;      break;
-    case 4:  data_format = MUS_B24INT;      break;
-    case 5:  data_format = MUS_BINT;        break;
-    case 6:  data_format = MUS_BFLOAT;      break;
-    case 7:  data_format = MUS_BDOUBLE;     break;
-    case 18: data_format = MUS_BSHORT;      break; 
-      /* "emphasized": Xavier Serra's de-emphasis filter: y(n) = x(n) + .9 y(n-1) */
-    case 27: data_format = MUS_ALAW;        break;
-    case 30: data_format = MUS_LINT;        break; /* from here on, for Snd's internal benefit -- these are probably not used elsewhere */
-    case 31: data_format = MUS_LFLOAT;      break; 
-    case 32: data_format = MUS_BINTN;       break; 
-    case 33: data_format = MUS_LINTN;       break; 
-    case 34: data_format = MUS_LDOUBLE;     break; 
-    case 35: data_format = MUS_ULSHORT;     break; 
-    case 36: data_format = MUS_UBSHORT;     break; 
-    case 37: data_format = MUS_LFLOAT_UNSCALED; break;
-    case 38: data_format = MUS_BFLOAT_UNSCALED; break;
+    case 1:  data_format = MUS_MULAW;            break;
+    case 2:  data_format = MUS_BYTE;             break; /* some sound files assume MUS_UBYTE here! (NAS from 1994 X11R6 contrib) */
+    case 3:  data_format = MUS_BSHORT;           break;
+    case 4:  data_format = MUS_B24INT;           break;
+    case 5:  data_format = MUS_BINT;             break;
+    case 6:  data_format = MUS_BFLOAT;           break;
+    case 7:  data_format = MUS_BDOUBLE;          break;
+    case 18: data_format = MUS_BSHORT;           break; /* "emphasized": Xavier Serra's de-emphasis filter: y(n) = x(n) + .9 y(n-1) */
+    case 27: data_format = MUS_ALAW;             break;
+    case 30: data_format = MUS_LINT;             break; /* from here on, for Snd's internal benefit -- these are probably not used elsewhere */
+    case 31: data_format = MUS_LFLOAT;           break; 
+    case 32: data_format = MUS_BINTN;            break; 
+    case 33: data_format = MUS_LINTN;            break; 
+    case 34: data_format = MUS_LDOUBLE;          break; 
+    case 35: data_format = MUS_ULSHORT;          break; 
+    case 36: data_format = MUS_UBSHORT;          break; 
+    case 37: data_format = MUS_LFLOAT_UNSCALED;  break;
+    case 38: data_format = MUS_BFLOAT_UNSCALED;  break;
     case 39: data_format = MUS_LDOUBLE_UNSCALED; break;
     case 40: data_format = MUS_BDOUBLE_UNSCALED; break;
-    case 41: data_format = MUS_LSHORT;      break; 
-    case 42: data_format = MUS_L24INT;      break; 
-    case 43: data_format = MUS_UBYTE;       break; 
-    default: data_format = MUS_UNKNOWN;     break;
+    case 41: data_format = MUS_LSHORT;           break; 
+    case 42: data_format = MUS_L24INT;           break; 
+    case 43: data_format = MUS_UBYTE;            break; 
+    default: data_format = MUS_UNKNOWN;          break;
     }
   srate = mus_char_to_bint((unsigned char *)(hdrbuf + 16));
   chans = mus_char_to_bint((unsigned char *)(hdrbuf + 20));

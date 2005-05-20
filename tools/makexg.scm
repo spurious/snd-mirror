@@ -790,10 +790,7 @@
 			      (hey "#define XEN_TO_C_~A(Arg) ((gpointer)Arg)~%" (no-stars (car typ)))))
 			(begin          ; xen special case
 			  (if (string=? type "etc")
-			      (begin
-				(if (not (member type no-xen-p))
-				    (hey "#define XEN_etc_P(Arg) (XEN_LIST_P(Arg))~%"))
-				(hey "#define XEN_TO_C_etc(Arg) ((gpointer)Arg)~%"))
+			      (hey "#define XEN_etc_P(Arg) (XEN_LIST_P(Arg))~%")
 			      (begin
 				(if (not (member type no-xen-p))
 				    (hey "#define XEN_~A_P(Arg) ((XEN_LIST_P(Arg)) && (XEN_LIST_LENGTH(Arg) > 2))~%" (no-stars (car typ))))

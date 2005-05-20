@@ -1321,13 +1321,13 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 		  }
 		else delete_mark_samp(CURSOR(cp), cp);
 		if ((keysym == snd_K_M) && 
-		    ((cp->sound)->sync != 0))
+		    (cp->sound->sync != 0))
 		  {
 		    sync_info *si;
 		    int sync_num;
 		    sync_num = mark_sync_max() + 1; 
 		    if (mk) set_mark_sync(mk, sync_num);
-		    si = snd_sync((cp->sound)->sync);
+		    si = snd_sync(cp->sound->sync);
 		    for (i = 0; i < si->chans; i++) 
 		      if (cp != si->cps[i])
 			{

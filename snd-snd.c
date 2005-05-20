@@ -1966,7 +1966,9 @@ bool r_sound_p(int i)
 
 static XEN g_select_sound(XEN snd_n)
 {
-  #define H_select_sound "(" S_select_sound " (snd #f)): select snd."
+  #define H_select_sound "(" S_select_sound " (snd #f)): sound 'snd' (an index) becomes the current default sound for \
+any editing operations."
+
   ASSERT_SOUND(S_select_sound, snd_n, 1);
   if (XEN_FALSE_P(snd_n))
     ss->selected_sound = NO_SELECTION;
@@ -1997,7 +1999,8 @@ static XEN g_select_sound(XEN snd_n)
 
 static XEN g_select_channel(XEN chn_n)
 {
-  #define H_select_channel "(" S_select_channel " (chn 0)): select channel"
+  #define H_select_channel "(" S_select_channel " (chn 0)): channel 'chn' of the currently selected sound becomes the default \
+channel for editing."
   snd_info *sp;
   int chan;
   ASSERT_SOUND(S_select_channel, chn_n, 1);
@@ -2080,11 +2083,11 @@ static XEN sound_get(XEN snd_n, sp_field_t fld, char *caller)
     case SP_FILTER_DBING:        return(C_TO_XEN_BOOLEAN(sp->filter_control_in_dB));   break;
     case SP_FILTER_HZING:        return(C_TO_XEN_BOOLEAN(sp->filter_control_in_hz));   break;
     case SP_FILTER_ORDER:        return(C_TO_XEN_INT(sp->filter_control_order));       break;
-    case SP_SRATE:               return(C_TO_XEN_INT((sp->hdr)->srate));               break;
-    case SP_DATA_FORMAT:         return(C_TO_XEN_INT((sp->hdr)->format));              break;
-    case SP_HEADER_TYPE:         return(C_TO_XEN_INT((sp->hdr)->type));                break;
-    case SP_DATA_LOCATION:       return(C_TO_XEN_OFF_T((sp->hdr)->data_location));     break;
-    case SP_DATA_SIZE:           return(C_TO_XEN_OFF_T(mus_samples_to_bytes((sp->hdr)->format, (sp->hdr)->samples))); break;
+    case SP_SRATE:               return(C_TO_XEN_INT(sp->hdr->srate));               break;
+    case SP_DATA_FORMAT:         return(C_TO_XEN_INT(sp->hdr->format));              break;
+    case SP_HEADER_TYPE:         return(C_TO_XEN_INT(sp->hdr->type));                break;
+    case SP_DATA_LOCATION:       return(C_TO_XEN_OFF_T(sp->hdr->data_location));     break;
+    case SP_DATA_SIZE:           return(C_TO_XEN_OFF_T(mus_samples_to_bytes(sp->hdr->format, sp->hdr->samples))); break;
     case SP_SAVE_CONTROLS:       if (!(IS_PLAYER(sp))) save_controls(sp);              break;
     case SP_RESTORE_CONTROLS:    if (!(IS_PLAYER(sp))) restore_controls(sp);           break;
     case SP_RESET_CONTROLS:      if (!(IS_PLAYER(sp))) reset_controls(sp);             break;
@@ -2363,7 +2366,7 @@ static XEN sound_set(XEN snd_n, XEN val, sp_field_t fld, char *caller)
 	  size = XEN_TO_C_OFF_T(val);
 	  if (size >= 0)
 	    {
-	      mus_sound_set_samples(sp->filename, mus_bytes_to_samples((sp->hdr)->format, size));
+	      mus_sound_set_samples(sp->filename, mus_bytes_to_samples(sp->hdr->format, size));
 	      snd_update(sp); 
 	    }
 	  else XEN_OUT_OF_RANGE_ERROR(S_setB S_data_size, 1, val, "data size ~A < 0?");

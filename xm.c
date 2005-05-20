@@ -997,6 +997,7 @@ static XEN C_TO_XEN_Ints(int *array, int len)
 #if HAVE_GUILE
 static XEN c_to_xen_ints(XEN array, XEN len)
 {
+  #define H_to_ints "->ints translates a Motif int array (from a .value reference for example) into a scheme list of ints"
   return(C_TO_XEN_Ints((int *)XEN_TO_C_ULONG(array), XEN_TO_C_INT(len)));
 }
 #endif
@@ -1018,6 +1019,7 @@ static XEN C_TO_XEN_Atoms(Atom *array, int len)
 #if HAVE_GUILE
 static XEN c_to_xen_atoms(XEN array, XEN len)
 {
+  #define H_to_Atoms "->Atoms translates a Motif Atoms array (from a .value reference for example) into a scheme list of Atoms"
   return(C_TO_XEN_Atoms((Atom *)XEN_TO_C_ULONG(array), XEN_TO_C_INT(len)));
 }
 #endif
@@ -1039,11 +1041,13 @@ static XEN C_TO_XEN_Strings(char **array, int len)
 #if HAVE_GUILE
 static XEN c_to_xen_strings(XEN array, XEN len)
 {
+  #define H_to_strings "->strings translates a Motif string array (from a .value reference for example) into a scheme list of strings"
   return(C_TO_XEN_Strings((char **)XEN_TO_C_ULONG(array), XEN_TO_C_INT(len)));
 }
 
 static XEN c_to_xen_string(XEN str)
 {
+  #define H_to_string "->string translates a Motif string (from a .value reference for example) into a scheme string"
   char *tmp;
   tmp = (char *)XEN_TO_C_ULONG(str);
   if (tmp)
@@ -1080,6 +1084,7 @@ static XEN C_TO_XEN_XRectangles(XRectangle *array, int len)
 #if HAVE_GUILE
 static XEN c_to_xen_xrectangles(XEN array, XEN len)
 {
+  #define H_to_XRectangles "->XRectangles translates a Motif rectangle array (from a .value reference for example) into a scheme list of rectangles"
   return(C_TO_XEN_XRectangles((XRectangle *)XEN_TO_C_ULONG(array), XEN_TO_C_INT(len)));
 }
 #endif
@@ -20016,11 +20021,11 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XVisibilityEvent?, XEN_XVisibilityEvent_p, 1, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XIconSize?, XEN_XIconSize_p, 1, 0, 0, NULL);
 
-  XEN_DEFINE_PROCEDURE("->string", c_to_xen_string, 1, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE("->strings", c_to_xen_strings, 2, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE("->ints", c_to_xen_ints, 2, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE("->Atoms", c_to_xen_atoms, 2, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE("->XRectangles", c_to_xen_xrectangles, 2, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE("->string", c_to_xen_string, 1, 0, 0, H_to_string);
+  XEN_DEFINE_PROCEDURE("->strings", c_to_xen_strings, 2, 0, 0, H_to_strings);
+  XEN_DEFINE_PROCEDURE("->ints", c_to_xen_ints, 2, 0, 0, H_to_ints);
+  XEN_DEFINE_PROCEDURE("->Atoms", c_to_xen_atoms, 2, 0, 0, H_to_Atoms);
+  XEN_DEFINE_PROCEDURE("->XRectangles", c_to_xen_xrectangles, 2, 0, 0, H_to_XRectangles);
 
 #if WITH_EDITRES
   XEN_DEFINE_PROCEDURE("_XEditResCheckMessages", gxm_XEditResCheckMessages, 4, 0, 0, NULL);
