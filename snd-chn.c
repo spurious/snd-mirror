@@ -2,17 +2,12 @@
 #include "clm2xen.h"
 #include "clm-strings.h"
 
-/* TODO: show sonogram in wave window so marks/selections etc can be used to edit that data
- *
- * SOMEDAY: if superimposed and 2chn cursor set, 1chan is xor'd, subsequent click sets both (and chan1 cursor takes precedence?)
- *    cursor redraw can check for this, but it gloms up code
- *
+/* 
  * TODO: tick choice based on stuff like beats-in-measure (div 3 7) -> measure numbers (like smpte display?)
  * TODO: overlay of rms env
  * TODO: fill in two-sided with colormap choice based on rms of underlying pixels (same for line graph?) -- would want peak-env style support
  *
- * TODO: bark scale as axis or color as above (fft as well?)
- * TODO: Fletcher-Munson post-process fft data -- is there a hook that would allow this?
+ * TODO: bark scale as axis or color as above: Fletcher-Munson post-process fft data -- is there a hook that would allow this?
  * SOMEDAY: user-addable graph-style? axis? (dB for example, or rms above)
  *          also affects cursor display, perhaps verbose cursor info display, peak-env graphing,
  * SOMEDAY: if chans superimposed, spectrogram might use offset planes? (sonogram?)
@@ -2365,7 +2360,10 @@ static bool make_spectrogram(chan_info *cp)
        * TODO: get gl spectro to work in united channel cases
        */
       /* TODO: printing support: XGetImage, then X->ps translation [vector (gl2ps): image switch in print dialog]
-	 TODO: multichannel resize: one chan ends up messed up until expose event; can't see why
+	 TODO: multichannel resize: chan is messed up until expose event; can't see why:
+	       it does not help to try to redisplay etc -- -sync (or XSync) helps, but there's still some sort
+	       of timing problem.  Even forcing an expose event (XmRedisplayWidget) doesn't help!  Same problem
+	       exists in gtk.
       */
       if (((sp->nchans == 1) || (sp->channel_style == CHANNELS_SEPARATE)) &&
 	  (color_map(ss) != 0) &&
@@ -2428,9 +2426,7 @@ static bool make_spectrogram(chan_info *cp)
 #endif
 	  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	  if (cp->fft_changed == FFT_CHANGED)
-	    {
-	      gl_spectrogram(si, cp->gl_fft_list, cp->spectro_cutoff, cp->fft_log_magnitude, cp->min_dB, br, bg, bb);
-	    }
+	    gl_spectrogram(si, cp->gl_fft_list, cp->spectro_cutoff, cp->fft_log_magnitude, cp->min_dB, br, bg, bb);
 	  glViewport(fap->graph_x0, 0, fap->width, fap->height);
 	  glMatrixMode(GL_PROJECTION);
 	  glLoadIdentity();
@@ -2466,8 +2462,6 @@ static bool make_spectrogram(chan_info *cp)
 	      fprintf(stderr, "spectro GL: %s\n", gluErrorString(errcode));
 	  }
 #endif
-	  /* if (cp->printing) make a pixmap of the graph and turn it into PS bits */
-
 	  /* a kludge to get the normal graph drawn (again...) */
 	  if (cp->graph_time_p)
 	    display_channel_time_data(cp); 
@@ -3401,6 +3395,7 @@ static void draw_graph_cursor(chan_info *cp)
   axis_info *ap;
   ap = cp->axis;
   if ((CURSOR(cp) < ap->losamp) || (CURSOR(cp) > ap->hisamp)) return;
+  if ((cp->chan > 0) && (cp->sound->channel_style == CHANNELS_SUPERIMPOSED)) return;
   if (cp->cursor_visible) draw_cursor(cp);
   cp->cx = local_grf_x((double)(CURSOR(cp)) / (double)SND_SRATE(cp->sound), ap); /* not float -- this matters in very long files (i.e. > 40 minutes) */
   if (cp->just_zero)

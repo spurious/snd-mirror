@@ -1903,37 +1903,6 @@ Float *mus_partials_to_polynomial(int npartials, Float *partials, mus_polynomial
 
 /* ---------------- polyshape ---------------- */
 
-/* PERHAPS: make-ssb-polyshape partials, ssb-polyshape gen driver fm
-
-	 (sin-coeffs (partials->polynomial normalized-partials mus-chebyshev-second-kind))
-	 (cos-coeffs (partials->polynomial normalized-partials mus-chebyshev-first-kind))
-		(ax (* (min 1.0 (env ind-env)) (oscil spacing-cos vib)))
-		;; fax/yfax/carrier-sin/cos/spacing-sin packaged, vib=fm, ax=driver, "r"?
-		(fax (polynomial cos-coeffs ax))
-		(yfax (* (oscil spacing-sin vib) (polynomial sin-coeffs ax))))
-	   (locsig loc i (* (env amp-env)
-			    (- (* (oscil carrier-sin (* vib r)) yfax) 
-			       (* (oscil carrier-cos (* vib r)) fax))))))))))
-
-   [def here]
-   [clm2xen.c]
-   [clm-strings.h/clm.h]
-   [grfsnd.html]
-   [snd-test.scm]
-   [mus.lisp]
-   [export.lisp]
-   [initmus.lisp (constant) -- cmus.h]
-   [libclm.def?]
-   [sndlib.html mention]
-   [run.lisp]
-   [test ins (ug1 clm-23)]
-   [all ins]
-   [snd-xref/indices]
-   [clm.html]
-   [snd-run.c]
-*/
-
-
 static void poly_reset(mus_any *ptr)
 {
   ws *gen = (ws *)ptr;
@@ -2247,7 +2216,6 @@ Float mus_delay(mus_any *ptr, Float input, Float pm)
   dly *gen = (dly *)ptr;
   if ((gen->size == 0) && (pm < 1.0))
     return(pm * gen->line[0] + (1.0 - pm) * input);
-  /* TODO: if ((size == 1) && (pm < 0.0)) return(something reasonable) */
   result = mus_tap(ptr, pm);
   mus_delay_tick(ptr, input);
   return(result);
@@ -8451,41 +8419,3 @@ void init_mus_module(void)
   sincs = 0;
 }
 
-
-#if 0
-
-/* local methods (add_method etc) */
-/* a first guess -- add field bool local_class */
-static mus_any_class *copy_class(mus_any *gen)
-{
-  mus_any_class *new_mus;
-  int size;
-  size = sizeof(mus_any_class);
-  new_mus = (mus_any_class *)CALLOC(1, size);
-  memcpy((void *)new_mus, (void *)(gen->core), size);
-  gen->local_class = true;
-  return(new_mus);
-}
-
-char *mus_set_name(mus_any *gen, const char *name)
-{
-  if (!(gen->local_class)) 
-    gen->core = copy_class(gen);
-  else
-    {
-      if (gen->core->name) 
-	free(gen->core->name);
-    }
-  gen->core->name = strdup(name);
-  return(name);
-}
-
-/* or to set local frequency reader... */
-void mus_set_local_frequency_method(mus_any *gen, Float (*frequency)(mus_any *ptr))
-{
-  if (!(gen->local_class)) 
-    gen->core = copy_class(gen);
-  gen->core->frequency = frequency;
-}
-
-#endif

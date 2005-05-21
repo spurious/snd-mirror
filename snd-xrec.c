@@ -1,7 +1,3 @@
-/* 
- * SOMEDAY:  dB in VUs (code below -- needs labels and a switch somewhere)
- */
-
 #include "snd.h"
 #include "snd-rec.h"
 

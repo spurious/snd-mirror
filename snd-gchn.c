@@ -981,6 +981,7 @@ void change_channel_style(snd_info *sp, channel_style_t new_style)
 		  /* set to green ? */
 		  apply_y_axis_change((sp->chans[0])->axis, sp->chans[0]);
 		  apply_x_axis_change((sp->chans[0])->axis, sp->chans[0]);
+		  for (i = 1; i < sp->nchans; i++) CURSOR(sp->chans[i]) = CURSOR(sp->chans[0]);
 		}
 	    }
 	  height[0] = widget_height(w_snd_pane(sp)) - control_panel_height(sp) - 16;

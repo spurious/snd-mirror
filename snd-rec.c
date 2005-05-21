@@ -1,9 +1,6 @@
 /* snd-xrec and snd-grec shared code */
 
 /* TODO: split out the Jack cases -- jack+recorder=bus error? */
-/* TODO: recorder-in-chans as a list of hardware chans -> displayed input chans, also recorder-out-chans */
-/* (Motif) troubles: on buttons in upper right are crushed
- */
 
 #include "snd.h"
 #include "snd-rec.h"

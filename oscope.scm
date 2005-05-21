@@ -257,5 +257,3 @@
     
 (define oscope (make-oscope))
     
-;;; TODO: gl checks ("waterfall"), rb cases
-    

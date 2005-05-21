@@ -1472,7 +1472,7 @@ Reverb-feedback sets the scaler on the feedback.
 	  (shell (list-ref (main-widgets) 1))
 	  (button-fontstruct (XLoadQueryFont (XtDisplay shell) "6x12"))
 	  (button-fontlist
-	   (let* ((e1 (XmFontListEntryCreate "smallest" XmFONT_IS_FONT button-fontstruct)) ; TODO replace deprecated fontlist stuff
+	   (let* ((e1 (XmFontListEntryCreate "smallest" XmFONT_IS_FONT button-fontstruct))
 		  (f1 (XmFontListAppendEntry #f e1)))
 	     (XmFontListEntryFree e1)
 	     f1)))
@@ -2846,8 +2846,6 @@ Reverb-feedback sets the scaler on the feedback.
 ;;; this needs auto-pitch detection
 
 (define ssb-dialog #f)
-
-;; TODO: microphone input for ssb-dialog
 
 (define (create-ssb-dialog)
   (if (not (Widget? ssb-dialog))

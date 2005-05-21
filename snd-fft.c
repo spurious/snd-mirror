@@ -1,6 +1,6 @@
 #include "snd.h"
 
-/* SOMEDAY: fftw error catcher (memerr = exit) (fftw does not yet support this) */
+/* we need error catcher from FFTW (memerr = exit) */
 /* SOMEDAY: logfreq in spectrogram?  */
 
 #if WITH_SHARED_SNDLIB

@@ -82,9 +82,7 @@
  *   args to same type (i.e. int->float done just once, if possible)
  */
 
-/* TODO: run safety complex checks (CL too?) -- will require extracted macro or something
- * TODO: run* equivalent in Snd/Scheme (need all reflections from run, I think)
- * PERHAPS: complex number support for run
+/* PERHAPS: complex number support for run
  *            3+4i real-part imag-part make-rectangular make-polar angle magnitude complex? real? declare case
  *            complex.h: ccos csin ctan cacos casin catan ccosh csinh ctanh cacosh casinh catanh cexp clog cabs cpow csqrt
  *                       carg[angle] creal cimag, complex double _Complex_I
@@ -100,7 +98,6 @@
  *        sample -> Float chn_sample(off_t samp, chan_info *cp, int pos) [6485 -- these opt args should not be a problem][(sample samp snd chn pos)]
  *        samples -> init_sample_reader then fill data with read_sample snd-edit 8441
  *        set sample(s) uses change_samples.
- * PERHAPS: is clm-struct ref handled solely as list-ref? (vct if all float?)
  * PERHAPS: count-matches and find? -- requires extraction of search in snd-sig.c line 3247
  */
 

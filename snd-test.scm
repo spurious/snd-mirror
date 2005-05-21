@@ -12991,15 +12991,6 @@ EDITS: 5
 	(if (not (vequal data (vct 0.0 0.6 0.4 0.0 0.0)))
 	    (snd-display ";delay size 1, max 2, off 0.4: ~A" data))
 	
-	(set! dly1 (make-delay :size 1 :max-size 2))
-	(set! impulse 1.0)
-	(do ((i 0 (1+ i)))
-	    ((= i 5))
-	  (vct-set! data i (delay dly1 impulse -0.4))
-	  (set! impulse 0.0))
-	(if (not (vequal data (vct 0.4 0.6 0.0 0.0 0.0)))
-	    (snd-display ";delay size 1, max 2, off -0.4: ~A" data))
-	
 	(set! dly1 (make-delay :size 0 :max-size 1))
 	(set! impulse 1.0)
 	(do ((i 0 (1+ i)))

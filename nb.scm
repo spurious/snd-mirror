@@ -96,8 +96,6 @@ It causes a description of the file to popup when the mouse crosses the filename
 		    ""))))
 
   (let ((alert-color (make-color 1.0 1.0 .94))
-	(current-file-viewer 0)
-	(previous-file-viewer 1)
 	(region-viewer 2))
     (if (not (= type region-viewer))
 	(let ((info-exists (list-ref (dialog-widgets) 20)))
