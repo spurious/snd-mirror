@@ -351,6 +351,8 @@ fi
 # X/Motif
 #--------------------------------------------------------------------------------
 
+ac_snd_have_gui=no
+
 AC_PATH_XTRA
 
 if test "$with_motif" = no && test "$with_gtk" = no ; then
@@ -460,6 +462,7 @@ else
     AC_CHECK_LIB(Xm, XmCreateForm, 
 	[
 	  with_motif=yes
+	  ac_snd_have_gui=yes
  	  AC_DEFINE(USE_MOTIF)  # for Snd
 	  AC_DEFINE(HAVE_MOTIF) # for xm
 	  if test "$with_xpm" != no; then
@@ -706,6 +709,7 @@ else
       	AC_SUBST(GTK_LIBS)
       	AC_SUBST(GTK_CFLAGS)
       	AC_DEFINE(USE_GTK)
+        ac_snd_have_gui=yes
 
 	GTK_LD_LIBS="$GTK_LIBS"
 	if test x$PKG_CONFIG != xno ; then
@@ -885,6 +889,8 @@ AC_SUBST(GL_FLAGS)
 # Ruby
 #--------------------------------------------------------------------------------
 
+ac_snd_have_extension_language=no
+
 RUBY="ruby"
 AC_ARG_WITH(ruby-prefix,[  --with-ruby-prefix=PFX  where Ruby is installed],
             	ruby_prefix="$withval"
@@ -927,6 +933,7 @@ AC_ARG_WITH(ruby,
               LIBS="$OLD_LIBS"
               CFLAGS="$OLD_CFLAGS"
               LOCAL_LANGUAGE="Ruby"
+	      ac_snd_have_extension_language=yes
 
             else 
               AC_MSG_WARN([can't find Ruby!])
@@ -1014,6 +1021,7 @@ if test $GUILE_CONFIG_works = yes; then
     AC_DEFINE(HAVE_GUILE)
     AC_DEFINE(HAVE_EXTENSION_LANGUAGE)
     LOCAL_LANGUAGE="Guile"
+    ac_snd_have_extension_language=yes
 
     OLD_LIBS="$LIBS"
     LIBS="$GUILE_LIBS"
@@ -1536,6 +1544,15 @@ if test "$with_snd_as_widget" != yes ; then
       # I think this really should be CFLAGS since it's assuming it's passed to gcc, not ld, but
       #   that ends up generating endless dumb warnings in gcc
     fi
+  fi
+fi
+
+if test "$ac_snd_have_extension_language" = no ; then
+  if test "$ac_snd_have_gui" = no ; then
+    if test "$ac_cv_header_dlfcn_h" = yes ; then
+      LDFLAGS="$LDFLAGS -ldl"
+    fi
+    AC_MSG_WARN([Snd needs either an extension language (Guile or Ruby), or a graphics toolkit (Gtk or Motif), or preferably both.  All four packages are available free, normally prepackaged and ready-to-use.  As currently configured, this version of Snd is useless.])
   fi
 fi
 

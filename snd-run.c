@@ -91,14 +91,6 @@
    (let ((gen (make-oscil 440.0)))
      (run (lambda () (let ((g1 gen) (g2 #f)) (oscil g1) (set! g2 g1) (oscil g2)))))
  *   -> opt: can't set pointer var (g2) to alias other such var
- *
- * TODO: set for sample with at least samp arg (don't need the full thing)
- *        (set-samples beg dur vct), (samples beg dur) -> vct, (sample samp), (set! (sample samp) ...)
- *        samples->sound-data, channel->vct, vct->channel
- *        sample -> Float chn_sample(off_t samp, chan_info *cp, int pos) [6485 -- these opt args should not be a problem][(sample samp snd chn pos)]
- *        samples -> init_sample_reader then fill data with read_sample snd-edit 8441
- *        set sample(s) uses change_samples.
- * PERHAPS: count-matches and find? -- requires extraction of search in snd-sig.c line 3247
  */
 
 #include "snd.h"
@@ -6470,6 +6462,19 @@ static xen_value *maxamp_1(ptree *pt, xen_value **args, int num_args)
   return(rtn);
 }
 
+
+/* ---------------- sample ---------------- */
+
+static void sample_f(int *args, ptree *pt) 
+{
+  chan_info *cp;
+  cp = selected_channel();
+  if (cp) FLOAT_RESULT = chn_sample(INT_ARG_1, cp, cp->edit_ctr);
+}
+static char *descr_sample_f(int *args, ptree *pt) {return(mus_format( FLT_PT " = sample(" INT_PT ")", args[0], FLOAT_RESULT, args[1], INT_ARG_1));}
+static xen_value *sample_1(ptree *pt, xen_value **args, int num_args) {return(package(pt, R_FLOAT, sample_f, descr_sample_f, args, 1));}
+
+
 /* ---------------- srate ---------------- */
 
 static void srate_i(int *args, ptree *pt) 
@@ -11467,6 +11472,7 @@ static void init_walkers(void)
   INIT_WALKER(S_cursor, make_walker(cursor_1, NULL, NULL, 0, 2, R_INT, false, 0));
   INIT_WALKER(S_add_mark, make_walker(add_mark_1, NULL, NULL, 1, 3, R_INT, false, 0));
   INIT_WALKER(S_maxamp, make_walker(maxamp_1, NULL, NULL, 0, 2, R_FLOAT, false, 0));
+  INIT_WALKER(S_sample, make_walker(sample_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_INT));
   INIT_WALKER(S_srate, make_walker(srate_1, NULL, NULL, 0, 1, R_INT, false, 0));
   INIT_WALKER(S_channels, make_walker(channels_1, NULL, NULL, 0, 1, R_INT, false, 0));
   INIT_WALKER(S_c_g, make_walker(c_g_p_1, NULL, NULL, 0, 0, R_BOOL, false, 0));

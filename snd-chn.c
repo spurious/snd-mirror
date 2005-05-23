@@ -12,7 +12,6 @@
  *          also affects cursor display, perhaps verbose cursor info display, peak-env graphing,
  * SOMEDAY: if chans superimposed, spectrogram might use offset planes? (sonogram?)
  * SOMEDAY: Options:Filter menu to give access to the various dsp.scm filters, graphs like the control panel etc
- * PERHAPS: channel-local colormaps (color-inverted color-scale color-cutoff as well?)
  */
 
 typedef enum {CLICK_NOGRAPH, CLICK_WAVE, CLICK_FFT_AXIS, CLICK_LISP, CLICK_FFT_MAIN} click_loc_t;    /* for marks, regions, mouse click detection */

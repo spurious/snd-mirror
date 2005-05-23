@@ -8544,6 +8544,8 @@ fi
 # X/Motif
 #--------------------------------------------------------------------------------
 
+ac_snd_have_gui=no
+
 echo "$as_me:$LINENO: checking for X" >&5
 echo $ECHO_N "checking for X... $ECHO_C" >&6
 
@@ -10413,6 +10415,7 @@ echo "${ECHO_T}$ac_cv_lib_Xm_XmCreateForm" >&6
 if test $ac_cv_lib_Xm_XmCreateForm = yes; then
 
 	  with_motif=yes
+	  ac_snd_have_gui=yes
  	  cat >>confdefs.h <<\_ACEOF
 #define USE_MOTIF 1
 _ACEOF
@@ -11627,6 +11630,7 @@ echo "$as_me: WARNING: trouble with gtk -- will try to make Snd without any GUI"
 #define USE_GTK 1
 _ACEOF
 
+        ac_snd_have_gui=yes
 
 	GTK_LD_LIBS="$GTK_LIBS"
 	if test x$PKG_CONFIG != xno ; then
@@ -12778,7 +12782,7 @@ _ACEOF
 
 fi
 
-	# gtk 2.6.0|1|2|3|4|5|6|7
+	# gtk 2.6.0|1|2|3|4|5|6|7: no API changes
 	echo "$as_me:$LINENO: checking for pango_matrix_rotate in -lm" >&5
 echo $ECHO_N "checking for pango_matrix_rotate in -lm... $ECHO_C" >&6
 if test "${ac_cv_lib_m_pango_matrix_rotate+set}" = set; then
@@ -13285,6 +13289,8 @@ fi
 # Ruby
 #--------------------------------------------------------------------------------
 
+ac_snd_have_extension_language=no
+
 RUBY="ruby"
 
 # Check whether --with-ruby-prefix or --without-ruby-prefix was given.
@@ -13560,6 +13566,7 @@ fi
               LIBS="$OLD_LIBS"
               CFLAGS="$OLD_CFLAGS"
               LOCAL_LANGUAGE="Ruby"
+	      ac_snd_have_extension_language=yes
 
             else
               { echo "$as_me:$LINENO: WARNING: can't find Ruby!" >&5
@@ -13698,6 +13705,7 @@ _ACEOF
 _ACEOF
 
     LOCAL_LANGUAGE="Guile"
+    ac_snd_have_extension_language=yes
 
     OLD_LIBS="$LIBS"
     LIBS="$GUILE_LIBS"
@@ -19055,6 +19063,16 @@ if test "$with_snd_as_widget" != yes ; then
       # I think this really should be CFLAGS since it's assuming it's passed to gcc, not ld, but
       #   that ends up generating endless dumb warnings in gcc
     fi
+  fi
+fi
+
+if test "$ac_snd_have_extension_language" = no ; then
+  if test "$ac_snd_have_gui" = no ; then
+    if test "$ac_cv_header_dlfcn_h" = yes ; then
+      LDFLAGS="$LDFLAGS -ldl"
+    fi
+    { echo "$as_me:$LINENO: WARNING: Snd needs either an extension language (Guile or Ruby), or a graphics toolkit (Gtk or Motif), or preferably both.  All four packages are available free, normally prepackaged and ready-to-use.  As currently configured, this version of Snd is useless." >&5
+echo "$as_me: WARNING: Snd needs either an extension language (Guile or Ruby), or a graphics toolkit (Gtk or Motif), or preferably both.  All four packages are available free, normally prepackaged and ready-to-use.  As currently configured, this version of Snd is useless." >&2;}
   fi
 fi
 

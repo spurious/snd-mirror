@@ -1422,7 +1422,7 @@ int snd_translate(const char *oldname, const char *newname, int type)
   err = MUS_CANT_TRANSLATE;
   hdr = (char *)CALLOC(TRANS_BUF_SIZE, sizeof(char));
   /* set up default output header */
-  mus_bint_to_char((unsigned char *)hdr, 0x2e736e64); /* .snd */
+  mus_bint_to_char((unsigned char *)hdr, 0x2e736e64);   /* .snd */
   mus_bint_to_char((unsigned char *)(hdr + 4), 28);     /* data location */
   mus_bint_to_char((unsigned char *)(hdr + 8), 0);      /* bytes in data portion */
   mus_bint_to_char((unsigned char *)(hdr + 12), 3);     /* 16-bit linear */
@@ -1473,25 +1473,12 @@ int snd_translate(const char *oldname, const char *newname, int type)
       break;
     }
   FREE(hdr);
-  if (err == MUS_CANT_TRANSLATE) /* i.e a case we don't even try to handle */
-    {
-      if (ss->catch_exists)
-	return(mus_error(MUS_CANT_TRANSLATE,
-			 _("can't translate %s\n  (%s header: %s (0x%x) data format)\n"),
-			 oldname,
-			 mus_header_type_name(type),
-			 any_format_name(oldname),
-			 mus_sound_original_format(oldname)));
-      else 
-	snd_error(_("can't translate %s\n  (%s header: %s (0x%x) data format)\n"),
+  if (err == MUS_CANT_TRANSLATE)
+    return(mus_error(MUS_CANT_TRANSLATE,
+		     _("can't translate %s\n  (%s header: %s (0x%x) data format)\n"),
 		     oldname,
 		     mus_header_type_name(type),
 		     any_format_name(oldname),
-		     mus_sound_original_format(oldname));
-    }
+		     mus_sound_original_format(oldname)));
   return(err);
 }
-
-/* TODO: some way to call translator from Scheme or from File:Open dialog (g723 raw file etc)
- *         this requires passing all the nominal header info in, faking up a header etc
- */

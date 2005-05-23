@@ -1492,6 +1492,8 @@ static Widget make_recorder_slider(pane_t *p, amp_t *a, Widget last_slider, bool
   XmString s1;
   XtCallbackList n1, n2;
   char numbuf[6];
+  char *widget_name;
+  widget_name = gain_channel_name(p->in_chans, p->out_chans, input, a->device_in_chan, a->out);
 
   n = 0;      
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
@@ -1506,8 +1508,7 @@ static Widget make_recorder_slider(pane_t *p, amp_t *a, Widget last_slider, bool
   XtSetArg(args[n], XmNshadowThickness, 0); n++;
   XtSetArg(args[n], XmNhighlightThickness, 0); n++;
   XtSetArg(args[n], XmNfillOnArm, false); n++;
-  a->label = make_pushbutton_widget(gain_channel_name(p->in_chans, p->out_chans, input, a->device_in_chan, a->out), 
-				       p->pane, args, n);
+  a->label = make_pushbutton_widget(widget_name, p->pane, args, n);
   XtAddCallback(a->label, XmNactivateCallback, record_amp_click_callback, a);
   
   n = 0;
@@ -1527,7 +1528,7 @@ static Widget make_recorder_slider(pane_t *p, amp_t *a, Widget last_slider, bool
   XtSetArg(args[n], XmNshadowThickness, 0); n++;
   XtSetArg(args[n], XmNhighlightThickness, 0); n++;
   XtSetArg(args[n], XmNfillOnArm, false); n++;
-  a->number = make_pushbutton_widget ("recorder-amp-number", p->pane, args, n);
+  a->number = make_pushbutton_widget("recorder-amp-number", p->pane, args, n);
   /* this could be the snd-xsnd control panel case as well */
   XtAddCallback(a->number, XmNactivateCallback, record_amp_click_callback, a);
   XmStringFree(s1);
@@ -1552,15 +1553,11 @@ static Widget make_recorder_slider(pane_t *p, amp_t *a, Widget last_slider, bool
   XtSetArg(args[n], XmNvalueChangedCallback, n2 = make_callback_list(record_amp_valuechanged_callback, (XtPointer)a)); n++;
   a->slider = XtCreateManagedWidget("recorder-amp", xmScrollBarWidgetClass, p->pane, args, n);
 
-  {
-    if (!new_actions_table)
-      new_actions_table = XtParseTranslationTable(new_actions);
-    XtOverrideTranslations(a->slider, new_actions_table);
-  }
-
+  if (!new_actions_table)
+    new_actions_table = XtParseTranslationTable(new_actions);
+  XtOverrideTranslations(a->slider, new_actions_table);
   FREE(n1);
   FREE(n2);
-
   return(a->slider);
 }
 

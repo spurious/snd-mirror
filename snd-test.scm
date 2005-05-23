@@ -38824,6 +38824,8 @@ EDITS: 2
 	      (let ((ok #f))
 		(run (lambda () (set! ok (sound? (1+ ind)))))
 		(if ok (snd-display ";run not sound?")))
+	      (let ((val (run (lambda () (sample 1000)))))
+		(if (fneq val .0328) (snd-display ";run sample 1000: ~A" val)))
 	      (let ((ok #f))
 		(run (lambda () (set! ok (mark? mrk))))
 		(if (not ok) (snd-display ";run mark?")))
