@@ -93,6 +93,15 @@
   `(primitive-eval `(define ,,symbol ,,val)))
 
 
+;; Snd has its own filter function (a clm function) overriding the guile filter function. This affects
+;; remove, because remove is based on filter. Redefine remove:
+(define (remove pred list)
+  (if (null? list)
+      '()
+      (if (pred (car list))
+	  (remove pred (cdr list))
+	  (cons (car list) (remove pred (cdr list))))))
+
 ;; Snd has its own filter function (a clm function) overriding the guile filter function.
 (define (filter-org pred list)
   (remove (lambda (e) (not (pred e)))

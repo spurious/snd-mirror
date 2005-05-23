@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Tue Mar 18 00:18:35 CET 2003
-# Last: Fri Apr 15 18:57:38 CEST 2005
+# Last: Thu May 19 18:30:45 CEST 2005
 
 # Commentary:
 #
@@ -11,7 +11,6 @@
 # module Snd_enved
 #  channel_enved(snd, chn)
 #  set_channel_enved(new_env, snd, chn)
-#  remove_channel_enved(snd, chn)
 #  channel_envelope(snd, chn)
 #  set_channel_envelope(new_env, snd, chn)
 #  mouse_press_envelope(snd, chn, button, state, x, y)
@@ -27,7 +26,7 @@
 #  envelope?(obj)
 #  make_enved(enved = [0, 0, 1, 1])
 #  enved?(obj)
-#  make_graph_enved(enved = [0, 0, 1, 1], snd = snd_snd, chn = snd_chn)
+#  make_graph_enved(enved = [0, 0, 1, 1], snd = Snd.snd, chn = Snd.chn)
 #  graph_enved?(obj)
 #  make_xenved(name, parent, *rest)
 #  xenved?(obj)
@@ -36,6 +35,7 @@
 # class Enved
 #  initialize(enved = [0, 0, 1, 1])
 #  inspect
+#  to_s
 #  envelope
 #  envelope=(new_env)
 #  reset
@@ -71,6 +71,7 @@
 #    before_enved_hook
 #    after_enved_hook
 #    inspect
+#    to_s
 #    reset
 #    redraw
 #    mouse_press_cb(x, y)
@@ -80,6 +81,7 @@
 #     class Xenved < Graph_enved
 #      initialize(name, parent, enved, bounds, args, axis_label)
 #      inspect
+#      to_s
 #      clear
 #      envelope=(new_env)
 #      axis_bounds
@@ -108,7 +110,6 @@ module Snd_enved
 
   # sets Graph_enved object
   def set_channel_enved(new_ge, snd = false, chn = false)
-    set_channel_property_save_state_ignore(:enved_envelope, snd, chn)
     set_channel_property(:enved_envelope, new_ge, snd, chn)
   end
   
@@ -220,7 +221,7 @@ starts the enved processes, displaying an envelope editor in each channel")
     $mouse_drag_hook.remove_hook!(Hook_name)
     $mouse_click_hook.remove_hook!(Hook_name)
     $key_press_hook.remove_hook!(Hook_name)
-    snd_catch do set_lisp_graph?(false, snd_snd, snd_chn) end
+    Snd.catch do set_lisp_graph?(false, Snd.snd, Snd.chn) end
     nil
   end
 
@@ -280,7 +281,7 @@ pans a mono sound following its enved envelope into a stereo sound")
     obj.instance_of?(Enved)
   end
 
-  def make_graph_enved(enved = [0, 0, 1, 1], snd = snd_snd, chn = snd_chn)
+  def make_graph_enved(enved = [0, 0, 1, 1], snd = Snd.snd, chn = Snd.chn)
     assert_type(envelope?(enved), enved, 0, "an envelope, at least 2 points [x0, y0, x1, y1, ...]")
     (ge = Graph_enved.new(enved, snd, chn)).redraw
     ge
@@ -292,10 +293,11 @@ pans a mono sound following its enved envelope into a stereo sound")
 
   if provided? :xm or provided? :xg
     def make_xenved(name, parent, *rest)
-      envelope = get_args(rest, :envelope, [0, 0, 1, 1])
-      bounds   = get_args(rest, :axis_bounds, [0, 1, 0, 1])
-      args     = get_args(rest, :args, [])
-      label    = get_args(rest, :axis_label, nil)
+      envelope, bounds, args, label = optkey(rest,
+                                             [:envelope, [0, 0, 1, 1]],
+                                             [:axis_bounds, [0, 1, 0, 1]],
+                                             [:args, []],
+                                             :axis_label)
       name = "xenved" unless string?(name) and (not name.empty?)
       assert_type(widget?(parent), parent, 1, "a widget")
       assert_type((array?(bounds) and bounds.length == 4),
@@ -343,6 +345,10 @@ class Enved
   attr_reader :envelope
   
   def inspect
+    format("%s.new(%s)", self.class, @envelope)
+  end
+  
+  def to_s
     format("#<%s: envelope: %s>", self.class, @envelope.to_string)
   end
 
@@ -392,8 +398,7 @@ class Enved
   end
 
   def point(idx, *args)
-    x = get_args(args, :x, nil)
-    y = get_args(args, :y, nil)
+    x, y = optkey(args, :x, :y)
     if x
       @envelope[idx * 2] = x
     end
@@ -592,6 +597,10 @@ Enved_add_point, Enved_delete_point, Enved_move_point.")
   attr_reader :after_enved_hook
   
   def inspect
+    format("%s.new(%s, %s, %s)", self.class, @envelope, @snd, @chn)
+  end
+  
+  def to_s
     format("#<%s: %s[%s:%s]: %s>", self.class, @graph_name, @snd, @chn, @envelope.to_string)
   end
 
@@ -773,6 +782,12 @@ class Xenved < Graph_enved
   alias help description
   
   def inspect
+    format("%s.new(%s, %s, %s, %s, %s)",
+           self.class, @name.inspect, @parent, @envelope,
+           [@x0, @x1, @y0, @y1], @args, [@lx0, @lx1, @ly0, @ly1])
+  end
+  
+  def to_s
     format("#<%s: name: %s, envelope: %s>", self.class, @name.inspect, @envelope.to_string)
   end
 
@@ -969,7 +984,7 @@ xe.help                             # this help
       Rgdk_draw_line(RGDK_DRAWABLE(@window), @gc, x1, y1, x2, y2)
     end
   else
-    snd_raise(:ruby_error, "neither Motif nor Gtk?")
+    Snd.raise(:runtime_error, "neither Motif nor Gtk?")
   end
 
   def mouse_press_cb(e)

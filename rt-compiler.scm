@@ -1201,18 +1201,48 @@ and run simple lisp[2] functions.
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; rt-expand-macros does that. First thing to do.
+;; rt-macroexpand does that. First thing to do.
 ;; +setter handling
 ;; (set! (asetter 5) 2)     -> (setter!-asetter 5 2)
 ;;
-(define (rt-expand-macros term)
-  (rt-print2 "expand" term)
+(define (rt-macroexpand-1 term)
   (call-with-current-continuation
    (lambda (return)
 
      (define (check-failed . args)
        (newline)
-       (apply c-display (cons "rt-compiler.scm/rt-expand-macros:" args))
+       (apply c-display (cons "rt-compiler.scm/rt-macroexpand-1:" args))
+       (return #f))
+     
+     (define (expand term)
+       (cond ((null? term) term)
+	     ((not (list? term)) term)
+	     ((and (eq? 'set! (car term))
+		   (list? (cadr term)))
+	      (expand `(,(symbol-append 'setter!- (car (cadr term))) ,@(cdr (cadr term)) ,@(cddr term))))
+	     ((list? (car term))
+	      term)
+	     (else
+	      (if (not (symbol? (car term)))
+		  (check-failed "Illegal function call:" term ".")
+		  (begin
+		    (let* ((args (cdr term))
+			   (a (cons (symbol-append rt-macro-prefix (car term)) args))
+			   (b (macroexpand-1 a )))
+		      (if (not b)
+			  (return #f)
+			  (if (not (equal? a b))
+			      b
+			      term))))))))
+     (expand term))))
+  
+(define (rt-macroexpand term)
+  (call-with-current-continuation
+   (lambda (return)
+
+     (define (check-failed . args)
+       (newline)
+       (apply c-display (cons "rt-compiler.scm/rt-macroexpand:" args))
        (return #f))
      
      (define (expand term)
@@ -2496,7 +2526,7 @@ and run simple lisp[2] functions.
 ;; rt-check-syntax does the following:
 ;; *various checks that that the term is a legal expression.
 ;;
-;; rt-expand-macros must have been called on the term before calling.
+;; rt-macroexpand must have been called on the term before calling.
 ;; 
 (define (rt-check-syntax term)
 
@@ -2866,15 +2896,14 @@ and run simple lisp[2] functions.
   (<rt-func> 'rt-continue/longjmp '<void> '(<jmp_buf>))
   (<rt-func> 'rt-printf/fprintf '<int> '(<char-*> <float>) #:min-arguments 1)
 
-  (<rt-func> 'rt_scm_to_int '<int> '(<SCM>) #:needs-rt-globals #t)
-  (<rt-func> 'rt_scm_to_float '<float> '(<SCM>) #:needs-rt-globals #t)
-  (<rt-func> 'rt_scm_to_double '<double> '(<SCM>) #:needs-rt-globals #t)
-  (<rt-func> 'rt_scm_to_vct '<vct-*> '(<SCM>) #:needs-rt-globals #t)
   (<rt-func> 'rt-mus-any?/mus_xen_p '<mus_any-*> '(<SCM>) #:needs-rt-globals #t)
-  (<rt-func> 'rt_scm_to_mus_any '<mus_any-*> '(<SCM>) #:needs-rt-globals #t)
-  (<rt-func> 'rt_in '<float> '(<int>) #:needs-rt-globals #t)
-  (<rt-func> 'rt_out '<void> '(<int> <float>) #:needs-rt-globals #t)
+
+
+
+
   )
+
+
 
 
 
@@ -2903,7 +2932,7 @@ and run simple lisp[2] functions.
 	     (exp (is-expand das-last)))
 	(if exp
 	    `(define-macro ,(cons (symbol-append rt-macro-prefix (car def)) (cdr def))
-	       (let ((,exp (map rt-expand-macros ,das-last)))
+	       (let ((,exp (map rt-macroexpand ,das-last)))
 		 ,@body))
 	    `(define-macro ,(cons (symbol-append rt-macro-prefix (car def)) (cdr def))
 	       ,@body)))
@@ -2972,7 +3001,7 @@ and run simple lisp[2] functions.
 		       optionals)
 
 		(let ,(map (lambda (expvarname)
-			     `(,expvarname (rt-expand-macros ,(symbol-append 'expand/ expvarname))))
+			     `(,expvarname (rt-macroexpand ,(symbol-append 'expand/ expvarname))))
 			   expand-args)
 		  ,@body))))))))
 	    
@@ -2986,7 +3015,315 @@ and run simple lisp[2] functions.
        `(,',funcname ,@rest))))
 
 
-(rt-renamefunc rt-error rt_error <void> (<char-*>) #:needs-rt-globals #t)
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;; rt-functions ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;These eval-c functions are compiled into the compiled functions
+;;when needed.
+
+;; (rt-find-all-funcs '(lambda () (+ (- (aiai 90)))) -> '(+ - aiai)
+(define (rt-find-all-funcs term)
+  (define ret '())
+  (define (find term)
+    (cond ((not (list? term)) #f)
+	  ((null? term) #f)
+	  ((eq? 'let* (car term))
+	   (for-each (lambda (vardecl)
+		       (find (cdr vardecl)))
+		     (cadr term))
+	   (find (cddr term)))
+	  ((eq? 'lambda (car term))
+	   (find (cddr term)))
+	  ((symbol? (car term))
+	   (set! ret (cons (car term) ret))
+	   (for-each find (cdr term)))
+	  (else
+	   (for-each find term))))
+  (find term)
+  ret)
+
+
+(define rt-functions '())
+
+(define-macro (rt-function ret-type name body)
+  (let ((dependents (rt-find-all-funcs body))
+	(old (assq name rt-functions)))
+    (if old
+	`(set-cdr! (assq ',name rt-functions) (list '(,@dependents)
+						  '(,ret-type ,name ,body)))
+	`(set! rt-functions (append! rt-functions
+				     (list (list ',name
+						 '(,@dependents)
+						 '(,ret-type ,name ,body))))))))
+
+(begin
+  
+  (rt-function <void> rt_error (lambda (,rt-globalvardecl (<char-*> msg))
+				 (<static-int> errordisplayed 0)
+				 (if (not errordisplayed)
+				     (fprintf stderr (string "RT RUNTIME ERROR: %s.\\n") msg))
+				 (set! errordisplayed 1)
+				 ,(if (rt-is-safety?)
+				      '(longjmp rt_globals->engine->error_jmp 5)
+				      "/* */")))
+  (rt-renamefunc rt-error rt_error <void> (<char-*>) #:needs-rt-globals #t)
+  
+  ;; scm_to_double
+  (rt-function <double> rt_scm_to_double (lambda (,rt-globalvardecl (<SCM> name))
+					   (if (SCM_INUMP name)
+					       (return (SCM_INUM name))
+					       (if (SCM_REALP name)
+						   (return (SCM_REAL_VALUE name))
+						   (begin
+						     (rt_error rt_globals (string "Variable is not a number (to_double)"))
+						     (return 0))))))
+  (<rt-func> 'rt_scm_to_double '<double> '(<SCM>) #:needs-rt-globals #t)
+
+  
+
+  ;;; scm_to_float
+  (rt-function <float> rt_scm_to_float (lambda (,rt-globalvardecl (<SCM> name))
+					 (if (SCM_INUMP name)
+					     (return (SCM_INUM name))
+					     (if (SCM_REALP name)
+						 (return (SCM_REAL_VALUE name))
+						 (begin
+						   (rt_error rt_globals (string "Variable is not a number (to_float)"))
+						   (return 0))))))
+  (<rt-func> 'rt_scm_to_float '<float> '(<SCM>) #:needs-rt-globals #t)
+  
+  
+  ;; scm_to_int
+  (rt-function <int> rt_scm_to_int (lambda (,rt-globalvardecl (<SCM> name))
+				     (if (SCM_INUMP name)
+					 (return (SCM_INUM name))
+					 (if (SCM_REALP name)
+					     (return (SCM_REAL_VALUE name))
+					     (begin
+					       (rt_error rt_globals (string "Variable is not a number (to_int)"))
+					       (return 0))))))
+  (<rt-func> 'rt_scm_to_int '<int> '(<SCM>) #:needs-rt-globals #t)
+
+
+  ;; scm_to_vct
+  (rt-function <vct-*> rt_scm_to_vct (lambda (,rt-globalvardecl (<SCM> name))
+				       ,(if (rt-is-safety?)
+					    `(if (vct_p name)
+						 (return (TO_VCT name))
+						 (begin
+						   (rt_error rt_globals (string "Variable is not a VCT."))
+						   (return NULL)))
+					    `(return (TO_VCT name)))))
+  (<rt-func> 'rt_scm_to_vct '<vct-*> '(<SCM>) #:needs-rt-globals #t)
+  
+
+  ;; scm_to_mus_any
+  (rt-function <mus_any-*> rt_scm_to_mus_any (lambda (,rt-globalvardecl (<SCM> name))
+					       (if (mus_xen_p name)
+						   (return (cast <void-*> (XEN_TO_MUS_ANY name)))
+						   (if (not (SCM_SMOB_PREDICATE rt_readin_tag name))
+						       (begin
+							 (rt_error rt_globals (string "Variable is not a CLM generator or rt-readin generator"))
+							 (return NULL))
+						       (return (cast <void-*> (SCM_SMOB_DATA name)))))))
+  (<rt-func> 'rt_scm_to_mus_any '<mus_any-*> '(<SCM>) #:needs-rt-globals #t)
+  
+
+
+  ;; create-thread
+  (rt-function <void> rt_create_thread (lambda ((<ThreadFunc> func))
+					 "pthread_t _rt_thread={0}"
+					 (<int> isrunning 0)
+					 (<void-*> threadfunc (lambda ((<void-*> arg))
+								(<ThreadFunc> dasfunc arg)
+								(set! isrunning 1)
+								(dasfunc)
+								(return NULL)))
+					 (pthread_create &_rt_thread NULL threadfunc func)
+					 (while (not isrunning) ;; I'm not quite sure why...
+						(usleep 50))
+					 ))
+  (<rt-func> 'rt_create_thread '<void> '((<float> ())))
+  (define-rt-macro (create-thread thunk)
+    `(rt_create_thread ,thunk))
+  
+  
+  (rt-function <void-*> rt_alloc (lambda (,rt-globalvardecl (<int> size))
+				   (let* ((ret <void-*> rt_globals->allocplace)
+					  (alignment <int> (sizeof <long>))
+					  (new <char-*> (+= rt_globals->allocplace size)))
+				     "new = (char *) (((unsigned long) new + alignment - 1) & - alignment)"
+				     (set! rt_globals->allocplace new)
+				     ,(if (rt-is-safety?)
+					  `(if (>= rt_globals->allocplace rt_globals->allocplace_end)
+					       (rt_error rt_globals (string "Out of memory when calling rt_alloc.")))
+					  "/* */")
+				     (return ret))))
+  (<rt-func> 'rt_alloc_vct '<vct-*> '(<int>)  #:needs-rt-globals #t)
+  
+  (rt-function <void-*> rt_alloc_zero (lambda (,rt-globalvardecl (<int> size))
+					(let* ((ret <void-*> (rt_alloc rt_globals size)))
+					  (memset ret 0 size)
+					  (return ret))))
+  
+  (rt-function <vct-*> rt_alloc_vct (lambda (,rt-globalvardecl (<int> length))
+				      (let* ((ret <vct-*> (rt_alloc rt_globals (sizeof <vct>)))
+					     (floats <float-*> (rt_alloc rt_globals (* (sizeof <float>) length))))
+					(set! ret->length length)
+					(set! ret->data floats)
+					(return ret))))
+  
+
+  ;; rt_in
+  (rt-function <float> rt_in (lambda (,rt-globalvardecl (<int> ch))
+			       ,(if (rt-is-safety?)
+				    '(if (< ch 0)
+					 (rt_error rt_globals (string "Channel number for In less than zero")))
+				    "/* */")
+			       ,(if (rt-is-safety?)
+				    '(if (> ch rt_globals->num_ins)
+					 (rt_error rt_globals (string "Illegal channel number for In")))
+				    "/* */")
+			       (return rt_globals->ins[ch][rt_globals->framenum])))
+  (<rt-func> 'rt_in '<float> '(<int>) #:needs-rt-globals #t)
+  
+  
+  ;; rt_out
+  (rt-function <void> rt_out (lambda (,rt-globalvardecl (<int> ch)(<float> val))
+			       ,(if (rt-is-safety?)
+				    '(if (< ch 0)
+					 (rt_error rt_globals (string "Channel number for Out less than zero")))
+				    "/* */")
+			       ,(if (rt-is-safety?)
+				    '(if (> ch rt_globals->num_outs)
+					 (rt_error rt_globals (string "Illegal channel number for Out")))
+				    "/* */")
+			       (+= rt_globals->outs[ch][rt_globals->framenum] val)))
+  (<rt-func> 'rt_out '<void> '(<int> <float>) #:needs-rt-globals #t)
+  
+  
+
+  ;; rt_out_vct
+  (rt-function <void> rt_out_vct (lambda (,rt-globalvardecl (<int> ch) (<vct-*> vct))
+				   (<int> lokke)
+				   (<int> framenum rt_globals->framenum)
+				   (<float-**> outs rt_globals->outs)
+				   (<float-*> data vct->data)
+				   
+				   (if (< ch 0)
+				       (set! ch 0))
+				   "for(lokke=0;lokke<vct->length;lokke++){"
+				   (if (> ch rt_globals->num_outs)
+				       break)
+				   (+= outs[ch][framenum] *data)
+				   ch++
+				   data++
+				   "}"
+				   ))
+  (<rt-func> 'rt_out_vct '<void> '(<int> <vct-*>) #:needs-rt-globals #t)
+
+
+
+  ;; BUS stuff
+  ;;;;;;;;;;;;;;
+  (rt-function <void> rt_write_bus (lambda (,rt-globalvardecl (<struct-mus_rt_bus_internal-*> bus) (<int> ch) (<float> val))
+				     ,(if (rt-is-safety?)
+					  '(if (< ch 0)
+					       (rt_error rt_globals (string "Channel number for write-bus less than zero")))
+					  "/* */")
+				     ,(if (rt-is-safety?)
+					  '(if (> ch bus->num_channels)
+					       (rt_error rt_globals (string "Illegal channel number for write-bus")))
+					  "/* */")
+				     ;;(if (!= bus->last_clear_frame rt_globals->frames)
+				     ;;   (set! bus->data[ch][rt_globals->framenum] val) else
+				     (+= bus->data[ch][rt_globals->framenum] val)))
+  (<rt-func> 'rt_write_bus '<void> '(<bus> <int> <float>) #:needs-rt-globals #t)
+  
+  (rt-function <void> rt_write_bus_vct (lambda (,rt-globalvardecl (<struct-mus_rt_bus_internal-*> bus) (<vct-*> vct))
+					 (<int> lokke)
+					 (<int> framenum rt_globals->framenum)
+					 (<float-*> data vct->data)
+					 (<int> end (EC_MIN vct->length bus->num_channels))
+					 "for(lokke=0;lokke<end;lokke++){"
+					 (+= bus->data[lokke][framenum] *data)
+					 data++
+					 "}"
+					 ))
+  (<rt-func> 'rt_write_bus_vct '<void> '(<bus> <vct-*>) #:needs-rt-globals #t)
+  
+  (rt-function <float> rt_read_bus (lambda (,rt-globalvardecl (<struct-mus_rt_bus_internal-*> bus) (<int> ch))
+				     ,(if (rt-is-safety?)
+					  '(if (< ch 0)
+					       (rt_error rt_globals (string "Channel number for write-bus less than zero")))
+					  "/* */")
+				     ,(if (rt-is-safety?)
+					  '(if (> ch bus->num_channels)
+					       (rt_error rt_globals (string "Illegal channel number for write-bus")))
+					  "/* */")
+				     (let* ((ret <float> bus->data[ch][rt_globals->framenum]))
+				       (set! bus->data[ch][rt_globals->framenum] 0.0f)
+				       (return ret))))
+  (<rt-func> 'rt_read_bus '<float> '(<bus> <int>) #:needs-rt-globals #t)
+
+  (rt-function <vct-*> rt_read_bus_vct (lambda (,rt-globalvardecl (<struct-mus_rt_bus_internal-*> bus))
+					 (let* ((ret <vct-*> (rt_alloc_vct rt_globals bus->num_channels))
+						(lokke <int>)
+						(framenum <int> rt_globals->framenum)
+						(data <float-*> ret->data))
+					   
+					   "for(lokke=0;lokke<bus->num_channels;lokke++){"
+					   (set! *data bus->data[lokke][framenum])
+					   (set! bus->data[lokke][framenum] 0)
+					   data++
+					   "}"
+					   (return ret))))
+  (<rt-func> 'rt_read_bus_vct '<vct-*> '(<bus>) #:needs-rt-globals #t)
+  
+
+
+  ;; VCT's
+  (rt-function <vct-*> rt_vct_scale (lambda ((<vct-*> vct) (<float> scl))
+				      (<int> lokke)
+				      "for(lokke=0;lokke<vct->length;lokke++){"
+				      (*= vct->data[lokke] scl)
+				      "}"
+				      (return vct)))
+  (<rt-func> 'rt_vct_scale '<vct-*> '(<vct-*> <float>))
+  
+  (rt-function <vct-*> rt_vct_offset (lambda ((<vct-*> vct) (<float> scl))
+				       (<int> lokke)
+				       "for(lokke=0;lokke<vct->length;lokke++){"
+				       (+= vct->data[lokke] scl)
+				       "}"
+				       (return vct)))
+  (<rt-func> 'rt_vct_offset '<vct-*> '(<vct-*> <float>))
+  
+  (rt-function <vct-*> rt_vct_fill (lambda ((<vct-*> vct) (<float> scl))
+				     (<int> lokke)
+				     "for(lokke=0;lokke<vct->length;lokke++){"
+				     (set! vct->data[lokke] scl)
+				     "}"
+				     (return vct)))
+  (<rt-func> 'rt_vct_fill '<vct-*> '(<vct-*> <float>))
+  
+  )
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;; Various Macros and functions ;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 
 
 (define-c-macro (the type somethingmore)
@@ -3332,7 +3669,7 @@ and run simple lisp[2] functions.
       (begin
 	(apply c-display (append (list "Too many arguments for if:" a b) c))
 	#f)
-      (let ((ae (rt-expand-macros a)))
+      (let ((ae (rt-macroexpand a)))
 	(if (number? ae)
 	    (if (= 0 ae)
 		(if (null? c)
@@ -3420,8 +3757,8 @@ and run simple lisp[2] functions.
 		(for-each search term))))
        (search term)
        #f)))
-  (let ((test (rt-expand-macros test))
-	(body (map rt-expand-macros body)))
+  (let ((test (rt-macroexpand test))
+	(body (map rt-macroexpand body)))
     (if (rec-search (cons test body))
 	`(let* ((_rt_breakcontsig 0))
 	   (if (< (rt-setjmp/setjmp _rt_breakcontsig) 2)
@@ -3838,23 +4175,56 @@ and run simple lisp[2] functions.
 
 ;;; OUT/IN
 
-(define-rt-macro (out . expand/rest)
-  (let ((channels (c-butlast rest))
-	(val (last rest)))
+(define-c-macro (rt-cast-float val)
+  `(cast <float> ,val))
+(<rt-func> 'rt-cast-float '<float> '(<void>) #:min-arguments 1 #:is-immediate #t)
+(define-c-macro (rt-cast-vct val)
+  `(cast <vct-*> ,val))
+(<rt-func> 'rt-cast-vct '<vct-*> '(<void>) #:min-arguments 1 #:is-immediate #t)
+
+
+
+(define-rt-macro (out . rest)
+  (let* ((org-channels (c-butlast rest))
+	 (channels org-channels)
+	 (val (last rest)))
+
     (if (null? channels)
 	(set! channels '(0 1)))
-    (if (= 1 (length channels))
-	`(rt_out ,(car channels) ,val)
-	(if (rt-immediate? val)
-	    `(begin
-	       ,@(map (lambda (ch)
-			`(rt_out ,ch ,val))
-		      channels))
-	    (let ((varname (rt-gensym)))
-	      `(let* ((,varname ,val))
-		 ,@(map (lambda (ch)
-			  `(rt_out ,ch ,varname))
-			channels)))))))
+
+    (cond ((and (list? val)
+		(or (eq? 'vct-scale! (car val))
+		    (eq? 'vct-offset! (car val))
+		    (eq? 'vct-fill! (car val))))
+	   `(out ,@org-channels ,(rt-macroexpand-1 val)))
+
+	  ((and (list? val)
+		(eq? 'vct (car val)))
+	   (let ((ch (1- (car channels))))
+	     `(begin
+		,@(map (lambda (something)
+			 (set! ch (1+ ch))
+			 `(rt_out ,ch ,something))
+		       (cdr val)))))
+	  ((not (symbol? val))
+	   (let ((new-val (rt-gensym)))
+	     `(let ((,new-val ,val))
+		(out ,@org-channels ,new-val))))
+	  ((= 1 (length channels))
+	   `(if (is-type? <vct-*> ,val)
+		(rt_out_vct ,(car channels) (rt-cast-vct ,val))
+		(rt_out ,(car channels) (rt-cast-float ,val))))
+	  ((= 0 (length org-channels))
+	   `(if (is-type? <vct-*> ,val)
+		(rt_out_vct 0 (rt-cast-vct ,val))
+		(begin
+		  (rt_out 0 (rt-cast-float ,val))
+		  (rt_out 1 (rt-cast-float ,val)))))
+	  (else
+	   `(begin
+	      ,@(map (lambda (ch)
+		       `(rt_out ,ch ,val))
+		     channels))))))
 
 (define-c-macro (rt-outs/outs n)
   (<-> "rt_globals->outs[" (eval-c-parse n) "]"))
@@ -3895,26 +4265,6 @@ and run simple lisp[2] functions.
 
 (define-rt-macro (include-guile-func name)
   (procedure-source (primitive-eval name)))
-
-
-;; create-thread
-(define-rt-macro (create-thread thunk)
-  `(rt_create_thread ,thunk))
-(<rt-func> 'rt_create_thread '<void> '((<float> ())))
-
-#!
-(<rt-type> '<pthread_t> c-nevercalled-true? #f)
-(define-rt-macro (create-thread thunk)
-  (let ((pthread (rt-gensym))
-	(das-func (rt-gensym)))
-    `(let ((,pthread <pthread_t>)
-	   (,das-func <int> (lambda ((<void-*> arg))
-				 (,thunk))))
-       (rt-create-thread/pthread_create ,pthread ,das-func))))
-(<rt-func> 'rt-create-thread/pthread_create '<int> '(<pthread_t> (<void-*> (<void-*>))))
-(define-c-macro (rt-create-thread/pthread_create pthread func)
-  (<-> "pthread_create(&" (eval-c-parse pthread) ",NULL," (eval-c-parse func) ",NULL)"))
-!#
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -4558,6 +4908,16 @@ and run simple lisp[2] functions.
 	   #:subtype-of '<mus_any-*>
 	   )
 
+
+(rt-function <struct-mus_rt_readin-*> rt_scm_to_rt_readin
+	     (lambda (,rt-globalvardecl (<SCM> name))
+	       ,(if (rt-is-safety?)
+		    `(if (not (SCM_SMOB_PREDICATE rt_readin_tag name))
+			 (begin
+			   (rt_error rt_globals (string "Variable is not an rt-readin generator"))
+			   (return NULL))
+			 (return (cast <void-*> (SCM_SMOB_DATA name))))
+		    `(return (cast <void-*> (SCM_SMOB_DATA name))))))
 (<rt-func> 'rt_scm_to_rt_readin '<rt-readin> '(<SCM>) #:needs-rt-globals #t)
 
 ;;(<rt-func> 'rt_readin '<float> '(<rt-readin>))
@@ -4722,13 +5082,166 @@ setter!-rt-mus-location/mus_location
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;; BUS. ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define-ec-struct <mus_rt_bus>
+  <int> num_channels)
+
+(define mus-rt-bus-internal-struct "struct mus_rt_bus_internal{ int num_channels; float* data[]; }")
+
+(eval-c ""
+	;;;;;;; Das SMOB
+
+	,mus-rt-bus-internal-struct
+	
+	(<nonstatic-scm_t_bits> rt_bus_tag)
+	
+	(public
+	  (<SCM> rt-bus-p (lambda ((<SCM> rt_bus_smob))
+			       (if (SCM_SMOB_PREDICATE rt_bus_tag rt_bus_smob)
+				   (return SCM_BOOL_T)
+				   (return SCM_BOOL_F))))
+	  (<SCM> make-bus2 (lambda ((<int> num_channels))
+			     (let* ((ret <struct-mus_rt_bus_internal-*> (calloc 1 (+ (sizeof <struct-mus_rt_bus_internal>)
+										     (* (sizeof <float-*>) num_channels))))
+				    (scmret <SCM>))
+
+			       (set! ret->num_channels num_channels)
+			       
+			       (for-each 0 num_channels
+					 (lambda (ch)
+					   (set! ret->data[ch] (calloc (sizeof <float>) ,rt-max-frame-size))))
+
+			       (SCM_NEWSMOB scmret rt_bus_tag ret)
+			       (return scmret)))))
+	 
+	;;(<SCM> mark_rt_bus (lambda ((<SCM> rt_bus_smob))
+	;;			 (let* ((rt_bus <struct-mus_rt_bus-*> (cast <void-*> (SCM_SMOB_DATA rt_bus_smob))))
+	;;			   (return rt_bus->scm_bus))))
+	(<size_t> free_rt_bus (lambda ((<SCM> rt_bus_smob))
+				(let* ((rt_bus <struct-mus_rt_bus_internal-*> (cast <void-*> (SCM_SMOB_DATA rt_bus_smob))))
+				  (for-each 0 rt_bus->num_channels
+					    (lambda (ch)
+					      (free rt_bus->data[ch])))
+				  (free rt_bus)
+				  (return 0))))
+	
+	(<int> print_rt_bus (lambda ((<SCM> rt_bus_smob) (<SCM> port) (<scm_print_state-*> pstate))
+			      (scm_puts (string "#<rt_bus ... > ") port)
+			      (return 1)))
+
+	(run-now
+	 (set! rt_bus_tag (scm_make_smob_type (string "rt_bus") (sizeof <struct-mus_rt_bus_internal>)))
+	 ;;(scm_set_smob_mark rt_bus_tag mark_rt_bus)
+	 (scm_set_smob_free rt_bus_tag free_rt_bus)
+	 (scm_set_smob_print rt_bus_tag print_rt_bus)))
+			    
+(define-macro (make-bus . rest)
+  (if (null? rest)
+      `(make-bus2 1)
+      `(make-bus2 ,(car rest))))
+
+(rt-function <struct-mus_rt_readin-*> rt_scm_to_rt_bus
+	     (lambda (,rt-globalvardecl (<SCM> name))
+	       ,(if (rt-is-safety?)
+		    `(if (not (SCM_SMOB_PREDICATE rt_bus_tag name))
+			 (begin
+			   (rt_error rt_globals (string "Variable is not an rt-bus object"))
+			   (return NULL))
+			 (return (cast <void-*> (SCM_SMOB_DATA name))))
+		    `(return (cast <void-*> (SCM_SMOB_DATA name))))))
+(<rt-func> 'rt_scm_to_rt_bus '<bus> '(<SCM>) #:needs-rt-globals #t)
+
+
+(<rt-type> '<bus>
+	   rt-bus-p
+	   #f ;;'rt_scm_to_rt_bus (The engine needs to know which buses are used by the instances. It can't know that if its hidden in an <SCM>.
+	   #:transformfunc SCM_SMOB_DATA
+	   #:c-type '<struct-mus_rt_bus_internal-*>)
+
+
+(define-c-macro (bus-length bus)
+  (<-> (eval-c-parse bus) "->num_channels"))
+(<rt-func> 'bus-length '<int> '(<bus>) #:is-immediate #t)
+       
+
+
+
+
+
+
+
+;;(write-bus bus 0.2)               -> (rt_write_bus bus 0 0.2)
+;;(write-bus bus 0.2 0.5 0.6)       -> (let ((,das-bus bus))
+;;				         (rt_write_bus ,das-bus 0 0.2)
+;;				         (rt_write_bus ,das-bus 1 0.5)
+;;				         (rt_write_bus ,das-bus 2 0.6))
+;;(write-bus bus #f 0.2)            -> (let ((,das-bus bus))
+;;                                       (rt_write_bus ,das-bus 1 0.2))
+;;(write-bus bus vct)               -> (rt_write_bus_vct bus vct)
+;;(write-bus bus (vct 0.2 0.5 0.6)) -> (let ((,das-vct (vct 0.2 0.5 0.6)))
+;;				         (rt_write_bus_vct bus ,das-vct))
+(define-rt-macro (write-bus bus . rest)
+  (cond ((and (= 1 (length rest))
+	      (number? (car rest)))
+	 `(rt_write_bus ,bus 0 ,(car rest)))
+	((> (length rest) 1)
+	 (let ((n -1)
+	       (das-bus (rt-gensym)))
+	   `(let ((,das-bus ,bus))
+	      ,@(map (lambda (v)
+		       `(rt_write_bus ,das-bus ,(car v) ,(cadr v)))
+		     (remove (lambda (v)
+			       (or (and (number? (cadr v))
+					(= 0 (cadr v)))
+				   (eq? #f (cadr v))))
+			     (map (lambda (v)
+				    (set! n (1+ n))
+				    (list n v))
+				  rest))))))
+	((not (symbol? (car rest)))
+	 (let ((new-val (rt-gensym)))
+	   `(let ((,new-val ,(car rest)))
+	      (write-bus ,bus ,new-val))))
+	(else
+	 `(if (is-type? <vct-*> ,(car rest))
+	      (rt_write_bus_vct ,bus (rt-cast-vct ,(car rest)))
+	      (rt_write_bus ,bus 0 (rt-cast-float ,(car rest)))))))
+
+
+;;(read-bus bus 0)   -> (rt_read_bus bus 0)      ;; returns float
+;;(read-bus bus 1)   -> (rt_read_bus bus 1)      ;; returns float
+;;(read-bus bus)     -> (rt_read_bus_vct bus)    ;; returns vct
+;;(read-bus bus 0 1) -> (vct (rt_read_bus bus 0) ;; returns vct
+;;			     (rt_read_bus bus 1))
+;;
+(define-rt-macro (read-bus bus . rest)
+  (cond ((null? rest)
+	 `(rt_read_bus_vct ,bus))
+	((= 1 (length rest))
+	 `(rt_read_bus ,bus ,(car rest)))
+	((not (rt-immediate? bus9))
+	 (let ((das-bus (rt-gensym)))
+	   `(let ((,das-bus ,bus))
+	      (read-bus ,das-bus ,@rest))))
+	 (else
+	  `(vct ,@(map (lambda (ch)
+			 `(rt_read_bus ,bus ,ch))
+		       rest)))))
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;; VCT. ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define-rt-macro (vct-length vct)
   `(rt-vct-length/vct-length ,vct))
-   
+
 (define-rt-macro (rt-vct-legal-pos das-vct pos funcname body)
   (if (rt-is-safety?)
       `(begin (if (< ,pos 0)
@@ -4757,19 +5270,57 @@ setter!-rt-mus-location/mus_location
 	   `(rt-vct-legal-pos ,das-vct ,pos "vct-ref"
 			      (rt-vct-ref/vct-ref ,das-vct (rt-castint/castint ,x)))))))
 
+
+(define-rt-macro (vct . rest)
+  (let ((ret (rt-gensym))
+	(n -1))
+    `(let ((,ret (rt_alloc_vct ,(length rest))))
+       ,@(map (lambda (something)
+		(set! n (1+ n))
+		`(rt-vct-set!/vct-set! ,ret ,n ,something))
+	      rest)
+       ,ret)))
+
+(define-rt-macro (make-vct len . initial-element)
+  (if (null? initial-element)
+      `(rt_vct_fill (rt_alloc_vct ,len) 0.0)
+      `(rt_vct_fill (rt_alloc_vct ,len) ,(car initial-element))))
+      
+
+
 (define-rt-macro (vct-scale! vct scl)
-  `(rt-range2 i 0 (vct-length ,vct) 1
-	      (rt-vct-set!/vct-set! ,vct i (* (rt-vct-ref/vct-ref ,vct i) ,scl))))
-
+  (if (and (list? vct)
+	   (rt-immediate? scl)
+	   (eq? 'vct (car vct)))
+      `(vct ,@(map (lambda (val)
+		     `(* ,scl ,val))
+		   (cdr vct)))
+      `(rt_vct_scale ,vct ,scl)))
 (define-rt-macro (vct-offset! vct scl)
-  `(range i 0 (vct-length ,vct)
-	  (rt-vct-set!/vct-set! ,vct i (+ (rt-vct-ref/vct-ref ,vct i) ,scl))))
+  (if (and (list? vct)
+	   (rt-immediate? scl)
+	   (eq? 'vct (car vct)))
+      `(vct ,@(map (lambda (val)
+		    `(+ ,scl ,val))
+		  (cdr vct)))
+      `(rt_vct_offset ,vct ,scl)))
+(define-rt-macro (vct-fill! vct scl)
+  (if (and (list? vct)
+	   (rt-immediate? scl)
+	   (eq? 'vct (car vct)))
+      `(vct ,@(map (lambda (val)
+		     ,scl)
+		   (cdr vct)))
+      `(rt_vct_fill ,vct ,scl)))
 
-(define-rt-macro (vct-fill! vct val)
-  `(range i 0 (vct-length ,vct)
-	  (rt-vct-set!/vct-set! ,vct i ,val)))
-
-
+(define-rt-macro (vct-map! vct thunk)
+  (let ((das-vct (rt-gensym))
+	(i (rt-gensym)))
+    `(let ((,das-vct ,vct))
+       (rt-range2 ,i 0 (vct-length ,das-vct) 1
+		  (rt-vct-set!/vct-set! ,das-vct ,i (begin
+						      ,@(cddr thunk)))))))
+		  
 (define-c-macro (rt-castint/castint val)
   `(cast <int> ,val))
 (<rt-func> 'rt-castint/castint '<int> '(<int>))
@@ -4800,6 +5351,8 @@ setter!-rt-mus-location/mus_location
 		   (vct-set! v 0 5))))
 		   
 !#
+
+
 
 
 
@@ -4880,7 +5433,7 @@ setter!-rt-mus-location/mus_location
 	   (extnumbers-writing #f))
 
        (rt-print "*RT: Expanding macros")
-       (set! term (rt-expand-macros term))
+       (set! term (rt-macroexpand term))
        (if (not term)
 	   (return #f))
 
@@ -4976,6 +5529,8 @@ setter!-rt-mus-location/mus_location
     (if t
 	(caddr (cdddr t)))))
 
+		   
+
 
 (define (rt-3 term)
   (let ((rt-4-result (rt-4 term)))
@@ -5068,7 +5623,9 @@ setter!-rt-mus-location/mus_location
 		  (shared-struct <RT_Engine>)
 		  
 		  (shared-struct <mus_rt_readin>)
-		   
+
+		  ,mus-rt-bus-internal-struct
+
 		  (define-struct <RT_Globals>
 		    ,@(apply append publicargs)
 		    ,@(apply append (map (lambda (vardecl)
@@ -5082,14 +5639,17 @@ setter!-rt-mus-location/mus_location
 		    <float-**> outs
 		    <int> num_ins
 		    <float-**> ins
+
+		    <char-*> allocplace
+		    <char-*> allocplace_end
 		    
 		    <int> remove_me
 		    <struct-RT_Engine*> engine)
 
 		  
 		  
-		  ;; RT_Globals functions.
-           	  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+		  ;; Setters and getters for the RT_Globals struct
+           	  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 		  (public
 		   (<void-*> ,make-globals-func (lambda ((<struct-RT_Engine-*> engine))
@@ -5115,6 +5675,7 @@ setter!-rt-mus-location/mus_location
 		  
 		  
 		   (<nonstatic-extern-scm_t_bits> rt_readin_tag)
+		   (<nonstatic-extern-scm_t_bits> rt_bus_tag)
 
 		   "extern float rt_readin(struct mus_rt_readin*)"
 		   
@@ -5122,104 +5683,22 @@ setter!-rt-mus-location/mus_location
 		   "typedef float (*ReadinFunc)(struct mus_rt_readin*)"
 
 
-		   (<void> rt_error (lambda (,rt-globalvardecl (<char-*> msg))
-				      (<static-int> errordisplayed 0)
-				      (if (not errordisplayed)
-					  (fprintf stderr (string "RT RUNTIME ERROR: %s.\\n") msg))
-				      (set! errordisplayed 1)
-				      ,(if (rt-is-safety?)
-					   '(longjmp rt_globals->engine->error_jmp 5)
-					   "/* */")))
-		   
-		   
-		   (<struct-mus_rt_readin-*> rt_scm_to_rt_readin (lambda (,rt-globalvardecl (<SCM> name))
-								   ,(if (rt-is-safety?)
-									`(if (not (SCM_SMOB_PREDICATE rt_readin_tag name))
-									     (begin
-									       (rt_error rt_globals (string "Variable is not an rt-readin generator"))
-									       (return NULL))
-									     (return (cast <void-*> (SCM_SMOB_DATA name))))
-									`(return (cast <void-*> (SCM_SMOB_DATA name))))))
-		   
-		   (<double> rt_scm_to_double (lambda (,rt-globalvardecl (<SCM> name))
-						(if (SCM_INUMP name)
-						    (return (SCM_INUM name))
-						    (if (SCM_REALP name)
-							(return (SCM_REAL_VALUE name))
-							(begin
-							  (rt_error rt_globals (string "Variable is not a number (to_double)"))
-							  (return 0))))))
-		   (<float> rt_scm_to_float (lambda (,rt-globalvardecl (<SCM> name))
-					      (if (SCM_INUMP name)
-						  (return (SCM_INUM name))
-						  (if (SCM_REALP name)
-						      (return (SCM_REAL_VALUE name))
-						      (begin
-							(rt_error rt_globals (string "Variable is not a number (to_float)"))
-							(return 0))))))
-		   (<int> rt_scm_to_int (lambda (,rt-globalvardecl (<SCM> name))
-					  (if (SCM_INUMP name)
-					      (return (SCM_INUM name))
-					      (if (SCM_REALP name)
-						  (return (SCM_REAL_VALUE name))
-						  (begin
-						    (rt_error rt_globals (string "Variable is not a number (to_int)"))
-						    (return 0))))))
-		   (<vct-*> rt_scm_to_vct (lambda (,rt-globalvardecl (<SCM> name))
-					    ,(if (rt-is-safety?)
-						 `(if (vct_p name)
-						      (return (TO_VCT name))
-						      (begin
-							(rt_error rt_globals (string "Variable is not a VCT."))
-							(return NULL)))
-						 `(return (TO_VCT name)))))
-		   
-		   (<mus_any-*> rt_scm_to_mus_any (lambda (,rt-globalvardecl (<SCM> name))
-						    (if (mus_xen_p name)
-							(return (cast <void-*> (XEN_TO_MUS_ANY name)))
-							(if (not (SCM_SMOB_PREDICATE rt_readin_tag name))
-							    (begin
-							      (rt_error rt_globals (string "Variable is not a CLM generator or rt-readin generator"))
-							      (return NULL))
-							    (return (cast <void-*> (SCM_SMOB_DATA name)))))))
-		   
-		   
-		   (<void> rt_create_thread (lambda ((<ThreadFunc> func))
-					      "pthread_t _rt_thread={0}"
-					      (<int> isrunning 0)
-					      (<void-*> threadfunc (lambda ((<void-*> arg))
-								     (<ThreadFunc> dasfunc arg)
-								     (set! isrunning 1)
-								     (dasfunc)
-								     (return NULL)))
-					      (pthread_create &_rt_thread NULL threadfunc func)
-					      (while (not isrunning) ;; I'm not quite sure why...
-						     (usleep 50))
-					      ))
+		   ;; Finding needed rt-functions to include in this file.
+		   ,@(let ((function-names '())
+			   (functions '()))
 
-		   (<float> rt_in (lambda (,rt-globalvardecl (<int> ch))
-				    ,(if (rt-is-safety?)
-					 '(if (< ch 0)
-					      (rt_error rt_globals (string "Channel number for In less than zero")))
-					 "/* */")
-				    ,(if (rt-is-safety?)
-					 '(if (> ch rt_globals->num_ins)
-					      (rt_error rt_globals (string "Illegal channel number for In")))
-					 "/* */")
-				    (return rt_globals->ins[ch][rt_globals->framenum])))
+		       (define (add-func funcname)
+			 (if (not (member funcname function-names))
+			     (let ((func (assq funcname rt-functions)))
+			       (if func
+				   (begin
+				     (set! function-names (cons funcname function-names))
+				     (for-each add-func (cadr func))
+				     (set! functions (cons (caddr func) functions)))))))
+		       
+		       (for-each add-func (rt-find-all-funcs (cdr term)))
+		       (reverse! functions))
 		   
-		   (<void> rt_out (lambda (,rt-globalvardecl (<int> ch)(<float> val))
-				    ,(if (rt-is-safety?)
-					 '(if (< ch 0)
-					      (rt_error rt_globals (string "Channel number for Out less than zero")))
-					 "/* */")
-				    ,(if (rt-is-safety?)
-					 '(if (> ch rt_globals->num_outs)
-					      (rt_error rt_globals (string "Illegal channel number for Out")))
-					 "/* */")
-				    (+= rt_globals->outs[ch][rt_globals->framenum] val)))
-
-				    
 		   ;; Inserting all inner functions. All global variables have been put into the rt_global struct, and is therefore not used here.
 		   ,@(map (lambda (vardecl)
 			    (if (= 3 (length vardecl))
@@ -5261,6 +5740,7 @@ setter!-rt-mus-location/mus_location
 						  (set! rt_globals->outs engine->outs)
 						  (set! rt_globals->num_ins engine->num_ins)
 						  (set! rt_globals->ins engine->ins)
+						  (set! rt_globals->allocplace_end engine->allocplace_end)
 						  
 						  (set! rt_globals->remove_me 0)
 						  
@@ -5270,6 +5750,7 @@ setter!-rt-mus-location/mus_location
 						   
 						  (let* ((len <int> (- endframe startframe)))
 						    "do{"
+						    (set! rt_globals->allocplace engine->allocplace)						    
 						    (,rt-innerfuncname rt_globals)
 						    ;;engine->time++
 						    rt_globals->framenum++

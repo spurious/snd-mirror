@@ -2,7 +2,7 @@
 
 # Translator: Michael Scholz <scholz-micha@gmx.de>
 # Created: Wed Mar 23 02:08:47 CET 2005
-# Last: Tue Apr 12 23:58:01 CEST 2005
+# Last: Wed May 18 19:04:45 CEST 2005
 
 # Commentary:
 #
@@ -59,7 +59,7 @@ module Mark
            "mark_name2id(name) is like find-mark but searches all currently accessible channels")
   def mark_name2id(name)
     callcc do |ret|
-      sounds2array.each do |snd|
+      Snd.sounds.each do |snd|
         channels(snd).times do |chn|
           if mark?(m = find_mark(name, snd, chn))
             ret.call(m)
@@ -84,8 +84,8 @@ module Mark
            "describe_mark(id) \
 returns a description of the movements of mark id over the channel's edit history")
   def describe_mark(id)
-    if (mark_setting = snd_catch do mark_home(id) end.first) == :no_such_mark
-      sounds2array.each do |snd|
+    if (mark_setting = Snd.catch do mark_home(id) end.first) == :no_such_mark
+      Snd.sounds.each do |snd|
         channels(snd).times do |chn|
           max_edits = 0
           edits(snd, chn).each do |n| max_edits += n end
@@ -112,7 +112,7 @@ returns a description of the movements of mark id over the channel's edit histor
       end
       descr
     else
-      snd_raise(:no_such_mark, id)
+      Snd.raise(:no_such_mark, id)
     end
   end
 
@@ -168,8 +168,8 @@ fits (and mixes) the current selection (via granulate) between the given marks")
     m1_home = mark_home(m1)
     m2_home = mark_home(m2)
     if m1_home != m2_home
-      message("mark %s is in %s[%s] but mark %s is in %s[%s]?",
-              m1, m1_home[0], m1_home[1], m2, m2_home[0], m2_home[1])
+      Snd.display("mark %s is in %s[%s] but mark %s is in %s[%s]?",
+                  m1, m1_home[0], m1_home[1], m2, m2_home[0], m2_home[1])
     else
       mark_samps = m2_samp - m1_samp
       selection_samps = selection_frames
@@ -231,8 +231,8 @@ fits (and mixes) the current selection (via granulate) between the given marks")
            "play_between_marks([mark1=false, [mark2=false]]) \
 plays the portion between the marks (searching for plausible default marks)")
   def play_between_marks(mark1 = false, mark2 = false)
-    snd = snd_snd
-    chn = snd_chn
+    snd = Snd.snd
+    chn = Snd.chn
     m1 = if mark1
            mark1
          else
@@ -246,7 +246,7 @@ plays the portion between the marks (searching for plausible default marks)")
                false
              end
            else
-             message("no marks in current window?")
+             Snd.display("no marks in current window?")
              false
            end
          end
@@ -263,7 +263,7 @@ plays the portion between the marks (searching for plausible default marks)")
                  end
                end
              else
-               message("no second mark?")
+               Snd.display("no second mark?")
                false
              end
            end
@@ -327,8 +327,8 @@ evaluates func between the leftmost marks; func takes one arg, the original samp
              func1
            end
     if proc?(func)
-      snd = snd_snd
-      chn = snd_chn
+      snd = Snd.snd
+      chn = Snd.chn
       if chn < 0
         chn = 0
       end
@@ -426,7 +426,7 @@ splits a sound into a bunch of sounds based on mark placements")
   def mark_explode(htype = Mus_next, dformat = Mus_bfloat)
     start = 0
     file_ctr = 0
-    snd = snd_snd
+    snd = Snd.snd
     if marks(snd)
       marks(snd).first.each do |m|
         last = mark_sample(m)
@@ -473,7 +473,7 @@ splits a sound into a bunch of sounds based on mark placements")
            "mark_property(key, id) \
 returns the value associated with 'key' in the given mark's property list, or false")
   def mark_property(key, id)
-    snd_raise(:no_such_mark, id) unless mark?(id)
+    Snd.raise(:no_such_mark, id) unless mark?(id)
     hash?(h = mark_properties(id)) and h[key]
   end
 
@@ -481,7 +481,7 @@ returns the value associated with 'key' in the given mark's property list, or fa
            "set_mark_property(key, val, id) \
 sets the value 'val' to 'key' in the given mark's property list")
   def set_mark_property(key, val, id)
-    snd_raise(:no_such_mark, id) unless mark?(id)
+    Snd.raise(:no_such_mark, id) unless mark?(id)
     unless hash?(h = mark_properties(id)) and h.store(key, val)
       $all_mark_properties.push(id)
       set_mark_properties(id, {key, val})
@@ -492,7 +492,7 @@ sets the value 'val' to 'key' in the given mark's property list")
            "remove_mark_property(key, id) \
 removes the key-value pair in the given mark's property list")
   def remove_mark_property(key, id)
-    snd_raise(:no_such_mark, id) unless mark?(id)
+    Snd.raise(:no_such_mark, id) unless mark?(id)
     if hash?(h = mark_properties(id))
       h.delete(key)
     else
@@ -541,7 +541,7 @@ sets up an $after_save_state_hook function to save any mark-properties")
            "mark_click_info(n) \
 is a $mark_click_hook function that describes a mark and its properties")
   def mark_click_info(id)
-    snd_raise(:no_such_mark, id) unless mark?(id)
+    Snd.raise(:no_such_mark, id) unless mark?(id)
     info_dialog("Mark info", format("\
      mark id: %d%s
       sample: %d (%1.3f secs)%s%s",
@@ -561,7 +561,7 @@ is a $mark_click_hook function that describes a mark and its properties")
   # back in when the sound is later reopened
 
   def eval_header(sndf)
-    string?(str = comment(sndf)) and snd_catch do eval(str) end.first
+    string?(str = comment(sndf)) and Snd.catch do eval(str) end.first
   end
 
   def marks2string(sndf)

@@ -2,7 +2,7 @@
 
 # Translator: Michael Scholz <scholz-micha@gmx.de>
 # Created: Mon Mar 07 13:50:44 CET 2005
-# Last: Sat Apr 16 13:50:18 CEST 2005
+# Last: Thu May 19 19:12:24 CEST 2005
 
 # Commentary:
 #
@@ -24,8 +24,11 @@
 #  spike(snd = false, chn = false)
 #  spot_freq(samp = 0, snd = false, chn = false)
 
-#  class Flanger
+#  class Flanger < Musgen
 #   initialize(time = 0.05, amount = 20.0, speed = 10.0)
+#   inspect
+#   to_s
+#   run_func(val1, val2)
 #   flanger(inval)
 
 #  make_flanger(time = 0.05, amount = 20.0, speed = 10.0)
@@ -38,8 +41,11 @@
 #  zero_phase(snd = false, chn = false)
 #  rotate_phase(func, snd = false, chn = false)
 
-#  class Asyfm
+#  class Asyfm < Musgen
 #   initialize(*args)
+#   inspect
+#   to_s
+#   run_func(val1, val2)
 #   asyfm_J(input)
 #   asyfm_I(input)
 
@@ -59,6 +65,7 @@
 
 #  band_limited_sawtooth(x, a, n, fi)
 #  brighten_slightly(amount, snd = false, chn = false)
+#  brighten_slightly_1(coeffs, snd = false, chn = false)
 #  spectrum2coeffs(order, spectr)
 #  fltit_1(order, spectr)
 
@@ -129,16 +136,22 @@
 #  ssb_bank(old_freq, new_freq, pairs, order, bw, beg, dur, snd, chn, edpos)
 #  ssb_bank_env(old_freq, new_freq, freq_env, pairs, order, bw, beg, dur, snd, chn, edpos)
 #
-#  class Ssb_fm
+#  class Ssb_fm < Musgen
 #   initialize(freq)
+#   inspect
+#   to_s
+#   run_func(val1, val2)
 #   ssb_fm(modsig)
 
 #  make_ssb_fm(freq)
 #  ssb_fm?(obj)
 #  ssb_fm(gen, modsig)
 #
-#  class Fm2
+#  class Fm2 < Musgen
 #   initialize(f1, f2, f3, f4, p1, p2, p3, p4)
+#   inspect
+#   to_s
+#   run_func(val1, val2)
 #   fm2(index)
 #
 #  make_fm2(f1, f2, f3, f4, p1, p2, p3, p4)
@@ -151,13 +164,26 @@
 #  scentroid(file, *args)
 #  invert_filter(fcoeffs)
 #
-#  class Volterra_filter
+#  class Volterra_filter < Musgen
 #   initialize(acoeffs, bcoeffs)
+#   inspect
+#   to_s
+#   run_func(val1, val2)
 #   volterra_filter(x)
 #
 #  make_volterra_filter(acoeffs, bcoeffs)
 #  volterra_filter(flt, x)
-#  
+#
+#  class Windowed_maxamp < Musgen
+#   initialize(size = 128)
+#   inspect
+#   to_s
+#   run_func(val1, val2)
+#   windowed_maxamp(y)
+#   
+#  make_windowed_maxamp(size = 128)
+#  windowed_maxamp(gen, y)
+#  harmonicizer(freq, coeffs, pairs, order, bw, beg, dur, snd, chn, edpos)
 
 # Code:
 
@@ -201,7 +227,7 @@ using 'gamma' as the window parameter.")
     rl = make_vct(n)
     im = make_vct(n)
     phase = 0.0
-    n.times do
+    n.times do |i|
       val = den * cos(n * acos(alpha * cos(phase)))
       rl[i] = val.real
       im[i] = val.image
@@ -218,7 +244,7 @@ using 'gamma' as the window parameter.")
       end
     end
     im
-  end
+  end if defined? acosh
 
   # this version taken from Julius Smith's "Spectral Audio..." with
   # three changes it does the DFT by hand, and is independent of
@@ -241,13 +267,13 @@ using 'gamma' as the window parameter.")
       n.times do |j|
         sum += vals[j] * exp((2.0 * Complex(0, 1) * PI * j * i) / n)
       end
-      w[i] = magnitude(sum)
+      w[i] = sum.abs
       if w[i] > pk
         pk = w[i]
       end
     end
     w.map! do |val| val / pk end
-  end
+  end if defined? acosh
   
   # move sound down by n (a power of 2)
   # I think this is "stretch" in DSP jargon -- to interpolate in the
@@ -492,12 +518,13 @@ tries to determine the current pitch: spot_freq(left_sample)")
     fftlen = (2 ** pow2).round
     data = autocorrelate(channel2vct(samp, fftlen, snd, chn))
     cor_peak = vct_peak(data)
+    cor_peak2 = 2.0 * cor_peak
     callcc do |ret|
       (1...fftlen - 2).each do |i|
-        if data[i] < data[i + 1] and data[i + 1] > data[i + 2]
-          logla = log10((cor_peak + data[i]) / (2.0 * cor_peak))
-          logca = log10((cor_peak + data[i + 1]) / (2.0 * cor_peak))
-          logra = log10((cor_peak + data[i + 2]) / (2.0 * cor_peak))
+        if data[i] < data[i + 1] and data[i + 2] < data[i + 1]
+          logla = log10((cor_peak + data[i])     / cor_peak2)
+          logca = log10((cor_peak + data[i + 1]) / cor_peak2)
+          logra = log10((cor_peak + data[i + 2]) / cor_peak2)
           offset = (0.5 * (logla - logra)) / (logla + logra + -2.0 * logca)
           ret.call(srate(snd) / (2 * (i + 1 + offset)))
         end
@@ -518,11 +545,27 @@ tries to determine the current pitch: spot_freq(left_sample)")
   # end
 
   # chorus (doesn't always work and needs speedup)
-  class Flanger
+  class Flanger < Musgen
     def initialize(time = 0.05, amount = 20.0, speed = 10.0)
+      super()
+      @time = time
+      @amount = amount
+      @speed = speed
       @randind = make_rand_interp(:frequency, speed, :amplitude, amount)
-      len = random(3.0 * time * srate()).floor
+      len = random(3.0 * time * mus_srate()).floor
       @flanger = make_delay(:size, len, :max_size, (len + amount + 1).to_i)
+    end
+
+    def inspect
+      format("%s.new(%s, %s, %s)", self.class, @time, @amount, @speed)
+    end
+
+    def to_s
+      format("#<%s time: %1.3f, amount: %1.3f, speed: %1.3f>", self.class, @time, @amount, @speed)
+    end
+
+    def run_func(val1 = 0.0, val2 = 0.0)
+      flanger(val1)
     end
 
     def flanger(inval)
@@ -624,19 +667,36 @@ calls fft, sets all phases to 0, and un-ffts")
   # rotate_phase(lambda {|x| -x })   # reverses original (might want to write fftlen samps here)
 
   # asymmetric FM (bes-i0 case)
-  class Asyfm
+  class Asyfm < Musgen
     def initialize(*args)
-      @frequency  = hz2radians(get_args(args, :frequency, 440.0).to_f)
-      @phase      = get_args(args, :initial_phase, 0.0).to_f
-      @ratio      = get_args(args, :ratio, 1.0).to_f
-      @r          = get_args(args, :r, 1.0).to_f
-      @index      = get_args(args, :index, 1.0).to_f
+      super()
+      frequency, initial_phase, ratio, r, index = nil
+      optkey(args, binding,
+             [:frequency, 440.0],
+             [:initial_phase, 0.0],
+             [:ratio, 1.0],
+             [:r, 1.0],
+             [:index, 1.0])
+      @frequency = hz2radians(frequency)
+      @phase = initial_phase.to_f
+      @ratio = ratio.to_f
+      @r = r.to_f
+      @index = index.to_f
     end
-    attr_accessor :frequency, :phase, :ratio, :r, :index
+    attr_accessor :ratio, :r, :index
 
     def inspect
+      format("%s.new(:frequency, %s, :initial_phase, %s, :ratio, %s, :r, %s, :index, %s)",
+             self.class, @frequency, @phase, @ratio, @r, @index)
+    end
+
+    def to_s
       format("#<%s freq: %1.3f, phase: %1.3f, ratio: %1.3f, r: %1.3f, index: %1.3f>",
              self.class, @frequency, @phase, @ratio, @r, @index)
+    end
+
+    def run_func(val1 = 0.0, val2 = 0.0)
+      asyfm_J(val1)
     end
     
     def asyfm_J(input)
@@ -775,6 +835,14 @@ calls fft, sets all phases to 0, and un-ffts")
     map_channel(lambda do |y|
                   mx * sin(y * brt)
                 end, 0, false, snd, chn, false, format("%s(%s", get_func_name, amount))
+  end
+
+  def brighten_slightly_1(coeffs, snd = false, chn = false)
+    # another version: brighten_slightly_1([1, 0.5, 3, 1])
+    pcoeffs = partials2polynomial(coeffs)
+    mx = maxamp(snd, chn)
+    map_channel(lambda do |y| mx * polynomial(pcoeffs, y / mx) end,
+                0, false, snd, chn, false, format("%s(%s", get_func_name, coeffs))
   end
 
   # FIR filters
@@ -1305,7 +1373,7 @@ performs a fractional Fourier transform on data; if angle=1.0, you get a normal 
   def fractional_fourier_transform(fr, fi, n, v)
     hr = make_vct(n)
     hi = make_vct(n)
-    ph0 = (v * 2.0 * PI) / n
+    ph0 = (v * TWO_PI) / n
     n.times do |w|
       sr = 0.0
       si = 0.0
@@ -1316,7 +1384,7 @@ performs a fractional Fourier transform on data; if angle=1.0, you get a normal 
         x = fr[k]
         y = fi[k]
         r = x * c - y * s
-        i = x * c + y * s
+        i = y * c + x * s
         sr += r
         si += i
         hr[w] = sr
@@ -1369,12 +1437,12 @@ returns the amplitude and initial-phase (for sin) at freq between beg and dur")
     sw = 0.0
     cw = 0.0
     reader = make_sample_reader(beg)
-    dur.times fo do |i|
+    dur.times do |i|
       samp = next_sample(reader)
       sw += samp * sin(i * incr)
       cw += samp * cos(i * incr)
     end
-    [2.0 * (sqrt(sw * sw + cw * cw) / dur), atan(cw, sw)]
+    [2.0 * (sqrt(sw * sw + cw * cw) / dur), atan2(cw, sw)]
   end
 
 # this is a faster version of find-sine using the "Goertzel algorithm"
@@ -1393,7 +1461,7 @@ returns the amplitude and initial-phase (for sin) at freq between beg and dur")
                    y0 = (y1 * cs - y2) + y
                    false
                  end, beg, dur)
-    magnitude(y0 - y1 * exp(Complex(0.0, -rfreq)))
+    (y0 - y1 * exp(Complex(0.0, -rfreq))).abs
   end
 
   def make_spencer_filter
@@ -1558,7 +1626,7 @@ returns the amplitude and initial-phase (for sin) at freq between beg and dur")
     norm1 = channel_norm(s1, c1)
     norm2 = channel_norm(s2, c2)
     acos(inprod / (norm1 * norm2))
-  end
+  end if defined? acos
 
   def channel2_orthogonal?(s1, c1, s2, c2)
     channel2_inner_product(s1, c1, s2, c2).zero?
@@ -1632,13 +1700,11 @@ returns the amplitude and initial-phase (for sin) at freq between beg and dur")
       nmx = 0.0
       map_channel_rb(beg, dur, snd, chn, edpos) do |y|
         sum = 0.0
-        ssbs.zip(bands) do |sbs, bds|
-          sum += ssb_am(sbs, bandpass(bds, y))
-        end
+        ssbs.zip(bands) do |sbs, bds| sum += ssb_am(sbs, bandpass(bds, y)) end
         nmx = [nmx, sum.abs].max
         sum
       end
-      scale_channel(mx / nmx, beg, dur, snd, chn, edpos)
+      scale_channel(mx / nmx, beg, dur, snd, chn)
     end
   end
 
@@ -1670,12 +1736,14 @@ returns the amplitude and initial-phase (for sin) at freq between beg and dur")
         nmx = [nmx, sum.abs].max
         sum
       end
-      scale_channel(mx / nmx, beg, dur, snd, chn, edpos)
+      scale_channel(mx / nmx, beg, dur, snd, chn)
     end
   end
 
-  class Ssb_fm
+  class Ssb_fm < Musgen
     def initialize(freq)
+      super()
+      @frequency = freq
       @osc1 = make_oscil(freq, 0)
       @osc2 = make_oscil(freq, HALF_PI)
       @osc3 = make_oscil(0, 0)
@@ -1684,6 +1752,18 @@ returns the amplitude and initial-phase (for sin) at freq between beg and dur")
       @delay = make_delay(40)
     end
 
+    def inspect
+      format("%s.new(%s)", self.class, @frequency)
+    end
+
+    def to_s
+      format("#<%s freq: %s>", self.class, @frequency)
+    end
+
+    def run_func(val1 = 0.0, val2 = 0.0)
+      ssb_fm(val1)
+    end
+    
     def ssb_fm(modsig)
       am0 = oscil(@osc1)
       am1 = oscil(@osc2)
@@ -1705,12 +1785,27 @@ returns the amplitude and initial-phase (for sin) at freq between beg and dur")
     gen.ssb_fm(modsig)
   end
 
-  class Fm2
+  class Fm2 < Musgen
     def initialize(f1, f2, f3, f4, p1, p2, p3, p4)
+      super()
       @osc1 = make_oscil(f1, p1)
       @osc2 = make_oscil(f2, p2)
       @osc3 = make_oscil(f3, p3)
       @osc4 = make_oscil(f4, p4)
+    end
+
+    def inspect
+      format("%s.new(%s, %s, %s, %s, %s, %s, %s, %s)",
+             self.class, @f1, @f2, @f3, @f4, @p1, @p2, @p3, @p4)
+    end
+
+    def to_s
+      format("#<%s %1.3f, %1.3f, %1.3f, %1.3f, %1.3f, %1.3f, %1.3f, %1.3f>",
+             self.class, @f1, @f2, @f3, @f4, @p1, @p2, @p3, @p4)
+    end
+
+    def run_func(val1 = 0.0, val2 = 0.0)
+      fm2(val1)
     end
     
     def fm2(index)
@@ -1734,9 +1829,9 @@ returns the amplitude and initial-phase (for sin) at freq between beg and dur")
 
   #vct|channel|spectral-polynomial
   def vct_polynomial(v, coeffs)
-    new_v = make_vct(v.length, coeffs[coeffs.length - 1])
+    new_v = Vct.new(v.length, coeffs.last)
     (coeffs.length - 2).downto(0) do |i|
-      vct_offset!(vct_multiply!(new_v, v), coeffs[i])
+      new_v.multiply!(v).offset!(coeffs[i])
     end
     new_v
   end
@@ -1747,8 +1842,8 @@ returns the amplitude and initial-phase (for sin) at freq between beg and dur")
                 format("%s(%s", get_func_name, coeffs.to_str))
   end
 
-  # (channel-polynomial (vct 0.0 .5)) = x*.5
-  # (channel-polynomial (vct 0.0 1.0 1.0 1.0)) = x*x*x + x*x + x
+  # channel_polynomial(vct(0.0, 0.5)) = x*0.5
+  # channel_polynomial(vct(0.0, 1.0, 1.0, 1.0)) = x*x*x + x*x + x
   # 
   # convolution -> * in freq
 
@@ -1765,19 +1860,18 @@ returns the amplitude and initial-phase (for sin) at freq between beg and dur")
     rl2 = make_vct(fft_len)
     new_sound = make_vct(fft_len)
     if coeffs[0] > 0.0
-      dither = coeffs[0]
-      new_sound.map! do mus_random(dither) end
+      new_sound.map! do mus_random(coeffs[0]) end
     end
     if num_coeffs > 1
-      vct_add!(new_sound, vct_scale!(vct_copy(sound), coeffs[1]))
+      new_sound.add!(sound.scale(coeffs[1]))
       if num_coeffs > 2
         peak = maxamp(snd, chn)
-        vct_add!(vct_scale!(rl1, 0.0), sound)
+        rl1.scale!(0.0).add!(sound)
         (2...num_coeffs).each do |i|
-          convolution(rl1, vct_add!(vct_scale!(rl2, 0.0), sound), fft_len)
-          vct_add!(new_sound(vct_scale!(vct_copy(rl1), (coeffs[i] * peak) / vct_peak(rl1))))
+          convolution(rl1, rl2.scale!(0.0).add(sound), fft_len)
+          new_sound.add!(rl1.scale((coeffs[i] * peak) / rl1.peak))
         end
-        vct_scale!(new_sound, peak / vct_peak(new_sound))
+        new_sound.scale!(peak / new_sound.peak)
       end
     end
     vct2channel(new_sound, 0, [len, len * (num_coeffs - 1)].max, snd, chn, false,
@@ -1816,40 +1910,43 @@ returns the amplitude and initial-phase (for sin) at freq between beg and dur")
   # recommended.
 
   def scentroid(file, *args)
-    beg      = get_args(args, :beg, 0.0).to_f
-    dur      = get_args(args, :dur, false)
-    db_floor = get_args(args, :db_floor, -40.0).to_f
-    rfreq    = get_args(args, :rfreq, 100.0).to_f
-    fftsize  = get_args(args, :fftsize, 4096)
+    beg, dur, db_floor, rfreq, fftsize = nil
+    optkey(args, binding,
+           [:beg, 0.0],
+           :dur,
+           [:db_floor, -40.0],
+           [:rfreq, 100.0],
+           [:fftsize, 4096])
+    assert_type(File.exists?(file), file, 0, "an existing file")
     fsr = mus_sound_srate(file)
     incrsamps = (fsr / rfreq).floor
     start = (beg * fsr).floor
-    ende = start + (dur ? (dur * fsr).to_i : mus_sound_frames(file) - start)
+    ende = start + (dur ? (dur.to_f * fsr).to_i : (mus_sound_frames(file) - beg))
     fdr = make_vct(fftsize)
     fdi = make_vct(fftsize)
     windows = ((ende - start.to_f) / incrsamps).floor + 1
     results = make_vct(windows)
-    fft2 = fftsize / 2
-    binwidth = fsr / fftsize
+    fft2 = (fftsize / 2.0).floor
+    binwidth = fsr / fftsize.to_f
     rd = make_readin(file)
     loc = 0
     start.step(ende, incrsamps) do |i|
       rd.location = i
       sum_of_squares = 0.0
-      fdr.map! do |ignored|
+      fdr.map! do
         val = readin(rd)
         sum_of_squares += val * val
         val
       end
-      if linear2db(sqrt(sum_of_squares / fftsize)) >= db_floor
+      if linear2db(sqrt(sum_of_squares / fftsize.to_f)) >= db_floor
         numsum = 0.0
         densum = 0.0
         clear_array(fdi)
         mus_fft(fdr, fdi, fftsize)
         rectangular2polar(fdr, fdi)
         fft2.times do |j|
-          numsum += k * binwidth * fdr[k]
-          densum += fdr[k]
+          numsum += j * binwidth * fdr[j]
+          densum += fdr[j]
         end
         results[loc] = numsum / densum
       end
@@ -1857,7 +1954,7 @@ returns the amplitude and initial-phase (for sin) at freq between beg and dur")
     end
     results
   end
-
+  
   # invert_filter inverts an FIR filter
   #
   # say we previously filtered a sound via filter_channel([0.5, 0.25, 0.125].to_vct)
@@ -1872,7 +1969,7 @@ returns the amplitude and initial-phase (for sin) at freq between beg and dur")
   def invert_filter(fcoeffs)
     order = fcoeffs.length + 32
     coeffs = Vct.new(order)
-    fcoeffs.each_with_index do |fval, i| coeffs[i] = val end
+    fcoeffs.each_with_index do |val, i| coeffs[i] = val end
     nfilt = Vct.new(order)
     nfilt[0] = 1.0 / coeffs.first
     (1...order).each do |i|
@@ -1893,11 +1990,23 @@ returns the amplitude and initial-phase (for sin) at freq between beg and dur")
   # this version is taken from Monson Hayes "Statistical DSP and Modeling"
   # it is a slight specialization of the form mentioned by J O Smith and others
 
-  class Volterra_filter
+  class Volterra_filter < Musgen
     def initialize(acoeffs, bcoeffs)
       @as = acoeffs
       @bs = bcoeffs
       @xs = Vct.new([acoeffs.length, bcoeffs.length].max)
+    end
+
+    def inspect
+      format("%s.new(%s, %s)", self.class, @as.to_str, @bs.to_str)
+    end
+
+    def to_s
+      format("#<%s acoeffs: %s, bcoeffs: %s>", self.class, @as, @bs)
+    end
+
+    def run_func(val1 = 0.0, val2 = 0.0)
+      volterra_filter(val1)
     end
 
     def volterra_filter(x)
@@ -1923,6 +2032,101 @@ returns the amplitude and initial-phase (for sin) at freq between beg and dur")
   end
   # flt = make_volterra_filter([0.5, 0.1].to_vct, [0.3, 0.2, 0.1].to_vct)
   # map_channel(lambda do |y| volterra_filter(flt, y) end)
+
+  class Windowed_maxamp < Musgen
+    def initialize(size = 128)
+      super()
+      @size = size
+      @gen = make_delay(:size, size)
+      @gen.scaler = 0.0
+    end
+
+    def inspect
+      format("%s.new(%s)", self.class, @size)
+    end
+
+    def to_s
+      format("#<%s size: %s, scaler: %s>", self.class, @size, @gen.scaler)
+    end
+
+    def run_func(val1 = 0.0, val2 = 0.0)
+      windowed_maxamp(val1)
+    end
+    
+    def windowed_maxamp(y)
+      absy = y.abs
+      mx = delay(@gen, absy)
+      pk = @gen.scaler - 0.001
+      if absy > pk
+        @gen.scaler = absy
+      else
+        if mx >= pk
+          @gen.scaler = @gen.data.peak
+        end
+      end
+      @gen.scaler
+    end
+  end
+
+  def make_windowed_maxamp(size = 128)
+    Windowed_maxamp.new(size)
+  end
+
+  def windowed_maxamp(gen, y)
+    gen.windowed_maxamp(y)
+  end
+
+  # harmonicizer (each harmonic is split into a set of harmonics via Chebyshev polynomials)
+  # obviously very similar to ssb_bank above, but splits harmonics
+  # individually, rather than pitch-shifting them
+  def harmonicizer(freq, coeffs, pairs,
+                   order = 40,
+                   bw = 50.0,
+                   beg = 0,
+                   dur = false,
+                   snd = false,
+                   chn = false,
+                   edpos = false)
+    bands = make_array(pairs)
+    pcoeffs = partials2polynomial(coeffs)
+    avgs = make_array(pairs)
+    peaks = make_array(pairs)
+    flt = make_filter(2, vct(1, -1), vct(0, -0.9))
+    old_mx = maxamp
+    new_mx = 0.0
+    ctr = 40
+    1.upto(pairs) do |i|
+      aff = i * freq
+      bwf = bw * (1.0 + i / (2 * pairs))
+      peaks[i - 1] = make_windowed_maxamp(128)
+      avgs[i - 1] = make_average(128)
+      bands[i - 1] = make_bandpass(hz_to_2pi(aff - bwf), hz_to_2pi(aff + bwf), order)
+    end
+    as_one_edit_rb do
+      map_channel_rb(beg, dur, snd, chn, edpos) do |y|
+        sum = 0.0
+        bands.zip(peaks, avgs) do |bs, ps, as|
+          sig = bandpass(bs, y)
+          mx = windowed_maxamp(ps, sig)
+          amp = average(as, mx > 0.0 ? [100.0, 1.0 / mx].min : 0.0)
+          if amp > 0.0
+            sum += mx * polynomial(pcoeffs, amp * sig)
+          end
+        end
+        val = filter(flt, sum)
+        new_mx = [new_mx, val.abs].max
+        if ctr.zero?
+          val
+        else
+          ctr -= 1
+          0.0
+        end
+      end
+      if new_mx > 0.0
+        scale_channel(old_mx / new_mx, beg, dur, snd, chn)
+      end
+    end
+  end
 end
 
 include Dsp

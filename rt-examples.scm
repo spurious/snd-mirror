@@ -226,14 +226,14 @@
 					   (set! (mus-increment read) 1)))
 				   (readin read))))
 		   ;; (Very stupid panner)
-		   (out 0 (* (readfunc read0)
-			     (if (< pan 0)
-				 1
-				 (- 1 pan))))
-		   (out 1 (* (readfunc read1)
-			     (if (> pan 0)
-				 1
-				 (+ 1 pan)))))))))
+		   (out (vct (* (readfunc read0)
+				(if (< pan 0)
+				    1
+				    (- 1 pan)))
+			     (* (readfunc read1)
+				(if (> pan 0)
+				    1
+				    (+ 1 pan))))))))))
 
 
 

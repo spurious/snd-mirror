@@ -1,14 +1,14 @@
 # snd-xm.rb -- snd-motif and snd-gtk classes and functions -*- snd-ruby -*-
 
-# Author: Michael Scholz <scholz-micha@@gmx.de>
+# Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Wed Feb 25 05:31:02 CET 2004
-# Last: Wed Feb 23 01:32:04 CET 2005
+# Last: Thu May 19 18:28:30 CEST 2005
 
 # Commentary:
 #
 # Requires --with-motif or --with-gtk and module libxm.so or --with-static-xm!
 #
-# Tested with Snd 7.3, Motif 2.2.2, Gtk+ 2.2.1, Ruby 1.6.6, 1.6.8 and 1.9.0.
+# Tested with Snd 7.13, Motif 2.2.2, Gtk+ 2.2.1, Ruby 1.6.6, 1.6.8 and 1.9.0.
 #
 # module Snd_XM
 #  make_snd_menu(name, args) do ... end
@@ -42,6 +42,18 @@
 #  set_label_sensitive(widget, name, set_p)
 #  set_sensitive(widget, flag)
 #  add_main_pane(name, type, *args)
+#  show_disk_space(snd)
+#
+#  class Level_meter
+#   initialize(parent, width, height, args, resizable)
+#   inspect
+#   make_meter
+#   display
+#   update_display
+#
+#  make_level_meter(parent, width, height, args, resizable)
+#  display_level(lm)
+#  with_level_meters(n)
 #
 #  class Scale_widget
 #    initialize(parent)
@@ -80,7 +92,45 @@
 # >  display_widget_tree(widget, spaces)
 # >  add_sound_pane(snd, name, type, *args)
 # >  add_channel_pane(snd, chn, name, type, *args)
+# >  menu_option(name)
+# >
+# >  class Variable_display
+# >    initialize(page_name, variable_name)
+# >    inspect
+# >    make_dialog
+# >    create
+# >    close
+# >    reset
 # > 
+# >  class Variable_display_text < Variable_display
+# >    create
+# >    display(var)
+# > 
+# >  class Variable_display_scale < Variable_display
+# >    initialize(page_name, variable_name, range)
+# >    inspect
+# >    create
+# >    display(var)
+# > 
+# >  class Variable_display_meter < Variable_display
+# >    create
+# >    display(var)
+# > 
+# >  class Variable_display_graph < Variable_display
+# >    create
+# >    display(var)
+# >    reset
+# > 
+# >  class Variable_display_spectrum < Variable_display
+# >    create
+# >    display(var)
+# >    reset
+# > 
+# >  make_variable_display(page_name, variable_name, type, range)
+# >  variable_display(vd, var)
+# >  variable_display_close(vd)
+# >  variable_display_reset(vd)
+# >  
 # >  class Dialog
 # >    add_frame(args)
 # >    add_label(label, args)
@@ -104,17 +154,22 @@
 
 require "examp"
 
-provided?("snd-motif") and (not provided?("xm")) and require("libxm.so")
-provided?("snd-gtk")   and (not provided?("xg")) and require("libxg.so")
+provided? :snd_motif and (not provided? :xm) and require "libxm.so"
+provided? :snd_gtk   and (not provided? :xg) and require "libxg.so"
 
-unless provided? "xm" or provided? "xg"
-  error("%s requires --with-motif or --with-gtk and module libxm.so or --with-static-xm", __FILE__)
+unless provided? :xm or provided? :xg
+  Snd.raise(:runtime_error, __FILE__, "file requires --with-motif or --with-gtk \
+and module libxm.so or libxg.so, or --with-static-xm")
 end
 
 #
 # --- functions working with Motif as well as with Gtk ---
 #
 module Snd_XM
+  class SndXError < StandardError
+  end
+  Ruby_exceptions[:snd_x_error] = SndXError
+  
   # main_widgets
   Top_level_application = 0
   Top_level_shell       = 1
@@ -211,12 +266,9 @@ module Snd_XM
   end
 
   def make_dialog(label, *rest, &ok_cb)
-    reset_cb = get_args(rest, :reset_cb, nil)
-    clear_cb = get_args(rest, :clear_cb, nil)
-    help_cb  = get_args(rest, :help_cb, nil)
-    help_str = get_args(rest, :info, nil)
-    unless help_cb.kind_of?(Proc)
-      if help_str.kind_of?(String) and !help_str.empty?
+    reset_cb, clear_cb, help_cb, help_str = optkey(rest, :reset_cb, :clear_cb, :help_cb, :info)
+    unless proc?(help_cb)
+      if string?(help_str) and !help_str.empty?
         help_cb = lambda do |w, c, i| help_dialog(label, help_str) end
       end
     end
@@ -293,7 +345,7 @@ module Snd_XM
   # get_color(0.93, 0.93, 0.87)
   # get_color(Ivory2) # from rgb.rb
   def get_color(*new_color)
-    if new_color[0].kind_of?(String)
+    if string?(new_color[0])
       create_color(new_color[0])
     elsif new_color.length == 3
       make_color(*new_color)
@@ -313,11 +365,14 @@ module Snd_XM
   end
   
   def update_label(list)
-    if list.kind_of?(Array) and (not widget?(list))
+    if array?(list) and (not widget?(list))
       list.each do |prc| prc.call end
     end
   end
 
+  add_help(:find_child,
+           "find_child(widget, name)  \
+returns a widget named 'name', if one can be found in the widget hierarchy beneath 'widget'")
   def find_child(widget, name)
     callcc do |ret|
       each_child(widget) do |child|
@@ -325,13 +380,35 @@ module Snd_XM
           ret.call(child)
         end
       end
-      false
+      Snd.raise(:no_such_widget, name)
     end
   end
 
   def set_label_sensitive(widget, name, set_p = false)
     if widget?(wid = find_child(widget, name))
       set_sensitive(wid, set_p)
+    end
+  end
+
+  set_property(:show_disk_space, :labelled_snds, [])
+
+  def labelled_snds
+    property(:show_disk_space, :labelled_snds)
+  end
+  
+  def kmg(num)
+    if num <= 0
+      "disk full!"
+    else
+      if num > 1024
+        if num > 1024 * 1024
+          format("space: %6.3fG", (num / (1024.0 * 1024)).round)
+        else
+          format("space: %6.3fM", (num / 1024.0).round)
+        end
+      else
+        format("space: %10dK", num)
+      end
     end
   end
 end
@@ -369,9 +446,9 @@ module Snd_Gtk
       end
     end
   end
-  
+
   def each_child(widget, &body)
-    if RGTK_IS_WIDGET(widget)
+    if widget?(widget)
       body.call(widget)
       Rgtk_container_foreach(RGTK_CONTAINER(widget), lambda do |w, d| body.call(RGTK_WIDGET(w)) end)
     end
@@ -379,10 +456,18 @@ module Snd_Gtk
   alias for_each_child each_child
 
   def widget?(obj)
-    if obj.kind_of?(Array) and obj.length == 2 and obj.last.kind_of?(Numeric)
-      RGTK_IS_WIDGET(obj)
+    old_sigsegv = trap("SIGSEGV", "SIG_IGN")
+    RGTK_IS_WIDGET(obj)
+  rescue
+    false
+  ensure
+    case old_sigsegv
+    when Proc
+      trap("SIGSEGV", &old_sigsegv)
+    when String
+      trap("SIGSEGV", old_sigsegv)
     else
-      false
+      trap("SIGSEGV", "SIG_DFL")
     end
   end
 
@@ -428,11 +513,184 @@ module Snd_Gtk
     if RGTK_IS_BOX(main_widgets[Notebook_outer_pane])
       Rgtk_box_pack_start(RGTK_BOX(main_widgets[Notebook_outer_pane]), pane, false, false, 4)
     else
-      error("%s doesn't work if Snd-Gtk is started with -notebook", get_func_name)
+      Snd.raise(:snd_x_error, "doesn't work if Snd-Gtk is started with -notebook")
     end
     Rgtk_widget_show(pane)
     Rgtk_widget_set_name(pane, name)
     pane
+  end
+
+  def show_disk_space(snd)
+    unless previous_label = labelled_snds.detect do |n| n.first == snd end
+      name_form = sound_widgets[10]
+      space = kmg(disk_kspace(file_name(snd)))
+      new_label = Rgtk_label_new(space)
+      Rgtk_box_pack_start(RGTK_BOX(name_form), new_label, false, false, 6)
+      Rgtk_widget_show(new_label)
+      previous_label = [snd, new_label]
+      labelled_snds.push(previous_label)
+    end
+    show_label = lambda do |data|
+      if sound?(data.first)
+        space = kmg(disk_kspace(file_name(data.first)))
+        Rgtk_label_set_text(RGTK_LABEL(data[1]), space)
+        Rg_timeout_add(10000, show_label, data)
+        0
+      end
+    end
+    Rg_timeout_add(10000, show_label, previous_label)
+  end
+  # $after_open_hook.add_hook!("disk-space", &method(:show_disk_space).to_proc)
+
+  # with-level-meters, make-level-meter, display-level
+  
+  class Level_meter
+    def initialize(parent, width, height, args = [], resizable = true)
+      @parent = parent
+      @width = width
+      @height = height
+      @meter = nil
+      @level = 0.0
+      @size = 1.0
+      @last_level = 0.0
+      @red_deg = 0.0
+    end
+    attr_accessor :level, :size
+    attr_reader :width, :height, :meter, :last_level, :red_deg
+
+    def inspect
+      format("make_level_meter(%s, %s, %s, [], true)", @parent, @width, @height)
+    end
+    
+    def make_meter
+      frame = Rgtk_frame_new(false)
+      Rgtk_widget_set_size_request(frame, @width, @height)
+      Rgtk_box_pack_start(RGTK_BOX(@parent), frame, true, true, 4)
+      Rgtk_widget_show(frame)
+      @meter = Rgtk_drawing_area_new()
+      Rgtk_widget_set_events(@meter, RGDK_EXPOSURE_MASK | RGDK_STRUCTURE_MASK)
+      Rgtk_container_add(RGTK_CONTAINER(frame), @meter)
+      Rgtk_widget_show(@meter)
+      add_event_handler(@meter, "expose_event") do |w, e, d| self.display end
+      add_event_handler(@meter, "configure_event") do |w, e, d|
+        xy = Rgdk_drawable_get_size(RGDK_DRAWABLE(Rwindow(w)))
+        @width = xy.car
+        @height = xy.cadr
+        self.display
+      end
+    end
+
+    def display
+      win = RGDK_DRAWABLE(Rwindow(@meter))
+      major_tick = (@width / 24.0).round
+      minor_tick = (major_tick * 0.6).round
+      ang0 = 45 * 64
+      ang1 = 90 * 64
+      wid2 = (@width / 2.0).floor
+      gc = snd_gcs[0]
+      top = (@height / 3.2).round
+      Rgdk_gc_set_foreground(gc, white_pixel)
+      Rgdk_draw_rectangle(win, gc, true, 0, 0, @width, @height)
+      Rgdk_gc_set_foreground(gc, black_pixel)
+      Rgdk_draw_arc(win, gc, false, 0, top, @width, @width, ang0, ang1)
+      Rgdk_draw_arc(win, gc, false, 0, top - 1, @width, @width, ang0, ang1)
+      if @width > 100
+        Rgdk_draw_arc(win, gc, false, 0, top - 2, @width, @width, ang0, ang1)
+      end
+      Rgdk_draw_arc(win, gc, false, 4, top + 4, @width - 8, @width - 8, ang0, ang1)
+      5.times do |i|
+        rdeg = degrees2radians(45 - i * 22.5)
+        sinr = sin(rdeg)
+        cosr = cos(rdeg)
+        x0 = (wid2 + wid2 * sinr).round
+        y0 = ((wid2 + top) - wid2 * cosr).round
+        x1 = (wid2 + (wid2 + major_tick) * sinr).round
+        y1 = ((wid2 + top) - (wid2 + major_tick) * cosr).round
+        Rgdk_draw_line(win, gc, x0, y0, x1, y1)
+        Rgdk_draw_line(win, gc, x0 + 1, y0, x1 + 1, y1)
+        if i < 4
+          1.upto(5) do |j|
+            rdeg = degrees2radians(45 - i * 22.5 - j * (90.0 / 20.0))
+            sinr = sin(rdeg)
+            cosr = cos(rdeg)
+            x0 = (wid2 * (1.0 + sinr)).round
+            y0 = ((wid2 + top) - wid2 * cosr).round
+            x1 = (wid2 + (wid2 + major_tick) * sinr).round
+            y1 = ((wid2 + top) - (wid2 + major_tick) * cosr).round
+            Rgdk_draw_line(win, gc, x0, y0, x1, y1)
+          end
+        end
+      end
+      needle_speed = 0.25
+      bubble_speed = 0.025
+      bubble_size = 15 * 64
+      val = @level * needle_speed + @last_level * (1.0 - needle_speed)
+      deg = val * 90.0 - 45.0
+      rdeg = degrees2radians(deg)
+      nx1 = (wid2 + (wid2 + major_tick) * sin(rdeg)).round
+      ny1 = ((wid2 + top) - (wid2 + major_tick) * cos(rdeg)).round
+      Rgdk_draw_line(win, gc, wid2, top + wid2, nx1, ny1)
+      @last_level = val
+      @red_deg = if val > @red_deg
+                   val
+                 else
+                   val * bubble_size + @red_deg * (1.0 - bubble_speed)
+                 end
+      if @red_deg > 0.01
+        Rgdk_gc_set_foreground(gc, red_pixel)
+        redx = (@red_deg * 90.0 * 64).floor
+        redy = [redx, bubble_size].min
+        4.times do |i|
+          width2 = @width - i * 2
+          Rgdk_draw_arc(win, gc, false, i, top + i, width2, width2, 135 * 64 - redx, redy)
+        end
+        Rgdk_gc_set_foreground(gc, black_pixel)
+      end
+    end
+  end
+  
+  def make_level_meter(parent, width, height, args = [], resizable = true)
+    lm = Level_meter.new(parent, width, height, args, resizable)
+    lm.make_meter
+    lm
+  end
+
+  def display_level(lm)
+    lm.display
+  end
+
+  def with_level_meters(n)
+    if widget?(parent = (main_widgets[Notebook_outer_pane] or main_widgets[Main_sound_pane]))
+      height = n > 2 ? 70 : 85
+      width = (Rgdk_drawable_get_size(RGDK_DRAWABLE(Rwindow(parent))).cadr / Float(n)).floor
+      meters = Rgtk_hbox_new(true, 4)
+      Rgtk_box_pack_start(RGTK_BOX(parent), meters, false, false, 4)
+      Rgtk_widget_set_size_request(meters, width, height)
+      Rgtk_widget_show(meters)
+      meter_list = make_array(n) do |i| make_level_meter(meters, width, height) end
+      $dac_hook.add_hook!(get_func_name) do |sd|
+        maxes = sound_data_maxamp(sd)
+        meter_list.each_with_index do |meter, i|
+          meter.level = (maxes[i] or 0.0)
+          meter.display
+        end
+      end
+      if defined? Rg_idle_add
+        $stop_dac_hook.add_hook!(get_func_name) do
+          Rg_idle_add(let(0) do |ctr|
+                        lambda do |ignored|
+                          meter_list.each do |meter|
+                            meter.level = 0.0
+                            meter.display
+                          end
+                          ctr += 1
+                          ctr < 200
+                        end
+                      end, false)
+        end
+      end
+      meter_list
+    end
   end
   
   # body.arity == 3
@@ -457,8 +715,7 @@ module Snd_Gtk
                                     0,
                                     Rg_cclosure_new(lambda do |w, d|
                                                       body.call(w, d)
-                                                    end, cb_data, false),
-                                    false)
+                                                    end, cb_data, false), false)
   end
   
   def g_list_each(glist)
@@ -528,7 +785,7 @@ module Snd_Gtk
       Rgtk_widget_set_name(scl, title)
     end
   end
-
+  
   class Dialog
     include Snd_XM
 
@@ -607,7 +864,7 @@ widget "*.clear_button" style "clear"})
       end
       Rgtk_box_pack_start(RGTK_BOX(Raction_area(RGTK_DIALOG(@dialog))),
                           @doit_button, true, true, 20)
-      if @ok_cb.kind_of?(Proc)
+      if proc?(@ok_cb)
         add_callback(@doit_button, "clicked") do |w, d|
           @ok_cb.call(w, d, nil)
         end
@@ -616,7 +873,7 @@ widget "*.clear_button" style "clear"})
       if @clear_cb
         Rgtk_box_pack_start(RGTK_BOX(Raction_area(RGTK_DIALOG(@dialog))),
                             @clear_button, true, true, 20)
-        if @clear_cb.kind_of?(Proc)
+        if proc?(@clear_cb)
           add_callback(@clear_button, "clicked") do |w, d|
             @clear_cb.call(w, d, nil)
           end
@@ -626,7 +883,7 @@ widget "*.clear_button" style "clear"})
       if @reset_cb
         Rgtk_box_pack_start(RGTK_BOX(Raction_area(RGTK_DIALOG(@dialog))),
                             @reset_button, true, true, 20)
-        if @reset_cb.kind_of?(Proc)
+        if proc?(@reset_cb)
           add_callback(@reset_button, "clicked") do |w, d|
             @reset_cb.call(w, d, nil)
           end
@@ -641,7 +898,7 @@ widget "*.clear_button" style "clear"})
       Rgtk_widget_show(@dismiss_button)
       Rgtk_box_pack_start(RGTK_BOX(Raction_area(RGTK_DIALOG(@dialog))),
                           @help_button, true, true, 20)
-      if @help_cb.kind_of?(Proc)
+      if proc?(@help_cb)
         add_callback(@help_button, "clicked") do |w, d|
           @help_cb.call(w, d, nil)
         end
@@ -719,7 +976,7 @@ module Snd_Motif
     col = RXColor()
     dpy = RXtDisplay(main_widgets[Top_level_shell])
     if RXAllocNamedColor(dpy, RDefaultColormap(dpy, RDefaultScreen(dpy)), color, col, col).zero?
-      error("can't allocate %s", color.inspect)
+      Snd.raise(:no_such_color, color, "can't allocate")
     else
       Rpixel(col)
     end
@@ -739,11 +996,15 @@ module Snd_Motif
     RXmStringFree(xs)
   end
 
+  add_help(:each_child, "each_child(w, &func)  applies func to w and each of its children")
+  add_help(:for_each_child, "for_each_child(w, &func)  applies func to w and each of its children")
   def each_child(widget, &body)
     if RWidget?(widget)
       body.call(widget)
-      if (res = get_xtvalue(widget, RXmNchildren)).kind_of?(Array)
-        res.each do |wid| each_child(wid) do |w| body.call(w) end if RXtIsComposite(widget) end
+      if RXtIsComposite(widget)
+        (get_xtvalue(widget, RXmNchildren) or []).each do |wid|
+          each_child(wid, &body)
+        end
       end
     end
   end
@@ -818,6 +1079,8 @@ module Snd_Motif
     compound2string(get_xtvalue(widget, RXmNlabelString))
   end
 
+  add_help(:current_screen,
+           "current_screen()  returns the current X screen number of the current display")
   def current_screen
     RDefaultScreenOfDisplay(RXtDisplay(main_widgets[Top_level_shell]))
   end
@@ -825,7 +1088,7 @@ module Snd_Motif
   def get_pixmap(screen, file)
     pix = RXmGetPixmap(screen, file, RBlackPixelOfScreen(screen), RWhitePixelOfScreen(screen))
     if pix == RXmUNSPECIFIED_PIXMAP
-      error("can't create pixmap from %s", file.inspect)
+      Snd.raise(:snd_x_error, pix, "can't create pixmap")
     else
       pix
     end
@@ -834,15 +1097,517 @@ module Snd_Motif
   def screen_depth
     RDefaultDepthOfScreen(current_screen)
   end
-  
+
+  add_help(:display_widget_tree,
+           "display_widget_tree(widget, spaces=\"\")  \
+displays the hierarchy of widgets beneath 'widget'" )
   def display_widget_tree(widget, spaces = "")
-    unless name = RXtName(widget) or name.empty?
+    unless (name = RXtName(widget)).null?
       name = "<unnamed>"
     end
-    rbm_message("%s%s\n", spaces, name)
-    if RXtIsComposite(widget) and (res = get_xtvalue(widget, RXmNchildren)).kind_of?(Array)
-      res.each do |w| display_widget_tree(w, spaces + "  ") end
+    Snd.display("%s%s\n", spaces, name)
+    if RXtIsComposite(widget)
+      (get_xtvalue(widget, RXmNchildren) or []).each do |w|
+        display_widget_tree(w, spaces + "  ")
+      end
     end
+  end
+
+  add_help(:show_disk_space,
+           "show_disk_space(snd)  \
+adds a label to the minibuffer area showing the current free space (for use with $after_open_hook)")
+  def show_disk_space(snd)
+    unless previous_label = labelled_snds.detect do |n| n.first == snd end
+      app = main_widgets[Top_level_application]
+      minibuffer = sound_widgets(snd)[Minibuffer]
+      name_form = RXtParent(minibuffer)
+      space = kmg(disk_kspace(file_name(snd)))
+      str = RXmStringCreateLocalized(space)
+      new_label = RXtCreateManagedWidget("space:", RxmLabelWidgetClass, name_form,
+                                         [RXmNbackground, basic_color,
+                                          RXmNleftAttachment, RXmATTACH_WIDGET,
+                                          RXmNleftWidget, minibuffer,
+                                          RXmNlabelString, str,
+                                          RXmNrightAttachment, RXmATTACH_NONE,
+                                          RXmNtopAttachment, RXmATTACH_FORM])
+      RXmStringFree(str)
+      previous_label = [snd, new_label, app]
+      labelled_snds.push(previous_label)
+    end
+    show_label = lambda do |data, id|
+      if sound?(data.first)
+        space = kmg(disk_kspace(file_name(data.first)))
+        str = RXmStringCreateLocalized(space)
+        RXtSetValues(data[1], [RXmNlabelString, str])
+        RXmStringFree(str)
+        RXtAppAddTimeOut(data[2], 10000, show_label, data)
+      end
+    end
+    RXtAppAddTimeOut(previous_label[2], 10000, show_label, previous_label)
+  end
+  # $after_open_hook.add_hook!("disk-space", &method(:show_disk_space).to_proc)
+
+  add_help(:menu_option,
+           "menu_option(name)  finds the widget associated with a given menu item name")
+  def menu_option(name)
+    callcc do |ret|
+      menu_widgets.cdr.each do |top_menu|
+        each_child(top_menu) do |w|
+          option_holder = RXtGetValues(w, [RXmNsubMenuId, 0]).cadr
+          each_child(option_holder) do |menu|
+            if name == RXtName(menu)
+              ret.call(menu)
+            else
+              if RXmIsCascadeButton(menu)
+                options = RXtGetValues(menu, [RXmNsubMenuId, 0]).cadr
+                each_child(options) do |inner_menu|
+                  if name == RXtName(inner_menu)
+                    ret.call(inner_menu)
+                  end
+                end
+              end
+            end 
+          end
+        end
+      end
+      Snd.raise(:no_such_menu, name)
+    end
+  end
+
+  class Level_meter
+    def initialize(parent, width, height, args, resizable = true)
+      @parent = parent
+      @width = width
+      @height = height
+      @args = args
+      @resizable = resizable
+      @meter = nil
+      @level = 0.0
+      @size = 1.0
+      @last_level = 0.0
+      @red_deg = 0.0
+    end
+    attr_accessor :level, :size
+    attr_reader :width, :height, :meter, :last_level, :red_deg
+
+    def inspect
+      format("make_level_meter(%s, %s, %s, %s, %s)", @parent, @width, @height, @args, @resizable)
+    end
+    
+    def make_meter
+      frame = RXtCreateManagedWidget("meter-frame", RxmFrameWidgetClass, @parent,
+                                     @args + [RXmNshadowType, RXmSHADOW_ETCHED_IN,
+                                       RXmNwidth, @width,
+                                       RXmNheight, @height,
+                                       RXmNshadowThickness, (@width > 500 ? 6 : 3)])
+      meter_args = [RXmNbackground, white_pixel,
+        RXmNforeground, black_pixel,
+        RXmNtopAttachment, RXmATTACH_FORM,
+        RXmNbottomAttachment, RXmATTACH_FORM,
+        RXmNleftAttachment, RXmATTACH_FORM,
+        RXmNrightAttachment, RXmATTACH_FORM]
+      if @resizable
+        meter_args + [RXmNwidth, @width, RXmNheight, @height, RXmNresizePolicy, RXmRESIZE_NONE]
+      end
+      @meter = RXtCreateManagedWidget("meter", RxmDrawingAreaWidgetClass, frame, meter_args)
+      RXtAddCallback(@meter, RXmNexposeCallback, lambda do |w, c, i| self.display end)
+      
+      if @resizable
+        RXtAddCallback(@meter, RXmNresizeCallback,
+                       lambda do |w, c, i|
+                         @width = RXtGetValues(w, [RXmNwidth, 0])[1]
+                         @height = RXtGetValues(w, [RXmNheight, 0])[1]
+                         self.display
+                       end)
+      end
+    end
+
+    def display
+      dpy = RXtDisplay(@meter)
+      win = RXtWindow(@meter)
+      major_tick = (@width / 24.0).round
+      minor_tick = (major_tick * 0.6).round
+      ang0 = 45 * 64
+      ang1 = 90 * 64
+      wid2 = (@width / 2.0).floor
+      gc = snd_gcs[0]
+      top = (@height / 3.2).round
+      RXSetForeground(dpy, gc, white_pixel)
+      RXFillRectangle(dpy, win, gc, 0, 0, @width, @height)
+      RXSetForeground(dpy, gc, black_pixel)
+      RXDrawArc(dpy, win, gc, 0, top, @width, @width, ang0, ang1)
+      RXDrawArc(dpy, win, gc, 0, top - 2, @width, @width, ang0, ang1)
+      if @width > 100
+        RXDrawArc(dpy, win, gc, 0, top - 2, @width, @width, ang0, ang1)
+      end
+      RXDrawArc(dpy, win, gc, 4, top + 4, @width - 8, @width - 8, ang0, ang1)
+      5.times do |i|
+        rdeg = degrees2radians(45 - i * 22.5)
+        sinr = sin(rdeg)
+        cosr = cos(rdeg)
+        x0 = (wid2 + wid2 * sinr).round
+        y0 = ((wid2 + top) - wid2 * cosr).round
+        x1 = (wid2 + (wid2 + major_tick) * sinr).round
+        y1 = ((wid2 + top) - (wid2 + major_tick) * cosr).round
+        RXDrawLine(dpy, win, gc, x0, y0, x1, y1)
+        RXDrawLine(dpy, win, gc, x0 + 1, y0, x1 + 1, y1)
+        if i < 4
+          1.upto(5) do |j|
+            rdeg = degrees2radians(45 - i * 22.5 - j * (90.0 / 20.0))
+            sinr = sin(rdeg)
+            cosr = cos(rdeg)
+            x0 = (wid2 * (1.0 + sinr)).round
+            y0 = ((wid2 + top) - wid2 * cosr).round
+            x1 = (wid2 + (wid2 + major_tick) * sinr).round
+            y1 = ((wid2 + top) - (wid2 + major_tick) * cosr).round
+            RXDrawLine(dpy, win, gc, x0, y0, x1, y1)
+          end
+        end
+      end
+      needle_speed = 0.25
+      bubble_speed = 0.025
+      bubble_size = 15 * 64
+      val = @level * needle_speed + @last_level * (1.0 - needle_speed)
+      deg = val * 90.0 - 45.0
+      rdeg = degrees2radians(deg)
+      nx1 = (wid2 + (wid2 + major_tick) * sin(rdeg)).round
+      ny1 = ((wid2 + top) - (wid2 + major_tick) * cos(rdeg)).round
+      RXDrawLine(dpy, win, gc, wid2, top + wid2, nx1, ny1)
+      @last_level = val
+      @red_deg = if val > @red_deg
+                   val
+                 else
+                   val * bubble_size + @red_deg * (1.0 - bubble_speed)
+                 end
+      if @red_deg > 0.01
+        RXSetForeground(dpy, gc, red_pixel)
+        redx = (@red_deg * 90.0 * 64).floor
+        redy = [redx, bubble_size].min
+        4.times do |i|
+          RXDrawArc(dpy, win, gc, i, top + i, @width - i * 2, @width - i * 2, 135 * 64 - redx, redy)
+        end
+        RXSetForeground(dpy, gc, black_pixel)
+      end
+    end
+
+    def update_display
+      RXmUpdateDisplay(@meter)
+    end      
+  end
+  
+  def make_level_meter(parent, width, height, args, resizable = true)
+    lm = Level_meter.new(parent, width, height, args, resizable)
+    lm.make_meter
+    lm
+  end
+
+  def display_level(lm)
+    lm.display
+  end
+
+  def with_level_meters(n)
+    parent = (main_widgets[Notebook_outer_pane] or main_widgets[Main_sound_pane])
+    height = 70
+    width = (RXtGetValues(parent, [RXmNwidth, 0])[1] / Float(n)).floor
+    meters = RXtCreateManagedWidget("meters", RxmFormWidgetClass, parent,
+                                    [RXmNpositionIndex, 0,
+                                      RXmNbackground, basic_color,
+                                      RXmNfractionBase, n * 10,
+                                      RXmNpaneMinimum, height])
+    meter_list = make_array(n) do |i|
+      make_level_meter(meters, width, height,
+                       [RXmNtopAttachment, RXmATTACH_FORM,
+                         RXmNbottomAttachment, RXmATTACH_FORM,
+                         RXmNleftAttachment, RXmATTACH_POSITION,
+                         RXmNleftPosition, i * 10,
+                         RXmNrightAttachment, RXmATTACH_POSITION,
+                         RXmNrightPosition, (i + 1) * 10])
+    end
+    $dac_hook.add_hook!(get_func_name) do |sd|
+      maxes = sound_data_maxamp(sd)
+      meter_list.each_with_index do |meter, i|
+        meter.level = (maxes[i] or 0.0)
+        meter.display
+      end
+    end
+    $stop_dac_hook.add_hook!(get_func_name) do
+      RXtAppAddWorkProc(main_widgets[Top_level_shell],
+                        let(0) do |ctr|
+                          lambda do |ignored|
+                            meter_list.each do |meter|
+                              meter.level = 0.0
+                              meter.display
+                            end
+                            ctr += 1
+                            ctr > 200
+                          end
+                        end)
+    end
+    RXtSetValues(meters, [RXmNpaneMinimum, 1])
+    meter_list
+  end
+  
+  class Variable_display
+    include Snd_XM
+
+    def initialize(page_name, variable_name)
+      @name = page_name
+      @variable = variable_name
+      @@dialog = nil unless defined? @@dialog
+      @@pages = {}   unless defined? @@pages
+      @@notebook = nil unless defined? @@notebook
+      @widget = nil
+      @snd = false
+      @data = nil
+      @default_background = nil
+      create
+    end
+    attr_reader :snd, :data
+
+    def dialog_widget
+      @@dialog
+    end
+
+    def inspect
+      format("%s.new(%s, %s)", self.class, @name, @variable)
+    end
+    
+    def make_dialog
+      xdismiss = RXmStringCreate("Dismiss", RXmFONTLIST_DEFAULT_TAG)
+      titlestr = RXmStringCreate("Variables", RXmFONTLIST_DEFAULT_TAG)
+      @@dialog = RXmCreateTemplateDialog(main_widgets[Top_level_shell], "variables-dialog",
+                                         [RXmNokLabelString, xdismiss,
+                                           RXmNautoUnmanage, false,
+                                           RXmNdialogTitle, titlestr,
+                                           RXmNresizePolicy, RXmRESIZE_GROW,
+                                           RXmNnoResize, false,
+                                           RXmNtransient, false,
+                                           RXmNheight, 400,
+                                           RXmNwidth, 400,
+                                           RXmNbackground, basic_color])
+      RXtVaSetValues(RXmMessageBoxGetChild(@@dialog, RXmDIALOG_OK_BUTTON),
+                     [RXmNarmColor, pushed_button_color,
+                       RXmNbackground, quit_button_color])
+      RXtAddCallback(@@dialog, RXmNokCallback, lambda do |w, c, i| RXtUnmanageChild(@@dialog) end)
+      RXmStringFree(xdismiss)
+      RXmStringFree(titlestr)
+      @@notebook = RXtCreateManagedWidget("variables-notebook", RxmNotebookWidgetClass, @@dialog,
+                                          [RXmNleftAttachment, RXmATTACH_FORM,
+                                            RXmNrightAttachment, RXmATTACH_FORM,
+                                            RXmNtopAttachment, RXmATTACH_FORM,
+                                            RXmNbottomAttachment, RXmATTACH_WIDGET,
+                                            RXmNbottomWidget,
+                                            RXmMessageBoxGetChild(@@dialog, RXmDIALOG_SEPARATOR),
+                                            RXmNbackground, basic_color,
+                                            RXmNframeBackground, zoom_color,
+                                            RXmNbindingWidth, 14])
+      RXtManageChild(@@dialog)
+      @default_background = RWhitePixelOfScreen(RDefaultScreenOfDisplay(RXtDisplay(@@dialog)))
+    end
+
+    def create
+      unless RWidget?(@@dialog) then make_dialog end
+      unless @@pages[@name]
+        panes = RXtCreateManagedWidget(@name, RxmPanedWindowWidgetClass, @@notebook, [])
+        simple_cases = RXtCreateManagedWidget(@name, RxmRowColumnWidgetClass, panes,
+                                              [RXmNorientation, RXmVERTICAL,
+                                                RXmNpaneMinimum, 30,
+                                                RXmNbackground, basic_color])
+        RXtCreateManagedWidget(@name, RxmPushButtonWidgetClass, @@notebook,
+                               [RXmNnotebookChildType, RXmMAJOR_TAB,
+                                 RXmNbackground, basic_color])
+        @@pages[@name] = [@name, panes, simple_cases]
+      end
+      @@pages[@name]
+    end
+
+    def close
+      RXtUnmanageChild(@@dialog)
+    end
+
+    def reset
+    end
+  end
+
+  class Variable_display_text < Variable_display
+    def create
+      page_info = super
+      row_pane = page_info[2]
+      pane = page_info[1]
+      var_label = @variable + ":"
+      row = RXtCreateManagedWidget(@variable + "-row",
+                                   RxmRowColumnWidgetClass, row_pane,
+                                   [RXmNorientation, RXmHORIZONTAL,
+                                     RXmNbackground, basic_color])
+      label = RXtCreateManagedWidget(var_label, RxmLabelWidgetClass, row,
+                                     [RXmNbackground, basic_color])
+      @widget = RXtCreateManagedWidget(@variable + "-value", RxmTextFieldWidgetClass, row,
+                                       [RXmNeditable, false,
+                                         RXmNresizeWidth, true,
+                                         RXmNbackground, @default_background])
+    end
+
+    def display(var)
+      old_str = RXmTextFieldGetString(@widget)
+      new_str = var.to_s
+      if old_str != new_str
+        RXmTextFieldSetString(@widget, new_str)
+        if RXtIsManaged(@widget) then RXmUpdateDisplay(@widget) end
+      end
+      var
+    end
+  end
+
+  class Variable_display_scale < Variable_display
+    def initialize(page_name, variable_name, range = [0.0, 1.0])
+      @range = range
+      super(page_name, variable_name)
+    end
+
+    def inspect
+      format("%s.new(%s, %s, %s)", self.class, @name, @variable, @range)
+    end
+    
+    def create
+      page_info = super()
+      row_pane = page_info[2]
+      pane = page_info[1]
+      var_label = @variable + ":"
+      title = RXmStringCreate(var_label, RXmFONTLIST_DEFAULT_TAG)
+      @widget = RXtCreateManagedWidget(@variable, RxmScaleWidgetClass, row_pane,
+                                       [RXmNbackground, basic_color,
+                                         RXmNslidingMode, RXmTHERMOMETER,
+                                         RXmNminimum, (100.0 * @range[0]).floor,
+                                         RXmNmaximum, (100.0 * @range[1]).floor,
+                                         RXmNdecimalPoints, 2,
+                                         RXmNtitleString, title,
+                                         RXmNorientation, RXmHORIZONTAL,
+                                         RXmNshowValue, RXmNEAR_BORDER])
+      RXtVaSetValues(find_child(@widget, "Scrollbar"), [RXmNtroughColor, red_pixel])
+      RXmStringFree(title)
+    end
+
+    def display(var)
+      RXmScaleSetValue(@widget, (100.0 * var).floor)
+      var
+    end
+  end
+
+  class Variable_display_meter < Variable_display
+    def create
+      page_info = super
+      row_pane = page_info[2]
+      pane = page_info[1]
+      var_label = @variable + ":"
+      height = 70
+      width = 210
+      label = RXtCreateManagedWidget(var_label, RxmLabelWidgetClass, row_pane,
+                                     [RXmNbackground, basic_color])
+      @widget = make_level_meter(row_pane, width, height, [], false)
+    end
+
+    def display(var)
+      @widget.level = var
+      @widget.display
+      @widget.update_display
+      var
+    end
+  end
+
+  class Variable_display_graph < Variable_display
+    def create
+      page_info = super
+      row_pane = page_info[2]
+      pane = page_info[1]
+      var_label = @variable + ":"
+      form = RXtCreateManagedWidget(var_label, RxmFormWidgetClass, pane,
+                                    [RXmNpaneMinimum, 100])
+      @snd = make_variable_graph(form, @variable + ": time", 2048, mus_srate.to_i)
+      @data = channel_data(@snd, 0)
+    end
+
+    def display(var)
+      frames = @data.length
+      loc = cursor(snd, 0)
+      @data[0, loc] = var
+      if time_graph?(@snd) then update_time_graph(@snd) end
+      if transform_graph?(@snd) then update_transform_graph(@snd) end
+      if loc + 1 == frames
+        set_cursor(0, @snd, 0)
+      else
+        set_cursor(loc + 1, @snd, 0)
+      end
+      var
+    end
+    
+    def reset
+      set_cursor(0, @snd, 0)
+      @data.fill(0.0)
+    end
+  end
+
+  class Variable_display_spectrum < Variable_display
+    def create
+      page_info = super
+      row_pane = page_info[2]
+      pane = page_info[1]
+      var_label = @variable + ":"
+      form = RXtCreateManagedWidget(var_label, RxmFormWidgetClass, pane,
+                                    [RXmNpaneMinimum, 100])
+      @snd = make_variable_graph(form, @variable, 2048, mus_srate.to_i)
+      set_time_graph?(false, @snd, 0)
+      set_transform_graph?(true, @snd, 0)
+      set_x_axis_label(@variable + ": frequency", @snd, 0, Transform_graph)
+      @data = channel_data(@snd, 0)
+    end
+
+    def display(var)
+      frames = @data.length
+      loc = cursor(snd, 0)
+      @data[0, loc] = var
+      if time_graph?(@snd) then update_time_graph(@snd) end
+      if transform_graph?(@snd) then update_transform_graph(@snd) end
+      if loc + 1 == frames
+        set_cursor(0, @snd, 0)
+      else
+        set_cursor(loc + 1, @snd, 0)
+      end
+      var
+    end
+    
+    def reset
+      set_cursor(0, @snd, 0)
+      @data.fill(0.0)
+    end
+  end
+
+  def make_variable_display(page_name, variable_name, type = :text, range = [0.0, 1.0])
+    case type
+    when :text
+      Variable_display_text.new(page_name, variable_name)
+    when :scale
+      Variable_display_scale.new(page_name, variable_name, range)
+    when :meter
+      Variable_display_meter.new(page_name, variable_name)
+    when :graph
+      Variable_display_graph.new(page_name, variable_name)
+    when :spectrum
+      Variable_display_spectrum.new(page_name, variable_name)
+    else
+      nil
+    end
+  end
+
+  def variable_display(vd, var)
+    vd.display(var)
+  end
+
+  def variable_display_close(vd)
+    vd.close
+  end
+  
+  def variable_display_reset(vd)
+    vd.reset
   end
   
   class Scale_widget
@@ -1044,7 +1809,7 @@ module Snd_Motif
     def add_slider(title, low, init, high, scale = 1, kind = :linear, parent = @parent, &func)
       slider = Scale_widget.new(parent)
       slider.add_scale(title, low, init, high, scale, kind)
-      unless func.kind_of?(Proc) and func.arity == 3
+      unless proc?(func) and func.arity == 3
         func = lambda do |w, c, i| func.call end
       end
       RXtAddCallback(slider.scale, RXmNvalueChangedCallback, func)
@@ -1122,7 +1887,7 @@ module Snd_Motif
       rc = RXtCreateManagedWidget("rc", RxmRowColumnWidgetClass, @parent,
                                   [RXmNorientation, RXmVERTICAL,
                                    RXmNbackground, basic_color])
-      if label.kind_of?(String)
+      if string?(label)
         RXtCreateManagedWidget(label, RxmLabelWidgetClass, rc,
                                [RXmNalignment, RXmALIGNMENT_BEGINNING,
                                 RXmNbackground, basic_color])
@@ -1145,11 +1910,12 @@ module Snd_Motif
     end
 
     def add_text(*args)
-      rows       = get_args(args, :rows, 16)
-      columns    = get_args(args, :columns, 60)
-      wordwrap   = get_args(args, :wordwrap, true)
-      value      = get_args(args, :value, "")
-      horizontal = get_args(args, :scroll_horizontal, false)
+      rows, columns, wordwrap, value, horizontal = optkey(args,
+                                                          [:rows, 16],
+                                                          [:columns, 60],
+                                                          [:wordwrap, true],
+                                                          [:value, ""],
+                                                          [:scroll_horizontal, false])
       text = RXmCreateScrolledText(@parent, "text",
                                    [RXmNtopAttachment, RXmATTACH_WIDGET,
                                     RXmNeditMode, RXmMULTI_LINE_EDIT,
@@ -1174,12 +1940,12 @@ module Snd_Motif
 end
 
 module Snd_XM
-  if provided? "xm"
+  if provided? :xm
     include Snd_Motif
-  elsif provided? "xg"
+  elsif provided? :xg
     include Snd_Gtk
   else
-    error "neither Motif nor Gtk?"
+    Snd.raise(:snd_x_error, "neither Motif nor Gtk?")
   end
 end
 
@@ -1293,9 +2059,10 @@ class Menu
 
   def entry(name, *rest, &body)
     child = false
-    if provided? "xm"
-      args         = get_args(rest, :args, @args)
-      widget_class = get_args(rest, :widget_class, RxmPushButtonWidgetClass)
+    if provided? :xm
+      args, widget_class = optkey(rest,
+                                  [:args, @args],
+                                  [:widget_class, RxmPushButtonWidgetClass])
       child = RXtCreateManagedWidget(name, widget_class, @menu, args)
       case widget_class
       when RxmPushButtonWidgetClass
@@ -1314,7 +2081,7 @@ class Menu
 
   def label(name, args = @args)
     label = false
-    if provided? "xm"
+    if provided? :xm
       label = RXtCreateManagedWidget(name, RxmLabelWidgetClass, @menu, args)
     else
       label = Rgtk_menu_item_new_with_label(name)
@@ -1325,7 +2092,7 @@ class Menu
   end
 
   def separator(single = :single)
-    if provided? "xm"
+    if provided? :xm
       line = (single == :double ? RXmDOUBLE_LINE : RXmSINGLE_LINE)
       RXtCreateManagedWidget("s", RxmSeparatorWidgetClass, @menu, [RXmNseparatorType, line])
     else
@@ -1345,7 +2112,7 @@ class Menu
   # $menu.change_menu_color(Ivory2)
   def change_menu_color(new_color)
     color_pixel = get_color(new_color)
-    if provided? "xm"
+    if provided? :xm
       each_child(@menu) do |child| RXmChangeColor(child, color_pixel) end
     else
       each_child(@menu) do |child| Rgtk_widget_modify_bg(child, RGTK_STATE_NORMAL, color_pixel) end
@@ -1370,7 +2137,7 @@ class Snd_main_menu < Menu
     if arg.class == Class
       menu = arg.new(*rest)
       if menu.respond_to?(:post_dialog)
-        if provided? "xm"
+        if provided? :xm
           child = RXtCreateManagedWidget(rest[0].to_s, RxmPushButtonWidgetClass, @menu, @args)
           RXtAddCallback(child, RXmNactivateCallback, lambda do |w, c, i| menu.post_dialog end)
         else
@@ -1383,14 +2150,13 @@ class Snd_main_menu < Menu
         end
         child
       else
-        error("%s#%s: class %s does not respond to `post_dialog'",
-              self.class, get_func_name, arg.class)
+        Snd.raise(:snd_x_error, arg.class, "class does not respond to `post_dialog'")
       end
     else
       if block_given?
         add_to_menu(@menu_number, arg, lambda do | | body.call end)
       else
-        error("%s#%s: no block given", self.class, get_func_name)
+        Snd.raise(:wrong_number_of_args, "no block given")
       end
     end
   end
@@ -1409,7 +2175,7 @@ class Snd_main_menu < Menu
     def initialize(name, parent, args)
       super
       @children = []
-      if provided? "xm"
+      if provided? :xm
         @menu = RXmCreatePulldownMenu(parent, @label, @args)
         cascade = RXtCreateManagedWidget(@label, RxmCascadeButtonWidgetClass, parent,
                                          [RXmNsubMenuId, @menu] + @args)
@@ -1432,7 +2198,7 @@ class Snd_main_menu < Menu
       if arg.class == Class
         menu = arg.new(*rest)
         if menu.respond_to?(:post_dialog)
-          if provided? "xm"
+          if provided? :xm
             child = RXtCreateManagedWidget(rest[0].to_s, RxmPushButtonWidgetClass, @menu, @args)
             RXtAddCallback(child, RXmNactivateCallback, lambda do |w, c, i| menu.post_dialog end)
           else
@@ -1445,12 +2211,11 @@ class Snd_main_menu < Menu
           end
           @children.push(lambda do change_label(child, menu.inspect) end)
         else
-          error("%s#%s: class %s does not respond to `post_dialog'",
-                self.class, get_func_name, arg.class)
+          Snd.raise(:snd_x_error, arg.class, "class does not respond to `post_dialog'")
         end
       else
         if block_given?
-          if provided? "xm"
+          if provided? :xm
             child = RXtCreateManagedWidget(arg.to_s, RxmPushButtonWidgetClass, @menu, @args)
             RXtAddCallback(child, RXmNactivateCallback, lambda do |w, c, i| body.call end)
           else
@@ -1463,14 +2228,14 @@ class Snd_main_menu < Menu
           end
           change_label(child, arg)
         else
-          error("%s#%s: no block given", self.class, get_func_name)
+          Snd.raise(:wrong_number_of_args, "no block given")
         end
       end
       child
     end
     
     def separator(single = :single)
-      if provided? "xm"
+      if provided? :xm
         line = (single == :double ? RXmDOUBLE_LINE : RXmSINGLE_LINE)
         RXtCreateManagedWidget("s", RxmSeparatorWidgetClass, @menu, [RXmNseparatorType, line])
       else
@@ -1486,7 +2251,7 @@ end
 class Main_menu < Menu
   def initialize(name, parent, args, &body)
     super(name, parent, args)
-    if provided? "xm"
+    if provided? :xm
       @menu = RXmCreatePulldownMenu(parent, "pulldown-menu", @args)
       wid = RXtCreateManagedWidget(@label, RxmCascadeButtonWidgetClass, parent,
                                    [RXmNsubMenuId, @menu] + @args)
@@ -1506,7 +2271,7 @@ class Main_popup_menu < Menu
   def initialize(name, parent, args, &body)
     super(name, parent, args)
     @parent = parent
-    if provided? "xm"
+    if provided? :xm
       @menu = RXmCreatePopupMenu(@parent, "popup-menu", [RXmNpopupEnabled, true] + @args)
       RXtAddEventHandler(@parent, RButtonPressMask, false,
                          lambda do |w, c, i, f|
@@ -1535,5 +2300,7 @@ class Main_popup_menu < Menu
     instance_eval(&body) if block_given?
   end
 end
+
+include Snd_XM
 
 # snd-xm.rb ends here

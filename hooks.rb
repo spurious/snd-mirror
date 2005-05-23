@@ -2,7 +2,7 @@
 
 # Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Sun Dec 21 13:48:01 CET 2003
-# Last: Tue Apr 12 17:47:50 CEST 2005
+# Last: Wed May 18 18:43:20 CEST 2005
 
 # Commentary:
 #
@@ -34,6 +34,9 @@ end
 # $var_hook.member?("name of hook")
 # $var_hook.show or
 # describe_hook(hook)   prints code of hook procedures if file exists
+# $var.run_hook_by_name(name, *args)
+#
+# with_local_hook(hook, *procs, &thunk)
 # reset_all_hooks()     clears all hook procedures
 
 # Code:
@@ -128,7 +131,7 @@ need a String or Symbol, not %s"
   end
   
   def hook?(obj)
-    defined?(Hook) ? obj.kind_of?(Hook) : false
+    obj.kind_of?(Hook)
   end
   
   $after_graph_hook             = Hook.new("$after_graph_hook", 2)
@@ -225,15 +228,35 @@ class Hook
   def to_str
     self.each do |prc|
       # cover printf's %x
-      rbm_message(prc.to_str.gsub(/%/, "%%"))
+      Snd.display(prc.to_str.gsub(/%/, "%%"))
     end
     nil
   end
   alias show to_str
+
+  def run_hook_by_name(name, *args)
+    if prc = @procs.assoc(name) then prc.last.call(*args) end
+  end
 end
 
 def describe_hook(hook)
   hook.show
+end
+
+add_help(:with_local_hook,
+         "with_local_hook(hook, *procs, &thunk)  \
+evaluates thunk with hook set to procs, then restores hook to its previous state")
+def with_local_hook(hook, *procs, &thunk)
+  old_procs = []
+  hook.to_names.each do |name| old_procs.push(hook.remove_hook!(name)) end
+  hook.reset_hook!
+  procs.each do |prc| hook.add_hook!(prc.object_id.to_s, &prc) end
+  thunk.call
+rescue Interrupt, ScriptError, StandardError
+  Snd.display(verbose_message_string(true, nil, get_func_name))
+ensure
+  hook.reset_hook!
+  old_procs.each do |name, prc| hook.add_hook!(name, &prc) end
 end
 
 if defined? $after_graph_hook
@@ -309,17 +332,18 @@ if defined? $after_graph_hook
     $start_playing_selection_hook,
     $selection_changed_hook,
     $after_save_as_hook,
-    unless provided?("snd-nogui")
-      $recorder_file_hook
-    end]
+    $before_save_as_hook]
 
-  if provided? "snd-gtk"
+  unless provided? :snd_nogui
+    Snd_hooks.push($recorder_file_hook)
+  end
+  if provided? :snd_gtk
     Snd_hooks.push $gtk_popup_hook
   end
   
   def reset_all_hooks
     Snd_hooks.each do |h| h.kind_of?(Hook) and h.reset_hook! end
-    sounds2array.each do |snd|
+    Snd.sounds.each do |snd|
       channels(snd).times do |chn|
         edit_hook(snd, chn).reset_hook! if hook?(edit_hook(snd, chn))
         after_edit_hook(snd, chn).reset_hook! if hook?(after_edit_hook(snd, chn))

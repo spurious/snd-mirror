@@ -45,6 +45,10 @@ http://www.notam02.no/arkiv/doc/snd-rt/
 (define rt-to-ringbuffer-size (* rt-pointer-size 8192))
 (define rt-from-ringbuffer-size (* 1024 1024))
 
+(define rt-allocmem-size (* 1024 1024 8))
+
+(define rt-max-frame-size 4096)
+
 (if (not (defined? '*rt-num-input-ports*))
     (primitive-eval '(define *rt-num-input-ports* 8)))
 
@@ -539,6 +543,8 @@ size_t jack_ringbuffer_write_space(const jack_ringbuffer_t *rb);
   <int> num_procfuncs
   <struct-RT_Procfunc-*> procfuncs  
 
+  <char-*> allocplace
+  <char-*> allocplace_end
   
   <int> num_outs
   <float-**> outs
@@ -835,6 +841,11 @@ size_t jack_ringbuffer_write_space(const jack_ringbuffer_t *rb);
 			       (<int> max_cycle_usage (/ (* nframes engine->max_cpu_usage) 100))
 				      
 			       (<int> time (+ base_time nframes))
+
+			       (if (> nframes ,rt-max-frame-size)
+				   (begin
+				     (fprintf stderr (string "Framesize too high.\\n"))
+				     return))
 			       
 			       ;; Check ringbuffer for new events. Put those into engine->events.
 			       (if (>= (jack_ringbuffer_read_space engine->ringbuffer_to_rt) (sizeof <void-*>))
@@ -935,6 +946,9 @@ size_t jack_ringbuffer_write_space(const jack_ringbuffer_t *rb);
 	(public
 
 	 (<void> rt_init_engine (lambda ((<struct-RT_Engine-*> engine))
+				  (set! engine->allocplace (malloc ,rt-allocmem-size))
+				  (set! engine->allocplace_end (+ engine->allocplace ,rt-allocmem-size))
+				  
 				  (set! engine->queue (calloc (sizeof <struct-RT_Event-*>) engine->queue_fullsize))
 				  (set! rt_event_dummy.time 0.0f)
 				  ;;(set! engine->queue_size 1)

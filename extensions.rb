@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Sat Jan 03 17:30:23 CET 2004
-# Last: Mon Apr 18 00:41:14 CEST 2005
+# Last: Wed May 18 19:04:33 CEST 2005
 
 # Commentary:
 # 
@@ -87,12 +87,13 @@
 #    reorganize
 #    help
 #  
-#  add_comment(comm, samp, snd, chn)
+#  add_comment(samp, comm, snd, chn)
 #  remove_comment(comm, snd, chn)
 #  show_comments(snd, chn)
 #  
 #  marks?(more_than_one)
 #  all_chans
+#  all_chans_zipped
 #  normalized_mix(fname, beg, in_chan, snd, chn)
 #  enveloped_mix(fname, beg, env, del_tmp)
 #  
@@ -151,12 +152,12 @@ applies scan_chan with proc to each channel in a sound")
     if body and body.arity.abs == 1
       val = nil
       if c = (0...chans(snd)).detect do |chn| val = scan_chan(body, beg, fin, snd, chn, edpos) end
-        val += [snd_snd(snd), c]
+        val += [Snd.snd(snd), c]
       else
         nil
       end
     else
-      snd_raise(:bad_arity, "scan_sound_chans([beg, [end, [snd, [edpos]]]]) do |y| ... end")
+      Snd.raise(:bad_arity, "scan_sound_chans([beg, [end, [snd, [edpos]]]]) do |y| ... end")
     end
   end
 
@@ -167,17 +168,17 @@ applies map_chan with proc to each channel in a sound")
     if body and body.arity.abs == 1
       channels(snd).times do |chn| map_chan(body, beg, fin, edname, snd, chn, edpos) end
     else
-      snd_raise(:bad_arity, "map_sound_chans([beg, [end, [ename, [snd, [edpos]]]]]) do |y| ... end")
+      Snd.raise(:bad_arity, "map_sound_chans([beg, [end, [ename, [snd, [edpos]]]]]) do |y| ... end")
     end
   end
 
   add_help(:scan_all_chans,
-           "scan_all_chans([beg=0, [end=flase, [edpos=false]]], &proc) \
+           "scan_all_chans([beg=0, [end=flase, [edpos=false]]], &proc)  \
 applies scan_chan with proc to all channels (all sounds)")
   def scan_all_chans(beg = 0, fin = false, edpos = false, &body)
     if body and body.arity.abs == 1
       catch(:done) do
-        sounds2array.each do |snd|
+        Snd.sounds.each do |snd|
           channels(snd).times do |chn|
             if res = scan_chan(body, beg, fin, snd, chn, edpos)
               throw(:done, res += [snd, chn])
@@ -187,22 +188,22 @@ applies scan_chan with proc to all channels (all sounds)")
         false
       end
     else
-      snd_raise(:bad_arity, "scan_all_chans([beg, [end, [edpos]]]) do |y| ... end")
+      Snd.raise(:bad_arity, "scan_all_chans([beg, [end, [edpos]]]) do |y| ... end")
     end
   end
-
+  
   add_help(:map_all_chans,
            "map_all_chans([beg=0, [end=flase, [edpos=false]]], &proc) \
 applies map_chan with proc to all channels (all sounds)")
   def map_all_chans(beg = 0, fin = false, edname = false, edpos = false, &body)
     if body and body.arity.abs == 1
-      sounds2array.each do |snd|
+      Snd.sounds.each do |snd|
         channels(snd).times do |chn|
           map_chan(body, beg, fin, edname, snd, chn, edpos)
         end
       end
     else
-      snd_raise(:bad_arity, "map_all_chans([beg, [end, [ename, [edpos]]]]) do |y| ... end")
+      Snd.raise(:bad_arity, "map_all_chans([beg, [end, [ename, [edpos]]]]) do |y| ... end")
     end
   end
 
@@ -213,7 +214,7 @@ applies scan_chan with proc to all channels sharing current sound's sync" )
     if body and body.arity.abs == 1
       current_sync = sync(selected_sound)
       catch(:done) do
-        sounds2array.each do |snd|
+        Snd.sounds.each do |snd|
           if sync(snd) == current_sync
             channels(snd).times do |chn|
               if res = scan_chan(body, beg, fin, snd, chn, edpos)
@@ -225,17 +226,17 @@ applies scan_chan with proc to all channels sharing current sound's sync" )
         false
       end
     else
-      snd_raise(:bad_arity, "scan_chans([beg, [end, [edpos]]]) do |y| ... end")
+      Snd.raise(:bad_arity, "scan_chans([beg, [end, [edpos]]]) do |y| ... end")
     end
   end
 
   add_help(:map_chan,
-           "map_chans([beg=0, [end=flase, [edpos=false]]], &proc) \
+           "map_chans([beg=0, [end=false, [edpos=false]]], &proc) \
 applies map_chan with proc to all channels sharing current sound's sync" )
   def map_chans(beg = 0, fin = false, edname = false, edpos = false, &body)
     if body and body.arity.abs == 1
       current_sync = sync(selected_sound)
-      sounds2array.each do |snd|
+      Snd.sounds.each do |snd|
         if sync(snd) == current_sync
           channels(snd).times do |chn|
             map_chan(body, beg, fin, edname, snd, chn, edpos)
@@ -243,7 +244,7 @@ applies map_chan with proc to all channels sharing current sound's sync" )
         end
       end
     else
-      snd_raise(:bad_arity, "map_chans([beg, [end, [ename, [edpos]]]]) do |y| ... end")
+      Snd.raise(:bad_arity, "map_chans([beg, [end, [ename, [edpos]]]]) do |y| ... end")
     end
   end
 
@@ -255,7 +256,7 @@ applies map_chan with proc to all channels in parallel" )
     chans = all_chans
     chan_num = chans.first.length
     maxlen = 0
-    sounds2array.each do |snd|
+    Snd.sounds.each do |snd|
       channels(snd).times do |chn|
         maxlen = [maxlen, frames(snd, chn)].max
       end
@@ -283,7 +284,7 @@ applies map_chan with proc to all channels in parallel" )
     snds, chans = all_chans
     chan_num = snds.length
     maxlen = 0
-    sounds2array.each do |sd|
+    Snd.sounds.each do |sd|
       channels(sd).times do |chn|
         maxlen = [maxlen, frames(sd, chn)].max
       end
@@ -332,7 +333,7 @@ writes selection data as (multichannel) file (for external program)")
 
   def syncd_sounds(val)
     ctr = 0
-    sounds2array.each do |snd|
+    Snd.sounds.each do |snd|
       if sync(snd) == val
         ctr += 1
       end
@@ -433,7 +434,7 @@ sets selection from (multichannel) file (from external program)")
     delete_temp_data_files(data, filename)
     chan = 0
     len = mus_sound_frames(filename)
-    sounds2array.each do |snd|
+    Snd.sounds.each do |snd|
       channels(snd).times do |chn|
         if selection_member?(snd, chn)
           set_samples(selection_position(snd, chn), len, filename, snd, chn, true, origin, chan)
@@ -450,7 +451,7 @@ sets selection from mono files (from external program)")
     delete_temp_data_files(data, filenames)
     cursnd = selected_sound
     chan = 0
-    sounds2array.each do |snd|
+    Snd.sounds.each do |snd|
       channels(cursnd).times do |chn|
         if selection_member?(snd, chn)
           len = mus_sound_frames(filenames[chan])
@@ -485,12 +486,23 @@ sets selection from mono files (from external program)")
       end
     end
   end
-  
+
   def dismiss_all_dialogs
-    dialog_widgets.each do |dialog|
-      next unless dialog
-      provided? :xm and RXtIsManaged(dialog) and RXtUnmanageChild(dialog)
-      # provided? :xg and Rgtk_widget_hide(dialog)
+    old_sigsegv = trap("SIGSEGV", "SIG_IGN")
+    (dialog_widgets or []).each do |w|
+      next unless w
+      hide_widget(w)
+    end
+  rescue
+    nil
+  ensure
+    case old_sigsegv
+    when Proc
+      trap("SIGSEGV", &old_sigsegv)
+    when String
+      trap("SIGSEGV", old_sigsegv)
+    else
+      trap("SIGSEGV", "SIG_DFL")
     end
   end
 
@@ -566,15 +578,15 @@ sets selection from mono files (from external program)")
   end
   
   def forward_mix(count = 1, snd = false, chn = false)
-    back_or_forth_mix(count, snd_snd(snd), snd_chn(chn))
+    back_or_forth_mix(count, Snd.snd(snd), Snd.chn(chn))
   end
 
   def backward_mix(count = 1, snd = false, chn = false)
-    back_or_forth_mix(-count, snd_snd(snd), snd_chn(chn))
+    back_or_forth_mix(-count, Snd.snd(snd), Snd.chn(chn))
   end
 
   def back_or_forth_mark(count, snd, chn)
-    if count.nonzero? and (not (mk = marks2array(snd, chn)).empty?)
+    if count.nonzero? and (not (mk = Snd.marks(snd, chn)).empty?)
       if mk.length == 1
         set_cursor(mark_sample(mk.first), snd, chn)
         mk.first
@@ -609,11 +621,11 @@ sets selection from mono files (from external program)")
   end
 
   def forward_mark(count = 1, snd = false, chn = false)
-    back_or_forth_mark(count, snd_snd(snd), snd_chn(chn))
+    back_or_forth_mark(count, Snd.snd(snd), Snd.chn(chn))
   end
 
   def backward_mark(count = 1, snd = false, chn = false)
-    back_or_forth_mark(-count, snd_snd(snd), snd_chn(chn))
+    back_or_forth_mark(-count, Snd.snd(snd), Snd.chn(chn))
   end
   
   def sound_data_channel2list(sd, chan)
@@ -745,6 +757,7 @@ turns a sound-data object's data into a list of lists (one for each channel)")
   end
 
   alias mixer_scale mixer_multiply
+  alias mus_error_to_string mus_error_type2string
 end
 
 include Compatibility
@@ -842,36 +855,36 @@ sets 'key-val' pair in the given sound's property list and returns 'val'.")
   
   def show_sound_properties(snd = false)
     if props = sound_properties(snd)
-      message("sound-properties of %s", file_name(snd).inspect)
+      Snd.display("sound-properties of %s", file_name(snd).inspect)
       props.each do |k, v|
-        message("%s --> %s", k, v.inspect)
+        Snd.display("%s --> %s", k, v.inspect)
       end
     else
-      message("%s has no sound-properties", file_name(snd).inspect)
+      Snd.display("%s has no sound-properties", file_name(snd).inspect)
     end
     nil
   end
 
   def show_channel_properties(snd = false, chn = false)
-    message("channel-properties of %s", file_name(snd).inspect)
+    Snd.display("channel-properties of %s", file_name(snd).inspect)
     if integer?(chn)
       if props = channel_properties(snd, chn)
-        message("==> channel %d <==", chn)
+        Snd.display("==> channel %d <==", chn)
         props.each do |k, v|
-          message("%s --> %s", k, v.inspect)
+          Snd.display("%s --> %s", k, v.inspect)
         end
       else
-        message("==> channel %d has no channel-properties <==", chn)
+        Snd.display("==> channel %d has no channel-properties <==", chn)
       end
     else
       channels(snd).times do |chn|
         if props = channel_properties(snd, chn)
-          message("==> channel %d <==", chn)
+          Snd.display("==> channel %d <==", chn)
           props.each do |k, v|
-            message("%s --> %s", k, v.inspect)
+            Snd.display("%s --> %s", k, v.inspect)
           end
         else
-          message("==> channel %d has no channel-properties <==", chn)
+          Snd.display("==> channel %d has no channel-properties <==", chn)
         end
       end
     end
@@ -949,7 +962,7 @@ sets 'key-val' pair in the given sound's property list and returns 'val'.")
 # rsp.contents               # prints all filenames in database
 # rsp.reorganize             # reorganizes the GDBM database
 # rsp.each do |file, value|
-#   message(file)
+#   Snd.display(file)
 # end                        # the same as rsp.contents
 # rsp.with_db do |db|
 #   db.reorganize
@@ -994,7 +1007,7 @@ sets 'key-val' pair in the given sound's property list and returns 'val'.")
     def load(snd)
       snd_name = file_name(snd)
       with_db do |db|
-        snd_catch do eval((db[snd_name] or "")) end
+        Snd.catch do eval((db[snd_name] or "")) end
       end
       if file_write_date(snd_name) == sound_property(:current_file_time, snd)
         @sound_funcs.each do |prop|
@@ -1072,10 +1085,10 @@ sets 'key-val' pair in the given sound's property list and returns 'val'.")
    end
 
     def contents
-      message("contents of %s", @database.inspect)
+      Snd.display("contents of %s", @database.inspect)
       with_db do |db|
         db.each do |file, value|
-          message(file)
+          Snd.display(file)
         end
       end
       nil
@@ -1094,7 +1107,7 @@ sets 'key-val' pair in the given sound's property list and returns 'val'.")
   end
 
   # add channel comments (see extsnd.html->Graphics->draw-string)
-  def add_comment(comm, samp = cursor(), snd = selected_sound(), chn = selected_channel())
+  def add_comment(samp, comm, snd = selected_sound(), chn = selected_channel())
     if array?(comments = channel_property(:comments, snd, chn))
       comments.push([samp, comm])
     else
@@ -1140,13 +1153,27 @@ all_chans returns [[0, 1, 1], [0, 0, 1]]")
   def all_chans
     sndlist = []
     chnlist = []
-    sounds2array.each do |snd|
+    Snd.sounds.each do |snd|
       channels(snd).times do |chn|
         sndlist << snd
         chnlist << chn
       end
     end
     [sndlist, chnlist]
+  end
+
+  # all_chans:        [[0, 1, 1], [0, 0, 1]]
+  # all_chans_zipped: [[0, 0], [1, 0], [1, 1]]
+  # fits with each or map
+  # all_chans_zipped.each do |snd, chn| ... end
+  def all_chans_zipped
+    new_list = []
+    Snd.sounds.each do |snd|
+      channels(snd).times do |chn|
+        new_list.push([snd, chn])
+      end
+    end
+    new_list
   end
   
   add_help(:normalized_mix,
@@ -1189,12 +1216,12 @@ enveloped_mix(\"pistol.snd\", 0, [0, 0, 1, 1, 2, 0])")
   # enveloped_mix("pistol.snd", 0, [0, 0, 1, 1, 2, 0])
 
   add_help(:map_sound_files,
-           "map_sound_files(*dir_array) do |file| ... end \
+           "map_sound_files(*dir_array) do |file| ... end  \
 applies body to each sound file in dir")
   def map_sound_files(*args, &func)
-    args << "." if args.empty?
+    args << "./" if args.empty?
     args.map do |dir|
-      if File.exist?(dir)
+      if File.exists?(dir)
         sound_files_in_directory(dir).map do |f| func.call(dir + f) end
       end
     end
@@ -1202,29 +1229,29 @@ applies body to each sound file in dir")
   # map_sound_files(".", "/usr/gnu/sound/SFiles") do |f| play_and_wait(f) end
   
   add_help(:for_each_sound_file,
-           "for_each_sound_file(*dir_args) do |file| ... end \
+           "for_each_sound_file(*dir_args) do |file| ... end  \
 applies body to each sound file in dir")
   add_help(:each_sound_file,
-           "each_sound_file(*dir_args) do |file| ... end \
+           "each_sound_file(*dir_args) do |file| ... end  \
 applies body to each sound file in dir")
-  def for_each_sound_file(*args, &func)
-    args << "." if args.empty?
+  def each_sound_file(*args, &func)
+    args << "./" if args.empty?
     args.each do |dir|
-      if File.exist?(dir)
+      if File.exists?(dir)
         sound_files_in_directory(dir).each do |f| func.call(dir + f) end
       end
     end
   end
-  alias each_sound_file for_each_sound_file
-  # for_each_sound_file(".", "/usr/gnu/sound/SFiles") do |f| play_and_wait(f) end
+  alias for_each_sound_file each_sound_file
+  # each_sound_file(".", "/usr/gnu/sound/SFiles") do |f| play_and_wait(f) end
 
   add_help(:match_sound_files,
-           "match_sound_files(*dir_args) do |file| ... end \
+           "match_sound_files(*dir_args) do |file| ... end  \
 applies func to each sound file in dir and returns a list of files \
 for which body does not return false")
   def match_sound_files(*args, &func)
     res = []
-    args << "." if args.empty?
+    args << "./" if args.empty?
     args.each do |dir|
       sound_files_in_directory(dir).each do |f|
         res << f if func.call(f)
@@ -1240,7 +1267,7 @@ for which body does not return false")
   def selection_members
     sndlist = []
     if selection?
-      sounds2array.each do |snd|
+      Snd.sounds.each do |snd|
         channels(snd).times do |chn|
           sndlist.push([snd, chn]) if selection_member?(snd, chn)
         end
@@ -1267,10 +1294,10 @@ snd defaults to the currently selected sound.")
       set_selection_frames(val - s0, s, c)
     end
     current_sound = (snd or selected_sound() or (sounds and sounds[0]))
-    unless sound?(current_sound) then snd_raise(:no_such_sound, beg, len, snd, chn) end
+    unless sound?(current_sound) then Snd.raise(:no_such_sound, beg, len, snd, chn) end
     current_sync = sync(current_sound)
     if selection?
-      sounds2array.each do |s|
+      Snd.sounds.each do |s|
         channels(s).times do |i|
           need_update = selection_member?(s, i)
           set_selection_member?(false, s, i)
@@ -1281,7 +1308,7 @@ snd defaults to the currently selected sound.")
     if chn
       add_chan_to_selection.call(beg, len, snd, chn)
     else
-      sounds2array.each do |s|
+      Snd.sounds.each do |s|
         if snd == true or s == current_sound or (current_sync.nonzero? and current_sync == sync(s))
           channels(s).times do |i|
             add_chan_to_selection.call(beg, len, s, i)
@@ -1292,26 +1319,23 @@ snd defaults to the currently selected sound.")
   end
   
   add_help(:delete_selection_and_smooth,
-           "delete_selection_and_smooth() deletes the current selection and smooths the splice")
+           "delete_selection_and_smooth()  deletes the current selection and smooths the splice")
   def delete_selection_and_smooth
-    ret = nil
     if selection?
-      beg = selection_position()
-      len = selection_frames()
-      sndlist, chnlist = all_chans()
-      sndlist.zip(chnlist) do |snd, chn|
+      beg = selection_position
+      len = selection_frames
+      all_chans_zipped.map do |snd, chn|
         if selection_member?(snd, chn)
           smooth_beg = [0, beg - 16].max
           delete_samples(beg, len, snd, chn)
-          ret = smooth_sound(smooth_beg, 32, snd, chn)
+          smooth_sound(smooth_beg, 32, snd, chn)
         end
       end
     end
-    ret
   end
 
   add_help(:eval_over_selection,
-          "eval_over_selection(&func) evaluates func on each sample in the current selection")
+          "eval_over_selection(&func)  evaluates func on each sample in the current selection")
   def eval_over_selection(func1 = nil, &func2)
     func = if block_given?
              func2
@@ -1321,12 +1345,10 @@ snd defaults to the currently selected sound.")
     if proc?(func) and selection?
       beg = selection_position()
       len = selection_frames()
-      sndlst, chnlst = all_chans()
-      sndlst.zip(chnlst) do |snd, chn|
+      all_chans_zipped.map do |snd, chn|
         if selection_member?(snd, chn)
-          new_data = make_vct(len)
           old_data = channel2vct(beg, len, snd, chn)
-          len.times do |i| new_data[i] = func.call(old_data[i]) end
+          new_data = Vct.new(len) do |i| func.call(old_data[i]) end
           vct2channel(new_data, beg, len, snd, chn)
         end
       end
@@ -1374,7 +1396,7 @@ If 'check' is false, the hooks are removed.")
       end
       unless $exit_hook.member?("unsaved-edits-at-exit?")
         $exit_hook.add_hook!("unsaved-edits-at-exit?") do | |
-          if sounds2array.detect do |snd| unsaved_edits_at_close.call(snd) end
+          if Snd.sounds.detect do |snd| unsaved_edits_at_close.call(snd) end
             true
           else
             false
@@ -1396,13 +1418,13 @@ and if it is subsquently re-opened, restores that state")
     states = {}
     sound_funcs = [:sync, :cursor_follows_play]
     channel_funcs = [:time_graph?, :transform_graph?, :lisp_graph?, :x_bounds, :y_bounds,
-                     :cursor, :cursor_size, :cursor_style, :show_marks, :show_y_zero,
-                     :wavo_hop, :wavo_trace, :max_transform_peaks, :show_transform_peaks,
-                     :fft_log_frequency, :fft_log_magnitude, :verbose_cursor, :zero_pad,
-                     :wavelet_type, :min_dB, :transform_size, :transform_graph_type,
-                     :time_graph_type, :fft_window, :transform_type, :transform_normalization,
-                     :time_graph_style, :show_mix_waveforms, :dot_size, :x_axis_style,
-                     :show_axes, :graphs_horizontal, :lisp_graph_style, :transform_graph_style]
+      :cursor, :cursor_size, :cursor_style, :show_marks, :show_y_zero,
+      :wavo_hop, :wavo_trace, :max_transform_peaks, :show_transform_peaks,
+      :fft_log_frequency, :fft_log_magnitude, :verbose_cursor, :zero_pad,
+      :wavelet_type, :min_dB, :transform_size, :transform_graph_type,
+      :time_graph_type, :fft_window, :transform_type, :transform_normalization,
+      :time_graph_style, :show_mix_waveforms, :dot_size, :x_axis_style,
+      :show_axes, :graphs_horizontal, :lisp_graph_style, :transform_graph_style, :grid_density]
     $close_hook.add_hook!(get_func_name) do |snd|
       states[file_name(snd)] = [file_write_date(file_name(snd)),
                                 sound_funcs.map { |f| snd_func(f, snd) },
@@ -1459,7 +1481,7 @@ mixes in file. file can be the file name or a list [file_name, beg = 0, chn = 0]
               fdata[2]
             end
     len = (dur or (mus_sound_frames(fname) - fbeg))
-    snd_raise(:no_such_sample) if beg < 0
+    Snd.raise(:no_such_sample) if beg < 0
     if len > 0
       reader = make_sample_reader(fbeg, fname, fchan)
       map_channel(lambda do |val|
@@ -1487,7 +1509,7 @@ inserts the file. file can be the file name or a list [file_name, beg = 0, chn =
               fdata[2]
             end
     len = (dur or (mus_sound_frames(fname) - fbeg))
-    snd_raise(:no_such_sample) if beg < 0
+    Snd.raise(:no_such_sample) if beg < 0
     if len > 0
       reader = make_sample_reader(fbeg, fname, fchan)
       insert_samples(beg, len, Vct.new(len) { |i| next_sample(reader) }, snd, chn, edpos, false,
@@ -1761,10 +1783,10 @@ applies contrast enhancement to the sound" )
         c1 = first_longer ? chn1 : chn2
         c2 = first_longer ? chn2 : chn1
         read2 = make_sample_reader(0, s2, c2)
-        (not scan_channel(lambda do |y|
+        (not scan_channel(lambda { |y|
                             val = read_sample(read2)
                             (val - y).abs > allowable_difference
-                          end, 0, len, s1, c1))
+                          }, 0, len, s1, c1))
       end
     end
   end
@@ -1776,7 +1798,7 @@ applies contrast enhancement to the sound" )
     len1 = frames(snd1, chn1)
     len2 = frames(snd2, chn2)
     if len1 == len2
-      channles_eql?(snd1, chn1, snd2, chn2, allowable_difference)
+      channels_eql?(snd1, chn1, snd2, chn2, allowable_difference)
     else
       false
     end

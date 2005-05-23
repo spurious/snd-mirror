@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Fri Feb 07 23:56:21 CET 2003
-# Last: Fri Apr 15 18:55:04 CEST 2005
+# Last: Wed May 18 18:50:39 CEST 2005
 
 # Commentary:
 #
@@ -79,7 +79,7 @@ module Effects
     if ms = marks(snd, chn)
       ms = ms.map do |x| mark_sample(x) end.sort
       if ms.length < 2
-        message("mark-related action requires two marks")
+        Snd.display("mark-related action requires two marks")
         false
       else
         if ms.length == 2
@@ -109,7 +109,7 @@ module Effects
         end
       end
     else
-      message("mark-related action requires marks")
+      Snd.display("mark-related action requires marks")
       false
     end
   end
@@ -117,12 +117,12 @@ module Effects
   def map_chan_over_target_with_sync(target, decay, origin_func, &func)
     okay = case target
            when :sound
-             (sounds or (message("no sound") and false))
+             (sounds or (Snd.display("no sound") and false))
            when :selection
-             selection? or (message("no selection") and false)
+             selection? or (Snd.display("no selection") and false)
            when :marks
              (sounds or marks(selected_sound, selected_channel).length < 2 or
-               (message("no marks") and false))
+               (Snd.display("no marks") and false))
            else
              true
            end
@@ -313,7 +313,7 @@ module Effects
   end
 
   def effects_cnv(snd0, amp, snd = false, chn = false)
-    snd0 = snd_snd
+    snd0 = Snd.snd
     flt_len = frames(snd0)
     total_len = flt_len + frames(snd, chn)
     cnv = make_convolve(:filter, channel2vct, 0, flt_len, snd0)
@@ -448,7 +448,7 @@ module Effects
 
   def effects_cross_synthesis_1(cross_snd, amp, fftsize, r,
                                 beg = 0, dur = false, snd = false, chn = false)
-    map_channel(effects_cross_synthesis(snd_snd(cross_snd), amp, fftsize, r),
+    map_channel(effects_cross_synthesis(Snd.snd(cross_snd), amp, fftsize, r),
                 beg, dur, snd, chn, false,
                 format("%s(%s, %s, %s, %s, %s, %s",
                        get_func_name, cross_snd, amp, fftsize, r, beg, dur))

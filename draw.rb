@@ -2,7 +2,7 @@
 
 # Translator: Michael Scholz <scholz-micha@gmx.de>
 # Created: Tue Apr 05 00:17:04 CEST 2005
-# Last: Mon Apr 11 03:19:34 CEST 2005
+# Last: Sat May 21 21:24:40 CEST 2005
 
 # Commentary:
 #
@@ -11,8 +11,8 @@
 # module Draw
 #  display_colored_samples(color, beg, dur, snd = false, chn = false)
 #  display_samples_in_color(snd, chn)
-#  color_samples(color, beg = 0, dur = false, snd = snd_snd, chn = snd_chn)
-#  uncolor_samples(snd = snd_snd, chn = snd_chn)
+#  color_samples(color, beg = 0, dur = false, snd = Snd.snd, chn = Snd.chn)
+#  uncolor_samples(snd = Snd.snd, chn = Snd.chn)
 #  display_previous_edits(snd, chn)
 #  overlay_sounds(*rest)
 #  samples_via_colormap(snd, chn)
@@ -79,7 +79,7 @@ displays samples from beg for dur in color whenever they\'re in the current view
   add_help(:color_samples,
            "color_samples(color, [beg=0, [dur=false, [snd=false, [chn=false]]]])  \
 causes samples from beg to beg+dur to be displayed in color")
-  def color_samples(color, beg = 0, dur = false, snd = snd_snd, chn = snd_chn)
+  def color_samples(color, beg = 0, dur = false, snd = Snd.snd, chn = Snd.chn)
     unless $after_graph_hook.member?("display-samples-in-color")
       $after_graph_hook.add_hook!("display-samples-in-color") do |snd, chn|
         display_samples_in_color(snd, chn)
@@ -92,7 +92,7 @@ causes samples from beg to beg+dur to be displayed in color")
 
   add_help(:uncolor_samples,
            "uncolor_samples([snd=false, [chn=false]]) cancels sample coloring in the given channel")
-  def uncolor_samples(snd = snd_snd, chn = snd_chn)
+  def uncolor_samples(snd = Snd.snd, chn = Snd.chn)
     set_channel_property(:colored_samples, [], snd, chn)
     update_time_graph(snd, chn)
   end
@@ -387,24 +387,25 @@ in the upper right corner")
 
   # click-for-listener-help
 
-  $last_click_time = 0
+  $last_click_time = 0.0
 
   def click_for_listener_help(pos)
-    help_moved = false
     time = Time.now.to_f
-    click_time = time - $last_click_time
-    $last_click_time = time
-    if click_time < 25
-      text = widget_text(main_widgets[4])
-      subject = text[text.rindex(/\b/, pos)...text.index(/\b/, pos)]
-      if help = snd_help(subject, false)
-        help_dialog(subject, help)
+    if time - $last_click_time < 0.2
+      $last_click_time = 0.0
+      if string?(text = widget_text(main_widgets[4]))
+        if string?(subject = text.slice(text.rindex(/\b/m, pos)...text.index(/\b/m, pos)))
+          if string?(help = snd_help(subject, false))
+            help_dialog(subject, help)
+          end
+        end
       end
+    else
+      $last_click_time = time
     end
   end
+  # $listener_click_hook.add_hook!("listener-help", &method(:click_for_listener_help).to_proc)
 end
-
-# $listener_click_hook.add_hook!("listener-help") do |pos| click_for_listener_help(pos) end
 
 include Draw
 

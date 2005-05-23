@@ -4,7 +4,7 @@
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Tue Mar 25 23:21:37 CET 2003
-# Last: Wed Apr 13 14:18:24 CEST 2005
+# Last: Thu May 19 19:43:43 CEST 2005
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -107,8 +107,8 @@
 #                        :path,                nil
 #                        :scaler,              1.0
 #                        :reverb_amount,       0.05
-#                        :rbm_output,          $rbm_output
-#                        :rbm_reverb,          $rbm_reverb
+#                        :rbm_output,          $output
+#                        :rbm_reverb,          $reverb
 #                        :output_power,        1.5
 #                        :reverb_power,        0.5
 #                        :render_using,        :amplitude_panning
@@ -251,7 +251,7 @@ end
 Ruby_exceptions[:dlocsig_error] = DlocsigError
 
 def dl_error(*msg)
-  snd_raise(:dlocsig_error, (msg.empty? ? "" : format(*msg)))
+  Snd.raise(:dlocsig_error, (msg.empty? ? "" : format(*msg)))
 end
 
 # module Inject, see Thomas, David, Hunt, Andrew: Programming Ruby --
@@ -390,7 +390,7 @@ class Gnuplot
     @@plot_stream.printf(*args)
     format(*args).chomp
   rescue
-    warn("%s#%s", self.class, get_func_name)
+    Snd.warning("%s#%s", self.class, get_func_name)
   end
 
   def reset
@@ -462,8 +462,10 @@ class Gnuplot
   end
 
   def data(data, *args)
-    style = get_args(args, :style, "linespoints")
-    label = get_args(args, :label, "")
+    style, label = nil
+    optkey(args, binding,
+           [:style, "linespoints"],
+           [:label, ""])
     command("plot '-' %s %s\n", label.empty? ? "" : "title \"#{label}\"",
                                              style.empty? ? "" : "with #{style}")
     data.each_with_index do |y, x| command("%f %f\n", x, y) end
@@ -471,8 +473,10 @@ class Gnuplot
   end
 
   def plot_2d_curve(curve, *args)
-    style = get_args(args, :style, "linespoints")
-    label = get_args(args, :label, "")
+    style, label = nil
+    optkey(args, binding,
+           [:style, "linespoints"],
+           [:label, ""])
     set_grid()
     command("plot '-' %s %s\n", label.empty? ? "" : "title \"#{label}\"",
                                              style.empty? ? "" : "with #{style}")
@@ -481,8 +485,10 @@ class Gnuplot
   end
 
   def plot_2d_curves(curves, *args)
-    styles = get_args(args, :styles, "linespoints")
-    labels = get_args(args, :labels, "")
+    styles, labels = nil
+    optkey(args, binding,
+           [:styles, "linespoints"],
+           [:labels, ""])
     set_grid()
     styles = curves.map do |i| styles end unless array?(styles)
     labels = curves.map do |i| labels end unless array?(labels)
@@ -503,14 +509,16 @@ class Gnuplot
   end
 
   def plot_3d_curve(curve, *args)
-    style  = get_args(args, :style, "linespoints")
-    label  = get_args(args, :label, "")
-    zstyle = get_args(args, :zstyle, "impulses")
-    xrot   = get_args(args, :xrot, nil)
-    zrot   = get_args(args, :zrot, nil)
-    scale  = get_args(args, :scale, nil)
-    zscale = get_args(args, :zscale, nil)
-    set_border(127+256+512)
+    style, label, zstyle, xrot, zrot, scale, zscale = nil
+    optkey(args, binding,
+           [:style, "linespoints"],
+           [:label, ""],
+           [:zstyle, "impulses"],
+           :xrot,
+           :zrot,
+           :scale,
+           :zscale)
+    set_border(127 + 256 + 512)
     set_grid()
     set_surface()
     set_parametric()
@@ -836,17 +844,28 @@ module DL
     # :b_format_ambisonics
     # :decoded_ambisonics
     def make_dlocsig(startime, dur, *args)
-      path           = get_args(args, :path, nil)
-      scaler         = get_args(args, :scaler, 1.0)
-      rev_amount     = get_args(args, :reverb_amount, 0.05)
-      @output_power  = get_args(args, :output_power, 1.5)
-      @reverb_power  = get_args(args, :reverb_power, 0.5)
-      @render_using  = which_render(get_args(args, :render_using, Amplitude_panning))
-      @rbm_output    = get_args(args, :rbm_output, $rbm_output)
-      @rbm_reverb    = get_args(args, :rbm_reverb, $rbm_reverb)
-      @out_channels  = get_args(args, :out_channels, 4)
-      @rev_channels  = get_args(args, :rev_channels, 1)
-      @clm           = get_args(args, :clm, true)
+      path, scaler, reverb_amount, output_power, reverb_power, render_using = nil
+      rbm_output, rbm_reverb, out_channels, rev_channels, clm = nil
+      optkey(args, binding,
+             :path,
+             [:scaler, 1.0],
+             [:reverb_amount, 0.05],
+             [:output_power, 1.5],
+             [:reverb_power, 0.5],
+             [:render_using, Amplitude_panning],
+             [:rbm_output, $output],
+             [:rbm_reverb, $reverb],
+             [:out_channels, 4],
+             [:rev_channels, 1],
+             [:clm, true])
+      @output_power = output_power
+      @reverb_power = reverb_power
+      @render_using = which_render(render_using)
+      @rbm_output   = rbm_output
+      @rbm_reverb   = rbm_reverb
+      @out_channels = out_channels
+      @rev_channels = rev_channels
+      @clm          = clm
       if @render_using == B_format_ambisonics and @out_channels != 4
         dl_error("B_format_ambisonics requires 4 output channels")
       end
@@ -901,7 +920,7 @@ module DL
         make_env(:envelope, @channel_gains[i], :scaler, unity_gain, :duration, real_dur)
       end
       if @rev_channels.nonzero?
-        unity_rev_gain = rev_amount * scaler * min_dist_unity ** @reverb_power
+        unity_rev_gain = reverb_amount * scaler * min_dist_unity ** @reverb_power
         @reverb_gains = make_array(@rev_channels) do |i|
           make_env(:envelope, @channel_rev_gains[i], :scaler, unity_rev_gain, :duration, real_dur)
         end
@@ -1070,7 +1089,7 @@ module DL
     def amplitude_panning(x, y, z, dist, time)
       if @prev_group
         if time != @prev_time and ((dist - @prev_dist) / (time - @prev_time)) > @speed_limit
-          message("%s#%s: supersonic radial movement", self.class, get_func_name)
+          Snd.display("%s#%s: supersonic radial movement", self.class, get_func_name)
         end
         inside, gains = calculate_gains(x, y, z, @prev_group)
         if inside
@@ -1100,7 +1119,9 @@ module DL
                     end
                   end
                 else
-                  warn("%s#%s: current time <= previous time", self.class, get_func_name) if $DEBUG
+                  if $DEBUG
+                    Snd.warning("%s#%s: current time <= previous time", self.class, get_func_name)
+                  end
                 end
               end
             elsif edge.length == 1 and group.size == 2
@@ -1122,13 +1143,15 @@ module DL
                     end
                   end
                 else
-                  warn("%s#%s: current time <= previous time", self.class, get_func_name) if $DEBUG
+                  if $DEBUG
+                    Snd.warning("%s#%s: current time <= previous time", self.class, get_func_name)
+                  end
                 end
               end
             elsif edge.length == 1
-              message("%s#%s: only one point in common", self.class, get_func_name)
+              Snd.display("%s#%s: only one point in common", self.class, get_func_name)
             elsif edge.length.zero?
-              message("%s#%s: with no common points", self.class, get_func_name)
+              Snd.display("%s#%s: with no common points", self.class, get_func_name)
             end
             push_gains(group, gains, dist, time)
             @prev_group, @prev_x, @prev_y, @prev_z = group, x, y, z
@@ -1389,8 +1412,10 @@ module DL
 
     def rotate_path(rotation, *args)
       assert_type(number?(rotation), 0, rotation, "a number")
-      rotation_center = get_args(args, :rotation_center, nil)
-      rotation_axis   = get_args(args, :rotation_axis, [0.0, 0.0, 1.0])
+      rotation_center, rotation_axis = nil
+      optkey(args, binding,
+             :rotation_center,
+             [:rotation_axis, [0.0, 0.0, 1.0]])
       transform_path(:rotation, rotation,
                      :rotation_center, rotation_center,
                      :rotation_axis, rotation_axis)
@@ -1468,8 +1493,10 @@ module DL
     
     def plot_trajectory(*args)
       @gnuplot = plot_open
-      label  = get_args(args, :label, "trajectory")
-      reset  = get_args(args, :reset, true)
+      label, reset = nil
+      optkey(args, binding,
+             [:label, "trajectory"],
+             [:reset, true])
       @gnuplot.reset() if reset
       @gnuplot.set_autoscale()
       if path_z.detect do |z| z.nonzero? end
@@ -1576,11 +1603,13 @@ module DL
 
     private
     def transform_path(*args)
-      scaling         = get_args(args, :scaling, nil)
-      translation     = get_args(args, :translation, nil)
-      rotation        = get_args(args, :rotation, nil)
-      rotation_center = get_args(args, :rotation_center, nil)
-      rotation_axis   = get_args(args, :rotation_axis, [0.0, 0.0, 1.0])
+      scaling, translation, rotation, rotation_center, rotation_axis = nil
+      optkey(args, binding,
+             :scaling,
+             :translation,
+             :rotation,
+             :rotation_center,
+             [:rotation_axis, [0.0, 0.0, 1.0]])
       render_path() if @rx.nil?
       if scaling or translation or rotation
         rotation = TWO_PI * (rotation / @one_turn) if rotation
@@ -1739,10 +1768,16 @@ module DL
         dl_error("can't define a path with no points in it")
       end
       super()
-      @d3        = get_args(args, :d3, true)
-      @polar     = get_args(args, :polar, false)
-      @error     = get_args(args, :error, 0.01)
-      @curvature = get_args(args, :curvature, nil)
+      d3, polar, error, curvature = nil
+      optkey(args, binding,
+             [:d3, true],
+             [:polar, false],
+             [:error, 0.01],
+             :curvature)
+      @d3        = d3
+      @polar     = polar
+      @error     = error
+      @curvature = curvature
       @x = @y = @z = @v = @bx = @by = @bz = nil
       # for ac() and a()
       @path_ak_even = nil
@@ -1760,7 +1795,8 @@ module DL
       end
       if @v[0] and @v.min < 0.1
         if @v.min < 0.0
-          warn("%s#%s: velocities must be all positive, corrected", self.class, get_func_name)
+          Snd.warning("%s#%s: velocities must be all positive, corrected",
+                      self.class, get_func_name)
         end
         @v.map! do |x| [0.1, x].max end
       end
@@ -1944,8 +1980,12 @@ module DL
   class Open_bezier_path < Bezier_path
     def initialize(path, *args)
       super
-      @initial_direction = get_args(args, :initial_direction, [0.0, 0.0, 0.0])
-      @final_direction   = get_args(args, :final_direction, [0.0, 0.0, 0.0])
+      initial_direction, final_direction = nil
+      optkey(args, binding,
+             [:initial_direction, [0.0, 0.0, 0.0]],
+             [:final_direction, [0.0, 0.0, 0.0]])
+      @initial_direction = initial_direction
+      @final_direction   = final_direction
     end
 
     private
@@ -2114,8 +2154,12 @@ module DL
         dl_error("can't define a path with no points in it")
       end
       super()
-      @d3    = get_args(args, :d3, true)
-      @polar = get_args(args, :polar, false)
+      d3, polar = nil
+      optkey(args, binding,
+             [:d3, true],
+             [:polar, false])
+      @d3    = d3
+      @polar = polar
     end
 
     private
@@ -2189,8 +2233,12 @@ module DL
     def initialize(*args)
       # to fool Literal_path.new
       super([nil])
-      @start_angle = get_args(args, :start_angle, 0)
-      @turns       = get_args(args, :turns, 2)
+      start_angle, turns = nil
+      optkey(args, binding,
+             [:start_angle, 0],
+             [:turns, 2])
+      @start_angle = start_angle
+      @turns       = turns
     end
 
     private
@@ -2251,7 +2299,9 @@ module DL
   end
   
   def make_closed_path(path, *args)
-    len = (get_args(args, :d3, true) ? 3 : 2)
+    d3 = nil
+    optkey(args, binding, [:d3, true])
+    len = d3 ? 3 : 2
     unless path[0][0, len] == path[-1][0, len]
       path += [path[0]]
     end
@@ -2305,7 +2355,7 @@ class Instrument
     start       = get_shift_args(args, :startime, 0)
     sound_let([:channels, chns, body]) do |to_move|
       if @verbose
-        message("%s: moving sound on %d channel%s", get_func_name, chns, (chns > 1 ? "s" : ""))
+        Snd.display("%s: moving sound on %d channel%s", get_func_name, chns, (chns > 1 ? "s" : ""))
       end
       move(0, to_move, path, *args)
       rbm_mix(to_move, :output_frame, seconds2samples(start))
@@ -2369,8 +2419,8 @@ if provided? :snd_motif or provided? :snd_gtk
       if @render_using == B_format_ambisonics
         set_scale_value(@sliders[0].scale, @out_chans = 4)
       end
-      comment_string = if string?($rbm_comment) and !$rbm_comment.empty?
-                         format("%s; %s", $rbm_comment, format(*comment_args))
+      comment_string = if string?($clm_comment) and !$clm_comment.empty?
+                         format("%s; %s", $clm_comment, format(*comment_args))
                        else
                          format(*comment_args)
                        end
@@ -2387,7 +2437,7 @@ if provided? :snd_motif or provided? :snd_gtk
                      :channels, @out_chans,
                      :reverb_channels, @rev_chans,
                      :comment, comment_string,
-                     :info, (not $rbm_notehook),
+                     :info, (not $clm_notehook),
                      :statistics, true,
                      :play, true) do
         move(0,
@@ -2397,9 +2447,9 @@ if provided? :snd_motif or provided? :snd_gtk
              :reverb_power, reverb_power,
              :render_using, render_using)
       end
-      rbm_message(f.output.inspect)
+      Snd.display(f.output.inspect)
     rescue
-      warn("%s#%s: %s", self.class, get_func_name, comment_string)
+      Snd.warning("%s#%s: %s", self.class, get_func_name, comment_string)
     end
 
     def add_with_sound_sliders(parent = @dialog.parent)
@@ -2486,8 +2536,8 @@ if provided? :snd_motif or provided? :snd_gtk
       help_dialog(@label,
                   "\
 The current sound will be moved through the chosen path.  You can set \
-the reverberator via the global with-sound-variable $rbm_reverb_func \
-(#{$rbm_reverb_func.inspect}).  If you want four reverb channels, you \
+the reverberator via the global with-sound-variable $clm_reverb \
+(#{$clm_reverb.inspect}).  If you want four reverb channels, you \
 may try freeverb from freeverb.rb.
 
 reverb    reverb-channels output-channels source
@@ -2669,11 +2719,12 @@ For detailed information see clm-2/dlocsig.html.",
     
     def test_path
       if @snd_path.length == 2
-        message("%s#%s: path has only two points, one added", self.class, get_func_name)
+        Snd.display("%s#%s: path has only two points, one added", self.class, get_func_name)
         @snd_path.insert(1, [0.0, @snd_path[0][1] - 0.1, 0.0, @snd_path[0][3] + 0.1])
       end
       unless @snd_path.detect do |pnt| pnt[1].nonzero? end
-        message("%s#%s: y-values are all zero, changed to mid-point 0.1", self.class, get_func_name)
+        Snd.display("%s#%s: y-values are all zero, changed to mid-point 0.1",
+                    self.class, get_func_name)
         @snd_path[@snd_path.length / 2][1] = 0.1
       end
     end
@@ -2811,16 +2862,16 @@ end
 # :delay4,   0.017
 # :double,   false
 #
-# $rbm_reverb_func = :jc_reverb_rb
-# $rbm_reverb_data = [:low_pass, false, :volume, 1.0, :amp_env, false,
+# $clm_reverb = :jc_reverb_rb
+# $clm_reverb_data = [:low_pass, false, :volume, 1.0, :amp_env, false,
 #                    :delay1, 0.013, :delay2, 0.011, :delay3, 0.015, :delay4, 0.017]
 
 # require "clm-ins"
 #
 # JL_REVERB has no options
 #
-# $rbm_reverb_func = :jl_reverb
-# $rbm_reverb_data = []
+# $clm_reverb = :jl_reverb
+# $clm_reverb_data = []
 
 # NREV default options
 # 
@@ -2828,8 +2879,8 @@ end
 # :lp_coeff,      0.7
 # :volume,        1.0
 #
-# $rbm_reverb_func = :nrev_rb
-# $rbm_reverb_data = [:volume, 1.0, :lp_coeff, 0.7]
+# $clm_reverb = :nrev_rb
+# $clm_reverb_data = [:volume, 1.0, :lp_coeff, 0.7]
 
 # INTERN or N_REV default options (only with_snd)
 #
@@ -2837,8 +2888,8 @@ end
 # :filter,   0.5
 # :feedback, 1.09
 #
-# $rbm_reverb_func = :intern
-# $rbm_reverb_data = [:amount, 0.1, :filter, 0.5, :feedback, 1.09]
+# $clm_reverb = :intern
+# $clm_reverb_data = [:amount, 0.1, :filter, 0.5, :feedback, 1.09]
 
 # require "freeverb"
 # 
@@ -2857,8 +2908,8 @@ end
 # :scale_damping,     0.4,
 # :stereo_spread,     23,
 #
-# $rbm_reverb_func = :freeverb
-# $rbm_reverb_data = [:room_decay, 0.5, :damping, 0.5, :global, 0.3, :predelay, 0.03,
+# $clm_reverb = :freeverb
+# $clm_reverb_data = [:room_decay, 0.5, :damping, 0.5, :global, 0.3, :predelay, 0.03,
 #                     :output_gain, 1.0, :output_mixer, nil, :scale_room_decay, 0.7,
 #                     :scale_damping, 0.4, :stereo_spread, 23]
 
