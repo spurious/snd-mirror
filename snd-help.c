@@ -398,6 +398,8 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+23-May:  maraca.rb, play.rb, prc95.rb, singer.rb, and zip.rb thanks to Mike Scholz.\n\
+         rt.tex thanks to Kjetil Matheussen.\n\
 16-May:  before-save-as-hook.\n\
 2-May:   maxamp-position, region|selection-maxamp-position.\n\
          windowed-maxamp generator (dsp.scm).\n\
@@ -408,9 +410,6 @@ void about_snd_help(void)
          zip.scm (zipper) changed (takes env args now, not thunks, uses def-clm-struct, etc).\n\
          changed mus-error-to-string to mus-error-type->string.\n\
            moved mus-data-format->string and mus-header-type->string from ws.scm to C.\n\
-18-Apr:  removed xen->sample generator.\n\
-         changed moog.scm to use def-clm-struct, rather than a list.\n\
-12-Apr:  before-save-state-hook.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",

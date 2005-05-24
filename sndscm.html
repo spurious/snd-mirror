@@ -66,7 +66,7 @@
 <tr><td><a href="#dotemacs">inf-snd.el, DotEmacs</a></td>              <td>Emacs subjob support (Michael Scholz, Fernando Lopez-Lezcano)</td></tr>
 <tr><td><a href="#jcrevdoc">jcrev.scm</a></td>                         <td>John Chowning's ancient reverb</td></tr>
 <tr><td><a href="#ladspadoc">ladspa.scm, ladspa-help.scm, gui.scm</a></td><td>Kjetil S. Matheussen's LADSPA GUI-builder and previewer.</td></tr>
-<tr><td><a href="#maracadoc">maraca.scm</a></td>                       <td>Perry Cook's maraca physical model</td></tr>
+<tr><td><a href="#maracadoc">maraca.scm, maraca.rb</a></td>            <td>Perry Cook's maraca physical model</td></tr>
 <tr><td><a href="#marksdoc">marks.scm, marks.rb</a></td>               <td>functions related to marks</td></tr>
 <tr><td><a href="#maxfdoc">maxf.scm, maxf.rb</a></td>                  <td>Max Mathews resonator</td></tr>
 <tr><td><a href="#mixdoc">mix.scm, mix.rb</a></td>                     <td>functions related to mixes and tracks</td></tr>
@@ -78,17 +78,17 @@
 <tr><td><a href="#oscopedoc">oscope.scm</a></td>                       <td>an oscilloscope/spectrum analysis dialog</td></tr>
 <tr><td><a href="#peakenvdoc">peak-env.scm</a></td>                    <td>peak envelope support</td></tr>
 <tr><td><a href="#pianodoc">piano.scm, piano.rb</a></td>               <td>piano physical model</td></tr>
-<tr><td><a href="#playdoc">play.scm</a></td>                           <td>play-related functions</td></tr>
+<tr><td><a href="#playdoc">play.scm, play.rb</a></td>                  <td>play-related functions</td></tr>
 <tr><td><a href="#polydoc">poly.scm, poly.rb</a></td>                  <td>polynomial-related stuff</td></tr>
 <tr><td><a href="#popupdoc">popup.scm, gtk-popup.scm, popup.rb</a></td><td>Popup menu specializations</td></tr>
-<tr><td><a href="#prc95doc">prc95.scm</a></td>                         <td>Perry Cook's physical model examples</td></tr>
+<tr><td><a href="#prc95doc">prc95.scm, prc95.rb</a></td>               <td>Perry Cook's physical model examples</td></tr>
 <tr><td><a href="#pvocdoc">pvoc.scm, pvoc.rb</a></td>                  <td>phase-vocoder</td></tr>
 <tr><td><a href="#rgbdoc">rgb.scm, rgb.rb</a></td>                     <td>color names</td></tr>
 <tr><td><A href="#rmsgaindoc">rmsgain.scm</a></td>                     <td>RMS-based gain and balance methods (Fabio Furlanete)</td></tr>
 <tr><td><a href="#rtexdoc">rt-examples.scm and friends</a></td>        <td>hard real-time support</td></tr>
 <tr><td><a href="#rtiodoc">rtio.scm, rtio.rb</a></td>                  <td>real-time stuff</td></tr>
 <tr><td><a href="#rubberdoc">rubber.scm, rubber.rb</a></td>            <td>rubber-sound</td></tr>
-<tr><td><a href="#singerdoc">singer.scm</a></td>                       <td>Perry Cook's vocal-tract physical model</td></tr>
+<tr><td><a href="#singerdoc">singer.scm, singer.rb</a></td>            <td>Perry Cook's vocal-tract physical model</td></tr>
 <tr><td><a href="#sndwarpdoc">sndwarp.scm</a></td>                     <td>Bret Battey's sndwarp instrument</td></tr>
 <tr><td><a href="#snd4doc">snd4|5|6|7.scm</a></td>                     <td>Backwards compatibility</td></tr>
 <tr><td><a href="#sndgldoc">snd-gl.scm</a></td>                        <td>OpenGL examples (gl.c)</td></tr>
@@ -99,7 +99,7 @@
 <tr><td><a href="#vdoc">v.scm, v.rb</a></td>                           <td>fm-violin</td></tr>
 <tr><td><a href="#wsdoc">ws.scm, ws.rb</a></td>                        <td>with-sound</td></tr>
 <tr><td><a href="#xmenveddoc">xm-enved.scm, xm-enved.rb</a></td>       <td>envelope editors</td></tr>
-<tr><td><a href="#zipdoc">zip.scm</a></td>                             <td>the zipper (the anti-cross-fader)</td></tr>
+<tr><td><a href="#zipdoc">zip.scm, zip.rb</a></td>                     <td>the zipper (the anti-cross-fader)</td></tr>
 <tr><td><a href="#extsndvarexpl">A Note on Scheme variables in Snd</a></td><td></td></tr>
 <tr><td><a href="#extsndasneededexpl">A Note on "As-Needed" input functions</a></td><td></td></tr>
 <tr><td><a href="#extsndcgens">A Note on User-defined Generators in C-CLM</a></td><td></td></tr>
@@ -896,7 +896,7 @@ Random Numbers in Snd/CLM:<br>
 generators, arbitrary distributions, fractals, 1/f: <a href="clm.html#randomnumbers">rand and rand-interp</a><br>
 dithering: <a href="sndscm.html#ditherchannel">dither-channel</a><br>
 noise-making instrument: <a href="#noisedoc">noise.scm, noise.rb</a><br>
-physical modeling of noisy instruments: <a href="#maracadoc">maraca.scm</a><br>
+physical modeling of noisy instruments: <a href="#maracadoc">maraca.scm, maraca.rb</a><br>
 arbitrary distribution via rejection method: <a href="#anyrandom">any-random</a><br>
 CL: random, *random-state*, make-random-state*: random number between 0 and arg, arg can't be 0!<br>
 Guile: random, *random-state*, seed-&gt;random-state: random number between 0 and arg, arg can't be 0!<br>
@@ -2346,7 +2346,7 @@ the GUI extensions are in gui.scm.
 </p>
 
 
-<A NAME="maracadoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>maraca.scm</h2></td></tr></table>
+<A NAME="maracadoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>maraca.scm, maraca.rb</h2></td></tr></table>
 
 <p>This file has a translation to Snd/Scheme of Perry Cook's maraca physical model.
 </p>
@@ -2714,7 +2714,7 @@ could be changed to suit your situation.
 model by Scott van Duyne.
 </p>
 
-<A NAME="playdoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>play.scm</h2></td></tr></table>
+<A NAME="playdoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>play.scm, play.rb</h2></td></tr></table>
 
 <p>These functions play sounds in various ways.</p>
 <pre>
@@ -2837,7 +2837,7 @@ A popup menu is also created for the edit-history pane.
 </p>
 
 
-<A NAME="prc95doc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>prc95.scm</h2></td></tr></table>
+<A NAME="prc95doc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>prc95.scm, prc95.rb</h2></td></tr></table>
 
 <!-- INDEX prc95doc:Physical Models -->
 <p>prc95.scm is a translation to Snd of Perry Cook's (1995) physical modelling toolkit; prc-toolkit95.lisp 
@@ -2871,9 +2871,9 @@ The example instruments are:
 <blockquote><small>
 <br>
 See also:<br>
-maraca: <a href="#maracadoc">maraca.scm</a><br>
+maraca: <a href="#maracadoc">maraca.scm, maraca.rb</a><br>
 piano: <a href="#pianodoc">piano.scm, piano.rb</a><br>
-singer: <a href="#singerdoc">singer.scm</a><br>
+singer: <a href="#singerdoc">singer.scm, singer.rb</a><br>
 bowed string: <a href="#straddoc">strad.scm, strad.rb</a><br>
 flute: <a href="#clminsdoc">clm-ins.scm</a><br>
 string: <a href="#excomputeuniformcircularstring">compute-string</a><br>
@@ -2967,12 +2967,12 @@ something like this:
 </pre>
 <br>
 
-<!-- TODO: document oo.scm, rt-examples.scm, rt-compile.scm, rt-engine.scm, eval-c.scm -->
 <A NAME="rtexdoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>rt-examples.scm and friends</h2></td></tr></table>
 
 <p>The files rt-compile.scm, rt-engine.scm, rt-examples.scm, oo.scm, gui.scm, and eval-c.scm, all
 written by Kjetil Matheussen, provide hard (glitch-free) real-time support for CLM instruments,
 as well as numerous other extensions of Snd for user interface development, optimization, etc.
+See rt.tex for complete details.
 </p>
 <br>
 
@@ -3031,7 +3031,7 @@ shortened.
 <!-- ((((((( --><!-- this matches the preceding open parens for index.cl's benefit -->
 </p>
 
-<A NAME="singerdoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>singer.scm</h2></td></tr></table>
+<A NAME="singerdoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>singer.scm, singer.rb</h2></td></tr></table>
 
 <p>singer.scm is a translation of CLM's singer.ins.  It implements
 a physical model of the vocal tract described in
@@ -4438,7 +4438,7 @@ resource argument list is <i>args</i>.  The editor's current envelope is accessi
 <br>
 
 
-<A NAME="zipdoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>zip.scm</h2></td></tr></table>
+<A NAME="zipdoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>zip.scm, zip.rb</h2></td></tr></table>
 <pre>
   <em class=emdef>make-zipper</em> ramp-env <i>frame-size frame-env</i>
   <a class=def name="zipper">zipper</a> gen in1 in2

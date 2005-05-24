@@ -461,7 +461,7 @@ snd_info *completely_free_snd_info(snd_info *sp)
 
 bool map_over_chans(bool (*func)(chan_info *, void *), void *userptr)
 {
-  /* argument to func is chan_info pointer+void pointer of user spec, return non-zero = abort map, skips inactive sounds */
+  /* non-zero = abort map, skips inactive sounds */
   /* currently used only in cases where only normal sounds are expected */
   int i, j;
   bool val = false;
@@ -544,7 +544,7 @@ void for_each_normal_chan(void (*func)(chan_info *))
 
 bool map_over_sound_chans(snd_info *sp, bool (*func)(chan_info *, void *), void *userptr)
 {
-  /* argument to func is chan_info pointer+void pointer of user spec, return non-zero = abort map, skips inactive sounds */
+  /* non-zero = abort map, skips inactive sounds */
   int j;
   bool val = false;
   chan_info *cp;
@@ -568,7 +568,7 @@ void for_each_sound_chan(snd_info *sp, void (*func)(chan_info *))
 
 void map_over_sounds(bool (*func)(snd_info *, void *), void *userptr)
 {
-  /* argument to func is snd_info pointer, return true = abort map, skips inactive sounds */
+  /* true = abort map, skips inactive sounds */
   int i;
   bool val = false;
   for (i = 0; i < ss->max_sounds; i++)

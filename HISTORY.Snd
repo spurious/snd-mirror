@@ -1,5 +1,7 @@
 Snd change log
 
+  23-May:    maraca.rb, play.rb, prc95.rb, singer.rb, and zip.rb thanks to Mike Scholz.
+             rt.tex thanks to Kjetil Matheussen.
   16-May:    before-save-as-hook.
   2-May:     maxamp-position, region|selection-maxamp-position.
              windowed-maxamp generator (dsp.scm)
