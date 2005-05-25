@@ -6145,6 +6145,9 @@ the closer the radius is to 1.0, the narrower the resonance."
 #endif
   XEN_DEFINE_PROCEDURE(S_make_filter,     g_make_filter_w,     0, 6, 0, H_make_filter);
   XEN_DEFINE_PROCEDURE(S_filter,          g_filter_w,          2, 0, 0, H_filter);
+#if HAVE_GUILE
+  XEN_DEFINE_PROCEDURE("clm:" S_filter,   g_filter_w,          2, 0, 0, H_filter); /* gad... */
+#endif
   XEN_DEFINE_PROCEDURE(S_filter_p,        g_filter_p_w,        1, 0, 0, H_filter_p);
   XEN_DEFINE_PROCEDURE(S_make_fir_coeffs, g_make_fir_coeffs_w, 2, 0, 0, H_make_fir_coeffs);
   XEN_DEFINE_PROCEDURE(S_make_fir_filter, g_make_fir_filter_w, 0, 4, 0, H_make_fir_filter);

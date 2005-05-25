@@ -1056,6 +1056,7 @@
 	'max-transform-peaks (max-transform-peaks) 100
 	'max-regions (max-regions) 16 
 	'min-dB (min-dB) -60.0 
+	'mus-file-data-clipped (mus-file-data-clipped) #f
 	'log-freq-start (log-freq-start) 32.0
 	'selection-creates-region (selection-creates-region) #t 
 	'transform-normalization (transform-normalization) normalize-by-channel
@@ -2646,6 +2647,7 @@
 	      (if (fneq (vct-ref v1 1) .01) (snd-display ";sound-data->(small)vct: ~A?" v1))
 	      (vct->sound-data v0 sdata 0) 
 	      (if (fneq (sound-data-ref sdata 0 10) .1) (snd-display ";vct->sound-data: ~A?" (sound-data-ref sdata 0 10)))
+	      (if (fneq (sdata 0 10) .1) (snd-display ";vct->sound-data applied: ~A?" (sdata 0 10)))
 	      (let ((var (catch #t (lambda () (sound-data->vct sdata 2 v0)) (lambda args args))))
 		(if (not (eq? (car var) 'out-of-range))
 		    (snd-display ";sound-data->vct bad chan: ~A" var)))
@@ -54463,7 +54465,7 @@ EDITS: 2
 		     lock-track make-fir-coeffs make-identity-mixer mus-interp-type mus-make-error mus-run phase-vocoder
 		     player-home redo-edit undo-edit widget-position widget-size 
 		     (if (defined? 'window-property) window-property identity)
-		     focus-widget
+		     focus-widget edit-fragment-type-name
 
 		     ;;add-amp-controls analyse-ladspa any-env-channel append-sound apply-ladspa 
 		     ;;backward-graph backward-mark backward-mix channel-envelope channel-property
@@ -54542,6 +54544,7 @@ EDITS: 2
 			 (if (defined? 'window-property) window-property widget-size)
 
 			 mixer-ref frame-ref locsig-ref locsig-reverb-ref
+			 mus-file-prescaler mus-file-data-clipped
 			 ))
       
       (define make-procs (list

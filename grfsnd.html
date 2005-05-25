@@ -835,7 +835,8 @@ load <i>len</i> samples of <i>filename</i> into <i>vct</i> starting at frame <i>
 <tr><td><a href="clm.html#filter">filter</a></td><td>(gen input)</td><td>filter</td></tr>
 <tr><td></td><td colspan=2><br>
 Some versions of Guile define an unrelated function named <b>filter</b>.
-It is renamed <b>%filter</b>, if it is noticed in time.
+It is renamed <b>%filter</b>, if it is noticed in time.  In case clm's filter is still overwritten,
+you can use the synonym <b>clm:filter</b>.
 </td></tr>
 <tr><td colspan=3><br></td></tr>
 <tr><td><a href="clm.html#filter?">filter?</a></td><td>(gen)</td><td>#t if gen is filter</td></tr>

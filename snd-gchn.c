@@ -19,9 +19,6 @@ enum {W_zy_adj, W_zx_adj, W_sy_adj, W_sx_adj, W_gzy_adj, W_gsy_adj};
 #define NUM_CHAN_WIDGETS 16
 #define NUM_CHAN_ADJS 6
 
-#define START_JUST_TIME(cp) ss->just_time = true
-#define END_JUST_TIME(cp) ss->just_time = false
-
 GtkWidget *channel_graph(chan_info *cp)      {return(cp->cgx->chan_widgets[W_graph]);}
 GtkWidget *channel_sx(chan_info *cp)         {return(cp->cgx->chan_widgets[W_sx]);}
 GtkWidget *channel_sy(chan_info *cp)         {return(cp->cgx->chan_widgets[W_sy]);}
@@ -230,11 +227,7 @@ static void sy_valuechanged_callback(GtkAdjustment *adj, gpointer context)
   chan_info *cp;
   cp = (chan_info *)get_user_data(G_OBJECT(adj));
   if (cp->active)
-    {
-      START_JUST_TIME(cp);
-      sy_changed(1.0 - adj->value, cp);
-      END_JUST_TIME(cp);
-    }
+    sy_changed(1.0 - adj->value, cp);
 }
 
 static void sx_valuechanged_callback(GtkAdjustment *adj, gpointer context)
@@ -242,11 +235,7 @@ static void sx_valuechanged_callback(GtkAdjustment *adj, gpointer context)
   chan_info *cp;
   cp = (chan_info *)get_user_data(G_OBJECT(adj));
   if (cp->active)
-    {
-      START_JUST_TIME(cp);
-      sx_changed(adj->value, cp);
-      END_JUST_TIME(cp);
-    }
+    sx_changed(adj->value, cp);
 }
 
 static void zy_valuechanged_callback(GtkAdjustment *adj, gpointer context)
@@ -254,11 +243,7 @@ static void zy_valuechanged_callback(GtkAdjustment *adj, gpointer context)
   chan_info *cp;
   cp = (chan_info *)get_user_data(G_OBJECT(adj));
   if (cp->active)
-    {
-      START_JUST_TIME(cp);
-      zy_changed(1.0 - adj->value, cp);
-      END_JUST_TIME(cp);
-    }
+    zy_changed(1.0 - adj->value, cp);
 }
 
 static void zx_valuechanged_callback(GtkAdjustment *adj, gpointer context)
@@ -266,11 +251,7 @@ static void zx_valuechanged_callback(GtkAdjustment *adj, gpointer context)
   chan_info *cp;
   cp = (chan_info *)get_user_data(G_OBJECT(adj));
   if (cp->active)
-    {
-      START_JUST_TIME(cp);
-      zx_changed(adj->value, cp);
-      END_JUST_TIME(cp);
-    }
+    zx_changed(adj->value, cp);
 }
 
 static void gzy_valuechanged_callback(GtkAdjustment *adj, gpointer context)
@@ -278,11 +259,7 @@ static void gzy_valuechanged_callback(GtkAdjustment *adj, gpointer context)
   chan_info *cp;
   cp = (chan_info *)get_user_data(G_OBJECT(adj));
   if (cp->active)
-    {
-      START_JUST_TIME(cp);
-      gzy_changed(1.0 - adj->value, cp);
-      END_JUST_TIME(cp);
-    }
+    gzy_changed(1.0 - adj->value, cp);
 }
 
 static void gsy_valuechanged_callback(GtkAdjustment *adj, gpointer context)
@@ -290,11 +267,7 @@ static void gsy_valuechanged_callback(GtkAdjustment *adj, gpointer context)
   chan_info *cp;
   cp = (chan_info *)get_user_data(G_OBJECT(adj));
   if (cp->active)
-    {
-      START_JUST_TIME(cp);
-      gsy_changed(1.0 - adj->value, cp);
-      END_JUST_TIME(cp);
-    }
+    gsy_changed(1.0 - adj->value, cp);
 }
 
 static int last_f_state = 0;

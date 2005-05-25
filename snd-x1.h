@@ -305,7 +305,6 @@ void goto_window(Widget text);
 XtCallbackList make_callback_list(XtCallbackProc callback, XtPointer closure);
 void color_sashes(Widget w, void *ptr);
 void check_for_event(void);
-bool event_pending(void);
 void color_cursor(Pixel color);
 void color_marks(Pixel color);
 void color_selection(Pixel color);

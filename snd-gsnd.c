@@ -1,7 +1,5 @@
 #include "snd.h"
 
-/* TODO: transparent pixmaps */
-
 enum {W_pane, W_pane_box, W_control_panel,
       W_name_form, W_name, W_name_event, W_name_pix, W_info_label, W_info, W_info_sep,
       W_play, W_sync, W_unite,

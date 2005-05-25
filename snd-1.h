@@ -371,7 +371,7 @@ typedef struct snd_state {
   char *pending_change;
   print_choice_t print_choice;
   snd_apply_t apply_choice;
-  bool gl_has_double_buffer, just_time;
+  bool gl_has_double_buffer;
   bool stopped_explicitly, checking_explicitly;
   int reloading_updated_file;
   Latus init_window_width, init_window_height;

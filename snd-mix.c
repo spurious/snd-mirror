@@ -2408,7 +2408,6 @@ static void display_mix_waveform(chan_info *cp, mix_info *md, bool draw)
   if (sp)
     cur_srate = (double)SND_SRATE(sp);
   else cur_srate = (double)SND_SRATE(md->cp->sound);
-  if ((ss->just_time) && (event_pending())) return;
   j = prepare_mix_waveform(md, cs, ap, md->height, md->y, cur_srate, (bool)sp, &two_sided);
   if (j == 0) return;
   if ((draw) && (!(watch_mix_proc)))

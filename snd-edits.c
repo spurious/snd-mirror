@@ -7473,8 +7473,12 @@ the edit lists '((global-pos data-num local-pos local-end scaler rmp0 rmp1 type)
 #if HAVE_GUILE
 static XEN g_edit_fragment_type_name(XEN type)
 {
+  int typ;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(type), type, XEN_ONLY_ARG, "edit-fragment-type-name", "an int");
-  return(C_TO_XEN_STRING(type_info[XEN_TO_C_INT(type)].name));
+  typ = XEN_TO_C_INT(type);
+  if ((typ >= 0) && (typ < NUM_OPS))
+    return(C_TO_XEN_STRING(type_info[typ].name));
+  return(XEN_FALSE);
 }
 #endif
 

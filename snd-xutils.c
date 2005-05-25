@@ -303,15 +303,6 @@ void check_for_event(void)
   ss->checking_explicitly = false;
 }
 
-bool event_pending(void)
-{
-  XtInputMask msk = 0;
-  XtAppContext app;
-  app = MAIN_APP(ss);
-  msk = XtAppPending(app);
-  return((bool)(msk & XtIMXEvent));
-}
-
 void color_cursor(Pixel color)
 {
   state_context *sx;

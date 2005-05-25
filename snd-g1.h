@@ -342,7 +342,6 @@ void sg_left_justify_button(GtkWidget *button);
 void sg_left_justify_label(GtkWidget *label);
 void check_for_event(void);
 void force_update(GtkWidget *wid);
-bool event_pending(void);
 void set_title(const char *title);
 void goto_window(GtkWidget *text);
 void gc_set_foreground_xor(GdkGC *gc, GdkColor *col1, GdkColor *col2);

@@ -5,8 +5,6 @@ enum {W_top, W_form, W_main_window, W_edhist, W_wf_buttons, W_f, W_w, W_left_scr
 };
 #define NUM_CHAN_WIDGETS 16
 #define DEFAULT_EDIT_HISTORY_WIDTH 1
-#define START_JUST_TIME(cp) ss->just_time = true
-#define END_JUST_TIME(cp) ss->just_time = false
 
 Widget channel_main_pane(chan_info *cp)
 {
@@ -284,11 +282,7 @@ static void sy_drag_callback(Widget w, XtPointer context, XtPointer info)
   chan_info *cp = (chan_info *)(context);
   ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
   if (cp->active)
-    {
-      START_JUST_TIME(cp);
-      sy_changed(((XmScrollBarCallbackStruct *)info)->value, cp);
-      END_JUST_TIME(cp);
-    }
+    sy_changed(((XmScrollBarCallbackStruct *)info)->value, cp);
 }
 
 static void sy_valuechanged_callback(Widget w, XtPointer context, XtPointer info) 
@@ -304,11 +298,7 @@ static void sx_drag_callback(Widget w, XtPointer context, XtPointer info)
   chan_info *cp = (chan_info *)(context);
   ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
   if (cp->active)
-    {
-      START_JUST_TIME(cp);
-      sx_changed(((XmScrollBarCallbackStruct *)info)->value, cp);
-      END_JUST_TIME(cp);
-    }
+    sx_changed(((XmScrollBarCallbackStruct *)info)->value, cp);
 }
 
 static void sx_valuechanged_callback(Widget w, XtPointer context, XtPointer info) 
@@ -340,11 +330,7 @@ static void zy_drag_callback(Widget w, XtPointer context, XtPointer info)
   chan_info *cp = (chan_info *)(context);
   ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
   if (cp->active)
-    {
-      START_JUST_TIME(cp);
-      zy_changed(((XmScrollBarCallbackStruct *)info)->value, cp);
-      END_JUST_TIME(cp);
-    }
+    zy_changed(((XmScrollBarCallbackStruct *)info)->value, cp);
 }
 
 static void zy_valuechanged_callback(Widget w, XtPointer context, XtPointer info) 
@@ -360,11 +346,7 @@ static void zx_drag_callback(Widget w, XtPointer context, XtPointer info)
   chan_info *cp = (chan_info *)(context);
   ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
   if (cp->active)
-    {
-      START_JUST_TIME(cp);
-      zx_changed(((XmScrollBarCallbackStruct *)info)->value, cp);
-      END_JUST_TIME(cp);
-    }
+    zx_changed(((XmScrollBarCallbackStruct *)info)->value, cp);
 }
 
 static void zx_valuechanged_callback(Widget w, XtPointer context, XtPointer info) 
@@ -380,11 +362,7 @@ static void gzy_drag_callback(Widget w, XtPointer context, XtPointer info)
   chan_info *cp = (chan_info *)(context);
   ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
   if (cp->active)
-    {
-      START_JUST_TIME(cp);
-      gzy_changed(((XmScrollBarCallbackStruct *)info)->value, cp);
-      END_JUST_TIME(cp);
-    }
+    gzy_changed(((XmScrollBarCallbackStruct *)info)->value, cp);
 }
 
 static void gzy_valuechanged_callback(Widget w, XtPointer context, XtPointer info) 
@@ -400,11 +378,7 @@ static void gsy_drag_callback(Widget w, XtPointer context, XtPointer info)
   chan_info *cp = (chan_info *)(context);
   ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
   if (cp->active)
-    {
-      START_JUST_TIME(cp);
-      gsy_changed(((XmScrollBarCallbackStruct *)info)->value, cp);
-      END_JUST_TIME(cp);
-    }
+    gsy_changed(((XmScrollBarCallbackStruct *)info)->value, cp);
 }
 
 static void gsy_valuechanged_callback(Widget w, XtPointer context, XtPointer info) 

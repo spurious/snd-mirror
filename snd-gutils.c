@@ -255,11 +255,6 @@ void force_update(GtkWidget *wid)
   gdk_window_process_updates(GDK_WINDOW((GTK_WIDGET(wid))->window), true);
 }
 
-bool event_pending(void)
-{
-  return((bool)gtk_events_pending());
-}
-
 void set_title(const char *title)
 {
 #ifndef SND_AS_WIDGET

@@ -36,6 +36,7 @@
 ;;; with-minmax-button adds an open/close button to each sound pane
 ;;; set-root-window-color
 ;;; notebook-with-top-tabs (for Xemacs-like list of open files across the top of the window)
+;;; create-audit-dialog
 
 (use-modules (ice-9 common-list) (ice-9 format))
 (provide 'snd-snd-motif.scm)
@@ -3007,3 +3008,105 @@ Reverb-feedback sets the scaler on the feedback.
 					 (sound-data-set! data 0 k (ssb-expand)))
 				       (mus-audio-write audio-fd data frames)))))))))))))
   (XtManageChild ssb-dialog))
+
+
+;;; -------- create-audit-dialog --------
+;;;
+;;; amp + freq sliders up to 20KHz
+
+(define audit-dialog #f)
+
+(define (create-audit-dialog)
+  (if (not (Widget? audit-dialog))
+      (let ((xdismiss (XmStringCreate "Dismiss" XmFONTLIST_DEFAULT_TAG))
+	    (xhelp (XmStringCreate "Help" XmFONTLIST_DEFAULT_TAG))
+	    (titlestr (XmStringCreate "Hear Anything Yet?" XmFONTLIST_DEFAULT_TAG))
+	    (running #f))
+	(set! audit-dialog 
+	      (XmCreateTemplateDialog (cadr (main-widgets)) "audit"
+                (list XmNcancelLabelString   xdismiss
+		      XmNhelpLabelString     xhelp
+		      XmNautoUnmanage        #f
+		      XmNdialogTitle         titlestr
+		      XmNresizePolicy        XmRESIZE_GROW
+	              XmNnoResize            #f
+		      XmNbackground          (basic-color)
+		      XmNwidth               400
+		      XmNtransient           #f) ))
+	(XtAddCallback audit-dialog 
+		       XmNcancelCallback (lambda (w context info)
+					   (if running (set! running #f))
+					   (XtUnmanageChild audit-dialog)))
+	(XtAddCallback audit-dialog XmNhelpCallback (lambda (w context info) (snd-print "set 'play' and move the sliders!")))
+	(XmStringFree xhelp)
+	(XmStringFree xdismiss)
+	(XmStringFree titlestr)
+	(set! (mus-srate) 44100)
+	
+	(let* ((frequency 440.0)
+	       (amplitude 0.1)
+	       (carrier (make-oscil frequency)))
+	  (letrec ((v (lambda ()
+			(* amplitude
+			   (oscil carrier)))))
+	    (let* ((mainform 
+		    (XtCreateManagedWidget "formd" xmRowColumnWidgetClass audit-dialog
+					   (list XmNleftAttachment      XmATTACH_FORM
+						 XmNrightAttachment     XmATTACH_FORM
+						 XmNtopAttachment       XmATTACH_FORM
+						 XmNbottomAttachment    XmATTACH_WIDGET
+						 XmNbottomWidget        (XmMessageBoxGetChild audit-dialog XmDIALOG_SEPARATOR)
+						 XmNbackground          (basic-color)
+						 XmNorientation         XmVERTICAL)))
+		   (button 
+		    (XtCreateManagedWidget "play" xmToggleButtonWidgetClass mainform
+					   (list XmNbackground  (basic-color))))
+		   (ampstr (XmStringCreate "amp" XmFONTLIST_DEFAULT_TAG))
+		   (amp-scale
+		    (XtCreateManagedWidget "amp" xmScaleWidgetClass mainform
+					   (list XmNorientation XmHORIZONTAL
+						 XmNshowValue   #t
+						 XmNbackground  (basic-color)
+						 XmNvalue       (inexact->exact (floor (* amplitude 100)))
+						 XmNmaximum     100
+						 XmNtitleString ampstr
+						 XmNdecimalPoints 2)))
+		   (freqstr (XmStringCreate "freq" XmFONTLIST_DEFAULT_TAG))
+		   (freq-scale
+		    (XtCreateManagedWidget "freq" xmScaleWidgetClass mainform
+					   (list XmNorientation XmHORIZONTAL
+						 XmNshowValue   #t
+						 XmNbackground  (basic-color)
+						 XmNvalue       (inexact->exact frequency)
+						 XmNmaximum     20000
+						 XmNtitleString freqstr
+						 XmNdecimalPoints 0))))
+	      (XmStringFree ampstr)
+	      (XmStringFree freqstr)
+	      (XtAddCallback amp-scale XmNvalueChangedCallback (lambda (w context info) (set! amplitude (* .01 (.value info)))))
+	      (XtAddCallback amp-scale XmNdragCallback (lambda (w context info) (set! amplitude (* .01 (.value info)))))
+	      (XtAddCallback freq-scale XmNvalueChangedCallback (lambda (w context info) (set! (mus-frequency carrier) (.value info))))
+	      (XtAddCallback freq-scale XmNdragCallback (lambda (w context info) (set! (mus-frequency carrier) (.value info))))
+	      (XtAddCallback button XmNvalueChangedCallback 
+			     (lambda (w context info)
+			       (if running
+				   (set! running #f)
+				   (let* ((audio-info (open-play-output 1 44100 #f 256))
+					  (audio-fd (car audio-info))
+					  (outchans (cadr audio-info))
+					  (frames (caddr audio-info))
+					  (data (make-sound-data outchans frames)))
+				     (if (not (= audio-fd -1))
+					 (begin
+					   (set! running #t)
+					   (do ()
+					       ((or (c-g?) (not running))
+						(begin
+						  (set! running #f)
+						  (mus-audio-close audio-fd)))
+					     (do ((k 0 (1+ k)))
+						 ((= k frames))
+					       (sound-data-set! data 0 k (v)))
+					     (mus-audio-write audio-fd data frames)))))))))))))
+  (XtManageChild audit-dialog))
+

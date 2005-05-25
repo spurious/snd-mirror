@@ -333,7 +333,6 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
   ss->print_choice = PRINT_SND;
   ss->graph_hook_active = false;
   ss->lisp_graph_hook_active = false;
-  ss->just_time = false;
   ss->error_lock = false;
   ss->exiting = false;
   ss->just_sounds_state = false;
