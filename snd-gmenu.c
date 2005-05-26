@@ -30,7 +30,7 @@ enum {menu_menu,
           v_color_menu, v_orientation_menu, 
           v_files_menu, v_mix_dialog_menu, v_track_dialog_menu,
           v_x_axis_menu, v_x_axis_cascade_menu,
-            v_x_axis_seconds_menu, v_x_axis_samples_menu, v_x_axis_percentage_menu, v_x_axis_beats_menu,
+      v_x_axis_seconds_menu, v_x_axis_samples_menu, v_x_axis_percentage_menu, v_x_axis_beats_menu, v_x_axis_measures_menu,
           v_error_history_menu,
           v_sep2_menu
 };
@@ -81,6 +81,7 @@ GtkWidget *view_listener_menu(void) {return(mw[v_listener_menu]);}
 GtkWidget *view_cursor_menu(void) {return(mw[v_cursor_menu]);}
 GtkWidget *view_x_axis_seconds_menu(void) {return(mw[v_x_axis_seconds_menu]);}
 GtkWidget *view_x_axis_beats_menu(void) {return(mw[v_x_axis_beats_menu]);}
+GtkWidget *view_x_axis_measures_menu(void) {return(mw[v_x_axis_measures_menu]);}
 GtkWidget *view_x_axis_samples_menu(void) {return(mw[v_x_axis_samples_menu]);}
 GtkWidget *view_x_axis_percentage_menu(void) {return(mw[v_x_axis_percentage_menu]);}
 
@@ -205,6 +206,7 @@ static void options_focus_middle_callback(GtkWidget *w, gpointer info, gpointer 
 static void options_focus_active_callback(GtkWidget *w, gpointer info, gpointer Data) {activate_focus_menu(ZOOM_FOCUS_ACTIVE);}
 static void options_x_axis_seconds_callback(GtkWidget *w, gpointer info) {set_x_axis_style(X_AXIS_IN_SECONDS);}
 static void options_x_axis_beats_callback(GtkWidget *w, gpointer info) {set_x_axis_style(X_AXIS_IN_BEATS);}
+static void options_x_axis_measures_callback(GtkWidget *w, gpointer info) {set_x_axis_style(X_AXIS_IN_MEASURES);}
 static void options_x_axis_samples_callback(GtkWidget *w, gpointer info) {set_x_axis_style(X_AXIS_IN_SAMPLES);}
 static void options_x_axis_percentage_callback(GtkWidget *w, gpointer info) {set_x_axis_style(X_AXIS_AS_PERCENTAGE);}
 #if HAVE_EXTENSION_LANGUAGE
@@ -519,7 +521,7 @@ GtkWidget *add_menu(void)
   ml[v_sep2_menu] = NULL;
   gtk_menu_shell_append(GTK_MENU_SHELL(mw[v_cascade_menu]), mw[v_sep2_menu]);
   gtk_widget_show(mw[v_sep2_menu]);
-  gtk_widget_modify_bg(mw[v_sep2_menu], GTK_STATE_NORMAL, (ss->sgx)->black);
+  gtk_widget_modify_bg(mw[v_sep2_menu], GTK_STATE_NORMAL, ss->sgx->black);
 
 
   mw[v_graph_style_menu] = gtk_menu_item_new_with_label(_("Graph style"));
@@ -643,6 +645,12 @@ GtkWidget *add_menu(void)
   gtk_menu_shell_append(GTK_MENU_SHELL(mw[v_x_axis_cascade_menu]), mw[v_x_axis_beats_menu]);
   gtk_widget_show(mw[v_x_axis_beats_menu]);
   SG_SIGNAL_CONNECT(mw[v_x_axis_beats_menu], "activate", options_x_axis_beats_callback, NULL);
+
+  mw[v_x_axis_measures_menu] = gtk_menu_item_new_with_label(_("measures"));
+  ml[v_x_axis_measures_menu] = _("measures");
+  gtk_menu_shell_append(GTK_MENU_SHELL(mw[v_x_axis_cascade_menu]), mw[v_x_axis_measures_menu]);
+  gtk_widget_show(mw[v_x_axis_measures_menu]);
+  SG_SIGNAL_CONNECT(mw[v_x_axis_measures_menu], "activate", options_x_axis_measures_callback, NULL);
 
   mw[v_error_history_menu] = gtk_menu_item_new_with_label(_("Error History"));
   ml[v_error_history_menu] = _("Error History");

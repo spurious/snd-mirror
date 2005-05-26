@@ -1071,6 +1071,7 @@ static void copy_chan_info(chan_info *ncp, chan_info *ocp)
   ncp->min_dB = ocp->min_dB;
   ncp->fft_window_beta = ocp->fft_window_beta;
   ncp->beats_per_minute = ocp->beats_per_minute;
+  ncp->beats_per_measure = ocp->beats_per_measure;
   ncp->show_y_zero = ocp->show_y_zero;
   ncp->show_grid = ocp->show_grid;
   ncp->grid_density = ocp->grid_density;

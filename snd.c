@@ -190,6 +190,7 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
   ss->Ask_Before_Overwrite = DEFAULT_ASK_BEFORE_OVERWRITE;
   ss->X_Axis_Style = DEFAULT_X_AXIS_STYLE;
   ss->Beats_Per_Minute = DEFAULT_BEATS_PER_MINUTE;
+  ss->Beats_Per_Measure = DEFAULT_BEATS_PER_MEASURE;
   ss->Time_Graph_Type = DEFAULT_TIME_GRAPH_TYPE;
   ss->Wavo_Hop = DEFAULT_WAVO_HOP;
   ss->Wavo_Trace = DEFAULT_WAVO_TRACE;

@@ -102,6 +102,7 @@ int view_listener_menu(void) {return(0);}
 int view_cursor_menu(void) {return(0);}
 int view_x_axis_seconds_menu(void) {return(0);}
 int view_x_axis_beats_menu(void) {return(0);}
+int view_x_axis_measures_menu(void) {return(0);}
 int view_x_axis_samples_menu(void) {return(0);}
 int view_x_axis_percentage_menu(void) {return(0);}
 int options_save_state_menu(void) {return(0);}

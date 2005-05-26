@@ -153,6 +153,7 @@ Widget view_listener_menu(void);
 Widget view_cursor_menu(void);
 Widget view_x_axis_seconds_menu(void);
 Widget view_x_axis_beats_menu(void);
+Widget view_x_axis_measures_menu(void);
 Widget view_x_axis_samples_menu(void);
 Widget view_x_axis_percentage_menu(void);
 Widget options_save_state_menu(void);

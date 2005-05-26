@@ -3,7 +3,6 @@
 #include "clm-strings.h"
 
 /* 
- * TODO: tick choice based on stuff like beats-in-measure (div 3 7) -> measure numbers (like smpte display?)
  * TODO: overlay of rms env
  * TODO: fill in two-sided with colormap choice based on rms of underlying pixels (same for line graph?) -- would want peak-env style support
  *
@@ -98,6 +97,22 @@ static void set_beats_per_minute(Float val)
       chans_field(FCP_BEATS, val);
       if (!(ss->graph_hook_active)) 
 	for_each_chan(update_graph);
+    }
+}
+
+static void chans_beats_per_measure(chan_info *cp, void *ptr) 
+{
+  cp->beats_per_measure = (*((int *)ptr)); 
+  update_graph(cp);
+}
+
+static void set_beats_per_measure(int val) 
+{
+  if (val > 0) 
+    {
+      if (val > 1000) val = 1000;
+      in_set_beats_per_measure(val); 
+      for_each_chan_1(chans_beats_per_measure, (void *)(&val));
     }
 }
 
@@ -492,10 +507,11 @@ void add_channel_data_1(chan_info *cp, int srate, off_t frames, channel_graph_t 
   y1 = 1.0;
   switch (cp->x_axis_style)
     {
-    case X_AXIS_IN_BEATS:      label = _("time (beats)");   break;
-    case X_AXIS_IN_SAMPLES:    label = _("time (samples)"); break;
-    case X_AXIS_AS_PERCENTAGE: label = _("time (percent)"); break;
-    default:                   label = _("time");           break;
+    case X_AXIS_IN_BEATS:      label = _("time (beats)");    break;
+    case X_AXIS_IN_MEASURES:   label = _("time (measures)"); break;
+    case X_AXIS_IN_SAMPLES:    label = _("time (samples)");  break;
+    case X_AXIS_AS_PERCENTAGE: label = _("time (percent)");  break;
+    default:                   label = _("time");            break;
     }
   dur = (double)frames / (double)(srate);
   cp->edit_size = INITIAL_EDIT_SIZE;
@@ -4499,7 +4515,7 @@ typedef enum {CP_GRAPH_TRANSFORM_P, CP_GRAPH_TIME_P, CP_FRAMES, CP_CURSOR, CP_GR
 	      CP_MIN_DB, CP_SPECTRO_X_ANGLE, CP_SPECTRO_Y_ANGLE, CP_SPECTRO_Z_ANGLE, CP_SPECTRO_X_SCALE, CP_SPECTRO_Y_SCALE, CP_SPECTRO_Z_SCALE,
 	      CP_SPECTRO_CUTOFF, CP_SPECTRO_START, CP_FFT_WINDOW_BETA, CP_AP_SX, CP_AP_SY, CP_AP_ZX, CP_AP_ZY, CP_MAXAMP, CP_EDPOS_MAXAMP,
 	      CP_BEATS_PER_MINUTE, CP_EDPOS_CURSOR, CP_SHOW_GRID, CP_SHOW_SONOGRAM_CURSOR, CP_GRID_DENSITY, CP_MAXAMP_POSITION,
-	      CP_EDPOS_MAXAMP_POSITION
+	      CP_EDPOS_MAXAMP_POSITION, CP_BEATS_PER_MEASURE
 } cp_field_t;
 
 #define EDPOS_NOT_PROTECTED -1
@@ -4667,6 +4683,7 @@ static XEN channel_get(XEN snd_n, XEN chn_n, cp_field_t fld, char *caller)
 	    case CP_SPECTRO_START:    return(C_TO_XEN_DOUBLE(cp->spectro_start));          break;
 	    case CP_FFT_WINDOW_BETA:  return(C_TO_XEN_DOUBLE(cp->fft_window_beta));        break;
 	    case CP_BEATS_PER_MINUTE: return(C_TO_XEN_DOUBLE(cp->beats_per_minute));       break;
+	    case CP_BEATS_PER_MEASURE: return(C_TO_XEN_INT(cp->beats_per_measure));        break;
 	    case CP_MAXAMP:           return(C_TO_XEN_DOUBLE(channel_maxamp(cp, AT_CURRENT_EDIT_POSITION))); break;
 	    case CP_EDPOS_MAXAMP:     return(C_TO_XEN_DOUBLE(channel_maxamp(cp, to_c_edit_position(cp, cp_edpos, S_maxamp, 3)))); break;
 	    case CP_MAXAMP_POSITION:  return(C_TO_XEN_OFF_T(channel_maxamp_position(cp, AT_CURRENT_EDIT_POSITION))); break;
@@ -5082,6 +5099,11 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, cp_field_t fld, char *calle
 	  update_graph(cp);
 	}
       break;
+    case CP_BEATS_PER_MEASURE:
+      cp->beats_per_measure = XEN_TO_C_INT(on);
+      update_graph(cp);
+      return(on);
+      break;
     default:
       break;
     }
@@ -5302,11 +5324,8 @@ static XEN g_set_cursor_size(XEN on, XEN snd_n, XEN chn_n)
   XEN_ASSERT_TYPE(XEN_INTEGER_P(on), on, XEN_ARG_1, S_setB S_cursor_size, "an integer");
   if (XEN_BOUND_P(snd_n))
     return(channel_set(snd_n, chn_n, on, CP_CURSOR_SIZE, S_setB S_cursor_size));
-  else
-    {
-      set_cursor_size(XEN_TO_C_INT_OR_ELSE(on, DEFAULT_CURSOR_SIZE));
-      return(C_TO_XEN_INT(cursor_size(ss)));
-    }
+  set_cursor_size(XEN_TO_C_INT_OR_ELSE(on, DEFAULT_CURSOR_SIZE));
+  return(C_TO_XEN_INT(cursor_size(ss)));
 }
 
 WITH_REVERSED_CHANNEL_ARGS(g_set_cursor_size_reversed, g_set_cursor_size)
@@ -5501,11 +5520,8 @@ static XEN g_set_show_y_zero(XEN on, XEN snd, XEN chn)
   XEN_ASSERT_TYPE(XEN_BOOLEAN_P(on), on, XEN_ARG_1, S_setB S_show_y_zero, "a boolean");
   if (XEN_BOUND_P(snd))
     return(channel_set(snd, chn, on, CP_SHOW_Y_ZERO, S_setB S_show_y_zero));
-  else
-    {
-      set_show_y_zero(XEN_TO_C_BOOLEAN(on));
-      return(C_TO_XEN_BOOLEAN(show_y_zero(ss)));
-    }
+  set_show_y_zero(XEN_TO_C_BOOLEAN(on));
+  return(C_TO_XEN_BOOLEAN(show_y_zero(ss)));
 }
 
 WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_show_y_zero_reversed, g_set_show_y_zero)
@@ -5523,11 +5539,8 @@ static XEN g_set_show_grid(XEN on, XEN snd, XEN chn)
   XEN_ASSERT_TYPE(XEN_BOOLEAN_P(on), on, XEN_ARG_1, S_setB S_show_grid, "a boolean");
   if (XEN_BOUND_P(snd))
     return(channel_set(snd, chn, on, CP_SHOW_GRID, S_setB S_show_grid));
-  else
-    {
-      set_show_grid((with_grid_t)(XEN_TO_C_BOOLEAN(on)));
-      return(C_TO_XEN_BOOLEAN((bool)show_grid(ss)));
-    }
+  set_show_grid((with_grid_t)(XEN_TO_C_BOOLEAN(on)));
+  return(C_TO_XEN_BOOLEAN((bool)show_grid(ss)));
 }
 
 WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_show_grid_reversed, g_set_show_grid)
@@ -5545,11 +5558,8 @@ static XEN g_set_grid_density(XEN on, XEN snd, XEN chn)
   XEN_ASSERT_TYPE(XEN_NUMBER_P(on), on, XEN_ARG_1, S_setB S_grid_density, "a number");
   if (XEN_BOUND_P(snd))
     return(channel_set(snd, chn, on, CP_GRID_DENSITY, S_setB S_grid_density));
-  else
-    {
-      set_grid_density(XEN_TO_C_DOUBLE(on));
-      return(C_TO_XEN_DOUBLE(grid_density(ss)));
-    }
+  set_grid_density(XEN_TO_C_DOUBLE(on));
+  return(C_TO_XEN_DOUBLE(grid_density(ss)));
 }
 
 WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_grid_density_reversed, g_set_grid_density)
@@ -5567,11 +5577,8 @@ static XEN g_set_show_sonogram_cursor(XEN on, XEN snd, XEN chn)
   XEN_ASSERT_TYPE(XEN_BOOLEAN_P(on), on, XEN_ARG_1, S_setB S_show_sonogram_cursor, "a boolean");
   if (XEN_BOUND_P(snd))
     return(channel_set(snd, chn, on, CP_SHOW_SONOGRAM_CURSOR, S_setB S_show_sonogram_cursor));
-  else
-    {
-      set_show_sonogram_cursor(XEN_TO_C_BOOLEAN(on));
-      return(C_TO_XEN_BOOLEAN(show_sonogram_cursor(ss)));
-    }
+  set_show_sonogram_cursor(XEN_TO_C_BOOLEAN(on));
+  return(C_TO_XEN_BOOLEAN(show_sonogram_cursor(ss)));
 }
 
 WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_show_sonogram_cursor_reversed, g_set_show_sonogram_cursor)
@@ -5649,11 +5656,8 @@ static XEN g_set_fft_window_beta(XEN val, XEN snd, XEN chn)
     XEN_OUT_OF_RANGE_ERROR(S_setB S_fft_window_beta, 1, val, "~A, must be between 0.0 and 1.0");
   if (XEN_BOUND_P(snd))
     return(channel_set(snd, chn, val, CP_FFT_WINDOW_BETA, S_setB S_fft_window_beta));
-  else
-    {
-      set_fft_window_beta(beta);
-      return(C_TO_XEN_DOUBLE(fft_window_beta(ss)));
-    }
+  set_fft_window_beta(beta);
+  return(C_TO_XEN_DOUBLE(fft_window_beta(ss)));
 }
 
 WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_fft_window_beta_reversed, g_set_fft_window_beta)
@@ -5675,11 +5679,8 @@ static XEN g_set_spectro_cutoff(XEN val, XEN snd, XEN chn)
     XEN_OUT_OF_RANGE_ERROR(S_setB S_spectro_cutoff, 1, val, "~A, must be between 0.0 and 1.0");
   if (XEN_BOUND_P(snd))
     return(channel_set(snd, chn, val, CP_SPECTRO_CUTOFF, S_setB S_spectro_cutoff));
-  else
-    {
-      set_spectro_cutoff(cutoff);
-      return(C_TO_XEN_DOUBLE(spectro_cutoff(ss)));
-    }
+  set_spectro_cutoff(cutoff);
+  return(C_TO_XEN_DOUBLE(spectro_cutoff(ss)));
 }
 
 WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_spectro_cutoff_reversed, g_set_spectro_cutoff)
@@ -5701,11 +5702,8 @@ static XEN g_set_spectro_start(XEN val, XEN snd, XEN chn)
     XEN_OUT_OF_RANGE_ERROR(S_setB S_spectro_start, 1, val, "~A, must be between 0.0 and 1.0");
   if (XEN_BOUND_P(snd))
     return(channel_set(snd, chn, val, CP_SPECTRO_START, S_setB S_spectro_start));
-  else
-    {
-      set_spectro_start(start);
-      return(C_TO_XEN_DOUBLE(spectro_start(ss)));
-    }
+  set_spectro_start(start);
+  return(C_TO_XEN_DOUBLE(spectro_start(ss)));
 }
 
 WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_spectro_start_reversed, g_set_spectro_start)
@@ -5723,11 +5721,8 @@ static XEN g_set_spectro_x_angle(XEN val, XEN snd, XEN chn)
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_1, S_setB S_spectro_x_angle, "a number"); 
   if (XEN_BOUND_P(snd))
     return(channel_set(snd, chn, val, CP_SPECTRO_X_ANGLE, S_setB S_spectro_x_angle));
-  else
-    {
-      set_spectro_x_angle(mus_fclamp(MIN_SPECTRO_ANGLE, XEN_TO_C_DOUBLE(val), MAX_SPECTRO_ANGLE));
-      return(C_TO_XEN_DOUBLE(spectro_x_angle(ss)));
-    }
+  set_spectro_x_angle(mus_fclamp(MIN_SPECTRO_ANGLE, XEN_TO_C_DOUBLE(val), MAX_SPECTRO_ANGLE));
+  return(C_TO_XEN_DOUBLE(spectro_x_angle(ss)));
 }
 
 WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_spectro_x_angle_reversed, g_set_spectro_x_angle)
@@ -5745,11 +5740,8 @@ static XEN g_set_spectro_x_scale(XEN val, XEN snd, XEN chn)
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_1, S_setB S_spectro_x_scale, "a number"); 
   if (XEN_BOUND_P(snd))
     return(channel_set(snd, chn, val, CP_SPECTRO_X_SCALE, S_setB S_spectro_x_scale));
-  else
-    {
-      set_spectro_x_scale(mus_fclamp(0.0, XEN_TO_C_DOUBLE(val), MAX_SPECTRO_SCALE));
-      return(C_TO_XEN_DOUBLE(spectro_x_scale(ss)));
-    }
+  set_spectro_x_scale(mus_fclamp(0.0, XEN_TO_C_DOUBLE(val), MAX_SPECTRO_SCALE));
+  return(C_TO_XEN_DOUBLE(spectro_x_scale(ss)));
 }
 
 WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_spectro_x_scale_reversed, g_set_spectro_x_scale)
@@ -5767,11 +5759,8 @@ static XEN g_set_spectro_y_angle(XEN val, XEN snd, XEN chn)
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_1, S_setB S_spectro_y_angle, "a number"); 
   if (XEN_BOUND_P(snd))
     return(channel_set(snd, chn, val, CP_SPECTRO_Y_ANGLE, S_setB S_spectro_y_angle));
-  else
-    {
-      set_spectro_y_angle(mus_fclamp(MIN_SPECTRO_ANGLE, XEN_TO_C_DOUBLE(val), MAX_SPECTRO_ANGLE));
-      return(C_TO_XEN_DOUBLE(spectro_y_angle(ss)));
-    }
+  set_spectro_y_angle(mus_fclamp(MIN_SPECTRO_ANGLE, XEN_TO_C_DOUBLE(val), MAX_SPECTRO_ANGLE));
+  return(C_TO_XEN_DOUBLE(spectro_y_angle(ss)));
 }
 
 WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_spectro_y_angle_reversed, g_set_spectro_y_angle)
@@ -5789,11 +5778,8 @@ static XEN g_set_spectro_y_scale(XEN val, XEN snd, XEN chn)
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_1, S_setB S_spectro_y_scale, "a number"); 
   if (XEN_BOUND_P(snd))
     return(channel_set(snd, chn, val, CP_SPECTRO_Y_SCALE, S_setB S_spectro_y_scale));
-  else
-    {
-      set_spectro_y_scale(mus_fclamp(0.0, XEN_TO_C_DOUBLE(val), MAX_SPECTRO_SCALE));
-      return(C_TO_XEN_DOUBLE(spectro_y_scale(ss)));
-    }
+  set_spectro_y_scale(mus_fclamp(0.0, XEN_TO_C_DOUBLE(val), MAX_SPECTRO_SCALE));
+  return(C_TO_XEN_DOUBLE(spectro_y_scale(ss)));
 }
 
 WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_spectro_y_scale_reversed, g_set_spectro_y_scale)
@@ -5811,11 +5797,8 @@ static XEN g_set_spectro_z_angle(XEN val, XEN snd, XEN chn)
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_1, S_setB S_spectro_z_angle, "a number"); 
   if (XEN_BOUND_P(snd))
     return(channel_set(snd, chn, val, CP_SPECTRO_Z_ANGLE, S_setB S_spectro_z_angle));
-  else
-    {
-      set_spectro_z_angle(mus_fclamp(MIN_SPECTRO_ANGLE, XEN_TO_C_DOUBLE(val), MAX_SPECTRO_ANGLE));
-      return(C_TO_XEN_DOUBLE(spectro_z_angle(ss)));
-    }
+  set_spectro_z_angle(mus_fclamp(MIN_SPECTRO_ANGLE, XEN_TO_C_DOUBLE(val), MAX_SPECTRO_ANGLE));
+  return(C_TO_XEN_DOUBLE(spectro_z_angle(ss)));
 }
 
 WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_spectro_z_angle_reversed, g_set_spectro_z_angle)
@@ -5833,11 +5816,8 @@ static XEN g_set_spectro_z_scale(XEN val, XEN snd, XEN chn)
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_1, S_setB S_spectro_z_scale, "a number"); 
   if (XEN_BOUND_P(snd))
     return(channel_set(snd, chn, val, CP_SPECTRO_Z_SCALE, S_setB S_spectro_z_scale));
-  else
-    {
-      set_spectro_z_scale(mus_fclamp(0.0, XEN_TO_C_DOUBLE(val), MAX_SPECTRO_SCALE));
-      return(C_TO_XEN_DOUBLE(spectro_z_scale(ss)));
-    }
+  set_spectro_z_scale(mus_fclamp(0.0, XEN_TO_C_DOUBLE(val), MAX_SPECTRO_SCALE));
+  return(C_TO_XEN_DOUBLE(spectro_z_scale(ss)));
 }
 
 WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_spectro_z_scale_reversed, g_set_spectro_z_scale)
@@ -5855,11 +5835,8 @@ static XEN g_set_spectro_hop(XEN val, XEN snd, XEN chn)
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_1, S_setB S_spectro_hop, "a number"); 
   if (XEN_BOUND_P(snd))
     return(channel_set(snd, chn, val, CP_SPECTRO_HOP, S_setB S_spectro_hop));
-  else
-    {
-      set_spectro_hop(XEN_TO_C_INT_OR_ELSE(val, 0));
-      return(C_TO_XEN_INT(spectro_hop(ss)));
-    }
+  set_spectro_hop(XEN_TO_C_INT_OR_ELSE(val, 0));
+  return(C_TO_XEN_INT(spectro_hop(ss)));
 }
 
 WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_spectro_hop_reversed, g_set_spectro_hop)
@@ -5878,11 +5855,8 @@ static XEN g_set_show_marks(XEN on, XEN snd, XEN chn)
   XEN_ASSERT_TYPE(XEN_BOOLEAN_P(on), on, XEN_ARG_1, S_setB S_show_marks, "a boolean");
   if (XEN_BOUND_P(snd))
     return(channel_set(snd, chn, on, CP_SHOW_MARKS, S_setB S_show_marks));
-  else
-    {
-      set_show_marks(XEN_TO_C_BOOLEAN(on));
-      return(C_TO_XEN_BOOLEAN(show_marks(ss)));
-    }
+  set_show_marks(XEN_TO_C_BOOLEAN(on));
+  return(C_TO_XEN_BOOLEAN(show_marks(ss)));
 }
 
 WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_show_marks_reversed, g_set_show_marks)
@@ -5900,11 +5874,8 @@ static XEN g_set_show_transform_peaks(XEN val, XEN snd, XEN chn)
   XEN_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, XEN_ARG_1, S_setB S_show_transform_peaks, "a boolean");
   if (XEN_BOUND_P(snd))
     return(channel_set(snd, chn, val, CP_SHOW_TRANSFORM_PEAKS, S_setB S_show_transform_peaks));
-  else
-    {
-      set_show_transform_peaks(XEN_TO_C_BOOLEAN(val));
-      return(C_TO_XEN_BOOLEAN(show_transform_peaks(ss)));
-    }
+  set_show_transform_peaks(XEN_TO_C_BOOLEAN(val));
+  return(C_TO_XEN_BOOLEAN(show_transform_peaks(ss)));
 }
 
 WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_show_transform_peaks_reversed, g_set_show_transform_peaks)
@@ -5922,11 +5893,8 @@ static XEN g_set_zero_pad(XEN val, XEN snd, XEN chn)
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_1, S_setB S_zero_pad, "a number"); 
   if (XEN_BOUND_P(snd))
     return(channel_set(snd, chn, val, CP_ZERO_PAD, S_setB S_zero_pad));
-  else
-    {
-      set_zero_pad(g_imin(0, val, DEFAULT_ZERO_PAD));
-      return(C_TO_XEN_INT(zero_pad(ss)));
-    }
+  set_zero_pad(g_imin(0, val, DEFAULT_ZERO_PAD));
+  return(C_TO_XEN_INT(zero_pad(ss)));
 }
 
 WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_zero_pad_reversed, g_set_zero_pad)
@@ -5948,11 +5916,8 @@ static XEN g_set_wavelet_type(XEN val, XEN snd, XEN chn)
     XEN_OUT_OF_RANGE_ERROR(S_setB S_wavelet_type, 1, val, "~A, unknown wavelet type");
   if (XEN_BOUND_P(snd))
     return(channel_set(snd, chn, val, CP_WAVELET_TYPE, S_setB S_wavelet_type));
-  else
-    {
-      set_wavelet_type(wave);
-      return(C_TO_XEN_INT(wavelet_type(ss)));
-    }
+  set_wavelet_type(wave);
+  return(C_TO_XEN_INT(wavelet_type(ss)));
 }
 
 WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_wavelet_type_reversed, g_set_wavelet_type)
@@ -5970,11 +5935,8 @@ static XEN g_set_fft_log_frequency(XEN on, XEN snd, XEN chn)
   XEN_ASSERT_TYPE(XEN_BOOLEAN_P(on), on, XEN_ARG_1, S_setB S_fft_log_frequency, "a boolean");
   if (XEN_BOUND_P(snd))
     return(channel_set(snd, chn, on, CP_FFT_LOG_FREQUENCY, S_setB S_fft_log_frequency));
-  else
-    {
-      set_fft_log_frequency(XEN_TO_C_BOOLEAN(on)); 
-      return(C_TO_XEN_BOOLEAN(fft_log_frequency(ss)));
-    }
+  set_fft_log_frequency(XEN_TO_C_BOOLEAN(on)); 
+  return(C_TO_XEN_BOOLEAN(fft_log_frequency(ss)));
 }
 
 WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_fft_log_frequency_reversed, g_set_fft_log_frequency)
@@ -5992,11 +5954,8 @@ static XEN g_set_fft_log_magnitude(XEN on, XEN snd, XEN chn)
   XEN_ASSERT_TYPE(XEN_BOOLEAN_P(on), on, XEN_ARG_1, S_setB S_fft_log_magnitude, "a boolean");
   if (XEN_BOUND_P(snd))
     return(channel_set(snd, chn, on, CP_FFT_LOG_MAGNITUDE, S_setB S_fft_log_magnitude));
-  else
-    {
-      set_fft_log_magnitude(XEN_TO_C_BOOLEAN(on)); 
-      return(C_TO_XEN_BOOLEAN(fft_log_magnitude(ss)));
-    }
+  set_fft_log_magnitude(XEN_TO_C_BOOLEAN(on)); 
+  return(C_TO_XEN_BOOLEAN(fft_log_magnitude(ss)));
 }
 
 WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_fft_log_magnitude_reversed, g_set_fft_log_magnitude)
@@ -6014,11 +5973,8 @@ static XEN g_set_show_mix_waveforms(XEN on, XEN snd, XEN chn)
   XEN_ASSERT_TYPE(XEN_BOOLEAN_P(on), on, XEN_ARG_1, S_setB S_show_mix_waveforms, "a boolean");
   if (XEN_BOUND_P(snd))
     return(channel_set(snd, chn, on, CP_SHOW_MIX_WAVEFORMS, S_setB S_show_mix_waveforms));
-  else
-    {
-      set_show_mix_waveforms(XEN_TO_C_BOOLEAN(on));
-      return(C_TO_XEN_BOOLEAN(show_mix_waveforms(ss)));
-    }
+  set_show_mix_waveforms(XEN_TO_C_BOOLEAN(on));
+  return(C_TO_XEN_BOOLEAN(show_mix_waveforms(ss)));
 }
 
 WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_show_mix_waveforms_reversed, g_set_show_mix_waveforms)
@@ -6036,11 +5992,8 @@ static XEN g_set_verbose_cursor(XEN on, XEN snd, XEN chn)
   XEN_ASSERT_TYPE(XEN_BOOLEAN_P(on), on, XEN_ARG_1, S_setB S_verbose_cursor, "a boolean");
   if (XEN_BOUND_P(snd))
     return(channel_set(snd, chn, on, CP_VERBOSE_CURSOR, S_setB S_verbose_cursor));
-  else
-    {
-      set_verbose_cursor(XEN_TO_C_BOOLEAN(on));
-      return(C_TO_XEN_BOOLEAN(verbose_cursor(ss)));
-    }
+  set_verbose_cursor(XEN_TO_C_BOOLEAN(on));
+  return(C_TO_XEN_BOOLEAN(verbose_cursor(ss)));
 }
 
 WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_verbose_cursor_reversed, g_set_verbose_cursor)
@@ -6064,11 +6017,8 @@ static XEN g_set_time_graph_type(XEN val, XEN snd, XEN chn)
     XEN_OUT_OF_RANGE_ERROR(S_setB S_time_graph_type, 1, val, "~A, must be " S_graph_once ", or " S_graph_as_wavogram);
   if (XEN_BOUND_P(snd))
     return(channel_set(snd, chn, val, CP_TIME_GRAPH_TYPE, S_setB S_time_graph_type));
-  else
-    {
-      set_time_graph_type(on);
-      return(C_TO_XEN_INT((int)time_graph_type(ss)));
-    }
+  set_time_graph_type(on);
+  return(C_TO_XEN_INT((int)time_graph_type(ss)));
 }
 
 WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_time_graph_type_reversed, g_set_time_graph_type)
@@ -6086,11 +6036,8 @@ static XEN g_set_wavo_hop(XEN val, XEN snd, XEN chn)
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_1, S_setB S_wavo_hop, "a number"); 
   if (XEN_BOUND_P(snd))
     return(channel_set(snd, chn, val, CP_WAVO_HOP, S_setB S_wavo_hop));
-  else
-    {
-      set_wavo_hop(XEN_TO_C_INT_OR_ELSE(val, 0));
-      return(C_TO_XEN_INT(wavo_hop(ss)));
-    }
+  set_wavo_hop(XEN_TO_C_INT_OR_ELSE(val, 0));
+  return(C_TO_XEN_INT(wavo_hop(ss)));
 }
 
 WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_wavo_hop_reversed, g_set_wavo_hop)
@@ -6108,11 +6055,8 @@ static XEN g_set_wavo_trace(XEN val, XEN snd, XEN chn)
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_1, S_setB S_wavo_trace, "a number"); 
   if (XEN_BOUND_P(snd))
     return(channel_set(snd, chn, val, CP_WAVO_TRACE, S_setB S_wavo_trace));
-  else
-    {
-      set_wavo_trace(XEN_TO_C_INT_OR_ELSE(val, 0));
-      return(C_TO_XEN_INT(wavo_trace(ss)));
-    }
+  set_wavo_trace(XEN_TO_C_INT_OR_ELSE(val, 0));
+  return(C_TO_XEN_INT(wavo_trace(ss)));
 }
 
 WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_wavo_trace_reversed, g_set_wavo_trace)
@@ -6135,11 +6079,8 @@ static XEN g_set_transform_size(XEN val, XEN snd, XEN chn)
   if (len <= 0) return(XEN_FALSE);
   if (XEN_BOUND_P(snd))
     return(channel_set(snd, chn, val, CP_TRANSFORM_SIZE, S_setB S_transform_size));
-  else
-    {
-      set_transform_size(len);
-      return(C_TO_XEN_INT(transform_size(ss)));
-    }
+  set_transform_size(len);
+  return(C_TO_XEN_INT(transform_size(ss)));
 }
 
 WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_transform_size_reversed, g_set_transform_size)
@@ -6162,11 +6103,8 @@ static XEN g_set_transform_graph_type(XEN val, XEN snd, XEN chn)
     XEN_OUT_OF_RANGE_ERROR(S_setB S_transform_graph_type, 1, val, "~A, but must be " S_graph_once ", " S_graph_as_sonogram ", or " S_graph_as_spectrogram);
   if (XEN_BOUND_P(snd))
     return(channel_set(snd, chn, val, CP_TRANSFORM_GRAPH_TYPE, S_setB S_transform_graph_type));
-  else
-    {
-      set_transform_graph_type(style);
-      return(C_TO_XEN_INT((int)transform_graph_type(ss)));
-    }
+  set_transform_graph_type(style);
+  return(C_TO_XEN_INT((int)transform_graph_type(ss)));
 }
 
 WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_transform_graph_type_reversed, g_set_transform_graph_type)
@@ -6194,11 +6132,8 @@ static XEN g_set_fft_window(XEN val, XEN snd, XEN chn)
     XEN_OUT_OF_RANGE_ERROR(S_setB S_fft_window, 1, val, "~A: unknown fft data window");
   if (XEN_BOUND_P(snd))
     return(channel_set(snd, chn, val, CP_FFT_WINDOW, S_setB S_fft_window));
-  else
-    {
-      set_fft_window(win);
-      return(C_TO_XEN_INT((int)fft_window(ss)));
-    }
+  set_fft_window(win);
+  return(C_TO_XEN_INT((int)fft_window(ss)));
 }
 
 WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_fft_window_reversed, g_set_fft_window)
@@ -6223,11 +6158,8 @@ static XEN g_set_transform_type(XEN val, XEN snd, XEN chn)
     XEN_OUT_OF_RANGE_ERROR(S_setB S_transform_type, 1, val, "~A: unknown transform type");
   if (XEN_BOUND_P(snd))
     return(channel_set(snd, chn, val, CP_TRANSFORM_TYPE, S_setB S_transform_type));
-  else
-    {
-      set_transform_type(type);
-      return(C_TO_XEN_INT(transform_type(ss)));
-    }
+  set_transform_type(type);
+  return(C_TO_XEN_INT(transform_type(ss)));
 }
 
 WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_transform_type_reversed, g_set_transform_type)
@@ -6253,11 +6185,8 @@ static XEN g_set_transform_normalization(XEN val, XEN snd, XEN chn)
 			   "~A, but must be " S_dont_normalize ", " S_normalize_by_channel ", " S_normalize_by_sound ", or " S_normalize_globally);
   if (XEN_BOUND_P(snd))
     return(channel_set(snd, chn, val, CP_TRANSFORM_NORMALIZATION, S_setB S_transform_normalization));
-  else
-    {
-      set_transform_normalization(norm);
-      return(C_TO_XEN_INT((int)transform_normalization(ss)));
-    }
+  set_transform_normalization(norm);
+  return(C_TO_XEN_INT((int)transform_normalization(ss)));
 }
 
 WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_transform_normalization_reversed, g_set_transform_normalization)
@@ -6401,11 +6330,8 @@ static XEN g_set_dot_size(XEN size, XEN snd, XEN chn)
   XEN_ASSERT_TYPE(XEN_NUMBER_P(size), size, XEN_ARG_1, S_setB S_dot_size, "a number"); 
   if (XEN_BOUND_P(snd))
     return(channel_set(snd, chn, size, CP_DOT_SIZE, S_setB S_dot_size));
-  else
-    {
-      set_dot_size(XEN_TO_C_INT_OR_ELSE(size, DEFAULT_DOT_SIZE));
-      return(C_TO_XEN_INT(dot_size(ss)));
-    }
+  set_dot_size(XEN_TO_C_INT_OR_ELSE(size, DEFAULT_DOT_SIZE));
+  return(C_TO_XEN_INT(dot_size(ss)));
 }
 
 WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_dot_size_reversed, g_set_dot_size)
@@ -6414,7 +6340,7 @@ static XEN g_x_axis_style(XEN snd, XEN chn)
 {
   #define H_x_axis_style "(" S_x_axis_style " (snd #f) (chn #f)) \
 The x axis labelling of the time domain waveform can be in seconds (" S_x_axis_in_seconds "), in samples (" S_x_axis_in_samples "), expressed as a \
-percentage of the overall duration (" S_x_axis_as_percentage "), or as a beat number (" S_x_axis_in_beats ")."
+percentage of the overall duration (" S_x_axis_as_percentage "), as a beat number (" S_x_axis_in_beats ", or as a measure number (" S_x_axis_in_measures ")."
 
   if (XEN_BOUND_P(snd))
     return(channel_get(snd, chn, CP_X_AXIS_STYLE, S_x_axis_style));
@@ -6426,17 +6352,14 @@ static XEN g_set_x_axis_style(XEN style, XEN snd, XEN chn)
   x_axis_style_t val;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(style), style, XEN_ARG_1, S_setB S_x_axis_style, "an integer"); 
   val = (x_axis_style_t)XEN_TO_C_INT(style);
-  if (val > X_AXIS_IN_BEATS)
+  if (val > X_AXIS_IN_MEASURES)
     XEN_OUT_OF_RANGE_ERROR(S_setB S_x_axis_style, 1, style, 
-			   "~A, but must be " S_x_axis_in_seconds ", " S_x_axis_in_samples ", " S_x_axis_as_percentage ", or " S_x_axis_in_beats);
+	"~A, but must be " S_x_axis_in_seconds ", " S_x_axis_in_samples ", " S_x_axis_as_percentage ", " S_x_axis_in_beats ", or " S_x_axis_in_measures ".");
   if (XEN_BOUND_P(snd))
     return(channel_set(snd, chn, style, CP_X_AXIS_STYLE, S_setB S_x_axis_style));
-  else
-    {
-      set_x_axis_style(val);
-      /* snd-menu.c -- maps over chans */
-      return(C_TO_XEN_INT((int)x_axis_style(ss)));
-    }
+  set_x_axis_style(val);
+  /* snd-menu.c -- maps over chans */
+  return(C_TO_XEN_INT((int)x_axis_style(ss)));
 }
 
 WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_x_axis_style_reversed, g_set_x_axis_style)
@@ -6466,6 +6389,29 @@ static XEN g_set_beats_per_minute(XEN beats, XEN snd, XEN chn)
 
 WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_beats_per_minute_reversed, g_set_beats_per_minute)
 
+static XEN g_beats_per_measure(XEN snd, XEN chn)
+{
+  #define H_beats_per_measure "(" S_beats_per_measure " (snd #f) (chn #f)): beats per measure if " S_x_axis_style " is " S_x_axis_in_measures
+  if (XEN_BOUND_P(snd))
+    return(channel_get(snd, chn, CP_BEATS_PER_MEASURE, S_beats_per_measure));
+  return(C_TO_XEN_INT(beats_per_measure(ss)));
+}
+
+static XEN g_set_beats_per_measure(XEN beats, XEN snd, XEN chn)
+{
+  int val;
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(beats), beats, XEN_ARG_1, S_setB S_beats_per_measure, "an int"); 
+  val = XEN_TO_C_INT(beats);
+  if ((val <= 0) || (val > 1000))
+    XEN_OUT_OF_RANGE_ERROR(S_setB S_beats_per_measure, 1, beats, "must be between 1 and 1000");
+  if (XEN_BOUND_P(snd))
+    return(channel_set(snd, chn, beats, CP_BEATS_PER_MEASURE, S_setB S_beats_per_measure));
+  set_beats_per_measure(val);
+  return(C_TO_XEN_INT(beats_per_measure(ss)));
+}
+
+WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_beats_per_measure_reversed, g_set_beats_per_measure)
+
 static XEN g_show_axes(XEN snd, XEN chn)
 {
   #define H_show_axes "(" S_show_axes "(snd #f) (chn #f)) \
@@ -6486,11 +6432,8 @@ static XEN g_set_show_axes(XEN on, XEN snd, XEN chn)
     XEN_OUT_OF_RANGE_ERROR(S_setB S_show_axes, 1, on, "~A, but must be " S_show_all_axes ", " S_show_x_axis ", or " S_show_no_axes ", or *-unlabelled");
   if (XEN_BOUND_P(snd))
     return(channel_set(snd, chn, on, CP_SHOW_AXES, S_setB S_show_axes));
-  else
-    {
-      set_show_axes(val);
-      return(C_TO_XEN_INT((int)show_axes(ss)));
-    }
+  set_show_axes(val);
+  return(C_TO_XEN_INT((int)show_axes(ss)));
 }
 
 WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_show_axes_reversed, g_set_show_axes)
@@ -6508,11 +6451,8 @@ static XEN g_set_graphs_horizontal(XEN val, XEN snd, XEN chn)
   XEN_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, XEN_ARG_1, S_setB S_graphs_horizontal, "a boolean");
   if (XEN_BOUND_P(snd))
     return(channel_set(snd, chn, val, CP_GRAPHS_HORIZONTAL, S_setB S_graphs_horizontal));
-  else
-    {
-      set_graphs_horizontal(XEN_TO_C_BOOLEAN(val)); 
-      return(C_TO_XEN_BOOLEAN(graphs_horizontal(ss)));
-    }
+  set_graphs_horizontal(XEN_TO_C_BOOLEAN(val)); 
+  return(C_TO_XEN_BOOLEAN(graphs_horizontal(ss)));
 }
 
 WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_graphs_horizontal_reversed, g_set_graphs_horizontal)
@@ -7115,6 +7055,8 @@ XEN_ARGIFY_2(g_dot_size_w, g_dot_size)
 XEN_ARGIFY_3(g_set_dot_size_w, g_set_dot_size)
 XEN_ARGIFY_2(g_x_axis_style_w, g_x_axis_style)
 XEN_ARGIFY_3(g_set_x_axis_style_w, g_set_x_axis_style)
+XEN_ARGIFY_2(g_beats_per_measure_w, g_beats_per_measure)
+XEN_ARGIFY_3(g_set_beats_per_measure_w, g_set_beats_per_measure)
 XEN_ARGIFY_2(g_beats_per_minute_w, g_beats_per_minute)
 XEN_ARGIFY_3(g_set_beats_per_minute_w, g_set_beats_per_minute)
 XEN_ARGIFY_2(g_show_axes_w, g_show_axes)
@@ -7254,6 +7196,8 @@ XEN_ARGIFY_2(g_update_transform_graph_w, g_update_transform_graph)
 #define g_set_dot_size_w g_set_dot_size
 #define g_x_axis_style_w g_x_axis_style
 #define g_set_x_axis_style_w g_set_x_axis_style
+#define g_beats_per_measure_w g_beats_per_measure
+#define g_set_beats_per_measure_w g_set_beats_per_measure
 #define g_beats_per_minute_w g_beats_per_minute
 #define g_set_beats_per_minute_w g_set_beats_per_minute
 #define g_show_axes_w g_show_axes
@@ -7492,11 +7436,13 @@ void g_init_chn(void)
   #define H_x_axis_in_seconds    "The value for " S_x_axis_style " that displays the x axis using seconds"
   #define H_x_axis_in_samples    "The value for " S_x_axis_style " that displays the x axis using sample numbers"
   #define H_x_axis_in_beats      "The value for " S_x_axis_style " that displays the x axis using beats (also " S_beats_per_minute ")"
+  #define H_x_axis_in_measures   "The value for " S_x_axis_style " that displays the x axis using measure numbers"
   #define H_x_axis_as_percentage "The value for " S_x_axis_style " that displays the x axis using percentages"
 
   XEN_DEFINE_CONSTANT(S_x_axis_in_seconds,     X_AXIS_IN_SECONDS,    H_x_axis_in_seconds);
   XEN_DEFINE_CONSTANT(S_x_axis_in_samples,     X_AXIS_IN_SAMPLES,    H_x_axis_in_samples);
   XEN_DEFINE_CONSTANT(S_x_axis_in_beats,       X_AXIS_IN_BEATS,      H_x_axis_in_beats);
+  XEN_DEFINE_CONSTANT(S_x_axis_in_measures,    X_AXIS_IN_MEASURES,   H_x_axis_in_measures);
   XEN_DEFINE_CONSTANT(S_x_axis_as_percentage,  X_AXIS_AS_PERCENTAGE, H_x_axis_as_percentage);
 
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_x_axis_style, g_x_axis_style_w, H_x_axis_style,
@@ -7504,6 +7450,9 @@ void g_init_chn(void)
 					    0, 2, 1, 2);
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_beats_per_minute, g_beats_per_minute_w, H_beats_per_minute,
 					    S_setB S_beats_per_minute, g_set_beats_per_minute_w, g_set_beats_per_minute_reversed,
+					    0, 2, 1, 2);
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_beats_per_measure, g_beats_per_measure_w, H_beats_per_measure,
+					    S_setB S_beats_per_measure, g_set_beats_per_measure_w, g_set_beats_per_measure_reversed,
 					    0, 2, 1, 2);
 
   #define H_show_all_axes "The value for " S_show_axes " that causes both the x and y axes to be displayed"

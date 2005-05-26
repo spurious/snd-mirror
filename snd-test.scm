@@ -467,6 +467,7 @@
 	'normalize-globally normalize-globally 3
 	'x-axis-in-samples x-axis-in-samples 1 
 	'x-axis-in-beats x-axis-in-beats 3
+	'x-axis-in-measures x-axis-in-measures 4
 	'x-axis-in-seconds x-axis-in-seconds 0 
 	'x-axis-as-percentage x-axis-as-percentage 2
 	'enved-add-point enved-add-point 0
@@ -899,6 +900,9 @@
       (set! (beats-per-minute) (beats-per-minute))
       (if (fneq (beats-per-minute)  60.0 )
 	  (snd-display ";beats-per-minute set def: ~A" (beats-per-minute)))
+      (set! (beats-per-measure) (beats-per-measure))
+      (if (not (= (beats-per-measure)  4))
+	  (snd-display ";beats-per-measure set def: ~A" (beats-per-measure)))
       (set! (zero-pad) (zero-pad))
       (if (not (equal? (zero-pad)  0)) 
 	  (snd-display ";zero-pad set def: ~A" (zero-pad)))
@@ -1123,6 +1127,7 @@
 	'wavo-trace (wavo-trace) 64 
 	'x-axis-style (x-axis-style) 0 
 	'beats-per-minute (beats-per-minute) 60.0
+	'beats-per-measure (beats-per-measure) 4
 	'zero-pad (zero-pad) 0
 	'zoom-focus-style (zoom-focus-style) 2 
 	'mix-waveform-height (mix-waveform-height) 20 
@@ -1708,6 +1713,7 @@
 	  (list 'with-gl with-gl (provided? 'gl) #f)
 	  (list 'x-axis-style x-axis-style 0 1)
 	  (list 'beats-per-minute beats-per-minute 30.0 120.0)
+	  (list 'beats-per-measure beats-per-measure 1 120)
 	  (list 'zero-pad zero-pad 0 1)
 	  (list 'zoom-focus-style zoom-focus-style 2 1))))
       
@@ -26075,6 +26081,7 @@ EDITS: 5
 		(list 'time-graph? time-graph? #t #f #t)
 		(list 'x-axis-style x-axis-style #f 0 2)
 		(list 'beats-per-minute beats-per-minute #f 60.0 120.0)
+		(list 'beats-per-measure beats-per-measure #f 4 120)
 		(list 'zero-pad zero-pad #f 0 2)
 		(list 'zoom-focus-style zoom-focus-style #f 0 3))))
 	    
@@ -26129,7 +26136,7 @@ EDITS: 5
 		    wavelet-type transform-size fft-window-beta transform-type 
 		    transform-normalization show-mix-waveforms graph-style dot-size show-axes show-y-zero show-grid show-marks grid-density
 		    spectro-x-angle spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle spectro-z-scale
-		    spectro-hop spectro-cutoff spectro-start graphs-horizontal x-axis-style beats-per-minute
+		    spectro-hop spectro-cutoff spectro-start graphs-horizontal x-axis-style beats-per-minute beats-per-measure
 		    cursor-size cursor-style show-sonogram-cursor
 		    ))
 (define func-names (list 'time-graph-type 'wavo-hop 'wavo-trace 'max-transform-peaks 'show-transform-peaks 'zero-pad 'transform-graph-type 'fft-window
@@ -26137,7 +26144,7 @@ EDITS: 5
 			 'wavelet-type 'transform-size 'fft-window-beta 'transform-type
 			 'transform-normalization 'show-mix-waveforms 'graph-style 'dot-size 'show-axes 'show-y-zero 'show-grid 'show-marks 'grid-density
 			 'spectro-x-angle 'spectro-x-scale 'spectro-y-angle 'spectro-y-scale 'spectro-z-angle 'spectro-z-scale
-			 'spectro-hop 'spectro-cutoff 'spectro-start 'graphs-horizontal 'x-axis-style 'beats-per-minute
+			 'spectro-hop 'spectro-cutoff 'spectro-start 'graphs-horizontal 'x-axis-style 'beats-per-minute 'beats-per-measure
 			 'cursor-size 'cursor-style 'show-sonogram-cursor
 			 ))
 (define new-values (list graph-as-wavogram 12 512 3 #t 32 graph-as-sonogram cauchy-window
@@ -26145,7 +26152,7 @@ EDITS: 5
 			 3 32 .5 autocorrelation
 			 0 #t graph-lollipops 8 show-no-axes #t #t #f 1.0
 			 32.0 .5 32.0 .5 32.0 .5
-			 14 .3 .1 #f x-axis-in-samples 120.0
+			 14 .3 .1 #f x-axis-in-samples 120.0 3
 			 15 cursor-cross #t
 			 ))
 
@@ -43952,8 +43959,8 @@ EDITS: 2
 		       (lambda (name style)
 			 (XtCallCallbacks (menu-option name) XmNactivateCallback (snd-global-state))
 			 (if (not (= (x-axis-style) style)) (snd-display ";x-axis style ~A: ~A" name (x-axis-style))))
-		       (list "samples" "percentage" "beats" "seconds")
-		       (list x-axis-in-samples x-axis-as-percentage x-axis-in-beats x-axis-in-seconds))
+		       (list "samples" "percentage" "beats" "seconds" "measures")
+		       (list x-axis-in-samples x-axis-as-percentage x-axis-in-beats x-axis-in-seconds x-axis-in-measures))
 		      (set! (cursor) 50)
 		      (for-each
 		       (lambda (name style)
@@ -54402,7 +54409,7 @@ EDITS: 2
 		     update-transform-graph update-time-graph update-lisp-graph update-sound run-safety clm-table-size
 		     vct->sound-file verbose-cursor view-sound vu-font vu-font-size vu-size wavelet-type
 		     time-graph?  time-graph-type wavo-hop wavo-trace window-height window-width window-x window-y
-		     with-mix-tags with-relative-panes with-gl write-peak-env-info-file x-axis-style 
+		     with-mix-tags with-relative-panes with-gl write-peak-env-info-file x-axis-style beats-per-measure
 		     beats-per-minute x-bounds x-position-slider x->position x-zoom-slider mus-header-type->string mus-data-format->string
 		     y-bounds y-position-slider y->position y-zoom-slider zero-pad zoom-color zoom-focus-style
 		     mus-sound-samples mus-sound-frames mus-sound-duration mus-sound-datum-size mus-sound-data-location data-size
@@ -54445,7 +54452,7 @@ EDITS: 2
 		     cursor-position clear-listener mus-sound-prune mus-sound-forget xramp-channel ptree-channel
 		     snd->sample snd->sample? make-snd->sample make-scalar-mixer
 		     
-		     beats-per-minute channel-amp-envs convolve-files filter-control-coeffs 
+		     beats-per-minute beats-per-measure channel-amp-envs convolve-files filter-control-coeffs 
 		     locsig-type make-phase-vocoder mus-audio-mixer-read
 		     mus-describe mus-error-type->string mus-file-buffer-size mus-name mus-offset mus-out-format mus-reset
 		     mus-rand-seed mus-width phase-vocoder?
@@ -54525,7 +54532,7 @@ EDITS: 2
 			 speed-control-style speed-control-tones squelch-update sync sound-properties temp-dir text-focus-color tiny-font y-bounds
 			 transform-type trap-segfault optimization verbose-cursor vu-font vu-font-size vu-size wavelet-type x-bounds
 			 time-graph? wavo-hop wavo-trace with-gl with-mix-tags x-axis-style beats-per-minute zero-pad zoom-color zoom-focus-style 
-			 with-relative-panes  window-x window-y window-width window-height mix-dialog-mix track-dialog-track
+			 with-relative-panes  window-x window-y window-width window-height mix-dialog-mix track-dialog-track beats-per-measure
 			 channels chans colormap comment data-format data-location data-size edit-position frames header-type maxamp
 			 minibuffer-history-length read-only right-sample sample samples selected-channel colormap-size colormap?
 			 selected-sound selection-position selection-frames selection-member? sound-loop-info
@@ -54533,7 +54540,7 @@ EDITS: 2
 			 y-position-slider y-zoom-slider sound-data-ref mus-array-print-length 
 			 mus-cosines mus-data mus-feedback mus-feedforward mus-formant-radius mus-frequency mus-hop
 			 mus-increment mus-length mus-location mus-phase mus-ramp mus-scaler vct-ref x-axis-label
-			 beats-per-minute filter-control-coeffs locsig-type mus-file-buffer-size 
+			 filter-control-coeffs locsig-type mus-file-buffer-size 
 			 mus-rand-seed mus-width clm-table-size run-safety mus-offset mus-reset
 			 previous-files-sort-procedure phase-vocoder-amp-increments phase-vocoder-amps 
 			 phase-vocoder-freqs phase-vocoder-outctr phase-vocoder-phase-increments phase-vocoder-phases 
@@ -55296,7 +55303,7 @@ EDITS: 2
 			      selected-channel selected-data-color selected-graph-color 
 			      selected-sound selection-creates-region show-backtrace show-controls show-indices show-listener
 			      show-selection-transform sinc-width temp-dir text-focus-color tiny-font
-			      trap-segfault optimization unbind-key verbose-cursor vu-font vu-font-size vu-size window-height
+			      trap-segfault optimization unbind-key verbose-cursor vu-font vu-font-size vu-size window-height beats-per-measure
 			      window-width window-x window-y with-gl with-mix-tags x-axis-style beats-per-minute zoom-color mix-tag-height
 			      mix-tag-width with-relative-panes run-safety clm-table-size mark-tag-width mark-tag-height
 			      quit-button-color help-button-color reset-button-color doit-button-color doit-again-button-color

@@ -156,6 +156,7 @@ GtkWidget *view_listener_menu(void);
 GtkWidget *view_cursor_menu(void);
 GtkWidget *view_x_axis_seconds_menu(void);
 GtkWidget *view_x_axis_beats_menu(void);
+GtkWidget *view_x_axis_measures_menu(void);
 GtkWidget *view_x_axis_samples_menu(void);
 GtkWidget *view_x_axis_percentage_menu(void);
 GtkWidget *options_save_state_menu(void);

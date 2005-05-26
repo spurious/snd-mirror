@@ -86,6 +86,7 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound)
   cp->grid_density = grid_density(ss);
   cp->x_axis_style = x_axis_style(ss);
   cp->beats_per_minute = beats_per_minute(ss);
+  cp->beats_per_measure = beats_per_measure(ss);
   cp->show_axes = show_axes(ss);
   cp->graph_time_p = true; /* the default state (button is set when we start) */
   cp->graph_transform_p = false;

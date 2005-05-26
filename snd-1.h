@@ -250,7 +250,7 @@ typedef struct chan_info {
   Float lin_dB, min_dB, fft_window_beta, beats_per_minute, grid_density;
   bool show_y_zero, show_marks, verbose_cursor;
   with_grid_t show_grid;
-  int wavo_hop, wavo_trace, zero_pad, wavelet_type, max_transform_peaks;
+  int wavo_hop, wavo_trace, zero_pad, wavelet_type, max_transform_peaks, beats_per_measure;
   x_axis_style_t x_axis_style;
   show_axes_t show_axes;
   int transform_size;
@@ -400,7 +400,7 @@ typedef struct snd_state {
   Float Fft_Window_Beta, Grid_Density;
   Float Color_Scale, Color_Cutoff, Beats_Per_Minute;
   bool Color_Inverted, Show_Mix_Waveforms;
-  int Mix_Waveform_Height;
+  int Mix_Waveform_Height, Beats_Per_Measure;
   fft_normalize_t Transform_Normalization;
   int Sinc_Width;
   x_axis_style_t X_Axis_Style;

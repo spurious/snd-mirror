@@ -398,6 +398,7 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+26-May:  beats-per-measure and x-axis-style x-axis-in-measures.\n\
 25-May:  create-audit-dialog in snd-motif.scm.\n\
 23-May:  maraca.rb, play.rb, prc95.rb, singer.rb, and zip.rb thanks to Mike Scholz.\n\
          rt.tex thanks to Kjetil Matheussen.\n\

@@ -184,6 +184,7 @@ static char *x_axis_style_name(x_axis_style_t choice)
     case X_AXIS_IN_SAMPLES:    return(TO_VAR_NAME(S_x_axis_in_samples));    break;
     case X_AXIS_AS_PERCENTAGE: return(TO_VAR_NAME(S_x_axis_as_percentage)); break;
     case X_AXIS_IN_BEATS:      return(TO_VAR_NAME(S_x_axis_in_beats));      break;
+    case X_AXIS_IN_MEASURES:   return(TO_VAR_NAME(S_x_axis_in_measures));   break;
     default:                   return(TO_VAR_NAME(S_x_axis_in_seconds));    break;
     }
 }
@@ -301,6 +302,7 @@ static void save_snd_state_options (FILE *fd)
   if (time_graph_type(ss) != DEFAULT_TIME_GRAPH_TYPE) pss_ss(fd, S_time_graph_type, time_graph_type_name(time_graph_type(ss)));
   if (x_axis_style(ss) != DEFAULT_X_AXIS_STYLE) pss_ss(fd, S_x_axis_style, x_axis_style_name(x_axis_style(ss)));
   if (beats_per_minute(ss) != DEFAULT_BEATS_PER_MINUTE) pss_sf(fd, S_beats_per_minute, beats_per_minute(ss));
+  if (beats_per_measure(ss) != DEFAULT_BEATS_PER_MEASURE) pss_sf(fd, S_beats_per_measure, beats_per_measure(ss));
   if (graph_style(ss) != DEFAULT_GRAPH_STYLE) pss_ss(fd, S_graph_style, graph_style_name(graph_style(ss)));
   if (region_graph_style(ss) != DEFAULT_GRAPH_STYLE) pss_ss(fd, S_region_graph_style, graph_style_name(region_graph_style(ss)));
   if (channel_style(ss) != DEFAULT_CHANNEL_STYLE) pss_ss(fd, S_channel_style, channel_style_name(channel_style(ss)));
@@ -840,6 +842,7 @@ static void save_sound_state (snd_info *sp, void *ptr)
       if (fneq(cp->grid_density, grid_density(ss))) pcp_sf(fd, S_grid_density, cp->grid_density, chan);
       if (cp->x_axis_style != x_axis_style(ss)) pcp_ss(fd, S_x_axis_style, x_axis_style_name(cp->x_axis_style), chan);
       if (cp->beats_per_minute != beats_per_minute(ss)) pcp_sf(fd, S_beats_per_minute, cp->beats_per_minute, chan);
+      if (cp->beats_per_measure != beats_per_measure(ss)) pcp_sf(fd, S_beats_per_measure, cp->beats_per_measure, chan);
       if (cp->show_axes != show_axes(ss)) pcp_ss(fd, S_show_axes, show_axes2string(cp->show_axes), chan);
       if (cp->graphs_horizontal != graphs_horizontal(ss)) pcp_ss(fd, S_graphs_horizontal, b2s(cp->graphs_horizontal), chan);
       if ((XEN_VECTOR_P(cp->properties)) &&

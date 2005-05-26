@@ -31,7 +31,7 @@ enum {menu_menu,
           v_color_menu, v_orientation_menu, 
           v_files_menu, v_mix_dialog_menu, v_track_dialog_menu,
           v_x_axis_menu, v_x_axis_cascade_menu,
-            v_x_axis_seconds_menu, v_x_axis_samples_menu, v_x_axis_percentage_menu, v_x_axis_beats_menu,
+      v_x_axis_seconds_menu, v_x_axis_samples_menu, v_x_axis_percentage_menu, v_x_axis_beats_menu, v_x_axis_measures_menu,
           v_error_history_menu,
           v_sep2_menu
 };
@@ -79,6 +79,7 @@ Widget view_listener_menu(void) {return(mw[v_listener_menu]);}
 Widget view_cursor_menu(void) {return(mw[v_cursor_menu]);}
 Widget view_x_axis_seconds_menu(void) {return(mw[v_x_axis_seconds_menu]);}
 Widget view_x_axis_beats_menu(void) {return(mw[v_x_axis_beats_menu]);}
+Widget view_x_axis_measures_menu(void) {return(mw[v_x_axis_measures_menu]);}
 Widget view_x_axis_samples_menu(void) {return(mw[v_x_axis_samples_menu]);}
 Widget view_x_axis_percentage_menu(void) {return(mw[v_x_axis_percentage_menu]);}
 
@@ -210,6 +211,7 @@ static void options_focus_middle_callback(Widget w, XtPointer info, XtPointer Da
 static void options_focus_active_callback(Widget w, XtPointer info, XtPointer Data) {activate_focus_menu(ZOOM_FOCUS_ACTIVE);}
 static void options_x_axis_seconds_callback(Widget w, XtPointer info, XtPointer context) {set_x_axis_style(X_AXIS_IN_SECONDS);}
 static void options_x_axis_beats_callback(Widget w, XtPointer info, XtPointer context) {set_x_axis_style(X_AXIS_IN_BEATS);}
+static void options_x_axis_measures_callback(Widget w, XtPointer info, XtPointer context) {set_x_axis_style(X_AXIS_IN_MEASURES);}
 static void options_x_axis_samples_callback(Widget w, XtPointer info, XtPointer context) {set_x_axis_style(X_AXIS_IN_SAMPLES);}
 static void options_x_axis_percentage_callback(Widget w, XtPointer info, XtPointer context) {set_x_axis_style(X_AXIS_AS_PERCENTAGE);}
 #if HAVE_EXTENSION_LANGUAGE
@@ -547,6 +549,9 @@ Widget add_menu(void)
 
   mw[v_x_axis_beats_menu] = XtCreateManagedWidget(_("beats"), xmPushButtonWidgetClass, mw[v_x_axis_menu], main_args, main_n);
   XtAddCallback(mw[v_x_axis_beats_menu], XmNactivateCallback, options_x_axis_beats_callback, NULL);  
+
+  mw[v_x_axis_measures_menu] = XtCreateManagedWidget(_("measures"), xmPushButtonWidgetClass, mw[v_x_axis_menu], main_args, main_n);
+  XtAddCallback(mw[v_x_axis_measures_menu], XmNactivateCallback, options_x_axis_measures_callback, NULL);  
 
   mw[v_error_history_menu] = XtCreateManagedWidget(_("Error History"), xmPushButtonWidgetClass, mw[view_menu], main_args, main_n);
   XtAddCallback(mw[v_error_history_menu], XmNactivateCallback, view_error_history_callback, NULL);

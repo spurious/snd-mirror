@@ -4223,13 +4223,25 @@ See <i>draw-smpte-label</i> in snd-motif.scm, or <i>make-current-window-display<
 <tr><td colspan=2></td></tr>
 
 
+<!-- beats-per-measure -->
+<tr><td colspan=2>
+<code><a class=def name="beatspermeasure">beats-per-measure</a> (<em class=narg>snd chn</em>)</code>
+</td></tr>
+<tr><td></td><td>
+The x axis labelling of the time domain waveform can be in measures
+(<a class=quiet href="#xaxisstyle">x-axis-style</a> = x-axis-in-measures); this variable sets the number of beats per measure.
+The default is 4.
+</td></tr>
+<tr><td colspan=2></td></tr>
+
+
 <!-- beats-per-minute -->
 <tr><td colspan=2>
 <code><a class=def name="beatsperminute">beats-per-minute</a> (<em class=narg>snd chn</em>)</code>
 </td></tr>
 <tr><td></td><td>
 The x axis labelling of the time domain waveform can be in beats
-(<a class=quiet href="#xaxisstyle">x-axis-style</a> = x-axis-in-beats); this variable sets the number of beats per minute.
+(<a class=quiet href="#xaxisstyle">x-axis-style</a> = x-axis-in-beats) or in measures (x-axis-in-measures); this variable sets the number of beats per minute.
 The default is 60.0, making it the same as x-axis-in-seconds.  
 See <a href="#snpmark">snap-mark-to-beat</a>, or <a href="sndscm.html#snapmixtobeat">snap-mix-to-beat</a>.
 </td></tr>
@@ -7826,7 +7838,8 @@ the current x axis label. <i>context</i> is one of time-graph (the default), lis
 <tr><td></td><td>
 The x axis labelling of the time domain waveform can be in seconds
 (<i>x-axis-in-seconds</i>), in samples (<i>x-axis-in-samples</i>), expressed
-as a percentage of the overall duration (<i>x-axis-as-percentage</i>, useful in envelope definitions), or as a beat number (<i>x-axis-in-beats</i>).
+as a percentage of the overall duration (<i>x-axis-as-percentage</i>, useful in envelope definitions), as a beat number (<i>x-axis-in-beats</i>),
+or as a measure number (<i>x-axis-in-measures</i>).
 This is the View menu 'X-axis units' option.
 (default: <i>x-axis-in-seconds</i>). 
 </td></tr>
@@ -10394,7 +10407,7 @@ to put the date and time in the Snd title bar.
 
 <p><b>X-axis Label</b> (<a href="#xaxisstyle">x-axis-style</a>):</p>
 <pre>
-  x-axis-in-seconds  x-axis-in-samples  x-axis-as-percentage  x-axis-in-beats
+  x-axis-in-seconds  x-axis-in-samples  x-axis-as-percentage  x-axis-in-beats  x-axis-in-measures
 </pre><br>
 
 <p><b>Speed Control</b> style (<a href="#speedstyle">speed-control-style</a>):</p>

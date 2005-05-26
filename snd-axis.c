@@ -190,6 +190,11 @@ static Locus tick_grf_x(double val, axis_info *ap, x_axis_style_t style, int sra
 	res = (int)(ap->x_base + val * ap->x_scale * 60.0 / ap->cp->beats_per_minute);
       else res = (int)(ap->x_base + val * ap->x_scale); 
       break;
+    case X_AXIS_IN_MEASURES:
+      if (ap->cp)
+	res = (int)(ap->x_base + val * ap->x_scale * 60.0 * ap->cp->beats_per_measure / ap->cp->beats_per_minute);
+      else res = (int)(ap->x_base + val * ap->x_scale); 
+      break;
     case X_AXIS_IN_SAMPLES: 
       res = (int)(ap->x_axis_x0 + (val - ap->x0 * srate) * ap->x_scale / srate); 
       break;
@@ -599,10 +604,21 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 	  tdx = describe_ticks(ap->x_ticks, ap->x0 * srate, ap->x1 * srate, num_ticks, grid_scale); 
 	  break;
 	case X_AXIS_IN_BEATS: 
-	  if (ap->cp)
+	  if (ap->cp) /* probably can't happen -- ap->cp can be null if axis if from envelope editor */
 	    tdx = describe_ticks(ap->x_ticks, 
 				 (ap->x0 * ap->cp->beats_per_minute / 60.0), 
 				 (ap->x1 * ap->cp->beats_per_minute / 60.0), 
+				 num_ticks, grid_scale); 
+	  else tdx = describe_ticks(ap->x_ticks, ap->x0, ap->x1, num_ticks, grid_scale); 
+	  break;
+	case X_AXIS_IN_MEASURES:
+	  /* TODO: the minor ticks should first be beat-based, then by twos */
+	  /* TODO: measure-positions or some such list + user interface support => interpolate unset measures */
+	  /* TODO: also labels should be ints or ratios (for beats and parts thereof, if possible) */
+	  if (ap->cp)
+	    tdx = describe_ticks(ap->x_ticks, 
+				 (ap->x0 * ap->cp->beats_per_minute / (60.0 * ap->cp->beats_per_measure)),
+				 (ap->x1 * ap->cp->beats_per_minute / (60.0 * ap->cp->beats_per_measure)),
 				 num_ticks, grid_scale); 
 	  else tdx = describe_ticks(ap->x_ticks, ap->x0, ap->x1, num_ticks, grid_scale); 
 	  break;
@@ -727,7 +743,7 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 #endif
 	{
 #if (!USE_NO_GUI)
-	  if ((ap->ylabel) && (include_y_tick_labels))
+	  if ((ap->cp) && (ap->ylabel) && (include_y_tick_labels))
 	    {
 	      int y_label_width = 0;
 	      y_label_width = label_width(ap->ylabel);
@@ -936,10 +952,10 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
     {
       double fx, tens;
       int tx, y0, majy, miny, y;
-      /* start ticks at flo, go to fhi by step, major ticks at mlo mhi and intervals of tenstep surrounding */
       y0 = ap->x_axis_y0;
       majy = y0 + tdx->maj_tick_len;
       miny = y0 + tdx->min_tick_len;
+      /* start at leftmost major tick and work toward y axis */
       fx = tdx->mlo;
       tx = tick_grf_x(fx, ap, x_style, srate);
 #if HAVE_GL
@@ -985,6 +1001,7 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 	}
       tens = 0.0;
       fx = tdx->mlo;
+      /* now start at leftmost major tick and work towards right end */
       fx += tdx->step;
       while (fx <= tdx->fhi)
 	{
@@ -1013,7 +1030,7 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 	}
     }
 
-  /* all linear axis stuff has been taken care of. check for log axes (assume fft context, not spectrogram so no GL) */
+  /* All linear axis stuff has been taken care of. Check for log axes (assume fft context, not spectrogram so no GL) */
   /* x axis overall label has already gone out */
 
   if ((!x_axis_linear) && (show_x_axis))
@@ -1285,7 +1302,7 @@ x0 y0 x1 y1 xmin ymin xmax ymax pix_x0 pix_y0 pix_x1 pix_y1 y_offset xscale ysca
                         (strcmp("GdkGC_", XEN_SYMBOL_TO_C_STRING(XEN_CAR(Value))) == 0))
 #endif
 
-#define AXIS_STYLE_OK(Id) (((Id) >= X_AXIS_IN_SECONDS) && ((Id) <= X_AXIS_IN_BEATS))
+#define AXIS_STYLE_OK(Id) (((Id) >= X_AXIS_IN_SECONDS) && ((Id) <= X_AXIS_IN_MEASURES))
 #define SHOW_AXES_OK(Id) (((Id) >= SHOW_NO_AXES) && ((Id) <= SHOW_X_AXIS_UNLABELLED))
 
 static XEN g_draw_axes(XEN args)

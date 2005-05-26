@@ -224,7 +224,7 @@ typedef enum {NO_PLAYERS, PLAYERS_OK} sp_sound_t;
 
 #define AT_CURRENT_EDIT_POSITION -1
 
-typedef enum {X_AXIS_IN_SECONDS, X_AXIS_IN_SAMPLES, X_AXIS_AS_PERCENTAGE, X_AXIS_IN_BEATS} x_axis_style_t;
+typedef enum {X_AXIS_IN_SECONDS, X_AXIS_IN_SAMPLES, X_AXIS_AS_PERCENTAGE, X_AXIS_IN_BEATS, X_AXIS_IN_MEASURES} x_axis_style_t;
 typedef enum {SPEED_CONTROL_AS_FLOAT, SPEED_CONTROL_AS_RATIO, SPEED_CONTROL_AS_SEMITONE} speed_style_t;
 typedef enum {CURSOR_IN_VIEW, CURSOR_ON_LEFT, CURSOR_ON_RIGHT, CURSOR_IN_MIDDLE, KEYBOARD_NO_ACTION} kbd_cursor_t;
 typedef enum {CHANNELS_SEPARATE, CHANNELS_COMBINED, CHANNELS_SUPERIMPOSED} channel_style_t;
@@ -726,6 +726,10 @@ typedef enum {PLAY_COMPLETE, PLAY_CLOSE, PLAY_BUTTON_UNSET, PLAY_STOP_CALLED, PL
 #define beats_per_minute(ss) ss->Beats_Per_Minute
 #define in_set_beats_per_minute(a) ss->Beats_Per_Minute = a
 #define DEFAULT_BEATS_PER_MINUTE 60.0
+
+#define beats_per_measure(ss) ss->Beats_Per_Measure
+#define in_set_beats_per_measure(a) ss->Beats_Per_Measure = a
+#define DEFAULT_BEATS_PER_MEASURE 4
 
 #define zero_pad(ss) ss->Zero_Pad
 #define in_set_zero_pad(a) ss->Zero_Pad = a

@@ -442,10 +442,11 @@ void chans_x_axis_style(chan_info *cp, void *ptr)
 	{
 	  switch (new_style)
 	    {
-	    case X_AXIS_IN_BEATS:      ap->xlabel = copy_string(_("time (beats)"));   break;
-	    case X_AXIS_IN_SAMPLES:    ap->xlabel = copy_string(_("time (samples)")); break;
-	    case X_AXIS_AS_PERCENTAGE: ap->xlabel = copy_string(_("time (percent)")); break;
-	    default:                   ap->xlabel = copy_string(_("time"));           break;
+	    case X_AXIS_IN_BEATS:      ap->xlabel = copy_string(_("time (beats)"));    break;
+	    case X_AXIS_IN_MEASURES:   ap->xlabel = copy_string(_("time (measures)")); break;
+	    case X_AXIS_IN_SAMPLES:    ap->xlabel = copy_string(_("time (samples)"));  break;
+	    case X_AXIS_AS_PERCENTAGE: ap->xlabel = copy_string(_("time (percent)"));  break;
+	    default:                   ap->xlabel = copy_string(_("time"));            break;
 	    }
 	}
       update_graph(cp);
@@ -458,6 +459,7 @@ static void reflect_x_axis_unit_change_in_menu(x_axis_style_t oldval, x_axis_sty
     {
     case X_AXIS_IN_SECONDS:    set_sensitive(view_x_axis_seconds_menu(), true);    break;
     case X_AXIS_IN_BEATS:      set_sensitive(view_x_axis_beats_menu(), true);      break;
+    case X_AXIS_IN_MEASURES:   set_sensitive(view_x_axis_measures_menu(), true);   break;
     case X_AXIS_IN_SAMPLES:    set_sensitive(view_x_axis_samples_menu(), true);    break;
     case X_AXIS_AS_PERCENTAGE: set_sensitive(view_x_axis_percentage_menu(), true); break;
     }
@@ -465,6 +467,7 @@ static void reflect_x_axis_unit_change_in_menu(x_axis_style_t oldval, x_axis_sty
     {
     case X_AXIS_IN_SECONDS:    set_sensitive(view_x_axis_seconds_menu(), false);    break;
     case X_AXIS_IN_BEATS:      set_sensitive(view_x_axis_beats_menu(), false);      break;
+    case X_AXIS_IN_MEASURES:   set_sensitive(view_x_axis_measures_menu(), false);   break;
     case X_AXIS_IN_SAMPLES:    set_sensitive(view_x_axis_samples_menu(), false);    break;
     case X_AXIS_AS_PERCENTAGE: set_sensitive(view_x_axis_percentage_menu(), false); break;
     }
