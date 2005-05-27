@@ -207,11 +207,15 @@
 				  (find-another-mark (cdr ms)))))))))
       (if (and (mark? m1)
 	       (mark? m2))
-	  (play (mark-sample m1) 
-		(car (mark-home m1)) 
-		(cadr (mark-home m1)) 
-		#f 
-		(mark-sample m2))))))
+	  (let* ((pos1 (mark-sample m1))
+		 (pos2 (mark-sample m2))
+		 (beg (min pos1 pos2))
+		 (end (max pos1 pos2)))
+	    (play beg
+		  (car (mark-home m1)) 
+		  (cadr (mark-home m1)) 
+		  #f 
+		  end))))))
 
 
 ;;; -------- report-mark-names causes mark names to be posted in the minibuffer as a sound is played

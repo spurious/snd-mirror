@@ -403,15 +403,10 @@ void about_snd_help(void)
 23-May:  maraca.rb, play.rb, prc95.rb, singer.rb, and zip.rb thanks to Mike Scholz.\n\
          rt.tex thanks to Kjetil Matheussen.\n\
 16-May:  before-save-as-hook.\n\
-2-May:   maxamp-position, region|selection-maxamp-position.\n\
+2-May:   maxamp-position, region-|selection-|maxamp-position.\n\
          windowed-maxamp generator (dsp.scm).\n\
          harmonicizer (dsp.scm).\n\
 26-Apr:  snd 7.12.\n\
-25-Apr:  y-axis-label.\n\
-20-Apr:  draw.rb, poly.rb, musglyphs.rb thanks to Mike Scholz.\n\
-         zip.scm (zipper) changed (takes env args now, not thunks, uses def-clm-struct, etc).\n\
-         changed mus-error-to-string to mus-error-type->string.\n\
-           moved mus-data-format->string and mus-header-type->string from ws.scm to C.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",

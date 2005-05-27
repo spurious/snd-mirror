@@ -604,22 +604,38 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 	  tdx = describe_ticks(ap->x_ticks, ap->x0 * srate, ap->x1 * srate, num_ticks, grid_scale); 
 	  break;
 	case X_AXIS_IN_BEATS: 
-	  if (ap->cp) /* probably can't happen -- ap->cp can be null if axis if from envelope editor */
-	    tdx = describe_ticks(ap->x_ticks, 
-				 (ap->x0 * ap->cp->beats_per_minute / 60.0), 
-				 (ap->x1 * ap->cp->beats_per_minute / 60.0), 
-				 num_ticks, grid_scale); 
+	  if (ap->cp) /* null here probably can't happen -- ap->cp can be null if axis if from envelope editor */
+	    {
+	      Float beats_per_second;
+	      beats_per_second = ap->cp->beats_per_minute / 60.0;
+	      tdx = describe_ticks(ap->x_ticks, 
+				   ap->x0 * beats_per_second,
+				   ap->x1 * beats_per_second,
+				   num_ticks, 
+				   grid_scale); 
+	    }
 	  else tdx = describe_ticks(ap->x_ticks, ap->x0, ap->x1, num_ticks, grid_scale); 
 	  break;
 	case X_AXIS_IN_MEASURES:
+
 	  /* TODO: the minor ticks should first be beat-based, then by twos */
+	  /*       should this also be the case for axis-in-beats? */
 	  /* TODO: measure-positions or some such list + user interface support => interpolate unset measures */
+	  /*       e.g. grab measure number and drag it => drag (push) all others unset, click = set? */
 	  /* TODO: also labels should be ints or ratios (for beats and parts thereof, if possible) */
+	  /* TODO: box or circled measure numbers? or square=measure, circle=beat? */
+	  /* perhaps in this case get labels and y-axis ticks, then handle x-axis ticks/tick labels elsewhere */
+
 	  if (ap->cp)
-	    tdx = describe_ticks(ap->x_ticks, 
-				 (ap->x0 * ap->cp->beats_per_minute / (60.0 * ap->cp->beats_per_measure)),
-				 (ap->x1 * ap->cp->beats_per_minute / (60.0 * ap->cp->beats_per_measure)),
-				 num_ticks, grid_scale); 
+	    {
+	      Float measures_per_second;
+	      measures_per_second = ap->cp->beats_per_minute / (60.0 * ap->cp->beats_per_measure);
+	      tdx = describe_ticks(ap->x_ticks, 
+				   ap->x0 * measures_per_second,
+				   ap->x1 * measures_per_second,
+				   num_ticks, 
+				   grid_scale); 
+	    }
 	  else tdx = describe_ticks(ap->x_ticks, ap->x0, ap->x1, num_ticks, grid_scale); 
 	  break;
 	case X_AXIS_AS_PERCENTAGE: 

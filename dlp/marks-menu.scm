@@ -1,7 +1,11 @@
 (use-modules (ice-9 format))
 (provide 'snd-marks-menu.scm)
 
+(if (not (defined? 'add-sliders)) (load-from-path "new-effects.scm"))
+(if (not (defined? 'mark-sync-color)) (load-from-path "snd-motif.scm"))
 (if (not (defined? 'mark-loops)) (load-from-path "examp.scm"))
+(if (not (defined? 'play-between-marks)) (load-from-path "marks.scm"))
+(if (not (defined? 'loop-between-marks)) (load-from-path "play.scm"))
 
 (define marks-list '()) ; menu labels are updated to show current default settings
 
@@ -34,40 +38,11 @@
 		 (all-chans))
 	  (map-channel (func) 0 #f #f #f #f origin)))))
 
-(define find-plausible-marks
-  (lambda args
-    (let* ((snd (selected-sound))
-           (chn (selected-channel))
-           (m1 (if (> (length args) 0)
-                   (car args)
-                   (let find-mark ((ms (marks snd chn)))
-                     (if (null? ms)
-                         (begin
-                           (snd-print ";no marks in current window?")
-                           #f)
-                         (if (>= (mark-sample (car ms)) (left-sample snd chn))
-                             (car ms)
-                             (find-mark (cdr ms)))))))
-           (m2 (and (mark? m1)
-                    (if (> (length args) 1)
-                        (cadr args)
-                        (let find-another-mark ((ms (marks snd chn)))
-                          (if (null? ms)
-                              (begin
-                                (snd-print ";no second mark?")
-                                #f)
-                              (if (> (mark-sample (car ms)) (mark-sample m1))
-                                  (car ms)
-                                  (find-another-mark (cdr ms)))))))))
-      (if (and (mark? m1)
-               (mark? m2))
-          (list (mark-sample m1)
-                (car (mark-home m1))
-                (cadr (mark-home m1))
-                #f
-                (mark-sample m2))
-          #f))))
-
+(define (find-two-marks)
+  (let* ((snd (selected-sound))
+	 (chn (selected-channel))
+	 (ms (marks snd chn)))
+    (list (car ms) (cadr ms))))
 
 
 ;;; -------- Play between by marks
@@ -79,40 +54,95 @@
 (define play-between-marks-dialog #f)
 (define play-between-marks-menu-label #f)
 
+
 (define (cp-play-between-marks)
  (play-between-marks play-between-marks-m1 play-between-marks-m2))
 
 (if (provided? 'xm) ; if xm module is loaded, popup a dialog here
     (begin
 
+      (define (set-syncs)
+	(for-each 
+	 (lambda (snd-marks)
+	   (for-each 
+	    (lambda (chan-marks)
+	      (for-each 
+	       (lambda (m)
+		 (if (or (= m play-between-marks-m1)
+			 (= m play-between-marks-m2))
+		     (set! (mark-sync m) 1)
+		     (set! (mark-sync m) 0)))
+	       chan-marks))
+	    snd-marks))
+	 (marks))
+	(update-time-graph))
+
+      (define (max-mark)
+	(let ((ms (marks (selected-sound) (selected-channel))))
+	  (apply max ms)))
+
+      (define (min-mark)
+	(let ((ms (marks (selected-sound) (selected-channel))))
+	  (apply min ms)))
+
       (define (post-play-between-marks-dialog)
         (if (not (Widget? play-between-marks-dialog))
             ;; if play-between-marks-dialog doesn't exist, create it
-            (let ((initial-play-between-marks-m1 0)
-                  (initial-play-between-marks-m2 1)
-                  (sliders '()))
+            (let* ((inits (find-two-marks))
+		   (max-mark-id (max-mark))
+		   (sliders '()))
+
+	      (set! play-between-marks-m1 (or (car inits) 0))
+	      (set! play-between-marks-m2 (or (cadr inits) 1))
+	      (set-syncs)
+	      (mark-sync-color "yellow")
+
               (set! play-between-marks-dialog 
 		    (make-effect-dialog play-between-marks-label
 					(lambda (w context info)
 					  (cp-play-between-marks))
 					(lambda (w context info)
 					  (help-dialog "Define selection by marks Help"
-						"Plays area between specified marks. Use the sliders to select the boundary marks. Negative play not supported yet: coming soon !"))
+						"Plays area between specified marks. Use the sliders to select the boundary marks."))
 					(lambda (w c i)
-					  (set! play-between-marks-m1 initial-play-between-marks-m1)
-					  (XtSetValues (list-ref sliders 0) (list XmNvalue (inexact->exact (round (* play-between-marks-m1 1)))))
-					  (set! play-between-marks-m2 initial-play-between-marks-m2)
-					  (XtSetValues (list-ref sliders 1) (list XmNvalue (inexact->exact (round (* play-between-marks-m2 1))))))))
+					  (XtSetValues (list-ref sliders 0) (list XmNvalue play-between-marks-m1))
+					  (XtSetValues (list-ref sliders 1) (list XmNvalue play-between-marks-m2)))))
 	      (set! sliders
 		    (add-sliders play-between-marks-dialog
-				 (list (list "mark one" 0 initial-play-between-marks-m1 25
+				 (list (list "mark one" 0 play-between-marks-m1 max-mark-id
 					     (lambda (w context info)
-					       (set! play-between-marks-m1 (/ (.value info) 1)))
+					       (set! play-between-marks-m1 (/ (.value info) 1))
+					       (set-syncs))
 					     1)
-				       (list "mark two" 0 initial-play-between-marks-m2 25
+				       (list "mark two" 0 play-between-marks-m2 max-mark-id
 					     (lambda (w context info)
-					       (set! play-between-marks-m2 (/ (.value info) 1)))
-					     1))))))
+					       (set! play-between-marks-m2 (/ (.value info) 1))
+					       (set-syncs))
+					     1))))
+	      (add-hook! select-channel-hook (lambda (snd chn)
+					       (let ((max-ms (max-mark))
+						     (min-ms (min-mark))
+						     (current-ms (find-two-marks)))
+						 (if (null? current-ms)
+						     (set! current-ms (list min-ms max-ms)))
+						 (if max-ms
+						     (for-each
+						      (lambda (slider)
+							(XtVaSetValues slider 
+								       (list XmNmaximum max-ms
+									     XmNminimum min-ms
+									     XmNvalue (car current-ms)))
+							(set! current-ms (cdr current-ms)))
+						      sliders)))))
+	      (add-hook! mark-hook (lambda (id snd chn reason)
+				     (if (and (= snd (selected-sound))
+					      (= chn (selected-channel))
+					      (= reason 0)) ; add-mark
+					 (for-each
+					  (lambda (slider)
+					    (XtVaSetValues slider (list XmNmaximum (max-mark))))
+					  sliders))))
+	      ))
 	(activate-dialog play-between-marks-dialog))
 
       (set! play-between-marks-menu-label (add-to-menu marks-menu "Play between marks" (lambda () (post-play-between-marks-dialog)))))
@@ -141,10 +171,24 @@
 
 
 (define (cp-loop-between-marks)
-  (loopit loop-between-marks-m1 loop-between-marks-m2 loop-between-marks-buffer-size))
+  (loop-between-marks loop-between-marks-m1 loop-between-marks-m2 loop-between-marks-buffer-size))
 
 (if (provided? 'xm) ; if xm module is loaded, popup a dialog here
     (begin
+
+      (define (overall-max-mark-id default-max)
+	(let ((maxid default-max))
+	  (for-each 
+	   (lambda (snd-marks)
+	     (for-each 
+	      (lambda (chan-marks)
+		(for-each 
+		 (lambda (m)
+		   (set! maxid (max maxid m)))
+		 chan-marks))
+	      snd-marks))
+	   (marks))
+	  maxid))
 
       (define (post-loop-between-marks-dialog)
         (if (not (Widget? loop-between-marks-dialog))
@@ -152,29 +196,24 @@
             (let ((initial-loop-between-marks-m1 0)
                   (initial-loop-between-marks-m2 1)
                   (initial-loop-between-marks-buffer-size 512)
-                  (sliders '()))
+                  (sliders '())
+		  (max-mark-id (overall-max-mark-id 25)))
               (set! loop-between-marks-dialog
                     (make-effect-dialog loop-between-marks-label
-                                        (lambda (w context info) (cp-loop-between-marks))
+                                        (lambda (w context info) 
+					  (cp-loop-between-marks))
                                         (lambda (w context info)
                                           (help-dialog "Loop play between marks"
                                                        "Move the sliders to set the mark numbers. Check a radio button to set the buffer size."))
                                         (lambda (w c i)
-                                          (set! loop-between-marks-m1 initial-loop-between-marks-m1)
-                                          (XtSetValues (list-ref sliders 0) (list XmNvalue (inexact->exact (* loop-between-marks-m1 1))))
-                                          (set! loop-between-marks-m2 initial-loop-between-marks-m2)
-                                          (XtSetValues (list-ref sliders 1) (list XmNvalue (inexact->exact (* loop-between-marks-m2 1))))
-                                          (set! loop-between-marks-buffer-size initial-loop-between-marks-buffer-size)
-                                          (if use-combo-box-for-buffer-size
-                                              (XtSetValues loop-between-marks-default-buffer-widget (list XmNselectedPosition 1))
-                                              (XmToggleButtonSetState loop-between-marks-default-buffer-widget #t #t)))))
+					  (c-g!))))
               (set! sliders
                     (add-sliders loop-between-marks-dialog
-                                 (list (list "mark one" 0 initial-loop-between-marks-m1 25
+                                 (list (list "mark one" 0 initial-loop-between-marks-m1 max-mark-id
                                              (lambda (w context info)
                                                (set! loop-between-marks-m1 (/ (.value info) 1)))
                                              1)
-                                       (list "mark two" 0 initial-loop-between-marks-m2 25
+                                       (list "mark two" 0 initial-loop-between-marks-m2 max-mark-id
                                              (lambda (w context info)
                                                (set! loop-between-marks-m2 (/ (.value info) 1)))
                                              1))))
