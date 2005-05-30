@@ -453,9 +453,9 @@ void chans_x_axis_style(chan_info *cp, void *ptr)
     }
 } 
 
-static void reflect_x_axis_unit_change_in_menu(x_axis_style_t oldval, x_axis_style_t newval)
+void set_x_axis_style(x_axis_style_t val)
 {
-  switch (oldval)
+  switch (x_axis_style(ss))
     {
     case X_AXIS_IN_SECONDS:    set_sensitive(view_x_axis_seconds_menu(), true);    break;
     case X_AXIS_IN_BEATS:      set_sensitive(view_x_axis_beats_menu(), true);      break;
@@ -463,7 +463,7 @@ static void reflect_x_axis_unit_change_in_menu(x_axis_style_t oldval, x_axis_sty
     case X_AXIS_IN_SAMPLES:    set_sensitive(view_x_axis_samples_menu(), true);    break;
     case X_AXIS_AS_PERCENTAGE: set_sensitive(view_x_axis_percentage_menu(), true); break;
     }
-  switch (newval)
+  switch (val)
     {
     case X_AXIS_IN_SECONDS:    set_sensitive(view_x_axis_seconds_menu(), false);    break;
     case X_AXIS_IN_BEATS:      set_sensitive(view_x_axis_beats_menu(), false);      break;
@@ -471,13 +471,29 @@ static void reflect_x_axis_unit_change_in_menu(x_axis_style_t oldval, x_axis_sty
     case X_AXIS_IN_SAMPLES:    set_sensitive(view_x_axis_samples_menu(), false);    break;
     case X_AXIS_AS_PERCENTAGE: set_sensitive(view_x_axis_percentage_menu(), false); break;
     }
-}
-  
-void set_x_axis_style(x_axis_style_t val)
-{
-  reflect_x_axis_unit_change_in_menu(x_axis_style(ss), val);
   in_set_x_axis_style(val);
   for_each_chan_1(chans_x_axis_style, (void *)(&val));
+}
+
+void menu_set_show_axes(show_axes_t val)
+{
+  switch (show_axes(ss))
+    {
+    case SHOW_NO_AXES:             set_sensitive(view_no_axes_menu(), true);                break;
+    case SHOW_X_AXIS:              set_sensitive(view_just_x_axis_menu(), true);            break;
+    case SHOW_X_AXIS_UNLABELLED:   set_sensitive(view_just_x_axis_unlabelled_menu(), true); break;
+    case SHOW_ALL_AXES:            set_sensitive(view_all_axes_menu(), true);               break;
+    case SHOW_ALL_AXES_UNLABELLED: set_sensitive(view_all_axes_unlabelled_menu(), true);    break;
+    }
+  switch (val)
+    {
+    case SHOW_NO_AXES:             set_sensitive(view_no_axes_menu(), false);                break;
+    case SHOW_X_AXIS:              set_sensitive(view_just_x_axis_menu(), false);            break;
+    case SHOW_X_AXIS_UNLABELLED:   set_sensitive(view_just_x_axis_unlabelled_menu(), false); break;
+    case SHOW_ALL_AXES:            set_sensitive(view_all_axes_menu(), false);               break;
+    case SHOW_ALL_AXES_UNLABELLED: set_sensitive(view_all_axes_unlabelled_menu(), false);    break;
+    }
+  set_show_axes(val);
 }
 
 static void update_sound(snd_info *sp, void *ptr)

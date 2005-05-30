@@ -3,8 +3,6 @@
 
 /* TODO  buttons that choose which devices to display are no-ops */
 /* TODO: rotate-text for numbers in grec vu meter labels (for non-default vu-size meters) */
-/* TODO: if in-chans set, the VU label no longer fits the VU frame */
-
 
 #define SMALL_FONT "Monospace 10"
 #define SMALLER_FONT "Monospace 8"
@@ -1353,7 +1351,7 @@ static void make_vu_meters(pane_t *p, int vu_meters,
       GtkWidget *frame, *meter;
       vu_t *vu;
       frame = gtk_frame_new(NULL);
-      gtk_box_pack_start(GTK_BOX(hboxes[row]), frame, true, true, 0);
+      gtk_box_pack_start(GTK_BOX(hboxes[row]), frame, false, false, 0);
       gtk_container_set_border_width(GTK_CONTAINER(frame), 2);
       gtk_frame_set_shadow_type(GTK_FRAME(frame), GTK_SHADOW_ETCHED_IN);
       gtk_widget_modify_bg(frame, GTK_STATE_NORMAL, ss->sgx->black);

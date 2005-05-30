@@ -127,6 +127,45 @@ static tick_descriptor *describe_ticks(tick_descriptor *gd_td, double lo, double
   return(td);
 }
 
+static bool first_beat(chan_info *cp, Float val)
+{
+  int measure, beat;
+  Float beat_frac;
+  beat = (int)val;
+  beat_frac = val - beat;
+  measure = (int)(beat / cp->beats_per_measure);
+  beat = beat - measure * cp->beats_per_measure;
+  return((beat == 0) &&
+	 (beat_frac < .001));
+}
+
+static char *measure_number(chan_info *cp, Float val)
+{
+  /* split out the measure number, change to beat count (1-based), add fraction, if any */
+  /* "val" is in terms of beats */
+  char *buf;
+  int measure, beat;
+  Float beat_frac;
+  beat = (int)val;
+  beat_frac = val - beat;
+  measure = (int)(beat / cp->beats_per_measure);
+  beat = beat - measure * cp->beats_per_measure;
+  buf = (char *)CALLOC(64, sizeof(char));
+  if (beat_frac > .001)
+    {
+      char *frac_buf, *tmp; /* according to the C spec, there's no way to get %f to omit the leading "0" */
+      frac_buf = (char *)CALLOC(32, sizeof(char));
+      snprintf(frac_buf, 32, "%.3f", beat_frac);
+      if (frac_buf[0] == '0')
+	tmp = (frac_buf + 1);  /* omit the leading "0" */
+      else tmp = frac_buf;
+      snprintf(buf, 64, "%d(%d)%s", 1 + measure, 1 + beat, tmp);
+      FREE(frac_buf);
+    }
+  else snprintf(buf, 64, "%d(%d)", 1 + measure, 1 + beat);
+  return(buf);
+}
+
 axis_info *free_axis_info(axis_info *ap)
 {
   if (ap->x_ticks) ap->x_ticks = free_tick_descriptor(ap->x_ticks);
@@ -186,13 +225,9 @@ static Locus tick_grf_x(double val, axis_info *ap, x_axis_style_t style, int sra
       res = (int)(ap->x_base + val * ap->x_scale); 
       break;
     case X_AXIS_IN_BEATS: 
-      if (ap->cp)
-	res = (int)(ap->x_base + val * ap->x_scale * 60.0 / ap->cp->beats_per_minute);
-      else res = (int)(ap->x_base + val * ap->x_scale); 
-      break;
     case X_AXIS_IN_MEASURES:
       if (ap->cp)
-	res = (int)(ap->x_base + val * ap->x_scale * 60.0 * ap->cp->beats_per_measure / ap->cp->beats_per_minute);
+	res = (int)(ap->x_base + val * ap->x_scale * 60.0 / ap->cp->beats_per_minute);
       else res = (int)(ap->x_base + val * ap->x_scale); 
       break;
     case X_AXIS_IN_SAMPLES: 
@@ -604,7 +639,8 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 	  tdx = describe_ticks(ap->x_ticks, ap->x0 * srate, ap->x1 * srate, num_ticks, grid_scale); 
 	  break;
 	case X_AXIS_IN_BEATS: 
-	  if (ap->cp) /* null here probably can't happen -- ap->cp can be null if axis if from envelope editor */
+	case X_AXIS_IN_MEASURES:
+	  if (ap->cp) /* cp==null probably can't happen -- ap->cp is null (only?) if we're called from the envelope editor */
 	    {
 	      Float beats_per_second;
 	      beats_per_second = ap->cp->beats_per_minute / 60.0;
@@ -613,31 +649,14 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 				   ap->x1 * beats_per_second,
 				   num_ticks, 
 				   grid_scale); 
+	      /* here we are getting the intra-beat settings, if x-axis-in-measures */
 	    }
 	  else tdx = describe_ticks(ap->x_ticks, ap->x0, ap->x1, num_ticks, grid_scale); 
 	  break;
-	case X_AXIS_IN_MEASURES:
 
-	  /* TODO: the minor ticks should first be beat-based, then by twos */
-	  /*       should this also be the case for axis-in-beats? */
 	  /* TODO: measure-positions or some such list + user interface support => interpolate unset measures */
 	  /*       e.g. grab measure number and drag it => drag (push) all others unset, click = set? */
-	  /* TODO: also labels should be ints or ratios (for beats and parts thereof, if possible) */
-	  /* TODO: box or circled measure numbers? or square=measure, circle=beat? */
-	  /* perhaps in this case get labels and y-axis ticks, then handle x-axis ticks/tick labels elsewhere */
 
-	  if (ap->cp)
-	    {
-	      Float measures_per_second;
-	      measures_per_second = ap->cp->beats_per_minute / (60.0 * ap->cp->beats_per_measure);
-	      tdx = describe_ticks(ap->x_ticks, 
-				   ap->x0 * measures_per_second,
-				   ap->x1 * measures_per_second,
-				   num_ticks, 
-				   grid_scale); 
-	    }
-	  else tdx = describe_ticks(ap->x_ticks, ap->x0, ap->x1, num_ticks, grid_scale); 
-	  break;
 	case X_AXIS_AS_PERCENTAGE: 
 	  tdx = describe_ticks(ap->x_ticks, ap->x0 / ap->xmax, ap->x1 / ap->xmax, num_ticks, grid_scale); 
 	  break;
@@ -651,14 +670,18 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 	      FREE(tdx->min_label); 
 	      tdx->min_label = NULL;
 	    }
-	  tdx->min_label = prettyf(tdx->mlo, tdx->tens);
+	  if ((ap->cp) && (x_style == X_AXIS_IN_MEASURES))
+	    tdx->min_label = measure_number(ap->cp, tdx->mlo);
+	  else tdx->min_label = prettyf(tdx->mlo, tdx->tens);
 	  tdx->min_label_width = number_width(tdx->min_label);
 	  if (tdx->max_label) 
 	    {
 	      FREE(tdx->max_label); 
 	      tdx->max_label = NULL;
 	    }
-	  tdx->max_label = prettyf(tdx->mhi, tdx->tens);
+	  if ((ap->cp) && (x_style == X_AXIS_IN_MEASURES))
+	    tdx->max_label = measure_number(ap->cp, tdx->mhi);
+	  else tdx->max_label = prettyf(tdx->mhi, tdx->tens);
 	  tdx->max_label_width = number_width(tdx->max_label);
 	  tick_label_width = tdx->min_label_width;
 	  if (tick_label_width < tdx->max_label_width) 
@@ -717,7 +740,9 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 	}
       else
 #endif
+	{
       draw_string(ax, ap->x_label_x, ap->x_label_y + X_LABEL_Y_OFFSET, ap->xlabel, snd_strlen(ap->xlabel));
+	}
       if (printing) 
 	ps_draw_string(ap, ap->x_label_x, ap->x_label_y + X_LABEL_Y_OFFSET, ap->xlabel);
     }
@@ -738,7 +763,9 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 	}
       else 
 #endif
+	{
       fill_rectangle(ax, ap->x_axis_x0, ap->x_axis_y0, (unsigned int)(ap->x_axis_x1 - ap->x_axis_x0), axis_thickness);
+	}
     }
 
   /* y axis */
@@ -803,8 +830,8 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 	  glCallLists(snd_strlen(tdy->max_label), GL_UNSIGNED_BYTE, (GLubyte *)(tdy->max_label));
 	}
       else
-	{
 #endif
+	{
       draw_string(ax,
 		  ap->y_axis_x0 - tdy->maj_tick_len - tdy->min_label_width - inner_border_width,
 #if USE_GTK
@@ -824,9 +851,7 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 #endif
 		  tdy->max_label,
 		  strlen(tdy->max_label));
-#if HAVE_GL
 	}
-#endif
       if (printing) 
 	{
 	  ps_draw_string(ap,
@@ -862,7 +887,9 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 	    }
 	  else
 #endif
+	    {
           draw_label(tdx->min_label, tx0, ap->x_label_y + X_NUMBERS_OFFSET, ap, ax, printing);
+	    }
 	}
       tx0 = (int)(tick_grf_x(tdx->mhi, ap, x_style, srate) - (.45 * tdx->max_label_width)); /* try centered label first */
       if ((tx0 + tdx->max_label_width) > ap->x_axis_x1)
@@ -881,7 +908,9 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 	    }
 	  else
 #endif
+	    {
           draw_label(tdx->max_label, tx0, ap->x_label_y + X_NUMBERS_OFFSET, ap, ax, printing);
+	    }
 	}
     }
   if ((y_axis_linear) && (include_y_ticks))
@@ -906,8 +935,10 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 	}
       else
 #endif
-
+	{
       draw_horizontal_tick(majx, x0, ty, ap, ax, printing, include_grid);
+	}
+
       tens = 0.0;
       fy -= tdy->step;
       while (fy >= tdy->flo)
@@ -932,7 +963,9 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 	    }
 	  else
 #endif
+	    {
           draw_horizontal_tick(x, x0, ty, ap, ax, printing, include_grid);
+	    }
 	  fy -= tdy->step;
 	}
       tens = 0.0;
@@ -960,12 +993,15 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 	    }
 	  else
 #endif
+	    {
           draw_horizontal_tick(x, x0, ty, ap, ax, printing, include_grid);
+	    }
 	  fy += tdy->step;
 	}
     }
   if ((x_axis_linear) && (include_x_ticks))
     {
+      bool major_tick_is_less_than_measure = false;
       double fx, tens;
       int tx, y0, majy, miny, y;
       y0 = ap->x_axis_y0;
@@ -974,6 +1010,12 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
       /* start at leftmost major tick and work toward y axis */
       fx = tdx->mlo;
       tx = tick_grf_x(fx, ap, x_style, srate);
+
+      if ((ap->cp) && 
+	  (x_style == X_AXIS_IN_MEASURES) &&
+	  ((tdx->tenstep * tdx->step) <= ((60.0 * ap->cp->beats_per_measure) / (Float)(ap->cp->beats_per_minute))))
+	major_tick_is_less_than_measure = true;
+
 #if HAVE_GL
       if (ap->use_gl)
 	{
@@ -986,8 +1028,12 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 	}
       else
 #endif
-
-      draw_vertical_tick(tx, y0, majy, ap, ax, printing, include_grid);
+	{
+	  if ((major_tick_is_less_than_measure) &&
+	      (first_beat(ap->cp, fx)))
+	    draw_vertical_tick(tx, y0 - major_tick_length, majy + minor_tick_length, ap, ax, printing, include_grid);
+	  else draw_vertical_tick(tx, y0, majy, ap, ax, printing, include_grid);
+	}
       tens = 0.0;
       fx -= tdx->step;
       while (fx >= tdx->flo)
@@ -1012,7 +1058,12 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 	    }
 	  else
 #endif
-          draw_vertical_tick(tx, y0, y, ap, ax, printing, include_grid);
+	    {
+	      if ((major_tick_is_less_than_measure) &&
+		  (first_beat(ap->cp, fx)))
+		draw_vertical_tick(tx, y0 - major_tick_length, y + minor_tick_length, ap, ax, printing, include_grid);
+	      else draw_vertical_tick(tx, y0, y, ap, ax, printing, include_grid);
+	    }
 	  fx -= tdx->step;
 	}
       tens = 0.0;
@@ -1041,7 +1092,12 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 	    }
 	  else
 #endif
-          draw_vertical_tick(tx, y0, y, ap, ax, printing, include_grid);
+	    {
+	      if ((major_tick_is_less_than_measure) &&
+		  (first_beat(ap->cp, fx)))
+		draw_vertical_tick(tx, y0 - major_tick_length, y + minor_tick_length, ap, ax, printing, include_grid);
+	      else draw_vertical_tick(tx, y0, y, ap, ax, printing, include_grid);
+	    }
 	  fx += tdx->step;
 	}
     }
@@ -1279,7 +1335,7 @@ static XEN g_ungrf_y(XEN val, XEN snd, XEN chn, XEN ap)
 static XEN g_axis_info(XEN snd, XEN chn, XEN ap_id)
 {
   #define H_axis_info "(" S_axis_info " (snd #f) (chn #f) (grf #f)): info about axis: (list losamp hisamp \
-x0 y0 x1 y1 xmin ymin xmax ymax pix_x0 pix_y0 pix_x1 pix_y1 y_offset xscale yscale label new-peaks)"
+x0 y0 x1 y1 xmin ymin xmax ymax pix_x0 pix_y0 pix_x1 pix_y1 y_offset xscale yscale xlabel ylabel new-peaks)"
   axis_info *ap;
   ASSERT_CHANNEL(S_axis_info, snd, chn, 1);
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ap_id), ap_id, XEN_ARG_3, S_axis_info, S_time_graph ", " S_transform_graph ", or " S_lisp_graph);
@@ -1303,9 +1359,9 @@ x0 y0 x1 y1 xmin ymin xmax ymax pix_x0 pix_y0 pix_x1 pix_y1 y_offset xscale ysca
 			XEN_CONS(C_TO_XEN_DOUBLE(ap->x_scale),
 			 XEN_CONS(C_TO_XEN_DOUBLE(ap->y_scale),
 			  XEN_CONS((ap->xlabel) ? C_TO_XEN_STRING(ap->xlabel) : XEN_FALSE,
-			   XEN_CONS((ap->cp) ? C_TO_XEN_BOOLEAN(ap->cp->new_peaks) : XEN_FALSE,
-				    /* ylabel? */
-		            XEN_EMPTY_LIST))))))))))))))))))));
+			   XEN_CONS((ap->ylabel) ? C_TO_XEN_STRING(ap->ylabel) : XEN_FALSE,
+			    XEN_CONS((ap->cp) ? C_TO_XEN_BOOLEAN(ap->cp->new_peaks) : XEN_FALSE,
+		             XEN_EMPTY_LIST)))))))))))))))))))));
 }
 
 /* this is intended for use with the xm package */

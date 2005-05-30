@@ -184,7 +184,7 @@ the y-zoom-slider controls the graph amp"
 	       (chan-offset (- (list-ref axinf 13) 10))
 	       (y-offset (+ chan-offset (inexact->exact (round (/ height 2)))))
 	       (grf-chn (if (= (channel-style snd) channels-separate) chn 0))
-	       (new-peaks (list-ref axinf 18))
+	       (new-peaks (list-ref axinf 19))
 	       (data0 #f)
 	       (data1 #f))
 	  (if (and (> width 10)

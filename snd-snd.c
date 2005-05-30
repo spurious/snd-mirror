@@ -4103,12 +4103,6 @@ static int pack_mus_sample_type(void)
 #define PEAK_ENV_INTS 5
 #define PEAK_ENV_SAMPS 2
 
-/* TODO: include maxamp-position in peak-env file
- *         add a version number in the low-order bits (currently only bit 0 is used)
- *         version 0: old form, version 1: new with added maxamp-position field
- *         but maxamp/maxamp_position aren't saved in the end_info data -- they are in the ed_lists
- */
-
 static bool mus_sample_type_ok(int val)
 {
   return((val == 0) ||                            /* for backwards compatibility */

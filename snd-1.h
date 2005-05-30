@@ -602,6 +602,7 @@ void activate_focus_menu(zoom_focus_t new_focus);
 void set_x_axis_style(x_axis_style_t val);
 void set_channel_style(channel_style_t val);
 void chans_x_axis_style(chan_info *cp, void *ptr);
+void menu_set_show_axes(show_axes_t val);
 
 void g_init_menu(void);
 
@@ -1125,6 +1126,7 @@ void update_graph(chan_info *cp);
 void add_channel_data(char *filename, chan_info *cp, channel_graph_t graphed);
 void add_channel_data_1(chan_info *cp, int srate, off_t frames, channel_graph_t graphed);
 void set_x_bounds(axis_info *ap);
+void set_show_axes(show_axes_t val);
 void display_channel_data (chan_info *cp);
 void display_channel_fft_data (chan_info *cp);
 void show_cursor_info(chan_info *cp);

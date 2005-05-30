@@ -4,8 +4,7 @@
 
 /* 
  * TODO: overlay of rms env
- * TODO: fill in two-sided with colormap choice based on rms of underlying pixels (same for line graph?) -- would want peak-env style support
- *
+ *       fill in two-sided with colormap choice based on rms of underlying pixels (same for line graph?) -- would want peak-env style support
  * TODO: bark scale as axis or color as above: Fletcher-Munson post-process fft data -- is there a hook that would allow this?
  * SOMEDAY: user-addable graph-style? axis? (dB for example, or rms above)
  *          also affects cursor display, perhaps verbose cursor info display, peak-env graphing,
@@ -205,7 +204,7 @@ static void chans_show_axes(chan_info *cp, void *ptr)
   update_graph(cp); 
 }
 
-static void set_show_axes(show_axes_t val) 
+void set_show_axes(show_axes_t val) 
 {
   in_set_show_axes(val); 
   for_each_chan_1(chans_show_axes, (void *)(&val));
@@ -1065,6 +1064,7 @@ static char chn_id_str[LABEL_BUFFER_SIZE];
 
 static void display_channel_id(chan_info *cp, int height, int chans)
 {
+  if (cp->show_axes == SHOW_NO_AXES) return;
   if ((chans > 1) || (cp->edit_ctr > 0))
     {
       int x0, y0;
@@ -6416,7 +6416,7 @@ static XEN g_show_axes(XEN snd, XEN chn)
 {
   #define H_show_axes "(" S_show_axes "(snd #f) (chn #f)) \
 If " S_show_all_axes ", display x and y axes; if " S_show_x_axis ", just one axis (the x axis) is displayed. \
-The other choice is " S_show_no_axes "."
+The other choices are " S_show_no_axes ", " S_show_all_axes_unlabelled ", and " S_show_x_axis_unlabelled "."
 
   if (XEN_BOUND_P(snd))
     return(channel_get(snd, chn, CP_SHOW_AXES, S_show_axes));
@@ -6429,7 +6429,8 @@ static XEN g_set_show_axes(XEN on, XEN snd, XEN chn)
   XEN_ASSERT_TYPE(XEN_INTEGER_P(on), on, XEN_ARG_1, S_setB S_show_axes, "an integer");
   val = (show_axes_t)XEN_TO_C_INT(on);
   if (val > SHOW_X_AXIS_UNLABELLED)
-    XEN_OUT_OF_RANGE_ERROR(S_setB S_show_axes, 1, on, "~A, but must be " S_show_all_axes ", " S_show_x_axis ", or " S_show_no_axes ", or *-unlabelled");
+    XEN_OUT_OF_RANGE_ERROR(S_setB S_show_axes, 1, on, "~A, but must be " S_show_all_axes ", " S_show_x_axis ", " S_show_no_axes ", \
+" S_show_all_axes_unlabelled ", or " S_show_x_axis_unlabelled ".");
   if (XEN_BOUND_P(snd))
     return(channel_set(snd, chn, on, CP_SHOW_AXES, S_setB S_show_axes));
   set_show_axes(val);

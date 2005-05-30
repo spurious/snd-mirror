@@ -30,12 +30,14 @@ enum {menu_menu,
           v_color_menu, v_orientation_menu, 
           v_files_menu, v_mix_dialog_menu, v_track_dialog_menu,
           v_x_axis_menu, v_x_axis_cascade_menu,
-      v_x_axis_seconds_menu, v_x_axis_samples_menu, v_x_axis_percentage_menu, v_x_axis_beats_menu, v_x_axis_measures_menu,
+            v_x_axis_seconds_menu, v_x_axis_samples_menu, v_x_axis_percentage_menu, v_x_axis_beats_menu, v_x_axis_measures_menu,
+          v_axes_menu, v_axes_cascade_menu,
+            v_no_axes_menu, v_all_axes_menu, v_just_x_axis_menu, v_all_axes_unlabelled_menu, v_just_x_axis_unlabelled_menu,
           v_error_history_menu,
           v_sep2_menu
 };
 
-#define NUM_MENU_WIDGETS 98
+#define NUM_MENU_WIDGETS 105
 static GtkWidget *mw[NUM_MENU_WIDGETS];
 static const char *ml[NUM_MENU_WIDGETS];
 
@@ -84,6 +86,12 @@ GtkWidget *view_x_axis_beats_menu(void) {return(mw[v_x_axis_beats_menu]);}
 GtkWidget *view_x_axis_measures_menu(void) {return(mw[v_x_axis_measures_menu]);}
 GtkWidget *view_x_axis_samples_menu(void) {return(mw[v_x_axis_samples_menu]);}
 GtkWidget *view_x_axis_percentage_menu(void) {return(mw[v_x_axis_percentage_menu]);}
+
+GtkWidget *view_no_axes_menu(void) {return(mw[v_no_axes_menu]);}
+GtkWidget *view_all_axes_menu(void) {return(mw[v_all_axes_menu]);}
+GtkWidget *view_all_axes_unlabelled_menu(void) {return(mw[v_all_axes_unlabelled_menu]);}
+GtkWidget *view_just_x_axis_menu(void) {return(mw[v_just_x_axis_menu]);}
+GtkWidget *view_just_x_axis_unlabelled_menu(void) {return(mw[v_just_x_axis_unlabelled_menu]);}
 
 GtkWidget *options_save_state_menu(void) {return(mw[o_save_state_menu]);}
 GtkWidget *options_focus_left_menu(void) {return(mw[o_focus_left_menu]);}
@@ -193,6 +201,18 @@ static void view_orientation_callback_1(GtkWidget *w, gpointer info) {view_orien
 static void view_color_callback_1(GtkWidget *w, gpointer info) {view_color_callback(w, info);}
 static void view_files_callback_1(GtkWidget *w, gpointer info) {view_files_callback(w, info);}
 
+static void view_x_axis_seconds_callback(GtkWidget *w, gpointer info) {set_x_axis_style(X_AXIS_IN_SECONDS);}
+static void view_x_axis_beats_callback(GtkWidget *w, gpointer info) {set_x_axis_style(X_AXIS_IN_BEATS);}
+static void view_x_axis_measures_callback(GtkWidget *w, gpointer info) {set_x_axis_style(X_AXIS_IN_MEASURES);}
+static void view_x_axis_samples_callback(GtkWidget *w, gpointer info) {set_x_axis_style(X_AXIS_IN_SAMPLES);}
+static void view_x_axis_percentage_callback(GtkWidget *w, gpointer info) {set_x_axis_style(X_AXIS_AS_PERCENTAGE);}
+
+static void view_no_axes_callback(GtkWidget *w, gpointer info) {menu_set_show_axes(SHOW_NO_AXES);}
+static void view_all_axes_callback(GtkWidget *w, gpointer info) {menu_set_show_axes(SHOW_ALL_AXES);}
+static void view_just_x_axis_callback(GtkWidget *w, gpointer info) {menu_set_show_axes(SHOW_X_AXIS);}
+static void view_all_axes_unlabelled_callback(GtkWidget *w, gpointer info) {menu_set_show_axes(SHOW_ALL_AXES_UNLABELLED);}
+static void view_just_x_axis_unlabelled_callback(GtkWidget *w, gpointer info) {menu_set_show_axes(SHOW_X_AXIS_UNLABELLED);}
+
 
 /* -------------------------------- OPTIONS MENU -------------------------------- */
 
@@ -204,11 +224,7 @@ static void options_focus_right_callback(GtkWidget *w, gpointer info, gpointer D
 static void options_focus_left_callback(GtkWidget *w, gpointer info, gpointer Data) {activate_focus_menu(ZOOM_FOCUS_LEFT);}
 static void options_focus_middle_callback(GtkWidget *w, gpointer info, gpointer Data) {activate_focus_menu(ZOOM_FOCUS_MIDDLE);}
 static void options_focus_active_callback(GtkWidget *w, gpointer info, gpointer Data) {activate_focus_menu(ZOOM_FOCUS_ACTIVE);}
-static void options_x_axis_seconds_callback(GtkWidget *w, gpointer info) {set_x_axis_style(X_AXIS_IN_SECONDS);}
-static void options_x_axis_beats_callback(GtkWidget *w, gpointer info) {set_x_axis_style(X_AXIS_IN_BEATS);}
-static void options_x_axis_measures_callback(GtkWidget *w, gpointer info) {set_x_axis_style(X_AXIS_IN_MEASURES);}
-static void options_x_axis_samples_callback(GtkWidget *w, gpointer info) {set_x_axis_style(X_AXIS_IN_SAMPLES);}
-static void options_x_axis_percentage_callback(GtkWidget *w, gpointer info) {set_x_axis_style(X_AXIS_AS_PERCENTAGE);}
+
 #if HAVE_EXTENSION_LANGUAGE
 static void options_save_state_callback(GtkWidget *w, gpointer info) {save_state_from_menu();}
 #endif
@@ -625,32 +641,73 @@ GtkWidget *add_menu(void)
   ml[v_x_axis_seconds_menu] = _("seconds");
   gtk_menu_shell_append(GTK_MENU_SHELL(mw[v_x_axis_cascade_menu]), mw[v_x_axis_seconds_menu]);
   gtk_widget_show(mw[v_x_axis_seconds_menu]);
-  SG_SIGNAL_CONNECT(mw[v_x_axis_seconds_menu], "activate", options_x_axis_seconds_callback, NULL);
+  SG_SIGNAL_CONNECT(mw[v_x_axis_seconds_menu], "activate", view_x_axis_seconds_callback, NULL);
   set_sensitive(mw[v_x_axis_seconds_menu], false);
 
   mw[v_x_axis_samples_menu] = gtk_menu_item_new_with_label(_("samples"));
   ml[v_x_axis_samples_menu] = _("samples");
   gtk_menu_shell_append(GTK_MENU_SHELL(mw[v_x_axis_cascade_menu]), mw[v_x_axis_samples_menu]);
   gtk_widget_show(mw[v_x_axis_samples_menu]);
-  SG_SIGNAL_CONNECT(mw[v_x_axis_samples_menu], "activate", options_x_axis_samples_callback, NULL);
+  SG_SIGNAL_CONNECT(mw[v_x_axis_samples_menu], "activate", view_x_axis_samples_callback, NULL);
 
   mw[v_x_axis_percentage_menu] = gtk_menu_item_new_with_label(_("percentage"));
   ml[v_x_axis_percentage_menu] = _("percentage");
   gtk_menu_shell_append(GTK_MENU_SHELL(mw[v_x_axis_cascade_menu]), mw[v_x_axis_percentage_menu]);
   gtk_widget_show(mw[v_x_axis_percentage_menu]);
-  SG_SIGNAL_CONNECT(mw[v_x_axis_percentage_menu], "activate", options_x_axis_percentage_callback, NULL);
+  SG_SIGNAL_CONNECT(mw[v_x_axis_percentage_menu], "activate", view_x_axis_percentage_callback, NULL);
 
   mw[v_x_axis_beats_menu] = gtk_menu_item_new_with_label(_("beats"));
   ml[v_x_axis_beats_menu] = _("beats");
   gtk_menu_shell_append(GTK_MENU_SHELL(mw[v_x_axis_cascade_menu]), mw[v_x_axis_beats_menu]);
   gtk_widget_show(mw[v_x_axis_beats_menu]);
-  SG_SIGNAL_CONNECT(mw[v_x_axis_beats_menu], "activate", options_x_axis_beats_callback, NULL);
+  SG_SIGNAL_CONNECT(mw[v_x_axis_beats_menu], "activate", view_x_axis_beats_callback, NULL);
 
   mw[v_x_axis_measures_menu] = gtk_menu_item_new_with_label(_("measures"));
   ml[v_x_axis_measures_menu] = _("measures");
   gtk_menu_shell_append(GTK_MENU_SHELL(mw[v_x_axis_cascade_menu]), mw[v_x_axis_measures_menu]);
   gtk_widget_show(mw[v_x_axis_measures_menu]);
-  SG_SIGNAL_CONNECT(mw[v_x_axis_measures_menu], "activate", options_x_axis_measures_callback, NULL);
+  SG_SIGNAL_CONNECT(mw[v_x_axis_measures_menu], "activate", view_x_axis_measures_callback, NULL);
+
+
+  mw[v_axes_menu] = gtk_menu_item_new_with_label(_("Axes"));
+  ml[v_axes_menu] = _("Axes");
+  gtk_menu_shell_append(GTK_MENU_SHELL(mw[v_cascade_menu]), mw[v_axes_menu]);
+  gtk_widget_show(mw[v_axes_menu]);
+
+  mw[v_axes_cascade_menu] = gtk_menu_new();
+  ml[v_axes_cascade_menu] = NULL;
+  gtk_menu_item_set_submenu(GTK_MENU_ITEM(mw[v_axes_menu]), mw[v_axes_cascade_menu]);
+
+  mw[v_no_axes_menu] = gtk_menu_item_new_with_label(_("no axes"));
+  ml[v_no_axes_menu] = _("no axes");
+  gtk_menu_shell_append(GTK_MENU_SHELL(mw[v_axes_cascade_menu]), mw[v_no_axes_menu]);
+  gtk_widget_show(mw[v_no_axes_menu]);
+  SG_SIGNAL_CONNECT(mw[v_no_axes_menu], "activate", view_no_axes_callback, NULL);
+
+  mw[v_all_axes_menu] = gtk_menu_item_new_with_label(_("both axes"));
+  ml[v_all_axes_menu] = _("both axes");
+  gtk_menu_shell_append(GTK_MENU_SHELL(mw[v_axes_cascade_menu]), mw[v_all_axes_menu]);
+  gtk_widget_show(mw[v_all_axes_menu]);
+  SG_SIGNAL_CONNECT(mw[v_all_axes_menu], "activate", view_all_axes_callback, NULL);
+
+  mw[v_just_x_axis_menu] = gtk_menu_item_new_with_label(_("just x axis"));
+  ml[v_just_x_axis_menu] = _("just x axis");
+  gtk_menu_shell_append(GTK_MENU_SHELL(mw[v_axes_cascade_menu]), mw[v_just_x_axis_menu]);
+  gtk_widget_show(mw[v_just_x_axis_menu]);
+  SG_SIGNAL_CONNECT(mw[v_just_x_axis_menu], "activate", view_just_x_axis_callback, NULL);
+
+  mw[v_all_axes_unlabelled_menu] = gtk_menu_item_new_with_label(_("both axes, no labels"));
+  ml[v_all_axes_unlabelled_menu] = _("both axes, no labels");
+  gtk_menu_shell_append(GTK_MENU_SHELL(mw[v_axes_cascade_menu]), mw[v_all_axes_unlabelled_menu]);
+  gtk_widget_show(mw[v_all_axes_unlabelled_menu]);
+  SG_SIGNAL_CONNECT(mw[v_all_axes_unlabelled_menu], "activate", view_all_axes_unlabelled_callback, NULL);
+
+  mw[v_just_x_axis_unlabelled_menu] = gtk_menu_item_new_with_label(_("just x axis, no label"));
+  ml[v_just_x_axis_unlabelled_menu] = _("just x axis, no label");
+  gtk_menu_shell_append(GTK_MENU_SHELL(mw[v_axes_cascade_menu]), mw[v_just_x_axis_unlabelled_menu]);
+  gtk_widget_show(mw[v_just_x_axis_unlabelled_menu]);
+  SG_SIGNAL_CONNECT(mw[v_just_x_axis_unlabelled_menu], "activate", view_just_x_axis_unlabelled_callback, NULL);
+
 
   mw[v_error_history_menu] = gtk_menu_item_new_with_label(_("Error History"));
   ml[v_error_history_menu] = _("Error History");

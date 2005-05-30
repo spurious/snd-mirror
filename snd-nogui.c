@@ -105,6 +105,11 @@ int view_x_axis_beats_menu(void) {return(0);}
 int view_x_axis_measures_menu(void) {return(0);}
 int view_x_axis_samples_menu(void) {return(0);}
 int view_x_axis_percentage_menu(void) {return(0);}
+int view_no_axes_menu(void) {return(0);}
+int view_all_axes_menu(void) {return(0);}
+int view_all_axes_unlabelled_menu(void) {return(0);}
+int view_just_x_axis_menu(void) {return(0);}
+int view_just_x_axis_unlabelled_menu(void) {return(0);}
 int options_save_state_menu(void) {return(0);}
 int options_focus_left_menu(void) {return(0);}
 int options_focus_right_menu(void) {return(0);}

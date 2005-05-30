@@ -31,12 +31,14 @@ enum {menu_menu,
           v_color_menu, v_orientation_menu, 
           v_files_menu, v_mix_dialog_menu, v_track_dialog_menu,
           v_x_axis_menu, v_x_axis_cascade_menu,
-      v_x_axis_seconds_menu, v_x_axis_samples_menu, v_x_axis_percentage_menu, v_x_axis_beats_menu, v_x_axis_measures_menu,
+            v_x_axis_seconds_menu, v_x_axis_samples_menu, v_x_axis_percentage_menu, v_x_axis_beats_menu, v_x_axis_measures_menu,
+          v_axes_menu, v_axes_cascade_menu,
+            v_no_axes_menu, v_all_axes_menu, v_just_x_axis_menu, v_all_axes_unlabelled_menu, v_just_x_axis_unlabelled_menu,
           v_error_history_menu,
           v_sep2_menu
 };
 
-#define NUM_MENU_WIDGETS 99
+#define NUM_MENU_WIDGETS 106
 static Widget mw[NUM_MENU_WIDGETS];
 
 static Widget popup_menu = NULL;
@@ -82,6 +84,11 @@ Widget view_x_axis_beats_menu(void) {return(mw[v_x_axis_beats_menu]);}
 Widget view_x_axis_measures_menu(void) {return(mw[v_x_axis_measures_menu]);}
 Widget view_x_axis_samples_menu(void) {return(mw[v_x_axis_samples_menu]);}
 Widget view_x_axis_percentage_menu(void) {return(mw[v_x_axis_percentage_menu]);}
+Widget view_no_axes_menu(void) {return(mw[v_no_axes_menu]);}
+Widget view_all_axes_menu(void) {return(mw[v_all_axes_menu]);}
+Widget view_just_x_axis_menu(void) {return(mw[v_just_x_axis_menu]);}
+Widget view_all_axes_unlabelled_menu(void) {return(mw[v_all_axes_unlabelled_menu]);}
+Widget view_just_x_axis_unlabelled_menu(void) {return(mw[v_just_x_axis_unlabelled_menu]);}
 
 Widget options_save_state_menu(void) {return(mw[o_save_state_menu]);}
 Widget options_focus_left_menu(void) {return(mw[o_focus_left_menu]);}
@@ -198,6 +205,19 @@ static void view_menu_update(Widget w, XtPointer info, XtPointer context)
   set_view_listener_label((listener_height() > 10) ? _("Hide listener") : _("Show listener"));
 }
 
+static void view_x_axis_seconds_callback(Widget w, XtPointer info, XtPointer context) {set_x_axis_style(X_AXIS_IN_SECONDS);}
+static void view_x_axis_beats_callback(Widget w, XtPointer info, XtPointer context) {set_x_axis_style(X_AXIS_IN_BEATS);}
+static void view_x_axis_measures_callback(Widget w, XtPointer info, XtPointer context) {set_x_axis_style(X_AXIS_IN_MEASURES);}
+static void view_x_axis_samples_callback(Widget w, XtPointer info, XtPointer context) {set_x_axis_style(X_AXIS_IN_SAMPLES);}
+static void view_x_axis_percentage_callback(Widget w, XtPointer info, XtPointer context) {set_x_axis_style(X_AXIS_AS_PERCENTAGE);}
+
+static void view_no_axes_callback(Widget w, XtPointer info, XtPointer context) {menu_set_show_axes(SHOW_NO_AXES);}
+static void view_all_axes_callback(Widget w, XtPointer info, XtPointer context) {menu_set_show_axes(SHOW_ALL_AXES);}
+static void view_just_x_axis_callback(Widget w, XtPointer info, XtPointer context) {menu_set_show_axes(SHOW_X_AXIS);}
+static void view_all_axes_unlabelled_callback(Widget w, XtPointer info, XtPointer context) {menu_set_show_axes(SHOW_ALL_AXES_UNLABELLED);}
+static void view_just_x_axis_unlabelled_callback(Widget w, XtPointer info, XtPointer context) {menu_set_show_axes(SHOW_X_AXIS_UNLABELLED);}
+
+
 
 /* -------------------------------- OPTIONS MENU -------------------------------- */
 
@@ -209,11 +229,6 @@ static void options_focus_right_callback(Widget w, XtPointer info, XtPointer Dat
 static void options_focus_left_callback(Widget w, XtPointer info, XtPointer Data) {activate_focus_menu(ZOOM_FOCUS_LEFT);}
 static void options_focus_middle_callback(Widget w, XtPointer info, XtPointer Data) {activate_focus_menu(ZOOM_FOCUS_MIDDLE);}
 static void options_focus_active_callback(Widget w, XtPointer info, XtPointer Data) {activate_focus_menu(ZOOM_FOCUS_ACTIVE);}
-static void options_x_axis_seconds_callback(Widget w, XtPointer info, XtPointer context) {set_x_axis_style(X_AXIS_IN_SECONDS);}
-static void options_x_axis_beats_callback(Widget w, XtPointer info, XtPointer context) {set_x_axis_style(X_AXIS_IN_BEATS);}
-static void options_x_axis_measures_callback(Widget w, XtPointer info, XtPointer context) {set_x_axis_style(X_AXIS_IN_MEASURES);}
-static void options_x_axis_samples_callback(Widget w, XtPointer info, XtPointer context) {set_x_axis_style(X_AXIS_IN_SAMPLES);}
-static void options_x_axis_percentage_callback(Widget w, XtPointer info, XtPointer context) {set_x_axis_style(X_AXIS_AS_PERCENTAGE);}
 #if HAVE_EXTENSION_LANGUAGE
 static void options_save_state_callback(Widget w, XtPointer info, XtPointer context) {save_state_from_menu();}
 #endif
@@ -538,23 +553,50 @@ Widget add_menu(void)
   mw[v_x_axis_cascade_menu] = XtCreateManagedWidget(_("X axis units"), xmCascadeButtonWidgetClass, mw[view_menu], main_args, k);
 
   mw[v_x_axis_seconds_menu] = XtCreateManagedWidget(_("seconds"), xmPushButtonWidgetClass, mw[v_x_axis_menu], main_args, main_n);
-  XtAddCallback(mw[v_x_axis_seconds_menu], XmNactivateCallback, options_x_axis_seconds_callback, NULL);  
+  XtAddCallback(mw[v_x_axis_seconds_menu], XmNactivateCallback, view_x_axis_seconds_callback, NULL);  
   set_sensitive(mw[v_x_axis_seconds_menu], false);
 
   mw[v_x_axis_samples_menu] = XtCreateManagedWidget(_("samples"), xmPushButtonWidgetClass, mw[v_x_axis_menu], main_args, main_n);
-  XtAddCallback(mw[v_x_axis_samples_menu], XmNactivateCallback, options_x_axis_samples_callback, NULL);  
+  XtAddCallback(mw[v_x_axis_samples_menu], XmNactivateCallback, view_x_axis_samples_callback, NULL);  
 
   mw[v_x_axis_percentage_menu] = XtCreateManagedWidget(_("percentage"), xmPushButtonWidgetClass, mw[v_x_axis_menu], main_args, main_n);
-  XtAddCallback(mw[v_x_axis_percentage_menu], XmNactivateCallback, options_x_axis_percentage_callback, NULL);  
+  XtAddCallback(mw[v_x_axis_percentage_menu], XmNactivateCallback, view_x_axis_percentage_callback, NULL);  
 
   mw[v_x_axis_beats_menu] = XtCreateManagedWidget(_("beats"), xmPushButtonWidgetClass, mw[v_x_axis_menu], main_args, main_n);
-  XtAddCallback(mw[v_x_axis_beats_menu], XmNactivateCallback, options_x_axis_beats_callback, NULL);  
+  XtAddCallback(mw[v_x_axis_beats_menu], XmNactivateCallback, view_x_axis_beats_callback, NULL);  
 
   mw[v_x_axis_measures_menu] = XtCreateManagedWidget(_("measures"), xmPushButtonWidgetClass, mw[v_x_axis_menu], main_args, main_n);
-  XtAddCallback(mw[v_x_axis_measures_menu], XmNactivateCallback, options_x_axis_measures_callback, NULL);  
+  XtAddCallback(mw[v_x_axis_measures_menu], XmNactivateCallback, view_x_axis_measures_callback, NULL);  
 
   mw[v_error_history_menu] = XtCreateManagedWidget(_("Error History"), xmPushButtonWidgetClass, mw[view_menu], main_args, main_n);
   XtAddCallback(mw[v_error_history_menu], XmNactivateCallback, view_error_history_callback, NULL);
+
+
+  mw[v_axes_menu] = XmCreatePulldownMenu(mw[view_menu], "axes", main_args, main_n);
+
+  k = main_n;
+  XtSetArg(main_args[k], XmNsubMenuId, mw[v_axes_menu]); k++;
+  mw[v_axes_cascade_menu] = XtCreateManagedWidget(_("Axes"), xmCascadeButtonWidgetClass, mw[view_menu], main_args, k);
+
+  mw[v_no_axes_menu] = XtCreateManagedWidget(_("no axes"), xmPushButtonWidgetClass, mw[v_axes_menu], main_args, main_n);
+  XtAddCallback(mw[v_no_axes_menu], XmNactivateCallback, view_no_axes_callback, NULL);  
+  if (show_axes(ss) == SHOW_NO_AXES) set_sensitive(mw[v_no_axes_menu], false); /* false because it is already chosen */
+
+  mw[v_all_axes_menu] = XtCreateManagedWidget(_("both axes"), xmPushButtonWidgetClass, mw[v_axes_menu], main_args, main_n);
+  XtAddCallback(mw[v_all_axes_menu], XmNactivateCallback, view_all_axes_callback, NULL);  
+  if (show_axes(ss) == SHOW_ALL_AXES) set_sensitive(mw[v_all_axes_menu], false);
+
+  mw[v_just_x_axis_menu] = XtCreateManagedWidget(_("just x axis"), xmPushButtonWidgetClass, mw[v_axes_menu], main_args, main_n);
+  XtAddCallback(mw[v_just_x_axis_menu], XmNactivateCallback, view_just_x_axis_callback, NULL);  
+  if (show_axes(ss) == SHOW_X_AXIS) set_sensitive(mw[v_just_x_axis_menu], false);
+
+  mw[v_all_axes_unlabelled_menu] = XtCreateManagedWidget(_("both axes, no labels"), xmPushButtonWidgetClass, mw[v_axes_menu], main_args, main_n);
+  XtAddCallback(mw[v_all_axes_unlabelled_menu], XmNactivateCallback, view_all_axes_unlabelled_callback, NULL);  
+  if (show_axes(ss) == SHOW_ALL_AXES_UNLABELLED) set_sensitive(mw[v_all_axes_unlabelled_menu], false);
+
+  mw[v_just_x_axis_unlabelled_menu] = XtCreateManagedWidget(_("just x axis, no label"), xmPushButtonWidgetClass, mw[v_axes_menu], main_args, main_n);
+  XtAddCallback(mw[v_just_x_axis_unlabelled_menu], XmNactivateCallback, view_just_x_axis_unlabelled_callback, NULL);  
+  if (show_axes(ss) == SHOW_X_AXIS_UNLABELLED) set_sensitive(mw[v_just_x_axis_unlabelled_menu], false);
 
 
   /* OPTIONS MENU */

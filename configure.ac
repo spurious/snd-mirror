@@ -1278,7 +1278,6 @@ case "$host" in
 	SO_INSTALL=":"
 	SO_LD=":"
 	A_LD_FLAGS="-non_shared"
-# should we include -lSgm if motif?
 	# OPT:Olimit check borrowed from Python's configure.in
 	AC_MSG_CHECKING(whether $CC accepts -OPT:Olimit=0)
 	AC_CACHE_VAL(ac_cv_opt_olimit_ok,
@@ -1296,9 +1295,6 @@ case "$host" in
 	    LIBS="$LIBS -lm"
           fi
 	fi
-# how to incorporate the TARG:platform arguments? (hinv...)
-# what is -IPA?
-# do we need explicit -n32?	
         ;;
     alpha*) 
         AC_DEFINE(ALPHA)

@@ -1448,7 +1448,7 @@ called when the mouse enters a channel's drawing area (graph pane).
 called when a file viewer or region label 
 is entered by the mouse. The 'type' is 0 for the current files list, 1 for previous files, and 2 for regions. 
 The 'position' is the scrolled list position of the label. 
-The label itself is 'label'. We could use the <i>finfo</i> procedure in examp.scm
+The label itself is 'label'. We can use the <i>finfo</i> procedure in examp.scm
 to popup file info as follows:
 </td></tr>
 <tr><td></td><td colspan=2>
@@ -4191,10 +4191,10 @@ send channel 1 data to channel 1 of the DAC, and so on).
 <tr><td width=50><br></td><td>
 return a list describing the specified axis:
 <code>'(<a class=quiet href="#leftsample">left-sample</a> right-sample x0 y0 x1 y1 x-min y-min x-max y-max 
-x0-position y0-position x1-position y1-position y-offset xlabel)</code>.  This might be
+x0-position y0-position x1-position y1-position y-offset xlabel ylabel new-peaks)</code>.  This might be
 useful if you're drawing arbitrary figures in a graph.  <i>grf</i> defaults to
 time-graph; the other choices are transform-graph and lisp-graph.  The procedure <a href="#x_to_position">x-&gt;position</a>
-could be defined as:
+can be defined as:
 </td></tr>
 <tr><td></td><td>
 <table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
@@ -6981,6 +6981,7 @@ If <b>show-axes</b> is <code>show-all-axes</code>, display x and y axes; if <cod
 just one (bottom) x axis is displayed, reducing screen clutter. 
 <code>show-no-axes</code> omits both x and y axes.  To remove the x axis label, use
 either <code>show-x-axis-unlabelled</code> or <code>show-all-axes-unlabelled</code>.
+This is the View:Axes choice.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -7842,6 +7843,11 @@ as a percentage of the overall duration (<i>x-axis-as-percentage</i>, useful in 
 or as a measure number (<i>x-axis-in-measures</i>).
 This is the View menu 'X-axis units' option.
 (default: <i>x-axis-in-seconds</i>). 
+When the x axis labelling is in measures, the label has the form M(B)F or M(B) where M is the one-based
+measure number (that is, the first measure, at time 0.0, is measure 1), B is the one-based beat number
+within that measure, and F (if present) is the location within that beat on a scale of 0.0 to 1.0.
+If a major tick marks a measure beginning, and there are non-measure minor ticks, then the measure
+is distinguished from the beat by having a longer tick mark.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
