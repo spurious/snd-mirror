@@ -568,9 +568,6 @@ Widget add_menu(void)
   mw[v_x_axis_measures_menu] = XtCreateManagedWidget(_("measures"), xmPushButtonWidgetClass, mw[v_x_axis_menu], main_args, main_n);
   XtAddCallback(mw[v_x_axis_measures_menu], XmNactivateCallback, view_x_axis_measures_callback, NULL);  
 
-  mw[v_error_history_menu] = XtCreateManagedWidget(_("Error History"), xmPushButtonWidgetClass, mw[view_menu], main_args, main_n);
-  XtAddCallback(mw[v_error_history_menu], XmNactivateCallback, view_error_history_callback, NULL);
-
 
   mw[v_axes_menu] = XmCreatePulldownMenu(mw[view_menu], "axes", main_args, main_n);
 
@@ -597,6 +594,11 @@ Widget add_menu(void)
   mw[v_just_x_axis_unlabelled_menu] = XtCreateManagedWidget(_("just x axis, no label"), xmPushButtonWidgetClass, mw[v_axes_menu], main_args, main_n);
   XtAddCallback(mw[v_just_x_axis_unlabelled_menu], XmNactivateCallback, view_just_x_axis_unlabelled_callback, NULL);  
   if (show_axes(ss) == SHOW_X_AXIS_UNLABELLED) set_sensitive(mw[v_just_x_axis_unlabelled_menu], false);
+
+
+  mw[v_error_history_menu] = XtCreateManagedWidget(_("Error History"), xmPushButtonWidgetClass, mw[view_menu], main_args, main_n);
+  XtAddCallback(mw[v_error_history_menu], XmNactivateCallback, view_error_history_callback, NULL);
+
 
 
   /* OPTIONS MENU */

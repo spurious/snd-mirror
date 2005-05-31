@@ -398,7 +398,8 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
-1-June:  show-axes View:Axes menu.\n\
+1-June:  snd 7.13.\n\
+         show-axes View:Axes menu.\n\
 26-May:  beats-per-measure and x-axis-style x-axis-in-measures.\n\
 25-May:  create-audit-dialog in snd-motif.scm.\n\
 23-May:  maraca.rb, play.rb, prc95.rb, singer.rb, and zip.rb thanks to Mike Scholz.\n\
@@ -407,7 +408,6 @@ void about_snd_help(void)
 2-May:   maxamp-position, region-|selection-|maxamp-position.\n\
          windowed-maxamp generator (dsp.scm).\n\
          harmonicizer (dsp.scm).\n\
-26-Apr:  snd 7.12.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",

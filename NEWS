@@ -1,48 +1,36 @@
-Snd 7.12:
+Snd 7.13
 
-marks.rb, draw.rb, poly.rb, musglyphs.rb, and many other improvements thanks to Mike Scholz.
+many improvements thanks to Mike Scholz and Kjetil Matheussen, including:
+  maraca.rb, play.rb, prc95.rb, singer.rb, and zip.rb
+  rt.tex
 
-rt-examples.scm and much else thanks to Kjetil Matheussen.
+vct* and vct+
 
-mixer.scm with various matrix/vector functions (determinant, inverse,
-   solve simultaneous linear equations, etc) as applied to mixers/frames.
+region-|selection-|maxamp-position
 
-   mixer-scale is now embedded in mixer* (old name is in snd7.scm), and
-   frame*, frame+, mixer*, and mixer+ take either generator or float args.
+before-save-as-hook
 
-   changed interpretation of frame->frame arguments.  To get the old style,
-      you need to reverse the first two args -- the new style reflects the
-      actual matrix multiplication order, which I think makes more sense.
+windowed-maxamp generator (clm.html, dsp.scm)
 
-poly.scm with various polynomial-related functions.
+added comment arg to save-sound-as
+added y-label to axis-info list
 
-added before-save-state-hook and y-axis-label.
+beats-per-measure and x-axis-style x-axis-in-measures
 
-moved load-font from C to snd-motif.scm and snd-gtk.scm.
+harmonicizer -- this splits each portion of a spectrum into a set of harmonics (formant-bank + polynomial)
+  it is similar in spirit to ssb-bank (formant-bank + ssbs -- split spectrum, operate on each piece, reassemble)
 
-removed xen->sample generator.
+create-audit-dialog (snd-motif.scm) for hearing test
 
-changed mus-error-to-string to mus-error-type->string.
-    moved mus-data-format->string and mus-header-type->string from ws.scm to C.
-
-changed moog.scm and prc95.scm to use def-clm-struct, rather than a list.
-    zip.scm (zipper) changed (takes env args now, not thunks, uses def-clm-struct, etc).
-
-added invert-filter and volterra-filter in dsp.scm (also src-duration, for convenience)
+show-axes menu choice (View:Axes)
 
 
-CLM: removed bessel.lisp -- it was very much out of date, and much of it is
-       now available directly from libm (see note about bes-j0 etc in 7.11)
-
-     added size arg (buffer size) to make-readin, make-file->sample, make-file->frame
-
-     fullmix.ins defaults changed.
+CLM: vowel.ins thanks to Michelle Daniels and Oded Ben-Tal.
 
 
-checked: gtk 2.6.5|6|7
+checked: sbcl 0.9.0|1, Mesa 6.2.1 (openGL)
 
 
-with much help from: Mike Scholz, Kjetil Matheussen, Rick Taube, Michael Klingbeil,
-    Anders Vinjar, Fernando Lopez-Lezcano, Bill Sack, Chandrasekhar Ramakrishnan,
-    Oded Ben-Tal, Russell Aspinwall, Orm Finnendahl
-
+with much help from: Michelle Daniels, Oded Ben-Tal, Mike Scholz, Fernando Lopez-Lezcano,
+	Kjetil Matheussen, Richard Rauch, Jelena Zoran, sting, Jonas Berlin, Daniel Zysman,
+        Cris Ewing
