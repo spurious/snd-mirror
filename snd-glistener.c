@@ -203,8 +203,8 @@ void listener_append(char *msg)
 {
   if (listener_text)
     {
-      if ((ss->sgx)->graph_is_active)
-	(ss->sgx)->graph_is_active = false;
+      if (ss->sgx->graph_is_active)
+	ss->sgx->graph_is_active = false;
       append_listener_text(0, msg);
       printout_end = gtk_text_buffer_get_char_count(LISTENER_BUFFER) - 1;
     }
@@ -484,7 +484,7 @@ static gboolean listener_key_release(GtkWidget *w, GdkEventKey *event, gpointer 
 
 static gboolean listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer data)
 {
-  if ((ss->sgx)->graph_is_active) 
+  if (ss->sgx->graph_is_active) 
     {
       chan_info *cp;
       cp = current_channel();
@@ -613,7 +613,7 @@ static XEN listener_click_hook;
 
 static gboolean listener_button_press(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
-  (ss->sgx)->graph_is_active = false;
+  ss->sgx->graph_is_active = false;
   /* this code from gedit/src/gedit-view.c.
    *    click in listener can place cursor (and autoscroll window) at any random place!
    *    so we have to explicitly find the correct place and put the cursor there.
@@ -854,16 +854,16 @@ void goto_listener(void)
 
 void color_listener(GdkColor *pix)
 {
-  (ss->sgx)->listener_color = pix;
+  ss->sgx->listener_color = pix;
   if (listener_text) 
-    gtk_widget_modify_base(listener_text, GTK_STATE_NORMAL, (ss->sgx)->listener_color);
+    gtk_widget_modify_base(listener_text, GTK_STATE_NORMAL, ss->sgx->listener_color);
 }
 
 void color_listener_text(GdkColor *pix)
 {
-  (ss->sgx)->listener_text_color = pix;
+  ss->sgx->listener_text_color = pix;
   if (listener_text) 
-    gtk_widget_modify_text(listener_text, GTK_STATE_NORMAL, (ss->sgx)->listener_text_color);
+    gtk_widget_modify_text(listener_text, GTK_STATE_NORMAL, ss->sgx->listener_text_color);
 }
 
 void handle_listener(bool open)
@@ -927,7 +927,7 @@ static XEN g_reset_listener_cursor(void)
 {
   #define H_reset_listener_cursor "(" S_reset_listener_cursor "): reset listener cursor to the default pointer"
   if (listener_text)
-    gdk_window_set_cursor(listener_text->window, (ss->sgx)->arrow_cursor);
+    gdk_window_set_cursor(listener_text->window, ss->sgx->arrow_cursor);
   return(XEN_FALSE);
 }
 

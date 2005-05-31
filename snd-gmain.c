@@ -281,9 +281,9 @@ static Cessate startup_funcs(gpointer context)
       /* trap outer-level Close for cleanup check */
       SG_SIGNAL_CONNECT(MAIN_SHELL(ss), "delete_event", window_close, NULL);
 #endif
-      (ss->sgx)->graph_cursor = gdk_cursor_new((GdkCursorType)in_graph_cursor(ss));
-      (ss->sgx)->wait_cursor = gdk_cursor_new(GDK_WATCH);
-      (ss->sgx)->arrow_cursor = gdk_cursor_new(GDK_LEFT_PTR);
+      ss->sgx->graph_cursor = gdk_cursor_new((GdkCursorType)in_graph_cursor(ss));
+      ss->sgx->wait_cursor = gdk_cursor_new(GDK_WATCH);
+      ss->sgx->arrow_cursor = gdk_cursor_new(GDK_LEFT_PTR);
       break;
     case 1: 
 #if HAVE_EXTENSION_LANGUAGE
