@@ -19,7 +19,7 @@ foreach file (*.h *.c *.cl *.el *.html makefile.* make.* *.gtkrc *.in *.scm *.li
 end
 
 chdir snddlp
-foreach file (*.h *.c *.cl *.el *.html makefile.* make.* *.gtkrc *.in *.scm *.lisp snd.spec old-snd.spec *.Snd Snd.ad snd.1 configure.ac *.rb *.m4 config.guess config.sub)
+foreach file (*)
   if (-e $curdir/dlp/$file) then
     diff -bcw $curdir/dlp/$file $snddlp/$file >> $curdir/hi
     find $curdir/dlp/$file -newer $snddlp/$file -exec echo ' updating ' dlp/$file \;

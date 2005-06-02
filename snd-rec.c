@@ -429,11 +429,7 @@ int out_chans_active(void)
   return(val);
 }
 
-#if HAVE_RUBY
-static char *b2s(bool val) {if (val) return("true"); else return("false");}
-#else
-static char *b2s(bool val) {if (val) return("#t"); else return("#f");}
-#endif
+static char *b2s(bool val) {return((val) ? PROC_TRUE : PROC_FALSE);}
 
 static bool fneq(Float a, Float b) {return(fabs(a - b) > .00001);}
 

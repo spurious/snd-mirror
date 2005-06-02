@@ -1909,8 +1909,9 @@ static XEN g_mus_set_rand_seed(XEN a)
 
 /* ---------------- table lookup ---------------- */
 
-static int clm_table_size = 512;
+static int clm_table_size = MUS_DEFAULT_CLM_TABLE_SIZE;
 
+int clm_table_size_c(void) {return(clm_table_size);}
 static XEN g_clm_table_size(void) {return(C_TO_XEN_INT((int)clm_table_size));}
 static XEN g_set_clm_table_size(XEN val) 
 {

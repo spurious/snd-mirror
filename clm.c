@@ -96,10 +96,10 @@ static char *interp_name[] = {"step", "linear", "sinusoidal", "all-pass", "lagra
 static int mus_class_tag = MUS_INITIAL_GEN_TAG;
 int mus_make_class_tag(void) {return(mus_class_tag++);}
 
-static Float sampling_rate = 22050.0;
-static Float w_rate = (TWO_PI / 22050.0);
-static int array_print_length = 8;
-static int clm_file_buffer_size = 8192;
+static Float sampling_rate = MUS_DEFAULT_SAMPLING_RATE;
+static Float w_rate = (TWO_PI / MUS_DEFAULT_SAMPLING_RATE);
+static int array_print_length = MUS_DEFAULT_ARRAY_PRINT_LENGTH;
+static int clm_file_buffer_size = MUS_DEFAULT_FILE_BUFFER_SIZE;
 int mus_file_buffer_size(void) {return(clm_file_buffer_size);}
 int mus_set_file_buffer_size(int size) {clm_file_buffer_size = size; return(size);}
 
@@ -8407,10 +8407,10 @@ Float mus_apply(mus_any *gen, ...)
 void init_mus_module(void)
 {
   mus_class_tag = MUS_INITIAL_GEN_TAG;
-  sampling_rate = 22050.0;
-  w_rate = (TWO_PI / 22050.0);
-  array_print_length = 8;
-  clm_file_buffer_size = 8192;
+  sampling_rate = MUS_DEFAULT_SAMPLING_RATE;
+  w_rate = (TWO_PI / MUS_DEFAULT_SAMPLING_RATE);
+  array_print_length = MUS_DEFAULT_ARRAY_PRINT_LENGTH;
+  clm_file_buffer_size = MUS_DEFAULT_FILE_BUFFER_SIZE;
 #if HAVE_FFTW3 || HAVE_FFTW
   last_fft_size = 0;
 #endif

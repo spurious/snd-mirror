@@ -2367,14 +2367,10 @@ static bool make_spectrogram(chan_info *cp)
 
 #if HAVE_GL
       /* experiments with lighting were a bust -- does not improve things (ditto fog, translucency, grid) 
-       */
-      /* can't figure out how to clear just the fft portion of the window
-       *   tried: glScissor + glClear, 
-       *          glRectf in bg color
-       *          no action (something is still clearing the darn thing!)
-       * TODO: get gl spectro to work in united channel cases
-       */
-      /* TODO: printing support: XGetImage, then X->ps translation [vector (gl2ps): image switch in print dialog]
+
+         TODO: printing support for GL images.
+	       one kludgey possibility is xsnap -> pixmap file(xpm) -> a2ps
+
 	 TODO: multichannel resize: chan is messed up until expose event; can't see why:
 	       it does not help to try to redisplay etc -- -sync (or XSync) helps, but there's still some sort
 	       of timing problem.  Even forcing an expose event (XmRedisplayWidget) doesn't help!  Same problem

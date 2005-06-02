@@ -1,4 +1,5 @@
 #include "snd.h"
+#include "clm-strings.h"
 #include "clm2xen.h"
 
 static void remove_temp_files(chan_info *cp)
@@ -219,11 +220,7 @@ static char *enved_target_name(enved_target_t choice)
     }
 }
 
-#if HAVE_RUBY
-static char *b2s(bool val) {if (val) return("true"); else return("false");}
-#else
-static char *b2s(bool val) {if (val) return("#t"); else return("#f");}
-#endif
+static char *b2s(bool val) {return((val) ? PROC_TRUE : PROC_FALSE);}
 
 #define white_space "      "
 static bool b_ok = false;
@@ -721,7 +718,7 @@ static void save_sound_state (snd_info *sp, void *ptr)
   char *tmpstr = NULL;
   fd = (FILE *)ptr;
   open_save_sound_block(sp, fd, true);
-  b_ok = false; /* can't have empty begin statement */
+  b_ok = false; /* can't have empty begin statement in old Guiles */
   if (sp->sync != DEFAULT_SYNC) psp_sd(fd, S_sync, sp->sync);
   if (sp->contrast_control_p != DEFAULT_CONTRAST_CONTROL_P) psp_ss(fd, S_contrast_control_p, b2s(sp->contrast_control_p));
   if (fneq(sp->contrast_control, DEFAULT_CONTRAST_CONTROL)) psp_sf(fd, S_contrast_control, sp->contrast_control);
@@ -922,10 +919,14 @@ static char *save_state_or_error (char *save_state_name)
       save_macro_state(save_fd);                              /* current unsaved keyboard macros (snd-chn.c) */
       save_envelope_editor_state(save_fd);                    /* current envelope editor window state */
       save_regions(save_fd);                                  /* regions */
+
       if (transform_dialog_is_active()) fprintf(save_fd, BPAREN "%s" EPAREN "\n", TO_PROC_NAME(S_transform_dialog));
       if (enved_dialog_is_active()) fprintf(save_fd, BPAREN "%s" EPAREN "\n", TO_PROC_NAME(S_enved_dialog));
+
+      /* TODO: collapse these back to save_color|orientation_dialog_state */
       if (color_dialog_is_active()) fprintf(save_fd, BPAREN "%s" EPAREN "\n", TO_PROC_NAME(S_color_dialog));
       if (orientation_dialog_is_active()) fprintf(save_fd, BPAREN "%s" EPAREN "\n", TO_PROC_NAME(S_orientation_dialog));
+
       if (view_files_dialog_is_active()) fprintf(save_fd, BPAREN "%s" EPAREN "\n", TO_PROC_NAME(S_view_files_dialog));
       if (region_dialog_is_active()) fprintf(save_fd, BPAREN "%s" EPAREN "\n", TO_PROC_NAME(S_view_regions_dialog));
       if (record_dialog_is_active()) fprintf(save_fd, BPAREN "%s" EPAREN "\n", TO_PROC_NAME(S_recorder_dialog));
@@ -936,12 +937,33 @@ static char *save_state_or_error (char *save_state_name)
        *   The functions may depend on globals that are not in loaded files, or that were changed since
        *   loading, and trying to map over the current module's obarray, saving each such variable in
        *   its current form, is a major undertaking (although this can be done for simple vars); additionally, 
-       *   what if the user has changed these
-       *   before restoring -- should the old forms be restored?  Perhaps the new files associated
-       *   with dumping (libguile/dump.c) will address this issue.  And, things like search functions
-       *   and hooks might be viewed as temporary to begin with. If the function source is long,
-       *   some sort of pretty-printer is really needed, but I couldn't get slib's to work.
+       *   what if the user has changed these before restoring -- should the old forms be restored?
        */
+
+      /* TODO: save/restore rest of dialogs, user-defined colormaps? is mix/track actually ok? */
+
+      /* FILE_OPEN_DIALOG [open-file-dialog], [current dir loc?]
+	 FILE_SAVE_AS_DIALOG [save-selection-dialog/save-sound-dialog -- needs choice!], 
+	 VIEW_FILES_DIALOG x, 
+	 NEW_FILE_DIALOG [no func],
+	 FILE_MIX_DIALOG [mix-file-dialog],
+	 EDIT_HEADER_DIALOG [edit-header-dialog needs snd arg], 
+	 FIND_DIALOG [find-dialog], [current find lambda?]                 [save_find_dialog_state]
+	 HELP_DIALOG [help-dialog needs subject etc], 
+	 MIX_DIALOG [view-mixes-dialog],
+	 PRINT_DIALOG [print-dialog], direct-to-printer toggle state       [save_print_dialog_state]
+	 POST_IT_DIALOG [info-dialog + subject info], snd-xfile            [save_post_it_dialog_state]
+	 TRACK_DIALOG [view-tracks-dialog]
+	 show-listener?                                                    [listener_is_active]
+	 
+	 tests for new stuff
+      */
+
+      if (fneq(mus_srate(), MUS_DEFAULT_SAMPLING_RATE)) pss_sf(save_fd, S_mus_srate, mus_srate());
+      if (mus_file_buffer_size() != MUS_DEFAULT_FILE_BUFFER_SIZE) pss_sd(save_fd, S_mus_file_buffer_size, mus_file_buffer_size());
+      if (mus_array_print_length() != MUS_DEFAULT_ARRAY_PRINT_LENGTH) pss_sd(save_fd, S_mus_array_print_length, mus_array_print_length());
+      if (clm_table_size_c() != MUS_DEFAULT_CLM_TABLE_SIZE) pss_sd(save_fd, S_clm_table_size, clm_table_size_c());
+
       if (locale)
 	{
 #if HAVE_SETLOCALE

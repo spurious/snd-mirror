@@ -8,6 +8,7 @@ fgrep accomoda *.c
 fgrep decrip *.scm
 fgrep accomoda *.scm
 fgrep -e " #(" *.scm
+va.scm
 
 echo ' -------------------------------- basic configure test -------------------------------- '
 rm -f snd
@@ -499,8 +500,10 @@ make allclean
 echo ' --with-static-xm --with-ruby CFLAGS="-DXM_DISABLE_DEPRECATED -Wall" '
 ./configure --quiet --with-static-xm --with-ruby CFLAGS="-DXM_DISABLE_DEPRECATED -Wall"
 make
-snd --version
+./snd --version
 make allclean
 
-
-# ./configure --enable-snd-debug CFLAGS=-DWITH_EFENCE SNDLIB_LIB=/home/bil/test/ElectricFence-2.2.2/libefence.a
+./configure --with-no-gui --without-guile --without-ruby --quiet
+make
+./snd --version
+make allclean

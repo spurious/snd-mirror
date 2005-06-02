@@ -1,7 +1,7 @@
 Snd 7.13
 
 many improvements thanks to Mike Scholz and Kjetil Matheussen, including:
-  maraca.rb, play.rb, prc95.rb, singer.rb, and zip.rb
+  maraca.rb, play.rb, prc95.rb, singer.rb, zip.rb, and extensive additions to snd-test.rb
   rt.tex
 
 vct* and vct+
