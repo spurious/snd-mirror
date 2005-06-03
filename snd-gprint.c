@@ -51,7 +51,7 @@ static void file_print_ok_callback(GtkWidget *w, gpointer context)
 	  set_label(file_print_message, print_string);
 	}
       printing = PRINTING;
-      print_it = (bool)GTK_TOGGLE_BUTTON(file_print_eps_or_lpr)->active;
+      print_it = (bool)(GTK_TOGGLE_BUTTON(file_print_eps_or_lpr)->active);
       quit = (ss->print_choice == PRINT_ENV);
       if (print_it)
 	{
@@ -164,9 +164,24 @@ void file_print_callback(GtkWidget *w, gpointer context)
   gtk_widget_show(file_print_dialog);
 }
 
-widget_t make_file_print_dialog(bool managed)
+widget_t make_file_print_dialog(bool managed, bool direct_to_printer)
 {
   start_file_print_dialog();
+  set_toggle_button(file_print_eps_or_lpr, direct_to_printer, false, NULL);
   if (managed) gtk_widget_show(file_print_dialog);
   return(file_print_dialog);
+}
+
+void save_print_dialog_state(FILE *fd)
+{
+  if ((file_print_dialog) && (GTK_WIDGET_VISIBLE(file_print_dialog)))
+    {
+#if HAVE_GUILE
+      fprintf(fd, "(%s #t %s)\n", S_print_dialog, ((bool)(GTK_TOGGLE_BUTTON(file_print_eps_or_lpr)->active)) ? "#t" : "#f");
+#else
+  #if HAVE_RUBY
+      fprintf(fd, "%s(true, %s)\n", TO_PROC_NAME(S_print_dialog), ((bool)(GTK_TOGGLE_BUTTON(file_print_eps_or_lpr)->active)) ? "true" : "false");
+  #endif
+#endif
+    }
 }

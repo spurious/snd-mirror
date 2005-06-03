@@ -4,6 +4,7 @@ void reflect_amp_control_bounds_change_in_recorder(void) {}
 void snd_help_back_to_top(void) {}
 color_t get_in_between_color(color_t fg, color_t bg) {return(0);}
 void set_find_dialog_label(const char *str) {}
+void save_find_dialog_state(FILE *fd) {}
 bool send_mozilla(const char *html_viewer, const char *url) {return(false);}
 void check_menu_labels(int key, int state, bool extended) {}
 int add_channel_window(snd_info *sound, int channel, int chan_y, int insertion, widget_t main, fw_button_t arrows, bool with_events) {return(0);}
@@ -12,6 +13,7 @@ int snd_help_with_xrefs(const char *subject, const char *helpstr, with_word_wrap
 void snd_help_append(char *text) {fprintf(stdout, text);}
 int help_text_width(const char *txt, int start, int end) {return(0);}
 widget_t post_it(const char *subject, const char *str) {fprintf(stdout, str); return(0);}
+void save_post_it_dialog_state(FILE *fd) {}
 void reflect_just_sounds_state(void) {}
 void add_to_error_history(char *msg, bool popup) {}
 void post_error_dialog(char *msg) {}
@@ -237,9 +239,11 @@ void highlight_selected_sound(void) {}
 int start_file_dialog(bool managed) {return(0);}
 bool view_files_dialog_is_active(void) {return(false);}
 int edit_header(snd_info *sp) {return(0);}
+void save_edit_header_dialog_state(FILE *fd) {}
 widget_t make_edit_save_as_dialog(bool managed) {return(0);}
 widget_t make_file_save_as_dialog(bool managed) {return(0);}
-widget_t make_file_print_dialog(bool managed) {return(0);}
+widget_t make_file_print_dialog(bool managed, bool direct_to_printer) {return(0);}
+void save_print_dialog_state(FILE *fd) {}
 axis_info *enved_make_axis(const char *name, axis_context *ax, int ex0, int ey0, int width, int height, 
 			   Float xmin, Float xmax, Float ymin, Float ymax, printing_t printing) {return(NULL);}
 void display_enved_env_with_selection(env *e, char *name, int x0, int y0, int width, int height, bool dots, printing_t printing) {}

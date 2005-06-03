@@ -1326,12 +1326,12 @@ Reverb-feedback sets the scaler on the feedback.
 		(list-set! (car ds) 1 #t)
 		(caar ds))
 	      (find-free-dialog (cdr ds)))))
-    (define (find-dialog wid ds)
+    (define (find-dialog-widget wid ds)
       (if (null? ds)
 	  #f
 	  (if (equal? wid (caar ds))
 	      (car ds)
-	      (find-dialog wid (cdr ds)))))
+	      (find-dialog-widget wid (cdr ds)))))
     (lambda args
       ;; (file-select func title dir filter help)
       (let* ((func (if (> (length args) 0) (list-ref args 0) #f))
@@ -1346,18 +1346,18 @@ Reverb-feedback sets the scaler on the feedback.
 					     (list XmNbackground (basic-color)))))
 			   (XtAddCallback new-dialog XmNhelpCallback
 					    (lambda (w c i)
-					      (let ((lst (find-dialog w file-selector-dialogs)))
+					      (let ((lst (find-dialog-widget w file-selector-dialogs)))
 						(if (list-ref lst 4)
 						    (help-dialog (list-ref lst 3) (list-ref lst 4))))))
 			   (XtAddCallback new-dialog XmNokCallback 
 					   (lambda (w c i)
-					     (let ((lst (find-dialog w file-selector-dialogs)))
+					     (let ((lst (find-dialog-widget w file-selector-dialogs)))
 					       ((list-ref lst 2) (cadr (XmStringGetLtoR (.value i) XmFONTLIST_DEFAULT_TAG)))
 					       (list-set! lst 1 #f)
 					       (XtUnmanageChild w))))
 			   (XtAddCallback new-dialog XmNcancelCallback
 					   (lambda (w c i)
-					     (let ((lst (find-dialog w file-selector-dialogs)))
+					     (let ((lst (find-dialog-widget w file-selector-dialogs)))
 					       (list-set! lst 1 #f)
 					       (XtUnmanageChild w))))
 			  (set! file-selector-dialogs (cons (list new-dialog #t func title help) file-selector-dialogs))

@@ -65,6 +65,7 @@ void recorder_error(char *msg);
 /* -------- snd-xfind.c -------- */
 
 void set_find_dialog_label(const char *str);
+void save_find_dialog_state(FILE *fd);
 
 
 /* -------- snd-xlistener.c -------- */
@@ -314,6 +315,7 @@ void set_file_sort_sensitive(bool sensitive);
 int start_file_dialog(bool managed);
 bool view_files_dialog_is_active(void);
 int edit_header(snd_info *sp);
+void save_edit_header_dialog_state(FILE *fd);
 widget_t make_open_file_dialog(bool read_only, bool managed);
 void set_open_file_play_button(bool val);
 widget_t make_edit_save_as_dialog(bool managed);
@@ -321,6 +323,7 @@ widget_t make_file_save_as_dialog(bool managed);
 widget_t make_mix_file_dialog(bool managed);
 void clear_deleted_snd_info(struct file_dialog_info *fd);
 widget_t post_it(const char *subject, const char *str);
+void save_post_it_dialog_state(FILE *fd);
 void reflect_just_sounds_state(void);
 
 
@@ -382,7 +385,9 @@ bool send_mozilla(const char *html_viewer, const char *url);
 
 
 /* -------- snd-xprint.c -------- */
-widget_t make_file_print_dialog(bool managed);
+widget_t make_file_print_dialog(bool managed, bool direct_to_printer);
+void save_print_dialog_state(FILE *fd);
+
 
 #endif
 

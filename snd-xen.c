@@ -2011,12 +2011,13 @@ static XEN g_save_sound_dialog(XEN managed)
   return(XEN_WRAP_WIDGET(w));
 }
 
-static XEN g_print_dialog(XEN managed) 
+static XEN g_print_dialog(XEN managed, XEN direct_to_printer) 
 {
   widget_t w;
-  #define H_print_dialog "(" S_print_dialog " (managed #t)): start the File Print dialog"
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(managed), managed, XEN_ONLY_ARG, S_print_dialog, "a boolean");
-  w = make_file_print_dialog(XEN_TO_C_BOOLEAN(managed));
+  #define H_print_dialog "(" S_print_dialog " managed direct): start the File Print dialog"
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(managed), managed, XEN_ARG_1, S_print_dialog, "a boolean");
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(direct_to_printer), direct_to_printer, XEN_ARG_2, S_print_dialog, "a boolean");
+  w = make_file_print_dialog(!(XEN_FALSE_P(managed)), XEN_TRUE_P(direct_to_printer));
   return(XEN_WRAP_WIDGET(w));
 }
 
@@ -2868,7 +2869,7 @@ XEN_ARGIFY_1(g_view_files_dialog_w, g_view_files_dialog)
 XEN_ARGIFY_1(g_edit_header_dialog_w, g_edit_header_dialog)
 XEN_ARGIFY_1(g_save_selection_dialog_w, g_save_selection_dialog)
 XEN_ARGIFY_1(g_save_sound_dialog_w, g_save_sound_dialog)
-XEN_ARGIFY_1(g_print_dialog_w, g_print_dialog)
+XEN_ARGIFY_2(g_print_dialog_w, g_print_dialog)
 XEN_NARGIFY_2(g_info_dialog_w, g_info_dialog)
 XEN_NARGIFY_0(g_sounds_w, g_sounds)
 XEN_NARGIFY_1(g_yes_or_no_p_w, g_yes_or_no_p)
@@ -3356,7 +3357,7 @@ void g_initialize_gh(void)
   XEN_DEFINE_PROCEDURE(S_edit_header_dialog,    g_edit_header_dialog_w,    0, 1, 0, H_edit_header_dialog);
   XEN_DEFINE_PROCEDURE(S_save_selection_dialog, g_save_selection_dialog_w, 0, 1, 0, H_save_selection_dialog);
   XEN_DEFINE_PROCEDURE(S_save_sound_dialog,     g_save_sound_dialog_w,     0, 1, 0, H_save_sound_dialog);
-  XEN_DEFINE_PROCEDURE(S_print_dialog,          g_print_dialog_w,          0, 1, 0, H_print_dialog);
+  XEN_DEFINE_PROCEDURE(S_print_dialog,          g_print_dialog_w,          0, 2, 0, H_print_dialog);
   XEN_DEFINE_PROCEDURE(S_info_dialog,           g_info_dialog_w,           2, 0, 0, H_info_dialog);
   XEN_DEFINE_PROCEDURE(S_sounds,                g_sounds_w,                0, 0, 0, H_sounds);
   XEN_DEFINE_PROCEDURE(S_yes_or_no_p,           g_yes_or_no_p_w,           1, 0, 0, H_yes_or_no_p);

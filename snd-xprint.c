@@ -186,12 +186,13 @@ static void start_file_print_dialog(XmString xmstr4, bool managed)
     }
 }
 
-widget_t make_file_print_dialog(bool managed)
+widget_t make_file_print_dialog(bool managed, bool direct_to_printer)
 {
   XmString xmstr4;
   xmstr4 = XmStringCreate("print", XmFONTLIST_DEFAULT_TAG);
   start_file_print_dialog(xmstr4, managed);
   XmStringFree(xmstr4);
+  XmToggleButtonSetState(file_print_eps_or_lpr, direct_to_printer, false);
   return(file_print_dialog);
 }
 
@@ -209,4 +210,18 @@ void file_print_callback(Widget w, XtPointer context, XtPointer info)
   else xmstr4 = XmStringCreate(_("print env"), XmFONTLIST_DEFAULT_TAG);
   start_file_print_dialog(xmstr4, true);
   XmStringFree(xmstr4);
+}
+
+void save_print_dialog_state(FILE *fd)
+{
+  if ((file_print_dialog) && (XtIsManaged(file_print_dialog)))
+    {
+#if HAVE_GUILE
+      fprintf(fd, "(%s #t %s)\n", S_print_dialog, ((bool)(XmToggleButtonGetState(file_print_eps_or_lpr))) ? "#t" : "#f");
+#else
+  #if HAVE_RUBY
+      fprintf(fd, "%s(true, %s)\n", TO_PROC_NAME(S_print_dialog), ((bool)(XmToggleButtonGetState(file_print_eps_or_lpr))) ? "true" : "false");
+  #endif
+#endif
+    }
 }

@@ -1789,6 +1789,21 @@ GtkWidget *edit_header(snd_info *sp)
   return(edit_header_dialog);
 }
 
+void save_edit_header_dialog_state(FILE *fd)
+{
+  if ((edit_header_dialog) && (GTK_WIDGET_VISIBLE(edit_header_dialog)) && (snd_ok(edit_header_sp)))
+    {
+#if HAVE_GUILE
+      fprintf(fd, "(%s (%s \"%s\"))\n", S_edit_header_dialog, S_find_sound, edit_header_sp->short_filename);
+#else
+  #if HAVE_RUBY
+      fprintf(fd, "%s(%s(\"%s\"))\n", TO_PROC_NAME(S_edit_header_dialog), TO_PROC_NAME(S_find_sound), edit_header_sp->short_filename);
+  #endif
+#endif
+    }
+}
+
+
 
 /* ---------------- POST-IT MONOLOG ---------------- */
 
@@ -1837,6 +1852,25 @@ widget_t post_it(const char *subject, const char *str)
   gtk_text_buffer_set_text(gtk_text_view_get_buffer(GTK_TEXT_VIEW(post_it_text)), "", 0);
   sg_text_insert(post_it_text, (char *)str);
   return(post_it_dialog);
+}
+
+void save_post_it_dialog_state(FILE *fd)
+{
+  if ((post_it_dialog) && (GTK_WIDGET_VISIBLE(post_it_dialog)))
+    {
+      char *subject, *text;
+      GtkTextIter start, end;
+      subject = gtk_window_get_title(GTK_WINDOW(post_it_dialog)); /* don't free subject! */
+      text = gtk_text_buffer_get_text(gtk_text_view_get_buffer(GTK_TEXT_VIEW(post_it_text)), &start, &end, true);
+#if HAVE_GUILE
+      fprintf(fd, "(%s \"%s\" \"%s\")\n", S_info_dialog, subject, text);
+#else
+  #if HAVE_RUBY
+      fprintf(fd, "%s(\"%s\", \"%s\")\n", TO_PROC_NAME(S_info_dialog), subject, text);
+  #endif
+#endif
+      if (text) g_free(text);
+    }
 }
 
 void reflect_just_sounds_state(void)

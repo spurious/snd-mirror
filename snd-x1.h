@@ -284,6 +284,7 @@ void g_init_gxcolormaps(void);
 
 void edit_find_callback(Widget w, XtPointer context, XtPointer info);
 void set_find_dialog_label(const char *str);
+void save_find_dialog_state(FILE *fd);
 void g_init_gxfind(void);
 
 
@@ -472,12 +473,13 @@ Widget start_file_dialog(bool managed);
 bool view_files_dialog_is_active(void);
 file_info *raw_data_dialog_to_file_info(const char *filename, const char *title);
 Widget edit_header(snd_info *sp);
+void save_edit_header_dialog_state(FILE *fd);
 void set_open_file_play_button(bool val);
 widget_t make_mix_file_dialog(bool managed);
 void g_init_gxfile(void);
 void clear_deleted_snd_info(struct file_dialog_info *fd);
 widget_t post_it(const char *subject, const char *str);
-void post_it_append(char *text);
+void save_post_it_dialog_state(FILE *fd);
 void reflect_just_sounds_state(void);
 
 
@@ -549,7 +551,8 @@ void g_init_gxrec(void);
 /* -------- snd-xprint.c -------- */
 
 void file_print_callback(Widget w, XtPointer context, XtPointer info);
-widget_t make_file_print_dialog(bool managed);
+widget_t make_file_print_dialog(bool managed, bool direct_to_printer);
+void save_print_dialog_state(FILE *fd);
 
 
 /* -------- snd-xxen.c -------- */

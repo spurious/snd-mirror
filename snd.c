@@ -346,6 +346,7 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
 #endif
   g_initialize_gh();
   ss->search_proc = XEN_UNDEFINED;
+  ss->search_expr = NULL;
   ss->file_sort_proc = XEN_UNDEFINED;
   ss->search_tree = NULL;
   mus_error_set_handler(mus_error2snd);

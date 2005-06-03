@@ -922,14 +922,33 @@ static char *save_state_or_error (char *save_state_name)
 
       if (transform_dialog_is_active()) fprintf(save_fd, BPAREN "%s" EPAREN "\n", TO_PROC_NAME(S_transform_dialog));
       if (enved_dialog_is_active()) fprintf(save_fd, BPAREN "%s" EPAREN "\n", TO_PROC_NAME(S_enved_dialog));
-
-      /* TODO: collapse these back to save_color|orientation_dialog_state */
       if (color_dialog_is_active()) fprintf(save_fd, BPAREN "%s" EPAREN "\n", TO_PROC_NAME(S_color_dialog));
       if (orientation_dialog_is_active()) fprintf(save_fd, BPAREN "%s" EPAREN "\n", TO_PROC_NAME(S_orientation_dialog));
-
       if (view_files_dialog_is_active()) fprintf(save_fd, BPAREN "%s" EPAREN "\n", TO_PROC_NAME(S_view_files_dialog));
       if (region_dialog_is_active()) fprintf(save_fd, BPAREN "%s" EPAREN "\n", TO_PROC_NAME(S_view_regions_dialog));
       if (record_dialog_is_active()) fprintf(save_fd, BPAREN "%s" EPAREN "\n", TO_PROC_NAME(S_recorder_dialog));
+      save_post_it_dialog_state(save_fd);
+      save_find_dialog_state(save_fd);
+      save_edit_header_dialog_state(save_fd);
+      save_print_dialog_state(save_fd);
+
+      /* TODO: save_help_dialog_state(save_fd); */
+
+      /* TODO: save/restore rest of dialogs, user-defined colormaps? mix/track */
+
+      /* FILE_OPEN_DIALOG [open-file-dialog], [current dir loc?]
+	 FILE_SAVE_AS_DIALOG [save-selection-dialog/save-sound-dialog -- needs choice!], 
+	 NEW_FILE_DIALOG [no func],
+	 FILE_MIX_DIALOG [mix-file-dialog],
+	 MIX_DIALOG [view-mixes-dialog],
+	 TRACK_DIALOG [view-tracks-dialog]
+
+      (change-samples-with-origin 965 4412 "set! -mix-0 (mix \"/home/bil/cl/1a.snd\" 965 0)" "/home/bil/zap/snd/snd_5334_3.snd" sfile 0 #f (list 1117710308 17780))
+	 
+	 tests for new stuff
+      */
+
+      if (listener_height() >= 5) pss_ss(save_fd, S_show_listener, b2s(true));
 
       /* the problem here (with saving hooks) is that it is not straightforward to save the function source
        *   (with the current print-set! source option, or with an earlier procedure->string function using
@@ -939,25 +958,6 @@ static char *save_state_or_error (char *save_state_name)
        *   its current form, is a major undertaking (although this can be done for simple vars); additionally, 
        *   what if the user has changed these before restoring -- should the old forms be restored?
        */
-
-      /* TODO: save/restore rest of dialogs, user-defined colormaps? is mix/track actually ok? */
-
-      /* FILE_OPEN_DIALOG [open-file-dialog], [current dir loc?]
-	 FILE_SAVE_AS_DIALOG [save-selection-dialog/save-sound-dialog -- needs choice!], 
-	 VIEW_FILES_DIALOG x, 
-	 NEW_FILE_DIALOG [no func],
-	 FILE_MIX_DIALOG [mix-file-dialog],
-	 EDIT_HEADER_DIALOG [edit-header-dialog needs snd arg], 
-	 FIND_DIALOG [find-dialog], [current find lambda?]                 [save_find_dialog_state]
-	 HELP_DIALOG [help-dialog needs subject etc], 
-	 MIX_DIALOG [view-mixes-dialog],
-	 PRINT_DIALOG [print-dialog], direct-to-printer toggle state       [save_print_dialog_state]
-	 POST_IT_DIALOG [info-dialog + subject info], snd-xfile            [save_post_it_dialog_state]
-	 TRACK_DIALOG [view-tracks-dialog]
-	 show-listener?                                                    [listener_is_active]
-	 
-	 tests for new stuff
-      */
 
       if (fneq(mus_srate(), MUS_DEFAULT_SAMPLING_RATE)) pss_sf(save_fd, S_mus_srate, mus_srate());
       if (mus_file_buffer_size() != MUS_DEFAULT_FILE_BUFFER_SIZE) pss_sd(save_fd, S_mus_file_buffer_size, mus_file_buffer_size());

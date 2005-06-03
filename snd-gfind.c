@@ -143,11 +143,46 @@ void edit_find_callback(GtkWidget *w, gpointer context)
   make_edit_find_dialog(true);
 }
 
-static XEN g_find_dialog(XEN managed)
+void save_find_dialog_state(FILE *fd)
+{
+  if ((edit_find_dialog) && (GTK_WIDGET_VISIBLE(edit_find_dialog)))
+    {
+      char *text = NULL;
+      GtkTextIter start, end;
+      text = gtk_text_buffer_get_text(gtk_text_view_get_buffer(GTK_TEXT_VIEW(edit_find_text)), &start, &end, true);
+#if HAVE_GUILE
+      if (text)
+	fprintf(fd, "(%s #t \"%s\")\n", S_find_dialog, text);
+      else
+	{
+	  if (ss->search_expr)
+	    fprintf(fd, "(%s #t \"%s\")\n", S_find_dialog, ss->search_expr);
+	  else fprintf(fd, "(%s #t)\n", S_find_dialog);
+	}
+#else
+  #if HAVE_RUBY
+      if (text)
+	fprintf(fd, "%s(true, \"%s\")\n", TO_PROC_NAME(S_find_dialog), text);
+      else
+	{
+	  if (ss->search_expr)
+	    fprintf(fd, "%s(true, \"%s\")\n", TO_PROC_NAME(S_find_dialog), ss->search_expr);
+	  else fprintf(fd, "%s(true)\n", TO_PROC_NAME(S_find_dialog));
+	}
+  #endif
+#endif
+      if (text) g_free(text);
+    }
+}
+
+static XEN g_find_dialog(XEN managed, XEN text)
 {
   #define H_find_dialog "(" S_find_dialog "): create and activate the Edit:Find dialog, return the dialog widget"
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(managed), managed, XEN_ONLY_ARG, S_find_dialog, "a boolean");
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(managed), managed, XEN_ARG_1, S_find_dialog, "a boolean");
+  XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(text), text, XEN_ARG_2, S_find_dialog, "a string");
   make_edit_find_dialog(XEN_TO_C_BOOLEAN(managed));
+  if ((edit_find_text) && (XEN_STRING_P(text)))
+    gtk_entry_get_text(GTK_ENTRY(edit_find_text));
   return(XEN_WRAP_WIDGET(edit_find_dialog));
 }
 
@@ -164,7 +199,7 @@ static XEN g_find_dialog_widgets(void)
 }
 
 #ifdef XEN_ARGIFY_1
-XEN_ARGIFY_1(g_find_dialog_w, g_find_dialog)
+XEN_ARGIFY_2(g_find_dialog_w, g_find_dialog)
 XEN_NARGIFY_0(g_find_dialog_widgets_w, g_find_dialog_widgets)
 #else
 #define g_find_dialog_w g_find_dialog
@@ -173,7 +208,7 @@ XEN_NARGIFY_0(g_find_dialog_widgets_w, g_find_dialog_widgets)
 
 void g_init_gxfind(void)
 {
-  XEN_DEFINE_PROCEDURE(S_find_dialog, g_find_dialog_w, 0, 1, 0, H_find_dialog);
+  XEN_DEFINE_PROCEDURE(S_find_dialog, g_find_dialog_w, 0, 2, 0, H_find_dialog);
   XEN_DEFINE_PROCEDURE("find-dialog-widgets", g_find_dialog_widgets_w, 0, 0, 0, "internal auto-test function");
 }
 
