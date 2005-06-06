@@ -570,7 +570,7 @@ longer want to restart that version of Snd.
 <tr><td colspan=3></td></tr>
 
 <!-- save-state-file -->
-<tr><td colspan=2><code><a class=def name="lsavestatefile">save-state-file</a></code></td>
+<tr><td colspan=2><code><a class=def name="savestatefile">save-state-file</a></code></td>
 <td><code>"saved-snd.scm"</code></td></tr>
 <tr><td></td><td colspan=2>The default <a href="snd.html#savedstate">saved state</a> file name.
 </td></tr>
@@ -6637,8 +6637,7 @@ extract a set of channels from a sound: <a href="#extractchannels">extract-chann
 save a sound in a different format or header: <a href="#savesoundas">save-sound-as</a><br>
 backup edits automatically: <a href="sndscm.html#exautosave">autosave</a><br>
 check first for unsaved edits: <a href="sndscm.html#exunsavededits">check-for-unsaved-edits</a><br>
-save Snd's complete state (unsaved edits and all): <a href="#savestate">save-state</a>, <a href="#savedir">save-dir</a>, <a href="#savestatehook">save-state-hook</a>, <a href="#lsavestatefile">save-state-file</a><br>
-save just the current options: <a href="#saveoptions">save-options</a><br>
+save Snd's complete state (unsaved edits and all): <a href="#savestate">save-state</a>, <a href="#savedir">save-dir</a>, <a href="#savestatehook">save-state-hook</a>, <a href="#savestatefile">save-state-file</a><br>
 save the selection: <a href="#saveselection">save-selection</a><br>
 save a region: <a href="#saveregion">save-region</a><br>
 save a mix: <a href="sndscm.html#savemix">save-mix</a><br>
@@ -9954,7 +9953,7 @@ non-CLM users might prefer <a href="#defineenvelope">define-envelope</a>.
 <tr><td colspan=2>
 <code><a class=def name="equalizepanes">equalize-panes</a> (<i>snd</i>)</code></td></tr>
 <tr><td></td><td>
-equalize Snd panes as in the View menu <a href="snd.html#equalizepanes">Equalize Panes</a> option.
+equalize Snd panes as in the View menu <a href="snd.html#menuequalizepanes">Equalize Panes</a> option.
 If the <i>snd</i> argument is given, only that sound's panes are affected.
 This function is specific to the Motif version of Snd.
 </td></tr>
@@ -10115,16 +10114,9 @@ save listener contents in <i>filename</i>.
 save <a href="snd.html#kbdmacros">keyboard macros</a> in <i>filename</i> or in Snd's init file (~/.snd) if <i>filename</i> is omitted.
 </td></tr>
 
-<!-- save-options -->
-<tr><td colspan=2>
-<code><a class=def name="saveoptions">save-options</a> (filename)</code></td></tr>
-<tr><td></td><td>
-save options (Snd global variable settings) in <i>filename</i>.  Perhaps "save-defaults" would be a better name.
-</td></tr>
-
 <!-- save-state -->
 <tr><td colspan=2>
-<code><a class=def name="savestate">save-state</a> (filename)</code></td></tr>
+<code><a class=def name="savestate">save-state</a> (<i>filename</i>)</code></td></tr>
 <tr><td></td><td>
 save current state of Snd in <i>filename</i>.  The saved-state file is a Scheme or Ruby program that when loaded
 into Snd, recreates the state of Snd (as far as possible) at the point of the save.  There are a variety of
@@ -10135,6 +10127,8 @@ want to back up the the saved state, it's safer to delete all the regions first 
 then load the saved-state file.
 <a href="#savestatehook">save-state-hook</a> is called during the saving process (once on each temp file), and
 and <a href="#aftersavestatehook">after-save-state-hook</a> is called afterwards.
+<i>filename</i> defaults to <a href="#savestatefile">save-state-file</a> which itself defaults to "saved-snd.scm"
+or some variant thereof.
 </td></tr>
 
 <!-- script-arg -->
@@ -11408,7 +11402,6 @@ If #t and GL is loaded, use GL where possible (default is #t if HAVE_GL).</td></
         <!-- I(save selection):L(save-region)(saveregion) --><!-- I(save selection):O(save-selection)(saveselection) -->
 	<!-- I(examine regions):L(view-regions-dialog)(viewregionsdialog) -->
 	<!-- I(zoom window):L(x-bounds)(xbounds) -->
-	<!-- I(save options):L(save-options)(saveoptions) -->
 	<!-- I(describe audio):A(musaudiodescribe) --><!-- I(describe audio):L(mus-audio-describe)(musaudiodescribe) -->
 	<!-- I(abort command):L(c-g?)(cgp) -->
 	<!-- I(count matches):L(count-matches)(countmatches) --><!-- I(count matches):A(countmatches) -->

@@ -398,6 +398,7 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+6-June:  removed save-options (use save-state).\n\
 1-June:  snd 7.13.\n\
          show-axes View:Axes menu.\n\
 26-May:  beats-per-measure and x-axis-style x-axis-in-measures.\n\

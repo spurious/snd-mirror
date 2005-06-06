@@ -341,3 +341,5 @@
 (define mixer-scale mixer*)
 
 (define mus-error-to-string mus-error-type->string)
+
+(define save-options save-state)

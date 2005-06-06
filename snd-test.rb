@@ -25626,7 +25626,7 @@ def test14
         end
       end
     end
-    save_options("hiho.rb")
+#    save_options("hiho.rb")
     if transform_type != Fourier_transform
       set_transform_graph?(false, true, true)
       set_transform_size([transform_size, 128].min)
@@ -29719,7 +29719,7 @@ def test0019
   end
   delete_file(save_state_file)
   save_state(save_state_file)
-  save_options("test.temp")
+#  save_options("test.temp")
   close_sound(nind)
   Snd.regions.apply(:forget_region)
   load(save_state_file)

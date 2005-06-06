@@ -2503,6 +2503,41 @@ void reflect_just_sounds_state(void)
     XmToggleButtonSetState(mix_dialog->just_sounds_button, ss->just_sounds_state, true);
 }
 
+void save_file_dialog_state(FILE *fd)
+{
+  if ((open_dialog) && (XtIsManaged(open_dialog->dialog)))
+    {
+      /* open_dialog->file_dialog_read_only -> "view-sound" dialog -- this distinction currently ignored */
+#if HAVE_GUILE
+      fprintf(fd, "(%s #t)\n", S_open_file_dialog);
+#else
+  #if HAVE_RUBY
+      fprintf(fd, "%s(true)\n", TO_PROC_NAME(S_open_file_dialog));
+  #endif
+#endif
+    }
+  if ((mix_dialog) && (XtIsManaged(mix_dialog->dialog)))
+    {
+#if HAVE_GUILE
+      fprintf(fd, "(%s #t)\n", S_mix_file_dialog);
+#else
+  #if HAVE_RUBY
+      fprintf(fd, "%s(true)\n", TO_PROC_NAME(S_mix_file_dialog));
+  #endif
+#endif
+    }
+  if ((save_as_dialog) && (XtIsManaged(save_as_dialog)))
+    {
+#if HAVE_GUILE
+      fprintf(fd, "(%s #t)\n", (save_as_dialog_type == FILE_SAVE_AS) ? S_save_sound_dialog : S_save_selection_dialog);
+#else
+  #if HAVE_RUBY
+      fprintf(fd, "%s(true)\n", TO_PROC_NAME((save_as_dialog_type == FILE_SAVE_AS) ? S_save_sound_dialog : S_save_selection_dialog));
+  #endif
+#endif
+    }
+}
+
 
 #if DEBUGGING && HAVE_GUILE
 static XEN g_new_file_dialog(void)

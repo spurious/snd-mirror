@@ -10,6 +10,7 @@ int snd_help_with_xrefs(const char *subject, const char *helpstr, with_word_wrap
 int help_text_width(const char *txt, int start, int end);
 void snd_help_append(char *text);
 void snd_help_back_to_top(void);
+void save_help_dialog_state(FILE *fd);
 
 
 /* -------- snd-xerror.c -------- */
@@ -325,6 +326,7 @@ void clear_deleted_snd_info(struct file_dialog_info *fd);
 widget_t post_it(const char *subject, const char *str);
 void save_post_it_dialog_state(FILE *fd);
 void reflect_just_sounds_state(void);
+void save_file_dialog_state(FILE *fd);
 
 
 /* -------- snd-xenv.c -------- */

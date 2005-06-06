@@ -26085,7 +26085,6 @@ EDITS: 5
 		(list 'zero-pad zero-pad #f 0 2)
 		(list 'zoom-focus-style zoom-focus-style #f 0 3))))
 	    
-	    (save-options "hiho.scm")
 	    (if (not (= (transform-type) fourier-transform))
 		(begin
 		  (set! (transform-graph? #t #t) #f)
@@ -32003,7 +32002,6 @@ EDITS: 1
 		       (close fd))))
 	(if (file-exists? (save-state-file)) (delete-file (save-state-file)))
 	(save-state (save-state-file))
-	(save-options "test.temp")
 	(close-sound nind)
 	(for-each forget-region (regions))
 	(load (save-state-file))
@@ -55683,7 +55681,6 @@ EDITS: 2
 	      (check-error-tag 'wrong-type-arg (lambda () (src-sound 3.0 1.0 ind #t)))
 	      (close-sound ind))
 	    (check-error-tag 'bad-arity (lambda () (add-transform "hiho" "time" 0 1 (lambda () 1.0))))
-	    (check-error-tag 'cannot-save (lambda () (save-options "/bad/baddy")))
 	    (check-error-tag 'cannot-save (lambda () (save-state "/bad/baddy")))
 	    (check-error-tag 'no-such-menu (lambda () (add-to-menu 1234 "hi" (lambda () #f))))
 	    (check-error-tag 'bad-arity (lambda () (add-to-main-menu "hi" (lambda (a b) #f))))
@@ -56437,7 +56434,6 @@ EDITS: 2
   "test.reverb"
   "test.snd"
   "test.snd.snd"
-  "test.temp"
   "test.wav"
   "test.xpm"
   "test2.snd"

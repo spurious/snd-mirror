@@ -298,8 +298,8 @@ static void save_snd_state_options (FILE *fd)
   if (transform_graph_type(ss) != DEFAULT_TRANSFORM_GRAPH_TYPE) pss_ss(fd, S_transform_graph_type, transform_graph_type_name(transform_graph_type(ss)));
   if (time_graph_type(ss) != DEFAULT_TIME_GRAPH_TYPE) pss_ss(fd, S_time_graph_type, time_graph_type_name(time_graph_type(ss)));
   if (x_axis_style(ss) != DEFAULT_X_AXIS_STYLE) pss_ss(fd, S_x_axis_style, x_axis_style_name(x_axis_style(ss)));
-  if (beats_per_minute(ss) != DEFAULT_BEATS_PER_MINUTE) pss_sf(fd, S_beats_per_minute, beats_per_minute(ss));
-  if (beats_per_measure(ss) != DEFAULT_BEATS_PER_MEASURE) pss_sf(fd, S_beats_per_measure, beats_per_measure(ss));
+  if (fneq(beats_per_minute(ss), DEFAULT_BEATS_PER_MINUTE)) pss_sf(fd, S_beats_per_minute, beats_per_minute(ss));
+  if (beats_per_measure(ss) != DEFAULT_BEATS_PER_MEASURE) pss_sd(fd, S_beats_per_measure, beats_per_measure(ss));
   if (graph_style(ss) != DEFAULT_GRAPH_STYLE) pss_ss(fd, S_graph_style, graph_style_name(graph_style(ss)));
   if (region_graph_style(ss) != DEFAULT_GRAPH_STYLE) pss_ss(fd, S_region_graph_style, graph_style_name(region_graph_style(ss)));
   if (channel_style(ss) != DEFAULT_CHANNEL_STYLE) pss_ss(fd, S_channel_style, channel_style_name(channel_style(ss)));
@@ -343,8 +343,8 @@ static void save_snd_state_options (FILE *fd)
   if (enved_filter_order(ss) != DEFAULT_ENVED_FILTER_ORDER) pss_sd(fd, S_enved_filter_order, enved_filter_order(ss));
   if (max_transform_peaks(ss) != DEFAULT_MAX_TRANSFORM_PEAKS) pss_sd(fd, S_max_transform_peaks, max_transform_peaks(ss));
   if (max_regions(ss) != DEFAULT_MAX_REGIONS) pss_sd(fd, S_max_regions, max_regions(ss));
-  if (auto_update_interval(ss) != DEFAULT_AUTO_UPDATE_INTERVAL) pss_sf(fd, S_auto_update_interval, auto_update_interval(ss));
-  if (cursor_update_interval(ss) != DEFAULT_CURSOR_UPDATE_INTERVAL) pss_sf(fd, S_cursor_update_interval, cursor_update_interval(ss));
+  if (fneq(auto_update_interval(ss), DEFAULT_AUTO_UPDATE_INTERVAL)) pss_sf(fd, S_auto_update_interval, auto_update_interval(ss));
+  if (fneq(cursor_update_interval(ss), DEFAULT_CURSOR_UPDATE_INTERVAL)) pss_sf(fd, S_cursor_update_interval, cursor_update_interval(ss));
   if (cursor_location_offset(ss) != DEFAULT_CURSOR_LOCATION_OFFSET) pss_sd(fd, S_cursor_location_offset, cursor_location_offset(ss));
   if (verbose_cursor(ss) != DEFAULT_VERBOSE_CURSOR) pss_ss(fd, S_verbose_cursor, b2s(verbose_cursor(ss)));
   if (show_indices(ss) != DEFAULT_SHOW_INDICES) pss_ss(fd, S_show_indices, b2s(show_indices(ss)));
@@ -838,8 +838,8 @@ static void save_sound_state (snd_info *sp, void *ptr)
       if (cp->dot_size != dot_size(ss)) pcp_sd(fd, S_dot_size, cp->dot_size, chan);
       if (fneq(cp->grid_density, grid_density(ss))) pcp_sf(fd, S_grid_density, cp->grid_density, chan);
       if (cp->x_axis_style != x_axis_style(ss)) pcp_ss(fd, S_x_axis_style, x_axis_style_name(cp->x_axis_style), chan);
-      if (cp->beats_per_minute != beats_per_minute(ss)) pcp_sf(fd, S_beats_per_minute, cp->beats_per_minute, chan);
-      if (cp->beats_per_measure != beats_per_measure(ss)) pcp_sf(fd, S_beats_per_measure, cp->beats_per_measure, chan);
+      if (fneq(cp->beats_per_minute, beats_per_minute(ss))) pcp_sf(fd, S_beats_per_minute, cp->beats_per_minute, chan);
+      if (cp->beats_per_measure != beats_per_measure(ss)) pcp_sd(fd, S_beats_per_measure, cp->beats_per_measure, chan);
       if (cp->show_axes != show_axes(ss)) pcp_ss(fd, S_show_axes, show_axes2string(cp->show_axes), chan);
       if (cp->graphs_horizontal != graphs_horizontal(ss)) pcp_ss(fd, S_graphs_horizontal, b2s(cp->graphs_horizontal), chan);
       if ((XEN_VECTOR_P(cp->properties)) &&
@@ -897,25 +897,36 @@ static char *save_state_or_error (char *save_state_name)
       save_prevlist(save_fd);                                 /* list of previous files (View: Files option) */
       save_snd_state_options(save_fd);                        /* options = user-settable global state variables */
       /* the global settings need to precede possible local settings */
+
+      if (ss->active_sounds > 0)
+	{
+	  if (ss->selected_sound != NO_SELECTION)
+	    {
 #if HAVE_GUILE
-      fprintf(save_fd, "\n(define _saved_snd_selected_sound_ #f)\n");
-      fprintf(save_fd, "(define _saved_snd_selected_channel_ #f)\n");
+	      fprintf(save_fd, "\n(define _saved_snd_selected_sound_ #f)\n");
+	      fprintf(save_fd, "(define _saved_snd_selected_channel_ #f)\n");
 #else
-      fprintf(save_fd, "\nsaved_snd_selected_sound = -1\n");
-      fprintf(save_fd, "saved_snd_selected_channel = -1\n");
+	      fprintf(save_fd, "\nsaved_snd_selected_sound = -1\n");
+	      fprintf(save_fd, "saved_snd_selected_channel = -1\n");
 #endif
-      for_each_sound(save_sound_state, (void *)save_fd);      /* current sound state -- will traverse chans */
+	    }
+	  for_each_sound(save_sound_state, (void *)save_fd);      /* current sound state -- will traverse chans */
+	  if (ss->selected_sound != NO_SELECTION)
+	    {
 #if HAVE_GUILE
-      fprintf(save_fd, "(if _saved_snd_selected_sound_\n");
-      fprintf(save_fd, "  (begin\n");
-      fprintf(save_fd, "    (%s _saved_snd_selected_sound_)\n", S_select_sound);
-      fprintf(save_fd, "    (%s _saved_snd_selected_channel_)))\n\n", S_select_channel);
+	      fprintf(save_fd, "(if _saved_snd_selected_sound_\n");
+	      fprintf(save_fd, "  (begin\n");
+	      fprintf(save_fd, "    (%s _saved_snd_selected_sound_)\n", S_select_sound);
+	      fprintf(save_fd, "    (%s _saved_snd_selected_channel_)))\n", S_select_channel);
 #else
-      fprintf(save_fd, "if saved_snd_selected_sound != -1\n");
-      fprintf(save_fd, "  select_sound(saved_snd_selected_sound)\n");
-      fprintf(save_fd, "  select_channel(saved_snd_selected_channel)\n");
-      fprintf(save_fd, "end\n\n");
+	      fprintf(save_fd, "if saved_snd_selected_sound != -1\n");
+	      fprintf(save_fd, "  select_sound(saved_snd_selected_sound)\n");
+	      fprintf(save_fd, "  select_channel(saved_snd_selected_channel)\n");
+	      fprintf(save_fd, "end\n");
 #endif
+	    }
+	}
+      fprintf(save_fd, "\n");
       save_macro_state(save_fd);                              /* current unsaved keyboard macros (snd-chn.c) */
       save_envelope_editor_state(save_fd);                    /* current envelope editor window state */
       save_regions(save_fd);                                  /* regions */
@@ -931,21 +942,13 @@ static char *save_state_or_error (char *save_state_name)
       save_find_dialog_state(save_fd);
       save_edit_header_dialog_state(save_fd);
       save_print_dialog_state(save_fd);
+      save_help_dialog_state(save_fd);
+      save_file_dialog_state(save_fd);
+      /* new-file dialog not restored because it hogs the event loop */
 
-      /* TODO: save_help_dialog_state(save_fd); */
-
-      /* TODO: save/restore rest of dialogs, user-defined colormaps? mix/track */
-
-      /* FILE_OPEN_DIALOG [open-file-dialog], [current dir loc?]
-	 FILE_SAVE_AS_DIALOG [save-selection-dialog/save-sound-dialog -- needs choice!], 
-	 NEW_FILE_DIALOG [no func],
-	 FILE_MIX_DIALOG [mix-file-dialog],
-	 MIX_DIALOG [view-mixes-dialog],
-	 TRACK_DIALOG [view-tracks-dialog]
-
-      (change-samples-with-origin 965 4412 "set! -mix-0 (mix \"/home/bil/cl/1a.snd\" 965 0)" "/home/bil/zap/snd/snd_5334_3.snd" sfile 0 #f (list 1117710308 17780))
-	 
-	 tests for new stuff
+      /* TODO: user-defined colormaps [after check for already-defined]? mix/track (and dialogs?) */
+      /* MIX_DIALOG [view-mixes-dialog], TRACK_DIALOG [view-tracks-dialog]
+      (change-samples-with-origin 965 4412 "set! -mix-0 (mix \"/home/bil/cl/1a.snd\" 965 0)" "3.snd" sfile 0 #f (list 1117710308 17780))
       */
 
       if (listener_height() >= 5) pss_ss(save_fd, S_show_listener, b2s(true));
@@ -1169,10 +1172,13 @@ int handle_next_startup_arg(int auto_open_ctr, char **auto_open_file_names, bool
 
 static XEN g_save_state(XEN filename) 
 {
-  #define H_save_state "(" S_save_state " filename): save the current Snd state in filename; (load filename) restores it)"
+  #define H_save_state "(" S_save_state " filename): save the current Snd state in filename; (load filename) restores it.  The \
+default " S_save_state " filename is " DEFAULT_SAVE_STATE_FILE ". It can be changed via " S_save_state_file "."
   char *error;
-  XEN_ASSERT_TYPE(XEN_STRING_P(filename), filename, XEN_ONLY_ARG, S_save_state, "a string");
-  error = save_state_or_error(XEN_TO_C_STRING(filename));
+  XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(filename), filename, XEN_ONLY_ARG, S_save_state, "a string");
+  if (XEN_BOUND_P(filename))
+    error = save_state_or_error(XEN_TO_C_STRING(filename));
+  else error = save_state_or_error(save_state_file(ss));
   if (error)
     {
       XEN result;
@@ -1180,30 +1186,12 @@ static XEN g_save_state(XEN filename)
       FREE(error);
       XEN_ERROR(CANNOT_SAVE,
 		XEN_LIST_3(C_TO_XEN_STRING(S_save_state),
-			   filename,
+			   (XEN_BOUND_P(filename)) ? filename : C_TO_XEN_STRING(save_state_file(ss)),
 			   result));
     }
-  return(filename);
-}
-
-static XEN g_save_options(XEN filename)
-{
-  #define H_save_options "(" S_save_options " filename): save Snd options in filename"
-  char *name = NULL;
-  FILE *fd;
-  XEN_ASSERT_TYPE(XEN_STRING_P(filename), filename, XEN_ONLY_ARG, S_save_options, "a string");
-  name = mus_expand_filename(XEN_TO_C_STRING(filename));
-  fd = FOPEN(name, "w");
-  if (name) FREE(name);
-  if (fd) 
-    save_snd_state_options(fd);
-  if ((!fd) || 
-      (FCLOSE(fd) != 0))
-    XEN_ERROR(CANNOT_SAVE, 
-	      XEN_LIST_3(C_TO_XEN_STRING(S_save_options),
-			 filename,
-			 C_TO_XEN_STRING(snd_io_strerror())));
-  return(filename);
+  if (XEN_BOUND_P(filename))
+    return(filename);
+  return(C_TO_XEN_STRING(save_state_file(ss)));
 }
 
 static XEN g_exit(XEN val) 
@@ -1215,14 +1203,12 @@ static XEN g_exit(XEN val)
 }
 
 #ifdef XEN_ARGIFY_1
-XEN_NARGIFY_1(g_save_options_w, g_save_options)
-XEN_NARGIFY_1(g_save_state_w, g_save_state)
+XEN_ARGIFY_1(g_save_state_w, g_save_state)
 XEN_ARGIFY_1(g_exit_w, g_exit)
 XEN_NARGIFY_0(g_script_arg_w, g_script_arg)
 XEN_NARGIFY_1(g_set_script_arg_w, g_set_script_arg)
 XEN_NARGIFY_0(g_script_args_w, g_script_args)
 #else
-#define g_save_options_w g_save_options
 #define g_save_state_w g_save_state
 #define g_exit_w g_exit
 #define g_script_arg_w g_script_arg
@@ -1232,8 +1218,7 @@ XEN_NARGIFY_0(g_script_args_w, g_script_args)
 
 void g_init_main(void)
 {
-  XEN_DEFINE_PROCEDURE(S_save_options, g_save_options_w, 1, 0, 0, H_save_options);
-  XEN_DEFINE_PROCEDURE(S_save_state,   g_save_state_w,   1, 0, 0, H_save_state);
+  XEN_DEFINE_PROCEDURE(S_save_state,   g_save_state_w,   0, 1, 0, H_save_state);
 #if HAVE_GUILE
   XEN_EVAL_C_STRING("(define %exit exit)");
 #endif

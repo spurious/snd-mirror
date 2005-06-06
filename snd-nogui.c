@@ -12,9 +12,11 @@ int snd_help(const char *subject, const char *help, with_word_wrap_t with_wrap) 
 int snd_help_with_xrefs(const char *subject, const char *helpstr, with_word_wrap_t with_wrap, char **xrefs, char **urls) {return(0);}
 void snd_help_append(char *text) {fprintf(stdout, text);}
 int help_text_width(const char *txt, int start, int end) {return(0);}
+void save_help_dialog_state(FILE *fd) {}
 widget_t post_it(const char *subject, const char *str) {fprintf(stdout, str); return(0);}
 void save_post_it_dialog_state(FILE *fd) {}
 void reflect_just_sounds_state(void) {}
+void save_file_dialog_state(FILE *fd) {}
 void add_to_error_history(char *msg, bool popup) {}
 void post_error_dialog(char *msg) {}
 bool snd_yes_or_no_p(char *format, ...) {return(false);}

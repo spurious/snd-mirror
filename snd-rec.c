@@ -28,6 +28,12 @@
 #define DEFAULT_RECORDER_MAX_DURATION 1000000.0
 #define DEFAULT_RECORDER_OUT_FORMAT MUS_COMPATIBLE_FORMAT
 
+#if LINUX || __bsdi__
+  #define DEFAULT_RECORDER_OUT_TYPE MUS_RIFF
+#else
+  #DEFINE DEFAULT_RECORDER_OUT_TYPE MUS_AIFC
+#endif
+
 #define MAX_MIXER_GAINS 128
 #define AUDVAL_SIZE 64
 
@@ -372,6 +378,7 @@ static void init_recorder(void)
   rp->out_chans = DEFAULT_RECORDER_OUT_CHANS;
   rp->in_chans = DEFAULT_RECORDER_IN_CHANS;
   rp->output_data_format = DEFAULT_RECORDER_OUT_FORMAT;
+  rp->output_header_type = DEFAULT_RECORDER_OUT_TYPE;
   rp->in_format = DEFAULT_RECORDER_IN_FORMAT;
   rp->srate = DEFAULT_RECORDER_SRATE;
   rp->trigger = DEFAULT_RECORDER_TRIGGER;
@@ -385,11 +392,6 @@ static void init_recorder(void)
   rp->monitoring = false;
   rp->taking_input = false;
   rp->systems = 1;
-#if LINUX || __bsdi__
-  rp->output_header_type = MUS_RIFF;
-#else
-  rp->output_header_type = MUS_AIFC;
-#endif
   rp->output_file_descriptor = -1;
 
   rp->out_amps = (Float *)CALLOC(MAX_OUT_CHANS, sizeof(Float));
@@ -446,7 +448,8 @@ void save_recorder_state(FILE *fd)
     fprintf(fd, "(set! (%s) %s)\n", 
 	    S_recorder_out_format, 
 	    mus_data_format_to_string(rp->output_data_format));
-  if (MUS_HEADER_TYPE_OK(rp->output_header_type))
+  if ((rp->output_header_type != DEFAULT_RECORDER_OUT_TYPE) &&
+      (MUS_HEADER_TYPE_OK(rp->output_header_type)))
     fprintf(fd, "(set! (%s) %s)\n", 
 	    S_recorder_out_type, 
 	    mus_header_type_to_string(rp->output_header_type));

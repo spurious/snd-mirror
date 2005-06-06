@@ -1129,19 +1129,7 @@ static mix_info *file_mix_samples(off_t beg, off_t num, char *mixfile, chan_info
       return(NULL); /* we're reading input[chan] so if chan >= in_chans (no such channel exists) give up */
     }
   ofile = snd_tempnam();
-#if DEBUGGING
-  {
-    char *info;
-    info = mus_format("%s: (%s " OFF_TD ", " OFF_TD ", %s, %d, delete: %d, tag: %s, track: %d)",
-		      origin, c__FUNCTION__, 
-		      beg, num, cp->sound->short_filename, cp->chan, (int)auto_delete, 
-		      (with_tag) ? PROC_TRUE : PROC_FALSE, track_id);
-    ohdr = make_temp_header(ofile, SND_SRATE(sp), 1, 0, info);
-    FREE(info);
-  }
-#else
   ohdr = make_temp_header(ofile, SND_SRATE(sp), 1, 0, (char *)origin);
-#endif
   ofd = open_temp_file(ofile, 1, ohdr);
   if (ofd == -1) 
     {

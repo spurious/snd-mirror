@@ -1858,7 +1858,8 @@ void save_post_it_dialog_state(FILE *fd)
 {
   if ((post_it_dialog) && (GTK_WIDGET_VISIBLE(post_it_dialog)))
     {
-      char *subject, *text;
+      const gchar *subject;
+      gchar *text;
       GtkTextIter start, end;
       subject = gtk_window_get_title(GTK_WINDOW(post_it_dialog)); /* don't free subject! */
       text = gtk_text_buffer_get_text(gtk_text_view_get_buffer(GTK_TEXT_VIEW(post_it_text)), &start, &end, true);
@@ -1881,6 +1882,40 @@ void reflect_just_sounds_state(void)
   if (mix_dialog)
     gtk_file_chooser_set_filter(GTK_FILE_CHOOSER(mix_dialog->dialog), (ss->just_sounds_state) ? sound_files_filter : all_files_filter);
 #endif
+}
+
+void save_file_dialog_state(FILE *fd)
+{
+  if ((open_dialog) && (GTK_WIDGET_VISIBLE(open_dialog->dialog)))
+    {
+#if HAVE_GUILE
+      fprintf(fd, "(%s #t)\n", S_open_file_dialog);
+#else
+  #if HAVE_RUBY
+      fprintf(fd, "%s(true)\n", TO_PROC_NAME(S_open_file_dialog));
+  #endif
+#endif
+    }
+  if ((mix_dialog) && (GTK_WIDGET_VISIBLE(mix_dialog->dialog)))
+    {
+#if HAVE_GUILE
+      fprintf(fd, "(%s #t)\n", S_mix_file_dialog);
+#else
+  #if HAVE_RUBY
+      fprintf(fd, "%s(true)\n", TO_PROC_NAME(S_mix_file_dialog));
+  #endif
+#endif
+    }
+  if ((save_as_dialog) && (GTK_WIDGET_VISIBLE(save_as_dialog)))
+    {
+#if HAVE_GUILE
+      fprintf(fd, "(%s #t)\n", (save_as_dialog_type == FILE_SAVE_AS) ? S_save_sound_dialog : S_save_selection_dialog);
+#else
+  #if HAVE_RUBY
+      fprintf(fd, "%s(true)\n", TO_PROC_NAME((save_as_dialog_type == FILE_SAVE_AS) ? S_save_sound_dialog : S_save_selection_dialog));
+  #endif
+#endif
+    }
 }
 
 void g_init_gxfile(void)
