@@ -17,6 +17,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Oscilator
 
+
 (definstrument (oscilator start duration)
   (let ((osc (make-oscil))
 	(vol 4/6))
@@ -24,7 +25,6 @@
 	       (lambda ()
 		 (out (* (oscil osc)
 			 vol))))))
-
 
 #!
 (define i (oscilator 0 10))
@@ -261,16 +261,12 @@
 ;; Extremely Simple delay.
 ;;
 
-(definstrument (extremely-simple-delay filename latency mix #:key (max-latency-in-seconds 2))
-  (let* ((rs (make-readin filename))
-	 (das-vct-length (c-integer (* (rte-samplerate) max-latency-in-seconds)))
+(definstrument (extremely-simple-delay latency mix #:key (max-latency-in-seconds 2))
+  (let* ((das-vct-length (c-integer (* (rte-samplerate) max-latency-in-seconds)))
 	 (das-vct (make-vct das-vct-length))
 	 (pos 0))
     (<rt-play> (lambda ()
 		 (declare (<int> pos))
-		 
-		 (if (>= (mus-location rs) (mus-length rs))
-		     (set! (mus-location rs) 0))
 		 
 		 (let* ((frame-latency (the <int> (* (mus-srate) latency)))
 			(write-pos (remainder (+ pos frame-latency)
@@ -278,7 +274,7 @@
 			(read-pos pos)
 			(next-pos (remainder (1+ pos)
 					     das-vct-length))
-			(sample (readin rs))
+			(sample (in 0))
 			(delayed-sample (vct-ref das-vct read-pos)))
 		   
 		   (vct-set! das-vct write-pos sample)
@@ -287,12 +283,17 @@
 
 	     
 #!
-(define p (extremely-simple-delay filename 1 0.5))
+
+(define bus (make-bus 2))
+(loopplay filename #:out-bus bus))
+(define p (extremely-simple-delay 1 0.5 #:in-bus bus))
+
 (set! (-> p mix) 1)
-(set! (-> p latency) 0.5)
+(set! (-> p latency) 1.5)
 (rte-info)
 (rte-silence!)
 !#
+
 
 
 
@@ -472,6 +473,8 @@ This version of the fm-violin assumes it is running within with-sound (where *ou
 (rte-info)
 (rte-silence!)
 (rte-restart)
+
+
 
 
 

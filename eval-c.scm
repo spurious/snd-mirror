@@ -149,6 +149,8 @@ Usually just "", but can be "-lsnd" or something if needed.
 (define eval-c-lazy-cleanup #t)
 (define eval-c-string-is-pointer #f)
 
+(if (not (defined? '*eval-c-compiler*))
+    (primitive-eval '(define *eval-c-compiler* "gcc")))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -338,8 +340,11 @@ Usually just "", but can be "-lsnd" or something if needed.
 	  (let* ((var (if (string? das-var)
 			  das-var
 			  (symbol->string das-var)))
-		 (varlist (string->list var)))
-	    (if (member #\- varlist)
+		 (varlist (string->list var))
+		 (firsthit (member #\- varlist)))
+	    (if (and firsthit
+		     (or (null? (cdr firsthit))
+			 (not (equal? #\> (cadr firsthit)))))
 		(let ((ret (apply <-> (map (lambda (c) (if (equal? #\- c)
 							   "_minus_"
 							   (string c)))
@@ -1360,7 +1365,9 @@ int fgetc (FILE
      ,@(map (lambda (def)
 	      (if (= 3 (length def))
 		  (list (cadr def) (car def) (caddr def))
-		  (list (cadr def) (car def))))
+		  (if (not (symbol? (cadr def)))
+		      (c-display "Error. \"" (cadr def) "\" is (probably) not a type in expression" def)
+		      (list (cadr def) (car def)))))
 	    defs)
      ,@body))
 
@@ -1548,6 +1555,13 @@ int fgetc (FILE
 !#
 
 
+(define eval-c-filestobedeleted '())
+
+(add-hook! exit-hook (lambda args
+		       (for-each (lambda (filename)
+				   (system (<-> "rm " filename)))
+				 eval-c-filestobedeleted)
+		       #f))
 
 (define* (eval-c-eval #:key (compile-options "") . codestrings)
   (let* ((evalstring "")
@@ -1568,20 +1582,19 @@ int fgetc (FILE
 		  codestrings))
     (close fd)
     (if eval-c-verbose
-	(c-display sourcefile))
-    (system (<-> "gcc -Wall -O3 -shared -o " libfile " " sourcefile " "
-			   (if (getenv "CFLAGS") (getenv "CFLAGS") "") " " (if (getenv "LDFLAGS") (getenv "LDFLAGS") "") " "
-			   (string #\`) guile-config " compile" (string #\`) " "
-			   compile-options))
+	(c-display "Compiling" sourcefile))
+    (system (<-> *eval-c-compiler* " -O3 -shared -o " libfile " " sourcefile " "
+		 (if (string=? *eval-c-compiler* "icc")
+		     "-L/opt/intel_cc_80/lib /opt/intel_cc_80/lib/libimf.a"
+		     (<-> "-Wall " (if (getenv "CFLAGS") (getenv "CFLAGS") "") " " (if (getenv "LDFLAGS") (getenv "LDFLAGS") "") " "))
+		 (string #\`) guile-config " compile" (string #\`) " "
+		 compile-options))
     (dynamic-call "das_init" (dynamic-link libfile))
     (system (<-> "rm " libfile))
     (if eval-c-cleanup
 	(system (<-> "rm " sourcefile))
 	(if eval-c-lazy-cleanup
-	    (add-hook! exit-hook (lambda args
-				   (system (<-> "rm " sourcefile))
-				   #f))))
-    ))
+	    (set! eval-c-filestobedeleted (cons sourcefile eval-c-filestobedeleted))))))
 
 
 #!
@@ -1791,7 +1804,7 @@ int fgetc (FILE
   (ec-get-somethings array num ec-get-ints-element))
 (define* (ec-get-doubles array #:optional  num)
   (ec-get-somethings array num ec-get-double-element))
-(define* (ec-get-floatss array  #:optional num)
+(define* (ec-get-floats array  #:optional num)
   (ec-get-somethings array num ec-get-floats-element))
 (define* (ec-get-strings array  #:optional num)
   (ec-get-somethings array num ec-get-strings-element))

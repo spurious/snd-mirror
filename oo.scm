@@ -419,7 +419,8 @@
 ;; If you thing that is whats happening, rename "->3" to "->" and "->3" to "->", and see if that helps.
 ;; If it did, change the "->"-calls thats causing the leak into "->2"-calls.
 ;;
-(define-macro (-> object method . args)
+;; Nah, this wasn't such a good idea... ->-bad-idea is the old ->
+(define-macro (->-bad-idea object method . args)
   (if (number? object)
       `(list-set! ,method ,object ,(car args))
       (let ((funcname (gensym (string-append "->___" (symbol->string method)))))
@@ -443,8 +444,7 @@
       `(list-set! ,method ,object ,(car args))
       `(,object ',method ,@args)))
 
-;; Debugging.
-(define-macro (->3 object method . args)
+(define-macro (-> object method . args)
   (if (number? object)
       `(list-set! ,method ,object ,(car args))
       `(,object ',method ,@args)))

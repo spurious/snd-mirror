@@ -22,14 +22,20 @@ http://www.notam02.no/arkiv/doc/snd-rt/
 !#
 
 
+(if (not (provided? 'snd-rt-compiler.scm))
+    (throw 'rt-compiler-not-loaded))
+
 (if (provided? 'snd-rt-engine.scm)
     (throw 'rt-engine-already-loaded))
 (provide 'snd-rt-engine.scm)
 
 (if (not (provided? 'snd-oo.scm)) (load-from-path "oo.scm"))
 
-(c-load-from-path rt-compiler)
 
+
+
+;; Various general functions and macros
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
 
@@ -56,6 +62,102 @@ http://www.notam02.no/arkiv/doc/snd-rt/
     (primitive-eval '(define *rt-num-output-ports* 8)))
 
 (define rt-max-cpu-usage 80)
+
+(define *out-bus* #f)
+(define *in-bus* #f)
+
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;; BUS. ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+#!
+Behavior logic for reading and writing:
+
+Reading: bus[n]
+Reading one period later[1][2]: bus[n]
+Reading two periods later[1]: 0 
+
+writing: bus[n]+=v
+writing one period later[1]: bus[n]=v
+
+[1] than the frame was last written to.
+[2] This behaviour seems to be different from Supercollider. According to the
+    file order-of-execution.rtf, in.ar "zeros any data from the previous
+    cycle", which I guess means this behaviour: (ret=bus[n],bus[n]=0,ret).
+
+!#
+
+
+(define bus-struct (<-> "struct rt_bus_data{"
+			"  int last_written_to;"
+			"  float val;"
+			"};"
+			"struct rt_bus{"
+			"  int num_channels;"
+			"  struct rt_bus_data data[];"
+			"}"))
+
+(eval-c ""
+	;;;;;;; Das SMOB
+
+	,bus-struct
+	
+	(<nonstatic-scm_t_bits> rt_bus_tag)
+	
+	(public
+	  (<SCM> rt-bus-p (lambda ((<SCM> rt_bus_smob))
+			       (if (SCM_SMOB_PREDICATE rt_bus_tag rt_bus_smob)
+				   (return SCM_BOOL_T)
+				   (return SCM_BOOL_F))))
+	  (<SCM> make-bus2 (lambda ((<int> num_channels))
+			     (let* ((ret <struct-rt_bus-*> (calloc 1 (+ (sizeof <struct-rt_bus>)
+									(* (sizeof <struct-rt_bus_data>)
+									   ,rt-max-frame-size
+									   num_channels))))
+				    (scmret <SCM>))
+
+			       (set! ret->num_channels num_channels)
+			       
+			       ;(for-each 0 num_channels
+				;	 (lambda (ch)
+				;	   (set! ret->data[ch] (calloc (sizeof <float>) ,rt-max-frame-size))))
+
+			       (SCM_NEWSMOB scmret rt_bus_tag ret)
+			       (return scmret)))))
+	 
+	;;(<SCM> mark_rt_bus (lambda ((<SCM> rt_bus_smob))
+	;;			 (let* ((rt_bus <struct-mus_rt_bus-*> (cast <void-*> (SCM_SMOB_DATA rt_bus_smob))))
+	;;			   (return rt_bus->scm_bus))))
+	(<size_t> free_rt_bus (lambda ((<SCM> rt_bus_smob))
+				(let* ((rt_bus <struct-rt_bus-*> (cast <void-*> (SCM_SMOB_DATA rt_bus_smob))))
+				  ;(for-each 0 rt_bus->num_channels
+				;	    (lambda (ch)
+				;	      (free rt_bus->data[ch])))
+				  (free rt_bus)
+				  (return 0))))
+	
+	(<int> print_rt_bus (lambda ((<SCM> rt_bus_smob) (<SCM> port) (<scm_print_state-*> pstate))
+			      (scm_puts (string "#<rt_bus ... > ") port)
+			      (return 1)))
+
+	(run-now
+	 (set! rt_bus_tag (scm_make_smob_type (string "rt_bus") (sizeof <struct-rt_bus>)))
+	 ;;(scm_set_smob_mark rt_bus_tag mark_rt_bus)
+	 (scm_set_smob_free rt_bus_tag free_rt_bus)
+	 (scm_set_smob_print rt_bus_tag print_rt_bus)))
+			    
+(define-macro (make-bus . rest)
+  (if (null? rest)
+      `(make-bus2 1)
+      `(make-bus2 ,(car rest))))
+
 
 
 
@@ -220,6 +322,31 @@ size_t jack_ringbuffer_write_space(const jack_ringbuffer_t *rb);
 
 
 
+(define-ec-struct <Jack_Arg>
+  <int> frames
+  <int> is_running
+
+  <void-*> rt_callback
+
+  <jack_client_t-*> client
+  
+  <int> num_inports
+  <jack_port_t**> input_ports
+  
+  <int> num_outports
+  <jack_port_t**> output_ports
+
+  <struct-rt_bus-*> out_bus
+  <struct-rt_bus-*> in_bus
+  
+  <void-*> rt_arg
+
+  <float> samplerate
+  
+  )
+
+
+
 
 (def-class (<jack> name process-func jack-arg num-inports num-outports #:key (autoconnect #t))
 
@@ -227,6 +354,9 @@ size_t jack_ringbuffer_write_space(const jack_ringbuffer_t *rb);
   
   (define client #f)
 
+  (def-var in-bus #f)
+  (def-var out-bus #f)
+  
   (def-method (get-client)
     client)
 
@@ -271,12 +401,18 @@ size_t jack_ringbuffer_write_space(const jack_ringbuffer_t *rb);
 		    (return #f)))
 
 	      (-> jack-arg client client)
-		    
+
+	      ;; Note to myself, why the if???
 	      (if num-inports
 		  (-> jack-arg num_inports num-inports))
 	      (if num-outports
 		  (-> jack-arg num_outports num-outports))
 
+	      (set! this->in-bus (make-bus num-inports))
+	      (set! this->out-bus (make-bus num-outports))
+	      (-> jack-arg in_bus (SCM_SMOB_DATA this->in-bus))
+	      (-> jack-arg out_bus (SCM_SMOB_DATA this->out-bus))
+	      
 	      (jack_set_process_callback client process-func (-> jack-arg get-c-object))
 	      
 	      (-> jack-arg input_ports (map (lambda (n)
@@ -319,32 +455,14 @@ size_t jack_ringbuffer_write_space(const jack_ringbuffer_t *rb);
 
 
 
-(define-ec-struct <Jack_Arg>
-  <int> frames
-  <int> is_running
-
-  <void-*> rt_callback
-
-  <jack_client_t-*> client
-  
-  <int> num_inports
-  <jack_port_t**> input_ports
-  
-  <int> num_outports
-  <jack_port_t**> output_ports
-
-  <void-*> rt_arg
-
-  <float> samplerate
-  
-  )
-
-
 (eval-c ""
 	"#include <jack/jack.h>"
+
+	,bus-struct
+	
 	(shared-struct <Jack_Arg>)
 
-	"typedef void (*Callback)(void *arg,jack_client_t *client,int is_running,int num_outs, float **outs, int num_ins, float **ins,int num_frames,int base_time,float samplerate)"
+	"typedef void (*Callback)(void *arg,jack_client_t *client,int is_running,struct rt_bus *in_bus,struct rt_bus *out_bus,int num_frames,int base_time,float samplerate)"
 
 	(functions->public
 	 (<int> jack_rt_process_dummy (lambda ((<jack_nframes_t> nframes)
@@ -360,28 +478,53 @@ size_t jack_ringbuffer_write_space(const jack_ringbuffer_t *rb);
 					 (callback <Callback> jack_arg->rt_callback)
 					 
 					 (out[jack_arg->num_outports] <float-*>)
-					 (in[jack_arg->num_inports] <float-*>))
-					 
+					 (in[jack_arg->num_inports] <float-*>)
+
+					 (lokke <int>)
+					 )
+
 				    (for-each 0 jack_arg->num_outports
 					      (lambda (ch)
-						(set! out[ch] (jack_port_get_buffer jack_arg->output_ports[ch] nframes))
-						(memset out[ch] 0 (* (sizeof <float>) nframes))))
-				    
+					      (set! out[ch] (jack_port_get_buffer jack_arg->output_ports[ch] nframes))))
 				    (for-each 0 jack_arg->num_inports
-					      (lambda (ch)
-						(set! in[ch] (jack_port_get_buffer jack_arg->input_ports[ch] nframes))))
+					    (lambda (ch)
+					      (set! in[ch] (jack_port_get_buffer jack_arg->input_ports[ch] nframes))))
+				    
+				    (set! lokke 0)
+				    (for-each 0 nframes
+					      (lambda (n)
+						(for-each 0 jack_arg->num_inports
+							  (lambda (ch)
+							    (set! jack_arg->in_bus->data[lokke].val
+								  in[ch][n])
+							    (set! jack_arg->in_bus->data[lokke].last_written_to
+								  jack_arg->frames)
+							    lokke++))))
+
+				    (for-each 0 (* nframes jack_arg->num_outports)
+					      (lambda (n)
+						(set! jack_arg->out_bus->data[n].val 0.0f)
+						(set! jack_arg->out_bus->data[n].last_written_to
+						      jack_arg->frames)))
 				    
 				    (callback jack_arg->rt_arg
 					      jack_arg->client
 					      jack_arg->is_running
-					      jack_arg->num_outports
-					      out
-					      jack_arg->num_inports
-					      in
+					      jack_arg->in_bus
+					      jack_arg->out_bus
 					      nframes
 					      jack_arg->frames
 					      jack_arg->samplerate)
-
+				    
+				    (set! lokke 0)
+				    (for-each 0 nframes
+					      (lambda (n)
+						(for-each 0 jack_arg->num_outports
+							  (lambda (ch)
+							    (set! out[ch][n]
+								  jack_arg->out_bus->data[lokke].val)
+							    lokke++))))
+				    
 				    (if jack_arg->is_running
 					(+= jack_arg->frames nframes))
 				    
@@ -545,12 +688,13 @@ size_t jack_ringbuffer_write_space(const jack_ringbuffer_t *rb);
 
   <char-*> allocplace
   <char-*> allocplace_end
-  
-  <int> num_outs
-  <float-**> outs
-  <int> num_ins
-  <float-**> ins
+
+
+  <struct-rt_bus-*> in_bus
+  <struct-rt_bus-*> out_bus
+
   <int> time
+  <int> time_before
   <float> samplerate
   <float> res
   <char-*> error
@@ -571,6 +715,8 @@ size_t jack_ringbuffer_write_space(const jack_ringbuffer_t *rb);
 	"#include <jack/ringbuffer.h>"
 	"#include <jack/jack.h>"
 
+	,bus-struct
+	
 	(shared-struct <RT_Event>)
 	(shared-struct <RT_Procfunc>)
 	(shared-struct <RT_Engine>)
@@ -582,7 +728,6 @@ size_t jack_ringbuffer_write_space(const jack_ringbuffer_t *rb);
 	(<scm_t_bits> procfunc_tag)
 	
 	(public
-	 ;; Note, this function is used as a general GET_SMOB_DATA function as well!
 	 (<void-*> rt_get_procfunc_data (lambda ((<SCM> procfunc_smob))
 					  (let* ((procfunc <struct-RT_Procfunc-*> (cast <void-*> (SCM_SMOB_DATA procfunc_smob))))
 					    (return procfunc))))
@@ -596,7 +741,7 @@ size_t jack_ringbuffer_write_space(const jack_ringbuffer_t *rb);
 				     (SCM_NEWSMOB smob procfunc_tag procfunc)
 				     (set! procfunc->smob smob)
 				     (return smob)))))
-
+	
 	(<SCM> mark_procfunc (lambda ((<SCM> procfunc_smob))
 			       (let* ((procfunc <struct-RT_Procfunc-*> (cast <void-*> (SCM_SMOB_DATA procfunc_smob))))
 				 (return procfunc->toprotect))))
@@ -789,8 +934,8 @@ size_t jack_ringbuffer_write_space(const jack_ringbuffer_t *rb);
 				       ;;(set! queue[size] NULL)
 				       (set! queue[i] last))))
 
-	(<int> rt_is_queue_not_empty (lambda ((<struct-RT_Engine-*> engine))
-				       (return engine->queue_size)))
+	;;(<int> rt_is_queue_not_empty (lambda ((<struct-RT_Engine-*> engine))
+	;;			       (return engine->queue_size)))
 	
 	(<struct-RT_Event-*> rt_findmin_event (lambda ((<struct-RT_Engine-*> engine))
 						(return engine->queue_size==0?NULL:engine->queue[1])))
@@ -832,8 +977,8 @@ size_t jack_ringbuffer_write_space(const jack_ringbuffer_t *rb);
 	 (<void> rt_callback (lambda ((<struct-RT_Engine-*> engine)
 				      (<jack_client_t-*> client)
 				      (<int> is_running)
-				      (<int> num_outs) (<float> **outs)
-				      (<int> num_ins) (<float> **ins)
+				      (<struct-rt_bus-*> in_bus)
+				      (<struct-rt_bus-*> out_bus)
 				      (<int> nframes)
 				      (<int> base_time)
 				      (<float> samplerate))
@@ -846,8 +991,8 @@ size_t jack_ringbuffer_write_space(const jack_ringbuffer_t *rb);
 				   (begin
 				     (fprintf stderr (string "Framesize too high.\\n"))
 				     return))
-			       
-			       ;; Check ringbuffer for new events. Put those into engine->events.
+
+			       ;; Check ringbuffer for new events.
 			       (if (>= (jack_ringbuffer_read_space engine->ringbuffer_to_rt) (sizeof <void-*>))
 				   (while (>= (jack_ringbuffer_read_space engine->ringbuffer_to_rt) (sizeof <void-*>))
 					  (let* ((event <struct-RT_Event-*> NULL))
@@ -871,6 +1016,7 @@ size_t jack_ringbuffer_write_space(const jack_ringbuffer_t *rb);
 					     (set! engine->events_noninserted2 event->next)
 					     (rt_insert_event engine event)))))
 
+			       ;; Put events placed in the to-be-queued list into the priority queue and switch the two lists.
 			       (if (>= time engine->next_switchtime)
 				   (let* ((left <struct-RT_Event-*> engine->events_noninserted1))
 				     (set! engine->events_noninserted1 engine->events_noninserted2)
@@ -885,14 +1031,14 @@ size_t jack_ringbuffer_write_space(const jack_ringbuffer_t *rb);
 					      (rt_queue_event engine event)))))
 
 			       ;;(fprintf stderr (string "engine: %u\\n") engine)
-			       
-			       (set! engine->num_outs num_outs)
-			       (set! engine->outs outs)
-			       (set! engine->num_ins num_ins)
-			       (set! engine->ins ins)
+
+			       (set! engine->in_bus in_bus)
+			       (set! engine->out_bus out_bus)
 			       (set! engine->samplerate samplerate)
 
 			       (rt_run_queued_events engine base_time)
+
+			       (set! engine->time_before engine->time) ;; Last time
 			       
 			       (if (== (setjmp engine->error_jmp) 0)
 				   (let* ((time <int> base_time)
@@ -900,6 +1046,8 @@ size_t jack_ringbuffer_write_space(const jack_ringbuffer_t *rb);
 					  (event <struct-RT_Event-*>)
 					  (end_time <int> (+ base_time nframes)))
 
+
+				     
 				     (while (< time end_time)
 					    (set! event (rt_findmin_event engine))
 					    (if event
@@ -913,7 +1061,7 @@ size_t jack_ringbuffer_write_space(const jack_ringbuffer_t *rb);
 							 (let* ((callback <Callback> procfunc->func)
 								(next <struct-RT_Procfunc-*> procfunc->next))
 							   (set! engine->time time)
-
+							   
 							   ;; Run a <realtime> instance function.
 							   (if (== 1 (callback procfunc->arg
 									       (- time base_time)
@@ -1066,6 +1214,9 @@ size_t jack_ringbuffer_write_space(const jack_ringbuffer_t *rb);
 		       (-> *rt-engine* destructor)))
 
 
+(set! *out-bus* (-> *rt-engine* out-bus))
+(set! *in-bus* (-> *rt-engine* in-bus))
+
 (-> *rt-engine* start)
 
 
@@ -1111,9 +1262,12 @@ size_t jack_ringbuffer_write_space(const jack_ringbuffer_t *rb);
   (set! *rt-num-output-ports* num-output-ports)
   (begin
     (-> *rt-engine* destructor)
-    (set! *rt-engine* (<rt-engine> (lambda (rt-arg)
-				     (<jack-rt-driver> num-input-ports num-output-ports (rt_callback) rt-arg))))
-    (-> *rt-engine* start)))
+    (let ((new-engine (<rt-engine> (lambda (rt-arg)
+				     (<jack-rt-driver> num-input-ports num-output-ports (rt_callback) rt-arg)))))
+      (set! *out-bus* (-> new-engine out-bus))
+      (set! *in-bus* (-> new-engine in-bus))
+      (set! *rt-engine* new-engine)
+      (-> *rt-engine* start))))
 
 (define (rte-silence!)
   (-> *rt-engine* add-event
@@ -1131,7 +1285,7 @@ size_t jack_ringbuffer_write_space(const jack_ringbuffer_t *rb);
 (define (rte-pause)
   (-> *rt-engine* pause))
 (define (rte-continue)
-  (-> *rt-engine* pause))
+  (-> *rt-engine* continue))
 (define (rte-time)
   (-> *rt-engine* get-time))
 (define (rte-frames)

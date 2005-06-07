@@ -20,8 +20,8 @@ http://www.notam02.no/arkiv/doc/snd-rt/
 *****
 Short
 *****
-rt-compiler provides various functions and macros to compile[1]
-and run simple lisp[2] functions.
+rt-compiler provides various functions and macros to compile[3]
+and run simple lisp[4] functions.
 
 
 
@@ -50,7 +50,6 @@ and run simple lisp[2] functions.
 (if (not (provided? 'snd-oo.scm)) (load-from-path "oo.scm"))
 
 (c-load-from-path eval-c)
-(c-load-from-path rt-engine)
 
 
 (if (not (defined? 'snd-header-files-path))
@@ -71,8 +70,7 @@ and run simple lisp[2] functions.
 
 
 ;; Various general functions and macros
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (eval-c  (string-append "-I" snd-header-files-path)
 	 "#include <clm.h>"
@@ -97,6 +95,7 @@ and run simple lisp[2] functions.
 	  (scm_c_define_gsubr (string "SCM_SMOB_DATA") 1 0 0 gakk15)
 	  (scm_c_define_gsubr (string "TO_VCT") 1 0 0 gakk3)
 	  (scm_c_define_gsubr (string "c-global-symbol") 2 0 0 gakk2)))
+
 
 
 ;; Get the address of a guile SCM variable.
@@ -141,6 +140,20 @@ and run simple lisp[2] functions.
 (c-global-symbol 'ai2 (standard-interface-eval-closure (current-module))))))
 !#
 
+
+
+
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;; Start the engine ;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(c-load-from-path rt-engine)
 
 
 
@@ -226,7 +239,9 @@ and run simple lisp[2] functions.
 (rt-add-immediate 'is-type?)
 		  
 
-
+;; Dummy, redefined later.
+(define (rt-clear-cache!)
+  #t)
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1523,16 +1538,17 @@ and run simple lisp[2] functions.
 				 (let* ((newvarlist varlist)
 					(funclist '())
 					(vardecls (map (lambda (vardecl)
-								  (let* ((uname (get-new-name (car vardecl))))
-								    (set! newvarlist (cons (list (car vardecl) uname) newvarlist))
-								    (if (and (list? (caddr vardecl))
-									     (eq? 'lambda (car (cadr vardecl))))
-									(begin
-									  (set! funclist (cons (list uname (cadr vardecl))
-											       funclist))
-									  `(,uname (rt-lambda-decl ,(cadr (cadr vardecl)))))
-									`(,uname ,(fix newvarlist (cadr vardecl))))))
-								das-vardecls)))
+							 ;;(c-display "vardecl" vardecl)
+							 (let* ((uname (get-new-name (car vardecl))))
+							   (set! newvarlist (cons (list (car vardecl) uname) newvarlist))
+							   (if (and (list? (cadr vardecl))
+								    (eq? 'lambda (car (cadr vardecl))))
+							       (begin
+								 (set! funclist (cons (list uname (cadr vardecl))
+										      funclist))
+								 `(,uname (rt-lambda-decl ,(cadr (cadr vardecl)))))
+							       `(,uname ,(fix newvarlist (cadr vardecl))))))
+						       das-vardecls)))
 				   `(let* ,(append vardecls (map (lambda (funcdecl)
 								   `(,(car funcdecl) ,(fix newvarlist (cadr funcdecl) #t)))
 								 (reverse! funclist)))
@@ -2922,11 +2938,8 @@ and run simple lisp[2] functions.
 	  (string->symbol (string-drop s 7))
 	  #f)))
   	   
-  (if (and (defined? 'rt-clear-cache!)
-	   rt-defining-macros-clears-cache)
-      (begin
-	;;(c-display "gakk")
-	(rt-clear-cache!)))
+  (if rt-defining-macros-clears-cache
+      (rt-clear-cache!))
   (if (dotted-list? def)
       (let* ((das-last (cdr (last-pair def)))
 	     (exp (is-expand das-last)))
@@ -3007,6 +3020,7 @@ and run simple lisp[2] functions.
 	    
 
 (define-macro (rt-renamefunc rt-name c-name returntype . args)
+  (rt-clear-cache!)
   (let ((funcname (symbol-append 'rt- rt-name '/ c-name)))
     (apply <rt-func> (append (list funcname returntype) args))
     (primitive-eval `(define-c-macro ,(cons funcname 'rest )
@@ -3025,7 +3039,7 @@ and run simple lisp[2] functions.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;;These eval-c functions are compiled into the compiled functions
+;;rt-functions are eval-c functions which are inserted into the compiled functions
 ;;when needed.
 
 ;; (rt-find-all-funcs '(lambda () (+ (- (aiai 90)))) -> '(+ - aiai)
@@ -3053,6 +3067,7 @@ and run simple lisp[2] functions.
 (define rt-functions '())
 
 (define-macro (rt-function ret-type name body)
+  (rt-clear-cache!)
   (let ((dependents (rt-find-all-funcs body))
 	(old (assq name rt-functions)))
     (if old
@@ -3066,10 +3081,8 @@ and run simple lisp[2] functions.
 (begin
   
   (rt-function <void> rt_error (lambda (,rt-globalvardecl (<char-*> msg))
-				 (<static-int> errordisplayed 0)
-				 (if (not errordisplayed)
-				     (fprintf stderr (string "RT RUNTIME ERROR: %s.\\n") msg))
-				 (set! errordisplayed 1)
+				 (fprintf stderr (string "RT RUNTIME ERROR: %s. (Removing instrument)\\n") msg)
+				 (set! rt_globals->remove_me 1)
 				 ,(if (rt-is-safety?)
 				      '(longjmp rt_globals->engine->error_jmp 5)
 				      "/* */")))
@@ -3166,8 +3179,7 @@ and run simple lisp[2] functions.
 					       (rt_error rt_globals (string "Out of memory when calling rt_alloc.")))
 					  "/* */")
 				     (return ret))))
-  (<rt-func> 'rt_alloc_vct '<vct-*> '(<int>)  #:needs-rt-globals #t)
-  
+
   (rt-function <void-*> rt_alloc_zero (lambda (,rt-globalvardecl (<int> size))
 					(let* ((ret <void-*> (rt_alloc rt_globals size)))
 					  (memset ret 0 size)
@@ -3179,114 +3191,11 @@ and run simple lisp[2] functions.
 					(set! ret->length length)
 					(set! ret->data floats)
 					(return ret))))
+  (<rt-func> 'rt_alloc_vct '<vct-*> '(<int>)  #:needs-rt-globals #t)
   
-
-  ;; rt_in
-  (rt-function <float> rt_in (lambda (,rt-globalvardecl (<int> ch))
-			       ,(if (rt-is-safety?)
-				    '(if (< ch 0)
-					 (rt_error rt_globals (string "Channel number for In less than zero")))
-				    "/* */")
-			       ,(if (rt-is-safety?)
-				    '(if (> ch rt_globals->num_ins)
-					 (rt_error rt_globals (string "Illegal channel number for In")))
-				    "/* */")
-			       (return rt_globals->ins[ch][rt_globals->framenum])))
-  (<rt-func> 'rt_in '<float> '(<int>) #:needs-rt-globals #t)
-  
-  
-  ;; rt_out
-  (rt-function <void> rt_out (lambda (,rt-globalvardecl (<int> ch)(<float> val))
-			       ,(if (rt-is-safety?)
-				    '(if (< ch 0)
-					 (rt_error rt_globals (string "Channel number for Out less than zero")))
-				    "/* */")
-			       ,(if (rt-is-safety?)
-				    '(if (> ch rt_globals->num_outs)
-					 (rt_error rt_globals (string "Illegal channel number for Out")))
-				    "/* */")
-			       (+= rt_globals->outs[ch][rt_globals->framenum] val)))
-  (<rt-func> 'rt_out '<void> '(<int> <float>) #:needs-rt-globals #t)
-  
-  
-
-  ;; rt_out_vct
-  (rt-function <void> rt_out_vct (lambda (,rt-globalvardecl (<int> ch) (<vct-*> vct))
-				   (<int> lokke)
-				   (<int> framenum rt_globals->framenum)
-				   (<float-**> outs rt_globals->outs)
-				   (<float-*> data vct->data)
-				   
-				   (if (< ch 0)
-				       (set! ch 0))
-				   "for(lokke=0;lokke<vct->length;lokke++){"
-				   (if (> ch rt_globals->num_outs)
-				       break)
-				   (+= outs[ch][framenum] *data)
-				   ch++
-				   data++
-				   "}"
-				   ))
-  (<rt-func> 'rt_out_vct '<void> '(<int> <vct-*>) #:needs-rt-globals #t)
 
 
 
-  ;; BUS stuff
-  ;;;;;;;;;;;;;;
-  (rt-function <void> rt_write_bus (lambda (,rt-globalvardecl (<struct-mus_rt_bus_internal-*> bus) (<int> ch) (<float> val))
-				     ,(if (rt-is-safety?)
-					  '(if (< ch 0)
-					       (rt_error rt_globals (string "Channel number for write-bus less than zero")))
-					  "/* */")
-				     ,(if (rt-is-safety?)
-					  '(if (> ch bus->num_channels)
-					       (rt_error rt_globals (string "Illegal channel number for write-bus")))
-					  "/* */")
-				     ;;(if (!= bus->last_clear_frame rt_globals->frames)
-				     ;;   (set! bus->data[ch][rt_globals->framenum] val) else
-				     (+= bus->data[ch][rt_globals->framenum] val)))
-  (<rt-func> 'rt_write_bus '<void> '(<bus> <int> <float>) #:needs-rt-globals #t)
-  
-  (rt-function <void> rt_write_bus_vct (lambda (,rt-globalvardecl (<struct-mus_rt_bus_internal-*> bus) (<vct-*> vct))
-					 (<int> lokke)
-					 (<int> framenum rt_globals->framenum)
-					 (<float-*> data vct->data)
-					 (<int> end (EC_MIN vct->length bus->num_channels))
-					 "for(lokke=0;lokke<end;lokke++){"
-					 (+= bus->data[lokke][framenum] *data)
-					 data++
-					 "}"
-					 ))
-  (<rt-func> 'rt_write_bus_vct '<void> '(<bus> <vct-*>) #:needs-rt-globals #t)
-  
-  (rt-function <float> rt_read_bus (lambda (,rt-globalvardecl (<struct-mus_rt_bus_internal-*> bus) (<int> ch))
-				     ,(if (rt-is-safety?)
-					  '(if (< ch 0)
-					       (rt_error rt_globals (string "Channel number for write-bus less than zero")))
-					  "/* */")
-				     ,(if (rt-is-safety?)
-					  '(if (> ch bus->num_channels)
-					       (rt_error rt_globals (string "Illegal channel number for write-bus")))
-					  "/* */")
-				     (let* ((ret <float> bus->data[ch][rt_globals->framenum]))
-				       (set! bus->data[ch][rt_globals->framenum] 0.0f)
-				       (return ret))))
-  (<rt-func> 'rt_read_bus '<float> '(<bus> <int>) #:needs-rt-globals #t)
-
-  (rt-function <vct-*> rt_read_bus_vct (lambda (,rt-globalvardecl (<struct-mus_rt_bus_internal-*> bus))
-					 (let* ((ret <vct-*> (rt_alloc_vct rt_globals bus->num_channels))
-						(lokke <int>)
-						(framenum <int> rt_globals->framenum)
-						(data <float-*> ret->data))
-					   
-					   "for(lokke=0;lokke<bus->num_channels;lokke++){"
-					   (set! *data bus->data[lokke][framenum])
-					   (set! bus->data[lokke][framenum] 0)
-					   data++
-					   "}"
-					   (return ret))))
-  (<rt-func> 'rt_read_bus_vct '<vct-*> '(<bus>) #:needs-rt-globals #t)
-  
 
 
   ;; VCT's
@@ -4173,7 +4082,23 @@ and run simple lisp[2] functions.
 !#
 		  
 
-;;; OUT/IN
+;; He he. :-)
+(define-rt-macro (unquote something)
+  (primitive-eval something))
+
+(define-rt-macro (include-guile-func name)
+  (procedure-source (primitive-eval name)))
+
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;; Output and Input ;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 
 (define-c-macro (rt-cast-float val)
   `(cast <float> ,val))
@@ -4204,7 +4129,7 @@ and run simple lisp[2] functions.
 	     `(begin
 		,@(map (lambda (something)
 			 (set! ch (1+ ch))
-			 `(rt_out ,ch ,something))
+			 `(rt_write_bus out-bus ,ch ,something))
 		       (cdr val)))))
 	  ((not (symbol? val))
 	   (let ((new-val (rt-gensym)))
@@ -4212,18 +4137,18 @@ and run simple lisp[2] functions.
 		(out ,@org-channels ,new-val))))
 	  ((= 1 (length channels))
 	   `(if (is-type? <vct-*> ,val)
-		(rt_out_vct ,(car channels) (rt-cast-vct ,val))
-		(rt_out ,(car channels) (rt-cast-float ,val))))
+		(rt_write_bus_vct out-bus (rt-cast-vct ,val))
+		(rt_write_bus out-bus ,(car channels) (rt-cast-float ,val))))
 	  ((= 0 (length org-channels))
 	   `(if (is-type? <vct-*> ,val)
-		(rt_out_vct 0 (rt-cast-vct ,val))
+		(rt_write_bus_vct out-bus (rt-cast-vct ,val))
 		(begin
-		  (rt_out 0 (rt-cast-float ,val))
-		  (rt_out 1 (rt-cast-float ,val)))))
+		  (rt_write_bus out-bus 0 (rt-cast-float ,val))
+		  (rt_write_bus out-bus 1 (rt-cast-float ,val)))))
 	  (else
 	   `(begin
 	      ,@(map (lambda (ch)
-		       `(rt_out ,ch ,val))
+		       `(rt_write_bus out-bus ,ch ,val))
 		     channels))))))
 
 (define-c-macro (rt-outs/outs n)
@@ -4238,9 +4163,9 @@ and run simple lisp[2] functions.
   (if (null? channels)
       (set! channels '(0 1)))
   (if (= 1 (length channels))
-      `(rt_in ,(car channels))
+      `(rt_read_bus in-bus ,(car channels))
       `(+ ,@(map (lambda (ch)
-		   `(rt_in ,(car channels)))
+		   `(rt_read_bus in-bus ,(car channels)))
 		 channels))))
 
 (define-c-macro (rt-ins/ins n)
@@ -4258,14 +4183,6 @@ and run simple lisp[2] functions.
 
   
   
-
-;; He he. :-)
-(define-rt-macro (unquote something)
-  (primitive-eval something))
-
-(define-rt-macro (include-guile-func name)
-  (procedure-source (primitive-eval name)))
-
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -4770,41 +4687,48 @@ and run simple lisp[2] functions.
 	  (<int> rt-readin-channels (lambda ((<SCM> rt_readin_smob))
 				      (if (SCM_SMOB_PREDICATE rt_readin_tag rt_readin_smob)
 					  (let* ((readin <struct-mus_rt_readin-*> (cast <void-*> (SCM_SMOB_DATA rt_readin_smob))))
-					    (return readin->channels)))))
+					    (return readin->channels))
+					  (return 0))))
 	  (<int> rt-readin-channel (lambda ((<SCM> rt_readin_smob))
 				     (if (SCM_SMOB_PREDICATE rt_readin_tag rt_readin_smob)
 					 (let* ((readin <struct-mus_rt_readin-*> (cast <void-*> (SCM_SMOB_DATA rt_readin_smob))))
-					   (return readin->channel)))))
+					   (return readin->channel))
+					 (return 0))))
 	  (<float> rt-readin-increment (lambda ((<SCM> rt_readin_smob))
 					 (if (SCM_SMOB_PREDICATE rt_readin_tag rt_readin_smob)
 					     (let* ((readin <struct-mus_rt_readin-*> (cast <void-*> (SCM_SMOB_DATA rt_readin_smob))))
-					       (return readin->increment)))))
+					       (return readin->increment)))
+					 (return 0)))
 	  (<float> rt-readin-set_increment (lambda ((<SCM> rt_readin_smob)
 						    (<float> val))
 					     (if (SCM_SMOB_PREDICATE rt_readin_tag rt_readin_smob)
 						 (let* ((readin <struct-mus_rt_readin-*> (cast <void-*> (SCM_SMOB_DATA rt_readin_smob))))
 						   (set! readin->increment val)
-						   (return val)))))
+						   (return val)))
+					     (return 0)))
 	  (<int> rt-readin-length (lambda ((<SCM> rt_readin_smob))
 				    (if (SCM_SMOB_PREDICATE rt_readin_tag rt_readin_smob)
 					(let* ((readin <struct-mus_rt_readin-*> (cast <void-*> (SCM_SMOB_DATA rt_readin_smob))))
-					  (return readin->length)))))
+					  (return readin->length)))
+				    (return 0)))
 	  (<char-*> rt-readin-file-name (lambda ((<SCM> rt_readin_smob))
 					  (if (SCM_SMOB_PREDICATE rt_readin_tag rt_readin_smob)
 					      (let* ((readin <struct-mus_rt_readin-*> (cast <void-*> (SCM_SMOB_DATA rt_readin_smob))))
-						(return (mus_file_name "((struct mus_rt_readin *) readin)->readin"))))))
+						(return (mus_file_name "((struct mus_rt_readin *) readin)->readin"))))
+					  (return NULL)))
 	  (<int> rt-readin-location (lambda ((<SCM> rt_readin_smob))
 				      (if (SCM_SMOB_PREDICATE rt_readin_tag rt_readin_smob)
 					  (let* ((readin <struct-mus_rt_readin-*> (cast <void-*> (SCM_SMOB_DATA rt_readin_smob))))
-					    (return readin->location)))))
+					    (return readin->location)))
+				      (return 0)))
 	  (<int> rt-readin-set_location (lambda ((<SCM> rt_readin_smob)						 
 						 (<int> loc))
 					  (if (SCM_SMOB_PREDICATE rt_readin_tag rt_readin_smob)
 					      (let* ((readin <struct-mus_rt_readin-*> (cast <void-*> (SCM_SMOB_DATA rt_readin_smob))))
 						(set! readin->location loc)
-						(return loc)))))
+						(return loc)))
+					  (return 0)))
 	
-
 	  (<SCM> make-rt-readin2 (lambda ((<SCM> scm_readin))
 				  (let* ((readin <mus_any-*> (XEN_TO_MUS_ANY scm_readin))
 					 (ret <struct-mus_rt_readin-*> (calloc 1 (sizeof <struct-mus_rt_readin>)))
@@ -5079,6 +5003,285 @@ setter!-rt-mus-location/mus_location
 
 
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;; LADSPA. ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define-ec-struct <mus_rt_ladspa>
+  <LADSPA_Descriptor-*> descriptor
+  <LADSPA_Handle> handle
+  <float-*> controls
+  <float-**> ins
+  <float-**> outs
+
+  <int> num_controls_in
+  <int> num_controls_out
+  <int> num_audio_outs
+  <int> num_audio_ins
+
+  <int-*> audioin_port_nums
+  <int-*> audioout_port_nums
+  <int-*> controlin_port_nums
+  <int-*> controlout_port_nums
+
+  <float-*> controls_out
+  
+  <vct-*> output
+  
+  <SCM> scm_output
+  <SCM> scm_descriptor)
+
+
+(eval-c (<-> "-I" snd-header-files-path " ")
+	"#include <ladspa.h>"
+	"#include <clm.h>"
+	"#include <xen.h>"
+	"#include <vct.h>"
+	;;;;;;; Das SMOB
+
+	(shared-struct <mus_rt_ladspa>)
+	
+	(<nonstatic-scm_t_bits> rt_ladspa_tag)
+	
+	(public
+	  (<SCM> rt-ladspa-p (lambda ((<SCM> rt_ladspa_smob))
+			       (if (SCM_SMOB_PREDICATE rt_ladspa_tag rt_ladspa_smob)
+				   (return SCM_BOOL_T)
+				   (return SCM_BOOL_F))))
+	  (<void> ladspa-set2 (lambda ((<SCM> rt_ladspa_smob)				       
+				       (<int> controlnum)
+				       (<float> val))
+				(if (not (SCM_SMOB_PREDICATE rt_ladspa_tag rt_ladspa_smob))
+				    (fprintf stderr (string "Not a ladspa object\\n"))
+				    (let* ((ladspa <struct-mus_rt_ladspa-*> (cast <void-*> (SCM_SMOB_DATA rt_ladspa_smob))))
+				      (if (< controlnum ladspa->num_controls_in)
+					  (set! ladspa->controls[controlnum] val))))))
+
+	  (<SCM> make-ladspa2 (lambda ((<struct-mus_rt_ladspa-*> ladspa))
+
+				(<SCM> scmret)
+				
+				(set! ladspa->ins (calloc (sizeof <float-*>) ladspa->num_audio_ins))
+				(for-each 0 ladspa->num_audio_ins
+					  (lambda (n)
+					    (set! ladspa->ins[n] (calloc (sizeof <float>) ,rt-max-frame-size))
+					    (ladspa->descriptor->connect_port ladspa->handle 
+									      ladspa->audioin_port_nums[n]
+									      ladspa->ins[n])))
+				
+				(set! ladspa->outs (calloc (sizeof <float-*>) ladspa->num_audio_outs))
+				(for-each 0 ladspa->num_audio_outs
+					  (lambda (n)
+					    (set! ladspa->outs[n] (calloc (sizeof <float>) ,rt-max-frame-size))
+					    (ladspa->descriptor->connect_port ladspa->handle 
+									      ladspa->audioout_port_nums[n]
+									      ladspa->outs[n])))
+
+				;;(set! ladspa->controls (calloc (sizeof <float>) ladspa->num_controls_in))
+				(for-each 0 ladspa->num_controls_in
+					  (lambda (n)
+					    (ladspa->descriptor->connect_port ladspa->handle 
+									      ladspa->controlin_port_nums[n]
+									      &ladspa->controls[n])))
+					    
+				(set! ladspa->controls_out (calloc (sizeof <float>) ladspa->num_controls_out))
+				(for-each 0 ladspa->num_controls_out
+					  (lambda (n)
+					    (ladspa->descriptor->connect_port ladspa->handle 
+									      ladspa->controlout_port_nums[n]
+									      &ladspa->controls_out[n])))
+					    
+				(if ladspa->descriptor->activate
+				    (ladspa->descriptor->activate ladspa->handle))
+				
+				(SCM_NEWSMOB scmret rt_ladspa_tag ladspa)
+				(return scmret))))
+	 
+	(<SCM> mark_rt_ladspa (lambda ((<SCM> rt_ladspa_smob))
+				(let* ((rt_ladspa <struct-mus_rt_ladspa-*> (cast <void-*> (SCM_SMOB_DATA rt_ladspa_smob))))
+				  (scm_gc_mark rt_ladspa->scm_output)
+				  (return rt_ladspa->scm_descriptor))))
+	
+	(<size_t> free_rt_ladspa (lambda ((<SCM> rt_ladspa_smob))
+				   (let* ((ladspa <struct-mus_rt_ladspa-*> (cast <void-*> (SCM_SMOB_DATA rt_ladspa_smob))))
+
+				     ;;(fprintf stderr (string "starint to free\\n"))
+				     (if ladspa->descriptor->deactivate
+					 (ladspa->descriptor->deactivate ladspa->handle))
+				     (if ladspa->descriptor->cleanup
+					 (ladspa->descriptor->cleanup ladspa->handle))
+				     
+				     (free ladspa->controls)
+				     (free ladspa->controls_out)
+				     
+				     (for-each 0 ladspa->num_audio_ins
+					       (lambda (n)
+						 (free ladspa->ins[n])))
+				     (free ladspa->ins)
+				     (for-each 0 ladspa->num_audio_outs
+					       (lambda (n)
+						 (free ladspa->outs[n])))
+				     (free ladspa->outs)
+				     (free ladspa->audioin_port_nums)
+				     (free ladspa->audioout_port_nums)
+				     (free ladspa->controlin_port_nums)
+				     (free ladspa->controlout_port_nums)
+				     
+				     (free ladspa)
+				     ;;(fprintf stderr (string "freed\\n"))
+				     (return 0))))
+	
+	(<int> print_rt_ladspa (lambda ((<SCM> rt_ladspa_smob) (<SCM> port) (<scm_print_state-*> pstate))
+				 (scm_puts (string "#<rt_ladspa ... > ") port)
+				 (return 1)))
+	
+	(run-now
+	 (set! rt_ladspa_tag (scm_make_smob_type (string "rt_ladspa") (sizeof <struct-mus_rt_ladspa>)))
+	 (scm_set_smob_mark rt_ladspa_tag mark_rt_ladspa)
+	 (scm_set_smob_free rt_ladspa_tag free_rt_ladspa)
+	 (scm_set_smob_print rt_ladspa_tag print_rt_ladspa)))
+
+
+(define-macro (ladspa-set! l c v)
+  `(ladspa-set2 ,l ,c ,v))
+
+(define (make-ladspa libname pluginname)
+  (let* ((descriptor #f)
+	 (ladspa #f)
+	 (input-controls '())
+	 (output-controls '())
+	 (input-audios '())
+	 (output-audios '())
+	 (smob #f))
+
+    (set! descriptor (ladspa-descriptor libname pluginname))
+    (set! ladspa (<mus_rt_ladspa> #:descriptor (list "A_POINTER" (cadr descriptor))))
+		  
+    (-> ladspa handle (list "A_POINTER" (cadr (ladspa-instantiate descriptor (c-integer (mus-srate))))))
+
+    (c-for-each (lambda (n x)
+		      (if (> (logand x LADSPA_PORT_CONTROL) 0)
+			  (if (> (logand x LADSPA_PORT_INPUT) 0)
+			      (set! input-controls (append input-controls (list n)))
+			      (set! output-controls (append output-controls (list n))))
+			  (if (> (logand x LADSPA_PORT_INPUT) 0)
+			      (set! input-audios (append input-audios (list n)))
+			      (set! output-audios (append output-audios (list n))))))
+		    (.PortDescriptors descriptor))
+
+    (-> ladspa controlin_port_nums input-controls)
+    (-> ladspa controlout_port_nums output-controls)
+    (-> ladspa audioin_port_nums input-audios)
+    (-> ladspa audioout_port_nums output-audios)
+    
+    (-> ladspa num_controls_in (length input-controls))
+    (-> ladspa num_controls_out (length output-controls))
+    (-> ladspa num_audio_outs (length output-audios))
+    (-> ladspa num_audio_ins (length input-audios))
+
+    (let ((output (make-vct (-> ladspa num_audio_outs))))
+      (-> ladspa scm_output output)
+      (-> ladspa output (TO_VCT output)))
+    
+    (-> ladspa controls (map (lambda (x)
+			       (let ((hint (car (x 1)))
+				     (lo (cadr (x 1)))
+				     (hi (caddr (x 1))))
+				 (define (ishint dashint)
+				  (= (logand hint LADSPA_HINT_DEFAULT_MASK) dashint))
+				 (define (ishint_notdefault dashint)
+				   (not (= (logand hint dashint ) 0)))
+				 
+				 (cond ;;((and def-vals (assoc (x 0) def-vals )) (cdr (assoc (x 0) def-vals)))
+				  ((ishint LADSPA_HINT_DEFAULT_0) 0)
+				  ((ishint LADSPA_HINT_DEFAULT_MINIMUM) lo)
+				  ((ishint LADSPA_HINT_DEFAULT_LOW) (if (ishint_notdefault LADSPA_HINT_LOGARITHMIC)
+									(exp (+ (* 0.75 (log lo)) (* 0.25 (log hi))))
+									(+ (* 0.75 lo) (* 0.25 hi))))
+				  ((ishint LADSPA_HINT_DEFAULT_1) 1)
+				  ((ishint LADSPA_HINT_DEFAULT_MAXIMUM) hi)
+				  ((ishint LADSPA_HINT_DEFAULT_HIGH) (if (ishint_notdefault LADSPA_HINT_LOGARITHMIC)
+									 (exp (+ (* 0.75 (log hi)) (* 0.25 (log lo))))
+									 (+ (* 0.75 hi) (* 0.25 lo))))
+				  ((ishint LADSPA_HINT_DEFAULT_MIDDLE) (if (ishint_notdefault LADSPA_HINT_LOGARITHMIC)
+									   (exp (+ (* 0.5 (log hi)) (* 0.5 (log lo))))
+									   (+ (* 0.5 hi) (* 0.5 lo))))
+				  ((ishint LADSPA_HINT_DEFAULT_100) 100)
+				  ((ishint LADSPA_HINT_DEFAULT_440) 440)
+				  ((ishint LADSPA_HINT_SAMPLE_RATE) (srate))
+				  (else
+				   (/ (+ lo hi) 2)))))
+	      
+			     (map (lambda (x) (<array> x
+						       (list-ref (.PortRangeHints descriptor) x)))
+				  input-controls)))
+
+    (set! smob (make-ladspa2 (-> ladspa get-c-object)))
+    
+    (if #t
+	smob
+	ladspa)))
+
+
+;; SCM->ladspa converter
+(rt-function <struct-mus_rt_readin-*> rt_scm_to_ladspa
+	     (lambda (,rt-globalvardecl (<SCM> name))
+	       ,(if (rt-is-safety?)
+		    `(if (not (SCM_SMOB_PREDICATE rt_ladspa_tag name))
+			 (begin
+			   (rt_error rt_globals (string "Variable is not an rt-ladspa object"))
+			   (return NULL))
+			 (return (cast <void-*> (SCM_SMOB_DATA name))))
+		    `(return (cast <void-*> (SCM_SMOB_DATA name))))))
+(<rt-func> 'rt_scm_to_rt_ladspa '<ladspa> '(<SCM>) #:needs-rt-globals #t)
+
+
+;; The ladspa type
+(<rt-type> '<ladspa>
+	   rt-ladspa-p
+	   'rt_scm_to_rt_ladspa
+	   #:transformfunc SCM_SMOB_DATA
+	   #:c-type '<struct-mus_rt_ladspa-*>)
+
+
+;; The ladspa-run function, ladspa-run calls rt_ladspa_run which replace data in the vct.
+;; (Yes, some kind of general buffer mechanism should be implemented. This is inefficient.)
+(rt-function <vct-*> rt_ladspa_run
+	     (lambda ((<struct-mus_rt_ladspa-*> ladspa)
+		      (<vct-*> input))
+	       (let* ((minin <int> (MIN ladspa->num_audio_ins input->length)))
+		 (for-each 0 minin
+			   (lambda (n)
+			     (set! ladspa->ins[n][0] input->data[n])))
+		 (ladspa->descriptor->run ladspa->handle 1)
+		 (for-each 0 ladspa->num_audio_outs
+			   (lambda (n)
+			     (set! ladspa->output->data[n] ladspa->outs[n][0])))
+
+		 (return ladspa->output))))
+
+(<rt-func> 'rt_ladspa_run '<vct-*> '(<ladspa> <vct-*>))
+
+(define-rt-macro (ladspa-run ladspa input)
+  `(rt_ladspa_run ,ladspa ,input))
+
+
+;; The ladspa-set function
+(rt-function <void> rt_ladspa_set
+	     (lambda ((<struct-mus_rt_ladspa-*> ladspa)
+		      (<int> controlnum)
+		      (<float> val))
+	       (if (< controlnum ladspa->num_controls_in)
+		   (set! ladspa->controls[controlnum] val))))
+(<rt-func> 'rt_ladspa_set '<void> '(<ladspa> <int> <float>))
+(define-rt-macro (ladspa-set! ladspa controlnum val)
+  `(rt_ladspa_set ,ladspa ,controlnum ,val))
+
+
+
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -5086,62 +5289,6 @@ setter!-rt-mus-location/mus_location
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define-ec-struct <mus_rt_bus>
-  <int> num_channels)
-
-(define mus-rt-bus-internal-struct "struct mus_rt_bus_internal{ int num_channels; float* data[]; }")
-
-(eval-c ""
-	;;;;;;; Das SMOB
-
-	,mus-rt-bus-internal-struct
-	
-	(<nonstatic-scm_t_bits> rt_bus_tag)
-	
-	(public
-	  (<SCM> rt-bus-p (lambda ((<SCM> rt_bus_smob))
-			       (if (SCM_SMOB_PREDICATE rt_bus_tag rt_bus_smob)
-				   (return SCM_BOOL_T)
-				   (return SCM_BOOL_F))))
-	  (<SCM> make-bus2 (lambda ((<int> num_channels))
-			     (let* ((ret <struct-mus_rt_bus_internal-*> (calloc 1 (+ (sizeof <struct-mus_rt_bus_internal>)
-										     (* (sizeof <float-*>) num_channels))))
-				    (scmret <SCM>))
-
-			       (set! ret->num_channels num_channels)
-			       
-			       (for-each 0 num_channels
-					 (lambda (ch)
-					   (set! ret->data[ch] (calloc (sizeof <float>) ,rt-max-frame-size))))
-
-			       (SCM_NEWSMOB scmret rt_bus_tag ret)
-			       (return scmret)))))
-	 
-	;;(<SCM> mark_rt_bus (lambda ((<SCM> rt_bus_smob))
-	;;			 (let* ((rt_bus <struct-mus_rt_bus-*> (cast <void-*> (SCM_SMOB_DATA rt_bus_smob))))
-	;;			   (return rt_bus->scm_bus))))
-	(<size_t> free_rt_bus (lambda ((<SCM> rt_bus_smob))
-				(let* ((rt_bus <struct-mus_rt_bus_internal-*> (cast <void-*> (SCM_SMOB_DATA rt_bus_smob))))
-				  (for-each 0 rt_bus->num_channels
-					    (lambda (ch)
-					      (free rt_bus->data[ch])))
-				  (free rt_bus)
-				  (return 0))))
-	
-	(<int> print_rt_bus (lambda ((<SCM> rt_bus_smob) (<SCM> port) (<scm_print_state-*> pstate))
-			      (scm_puts (string "#<rt_bus ... > ") port)
-			      (return 1)))
-
-	(run-now
-	 (set! rt_bus_tag (scm_make_smob_type (string "rt_bus") (sizeof <struct-mus_rt_bus_internal>)))
-	 ;;(scm_set_smob_mark rt_bus_tag mark_rt_bus)
-	 (scm_set_smob_free rt_bus_tag free_rt_bus)
-	 (scm_set_smob_print rt_bus_tag print_rt_bus)))
-			    
-(define-macro (make-bus . rest)
-  (if (null? rest)
-      `(make-bus2 1)
-      `(make-bus2 ,(car rest))))
 
 (rt-function <struct-mus_rt_readin-*> rt_scm_to_rt_bus
 	     (lambda (,rt-globalvardecl (<SCM> name))
@@ -5158,8 +5305,9 @@ setter!-rt-mus-location/mus_location
 (<rt-type> '<bus>
 	   rt-bus-p
 	   #f ;;'rt_scm_to_rt_bus (The engine needs to know which buses are used by the instances. It can't know that if its hidden in an <SCM>.
-	   #:transformfunc SCM_SMOB_DATA
-	   #:c-type '<struct-mus_rt_bus_internal-*>)
+	   #:transformfunc (lambda (scmbus)
+			     (SCM_SMOB_DATA scmbus))
+	   #:c-type '<struct-rt_bus-*>)
 
 
 (define-c-macro (bus-length bus)
@@ -5168,7 +5316,71 @@ setter!-rt-mus-location/mus_location
        
 
 
+(define (rt-clean-write-bus val)
+  `(begin
+     (if (< data->last_written_to time)
+	 (set! data->val ,val)
+	 (+= data->val ,val))
+     (set! data->last_written_to time)))
 
+(rt-function <void> rt_write_bus (lambda (,rt-globalvardecl (<struct-rt_bus-*> bus) (<int> ch) (<float> val))
+				   ,(if (rt-is-safety?)
+					'(if (< ch 0)
+					     (rt_error rt_globals (string "Channel number for write-bus less than zero")))
+					"/* */")
+				   ,(if (rt-is-safety?)
+					'(if (>= ch bus->num_channels)
+					     (rt_error rt_globals (string "Illegal channel number for write-bus")))
+					"/* */")
+				   (let* ((time <int> rt_globals->time)
+					  (data <struct-rt_bus_data-*> "&bus->data[(bus->num_channels*rt_globals->framenum)+ch]"))
+				     ,(rt-clean-write-bus 'val))))
+
+(<rt-func> 'rt_write_bus '<void> '(<bus> <int> <float>) #:needs-rt-globals #t)
+
+(rt-function <void> rt_write_bus_vct (lambda (,rt-globalvardecl (<struct-rt_bus-*> bus) (<vct-*> vct))
+				       (<float-*> vctdata vct->data)
+				       (<int> end (EC_MIN vct->length bus->num_channels))
+				       (<int> time rt_globals->time)
+				       (<int> base (* bus->num_channels rt_globals->framenum))
+				       (for-each 0 end
+						 (lambda (ch)
+						   (let* ((data <struct-rt_bus_data-*> "&bus->data[base++]"))
+						     ,(rt-clean-write-bus 'vctdata[ch]))))))
+	     
+(<rt-func> 'rt_write_bus_vct '<void> '(<bus> <vct-*>) #:needs-rt-globals #t)
+
+(rt-function <float> rt_read_bus (lambda (,rt-globalvardecl (<struct-rt_bus-*> bus) (<int> ch))
+				   ,(if (rt-is-safety?)
+					'(if (< ch 0)
+					     (rt_error rt_globals (string "Channel number for write-bus less than zero")))
+					"/* */")
+				   ,(if (rt-is-safety?)
+					'(if (>= ch bus->num_channels)
+					     (rt_error rt_globals (string "Illegal channel number for write-bus")))
+					"/* */")
+				   (let* ((time <int> rt_globals->time_before)
+					  (data <struct-rt_bus_data-*> "&bus->data[(bus->num_channels*rt_globals->framenum)+ch]"))
+				     (return (?kolon (< data->last_written_to time)
+						     0
+						     data->val)))))
+(<rt-func> 'rt_read_bus '<float> '(<bus> <int>) #:needs-rt-globals #t)
+
+(rt-function <vct-*> rt_read_bus_vct (lambda (,rt-globalvardecl (<struct-rt_bus-*> bus))
+				       (let* ((vct <vct-*> (rt_alloc_vct rt_globals bus->num_channels))
+					      (vctdata <float-*> vct->data)
+					      (time <int> rt_globals->time_before)
+					      (base <int> (* bus->num_channels rt_globals->framenum)))
+					 (for-each 0 bus->num_channels
+						   (lambda (ch)
+						     (let* ((data <struct-rt_bus_data-*> "&bus->data[base++]"))
+						       (set! vctdata[ch]
+							     (?kolon (< data->last_written_to time)
+								     0
+								     data->val)))))
+					 (return vct))))
+
+(<rt-func> 'rt_read_bus_vct '<vct-*> '(<bus>) #:needs-rt-globals #t)
 
 
 
@@ -5230,6 +5442,27 @@ setter!-rt-mus-location/mus_location
 	  `(vct ,@(map (lambda (ch)
 			 `(rt_read_bus ,bus ,ch))
 		       rest)))))
+
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;; VAR. ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define* (make-var #:optional (val 0))
+  (make-vct 1 val))
+(define (read-var var)
+  (vct-ref var 0))
+(define (write-var var val)
+  (vct-set! var 0 val))
+(define-rt-macro (read-var var)
+  `(rt-vct-ref/vct-ref ,var 0))
+(define-rt-macro (write-var var val)
+  `(rt-vct-set!/vct-set! ,var 0 ,val))
 
 
 
@@ -5623,8 +5856,9 @@ setter!-rt-mus-location/mus_location
 		  (shared-struct <RT_Engine>)
 		  
 		  (shared-struct <mus_rt_readin>)
-
-		  ,mus-rt-bus-internal-struct
+		  (shared-struct <mus_rt_ladspa>)
+		  
+		  ,bus-struct
 
 		  (define-struct <RT_Globals>
 		    ,@(apply append publicargs)
@@ -5635,10 +5869,14 @@ setter!-rt-mus-location/mus_location
 						  (cadr (caddr term)))))
 		    
 		    <int> framenum
-		    <int> num_outs
-		    <float-**> outs
-		    <int> num_ins
-		    <float-**> ins
+		    <int> time
+		    <int> time_before
+		    <struct-rt_bus-*> in_bus
+		    <struct-rt_bus-*> out_bus
+		    ;;<int> num_outs
+		    ;;<float-**> outs
+		    ;;<int> num_ins
+		    ;;<float-**> ins
 
 		    <char-*> allocplace
 		    <char-*> allocplace_end
@@ -5692,10 +5930,11 @@ setter!-rt-mus-location/mus_location
 			     (let ((func (assq funcname rt-functions)))
 			       (if func
 				   (begin
-				     (set! function-names (cons funcname function-names))
-				     (for-each add-func (cadr func))
-				     (set! functions (cons (caddr func) functions)))))))
-		       
+				     (set! function-names (cons funcname function-names))    ;; Add function-name to the list of included function
+				     (for-each add-func (cadr func))                         ;; Add functions used by the function
+				     (set! functions (cons (caddr func) functions)))))))     ;; Add function-body to be included.
+
+		       ;;(c-display "all-funcs:" (rt-find-all-funcs (cdr term)))
 		       (for-each add-func (rt-find-all-funcs (cdr term)))
 		       (reverse! functions))
 		   
@@ -5734,20 +5973,18 @@ setter!-rt-mus-location/mus_location
 					       `(begin
 						  ;;(fprintf stderr (string "jepp %u\\n") rt_globals->engine)
 						  (<struct-RT_Engine-*> engine rt_globals->engine)
+
+						  (if (not (== 0 rt_globals->remove_me))
+						      (return 1))
 						  
 						  (set! rt_globals->framenum startframe)
-						  (set! rt_globals->num_outs engine->num_outs)
-						  (set! rt_globals->outs engine->outs)
-						  (set! rt_globals->num_ins engine->num_ins)
-						  (set! rt_globals->ins engine->ins)
+						  (set! rt_globals->in_bus engine->in_bus)
+						  (set! rt_globals->out_bus engine->out_bus)
+ 						  (set! rt_globals->time engine->time)
+						  (set! rt_globals->time_before engine->time_before)
+						  
 						  (set! rt_globals->allocplace_end engine->allocplace_end)
 						  
-						  (set! rt_globals->remove_me 0)
-						  
-						  ;;(printf (string "start/end %d %d\\n") startframe endframe)
-						  ;;(if (not (== nframes 2048))
-						  ;;    (printf (string "nframes: %d\\n") nframes))
-						   
 						  (let* ((len <int> (- endframe startframe)))
 						    "do{"
 						    (set! rt_globals->allocplace engine->allocplace)						    
@@ -5755,6 +5992,7 @@ setter!-rt-mus-location/mus_location
 						    ;;engine->time++
 						    rt_globals->framenum++
 						    "}while((0==rt_globals->remove_me) && (0!=--len));")
+
 						  (return rt_globals->remove_me))
 						
 					       `(begin
@@ -5941,58 +6179,123 @@ setter!-rt-mus-location/mus_location
 						       ,@(cdr x))))))))
 	       (rt-callmacro (procedure->macro
 			      (lambda (x env)
-				`(let ()
-				   (let* ((extra-gc-vars (make-hash-table 19))
-					  (procarg (,make-globals-func (-> *rt-engine* engine-c)))
-					  (ret (<realtime> (,rt-funcname)
-							   procarg
-							   ;; This variable is gc-marked manually in the funcall smob.
-							   (list extra-gc-vars ,@(map cadddr extpointers)))))
-				     
-				     ;; Setting all Guile variables (tranforming vars Guile->RT)
-				     ,@(map (lambda (setter)
-					      (let* ((funcname (car setter))
-						     (extvar (cadr setter))
-						     (name (cadddr extvar))
-						     (type (cadr extvar)))
-						`(,funcname procarg
-							    (->2 ,type transform
-								 ,name
-								 ',name
-								 (lambda (var)
-								   (hashq-set! extra-gc-vars (gensym) var))))))
-					    setternames)
-
-
-				     ;; Adding setters for number-variables.
-				     ,@(map (lambda (getter setter)
-					      (let* ((setterfuncname (car setter))
-						     (extvar (cadr setter))
-						     (name (cadddr extvar))
-						     (type (cadr extvar)))
-						`(->2 ret add-method ',name (make-procedure-with-setter
-									     (lambda ()
-									       (,(car getter) procarg))
-									     (lambda (newval)
-									       (,setterfuncname procarg newval))))))
-					    getternames
-					    setternames)
-				     
-				     ;; Adding "getter" for the pointers.
-				     ,@(map (lambda (pointer)
-					      `(->2 ret add-method ',pointer (lambda ()
-									       ,pointer)))
-					    (map cadddr extpointers))
-				     
-				     ret))))))
+				(let ((isoutdefined? (defined? 'out-bus env))
+				      (isindefined? (defined? 'in-bus env)))
+				  `(let ()
+				     (let* ((extra-gc-vars (make-hash-table 19))
+					    (procarg (,make-globals-func (-> *rt-engine* engine-c)))
+					    ;;(isoutdefined? (defined? 'out-bus env))
+					    (ret (<realtime> (,rt-funcname)
+							     procarg
+							     ;; This variable is gc-marked manually in the funcall smob.
+							     (list extra-gc-vars ,@(map (lambda (p)
+											  (let ((ret (cadddr p)))
+											    (if (eq? 'out-bus ret)
+												(if isoutdefined?
+												    'out-bus
+												    '*out-bus*)
+												(if (eq? 'in-bus ret)
+												    (if isindefined?
+													'in-bus
+													'*in-bus*)
+												    ret))))
+											extpointers)))))
+				       
+				       ;;(c-display "hm?" ,isoutdefined?);;isoutdefined?)
+				       
+				       ;; Make sure these never dissapear.
+				       (if ,isoutdefined?
+					   (hashq-set! extra-gc-vars (gensym) out-bus))
+				       (if ,isindefined?
+					   (hashq-set! extra-gc-vars (gensym) in-bus))
+				       
+				       ;; Setting all Guile variables (tranforming vars Guile->RT)
+				       ,@(map (lambda (setter)
+						(let* ((funcname (car setter))
+						       (extvar (cadr setter))
+						       (name (cadddr extvar))
+						       (type (cadr extvar)))
+						  
+						  (if (eq? 'out-bus name)
+						      (if isoutdefined?
+							  `(,funcname procarg
+								      (->2 ,type transform
+									   out-bus
+									   'out-bus
+									   (lambda (var)
+									     (hashq-set! extra-gc-vars (gensym) var))))
+							  `(,funcname procarg
+								      (->2 ,type transform
+									   *out-bus*
+									   '*out-bus*
+									   (lambda (var)
+									     (hashq-set! extra-gc-vars (gensym) var)))))
+						      (if (eq? 'in-bus name)
+							  (if isindefined?
+							      `(,funcname procarg
+									  (->2 ,type transform
+									       in-bus
+									       'in-bus
+									       (lambda (var)
+										 (hashq-set! extra-gc-vars (gensym) var))))
+							      `(,funcname procarg
+									  (->2 ,type transform
+									       *in-bus*
+									       '*in-bus*
+									       (lambda (var)
+										 (hashq-set! extra-gc-vars (gensym) var)))))
+							  `(,funcname procarg
+								      (->2 ,type transform
+									   ,name
+									   ',name
+									   (lambda (var)
+									     (hashq-set! extra-gc-vars (gensym) var))))))))
+					      setternames)
+				       
+				       
+				       ;; Adding setters for number-variables.
+				       ,@(map (lambda (getter setter)
+						(let* ((setterfuncname (car setter))
+						       (extvar (cadr setter))
+						       (name (cadddr extvar))
+						       (type (cadr extvar)))
+						  `(->2 ret add-method ',name (make-procedure-with-setter
+									       (lambda ()
+										 (,(car getter) procarg))
+									       (lambda (newval)
+										 (,setterfuncname procarg newval))))))
+					      getternames
+					      setternames)
+				       
+				       ;; Adding "getter" for the pointers.
+				       ,@(map (lambda (pointer)
+						`(->2 ret add-method ',pointer (lambda ()
+										 ,pointer)))
+					      (map cadddr extpointers))
+				       
+				       
+				       ;; Adding "getter" for in-bus and out-bus (TODO, setter as well, that would be very cool.)
+				       (if ,isoutdefined?
+					   (->2 ret add-method 'out-bus (lambda ()
+									  out-bus))
+					   (->2 ret add-method 'out-bus (lambda ()
+									  *out-bus*)))
+				       (if ,isindefined?
+					   (->2 ret add-method 'in-bus (lambda ()
+									 in-bus))
+					   (->2 ret add-method 'in-bus (lambda ()
+									 *in-bus*)))
+				       
+				       ret)))))))
 	  
-	  (apply eval-c-non-macro (append (list (<-> "-I" snd-header-files-path " ") ;; "-ffast-math") ;; " -Werror "
+	  (apply eval-c-non-macro (append (list (<-> "-I" snd-header-files-path " -ffast-math ") ;; "-ffast-math") ;; " -Werror "
 						"#include <math.h>"
 						"#include <clm.h>"
 						"#include <xen.h>"
 						"#include <vct.h>"
 						"#include <clm2xen.h>"
-						
+						"#include <ladspa.h>"
+
 						"typedef struct {
                                                  mus_any_class *core;
                                                  int chans;
@@ -6138,10 +6441,21 @@ setter!-rt-mus-location/mus_location
 	    (else
 	     (map find-rt term))))
 
+    (if (or (member #:optional def)
+	    (member #:rest def))
+	(begin
+	  (c-display "Rest or optional argument is not possible with definstrument :-(")
+	  (throw 'gakk)))
+    
+    (let ((keymember (member #:key def)))
+      (if keymember
+	  (set-cdr! keymember (append (list '(out-bus *out-bus*) '(in-bus *in-bus*)) (cdr keymember)))
+	  (set! def (append def (list #:key '(out-bus *out-bus*) '(in-bus *in-bus*))))))
+    ;;(c-display "def:" def)
 
     (let ((newbody (find-rt body)))
       (if (not (null? rt-funcs))
-	  `(define* ,(car def)
+	  `(define ,(car def)
 	     (let ,(map (lambda (def)
 			  `(,(car def) (rt-compile ,(cadr def))))
 			rt-funcs)
