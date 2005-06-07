@@ -574,7 +574,7 @@ static void enved_reset(void)
   set_enved_in_dB(DEFAULT_ENVED_IN_DB);
   set_enved_filter_order(DEFAULT_ENVED_FILTER_ORDER);
   if (active_env) active_env = free_env(active_env);
-#if HAVE_GUILE
+#if HAVE_SCHEME
   active_env = string_to_env("'(0 0 1 0)");
 #else
   active_env = string_to_env("[0, 0, 1, 0]");

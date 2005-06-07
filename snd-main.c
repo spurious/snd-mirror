@@ -220,7 +220,7 @@ static char *enved_target_name(enved_target_t choice)
     }
 }
 
-static char *b2s(bool val) {return((val) ? PROC_TRUE : PROC_FALSE);}
+static char *b2s(bool val) {return((val) ? (char *)PROC_TRUE : (char *)PROC_FALSE);} /* cast needed by g++ > 3.4 */
 
 #define white_space "      "
 static bool b_ok = false;
@@ -274,7 +274,7 @@ static void pcp_sl(FILE *fd, const char *name, Float val1, Float val2, int chan)
   {b_ok = true; fprintf(fd, "%s(set! (%s sfile %d) (list %f %f))\n", white_space, name, chan, val1, val2);}
 #endif
 
-static void save_snd_state_options (FILE *fd)
+void save_snd_options(FILE *fd)
 { /* for save options menu choice (.snd) -- mostly saving snd_state info */
   time_t ts;
   char time_buf[TIME_STR_SIZE];
@@ -519,34 +519,9 @@ static FILE *open_restart_file(char *name, bool append)
   return(fd);
 }
 
-FILE *open_snd_init_file (void)
+FILE *open_snd_init_file(void)
 { /* needed also by keyboard macro saver */
   return(open_restart_file(ss->init_file, true));
-}
-
-static char *save_options_or_error(void)
-{
-  FILE *fd;
-  fd = open_snd_init_file();
-  if (fd) save_snd_state_options(fd);
-  if ((!fd) || (FCLOSE(fd) != 0))
-    return(mus_format(_("save-options in %s hit error: %s"),
-		      ss->init_file,
-		      snd_io_strerror()));
-  return(NULL);
-}
-
-int save_options(void)
-{
-  char *error;
-  error = save_options_or_error();
-  if (error)
-    {
-      snd_error(error);
-      FREE(error);
-      return(-1);
-    }
-  return(0);
 }
 
 #if HAVE_GUILE
@@ -852,7 +827,7 @@ static void save_sound_state (snd_info *sp, void *ptr)
       check_selection(fd, cp);
       if (selected_channel() == cp)
 	{
-#if HAVE_GUILE
+#if HAVE_SCHEME
 	  fprintf(fd, "%s(set! _saved_snd_selected_sound_ sfile)\n", white_space);
 	  fprintf(fd, "%s(set! _saved_snd_selected_channel_ %d)\n", white_space, cp->chan);
 #else
@@ -895,14 +870,14 @@ static char *save_state_or_error (char *save_state_name)
       locale = copy_string(setlocale(LC_NUMERIC, "C")); /* must use decimal point in floats since Scheme assumes that format */
 #endif
       save_prevlist(save_fd);                                 /* list of previous files (View: Files option) */
-      save_snd_state_options(save_fd);                        /* options = user-settable global state variables */
+      save_snd_options(save_fd);                              /* options = user-settable global state variables */
       /* the global settings need to precede possible local settings */
 
       if (ss->active_sounds > 0)
 	{
 	  if (ss->selected_sound != NO_SELECTION)
 	    {
-#if HAVE_GUILE
+#if HAVE_SCHEME
 	      fprintf(save_fd, "\n(define _saved_snd_selected_sound_ #f)\n");
 	      fprintf(save_fd, "(define _saved_snd_selected_channel_ #f)\n");
 #else
@@ -913,7 +888,7 @@ static char *save_state_or_error (char *save_state_name)
 	  for_each_sound(save_sound_state, (void *)save_fd);      /* current sound state -- will traverse chans */
 	  if (ss->selected_sound != NO_SELECTION)
 	    {
-#if HAVE_GUILE
+#if HAVE_SCHEME
 	      fprintf(save_fd, "(if _saved_snd_selected_sound_\n");
 	      fprintf(save_fd, "  (begin\n");
 	      fprintf(save_fd, "    (%s _saved_snd_selected_sound_)\n", S_select_sound);
@@ -946,7 +921,7 @@ static char *save_state_or_error (char *save_state_name)
       save_file_dialog_state(save_fd);
       /* new-file dialog not restored because it hogs the event loop */
 
-      /* TODO: user-defined colormaps [after check for already-defined]? mix/track (and dialogs?) */
+      /* TODO: mix/track (and dialogs?) */
       /* MIX_DIALOG [view-mixes-dialog], TRACK_DIALOG [view-tracks-dialog]
       (change-samples-with-origin 965 4412 "set! -mix-0 (mix \"/home/bil/cl/1a.snd\" 965 0)" "3.snd" sfile 0 #f (list 1117710308 17780))
       */

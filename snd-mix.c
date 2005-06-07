@@ -1,7 +1,5 @@
 #include "snd.h"
 
-/* SOMEDAY: save mix/track stuff in edit-history saved-state stuff, so they remain as they were upon reload */
-
 typedef struct {
   int chans;
   Float *scalers;
@@ -447,7 +445,7 @@ static mix_info *free_mix_info(mix_info *md)
  * before ref, check that we re-made it, if not find some way to re-make or give up?
  */
 
-#if HAVE_GUILE
+#if HAVE_SCHEME
   #define PROC_SET_MIX "set! (%s -mix-%d) "
   #define PROC_SET_MIX_CHANNEL "set! (%s -mix-%d %d) "
   #define PROC_SET_TRACK "set! (%s %d) "
@@ -470,7 +468,7 @@ char *edit_list_mix_and_track_init(chan_info *cp)
       if ((md) && (md->cp == cp))
 	{
 	  old_list = mix_list;
-#if HAVE_GUILE
+#if HAVE_SCHEME
 	  mix_list = mus_format("%s%s(-mix-%d %d)", 
 				(old_list) ? old_list : "", 
 				(old_list) ? " " : "",  /* strcat of previous + possible space */
@@ -1188,7 +1186,7 @@ static mix_info *file_mix_samples(off_t beg, off_t num, char *mixfile, chan_info
     {
       int next_mix;
       next_mix = pending_mix_id();
-#if HAVE_GUILE
+#if HAVE_SCHEME
       new_origin = mus_format("set! -mix-%d (%s)", next_mix, origin);
 #else
       new_origin = mus_format("_mix_%d = %s", next_mix, origin);

@@ -316,7 +316,7 @@ enum {MUS_NO_ERROR, MUS_NO_FREQUENCY, MUS_NO_PHASE, MUS_NO_GEN, MUS_NO_LENGTH,
 #if HAVE_RUBY
   #define S_setB "set_"
 #else
-  #if HAVE_GUILE
+  #if HAVE_SCHEME
     #define S_setB "set! "
   #else
     #define S_setB "set-"

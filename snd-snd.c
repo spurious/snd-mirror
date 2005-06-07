@@ -3868,7 +3868,7 @@ static XEN controls_to_channel_body(void *context)
 }
 #endif
 
-#if HAVE_GUILE
+#if HAVE_SCHEME
   #define PROC_QUOTE "'"
 #else
   #define PROC_QUOTE ""

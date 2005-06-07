@@ -150,7 +150,7 @@ void save_find_dialog_state(FILE *fd)
       char *text = NULL;
       GtkTextIter start, end;
       text = gtk_text_buffer_get_text(gtk_text_view_get_buffer(GTK_TEXT_VIEW(edit_find_text)), &start, &end, true);
-#if HAVE_GUILE
+#if HAVE_SCHEME
       if (text)
 	fprintf(fd, "(%s #t \"%s\")\n", S_find_dialog, text);
       else

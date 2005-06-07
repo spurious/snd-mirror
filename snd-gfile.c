@@ -1793,7 +1793,7 @@ void save_edit_header_dialog_state(FILE *fd)
 {
   if ((edit_header_dialog) && (GTK_WIDGET_VISIBLE(edit_header_dialog)) && (snd_ok(edit_header_sp)))
     {
-#if HAVE_GUILE
+#if HAVE_SCHEME
       fprintf(fd, "(%s (%s \"%s\"))\n", S_edit_header_dialog, S_find_sound, edit_header_sp->short_filename);
 #else
   #if HAVE_RUBY
@@ -1863,7 +1863,7 @@ void save_post_it_dialog_state(FILE *fd)
       GtkTextIter start, end;
       subject = gtk_window_get_title(GTK_WINDOW(post_it_dialog)); /* don't free subject! */
       text = gtk_text_buffer_get_text(gtk_text_view_get_buffer(GTK_TEXT_VIEW(post_it_text)), &start, &end, true);
-#if HAVE_GUILE
+#if HAVE_SCHEME
       fprintf(fd, "(%s \"%s\" \"%s\")\n", S_info_dialog, subject, text);
 #else
   #if HAVE_RUBY
@@ -1888,7 +1888,7 @@ void save_file_dialog_state(FILE *fd)
 {
   if ((open_dialog) && (GTK_WIDGET_VISIBLE(open_dialog->dialog)))
     {
-#if HAVE_GUILE
+#if HAVE_SCHEME
       fprintf(fd, "(%s #t)\n", S_open_file_dialog);
 #else
   #if HAVE_RUBY
@@ -1898,7 +1898,7 @@ void save_file_dialog_state(FILE *fd)
     }
   if ((mix_dialog) && (GTK_WIDGET_VISIBLE(mix_dialog->dialog)))
     {
-#if HAVE_GUILE
+#if HAVE_SCHEME
       fprintf(fd, "(%s #t)\n", S_mix_file_dialog);
 #else
   #if HAVE_RUBY
@@ -1908,7 +1908,7 @@ void save_file_dialog_state(FILE *fd)
     }
   if ((save_as_dialog) && (GTK_WIDGET_VISIBLE(save_as_dialog)))
     {
-#if HAVE_GUILE
+#if HAVE_SCHEME
       fprintf(fd, "(%s #t)\n", (save_as_dialog_type == FILE_SAVE_AS) ? S_save_sound_dialog : S_save_selection_dialog);
 #else
   #if HAVE_RUBY

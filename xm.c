@@ -200,7 +200,7 @@
 #endif
 
 /* prefix for all names */
-#if HAVE_GUILE
+#if HAVE_SCHEME
   #define XM_PREFIX ""
   #define XM_POSTFIX ""
   #define XM_FIELD_PREFIX "."
@@ -26852,7 +26852,7 @@ static bool xm_already_inited = false;
 #endif
       XEN_YES_WE_HAVE("xm");
 #if (!WITH_GTK_AND_X11)
-#if HAVE_GUILE
+#if HAVE_SCHEME
       XEN_EVAL_C_STRING("(define xm-version \"" XM_DATE "\")");
 #endif
 #if HAVE_RUBY

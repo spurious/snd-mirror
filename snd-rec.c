@@ -431,14 +431,14 @@ int out_chans_active(void)
   return(val);
 }
 
-static char *b2s(bool val) {return((val) ? PROC_TRUE : PROC_FALSE);}
+static char *b2s(bool val) {return((val) ? (char *)PROC_TRUE : (char *)PROC_FALSE);}
 
 static bool fneq(Float a, Float b) {return(fabs(a - b) > .00001);}
 
 void save_recorder_state(FILE *fd)
 {
   if (!rp) return;
-#if HAVE_GUILE
+#if HAVE_SCHEME
   if (rp->autoload != DEFAULT_RECORDER_AUTOLOAD) fprintf(fd, "(set! (%s) %s)\n", S_recorder_autoload, b2s(rp->autoload));
   if (rp->buffer_size != DEFAULT_RECORDER_BUFFER_SIZE) fprintf(fd, "(set! (%s) %d)\n", S_recorder_buffer_size, rp->buffer_size);
   if (rp->out_chans != DEFAULT_RECORDER_OUT_CHANS) fprintf(fd, "(set! (%s) %d)\n", S_recorder_out_chans, rp->out_chans);

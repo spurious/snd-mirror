@@ -190,7 +190,7 @@ void save_find_dialog_state(FILE *fd)
       text = XmTextGetString(edit_find_text);
       if ((text) && (*text))
 	{
-#if HAVE_GUILE
+#if HAVE_SCHEME
 	  fprintf(fd, "(%s #t \"%s\")\n", S_find_dialog, text);
 #else
   #if HAVE_RUBY
@@ -201,7 +201,7 @@ void save_find_dialog_state(FILE *fd)
 	}
       else 
 	{
-#if HAVE_GUILE
+#if HAVE_SCHEME
 	  if (ss->search_expr)
 	    fprintf(fd, "(%s #t \"%s\")\n", S_find_dialog, ss->search_expr);
 	  else fprintf(fd, "(%s #t)\n", S_find_dialog);

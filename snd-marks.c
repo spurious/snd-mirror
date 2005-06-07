@@ -1040,7 +1040,7 @@ void save_mark_list(FILE *fd, chan_info *cp)
       for (i = 0; i < cp->marks_size; i++)
 	if (cp->marks[i])
 	  true_marks_size = i + 1;
-#if HAVE_GUILE
+#if HAVE_SCHEME
       fprintf(fd, "      (%s %d sfile %d '(", S_restore_marks, true_marks_size, cp->chan);
       for (i = 0; i < true_marks_size; i++)
 	{

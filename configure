@@ -13701,6 +13701,10 @@ _ACEOF
 _ACEOF
 
     cat >>confdefs.h <<\_ACEOF
+#define HAVE_SCHEME 1
+_ACEOF
+
+    cat >>confdefs.h <<\_ACEOF
 #define HAVE_EXTENSION_LANGUAGE 1
 _ACEOF
 

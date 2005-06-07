@@ -1342,7 +1342,7 @@ void save_envelope_editor_state(FILE *fd)
       estr = env_to_string(all_envs[i]);
       if (estr)
 	{
-#if HAVE_GUILE
+#if HAVE_SCHEME
 	  fprintf(fd, "(%s %s %s %.4f)\n", S_define_envelope, all_names[i], estr, all_envs[i]->base);
 #endif
 #if HAVE_RUBY
@@ -1464,7 +1464,7 @@ env *position_to_env(int pos)
 {
   env *e;
   if (pos < 0) return(NULL);
-#if HAVE_GUILE
+#if HAVE_SCHEME
   e = xen_to_env(XEN_NAME_AS_C_STRING_TO_VALUE(all_names[pos]));
 #else
   e = xen_to_env(XEN_EVAL_C_STRING(all_names[pos]));

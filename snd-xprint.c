@@ -216,7 +216,7 @@ void save_print_dialog_state(FILE *fd)
 {
   if ((file_print_dialog) && (XtIsManaged(file_print_dialog)))
     {
-#if HAVE_GUILE
+#if HAVE_SCHEME
       fprintf(fd, "(%s #t %s)\n", S_print_dialog, ((bool)(XmToggleButtonGetState(file_print_eps_or_lpr))) ? "#t" : "#f");
 #else
   #if HAVE_RUBY

@@ -1019,6 +1019,7 @@ if test $GUILE_CONFIG_works = yes; then
     AC_SUBST(XM_LIBS)
     AC_SUBST(GUILE_LIBS)
     AC_DEFINE(HAVE_GUILE)
+    AC_DEFINE(HAVE_SCHEME)
     AC_DEFINE(HAVE_EXTENSION_LANGUAGE)
     LOCAL_LANGUAGE="Guile"
     ac_snd_have_extension_language=yes

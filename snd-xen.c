@@ -872,7 +872,7 @@ static char *gl_print(XEN result)
   ilen = print_length(ss); 
   newbuf = (char *)CALLOC(128, sizeof(char));
   savelen = 128;
-#if HAVE_GUILE
+#if HAVE_SCHEME
   sprintf(newbuf, "#("); 
 #else
   sprintf(newbuf, "[");
@@ -893,7 +893,7 @@ static char *gl_print(XEN result)
 	  FREE(str);
 	}
     }
-#if HAVE_GUILE
+#if HAVE_SCHEME
   newbuf = snd_strcat(newbuf, " ...)", &savelen);
 #else
   newbuf = snd_strcat(newbuf, " ...]", &savelen);

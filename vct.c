@@ -151,14 +151,14 @@ char *vct_to_readable_string(vct *v)
   if (v == NULL) return(NULL);
   len = v->length;
   buf = (char *)CALLOC(64 + len * 16, sizeof(char));
-#if HAVE_GUILE
+#if HAVE_SCHEME
   sprintf(buf, "(vct");
 #else
   sprintf(buf, "vct(");
 #endif
   for (i = 0; i < len; i++)
     {
-#if HAVE_GUILE
+#if HAVE_SCHEME
       mus_snprintf(flt, 16, " %.3f", v->data[i]);
 #else
       mus_snprintf(flt, 16, "%.3f%s", v->data[i], i + 1 < len ? ", " : "");

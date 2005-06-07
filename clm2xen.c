@@ -5985,7 +5985,7 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_mus_apply,   g_mus_apply_w,   0, 0, 1, H_mus_apply);
 
 
-#if HAVE_GUILE
+#if HAVE_SCHEME
   XEN_EVAL_C_STRING("(define %delay delay)"); /* protect the original meaning (a Scheme built-in function) */
 #endif
   XEN_DEFINE_PROCEDURE(S_make_delay,    g_make_delay_w,    0, 0, 1, H_make_delay);
@@ -6080,7 +6080,7 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_wave_train_p,    g_wave_train_p_w,    1, 0, 0, H_wave_train_p);
 
   XEN_DEFINE_PROCEDURE(S_make_frame,     g_make_frame_w,     0, 0, 1, H_make_frame);
-#if HAVE_GUILE
+#if HAVE_SCHEME
   XEN_EVAL_C_STRING("(define %frame? frame?)"); /* protect the original meaning */
   /* frame? is defined in guile stacks.c scm_frame_p, but doesn't appear to be used in ice-9 */
 #endif
@@ -6141,7 +6141,7 @@ the closer the radius is to 1.0, the narrower the resonance."
   XEN_DEFINE_PROCEDURE(S_sine_summation_p,    g_sine_summation_p_w,    1, 0, 0, H_sine_summation_p);
 
 
-#if HAVE_GUILE
+#if HAVE_SCHEME
   XEN_EVAL_C_STRING("(if (defined? 'filter) (define %filter filter))"); /* defined in 1.7 */
 #endif
   XEN_DEFINE_PROCEDURE(S_make_filter,     g_make_filter_w,     0, 6, 0, H_make_filter);

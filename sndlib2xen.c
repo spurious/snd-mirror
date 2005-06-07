@@ -10,7 +10,7 @@
   #if HAVE_RUBY
     #define PROC_FALSE "false"
   #endif
-  #if HAVE_GUILE
+  #if HAVE_SCHEME
     #define PROC_FALSE "#f"
   #endif
 #endif

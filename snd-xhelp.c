@@ -622,7 +622,7 @@ void save_help_dialog_state(FILE *fd)
 	      help = XEN_TO_C_STRING(g_snd_help(C_TO_XEN_STRING(topic), 0));
 	      if (help)
 		{
-#if HAVE_GUILE
+#if HAVE_SCHEME
 		  fprintf(fd, "(%s \"%s\" \"%s\")\n", S_help_dialog, topic, help);
 #else
   #if HAVE_RUBY
