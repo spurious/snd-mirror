@@ -32059,57 +32059,6 @@ EDITS: 1
       (if (not (equal? (edit-fragment 3) '("insert-sample 10 0.5000" "insert" 10 1))) (snd-display ";save-edit-history 3: ~A?" (edit-fragment 3)))
       (if (not (equal? (edit-fragment 4) '("scale-channel 2.000 0 #f" "scale" 0 50828))) (snd-display ";save-edit-history 4: ~A?" (edit-fragment 4)))
       (if (not (equal? (edit-fragment 5) '("pad-channel" "zero" 100 20))) (snd-display ";save-edit-history 5: ~A?" (edit-fragment 5)))
-      (let ((str (display-edits)))
-	(if (not (string=? str (string-append "
-EDITS: 5
-
- (begin) [0:2]:
-   (at 0, cp->sounds[0][0:50827, 1.000]) [file: " cwd "oboe.snd[0]]
-   (at 50828, end_mark)
-
- (set 1 1) ; set-sample 1 0.5000 [1:4]:
-   (at 0, cp->sounds[0][0:0, 1.000]) [file: " cwd "oboe.snd[0]]
-   (at 1, cp->sounds[1][0:0, 1.000]) [buf: 1] 
-   (at 2, cp->sounds[0][2:50827, 1.000]) [file: " cwd "oboe.snd[0]]
-   (at 50828, end_mark)
-
- (delete 100 1) ; delete-samples 100 1 [2:5]:
-   (at 0, cp->sounds[0][0:0, 1.000]) [file: " cwd "oboe.snd[0]]
-   (at 1, cp->sounds[1][0:0, 1.000]) [buf: 1] 
-   (at 2, cp->sounds[0][2:99, 1.000]) [file: " cwd "oboe.snd[0]]
-   (at 100, cp->sounds[0][101:50827, 1.000]) [file: " cwd "oboe.snd[0]]
-   (at 50827, end_mark)
-
- (insert 10 1) ; insert-sample 10 0.5000 [3:7]:
-   (at 0, cp->sounds[0][0:0, 1.000]) [file: " cwd "oboe.snd[0]]
-   (at 1, cp->sounds[1][0:0, 1.000]) [buf: 1] 
-   (at 2, cp->sounds[0][2:9, 1.000]) [file: " cwd "oboe.snd[0]]
-   (at 10, cp->sounds[2][0:0, 1.000]) [buf: 1] 
-   (at 11, cp->sounds[0][10:99, 1.000]) [file: " cwd "oboe.snd[0]]
-   (at 101, cp->sounds[0][101:50827, 1.000]) [file: " cwd "oboe.snd[0]]
-   (at 50828, end_mark)
-
- (scale 0 50828) ; scale-channel 2.000 0 #f [4:7]:
-   (at 0, cp->sounds[0][0:0, 2.000]) [file: " cwd "oboe.snd[0]]
-   (at 1, cp->sounds[1][0:0, 2.000]) [buf: 1] 
-   (at 2, cp->sounds[0][2:9, 2.000]) [file: " cwd "oboe.snd[0]]
-   (at 10, cp->sounds[2][0:0, 2.000]) [buf: 1] 
-   (at 11, cp->sounds[0][10:99, 2.000]) [file: " cwd "oboe.snd[0]]
-   (at 101, cp->sounds[0][101:50827, 2.000]) [file: " cwd "oboe.snd[0]]
-   (at 50828, end_mark)
-
- (silence 100 20) ; pad-channel [5:9]:
-   (at 0, cp->sounds[0][0:0, 2.000]) [file: " cwd "oboe.snd[0]]
-   (at 1, cp->sounds[1][0:0, 2.000]) [buf: 1] 
-   (at 2, cp->sounds[0][2:9, 2.000]) [file: " cwd "oboe.snd[0]]
-   (at 10, cp->sounds[2][0:0, 2.000]) [buf: 1] 
-   (at 11, cp->sounds[0][10:98, 2.000]) [file: " cwd "oboe.snd[0]]
-   (at 100, cp->sounds[-1][0:19, 0.000])
-   (at 120, cp->sounds[0][99:99, 2.000]) [file: " cwd "oboe.snd[0]]
-   (at 121, cp->sounds[0][101:50827, 2.000]) [file: " cwd "oboe.snd[0]]
-   (at 50848, end_mark)
-")))
-	    (snd-display ";display-edits: ~A?" str)))
       (save-edit-history "hiho.scm" nind 0)
       (scale-sound-to 1.0 0 (frames nind 0) nind 0)
       (let ((eds (edit-position nind 0))
@@ -32164,9 +32113,6 @@ EDITS: 5
 	  (set! ind (find-sound "fmv.snd"))
 	  (if (not (sound? ind))
 	      (snd-display ";save-state restored but no sound?"))
-	  (let ((new-eds (display-edits ind)))
-	    (if (not (string=? eds new-eds))
-		(snd-display ";save-state from ~A to ~A?" eds new-eds)))
 	  (do ((i 3 (1+ i)))
 	      ((= i 6))
 	    (set! (sample i) (* i .1))
@@ -32178,10 +32124,7 @@ EDITS: 5
 	    (load "t1.scm")
 	    (set! ind (find-sound "fmv.snd"))
 	    (if (not (sound? ind))
-		(snd-display ";save-state ~A restored but no sound?" i))
-	    (let ((new-eds (display-edits ind)))
-	      (if (not (string=? eds new-eds))
-		  (snd-display ";save-state ~A from ~A to ~A?" i eds new-eds)))))
+		(snd-display ";save-state ~A restored but no sound?" i))))
 	(close-sound ind)
 	(delete-file "t1.scm"))
       
@@ -32213,13 +32156,7 @@ EDITS: 5
 	  (set! ind1 (find-sound "fmv1.snd"))
 	  (if (or (not (sound? ind))
 		  (not (sound? ind1)))
-	      (snd-display ";save-state(2) restored but no sound? ~A ~A" ind ind1))
-	  (let ((new-eds (display-edits ind))
-		(new-eds1 (display-edits ind1)))
-	    (if (not (string=? eds new-eds))
-		(snd-display ";save-state(1) from ~A to ~A?" eds new-eds))
-	    (if (not (string=? eds1 new-eds1))
-		(snd-display ";save-state(2) from ~A to ~A?" eds1 new-eds1))))
+	      (snd-display ";save-state(2) restored but no sound? ~A ~A" ind ind1)))
 	(close-sound ind)
 	(close-sound ind1)
 	(delete-file "t1.scm"))
@@ -32275,28 +32212,6 @@ EDITS: 5
 	(if (not (= (cursor ind 0) 1234)) (snd-display ";save cursor 1234: ~A" (cursor ind 0)))
 	(if (not (string=? (eps-file) "hiho.eps")) (snd-display ";save eps-file: ~A" (eps-file)))
 	(set! (eps-file) old-eps-file)
-	(if (not (string=? (display-edits) (string-append "
-EDITS: 2
-
- (begin) [0:2]:
-   (at 0, cp->sounds[0][0:50827, 1.000]) [file: " cwd "oboe.snd[0]]
-   (at 50828, end_mark)
-
- (set 100 32) ; set-samples [1:4]:
-   (at 0, cp->sounds[0][0:99, 1.000]) [file: " cwd "oboe.snd[0]]
-   (at 100, cp->sounds[1][0:31, 1.000]) [buf: 32] 
-   (at 132, cp->sounds[0][132:50827, 1.000]) [file: " cwd "oboe.snd[0]]
-   (at 50828, end_mark)
-
- (set 1000 10000) ; map-channel [2:6]:
-   (at 0, cp->sounds[0][0:99, 1.000]) [file: " cwd "oboe.snd[0]]
-   (at 100, cp->sounds[1][0:31, 1.000]) [buf: 32] 
-   (at 132, cp->sounds[0][132:999, 1.000]) [file: " cwd "oboe.snd[0]]
-   (at 1000, cp->sounds[2][0:9999, 1.000]) [buf: 10000] 
-   (at 11000, cp->sounds[0][11000:50827, 1.000]) [file: " cwd "oboe.snd[0]]
-   (at 50828, end_mark)
-")))
-	    (snd-display ";no save dir edits: ~A" (display-edits)))
 	(delete-file "s61.scm")
 	(close-sound ind))
       
@@ -32820,6 +32735,30 @@ EDITS: 2
 	    (if (not (vequal (channel->vct 99 4) (vct 0.0 0.1 0.1 0.0)))
 		(snd-display ";edit-list->function func 9: ~A" (channel->vct 99 4)))
 	    (if (not (= (frames) (+ frs 2))) (snd-display ";edit-list->function called (9): ~A ~A" frs (frames))))
+	  (revert-sound ind)
+
+	  ;; ---- insert-samples with data
+	  (insert-samples 0 100 (make-vct 100 .1))
+	  (if (not (= (frames) (+ frs 100))) (snd-display ";edit-list->function insert-samples (100): ~A ~A" frs (frames)))
+	  (let ((func (edit-list->function)))
+	    (if (not (procedure? func)) 
+		(snd-display ";edit-list->function 9a: ~A" func))
+	    (func ind 0)
+	    (if (not (= (frames) (+ frs 200))) (snd-display ";edit-list->function insert-samples (200): ~A ~A" frs (frames)))
+	    (if (not (vequal (channel->vct 0 5) (vct 0.1 0.1 0.1 0.1 0.1)))
+		(snd-display ";edit-list->function func 9a: ~A" (channel->vct 0 5))))
+	  (revert-sound ind)
+	  
+	  ;; ---- set-samples with data
+	  (set! (samples 0 100) (make-vct 100 .1))
+	  (if (not (= (frames) frs)) (snd-display ";edit-list->function set-samples (1): ~A ~A" frs (frames)))
+	  (let ((func (edit-list->function)))
+	    (if (not (procedure? func)) 
+		(snd-display ";edit-list->function 9b: ~A" func))
+	    (func ind 0)
+	    (if (not (= (frames) frs)) (snd-display ";edit-list->function set-samples (2): ~A ~A" frs (frames)))
+	    (if (not (vequal (channel->vct 0 5) (vct 0.1 0.1 0.1 0.1 0.1)))
+		(snd-display ";edit-list->function func 9b: ~A" (channel->vct 0 5))))
 	  (revert-sound ind)
 	  
 	  ;; ---- simple 1 sample set
@@ -54365,7 +54304,7 @@ EDITS: 2
 		     auto-update-interval count-matches current-font cursor cursor-color cursor-follows-play cursor-size
 		     cursor-style dac-combines-channels dac-size data-clipped data-color data-format data-location data-size
 		     default-output-chans default-output-format default-output-srate default-output-type define-envelope
-		     delete-mark delete-marks forget-region delete-sample delete-samples delete-samples-with-origin
+		     delete-mark delete-marks forget-region delete-sample delete-samples
 		     delete-selection dialog-widgets display-edits dot-size draw-dot draw-dots draw-line
 		     draw-lines draw-string edit-header-dialog edit-fragment edit-position edit-tree edits env-selection
 		     env-sound enved-envelope enved-base enved-clip? enved-in-dB enved-dialog enved-style enved-power

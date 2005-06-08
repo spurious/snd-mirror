@@ -35,18 +35,6 @@
 
 %\pagestyle{empty}
 
-\def\inputindex{%
-  \openin0 \jobname.ind
-  \ifeof0 \closein0
-    \message{\jobname.ind missing.}%
-  \else\closein0
-    \begingroup
-      \def\begin##1{\csname##1\endcsname}%
-      \def\end##1{\csname end##1\endcsname}%
-      \input\jobname.ind
-    \endgroup\fi}
-
-
 \title{Realtime extension for the sound editor SND.}
 
 \author{Kjetil S. Matheussen}
@@ -76,8 +64,6 @@
 
 %%\section{Introduksjon}
 \section{Introduction}
-
-\index{zen}
 
 
 The RT extension for the sound editor SND consists of two parts:
@@ -455,11 +441,11 @@ The \scheme|<realtime>| class provides the following methods:
 
 \item{\scheme|(play [start] [duration])|  \hspace{\stretch{1}} Method \newline
   Starts playing \scheme|start| seconds into the future from the current time, stopping at \scheme|(+ start duration)| seconds into the future from the current time.
-  Default value for \scheme|start| is the current time.
+  Default value for \scheme|start| 0.
   If \scheme|end| is not specified, a stop command is not scheduled.}
 
 \item{\scheme|(stop [end])|  \hspace{\stretch{1}} Method \newline
-  Stops playing \scheme|end| seconds into the future from the current time. Default value for \scheme|end| is the current time.}
+  Stops playing \scheme|end| seconds into the future from the current time. Default value for \scheme|end| is 0}
 
 \end{itemize}
 
@@ -671,7 +657,7 @@ And keyword arguments:
 
 
 
-The function \scheme|rt-expand-macros| works the same as \scheme|macroexpand|, but for
+The function \scheme|rt-macroexpand| works the same as \scheme|macroexpand|, but for
 rt-macros. It can be used inside other rt-macros, and is currently used in
 the \scheme|if|, \scheme|min|, \scheme|max|, \scheme|and| and \scheme|or| macros to speed up some situations.
 
@@ -699,6 +685,9 @@ For the define-rt-macro macro, I have the following lines in my .emacs file:
 
 
 
+
+
+
 \subsection{Reading and writing rt-variables from the guile-side}
 
 \begin{schemedisplay}
@@ -716,7 +705,7 @@ For the define-rt-macro macro, I have the following lines in my .emacs file:
 => 0.8
 
 (-> i osc)
-=> \#<oscil freq: 440.000Hz, phase: 0.256>
+=> #<oscil freq: 440.000Hz, phase: 0.256>
 \end{schemedisplay}
 
 
@@ -739,7 +728,11 @@ This will return an error:
 \begin{schemedisplay}
 (set! (-> i osc) (make-oscil))
 \end{schemedisplay}
-...because only numbers can be set.
+...because only numbers and buses can be set.
+
+
+
+
 
 \subsection{Shared variables}
 
@@ -762,6 +755,10 @@ with the functions \scheme|read-var| and \scheme|write-var|:
 \end{schemedisplay}
 
 (API might change)
+
+
+
+
 
 
 \subsection{Ladspa plugins}
@@ -796,8 +793,83 @@ holding sound-data. The function returns a \scheme|vct|.
 
 
 
-\subsection{Getting sound in and out}
 
+
+
+
+\subsection{Routing signals}
+
+
+\subsubsection{Buses}
+
+To create a bus, use \scheme|make-bus|. \scheme|make-bus| takes one optional argument, which
+is number of channels. Default is 1.
+
+To read from a bus, use \scheme|read-bus|. To write to a bus, use \scheme|write-bus|.
+
+When writing to a bus, you add your signal if the bus had been written to in the current cycle.
+If not, the old value is overwritten.
+
+When reading, you always get the current value, unless the bus hadn't been written to for two
+or more cycles. Then you'll get zero.
+
+This behaviour is a bit different from Supercollider, but I think its better. I migh change
+the behaviour later though.
+
+
+
+\subsubsection{The in and out macros}
+
+The \scheme|in| and \scheme|out| macros are supposed to provide a convenient interface to the bus
+system. The basic way to play a sound to the soundcard is like this:
+\scheme|(write-bus *out-bus* sound)|. Instead, you can just write \scheme|(out sound)|.
+
+But thats not all. \scheme|in| and \scheme|out| also tries to automatically find out whether you are
+playing a VCT or just a single value, and which channel(s) to write to or read from.
+
+But thats not all either. The compiler automatically creates two special bus-variables
+called \scheme|out-bus| and \scheme|in-bus|, which, if \scheme|out-bus| \scheme|in-bus|
+aren't already declared locally \footnote{Never declare \scheme|in-bus| and \scheme|out-bus| in
+the toplevel!} is set to \scheme|*out-bus*| or \scheme|*in-bus*|. And since buses are settable,
+you can redefine outputs and inputs the way you like:
+
+\begin{schemedisplay}
+    (definstrument (oscillator)
+      (let ((osc (make-oscil)))
+        (<rt-play> (lambda ()
+  		      (out (oscil osc))))))
+    (define o (oscillator))
+    (define bus (make-bus 2))
+    (set! (-> o out-bus) bus)
+    (definstrument (volume vol)
+      (<rt-play> (lambda ()
+	           (out (* vol (in))))))
+    (volume 0.5 #:in-bus bus)
+    (rte-silence!)
+\end{schemedisplay}
+
+This way, you very seldom should have the need to use \scheme|read-bus| and \scheme|write-bus|
+directly.
+
+
+In my .emacs file, I have the following lines to colorize \scheme|out| and \scheme|in|:
+
+\begin{schemedisplay}
+(font-lock-add-keywords
+ 'scheme-mode 
+ '(("(\\(out\\)\\>\\s-*(?\\(\\sw+\\)?"
+    (1 font-lock-keyword-face
+       nil t))))
+(font-lock-add-keywords
+ 'scheme-mode
+ '(("(\\(in\\)\\>\\s-*(?\\(\\sw+\\)?"
+    (1 font-lock-keyword-face
+       nil t))))
+\end{schemedisplay}
+
+
+
+\subsubsection{The syntax for in and out}
 
 This simple function will software monitor the two first channels for 10 seconds:
 \begin{schemedisplay}
@@ -881,7 +953,8 @@ This function does the same as the one above, but halves the volume:
 \textbf{Note that the API for out and in might change.} (although probably not too radically...)
 
 
-\subsubsection{Defining input and output buses}
+
+\subsubsection{The syntax for definstrument}
 
 When using the functions \scheme|in| or \scheme|out| inside a \scheme|definstrument| block, you can call the instrument with the hidden
 key-word arguments \scheme|out-bus| and \scheme|in-bus|.
@@ -1592,116 +1665,19 @@ printf (Using c's fprintf with stderr as the first argument. Warning, this one i
 \section{Missing functionality}
 
 
-\subsection{Sound-arrays and Buses}
+\subsection{Order of execution}
+There is no API to set the order of execution for the \scheme|<realtime>|-instances. It can/should be done
+automatically by looking at which instance depends on which bus, but that hasn't been implemented (yet).
 
-I think it would be nice if \scheme|(out (bus 0.2 0.5)))| transformed
-into \scheme|(begin (out 0 0.2) (out 1 0.5))|.
-
-But this needs some more thinking...
-
-
-
-\subsection{Order of execution and sharing of sound data}
-The RT extension is missing one important functionality; How to share sound data
-between functions; How to let a function use the sound produced by another
-function.
-
-The supercollider engine solves this by providing a bus-system, and letting the
-user specify the order the synths are executed.
-
-That could be done by doing something like this:
-
-\begin{schemedisplay}
-(let ((bus (make-bus 2)))
-  (<rt-play>  0 10
-	      (lambda ()
-	        (out- bus 0 (oscil oa)))
-	      (lambda ()
-	        (out- bus 1 (oscil ob)))
-	      (lambda () #:add-to-tail
-	        (out (vct (* vol (in 0 bus))
-                          (* vol (in 1 bus)))))))
-\end{schemedisplay}
-
-Another way would be to let RT-functions be able to call other RT-functions.
-That could be done by doing something like this:
-
-\begin{schemedisplay}
-(let ((a (<rt> (lambda ()
-	         (oscil oa))))
-      (b (<rt> (lambda ()
-	         (oscil ob)))))
-  (<rt-play> 0 10
-	     (lambda ()
-	       (out (vct (* vol (a))
-	                 (* vol (b)))))))
-\end{schemedisplay}
-
-I have a feeling that the first version can be a lot faster, because it executes smaller parts many times, which avoids
-cache-misses and function-calls. It uses some more memory as well though, but that shouldn't be very important.
-
-
-
-So, perhaps the best would be a combination of the two possibilities would be a good idea? Or
-just provide both? Or perhaps even something completely different. I don't know.
-Its yet to be decided...
-
-Heres a workaround for how to solve the above example by using 
-jack-port 6 and 7 for internal routing:
-
-\begin{schemedisplay}
-(let ((oa (make-oscil #:frequency 500))
-      (ob (make-oscil #:frequency 600))
-      (vol 0.8))
-  (<rt-play> 0 10
-	     (lambda ()
-	       (out (vct (* vol (in 6))
-	                 (* vol (in 7))))))
-  (<rt-play> 0 10
-	     (lambda ()
-	       (out 6 (oscil oa))))
-  (<rt-play> 0 10
-	     (lambda ()
-	       (out 7 (oscil ob))))
-  )
-\end{schemedisplay}
-
-But for the above to work, you have to do some acrobatic jack-port routing as well.
-
-
-
-\subsection{Implementation of a try-and-see-how-it-works bus-system}
-
-20.5.2005 I added bus-support. The API is definitely not settled yet, so please tell me what you think, in
-case you are interested.
-
-\begin{schemedisplay}
-  (definstrument (a)
-    (let ((bus (make-bus 2))
-	  (oa (make-oscil))
-	  (ob (make-oscil #:frequency 600))
-	  (vol 0.5)
-	  (start 0)
-	  (end 10))
-      (<rt-play> start end
-		 (lambda ()
-		   (write-bus bus (oscil oa))))
-      (<rt-play> start end
-		 (lambda ()
-		   (write-bus bus #f (oscil ob))))
-      (<rt-play> start end
-		 (lambda ()
-		   (out (vct-scale! (read-bus bus)
-				    vol))))))
-
-\end{schemedisplay}
-
+For now, you can order the execution by using the fact that instances are always put first in the queue.
 
 
 %\newpage
 %\section{Credits}
 \newpage
 \section{History}
+
+07.06.2005: Added setters for buses, introducing a general patching mechanism. Very nice I think.
 
 06.06.2005: Added the hidden in-bus and out-bus keyword arguments for definstrument. (the \scheme|in| and \scheme|out| macros uses in-bus and out-bus)
 

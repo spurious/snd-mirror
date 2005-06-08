@@ -462,7 +462,7 @@ size_t jack_ringbuffer_write_space(const jack_ringbuffer_t *rb);
 	
 	(shared-struct <Jack_Arg>)
 
-	"typedef void (*Callback)(void *arg,jack_client_t *client,int is_running,struct rt_bus *in_bus,struct rt_bus *out_bus,int num_frames,int base_time,float samplerate)"
+	"typedef void (*Callback)(void *arg,jack_client_t *client,int is_running,int num_frames,int base_time,float samplerate)"
 
 	(functions->public
 	 (<int> jack_rt_process_dummy (lambda ((<jack_nframes_t> nframes)
@@ -510,8 +510,6 @@ size_t jack_ringbuffer_write_space(const jack_ringbuffer_t *rb);
 				    (callback jack_arg->rt_arg
 					      jack_arg->client
 					      jack_arg->is_running
-					      jack_arg->in_bus
-					      jack_arg->out_bus
 					      nframes
 					      jack_arg->frames
 					      jack_arg->samplerate)
@@ -688,10 +686,6 @@ size_t jack_ringbuffer_write_space(const jack_ringbuffer_t *rb);
 
   <char-*> allocplace
   <char-*> allocplace_end
-
-
-  <struct-rt_bus-*> in_bus
-  <struct-rt_bus-*> out_bus
 
   <int> time
   <int> time_before
@@ -977,8 +971,6 @@ size_t jack_ringbuffer_write_space(const jack_ringbuffer_t *rb);
 	 (<void> rt_callback (lambda ((<struct-RT_Engine-*> engine)
 				      (<jack_client_t-*> client)
 				      (<int> is_running)
-				      (<struct-rt_bus-*> in_bus)
-				      (<struct-rt_bus-*> out_bus)
 				      (<int> nframes)
 				      (<int> base_time)
 				      (<float> samplerate))
@@ -1032,8 +1024,6 @@ size_t jack_ringbuffer_write_space(const jack_ringbuffer_t *rb);
 
 			       ;;(fprintf stderr (string "engine: %u\\n") engine)
 
-			       (set! engine->in_bus in_bus)
-			       (set! engine->out_bus out_bus)
 			       (set! engine->samplerate samplerate)
 
 			       (rt_run_queued_events engine base_time)

@@ -471,10 +471,9 @@ static void tick_temp(const char *filename, int chan)
 
 void forget_temps(void)
 {
-  /* this should always be a no-op -- probably can be deleted */
   int i;
   for (i = 0; i < tempfiles_size; i++)
-    if (tempfiles[i])
+    if ((tempfiles[i]) && (mus_file_probe(tempfiles[i]->name)))
       snd_remove(tempfiles[i]->name, REMOVE_FROM_CACHE);
 }
 

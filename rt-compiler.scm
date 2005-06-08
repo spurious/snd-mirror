@@ -3125,18 +3125,6 @@ and run simple lisp[4] functions.
   (<rt-func> 'rt_scm_to_int '<int> '(<SCM>) #:needs-rt-globals #t)
 
 
-  ;; scm_to_vct
-  (rt-function <vct-*> rt_scm_to_vct (lambda (,rt-globalvardecl (<SCM> name))
-				       ,(if (rt-is-safety?)
-					    `(if (vct_p name)
-						 (return (TO_VCT name))
-						 (begin
-						   (rt_error rt_globals (string "Variable is not a VCT."))
-						   (return NULL)))
-					    `(return (TO_VCT name)))))
-  (<rt-func> 'rt_scm_to_vct '<vct-*> '(<SCM>) #:needs-rt-globals #t)
-  
-
   ;; scm_to_mus_any
   (rt-function <mus_any-*> rt_scm_to_mus_any (lambda (,rt-globalvardecl (<SCM> name))
 					       (if (mus_xen_p name)
@@ -3184,44 +3172,6 @@ and run simple lisp[4] functions.
 					(let* ((ret <void-*> (rt_alloc rt_globals size)))
 					  (memset ret 0 size)
 					  (return ret))))
-  
-  (rt-function <vct-*> rt_alloc_vct (lambda (,rt-globalvardecl (<int> length))
-				      (let* ((ret <vct-*> (rt_alloc rt_globals (sizeof <vct>)))
-					     (floats <float-*> (rt_alloc rt_globals (* (sizeof <float>) length))))
-					(set! ret->length length)
-					(set! ret->data floats)
-					(return ret))))
-  (<rt-func> 'rt_alloc_vct '<vct-*> '(<int>)  #:needs-rt-globals #t)
-  
-
-
-
-
-
-  ;; VCT's
-  (rt-function <vct-*> rt_vct_scale (lambda ((<vct-*> vct) (<float> scl))
-				      (<int> lokke)
-				      "for(lokke=0;lokke<vct->length;lokke++){"
-				      (*= vct->data[lokke] scl)
-				      "}"
-				      (return vct)))
-  (<rt-func> 'rt_vct_scale '<vct-*> '(<vct-*> <float>))
-  
-  (rt-function <vct-*> rt_vct_offset (lambda ((<vct-*> vct) (<float> scl))
-				       (<int> lokke)
-				       "for(lokke=0;lokke<vct->length;lokke++){"
-				       (+= vct->data[lokke] scl)
-				       "}"
-				       (return vct)))
-  (<rt-func> 'rt_vct_offset '<vct-*> '(<vct-*> <float>))
-  
-  (rt-function <vct-*> rt_vct_fill (lambda ((<vct-*> vct) (<float> scl))
-				     (<int> lokke)
-				     "for(lokke=0;lokke<vct->length;lokke++){"
-				     (set! vct->data[lokke] scl)
-				     "}"
-				     (return vct)))
-  (<rt-func> 'rt_vct_fill '<vct-*> '(<vct-*> <float>))
   
   )
 
@@ -5466,11 +5416,61 @@ setter!-rt-mus-location/mus_location
 
 
 
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;; VCT. ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; scm_to_vct
+(rt-function <vct-*> rt_scm_to_vct (lambda (,rt-globalvardecl (<SCM> name))
+				     ,(if (rt-is-safety?)
+					  `(if (vct_p name)
+					       (return (TO_VCT name))
+					       (begin
+						 (rt_error rt_globals (string "Variable is not a VCT."))
+						 (return NULL)))
+					  `(return (TO_VCT name)))))
+(<rt-func> 'rt_scm_to_vct '<vct-*> '(<SCM>) #:needs-rt-globals #t)
+
+
+
+(rt-function <vct-*> rt_alloc_vct (lambda (,rt-globalvardecl (<int> length))
+				    (let* ((ret <vct-*> (rt_alloc rt_globals (sizeof <vct>)))
+					   (floats <float-*> (rt_alloc rt_globals (* (sizeof <float>) length))))
+				      (set! ret->length length)
+				      (set! ret->data floats)
+				      (return ret))))
+(<rt-func> 'rt_alloc_vct '<vct-*> '(<int>)  #:needs-rt-globals #t)
+  
+
+
+(rt-function <vct-*> rt_vct_scale (lambda ((<vct-*> vct) (<float> scl))
+				    (<int> lokke)
+				    "for(lokke=0;lokke<vct->length;lokke++){"
+				    (*= vct->data[lokke] scl)
+				    "}"
+				    (return vct)))
+(<rt-func> 'rt_vct_scale '<vct-*> '(<vct-*> <float>))
+
+(rt-function <vct-*> rt_vct_offset (lambda ((<vct-*> vct) (<float> scl))
+				     (<int> lokke)
+				     "for(lokke=0;lokke<vct->length;lokke++){"
+				     (+= vct->data[lokke] scl)
+				     "}"
+				     (return vct)))
+(<rt-func> 'rt_vct_offset '<vct-*> '(<vct-*> <float>))
+
+(rt-function <vct-*> rt_vct_fill (lambda ((<vct-*> vct) (<float> scl))
+				   (<int> lokke)
+				   "for(lokke=0;lokke<vct->length;lokke++){"
+				   (set! vct->data[lokke] scl)
+				   "}"
+				   (return vct)))
+(<rt-func> 'rt_vct_fill '<vct-*> '(<vct-*> <float>))
+
+
 
 (define-rt-macro (vct-length vct)
   `(rt-vct-length/vct-length ,vct))
@@ -5636,19 +5636,6 @@ setter!-rt-mus-location/mus_location
 			      duration
 			      #f))))))
 
-;(def-class (<test> arg)
-;  (define procfunc arg))
-
-	       
-;  (def-method (play-now #:optional length)
-;    (if length
-;	(this->play (-> engine get-time) (+ (-> engine get-time) length))
-;	(this->play (-> engine get-time))))
-
-;  (def-method (start #:optional (time (-> engine get-time)))
-;    (rt-start))
-
-
 
 (define (rt-4 term)
 
@@ -5805,8 +5792,15 @@ setter!-rt-mus-location/mus_location
 				 (append extnumbers-writing extnumbers))) ;;extpointers
 	       (setternames (map (lambda (extvar)
 				   (list (rt-gensym) extvar))
-				 (append extnumbers-writing extnumbers extpointers)))
+				 (remove (lambda (vardecl)
+					   (eq? '<struct-rt_bus-*> (-> (cadr vardecl) c-type)))
+					 (append extnumbers-writing extnumbers extpointers))))
 	       
+	       (busnames (map (lambda (extvar)
+				(list (-> (cadr extvar) c-type) (car extvar) (symbol-append (car extvar) '_mirror) (cadddr extvar) (rt-gensym)))
+			      (remove (lambda (vardecl)
+					(not (eq? '<struct-rt_bus-*> (-> (cadr vardecl) c-type))))
+				      extpointers)))
 	       (i 0)
 	       
 	       (types (map (lambda (var)
@@ -5818,6 +5812,7 @@ setter!-rt-mus-location/mus_location
 				   (cadr var)))
 			   publicargs)))
 
+	  ;;(c-display "busnames" busnames)
 	  (rt-print "publicargs" publicargs)
 	  (rt-print "orgargs" orgargs)
 	  (rt-print "mainfuncargs" mainfuncargs)
@@ -5836,6 +5831,7 @@ setter!-rt-mus-location/mus_location
 		
 		getternames
 		setternames
+		busnames
 		
 		`( ;;(define-struct <func_args>
 		   ;;  <int> num_outs
@@ -5861,7 +5857,9 @@ setter!-rt-mus-location/mus_location
 		  ,bus-struct
 
 		  (define-struct <RT_Globals>
+		    ;; Global/Guile variables
 		    ,@(apply append publicargs)
+		    ;; Arguments for the main-function.
 		    ,@(apply append (map (lambda (vardecl)
 					   (list (cadr vardecl) (car vardecl)))
 					  (remove (lambda (vardecl)
@@ -5871,8 +5869,6 @@ setter!-rt-mus-location/mus_location
 		    <int> framenum
 		    <int> time
 		    <int> time_before
-		    <struct-rt_bus-*> in_bus
-		    <struct-rt_bus-*> out_bus
 		    ;;<int> num_outs
 		    ;;<float-**> outs
 		    ;;<int> num_ins
@@ -5880,7 +5876,11 @@ setter!-rt-mus-location/mus_location
 
 		    <char-*> allocplace
 		    <char-*> allocplace_end
-		    
+
+		    ;; Adding bus-mirrors.
+		    ,@(apply append (map (lambda (vardecl)
+					   (list (car vardecl) (caddr vardecl)))
+					 busnames))
 		    <int> remove_me
 		    <struct-RT_Engine*> engine)
 
@@ -5909,8 +5909,18 @@ setter!-rt-mus-location/mus_location
 			      `(<void> ,funcname (lambda ((<struct-RT_Globals-*> rt_globals) (,type das_var))
 						   ;;(fprintf stderr (string "setting: <something> for: %u\\n") (cast <unsigned-int> rt_globals))
 						   (set! ,(symbol-append 'rt_globals-> varname) das_var)))))
-			  setternames))
-		  
+			  setternames)
+
+		  ;; Setter for the buses
+		   ,@(map (lambda (setter)
+			    (let ((type (car setter))
+				  (funcname (cadr (cdddr setter)))
+				  (varname (caddr setter)))
+			      `(<void> ,funcname (lambda ((<struct-RT_Globals-*> rt_globals) (,type das_var))
+						   ;;(fprintf stderr (string "setting: <something> for: %u\\n") (cast <unsigned-int> rt_globals))
+						   (set! ,(symbol-append 'rt_globals-> varname) das_var)))))
+			  busnames)
+		   )
 		  
 		   (<nonstatic-extern-scm_t_bits> rt_readin_tag)
 		   (<nonstatic-extern-scm_t_bits> rt_bus_tag)
@@ -5978,12 +5988,18 @@ setter!-rt-mus-location/mus_location
 						      (return 1))
 						  
 						  (set! rt_globals->framenum startframe)
-						  (set! rt_globals->in_bus engine->in_bus)
-						  (set! rt_globals->out_bus engine->out_bus)
  						  (set! rt_globals->time engine->time)
 						  (set! rt_globals->time_before engine->time_before)
 						  
 						  (set! rt_globals->allocplace_end engine->allocplace_end)
+
+
+						  ;;((<struct-rt_bus-*> renamed_var__3 renamed_var__3_mirror out-bus rt_gen529))
+						  ;; Copying buses
+						  ,@(map (lambda (busdecl)
+							   `(set! ,(symbol-append 'rt_globals-> (cadr busdecl))
+								  ,(symbol-append 'rt_globals-> (caddr busdecl))))
+							 busnames)
 						  
 						  (let* ((len <int> (- endframe startframe)))
 						    "do{"
@@ -6156,7 +6172,8 @@ setter!-rt-mus-location/mus_location
 	       (make-globals-func (caddr (cdddr rt-3-result)))
 	       (getternames (cadddr (cdddr rt-3-result)))
 	       (setternames (cadr (cdddr (cdddr rt-3-result))))
-	       (term       (caddr (cdddr (cdddr rt-3-result))))
+	       (busnames    (caddr (cdddr (cdddr rt-3-result))))
+	       (term        (cadddr (cdddr (cdddr rt-3-result))))
 	       (callmacro (procedure->macro
 			   (lambda (x env)
 			     (if (null? extnumbers-writing)
@@ -6215,7 +6232,23 @@ setter!-rt-mus-location/mus_location
 						       (extvar (cadr setter))
 						       (name (cadddr extvar))
 						       (type (cadr extvar)))
-						  
+						  `(,funcname procarg
+							      (->2 ,type transform
+								   ,name
+								   ',name
+								   (lambda (var)
+								     (hashq-set! extra-gc-vars (gensym) var))))))
+					      setternames)
+				       
+
+				       ;; Setting all Guile bus variables (tranforming vars Guile->RT)				       
+				       ;;((<struct-rt_bus-*> renamed_var__3 renamed_var__3_mirror out-bus rt_gen529))
+				       ,@(map (lambda (busname)
+						;;(c-display "gakk?" isoutdefined?)
+						(let ((type (hashq-ref rt-types '<bus>))
+						      (name (cadddr busname))
+						      (funcname (cadr (cdddr busname))))
+						  ;;(c-display type name funcname)
 						  (if (eq? 'out-bus name)
 						      (if isoutdefined?
 							  `(,funcname procarg
@@ -6250,8 +6283,7 @@ setter!-rt-mus-location/mus_location
 									   ',name
 									   (lambda (var)
 									     (hashq-set! extra-gc-vars (gensym) var))))))))
-					      setternames)
-				       
+					      busnames)
 				       
 				       ;; Adding setters for number-variables.
 				       ,@(map (lambda (getter setter)
@@ -6273,18 +6305,36 @@ setter!-rt-mus-location/mus_location
 										 ,pointer)))
 					      (map cadddr extpointers))
 				       
+
+				       ;; Adding setters for buses
+				       ;;((<struct-rt_bus-*> renamed_var__3 renamed_var__3_mirror out-bus rt_gen529))
+				       ,@(map (lambda (busname)
+						(let ((type (car busname))
+						      (name (cadddr busname))
+						      (func (cadr (cdddr busname))))
+						`(->2 ret add-method ',name (make-procedure-with-setter
+									     (lambda ()
+									       ,name)
+									     (lambda (newval)
+									       (if (not (rt-bus-p newval))
+										   (c-display "Error." newval "is not a bus.")
+										   (begin
+										     ;; There is a memory-leak here. Should (gensym) be exchanged with ,name?
+										     (hashq-set! extra-gc-vars (gensym) newval) 
+										     (,func procarg (SCM_SMOB_DATA newval)))))))))
+					      busnames)
 				       
 				       ;; Adding "getter" for in-bus and out-bus (TODO, setter as well, that would be very cool.)
-				       (if ,isoutdefined?
-					   (->2 ret add-method 'out-bus (lambda ()
-									  out-bus))
-					   (->2 ret add-method 'out-bus (lambda ()
-									  *out-bus*)))
-				       (if ,isindefined?
-					   (->2 ret add-method 'in-bus (lambda ()
-									 in-bus))
-					   (->2 ret add-method 'in-bus (lambda ()
-									 *in-bus*)))
+				       ;(if ,isoutdefined?
+					;   (->2 ret add-method 'out-bus (lambda ()
+					;				  out-bus))
+					;   (->2 ret add-method 'out-bus (lambda ()
+					;				  *out-bus*)))
+				       ;(if ,isindefined?
+				;	   (->2 ret add-method 'in-bus (lambda ()
+					;				 in-bus))
+					;   (->2 ret add-method 'in-bus (lambda ()
+					;				 *in-bus*)))
 				       
 				       ret)))))))
 	  

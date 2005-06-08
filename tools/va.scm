@@ -31,6 +31,8 @@
        (do ((i 0 (1+ i)))
 	   ((= i len))
 	 (let ((ch (string-ref line i)))
+	   (if (char=? ch (integer->char #o015))
+	       (display (format #f "~A has /r (~A)~%" file count)))
 	   (if (char=? ch #\X)
 	       (if (and (< i (- len 4))
 			(string=? (substring line i (+ i 4)) "XtVa"))
@@ -117,3 +119,40 @@
 			      (if (not (char=? (string-ref line (+ i flen)) #\;))
 				  (display (format #f "~A: ~A~%" line-ctr line))))))))
 	      (loop (read-line file 'concat))))))))
+
+(define (directory->list dir)
+  (let ((dport (opendir dir)))
+    (let loop ((entry (readdir dport))
+	       (files '()))
+      (if (not (eof-object? entry))
+	  (loop (readdir dport) (cons entry files))
+	  (begin
+	    (closedir dport)
+	    (reverse! files))))))
+
+(define (grep rx strings)
+  (define (filter-list pred? objects)
+    (let loop ((objs objects)
+	       (result '()))
+      (cond ((null? objs) (reverse! result))
+	    ((pred? (car objs)) (loop (cdr objs) (cons (car objs) result)))
+	    (else (loop (cdr objs) result)))))
+  (let ((r (make-regexp rx)))
+    (filter-list (lambda (x) (regexp-exec r x)) strings)))
+
+(for-each-file 
+ (lambda (line file count)
+   (let ((len (string-length line)))
+     (call-with-current-continuation
+      (lambda (return)
+	(do ((i 0 (1+ i)))
+	    ((= i len))
+	  (let ((ch (string-ref line i)))
+	    (if (char=? ch (integer->char #o015))
+		(begin
+		  (display (format #f "~A has /r (~A)~%" file count))
+		  (return)))))))))
+ (sort (grep
+	(format #f "\\.(~{~A~^|~})$" (list "scm" "rb"))
+	(directory->list "."))
+       string<?))

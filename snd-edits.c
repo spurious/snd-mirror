@@ -4506,130 +4506,9 @@ static int channel_to_file(chan_info *cp, const char *ofile, int edpos)
 }
 
 /* these are used internally by the save-state process */
-#define S_delete_samples_with_origin    "delete-samples-with-origin"
 #define S_change_samples_with_origin    "change-samples-with-origin"
 #define S_insert_samples_with_origin    "insert-samples-with-origin"
 #define S_override_samples_with_origin  "override-samples-with-origin"
-
-
-#define BUFFER_NOT_FILE_LIMIT 64
-
-static char *edit_data_to_file(FILE *fd, ed_list *ed, chan_info *cp)
-{
-  int snd;
-  snd = ed->sound_location; /* sound_location read only here (modulo error reporting) */
-  if (snd < cp->sound_size)
-    {
-      snd_data *sd;
-      char *newname;
-      int i;
-      sd = cp->sounds[snd];
-      if (sd->type == SND_DATA_BUFFER)
-	{
-	  if ((ed->len > BUFFER_NOT_FILE_LIMIT) && (save_dir(ss)))
-	    {
-	      char *ofile = NULL;
-	      ofile = shorter_tempnam(save_dir(ss), "snd_");
-	      newname = run_save_state_hook(ofile);
-	      FREE(ofile);
-	      mus_array_to_file(newname, sd->buffered_data, ed->len, 22050, 1);
-	      fprintf(fd, "\"%s\"", newname);
-	      return(newname);
-	    }
-	  else
-	    {
-  	      fprintf(fd, VECTOR_OPEN);
-#if SNDLIB_USE_FLOATS
- 	      fprintf(fd, "%f", sd->buffered_data[0]);
-#else
- 	      fprintf(fd, "%d", sd->buffered_data[0]);
-#endif
- 	      for (i = 1; i < ed->len; i++) 
-  		{
-#if SNDLIB_USE_FLOATS
- 		  fprintf(fd, PROC_SEP "%f", sd->buffered_data[i]);
-#else
- 		  fprintf(fd, PROC_SEP "%d", sd->buffered_data[i]);
-#endif
-  		}
-	      fprintf(fd, VECTOR_CLOSE);
-	      return(NULL);
-	    }
-	}
-      else
-	{
-	  if ((ed->len > BUFFER_NOT_FILE_LIMIT) && (save_dir(ss)))
-	    {
-	      char *ofile = NULL;
-	      ofile = shorter_tempnam(save_dir(ss), "snd_");
-	      newname = run_save_state_hook(ofile);
-	      FREE(ofile);
-	      copy_file(sd->filename, newname);
-	      fprintf(fd, "\"%s\"", newname);
-	      return(newname);
-	    }
-	  else
-	    {
-	      /* read at very low level and write to (text) history files as sample list */
-	      int ifd, bufnum;
-	      off_t idataloc, n, samples, cursamples, sample;
-	      mus_sample_t *buffer;
-	      mus_sample_t **ibufs;
-	      fprintf(fd, VECTOR_OPEN);
-	      ifd = mus_file_open_read(sd->filename);
-	      if (ifd == -1) 
-		{
-		  snd_error(_("save edits: can't open %s: %s!"),
-			    sd->filename,
-			    snd_io_strerror());
-		  return(NULL);
-		}
-	      idataloc = mus_sound_data_location(sd->filename);
-	      mus_file_open_descriptors(ifd,
-					sd->filename,
-					mus_sound_data_format(sd->filename),
-					mus_sound_datum_size(sd->filename),
-					idataloc,
-					mus_sound_chans(sd->filename),
-					mus_sound_header_type(sd->filename));
-	      samples = mus_sound_samples(sd->filename);
-	      lseek(ifd, idataloc, SEEK_SET);
-	      ibufs = (mus_sample_t **)MALLOC(sizeof(mus_sample_t *));
-	      ibufs[0] = (mus_sample_t *)CALLOC(FILE_BUFFER_SIZE, sizeof(mus_sample_t));
-	      bufnum = (FILE_BUFFER_SIZE);
-	      sample = 0;
-	      for (n = 0; n < samples; n += bufnum)
-		{
-		  if ((n + bufnum) < samples) cursamples = bufnum; else cursamples = (samples - n);
-		  mus_file_read(ifd, 0, cursamples - 1, 1, ibufs);
-		  buffer = (mus_sample_t *)(ibufs[0]);
- 		  if (n > 0) fprintf(fd, PROC_SEP);
-#if SNDLIB_USE_FLOATS
- 		  fprintf(fd, "%f", MUS_SAMPLE_TO_FLOAT(buffer[0]));
-#else
- 		  fprintf(fd, "%d", MUS_SAMPLE_TO_INT(buffer[0]));
-#endif
- 		  for (i = 1; i < cursamples; i++) 
-  		    {
-#if SNDLIB_USE_FLOATS
- 		      fprintf(fd, PROC_SEP "%f", MUS_SAMPLE_TO_FLOAT(buffer[i]));
-#else
-		      fprintf(fd, PROC_SEP "%d", MUS_SAMPLE_TO_INT(buffer[i]));
-#endif
-		      sample++;
-		      if (sample == ed->len) goto ALL_DONE;
-		    }
-		}
-	    ALL_DONE:
-	      mus_file_close(ifd);
-	      fprintf(fd, VECTOR_CLOSE);
-	      FREE(ibufs[0]);
-	      FREE(ibufs);
-	    }
-	}
-    }
-  return(NULL);
-}
 
 static void fprintf_with_possible_embedded_string(FILE *fd, const char *str)
 {
@@ -4645,11 +4524,24 @@ static void fprintf_with_possible_embedded_string(FILE *fd, const char *str)
   fputc('"', fd);
 }
 
+static char *edit_list_data_to_temp_file(chan_info *cp, ed_list *ed, file_delete_t delete_me)
+{
+  snd_data *sd;
+  char *ofile;
+  ofile = shorter_tempnam(save_dir(ss), "snd_");
+  sd = cp->sounds[ed->sound_location];
+  if (sd->type == SND_DATA_BUFFER)
+    mus_array_to_file(ofile, sd->buffered_data, ed->len, 22050, 1);
+  else copy_file(sd->filename, ofile);
+  if (delete_me == DELETE_ME) remember_temp(ofile, 1); /* deletion upon exit (forget_temps) if a temp (edit-list->function, but not save-state) */
+  return(ofile);
+}
+
+/* TODO: combine save-state and edit-list->function code somehow */
+
 void edit_history_to_file(FILE *fd, chan_info *cp)
 {
   /* write edit list as a guile|ruby program to fd (open for writing) for subsequent load */
-  /*   the actual user-operations that produced these are included as comments */
-  /*   the data is sometimes included as a vector, so the file can be very large! */
   /*   the entire current list is written, then the edit_ctr is fixed up to reflect its current state */
   int i, edits;
   ed_list *ed;
@@ -4719,16 +4611,15 @@ void edit_history_to_file(FILE *fd, chan_info *cp)
 		    fprintf_with_possible_embedded_string(fd, ed->origin);
 		  else fprintf(fd, "\"%s\"", S_insert_samples);
 		  fprintf(fd, PROC_SEP);
-		  nfile = edit_data_to_file(fd, ed, cp);
-		  fprintf(fd, PROC_SEP "sfile" PROC_SEP "%d", cp->chan);
+		  nfile = edit_list_data_to_temp_file(cp, ed, DONT_DELETE_ME);
+		  fprintf(fd, "\"%s\"" PROC_SEP "sfile" PROC_SEP "%d", nfile, cp->chan);
 		  break;
 		case DELETION_EDIT:
 		  /* samp samps snd chn */
-		  fprintf(fd, "%s" PROC_OPEN OFF_TD PROC_SEP OFF_TD PROC_SEP "\"%s\"" PROC_SEP "sfile" PROC_SEP "%d",
-			  TO_PROC_NAME(S_delete_samples_with_origin),
+		  fprintf(fd, "%s" PROC_OPEN OFF_TD PROC_SEP OFF_TD PROC_SEP "sfile" PROC_SEP "%d",
+			  TO_PROC_NAME(S_delete_samples),
 			  ed->beg,
 			  ed->len,
-			  "", /* no longer used in this context */
 			  cp->chan);
 		  break;
 		case CHANGE_EDIT:
@@ -4740,8 +4631,8 @@ void edit_history_to_file(FILE *fd, chan_info *cp)
 		    fprintf_with_possible_embedded_string(fd, ed->origin);
 		  else fprintf(fd, "\"\"");
 		  fprintf(fd, PROC_SEP);
-		  nfile = edit_data_to_file(fd, ed, cp);
-		  fprintf(fd, PROC_SEP "sfile" PROC_SEP "%d", cp->chan);
+		  nfile = edit_list_data_to_temp_file(cp, ed, DONT_DELETE_ME);
+		  fprintf(fd, "\"%s\"" PROC_SEP "sfile" PROC_SEP "%d", nfile, cp->chan);
 		  break;
 		case EXTEND_EDIT:
 		  /* not currently savable (this is a dummy edit fragment for zero-mix-drag position change) */
@@ -4876,12 +4767,32 @@ static char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
 	      switch (ed->edit_type)
 		{
 		case INSERTION_EDIT: 
-		  function = mus_format("%s (%s snd chn)", function, ed->origin);
+		  if ((!(ed->origin)) || (strcmp(ed->origin, S_insert_samples) == 0))
+		    {
+		      /* save data in temp file, use insert-samples with file name */
+		      char *ofile;
+		      ofile = edit_list_data_to_temp_file(cp, ed, DELETE_ME);
+		      function = mus_format("%s (%s " OFF_TD " " OFF_TD " \"%s\" snd chn)", function, S_insert_samples, ed->beg, ed->len, ofile);
+		      FREE(ofile);
+		    }
+		  else function = mus_format("%s (%s snd chn)", function, ed->origin);
 		  break;
 		case CHANGE_EDIT:
-		  if ((ed->origin) && (strncmp(ed->origin, "set!", 4) == 0))
-		    function = mus_format("%s (%s)", function, ed->origin);
-		  else function = mus_format("%s (%s snd chn)", function, ed->origin);
+		  /* TODO: don't forget Ruby below for insert case, also snd-test this case */
+		  if ((!(ed->origin)) || (strcmp(ed->origin, "set-samples") == 0))
+		    {
+		      /* save data in temp file, use set-samples with file name */
+		      char *ofile;
+		      ofile = edit_list_data_to_temp_file(cp, ed, DELETE_ME);
+		      function = mus_format("%s (set-samples " OFF_TD " " OFF_TD " \"%s\" snd chn)", function, ed->beg, ed->len, ofile);
+		      FREE(ofile);
+		    }
+		  else
+		    {
+		      if (strncmp(ed->origin, "set!", 4) == 0)
+			function = mus_format("%s (%s)", function, ed->origin);
+		      else function = mus_format("%s (%s snd chn)", function, ed->origin);
+		    }
 		  break;
 		case DELETION_EDIT:
 		  /* what about delete-mix? */
@@ -5039,7 +4950,7 @@ static ed_list *make_ed_list(int size)
   ed->allocated_size = size;
   ed->fragments = (ed_fragment **)MALLOC(size * sizeof(ed_fragment *));
   for (i = 0; i < size; i++)
-    FRAGMENT(ed, i) = (ed_fragment *)calloc(1, sizeof(ed_fragment)); /* remove this from the memory tracker -- it's glomming up everything */
+    FRAGMENT(ed, i) = (ed_fragment *)calloc(1, sizeof(ed_fragment)); /* "calloc" removes this from the memory tracker -- it's glomming up everything */
   ed->origin = NULL;
   ed->maxamp = -1.0;
   ed->maxamp_position = -1;
@@ -8745,11 +8656,6 @@ delete 'samps' samples from snd's channel chn starting at 'start-samp'"
   return(samp_n);
 }
 
-static XEN g_delete_samples_with_origin(XEN samp_n, XEN samps, XEN origin, XEN snd_n, XEN chn_n, XEN edpos)
-{
-  return(g_delete_samples(samp_n, samps, snd_n, chn_n, edpos));
-}
-
 static XEN g_insert_sample(XEN samp_n, XEN val, XEN snd_n, XEN chn_n, XEN edpos)
 {
   #define H_insert_sample "(" S_insert_sample " sample value (snd #f) (chn #f) (edpos #f)): insert 'value' at 'sample' in snd's channel chn"
@@ -9123,7 +9029,6 @@ XEN_ARGIFY_7(g_insert_sound_w, g_insert_sound)
 XEN_ARGIFY_6(g_scale_channel_w, g_scale_channel)
 XEN_ARGIFY_6(g_normalize_channel_w, g_normalize_channel)
 XEN_ARGIFY_8(g_change_samples_with_origin_w, g_change_samples_with_origin)
-XEN_NARGIFY_6(g_delete_samples_with_origin_w, g_delete_samples_with_origin)
 XEN_ARGIFY_8(g_insert_samples_with_origin_w, g_insert_samples_with_origin)
 XEN_ARGIFY_6(g_override_samples_with_origin_w, g_override_samples_with_origin)
 XEN_ARGIFY_4(g_sample_w, g_sample)
@@ -9164,7 +9069,6 @@ XEN_ARGIFY_4(g_edit_list_to_function_w, g_edit_list_to_function)
 #define g_scale_channel_w g_scale_channel
 #define g_normalize_channel_w g_normalize_channel
 #define g_change_samples_with_origin_w g_change_samples_with_origin
-#define g_delete_samples_with_origin_w g_delete_samples_with_origin
 #define g_insert_samples_with_origin_w g_insert_samples_with_origin
 #define g_override_samples_with_origin_w g_override_samples_with_origin
 #define g_sample_w g_sample
@@ -9236,7 +9140,6 @@ void g_init_edits(void)
   XEN_DEFINE_PROCEDURE(S_normalize_channel,            g_normalize_channel_w,            1, 5, 0, H_normalize_channel);
 
   XEN_DEFINE_PROCEDURE(S_change_samples_with_origin,   g_change_samples_with_origin_w,   7, 1, 0, "internal function used in save-state");
-  XEN_DEFINE_PROCEDURE(S_delete_samples_with_origin,   g_delete_samples_with_origin_w,   6, 0, 0, "internal function used in save-state");
   XEN_DEFINE_PROCEDURE(S_insert_samples_with_origin,   g_insert_samples_with_origin_w,   7, 1, 0, "internal function used in save-state");
   XEN_DEFINE_PROCEDURE(S_override_samples_with_origin, g_override_samples_with_origin_w, 5, 1, 0, "internal function used in save-state");
 
