@@ -335,7 +335,7 @@ char *version_info(void)
 	  "\n    LADSPA",
   #ifdef LADSPA_HINT_DEFAULT_MASK
 	  " 1.1",
- #else
+  #else
 	  " 1.0",
   #endif
 #endif
@@ -2001,7 +2001,10 @@ static char *run_string_hook(XEN hook, const char *caller, char *initial_string,
 
 char *output_comment(file_info *hdr)
 {
-  return(run_string_hook(output_comment_hook, S_output_comment_hook, (hdr) ? hdr->comment : NULL, NULL));
+  return(run_string_hook(output_comment_hook, 
+			 S_output_comment_hook, 
+			 (hdr) ? hdr->comment : NULL, 
+			 NULL));
 }
 
 XEN g_snd_help(XEN text, int widget_wid)

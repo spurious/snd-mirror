@@ -4767,6 +4767,13 @@ static char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
 	      switch (ed->edit_type)
 		{
 		case INSERTION_EDIT: 
+		  /* this and change_edit are not bullet-proof -- there are many ways an incomplete
+		   *   origin can get here, but we want to trap the mix setters.  In save-state above,
+		   *   origin is just ignored, which is also less than ideal, but there are cases
+		   *   (map-channel for example) where the lambda form can't be saved correctly,
+		   *   so "the right thing" is not reachable.  Here, perhaps the strcmp should
+		   *   check for "set! -mix" or "set! (".  But then the track stuff is lost...
+		   */
 		  if ((!(ed->origin)) || (strcmp(ed->origin, S_insert_samples) == 0))
 		    {
 		      /* save data in temp file, use insert-samples with file name */
@@ -4778,8 +4785,8 @@ static char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
 		  else function = mus_format("%s (%s snd chn)", function, ed->origin);
 		  break;
 		case CHANGE_EDIT:
-		  /* TODO: don't forget Ruby below for insert case, also snd-test this case */
-		  if ((!(ed->origin)) || (strcmp(ed->origin, "set-samples") == 0))
+		  /* TODO: don't forget Ruby below for file-related insert/change cases */
+		  if ((!(ed->origin)) || (strcmp(ed->origin, "set-samples") == 0)) /* TODO: swap-channels? */
 		    {
 		      /* save data in temp file, use set-samples with file name */
 		      char *ofile;

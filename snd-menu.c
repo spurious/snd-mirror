@@ -302,9 +302,11 @@ void exit_from_menu(void)
 
 void save_options_from_menu(void)
 {
+  /*
   if ((save_options() == 0) && 
       (any_selected_sound()))
     report_in_minibuffer(any_selected_sound(), _("saved options in %s"), ss->init_file);
+  */
 }
 
 void save_state_from_menu(void)

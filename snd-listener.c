@@ -389,7 +389,9 @@ void command_return(widget_t w, int last_prompt)
 	  for (k = current_position - 1; k < full_len; k++)
 	    if (full_str[k] == '\n')
 	      break;
-	  start = i + prompt_length + 1;
+	  if (i == 0)
+	    start = prompt_length;
+	  else start = i + prompt_length + 1;
 	  len = (k - start + 1);
 	  str = (char *)CALLOC(len, sizeof(char));
 	  for (k = 0; k < len - 1; k++)
