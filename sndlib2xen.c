@@ -781,9 +781,7 @@ data-location should be retrieved from a previous call to " S_mus_sound_data_loc
 	  if (chns > 0)
 	    {
 	      fd = mus_sound_reopen_output(local_mus_expand_filename(XEN_TO_C_STRING(file)),
-					   chns,
-					   df,
-					   ht,
+					   chns, df, ht,
 					   XEN_TO_C_OFF_T_OR_ELSE(data_loc, 0));
 	    }
 	  else XEN_OUT_OF_RANGE_ERROR(S_mus_sound_reopen_output, 2, chans, "chans <= 0?");
@@ -1679,7 +1677,6 @@ void mus_sndlib_xen_initialize(void)
   XEN_DEFINE_PROCEDURE(S_mus_sound_maxamp_exists,  g_mus_sound_maxamp_exists_w,    1, 0, 0, H_mus_sound_maxamp_exists);
   XEN_DEFINE_PROCEDURE(S_mus_sound_forget,         g_mus_sound_forget_w,           1, 0, 0, H_mus_sound_forget);
   XEN_DEFINE_PROCEDURE(S_mus_sound_prune,          g_mus_sound_prune_w,            0, 0, 0, H_mus_sound_prune);
-
   XEN_DEFINE_PROCEDURE(S_mus_make_error,           g_mus_make_error_w,             1, 0, 0, H_mus_make_error);
   XEN_DEFINE_PROCEDURE(S_mus_audio_report,         g_mus_audio_report_w,           0, 0, 0, H_mus_audio_report);
   XEN_DEFINE_PROCEDURE(S_mus_audio_sun_outputs,    g_mus_audio_sun_outputs_w,      3, 0, 0, H_mus_audio_sun_outputs);

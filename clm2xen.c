@@ -392,7 +392,8 @@ static XEN g_mus_set_srate(XEN val)
 
 static XEN g_mus_array_print_length(void) 
 {
-  #define H_mus_array_print_length "(" S_mus_array_print_length "): current clm array print length (default is 8)"
+  #define H_mus_array_print_length "(" S_mus_array_print_length "): current clm array print length (default is 8).  This \
+affects error reporting and generator descriptions.  Array (vct) elements beyond this length are represented by '...'"
   return(C_TO_XEN_INT(mus_array_print_length()));
 }
 
@@ -416,7 +417,7 @@ static XEN g_mus_set_array_print_length(XEN val)
 
 static XEN g_ring_modulate(XEN val1, XEN val2) 
 {
-  #define H_ring_modulate "(" S_ring_modulate " s1 s2): s1 * s2 (sample by sample)"
+  #define H_ring_modulate "(" S_ring_modulate " s1 s2): s1 * s2 (sample by sample multiply)"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val1), val1, XEN_ARG_1, S_ring_modulate, "a number");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val2), val2, XEN_ARG_2, S_ring_modulate, "a number");
   return(C_TO_XEN_DOUBLE(mus_ring_modulate(XEN_TO_C_DOUBLE(val1), XEN_TO_C_DOUBLE(val2))));
@@ -441,7 +442,7 @@ static XEN g_contrast_enhancement(XEN val1, XEN val2)
 
 static XEN g_dot_product(XEN val1, XEN val2, XEN size) 
 {
-  #define H_dot_product "(" S_dot_product " v1 v2 (size)): sum of (vcts) v1[i] * v2[i] (scalar product)"
+  #define H_dot_product "(" S_dot_product " v1 v2 (size)): sum of (vcts) v1[i] * v2[i] (also named scalar product)"
   vct *v1, *v2;
   int len;  
   XEN_ASSERT_TYPE(VCT_P(val1), val1, XEN_ARG_1, S_dot_product, "a vct");
@@ -561,14 +562,14 @@ static XEN g_fft_window_1(xclm_window_t choice, XEN val1, XEN val2, XEN ulen, co
 
 static XEN g_multiply_arrays(XEN val1, XEN val2, XEN len) 
 {
-  #define H_multiply_arrays "(" S_multiply_arrays " v1 v2 (len)): (vcts) v1[i] *= v2[i]"
+  #define H_multiply_arrays "(" S_multiply_arrays " v1 v2 (len)): vct element-wise multiply: v1[i] *= v2[i]"
   return(g_fft_window_1(G_MULTIPLY_ARRAYS, val1, val2, len, S_multiply_arrays));
 }
 
 static XEN g_rectangular_to_polar(XEN val1, XEN val2) 
 {
   #define H_rectangular_to_polar "(" S_rectangular_to_polar " rl im): convert real/imaginary \
-data in (vcts) rl and im from rectangular form (fft output) to polar form (a spectrum)"
+data in vcts rl and im from rectangular form (fft output) to polar form (a spectrum)"
 
   return(g_fft_window_1(G_RECTANGULAR_POLAR, val1, val2, XEN_UNDEFINED, S_rectangular_to_polar));
 }
@@ -576,15 +577,15 @@ data in (vcts) rl and im from rectangular form (fft output) to polar form (a spe
 static XEN g_polar_to_rectangular(XEN val1, XEN val2) 
 {
   #define H_polar_to_rectangular "(" S_polar_to_rectangular " rl im): convert real/imaginary \
-data in (vcts) rl and im from polar form (spectrum) to rectangular form (fft-style)"
+data in vcts rl and im from polar form (spectrum) to rectangular form (fft-style)"
 
   return(g_fft_window_1(G_POLAR_RECTANGULAR, val1, val2, XEN_UNDEFINED, S_polar_to_rectangular));
 }
 
 static XEN g_mus_fft(XEN url, XEN uim, XEN len, XEN usign)
 {
-  #define H_mus_fft "(" S_mus_fft " rl im (len) (dir 1)): return the fft of (vcts) rl and im \
-the real and imaginary parts of the data, len should be a power of 2, dir = 1 for fft, -1 for inverse-fft"
+  #define H_mus_fft "(" S_mus_fft " rl im (len) (dir 1)): return the fft of vcts rl and im which contain \
+the real and imaginary parts of the data; len should be a power of 2, dir = 1 for fft, -1 for inverse-fft"
 
   int sign, n, np;
   Float nf;
@@ -617,9 +618,9 @@ the real and imaginary parts of the data, len should be a power of 2, dir = 1 fo
 
 static XEN g_make_fft_window(XEN type, XEN size, XEN ubeta)
 {
-  #define H_make_fft_window "(" S_make_fft_window " type size (beta 0.0)): fft data window (a vct). \
+  #define H_make_fft_window "(" S_make_fft_window " type size (beta 0.0)): -> fft data window (a vct). \
 type is one of the sndlib fft window identifiers such as " S_kaiser_window ", beta \
-is the window parameter, if any:\n\
+is the window family parameter, if any:\n\
      (set! v1 (make-fft-window hamming-window 256))"
 
   Float beta = 0.0;
@@ -640,8 +641,8 @@ is the window parameter, if any:\n\
 static XEN g_spectrum(XEN url, XEN uim, XEN uwin, XEN utype)
 {
   #define H_mus_spectrum "(" S_spectrum " rl im window (type 1)): \
-real and imaginary data in (vcts) rl and im, returns (in rl) the spectrum thereof; \
-window is the data window (a vct as returned by " S_make_fft_window "), \
+real and imaginary data in vcts rl and im, returns (in rl) the spectrum thereof; \
+window is the fft data window (a vct as returned by " S_make_fft_window "), \
 and type determines how the spectral data is scaled:\n\
   0 = data in dB, \n\
   1 (default) = linear and normalized\n\
@@ -678,7 +679,7 @@ and type determines how the spectral data is scaled:\n\
 static XEN g_convolution(XEN url1, XEN url2, XEN un)
 {
   #define H_mus_convolution "(" S_convolution " v1 v2 (len)): convolution \
-of (vcts) v1 with v2, using fft of size len (a power of 2), result in v1"
+of vcts v1 with v2, using fft of size len (a power of 2), result in v1"
 
   int n;
   vct *v1, *v2;
@@ -721,7 +722,8 @@ static XEN g_clear_array(XEN arr)
 
 static XEN g_polynomial(XEN arr, XEN x)
 {
-  #define H_polynomial "(" S_polynomial " coeffs x): evaluate a polynomial at x"
+  #define H_polynomial "(" S_polynomial " coeffs x): evaluate a polynomial at x.  coeffs are in order \
+of degree, so coeff[0] is the constant term."
   vct *v;
   XEN_ASSERT_TYPE(VCT_P(arr), arr, XEN_ARG_1, S_polynomial, "a vct");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ARG_2, S_polynomial, "a number");
@@ -905,7 +907,7 @@ mus_any *mus_optkey_to_mus_any(XEN key, const char *caller, int n, mus_any *def)
 
 static XEN g_mus_describe(XEN gen) 
 {
-  #define H_mus_describe "(" S_mus_describe " gen): show the outside world's view of the state of gen"
+  #define H_mus_describe "(" S_mus_describe " gen): return a string describing the state of CLM generator gen"
   XEN_ASSERT_TYPE((MUS_XEN_P(gen)), gen, XEN_ONLY_ARG, S_mus_describe, "a generator");
   return(C_TO_XEN_STRING(mus_describe(XEN_TO_MUS_ANY(gen))));
 }
@@ -934,7 +936,7 @@ static XEN g_mus_set_phase(XEN gen, XEN val)
 
 static XEN g_mus_scaler(XEN gen) 
 {
-  #define H_mus_scaler "(" S_mus_scaler " gen): gen's scaler, if any"
+  #define H_mus_scaler "(" S_mus_scaler " gen): gen's scaler, if any.  This is often an amplitude adjustment of some sort."
   XEN_ASSERT_TYPE(MUS_XEN_P(gen), gen, XEN_ONLY_ARG, S_mus_scaler, "a generator");
   return(C_TO_XEN_DOUBLE(mus_scaler(XEN_TO_MUS_ANY(gen))));
 }
@@ -948,7 +950,7 @@ static XEN g_mus_set_scaler(XEN gen, XEN val)
 
 static XEN g_mus_width(XEN gen) 
 {
-  #define H_mus_width "(" S_mus_width " gen): gen's width, if any"
+  #define H_mus_width "(" S_mus_width " gen): gen's width, if any.  This is usually a table size."
   XEN_ASSERT_TYPE(MUS_XEN_P(gen), gen, XEN_ONLY_ARG, S_mus_width, "a generator");
   return(C_TO_XEN_DOUBLE(mus_width(XEN_TO_MUS_ANY(gen))));
 }
@@ -2028,7 +2030,7 @@ a new one is created.  If normalize is #t, the resulting waveform goes between -
   return(xen_return_first(table, partials, utable));
 }
 
-static XEN g_make_table_lookup (XEN arglist)
+static XEN g_make_table_lookup(XEN arglist)
 {
   #define H_make_table_lookup "(" S_make_table_lookup " (:frequency 440.0) (:initial-phase 0.0) :wave :size :type): \
 return a new " S_table_lookup " generator.  This is known as an oscillator in other synthesis systems. \
@@ -2100,7 +2102,7 @@ is the same in effect as " S_make_oscil "."
   return(clm_mus_error(local_error_type, local_error_msg));
 }
 
-static XEN g_table_lookup (XEN obj, XEN fm) 
+static XEN g_table_lookup(XEN obj, XEN fm) 
 {
   #define H_table_lookup "(" S_table_lookup " gen (fm 0.0)): interpolated table-lookup \
 with 'wrap-around' when gen's phase marches off either end of its table."
@@ -2575,7 +2577,7 @@ static XEN g_formant_p(XEN os)
   return(C_TO_XEN_BOOLEAN((MUS_XEN_P(os)) && (mus_formant_p(XEN_TO_MUS_ANY(os)))));
 }
 
-static XEN g_set_formant_radius_and_frequency (XEN gen, XEN rad, XEN frq)
+static XEN g_set_formant_radius_and_frequency(XEN gen, XEN rad, XEN frq)
 {
   #define H_mus_set_formant_radius_and_frequency  "(" S_mus_set_formant_radius_and_frequency  " gen radius frequency): set (" S_formant " \
 generator) gen's radius and frequency"
@@ -2611,10 +2613,14 @@ with chans samples, each sample set from the trailing arguments (defaulting to 0
       cararg = XEN_CAR(arglist);
       XEN_ASSERT_TYPE(XEN_NUMBER_P(cararg), cararg, XEN_ARG_1, S_make_frame, "a number");
       size = XEN_TO_C_INT_OR_ELSE(cararg, 0);
-      if (size <= 0) XEN_OUT_OF_RANGE_ERROR(S_make_frame, XEN_ARG_1, cararg, "chans ~A <= 0?");
-      if (len > (size + 1)) mus_misc_error(S_make_frame, "extra trailing args?", arglist);
-      if (size <= 0) XEN_OUT_OF_RANGE_ERROR(S_make_frame, XEN_ARG_1, C_TO_XEN_INT(size), "size ~A <= 0?");
-      if (size > MUS_MAX_CHANS) XEN_OUT_OF_RANGE_ERROR(S_make_frame, XEN_ARG_1, C_TO_XEN_INT(size), "size ~A too big");
+      if (size <= 0) 
+	XEN_OUT_OF_RANGE_ERROR(S_make_frame, XEN_ARG_1, cararg, "chans ~A <= 0?");
+      if (len > (size + 1)) 
+	mus_misc_error(S_make_frame, "extra trailing args?", arglist);
+      if (size <= 0) 
+	XEN_OUT_OF_RANGE_ERROR(S_make_frame, XEN_ARG_1, C_TO_XEN_INT(size), "size ~A <= 0?");
+      if (size > MUS_MAX_CHANS) 
+	XEN_OUT_OF_RANGE_ERROR(S_make_frame, XEN_ARG_1, C_TO_XEN_INT(size), "size ~A too big");
     }
   ge = (mus_any *)mus_make_empty_frame(size);
   if (ge)
@@ -3698,14 +3704,19 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
 	XEN_OUT_OF_RANGE_ERROR(S_make_env, orig_arg[2], keys[2], "duration ~A <= 0.0?");
       offset = mus_optkey_to_float(keys[3], S_make_env, orig_arg[3], 0.0);
       base = mus_optkey_to_float(keys[4], S_make_env, orig_arg[4], 1.0);
-      if (base < 0.0) XEN_OUT_OF_RANGE_ERROR(S_make_env, orig_arg[4], keys[4], "base ~A < 0.0?");
+      if (base < 0.0) 
+	XEN_OUT_OF_RANGE_ERROR(S_make_env, orig_arg[4], keys[4], "base ~A < 0.0?");
       end = mus_optkey_to_off_t(keys[5], S_make_env, orig_arg[5], 0);
-      if (end < 0) XEN_OUT_OF_RANGE_ERROR(S_make_env, orig_arg[5], keys[5], "end ~A < 0?");
+      if (end < 0) 
+	XEN_OUT_OF_RANGE_ERROR(S_make_env, orig_arg[5], keys[5], "end ~A < 0?");
       start = mus_optkey_to_off_t(keys[6], S_make_env, orig_arg[6], 0);
-      if (start < 0) XEN_OUT_OF_RANGE_ERROR(S_make_env, orig_arg[6], keys[6], "start ~A < 0?");
-      if ((start > end) && (end != 0)) XEN_OUT_OF_RANGE_ERROR(S_make_env, orig_arg[6], keys[6], "start ~A > end?");
+      if (start < 0) 
+	XEN_OUT_OF_RANGE_ERROR(S_make_env, orig_arg[6], keys[6], "start ~A < 0?");
+      if ((start > end) && (end != 0)) 
+	XEN_OUT_OF_RANGE_ERROR(S_make_env, orig_arg[6], keys[6], "start ~A > end?");
       dur = mus_optkey_to_off_t(keys[7], S_make_env, orig_arg[7], 0);
-      if (dur < 0) XEN_OUT_OF_RANGE_ERROR(S_make_env, orig_arg[7], keys[7], "dur ~A < 0?");
+      if (dur < 0) 
+	XEN_OUT_OF_RANGE_ERROR(S_make_env, orig_arg[7], keys[7], "dur ~A < 0?");
       /* env data is a list, checked last to let the preceding throw wrong-type error before calloc  */
       if (!(XEN_KEYWORD_P(keys[0])))
         {
@@ -3948,9 +3959,7 @@ should be sndlib identifiers:\n\
 	    {
 	      mus_any *rgen;
 	      rgen = mus_make_sample_to_file_with_comment(XEN_TO_C_STRING(name),
-							  chns,
-							  df,
-							  ht,
+							  chns, df, ht,
 							  (XEN_STRING_P(comment)) ? XEN_TO_C_STRING(comment) : NULL);
 	      if (rgen) return(xen_return_first(mus_xen_to_object(_mus_wrap_no_vcts(rgen)), name));
 	    }
@@ -4347,8 +4356,10 @@ return a new generator for signal placement in n channels.  Channel 0 correspond
 	  else XEN_ASSERT_TYPE(XEN_FALSE_P(keys[4]), keys[4], orig_arg[4], S_make_locsig, "a reverb output gen");
 	}
       out_chans = mus_optkey_to_int(keys[5], S_make_locsig, orig_arg[5], out_chans);
-      if (out_chans < 0) XEN_OUT_OF_RANGE_ERROR(S_make_locsig, orig_arg[5], keys[5], "chans ~A < 0.0?");
-      if (out_chans > MAX_TABLE_SIZE) XEN_OUT_OF_RANGE_ERROR(S_make_locsig, orig_arg[5], keys[5], "chans = ~A?");
+      if (out_chans < 0) 
+	XEN_OUT_OF_RANGE_ERROR(S_make_locsig, orig_arg[5], keys[5], "chans ~A < 0.0?");
+      if (out_chans > MAX_TABLE_SIZE) 
+	XEN_OUT_OF_RANGE_ERROR(S_make_locsig, orig_arg[5], keys[5], "chans = ~A?");
       if (out_chans > 0) vlen++;
       type = (mus_interp_t)mus_optkey_to_int(keys[6], S_make_locsig, orig_arg[6], type);
       if ((type != MUS_INTERP_LINEAR) && (type != MUS_INTERP_SINUSOIDAL))
@@ -4402,7 +4413,7 @@ static XEN g_move_locsig(XEN obj, XEN degree, XEN distance)
 
 /* ---------------- src ---------------- */
 
-static Float funcall1 (void *ptr, int direction) /* intended for "as-needed" input funcs */
+static Float funcall1(void *ptr, int direction) /* intended for "as-needed" input funcs */
 {
   /* if this is called, it's a callback from C, where ptr is a mus_xen object whose vcts[0]
    * field is a XEN procedure to be called, the result being returned back to C.  In the
@@ -4492,10 +4503,13 @@ width (effectively the steepness of the low-pass filter), normally between 10 an
     {
       in_obj = mus_optkey_to_procedure(keys[0], S_make_src, orig_arg[0], XEN_UNDEFINED, 1, "src input procedure takes 1 arg");
       srate = mus_optkey_to_float(keys[1], S_make_src, orig_arg[1], srate);
-      if (srate < 0) XEN_OUT_OF_RANGE_ERROR(S_make_src, orig_arg[1], keys[1], "srate ~A < 0.0?");
+      if (srate < 0) 
+	XEN_OUT_OF_RANGE_ERROR(S_make_src, orig_arg[1], keys[1], "srate ~A < 0.0?");
       wid = mus_optkey_to_int(keys[2], S_make_src, orig_arg[2], wid);
-      if (wid < 0) XEN_OUT_OF_RANGE_ERROR(S_make_src, orig_arg[2], keys[2], "width ~A < 0?");
-      if (wid > 2000) XEN_OUT_OF_RANGE_ERROR(S_make_src, orig_arg[2], keys[2], "width ~A?");
+      if (wid < 0) 
+	XEN_OUT_OF_RANGE_ERROR(S_make_src, orig_arg[2], keys[2], "width ~A < 0?");
+      if (wid > 2000) 
+	XEN_OUT_OF_RANGE_ERROR(S_make_src, orig_arg[2], keys[2], "width ~A?");
     }
   gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
   /* mus_make_src assumes it can invoke the input function! */
@@ -4619,18 +4633,24 @@ The edit function, if any, should return the length in samples of the grain, or 
     {
       in_obj = mus_optkey_to_procedure(keys[0], S_make_granulate, orig_arg[0], XEN_UNDEFINED, 1, "granulate input procedure takes 1 arg");
       expansion = mus_optkey_to_float(keys[1], S_make_granulate, orig_arg[1], expansion);
-      if (expansion <= 0.0) XEN_OUT_OF_RANGE_ERROR(S_make_granulate, orig_arg[1], keys[1], "expansion ~A <= 0.0?");
+      if (expansion <= 0.0) 
+	XEN_OUT_OF_RANGE_ERROR(S_make_granulate, orig_arg[1], keys[1], "expansion ~A <= 0.0?");
       segment_length = mus_optkey_to_float(keys[2], S_make_granulate, orig_arg[2], segment_length);
-      if (segment_length <= 0.0) XEN_OUT_OF_RANGE_ERROR(S_make_granulate, orig_arg[2], keys[2], "segment-length ~A <= 0.0?");
+      if (segment_length <= 0.0) 
+	XEN_OUT_OF_RANGE_ERROR(S_make_granulate, orig_arg[2], keys[2], "segment-length ~A <= 0.0?");
       segment_scaler = mus_optkey_to_float(keys[3], S_make_granulate, orig_arg[3], segment_scaler);
-      if (segment_scaler == 0.0) XEN_OUT_OF_RANGE_ERROR(S_make_granulate, orig_arg[3], keys[3], "segment-scaler: ~A?");
+      if (segment_scaler == 0.0) 
+	XEN_OUT_OF_RANGE_ERROR(S_make_granulate, orig_arg[3], keys[3], "segment-scaler: ~A?");
       output_hop = mus_optkey_to_float(keys[4], S_make_granulate, orig_arg[4], output_hop);
-      if (output_hop <= 0.0) XEN_OUT_OF_RANGE_ERROR(S_make_granulate, orig_arg[4], keys[4], "hop ~A <= 0?");
-      if (output_hop > 3600.0) XEN_OUT_OF_RANGE_ERROR(S_make_granulate, orig_arg[4], keys[4], "hop ~A?");
+      if (output_hop <= 0.0) 
+	XEN_OUT_OF_RANGE_ERROR(S_make_granulate, orig_arg[4], keys[4], "hop ~A <= 0?");
+      if (output_hop > 3600.0) 
+	XEN_OUT_OF_RANGE_ERROR(S_make_granulate, orig_arg[4], keys[4], "hop ~A?");
       if ((segment_length + output_hop) > 60.0) /* multiplied by srate in mus_make_granulate in array allocation */
 	XEN_OUT_OF_RANGE_ERROR(S_make_granulate, orig_arg[2], XEN_LIST_2(keys[2], keys[4]), "segment_length + output_hop = ~A: too large!");
       ramp_time = mus_optkey_to_float(keys[5], S_make_granulate, orig_arg[5], ramp_time);
-      if ((ramp_time < 0.0) || (ramp_time > 0.5)) XEN_OUT_OF_RANGE_ERROR(S_make_granulate, orig_arg[5], keys[5], "ramp ~A must be between 0.0 and 0.5");
+      if ((ramp_time < 0.0) || (ramp_time > 0.5))
+	XEN_OUT_OF_RANGE_ERROR(S_make_granulate, orig_arg[5], keys[5], "ramp ~A must be between 0.0 and 0.5");
       jitter = mus_optkey_to_float(keys[6], S_make_granulate, orig_arg[6], jitter);
       XEN_ASSERT_TYPE((jitter >= 0.0) && (jitter < 100.0), keys[6], orig_arg[6], S_make_granulate, "0.0 .. 100.0");
       maxsize = mus_optkey_to_int(keys[7], S_make_granulate, orig_arg[7], maxsize);
@@ -4796,19 +4816,19 @@ file1 and file2 writing outfile after scaling the convolution result to maxamp."
  *   call chains).
  */
 
-static int pvedit (void *ptr)
+static int pvedit(void *ptr)
 {
   mus_xen *gn = (mus_xen *)ptr;
   return(XEN_TO_C_BOOLEAN(XEN_CALL_1_NO_CATCH(gn->vcts[MUS_EDIT_FUNCTION], gn->vcts[MUS_SELF_WRAPPER])));
 }
 
-static Float pvsynthesize (void *ptr)
+static Float pvsynthesize(void *ptr)
 {
   mus_xen *gn = (mus_xen *)ptr;
   return(XEN_TO_C_DOUBLE(XEN_CALL_1_NO_CATCH(gn->vcts[MUS_SYNTHESIZE_FUNCTION], gn->vcts[MUS_SELF_WRAPPER])));
 }
 
-static bool pvanalyze (void *ptr, Float (*input)(void *arg1, int direction))
+static bool pvanalyze(void *ptr, Float (*input)(void *arg1, int direction))
 {
   mus_xen *gn = (mus_xen *)ptr;
   /* we can only get input func if it's already set up by the outer gen call, so (?) we can use that function here */
@@ -5053,8 +5073,6 @@ static XEN g_mus_set_hop(XEN obj, XEN val)
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, S_setB S_mus_hop, "a number");
   return(C_TO_XEN_OFF_T(mus_set_hop(XEN_TO_MUS_ANY(obj), XEN_TO_C_OFF_T_OR_ELSE(val, 0))));
 }
-
-
 
 
 

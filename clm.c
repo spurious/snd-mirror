@@ -88,7 +88,7 @@ enum {MUS_OSCIL, MUS_SUM_OF_COSINES, MUS_DELAY, MUS_COMB, MUS_NOTCH, MUS_ALL_PAS
       MUS_FILTER, MUS_FIR_FILTER, MUS_IIR_FILTER, MUS_CONVOLVE, MUS_ENV, MUS_LOCSIG,
       MUS_FRAME, MUS_READIN, MUS_FILE_TO_SAMPLE, MUS_FILE_TO_FRAME,
       MUS_SAMPLE_TO_FILE, MUS_FRAME_TO_FILE, MUS_MIXER, MUS_PHASE_VOCODER,
-      MUS_AVERAGE, MUS_SUM_OF_SINES, MUS_SSB_AM, MUS_POLYSHAPE, MUS_SSB_POLYSHAPE,
+      MUS_AVERAGE, MUS_SUM_OF_SINES, MUS_SSB_AM, MUS_POLYSHAPE,
       MUS_INITIAL_GEN_TAG};
 
 static char *interp_name[] = {"step", "linear", "sinusoidal", "all-pass", "lagrange", "bezier", "hermite"};
@@ -642,7 +642,8 @@ Float mus_dot_product(Float *data1, Float *data2, int size)
 {
   int i;
   Float sum = 0.0;
-  for (i = 0; i < size; i++) sum += (data1[i] * data2[i]);
+  for (i = 0; i < size; i++) 
+    sum += (data1[i] * data2[i]);
   return(sum);
 }
 
@@ -651,7 +652,8 @@ complex double mus_edot_product(complex double freq, complex double *data, int s
 {
   int i;
   complex double sum = 0.0;
-  for (i = 0; i < size; i++) sum += (cexp(i * freq) * data[i]);
+  for (i = 0; i < size; i++) 
+    sum += (cexp(i * freq) * data[i]);
   return(sum);
 }
 #endif
@@ -663,14 +665,16 @@ Float mus_polynomial(Float *coeffs, Float x, int ncoeffs)
   if (ncoeffs <= 0) return(x);
   sum = coeffs[ncoeffs - 1];
   if (ncoeffs == 1) return(sum * x);
-  for (i = ncoeffs - 2; i >= 0; i--) sum = (sum * x) + coeffs[i];
+  for (i = ncoeffs - 2; i >= 0; i--) 
+    sum = (sum * x) + coeffs[i];
   return(sum);
 }
 
 void mus_multiply_arrays(Float *data, Float *window, int len)
 {
   int i;
-  for (i = 0; i < len; i++) data[i] *= window[i];
+  for (i = 0; i < len; i++) 
+    data[i] *= window[i];
 }
 
 void mus_rectangular_to_polar(Float *rl, Float *im, int size) 
@@ -2724,7 +2728,8 @@ mus_any *mus_make_average(int size, Float *line)
       int i;
       gen->core = &AVERAGE_CLASS;
       gen->xscl = 0.0;
-      for (i = 0; i < size; i++) gen->xscl += gen->line[i];
+      for (i = 0; i < size; i++) 
+	gen->xscl += gen->line[i];
       gen->yscl = 1.0 / (Float)size;
       return((mus_any *)gen);
     }
@@ -4093,7 +4098,8 @@ Float *mus_make_fir_coeffs(int order, Float *envl, Float *aa)
       mus_fft(rl, im, fsize, 1);
       scl = 4.0 / fsize;
       offset = -2.0 * envl[0] / fsize;
-      for (i = 0; i < fsize; i++) rl[i] = rl[i] * scl + offset;
+      for (i = 0; i < fsize; i++) 
+	rl[i] = rl[i] * scl + offset;
       for (i = 1, j = lim - 1, jj = lim; i < order; i += 2, j--, jj++) 
 	{
 	  a[j] = rl[i]; 
@@ -4182,7 +4188,7 @@ Float mus_env_linear(mus_any *ptr)
   return(val);
 }
 
-static Float run_env (mus_any *ptr, Float unused1, Float unused2) {return(mus_env(ptr));}
+static Float run_env(mus_any *ptr, Float unused1, Float unused2) {return(mus_env(ptr));}
 
 static void dmagify_env(seg *e, Float *data, int pts, off_t dur, Float scaler)
 { 
@@ -4349,7 +4355,7 @@ static Float env_increment(mus_any *rd)
   return(((seg *)rd)->base);
 }
 
-static void env_reset (mus_any *ptr)
+static void env_reset(mus_any *ptr)
 {
   seg *gen = (seg *)ptr;
   gen->current_value = gen->init_y;
@@ -4678,7 +4684,8 @@ mus_any *mus_frame_multiply(mus_any *uf1, mus_any *uf2, mus_any *ures)
   if (f2->chans < chans) chans = f2->chans;
   if (res)
     {
-      if (res->chans < chans) chans = res->chans;
+      if (res->chans < chans) 
+	chans = res->chans;
     }
   else res = (mus_frame *)mus_make_empty_frame(chans);
   for (i = 0; i < chans; i++) 
@@ -4694,7 +4701,8 @@ mus_any *mus_frame_scale(mus_any *uf1, Float scl, mus_any *ures)
   chans = f1->chans;
   if (res)
     {
-      if (res->chans < chans) chans = res->chans;
+      if (res->chans < chans) 
+	chans = res->chans;
     }
   else res = (mus_frame *)mus_make_empty_frame(chans);
   for (i = 0; i < chans; i++) 
@@ -4956,11 +4964,13 @@ static mus_any *frame_to_frame_right(mus_any *arg1, mus_any *arg2, mus_any *arg_
   mus_frame *out = (mus_frame *)arg_out;
   int i, in_chans, out_chans;
   in_chans = frame->chans;
-  if (in_chans > mix->chans) in_chans = mix->chans;
+  if (in_chans > mix->chans) 
+    in_chans = mix->chans;
   out_chans = mix->chans;
   if (out)
     {
-      if (out->chans < out_chans) out_chans = out->chans;
+      if (out->chans < out_chans) 
+	out_chans = out->chans;
     }
   else out = (mus_frame *)mus_make_empty_frame(out_chans);
   for (i = 0; i < out_chans; i++)
@@ -4981,11 +4991,13 @@ static mus_any *frame_to_frame_left(mus_any *arg1, mus_any *arg2, mus_any *arg_o
   mus_frame *out = (mus_frame *)arg_out;
   int i, in_chans, out_chans;
   in_chans = frame->chans;
-  if (in_chans > mix->chans) in_chans = mix->chans;
+  if (in_chans > mix->chans) 
+    in_chans = mix->chans;
   out_chans = mix->chans;
   if (out)
     {
-      if (out->chans < out_chans) out_chans = out->chans;
+      if (out->chans < out_chans) 
+	out_chans = out->chans;
     }
   else out = (mus_frame *)mus_make_empty_frame(out_chans);
   for (i = 0; i < out_chans; i++)
@@ -5016,7 +5028,8 @@ mus_any *mus_sample_to_frame(mus_any *f, Float in, mus_any *uout)
       chans = fr->chans;
       if (out)
 	{
-	  if (out->chans < chans) chans = out->chans;
+	  if (out->chans < chans) 
+	    chans = out->chans;
 	}
       else out = (mus_frame *)mus_make_empty_frame(chans);
       for (i = 0; i < chans; i++)
@@ -5032,7 +5045,8 @@ mus_any *mus_sample_to_frame(mus_any *f, Float in, mus_any *uout)
 	  chans = mx->chans;
 	  if (out)
 	    {
-	      if (out->chans < chans) chans = out->chans;
+	      if (out->chans < chans) 
+		chans = out->chans;
 	    }
 	  else out = (mus_frame *)mus_make_empty_frame(chans);
 	  for (i = 0; i < chans; i++)
@@ -5053,7 +5067,8 @@ Float mus_frame_to_sample(mus_any *f, mus_any *uin)
       mus_frame *fr;
       fr = (mus_frame *)f;
       chans = in->chans;
-      if (fr->chans < chans) chans = fr->chans;
+      if (fr->chans < chans) 
+	chans = fr->chans;
       for (i = 0; i < chans; i++)
 	val += (in->vals[i] * fr->vals[i]); 
     }
@@ -5064,7 +5079,8 @@ Float mus_frame_to_sample(mus_any *f, mus_any *uin)
 	  mus_mixer *mx;
 	  mx = (mus_mixer *)f;
 	  chans = in->chans;
-	  if (mx->chans < chans) chans = mx->chans;
+	  if (mx->chans < chans) 
+	    chans = mx->chans;
 	  for (i = 0; i < chans; i++)
 	    val += (in->vals[i] * mx->vals[i][0]);
 	}
@@ -5080,10 +5096,12 @@ mus_any *mus_mixer_add(mus_any *uf1, mus_any *uf2, mus_any *ures)
   mus_mixer *f2 = (mus_mixer *)uf2;
   mus_mixer *res = (mus_mixer *)ures;
   chans = f1->chans;
-  if (f2->chans < chans) chans = f2->chans;
+  if (f2->chans < chans) 
+    chans = f2->chans;
   if (res)
     {
-      if (res->chans < chans) chans = res->chans;
+      if (res->chans < chans) 
+	chans = res->chans;
     }
   else res = (mus_mixer *)mus_make_empty_mixer(chans);
   for (i = 0; i < chans; i++)
@@ -5099,10 +5117,12 @@ mus_any *mus_mixer_multiply(mus_any *uf1, mus_any *uf2, mus_any *ures)
   mus_mixer *f2 = (mus_mixer *)uf2;
   mus_mixer *res = (mus_mixer *)ures;
   chans = f1->chans;
-  if (f2->chans < chans) chans = f2->chans;
+  if (f2->chans < chans) 
+    chans = f2->chans;
   if (res)
     {
-      if (res->chans < chans) chans = res->chans;
+      if (res->chans < chans) 
+	chans = res->chans;
     }
   else res = (mus_mixer *)mus_make_empty_mixer(chans);
   for (i = 0; i < chans; i++)
@@ -5123,7 +5143,8 @@ mus_any *mus_mixer_scale(mus_any *uf1, Float scaler, mus_any *ures)
   chans = f1->chans;
   if (res)
     {
-      if (res->chans < chans) chans = res->chans;
+      if (res->chans < chans) 
+	chans = res->chans;
     }
   else res = (mus_mixer *)mus_make_empty_mixer(chans);
   for (i = 0; i < chans; i++)
@@ -5140,7 +5161,8 @@ mus_any *mus_mixer_offset(mus_any *uf1, Float offset, mus_any *ures)
   chans = f1->chans;
   if (res)
     {
-      if (res->chans < chans) chans = res->chans;
+      if (res->chans < chans) 
+	chans = res->chans;
     }
   else res = (mus_mixer *)mus_make_empty_mixer(chans);
   for (i = 0; i < chans; i++)
@@ -5572,7 +5594,9 @@ mus_any *mus_file_to_frame(mus_any *ptr, off_t samp, mus_any *uf)
   mus_frame *f;
   rdin *gen = (rdin *)ptr;
   int i;
-  if (uf == NULL) f = (mus_frame *)mus_make_empty_frame(gen->chans); else f = (mus_frame *)uf;
+  if (uf == NULL) 
+    f = (mus_frame *)mus_make_empty_frame(gen->chans); 
+  else f = (mus_frame *)uf;
   for (i = 0; i < gen->chans; i++) 
     f->vals[i] = mus_file_to_sample(ptr, samp, i);
   return((mus_any *)f);
@@ -5709,7 +5733,8 @@ static void flush_buffers(rdout *gen)
       mus_file_write(fd, 0, last, gen->chans, addbufs);
       if (size <= gen->out_end) size = gen->out_end + 1;
       mus_sound_close_output(fd, size * gen->chans * mus_bytes_per_sample(hdrfrm));
-      for (i = 0; i < gen->chans; i++) FREE(addbufs[i]);
+      for (i = 0; i < gen->chans; i++) 
+	FREE(addbufs[i]);
       FREE(addbufs);
     }
 }
@@ -5930,7 +5955,8 @@ mus_any *mus_frame_to_file(mus_any *ptr, off_t samp, mus_any *udata)
 	{
 	  int i, chans;
 	  chans = data->chans;
-	  if (gen->chans < chans) chans = gen->chans;
+	  if (gen->chans < chans) 
+	    chans = gen->chans;
 	  for (i = 0; i < chans; i++) 
 	    mus_sample_to_file(ptr, samp, i, data->vals[i]);
 	}
@@ -7036,7 +7062,7 @@ void mus_fftw(Float *rl, int n, int dir)
 #endif
 #endif
 
-static void mus_scramble (Float* rl, Float* im, int n)
+static void mus_scramble(Float* rl, Float* im, int n)
 {
   /* bit reversal */
 

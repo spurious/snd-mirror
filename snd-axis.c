@@ -17,7 +17,7 @@ typedef struct tick_descriptor {
   Float grid_scale;
 } tick_descriptor;
 
-static tick_descriptor *free_tick_descriptor (tick_descriptor *td)
+static tick_descriptor *free_tick_descriptor(tick_descriptor *td)
 {
   if (td)
     {
@@ -1550,6 +1550,7 @@ static XEN g_set_x_axis_label_reversed(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 
 /* TODO: how to implement rotate_text in OpenGL? */
 /*       Mesa/progs/xdemos/xuserotfont.c gets pixmap, then calls glBitmap: glBitmap(bitmapWidth, bitmapHeight, xOrig, yOrig, xStep, yStep, bm) */
+/*       then use that code in xrotfontdemo.c */
 
 static XEN g_y_axis_label(XEN snd, XEN chn, XEN ax)
 {

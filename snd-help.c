@@ -1199,7 +1199,7 @@ As option.  The output header type, data format,  and sampling rate can also be 
 are little-endian where relevant except for 'aifc' output.  If a file by the chosen name already exists \
 it is silently overwritten, unless that file is already open in Snd and has edits.  In that case,  \
 you'll be asked what to do.  If you want to be warned whenever a file is about to be overwritten by this \
-option, set the the variable " S_ask_before_overwrite " to #t. \
+option, set the variable " S_ask_before_overwrite " to #t. \
 If you give the current file name to Save As,  \
 any current edits will be saved and the current version in Snd will be updated (that is, in this \
 case, the edit tree is not preserved).",

@@ -1108,7 +1108,7 @@ static void display_channel_id(chan_info *cp, int height, int chans)
   #define SELECTION_FFT_LABEL_OFFSET -15
 #endif
 
-static void display_selection_transform_size (chan_info *cp, axis_info *fap)
+static void display_selection_transform_size(chan_info *cp, axis_info *fap)
 {
   int x0, y0;
   if (fap->height < 60) return;
@@ -3007,9 +3007,9 @@ static void make_axes(chan_info *cp, axis_info *ap, x_axis_style_t x_style, bool
 static void draw_graph_cursor(chan_info *cp);
 static void draw_sonogram_cursor(chan_info *cp);
 
-static void display_channel_data_with_size (chan_info *cp, 
-					    int width, int height, int offset, 
-					    bool just_fft, bool just_lisp, bool just_time)
+static void display_channel_data_with_size(chan_info *cp, 
+					   int width, int height, int offset, 
+					   bool just_fft, bool just_lisp, bool just_time)
 {
   /* this procedure is unnecessarily confusing! */
   snd_info *sp;

@@ -1,6 +1,6 @@
 #include "snd.h"
 
-void reflect_file_open_in_menu (void)
+void reflect_file_open_in_menu(void)
 {
   set_sensitive(file_close_menu(), true);
   set_sensitive(file_print_menu(), true);
@@ -23,7 +23,7 @@ void reflect_file_open_in_menu (void)
     }
 }
 
-void reflect_file_change_in_menu (void)
+void reflect_file_change_in_menu(void)
 {
   set_sensitive(file_save_menu(), true);
   set_sensitive(file_revert_menu(), true);
@@ -36,7 +36,7 @@ void reflect_file_change_in_menu (void)
     }
 }
 
-void reflect_file_lack_in_menu (void)
+void reflect_file_lack_in_menu(void)
 {
   set_sensitive(file_close_menu(), false);
   set_sensitive(file_save_as_menu(), false);
@@ -73,17 +73,17 @@ void reflect_equalize_panes_in_menu(bool on)
 #endif
 }
 
-static bool find_any_edits (chan_info *cp, void *ignore)
+static bool find_any_edits(chan_info *cp, void *ignore)
 {
   return(cp->edit_ctr > 0);
 }
 
-static bool find_any_possible_edits (chan_info *cp, void *ignore)
+static bool find_any_possible_edits(chan_info *cp, void *ignore)
 {
   return(cp->edit_size > 0);
 }
 
-void reflect_file_revert_in_menu (void)
+void reflect_file_revert_in_menu(void)
 {
   bool editing;
   editing = map_over_chans(find_any_edits, NULL);
@@ -102,7 +102,7 @@ void reflect_file_revert_in_menu (void)
   if (popup_menu_exists()) set_sensitive(popup_redo_menu(), true);
 }
 
-void reflect_file_save_in_menu (void)
+void reflect_file_save_in_menu(void)
 {
   bool editing;
   editing = map_over_chans(find_any_edits, NULL);
@@ -122,7 +122,7 @@ void reflect_file_save_in_menu (void)
   editing = map_over_chans(find_any_possible_edits, NULL);
 }
 
-void reflect_file_revert_in_label (snd_info *sp)
+void reflect_file_revert_in_label(snd_info *sp)
 {
   if (sp->sgx)
     {
@@ -139,7 +139,7 @@ void reflect_no_more_redo_in_menu(void)
   if (popup_menu_exists()) set_sensitive(popup_redo_menu(), false);
 }
 
-void reflect_edit_with_selection_in_menu (void)
+void reflect_edit_with_selection_in_menu(void)
 {
   set_sensitive(edit_cut_menu(), true);
   set_sensitive(edit_paste_menu(), true);
@@ -149,7 +149,7 @@ void reflect_edit_with_selection_in_menu (void)
   enved_reflect_selection(true);
 }
 
-void reflect_edit_without_selection_in_menu (void)
+void reflect_edit_without_selection_in_menu(void)
 {
   set_sensitive(edit_cut_menu(), false);
   set_sensitive(edit_paste_menu(), false);
@@ -302,11 +302,19 @@ void exit_from_menu(void)
 
 void save_options_from_menu(void)
 {
-  /*
-  if ((save_options() == 0) && 
-      (any_selected_sound()))
-    report_in_minibuffer(any_selected_sound(), _("saved options in %s"), ss->init_file);
-  */
+  FILE *fd;
+  fd = open_snd_init_file();
+  if (fd) save_snd_options(fd);
+  if ((!fd) || (FCLOSE(fd) != 0))
+    snd_error(_("save-options in %s: %s"),
+	      ss->init_file,
+	      snd_io_strerror());
+  else
+    {
+      if (any_selected_sound())
+	report_in_minibuffer(any_selected_sound(), 
+			     _("saved options in %s"), ss->init_file);
+    }
 }
 
 void save_state_from_menu(void)

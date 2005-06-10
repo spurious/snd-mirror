@@ -8,6 +8,8 @@ fgrep accomoda *.c
 fgrep decrip *.scm
 fgrep accomoda *.scm
 fgrep -e " #(" *.scm
+fgrep -e "the the " *.c
+fgrep -e "the the " *.html
 va.scm
 
 echo ' -------------------------------- basic configure test -------------------------------- '

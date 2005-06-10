@@ -1170,7 +1170,7 @@ static const char *sndlib_format_to_aifc_name(int format)
     }
 }
 
-static int write_aif_header (int chan, int wsrate, int wchans, int siz, int format, const char *comment, int len, bool aifc_header)
+static int write_aif_header(int chan, int wsrate, int wchans, int siz, int format, const char *comment, int len, bool aifc_header)
 {
   /* we write the simplest possible AIFC header: AIFC | COMM | APPL-MUS_ if needed | SSND eof. */
   /* the assumption being that we're going to be appending sound data once the header is out   */
@@ -1597,7 +1597,7 @@ static int read_riff_header(const char *filename, int chan)
   return(MUS_NO_ERROR);
 }
 
-static int write_riff_header (int chan, int wsrate, int wchans, int siz, int format, const char *comment, int len)
+static int write_riff_header(int chan, int wsrate, int wchans, int siz, int format, const char *comment, int len)
 {
   int i, j, lenhdr, extra;
   off_t offset, curend;
@@ -2275,7 +2275,7 @@ static int read_nist_header(const char *filename, int chan)
   return(MUS_NO_ERROR);
 }
 
-static int write_nist_header (int chan, int wsrate, int wchans, int siz, int format)
+static int write_nist_header(int chan, int wsrate, int wchans, int siz, int format)
 {
   char *header;
   int datum;
@@ -3213,7 +3213,7 @@ static int read_esps_header(const char *filename, int chan)
 
 static int inrs_srates[NINRS] = {6500, 6667, 8000, 10000, 12000, 16000, 20000};
 
-static int read_inrs_header (const char *filename, int chan, int loc)
+static int read_inrs_header(const char *filename, int chan, int loc)
 {
   true_file_length = SEEK_FILE_LENGTH(chan);
   comment_start = 6;

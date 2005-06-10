@@ -1948,7 +1948,7 @@ XEN snd_no_such_sound_error(const char *caller, XEN n)
 
 static XEN g_sound_p(XEN snd_n)
 {
-  #define H_sound_p "(" S_sound_p " (index 0)): #t if sound associated with index is active (accessible)"
+  #define H_sound_p "(" S_sound_p " (index 0)): #t if sound associated with 'index' is active (accessible)"
   snd_info *sp;
   sp = get_sp(snd_n, PLAYERS_OK);
   return(C_TO_XEN_BOOLEAN((sp) && 
@@ -2792,7 +2792,8 @@ static XEN name_reversed(XEN arg1, XEN arg2) \
 
 static XEN g_sync(XEN snd_n) 
 {
-  #define H_sync "(" S_sync " (snd #f)): snd's sync value (0 = no sync)"
+  #define H_sync "(" S_sync " (snd #f)): snd's sync value (0 = no sync).  Some editing operations \
+are applied to all sounds sharing the sync value of the selected sound."
   return(sound_get(snd_n, SP_SYNC, S_sync));
 }
 
