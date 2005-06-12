@@ -646,6 +646,29 @@ size_t jack_ringbuffer_write_space(const jack_ringbuffer_t *rb);
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
+#!
+;;Simple sorting scheme for running procfuncs: (too simple?)
+
+struct procfuncs *sorted=procfuncs.pop(0)
+struct procfuncs *unsorted=procfuncs
+struct procfuncs *next
+
+while(unsorted):
+  next=unsorted.next
+  while(sorted):
+    when any of the write-buses in unserted = any of the read-buses in sorted:
+       unsorted.put_before(sorted)
+       goto is_sorted
+    sorted=sorted.next
+  unsorted.put_at_tail(sorted)
+  is_sorted:
+  unsorted=next
+
+procfuncs=sorted
+
+;;Can this be done more efficiently? And in case, is it necessary?
+!#
+
 
 (define-ec-struct <RT_Event>
   <int> time
@@ -654,10 +677,16 @@ size_t jack_ringbuffer_write_space(const jack_ringbuffer_t *rb);
   <void-*> arg
   )
 
-;; (The double linked-list operations on procfunc can be optimized.)
+;; (The double linked-list operations on procfunc can be optimized. (no point regarding cpu-use, but perhaps for readability...))
 (define-ec-struct <RT_Procfunc>
   <struct-RT_Procfunc-*> next
   <struct-RT_Procfunc-*> prev
+
+  ;; <int> num_read_buses
+  ;; <struct-rt_bus-**> read_buses
+  ;; <int> num_write_buses
+  ;; <struct-rt_bus-**> write_buses
+
   <int> visitors
   <void-*> func
   <void-*> arg

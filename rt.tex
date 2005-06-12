@@ -161,7 +161,7 @@ A sinus is/should be heard for three seconds.
 2.
 
 \begin{schemedisplay}
-(define-rt (fib n)
+(define-rt2 (fib n)
   (if (< n 2)
       n
       (+ (fib (- n 1))
@@ -350,17 +350,6 @@ Same as rt-compile
 
 %%%%%
 
-\item[\scheme|(define-rt ...)|] \hspace{\stretch{1}} Macro \newline
-  
-    $ $ \begin{schemedisplay}
-           (define-rt (a b c)
-	     (* b c))
-           (a 2 3)
-           => 6.0
-    \end{schemedisplay}
-
-%%%%%
-
 \item[\scheme|(rt-safety ...)|] \hspace{\stretch{1}} Setter function \newline
   
 
@@ -448,6 +437,7 @@ The \scheme|<realtime>| class provides the following methods:
   Stops playing \scheme|end| seconds into the future from the current time. Default value for \scheme|end| is 0}
 
 \end{itemize}
+
 
 
 \subsection{Various}
@@ -624,6 +614,23 @@ The following code:
 (Note, I manually had to add \scheme|(declare (<int> b))| to make it compile
 because of a bug in the compiler.)
 
+
+
+\subsection{Functions}
+
+\begin{schemedisplay}
+(define-rt (add-really a b)
+  (+ a b))
+
+(define-rt (add a b)
+  (add-really a b))
+
+(rt-funcall (rt-c (lambda ()
+		    (add 2 3))))
+=> 5
+\end{schemedisplay}
+
+Optional, rest or keyword arguments are not supported.
 
 
 
@@ -1676,6 +1683,8 @@ For now, you can order the execution by using the fact that instances are always
 %\section{Credits}
 \newpage
 \section{History}
+
+09.06.2005: Redefined \scheme|define-rt| to define rt-functions instead of guile-functions.
 
 07.06.2005: Added setters for buses, introducing a general patching mechanism. Very nice I think.
 

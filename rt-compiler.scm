@@ -2680,7 +2680,7 @@ and run simple lisp[4] functions.
 
 ;; rt-type         -> Name used in rt
 ;; checkfunc       -> Guile-function to check if type is correct.
-;; c-transformfunc -> Name of a rt-function (or macro) that converts an SCM version of the type to something that can be used in rt.
+;; c-transformfunc -> Name of a rt-ec-function (or macro) that converts an SCM version of the type to something that can be used in rt.
 ;;                    (For example when using vector-ref, list-ref, car, cdr, etc.)
 ;;                    This function must call rt-error if the variable can not be converted to a compatible type.
 ;; transformfunc   -> A Guile function that is run on the variable before putting it to rt. Type is already checked with checkfunc.
@@ -3035,11 +3035,29 @@ and run simple lisp[4] functions.
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;; rt-functions ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;; define-rt ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;;rt-functions are eval-c functions which are inserted into the compiled functions
+(define rt-functions (make-hash-table 219))
+
+(define-macro (define-rt def . body)
+  (rt-clear-cache!)
+  (hashq-set! rt-functions
+	      (car def)
+	      `(define ,def
+		 ,@body)))
+
+
+
+  
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;; rt-ec-functions ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;rt-ec-functions are eval-c functions which are inserted into the compiled functions
 ;;when needed.
 
 ;; (rt-find-all-funcs '(lambda () (+ (- (aiai 90)))) -> '(+ - aiai)
@@ -3064,32 +3082,34 @@ and run simple lisp[4] functions.
   ret)
 
 
-(define rt-functions '())
+(define rt-ec-functions '())
 
-(define-macro (rt-function ret-type name body)
+(define-macro (rt-ec-function ret-type name body)
   (rt-clear-cache!)
   (let ((dependents (rt-find-all-funcs body))
-	(old (assq name rt-functions)))
+	(old (assq name rt-ec-functions)))
     (if old
-	`(set-cdr! (assq ',name rt-functions) (list '(,@dependents)
+	`(set-cdr! (assq ',name rt-ec-functions) (list '(,@dependents)
 						  '(,ret-type ,name ,body)))
-	`(set! rt-functions (append! rt-functions
+	`(set! rt-ec-functions (append! rt-ec-functions
 				     (list (list ',name
 						 '(,@dependents)
 						 '(,ret-type ,name ,body))))))))
 
 (begin
   
-  (rt-function <void> rt_error (lambda (,rt-globalvardecl (<char-*> msg))
+  (rt-ec-function <nonstatic-void> rt_error (lambda (,rt-globalvardecl (<char-*> msg))
 				 (fprintf stderr (string "RT RUNTIME ERROR: %s. (Removing instrument)\\n") msg)
 				 (set! rt_globals->remove_me 1)
 				 ,(if (rt-is-safety?)
 				      '(longjmp rt_globals->engine->error_jmp 5)
 				      "/* */")))
-  (rt-renamefunc rt-error rt_error <void> (<char-*>) #:needs-rt-globals #t)
+  (<rt-func> 'rt_error '<void> '(<char-*>) #:needs-rt-globals #t)
+  (define-macro (rt-error . rest)
+    `(rt_error ,@rest))
   
   ;; scm_to_double
-  (rt-function <double> rt_scm_to_double (lambda (,rt-globalvardecl (<SCM> name))
+  (rt-ec-function <double> rt_scm_to_double (lambda (,rt-globalvardecl (<SCM> name))
 					   (if (SCM_INUMP name)
 					       (return (SCM_INUM name))
 					       (if (SCM_REALP name)
@@ -3102,7 +3122,7 @@ and run simple lisp[4] functions.
   
 
   ;;; scm_to_float
-  (rt-function <float> rt_scm_to_float (lambda (,rt-globalvardecl (<SCM> name))
+  (rt-ec-function <float> rt_scm_to_float (lambda (,rt-globalvardecl (<SCM> name))
 					 (if (SCM_INUMP name)
 					     (return (SCM_INUM name))
 					     (if (SCM_REALP name)
@@ -3114,7 +3134,7 @@ and run simple lisp[4] functions.
   
   
   ;; scm_to_int
-  (rt-function <int> rt_scm_to_int (lambda (,rt-globalvardecl (<SCM> name))
+  (rt-ec-function <int> rt_scm_to_int (lambda (,rt-globalvardecl (<SCM> name))
 				     (if (SCM_INUMP name)
 					 (return (SCM_INUM name))
 					 (if (SCM_REALP name)
@@ -3126,7 +3146,7 @@ and run simple lisp[4] functions.
 
 
   ;; scm_to_mus_any
-  (rt-function <mus_any-*> rt_scm_to_mus_any (lambda (,rt-globalvardecl (<SCM> name))
+  (rt-ec-function <mus_any-*> rt_scm_to_mus_any (lambda (,rt-globalvardecl (<SCM> name))
 					       (if (mus_xen_p name)
 						   (return (cast <void-*> (XEN_TO_MUS_ANY name)))
 						   (if (not (SCM_SMOB_PREDICATE rt_readin_tag name))
@@ -3139,7 +3159,7 @@ and run simple lisp[4] functions.
 
 
   ;; create-thread
-  (rt-function <void> rt_create_thread (lambda ((<ThreadFunc> func))
+  (rt-ec-function <void> rt_create_thread (lambda ((<ThreadFunc> func))
 					 "pthread_t _rt_thread={0}"
 					 (<int> isrunning 0)
 					 (<void-*> threadfunc (lambda ((<void-*> arg))
@@ -3156,7 +3176,7 @@ and run simple lisp[4] functions.
     `(rt_create_thread ,thunk))
   
   
-  (rt-function <void-*> rt_alloc (lambda (,rt-globalvardecl (<int> size))
+  (rt-ec-function <void-*> rt_alloc (lambda (,rt-globalvardecl (<int> size))
 				   (let* ((ret <void-*> rt_globals->allocplace)
 					  (alignment <int> (sizeof <long>))
 					  (new <char-*> (+= rt_globals->allocplace size)))
@@ -3168,7 +3188,7 @@ and run simple lisp[4] functions.
 					  "/* */")
 				     (return ret))))
 
-  (rt-function <void-*> rt_alloc_zero (lambda (,rt-globalvardecl (<int> size))
+  (rt-ec-function <void-*> rt_alloc_zero (lambda (,rt-globalvardecl (<int> size))
 					(let* ((ret <void-*> (rt_alloc rt_globals size)))
 					  (memset ret 0 size)
 					  (return ret))))
@@ -4783,7 +4803,7 @@ and run simple lisp[4] functions.
 	   )
 
 
-(rt-function <struct-mus_rt_readin-*> rt_scm_to_rt_readin
+(rt-ec-function <struct-mus_rt_readin-*> rt_scm_to_rt_readin
 	     (lambda (,rt-globalvardecl (<SCM> name))
 	       ,(if (rt-is-safety?)
 		    `(if (not (SCM_SMOB_PREDICATE rt_readin_tag name))
@@ -5176,7 +5196,7 @@ setter!-rt-mus-location/mus_location
 
 
 ;; SCM->ladspa converter
-(rt-function <struct-mus_rt_readin-*> rt_scm_to_ladspa
+(rt-ec-function <struct-mus_rt_readin-*> rt_scm_to_ladspa
 	     (lambda (,rt-globalvardecl (<SCM> name))
 	       ,(if (rt-is-safety?)
 		    `(if (not (SCM_SMOB_PREDICATE rt_ladspa_tag name))
@@ -5198,7 +5218,7 @@ setter!-rt-mus-location/mus_location
 
 ;; The ladspa-run function, ladspa-run calls rt_ladspa_run which replace data in the vct.
 ;; (Yes, some kind of general buffer mechanism should be implemented. This is inefficient.)
-(rt-function <vct-*> rt_ladspa_run
+(rt-ec-function <vct-*> rt_ladspa_run
 	     (lambda ((<struct-mus_rt_ladspa-*> ladspa)
 		      (<vct-*> input))
 	       (let* ((minin <int> (MIN ladspa->num_audio_ins input->length)))
@@ -5219,7 +5239,7 @@ setter!-rt-mus-location/mus_location
 
 
 ;; The ladspa-set function
-(rt-function <void> rt_ladspa_set
+(rt-ec-function <void> rt_ladspa_set
 	     (lambda ((<struct-mus_rt_ladspa-*> ladspa)
 		      (<int> controlnum)
 		      (<float> val))
@@ -5240,7 +5260,7 @@ setter!-rt-mus-location/mus_location
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
-(rt-function <struct-mus_rt_readin-*> rt_scm_to_rt_bus
+(rt-ec-function <struct-mus_rt_readin-*> rt_scm_to_rt_bus
 	     (lambda (,rt-globalvardecl (<SCM> name))
 	       ,(if (rt-is-safety?)
 		    `(if (not (SCM_SMOB_PREDICATE rt_bus_tag name))
@@ -5273,7 +5293,7 @@ setter!-rt-mus-location/mus_location
 	 (+= data->val ,val))
      (set! data->last_written_to time)))
 
-(rt-function <void> rt_write_bus (lambda (,rt-globalvardecl (<struct-rt_bus-*> bus) (<int> ch) (<float> val))
+(rt-ec-function <void> rt_write_bus (lambda (,rt-globalvardecl (<struct-rt_bus-*> bus) (<int> ch) (<float> val))
 				   ,(if (rt-is-safety?)
 					'(if (< ch 0)
 					     (rt_error rt_globals (string "Channel number for write-bus less than zero")))
@@ -5288,7 +5308,7 @@ setter!-rt-mus-location/mus_location
 
 (<rt-func> 'rt_write_bus '<void> '(<bus> <int> <float>) #:needs-rt-globals #t)
 
-(rt-function <void> rt_write_bus_vct (lambda (,rt-globalvardecl (<struct-rt_bus-*> bus) (<vct-*> vct))
+(rt-ec-function <void> rt_write_bus_vct (lambda (,rt-globalvardecl (<struct-rt_bus-*> bus) (<vct-*> vct))
 				       (<float-*> vctdata vct->data)
 				       (<int> end (EC_MIN vct->length bus->num_channels))
 				       (<int> time rt_globals->time)
@@ -5300,7 +5320,7 @@ setter!-rt-mus-location/mus_location
 	     
 (<rt-func> 'rt_write_bus_vct '<void> '(<bus> <vct-*>) #:needs-rt-globals #t)
 
-(rt-function <float> rt_read_bus (lambda (,rt-globalvardecl (<struct-rt_bus-*> bus) (<int> ch))
+(rt-ec-function <float> rt_read_bus (lambda (,rt-globalvardecl (<struct-rt_bus-*> bus) (<int> ch))
 				   ,(if (rt-is-safety?)
 					'(if (< ch 0)
 					     (rt_error rt_globals (string "Channel number for write-bus less than zero")))
@@ -5316,7 +5336,7 @@ setter!-rt-mus-location/mus_location
 						     data->val)))))
 (<rt-func> 'rt_read_bus '<float> '(<bus> <int>) #:needs-rt-globals #t)
 
-(rt-function <vct-*> rt_read_bus_vct (lambda (,rt-globalvardecl (<struct-rt_bus-*> bus))
+(rt-ec-function <vct-*> rt_read_bus_vct (lambda (,rt-globalvardecl (<struct-rt_bus-*> bus))
 				       (let* ((vct <vct-*> (rt_alloc_vct rt_globals bus->num_channels))
 					      (vctdata <float-*> vct->data)
 					      (time <int> rt_globals->time_before)
@@ -5424,7 +5444,7 @@ setter!-rt-mus-location/mus_location
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; scm_to_vct
-(rt-function <vct-*> rt_scm_to_vct (lambda (,rt-globalvardecl (<SCM> name))
+(rt-ec-function <vct-*> rt_scm_to_vct (lambda (,rt-globalvardecl (<SCM> name))
 				     ,(if (rt-is-safety?)
 					  `(if (vct_p name)
 					       (return (TO_VCT name))
@@ -5436,7 +5456,7 @@ setter!-rt-mus-location/mus_location
 
 
 
-(rt-function <vct-*> rt_alloc_vct (lambda (,rt-globalvardecl (<int> length))
+(rt-ec-function <vct-*> rt_alloc_vct (lambda (,rt-globalvardecl (<int> length))
 				    (let* ((ret <vct-*> (rt_alloc rt_globals (sizeof <vct>)))
 					   (floats <float-*> (rt_alloc rt_globals (* (sizeof <float>) length))))
 				      (set! ret->length length)
@@ -5446,7 +5466,7 @@ setter!-rt-mus-location/mus_location
   
 
 
-(rt-function <vct-*> rt_vct_scale (lambda ((<vct-*> vct) (<float> scl))
+(rt-ec-function <vct-*> rt_vct_scale (lambda ((<vct-*> vct) (<float> scl))
 				    (<int> lokke)
 				    "for(lokke=0;lokke<vct->length;lokke++){"
 				    (*= vct->data[lokke] scl)
@@ -5454,7 +5474,7 @@ setter!-rt-mus-location/mus_location
 				    (return vct)))
 (<rt-func> 'rt_vct_scale '<vct-*> '(<vct-*> <float>))
 
-(rt-function <vct-*> rt_vct_offset (lambda ((<vct-*> vct) (<float> scl))
+(rt-ec-function <vct-*> rt_vct_offset (lambda ((<vct-*> vct) (<float> scl))
 				     (<int> lokke)
 				     "for(lokke=0;lokke<vct->length;lokke++){"
 				     (+= vct->data[lokke] scl)
@@ -5462,7 +5482,7 @@ setter!-rt-mus-location/mus_location
 				     (return vct)))
 (<rt-func> 'rt_vct_offset '<vct-*> '(<vct-*> <float>))
 
-(rt-function <vct-*> rt_vct_fill (lambda ((<vct-*> vct) (<float> scl))
+(rt-ec-function <vct-*> rt_vct_fill (lambda ((<vct-*> vct) (<float> scl))
 				   (<int> lokke)
 				   "for(lokke=0;lokke<vct->length;lokke++){"
 				   (set! vct->data[lokke] scl)
@@ -5657,6 +5677,23 @@ setter!-rt-mus-location/mus_location
        (if (not term)
 	   (return #f))
 
+       ;; Inserted used functions
+       (let ((function-names '())
+	     (functions '()))
+	 (define (add-func funcname)
+	   (if (not (member funcname function-names))
+	       (let ((func (hashq-ref rt-functions funcname)))
+		 (if func
+		     (let ((expanded-func (rt-macroexpand func)))
+		       (set! function-names (cons funcname function-names))    ;; Add function-name to the list of included function
+		       (for-each add-func (rt-find-all-funcs expanded-func))
+		       (set! functions (cons expanded-func functions)))))))     ;; Add function-body to be included.
+	 (for-each add-func (rt-find-all-funcs term))
+	 (set! term `(,(car term) ,(cadr term)
+		      ,@(reverse! functions)
+		      ,@(cddr term))))
+
+	 
        (rt-print "*RT: Checking syntax")
 	      
        (if (not (rt-check-syntax term))
@@ -5683,7 +5720,8 @@ setter!-rt-mus-location/mus_location
        (set! term (rt-let*-lifter term))
        (if (not term)
 	   (return #f))
-       
+
+       (c-display term)
        (rt-print "*RT: Inserting types" term)
        
        (set! insert-types-res (rt-insert-types term renamed-vars))
@@ -5931,13 +5969,13 @@ setter!-rt-mus-location/mus_location
 		   "typedef float (*ReadinFunc)(struct mus_rt_readin*)"
 
 
-		   ;; Finding needed rt-functions to include in this file.
+		   ;; Finding needed rt-ec-functions to include in this file.
 		   ,@(let ((function-names '())
 			   (functions '()))
 
 		       (define (add-func funcname)
 			 (if (not (member funcname function-names))
-			     (let ((func (assq funcname rt-functions)))
+			     (let ((func (assq funcname rt-ec-functions)))
 			       (if func
 				   (begin
 				     (set! function-names (cons funcname function-names))    ;; Add function-name to the list of included function
@@ -5945,7 +5983,7 @@ setter!-rt-mus-location/mus_location
 				     (set! functions (cons (caddr func) functions)))))))     ;; Add function-body to be included.
 
 		       ;;(c-display "all-funcs:" (rt-find-all-funcs (cdr term)))
-		       (for-each add-func (rt-find-all-funcs (cdr term)))
+		       (for-each add-func (cons 'rt_error (rt-find-all-funcs (cdr term))))
 		       (reverse! functions))
 		   
 		   ;; Inserting all inner functions. All global variables have been put into the rt_global struct, and is therefore not used here.
@@ -6122,7 +6160,7 @@ setter!-rt-mus-location/mus_location
 	   (tak (- y 1) z x)
 	   (tak (- z 1) x y))))
 
-(define-rt (tak-rt x y z)
+(define-rt2 (tak-rt x y z)
   (declare (<int> x y z))
   (if (not (< y x))
       z
@@ -6142,7 +6180,7 @@ setter!-rt-mus-location/mus_location
 		    (move-them (- n 1) from helper to)
 		    (move-them (- n 1) helper to from))))))
     (move-them n 0 1 2)))
-(define-rt (hanoi-rt n)
+(define-rt2 (hanoi-rt n)
   (letrec ((move-them (lambda (n from to helper)
 			(declare (<int> n))
 			(if (> n 1)
@@ -6200,6 +6238,7 @@ setter!-rt-mus-location/mus_location
 				      (isindefined? (defined? 'in-bus env)))
 				  `(let ()
 				     (let* ((extra-gc-vars (make-hash-table 19))
+					    (buses (make-hash-table 19))
 					    (procarg (,make-globals-func (-> *rt-engine* engine-c)))
 					    ;;(isoutdefined? (defined? 'out-bus env))
 					    (ret (<realtime> (,rt-funcname)
@@ -6418,7 +6457,7 @@ setter!-rt-mus-location/mus_location
 	`(lambda ,(cadr term)
 	   (,(cadr das-rt) ,@(cadr term))))))
 
-(define-macro (define-rt def . body)
+(define-macro (define-rt2 def . body)
   `(define ,(car def) (rt-func (lambda ,(cdr def)
 				 (define ,def
 				   ,@body)
