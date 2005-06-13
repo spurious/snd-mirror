@@ -640,7 +640,7 @@ static void read_snd_opened_sound_file(snd_info *sp)
   newname = snd_opened_sound_file_name(sp);
   if (file_write_date(newname) >= sp->write_date)
     {
-#if HAVE_GUILE
+#if HAVE_SCHEME
       /* this file shouldn't be left in the load list -- it will confuse the save-state process 
        *   (*snd-opened-sound* is defined here but not at the saved state file reload point)
        * *snd-loaded-files* is the variable name (snd-xen.c), so we save and restore its value if possible 
@@ -742,7 +742,8 @@ static snd_info *snd_open_file_1 (const char *filename, bool select, bool read_o
     {
 #if HAVE_RUBY
       XEN_VARIABLE_SET(S_snd_opened_sound, C_TO_XEN_INT(sp->index));
-#else
+#endif
+#if HAVE_SCHEME
       XEN_VARIABLE_SET(snd_opened_sound, C_TO_XEN_INT(sp->index));
       XEN_VARIABLE_SET(snd_memo_sound, C_TO_XEN_INT(sp->index)); /* backwards compatibility */
 #endif
@@ -1664,17 +1665,20 @@ int find_prevfile_regrow(const char *shortname)
 
 void save_prevlist(FILE *fd)
 {
+#if HAVE_EXTENSION_LANGUAGE
   int i;
   if (prevfullnames)
     for (i = 0; i <= prevfile_end; i++)
 #if HAVE_RUBY
       fprintf(fd, "%s \"%s\"\n",
 	      xen_scheme_procedure_to_ruby(S_preload_file),
-#else
+#endif
+#if HAVE_SCHEME
       fprintf(fd, "(%s \"%s\")\n",
 	      S_preload_file,
 #endif
 	      prevfullnames[i]);
+#endif
 }
 
 void clear_prevlist(void)

@@ -159,8 +159,8 @@ void save_find_dialog_state(FILE *fd)
 	    fprintf(fd, "(%s #t \"%s\")\n", S_find_dialog, ss->search_expr);
 	  else fprintf(fd, "(%s #t)\n", S_find_dialog);
 	}
-#else
-  #if HAVE_RUBY
+#endif
+#if HAVE_RUBY
       if (text)
 	fprintf(fd, "%s(true, \"%s\")\n", TO_PROC_NAME(S_find_dialog), text);
       else
@@ -169,7 +169,6 @@ void save_find_dialog_state(FILE *fd)
 	    fprintf(fd, "%s(true, \"%s\")\n", TO_PROC_NAME(S_find_dialog), ss->search_expr);
 	  else fprintf(fd, "%s(true)\n", TO_PROC_NAME(S_find_dialog));
 	}
-  #endif
 #endif
       if (text) g_free(text);
     }

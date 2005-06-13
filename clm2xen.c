@@ -845,7 +845,7 @@ static void mus_xen_free(mus_xen *ms)
 
 XEN_MAKE_OBJECT_FREE_PROCEDURE(mus_xen, free_mus_xen, mus_xen_free)
 
-#if HAVE_GUILE
+#if HAVE_SCHEME
 static int print_mus_xen(XEN obj, XEN port, scm_print_state *pstate)
 {
   XEN_PUTS("#<", port);
@@ -6105,7 +6105,7 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_frame_p,        g_frame_p_w,        1, 0, 0, H_frame_p);
   XEN_DEFINE_PROCEDURE(S_frame_add,      g_frame_add_w,      2, 1, 0, H_frame_add);
   XEN_DEFINE_PROCEDURE(S_frame_multiply, g_frame_multiply_w, 2, 1, 0, H_frame_multiply);
-#if HAVE_GUILE
+#if HAVE_SCHEME
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_frame_ref, g_frame_ref_w, H_frame_ref, S_setB S_frame_ref, g_set_frame_ref_w,  2, 0, 3, 0);
 #else
   XEN_DEFINE_PROCEDURE(S_frame_ref,      g_frame_ref_w,      2, 0, 0, H_frame_ref);
@@ -6118,7 +6118,7 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_mixer_multiply,    g_mixer_multiply_w,    2, 1, 0, H_mixer_multiply);
   XEN_DEFINE_PROCEDURE(S_mixer_add,         g_mixer_add_w,         2, 1, 0, H_mixer_add);
   XEN_DEFINE_PROCEDURE(S_make_scalar_mixer, g_make_scalar_mixer_w, 2, 0, 0, H_make_scalar_mixer);
-#if HAVE_GUILE
+#if HAVE_SCHEME
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mixer_ref, g_mixer_ref_w, H_mixer_ref, S_setB S_mixer_ref, g_set_mixer_ref_w,  3, 0, 4, 0);
 #else
   XEN_DEFINE_PROCEDURE(S_mixer_ref,         g_mixer_ref_w,         3, 0, 0, H_mixer_ref);
@@ -6191,13 +6191,13 @@ the closer the radius is to 1.0, the narrower the resonance."
   XEN_DEFINE_PROCEDURE(S_make_locsig,       g_make_locsig_w,  0, 0, 1, H_make_locsig);
   XEN_DEFINE_PROCEDURE(S_move_locsig,       g_move_locsig_w,  3, 0, 0, H_move_locsig);
   XEN_DEFINE_PROCEDURE(S_mus_channels,      g_mus_channels_w, 1, 0, 0, H_mus_channels);
-#if HAVE_GUILE
+#if HAVE_SCHEME
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_locsig_ref, g_locsig_ref_w, H_locsig_ref, S_setB S_locsig_ref, g_locsig_set_w,  2, 0, 3, 0);
 #else
   XEN_DEFINE_PROCEDURE(S_locsig_ref,        g_locsig_ref_w,   2, 0, 0, H_locsig_ref);
 #endif
   XEN_DEFINE_PROCEDURE(S_locsig_set,        g_locsig_set_w,   3, 0, 0, H_locsig_set);
-#if HAVE_GUILE
+#if HAVE_SCHEME
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_locsig_reverb_ref, g_locsig_reverb_ref_w, H_locsig_reverb_ref, 
 				   S_locsig_reverb_set, g_locsig_reverb_set_w,  2, 0, 3, 0);
 #else

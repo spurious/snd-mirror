@@ -655,7 +655,7 @@ void g_init_listener(void)
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_listener_prompt, g_listener_prompt_w, H_listener_prompt,
 				   S_setB S_listener_prompt, g_set_listener_prompt_w,  0, 0, 1, 0);
 
-#if HAVE_GUILE
+#if HAVE_SCHEME
   #define H_read_hook S_read_hook " (text): called each time a line is typed into the listener (triggered by the carriage return). \
 If it returns #t, Snd assumes you've dealt the text yourself, and does not try to evaluate it. \n\
 (define (read-listener-line prompt) \n\
@@ -665,7 +665,8 @@ If it returns #t, Snd assumes you've dealt the text yourself, and does not try t
     (do () ((or (" S_c_g ") res))) \n\
     (reset-hook! " S_read_hook ") \n\
     res))"
-#else
+#endif
+#if HAVE_RUBY
   #define H_read_hook S_read_hook " (text): called each time a line is typed into the listener (triggered by the carriage return). \
 If it returns true, Snd assumes you've dealt the text yourself, and does not try to evaluate it."
 #endif

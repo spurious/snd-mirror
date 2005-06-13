@@ -313,15 +313,15 @@ enum {MUS_NO_ERROR, MUS_NO_FREQUENCY, MUS_NO_PHASE, MUS_NO_GEN, MUS_NO_LENGTH,
 #endif 
 
 #ifndef S_setB
-#if HAVE_RUBY
-  #define S_setB "set_"
-#else
+  #if HAVE_RUBY
+    #define S_setB "set_"
+  #endif
   #if HAVE_SCHEME
     #define S_setB "set! "
-  #else
+  #endif
+  #if (!HAVE_EXTENSION_LANGUAGE)
     #define S_setB "set-"
   #endif
-#endif
 #endif
 
 #define MUS_LOOP_INFO_SIZE 8

@@ -119,6 +119,20 @@ echo ' '
 rm -f sndinfo
 make sndinfo
 ./sndinfo test.snd
+make allclean
+echo ' --without-guile --without-ruby --with-gtk --with-gl '
+./configure --quiet --without-guile --without-ruby --with-gtk --with-gl
+make
+echo ' '
+echo ' '
+./snd --version
+make allclean
+echo ' --without-guile --without-ruby --with-just-gl '
+./configure --quiet --without-guile --without-ruby --with-just-gl
+make
+echo ' '
+echo ' '
+./snd --version
 
 echo ' '
 echo ' -------------------------------- static gsl -------------------------------- '

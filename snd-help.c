@@ -154,7 +154,7 @@ static void main_snd_help(const char *subject, ...)
 static char *xm_version(void)
 {
   XEN xm_val = XEN_FALSE;
-#if HAVE_GUILE
+#if HAVE_SCHEME
   #if USE_MOTIF
     xm_val = XEN_EVAL_C_STRING("(and (defined? 'xm-version) xm-version)");
   #else
@@ -162,16 +162,15 @@ static char *xm_version(void)
       xm_val = XEN_EVAL_C_STRING("(and (defined? 'xg-version) xg-version)");
     #endif
   #endif
-#else
-  #if HAVE_RUBY
-    #if USE_MOTIF
-      if (rb_const_defined(rb_cObject, rb_intern("Xm_Version")))
-        xm_val = XEN_EVAL_C_STRING("Xm_Version");
-    #else
-      #if USE_GTK
-        if (rb_const_defined(rb_cObject, rb_intern("Xg_Version")))
-          xm_val = XEN_EVAL_C_STRING("Xg_Version");
-      #endif
+#endif
+#if HAVE_RUBY
+  #if USE_MOTIF
+    if (rb_const_defined(rb_cObject, rb_intern("Xm_Version")))
+      xm_val = XEN_EVAL_C_STRING("Xm_Version");
+  #else
+    #if USE_GTK
+      if (rb_const_defined(rb_cObject, rb_intern("Xg_Version")))
+        xm_val = XEN_EVAL_C_STRING("Xg_Version");
     #endif
   #endif
 #endif
@@ -196,13 +195,12 @@ static char *xm_version(void)
 static char *gl_version(void)
 {
   XEN gl_val = XEN_FALSE;
-#if HAVE_GUILE
+#if HAVE_SCHEME
   gl_val = XEN_EVAL_C_STRING("(and (provided? 'gl) gl-version)");
-#else
-  #if HAVE_RUBY
+#endif
+#if HAVE_RUBY
   if (rb_const_defined(rb_cObject, rb_intern("Gl_Version")))
     gl_val = XEN_EVAL_C_STRING("Gl_Version");
-  #endif
 #endif
   if (XEN_STRING_P(gl_val))
     {
@@ -398,6 +396,7 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+13-Jun:  folded gl-ruby.c into gl.c, xm-ruby.c into xm.c, xg-ruby.c into xg.c.\n\
 6-June:  removed save-options (use save-state).\n\
 1-June:  snd 7.13.\n\
          show-axes View:Axes menu.\n\
@@ -1726,7 +1725,8 @@ static bool strings_might_match(const char *a, const char *b, int len)
       if (a[i] != b[i]) return(false);
 #if HAVE_RUBY
       if (a[i] == '_') return(true);
-#else
+#endif
+#if HAVE_SCHEME
       if (a[i] == '-') return(true);
 #endif
     }
@@ -2266,7 +2266,7 @@ if returns a string, it replaces 'help-string' (the default help)"
 
   XEN_DEFINE_HOOK(help_hook, S_help_hook, 2, H_help_hook);    /* args = subject help-string */
 
-#if HAVE_GUILE
+#if HAVE_SCHEME
   #define H_output_comment_hook S_output_comment_hook " (str): called in Save-As dialog, passed current sound's comment, if any. \
 If more than one hook function, each function gets the previous function's output as its input.\n\
   (add-hook! " S_output_comment_hook "\n\
@@ -2274,7 +2274,8 @@ If more than one hook function, each function gets the previous function's outpu
       (string-append str \": written \"\n\
         (strftime \"%a %d-%b-%Y %H:%M %Z\"\n\
           (localtime (current-time))))))"
-#else
+#endif
+#if HAVE_RUBY
   #define H_output_comment_hook S_output_comment_hook " (str): called in Save-As dialog, passed current sound's comment, if any. \
 If more than one hook function, each function gets the previous function's output as its input."
 #endif

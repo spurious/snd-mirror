@@ -266,7 +266,7 @@ static XEN g_set_foreground_color(XEN color, XEN snd, XEN chn, XEN ax)
   return(color);
 }
 
-#if HAVE_GUILE
+#if HAVE_SCHEME
 static XEN g_set_foreground_color_reversed(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   if (XEN_NOT_BOUND_P(arg2))
@@ -350,7 +350,7 @@ static XEN g_current_font(XEN snd, XEN chn, XEN ax_id)
 
 #endif
 
-#if HAVE_GUILE
+#if HAVE_SCHEME
 static XEN g_set_current_font_reversed(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   if (XEN_NOT_BOUND_P(arg2))

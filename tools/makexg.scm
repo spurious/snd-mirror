@@ -13,7 +13,6 @@
 (read-enable 'positions)
 
 (define xg-file (open-output-file "xg.c"))
-(define xg-ruby-file (open-output-file "xg-ruby.c"))
 (define xg-x11-file (open-output-file "xg-x11.h"))
 
 (define (hey . args)
@@ -21,13 +20,6 @@
 
 (define (heyc arg)
   (display arg xg-file))
-
-(define (say . args)
-  (display (apply format #f args) xg-ruby-file))
-
-(define (say-hey . args)
-  (apply hey args)
-  (apply say args))
 
 (define (hey-x11 . args)
   (display (apply format #f args) xg-x11-file))
@@ -1649,6 +1641,7 @@
 (hey " *     win32-specific functions~%")
 (hey " *~%")
 (hey " * HISTORY:~%")
+(hey " *     13-June:   folded xg-ruby.c into xg.c.~%")
 (hey " *     21-Feb:    changed libxm to libxg, xm-version to xg-version.~%")
 (hey " *     10-Jan:    plugged some memory leaks.~%")
 (hey " *     4-Jan:     removed deprecated XEN_VECTOR_ELEMENTS.~%")
@@ -1709,6 +1702,9 @@
 (hey " */~%~%")
 
 (hey "#include <config.h>~%~%")
+
+(hey "#if HAVE_EXTENSION_LANGUAGE~%~%")
+
 (hey "#if UNDEF_USE_SND~%  #undef USE_SND~%  #define USE_SND 0~%#endif~%~%")
 
 (hey "#include <glib.h>~%")
@@ -1763,11 +1759,12 @@
 (hey "~%")
 
 (hey "/* prefix for all names */~%")
-(hey "#if HAVE_GUILE~%")
+(hey "#if HAVE_SCHEME~%")
 (hey "  #define XG_PRE \"\"~%")
 (hey "  #define XG_FIELD_PRE \".\"~%")
 (hey "  #define XG_POST \"\"~%")
-(hey "#else~%")
+(hey "#endif~%")
+(hey "#if HAVE_RUBY~%")
 (hey "/* for Ruby, XG PRE needs to be uppercase */~%")
 (hey "  #define XG_PRE \"R\"~%")
 (hey "  #define XG_POST \"\"~%")
@@ -2626,237 +2623,16 @@
 (hey "  return(C_TO_XEN_GtkTargetEntry_(targets));~%")
 (hey "}~%")
 
-
-
-;;; ---------------- Ruby step 1 ----------------
-(say "/* Ruby connection for xg.c */~%~%")
-
-(define (argify-func func)
-  (let* ((cargs (length (caddr func)))
-	 (refargs (+ (ref-args (caddr func)) (opt-args (caddr func))))
-	 (args (- cargs refargs)))
-    (say "XEN_~A(gxg_~A_w, gxg_~A)~%" 
-	 (if (>= cargs 10) "VARGIFY"
-	     (if (> refargs 0)
-		 (format #f "ARGIFY_~D" cargs)
-		 (format #f "NARGIFY_~D" cargs)))
-	 (car func) (car func))))
-	 
-(for-each argify-func (reverse funcs))
-(if (not (null? funcs-21)) (with-21 say (lambda () (for-each argify-func (reverse funcs-21)))))
-(if (not (null? funcs-22)) (with-22 say (lambda () (for-each argify-func (reverse funcs-22)))))
-(if (not (null? funcs-23)) (with-23 say (lambda () (for-each argify-func (reverse funcs-23)))))
-(if (not (null? funcs-231)) (with-231 say (lambda () (for-each argify-func (reverse funcs-231)))))
-(if (not (null? funcs-232)) (with-232 say (lambda () (for-each argify-func (reverse funcs-232)))))
-(if (not (null? funcs-234)) (with-234 say (lambda () (for-each argify-func (reverse funcs-234)))))
-(if (not (null? funcs-235)) (with-235 say (lambda () (for-each argify-func (reverse funcs-235)))))
-(if (not (null? funcs-236)) (with-236 say (lambda () (for-each argify-func (reverse funcs-236)))))
-(if (not (null? funcs-250)) (with-250 say (lambda () (for-each argify-func (reverse funcs-250)))))
-(if (not (null? funcs-251)) (with-251 say (lambda () (for-each argify-func (reverse funcs-251)))))
-(if (not (null? funcs-252)) (with-252 say (lambda () (for-each argify-func (reverse funcs-252)))))
-(if (not (null? funcs-254)) (with-254 say (lambda () (for-each argify-func (reverse funcs-254)))))
-(if (not (null? funcs-255)) (with-255 say (lambda () (for-each argify-func (reverse funcs-255)))))
-(if (not (null? funcs-256)) (with-256 say (lambda () (for-each argify-func (reverse funcs-256)))))
-(if (not (null? funcs-260)) (with-260 say (lambda () (for-each argify-func (reverse funcs-260)))))
-
-(define (ruby-cast func) (say "XEN_NARGIFY_1(gxg_~A_w, gxg_~A)~%" (no-arg (car func)) (no-arg (car func)))) 
-(say "XEN_NARGIFY_1(gxg_GPOINTER_w, gxg_GPOINTER)~%")
-
-(for-each ruby-cast (reverse casts))
-(if (not (null? casts-21)) (with-21 say (lambda () (for-each ruby-cast (reverse casts-21)))))
-(if (not (null? casts-23)) (with-23 say (lambda () (for-each ruby-cast (reverse casts-23)))))
-(if (not (null? casts-234)) (with-234 say (lambda () (for-each ruby-cast (reverse casts-234)))))
-(if (not (null? casts-250)) (with-250 say (lambda () (for-each ruby-cast (reverse casts-250)))))
-(if (not (null? casts-252)) (with-252 say (lambda () (for-each ruby-cast (reverse casts-252)))))
-(if (not (null? casts-254)) (with-254 say (lambda () (for-each ruby-cast (reverse casts-254)))))
-(if (not (null? casts-256)) (with-256 say (lambda () (for-each ruby-cast (reverse casts-256)))))
-
-(define (ruby-check func) (say "XEN_NARGIFY_1(gxg_~A_w, gxg_~A)~%" (no-arg (car func)) (no-arg (car func))))
-(for-each ruby-check (reverse checks))
-(if (not (null? checks-21)) (with-21 say (lambda () (for-each ruby-check (reverse checks-21)))))
-(if (not (null? checks-23)) (with-23 say (lambda () (for-each ruby-check (reverse checks-23)))))
-(if (not (null? checks-234)) (with-234 say (lambda () (for-each ruby-check (reverse checks-234)))))
-(if (not (null? checks-250)) (with-250 say (lambda () (for-each ruby-check (reverse checks-250)))))
-(if (not (null? checks-252)) (with-252 say (lambda () (for-each ruby-check (reverse checks-252)))))
-(if (not (null? checks-254)) (with-254 say (lambda () (for-each ruby-check (reverse checks-254)))))
-(if (not (null? checks-256)) (with-256 say (lambda () (for-each ruby-check (reverse checks-256)))))
-
-(say "XEN_NARGIFY_2(c_array_to_xen_list_w, c_array_to_xen_list)~%")
-(say "XEN_NARGIFY_2(xen_list_to_c_array_w, xen_list_to_c_array)~%")
-(say "XEN_NARGIFY_1(gxg_freeGdkPoints_w, gxg_freeGdkPoints)~%")
-(say "XEN_NARGIFY_1(gxg_vector2GdkPoints_w, gxg_vector2GdkPoints)~%")
-(say "XEN_NARGIFY_1(gxg_make_target_entry_w, gxg_make_target_entry)~%")
-(say "XEN_NARGIFY_1(c_to_xen_string_w, c_to_xen_string)~%")
-
-(let ((in-x11 #f))
-  (for-each 
-   (lambda (field) 
-     (if (or (member field with-x11-accessors)
-	     (member field with-x11-readers))
-	 (if (not in-x11)
-	     (begin
-	       (say "#if (!WITH_GTK_AND_X11)~%")
-	       (set! in-x11 #t)))
-	 (if in-x11
-	     (begin
-	       (say "#endif~%")
-	       (set! in-x11 #f))))
-     (say "XEN_NARGIFY_1(gxg_~A_w, gxg_~A)~%" field field))
-   struct-fields)
-  (if in-x11
-      (say "#endif~%")))
-
-(let ((in-x11 #f))
-  (for-each 
-   (lambda (field) 
-     (if (or (member field with-x11-accessors)
-	     (member field with-x11-readers))
-	 (if (not in-x11)
-	     (begin
-	       (say "#if (!WITH_GTK_AND_X11)~%")
-	       (set! in-x11 #t)))
-	 (if in-x11
-	     (begin
-	       (say "#endif~%")
-	       (set! in-x11 #f))))
-     (say "XEN_NARGIFY_1(gxg_~A_w, gxg_~A)~%" field field)) 
-   settable-struct-fields)
-  (if in-x11
-      (say "#endif~%")))
-
-(let ((in-x11 #f))
-  (for-each 
-   (lambda (field) 
-     (if (or (member field with-x11-accessors)
-	     (member field with-x11-readers))
-	 (if (not in-x11)
-	     (begin
-	       (say "#if (!WITH_GTK_AND_X11)~%")
-	       (set! in-x11 #t)))
-	 (if in-x11
-	     (begin
-	       (say "#endif~%")
-	       (set! in-x11 #f))))
-     (say "XEN_NARGIFY_2(gxg_set_~A_w, gxg_set_~A)~%" field field)) 
-   settable-struct-fields)
-  (if in-x11
-      (say "#endif~%")))
-
-(for-each (lambda (struct) 
-	    (let* ((s (find-struct struct)))
-	      (if (> (length (cadr s)) 0)
-		  (say "XEN_VARGIFY(gxg_make_~A_w, gxg_make_~A)~%" struct struct)
-		  (say "XEN_NARGIFY_0(gxg_make_~A_w, gxg_make_~A)~%" struct struct))))
- (reverse make-structs))
-(say "~%")
-;;; ---------------- end Ruby step 1 ----------------
-
-(hey "static XEN c_array_to_xen_list(XEN val, XEN clen);~%")
-(hey "static XEN xen_list_to_c_array(XEN val, XEN type);~%~%")
-
-(hey "  #define XG_DEFINE_PROCEDURE(Name, Value, A1, A2, A3, Help) XEN_DEFINE_PROCEDURE(XG_PRE #Name XG_POST, Value, A1, A2, A3, Help)~%")
-
-(hey "#if HAVE_GUILE~%")
-(say-hey "static void define_functions(void)~%")
-(say-hey "{~%")
-
-(say-hey "  xm_gc_table = XEN_MAKE_VECTOR(1, XEN_FALSE);~%")
-(say-hey "  XEN_PROTECT_FROM_GC(xm_gc_table);~%")
-(say-hey "  xm_protected_size = 512;~%")
-(say-hey "  xm_protected = XEN_MAKE_VECTOR(xm_protected_size, XEN_FALSE);~%")
-(say-hey "  XEN_VECTOR_SET(xm_gc_table, 0, xm_protected);~%~%")
-
-(hey "  XG_DEFINE_PROCEDURE(c-array->list, c_array_to_xen_list, 2, 0, 0, NULL);~%")
-(hey "  XG_DEFINE_PROCEDURE(list->c-array, xen_list_to_c_array, 2, 0, 0, NULL);~%~%")
-(hey "  XG_DEFINE_PROCEDURE(freeGdkPoints, gxg_freeGdkPoints, 1, 0, 0, H_freeGdkPoints);~%")
-(hey "  XG_DEFINE_PROCEDURE(vector->GdkPoints, gxg_vector2GdkPoints, 1, 0, 0, H_vector2GdkPoints);~%")
-(hey "  XG_DEFINE_PROCEDURE(->string, c_to_xen_string, 1, 0, 0, NULL);~%")
-(hey "  XG_DEFINE_PROCEDURE(make-target-entry, gxg_make_target_entry, 1, 0, 0, H_make_target_entry);~%")
-
-(define (defun func)
-  (let* ((cargs (length (caddr func)))
-	 (refargs (+ (ref-args (caddr func)) (opt-args (caddr func))))
-	 (args (- cargs refargs)))
-
-    (hey "  XG_DEFINE_PROCEDURE(~A, gxg_~A, ~D, ~D, ~D, H_~A);~%"
-		     (car func) (car func) 
-		     (if (>= cargs 10) 0 args)
-		     (if (>= cargs 10) 0 refargs)
-		     (if (>= cargs 10) 1 0)
-		     (car func))
-    (say "  XG_DEFINE_PROCEDURE(~A, gxg_~A_w, ~D, ~D, ~D, H_~A);~%"
-		     (car func) (car func) 
-		     (if (>= cargs 10) 0 args)
-		     (if (>= cargs 10) 0 refargs)
-		     (if (>= cargs 10) 1 0)
-		     (car func))))
-
-(for-each defun (reverse funcs))
-(if (not (null? funcs-21)) (with-21 say-hey (lambda () (for-each defun (reverse funcs-21)))))
-(if (not (null? funcs-22)) (with-22 say-hey (lambda () (for-each defun (reverse funcs-22)))))
-(if (not (null? funcs-23)) (with-23 say-hey (lambda () (for-each defun (reverse funcs-23)))))
-(if (not (null? funcs-231)) (with-231 say-hey (lambda () (for-each defun (reverse funcs-231)))))
-(if (not (null? funcs-232)) (with-232 say-hey (lambda () (for-each defun (reverse funcs-232)))))
-(if (not (null? funcs-234)) (with-234 say-hey (lambda () (for-each defun (reverse funcs-234)))))
-(if (not (null? funcs-235)) (with-235 say-hey (lambda () (for-each defun (reverse funcs-235)))))
-(if (not (null? funcs-236)) (with-236 say-hey (lambda () (for-each defun (reverse funcs-236)))))
-(if (not (null? funcs-250)) (with-250 say-hey (lambda () (for-each defun (reverse funcs-250)))))
-(if (not (null? funcs-251)) (with-251 say-hey (lambda () (for-each defun (reverse funcs-251)))))
-(if (not (null? funcs-252)) (with-252 say-hey (lambda () (for-each defun (reverse funcs-252)))))
-(if (not (null? funcs-254)) (with-254 say-hey (lambda () (for-each defun (reverse funcs-254)))))
-(if (not (null? funcs-255)) (with-255 say-hey (lambda () (for-each defun (reverse funcs-255)))))
-(if (not (null? funcs-256)) (with-256 say-hey (lambda () (for-each defun (reverse funcs-256)))))
-(if (not (null? funcs-260)) (with-260 say-hey (lambda () (for-each defun (reverse funcs-260)))))
-
-(define (cast-out func)
-  (hey "  XG_DEFINE_PROCEDURE(~A, gxg_~A, 1, 0, 0, NULL);~%" (no-arg (car func)) (no-arg (car func)))
-  (say "  XG_DEFINE_PROCEDURE(~A, gxg_~A_w, 1, 0, 0, NULL);~%" (no-arg (car func)) (no-arg (car func))))
-
-(hey "  XG_DEFINE_PROCEDURE(GPOINTER, gxg_GPOINTER, 1, 0, 0, NULL);~%")
-(say "  XG_DEFINE_PROCEDURE(GPOINTER, gxg_GPOINTER_w, 1, 0, 0, NULL);~%")
-
-(for-each cast-out (reverse casts))
-(if (not (null? casts-21)) (with-21 say-hey (lambda () (for-each cast-out (reverse casts-21)))))
-(if (not (null? casts-23)) (with-23 say-hey (lambda () (for-each cast-out (reverse casts-23)))))
-(if (not (null? casts-234)) (with-234 say-hey (lambda () (for-each cast-out (reverse casts-234)))))
-(if (not (null? casts-250)) (with-250 say-hey (lambda () (for-each cast-out (reverse casts-250)))))
-(if (not (null? casts-252)) (with-252 say-hey (lambda () (for-each cast-out (reverse casts-252)))))
-(if (not (null? casts-254)) (with-254 say-hey (lambda () (for-each cast-out (reverse casts-254)))))
-(if (not (null? casts-256)) (with-256 say-hey (lambda () (for-each cast-out (reverse casts-256)))))
-
-(say "  XG_DEFINE_PROCEDURE(c-array->list, c_array_to_xen_list_w, 2, 0, 0, NULL);~%")
-(say "  XG_DEFINE_PROCEDURE(list->c-array, xen_list_to_c_array_w, 2, 0, 0, NULL);~%")
-(say "  XG_DEFINE_PROCEDURE(freeGdkPoints, gxg_freeGdkPoints_w, 1, 0, 0, H_freeGdkPoints);~%")
-(say "  XG_DEFINE_PROCEDURE(vector->GdkPoints, gxg_vector2GdkPoints_w, 1, 0, 0, H_vector2GdkPoints);~%")
-(say "  XG_DEFINE_PROCEDURE(->string, c_to_xen_string_w, 1, 0, 0, NULL);~%")
-(say "  XG_DEFINE_PROCEDURE(make-target-entry, gxg_make_target_entry_w, 1, 0, 0, H_make_target_entry);~%")
-
-(define (check-out func)
-  (hey "  XG_DEFINE_PROCEDURE(~A, gxg_~A, 1, 0, 0, NULL);~%" (no-arg (car func)) (no-arg (car func)))
-  (say "  XG_DEFINE_PROCEDURE(~A, gxg_~A_w, 1, 0, 0, NULL);~%" (no-arg (car func)) (no-arg (car func))))
-
-(for-each check-out (reverse checks))
-(if (not (null? checks-21)) (with-21 say-hey (lambda () (for-each check-out (reverse checks-21)))))
-(if (not (null? checks-23)) (with-23 say-hey (lambda () (for-each check-out (reverse checks-23)))))
-(if (not (null? checks-234)) (with-234 say-hey (lambda () (for-each check-out (reverse checks-234)))))
-(if (not (null? checks-250)) (with-250 say-hey (lambda () (for-each check-out (reverse checks-250)))))
-(if (not (null? checks-252)) (with-252 say-hey (lambda () (for-each check-out (reverse checks-252)))))
-(if (not (null? checks-254)) (with-254 say-hey (lambda () (for-each check-out (reverse checks-254)))))
-(if (not (null? checks-256)) (with-256 say-hey (lambda () (for-each check-out (reverse checks-256)))))
-
-(say-hey "}~%~%")
-(hey "#endif~%")
-
-
 (hey "/* ---------------------------------------- structs ---------------------------------------- */~%~%")
 
 (hey "  #define XG_DEFINE_READER(Name, Value, A1, A2, A3, Help) XEN_DEFINE_PROCEDURE(XG_FIELD_PRE #Name XG_POST, Value, A1, A2, A3, Help)~%")
 (hey "  #if HAVE_RUBY~%")
-(hey "  #define XG_DEFINE_ACCESSOR(Name, Value, SetValue, A1, A2, A3, A4) \\~%")
-(hey "    XEN_DEFINE_PROCEDURE_WITH_SETTER(XG_FIELD_PRE #Name XG_POST, Value, NULL, XG_FIELD_PRE \"set_\" #Name XG_POST, SetValue, A1, A2, A3, A4)~%")
-(hey "  #else~%")
-(hey "  #define XG_DEFINE_ACCESSOR(Name, Value, SetValue, A1, A2, A3, A4) \\~%")
-(hey "    XEN_DEFINE_PROCEDURE_WITH_SETTER(XG_FIELD_PRE #Name XG_POST, Value, NULL, \"set! \" XG_FIELD_PRE #Name XG_POST, SetValue, A1, A2, A3, A4)~%")
+(hey "    #define XG_DEFINE_ACCESSOR(Name, Value, SetValue, A1, A2, A3, A4) \\~%")
+(hey "      XEN_DEFINE_PROCEDURE_WITH_SETTER(XG_FIELD_PRE #Name XG_POST, Value, NULL, XG_FIELD_PRE \"set_\" #Name XG_POST, SetValue, A1, A2, A3, A4)~%")
+(hey "  #endif~%")
+(hey "  #if HAVE_SCHEME~%")
+(hey "    #define XG_DEFINE_ACCESSOR(Name, Value, SetValue, A1, A2, A3, A4) \\~%")
+(hey "      XEN_DEFINE_PROCEDURE_WITH_SETTER(XG_FIELD_PRE #Name XG_POST, Value, NULL, \"set! \" XG_FIELD_PRE #Name XG_POST, SetValue, A1, A2, A3, A4)~%")
 (hey "  #endif~%~%")
 
 (define (array->list type)
@@ -3068,28 +2844,328 @@
 	   (hey "}~%~%")))))
  (reverse make-structs))
 
-(hey "#if HAVE_GUILE~%")
-(say-hey "static void define_structs(void)~%")
-(say-hey "{~%~%")
+;;; ---------------- argify ----------------
+
+(define (argify-func func)
+  (let* ((cargs (length (caddr func)))
+	 (refargs (+ (ref-args (caddr func)) (opt-args (caddr func))))
+	 (args (- cargs refargs)))
+    (hey "XEN_~A(gxg_~A_w, gxg_~A)~%" 
+	 (if (>= cargs 10) "VARGIFY"
+	     (if (> refargs 0)
+		 (format #f "ARGIFY_~D" cargs)
+		 (format #f "NARGIFY_~D" cargs)))
+	 (car func) (car func))))
+	 
+(define (unargify-func func)
+  (let* ((cargs (length (caddr func)))
+	 (refargs (+ (ref-args (caddr func)) (opt-args (caddr func))))
+	 (args (- cargs refargs)))
+    (hey "#define gxg_~A_w gxg_~A~%" 
+	 (car func) (car func))))
+	 
+(hey "~%#ifdef XEN_ARGIFY_1~%")
+(for-each argify-func (reverse funcs))
+(if (not (null? funcs-21)) (with-21 hey (lambda () (for-each argify-func (reverse funcs-21)))))
+(if (not (null? funcs-22)) (with-22 hey (lambda () (for-each argify-func (reverse funcs-22)))))
+(if (not (null? funcs-23)) (with-23 hey (lambda () (for-each argify-func (reverse funcs-23)))))
+(if (not (null? funcs-231)) (with-231 hey (lambda () (for-each argify-func (reverse funcs-231)))))
+(if (not (null? funcs-232)) (with-232 hey (lambda () (for-each argify-func (reverse funcs-232)))))
+(if (not (null? funcs-234)) (with-234 hey (lambda () (for-each argify-func (reverse funcs-234)))))
+(if (not (null? funcs-235)) (with-235 hey (lambda () (for-each argify-func (reverse funcs-235)))))
+(if (not (null? funcs-236)) (with-236 hey (lambda () (for-each argify-func (reverse funcs-236)))))
+(if (not (null? funcs-250)) (with-250 hey (lambda () (for-each argify-func (reverse funcs-250)))))
+(if (not (null? funcs-251)) (with-251 hey (lambda () (for-each argify-func (reverse funcs-251)))))
+(if (not (null? funcs-252)) (with-252 hey (lambda () (for-each argify-func (reverse funcs-252)))))
+(if (not (null? funcs-254)) (with-254 hey (lambda () (for-each argify-func (reverse funcs-254)))))
+(if (not (null? funcs-255)) (with-255 hey (lambda () (for-each argify-func (reverse funcs-255)))))
+(if (not (null? funcs-256)) (with-256 hey (lambda () (for-each argify-func (reverse funcs-256)))))
+(if (not (null? funcs-260)) (with-260 hey (lambda () (for-each argify-func (reverse funcs-260)))))
+
+(define (ruby-cast func) (hey "XEN_NARGIFY_1(gxg_~A_w, gxg_~A)~%" (no-arg (car func)) (no-arg (car func)))) 
+(hey "XEN_NARGIFY_1(gxg_GPOINTER_w, gxg_GPOINTER)~%")
+(hey "XEN_NARGIFY_2(c_array_to_xen_list_w, c_array_to_xen_list)~%")
+(hey "XEN_NARGIFY_2(xen_list_to_c_array_w, xen_list_to_c_array)~%")
+(hey "XEN_NARGIFY_1(gxg_freeGdkPoints_w, gxg_freeGdkPoints)~%")
+(hey "XEN_NARGIFY_1(gxg_vector2GdkPoints_w, gxg_vector2GdkPoints)~%")
+(hey "XEN_NARGIFY_1(gxg_make_target_entry_w, gxg_make_target_entry)~%")
+(hey "XEN_NARGIFY_1(c_to_xen_string_w, c_to_xen_string)~%")
+
+(define (ruby-cast func) (hey "XEN_NARGIFY_1(gxg_~A_w, gxg_~A)~%" (no-arg (car func)) (no-arg (car func)))) 
+(for-each ruby-cast (reverse casts))
+(if (not (null? casts-21)) (with-21 hey (lambda () (for-each ruby-cast (reverse casts-21)))))
+(if (not (null? casts-23)) (with-23 hey (lambda () (for-each ruby-cast (reverse casts-23)))))
+(if (not (null? casts-234)) (with-234 hey (lambda () (for-each ruby-cast (reverse casts-234)))))
+(if (not (null? casts-250)) (with-250 hey (lambda () (for-each ruby-cast (reverse casts-250)))))
+(if (not (null? casts-252)) (with-252 hey (lambda () (for-each ruby-cast (reverse casts-252)))))
+(if (not (null? casts-254)) (with-254 hey (lambda () (for-each ruby-cast (reverse casts-254)))))
+(if (not (null? casts-256)) (with-256 hey (lambda () (for-each ruby-cast (reverse casts-256)))))
+
+(define (ruby-check func) (hey "XEN_NARGIFY_1(gxg_~A_w, gxg_~A)~%" (no-arg (car func)) (no-arg (car func))))
+(for-each ruby-check (reverse checks))
+(if (not (null? checks-21)) (with-21 hey (lambda () (for-each ruby-check (reverse checks-21)))))
+(if (not (null? checks-23)) (with-23 hey (lambda () (for-each ruby-check (reverse checks-23)))))
+(if (not (null? checks-234)) (with-234 hey (lambda () (for-each ruby-check (reverse checks-234)))))
+(if (not (null? checks-250)) (with-250 hey (lambda () (for-each ruby-check (reverse checks-250)))))
+(if (not (null? checks-252)) (with-252 hey (lambda () (for-each ruby-check (reverse checks-252)))))
+(if (not (null? checks-254)) (with-254 hey (lambda () (for-each ruby-check (reverse checks-254)))))
+(if (not (null? checks-256)) (with-256 hey (lambda () (for-each ruby-check (reverse checks-256)))))
+
 
 (let ((in-x11 #f))
   (for-each 
-   (lambda (field)
+   (lambda (field) 
      (if (or (member field with-x11-accessors)
 	     (member field with-x11-readers))
 	 (if (not in-x11)
 	     (begin
-	       (say-hey "#if (!WITH_GTK_AND_X11)~%")
+	       (hey "#if (!WITH_GTK_AND_X11)~%")
 	       (set! in-x11 #t)))
 	 (if in-x11
 	     (begin
-	       (say-hey "#endif~%")
+	       (hey "#endif~%")
 	       (set! in-x11 #f))))
-     (hey "  XG_DEFINE_READER(~A, gxg_~A, 1, 0, 0, NULL);~%" field field)
-     (say "  XG_DEFINE_READER(~A, gxg_~A_w, 1, 0, 0, NULL);~%" field field))
+     (hey "XEN_NARGIFY_1(gxg_~A_w, gxg_~A)~%" field field))
    struct-fields)
   (if in-x11
-      (say-hey "#endif~%")))
+      (hey "#endif~%")))
+
+(let ((in-x11 #f))
+  (for-each 
+   (lambda (field) 
+     (if (or (member field with-x11-accessors)
+	     (member field with-x11-readers))
+	 (if (not in-x11)
+	     (begin
+	       (hey "#if (!WITH_GTK_AND_X11)~%")
+	       (set! in-x11 #t)))
+	 (if in-x11
+	     (begin
+	       (hey "#endif~%")
+	       (set! in-x11 #f))))
+     (hey "XEN_NARGIFY_1(gxg_~A_w, gxg_~A)~%" field field)) 
+   settable-struct-fields)
+  (if in-x11
+      (hey "#endif~%")))
+
+(let ((in-x11 #f))
+  (for-each 
+   (lambda (field) 
+     (if (or (member field with-x11-accessors)
+	     (member field with-x11-readers))
+	 (if (not in-x11)
+	     (begin
+	       (hey "#if (!WITH_GTK_AND_X11)~%")
+	       (set! in-x11 #t)))
+	 (if in-x11
+	     (begin
+	       (hey "#endif~%")
+	       (set! in-x11 #f))))
+     (hey "XEN_NARGIFY_2(gxg_set_~A_w, gxg_set_~A)~%" field field)) 
+   settable-struct-fields)
+  (if in-x11
+      (hey "#endif~%")))
+
+(for-each (lambda (struct) 
+	    (let* ((s (find-struct struct)))
+	      (if (> (length (cadr s)) 0)
+		  (hey "XEN_VARGIFY(gxg_make_~A_w, gxg_make_~A)~%" struct struct)
+		  (hey "XEN_NARGIFY_0(gxg_make_~A_w, gxg_make_~A)~%" struct struct))))
+ (reverse make-structs))
+(hey "~%")
+
+(hey "~%#else~%")
+(hey "/* not XEN_ARGIFY_1 */~%")
+
+(for-each unargify-func (reverse funcs))
+(if (not (null? funcs-21)) (with-21 hey (lambda () (for-each unargify-func (reverse funcs-21)))))
+(if (not (null? funcs-22)) (with-22 hey (lambda () (for-each unargify-func (reverse funcs-22)))))
+(if (not (null? funcs-23)) (with-23 hey (lambda () (for-each unargify-func (reverse funcs-23)))))
+(if (not (null? funcs-231)) (with-231 hey (lambda () (for-each unargify-func (reverse funcs-231)))))
+(if (not (null? funcs-232)) (with-232 hey (lambda () (for-each unargify-func (reverse funcs-232)))))
+(if (not (null? funcs-234)) (with-234 hey (lambda () (for-each unargify-func (reverse funcs-234)))))
+(if (not (null? funcs-235)) (with-235 hey (lambda () (for-each unargify-func (reverse funcs-235)))))
+(if (not (null? funcs-236)) (with-236 hey (lambda () (for-each unargify-func (reverse funcs-236)))))
+(if (not (null? funcs-250)) (with-250 hey (lambda () (for-each unargify-func (reverse funcs-250)))))
+(if (not (null? funcs-251)) (with-251 hey (lambda () (for-each unargify-func (reverse funcs-251)))))
+(if (not (null? funcs-252)) (with-252 hey (lambda () (for-each unargify-func (reverse funcs-252)))))
+(if (not (null? funcs-254)) (with-254 hey (lambda () (for-each unargify-func (reverse funcs-254)))))
+(if (not (null? funcs-255)) (with-255 hey (lambda () (for-each unargify-func (reverse funcs-255)))))
+(if (not (null? funcs-256)) (with-256 hey (lambda () (for-each unargify-func (reverse funcs-256)))))
+(if (not (null? funcs-260)) (with-260 hey (lambda () (for-each unargify-func (reverse funcs-260)))))
+
+(hey "#define gxg_GPOINTER_w gxg_GPOINTER~%")
+(hey "#define c_array_to_xen_list_w c_array_to_xen_list~%")
+(hey "#define xen_list_to_c_array_w xen_list_to_c_array~%")
+(hey "#define gxg_freeGdkPoints_w gxg_freeGdkPoints~%")
+(hey "#define gxg_vector2GdkPoints_w gxg_vector2GdkPoints~%")
+(hey "#define gxg_make_target_entry_w gxg_make_target_entry~%")
+(hey "#define c_to_xen_string_w c_to_xen_string~%")
+
+(define (ruby-uncast func) (hey "#define gxg_~A_w gxg_~A~%" (no-arg (car func)) (no-arg (car func)))) 
+(for-each ruby-uncast (reverse casts))
+(if (not (null? casts-21)) (with-21 hey (lambda () (for-each ruby-uncast (reverse casts-21)))))
+(if (not (null? casts-23)) (with-23 hey (lambda () (for-each ruby-uncast (reverse casts-23)))))
+(if (not (null? casts-234)) (with-234 hey (lambda () (for-each ruby-uncast (reverse casts-234)))))
+(if (not (null? casts-250)) (with-250 hey (lambda () (for-each ruby-uncast (reverse casts-250)))))
+(if (not (null? casts-252)) (with-252 hey (lambda () (for-each ruby-uncast (reverse casts-252)))))
+(if (not (null? casts-254)) (with-254 hey (lambda () (for-each ruby-uncast (reverse casts-254)))))
+(if (not (null? casts-256)) (with-256 hey (lambda () (for-each ruby-uncast (reverse casts-256)))))
+
+(define (ruby-uncheck func) (hey "#define gxg_~A_w gxg_~A~%" (no-arg (car func)) (no-arg (car func))))
+(for-each ruby-uncheck (reverse checks))
+(if (not (null? checks-21)) (with-21 hey (lambda () (for-each ruby-uncheck (reverse checks-21)))))
+(if (not (null? checks-23)) (with-23 hey (lambda () (for-each ruby-uncheck (reverse checks-23)))))
+(if (not (null? checks-234)) (with-234 hey (lambda () (for-each ruby-uncheck (reverse checks-234)))))
+(if (not (null? checks-250)) (with-250 hey (lambda () (for-each ruby-uncheck (reverse checks-250)))))
+(if (not (null? checks-252)) (with-252 hey (lambda () (for-each ruby-uncheck (reverse checks-252)))))
+(if (not (null? checks-254)) (with-254 hey (lambda () (for-each ruby-uncheck (reverse checks-254)))))
+(if (not (null? checks-256)) (with-256 hey (lambda () (for-each ruby-uncheck (reverse checks-256)))))
+
+(let ((in-x11 #f))
+  (for-each 
+   (lambda (field) 
+     (if (or (member field with-x11-accessors)
+	     (member field with-x11-readers))
+	 (if (not in-x11)
+	     (begin
+	       (hey "#if (!WITH_GTK_AND_X11)~%")
+	       (set! in-x11 #t)))
+	 (if in-x11
+	     (begin
+	       (hey "#endif~%")
+	       (set! in-x11 #f))))
+     (hey "#define gxg_~A_w gxg_~A~%" field field))
+   struct-fields)
+  (if in-x11
+      (hey "#endif~%")))
+
+(let ((in-x11 #f))
+  (for-each 
+   (lambda (field) 
+     (if (or (member field with-x11-accessors)
+	     (member field with-x11-readers))
+	 (if (not in-x11)
+	     (begin
+	       (hey "#if (!WITH_GTK_AND_X11)~%")
+	       (set! in-x11 #t)))
+	 (if in-x11
+	     (begin
+	       (hey "#endif~%")
+	       (set! in-x11 #f))))
+     (hey "#define gxg_~A_w gxg_~A~%" field field)) 
+   settable-struct-fields)
+  (if in-x11
+      (hey "#endif~%")))
+
+(let ((in-x11 #f))
+  (for-each 
+   (lambda (field) 
+     (if (or (member field with-x11-accessors)
+	     (member field with-x11-readers))
+	 (if (not in-x11)
+	     (begin
+	       (hey "#if (!WITH_GTK_AND_X11)~%")
+	       (set! in-x11 #t)))
+	 (if in-x11
+	     (begin
+	       (hey "#endif~%")
+	       (set! in-x11 #f))))
+     (hey "#define gxg_set_~A_w gxg_set_~A~%" field field)) 
+   settable-struct-fields)
+  (if in-x11
+      (hey "#endif~%")))
+
+(for-each (lambda (struct) 
+	    (let* ((s (find-struct struct)))
+	      (if (> (length (cadr s)) 0)
+		  (hey "#define gxg_make_~A_w gxg_make_~A~%" struct struct)
+		  (hey "#define gxg_make_~A_w gxg_make_~A~%" struct struct))))
+ (reverse make-structs))
+(hey "~%")
+
+
+(hey "~%#endif~%")
+
+;;; --------------------------------------------------------------------------------
+(hey "  #define XG_DEFINE_PROCEDURE(Name, Value, A1, A2, A3, Help) XEN_DEFINE_PROCEDURE(XG_PRE #Name XG_POST, Value, A1, A2, A3, Help)~%")
+
+(hey "static void define_functions(void)~%")
+(hey "{~%")
+
+(hey "  xm_gc_table = XEN_MAKE_VECTOR(1, XEN_FALSE);~%")
+(hey "  XEN_PROTECT_FROM_GC(xm_gc_table);~%")
+(hey "  xm_protected_size = 512;~%")
+(hey "  xm_protected = XEN_MAKE_VECTOR(xm_protected_size, XEN_FALSE);~%")
+(hey "  XEN_VECTOR_SET(xm_gc_table, 0, xm_protected);~%")
+
+(define (defun func)
+  (let* ((cargs (length (caddr func)))
+	 (refargs (+ (ref-args (caddr func)) (opt-args (caddr func))))
+	 (args (- cargs refargs)))
+
+    (hey "  XG_DEFINE_PROCEDURE(~A, gxg_~A_w, ~D, ~D, ~D, H_~A);~%"
+		     (car func) (car func) 
+		     (if (>= cargs 10) 0 args)
+		     (if (>= cargs 10) 0 refargs)
+		     (if (>= cargs 10) 1 0)
+		     (car func))))
+
+(for-each defun (reverse funcs))
+(if (not (null? funcs-21)) (with-21 hey (lambda () (for-each defun (reverse funcs-21)))))
+(if (not (null? funcs-22)) (with-22 hey (lambda () (for-each defun (reverse funcs-22)))))
+(if (not (null? funcs-23)) (with-23 hey (lambda () (for-each defun (reverse funcs-23)))))
+(if (not (null? funcs-231)) (with-231 hey (lambda () (for-each defun (reverse funcs-231)))))
+(if (not (null? funcs-232)) (with-232 hey (lambda () (for-each defun (reverse funcs-232)))))
+(if (not (null? funcs-234)) (with-234 hey (lambda () (for-each defun (reverse funcs-234)))))
+(if (not (null? funcs-235)) (with-235 hey (lambda () (for-each defun (reverse funcs-235)))))
+(if (not (null? funcs-236)) (with-236 hey (lambda () (for-each defun (reverse funcs-236)))))
+(if (not (null? funcs-250)) (with-250 hey (lambda () (for-each defun (reverse funcs-250)))))
+(if (not (null? funcs-251)) (with-251 hey (lambda () (for-each defun (reverse funcs-251)))))
+(if (not (null? funcs-252)) (with-252 hey (lambda () (for-each defun (reverse funcs-252)))))
+(if (not (null? funcs-254)) (with-254 hey (lambda () (for-each defun (reverse funcs-254)))))
+(if (not (null? funcs-255)) (with-255 hey (lambda () (for-each defun (reverse funcs-255)))))
+(if (not (null? funcs-256)) (with-256 hey (lambda () (for-each defun (reverse funcs-256)))))
+(if (not (null? funcs-260)) (with-260 hey (lambda () (for-each defun (reverse funcs-260)))))
+
+(define (cast-out func)
+  (hey "  XG_DEFINE_PROCEDURE(~A, gxg_~A_w, 1, 0, 0, NULL);~%" (no-arg (car func)) (no-arg (car func))))
+
+(hey "  XG_DEFINE_PROCEDURE(GPOINTER, gxg_GPOINTER_w, 1, 0, 0, NULL);~%")
+
+(for-each cast-out (reverse casts))
+(if (not (null? casts-21)) (with-21 hey (lambda () (for-each cast-out (reverse casts-21)))))
+(if (not (null? casts-23)) (with-23 hey (lambda () (for-each cast-out (reverse casts-23)))))
+(if (not (null? casts-234)) (with-234 hey (lambda () (for-each cast-out (reverse casts-234)))))
+(if (not (null? casts-250)) (with-250 hey (lambda () (for-each cast-out (reverse casts-250)))))
+(if (not (null? casts-252)) (with-252 hey (lambda () (for-each cast-out (reverse casts-252)))))
+(if (not (null? casts-254)) (with-254 hey (lambda () (for-each cast-out (reverse casts-254)))))
+(if (not (null? casts-256)) (with-256 hey (lambda () (for-each cast-out (reverse casts-256)))))
+
+(hey "  XG_DEFINE_PROCEDURE(c-array->list, c_array_to_xen_list_w, 2, 0, 0, NULL);~%")
+(hey "  XG_DEFINE_PROCEDURE(list->c-array, xen_list_to_c_array_w, 2, 0, 0, NULL);~%")
+(hey "  XG_DEFINE_PROCEDURE(freeGdkPoints, gxg_freeGdkPoints_w, 1, 0, 0, H_freeGdkPoints);~%")
+(hey "  XG_DEFINE_PROCEDURE(vector->GdkPoints, gxg_vector2GdkPoints_w, 1, 0, 0, H_vector2GdkPoints);~%")
+(hey "  XG_DEFINE_PROCEDURE(->string, c_to_xen_string_w, 1, 0, 0, NULL);~%")
+(hey "  XG_DEFINE_PROCEDURE(make-target-entry, gxg_make_target_entry_w, 1, 0, 0, H_make_target_entry);~%")
+
+(define (check-out func)
+  (hey "  XG_DEFINE_PROCEDURE(~A, gxg_~A_w, 1, 0, 0, NULL);~%" (no-arg (car func)) (no-arg (car func))))
+
+(for-each check-out (reverse checks))
+(if (not (null? checks-21)) (with-21 hey (lambda () (for-each check-out (reverse checks-21)))))
+(if (not (null? checks-23)) (with-23 hey (lambda () (for-each check-out (reverse checks-23)))))
+(if (not (null? checks-234)) (with-234 hey (lambda () (for-each check-out (reverse checks-234)))))
+(if (not (null? checks-250)) (with-250 hey (lambda () (for-each check-out (reverse checks-250)))))
+(if (not (null? checks-252)) (with-252 hey (lambda () (for-each check-out (reverse checks-252)))))
+(if (not (null? checks-254)) (with-254 hey (lambda () (for-each check-out (reverse checks-254)))))
+(if (not (null? checks-256)) (with-256 hey (lambda () (for-each check-out (reverse checks-256)))))
+
+(hey "}~%~%")
+
+
+(hey "static void define_structs(void)~%")
+(hey "{~%~%")
 
 (let ((in-x11 #f))
   (for-each 
@@ -3098,29 +3174,43 @@
 	     (member field with-x11-readers))
 	 (if (not in-x11)
 	     (begin
-	       (say-hey "#if (!WITH_GTK_AND_X11)~%")
+	       (hey "#if (!WITH_GTK_AND_X11)~%")
 	       (set! in-x11 #t)))
 	 (if in-x11
 	     (begin
-	       (say-hey "#endif~%")
+	       (hey "#endif~%")
 	       (set! in-x11 #f))))
-     (hey "  XG_DEFINE_ACCESSOR(~A, gxg_~A, gxg_set_~A, 1, 0, 2, 0);~%" field field field)
-     (say "  XG_DEFINE_ACCESSOR(~A, gxg_~A_w, gxg_set_~A_w, 1, 0, 2, 0);~%" field field field))
+     (hey "  XG_DEFINE_READER(~A, gxg_~A_w, 1, 0, 0, NULL);~%" field field))
+   struct-fields)
+  (if in-x11
+      (hey "#endif~%")))
+
+(let ((in-x11 #f))
+  (for-each 
+   (lambda (field)
+     (if (or (member field with-x11-accessors)
+	     (member field with-x11-readers))
+	 (if (not in-x11)
+	     (begin
+	       (hey "#if (!WITH_GTK_AND_X11)~%")
+	       (set! in-x11 #t)))
+	 (if in-x11
+	     (begin
+	       (hey "#endif~%")
+	       (set! in-x11 #f))))
+     (hey "  XG_DEFINE_ACCESSOR(~A, gxg_~A_w, gxg_set_~A_w, 1, 0, 2, 0);~%" field field field))
    settable-struct-fields)
   (if in-x11
-      (say-hey "#endif~%")))
+      (hey "#endif~%")))
 
 (for-each 
  (lambda (struct)
    (let* ((s (find-struct struct)))
-     (hey "  XG_DEFINE_PROCEDURE(~A, gxg_make_~A, 0, 0, ~D, NULL);~%" struct struct (if (> (length (cadr s)) 0) 1 0))
-     (say "  XG_DEFINE_PROCEDURE(~A, gxg_make_~A_w, 0, 0, ~D, NULL);~%" struct struct (if (> (length (cadr s)) 0) 1 0))))
+     (hey "  XG_DEFINE_PROCEDURE(~A, gxg_make_~A_w, 0, 0, ~D, NULL);~%" struct struct (if (> (length (cadr s)) 0) 1 0))))
  (reverse make-structs))
 
-(say-hey "}~%~%")
-(hey "#else~%")
-(hey "  #include \"xg-ruby.c\"~%")
-(hey "#endif~%")
+(hey "}~%~%")
+
 
 
 (hey "/* ---------------------------------------- constants ---------------------------------------- */~%~%")
@@ -3134,7 +3224,8 @@
 (hey "  #define DEFINE_INTEGER(Name) gh_define(XG_PRE #Name XG_POST, C_TO_XEN_INT(Name))~%")
 (hey "  #define DEFINE_ULONG(Name) gh_define(XG_PRE #Name XG_POST, C_TO_XEN_ULONG(Name))~%")
 (hey "#endif~%")
-(hey "#else~%")
+(hey "#endif~%")
+(hey "#if HAVE_RUBY~%")
 (hey "  #define DEFINE_INTEGER(Name) rb_define_global_const(XG_PRE #Name XG_POST, C_TO_XEN_INT(Name))~%")
 (hey "  #define DEFINE_ULONG(Name) rb_define_global_const(XG_PRE #Name XG_POST, C_TO_XEN_ULONG(Name))~%")
 (hey "#endif~%")
@@ -3196,7 +3287,8 @@
 (hey "#else~%")
 (hey "  #define DEFINE_DOUBLE(Name) gh_define(XG_PRE #Name XG_POST, C_TO_XEN_DOUBLE(Name))~%")
 (hey "#endif~%")
-(hey "#else~%")
+(hey "#endif~%")
+(hey "#if HAVE_RUBY~%")
 (hey "  #define DEFINE_DOUBLE(Name) rb_define_global_const(XG_PRE #Name XG_POST, C_TO_XEN_DOUBLE(Name))~%")
 (hey "#endif~%")
 (hey "~%")
@@ -3218,7 +3310,8 @@
 (hey "#else~%")
 (hey "  #define DEFINE_ATOM(Name) gh_define(XG_PRE #Name XG_POST, C_TO_XEN_GdkAtom(Name))~%")
 (hey "#endif~%")
-(hey "#else~%")
+(hey "#endif~%")
+(hey "#if HAVE_RUBY~%")
 (hey "  #define DEFINE_ATOM(Name) rb_define_global_const(XG_PRE #Name XG_POST, C_TO_XEN_GdkAtom(Name))~%")
 (hey "#endif~%~%")
 
@@ -3240,7 +3333,8 @@
 (hey "#else~%")
 (hey "  #define DEFINE_STRING(Name) gh_define(XG_PRE #Name XG_POST, C_TO_XEN_STRING(Name))~%")
 (hey "#endif~%")
-(hey "#else~%")
+(hey "#endif~%")
+(hey "#if HAVE_RUBY~%")
 (hey "  #define DEFINE_STRING(Name) rb_define_global_const(XG_PRE #Name XG_POST, C_TO_XEN_STRING(Name))~%")
 (hey "#endif~%")
 
@@ -3257,16 +3351,18 @@
 (hey "/* -------------------------------- initialization -------------------------------- */~%~%")
 (hey "static bool xg_already_inited = false;~%~%")
 (hey "#if WITH_GTK_AND_X11~%")
-(hey "#if HAVE_GUILE~%")
-(hey " void init_x11(void);~%")
-(hey "#else~%")
-(hey " void Init_libx11(void);~%")
-(hey "#endif~%")
+(hey "  #if HAVE_SCHEME~%")
+(hey "   void init_x11(void);~%")
+(hey "  #endif~%")
+(hey "  #if HAVE_RUBY~%")
+(hey "   void Init_libx11(void);~%")
+(hey "  #endif~%")
 (hey "#endif~%~%")
-(hey "#if HAVE_GUILE~%")
+(hey "#if HAVE_SCHEME~%")
 (hey " void init_xg(void);~%")
 (hey " void init_xg(void)~%")
-(hey "#else~%")
+(hey "#endif~%")
+(hey "#if HAVE_RUBY~%")
 (hey " void Init_libxg(void);~%")
 (hey " void Init_libxg(void)~%")
 (hey "#endif~%")
@@ -3289,19 +3385,21 @@
 (hey "#endif~%")
 (hey "      xg_already_inited = true;~%")
 (hey "#if WITH_GTK_AND_X11~%")
-(hey "#if HAVE_GUILE~%")
+(hey "  #if HAVE_GUILE~%")
 (hey "      init_x11();~%")
-(hey "#else~%")
+(hey "  #endif~%")
+(hey "  #if HAVE_RUBY~%")
 (hey "      Init_libx11();~%")
-(hey "#endif~%")
+(hey "  #endif~%")
 (hey "#endif~%~%")
 (hey "    }~%")
 (hey "}~%")
 
 (hey-x11 "#endif~%")
 
+(hey "#endif~%") ; have_extension_language
+
 (close-output-port xg-file)
-(close-output-port xg-ruby-file)
 (close-output-port xg-x11-file)
 
 ;(for-each

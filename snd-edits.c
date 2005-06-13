@@ -4354,7 +4354,8 @@ char *edit_to_string(chan_info *cp, int edit)
   mus_snprintf(edbuf, PRINT_BUFFER_SIZE, 
 #if HAVE_RUBY
 	       "%s : %s(" OFF_TD ", " OFF_TD ")", 
-#else
+#endif
+#if HAVE_SCHEME
 	       "%s : (%s " OFF_TD " " OFF_TD ")", 
 #endif
 	       ed->origin, 
@@ -4580,7 +4581,8 @@ void edit_history_to_file(FILE *fd, chan_info *cp)
  	      fprintf(fd, ", [%d, " OFF_TD "])\n",
  		      (int)mus_sound_write_date(nfile),
  		      mus_sound_length(nfile));
-#else
+#endif
+#if HAVE_SCHEME
 	      fprintf(fd, "      (%s \"%s\" " OFF_TD " sfile %d ", S_override_samples_with_origin, nfile, len, cp->chan);
 	      if (ed->origin) 
 		fprintf_with_possible_embedded_string(fd, ed->origin);
@@ -4596,7 +4598,8 @@ void edit_history_to_file(FILE *fd, chan_info *cp)
 	      char *nfile = NULL;
 #if HAVE_RUBY
 	      fprintf(fd, "      ");
-#else
+#endif
+#if HAVE_SCHEME
 	      fprintf(fd, "      (");
 #endif
 	      switch (ed->edit_type)
@@ -4678,7 +4681,8 @@ void edit_history_to_file(FILE *fd, chan_info *cp)
 		fprintf(fd, PROC_SEP " %d", ed->edpos);
 #if HAVE_RUBY
 	      else fprintf(fd, ", false");
-#else
+#endif
+#if HAVE_SCHEME
 	      else fprintf(fd, " #f");
 #endif
 #if HAVE_SCHEME
@@ -4697,7 +4701,8 @@ void edit_history_to_file(FILE *fd, chan_info *cp)
 		  fprintf(fd, " (list %d " OFF_TD ")",
 			  (int)mus_sound_write_date(nfile),
 			  mus_sound_length(nfile));
-#else
+#endif
+#if HAVE_RUBY
  		  fprintf(fd, ", [%d, " OFF_TD "]",
   			  (int)mus_sound_write_date(nfile),
   			  mus_sound_length(nfile));
@@ -4713,7 +4718,8 @@ void edit_history_to_file(FILE *fd, chan_info *cp)
     fprintf(fd, "      undo(%d, sfile, %d);\n",
 	    edits - cp->edit_ctr,
 	    cp->chan);
-#else
+#endif
+#if HAVE_SCHEME
     fprintf(fd, "      (undo %d sfile %d)\n",
 	    edits - cp->edit_ctr,
 	    cp->chan);
@@ -4723,7 +4729,7 @@ void edit_history_to_file(FILE *fd, chan_info *cp)
 
 static char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
 {
-#if HAVE_GUILE
+#if HAVE_SCHEME
   char *function = NULL, *old_function = NULL;
   bool close_mix_let = false;
   int i, edits;
@@ -7388,7 +7394,7 @@ the edit lists '((global-pos data-num local-pos local-end scaler rmp0 rmp1 type)
   return(res);
 }
 
-#if HAVE_GUILE
+#if HAVE_SCHEME
 static XEN g_edit_fragment_type_name(XEN type)
 {
   int typ;
@@ -8247,7 +8253,7 @@ static XEN g_set_sample(XEN samp_n, XEN val, XEN snd_n, XEN chn_n, XEN edpos)
   return(val);
 }
 
-#if HAVE_GUILE
+#if HAVE_SCHEME
 static XEN g_set_sample_reversed(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
 {
   if (XEN_NOT_BOUND_P(arg2))
@@ -8458,7 +8464,7 @@ history position to read (defaults to current position)."
   return(samples_to_vct_1(samp_0, samps, snd_n, chn_n, edpos, S_samples));
 }
 
-#if HAVE_GUILE
+#if HAVE_SCHEME
 static XEN g_set_samples_reversed(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7, XEN arg8, XEN arg9, XEN arg10)
 {
   /* (set! (samples start samps [snd chn trunc edname infilechan edpos delete]) vect) */
@@ -9124,7 +9130,7 @@ void g_init_edits(void)
 
   XEN_DEFINE_PROCEDURE(S_save_edit_history,            g_save_edit_history_w,            1, 2, 0, H_save_edit_history);
   XEN_DEFINE_PROCEDURE(S_edit_fragment,                g_edit_fragment_w,                0, 3, 0, H_edit_fragment);
-#if HAVE_GUILE
+#if HAVE_SCHEME
   XEN_DEFINE_PROCEDURE("edit-fragment-type-name",      g_edit_fragment_type_name,        1, 0, 0, "internal testing function");
 #endif
   XEN_DEFINE_PROCEDURE(S_undo,                         g_undo_w,                         0, 3, 0, H_undo);

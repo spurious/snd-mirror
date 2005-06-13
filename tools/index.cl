@@ -491,7 +491,7 @@
 		(setf help-urls (reverse help-urls))
 		(let ((len (length help-names)))
 		  (format sfil "#define HELP_NAMES_SIZE ~D~%" len)
-		  (format sfil "#if HAVE_GUILE~%")
+		  (format sfil "#if HAVE_SCHEME~%")
 		  (format sfil "static char *help_names[HELP_NAMES_SIZE] = {~%  ")
 		  (format sfil "~S" (car help-names))
 		  (loop for ctr from 1 and name in (cdr help-names) do
@@ -503,7 +503,7 @@
 		  (loop for ctr from 1 and name in (cdr help-names) do
 		    (format sfil ",~%  ~S" (scm->rb name)))
 		  (format sfil "};~%#endif~%")
-		  (format sfil "#if (!HAVE_GUILE) && (!HAVE_RUBY)~%static char **help_names = NULL;~%#endif~%")
+		  (format sfil "#if (!HAVE_EXTENSION_LANGUAGE)~%static char **help_names = NULL;~%#endif~%")
 		  (format sfil "static char *help_urls[HELP_NAMES_SIZE] = {~%  ")
 		  (format sfil "~S" (car help-names))
 		  (loop for ctr from 1 and url in (cdr help-urls) do

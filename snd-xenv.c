@@ -259,9 +259,10 @@ static void enved_reset(void)
   XmTextSetString(textL, NULL);
   set_enved_filter_order(DEFAULT_ENVED_FILTER_ORDER);
   if (active_env) active_env = free_env(active_env);
-#if HAVE_GUILE
+#if HAVE_SCHEME
   active_env = string_to_env("'(0 0 1 0)");
-#else
+#endif
+#if HAVE_RUBY
   active_env = string_to_env("[0, 0, 1, 0]");
 #endif
   set_enved_env_list_top(0);

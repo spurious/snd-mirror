@@ -686,18 +686,217 @@ char *xen_guile_to_c_string_with_eventual_free(XEN str);
 #if HAVE_RUBY
 
 #include <ruby.h>
-
 #define XEN_OK 1
 
-#define XEN                  VALUE
-#define XEN_FALSE            Qfalse
-#define XEN_TRUE             Qtrue
-#define XEN_EMPTY_LIST       Qnil
-#define XEN_UNDEFINED        ID2SYM(rb_intern("undefined"))
+#define XEN                             VALUE
+#define XEN_FILE_EXTENSION              "rb"
+#define XEN_COMMENT_STRING              "#"
 
-#define XEN_FILE_EXTENSION  "rb"
-#define XEN_COMMENT_STRING  "#"
+#define XEN_FALSE                       Qfalse
+#define XEN_TRUE                        Qtrue
+#define XEN_TRUE_P(a)                   ((a) == Qtrue)
+#define XEN_FALSE_P(a)                  ((a) == Qfalse)
+#define C_TO_XEN_BOOLEAN(a)             ((a) ? Qtrue : Qfalse)
+#define XEN_TO_C_BOOLEAN(a)             (!(XEN_FALSE_P(a)))
 
+#define XEN_UNDEFINED                   ID2SYM(rb_intern("undefined"))
+#define XEN_BOUND_P(Arg)                ((Arg) != XEN_UNDEFINED)
+#define XEN_NOT_BOUND_P(Arg)            ((Arg) == XEN_UNDEFINED)
+
+#if defined(__GNUC__) && (!(defined(__cplusplus)))
+  #define XEN_BOOLEAN_P(Arg)            ({ XEN _xen_h_7_ = Arg;        (XEN_TRUE_P(_xen_h_7_) || XEN_FALSE_P(_xen_h_7_)); })
+  #define XEN_NUMBER_P(Arg)             ({ int _xen_h_8_ = TYPE(Arg);  ((_xen_h_8_ == T_FLOAT) || (_xen_h_8_ == T_FIXNUM) || (_xen_h_8_ == T_BIGNUM)); })
+  #define XEN_INTEGER_P(Arg)            ({ int _xen_h_9_ = TYPE(Arg);  ((_xen_h_9_ == T_FIXNUM) || (_xen_h_9_ == T_BIGNUM)); })
+  #define XEN_PROCEDURE_P(Arg)          ({ XEN _xen_h_10_ = Arg;       (XEN_BOUND_P(_xen_h_10_) && (rb_obj_is_kind_of(_xen_h_10_, rb_cProc))); })
+  #define XEN_OFF_T_P(Arg)              ({ int _xen_h_11_ = TYPE(Arg); ((_xen_h_11_ == T_FIXNUM) || (_xen_h_11_ == T_BIGNUM)); })
+  #define XEN_KEYWORD_P(Obj)            ({ XEN _xen_h_12_ = Obj;       (XEN_BOUND_P(_xen_h_12_) && SYMBOL_P(_xen_h_12_)); })
+  #define XEN_LIST_P_WITH_LENGTH(Arg, Len) ({ XEN _xen_h_13_ = Arg; ((XEN_LIST_P(_xen_h_13_)) ? (Len = RARRAY(_xen_h_13_)->len) : (Len = 0)); })
+#else
+  #define XEN_BOOLEAN_P(Arg)            (XEN_TRUE_P(Arg) || XEN_FALSE_P(Arg))
+  #define XEN_NUMBER_P(Arg)             ((TYPE(Arg) == T_FLOAT) || (TYPE(Arg) == T_FIXNUM) || (TYPE(Arg) == T_BIGNUM))
+  #define XEN_INTEGER_P(Arg)            ((TYPE(Arg) == T_FIXNUM) || (TYPE(Arg) == T_BIGNUM))
+  #define XEN_PROCEDURE_P(Arg)          (XEN_BOUND_P(Arg) && (rb_obj_is_kind_of(Arg, rb_cProc)))
+  #define XEN_OFF_T_P(Arg)              ((TYPE(Arg) == T_FIXNUM) || (TYPE(Arg) == T_BIGNUM))
+  #define XEN_KEYWORD_P(Obj)            (XEN_BOUND_P(Obj) && SYMBOL_P(Obj))
+  #define XEN_LIST_P_WITH_LENGTH(Arg, Len) ((XEN_LIST_P(Arg)) ? (Len = RARRAY(Arg)->len) : (Len = 0))
+#endif
+
+/* ---- lists ---- */
+#define XEN_EMPTY_LIST                  Qnil
+#define XEN_NULL_P(a)                   (((a) == Qnil) || ((a) == INT2NUM(0)) || (XEN_LIST_P(a) && XEN_LIST_LENGTH(a) == 0))
+
+#define XEN_CONS_P(Arg)                 (TYPE(Arg) == T_ARRAY)
+#define XEN_PAIR_P(Arg)                 (TYPE(Arg) == T_ARRAY)
+#define XEN_CONS(Arg1, Arg2)            xen_rb_cons(Arg1, Arg2)
+#define XEN_CONS_2(Arg1, Arg2, Arg3)    xen_rb_cons2(Arg1, Arg2, Arg3)
+#define XEN_CAR(a)                      rb_ary_entry(a, 0)
+#define XEN_CADR(a)                     rb_ary_entry(a, 1)
+#define XEN_CADDR(a)                    rb_ary_entry(a, 2)
+#define XEN_CADDDR(a)                   rb_ary_entry(a, 3)
+#define XEN_CDR(a)                      xen_rb_cdr(a)
+#define XEN_CDDR(a)                     XEN_CDR(XEN_CDR(a))
+
+#define XEN_LIST_P(Arg)                 (TYPE(Arg) == T_ARRAY)
+#define XEN_LIST_LENGTH(Arg)            RARRAY(Arg)->len
+#define XEN_EQ_P(a, b)                  ((a) == (b))
+#define XEN_EQV_P(a, b)                 ((a) == (b))
+#define XEN_EQUAL_P(a, b)               ((a) == (b))
+#define XEN_LIST_1(a)                   rb_ary_new3(1, a)
+#define XEN_LIST_2(a, b)                rb_ary_new3(2, a, b) 
+#define XEN_LIST_3(a, b, c)             rb_ary_new3(3, a, b, c) 
+#define XEN_LIST_4(a, b, c, d)          rb_ary_new3(4, a, b, c, d) 
+#define XEN_LIST_5(a, b, c, d, e)       rb_ary_new3(5, a, b, c, d, e) 
+#define XEN_LIST_6(a, b, c, d, e, f)    rb_ary_new3(6, a, b, c, d, e, f)
+#define XEN_LIST_7(a, b, c, d, e, f, g) rb_ary_new3(7, a, b, c, d, e, f, g)
+#define XEN_LIST_8(a, b, c, d, e, f, g, h) rb_ary_new3(8, a, b, c, d, e, f, g, h)
+#define XEN_LIST_9(a, b, c, d, e, f, g, h, i) rb_ary_new3(9, a, b, c, d, e, f, g, h, i)
+#if HAVE_RB_ARY_DUP
+  #define XEN_COPY_ARG(Lst)             rb_ary_dup(Lst)
+#else
+  #define XEN_COPY_ARG(Lst)             xen_rb_copy_list(Lst)
+#endif
+#define XEN_LIST_REF(Lst, Num)          rb_ary_entry(Lst, Num)
+#define XEN_LIST_SET(Lst, Num, Val)     rb_ary_store(Lst, Num, Val)
+#define XEN_APPEND(X, Y)                rb_ary_concat(X, Y)
+#define XEN_LIST_REVERSE(Lst)           rb_ary_reverse(XEN_COPY_ARG(Lst))
+
+/* ---- numbers ---- */
+/* apparently no complex numbers (built-in) in Ruby? */
+
+#define XEN_ZERO                        INT2NUM(0)
+#define XEN_DOUBLE_P(Arg)               XEN_NUMBER_P(Arg)
+#define XEN_TO_C_DOUBLE(a)              NUM2DBL(a)
+#if defined(__GNUC__) && (!(defined(__cplusplus)))
+  #define XEN_TO_C_DOUBLE_OR_ELSE(a, b) ({ XEN _xen_h_4_ = a; (XEN_NUMBER_P(_xen_h_4_) ? NUM2DBL(_xen_h_4_) : b); })
+#else
+  #define XEN_TO_C_DOUBLE_OR_ELSE(a, b) xen_rb_to_c_double_or_else(a, b)
+#endif
+#define C_TO_XEN_DOUBLE(a)              rb_float_new(a)
+#define XEN_TO_C_INT(a)                 rb_num2long(a)
+#if defined(__GNUC__) && (!(defined(__cplusplus)))
+  #define XEN_TO_C_INT_OR_ELSE(a, b)    ({ XEN _xen_h_5_ = a; (XEN_INTEGER_P(_xen_h_5_) ? FIX2INT(_xen_h_5_) : b); })
+#else
+  #define XEN_TO_C_INT_OR_ELSE(a, b)    xen_rb_to_c_int_or_else(a, b)
+#endif
+
+#define XEN_ULONG_P(Arg1)               XEN_INTEGER_P(Arg1)
+#define XEN_EXACT_P(Arg1)               XEN_INTEGER_P(Arg1)
+#define C_TO_XEN_INT(a)                 INT2NUM(a)
+#define XEN_TO_C_ULONG(a)               NUM2ULONG(a)
+#ifdef ULONG2NUM
+  #define C_TO_XEN_ULONG(a)             ULONG2NUM((unsigned long)a)
+#else
+  #define C_TO_XEN_ULONG(a)             UINT2NUM((unsigned long)a)
+#endif
+
+/* off_t support added in 1.8.0, I think */
+#ifndef OFFT2NUM
+  #define OFFT2NUM(a)                   INT2NUM(a)
+#endif
+#ifndef NUM2OFFT
+  #define NUM2OFFT(a)                   NUM2LONG(a)
+#endif
+#define C_TO_XEN_LONG_LONG(a)           OFFT2NUM(a)
+#define XEN_TO_C_LONG_LONG(a)           NUM2OFFT(a)
+
+/* ---- strings ---- */
+#define XEN_STRING_P(Arg)               (TYPE(Arg) == T_STRING)
+#define C_TO_XEN_STRING(a)              xen_rb_str_new2((char *)a)
+#define C_TO_XEN_STRINGN(a, len)        rb_str_new((char *)a, len)
+#define XEN_TO_C_STRING(Str)            RSTRING(Str)->ptr
+
+#define XEN_CHAR_P(Arg)                 XEN_STRING_P(Arg)
+#define XEN_TO_C_CHAR(Arg)              RSTRING(Arg)->ptr[0]
+#define C_TO_XEN_CHAR(Arg)              rb_str_new((char *)(&(Arg)), 1)
+
+#define XEN_NAME_AS_C_STRING_TO_VALUE(a) rb_gv_get(xen_scheme_global_variable_to_ruby(a))
+#define C_STRING_TO_XEN_FORM(Str)       XEN_EVAL_C_STRING(Str)
+#define XEN_EVAL_FORM(Form)             ((XEN)Form)
+#define XEN_EVAL_C_STRING(Arg)          xen_rb_eval_string_with_error(Arg)
+#define XEN_TO_STRING(Obj)              xen_rb_obj_as_string(Obj)
+#define XEN_LOAD_FILE(a)                xen_rb_load_file_with_error(C_TO_XEN_STRING(a))
+
+/* ---- hooks ---- */
+#define XEN_HOOK_P(Arg)                 (xen_rb_is_hook_p(Arg) || XEN_PROCEDURE_P(Arg))
+#define XEN_HOOK_PROCEDURES(a)          ((xen_rb_is_hook_p(a)) ? xen_rb_hook_to_a(a) : ((XEN_NULL_P(a)) ? Qnil : XEN_LIST_1(a)))
+#define XEN_CLEAR_HOOK(a)               ((xen_rb_is_hook_p(a)) ? xen_rb_hook_reset_hook(a) : (a = Qnil))
+#define XEN_HOOKED(a)                   XEN_NOT_NULL_P(XEN_HOOK_PROCEDURES(a))
+#define XEN_DEFINE_HOOK(Var, Name, Arity, Help) \
+  { \
+    Var = xen_rb_hook_c_new(xen_scheme_global_variable_to_ruby(Name), Arity, Help); \
+    rb_define_variable(xen_scheme_global_variable_to_ruby(Name), (VALUE *)(&Var)); \
+  }
+
+#define XEN_DEFINE_SIMPLE_HOOK(Var, Arity) \
+  { \
+    Var = xen_rb_hook_c_new("simple_hook", Arity, NULL); \
+  }
+
+/* ---- vectors ---- */
+#define XEN_VECTOR_P(Arg)               (TYPE(Arg) == T_ARRAY)
+#define XEN_VECTOR_LENGTH(Arg)          RARRAY(Arg)->len
+#define XEN_VECTOR_REF(Vect, Num)       rb_ary_entry(Vect, Num)
+#define XEN_VECTOR_SET(a, b, c)         rb_ary_store(a, b, c)
+#define XEN_MAKE_VECTOR(Num, Fill)      xen_rb_ary_new_with_initial_element(Num, Fill)
+#define XEN_VECTOR_TO_LIST(a)           a
+
+/* ---- symbols ---- */
+#define XEN_SYMBOL_P(Arg)               SYMBOL_P(Arg)
+#define XEN_SYMBOL_TO_C_STRING(a)       rb_id2name(SYM2ID(a))
+#define C_STRING_TO_XEN_SYMBOL(a)       ID2SYM(rb_intern(a))
+#define XEN_STRING_TO_SYMBOL(Str)       C_STRING_TO_XEN_SYMBOL(XEN_TO_C_STRING(Str))
+#define XEN_SYMBOL_TO_STRING(Sym)       C_TO_XEN_STRING(XEN_SYMBOL_TO_C_STRING(Sym))
+#define XEN_DOCUMENTATION_SYMBOL        C_STRING_TO_XEN_SYMBOL("documentation")
+#define XEN_OBJECT_HELP(Name)           rb_documentation(Name)
+#define XEN_SET_OBJECT_HELP(Name, Help) rb_set_documentation(Name, Help)
+#define C_SET_OBJECT_HELP(name, help)   ((name) && (help) && XEN_SET_OBJECT_HELP(C_TO_XEN_STRING(name), C_TO_XEN_STRING(help)))
+
+#define XEN_VARIABLE_SET(a, b)          rb_gv_set(xen_scheme_global_variable_to_ruby(a), b)
+#define XEN_VARIABLE_REF(a)             rb_gv_get(xen_scheme_global_variable_to_ruby(a))
+#define XEN_DEFINE_CONSTANT(Name, Value, Help) \
+  do { \
+      rb_define_global_const(xen_scheme_constant_to_ruby(Name), C_TO_XEN_INT(Value)); \
+      if (Help != NULL) C_SET_OBJECT_HELP(xen_scheme_constant_to_ruby(Name), Help); \
+    } while (0)
+
+#define XEN_DEFINE_VARIABLE(Name, Var, Value) \
+  { \
+    Var = Value; \
+    rb_define_variable(xen_scheme_global_variable_to_ruby(Name), (VALUE *)(&Var)); \
+  }
+
+#define XEN_WRAP_C_POINTER(a)           Data_Wrap_Struct(rb_cData, 0, 0, (void *)a)
+#define XEN_UNWRAP_C_POINTER(a)         DATA_PTR(a)
+#define XEN_WRAPPED_C_POINTER_P(a)      (TYPE(a) == T_DATA)
+
+/* ---- C structs ---- */
+#define XEN_MARK_OBJECT_TYPE            void *
+#define XEN_MAKE_AND_RETURN_OBJECT(Tag, Val, Mark, Free) return(Data_Wrap_Struct(Tag, Mark, Free, Val))
+#define XEN_OBJECT_REF(a)               DATA_PTR(a)
+#define XEN_MAKE_OBJECT(Var, Tag, Val, Mark, Free) Var = Data_Wrap_Struct(Tag, Mark, Free, Val)
+#define XEN_OBJECT_TYPE                 VALUE
+#define XEN_OBJECT_TYPE_P(OBJ, TAG)     (XEN_BOUND_P(OBJ) && (rb_obj_is_instance_of(OBJ, TAG)))
+#define XEN_MAKE_OBJECT_TYPE(Typ, Siz)  rb_define_class(xen_scheme_constant_to_ruby(Typ), rb_cObject)
+
+#define XEN_MAKE_OBJECT_FREE_PROCEDURE(Type, Wrapped_Free, Original_Free) \
+  static void *Wrapped_Free(XEN obj) \
+  { \
+    Original_Free((Type *)obj); \
+    return(NULL); \
+  }
+
+#define XEN_MAKE_OBJECT_PRINT_PROCEDURE(Type, Wrapped_Print, Original_Print) \
+  static XEN Wrapped_Print(XEN obj) \
+  { \
+    XEN val; \
+    char *str; \
+    str = Original_Print((Type *)XEN_OBJECT_REF(obj)); \
+    val = C_TO_XEN_STRING(str); \
+    FREE(str); \
+    return(val); \
+  }
+
+/* ---- procedures ---- */
 #ifdef __cplusplus
   #ifdef ANYARGS
     #define XEN_PROCEDURE_CAST (XEN (*)(ANYARGS))
@@ -711,100 +910,10 @@ char *xen_guile_to_c_string_with_eventual_free(XEN str);
   #define XEN_VALUE_ARG_PROCEDURE_CAST
 #endif
 
-#define XEN_MARK_OBJECT_TYPE              void *
-#define XEN_MAKE_AND_RETURN_OBJECT(Tag, Val, Mark, Free) return(Data_Wrap_Struct(Tag, Mark, Free, Val))
-#define XEN_OBJECT_REF(a)                 DATA_PTR(a)
-#define XEN_MAKE_OBJECT(Var, Tag, Val, Mark, Free) Var = Data_Wrap_Struct(Tag, Mark, Free, Val)
-#define XEN_OBJECT_TYPE                   VALUE
-#define XEN_OBJECT_TYPE_P(OBJ, TAG)       (XEN_BOUND_P(OBJ) && (rb_obj_is_instance_of(OBJ, TAG)))
-#define XEN_MAKE_OBJECT_TYPE(Typ, Siz)    rb_define_class(xen_scheme_constant_to_ruby(Typ), rb_cObject)
-
-#define XEN_MAKE_OBJECT_PRINT_PROCEDURE(Type, Wrapped_Print, Original_Print) \
-  static XEN Wrapped_Print(XEN obj) \
-  { \
-    XEN val; \
-    char *str; \
-    str = Original_Print((Type *)XEN_OBJECT_REF(obj)); \
-    val = C_TO_XEN_STRING(str); \
-    FREE(str); \
-    return(val); \
-  }
-
-#define XEN_MAKE_OBJECT_FREE_PROCEDURE(Type, Wrapped_Free, Original_Free) \
-  static void *Wrapped_Free(XEN obj) \
-  { \
-    Original_Free((Type *)obj); \
-    return(NULL); \
-  } 
-
-#define XEN_TRUE_P(a)                     ((a) == Qtrue)
-#define XEN_FALSE_P(a)                    ((a) == Qfalse)
-#define XEN_NULL_P(a)                     (((a) == Qnil) || ((a) == INT2NUM(0)) || (XEN_LIST_P(a) && XEN_LIST_LENGTH(a) == 0))
-#define XEN_BOUND_P(Arg)                  ((Arg) != XEN_UNDEFINED)
-#define XEN_NOT_BOUND_P(Arg)              ((Arg) == XEN_UNDEFINED)
-#define XEN_ZERO                          INT2NUM(0)
-
-#define XEN_TO_C_DOUBLE(a)                NUM2DBL(a)
-#if defined(__GNUC__) && (!(defined(__cplusplus)))
-  #define XEN_TO_C_DOUBLE_OR_ELSE(a, b) ({ XEN _xen_h_4_ = a; (XEN_NUMBER_P(_xen_h_4_) ? NUM2DBL(_xen_h_4_) : b); })
-#else
-  #define XEN_TO_C_DOUBLE_OR_ELSE(a, b) xen_rb_to_c_double_or_else(a, b)
-#endif
-#define C_TO_XEN_DOUBLE(a)                rb_float_new(a)
-
-#define XEN_TO_C_INT(a)                   rb_num2long(a)
-#if defined(__GNUC__) && (!(defined(__cplusplus)))
-  #define XEN_TO_C_INT_OR_ELSE(a, b) ({ XEN _xen_h_5_ = a; (XEN_INTEGER_P(_xen_h_5_) ? FIX2INT(_xen_h_5_) : b); })
-#else
-  #define XEN_TO_C_INT_OR_ELSE(a, b) xen_rb_to_c_int_or_else(a, b)
-#endif
-
-#define C_TO_XEN_INT(a)                   INT2NUM(a)
-#define XEN_TO_C_ULONG(a)                 NUM2ULONG(a)
-#ifdef ULONG2NUM
-  #define C_TO_XEN_ULONG(a)               ULONG2NUM((unsigned long)a)
-#else
-  #define C_TO_XEN_ULONG(a)               UINT2NUM((unsigned long)a)
-#endif
-
-/* off_t support added in 1.8.0, I think */
-#ifndef OFFT2NUM
-  #define OFFT2NUM(a)                     INT2NUM(a)
-#endif
-#ifndef NUM2OFFT
-  #define NUM2OFFT(a)                     NUM2LONG(a)
-#endif
-#define C_TO_XEN_LONG_LONG(a)             OFFT2NUM(a)
-#define XEN_TO_C_LONG_LONG(a)             NUM2OFFT(a)
-
-#define C_TO_XEN_STRING(a)                xen_rb_str_new2((char *)a)
-#define C_TO_XEN_STRINGN(a, len)          rb_str_new((char *)a, len)
-#define XEN_TO_C_STRING(Str)              RSTRING(Str)->ptr
-
-#define C_TO_XEN_BOOLEAN(a)               ((a) ? Qtrue : Qfalse)
-#define XEN_TO_C_BOOLEAN(a)               (!(XEN_FALSE_P(a)))
-
-#define XEN_NAME_AS_C_STRING_TO_VALUE(a)  rb_gv_get(xen_scheme_global_variable_to_ruby(a))
-#define C_STRING_TO_XEN_FORM(Str)         XEN_EVAL_C_STRING(Str)
-#define XEN_EVAL_FORM(Form)               ((XEN)Form)
-#define XEN_EVAL_C_STRING(Arg)            xen_rb_eval_string_with_error(Arg)
-#define XEN_SYMBOL_TO_C_STRING(a)         rb_id2name(SYM2ID(a))
-#define C_STRING_TO_XEN_SYMBOL(a)         ID2SYM(rb_intern(a))
-#define XEN_TO_STRING(Obj)                xen_rb_obj_as_string(Obj)
-#define XEN_LOAD_FILE(a)                  xen_rb_load_file_with_error(C_TO_XEN_STRING(a))
-
-#define XEN_WRAP_C_POINTER(a)             Data_Wrap_Struct(rb_cData, 0, 0, (void *)a)
-#define XEN_UNWRAP_C_POINTER(a)           DATA_PTR(a)
-#define XEN_WRAPPED_C_POINTER_P(a)        (TYPE(a) == T_DATA)
-
-#define XEN_PROCEDURE_SOURCE(Func)        Func
-
-#define XEN_STRING_TO_SYMBOL(Str)         C_STRING_TO_XEN_SYMBOL(XEN_TO_C_STRING(Str))
-#define XEN_SYMBOL_TO_STRING(Sym)         C_TO_XEN_STRING(XEN_SYMBOL_TO_C_STRING(Sym))
-#define XEN_DOCUMENTATION_SYMBOL          C_STRING_TO_XEN_SYMBOL("documentation")
-#define XEN_OBJECT_HELP(Name)             rb_documentation(Name)
-#define XEN_SET_OBJECT_HELP(Name, Help)   rb_set_documentation(Name, Help)
-#define C_SET_OBJECT_HELP(name, help)     ((name) && (help) && XEN_SET_OBJECT_HELP(C_TO_XEN_STRING(name), C_TO_XEN_STRING(help)))
+#define XEN_PROCEDURE_SOURCE(Func)       Func
+#define XEN_ARITY(Func)                  rb_funcall(Func, rb_intern("arity"), 0)
+#define XEN_REQUIRED_ARGS(Func)          xen_rb_required_args(XEN_ARITY(Func))
+#define XEN_REQUIRED_ARGS_OK(Func, Args) (xen_rb_required_args(XEN_ARITY(Func)) == Args)
 
 #if XEN_DEBUGGING
 /* the otiose casts to int here are required by g++ */
@@ -822,6 +931,7 @@ char *xen_guile_to_c_string_with_eventual_free(XEN str);
       rb_define_global_function(xen_scheme_procedure_to_ruby(Name), XEN_PROCEDURE_CAST Func, ((RstArg > 0) ? -2 : ((OptArg > 0) ? -1 : ReqArg))); \
       if (Doc != NULL) C_SET_OBJECT_HELP(xen_scheme_procedure_to_ruby(Name), Doc); \
     } while (0)
+
 #else
 
 #define XEN_DEFINE_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg, Doc) \
@@ -843,107 +953,6 @@ char *xen_guile_to_c_string_with_eventual_free(XEN str);
       XEN_DEFINE_PROCEDURE(Set_Name, XEN_PROCEDURE_CAST Set_Func, Set_Req, Set_Opt, 0, Get_Help); \
     } while (0)
 
-#define XEN_DEFINE_CONSTANT(Name, Value, Help) \
-  do { \
-      rb_define_global_const(xen_scheme_constant_to_ruby(Name), C_TO_XEN_INT(Value)); \
-      if (Help != NULL) C_SET_OBJECT_HELP(xen_scheme_constant_to_ruby(Name), Help); \
-    } while (0)
-
-#define XEN_DEFINE_VARIABLE(Name, Var, Value) \
-  { \
-    Var = Value; \
-    rb_define_variable(xen_scheme_global_variable_to_ruby(Name), (VALUE *)(&Var)); \
-  }
-
-#define XEN_DEFINE_HOOK(Var, Name, Arity, Help) \
-  { \
-    Var = xen_rb_hook_c_new(xen_scheme_global_variable_to_ruby(Name), Arity, Help); \
-    rb_define_variable(xen_scheme_global_variable_to_ruby(Name), (VALUE *)(&Var)); \
-  }
-
-#define XEN_DEFINE_SIMPLE_HOOK(Var, Arity) \
-  { \
-    Var = xen_rb_hook_c_new("simple_hook", Arity, NULL); \
-  }
-
-#if defined(__GNUC__) && (!(defined(__cplusplus)))
-  #define XEN_BOOLEAN_P(Arg)    ({ XEN _xen_h_7_ = Arg;        (XEN_TRUE_P(_xen_h_7_) || XEN_FALSE_P(_xen_h_7_)); })
-  #define XEN_NUMBER_P(Arg)     ({ int _xen_h_8_ = TYPE(Arg);  ((_xen_h_8_ == T_FLOAT) || (_xen_h_8_ == T_FIXNUM) || (_xen_h_8_ == T_BIGNUM)); })
-  #define XEN_INTEGER_P(Arg)    ({ int _xen_h_9_ = TYPE(Arg);  ((_xen_h_9_ == T_FIXNUM) || (_xen_h_9_ == T_BIGNUM)); })
-  #define XEN_PROCEDURE_P(Arg)  ({ XEN _xen_h_10_ = Arg;       (XEN_BOUND_P(_xen_h_10_) && (rb_obj_is_kind_of(_xen_h_10_, rb_cProc))); })
-  #define XEN_OFF_T_P(Arg)      ({ int _xen_h_11_ = TYPE(Arg); ((_xen_h_11_ == T_FIXNUM) || (_xen_h_11_ == T_BIGNUM)); })
-  #define XEN_KEYWORD_P(Obj)    ({ XEN _xen_h_12_ = Obj;       (XEN_BOUND_P(_xen_h_12_) && SYMBOL_P(_xen_h_12_)); })
-  #define XEN_LIST_P_WITH_LENGTH(Arg, Len) ({ XEN _xen_h_13_ = Arg; ((XEN_LIST_P(_xen_h_13_)) ? (Len = RARRAY(_xen_h_13_)->len) : (Len = 0)); })
-#else
-  #define XEN_BOOLEAN_P(Arg)    (XEN_TRUE_P(Arg) || XEN_FALSE_P(Arg))
-  #define XEN_NUMBER_P(Arg)     ((TYPE(Arg) == T_FLOAT) || (TYPE(Arg) == T_FIXNUM) || (TYPE(Arg) == T_BIGNUM))
-  #define XEN_INTEGER_P(Arg)    ((TYPE(Arg) == T_FIXNUM) || (TYPE(Arg) == T_BIGNUM))
-  #define XEN_PROCEDURE_P(Arg)  (XEN_BOUND_P(Arg) && (rb_obj_is_kind_of(Arg, rb_cProc)))
-  #define XEN_OFF_T_P(Arg)      ((TYPE(Arg) == T_FIXNUM) || (TYPE(Arg) == T_BIGNUM))
-  #define XEN_KEYWORD_P(Obj)    (XEN_BOUND_P(Obj) && SYMBOL_P(Obj))
-  #define XEN_LIST_P_WITH_LENGTH(Arg, Len) ((XEN_LIST_P(Arg)) ? (Len = RARRAY(Arg)->len) : (Len = 0))
-#endif
-
-#define XEN_STRING_P(Arg)       (TYPE(Arg) == T_STRING)
-#define XEN_VECTOR_P(Arg)       (TYPE(Arg) == T_ARRAY)
-#define XEN_SYMBOL_P(Arg)       SYMBOL_P(Arg)
-#define XEN_DOUBLE_P(Arg)       XEN_NUMBER_P(Arg)
-#define XEN_ULONG_P(Arg1)       XEN_INTEGER_P(Arg1)
-#define XEN_EXACT_P(Arg1)       XEN_INTEGER_P(Arg1)
-#define XEN_HOOK_P(Arg)         (xen_rb_is_hook_p(Arg) || XEN_PROCEDURE_P(Arg))
-
-/* apparently no complex numbers (built-in) in Ruby? */
-
-#define XEN_LIST_P(Arg)                 (TYPE(Arg) == T_ARRAY)
-#define XEN_CONS_P(Arg)                 (TYPE(Arg) == T_ARRAY)
-#define XEN_PAIR_P(Arg)                 (TYPE(Arg) == T_ARRAY)
-#define XEN_LIST_LENGTH(Arg)            RARRAY(Arg)->len
-#define XEN_EQ_P(a, b)                  ((a) == (b))
-#define XEN_EQV_P(a, b)                 ((a) == (b))
-#define XEN_EQUAL_P(a, b)               ((a) == (b))
-#define XEN_LIST_1(a)                   rb_ary_new3(1, a)
-#define XEN_LIST_2(a, b)                rb_ary_new3(2, a, b) 
-#define XEN_LIST_3(a, b, c)             rb_ary_new3(3, a, b, c) 
-#define XEN_LIST_4(a, b, c, d)          rb_ary_new3(4, a, b, c, d) 
-#define XEN_LIST_5(a, b, c, d, e)       rb_ary_new3(5, a, b, c, d, e) 
-#define XEN_LIST_6(a, b, c, d, e, f)    rb_ary_new3(6, a, b, c, d, e, f)
-#define XEN_LIST_7(a, b, c, d, e, f, g) rb_ary_new3(7, a, b, c, d, e, f, g)
-#define XEN_LIST_8(a, b, c, d, e, f, g, h) rb_ary_new3(8, a, b, c, d, e, f, g, h)
-#define XEN_LIST_9(a, b, c, d, e, f, g, h, i) rb_ary_new3(9, a, b, c, d, e, f, g, h, i)
-#define XEN_CAR(a)                      rb_ary_entry(a, 0)
-#define XEN_CADR(a)                     rb_ary_entry(a, 1)
-#define XEN_CADDR(a)                    rb_ary_entry(a, 2)
-#define XEN_CADDDR(a)                   rb_ary_entry(a, 3)
-#define XEN_CDR(a)                      xen_rb_cdr(a)
-#define XEN_CDDR(a)                     XEN_CDR(XEN_CDR(a))
-#if HAVE_RB_ARY_DUP
-  #define XEN_COPY_ARG(Lst)             rb_ary_dup(Lst)
-#else
-  #define XEN_COPY_ARG(Lst)             xen_rb_copy_list(Lst)
-#endif
-#define XEN_CONS(Arg1, Arg2)            xen_rb_cons(Arg1, Arg2)
-#define XEN_CONS_2(Arg1, Arg2, Arg3)    xen_rb_cons2(Arg1, Arg2, Arg3)
-#define XEN_LIST_REF(Lst, Num)          rb_ary_entry(Lst, Num)
-#define XEN_LIST_SET(Lst, Num, Val)     rb_ary_store(Lst, Num, Val)
-#define XEN_APPEND(X, Y)                rb_ary_concat(X, Y)
-#define XEN_LIST_REVERSE(Lst)           rb_ary_reverse(XEN_COPY_ARG(Lst))
-
-#define XEN_HOOK_PROCEDURES(a)          ((xen_rb_is_hook_p(a)) ? xen_rb_hook_to_a(a) : ((XEN_NULL_P(a)) ? Qnil : XEN_LIST_1(a)))
-#define XEN_CLEAR_HOOK(a)               ((xen_rb_is_hook_p(a)) ? xen_rb_hook_reset_hook(a) : (a = Qnil))
-#define XEN_HOOKED(a)                   XEN_NOT_NULL_P(XEN_HOOK_PROCEDURES(a))
-#define XEN_VARIABLE_SET(a, b)          rb_gv_set(xen_scheme_global_variable_to_ruby(a), b)
-#define XEN_VARIABLE_REF(a)             rb_gv_get(xen_scheme_global_variable_to_ruby(a))
-
-#define XEN_VECTOR_LENGTH(Arg)          RARRAY(Arg)->len
-#define XEN_VECTOR_REF(Vect, Num)       rb_ary_entry(Vect, Num)
-#define XEN_VECTOR_SET(a, b, c)         rb_ary_store(a, b, c)
-#define XEN_MAKE_VECTOR(Num, Fill)      xen_rb_ary_new_with_initial_element(Num, Fill)
-#define XEN_VECTOR_TO_LIST(a)           a
-
-#define XEN_CHAR_P(Arg)                  XEN_STRING_P(Arg)
-#define XEN_TO_C_CHAR(Arg)               RSTRING(Arg)->ptr[0]
-#define C_TO_XEN_CHAR(Arg)               rb_str_new((char *)(&(Arg)), 1)
-
 #define XEN_CALL_0(Func, Caller)                   xen_rb_funcall_0(Func)
 #define XEN_CALL_1(Func, Arg1, Caller)             rb_funcall(Func, rb_intern("call"), 1, Arg1)
 #define XEN_CALL_2(Func, Arg1, Arg2, Caller)       rb_funcall(Func, rb_intern("call"), 2, Arg1, Arg2)
@@ -959,15 +968,14 @@ char *xen_guile_to_c_string_with_eventual_free(XEN str);
 #define XEN_CALL_3_NO_CATCH(Func, Arg1, Arg2, Arg3) rb_funcall(Func, rb_intern("call"), 3, Arg1, Arg2, Arg3)
 #define XEN_APPLY_NO_CATCH(Func, Args)              xen_rb_apply(Func, Args)
 
-#define XEN_ARITY(Func)                 rb_funcall(Func, rb_intern("arity"), 0)
-#define XEN_REQUIRED_ARGS(Func)         xen_rb_required_args(XEN_ARITY(Func))
-#define XEN_REQUIRED_ARGS_OK(Func, Args) (xen_rb_required_args(XEN_ARITY(Func)) == Args)
+/* ---- keywords, etc ---- */
 #define XEN_KEYWORD_EQ_P(k1, k2)        ((k1) == (k2))
 #define XEN_MAKE_KEYWORD(Arg)           C_STRING_TO_XEN_SYMBOL(xen_scheme_procedure_to_ruby(Arg))
 #define XEN_YES_WE_HAVE(a)              rb_provide(a)
 #define XEN_PROTECT_FROM_GC(Var)        rb_gc_register_address(&(Var))
 #define XEN_UNPROTECT_FROM_GC(Var)      rb_gc_unregister_address(&(Var))
 
+/* ---- errors ---- */
 #define XEN_ERROR_TYPE(Name)            rb_intern(xen_scheme_constant_to_ruby(Name))
 
 #define XEN_ASSERT_TYPE(Assertion, Arg, Position, Caller, Correct_Type) \
@@ -1358,6 +1366,7 @@ XEN rb_documentation(XEN name);
 XEN rb_set_documentation(XEN name, XEN help);
 #endif
 /* end HAVE_RUBY */
+
 
 
 /* ------------------------------ NO EXTENSION LANGUAGE ------------------------------ */

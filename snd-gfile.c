@@ -1795,10 +1795,9 @@ void save_edit_header_dialog_state(FILE *fd)
     {
 #if HAVE_SCHEME
       fprintf(fd, "(%s (%s \"%s\"))\n", S_edit_header_dialog, S_find_sound, edit_header_sp->short_filename);
-#else
-  #if HAVE_RUBY
+#endif
+#if HAVE_RUBY
       fprintf(fd, "%s(%s(\"%s\"))\n", TO_PROC_NAME(S_edit_header_dialog), TO_PROC_NAME(S_find_sound), edit_header_sp->short_filename);
-  #endif
 #endif
     }
 }
@@ -1865,10 +1864,9 @@ void save_post_it_dialog_state(FILE *fd)
       text = gtk_text_buffer_get_text(gtk_text_view_get_buffer(GTK_TEXT_VIEW(post_it_text)), &start, &end, true);
 #if HAVE_SCHEME
       fprintf(fd, "(%s \"%s\" \"%s\")\n", S_info_dialog, subject, text);
-#else
-  #if HAVE_RUBY
+#endif
+#if HAVE_RUBY
       fprintf(fd, "%s(\"%s\", \"%s\")\n", TO_PROC_NAME(S_info_dialog), subject, text);
-  #endif
 #endif
       if (text) g_free(text);
     }
@@ -1890,37 +1888,34 @@ void save_file_dialog_state(FILE *fd)
     {
 #if HAVE_SCHEME
       fprintf(fd, "(%s #t)\n", S_open_file_dialog);
-#else
-  #if HAVE_RUBY
+#endif
+#if HAVE_RUBY
       fprintf(fd, "%s(true)\n", TO_PROC_NAME(S_open_file_dialog));
-  #endif
 #endif
     }
   if ((mix_dialog) && (GTK_WIDGET_VISIBLE(mix_dialog->dialog)))
     {
 #if HAVE_SCHEME
       fprintf(fd, "(%s #t)\n", S_mix_file_dialog);
-#else
-  #if HAVE_RUBY
+#endif
+#if HAVE_RUBY
       fprintf(fd, "%s(true)\n", TO_PROC_NAME(S_mix_file_dialog));
-  #endif
 #endif
     }
   if ((save_as_dialog) && (GTK_WIDGET_VISIBLE(save_as_dialog)))
     {
 #if HAVE_SCHEME
       fprintf(fd, "(%s #t)\n", (save_as_dialog_type == FILE_SAVE_AS) ? S_save_sound_dialog : S_save_selection_dialog);
-#else
-  #if HAVE_RUBY
+#endif
+#if HAVE_RUBY
       fprintf(fd, "%s(true)\n", TO_PROC_NAME((save_as_dialog_type == FILE_SAVE_AS) ? S_save_sound_dialog : S_save_selection_dialog));
-  #endif
 #endif
     }
 }
 
 void g_init_gxfile(void)
 {
-#if HAVE_GUILE
+#if HAVE_SCHEME
   #define H_mouse_enter_label_hook S_mouse_enter_label_hook " (type position label): called when the mouse enters a file viewer or region label. \
 The 'type' is 0 for the current files list, 1 for previous files, and 2 for regions. The 'position' \
 is the scrolled list position of the label. The label itself is 'label'. We could use the 'finfo' procedure in examp.scm \
@@ -1930,7 +1925,8 @@ to popup file info as follows: \n\
     (if (not (= type 2))\n\
         (info-dialog name (finfo name)))))\n\
 See also nb.scm."
-#else
+#endif
+#if HAVE_RUBY
   #define H_mouse_enter_label_hook S_mouse_enter_label_hook " (type position label): called when the mouse enters a file viewer or region label. \
 The 'type' is 0 for the current files list, 1 for previous files, and 2 for regions. The 'position' \
 is the scrolled list position of the label. The label itself is 'label'."

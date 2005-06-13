@@ -5125,7 +5125,7 @@ static XEN g_update_lisp_graph(XEN snd, XEN chn)
 }
 
 
-#if HAVE_GUILE
+#if HAVE_SCHEME
 #define WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(name_reversed, name) \
 static XEN name_reversed(XEN arg1, XEN arg2, XEN arg3) \
 { \
@@ -5235,7 +5235,7 @@ static XEN g_set_cursor(XEN on, XEN snd_n, XEN chn_n, XEN edpos)
   return(channel_set(snd_n, chn_n, on, CP_CURSOR, S_setB S_cursor));
 }
 
-#if HAVE_GUILE
+#if HAVE_SCHEME
 static XEN g_set_cursor_reversed(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   if (XEN_NOT_BOUND_P(arg2))

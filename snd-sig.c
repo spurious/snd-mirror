@@ -3022,7 +3022,8 @@ the current sample, the vct returned by 'init-func', and the current read direct
   /*   the cadr proc gives access to the environment, run walks the car */
 #if HAVE_RUBY
   proc = proc_and_list;
-#else
+#endif
+#if HAVE_SCHEME
   if (XEN_LIST_P(proc_and_list))
     proc = XEN_CADR(proc_and_list);
 #endif
@@ -3056,7 +3057,8 @@ the current sample, the vct returned by 'init-func', and the current read direct
   if (XEN_STRING_P(origin)) caller = copy_string(XEN_TO_C_STRING(origin)); else caller = copy_string(S_ptree_channel);
   g_map_chan_ptree_fallback(proc, init_func, cp, beg, dur, pos, caller);
   if (caller) {FREE(caller); caller = NULL;}
-#else
+#endif
+#if HAVE_SCHEME
   ptrees_present = ptree_fragments_in_use(cp, beg, dur, pos);
   if (XEN_PROCEDURE_P(init_func))
     {

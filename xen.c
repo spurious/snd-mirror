@@ -1116,7 +1116,7 @@ void Init_Hook(void)
 
 /* ------------------------------ NONE OF THE ABOVE ------------------------------ */
 
-#if (!HAVE_GUILE) && (!HAVE_RUBY)
+#if (!HAVE_EXTENSION_LANGUAGE)
 
 char *xen_version(void)
 {

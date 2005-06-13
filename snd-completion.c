@@ -144,7 +144,7 @@ static int completions(char *text)
 
 #endif
 
-#if (!HAVE_GUILE) && (!HAVE_RUBY)
+#if (!HAVE_EXTENSION_LANGUAGE)
 static int completions(char *text) {return(0);}
 #endif
 
@@ -156,7 +156,8 @@ bool separator_char_p(char c)
 	 (c != '?') &&
 	 (c != '!') &&
 	 (c != '_') &&
-#else
+#endif
+#if HAVE_SCHEME
 	 (c != '-') &&
 	 (c != '_') &&
 	 (c != '>') &&

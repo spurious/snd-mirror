@@ -1,7 +1,7 @@
 #!/usr/local/bin/guile -s
 !#
 
-;;; makegl.scm creates the GL/GLU bindings using gldata.scm, writes gl.c and gl-ruby.c
+;;; makegl.scm creates the GL/GLU bindings using gldata.scm, writes gl.c
 
 (use-modules (ice-9 debug))
 (use-modules (ice-9 format))
@@ -13,20 +13,12 @@
 (read-enable 'positions)
 
 (define gl-file (open-output-file "gl.c"))
-(define gl-ruby-file (open-output-file "gl-ruby.c"))
 
 (define (hey . args)
   (display (apply format #f args) gl-file))
 
 (define (heyc arg)
   (display arg gl-file))
-
-(define (say . args)
-  (display (apply format #f args) gl-ruby-file))
-
-(define (say-hey . args)
-  (apply hey args)
-  (apply say args))
 
 (define names '())
 (define types '())
@@ -439,7 +431,7 @@
 
 (load "gldata.scm")
 
-;;; ---------------------------------------- write output files ----------------------------------------
+;;; ---------------------------------------- write output file ----------------------------------------
 (hey "/* gl.c: Guile and Ruby bindings for GL, GLU~%")
 (hey " *   generated automatically from makegl.scm and gldata.scm~%")
 (hey " *   needs xen.h~%")
@@ -449,6 +441,8 @@
 (hey " * 'gl is added to *features*~%")
 (hey " *~%")
 (hey " * HISTORY:~%")
+(hey " *     13-Jun-05: merged gl-ruby.c into gl.c.~%")
+(hey " *     --------~%")
 (hey " *     10-Mar:    Gl_Version.~%")
 (hey " *     1-Feb-03:  glGet* funcs now try to handle multiple return values correctly.~%")
 (hey " *     --------~%")
@@ -462,6 +456,7 @@
 
 (hey "#include <config.h>~%~%")
 
+(hey "#if HAVE_EXTENSION_LANGUAGE~%")
 (hey "#if USE_GTK~%")
 (hey "  #include <gtk/gtkgl.h>~%")
 (hey "#endif~%")
@@ -489,10 +484,11 @@
 (hey "#endif~%~%")
 
 (hey "/* prefix for all names */~%")
-(hey "#if HAVE_GUILE~%")
+(hey "#if HAVE_SCHEME~%")
 (hey "  #define XL_PRE \"\"~%")
 (hey "  #define XL_POST \"\"~%")
-(hey "#else~%")
+(hey "#endif~%")
+(hey "#if HAVE_RUBY~%")
 (hey "/* for Ruby, XG PRE needs to be uppercase */~%")
 (hey "  #define XL_PRE \"R\"~%")
 (hey "  #define XL_POST \"\"~%")
@@ -788,86 +784,107 @@
 
 (for-each handle-func (reverse funcs))
 
+;;; ---------------- argify linkages
 
-(say "/* Ruby connection for gl.c */~%~%")
-
+(hey "#ifdef XEN_ARGIFY_1~%")
 (define (argify-func func)
   (let* ((cargs (length (caddr func)))
 	 (refargs (+ (ref-args (caddr func)) (opt-args (caddr func))))
 	 (args (- cargs refargs))
 	 (if-fnc (and (> (length func) 4)
 		      (eq? (list-ref func 4) 'if))))
-    (if (member (car func) glu-1-2) (say "#ifdef GLU_VERSION_1_2~%"))
+    (if (member (car func) glu-1-2) (hey "#ifdef GLU_VERSION_1_2~%"))
     (if if-fnc
-	(say "#if HAVE_~A~%" (string-upcase (symbol->string (list-ref func 5)))))
-    (say "XEN_~A(gxg_~A_w, gxg_~A)~%" 
+	(hey "#if HAVE_~A~%" (string-upcase (symbol->string (list-ref func 5)))))
+    (hey "XEN_~A(gxg_~A_w, gxg_~A)~%" 
 	 (if (>= cargs 10) "VARGIFY"
 	     (if (> refargs 0)
 		 (format #f "ARGIFY_~D" cargs)
 		 (format #f "NARGIFY_~D" cargs)))
 	 (car func) (car func))
     (if if-fnc
-	(say "#endif~%"))
-    (if (member (car func) glu-1-2) (say "#endif~%"))))
+	(hey "#endif~%"))
+    (if (member (car func) glu-1-2) (hey "#endif~%"))))
 	 
-(say "#if USE_MOTIF~%")
+(hey "#if USE_MOTIF~%")
 (for-each argify-func (reverse x-funcs))
-(say "#endif~%")
+(hey "#endif~%")
 
-(say "#if USE_GTK~%")
+(hey "#if USE_GTK~%")
 (for-each argify-func (reverse g-funcs))
-(say "#ifdef GTKGLEXT_MAJOR_VERSION~%")
+(hey "#ifdef GTKGLEXT_MAJOR_VERSION~%")
 (for-each argify-func (reverse g5-funcs))
-(say "#endif~%")
-(say "#endif~%")
+(hey "#endif~%")
+(hey "#endif~%~%")
 
 (for-each argify-func (reverse funcs))
 
+(hey "~%#else~%~%")
 
-(hey "#if HAVE_GUILE~%")
-(say-hey "static void define_functions(void)~%")
-(say-hey "{~%")
-(say-hey "  #define GL_DEFINE_PROCEDURE(Name, Value, A1, A2, A3, Help) XEN_DEFINE_PROCEDURE(XL_PRE #Name XL_POST, Value, A1, A2, A3, Help)~%")
+(define (unargify-func func)
+  (let* ((cargs (length (caddr func)))
+	 (refargs (+ (ref-args (caddr func)) (opt-args (caddr func))))
+	 (args (- cargs refargs))
+	 (if-fnc (and (> (length func) 4)
+		      (eq? (list-ref func 4) 'if))))
+    (if (member (car func) glu-1-2) (hey "#ifdef GLU_VERSION_1_2~%"))
+    (if if-fnc
+	(hey "#if HAVE_~A~%" (string-upcase (symbol->string (list-ref func 5)))))
+    (hey "#define gxg_~A_w gxg_~A~%" 
+	 (car func) (car func))
+    (if if-fnc
+	(hey "#endif~%"))
+    (if (member (car func) glu-1-2) (hey "#endif~%"))))
+	 
+(hey "#if USE_MOTIF~%")
+(for-each unargify-func (reverse x-funcs))
+(hey "#endif~%")
+
+(hey "#if USE_GTK~%")
+(for-each unargify-func (reverse g-funcs))
+(hey "#ifdef GTKGLEXT_MAJOR_VERSION~%")
+(for-each unargify-func (reverse g5-funcs))
+(hey "#endif~%")
+(hey "#endif~%~%")
+
+(for-each unargify-func (reverse funcs))
+
+(hey "#endif~%")
+
+
+;;; ---------------- procedure linkages
+(hey "static void define_functions(void)~%")
+(hey "{~%")
+(hey "  #define GL_DEFINE_PROCEDURE(Name, Value, A1, A2, A3, Help) XEN_DEFINE_PROCEDURE(XL_PRE #Name XL_POST, Value, A1, A2, A3, Help)~%")
 
 (define (defun func)
   (let* ((cargs (length (caddr func)))
 	 (refargs (+ (ref-args (caddr func)) (opt-args (caddr func))))
 	 (args (- cargs refargs)))
     (if (member (car func) glu-1-2) (hey "#ifdef GLU_VERSION_1_2~%"))
-    (hey "  GL_DEFINE_PROCEDURE(~A, gxg_~A, ~D, ~D, ~D, H_~A);~%"
+    (hey "  GL_DEFINE_PROCEDURE(~A, gxg_~A_w, ~D, ~D, ~D, H_~A);~%"
 		     (car func) (car func) 
 		     (if (>= cargs 10) 0 args)
 		     (if (>= cargs 10) 0 refargs) ; optional ignored
 		     (if (>= cargs 10) 1 0)
 		     (car func))
     (if (member (car func) glu-1-2) (hey "#endif~%"))
-    (if (member (car func) glu-1-2) (say "#ifdef GLU_VERSION_1_2~%"))
-    (say "  GL_DEFINE_PROCEDURE(~A, gxg_~A_w, ~D, ~D, ~D, H_~A);~%"
-		     (car func) (car func) 
-		     (if (>= cargs 10) 0 args)
-		     (if (>= cargs 10) 0 refargs) ; optional ignored
-		     (if (>= cargs 10) 1 0)
-		     (car func))
-    (if (member (car func) glu-1-2) (say "#endif~%"))
     ))
 
-(say-hey "#if USE_MOTIF~%")
+(hey "#if USE_MOTIF~%")
 (for-each defun (reverse x-funcs))
-(say-hey "#endif~%")
+(hey "#endif~%")
 
-(say-hey "#if USE_GTK~%")
+(hey "#if USE_GTK~%")
 (for-each defun (reverse g-funcs))
-(say-hey "#ifdef GTKGLEXT_MAJOR_VERSION~%")
+(hey "#ifdef GTKGLEXT_MAJOR_VERSION~%")
 (for-each defun (reverse g5-funcs))
-(say-hey "#endif~%")
-(say-hey "#endif~%")
+(hey "#endif~%")
+(hey "#endif~%")
 
 (for-each defun (reverse funcs))
 
-(say-hey "}~%~%")
-(hey "#else~%")
-(hey "  #include \"gl-ruby.c\"~%")
-(hey "#endif~%")
+(hey "}~%~%")
 
 
 (hey "/* ---------------------------------------- constants ---------------------------------------- */~%~%")
@@ -879,7 +896,8 @@
 (hey "#else~%")
 (hey "  #define DEFINE_INTEGER(Name) gh_define(XL_PRE #Name XL_POST, C_TO_XEN_INT(Name))~%")
 (hey "#endif~%")
-(hey "#else~%")
+(hey "#endif~%")
+(hey "#if HAVE_RUBY~%")
 (hey "  #define DEFINE_INTEGER(Name) rb_define_global_const(XL_PRE #Name XL_POST, C_TO_XEN_INT(Name))~%")
 (hey "#endif~%")
 (hey "~%")
@@ -913,10 +931,11 @@
 
 (hey "/* -------------------------------- initialization -------------------------------- */~%~%")
 (hey "static bool gl_already_inited = false;~%~%")
-(hey "#if HAVE_GUILE~%")
+(hey "#if HAVE_SCHEME~%")
 (hey " void init_gl(void);~%")
 (hey " void init_gl(void)~%")
-(hey "#else~%")
+(hey "#endif~%")
+(hey "#if HAVE_RUBY~%")
 (hey " void Init_libgl(void);~%")
 (hey " void Init_libgl(void)~%")
 (hey "#endif~%")
@@ -936,6 +955,7 @@
 (hey "    }~%")
 (hey "}~%")
 
+(hey "#endif~%")
+
 (close-output-port gl-file)
-(close-output-port gl-ruby-file)
 

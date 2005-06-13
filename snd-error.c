@@ -152,7 +152,7 @@ void g_init_errors(void)
   XEN_DEFINE_PROCEDURE(S_snd_error,   g_snd_error_w,   1, 0, 0, H_snd_error);
   XEN_DEFINE_PROCEDURE(S_snd_warning, g_snd_warning_w, 1, 0, 0, H_snd_warning);
 
-#if HAVE_GUILE
+#if HAVE_SCHEME
   #define H_snd_error_hook S_snd_error_hook " (error-message): called upon snd_error. \
 If it returns #t, Snd flushes the error (it assumes you've reported it via the hook:\n\
   (add-hook! " S_snd_error_hook "\n\
@@ -166,7 +166,8 @@ If it returns #t, Snd flushes the warning (it assumes you've reported it via the
       (add-hook! " S_snd_warning_hook " no-warning)\n\
       (thunk)\n\
       (remove-hook! " S_snd_warning_hook " no-warning)))"
-#else
+#endif
+#if HAVE_RUBY
   #define H_snd_error_hook S_snd_error_hook " (error-message): called upon snd_error. \
 If it returns true, Snd flushes the error (it assumes you've reported it via the hook:\n\
   $snd_error_hook.add-hook!(\"error\") do |msg|\n\

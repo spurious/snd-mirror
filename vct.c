@@ -991,7 +991,7 @@ void vct_init(void)
   XEN_DEFINE_PROCEDURE(S_vct_mapB,      vct_mapB_w,      2, 0, 0, H_vct_mapB);
 #endif
 
-#if HAVE_GUILE
+#if HAVE_SCHEME
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_vct_ref, vct_ref_w, H_vct_ref, "set-" S_vct_ref, vct_set_w,  2, 0, 3, 0);
 #else
   XEN_DEFINE_PROCEDURE(S_vct_ref,       vct_ref_w,       2, 0, 0, H_vct_ref);

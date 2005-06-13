@@ -2039,7 +2039,7 @@ XEN_NARGIFY_1(g_delete_transform_w, g_delete_transform)
 
 void g_init_fft(void)
 {
-#if HAVE_GUILE
+#if HAVE_SCHEME
   #define H_before_transform_hook S_before_transform_hook " (snd chn): called just before a transform is calculated.  If it returns \
 an integer, it is used as the starting point of the transform.  The following \
 somewhat brute-force code shows a way to have the transform reflect the position \
@@ -2051,7 +2051,8 @@ of a moving mark:\n\
     (lambda (id)\n\
       (set! transform-position (" S_mark_sample " id))\n\
       (" S_update_transform_graph ")))"
-#else
+#endif
+#if HAVE_RUBY
   #define H_before_transform_hook S_before_transform_hook " (snd chn): called just before a transform is calculated.  If it returns \
 an integer, it is used as the starting point of the transform."
 #endif

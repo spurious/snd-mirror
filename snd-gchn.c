@@ -1063,7 +1063,7 @@ void g_init_gxchn(void)
 {
   XEN_DEFINE_PROCEDURE(S_channel_widgets, g_channel_widgets_w, 0, 2, 0, H_channel_widgets);
 
-#if HAVE_GUILE
+#if HAVE_SCHEME
   #define H_mouse_enter_graph_hook S_mouse_enter_graph_hook " (snd chn): called when the mouse \
 enters the drawing area (graph pane) of the given channel.\n\
   (add-hook! mouse-enter-graph-hook\n\
@@ -1073,7 +1073,8 @@ enters the drawing area (graph pane) of the given channel.\n\
   #define H_mouse_leave_graph_hook S_mouse_leave_graph_hook " (snd chn): called when the mouse \
 leaves the drawing area (graph pane) of the given channel."
 
-#else
+#endif
+#if HAVE_RUBY
 
   #define H_mouse_enter_graph_hook S_mouse_enter_graph_hook " (snd chn): called when the mouse \
 enters the drawing area (graph pane) of the given channel.\n\

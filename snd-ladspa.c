@@ -817,19 +817,21 @@ Information about about parameters can be acquired using " S_analyse_ladspa "."
 }
 
 #if HAVE_EXTENSION_LANGUAGE
-#if HAVE_GUILE
+#if HAVE_SCHEME
   #define FIELD_PREFIX "."
-#else
+#endif
+#if HAVE_RUBY
   #define FIELD_PREFIX "R"
 #endif
 
 #if HAVE_GUILE
-#if HAVE_SCM_C_DEFINE
-  #define DEFINE_INTEGER(Name) scm_c_define(#Name, C_TO_XEN_INT(Name))
-#else
-  #define DEFINE_INTEGER(Name) gh_define(#Name, C_TO_XEN_INT(Name))
+  #if HAVE_SCM_C_DEFINE
+    #define DEFINE_INTEGER(Name) scm_c_define(#Name, C_TO_XEN_INT(Name))
+  #else
+    #define DEFINE_INTEGER(Name) gh_define(#Name, C_TO_XEN_INT(Name))
+  #endif
 #endif
-#else
+#if HAVE_RUBY
   #define DEFINE_INTEGER(Name) rb_define_global_const(#Name, C_TO_XEN_INT(Name))
 #endif
 

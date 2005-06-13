@@ -71,8 +71,7 @@ int main (int argc, char **argv )
        return(0);
      }
 
-   as our new main program.  Also, include -lguile in the LIBS statement above,
-   and (if not using configure), -DHAVE_GUILE in the CFLAGS statement.
+   as our new main program.  Also, include -lguile in the LIBS statement above.
 */
 
 #else

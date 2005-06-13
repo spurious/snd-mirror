@@ -1311,13 +1311,14 @@ static XEN g_goto_listener_end(void)
 
 void g_init_gxlistener(void)
 {
-#if HAVE_GUILE
+#if HAVE_SCHEME
   #define H_mouse_enter_listener_hook S_mouse_enter_listener_hook " (listener): called when the mouse \
 enters the lisp listener pane:\n\
   (add-hook! " S_mouse_enter_listener_hook "\n\
     (lambda (widget)\n\
       (" S_focus_widget " widget)))"
-#else
+#endif
+#if HAVE_RUBY
   #define H_mouse_enter_listener_hook S_mouse_enter_listener_hook " (listener): called when the mouse \
 enters the lisp listener pane:\n\
   $mouse_enter_listener_hook.add-hook!(\"enter\") do |widget|\n\
@@ -1331,12 +1332,13 @@ leaves the lisp listener pane"
   XEN_DEFINE_HOOK(mouse_enter_listener_hook, S_mouse_enter_listener_hook, 1, H_mouse_enter_listener_hook);    /* arg = listener_text widget */
   XEN_DEFINE_HOOK(mouse_leave_listener_hook, S_mouse_leave_listener_hook, 1, H_mouse_leave_listener_hook);    /* arg = listener_text widget */
 
-#if HAVE_GUILE
+#if HAVE_SCHEME
   #define H_mouse_enter_text_hook S_mouse_enter_text_hook " (widget): called when the mouse enters a text widget:\n\
 (add-hook! " S_mouse_enter_text_hook "\n\
   (lambda (w)\n\
     (" S_focus_widget " w)))"
-#else
+#endif
+#if HAVE_RUBY
   #define H_mouse_enter_text_hook S_mouse_enter_text_hook " (widget): called when the mouse enters a text widget:\n\
 $mouse_enter_text_hook.add_hook!(\"enter\") do |w|\n\
     focus_widget(w)\n\

@@ -29,11 +29,12 @@
 #include "vct.h"
 
 #ifndef S_setB
-#if HAVE_RUBY
-  #define S_setB "set_"
-#else
-  #define S_setB "set! "
-#endif
+  #if HAVE_RUBY
+    #define S_setB "set_"
+  #endif
+  #if HAVE_SCHEME
+    #define S_setB "set! "
+  #endif
 #endif
 
 void mus_misc_error(const char *caller, char *msg, XEN val)

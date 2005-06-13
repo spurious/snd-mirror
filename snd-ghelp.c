@@ -397,10 +397,9 @@ void save_help_dialog_state(FILE *fd)
 		{
 #if HAVE_SCHEME
 		  fprintf(fd, "(%s \"%s\" \"%s\")\n", S_help_dialog, topic, help);
-#else
-  #if HAVE_RUBY
+#endif
+#if HAVE_RUBY
 		  fprintf(fd, "%s(\"%s\", \"%s\")\n", TO_PROC_NAME(S_help_dialog), topic, help);
-  #endif
 #endif
 		}
 	    }

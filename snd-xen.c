@@ -31,11 +31,12 @@ void dump_protection(FILE *Fp)
 	  gcdat = XEN_VECTOR_REF(gc_protection, i);
 	  if (!(XEN_EQ_P(gcdat, DEFAULT_GC_VALUE)))
 	    {
-#if HAVE_GUILE
+#if HAVE_SCHEME
 	      fprintf(Fp,"  %s:%d %s", snd_protect_callers[i], i, XEN_AS_STRING(gcdat));
 	      if (XEN_HOOK_P(gcdat))
 		fprintf(Fp, " -> %s", XEN_AS_STRING(scm_hook_to_list(gcdat)));
-#else
+#endif
+#if HAVE_RUBY
 	      fprintf(Fp,"  %s:%d %d %s", snd_protect_callers[i], i, (int)gcdat, XEN_AS_STRING(gcdat));
 #endif
 	      fprintf(Fp, "\n");
@@ -308,7 +309,8 @@ static XEN snd_format_if_needed(XEN args)
     result = C_TO_XEN_STRING(temp);
     if (temp) free(temp); /* calloc in xen.c */
   }
-#else
+#endif
+#if HAVE_SCHEME
   result = C_TO_XEN_STRING(errmsg);
 #endif
   FREE(errmsg);
@@ -550,13 +552,16 @@ XEN snd_catch_any(XEN_CATCH_BODY_TYPE body, void *body_data, const char *caller)
 {
   return(snd_internal_stack_catch(XEN_TRUE, body, body_data, snd_catch_scm_error, (void *)caller));
 }
-#else
+#endif
+
 #if HAVE_RUBY
 XEN snd_catch_any(XEN_CATCH_BODY_TYPE body, void *body_data, const char *caller)
 {
   return((*body)(body_data));
 }
-#else
+#endif
+
+#if (!HAVE_EXTENSION_LANGUAGE)
 /* no extension language but user managed to try to evaluate something -- one way is to
  *   activate the minibuffer (via click) and type an expression into it
  */
@@ -566,8 +571,6 @@ XEN snd_catch_any(XEN_CATCH_BODY_TYPE body, void *body_data, const char *caller)
   return(XEN_FALSE);
 }
 #endif
-#endif
-
 
 bool procedure_arity_ok(XEN proc, int args)
 {
@@ -582,7 +585,8 @@ bool procedure_arity_ok(XEN proc, int args)
   if ((rargs > args) ||
       ((rargs < 0) && (-rargs > args)))
     return(false);
-#else
+#endif
+#if HAVE_SCHEME
   loc = snd_protect(arity);
   rargs = XEN_TO_C_INT(XEN_CAR(arity));
   oargs = XEN_TO_C_INT(XEN_CADR(arity));
@@ -622,7 +626,8 @@ char *procedure_ok(XEN proc, int args, const char *caller, const char *arg_name,
       if ((args == 0) && (rargs != 0))
 	return(mus_format(_("%s function (%s arg %d) should take no args, not %d"), 
 			  arg_name, caller, argn, (rargs < 0) ? (-rargs) : rargs));
-#else
+#endif
+#if HAVE_SCHEME
       loc = snd_protect(arity);
       rargs = XEN_TO_C_INT(XEN_CAR(arity));
       oargs = XEN_TO_C_INT(XEN_CADR(arity));
@@ -874,7 +879,8 @@ static char *gl_print(XEN result)
   savelen = 128;
 #if HAVE_SCHEME
   sprintf(newbuf, "#("); 
-#else
+#endif
+#if HAVE_RUBY
   sprintf(newbuf, "[");
 #endif
   for (i = 0; i < ilen; i++)
@@ -895,7 +901,8 @@ static char *gl_print(XEN result)
     }
 #if HAVE_SCHEME
   newbuf = snd_strcat(newbuf, " ...)", &savelen);
-#else
+#endif
+#if HAVE_RUBY
   newbuf = snd_strcat(newbuf, " ...]", &savelen);
 #endif
   return(newbuf);
@@ -933,7 +940,8 @@ void snd_report_listener_result(XEN form)
 #if HAVE_RUBY
   str = gl_print(form);
   result = form;
-#else
+#endif
+#if HAVE_SCHEME
   result = snd_catch_any(eval_form_wrapper, (void *)form, NULL);
   str = gl_print(result);
 #endif
@@ -966,7 +974,7 @@ void clear_stdin(void)
 
 static char *stdin_check_for_full_expression(char *newstr)
 {
-#if HAVE_GUILE
+#if HAVE_SCHEME
   int end_of_text;
 #endif
   if (stdin_str)
@@ -979,7 +987,7 @@ static char *stdin_check_for_full_expression(char *newstr)
       FREE(str);
     }
   else stdin_str = copy_string(newstr);
-#if HAVE_GUILE
+#if HAVE_SCHEME
   end_of_text = check_balance(stdin_str, 0, snd_strlen(stdin_str), false); /* last-arg->not in listener */
   if (end_of_text > 0)
     {
@@ -987,10 +995,9 @@ static char *stdin_check_for_full_expression(char *newstr)
 	stdin_str[end_of_text + 1] = 0;
       return(stdin_str);
     }
-  else return(NULL);
-#else
-  return(stdin_str);
+  return(NULL);
 #endif
+  return(stdin_str);
 }
 
 void snd_eval_stdin_str(char *buf)
@@ -2510,7 +2517,7 @@ static XEN g_set_just_sounds(XEN on)
 }
 
 
-#if HAVE_GUILE && HAVE_DLFCN_H
+#if HAVE_SCHEME && HAVE_DLFCN_H
 #include <dlfcn.h>
 /* these are included because libtool's dlopen is incredibly stupid */
 
@@ -2724,7 +2731,7 @@ static XEN g_i0(XEN x)
 
 
 #ifdef XEN_ARGIFY_1
-#if HAVE_GUILE && HAVE_DLFCN_H
+#if HAVE_SCHEME && HAVE_DLFCN_H
 XEN_NARGIFY_1(g_dlopen_w, g_dlopen)
 XEN_NARGIFY_1(g_dlclose_w, g_dlclose)
 XEN_NARGIFY_0(g_dlerror_w, g_dlerror)
@@ -2903,7 +2910,7 @@ XEN_NARGIFY_1(g_lgamma_w, g_lgamma)
 XEN_NARGIFY_1(g_i0_w, g_i0)
 
 #else
-#if HAVE_GUILE && HAVE_DLFCN_H
+#if HAVE_SCHEME && HAVE_DLFCN_H
 #define g_dlopen_w g_dlopen
 #define g_dlclose_w g_dlclose
 #define g_dlerror_w g_dlerror
@@ -3082,14 +3089,16 @@ XEN_NARGIFY_1(g_i0_w, g_i0)
 
 #endif
 
+
 #if HAVE_STATIC_XM
-#if HAVE_GUILE
+#if HAVE_SCHEME
   #if USE_MOTIF
     void init_xm(void);
   #else
     void init_xg(void);
   #endif
-#else
+#endif
+#if HAVE_RUBY
   #if USE_MOTIF
     void Init_libxm(void);
   #else
@@ -3098,15 +3107,16 @@ XEN_NARGIFY_1(g_i0_w, g_i0)
 #endif
 #endif
 
-#ifndef JUST_GL
-#if HAVE_GL
-#if HAVE_GUILE
+
+#if HAVE_GL && (!JUST_GL)
+#if HAVE_SCHEME
  void init_gl(void);
-#else
+#endif
+#if HAVE_RUBY
  void Init_libgl(void);
 #endif
 #endif
-#endif
+
 
 #if DEBUGGING && HAVE_GUILE
 void g_init_xmix(void);
@@ -3385,7 +3395,7 @@ void g_initialize_gh(void)
 #endif
   XEN_DEFINE_PROCEDURE("bes-i0", g_i0_w,     1, 0, 0, "i0");
 
-#if HAVE_GUILE
+#if HAVE_SCHEME
   #define H_during_open_hook S_during_open_hook " (fd name reason): called after file is opened, \
 but before data has been read. \n\
   (add-hook! " S_during_open_hook "\n\
@@ -3399,7 +3409,8 @@ This provides a way to set various sound-specific defaults. \n\
     (lambda (snd) \n\
       (if (> (" S_channels " snd) 1) \n\
           (set! (" S_channel_style " snd) " S_channels_combined "))))"
-#else
+#endif
+#if HAVE_RUBY
   #define H_during_open_hook "$" S_during_open_hook " lambda do |fd, name, reason| ...; called after file is opened, \
 but before data has been read. \n\
   $during_open_hook.add_hook!(\"during-open-hook\") do |fd, name, reason|\n\
@@ -3420,7 +3431,7 @@ This provides a way to set various sound-specific defaults. \n\
   XEN_DEFINE_HOOK(during_open_hook,    S_during_open_hook, 3,    H_during_open_hook);    /* args = fd filename reason */
   XEN_DEFINE_HOOK(after_open_hook,     S_after_open_hook, 1,     H_after_open_hook);     /* args = sound */
 
-#if HAVE_GUILE
+#if HAVE_SCHEME
   #define H_print_hook S_print_hook " (text): called each time some Snd-generated response (text) is about to be appended to the listener. \
 If it returns some non-#f result, Snd assumes you've sent the text out yourself, as well as any needed prompt. \n\
   (add-hook! "S_print_hook "\n\
@@ -3431,7 +3442,8 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
                 (strftime \"%d-%b %H:%M %Z\" \n\
                            (localtime (current-time))) \n\
                 (" S_listener_prompt ")))))"
-#else
+#endif
+#if HAVE_RUBY
   #define H_print_hook S_print_hook " (text): called each time some Snd-generated response (text) is about to be appended to the listener. \
 If it returns some non-false result, Snd assumes you've sent the text out yourself, as well as any needed prompt. \n\
   $print_hook.add-hook!(\"localtime\") do |msg|\n\
@@ -3491,7 +3503,7 @@ If it returns some non-false result, Snd assumes you've sent the text out yourse
   g_init_xmix();
 #endif
 
-#if HAVE_GUILE && HAVE_DLFCN_H
+#if HAVE_SCHEME && HAVE_DLFCN_H
   XEN_DEFINE_PROCEDURE("dlopen", g_dlopen_w, 1, 0 ,0, "");
   XEN_DEFINE_PROCEDURE("dlclose", g_dlclose_w, 1, 0 ,0, "");
   XEN_DEFINE_PROCEDURE("dlerror", g_dlerror_w, 0, 0 ,0, "");
@@ -3545,29 +3557,29 @@ If it returns some non-false result, Snd assumes you've sent the text out yourse
 #endif
 
 #if HAVE_STATIC_XM
-#if HAVE_GUILE
-  #if USE_MOTIF
-    init_xm();
-  #else
-    init_xg();
+  #if HAVE_SCHEME
+    #if USE_MOTIF
+      init_xm();
+    #else
+      init_xg();
+    #endif
   #endif
-#else
-  #if USE_MOTIF
-    Init_libxm();
-  #else
-    Init_libxg();
+  #if HAVE_RUBY
+    #if USE_MOTIF
+      Init_libxm();
+    #else
+      Init_libxg();
+    #endif
   #endif
-#endif
 #endif
 
-#ifndef JUST_GL
-#if HAVE_GL
-#if HAVE_GUILE
-  init_gl();
-#else
-  Init_libgl();
-#endif
-#endif
+#if (HAVE_GL) && (!JUST_GL)
+  #if HAVE_SCHEME
+    init_gl();
+  #endif
+  #if HAVE_RUBY
+    Init_libgl();
+  #endif
 #endif
 
 #if USE_MOTIF

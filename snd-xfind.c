@@ -192,10 +192,9 @@ void save_find_dialog_state(FILE *fd)
 	{
 #if HAVE_SCHEME
 	  fprintf(fd, "(%s #t \"%s\")\n", S_find_dialog, text);
-#else
-  #if HAVE_RUBY
+#endif
+#if HAVE_RUBY
 	  fprintf(fd, "%s(true, \"%s\")\n", TO_PROC_NAME(S_find_dialog), text);
-  #endif
 #endif
 	  XtFree(text);
 	}
@@ -205,12 +204,11 @@ void save_find_dialog_state(FILE *fd)
 	  if (ss->search_expr)
 	    fprintf(fd, "(%s #t \"%s\")\n", S_find_dialog, ss->search_expr);
 	  else fprintf(fd, "(%s #t)\n", S_find_dialog);
-#else
-  #if HAVE_RUBY
+#endif
+#if HAVE_RUBY
 	  if (ss->search_expr)
 	    fprintf(fd, "%s(true, \"%s\")\n", TO_PROC_NAME(S_find_dialog), ss->search_expr);
 	  else fprintf(fd, "%s(true)\n", TO_PROC_NAME(S_find_dialog));
-  #endif
 #endif
 	}
     }

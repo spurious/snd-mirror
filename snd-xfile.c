@@ -2392,10 +2392,9 @@ void save_edit_header_dialog_state(FILE *fd)
     {
 #if HAVE_SCHEME
       fprintf(fd, "(%s (%s \"%s\"))\n", S_edit_header_dialog, S_find_sound, edit_header_sp->short_filename);
-#else
-  #if HAVE_RUBY
+#endif
+#if HAVE_RUBY
       fprintf(fd, "%s(%s(\"%s\"))\n", TO_PROC_NAME(S_edit_header_dialog), TO_PROC_NAME(S_find_sound), edit_header_sp->short_filename);
-  #endif
 #endif
     }
 }
@@ -2485,10 +2484,9 @@ void save_post_it_dialog_state(FILE *fd)
       XmStringGetLtoR(title, XmFONTLIST_DEFAULT_TAG, &subject);
 #if HAVE_SCHEME
       fprintf(fd, "(%s \"%s\" \"%s\")\n", S_info_dialog, subject, text);
-#else
-  #if HAVE_RUBY
+#endif
+#if HAVE_RUBY
       fprintf(fd, "%s(\"%s\", \"%s\")\n", TO_PROC_NAME(S_info_dialog), subject, text);
-  #endif
 #endif
       if (subject) XtFree(subject);
       if (text) XtFree(text);
@@ -2510,30 +2508,27 @@ void save_file_dialog_state(FILE *fd)
       /* open_dialog->file_dialog_read_only -> "view-sound" dialog -- this distinction currently ignored */
 #if HAVE_SCHEME
       fprintf(fd, "(%s #t)\n", S_open_file_dialog);
-#else
-  #if HAVE_RUBY
+#endif
+#if HAVE_RUBY
       fprintf(fd, "%s(true)\n", TO_PROC_NAME(S_open_file_dialog));
-  #endif
 #endif
     }
   if ((mix_dialog) && (XtIsManaged(mix_dialog->dialog)))
     {
 #if HAVE_SCHEME
       fprintf(fd, "(%s #t)\n", S_mix_file_dialog);
-#else
-  #if HAVE_RUBY
+#endif
+#if HAVE_RUBY
       fprintf(fd, "%s(true)\n", TO_PROC_NAME(S_mix_file_dialog));
-  #endif
 #endif
     }
   if ((save_as_dialog) && (XtIsManaged(save_as_dialog)))
     {
 #if HAVE_SCHEME
       fprintf(fd, "(%s #t)\n", (save_as_dialog_type == FILE_SAVE_AS) ? S_save_sound_dialog : S_save_selection_dialog);
-#else
-  #if HAVE_RUBY
+#endif
+#if HAVE_RUBY
       fprintf(fd, "%s(true)\n", TO_PROC_NAME((save_as_dialog_type == FILE_SAVE_AS) ? S_save_sound_dialog : S_save_selection_dialog));
-  #endif
 #endif
     }
 }

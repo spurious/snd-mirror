@@ -123,7 +123,8 @@ static void save_macro_1(named_macro *nm, FILE *fd)
 		S_key, (int)(mc->keysym), mc->state);
     }
   fprintf(fd, "end\n");
-#else
+#endif
+#if HAVE_SCHEME
   fprintf(fd, "(define (%s)\n", nm->name);
   for (i = 0; i < nm->macro_size; i++)
     {

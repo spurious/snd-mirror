@@ -1529,7 +1529,7 @@ static XEN g_set_x_axis_label(XEN label, XEN snd, XEN chn, XEN ax)
   return(label);
 }
 
-#if HAVE_GUILE
+#if HAVE_SCHEME
 static XEN g_set_x_axis_label_reversed(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   if (XEN_NOT_BOUND_P(arg2))
@@ -1577,7 +1577,7 @@ static XEN g_set_y_axis_label(XEN label, XEN snd, XEN chn, XEN ax)
   return(label);
 }
 
-#if HAVE_GUILE
+#if HAVE_SCHEME
 static XEN g_set_y_axis_label_reversed(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   if (XEN_NOT_BOUND_P(arg2))

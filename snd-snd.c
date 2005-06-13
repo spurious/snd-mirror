@@ -2775,7 +2775,7 @@ static XEN g_set_comment(XEN snd_n, XEN val)
   return(sound_set(snd_n, val, SP_COMMENT, S_setB S_comment));
 }
 
-#if HAVE_GUILE
+#if HAVE_SCHEME
 #define WITH_REVERSED_BOOLEAN_ARGS(name_reversed, name) \
 static XEN name_reversed(XEN arg1, XEN arg2) \
 { \
@@ -2976,7 +2976,7 @@ static XEN g_set_filter_control_order(XEN on, XEN snd_n)
   return(sound_set_global(snd_n, on, SP_FILTER_ORDER, S_setB S_filter_control_order));
 }
 
-#if HAVE_GUILE
+#if HAVE_SCHEME
 #define WITH_REVERSED_ARGS(name_reversed, name) \
 static XEN name_reversed(XEN arg1, XEN arg2) \
 { \

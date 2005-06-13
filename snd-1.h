@@ -12,7 +12,7 @@
     if (!((XEN_INTEGER_P(Chn)) || (XEN_FALSE_P(Chn)) || (XEN_NOT_BOUND_P(Chn)))) \
       XEN_WRONG_TYPE_ARG_ERROR(Origin, Offset + 1, Chn, "an integer (0-based channel number) or " PROC_FALSE);
 
-#if HAVE_GUILE
+#if HAVE_SCHEME
 #define WITH_REVERSED_CHANNEL_ARGS(name_reversed, name) \
 static XEN name_reversed(XEN arg1, XEN arg2, XEN arg3) \
 { \
@@ -609,11 +609,11 @@ void g_init_menu(void);
 
 /* -------- snd-main.c -------- */
 
+void save_snd_options(FILE *fd);
 void open_save_sound_block(snd_info *sp, FILE *fd, bool with_nth);
 void close_save_sound_block(FILE *fd);
 int snd_exit_cleanly(bool force_exit);
 void sound_not_current(snd_info *sp, void *dat);
-int save_options (void);
 void set_init_filename(const char *filename);
 FILE *open_snd_init_file (void);
 int save_state (char *save_state_name);

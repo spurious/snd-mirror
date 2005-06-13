@@ -50,7 +50,7 @@ void sound_not_current(snd_info *sp, void *ignore)
 
 /* ---------------- save sound state (options, or entire state) ---------------- */
 
-#if HAVE_GUILE
+#if HAVE_SCHEME
 
 static void save_loaded_files_list(FILE *fd, const char *current_filename)
 {
@@ -246,7 +246,7 @@ static void pcp_sf(FILE *fd, const char *name, Float val, int chan) {fprintf(fd,
 static void pcp_sl(FILE *fd, const char *name, Float val1, Float val2, int chan) 
   {fprintf(fd, "%sset_%s([%f, %f], sfile, %d)\n", white_space, TO_PROC_NAME(name), val1, val2, chan);}
 #endif
-#if HAVE_GUILE || (!HAVE_EXTENSION_LANGUAGE)
+#if HAVE_SCHEME || (!HAVE_EXTENSION_LANGUAGE)
 static void pss_ss(FILE *fd, const char *name, const char *val) {fprintf(fd, "(set! (%s) %s)\n", name, val);}
 static void pss_sq(FILE *fd, const char *name, const char *val) {fprintf(fd, "(set! (%s) \"%s\")\n", name, val);}
 static void pss_sd(FILE *fd, const char *name, int val)   {fprintf(fd, "(set! (%s) %d)\n", name, val);}
@@ -557,9 +557,9 @@ static void save_property_list(FILE *fd, XEN property_list, int chan)
       snd_unprotect_at(gc_loc);
     }
 }
-#else
-#if HAVE_RUBY
+#endif
 
+#if HAVE_RUBY
 static void save_property_list(FILE *fd, XEN property_list, int chan)
 {
   XEN ignore_list;
@@ -606,9 +606,10 @@ static void save_property_list(FILE *fd, XEN property_list, int chan)
       snd_unprotect_at(gc_loc);
     }
 }
-#else
-static void save_property_list(FILE *fd, XEN property_list, int chan) {}
 #endif
+
+#if (!HAVE_EXTENSION_LANGUAGE)
+static void save_property_list(FILE *fd, XEN property_list, int chan) {}
 #endif
 
 static void check_selection(FILE *fd, chan_info *cp)
@@ -652,7 +653,8 @@ void open_save_sound_block(snd_info *sp, FILE *fd, bool with_nth)
 	  TO_PROC_NAME((sp->read_only) ? S_view_sound : S_open_sound),
 	  sp->filename);
   
-#else
+#endif
+#if HAVE_SCHEME
   fprintf(fd, "(let ((sfile (or (%s \"%s\" %d) (%s \"%s\"))))\n  (if sfile\n    (begin\n",
 	  S_find_sound,
 	  sp->short_filename, /* short filename ok because find-sound searches for that name as well as the full filename */
@@ -666,7 +668,8 @@ void close_save_sound_block(FILE *fd)
 {
 #if HAVE_RUBY
   fprintf(fd, "end\n");
-#else
+#endif
+#if HAVE_SCHEME
   if (!b_ok) fprintf(fd, "      #f\n"); /* avoid empty begin if no field was output */
   fprintf(fd, "      )))\n");
 #endif
@@ -862,7 +865,7 @@ static char *save_state_or_error (char *save_state_name)
 		      snd_io_strerror()));
   else
     {
-#if HAVE_GUILE
+#if HAVE_SCHEME
       /* try to make sure all previously loaded files are now loaded */
       save_loaded_files_list(save_fd, save_state_name);
 #endif
@@ -1118,12 +1121,11 @@ int handle_next_startup_arg(int auto_open_ctr, char **auto_open_file_names, bool
 #if HAVE_RUBY
 				  extern VALUE rb_load_path; /* prepend -I as they appear (kinda unintuitive) */
 				  rb_ary_unshift(rb_load_path, rb_str_new2(auto_open_file_names[auto_open_ctr]));
-#else
-  #if HAVE_GUILE
+#endif
+#if HAVE_SCHEME
 				  char buf[256];
 				  sprintf(buf, "(set! %%load-path (cons \"%s\" %%load-path))", auto_open_file_names[auto_open_ctr]);
 				  XEN_EVAL_C_STRING(buf);
-  #endif
 #endif
 				}
 			    }

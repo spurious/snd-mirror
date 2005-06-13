@@ -12,20 +12,20 @@
 
 XEN envelope_base_sym;
 #if HAVE_GUILE
-    #define XEN_VARIABLE_PROPERTY(Obj, Prop)          scm_object_property(Obj, Prop)
-    #define XEN_SET_VARIABLE_PROPERTY(Obj, Prop, Val) scm_set_object_property_x(XEN_VARIABLE_REF(Obj), Prop, Val)
-    #define XEN_OBJECT_PROPERTY(Obj, Prop)            scm_object_property(Obj, Prop)
-    #define XEN_SET_OBJECT_PROPERTY(Obj, Prop, Val)   scm_set_object_property_x(Obj, Prop, Val)
-#else
-  #if HAVE_RUBY
-    #define XEN_VARIABLE_PROPERTY(Obj, Prop)          rb_property(rb_obj_id(Obj), Prop)
-    #define XEN_SET_VARIABLE_PROPERTY(Obj, Prop, Val) rb_set_property(rb_obj_id(Obj), Prop, Val)
-    #define XEN_OBJECT_PROPERTY(Obj, Prop)            rb_property(rb_obj_id(Obj), Prop)
-    #define XEN_SET_OBJECT_PROPERTY(Obj, Prop, Val)   rb_set_property(rb_obj_id(Obj), Prop, Val)
-  #else
-    #define XEN_VARIABLE_PROPERTY(Obj, Prop)          0
-    #define XEN_SET_VARIABLE_PROPERTY(Obj, Prop, Val)
-  #endif
+  #define XEN_VARIABLE_PROPERTY(Obj, Prop)          scm_object_property(Obj, Prop)
+  #define XEN_SET_VARIABLE_PROPERTY(Obj, Prop, Val) scm_set_object_property_x(XEN_VARIABLE_REF(Obj), Prop, Val)
+  #define XEN_OBJECT_PROPERTY(Obj, Prop)            scm_object_property(Obj, Prop)
+  #define XEN_SET_OBJECT_PROPERTY(Obj, Prop, Val)   scm_set_object_property_x(Obj, Prop, Val)
+#endif
+#if HAVE_RUBY
+  #define XEN_VARIABLE_PROPERTY(Obj, Prop)          rb_property(rb_obj_id(Obj), Prop)
+  #define XEN_SET_VARIABLE_PROPERTY(Obj, Prop, Val) rb_set_property(rb_obj_id(Obj), Prop, Val)
+  #define XEN_OBJECT_PROPERTY(Obj, Prop)            rb_property(rb_obj_id(Obj), Prop)
+  #define XEN_SET_OBJECT_PROPERTY(Obj, Prop, Val)   rb_set_property(rb_obj_id(Obj), Prop, Val)
+#endif
+#if (!HAVE_EXTENSION_LANGUAGE)
+  #define XEN_VARIABLE_PROPERTY(Obj, Prop)          0
+  #define XEN_SET_VARIABLE_PROPERTY(Obj, Prop, Val)
 #endif
 
 
@@ -80,7 +80,8 @@ char *env_to_string(env *e)
       news = (char *)CALLOC(len, sizeof(char));
 #if HAVE_RUBY
       news[0] = '[';
-#else
+#endif
+#if HAVE_SCHEME
       news[0] = '\'';
       news[1] = '(';
 #endif
@@ -89,7 +90,8 @@ char *env_to_string(env *e)
 	{
 #if HAVE_RUBY
 	  mus_snprintf(expr_buf, PRINT_BUFFER_SIZE, "%s%.3f, %.3f", (first) ? "" : ", ", e->data[j], e->data[j + 1]);
-#else
+#endif
+#if HAVE_SCHEME
 	  mus_snprintf(expr_buf, PRINT_BUFFER_SIZE, "%s%.3f %.3f", (first) ? "" : " ", e->data[j], e->data[j + 1]);
 #endif
 	  news = snd_strcat(news, expr_buf, &len);
@@ -98,7 +100,8 @@ char *env_to_string(env *e)
       FREE(expr_buf);
 #if HAVE_RUBY
       news = snd_strcat(news, "]", &len);
-#else
+#endif
+#if HAVE_SCHEME
       news = snd_strcat(news, ")", &len);
 #endif
     }
@@ -1479,7 +1482,7 @@ env *name_to_env(const char *str)
   env *e;
   int pos;
   pos = find_env(str);
-#if HAVE_GUILE
+#if HAVE_SCHEME
   e = xen_to_env(XEN_NAME_AS_C_STRING_TO_VALUE(str));
 #else
   e = xen_to_env(XEN_EVAL_C_STRING((char *)str));
@@ -1522,7 +1525,8 @@ and 'base' into the envelope editor."
   /* add property */
   XEN_SET_VARIABLE_PROPERTY(snd_env_array[env_index], envelope_base_sym, C_TO_XEN_DOUBLE(e->base));
   return(snd_env_array[env_index]);
-#else
+#endif
+#if HAVE_SCHEME
   {
     XEN temp;
     alert_envelope_editor(ename, e);
@@ -1535,7 +1539,7 @@ and 'base' into the envelope editor."
 }
 
 XEN envelope_base(XEN obj) {return(XEN_VARIABLE_PROPERTY(obj, envelope_base_sym));}
-#if HAVE_GUILE
+#if HAVE_SCHEME
 static XEN set_envelope_base(XEN obj, XEN base) {XEN_SET_VARIABLE_PROPERTY(obj, envelope_base_sym, base); return(base);}
 #endif
 
@@ -1560,8 +1564,8 @@ void add_or_edit_symbol(char *name, env *val)
   if (tmpstr) FREE(tmpstr);
   snd_catch_any(eval_str_wrapper, buf, buf);
   FREE(buf);
-#else
-#if HAVE_GUILE
+#endif
+#if HAVE_SCHEME
   XEN e;
   if (!val) return;
   if (XEN_DEFINED_P(name))
@@ -1571,7 +1575,6 @@ void add_or_edit_symbol(char *name, env *val)
     }
   else XEN_DEFINE_VARIABLE(name, e, env_to_xen(val));
   set_envelope_base(e, C_TO_XEN_DOUBLE(val->base));
-#endif
 #endif
 }
 
@@ -1841,7 +1844,7 @@ void g_init_env(void)
   XEN_DEFINE_PROCEDURE(S_enved_dialog,    g_enved_dialog_w,    0, 0, 0, H_enved_dialog);
   XEN_DEFINE_PROCEDURE(S_save_envelopes,  g_save_envelopes_w,  0, 1, 0, H_save_envelopes);
 
-#if HAVE_GUILE
+#if HAVE_SCHEME
   XEN_DEFINE_PROCEDURE(S_define_envelope "-1", g_define_envelope_w, 2, 1, 0, H_define_envelope);
   XEN_EVAL_C_STRING("(defmacro defvar (a b) `(define-envelope-1 (symbol->string ',a) ,b))");
 
@@ -1862,7 +1865,7 @@ void g_init_env(void)
   XEN_DEFINE_CONSTANT(S_enved_delete_point,   ENVED_DELETE_POINT,   S_enved_hook " 'reason' arg when point is deleted");
   XEN_DEFINE_CONSTANT(S_enved_move_point,     ENVED_MOVE_POINT,     S_enved_hook " 'reason' arg when point is moved");
 
-#if HAVE_GUILE
+#if HAVE_SCHEME
   #define H_enved_hook S_enved_hook " (env pt new-x new-y reason): \
 called each time a breakpoint is changed in the envelope editor; \
 if it returns a list, that list defines the new envelope, \
@@ -1880,7 +1883,8 @@ stretch-envelope from env.scm: \n\
            (list-set! new-env (+ (* pt 2) 1) y)\n\
            new-env)\n\
          #f)))"
-#else
+#endif
+#if HAVE_RUBY
   #define H_enved_hook S_enved_hook " (env pt new-x new-y reason): \
 called each time a breakpoint is changed in the envelope editor; \
 if it returns a list, that list defines the new envelope, \

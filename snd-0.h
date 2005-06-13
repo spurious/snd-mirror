@@ -177,7 +177,8 @@ typedef enum {NOT_FILING, INPUT_FILING, REGION_FILING, CHANNEL_FILING, TEMP_FILI
   #define EPAREN ""
   #define PROC_FALSE "false"
   #define PROC_TRUE "true"
-#else
+#endif
+#if HAVE_SCHEME || (!HAVE_EXTENSION_LANGUAGE)
   #define TO_PROC_NAME(Str) Str
   #define TO_VAR_NAME(Str) Str
   #define PROC_OPEN " "
