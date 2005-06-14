@@ -1,19 +1,20 @@
 /* xm.c: Guile/Ruby bindings for X/Xt/Xpm/Xm/Xp/Xext
  *   needs xen.h
- *   for tests and examples see snd-motif.scm, bess.scm, bess.rb, and snd-test.scm
+ *   for tests and examples see snd-motif.scm, bess.scm|rb, and snd-test.scm
  */
 
 #include <config.h>
 
-#define XM_DATE "13-June-05"
+#define XM_DATE "14-June-05"
 
 /* HISTORY: 
  *
- *   13-June:   folded xm-ruby.c into xm.c.
+ *   14-June:   various xen-related updates (XEN_DEFINE).
+ *   13-June:   fold xm-ruby.c into xm.c.
  *   15-Apr:    XGetWindowProperty free bugfix.
- *   28-Mar:    fixed some Ruby error strings (#f->false).
- *   31-Jan:    removed Motif 1 support, and Lesstif.
- *   4-Jan:     replace XEN_VECTOR_ELEMENTS usages.
+ *   28-Mar:    fix some Ruby error strings (#f->false).
+ *   31-Jan:    remove Motif 1 support, and Lesstif.
+ *   4-Jan-05:  replace XEN_VECTOR_ELEMENTS usages.
  *   --------
  *   30-Dec:    plug various memory leaks.
  *   23-Nov:    resource type lookup indexing bugfix.
@@ -27503,28 +27504,12 @@ static xm_resource_t resource_type(char *name)
 
 static void define_strings(void)
 {
-  
-  xm_hash = (hdata **)calloc(XM_HASH_SIZE, sizeof(hdata *));
+  #define DEFINE_STRING(Name) XEN_DEFINE(XM_PREFIX #Name XM_POSTFIX, C_TO_XEN_STRING(Name))
+  #define DEFINE_RESOURCE(Name, Type) \
+            XEN_DEFINE(XM_PREFIX #Name XM_POSTFIX, C_TO_XEN_STRING(Name)); \
+            hash_resource(Name, Type)
 
-#if HAVE_GUILE
-#if HAVE_SCM_C_DEFINE
-  #define DEFINE_STRING(Name) scm_c_define(XM_PREFIX #Name XM_POSTFIX, C_TO_XEN_STRING(Name))
-  #define DEFINE_RESOURCE(Name, Type) \
-            scm_c_define(XM_PREFIX #Name XM_POSTFIX, C_TO_XEN_STRING(Name)); \
-            hash_resource(Name, Type)
-#else
-  #define DEFINE_STRING(Name) gh_define(XM_PREFIX #Name XM_POSTFIX, C_TO_XEN_STRING(Name))
-  #define DEFINE_RESOURCE(Name, Type) \
-            gh_define(XM_PREFIX #Name XM_POSTFIX, C_TO_XEN_STRING(Name)); \
-            hash_resource(Name, Type)
-#endif
-#endif
-#if HAVE_RUBY
-  #define DEFINE_STRING(Name) rb_define_global_const(XM_PREFIX #Name XM_POSTFIX, C_TO_XEN_STRING(Name))
-  #define DEFINE_RESOURCE(Name, Type) \
-            rb_define_global_const(XM_PREFIX #Name XM_POSTFIX, C_TO_XEN_STRING(Name)); \
-            hash_resource(Name, Type)
-#endif
+  xm_hash = (hdata **)calloc(XM_HASH_SIZE, sizeof(hdata *));
 
   DEFINE_STRING(XmSTRING_DEFAULT_CHARSET);
   DEFINE_STRING(XmFONTLIST_DEFAULT_TAG);
@@ -28453,20 +28438,8 @@ The types are defined in xm.c around line 679.  To add XmNhiho as an integer: \n
 
 static void define_integers(void)
 {
-
-#if HAVE_GUILE
-#if HAVE_SCM_C_DEFINE
-  #define DEFINE_INTEGER(Name) scm_c_define(XM_PREFIX #Name XM_POSTFIX, C_TO_XEN_INT(Name))
-  #define DEFINE_ULONG(Name) scm_c_define(XM_PREFIX #Name XM_POSTFIX, C_TO_XEN_ULONG(Name))
-#else
-  #define DEFINE_INTEGER(Name) gh_define(XM_PREFIX #Name XM_POSTFIX, C_TO_XEN_INT(Name))
-  #define DEFINE_ULONG(Name) gh_define(XM_PREFIX #Name XM_POSTFIX, C_TO_XEN_ULONG(Name))
-#endif
-#endif
-#if HAVE_RUBY
-  #define DEFINE_INTEGER(Name) rb_define_global_const(XM_PREFIX #Name XM_POSTFIX, C_TO_XEN_INT(Name))
-  #define DEFINE_ULONG(Name) rb_define_global_const(XM_PREFIX #Name XM_POSTFIX, C_TO_XEN_ULONG(Name))
-#endif
+  #define DEFINE_INTEGER(Name) XEN_DEFINE(XM_PREFIX #Name XM_POSTFIX, C_TO_XEN_INT(Name))
+  #define DEFINE_ULONG(Name) XEN_DEFINE(XM_PREFIX #Name XM_POSTFIX, C_TO_XEN_ULONG(Name))
   
   DEFINE_ULONG(AllPlanes);
   DEFINE_INTEGER(XC_num_glyphs);
@@ -30139,16 +30112,7 @@ static void define_pointers(void)
 {
 #if HAVE_MOTIF
 
-#if HAVE_GUILE
-#if HAVE_SCM_C_DEFINE
-  #define DEFINE_POINTER(Name) scm_permanent_object(scm_c_define(XM_PREFIX #Name XM_POSTFIX, C_TO_XEN_WidgetClass(Name)))
-#else
-  #define DEFINE_POINTER(Name) gh_define(XM_PREFIX #Name XM_POSTFIX, C_TO_XEN_WidgetClass(Name))
-#endif
-#endif
-#if HAVE_RUBY
-  #define DEFINE_POINTER(Name) rb_define_global_const(XM_PREFIX #Name XM_POSTFIX, C_TO_XEN_WidgetClass(Name))
-#endif
+  #define DEFINE_POINTER(Name) XEN_DEFINE(XM_PREFIX #Name XM_POSTFIX, C_TO_XEN_WidgetClass(Name))
 
   DEFINE_POINTER(compositeWidgetClass);
   DEFINE_POINTER(constraintWidgetClass);
@@ -30250,16 +30214,7 @@ static void define_pointers(void)
 
 static void define_Atoms(void)
 {
-#if HAVE_GUILE
-#if HAVE_SCM_C_DEFINE
-  #define DEFINE_ATOM(Name) scm_permanent_object(scm_c_define(XM_PREFIX #Name XM_POSTFIX, C_TO_XEN_Atom(Name)))
-#else
-  #define DEFINE_ATOM(Name) gh_define(XM_PREFIX #Name XM_POSTFIX, C_TO_XEN_Atom(Name))
-#endif
-#endif
-#if HAVE_RUBY
-  #define DEFINE_ATOM(Name) rb_define_global_const(XM_PREFIX #Name XM_POSTFIX, C_TO_XEN_Atom(Name))
-#endif
+  #define DEFINE_ATOM(Name) XEN_DEFINE(XM_PREFIX #Name XM_POSTFIX, C_TO_XEN_Atom(Name))
 
   DEFINE_ATOM(XA_PRIMARY);
   DEFINE_ATOM(XA_SECONDARY);
@@ -30409,12 +30364,7 @@ static bool xm_already_inited = false;
 #endif
       XEN_YES_WE_HAVE("xm");
 #if (!WITH_GTK_AND_X11)
-#if HAVE_SCHEME
-      XEN_EVAL_C_STRING("(define xm-version \"" XM_DATE "\")");
-#endif
-#if HAVE_RUBY
-      rb_define_global_const("Xm_Version", C_TO_XEN_STRING(XM_DATE));
-#endif
+      XEN_DEFINE("xm-version", C_TO_XEN_STRING(XM_DATE));
 #endif
       xm_already_inited = true;
     }

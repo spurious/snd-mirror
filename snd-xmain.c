@@ -1031,9 +1031,10 @@ XEN_NARGIFY_0(g_snd_glx_context_w, g_snd_glx_context)
 
 void g_init_gxmain(void)
 {
+#if HAVE_EXTENSION_LANGUAGE
   #define H_window_property_changed_hook S_window_property_changed_hook "(command): called upon receipt of a change in SND_COMMAND (an X window property)"
-  XEN_DEFINE_HOOK(window_property_changed_hook, S_window_property_changed_hook, 1, H_window_property_changed_hook);
-
+  window_property_changed_hook = XEN_DEFINE_HOOK(S_window_property_changed_hook, 1, H_window_property_changed_hook);
+#endif
 #if HAVE_GL
   XEN_DEFINE_PROCEDURE("snd-glx-context", g_snd_glx_context_w, 0, 0, 0, "OpenGL GLXContext");
 #endif

@@ -4430,7 +4430,6 @@ static Float funcall1(void *ptr, int direction) /* intended for "as-needed" inpu
    */
   mus_xen *gn = (mus_xen *)ptr;
   if ((gn) && (gn->vcts) && (XEN_BOUND_P(gn->vcts[MUS_INPUT_FUNCTION])) && (XEN_PROCEDURE_P(gn->vcts[MUS_INPUT_FUNCTION])))
-    /* the gh_procedure_p call can be confused by 0 -> segfault! */
     return(XEN_TO_C_DOUBLE(XEN_CALL_1_NO_CATCH(gn->vcts[MUS_INPUT_FUNCTION], C_TO_XEN_INT(direction))));
   else return(0.0);
 }

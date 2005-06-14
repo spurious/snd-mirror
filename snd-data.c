@@ -976,8 +976,8 @@ void g_init_data(void)
   #define H_select_channel_hook S_select_channel_hook "(snd chn): called whenever a channel is selected. \
 Its arguments are the sound index and the channel number."
 
-  XEN_DEFINE_HOOK(select_sound_hook, S_select_sound_hook, 1, H_select_sound_hook);       /* arg = sound index */
-  XEN_DEFINE_HOOK(select_channel_hook, S_select_channel_hook, 2, H_select_channel_hook); /* args = sound index, channel */
+  select_sound_hook = XEN_DEFINE_HOOK(S_select_sound_hook, 1, H_select_sound_hook);       /* arg = sound index */
+  select_channel_hook = XEN_DEFINE_HOOK(S_select_channel_hook, 2, H_select_channel_hook); /* args = sound index, channel */
 
 #if DEBUGGING && HAVE_GUILE
   XEN_DEFINE_PROCEDURE("popup-display-info", g_display_info, 0, 0, 0, "internal test function");

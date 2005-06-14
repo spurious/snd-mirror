@@ -37706,19 +37706,8 @@ static void define_structs(void)
 static void define_integers(void)
 {
 
-#if HAVE_GUILE
-#if HAVE_SCM_C_DEFINE
-  #define DEFINE_INTEGER(Name) scm_c_define(XG_PRE #Name XG_POST, C_TO_XEN_INT(Name))
-  #define DEFINE_ULONG(Name) scm_c_define(XG_PRE #Name XG_POST, C_TO_XEN_ULONG(Name))
-#else
-  #define DEFINE_INTEGER(Name) gh_define(XG_PRE #Name XG_POST, C_TO_XEN_INT(Name))
-  #define DEFINE_ULONG(Name) gh_define(XG_PRE #Name XG_POST, C_TO_XEN_ULONG(Name))
-#endif
-#endif
-#if HAVE_RUBY
-  #define DEFINE_INTEGER(Name) rb_define_global_const(XG_PRE #Name XG_POST, C_TO_XEN_INT(Name))
-  #define DEFINE_ULONG(Name) rb_define_global_const(XG_PRE #Name XG_POST, C_TO_XEN_ULONG(Name))
-#endif
+  #define DEFINE_INTEGER(Name) XEN_DEFINE(XG_PRE #Name XG_POST, C_TO_XEN_INT(Name))
+  #define DEFINE_ULONG(Name) XEN_DEFINE(XG_PRE #Name XG_POST, C_TO_XEN_ULONG(Name))
 
   g_type_init();
   DEFINE_INTEGER(G_SIGNAL_RUN_FIRST);
@@ -39198,16 +39187,7 @@ static void define_integers(void)
 static void define_doubles(void)
 {
 
-#if HAVE_GUILE
-#if HAVE_SCM_C_DEFINE
-  #define DEFINE_DOUBLE(Name) scm_c_define(XG_PRE #Name XG_POST, C_TO_XEN_DOUBLE(Name))
-#else
-  #define DEFINE_DOUBLE(Name) gh_define(XG_PRE #Name XG_POST, C_TO_XEN_DOUBLE(Name))
-#endif
-#endif
-#if HAVE_RUBY
-  #define DEFINE_DOUBLE(Name) rb_define_global_const(XG_PRE #Name XG_POST, C_TO_XEN_DOUBLE(Name))
-#endif
+  #define DEFINE_DOUBLE(Name) XEN_DEFINE(XG_PRE #Name XG_POST, C_TO_XEN_DOUBLE(Name))
 
   DEFINE_DOUBLE(PANGO_SCALE_XX_SMALL);
   DEFINE_DOUBLE(PANGO_SCALE_X_SMALL);
@@ -39222,16 +39202,7 @@ static void define_doubles(void)
 
 static void define_atoms(void)
 {
-#if HAVE_GUILE
-#if HAVE_SCM_C_DEFINE
-  #define DEFINE_ATOM(Name) scm_permanent_object(scm_c_define(XG_PRE #Name XG_POST, C_TO_XEN_GdkAtom(Name)))
-#else
-  #define DEFINE_ATOM(Name) gh_define(XG_PRE #Name XG_POST, C_TO_XEN_GdkAtom(Name))
-#endif
-#endif
-#if HAVE_RUBY
-  #define DEFINE_ATOM(Name) rb_define_global_const(XG_PRE #Name XG_POST, C_TO_XEN_GdkAtom(Name))
-#endif
+  #define DEFINE_ATOM(Name) XEN_DEFINE(XG_PRE #Name XG_POST, C_TO_XEN_GdkAtom(Name))
 
   DEFINE_ATOM(GDK_SELECTION_PRIMARY);
   DEFINE_ATOM(GDK_SELECTION_SECONDARY);
@@ -39257,16 +39228,7 @@ static void define_atoms(void)
 static void define_strings(void)
 {
   
-#if HAVE_GUILE
-#if HAVE_SCM_C_DEFINE
-  #define DEFINE_STRING(Name) scm_c_define(XG_PRE #Name XG_POST, C_TO_XEN_STRING(Name))
-#else
-  #define DEFINE_STRING(Name) gh_define(XG_PRE #Name XG_POST, C_TO_XEN_STRING(Name))
-#endif
-#endif
-#if HAVE_RUBY
-  #define DEFINE_STRING(Name) rb_define_global_const(XG_PRE #Name XG_POST, C_TO_XEN_STRING(Name))
-#endif
+  #define DEFINE_STRING(Name) XEN_DEFINE(XG_PRE #Name XG_POST, C_TO_XEN_STRING(Name))
   DEFINE_STRING(GDK_PIXBUF_VERSION);
   DEFINE_STRING(GTK_STOCK_DIALOG_INFO);
   DEFINE_STRING(GTK_STOCK_DIALOG_WARNING);
@@ -39400,12 +39362,7 @@ static bool xg_already_inited = false;
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-#if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define xg-version \"12-Jun-05\")");
-#endif
-#if HAVE_RUBY
-      rb_define_global_const("Xg_Version", C_TO_XEN_STRING("12-Jun-05"));
-#endif
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("13-Jun-05"));
       xg_already_inited = true;
 #if WITH_GTK_AND_X11
   #if HAVE_GUILE

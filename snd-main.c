@@ -524,11 +524,11 @@ FILE *open_snd_init_file(void)
   return(open_restart_file(ss->init_file, true));
 }
 
-#if HAVE_GUILE
+#if HAVE_SCHEME
 static void save_property_list(FILE *fd, XEN property_list, int chan)
 {
   XEN ignore_list;
-  ignore_list = scm_assoc(C_STRING_TO_XEN_SYMBOL("save-state-ignore"), property_list);
+  ignore_list = XEN_ASSOC(C_STRING_TO_XEN_SYMBOL("save-state-ignore"), property_list);
   if (!(XEN_LIST_P(ignore_list)))
     {
       if (chan == -1)
@@ -545,7 +545,7 @@ static void save_property_list(FILE *fd, XEN property_list, int chan)
 	{
 	  XEN property;
 	  property = XEN_LIST_REF(property_list, i);
-	  if (XEN_FALSE_P(scm_member(XEN_CAR(property), ignore_list)))
+	  if (XEN_FALSE_P(XEN_MEMBER(XEN_CAR(property), ignore_list)))
 	    new_properties = XEN_CONS(property, new_properties);
 	}
       if (!(XEN_NULL_P(new_properties)))
@@ -717,7 +717,7 @@ static void save_sound_state (snd_info *sp, void *ptr)
   if (sp->speed_control_style != DEFAULT_SPEED_CONTROL_STYLE) psp_ss(fd, S_speed_control_style, speed_control_style_name(sp->speed_control_style));
   if (fneq(sp->speed_control, DEFAULT_SPEED_CONTROL)) 
     {
-#if (HAVE_SCM_MAKE_RATIO || HAVE_SCM_C_MAKE_RECTANGULAR)
+#if HAVE_RATIOS
       if (sp->speed_control == SPEED_CONTROL_AS_RATIO)
 	{
 	  /* this is only Guile, so we don't need to handle the Ruby syntax */
@@ -1202,20 +1202,20 @@ void g_init_main(void)
   XEN_DEFINE_PROCEDURE(S_exit,         g_exit_w,         0, 1, 0, H_exit);
 
   #define H_start_hook S_start_hook " (filename): called upon start-up. If it returns #t, snd exits immediately."
-  XEN_DEFINE_HOOK(start_hook, S_start_hook, 1, H_start_hook);                   /* arg = argv filename if any */
+  start_hook = XEN_DEFINE_HOOK(S_start_hook, 1, H_start_hook);                   /* arg = argv filename if any */
 
   #define H_exit_hook S_exit_hook " (): called upon exit. \
 If it returns #t, Snd does not exit.  This can be used to check for unsaved edits, or to perform cleanup activities."
 
-  XEN_DEFINE_HOOK(exit_hook, S_exit_hook, 0, H_exit_hook);
+  exit_hook = XEN_DEFINE_HOOK(S_exit_hook, 0, H_exit_hook);
 
   #define H_after_save_state_hook S_after_save_state_hook " (filename): called after Snd state has been saved; \
 filename is the save state file."
-  XEN_DEFINE_HOOK(after_save_state_hook, S_after_save_state_hook, 1, H_after_save_state_hook);
+  after_save_state_hook = XEN_DEFINE_HOOK(S_after_save_state_hook, 1, H_after_save_state_hook);
 
   #define H_before_save_state_hook S_before_save_state_hook " (filename): called before Snd state is saved. If \
 the hook functions return #t, the save state process opens 'filename' for appending, rather than truncating."
-  XEN_DEFINE_HOOK(before_save_state_hook, S_before_save_state_hook, 1, H_before_save_state_hook);
+  before_save_state_hook = XEN_DEFINE_HOOK(S_before_save_state_hook, 1, H_before_save_state_hook);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_script_arg, g_script_arg_w, H_script_arg, S_setB S_script_arg, g_set_script_arg_w,  0, 0, 1, 0);
   XEN_DEFINE_PROCEDURE(S_script_args, g_script_args_w, 0, 0, 0, H_script_args);

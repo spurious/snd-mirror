@@ -671,5 +671,5 @@ If it returns #t, Snd assumes you've dealt the text yourself, and does not try t
 If it returns true, Snd assumes you've dealt the text yourself, and does not try to evaluate it."
 #endif
   
-  XEN_DEFINE_HOOK(read_hook, S_read_hook, 1, H_read_hook);
+  read_hook = XEN_DEFINE_HOOK(S_read_hook, 1, H_read_hook);
 }

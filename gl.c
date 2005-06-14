@@ -5102,16 +5102,7 @@ static void define_functions(void)
 static void define_integers(void)
 {
 
-#if HAVE_GUILE
-#if HAVE_SCM_C_DEFINE
-  #define DEFINE_INTEGER(Name) scm_c_define(XL_PRE #Name XL_POST, C_TO_XEN_INT(Name))
-#else
-  #define DEFINE_INTEGER(Name) gh_define(XL_PRE #Name XL_POST, C_TO_XEN_INT(Name))
-#endif
-#endif
-#if HAVE_RUBY
-  #define DEFINE_INTEGER(Name) rb_define_global_const(XL_PRE #Name XL_POST, C_TO_XEN_INT(Name))
-#endif
+#define DEFINE_INTEGER(Name) XEN_DEFINE(XL_PRE #Name XL_POST, C_TO_XEN_INT(Name))
 
 #if USE_MOTIF
   DEFINE_INTEGER(GLX_USE_GL);
@@ -5969,12 +5960,7 @@ static bool gl_already_inited = false;
       define_integers();
       define_functions();
       XEN_YES_WE_HAVE("gl");
-#if HAVE_GUILE
-      XEN_EVAL_C_STRING("(define gl-version \"12-Jun-05\")");
-#endif
-#if HAVE_RUBY
-      rb_define_global_const("Gl_Version", C_TO_XEN_STRING("12-Jun-05"));
-#endif
+      XEN_DEFINE("gl-version", C_TO_XEN_STRING("13-Jun-05"));
       gl_already_inited = true;
     }
 }

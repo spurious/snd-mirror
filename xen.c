@@ -183,8 +183,8 @@ void xen_guile_define_procedure_with_setter(char *get_name, XEN (*get_func)(), c
   /* if (!(snd_url(get_name))) fprintf(stderr, "%s not documented\n", get_name); */
 #endif
   if (get_help) str = C_TO_XEN_STRING(get_help);
-  scm_permanent_object(
-    scm_c_define(get_name,
+  XEN_PROTECT_FROM_GC(
+    XEN_DEFINE(get_name,
       scm_make_procedure_with_setter(
         XEN_NEW_PROCEDURE("", XEN_PROCEDURE_CAST get_func, get_req, get_opt, 0),
 	XEN_NEW_PROCEDURE("", XEN_PROCEDURE_CAST set_func, set_req, set_opt, 0))));
@@ -196,7 +196,7 @@ void xen_guile_define_procedure_with_setter(char *get_name, XEN (*get_func)(), c
 #else
   scm_set_object_property_x(
     XEN_CDR(
-      gh_define(get_name,
+      XEN_DEFINE(get_name,
 	scm_make_procedure_with_setter(
           XEN_NEW_PROCEDURE("", XEN_PROCEDURE_CAST get_func, get_req, get_opt, 0),
 	  XEN_NEW_PROCEDURE("", XEN_PROCEDURE_CAST set_func, set_req, set_opt, 0)
@@ -216,8 +216,8 @@ void xen_guile_define_procedure_with_reversed_setter(char *get_name, XEN (*get_f
   /* if (!(snd_url(get_name))) fprintf(stderr, "%s not documented\n", get_name); */
 #endif
   if (get_help) str = C_TO_XEN_STRING(get_help);
-  scm_permanent_object(
-    scm_c_define(get_name,
+  XEN_PROTECT_FROM_GC(
+    XEN_DEFINE(get_name,
       scm_make_procedure_with_setter(
         XEN_NEW_PROCEDURE("", XEN_PROCEDURE_CAST get_func, get_req, get_opt, 0),
 	XEN_NEW_PROCEDURE("", XEN_PROCEDURE_CAST reversed_set_func, set_req, set_opt, 0))));
@@ -229,7 +229,7 @@ void xen_guile_define_procedure_with_reversed_setter(char *get_name, XEN (*get_f
 #else
   scm_set_object_property_x(
     XEN_CDR(
-      gh_define(get_name,
+      XEN_DEFINE(get_name,
 	scm_make_procedure_with_setter(
           XEN_NEW_PROCEDURE("", XEN_PROCEDURE_CAST get_func, get_req, get_opt, 0),
 	  XEN_NEW_PROCEDURE("", XEN_PROCEDURE_CAST reversed_set_func, set_req, set_opt, 0)
@@ -241,29 +241,12 @@ void xen_guile_define_procedure_with_reversed_setter(char *get_name, XEN (*get_f
 
 XEN xen_guile_create_hook(const char *name, int args, const char *help, XEN local_doc)
 {
-  /* documentation for hooks */
+  /* make-hook + documentation */
   XEN hook;
-#if HAVE_GUILE
+  hook = XEN_DEFINE_SIMPLE_HOOK(args);
   if ((name) && (help))
-    {
-      hook = scm_permanent_object(scm_make_hook(C_TO_XEN_INT(args)));
-      scm_set_object_property_x(hook, local_doc, C_TO_XEN_STRING(help));
-#if HAVE_SCM_C_DEFINE
-#if XEN_DEBUGGING
-      if (XEN_DEFINED_P(name)) fprintf(stderr, "%s is defined\n", name);
-      /* if (!(snd_url(name))) fprintf(stderr, "%s not documented\n", name); */
-#endif
-      scm_c_define(name, hook);
-#else
-  #if HAVE_SCM_MAKE_REAL
-      gh_define(name, hook);
-  #else
-      gh_define((char *)name, hook);
-  #endif
-#endif
-    }
-  else hook = scm_make_hook(C_TO_XEN_INT(args));
-#endif
+    scm_set_object_property_x(XEN_PROTECT_FROM_GC(hook), local_doc, C_TO_XEN_STRING(help));
+  XEN_DEFINE(name, hook);
   return(hook);
 }
 
@@ -914,6 +897,21 @@ static VALUE xen_rb_hook_inspect(VALUE hook)
   rb_str_cat2(str, ">");
   return str;
 }    
+
+/* bil -- added xen_rb_create_hook for XEN_DEFINE_HOOK in xen.h, 13-Jun-05 --
+ *   seems to work, but I'm guessing, especially the rb_gv_set line.
+ *   I can't use rb_define_variable here, as in the old version, because it takes a pointer
+ *   to the new variable, which in this case is a local variable => segfault.
+ */
+XEN xen_rb_create_hook(char *name, int arity, char *help)
+{
+  XEN var, hook_name;
+  var = xen_rb_hook_c_new(xen_scheme_global_variable_to_ruby(name), arity, help);
+  hook_name = xen_rb_hook_name(var);
+  rb_gv_set(RSTRING(hook_name)->ptr, var);  
+  return(var);
+}
+
 
 /*
  * make_hook(name, arity = 0, help = "", hook_name = nil, &func)

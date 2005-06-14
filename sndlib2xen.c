@@ -1725,7 +1725,7 @@ void mus_sndlib_xen_initialize(void)
 #endif
 
   #define H_new_sound_hook S_new_sound_hook "(filename): called when a new sound file is being created"
-  XEN_DEFINE_HOOK(new_sound_hook, S_new_sound_hook, 1, H_new_sound_hook);    /* arg = filename */
+  new_sound_hook = XEN_DEFINE_HOOK(S_new_sound_hook, 1, H_new_sound_hook);    /* arg = filename */
   mus_header_write_set_hook(g_new_sound_hook);
 
   XEN_YES_WE_HAVE("sndlib");

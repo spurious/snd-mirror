@@ -4863,11 +4863,11 @@ void g_init_mix(void)
   #define H_mix_release_hook S_mix_release_hook " (mix-id samps): called after the mouse has dragged a mix to some new position. \
 'samps' = samples moved in the course of the drag. If it returns #t, the actual remix is the hook's responsibility."
 
-  XEN_DEFINE_HOOK(mix_release_hook, S_mix_release_hook, 2, H_mix_release_hook);
+  mix_release_hook = XEN_DEFINE_HOOK(S_mix_release_hook, 2, H_mix_release_hook);
 
   #define H_mix_drag_hook S_mix_drag_hook " (id): called when a mix is dragged"
 
-  XEN_DEFINE_HOOK(mix_drag_hook, S_mix_drag_hook, 1, H_mix_drag_hook); /* arg = id */
+  mix_drag_hook = XEN_DEFINE_HOOK(S_mix_drag_hook, 1, H_mix_drag_hook); /* arg = id */
 }
 
 

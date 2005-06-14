@@ -4576,7 +4576,7 @@ static XEN channel_get(XEN snd_n, XEN chn_n, cp_field_t fld, char *caller)
 	    case CP_EDIT_HOOK:
 	      if (!(XEN_HOOK_P(cp->edit_hook)))
 		{
-		  XEN_DEFINE_SIMPLE_HOOK(cp->edit_hook, 0);
+		  cp->edit_hook = XEN_DEFINE_SIMPLE_HOOK(0);
 		  cp->edit_hook_loc = snd_protect(cp->edit_hook);
 		}
 	      return(cp->edit_hook);
@@ -4584,7 +4584,7 @@ static XEN channel_get(XEN snd_n, XEN chn_n, cp_field_t fld, char *caller)
 	    case CP_AFTER_EDIT_HOOK:
 	      if (!(XEN_HOOK_P(cp->after_edit_hook)))
 		{
-		  XEN_DEFINE_SIMPLE_HOOK(cp->after_edit_hook, 0);
+		  cp->after_edit_hook = XEN_DEFINE_SIMPLE_HOOK(0);
 		  cp->after_edit_hook_loc = snd_protect(cp->after_edit_hook);
 		}
 	      return(cp->after_edit_hook);
@@ -4592,7 +4592,7 @@ static XEN channel_get(XEN snd_n, XEN chn_n, cp_field_t fld, char *caller)
 	    case CP_UNDO_HOOK:               
 	      if (!(XEN_HOOK_P(cp->undo_hook)))
 		{
-		  XEN_DEFINE_SIMPLE_HOOK(cp->undo_hook, 0);
+		  cp->undo_hook = XEN_DEFINE_SIMPLE_HOOK(0);
 		  cp->undo_hook_loc = snd_protect(cp->undo_hook);
 		}
 	      return(cp->undo_hook);
@@ -7501,18 +7501,18 @@ graph. 'time' is the uninterpreted time at which the drag event was reported. 'i
 Snd takes no further action.  To set up to play, then interpret the motion yourself, return #f on the first call, \
 and #t thereafter."
   
-  XEN_DEFINE_HOOK(after_transform_hook, S_after_transform_hook, 3, H_after_transform_hook); /* args = sound channel scaler */
-  XEN_DEFINE_HOOK(graph_hook,           S_graph_hook, 4,           H_graph_hook);           /* args = sound channel y0 y1 */
-  XEN_DEFINE_HOOK(after_graph_hook,     S_after_graph_hook, 2,     H_after_graph_hook);     /* args = sound channel */
-  XEN_DEFINE_HOOK(lisp_graph_hook,      S_lisp_graph_hook, 2,      H_lisp_graph_hook);      /* args = sound channel */
-  XEN_DEFINE_HOOK(mouse_press_hook,     S_mouse_press_hook, 6,     H_mouse_press_hook);     /* args = sound channel button state x y */
-  XEN_DEFINE_HOOK(mouse_click_hook,     S_mouse_click_hook, 7,     H_mouse_click_hook);     /* args = sound channel button state x y axis */
-  XEN_DEFINE_HOOK(mouse_drag_hook,      S_mouse_drag_hook, 6,      H_mouse_drag_hook);      /* args = sound channel button state x y */
-  XEN_DEFINE_HOOK(key_press_hook,       S_key_press_hook, 4,       H_key_press_hook);       /* args = sound channel key state */
-  XEN_DEFINE_HOOK(mark_click_hook,      S_mark_click_hook, 1,      H_mark_click_hook);      /* arg = id */
-  XEN_DEFINE_HOOK(mix_click_hook,       S_mix_click_hook, 1,       H_mix_click_hook);       /* arg = id */
-  XEN_DEFINE_HOOK(initial_graph_hook,   S_initial_graph_hook, 3,   H_initial_graph_hook);   /* args = sound channel duration */
-  XEN_DEFINE_HOOK(mark_drag_triangle_hook, S_mark_drag_triangle_hook, 4, H_mark_drag_triangle_hook); /* args = id x time dragged-before */
+  after_transform_hook = XEN_DEFINE_HOOK(S_after_transform_hook, 3, H_after_transform_hook); /* args = sound channel scaler */
+  graph_hook =           XEN_DEFINE_HOOK(S_graph_hook, 4,           H_graph_hook);           /* args = sound channel y0 y1 */
+  after_graph_hook =     XEN_DEFINE_HOOK(S_after_graph_hook, 2,     H_after_graph_hook);     /* args = sound channel */
+  initial_graph_hook =   XEN_DEFINE_HOOK(S_initial_graph_hook, 3,   H_initial_graph_hook);   /* args = sound channel duration */
+  lisp_graph_hook =      XEN_DEFINE_HOOK(S_lisp_graph_hook, 2,      H_lisp_graph_hook);      /* args = sound channel */
+  mouse_press_hook =     XEN_DEFINE_HOOK(S_mouse_press_hook, 6,     H_mouse_press_hook);     /* args = sound channel button state x y */
+  mouse_click_hook =     XEN_DEFINE_HOOK(S_mouse_click_hook, 7,     H_mouse_click_hook);     /* args = sound channel button state x y axis */
+  mouse_drag_hook =      XEN_DEFINE_HOOK(S_mouse_drag_hook, 6,      H_mouse_drag_hook);      /* args = sound channel button state x y */
+  key_press_hook =       XEN_DEFINE_HOOK(S_key_press_hook, 4,       H_key_press_hook);       /* args = sound channel key state */
+  mark_click_hook =      XEN_DEFINE_HOOK(S_mark_click_hook, 1,      H_mark_click_hook);      /* arg = id */
+  mix_click_hook =       XEN_DEFINE_HOOK(S_mix_click_hook, 1,       H_mix_click_hook);       /* arg = id */
+  mark_drag_triangle_hook = XEN_DEFINE_HOOK(S_mark_drag_triangle_hook, 4, H_mark_drag_triangle_hook); /* args = id x time dragged-before */
 
 #if DEBUGGING && HAVE_GUILE
   XEN_DEFINE_PROCEDURE("edit-hook-checked", g_edit_hook_checked, 2, 0, 0, "internal debugging func");

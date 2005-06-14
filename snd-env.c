@@ -1895,7 +1895,7 @@ or " S_enved_add_point ".  This hook makes it possible to define attack \
 and decay portions in the envelope editor."
 #endif
 
-  XEN_DEFINE_HOOK(enved_hook, S_enved_hook, 5, H_enved_hook);
+  enved_hook = XEN_DEFINE_HOOK(S_enved_hook, 5, H_enved_hook);
 
   ss->enved = new_env_editor();
   FREE(ss->enved->axis);

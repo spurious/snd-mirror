@@ -11754,7 +11754,7 @@ You can often slightly rewrite the form to make run happy."
 #define H_optimization_hook S_optimization_hook " (msg): this hook is ignored because 'run' is not included in this version of Snd."
 #endif
 
-  XEN_DEFINE_HOOK(optimization_hook, S_optimization_hook, 1, H_optimization_hook);      /* arg = message */
+  optimization_hook = XEN_DEFINE_HOOK(S_optimization_hook, 1, H_optimization_hook);      /* arg = message */
 
 #if WITH_RUN 
   init_walkers();

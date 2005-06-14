@@ -179,7 +179,7 @@ If it returns true, Snd flushes the error (it assumes you've reported it via the
 If it returns true, Snd flushes the warning (it assumes you've reported it via the hook)"
 #endif
 
-  XEN_DEFINE_HOOK(snd_error_hook, S_snd_error_hook, 1, H_snd_error_hook);       /* arg = error-message */
-  XEN_DEFINE_HOOK(snd_warning_hook, S_snd_warning_hook, 1, H_snd_warning_hook); /* arg = error-message */
+  snd_error_hook = XEN_DEFINE_HOOK(S_snd_error_hook, 1, H_snd_error_hook);       /* arg = error-message */
+  snd_warning_hook = XEN_DEFINE_HOOK(S_snd_warning_hook, 1, H_snd_warning_hook); /* arg = error-message */
 }
 

@@ -1,6 +1,8 @@
 #ifndef XEN_H
 #define XEN_H
 
+/* SOMEDAY: we're using flags (config.h) like HAVE_COMPLEX_TRIG and defining HAVE_RATIOS -- bad names */
+
 /* macros for extension language support 
  *
  * Guile:     covers 1.3.4 to present (1.7.2) given the configuration macros in the Snd or Libxm config.h.in.
@@ -9,11 +11,14 @@
  */
 
 #define XEN_MAJOR_VERSION 1
-#define XEN_MINOR_VERSION 34
-#define XEN_VERSION "1.34"
+#define XEN_MINOR_VERSION 35
+#define XEN_VERSION "1.35"
 
 /* HISTORY:
  *
+ *  14-Jun-05: XEN_DEFINE (XEN value, not assumed to be int as in XEN_DEFINE_CONSTANT).
+ *             XEN_ASSOC, XEN_MEMBER, and XEN_PROCEDURE_NAME for Scheme side.
+ *             XEN_DEFINE_HOOK and XEN_DEFINE_SIMPLE_HOOK no longer take the "Var" arg.
  *  18-May-05: deprecate XEN_NUMBER_OR_BOOLEAN_IF_BOUND_P and XEN_NUMBER_OR_BOOLEAN_P.
  *  29-Mar-05: C_TO_XEN_STRINGN changes.
  *  24-Mar-05: Ruby properties (Mike Scholz).
@@ -109,6 +114,9 @@
 #define XEN_FALSE                    SCM_BOOL_F
 #define XEN_TRUE_P(a)                XEN_EQ_P(a, XEN_TRUE)
 #define XEN_FALSE_P(a)               XEN_EQ_P(a, XEN_FALSE)
+#define C_TO_XEN_BOOLEAN(a)          ((a) ? XEN_TRUE : XEN_FALSE)
+#define XEN_TO_C_BOOLEAN(a)          (!(XEN_FALSE_P(a)))
+
 #define XEN_UNDEFINED                SCM_UNDEFINED
 #define XEN_BOUND_P(Arg)             (!(SCM_UNBNDP(Arg)))
 #define XEN_NOT_BOUND_P(Arg)         SCM_UNBNDP(Arg)
@@ -147,14 +155,11 @@
 #define XEN_CDDR(a)                  SCM_CDDR(a)
 #define XEN_COPY_ARG(Lst)            Lst
 
-#define C_TO_XEN_BOOLEAN(a)          ((a) ? XEN_TRUE : XEN_FALSE)
-#define XEN_TO_C_BOOLEAN(a)          (!(XEN_FALSE_P(a)))
-
 /* ---- numbers ---- */
 #define XEN_ZERO                     SCM_INUM0
+#define XEN_INTEGER_P(Arg)           xen_integer_p(Arg)
 #define XEN_TO_C_INT(a)              xen_to_c_int(a)
 #define XEN_TO_C_INT_OR_ELSE(a, b)   xen_to_c_int_or_else(a, b)
-#define XEN_INTEGER_P(Arg)           xen_integer_p(Arg)
 #define XEN_TO_C_DOUBLE(a)           xen_to_c_double(a)  
 #define XEN_TO_C_DOUBLE_OR_ELSE(a, b) xen_to_c_double_or_else(a, b)  
 
@@ -214,6 +219,7 @@
 #endif
 
 #if HAVE_SCM_MAKE_RATIO || HAVE_SCM_C_MAKE_RECTANGULAR
+  #define HAVE_RATIOS                 1
   #define XEN_NUMERATOR(Arg)          scm_numerator(Arg)
   #define XEN_DENOMINATOR(Arg)        scm_denominator(Arg)
   #define XEN_RATIONALIZE(Arg1, Arg2) scm_rationalize(scm_inexact_to_exact(Arg1), scm_inexact_to_exact(Arg2))
@@ -254,6 +260,9 @@
   #define XEN_LIST_9(a, b, c, d, e, f, g, h, i) SCM_LIST9(a, b, c, d, e, f, g, h, i)
 #endif
 #define XEN_APPEND(a, b)                  scm_append(XEN_LIST_2(a, b))
+/* these are only used in Scheme-side stuff, so aren't defined in other cases */
+#define XEN_ASSOC(a, b)                   scm_assoc(a, b)
+#define XEN_MEMBER(a, b)                  scm_member(a, b)
 
 /* ---- vectors ---- */
 #if HAVE_SCM_IS_SIMPLE_VECTOR
@@ -293,8 +302,8 @@
 
 /* ---- hooks ---- */
 #define XEN_HOOK_P(Arg)               (SCM_HOOKP(Arg))
-#define XEN_DEFINE_HOOK(Var, Name, Arity, Help) Var = xen_guile_create_hook(Name, Arity, Help, XEN_DOCUMENTATION_SYMBOL)
-#define XEN_DEFINE_SIMPLE_HOOK(Var, Arity) Var = scm_make_hook(C_TO_XEN_INT(Arity))
+#define XEN_DEFINE_HOOK(Name, Arity, Help) xen_guile_create_hook(Name, Arity, Help, XEN_DOCUMENTATION_SYMBOL)
+#define XEN_DEFINE_SIMPLE_HOOK(Arity) scm_make_hook(C_TO_XEN_INT(Arity))
 #define XEN_CLEAR_HOOK(Arg)           scm_reset_hook_x(Arg)
 #define XEN_HOOKED(a)                 (XEN_NOT_NULL_P(SCM_HOOK_PROCEDURES(a)))
 #define XEN_HOOK_PROCEDURES(a)        SCM_HOOK_PROCEDURES(a)
@@ -422,36 +431,38 @@
     #define XEN_DEFINE_VARIABLE(Name, Var, Value) \
       { \
         if (XEN_DEFINED_P(Name)) fprintf(stderr, "%s is defined\n", Name); \
-        Var = scm_permanent_object(scm_c_define(Name, Value)); \
+        Var = XEN_PROTECT_FROM_GC(scm_c_define(Name, Value)); \
       }
   #else
-    #define XEN_DEFINE_VARIABLE(Name, Var, Value) Var = scm_permanent_object(scm_c_define(Name, Value))
+    #define XEN_DEFINE_VARIABLE(Name, Var, Value) Var = XEN_PROTECT_FROM_GC(scm_c_define(Name, Value))
   #endif
 #else
   #define XEN_DEFINE_VARIABLE(Name, Var, Value) Var = gh_define(Name, Value)
 #endif
 
 #if HAVE_SCM_C_DEFINE
-#if XEN_DEBUGGING
-#define XEN_DEFINE_CONSTANT(Name, Value, Help) \
-  { \
-    if (XEN_DEFINED_P(Name)) fprintf(stderr, "%s is defined\n", Name); \
-    scm_c_define(Name, C_TO_XEN_INT(Value)); \
-    XEN_SET_DOCUMENTATION(Name, Help); \
-  }
+  #define XEN_DEFINE(Name, Value) scm_c_define(Name, Value)
+  #if XEN_DEBUGGING
+    #define XEN_DEFINE_CONSTANT(Name, Value, Help) \
+      { \
+        if (XEN_DEFINED_P(Name)) fprintf(stderr, "%s is defined\n", Name); \
+        scm_c_define(Name, C_TO_XEN_INT(Value)); \
+        if (Help) XEN_SET_DOCUMENTATION(Name, Help); \
+      }
+  #else
+    #define XEN_DEFINE_CONSTANT(Name, Value, Help) \
+      { \
+        scm_c_define(Name, C_TO_XEN_INT(Value)); \
+        if (Help) XEN_SET_DOCUMENTATION(Name, Help); \
+      }
+  #endif
 #else
-#define XEN_DEFINE_CONSTANT(Name, Value, Help) \
-  { \
-    scm_c_define(Name, C_TO_XEN_INT(Value)); \
-    XEN_SET_DOCUMENTATION(Name, Help); \
-  }
-#endif
-#else
-#define XEN_DEFINE_CONSTANT(Name, Value, Help) \
-  { \
-    gh_define(Name, C_TO_XEN_INT(Value)); \
-    XEN_SET_DOCUMENTATION(Name, Help); \
-  }
+  #define XEN_DEFINE(Name, Value) gh_define(Name, Value)
+  #define XEN_DEFINE_CONSTANT(Name, Value, Help) \
+    { \
+      gh_define(Name, C_TO_XEN_INT(Value)); \
+      if (Help) XEN_SET_DOCUMENTATION(Name, Help); \
+    }
 #endif
 
 /* ---- user-defined types --- */
@@ -540,17 +551,18 @@
                                                   XEN_PROCEDURE_CAST Set_Func, XEN_PROCEDURE_CAST Rev_Func, \
                                                   XEN_DOCUMENTATION_SYMBOL, Get_Req, Get_Opt, Set_Req, Set_Opt)
 
-#define XEN_PROCEDURE_P(Arg)          (XEN_NOT_FALSE_P(scm_procedure_p(Arg)))
-#define XEN_DOCUMENTATION_SYMBOL        scm_string_to_symbol(C_TO_XEN_STRING("documentation"))
-#define XEN_OBJECT_HELP(Name)           scm_object_property(Name, XEN_DOCUMENTATION_SYMBOL)
-#define XEN_PROCEDURE_HELP(Name)        scm_procedure_property(Name, XEN_DOCUMENTATION_SYMBOL)
-#define XEN_PROCEDURE_SOURCE_HELP(Name) scm_procedure_documentation(Name)
-#define XEN_PROCEDURE_SOURCE(Func)      scm_procedure_source(Func)
-#define XEN_ARITY(Func)                 scm_i_procedure_arity(Func)
+#define XEN_PROCEDURE_P(Arg)             (XEN_NOT_FALSE_P(scm_procedure_p(Arg)))
+#define XEN_DOCUMENTATION_SYMBOL         scm_string_to_symbol(C_TO_XEN_STRING("documentation"))
+#define XEN_OBJECT_HELP(Name)            scm_object_property(Name, XEN_DOCUMENTATION_SYMBOL)
+#define XEN_PROCEDURE_HELP(Name)         scm_procedure_property(Name, XEN_DOCUMENTATION_SYMBOL)
+#define XEN_PROCEDURE_SOURCE_HELP(Name)  scm_procedure_documentation(Name)
+#define XEN_PROCEDURE_SOURCE(Func)       scm_procedure_source(Func)
+#define XEN_ARITY(Func)                  scm_i_procedure_arity(Func)
+#define XEN_PROCEDURE_NAME(Func)         scm_procedure_name(Func)
 #define XEN_REQUIRED_ARGS_OK(Func, Args) (XEN_TO_C_INT(XEN_CAR(XEN_ARITY(Func))) == Args)
 
 #if (!WITH_HOBBIT)
-#define XEN_REQUIRED_ARGS(Func)         XEN_TO_C_INT(XEN_CAR(XEN_ARITY(Func)))
+#define XEN_REQUIRED_ARGS(Func)          XEN_TO_C_INT(XEN_CAR(XEN_ARITY(Func)))
 #else
 #define XEN_REQUIRED_ARGS(Func) \
   XEN_TO_C_INT(((!(SCM_CLOSUREP(Func))) && \
@@ -586,6 +598,12 @@
 #define XEN_CALL_1_NO_CATCH(Func, Arg1)             scm_apply(Func, Arg1, XEN_APPLY_ARG_LIST_END)
 #define XEN_CALL_2_NO_CATCH(Func, Arg1, Arg2)       scm_apply(Func, Arg1, scm_cons(Arg2, XEN_APPLY_ARG_LIST_END))
 #define XEN_CALL_3_NO_CATCH(Func, Arg1, Arg2, Arg3) scm_apply(Func, Arg1, scm_cons2(Arg2, Arg3, XEN_APPLY_ARG_LIST_END))
+
+#ifdef WINDOZE
+  #define XEN_APPLY_ARG_LIST_END      scm_cons(SCM_EOL, SCM_EOL)
+#else
+  #define XEN_APPLY_ARG_LIST_END      scm_listofnull
+#endif
 
 /* ---- errors ---- */
 #define XEN_ERROR_TYPE(Typ)           C_STRING_TO_XEN_SYMBOL(Typ)
@@ -625,15 +643,16 @@
                        C_TO_XEN_STRING(Descr), \
                        XEN_LIST_1(Arg)))
 
-#ifdef WINDOZE
-  #define XEN_APPLY_ARG_LIST_END      scm_cons(SCM_EOL, SCM_EOL)
+#if HAVE_SCM_T_CATCH_BODY
+  #define XEN_CATCH_BODY_TYPE scm_t_catch_body
 #else
-  #define XEN_APPLY_ARG_LIST_END      scm_listofnull
+  #define XEN_CATCH_BODY_TYPE scm_catch_body_t
 #endif
 
 #define XEN_YES_WE_HAVE(Feature)      scm_add_feature(Feature)
 #define XEN_PROTECT_FROM_GC(Obj)      scm_permanent_object(Obj)
 #define XEN_LOAD_FILE(File)           scm_primitive_load(C_TO_XEN_STRING(File))
+
 #define XEN_PUTS(Str, Port)           scm_puts(Str, Port)
 #define XEN_DISPLAY(Val, Port)        scm_display(Val, Port)
 #define XEN_FLUSH_PORT(Port)          scm_force_output(Port)
@@ -654,17 +673,11 @@ bool xen_integer_p(XEN a);
 XEN xen_guile_dbg_new_procedure(const char *name, XEN (*func)(), int req, int opt, int rst);
 #endif
 
-#if HAVE_SCM_T_CATCH_BODY
-  #define XEN_CATCH_BODY_TYPE scm_t_catch_body
-#else
-  #define XEN_CATCH_BODY_TYPE scm_catch_body_t
-#endif
-
 #if HAVE_SCM_C_MAKE_RECTANGULAR
 char *xen_guile_to_c_string_with_eventual_free(XEN str);
 #endif
 
-/* these are only needed in 1.3.4, but it's hard to find the right way to distinguish it */
+/* these are only needed in 1.3.4, but it's hard to find a good way to distinguish that particular version */
 #ifndef SCM_PACK
   #define SCM_BOOLP(Arg)              gh_boolean_p(Arg)
   /* the next exist in 1.3.4 but are not usable in this context (need SCM_NIMP check) */
@@ -821,16 +834,8 @@ char *xen_guile_to_c_string_with_eventual_free(XEN str);
 #define XEN_HOOK_PROCEDURES(a)          ((xen_rb_is_hook_p(a)) ? xen_rb_hook_to_a(a) : ((XEN_NULL_P(a)) ? Qnil : XEN_LIST_1(a)))
 #define XEN_CLEAR_HOOK(a)               ((xen_rb_is_hook_p(a)) ? xen_rb_hook_reset_hook(a) : (a = Qnil))
 #define XEN_HOOKED(a)                   XEN_NOT_NULL_P(XEN_HOOK_PROCEDURES(a))
-#define XEN_DEFINE_HOOK(Var, Name, Arity, Help) \
-  { \
-    Var = xen_rb_hook_c_new(xen_scheme_global_variable_to_ruby(Name), Arity, Help); \
-    rb_define_variable(xen_scheme_global_variable_to_ruby(Name), (VALUE *)(&Var)); \
-  }
-
-#define XEN_DEFINE_SIMPLE_HOOK(Var, Arity) \
-  { \
-    Var = xen_rb_hook_c_new("simple_hook", Arity, NULL); \
-  }
+#define XEN_DEFINE_HOOK(Name, Arity, Help) xen_rb_create_hook(Name, Arity, Help)
+#define XEN_DEFINE_SIMPLE_HOOK(Arity)   xen_rb_hook_c_new("simple_hook", Arity, NULL);
 
 /* ---- vectors ---- */
 #define XEN_VECTOR_P(Arg)               (TYPE(Arg) == T_ARRAY)
@@ -856,7 +861,7 @@ char *xen_guile_to_c_string_with_eventual_free(XEN str);
 #define XEN_DEFINE_CONSTANT(Name, Value, Help) \
   do { \
       rb_define_global_const(xen_scheme_constant_to_ruby(Name), C_TO_XEN_INT(Value)); \
-      if (Help != NULL) C_SET_OBJECT_HELP(xen_scheme_constant_to_ruby(Name), Help); \
+      if (Help) C_SET_OBJECT_HELP(xen_scheme_constant_to_ruby(Name), Help); \
     } while (0)
 
 #define XEN_DEFINE_VARIABLE(Name, Var, Value) \
@@ -864,6 +869,7 @@ char *xen_guile_to_c_string_with_eventual_free(XEN str);
     Var = Value; \
     rb_define_variable(xen_scheme_global_variable_to_ruby(Name), (VALUE *)(&Var)); \
   }
+#define XEN_DEFINE(Name, Value) rb_define_global_const(xen_scheme_constant_to_ruby(Name), Value)
 
 #define XEN_WRAP_C_POINTER(a)           Data_Wrap_Struct(rb_cData, 0, 0, (void *)a)
 #define XEN_UNWRAP_C_POINTER(a)         DATA_PTR(a)
@@ -1358,6 +1364,8 @@ VALUE xen_rb_hook_c_new(char *name, int arity, char *help);
 VALUE xen_rb_hook_reset_hook(VALUE hook);
 VALUE xen_rb_hook_to_a(VALUE hook);
 void Init_Hook(void);
+XEN xen_rb_create_hook(char *name, int arity, char *help);
+
 typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
 
 XEN rb_property(XEN obj, XEN prop);
@@ -1474,6 +1482,7 @@ XEN rb_set_documentation(XEN name, XEN help);
 #define XEN_APPLY_NO_CATCH(Func, Args) 0
 #define XEN_DEFINE_CONSTANT(a, b, c)
 #define XEN_DEFINE_VARIABLE(a, b, c)
+#define XEN_DEFINE(Name, Value)
 #define XEN_VARIABLE_SET(a, b)
 #define XEN_VARIABLE_REF(a) 0
 #define XEN_MARK_OBJECT_TYPE         XEN
@@ -1488,8 +1497,8 @@ XEN rb_set_documentation(XEN name, XEN help);
 #define XEN_SYMBOL_P(Arg) 0
 #define XEN_HOOK_P(Arg) 0
 #define XEN_HOOKED(a) 0
-#define XEN_DEFINE_HOOK(Var, Name, Arity, Help)
-#define XEN_DEFINE_SIMPLE_HOOK(Var, Arity)
+#define XEN_DEFINE_HOOK(Name, Arity, Help) 0
+#define XEN_DEFINE_SIMPLE_HOOK(Arity) 0
 #define XEN_CLEAR_HOOK(Arg)
 #define XEN_HOOK_PROCEDURES(a) 0
 #define XEN_VECTOR_P(Arg) 0
@@ -1563,7 +1572,7 @@ typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
                        C_TO_XEN_STRING(Descr), \
                        Arg))
 
-#ifndef XEN_RATIO_P
+#ifndef HAVE_RATIOS
   #define XEN_NUMERATOR(Arg)          0
   #define XEN_DENOMINATOR(Arg)        1
   #define XEN_RATIONALIZE(Arg1, Arg2) 1

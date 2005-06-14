@@ -1,5 +1,11 @@
 /* try out Snd as a mere widget in some grander context */
 
+/* 
+   if anyone uses this feature, and Snd doesn't do what you want, or you
+   need more hooks into Snd, send me (bil@ccrma.stanford.edu) a description
+   of the problem.
+*/
+
 #include "snd.h"
 
 #ifndef USE_GTK
@@ -51,28 +57,6 @@ int main (int argc, char **argv )
   XtRealizeWidget(shell);
   XtAppMainLoop(app);
 }
-
-/* 
-   if anyone uses this feature, and Snd doesn't do what you want, or you
-   need more hooks into Snd, send me (bil@ccrma.stanford.edu) a description
-   of the problem and so on.
-
-   if you're including Guile, remember that it needs to be the top-level,
-   so we'd use something like:
-
-     void saw_main(int argc, char **argv )
-     ...
-  
-   in place of the current "main", and then
-
-     int main (int argc, char **argv )
-     {
-       gh_enter(argc, argv, saw_main);
-       return(0);
-     }
-
-   as our new main program.  Also, include -lguile in the LIBS statement above.
-*/
 
 #else
 
@@ -130,7 +114,7 @@ static void gsnd_main (int argc, char **argv )
 
 int main(int argc, char *argv[])
 {
-  gh_enter(argc, argv, gsnd_main);
+  scm_boot_guile(argc, argv, gsnd_main, 0);
   return(0);
 }
 

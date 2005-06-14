@@ -268,7 +268,7 @@ static XEN snd_format_if_needed(XEN args)
 			    {
 			      /* don't need the source, just the name here, I think */
 			      XEN str;
-			      str = scm_procedure_name(cur_arg);
+			      str = XEN_PROCEDURE_NAME(cur_arg);
 			      if (!(XEN_FALSE_P(str)))
 				errmsg = snd_strcat(errmsg, XEN_AS_STRING(str), &err_size);
 			      else errmsg = snd_strcat(errmsg, XEN_AS_STRING(cur_arg), &err_size);
@@ -3428,8 +3428,8 @@ This provides a way to set various sound-specific defaults. \n\
   end"
 #endif
 
-  XEN_DEFINE_HOOK(during_open_hook,    S_during_open_hook, 3,    H_during_open_hook);    /* args = fd filename reason */
-  XEN_DEFINE_HOOK(after_open_hook,     S_after_open_hook, 1,     H_after_open_hook);     /* args = sound */
+  during_open_hook = XEN_DEFINE_HOOK(S_during_open_hook, 3,    H_during_open_hook);    /* args = fd filename reason */
+  after_open_hook =  XEN_DEFINE_HOOK(S_after_open_hook, 1,     H_after_open_hook);     /* args = sound */
 
 #if HAVE_SCHEME
   #define H_print_hook S_print_hook " (text): called each time some Snd-generated response (text) is about to be appended to the listener. \
@@ -3452,7 +3452,7 @@ If it returns some non-false result, Snd assumes you've sent the text out yourse
   end"
 #endif
 
-  XEN_DEFINE_HOOK(print_hook, S_print_hook, 1, H_print_hook);          /* arg = text */
+  print_hook = XEN_DEFINE_HOOK(S_print_hook, 1, H_print_hook);          /* arg = text */
 
   g_init_base();
   g_init_utils();

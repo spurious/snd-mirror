@@ -2430,8 +2430,8 @@ void g_init_marks(void)
   #define H_mark_hook S_mark_hook " (id snd chn reason): called when a mark added, deleted, or moved. \
 'Reason' can be 0: add, 1: delete, 2: move, 3: delete all marks"
 
-  XEN_DEFINE_HOOK(mark_drag_hook, S_mark_drag_hook, 1, H_mark_drag_hook); /* arg = id */
-  XEN_DEFINE_HOOK(mark_hook, S_mark_hook, 4, H_mark_hook);                /* args = id snd chn reason */
+  mark_drag_hook = XEN_DEFINE_HOOK(S_mark_drag_hook, 1, H_mark_drag_hook); /* arg = id */
+  mark_hook = XEN_DEFINE_HOOK(S_mark_hook, 4, H_mark_hook);                /* args = id snd chn reason */
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mark_sample, g_mark_sample_w, H_mark_sample,
 				   S_setB S_mark_sample, g_set_mark_sample_w, 0, 2, 2, 0);
@@ -2463,7 +2463,7 @@ void g_init_marks(void)
   #define H_draw_mark_hook S_draw_mark_hook " (mark-id): called before a mark is drawn (in XOR mode). \
 If the hook returns #t, the mark is not drawn."
 
-  XEN_DEFINE_HOOK(draw_mark_hook, S_draw_mark_hook, 1, H_draw_mark_hook);  /* arg = mark-id */
+  draw_mark_hook = XEN_DEFINE_HOOK(S_draw_mark_hook, 1, H_draw_mark_hook);  /* arg = mark-id */
 
 #if DEBUGGING && HAVE_GUILE
   XEN_DEFINE_PROCEDURE("internal-test-control-drag-mark", g_test_control_drag_mark, 3, 0, 0, "internal testing func");

@@ -1062,7 +1062,7 @@ void amp_env_insert_zeros(chan_info *cp, off_t beg, off_t num, int pos)
     }
 }
 
-#if (HAVE_SCM_MAKE_RATIO || HAVE_SCM_C_MAKE_RECTANGULAR)
+#if HAVE_RATIOS
 void snd_rationalize(Float a, int *num, int *den)
 {
   XEN ratio;
@@ -1078,7 +1078,7 @@ void snd_rationalize(Float a, int *num, int *den)
 
 /* -------- control panel speed -------- */
 
-#if ((!HAVE_SCM_MAKE_RATIO) && (!HAVE_SCM_C_MAKE_RECTANGULAR))
+#if (!HAVE_RATIOS)
 #define TOTAL_RATS 123
 
 static char *rat_names[TOTAL_RATS] = {
@@ -1095,7 +1095,7 @@ Float speed_changed(Float val, char *srcbuf, speed_style_t style, int tones, int
   switch (style)
     {
     case SPEED_CONTROL_AS_RATIO:
-#if (HAVE_SCM_MAKE_RATIO || HAVE_SCM_C_MAKE_RECTANGULAR)
+#if HAVE_RATIOS
       {
 	int num, den;
 	snd_rationalize(val, &num, &den);
@@ -2132,7 +2132,7 @@ static XEN sound_get(XEN snd_n, sp_field_t fld, char *caller)
     case SP_EXPAND_HOP:          return(C_TO_XEN_DOUBLE(sp->expand_control_hop));      break;
     case SP_EXPAND_JITTER:       return(C_TO_XEN_DOUBLE(sp->expand_control_jitter));   break;
     case SP_SPEED:
-#if (HAVE_SCM_MAKE_RATIO || HAVE_SCM_C_MAKE_RECTANGULAR)
+#if HAVE_RATIOS
       if (sp->speed_control_style == SPEED_CONTROL_AS_RATIO)
 	{
 	  if (sp->speed_control_direction == -1)
@@ -2279,7 +2279,7 @@ static XEN sound_set(XEN snd_n, XEN val, sp_field_t fld, char *caller)
       break;
     case SP_SPEED_STYLE:
       sp->speed_control_style = (speed_style_t)XEN_TO_C_INT(val); /* range checked already */
-#if (HAVE_SCM_MAKE_RATIO || HAVE_SCM_C_MAKE_RECTANGULAR)
+#if HAVE_RATIOS
       if (sp->speed_control_style == SPEED_CONTROL_AS_RATIO)
 	snd_rationalize(sp->speed_control, &(sp->speed_control_numerator), &(sp->speed_control_denominator));
 #endif
@@ -2462,7 +2462,7 @@ static XEN sound_set(XEN snd_n, XEN val, sp_field_t fld, char *caller)
       return(C_TO_XEN_DOUBLE(sp->expand_control_jitter));
       break;
     case SP_SPEED: 
-#if (HAVE_SCM_MAKE_RATIO || HAVE_SCM_C_MAKE_RECTANGULAR)
+#if HAVE_RATIOS
       if ((sp->speed_control_style == SPEED_CONTROL_AS_RATIO) &&
 	  (XEN_RATIO_P(val)))
 	{
@@ -2487,7 +2487,7 @@ static XEN sound_set(XEN snd_n, XEN val, sp_field_t fld, char *caller)
 	  int direction;
 	  if (fval > 0.0) direction = 1; else direction = -1;
 	  set_speed(sp, fabs(fval)); 
-#if (HAVE_SCM_MAKE_RATIO || HAVE_SCM_C_MAKE_RECTANGULAR)
+#if HAVE_RATIOS
 	  if (sp->speed_control_style == SPEED_CONTROL_AS_RATIO)
 	    snd_rationalize(sp->speed_control, &(sp->speed_control_numerator), &(sp->speed_control_denominator));
 #endif
@@ -5009,8 +5009,8 @@ If it returns #t, the usual informative minibuffer babbling is squelched."
 
   #define H_after_apply_hook S_after_apply_hook " (snd): called when apply-controls finishes."
 
-  XEN_DEFINE_HOOK(name_click_hook,   S_name_click_hook,   1, H_name_click_hook);       /* args = snd-index */
-  XEN_DEFINE_HOOK(after_apply_hook,  S_after_apply_hook,  1, H_after_apply_hook);      /* args = snd-index */
+  name_click_hook =  XEN_DEFINE_HOOK(S_name_click_hook,   1, H_name_click_hook);       /* args = snd-index */
+  after_apply_hook = XEN_DEFINE_HOOK(S_after_apply_hook,  1, H_after_apply_hook);      /* args = snd-index */
 
   #define H_channels_separate "The value for " S_channel_style " that causes channel graphs to occupy separate panes"
   #define H_channels_combined "The value for " S_channel_style " that causes channel graphs to occupy one panes (the 'unite' button)"

@@ -1168,5 +1168,5 @@ void g_init_selection(void)
   #define H_selection_changed_hook S_selection_changed_hook " (): called whenever some portion of sound is \
 either selected or unselected"
 
-  XEN_DEFINE_HOOK(selection_changed_hook,  S_selection_changed_hook, 0, H_selection_changed_hook); /* no args */
+  selection_changed_hook = XEN_DEFINE_HOOK(S_selection_changed_hook, 0, H_selection_changed_hook); /* no args */
 }

@@ -339,7 +339,7 @@ char *key_binding_description(int key, int state, bool cx_extended)
 	{
 	  help_text = XEN_PROCEDURE_SOURCE_HELP(value); /* (procedure-documentation ...) -- this is the first line of source if string */
 	  if (XEN_FALSE_P(help_text))
-	    help_text = scm_procedure_name(value);
+	    help_text = XEN_PROCEDURE_NAME(value);
 	}
       if (!(XEN_FALSE_P(help_text))) 
 	{

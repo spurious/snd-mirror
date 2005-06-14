@@ -824,17 +824,7 @@ Information about about parameters can be acquired using " S_analyse_ladspa "."
   #define FIELD_PREFIX "R"
 #endif
 
-#if HAVE_GUILE
-  #if HAVE_SCM_C_DEFINE
-    #define DEFINE_INTEGER(Name) scm_c_define(#Name, C_TO_XEN_INT(Name))
-  #else
-    #define DEFINE_INTEGER(Name) gh_define(#Name, C_TO_XEN_INT(Name))
-  #endif
-#endif
-#if HAVE_RUBY
-  #define DEFINE_INTEGER(Name) rb_define_global_const(#Name, C_TO_XEN_INT(Name))
-#endif
-
+#define DEFINE_INTEGER(Name) XEN_DEFINE(#Name, C_TO_XEN_INT(Name))
 #define DEFINE_READER(Name, Value, Doc) XEN_DEFINE_PROCEDURE(FIELD_PREFIX #Name, Value, 1, 0, 0, Doc)
 
 #define C_TO_XEN_Ladspa_Descriptor(Value) \

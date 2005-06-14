@@ -2057,7 +2057,7 @@ of a moving mark:\n\
 an integer, it is used as the starting point of the transform."
 #endif
 
-  XEN_DEFINE_HOOK(before_transform_hook, S_before_transform_hook, 2, H_before_transform_hook);  /* args = snd chn */
+  before_transform_hook = XEN_DEFINE_HOOK(S_before_transform_hook, 2, H_before_transform_hook);  /* args = snd chn */
 
   #define H_fourier_transform   S_transform_type " value for Fourier transform (sinusoid basis)"
   #define H_wavelet_transform   S_transform_type " value for wavelet transform (" S_wavelet_type " chooses wavelet)"

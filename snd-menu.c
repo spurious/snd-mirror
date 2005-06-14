@@ -764,7 +764,7 @@ void g_init_menu(void)
 {
   #define H_output_name_hook S_output_name_hook " (): called from the File:New dialog.  If it returns a filename, \
 that name is the default that appears in the New File dialog."
-  XEN_DEFINE_HOOK(output_name_hook, S_output_name_hook, 0, H_output_name_hook);
+  output_name_hook = XEN_DEFINE_HOOK(S_output_name_hook, 0, H_output_name_hook);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_save_state_file, g_save_state_file_w, H_save_state_file,
 				   S_setB S_save_state_file, g_set_save_state_file_w, 0, 0, 1, 0);

@@ -1363,6 +1363,6 @@ enters the drawing area (graph pane) of the given channel.\n\
 leaves the drawing area (graph pane) of the given channel."
 #endif
 
-  XEN_DEFINE_HOOK(mouse_enter_graph_hook, S_mouse_enter_graph_hook, 2, H_mouse_enter_graph_hook);    /* args = snd chn */
-  XEN_DEFINE_HOOK(mouse_leave_graph_hook, S_mouse_leave_graph_hook, 2, H_mouse_leave_graph_hook);    /* args = snd chn */
+  mouse_enter_graph_hook = XEN_DEFINE_HOOK(S_mouse_enter_graph_hook, 2, H_mouse_enter_graph_hook);    /* args = snd chn */
+  mouse_leave_graph_hook = XEN_DEFINE_HOOK(S_mouse_leave_graph_hook, 2, H_mouse_leave_graph_hook);    /* args = snd chn */
 }

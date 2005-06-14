@@ -2758,12 +2758,12 @@ upon File:Save as or " S_save_sound_as " completion."
   #define H_before_save_as_hook " (index filename selection srate type format comment): called \
 before File:Save as or " S_save_sound_as ". Provides a way to fixup a sound just before it is saved."
 
-  XEN_DEFINE_HOOK(open_hook, S_open_hook, 1, H_open_hook);                            /* arg = filename */
-  XEN_DEFINE_HOOK(close_hook, S_close_hook, 1, H_close_hook);                         /* arg = sound index */
-  XEN_DEFINE_HOOK(just_sounds_hook, S_just_sounds_hook, 1, H_just_sounds_hook);       /* arg = filename */
-  XEN_DEFINE_HOOK(bad_header_hook, S_bad_header_hook, 1, H_bad_header_hook);          /* arg = filename */
-  XEN_DEFINE_HOOK(after_save_as_hook, S_after_save_as_hook, 3, H_after_save_as_hook); /* args: index filename from-dialog */
-  XEN_DEFINE_HOOK(before_save_as_hook, S_before_save_as_hook, 7, H_before_save_as_hook); /* args: index filename selection srate type format comment */
+  open_hook =           XEN_DEFINE_HOOK(S_open_hook, 1,           H_open_hook);           /* arg = filename */
+  close_hook =          XEN_DEFINE_HOOK(S_close_hook, 1,          H_close_hook);          /* arg = sound index */
+  just_sounds_hook =    XEN_DEFINE_HOOK(S_just_sounds_hook, 1,    H_just_sounds_hook);    /* arg = filename */
+  bad_header_hook =     XEN_DEFINE_HOOK(S_bad_header_hook, 1,     H_bad_header_hook);     /* arg = filename */
+  after_save_as_hook =  XEN_DEFINE_HOOK(S_after_save_as_hook, 3,  H_after_save_as_hook);  /* args: index filename from-dialog */
+  before_save_as_hook = XEN_DEFINE_HOOK(S_before_save_as_hook, 7, H_before_save_as_hook); /* args: index filename selection srate type format comment */
 
   #define H_open_raw_sound_hook S_open_raw_sound_hook " (filename current-choices): called when a headerless sound file is opened. \
 Its result can be a list describing the raw file's attributes (thereby bypassing the Raw File Dialog and so on). \
@@ -2771,7 +2771,7 @@ The list (passed to subsequent hook functions as 'current-choice') is interprete
 (list chans srate data-format data-location data-length) where trailing elements can \
 be omitted (location defaults to 0, and length defaults to the file length in bytes)."
 
-  XEN_DEFINE_HOOK(open_raw_sound_hook, S_open_raw_sound_hook, 2, H_open_raw_sound_hook);    /* args = filename current-result */
+  open_raw_sound_hook = XEN_DEFINE_HOOK(S_open_raw_sound_hook, 2, H_open_raw_sound_hook);    /* args = filename current-result */
 
   #define H_update_hook S_update_hook " (snd): called just before " S_update_sound " is called. \
 The update process can  be triggered by a variety of situations, not just by " S_update_sound ". \
@@ -2781,7 +2781,7 @@ completion of the update operation; its argument is the (possibly different) sou
 Snd tries to maintain the index across the update, but if you change the number of channels \
 the newly updated sound may have a different index."
 
-  XEN_DEFINE_HOOK(update_hook, S_update_hook, 1, H_update_hook);            /* arg = sound index */
+  update_hook = XEN_DEFINE_HOOK(S_update_hook, 1, H_update_hook);            /* arg = sound index */
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_previous_files_sort_procedure, g_previous_files_sort_procedure_w, H_previous_files_sort_procedure,
                                    S_setB S_previous_files_sort_procedure, g_set_previous_files_sort_procedure_w,  0, 0, 1, 0);
@@ -2789,5 +2789,5 @@ the newly updated sound may have a different index."
   #define H_previous_files_select_hook S_previous_files_select_hook "(filename): called when a file is selected in the \
 previous files list of the View Files dialog.  If it returns #t, the default action, opening the file, is omitted."
 
-  XEN_DEFINE_HOOK(previous_files_select_hook, S_previous_files_select_hook, 1, H_previous_files_select_hook); /* arg = filename */
+  previous_files_select_hook = XEN_DEFINE_HOOK(S_previous_files_select_hook, 1, H_previous_files_select_hook); /* arg = filename */
 }
