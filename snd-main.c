@@ -833,7 +833,8 @@ static void save_sound_state (snd_info *sp, void *ptr)
 #if HAVE_SCHEME
 	  fprintf(fd, "%s(set! _saved_snd_selected_sound_ sfile)\n", white_space);
 	  fprintf(fd, "%s(set! _saved_snd_selected_channel_ %d)\n", white_space, cp->chan);
-#else
+#endif
+#if HAVE_RUBY
 	  fprintf(fd, "%ssaved_snd_selected_sound = sfile\n", white_space);
 	  fprintf(fd, "%ssaved_snd_selected_channel = %d\n", white_space, cp->chan);
 #endif
@@ -883,7 +884,8 @@ static char *save_state_or_error (char *save_state_name)
 #if HAVE_SCHEME
 	      fprintf(save_fd, "\n(define _saved_snd_selected_sound_ #f)\n");
 	      fprintf(save_fd, "(define _saved_snd_selected_channel_ #f)\n");
-#else
+#endif
+#if HAVE_RUBY
 	      fprintf(save_fd, "\nsaved_snd_selected_sound = -1\n");
 	      fprintf(save_fd, "saved_snd_selected_channel = -1\n");
 #endif
@@ -896,7 +898,8 @@ static char *save_state_or_error (char *save_state_name)
 	      fprintf(save_fd, "  (begin\n");
 	      fprintf(save_fd, "    (%s _saved_snd_selected_sound_)\n", S_select_sound);
 	      fprintf(save_fd, "    (%s _saved_snd_selected_channel_)))\n", S_select_channel);
-#else
+#endif
+#if HAVE_RUBY
 	      fprintf(save_fd, "if saved_snd_selected_sound != -1\n");
 	      fprintf(save_fd, "  select_sound(saved_snd_selected_sound)\n");
 	      fprintf(save_fd, "  select_channel(saved_snd_selected_channel)\n");

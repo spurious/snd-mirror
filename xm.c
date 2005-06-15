@@ -207,7 +207,8 @@
   #define XM_PREFIX ""
   #define XM_POSTFIX ""
   #define XM_FIELD_PREFIX "."
-#else
+#endif
+#if HAVE_RUBY
 /* for Ruby, XM PREFIX needs to be uppercase */
   #define XM_PREFIX "R"
   #define XM_POSTFIX ""
@@ -30292,23 +30293,11 @@ static void define_Atoms(void)
 static bool xm_already_inited = false;
 
 #if WITH_GTK_AND_X11
-#if HAVE_SCHEME
- void init_x11(void);
- void init_x11(void)
-#endif
-#if HAVE_RUBY
  void Init_libx11(void);
  void Init_libx11(void)
-#endif
 #else
-#if HAVE_SCHEME
- void init_xm(void);
- void init_xm(void)
-#endif
-#if HAVE_RUBY
  void Init_libxm(void);
  void Init_libxm(void)
-#endif
 #endif
 {
   /* perhaps nicer here to check the features list for 'xm */
@@ -30370,6 +30359,16 @@ static bool xm_already_inited = false;
     }
 }
 
+#else
+#if WITH_GTK_AND_X11
+ void Init_libx11(void);
+ void Init_libx11(void)
+#else
+ void Init_libxm(void);
+ void Init_libxm(void)
+#endif
+{
+}
 #endif
 /* end HAVE_EXTENSION_LANGUAGE */
 

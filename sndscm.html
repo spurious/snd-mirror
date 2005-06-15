@@ -577,73 +577,74 @@ the listener?
 </p>
 
 <table border=1 cellpadding=3>
-  <tr><td><a class=def href="#srcduration">src-duration</a> env</td>  <td>predict duration after src by env</td></tr>
-  <tr><td><a class=def href="#exdolph">dolph</a> n gamma</td>         <td>Dolph-Chebyshev fft data window</td></tr>
+  <tr><td><a class=def href="#srcduration">src-duration</a> env</td>                      <td>predict duration after src by env</td></tr>
+  <tr><td><a class=def href="#exdolph">dolph</a> n gamma</td>                             <td>Dolph-Chebyshev fft data window</td></tr>
   <tr><td><a class=def href="#exdownoct">down-oct</a> n, <em class=emdef>stretch-sound-via-dft</em></td><td>move sound down a factor of n using fft/dft</td></tr>
-  <tr><td><a class=def href="#freqdiv">freqdiv</a> n</td>                        <td>"frequency division" effect</td></tr>
-  <tr><td><a class=def href="#adsat">adsat</a> size</td>                       <td>"adaptive saturation" effect</td></tr>
-  <tr><td><a class=def href="#spike">spike</a></td>                            <td>spikey sound effect</td></tr>
+  <tr><td><a class=def href="#freqdiv">freqdiv</a> n</td>                                 <td>"frequency division" effect</td></tr>
+  <tr><td><a class=def href="#adsat">adsat</a> size</td>                                  <td>"adaptive saturation" effect</td></tr>
+  <tr><td><a class=def href="#spike">spike</a></td>                                       <td>spikey sound effect</td></tr>
   <tr><td><a class=def href="#excomputeuniformcircularstring">compute-uniform-circular-string</a> size ...</td><td>scanned synthesis</td></tr>
-  <tr><td><a class=def href="#computestring">compute-string</a> size ...</td>          <td></td></tr>
-  <tr><td><a class=def href="#spotfreq">spot-freq</a></td>                        <td>easily-fooled autocorrelation-based pitch tracker</td></tr>
+  <tr><td><a class=def href="#computestring">compute-string</a> size ...</td>             <td></td></tr>
+  <tr><td><a class=def href="#spotfreq">spot-freq</a></td>                                <td>easily-fooled autocorrelation-based pitch tracker</td></tr>
   <tr><td><a class=def href="#zerophase">zero-phase</a>, <a class=def href="#rotatephase">rotate-phase</a></td><td>phase-based effects</td></tr>
-  <tr><td><a class=def href="#asyfm1">both forms of asymmetric-fm</a></td>      <td></td></tr>
-  <tr><td><a class=def href="#cosinesummation">cosine-summation</a></td>                 <td>sum-of-cosines stuff</td></tr>
-  <tr><td><a class=def href="#kosinesummation">kosine-summation</a></td>                 <td>more sum-of-cosines stuff</td></tr>
-  <tr><td><a class=def href="#legendresum">legendre-sum</a></td>                     <td></td></tr>
-  <tr><td><a class=def href="#fejersum">fejer-sum</a></td>                        <td></td></tr>
-  <tr><td><a class=def href="#brightenslightly1">brighten-slightly</a> amount</td>         <td>add harmonics</td></tr>
+  <tr><td><a class=def href="#asyfm1">both forms of asymmetric-fm</a></td>                <td></td></tr>
+  <tr><td><a class=def href="#cosinesummation">cosine-summation</a></td>                  <td>sum-of-cosines stuff</td></tr>
+  <tr><td><a class=def href="#kosinesummation">kosine-summation</a></td>                  <td>more sum-of-cosines stuff</td></tr>
+  <tr><td><a class=def href="#legendresum">legendre-sum</a></td>                          <td></td></tr>
+  <tr><td><a class=def href="#fejersum">fejer-sum</a></td>                                <td></td></tr>
+  <tr><td><a class=def href="#brightenslightly1">brighten-slightly</a> amount</td>        <td>add harmonics</td></tr>
   <tr><td><a class=def href="#spectrumtocoeffs">spectrum-&gt;coeffs</a> order spectrum-envelope</td><td>frequency-response envelope -&gt; FIR coeffs</td></tr>
   <tr><td><a class=def href="#makehilberttransform">make-hilbert-transform</a> length</td><td>Hilbert transform</td></tr>
-  <tr><td><a class=def href="#makelowpass">make-lowpass</a> fc length</td><td>FIR lowpass</td></tr>
-  <tr><td><a class=def href="#makehighpass">make-highpass</a> fc length</td><td>FIR highpass</td></tr>
-  <tr><td><a class=def href="#makebandpass">make-bandpass</a> flo fhi length</td><td>FIR bandpass</td></tr>
-  <tr><td><a class=def href="#makebandstop">make-bandstop</a> flo fhi length</td><td>FIR bandstop</td></tr>
-  <tr><td><a class=def href="#makedifferentiator">make-differentiator</a> length</td><td>FIR differentiator</td></tr>
-  <tr><td><a class=def href="#makebiquad">make-biquad</a> a0 a1 a2 b1 b2</td><td>IIR cascade section</td></tr>
-  <tr><td><a class=def href="#makebutterhighpass">make-butter-high-pass</a> freq</td><td>2nd order Butterworth highpass</td></tr>
-  <tr><td><a class=def href="#makebutterlowpass">make-butter-low-pass</a> freq</td><td>2nd order Butterworth lowpass</td></tr>
+  <tr><td><a class=def href="#makelowpass">make-lowpass</a> fc length</td>                <td>FIR lowpass</td></tr>
+  <tr><td><a class=def href="#makehighpass">make-highpass</a> fc length</td>              <td>FIR highpass</td></tr>
+  <tr><td><a class=def href="#makebandpass">make-bandpass</a> flo fhi length</td>         <td>FIR bandpass</td></tr>
+  <tr><td><a class=def href="#makebandstop">make-bandstop</a> flo fhi length</td>         <td>FIR bandstop</td></tr>
+  <tr><td><a class=def href="#makedifferentiator">make-differentiator</a> length</td>     <td>FIR differentiator</td></tr>
+  <tr><td><a class=def href="#makebiquad">make-biquad</a> a0 a1 a2 b1 b2</td>             <td>IIR cascade section</td></tr>
+  <tr><td><a class=def href="#makebutterhighpass">make-butter-high-pass</a> freq</td>     <td>2nd order Butterworth highpass</td></tr>
+  <tr><td><a class=def href="#makebutterlowpass">make-butter-low-pass</a> freq</td>       <td>2nd order Butterworth lowpass</td></tr>
   <tr><td><a class=def href="#makebutterbandpass">make-butter-band-pass</a> freq bandwidth</td><td>2nd order Butterworth bandpass</td></tr>
   <tr><td><a class=def href="#makebutterbandreject">make-butter-band-reject</a> freq bandwidth</td><td>2nd order Butterworth bandstop</td></tr>
-  <tr><td><a class=def href="#fltit1">fltit-1</a></td>                          <td></td></tr>
-  <tr><td><a class=def href="#makeiirlowpass">make-iir-low-pass-1</a> fc</td>           <td>IIR 1st order lowpass</td></tr>
-  <tr><td><a class=def href="#makeiirhighpass">make-iir-high-pass-1</a> fc</td>          <td>IIR 1st order highpass</td></tr>
-  <tr><td><a class=def href="#makeiirlowpass2">make-iir-low-pass-2</a> fc d</td>         <td>IIR 2nd order lowpass</td></tr>
+  <tr><td><a class=def href="#fltit1">fltit-1</a></td>                                    <td></td></tr>
+  <tr><td><a class=def href="#makeiirlowpass">make-iir-low-pass-1</a> fc</td>             <td>IIR 1st order lowpass</td></tr>
+  <tr><td><a class=def href="#makeiirhighpass">make-iir-high-pass-1</a> fc</td>           <td>IIR 1st order highpass</td></tr>
+  <tr><td><a class=def href="#makeiirlowpass2">make-iir-low-pass-2</a> fc d</td>          <td>IIR 2nd order lowpass</td></tr>
   <tr><td><a class=def href="#makeiirhighpass2">make-iir-high-pass-2</a> fc d</td>        <td>IIR 2nd order highpass</td></tr>
   <tr><td><a class=def href="#makeiirbandpass2">make-iir-band-pass-2</a> f1 f2</td>       <td>IIR 2nd order bandpass</td></tr>
   <tr><td><a class=def href="#makeiirbandstop2">make-iir-band-stop-2</a> f1 f2</td>       <td>IIR 2nd order bandstop</td></tr>
   <tr><td><a class=def href="#makeeliminatehum">make-eliminate-hum</a> freq ...</td>      <td>hum eliminator (cascaded bandstops)</td></tr>
-  <tr><td><a class=def href="#makepeaking2">make-peaking-2</a> f1 f2 m</td>           <td>slight resonance effect</td></tr>
-  <tr><td><em class=emdef>cascade-&gt;canonical</em> coeffs</td>     <td>convert cascade coeffs to canonical (for CLM's filter gen)</td></tr>
-  <tr><td><a class=def href="#makebutterlp">make-butter-lp</a> M fc</td>              <td>any even order Butterworth lowpass</td></tr>
-  <tr><td><a class=def href="#makebutterhp">make-butter-hp</a> M fc</td>              <td>any even order Butterworth highpass</td></tr>
-  <tr><td><a class=def href="#makebutterbp">make-butter-bp</a> M f1 f2</td>           <td>any even order Butterworth bandpass</td></tr>
-  <tr><td><a class=def href="#makebutterbs">make-butter-bs</a> M f1 f2</td>           <td>any even order Butterworth bandstop</td></tr>
+  <tr><td><a class=def href="#makepeaking2">make-peaking-2</a> f1 f2 m</td>               <td>slight resonance effect</td></tr>
+  <tr><td><em class=emdef>cascade-&gt;canonical</em> coeffs</td>                          <td>convert cascade coeffs to canonical (for CLM's filter gen)</td></tr>
+  <tr><td><a class=def href="#makebutterlp">make-butter-lp</a> M fc</td>                  <td>any even order Butterworth lowpass</td></tr>
+  <tr><td><a class=def href="#makebutterhp">make-butter-hp</a> M fc</td>                  <td>any even order Butterworth highpass</td></tr>
+  <tr><td><a class=def href="#makebutterbp">make-butter-bp</a> M f1 f2</td>               <td>any even order Butterworth bandpass</td></tr>
+  <tr><td><a class=def href="#makebutterbs">make-butter-bs</a> M f1 f2</td>               <td>any even order Butterworth bandstop</td></tr>
   <tr><td><a class=def href="#notchchannel">notch-channel</a> freqs order beg dur s c e trunc width</td><td>arbitrary notch filter applied to channel</td></tr>
-  <tr><td><a class=def href="#notchsound">notch-sound</a> freqs order s c width</td><td>arbitrary notch filter applied to sound</td></tr>
-  <tr><td><a class=def href="#notchselection">notch-selection</a> freqs order width</td><td>arbitrary notch filter applied to selection</td></tr>
+  <tr><td><a class=def href="#notchsound">notch-sound</a> freqs order s c width</td>      <td>arbitrary notch filter applied to sound</td></tr>
+  <tr><td><a class=def href="#notchselection">notch-selection</a> freqs order width</td>  <td>arbitrary notch filter applied to selection</td></tr>
   <tr><td><a class=def href="#fractionalfouriertransform">fractional-fourier-transform</a> rl im size angle</td><td>fractional dft</td></tr>
-  <tr><td><a class=def href="#ztransform">z-transform</a> rl size z</td><td></td></tr>
-  <tr><td><a class=def href="#exdht">dht</a> data</td>                <td>slow Hartley transform </td></tr>
-  <tr><td><a class=def href="#findsine">find-sine</a> freq beg dur</td>           <td>DFT at a particular frequency</td></tr>
-  <tr><td><a class=def href="#goertzel">goertzel</a> freq beg dur</td><td>same as find-sine but faster</td></tr>
-  <tr><td><em class=emdef>make-spencer-filter</em></td>              <td>return FIR filter with Spencer coefficients</td></tr>
-  <tr><td><a class=def href="#anyrandom">any-random</a></td>          <td>random numbers of arbitrary distribution using rejection method</td></tr>
-  <tr><td><a class=def href="#channelvariance">channel-variance</a> etc</td>             <td>miscellaneous funcs from Julius Smith, Mathematics of the DFT</td></tr>
-  <tr><td><a class=def href="#channeldistance">channel-distance</a> s0 c0 s1 c1</td>     <td>a measure of the difference between two sounds (Euclidean distance)</td></tr>
-  <tr><td><em class=emdef>shift-channel-pitch</em></td>              <td>shift all components by some frequency ("single-sideband amplitude modulation")</td></tr>
-  <tr><td><a class=def href="#ssbbank">ssb-bank</a></td>              <td>time/pitch changes using ssb-am gens</td></tr>
-  <tr><td><a class=def href="#ssbbankenv">ssb-bank-env</a></td>       <td>time/pitch changes using ssb-am gens and a frequency envelope</td></tr>
-  <tr><td><a class=def href="#ssbfm">make-ssb-fm, ssb-fm</a></td>     <td>quasi-single-sideband FM</td></tr>
-  <tr><td><em class=emdef>periodogram</em> N</td>                    <td>periodogram displayed in "lisp graph"</td></tr>
-  <tr><td><a class=def href="#vctpolynomial">vct-polynomial</a> v coeffs</td><td>polynomial evaluation of entire vct</td></tr>
+  <tr><td><a class=def href="#ztransform">z-transform</a> rl size z</td>                  <td></td></tr>
+  <tr><td><a class=def href="#exdht">dht</a> data</td>                                    <td>slow Hartley transform </td></tr>
+  <tr><td><a class=def href="#findsine">find-sine</a> freq beg dur</td>                   <td>DFT at a particular frequency</td></tr>
+  <tr><td><a class=def href="#goertzel">goertzel</a> freq beg dur</td>                    <td>same as find-sine but faster</td></tr>
+  <tr><td><em class=emdef>make-spencer-filter</em></td>                                   <td>return FIR filter with Spencer coefficients</td></tr>
+  <tr><td><a class=def href="#anyrandom">any-random</a></td>                              <td>random numbers of arbitrary distribution using rejection method</td></tr>
+  <tr><td><a class=def href="#channelvariance">channel-variance</a> etc</td>              <td>miscellaneous funcs from Julius Smith, Mathematics of the DFT</td></tr>
+  <tr><td><a class=def href="#channeldistance">channel-distance</a> s0 c0 s1 c1</td>      <td>a measure of the difference between two sounds (Euclidean distance)</td></tr>
+  <tr><td><em class=emdef>shift-channel-pitch</em></td>                                   <td>shift all components by some frequency ("single-sideband amplitude modulation")</td></tr>
+  <tr><td><a class=def href="#ssbbank">ssb-bank</a></td>                                  <td>time/pitch changes using ssb-am gens</td></tr>
+  <tr><td><a class=def href="#ssbbankenv">ssb-bank-env</a></td>                           <td>time/pitch changes using ssb-am gens and a frequency envelope</td></tr>
+  <tr><td><a class=def href="#ssbfm">make-ssb-fm, ssb-fm</a></td>                         <td>quasi-single-sideband FM</td></tr>
+  <tr><td><em class=emdef>periodogram</em> N</td>                                         <td>periodogram displayed in "lisp graph"</td></tr>
+  <tr><td><a class=def href="#vctpolynomial">vct-polynomial</a> v coeffs</td>             <td>polynomial evaluation of entire vct</td></tr>
   <tr><td><a class=def href="#channelpolynomial">channel-polynomial</a> coeffs snd chn</td><td>polynomial evaluation of entire channel</td></tr>
   <tr><td><a class=def href="#spectralpolynomial">spectral-polynomial</a> coeffs snd chn</td><td>polynomial evaluation of entire channel in frequency domain (convolution)</td></tr>
   <tr><td><a class=def href="#scentroid">scentroid</a> file beg dur db-floor rfreq fftsize</td><td>spectral center of gravity (brightness)</td></tr>
-  <tr><td><a class=def href="#invertfilter">invert-filter</a> coeffs</td><td>return inverse filter given original coeffs</td></tr>
-  <tr><td><a class=def href="#volterrafilter">volterra-filter</a> flt x</td><td>Volterra (non-linear FIR) filter</td></tr>
-  <tr><td><a class=def href="#windowedmaxamp">windowed-maxamp</a> gen y</td><td>envelope follower -- returns maxamp of last n samps</td></tr>
-  <tr><td><a class=def href="#harmonicizer">harmonicizer</a> freq coeffs pairs ...</td><td>split each harmonic into a set of harmonics</td></tr>
+  <tr><td><a class=def href="#invertfilter">invert-filter</a> coeffs</td>                 <td>return inverse filter given original coeffs</td></tr>
+  <tr><td><a class=def href="#volterrafilter">volterra-filter</a> flt x</td>              <td>Volterra (non-linear FIR) filter</td></tr>
+  <tr><td><a class=def href="#windowedmaxamp">windowed-maxamp</a> gen y</td>              <td>envelope follower -- returns maxamp of last n samps</td></tr>
+  <tr><td><a class=def href="#harmonicizer">harmonicizer</a> freq coeffs pairs ...</td>   <td>split each harmonic into a set of harmonics</td></tr>
+  <tr><td><em class=emdef>linear-src-channel</em></td>                                    <td>linear sampling rate conversion</td></tr>
 </table>
 
 <p><A class=def NAME="exdolph">dolph</A> is the Dolph-Chebyshev fft data window, taken

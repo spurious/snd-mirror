@@ -139,8 +139,8 @@ echo ' -------------------------------- static gsl -----------------------------
 make allclean
 rm -f snd
 rm -f config.cache
-echo ' CFLAGS="-Wall" --with-static-gsl '
-./configure --quiet CFLAGS="-Wall" --with-static-gsl
+echo ' CFLAGS="-Wall" --with-static-gsl --with-alsa '
+./configure --quiet CFLAGS="-Wall" --with-static-gsl --with-alsa
 make
 echo ' '
 echo ' '
@@ -332,8 +332,8 @@ echo ' CC=g++ CFLAGS="-Wall" --with-ruby '
 make
 snd --version
 make allclean
-echo ' CFLAGS="-Wall" --with-ruby --with-static-xm --with-gl --enable-snd-debug '
-./configure --quiet CFLAGS="-Wall -DXEN_DEBUGGING" --with-ruby --with-static-xm --with-gl --enable-snd-debug
+echo ' CFLAGS="-Wall" --with-ruby --with-static-xm --with-gl --enable-snd-debug --with-alsa '
+./configure --quiet CFLAGS="-Wall -DXEN_DEBUGGING" --with-ruby --with-static-xm --with-gl --enable-snd-debug --with-alsa
 make
 echo ' '
 echo ' '
@@ -349,8 +349,8 @@ echo ' '
 echo ' '
 ./snd --version
 make allclean
-echo ' CC=g++ --with-ruby --with-gtk '
-./configure --quiet CC=g++ --with-ruby --with-gtk
+echo ' CC=g++ --with-ruby --with-gtk --with-alsa '
+./configure --quiet CC=g++ --with-ruby --with-gtk --with-alsa
 make
 echo ' '
 echo ' '
@@ -428,8 +428,8 @@ echo ' CC=g++ --without-guile --without-ruby '
 make
 ./snd --version
 make allclean
-echo ' CC=g++ --with-static-xm --with-hobbit --without-gsl '
-./configure --quiet CC=g++ --with-static-xm --without-gsl
+echo ' CC=g++ --with-static-xm --with-hobbit --without-gsl --with-alsa '
+./configure --quiet CC=g++ --with-static-xm --without-gsl --with-alsa
 make
 ./snd --version
 make allclean
@@ -520,6 +520,14 @@ make
 make allclean
 
 ./configure --with-no-gui --without-guile --without-ruby --quiet
+make
+./snd --version
+make allclean
+./configure --without-guile --without-ruby --with-static-xm --with-gl --quiet
+make
+./snd --version
+make allclean
+./configure --without-guile --without-ruby --with-gtk --with-static-xg --with-gl --quiet
 make
 ./snd --version
 make allclean

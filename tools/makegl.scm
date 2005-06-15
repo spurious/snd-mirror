@@ -922,14 +922,8 @@
 
 (hey "/* -------------------------------- initialization -------------------------------- */~%~%")
 (hey "static bool gl_already_inited = false;~%~%")
-(hey "#if HAVE_SCHEME~%")
-(hey " void init_gl(void);~%")
-(hey " void init_gl(void)~%")
-(hey "#endif~%")
-(hey "#if HAVE_RUBY~%")
 (hey " void Init_libgl(void);~%")
 (hey " void Init_libgl(void)~%")
-(hey "#endif~%")
 (hey "{~%")
 (hey "  if (!gl_already_inited)~%")
 (hey "    {~%")
@@ -940,7 +934,11 @@
 (hey "      gl_already_inited = true;~%")
 (hey "    }~%")
 (hey "}~%")
-
+(hey "#else~%")
+(hey " void Init_libgl(void);~%")
+(hey " void Init_libgl(void)~%")
+(hey "{~%")
+(hey "}~%")
 (hey "#endif~%")
 
 (close-output-port gl-file)

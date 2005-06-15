@@ -39335,22 +39335,11 @@ static void define_strings(void)
 static bool xg_already_inited = false;
 
 #if WITH_GTK_AND_X11
-  #if HAVE_SCHEME
-   void init_x11(void);
-  #endif
-  #if HAVE_RUBY
-   void Init_libx11(void);
-  #endif
+  void Init_libx11(void); /* xm.c */ 
 #endif
 
-#if HAVE_SCHEME
- void init_xg(void);
- void init_xg(void)
-#endif
-#if HAVE_RUBY
  void Init_libxg(void);
  void Init_libxg(void)
-#endif
 {
   if (!xg_already_inited)
     {
@@ -39362,17 +39351,17 @@ static bool xg_already_inited = false;
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("13-Jun-05"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("14-Jun-05"));
       xg_already_inited = true;
 #if WITH_GTK_AND_X11
-  #if HAVE_GUILE
-      init_x11();
-  #endif
-  #if HAVE_RUBY
       Init_libx11();
-  #endif
 #endif
 
     }
+}
+#else
+ void Init_libxg(void);
+ void Init_libxg(void)
+{
 }
 #endif

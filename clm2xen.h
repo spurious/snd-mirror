@@ -34,10 +34,6 @@ vct *mus_optkey_to_vct(XEN key, const char *caller, int n, vct *def);
 XEN mus_optkey_to_procedure(XEN key, const char *caller, int n, XEN def, int required_args, const char *err);
 XEN mus_wrap_generator(mus_any *val);
 
-#if HAVE_RUBY
 void Init_sndlib(void);
-#else
-void init_sndlib(void);
-#endif
 
 #endif

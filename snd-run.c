@@ -6195,6 +6195,7 @@ static xen_value *funcall_n(ptree *prog, xen_value **args, int num_args, xen_val
   xen_value **new_args;
   xen_value *fres;
   func = ((ptree **)(prog->fncs))[sf->addr];
+  if (!func) return(run_warn("inner lambda lost!! (%d in %p)", sf->addr, prog->fncs));
   if (func->arity != num_args) return(run_warn("wrong number of args (%d) for func", num_args));
   fres = func->result;
   new_args = (xen_value **)CALLOC(num_args + 2, sizeof(xen_value *));

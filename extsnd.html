@@ -6925,7 +6925,7 @@ file; <i>auto-delete</i> set to #t asks Snd to handle cleanup).
 The form (set! (<a class=quiet href="#samples">samples</a> samp samps <i>snd chn trunc edname infile-chan</i>) data) can also be used.
 <i>env-sound-interp</i> in examp.scm has an example of the file version, using
 sound-data objects and mus-sound-write to create a temporary file, but
-it's probably simpler to use <a href="clm.html#with-sound">with-sound</a> (from ws.scm):
+it's probably simpler to use <a href="clm.html#with-sound">with-sound</a> (see also linear-src-channel in dsp.scm):
 <br><br>
 <table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define (step-src)
@@ -7351,6 +7351,7 @@ resample through env: <a href="sndscm.html#exsoundinterp">sound-interp</a> and <
 resample through list: <a href="sndscm.html#scratch">scratch</a><br>
 resample step-size through a function: <a href="#setsamples">step-src</a><br>
 predict duration of resampled sound: <a href="sndscm.html#srcduration">src-duration</a><br>
+linear src: linear-src-channel in dsp.scm<br>
 <br>
 </blockquote></small>
 </td></tr></TABLE>

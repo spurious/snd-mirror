@@ -4851,9 +4851,9 @@ static char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
   else function = mus_format("%s)", function);
   FREE(old_function);
   return(function);
-#else
+#endif
 
-  #if HAVE_RUBY
+#if HAVE_RUBY
   char *function = NULL, *old_function = NULL;
   bool close_mix_let = false, first = true;
   int i, edits;
@@ -4947,8 +4947,6 @@ static char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
   else function = mus_format("%s }", function);
   FREE(old_function);
   return(function);
-  #endif
-
 #endif
 }
 

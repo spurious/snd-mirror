@@ -3091,30 +3091,15 @@ XEN_NARGIFY_1(g_i0_w, g_i0)
 
 
 #if HAVE_STATIC_XM
-#if HAVE_SCHEME
-  #if USE_MOTIF
-    void init_xm(void);
-  #else
-    void init_xg(void);
-  #endif
-#endif
-#if HAVE_RUBY
   #if USE_MOTIF
     void Init_libxm(void);
   #else
     void Init_libxg(void);
   #endif
 #endif
-#endif
-
 
 #if HAVE_GL && (!JUST_GL)
-#if HAVE_SCHEME
- void init_gl(void);
-#endif
-#if HAVE_RUBY
  void Init_libgl(void);
-#endif
 #endif
 
 
@@ -3143,11 +3128,7 @@ void g_initialize_gh(void)
 #endif
 #endif
 
-#if HAVE_RUBY
   Init_sndlib();
-#else
-  init_sndlib();
-#endif
 
 #if WITH_MIDI && HAVE_EXTENSION_LANGUAGE
   mus_midi_init();
@@ -3557,29 +3538,15 @@ If it returns some non-false result, Snd assumes you've sent the text out yourse
 #endif
 
 #if HAVE_STATIC_XM
-  #if HAVE_SCHEME
-    #if USE_MOTIF
-      init_xm();
-    #else
-      init_xg();
-    #endif
-  #endif
-  #if HAVE_RUBY
-    #if USE_MOTIF
-      Init_libxm();
-    #else
-      Init_libxg();
-    #endif
+  #if USE_MOTIF
+    Init_libxm();
+  #else
+    Init_libxg();
   #endif
 #endif
 
 #if (HAVE_GL) && (!JUST_GL)
-  #if HAVE_SCHEME
-    init_gl();
-  #endif
-  #if HAVE_RUBY
-    Init_libgl();
-  #endif
+  Init_libgl();
 #endif
 
 #if USE_MOTIF

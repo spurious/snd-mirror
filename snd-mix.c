@@ -473,7 +473,8 @@ char *edit_list_mix_and_track_init(chan_info *cp)
 				(old_list) ? old_list : "", 
 				(old_list) ? " " : "",  /* strcat of previous + possible space */
 				i, i);                  /* i is md->id = mix id from user's point of view */
-#else
+#endif
+#if HAVE_RUBY
 	  mix_list = mus_format("%s%s_mix_%d = %d", 
 				(old_list) ? old_list : "", 
 				(old_list) ? "; " : "",  /* strcat of previous + possible space */
@@ -1188,7 +1189,8 @@ static mix_info *file_mix_samples(off_t beg, off_t num, char *mixfile, chan_info
       next_mix = pending_mix_id();
 #if HAVE_SCHEME
       new_origin = mus_format("set! -mix-%d (%s)", next_mix, origin);
-#else
+#endif
+#if HAVE_RUBY
       new_origin = mus_format("_mix_%d = %s", next_mix, origin);
 #endif
     }

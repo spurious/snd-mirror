@@ -5946,22 +5946,21 @@ static void define_integers(void)
 
 static bool gl_already_inited = false;
 
-#if HAVE_SCHEME
- void init_gl(void);
- void init_gl(void)
-#endif
-#if HAVE_RUBY
  void Init_libgl(void);
  void Init_libgl(void)
-#endif
 {
   if (!gl_already_inited)
     {
       define_integers();
       define_functions();
       XEN_YES_WE_HAVE("gl");
-      XEN_DEFINE("gl-version", C_TO_XEN_STRING("13-Jun-05"));
+      XEN_DEFINE("gl-version", C_TO_XEN_STRING("14-Jun-05"));
       gl_already_inited = true;
     }
+}
+#else
+ void Init_libgl(void);
+ void Init_libgl(void)
+{
 }
 #endif

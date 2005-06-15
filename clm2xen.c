@@ -195,7 +195,8 @@ static bool local_arity_ok(XEN proc, int args) /* from snd-xen.c minus (inconven
   if ((rargs > args) ||
       ((rargs < 0) && (-rargs > args)))
     return(false);
-#else
+#endif
+#if HAVE_SCHEME
   rargs = XEN_TO_C_INT(XEN_CAR(arity));
   oargs = XEN_TO_C_INT(XEN_CADR(arity));
   restargs = ((XEN_TRUE_P(XEN_CADDR(arity))) ? 1 : 0);
@@ -817,7 +818,8 @@ static XEN_MARK_OBJECT_TYPE mark_mus_xen(XEN obj)
 #if HAVE_RUBY
   /* rb_gc_mark passes us the actual value, not the XEN wrapper! */
   ms = (mus_xen *)obj;
-#else
+#endif
+#if HAVE_SCHEME
   ms = XEN_TO_MUS_XEN(obj);
 #endif
   if (ms->vcts) 
@@ -829,9 +831,8 @@ static XEN_MARK_OBJECT_TYPE mark_mus_xen(XEN obj)
     }
 #if HAVE_RUBY
   return(NULL);
-#else
-  return(XEN_FALSE);
 #endif
+  return(XEN_FALSE);
 }
 
 static void mus_xen_free(mus_xen *ms)
@@ -6106,7 +6107,8 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_frame_multiply, g_frame_multiply_w, 2, 1, 0, H_frame_multiply);
 #if HAVE_SCHEME
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_frame_ref, g_frame_ref_w, H_frame_ref, S_setB S_frame_ref, g_set_frame_ref_w,  2, 0, 3, 0);
-#else
+#endif
+#if HAVE_RUBY
   XEN_DEFINE_PROCEDURE(S_frame_ref,      g_frame_ref_w,      2, 0, 0, H_frame_ref);
 #endif
   XEN_DEFINE_PROCEDURE(S_frame_set,      g_set_frame_ref_w,  3, 0, 0, H_frame_set);
@@ -6119,7 +6121,8 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_make_scalar_mixer, g_make_scalar_mixer_w, 2, 0, 0, H_make_scalar_mixer);
 #if HAVE_SCHEME
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mixer_ref, g_mixer_ref_w, H_mixer_ref, S_setB S_mixer_ref, g_set_mixer_ref_w,  3, 0, 4, 0);
-#else
+#endif
+#if HAVE_RUBY
   XEN_DEFINE_PROCEDURE(S_mixer_ref,         g_mixer_ref_w,         3, 0, 0, H_mixer_ref);
 #endif
   XEN_DEFINE_PROCEDURE(S_mixer_set,         g_set_mixer_ref_w,     4, 0, 0, H_mixer_set);
@@ -6192,14 +6195,16 @@ the closer the radius is to 1.0, the narrower the resonance."
   XEN_DEFINE_PROCEDURE(S_mus_channels,      g_mus_channels_w, 1, 0, 0, H_mus_channels);
 #if HAVE_SCHEME
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_locsig_ref, g_locsig_ref_w, H_locsig_ref, S_setB S_locsig_ref, g_locsig_set_w,  2, 0, 3, 0);
-#else
+#endif
+#if HAVE_RUBY
   XEN_DEFINE_PROCEDURE(S_locsig_ref,        g_locsig_ref_w,   2, 0, 0, H_locsig_ref);
 #endif
   XEN_DEFINE_PROCEDURE(S_locsig_set,        g_locsig_set_w,   3, 0, 0, H_locsig_set);
 #if HAVE_SCHEME
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_locsig_reverb_ref, g_locsig_reverb_ref_w, H_locsig_reverb_ref, 
 				   S_locsig_reverb_set, g_locsig_reverb_set_w,  2, 0, 3, 0);
-#else
+#endif
+#if HAVE_RUBY
   XEN_DEFINE_PROCEDURE(S_locsig_reverb_ref, g_locsig_reverb_ref_w, 2, 0, 0, H_locsig_reverb_ref);
 #endif
   XEN_DEFINE_PROCEDURE(S_locsig_reverb_set, g_locsig_reverb_set_w, 3, 0, 0, H_locsig_reverb_set);
@@ -6570,11 +6575,7 @@ void mus_xen_init(void)
 #endif
 
 
-#if HAVE_RUBY
 void Init_sndlib(void)
-#else
-void init_sndlib(void)
-#endif
 {
   mus_sndlib_xen_initialize();
   vct_init();

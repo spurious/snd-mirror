@@ -142,8 +142,11 @@ int xen_to_c_int(XEN a)
 #if HAVE_SCM_TO_SIGNED_INTEGER
     if ((SCM_INEXACTP(a)) || (SCM_FRACTIONP(a))) /* avoid error if inexact integer! SCM_INUMP deprecated in 1.7 */
       {
-	if ((scm_is_true(scm_inf_p(a))) || (scm_is_true(scm_nan_p(a)))) return(0);
-	if (SCM_REALP(a)) return((int)(SCM_REAL_VALUE(a)));
+	if ((scm_is_true(scm_inf_p(a))) || 
+	    (scm_is_true(scm_nan_p(a)))) 
+	  return(0);
+	if (SCM_REALP(a)) 
+	  return((int)(SCM_REAL_VALUE(a)));
 	return((int)scm_to_double(a)); 
       }
     return(scm_to_int32(a)); 

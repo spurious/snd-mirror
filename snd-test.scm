@@ -36120,6 +36120,29 @@ EDITS: 1
        (if (fneq (mus-frequency sb) 220.0) (display ";sb freq messed up"))
        ))))
 
+(define (make-linear-src sr)
+  (vct 0.0 sr 0.0 0.0)) ; position sr last next
+
+(define (linear-src gen input)
+  (let ((pos (vct-ref gen 0)))
+    (if (>= pos 1.0)
+	(begin
+	  (if (< pos 2.0)
+	      (begin
+		(vct-set! gen 2 (vct-ref gen 3))
+		(vct-set! gen 3 (input))
+		(set! pos (- 1.0 (vct-ref gen 0))))
+	      (let ((num (inexact->exact (floor pos))))
+		(do ((i 0 (1+ i)))
+		    ((= i num))
+		  (vct-set! gen 2 (vct-ref gen 3))
+		  (vct-set! gen 3 (input)))
+		(set! pos (- pos num))))
+	  (vct-set! gen 0 pos)))
+    (vct-set! gen 0 (+ pos (vct-ref gen 1)))
+    (let ((lo (vct-ref gen 2)))
+      (+ lo (* pos (- (vct-ref gen 3) lo))))))
+
 (define unique-float 3.0)
 (define unique-int 3)
 (define unique-char #\c)
@@ -41368,6 +41391,19 @@ EDITS: 1
 			 ((not ch2) (clm-print ";cond direct ch2")))
 		   
 		   )))
+
+	  ;; see if these segfault
+	  (let ((gen (make-linear-src .5))
+		(rd (make-sample-reader 0)))
+	    (map-channel (lambda (y) (linear-src gen (lambda () (rd))))))
+
+	  (catch #t
+		 (lambda ()
+		   (let ((gen (make-linear-src .5))
+			 (rd (make-sample-reader 0)))
+		     (map-channel (lambda (y) (linear-src gen (lambda (y) (rd)))))))
+		 (lambda args args))
+
 	  (close-sound ind)
 	  (if (not (= ok 25)) (clm-print ";ok: ~A" ok))))
       

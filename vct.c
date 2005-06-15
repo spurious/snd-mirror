@@ -153,14 +153,16 @@ char *vct_to_readable_string(vct *v)
   buf = (char *)CALLOC(64 + len * 16, sizeof(char));
 #if HAVE_SCHEME
   sprintf(buf, "(vct");
-#else
+#endif
+#if HAVE_RUBY
   sprintf(buf, "vct(");
 #endif
   for (i = 0; i < len; i++)
     {
 #if HAVE_SCHEME
       mus_snprintf(flt, 16, " %.3f", v->data[i]);
-#else
+#endif
+#if HAVE_RUBY
       mus_snprintf(flt, 16, "%.3f%s", v->data[i], i + 1 < len ? ", " : "");
 #endif
       strcat(buf, flt);

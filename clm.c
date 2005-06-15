@@ -7193,25 +7193,32 @@ Float *mus_make_fft_window_with_window(mus_fft_window_t type, int size, Float be
   switch (type)
     {
     case MUS_RECTANGULAR_WINDOW:
-      for (i = 0; i < size; i++) window[i] = 1.0;
+      for (i = 0; i < size; i++) 
+	window[i] = 1.0;
       break; 
     case MUS_HANN_WINDOW:
-      for (i = 0, j = size - 1, angle = 0.0; i <= midn; i++, j--, angle += freq) window[j] = (window[i] = 0.5 - 0.5 * cos(angle));
+      for (i = 0, j = size - 1, angle = 0.0; i <= midn; i++, j--, angle += freq) 
+	window[j] = (window[i] = 0.5 - 0.5 * cos(angle));
       break; 
     case MUS_WELCH_WINDOW:
-      for (i = 0, j = size - 1; i <= midn; i++, j--) window[j] = (window[i] = 1.0 - sqr((Float)(i - midn) / (Float)midp1));
+      for (i = 0, j = size - 1; i <= midn; i++, j--) 
+	window[j] = (window[i] = 1.0 - sqr((Float)(i - midn) / (Float)midp1));
       break; 
     case MUS_CONNES_WINDOW:
-      for (i = 0, j = size - 1; i <= midn; i++, j--) window[j] = (window[i] = sqr(1.0 - sqr((Float)(i - midn) / (Float)midp1)));
+      for (i = 0, j = size - 1; i <= midn; i++, j--) 
+	window[j] = (window[i] = sqr(1.0 - sqr((Float)(i - midn) / (Float)midp1)));
       break; 
     case MUS_PARZEN_WINDOW:
-      for (i = 0, j = size - 1; i <= midn; i++, j--) window[j] = (window[i] = 1.0 - fabs((Float)(i - midn) / (Float)midp1));
+      for (i = 0, j = size - 1; i <= midn; i++, j--) 
+	window[j] = (window[i] = 1.0 - fabs((Float)(i - midn) / (Float)midp1));
       break; 
     case MUS_BARTLETT_WINDOW:
-      for (i = 0, j = size - 1, angle = 0.0; i <= midn; i++, j--, angle += rate) window[j] = (window[i] = angle);
+      for (i = 0, j = size - 1, angle = 0.0; i <= midn; i++, j--, angle += rate) 
+	window[j] = (window[i] = angle);
       break; 
     case MUS_HAMMING_WINDOW:
-      for (i = 0, j = size - 1, angle = 0.0; i <= midn; i++, j--, angle += freq) window[j] = (window[i] = 0.54 - 0.46 * cos(angle));
+      for (i = 0, j = size - 1, angle = 0.0; i <= midn; i++, j--, angle += freq) 
+	window[j] = (window[i] = 0.54 - 0.46 * cos(angle));
       break; 
     case MUS_BLACKMAN2_WINDOW: /* using Chebyshev polynomial equivalents here (this is also given as .42 .5 .08) */
       for (i = 0, j = size - 1, angle = 0.0; i <= midn; i++, j--, angle += freq) 
@@ -7240,7 +7247,11 @@ Float *mus_make_fft_window_with_window(mus_fft_window_t type, int size, Float be
       {
 	Float expn, expsum = 1.0;
 	expn = log(2) / (Float)midn + 1.0;
-	for (i = 0, j = size - 1; i <= midn; i++, j--) {window[j] = (window[i] = expsum - 1.0); expsum *= expn;}
+	for (i = 0, j = size - 1; i <= midn; i++, j--) 
+	  {
+	    window[j] = (window[i] = expsum - 1.0); 
+	    expsum *= expn;
+	  }
       }
       break;
     case MUS_KAISER_WINDOW:
@@ -7252,10 +7263,12 @@ Float *mus_make_fft_window_with_window(mus_fft_window_t type, int size, Float be
       }
       break;
     case MUS_CAUCHY_WINDOW:
-      for (i = 0, j = size - 1, angle = 1.0; i <= midn; i++, j--, angle -= rate) window[j] = (window[i] = 1.0 / (1.0 + sqr(beta * angle)));
+      for (i = 0, j = size - 1, angle = 1.0; i <= midn; i++, j--, angle -= rate) 
+	window[j] = (window[i] = 1.0 / (1.0 + sqr(beta * angle)));
       break;
     case MUS_POISSON_WINDOW:
-      for (i = 0, j = size - 1, angle = 1.0; i <= midn; i++, j--, angle -= rate) window[j] = (window[i] = exp((-beta) * angle));
+      for (i = 0, j = size - 1, angle = 1.0; i <= midn; i++, j--, angle -= rate) 
+	window[j] = (window[i] = exp((-beta) * angle));
       break;
     case MUS_HANN_POISSON_WINDOW:
       /* Hann * Poisson -- from JOS */
@@ -7282,7 +7295,8 @@ Float *mus_make_fft_window_with_window(mus_fft_window_t type, int size, Float be
       }
       break;
     case MUS_GAUSSIAN_WINDOW:
-      for (i = 0, j = size - 1, angle = 1.0; i <= midn; i++, j--, angle -= rate) window[j] = (window[i] = exp(-.5 * sqr(beta * angle)));
+      for (i = 0, j = size - 1, angle = 1.0; i <= midn; i++, j--, angle -= rate) 
+	window[j] = (window[i] = exp(-.5 * sqr(beta * angle)));
       break;
     case MUS_TUKEY_WINDOW:
       cx = midn * (1.0 - beta);

@@ -260,7 +260,7 @@
   #define XEN_LIST_9(a, b, c, d, e, f, g, h, i) SCM_LIST9(a, b, c, d, e, f, g, h, i)
 #endif
 #define XEN_APPEND(a, b)                  scm_append(XEN_LIST_2(a, b))
-/* these are only used in Scheme-side stuff, so aren't defined in other cases */
+/* these are only used in Scheme-side stuff, so aren't defined in other cases; in Ruby the args are reversed, I think: rb_ary_assoc */
 #define XEN_ASSOC(a, b)                   scm_assoc(a, b)
 #define XEN_MEMBER(a, b)                  scm_member(a, b)
 
@@ -695,6 +695,12 @@ char *xen_guile_to_c_string_with_eventual_free(XEN str);
 
 
 /* ------------------------------ RUBY ------------------------------ */
+
+/* other possibilities: 
+ *    XEN_ASSOC (args reversed from Scheme), XEN_DEFINE_METHOD, XEN_DEFINE_ALIAS, rb_ary_unsift = XEN_LIST_PREPEND?,
+ *    various property macros -- in Scheme as well, rb_const_defined, rb_yield, XEN_INCLUDE_MODULE,
+ *    rb_id2name (XEN_SYMBOL...), rb_raise.
+ */
 
 #if HAVE_RUBY
 

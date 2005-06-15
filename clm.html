@@ -1934,6 +1934,7 @@ ratio between the new sampling rate and the old.
 <i>width</i> is how many neighboring samples to convolve with sinc.
 If you hear high-frequency artifacts in the conversion, try increasing this number;
 Perry Cook's default value is 40, and I've seen cases where it needs to be 100.
+It can also be set as low as 2 in some cases.
 The greater the width, the slower the src generator runs.
 The <i>sr-change</i>
 argument is the amount to add to the current <i>srate</i> on a sample by sample
