@@ -2020,3 +2020,35 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
        (if (> new-mx 0.0)
 	   (scale-channel (/ old-mx new-mx) beg dur snd chn))))))
 
+
+;;; ----------------
+;;;
+;;; linear sampling rate conversion
+
+(define* (linear-src-channel srinc #:optional snd chn)
+  (let* ((rd (make-sample-reader 0 snd chn))
+	 (last (rd))
+	 (next (rd))
+	 (intrp 0.0)
+	 (sr srinc)
+	 (tempfile 
+	  (with-sound (:output (snd-tempnam) :srate (srate) :to-snd #f)
+	    (run (lambda ()
+		   (do ((samp 0 (1+ samp)))
+		       ((sample-reader-at-end? rd))
+		     (out-any samp
+			      (let ((pos intrp))
+				(if (>= pos 1.0)
+				    (let ((num (inexact->exact (floor pos))))
+				      (do ((i 0 (1+ i)))
+					  ((= i num))
+					(set! last next)
+					(set! next (rd)))
+				      (set! pos (- pos num))))
+				(set! intrp (+ pos sr))
+				(+ last (* pos (- next last))))
+			      0 *output*))))))
+	 (len (mus-sound-frames tempfile)))
+    (set-samples 0 (1- len) tempfile snd chn #t "linear-src" 0 #f #t)
+    ;; first #t=truncate to new length, #f=at current edpos, #t=auto delete temp file
+    ))
