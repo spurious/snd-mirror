@@ -783,6 +783,9 @@ and second is the name of the label.
 \scheme|ladspa-run| is an rt function. First argument is the plugin object, and second argument is a \scheme|vct|
 holding sound-data. The function returns a \scheme|vct|.
 
+\scheme|make-ladspa-gui| is a guile function that automatically makes a gui for the ladspa object. This one should
+hopefully be convenient to use to find default values. (see rt-examples.scm for an example)
+
 
 \begin{schemedisplay}
 (definstrument (ladspatest)
@@ -793,6 +796,7 @@ holding sound-data. The function returns a \scheme|vct|.
 
 (define l (ladspatest))
 (ladspa-set! (-> l am-pitchshift) 0 0.5)
+(make-ladspa-gui l)
 (-> l stop)
 \end{schemedisplay}
 
@@ -1683,6 +1687,8 @@ For now, you can order the execution by using the fact that instances are always
 %\section{Credits}
 \newpage
 \section{History}
+
+15.06.2005: Added \scheme|make-ladspa-gui|.
 
 09.06.2005: Redefined \scheme|define-rt| to define rt-functions instead of guile-functions.
 

@@ -170,7 +170,8 @@
 			   vardecls)))
     `(let* ,newvardecls
        ,@(reverse! sets)
-       ,@body)))
+       (let ()
+	 ,@body))))
 
 #!
 (letrec* ((a (+ d 2))

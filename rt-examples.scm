@@ -475,7 +475,24 @@ This version of the fm-violin assumes it is running within with-sound (where *ou
 (rte-restart)
 
 
+!#
 
 
+
+
+(definstrument (ladspatest)
+  (let ((am-pitchshift (make-ladspa "am_pitchshift_1433" "amPitchshift")))
+    (<rt-play> (lambda ()
+		 (out (ladspa-run am-pitchshift
+				  (vct (in 0))))))))
+
+
+
+#!
+(define l (ladspatest))
+(ladspa-set! (-> l am-pitchshift) 0 1.5)
+(make-ladspa-gui (-> l am-pitchshift))
+(-> l stop)
+(rte-info)
 
 !#

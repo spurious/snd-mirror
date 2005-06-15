@@ -3105,7 +3105,7 @@ and run simple lisp[4] functions.
 				      '(longjmp rt_globals->engine->error_jmp 5)
 				      "/* */")))
   (<rt-func> 'rt_error '<void> '(<char-*>) #:needs-rt-globals #t)
-  (define-macro (rt-error . rest)
+  (define-rt-macro (rt-error . rest)
     `(rt_error ,@rest))
   
   ;; scm_to_double
@@ -4986,6 +4986,10 @@ setter!-rt-mus-location/mus_location
   <float-**> ins
   <float-**> outs
 
+  <float-*> controls_mins
+  <float-*> controls_defaults
+  <float-*> controls_maxs
+  
   <int> num_controls_in
   <int> num_controls_out
   <int> num_audio_outs
@@ -5115,8 +5119,104 @@ setter!-rt-mus-location/mus_location
 
 
 (define-macro (ladspa-set! l c v)
-  `(ladspa-set2 ,l ,c ,v))
+  `(ladspa-set2 (cadr ,l) ,c ,v))
 
+(define (ladspa-get-min ladspa control-num)
+  (list-ref (-> (car ladspa) controls_mins) control-num))
+(define (ladspa-get-default ladspa control-num)
+  (list-ref (-> (car ladspa) controls_defaults) control-num))
+(define (ladspa-get ladspa control-num)
+  (list-ref (-> (car ladspa) controls) control-num))
+(define (ladspa-get-max ladspa control-num)
+  (list-ref (-> (car ladspa) controls_maxs) control-num))
+
+(define (make-ladspa-gui das-ladspa)
+  (letrec* ((ladspa (car das-ladspa))
+	    (descriptor (caddr das-ladspa))
+	    (name (.Name descriptor))
+	    (libraryname (cadddr das-ladspa))
+	    (effectname (cadr (cdddr das-ladspa)))
+	    (author (.Maker descriptor))
+	    (lisense (.Copyright descriptor))
+	    (exit (lambda () (-> dialog hide)))
+	    (Help (lambda ()
+		    (let ((dashelp (assoc (string-append libraryname effectname) ladspa-help-assoclist)))
+		      (help-dialog author
+				   (string-append (if dashelp
+						      (caddr dashelp)
+						      lisense)
+						  (string #\newline #\newline)
+						  "Processing can be stopped by pressing C-g")))))
+	    (Reset (lambda ()
+		     (for-each (lambda (c v)
+				 (ladspa-set! das-ladspa c v))
+			       (iota (-> ladspa num_controls_in))
+			       (-> ladspa controls_defaults))
+		     (-> dialog hide)
+		     (make-ladspa-gui das-ladspa)))
+	    (toggles #f)
+	    (dialog (<dialog> name exit
+			      "Close" exit
+			      "Reset" Reset
+			      (if (assoc (string-append libraryname effectname) ladspa-help-assoclist)
+				  "Help"
+				  "Not much help")
+			      Help)))
+
+    (define (get-hint portnum)
+      (car (list-ref (.PortRangeHints descriptor) portnum)))
+
+    (define (ishint dashint dashint2)
+      (not (= (logand dashint dashint2 ) 0)))
+
+    (define (stupid->nonstupid stupid)
+      (let ((gakk (-> ladspa controlin_port_nums)))
+	(- (length gakk) (length (member stupid gakk)))))
+    (define (s->n stupid)
+      (stupid->nonstupid stupid))
+    
+    (if (> (-> ladspa num_controls_in) 0)
+	(dialog 'add-sliders
+		(map (lambda (portnum)
+		       (let* ((lo (ladspa-get-min das-ladspa (s->n portnum)))
+			      (init (ladspa-get das-ladspa (s->n portnum)))
+			      (hi (ladspa-get-max das-ladspa (s->n portnum)))
+			      (hint (get-hint portnum))
+			      (scale (if (ishint hint LADSPA_HINT_INTEGER)
+					 1
+					 (if use-gtk 1000.0 100.0)))
+			      (name (list-ref (.PortNames descriptor) portnum)))
+			 (list name
+			       lo
+			       init
+			       hi
+			       (lambda (val)
+				 (ladspa-set! das-ladspa (s->n portnum) val))
+			       scale)))
+		     (remove (lambda (portnum) (ishint (car (list-ref (.PortRangeHints descriptor) portnum))  LADSPA_HINT_TOGGLED))
+			     (-> ladspa controlin_port_nums)))))
+    
+    
+    ;; Add toggle buttons.
+    (set! toggles (map (lambda (portnum)
+			 (let* ((hint (get-hint portnum))
+				(hi (ladspa-get-max das-ladspa (s->n portnum)))
+				(lo (ladspa-get-min das-ladspa (s->n portnum)))
+				(portname (list-ref (.PortNames descriptor) portnum))
+				(ison (> (ladspa-get das-ladspa (s->n portnum)) 0)))
+			   (<checkbutton> dialog
+					  portname
+					  (lambda (on)
+					    (ladspa-set! das-ladspa (s->n portnum) (if on hi lo)))
+					  ison)))
+		       (filter-org (lambda (portnum) (ishint (car (list-ref (.PortRangeHints descriptor) portnum))  LADSPA_HINT_TOGGLED))
+				   (-> ladspa controlin_port_nums))))
+
+    (-> dialog show)
+    dialog))
+    
+
+	 
 (define (make-ladspa libname pluginname)
   (let* ((descriptor #f)
 	 (ladspa #f)
@@ -5126,6 +5226,29 @@ setter!-rt-mus-location/mus_location
 	 (output-audios '())
 	 (smob #f))
 
+    (define (get-hint portnum)
+      (car (list-ref (.PortRangeHints descriptor) portnum)))
+    
+    (define (ishint portnum dashint)
+      (not (= (logand (get-hint portnum) dashint) 0)))
+    
+    (define (get-lo portnum)
+      (* (if (ishint portnum LADSPA_HINT_SAMPLE_RATE)
+	     (srate)
+	     1)
+	 (if (not (ishint portnum LADSPA_HINT_BOUNDED_BELOW))
+	     0                                   ;The value Ardour use.
+	     (cadr (list-ref (.PortRangeHints descriptor) portnum)))))
+    
+    (define (get-hi portnum)
+      (* (if (ishint portnum LADSPA_HINT_SAMPLE_RATE)
+	     (srate)
+	     1)
+	 (if (not (ishint portnum LADSPA_HINT_BOUNDED_ABOVE))
+	     4                                   ;The value Ardour use.
+	     (caddr (list-ref (.PortRangeHints descriptor) portnum)))))
+
+    
     (set! descriptor (ladspa-descriptor libname pluginname))
     (set! ladspa (<mus_rt_ladspa> #:descriptor (list "A_POINTER" (cadr descriptor))))
 		  
@@ -5154,45 +5277,52 @@ setter!-rt-mus-location/mus_location
     (let ((output (make-vct (-> ladspa num_audio_outs))))
       (-> ladspa scm_output output)
       (-> ladspa output (TO_VCT output)))
-    
-    (-> ladspa controls (map (lambda (x)
-			       (let ((hint (car (x 1)))
-				     (lo (cadr (x 1)))
-				     (hi (caddr (x 1))))
-				 (define (ishint dashint)
-				  (= (logand hint LADSPA_HINT_DEFAULT_MASK) dashint))
-				 (define (ishint_notdefault dashint)
-				   (not (= (logand hint dashint ) 0)))
-				 
-				 (cond ;;((and def-vals (assoc (x 0) def-vals )) (cdr (assoc (x 0) def-vals)))
-				  ((ishint LADSPA_HINT_DEFAULT_0) 0)
-				  ((ishint LADSPA_HINT_DEFAULT_MINIMUM) lo)
-				  ((ishint LADSPA_HINT_DEFAULT_LOW) (if (ishint_notdefault LADSPA_HINT_LOGARITHMIC)
-									(exp (+ (* 0.75 (log lo)) (* 0.25 (log hi))))
-									(+ (* 0.75 lo) (* 0.25 hi))))
-				  ((ishint LADSPA_HINT_DEFAULT_1) 1)
-				  ((ishint LADSPA_HINT_DEFAULT_MAXIMUM) hi)
-				  ((ishint LADSPA_HINT_DEFAULT_HIGH) (if (ishint_notdefault LADSPA_HINT_LOGARITHMIC)
-									 (exp (+ (* 0.75 (log hi)) (* 0.25 (log lo))))
-									 (+ (* 0.75 hi) (* 0.25 lo))))
-				  ((ishint LADSPA_HINT_DEFAULT_MIDDLE) (if (ishint_notdefault LADSPA_HINT_LOGARITHMIC)
-									   (exp (+ (* 0.5 (log hi)) (* 0.5 (log lo))))
-									   (+ (* 0.5 hi) (* 0.5 lo))))
-				  ((ishint LADSPA_HINT_DEFAULT_100) 100)
-				  ((ishint LADSPA_HINT_DEFAULT_440) 440)
-				  ((ishint LADSPA_HINT_SAMPLE_RATE) (srate))
-				  (else
-				   (/ (+ lo hi) 2)))))
-	      
-			     (map (lambda (x) (<array> x
-						       (list-ref (.PortRangeHints descriptor) x)))
-				  input-controls)))
 
+    (-> ladspa controls_maxs (map get-hi input-controls))
+    (-> ladspa controls_mins (map get-lo input-controls))
+
+    (-> ladspa controls_defaults (map (lambda (x)
+					(let ((hint (car (x 1)))
+					      (lo (cadr (x 1)))
+					      (hi (caddr (x 1))))
+					  (define (ishint dashint)
+					    (= (logand hint LADSPA_HINT_DEFAULT_MASK) dashint))
+					  (define (ishint_notdefault dashint)
+					    (not (= (logand hint dashint ) 0)))
+					  
+					  (cond ;;((and def-vals (assoc (x 0) def-vals )) (cdr (assoc (x 0) def-vals)))
+					   ((ishint LADSPA_HINT_DEFAULT_0) 0)
+					   ((ishint LADSPA_HINT_DEFAULT_MINIMUM) lo)
+					   ((ishint LADSPA_HINT_DEFAULT_LOW) (if (ishint_notdefault LADSPA_HINT_LOGARITHMIC)
+										 (exp (+ (* 0.75 (log lo)) (* 0.25 (log hi))))
+										 (+ (* 0.75 lo) (* 0.25 hi))))
+					   ((ishint LADSPA_HINT_DEFAULT_1) 1)
+					   ((ishint LADSPA_HINT_DEFAULT_MAXIMUM) hi)
+					   ((ishint LADSPA_HINT_DEFAULT_HIGH) (if (ishint_notdefault LADSPA_HINT_LOGARITHMIC)
+										  (exp (+ (* 0.75 (log hi)) (* 0.25 (log lo))))
+										  (+ (* 0.75 hi) (* 0.25 lo))))
+					   ((ishint LADSPA_HINT_DEFAULT_MIDDLE) (if (ishint_notdefault LADSPA_HINT_LOGARITHMIC)
+										    (exp (+ (* 0.5 (log hi)) (* 0.5 (log lo))))
+										    (+ (* 0.5 hi) (* 0.5 lo))))
+					   ((ishint LADSPA_HINT_DEFAULT_100) 100)
+					   ((ishint LADSPA_HINT_DEFAULT_440) 440)
+					   ((ishint LADSPA_HINT_SAMPLE_RATE) (srate))
+					   (else
+					    (/ (+ lo hi) 2)))))
+				      
+				      (map (lambda (x) (<array> x
+								(list-ref (.PortRangeHints descriptor) x)))
+					   input-controls)))
+
+    (-> ladspa controls (-> ladspa controls_defaults))
+					
     (set! smob (make-ladspa2 (-> ladspa get-c-object)))
     
-    (if #t
-	smob
-	ladspa)))
+    (list ladspa
+	  smob
+	  descriptor
+	  libname
+	  pluginname)))
 
 
 ;; SCM->ladspa converter
@@ -5210,9 +5340,11 @@ setter!-rt-mus-location/mus_location
 
 ;; The ladspa type
 (<rt-type> '<ladspa>
-	   rt-ladspa-p
+	   (lambda (l)
+	     (and (list? l)
+		  (rt-ladspa-p (cadr l))))
 	   'rt_scm_to_rt_ladspa
-	   #:transformfunc SCM_SMOB_DATA
+	   #:transformfunc (lambda (l) (SCM_SMOB_DATA (cadr l)))
 	   #:c-type '<struct-mus_rt_ladspa-*>)
 
 
