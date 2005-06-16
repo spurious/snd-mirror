@@ -406,7 +406,7 @@ static void set_keymap_entry(int key, int state, int args, XEN func, bool cx_ext
 		  user_keymap[i].func = XEN_UNDEFINED;
 		  user_keymap[i].cx_extended = false;
 		  user_keymap[i].origin = NULL;
-		  user_keymap[i].gc_loc = -1;
+		  user_keymap[i].gc_loc = NOT_A_GC_LOC;
 		}
 	    }
 	}
@@ -420,10 +420,10 @@ static void set_keymap_entry(int key, int state, int args, XEN func, bool cx_ext
   else
     {
       if ((XEN_PROCEDURE_P(user_keymap[i].func)) &&
-	  (user_keymap[i].gc_loc >= 0))
+	  (user_keymap[i].gc_loc != NOT_A_GC_LOC))
 	{
 	  snd_unprotect_at(user_keymap[i].gc_loc);
-	  user_keymap[i].gc_loc = -1;
+	  user_keymap[i].gc_loc = NOT_A_GC_LOC;
 	}
       if (user_keymap[i].origin)
 	{
@@ -762,7 +762,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 	      if (XEN_PROCEDURE_P(sp->search_proc))
 		{
 		  snd_unprotect_at(sp->search_proc_loc);
-		  sp->search_proc_loc = -1;
+		  sp->search_proc_loc = NOT_A_GC_LOC;
 		}
 	      sp->search_proc = XEN_UNDEFINED;
 	      proc = snd_catch_any(eval_str_wrapper, str, str);
@@ -2061,7 +2061,7 @@ returned as a string; otherwise it is evaluated first as Scheme code"
   if (XEN_PROCEDURE_P(sp->prompt_callback))
     {
       snd_unprotect_at(sp->prompt_callback_loc);
-      sp->prompt_callback_loc = -1;
+      sp->prompt_callback_loc = NOT_A_GC_LOC;
     }
   sp->prompt_callback = XEN_FALSE; /* just in case something goes awry */
   if (XEN_BOUND_P(raw)) sp->raw_prompt = XEN_TO_C_BOOLEAN(raw); else sp->raw_prompt = false;

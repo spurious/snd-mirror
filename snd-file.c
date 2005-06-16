@@ -253,7 +253,7 @@ file_info *make_file_info(const char *fullname)
       if (type == MUS_RAW)
 	{
 	  XEN res = XEN_FALSE;
-	  int res_loc = -1;
+	  int res_loc = NOT_A_GC_LOC;
 	  XEN procs, arg1;
 	  int len, srate, chans, data_format;
 	  off_t data_location, bytes;
@@ -280,7 +280,7 @@ file_info *make_file_info(const char *fullname)
 				   arg1, 
 				   res, 
 				   S_open_raw_sound_hook);
-		  if (res_loc != -1) snd_unprotect_at(res_loc);
+		  if (res_loc != NOT_A_GC_LOC) snd_unprotect_at(res_loc);
 		  res_loc = snd_protect(res);
 		  procs = XEN_CDR(procs);
 		}
@@ -303,7 +303,7 @@ file_info *make_file_info(const char *fullname)
 	      mus_sound_override_header(fullname, srate, chans, data_format, 
 					MUS_RAW, data_location,
 					mus_bytes_to_samples(data_format, bytes));
-	      if (res_loc != -1) snd_unprotect_at(res_loc);	      
+	      if (res_loc != NOT_A_GC_LOC) snd_unprotect_at(res_loc);	      
 	      hdr = (file_info *)CALLOC(1, sizeof(file_info));
 	      hdr->name = copy_string(fullname);
 	      hdr->type = MUS_RAW;
@@ -321,7 +321,7 @@ file_info *make_file_info(const char *fullname)
 	      char *str;
 	      bool just_quit = false;
 	      if (XEN_TRUE_P(res)) just_quit = true;
-	      if (res_loc != -1) snd_unprotect_at(res_loc);
+	      if (res_loc != NOT_A_GC_LOC) snd_unprotect_at(res_loc);
 	      if (just_quit) return(NULL);
 	      str = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
 	      mus_snprintf(str, PRINT_BUFFER_SIZE, _("No header found for %s"), filename_without_home_directory(fullname));
@@ -1105,7 +1105,7 @@ static void copy_chan_info(chan_info *ncp, chan_info *ocp)
   ncp->cursor_proc = ocp->cursor_proc;
   if (XEN_BOUND_P(ncp->cursor_proc)) 
     ncp->cursor_proc_loc = snd_protect(ncp->cursor_proc);
-  else ncp->cursor_proc_loc = -1;
+  else ncp->cursor_proc_loc = NOT_A_GC_LOC;
 }
 
 static void copy_snd_info(snd_info *nsp, snd_info *osp)
@@ -1164,13 +1164,13 @@ static void sound_restore_chan_info(snd_info *nsp, snd_info *osp)
 	{
 	  snd_unprotect_at(cps[i]->cursor_proc_loc);
 	  cps[i]->cursor_proc = XEN_UNDEFINED;
-	  cps[i]->cursor_proc_loc = -1;
+	  cps[i]->cursor_proc_loc = NOT_A_GC_LOC;
 	}
     }
   if (XEN_BOUND_P(osp->search_proc))
     {
       snd_unprotect_at(osp->search_proc_loc);
-      osp->search_proc_loc = -1;
+      osp->search_proc_loc = NOT_A_GC_LOC;
       osp->search_proc = XEN_UNDEFINED;
     }
 }
@@ -1180,7 +1180,7 @@ static XEN update_hook;
 static snd_info *snd_update_1(snd_info *sp, const char *ur_filename)
 {
   /* we can't be real smart here because the channel number may have changed and so on */
-  int i, old_srate, old_chans, old_format, sp_chans, old_index, gc_loc = -1;
+  int i, old_srate, old_chans, old_format, sp_chans, old_index, gc_loc = NOT_A_GC_LOC;
   channel_style_t old_channel_style;
   bool read_only, old_raw;
   void *sa;
@@ -1274,8 +1274,8 @@ static snd_info *snd_update_1(snd_info *sp, const char *ur_filename)
       XEN_CALL_1(update_hook_result,
 		 (nsp) ? C_TO_XEN_INT(nsp->index) : XEN_FALSE,
 		 "procedure returned by " S_update_hook);
-      if (gc_loc != -1) snd_unprotect_at(gc_loc);
-      gc_loc = -1;
+      if (gc_loc != NOT_A_GC_LOC) snd_unprotect_at(gc_loc);
+      gc_loc = NOT_A_GC_LOC;
     }
   if (saved_sp)
     {
@@ -1876,7 +1876,7 @@ static XEN g_set_previous_files_sort_procedure(XEN proc)
   if (XEN_PROCEDURE_P(ss->file_sort_proc))
     {
       snd_unprotect_at(ss->file_sort_proc_loc);
-      ss->file_sort_proc_loc = -1;
+      ss->file_sort_proc_loc = NOT_A_GC_LOC;
     }
   ss->file_sort_proc = XEN_UNDEFINED;
   error = procedure_ok(proc, 1, "file sort", "sort", 1);

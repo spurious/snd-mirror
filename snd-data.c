@@ -15,19 +15,19 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound)
       cp->gl_fft_list = NO_LIST;
 #endif
       cp->edit_hook = XEN_FALSE;
-      cp->edit_hook_loc = -1;
+      cp->edit_hook_loc = NOT_A_GC_LOC;
       cp->after_edit_hook = XEN_FALSE;
-      cp->after_edit_hook_loc = -1;
+      cp->after_edit_hook_loc = NOT_A_GC_LOC;
       cp->undo_hook = XEN_FALSE;
-      cp->undo_hook_loc = -1;
+      cp->undo_hook_loc = NOT_A_GC_LOC;
       cp->properties = XEN_FALSE; /* will be a vector of 1 element if it's ever used */
-      cp->properties_loc = -1;
+      cp->properties_loc = NOT_A_GC_LOC;
     }
   else cp = cip;
   cp->tcgx = NULL;
   cp->chan = chan;
   cp->sound = sound;
-  cp->sound_ctr = -1;
+  cp->sound_ctr = NOT_A_SOUND;
   cp->edit_ctr = -1;
   cp->sound_size = 0;
   cp->ptrees = NULL;
@@ -44,7 +44,7 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound)
   cp->cursor_style = cursor_style(ss);
   cp->cursor_size = cursor_size(ss);
   cp->cursor_proc = XEN_UNDEFINED;
-  cp->cursor_proc_loc = -1;
+  cp->cursor_proc_loc = NOT_A_GC_LOC;
   cp->squelch_update = false;
   cp->show_y_zero = show_y_zero(ss);
   cp->show_grid = show_grid(ss);
@@ -160,7 +160,7 @@ static chan_info *free_chan_info(chan_info *cp)
     {
       snd_unprotect_at(cp->cursor_proc_loc);
       cp->cursor_proc = XEN_UNDEFINED;
-      cp->cursor_proc_loc = -1;
+      cp->cursor_proc_loc = NOT_A_GC_LOC;
     }
   if (XEN_VECTOR_P(cp->properties)) /* using vector as node for GC */
     XEN_VECTOR_SET(cp->properties, 0, XEN_EMPTY_LIST);
@@ -193,21 +193,21 @@ static chan_info *free_chan_info(chan_info *cp)
       XEN_CLEAR_HOOK(cp->edit_hook);
       snd_unprotect_at(cp->edit_hook_loc);
       cp->edit_hook = XEN_FALSE;
-      cp->edit_hook_loc = -1;
+      cp->edit_hook_loc = NOT_A_GC_LOC;
     }
   if (XEN_HOOK_P(cp->after_edit_hook))
     {
       XEN_CLEAR_HOOK(cp->after_edit_hook);
       snd_unprotect_at(cp->after_edit_hook_loc);
       cp->after_edit_hook = XEN_FALSE;
-      cp->after_edit_hook_loc = -1;
+      cp->after_edit_hook_loc = NOT_A_GC_LOC;
     }
   if (XEN_HOOK_P(cp->undo_hook))
     {
       XEN_CLEAR_HOOK(cp->undo_hook);
       snd_unprotect_at(cp->undo_hook_loc);
       cp->undo_hook = XEN_FALSE;
-      cp->undo_hook_loc = -1;
+      cp->undo_hook_loc = NOT_A_GC_LOC;
     }
   return(cp);  /* pointer is left for possible future re-use */
 }
@@ -219,7 +219,7 @@ snd_info *make_basic_snd_info(int chans)
   sp->chans = (chan_info **)CALLOC(chans, sizeof(chan_info *));
   sp->allocated_chans = chans;
   sp->properties = XEN_FALSE; /* will be a vector of 1 element if it's ever used */
-  sp->properties_loc = -1;
+  sp->properties_loc = NOT_A_GC_LOC;
   return(sp);
 }
 
@@ -329,9 +329,9 @@ snd_info *make_snd_info(snd_info *sip, const char *filename, file_info *hdr, int
   sp->lacp = NULL;
   sp->search_tree = NULL;
   sp->search_proc = XEN_UNDEFINED;
-  sp->search_proc_loc = -1;
+  sp->search_proc_loc = NOT_A_GC_LOC;
   sp->prompt_callback = XEN_UNDEFINED;
-  sp->prompt_callback_loc = -1;
+  sp->prompt_callback_loc = NOT_A_GC_LOC;
   sp->delete_me = NULL;
   sp->name_string = NULL;
   sp->active = true;
@@ -396,13 +396,13 @@ void free_snd_info(snd_info *sp)
   if (XEN_PROCEDURE_P(sp->search_proc))
     {
       snd_unprotect_at(sp->search_proc_loc);
-      sp->search_proc_loc = -1;
+      sp->search_proc_loc = NOT_A_GC_LOC;
     }
   sp->search_proc = XEN_UNDEFINED;
   if (XEN_PROCEDURE_P(sp->prompt_callback))
     {
       snd_unprotect_at(sp->prompt_callback_loc);
-      sp->prompt_callback_loc = -1;
+      sp->prompt_callback_loc = NOT_A_GC_LOC;
     }
   sp->prompt_callback = XEN_UNDEFINED;
   if (XEN_VECTOR_P(sp->properties)) /* using vector as node for GC */
@@ -445,7 +445,7 @@ snd_info *completely_free_snd_info(snd_info *sp)
 	  if (XEN_VECTOR_P(cp->properties))
 	    {
 	      snd_unprotect_at(cp->properties_loc);
-	      cp->properties_loc = -1;
+	      cp->properties_loc = NOT_A_GC_LOC;
 	    }
 	  FREE(cp);
 	}
@@ -454,7 +454,7 @@ snd_info *completely_free_snd_info(snd_info *sp)
   if (XEN_VECTOR_P(sp->properties))
     {
       snd_unprotect_at(sp->properties_loc);
-      sp->properties_loc = -1;
+      sp->properties_loc = NOT_A_GC_LOC;
     }
   FREE(sp);
   return(NULL);

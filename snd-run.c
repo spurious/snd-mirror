@@ -825,7 +825,7 @@ static ptree *make_ptree(int initial_data_size)
   pt->int_ctr = INITIAL_INT_CTR;
   pt->code = XEN_FALSE;
   pt->form = XEN_UNDEFINED;
-  pt->form_loc = -1;
+  pt->form_loc = NOT_A_GC_LOC;
   return(pt);
 }
 
@@ -841,7 +841,7 @@ static ptree *attach_to_ptree(ptree *pt)
   new_tree->arity = 0;
   new_tree->code = XEN_FALSE;
   new_tree->form = XEN_UNDEFINED;
-  new_tree->form_loc = -1;
+  new_tree->form_loc = NOT_A_GC_LOC;
   if (pt->outer_tree)
     new_tree->outer_tree = pt->outer_tree;
   else new_tree->outer_tree = pt;
@@ -1732,7 +1732,8 @@ static void add_loc_to_protected_list(ptree *pt, int loc)
    *   since we don't have an explicit list of such trees in the outer tree, we need to put the
    *   protected loc in the outer-most tree.
    */
-  if (loc < 0) return;
+  int i;
+  if (loc == NOT_A_GC_LOC) return;
   while (pt->outer_tree) pt = pt->outer_tree;
   if (pt->gc_protected_ctr >= pt->gc_protected_size)
     {
@@ -1741,12 +1742,8 @@ static void add_loc_to_protected_list(ptree *pt, int loc)
       pt->gc_protected_size += 8;
       if (old_size == 0)
 	pt->gc_protected = (int *)CALLOC(pt->gc_protected_size, sizeof(int));
-      else
-	{
-	  int i;
-	  pt->gc_protected = (int *)REALLOC(pt->gc_protected, pt->gc_protected_size * sizeof(int));
-	  for (i = old_size; i < pt->gc_protected_size; i++) pt->gc_protected[i] = -1;
-	}
+      else pt->gc_protected = (int *)REALLOC(pt->gc_protected, pt->gc_protected_size * sizeof(int));
+      for (i = old_size; i < pt->gc_protected_size; i++) pt->gc_protected[i] = NOT_A_GC_LOC;
     }
   pt->gc_protected[pt->gc_protected_ctr++] = loc;
 }
@@ -6195,7 +6192,7 @@ static xen_value *funcall_n(ptree *prog, xen_value **args, int num_args, xen_val
   xen_value **new_args;
   xen_value *fres;
   func = ((ptree **)(prog->fncs))[sf->addr];
-  if (!func) return(run_warn("inner lambda lost!! (%d in %p)", sf->addr, prog->fncs));
+  if (!func) return(run_warn("inner lambda lost!"));
   if (func->arity != num_args) return(run_warn("wrong number of args (%d) for func", num_args));
   fres = func->result;
   new_args = (xen_value **)CALLOC(num_args + 2, sizeof(xen_value *));

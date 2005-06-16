@@ -3869,12 +3869,6 @@ static XEN controls_to_channel_body(void *context)
 }
 #endif
 
-#if HAVE_SCHEME
-  #define PROC_QUOTE "'"
-#else
-  #define PROC_QUOTE ""
-#endif
-
 static XEN g_controls_to_channel(XEN settings, XEN beg, XEN dur, XEN snd, XEN chn, XEN origin)
 {
   #define H_controls_to_channel "(" S_controls_to_channel " settings beg dur snd chn origin) sets up \
@@ -4076,7 +4070,7 @@ the envelopes are complete (they are the result of a background process), and th
     XEN_ERROR(NO_SUCH_EDIT,
 	      XEN_LIST_2(C_TO_XEN_STRING(S_peak_env_info),
 			 pos));
-  if (edpos == -1) edpos = cp->edit_ctr;
+  if (edpos == AT_CURRENT_EDIT_POSITION) edpos = cp->edit_ctr;
   ep = cp->amp_envs[edpos];
   if (ep)
     return(XEN_LIST_3(C_TO_XEN_BOOLEAN(ep->completed),
@@ -4516,7 +4510,7 @@ update an on-going 'progress report' (an animated hour-glass icon) in snd using 
   if (sp == NULL)
     return(snd_no_such_sound_error(S_progress_report, snd));
   progress_report(sp,
-		  (XEN_STRING_P(name)) ? XEN_TO_C_STRING(name) : "something useful",
+		  (XEN_STRING_P(name)) ? XEN_TO_C_STRING(name) : "",
 		  XEN_TO_C_INT_OR_ELSE(cur_chan, 0),
 		  XEN_TO_C_INT_OR_ELSE(chans, sp->nchans),
 		  XEN_TO_C_DOUBLE(pct),
@@ -4584,14 +4578,13 @@ static XEN g_open_sound_file(XEN arglist)
 {
   #define H_open_sound_file "(" S_open_sound_file " (:file \"test.snd\") (:channels 1) :srate :comment :header-type): \
 create a new sound file 'file' (writing float data), return the file descriptor for " S_vct_to_sound_file " and " S_close_sound_file "."
-
-  /* assume user temp files are writing floats in native format */
+  
   char *filename = NULL, *comment = NULL, *file = NULL;
   file_info *hdr;
   int chans = 1, srate, result;
 #if MUS_LITTLE_ENDIAN
   int type = MUS_RIFF;
-  int format = MUS_LFLOAT; /* see comment! */
+  int format = MUS_LFLOAT; /* assume user temp files are writing floats in native format */
 #else
   int type = MUS_NEXT;
   int format = MUS_BFLOAT;

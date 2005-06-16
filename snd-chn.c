@@ -372,7 +372,7 @@ static void chans_cursor_style(chan_info *cp, void *ptr)
     {
       snd_unprotect_at(cp->cursor_proc_loc);
       cp->cursor_proc = XEN_UNDEFINED;
-      cp->cursor_proc_loc = -1;
+      cp->cursor_proc_loc = NOT_A_GC_LOC;
     }
   cp->cursor_style = style;
   cp->just_zero = (style == CURSOR_LINE); /* no point in displaying y value in this case */
@@ -4514,9 +4514,8 @@ typedef enum {CP_GRAPH_TRANSFORM_P, CP_GRAPH_TIME_P, CP_FRAMES, CP_CURSOR, CP_GR
 	      CP_EDPOS_MAXAMP_POSITION, CP_BEATS_PER_MEASURE
 } cp_field_t;
 
-#define EDPOS_NOT_PROTECTED -1
 static XEN cp_edpos;
-static int cp_edpos_loc = EDPOS_NOT_PROTECTED;
+static int cp_edpos_loc = NOT_A_GC_LOC;
 
 static XEN channel_get(XEN snd_n, XEN chn_n, cp_field_t fld, char *caller)
 {
@@ -4849,7 +4848,7 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, cp_field_t fld, char *calle
 	    {
 	      snd_unprotect_at(cp->cursor_proc_loc);
 	      cp->cursor_proc = XEN_UNDEFINED;
-	      cp->cursor_proc_loc = -1;
+	      cp->cursor_proc_loc = NOT_A_GC_LOC;
 	    }
 	  cp->cursor_style = (cursor_style_t)XEN_TO_C_INT(on); /* range already checked */
 	}
@@ -5205,13 +5204,13 @@ static XEN g_cursor(XEN snd_n, XEN chn_n, XEN edpos)
   if (XEN_BOUND_P(edpos))
     {
       XEN res;
-      if (cp_edpos_loc != EDPOS_NOT_PROTECTED)
+      if (cp_edpos_loc != NOT_A_GC_LOC)
 	snd_unprotect_at(cp_edpos_loc);
       cp_edpos = edpos;
       cp_edpos_loc = snd_protect(cp_edpos);
       res = channel_get(snd_n, chn_n, CP_EDPOS_CURSOR, S_cursor);
       snd_unprotect_at(cp_edpos_loc);
-      cp_edpos_loc = EDPOS_NOT_PROTECTED;
+      cp_edpos_loc = NOT_A_GC_LOC;
       return(res);
     }
   return(channel_get(snd_n, chn_n, CP_CURSOR, S_cursor));
@@ -5223,13 +5222,13 @@ static XEN g_set_cursor(XEN on, XEN snd_n, XEN chn_n, XEN edpos)
   if (XEN_BOUND_P(edpos))
     {
       XEN res;
-      if (cp_edpos_loc != EDPOS_NOT_PROTECTED)
+      if (cp_edpos_loc != NOT_A_GC_LOC)
 	snd_unprotect_at(cp_edpos_loc);
       cp_edpos = edpos;
       cp_edpos_loc = snd_protect(cp_edpos);
       res = channel_set(snd_n, chn_n, on, CP_EDPOS_CURSOR, S_setB S_cursor);
       snd_unprotect_at(cp_edpos_loc);
-      cp_edpos_loc = EDPOS_NOT_PROTECTED;
+      cp_edpos_loc = NOT_A_GC_LOC;
       return(res);
     }
   return(channel_set(snd_n, chn_n, on, CP_CURSOR, S_setB S_cursor));
@@ -5338,13 +5337,13 @@ static XEN g_frames(XEN snd_n, XEN chn_n, XEN edpos)
   if (XEN_BOUND_P(edpos))
     {
       XEN res;
-      if (cp_edpos_loc != EDPOS_NOT_PROTECTED)
+      if (cp_edpos_loc != NOT_A_GC_LOC)
 	snd_unprotect_at(cp_edpos_loc);
       cp_edpos = edpos;
       cp_edpos_loc = snd_protect(cp_edpos);
       res = channel_get(snd_n, chn_n, CP_EDPOS_FRAMES, S_frames);
       snd_unprotect_at(cp_edpos_loc);
-      cp_edpos_loc = EDPOS_NOT_PROTECTED;
+      cp_edpos_loc = NOT_A_GC_LOC;
       return(res);
     }
   return(channel_get(snd_n, chn_n, CP_FRAMES, S_frames));
@@ -5364,13 +5363,13 @@ static XEN g_maxamp(XEN snd_n, XEN chn_n, XEN edpos)
   if (XEN_BOUND_P(edpos))
     {
       XEN res;
-      if (cp_edpos_loc != EDPOS_NOT_PROTECTED)
+      if (cp_edpos_loc != NOT_A_GC_LOC)
 	snd_unprotect_at(cp_edpos_loc);
       cp_edpos = edpos;
       cp_edpos_loc = snd_protect(cp_edpos);
       res = channel_get(snd_n, chn_n, CP_EDPOS_MAXAMP, S_maxamp);
       snd_unprotect_at(cp_edpos_loc);
-      cp_edpos_loc = EDPOS_NOT_PROTECTED;
+      cp_edpos_loc = NOT_A_GC_LOC;
       return(res);
     }
   return(channel_get(snd_n, chn_n, CP_MAXAMP, S_maxamp));
@@ -5390,13 +5389,13 @@ static XEN g_maxamp_position(XEN snd_n, XEN chn_n, XEN edpos)
   if (XEN_BOUND_P(edpos))
     {
       XEN res;
-      if (cp_edpos_loc != EDPOS_NOT_PROTECTED)
+      if (cp_edpos_loc != NOT_A_GC_LOC)
 	snd_unprotect_at(cp_edpos_loc);
       cp_edpos = edpos;
       cp_edpos_loc = snd_protect(cp_edpos);
       res = channel_get(snd_n, chn_n, CP_EDPOS_MAXAMP_POSITION, S_maxamp_position);
       snd_unprotect_at(cp_edpos_loc);
-      cp_edpos_loc = EDPOS_NOT_PROTECTED;
+      cp_edpos_loc = NOT_A_GC_LOC;
       return(res);
     }
   return(channel_get(snd_n, chn_n, CP_MAXAMP_POSITION, S_maxamp_position));
@@ -6680,7 +6679,7 @@ If 'data' is a list of numbers, it is treated as an envelope."
   cp = get_cp(snd_n, chn_n, S_graph);
   ymin = 32768.0;
   ymax = -32768.0;
-  if ((cp->sound_ctr == -1) || 
+  if ((cp->sound_ctr == NOT_A_SOUND) || 
       (cp->sounds == NULL) || 
       (cp->sounds[cp->sound_ctr] == NULL) ||
       (cp->axis == NULL))

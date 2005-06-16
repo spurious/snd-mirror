@@ -33,7 +33,7 @@ static void edit_find_find(read_direction_t direction, GtkWidget *w, gpointer co
       if (XEN_PROCEDURE_P(ss->search_proc)) 
 	{
 	  snd_unprotect_at(ss->search_proc_loc);
-	  ss->search_proc_loc = -1;
+	  ss->search_proc_loc = NOT_A_GC_LOC;
 	}
       ss->search_proc = XEN_UNDEFINED;
       if (ss->search_tree)

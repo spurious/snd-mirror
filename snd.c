@@ -217,7 +217,7 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
   ss->Cursor_Size = DEFAULT_CURSOR_SIZE;
   ss->Cursor_Style = DEFAULT_CURSOR_STYLE;
   ss->cursor_proc = XEN_UNDEFINED;
-  ss->cursor_proc_loc = -1;
+  ss->cursor_proc_loc = NOT_A_GC_LOC;
   ss->Vu_Size = DEFAULT_VU_SIZE;
   ss->Vu_Font_Size = DEFAULT_VU_FONT_SIZE;
   if (DEFAULT_VU_FONT != (char *)NULL) ss->Vu_Font = copy_string(DEFAULT_VU_FONT); else ss->Vu_Font = NULL;
@@ -225,7 +225,7 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
   ss->Transform_Normalization = DEFAULT_TRANSFORM_NORMALIZATION;
   ss->Zoom_Focus_Style = DEFAULT_ZOOM_FOCUS_STYLE;
   ss->zoom_focus_proc = XEN_UNDEFINED;
-  ss->zoom_focus_proc_loc = -1;
+  ss->zoom_focus_proc_loc = NOT_A_GC_LOC;
   ss->Graph_Style = DEFAULT_GRAPH_STYLE;
   ss->Region_Graph_Style = DEFAULT_GRAPH_STYLE;
   ss->Enved_Filter_Order = DEFAULT_ENVED_FILTER_ORDER;

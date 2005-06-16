@@ -12,8 +12,8 @@
 static XEN gc_protection;
 static int gc_protection_size = 0;
 #define DEFAULT_GC_VALUE XEN_UNDEFINED
-static int gc_last_cleared = -1;
-static int gc_last_set = -1;
+static int gc_last_cleared = NOT_A_GC_LOC;
+static int gc_last_set = NOT_A_GC_LOC;
 
 #if DEBUGGING
 static char **snd_protect_callers = NULL; /* static char* const *callers? no thanks... */
@@ -77,7 +77,7 @@ int snd_protect(XEN obj)
 	  snd_protect_callers[gc_last_cleared] = (char *)caller;
 #endif
 	  gc_last_set = gc_last_cleared;
-	  gc_last_cleared = -1;
+	  gc_last_cleared = NOT_A_GC_LOC;
 	  return(gc_last_set);
 	}
 
@@ -672,7 +672,7 @@ XEN snd_no_such_file_error(const char *caller, XEN filename)
 
 XEN snd_no_such_channel_error(const char *caller, XEN snd, XEN chn)
 {
-  int index = -1;
+  int index = NOT_A_SOUND;
   snd_info *sp;
   if (XEN_INTEGER_P(snd))
     index = XEN_TO_C_INT(snd);
@@ -1851,7 +1851,7 @@ reading edit version edpos"
 
   chan_info *cp;
   XEN newsd = XEN_FALSE;
-  int i, len, pos, maxlen = 0, loc = -1;
+  int i, len, pos, maxlen = 0, loc = NOT_A_GC_LOC;
   off_t beg;
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samp_0), samp_0, XEN_ARG_1, S_samples_to_sound_data, "a number");
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samps), samps, XEN_ARG_2, S_samples_to_sound_data, "a number");
@@ -1894,11 +1894,11 @@ reading edit version edpos"
 	}
       else 
 	{
-	  if (loc != -1) snd_unprotect_at(loc);
+	  if (loc != NOT_A_GC_LOC) snd_unprotect_at(loc);
 	  XEN_OUT_OF_RANGE_ERROR(S_samples_to_sound_data, 7, sdchan, "sound-data channel ~A > available chans");
 	}
     }
-  if (loc != -1) snd_unprotect_at(loc);
+  if (loc != NOT_A_GC_LOC) snd_unprotect_at(loc);
   if (XEN_NOT_FALSE_P(newsd))
     return(newsd);
   return(sdobj);

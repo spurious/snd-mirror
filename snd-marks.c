@@ -1916,7 +1916,7 @@ static XEN mark_get(XEN n, mark_field_t fld, XEN pos_n, char *caller)
   int pos;
   chan_info *ncp[1];
   mark *m = NULL;
-  pos = XEN_TO_C_INT_OR_ELSE(pos_n, -1);
+  pos = XEN_TO_C_INT_OR_ELSE(pos_n, AT_CURRENT_EDIT_POSITION);
   m = find_mark_from_id(XEN_TO_C_INT_OR_ELSE(n, 0), ncp, pos);
   if (m == NULL) 
     return(snd_no_such_mark_error(caller, n));
@@ -1945,7 +1945,7 @@ static XEN mark_set(XEN mark_n, XEN val, mark_field_t fld, char *caller)
 {
   chan_info *cp[1];
   mark *m;
-  m = find_mark_from_id(XEN_TO_C_INT(mark_n), cp, -1);
+  m = find_mark_from_id(XEN_TO_C_INT(mark_n), cp, AT_CURRENT_EDIT_POSITION);
   if (m == NULL) 
     return(snd_no_such_mark_error(caller, mark_n));
   switch (fld)
@@ -1980,7 +1980,7 @@ static XEN g_mark_p(XEN id_n)
 {
   #define H_mark_p "(" S_mark_p " id): #t if mark is active"
   if (XEN_INTEGER_P(id_n))
-    return(C_TO_XEN_BOOLEAN(find_mark_from_id(XEN_TO_C_INT(id_n), NULL, -1)));
+    return(C_TO_XEN_BOOLEAN(find_mark_from_id(XEN_TO_C_INT(id_n), NULL, AT_CURRENT_EDIT_POSITION)));
   return(XEN_FALSE);
 }
 
@@ -1988,14 +1988,14 @@ static XEN g_mark_p(XEN id_n)
 bool r_mark_p(int n);
 bool r_mark_p(int n)
 {
-  return((bool)(find_mark_from_id(n, NULL, -1)));
+  return((bool)(find_mark_from_id(n, NULL, AT_CURRENT_EDIT_POSITION)));
 }
 
 off_t r_mark_sample(int n);
 off_t r_mark_sample(int n)
 {
   mark *m;
-  m = find_mark_from_id(n, NULL, -1);
+  m = find_mark_from_id(n, NULL, AT_CURRENT_EDIT_POSITION);
   if (m) return(m->samp);
   return(-1);
 }
@@ -2004,7 +2004,7 @@ off_t r_mark_sync(int n);
 off_t r_mark_sync(int n)
 {
   mark *m;
-  m = find_mark_from_id(n, NULL, -1);
+  m = find_mark_from_id(n, NULL, AT_CURRENT_EDIT_POSITION);
   if (m) return(mark_sync(m));
   return(-1);
 }
@@ -2013,7 +2013,7 @@ char *r_mark_name(int n);
 char *r_mark_name(int n)
 {
   mark *m;
-  m = find_mark_from_id(n, NULL, -1);
+  m = find_mark_from_id(n, NULL, AT_CURRENT_EDIT_POSITION);
   if (m) return(m->name);
   return(NULL);
 }
@@ -2148,7 +2148,7 @@ static XEN g_delete_mark(XEN id_n)
   int id;
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(id_n), id_n, XEN_ONLY_ARG, S_delete_mark, "an integer");
   id = XEN_TO_C_INT_OR_ELSE(id_n, 0);
-  m = find_mark_from_id(id, cp, -1);
+  m = find_mark_from_id(id, cp, AT_CURRENT_EDIT_POSITION);
   if (m == NULL) 
     return(snd_no_such_mark_error(S_delete_mark, id_n));
   delete_mark_id(id, cp[0]);
@@ -2266,11 +2266,11 @@ mark list is: channel given: (id id ...), snd given: ((id id) (id id ...)), neit
 	    if (XEN_INTEGER_P(pos_n)) 
 	      {
 		pos = XEN_TO_C_INT(pos_n); 
-		if ((pos < -1) || (pos >= cp->edit_size) || (cp->edits[pos] == NULL))
+		if ((pos < AT_CURRENT_EDIT_POSITION) || (pos >= cp->edit_size) || (cp->edits[pos] == NULL))
 		  XEN_ERROR(NO_SUCH_EDIT,
 			    XEN_LIST_2(C_TO_XEN_STRING(S_marks),
 				       pos_n));
-		if (pos == -1) pos = cp->edit_ctr;
+		if (pos == AT_CURRENT_EDIT_POSITION) pos = cp->edit_ctr;
 	      }
 	    else pos = cp->edit_ctr;
 	    ids = channel_marks(cp, pos);

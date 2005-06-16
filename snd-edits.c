@@ -34,7 +34,7 @@ void free_sound_list(chan_info *cp)
 	  FREE(cp->sounds);
 	  cp->sounds = NULL;
 	}
-      cp->sound_ctr = -1;
+      cp->sound_ctr = NOT_A_SOUND;
       cp->sound_size = 0;
     }
 }
@@ -3533,10 +3533,10 @@ static void get_sf_closure(snd_fd *sf)
   XEN proc;
   proc = sf->cp->ptree_inits[READER_PTREE_INDEX(sf)];
   /* if ((XEN_BOUND_P(sf->closure1)) && (!(XEN_EQ_P(sf->closure1, empty_closure)))) */
-  if (sf->protect1 >= 0)
+  if (sf->protect1 != NOT_A_GC_LOC)
     {
       snd_unprotect_at(sf->protect1);
-      sf->protect1 = -1;
+      sf->protect1 = NOT_A_GC_LOC;
     }
   sf->closure1 = empty_closure;
   if (XEN_PROCEDURE_P(proc))
@@ -3555,10 +3555,10 @@ static void get_sf_closure2(snd_fd *sf)
   XEN proc;
   proc = sf->cp->ptree_inits[READER_PTREE2_INDEX(sf)];
   /* if ((XEN_BOUND_P(sf->closure2)) && (!(XEN_EQ_P(sf->closure2, empty_closure)))) */
-  if (sf->protect2 >= 0)
+  if (sf->protect2 != NOT_A_GC_LOC)
     {
       snd_unprotect_at(sf->protect2);
-      sf->protect2 = -1;
+      sf->protect2 = NOT_A_GC_LOC;
     }
   sf->closure2 = empty_closure;
   if (XEN_PROCEDURE_P(proc))
@@ -3577,10 +3577,10 @@ static void get_sf_closure3(snd_fd *sf)
   XEN proc;
   proc = sf->cp->ptree_inits[READER_PTREE3_INDEX(sf)];
   /* if ((XEN_BOUND_P(sf->closure3)) && (!(XEN_EQ_P(sf->closure3, empty_closure)))) */
-  if (sf->protect3 >= 0)
+  if (sf->protect3 != NOT_A_GC_LOC)
     {
       snd_unprotect_at(sf->protect3);
-      sf->protect3 = -1;
+      sf->protect3 = NOT_A_GC_LOC;
     }
   sf->closure3 = empty_closure;
   if (XEN_PROCEDURE_P(proc))
@@ -5715,13 +5715,6 @@ bool file_mix_change_samples(off_t beg, off_t num, char *tempfile, chan_info *cp
       if (new_len > prev_len) reflect_sample_change_in_axis(cp);
       if (lock == LOCK_MIXES) lock_affected_mixes(cp, beg, beg + num);
       fd = snd_open_read(tempfile);
-#if DEBUGGING
-      if (fd == -1) /* not sure this can happen -- snd_error in snd_open_read probably throws us to top */
-	{
-	  fprintf(stderr, "temp file trouble in change_samples");
-	  abort();
-	}
-#endif
       mus_file_open_descriptors(fd,
 				tempfile,
 				hdr->format,
@@ -6413,25 +6406,25 @@ snd_fd *free_snd_fd_almost(snd_fd *sf)
     {
       snd_data *sd;
       /* if ((XEN_BOUND_P(sf->closure1)) && (!(XEN_EQ_P(sf->closure1, empty_closure)))) */
-      if (sf->protect1 >= 0)
+      if (sf->protect1 != NOT_A_GC_LOC)
  	{
  	  snd_unprotect_at(sf->protect1);
  	  sf->closure1 = XEN_UNDEFINED;
-	  sf->protect1 = -1;
+	  sf->protect1 = NOT_A_GC_LOC;
  	}
       /* if ((XEN_BOUND_P(sf->closure2)) && (!(XEN_EQ_P(sf->closure2, empty_closure)))) */
-      if (sf->protect2 >= 0)
+      if (sf->protect2 != NOT_A_GC_LOC)
  	{
  	  snd_unprotect_at(sf->protect2);
  	  sf->closure2 = XEN_UNDEFINED;
-	  sf->protect2 = -1;
+	  sf->protect2 = NOT_A_GC_LOC;
  	}
       /* if ((XEN_BOUND_P(sf->closure3)) && (!(XEN_EQ_P(sf->closure3, empty_closure)))) */
-      if (sf->protect3 >= 0)
+      if (sf->protect3 != NOT_A_GC_LOC)
  	{
  	  snd_unprotect_at(sf->protect3);
  	  sf->closure3 = XEN_UNDEFINED;
-	  sf->protect3 = -1;
+	  sf->protect3 = NOT_A_GC_LOC;
  	}
       reader_out_of_data(sf);
       sd = sf->current_sound;
@@ -6495,9 +6488,9 @@ static snd_fd *init_sample_read_any_with_bufsize(off_t samp, chan_info *cp, read
   sf->closure1 = XEN_UNDEFINED;
   sf->closure2 = XEN_UNDEFINED;
   sf->closure3 = XEN_UNDEFINED;
-  sf->protect1 = -1;
-  sf->protect2 = -1;
-  sf->protect3 = -1;
+  sf->protect1 = NOT_A_GC_LOC;
+  sf->protect2 = NOT_A_GC_LOC;
+  sf->protect3 = NOT_A_GC_LOC;
   sf->region = INVALID_REGION;
   sf->initial_samp = samp;
   sf->cp = cp;
@@ -7292,7 +7285,7 @@ static XEN g_display_edits(XEN snd, XEN chn, XEN edpos, XEN with_source)
   FILE *tmp = NULL;
   char *buf, *name;
   chan_info *cp;
-  int fd, pos = -1;
+  int fd, pos = AT_CURRENT_EDIT_POSITION;
   bool include_source = true;
   off_t len;
   XEN res;

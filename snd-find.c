@@ -149,7 +149,7 @@ char *global_search(read_direction_t direction)
 	  if (XEN_PROCEDURE_P(ss->search_proc))
 	    {
 	      snd_unprotect_at(ss->search_proc_loc);
-	      ss->search_proc_loc = -1;
+	      ss->search_proc_loc = NOT_A_GC_LOC;
 	      ss->search_proc = XEN_UNDEFINED;
 	    }
 	  ss->search_proc = snd_catch_any(eval_str_wrapper, ss->search_expr, ss->search_expr);
@@ -416,7 +416,7 @@ void cursor_search(chan_info *cp, int count)
 	      if (XEN_PROCEDURE_P(sp->search_proc))
 		{
 		  snd_unprotect_at(sp->search_proc_loc);
-		  sp->search_proc_loc = -1;
+		  sp->search_proc_loc = NOT_A_GC_LOC;
 		  sp->search_proc = XEN_UNDEFINED;
 		}
 	      if (sp->search_tree)
@@ -497,7 +497,7 @@ static XEN g_set_search_procedure(XEN snd, XEN proc)
 	      if (XEN_PROCEDURE_P(sp->search_proc)) 
 		{
 		  snd_unprotect_at(sp->search_proc_loc);
-		  sp->search_proc_loc = -1;
+		  sp->search_proc_loc = NOT_A_GC_LOC;
 		}
 	      sp->search_proc = XEN_UNDEFINED;
 	      if (sp->search_expr) FREE(sp->search_expr);
@@ -537,7 +537,7 @@ static XEN g_set_search_procedure(XEN snd, XEN proc)
 	  if (XEN_PROCEDURE_P(ss->search_proc)) 
 	    {
 	      snd_unprotect_at(ss->search_proc_loc);
-	      ss->search_proc_loc = -1;
+	      ss->search_proc_loc = NOT_A_GC_LOC;
 	    }
 	  ss->search_proc = XEN_UNDEFINED;
 	  if (ss->search_expr) FREE(ss->search_expr);

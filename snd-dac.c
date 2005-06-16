@@ -1174,7 +1174,7 @@ static Float **rev_ins;
 static XEN dac_hook;
 static XEN stop_dac_hook;
 static XEN sdobj;
-static int sdobj_loc = -1;
+static int sdobj_loc = NOT_A_GC_LOC;
 static void cleanup_dac_hook(void)
 {
   if (XEN_HOOKED(stop_dac_hook))
@@ -1185,7 +1185,7 @@ static void cleanup_dac_hook(void)
     {
       snd_unprotect_at(sdobj_loc);
       sdobj = XEN_FALSE;
-      sdobj_loc = -1;
+      sdobj_loc = NOT_A_GC_LOC;
     }
 }
 
@@ -2776,5 +2776,5 @@ If it returns #t, the sound is not played."
   start_playing_selection_hook = XEN_DEFINE_HOOK(S_start_playing_selection_hook, 0, H_start_playing_selection_hook); /* no args */
 
   sdobj = XEN_FALSE;
-  sdobj_loc = -1;
+  sdobj_loc = NOT_A_GC_LOC;
 }

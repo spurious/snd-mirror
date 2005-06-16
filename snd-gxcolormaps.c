@@ -118,7 +118,7 @@ static cmap *make_builtin_cmap(int size, const char *name, Float** (*make_rgb)(i
       c = new_cmap(name, size, rgb);
       c->make_rgb = make_rgb;
       c->lambda = XEN_FALSE;
-      c->gc_loc = -1;
+      c->gc_loc = NOT_A_GC_LOC;
       for (i = 0; i < 3; i++) FREE(rgb[i]);
       FREE(rgb);
     }

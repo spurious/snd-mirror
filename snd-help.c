@@ -1710,11 +1710,82 @@ bool snd_topic_help(const char *topic)
 
 char *snd_url(const char *name)
 {
+  /* (snd-url "save-sound-as") -> "extsnd.html#savesoundas" */
   int i;
   for (i = 0; i < HELP_NAMES_SIZE; i++)
     if (STRCMP(help_names[i], name) == 0)
       return(help_urls[i]);
   return(NULL);
+}
+
+static char *file_to_string(const char *filename)
+{ 
+  FILE *file;
+  int size;
+  char *content = NULL;
+  if ((file = fopen(filename, "r")) == NULL) return(NULL);
+  fseek(file, 0, SEEK_END);
+  size = ftell(file);
+  if (size > 0)
+    {
+      rewind(file);
+      content = (char *)CALLOC(size + 1, sizeof(char));
+      fread(content, 1, size, file);
+    }
+  fclose(file);
+  return(content);
+}
+
+/* TODO fix this:(snd-help 'linear-src-channel)
+"(sine-env-channel env #:optional (beg 0) dur snd chn edpos) connects env's dots
+with sinusoids"
+*/
+
+/* add (define name) case */
+/* add XEN_DEFINED_P check (could have no help) */
+/* run through %load-path append snd-motif.scm, if found check that directory */
+/* may concat all finds? */
+/* export file_to_string to snd-edits snd-chn? */
+
+static char *snd_finder(const char *name)
+{
+  /* desperation -- search *.scm/rb then even *.html? for 'name' */
+  
+  char *url = NULL, *fgrep = NULL, *tempnam = NULL, *command = NULL;
+  url = snd_url(name);
+  tempnam = snd_tempnam();
+  command = mus_format("fgrep \"(define (%s \" *.scm --line-number > %s", name, tempnam);
+  system(command);
+  FREE(command);
+  fgrep = file_to_string(tempnam);
+
+  fprintf(stderr,"got %s (%d)\n", fgrep, snd_strlen(fgrep));
+
+  if ((!fgrep) || (snd_strlen(fgrep) == 0))
+    {
+      command = mus_format("fgrep \"(define* (%s \" *.scm --line-number > %s", name, tempnam);
+      system(command);
+      FREE(command);
+      fgrep = file_to_string(tempnam);
+      fprintf(stderr,"got * case %s (%d)\n", fgrep, snd_strlen(fgrep));
+
+    }
+  if (url)
+    {
+      if (fgrep)
+	command = mus_format("%s is not defined; it appears to be defined in %s, and documented at %s", name, fgrep, url);
+      else command = mus_format("%s is not defined; it is documented at %s", name, url);
+    }
+  else
+    {
+      if (fgrep)
+	command = mus_format("%s is not defined; it appears to be defined in %s", name, fgrep);
+      else command = NULL;
+    }
+  if (fgrep) FREE(fgrep); /* don't free url! */
+  REMOVE(tempnam);
+  FREE(tempnam);
+  return(command);
 }
 
 static bool strings_might_match(const char *a, const char *b, int len)
@@ -2114,6 +2185,10 @@ and its value is returned."
     else text = C_TO_XEN_STRING(xen_scheme_procedure_to_ruby(S_snd_help));
   str = XEN_AS_STRING(XEN_OBJECT_HELP(text));
 #endif
+  /* this is not the right place for this
+  if ((str == NULL) || (snd_strlen(str) == 0))
+    str = snd_finder(subject);
+  */
   if (str)
     {
       if (subject)

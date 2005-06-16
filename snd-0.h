@@ -119,6 +119,8 @@ typedef enum {FILE_SAVE_AS, EDIT_SAVE_AS} save_dialog_t;
 #define ANY_MIX_ID -2
 #define ANY_TRACK_ID -2
 #define NO_COLOR -1
+#define NOT_A_GC_LOC -1
+#define NOT_A_SOUND -1
 
 typedef enum {NOT_IN_BACKGROUND, IN_BACKGROUND} play_process_t;
 typedef enum {WITHOUT_VIRTUAL_CHANNELS, WITH_VIRTUAL_CHANNELS} virtual_channels_t;
@@ -177,6 +179,7 @@ typedef enum {NOT_FILING, INPUT_FILING, REGION_FILING, CHANNEL_FILING, TEMP_FILI
   #define EPAREN ""
   #define PROC_FALSE "false"
   #define PROC_TRUE "true"
+  #define PROC_QUOTE ""
 #endif
 #if HAVE_SCHEME || (!HAVE_EXTENSION_LANGUAGE)
   #define TO_PROC_NAME(Str) Str
@@ -192,6 +195,7 @@ typedef enum {NOT_FILING, INPUT_FILING, REGION_FILING, CHANNEL_FILING, TEMP_FILI
   #define EPAREN ")"
   #define PROC_FALSE "#f"
   #define PROC_TRUE  "#t"
+  #define PROC_QUOTE "'"
 #endif
 
 #define MAX_MAIN_MENUS 64

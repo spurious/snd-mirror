@@ -4388,7 +4388,7 @@ applies an FIR filter to snd's channel chn. 'env' is the frequency response enve
   chan_info *cp;
   char *errstr = NULL, *caller = NULL;
   bool truncate_1 = true;
-  int order_1 = 0, edpos_1 = -1;
+  int order_1 = 0, edpos_1 = AT_CURRENT_EDIT_POSITION;
   off_t beg_1 = 0, dur_1 = 0;
   env *e_1 = NULL;
   vct *v = NULL;

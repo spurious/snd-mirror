@@ -604,14 +604,14 @@ static int make_callback_slot(void)
 	  menu_functions = (XEN *)CALLOC(callbacks_size, sizeof(XEN));
 	  for (i = 0; i < callbacks_size; i++) menu_functions[i] = XEN_UNDEFINED;
 	  menu_functions_loc = (int *)CALLOC(callbacks_size, sizeof(int));
-	  for (i = 0; i < callbacks_size; i++) menu_functions_loc[i] = -1;
+	  for (i = 0; i < callbacks_size; i++) menu_functions_loc[i] = NOT_A_GC_LOC;
 	}
       else 
 	{
 	  menu_functions = (XEN *)REALLOC(menu_functions, callbacks_size * sizeof(XEN));
 	  for (i = callbacks_size - CALLBACK_INCR; i < callbacks_size; i++) menu_functions[i] = XEN_UNDEFINED;
 	  menu_functions_loc = (int *)REALLOC(menu_functions_loc, callbacks_size * sizeof(int));
-	  for (i = callbacks_size - CALLBACK_INCR; i < callbacks_size; i++) menu_functions_loc[i] = -1;
+	  for (i = callbacks_size - CALLBACK_INCR; i < callbacks_size; i++) menu_functions_loc[i] = NOT_A_GC_LOC;
 	}
     }
   old_callb = callb;
@@ -636,7 +636,7 @@ void unprotect_callback(int slot)
       if (XEN_PROCEDURE_P(menu_functions[slot]))
 	{
 	  snd_unprotect_at(menu_functions_loc[slot]);
-	  menu_functions_loc[slot] = -1;
+	  menu_functions_loc[slot] = NOT_A_GC_LOC;
 	}
       menu_functions[slot] = XEN_FALSE;  /* not XEN_UNDEFINED -- need a way to distinguish "no callback" from "recyclable slot" */
     }
