@@ -948,7 +948,7 @@ static XEN c_to_xen_string(XEN str)
 static XEN xm_protected = XEN_FALSE;
 static int xm_protected_size = 0;
 static XEN xm_gc_table = XEN_FALSE;
-static int last_xm_unprotect = -1;
+static int last_xm_unprotect = NOT_A_GC_LOC;
 
 static int xm_protect(XEN obj)
 {
@@ -960,10 +960,10 @@ static int xm_protect(XEN obj)
       if (XEN_FALSE_P(XEN_VECTOR_REF(xm_protected, i)))
 	{
 	  XEN_VECTOR_SET(xm_protected, i, obj);
-	  last_xm_unprotect = -1;
+	  last_xm_unprotect = NOT_A_GC_LOC;
 	  return(i);
 	}
-      last_xm_unprotect = -1;
+      last_xm_unprotect = NOT_A_GC_LOC;
     }
   for (i = 0; i < xm_protected_size; i++)
     if (XEN_FALSE_P(XEN_VECTOR_REF(xm_protected, i)))
@@ -39351,7 +39351,7 @@ static bool xg_already_inited = false;
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("14-Jun-05"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("16-Jun-05"));
       xg_already_inited = true;
 #if WITH_GTK_AND_X11
       Init_libx11();

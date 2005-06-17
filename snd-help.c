@@ -1647,6 +1647,7 @@ static int levenstein(const char *s1, const char *s2)
 
 bool snd_topic_help(const char *topic)
 {
+  /* called only in snd-x|ghelp.c */
   int i, topic_len;
   for (i = 0; i < NUM_XREFS; i++)
     if (STRCMP(topic, xrefs[i]) == 0)
@@ -1699,7 +1700,7 @@ bool snd_topic_help(const char *topic)
 	      min_loc = i;
 	    }
 	}
-    if (min_diff < (topic_len / 2))
+    if (min_diff < snd_ilog2(topic_len)) /* was topic_len / 2, but this gives too much leeway for substitutions */
       {
 	(*help_funcs[min_loc])();
 	return(true);
@@ -1712,79 +1713,96 @@ char *snd_url(const char *name)
 {
   /* (snd-url "save-sound-as") -> "extsnd.html#savesoundas" */
   int i;
-  for (i = 0; i < HELP_NAMES_SIZE; i++)
-    if (STRCMP(help_names[i], name) == 0)
-      return(help_urls[i]);
+  if (help_names) /* no ext lang, but wily user typed play-selection to the help dialog... */
+    for (i = 0; i < HELP_NAMES_SIZE; i++)
+      if (STRCMP(help_names[i], name) == 0)
+	return(help_urls[i]);
   return(NULL);
 }
 
-static char *file_to_string(const char *filename)
-{ 
-  FILE *file;
-  int size;
-  char *content = NULL;
-  if ((file = fopen(filename, "r")) == NULL) return(NULL);
-  fseek(file, 0, SEEK_END);
-  size = ftell(file);
-  if (size > 0)
-    {
-      rewind(file);
-      content = (char *)CALLOC(size + 1, sizeof(char));
-      fread(content, 1, size, file);
-    }
-  fclose(file);
-  return(content);
-}
+/* PERHAPS: finder could concat all finds */
 
-/* TODO fix this:(snd-help 'linear-src-channel)
-"(sine-env-channel env #:optional (beg 0) dur snd chn edpos) connects env's dots
-with sinusoids"
-*/
-
-/* add (define name) case */
-/* add XEN_DEFINED_P check (could have no help) */
-/* run through %load-path append snd-motif.scm, if found check that directory */
-/* may concat all finds? */
-/* export file_to_string to snd-edits snd-chn? */
-
-static char *snd_finder(const char *name)
+static char *snd_finder(const char *name, bool got_help)
 {
   /* desperation -- search *.scm/rb then even *.html? for 'name' */
-  
   char *url = NULL, *fgrep = NULL, *tempnam = NULL, *command = NULL;
+  bool is_defined = false;
+  int a_def = 0, dir_len = 0, i;
+  XEN dirs = XEN_EMPTY_LIST;
+
+#if HAVE_SCHEME || (!HAVE_EXTENSION_LANGUAGE)
+  #define NUM_DEFINES 5
+  #define TRAILER " "
+  char *defines[NUM_DEFINES] = {"(define (", "(define* (", "(define ", "(defmacro ", "(defmacro* "};
+  dirs = XEN_EVAL_C_STRING("%load-path");
+#endif
+#if HAVE_RUBY
+  #define NUM_DEFINES 1
+  #define TRAILER ""
+  char *defines[NUM_DEFINES] = {"def "}; /* PERHAPS: add "class " to this search list? */
+  extern VALUE rb_load_path;
+  dirs = rb_load_path;
+#endif
+
+  is_defined = XEN_DEFINED_P(name);
   url = snd_url(name);
   tempnam = snd_tempnam();
-  command = mus_format("fgrep \"(define (%s \" *.scm --line-number > %s", name, tempnam);
-  system(command);
-  FREE(command);
-  fgrep = file_to_string(tempnam);
+  dir_len = XEN_LIST_LENGTH(dirs);
 
-  fprintf(stderr,"got %s (%d)\n", fgrep, snd_strlen(fgrep));
-
-  if ((!fgrep) || (snd_strlen(fgrep) == 0))
+  for (i = 0; (!fgrep) && (i < dir_len); i++)
     {
-      command = mus_format("fgrep \"(define* (%s \" *.scm --line-number > %s", name, tempnam);
-      system(command);
-      FREE(command);
-      fgrep = file_to_string(tempnam);
-      fprintf(stderr,"got * case %s (%d)\n", fgrep, snd_strlen(fgrep));
+      char *path;
+      path = XEN_TO_C_STRING(XEN_LIST_REF(dirs, i));
+      if (!path) continue;
 
+      for (a_def = 0; (!fgrep) && (a_def < NUM_DEFINES); a_def++)
+	{
+#if (!SUN)
+	  /* Gnu fgrep: -s switch to fgrep = "silent", I guess (--no-messages) [OSX uses Gnu fgrep] */
+	  /* configure script looks for grep -F or fgrep, setting FGREP_PROG (fgrep is supposedly obsolete) */
+	  command = mus_format(FGREP_PROG " -s \"%s%s" TRAILER "\" %s/*." XEN_FILE_EXTENSION " --line-number > %s", 
+#else
+          /* Sun fgrep: here -s means -q and --line-number prints an error message */
+	  command = mus_format(FGREP_PROG " \"%s%s" TRAILER "\" %s/*." XEN_FILE_EXTENSION " > %s", 
+#endif
+			       defines[a_def], 
+			       name,
+			       path,
+			       tempnam);
+	  system(command);
+	  FREE(command);
+	  fgrep = file_to_string(tempnam);
+	}
     }
+  REMOVE(tempnam);
+  FREE(tempnam);
+
   if (url)
     {
       if (fgrep)
-	command = mus_format("%s is not defined; it appears to be defined in %s, and documented at %s", name, fgrep, url);
-      else command = mus_format("%s is not defined; it is documented at %s", name, url);
+	command = mus_format("%s is %sdefined%s; it appears to be defined in:\n%sand documented at %s", 
+			     name,
+			     (is_defined) ? "" : "not ",
+			     (is_defined && (!got_help)) ? ", but has no help string" : "",
+			     fgrep, 
+			     url);
+      else command = mus_format("%s is %sdefined%s; it is documented at %s", 
+				name,
+				(is_defined) ? "" : "not ",
+				(is_defined && (!got_help)) ? ", but has no help string" : "",
+				url);
     }
   else
     {
       if (fgrep)
-	command = mus_format("%s is not defined; it appears to be defined in %s", name, fgrep);
+	command = mus_format("%s is %sdefined%s; it appears to be defined in:\n%s",
+			     name,
+			     (is_defined) ? "" : "not ",
+			     (is_defined && (!got_help)) ? ", but has no help string" : "",
+			     fgrep);
       else command = NULL;
     }
   if (fgrep) FREE(fgrep); /* don't free url! */
-  REMOVE(tempnam);
-  FREE(tempnam);
   return(command);
 }
 
@@ -1808,6 +1826,7 @@ char **help_name_to_xrefs(const char *name)
 {
   char **xrefs = NULL;
   int i, xref_ctr = 0, xrefs_size = 0, name_len;
+  if (!help_names) return(NULL);
   name_len = strlen(name);
   for (i = 0; i < HELP_NAMES_SIZE; i++)
     if (name[0] == help_names[i][0])
@@ -2092,6 +2111,7 @@ and its value is returned."
 
   XEN help_text = XEN_FALSE; 
   char *str = NULL, *new_str, *subject = NULL;
+  int topic_min = 0, min_diff = 1000;
 
 #if HAVE_GUILE
   bool already_looped = false;
@@ -2123,6 +2143,8 @@ and its value is returned."
 	      help_text = XEN_OBJECT_HELP(text);
 	    }
 	}
+      topic_min = snd_ilog2(snd_strlen(subject));
+
     HELP_LOOP:
       if (XEN_FALSE_P(help_text))
 	{
@@ -2143,10 +2165,10 @@ and its value is returned."
 	      if (XEN_FALSE_P(help_text))
 		help_text = XEN_PROCEDURE_SOURCE_HELP(value);      /* (procedure-documentation ...) -- this is the first line of source if string */
 	    }
-	  if ((XEN_FALSE_P(help_text)) && (!already_looped))
+	  if ((XEN_FALSE_P(help_text)) && (!already_looped) && (help_names))
 	    {
 	      /* we're getting desperate! */
-	      int i, min_diff = 1000, min_loc = 0, this_diff;
+	      int i, min_loc = 0, this_diff;
 	      already_looped = true;
 	      for (i = 0; i < HELP_NAMES_SIZE; i++)
 		{
@@ -2157,7 +2179,7 @@ and its value is returned."
 		      min_loc = i;
 		    }
 		}
-	      if (min_diff < (snd_strlen(subject) / 2))
+	      if (min_diff < topic_min)
 		{
 		  subject = help_names[min_loc];
 		  sym = C_STRING_TO_XEN_SYMBOL(subject);
@@ -2185,10 +2207,25 @@ and its value is returned."
     else text = C_TO_XEN_STRING(xen_scheme_procedure_to_ruby(S_snd_help));
   str = XEN_AS_STRING(XEN_OBJECT_HELP(text));
 #endif
-  /* this is not the right place for this
-  if ((str == NULL) || (snd_strlen(str) == 0))
-    str = snd_finder(subject);
-  */
+
+  if ((str == NULL) || 
+      (snd_strlen(str) == 0) ||
+      (strcmp(str, PROC_FALSE) == 0)) /* Ruby returns "false" here */
+    str = snd_finder(subject, false);
+  else 
+    {
+      if ((min_diff < 1000) && (min_diff > 0))
+	{
+	  char *more_str;
+	  more_str = snd_finder(subject, true);
+	  if (more_str)
+	    {
+	      str = mus_format("%s\nOther possibilities:\n%s", str, more_str);
+	      FREE(more_str);
+	    }
+	}
+    }
+
   if (str)
     {
       if (subject)
@@ -2262,8 +2299,9 @@ static XEN g_snd_urls(void)
   #define H_snd_urls "(" S_snd_urls ") -> list of all snd names with the associated url (a list of lists)"
   XEN lst = XEN_EMPTY_LIST;
   int i;
-  for (i = 0; i < HELP_NAMES_SIZE; i++)
-    lst = XEN_CONS(XEN_CONS(C_TO_XEN_STRING(help_names[i]), C_TO_XEN_STRING(help_urls[i])), lst);
+  if (help_names)
+    for (i = 0; i < HELP_NAMES_SIZE; i++)
+      lst = XEN_CONS(XEN_CONS(C_TO_XEN_STRING(help_names[i]), C_TO_XEN_STRING(help_urls[i])), lst);
   return(lst);
 }
 

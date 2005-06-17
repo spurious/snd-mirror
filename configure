@@ -311,7 +311,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA PACKAGE VERSION PKG_CONFIG FFTW_LIBS GSL_CONFIG GSL_LIBS GSL_CFLAGS X_CFLAGS X_PRE_LIBS X_LIBS X_EXTRA_LIBS XLIBS XFLAGS GTK_CFLAGS GTK_LIBS GTK_LD_LIBS GX_FILES GX_HEADERS GL_LIBS GL_FILES GL_FLAGS GUILE_LIBS GUILE_CFLAGS XM_LIBS AUDIO_LIB LDSO_FLAGS SO_INSTALL SO_LD A_LD A_LD_FLAGS MIDI_FILES SNDLIB_CONFIG SNDLIB_FILES SNDLIB_LIB SET_MAKE MKINSTALLDIRS MSGFMT GMSGFMT XGETTEXT MSGMERGE USE_NLS LIBICONV LTLIBICONV INTLLIBS LIBINTL LTLIBINTL POSUB MAKE_TARGET LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA PACKAGE VERSION FGREP PKG_CONFIG FFTW_LIBS GSL_CONFIG GSL_LIBS GSL_CFLAGS X_CFLAGS X_PRE_LIBS X_LIBS X_EXTRA_LIBS XLIBS XFLAGS GTK_CFLAGS GTK_LIBS GTK_LD_LIBS GX_FILES GX_HEADERS GL_LIBS GL_FILES GL_FLAGS GUILE_LIBS GUILE_CFLAGS XM_LIBS AUDIO_LIB LDSO_FLAGS SO_INSTALL SO_LD A_LD A_LD_FLAGS MIDI_FILES SNDLIB_CONFIG SNDLIB_FILES SNDLIB_LIB SET_MAKE MKINSTALLDIRS MSGFMT GMSGFMT XGETTEXT MSGMERGE USE_NLS LIBICONV LTLIBICONV INTLLIBS LIBINTL LTLIBINTL POSUB MAKE_TARGET LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -7691,6 +7691,25 @@ echo "${ECHO_T}$acl_cv_prog_gnu_ld" >&6
 with_gnu_ld=$acl_cv_prog_gnu_ld
 
 
+echo "$as_me:$LINENO: checking for fgrep" >&5
+echo $ECHO_N "checking for fgrep... $ECHO_C" >&6
+if test "${ac_cv_prog_fgrep+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  if echo 'ab*c' | (grep -F 'ab*c') >/dev/null 2>&1
+    then ac_cv_prog_fgrep='grep -F'
+    else ac_cv_prog_fgrep='fgrep'
+    fi
+fi
+echo "$as_me:$LINENO: result: $ac_cv_prog_fgrep" >&5
+echo "${ECHO_T}$ac_cv_prog_fgrep" >&6
+ FGREP=$ac_cv_prog_fgrep
+
+
+cat >>confdefs.h <<_ACEOF
+#define FGREP_PROG "$ac_cv_prog_fgrep"
+_ACEOF
+
 
 echo "$as_me:$LINENO: checking for __func__" >&5
 echo $ECHO_N "checking for __func__... $ECHO_C" >&6
@@ -12782,7 +12801,7 @@ _ACEOF
 
 fi
 
-	# gtk 2.6.0|1|2|3|4|5|6|7: no API changes
+	# gtk 2.6.0|1|2|3|4|5|6|7|8: no API changes
 	echo "$as_me:$LINENO: checking for pango_matrix_rotate in -lm" >&5
 echo $ECHO_N "checking for pango_matrix_rotate in -lm... $ECHO_C" >&6
 if test "${ac_cv_lib_m_pango_matrix_rotate+set}" = set; then
@@ -19730,6 +19749,7 @@ s,@INSTALL_SCRIPT@,$INSTALL_SCRIPT,;t t
 s,@INSTALL_DATA@,$INSTALL_DATA,;t t
 s,@PACKAGE@,$PACKAGE,;t t
 s,@VERSION@,$VERSION,;t t
+s,@FGREP@,$FGREP,;t t
 s,@PKG_CONFIG@,$PKG_CONFIG,;t t
 s,@FFTW_LIBS@,$FFTW_LIBS,;t t
 s,@GSL_CONFIG@,$GSL_CONFIG,;t t

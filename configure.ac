@@ -210,6 +210,8 @@ AC_CHECK_FUNCS(vsnprintf snprintf memmove strdup lstat fileno strcasecmp)
 AC_FUNC_CLOSEDIR_VOID
 AC_FUNC_VPRINTF
 AC_LIB_PROG_LD
+AC_PROG_FGREP
+AC_DEFINE_UNQUOTED(FGREP_PROG, "$ac_cv_prog_fgrep")
 
 AC_MSG_CHECKING(for __func__)
 AC_LINK_IFELSE(
@@ -766,7 +768,7 @@ else
 	AC_CHECK_LIB(m, gdk_pango_renderer_new, [AC_DEFINE(HAVE_GDK_PANGO_RENDERER_NEW)],  ,$GTK_LIBS)
 	# gtk 2.5.6
 	AC_CHECK_LIB(m, gtk_text_layout_get_iter_at_position, [AC_DEFINE(HAVE_GTK_TEXT_LAYOUT_GET_ITER_AT_POSITION)],  ,$GTK_LIBS)
-	# gtk 2.6.0|1|2|3|4|5|6|7: no API changes
+	# gtk 2.6.0|1|2|3|4|5|6|7|8: no API changes
 	AC_CHECK_LIB(m, pango_matrix_rotate, [AC_DEFINE(HAVE_PANGO_MATRIX_ROTATE)],  ,$GTK_LIBS)
 
         if test "$with_x11" = yes ; then

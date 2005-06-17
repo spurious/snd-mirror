@@ -2423,7 +2423,7 @@ static XEN gxm_XtGetValues_1(XEN arg1, XEN larg2, int len)
 static XEN xm_protected = XEN_FALSE;
 static int xm_protected_size = 0;
 static XEN xm_gc_table = XEN_FALSE;
-static int last_xm_unprotect = -1;
+static int last_xm_unprotect = NOT_A_GC_LOC;
 
 static int xm_protect(XEN obj)
 {
@@ -2435,10 +2435,10 @@ static int xm_protect(XEN obj)
       if (XEN_FALSE_P(XEN_VECTOR_REF(xm_protected, i)))
 	{
 	  XEN_VECTOR_SET(xm_protected, i, obj);
-	  last_xm_unprotect = -1;
+	  last_xm_unprotect = NOT_A_GC_LOC;
 	  return(i);
 	}
-      last_xm_unprotect = -1;
+      last_xm_unprotect = NOT_A_GC_LOC;
     }
   for (i = 0; i < xm_protected_size; i++)
     if (XEN_FALSE_P(XEN_VECTOR_REF(xm_protected, i)))

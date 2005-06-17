@@ -1996,15 +1996,8 @@ static int display_transform_peaks(chan_info *ucp, char *filename)
 	report_in_minibuffer_and_save(sp, _("can't close %s: %s"), filename, snd_io_strerror());
       if (tmp_file)
 	{
-	  int chars;
 	  char *str;
-	  fd = FOPEN(filename, "r");
-	  fseek(fd, 0, SEEK_END);
-	  chars = ftell(fd); /* safe because this is a short file */
-	  rewind(fd);
-	  str = (char *)CALLOC(chars + 1, sizeof(char));
-	  fread(str, 1, chars, fd);
-	  snd_fclose(fd, filename);
+	  str = file_to_string(filename);
 	  post_it("fft peaks", str);
 	  FREE(str);
 	  err = snd_remove(filename, IGNORE_CACHE);

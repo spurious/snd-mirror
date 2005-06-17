@@ -1809,7 +1809,7 @@ static XEN g_test_control_drag_mark(XEN snd, XEN chn, XEN mid)
   chan_info *cp;
   mark *m = NULL, *m1 = NULL;
   cp = get_cp(snd, chn, "test-C-mark");
-  m = find_mark_from_id(XEN_TO_C_INT(mid), NULL, -1);
+  m = find_mark_from_id(XEN_TO_C_INT(mid), NULL, AT_CURRENT_EDIT_POSITION);
   if (m == NULL) 
     return(snd_no_such_mark_error("test-C-mark", mid));
   y = cp->axis->y_axis_y1;

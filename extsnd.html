@@ -558,13 +558,12 @@ error checks, much as in CLM with *clm-safety*.
 <td><code>#f</code></td></tr>
 <tr><td></td><td colspan=2>Name of directory for saved-state files.  
 <br><br>
-If #f, all saved-state is placed (as text) in the saved-snd.scm
-file.  If you've edited a sound file, this can be unwieldy because each
-changed sample is saved as text!  By setting
-save-dir, Snd instead places the necessary intermediate files in
-save-dir, with the file names in the saved-state file.  The assumption
-here is that you won't mess with the save-dir files until you no
-longer want to restart that version of Snd.  
+These files are written when you call <a href="#savestate">save-state</a> or
+choose the Options:Save state menu item.  If any of the current sounds has
+an edit that requires saved data, it is written as a separate sound file, and
+that file is reloaded automatically when you restart the saved session.  To keep such
+files safe, or at least separate from others, you can set up separate
+directory for them.
 <code>(set! (<a class=quiet href="#savedir">save-dir</a>) "/tmp")</code>.
 </td></tr>
 <tr><td colspan=3></td></tr>
@@ -10126,7 +10125,7 @@ see also <a href="#ptreechannel">ptree-channel</a> in this regard.
 If you call save-state with active regions, and have the region browser running all the time, and subsequently
 want to back up to the saved state, it's safer to delete all the regions first (via <a href="#forgetregion">forget-region</a>), 
 then load the saved-state file.
-<a href="#savestatehook">save-state-hook</a> is called during the saving process (once on each temp file), and
+<a href="#savestatehook">save-state-hook</a> is called during the saving process (once on each temp file),
 and <a href="#aftersavestatehook">after-save-state-hook</a> is called afterwards.
 <i>filename</i> defaults to <a href="#savestatefile">save-state-file</a> which itself defaults to "saved-snd.scm"
 or some variant thereof.
@@ -10177,7 +10176,25 @@ return (as a string) the help text associated with <i>obj</i>:
 <pre>
 :<em class=typing>(snd-help 'open-sound)</em>
 <em class=listener>"(open-sound filename) opens filename (as if opened from File:Open menu option), 
-and returns the new file's index"</em>
+and returns the new sound's index"</em>
+</pre>
+If no help string can be found, or if the name doesn't come close to any currently defined name,
+snd-help runs through the current load path searching *.scm (or *.rb) files for a definition
+of that name.  So, if you haven't loaded dsp.scm:
+<br>
+<pre>
+:<em class=typing>(snd-help "volterra-filter")</em>
+<em class=listener>"volterra-filter is not defined; it appears to be defined in:
+/home/bil/cl/dsp.scm:1936:(define (volterra-filter flt x)
+and documented at sndscm.html#volterrafilter"</em>
+</pre>
+snd-help tries to be smart about minor mispellings:
+<br>
+<pre>
+:<em class=typing>(snd-help "close-soud")</em>
+<em class=listener>"(close-sound (snd #f)): close snd
+Other possibilities:
+close-sound is defined; it is documented at extsnd.html#closesound"</em>
 </pre>
 To go to the
 HTML documentation for a given object, load <a href="sndscm.html#indexdoc">index.scm</a> and use the html function.

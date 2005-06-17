@@ -42,6 +42,16 @@ int snd_2pow2(int n)
   return(0);
 }
 
+int snd_ilog2(int n)
+{
+  /* round down */
+  int i;
+  for (i = 1; i < POW2_SIZE; i++)
+    if (pow2s[i] > n)
+      return(i - 1);
+  return(0);
+}
+
 #define MAX_FLOAT_DIFF_FOR_EQUAL 0.0000001
 bool snd_feq(Float val1, Float val2)
 {
@@ -157,6 +167,26 @@ char *just_filename(char *name)
       }
   return(nodir);
 }
+
+char *file_to_string(const char *filename)
+{ 
+  FILE *file;
+  long size;
+  char *content = NULL;
+  file = fopen(filename, "r");
+  if (!file) return(NULL);
+  fseek(file, 0, SEEK_END);
+  size = ftell(file);
+  if (size > 0)
+    {
+      rewind(file);
+      content = (char *)CALLOC(size + 1, sizeof(char));
+      fread(content, sizeof(char), size, file);
+    }
+  fclose(file);
+  return(content);
+}
+
 
 #if HAVE_LANGINFO_DECIMAL_POINT || HAVE_LANGINFO_RADIXCHAR
 #if NL_TYPES_H_DEFINES_MALLOC
@@ -889,22 +919,12 @@ void stop_timing(void) {fprintf(stderr, "time: %d ",(int)((clock() - start) * 10
 #define S_file2string "file->string"
 static XEN g_file_to_string(XEN name)
 { 
-  char *filename;
-  FILE *file;
-  int size;
-  char *content = NULL;
+  char *contents;
   XEN val = XEN_FALSE;
   XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ONLY_ARG, S_file2string, "a string");
-  filename = XEN_TO_C_STRING(name);
-  if ((file = fopen(filename, "r")) == NULL) return(XEN_FALSE);
-  fseek(file, 0, SEEK_END);
-  size = ftell(file); /* safe because this is presumably not a huge file */
-  rewind(file);
-  content = (char *)CALLOC(size + 1, sizeof(char));
-  fread(content, 1, size, file);
-  fclose(file);
-  val = C_TO_XEN_STRING(content);
-  FREE(content);
+  contents = file_to_string(XEN_TO_C_STRING(name));
+  val = C_TO_XEN_STRING(contents);
+  FREE(contents);
   return(val);
 }
 #endif
