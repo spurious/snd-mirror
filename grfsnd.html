@@ -410,11 +410,13 @@ latter are (configure --help):
 </p>
 
 <table>
+<tr><td colspan=2><hr></td><td></td></tr>
 <tr><td colspan=2>Audio choices</td><td>(normally this is decided automatically)</td></tr>
 <tr><td width=50></td><td>--with-esd</td><td>use ESD (enlightened sound daemon)</td></tr>
 <tr><td></td><td>--with-alsa</td><td>use ALSA (Linux OSS replacement)</td></tr>
 <tr><td></td><td>--with-static-alsa</td><td>use ALSA statically loaded</td></tr>
 <tr><td></td><td>--with-jack</td><td>use JACK (Linux audio stream sharing support, can be used with ALSA)</td></tr>
+<tr><td colspan=2><hr></td><td></td></tr>
 
 <tr><td colspan=2>Graphics choices</td><td></td></tr>
 <tr><td></td><td>--with-gtk</td><td>use Gtk+ to build Snd (Gtk+ version 2.0 or later)</td></tr>
@@ -423,23 +425,27 @@ latter are (configure --help):
 <tr><td></td><td>--with-motif-prefix=PFX</td><td>where Motif is installed</td></tr>
 <tr><td></td><td>--with-no-gui</td><td>make Snd without any graphics support</td></tr>
 <tr><td></td><td>--with-static-xm</td><td>include the xm module at build time; this is easier than trying to dynamically load xm.so</td></tr>
+<tr><td></td><td>--with-static-xg</td><td>include the xg module at build time; this is easier than trying to dynamically load xg.so</td></tr>
 <tr><td></td><td>--with-gl</td><td>include OpenGL support (spectrogram, etc)</td></tr>
 <tr><td></td><td>--with-just-gl</td><td>include OpenGL support, but omit the GL/Guile/Ruby bindings</td></tr>
 <tr><td></td><td>--with-editres</td><td>include editres in xm (default: no)</td></tr>
 <tr><td></td><td>--with-xpm</td><td>use xpm, default: yes</td></tr>
 <tr><td></td><td>--with-xp</td><td>use xp, default: no; this is the Xprint library which is not tied into Snd at all</td></tr>
-<tr><td></td><td>--with-builtin-gtkrc</td><td>include built-in gtkrc fallbacks (default: yes) (some don't like my happy pastel color scheme)</td></tr>
+<tr><td></td><td>--with-builtin-gtkrc</td><td>include built-in gtkrc fallbacks (default: yes) (some grouches don't like my happy pastel color scheme)</td></tr>
+<tr><td colspan=2><hr></td><td></td></tr>
 
 <tr><td colspan=2>Language choices</td><td></td></tr>
 <tr><td></td><td>--with-guile</td><td>use Guile (default: yes), GUILE_CONFIG_path sets Guile location; version 1.3.4 or later</td></tr>
 <tr><td></td><td>--with-ruby</td><td>try to use Ruby as the extension language; version 1.6.4 or later</td></tr>
 <tr><td></td><td>--with-ruby-prefix=PFX</td><td>where Ruby is installed</td></tr>
 <tr><td></td><td>--with-hobbit</td><td>include hobbit-style function arity checking (hobbit is a Scheme compiler), default: no</td></tr>
+<tr><td colspan=2><hr></td><td></td></tr>
 
 <tr><td colspan=2>Numerical choices</td><td></td></tr>
 <tr><td></td><td>--with-doubles</td><td>use doubles throughout (default: no)</td></tr>
 <tr><td></td><td>--with-float-samples</td><td>use floats as the internal sample representation (default: no)</td></tr>
 <tr><td></td><td>--with-sample-width=N</td><td>if not float samples, use N bits for ints (default: 24, must be between 16 and 31)</td></tr>
+<tr><td colspan=2><hr></td><td></td></tr>
 
 <tr><td colspan=2>Library choices</td><td></td></tr>
 <tr><td></td><td>--with-gsl</td><td>use GSL (for Chebyshev window), default: yes if local C does not support complex trig</td></tr>
@@ -450,11 +456,13 @@ latter are (configure --help):
 <tr><td></td><td>--with-shared-sndlib</td><td>try to load libsndlib.so, rather than building it into Snd (default: no)</td></tr>
 <tr><td></td><td>--with-modules</td><td>use this switch with --with-shared-sndlib if sndlib.so uses modules</td></tr>
 <tr><td></td><td>--disable-deprecated</td><td>do not include any deprecated stuff from gtk, guile, sndlib, xen, clm, etc</td></tr>
+<tr><td colspan=2><hr></td><td></td></tr>
 
 <tr><td colspan=2>Directory choices</td><td></td></tr>
 <tr><td></td><td>--with-temp-dir</td><td>directory to use for temp files (default: ".")</td></tr>
 <tr><td></td><td>--with-save-dir</td><td>directory to use for saved-state files (default: ".")</td></tr>
 <tr><td></td><td>--with-doc-dir</td><td>directory to search for documentation (html-dir, elaborate set of defaults)</td></tr>
+<tr><td colspan=2><hr></td><td></td></tr>
 
 <tr><td colspan=2>Debugging etc</td><td></td></tr>
 <tr><td></td><td>--with-snd-as-widget</td><td>make Snd a loadable widget, not a standalone program</td></tr>
@@ -462,13 +470,37 @@ latter are (configure --help):
 <tr><td></td><td>--enable-snd-debug</td><td>include internal Snd debugging functions, default: no (not useful if not actually debugging!) </td></tr>
 <tr><td></td><td>--disable-largefile</td><td>omit support for large (64-bit byte address) files</td></tr>
 <tr><td></td><td>--disable-nls</td><td>do not use Native Language Support</td></tr>
+<tr><td colspan=2><hr></td><td></td></tr>
 </table>
 
-<p>Depending on how Snd was configured, any of the following symbols may be
-on the *features* list (in Guile):
+<p>Other configuration variables are GUILE_CONFIG_name and SNDLIB_CONFIG_path. The default configuration/build sequence:
+</p>
+<pre>
+  ./configure
+  make
+  make install
+</pre>
+<p>tries to use Guile, Motif, OSS (if Linux), and integer (24-bit fraction) sample representation, then
+installs the snd executable in /usr/local/bin, a brief blurb
+in /usr/local/man/man1, and the German translations in whatever directory the translation files are sent to (this is part of
+the NLS business in Gnu). 
+Here at CCRMA, we normally use:
+</p>
+<pre>
+  ./configure --with-alsa --with-temp-dir=/zap --with-static-xm --with-gl
+</pre>
+<p>and, since I'm usually running the CVS Guile, I use:
+</p>
+<pre>
+  ./configure CFLAGS="-Wall" GUILE_CONFIG_path=/home/bil/test/bin --with-float-samples --with-gl --with-static-xm
+</pre>
+<p>
+There are many more examples in tools/compsnd.
+Depending on how Snd is configured, any of the following symbols may be "provided"
+(on the *features* list in Guile):
 </p>
 <table>
-<tr><td width=100>clm</td><td>clm module (always included)</td></tr>
+<tr><td width=100>clm</td><td>clm module (always included -- once upon a time it was optional)</td></tr>
 <tr><td>gl</td><td>OpenGL callable from Scheme/Ruby (--with-gl switch)</td></tr>
 <tr><td>snd-ladspa</td><td>LADSPA loaded (--with-ladspa, but also the default in Linux if ladspa.h can be found)</td></tr>
 <tr><td>sndlib</td><td>sndlib module (always included)</td></tr>
@@ -479,9 +511,10 @@ on the *features* list (in Guile):
 <tr><td>snd-ruby</td><td>Ruby as extension language (--with-ruby)</td></tr>
 <tr><td>snd-debug</td><td>internal debugging hooks included (--enable-snd-debug)</td></tr>
 <tr><td>snd</td><td>It's Snd, ferchrissake... (always included)</td></tr>
-<tr><td>xg</td><td>Gtk module (xg.c) included (--with-static-xm, or loaded dynamically)</td></tr>
+<tr><td>xg</td><td>Gtk module (xg.c) included (--with-static-xg, or loaded dynamically)</td></tr>
 <tr><td>Xp</td><td>Xprint library included and available from Scheme/Ruby (--with-xp, the default if it exists)</td></tr>
 <tr><td>xm</td><td>Motif module (xm.c) included (--with-static-xm, or loaded dynamically)</td></tr>
+<tr><td>alsa</td><td>ALSA is in use, rather than OSS (--with-alsa)</td></tr>
 </table>
 
 <p>To check whether something is available in the current Snd, use <b>provided?</b>:
@@ -516,123 +549,15 @@ Scholz.  It starts with a long and detailed commentary.
 <table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="dynamic">Dynamically loaded modules</a></h3></td></tr></table>
 
 <p>You can import shared object files into Snd at any time.
-You need to build Snd
-with -lguile (that is, load it with the guile shared library, not libguile.a);
-if the loader can't find libguile.so.2 (or whatever), add its directory to
-your LD_LIBRARY_PATH; for example, if
-it's on /usr/local/lib, <code>setenv LD_LIBRARY_PATH /usr/local/lib</code>.  
-Next add Guile wrappers to your C code:</p>
-
-<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
-  /* cscm.c */
-  #include &lt;math.h&gt;
-  #include &lt;stdio.h&gt;
-  #include &lt;stdlib.h&gt;
-  #include &lt;libguile.h&gt;
-
-  int hiho (int a) 
-  { /* this is the function we want to call from Snd */
-    return(1 + a);
-  }
-
-  SCM hiho_wrapper(SCM a) 
-  { /* this tells Guile how to interpret the arguments and return value of hiho */
-    return(scm_long2num(hiho(scm_num2int(a, 0, "hiho"))));
-  }
-
-  void init_hiho() 
-  { /* this declares hiho within Guile calling the wrapper which calls the C function hiho */
-    scm_c_define_gsubr("hiho", 1, 0, 0, hiho_wrapper);
-  }
-</pre></td></tr></table>
-
-<p>
-Next compile
-your code into a shared object (this is aimed at Linux):
+If you have a Guile-aware module with a known initialization function:
 </p>
-<pre>
-  cc -c cscm.c 
-  ld -shared -o cscm.so cscm.o -lguile
-</pre>
-<p>Now go to Snd's listener and,</p>
 <pre>
   (define lib (<em class=red>dynamic-link</em> "/home/bil/cl/cscm.so"))
   (<em class=red>dynamic-call</em> "init_hiho" lib)
-  (hiho 3)
 </pre>
-<p>The function we actually want loaded into Guile here is "hiho".
-We define a wrapper for it to handle the translation between
-Guile (Scheme) variable types and C ("hiho_wrapper"), and
-a procedure to define hiho in Guile ("init_hiho").  Once loaded
-("dynamic-link"), we can call the initialization function
-("dynamic-call"), and thereafter treat "hiho" as though
-it had been defined in Guile/Snd to begin with.  After both the
-dynamic-link and dynamic-lib calls, the listener will
-print "#&lt;unspecified&gt;" or something equally obscure to indicate
-in its own peculiar way that all went well.  M-x (hiho 4) will
-print 5 in the minibuffer.
+<p>I used to have an explicit example here, but the Guile API changes
+so often, and so radically, that it was never up-to-date.  Good luck!
 </p>
-
-<p>
-As a slightly more useful example, let's import the Bessel J0 function
-from GSL (Gnu Scientific Library); in this case, we need to build Snd
-with GSL (the easiest way is to include the --with-gsl option to configure).
-Then make a file (say "gsl-ex.c"):</p>
-
-<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
-#include &lt;libguile.h&gt;
-#include &lt;gsl/gsl_sf_bessel.h&gt;
-
-static SCM scm_j0(SCM x)
-{ /* calls GSL function gsl_sf_bessel_J0_e */
-  gsl_sf_result res;
-  gsl_sf_bessel_J0_e(scm_num2dbl(x, "j0"), &amp;res);
-  return(scm_make_real(res.val));
-}
-
-void init_gsl_j0(void)
-{ /* links scm_j0 into Snd under the name j0 */
-  scm_c_define_gsubr("j0", 1, 0, 0, scm_j0);
-}
-</pre></td></tr></table>
-
-<p>Now the usual compile, load, link into Snd sequence:</p>
-<pre>
-/home/bil/snd-4/ cc gsl-ex.c -c -Wall
-/home/bil/snd-4/ ld -shared gsl-ex.o -o gsl-ex.so -lguile
-/home/bil/snd-4/ ./snd
-
-&gt;<em class=typing>(define lib (dynamic-link "/home/bil/snd-4/gsl-ex.so"))</em>
-<em class=listener>#&lt;unspecified&gt;</em>
-&gt;<em class=typing>(dynamic-call "init_gsl_j0" lib)</em>
-<em class=listener>#&lt;unspecified&gt;</em>
-&gt;<em class=typing>(</em><em class=red>j0</em><em class=typing> 0.0)</em>
-<em class=listener>1.0</em>
-&gt;<em class=typing>(</em><em class=red>j0</em><em class=typing> 2.0)</em>
-<em class=listener>0.223890779141236</em>
-&gt;<em class=typing>(define (bes-fm dur freq amp ratio index)
- ;; bessel-FM from CLM
-   (let* ((car-ph 0.0)
-	  (mod-ph 0.0)
- 	  (car-incr (hz-&gt;radians freq))
-	  (mod-incr (* ratio car-incr))
-	  (ampenv (make-env :envelope '(0 0 25 1 75 1 100 0) :scaler amp :end dur))
-	  (output (make-vct dur)))
-     (vct-map! output
-       (lambda ()
-         (let ((val (* (env ampenv) (</em><em class=red>j0</em><em class=typing> car-ph))))
-           (set! car-ph (+ car-ph car-incr (* index (</em><em class=red>j0</em><em class=typing> mod-ph))))
-           (set! mod-ph (+ mod-ph mod-incr))
-	   val)))
-     (vct-&gt;channel output 0 dur)))</em>
-<em class=listener>#&lt;unspecified&gt;</em>
-&gt;<em class=typing>(bes-fm 22050 440 10.0 1.0 8.0)</em>
-</pre>
-<p>
-The "J" and "Y" Bessel functions are built-in now: bes-j0, bes-j1, bes-jn, bes-y0, bes-y1, bes-yn, bes-i0.
-Also erf, erfc, and lgamma.
-</p>
-
 
 
 <br>
@@ -2178,6 +2103,7 @@ end
 
 define gh
 call g_help(scm_str2symbol($arg0), 20)
+# in Guile 1.7 this should use scm_from_locale_symbol
 set gdb_print($1)
 print gdb_output
 end

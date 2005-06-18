@@ -596,14 +596,7 @@ static XEN g_widget_text(XEN wid)
 		    {
 		      XEN val = XEN_FALSE;
 		      char *text;
-		      int end;
-		      GtkTextIter s, e;
-		      GtkTextBuffer *buf;
-		      buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(w));
-		      end = gtk_text_buffer_get_char_count(buf);
-		      gtk_text_buffer_get_iter_at_offset(buf, &s, 0);
-		      gtk_text_buffer_get_iter_at_offset(buf, &e, end);
-		      text = gtk_text_buffer_get_text(buf, &s, &e, true);
+		      text = sg_get_text(w, 0, -1);
 		      if (text)
 			{
 			  val = C_TO_XEN_STRING(text); /* this copies, so it should be safe to free the original */

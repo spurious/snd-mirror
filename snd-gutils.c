@@ -148,7 +148,7 @@ int number_width(char *num)
   return(0);
 }
 
-static int sg_font2width(PangoFontDescription *font)
+static int sg_font_width(PangoFontDescription *font)
 {
   int wid = 0;
   PangoLayout *layout = NULL;
@@ -166,7 +166,7 @@ static int sg_font2width(PangoFontDescription *font)
   return(wid);
 }
 
-static int sg_font2height(PangoFontDescription *font)
+static int sg_font_height(PangoFontDescription *font)
 {
   int wid = 0;
   PangoLayout *layout = NULL;
@@ -186,12 +186,12 @@ static int sg_font2height(PangoFontDescription *font)
 
 int number_height(void)
 {
-  return(sg_font2height(AXIS_NUMBERS_FONT(ss)));
+  return(sg_font_height(AXIS_NUMBERS_FONT(ss)));
 }
 
 int label_height(void)
 {
-  return(sg_font2width(AXIS_LABEL_FONT(ss)));
+  return(sg_font_width(AXIS_LABEL_FONT(ss)));
 }
 
 void clear_window(axis_context *ax)

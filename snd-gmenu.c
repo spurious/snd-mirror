@@ -774,8 +774,8 @@ GtkWidget *add_menu(void)
   gtk_widget_show(mw[o_save_menu]);
   SG_SIGNAL_CONNECT(mw[o_save_menu], "activate", options_save_callback, NULL);
 
-  mw[o_save_state_menu] = gtk_menu_item_new_with_label(_("Save state"));
-  ml[o_save_state_menu] = _("Save state");
+  mw[o_save_state_menu] = gtk_menu_item_new_with_label(_("Save session"));
+  ml[o_save_state_menu] = _("Save session");
   gtk_menu_shell_append(GTK_MENU_SHELL(mw[o_cascade_menu]), mw[o_save_state_menu]);
   gtk_widget_show(mw[o_save_state_menu]);
   SG_SIGNAL_CONNECT(mw[o_save_state_menu], "activate", options_save_state_callback, NULL);

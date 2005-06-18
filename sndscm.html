@@ -1,5 +1,5 @@
 <html>
-<!-- documentation for some of the Scheme code included with Snd -->
+<!-- documentation for some of the Scheme and Ruby code included with Snd -->
 <head>
 <title>Scheme and Ruby Functions included with Snd</title>
 <style type="text/css">
@@ -1864,7 +1864,7 @@ convenient if they were in one file.
 property list.  To add or change a property, use set! with this procedure.  Similarly,
 <b>sound-property</b> provides access to a sound's property list.
 These properties are normally saved when Snd's state is saved (via <a href="extsnd.html#savestate">save-state</a>
-or the Options:Save State menu).  To omit a given property at that time, add its name (a symbol) to
+or the Options:Save session menu).  To omit a given property at that time, add its name (a symbol) to
 the property 'save-state-ignore (a list of symbols); see 'inset-envelope in extensions.scm.
 <b>channel-sync</b> uses the channel-properties list to implement a channel-local sync field.
 </p>
@@ -4620,59 +4620,7 @@ int main(int argc, char **argv)
 it with sinc); in this case, the "srate" argument is 0.5, so src will
 pick up a new input sample (calling src_input_as_needed) on every other
 output sample.  In the Scheme CLM (and Snd), the "as-needed" input
-function is a Scheme function passed in as Scheme code:
-</p>
-
-<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
-#include &lt;stdio.h&gt;
-#include &lt;libguile.h&gt;
-#include "clm.h"
-
-typedef struct {
-  SCM input_func;
-} src_state;
-
-float src_input_as_needed(void *ptr, int direction)
-{
-  src_state *sr = (src_state *)ptr;
-  return(scm_num2dbl(scm_call_1(sr-&gt;input_func, scm_long2num(direction)), "input-as-needed"));
-}
-
-void inner_main(void *closure, int argc, char **argv)
-{
-  mus_any *gen;
-  src_state *input;
-  int i;
-  int size = 512;
-  char **buffer = NULL;
-  buffer = (char **)calloc(1, sizeof(char *));
-  buffer[0] = (char *)calloc(size, sizeof(char));
-  input = (src_state *)calloc(1, sizeof(src_state));
-  fprintf(stdout, "input function: ");
-  getline(buffer, &amp;size, stdin);
-  input-&gt;input_func = scm_eval_str0(buffer[0]);
-  gen = mus_make_src(&amp;src_input_as_needed, 0.5, 10, (void *)input);
-  for (i=0; i &lt; 100; i++)
-    fprintf(stdout, "%f ", mus_src(gen, 0.0, src_input_as_needed));
-  mus_free(gen);
-  free(input);
-}
-
-int main(int argc, char *argv[])
-{
-  scm_boot_guile(argc, argv, inner_main, 0);
-  return(0);
-}
-
-/* cc g1.c -o g1 -L/usr/local/lib -lguile /home/bil/sndlib/sndlib.a */
-/* g1
-   input function: (let ((val 0.0)) (lambda (dir) (set! val (+ val (* dir .01))) val))
-   0.010000 0.015440 0.020000 0.024761 0.029999 0.035170 0.039999
-*/
-</pre></td></tr></table>
-
-<p>In this case, <code>src_input_as_needed</code> is calling the
-user-supplied Scheme function (via <code>scm_call_1</code>).
+function is a Scheme function passed in as Scheme code.
 </p>
 <br>
 

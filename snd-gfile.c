@@ -1859,9 +1859,8 @@ void save_post_it_dialog_state(FILE *fd)
     {
       const gchar *subject;
       gchar *text;
-      GtkTextIter start, end;
       subject = gtk_window_get_title(GTK_WINDOW(post_it_dialog)); /* don't free subject! */
-      text = gtk_text_buffer_get_text(gtk_text_view_get_buffer(GTK_TEXT_VIEW(post_it_text)), &start, &end, true);
+      text = sg_get_text(post_it_text, 0, -1);
 #if HAVE_SCHEME
       fprintf(fd, "(%s \"%s\" \"%s\")\n", S_info_dialog, subject, text);
 #endif

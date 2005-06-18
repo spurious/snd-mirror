@@ -105,7 +105,7 @@ is included in the <a href="http://ccrma.stanford.edu/planetccrma/software/">Pla
     <li><a href="#editenvelope">Edit or view an envelope</a>
     <li><a href="#editheader">Edit, add, or remove the header</a>
     <li><a href="#centeryaxis">Center a tiny signal with DC</a>
-    <li><a href="#savedstate">Save state for later restart</a>
+    <li><a href="#savedstate">Save session for later restart</a>
     <li><a href="#misccommands">Miscellaneous commands</a>
     </ul></small>
   <li><a href="#keyboardcommands">Keyboard Commands</a>
@@ -228,7 +228,7 @@ is included in the <a href="http://ccrma.stanford.edu/planetccrma/software/">Pla
 <td><a href="#savefile">Save as</a></td>
 <td><a href="#editcut">Cut</a></td>
 <td><a href="extsnd.html#trackstuff">Tracks</a></td>
-<td><a href="#savedstate">Save state</a></td>
+<td><a href="#savedstate">Save session</a></td>
 <td><a href="#builtinkeys">Key bindings</a></td>
 </tr>
 <tr>
@@ -799,7 +799,7 @@ posted during the current run of Snd.  If some error gets erased too quickly fro
 <tr><td width=160><a href="#viewfft">Transform options</a></td><td>various transform (FFT, etc) choices</td></tr>
 <tr><td><a href="#zoomoption">Zoom focus</a></td><td>where to focus during zooms</td></tr>
 <tr><td><a href="#saveoptions">Save options</a></td><td>save current state of various variables</td></tr>
-<tr><td><a href="#savedstate">Save state</a></td><td>save current state</td></tr>
+<tr><td><a href="#savedstate">Save session</a></td><td>save current state</td></tr>
 </table>
 </center>
         <!-- I(fft size):M(Options: Transform)(fftsize) --><!-- I(fft size):O(transform-size: numberpad: '*', '/')(transformsize) -->
@@ -815,7 +815,7 @@ posted during the current run of Snd.  If some error gets erased too quickly fro
         <!-- I(fft window):A(menufftwindow) --><!-- I(fft window parameter):M(Options: Transform)(Xfftbeta) -->
         <!-- I(fft window parameter):A(Xfftbeta) --><!-- I(zoom focus):M(Options: Zoom style)(zoomoption) -->
 	<!-- I(save options):M(Options: Save options)(saveoptions) -->
-        <!-- I(save state):M(Options: Save State)(savedstate) -->
+        <!-- I(save session):M(Options: Save session)(savedstate) -->
         <!-- I(speed units):A(speedstyle) -->
 	<!-- I(wavelets):A(menutransformtype) --><!-- I(wavelets):M(Options: Transform)(menutransformtype) -->
 
@@ -1284,7 +1284,7 @@ See <a href="extsnd.html#editlists">Edit Lists</a> for more details.
 <li><a href="#editenvelope">Edit or view an envelope</a>
 <li><a href="#editheader">Edit, add, or remove the header</a>
 <li><a href="#centeryaxis">Center a tiny signal with DC</a>
-<li><a href="#savedstate">Save state for later restart</a>
+<li><a href="#savedstate">Save session for later restart</a>
 <li><a href="#misccommands">Miscellaneous commands</a>
 <li>
 </ul>
@@ -1912,7 +1912,7 @@ After writing the new header, you should either close or update the
 associated sound.
 </p>
 
-<h4><A NAME="savedstate">Save state</a></h4>
+<h4><A NAME="savedstate">Save session</a></h4>
 
 <p>At any time you can save the current
 state of Snd by calling <code>(save-state name)</code> where <i>name</i>
@@ -1922,8 +1922,8 @@ This file is in exactly the same format as the <a href="grfsnd.html#sndinitfile"
 whatever. To load such a file after startup, <code>(load name)</code>. 
 </p> 
         <!-- I(continue session):A(savedstate) -->
-        <!-- I(save state):A(savedstate) -->
-        <!-- I(save state):L(save-state)(savestate) -->
+        <!-- I(save session):A(savedstate) -->
+        <!-- I(save session):L(save-state)(savestate) -->
 
 <h4><A NAME="centeryaxis">Center a tiny signal with DC</a></h4>
 
@@ -2406,7 +2406,7 @@ panel are:</p>
   <tr><td><a href="extsnd.html#savemarks">save marks</a></td><td><br></td><td><br></td><td><a href="extsnd.html#savemarks"><small>save-marks</small></a></td><td><br></td></tr>
   <tr><td><a href="#saveoptions">save options</a></td><td><small>Options: <a href="#saveoptions">Save options</a></small></td><td><br></td><td><br></td><td><br></td></tr>
   <tr><td><a href="#cxw">save selection</a></td><td><small>Edit: <a href="#cxw">Save selection</a></small></td><td><a href="#cxw"><small>Cx w</small></a></td><td><a href="extsnd.html#saveregion"><small>save-region</small></a></td><td><a href="extsnd.html#saveselection"><small>save-selection</small></a></td></tr>
-  <tr><td><a href="#savedstate">save state</a></td><td><small>Options: <a href="#savedstate">Save State</a></small></td><td><br></td><td><a href="extsnd.html#savestate"><small>save-state</small></a></td><td><br></td></tr>
+  <tr><td><a href="#savedstate">save session</a></td><td><small>Options: <a href="#savedstate">Save session</a></small></td><td><br></td><td><a href="extsnd.html#savestate"><small>save-state</small></a></td><td><br></td></tr>
   <tr><td><a href="#prevfiles">select sound</a></td><td><br></td><td><a href="#cxo"><small>Cx o</small></a></td><td><a href="extsnd.html#selectedsound"><small>selected-sound</small></a></td><td><small>File dialog: click file</small></td></tr>
   <tr><td><a href="#fw">show freq domain</a></td><td><br></td><td><br></td><td><a href="extsnd.html#transformgraphp"><small>transform-graph?</small></a></td><td><a href="#fw"><small>'f' button</small></a></td></tr>
   <tr><td><a href="extsnd.html#showmarks">show marks</a></td><td><br></td><td><br></td><td><a href="extsnd.html#showmarks"><small>show-marks</small></a></td><td><br></td></tr>

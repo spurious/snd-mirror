@@ -148,8 +148,7 @@ void save_find_dialog_state(FILE *fd)
   if ((edit_find_dialog) && (GTK_WIDGET_VISIBLE(edit_find_dialog)))
     {
       char *text = NULL;
-      GtkTextIter start, end;
-      text = gtk_text_buffer_get_text(gtk_text_view_get_buffer(GTK_TEXT_VIEW(edit_find_text)), &start, &end, true);
+      text = sg_get_text(edit_find_text, 0, -1);
 #if HAVE_SCHEME
       if (text)
 	fprintf(fd, "(%s #t \"%s\")\n", S_find_dialog, text);

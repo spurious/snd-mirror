@@ -9,7 +9,7 @@
  * SOMEDAY: user-addable graph-style? axis? (dB for example, or rms above)
  *          also affects cursor display, perhaps verbose cursor info display, peak-env graphing,
  * SOMEDAY: if chans superimposed, spectrogram might use offset planes? (sonogram?)
- * SOMEDAY: Options:Filter menu to give access to the various dsp.scm filters, graphs like the control panel etc
+ * SOMEDAY: Edit:Filter menu to give access to the various dsp.scm filters, graphs like the control panel etc
  */
 
 typedef enum {CLICK_NOGRAPH, CLICK_WAVE, CLICK_FFT_AXIS, CLICK_LISP, CLICK_FFT_MAIN} click_loc_t;    /* for marks, regions, mouse click detection */
@@ -1068,37 +1068,24 @@ static void display_channel_id(chan_info *cp, int height, int chans)
   if ((chans > 1) || (cp->edit_ctr > 0))
     {
       int x0, y0;
+      color_t old_color = 0;
       set_peak_numbers_font(cp);
       if (cp->printing) ps_set_peak_numbers_font();
       x0 = 5;
       y0 = height + CHN_LABEL_OFFSET;
+      if (cp->edit_ctr == 0)
+	mus_snprintf(chn_id_str, LABEL_BUFFER_SIZE, "[%d]", cp->chan + 1);
+      else mus_snprintf(chn_id_str, LABEL_BUFFER_SIZE, "[%d]: %d", cp->chan + 1, cp->edit_ctr);
       if (cp == selected_channel())
 	{
-	  if (chans > 1)
-	    {
-	      if (cp->edit_ctr == 0)
-		mus_snprintf(chn_id_str, LABEL_BUFFER_SIZE, "[%s%d]", 
-			     _("chn"), (cp->chan + 1));                    /* cp chan numbers are 0 based to index sp->chans array */
-	      else mus_snprintf(chn_id_str, LABEL_BUFFER_SIZE, "[%s%d: (%d)]", 
-				_("chn"), (cp->chan + 1), cp->edit_ctr);
-	    }
-	  else mus_snprintf(chn_id_str, LABEL_BUFFER_SIZE, "[%d]", cp->edit_ctr);
-	}
-      else
-	{
-	  if (chans > 1)
-	    {
-	      if (cp->edit_ctr == 0)
-		mus_snprintf(chn_id_str, LABEL_BUFFER_SIZE, "%s%d", 
-			     _("chn"), (cp->chan + 1));
-	      else mus_snprintf(chn_id_str, LABEL_BUFFER_SIZE, "%s%d:(%d)", 
-				_("chn"), (cp->chan + 1), cp->edit_ctr);
-	    }
-	  else mus_snprintf(chn_id_str, LABEL_BUFFER_SIZE, "(%d)", cp->edit_ctr);
+	  old_color = get_foreground_color(copy_context(cp));
+	  set_foreground_color(copy_context(cp), ss->sgx->red);
 	}
       draw_string(copy_context(cp), x0, y0, chn_id_str, strlen(chn_id_str));
       if (cp->printing) 
 	ps_draw_string(cp->axis, x0, y0, chn_id_str);
+      if (cp == selected_channel())
+	set_foreground_color(copy_context(cp), old_color);
     }
 }
 

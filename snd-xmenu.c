@@ -640,7 +640,7 @@ Widget add_menu(void)
   XtAddCallback(mw[o_save_menu], XmNactivateCallback, options_save_callback, NULL);
   XtVaSetValues(mw[o_save_menu], XmNmnemonic, 'a', NULL);
 
-  mw[o_save_state_menu] = XtCreateManagedWidget(_("Save state"), xmPushButtonWidgetClass, mw[option_menu], main_args, main_n);
+  mw[o_save_state_menu] = XtCreateManagedWidget(_("Save session"), xmPushButtonWidgetClass, mw[option_menu], main_args, main_n);
   XtAddCallback(mw[o_save_state_menu], XmNactivateCallback, options_save_state_callback, NULL);
 #endif
 

@@ -1645,70 +1645,6 @@ static int levenstein(const char *s1, const char *s2)
   return(val);
 }
 
-bool snd_topic_help(const char *topic)
-{
-  /* called only in snd-x|ghelp.c */
-  int i, topic_len;
-  for (i = 0; i < NUM_XREFS; i++)
-    if (STRCMP(topic, xrefs[i]) == 0)
-      {
-	if (help_funcs[i])
-	  {
-	    (*help_funcs[i])();
-	    return(true);
-	  }
-      }
-  topic_len = snd_strlen(topic);
-  for (i = 0; i < NUM_XREFS; i++)
-    {
-      int xref_len, j, diff, min_len;
-      const char *a, *b;
-      xref_len = strlen(xrefs[i]);
-      if (xref_len < topic_len)
-	{
-	  diff = topic_len - xref_len;
-	  min_len = xref_len;
-	  a = topic;
-	  b = xrefs[i];
-	}
-      else
-	{
-	  diff = xref_len - topic_len;
-	  min_len = topic_len;
-	  a = xrefs[i];
-	  b = topic;
-	}
-      for (j = 0; j < diff; j++)
-	if (STRNCMP((char *)(a + j), b, min_len) == 0)
-	  {
-	    if (help_funcs[i])
-	      {
-		(*help_funcs[i])();
-		return(true);
-	      }
-	  }
-    }
-  {
-    int min_diff = 1000, min_loc = 0, this_diff;
-    for (i = 0; i < NUM_XREFS; i++)
-      if (help_funcs[i])
-	{
-	  this_diff = levenstein(topic, xrefs[i]);
-	  if (this_diff < min_diff)
-	    {
-	      min_diff = this_diff;
-	      min_loc = i;
-	    }
-	}
-    if (min_diff < snd_ilog2(topic_len)) /* was topic_len / 2, but this gives too much leeway for substitutions */
-      {
-	(*help_funcs[min_loc])();
-	return(true);
-      }
-  }
-  return(false);
-}
-
 char *snd_url(const char *name)
 {
   /* (snd-url "save-sound-as") -> "extsnd.html#savesoundas" */
@@ -1804,6 +1740,83 @@ static char *snd_finder(const char *name, bool got_help)
     }
   if (fgrep) FREE(fgrep); /* don't free url! */
   return(command);
+}
+
+bool snd_topic_help(const char *topic)
+{
+  /* called only in snd-x|ghelp.c */
+  int i, topic_len;
+  for (i = 0; i < NUM_XREFS; i++)
+    if (STRCMP(topic, xrefs[i]) == 0)
+      {
+	if (help_funcs[i])
+	  {
+	    (*help_funcs[i])();
+	    return(true);
+	  }
+      }
+  topic_len = snd_strlen(topic);
+  for (i = 0; i < NUM_XREFS; i++)
+    {
+      int xref_len, j, diff, min_len;
+      const char *a, *b;
+      xref_len = strlen(xrefs[i]);
+      if (xref_len < topic_len)
+	{
+	  diff = topic_len - xref_len;
+	  min_len = xref_len;
+	  a = topic;
+	  b = xrefs[i];
+	}
+      else
+	{
+	  diff = xref_len - topic_len;
+	  min_len = topic_len;
+	  a = xrefs[i];
+	  b = topic;
+	}
+      for (j = 0; j < diff; j++)
+	if (STRNCMP((char *)(a + j), b, min_len) == 0)
+	  {
+	    if (help_funcs[i])
+	      {
+		(*help_funcs[i])();
+		return(true);
+	      }
+	  }
+    }
+  /* try respelling topic */
+  {
+    int min_diff = 1000, min_loc = 0, this_diff;
+    for (i = 0; i < NUM_XREFS; i++)
+      if (help_funcs[i])
+	{
+	  this_diff = levenstein(topic, xrefs[i]);
+	  if (this_diff < min_diff)
+	    {
+	      min_diff = this_diff;
+	      min_loc = i;
+	    }
+	}
+    if (min_diff < snd_ilog2(topic_len)) /* was topic_len / 2, but this gives too much leeway for substitutions */
+      {
+	(*help_funcs[min_loc])();
+	return(true);
+      }
+  }
+  /* go searching for it */
+  {
+    char *str;
+    str = snd_finder(topic, false);
+    if (str)
+      {
+	snd_help(topic, str, WITH_WORD_WRAP);
+	FREE(str);
+	return(true);
+      }
+  }
+
+  return(false);
 }
 
 static bool strings_might_match(const char *a, const char *b, int len)

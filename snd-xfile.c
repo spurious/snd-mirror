@@ -694,6 +694,8 @@ void alert_new_file(void)
  * changed again 6-Dec-04 -- need a hook here since gtk changes constantly
  */
 
+/* PERHAPS: add a button for channel extraction in Save as dialog */
+
 static file_data *save_as_file_data = NULL;
 static Widget save_as_dialog = NULL, file_save_as_file_name;
 static save_dialog_t save_as_dialog_type = FILE_SAVE_AS;

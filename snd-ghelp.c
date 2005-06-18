@@ -51,16 +51,8 @@ static gboolean help_expose_callback(GtkWidget *w, GdkEventExpose *ev, gpointer 
     {
       if ((outer_with_wrap == WITH_WORD_WRAP) && (abs(curwid - old_help_text_width) > 10))
 	{
-	  char *cur_help_str = NULL;
-	  char *new_help_str = NULL;
-	  int end;
-	  GtkTextIter s, e;
-	  GtkTextBuffer *buf;
-	  buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(help_text));
-	  end = gtk_text_buffer_get_char_count(buf);
-	  gtk_text_buffer_get_iter_at_offset(buf, &s, 0);
-	  gtk_text_buffer_get_iter_at_offset(buf, &e, end);
-	  cur_help_str = gtk_text_buffer_get_text(buf, &s, &e, true);
+	  char *cur_help_str = NULL, *new_help_str = NULL;
+	  cur_help_str = sg_get_text(help_text, 0, -1);
 	  new_help_str = word_wrap(original_help_text, curwid);
 	  gtk_text_buffer_set_text(gtk_text_view_get_buffer(GTK_TEXT_VIEW(help_text)), "", 0);
 	  sg_text_insert(help_text, new_help_str);

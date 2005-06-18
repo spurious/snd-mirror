@@ -559,7 +559,7 @@ error checks, much as in CLM with *clm-safety*.
 <tr><td></td><td colspan=2>Name of directory for saved-state files.  
 <br><br>
 These files are written when you call <a href="#savestate">save-state</a> or
-choose the Options:Save state menu item.  If any of the current sounds has
+choose the Options:Save session menu item.  If any of the current sounds has
 an edit that requires saved data, it is written as a separate sound file, and
 that file is reloaded automatically when you restart the saved session.  To keep such
 files safe, or at least separate from others, you can set up separate
@@ -8693,7 +8693,7 @@ edit sequences can be compared.
 </table>
 
 <p>It is sometimes more convenient to edit the edit history lists
-directly, than to run Snd and invoke the <a href="snd.html#savedstate">"Save State"</a> menu option.
+directly, than to run Snd and invoke the <a href="snd.html#savedstate">"Save session"</a> menu option.
 To save a particular sound's or channel's edit list(s), use the
 function <a href="#saveedithistory">save-edit-history</a>.
 These lists are simply Scheme or Ruby programs, just like anything else
@@ -8723,7 +8723,7 @@ put in it something like:</p>
 Files like this can contain any arbitrary code, calling
 anything in Snd or anywhere else for that matter; you
 have a CLM-like notelist reader to describe sound file edits.
-Similarly, when you save Snd's state (via the Save State menu
+Similarly, when you save Snd's state (via the Save session menu
 option or by calling the function <a href="#savestate">save-state</a>),
 the result is a program that can be edited just like any
 other such text.
@@ -10185,7 +10185,7 @@ of that name.  So, if you haven't loaded dsp.scm:
 <pre>
 :<em class=typing>(snd-help "volterra-filter")</em>
 <em class=listener>"volterra-filter is not defined; it appears to be defined in:
-/home/bil/cl/dsp.scm:1936:(define (volterra-filter flt x)
+/home/bil/cl/dsp.scm:1936:(define (volterra-filter flt x) <!-- ) -->
 and documented at sndscm.html#volterrafilter"</em>
 </pre>
 snd-help tries to be smart about minor mispellings:

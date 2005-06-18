@@ -1033,6 +1033,8 @@ static void minibuffer_click_callback(Widget w, XtPointer context, XtPointer inf
  * if all other apply buttons are locked out (and play).
  */
 
+/* TODO: relative panes needs to notice overall window resize, and perhaps control panel sash motion */
+
 #if WITH_RELATIVE_PANES
 /* It would be nice if we could set a paned window to keep its children relative
  *   amounts the same upon outside resize, but the Paned Window widget doesn't
