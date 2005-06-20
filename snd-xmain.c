@@ -2,8 +2,6 @@
 
 /* in Mac OSX 10.3 using Apple's X11, the title bar is sometimes repeated? */
 
-#include <X11/cursorfont.h>
-
 #define FALLBACK_FONT "fixed"
 #define DEFAULT_FONTLIST "9x15"
 
@@ -46,15 +44,6 @@
 /* 0 means: use Motif default size */
 #define PLAIN_ICON 1
 #define XPM_ICON 2
-
-#define TINY_FONT "6x12"
-
-/* we assume later that we can always find these fonts (if resource file gives bogus entry, we fall back on these) */
-
-#define DEFAULT_PEAKS_FONT "-*-times-medium-r-*-*-14-*-*-*-*-*-*-*"
-#define DEFAULT_BOLD_PEAKS_FONT "-*-times-bold-r-*-*-14-*-*-*-*-*-*-*"
-#define DEFAULT_AXIS_NUMBERS_FONT "-*-courier-medium-r-*-*-14-*-*-*-*-*-*-*"
-#define DEFAULT_AXIS_LABEL_FONT "-*-times-medium-r-*-*-14-*-*-*-*-*-*-*"
 
 #ifdef SGI
   #define ICON_TYPE PLAIN_ICON
@@ -632,7 +621,7 @@ void snd_doit(int argc, char **argv)
   XtSetLanguageProc(NULL, NULL, NULL);
 #endif
   ss->channel_min_height = CHANNEL_MIN_HEIGHT;
-  ss->Graph_Cursor = XC_crosshair;
+  ss->Graph_Cursor = DEFAULT_GRAPH_CURSOR;
 #ifndef SND_AS_WIDGET
 #if ALPHA
   XtSetArg(args[0], XtNwidth, 640);
@@ -804,30 +793,30 @@ void snd_doit(int argc, char **argv)
   if ((!(set_peaks_font(snd_rs.peaks_font))) &&
       (!(set_peaks_font(DEFAULT_PEAKS_FONT))) &&
       (!(set_peaks_font(FALLBACK_FONT))))
-    fprintf(stderr, _("can't find font %s"), snd_rs.peaks_font);
+    fprintf(stderr, _("can't find peaks font %s"), snd_rs.peaks_font);
 
-  if ((!(set_tiny_font(TINY_FONT))) &&
+  if ((!(set_tiny_font(DEFAULT_TINY_FONT))) &&
       (!(set_tiny_font(FALLBACK_FONT))))
-    fprintf(stderr, _("can't find font %s"), TINY_FONT);
+    fprintf(stderr, _("can't find tiny font %s"), DEFAULT_TINY_FONT);
 
   if ((!(set_bold_peaks_font(snd_rs.bold_peaks_font))) &&
       (!(set_bold_peaks_font(DEFAULT_BOLD_PEAKS_FONT))) &&
       (!(set_bold_peaks_font(FALLBACK_FONT))))
-    fprintf(stderr, _("can't find font %s"), snd_rs.bold_peaks_font);
+    fprintf(stderr, _("can't find bold peaks font %s"), snd_rs.bold_peaks_font);
 
   if ((!(set_axis_label_font(snd_rs.axis_label_font))) &&
       (!(set_axis_label_font(DEFAULT_AXIS_LABEL_FONT))) &&
       (!(set_axis_label_font(FALLBACK_FONT))))
-    fprintf(stderr, _("can't find font %s"), snd_rs.axis_label_font);
+    fprintf(stderr, _("can't find axis label font %s"), snd_rs.axis_label_font);
 
   if ((!(set_axis_numbers_font(snd_rs.axis_numbers_font))) &&
       (!(set_axis_numbers_font(DEFAULT_AXIS_NUMBERS_FONT))) &&
       (!(set_axis_numbers_font(FALLBACK_FONT))))
-    fprintf(stderr, _("can't find font %s"), snd_rs.axis_numbers_font);
+    fprintf(stderr, _("can't find axis numbers font %s"), snd_rs.axis_numbers_font);
 
   if ((snd_rs.listener_font) &&
       (!(set_listener_font(snd_rs.listener_font))))
-    fprintf(stderr, _("can't find font %s"), snd_rs.listener_font);
+    fprintf(stderr, _("can't find listener font %s"), snd_rs.listener_font);
 
   if (!(ss->using_schemes)) XtVaSetValues(shell, XmNbackground, sx->basic_color, NULL);
   

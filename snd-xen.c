@@ -2505,15 +2505,15 @@ static XEN g_mus_audio_describe(void)
 static XEN g_just_sounds(void)
 {
   #define H_just_sounds "(" S_just_sounds "): the 'just sounds' choice in the file chooser dialog"
-  return(C_TO_XEN_BOOLEAN(ss->just_sounds_state));
+  return(C_TO_XEN_BOOLEAN(just_sounds(ss)));
 }
 
 static XEN g_set_just_sounds(XEN on) 
 {
   XEN_ASSERT_TYPE(XEN_BOOLEAN_P(on), on, XEN_ARG_1, S_setB S_just_sounds, "a boolean");
-  ss->just_sounds_state = XEN_TO_C_BOOLEAN(on);
-  reflect_just_sounds_state();
-  return(C_TO_XEN_BOOLEAN(ss->just_sounds_state));
+  set_just_sounds(XEN_TO_C_BOOLEAN(on));
+  reflect_just_sounds();
+  return(C_TO_XEN_BOOLEAN(just_sounds(ss)));
 }
 
 

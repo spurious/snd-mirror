@@ -302,7 +302,7 @@ void reflect_sound_selection(snd_info *sp);
 
 /* -------- snd-xfile.c -------- */
 
-char *read_file_data_choices(file_data *fdat, int *srate, int *chans, int *type, int *format, off_t *location, off_t *samples);
+char *get_file_dialog_sound_attributes(file_data *fdat, int *srate, int *chans, int *type, int *format, off_t *location, off_t *samples);
 void alert_new_file(void);
 snd_info *make_new_file_dialog(char *newname, int header_type, int data_format, int srate, int chans, char *comment);
 void make_cur_name_row(int old_size, int new_size);
@@ -325,7 +325,7 @@ widget_t make_mix_file_dialog(bool managed);
 void clear_deleted_snd_info(struct file_dialog_info *fd);
 widget_t post_it(const char *subject, const char *str);
 void save_post_it_dialog_state(FILE *fd);
-void reflect_just_sounds_state(void);
+void reflect_just_sounds(void);
 void save_file_dialog_state(FILE *fd);
 
 

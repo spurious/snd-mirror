@@ -304,9 +304,9 @@ void save_options_from_menu(void)
 {
   FILE *fd;
   fd = open_snd_init_file();
-  if (fd) save_snd_options(fd);
+  if (fd) save_options(fd);
   if ((!fd) || (FCLOSE(fd) != 0))
-    snd_error(_("save-options in %s: %s"),
+    snd_error(_("save options in %s: %s"),
 	      ss->init_file,
 	      snd_io_strerror());
   else

@@ -1,5 +1,6 @@
 Snd change log
-
+  
+  20-Jun:    'Extract' option to Save as dialogs (to extract a channel).
   13-Jun:    folded gl-ruby.c into gl.c, xm-ruby.c into xm.c, xg-ruby.c into xg.c.
   6-June:    removed save-options (use save-state).
   1-June:    snd 7.13.

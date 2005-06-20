@@ -1195,7 +1195,8 @@ static void make_file_info_pane(recorder_info *rp, Widget file_pane, int ndevs)
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-  recdat = make_file_data_panel(ff_form, "data-form", args, n, true, rp->output_header_type, rp->output_data_format, false, true, false);
+  recdat = make_file_data_panel(ff_form, "data-form", args, n, WITH_CHANNELS_FIELD, rp->output_header_type, rp->output_data_format, 
+				WITHOUT_DATA_LOCATION_FIELD, WITHOUT_SAMPLES_FIELD);
   XtVaGetValues(recdat->comment_text, XmNy, &pane_max, NULL);
   XtAddCallback(recdat->srate_text, XmNactivateCallback, srate_changed_callback, NULL); /* this is a no-op -- textfield widget is not activatable */
 #if SGI
@@ -2778,7 +2779,7 @@ static void record_button_callback(Widget w, XtPointer context, XtPointer info)
     {
       if (!(rp->taking_input)) fire_up_recorder();
       old_srate = rp->srate;
-      comment = read_file_data_choices(recdat, &rs, &ochns, &rp->output_header_type, &ofmt, &oloc, &samples); 
+      comment = get_file_dialog_sound_attributes(recdat, &rs, &ochns, &rp->output_header_type, &ofmt, &oloc, &samples); 
       rp->output_data_format = ofmt;
       if (rp->out_chans == 0)
 	{

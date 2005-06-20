@@ -52,13 +52,22 @@ void snd_warning(char *format, ...)
 #ifdef SND_AS_WIDGET
 static void (*snd_error_display)(const char *);
 
-void set_error_display (void (*func)(const char *))
+void set_error_display(void (*func)(const char *))
 {
   snd_error_display = func;
 }
 #endif
 
 static bool direct_snd_error_call = false;
+
+static void (*snd_error_handler)(const char *error_msg, void *ufd) = NULL;
+static void *snd_error_data;
+
+void redirect_snd_error_to(void (*handler)(const char *error_msg, void *ufd), void *data)
+{
+  snd_error_handler = handler;
+  snd_error_data = data;
+}
 
 void snd_error(char *format, ...)
 {
@@ -73,6 +82,13 @@ void snd_error(char *format, ...)
   vsprintf(snd_error_buffer, format, ap);
 #endif
   va_end(ap);
+
+  if (snd_error_handler)
+    {
+      (*snd_error_handler)(snd_error_buffer, snd_error_data);
+      return;
+    }
+
   if ((XEN_HOOKED(snd_error_hook)) &&
       (XEN_NOT_FALSE_P(run_or_hook(snd_error_hook, 
 				   XEN_LIST_1(C_TO_XEN_STRING(snd_error_buffer)),

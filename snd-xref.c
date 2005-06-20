@@ -4043,6 +4043,7 @@ static char *Resampling_xrefs[] = {
   "resample through list: {scratch}",
   "resample step-size through a function: {step-src}",
   "predict duration of resampled sound: {src-duration}",
+  "linear src: linear-src-channel in dsp.scm",
   NULL};
 
 static char *Resampling_urls[] = {
@@ -4062,6 +4063,7 @@ static char *Resampling_urls[] = {
   "sndscm.html#scratch",
   "extsnd.html#setsamples",
   "sndscm.html#srcduration",
+  NULL,
   NULL};
 
 static char *Undo_and_Redo_xrefs[] = {

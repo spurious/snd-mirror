@@ -1,12 +1,13 @@
 #include "snd.h"
 
-/* TODO: the chooser preview area could display a thumbnail graph of the sound */
+/* TODO: the chooser preview area could display a thumbnail graph of the sound, but the file_chooser is not ready for prime time... */
 
-#define HAVE_GFCDN HAVE_GTK_FILE_CHOOSER_DIALOG_NEW
+#define HAVE_GFCDN 0
+/* stupid thing doesn't work worth %$#! */
 
 /* most of these dialogs present a view of the various file header possibilities */
 
-char *read_file_data_choices(file_data *fdat, int *srate, int *chans, int *type, int *format, off_t *location, off_t *samples)
+char *get_file_dialog_sound_attributes(file_data *fdat, int *srate, int *chans, int *type, int *format, off_t *location, off_t *samples)
 {
   char *str;
   int res, val;
@@ -80,7 +81,12 @@ char *read_file_data_choices(file_data *fdat, int *srate, int *chans, int *type,
   return(NULL);
 }
 
-static void load_header_and_data_lists(file_data *fdat, int type, int format, int srate, int chans, off_t location, off_t samples, char *comment)
+#define IGNORE_DATA_LOCATION -1
+#define IGNORE_SAMPLES -1
+#define IGNORE_CHANS -1
+#define IGNORE_SRATE -1
+
+static void set_file_dialog_sound_attributes(file_data *fdat, int type, int format, int srate, int chans, off_t location, off_t samples, char *comment)
 {
   int i;
   char **fl = NULL;
@@ -100,9 +106,9 @@ static void load_header_and_data_lists(file_data *fdat, int type, int format, in
   g_signal_handlers_block_matched(GTK_OBJECT(fdat->format_list), G_SIGNAL_MATCH_DATA, 0, 0, NULL, 0, (gpointer)fdat);
   sg_list_select(fdat->format_list, fdat->format_pos);
   g_signal_handlers_unblock_matched(GTK_OBJECT(fdat->format_list), G_SIGNAL_MATCH_DATA, 0, 0, NULL, 0, (gpointer)fdat);
-  if ((srate > 0) && (fdat->srate_text))
+  if ((srate != IGNORE_SRATE) && (fdat->srate_text))
     widget_int_to_text(fdat->srate_text, srate);
-  if ((chans > 0) && (fdat->chans_text))
+  if ((chans != IGNORE_CHANS) && (fdat->chans_text))
     widget_int_to_text(fdat->chans_text, chans);
   if (fdat->comment_text) 
     {
@@ -113,9 +119,9 @@ static void load_header_and_data_lists(file_data *fdat, int type, int format, in
 	}
       else gtk_entry_set_text(GTK_ENTRY(fdat->comment_text), comment);
     }
-  if ((location >= 0) && (fdat->location_text))
+  if ((location != IGNORE_DATA_LOCATION) && (fdat->location_text))
     widget_off_t_to_text(fdat->location_text, location);
-  if ((samples >= 0) && (fdat->samples_text))
+  if ((samples != IGNORE_SAMPLES) && (fdat->samples_text))
     widget_off_t_to_text(fdat->samples_text, samples);
 }
 
@@ -603,10 +609,11 @@ static void gfile_header_type(file_data *fd, int row)
   if (fd->current_type != row)
     {
       set_header_type_and_format_from_position(fd, row);
-      load_header_and_data_lists(fd,
-				 fd->current_type,
-				 fd->current_format,
-				 0, 0, -1, -1, NULL);
+      set_file_dialog_sound_attributes(fd,
+				       fd->current_type,
+				       fd->current_format,
+				       IGNORE_SRATE, IGNORE_CHANS, IGNORE_DATA_LOCATION, IGNORE_SAMPLES, 
+				       NULL);
     }
 }
 
@@ -650,8 +657,9 @@ static void save_as_data_format_callback(GtkTreeSelection *selection, gpointer *
   if (value) g_free(value);
 }
 
-file_data *make_file_data_panel(GtkWidget *parent, char *name, 
-				bool with_chan, int header_type, int data_format, bool with_loc, bool comment_as_entry, bool with_samples)
+file_data *make_file_data_panel(GtkWidget *parent, char *name, dialog_channels_t with_chan, 
+				int header_type, int data_format, dialog_data_location_t with_loc, 
+				dialog_samples_t with_samples)
 {
   GtkWidget *form, *slab, *comment_label, *scbox, *combox;
   file_data *fdat;
@@ -687,7 +695,7 @@ file_data *make_file_data_panel(GtkWidget *parent, char *name,
 
   fdat->srate_text = snd_entry_new(scbox, true);
 
-  if (with_chan)
+  if (with_chan == WITH_CHANNELS_FIELD)
     {
       GtkWidget *clab, *loclab;
       clab = snd_gtk_label_new(_("chans:"), ss->sgx->highlight_color);
@@ -696,7 +704,7 @@ file_data *make_file_data_panel(GtkWidget *parent, char *name,
 
       fdat->chans_text = snd_entry_new(scbox, true);
       
-      if (with_loc)
+      if (with_loc == WITH_DATA_LOCATION_FIELD)
 	{
 	  loclab = snd_gtk_label_new(_("location:"), ss->sgx->highlight_color);
 	  gtk_box_pack_start(GTK_BOX(scbox), loclab, false, false, 0);
@@ -706,7 +714,7 @@ file_data *make_file_data_panel(GtkWidget *parent, char *name,
 	}
     }
 
-  if (with_samples)
+  if (with_samples == WITH_SAMPLES_FIELD)
     {
       GtkWidget *samplab;
       samplab = snd_gtk_label_new(_("samples:"), ss->sgx->highlight_color);
@@ -733,21 +741,15 @@ file_data *make_file_data_panel(GtkWidget *parent, char *name,
   gtk_box_pack_start(GTK_BOX(combox), comment_label, false, false, 0);
   gtk_widget_show(comment_label);
 
-  if (comment_as_entry)
-    {
-      /* try to kludge around a gtk bug -- this is not needed in motif */
-      fdat->comment_text = snd_entry_new(combox, true);
-    }
-  else
-    {
-      GtkWidget *frame;
-      frame = gtk_frame_new(NULL);
-      gtk_box_pack_start(GTK_BOX(combox), frame, true, true, 4);  
-      gtk_frame_set_shadow_type(GTK_FRAME(frame), GTK_SHADOW_IN);
-      gtk_widget_show(frame);
-      fdat->comment_text = make_scrolled_text(frame, true, NULL, NULL);
-      connect_mouse_to_text(fdat->comment_text);
-    }
+  {
+    GtkWidget *frame;
+    frame = gtk_frame_new(NULL);
+    gtk_box_pack_start(GTK_BOX(combox), frame, true, true, 4);  
+    gtk_frame_set_shadow_type(GTK_FRAME(frame), GTK_SHADOW_IN);
+    gtk_widget_show(frame);
+    fdat->comment_text = make_scrolled_text(frame, true, NULL, NULL);
+    connect_mouse_to_text(fdat->comment_text);
+  }
   return(fdat);
 }
 
@@ -767,7 +769,7 @@ static void save_as_ok_callback(GtkWidget *w, gpointer data)
   off_t location, samples;
   gpointer hide_me = 0;
   snd_info *sp;
-  comment = read_file_data_choices(save_as_file_data, &srate, &chans, &type, &format, &location, &samples);
+  comment = get_file_dialog_sound_attributes(save_as_file_data, &srate, &chans, &type, &format, &location, &samples);
   last_save_as_filename = snd_filer_get_filename(save_as_dialog);
   sp = any_selected_sound();
   if (last_save_as_filename)
@@ -819,8 +821,11 @@ static void make_save_as_dialog(char *sound_name, int header_type, int format_ty
 				     save_as_help_callback);
       fbox = gtk_vbox_new(false, 0);
       gtk_file_chooser_set_preview_widget(GTK_FILE_CHOOSER(save_as_dialog), fbox);
-      save_as_file_data = make_file_data_panel(fbox, "data-form", false, header_type, format_type, false, false, false);
+      gtk_widget_show(fbox);
       gtk_file_chooser_set_preview_widget_active(GTK_FILE_CHOOSER(save_as_dialog), true);
+      save_as_file_data = make_file_data_panel(fbox, "data-form", WITHOUT_CHANNELS_FIELD, header_type, format_type, 
+					       WITHOUT_DATA_LOCATION_FIELD, WITHOUT_SAMPLES_FIELD);
+      /* TODO: where is this file panel?? */
 #else
       save_as_dialog = snd_filer_new(file_string, true,
 				     (GtkSignalFunc)save_as_delete_callback,
@@ -829,7 +834,8 @@ static void make_save_as_dialog(char *sound_name, int header_type, int format_ty
       fbox = gtk_vbox_new(false, 0);
       gtk_box_pack_start(GTK_BOX(SND_FILER(save_as_dialog)->main_vbox), fbox, true, true, 0);
       gtk_widget_show(fbox);
-      save_as_file_data = make_file_data_panel(fbox, "data-form", false, header_type, format_type, false, false, false);
+      save_as_file_data = make_file_data_panel(fbox, "data-form", WITHOUT_CHANNELS_FIELD, header_type, format_type,
+					       WITHOUT_DATA_LOCATION_FIELD, WITHOUT_SAMPLES_FIELD);
 #endif
       set_dialog_widget(FILE_SAVE_AS_DIALOG, save_as_dialog);
     }
@@ -851,12 +857,12 @@ widget_t make_file_save_as_dialog(bool managed)
   make_save_as_dialog((char *)((sp) ? sp->short_filename : ""),
 		      default_output_type(ss),
 		      default_output_format(ss));
-  load_header_and_data_lists(save_as_file_data,
-			     save_as_file_data->current_type,
-			     save_as_file_data->current_format,
-			     (hdr) ? hdr->srate : selection_srate(), 
-			     0, -1, -1,
-			     com = output_comment(hdr));
+  set_file_dialog_sound_attributes(save_as_file_data,
+				   save_as_file_data->current_type,
+				   save_as_file_data->current_format,
+				   (hdr) ? hdr->srate : selection_srate(), 
+				   IGNORE_CHANS, IGNORE_DATA_LOCATION, IGNORE_SAMPLES,
+				   com = output_comment(hdr));
   if (com) FREE(com);
   if (managed) gtk_widget_show(save_as_dialog);
   return(save_as_dialog);
@@ -868,11 +874,12 @@ widget_t make_edit_save_as_dialog(bool managed)
   make_save_as_dialog(_("current selection"),
 		      default_output_type(ss),
 		      default_output_format(ss));
-  load_header_and_data_lists(save_as_file_data,
-			     save_as_file_data->current_type,
-			     save_as_file_data->current_format,
-			     selection_srate(), 
-			     0, -1, -1, NULL);
+  set_file_dialog_sound_attributes(save_as_file_data,
+				   save_as_file_data->current_type,
+				   save_as_file_data->current_format,
+				   selection_srate(), 
+				   IGNORE_CHANS, IGNORE_DATA_LOCATION, IGNORE_SAMPLES, 
+				   NULL);
   if (managed) gtk_widget_show(save_as_dialog);
   return(save_as_dialog);
 }
@@ -1676,8 +1683,9 @@ snd_info *make_new_file_dialog(char *newname, int header_type, int data_format, 
       new_file_name = snd_entry_new(hform, true);
       gtk_entry_set_text(GTK_ENTRY(new_file_name), newname);
 
-      new_dialog_data = make_file_data_panel(GTK_DIALOG(new_dialog)->vbox, "data-form", true, 
-					     default_output_type(ss), default_output_format(ss), false, false, true);
+      new_dialog_data = make_file_data_panel(GTK_DIALOG(new_dialog)->vbox, "data-form", WITH_CHANNELS_FIELD, 
+					     default_output_type(ss), default_output_format(ss), 
+					     WITHOUT_DATA_LOCATION_FIELD, WITH_SAMPLES_FIELD);
       set_dialog_widget(NEW_FILE_DIALOG, new_dialog);
     }
   else
@@ -1685,7 +1693,7 @@ snd_info *make_new_file_dialog(char *newname, int header_type, int data_format, 
       gtk_window_set_title(GTK_WINDOW(new_dialog), title);
       gtk_entry_set_text(GTK_ENTRY(new_file_name), newname);
     }
-  load_header_and_data_lists(new_dialog_data, header_type, data_format, srate, chans, -1, initial_samples, comment);
+  set_file_dialog_sound_attributes(new_dialog_data, header_type, data_format, srate, chans, IGNORE_DATA_LOCATION, initial_samples, comment);
   new_file_done = false;
   gtk_widget_show(new_dialog);
   while (!new_file_done) gtk_main_iteration();
@@ -1698,7 +1706,7 @@ snd_info *make_new_file_dialog(char *newname, int header_type, int data_format, 
       char *tmpstr, *newer_name = NULL;
       newer_name = (char *)gtk_entry_get_text(GTK_ENTRY(new_file_name));
       if (newer_name == NULL) return(NULL);
-      tmpstr = read_file_data_choices(new_dialog_data, &srate, &chans, &header_type, &data_format, &loc, &initial_samples);
+      tmpstr = get_file_dialog_sound_attributes(new_dialog_data, &srate, &chans, &header_type, &data_format, &loc, &initial_samples);
       sp = snd_new_file(newer_name, header_type, data_format, srate, chans, tmpstr, initial_samples);
       if (tmpstr) FREE(tmpstr);
     }
@@ -1776,8 +1784,9 @@ GtkWidget *edit_header(snd_info *sp)
       gtk_widget_show(save_button);
       gtk_widget_show(help_button);
 
-      edit_header_data = make_file_data_panel(GTK_DIALOG(edit_header_dialog)->vbox, _("Edit Header"), true, 
-					      hdr->type, hdr->format, true, false, true);
+      edit_header_data = make_file_data_panel(GTK_DIALOG(edit_header_dialog)->vbox, _("Edit Header"), 
+					      WITH_CHANNELS_FIELD, hdr->type, hdr->format,
+					      WITH_DATA_LOCATION_FIELD, WITH_SAMPLES_FIELD);
       set_dialog_widget(EDIT_HEADER_DIALOG, edit_header_dialog);
     }
   str = mus_format(_("Edit header of %s"), sp->short_filename);
@@ -1785,7 +1794,7 @@ GtkWidget *edit_header(snd_info *sp)
   FREE(str);
 
   gtk_widget_show(edit_header_dialog);
-  load_header_and_data_lists(edit_header_data, hdr->type, hdr->format, hdr->srate, hdr->chans, hdr->data_location, hdr->samples, hdr->comment);
+  set_file_dialog_sound_attributes(edit_header_data, hdr->type, hdr->format, hdr->srate, hdr->chans, hdr->data_location, hdr->samples, hdr->comment);
   return(edit_header_dialog);
 }
 
@@ -1871,13 +1880,13 @@ void save_post_it_dialog_state(FILE *fd)
     }
 }
 
-void reflect_just_sounds_state(void)
+void reflect_just_sounds(void)
 {
 #if HAVE_GFCDN
   if (open_dialog)
-    gtk_file_chooser_set_filter(GTK_FILE_CHOOSER(open_dialog->dialog), (ss->just_sounds_state) ? sound_files_filter : all_files_filter);
+    gtk_file_chooser_set_filter(GTK_FILE_CHOOSER(open_dialog->dialog), (just_sounds(ss)) ? sound_files_filter : all_files_filter);
   if (mix_dialog)
-    gtk_file_chooser_set_filter(GTK_FILE_CHOOSER(mix_dialog->dialog), (ss->just_sounds_state) ? sound_files_filter : all_files_filter);
+    gtk_file_chooser_set_filter(GTK_FILE_CHOOSER(mix_dialog->dialog), (just_sounds(ss)) ? sound_files_filter : all_files_filter);
 #endif
 }
 

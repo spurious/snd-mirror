@@ -1236,6 +1236,7 @@ static mix_info *file_mix_samples(off_t beg, off_t num, char *mixfile, chan_info
 
 #define MIX_FILE_NO_MIX -1
 #define MIX_FILE_NO_FILE -2
+#define MIX_FILE_NO_SP -3
 
 int mix_file(off_t beg, off_t num, int chans, chan_info **cps, char *mixinfile, file_delete_t temp, const char *origin, bool with_tag, int track_id)
 {
@@ -1398,12 +1399,12 @@ static int mix_complete_file(snd_info *sp, off_t beg, char *fullname, bool with_
   return(id);
 }
 
-void mix_complete_file_at_cursor(snd_info *sp, char *str, bool with_tag, int track_id)
+int mix_complete_file_at_cursor(snd_info *sp, char *str, bool with_tag, int track_id)
 {
   if ((sp) && (str) && (*str))
     {
       chan_info *cp;
-      int err;
+      int err = 0;
       char *fullname;
       fullname = mus_expand_filename(str);
       cp = any_selected_channel(sp);
@@ -1411,7 +1412,9 @@ void mix_complete_file_at_cursor(snd_info *sp, char *str, bool with_tag, int tra
       if (err == MIX_FILE_NO_FILE) 
 	report_in_minibuffer_and_save(sp, _("can't mix file: %s, %s"), str, snd_io_strerror());
       if (fullname) FREE(fullname);
+      return(err);
     }
+  return(MIX_FILE_NO_SP);
 }
 
 #define MIX_STATE_INCREMENT 8

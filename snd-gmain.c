@@ -37,12 +37,6 @@
 #define CHANNEL_SASH_INDENT -10
 #define CHANNEL_SASH_SIZE 10
 
-#define DEFAULT_TINY_FONT "Monospace 8"
-#define DEFAULT_PEAKS_FONT "Serif 10"
-#define DEFAULT_BOLD_PEAKS_FONT "Serif Bold 10"
-#define DEFAULT_AXIS_NUMBERS_FONT "Monospace 10"
-#define DEFAULT_AXIS_LABEL_FONT "Serif 14"
-
 #define POSITION_SLIDER_WIDTH 13
 #define ZOOM_SLIDER_WIDTH 10
 #define TOGGLE_SIZE 15
@@ -440,7 +434,7 @@ void snd_doit(int argc, char **argv)
 #endif
 
   ss->channel_min_height = CHANNEL_MIN_HEIGHT;
-  ss->Graph_Cursor = GDK_CROSSHAIR;
+  ss->Graph_Cursor = DEFAULT_GRAPH_CURSOR;
 
 #ifndef SND_AS_WIDGET
   shell = gtk_window_new(GTK_WINDOW_TOPLEVEL);
@@ -525,26 +519,26 @@ void snd_doit(int argc, char **argv)
 
   if ((!(set_tiny_font(DEFAULT_TINY_FONT))) &&
       (!(set_tiny_font(FALLBACK_FONT))))
-    fprintf(stderr, _("can't find font: %s"), DEFAULT_TINY_FONT);
+    fprintf(stderr, _("can't find tiny font: %s"), DEFAULT_TINY_FONT);
 
   if ((!(set_axis_label_font(DEFAULT_AXIS_LABEL_FONT))) &&
       (!(set_axis_label_font(FALLBACK_FONT))))
-    fprintf(stderr, _("can't find font: %s"), DEFAULT_AXIS_LABEL_FONT);
+    fprintf(stderr, _("can't find axis label font: %s"), DEFAULT_AXIS_LABEL_FONT);
 
   if ((!(set_axis_numbers_font(DEFAULT_AXIS_NUMBERS_FONT))) &&
       (!(set_axis_numbers_font(FALLBACK_FONT))))
-    fprintf(stderr, _("can't find font: %s"), DEFAULT_AXIS_NUMBERS_FONT);
+    fprintf(stderr, _("can't find axis numbers font: %s"), DEFAULT_AXIS_NUMBERS_FONT);
 
   if ((!(set_peaks_font(DEFAULT_PEAKS_FONT))) &&
       (!(set_peaks_font(FALLBACK_FONT))))
-    fprintf(stderr, _("can't find font: %s"), DEFAULT_PEAKS_FONT);
+    fprintf(stderr, _("can't find peaks font: %s"), DEFAULT_PEAKS_FONT);
 
   if ((!(set_bold_peaks_font(DEFAULT_BOLD_PEAKS_FONT))) &&
       (!(set_bold_peaks_font(FALLBACK_FONT))))
-    fprintf(stderr, _("can't find font: %s"), DEFAULT_BOLD_PEAKS_FONT);
+    fprintf(stderr, _("can't find bold peaks font: %s"), DEFAULT_BOLD_PEAKS_FONT);
 
   if (!(set_listener_font(FALLBACK_FONT)))
-    fprintf(stderr, _("can't find font: %s"), FALLBACK_FONT);
+    fprintf(stderr, _("can't find listener font: %s"), FALLBACK_FONT);
 
   set_init_filename(INIT_FILE_NAME);
   set_color_map(DEFAULT_SPECTROGRAM_COLOR);

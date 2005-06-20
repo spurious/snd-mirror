@@ -418,7 +418,7 @@ typedef struct snd_state {
   env_type_t Enved_Style;
   int Graph_Cursor, Mix_Tag_Width, Mix_Tag_Height, Mark_Tag_Height, Mark_Tag_Width, Minibuffer_History_Length;
   enved_target_t Enved_Target;
-  bool Data_Clipped, Show_Indices;
+  bool Data_Clipped, Show_Indices, Just_Sounds;
   int Cursor_Size;
   cursor_style_t Cursor_Style;
   bool Filter_Control_In_Db, Filter_Control_In_Hz, Show_Sonogram_Cursor;
@@ -432,19 +432,19 @@ typedef struct snd_state {
   Float Amp_Control_Min, Amp_Control_Max, Reverb_Control_Scale_Min, Reverb_Control_Scale_Max;
   Float Reverb_Control_Length_Min, Reverb_Control_Length_Max;
   int Filter_Control_Order, Cursor_Location_Offset;
-  Float Tempo_Control_Min, Tempo_Control_Max;
+  Float Tempo_Control_Min, Tempo_Control_Max, Min_dB;
   bool Show_Controls;
   tracking_cursor_t Cursor_Follows_Play;
   XEN cursor_proc;
   int cursor_proc_loc;
   XEN zoom_focus_proc;
   int zoom_focus_proc_loc;
-  Float min_dB, lin_dB;
+  Float lin_dB;
   char *HTML_Dir, *HTML_Program;
   bool error_lock;
   int deferred_regions;
   bool batch_mode;
-  bool jump_ok, exiting, just_sounds_state;
+  bool jump_ok, exiting;
   env_editor *enved;
   Tempus click_time;
 } snd_state;
@@ -609,7 +609,7 @@ void g_init_menu(void);
 
 /* -------- snd-main.c -------- */
 
-void save_snd_options(FILE *fd);
+void save_options(FILE *fd);
 void open_save_sound_block(snd_info *sp, FILE *fd, bool with_nth);
 void close_save_sound_block(FILE *fd);
 int snd_exit_cleanly(bool force_exit);
@@ -638,6 +638,7 @@ void g_init_errors(void);
 #ifdef SND_AS_WIDGET
   void set_error_display (void (*func)(const char *));
 #endif
+void redirect_snd_error_to(void (*handler)(const char *error_msg, void *ufd), void *data);
 
 
 /* -------- snd-completion.c -------- */
@@ -1263,6 +1264,7 @@ dir *free_dir (dir *dp);
 bool sound_file_p(char *name);
 bool run_just_sounds_hook(const char *name);
 void init_sound_file_extensions(void);
+void save_added_sound_file_extensions(FILE *fd);
 dir *find_sound_files_in_dir (const char *name);
 dir *filter_sound_files(dir *dp, char *pattern);
 snd_info *snd_open_file (const char *filename, bool read_only);
@@ -1372,7 +1374,7 @@ mix_context *make_mix_context(chan_info *cp);
 mix_context *free_mix_context(mix_context *ms);
 void free_mix_list(chan_info *cp);
 void free_mixes(chan_info *cp);
-void mix_complete_file_at_cursor(snd_info *sp, char *str, bool with_tag, int track_id);
+int mix_complete_file_at_cursor(snd_info *sp, char *str, bool with_tag, int track_id);
 int mix_file(off_t beg, off_t num, int chans, chan_info **cps, char *mixinfile, file_delete_t temp, const char *origin, bool with_tag, int track_id);
 void backup_mix_list(chan_info *cp, int edit_ctr);
 bool active_mix_p(chan_info *cp);

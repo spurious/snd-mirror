@@ -353,7 +353,7 @@ static char brkpt_buf[LABEL_BUFFER_SIZE];
 
 void enved_display_point_label(Float x, Float y)
 {
-  if ((enved_in_dB(ss)) && (ss->min_dB < -60))
+  if ((enved_in_dB(ss)) && (min_dB(ss) < -60))
     mus_snprintf(brkpt_buf, LABEL_BUFFER_SIZE, "%.3f : %.5f", x, y);
   else mus_snprintf(brkpt_buf, LABEL_BUFFER_SIZE, "%.3f : %.3f", x, y);
   gtk_label_set_text(GTK_LABEL(brktxtL), brkpt_buf);

@@ -411,7 +411,7 @@ static void clear_point_label(void)
 void enved_display_point_label(Float x, Float y)
 {
   char brkpt_buf[LABEL_BUFFER_SIZE];
-  if ((enved_in_dB(ss)) && (ss->min_dB < -60))
+  if ((enved_in_dB(ss)) && (min_dB(ss) < -60))
     mus_snprintf(brkpt_buf, LABEL_BUFFER_SIZE, "%.3f : %.5f", x, y);
   else mus_snprintf(brkpt_buf, LABEL_BUFFER_SIZE, "%.3f : %.3f", x, y);
   set_button_label(brkptL, brkpt_buf);

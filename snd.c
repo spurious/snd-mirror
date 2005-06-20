@@ -24,7 +24,7 @@ static bool ignore_mus_error(int type, char *msg)
   RETSIGTYPE top_level_catch(int ignore);
 #endif
 
-static void mus_error2snd(int type, char *msg)
+static void mus_error_to_snd(int type, char *msg)
 {
   /* it's possible to get here outside any catch, and in Guile a throw in that case
    *   kills the main program!
@@ -55,7 +55,7 @@ static void mus_error2snd(int type, char *msg)
     }
 }
 
-static void mus_print2snd(char *msg)
+static void mus_print_to_snd(char *msg)
 {
   if (!ss)
     {
@@ -285,7 +285,7 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
   ss->HTML_Dir = NULL;
   ss->HTML_Program = copy_string(DEFAULT_HTML_PROGRAM);
   ss->Log_Freq_Start = DEFAULT_LOG_FREQ_START;
-  ss->min_dB = DEFAULT_MIN_DB;
+  ss->Min_dB = DEFAULT_MIN_DB;
   ss->lin_dB = pow(10.0, DEFAULT_MIN_DB * 0.05);
   ss->init_window_x = DEFAULT_INIT_WINDOW_X; 
   ss->init_window_y = DEFAULT_INIT_WINDOW_Y; 
@@ -322,6 +322,7 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
   ss->Tempo_Control_Max = DEFAULT_TEMPO_CONTROL_MAX;
   ss->Show_Controls = DEFAULT_SHOW_CONTROLS;
   ss->Cursor_Follows_Play = DEFAULT_CURSOR_FOLLOWS_PLAY;
+  ss->Just_Sounds = DEFAULT_JUST_SOUNDS;
 
   init_sound_file_extensions();
 
@@ -336,7 +337,6 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
   ss->lisp_graph_hook_active = false;
   ss->error_lock = false;
   ss->exiting = false;
-  ss->just_sounds_state = false;
   ss->deferred_regions = 0;
 
 #if USE_NO_GUI || HAVE_RUBY
@@ -349,8 +349,8 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
   ss->search_expr = NULL;
   ss->file_sort_proc = XEN_UNDEFINED;
   ss->search_tree = NULL;
-  mus_error_set_handler(mus_error2snd);
-  mus_print_set_handler(mus_print2snd);
+  mus_error_set_handler(mus_error_to_snd);
+  mus_print_set_handler(mus_print_to_snd);
 
 #ifdef SND_AS_WIDGET
   return(ss);

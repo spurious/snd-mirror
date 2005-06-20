@@ -27,7 +27,7 @@ static char *FFT_WINDOWS[NUM_FFT_WINDOWS] =
 
 static Float fp_dB(Float py)
 {
-  return((py <= ss->lin_dB) ? 0.0 : (1.0 - (20.0 * log10(py) / ss->min_dB)));
+  return((py <= ss->lin_dB) ? 0.0 : (1.0 - (20.0 * log10(py) / min_dB(ss))));
 }
 
 static axis_info *axis_ap = NULL;
@@ -418,7 +418,7 @@ void reflect_log_freq_start_in_transform_dialog(void)
 void reflect_min_db_in_transform_dialog(void) 
 {
   if (transform_dialog)
-    gtk_spin_button_set_value(GTK_SPIN_BUTTON(db_txt), (gfloat)(-(ss->min_dB)));
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(db_txt), (gfloat)(-(min_dB(ss))));
 }
 
 
@@ -559,7 +559,7 @@ GtkWidget *fire_up_transform_dialog(bool managed)
 	gtk_box_pack_start(GTK_BOX(buttons), db_lab, false, false, 0);
 	gtk_widget_show(db_lab);
       
-	db_vals = gtk_adjustment_new((int)(-(ss->min_dB)), 2, 1000, 2, 10, 0); /* can't be negative!! */
+	db_vals = gtk_adjustment_new((int)(-(min_dB(ss))), 2, 1000, 2, 10, 0); /* can't be negative!! */
 	db_txt = gtk_spin_button_new(GTK_ADJUSTMENT(db_vals), 0.0, 0);
 	gtk_box_pack_start(GTK_BOX(buttons), db_txt, false, false, 0);
 	gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(db_txt), true);

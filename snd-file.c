@@ -426,9 +426,14 @@ static void add_snd_file_to_dir_list(dir *dp, const char *name)
 static char **sound_file_extensions = NULL;
 static int sound_file_extensions_size = 0;
 static int sound_file_extensions_end = 0;
+static int default_sound_file_extensions = 0;
 
 static void add_sound_file_extension(const char *ext)
 {
+  int i;
+  for (i = 0; i < sound_file_extensions_end; i++)
+    if (strcmp(ext, sound_file_extensions[i]) == 0)
+      return;
   if (sound_file_extensions_end == sound_file_extensions_size)
     {
       sound_file_extensions_size += 8;
@@ -452,6 +457,22 @@ void init_sound_file_extensions(void)
   add_sound_file_extension("voc");
   add_sound_file_extension("wve");
   add_sound_file_extension("sf2");
+  default_sound_file_extensions = sound_file_extensions_end;
+}
+
+void save_added_sound_file_extensions(FILE *fd)
+{
+  int i;
+  if (sound_file_extensions_end > default_sound_file_extensions)
+    for (i = default_sound_file_extensions; i < sound_file_extensions_end; i++)
+      {
+#if HAVE_SCHEME
+	fprintf(fd, "(%s \"%s\")\n", S_add_sound_file_extension, sound_file_extensions[i]);
+#endif
+#if HAVE_RUBY
+	fprintf(fd, "%s(\"%s\")\n", TO_PROC_NAME(S_add_sound_file_extension), sound_file_extensions[i]);
+#endif
+      }
 }
 
 static XEN just_sounds_hook;
@@ -2271,7 +2292,7 @@ void edit_header_callback(snd_info *sp, file_data *edit_header_data)
       if ((hdr->type == MUS_AIFF) || (hdr->type == MUS_AIFC)) mus_header_set_aiff_loop_info(mus_sound_loop_info(sp->filename));
       mus_sound_forget(sp->filename);
       /* find out which fields changed -- if possible don't touch the sound data */
-      comment = read_file_data_choices(edit_header_data, &srate, &chans, &type, &format, &loc, &samples);
+      comment = get_file_dialog_sound_attributes(edit_header_data, &srate, &chans, &type, &format, &loc, &samples);
       if (hdr->type != type)
 	mus_header_change_type(sp->filename, type, format);
       else

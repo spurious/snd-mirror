@@ -274,7 +274,9 @@ static void pcp_sl(FILE *fd, const char *name, Float val1, Float val2, int chan)
   {b_ok = true; fprintf(fd, "%s(set! (%s sfile %d) (list %f %f))\n", white_space, name, chan, val1, val2);}
 #endif
 
-void save_snd_options(FILE *fd)
+/* TODO: save_options (and save_state) should save non-default colors */
+
+void save_options(FILE *fd)
 { /* for save options menu choice (.snd) -- mostly saving snd_state info */
   time_t ts;
   char time_buf[TIME_STR_SIZE];
@@ -309,6 +311,7 @@ void save_snd_options(FILE *fd)
   if (transform_normalization(ss) != DEFAULT_TRANSFORM_NORMALIZATION) pss_ss(fd, S_transform_normalization, transform_normalization_name(transform_normalization(ss)));
   if (optimization(ss) != DEFAULT_OPTIMIZATION) pss_sd(fd, S_optimization, optimization(ss));
   if (trap_segfault(ss) != DEFAULT_TRAP_SEGFAULT) pss_ss(fd, S_trap_segfault, b2s(trap_segfault(ss)));
+  if (just_sounds(ss) != DEFAULT_JUST_SOUNDS) pss_ss(fd, S_just_sounds, b2s(just_sounds(ss)));
   if (show_selection_transform(ss) != DEFAULT_SHOW_SELECTION_TRANSFORM) pss_ss(fd, S_show_selection_transform, b2s(show_selection_transform(ss)));
   if (with_gl(ss) != DEFAULT_WITH_GL) pss_ss(fd, S_with_gl, b2s(with_gl(ss)));
   if (with_mix_tags(ss) != DEFAULT_WITH_MIX_TAGS) pss_ss(fd, S_with_mix_tags, b2s(with_mix_tags(ss)));
@@ -372,7 +375,25 @@ void save_snd_options(FILE *fd)
   if (enved_clip_p(ss) != DEFAULT_ENVED_CLIP_P) pss_ss(fd, S_enved_clip_p, b2s(enved_clip_p(ss)));
   if (enved_style(ss) == ENVELOPE_EXPONENTIAL) pss_ss(fd, S_enved_style, TO_VAR_NAME(S_envelope_exponential));
 
-  if (vu_font(ss)) pss_sq(fd, S_vu_font, vu_font(ss));
+  if (vu_font(ss)) 
+    pss_sq(fd, S_vu_font, vu_font(ss));
+  if ((!tiny_font(ss)) || (strcmp(tiny_font(ss), DEFAULT_TINY_FONT) != 0))
+    pss_sq(fd, S_tiny_font, tiny_font(ss));
+  if ((!peaks_font(ss)) || (strcmp(peaks_font(ss), DEFAULT_PEAKS_FONT) != 0))
+    pss_sq(fd, S_peaks_font, peaks_font(ss));
+  if ((!bold_peaks_font(ss)) || (strcmp(bold_peaks_font(ss), DEFAULT_BOLD_PEAKS_FONT) != 0))
+    pss_sq(fd, S_bold_peaks_font, bold_peaks_font(ss));
+  if ((!axis_label_font(ss)) || (strcmp(axis_label_font(ss), DEFAULT_AXIS_LABEL_FONT) != 0))
+    pss_sq(fd, S_axis_label_font, axis_label_font(ss));
+  if ((!axis_numbers_font(ss)) || (strcmp(axis_numbers_font(ss), DEFAULT_AXIS_NUMBERS_FONT) != 0))
+    pss_sq(fd, S_axis_numbers_font, axis_numbers_font(ss));
+  if (listener_font(ss))
+    pss_sq(fd, S_listener_font, listener_font(ss));
+
+  /* graph_cursor is a Cursor in X [ss->sgx->graph_cursor], GdkCursor in gtk */
+
+  save_added_sound_file_extensions(fd);
+
   if (save_state_file(ss))
     pss_sq(fd, S_save_state_file, save_state_file(ss));
   if (temp_dir(ss)) pss_sq(fd, S_temp_dir, temp_dir(ss));
@@ -386,12 +407,14 @@ void save_snd_options(FILE *fd)
     pss_sq(fd, S_listener_prompt, listener_prompt(ss));
   if ((html_program(ss)) && (strcmp(html_program(ss), DEFAULT_HTML_PROGRAM) != 0))
     pss_sq(fd, S_html_program, html_program(ss));
+  if (html_dir(ss))
+    pss_sq(fd, S_html_dir, html_dir(ss));
   if (audio_input_device(ss) != DEFAULT_AUDIO_INPUT_DEVICE) pss_sd(fd, S_audio_input_device, audio_input_device(ss));
   if (audio_output_device(ss) != DEFAULT_AUDIO_OUTPUT_DEVICE) pss_sd(fd, S_audio_output_device, audio_output_device(ss));
 
   if (fneq(fft_window_beta(ss), DEFAULT_FFT_WINDOW_BETA)) pss_sf(fd, S_fft_window_beta, fft_window_beta(ss));
-  if (fneq(ss->min_dB, DEFAULT_MIN_DB)) pss_sf(fd, S_min_dB, ss->min_dB);
-  if (fneq(ss->Log_Freq_Start, DEFAULT_LOG_FREQ_START)) pss_sf(fd, S_log_freq_start, ss->Log_Freq_Start);
+  if (fneq(min_dB(ss), DEFAULT_MIN_DB)) pss_sf(fd, S_min_dB, min_dB(ss));
+  if (fneq(log_freq_start(ss), DEFAULT_LOG_FREQ_START)) pss_sf(fd, S_log_freq_start, log_freq_start(ss));
   if (fneq(color_cutoff(ss), DEFAULT_COLOR_CUTOFF)) pss_sf(fd, S_color_cutoff, color_cutoff(ss));
   if (fneq(color_scale(ss), DEFAULT_COLOR_SCALE)) pss_sf(fd, S_color_scale, color_scale(ss));
   if (fneq(spectro_x_scale(ss), DEFAULT_SPECTRO_X_SCALE)) pss_sf(fd, S_spectro_x_scale, spectro_x_scale(ss));
@@ -689,6 +712,7 @@ static bool default_envelope_p(env *e)
 static void save_sound_state (snd_info *sp, void *ptr) 
 {
   /* called only after the global settings have been established, so here we can't use the DEFAULT_* macros that are ambiguous */
+  /* x|y-axis-label? */
   int chan;
   FILE *fd;
   chan_info *cp;
@@ -789,7 +813,7 @@ static void save_sound_state (snd_info *sp, void *ptr)
       if (cp->verbose_cursor != verbose_cursor(ss)) pcp_ss(fd, S_verbose_cursor, b2s(cp->verbose_cursor), chan);
       if (cp->zero_pad != zero_pad(ss)) pcp_sd(fd, S_zero_pad, cp->zero_pad, chan);
       if (cp->wavelet_type != wavelet_type(ss)) pcp_sd(fd, S_wavelet_type, cp->wavelet_type, chan);
-      if (fneq(cp->min_dB, ss->min_dB)) pcp_sf(fd, S_min_dB, cp->min_dB, chan);
+      if (fneq(cp->min_dB, min_dB(ss))) pcp_sf(fd, S_min_dB, cp->min_dB, chan);
       if (fneq(cp->spectro_x_angle, spectro_x_angle(ss))) pcp_sf(fd, S_spectro_x_angle, cp->spectro_x_angle, chan);
       if (fneq(cp->spectro_y_angle, spectro_y_angle(ss))) pcp_sf(fd, S_spectro_y_angle, cp->spectro_y_angle, chan);
       if (fneq(cp->spectro_z_angle, spectro_z_angle(ss))) pcp_sf(fd, S_spectro_z_angle, cp->spectro_z_angle, chan);
@@ -873,8 +897,8 @@ static char *save_state_or_error (char *save_state_name)
 #if HAVE_SETLOCALE
       locale = copy_string(setlocale(LC_NUMERIC, "C")); /* must use decimal point in floats since Scheme assumes that format */
 #endif
-      save_prevlist(save_fd);                                 /* list of previous files (View: Files option) */
-      save_snd_options(save_fd);                              /* options = user-settable global state variables */
+      save_prevlist(save_fd);                           /* list of previous files (View: Files option) */
+      save_options(save_fd);                            /* options = user-settable global state variables */
       /* the global settings need to precede possible local settings */
 
       if (ss->active_sounds > 0)

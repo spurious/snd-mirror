@@ -20,6 +20,12 @@
 #define XEN_WIDGET_P(Value) 0
 #define LOTSA_PIXELS 10000
 
+#define DEFAULT_TINY_FONT "Monospace 8"
+#define DEFAULT_PEAKS_FONT "Serif 10"
+#define DEFAULT_BOLD_PEAKS_FONT "Serif Bold 10"
+#define DEFAULT_AXIS_NUMBERS_FONT "Monospace 10"
+#define DEFAULT_AXIS_LABEL_FONT "Serif 14"
+
 #define Cessator int
 #define Cessate int
 #define Indicium void *

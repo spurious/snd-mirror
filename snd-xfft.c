@@ -27,7 +27,7 @@ static char *FFT_WINDOWS[NUM_FFT_WINDOWS] =
 
 static Float fp_dB(Float py)
 {
-  return((py <= ss->lin_dB) ? 0.0 : (1.0 - (20.0 * log10(py) / ss->min_dB)));
+  return((py <= ss->lin_dB) ? 0.0 : (1.0 - (20.0 * log10(py) / min_dB(ss))));
 }
 
 static Locus local_grf_x(double val, axis_info *ap)
@@ -420,7 +420,7 @@ static void log_freq_start_activate_callback(Widget w, XtPointer context, XtPoin
 void reflect_min_db_in_transform_dialog(void)
 {
   if (transform_dialog)
-    widget_float_to_text(db_txt, ss->min_dB);
+    widget_float_to_text(db_txt, min_dB(ss));
 }
 
 static void min_db_activate_callback(Widget w, XtPointer context, XtPointer info)
@@ -433,7 +433,7 @@ static void min_db_activate_callback(Widget w, XtPointer context, XtPointer info
       new_db = string_to_Float(str);
       if (new_db < 0.0)
 	set_min_db(new_db);
-      else widget_float_to_text(w, ss->min_dB);
+      else widget_float_to_text(w, min_dB(ss));
     }
 }
 
@@ -777,7 +777,7 @@ Widget fire_up_transform_dialog(bool managed)
       XtAddCallback(db_txt, XmNlosingFocusCallback, blue_textfield_unfocus_callback, NULL);
       XtAddEventHandler(db_txt, LeaveWindowMask, false, blue_mouse_leave_text_callback, NULL);
       XtAddEventHandler(db_txt, EnterWindowMask, false, white_mouse_enter_text_callback, NULL);
-      widget_float_to_text(db_txt, ss->min_dB);
+      widget_float_to_text(db_txt, min_dB(ss));
       XtAddCallback(db_txt, XmNactivateCallback, min_db_activate_callback, NULL);
 
       n = 0;

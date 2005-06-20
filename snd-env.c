@@ -482,13 +482,13 @@ static void env_editor_set_current_point(env_editor *edp, int pos, int x, int y)
 static short env_editor_grf_y_dB(env_editor *edp, Float val)
 {
   if (edp->in_dB)
-    return(grf_y(in_dB(ss->min_dB, ss->lin_dB, val), edp->axis));
+    return(grf_y(in_dB(min_dB(ss), ss->lin_dB, val), edp->axis));
   else return(grf_y(val, edp->axis));
 }
 
 static Float un_dB(Float py)
 {
-  return((py <= ss->min_dB) ? 0.0 : pow(10.0, py * .05));
+  return((py <= min_dB(ss)) ? 0.0 : pow(10.0, py * .05));
 }
 
 double env_editor_ungrf_y_dB(env_editor *edp, int y)
@@ -545,7 +545,7 @@ void env_editor_display_env(env_editor *edp, env *e, axis_context *ax, const cha
     }
   if (edp->in_dB)
     {
-      ey0 = ss->min_dB; 
+      ey0 = min_dB(ss); 
       ey1 = 0.0;
     }
   if (edp == ss->enved)
@@ -611,7 +611,7 @@ void env_editor_display_env(env_editor *edp, env *e, axis_context *ax, const cha
 			  lx0 = lx1;
 			  ly0 = ly1;
 			  lx1 = grf_x(curx, ap);
-			  ly1 = grf_y(in_dB(ss->min_dB, ss->lin_dB, yval), ap);
+			  ly1 = grf_y(in_dB(min_dB(ss), ss->lin_dB, yval), ap);
 			  draw_line(ax, lx0, ly0, lx1, ly1);
 			}
 		      draw_line(ax, lx1, ly1, ix1, iy1);

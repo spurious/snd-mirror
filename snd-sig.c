@@ -1133,7 +1133,7 @@ void display_frequency_response(env *e, axis_info *ap, axis_context *gax, int or
   mus_fft(rl, im, fsize, -1);
   resp = 2 * rl[0];
   if (dBing)
-    y1 = (int)(ap->y_axis_y0 + (ss->min_dB - in_dB(ss->min_dB, ss->lin_dB, resp)) * height / ss->min_dB);
+    y1 = (int)(ap->y_axis_y0 + (min_dB(ss) - in_dB(min_dB(ss), ss->lin_dB, resp)) * height / min_dB(ss));
   else y1 = (int)(ap->y_axis_y0 + resp * height);
   x1 = ap->x_axis_x0;
   step = (Float)(fsize - 1) / (4 * (Float)pts); /* fsize-1 since we got 1 already, *4 due to double size fft */
@@ -1149,7 +1149,7 @@ void display_frequency_response(env *e, axis_info *ap, axis_context *gax, int or
       resp = 2 * (rl[fxi] + (fx - fxi) * (rl[fxi + 1] - rl[fxi]));
       if (resp < 0.0) resp = -resp;
       if (dBing)
-	y1 = (int)(ap->y_axis_y0 + (ss->min_dB - in_dB(ss->min_dB, ss->lin_dB, resp)) * height / ss->min_dB);
+	y1 = (int)(ap->y_axis_y0 + (min_dB(ss) - in_dB(min_dB(ss), ss->lin_dB, resp)) * height / min_dB(ss));
       else y1 = (int)(ap->y_axis_y0 + resp * height);
       draw_line(gax, x0, y0, x1, y1);
     }
@@ -4166,7 +4166,7 @@ magnitude spectrum of data (a vct), in data if in-place, using fft-window win an
 	  for (i = 0; i < n; i++) 
 	    if (idat[i] > 0.0)
 	      idat[i] = todb * log(idat[i] * maxa);
-	    else idat[i] = -90.0; /* ss->min_dB? or could channel case be less? */
+	    else idat[i] = -90.0; /* min_dB(ss)? or could channel case be less? */
 	}
       else 
 	{

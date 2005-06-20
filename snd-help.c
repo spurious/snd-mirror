@@ -396,6 +396,7 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+20-Jun:  'Extract' option to Save as dialogs (to extract a channel).\n\
 13-Jun:  folded gl-ruby.c into gl.c, xm-ruby.c into xm.c, xg-ruby.c into xg.c.\n\
 6-June:  removed save-options (use save-state).\n\
 1-June:  snd 7.13.\n\
@@ -1193,15 +1194,18 @@ void completion_dialog_help(void)
 void save_as_dialog_help(void)
 {
   snd_help_with_xrefs("Save As",
-"You can save the current state of a file or region under a different file name using the Save \
-As option.  The output header type, data format,  and sampling rate can also be set.  The data formats \
-are little-endian where relevant except for 'aifc' output.  If a file by the chosen name already exists \
-it is silently overwritten, unless that file is already open in Snd and has edits.  In that case,  \
+"You can save the current state of a file with File:Save As, or the current selection with Edit:Save as. \
+The output header type, data format, sampling rate, and comment can also be set.  Setting the srate \
+does not affect the data -- it is just a number placed in the sound file header. \
+If a file by the chosen name already exists \
+it is overwritten, unless that file is already open in Snd and has edits.  In that case,  \
 you'll be asked what to do.  If you want to be warned whenever a file is about to be overwritten by this \
 option, set the variable " S_ask_before_overwrite " to #t. \
 If you give the current file name to Save As,  \
 any current edits will be saved and the current version in Snd will be updated (that is, in this \
-case, the edit tree is not preserved).",
+case, the edit tree is not preserved).  To save (extract) just one channel of a multichannel file, \
+put the (0-based) channel number in the 'extract channel' field, then click 'Extract', rather \
+than 'Save'.",
 		      WITH_WORD_WRAP,
 		      snd_xrefs("Save"),
 		      snd_xref_urls("Save"));
@@ -1655,8 +1659,6 @@ char *snd_url(const char *name)
 	return(help_urls[i]);
   return(NULL);
 }
-
-/* PERHAPS: finder could concat all finds */
 
 static char *snd_finder(const char *name, bool got_help)
 {

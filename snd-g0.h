@@ -113,6 +113,12 @@ typedef struct {
   GdkCursor *arrow_cursor, *wait_cursor, *graph_cursor;
 } state_context;
 
+#define DEFAULT_TINY_FONT "Monospace 8"
+#define DEFAULT_PEAKS_FONT "Serif 10"
+#define DEFAULT_BOLD_PEAKS_FONT "Serif Bold 10"
+#define DEFAULT_AXIS_NUMBERS_FONT "Monospace 10"
+#define DEFAULT_AXIS_LABEL_FONT "Serif 14"
+
 typedef struct {
   GtkWidget *graph;
   GdkPoint *p0, *p1;
@@ -124,6 +130,9 @@ typedef enum {WITHOUT_PANED_WINDOW, WITH_PANED_WINDOW} dialog_paned_t;
 typedef enum {DONT_PAD_TITLE, PAD_TITLE_ON_RIGHT, PAD_TITLE_ON_LEFT} dialog_pad_t;
 typedef enum {WITHOUT_SORT_BUTTON, WITH_SORT_BUTTON} dialog_sort_t;
 typedef enum {CONTAINER_ADD, PANED_ADD, BOX_PACK, TABLE_ATTACH} widget_add_t;
+typedef enum {WITHOUT_CHANNELS_FIELD, WITH_CHANNELS_FIELD, WITH_EXTRACT_CHANNELS_FIELD} dialog_channels_t;
+typedef enum {WITHOUT_SAMPLES_FIELD, WITH_SAMPLES_FIELD} dialog_samples_t;
+typedef enum {WITHOUT_DATA_LOCATION_FIELD, WITH_DATA_LOCATION_FIELD} dialog_data_location_t;
 
 typedef struct {
   GtkWidget *ww;
@@ -159,6 +168,7 @@ typedef struct {
 #define color_t GdkColor *
 #define KEY_TO_NAME(key) gdk_keyval_name(key)
 
+#define DEFAULT_GRAPH_CURSOR GDK_CROSSHAIR
 /* #define GUI_CURRENT_TIME(ss) GDK_CURRENT_TIME */
 
 /* now pull in the key names (gdk/gdkkeysyms.h) */

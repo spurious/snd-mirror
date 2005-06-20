@@ -846,7 +846,9 @@ static void make_file_info_pane(recorder_info *rp, GtkWidget *file_pane, int nde
   gtk_box_pack_start(GTK_BOX(left_form), ff_sep3, false, false, 8);
   gtk_widget_show(ff_sep3);
 
-  recdat = make_file_data_panel(left_form, "data-form", true, rp->output_header_type, rp->output_data_format, false, true, false);
+  recdat = make_file_data_panel(left_form, "data-form", 
+				WITH_CHANNELS_FIELD, rp->output_header_type, rp->output_data_format,
+				WITHOUT_DATA_LOCATION_FIELD, WITHOUT_SAMPLES_FIELD);
   SG_SIGNAL_CONNECT(recdat->srate_text, "activate", srate_changed_callback, NULL);
 
 #if SGI
@@ -1747,7 +1749,7 @@ static void record_button_callback(GtkWidget *w, gpointer context)
 
       if (!(rp->taking_input)) fire_up_recorder();
       old_srate = rp->srate;
-      comment = read_file_data_choices(recdat, &rs, &ochns, &rp->output_header_type, &ofmt, &oloc, &samples); 
+      comment = get_file_dialog_sound_attributes(recdat, &rs, &ochns, &rp->output_header_type, &ofmt, &oloc, &samples); 
       rp->output_data_format = ofmt;
       if (rp->out_chans == 0)
 	{

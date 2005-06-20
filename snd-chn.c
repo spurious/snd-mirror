@@ -5563,7 +5563,7 @@ static XEN g_min_dB(XEN snd, XEN chn)
   #define H_min_dB "(" S_min_dB " (snd #f) (chn #f)): min dB value displayed in fft graphs using dB scales (default: -60)"
   if (XEN_BOUND_P(snd))
     return(channel_get(snd, chn, CP_MIN_DB, S_min_dB));
-  return(C_TO_XEN_DOUBLE(ss->min_dB));
+  return(C_TO_XEN_DOUBLE(min_dB(ss)));
 }
 
 
@@ -5587,7 +5587,7 @@ static void update_db_graph(chan_info *cp, void *db)
 void set_min_db(Float db)
 {
   Float new_db[1];
-  ss->min_dB = db;
+  set_min_dB(db);
   ss->lin_dB = pow(10.0, db * 0.05);
   new_db[0] = db;
   for_each_chan_1(update_db_graph, (void *)new_db);
@@ -5608,7 +5608,7 @@ static XEN g_set_min_dB(XEN val, XEN snd, XEN chn)
 	  reflect_min_db_in_transform_dialog();
 	}
       else XEN_OUT_OF_RANGE_ERROR(S_setB S_min_dB, 1, val, S_min_dB " (~A) must be < 0.0");
-      return(C_TO_XEN_DOUBLE(ss->min_dB));
+      return(C_TO_XEN_DOUBLE(min_dB(ss)));
     }
 }
 

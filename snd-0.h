@@ -249,7 +249,6 @@ typedef enum {MINI_OFF, MINI_CURSOR, MINI_FIND, MINI_PROMPT, MINI_REPORT, MINI_U
 typedef enum {PLAY_COMPLETE, PLAY_CLOSE, PLAY_BUTTON_UNSET, PLAY_STOP_CALLED, PLAY_C_G, PLAY_NO_CHANNEL,
 	      PLAY_ERROR, PLAY_APPLY, PLAY_EDIT, PLAY_C_T} play_stop_t;
 
-#define DEFAULT_MIN_DB -60.0
 #define NO_LIST -1
 
 #define DEFAULT_AMP_CONTROL 1.0
@@ -262,6 +261,7 @@ typedef enum {PLAY_COMPLETE, PLAY_CLOSE, PLAY_BUTTON_UNSET, PLAY_STOP_CALLED, PL
 #define DEFAULT_EXPAND_CONTROL_P false
 #define DEFAULT_FILTER_CONTROL_P false
 #define DEFAULT_REVERB_CONTROL_P false
+
 
 #define filter_control_in_dB(ss) ss->Filter_Control_In_Db
 #define in_set_filter_control_in_dB(ss, val) ss->Filter_Control_In_Db = val
@@ -379,6 +379,9 @@ typedef enum {PLAY_COMPLETE, PLAY_CLOSE, PLAY_BUTTON_UNSET, PLAY_STOP_CALLED, PL
 #define in_set_cursor_follows_play(ss, val) ss->Cursor_Follows_Play = val
 #define DEFAULT_CURSOR_FOLLOWS_PLAY DONT_FOLLOW
 
+#define just_sounds(ss) ss->Just_Sounds
+#define set_just_sounds(val) ss->Just_Sounds = val
+#define DEFAULT_JUST_SOUNDS false
 
 #define DEFAULT_SYNC 0
 #define DEFAULT_INIT_WINDOW_X -1
@@ -889,5 +892,9 @@ typedef enum {PLAY_COMPLETE, PLAY_CLOSE, PLAY_BUTTON_UNSET, PLAY_STOP_CALLED, PL
 #define mark_tag_height(ss) ss->Mark_Tag_Height
 #define set_mark_tag_height(a) ss->Mark_Tag_Height = a
 #define DEFAULT_MARK_TAG_HEIGHT 4
+
+#define min_dB(ss) ss->Min_dB
+#define set_min_dB(a) ss->Min_dB = a
+#define DEFAULT_MIN_DB -60.0
 
 #endif

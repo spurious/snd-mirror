@@ -15,7 +15,7 @@ int help_text_width(const char *txt, int start, int end) {return(0);}
 void save_help_dialog_state(FILE *fd) {}
 widget_t post_it(const char *subject, const char *str) {fprintf(stdout, str); return(0);}
 void save_post_it_dialog_state(FILE *fd) {}
-void reflect_just_sounds_state(void) {}
+void reflect_just_sounds(void) {}
 void save_file_dialog_state(FILE *fd) {}
 void add_to_error_history(char *msg, bool popup) {}
 void post_error_dialog(char *msg) {}
@@ -227,7 +227,7 @@ bool control_panel_open(snd_info *sp) {return(false);}
 void start_progress_report(snd_info *sp, enved_progress_t from_enved) {}
 void finish_progress_report(snd_info *sp, enved_progress_t from_enved) {}
 void progress_report(snd_info *sp, const char *funcname, int curchan, int chans, Float pct, enved_progress_t from_enved) {}
-char *read_file_data_choices(file_data *fdat, int *srate, int *chans, int *type, int *format, off_t *location, off_t *samples) {return(NULL);}
+char *get_file_dialog_sound_attributes(file_data *fdat, int *srate, int *chans, int *type, int *format, off_t *location, off_t *samples) {}
 void alert_new_file(void) {}
 snd_info *make_new_file_dialog(char *newname, int header_type, int data_format, int srate, int chans, char *comment) {return(NULL);}
 void make_cur_name_row(int old_size, int new_size) {}

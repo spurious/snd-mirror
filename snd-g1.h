@@ -536,11 +536,11 @@ void g_init_gxrec(void);
 
 /* -------- snd-gfile.c -------- */
 
-char *read_file_data_choices(file_data *fdat, int *srate, int *chans, int *type, int *format, off_t *location, off_t *samples);
+char *get_file_dialog_sound_attributes(file_data *fdat, int *srate, int *chans, int *type, int *format, off_t *location, off_t *samples);
 void alert_new_file(void);
 widget_t make_open_file_dialog(bool read_only, bool managed);
-file_data *make_file_data_panel(GtkWidget *parent, char *name, bool with_chan, 
-				int header_type, int data_format, bool with_loc, bool comment_as_entry, bool with_samples);
+file_data *make_file_data_panel(GtkWidget *parent, char *name, dialog_channels_t with_chan, 
+				int header_type, int data_format, dialog_data_location_t with_loc, dialog_samples_t with_samples);
 widget_t make_file_save_as_dialog(bool managed);
 widget_t make_edit_save_as_dialog(bool managed);
 ww_info *make_title_row(GtkWidget *formw, char *top_str, char *main_str, dialog_pad_t pad, dialog_sort_t with_sort, dialog_paned_t with_pane);
@@ -566,7 +566,7 @@ void g_init_gxfile(void);
 void clear_deleted_snd_info(struct file_dialog_info *fd);
 widget_t post_it(const char *subject, const char *str);
 void save_post_it_dialog_state(FILE *fd);
-void reflect_just_sounds_state(void);
+void reflect_just_sounds(void);
 void save_file_dialog_state(FILE *fd);
 
 

@@ -58,7 +58,7 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound)
   cp->verbose_cursor = verbose_cursor(ss);
   cp->fft_log_frequency = fft_log_frequency(ss);
   cp->fft_log_magnitude = fft_log_magnitude(ss);
-  cp->min_dB = ss->min_dB;
+  cp->min_dB = min_dB(ss);
   cp->lin_dB = ss->lin_dB;
   cp->in_as_one_edit = false;
   cp->wavelet_type = wavelet_type(ss);

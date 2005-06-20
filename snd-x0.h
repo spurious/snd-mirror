@@ -4,6 +4,7 @@
 #include <config.h>
 #include <Xm/XmAll.h>
 #include <X11/keysym.h>
+#include <X11/cursorfont.h>
 
 #if HAVE_GL
 #include <GL/gl.h>
@@ -152,6 +153,9 @@ typedef struct {
 typedef enum {WITHOUT_PANED_WINDOW, WITH_PANED_WINDOW} dialog_paned_t;
 typedef enum {DONT_PAD_TITLE, PAD_TITLE_ON_RIGHT, PAD_TITLE_ON_LEFT} dialog_pad_t;
 typedef enum {WITHOUT_SORT_BUTTON, WITH_SORT_BUTTON} dialog_sort_t;
+typedef enum {WITHOUT_CHANNELS_FIELD, WITH_CHANNELS_FIELD, WITH_EXTRACT_CHANNELS_FIELD} dialog_channels_t;
+typedef enum {WITHOUT_SAMPLES_FIELD, WITH_SAMPLES_FIELD} dialog_samples_t;
+typedef enum {WITHOUT_DATA_LOCATION_FIELD, WITH_DATA_LOCATION_FIELD} dialog_data_location_t;
 
 typedef struct {
   Widget ww;
@@ -186,6 +190,14 @@ typedef struct {
 #define TINY_NUMBERS_FONT(a) (a->sgx)->tiny_fontstruct
 #define color_t Pixel
 /* this was unsigned long = Pixel (/usr/X11R6/include/X11/Intrinsic.h) */
+
+#define DEFAULT_GRAPH_CURSOR XC_crosshair
+
+#define DEFAULT_TINY_FONT "6x12"
+#define DEFAULT_PEAKS_FONT "-*-times-medium-r-*-*-14-*-*-*-*-*-*-*"
+#define DEFAULT_BOLD_PEAKS_FONT "-*-times-bold-r-*-*-14-*-*-*-*-*-*-*"
+#define DEFAULT_AXIS_NUMBERS_FONT "-*-courier-medium-r-*-*-14-*-*-*-*-*-*-*"
+#define DEFAULT_AXIS_LABEL_FONT "-*-times-medium-r-*-*-14-*-*-*-*-*-*-*"
 
 #define KEY_TO_NAME(key) XKeysymToString(key)
 /* on the Sun, if key is 0, XKeysymToString segfaults! */
