@@ -1196,7 +1196,7 @@ static void make_file_info_pane(recorder_info *rp, Widget file_pane, int ndevs)
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
   recdat = make_file_data_panel(ff_form, "data-form", args, n, WITH_CHANNELS_FIELD, rp->output_header_type, rp->output_data_format, 
-				WITHOUT_DATA_LOCATION_FIELD, WITHOUT_SAMPLES_FIELD);
+				WITHOUT_DATA_LOCATION_FIELD, WITHOUT_SAMPLES_FIELD, WITHOUT_ERROR_FIELD);
   XtVaGetValues(recdat->comment_text, XmNy, &pane_max, NULL);
   XtAddCallback(recdat->srate_text, XmNactivateCallback, srate_changed_callback, NULL); /* this is a no-op -- textfield widget is not activatable */
 #if SGI

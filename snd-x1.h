@@ -454,7 +454,8 @@ void reflect_sound_selection(snd_info *sp);
 
 char *get_file_dialog_sound_attributes(file_data *fdat, int *srate, int *chans, int *type, int *format, off_t *location, off_t *samples);
 file_data *make_file_data_panel(Widget parent, char *name, Arg *args, int n, dialog_channels_t with_chan, 
-				int header_type, int data_format, dialog_data_location_t with_loc, dialog_samples_t with_samples);
+				int header_type, int data_format, dialog_data_location_t with_loc, 
+				dialog_samples_t with_samples, dialog_error_t with_error);
 void alert_new_file(void);
 widget_t make_open_file_dialog(bool read_only, bool managed);
 widget_t make_file_save_as_dialog(bool managed);

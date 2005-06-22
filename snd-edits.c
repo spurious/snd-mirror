@@ -4290,7 +4290,7 @@ static void display_ed_list(chan_info *cp, FILE *outp, int i, ed_list *ed, bool 
 		  fprintf(outp, " [file: %s[%d]]", sd->filename, sd->chan);
 		else 
 		  if (sd->type == SND_DATA_BUFFER)
-		    fprintf(outp, " [buf: " OFF_TD "] ", sd->len / sizeof(mus_sample_t));
+		    fprintf(outp, " [buf: " OFF_TD "] ", sd->data_bytes / sizeof(mus_sample_t));
 		  else fprintf(outp, " [bogus!]");
 	    }
 	}
@@ -6467,6 +6467,15 @@ static snd_fd *init_sample_read_any_with_bufsize(off_t samp, chan_info *cp, read
   int len, i;
   off_t curlen;
   snd_data *first_snd = NULL;
+#if DEBUG64
+  if (cp->chan == 1)
+    {
+      if (!(cp->active)) fprintf(stderr,"chan 1 not active\n");
+      if ((edit_position < 0) || (edit_position >= cp->edit_size)) fprintf(stderr,"chan 1 edit: %d %d\n", edit_position, cp->edit_size);
+      if (!(cp->edits[edit_position])) fprintf(stderr,"no edit at %d\n", edit_position);
+      if (cp->sound->inuse == SOUND_IDLE) fprintf(stderr,"sound idle\n");
+    }
+#endif
   if (!(cp->active)) return(NULL);
   if ((edit_position < 0) || (edit_position >= cp->edit_size)) return(NULL); /* was ">" not ">=": 6-Jan-05 */
   ed = (ed_list *)(cp->edits[edit_position]);
@@ -6499,6 +6508,10 @@ static snd_fd *init_sample_read_any_with_bufsize(off_t samp, chan_info *cp, read
   sf->current_state = ed;
   sf->edit_ctr = edit_position;
   sf->dangling_loc = -1;
+#if DEBUG64
+  if ((curlen <= 0) || (samp < 0) || ((samp >= curlen) && (direction == READ_FORWARD)))
+    fprintf(stderr,"canceling read: " OFF_TD " " OFF_TD "\n", curlen, samp);
+#endif
   if ((curlen <= 0) ||    /* no samples, not ed->len (delete->len = #deleted samps) */
       (samp < 0) ||       /* this should never happen */
       ((samp >= curlen) && (direction == READ_FORWARD)))
@@ -6569,6 +6582,9 @@ static snd_fd *init_sample_read_any_with_bufsize(off_t samp, chan_info *cp, read
 	  return(sf);
 	}
     }
+#if DEBUG64
+  fprintf(stderr,"fell off end!\n");
+#endif
   if (sf) FREE(sf);
   return(NULL);
 }
@@ -6991,7 +7007,6 @@ static bool save_edits_and_update_display(snd_info *sp)
 
 int save_edits_without_display(snd_info *sp, char *new_name, int type, int format, int srate, char *comment, int pos)
 { 
-  /* file save as menu option -- changed 19-June-97 to retain current state after writing */
   file_info *hdr;
   if ((sp->read_only) && (strcmp(new_name, sp->filename) == 0))
     return(MUS_CANT_OPEN_FILE);

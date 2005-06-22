@@ -540,7 +540,8 @@ char *get_file_dialog_sound_attributes(file_data *fdat, int *srate, int *chans, 
 void alert_new_file(void);
 widget_t make_open_file_dialog(bool read_only, bool managed);
 file_data *make_file_data_panel(GtkWidget *parent, char *name, dialog_channels_t with_chan, 
-				int header_type, int data_format, dialog_data_location_t with_loc, dialog_samples_t with_samples);
+				int header_type, int data_format, dialog_data_location_t with_loc, 
+				dialog_samples_t with_samples, dialog_error_t with_error);
 widget_t make_file_save_as_dialog(bool managed);
 widget_t make_edit_save_as_dialog(bool managed);
 ww_info *make_title_row(GtkWidget *formw, char *top_str, char *main_str, dialog_pad_t pad, dialog_sort_t with_sort, dialog_paned_t with_pane);

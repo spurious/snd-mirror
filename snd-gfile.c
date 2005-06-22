@@ -1,9 +1,10 @@
 #include "snd.h"
 
-/* TODO: the chooser preview area could display a thumbnail graph of the sound, but the file_chooser is not ready for prime time... */
+/* TODO: merge all Motif dialog changes into Gtk */
 
 #define HAVE_GFCDN 0
 /* stupid thing doesn't work worth %$#! */
+/* TODO: the chooser preview area could display a thumbnail graph of the sound, but the file_chooser is not ready for prime time... */
 
 /* most of these dialogs present a view of the various file header possibilities */
 
@@ -659,7 +660,7 @@ static void save_as_data_format_callback(GtkTreeSelection *selection, gpointer *
 
 file_data *make_file_data_panel(GtkWidget *parent, char *name, dialog_channels_t with_chan, 
 				int header_type, int data_format, dialog_data_location_t with_loc, 
-				dialog_samples_t with_samples)
+				dialog_samples_t with_samples, dialog_error_t with_error)
 {
   GtkWidget *form, *slab, *comment_label, *scbox, *combox;
   file_data *fdat;
@@ -763,9 +764,9 @@ static char *last_save_as_filename = NULL;
 
 static void save_as_ok_callback(GtkWidget *w, gpointer data)
 {
-  char *comment = NULL;
+  char *comment = NULL, *msg;
   int type, format, srate, chans;
-  bool need_update = false;
+  bool need_directory_update = false;
   off_t location, samples;
   gpointer hide_me = 0;
   snd_info *sp;
@@ -773,7 +774,7 @@ static void save_as_ok_callback(GtkWidget *w, gpointer data)
   last_save_as_filename = snd_filer_get_filename(save_as_dialog);
   sp = any_selected_sound();
   if (last_save_as_filename)
-    need_update = saved_file_needs_update(sp, last_save_as_filename, save_as_dialog_type, srate, type, format, comment);
+    msg = save_as_dialog_save_sound(sp, last_save_as_filename, save_as_dialog_type, srate, type, format, comment, &need_directory_update);
   else 
     if (sp) 
       report_in_minibuffer(sp, _("not saved (no name given)"));
@@ -783,7 +784,7 @@ static void save_as_ok_callback(GtkWidget *w, gpointer data)
     gtk_widget_hide(save_as_dialog);
   if ((sp) && (last_save_as_filename) &&
       (save_as_dialog_type == FILE_SAVE_AS) && 
-      (need_update))
+      (need_directory_update))
     run_after_save_as_hook(sp, last_save_as_filename, true); /* true => from dialog */
 } 
 
@@ -824,7 +825,8 @@ static void make_save_as_dialog(char *sound_name, int header_type, int format_ty
       gtk_widget_show(fbox);
       gtk_file_chooser_set_preview_widget_active(GTK_FILE_CHOOSER(save_as_dialog), true);
       save_as_file_data = make_file_data_panel(fbox, "data-form", WITHOUT_CHANNELS_FIELD, header_type, format_type, 
-					       WITHOUT_DATA_LOCATION_FIELD, WITHOUT_SAMPLES_FIELD);
+					       WITHOUT_DATA_LOCATION_FIELD, WITHOUT_SAMPLES_FIELD,
+					       WITH_ERROR_FIELD);
       /* TODO: where is this file panel?? */
 #else
       save_as_dialog = snd_filer_new(file_string, true,
@@ -835,7 +837,8 @@ static void make_save_as_dialog(char *sound_name, int header_type, int format_ty
       gtk_box_pack_start(GTK_BOX(SND_FILER(save_as_dialog)->main_vbox), fbox, true, true, 0);
       gtk_widget_show(fbox);
       save_as_file_data = make_file_data_panel(fbox, "data-form", WITHOUT_CHANNELS_FIELD, header_type, format_type,
-					       WITHOUT_DATA_LOCATION_FIELD, WITHOUT_SAMPLES_FIELD);
+					       WITHOUT_DATA_LOCATION_FIELD, WITHOUT_SAMPLES_FIELD,
+					       WITH_ERROR_FIELD);
 #endif
       set_dialog_widget(FILE_SAVE_AS_DIALOG, save_as_dialog);
     }
@@ -1685,7 +1688,8 @@ snd_info *make_new_file_dialog(char *newname, int header_type, int data_format, 
 
       new_dialog_data = make_file_data_panel(GTK_DIALOG(new_dialog)->vbox, "data-form", WITH_CHANNELS_FIELD, 
 					     default_output_type(ss), default_output_format(ss), 
-					     WITHOUT_DATA_LOCATION_FIELD, WITH_SAMPLES_FIELD);
+					     WITHOUT_DATA_LOCATION_FIELD, WITH_SAMPLES_FIELD,
+					     WITH_ERROR_FIELD);
       set_dialog_widget(NEW_FILE_DIALOG, new_dialog);
     }
   else
@@ -1786,7 +1790,8 @@ GtkWidget *edit_header(snd_info *sp)
 
       edit_header_data = make_file_data_panel(GTK_DIALOG(edit_header_dialog)->vbox, _("Edit Header"), 
 					      WITH_CHANNELS_FIELD, hdr->type, hdr->format,
-					      WITH_DATA_LOCATION_FIELD, WITH_SAMPLES_FIELD);
+					      WITH_DATA_LOCATION_FIELD, WITH_SAMPLES_FIELD,
+					      WITH_ERROR_FIELD);
       set_dialog_widget(EDIT_HEADER_DIALOG, edit_header_dialog);
     }
   str = mus_format(_("Edit header of %s"), sp->short_filename);

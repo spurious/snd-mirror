@@ -277,7 +277,6 @@ int  jack_engine_takeover_timebase (jack_client_t *);
 jack_nframes_t jack_frames_since_cycle_start (const jack_client_t *);
 jack_nframes_t jack_frame_time (const jack_client_t *);
 float jack_cpu_load (jack_client_t *client);
-void jack_set_server_dir (const char *path);
 pthread_t jack_client_thread_id (jack_client_t *);
 "
 ;;extern void (*jack_error_callback)(const char *msg);

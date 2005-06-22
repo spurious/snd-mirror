@@ -118,6 +118,10 @@
 (define ints-260 '())
 (define types-260 '())
 
+(define funcs-270 '())
+(define ints-270 '())
+(define types-270 '())
+
 (define all-types '())
 (define all-check-types '())
 
@@ -392,10 +396,12 @@
 								  (set! types-255 (cons type types-255))
 								  (if (eq? extra '256)
 								      (set! types-256 (cons type types-256))
-								      (if (eq? extra '256)
+								      (if (eq? extra '260)
 									  (set! types-260 (cons type types-260))
-									  (if (not (member type types))
-									      (set! types (cons type types))))))))))))))))
+									  (if (eq? extra '270)
+									      (set! types-270 (cons type types-270))
+									      (if (not (member type types))
+										  (set! types (cons type types)))))))))))))))))
 			(set! type #f))
 		      (if (> i (1+ sp))
 			  (set! type (substring args (1+ sp) i))))
@@ -1074,6 +1080,22 @@
 		(set! funcs-260 (cons (list name type strs args) funcs-260)))
 	    (set! names (cons (cons name (func-type strs)) names)))))))
 
+(define* (CFNC-270 data #:optional spec)
+  (let ((name (cadr-str data))
+	(args (caddr-str data)))
+    (if (assoc name names)
+	(no-way "CFNC-270: ~A~%" (list name data))
+	(let ((type (car-str data)))
+	  (if (not (member type all-types)) 
+	      (begin
+		(set! all-types (cons type all-types))
+		(set! types-270 (cons type types-270))))
+	  (let ((strs (parse-args args '270)))
+	    (if spec
+		(set! funcs-270 (cons (list name type strs args spec) funcs-270))
+		(set! funcs-270 (cons (list name type strs args) funcs-270)))
+	    (set! names (cons (cons name (func-type strs)) names)))))))
+
 (define* (CFNC-22 data)
   (let ((name (cadr-str data))
 	(args (caddr-str data)))
@@ -1299,6 +1321,14 @@
       (no-way "~A CINT-260~%" name)
       (begin
 	(set! ints-260 (cons name ints-260))
+	(set! names (cons (cons name 'int) names)))))
+
+(define* (CINT-270 name #:optional type)
+  (save-declared-type type)
+  (if (assoc name names)
+      (no-way "~A CINT-270~%" name)
+      (begin
+	(set! ints-270 (cons name ints-270))
 	(set! names (cons (cons name 'int) names)))))
 
 (define (CCAST name type) ; this is the cast (type *)obj essentially but here it's (list type* (cadr obj))
@@ -1584,6 +1614,11 @@
   (thunk)
   (dpy "#endif~%~%"))
 
+(define (with-270 dpy thunk)
+  (dpy "#if HAVE_GTK_MENU_BAR_GET_CHILD_PACK_DIRECTION~%")
+  (thunk)
+  (dpy "#endif~%~%"))
+
 
 
 ;;; ---------------------------------------- write output files ----------------------------------------
@@ -1607,6 +1642,7 @@
 (hey " *     HAVE_GTK_LABEL_GET_SINGLE_LINE_MODE for gtk 2.5.5~%")
 (hey " *     HAVE_GDK_PANGO_RENDERER_NEW for gtk 2.5.6~%")
 (hey " *     HAVE_GTK_TEXT_LAYOUT_GET_ITER_AT_POSITION for gtk 2.6.0~%")
+(hey " *     HAVE_GTK_MENU_BAR_GET_CHILD_PACK_DIRECTION for gtk 2.7.0~%")
 (hey " *~%")
 (hey " * reference args initial values are usually ignored, resultant values are returned in a list.~%")
 (hey " * null ptrs are passed and returned as #f, trailing \"user_data\" callback function arguments are optional (default: #f).~%")
@@ -1641,7 +1677,8 @@
 (hey " *     win32-specific functions~%")
 (hey " *~%")
 (hey " * HISTORY:~%")
-(hey " *     13-June:   folded xg-ruby.c into xg.c.~%")
+(hey " *     23-Jun:    gtk 2.7.0 changes.~%")
+(hey " *     13-Jun:    folded xg-ruby.c into xg.c.~%")
 (hey " *     21-Feb:    changed libxm to libxg, xm-version to xg-version.~%")
 (hey " *     10-Jan:    plugged some memory leaks.~%")
 (hey " *     4-Jan:     removed deprecated XEN_VECTOR_ELEMENTS.~%")
@@ -1721,6 +1758,7 @@
 (hey "  #include \"snd.h\"~%")
 (hey "#else~%")
 (hey "  #include \"xen.h\"~%")
+(hey "  #define NOT_A_GC_LOC -1~%")
 (hey "#endif~%")
 (hey "#ifndef CALLOC~%")
 (hey "  #define CALLOC(a, b)  calloc((size_t)(a), (size_t)(b))~%")
@@ -1925,6 +1963,12 @@
     (with-260 hey
 	     (lambda ()
 	       (for-each type-it (reverse types-260))
+	       )))
+
+(if (not (null? types-270))
+    (with-270 hey
+	     (lambda ()
+	       (for-each type-it (reverse types-270))
 	       )))
 
 (hey "#define XLS(a, b) XEN_TO_C_gchar_(XEN_LIST_REF(a, b))~%")
@@ -2535,6 +2579,7 @@
 (if (not (null? funcs-255)) (with-255 hey (lambda () (for-each handle-func (reverse funcs-255)))))
 (if (not (null? funcs-256)) (with-256 hey (lambda () (for-each handle-func (reverse funcs-256)))))
 (if (not (null? funcs-260)) (with-260 hey (lambda () (for-each handle-func (reverse funcs-260)))))
+(if (not (null? funcs-270)) (with-270 hey (lambda () (for-each handle-func (reverse funcs-270)))))
 
 
 (hey "#define WRAPPED_OBJECT_P(Obj) (XEN_LIST_P(Obj) && (XEN_LIST_LENGTH(Obj) >= 2) && (XEN_SYMBOL_P(XEN_CAR(Obj))))~%~%")
@@ -2881,6 +2926,7 @@
 (if (not (null? funcs-255)) (with-255 hey (lambda () (for-each argify-func (reverse funcs-255)))))
 (if (not (null? funcs-256)) (with-256 hey (lambda () (for-each argify-func (reverse funcs-256)))))
 (if (not (null? funcs-260)) (with-260 hey (lambda () (for-each argify-func (reverse funcs-260)))))
+(if (not (null? funcs-270)) (with-270 hey (lambda () (for-each argify-func (reverse funcs-270)))))
 
 (define (ruby-cast func) (hey "XEN_NARGIFY_1(gxg_~A_w, gxg_~A)~%" (no-arg (car func)) (no-arg (car func)))) 
 (hey "XEN_NARGIFY_1(gxg_GPOINTER_w, gxg_GPOINTER)~%")
@@ -2993,6 +3039,7 @@
 (if (not (null? funcs-255)) (with-255 hey (lambda () (for-each unargify-func (reverse funcs-255)))))
 (if (not (null? funcs-256)) (with-256 hey (lambda () (for-each unargify-func (reverse funcs-256)))))
 (if (not (null? funcs-260)) (with-260 hey (lambda () (for-each unargify-func (reverse funcs-260)))))
+(if (not (null? funcs-270)) (with-270 hey (lambda () (for-each unargify-func (reverse funcs-270)))))
 
 (hey "#define gxg_GPOINTER_w gxg_GPOINTER~%")
 (hey "#define c_array_to_xen_list_w c_array_to_xen_list~%")
@@ -3127,6 +3174,7 @@
 (if (not (null? funcs-255)) (with-255 hey (lambda () (for-each defun (reverse funcs-255)))))
 (if (not (null? funcs-256)) (with-256 hey (lambda () (for-each defun (reverse funcs-256)))))
 (if (not (null? funcs-260)) (with-260 hey (lambda () (for-each defun (reverse funcs-260)))))
+(if (not (null? funcs-270)) (with-270 hey (lambda () (for-each defun (reverse funcs-270)))))
 
 (define (cast-out func)
   (hey "  XG_DEFINE_PROCEDURE(~A, gxg_~A_w, 1, 0, 0, NULL);~%" (no-arg (car func)) (no-arg (car func))))
@@ -3244,6 +3292,8 @@
     (with-256 hey (lambda () (for-each (lambda (val) (hey "  DEFINE_INTEGER(~A);~%" val)) (reverse ints-256)))))
 (if (not (null? ints-260))
     (with-260 hey (lambda () (for-each (lambda (val) (hey "  DEFINE_INTEGER(~A);~%" val)) (reverse ints-260)))))
+(if (not (null? ints-270))
+    (with-270 hey (lambda () (for-each (lambda (val) (hey "  DEFINE_INTEGER(~A);~%" val)) (reverse ints-270)))))
 
 
 (for-each 

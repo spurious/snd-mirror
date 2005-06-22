@@ -770,6 +770,8 @@ else
 	AC_CHECK_LIB(m, gtk_text_layout_get_iter_at_position, [AC_DEFINE(HAVE_GTK_TEXT_LAYOUT_GET_ITER_AT_POSITION)],  ,$GTK_LIBS)
 	# gtk 2.6.0|1|2|3|4|5|6|7|8: no API changes
 	AC_CHECK_LIB(m, pango_matrix_rotate, [AC_DEFINE(HAVE_PANGO_MATRIX_ROTATE)],  ,$GTK_LIBS)
+        AC_CHECK_LIB(m, gtk_menu_bar_get_child_pack_direction, [AC_DEFINE(HAVE_GTK_MENU_BAR_GET_CHILD_PACK_DIRECTION)],  ,$GTK_LIBS)
+	# gtk 2.7.0
 
         if test "$with_x11" = yes ; then
 	  AC_DEFINE(WITH_GTK_AND_X11)

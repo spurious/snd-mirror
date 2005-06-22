@@ -188,6 +188,23 @@ snd_io *make_file_state(int fd, file_info *hdr, int chan, off_t beg, int suggest
   io->bufsize = bufsize;
   io->arrays[chan] = (mus_sample_t *)CALLOC(bufsize, sizeof(mus_sample_t));
   reposition_file_buffers_1(beg, io); /* get ready to read -- we're assuming mus_file_read_chans here */
+#if DEBUG64
+	  {
+	    int i;
+	    bool happy = false;
+	    if (chan == 1)
+	      {
+		if (!(io->arrays[1])) fprintf(stderr,"%s: chan 2 buffer null", c__FUNCTION__);
+		else
+		  {
+		    for (i = 0; (!happy) && (i < io->bufsize); i++)
+		      if (io->arrays[1][i] != MUS_SAMPLE_0)
+			happy = true;
+		    if (!happy) fprintf(stderr,"%s: chan 2 is empty", c__FUNCTION__);
+		  }
+	      }
+	  }
+#endif
   return(io);
 }
 
@@ -204,6 +221,23 @@ void file_buffers_forward(off_t ind0, off_t ind1, off_t indx, snd_fd *sf, snd_da
   if (ind1 <= cur_snd->io->end) 
     sf->last = ind1 - cur_snd->io->beg;
   else sf->last = cur_snd->io->bufsize - 1;
+#if DEBUG64
+	  {
+	    int i;
+	    bool happy = false;
+	    if (cur_snd->io->arrays[1])
+	      {
+		if (!(cur_snd->io->arrays[1])) fprintf(stderr,"%s: chan 2 buffer null", c__FUNCTION__);
+		else
+		  {
+		    for (i = 0; (!happy) && (i < cur_snd->io->bufsize); i++)
+		      if (cur_snd->io->arrays[1][i] != MUS_SAMPLE_0)
+			happy = true;
+		    if (!happy) fprintf(stderr,"%s: chan 2 is empty", c__FUNCTION__);
+		  }
+	      }
+	  }
+#endif
 }
 
 void file_buffers_back(off_t ind0, off_t ind1, off_t indx, snd_fd *sf, snd_data *cur_snd)
@@ -493,7 +527,7 @@ snd_data *make_snd_data_file(const char *name, snd_io *io, file_info *hdr, file_
   sd->inuse = false;
   sd->copy = false;
   sd->chan = temp_chan;
-  sd->len = (hdr->samples) * (mus_bytes_per_sample(hdr->format)) + hdr->data_location;
+  sd->data_bytes = (hdr->samples) * (mus_bytes_per_sample(hdr->format)) + hdr->data_location;
   return(sd);
 }
 
@@ -544,7 +578,7 @@ snd_data *make_snd_data_buffer(mus_sample_t *data, int len, int ctr)
   sf->edit_ctr = ctr;
   sf->copy = false;
   sf->inuse = false;
-  sf->len = len * 4;
+  sf->data_bytes = len * sizeof(mus_sample_t);
   return(sf);
 }
 
@@ -557,7 +591,7 @@ snd_data *make_snd_data_buffer_for_simple_channel(int len)
   sf->edit_ctr = 0;
   sf->copy = false;
   sf->inuse = false;
-  sf->len = len * 4;
+  sf->data_bytes = len * sizeof(mus_sample_t);
   return(sf);
 }
 

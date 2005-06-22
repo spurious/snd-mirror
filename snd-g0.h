@@ -72,9 +72,12 @@ typedef struct {
   bool mini_active;
 } snd_context;
 
+typedef enum {NOT_A_SCANF_WIDGET, SRATE_WIDGET, CHANS_WIDGET, DATA_LOCATION_WIDGET, SAMPLES_WIDGET} scanf_widget_t;
+
 typedef struct {
-  GtkWidget *header_list, *format_list, *srate_text, *chans_text, *comment_text, *location_text, *samples_text;
+  GtkWidget *header_list, *format_list, *srate_text, *chans_text, *comment_text, *location_text, *samples_text, *error_text;
   int current_type, current_format, formats, header_pos, format_pos;
+  scanf_widget_t scanf_widget;
 } file_data;
 
 typedef struct {
@@ -133,6 +136,7 @@ typedef enum {CONTAINER_ADD, PANED_ADD, BOX_PACK, TABLE_ATTACH} widget_add_t;
 typedef enum {WITHOUT_CHANNELS_FIELD, WITH_CHANNELS_FIELD, WITH_EXTRACT_CHANNELS_FIELD} dialog_channels_t;
 typedef enum {WITHOUT_SAMPLES_FIELD, WITH_SAMPLES_FIELD} dialog_samples_t;
 typedef enum {WITHOUT_DATA_LOCATION_FIELD, WITH_DATA_LOCATION_FIELD} dialog_data_location_t;
+typedef enum {WITHOUT_ERROR_FIELD, WITH_ERROR_FIELD} dialog_error_t;
 
 typedef struct {
   GtkWidget *ww;

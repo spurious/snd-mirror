@@ -68,7 +68,7 @@ typedef struct {
   bool inuse;
   bool copy;
   int chan;
-  off_t len;
+  off_t data_bytes;        /* used only for edit-history descriptions (snd-edits.c display_ed_list) */
   bool free_me;
 } snd_data;
 
@@ -922,6 +922,8 @@ bool listener_print_p(char *msg);
 int string_to_int(char *str);
 Float string_to_Float(char *str);
 off_t string_to_off_t(char *str);
+int string_to_int_with_error(char *str, int lo, const char *field_name);
+off_t string_to_off_t_with_error(char *str, off_t lo, const char *field_name);
 char *output_comment(file_info *hdr);
 void snd_load_init_file(bool nog, bool noi);
 void snd_load_file(char *filename);
@@ -1300,7 +1302,9 @@ void init_prevfiles(int size);
 void add_directory_to_prevlist(const char *dirname);
 void make_prevfiles_list_1(void);
 char **set_header_and_data_positions(file_data *fdat, int type, int format);
-bool saved_file_needs_update(snd_info *sp, char *str, save_dialog_t save_type, int srate, int type, int format, char *comment);
+char *save_as_dialog_save_sound(snd_info *sp, char *str, save_dialog_t save_type, 
+			     int srate, int type, int format, char *comment,
+			     bool *need_directory_update);
 void edit_header_callback(snd_info *sp, file_data *edit_header_data);
 void reflect_file_change_in_title(void);
 

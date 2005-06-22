@@ -5018,12 +5018,12 @@ int mus_header_read(const char *name)
   int chan, err = 0;
   chan = mus_file_open_read(name);
   if (chan == -1) 
-    return(mus_error(MUS_CANT_OPEN_FILE, "mus_header_read: can't open %s: %s", name, STRERROR(errno)));
+    return(mus_error(MUS_CANT_OPEN_FILE, "can't open %s: %s", name, STRERROR(errno)));
   old_error_handler = mus_error_set_handler(local_mus_error);
   err = mus_header_read_1(name, chan);
   mus_error_set_handler(old_error_handler);
   if (CLOSE(chan) != 0)
-    return(mus_error(MUS_CANT_CLOSE_FILE, "mus_header_read: can't close %s: %s", name, STRERROR(errno)));
+    return(mus_error(MUS_CANT_CLOSE_FILE, "can't close %s: %s", name, STRERROR(errno)));
   if (err != MUS_NO_ERROR)
     return(mus_error(local_error_type, local_error_msg)); /* pass error info on up the chain now that we've cleaned up the open file descriptor */
   return(err);

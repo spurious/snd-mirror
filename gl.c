@@ -5954,7 +5954,7 @@ static bool gl_already_inited = false;
       define_integers();
       define_functions();
       XEN_YES_WE_HAVE("gl");
-      XEN_DEFINE("gl-version", C_TO_XEN_STRING("14-Jun-05"));
+      XEN_DEFINE("gl-version", C_TO_XEN_STRING("21-Jun-05"));
       gl_already_inited = true;
     }
 }

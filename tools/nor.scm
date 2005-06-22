@@ -8,7 +8,7 @@
     "test.scm"
   (lambda ()
     (call-with-input-file 
-	"snd_conffile.scm"
+	"rt-examples.scm"
       (lambda (file)
 	(let loop ((line (read-line file 'concat)))
 	  (or (eof-object? line)

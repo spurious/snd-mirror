@@ -140,7 +140,7 @@
 
 (definstrument (make-fm-gui freq)
   (letrec* ((amp 0.6)
-	    (mc-ratio 0.1)
+	    (mc-ratio 2)
 	    (index 4)
 	    
 	    (fm (make-oscil (* freq mc-ratio) :initial-phase (/ 3.14159 2.0)))
@@ -433,6 +433,7 @@ This version of the fm-violin assumes it is running within with-sound (where *ou
       (if (not (env? indf3))
 	  (set! indf3 (make-env '(0 2))))
 
+
       (if (or (not easy-case) ind-noi amp-noi (> noise-amount 0.0) (not modulate))
 	  (<rt-play> startime dur
 		     (lambda ()
@@ -474,11 +475,13 @@ This version of the fm-violin assumes it is running within with-sound (where *ou
 (rte-silence!)
 (rte-restart)
 
-
 !#
 
 
 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Ladspa
 
 (definstrument (ladspatest)
   (let ((am-pitchshift (make-ladspa "am_pitchshift_1433" "amPitchshift")))
@@ -495,4 +498,43 @@ This version of the fm-violin assumes it is running within with-sound (where *ou
 (-> l stop)
 (rte-info)
 
+!#
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Risset
+
+(definstrument (risset startpitch endpitch num-oscs loop-duration)
+  (define starttime (+ 1 (rte-time))) ;; Ensure all starts simultaniously by scheduling one second into the future.
+  (for-each (lambda (n)
+	      (let ((osc (make-oscil #:frequency 0))
+		    (e-p (make-env `(0 ,startpitch 1 ,endpitch) #:duration loop-duration #:base (expt 2 num-oscs)))
+		    (e-a (make-env `(0 0 1 0.25 2 0) #:duration loop-duration #:base 100)) ;; Linear amplitude-change didn't sound very nice.
+		    (start-location (* (/ (* (mus-srate) loop-duration)
+					  num-oscs)
+				       n)))
+		(set! (mus-location e-p) start-location)
+		(set! (mus-location e-a) start-location)
+		(<rt-play-abs> starttime
+			       (lambda ()
+				 (if (>= (mus-location e-p) (mus-length e-p))
+				     (begin
+				       (set! (mus-location e-p) 0)
+				       (set! (mus-location e-a) 0)))
+				 (out (* (env e-a)
+					 (oscil osc (hz->radians (env e-p)))))))))
+	    (iota num-oscs)))
+
+    
+#!
+;; When evaluating the three following lines simulatniously, There are some occasional pops. Why?
+(risset 50 800 4 50)
+(risset 800 50 4 50)
+(risset 150 200 4 10)
+
+(rte-silence!)
+(rte-restart)
+(rte-info)
 !#

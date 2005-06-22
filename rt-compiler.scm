@@ -165,7 +165,7 @@ and run simple lisp[4] functions.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define rt-defining-macros-clears-cache #t)
-(define rt-verbose #f)
+(define rt-verbose #t)
 (define rt-very-verbose #f)
 
 (define rt-operators '(+ - * / = < > <= >=))
@@ -1851,7 +1851,8 @@ and run simple lisp[4] functions.
 					   (add-equal-variables! follow-variable (car avar) '<undefined> '<undefined> term)
 					   ))
 				     (cadr avar)))
-			       (add-external-var term '<undefined>))))
+			       (begin (debug "gakk" term)
+			       (add-external-var term '<undefined>)))))
 			
 			((number? term)
 			 (if (exact? term)
@@ -2269,8 +2270,11 @@ and run simple lisp[4] functions.
 	     ;; THE
 	     ;;;;;;;;;;;;;;;;;;;;;;
 	     ((eq? 'the (car term))
+	      (if (symbol? (caddr term))
+		  (set-type! varlist (caddr term) (cadr term) term))
 	      (let* ((c (insert varlist (caddr term)))
 		     (ret-type (get-returntype varlist c)))
+		;;(c-display "the" term c ret-type)
 		(if (and (eq? '<SCM> ret-type)
 			 (not (eq? '<SCM> (cadr term))))
 		    `(the ,(cadr term) (,(-> (hashq-ref rt-types (cadr term)) c-transformfunc) ,c))
@@ -2339,6 +2343,9 @@ and run simple lisp[4] functions.
 
 #!
 
+(rt-insert-types2 '(lambda ()
+		     (rt-/// (the <float> a) b)))
+		     
 (rt-insert-types2 '(lambda ()
 		     (let* ((a (lambda ()
 				 9))
@@ -6713,7 +6720,7 @@ setter!-rt-mus-location/mus_location
 (rt-2 '(lambda ()
 	 (+ 2 a 35)))
 
-(rt- '(lambda ()
+(rt-2 '(lambda ()
 	(call-with-current-continuation
 	 (lambda (return)
 	   (return 2)))))
@@ -6764,6 +6771,28 @@ setter!-rt-mus-location/mus_location
 (rt-funcall a)
 
 
+(lambda ((<struct-RT_Globals> *rt_globals))
+  (let* ((b__2 <int>)
+	 (rt_gen413__3 <int> (lambda ((<struct-RT_Globals> *rt_globals))
+			       (return (the <int> rt_globals->b__2))))
+	 (a__1 (<int> (<struct-RT_Globals-*>)) (rt-lambda-decl ((<struct-RT_Globals> *rt_globals) (<int> b__2))))
+	 (rt_gen415 (<int> (<struct-RT_Globals-*>)) (lambda ((<struct-RT_Globals> *rt_globals)
+							     (<int> _rt_local_b__2))
+						      (set! rt_globals->b__2 _rt_local_b__2)
+						      (begin
+							(begin
+							  (return rt_gen413__3)))))
+	 (a__1 (<int> (<struct-RT_Globals-*>)) (lambda ((<struct-RT_Globals> *rt_globals)
+							(<int> _rt_local_b__2))
+						 (let* ((rt_gen416 <int> rt_globals->b__2)
+							(_rt_ret (<int> (<struct-RT_Globals-*>)) (rt_gen415 rt_globals _rt_local_b__2)))
+						   (set! rt_globals->b__2 rt_gen416)
+						   (return _rt_ret)))))
+    (let* ((rt_gen414__4 (<int> (<struct-RT_Globals-*>))))
+      (begin
+	(begin
+	  (set! rt_gen414__4 (a__1 rt_globals 50))
+	  (return (rt_gen414__4 rt_globals)))))))
 
 
 (rt-2 '(lambda ()

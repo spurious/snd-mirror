@@ -2163,27 +2163,31 @@ static bool check_for_same_name(snd_info *sp1, void *ur_info)
   return(false);
 }
 
-bool saved_file_needs_update(snd_info *sp, char *str, save_dialog_t save_type, int srate, int type, int format, char *comment)
+char *save_as_dialog_save_sound(snd_info *sp, char *str, save_dialog_t save_type, 
+				int srate, int type, int format, char *comment,
+				bool *need_directory_update)
 {
   /* only from save-as dialog where type/format are known to be writable */
   /* returns true if new file not yet opened, false if opened (same name as old) or if cancelled by error of some sort */
   same_name_info *collision = NULL;
-  char *fullname;
+  char *fullname, *msg = NULL;
   int result = 0;
-  bool needs_update = true;
   if (sp) clear_minibuffer(sp);
   alert_new_file();
   /* now check in-core files -- need to close any of same name -- if edited what to do? */
   /* also it's possible the new file name is the same as the current file name(!) */
   fullname = mus_expand_filename(str);
+
   if (!(snd_overwrite_ok(fullname))) 
     {
-      FREE(fullname); 
-      return(false);
+      FREE(fullname);
+      (*need_directory_update) = false;
+      return(mus_format(_("%s not overwritten"), sp->short_filename));
     }
+
   if (!(run_before_save_as_hook(sp, fullname, save_type != FILE_SAVE_AS, srate, type, format, comment)))
     {
-      if (strcmp(fullname, sp->filename) == 0)
+      if (strcmp(fullname, sp->filename) == 0) /* save-as to mimic save (overwrite current) */
 	{
 	  char *ofile;
 	  /* normally save-as saves the current edit tree, merely saving the current state
@@ -2193,9 +2197,9 @@ bool saved_file_needs_update(snd_info *sp, char *str, save_dialog_t save_type, i
 	   */
 	  if (sp->read_only)
 	    {
-	      report_in_minibuffer_and_save(sp, _("can't save-as %s (%s is write-protected)"), fullname, sp->short_filename);
 	      FREE(fullname);
-	      return(false);
+	      (*need_directory_update)= false;
+	      return(mus_format(_("can't overwrite %s (it is write-protected)"), sp->short_filename));
 	    }
 	  /* it's possible also that the same-named file is open in several windows -- for now we'll ignore that */
 	  /* also what if a sound is write-protected in one window, and not in another? */
@@ -2205,10 +2209,10 @@ bool saved_file_needs_update(snd_info *sp, char *str, save_dialog_t save_type, i
 	    result = save_edits_without_display(sp, ofile, type, format, srate, comment, AT_CURRENT_EDIT_POSITION);
 	  else result = save_selection(ofile, type, format, srate, comment, SAVE_ALL_CHANS);
 	  if (result != MUS_NO_ERROR)
-	    report_in_minibuffer(sp, _("save as temp %s hit error: %s"), ofile, snd_io_strerror());
+	    msg = mus_format(_("save as %s error: %s"), ofile, snd_io_strerror());
 	  else move_file(ofile, sp->filename);
 	  snd_update(sp);
-	  needs_update = false;
+	  (*need_directory_update) = false;
 	  FREE(ofile);
 	  FREE(fullname);
 	}
@@ -2219,10 +2223,10 @@ bool saved_file_needs_update(snd_info *sp, char *str, save_dialog_t save_type, i
 	  collision->edits = 0;
 	  collision->sp = NULL;
 	  map_over_sounds(check_for_same_name, (void *)collision);
-	  if (collision->sp)
+	  if (collision->sp) /* sound open twice in Snd, other case has unsaved edits */
 	    {
 	      /* if no edits, we'll just close, overwrite, reopen */
-	      /* if edits, we need to ask luser what to do */
+	      /* if edits, we need to ask user what to do */
 	      /* we don't need to check for overwrites at this point */
 	      if (collision->edits > 0)
 		{
@@ -2230,7 +2234,8 @@ bool saved_file_needs_update(snd_info *sp, char *str, save_dialog_t save_type, i
 		    {
 		      FREE(fullname); 
 		      FREE(collision); 
-		      return(false);
+		      (*need_directory_update) = false;
+		      return(mus_format(_("%s not overwritten"), str));
 		    }
 		}
 	      snd_close_file(collision->sp);
@@ -2241,18 +2246,17 @@ bool saved_file_needs_update(snd_info *sp, char *str, save_dialog_t save_type, i
 	  else result = save_selection(str, type, format, srate, comment, SAVE_ALL_CHANS);
 	  if (result != MUS_NO_ERROR)
 	    {
-	      report_in_minibuffer_and_save(sp, "%s: %s", 
-					    str, 
-					    snd_io_strerror());
-	      needs_update = false;
+	      msg = mus_format("%s: %s", str, snd_io_strerror());
+	      (*need_directory_update) = false;
 	    }
-	  else report_in_minibuffer(sp, _("%s saved as %s"),
-				    (save_type == FILE_SAVE_AS) ? sp->short_filename : "selection",
-				    str);
 	  if (collision->sp) 
 	    {
 	      snd_open_file(fullname, false);
-	      if (needs_update) needs_update = false;
+	      (*need_directory_update) = false;
+	    }
+	  else 
+	    {
+	      if (!msg) (*need_directory_update) = true;
 	    }
 	  FREE(fullname);
 	  FREE(collision);
@@ -2261,9 +2265,10 @@ bool saved_file_needs_update(snd_info *sp, char *str, save_dialog_t save_type, i
   else 
     {
       FREE(fullname);
-      needs_update = false;
+      (*need_directory_update) = false;
+      return(mus_format(_("%s not saved due to %s"), sp->short_filename, S_before_save_as_hook));
     }
-  return(needs_update);
+  return(msg);
 }
 
 

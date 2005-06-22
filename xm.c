@@ -162,6 +162,7 @@
     #define S_setB "set! "
     #define PROC_FALSE "#f"
   #endif
+  #define NOT_A_GC_LOC -1
 #endif
 
 #ifndef CALLOC

@@ -1915,11 +1915,16 @@ Float string_to_Float(char *str)
   return(0.0);
 #else
   Float res = 0.0;
-  if (str) sscanf(str, "%f", &res);
+  if (str) 
+    {
+      if (!(sscanf(str, "%f", &res)))
+	snd_error(_("%s is not a number"), str);
+    }
   return(res);
 #endif
 }
 
+/* TODO: add error checks to sscanf et al elsewhere (headers snd-env snd-kbd) */
 int string_to_int(char *str) 
 {
 #if HAVE_EXTENSION_LANGUAGE
@@ -1931,7 +1936,11 @@ int string_to_int(char *str)
   return(0);
 #else
   int res = 0;
-  if (str) sscanf(str, "%d", &res);
+  if (str) 
+    {
+      if (!(sscanf(str, "%d", &res)))
+	snd_error(_("%s is not a number"), str);
+    }
   return(res);
 #endif
 }
@@ -1947,7 +1956,73 @@ off_t string_to_off_t(char *str)
   return(0);
 #else
   off_t res = 0;
-  if (str) sscanf(str, OFF_TD , &res);
+  if (str) 
+    {
+      if (!(sscanf(str, OFF_TD , &res)))
+	snd_error(_("%s is not a number"), str);
+    }
+  return(res);
+#endif
+}
+
+int string_to_int_with_error(char *str, int lo, const char *field_name) 
+{
+#if HAVE_EXTENSION_LANGUAGE
+  XEN res;
+  res = snd_catch_any(eval_str_wrapper, (void *)str, "string->int");
+  if (XEN_NUMBER_P(res))
+    {
+      int val;
+      val = XEN_TO_C_INT(res);
+      if (val < lo)
+	snd_error(_("%s: %d is invalid"), field_name, val);
+      else return(val);
+    }
+  else snd_error(_("%s: %s is not a number"), field_name, str);
+  return(0);
+#else
+  int res = 0;
+  if (str) 
+    {
+      if (!(sscanf(str, "%d", &res)))
+	snd_error(_("%s: %s is not a number"), field_name, str);
+      else
+	{
+	  if (res < lo)
+	    snd_error(_("%s: %d is invalid"), field_name, res);
+	}
+    }
+  return(res);
+#endif
+}
+
+off_t string_to_off_t_with_error(char *str, off_t lo, const char *field_name)
+{
+#if HAVE_EXTENSION_LANGUAGE
+  XEN res;
+  res = snd_catch_any(eval_str_wrapper, (void *)str, "string->off_t");
+  if (XEN_NUMBER_P(res))
+    {
+      off_t val;
+      val = XEN_TO_C_OFF_T(res);
+      if (val < lo)
+	snd_error(_("%s: " PRId64 " is invalid"), field_name, val);
+      else return(val);
+    }
+  else snd_error(_("%s: %s is not a number"), field_name, str);
+  return(0);
+#else
+  off_t res = 0;
+  if (str) 
+    {
+      if (!(sscanf(str, OFF_TD , &res)))
+	snd_error(_("%s: %s is not a number"), field_name, str);
+      else
+	{
+	  if (res < lo)
+	    snd_error(_("%s: " PRId64 " is invalid"), field_name, res);
+	}
+    }
   return(res);
 #endif
 }
