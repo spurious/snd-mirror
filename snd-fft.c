@@ -1651,7 +1651,7 @@ void c_convolve(char *fname, Float amp, int filec, off_t filehdr, int filterc, o
     {
       Float *rl0 = NULL, *rl1 = NULL, *rl2 = NULL;
       mus_sample_t **pbuffer = NULL, **fbuffer = NULL;
-      mus_sample_t *cm = NULL, *fcm = NULL, *pbuf = NULL;
+      mus_sample_t *pbuf = NULL;
       int i;
       Float scl;
       /* get to start point in the two sound files */
@@ -1661,32 +1661,28 @@ void c_convolve(char *fname, Float amp, int filec, off_t filehdr, int filterc, o
       if (rl0) rl1 = (Float *)CALLOC(fftsize, sizeof(Float));
       if (rl1) pbuffer = (mus_sample_t **)CALLOC(1, sizeof(mus_sample_t *));
       if (pbuffer) pbuffer[0] = (mus_sample_t *)CALLOC(data_size, sizeof(mus_sample_t));
-      if (pbuffer[0]) cm = (mus_sample_t *)CALLOC(1, sizeof(mus_sample_t));
       fbuffer = (mus_sample_t **)CALLOC(filter_chans, sizeof(mus_sample_t *));
       if (fbuffer) fbuffer[filter_chan] = (mus_sample_t *)CALLOC(filtersize, sizeof(mus_sample_t));
-      if (fbuffer[filter_chan]) fcm = (mus_sample_t *)CALLOC(filter_chans, sizeof(mus_sample_t));
       if ((rl0 == NULL) || (rl1 == NULL) || 
-	  (pbuffer == NULL) || (pbuffer[0] == NULL) || (cm == NULL) ||
-	  (fbuffer == NULL) || (fbuffer[filter_chan] == NULL) || (fcm == NULL))
+	  (pbuffer == NULL) || (pbuffer[0] == NULL) ||
+	  (fbuffer == NULL) || (fbuffer[filter_chan] == NULL))
 	{
 	  snd_error(_("not enough memory for convolve of %s (filter size: %d, fft size: %d)"), 
 		    fname, filtersize, fftsize);
 	}
       else
 	{
-	  cm[0] = (mus_sample_t)1;
-	  fcm[filter_chan] = (mus_sample_t)1;
 	  pbuf = pbuffer[0];
 
 	  /* read in the "impulse response" */
-	  mus_file_read_any(filterc, 0, filter_chans, filtersize, fbuffer, fcm);
+	  mus_file_read_any(filterc, 0, filter_chans, filtersize, fbuffer, fbuffer);
 	  for (i = 0; i < filtersize; i++) 
 	    rl1[i] = MUS_SAMPLE_TO_FLOAT(fbuffer[filter_chan][i]);
 	  progress_report(gsp, "convolve", ip + 1, total_chans, .1, from_enved);
 	  mus_header_write_next_header(tempfile, 22050, 1, 28, data_size * 4, MUS_BINT, NULL, 0);
 	  mus_file_open_descriptors(tempfile, fname, MUS_BINT, 4, 28, 1, MUS_NEXT);
 	  /* get the convolution data */
-	  mus_file_read_any(filec, 0, 1, data_size, pbuffer, cm);
+	  mus_file_read_any(filec, 0, 1, data_size, pbuffer, pbuffer);
 	  for (i = 0; i < data_size; i++) rl0[i] = MUS_SAMPLE_TO_FLOAT(pbuf[i]);
 
 	  progress_report(gsp, "convolve", ip + 1, total_chans, .3, from_enved);
@@ -1731,13 +1727,11 @@ void c_convolve(char *fname, Float amp, int filec, off_t filehdr, int filterc, o
 	  if (pbuf) FREE(pbuf);
 	  FREE(pbuffer);
 	}
-      if (cm) FREE(cm);
       if (fbuffer) 
 	{
 	  if (fbuffer[filter_chan]) FREE(fbuffer[filter_chan]);
 	  FREE(fbuffer);
 	}
-      if (fcm) FREE(fcm);
     }
 }
 

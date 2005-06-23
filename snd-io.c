@@ -106,24 +106,49 @@ static void c_io_bufclr (snd_io *io, int beg)
 static void reposition_file_buffers_1(off_t loc, snd_io *io)
 {
   /* called when loc is outside the current in-core frame for the file pointed to by io */
-  off_t frames;
-  frames = io->frames - loc;
+  int frames;
+  /* local frames is buffer-local, not a sample number. */
+  frames = (int)(io->frames - loc);
   if (frames > io->bufsize) frames = io->bufsize;
   if (frames <= 0)                   /* tried to access beyond current end of file */
     {
+
+#if DEBUG64
+      fprintf(stderr, "clearing because frames: %d, loc: " OFF_TD ", io->frames: " OFF_TD "\n", frames, loc, io->frames);
+#endif
+
       io->beg = loc; 
       c_io_bufclr(io, 0);
     }
   else
     {
-      mus_file_seek_frame(io->fd, loc);
+      off_t seek_loc;
+      int err;
+      seek_loc = mus_file_seek_frame(io->fd, loc);
       io->beg = loc;
-      mus_file_read_chans(io->fd,
-			  0, frames - 1,
-			  io->chans,
-			  io->arrays,
-			  (mus_sample_t *)(io->arrays));
-      if (frames < io->bufsize) c_io_bufclr(io, frames);
+
+#if DEBUG64
+      if (io->chans == 1) fprintf(stderr, "read mono sound\n");
+#endif
+
+      err = mus_file_read_chans(io->fd,
+				0, frames - 1,
+				io->chans,
+				io->arrays,
+				io->arrays);
+#if DEBUG64
+      if (err == MUS_ERROR)
+	{
+	  fprintf(stderr, "read chans error!\n");
+	}
+#endif
+      if (frames < io->bufsize) 
+	{
+#if DEBUG64
+	  fprintf(stderr, "clear from %d to %d\n", frames, io->bufsize);
+#endif
+	  c_io_bufclr(io, frames);
+	}
     }
   io->end = io->beg + io->bufsize - 1;
 }
@@ -194,13 +219,15 @@ snd_io *make_file_state(int fd, file_info *hdr, int chan, off_t beg, int suggest
 	    bool happy = false;
 	    if (chan == 1)
 	      {
-		if (!(io->arrays[1])) fprintf(stderr,"%s: chan 2 buffer null", c__FUNCTION__);
+		if (!(io->arrays[1])) fprintf(stderr,"%s: chan 2 buffer null\n", c__FUNCTION__);
 		else
 		  {
 		    for (i = 0; (!happy) && (i < io->bufsize); i++)
 		      if (io->arrays[1][i] != MUS_SAMPLE_0)
 			happy = true;
-		    if (!happy) fprintf(stderr,"%s: chan 2 is empty", c__FUNCTION__);
+		    if (!happy) 
+		      fprintf(stderr,"%s: chan 2 is empty (read %d samps: " OFF_TD " / %d)\n", 
+			      c__FUNCTION__, io->bufsize, hdr->samples, hdr->chans);
 		  }
 	      }
 	  }
@@ -221,23 +248,6 @@ void file_buffers_forward(off_t ind0, off_t ind1, off_t indx, snd_fd *sf, snd_da
   if (ind1 <= cur_snd->io->end) 
     sf->last = ind1 - cur_snd->io->beg;
   else sf->last = cur_snd->io->bufsize - 1;
-#if DEBUG64
-	  {
-	    int i;
-	    bool happy = false;
-	    if (cur_snd->io->arrays[1])
-	      {
-		if (!(cur_snd->io->arrays[1])) fprintf(stderr,"%s: chan 2 buffer null", c__FUNCTION__);
-		else
-		  {
-		    for (i = 0; (!happy) && (i < cur_snd->io->bufsize); i++)
-		      if (cur_snd->io->arrays[1][i] != MUS_SAMPLE_0)
-			happy = true;
-		    if (!happy) fprintf(stderr,"%s: chan 2 is empty", c__FUNCTION__);
-		  }
-	      }
-	  }
-#endif
 }
 
 void file_buffers_back(off_t ind0, off_t ind1, off_t indx, snd_fd *sf, snd_data *cur_snd)

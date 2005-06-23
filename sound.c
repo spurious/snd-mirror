@@ -1026,7 +1026,7 @@ int mus_file_to_array(const char *filename, int chan, int start, int samples, mu
   bufs = (mus_sample_t **)CALLOC(chans, sizeof(mus_sample_t *));
   bufs[chan] = array;
   mus_file_seek_frame(ifd, start);
-  total_read = mus_file_read_any(ifd, 0, chans, samples, bufs, (mus_sample_t *)bufs);
+  total_read = mus_file_read_any(ifd, 0, chans, samples, bufs, bufs);
   mus_sound_close_input(ifd);
   FREE(bufs);
   return(total_read);

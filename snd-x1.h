@@ -25,6 +25,8 @@ void save_help_dialog_state(FILE *fd);
 void add_to_error_history(char *msg, bool popup);
 void post_error_dialog(char *msg);
 void show_snd_errors(void);
+widget_t post_it(const char *subject, const char *str);
+void save_post_it_dialog_state(FILE *fd);
 
 #ifdef __GNUC__
   bool snd_yes_or_no_p(const char *format, ...) __attribute__ ((format (printf, 1, 2)));
@@ -452,10 +454,11 @@ void reflect_sound_selection(snd_info *sp);
 
 /* -------- snd-xfile.c -------- */
 
-char *get_file_dialog_sound_attributes(file_data *fdat, int *srate, int *chans, int *type, int *format, off_t *location, off_t *samples);
+char *get_file_dialog_sound_attributes(file_data *fdat, int *srate, int *chans, int *type, int *format, off_t *location, off_t *samples, int min_chan);
 file_data *make_file_data_panel(Widget parent, char *name, Arg *args, int n, dialog_channels_t with_chan, 
 				int header_type, int data_format, dialog_data_location_t with_loc, 
-				dialog_samples_t with_samples, dialog_error_t with_error);
+				dialog_samples_t with_samples, dialog_error_t with_error, 
+				dialog_header_type_t with_header_type, dialog_comment_t with_comment);
 void alert_new_file(void);
 widget_t make_open_file_dialog(bool read_only, bool managed);
 widget_t make_file_save_as_dialog(bool managed);
@@ -481,8 +484,6 @@ void set_open_file_play_button(bool val);
 widget_t make_mix_file_dialog(bool managed);
 void g_init_gxfile(void);
 void clear_deleted_snd_info(struct file_dialog_info *fd);
-widget_t post_it(const char *subject, const char *str);
-void save_post_it_dialog_state(FILE *fd);
 void reflect_just_sounds(void);
 void save_file_dialog_state(FILE *fd);
 

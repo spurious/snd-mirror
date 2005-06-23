@@ -5347,7 +5347,7 @@ static Float file_sample(mus_any *ptr, off_t samp, int chan)
 		gen->ibufs[i] = (mus_sample_t *)clm_calloc(gen->file_buffer_size, sizeof(mus_sample_t), "input buffer");
 	    }
 	  mus_file_seek_frame(fd, gen->data_start);
-	  mus_file_read_chans(fd, 0, gen->file_buffer_size - 1, gen->chans, gen->ibufs, (mus_sample_t *)(gen->ibufs));
+	  mus_file_read_chans(fd, 0, gen->file_buffer_size - 1, gen->chans, gen->ibufs, gen->ibufs);
 	  mus_sound_close_input(fd);
 	  if (gen->data_end > gen->file_end) gen->data_end = gen->file_end;
 	}

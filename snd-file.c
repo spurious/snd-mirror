@@ -2297,7 +2297,7 @@ void edit_header_callback(snd_info *sp, file_data *edit_header_data)
       if ((hdr->type == MUS_AIFF) || (hdr->type == MUS_AIFC)) mus_header_set_aiff_loop_info(mus_sound_loop_info(sp->filename));
       mus_sound_forget(sp->filename);
       /* find out which fields changed -- if possible don't touch the sound data */
-      comment = get_file_dialog_sound_attributes(edit_header_data, &srate, &chans, &type, &format, &loc, &samples);
+      comment = get_file_dialog_sound_attributes(edit_header_data, &srate, &chans, &type, &format, &loc, &samples, 1);
       if (hdr->type != type)
 	mus_header_change_type(sp->filename, type, format);
       else

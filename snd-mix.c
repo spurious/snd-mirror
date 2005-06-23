@@ -1162,13 +1162,13 @@ static mix_info *file_mix_samples(off_t beg, off_t num, char *mixfile, chan_info
   chandata = data[chan];
   lseek(ofd, ohdr->data_location, SEEK_SET);
   lseek(ifd, ihdr->data_location, SEEK_SET);
-  mus_file_read_chans(ifd, 0, size - 1, in_chans, data, (mus_sample_t *)data);
+  mus_file_read_chans(ifd, 0, size - 1, in_chans, data, data);
   for (i = 0, j = 0; i < num; i++)
     {
       if (j == size)
 	{
 	  err = mus_file_write(ofd, 0, size - 1, 1, &chandata);
-	  mus_file_read_chans(ifd, 0, size - 1, in_chans, data, (mus_sample_t *)data);
+	  mus_file_read_chans(ifd, 0, size - 1, in_chans, data, data);
 	  j = 0;
 	  if (err == -1) break;
 	}

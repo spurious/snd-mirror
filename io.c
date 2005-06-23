@@ -720,7 +720,7 @@ static const int mulaw[256] = {
 
 /* TODO: 64-bit systems can lose chan 2? */
 
-static int mus_read_any_1(int tfd, int beg, int chans, int nints, mus_sample_t **bufs, mus_sample_t *cm, char *inbuf)
+static int mus_read_any_1(int tfd, int beg, int chans, int nints, mus_sample_t **bufs, mus_sample_t **cm, char *inbuf)
 {
   int loclim;
   io_fd *fd;
@@ -830,6 +830,16 @@ static int mus_read_any_1(int tfd, int beg, int chans, int nints, mus_sample_t *
 
       for (k = 0; k < chans; k++)
 	{
+#if DEBUG64
+	  if ((cm) && ((cm[k] == NULL) || (bufs[k] == NULL)))
+	    {
+	      int n, locs = 0;
+	      for (n = 0; n < chans; n++)
+		if (cm[n]) locs++;
+	      fprintf(stderr, "skip chan %d this time (%d chans, %d requested: %p %p)\n", 
+		      k, chans, locs, cm[k], bufs[k]);
+	    }
+#endif
 	  if ((cm == NULL) || (cm[k]))
 	    {
 	      buffer = (mus_sample_t *)(bufs[k]);
@@ -958,7 +968,7 @@ static int mus_read_any_1(int tfd, int beg, int chans, int nints, mus_sample_t *
   return(total_read);
 }
 
-int mus_file_read_any(int tfd, int beg, int chans, int nints, mus_sample_t **bufs, mus_sample_t *cm)
+int mus_file_read_any(int tfd, int beg, int chans, int nints, mus_sample_t **bufs, mus_sample_t **cm)
 {
   return(mus_read_any_1(tfd, beg, chans, nints, bufs, cm, NULL));
 }
@@ -984,7 +994,7 @@ int mus_file_read(int tfd, int beg, int end, int chans, mus_sample_t **bufs)
     for (k = 0; k < chans; k++)
       {
 	mus_sample_t *buffer;
-	buffer = (mus_sample_t *)(bufs[k]);
+	buffer = bufs[k];
 	i = rtn + beg;
 	/* this happens routinely in mus_outa + initial write (reads ahead in effect) */
 	memset((void *)(buffer + i), 0, (end - i + 1) * sizeof(mus_sample_t));
@@ -992,7 +1002,7 @@ int mus_file_read(int tfd, int beg, int end, int chans, mus_sample_t **bufs)
   return(num);
 }
 
-int mus_file_read_chans(int tfd, int beg, int end, int chans, mus_sample_t **bufs, mus_sample_t *cm)
+int mus_file_read_chans(int tfd, int beg, int end, int chans, mus_sample_t **bufs, mus_sample_t **cm)
 {
   /* an optimization of mus_file_read -- just reads the desired channels */
   int num, rtn, i, k;
@@ -1004,8 +1014,11 @@ int mus_file_read_chans(int tfd, int beg, int end, int chans, mus_sample_t **buf
       if ((cm == NULL) || (cm[k]))
 	{
 	  mus_sample_t *buffer;
-	  buffer = (mus_sample_t *)(bufs[k]);
+	  buffer = bufs[k];
 	  i = rtn + beg;
+#if DEBUG64
+	  fprintf(stderr, "clear buf[%d]: %d %d\n", k, rtn, num);
+#endif
 	  memset((void *)(buffer + i), 0, (end - i + 1) * sizeof(mus_sample_t));
 	}
   return(num);

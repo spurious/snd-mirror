@@ -1749,7 +1749,7 @@ static void record_button_callback(GtkWidget *w, gpointer context)
 
       if (!(rp->taking_input)) fire_up_recorder();
       old_srate = rp->srate;
-      comment = get_file_dialog_sound_attributes(recdat, &rs, &ochns, &rp->output_header_type, &ofmt, &oloc, &samples); 
+      comment = get_file_dialog_sound_attributes(recdat, &rs, &ochns, &rp->output_header_type, &ofmt, &oloc, &samples, 1); 
       rp->output_data_format = ofmt;
       if (rp->out_chans == 0)
 	{

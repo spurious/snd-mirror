@@ -44813,8 +44813,8 @@ EDITS: 1
 		    (if (file-exists? "test.snd") (delete-file "test.snd"))
 		    (save-sound-dialog)
 		    (let* ((saved (list-ref (dialog-widgets) 7))
-			   (types (find-child saved "header type")) ; list
-			   (formats (find-child saved "data format")) ; list
+			   (types (find-child saved "header-type")) ; list
+			   (formats (find-child saved "data-format")) ; list
 			   (srtxt (find-child saved "srate-text")) 
 			   (comtxt (find-child saved "comment-text"))
 			   (cancel (XmFileSelectionBoxGetChild saved XmDIALOG_CANCEL_BUTTON))
@@ -44883,8 +44883,8 @@ EDITS: 1
 		    (let* ((saved (list-ref (dialog-widgets) 7))
 			   (ok (XmFileSelectionBoxGetChild saved XmDIALOG_OK_BUTTON))
 			   (filetext (XmFileSelectionBoxGetChild saved XmDIALOG_TEXT))
-			   (types (find-child saved "header type")) ; list
-			   (formats (find-child saved "data format"))) ; list
+			   (types (find-child saved "header-type")) ; list
+			   (formats (find-child saved "data-format"))) ; list
 		      (XmListSelectPos types 1 #t)
 		      (XmListSelectPos formats 1 #t)
 		      (XmTextSetString filetext "test.snd")
@@ -45123,8 +45123,8 @@ EDITS: 1
 		    (if (provided? 'snd-debug)
 			(let* ((editd (list-ref (dialog-widgets) 12))
 			       ;; cancel ok=save 
-			       (types (find-child editd "header type")) ; list
-			       (formats (find-child editd "data format")) ; list
+			       (types (find-child editd "header-type")) ; list
+			       (formats (find-child editd "data-format")) ; list
 			       (srtxt (find-child editd "srate-text")) 
 			       (chtxt (find-child editd "chans-text"))
 			       (loctxt (find-child editd "location-text"))

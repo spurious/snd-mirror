@@ -302,7 +302,7 @@ void reflect_sound_selection(snd_info *sp);
 
 /* -------- snd-xfile.c -------- */
 
-char *get_file_dialog_sound_attributes(file_data *fdat, int *srate, int *chans, int *type, int *format, off_t *location, off_t *samples);
+char *get_file_dialog_sound_attributes(file_data *fdat, int *srate, int *chans, int *type, int *format, off_t *location, off_t *samples, int min_chan);
 void alert_new_file(void);
 snd_info *make_new_file_dialog(char *newname, int header_type, int data_format, int srate, int chans, char *comment);
 void make_cur_name_row(int old_size, int new_size);

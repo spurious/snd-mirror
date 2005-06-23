@@ -3367,6 +3367,8 @@ apply func to samples in current channel; edname is the edit history name for th
   return(g_map_chan_1(proc, s_beg, XEN_FALSE, org, snd, chn, edpos, (XEN_BOUND_P(s_dur)) ? s_dur : XEN_FALSE, S_map_channel));
 }
 
+/* TODO: "find" and presumably "count-matches" are bad names -- collides with CM/Guile */
+
 static XEN g_find(XEN expr, XEN sample, XEN snd_n, XEN chn_n, XEN edpos)
 {
   #define H_find "(" S_find " func (start-samp 0) (snd #f) (chn #f) (edpos #f)): apply func, a function of one argument, \

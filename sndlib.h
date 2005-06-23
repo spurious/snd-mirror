@@ -2,8 +2,8 @@
 #define SNDLIB_H
 
 #define SNDLIB_VERSION 19
-#define SNDLIB_REVISION 12
-#define SNDLIB_DATE "20-Apr-05"
+#define SNDLIB_REVISION 13
+#define SNDLIB_DATE "23-Jun-05"
 
 #include <config.h>
 
@@ -473,9 +473,9 @@ int mus_file_reopen_write(const char *arg);
 int mus_file_close(int fd);
 off_t mus_file_seek_frame(int tfd, off_t frame);
 int mus_file_read(int fd, int beg, int end, int chans, mus_sample_t **bufs);
-int mus_file_read_chans(int fd, int beg, int end, int chans, mus_sample_t **bufs, mus_sample_t *cm);
+int mus_file_read_chans(int fd, int beg, int end, int chans, mus_sample_t **bufs, mus_sample_t **cm);
 int mus_file_write(int tfd, int beg, int end, int chans, mus_sample_t **bufs);
-int mus_file_read_any(int tfd, int beg, int chans, int nints, mus_sample_t **bufs, mus_sample_t *cm);
+int mus_file_read_any(int tfd, int beg, int chans, int nints, mus_sample_t **bufs, mus_sample_t **cm);
 int mus_file_read_file(int tfd, int beg, int chans, int nints, mus_sample_t **bufs);
 int mus_file_read_buffer(int charbuf_data_format, int beg, int chans, int nints, mus_sample_t **bufs, char *charbuf);
 int mus_file_write_file(int tfd, int beg, int end, int chans, mus_sample_t **bufs);

@@ -25,6 +25,8 @@ void save_help_dialog_state(FILE *fd);
 void add_to_error_history(char *msg, bool popup);
 void post_error_dialog(char *msg);
 void show_snd_errors(void);
+widget_t post_it(const char *subject, const char *str);
+void save_post_it_dialog_state(FILE *fd);
 
 #ifdef __GNUC__
   bool snd_yes_or_no_p(const char *format, ...) __attribute__ ((format (printf, 1, 2)));
@@ -536,7 +538,7 @@ void g_init_gxrec(void);
 
 /* -------- snd-gfile.c -------- */
 
-char *get_file_dialog_sound_attributes(file_data *fdat, int *srate, int *chans, int *type, int *format, off_t *location, off_t *samples);
+char *get_file_dialog_sound_attributes(file_data *fdat, int *srate, int *chans, int *type, int *format, off_t *location, off_t *samples, int min_chan);
 void alert_new_file(void);
 widget_t make_open_file_dialog(bool read_only, bool managed);
 file_data *make_file_data_panel(GtkWidget *parent, char *name, dialog_channels_t with_chan, 
@@ -565,8 +567,6 @@ void save_edit_header_dialog_state(FILE *fd);
 void set_open_file_play_button(bool val);
 void g_init_gxfile(void);
 void clear_deleted_snd_info(struct file_dialog_info *fd);
-widget_t post_it(const char *subject, const char *str);
-void save_post_it_dialog_state(FILE *fd);
 void reflect_just_sounds(void);
 void save_file_dialog_state(FILE *fd);
 
