@@ -396,6 +396,7 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+24-Jun:  channels-combined is now the default channel-style.\n\
 20-Jun:  'Extract' option to Save as dialogs (to extract a channel).\n\
 13-Jun:  folded gl-ruby.c into gl.c, xm-ruby.c into xm.c, xg-ruby.c into xg.c.\n\
 6-June:  removed save-options (use save-state).\n\
@@ -405,10 +406,6 @@ void about_snd_help(void)
 25-May:  create-audit-dialog in snd-motif.scm.\n\
 23-May:  maraca.rb, play.rb, prc95.rb, singer.rb, and zip.rb thanks to Mike Scholz.\n\
          rt.tex thanks to Kjetil Matheussen.\n\
-16-May:  before-save-as-hook.\n\
-2-May:   maxamp-position, region-|selection-|maxamp-position.\n\
-         windowed-maxamp generator (dsp.scm).\n\
-         harmonicizer (dsp.scm).\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",

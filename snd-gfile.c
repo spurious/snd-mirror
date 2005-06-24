@@ -1641,10 +1641,9 @@ static void new_file_help_callback(GtkWidget *w, gpointer context)
 
 static off_t initial_samples = 1;
 
-snd_info *make_new_file_dialog(char *newname, int header_type, int data_format, int srate, int chans, char *comment)
+void make_new_file_dialog(char *newname, int header_type, int data_format, int srate, int chans, char *comment)
 {
   char *title;
-  snd_info *sp = NULL;
   new_file_cancelled = false;
   title = (char *)CALLOC(snd_strlen(newname) + 32, sizeof(char));
   sprintf(title, _("create new sound: %s"), newname);
@@ -1702,19 +1701,18 @@ snd_info *make_new_file_dialog(char *newname, int header_type, int data_format, 
   gtk_widget_show(new_dialog);
   while (!new_file_done) gtk_main_iteration();
   gtk_widget_hide(new_dialog);
-  if (new_file_cancelled)
-    return(NULL);
-  else
+  if (!new_file_cancelled)
     {
       off_t loc;
       char *tmpstr, *newer_name = NULL;
       newer_name = (char *)gtk_entry_get_text(GTK_ENTRY(new_file_name));
-      if (newer_name == NULL) return(NULL);
-      tmpstr = get_file_dialog_sound_attributes(new_dialog_data, &srate, &chans, &header_type, &data_format, &loc, &initial_samples, 1);
-      sp = snd_new_file(newer_name, header_type, data_format, srate, chans, tmpstr, initial_samples);
-      if (tmpstr) FREE(tmpstr);
+      if (newer_name)
+	{
+	  tmpstr = get_file_dialog_sound_attributes(new_dialog_data, &srate, &chans, &header_type, &data_format, &loc, &initial_samples, 1);
+	  snd_new_file(newer_name, header_type, data_format, srate, chans, tmpstr, initial_samples);
+	  if (tmpstr) FREE(tmpstr);
+	}
     }
-  return(sp);
 }
 
 
@@ -1744,7 +1742,7 @@ static gint edit_header_delete_callback(GtkWidget *w, GdkEvent *event, gpointer 
 static void edit_header_ok_callback(GtkWidget *w, gpointer context) 
 {
   if (!(edit_header_sp->read_only))
-    edit_header_callback(edit_header_sp, edit_header_data);
+    edit_header_callback(edit_header_sp, edit_header_data, NULL, NULL);
   else snd_error(_("%s is write-protected"), edit_header_sp->short_filename);
   gtk_widget_hide(edit_header_dialog);
 }

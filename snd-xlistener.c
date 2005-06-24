@@ -51,6 +51,8 @@ static void completion_help_browse_callback(Widget w, XtPointer context, XtPoint
   ss->sgx->completion_requestor = NULL;
 }
 
+/* TODO: get completion popup out of the line of fire! */
+
 static void help_completion_ok_callback(Widget w, XtPointer context, XtPointer info) 
 {
   ss->sgx->completion_requestor = NULL;

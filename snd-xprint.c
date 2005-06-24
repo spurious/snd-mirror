@@ -66,6 +66,8 @@ static void file_print_ok_callback(Widget w, XtPointer context, XtPointer info)
 	    }
 	  err = lpr(name);
 	  if ((err != 0) && (nsp)) report_in_minibuffer(nsp, _("can't print!"));
+	  /* TODO: redirect print error to dialog */
+
 	  /* tried to redirect stderr here and pick it up afterwards, to no avail */
 	  snd_remove(name, IGNORE_CACHE);
 	  FREE(name);

@@ -346,6 +346,7 @@ typedef struct snd_info {
   struct mini_history *minibuffer_history, *filter_history;
   bool active;
   char *name_string;
+  void (*read_only_watcher)(struct snd_info *sp);
 } snd_info;
 
 #define SND_SRATE(sp) (((sp)->hdr)->srate)
@@ -590,7 +591,7 @@ void revert_file_from_menu(void);
 void exit_from_menu(void);
 void save_options_from_menu(void);
 void save_state_from_menu(void);
-snd_info *new_file_from_menu(void);
+void new_file_from_menu(void);
 void unprotect_callback(int slot);
 void set_graph_style(graph_style_t val);
 void set_show_marks(bool val);
@@ -1305,7 +1306,9 @@ char **set_header_and_data_positions(file_data *fdat, int type, int format);
 char *save_as_dialog_save_sound(snd_info *sp, char *str, save_dialog_t save_type, 
 			     int srate, int type, int format, char *comment,
 			     bool *need_directory_update);
-void edit_header_callback(snd_info *sp, file_data *edit_header_data);
+bool edit_header_callback(snd_info *sp, file_data *edit_header_data, 
+			  void (*outer_handler)(const char *error_msg, void *ufd),
+			  void (*inner_handler)(const char *error_msg, void *ufd));
 void reflect_file_change_in_title(void);
 
 int header_type_from_position(int pos);

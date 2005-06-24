@@ -560,7 +560,7 @@ void view_files_callback(GtkWidget *w, gpointer info);
 GtkWidget *start_file_dialog(bool managed);
 bool view_files_dialog_is_active(void);
 file_info *raw_data_dialog_to_file_info(const char *filename, const char *title);
-snd_info *make_new_file_dialog(char *newname, int header_type, int data_format, int srate, int chans, char *comment);
+void make_new_file_dialog(char *newname, int header_type, int data_format, int srate, int chans, char *comment);
 widget_t make_mix_file_dialog(bool managed);
 GtkWidget *edit_header(snd_info *sp);
 void save_edit_header_dialog_state(FILE *fd);

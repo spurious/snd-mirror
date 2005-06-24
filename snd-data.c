@@ -305,6 +305,7 @@ snd_info *make_snd_info(snd_info *sip, const char *filename, file_info *hdr, int
 	}
     }
   sp->read_only = read_only;  /* need to be sure this is set before any hooks run */
+  sp->read_only_watcher = NULL;
   sp->index = snd_slot;
   sp->nchans = chans;
   sp->hdr = hdr;

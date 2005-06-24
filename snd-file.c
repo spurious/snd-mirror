@@ -1310,6 +1310,7 @@ static snd_info *snd_update_1(snd_info *sp, const char *ur_filename)
   return(nsp);
 }
 
+/* TODO: if channels_combined, I think the window gets smaller each time */
 snd_info *snd_update(snd_info *sp)
 {
   Latus app_x, app_y;
@@ -2272,14 +2273,16 @@ char *save_as_dialog_save_sound(snd_info *sp, char *str, save_dialog_t save_type
 }
 
 
-void edit_header_callback(snd_info *sp, file_data *edit_header_data)
+bool edit_header_callback(snd_info *sp, file_data *edit_header_data, 
+			  void (*outer_handler)(const char *error_msg, void *ufd),
+			  void (*inner_handler)(const char *error_msg, void *ufd))
 {
-  /* this blindly changes the header info -- it does not actually reformat the data or whatever */
+  /* this just changes the header -- it does not actually reformat the data or whatever */
   int err;
   if (sp->read_only)
     {
       snd_error(_("%s is write-protected"), sp->filename);
-      return;
+      return(false);
     }
 #if HAVE_ACCESS
   err = access(sp->filename, W_OK);
@@ -2293,11 +2296,17 @@ void edit_header_callback(snd_info *sp, file_data *edit_header_data)
       file_info *hdr;
       int chans, srate, type, format;
       hdr = sp->hdr;
+
+      /* find out which fields changed -- if possible don't touch the sound data */
+      redirect_snd_error_to(inner_handler, (void *)edit_header_data);
+      comment = get_file_dialog_sound_attributes(edit_header_data, &srate, &chans, &type, &format, &loc, &samples, 1);
+      redirect_snd_error_to(outer_handler, (void *)edit_header_data);
+      if (edit_header_data->error_widget != NOT_A_SCANF_WIDGET) /* bad field value, perhaps */
+	return(false);
+
       original_comment = mus_sound_comment(sp->filename);
       if ((hdr->type == MUS_AIFF) || (hdr->type == MUS_AIFC)) mus_header_set_aiff_loop_info(mus_sound_loop_info(sp->filename));
       mus_sound_forget(sp->filename);
-      /* find out which fields changed -- if possible don't touch the sound data */
-      comment = get_file_dialog_sound_attributes(edit_header_data, &srate, &chans, &type, &format, &loc, &samples, 1);
       if (hdr->type != type)
 	mus_header_change_type(sp->filename, type, format);
       else
@@ -2321,9 +2330,11 @@ void edit_header_callback(snd_info *sp, file_data *edit_header_data)
       if (comment) FREE(comment);
       if (original_comment) FREE(original_comment);
       snd_update(sp);
+      return(true);
     }
   else 
     snd_error(_("can't write file %s: %s"), sp->short_filename, snd_io_strerror());
+  return(false);
 }
 
 #if (!USE_NO_GUI)

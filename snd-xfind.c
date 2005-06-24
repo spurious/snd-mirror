@@ -2,6 +2,8 @@
 
 /* -------- edit find -------- */
 
+/* TODO: trap syntax errors? in find and post in that dialog */
+
 static Widget edit_find_dialog, edit_find_text, cancelB, edit_find_label, findnextB;
 
 static void edit_find_help_callback(Widget w, XtPointer context, XtPointer info) 

@@ -6,42 +6,44 @@
 
 snd_info *snd_new_file(char *newname, int header_type, int data_format, int srate, int chans, char *new_comment, off_t samples)
 {
-  if (snd_overwrite_ok(newname))
+  if ((newname) && (*newname))
     {
-      if (mus_header_writable(header_type, data_format))
+      if (snd_overwrite_ok(newname))
 	{
-	  int err;
-#if DEBUGGING
-	  if (new_comment == NULL) new_comment = copy_string("snd new file in snd-snd.c");
-#endif
-	  err = snd_write_header(newname, header_type, srate, chans, 0, /* 0 is loc? */
-				 samples * chans, /* total samples apparently */
-				 data_format, new_comment, 
-				 snd_strlen(new_comment), NULL);
-	  if (err == -1)
-	    snd_error(_("can't write %s"),newname);
-	  else
+	  if (mus_header_writable(header_type, data_format))
 	    {
-	      int chan;
-	      off_t size;
-	      unsigned char* buf;
-	      /* send out the initial samples */
-	      chan = snd_reopen_write(newname);
-	      lseek(chan, mus_header_data_location(), SEEK_SET);
-	      size = chans * mus_samples_to_bytes(data_format, samples);
-	      buf = (unsigned char *)CALLOC(size, sizeof(unsigned char));
-	      write(chan, buf, size);
-	      snd_close(chan, newname);
-	      FREE(buf);
-	      return(sound_is_silence(snd_open_file(newname, false)));
+	      int err;
+	      err = snd_write_header(newname, header_type, srate, chans, 0, /* 0 is loc? */
+				     samples * chans, /* total samples apparently */
+				     data_format, new_comment, 
+				     snd_strlen(new_comment), NULL);
+	      if (err == -1)
+		snd_error(_("can't write %s"),newname);
+	      else
+		{
+		  int chan;
+		  off_t size;
+		  unsigned char* buf;
+		  /* send out the initial samples */
+		  chan = snd_reopen_write(newname);
+		  lseek(chan, mus_header_data_location(), SEEK_SET);
+		  size = chans * mus_samples_to_bytes(data_format, samples);
+		  buf = (unsigned char *)CALLOC(size, sizeof(unsigned char));
+		  write(chan, buf, size);
+		  snd_close(chan, newname);
+		  FREE(buf);
+		  return(sound_is_silence(snd_open_file(newname, false)));
+		}
 	    }
+	  else 
+	    snd_error(_("%s: can't write %s header with %s data format"),
+		      newname,
+		      mus_header_type_name(header_type),
+		      mus_data_format_name(data_format));
 	}
-      else 
-	snd_error(_("%s: can't write %s header with %s data format"),
-		  newname,
-		  mus_header_type_name(header_type),
-		  mus_data_format_name(data_format));
+      else snd_error(_("can't overwrite %s"), newname);
     }
+  else snd_error(_("no new file name?"));
   return(NULL);
 }
 
@@ -2235,7 +2237,9 @@ static XEN sound_set(XEN snd_n, XEN val, sp_field_t fld, char *caller)
       if (!(IS_PLAYER(sp)))
 	{
 	  sp->read_only = XEN_TO_C_BOOLEAN(val); 
-	  snd_file_lock_icon(sp, sp->read_only); 
+	  snd_file_lock_icon(sp, sp->read_only);
+	  if (sp->read_only_watcher)
+	    (*(sp->read_only_watcher))(sp);
 	}
       break;
     case SP_EXPANDING:
@@ -2838,7 +2842,7 @@ static XEN g_set_channel_style(XEN style, XEN snd)
   snd_info *sp;
   channel_style_t new_style = CHANNELS_SEPARATE;
   #define H_channel_style "(" S_channel_style " (snd #f)): how multichannel sounds lay out the channels. \
-Default is " S_channels_separate ", other values are " S_channels_combined " and " S_channels_superimposed ". \
+The default is " S_channels_combined "; other values are " S_channels_separate " and " S_channels_superimposed ". \
 As a global (if the 'snd' arg is omitted), it is the default setting for each sound's 'unite' button."
 
   XEN_ASSERT_TYPE(XEN_INTEGER_P(style), style, XEN_ARG_1, S_setB S_channel_style, "an integer or boolean"); 
@@ -5006,7 +5010,7 @@ If it returns #t, the usual informative minibuffer babbling is squelched."
   after_apply_hook = XEN_DEFINE_HOOK(S_after_apply_hook,  1, H_after_apply_hook);      /* args = snd-index */
 
   #define H_channels_separate "The value for " S_channel_style " that causes channel graphs to occupy separate panes"
-  #define H_channels_combined "The value for " S_channel_style " that causes channel graphs to occupy one panes (the 'unite' button)"
+  #define H_channels_combined "The value for " S_channel_style " that causes channel graphs to occupy one pane (set by the 'unite' button)"
   #define H_channels_superimposed "The value for " S_channel_style " that causes channel graphs to occupy one pane and one axis"
 
   XEN_DEFINE_CONSTANT(S_channels_separate,     CHANNELS_SEPARATE,     H_channels_separate);

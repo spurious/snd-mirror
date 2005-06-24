@@ -801,7 +801,8 @@ typedef enum {PLAY_COMPLETE, PLAY_CLOSE, PLAY_BUTTON_UNSET, PLAY_STOP_CALLED, PL
 
 #define channel_style(ss) ss->Channel_Style
 #define in_set_channel_style(a) ss->Channel_Style = a
-#define DEFAULT_CHANNEL_STYLE CHANNELS_SEPARATE
+#define DEFAULT_CHANNEL_STYLE CHANNELS_COMBINED
+#define DEFAULT_MONO_CHANNEL_STYLE CHANNELS_SEPARATE
 
 #define sound_style(ss) ss->Sound_Style
 #define set_sound_style(a) ss->Sound_Style = a

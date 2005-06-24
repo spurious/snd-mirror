@@ -463,7 +463,7 @@ void alert_new_file(void);
 widget_t make_open_file_dialog(bool read_only, bool managed);
 widget_t make_file_save_as_dialog(bool managed);
 widget_t make_edit_save_as_dialog(bool managed);
-snd_info *make_new_file_dialog(char *newname, int header_type, int data_format, int srate, int chans, char *comment);
+void make_new_file_dialog(char *newname, int header_type, int data_format, int srate, int chans, char *comment);
 ww_info *make_title_row(Widget formw, char *top_str, char *main_str, dialog_pad_t pad, dialog_sort_t with_sort, dialog_paned_t with_pane);
 regrow *make_regrow(Widget ww, Widget last_row, XtCallbackProc play_callback, XtCallbackProc name_callback);
 void make_prevfiles_list (void);

@@ -1,6 +1,8 @@
 #include "snd.h"
 #include "snd-rec.h"
 
+/* TODO: redirect file panel errors */
+
 #if HAVE_XPM
   #include <X11/xpm.h>
 #endif
