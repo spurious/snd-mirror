@@ -1655,7 +1655,8 @@
     (if use-gtk
 	(gtk_widget_hide this->dialog)
 	(XtUnmanageChild this->dialog))
-    (focus-widget (c-editor-widget (selected-sound))))
+    (if (selected-sound)
+	(focus-widget (c-editor-widget (selected-sound)))))
 
   (def-method (show)
     (if use-gtk
@@ -1701,7 +1702,8 @@
 					  0 (g_cclosure_new (lambda (w ev data)
 							      (if deletefunc (deletefunc))
 							      (gtk_widget_hide new-dialog)
-							      (focus-widget (c-editor-widget (selected-sound))))
+							      (if (selected-sound)
+								  (focus-widget (c-editor-widget (selected-sound)))))
 							    #f #f) #f))
 	(let ((titlestr (XmStringCreate label XmFONTLIST_DEFAULT_TAG)))
 	  (set! new-dialog
@@ -1715,7 +1717,8 @@
 	  (XtAddCallback new-dialog XmNcancelCallback (lambda (w c i)
 							(if deletefunc (deletefunc))
 							(XtUnmanageChild new-dialog)
-							(focus-widget (c-editor-widget (selected-sound)))))
+							(if (selected-sound)
+							    (focus-widget (c-editor-widget (selected-sound))))))
 	  (XmStringFree titlestr)))
     
     

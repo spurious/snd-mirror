@@ -165,7 +165,7 @@ and run simple lisp[4] functions.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define rt-defining-macros-clears-cache #t)
-(define rt-verbose #t)
+(define rt-verbose #f)
 (define rt-very-verbose #f)
 
 (define rt-operators '(+ - * / = < > <= >=))
@@ -3053,7 +3053,8 @@ and run simple lisp[4] functions.
   (hashq-set! rt-functions
 	      (car def)
 	      `(define ,def
-		 ,@body)))
+		 ,@body))
+  #t) ;; hashq-set! actually returns the value...
 
 
 
@@ -4578,22 +4579,27 @@ and run simple lisp[4] functions.
 	  <int> num_visitors
 	  <void-*> readin_raw_func
 	  ;;(<float> (<char-*> <int>)) read_func
+	  <int> channel
 	  <char> filename[500])
+
 
   
 	;;;;;; Buffer handling.
 	;;;;;; A buffer is only freed if no one is using it. Perhaps it should never be freed at all?
 	(<struct-buffer-*> buffers NULL)
 
-	(<struct-buffer-*> find_buffer (lambda ((<char-*> filename))
+	(<struct-buffer-*> find_buffer (lambda ((<char-*> filename)
+						(<int> channel))
 					 (let* ((buffer <struct-buffer-*> buffers))
 					   (while (not (== NULL buffer))
-						  (if (not (strncmp buffer->filename filename 499))
+						  (if (and (== buffer->channel channel)
+							   (not (strncmp buffer->filename filename 499)))
 						      (begin
 							buffer->num_visitors++
 							(return buffer)))
 						  (set! buffer buffer->next))
 					   (set! buffer (calloc 1 (sizeof <struct-buffer>)))
+					   (set! buffer->channel channel)
 					   (strncpy buffer->filename filename 499)
 					   (set! buffer->num_visitors 1)
 					   (set! buffer->next buffers)
@@ -4711,16 +4717,17 @@ and run simple lisp[4] functions.
 					 (ret <struct-mus_rt_readin-*> (calloc 1 (sizeof <struct-mus_rt_readin>)))
 					 (scmret <SCM>)
 					 (filename <char-*> (mus_file_name readin))
-					 (buffer <struct-buffer-*> (find_buffer filename))
-					 (channel <int> (mus_channel readin)))
+					 (channel <int> (mus_channel readin))
+					 (buffer <struct-buffer-*> (find_buffer filename channel)))
+				    
 				    ;;(fprintf stderr (string "readin (make): %x\\n") ret)
 				    
-				   (set! ret->readin readin)
+				    (set! ret->readin readin)
 				   (set! ret->scm_readin scm_readin)
 				   (set! ret->readin_func rt_readin)
 
 				   (set! ret->buffer buffer)
-				   ;;(fprintf stderr (string "readin (make), buffer: %x\\n") buffer)
+				   ;;(fprintf stderr (string "readin (make), buffer: %x channel: %d\\n") buffer channel)
 				   
 				   (if (== NULL buffer->buffer)
 				       (let* ((sfinfo <SF_INFO>)
@@ -5562,6 +5569,7 @@ setter!-rt-mus-location/mus_location
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;; Normal
 (define* (make-var #:optional (val 0))
   (make-vct 1 val))
 (define (read-var var)
@@ -5573,6 +5581,32 @@ setter!-rt-mus-location/mus_location
 (define-rt-macro (write-var var val)
   `(rt-vct-set!/vct-set! ,var 0 ,val))
 
+
+;; Gliding from last value to new value. (only linear glide...)
+(define (make-glide-var default-val maximum-change)
+  (vct default-val default-val maximum-change maximum-change))
+(define (write-glide-var var val)
+  (vct-set! var 2
+	    (if (> val (vct-ref var 0))
+		(vct-ref var 3)
+		(- (vct-ref var 3))))
+  (vct-set! var 1 val))
+(define (read-glide-var var)
+  (let ((a (vct-ref var 0))
+	(b (vct-ref var 1)))
+    (if (= a b)
+	a
+	(let ((ret (if (> (abs (- a b))
+			  (vct-ref var 3))
+		       (+ a (vct-ref var 2))
+		       b)))
+	  (vct-set! var 0 ret)
+	  ret))))
+
+(define-rt (write-glide-var var val)
+  ,(cons 'begin (cddr (procedure-source write-glide-var))))
+(define-rt (read-glide-var var)
+  ,(cons 'begin (cddr (procedure-source read-glide-var))))
 
 
 
@@ -5796,6 +5830,25 @@ setter!-rt-mus-location/mus_location
 			      #f))))))
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 (define (rt-4 term)
 
   (call-with-current-continuation
@@ -5860,7 +5913,7 @@ setter!-rt-mus-location/mus_location
        (if (not term)
 	   (return #f))
 
-       (c-display term)
+       ;;(c-display term)
        (rt-print "*RT: Inserting types" term)
        
        (set! insert-types-res (rt-insert-types term renamed-vars))
@@ -6769,7 +6822,8 @@ setter!-rt-mus-location/mus_location
 		     ((a 50))))))
 ;; Wrong result:
 (rt-funcall a)
-
+(rte-frames)
+(-> *rt-engine* dir)
 
 (lambda ((<struct-RT_Globals> *rt_globals))
   (let* ((b__2 <int>)
