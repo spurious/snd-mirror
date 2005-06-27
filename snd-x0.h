@@ -140,7 +140,7 @@ typedef struct {
   Widget listener_pane;
   Widget *dialogs;
   Cursor graph_cursor, wait_cursor;
-  Widget completion_requestor;
+  Widget completion_requestor, requestor_dialog;
 #if HAVE_GL
   GLXContext cx;
 #endif
@@ -161,7 +161,7 @@ typedef enum {WITHOUT_SAMPLES_FIELD, WITH_SAMPLES_FIELD} dialog_samples_t;
 typedef enum {WITHOUT_DATA_LOCATION_FIELD, WITH_DATA_LOCATION_FIELD} dialog_data_location_t;
 typedef enum {WITHOUT_ERROR_FIELD, WITH_ERROR_FIELD} dialog_error_t;
 typedef enum {WITHOUT_HEADER_TYPE_FIELD, WITH_HEADER_TYPE_FIELD} dialog_header_type_t;
-typedef enum {WITHOUT_COMMENT_FIELD, WITH_COMMENT_FIELD} dialog_comment_t;
+typedef enum {WITHOUT_COMMENT_FIELD, WITH_COMMENT_FIELD, WITH_UNLABELLED_COMMENT_FIELD} dialog_comment_t;
 
 typedef struct {
   Widget ww;

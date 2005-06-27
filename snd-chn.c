@@ -10,6 +10,8 @@
  *          also affects cursor display, perhaps verbose cursor info display, peak-env graphing,
  * SOMEDAY: if chans superimposed, spectrogram might use offset planes? (sonogram?)
  * SOMEDAY: Edit:Filter menu to give access to the various dsp.scm filters, graphs like the control panel etc
+ *
+ * PERHAPS: if marks, show ticks on x axis or some way to move to each easily (clickable box)
  */
 
 typedef enum {CLICK_NOGRAPH, CLICK_WAVE, CLICK_FFT_AXIS, CLICK_LISP, CLICK_FFT_MAIN} click_loc_t;    /* for marks, regions, mouse click detection */

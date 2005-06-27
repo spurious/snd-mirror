@@ -311,7 +311,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA PACKAGE VERSION FGREP PKG_CONFIG FFTW_LIBS GSL_CONFIG GSL_LIBS GSL_CFLAGS X_CFLAGS X_PRE_LIBS X_LIBS X_EXTRA_LIBS XLIBS XFLAGS GTK_CFLAGS GTK_LIBS GTK_LD_LIBS GX_FILES GX_HEADERS GL_LIBS GL_FILES GL_FLAGS GUILE_LIBS GUILE_CFLAGS XM_LIBS AUDIO_LIB LDSO_FLAGS SO_INSTALL SO_LD A_LD A_LD_FLAGS MIDI_FILES SNDLIB_CONFIG SNDLIB_FILES SNDLIB_LIB SET_MAKE MKINSTALLDIRS MSGFMT GMSGFMT XGETTEXT MSGMERGE USE_NLS LIBICONV LTLIBICONV INTLLIBS LIBINTL LTLIBINTL POSUB MAKE_TARGET LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA PACKAGE VERSION FGREP PKG_CONFIG FFTW_LIBS GSL_CONFIG GSL_LIBS GSL_CFLAGS X_CFLAGS X_PRE_LIBS X_LIBS X_EXTRA_LIBS XLIBS XFLAGS GTK_CFLAGS GTK_LIBS GTK_LD_LIBS CAIRO_CFLAGS GX_FILES GX_HEADERS GL_LIBS GL_FILES GL_FLAGS GUILE_LIBS GUILE_CFLAGS XM_LIBS AUDIO_LIB LDSO_FLAGS SO_INSTALL SO_LD A_LD A_LD_FLAGS MIDI_FILES SNDLIB_CONFIG SNDLIB_FILES SNDLIB_LIB SET_MAKE MKINSTALLDIRS MSGFMT GMSGFMT XGETTEXT MSGMERGE USE_NLS LIBICONV LTLIBICONV INTLLIBS LIBINTL LTLIBINTL POSUB MAKE_TARGET LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -11659,6 +11659,11 @@ _ACEOF
 #define PANGO_VERSION "${pango_version}"
 _ACEOF
 
+	  atk_version="`$PKG_CONFIG atk --modversion`"
+          cat >>confdefs.h <<_ACEOF
+#define ATK_VERSION "${atk_version}"
+_ACEOF
+
         fi
 
 
@@ -12938,13 +12943,28 @@ fi
 echo "$as_me:$LINENO: result: $ac_cv_lib_m_gtk_menu_bar_get_child_pack_direction" >&5
 echo "${ECHO_T}$ac_cv_lib_m_gtk_menu_bar_get_child_pack_direction" >&6
 if test $ac_cv_lib_m_gtk_menu_bar_get_child_pack_direction = yes; then
-  cat >>confdefs.h <<\_ACEOF
+
+	      cat >>confdefs.h <<\_ACEOF
 #define HAVE_GTK_MENU_BAR_GET_CHILD_PACK_DIRECTION 1
 _ACEOF
+
+	      if test x$PKG_CONFIG != xno ; then
+                  CAIRO_CFLAGS="`$PKG_CONFIG cairo --cflags-only-I`"
+
+	          cairo_version="`$PKG_CONFIG cairo --modversion`"
+                  cat >>confdefs.h <<_ACEOF
+#define CAIRO_VERSION "${cairo_version}"
+_ACEOF
+
+               fi
 
 fi
 
 	# gtk 2.7.0
+
+	# TODO: if 2.7, need cairo includes
+	# cairo needs xfixes xextensions fixesext libXfixes fontconfig libXrender libpixman libXft2 glitz
+	#   and innumerable *.pc files scattered all over the world-wide-web
 
         if test "$with_x11" = yes ; then
 	  cat >>confdefs.h <<\_ACEOF
@@ -19836,6 +19856,7 @@ s,@XFLAGS@,$XFLAGS,;t t
 s,@GTK_CFLAGS@,$GTK_CFLAGS,;t t
 s,@GTK_LIBS@,$GTK_LIBS,;t t
 s,@GTK_LD_LIBS@,$GTK_LD_LIBS,;t t
+s,@CAIRO_CFLAGS@,$CAIRO_CFLAGS,;t t
 s,@GX_FILES@,$GX_FILES,;t t
 s,@GX_HEADERS@,$GX_HEADERS,;t t
 s,@GL_LIBS@,$GL_LIBS,;t t

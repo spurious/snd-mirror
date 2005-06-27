@@ -824,6 +824,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 	    case INPUT_FILING:
 	      {
 		snd_info *nsp;
+		ss->open_requestor = FROM_KEYBOARD;
 		nsp = snd_open_file(str, false); /* will post error if any */
 		if (nsp) 
 		  {

@@ -1725,6 +1725,7 @@ void finish_recording(recorder_info *rp)
   FREE(str);
   if (rp->autoload)
     {
+      ss->open_requestor = FROM_RECORDER;
       snd_info *sp;
       if ((sp = find_sound(rp->output_file, 0)))
 	snd_update(sp);

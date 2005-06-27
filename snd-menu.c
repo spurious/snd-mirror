@@ -1,5 +1,12 @@
 #include "snd.h"
 
+/* PERHAPS: insert-sound, [insert-selection--exists], insert-region menus (mix-region?)
+ * PERHAPS: rename, append?
+ * PERHAPS: explode sf2 if sf2 being edited?
+ * PERHAPS: OGG/MPEG3 etc choices for save-as if the encoders exist? (read side as well)
+ * PERHAPS: key binding updates here too 
+ */
+
 void reflect_file_open_in_menu(void)
 {
   set_sensitive(file_close_menu(), true);
@@ -206,20 +213,6 @@ void reflect_no_regions_in_menu(void)
   set_sensitive(view_region_menu(), false);
 }
 
-void reflect_raw_open_in_menu(void)
-{
-  set_sensitive(file_open_menu(), true);
-  set_sensitive(file_view_menu(), true);
-  set_sensitive(file_new_menu(), true);
-}
-
-void reflect_raw_pending_in_menu(void)
-{
-  set_sensitive(file_open_menu(), false);
-  set_sensitive(file_view_menu(), false);
-  set_sensitive(file_new_menu(), false);
-}
-
 void close_file_from_menu(void)
 {
   snd_info *sp;
@@ -246,36 +239,6 @@ static void file_update(snd_info *sp, void *ptr)
 void update_file_from_menu(void)
 {
   for_each_sound(file_update, NULL);
-}
-
-static char *output_name(void);
-static int new_ctr = 0;
-
-void new_file_from_menu(void)
-{
-  char *new_file_name = NULL, *extension = NULL, *new_comment = NULL;
-  int header_type, data_format, chans, srate;
-  new_file_name = output_name();
-  header_type = default_output_type(ss);
-  if (new_file_name == NULL)
-    {
-      new_file_name = (char *)CALLOC(64, sizeof(char));
-      switch (header_type)
-	{
-	case MUS_AIFC: case MUS_AIFF: extension = "aiff"; break;
-	case MUS_RIFF:                extension = "wav";  break;
-	default:                      extension = "snd";  break;
-	}
-      mus_snprintf(new_file_name, 64, _("new-%d.%s"), new_ctr++, extension);
-    }
-  chans = default_output_chans(ss);
-  data_format = default_output_format(ss);
-  srate = default_output_srate(ss);
-  new_comment = output_comment(NULL);
-  mus_sound_forget(new_file_name);
-  make_new_file_dialog(new_file_name, header_type, data_format, srate, chans, new_comment);
-  if (new_comment) FREE(new_comment);
-  if (new_file_name) FREE(new_file_name);
 }
 
 void revert_file_from_menu(void)
@@ -544,24 +507,6 @@ static XEN snd_no_such_menu_error(const char *caller, XEN id)
   return(XEN_FALSE);
 }
 
-static XEN output_name_hook;
-
-static char *output_name(void)
-{
-  if (XEN_HOOKED(output_name_hook))
-    {
-      XEN result;
-      XEN procs = XEN_HOOK_PROCEDURES (output_name_hook);
-      while (XEN_NOT_NULL_P(procs))
-	{
-	  result = XEN_CALL_0(XEN_CAR(procs), S_output_name_hook);
-	  if (XEN_STRING_P(result)) return(copy_string(XEN_TO_C_STRING(result)));
-	  procs = XEN_CDR (procs);
-	}
-    }
-  return(NULL);
-}
-
 static XEN g_save_state_file(void) 
 {
   return(C_TO_XEN_STRING(save_state_file(ss)));
@@ -760,10 +705,6 @@ XEN_NARGIFY_1(g_main_menu_w, g_main_menu)
 
 void g_init_menu(void)
 {
-  #define H_output_name_hook S_output_name_hook " (): called from the File:New dialog.  If it returns a filename, \
-that name is the default that appears in the New File dialog."
-  output_name_hook = XEN_DEFINE_HOOK(S_output_name_hook, 0, H_output_name_hook);
-
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_save_state_file, g_save_state_file_w, H_save_state_file,
 				   S_setB S_save_state_file, g_set_save_state_file_w, 0, 0, 1, 0);
   

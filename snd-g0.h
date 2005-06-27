@@ -112,6 +112,7 @@ typedef struct {
 
   GtkWidget **dialogs;
   bool graph_is_active;
+  GtkWidget *requestor_dialog; /* TODO: completion? */
   
   GdkCursor *arrow_cursor, *wait_cursor, *graph_cursor;
 } state_context;

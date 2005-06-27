@@ -1194,7 +1194,7 @@ static void make_file_info_pane(recorder_info *rp, Widget file_pane, int ndevs)
   /* if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;} */
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNtopWidget, ff_sep3); n++;
-  XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
+  XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
   recdat = make_file_data_panel(ff_form, "data-form", args, n, 
@@ -1206,6 +1206,7 @@ static void make_file_info_pane(recorder_info *rp, Widget file_pane, int ndevs)
 				WITHOUT_ERROR_FIELD, 
 				WITH_HEADER_TYPE_FIELD, 
 				WITH_COMMENT_FIELD);
+  recdat->dialog = recorder;
   XtVaGetValues(recdat->comment_text, XmNy, &pane_max, NULL);
   XtAddCallback(recdat->srate_text, XmNactivateCallback, srate_changed_callback, NULL); /* this is a no-op -- textfield widget is not activatable */
 #if SGI
@@ -2761,6 +2762,7 @@ void finish_recording(recorder_info *rp)
   FREE(str);
   if (rp->autoload)
     {
+      ss->open_requestor = FROM_RECORDER;
       if ((sp = find_sound(rp->output_file, 0)))
 	snd_update(sp);
       else snd_open_file(rp->output_file, false);

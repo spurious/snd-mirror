@@ -1,5 +1,10 @@
 #include "snd.h"
 
+/* PERHAPS: insert/mix buttons
+ * PERHAPS: amp/srate sliders as in mix panel
+ * PERHAPS: some way to group or list these to handle as motifs
+ */
+
 /* -------- region browser -------- */
 
 static Widget region_dialog = NULL, region_list, region_grf;

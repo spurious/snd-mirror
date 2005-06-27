@@ -243,6 +243,12 @@ static GtkWidget *snd_filer_new(char *title, bool saving, GtkSignalFunc gdelete,
 
 /* -------- Open/Mix File Dialogs -------- */
 
+typedef struct dialog_play_info {
+  GtkWidget *dialog, *play_selected_button;
+  snd_info *file_play_sp;
+} dialog_play_info;
+
+
 typedef struct file_dialog_info {
   int file_dialog_read_only, need_update, new_file_written;
   GtkWidget *dialog, *play_selected_button, *dialog_frame, *dialog_info1, *dialog_info2, *dialog_vbox, *playb;
@@ -353,11 +359,14 @@ static void dialog_select_callback(GtkTreeSelection *selection, gpointer context
 
 #endif
 
-void clear_deleted_snd_info(struct file_dialog_info *fd)
+void clear_deleted_snd_info(struct dialog_play_info *fd)
 {
+  /* fix later
   fd->file_play_sp = NULL;
+  */
 }
 
+/* TODO: update selectedplay in gfile */
 static void play_selected_callback(GtkWidget *w, gpointer data)
 {
   file_dialog_info *fd = (file_dialog_info *)data;
@@ -370,7 +379,9 @@ static void play_selected_callback(GtkWidget *w, gpointer data)
       if (mus_file_probe(filename))
 	{
 	  fd->file_play_sp = make_sound_readable(filename, false);
+	  /* fix later
 	  fd->file_play_sp->delete_me = fd;
+	  */
 	  if (fd->file_play_sp)
 	    play_sound(fd->file_play_sp, 0, NO_END_SPECIFIED, IN_BACKGROUND, AT_CURRENT_EDIT_POSITION);
 	}
@@ -491,6 +502,7 @@ static void file_open_dialog_ok(GtkWidget *w, gpointer data)
   file_dialog_stop_playing(open_dialog);
   if (!(directory_p(filename)))
     {
+      ss->open_requestor = FROM_OPEN_DIALOG;
       sp = snd_open_file(filename, open_dialog->file_dialog_read_only);
       if (sp) select_channel(sp, 0);           /* add_sound_window (snd-gsnd.c) will report reason for error, if any */
     }
@@ -1493,7 +1505,7 @@ static void raw_data_browse_callback(GtkTreeSelection *selection, gpointer *gp)
 
 static void raw_data_help_callback(GtkWidget *w, gpointer context) 
 {
-  raw_data_dialog_help();
+  raw_data_dialog_help(NULL);
 }
 
 static void make_raw_data_dialog(void)
@@ -1569,19 +1581,17 @@ static void make_raw_data_dialog(void)
   set_dialog_widget(RAW_DATA_DIALOG, raw_data_dialog);
 }
 
-file_info *raw_data_dialog_to_file_info(const char *filename, const char *title)
+void raw_data_dialog_to_file_info(const char *filename, char *title, char *info, bool read_only, bool selected)
 {
   char *str;
   file_info *hdr = NULL;
   int sr, oc, fr;
   if (!raw_data_dialog) make_raw_data_dialog();
   gtk_label_set_text(GTK_LABEL(raw_data_label), title);
-  reflect_raw_pending_in_menu();
   raw_done = false;
   gtk_widget_show(raw_data_dialog);
   while (!raw_done) gtk_main_iteration();
   gtk_widget_hide(raw_data_dialog);
-  reflect_raw_open_in_menu();
   if (raw_cancelled) return(NULL);
   mus_header_raw_defaults(&sr, &oc, &fr);
   str = (char *)gtk_entry_get_text(GTK_ENTRY(raw_srate_text));
@@ -1641,18 +1651,19 @@ static void new_file_help_callback(GtkWidget *w, gpointer context)
 
 static off_t initial_samples = 1;
 
-void make_new_file_dialog(char *newname, int header_type, int data_format, int srate, int chans, char *comment)
+void make_new_file_dialog(void)
 {
-  char *title;
+  int header_type, data_format, srate, chans;
+  char *comment, *newname;
   new_file_cancelled = false;
-  title = (char *)CALLOC(snd_strlen(newname) + 32, sizeof(char));
-  sprintf(title, _("create new sound: %s"), newname);
+
+
   if (!new_dialog)
     {
       GtkWidget *name_label, *hform, *help_button, *cancel_button, *ok_button;
       new_dialog = snd_gtk_dialog_new();
       SG_SIGNAL_CONNECT(new_dialog, "delete_event", new_file_delete_callback, NULL);
-      gtk_window_set_title(GTK_WINDOW(new_dialog), title);
+      gtk_window_set_title(GTK_WINDOW(new_dialog), _("New file"));
       sg_make_resizable(new_dialog);
       gtk_container_set_border_width (GTK_CONTAINER(new_dialog), 10);
       gtk_window_resize(GTK_WINDOW(new_dialog), 400, 250);
@@ -1683,7 +1694,9 @@ void make_new_file_dialog(char *newname, int header_type, int data_format, int s
       gtk_widget_show(name_label);
 
       new_file_name = snd_entry_new(hform, true);
-      gtk_entry_set_text(GTK_ENTRY(new_file_name), newname);
+
+      newname = output_name(NULL); /* fix later */
+      gtk_entry_set_text(GTK_ENTRY(new_file_name), newname); /* output_name?? fix later */
 
       new_dialog_data = make_file_data_panel(GTK_DIALOG(new_dialog)->vbox, "data-form", WITH_CHANNELS_FIELD, 
 					     default_output_type(ss), default_output_format(ss), 
@@ -1691,12 +1704,9 @@ void make_new_file_dialog(char *newname, int header_type, int data_format, int s
 					     WITH_ERROR_FIELD);
       set_dialog_widget(NEW_FILE_DIALOG, new_dialog);
     }
-  else
-    {
-      gtk_window_set_title(GTK_WINDOW(new_dialog), title);
-      gtk_entry_set_text(GTK_ENTRY(new_file_name), newname);
-    }
+
   set_file_dialog_sound_attributes(new_dialog_data, header_type, data_format, srate, chans, IGNORE_DATA_LOCATION, initial_samples, comment);
+
   new_file_done = false;
   gtk_widget_show(new_dialog);
   while (!new_file_done) gtk_main_iteration();
@@ -1717,7 +1727,7 @@ void make_new_file_dialog(char *newname, int header_type, int data_format, int s
 
 
 
-/* ---------------- EDIT_HEADER ---------------- */
+/* ---------------- Edit Header ---------------- */
 
 static GtkWidget *edit_header_dialog = NULL;
 static file_data *edit_header_data;
@@ -1776,12 +1786,15 @@ GtkWidget *edit_header(snd_info *sp)
       gtk_widget_set_name(cancel_button, "quit_button");
       save_button = gtk_button_new_with_label(_("Save"));
       gtk_widget_set_name(save_button, "doit_button");
+
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(edit_header_dialog)->action_area), cancel_button, true, true, 10);
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(edit_header_dialog)->action_area), save_button, true, true, 10);
       gtk_box_pack_end(GTK_BOX(GTK_DIALOG(edit_header_dialog)->action_area), help_button, true, true, 10);
+
       SG_SIGNAL_CONNECT(cancel_button, "clicked", edit_header_cancel_callback, NULL);
       SG_SIGNAL_CONNECT(help_button, "clicked", edit_header_help_callback, NULL);
       SG_SIGNAL_CONNECT(save_button, "clicked", edit_header_ok_callback, NULL);
+
       gtk_widget_show(cancel_button);
       gtk_widget_show(save_button);
       gtk_widget_show(help_button);

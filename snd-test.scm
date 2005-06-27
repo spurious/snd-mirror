@@ -3771,7 +3771,7 @@
 
 (define (check-maxamp ind val name)
   (if (fneq (maxamp ind 0) val) (snd-display ";maxamp amp-env ~A: ~A should be ~A" name (maxamp ind) val))
-  (let ((pos (find (lambda (y) (>= (abs y) (- val .0001)))))
+  (let ((pos (find-channel (lambda (y) (>= (abs y) (- val .0001)))))
 	(maxpos (maxamp-position ind 0)))
     (if (not pos) (snd-display ";actual maxamp ~A vals not right" name))
     (if (not (= maxpos (cadr pos)))
@@ -7444,7 +7444,7 @@ EDITS: 5
 	(if (not (string=? (short-file-name index) "oboe.snd")) (snd-display ";oboe short name: ~S?" (short-file-name index)))
 	(let ((matches (count-matches (lambda (a) (> a .125)))))
 	  (if (not (= matches 1313)) (snd-display ";count-matches: ~A?" matches)))
-	(let ((spot (find (lambda (a) (> a .13)))))
+	(let ((spot (find-channel (lambda (a) (> a .13)))))
 	  (if (or (null? spot) (not (= (cadr spot) 8862))) (snd-display ";find: ~A?" spot)))
 	(set! (right-sample) 3000) 
 	(let ((samp (right-sample)))
@@ -8834,7 +8834,7 @@ EDITS: 5
 	   (lambda () (scale-by 2.0 ind1 0)) 
 	   ind1)
 	  (test-edpos 
-	   (lambda* (#:optional (snd 0) (chn 0) (edpos current-edit-position)) (cadr (find (lambda (n2) (> n2 .1)) 0 snd chn edpos)))
+	   (lambda* (#:optional (snd 0) (chn 0) (edpos current-edit-position)) (cadr (find-channel (lambda (n2) (> n2 .1)) 0 snd chn edpos)))
 	   'find
 	   (lambda () (delete-samples 0 100 ind1 0))
 	   ind1)
@@ -9861,12 +9861,12 @@ EDITS: 5
 	      (set! val (scan-again))
 	      (if (not (equal? val (list #t 4463)))
 		  (snd-display ";scan-again: ~A" val))
-	      (let ((val (find (lambda (y)
-				 (let ((val (find (lambda (y) (> y .1)))))
+	      (let ((val (find-channel (lambda (y)
+				 (let ((val (find-channel (lambda (y) (> y .1)))))
 				   val)))))
 		(if (not (equal? val (list (list #t 4423) 0)))
 		    (snd-display ";find twice: ~A" val)))
-	      (let ((val (find (lambda (y)
+	      (let ((val (find-channel (lambda (y)
 				 (count-matches (lambda (y) (> y .1)))))))
 		(if (not (equal? val (list 2851 0)))
 		    (snd-display ";find+count: ~A" val)))
@@ -23779,10 +23779,10 @@ EDITS: 5
   (add-hook! read-hook arg1) (carg1 read-hook)
   (add-hook! bad-header-hook arg1) (carg1 bad-header-hook)
   (add-hook! previous-files-select-hook arg1) (carg1 previous-files-select-hook)
+  (add-hook! output-name-hook arg1) (carg1 output-name-hook)
   
   (add-hook! exit-hook arg0) (carg0 exit-hook)
   (add-hook! stop-dac-hook arg0) (carg0 stop-dac-hook)
-  (add-hook! output-name-hook arg0) (carg0 output-name-hook)
   (add-hook! stop-playing-selection-hook arg0) (carg0 stop-playing-selection-hook)
   (add-hook! color-hook arg0) (carg0 color-hook)
   (add-hook! orientation-hook arg0) (carg0 orientation-hook)
@@ -25623,7 +25623,7 @@ EDITS: 5
 		     (lambda () (convolve-with "z.snd" 1.0))
 		     (lambda args args))
 	      (if (not (= (edit-position ind 0) 0)) (snd-display ";convolve z: ~A" (edit-position ind 0)))
-	      (let ((tag (catch #t (lambda () (find (lambda (y) *> y .1))) (lambda args (car args)))))
+	      (let ((tag (catch #t (lambda () (find-channel (lambda (y) *> y .1))) (lambda args (car args)))))
 		(if (not (eq? tag 'no-such-sample)) (snd-display ";find z: ~A" tag)))
 	      (let ((tag (catch #t (lambda () (count-matches (lambda (y) *> y .1))) (lambda args (car args)))))
 		(if (not (eq? tag 'no-such-sample)) (snd-display ";count z: ~A" tag)))
@@ -31052,9 +31052,9 @@ EDITS: 6
 					     (+ (vct-ref ho 0) .1))) 
 			      (vct-ref ho 0)))
 	       (if (not (vequal hi (vct .2 .3 .4))) (snd-display ";vct-map! with vct-map! (~A): ~A ~A" n hi ho)))
-	     (let ((val (find (lambda (y) (if (find (lambda (n6) (> n6 .1))) #t #f)))))
+	     (let ((val (find-channel (lambda (y) (if (find-channel (lambda (n6) (> n6 .1))) #t #f)))))
 	       (if (not (equal? val (list #t 0))) (snd-display ";find with find: ~A" val)))
-	     (let ((val (find (lambda (y) (if (scan-channel (lambda (n7) (> n7 .1))) #t #f)))))
+	     (let ((val (find-channel (lambda (y) (if (scan-channel (lambda (n7) (> n7 .1))) #t #f)))))
 	       (if (not (equal? val (list #t 0))) (snd-display ";find with scan-channel: ~A" val)))
 	     (let ((mx (maxamp ind 0))
 		   (val (scan-channel (lambda (y) (map-channel (lambda (n) (* n 2))) #t))))
@@ -44197,7 +44197,7 @@ EDITS: 1
 		    (if (not (> (sample (max 0 (1- (cursor)))) .1))
 			(snd-display ";find 1 past .1: ~A ~A ~A, ~A" 
 				     (cursor) (sample (max 0 (1- (cursor)))) (sample (cursor))
-				     (find (lambda (y) (> y .1)) 0)))
+				     (find-channel (lambda (y) (> y .1)) 0)))
 		    (click-button cancel-button) (force-event)
 		    (close-sound ind))
 	    
@@ -45035,7 +45035,7 @@ EDITS: 1
 		  (if (defined? 'new-file-dialog)
 		      (begin
 			(reset-hook! output-name-hook)
-			(add-hook! output-name-hook (lambda () "hiho.snd"))
+			(add-hook! output-name-hook (lambda (ignored) "hiho.snd"))
 			(let ((old-val (with-background-processes)))
 			  (set! (with-background-processes) #f)
 			  (let ((newind (new-file-dialog)))
@@ -54369,7 +54369,7 @@ EDITS: 1
 		     expand-control? fft fft-window-beta fft-log-frequency fft-log-magnitude transform-size disk-kspace
 		     transform-graph-type fft-window transform-graph? view-files-dialog mix-file-dialog file-name fill-polygon
 		     fill-rectangle filter-sound filter-control-in-dB filter-control-envelope enved-filter-order enved-filter
-		     filter-control-in-hz filter-control-order filter-selection filter-channel filter-control-waveform-color filter-control? find
+		     filter-control-in-hz filter-control-order filter-selection filter-channel filter-control-waveform-color filter-control? find-channel
 		     find-mark find-sound finish-progress-report foreground-color
 		     frames free-sample-reader graph transform? delete-transform
 		     graph-color graph-cursor graph-data graph->ps graph-style lisp-graph?  graphs-horizontal header-type
@@ -55014,7 +55014,7 @@ EDITS: 1
 			(list channel-widgets count-matches cursor channel-properties
 			      cursor-follows-play cursor-position cursor-size cursor-style delete-sample display-edits dot-size
 			      draw-dots draw-lines edit-fragment edit-position edit-tree edits fft-window-beta fft-log-frequency
-			      fft-log-magnitude transform-size transform-graph-type fft-window transform-graph? find
+			      fft-log-magnitude transform-size transform-graph-type fft-window transform-graph? find-channel
 			      graph graph-style lisp-graph? insert-region insert-sound
 			      time-graph-style lisp-graph-style transform-graph-style
 			      left-sample make-graph-data map-chan max-transform-peaks maxamp maxamp-position min-dB mix-region
@@ -55041,7 +55041,7 @@ EDITS: 1
 			(list channel-widgets count-matches cursor channel-properties
 			      cursor-position cursor-size cursor-style delete-sample display-edits dot-size draw-dots draw-lines
 			      edit-fragment edit-position edit-tree edits fft-window-beta fft-log-frequency fft-log-magnitude
-			      transform-size transform-graph-type fft-window transform-graph? find 
+			      transform-size transform-graph-type fft-window transform-graph? find-channel
 			      graph graph-style lisp-graph? insert-region insert-sound left-sample
 			      time-graph-style lisp-graph-style transform-graph-style
 			      make-graph-data map-chan max-transform-peaks maxamp maxamp-position min-dB mix-region transform-normalization
@@ -55342,6 +55342,7 @@ EDITS: 1
 			    (list mouse-leave-graph-hook 'mouse-leave-graph-hook)
 			    (list open-raw-sound-hook 'open-raw-sound-hook)
 			    (list select-channel-hook 'select-channel-hook)
+			    (list output-name-hook 'output-name-hook)
 			    (list after-open-hook 'after-open-hook)
 			    (list close-hook 'close-hook)
 			    (list draw-mark-hook 'draw-mark-hook)
@@ -55398,7 +55399,6 @@ EDITS: 1
 			      (snd-display ";hooks ~A: ~A" hook-name tag))))
 		      (list (list exit-hook 'exit-hook)
 			    (list stop-dac-hook 'stop-dac-hook)
-			    (list output-name-hook 'output-name-hook)
 			    (list stop-playing-selection-hook 'stop-playing-selection-hook)
 			    (list color-hook 'color-hook)
 			    (list orientation-hook 'orientation-hook)
@@ -55571,7 +55571,7 @@ EDITS: 1
 	      (check-error-tag 'bad-arity (lambda () (map-chan (lambda (a b c) 1.0))))
 	      (check-error-tag 'bad-arity (lambda () (scan-chan (lambda (a b c) 1.0))))
 	      (check-error-tag 'bad-arity (lambda () (set! (cursor-style ind 0) (lambda (a) 32))))
-	      (check-error-tag 'bad-arity (lambda () (find (lambda () 1.0))))
+	      (check-error-tag 'bad-arity (lambda () (find-channel (lambda () 1.0))))
 	      (check-error-tag 'bad-arity (lambda () (count-matches (lambda () 1.0))))
 	      (check-error-tag 'no-such-graphics-context (lambda () (draw-line 0 0 1 1 ind 0 1234)))
 	      (check-error-tag 'no-such-graphics-context (lambda () (foreground-color ind 0 1234)))

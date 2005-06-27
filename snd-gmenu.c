@@ -105,7 +105,7 @@ void set_menu_label(GtkWidget *w, const char *label) {if (w) set_button_label(w,
 
 static void file_open_callback(GtkWidget *w, gpointer info) {make_open_file_dialog(false, true);}
 static void file_view_callback(GtkWidget *w, gpointer info) {make_open_file_dialog(true, true);}
-static void file_new_callback(GtkWidget *w, gpointer info) {new_file_from_menu();}
+static void file_new_callback(GtkWidget *w, gpointer info) {make_new_file_dialog();}
 static void file_record_callback(GtkWidget *w, gpointer info) {snd_record_file();}
 static void file_close_callback(GtkWidget *w, gpointer info) {close_file_from_menu();}
 static void file_save_callback(GtkWidget *w, gpointer info) {save_file_from_menu();}

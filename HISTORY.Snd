@@ -1,5 +1,7 @@
 Snd change log
 
+  27-Jun:    output-name-hook now takes an argument, the current output file name.
+             changed find to find-channel to avoid collision with Scheme's srfi-1.
   24-Jun:    channels-combined is now the default channel-style.
   20-Jun:    'Extract' option to Save as dialogs (to extract a channel).
   13-Jun:    folded gl-ruby.c into gl.c, xm-ruby.c into xm.c, xg-ruby.c into xg.c.

@@ -5503,7 +5503,7 @@
 (CFNC-270 "GtkWidget* gtk_scrolled_window_get_vscrollbar GtkScrolledWindow* scrolled_window")
 (CFNC-270 "void gtk_size_group_set_ignore_hidden GtkSizeGroup* size_group gboolean ignore_hidden")
 (CFNC-270 "gboolean gtk_size_group_get_ignore_hidden GtkSizeGroup* size_group")
-(CFNC-270 "void gtk_stock_set_translate_func gchar* domain GtkTranslateFunc func gpointer data GtkDestroyNotify notify" 'const)
+(CFNC-270 "void gtk_stock_set_translate_func gchar* domain GtkTranslateFunc func lambda_data func_data GtkDestroyNotify notify" 'const)
 ;;; TODO: what is translate_func?
 (CFNC-270 "gboolean gtk_text_iter_forward_visible_line GtkTextIter* iter")
 (CFNC-270 "gboolean gtk_text_iter_backward_visible_line GtkTextIter* iter")
@@ -5514,7 +5514,7 @@
 (CFNC-270 "void gtk_window_set_urgency_hint GtkWindow* window gboolean setting")
 (CFNC-270 "gboolean gtk_window_get_urgency_hint GtkWindow* window")
 (CFNC-270 "void gtk_window_present_with_time GtkWindow* window guint32 timestamp")
-(CFNC-270 "PangoFontMap* pango_font_get_font_map PangoFont* font")
+;(CFNC-270 "PangoFontMap* pango_font_get_font_map PangoFont* font")
 
 ;;; omitted "cairo" stuff
 

@@ -165,8 +165,17 @@ static void make_pixmaps(void)
 static gboolean name_pix_expose(GtkWidget *w, GdkEventExpose *ev, gpointer data)
 {
   snd_info *sp = (snd_info *)data;
+  /*
+    Gdk-CRITICAL **: gdk_draw_drawable: assertion `src != NULL' failed
+    #3  0x403f94e8 in gdk_draw_drawable (drawable=0x878dfe0, gc=0x8600430, 
+        src=0x0, xsrc=0, ysrc=0, xdest=0, ydest=4, width=16, height=16)
+        at gdkdraw.c:666
+	
+	... typical...
+
   if (NAME_PIX(sp))
     gdk_draw_drawable(GDK_DRAWABLE(NAME_PIX(sp)->window), ss->sgx->basic_gc, sp->sgx->file_pix, 0, 0, 0, 4, 16, 16);
+  */
   return(false);
 }
 
@@ -1203,10 +1212,9 @@ static gint close_sound_dialog(GtkWidget *w, GdkEvent *event, gpointer context)
 
 static bool showing_controls = false;
 
-snd_info *add_sound_window(char *filename, bool read_only)
+snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
 {
   snd_info *sp, *osp;
-  file_info *hdr;
   GtkWidget **sw;
   GtkObject **adjs;
   int snd_slot, nchans, i, k, old_chans;
@@ -1215,13 +1223,11 @@ snd_info *add_sound_window(char *filename, bool read_only)
   int app_y, app_dy, screen_y, chan_min_y;
   /* these dimensions are used to try to get a reasonable channel graph size without falling off the screen bottom */
   snd_context *sx;
-  hdr = make_file_info(filename);
-  if (!hdr) return(NULL);
-  if (ss->pending_change) 
+  if (ss->translated_filename) 
     {
       old_name = filename;
-      filename = ss->pending_change;
-      ss->pending_change = NULL;
+      filename = ss->translated_filename;
+      ss->translated_filename = NULL;
       free_filename = true;
     }
   nchans = hdr->chans;

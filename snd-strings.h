@@ -205,7 +205,7 @@
 #define S_filter_control_waveform_color "filter-control-waveform-color"
 #define S_filter_selection              "filter-selection"
 #define S_filter_sound                  "filter-sound"
-#define S_find                          "find"
+#define S_find_channel                  "find-channel"
 #define S_find_dialog                   "find-dialog"
 #define S_find_mark                     "find-mark"
 #define S_find_sound                    "find-sound"

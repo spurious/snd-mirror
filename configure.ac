@@ -718,6 +718,8 @@ else
           GTK_LD_LIBS="`$PKG_CONFIG gtk+-2.0 --libs-only-L` `$PKG_CONFIG gtk+-2.0 --libs-only-l`"
           pango_version="`$PKG_CONFIG pango --modversion`"
           AC_DEFINE_UNQUOTED(PANGO_VERSION,"${pango_version}")
+	  atk_version="`$PKG_CONFIG atk --modversion`"
+          AC_DEFINE_UNQUOTED(ATK_VERSION,"${atk_version}")
         fi
       	AC_SUBST(GTK_LD_LIBS)
 
@@ -770,8 +772,19 @@ else
 	AC_CHECK_LIB(m, gtk_text_layout_get_iter_at_position, [AC_DEFINE(HAVE_GTK_TEXT_LAYOUT_GET_ITER_AT_POSITION)],  ,$GTK_LIBS)
 	# gtk 2.6.0|1|2|3|4|5|6|7|8: no API changes
 	AC_CHECK_LIB(m, pango_matrix_rotate, [AC_DEFINE(HAVE_PANGO_MATRIX_ROTATE)],  ,$GTK_LIBS)
-        AC_CHECK_LIB(m, gtk_menu_bar_get_child_pack_direction, [AC_DEFINE(HAVE_GTK_MENU_BAR_GET_CHILD_PACK_DIRECTION)],  ,$GTK_LIBS)
+        AC_CHECK_LIB(m, gtk_menu_bar_get_child_pack_direction, 
+	    [
+	      AC_DEFINE(HAVE_GTK_MENU_BAR_GET_CHILD_PACK_DIRECTION)
+	      if test x$PKG_CONFIG != xno ; then
+                  CAIRO_CFLAGS="`$PKG_CONFIG cairo --cflags-only-I`"
+      	          AC_SUBST(CAIRO_CFLAGS)
+	          cairo_version="`$PKG_CONFIG cairo --modversion`"
+                  AC_DEFINE_UNQUOTED(CAIRO_VERSION,"${cairo_version}")
+               fi
+	    ],  ,$GTK_LIBS)
 	# gtk 2.7.0
+	# cairo needs xfixes xextensions fixesext libXfixes fontconfig libXrender libpixman libXft2 glitz 
+	#   and innumerable *.pc files scattered all over the world-wide-web
 
         if test "$with_x11" = yes ; then
 	  AC_DEFINE(WITH_GTK_AND_X11)

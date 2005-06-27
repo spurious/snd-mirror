@@ -112,7 +112,7 @@ static char* vstrcat(char *arg1, ...)
 
 static char *main_snd_xrefs[12] = {
   "{CLM}: sound synthesis",
-  "{CM}: algorithmmic composition",
+  "{CM}: algorithmic composition",
   "{CMN}: music notation",
   "{Ruby}: extension language",
   "{Emacs}: Snd as Emacs subjob",
@@ -304,6 +304,13 @@ char *version_info(void)
   #ifdef PANGO_VERSION
 	  ", Pango ", PANGO_VERSION,
   #endif
+  #ifdef ATK_VERSION
+	  ", Atk ", ATK_VERSION,
+  #endif
+  #ifdef CAIRO_VERSION
+	  ", Cairo ", CAIRO_VERSION,
+  #endif
+	  /* would be nice, I suppose, to give the other infinite dependencies here (fontconfig...) */
 #endif
 	  xm_version(), /* omitted if --version/--help because the init procs haven't run at that point */
 #if WITH_GTK_AND_X11
@@ -396,6 +403,8 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+27-Jun:  output-name-hook now takes an argument, the current output file name.\n\
+         changed find to find-channel to avoid collision with Scheme's srfi-1.\n\
 24-Jun:  channels-combined is now the default channel-style.\n\
 20-Jun:  'Extract' option to Save as dialogs (to extract a channel).\n\
 13-Jun:  folded gl-ruby.c into gl.c, xm-ruby.c into xm.c, xg-ruby.c into xg.c.\n\
@@ -427,6 +436,8 @@ NULL);
 }
 
 
+/* ---------------- help menu help texts ---------------- */
+
 void find_help(void) 
 {
   snd_help_with_xrefs("Find", 
@@ -447,6 +458,8 @@ the searching mechanisms are disabled.",
 		      snd_xrefs("Search"),
 		      snd_xref_urls("Search"));
 }
+
+/* TODO: key command help lists omitted if rebound */
 
 void undo_help(void) 
 {
@@ -527,6 +540,8 @@ extsnd.html, or snd-debug.  For notelist debugging, see ws-backtrace.",
 		      debug_urls);
 }
 
+/* TODO: Scheme syntax in places here ("define" for env var) */
+
 void env_help(void) 
 {
   snd_help_with_xrefs("Envelope", 
@@ -550,24 +565,24 @@ void fft_help(void)
   snd_help_with_xrefs("FFT",
 "The FFT performs a projection of the time domain into the frequency domain. Good discussions of the Fourier Transform \
 and the trick used in the FFT itself can be found in many DSP books; those I know of include 'A Digital Signal Processing \
-Primer', Ken Steiglitz, Addison-Wesley, 1996; or 'Numerical Recipes in C'. \
+Primer', Ken Steiglitz, or 'Numerical Recipes in C'. \
+For the Fourier transform itself, good books abound: \
+'Mathematics of the DFT', Julius Smith, or 'Understanding DSP', Lyons, etc.  For more sophistication, \
+'Fourier Analysis', Korner, 'Fourier Analysis', Stein and Shakarchi, or 'Trigonometric Series', Zygmund. \
 \n\n\
 The FFT size can be any power of 2. The larger, the longer it takes to compute, and the larger the amount of the time domain \
-that gets consumed.  Interpretation of the FFT results is not straightforward! The window choices are taken primarily \
+that gets consumed.  Interpretation of the FFT results is not straightforward!  The window choices are taken primarily \
 from Harris' article: Fredric J. Harris, 'On the Use of Windows for Harmonic Analysis with the Discrete Fourier Transform', Proceedings of the \
 IEEE, Vol. 66, No. 1, January 1978, with updates from: Albert H. Nuttall, 'Some Windows with Very Good Sidelobe Behaviour', IEEE Transactions \
 of Acoustics, Speech, and Signal Processing, Vol. ASSP-29, 1, February 1981. \
 \n\n\
 Nearly all the transform-related choices are set by the transform dialog launched from the Options \
 Menu Transform item. Most of this dialog should be self-explanatory.  Some of the windows take an \
-additional parameter sometimes known as alpha or beta.  This can be set by the scale in the \
-transform dialog. \
+additional parameter sometimes known as alpha or beta.  This can be set by the scale next to the fft window graph in the \
+transform dialog, or via " S_fft_window_beta ". \
 \n\n\
 The FFT display is activated by setting the 'f' button on the channel's window.  It then updates \
-itself each time the time domain waveform moves or changes.  The update function runs in the \
-background, so in some cases, notably very large FFTs, you will notice that the FFT updates less \
-often than the time domain. \
-\n\n\
+itself each time the time domain waveform moves or changes.  \
 The spectrum data is usually normalized to fit between 0.0 to 1.0; if you'd rather have un-normalized \
 data (the y-axis in this case changes to reflect the data values, to some extent), set the \
 variable " S_transform_normalization " to " S_dont_normalize ".",
@@ -1019,7 +1034,7 @@ void delete_help(void)
 }
 
 
-/* -------- dialog help button -------- */
+/* -------- dialog help texts -------- */
 
 void envelope_editor_dialog_help(void)
 {
@@ -1162,24 +1177,49 @@ the file, the region is updated to reflect any edits you made.",
 		      snd_xref_urls("Region"));
 }
 
-static char *raw_xrefs[5] = {
+static char *raw_xrefs[7] = {
   "specialize handing of raw sounds: {open-raw-sound-hook}",
   "open a headerless sound: {open-raw-sound}",
   "header type constants: {mus-header-type-name}",
   "data format constants: {mus-data-format-name}",
+  "what are these data formats?",
+  "what are these headers?",
   NULL};
 
-void raw_data_dialog_help(void)
+static char *raw_urls[7] = {
+  NULL, NULL, NULL, NULL, 
+  "extsnd.html#describedataformats",
+  "extsnd.html#describeheadertypes",
+  NULL
+};
+
+
+void raw_data_dialog_help(char *info)
 {
-  snd_help_with_xrefs("Raw Data",
+  if (info)
+    {
+      snd_help_with_xrefs("Raw Data",
+"This file seems to have an invalid header.  I'll append what sense I can make of it. \
+To display and edit sound data, Snd needs to know how the data's sampling rate, number \
+of channels, and numerical format.\n\n",
+			  WITH_WORD_WRAP,
+			  raw_xrefs,
+			  raw_urls);
+      snd_help_append(info);
+    }
+  else
+    {
+      snd_help_with_xrefs("Raw Data",
 "To display and edit sound data, Snd needs to know how the data's sampling rate, number \
 of channels, and numerical format.  This dialog gives you a chance to set those fields. \
-To make the current settings the default for any future headerless files, click the \
-'Default' button.",
-		      WITH_WORD_WRAP,
-		      raw_xrefs,
-		      NULL);
+To use the defaults, click the 'Reset' button.",
+			  WITH_WORD_WRAP,
+			  raw_xrefs,
+			  NULL);
+    }
 }
+
+/* TODO: completion popup should go away after choice, or maybe be embedded */
 
 void completion_dialog_help(void)
 {
@@ -1280,6 +1320,8 @@ mix amp env (if any) is drawn in blue.",
 		      snd_xref_urls("Track"));
 }
 
+/* TODO: shouldn't the Ruby xrefs be in Ruby syntax? (would this mess up the indexing?) */
+
 static char *new_file_xrefs[5] = {
   "open a new sound: {new-sound}",
   "specialize making a new sound: {new-sound-hook}",
@@ -1290,19 +1332,48 @@ static char *new_file_xrefs[5] = {
 void new_file_dialog_help(void)
 {
   snd_help_with_xrefs("New File",
-"This dialog sets the new file's output header type, data format, srate, chans, and comment if any.",
+"This dialog sets the new file's output header type, data format, srate, chans, and comment. \
+The 'srate:' and 'channels:' labels are actually drop-down menus providing quick access to common choices. \
+The default values for the fields can be set by clicking 'Reset'.  These values \
+are " S_default_output_chans ", " S_default_output_format ", " S_default_output_srate ", and " S_default_output_type ".  \
+The file name field can be set upon each invocation through " S_output_name_hook ", and the \
+comment field via " S_output_comment_hook ".  The actual new file representing the new sound is not written \
+until you save the new sound.",
 		      WITH_WORD_WRAP,
 		      new_file_xrefs,
 		      NULL);
 }
 
+static char *edit_header_xrefs[11] = {
+  "change srate: {src-channel}",
+  "convert data to a new format: {save-sound-as}",
+  "interpret current data in new data format: {data-format}",
+  "convert header to a new type: {save-sound-as}",
+  "interpret current header differently: {header-type}",
+  "extract or combine chans: {mono->stereo}",
+  "change data location: {data-location}",
+  "change number of samples: {frames}",
+  "what are these data formats?",
+  "what are these headers?",
+  NULL
+};
+
+static char *edit_header_urls[11] = {
+  NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+  "extsnd.html#describedataformats",
+  "extsnd.html#describeheadertypes",
+  NULL
+};
+
 void edit_header_dialog_help(void)
 {
-  snd_help("Edit Header",
-"This dialog edits the header of a sound file. No change is made to the actual sound data. \
+  snd_help_with_xrefs("Edit Header",
+"This dialog edits the header of a sound file; no change is made to the actual sound data. \
 If you specify 'raw' as the type, any existing header is removed.  This dialog is aimed at adding or removing an entire header,  \
 or editing the header comments; anything else is obviously dangerous.",
-	   WITH_WORD_WRAP);
+		      WITH_WORD_WRAP,
+		      edit_header_xrefs,
+		      edit_header_urls);
 }
 
 static char *print_xrefs[4] = {

@@ -69,6 +69,7 @@ static void massage_selection(Widget w, XtPointer context, Atom *selection, Atom
 	  caller = (Widget)((XmDropTransferEntry)context)->client_data;
 	  if (XmIsRowColumn(caller)) /* top menuBar widget or top level menu */
 	    {
+	      ss->open_requestor = FROM_DRAG_AND_DROP;
 	      sp = snd_open_file(str, false);
 	      if (sp) select_channel(sp, 0);
 	    }

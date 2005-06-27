@@ -1699,16 +1699,16 @@ If there is more than one hook function, each function's result is passed as inp
 
 <!-- output-name-hook -->
 <tr><td colspan=2>
-<code><a class=def name="outputnamehook">output-name-hook</a> ()</code></td><td align=right><b>progn</b>
+<code><a class=def name="outputnamehook">output-name-hook</a> (current-name)</code></td><td align=right><b>progn</b>
 </td></tr>
 <tr><td></td><td colspan=2>
-called in the New File dialog. If it returns a filename, that name is the default that appears in the New File dialog.
+called in the New File dialog. If it returns a filename, that name is presented in the New File dialog.
 </td></tr>
 <tr><td></td><td colspan=2>
 <table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (let ((file-ctr -1))
   (add-hook! <em class=red>output-name-hook</em>
-    (lambda ()
+    (lambda (ignored-name)
       (set! file-ctr (+ file-ctr 1))
       (format #f "~A-~D.snd" 
 	(strftime "%b-%d" (localtime (current-time)))
@@ -4688,6 +4688,8 @@ To turn a data-format number into a string, use <a href="#musdataformatname">mus
 the data format of some sound file, use <a href="#sounddataformat">mus-sound-data-format</a>.
 The default output (<a class=quiet href="#newsound">new-sound</a>, 
 <a class=quiet href="#savesoundas">save-sound-as</a>) data-format is <a href="#defaultoutputformat">default-output-format</a>.
+
+<A NAME="describedataformats">TODO: describe formats</A>
 </td></tr>
 
 <tr><td colspan=2></td></tr>
@@ -5034,13 +5036,13 @@ Guile built-in filter function: %filter.<br>
 
 <!-- find -->
 <tr><td colspan=2>
-<code><a class=def name="find">find</a> (proc <i>sample snd chn edpos</i>) </code></td></tr>
+<code><a class=def name="findchannel">find-channel</a> (proc <i>sample snd chn edpos</i>) </code></td></tr>
 <tr><td></td><td>
 find the sample that satisfies the function <i>proc</i>. <i>sample</i>
 determines where to start the search. 
-If 'proc' returns some non-#f value, find itself returns a list with that value and the sample number.
+If 'proc' returns some non-#f value, find-channel itself returns a list with that value and the sample number.
 In the find dialog and in C-s or C-r searches, if the value returned is an integer, the cursor is offset by that number of samples.
-<br><br><code>(<a class=quiet href="#find">find</a> (lambda (y) (&gt; y .1)))</code><br><code>(<a class=quiet href="#find">find</a> (lambda (y) (and (&gt; y .1) -2)))</code><br>
+<br><br><code>(find-channel (lambda (y) (&gt; y .1)))</code><br><code>(find-channel (lambda (y) (and (&gt; y .1) -2)))</code><br>
 
 <!-- INDEX searchexamples:Searching -->
 <A NAME="searchexamples"></a>
@@ -5234,6 +5236,9 @@ Snd will throw up its hands and say "maybe it's a raw (headerless)
 sound"; it will then look at open-raw-sound-hook before trying
 other fallbacks (such as the Raw File Dialog).
 See examp.scm or dlp/misc.scm (MPEG, OGG, etc).
+
+<A NAME="describeheadertypes">TODO: describe headers</A>
+
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -6566,7 +6571,7 @@ For more examples see <a href="#ptreechannel">Virtual Edits</a> and, in
 particular, <a href="#cosinechannelviaptree">cosine-channel-via-ptree</a>.
 <br><br>
 This optimization is also hidden in many contexts (<a class=quiet href="#mapchannel">map-channel</a>, 
-<a class=quiet href="#find">find</a>, etc).  Internally the Snd run macro
+<a class=quiet href="#findchannel">find-channel</a>, etc).  Internally the Snd run macro
 uses 64-bit ints and doubles, so large sounds should not present any numerical problems.
 See <a href="#optimization">optimization</a>
 for some timings.  In Ruby, it's possible to use the <a href="http://www.zenspider.com/Languages/Ruby/">RubyInline</a> module instead.
@@ -9429,7 +9434,7 @@ Here is a partial list of the dialogs scattered around Snd.
 <tr><td></td><td colspan=2>Print</td><td>File:<a href="snd.html#printfile">Print</a></td>
     <td><a href="#printdialog">print-dialog</a></td><td></td></tr>
 <tr><td></td><td colspan=2>Find globally</td><td>Edit:Find</td>
-    <td><a href="#finddialog">find-dialog</a>, <a href="#find">find</a></td><td></td></tr>
+    <td><a href="#finddialog">find-dialog</a>, <a href="#findchannel">find-channel</a></td><td></td></tr>
   <tr><td></td><td></td><td>listener completions dialog</td><td></td><td></td><td></td></tr>
   <tr><td></td><td></td><td><a href="sndscm.html#addfindtolistener">add-find-to-listener</a></td><td></td><td></td><td></td></tr>
 

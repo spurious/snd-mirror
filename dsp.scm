@@ -9,6 +9,7 @@
 ;;; src-duration (see src-channel in extsnd.html)
 
 (define (src-duration e)
+  "(src-duration envelope) returns the new duration of a sound after using 'envelope' for time-varying sampling-rate conversion ."
   (let* ((len (length e))
 	 (ex0 (car e))
 	 (ex1 (list-ref e (- len 2)))
@@ -1899,6 +1900,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 ;;;   a "linear phase" filter).
 
 (define (invert-filter fcoeffs)
+  "(invert-filter coeffs) tries to return an inverse filter to undo the effect of the FIR filter coeffs."
   (let* ((flen (vct-length fcoeffs))
 	 (coeffs (make-vct (+ 32 flen))) ; add room for coeffs to die away
 	 (order (vct-length coeffs)))
@@ -1958,11 +1960,14 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 ;;; windowed-maxamp generator
 
 (define* (make-windowed-maxamp #:optional (size 128))
+  "(make-windowed-maxamp (size 128) returns a windowed-maxamp generator.  The generator keeps \
+a running window of the last 'size' inputs, returning the maxamp in that window."
   (let ((gen (make-delay size)))
     (set! (mus-scaler gen) 0.0)
     gen))
 
 (define (windowed-maxamp gen y)
+  "(windowed-maxamp gen input) returns the maxamp in a running window on the last few inputs."
   (let* ((absy (abs y))
 	 (mx (delay gen absy))
 	 (pk (- (mus-scaler gen) .001)))
@@ -1979,6 +1984,8 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 ;;;   obviously very similar to ssb-bank above, but splits harmonics individually, rather than pitch-shifting them
 
 (define* (harmonicizer freq coeffs pairs-1 #:optional (order 40) (bw 50.0) (beg 0) dur snd chn edpos)
+  "(harmonicizer freq coeffs pairs (order 40) (bw 50.0) (beg 0) dur snd chn edpos) splits out each harmonic \
+and replaces it with the spectrum given in coeffs"
   (let* ((pairs pairs-1) ; for run's benefit
 	 (bands (make-vector pairs))
 	 (pcoeffs (partials->polynomial coeffs))
@@ -2026,6 +2033,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 ;;; linear sampling rate conversion
 
 (define* (linear-src-channel srinc #:optional snd chn)
+  "(linear-src-channel sr (snd #f) (chn #f) performs sampling rate conversion using linear interpolation."
   (let* ((rd (make-sample-reader 0 snd chn))
 	 (last (rd))
 	 (next (rd))

@@ -35,6 +35,7 @@ static void drag_data_received (GtkWidget *widget, GdkDragContext *context, gint
 	  else
 	    {
 	      snd_info *sp = NULL;
+	      ss->open_requestor = FROM_DRAG_AND_DROP;
 	      sp = snd_open_file(filename, false);
 	      if (sp) select_channel(sp, 0);
 	    }

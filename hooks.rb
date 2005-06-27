@@ -167,7 +167,7 @@ need a String or Symbol, not %s"
   $select_sound_hook            = Hook.new("$select_sound_hook", 1)
   $print_hook                   = Hook.new("$print_hook", 1)
   $exit_hook                    = Hook.new("$exit_hook", 0)
-  $output_name_hook             = Hook.new("$output_name_hook", 0)
+  $output_name_hook             = Hook.new("$output_name_hook", 1)
   $during_open_hook             = Hook.new("$during_open_hook", 3)
   $after_transform_hook         = Hook.new("$after_transform_hook", 3)
   $mouse_enter_label_hook       = Hook.new("$mouse_enter_label_hook", 3)

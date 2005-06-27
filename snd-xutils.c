@@ -247,7 +247,7 @@ void set_label(Widget label, const char *str)
   XmStringFree(s1);
 }
 
-void set_button_label (Widget label, const char *str) {set_label(label, str);}
+void set_button_label(Widget label, const char *str) {set_label(label, str);}
 
 void set_title(const char *title)
 {

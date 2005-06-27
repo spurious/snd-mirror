@@ -1482,10 +1482,9 @@ static void close_sound_dialog(Widget w, XtPointer context, XtPointer info)
   if (sp) snd_close_file(sp);
 }
 
-snd_info *add_sound_window(char *filename, bool read_only)
+snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
 {  
   snd_info *sp = NULL, *osp;
-  file_info *hdr = NULL;
   Widget *sw;
   XmString s1;
   int snd_slot, nchans = 1, i, k, n, old_chans;
@@ -1502,14 +1501,12 @@ snd_info *add_sound_window(char *filename, bool read_only)
   snd_context *sx;
   Atom sound_delete;
   static bool first_window = true;
-  hdr = make_file_info(filename);
-  if (!hdr) return(NULL);
-  if (ss->pending_change) 
+  if (ss->translated_filename) 
     {
       old_name = filename;
-      filename = ss->pending_change;
+      filename = ss->translated_filename;
       free_filename = true;
-      ss->pending_change = NULL;
+      ss->translated_filename = NULL;
     }
   nchans = hdr->chans;
   if (nchans <= 0) nchans = 1;

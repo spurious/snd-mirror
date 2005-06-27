@@ -884,7 +884,7 @@ void add_completer_to_textfield(Widget w, int completer)
 Widget make_text_widget(char *name, Widget parent, Arg *args, int n)
 {
   /* white background when active, emacs translations */
-  /* used only for comment widget in file data box (snd-xfile.c) */
+  /* used only for comment widget in file data box (snd-xfile.c), but needs to be in this file to pick up actions etc */
   Widget df;
   if (!actions_loaded) 
     {

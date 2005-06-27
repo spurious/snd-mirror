@@ -32,6 +32,7 @@ snd_info *snd_new_file(char *newname, int header_type, int data_format, int srat
 		  write(chan, buf, size);
 		  snd_close(chan, newname);
 		  FREE(buf);
+		  ss->open_requestor = FROM_SND_NEW_FILE;
 		  return(sound_is_silence(snd_open_file(newname, false)));
 		}
 	    }
@@ -3152,6 +3153,7 @@ open filename (as if opened from File:Open menu option), and return the new soun
   }
   if (!file_exists)
     return(snd_no_such_file_error(S_open_sound, filename));
+  ss->open_requestor = FROM_OPEN_SOUND;
   sp = snd_open_file(fname, false); /* this will call mus_expand_filename */
   if (sp) 
     return(C_TO_XEN_INT(sp->index));
@@ -3220,6 +3222,7 @@ open file assuming the data matches the attributes indicated unless the file act
     return(snd_no_such_file_error(S_open_raw_sound, keys[0]));
   mus_header_set_raw_defaults(os, oc, ofr);
   ss->reloading_updated_file = -1;
+  ss->open_requestor = FROM_OPEN_RAW_SOUND;
   sp = snd_open_file(file, false);
   set_fallback_chans(0);
   set_fallback_srate(0);
@@ -3249,6 +3252,7 @@ You can subsequently make it writable by (set! (" S_read_only ") #f)."
   }
   if (!file_exists)
     return(snd_no_such_file_error(S_view_sound, filename));
+  ss->open_requestor = FROM_VIEW_SOUND;
   sp = snd_open_file(fname, true);
   if (sp) 
     return(C_TO_XEN_INT(sp->index));
@@ -3450,6 +3454,7 @@ The 'size' argument sets the number of samples (zeros) in the newly created soun
       write(chan, buf, size);
       snd_close(chan, str);
       FREE(buf);
+      ss->open_requestor = FROM_NEW_SOUND;
       sp = sound_is_silence(snd_open_file(str, false));
     }
   if (str) FREE(str);

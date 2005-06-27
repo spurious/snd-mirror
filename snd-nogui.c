@@ -198,7 +198,7 @@ void set_foreground_color(axis_context *ax, int color) {}
 void change_channel_style(snd_info *sp, channel_style_t new_style) {}
 void reflect_amp_env_in_progress(snd_info *sp) {}
 void cleanup_cw(chan_info *cp) {}
-void clear_deleted_snd_info(struct file_dialog_info *fd) {}
+void clear_deleted_snd_info(struct dialog_play_info *dp) {}
 bool fixup_cp_cgx_ax_wn(chan_info *cp) {return(false);}
 void make_minibuffer_label(snd_info *sp, char *str) {}
 void goto_minibuffer(snd_info *sp) {}
@@ -229,7 +229,7 @@ void finish_progress_report(snd_info *sp, enved_progress_t from_enved) {}
 void progress_report(snd_info *sp, const char *funcname, int curchan, int chans, Float pct, enved_progress_t from_enved) {}
 char *get_file_dialog_sound_attributes(file_data *fdat, int *srate, int *chans, int *type, int *format, off_t *location, off_t *samples, int min_chan) {return(NULL);}
 void alert_new_file(void) {}
-void make_new_file_dialog(char *newname, int header_type, int data_format, int srate, int chans, char *comment) {}
+void make_new_file_dialog(void) {}
 void make_cur_name_row(int old_size, int new_size) {}
 void make_prev_name_row(int old_size, int new_size) {}
 void make_prevfiles_list (void) {}
@@ -311,19 +311,17 @@ void set_filter_in_hz(snd_info *sp, bool val) {sp->filter_control_in_hz = val;}
 
 void auto_update_restart(void) {}
 
-snd_info *add_sound_window (char *filename, bool read_only)
+snd_info *add_sound_window (char *filename, bool read_only, file_info *hdr)
 {
   snd_info *sp;
   file_info *hdr;
   int snd_slot, nchans, i;
   bool free_filename = false;
-  hdr = make_file_info(filename);
-  if (!hdr) return(NULL);
-  if (ss->pending_change) 
+  if (ss->translated_filename) 
     {
-      filename = ss->pending_change;
+      filename = ss->translated_filename;
       free_filename = true;
-      ss->pending_change = NULL;
+      ss->translated_filename = NULL;
     }
   nchans = hdr->chans;
   if (nchans <= 0) nchans = 1;

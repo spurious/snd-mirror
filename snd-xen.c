@@ -7,6 +7,13 @@
  *   In Ruby, rand is protected as kernel_rand.
  */
 
+/* TODO: get rid of all yes_or_no calls (it is wrong in every case), and move that garbage to Scheme/Ruby
+ *   snd-edits (save_channel_edits!)
+ *   snd-file (save_as_dialog_save!!)
+ *   snd-mix (disk_space_p: 3 in mix and snd-select: save_selection!)
+ *   snd-io (snd_overwrite_ok: snd-xfile, snd-file save_as!!, snd-kbd: save-region, snd-snd: snd_new_file! g_new_sound)
+ */
+
 /* -------- protect XEN vars from GC -------- */
 
 static XEN gc_protection;
@@ -2569,6 +2576,29 @@ void after_open(int index)
 	     S_after_open_hook);
 }
 
+static XEN output_name_hook;
+
+char *output_name(const char *current_name)
+{
+  if (XEN_HOOKED(output_name_hook))
+    {
+      XEN result;
+      XEN procs = XEN_HOOK_PROCEDURES (output_name_hook);
+      while (XEN_NOT_NULL_P(procs))
+	{
+	  result = XEN_CALL_1(XEN_CAR(procs),
+			      C_TO_XEN_STRING(current_name),
+			      S_output_name_hook);
+	  if (XEN_STRING_P(result)) 
+	    return(copy_string(XEN_TO_C_STRING(result)));
+	  procs = XEN_CDR (procs);
+	}
+    }
+  return(copy_string(current_name));
+}
+
+
+
 /* this needs to be in Snd (rather than sndlib2xen.c) because it calls post_it */
 static XEN g_mus_audio_describe(void) 
 {
@@ -3509,6 +3539,10 @@ If it returns some non-false result, Snd assumes you've sent the text out yourse
 #endif
 
   print_hook = XEN_DEFINE_HOOK(S_print_hook, 1, H_print_hook);          /* arg = text */
+
+  #define H_output_name_hook S_output_name_hook " (current-name): called from the File:New dialog.  If it returns a filename, \
+that name is presented in the New File dialog."
+  output_name_hook = XEN_DEFINE_HOOK(S_output_name_hook, 1, H_output_name_hook); /* arg = current name, if any */
 
   g_init_base();
   g_init_utils();

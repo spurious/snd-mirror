@@ -112,11 +112,6 @@ static void reposition_file_buffers_1(off_t loc, snd_io *io)
   if (frames > io->bufsize) frames = io->bufsize;
   if (frames <= 0)                   /* tried to access beyond current end of file */
     {
-
-#if DEBUG64
-      fprintf(stderr, "clearing because frames: %d, loc: " OFF_TD ", io->frames: " OFF_TD "\n", frames, loc, io->frames);
-#endif
-
       io->beg = loc; 
       c_io_bufclr(io, 0);
     }
@@ -126,29 +121,13 @@ static void reposition_file_buffers_1(off_t loc, snd_io *io)
       int err;
       seek_loc = mus_file_seek_frame(io->fd, loc);
       io->beg = loc;
-
-#if DEBUG64
-      if (io->chans == 1) fprintf(stderr, "read mono sound\n");
-#endif
-
       err = mus_file_read_chans(io->fd,
 				0, frames - 1,
 				io->chans,
 				io->arrays,
 				io->arrays);
-#if DEBUG64
-      if (err == MUS_ERROR)
-	{
-	  fprintf(stderr, "read chans error!\n");
-	}
-#endif
       if (frames < io->bufsize) 
-	{
-#if DEBUG64
-	  fprintf(stderr, "clear from %d to %d\n", frames, io->bufsize);
-#endif
-	  c_io_bufclr(io, frames);
-	}
+	c_io_bufclr(io, frames);
     }
   io->end = io->beg + io->bufsize - 1;
 }
@@ -213,25 +192,6 @@ snd_io *make_file_state(int fd, file_info *hdr, int chan, off_t beg, int suggest
   io->bufsize = bufsize;
   io->arrays[chan] = (mus_sample_t *)CALLOC(bufsize, sizeof(mus_sample_t));
   reposition_file_buffers_1(beg, io); /* get ready to read -- we're assuming mus_file_read_chans here */
-#if DEBUG64
-	  {
-	    int i;
-	    bool happy = false;
-	    if (chan == 1)
-	      {
-		if (!(io->arrays[1])) fprintf(stderr,"%s: chan 2 buffer null\n", c__FUNCTION__);
-		else
-		  {
-		    for (i = 0; (!happy) && (i < io->bufsize); i++)
-		      if (io->arrays[1][i] != MUS_SAMPLE_0)
-			happy = true;
-		    if (!happy) 
-		      fprintf(stderr,"%s: chan 2 is empty (read %d samps: " OFF_TD " / %d)\n", 
-			      c__FUNCTION__, io->bufsize, hdr->samples, hdr->chans);
-		  }
-	      }
-	  }
-#endif
   return(io);
 }
 

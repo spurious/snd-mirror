@@ -3916,7 +3916,7 @@ def check_maxamp(ind, val, name)
   if fneq(maxamp(ind, 0), val)
     snd_display("maxamp amp_env %s: %s should be %s", name, maxamp(ind), val)
   end
-  unless pos = find(lambda do |y| y.abs >= (val - 0.0001) end)
+  unless pos = find_channel(lambda do |y| y.abs >= (val - 0.0001) end)
     snd_display("actual maxamp %s vals not right", name)
   end
   maxpos = maxamp_position(ind, 0)
@@ -6315,7 +6315,7 @@ def test105
   if (res = count_matches(lambda do |y| y > 0.125 end)) != 1313
     snd_display("oboe: count_matches %d?", res)
   end
-  spot = find(lambda do |y| y > 0.13 end)
+  spot = find_channel(lambda do |y| y > 0.13 end)
   if (not array?(spot)) or spot[1] != 8862
     snd_display("find: %s?", spot)
   end
@@ -7903,7 +7903,7 @@ def test205
   end
   test_edpos(ind1, :find, lambda do |*args|
                snd, chn, edpos = get_test_args(args, 0, 0, Current_edit_position)
-               find(lambda do |n2| n2 > 0.1 end, 0, snd, chn, edpos)[1]
+               find_channel(lambda do |n2| n2 > 0.1 end, 0, snd, chn, edpos)[1]
              end) do
     delete_samples(0, 100, ind1, 0)
   end
@@ -8915,10 +8915,10 @@ def test255
   if (res = scan_again.call) != [true, 4463]
     snd_display("scan_again: %s?", res)
   end
-  if (res = find(lambda do |y| find(lambda do |yy| yy > 0.1 end) end)) != [[true, 4423], 0]
+  if (res = find_channel(lambda do |y| find_channel(lambda do |yy| yy > 0.1 end) end)) != [[true, 4423], 0]
     snd_display("find twice: %s?", res)
   end
-  if (res = find(lambda do |y| count_matches(lambda do |yy| yy > 0.1 end) end)) != [2851, 0]
+  if (res = find_channel(lambda do |y| count_matches(lambda do |yy| yy > 0.1 end) end)) != [2851, 0]
     snd_display("find+count: %s?", res)
   end
   set_cursor(1000)
@@ -25139,7 +25139,7 @@ def test14
     if (res = edit_position(ind, 0)).nonzero?
       snd_display("convolve_with z: %s?", res)
     end
-    if (res = Snd.catch do find(lambda do |y| y > 0.1 end) end).first != :no_such_sample
+    if (res = Snd.catch do find_channel(lambda do |y| y > 0.1 end) end).first != :no_such_sample
       snd_display("find z: %s", res.inspect)
     end
     if (res = Snd.catch do count_matches(lambda do |y| y > 0.1 end) end).first != :no_such_sample
@@ -37150,7 +37150,7 @@ def test0224
                   cursor,
                   sample([0, cursor - 1].max),
                   sample(cursor),
-                  find(lambda do |y| y > 0.1 end, 0))
+                  find_channel(lambda do |y| y > 0.1 end, 0))
     end
     click_button(cancel_button)
     force_event

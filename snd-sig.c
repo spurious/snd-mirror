@@ -3367,16 +3367,14 @@ apply func to samples in current channel; edname is the edit history name for th
   return(g_map_chan_1(proc, s_beg, XEN_FALSE, org, snd, chn, edpos, (XEN_BOUND_P(s_dur)) ? s_dur : XEN_FALSE, S_map_channel));
 }
 
-/* TODO: "find" and presumably "count-matches" are bad names -- collides with CM/Guile */
-
-static XEN g_find(XEN expr, XEN sample, XEN snd_n, XEN chn_n, XEN edpos)
+static XEN g_find_channel(XEN expr, XEN sample, XEN snd_n, XEN chn_n, XEN edpos)
 {
-  #define H_find "(" S_find " func (start-samp 0) (snd #f) (chn #f) (edpos #f)): apply func, a function of one argument, \
+  #define H_find_channel "(" S_find_channel " func (start-samp 0) (snd #f) (chn #f) (edpos #f)): apply func, a function of one argument, \
 the current sample, to each sample in snd's channel chn, starting at 'start-samp' until func returns something other than #f"
 
   /* no free here -- it's handled as ss->search_expr in snd-find.c */
-  ASSERT_CHANNEL(S_find, snd_n, chn_n, 3);
-  return(g_sp_scan(expr, sample, XEN_FALSE, snd_n, chn_n, S_find, false, edpos, 5, XEN_FALSE));
+  ASSERT_CHANNEL(S_find_channel, snd_n, chn_n, 3);
+  return(g_sp_scan(expr, sample, XEN_FALSE, snd_n, chn_n, S_find_channel, false, edpos, 5, XEN_FALSE));
 }
 
 static XEN g_count_matches(XEN expr, XEN sample, XEN snd_n, XEN chn_n, XEN edpos)
@@ -4551,7 +4549,7 @@ XEN_ARGIFY_6(g_scan_chan_w, g_scan_chan)
 XEN_ARGIFY_7(g_map_chan_w, g_map_chan)
 XEN_ARGIFY_6(g_scan_channel_w, g_scan_channel)
 XEN_ARGIFY_7(g_map_channel_w, g_map_channel)
-XEN_ARGIFY_5(g_find_w, g_find)
+XEN_ARGIFY_5(g_find_channel_w, g_find_channel)
 XEN_ARGIFY_5(g_count_matches_w, g_count_matches)
 XEN_ARGIFY_4(g_smooth_sound_w, g_smooth_sound)
 XEN_ARGIFY_5(g_smooth_channel_w, g_smooth_channel)
@@ -4591,7 +4589,7 @@ XEN_ARGIFY_9(g_ptree_channel_w, g_ptree_channel)
 #define g_map_chan_w g_map_chan
 #define g_scan_channel_w g_scan_channel
 #define g_map_channel_w g_map_channel
-#define g_find_w g_find
+#define g_find_channel_w g_find_channel
 #define g_count_matches_w g_count_matches
 #define g_smooth_sound_w g_smooth_sound
 #define g_smooth_channel_w g_smooth_channel
@@ -4634,7 +4632,7 @@ void g_init_sig(void)
   XEN_EVAL_C_STRING("(use-modules (ice-9 optargs))");
   XEN_DEFINE_PROCEDURE(S_scan_channel "-1",       g_scan_channel_w,  1, 5, 0, H_scan_channel);
   XEN_DEFINE_PROCEDURE(S_scan_chan "-1",          g_scan_chan_w,     1, 5, 0, H_scan_chan);
-  XEN_DEFINE_PROCEDURE(S_find "-1",               g_find_w,          1, 4, 0, H_find);
+  XEN_DEFINE_PROCEDURE(S_find_channel "-1",       g_find_channel_w,  1, 4, 0, H_find_channel);
   XEN_DEFINE_PROCEDURE(S_count_matches "-1",      g_count_matches_w, 1, 4, 0, H_count_matches);
   XEN_DEFINE_PROCEDURE(S_map_chan "-1",           g_map_chan_w,      1, 6, 0, H_map_chan);
   XEN_DEFINE_PROCEDURE(S_map_channel "-1",        g_map_channel_w,   1, 6, 0, H_map_channel);
@@ -4644,8 +4642,8 @@ void g_init_sig(void)
   XEN_SET_DOCUMENTATION(S_scan_channel, H_scan_channel);
   XEN_EVAL_C_STRING("(defmacro* scan-chan (form #:rest args) `(apply scan-chan-1 (list (list ',form ,form) ,@args)))");
   XEN_SET_DOCUMENTATION(S_scan_chan, H_scan_chan);
-  XEN_EVAL_C_STRING("(defmacro* find (form #:rest args) `(apply find-1 (list (list ',form ,form) ,@args)))");
-  XEN_SET_DOCUMENTATION(S_find, H_find);
+  XEN_EVAL_C_STRING("(defmacro* find-channel (form #:rest args) `(apply find-channel-1 (list (list ',form ,form) ,@args)))");
+  XEN_SET_DOCUMENTATION(S_find_channel, H_find_channel);
   XEN_EVAL_C_STRING("(defmacro* count-matches (form #:rest args) `(apply count-matches-1 (list (list ',form ,form) ,@args)))");
   XEN_SET_DOCUMENTATION(S_count_matches, H_count_matches);
   XEN_EVAL_C_STRING("(defmacro* map-channel (form #:rest args) `(apply map-channel-1 (list (list ',form ,form) ,@args)))");
@@ -4657,7 +4655,7 @@ void g_init_sig(void)
 #else
   XEN_DEFINE_PROCEDURE(S_scan_channel,            g_scan_channel_w,            1, 5, 0, H_scan_channel);
   XEN_DEFINE_PROCEDURE(S_scan_chan,               g_scan_chan_w,               1, 5, 0, H_scan_chan);
-  XEN_DEFINE_PROCEDURE(S_find,                    g_find_w,                    1, 4, 0, H_find);
+  XEN_DEFINE_PROCEDURE(S_find_channel,            g_find_channel_w,            1, 4, 0, H_find_channel);
   XEN_DEFINE_PROCEDURE(S_count_matches,           g_count_matches_w,           1, 4, 0, H_count_matches);
   XEN_DEFINE_PROCEDURE(S_map_chan,                g_map_chan_w,                1, 6, 0, H_map_chan);
   XEN_DEFINE_PROCEDURE(S_map_channel,             g_map_channel_w,             1, 6, 0, H_map_channel);

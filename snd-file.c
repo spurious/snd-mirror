@@ -93,6 +93,7 @@ time_t file_write_date(const char *filename)
 }
 
 static int fallback_srate = 0, fallback_chans = 0, fallback_format = MUS_UNKNOWN;
+static int original_srate = 0, original_chans = 0, original_format = MUS_UNKNOWN;
 
 void set_fallback_srate(int sr) {fallback_srate = sr;}
 void set_fallback_chans(int ch) {fallback_chans = ch;}
@@ -109,8 +110,11 @@ static file_info *make_file_info_1(const char *fullname)
   else
     {
       hdr->srate = mus_sound_srate(fullname);
+      original_srate = hdr->srate;
       hdr->chans = mus_sound_chans(fullname);
+      original_chans = hdr->chans;
       hdr->format = mus_sound_data_format(fullname);
+      original_format = hdr->format;
     }
   if (!(MUS_DATA_FORMAT_OK(hdr->format))) hdr->format = fallback_format;
   if (hdr->srate <= 0) {if (fallback_srate > 0) hdr->srate = fallback_srate; else hdr->srate = 1;}
@@ -192,7 +196,7 @@ static file_info *translate_file(const char *filename, int type)
 	  hdr = make_file_info_1(newname);
 	  if (hdr->loops == NULL) hdr->loops = loops;
 	  loops = NULL;
-	  ss->pending_change = copy_string(newname);
+	  ss->translated_filename = copy_string(newname);
 	}
     }
   else snd_remove(newname, REMOVE_FROM_CACHE);
@@ -203,10 +207,11 @@ static file_info *translate_file(const char *filename, int type)
 
 static XEN open_raw_sound_hook, bad_header_hook;
 #if (!USE_NO_GUI)
-static char *raw_data_explanation(const char *filename, file_info *hdr);
+static char *raw_data_explanation(const char *filename, file_info *hdr, char **info);
+static bool raw_data_selected = true; /* TODO: fix this kludge! */
 #endif
 
-file_info *make_file_info(const char *fullname)
+file_info *make_file_info(const char *fullname, bool read_only)
 {
   file_info *hdr = NULL;
   if (mus_file_probe(fullname))
@@ -238,14 +243,17 @@ file_info *make_file_info(const char *fullname)
 		  (type != MUS_MUS10) && 
 		  (type != MUS_HCOM))
 		{
-		  char *tmp;
-		  file_info *tmp_hdr;
-		  tmp_hdr = make_file_info_1(fullname);
-		  tmp = raw_data_explanation(fullname, tmp_hdr);
-		  hdr = raw_data_dialog_to_file_info(fullname, tmp);
-		  if (tmp) FREE(tmp);
-		  tmp_hdr = free_file_info(tmp_hdr);
-		  return(hdr);
+		  char *info = NULL, *title = NULL;
+		  title = raw_data_explanation(fullname, make_file_info_1(fullname), &info);
+		  raw_data_dialog_to_file_info(fullname, 
+					       title,
+					       info,
+					       read_only,
+					       raw_data_selected);
+		  /* TODO: FREE title and info in dialog */
+		  /* TODO: can't all of this be posted in the raw data dialog? */
+		  /* TODO: free tmphdr in data expl */
+		  return(NULL); /* TODO: no error here! */
 		}
 	    }
 	}
@@ -325,9 +333,12 @@ file_info *make_file_info(const char *fullname)
 	      if (just_quit) return(NULL);
 	      str = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
 	      mus_snprintf(str, PRINT_BUFFER_SIZE, _("No header found for %s"), filename_without_home_directory(fullname));
-	      hdr = raw_data_dialog_to_file_info(fullname, str);
-	      FREE(str);
-	      return(hdr);
+	      raw_data_dialog_to_file_info(fullname, 
+					   str,
+					   NULL,
+					   read_only,
+					   raw_data_selected);
+	      return(NULL); /* TODO: no error here */
 	    }
 #endif
 	}
@@ -693,6 +704,7 @@ static void add_to_previous_files(const char *shortname, const char *fullname);
 typedef struct {
   char *filename;
   bool read_only;
+  file_info *hdr;
 } open_file_context;
 
 static snd_info *open_file_sp = NULL;
@@ -701,7 +713,7 @@ static void before_open_file(void *context) {}
 static XEN open_file_body(void *context)
 {
   open_file_context *sc = (open_file_context *)context;
-  open_file_sp = add_sound_window(sc->filename, sc->read_only); /* snd-xsnd.c -> make_file_info (in this file) */
+  open_file_sp = add_sound_window(sc->filename, sc->read_only, sc->hdr); /* snd-xsnd.c -> make_file_info (in this file) */
   return(XEN_FALSE);
 }
 
@@ -713,54 +725,11 @@ static void after_open_file(void *context)
 }
 #endif
 
-static snd_info *snd_open_file_1 (const char *filename, bool select, bool read_only)
+snd_info *finish_opening_sound(snd_info *sp, bool selected)
 {
-  snd_info *sp;
-  char *mcf = NULL;
-  int files;
-  XEN res = XEN_FALSE;
-  mcf = mus_expand_filename(filename);
-  if (XEN_HOOKED(open_hook))
-    {
-      XEN fstr;
-      fstr = C_TO_XEN_STRING(mcf);
-      res = run_or_hook(open_hook,
-			XEN_LIST_1(fstr),
-			S_open_hook);
-      if (XEN_TRUE_P(res))
-	{
-	  if (mcf) FREE(mcf);
-	  return(NULL);
-	}
-      else
-	{
-	  if (XEN_STRING_P(res))  /* added 14-Aug-01 for user-supplied auto-translations */
-	    {
-	      if (mcf) FREE(mcf);
-	      mcf = mus_expand_filename(XEN_TO_C_STRING(res));
-	    }
-	}
-    }
-#if HAVE_GUILE_DYNAMIC_WIND
-  {
-    open_file_context *ofc;
-    ofc = (open_file_context *)CALLOC(1, sizeof(open_file_context));
-    ofc->filename = mcf;
-    ofc->read_only = read_only;
-    scm_internal_dynamic_wind((scm_t_guard)before_open_file, 
-			      (scm_t_inner)open_file_body, 
-			      (scm_t_guard)after_open_file, 
-			      (void *)ofc,
-			      (void *)ofc);
-    sp = open_file_sp; /* has to be global since we free sc during the unwind */
-    mcf = NULL; /* freed above in unwind */
-  }
-#else
-  sp = add_sound_window(mcf, read_only); /* snd-xsnd.c -> make_file_info (in this file) */
-  if (mcf) FREE(mcf);
-#endif
   if (sp)
     {
+      int files;
 #if HAVE_RUBY
       XEN_VARIABLE_SET(S_snd_opened_sound, C_TO_XEN_INT(sp->index));
 #endif
@@ -786,7 +755,7 @@ static snd_info *snd_open_file_1 (const char *filename, bool select, bool read_o
 #endif
   if (sp) 
     {
-      if (select) select_channel(sp, 0);
+      if (selected) select_channel(sp, 0);
       read_snd_opened_sound_file(sp);
       if ((sp->channel_style != CHANNELS_SEPARATE) && 
 	  (sp->nchans > 1)) 
@@ -802,8 +771,75 @@ static snd_info *snd_open_file_1 (const char *filename, bool select, bool read_o
   return(sp);
 }
 
-snd_info *snd_open_file(const char *filename, bool read_only) {return(snd_open_file_1(filename, true, read_only));}
-snd_info *snd_open_file_unselected(const char *filename) {return(snd_open_file_1(filename, false, false));}
+static snd_info *snd_open_file_1(const char *filename, bool selected, bool read_only)
+{
+  file_info *hdr;
+  snd_info *sp;
+  char *mcf = NULL;
+  mcf = mus_expand_filename(filename);
+  if (XEN_HOOKED(open_hook))
+    {
+      XEN res = XEN_FALSE;
+      XEN fstr;
+      fstr = C_TO_XEN_STRING(mcf);
+      res = run_or_hook(open_hook,
+			XEN_LIST_1(fstr),
+			S_open_hook);
+      if (XEN_TRUE_P(res))
+	{
+	  if (mcf) FREE(mcf);
+	  return(NULL);
+	}
+      else
+	{
+	  if (XEN_STRING_P(res))  /* added 14-Aug-01 for user-supplied auto-translations */
+	    {
+	      if (mcf) FREE(mcf);
+	      mcf = mus_expand_filename(XEN_TO_C_STRING(res));
+	    }
+	}
+    }
+#if (!USE_NO_GUI)
+  raw_data_selected= selected;
+#endif
+  hdr = make_file_info(mcf, read_only);
+  if (!hdr) 
+    {
+      if (mcf) FREE(mcf);
+      return(NULL);
+    }
+
+#if HAVE_GUILE_DYNAMIC_WIND
+  {
+    open_file_context *ofc;
+    ofc = (open_file_context *)CALLOC(1, sizeof(open_file_context));
+    ofc->filename = mcf;
+    ofc->read_only = read_only;
+    ofc->hdr = hdr;
+    scm_internal_dynamic_wind((scm_t_guard)before_open_file, 
+			      (scm_t_inner)open_file_body, 
+			      (scm_t_guard)after_open_file, 
+			      (void *)ofc,
+			      (void *)ofc);
+    sp = open_file_sp; /* has to be global since we free sc during the unwind */
+    mcf = NULL; /* freed above in unwind */
+  }
+#else
+  sp = add_sound_window(mcf, read_only, hdr);
+  if (mcf) FREE(mcf);
+#endif
+  return(finish_opening_sound(sp, selected));
+}
+
+snd_info *snd_open_file(const char *filename, bool read_only) 
+{
+  return(snd_open_file_1(filename, true, read_only));
+}
+
+snd_info *snd_open_file_unselected(const char *filename) 
+{
+  return(snd_open_file_1(filename, false, false));
+}
 
 void snd_close_file(snd_info *sp)
 {
@@ -1271,6 +1307,7 @@ static snd_info *snd_update_1(snd_info *sp, const char *ur_filename)
   /* this normalizes the fft/lisp/wave state so we need to reset it after reopen */
   alert_new_file();
   ss->reloading_updated_file = (old_index + 1);
+  ss->open_requestor = FROM_UPDATE;
   nsp = snd_open_file(filename, read_only);
   ss->reloading_updated_file = 0;
   if (old_raw)
@@ -1454,6 +1491,7 @@ void view_prevfiles_select(int pos)
   if (XEN_NOT_TRUE_P(res))
     {
       snd_info *sp;
+      ss->open_requestor = FROM_VIEW_PREVIOUS_FILES;
       sp = snd_open_file(prevfullnames[pos], false);
       if (sp) select_channel(sp, 0); 
     }
@@ -2183,7 +2221,7 @@ char *save_as_dialog_save_sound(snd_info *sp, char *str, save_dialog_t save_type
     {
       FREE(fullname);
       (*need_directory_update) = false;
-      return(mus_format(_("%s not overwritten"), sp->short_filename));
+      return(mus_format(_("%s not overwritten"), str));
     }
 
   if (!(run_before_save_as_hook(sp, fullname, save_type != FILE_SAVE_AS, srate, type, format, comment)))
@@ -2252,6 +2290,7 @@ char *save_as_dialog_save_sound(snd_info *sp, char *str, save_dialog_t save_type
 	    }
 	  if (collision->sp) 
 	    {
+	      ss->open_requestor = FROM_SAVE_AS_DIALOG;
 	      snd_open_file(fullname, false);
 	      (*need_directory_update) = false;
 	    }
@@ -2381,36 +2420,59 @@ static short swap_short(short n)
   return(o);
 }
 
-static char *raw_data_explanation(const char *filename, file_info *hdr)
+static char *raw_data_explanation(const char *filename, file_info *hdr, char **info)
 {
   char *reason_str, *tmp_str, *file_string;
   off_t nsamp;
+  bool ok;
   int ns, better_srate = 0, better_chans = 0, len;
   reason_str = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
   tmp_str = (char *)CALLOC(LABEL_BUFFER_SIZE, sizeof(char));
   /* try to provide some notion of what might be the intended header (currently limited to byte-order mistakes) */
   len = PRINT_BUFFER_SIZE;
-  mus_snprintf(reason_str, len, "srate: %d", hdr->srate);
-  ns = (int)swap_int(hdr->srate);
-  if ((ns < 4000) || (ns > 100000)) 
-    ns = (int)swap_short((short)(hdr->srate));
-  if ((ns > 4000) && (ns < 100000))
+  ok = ((original_srate >= 8000) && (original_srate <= 100000));
+  mus_snprintf(reason_str, len, "srate%s: %d", (ok) ? "" : " looks wrong", original_srate);
+  if (!ok)
     {
-      better_srate = ns;
-      mus_snprintf(tmp_str, LABEL_BUFFER_SIZE, " (swapped: %d)", ns);
-      reason_str = snd_strcat(reason_str, tmp_str, &len);
+      ns = (int)swap_int(original_srate);
+      if ((ns < 4000) || (ns > 100000)) 
+	ns = (int)swap_short((short)(original_srate));
+      if ((ns > 4000) && (ns < 100000))
+	{
+	  better_srate = ns;
+	  mus_snprintf(tmp_str, LABEL_BUFFER_SIZE, " (swapped: %d)", ns);
+	  reason_str = snd_strcat(reason_str, tmp_str, &len);
+	}
     }
-  mus_snprintf(tmp_str, LABEL_BUFFER_SIZE, "\nchans: %d", hdr->chans);
+  ok = ((original_chans > 0) && (original_chans < 1000));
+  mus_snprintf(tmp_str, LABEL_BUFFER_SIZE, "\nchans%s: %d", (ok) ? "" : " looks wrong", original_chans);
   reason_str = snd_strcat(reason_str, tmp_str, &len);
-  ns = swap_int(hdr->chans);
-  if ((ns < 0) || (ns > 8)) 
-    ns = swap_short((short)(hdr->chans));
-  if ((ns > 0) && (ns <= 8))
+  if (!ok)
     {
-      better_chans = ns;
-      mus_snprintf(tmp_str, LABEL_BUFFER_SIZE, " (swapped: %d)", ns);
-      reason_str = snd_strcat(reason_str, tmp_str, &len);
+      ns = swap_int(original_chans);
+      if ((ns < 0) || (ns > 8)) 
+	ns = swap_short((short)(original_chans));
+      if ((ns > 0) && (ns <= 8))
+	{
+	  better_chans = ns;
+	  mus_snprintf(tmp_str, LABEL_BUFFER_SIZE, " (swapped: %d)", ns);
+	  reason_str = snd_strcat(reason_str, tmp_str, &len);
+	}
     }
+
+  mus_snprintf(tmp_str, LABEL_BUFFER_SIZE, "\ntype: %s", mus_header_type_name(hdr->type));
+  reason_str = snd_strcat(reason_str, tmp_str, &len);
+  if (!(MUS_DATA_FORMAT_OK(original_format)))
+    {
+      char *format_info;
+      if (original_format != MUS_UNKNOWN)
+	format_info = (char *)mus_data_format_name(original_format);
+      else format_info = (char *)mus_header_original_format_name(mus_sound_original_format(filename), hdr->type);
+      mus_snprintf(tmp_str, LABEL_BUFFER_SIZE, "\nformat looks bogus: %s", format_info);
+    }
+  else mus_snprintf(tmp_str, LABEL_BUFFER_SIZE, "\nformat: %s", (char *)mus_data_format_name(original_format));
+  reason_str = snd_strcat(reason_str, tmp_str, &len);
+
   mus_snprintf(tmp_str, LABEL_BUFFER_SIZE, "\nlength: %.3f (" PRId64 " samples, " PRId64 " bytes total)",
 	       (float)((double)(hdr->samples) / (float)(hdr->chans * hdr->srate)),
 	       hdr->samples,
@@ -2419,7 +2481,7 @@ static char *raw_data_explanation(const char *filename, file_info *hdr)
   nsamp = swap_off_t(hdr->samples);
   if (nsamp < mus_sound_length(filename))
     {
-      mus_snprintf(tmp_str, LABEL_BUFFER_SIZE, "\n  (swapped: " OFF_TD , nsamp);
+      mus_snprintf(tmp_str, LABEL_BUFFER_SIZE, " (swapped: " OFF_TD , nsamp);
       reason_str = snd_strcat(reason_str, tmp_str, &len);
       if ((better_chans) && (better_srate))
 	{
@@ -2438,18 +2500,13 @@ static char *raw_data_explanation(const char *filename, file_info *hdr)
       mus_snprintf(tmp_str, LABEL_BUFFER_SIZE, " (swapped: " OFF_TD ")", nsamp);
       reason_str = snd_strcat(reason_str, tmp_str, &len);
     }
-  mus_snprintf(tmp_str, LABEL_BUFFER_SIZE, "\ntype: %s", mus_header_type_name(hdr->type));
-  reason_str = snd_strcat(reason_str, tmp_str, &len);
-  mus_snprintf(tmp_str, LABEL_BUFFER_SIZE, "\nformat: %s\n", mus_data_format_name(hdr->format));
-  reason_str = snd_strcat(reason_str, tmp_str, &len);
-  hdr->type = MUS_RAW;
-  post_it("Current header values", reason_str);
+  (*info) = reason_str;
   file_string = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
   mus_snprintf(file_string, PRINT_BUFFER_SIZE,
-	       "Bogus header found for %s", 
+	       "Bad header found on %s", 
 	       filename_without_home_directory(filename));
   FREE(tmp_str);
-  FREE(reason_str);
+  free_file_info(hdr);
   return(file_string);
 }
 #endif

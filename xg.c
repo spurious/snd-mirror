@@ -25298,19 +25298,19 @@ static XEN gxg_gtk_size_group_get_ignore_hidden(XEN size_group)
   XEN_ASSERT_TYPE(XEN_GtkSizeGroup__P(size_group), size_group, 1, "gtk_size_group_get_ignore_hidden", "GtkSizeGroup*");
   return(C_TO_XEN_gboolean(gtk_size_group_get_ignore_hidden(XEN_TO_C_GtkSizeGroup_(size_group))));
 }
-static XEN gxg_gtk_stock_set_translate_func(XEN domain, XEN func, XEN data, XEN notify)
+static XEN gxg_gtk_stock_set_translate_func(XEN domain, XEN func, XEN func_data, XEN notify)
 {
   #define H_gtk_stock_set_translate_func "void gtk_stock_set_translate_func(gchar* domain, GtkTranslateFunc func, \
-gpointer data, GtkDestroyNotify notify)"
+lambda_data func_data, GtkDestroyNotify notify)"
   XEN_ASSERT_TYPE(XEN_gchar__P(domain), domain, 1, "gtk_stock_set_translate_func", "gchar*");
   XEN_ASSERT_TYPE(XEN_GtkTranslateFunc_P(func), func, 2, "gtk_stock_set_translate_func", "GtkTranslateFunc");
-  XEN_ASSERT_TYPE(XEN_gpointer_P(data), data, 3, "gtk_stock_set_translate_func", "gpointer");
+  XEN_ASSERT_TYPE(XEN_lambda_data_P(func_data), func_data, 3, "gtk_stock_set_translate_func", "lambda_data");
   XEN_ASSERT_TYPE(XEN_GtkDestroyNotify_P(notify), notify, 4, "gtk_stock_set_translate_func", "GtkDestroyNotify");
   {
     XEN gxg_ptr = XEN_LIST_5(func, func_data, XEN_FALSE, XEN_FALSE, XEN_FALSE);
     xm_protect(gxg_ptr);
     XEN_LIST_SET(gxg_ptr, 3, notify);
-    gtk_stock_set_translate_func((const gchar*)XEN_TO_C_gchar_(domain), XEN_TO_C_GtkTranslateFunc(func), XEN_TO_C_gpointer(data), XEN_TO_C_GtkDestroyNotify(notify));
+    gtk_stock_set_translate_func((const gchar*)XEN_TO_C_gchar_(domain), XEN_TO_C_GtkTranslateFunc(func), XEN_TO_C_lambda_data(func_data), XEN_TO_C_GtkDestroyNotify(notify));
     return(XEN_FALSE);
    }
 }
@@ -25378,12 +25378,6 @@ static XEN gxg_gtk_window_present_with_time(XEN window, XEN timestamp)
   XEN_ASSERT_TYPE(XEN_guint32_P(timestamp), timestamp, 2, "gtk_window_present_with_time", "guint32");
   gtk_window_present_with_time(XEN_TO_C_GtkWindow_(window), XEN_TO_C_guint32(timestamp));
   return(XEN_FALSE);
-}
-static XEN gxg_pango_font_get_font_map(XEN font)
-{
-  #define H_pango_font_get_font_map "PangoFontMap* pango_font_get_font_map(PangoFont* font)"
-  XEN_ASSERT_TYPE(XEN_PangoFont__P(font), font, 1, "pango_font_get_font_map", "PangoFont*");
-  return(C_TO_XEN_PangoFontMap_(pango_font_get_font_map(XEN_TO_C_PangoFont_(font))));
 }
 #endif
 
@@ -30465,7 +30459,6 @@ XEN_NARGIFY_1(gxg_gtk_tool_button_get_icon_name_w, gxg_gtk_tool_button_get_icon_
 XEN_NARGIFY_2(gxg_gtk_window_set_urgency_hint_w, gxg_gtk_window_set_urgency_hint)
 XEN_NARGIFY_1(gxg_gtk_window_get_urgency_hint_w, gxg_gtk_window_get_urgency_hint)
 XEN_NARGIFY_2(gxg_gtk_window_present_with_time_w, gxg_gtk_window_present_with_time)
-XEN_NARGIFY_1(gxg_pango_font_get_font_map_w, gxg_pango_font_get_font_map)
 #endif
 
 XEN_NARGIFY_1(gxg_GPOINTER_w, gxg_GPOINTER)
@@ -34057,7 +34050,6 @@ XEN_NARGIFY_0(gxg_make_PangoLogAttr_w, gxg_make_PangoLogAttr)
 #define gxg_gtk_window_set_urgency_hint_w gxg_gtk_window_set_urgency_hint
 #define gxg_gtk_window_get_urgency_hint_w gxg_gtk_window_get_urgency_hint
 #define gxg_gtk_window_present_with_time_w gxg_gtk_window_present_with_time
-#define gxg_pango_font_get_font_map_w gxg_pango_font_get_font_map
 #endif
 
 #define gxg_GPOINTER_w gxg_GPOINTER
@@ -37656,7 +37648,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_window_set_urgency_hint, gxg_gtk_window_set_urgency_hint_w, 2, 0, 0, H_gtk_window_set_urgency_hint);
   XG_DEFINE_PROCEDURE(gtk_window_get_urgency_hint, gxg_gtk_window_get_urgency_hint_w, 1, 0, 0, H_gtk_window_get_urgency_hint);
   XG_DEFINE_PROCEDURE(gtk_window_present_with_time, gxg_gtk_window_present_with_time_w, 2, 0, 0, H_gtk_window_present_with_time);
-  XG_DEFINE_PROCEDURE(pango_font_get_font_map, gxg_pango_font_get_font_map_w, 1, 0, 0, H_pango_font_get_font_map);
 #endif
 
   XG_DEFINE_PROCEDURE(GPOINTER, gxg_GPOINTER_w, 1, 0, 0, NULL);
@@ -39961,7 +39952,7 @@ static bool xg_already_inited = false;
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("21-Jun-05"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("26-Jun-05"));
       xg_already_inited = true;
 #if WITH_GTK_AND_X11
       Init_libx11();

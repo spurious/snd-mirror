@@ -830,16 +830,6 @@ static int mus_read_any_1(int tfd, int beg, int chans, int nints, mus_sample_t *
 
       for (k = 0; k < chans; k++)
 	{
-#if DEBUG64
-	  if ((cm) && ((cm[k] == NULL) || (bufs[k] == NULL)))
-	    {
-	      int n, locs = 0;
-	      for (n = 0; n < chans; n++)
-		if (cm[n]) locs++;
-	      fprintf(stderr, "skip chan %d this time (%d chans, %d requested: %p %p)\n", 
-		      k, chans, locs, cm[k], bufs[k]);
-	    }
-#endif
 	  if ((cm == NULL) || (cm[k]))
 	    {
 	      buffer = (mus_sample_t *)(bufs[k]);
@@ -1016,9 +1006,6 @@ int mus_file_read_chans(int tfd, int beg, int end, int chans, mus_sample_t **buf
 	  mus_sample_t *buffer;
 	  buffer = bufs[k];
 	  i = rtn + beg;
-#if DEBUG64
-	  fprintf(stderr, "clear buf[%d]: %d %d\n", k, rtn, num);
-#endif
 	  memset((void *)(buffer + i), 0, (end - i + 1) * sizeof(mus_sample_t));
 	}
   return(num);
