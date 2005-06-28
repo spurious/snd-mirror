@@ -386,7 +386,7 @@ static void make_region_readable(region *r)
       cp->edit_size = 1;
       cp->sound_size = 1;
       cp->hookable = WITHOUT_HOOK;
-      hdr = make_file_info(r->filename, true);
+      hdr = make_file_info(r->filename, FILE_READ_ONLY, FILE_NOT_SELECTED);
       if (hdr)
 	{
 	  snd_io *io;
@@ -1075,7 +1075,7 @@ void region_edit(int pos)
 	    {
 	      snd_info *sp;
 	      ss->open_requestor = FROM_REGION_EDIT;
-	      sp = snd_open_file(temp_region_name, false);
+	      sp = snd_open_file(temp_region_name, FILE_READ_WRITE);
 	      if (sp)
 		{
 		  r->editor_copy = sp;

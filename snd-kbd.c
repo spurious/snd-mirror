@@ -825,7 +825,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 	      {
 		snd_info *nsp;
 		ss->open_requestor = FROM_KEYBOARD;
-		nsp = snd_open_file(str, false); /* will post error if any */
+		nsp = snd_open_file(str, FILE_READ_WRITE); /* will post error if any */
 		if (nsp) 
 		  {
 		    select_channel(nsp, 0);
@@ -837,6 +837,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 	      {
 		char *filename;
 		filename = mus_expand_filename(str);
+		/* TODO: can this overwrite question be handled locally? */
 		if (!(snd_overwrite_ok(filename))) 
 		  {
 		    FREE(filename); 

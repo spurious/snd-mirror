@@ -11,7 +11,10 @@
  *   snd-edits (save_channel_edits!)
  *   snd-file (save_as_dialog_save!!)
  *   snd-mix (disk_space_p: 3 in mix and snd-select: save_selection!)
- *   snd-io (snd_overwrite_ok: snd-xfile, snd-file save_as!!, snd-kbd: save-region, snd-snd: snd_new_file! g_new_sound)
+ *   snd-io (snd_overwrite_ok: snd-xfile, snd-file save_as!!, snd-kbd: save-region)
+ *   extensions.scm: check-for-unsaved-edits
+ *   misc.scm: delete question in File:Delete menu -- is this a good idea?
+ *   snd-motif.scm: same code as above
  */
 
 /* -------- protect XEN vars from GC -------- */
@@ -1946,26 +1949,6 @@ int string_to_int(char *str)
   if (str) 
     {
       if (!(sscanf(str, "%d", &res)))
-	snd_error(_("%s is not a number"), str);
-    }
-  return(res);
-#endif
-}
-
-off_t string_to_off_t(char *str) 
-{
-#if HAVE_EXTENSION_LANGUAGE
-  XEN res;
-  res = snd_catch_any(eval_str_wrapper, (void *)str, "string->off_t");
-  if (XEN_NUMBER_P(res))
-    return(XEN_TO_C_OFF_T_OR_ELSE(res, 0));
-  else snd_error(_("%s is not a number"), str);
-  return(0);
-#else
-  off_t res = 0;
-  if (str) 
-    {
-      if (!(sscanf(str, OFF_TD , &res)))
 	snd_error(_("%s is not a number"), str);
     }
   return(res);

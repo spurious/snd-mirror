@@ -70,7 +70,7 @@ static void massage_selection(Widget w, XtPointer context, Atom *selection, Atom
 	  if (XmIsRowColumn(caller)) /* top menuBar widget or top level menu */
 	    {
 	      ss->open_requestor = FROM_DRAG_AND_DROP;
-	      sp = snd_open_file(str, false);
+	      sp = snd_open_file(str, FILE_READ_WRITE);
 	      if (sp) select_channel(sp, 0);
 	    }
 	  else

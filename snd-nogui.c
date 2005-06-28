@@ -314,7 +314,6 @@ void auto_update_restart(void) {}
 snd_info *add_sound_window (char *filename, bool read_only, file_info *hdr)
 {
   snd_info *sp;
-  file_info *hdr;
   int snd_slot, nchans, i;
   bool free_filename = false;
   if (ss->translated_filename) 

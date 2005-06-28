@@ -294,18 +294,9 @@ int snd_open_read(const char *arg)
 
 bool snd_overwrite_ok(const char *ofile)
 {
-  bool rtn = true;
-  if (ask_before_overwrite(ss))
-    {
-      int fil;
-      fil = OPEN(ofile, O_RDONLY, O_NONBLOCK);
-      if (fil != -1) 
-	{
-	  CLOSE(fil);
-	  rtn = snd_yes_or_no_p(_("file %s exists. Overwrite?"), ofile);
-	}
-    }
-  return(rtn);
+  if ((ask_before_overwrite(ss)) && (mus_file_probe(ofile)))
+    return(snd_yes_or_no_p(_("file %s exists. Overwrite?"), ofile));
+  return(true);
 }
 
 int snd_reopen_write(const char *arg)

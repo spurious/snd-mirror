@@ -6,45 +6,38 @@
 
 snd_info *snd_new_file(char *newname, int header_type, int data_format, int srate, int chans, char *new_comment, off_t samples)
 {
-  if ((newname) && (*newname))
+  /* caller checks newname != null, and runs overwrite hook */
+  if (mus_header_writable(header_type, data_format))
     {
-      if (snd_overwrite_ok(newname))
+      int err;
+      err = snd_write_header(newname, header_type, srate, chans, 0, /* 0 is loc? */
+			     samples * chans, /* total samples apparently */
+			     data_format, new_comment, 
+			     snd_strlen(new_comment), NULL);
+      if (err == -1)
+	snd_error(_("can't write %s"),newname);
+      else
 	{
-	  if (mus_header_writable(header_type, data_format))
-	    {
-	      int err;
-	      err = snd_write_header(newname, header_type, srate, chans, 0, /* 0 is loc? */
-				     samples * chans, /* total samples apparently */
-				     data_format, new_comment, 
-				     snd_strlen(new_comment), NULL);
-	      if (err == -1)
-		snd_error(_("can't write %s"),newname);
-	      else
-		{
-		  int chan;
-		  off_t size;
-		  unsigned char* buf;
-		  /* send out the initial samples */
-		  chan = snd_reopen_write(newname);
-		  lseek(chan, mus_header_data_location(), SEEK_SET);
-		  size = chans * mus_samples_to_bytes(data_format, samples);
-		  buf = (unsigned char *)CALLOC(size, sizeof(unsigned char));
-		  write(chan, buf, size);
-		  snd_close(chan, newname);
-		  FREE(buf);
-		  ss->open_requestor = FROM_SND_NEW_FILE;
-		  return(sound_is_silence(snd_open_file(newname, false)));
-		}
-	    }
-	  else 
-	    snd_error(_("%s: can't write %s header with %s data format"),
-		      newname,
-		      mus_header_type_name(header_type),
-		      mus_data_format_name(data_format));
+	  int chan;
+	  off_t size;
+	  unsigned char* buf;
+	  /* send out the initial samples */
+	  chan = snd_reopen_write(newname);
+	  lseek(chan, mus_header_data_location(), SEEK_SET);
+	  size = chans * mus_samples_to_bytes(data_format, samples);
+	  buf = (unsigned char *)CALLOC(size, sizeof(unsigned char));
+	  write(chan, buf, size);
+	  snd_close(chan, newname);
+	  FREE(buf);
+	  ss->open_requestor = FROM_SND_NEW_FILE;
+	  return(sound_is_silence(snd_open_file(newname, FILE_READ_WRITE)));
 	}
-      else snd_error(_("can't overwrite %s"), newname);
     }
-  else snd_error(_("no new file name?"));
+  else 
+    snd_error(_("%s: can't write %s header with %s data format"),
+	      newname,
+	      mus_header_type_name(header_type),
+	      mus_data_format_name(data_format));
   return(NULL);
 }
 
@@ -3154,7 +3147,7 @@ open filename (as if opened from File:Open menu option), and return the new soun
   if (!file_exists)
     return(snd_no_such_file_error(S_open_sound, filename));
   ss->open_requestor = FROM_OPEN_SOUND;
-  sp = snd_open_file(fname, false); /* this will call mus_expand_filename */
+  sp = snd_open_file(fname, FILE_READ_WRITE); /* this will call mus_expand_filename */
   if (sp) 
     return(C_TO_XEN_INT(sp->index));
   /* sp NULL is not an error (open-hook func returned #t) */
@@ -3223,7 +3216,7 @@ open file assuming the data matches the attributes indicated unless the file act
   mus_header_set_raw_defaults(os, oc, ofr);
   ss->reloading_updated_file = -1;
   ss->open_requestor = FROM_OPEN_RAW_SOUND;
-  sp = snd_open_file(file, false);
+  sp = snd_open_file(file, FILE_READ_WRITE);
   set_fallback_chans(0);
   set_fallback_srate(0);
   set_fallback_format(MUS_UNKNOWN);
@@ -3253,7 +3246,7 @@ You can subsequently make it writable by (set! (" S_read_only ") #f)."
   if (!file_exists)
     return(snd_no_such_file_error(S_view_sound, filename));
   ss->open_requestor = FROM_VIEW_SOUND;
-  sp = snd_open_file(fname, true);
+  sp = snd_open_file(fname, FILE_READ_ONLY);
   if (sp) 
     return(C_TO_XEN_INT(sp->index));
   return(XEN_FALSE);
@@ -3396,6 +3389,7 @@ The 'size' argument sets the number of samples (zeros) in the newly created soun
   XEN keys[7];
   int orig_arg[7] = {0, 0, 0, 0, 0, 0, 0};
   int vals, i, arglist_len;
+  unsigned char* buf;
   keys[0] = kw_file;
   keys[1] = kw_header_type;
   keys[2] = kw_data_format;
@@ -3437,26 +3431,24 @@ The 'size' argument sets the number of samples (zeros) in the newly created soun
   if (file)
     str = mus_expand_filename(file);
   else str = snd_tempnam();
-  if (snd_overwrite_ok(str))
+
+  mus_sound_forget(str);
+  err = snd_write_header(str, ht, sr, ch, 0, len * ch, df, com, snd_strlen(com), NULL);
+  if (err == -1)
     {
-      unsigned char* buf;
-      mus_sound_forget(str);
-      err = snd_write_header(str, ht, sr, ch, 0, len * ch, df, com, snd_strlen(com), NULL);
-      if (err == -1)
-	{
-	  if (str) {FREE(str); str = NULL;}
-	  mus_misc_error(S_new_sound, snd_io_strerror(), keys[0]);
-	}
-      chan = snd_reopen_write(str);
-      lseek(chan, mus_header_data_location(), SEEK_SET);
-      size = ch * mus_samples_to_bytes(df, len);
-      buf = (unsigned char *)CALLOC(size, sizeof(unsigned char));
-      write(chan, buf, size);
-      snd_close(chan, str);
-      FREE(buf);
-      ss->open_requestor = FROM_NEW_SOUND;
-      sp = sound_is_silence(snd_open_file(str, false));
+      if (str) {FREE(str); str = NULL;}
+      mus_misc_error(S_new_sound, snd_io_strerror(), keys[0]);
     }
+  chan = snd_reopen_write(str);
+  lseek(chan, mus_header_data_location(), SEEK_SET);
+  size = ch * mus_samples_to_bytes(df, len);
+  buf = (unsigned char *)CALLOC(size, sizeof(unsigned char));
+  write(chan, buf, size);
+  snd_close(chan, str);
+  FREE(buf);
+  ss->open_requestor = FROM_NEW_SOUND;
+  sp = sound_is_silence(snd_open_file(str, FILE_READ_WRITE));
+
   if (str) FREE(str);
   if (sp) return(C_TO_XEN_INT(sp->index));
   return(XEN_FALSE);

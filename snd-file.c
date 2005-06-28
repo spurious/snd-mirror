@@ -208,10 +208,9 @@ static file_info *translate_file(const char *filename, int type)
 static XEN open_raw_sound_hook, bad_header_hook;
 #if (!USE_NO_GUI)
 static char *raw_data_explanation(const char *filename, file_info *hdr, char **info);
-static bool raw_data_selected = true; /* TODO: fix this kludge! */
 #endif
 
-file_info *make_file_info(const char *fullname, bool read_only)
+file_info *make_file_info(const char *fullname, bool read_only, bool selected)
 {
   file_info *hdr = NULL;
   if (mus_file_probe(fullname))
@@ -249,11 +248,8 @@ file_info *make_file_info(const char *fullname, bool read_only)
 					       title,
 					       info,
 					       read_only,
-					       raw_data_selected);
-		  /* TODO: FREE title and info in dialog */
-		  /* TODO: can't all of this be posted in the raw data dialog? */
-		  /* TODO: free tmphdr in data expl */
-		  return(NULL); /* TODO: no error here! */
+					       selected);
+		  return(NULL);
 		}
 	    }
 	}
@@ -337,8 +333,8 @@ file_info *make_file_info(const char *fullname, bool read_only)
 					   str,
 					   NULL,
 					   read_only,
-					   raw_data_selected);
-	      return(NULL); /* TODO: no error here */
+					   selected);
+	      return(NULL);
 	    }
 #endif
 	}
@@ -799,10 +795,7 @@ static snd_info *snd_open_file_1(const char *filename, bool selected, bool read_
 	    }
 	}
     }
-#if (!USE_NO_GUI)
-  raw_data_selected= selected;
-#endif
-  hdr = make_file_info(mcf, read_only);
+  hdr = make_file_info(mcf, read_only, selected);
   if (!hdr) 
     {
       if (mcf) FREE(mcf);
@@ -833,12 +826,12 @@ static snd_info *snd_open_file_1(const char *filename, bool selected, bool read_
 
 snd_info *snd_open_file(const char *filename, bool read_only) 
 {
-  return(snd_open_file_1(filename, true, read_only));
+  return(snd_open_file_1(filename, FILE_SELECTED, read_only));
 }
 
 snd_info *snd_open_file_unselected(const char *filename) 
 {
-  return(snd_open_file_1(filename, false, false));
+  return(snd_open_file_1(filename, FILE_NOT_SELECTED, FILE_READ_WRITE));
 }
 
 void snd_close_file(snd_info *sp)
@@ -1492,7 +1485,7 @@ void view_prevfiles_select(int pos)
     {
       snd_info *sp;
       ss->open_requestor = FROM_VIEW_PREVIOUS_FILES;
-      sp = snd_open_file(prevfullnames[pos], false);
+      sp = snd_open_file(prevfullnames[pos], FILE_READ_WRITE);
       if (sp) select_channel(sp, 0); 
     }
 }
@@ -2291,7 +2284,7 @@ char *save_as_dialog_save_sound(snd_info *sp, char *str, save_dialog_t save_type
 	  if (collision->sp) 
 	    {
 	      ss->open_requestor = FROM_SAVE_AS_DIALOG;
-	      snd_open_file(fullname, false);
+	      snd_open_file(fullname, FILE_READ_WRITE);
 	      (*need_directory_update) = false;
 	    }
 	  else 
@@ -2430,7 +2423,10 @@ static char *raw_data_explanation(const char *filename, file_info *hdr, char **i
   tmp_str = (char *)CALLOC(LABEL_BUFFER_SIZE, sizeof(char));
   /* try to provide some notion of what might be the intended header (currently limited to byte-order mistakes) */
   len = PRINT_BUFFER_SIZE;
-  ok = ((original_srate >= 8000) && (original_srate <= 100000));
+
+  /* srate */
+  ok = ((original_srate >= 8000) && 
+	(original_srate <= 100000));
   mus_snprintf(reason_str, len, "srate%s: %d", (ok) ? "" : " looks wrong", original_srate);
   if (!ok)
     {
@@ -2444,7 +2440,10 @@ static char *raw_data_explanation(const char *filename, file_info *hdr, char **i
 	  reason_str = snd_strcat(reason_str, tmp_str, &len);
 	}
     }
-  ok = ((original_chans > 0) && (original_chans < 1000));
+
+  /* chans */
+  ok = ((original_chans > 0) && 
+	(original_chans < 1000));
   mus_snprintf(tmp_str, LABEL_BUFFER_SIZE, "\nchans%s: %d", (ok) ? "" : " looks wrong", original_chans);
   reason_str = snd_strcat(reason_str, tmp_str, &len);
   if (!ok)
@@ -2460,19 +2459,24 @@ static char *raw_data_explanation(const char *filename, file_info *hdr, char **i
 	}
     }
 
+  /* header type */
   mus_snprintf(tmp_str, LABEL_BUFFER_SIZE, "\ntype: %s", mus_header_type_name(hdr->type));
   reason_str = snd_strcat(reason_str, tmp_str, &len);
+
+  /* data format */
   if (!(MUS_DATA_FORMAT_OK(original_format)))
     {
       char *format_info;
       if (original_format != MUS_UNKNOWN)
 	format_info = (char *)mus_data_format_name(original_format);
-      else format_info = (char *)mus_header_original_format_name(mus_sound_original_format(filename), hdr->type);
+      else format_info = (char *)mus_header_original_format_name(mus_sound_original_format(filename), 
+								 hdr->type);
       mus_snprintf(tmp_str, LABEL_BUFFER_SIZE, "\nformat looks bogus: %s", format_info);
     }
   else mus_snprintf(tmp_str, LABEL_BUFFER_SIZE, "\nformat: %s", (char *)mus_data_format_name(original_format));
   reason_str = snd_strcat(reason_str, tmp_str, &len);
 
+  /* samples */
   mus_snprintf(tmp_str, LABEL_BUFFER_SIZE, "\nlength: %.3f (" PRId64 " samples, " PRId64 " bytes total)",
 	       (float)((double)(hdr->samples) / (float)(hdr->chans * hdr->srate)),
 	       hdr->samples,
@@ -2492,10 +2496,13 @@ static char *raw_data_explanation(const char *filename, file_info *hdr, char **i
 	}
       else reason_str = snd_strcat(reason_str, ")", &len);
     }
+
+  /* data location */
   mus_snprintf(tmp_str, LABEL_BUFFER_SIZE, "\ndata location: " OFF_TD, hdr->data_location);
   reason_str = snd_strcat(reason_str, tmp_str, &len);
   nsamp = swap_off_t(hdr->data_location);
-  if ((nsamp > 0) && (nsamp <= 1024)) 
+  if ((nsamp > 0) && 
+      (nsamp <= 1024)) 
     {
       mus_snprintf(tmp_str, LABEL_BUFFER_SIZE, " (swapped: " OFF_TD ")", nsamp);
       reason_str = snd_strcat(reason_str, tmp_str, &len);

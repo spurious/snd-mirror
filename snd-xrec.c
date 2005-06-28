@@ -2765,7 +2765,7 @@ void finish_recording(recorder_info *rp)
       ss->open_requestor = FROM_RECORDER;
       if ((sp = find_sound(rp->output_file, 0)))
 	snd_update(sp);
-      else snd_open_file(rp->output_file, false);
+      else snd_open_file(rp->output_file, FILE_READ_WRITE);
     }
 }
 

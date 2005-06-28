@@ -1219,7 +1219,17 @@ To use the defaults, click the 'Reset' button.",
     }
 }
 
-/* TODO: completion popup should go away after choice, or maybe be embedded */
+/* TODO: completion popup should go away after choice, or maybe be embedded as pull down menu */
+/*  appears to be Name_completion in snd-xlistener, so triggered via XtAction TAB (different from Listener_completion)
+    add_completer:
+    snd-xfile.c:    add_completer_to_textfield(wtmp, add_completer_func(filename_completer));
+    snd-xfile.c:    add_completer_to_textfield(wtmp, add_completer_func(filename_completer));
+    snd-xfile.c:  fdat->srate_text = make_textfield_widget("srate-text", form, args, n, NOT_ACTIVATABLE, add_completer_func(srate_completer));
+    snd-xfile.c:      new_file_name = make_textfield_widget("newtext", form, args, n, ACTIVATABLE, add_completer_func(filename_completer));
+    snd-xhelp.c:  help_search = make_textfield_widget("help-search", holder, args, n, ACTIVATABLE, add_completer_func(help_completer));
+    snd-xsnd.c:      sw[W_info] = make_textfield_widget("snd-info", sw[W_name_form], args, n, ACTIVATABLE, add_completer_func(info_completer));
+    snd-xsnd.c:      sw[W_filter] = make_textfield_widget("filter-text", sw[W_amp_form], args, n, ACTIVATABLE, add_completer_func(filename_completer));
+ */
 
 void completion_dialog_help(void)
 {

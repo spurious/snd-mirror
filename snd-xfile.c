@@ -8,25 +8,10 @@
    View:Files and region lists 
 */
 
-/* TODO: 
-xg.c:943: warning: `C_TO_XEN_GtkIconViewDropPosition' defined but not used
-xg.c:944: warning: `C_TO_XEN_GtkIconViewDropPosition_' defined but not used
-xg.c:946: warning: `C_TO_XEN_GtkMenuBar_' defined but not used
-xg.c:947: warning: `C_TO_XEN_GtkTranslateFunc' defined but not used
-
-snd-gfile.c: In function `raw_data_dialog_to_file_info':
-snd-gfile.c:1595: warning: `return' with a value, in function returning void
-snd-gfile.c:1627: warning: `return' with a value, in function returning void
-
-snd-gsnd.c: In function `name_pix_expose':
-snd-gsnd.c:167: warning: unused variable `sp'
-
-*/
-
-/* TODO: how to incorporate a reponse for the overwrite question etc?
- * TODO: if file write-protected, how to get rid of errmsg if user chmods it?
+/* TODO: if file write-protected, how to get rid of errmsg if user chmods it?
+ *           /usr/include/fam.h -- how to tell if fam is running?
  * TODO: if edit-header of write-protected sound, should we add an 'Unprotect' button?  Is there are "right way" to implement it?
- * TODO: what does it mean to edit the header of a no-header sound? Perhaps "add-header" instead => save-as?
+ * PERHAPS: location to mix at in File:Mix? amp/srate sliders?
  */
 
 #define NUM_VISIBLE_HEADERS 5
@@ -936,34 +921,8 @@ void reflect_just_sounds(void)
  *   erases the error message, and removes itself from the text widget.
  */
 
-static void post_file_dialog_error(const char *error_msg, void *ufd)
+static void clear_dialog_error(file_data *fd)
 {
-  XmString msg;
-  file_data *fd = (file_data *)ufd;
-  msg = XmStringCreate((char *)error_msg, XmFONTLIST_DEFAULT_TAG);
-  XtVaSetValues(fd->error_text, 
-		XmNlabelString, msg, 
-		NULL);
-  XmStringFree(msg);
-  if (!(XtIsManaged(fd->error_text))) 
-    {
-      if (fd->comment_text)
-	{
-	  XtVaSetValues(fd->comment_text, 
-			XmNbottomAttachment, XmATTACH_WIDGET,
-			XmNbottomWidget, fd->error_text,
-			NULL);
-	}
-    XtManageChild(fd->error_text);
-    }
-}
-
-static void filename_modify_callback(Widget w, XtPointer context, XtPointer info)
-{
-  file_data *fd = (file_data *)context;
-  XmTextVerifyCallbackStruct *cbs = (XmTextVerifyCallbackStruct *)info;
-  Widget dialog_filename_text;
-  ASSERT_WIDGET_TYPE(XmIsFileSelectionBox(fd->dialog), fd->dialog);
   if (XtIsManaged(fd->error_text))
     {
       XtUnmanageChild(fd->error_text);
@@ -974,6 +933,42 @@ static void filename_modify_callback(Widget w, XtPointer context, XtPointer info
 			NULL);
 	}
     }
+}
+
+static void show_dialog_error(file_data *fd)
+{
+  if (!(XtIsManaged(fd->error_text))) 
+    {
+      if (fd->comment_text)
+	{
+	  XtVaSetValues(fd->comment_text, 
+			XmNbottomAttachment, XmATTACH_WIDGET,
+			XmNbottomWidget, fd->error_text,
+			NULL);
+	}
+      XtManageChild(fd->error_text);
+    }
+}
+
+static void post_file_dialog_error(const char *error_msg, void *ufd)
+{
+  XmString msg;
+  file_data *fd = (file_data *)ufd;
+  msg = XmStringCreate((char *)error_msg, XmFONTLIST_DEFAULT_TAG);
+  XtVaSetValues(fd->error_text, 
+		XmNlabelString, msg, 
+		NULL);
+  XmStringFree(msg);
+  show_dialog_error(fd);
+}
+
+static void filename_modify_callback(Widget w, XtPointer context, XtPointer info)
+{
+  file_data *fd = (file_data *)context;
+  XmTextVerifyCallbackStruct *cbs = (XmTextVerifyCallbackStruct *)info;
+  Widget dialog_filename_text;
+  ASSERT_WIDGET_TYPE(XmIsFileSelectionBox(fd->dialog), fd->dialog);
+  clear_dialog_error(fd);
   dialog_filename_text = XtNameToWidget(fd->dialog, "Text");
   if (!dialog_filename_text) dialog_filename_text = XmFileSelectionBoxGetChild(fd->dialog, XmDIALOG_TEXT);
   if (dialog_filename_text) XtRemoveCallback(dialog_filename_text, XmNmodifyVerifyCallback, filename_modify_callback, context);
@@ -997,16 +992,7 @@ static void chans_modify_callback(Widget w, XtPointer context, XtPointer info)
 {
   file_data *fd = (file_data *)context;
   XmTextVerifyCallbackStruct *cbs = (XmTextVerifyCallbackStruct *)info;
-  if (XtIsManaged(fd->error_text))
-    {
-      XtUnmanageChild(fd->error_text);
-      if (fd->comment_text)
-	{
-	  XtVaSetValues(fd->comment_text, 
-			XmNbottomAttachment, XmATTACH_FORM,
-			NULL);
-	}
-    }
+  clear_dialog_error(fd);
   XtRemoveCallback(fd->chans_text, XmNmodifyVerifyCallback, chans_modify_callback, context);
   cbs->doit = true;
 }
@@ -1021,16 +1007,7 @@ static void panel_modify_callback(Widget w, XtPointer context, XtPointer info)
 {
   file_data *fd = (file_data *)context;
   XmTextVerifyCallbackStruct *cbs = (XmTextVerifyCallbackStruct *)info;
-  if (XtIsManaged(fd->error_text))
-    {
-      XtUnmanageChild(fd->error_text);
-      if (fd->comment_text)
-	{
-	  XtVaSetValues(fd->comment_text, 
-			XmNbottomAttachment, XmATTACH_FORM,
-			NULL);
-	}
-    }
+  clear_dialog_error(fd);
   XtRemoveCallback(w, XmNmodifyVerifyCallback, panel_modify_callback, context);
   cbs->doit = true;
 }
@@ -1311,7 +1288,7 @@ file_data *make_file_data_panel(Widget parent, char *name, Arg *in_args, int in_
 
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;}
-      cmenu = XmCreatePulldownMenu(chans_label, (with_chan == WITH_CHANNELS_FIELD) ? _("channels:") : _("extract channel:"), args, n);
+      cmenu = XmCreatePulldownMenu(chans_label, (char *)((with_chan == WITH_CHANNELS_FIELD) ? _("channels:") : _("extract channel:")), args, n);
 
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;}
@@ -1319,7 +1296,7 @@ file_data *make_file_data_panel(Widget parent, char *name, Arg *in_args, int in_
       XtSetArg(args[n], XmNshadowThickness, 0); n++;
       XtSetArg(args[n], XmNhighlightThickness, 0); n++;
       XtSetArg(args[n], XmNmarginHeight, 1); n++;
-      XtCreateManagedWidget((with_chan == WITH_CHANNELS_FIELD) ? _("channels:") : _("extract channel:"), xmCascadeButtonWidgetClass, chans_label, args, n);
+      XtCreateManagedWidget((char *)((with_chan == WITH_CHANNELS_FIELD) ? _("channels:") : _("extract channel:")), xmCascadeButtonWidgetClass, chans_label, args, n);
       
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;}
@@ -1513,13 +1490,7 @@ static void save_as_ok_callback(Widget w, XtPointer context, XtPointer info)
   bool need_directory_update = false;
   off_t location, samples;
 
-  if (XtIsManaged(sdat->error_text))
-    {
-      XtUnmanageChild(sdat->error_text);
-      XtVaSetValues(sdat->comment_text, 
-		    XmNbottomAttachment, XmATTACH_FORM,
-		    NULL);
-    }
+  clear_dialog_error(sdat);
   redirect_snd_error_to(post_file_panel_error, (void *)sdat);
   comment = get_file_dialog_sound_attributes(sdat, &srate, &chans, &type, &format, &location, &samples, 0);
   redirect_snd_error_to(NULL, NULL);
@@ -1536,6 +1507,7 @@ static void save_as_ok_callback(Widget w, XtPointer context, XtPointer info)
   if ((str) && (*str))
     {
       redirect_snd_error_to(post_file_dialog_error, (void *)sdat);
+      /* TODO: extract overwrite question from save_as_dialog_save_sound */
       msg = save_as_dialog_save_sound(sp, str, save_as_dialog_type, srate, type, format, comment, &need_directory_update);
       redirect_snd_error_to(NULL, NULL);
       if (msg)
@@ -1572,13 +1544,7 @@ static void save_as_extract_callback(Widget w, XtPointer context, XtPointer info
   int type, format, srate, chan = 0, err = 0;
   bool need_directory_update = false;
   off_t location, samples;
-  if (XtIsManaged(sdat->error_text))
-    {
-      XtUnmanageChild(sdat->error_text);
-      XtVaSetValues(sdat->comment_text, 
-		    XmNbottomAttachment, XmATTACH_FORM,
-		    NULL);
-    }
+  clear_dialog_error(sdat);
   redirect_snd_error_to(post_file_panel_error, (void *)sdat);
   comment = get_file_dialog_sound_attributes(sdat, &srate, &chan, &type, &format, &location, &samples, 0);
   redirect_snd_error_to(NULL, NULL);
@@ -1628,6 +1594,7 @@ static void save_as_extract_callback(Widget w, XtPointer context, XtPointer info
 	    {
 	      char *fullname = NULL;
 	      fullname = mus_expand_filename(str);
+	      /* TODO: incorporate overwrite here */
 	      if (!(snd_overwrite_ok(fullname))) 
 		{
 		  FREE(fullname);
@@ -1905,20 +1872,35 @@ static Widget new_file_dialog = NULL;
 static file_data *ndat = NULL;
 static off_t initial_samples = 1;
 static Widget new_file_name = NULL;
+static bool new_file_doit = false;
+
+static void new_file_undoit(void);
 
 static void new_filename_modify_callback(Widget w, XtPointer context, XtPointer info)
 {
   file_data *fd = (file_data *)context;
   XmTextVerifyCallbackStruct *cbs = (XmTextVerifyCallbackStruct *)info;
-  if (XtIsManaged(fd->error_text))
+  if (new_file_doit)
+    new_file_undoit();
+  else
     {
-      XtUnmanageChild(fd->error_text);
-      XtVaSetValues(fd->comment_text, 
-		    XmNbottomAttachment, XmATTACH_FORM,
-		    NULL);
+      clear_dialog_error(fd);
+      XtRemoveCallback(new_file_name, XmNmodifyVerifyCallback, new_filename_modify_callback, context);
     }
-  XtRemoveCallback(new_file_name, XmNmodifyVerifyCallback, new_filename_modify_callback, context);
   cbs->doit = true;
+}
+
+static void new_file_undoit(void)
+{
+  XmString ok_label;
+  new_file_doit = false;
+  ok_label = XmStringCreate(_("Ok"), XmFONTLIST_DEFAULT_TAG);
+  XtVaSetValues(new_file_dialog, 
+		XmNokLabelString, ok_label, 
+		NULL);
+  XmStringFree(ok_label);
+  clear_dialog_error(ndat);
+  XtRemoveCallback(new_file_name, XmNmodifyVerifyCallback, new_filename_modify_callback, (XtPointer)ndat);
 }
 
 static void clear_error_if_new_filename_changes(Widget dialog, void *data)
@@ -1950,16 +1932,39 @@ static void new_file_ok_callback(Widget w, XtPointer context, XtPointer info)
       else
 	{
 	  snd_info *sp;
-	  redirect_snd_error_to(post_file_dialog_error, (void *)ndat);
-	  sp = snd_new_file(newer_name, header_type, data_format, srate, chans, comment, initial_samples);
-	  redirect_snd_error_to(NULL, NULL);
-	  if (!sp)
+	  /* handle the overwrite hook directly */
+	  if ((!new_file_doit) &&
+	      (ask_before_overwrite(ss)) && 
+	      (mus_file_probe(newer_name)))
 	    {
+	      /* SOMEDAY: would be nice to cancel 'DoIt' if user deletes file by hand */
+	      XmString ok_label;
+	      msg = mus_format(_("%s exists. If you want to overwrite it, click 'DoIt'"), newer_name);
+	      post_file_dialog_error((const char *)msg, (void *)ndat);
 	      clear_error_if_new_filename_changes(new_file_dialog, (void *)ndat);
+	      ok_label = XmStringCreate(_("DoIt"), XmFONTLIST_DEFAULT_TAG);
+	      XtVaSetValues(new_file_dialog, 
+			    XmNokLabelString, ok_label, 
+			    NULL);
+	      XmStringFree(ok_label);
+	      FREE(msg);
+	      new_file_doit = true;
 	    }
 	  else
 	    {
-	      XtUnmanageChild(new_file_dialog);
+	      if (new_file_doit)
+		new_file_undoit();
+	      redirect_snd_error_to(post_file_dialog_error, (void *)ndat);
+	      sp = snd_new_file(newer_name, header_type, data_format, srate, chans, comment, initial_samples);
+	      redirect_snd_error_to(NULL, NULL);
+	      if (!sp)
+		{
+		  clear_error_if_new_filename_changes(new_file_dialog, (void *)ndat);
+		}
+	      else
+		{
+		  XtUnmanageChild(new_file_dialog);
+		}
 	    }
 	}
       XtFree(newer_name);
@@ -2011,6 +2016,8 @@ static void new_file_reset_callback(Widget w, XtPointer context, XtPointer info)
   current_name = XmTextGetString(new_file_name);
   load_new_file_defaults(current_name);
   if (current_name) XtFree(current_name);
+  if (new_file_doit)
+    new_file_undoit();
 }
 
 static void new_file_cancel_callback(Widget w, XtPointer context, XtPointer info) 
@@ -2086,7 +2093,7 @@ void make_new_file_dialog(void)
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNleftWidget, name_label); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-      new_file_name = make_textfield_widget("newtext", form, args, n, NOT_ACTIVATABLE, add_completer_func(filename_completer));
+      new_file_name = make_textfield_widget("newtext", form, args, n, ACTIVATABLE, add_completer_func(filename_completer));
 
       n = 0;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
@@ -2138,7 +2145,18 @@ void make_new_file_dialog(void)
 
       load_new_file_defaults(NULL);
     }
-
+  else
+    {
+      /* if overwrite question pends, but file has been deleted in the meantime, go back to normal state */
+      if (new_file_doit)
+	{
+	  char *new_name;
+	  new_name = XmTextGetString(new_file_name);
+	  if ((!new_name) || (!(*new_name)) ||
+	      (!(mus_file_probe(new_name))))
+	    new_file_undoit();
+	}
+    }
   if (!(XtIsManaged(new_file_dialog))) 
     XtManageChild(new_file_dialog);
 }
@@ -2146,6 +2164,8 @@ void make_new_file_dialog(void)
 
 
 /* ---------------- Edit Header ---------------- */
+
+/* TODO: if nothing has changed, Save button should be insensitive */
 
 static Widget edit_header_dialog = NULL;
 static file_data *edat;
@@ -2201,11 +2221,7 @@ static void watch_read_only(struct snd_info *sp)
       (!(sp->read_only)))
     {
       XmString title;
-      XtUnmanageChild(edat->error_text);
-      XtVaSetValues(edat->comment_text, 
-		    XmNbottomAttachment, XmATTACH_FORM,
-		    NULL);
-
+      clear_dialog_error(edat);
       title = make_edit_header_dialog_title(sp);
       XtVaSetValues(edit_header_dialog, 
 		    XmNmessageString, title, 
@@ -2333,13 +2349,18 @@ Widget edit_header(snd_info *sp)
       raise_dialog(edit_header_dialog);
     }
   XmStringFree(xstr4);
+  if (hdr->type == MUS_RAW)
+    post_file_dialog_error("this file has no header!", (void *)edat);
+  else clear_dialog_error(edat);
   if (!(XtIsManaged(edit_header_dialog))) XtManageChild(edit_header_dialog);
   return(edit_header_dialog);
 }
 
 void save_edit_header_dialog_state(FILE *fd)
 {
-  if ((edit_header_dialog) && (XtIsManaged(edit_header_dialog)) && (snd_ok(edit_header_sp)))
+  if ((edit_header_dialog) && 
+      (XtIsManaged(edit_header_dialog)) && 
+      (snd_ok(edit_header_sp)))
     {
 #if HAVE_SCHEME
       fprintf(fd, "(%s (%s \"%s\"))\n", S_edit_header_dialog, S_find_sound, edit_header_sp->short_filename);

@@ -921,7 +921,6 @@ bool listener_print_p(char *msg);
 #endif
 int string_to_int(char *str);
 Float string_to_Float(char *str);
-off_t string_to_off_t(char *str);
 int string_to_int_with_error(char *str, int lo, const char *field_name);
 off_t string_to_off_t_with_error(char *str, off_t lo, const char *field_name);
 char *output_comment(file_info *hdr);
@@ -1258,7 +1257,7 @@ off_t disk_kspace (const char *filename);
 time_t file_write_date(const char *filename);
 bool link_p(const char *filename);
 bool directory_p(const char *filename);
-file_info *make_file_info(const char *fullname, bool read_only);
+file_info *make_file_info(const char *fullname, bool read_only, bool selected);
 file_info *free_file_info(file_info *hdr);
 file_info *copy_header(const char *fullname, file_info *ohdr);
 file_info *make_temp_header(const char *fullname, int srate, int chans, off_t samples, const char *caller);

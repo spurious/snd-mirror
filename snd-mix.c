@@ -1114,7 +1114,7 @@ static mix_info *file_mix_samples(off_t beg, off_t num, char *mixfile, chan_info
     return(NULL);
   if (beg < 0) beg = 0;
   sp = cp->sound;
-  ihdr = make_file_info(mixfile, true);
+  ihdr = make_file_info(mixfile, FILE_READ_ONLY, FILE_NOT_SELECTED);
   if (!ihdr) 
     {
       cp->edit_hook_checked = false;

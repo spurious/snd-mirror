@@ -941,10 +941,9 @@ XM_TYPE_PTR_1(GValue_, GValue*)
 
 #if HAVE_GTK_MENU_BAR_GET_CHILD_PACK_DIRECTION
 XM_TYPE(GtkIconViewDropPosition, GtkIconViewDropPosition)
-XM_TYPE_PTR(GtkIconViewDropPosition_, GtkIconViewDropPosition*)
 XM_TYPE(GtkPackDirection, GtkPackDirection)
-XM_TYPE_PTR(GtkMenuBar_, GtkMenuBar*)
-XM_TYPE(GtkTranslateFunc, GtkTranslateFunc)
+XM_TYPE_PTR_1(GtkMenuBar_, GtkMenuBar*)
+XM_TYPE_1(GtkTranslateFunc, GtkTranslateFunc)
 #endif
 
 #define XLS(a, b) XEN_TO_C_gchar_(XEN_LIST_REF(a, b))
@@ -25188,27 +25187,27 @@ GtkTreePath* path, GtkIconViewDropPosition pos)"
 static XEN gxg_gtk_icon_view_get_drag_dest_item(XEN icon_view, XEN path, XEN pos)
 {
   #define H_gtk_icon_view_get_drag_dest_item "void gtk_icon_view_get_drag_dest_item(GtkIconView* icon_view, \
-GtkTreePath** [path], GtkIconViewDropPosition* pos)"
+GtkTreePath** [path], GtkIconViewDropPosition* [pos])"
   GtkTreePath* ref_path = NULL;
+  GtkIconViewDropPosition ref_pos;
   XEN_ASSERT_TYPE(XEN_GtkIconView__P(icon_view), icon_view, 1, "gtk_icon_view_get_drag_dest_item", "GtkIconView*");
-  XEN_ASSERT_TYPE(XEN_GtkIconViewDropPosition__P(pos), pos, 3, "gtk_icon_view_get_drag_dest_item", "GtkIconViewDropPosition*");
-  gtk_icon_view_get_drag_dest_item(XEN_TO_C_GtkIconView_(icon_view), &ref_path, XEN_TO_C_GtkIconViewDropPosition_(pos));
-  return(XEN_LIST_1(C_TO_XEN_GtkTreePath_(ref_path)));
+  gtk_icon_view_get_drag_dest_item(XEN_TO_C_GtkIconView_(icon_view), &ref_path, &ref_pos);
+  return(XEN_LIST_2(C_TO_XEN_GtkTreePath_(ref_path), C_TO_XEN_GtkIconViewDropPosition(ref_pos)));
 }
 static XEN gxg_gtk_icon_view_get_dest_item_at_pos(XEN icon_view, XEN drag_x, XEN drag_y, XEN path, XEN pos)
 {
   #define H_gtk_icon_view_get_dest_item_at_pos "gboolean gtk_icon_view_get_dest_item_at_pos(GtkIconView* icon_view, \
-gint drag_x, gint drag_y, GtkTreePath** [path], GtkIconViewDropPosition* pos)"
+gint drag_x, gint drag_y, GtkTreePath** [path], GtkIconViewDropPosition* [pos])"
   GtkTreePath* ref_path = NULL;
+  GtkIconViewDropPosition ref_pos;
   XEN_ASSERT_TYPE(XEN_GtkIconView__P(icon_view), icon_view, 1, "gtk_icon_view_get_dest_item_at_pos", "GtkIconView*");
   XEN_ASSERT_TYPE(XEN_gint_P(drag_x), drag_x, 2, "gtk_icon_view_get_dest_item_at_pos", "gint");
   XEN_ASSERT_TYPE(XEN_gint_P(drag_y), drag_y, 3, "gtk_icon_view_get_dest_item_at_pos", "gint");
-  XEN_ASSERT_TYPE(XEN_GtkIconViewDropPosition__P(pos), pos, 5, "gtk_icon_view_get_dest_item_at_pos", "GtkIconViewDropPosition*");
   {
     XEN result = XEN_FALSE;
     result = C_TO_XEN_gboolean(gtk_icon_view_get_dest_item_at_pos(XEN_TO_C_GtkIconView_(icon_view), XEN_TO_C_gint(drag_x), 
-                                                                  XEN_TO_C_gint(drag_y), &ref_path, XEN_TO_C_GtkIconViewDropPosition_(pos)));
-    return(XEN_LIST_2(result, C_TO_XEN_GtkTreePath_(ref_path)));
+                                                                  XEN_TO_C_gint(drag_y), &ref_path, &ref_pos));
+    return(XEN_LIST_3(result, C_TO_XEN_GtkTreePath_(ref_path), C_TO_XEN_GtkIconViewDropPosition(ref_pos)));
    }
 }
 static XEN gxg_gtk_icon_view_create_drag_icon(XEN icon_view, XEN path)
@@ -37624,8 +37623,8 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_icon_view_set_reorderable, gxg_gtk_icon_view_set_reorderable_w, 2, 0, 0, H_gtk_icon_view_set_reorderable);
   XG_DEFINE_PROCEDURE(gtk_icon_view_get_reorderable, gxg_gtk_icon_view_get_reorderable_w, 1, 0, 0, H_gtk_icon_view_get_reorderable);
   XG_DEFINE_PROCEDURE(gtk_icon_view_set_drag_dest_item, gxg_gtk_icon_view_set_drag_dest_item_w, 3, 0, 0, H_gtk_icon_view_set_drag_dest_item);
-  XG_DEFINE_PROCEDURE(gtk_icon_view_get_drag_dest_item, gxg_gtk_icon_view_get_drag_dest_item_w, 2, 1, 0, H_gtk_icon_view_get_drag_dest_item);
-  XG_DEFINE_PROCEDURE(gtk_icon_view_get_dest_item_at_pos, gxg_gtk_icon_view_get_dest_item_at_pos_w, 4, 1, 0, H_gtk_icon_view_get_dest_item_at_pos);
+  XG_DEFINE_PROCEDURE(gtk_icon_view_get_drag_dest_item, gxg_gtk_icon_view_get_drag_dest_item_w, 1, 2, 0, H_gtk_icon_view_get_drag_dest_item);
+  XG_DEFINE_PROCEDURE(gtk_icon_view_get_dest_item_at_pos, gxg_gtk_icon_view_get_dest_item_at_pos_w, 3, 2, 0, H_gtk_icon_view_get_dest_item_at_pos);
   XG_DEFINE_PROCEDURE(gtk_icon_view_create_drag_icon, gxg_gtk_icon_view_create_drag_icon_w, 2, 0, 0, H_gtk_icon_view_create_drag_icon);
   XG_DEFINE_PROCEDURE(gtk_image_clear, gxg_gtk_image_clear_w, 1, 0, 0, H_gtk_image_clear);
   XG_DEFINE_PROCEDURE(gtk_menu_bar_get_pack_direction, gxg_gtk_menu_bar_get_pack_direction_w, 1, 0, 0, H_gtk_menu_bar_get_pack_direction);
@@ -39952,7 +39951,7 @@ static bool xg_already_inited = false;
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("26-Jun-05"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("27-Jun-05"));
       xg_already_inited = true;
 #if WITH_GTK_AND_X11
       Init_libx11();

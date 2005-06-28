@@ -5463,7 +5463,7 @@ bool file_insert_samples(off_t beg, off_t num, char *inserted_file, chan_info *c
     }
   if (!(prepare_edit_list(cp, len + num, edpos, origin))) return(false);
   cp->edits[cp->edit_ctr] = insert_samples_into_list(beg, num, edpos, cp, &cb, origin, 1.0);
-  hdr = make_file_info(inserted_file, true);
+  hdr = make_file_info(inserted_file, FILE_READ_ONLY, FILE_NOT_SELECTED);
   if (hdr)
     {
       int fd;
@@ -5690,7 +5690,7 @@ bool file_mix_change_samples(off_t beg, off_t num, char *tempfile, chan_info *cp
 			     file_delete_t auto_delete, lock_mix_t lock, const char *origin, int edpos, bool with_mix)
 {
   file_info *hdr;
-  hdr = make_file_info(tempfile, true);
+  hdr = make_file_info(tempfile, FILE_READ_ONLY, FILE_NOT_SELECTED);
   if (hdr)
     {
       off_t prev_len, new_len;
@@ -5760,7 +5760,7 @@ bool file_change_samples(off_t beg, off_t num, char *tempfile, chan_info *cp, in
 bool file_override_samples(off_t num, char *tempfile, chan_info *cp, int chan, file_delete_t auto_delete, lock_mix_t lock, const char *origin)
 {
   file_info *hdr;
-  hdr = make_file_info(tempfile, true);
+  hdr = make_file_info(tempfile, FILE_READ_ONLY, FILE_NOT_SELECTED);
   if (hdr) 
     {
       int fd;
