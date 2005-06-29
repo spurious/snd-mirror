@@ -847,8 +847,14 @@ static void make_file_info_pane(recorder_info *rp, GtkWidget *file_pane, int nde
   gtk_widget_show(ff_sep3);
 
   recdat = make_file_data_panel(left_form, "data-form", 
-				WITH_CHANNELS_FIELD, rp->output_header_type, rp->output_data_format,
-				WITHOUT_DATA_LOCATION_FIELD, WITHOUT_SAMPLES_FIELD, WITHOUT_ERROR_FIELD);
+				WITH_CHANNELS_FIELD, 
+				rp->output_header_type, 
+				rp->output_data_format, 
+				WITHOUT_DATA_LOCATION_FIELD, 
+				WITHOUT_SAMPLES_FIELD, 
+				WITHOUT_ERROR_FIELD, 
+				WITH_HEADER_TYPE_FIELD, 
+				WITH_COMMENT_FIELD);
   SG_SIGNAL_CONNECT(recdat->srate_text, "activate", srate_changed_callback, NULL);
 
 #if SGI

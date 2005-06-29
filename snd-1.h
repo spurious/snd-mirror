@@ -449,6 +449,9 @@ typedef struct snd_state {
   bool jump_ok, exiting;
   env_editor *enved;
   Tempus click_time;
+#if HAVE_FAM
+  FAMConnection *fam_connection;
+#endif
 } snd_state;
 
 extern snd_state *ss;
@@ -1350,6 +1353,11 @@ char *shorter_tempnam(const char *dir, const char *prefix);
 char *snd_tempnam(void);
 void snd_exit(int val);
 void g_init_utils(void);
+#if HAVE_FAM
+  FAMRequest *fam_monitor_file(const char *filename, void *data);
+  FAMRequest *fam_monitor_directory(const char *dir_name, void *data);
+  int fam_unmonitor_file(FAMRequest *rp);
+#endif
 #ifdef DEBUGGING
   void set_encloser(char *name);
 #endif

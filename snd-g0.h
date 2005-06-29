@@ -78,6 +78,7 @@ typedef struct {
   GtkWidget *header_list, *format_list, *srate_text, *chans_text, *comment_text, *location_text, *samples_text, *error_text;
   int current_type, current_format, formats, header_pos, format_pos;
   scanf_widget_t scanf_widget, error_widget;
+  bool extracting;
 } file_data;
 
 typedef struct {
@@ -138,6 +139,8 @@ typedef enum {WITHOUT_CHANNELS_FIELD, WITH_CHANNELS_FIELD, WITH_EXTRACT_CHANNELS
 typedef enum {WITHOUT_SAMPLES_FIELD, WITH_SAMPLES_FIELD} dialog_samples_t;
 typedef enum {WITHOUT_DATA_LOCATION_FIELD, WITH_DATA_LOCATION_FIELD} dialog_data_location_t;
 typedef enum {WITHOUT_ERROR_FIELD, WITH_ERROR_FIELD} dialog_error_t;
+typedef enum {WITHOUT_HEADER_TYPE_FIELD, WITH_HEADER_TYPE_FIELD} dialog_header_type_t;
+typedef enum {WITHOUT_COMMENT_FIELD, WITH_COMMENT_FIELD, WITH_UNLABELLED_COMMENT_FIELD} dialog_comment_t;
 
 typedef struct {
   GtkWidget *ww;

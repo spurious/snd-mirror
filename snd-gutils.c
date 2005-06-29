@@ -603,7 +603,8 @@ GtkWidget *sg_make_list(const char *title, GtkWidget *parent, widget_add_t paned
   gtk_container_add(GTK_CONTAINER(scrolled_win), list);
   gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled_win), GTK_POLICY_AUTOMATIC, GTK_POLICY_ALWAYS);
   gtk_container_set_border_width(GTK_CONTAINER(scrolled_win), 0);
-  SG_SIGNAL_CONNECT(gtk_tree_view_get_selection(GTK_TREE_VIEW(list)), "changed", callback, gp);
+  if (callback)
+    SG_SIGNAL_CONNECT(gtk_tree_view_get_selection(GTK_TREE_VIEW(list)), "changed", callback, gp);
 
   switch (paned)
     {
@@ -721,7 +722,7 @@ GtkWidget *snd_gtk_label_new(const char *label, GdkColor *color)
   /* this is what goddamn gtk forces us to use -- all I want is a label with a background color! */
   rlw = gtk_entry_new();
   gtk_entry_set_has_frame(GTK_ENTRY(rlw), false);
-  gtk_entry_set_text(GTK_ENTRY(rlw), label);
+  if (label) gtk_entry_set_text(GTK_ENTRY(rlw), label);
   gtk_editable_set_editable(GTK_EDITABLE(rlw), false);
   GTK_WIDGET_UNSET_FLAGS(GTK_WIDGET(rlw), GTK_CAN_FOCUS); /* turn off the $%#@$! blinking cursor */
   gtk_widget_modify_base(rlw, GTK_STATE_NORMAL, color);

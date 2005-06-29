@@ -1429,6 +1429,7 @@ env *string_to_env(char *str)
   else snd_error(_("%s is not a list"), str);
   return(NULL);
 #else
+  /* TODO: test for these cases somehow (testsnd -e?) */
   char *tok;
   int i;
   float f;
@@ -1445,7 +1446,11 @@ env *string_to_env(char *str)
       tok = strtok(str, env_white_space);
       while (tok)
 	{
-	  sscanf(tok, "%f", &f);
+	  if (!(sscanf(tok, "%f", &f)))
+	    {
+	      snd_error("%s in env list is not a number", tok);
+	      return(NULL);
+	    }
 	  env_buffer[i] = (Float)f;
 	  i++;
 	  if (i == env_buffer_size)

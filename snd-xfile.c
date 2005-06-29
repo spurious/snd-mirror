@@ -10,8 +10,10 @@
 
 /* TODO: if file write-protected, how to get rid of errmsg if user chmods it?
  *           /usr/include/fam.h -- how to tell if fam is running?
+ *           use gamin if possible -- apparently it's a user-side process?
  * TODO: if edit-header of write-protected sound, should we add an 'Unprotect' button?  Is there are "right way" to implement it?
  * PERHAPS: location to mix at in File:Mix? amp/srate sliders?
+ * TODO: pull-down list of recent files
  */
 
 #define NUM_VISIBLE_HEADERS 5
@@ -741,7 +743,7 @@ static void file_open_ok_callback(Widget w, XtPointer context, XtPointer info)
 	  if (sp) 
 	    {
 	      XtUnmanageChild(w);
-	      select_channel(sp, 0); /* add_sound_window (snd-xsnd.c) -> make_file_info (snd-file) will report reason for error, if any */
+	      select_channel(sp, 0);
 	    }
 	  else
 	    {
@@ -898,6 +900,7 @@ void set_open_file_play_button(bool val)
     XmToggleButtonSetState(mix_dialog->dp->play_button, (Boolean)val, false);
 }
 
+/* PERHAPS: handle all directory update decisions through FAM */
 void alert_new_file(void) 
 {
   if (open_dialog)
@@ -913,6 +916,7 @@ void reflect_just_sounds(void)
   if ((mix_dialog) && (mix_dialog->fp->just_sounds_button))
     XmToggleButtonSetState(mix_dialog->fp->just_sounds_button, just_sounds(ss), true);
 }
+
 
 /* -------- error handling -------- */
 
@@ -1062,6 +1066,8 @@ static void file_data_format_callback(Widget w, XtPointer context, XtPointer inf
 }
 
 
+/* ---------------- File Data Panel ---------------- */
+
 static void srate_drop(Widget w, XtPointer context, XtPointer info) 
 {
   file_data *fd = (file_data *)context;
@@ -1084,7 +1090,8 @@ static void chans_drop(Widget w, XtPointer context, XtPointer info)
 static char *header_short_names[NUM_HEADER_TYPES] = {"sun  ", "aifc ", "wave ", "raw  ", "aiff ", "ircam", "nist "};
 
 file_data *make_file_data_panel(Widget parent, char *name, Arg *in_args, int in_n, 
-				dialog_channels_t with_chan, int header_type, int data_format,
+				dialog_channels_t with_chan, 
+				int header_type, int data_format,
 				dialog_data_location_t with_loc, dialog_samples_t with_samples,
 				dialog_error_t with_error, dialog_header_type_t with_header_type,
 				dialog_comment_t with_comment)
@@ -1288,7 +1295,8 @@ file_data *make_file_data_panel(Widget parent, char *name, Arg *in_args, int in_
 
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;}
-      cmenu = XmCreatePulldownMenu(chans_label, (char *)((with_chan == WITH_CHANNELS_FIELD) ? _("channels:") : _("extract channel:")), args, n);
+      cmenu = XmCreatePulldownMenu(chans_label, (char *)((with_chan == WITH_CHANNELS_FIELD) ? _("channels:") : _("extract channel:")), 
+				   args, n);
 
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;}
@@ -1296,7 +1304,8 @@ file_data *make_file_data_panel(Widget parent, char *name, Arg *in_args, int in_
       XtSetArg(args[n], XmNshadowThickness, 0); n++;
       XtSetArg(args[n], XmNhighlightThickness, 0); n++;
       XtSetArg(args[n], XmNmarginHeight, 1); n++;
-      XtCreateManagedWidget((char *)((with_chan == WITH_CHANNELS_FIELD) ? _("channels:") : _("extract channel:")), xmCascadeButtonWidgetClass, chans_label, args, n);
+      XtCreateManagedWidget((char *)((with_chan == WITH_CHANNELS_FIELD) ? _("channels:") : _("extract channel:")), 
+			    xmCascadeButtonWidgetClass, chans_label, args, n);
       
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;}
@@ -1449,18 +1458,18 @@ file_data *make_file_data_panel(Widget parent, char *name, Arg *in_args, int in_
     }
   else fdat->comment_text = NULL;
 
-      XtAddCallback(s8, XmNactivateCallback, srate_drop, (XtPointer)fdat);
-      XtAddCallback(s22, XmNactivateCallback, srate_drop, (XtPointer)fdat);
-      XtAddCallback(s44, XmNactivateCallback, srate_drop, (XtPointer)fdat);
-      XtAddCallback(s48, XmNactivateCallback, srate_drop, (XtPointer)fdat);
+  XtAddCallback(s8, XmNactivateCallback, srate_drop, (XtPointer)fdat);
+  XtAddCallback(s22, XmNactivateCallback, srate_drop, (XtPointer)fdat);
+  XtAddCallback(s44, XmNactivateCallback, srate_drop, (XtPointer)fdat);
+  XtAddCallback(s48, XmNactivateCallback, srate_drop, (XtPointer)fdat);
 
-      if (with_chan != WITHOUT_CHANNELS_FIELD)
-	{
+  if (with_chan != WITHOUT_CHANNELS_FIELD)
+    {
       XtAddCallback(c1, XmNactivateCallback, chans_drop, (XtPointer)fdat);
       XtAddCallback(c2, XmNactivateCallback, chans_drop, (XtPointer)fdat);
       XtAddCallback(c4, XmNactivateCallback, chans_drop, (XtPointer)fdat);
       XtAddCallback(c8, XmNactivateCallback, chans_drop, (XtPointer)fdat);
-	}
+    }
   return(fdat);
 }
 
@@ -1830,6 +1839,8 @@ widget_t make_edit_save_as_dialog(bool managed)
   return(save_as_dialog);
 }
 
+/* PERHAPS: region save-as as button in region browser? */
+
 
 /* -------- save/restore for all these dialogs -------- */
 
@@ -1937,7 +1948,7 @@ static void new_file_ok_callback(Widget w, XtPointer context, XtPointer info)
 	      (ask_before_overwrite(ss)) && 
 	      (mus_file_probe(newer_name)))
 	    {
-	      /* SOMEDAY: would be nice to cancel 'DoIt' if user deletes file by hand */
+	      /* SOMEDAY: would be nice to cancel 'DoIt' if user deletes file by hand -- use FAM */
 	      XmString ok_label;
 	      msg = mus_format(_("%s exists. If you want to overwrite it, click 'DoIt'"), newer_name);
 	      post_file_dialog_error((const char *)msg, (void *)ndat);
@@ -2114,17 +2125,17 @@ void make_new_file_dialog(void)
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       ndat = make_file_data_panel(form, "data-form", args, n, 
 				  WITH_CHANNELS_FIELD, 
-				  default_output_type(ss), default_output_format(ss), 
+				  default_output_type(ss), 
+				  default_output_format(ss), 
 				  WITHOUT_DATA_LOCATION_FIELD, 
 				  WITH_SAMPLES_FIELD,
 				  WITH_ERROR_FIELD, 
 				  WITH_HEADER_TYPE_FIELD, 
 				  WITH_COMMENT_FIELD);
       ndat->dialog = new_file_dialog;
-
-
       XtManageChild(ndat->error_text);
       XtManageChild(new_file_dialog);
+
       if (!(ss->using_schemes)) map_over_children(new_file_dialog, set_main_color_of_widget, NULL);
       if (!(ss->using_schemes))	
 	{
@@ -2148,6 +2159,7 @@ void make_new_file_dialog(void)
   else
     {
       /* if overwrite question pends, but file has been deleted in the meantime, go back to normal state */
+      /* TODO: use FAM to handle this */
       if (new_file_doit)
 	{
 	  char *new_name;
@@ -2532,7 +2544,8 @@ static void make_raw_data_dialog(const char *filename, const char *title)
   set_dialog_widget(RAW_DATA_DIALOG, raw_data_dialog);
 }
 
-
+/* TODO: check out other paths to raw data dialog */
+/* PERHAPS: if user changes raw file with dialog up -- adding header for example, should we automatically open it? */
 #if 0
 #define NUM_REQUESTORS 16
 static char *raw_data_dialog_requestors[NUM_REQUESTORS] = {
@@ -2643,6 +2656,7 @@ static void mouse_leave_label(Widget w, XtPointer context, XEvent *event, Boolea
 /*
  * the region and file browsers share much widgetry -- they are supposed to look the same
  */
+/* TODO: should previous files list be monitored via FAM? */
 
 ww_info *make_title_row(Widget formw, char *top_str, char *main_str, dialog_pad_t pad, dialog_sort_t with_sort, dialog_paned_t with_pane)
 {

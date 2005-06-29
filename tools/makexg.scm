@@ -163,6 +163,8 @@
 	"GtkDirectionType" "GtkExpanderStyle" "GtkIconLookupFlags" "GtkMenuPositionFunc" "GtkPathType" "GtkSpinType"
 	"GtkTextSearchFlags" "GtkTreeIterCompareFunc" "GtkTreeSelectionFunc" "GtkUIManagerItemType" "GtkWindowPosition"
 	"GtkWindowType" "PangoGlyph" "PangoUnderline" "double" "gsize" "gssize" 
+
+	"GtkMenuBar*" "GtkTranslateFunc"
 	))
 
 (define no-xen-p 

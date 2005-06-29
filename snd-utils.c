@@ -351,6 +351,59 @@ void snd_exit(int val)
 #endif
 }
 
+
+/* ---------------- file alteration monitor (fam or gamin) ---------------- */
+#if HAVE_FAM
+static FAMRequest *fam_monitor(void)
+{
+  if (!(ss->fam_connection))
+    {
+      int err;
+      ss->fam_connection = (FAMConnection *)CALLOC(1, sizeof(FAMConnection));
+      err = FAMOpen(ss->fam_connection);
+      if (err < 0)
+	snd_error("can't start file alteration monitor!");
+    }
+  return((FAMRequest *)CALLOC(1, sizeof(FAMRequest)));
+}
+
+FAMRequest *fam_monitor_file(const char *filename, void *data)
+{
+  FAMRequest *rp;
+  int err;
+  rp = fam_monitor();
+  err = FAMMonitorFile(ss->fam_connection, filename, rp, data);
+  if (err < 0)
+    {
+      snd_error("can't monitor %s\n", filename);
+      FREE(rp);
+      return(NULL);
+    }
+  return(rp);
+}
+
+FAMRequest *fam_monitor_directory(const char *dir_name, void *data)
+{
+  FAMRequest *rp;
+  int err;
+  rp = fam_monitor();
+  err = FAMMonitorDirectory(ss->fam_connection, dir_name, rp, data);
+  if (err < 0)
+    {
+      snd_error("can't monitor %s\n", dir_name);
+      FREE(rp);
+      return(NULL);
+    }
+  return(rp);
+}
+
+int fam_unmonitor_file(FAMRequest *rp)
+{
+  return(FAMCancelMonitor(ss->fam_connection, rp));
+}
+#endif
+
+
 #if DEBUGGING
 
 /* mtrace-style malloc hooks are not very useful here since I don't care

@@ -476,6 +476,7 @@ static void check_parens(void)
       g_free(fstr);
     }
 }
+
 static gboolean listener_key_release(GtkWidget *w, GdkEventKey *event, gpointer data)
 {
   check_parens();

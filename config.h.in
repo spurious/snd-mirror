@@ -66,6 +66,7 @@
 #undef HAVE_ALSA_ASOUNDLIB_H
 #undef HAVE_BYTESWAP_H
 #undef HAVE_STDINT_H
+#undef HAVE_FAM_H
 #undef FGREP_PROG
 
 #undef SIZEOF_OFF_T
@@ -98,6 +99,8 @@
 #undef HAVE_EXTENSION_LANGUAGE
 #undef HAVE_XPM
 #undef HAVE_XM_XP
+#undef HAVE_FAM
+#undef HAVE_FAM_NO_EXISTS
 #undef HAVE_GL
 #undef JUST_GL
 #undef DEFAULT_TEMP_DIR

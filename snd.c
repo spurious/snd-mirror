@@ -338,6 +338,9 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
   ss->error_lock = false;
   ss->exiting = false;
   ss->deferred_regions = 0;
+#if HAVE_FAM
+  ss->fam_connection = NULL;
+#endif
 
 #if USE_NO_GUI || HAVE_RUBY
   ss->catch_exists = 1; /* scm_shell */

@@ -7113,6 +7113,7 @@ void save_edits(snd_info *sp, void *ptr)
 	}
       if (need_save)
 	{
+	  /* TODO: use FAM for these? */
 	  time_t current_write_date;
 	  /* check for change to file while we were editing it */
 	  current_write_date = file_write_date(sp->filename);

@@ -1105,10 +1105,18 @@ static off_t get_count_1(char *number_buffer, int number_ctr, bool dot_seen, cha
   if (dot_seen)
     {
       float f;
-      sscanf(number_buffer, "%f", &f);
+      if (!(sscanf(number_buffer, "%f", &f)))
+	{
+	  snd_error("invalid number: %s", number_buffer); /* TODO: test these 2 cases */
+	  return(0);
+	}
       return((off_t)(f * SND_SRATE(cp->sound)));
     }
-  sscanf(number_buffer, "%d", &i);
+  if (!(sscanf(number_buffer, "%d", &i)))
+    {
+      snd_error("invalid number: %s", number_buffer);
+      return(0);
+    }
   return(i);
 }
 

@@ -1934,7 +1934,8 @@ Float string_to_Float(char *str)
 #endif
 }
 
-/* TODO: add error checks to sscanf et al elsewhere (headers snd-env snd-kbd) */
+/* PERHAPS: sscanf -> cant_read_header in headers.c and snd-trans.c */
+/* TODO: replace string_to_* with redirected versions */
 int string_to_int(char *str) 
 {
 #if HAVE_EXTENSION_LANGUAGE

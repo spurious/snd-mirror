@@ -23,6 +23,11 @@ int snd_exit_cleanly(bool force_exit)
 		      XEN_EMPTY_LIST,
 		      S_exit_hook);
   if ((XEN_TRUE_P(res)) && (!force_exit)) return(0);
+#if HAVE_FAM
+  if (ss->fam_connection)
+    FAMClose(ss->fam_connection);
+  ss->fam_connection = NULL;
+#endif
   cleanup_dac();
   for_each_normal_chan(remove_temp_files);
   cleanup_region_temp_files();
@@ -36,6 +41,7 @@ int snd_exit_cleanly(bool force_exit)
 
 void sound_not_current(snd_info *sp, void *ignore)
 {
+  /* TODO: handle this with FAM -- called in snd-edits/g|xmain (why auto_update? perhaps remove auto-update-interval!) */
   /* check for change in update status */
   bool needs_update;
   needs_update = (file_write_date(sp->filename) != sp->write_date);

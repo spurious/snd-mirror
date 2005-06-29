@@ -226,10 +226,26 @@ AC_LINK_IFELSE(
 
 AC_PATH_PROG(PKG_CONFIG, pkg-config, no)
 
+
+# look for special functions in libm
 AC_CHECK_LIB(m, jn, 
   [AC_CHECK_LIB(m, yn, 
     [AC_CHECK_LIB(m, lgamma,
-      [AC_CHECK_LIB(m, erf, [AC_DEFINE(HAVE_SPECIAL_FUNCTIONS)])])])])
+      [AC_CHECK_LIB(m, erf, 
+        [AC_DEFINE(HAVE_SPECIAL_FUNCTIONS)])])])])
+
+
+# look for the File Alteration Monitor (gamin or SGI's fam -- both use fam.h and libfam apparently)
+# TODO: doesn't this need an explicit include for fam.h? 
+FAM_LIB=""
+AC_CHECK_HEADER(fam.h,
+  [AC_CHECK_LIB(fam, FAMOpen, 
+     [AC_DEFINE(HAVE_FAM_H)
+      AC_DEFINE(HAVE_FAM)
+      AC_CHECK_LIB(fam, FAMNoExists, [AC_DEFINE(HAVE_FAM_NO_EXISTS)]) # gamin extension
+      FAM_LIB="-lfam"
+     ])])
+AC_SUBST(FAM_LIB)
 
 
 #--------------------------------------------------------------------------------

@@ -174,7 +174,6 @@ static XtResource resources[] = {
   {"doitagainbuttoncolor", "Doitagainbuttoncolor", XmRString, sizeof(char *), XtOffset(sndres *, doit_again_button_color), XmRString, (XtPointer)DOIT_AGAIN_BUTTON_COLOR}
 };
 
-
 #ifndef SND_AS_WIDGET
 static void window_close(Widget w, XtPointer context, XtPointer info)
 {
@@ -186,6 +185,7 @@ static XtIntervalId auto_update_proc = 0;
 
 static void auto_update_check(XtPointer context, XtIntervalId *id)
 {
+  /* TODO: can this be replaced by FAM? */
   if (auto_update_interval(ss) > 0.0)
     {
       if ((!(play_in_progress())) && 
@@ -332,7 +332,7 @@ static bool noglob = false, noinit = false, batch = false, nostdin = false;
 #if HAVE_EXTENSION_LANGUAGE
 static XtInputId stdin_id = 0;
 
-static void get_stdin_string (XtPointer context, int *fd, XtInputId *id)
+static void get_stdin_string(XtPointer context, int *fd, XtInputId *id)
 {
   int bytes, size;
   char *buf;
