@@ -595,7 +595,7 @@ GtkWidget *make_mix_dialog(void)
       SG_SIGNAL_CONNECT(apply_button, "clicked", apply_mix_dialog, NULL);
       gtk_widget_show(apply_button);
 
-      help_button = gtk_button_new_with_label(_("Help"));
+      help_button = gtk_button_new_from_stock(GTK_STOCK_HELP);
       gtk_widget_set_name(help_button, "help_button");
       gtk_box_pack_end(GTK_BOX(GTK_DIALOG(mix_dialog)->action_area), help_button, true, true, 10);
       SG_SIGNAL_CONNECT(help_button, "clicked", mix_dialog_help_callback, NULL);
@@ -1508,7 +1508,7 @@ GtkWidget *make_track_dialog(void)
       SG_SIGNAL_CONNECT(apply_button, "clicked", apply_track_dialog, NULL);
       gtk_widget_show(apply_button);
 
-      help_button = gtk_button_new_with_label(_("Help"));
+      help_button = gtk_button_new_from_stock(GTK_STOCK_HELP);
       gtk_widget_set_name(help_button, "help_button");
       gtk_box_pack_end(GTK_BOX(GTK_DIALOG(track_dialog)->action_area), help_button, true, true, 10);
       SG_SIGNAL_CONNECT(help_button, "clicked", track_dialog_help_callback, NULL);

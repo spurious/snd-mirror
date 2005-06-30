@@ -1922,12 +1922,15 @@ widget_t snd_record_file(void)
       gtk_container_set_border_width (GTK_CONTAINER(recorder), 10);
       gtk_widget_realize(recorder);
 
-      help_button = gtk_button_new_with_label(_("Help"));
+      help_button = gtk_button_new_from_stock(GTK_STOCK_HELP);
       gtk_widget_set_name(help_button, "help_button");
+
       dismiss_button = gtk_button_new_with_label(_("Dismiss"));
       gtk_widget_set_name(dismiss_button, "quit_button");
+
       reset_button = gtk_button_new_with_label(_("Reset"));
       gtk_widget_set_name(reset_button, "reset_button");
+
       record_button = gtk_button_new_with_label(_("Record"));
       gtk_widget_set_name(record_button, "doit_button");
 

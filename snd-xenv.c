@@ -272,6 +272,8 @@ static void enved_reset(void)
   env_redisplay();
 }
 
+/* TODO: string_to_* in env ed (order, env as breakpoints) -> redirect */
+
 static void order_field_activated(void)
 {
   /* return in order text field */

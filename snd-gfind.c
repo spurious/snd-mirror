@@ -94,14 +94,18 @@ static void make_edit_find_dialog(bool managed)
       gtk_window_resize(GTK_WINDOW(edit_find_dialog), 350, 120);
       gtk_widget_realize(edit_find_dialog);
 
-      help_button = gtk_button_new_with_label(_("Help"));
+      help_button = gtk_button_new_from_stock(GTK_STOCK_HELP);
       gtk_widget_set_name(help_button, "help_button");
-      cancelB = gtk_button_new_with_label(_("Dismiss"));
+
+      cancelB = gtk_button_new_from_stock(GTK_STOCK_QUIT);
       gtk_widget_set_name(cancelB, "quit_button");
-      next_button = gtk_button_new_with_label(_("Next"));
-      gtk_widget_set_name(next_button, "doit_button");
-      previous_button = gtk_button_new_with_label(_("Previous"));
+
+      previous_button = gtk_button_new_from_stock(GTK_STOCK_GO_BACK);
       gtk_widget_set_name(previous_button, "reset_button");
+
+      next_button = gtk_button_new_from_stock(GTK_STOCK_GO_FORWARD);
+      gtk_widget_set_name(next_button, "doit_button");
+
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(edit_find_dialog)->action_area), cancelB, true, true, 10);
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(edit_find_dialog)->action_area), next_button, true, true, 10);
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(edit_find_dialog)->action_area), previous_button, true, true, 10);

@@ -1145,7 +1145,8 @@ SO_INSTALL="install"
 A_LD="ld"
 A_LD_FLAGS=""
 # Python configure.in has a lot of code to get these switches right
-
+JACK_LIBS=""
+JACK_FLAGS=""
 
 # we need the sndlib.h equivalents to try to find the native sound support (see config.guess)
 # this only matters for those cases where we've implemented the audio code in audio.c
@@ -1212,10 +1213,6 @@ case "$host" in
               [with_jack=no
 	       AC_MSG_WARN(can't find the samplerate library. JACK will not be used.)])
             if test $with_jack = yes ; then
-	       if test x$PKG_CONFIG != xno ; then
-                 jack_version="`$PKG_CONFIG jack --modversion`"
-                 AC_DEFINE_UNQUOTED(JACK_VERSION,"${jack_version}")
-               fi
 	       if test "$with_alsa" != yes ; then
                  audio_system=JACK
                fi
@@ -1259,9 +1256,10 @@ case "$host" in
 
 		    if test "$with_jack" = yes ; then 
 		      if test "$with_static_alsa" = yes ; then
-			 AUDIO_LIB="/usr/lib/libasound.a -ljack -lsamplerate"
+			 AUDIO_LIB="/usr/lib/libasound.a -lsamplerate"
 		      else
-			 AUDIO_LIB="-lasound -ljack -lsamplerate"
+			 AUDIO_LIB="-lasound -lsamplerate"
+		      # -ljack will come from JACK_LIBS
 	              fi
 		      AC_DEFINE(HAVE_JACK)
 		    fi
@@ -1271,9 +1269,15 @@ case "$host" in
  		fi
  		;;
 	    JACK)
+	        if test x$PKG_CONFIG != xno ; then
+                   jack_version="`$PKG_CONFIG jack --modversion`"
+                   AC_DEFINE_UNQUOTED(JACK_VERSION,"${jack_version}")
+          	   JACK_LIBS="`$PKG_CONFIG jack --libs`"
+          	   JACK_FLAGS="`$PKG_CONFIG jack --cflags`"
+                fi
 		AC_DEFINE(HAVE_JACK)
 		AC_DEFINE(HAVE_OSS)
-		AUDIO_LIB="-ljack -lsamplerate"
+		AUDIO_LIB="-lsamplerate"
 		;;
 	    OSS)
 		AC_DEFINE(HAVE_OSS)
@@ -1385,6 +1389,9 @@ esac
 AC_MSG_CHECKING([for audio system])
 AC_MSG_RESULT($audio_system)
 fi
+
+AC_SUBST(JACK_LIBS)
+AC_SUBST(JACK_FLAGS)
 
 AC_SUBST(LDSO_FLAGS)
 AC_SUBST(SO_INSTALL)

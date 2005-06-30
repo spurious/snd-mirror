@@ -771,26 +771,33 @@ GtkWidget *create_envelope_editor (void)
       gdk_gc_set_background(ggc, ss->sgx->white);
       gdk_gc_set_foreground(ggc, ss->sgx->enved_waveform_color);
 
-      helpB = gtk_button_new_with_label(_("Help"));
+      helpB = gtk_button_new_from_stock(GTK_STOCK_HELP);
       gtk_widget_set_name(helpB, "help_button");
+
       cancelB = gtk_button_new_with_label(_("Dismiss"));
       gtk_widget_set_name(cancelB, "quit_button");
-      applyB = gtk_button_new_with_label(_("Apply"));
+
+      applyB = gtk_button_new_from_stock(GTK_STOCK_APPLY);
       gtk_widget_set_name(applyB, "doit_button");
+
       apply2B = gtk_button_new_with_label(_("Undo&Apply"));
       gtk_widget_set_name(apply2B, "doit_again_button");
+
       resetB = gtk_button_new_with_label(_("Reset"));
       gtk_widget_set_name(resetB, "reset_button");
+
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(enved_dialog)->action_area), cancelB, false, true, 10);
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(enved_dialog)->action_area), applyB, false, true, 10);
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(enved_dialog)->action_area), apply2B, false, true, 10);
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(enved_dialog)->action_area), resetB, false, true, 10);
       gtk_box_pack_end(GTK_BOX(GTK_DIALOG(enved_dialog)->action_area), helpB, false, true, 10);
+
       SG_SIGNAL_CONNECT(cancelB, "clicked", dismiss_enved_callback, NULL);
       SG_SIGNAL_CONNECT(applyB, "clicked", apply_enved_callback, NULL);
       SG_SIGNAL_CONNECT(apply2B, "clicked", undo_and_apply_enved_callback, NULL);
       SG_SIGNAL_CONNECT(resetB, "clicked", reset_button_pressed, NULL);
       SG_SIGNAL_CONNECT(helpB, "clicked", help_enved_callback, NULL);
+
       gtk_widget_show(cancelB);
       gtk_widget_show(applyB);
       gtk_widget_show(apply2B);

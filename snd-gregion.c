@@ -305,11 +305,13 @@ static void make_region_dialog(void)
   gtk_window_resize(GTK_WINDOW(region_dialog), 400, 400);
   gtk_widget_realize(region_dialog);
 
-  help_button = gtk_button_new_with_label(_("Help"));
+  help_button = gtk_button_new_from_stock(GTK_STOCK_HELP);
   gtk_widget_set_name(help_button, "help_button");
+
   dismiss_button = gtk_button_new_with_label(_("Dismiss"));
   gtk_widget_set_name(dismiss_button, "quit_button");
-  delete_button = gtk_button_new_with_label(_("Delete"));
+
+  delete_button = gtk_button_new_from_stock(GTK_STOCK_DELETE);
   gtk_widget_set_name(delete_button, "doit_button");
 
   gtk_box_pack_start(GTK_BOX(GTK_DIALOG(region_dialog)->action_area), dismiss_button, true, true, 4);

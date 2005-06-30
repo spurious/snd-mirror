@@ -27,8 +27,9 @@ static void create_snd_error_dialog(bool popup)
   gtk_window_resize(GTK_WINDOW(snd_error_dialog), 400, 300);
   gtk_widget_realize(snd_error_dialog);
 
-  ok_button = gtk_button_new_with_label(_("Ok"));
+  ok_button = gtk_button_new_from_stock(GTK_STOCK_OK);
   gtk_widget_set_name(ok_button, "quit_button");
+
   gtk_box_pack_start(GTK_BOX(GTK_DIALOG(snd_error_dialog)->action_area), ok_button, false, true, 20);
   SG_SIGNAL_CONNECT(ok_button, "clicked", dismiss_snd_error, NULL);
   gtk_widget_show(ok_button);
@@ -131,10 +132,12 @@ bool snd_yes_or_no_p(const char *format, ...)
       gtk_widget_realize(yes_or_no_dialog);
       gtk_window_resize(GTK_WINDOW(yes_or_no_dialog), 180, 100);
 
-      yes_button = gtk_button_new_with_label(_("Yes"));
+      yes_button = gtk_button_new_from_stock(GTK_STOCK_YES);
       gtk_widget_set_name(yes_button, "doit_button");
-      no_button = gtk_button_new_with_label(_("No"));
+
+      no_button = gtk_button_new_from_stock(GTK_STOCK_NO);
       gtk_widget_set_name(no_button, "quit_button");
+
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(yes_or_no_dialog)->action_area), yes_button, false, true, 10);
       gtk_box_pack_end(GTK_BOX(GTK_DIALOG(yes_or_no_dialog)->action_area), no_button, false, true, 10);
       SG_SIGNAL_CONNECT(yes_button, "clicked", yes_callback, NULL);
@@ -188,8 +191,9 @@ static void create_post_it_monolog(void)
   gtk_window_resize(GTK_WINDOW(post_it_dialog), POST_IT_COLUMNS * 9, POST_IT_ROWS * 20);
   gtk_widget_realize(post_it_dialog);
 
-  ok_button = gtk_button_new_with_label(_("Ok"));
+  ok_button = gtk_button_new_from_stock(GTK_STOCK_OK);
   gtk_widget_set_name(ok_button, "quit_button");
+
   gtk_box_pack_start(GTK_BOX(GTK_DIALOG(post_it_dialog)->action_area), ok_button, false, true, 20);
   SG_SIGNAL_CONNECT(ok_button, "clicked", dismiss_post_it, NULL);
   gtk_widget_show(ok_button);

@@ -866,27 +866,36 @@ static void mix_file_help_callback (Widget w, XtPointer context, XtPointer info)
   mix_file_dialog_help();
 }
 
-static file_dialog_info *mix_dialog = NULL;
+static file_dialog_info *mdat = NULL;
 
 widget_t make_mix_file_dialog(bool managed)
 {
   /* called from the menu */
-  if (mix_dialog == NULL)
+  if (mdat == NULL)
     {
-      mix_dialog = make_file_dialog(true, _("Mix"), _("mix in:"), file_mix_ok_callback, mix_file_help_callback);
-      set_dialog_widget(FILE_MIX_DIALOG, mix_dialog->dialog);
+      XmString mix_label;
+      mdat = make_file_dialog(true, _("Mix"), _("mix in:"), file_mix_ok_callback, mix_file_help_callback);
+      set_dialog_widget(FILE_MIX_DIALOG, mdat->dialog);
+
+      /* set ok button label to "Mix" */
+      mix_label = XmStringCreate(_("Mix"), XmFONTLIST_DEFAULT_TAG);
+      XtVaSetValues(XmFileSelectionBoxGetChild(mdat->dialog, XmDIALOG_OK_BUTTON),
+		    XmNlabelString, mix_label,
+		    NULL);
+      XmStringFree(mix_label);
+
       if (just_sounds(ss)) 
 	{
-	  XtVaSetValues(mix_dialog->dialog, 
+	  XtVaSetValues(mdat->dialog, 
 			XmNfileSearchProc, sound_file_search, 
 			NULL);
-	  mix_dialog->fp->need_update = true;
-	  force_directory_reread(mix_dialog->dialog);
+	  mdat->fp->need_update = true;
+	  force_directory_reread(mdat->dialog);
 	}
     }
-  if ((managed) && (!XtIsManaged(mix_dialog->dialog)))
-    XtManageChild(mix_dialog->dialog);
-  return(mix_dialog->dialog);
+  if ((managed) && (!XtIsManaged(mdat->dialog)))
+    XtManageChild(mdat->dialog);
+  return(mdat->dialog);
 }
 
 
@@ -896,8 +905,8 @@ void set_open_file_play_button(bool val)
 {
   if ((open_dialog) && (open_dialog->dp->play_button))
     XmToggleButtonSetState(open_dialog->dp->play_button, (Boolean)val, false);
-  if ((mix_dialog) && (mix_dialog->dp->play_button))
-    XmToggleButtonSetState(mix_dialog->dp->play_button, (Boolean)val, false);
+  if ((mdat) && (mdat->dp->play_button))
+    XmToggleButtonSetState(mdat->dp->play_button, (Boolean)val, false);
 }
 
 /* PERHAPS: handle all directory update decisions through FAM */
@@ -905,16 +914,16 @@ void alert_new_file(void)
 {
   if (open_dialog)
     open_dialog->fp->new_file_written = true;
-  if (mix_dialog)
-    mix_dialog->fp->new_file_written = true;
+  if (mdat)
+    mdat->fp->new_file_written = true;
 }
 
 void reflect_just_sounds(void)
 {
   if ((open_dialog) && (open_dialog->fp->just_sounds_button))
     XmToggleButtonSetState(open_dialog->fp->just_sounds_button, just_sounds(ss), true);
-  if ((mix_dialog) && (mix_dialog->fp->just_sounds_button))
-    XmToggleButtonSetState(mix_dialog->fp->just_sounds_button, just_sounds(ss), true);
+  if ((mdat) && (mdat->fp->just_sounds_button))
+    XmToggleButtonSetState(mdat->fp->just_sounds_button, just_sounds(ss), true);
 }
 
 
@@ -1856,7 +1865,7 @@ void save_file_dialog_state(FILE *fd)
       fprintf(fd, "%s(true)\n", TO_PROC_NAME(S_open_file_dialog));
 #endif
     }
-  if ((mix_dialog) && (XtIsManaged(mix_dialog->dialog)))
+  if ((mdat) && (XtIsManaged(mdat->dialog)))
     {
 #if HAVE_SCHEME
       fprintf(fd, "(%s #t)\n", S_mix_file_dialog);

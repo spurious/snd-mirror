@@ -444,22 +444,28 @@ GtkWidget *fire_up_transform_dialog(bool managed)
       gtk_widget_realize(transform_dialog);
       gtk_window_resize(GTK_WINDOW(transform_dialog), 400, 500);
 
-      help_button = gtk_button_new_with_label(_("Help"));
+      help_button = gtk_button_new_from_stock(GTK_STOCK_HELP);
       gtk_widget_set_name(help_button, "help_button");
+
       dismiss_button = gtk_button_new_with_label(_("Dismiss"));
       gtk_widget_set_name(dismiss_button, "quit_button");
+
       color_button = gtk_button_new_with_label(_("Color"));
       gtk_widget_set_name(color_button, "doit_button");
+
       orient_button = gtk_button_new_with_label(_("Orientation"));
       gtk_widget_set_name(orient_button, "doit_again_button");
+
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(transform_dialog)->action_area), dismiss_button, false, true, 10);
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(transform_dialog)->action_area), color_button, false, true, 10);
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(transform_dialog)->action_area), orient_button, false, true, 10);
       gtk_box_pack_end(GTK_BOX(GTK_DIALOG(transform_dialog)->action_area), help_button, false, true, 10);
+
       SG_SIGNAL_CONNECT(dismiss_button, "clicked", dismiss_transform_callback, NULL);
       SG_SIGNAL_CONNECT(color_button, "clicked", color_transform_callback, NULL);
       SG_SIGNAL_CONNECT(orient_button, "clicked", orient_transform_callback, NULL);
       SG_SIGNAL_CONNECT(help_button, "clicked", help_transform_callback, NULL);
+
       gtk_widget_show(dismiss_button);
       gtk_widget_show(color_button);
       gtk_widget_show(orient_button);
