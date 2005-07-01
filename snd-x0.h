@@ -144,6 +144,9 @@ typedef struct {
 #if HAVE_GL
   GLXContext cx;
 #endif
+#if HAVE_FAM
+  XtInputId fam_port;
+#endif
 } state_context;
 
 typedef struct {

@@ -1297,8 +1297,10 @@ This value only matters if " S_auto_update " is #t"
   set_auto_update_interval(ctime);
   /* if new value is 0.0, auto_update_check will notice that, and not run or re-start the update check */
   /* if new value is not 0.0, and old value was 0.0, we need to restart the timeout proc, unless it's still on the queue */
+#if (!HAVE_FAM)
   if ((ctime > 0.0) && (old_time == 0.0))
     auto_update_restart();
+#endif
   return(C_TO_XEN_DOUBLE(auto_update_interval(ss)));
 }
 

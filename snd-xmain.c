@@ -181,6 +181,7 @@ static void window_close(Widget w, XtPointer context, XtPointer info)
 }
 #endif
 
+#if (!HAVE_FAM)
 static XtIntervalId auto_update_proc = 0;
 
 static void auto_update_check(XtPointer context, XtIntervalId *id)
@@ -207,6 +208,7 @@ void auto_update_restart(void)
 				       (XtTimerCallbackProc)auto_update_check,
 				       (XtPointer)NULL);
 }
+#endif
 
 #ifndef SND_AS_WIDGET
 static void dismiss_all_dialogs(void)
@@ -432,11 +434,13 @@ static Cessate startup_funcs(XtPointer context)
       if (ss->init_window_height > 0) set_widget_height(MAIN_SHELL(ss), ss->init_window_height);
       if (ss->init_window_x != DEFAULT_INIT_WINDOW_X) set_widget_x(MAIN_SHELL(ss), ss->init_window_x);
       if (ss->init_window_y != DEFAULT_INIT_WINDOW_Y) set_widget_y(MAIN_SHELL(ss), ss->init_window_y);
+#if (!HAVE_FAM)
       if (auto_update_interval(ss) > 0.0)
 	XtAppAddTimeOut(MAIN_APP(ss), 
 			(unsigned long)(auto_update_interval(ss) * 1000), 
 			auto_update_check, 
 			NULL);
+#endif
 #if TRAP_SEGFAULT
       if (trap_segfault(ss)) signal(SIGSEGV, segv);
 #endif

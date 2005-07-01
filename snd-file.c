@@ -237,6 +237,9 @@ file_info *make_file_info(const char *fullname, bool read_only, bool selected)
 		return(NULL);
 	      
 	      type = mus_header_type();
+
+	      /* TODO: if not from dialog, should this simply return null? */
+
 	      if ((type != MUS_MIDI_SAMPLE_DUMP) && 
 		  (type != MUS_IEEE) &&
 		  (type != MUS_MUS10) && 
@@ -265,14 +268,7 @@ file_info *make_file_info(const char *fullname, bool read_only, bool selected)
 	  if (ss->reloading_updated_file != 0)
 	    {
 	      /* choices already made, so just send back a header that reflects those choices */
-	      if (mus_file_probe(fullname))
-		return(make_file_info_1(fullname));
-	      else
-		{
-		  snd_error(_("can't find raw (headerless) file %s: %s"),
-			    fullname, snd_io_strerror());
-		  return(NULL);
-		}
+	      return(make_file_info_1(fullname));
 	    }
 	  if (XEN_HOOKED(open_raw_sound_hook))
 	    {
@@ -740,6 +736,9 @@ snd_info *finish_opening_sound(snd_info *sp, bool selected)
       if (files == 1) reflect_file_open_in_menu();
       reflect_equalize_panes_in_menu(active_channels(WITHOUT_VIRTUAL_CHANNELS) > 1);
       reflect_file_change_in_title();
+#if HAVE_FAM
+      sp->file_watcher = fam_monitor_file(sp->filename, (void *)sp);
+#endif
 #if USE_MOTIF
       unlock_control_panel(sp);
 #endif
@@ -843,6 +842,9 @@ void snd_close_file(snd_info *sp)
 		      XEN_LIST_1(C_TO_XEN_INT(sp->index)),
 		      S_close_hook);
   if (XEN_TRUE_P(res)) return;
+#if HAVE_FAM
+  sp->file_watcher = fam_unmonitor_file(sp->filename, sp->file_watcher);
+#endif
   /* exit does not go through this function to clean up temps -- see snd_exit_cleanly in snd-main.c */
   if (selection_creation_in_progress()) finish_selection_creation();
   if (ss->deferred_regions > 0)
@@ -2115,6 +2117,13 @@ char **set_header_positions_from_type(file_data *fdat, int header_type, int data
   char **formats = NULL;
   int *dfs = NULL;
   int i;
+#if DEBUGGING
+  if ((data_format > 0) && (!MUS_DATA_FORMAT_OK(data_format)))
+    {
+      fprintf(stderr, "data-format in %s line %d is bad: %d\n", __FUNCTION__, __LINE__, data_format);
+      abort();
+    }
+#endif
   switch (header_type)
     {
     case MUS_NEXT: 
@@ -2242,7 +2251,16 @@ char *save_as_dialog_save_sound(snd_info *sp, char *str, save_dialog_t save_type
 	  else result = save_selection(ofile, type, format, srate, comment, SAVE_ALL_CHANS);
 	  if (result != MUS_NO_ERROR)
 	    msg = mus_format(_("save as %s error: %s"), ofile, snd_io_strerror());
-	  else move_file(ofile, sp->filename);
+	  else 
+	    {
+#if HAVE_FAM
+	      sp->writing = true;
+	      move_file(ofile, sp->filename); /* should we cancel and restart a monitor? */
+	      sp->writing = false;
+#else
+	      move_file(ofile, sp->filename);
+#endif
+	    }
 	  snd_update(sp);
 	  (*need_directory_update) = false;
 	  FREE(ofile);
@@ -2663,7 +2681,13 @@ static XEN g_set_sound_loop_info(XEN snd, XEN vals)
 	      XEN_LIST_3(C_TO_XEN_STRING(S_setB S_sound_loop_info),
 			 C_TO_XEN_STRING(tmp_file),
 			 C_TO_XEN_STRING(snd_io_strerror())));
+#if HAVE_FAM
+  sp->writing = true;
+  move_file(tmp_file, sp->filename); /* should we cancel and restart a monitor? */
+  sp->writing = false;
+#else
   move_file(tmp_file, sp->filename);
+#endif
   snd_update(sp);
   FREE(tmp_file);
   return(xen_return_first((err == MUS_NO_ERROR) ? XEN_TRUE : C_TO_XEN_INT(err), snd, vals));

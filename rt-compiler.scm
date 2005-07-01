@@ -192,7 +192,7 @@ and run simple lisp[4] functions.
     (string= das-string1 das-string2 0 len 0 len)))
 
 #!
-(symbol-starts-with? 'abwe4wei 'aiai)
+(rt-symbol-starts-with? 'abwe4wei 'aiai)
 !#
 
 (define rt-safety
@@ -242,6 +242,12 @@ and run simple lisp[4] functions.
 ;; Dummy, redefined later.
 (define (rt-clear-cache!)
   #t)
+
+
+;; Need pi.
+(if (not (defined? 'pi))
+    (define-toplevel 'pi 3.14159265358979))
+
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -4129,13 +4135,6 @@ and run simple lisp[4] functions.
 		       `(rt_write_bus out-bus ,ch ,val))
 		     channels))))))
 
-(define-c-macro (rt-outs/outs n)
-  (<-> "rt_globals->outs[" (eval-c-parse n) "]"))
-(define-c-macro (rt-set-outs! n val)
-  (<-> "rt_globals->outs[" (eval-c-parse n) "]=" (eval-c-parse val)))
-(define-c-macro (rt-num_outs/num_outs)
-  "rt_globals->num_outs")
-
 
 (define-rt-macro (in . channels)
   (if (null? channels)
@@ -4145,19 +4144,6 @@ and run simple lisp[4] functions.
       `(+ ,@(map (lambda (ch)
 		   `(rt_read_bus in-bus ,(car channels)))
 		 channels))))
-
-(define-c-macro (rt-ins/ins n)
-  (<-> "rt_globals->ins[" (eval-c-parse n) "]"))
-(define-c-macro (rt-num_ins/num_ins)
-  "rt_globals->num_ins")
-
-
-(<rt-func> 'rt-outs/outs '<float> '(<int>))
-(<rt-func> 'rt-set-outs! '<void> '(<int> <float>))
-(<rt-func> 'rt-num_outs/num_outs '<int> '() #:is-immediate #t)
-
-(<rt-func> 'rt-ins/ins '<float> '(<int>))
-(<rt-func> 'rt-num_ins/num_ins '<int> '() #:is-immediate #t)
 
   
   
@@ -4353,7 +4339,17 @@ and run simple lisp[4] functions.
 	    ))
 
 
+;; mus-feedback
+(define-rt-macro (mus-feedback ins)
+  `(mus-increment ,ins))
+(define-rt-macro (setter!-mus-feedback ins val)
+  `(setter!-mus-increment ,ins ,val))
 
+;; mus-feedforward
+(define-rt-macro (mus-feedforward ins)
+  `(mus-scaler ,ins))
+(define-rt-macro (setter!-mus-feedforward ins val)
+  `(setter!-mus-scaler ,ins ,val))
 
 
 
@@ -5444,13 +5440,11 @@ setter!-rt-mus-location/mus_location
 					'(if (< ch 0)
 					     (rt_error rt_globals (string "Channel number for write-bus less than zero")))
 					"/* */")
-				   ,(if (rt-is-safety?)
-					'(if (>= ch bus->num_channels)
-					     (rt_error rt_globals (string "Illegal channel number for write-bus")))
-					"/* */")
-				   (let* ((time <int> rt_globals->time)
-					  (data <struct-rt_bus_data-*> "&bus->data[(bus->num_channels*rt_globals->framenum)+ch]"))
-				     ,(rt-clean-write-bus 'val))))
+				   (if (>= ch bus->num_channels)
+				       return
+				       (let* ((time <int> rt_globals->time)
+					      (data <struct-rt_bus_data-*> "&bus->data[(bus->num_channels*rt_globals->framenum)+ch]"))
+					 ,(rt-clean-write-bus 'val)))))
 
 (<rt-func> 'rt_write_bus '<void> '(<bus> <int> <float>) #:needs-rt-globals #t)
 
@@ -5469,17 +5463,15 @@ setter!-rt-mus-location/mus_location
 (rt-ec-function <float> rt_read_bus (lambda (,rt-globalvardecl (<struct-rt_bus-*> bus) (<int> ch))
 				   ,(if (rt-is-safety?)
 					'(if (< ch 0)
-					     (rt_error rt_globals (string "Channel number for write-bus less than zero")))
+					     (rt_error rt_globals (string "Channel number for read-bus less than zero")))
 					"/* */")
-				   ,(if (rt-is-safety?)
-					'(if (>= ch bus->num_channels)
-					     (rt_error rt_globals (string "Illegal channel number for write-bus")))
-					"/* */")
-				   (let* ((time <int> rt_globals->time_before)
-					  (data <struct-rt_bus_data-*> "&bus->data[(bus->num_channels*rt_globals->framenum)+ch]"))
-				     (return (?kolon (< data->last_written_to time)
-						     0
-						     data->val)))))
+				   (if (>= ch bus->num_channels)
+				       (return 0)
+				       (let* ((time <int> rt_globals->time_before)
+					      (data <struct-rt_bus_data-*> "&bus->data[(bus->num_channels*rt_globals->framenum)+ch]"))
+					 (return (?kolon (< data->last_written_to time)
+							 0
+							 data->val))))))
 (<rt-func> 'rt_read_bus '<float> '(<bus> <int>) #:needs-rt-globals #t)
 
 (rt-ec-function <vct-*> rt_read_bus_vct (lambda (,rt-globalvardecl (<struct-rt_bus-*> bus))
@@ -5502,12 +5494,8 @@ setter!-rt-mus-location/mus_location
 
 
 ;;(write-bus bus 0.2)               -> (rt_write_bus bus 0 0.2)
-;;(write-bus bus 0.2 0.5 0.6)       -> (let ((,das-bus bus))
-;;				         (rt_write_bus ,das-bus 0 0.2)
-;;				         (rt_write_bus ,das-bus 1 0.5)
-;;				         (rt_write_bus ,das-bus 2 0.6))
-;;(write-bus bus #f 0.2)            -> (let ((,das-bus bus))
-;;                                       (rt_write_bus ,das-bus 1 0.2))
+;;(write-bus bus 0 0.2)               -> (rt_write_bus bus 0 0.2)
+;;(write-bus bus 1 0.2)               -> (rt_write_bus bus 1 0.2)
 ;;(write-bus bus vct)               -> (rt_write_bus_vct bus vct)
 ;;(write-bus bus (vct 0.2 0.5 0.6)) -> (let ((,das-vct (vct 0.2 0.5 0.6)))
 ;;				         (rt_write_bus_vct bus ,das-vct))
@@ -5515,28 +5503,16 @@ setter!-rt-mus-location/mus_location
   (cond ((and (= 1 (length rest))
 	      (number? (car rest)))
 	 `(rt_write_bus ,bus 0 ,(car rest)))
-	((> (length rest) 1)
-	 (let ((n -1)
-	       (das-bus (rt-gensym)))
-	   `(let ((,das-bus ,bus))
-	      ,@(map (lambda (v)
-		       `(rt_write_bus ,das-bus ,(car v) ,(cadr v)))
-		     (remove (lambda (v)
-			       (or (and (number? (cadr v))
-					(= 0 (cadr v)))
-				   (eq? #f (cadr v))))
-			     (map (lambda (v)
-				    (set! n (1+ n))
-				    (list n v))
-				  rest))))))
-	((not (symbol? (car rest)))
-	 (let ((new-val (rt-gensym)))
-	   `(let ((,new-val ,(car rest)))
-	      (write-bus ,bus ,new-val))))
+	((> (length rest) 2)
+	 (c-display "Error. write-bus. Too many arguments.")
+	 #f)
+	((= (length rest) 2)
+	 `(rt_write_bus ,bus ,@rest))
 	(else
 	 `(if (is-type? <vct-*> ,(car rest))
 	      (rt_write_bus_vct ,bus (rt-cast-vct ,(car rest)))
 	      (rt_write_bus ,bus 0 (rt-cast-float ,(car rest)))))))
+
 
 
 ;;(read-bus bus 0)   -> (rt_read_bus bus 0)      ;; returns float
@@ -6922,6 +6898,31 @@ setter!-rt-mus-location/mus_location
 (rt-funcall a)
 
 
+(define fm-bus (make-bus 1))
+
+(definstrument (envset! orig val tid)
+  (let ((e (make-env `(0 ,orig 1 ,val) :duration tid)))
+    (<rt-play> (lambda ()
+                 (write-bus fm-bus (env e))))))
+
+(definstrument (tut freq)
+  (let* ((car (make-oscil :frequency freq))
+	 (amp 0.04)
+	 (ret (<rt-play> (lambda ()
+			   (out (* (oscil car (read-bus fm-bus 0))
+				   amp))))))
+    (-> ret add-method 'freq (lambda ()
+			       freq))
+    ret))
+			 
+
+(define i (tut 120.0))
+
+(envset! (-> i freq) 10.0 3.0)
+
+(-> i stop)
+(rte-silence!)
+(rte-info)
 
 !#
 

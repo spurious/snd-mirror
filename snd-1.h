@@ -346,6 +346,10 @@ typedef struct snd_info {
   struct mini_history *minibuffer_history, *filter_history;
   bool active;
   char *name_string;
+#if HAVE_FAM
+  FAMRequest *file_watcher;
+  bool writing;
+#endif
   void (*read_only_watcher)(struct snd_info *sp);
 } snd_info;
 
@@ -1356,7 +1360,7 @@ void g_init_utils(void);
 #if HAVE_FAM
   FAMRequest *fam_monitor_file(const char *filename, void *data);
   FAMRequest *fam_monitor_directory(const char *dir_name, void *data);
-  int fam_unmonitor_file(FAMRequest *rp);
+  FAMRequest *fam_unmonitor_file(const char *filename, FAMRequest *rp);
 #endif
 #ifdef DEBUGGING
   void set_encloser(char *name);

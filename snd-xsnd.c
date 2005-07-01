@@ -1317,6 +1317,7 @@ static void bomb_check(XtPointer context, XtIntervalId *id)
   else bomb_in_progress = false;
 }
 
+/* TODO: bomb_in_progress should be local to sp -- could be a bunch of messed up sounds */
 void snd_file_bomb_icon(snd_info *sp, bool on)
 {
   if ((on) && (!bomb_in_progress))

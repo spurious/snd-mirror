@@ -6480,7 +6480,7 @@ static snd_fd *init_sample_read_any_with_bufsize(off_t samp, chan_info *cp, read
     {
       if (mus_file_probe(sp->filename) == 0)
 	{
-	  snd_error(_("file %s no longer exists!"), sp->short_filename);
+	  snd_warning(_("file %s no longer exists!"), sp->short_filename);
 	  return(NULL);
 	}
       else snd_warning(_("file %s has changed since we last read it!"), sp->short_filename);
@@ -6966,7 +6966,13 @@ static bool save_edits_and_update_display(snd_info *sp)
   if (!err)
     {
       mus_sound_forget(sp->filename);
+#if HAVE_FAM
+      sp->writing = true;
+      err = move_file(ofile, sp->filename); /* should we cancel and restart a monitor? */
+      sp->writing = false;
+#else
       err = move_file(ofile, sp->filename);
+#endif
       if (err) saved_errno = errno;
     }
   else saved_errno = errno;

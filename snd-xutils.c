@@ -292,7 +292,7 @@ void check_for_event(void)
   while (true)
     {
       msk = XtAppPending(app);
-      if (msk & (XtIMXEvent | XtIMAlternateInput))
+      if (msk & XtIMXEvent) /* TODO: check C-g again, and interlock fam sp (and gtk fam) */
 	{
 	  XtAppNextEvent(app, &event);
 	  XtDispatchEvent(&event);

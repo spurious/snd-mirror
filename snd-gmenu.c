@@ -260,16 +260,14 @@ void check_menu_labels(int key, int state, bool extended) {}
 
 /* -------------------------------- MAIN MENU -------------------------------- */
 
-/* I tried gtk_image_menu_item_new_from_stock here, and it looks cruddy to me -- will stick with bare-bones menus */
-
 GtkWidget *add_menu(void)
 {
-  /* this mainly passes the global data pointer (ss) to all the menu-related callbacks */
 #ifndef SND_AS_WIDGET
   GtkAccelGroup *accel_group;
   accel_group = gtk_accel_group_new();
   gtk_window_add_accel_group(GTK_WINDOW(MAIN_SHELL(ss)), accel_group);
 #endif
+
   mw[menu_menu] = gtk_menu_bar_new();
   ml[menu_menu] = NULL;
   add_drop(mw[menu_menu]);
@@ -286,7 +284,8 @@ GtkWidget *add_menu(void)
   ml[f_cascade_menu] = NULL;
   gtk_menu_item_set_submenu(GTK_MENU_ITEM(mw[file_menu]), mw[f_cascade_menu]);
 
-  mw[f_open_menu] = gtk_menu_item_new_with_label(_("Open"));
+  /* stock images here perhaps, but are they compatible with scm uses of button label? */
+  mw[f_open_menu] = gtk_image_menu_item_new_with_label(_("Open"));
   ml[f_open_menu] = _("Open");
   gtk_menu_shell_append(GTK_MENU_SHELL(mw[f_cascade_menu]), mw[f_open_menu]);
   gtk_widget_show(mw[f_open_menu]);

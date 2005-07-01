@@ -589,7 +589,7 @@ static file_dialog_info *make_file_dialog(bool read_only, char *title, char *sel
   file_dialog_info *fd;
   Arg args[20];
   int n;
-  XmString s1, s2;
+  XmString s1, s2, ok_label;
   Widget wtmp = NULL, rc1, rc2;
   fd = (file_dialog_info *)CALLOC(1, sizeof(file_dialog_info));
   fd->fp = (file_pattern_info *)CALLOC(1, sizeof(file_pattern_info));
@@ -603,10 +603,12 @@ static file_dialog_info *make_file_dialog(bool read_only, char *title, char *sel
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
   s1 = XmStringCreate(select_title, XmFONTLIST_DEFAULT_TAG);
   s2 = XmStringCreate(title, XmFONTLIST_DEFAULT_TAG);
+  ok_label = XmStringCreate(title, XmFONTLIST_DEFAULT_TAG);
 
+  XtSetArg(args[n], XmNokLabelString, ok_label); n++;
   XtSetArg(args[n], XmNselectionLabelString, s1); n++;
-  XtSetArg(args[n], XmNuserData, (XtPointer)(fd->fp)); n++;
   XtSetArg(args[n], XmNdialogTitle, s2); n++;
+  XtSetArg(args[n], XmNuserData, (XtPointer)(fd->fp)); n++;
 
   if (just_sounds(ss))
     {
@@ -615,11 +617,14 @@ static file_dialog_info *make_file_dialog(bool read_only, char *title, char *sel
       XtSetArg(args[n], XmNfileListLabelString, lab); n++;
       XmStringFree(lab);
     }
+
   fd->dialog = XmCreateFileSelectionDialog(w, title, args, n);
   fd->fp->dialog = fd->dialog;
   fd->dp->dialog = fd->dialog;
+
   XmStringFree(s1);
   XmStringFree(s2);
+  XmStringFree(ok_label);
 
   rc1 = XtVaCreateManagedWidget("filebuttons-rc1", 
 				xmRowColumnWidgetClass, fd->dialog,
@@ -840,13 +845,16 @@ static void file_mix_ok_callback(Widget w, XtPointer context, XtPointer info)
 	{
 	  int err;
 	  redirect_snd_error_to(file_open_error, (void *)fd);
+	  ss->sgx->requestor_dialog = w;
+	  ss->open_requestor = FROM_MIX_DIALOG;
 	  err = mix_complete_file_at_cursor(any_selected_sound(), filename, with_mix_tags(ss), 0);
 	  redirect_snd_error_to(NULL, NULL);
 	  if (err == 0) 
 	    XtUnmanageChild(w);
 	  else
 	    {
-	      clear_error_if_open_changes(fd->dialog, (void *)fd);
+	      if (ss->open_requestor != FROM_RAW_DATA_DIALOG)
+		clear_error_if_open_changes(fd->dialog, (void *)fd);
 	    }
 	  if (filename) XtFree(filename);
 	}
@@ -873,17 +881,8 @@ widget_t make_mix_file_dialog(bool managed)
   /* called from the menu */
   if (mdat == NULL)
     {
-      XmString mix_label;
       mdat = make_file_dialog(true, _("Mix"), _("mix in:"), file_mix_ok_callback, mix_file_help_callback);
       set_dialog_widget(FILE_MIX_DIALOG, mdat->dialog);
-
-      /* set ok button label to "Mix" */
-      mix_label = XmStringCreate(_("Mix"), XmFONTLIST_DEFAULT_TAG);
-      XtVaSetValues(XmFileSelectionBoxGetChild(mdat->dialog, XmDIALOG_OK_BUTTON),
-		    XmNlabelString, mix_label,
-		    NULL);
-      XmStringFree(mix_label);
-
       if (just_sounds(ss)) 
 	{
 	  XtVaSetValues(mdat->dialog, 
@@ -1653,7 +1652,6 @@ static void save_as_extract_callback(Widget w, XtPointer context, XtPointer info
 	  XtFree(str);
 	}
     }
-  /* TODO: gtk all dialogs */
   if (comment) FREE(comment);
 }
 
@@ -1951,6 +1949,7 @@ static void new_file_ok_callback(Widget w, XtPointer context, XtPointer info)
 	}
       else
 	{
+	  /* TODO: if existing file by new name and it's write protected, we need some better explanation */
 	  snd_info *sp;
 	  /* handle the overwrite hook directly */
 	  if ((!new_file_doit) &&
@@ -2396,11 +2395,24 @@ void save_edit_header_dialog_state(FILE *fd)
 
 /* -------------------------------- Raw Data Dialog -------------------------------- */
 
+/* PERHAPS: caller can pass continuation and callback funcs */
+
 static Widget raw_data_dialog = NULL;
 static off_t raw_data_location = 0;
 static file_data *rdat = NULL;
 static bool raw_data_read_only = false, raw_data_sound_selected = false;
 static char *raw_data_filename = NULL, *raw_data_info = NULL;
+
+/* TODO: check out other paths to raw data dialog */
+/* PERHAPS: if user changes raw file with dialog up -- adding header for example, should we automatically open it? */
+
+#define NUM_REQUESTORS 17
+static char *raw_data_dialog_requestors[NUM_REQUESTORS] = {
+  "no requestor", "update", "view previous files", "save as dialog", "drag and drop", "open dialog",
+  "recorder", "keyboard", "startup args", "region edit", "new file", "open-sound", 
+  "open-raw-sound", "view-sound", "new-sound", "raw data dialog", "mix dialog"
+};
+
 
 static void raw_data_ok_callback(Widget w, XtPointer context, XtPointer info) 
 {
@@ -2416,6 +2428,7 @@ static void raw_data_ok_callback(Widget w, XtPointer context, XtPointer info)
     {
       file_info *hdr;
       mus_header_set_raw_defaults(raw_srate, raw_chans, raw_data_format);
+      /* TODO: hdr unneeded in mix case (memleak) */
       hdr = (file_info *)CALLOC(1, sizeof(file_info));
       hdr->name = copy_string(raw_data_filename);
       hdr->type = MUS_RAW;
@@ -2426,19 +2439,52 @@ static void raw_data_ok_callback(Widget w, XtPointer context, XtPointer info)
 					  mus_sound_length(raw_data_filename) - raw_data_location);
       hdr->data_location = raw_data_location;
       hdr->comment = NULL;
+
       mus_sound_override_header(raw_data_filename, raw_srate, raw_chans, raw_data_format, MUS_RAW, raw_data_location,
 				mus_bytes_to_samples(raw_data_format, 
 						     mus_sound_length(raw_data_filename) - raw_data_location));
-      finish_opening_sound(add_sound_window(raw_data_filename, raw_data_read_only, hdr), raw_data_sound_selected);
+      /* choose action based on how we got here */
+#if DEBUGGING
+      if ((!(ss->sgx->requestor_dialog)) ||
+	  (ss->open_requestor == FROM_OPEN_DIALOG))
+	finish_opening_sound(add_sound_window(raw_data_filename, raw_data_read_only, hdr), raw_data_sound_selected);
+      else
+	{
+	  if (ss->open_requestor == FROM_MIX_DIALOG)
+	    {
+	      ss->reloading_updated_file = -1; /* don't reread lack-of-header! */
+	      mix_complete_file_at_cursor(any_selected_sound(), raw_data_filename, with_mix_tags(ss), 0);
+	      ss->reloading_updated_file = 0;
+	    }
+	  else fprintf(stderr, "unknown caller: %s\n", raw_data_dialog_requestors[ss->open_requestor]);
+	}
+#else
+      if ((ss->sgx->requestor_dialog) &&
+	  (ss->open_requestor == FROM_MIX_DIALOG))
+	{
+	  ss->reloading_updated_file = true; /* don't reread lack-of-header! */
+	  mix_complete_file_at_cursor(any_selected_sound(), raw_data_filename, with_mix_tags(ss), 0);
+	  ss->reloading_updated_file = false;
+	}
+      else
+	{
+	  finish_opening_sound(add_sound_window(raw_data_filename, raw_data_read_only, hdr), raw_data_sound_selected);
+	}
+#endif
       XtUnmanageChild(raw_data_dialog);
     }
 }
+
+/* TODO: cancel info in mix/open if filename in textfield doesn't match selected file 
+ *       or perhaps update info as file name is typed, as in write-protected case 
+ */
 
 static void raw_data_cancel_callback(Widget w, XtPointer context, XtPointer info) 
 {
   XtUnmanageChild(raw_data_dialog);
   if ((ss->sgx->requestor_dialog) && 
-      (ss->open_requestor == FROM_OPEN_DIALOG))
+      ((ss->open_requestor == FROM_OPEN_DIALOG) ||
+       (ss->open_requestor == FROM_MIX_DIALOG)))
     XtManageChild(ss->sgx->requestor_dialog);
 }
 
@@ -2553,18 +2599,6 @@ static void make_raw_data_dialog(const char *filename, const char *title)
   set_dialog_widget(RAW_DATA_DIALOG, raw_data_dialog);
 }
 
-/* TODO: check out other paths to raw data dialog */
-/* PERHAPS: if user changes raw file with dialog up -- adding header for example, should we automatically open it? */
-#if 0
-#define NUM_REQUESTORS 16
-static char *raw_data_dialog_requestors[NUM_REQUESTORS] = {
-  "no requestor", "update", "view previous files", "save as dialog", "drag and drop", "open dialog",
-  "recorder", "keyboard", "startup args", "region edit", "new file", "open-sound", 
-  "open-raw-sound", "view-sound", "new-sound", "raw data dialog"
-};
-#endif
-
-
 void raw_data_dialog_to_file_info(const char *filename, char *title, char *info, bool read_only, bool selected)
 {
   /* put up dialog for srate, chans, data format */
@@ -2573,7 +2607,8 @@ void raw_data_dialog_to_file_info(const char *filename, char *title, char *info,
   if (raw_data_filename) FREE(raw_data_filename);
   raw_data_filename = copy_string(filename);
   if ((ss->sgx->requestor_dialog) &&
-      (ss->open_requestor == FROM_OPEN_DIALOG))
+      ((ss->open_requestor == FROM_OPEN_DIALOG) ||
+       (ss->open_requestor == FROM_MIX_DIALOG)))
     XtUnmanageChild(ss->sgx->requestor_dialog);
   if (!title) 
     title = mus_format("no header found on %s\n", filename);

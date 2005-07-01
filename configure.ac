@@ -1206,8 +1206,7 @@ case "$host" in
               [with_jack=no
 	       AC_MSG_WARN(can't find the JACK library)])
             AC_CHECK_LIB(samplerate,main,[ 
-	      AC_CHECK_HEADER(samplerate.h,
-                  ,
+	      AC_CHECK_HEADER(samplerate.h,  ,
    	          [with_jack=no
                    AC_MSG_WARN(can't find the samplerate header files. JACK will not be used.)])],
               [with_jack=no
@@ -1215,6 +1214,12 @@ case "$host" in
             if test $with_jack = yes ; then
 	       if test "$with_alsa" != yes ; then
                  audio_system=JACK
+               fi
+	       if test x$PKG_CONFIG != xno ; then
+                   jack_version="`$PKG_CONFIG jack --modversion`"
+                   AC_DEFINE_UNQUOTED(JACK_VERSION,"${jack_version}")
+          	   JACK_LIBS="`$PKG_CONFIG jack --libs`"
+          	   JACK_FLAGS="`$PKG_CONFIG jack --cflags`"
                fi
             fi
         fi
@@ -1259,7 +1264,6 @@ case "$host" in
 			 AUDIO_LIB="/usr/lib/libasound.a -lsamplerate"
 		      else
 			 AUDIO_LIB="-lasound -lsamplerate"
-		      # -ljack will come from JACK_LIBS
 	              fi
 		      AC_DEFINE(HAVE_JACK)
 		    fi
@@ -1269,12 +1273,6 @@ case "$host" in
  		fi
  		;;
 	    JACK)
-	        if test x$PKG_CONFIG != xno ; then
-                   jack_version="`$PKG_CONFIG jack --modversion`"
-                   AC_DEFINE_UNQUOTED(JACK_VERSION,"${jack_version}")
-          	   JACK_LIBS="`$PKG_CONFIG jack --libs`"
-          	   JACK_FLAGS="`$PKG_CONFIG jack --cflags`"
-                fi
 		AC_DEFINE(HAVE_JACK)
 		AC_DEFINE(HAVE_OSS)
 		AUDIO_LIB="-lsamplerate"

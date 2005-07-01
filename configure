@@ -16812,6 +16812,15 @@ fi
 	       if test "$with_alsa" != yes ; then
                  audio_system=JACK
                fi
+	       if test x$PKG_CONFIG != xno ; then
+                   jack_version="`$PKG_CONFIG jack --modversion`"
+                   cat >>confdefs.h <<_ACEOF
+#define JACK_VERSION "${jack_version}"
+_ACEOF
+
+          	   JACK_LIBS="`$PKG_CONFIG jack --libs`"
+          	   JACK_FLAGS="`$PKG_CONFIG jack --cflags`"
+               fi
             fi
         fi
 
@@ -16945,7 +16954,6 @@ _ACEOF
 			 AUDIO_LIB="/usr/lib/libasound.a -lsamplerate"
 		      else
 			 AUDIO_LIB="-lasound -lsamplerate"
-		      # -ljack will come from JACK_LIBS
 	              fi
 		      cat >>confdefs.h <<\_ACEOF
 #define HAVE_JACK 1
@@ -16961,15 +16969,6 @@ _ACEOF
  		fi
  		;;
 	    JACK)
-	        if test x$PKG_CONFIG != xno ; then
-                   jack_version="`$PKG_CONFIG jack --modversion`"
-                   cat >>confdefs.h <<_ACEOF
-#define JACK_VERSION "${jack_version}"
-_ACEOF
-
-          	   JACK_LIBS="`$PKG_CONFIG jack --libs`"
-          	   JACK_FLAGS="`$PKG_CONFIG jack --cflags`"
-                fi
 		cat >>confdefs.h <<\_ACEOF
 #define HAVE_JACK 1
 _ACEOF

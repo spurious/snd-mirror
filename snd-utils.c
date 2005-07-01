@@ -354,6 +354,61 @@ void snd_exit(int val)
 
 /* ---------------- file alteration monitor (fam or gamin) ---------------- */
 #if HAVE_FAM
+#define DEBUGGING_FAM 0
+
+static void fam_reader(XtPointer context, int *fd, XtInputId *id)
+{
+  FAMEvent fe; 
+  if (FAMPending(ss->fam_connection) <= 0) return;
+  if (FAMNextEvent(ss->fam_connection, &fe) < 0) 
+    fprintf(stderr,"fam error: %d\n", FAMErrno);
+  else
+    {
+      snd_info *sp;
+      sp = (snd_info *)(fe.userdata);
+#if DEBUGGING_FAM
+      fprintf(stderr, "fam %s: %d\n", fe.filename, fe.code);
+#endif
+      switch (fe.code)
+	{
+	case FAMChanged:
+	  /* TODO: check what changes might matter here (write-protection -> put up lock?) */
+#if DEBUGGING_FAM
+	  fprintf(stderr, "%s changed\n", fe.filename);
+#endif	  
+	  break;
+
+	case FAMDeleted:
+	case FAMCreated:
+	case FAMMoved:
+#if DEBUGGING_FAM
+	  fprintf(stderr, "%s moved etc\n", fe.filename);
+#endif	  
+	  if (!(sp->writing))
+	    {
+	      sp->need_update = true;
+	      if (auto_update(ss))
+		snd_update(sp);
+	      else snd_file_bomb_icon(sp, true);
+	    }
+	  break;
+
+	case FAMStartExecuting:
+	case FAMStopExecuting:
+	case FAMAcknowledge:
+	case FAMExists:
+	case FAMEndExist:
+	  break;
+	  /* these don't matter */
+	default:
+#if DEBUGGING_FAM
+	  fprintf(stderr, "%s: unknown fam code: %d!\n", fe.filename, fe.code);
+#endif
+	  break;
+	}
+    }
+}
+
 static FAMRequest *fam_monitor(void)
 {
   if (!(ss->fam_connection))
@@ -362,7 +417,17 @@ static FAMRequest *fam_monitor(void)
       ss->fam_connection = (FAMConnection *)CALLOC(1, sizeof(FAMConnection));
       err = FAMOpen(ss->fam_connection);
       if (err < 0)
-	snd_error("can't start file alteration monitor!");
+	snd_error("can't start file alteration monitor: %d\n", FAMErrno);
+      else
+	{
+	  int fd;
+	  fd = FAMCONNECTION_GETFD(ss->fam_connection);
+	  ss->sgx->fam_port = XtAppAddInput(MAIN_APP(ss),
+					    fd,
+					    (XtPointer)XtInputReadMask,
+					    fam_reader,
+					    NULL);
+	}
     }
   return((FAMRequest *)CALLOC(1, sizeof(FAMRequest)));
 }
@@ -372,10 +437,13 @@ FAMRequest *fam_monitor_file(const char *filename, void *data)
   FAMRequest *rp;
   int err;
   rp = fam_monitor();
+#if DEBUGGING_FAM
+  fprintf(stderr, "monitor %s\n", filename);
+#endif
   err = FAMMonitorFile(ss->fam_connection, filename, rp, data);
   if (err < 0)
     {
-      snd_error("can't monitor %s\n", filename);
+      snd_error("can't monitor %s: %d\n", filename, FAMErrno);
       FREE(rp);
       return(NULL);
     }
@@ -390,16 +458,24 @@ FAMRequest *fam_monitor_directory(const char *dir_name, void *data)
   err = FAMMonitorDirectory(ss->fam_connection, dir_name, rp, data);
   if (err < 0)
     {
-      snd_error("can't monitor %s\n", dir_name);
+      snd_error("can't monitor %s: %d\n", dir_name, FAMErrno);
       FREE(rp);
       return(NULL);
     }
   return(rp);
 }
 
-int fam_unmonitor_file(FAMRequest *rp)
+FAMRequest *fam_unmonitor_file(const char *filename, FAMRequest *rp)
 {
-  return(FAMCancelMonitor(ss->fam_connection, rp));
+  int err;
+#if DEBUGGING_FAM
+  fprintf(stderr, "unmonitor %s\n", filename);
+#endif
+  err = FAMCancelMonitor(ss->fam_connection, rp);
+  if (err < 0)
+    snd_error("can't unmonitor %s: %d\n", filename, FAMErrno);
+  FREE(rp);
+  return(NULL);
 }
 #endif
 

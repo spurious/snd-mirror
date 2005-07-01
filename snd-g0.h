@@ -75,7 +75,7 @@ typedef struct {
 typedef enum {NOT_A_SCANF_WIDGET, SRATE_WIDGET, CHANS_WIDGET, DATA_LOCATION_WIDGET, SAMPLES_WIDGET} scanf_widget_t;
 
 typedef struct {
-  GtkWidget *header_list, *format_list, *srate_text, *chans_text, *comment_text, *location_text, *samples_text, *error_text;
+  GtkWidget *header_list, *format_list, *srate_text, *chans_text, *comment_text, *location_text, *samples_text, *error_text,*dialog;
   int current_type, current_format, formats, header_pos, format_pos;
   scanf_widget_t scanf_widget, error_widget;
   bool extracting;
