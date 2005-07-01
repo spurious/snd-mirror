@@ -1,0 +1,256 @@
+#!/usr/local/bin/guile -s
+!#
+
+;;; checkxg.scm checks the gtk2/gdk/pango/glib bindings in the snd sources, flagging any that are not gtk-2.0 compatible
+
+(use-modules (ice-9 debug))
+(use-modules (ice-9 format))
+(use-modules (ice-9 optargs))
+(use-modules (ice-9 common-list))
+(use-modules (ice-9 popen))
+(use-modules (ice-9 rdelim))
+
+(debug-enable 'debug)
+(debug-enable 'backtrace)
+(read-enable 'positions)
+
+(define ignore (list "gdk_pixmap_new" "gdk_pixmap_create_from_xpm" "gdk_pixmap_create_from_xpm_d"
+		     "gtk_notebook_append_page" "GTK_FILE_CHOOSER_DIALOG" "GTK_FILE_FILTER"
+		     "GTK_FILE_CHOOSER" "GTK_FILE_FILTER_FILENAME" "GTK_FILE_FILTER_DISPLAY_NAME"
+		     "GTK_FILE_CHOOSER_ACTION_OPEN" "GTK_FILE_CHOOSER_ACTION_SAVE" "gtk_file_chooser_dialog_new"
+		     "g_timeout_add_full" "g_timeout_add" "g_idle_add" "g_idle_add_full" "g_source_remove"
+		     "gtk_file_filter_new" "gtk_file_filter_set_name" "gtk_file_filter_add_pattern"
+		     "gtk_file_filter_add_custom" "gtk_file_chooser_set_select_multiple"
+		     "gtk_file_chooser_get_filename" "gtk_file_chooser_set_extra_widget"
+		     "gtk_file_chooser_add_filter" "gtk_file_chooser_set_filter"
+		     ))
+
+(define (shell cmd)
+  (with-output-to-string
+    (lambda ()
+      (let ((in-port (open-input-pipe cmd)))
+	(let loop ((line (read-line in-port 'concat)))
+	  (or (eof-object? line)
+	      (begin
+		(display line)
+		(loop (read-line in-port 'concat)))))))))
+
+(define (fgrep id num)
+  (if (not (member id ignore))
+      (let ((str (shell (format #f "fgrep ~A snd-*.[ch] --line-number" id))))
+	(if (> (string-length str) 1)
+	    (begin
+	      (display (format #f "-------------------------------- ~A from ~A --------------------------------~%" id num))
+	      (display str)
+	      (display (format #f "~%~%")))))))
+
+(define (cadr-str data)
+  (let ((sp1 -1)
+	(len (string-length data)))
+    (call-with-current-continuation
+     (lambda (return)
+       (do ((i 0 (1+ i)))
+	   ((= i len) (substring data sp1))
+	 (if (char=? (string-ref data i) #\space)
+	     (if (= sp1 -1)
+		 (set! sp1 i)
+		 (return (substring data (1+ sp1) i)))))))))
+
+(define (paren-str data)
+  (let ((len (string-length data)))
+    (call-with-current-continuation
+     (lambda (return)
+       (do ((i 0 (1+ i)))
+	   ((= i len) data)
+	 (if (char=? (string-ref data i) #\()
+	     (return (substring data 0 i))))))))
+
+
+(define* (CFNC data #:optional spec spec-data) ; 'const -> const for arg cast, 'etc for ... args, 'free -> must free C val before return
+  #f)
+
+(define (CFNC-PA data min-len max-len types)
+  #f)
+
+(define* (CFNC-21 data #:optional spec)
+  (fgrep (cadr-str data) 21))
+
+(define* (CFNC-23 data #:optional spec spec-data)
+  (fgrep (cadr-str data) 23))
+
+(define (CFNC-23-PA data min-len max-len types)
+  (fgrep (cadr-str data) 23))
+
+(define* (CFNC-231 data)
+  (fgrep (cadr-str data) 231))
+
+(define* (CFNC-232 data)
+  (fgrep (cadr-str data) 232))
+
+(define* (CFNC-234 data)
+  (fgrep (cadr-str data) 234))
+
+(define* (CFNC-235 data)
+  (fgrep (cadr-str data) 235))
+
+(define* (CFNC-236 data)
+  (fgrep (cadr-str data) 236))
+
+(define* (CFNC-250 data #:optional spec)
+  (fgrep (cadr-str data) 250))
+
+(define* (CFNC-251 data #:optional spec)
+  (fgrep (cadr-str data) 251))
+
+(define* (CFNC-252 data #:optional spec)
+  (fgrep (cadr-str data) 252))
+
+(define* (CFNC-254 data #:optional spec)
+  (fgrep (cadr-str data) 254))
+
+(define* (CFNC-255 data #:optional spec)
+  (fgrep (cadr-str data) 255))
+
+(define* (CFNC-256 data #:optional spec)
+  (fgrep (cadr-str data) 256))
+
+(define* (CFNC-260 data #:optional spec)
+  (fgrep (cadr-str data) 260))
+
+(define* (CFNC-270 data #:optional spec)
+  (fgrep (cadr-str data) 270))
+
+(define* (CFNC-22 data)
+  (fgrep (cadr-str data) 22))
+
+(define (CATOM name)
+  #f)
+
+(define (CSTR name)
+  #f)
+
+(define (CSTR-232 name)
+  (fgrep name 232))
+
+(define (CSTR-234 name)
+  (fgrep name 234))
+
+(define (CSTR-250 name)
+  (fgrep name 250))
+
+(define (CDBL name)
+  #f)
+
+(define* (CLNG name #:optional type spec-name)
+  #f)
+
+(define* (CLNG-21 name #:optional type spec-name)
+  (fgrep name 21))
+
+(define* (CLNG-23 name #:optional type spec-name)
+  (fgrep name 23))
+
+(define* (CLNG-250 name #:optional type spec-name)
+  (fgrep name 250))
+
+(define* (CLNG-252 name #:optional type spec-name)
+  (fgrep name 252))
+
+(define* (CLNG-254 name #:optional type spec-name)
+  (fgrep name 254))
+
+(define* (CLNG-256 name #:optional type spec-name)
+  (fgrep name 256))
+
+(define* (CINT name #:optional type)
+  #f)
+
+(define* (CINT-22 name #:optional type)
+  (fgrep name 22))
+
+(define* (CINT-23 name #:optional type)
+  (fgrep name 23))
+
+(define* (CINT-234 name #:optional type)
+  (fgrep name 234))
+
+(define* (CINT-235 name #:optional type)
+  (fgrep name 235))
+
+(define* (CINT-250 name #:optional type)
+  (fgrep name 250))
+
+(define* (CINT-251 name #:optional type)
+  (fgrep name 251))
+
+(define* (CINT-254 name #:optional type)
+  (fgrep name 254))
+
+(define* (CINT-256 name #:optional type)
+  (fgrep name 256))
+
+(define* (CINT-260 name #:optional type)
+  (fgrep name 260))
+
+(define* (CINT-270 name #:optional type)
+  (fgrep name 270))
+
+(define (CCAST name type) ; this is the cast (type *)obj essentially but here it's (list type* (cadr obj))
+  #f)
+
+(define (CCAST-21 name type)
+  (fgrep (paren-str name) 21))
+
+(define (CCAST-23 name type)
+  (fgrep (paren-str name) 23))
+
+(define (CCAST-234 name type)
+  (fgrep (paren-str name) 234))
+
+(define (CCAST-250 name type)
+  (fgrep (paren-str name) 250))
+
+(define (CCAST-252 name type)
+  (fgrep (paren-str name) 252))
+
+(define (CCAST-254 name type)
+  (fgrep (paren-str name) 254))
+
+(define (CCAST-256 name type)
+  (fgrep (paren-str name) 256))
+
+(define (CCHK name type)
+  #f)
+
+(define (CCHK-21 name type)
+  (fgrep (paren-str name) 21))
+
+(define (CCHK-23 name type)
+  (fgrep (paren-str name) 23))
+
+(define (CCHK-234 name type)
+  (fgrep (paren-str name) 234))
+
+(define (CCHK-250 name type)
+  (fgrep (paren-str name) 250))
+
+(define (CCHK-252 name type)
+  (fgrep (paren-str name) 252))
+
+(define (CCHK-254 name type)
+  (fgrep (paren-str name) 254))
+
+(define (CCHK-256 name type)
+  (fgrep (paren-str name) 256))
+
+(define (STRUCT data)
+  #f)
+
+(define (STRUCT-make data)
+  #f)
+
+;;; ---------------------------------------- read data ---------------------------------------- 
+(load "xgdata.scm")
+
+
+
