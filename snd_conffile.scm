@@ -1272,20 +1272,18 @@ Does not work.
 		   (if (car dim)
 		       (begin
 			 (set! (foreground-color) c-backgroundcolor)
-			 ;;(set! (foreground-color) green)
-			 (if #f
-			     (draw-string (cadddr dim) (car dim) (cadr dim))
-			     (fill-rectangle (car dim) (cadr dim) (caddr dim) (1+ fontheight)))))
-		   ;;(display string)(newline)
-		   (set! (foreground-color) color)
-		   (draw-string string x y)
+			 (fill-rectangle (car dim) (cadr dim) (caddr dim) (1+ fontheight))))
+		   (c-draw-string sound-widget
+				  color
+				  x (+ fontheight y)
+				  string) 
 
 		   (set-car! dim x)
 		   (set-car! (cdr dim) y)
 		   (set-car! (cddr dim) stringlen)
 		   (set-car! (cdddr dim) string)
 		   (set! (foreground-color) old-color))))))
-
+	
 	(get-time-string
 	 (let* ((ret-string "        ")
 		(intdiv (lambda-non-cons (a b)
@@ -1357,11 +1355,11 @@ Does not work.
 
       (if stereocombined
 	  (begin
-	    (call-non-cons c-dodasprint (call-non-cons get-time-string dastime) 0 red dastime wanttoupdate)
+	    (call-non-cons c-dodasprint (call-non-cons get-time-string dastime) 0 (list-ref (snd-gcs) 9) dastime wanttoupdate)
 	    (if (and force (c-selection?))
 		(begin
-		  (call-non-cons c-dodasprint (call-non-cons get-time-string (c-selection-position)) 1 blue (c-selection-position) #t)
-		  (call-non-cons c-dodasprint (call-non-cons get-time-string (+ (c-selection-position) (c-selection-frames))) 2 blue (+ (c-selection-position) (c-selection-frames)) #t))))
+		  (call-non-cons c-dodasprint (call-non-cons get-time-string (c-selection-position)) 1 (list-ref (snd-gcs) 3) (c-selection-position) #t)
+		  (call-non-cons c-dodasprint (call-non-cons get-time-string (+ (c-selection-position) (c-selection-frames))) 2 (list-ref (snd-gcs) 3) (+ (c-selection-position) (c-selection-frames)) #t))))
 	  (if wanttoupdate
 	      (report-in-minibuffer (if (c-selection?)
 					(begin
