@@ -311,7 +311,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA PACKAGE VERSION FGREP PKG_CONFIG FAM_LIB FFTW_LIBS GSL_CONFIG GSL_LIBS GSL_CFLAGS X_CFLAGS X_PRE_LIBS X_LIBS X_EXTRA_LIBS XLIBS XFLAGS GTK_CFLAGS GTK_LIBS GTK_LD_LIBS CAIRO_CFLAGS GX_FILES GX_HEADERS GL_LIBS GL_FILES GL_FLAGS GUILE_LIBS GUILE_CFLAGS XM_LIBS AUDIO_LIB JACK_LIBS JACK_FLAGS LDSO_FLAGS SO_INSTALL SO_LD A_LD A_LD_FLAGS MIDI_FILES SNDLIB_CONFIG SNDLIB_FILES SNDLIB_LIB SET_MAKE MKINSTALLDIRS MSGFMT GMSGFMT XGETTEXT MSGMERGE USE_NLS LIBICONV LTLIBICONV INTLLIBS LIBINTL LTLIBINTL POSUB MAKE_TARGET LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA PACKAGE VERSION FGREP PKG_CONFIG FFTW_LIBS GSL_CONFIG GSL_LIBS GSL_CFLAGS X_CFLAGS X_PRE_LIBS X_LIBS X_EXTRA_LIBS XLIBS XFLAGS GTK_CFLAGS GTK_LIBS GTK_LD_LIBS CAIRO_CFLAGS GX_FILES GX_HEADERS GL_LIBS GL_FILES GL_FLAGS FAM_LIB GUILE_LIBS GUILE_CFLAGS XM_LIBS AUDIO_LIB JACK_LIBS JACK_FLAGS LDSO_FLAGS SO_INSTALL SO_LD A_LD A_LD_FLAGS MIDI_FILES SNDLIB_CONFIG SNDLIB_FILES SNDLIB_LIB SET_MAKE MKINSTALLDIRS MSGFMT GMSGFMT XGETTEXT MSGMERGE USE_NLS LIBICONV LTLIBICONV INTLLIBS LIBINTL LTLIBINTL POSUB MAKE_TARGET LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -887,6 +887,7 @@ Optional Packages:
   --with-fftw		  use fftw, default=yes
   --with-xpm		  use xpm, default=yes
   --with-xp		  use xp, default=no
+  --with-fam		  use libfam (Gamin), default= yes
   --with-profiling	  include profiling machinery, default=no, for internal testing
   --with-float-samples	  use floats as the internal sample respresentation
   --with-sample-width=N   use N bits of samples
@@ -2941,6 +2942,7 @@ _ACEOF
 #   --without-fftw        omit FFTW even if it exists
 #   --without-xpm         omit XPM even if it exists (for testing)
 #   --without-xp          omit libXp even if it exists (for testing)
+#   --without-fam         libfam can be obsolete, but it's not clear how to test this
 #   --with-profiling      add profiling flags [branch counts] (for testing)
 #   --with-midi           include sndlib midi module
 #   GUILE_CONFIG_path     where to look for guile-config
@@ -3106,6 +3108,12 @@ fi;
 # Check whether --with-xp or --without-xp was given.
 if test "${with_xp+set}" = set; then
   withval="$with_xp"
+
+fi;
+
+# Check whether --with-fam or --without-fam was given.
+if test "${with_fam+set}" = set; then
+  withval="$with_fam"
 
 fi;
 
@@ -8086,301 +8094,6 @@ fi
 
 
 
-# look for the File Alteration Monitor (gamin or SGI's fam -- both use fam.h and libfam apparently)
-# TODO: doesn't this need an explicit include for fam.h?
-FAM_LIB=""
-if test "${ac_cv_header_fam_h+set}" = set; then
-  echo "$as_me:$LINENO: checking for fam.h" >&5
-echo $ECHO_N "checking for fam.h... $ECHO_C" >&6
-if test "${ac_cv_header_fam_h+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-fi
-echo "$as_me:$LINENO: result: $ac_cv_header_fam_h" >&5
-echo "${ECHO_T}$ac_cv_header_fam_h" >&6
-else
-  # Is the header compilable?
-echo "$as_me:$LINENO: checking fam.h usability" >&5
-echo $ECHO_N "checking fam.h usability... $ECHO_C" >&6
-cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-$ac_includes_default
-#include <fam.h>
-_ACEOF
-rm -f conftest.$ac_objext
-if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
-  (eval $ac_compile) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"
-			 || test ! -s conftest.err'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  ac_header_compiler=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-ac_header_compiler=no
-fi
-rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
-echo "$as_me:$LINENO: result: $ac_header_compiler" >&5
-echo "${ECHO_T}$ac_header_compiler" >&6
-
-# Is the header present?
-echo "$as_me:$LINENO: checking fam.h presence" >&5
-echo $ECHO_N "checking fam.h presence... $ECHO_C" >&6
-cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-#include <fam.h>
-_ACEOF
-if { (eval echo "$as_me:$LINENO: \"$ac_cpp conftest.$ac_ext\"") >&5
-  (eval $ac_cpp conftest.$ac_ext) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } >/dev/null; then
-  if test -s conftest.err; then
-    ac_cpp_err=$ac_c_preproc_warn_flag
-    ac_cpp_err=$ac_cpp_err$ac_c_werror_flag
-  else
-    ac_cpp_err=
-  fi
-else
-  ac_cpp_err=yes
-fi
-if test -z "$ac_cpp_err"; then
-  ac_header_preproc=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-  ac_header_preproc=no
-fi
-rm -f conftest.err conftest.$ac_ext
-echo "$as_me:$LINENO: result: $ac_header_preproc" >&5
-echo "${ECHO_T}$ac_header_preproc" >&6
-
-# So?  What about this header?
-case $ac_header_compiler:$ac_header_preproc:$ac_c_preproc_warn_flag in
-  yes:no: )
-    { echo "$as_me:$LINENO: WARNING: fam.h: accepted by the compiler, rejected by the preprocessor!" >&5
-echo "$as_me: WARNING: fam.h: accepted by the compiler, rejected by the preprocessor!" >&2;}
-    { echo "$as_me:$LINENO: WARNING: fam.h: proceeding with the compiler's result" >&5
-echo "$as_me: WARNING: fam.h: proceeding with the compiler's result" >&2;}
-    ac_header_preproc=yes
-    ;;
-  no:yes:* )
-    { echo "$as_me:$LINENO: WARNING: fam.h: present but cannot be compiled" >&5
-echo "$as_me: WARNING: fam.h: present but cannot be compiled" >&2;}
-    { echo "$as_me:$LINENO: WARNING: fam.h:     check for missing prerequisite headers?" >&5
-echo "$as_me: WARNING: fam.h:     check for missing prerequisite headers?" >&2;}
-    { echo "$as_me:$LINENO: WARNING: fam.h: see the Autoconf documentation" >&5
-echo "$as_me: WARNING: fam.h: see the Autoconf documentation" >&2;}
-    { echo "$as_me:$LINENO: WARNING: fam.h:     section \"Present But Cannot Be Compiled\"" >&5
-echo "$as_me: WARNING: fam.h:     section \"Present But Cannot Be Compiled\"" >&2;}
-    { echo "$as_me:$LINENO: WARNING: fam.h: proceeding with the preprocessor's result" >&5
-echo "$as_me: WARNING: fam.h: proceeding with the preprocessor's result" >&2;}
-    { echo "$as_me:$LINENO: WARNING: fam.h: in the future, the compiler will take precedence" >&5
-echo "$as_me: WARNING: fam.h: in the future, the compiler will take precedence" >&2;}
-    (
-      cat <<\_ASBOX
-## ------------------------------------- ##
-## Report this to bil@ccrma.stanford.edu ##
-## ------------------------------------- ##
-_ASBOX
-    ) |
-      sed "s/^/$as_me: WARNING:     /" >&2
-    ;;
-esac
-echo "$as_me:$LINENO: checking for fam.h" >&5
-echo $ECHO_N "checking for fam.h... $ECHO_C" >&6
-if test "${ac_cv_header_fam_h+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_cv_header_fam_h=$ac_header_preproc
-fi
-echo "$as_me:$LINENO: result: $ac_cv_header_fam_h" >&5
-echo "${ECHO_T}$ac_cv_header_fam_h" >&6
-
-fi
-if test $ac_cv_header_fam_h = yes; then
-  echo "$as_me:$LINENO: checking for FAMOpen in -lfam" >&5
-echo $ECHO_N "checking for FAMOpen in -lfam... $ECHO_C" >&6
-if test "${ac_cv_lib_fam_FAMOpen+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lfam  $LIBS"
-cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-/* Override any gcc2 internal prototype to avoid an error.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
-char FAMOpen ();
-int
-main ()
-{
-FAMOpen ();
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
-  (eval $ac_link) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"
-			 || test ! -s conftest.err'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest$ac_exeext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  ac_cv_lib_fam_FAMOpen=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-ac_cv_lib_fam_FAMOpen=no
-fi
-rm -f conftest.err conftest.$ac_objext \
-      conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-echo "$as_me:$LINENO: result: $ac_cv_lib_fam_FAMOpen" >&5
-echo "${ECHO_T}$ac_cv_lib_fam_FAMOpen" >&6
-if test $ac_cv_lib_fam_FAMOpen = yes; then
-  cat >>confdefs.h <<\_ACEOF
-#define HAVE_FAM_H 1
-_ACEOF
-
-      cat >>confdefs.h <<\_ACEOF
-#define HAVE_FAM 1
-_ACEOF
-
-      echo "$as_me:$LINENO: checking for FAMNoExists in -lfam" >&5
-echo $ECHO_N "checking for FAMNoExists in -lfam... $ECHO_C" >&6
-if test "${ac_cv_lib_fam_FAMNoExists+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lfam  $LIBS"
-cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-/* Override any gcc2 internal prototype to avoid an error.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
-char FAMNoExists ();
-int
-main ()
-{
-FAMNoExists ();
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
-  (eval $ac_link) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"
-			 || test ! -s conftest.err'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest$ac_exeext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  ac_cv_lib_fam_FAMNoExists=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-ac_cv_lib_fam_FAMNoExists=no
-fi
-rm -f conftest.err conftest.$ac_objext \
-      conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-echo "$as_me:$LINENO: result: $ac_cv_lib_fam_FAMNoExists" >&5
-echo "${ECHO_T}$ac_cv_lib_fam_FAMNoExists" >&6
-if test $ac_cv_lib_fam_FAMNoExists = yes; then
-  cat >>confdefs.h <<\_ACEOF
-#define HAVE_FAM_NO_EXISTS 1
-_ACEOF
-
-fi
- # gamin extension
-      FAM_LIB="-lfam"
-
-fi
-
-fi
-
-
-
-
-
 #--------------------------------------------------------------------------------
 # fftw
 #--------------------------------------------------------------------------------
@@ -8388,10 +8101,10 @@ fi
 SAVELIBS=$LIBS
 FFTW_LIBS=""
 if test "$with_fftw" != no; then
-LIBS="$LIBS -lfftw3 -lm"
-echo "$as_me:$LINENO: checking for fftw-3" >&5
+  LIBS="$LIBS -lfftw3 -lm"
+  echo "$as_me:$LINENO: checking for fftw-3" >&5
 echo $ECHO_N "checking for fftw-3... $ECHO_C" >&6
-cat >conftest.$ac_ext <<_ACEOF
+  cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
 cat confdefs.h >>conftest.$ac_ext
@@ -13253,7 +12966,7 @@ _ACEOF
 #define CAIRO_VERSION "${cairo_version}"
 _ACEOF
 
-               fi
+              fi
 
 fi
 
@@ -13614,6 +13327,7 @@ echo "$as_me: WARNING: can't find gtkglext" >&2;}
 echo "$as_me: WARNING: GL only works with Motif or Gtk2" >&2;}
   fi
 fi
+
 if test "$have_gl" = yes ; then
   cat >>confdefs.h <<\_ACEOF
 #define HAVE_GL 1
@@ -13687,6 +13401,266 @@ else
 fi
 
 
+
+
+
+#--------------------------------------------------------------------------------
+# fam/gamin (needs GUI)
+#--------------------------------------------------------------------------------
+
+FAM_LIB=""
+if test "$ac_snd_have_gui" != no ; then
+  if test "$with_fam" != no ; then
+    # look for the File Alteration Monitor (gamin or SGI's fam -- both use fam.h and libfam apparently)
+    # TODO: doesn't this need an explicit include for fam.h?
+    # TODO: look for gamin before fam
+    echo "$as_me:$LINENO: checking for Gamin" >&5
+echo $ECHO_N "checking for Gamin... $ECHO_C" >&6
+    if test x$PKG_CONFIG != xno && $PKG_CONFIG gamin --exists ; then
+       gamin_version="`$PKG_CONFIG gamin --modversion`"
+       echo "$as_me:$LINENO: result: $gamin_version" >&5
+echo "${ECHO_T}$gamin_version" >&6
+       cat >>confdefs.h <<_ACEOF
+#define GAMIN_VERSION "${gamin_version}"
+_ACEOF
+
+       FAM_LIB="`$PKG_CONFIG gamin --libs`"
+       cat >>confdefs.h <<\_ACEOF
+#define HAVE_FAM_H 1
+_ACEOF
+
+       cat >>confdefs.h <<\_ACEOF
+#define HAVE_FAM 1
+_ACEOF
+
+       cat >>confdefs.h <<\_ACEOF
+#define HAVE_FAM_NO_EXISTS 1
+_ACEOF
+
+    else
+      echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+      if test "${ac_cv_header_fam_h+set}" = set; then
+  echo "$as_me:$LINENO: checking for fam.h" >&5
+echo $ECHO_N "checking for fam.h... $ECHO_C" >&6
+if test "${ac_cv_header_fam_h+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+fi
+echo "$as_me:$LINENO: result: $ac_cv_header_fam_h" >&5
+echo "${ECHO_T}$ac_cv_header_fam_h" >&6
+else
+  # Is the header compilable?
+echo "$as_me:$LINENO: checking fam.h usability" >&5
+echo $ECHO_N "checking fam.h usability... $ECHO_C" >&6
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+$ac_includes_default
+#include <fam.h>
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_header_compiler=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_header_compiler=no
+fi
+rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+echo "$as_me:$LINENO: result: $ac_header_compiler" >&5
+echo "${ECHO_T}$ac_header_compiler" >&6
+
+# Is the header present?
+echo "$as_me:$LINENO: checking fam.h presence" >&5
+echo $ECHO_N "checking fam.h presence... $ECHO_C" >&6
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+#include <fam.h>
+_ACEOF
+if { (eval echo "$as_me:$LINENO: \"$ac_cpp conftest.$ac_ext\"") >&5
+  (eval $ac_cpp conftest.$ac_ext) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } >/dev/null; then
+  if test -s conftest.err; then
+    ac_cpp_err=$ac_c_preproc_warn_flag
+    ac_cpp_err=$ac_cpp_err$ac_c_werror_flag
+  else
+    ac_cpp_err=
+  fi
+else
+  ac_cpp_err=yes
+fi
+if test -z "$ac_cpp_err"; then
+  ac_header_preproc=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+  ac_header_preproc=no
+fi
+rm -f conftest.err conftest.$ac_ext
+echo "$as_me:$LINENO: result: $ac_header_preproc" >&5
+echo "${ECHO_T}$ac_header_preproc" >&6
+
+# So?  What about this header?
+case $ac_header_compiler:$ac_header_preproc:$ac_c_preproc_warn_flag in
+  yes:no: )
+    { echo "$as_me:$LINENO: WARNING: fam.h: accepted by the compiler, rejected by the preprocessor!" >&5
+echo "$as_me: WARNING: fam.h: accepted by the compiler, rejected by the preprocessor!" >&2;}
+    { echo "$as_me:$LINENO: WARNING: fam.h: proceeding with the compiler's result" >&5
+echo "$as_me: WARNING: fam.h: proceeding with the compiler's result" >&2;}
+    ac_header_preproc=yes
+    ;;
+  no:yes:* )
+    { echo "$as_me:$LINENO: WARNING: fam.h: present but cannot be compiled" >&5
+echo "$as_me: WARNING: fam.h: present but cannot be compiled" >&2;}
+    { echo "$as_me:$LINENO: WARNING: fam.h:     check for missing prerequisite headers?" >&5
+echo "$as_me: WARNING: fam.h:     check for missing prerequisite headers?" >&2;}
+    { echo "$as_me:$LINENO: WARNING: fam.h: see the Autoconf documentation" >&5
+echo "$as_me: WARNING: fam.h: see the Autoconf documentation" >&2;}
+    { echo "$as_me:$LINENO: WARNING: fam.h:     section \"Present But Cannot Be Compiled\"" >&5
+echo "$as_me: WARNING: fam.h:     section \"Present But Cannot Be Compiled\"" >&2;}
+    { echo "$as_me:$LINENO: WARNING: fam.h: proceeding with the preprocessor's result" >&5
+echo "$as_me: WARNING: fam.h: proceeding with the preprocessor's result" >&2;}
+    { echo "$as_me:$LINENO: WARNING: fam.h: in the future, the compiler will take precedence" >&5
+echo "$as_me: WARNING: fam.h: in the future, the compiler will take precedence" >&2;}
+    (
+      cat <<\_ASBOX
+## ------------------------------------- ##
+## Report this to bil@ccrma.stanford.edu ##
+## ------------------------------------- ##
+_ASBOX
+    ) |
+      sed "s/^/$as_me: WARNING:     /" >&2
+    ;;
+esac
+echo "$as_me:$LINENO: checking for fam.h" >&5
+echo $ECHO_N "checking for fam.h... $ECHO_C" >&6
+if test "${ac_cv_header_fam_h+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_cv_header_fam_h=$ac_header_preproc
+fi
+echo "$as_me:$LINENO: result: $ac_cv_header_fam_h" >&5
+echo "${ECHO_T}$ac_cv_header_fam_h" >&6
+
+fi
+if test $ac_cv_header_fam_h = yes; then
+  echo "$as_me:$LINENO: checking for FAMOpen in -lfam" >&5
+echo $ECHO_N "checking for FAMOpen in -lfam... $ECHO_C" >&6
+if test "${ac_cv_lib_fam_FAMOpen+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lfam  $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char FAMOpen ();
+int
+main ()
+{
+FAMOpen ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_fam_FAMOpen=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_lib_fam_FAMOpen=no
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_fam_FAMOpen" >&5
+echo "${ECHO_T}$ac_cv_lib_fam_FAMOpen" >&6
+if test $ac_cv_lib_fam_FAMOpen = yes; then
+  cat >>confdefs.h <<\_ACEOF
+#define HAVE_FAM_H 1
+_ACEOF
+
+            cat >>confdefs.h <<\_ACEOF
+#define HAVE_FAM 1
+_ACEOF
+
+            FAM_LIB="-lfam"
+
+fi
+
+fi
+
+
+    fi
+  fi
+fi
 
 
 
@@ -17031,57 +17005,8 @@ _ACEOF
 	SO_INSTALL=":"
 	SO_LD=":"
 	A_LD_FLAGS="-non_shared"
-	# OPT:Olimit check borrowed from Python's configure.in
-	echo "$as_me:$LINENO: checking whether $CC accepts -OPT:Olimit=0" >&5
-echo $ECHO_N "checking whether $CC accepts -OPT:Olimit=0... $ECHO_C" >&6
-	if test "${ac_cv_opt_olimit_ok+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_save_cc="$CC"
-	CC="$CC -OPT:Olimit=0"
-	if test "$cross_compiling" = yes; then
-  ac_cv_opt_olimit_ok=no
-else
-  cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-int main() { return 0; }
-_ACEOF
-rm -f conftest$ac_exeext
-if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
-  (eval $ac_link) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } && { ac_try='./conftest$ac_exeext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  ac_cv_opt_olimit_ok=yes
-else
-  echo "$as_me: program exited with status $ac_status" >&5
-echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-( exit $ac_status )
-ac_cv_opt_olimit_ok=no
-fi
-rm -f core *.core gmon.out bb.out conftest$ac_exeext conftest.$ac_objext conftest.$ac_ext
-fi
-	CC="$ac_save_cc"
-fi
-
-	echo "$as_me:$LINENO: result: $ac_cv_opt_olimit_ok" >&5
-echo "${ECHO_T}$ac_cv_opt_olimit_ok" >&6
-	if test $ac_cv_opt_olimit_ok = yes; then
-	  CFLAGS="$CFLAGS -OPT:Olimit=0"
-	  if test $LOCAL_LANGUAGE = "None"; then
-	    LIBS="$LIBS -lm"
-          fi
+	if test $LOCAL_LANGUAGE = "None"; then
+	  LIBS="$LIBS -lm"
 	fi
         ;;
     alpha*)
@@ -20144,7 +20069,6 @@ s,@PACKAGE@,$PACKAGE,;t t
 s,@VERSION@,$VERSION,;t t
 s,@FGREP@,$FGREP,;t t
 s,@PKG_CONFIG@,$PKG_CONFIG,;t t
-s,@FAM_LIB@,$FAM_LIB,;t t
 s,@FFTW_LIBS@,$FFTW_LIBS,;t t
 s,@GSL_CONFIG@,$GSL_CONFIG,;t t
 s,@GSL_LIBS@,$GSL_LIBS,;t t
@@ -20164,6 +20088,7 @@ s,@GX_HEADERS@,$GX_HEADERS,;t t
 s,@GL_LIBS@,$GL_LIBS,;t t
 s,@GL_FILES@,$GL_FILES,;t t
 s,@GL_FLAGS@,$GL_FLAGS,;t t
+s,@FAM_LIB@,$FAM_LIB,;t t
 s,@GUILE_LIBS@,$GUILE_LIBS,;t t
 s,@GUILE_CFLAGS@,$GUILE_CFLAGS,;t t
 s,@XM_LIBS@,$XM_LIBS,;t t

@@ -399,7 +399,7 @@ const char *mus_header_type_name(int type)
 {
   switch (type)
     {
-    case MUS_NEXT:             return("Sun");                     break;
+    case MUS_NEXT:             return("Sun/Next");                break;
     case MUS_AIFC:             return("AIFC");                    break;
     case MUS_RIFF:             return("RIFF");                    break;
     case MUS_BICSF:            return("BICSF");                   break;
@@ -490,6 +490,36 @@ const char *mus_data_format_name(int format)
     case MUS_BINTN:            return("normalized big endian int (32 bits)");      break;
     case MUS_LINTN:            return("normalized little endian int (32 bits)");   break;
     default:                   return("unknown");                                  break;
+    }
+}
+
+const char *mus_data_format_short_name(int format)
+{
+  switch (format)
+    {
+    case MUS_BSHORT:           return("short");           break;
+    case MUS_MULAW:            return("mulaw");           break;
+    case MUS_BYTE:             return("signed byte");     break;
+    case MUS_BFLOAT:           return("float");           break;
+    case MUS_BFLOAT_UNSCALED:  return("float unscaled)"); break;
+    case MUS_BINT:             return("int");             break;
+    case MUS_ALAW:             return("alaw");            break;
+    case MUS_UBYTE:            return("unsigned byte");   break;
+    case MUS_B24INT:           return("24-bit int");      break;
+    case MUS_BDOUBLE:          return("double");          break;
+    case MUS_BDOUBLE_UNSCALED: return("double unscaled"); break;
+    case MUS_LSHORT:           return("short");           break;
+    case MUS_LINT:             return("int");             break;
+    case MUS_LFLOAT:           return("float");           break;
+    case MUS_LDOUBLE:          return("double");          break;
+    case MUS_LFLOAT_UNSCALED:  return("float unscaled");  break;
+    case MUS_LDOUBLE_UNSCALED: return("double unscaled"); break;
+    case MUS_UBSHORT:          return("unsigned short");  break;
+    case MUS_ULSHORT:          return("unsigned short");  break;
+    case MUS_L24INT:           return("24-bit int");      break;
+    case MUS_BINTN:            return("normalized int");  break;
+    case MUS_LINTN:            return("normalized int");  break;
+    default:                   return("unknown");         break;
     }
 }
 

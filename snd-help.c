@@ -347,6 +347,13 @@ char *version_info(void)
 #ifdef JACK_VERSION
 	  ", Jack: ", JACK_VERSION,
 #endif
+#if HAVE_FAM
+  #ifdef GAMIN_VERSION
+	  "\n    Gamin: ", GAMIN_VERSION,
+  #else
+	  "\n    with fam",
+  #endif
+#endif
 #if SND_AS_WIDGET
 	  _("\n    compiled as a widget"),
 #endif
@@ -403,6 +410,7 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+1-Jul:   --with-fam configuration switch.\n\
 27-Jun:  output-name-hook now takes an argument, the current output file name.\n\
          changed find to find-channel to avoid collision with Scheme's srfi-1.\n\
 24-Jun:  channels-combined is now the default channel-style.\n\

@@ -8,13 +8,32 @@
    View:Files and region lists 
 */
 
-/* TODO: if file write-protected, how to get rid of errmsg if user chmods it?
- *           /usr/include/fam.h -- how to tell if fam is running?
- *           use gamin if possible -- apparently it's a user-side process?
+
+/* TODO: if file write-protected, fam to get rid of errmsg if user chmods it?
  * TODO: if edit-header of write-protected sound, should we add an 'Unprotect' button?  Is there are "right way" to implement it?
  * PERHAPS: location to mix at in File:Mix? amp/srate sliders?
  * TODO: pull-down list of recent files
+ * TODO: add a sound filename completer to specialize filename_completer (if just_sounds)
+ * TODO: extract overwrite question from save_as_dialog_save_sound
+ * TODO: extract snd_overwrite_ok case: incorporate overwrite here
+ * TODO: new file ok: if existing file by new name and it's write protected, we need some better explanation
+ * TODO: names are bad: default-output-type|format
+ * TODO: new file: find some way to get around the hidden label bug (unmanage error text etc)
+ * TODO: new file: mus_file_probe: use FAM to handle this
+ * TODO: edit_header: if nothing has changed, Save button should be insensitive
+ * TODO: check out other paths to raw data dialog
+ * PERHAPS: if user changes raw file with dialog up -- adding header for example, should we automatically open it?
+ * TODO: should previous files list be monitored via FAM?
+ * TODO: replace "current files" section with something useful --
+ *   perhaps a menu for actions on previous files such as insert/mix/open/play
+ *   or a grouping thing as in the (unimplemented) regions dialog
+ * PERHAPS: (alert_new_file): handle all directory update decisions through FAM
+ * PERHAPS: region save-as as button in region browser?
+ * PERHAPS: raw_data: caller can pass continuation and callback funcs
+ * SOMEDAY: new file ok: would be nice to cancel 'DoIt' if user deletes file by hand -- use FAM
+ * TODO: get rid of XmStringGetLtoR(list->item, XmFONTLIST_DEFAULT_TAG, ...) -> XmStringUnparse
  */
+
 
 #define NUM_VISIBLE_HEADERS 5
 
@@ -246,25 +265,6 @@ static void sound_file_search(Widget dialog, XmFileSelectionBoxCallbackStruct *i
 {
   /* generate list of sound files, set XmNfileListItems, XmNfileListItemCount, XmNlistUpdated
    * the latter if new file list generated -- if no files, XmNfileListItems NULL, Count 0
-   * can also set XmNdirSpec to full file spec of dir.  The callbackstruct is:
-   *    typedef struct
-   *    {
-   *      int      reason;         Why called
-   *      XEvent   * event;  
-   *      XmString value;          current value of XmNdirSpec
-   *      int      length;         number of bytes in value
-   *      XmString mask;           current value of XmNdirMask
-   *      int      mask_length;    number of bytes in mask
-   *      XmString dir;            current base directory
-   *      int      dir_length;     number of bytes in dir
-   *      XmString pattern;        current search pattern
-   *      int      pattern_length; number of bytes in pattern
-   *    } XmFileSelectionBoxCallbackStruct;
-   *
-   * proc should stick to XmNfileTypeMask (type unsigned char): 
-   *   XmFILE_REGULAR -- regular files
-   *   XmFILE_DIRECTORY -- directories
-   *   XmFILE_ANY_TYPE 
    *
    * the pattern (file name mask) only matters if the filter button is hit, 
    * it appears to be "*" until the filter is invoked.
@@ -386,7 +386,7 @@ static void force_directory_reread(Widget dialog)
   /* force update, but make sure the filename is not reset to its (dumb) default */
   XmString dirmask;
   Widget name_field;
-  char *filename;
+  char *filename = NULL;
   ASSERT_WIDGET_TYPE(XmIsFileSelectionBox(dialog), dialog);
   name_field = XtNameToWidget(dialog, "Text");
   if (!name_field) 
@@ -396,6 +396,7 @@ static void force_directory_reread(Widget dialog)
   XmFileSelectionDoSearch(dialog, dirmask);
   XmStringFree(dirmask);
   XmTextSetString(name_field, filename);
+  if (filename) XtFree(filename);
 }
 
 static void just_sounds_callback(Widget w, XtPointer context, XtPointer info) 
@@ -458,7 +459,7 @@ static void play_selected_callback(Widget w, XtPointer context, XtPointer info)
   if (cb->set)
     {
       Widget wtmp;
-      char *filename;
+      char *filename = NULL;
       if ((dp->player) && 
 	  (dp->player->playing)) 
 	stop_playing_sound(dp->player, PLAY_BUTTON_UNSET);
@@ -523,6 +524,57 @@ static void file_cancel_callback (Widget w, XtPointer context, XtPointer info)
   XtUnmanageChild (w);
 }
 
+static void post_file_info(file_dialog_info *fd, const char *filename)
+{
+  /* filename is known[strongly believed] to be a sound file, etc */
+  XmString label;
+  char *buf;
+  char timestr[64];
+  time_t date;
+  XtManageChild(fd->dp->play_button);
+
+  buf = (char *)CALLOC(LABEL_BUFFER_SIZE, sizeof(char));
+  mus_snprintf(buf, LABEL_BUFFER_SIZE, "%s: %d chan%s, %d Hz, %.3f secs",
+	       filename_without_home_directory(filename),
+	       mus_sound_chans(filename),
+	       (mus_sound_chans(filename) > 1) ? "s" : "",
+	       mus_sound_srate(filename),
+	       mus_sound_duration(filename));
+  label = XmStringCreateLocalized(buf);
+  XtVaSetValues(fd->dialog_info1, 
+		XmNlabelString, label, 
+		NULL);
+  XmStringFree(label);
+
+  date = mus_sound_write_date(filename);
+#if HAVE_STRFTIME
+  strftime(timestr, 64, ", %d-%b-%Y", localtime(&date));
+#else
+  sprintf(timestr, "");
+#endif
+  mus_snprintf(buf, LABEL_BUFFER_SIZE, "%s, %s%s",
+	       mus_header_type_name(mus_sound_header_type(filename)),
+	       mus_data_format_short_name(mus_sound_data_format(filename)),
+	       timestr);
+  label = XmStringCreateLocalized(buf);
+  XtVaSetValues(fd->dialog_info2, XmNlabelString, label, NULL);
+  XmStringFree(label);
+  FREE(buf);
+
+  if (!(XtIsManaged(fd->dialog_info2))) 
+    XtManageChild(fd->dialog_info2);
+  if (!(XtIsManaged(fd->dialog_frame))) 
+    XtManageChild(fd->dialog_frame);
+}
+
+static void unpost_file_info(file_dialog_info *fd)
+{
+  if (XtIsManaged(fd->dp->play_button)) 
+    XtUnmanageChild(fd->dp->play_button);
+  if (XtIsManaged(fd->dialog_frame)) 
+    XtUnmanageChild(fd->dialog_frame);
+}
+
 static void file_dialog_select_callback(Widget w, XtPointer context, XtPointer info)
 {
   file_dialog_info *fd = (file_dialog_info *)context;
@@ -532,54 +584,91 @@ static void file_dialog_select_callback(Widget w, XtPointer context, XtPointer i
   XtVaGetValues(w, XmNselectedItems, &strs, NULL);
   filename = (char *)XmStringUnparse(strs[0], NULL, XmCHARSET_TEXT, XmCHARSET_TEXT, NULL, 0, XmOUTPUT_ALL);
   if ((filename) && (sound_file_p(filename)))
-    {
-      XmString label;
-      char *buf;
-      char timestr[64];
-      time_t date;
-      XtManageChild(fd->dp->play_button);
+    post_file_info(fd, filename);
+  else unpost_file_info(fd);
+  if (filename) XtFree(filename);
+}
 
-      buf = (char *)CALLOC(LABEL_BUFFER_SIZE, sizeof(char));
-      mus_snprintf(buf, LABEL_BUFFER_SIZE, "%s: %d chan%s, %d Hz, %.3f secs",
-		   filename_without_home_directory(filename),
-		   mus_sound_chans(filename),
-		   (mus_sound_chans(filename) > 1) ? "s" : "",
-		   mus_sound_srate(filename),
-		   mus_sound_duration(filename));
-      label = XmStringCreateLocalized(buf);
-      XtVaSetValues(fd->dialog_info1, 
-		    XmNlabelString, label, 
+static void unpost_if_filter_changed(Widget w, XtPointer context, XtPointer info)
+{
+  unpost_file_info((file_dialog_info *)context);
+}
+
+static void watch_filename_change(Widget w, XtPointer context, XtPointer info)
+{
+  /* try to move file list to show possible matches,
+   *   if a sound file, show info
+   */
+  file_dialog_info *fd = (file_dialog_info *)context;
+  char *filename = NULL;
+  filename = XmTextGetString(w);
+  if ((filename) && (*filename))
+    {
+      XmStringTable files;
+      Widget file_list;
+      int num_files = 0, i, top, visible, pos = -1, l, u;
+      char *file_list_file = NULL;
+
+      file_list = XmFileSelectionBoxGetChild(fd->dialog, XmDIALOG_LIST);
+      XtVaGetValues(fd->dialog,
+		    XmNfileListItemCount, &num_files,
+		    XmNfileListItems, &files, /* do not free */
 		    NULL);
-      XmStringFree(label);
-
-      date = mus_sound_write_date(filename);
-#if HAVE_STRFTIME
-      strftime(timestr, 64, ", %d-%b-%Y", localtime(&date));
-#else
-      sprintf(timestr, "");
-#endif
-      mus_snprintf(buf, LABEL_BUFFER_SIZE, "%s %s%s",
-		   mus_header_type_to_string(mus_sound_header_type(filename)),
-		   mus_data_format_to_string(mus_sound_data_format(filename)),
-		   timestr);
-      label = XmStringCreateLocalized(buf);
-      XtVaSetValues(fd->dialog_info2, XmNlabelString, label, NULL);
-      XmStringFree(label);
-      FREE(buf);
-
-      if (!(XtIsManaged(fd->dialog_info2))) 
-	XtManageChild(fd->dialog_info2);
-      if (!(XtIsManaged(fd->dialog_frame))) 
-	XtManageChild(fd->dialog_frame);
-    }
-  else
-    {
-      if (XtIsManaged(fd->dp->play_button)) 
-	XtUnmanageChild(fd->dp->play_button);
-      if (XtIsManaged(fd->dialog_frame)) 
-	XtUnmanageChild(fd->dialog_frame);
+      XtVaGetValues(file_list,
+		    XmNtopItemPosition, &top,
+		    XmNvisibleItemCount, &visible,
+		    NULL);
+      l = 0; /* hooray for Knuth... */
+      u = num_files - 1;
+      while (true)
+	{
+	  int comp;
+	  if (u < l) break;
+	  i = (l + u) / 2;
+	  file_list_file = XmStringUnparse(files[i], NULL, XmCHARSET_TEXT, XmCHARSET_TEXT, NULL, 0, XmOUTPUT_ALL); /* p453 */
+	  comp = strcmp(file_list_file, filename);
+	  XtFree(file_list_file);
+	  if (comp == 0)
+	    {
+	      pos = i + 1;
+	      break;
+	    }
+	  if (comp < 0) /* files[i] less than filename */
+	    l = i + 1;
+	  else u = i - 1;
+	}
+      if (pos >= 0)
+	{
+	  if (pos < top)
+	    XmListSetPos(file_list, pos);
+	  else
+	    {
+	      if (pos >= (top + visible))
+		{
+		  if ((pos + visible) > num_files)
+		    XmListSetBottomPos(file_list, pos);
+		  else XmListSetPos(file_list, pos);
+		}
+	    }
+	}
+      if ((mus_file_probe(filename)) && 
+	  (!directory_p(filename)))
+	{
+	  if (sound_file_p(filename))
+	    post_file_info(fd, filename);
+	}
     }
   if (filename) XtFree(filename);
+}
+
+static void focus_filename_text_callback(Widget w, XtPointer context, XtPointer info)
+{
+  XtAddCallback(w, XmNvalueChangedCallback, watch_filename_change, context);
+}
+
+static void unfocus_filename_text_callback(Widget w, XtPointer context, XtPointer info)
+{
+  XtRemoveCallback(w, XmNvalueChangedCallback, watch_filename_change, context);
 }
 
 static file_dialog_info *make_file_dialog(bool read_only, char *title, char *select_title, 
@@ -642,19 +731,24 @@ static file_dialog_info *make_file_dialog(bool read_only, char *title, char *sel
   fd->dialog_info2 = XtVaCreateManagedWidget("", xmLabelWidgetClass, rc2, XmNbackground, ss->sgx->highlight_color, NULL);
   color_file_selection_box(fd->dialog);
 
-  /* TODO: add a sound filename completer to specialize filename_completer */
-
   wtmp = XtNameToWidget(fd->dialog, "Text");
   if (!wtmp) 
     wtmp = XmFileSelectionBoxGetChild(fd->dialog, XmDIALOG_TEXT);
   if (wtmp) 
-    add_completer_to_textfield(wtmp, add_completer_func(filename_completer));
+    {
+      add_completer_to_textfield(wtmp, add_completer_func(filename_completer));
+      XtAddCallback(wtmp, XmNfocusCallback, focus_filename_text_callback, (XtPointer)fd);
+      XtAddCallback(wtmp, XmNlosingFocusCallback, unfocus_filename_text_callback, (XtPointer)fd);
+    }
 
   wtmp = XtNameToWidget(fd->dialog, "FilterText");
   if (!wtmp) 
     wtmp = XmFileSelectionBoxGetChild(fd->dialog, XmDIALOG_FILTER_TEXT);
-  if (wtmp) 
-    add_completer_to_textfield(wtmp, add_completer_func(filename_completer));
+  if (wtmp)
+    {
+      add_completer_to_textfield(wtmp, add_completer_func(filename_completer));
+      XtAddCallback(wtmp, XmNvalueChangedCallback, unpost_if_filter_changed, (XtPointer)fd);
+    }
 
   if (!(ss->using_schemes)) 
     {
@@ -908,7 +1002,6 @@ void set_open_file_play_button(bool val)
     XmToggleButtonSetState(mdat->dp->play_button, (Boolean)val, false);
 }
 
-/* PERHAPS: handle all directory update decisions through FAM */
 void alert_new_file(void) 
 {
   if (open_dialog)
@@ -1524,7 +1617,6 @@ static void save_as_ok_callback(Widget w, XtPointer context, XtPointer info)
   if ((str) && (*str))
     {
       redirect_snd_error_to(post_file_dialog_error, (void *)sdat);
-      /* TODO: extract overwrite question from save_as_dialog_save_sound */
       msg = save_as_dialog_save_sound(sp, str, save_as_dialog_type, srate, type, format, comment, &need_directory_update);
       redirect_snd_error_to(NULL, NULL);
       if (msg)
@@ -1611,7 +1703,6 @@ static void save_as_extract_callback(Widget w, XtPointer context, XtPointer info
 	    {
 	      char *fullname = NULL;
 	      fullname = mus_expand_filename(str);
-	      /* TODO: incorporate overwrite here */
 	      if (!(snd_overwrite_ok(fullname))) 
 		{
 		  FREE(fullname);
@@ -1686,7 +1777,7 @@ static void save_as_help_callback(Widget w, XtPointer context, XtPointer info)
 static void save_as_file_exists_check(Widget w, XtPointer context, XtPointer info)
 {
   Widget dialog = (Widget)context;
-  char *filename;
+  char *filename = NULL;
   XmString s1;
   filename = XmTextGetString(w);
   if ((filename) && (*filename) && 
@@ -1697,6 +1788,7 @@ static void save_as_file_exists_check(Widget w, XtPointer context, XtPointer inf
   XtVaSetValues(dialog, 
 		XmNselectionLabelString, s1, 
 		NULL);
+  if (filename) XtFree(filename);
 }
 
 static void make_save_as_dialog(char *sound_name, int header_type, int format_type)
@@ -1846,8 +1938,6 @@ widget_t make_edit_save_as_dialog(bool managed)
   return(save_as_dialog);
 }
 
-/* PERHAPS: region save-as as button in region browser? */
-
 
 /* -------- save/restore for all these dialogs -------- */
 
@@ -1949,14 +2039,12 @@ static void new_file_ok_callback(Widget w, XtPointer context, XtPointer info)
 	}
       else
 	{
-	  /* TODO: if existing file by new name and it's write protected, we need some better explanation */
 	  snd_info *sp;
 	  /* handle the overwrite hook directly */
 	  if ((!new_file_doit) &&
 	      (ask_before_overwrite(ss)) && 
 	      (mus_file_probe(newer_name)))
 	    {
-	      /* SOMEDAY: would be nice to cancel 'DoIt' if user deletes file by hand -- use FAM */
 	      XmString ok_label;
 	      msg = mus_format(_("%s exists. If you want to overwrite it, click 'DoIt'"), newer_name);
 	      post_file_dialog_error((const char *)msg, (void *)ndat);
@@ -1990,9 +2078,6 @@ static void new_file_ok_callback(Widget w, XtPointer context, XtPointer info)
       if (comment) FREE(comment);
     }
 }
-
-/* TODO: names are bad: default-output-type|format
- */
 
 static void load_new_file_defaults(char *newname)
 {
@@ -2160,14 +2245,13 @@ void make_new_file_dialog(void)
 	  XtVaSetValues(XmMessageBoxGetChild(new_file_dialog, XmDIALOG_HELP_BUTTON),   XmNbackground, ss->sgx->help_button_color,   NULL);
 	}
       set_dialog_widget(NEW_FILE_DIALOG, new_file_dialog);
-      XtUnmanageChild(ndat->error_text); /* TODO: find some way to get around this hidden label bug */
+      XtUnmanageChild(ndat->error_text); 
 
       load_new_file_defaults(NULL);
     }
   else
     {
       /* if overwrite question pends, but file has been deleted in the meantime, go back to normal state */
-      /* TODO: use FAM to handle this */
       if (new_file_doit)
 	{
 	  char *new_name;
@@ -2175,6 +2259,7 @@ void make_new_file_dialog(void)
 	  if ((!new_name) || (!(*new_name)) ||
 	      (!(mus_file_probe(new_name))))
 	    new_file_undoit();
+	  if (new_name) XtFree(new_name);
 	}
     }
   if (!(XtIsManaged(new_file_dialog))) 
@@ -2184,8 +2269,6 @@ void make_new_file_dialog(void)
 
 
 /* ---------------- Edit Header ---------------- */
-
-/* TODO: if nothing has changed, Save button should be insensitive */
 
 static Widget edit_header_dialog = NULL;
 static file_data *edat;
@@ -2395,16 +2478,11 @@ void save_edit_header_dialog_state(FILE *fd)
 
 /* -------------------------------- Raw Data Dialog -------------------------------- */
 
-/* PERHAPS: caller can pass continuation and callback funcs */
-
 static Widget raw_data_dialog = NULL;
 static off_t raw_data_location = 0;
 static file_data *rdat = NULL;
 static bool raw_data_read_only = false, raw_data_sound_selected = false;
 static char *raw_data_filename = NULL, *raw_data_info = NULL;
-
-/* TODO: check out other paths to raw data dialog */
-/* PERHAPS: if user changes raw file with dialog up -- adding header for example, should we automatically open it? */
 
 #define NUM_REQUESTORS 17
 static char *raw_data_dialog_requestors[NUM_REQUESTORS] = {
@@ -2426,28 +2504,29 @@ static void raw_data_ok_callback(Widget w, XtPointer context, XtPointer info)
     }
   else
     {
-      file_info *hdr;
       mus_header_set_raw_defaults(raw_srate, raw_chans, raw_data_format);
-      /* TODO: hdr unneeded in mix case (memleak) */
-      hdr = (file_info *)CALLOC(1, sizeof(file_info));
-      hdr->name = copy_string(raw_data_filename);
-      hdr->type = MUS_RAW;
-      hdr->srate = raw_srate;
-      hdr->chans = raw_chans;
-      hdr->format = raw_data_format;
-      hdr->samples = mus_bytes_to_samples(raw_data_format, 
-					  mus_sound_length(raw_data_filename) - raw_data_location);
-      hdr->data_location = raw_data_location;
-      hdr->comment = NULL;
-
-      mus_sound_override_header(raw_data_filename, raw_srate, raw_chans, raw_data_format, MUS_RAW, raw_data_location,
+      mus_sound_override_header(raw_data_filename, raw_srate, raw_chans, 
+				raw_data_format, MUS_RAW, raw_data_location,
 				mus_bytes_to_samples(raw_data_format, 
 						     mus_sound_length(raw_data_filename) - raw_data_location));
       /* choose action based on how we got here */
 #if DEBUGGING
       if ((!(ss->sgx->requestor_dialog)) ||
 	  (ss->open_requestor == FROM_OPEN_DIALOG))
-	finish_opening_sound(add_sound_window(raw_data_filename, raw_data_read_only, hdr), raw_data_sound_selected);
+	{
+	  file_info *hdr;
+	  hdr = (file_info *)CALLOC(1, sizeof(file_info));
+	  hdr->name = copy_string(raw_data_filename);
+	  hdr->type = MUS_RAW;
+	  hdr->srate = raw_srate;
+	  hdr->chans = raw_chans;
+	  hdr->format = raw_data_format;
+	  hdr->samples = mus_bytes_to_samples(raw_data_format, 
+					      mus_sound_length(raw_data_filename) - raw_data_location);
+	  hdr->data_location = raw_data_location;
+	  hdr->comment = NULL;
+	  finish_opening_sound(add_sound_window(raw_data_filename, raw_data_read_only, hdr), raw_data_sound_selected);
+	}
       else
 	{
 	  if (ss->open_requestor == FROM_MIX_DIALOG)
@@ -2468,16 +2547,23 @@ static void raw_data_ok_callback(Widget w, XtPointer context, XtPointer info)
 	}
       else
 	{
+	  file_info *hdr;
+	  hdr = (file_info *)CALLOC(1, sizeof(file_info));
+	  hdr->name = copy_string(raw_data_filename);
+	  hdr->type = MUS_RAW;
+	  hdr->srate = raw_srate;
+	  hdr->chans = raw_chans;
+	  hdr->format = raw_data_format;
+	  hdr->samples = mus_bytes_to_samples(raw_data_format, 
+					      mus_sound_length(raw_data_filename) - raw_data_location);
+	  hdr->data_location = raw_data_location;
+	  hdr->comment = NULL;
 	  finish_opening_sound(add_sound_window(raw_data_filename, raw_data_read_only, hdr), raw_data_sound_selected);
 	}
 #endif
       XtUnmanageChild(raw_data_dialog);
     }
 }
-
-/* TODO: cancel info in mix/open if filename in textfield doesn't match selected file 
- *       or perhaps update info as file name is typed, as in write-protected case 
- */
 
 static void raw_data_cancel_callback(Widget w, XtPointer context, XtPointer info) 
 {
@@ -2700,7 +2786,6 @@ static void mouse_leave_label(Widget w, XtPointer context, XEvent *event, Boolea
 /*
  * the region and file browsers share much widgetry -- they are supposed to look the same
  */
-/* TODO: should previous files list be monitored via FAM? */
 
 ww_info *make_title_row(Widget formw, char *top_str, char *main_str, dialog_pad_t pad, dialog_sort_t with_sort, dialog_paned_t with_pane)
 {
@@ -2964,11 +3049,6 @@ regrow *make_regrow(Widget ww, Widget last_row, XtCallbackProc play_callback, Xt
 
 
 /* -------- view files dialog -------- */
-
-/* TODO: replace "current files" section with something useful --
- *   perhaps a menu for actions on previous files such as insert/mix/open/play
- *   or a grouping thing as in the (unimplemented) regions dialog
- */
 
 static Widget view_files_dialog = NULL;
 static int vf_selected_file = -1;

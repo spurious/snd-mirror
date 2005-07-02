@@ -2,6 +2,8 @@
 
 /* envelope editor and viewer */
 
+/* TODO: does the "stop" business actually work in either case?  does it need check_event? */
+
 static Widget enved_dialog = NULL;
 static Widget applyB, apply2B, cancelB, drawer, showB, saveB, revertB, undoB, redoB;
 static Widget printB, brkptL, graphB, fltB, ampB, srcB, clipB;

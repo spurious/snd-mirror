@@ -2,8 +2,8 @@
 #define SNDLIB_H
 
 #define SNDLIB_VERSION 19
-#define SNDLIB_REVISION 13
-#define SNDLIB_DATE "23-Jun-05"
+#define SNDLIB_REVISION 14
+#define SNDLIB_DATE "1-Jul-05"
 
 #include <config.h>
 
@@ -385,6 +385,7 @@ const char *mus_header_type_name(int type);
 const char *mus_data_format_name(int format);
 char *mus_header_type_to_string(int type);
 char *mus_data_format_to_string(int format);
+const char *mus_data_format_short_name(int format);
 char *mus_sound_comment(const char *name);
 int mus_bytes_per_sample(int format);
 float mus_sound_duration(const char *arg);
@@ -620,14 +621,6 @@ char *strdup(const char *str);
 #endif
 #if (!HAVE_FILENO)
 int fileno(FILE *fp);
-#endif
-
-#ifndef SNDLIB_DISABLE_DEPRECATED
-#define mus_sound_set_full_loop_info(Arg1, Arg2) mus_sound_set_loop_info(Arg1, Arg2)
-#define mus_header_set_full_aiff_loop_info(Arg1) mus_header_set_aiff_loop_info(Arg1)
-#define mus_data_format_to_constant_name(Format) mus_data_format_to_string(Format)
-#define mus_header_type_to_constant_name(Format) mus_header_type_to_string(Format)
-#define mus_short_data_format_name(Format) mus_data_format_to_string(Format)
 #endif
 
 #ifdef __cplusplus

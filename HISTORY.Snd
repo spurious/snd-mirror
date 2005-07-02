@@ -1,5 +1,7 @@
 Snd change log
 
+  1-Jul:     --with-fam configuration switch.
+	     tools/check-gtk.scm.
   27-Jun:    output-name-hook now takes an argument, the current output file name.
              changed find to find-channel to avoid collision with Scheme's srfi-1.
   24-Jun:    channels-combined is now the default channel-style.

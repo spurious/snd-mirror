@@ -64,6 +64,7 @@ AC_DEFINE_UNQUOTED(CONFIGURE_ARGS, "$INVOKED_ARGS")
 #   --without-fftw        omit FFTW even if it exists
 #   --without-xpm         omit XPM even if it exists (for testing)
 #   --without-xp          omit libXp even if it exists (for testing)
+#   --without-fam         libfam can be obsolete, but it's not clear how to test this
 #   --with-profiling      add profiling flags [branch counts] (for testing)
 #   --with-midi           include sndlib midi module
 #   GUILE_CONFIG_path     where to look for guile-config
@@ -101,6 +102,7 @@ AC_ARG_WITH(gsl,         [  --with-gsl		  use GSL, default=yes if no complex tri
 AC_ARG_WITH(fftw,        [  --with-fftw		  use fftw, default=yes])
 AC_ARG_WITH(xpm,         [  --with-xpm		  use xpm, default=yes])
 AC_ARG_WITH(xp,          [  --with-xp		  use xp, default=no])
+AC_ARG_WITH(fam,         [  --with-fam		  use libfam (Gamin), default= yes])
 AC_ARG_WITH(profiling,   [  --with-profiling	  include profiling machinery, default=no, for internal testing])
 
 if test "$with_doubles" = yes ; then
@@ -235,19 +237,6 @@ AC_CHECK_LIB(m, jn,
         [AC_DEFINE(HAVE_SPECIAL_FUNCTIONS)])])])])
 
 
-# look for the File Alteration Monitor (gamin or SGI's fam -- both use fam.h and libfam apparently)
-# TODO: doesn't this need an explicit include for fam.h? 
-FAM_LIB=""
-AC_CHECK_HEADER(fam.h,
-  [AC_CHECK_LIB(fam, FAMOpen, 
-     [AC_DEFINE(HAVE_FAM_H)
-      AC_DEFINE(HAVE_FAM)
-      AC_CHECK_LIB(fam, FAMNoExists, [AC_DEFINE(HAVE_FAM_NO_EXISTS)]) # gamin extension
-      FAM_LIB="-lfam"
-     ])])
-AC_SUBST(FAM_LIB)
-
-
 #--------------------------------------------------------------------------------
 # fftw
 #--------------------------------------------------------------------------------
@@ -255,9 +244,9 @@ AC_SUBST(FAM_LIB)
 SAVELIBS=$LIBS
 FFTW_LIBS=""
 if test "$with_fftw" != no; then
-LIBS="$LIBS -lfftw3 -lm"
-AC_MSG_CHECKING([for fftw-3])
-AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <fftw3.h>],
+  LIBS="$LIBS -lfftw3 -lm"
+  AC_MSG_CHECKING([for fftw-3])
+  AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <fftw3.h>],
 		                [fftw_plan plan; fftw_execute(plan)])],
 		[AC_MSG_RESULT(yes)
 		 AC_DEFINE(HAVE_FFTW3)
@@ -796,7 +785,7 @@ else
       	          AC_SUBST(CAIRO_CFLAGS)
 	          cairo_version="`$PKG_CONFIG cairo --modversion`"
                   AC_DEFINE_UNQUOTED(CAIRO_VERSION,"${cairo_version}")
-               fi
+              fi
 	    ],  ,$GTK_LIBS)
 	# gtk 2.7.0
 	# cairo needs xfixes xextensions fixesext libXfixes fontconfig libXrender libpixman libXft2 glitz 
@@ -890,6 +879,7 @@ if test "$with_gl" = yes || test "$with_just_gl" = yes ; then
     AC_MSG_WARN([GL only works with Motif or Gtk2])
   fi
 fi
+
 if test "$have_gl" = yes ; then
   AC_DEFINE(HAVE_GL)
   if test "$with_just_gl" = yes ; then
@@ -915,6 +905,39 @@ fi
 AC_SUBST(GL_LIBS)
 AC_SUBST(GL_FILES)
 AC_SUBST(GL_FLAGS)
+
+
+#--------------------------------------------------------------------------------
+# fam/gamin (needs GUI)
+#--------------------------------------------------------------------------------
+
+FAM_LIB=""
+if test "$ac_snd_have_gui" != no ; then
+  if test "$with_fam" != no ; then
+    # look for the File Alteration Monitor (gamin or SGI's fam -- both use fam.h and libfam apparently)
+    # TODO: doesn't this need an explicit include for fam.h? 
+    # TODO: look for gamin before fam
+    AC_MSG_CHECKING(for Gamin)
+    if test x$PKG_CONFIG != xno && $PKG_CONFIG gamin --exists ; then
+       gamin_version="`$PKG_CONFIG gamin --modversion`"
+       AC_MSG_RESULT($gamin_version)
+       AC_DEFINE_UNQUOTED(GAMIN_VERSION,"${gamin_version}")
+       FAM_LIB="`$PKG_CONFIG gamin --libs`"
+       AC_DEFINE(HAVE_FAM_H)
+       AC_DEFINE(HAVE_FAM)
+       AC_DEFINE(HAVE_FAM_NO_EXISTS)
+    else
+      AC_MSG_RESULT(no)
+      AC_CHECK_HEADER(fam.h,
+        [AC_CHECK_LIB(fam, FAMOpen, 
+           [AC_DEFINE(HAVE_FAM_H)
+            AC_DEFINE(HAVE_FAM)
+            FAM_LIB="-lfam"
+            ])])
+    fi
+  fi
+fi
+AC_SUBST(FAM_LIB)
 
 
 
@@ -1314,22 +1337,8 @@ case "$host" in
 	SO_INSTALL=":"
 	SO_LD=":"
 	A_LD_FLAGS="-non_shared"
-	# OPT:Olimit check borrowed from Python's configure.in
-	AC_MSG_CHECKING(whether $CC accepts -OPT:Olimit=0)
-	AC_CACHE_VAL(ac_cv_opt_olimit_ok,
-	[ac_save_cc="$CC"
-	CC="$CC -OPT:Olimit=0"
-	AC_TRY_RUN([int main() { return 0; }],
- 	  ac_cv_opt_olimit_ok=yes,
-  	  ac_cv_opt_olimit_ok=no,
-  	  ac_cv_opt_olimit_ok=no)
-	CC="$ac_save_cc"])
-	AC_MSG_RESULT($ac_cv_opt_olimit_ok)
-	if test $ac_cv_opt_olimit_ok = yes; then
-	  CFLAGS="$CFLAGS -OPT:Olimit=0"
-	  if test $LOCAL_LANGUAGE = "None"; then
-	    LIBS="$LIBS -lm"
-          fi
+	if test $LOCAL_LANGUAGE = "None"; then
+	  LIBS="$LIBS -lm"
 	fi
         ;;
     alpha*) 

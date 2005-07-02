@@ -116,6 +116,9 @@ typedef struct {
   GtkWidget *requestor_dialog; /* TODO: completion? */
   
   GdkCursor *arrow_cursor, *wait_cursor, *graph_cursor;
+#if HAVE_FAM
+  gint fam_port;
+#endif
 } state_context;
 
 #define DEFAULT_TINY_FONT "Monospace 8"

@@ -292,7 +292,7 @@ void check_for_event(void)
   while (true)
     {
       msk = XtAppPending(app);
-      if (msk & XtIMXEvent) /* TODO: check C-g again, and interlock fam sp (and gtk fam) */
+      if (msk & XtIMXEvent) /* was also tracking alternate input events, but these are problematic if libfam is in use */
 	{
 	  XtAppNextEvent(app, &event);
 	  XtDispatchEvent(&event);

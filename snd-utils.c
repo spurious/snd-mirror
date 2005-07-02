@@ -356,57 +356,66 @@ void snd_exit(int val)
 #if HAVE_FAM
 #define DEBUGGING_FAM 0
 
+#if USE_MOTIF
 static void fam_reader(XtPointer context, int *fd, XtInputId *id)
+#else
+static gboolean fam_reader(GIOChannel *source, GIOCondition condition, gpointer data)
+#endif
 {
   FAMEvent fe; 
-  if (FAMPending(ss->fam_connection) <= 0) return;
-  if (FAMNextEvent(ss->fam_connection, &fe) < 0) 
-    fprintf(stderr,"fam error: %d\n", FAMErrno);
-  else
+  if (FAMPending(ss->fam_connection) > 0)
     {
-      snd_info *sp;
-      sp = (snd_info *)(fe.userdata);
-#if DEBUGGING_FAM
-      fprintf(stderr, "fam %s: %d\n", fe.filename, fe.code);
-#endif
-      switch (fe.code)
+      if (FAMNextEvent(ss->fam_connection, &fe) < 0) 
+	fprintf(stderr,"fam error: %d\n", FAMErrno);
+      else
 	{
-	case FAMChanged:
-	  /* TODO: check what changes might matter here (write-protection -> put up lock?) */
+	  snd_info *sp;
+	  sp = (snd_info *)(fe.userdata);
 #if DEBUGGING_FAM
-	  fprintf(stderr, "%s changed\n", fe.filename);
-#endif	  
-	  break;
-
-	case FAMDeleted:
-	case FAMCreated:
-	case FAMMoved:
-#if DEBUGGING_FAM
-	  fprintf(stderr, "%s moved etc\n", fe.filename);
-#endif	  
-	  if (!(sp->writing))
-	    {
-	      sp->need_update = true;
-	      if (auto_update(ss))
-		snd_update(sp);
-	      else snd_file_bomb_icon(sp, true);
-	    }
-	  break;
-
-	case FAMStartExecuting:
-	case FAMStopExecuting:
-	case FAMAcknowledge:
-	case FAMExists:
-	case FAMEndExist:
-	  break;
-	  /* these don't matter */
-	default:
-#if DEBUGGING_FAM
-	  fprintf(stderr, "%s: unknown fam code: %d!\n", fe.filename, fe.code);
+	  fprintf(stderr, "fam %s: %d\n", fe.filename, fe.code);
 #endif
-	  break;
+	  switch (fe.code)
+	    {
+	    case FAMChanged:
+	      /* TODO: check what changes might matter here (write-protection -> put up lock?) */
+#if DEBUGGING_FAM
+	      fprintf(stderr, "%s changed\n", fe.filename);
+#endif	  
+	      break;
+
+	    case FAMDeleted:
+	    case FAMCreated:
+	    case FAMMoved:
+#if DEBUGGING_FAM
+	      fprintf(stderr, "%s moved etc\n", fe.filename);
+#endif	  
+	      if (!(sp->writing))
+		{
+		  sp->need_update = true;
+		  if (auto_update(ss))
+		    snd_update(sp);
+		  else snd_file_bomb_icon(sp, true);
+		}
+	      break;
+
+	    case FAMStartExecuting:
+	    case FAMStopExecuting:
+	    case FAMAcknowledge:
+	    case FAMExists:
+	    case FAMEndExist:
+	      break;
+	      /* these don't matter */
+	    default:
+#if DEBUGGING_FAM
+	      fprintf(stderr, "%s: unknown fam code: %d!\n", fe.filename, fe.code);
+#endif
+	      break;
+	    }
 	}
     }
+#if USE_GTK
+  return(true);
+#endif
 }
 
 static FAMRequest *fam_monitor(void)
@@ -417,16 +426,32 @@ static FAMRequest *fam_monitor(void)
       ss->fam_connection = (FAMConnection *)CALLOC(1, sizeof(FAMConnection));
       err = FAMOpen(ss->fam_connection);
       if (err < 0)
-	snd_error("can't start file alteration monitor: %d\n", FAMErrno);
+	{
+	  snd_error("can't start file alteration monitor: %d\n", FAMErrno);
+	  return(NULL);
+	}
       else
 	{
 	  int fd;
 	  fd = FAMCONNECTION_GETFD(ss->fam_connection);
+#if USE_MOTIF
 	  ss->sgx->fam_port = XtAppAddInput(MAIN_APP(ss),
 					    fd,
 					    (XtPointer)XtInputReadMask,
 					    fam_reader,
 					    NULL);
+#endif
+#if USE_GTK
+	  {
+	    GIOChannel *channel;
+	    channel = g_io_channel_unix_new(fd);
+	    ss->sgx->fam_port = g_io_add_watch_full(channel, 
+						    G_PRIORITY_DEFAULT, 
+						    (GIOCondition)(G_IO_IN | G_IO_HUP | G_IO_ERR), 
+						    fam_reader, NULL, NULL);
+	    g_io_channel_unref(channel);
+	  }
+#endif
 	}
     }
   return((FAMRequest *)CALLOC(1, sizeof(FAMRequest)));
@@ -437,16 +462,20 @@ FAMRequest *fam_monitor_file(const char *filename, void *data)
   FAMRequest *rp;
   int err;
   rp = fam_monitor();
-#if DEBUGGING_FAM
-  fprintf(stderr, "monitor %s\n", filename);
-#endif
-  err = FAMMonitorFile(ss->fam_connection, filename, rp, data);
-  if (err < 0)
+  if (rp)
     {
-      snd_error("can't monitor %s: %d\n", filename, FAMErrno);
-      FREE(rp);
-      return(NULL);
+#if DEBUGGING_FAM
+      fprintf(stderr, "monitor %s\n", filename);
+#endif
+      err = FAMMonitorFile(ss->fam_connection, filename, rp, data);
+      if (err < 0)
+	{
+	  snd_error("can't monitor %s: %d\n", filename, FAMErrno);
+	  FREE(rp);
+	  return(NULL);
+	}
     }
+  else snd_error("can't get fam request for %s: %d\n", filename, FAMErrno);
   return(rp);
 }
 
@@ -455,13 +484,17 @@ FAMRequest *fam_monitor_directory(const char *dir_name, void *data)
   FAMRequest *rp;
   int err;
   rp = fam_monitor();
-  err = FAMMonitorDirectory(ss->fam_connection, dir_name, rp, data);
-  if (err < 0)
+  if (rp)
     {
-      snd_error("can't monitor %s: %d\n", dir_name, FAMErrno);
-      FREE(rp);
-      return(NULL);
+      err = FAMMonitorDirectory(ss->fam_connection, dir_name, rp, data);
+      if (err < 0)
+	{
+	  snd_error("can't monitor %s: %d\n", dir_name, FAMErrno);
+	  FREE(rp);
+	  return(NULL);
+	}
     }
+  else snd_error("can't get fam request for %s: %d\n", dir_name, FAMErrno);
   return(rp);
 }
 

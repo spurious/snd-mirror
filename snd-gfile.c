@@ -10,11 +10,50 @@
    View:Files and region lists 
 */
 
-/* TODO: merge all Motif dialog changes into Gtk */
-/* TODO: compsnd have_fam=0 */
+
+/* TODO: play button and file filters in save-as */
+/* TODO: separate funcs to add play/just-sounds buttons (if the latter is possible) */
+/* TODO: "sound files" label if filtered */
 /* PERHAPS: click bomb: update, or some easy way to update (temp File: item?) */
 /* TODO: highlight error message in open_info */
 /* PERHAPS: make file_chooser/file_selection a run-time choice somehow? -- file_chooser is really ugly and stupid... */
+/* TODO: open file: test vector to raw data and back */
+/* TODO: reflect filename change in selection list and in info */
+/* TODO: how to add "Extract" button to file chooser and get a callback? */
+/* SOMEDAY: New file: would be nice to cancel 'DoIt' if user deletes file by hand */
+/* TODO: edit header: implement watcher for read_only */
+/* TODO: save-as ok: check the hide-me business for this and extract   gpointer hide_me = 0; */
+/* TODO: cancel info in mix/open if filename in textfield doesn't match selected file 
+ *       pdate info as file name is typed, as in write-protected case 
+ */
+  /* TODO: check button_new -> from stock where possible
+   *    [help -> GTK_STOCK_HELP]
+   *    [cancel -> GTK_STOCK_CANCEL]
+   *    apply -> GTK_STOCK_APPLY
+   *    clear -> GTK_STOCK_CLEAR
+   *    print -> GTK_STOCK_PRINT
+   *    reset -> GTK_STOCK_REFRESH? or update?
+   *    save/as -> GTK_STOCK_SAVE/AS
+   *    color -> GTK_STOCK_SELECT_COLOR
+   *    open -> GTK_STOCK_OPEN
+   *    undo -> GTK_STOCK_UNDO
+   *    delete -> GTK_STOCK_DELETE
+   *    dismiss -> ? quit?
+   *    orientation -> ?
+   *    previous -> GTK_STOCK_GO_BACK?
+   *    next -> GTK_STOCK_GO_FORWARD?
+   *    find -> GTK_STOCK_FIND
+   *    ok -> GTK_STOCK_OK
+   *    yes/no if yes_or_no_p survives
+   *    revert -> REVERT_TO_SAVED
+   *  STOP -> C-G? as menu item? -- stop anything
+   *
+   * watch out for later additions here! and assumptions about labelling!
+   * TODO: check "ok" and make it more explicit if possible
+   */
+/* TODO: new file: output_name defaulting and so forth */
+
+
 
 #ifndef HAVE_GFCDN
 /* #define HAVE_GFCDN HAVE_GTK_FILE_CHOOSER_DIALOG_NEW */
@@ -227,8 +266,6 @@ static void play_selected_callback(GtkWidget *w, gpointer data)
   else file_dialog_stop_playing(dp);
 }
 
-/* TODO: separate funcs to add play/just-sounds buttons (if the latter is possible) */
-
 
 /* ---------------- file dialogs ---------------- */
 
@@ -338,32 +375,6 @@ static GtkWidget *snd_filer_new(char *title, bool saving,
   new_dialog = gtk_file_selection_new(title);
   filer = SND_FILER(new_dialog);
 
-  /* TODO: check button_new -> from stock where possible
-   *    [help -> GTK_STOCK_HELP]
-   *    [cancel -> GTK_STOCK_CANCEL]
-   *    apply -> GTK_STOCK_APPLY
-   *    clear -> GTK_STOCK_CLEAR
-   *    print -> GTK_STOCK_PRINT
-   *    reset -> GTK_STOCK_REFRESH? or update?
-   *    save/as -> GTK_STOCK_SAVE/AS
-   *    color -> GTK_STOCK_SELECT_COLOR
-   *    open -> GTK_STOCK_OPEN
-   *    undo -> GTK_STOCK_UNDO
-   *    delete -> GTK_STOCK_DELETE
-   *    dismiss -> ? quit?
-   *    orientation -> ?
-   *    previous -> GTK_STOCK_GO_BACK?
-   *    next -> GTK_STOCK_GO_FORWARD?
-   *    find -> GTK_STOCK_FIND
-   *    ok -> GTK_STOCK_OK
-   *    yes/no if yes_or_no_p survives
-   *    revert -> REVERT_TO_SAVED
-   *  STOP -> C-G? as menu item? -- stop anything
-   *
-   * watch out for later additions here! and assumptions about labelling!
-   * TODO: check "ok" and make it more explicit if possible
-   */
-
   helpB = gtk_button_new_from_stock(GTK_STOCK_HELP);
   gtk_widget_set_name(helpB, "help_button");
   gtk_box_pack_end(GTK_BOX(GTK_DIALOG(new_dialog)->action_area), helpB, false, true, 10);
@@ -441,8 +452,8 @@ static void dialog_select_callback(GtkTreeSelection *selection, gpointer context
       sprintf(timestr, "");
 #endif
       mus_snprintf(buf, LABEL_BUFFER_SIZE, "%s %s%s",
-		   mus_header_type_to_string(mus_sound_header_type(filename)),
-		   mus_data_format_to_string(mus_sound_data_format(filename)),
+		   mus_header_type_name(mus_sound_header_type(filename)),
+		   mus_data_format_short_name(mus_sound_data_format(filename)),
 		   timestr);
       gtk_label_set_text(GTK_LABEL(fd->dialog_info2), buf);
       FREE(buf);
@@ -652,8 +663,6 @@ static void clear_error_if_open_changes(GtkWidget *dialog, void *data)
   key_press_handler_id = SG_SIGNAL_CONNECT(GTK_FILE_SELECTION(dialog)->selection_entry, "key_press_event", open_modify_key_press, data);
 #endif
 }
-
-/* TODO: vector to raw data and back */
 
 static void file_open_dialog_ok(GtkWidget *w, gpointer data)
 {
@@ -1098,14 +1107,6 @@ file_data *make_file_data_panel(GtkWidget *parent, char *name,
   GtkWidget *s8, *s22, *s44, *s48;
   GtkWidget *sbar, *sitem, *smenu;
 
-#if DEBUGGING
-  if ((data_format > 0) && (!MUS_DATA_FORMAT_OK(data_format)))
-    {
-      fprintf(stderr, "data-format in %s line %d is bad: %d\n", __FUNCTION__, __LINE__, data_format);
-      abort();
-    }
-#endif
-
   fdat = (file_data *)CALLOC(1, sizeof(file_data));
   fdat->current_type = header_type;
   fdat->current_format = data_format;
@@ -1294,8 +1295,6 @@ static GtkWidget *save_as_dialog = NULL;
 static save_dialog_t save_as_dialog_type = FILE_SAVE_AS;
 static char *save_as_filename = NULL;
 
-/* TODO: play selected button in save-as */
-
 static void save_as_ok_callback(GtkWidget *w, gpointer null_data)
 {
   char *comment = NULL, *msg;
@@ -1303,7 +1302,6 @@ static void save_as_ok_callback(GtkWidget *w, gpointer null_data)
   bool need_directory_update = false;
   off_t location, samples;
   snd_info *sp;
-  /* TODO: check the hide-me business for this and extract   gpointer hide_me = 0; */
 
   clear_dialog_error(sdat);
   redirect_snd_error_to(post_file_panel_error, (void *)sdat);
@@ -1454,8 +1452,6 @@ static void save_as_extract_callback(GtkWidget *w, gpointer null_data)
     }
   if (comment) FREE(comment);
 }
-
-/* TODO: how to add "Extract" button to file chooser and get a callback? */
 
 static void save_as_cancel_callback(GtkWidget *w, gpointer null_data)
 { 
@@ -1831,7 +1827,6 @@ static void new_file_ok_callback(GtkWidget *w, gpointer context)
 	      (ask_before_overwrite(ss)) && 
 	      (mus_file_probe(newer_name)))
 	    {
-	      /* SOMEDAY: would be nice to cancel 'DoIt' if user deletes file by hand */
 	      msg = mus_format(_("%s exists. If you want to overwrite it, click 'DoIt'"), newer_name);
 	      post_file_dialog_error((const char *)msg, (void *)ndat);
 	      clear_error_if_new_filename_changes(new_file_dialog, (void *)ndat);
@@ -2013,7 +2008,6 @@ static snd_info *edit_header_sp = NULL;
 
 static void watch_read_only(struct snd_info *sp);
 
-/* TODO: implement watcher for read_only */
 static void watch_read_only(struct snd_info *sp)
 {
 }
