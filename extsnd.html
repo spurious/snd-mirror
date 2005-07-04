@@ -389,8 +389,8 @@ or a save dialog is opened.
 </td></tr>
 <tr><td colspan=3></td></tr>
 
-<!-- default-output-format -->
-<tr><td colspan=2><code><a class=def name="defaultoutputformat">default-output-format</a></code></td>
+<!-- default-output-data-format -->
+<tr><td colspan=2><code><a class=def name="defaultoutputdataformat">default-output-data-format</a></code></td>
 <td><code>mus-bshort</code></td></tr>
 <tr><td></td><td colspan=2>The default data format when a new or temporary file is created, 
 or a save dialog is opened. (mus-bshort is from sndlib, standing for 16-bit big-endian data).  Use <a href="#musoutformat">mus-out-format</a> for fastest IO.
@@ -405,8 +405,8 @@ or a save dialog is opened.
 </td></tr>
 <tr><td colspan=3></td></tr>
 
-<!-- default-output-type -->
-<tr><td colspan=2><code><a class=def name="defaultoutputtype">default-output-type</a></code></td>
+<!-- default-output-header-type -->
+<tr><td colspan=2><code><a class=def name="defaultoutputheadertype">default-output-header-type</a></code></td>
 <td><code>mus-next</code></td></tr>
 <tr><td></td><td colspan=2>The default header type when a new file is created, 
 or a save dialog is opened. (<code>mus-next</code> stands for the NeXT/Sun sound file header).
@@ -4688,7 +4688,7 @@ Octave/WaveLab ASCII files can be translated by read-ascii (examp.scm).
 To turn a data-format number into a string, use <a href="#musdataformatname">mus-data-format-name</a>. To get
 the data format of some sound file, use <a href="#sounddataformat">mus-sound-data-format</a>.
 The default output (<a class=quiet href="#newsound">new-sound</a>, 
-<a class=quiet href="#savesoundas">save-sound-as</a>) data-format is <a href="#defaultoutputformat">default-output-format</a>.
+<a class=quiet href="#savesoundas">save-sound-as</a>) data-format is <a href="#defaultoutputdataformat">default-output-data-format</a>.
 
 <A NAME="describedataformats">TODO: describe formats</A>
 </td></tr>
@@ -5228,7 +5228,7 @@ To turn a type number into a string, use <a href="#musheadertypename">mus-header
 the header type of some sound file, use <a href="#soundheadertype">mus-sound-header-type</a>.
 If you set the header-type, the sound file is rewritten with the new header.  The default output
 (<a class=quiet href="#newsound">new-sound</a>, 
-<a class=quiet href="#savesoundas">save-sound-as</a>) header type is <a href="#defaultoutputtype">default-output-type</a>.
+<a class=quiet href="#savesoundas">save-sound-as</a>) header type is <a href="#defaultoutputheadertype">default-output-header-type</a>.
 <br><br>
 To read or write your own headers (or some header that isn't built-in),
 I recommend using either <a href="#openhook">open-hook</a> or <a href="#openrawsoundhook">open-raw-sound-hook</a>:
@@ -5679,7 +5679,7 @@ extends it to 'dur' samples, and initializes all samples to 'val':
 </pre>
 If the <i>header-type</i> and other 
 arguments are not specified, they
-default to the current <a href="#defaultoutputtype">default-output-type</a> and 
+default to the current <a href="#defaultoutputheadertype">default-output-header-type</a> and 
 related settings. Data formats are (b=big-endian, l=little, u=unsigned):
 <pre>
 mus-bshort  mus-lshort mus-mulaw  mus-alaw   mus-byte   mus-ubyte   mus-bfloat

@@ -122,6 +122,11 @@
 (define ints-270 '())
 (define types-270 '())
 
+(define funcs-271 '())
+(define ints-271 '())
+(define names-271 '())
+(define strings-271 '())
+
 (define all-types '())
 (define all-check-types '())
 
@@ -1098,6 +1103,20 @@
 		(set! funcs-270 (cons (list name type strs args) funcs-270)))
 	    (set! names (cons (cons name (func-type strs)) names)))))))
 
+(define* (CFNC-271 data #:optional spec)
+  (let ((name (cadr-str data))
+	(args (caddr-str data)))
+    (if (assoc name names)
+	(no-way "CFNC-271: ~A~%" (list name data))
+	(let ((type (car-str data)))
+	  (if (not (member type all-types)) 
+	      (set! all-types (cons type all-types)))
+	  (let ((strs (parse-args args '271)))
+	    (if spec
+		(set! funcs-271 (cons (list name type strs args spec) funcs-271))
+		(set! funcs-271 (cons (list name type strs args) funcs-271)))
+	    (set! names (cons (cons name (func-type strs)) names)))))))
+
 (define* (CFNC-22 data)
   (let ((name (cadr-str data))
 	(args (caddr-str data)))
@@ -1177,6 +1196,13 @@
       (begin
 	(set! strings-250 (cons name strings-250))
 	(set! names-250 (cons (cons name 'string) names-250)))))
+
+(define (CSTR-271 name)
+  (if (assoc name names-271)
+      (no-way "~A CSTR-271~%" name)
+      (begin
+	(set! strings-271 (cons name strings-271))
+	(set! names-271 (cons (cons name 'string) names-271)))))
 
 (define (CDBL name)
   (if (assoc name names)
@@ -1331,6 +1357,14 @@
       (no-way "~A CINT-270~%" name)
       (begin
 	(set! ints-270 (cons name ints-270))
+	(set! names (cons (cons name 'int) names)))))
+
+(define* (CINT-271 name #:optional type)
+  (save-declared-type type)
+  (if (assoc name names)
+      (no-way "~A CINT-271~%" name)
+      (begin
+	(set! ints-271 (cons name ints-271))
 	(set! names (cons (cons name 'int) names)))))
 
 (define (CCAST name type) ; this is the cast (type *)obj essentially but here it's (list type* (cadr obj))
@@ -1621,6 +1655,11 @@
   (thunk)
   (dpy "#endif~%~%"))
 
+(define (with-271 dpy thunk)
+  (dpy "#if HAVE_GDK_WINDOW_MOVE_REGION~%")
+  (thunk)
+  (dpy "#endif~%~%"))
+
 
 
 ;;; ---------------------------------------- write output files ----------------------------------------
@@ -1645,6 +1684,7 @@
 (hey " *     HAVE_GDK_PANGO_RENDERER_NEW for gtk 2.5.6~%")
 (hey " *     HAVE_GTK_TEXT_LAYOUT_GET_ITER_AT_POSITION for gtk 2.6.0~%")
 (hey " *     HAVE_GTK_MENU_BAR_GET_CHILD_PACK_DIRECTION for gtk 2.7.0~%")
+(hey " *     HAVE_GDK_WINDOW_MOVE_REGION for gtk 2.7.1~%")
 (hey " *~%")
 (hey " * reference args initial values are usually ignored, resultant values are returned in a list.~%")
 (hey " * null ptrs are passed and returned as #f, trailing \"user_data\" callback function arguments are optional (default: #f).~%")
@@ -1679,6 +1719,7 @@
 (hey " *     win32-specific functions~%")
 (hey " *~%")
 (hey " * HISTORY:~%")
+(hey " *     5-Jul:     gtk 2.7.1 changes.~%")
 (hey " *     23-Jun:    gtk 2.7.0 changes.~%")
 (hey " *     13-Jun:    folded xg-ruby.c into xg.c.~%")
 (hey " *     21-Feb:    changed libxm to libxg, xm-version to xg-version.~%")
@@ -2582,6 +2623,7 @@
 (if (not (null? funcs-256)) (with-256 hey (lambda () (for-each handle-func (reverse funcs-256)))))
 (if (not (null? funcs-260)) (with-260 hey (lambda () (for-each handle-func (reverse funcs-260)))))
 (if (not (null? funcs-270)) (with-270 hey (lambda () (for-each handle-func (reverse funcs-270)))))
+(if (not (null? funcs-271)) (with-271 hey (lambda () (for-each handle-func (reverse funcs-271)))))
 
 
 (hey "#define WRAPPED_OBJECT_P(Obj) (XEN_LIST_P(Obj) && (XEN_LIST_LENGTH(Obj) >= 2) && (XEN_SYMBOL_P(XEN_CAR(Obj))))~%~%")
@@ -2929,6 +2971,7 @@
 (if (not (null? funcs-256)) (with-256 hey (lambda () (for-each argify-func (reverse funcs-256)))))
 (if (not (null? funcs-260)) (with-260 hey (lambda () (for-each argify-func (reverse funcs-260)))))
 (if (not (null? funcs-270)) (with-270 hey (lambda () (for-each argify-func (reverse funcs-270)))))
+(if (not (null? funcs-271)) (with-271 hey (lambda () (for-each argify-func (reverse funcs-271)))))
 
 (define (ruby-cast func) (hey "XEN_NARGIFY_1(gxg_~A_w, gxg_~A)~%" (no-arg (car func)) (no-arg (car func)))) 
 (hey "XEN_NARGIFY_1(gxg_GPOINTER_w, gxg_GPOINTER)~%")
@@ -3042,6 +3085,7 @@
 (if (not (null? funcs-256)) (with-256 hey (lambda () (for-each unargify-func (reverse funcs-256)))))
 (if (not (null? funcs-260)) (with-260 hey (lambda () (for-each unargify-func (reverse funcs-260)))))
 (if (not (null? funcs-270)) (with-270 hey (lambda () (for-each unargify-func (reverse funcs-270)))))
+(if (not (null? funcs-271)) (with-271 hey (lambda () (for-each unargify-func (reverse funcs-271)))))
 
 (hey "#define gxg_GPOINTER_w gxg_GPOINTER~%")
 (hey "#define c_array_to_xen_list_w c_array_to_xen_list~%")
@@ -3177,6 +3221,7 @@
 (if (not (null? funcs-256)) (with-256 hey (lambda () (for-each defun (reverse funcs-256)))))
 (if (not (null? funcs-260)) (with-260 hey (lambda () (for-each defun (reverse funcs-260)))))
 (if (not (null? funcs-270)) (with-270 hey (lambda () (for-each defun (reverse funcs-270)))))
+(if (not (null? funcs-271)) (with-271 hey (lambda () (for-each defun (reverse funcs-271)))))
 
 (define (cast-out func)
   (hey "  XG_DEFINE_PROCEDURE(~A, gxg_~A_w, 1, 0, 0, NULL);~%" (no-arg (car func)) (no-arg (car func))))
@@ -3296,6 +3341,8 @@
     (with-260 hey (lambda () (for-each (lambda (val) (hey "  DEFINE_INTEGER(~A);~%" val)) (reverse ints-260)))))
 (if (not (null? ints-270))
     (with-270 hey (lambda () (for-each (lambda (val) (hey "  DEFINE_INTEGER(~A);~%" val)) (reverse ints-270)))))
+(if (not (null? ints-271))
+    (with-271 hey (lambda () (for-each (lambda (val) (hey "  DEFINE_INTEGER(~A);~%" val)) (reverse ints-271)))))
 
 
 (for-each 
@@ -3360,6 +3407,8 @@
     (with-234 hey (lambda () (for-each (lambda (str) (hey "  DEFINE_STRING(~A);~%" str)) (reverse strings-234)))))
 (if (not (null? strings-250))
     (with-250 hey (lambda () (for-each (lambda (str) (hey "  DEFINE_STRING(~A);~%" str)) (reverse strings-250)))))
+(if (not (null? strings-271))
+    (with-271 hey (lambda () (for-each (lambda (str) (hey "  DEFINE_STRING(~A);~%" str)) (reverse strings-271)))))
 (hey "}~%~%")
 
 

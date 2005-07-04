@@ -19,6 +19,7 @@
  *     HAVE_GDK_PANGO_RENDERER_NEW for gtk 2.5.6
  *     HAVE_GTK_TEXT_LAYOUT_GET_ITER_AT_POSITION for gtk 2.6.0
  *     HAVE_GTK_MENU_BAR_GET_CHILD_PACK_DIRECTION for gtk 2.7.0
+ *     HAVE_GDK_WINDOW_MOVE_REGION for gtk 2.7.1
  *
  * reference args initial values are usually ignored, resultant values are returned in a list.
  * null ptrs are passed and returned as #f, trailing "user_data" callback function arguments are optional (default: #f).
@@ -50,6 +51,7 @@
  *     win32-specific functions
  *
  * HISTORY:
+ *     5-Jul:     gtk 2.7.1 changes.
  *     23-Jun:    gtk 2.7.0 changes.
  *     13-Jun:    folded xg-ruby.c into xg.c.
  *     21-Feb:    changed libxm to libxg, xm-version to xg-version.
@@ -943,7 +945,6 @@ XM_TYPE_PTR_1(GValue_, GValue*)
 XM_TYPE(GtkIconViewDropPosition, GtkIconViewDropPosition)
 XM_TYPE(GtkPackDirection, GtkPackDirection)
 XM_TYPE_PTR_1(GtkMenuBar_, GtkMenuBar*)
-XM_TYPE_1(GtkTranslateFunc, GtkTranslateFunc)
 #endif
 
 #define XLS(a, b) XEN_TO_C_gchar_(XEN_LIST_REF(a, b))
@@ -25297,22 +25298,6 @@ static XEN gxg_gtk_size_group_get_ignore_hidden(XEN size_group)
   XEN_ASSERT_TYPE(XEN_GtkSizeGroup__P(size_group), size_group, 1, "gtk_size_group_get_ignore_hidden", "GtkSizeGroup*");
   return(C_TO_XEN_gboolean(gtk_size_group_get_ignore_hidden(XEN_TO_C_GtkSizeGroup_(size_group))));
 }
-static XEN gxg_gtk_stock_set_translate_func(XEN domain, XEN func, XEN func_data, XEN notify)
-{
-  #define H_gtk_stock_set_translate_func "void gtk_stock_set_translate_func(gchar* domain, GtkTranslateFunc func, \
-lambda_data func_data, GtkDestroyNotify notify)"
-  XEN_ASSERT_TYPE(XEN_gchar__P(domain), domain, 1, "gtk_stock_set_translate_func", "gchar*");
-  XEN_ASSERT_TYPE(XEN_GtkTranslateFunc_P(func), func, 2, "gtk_stock_set_translate_func", "GtkTranslateFunc");
-  XEN_ASSERT_TYPE(XEN_lambda_data_P(func_data), func_data, 3, "gtk_stock_set_translate_func", "lambda_data");
-  XEN_ASSERT_TYPE(XEN_GtkDestroyNotify_P(notify), notify, 4, "gtk_stock_set_translate_func", "GtkDestroyNotify");
-  {
-    XEN gxg_ptr = XEN_LIST_5(func, func_data, XEN_FALSE, XEN_FALSE, XEN_FALSE);
-    xm_protect(gxg_ptr);
-    XEN_LIST_SET(gxg_ptr, 3, notify);
-    gtk_stock_set_translate_func((const gchar*)XEN_TO_C_gchar_(domain), XEN_TO_C_GtkTranslateFunc(func), XEN_TO_C_lambda_data(func_data), XEN_TO_C_GtkDestroyNotify(notify));
-    return(XEN_FALSE);
-   }
-}
 static XEN gxg_gtk_text_iter_forward_visible_line(XEN iter)
 {
   #define H_gtk_text_iter_forward_visible_line "gboolean gtk_text_iter_forward_visible_line(GtkTextIter* iter)"
@@ -25376,6 +25361,20 @@ static XEN gxg_gtk_window_present_with_time(XEN window, XEN timestamp)
   XEN_ASSERT_TYPE(XEN_GtkWindow__P(window), window, 1, "gtk_window_present_with_time", "GtkWindow*");
   XEN_ASSERT_TYPE(XEN_guint32_P(timestamp), timestamp, 2, "gtk_window_present_with_time", "guint32");
   gtk_window_present_with_time(XEN_TO_C_GtkWindow_(window), XEN_TO_C_guint32(timestamp));
+  return(XEN_FALSE);
+}
+#endif
+
+#if HAVE_GDK_WINDOW_MOVE_REGION
+static XEN gxg_gdk_window_move_region(XEN window, XEN region, XEN dx, XEN dy)
+{
+  #define H_gdk_window_move_region "void gdk_window_move_region(GdkWindow* window, GdkRegion* region, \
+gint dx, gint dy)"
+  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 1, "gdk_window_move_region", "GdkWindow*");
+  XEN_ASSERT_TYPE(XEN_GdkRegion__P(region), region, 2, "gdk_window_move_region", "GdkRegion*");
+  XEN_ASSERT_TYPE(XEN_gint_P(dx), dx, 3, "gdk_window_move_region", "gint");
+  XEN_ASSERT_TYPE(XEN_gint_P(dy), dy, 4, "gdk_window_move_region", "gint");
+  gdk_window_move_region(XEN_TO_C_GdkWindow_(window), XEN_TO_C_GdkRegion_(region), XEN_TO_C_gint(dx), XEN_TO_C_gint(dy));
   return(XEN_FALSE);
 }
 #endif
@@ -30448,7 +30447,6 @@ XEN_NARGIFY_1(gxg_gtk_scrolled_window_get_hscrollbar_w, gxg_gtk_scrolled_window_
 XEN_NARGIFY_1(gxg_gtk_scrolled_window_get_vscrollbar_w, gxg_gtk_scrolled_window_get_vscrollbar)
 XEN_NARGIFY_2(gxg_gtk_size_group_set_ignore_hidden_w, gxg_gtk_size_group_set_ignore_hidden)
 XEN_NARGIFY_1(gxg_gtk_size_group_get_ignore_hidden_w, gxg_gtk_size_group_get_ignore_hidden)
-XEN_NARGIFY_4(gxg_gtk_stock_set_translate_func_w, gxg_gtk_stock_set_translate_func)
 XEN_NARGIFY_1(gxg_gtk_text_iter_forward_visible_line_w, gxg_gtk_text_iter_forward_visible_line)
 XEN_NARGIFY_1(gxg_gtk_text_iter_backward_visible_line_w, gxg_gtk_text_iter_backward_visible_line)
 XEN_NARGIFY_2(gxg_gtk_text_iter_forward_visible_lines_w, gxg_gtk_text_iter_forward_visible_lines)
@@ -30458,6 +30456,10 @@ XEN_NARGIFY_1(gxg_gtk_tool_button_get_icon_name_w, gxg_gtk_tool_button_get_icon_
 XEN_NARGIFY_2(gxg_gtk_window_set_urgency_hint_w, gxg_gtk_window_set_urgency_hint)
 XEN_NARGIFY_1(gxg_gtk_window_get_urgency_hint_w, gxg_gtk_window_get_urgency_hint)
 XEN_NARGIFY_2(gxg_gtk_window_present_with_time_w, gxg_gtk_window_present_with_time)
+#endif
+
+#if HAVE_GDK_WINDOW_MOVE_REGION
+XEN_NARGIFY_4(gxg_gdk_window_move_region_w, gxg_gdk_window_move_region)
 #endif
 
 XEN_NARGIFY_1(gxg_GPOINTER_w, gxg_GPOINTER)
@@ -34039,7 +34041,6 @@ XEN_NARGIFY_0(gxg_make_PangoLogAttr_w, gxg_make_PangoLogAttr)
 #define gxg_gtk_scrolled_window_get_vscrollbar_w gxg_gtk_scrolled_window_get_vscrollbar
 #define gxg_gtk_size_group_set_ignore_hidden_w gxg_gtk_size_group_set_ignore_hidden
 #define gxg_gtk_size_group_get_ignore_hidden_w gxg_gtk_size_group_get_ignore_hidden
-#define gxg_gtk_stock_set_translate_func_w gxg_gtk_stock_set_translate_func
 #define gxg_gtk_text_iter_forward_visible_line_w gxg_gtk_text_iter_forward_visible_line
 #define gxg_gtk_text_iter_backward_visible_line_w gxg_gtk_text_iter_backward_visible_line
 #define gxg_gtk_text_iter_forward_visible_lines_w gxg_gtk_text_iter_forward_visible_lines
@@ -34049,6 +34050,10 @@ XEN_NARGIFY_0(gxg_make_PangoLogAttr_w, gxg_make_PangoLogAttr)
 #define gxg_gtk_window_set_urgency_hint_w gxg_gtk_window_set_urgency_hint
 #define gxg_gtk_window_get_urgency_hint_w gxg_gtk_window_get_urgency_hint
 #define gxg_gtk_window_present_with_time_w gxg_gtk_window_present_with_time
+#endif
+
+#if HAVE_GDK_WINDOW_MOVE_REGION
+#define gxg_gdk_window_move_region_w gxg_gdk_window_move_region
 #endif
 
 #define gxg_GPOINTER_w gxg_GPOINTER
@@ -37637,7 +37642,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_scrolled_window_get_vscrollbar, gxg_gtk_scrolled_window_get_vscrollbar_w, 1, 0, 0, H_gtk_scrolled_window_get_vscrollbar);
   XG_DEFINE_PROCEDURE(gtk_size_group_set_ignore_hidden, gxg_gtk_size_group_set_ignore_hidden_w, 2, 0, 0, H_gtk_size_group_set_ignore_hidden);
   XG_DEFINE_PROCEDURE(gtk_size_group_get_ignore_hidden, gxg_gtk_size_group_get_ignore_hidden_w, 1, 0, 0, H_gtk_size_group_get_ignore_hidden);
-  XG_DEFINE_PROCEDURE(gtk_stock_set_translate_func, gxg_gtk_stock_set_translate_func_w, 4, 0, 0, H_gtk_stock_set_translate_func);
   XG_DEFINE_PROCEDURE(gtk_text_iter_forward_visible_line, gxg_gtk_text_iter_forward_visible_line_w, 1, 0, 0, H_gtk_text_iter_forward_visible_line);
   XG_DEFINE_PROCEDURE(gtk_text_iter_backward_visible_line, gxg_gtk_text_iter_backward_visible_line_w, 1, 0, 0, H_gtk_text_iter_backward_visible_line);
   XG_DEFINE_PROCEDURE(gtk_text_iter_forward_visible_lines, gxg_gtk_text_iter_forward_visible_lines_w, 2, 0, 0, H_gtk_text_iter_forward_visible_lines);
@@ -37647,6 +37651,10 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_window_set_urgency_hint, gxg_gtk_window_set_urgency_hint_w, 2, 0, 0, H_gtk_window_set_urgency_hint);
   XG_DEFINE_PROCEDURE(gtk_window_get_urgency_hint, gxg_gtk_window_get_urgency_hint_w, 1, 0, 0, H_gtk_window_get_urgency_hint);
   XG_DEFINE_PROCEDURE(gtk_window_present_with_time, gxg_gtk_window_present_with_time_w, 2, 0, 0, H_gtk_window_present_with_time);
+#endif
+
+#if HAVE_GDK_WINDOW_MOVE_REGION
+  XG_DEFINE_PROCEDURE(gdk_window_move_region, gxg_gdk_window_move_region_w, 4, 0, 0, H_gdk_window_move_region);
 #endif
 
   XG_DEFINE_PROCEDURE(GPOINTER, gxg_GPOINTER_w, 1, 0, 0, NULL);
@@ -39460,6 +39468,10 @@ static void define_integers(void)
   DEFINE_INTEGER(GTK_ICON_VIEW_DROP_BELOW);
 #endif
 
+#if HAVE_GDK_WINDOW_MOVE_REGION
+  DEFINE_INTEGER(GDK_GRAB_BROKEN);
+#endif
+
   DEFINE_ULONG(GDK_TYPE_PIXBUF);
   DEFINE_ULONG(GDK_TYPE_PIXBUF_ANIMATION);
   DEFINE_ULONG(GDK_TYPE_PIXBUF_ANIMATION_ITER);
@@ -39928,6 +39940,12 @@ static void define_strings(void)
   DEFINE_STRING(GTK_STOCK_MEDIA_STOP);
 #endif
 
+#if HAVE_GDK_WINDOW_MOVE_REGION
+  DEFINE_STRING(GTK_STOCK_FULLSCREEN);
+  DEFINE_STRING(GTK_STOCK_INFO);
+  DEFINE_STRING(GTK_STOCK_LEAVE_FULLSCREEN);
+#endif
+
 }
 
 /* -------------------------------- initialization -------------------------------- */
@@ -39951,7 +39969,7 @@ static bool xg_already_inited = false;
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("27-Jun-05"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("03-Jul-05"));
       xg_already_inited = true;
 #if WITH_GTK_AND_X11
       Init_libx11();

@@ -573,7 +573,7 @@ static XEN g_widget_text(XEN wid)
 	  XmString s1 = NULL;
 	  XtVaGetValues(w, XmNlabelString, &s1, NULL);
 	  if (XmStringEmpty(s1)) return(XEN_FALSE);
-	  XmStringGetLtoR(s1, XmFONTLIST_DEFAULT_TAG, &text);
+	  text = (char *)XmStringUnparse(s1, NULL, XmCHARSET_TEXT, XmCHARSET_TEXT, NULL, 0, XmOUTPUT_ALL);
 	  XmStringFree(s1);
 	  res = C_TO_XEN_STRING(text);
 	}

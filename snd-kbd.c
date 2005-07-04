@@ -825,7 +825,11 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 	      {
 		snd_info *nsp;
 		ss->open_requestor = FROM_KEYBOARD;
-		nsp = snd_open_file(str, FILE_READ_WRITE); /* will post error if any */
+#if (!USE_NO_GUI)
+		ss->sgx->requestor_dialog = NULL;
+#endif
+		ss->open_requestor_sp = sp;
+		nsp = snd_open_file(str, FILE_READ_WRITE);
 		if (nsp) 
 		  {
 		    select_channel(nsp, 0);
@@ -844,8 +848,8 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 		    return;
 		  }
 		if ((region_count == 0) && (selection_is_active()))
-		  err = save_selection(filename, default_output_type(ss), default_output_format(ss), SND_SRATE(sp), NULL, SAVE_ALL_CHANS);
-		else err = save_region(region_count, filename, default_output_format(ss));
+		  err = save_selection(filename, default_output_header_type(ss), default_output_data_format(ss), SND_SRATE(sp), NULL, SAVE_ALL_CHANS);
+		else err = save_region(region_count, filename, default_output_data_format(ss));
 		if (err == MUS_NO_ERROR)
 		  {
 		    clear_minibuffer(sp); /* get rid of prompt */

@@ -205,10 +205,145 @@ static file_info *translate_file(const char *filename, int type)
   return(hdr);
 }
 
-static XEN open_raw_sound_hook, bad_header_hook;
+
+static XEN open_raw_sound_hook;
+
+static file_info *open_raw_sound(const char *fullname, bool read_only, bool selected)
+{
+  XEN res = XEN_FALSE;
+  int res_loc = NOT_A_GC_LOC;
+  XEN procs, arg1;
+  int len, srate, chans, data_format;
+  off_t data_location, bytes;
+
+  if (ss->reloading_updated_file != 0)
+    {
+      /* choices already made, so just send back a header that reflects those choices */
+      return(make_file_info_1(fullname));
+    }
+  if (XEN_HOOKED(open_raw_sound_hook))
+    {
+      procs = XEN_HOOK_PROCEDURES(open_raw_sound_hook);
+      arg1 = C_TO_XEN_STRING(fullname);
+      while(XEN_NOT_NULL_P(procs))
+	{
+	  res = XEN_CALL_2(XEN_CAR(procs), 
+			   arg1, 
+			   res, 
+			   S_open_raw_sound_hook);
+	  if (res_loc != NOT_A_GC_LOC) snd_unprotect_at(res_loc);
+	  res_loc = snd_protect(res);
+	  procs = XEN_CDR(procs);
+	}
+    }
+  if (XEN_LIST_P(res)) /* empty list ok here -> accept all current defaults */
+    {
+      file_info *hdr;
+      len = XEN_LIST_LENGTH(res);
+      mus_header_raw_defaults(&srate, &chans, &data_format);
+      if (len > 0) chans = XEN_TO_C_INT(XEN_CAR(res));
+      if (len > 1) srate = XEN_TO_C_INT(XEN_CADR(res));
+      if (len > 2) 
+	{
+	  XEN df;
+	  df = XEN_LIST_REF(res, 2);
+	  data_format = XEN_TO_C_INT(df);
+	}
+      if (len > 3) data_location = XEN_TO_C_OFF_T(XEN_LIST_REF(res, 3)); else data_location = 0;
+      if (len > 4) bytes = XEN_TO_C_OFF_T(XEN_LIST_REF(res, 4)); else bytes = mus_sound_length(fullname) - data_location;
+      mus_header_set_raw_defaults(srate, chans, data_format);
+      mus_sound_override_header(fullname, 
+				srate, chans, data_format, 
+				MUS_RAW, data_location,
+				mus_bytes_to_samples(data_format, bytes));
+      if (res_loc != NOT_A_GC_LOC) snd_unprotect_at(res_loc);	      
+      hdr = (file_info *)CALLOC(1, sizeof(file_info));
+      hdr->name = copy_string(fullname);
+      hdr->type = MUS_RAW;
+      hdr->srate = mus_sound_srate(fullname);
+      hdr->chans = mus_sound_chans(fullname);
+      hdr->format = mus_sound_data_format(fullname);
+      hdr->samples = mus_sound_samples(fullname); /* total samples, not per channel */
+      hdr->data_location = mus_sound_data_location(fullname);
+      hdr->comment = NULL;
+      return(hdr);
+    }
+#if (!USE_NO_GUI)
+  else 
+    {
+      char *str;
+      bool just_quit = false;
+      if (XEN_TRUE_P(res)) just_quit = true;
+      if (res_loc != NOT_A_GC_LOC) snd_unprotect_at(res_loc);
+      if (just_quit) return(NULL);
+
+      /* open-sound and view-sound do not fall into the raw data dialog */
+      if ((ss->open_requestor == FROM_OPEN_SOUND) || 
+	  (ss->open_requestor == FROM_VIEW_SOUND))
+	return(make_file_info_1(fullname));
+
+      str = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
+      mus_snprintf(str, PRINT_BUFFER_SIZE, _("No header found for %s"), filename_without_home_directory(fullname));
+      raw_data_dialog_to_file_info(fullname, 
+				   str,
+				   NULL,
+				   read_only,
+				   selected);
+    }
+#endif
+  return(NULL);
+}
+
 #if (!USE_NO_GUI)
 static char *raw_data_explanation(const char *filename, file_info *hdr, char **info);
 #endif
+
+static XEN bad_header_hook;
+
+static file_info *tackle_bad_header(const char *fullname, bool read_only, bool selected)
+{
+  /* messed up header */
+  if ((XEN_HOOKED(bad_header_hook)) &&
+      (XEN_TRUE_P(run_or_hook(bad_header_hook,
+			      XEN_LIST_1(C_TO_XEN_STRING(fullname)),
+			      S_bad_header_hook))))
+    return(NULL);
+
+  /* if not from dialog, throw an error ('bad-header) */
+  if ((ss->open_requestor == FROM_OPEN_SOUND) || 
+      (ss->open_requestor == FROM_VIEW_SOUND))
+    {
+      char *caller;
+      if (ss->open_requestor == FROM_OPEN_SOUND)
+	caller = S_open_sound;
+      else caller = S_view_sound;
+      XEN_ERROR(BAD_HEADER,
+		XEN_LIST_2(C_TO_XEN_STRING(caller),
+			   C_TO_XEN_STRING(fullname)));
+      return(NULL);
+    }
+  
+#if (!USE_NO_GUI)
+  {
+    int type;
+    type = mus_header_type();
+    if ((type != MUS_MIDI_SAMPLE_DUMP) && 
+	(type != MUS_IEEE) &&
+	(type != MUS_MUS10) && 
+	(type != MUS_HCOM))
+      {
+	char *info = NULL, *title = NULL;
+	title = raw_data_explanation(fullname, make_file_info_1(fullname), &info);
+	raw_data_dialog_to_file_info(fullname, 
+				     title,
+				     info,
+				     read_only,
+				     selected);
+      }
+  }
+#endif
+  return(NULL);
+}
 
 file_info *make_file_info(const char *fullname, bool read_only, bool selected)
 {
@@ -216,12 +351,17 @@ file_info *make_file_info(const char *fullname, bool read_only, bool selected)
   if (mus_file_probe(fullname))
     {
       int type = MUS_UNSUPPORTED, format = MUS_UNKNOWN;
+
+      /* open-raw-sound will force it to viewed as a raw sound */
+      if (ss->open_requestor == FROM_OPEN_RAW_SOUND)
+	return(make_file_info_1(fullname));
+
       type = mus_sound_header_type(fullname);
-      if (type == MUS_ERROR) 
-	type = mus_header_type();
-#if (!USE_NO_GUI)
-      else
+      if (type == MUS_ERROR)        /* if something went wrong */
+	type = mus_header_type();   /*    try top read it anyway... */
+      if (MUS_HEADER_TYPE_OK(type)) /* at least the header type seems plausible */
 	{
+	  /* check header fields */
 	  int sr = 0, ch = 0;
 	  sr = mus_sound_srate(fullname);
 	  ch = mus_sound_chans(fullname);
@@ -229,123 +369,20 @@ file_info *make_file_info(const char *fullname, bool read_only, bool selected)
 	  if ((fallback_chans > 0) && ((ch >= 256) || (ch <= 0))) ch = fallback_chans;
 	  if ((sr <= 0) || (sr > 100000000) ||
 	      (ch >= 256) || (ch <= 0))
-	    {
-	      if ((XEN_HOOKED(bad_header_hook)) &&
-		  (XEN_TRUE_P(run_or_hook(bad_header_hook,
-					  XEN_LIST_1(C_TO_XEN_STRING(fullname)),
-					  S_bad_header_hook))))
-		return(NULL);
-	      
-	      type = mus_header_type();
+	    return(tackle_bad_header(fullname, read_only, selected));
 
-	      /* TODO: if not from dialog, should this simply return null? */
-
-	      if ((type != MUS_MIDI_SAMPLE_DUMP) && 
-		  (type != MUS_IEEE) &&
-		  (type != MUS_MUS10) && 
-		  (type != MUS_HCOM))
-		{
-		  char *info = NULL, *title = NULL;
-		  title = raw_data_explanation(fullname, make_file_info_1(fullname), &info);
-		  raw_data_dialog_to_file_info(fullname, 
-					       title,
-					       info,
-					       read_only,
-					       selected);
-		  return(NULL);
-		}
-	    }
-	}
-#endif
-      if (type == MUS_RAW)
-	{
-	  XEN res = XEN_FALSE;
-	  int res_loc = NOT_A_GC_LOC;
-	  XEN procs, arg1;
-	  int len, srate, chans, data_format;
-	  off_t data_location, bytes;
-
-	  if (ss->reloading_updated_file != 0)
-	    {
-	      /* choices already made, so just send back a header that reflects those choices */
-	      return(make_file_info_1(fullname));
-	    }
-	  if (XEN_HOOKED(open_raw_sound_hook))
-	    {
-	      procs = XEN_HOOK_PROCEDURES(open_raw_sound_hook);
-	      arg1 = C_TO_XEN_STRING(fullname);
-	      while(XEN_NOT_NULL_P(procs))
-		{
-		  res = XEN_CALL_2(XEN_CAR(procs), 
-				   arg1, 
-				   res, 
-				   S_open_raw_sound_hook);
-		  if (res_loc != NOT_A_GC_LOC) snd_unprotect_at(res_loc);
-		  res_loc = snd_protect(res);
-		  procs = XEN_CDR(procs);
-		}
-	    }
-	  if (XEN_LIST_P(res)) /* empty list ok here -> accept all current defaults */
-	    {
-	      len = XEN_LIST_LENGTH(res);
-	      mus_header_raw_defaults(&srate, &chans, &data_format);
-	      if (len > 0) chans = XEN_TO_C_INT(XEN_CAR(res));
-	      if (len > 1) srate = XEN_TO_C_INT(XEN_CADR(res));
-	      if (len > 2) 
-		{
-		  XEN df;
-		  df = XEN_LIST_REF(res, 2);
-		  data_format = XEN_TO_C_INT(df);
-		}
-	      if (len > 3) data_location = XEN_TO_C_OFF_T(XEN_LIST_REF(res, 3)); else data_location = 0;
-	      if (len > 4) bytes = XEN_TO_C_OFF_T(XEN_LIST_REF(res, 4)); else bytes = mus_sound_length(fullname) - data_location;
-	      mus_header_set_raw_defaults(srate, chans, data_format);
-	      mus_sound_override_header(fullname, srate, chans, data_format, 
-					MUS_RAW, data_location,
-					mus_bytes_to_samples(data_format, bytes));
-	      if (res_loc != NOT_A_GC_LOC) snd_unprotect_at(res_loc);	      
-	      hdr = (file_info *)CALLOC(1, sizeof(file_info));
-	      hdr->name = copy_string(fullname);
-	      hdr->type = MUS_RAW;
-	      hdr->srate = mus_sound_srate(fullname);
-	      hdr->chans = mus_sound_chans(fullname);
-	      hdr->format = mus_sound_data_format(fullname);
-	      hdr->samples = mus_sound_samples(fullname); /* total samples, not per channel */
-	      hdr->data_location = mus_sound_data_location(fullname);
-	      hdr->comment = NULL;
-	      return(hdr);
-	    }
-#if (!USE_NO_GUI)
-	  else 
-	    {
-	      char *str;
-	      bool just_quit = false;
-	      if (XEN_TRUE_P(res)) just_quit = true;
-	      if (res_loc != NOT_A_GC_LOC) snd_unprotect_at(res_loc);
-	      if (just_quit) return(NULL);
-	      str = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
-	      mus_snprintf(str, PRINT_BUFFER_SIZE, _("No header found for %s"), filename_without_home_directory(fullname));
-	      raw_data_dialog_to_file_info(fullname, 
-					   str,
-					   NULL,
-					   read_only,
-					   selected);
-	      return(NULL);
-	    }
-#endif
-	}
-      else
-	{
-	  if (MUS_HEADER_TYPE_OK(type))
+	  /* header is ok */
+	  if (type == MUS_RAW)
+	    return(open_raw_sound(fullname, read_only, selected));
+	  else
 	    {
 	      format = mus_sound_data_format(fullname);
 	      if (MUS_DATA_FORMAT_OK(format))
-		hdr = make_file_info_1(fullname);
-	      else hdr = translate_file(fullname, type);
+		return(make_file_info_1(fullname));
+	      return(translate_file(fullname, type));
 	    }
-	  else 
-	    snd_error(_("%s does not seem to be a sound file?"), fullname);
 	}
+      else snd_error(_("%s does not seem to be a sound file?"), fullname); /* no known header */
     }
   else
     {
@@ -491,7 +528,7 @@ bool run_just_sounds_hook(const char *name)
 }
 
 
-bool sound_file_p(char *name)
+bool sound_file_p(char *name) /* can't be const (compiler confusion) */
 {
   int i;
   char *dot, *sp;
@@ -504,6 +541,28 @@ bool sound_file_p(char *name)
       if (strcmp(dot, sound_file_extensions[i]) == 0)
 	return(true);
   return(false);
+}
+
+static int local_error = MUS_NO_ERROR;
+static char *local_error_msg = NULL;
+static mus_error_handler_t *old_error_handler;
+static void local_error2snd(int type, char *msg) 
+{
+  local_error = type;
+  if (local_error_msg) free(local_error_msg);
+  if (msg)
+    local_error_msg = strdup(msg);
+  else local_error_msg = NULL;
+}
+
+bool plausible_sound_file_p(const char *name)
+{
+  int err = MUS_NO_ERROR;
+  old_error_handler = mus_error_set_handler(local_error2snd);
+  err = mus_header_read(name);
+  mus_error_set_handler(old_error_handler);
+  return((err == MUS_NO_ERROR) &&
+	 (mus_header_type() != MUS_RAW));
 }
 
 dir *find_sound_files_in_dir(const char *name)

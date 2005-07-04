@@ -38,20 +38,21 @@ int help_text_width(const char *txt, int start, int end)
   return((end - start) * 8);
 }
 
-static int old_help_text_width = 0;
 static with_word_wrap_t outer_with_wrap = WITHOUT_WORD_WRAP;
 
+static int old_help_text_width = 0;
 static gboolean help_expose_callback(GtkWidget *w, GdkEventExpose *ev, gpointer data)
 {
   int curwid;
-  curwid = widget_width(help_text);
+  curwid = widget_width(help_dialog); /* was h elp_text, but I'm getting shivering in expose events */
   if (old_help_text_width == 0)
     old_help_text_width = curwid;
   else
     {
-      if ((outer_with_wrap == WITH_WORD_WRAP) && (abs(curwid - old_help_text_width) > 10))
+      if ((outer_with_wrap == WITH_WORD_WRAP) && (abs(curwid - old_help_text_width) > 50))
 	{
 	  char *cur_help_str = NULL, *new_help_str = NULL;
+	  fprintf(stderr,"diff: %d\n", (curwid - old_help_text_width));
 	  cur_help_str = sg_get_text(help_text, 0, -1);
 	  new_help_str = word_wrap(original_help_text, curwid);
 	  gtk_text_buffer_set_text(gtk_text_view_get_buffer(GTK_TEXT_VIEW(help_text)), "", 0);
@@ -272,22 +273,23 @@ static void create_help_monolog(void)
   gtk_window_resize(GTK_WINDOW(help_dialog), HELP_COLUMNS * 9, HELP_ROWS * 40);
   gtk_widget_realize(help_dialog);
 
-  ok_button = gtk_button_new_with_label(_("Dismiss"));
+  ok_button = gtk_button_new_from_stock(GTK_STOCK_QUIT);
   gtk_widget_set_name(ok_button, "quit_button");
   gtk_box_pack_start(GTK_BOX(GTK_DIALOG(help_dialog)->action_area), ok_button, false, true, 20);
   SG_SIGNAL_CONNECT(ok_button, "clicked", dismiss_help_dialog, NULL);
   gtk_widget_show(ok_button);
 
-  help_previous_button = gtk_button_new_with_label(_("Previous"));
+  help_previous_button = gtk_button_new_from_stock(GTK_STOCK_GO_BACK);
   gtk_widget_set_name(help_previous_button, "reset_button");
   gtk_box_pack_start(GTK_BOX(GTK_DIALOG(help_dialog)->action_area), help_previous_button, true, true, 10);
-  help_next_button = gtk_button_new_with_label(_("Next"));
+  SG_SIGNAL_CONNECT(help_previous_button, "clicked", help_previous_callback, NULL);
+  gtk_widget_show(help_previous_button);
+
+  help_next_button = gtk_button_new_from_stock(GTK_STOCK_GO_FORWARD);
   gtk_widget_set_name(help_next_button, "doit_button");
   gtk_box_pack_start(GTK_BOX(GTK_DIALOG(help_dialog)->action_area), help_next_button, true, true, 10);
   SG_SIGNAL_CONNECT(help_next_button, "clicked", help_next_callback, NULL);
-  SG_SIGNAL_CONNECT(help_previous_button, "clicked", help_previous_callback, NULL);
   gtk_widget_show(help_next_button);
-  gtk_widget_show(help_previous_button);
 
   frame = gtk_frame_new(NULL);
   gtk_box_pack_start(GTK_BOX(GTK_DIALOG(help_dialog)->vbox), frame, true, true, 10); 

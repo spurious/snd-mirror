@@ -537,6 +537,6 @@ make allclean
 make
 ./snd --version
 make allclean
-./configure --without-fam
+./configure --without-fam --quiet
 make
 make allclean

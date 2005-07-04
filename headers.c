@@ -497,7 +497,7 @@ const char *mus_data_format_short_name(int format)
 {
   switch (format)
     {
-    case MUS_BSHORT:           return("short");           break;
+    case MUS_BSHORT:           return("short int");       break;
     case MUS_MULAW:            return("mulaw");           break;
     case MUS_BYTE:             return("signed byte");     break;
     case MUS_BFLOAT:           return("float");           break;
@@ -508,7 +508,7 @@ const char *mus_data_format_short_name(int format)
     case MUS_B24INT:           return("24-bit int");      break;
     case MUS_BDOUBLE:          return("double");          break;
     case MUS_BDOUBLE_UNSCALED: return("double unscaled"); break;
-    case MUS_LSHORT:           return("short");           break;
+    case MUS_LSHORT:           return("short int");       break;
     case MUS_LINT:             return("int");             break;
     case MUS_LFLOAT:           return("float");           break;
     case MUS_LDOUBLE:          return("double");          break;

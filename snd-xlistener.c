@@ -18,7 +18,7 @@ static void completion_help_browse_callback(Widget w, XtPointer context, XtPoint
   char *text = NULL, *old_text = NULL;
   XmListCallbackStruct *cbs = (XmListCallbackStruct *)info;
   /* choice = cbs->item_position - 1; */
-  XmStringGetLtoR(cbs->item, XmFONTLIST_DEFAULT_TAG, &text);
+  text = (char *)XmStringUnparse(cbs->item, NULL, XmCHARSET_TEXT, XmCHARSET_TEXT, NULL, 0, XmOUTPUT_ALL);
   if ((ss->sgx->completion_requestor == NULL) || (ss->sgx->completion_requestor == listener_text))
     old_text = XmTextGetString(listener_text);
   else old_text = XmTextGetString(ss->sgx->completion_requestor);

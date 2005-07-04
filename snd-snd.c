@@ -3401,8 +3401,8 @@ The 'size' argument sets the number of samples (zeros) in the newly created soun
   arglist_len = XEN_LIST_LENGTH(arglist);
   for (i = 0; i < arglist_len; i++) args[i] = XEN_LIST_REF(arglist, i);
   vals = mus_optkey_unscramble(S_new_sound, 7, keys, args, orig_arg);
-  ht = default_output_type(ss);
-  df = default_output_format(ss);
+  ht = default_output_header_type(ss);
+  df = default_output_data_format(ss);
   sr = default_output_srate(ss);
   ch = default_output_chans(ss);
   if (vals > 0)

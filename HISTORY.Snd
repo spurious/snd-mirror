@@ -1,5 +1,7 @@
 Snd change log
 
+  5-Jul:     default-output-type -> default-output-header-type,
+             default-output-format -> default-output-data-format.
   1-Jul:     --with-fam configuration switch.
 	     tools/check-gtk.scm.
   27-Jun:    output-name-hook now takes an argument, the current output file name.

@@ -1,5 +1,7 @@
 #include "snd.h"
 
+/* PERHAPS: use gtk stock images here */
+
 enum {menu_menu,
         file_menu, f_cascade_menu,
           f_open_menu, f_close_menu, f_save_menu, f_save_as_menu, f_revert_menu, f_exit_menu, f_new_menu,

@@ -410,6 +410,8 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+5-Jul:   default-output-type -> default-output-header-type, \n\
+         default-output-format -> default-output-data-format.\n\
 1-Jul:   --with-fam configuration switch.\n\
 27-Jun:  output-name-hook now takes an argument, the current output file name.\n\
          changed find to find-channel to avoid collision with Scheme's srfi-1.\n\
@@ -419,10 +421,6 @@ void about_snd_help(void)
 6-June:  removed save-options (use save-state).\n\
 1-June:  snd 7.13.\n\
          show-axes View:Axes menu.\n\
-26-May:  beats-per-measure and x-axis-style x-axis-in-measures.\n\
-25-May:  create-audit-dialog in snd-motif.scm.\n\
-23-May:  maraca.rb, play.rb, prc95.rb, singer.rb, and zip.rb thanks to Mike Scholz.\n\
-         rt.tex thanks to Kjetil Matheussen.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",
@@ -1353,7 +1351,7 @@ void new_file_dialog_help(void)
 "This dialog sets the new file's output header type, data format, srate, chans, and comment. \
 The 'srate:' and 'channels:' labels are actually drop-down menus providing quick access to common choices. \
 The default values for the fields can be set by clicking 'Reset'.  These values \
-are " S_default_output_chans ", " S_default_output_format ", " S_default_output_srate ", and " S_default_output_type ".  \
+are " S_default_output_chans ", " S_default_output_data_format ", " S_default_output_srate ", and " S_default_output_header_type ".  \
 The file name field can be set upon each invocation through " S_output_name_hook ", and the \
 comment field via " S_output_comment_hook ".  The actual new file representing the new sound is not written \
 until you save the new sound.",

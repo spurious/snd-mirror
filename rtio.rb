@@ -136,7 +136,7 @@ HELP
   def chans=(val)
     props = {}
     unless (snd = sounds.detect do |s| channels(s) == val end)
-      snd = new_sound(snd_tempnam, default_output_type, default_output_format,
+      snd = new_sound(snd_tempnam, default_output_header_type, default_output_data_format,
                       default_output_srate, val)
       props[:new?] = true
     end

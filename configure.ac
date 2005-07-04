@@ -930,10 +930,47 @@ if test "$ac_snd_have_gui" != no ; then
       AC_MSG_RESULT(no)
       AC_CHECK_HEADER(fam.h,
         [AC_CHECK_LIB(fam, FAMOpen, 
-           [AC_DEFINE(HAVE_FAM_H)
-            AC_DEFINE(HAVE_FAM)
-            FAM_LIB="-lfam"
-            ])])
+          # fam may exist and be loadable, but be unusable due to system daemon restrictions, 
+          #   so we need to build and run a test program
+	  [
+	    SAVELIBS=$LIBS
+  	    LIBS="$LIBS -lfam"
+            AC_RUN_IFELSE(
+              [AC_LANG_PROGRAM(
+                [
+                 #include <fam.h>
+                 #include <stdio.h>
+                 #include <stdlib.h>
+                ],
+                [ 
+                  int rc, fd;
+                  FAMConnection fc;
+                  FAMRequest *rp;
+            
+                  char *filename, *pwd;
+                  filename = calloc(512, sizeof(char));
+                  pwd = calloc(512, sizeof(char));
+                  getcwd(pwd, 512);
+                  strcpy(filename, pwd);
+                  strcat(filename, "/snd.c");
+            
+                  if ((FAMOpen(&fc)) < 0) exit(1);
+                  rp = (FAMRequest *)calloc(1, sizeof(FAMRequest));
+                  if (!rp) exit(1);
+                  rc = FAMMonitorFile(&fc, filename, rp, (void *)rp);
+                  if (rc < 0) exit(1);
+                  rc = FAMCancelMonitor(&fc, rp);
+                  if (rc < 0) exit(1);
+                  rc = FAMClose(&fc);
+                  if (rc < 0) exit(1);
+                  exit(0);
+                ])],
+          [
+	   AC_DEFINE(HAVE_FAM_H)
+           AC_DEFINE(HAVE_FAM)
+           FAM_LIB="-lfam"
+          ])]
+	)])
     fi
   fi
 fi

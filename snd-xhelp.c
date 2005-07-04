@@ -8,10 +8,10 @@
 static Widget help_dialog = NULL;
 static Widget help_text = NULL;
 static char *original_help_text = NULL;
-static int old_help_text_width = 0; 
 static with_word_wrap_t outer_with_wrap = WITHOUT_WORD_WRAP;
 static char **help_urls = NULL;
 
+static int old_help_text_width = 0; 
 static void help_expose(Widget w, XtPointer context, XEvent *event, Boolean *cont) 
 {
   int curwid;

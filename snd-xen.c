@@ -1324,34 +1324,34 @@ static XEN g_set_default_output_srate(XEN val)
   return(C_TO_XEN_INT(default_output_srate(ss)));
 }
 
-static XEN g_default_output_type(void) {return(C_TO_XEN_INT(default_output_type(ss)));}
-static XEN g_set_default_output_type(XEN val) 
+static XEN g_default_output_header_type(void) {return(C_TO_XEN_INT(default_output_header_type(ss)));}
+static XEN g_set_default_output_header_type(XEN val) 
 {
   int typ;
-  #define H_default_output_type "(" S_default_output_type "): default header type when a new or temporary file is created. \
+  #define H_default_output_header_type "(" S_default_output_header_type "): default header type when a new or temporary file is created. \
 Normally this is " S_mus_next "; -1 here indicates you want Snd to use the current sound's header type, if possible. \
 Other writable headers include " S_mus_aiff ", " S_mus_riff ", " S_mus_ircam ", " S_mus_nist ", " S_mus_aifc ", and " S_mus_raw "."
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_default_output_type, "an integer"); 
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_default_output_header_type, "an integer"); 
   typ = XEN_TO_C_INT(val);
   if (mus_header_writable(typ, -2))
-    set_default_output_type(typ); 
-  else XEN_OUT_OF_RANGE_ERROR(S_setB S_default_output_type, 1, val, "~A: unwritable header type");
-  return(C_TO_XEN_INT(default_output_type(ss)));
+    set_default_output_header_type(typ); 
+  else XEN_OUT_OF_RANGE_ERROR(S_setB S_default_output_header_type, 1, val, "~A: unwritable header type");
+  return(C_TO_XEN_INT(default_output_header_type(ss)));
 }
 
-static XEN g_default_output_format(void) {return(C_TO_XEN_INT(default_output_format(ss)));}
-static XEN g_set_default_output_format(XEN val) 
+static XEN g_default_output_data_format(void) {return(C_TO_XEN_INT(default_output_data_format(ss)));}
+static XEN g_set_default_output_data_format(XEN val) 
 {
   int format;
-  #define H_default_output_format "(" S_default_output_format "): default data format when a new or temporary file is created, \
+  #define H_default_output_data_format "(" S_default_output_data_format "): default data format when a new or temporary file is created, \
 normally " S_mus_bshort "; -1 here means try to use the current sound's data format; many other formats \
 are available, but not all are compatible with all header types"
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_default_output_format, "an integer"); 
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_default_output_data_format, "an integer"); 
   format = XEN_TO_C_INT(val);
   if (MUS_DATA_FORMAT_OK(format))
-    set_default_output_format(format); 
-  else XEN_OUT_OF_RANGE_ERROR(S_setB S_default_output_format, 1, val, "~A: unknown data format");
-  return(C_TO_XEN_INT(default_output_format(ss)));
+    set_default_output_data_format(format); 
+  else XEN_OUT_OF_RANGE_ERROR(S_setB S_default_output_data_format, 1, val, "~A: unknown data format");
+  return(C_TO_XEN_INT(default_output_data_format(ss)));
 }
 
 static XEN g_selection_creates_region(void) {return(C_TO_XEN_BOOLEAN(selection_creates_region(ss)));}
@@ -2856,10 +2856,10 @@ XEN_NARGIFY_0(g_default_output_chans_w, g_default_output_chans)
 XEN_NARGIFY_1(g_set_default_output_chans_w, g_set_default_output_chans)
 XEN_NARGIFY_0(g_default_output_srate_w, g_default_output_srate)
 XEN_NARGIFY_1(g_set_default_output_srate_w, g_set_default_output_srate)
-XEN_NARGIFY_0(g_default_output_type_w, g_default_output_type)
-XEN_NARGIFY_1(g_set_default_output_type_w, g_set_default_output_type)
-XEN_NARGIFY_0(g_default_output_format_w, g_default_output_format)
-XEN_NARGIFY_1(g_set_default_output_format_w, g_set_default_output_format)
+XEN_NARGIFY_0(g_default_output_header_type_w, g_default_output_header_type)
+XEN_NARGIFY_1(g_set_default_output_header_type_w, g_set_default_output_header_type)
+XEN_NARGIFY_0(g_default_output_data_format_w, g_default_output_data_format)
+XEN_NARGIFY_1(g_set_default_output_data_format_w, g_set_default_output_data_format)
 XEN_NARGIFY_0(g_selection_creates_region_w, g_selection_creates_region)
 XEN_NARGIFY_1(g_set_selection_creates_region_w, g_set_selection_creates_region)
 XEN_NARGIFY_0(g_print_length_w, g_print_length)
@@ -3035,10 +3035,10 @@ XEN_NARGIFY_1(g_i0_w, g_i0)
 #define g_set_default_output_chans_w g_set_default_output_chans
 #define g_default_output_srate_w g_default_output_srate
 #define g_set_default_output_srate_w g_set_default_output_srate
-#define g_default_output_type_w g_default_output_type
-#define g_set_default_output_type_w g_set_default_output_type
-#define g_default_output_format_w g_default_output_format
-#define g_set_default_output_format_w g_set_default_output_format
+#define g_default_output_header_type_w g_default_output_header_type
+#define g_set_default_output_header_type_w g_set_default_output_header_type
+#define g_default_output_data_format_w g_default_output_data_format
+#define g_set_default_output_data_format_w g_set_default_output_data_format
 #define g_selection_creates_region_w g_selection_creates_region
 #define g_set_selection_creates_region_w g_set_selection_creates_region
 #define g_print_length_w g_print_length
@@ -3276,11 +3276,19 @@ void g_initialize_gh(void)
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_default_output_srate, g_default_output_srate_w, H_default_output_srate,
 				   S_setB S_default_output_srate, g_set_default_output_srate_w,  0, 0, 1, 0);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_default_output_type, g_default_output_type_w, H_default_output_type,
-				   S_setB S_default_output_type, g_set_default_output_type_w,  0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_default_output_header_type, g_default_output_header_type_w, H_default_output_header_type,
+				   S_setB S_default_output_header_type, g_set_default_output_header_type_w,  0, 0, 1, 0);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_default_output_format, g_default_output_format_w, H_default_output_format,
-				   S_setB S_default_output_format, g_set_default_output_format_w,  0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_default_output_data_format, g_default_output_data_format_w, H_default_output_data_format,
+				   S_setB S_default_output_data_format, g_set_default_output_data_format_w,  0, 0, 1, 0);
+
+  /* backwards compatibility */
+  XEN_DEFINE_PROCEDURE_WITH_SETTER("default-output-type", g_default_output_header_type_w, H_default_output_header_type,
+				   S_setB S_default_output_header_type, g_set_default_output_header_type_w,  0, 0, 1, 0);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER("default-output-format", g_default_output_data_format_w, H_default_output_data_format,
+				   S_setB S_default_output_data_format, g_set_default_output_data_format_w,  0, 0, 1, 0);
+
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_selection_creates_region, g_selection_creates_region_w, H_selection_creates_region,
 				   S_setB S_selection_creates_region, g_set_selection_creates_region_w,  0, 0, 1, 0);

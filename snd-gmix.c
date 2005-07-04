@@ -571,19 +571,19 @@ GtkWidget *make_mix_dialog(void)
       gtk_container_set_border_width (GTK_CONTAINER(mix_dialog), 6);
       gtk_widget_realize(mix_dialog);
       
-      dismiss_button = gtk_button_new_with_label(_("Dismiss"));
+      dismiss_button = gtk_button_new_from_stock(GTK_STOCK_QUIT);
       gtk_widget_set_name(dismiss_button, "quit_button");
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(mix_dialog)->action_area), dismiss_button, false, true, 10);
       SG_SIGNAL_CONNECT(dismiss_button, "clicked", dismiss_mix_dialog, NULL);
       gtk_widget_show(dismiss_button);
 
-      previousb = gtk_button_new_with_label(_("Previous"));
+      previousb = gtk_button_new_from_stock(GTK_STOCK_GO_BACK);
       gtk_widget_set_name(previousb, "reset_button");
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(mix_dialog)->action_area), previousb, false, true, 10);
       SG_SIGNAL_CONNECT(previousb, "clicked", mix_previous_callback, NULL);
       gtk_widget_show(previousb);
 
-      nextb = gtk_button_new_with_label(_("Next"));
+      nextb = gtk_button_new_from_stock(GTK_STOCK_GO_FORWARD);
       gtk_widget_set_name(nextb, "doit_button");
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(mix_dialog)->action_area), nextb, false, true, 10);
       SG_SIGNAL_CONNECT(nextb, "clicked", mix_next_callback, NULL);
@@ -1484,19 +1484,19 @@ GtkWidget *make_track_dialog(void)
       gtk_container_set_border_width (GTK_CONTAINER(track_dialog), 6);
       gtk_widget_realize(track_dialog);
       
-      dismiss_button = gtk_button_new_with_label(_("Dismiss"));
+      dismiss_button = gtk_button_new_from_stock(GTK_STOCK_QUIT);
       gtk_widget_set_name(dismiss_button, "quit_button");
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(track_dialog)->action_area), dismiss_button, false, true, 10);
       SG_SIGNAL_CONNECT(dismiss_button, "clicked", dismiss_track_dialog, NULL);
       gtk_widget_show(dismiss_button);
 
-      track_previousb = gtk_button_new_with_label(_("Previous"));
+      track_previousb = gtk_button_new_from_stock(GTK_STOCK_GO_BACK);
       gtk_widget_set_name(track_previousb, "reset_button");
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(track_dialog)->action_area), track_previousb, false, true, 10);
       SG_SIGNAL_CONNECT(track_previousb, "clicked", track_previous_callback, NULL);
       gtk_widget_show(track_previousb);
 
-      track_nextb = gtk_button_new_with_label(_("Next"));
+      track_nextb = gtk_button_new_from_stock(GTK_STOCK_GO_FORWARD);
       gtk_widget_set_name(track_nextb, "doit_button");
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(track_dialog)->action_area), track_nextb, false, true, 10);
       SG_SIGNAL_CONNECT(track_nextb, "clicked", track_next_callback, NULL);

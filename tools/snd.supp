@@ -1,5 +1,6 @@
 # Snd valgrind suppressions file
 # valgrind --error-limit=no -v --gen-suppressions=yes --suppressions=/home/bil/cl/snd.supp snd
+# valgrind --error-limit=no -v --gen-suppressions=yes --suppressions=/home/bil/cl/snd.supp --leak-check=yes --show-reachable=no --num-callers=6 snd
 # valgrind --error-limit=no -v --gen-suppressions=no --suppressions=/home/bil/cl/snd.supp --leak-check=yes --leak-resolution=high --show-reachable=no --num-callers=12 snd
 #
 # first section copied (unnecessarily) from default: /usr/local/lib/valgrind/default.supp
@@ -696,6 +697,15 @@
    fun:scm_from_int32
    fun:*
 }
+
+{
+   scm-42
+   Memcheck:Cond
+   fun:scan_dynamic_states_and_fluids
+   fun:scm_c_hook_run
+   fun:*
+}
+
 
 {
    Xt-1
@@ -1524,3 +1534,153 @@
    fun:*
 }
 
+{
+   mem-1
+   Memcheck:Leak
+   fun:malloc
+   fun:_XlcDefaultMapModifiers
+   fun:XSetLocaleModifiers
+   obj:/usr/X11R6/lib/libXt.so.6.0
+}
+
+{
+   mem-2
+   Memcheck:Leak
+   fun:malloc
+   obj:/usr/X11R6/lib/X11/locale/lib/common/ximcp.so.2
+   fun:_XimOpenIM
+   obj:/usr/X11R6/lib/libX11.so.6.2
+}
+
+{
+   mem-3
+   Memcheck:Leak
+   fun:malloc
+   obj:/usr/X11R6/lib/libX11.so.6.2
+   obj:/usr/X11R6/lib/libX11.so.6.2
+   fun:_X11TransOpenCOTSClient
+}
+
+{
+   mem-4
+   Memcheck:Leak
+   fun:malloc
+   obj:/usr/X11R6/lib/libX11.so.6.2
+   obj:/usr/X11R6/lib/libX11.so.6.2
+   fun:XrmPutLineResource
+}
+
+{
+   mem-5
+   Memcheck:Leak
+   fun:malloc
+   obj:/usr/X11R6/lib/X11/locale/lib/common/ximcp.so.2
+   fun:_XimOpenIM
+   obj:/usr/X11R6/lib/libX11.so.6.2
+}
+
+{
+   mem-6
+   Memcheck:Leak
+   fun:malloc
+   fun:_XimOpenIM
+   obj:/usr/X11R6/lib/libX11.so.6.2
+   fun:XOpenIM
+}
+
+{
+   mem-7
+   Memcheck:Leak
+   fun:malloc
+   fun:_XimOpenIM
+   obj:/usr/X11R6/lib/libX11.so.6.2
+   fun:XOpenIM
+}
+
+{
+   mem-8
+   Memcheck:Leak
+   fun:malloc
+   fun:_X11TransConnectDisplay
+   fun:XOpenDisplay
+   fun:*
+}
+
+{
+   mem-9
+   Memcheck:Leak
+   fun:malloc
+   fun:_XlcCreateLC
+   fun:_XlcDefaultLoader
+   fun:_XlcDynamicLoad
+}
+
+{
+   mem-10
+   Memcheck:Leak
+   fun:realloc
+   obj:/usr/X11R6/lib/libX11.so.6.2
+   obj:/usr/X11R6/lib/libX11.so.6.2
+   obj:/usr/X11R6/lib/libX11.so.6.2
+}
+
+{
+   mem-11
+   Memcheck:Leak
+   fun:malloc
+   fun:XCreateRegion
+   fun:*
+}
+
+{
+   mem-12
+   Memcheck:Leak
+   fun:malloc
+   obj:/usr/X11R6/lib/libX11.so.6.2
+   obj:/usr/X11R6/lib/libX11.so.6.2
+   fun:XrmCombineFileDatabase
+}
+
+{
+   mem-13
+   Memcheck:Leak
+   fun:malloc
+   fun:_XrmDefaultInitParseInfo
+   fun:_XrmInitParseInfo
+   obj:/usr/X11R6/lib/libX11.so.6.2
+}
+
+{
+   mem-14
+   Memcheck:Leak
+   fun:malloc
+   obj:/usr/X11R6/lib/libX11.so.6.2
+   obj:/usr/X11R6/lib/libX11.so.6.2
+   obj:/usr/X11R6/lib/libX11.so.6.2
+}
+
+{
+   mem-16
+   Memcheck:Leak
+   fun:malloc
+   fun:calc_epsdest
+   fun:*
+}
+
+{
+   mem-17
+   Memcheck:Leak
+   fun:malloc
+   fun:_XOpenLC
+   fun:_XrmInitParseInfo
+   obj:/usr/X11R6/lib/libX11.so.6.2
+}
+
+{
+   mem-18
+   Memcheck:Leak
+   fun:malloc
+   obj:/usr/X11R6/lib/libX11.so.6.2
+   fun:_XlcCreateLC
+   fun:_XlcDefaultLoader
+}

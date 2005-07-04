@@ -421,13 +421,13 @@ $clm_table_size         = 512        unless defined? $clm_table_size
 $clm_array_print_length = 8          unless defined? $clm_array_print_length
 
 if provided? :snd
-  $clm_srate         = default_output_srate  unless defined? $clm_srate
-  $clm_channels      = default_output_chans  unless defined? $clm_channels
-  $clm_header_type   = default_output_type   unless defined? $clm_header_type
-  $clm_data_format   = default_output_format unless defined? $clm_data_format
-  $clm_locsig_type   = locsig_type           unless defined? $clm_locsig_type
-  $clm_rt_bufsize    = dac_size              unless defined? $clm_rt_bufsize
-  $clm_output_device = audio_output_device   unless defined? $clm_output_device
+  $clm_srate         = default_output_srate         unless defined? $clm_srate
+  $clm_channels      = default_output_chans         unless defined? $clm_channels
+  $clm_header_type   = default_output_header_type   unless defined? $clm_header_type
+  $clm_data_format   = default_output_data_format   unless defined? $clm_data_format
+  $clm_locsig_type   = locsig_type                  unless defined? $clm_locsig_type
+  $clm_rt_bufsize    = dac_size                     unless defined? $clm_rt_bufsize
+  $clm_output_device = audio_output_device          unless defined? $clm_output_device
 else
   $clm_srate         = 22050             unless defined? $clm_srate
   $clm_channels      = 1                 unless defined? $clm_channels

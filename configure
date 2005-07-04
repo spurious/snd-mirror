@@ -13643,15 +13643,89 @@ fi
 echo "$as_me:$LINENO: result: $ac_cv_lib_fam_FAMOpen" >&5
 echo "${ECHO_T}$ac_cv_lib_fam_FAMOpen" >&6
 if test $ac_cv_lib_fam_FAMOpen = yes; then
-  cat >>confdefs.h <<\_ACEOF
+  # fam may exist and be loadable, but be unusable due to system daemon restrictions,
+          #   so we need to build and run a test program
+
+	    SAVELIBS=$LIBS
+  	    LIBS="$LIBS -lfam"
+            if test "$cross_compiling" = yes; then
+  { { echo "$as_me:$LINENO: error: cannot run test program while cross compiling
+See \`config.log' for more details." >&5
+echo "$as_me: error: cannot run test program while cross compiling
+See \`config.log' for more details." >&2;}
+   { (exit 1); exit 1; }; }
+else
+  cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+                 #include <fam.h>
+                 #include <stdio.h>
+                 #include <stdlib.h>
+
+int
+main ()
+{
+
+                  int rc, fd;
+                  FAMConnection fc;
+                  FAMRequest *rp;
+
+                  char *filename, *pwd;
+                  filename = calloc(512, sizeof(char));
+                  pwd = calloc(512, sizeof(char));
+                  getcwd(pwd, 512);
+                  strcpy(filename, pwd);
+                  strcat(filename, "/snd.c");
+
+                  if ((FAMOpen(&fc)) < 0) exit(1);
+                  rp = (FAMRequest *)calloc(1, sizeof(FAMRequest));
+                  if (!rp) exit(1);
+                  rc = FAMMonitorFile(&fc, filename, rp, (void *)rp);
+                  if (rc < 0) exit(1);
+                  rc = FAMCancelMonitor(&fc, rp);
+                  if (rc < 0) exit(1);
+                  rc = FAMClose(&fc);
+                  if (rc < 0) exit(1);
+                  exit(0);
+
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && { ac_try='./conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+
+	   cat >>confdefs.h <<\_ACEOF
 #define HAVE_FAM_H 1
 _ACEOF
 
-            cat >>confdefs.h <<\_ACEOF
+           cat >>confdefs.h <<\_ACEOF
 #define HAVE_FAM 1
 _ACEOF
 
-            FAM_LIB="-lfam"
+           FAM_LIB="-lfam"
+
+else
+  echo "$as_me: program exited with status $ac_status" >&5
+echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+fi
+rm -f core *.core gmon.out bb.out conftest$ac_exeext conftest.$ac_objext conftest.$ac_ext
+fi
 
 fi
 

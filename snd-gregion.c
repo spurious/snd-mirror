@@ -308,7 +308,7 @@ static void make_region_dialog(void)
   help_button = gtk_button_new_from_stock(GTK_STOCK_HELP);
   gtk_widget_set_name(help_button, "help_button");
 
-  dismiss_button = gtk_button_new_with_label(_("Dismiss"));
+  dismiss_button = gtk_button_new_from_stock(GTK_STOCK_QUIT);
   gtk_widget_set_name(dismiss_button, "quit_button");
 
   delete_button = gtk_button_new_from_stock(GTK_STOCK_DELETE);

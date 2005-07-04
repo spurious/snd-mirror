@@ -627,15 +627,15 @@
       (set! (default-output-chans) (default-output-chans))
       (if (not (equal? (default-output-chans)  1 )) 
 	  (snd-display ";default-output-chans set def: ~A" (default-output-chans)))
-      (set! (default-output-format) (default-output-format))
-      (if (not (equal? (default-output-format) mus-bshort)) 
-	  (snd-display ";default-output-format set def: ~A" (default-output-format)))
+      (set! (default-output-data-format) (default-output-data-format))
+      (if (not (equal? (default-output-data-format) mus-bshort)) 
+	  (snd-display ";default-output-data-format set def: ~A" (default-output-data-format)))
       (set! (default-output-srate) (default-output-srate))
       (if (not (equal? (default-output-srate)  22050 )) 
 	  (snd-display ";default-output-srate set def: ~A" (default-output-srate)))
-      (set! (default-output-type) (default-output-type))
-      (if (not (equal? (default-output-type)  mus-next)) 
-	  (snd-display ";default-output-type set def: ~A" (default-output-type)))
+      (set! (default-output-header-type) (default-output-header-type))
+      (if (not (equal? (default-output-header-type)  mus-next)) 
+	  (snd-display ";default-output-header-type set def: ~A" (default-output-header-type)))
       (set! (dot-size) (dot-size))
       (if (not (equal? (dot-size)  1 )) 
 	  (snd-display ";dot-size set def: ~A" (dot-size)))
@@ -1011,9 +1011,9 @@
 	'minibuffer-history-length (minibuffer-history-length) 8
 	'data-clipped (data-clipped) #f 
 	'default-output-chans (default-output-chans) 1 
-	'default-output-format (default-output-format) mus-bshort
+	'default-output-data-format (default-output-data-format) mus-bshort
 	'default-output-srate (default-output-srate) 22050 
-	'default-output-type (default-output-type) mus-next
+	'default-output-header-type (default-output-header-type) mus-next
 	'dot-size (dot-size) 1 
 	'enved-base (enved-base) 1.0 
 	'enved-clip? (enved-clip?) #f 
@@ -1604,9 +1604,9 @@
 	  (list 'minibuffer-history-length minibuffer-history-length 8 16)
 	  (list 'data-clipped data-clipped #f #t)
 	  (list 'default-output-chans default-output-chans 1 2)
-	  (list 'default-output-format default-output-format 1 1)
+	  (list 'default-output-data-format default-output-data-format 1 1)
 	  (list 'default-output-srate default-output-srate 22050 44100)
-	  (list 'default-output-type default-output-type mus-next mus-aifc)
+	  (list 'default-output-header-type default-output-header-type mus-next mus-aifc)
 	  (list 'dot-size dot-size 1 4)
 	  (list 'enved-base enved-base 1.0  1.5)
 	  (list 'enved-clip? enved-clip? #f #t)
@@ -3282,7 +3282,9 @@
 			     (lambda args (car args)))))
 	     (if (and (number? tag)
 		      (sound? tag))
-		 (snd-display ";open-sound garbage ~A: ~A?" magic tag)))
+		 (begin
+		   (snd-display ";open-sound garbage ~A: ~A?" magic tag)
+		   (if (sound? tag) (close-sound tag)))))
 	   (delete-file "test.snd")
 	   (mus-sound-forget "test.snd")
 	   ;; try plausible garbage
@@ -3298,7 +3300,9 @@
 			     (lambda args (car args)))))
 	     (if (and (number? tag)
 		      (sound? tag))
-		 (snd-display ";open-sound plausible garbage ~A: ~A?" magic tag)))
+		 (begin
+		   (snd-display ";open-sound plausible garbage ~A: ~A?" magic tag)
+		   (if (sound? tag) (close-sound tag)))))
 	   (delete-file "test.snd")
 	   (mus-sound-forget "test.snd")
 	   ;; write very plausible garbage
@@ -3316,7 +3320,9 @@
 			     (lambda args (car args)))))
 	     (if (and (number? tag)
 		      (sound? tag))
-		 (snd-display ";open-sound very plausible garbage ~A: ~A?" magic tag)))
+		 (begin
+		   (snd-display ";open-sound very plausible garbage ~A: ~A?" magic tag)
+		   (if (sound? tag) (close-sound tag)))))
 	   (set! ctr (1+ ctr)))
 	 magic-words))
       (if (file-exists? "test.snd") (delete-file "test.snd"))
@@ -18558,14 +18564,14 @@ EDITS: 5
       (if (file-exists? "fmv.snd") (delete-file "fmv.snd"))
       
       (let ((nind (new-sound "fmv.snd")))
-	(if (not (= (header-type nind) (default-output-type)))
+	(if (not (= (header-type nind) (default-output-header-type)))
 	    (snd-display ";new-sound default header-type: ~A ~A?"
 			 (mus-header-type-name (header-type nind))
-			 (mus-header-type-name (default-output-type))))
-	(if (not (= (data-format nind) (default-output-format)))
+			 (mus-header-type-name (default-output-header-type))))
+	(if (not (= (data-format nind) (default-output-data-format)))
 	    (snd-display ";new-sound default data-format: ~A ~A?"
 			 (mus-data-format-name (data-format nind))
-			 (mus-data-format-name (default-output-format))))
+			 (mus-data-format-name (default-output-data-format))))
 	(if (not (= (chans nind) (default-output-chans)))
 	    (snd-display ";new-sound default chans: ~A ~A?" (chans nind) (default-output-chans)))
 	(if (not (= (srate nind) (default-output-srate)))
@@ -26002,9 +26008,9 @@ EDITS: 5
 		(list 'cursor-style cursor-style #f cursor-cross cursor-line)
 		(list 'data-clipped data-clipped #f #f #t)
 		(list 'default-output-chans default-output-chans #f 1 8)
-					;(list 'default-output-format default-output-format #f 1 12)
+					;(list 'default-output-data-format default-output-data-format #f 1 12)
 		(list 'default-output-srate default-output-srate #f 22050 44100)
-					;(list 'default-output-type default-output-type #f 0 2)
+					;(list 'default-output-header-type default-output-header-type #f 0 2)
 		(list 'dot-size dot-size #f 1 10)
 		(list 'enved-base enved-base #f 0.01  100.0)
 		(list 'enved-clip? enved-clip? #f #f #t)
@@ -26322,7 +26328,7 @@ EDITS: 5
 	(if (and (not (equal? (all-chans) (list (list obi s2i s2i) (list 0 0 1))))
 		 (not (equal? (all-chans) (list (list s2i s2i obi) (list 0 1 0)))))
 	    (snd-display ";all-chans(2): ~A?" (all-chans)))
-	(if (not (string=? (finfo "oboe.snd") "oboe.snd: chans: 1, srate: 22050, Sun, big endian short (16 bits), len: 2.305"))
+	(if (not (string=? (finfo "oboe.snd") "oboe.snd: chans: 1, srate: 22050, Sun/Next, big endian short (16 bits), len: 2.305"))
 	    (snd-display ";finfo: ~A?" (finfo "oboe.snd")))
 	(close-sound s2i)
 	(close-sound obi)
@@ -38723,8 +38729,8 @@ EDITS: 1
 				    (number->string 
 				     (/ (mus-sound-samples file)
 					(* (mus-sound-chans file) (mus-sound-srate file)))))))
-		     (or (string=? str "oboe.snd: chans: 1, srate: 22050, Sun, big endian short (16 bits), len: 2.30512475967407")
-			 (string=? str "oboe.snd: chans: 1, srate: 22050, Sun, big endian short (16 bits), len: 2.30512471655329")))
+		     (or (string=? str "oboe.snd: chans: 1, srate: 22050, Sun/Next, big endian short (16 bits), len: 2.30512475967407")
+			 (string=? str "oboe.snd: chans: 1, srate: 22050, Sun/Next, big endian short (16 bits), len: 2.30512471655329")))
 		  #t)
 
 	    (ftst '(mus-sound-duration "oboe.snd") 2.30512)
@@ -42200,8 +42206,8 @@ EDITS: 1
 
       (if (not (= *clm-srate* (default-output-srate))) (snd-display ";*clm-srate*: ~A ~A" *clm-srate* (default-output-srate)))
       (if (not (= *clm-channels* (default-output-chans))) (snd-display ";*clm-channels*: ~A ~A" *clm-channels* (default-output-channels)))
-      (if (not (= *clm-header-type* (default-output-type))) (snd-display ";*clm-header-type*: ~A ~A" *clm-header-type* (default-output-type)))
-      (if (not (= *clm-data-format* (default-output-format))) (snd-display ";*clm-data-format*: ~A ~A" *clm-data-format* (default-output-format)))
+      (if (not (= *clm-header-type* (default-output-header-type))) (snd-display ";*clm-header-type*: ~A ~A" *clm-header-type* (default-output-header-type)))
+      (if (not (= *clm-data-format* (default-output-data-format))) (snd-display ";*clm-data-format*: ~A ~A" *clm-data-format* (default-output-data-format)))
       (if (not (= *clm-reverb-channels* 1)) (snd-display ";*clm-reverb-channels*: ~A ~A" *clm-reverb-channels*))
       (if (not (string=? *clm-file-name* "test.snd")) (snd-display ";*clm-file-name*: ~A" *clm-file-name*))
       (if *clm-play* (snd-display ";*clm-play*: ~A" *clm-play*))
@@ -44768,9 +44774,9 @@ EDITS: 1
 		  
 		  ;; ---------------- file save-as dialog ----------------
 		  (set! (default-output-chans) 1)
-		  (set! (default-output-format) mus-bshort)
+		  (set! (default-output-data-format) mus-bshort)
 		  (set! (default-output-srate) 22050)
-		  (set! (default-output-type) mus-next)
+		  (set! (default-output-header-type) mus-next)
 		  
 		  (let ((ind (open-sound "oboe.snd")))
 		    (if (file-exists? "test.snd") (delete-file "test.snd"))
@@ -45021,13 +45027,14 @@ EDITS: 1
 			      (let ((rd (list-ref (dialog-widgets) 9)))
 				(click-button (XmMessageBoxGetChild rd XmDIALOG_CANCEL_BUTTON)) (force-event))))
 			(reset-hook! bad-header-hook)
-			(if (file-exists? (string-append home-dir "/sf1/bogus.snd"))
-			    (let ((ind (open-sound (string-append home-dir "/sf1/bogus.snd"))))
-			      (let ((rd (list-ref (dialog-widgets) 9)))
-				(if (XtIsManaged rd)
-				    (begin
-				      (click-button (XmMessageBoxGetChild rd XmDIALOG_HELP_BUTTON)) (force-event)
-				      (click-button (XmMessageBoxGetChild rd XmDIALOG_CANCEL_BUTTON)) (force-event))))))
+; no longer works -- open-sound can't invoke the bad-header or raw-data dialogs
+;			(if (file-exists? (string-append home-dir "/sf1/bogus.snd"))
+;			    (let ((ind (open-sound (string-append home-dir "/sf1/bogus.snd"))))
+;			      (let ((rd (list-ref (dialog-widgets) 9)))
+;				(if (XtIsManaged rd)
+;				    (begin
+;				      (click-button (XmMessageBoxGetChild rd XmDIALOG_HELP_BUTTON)) (force-event)
+;				      (click-button (XmMessageBoxGetChild rd XmDIALOG_CANCEL_BUTTON)) (force-event))))))
 			(set! (with-background-processes) old-val)))
 		  (add-hook! bad-header-hook (lambda (n) #t))
 		  
@@ -54359,7 +54366,7 @@ EDITS: 1
 		     reverb-control-length-bounds reverb-control-scale-bounds cursor-update-interval cursor-location-offset
 		     auto-update-interval count-matches current-font cursor cursor-color cursor-follows-play cursor-size
 		     cursor-style dac-combines-channels dac-size data-clipped data-color data-format data-location data-size
-		     default-output-chans default-output-format default-output-srate default-output-type define-envelope
+		     default-output-chans default-output-data-format default-output-srate default-output-header-type define-envelope
 		     delete-mark delete-marks forget-region delete-sample delete-samples
 		     delete-selection dialog-widgets display-edits dot-size draw-dot draw-dots draw-line
 		     draw-lines draw-string edit-header-dialog edit-fragment edit-position edit-tree edits env-selection
@@ -54516,7 +54523,7 @@ EDITS: 1
 			 reverb-control-length-bounds reverb-control-scale-bounds cursor-update-interval cursor-location-offset
 			 contrast-control? auto-update-interval current-font cursor cursor-color channel-properties
 			 cursor-follows-play cursor-size cursor-style dac-combines-channels dac-size data-clipped data-color
-			 default-output-chans default-output-format default-output-srate default-output-type dot-size
+			 default-output-chans default-output-data-format default-output-srate default-output-header-type dot-size
 			 enved-envelope enved-base enved-clip? enved-in-dB enved-style enved-power
 			 enved-target enved-waveform-color enved-wave? eps-file eps-left-margin eps-bottom-margin eps-size
 			 expand-control expand-control-hop expand-control-jitter expand-control-length expand-control-ramp expand-control?
@@ -55299,7 +55306,7 @@ EDITS: 1
 			      auto-resize auto-update axis-label-font axis-numbers-font basic-color bind-key
 			      channel-style color-cutoff color-dialog color-inverted color-scale
 			      cursor-color dac-combines-channels dac-size data-clipped data-color default-output-chans 
-			      default-output-format default-output-srate default-output-type enved-envelope enved-base
+			      default-output-data-format default-output-srate default-output-header-type enved-envelope enved-base
 			      enved-clip? enved-in-dB enved-dialog enved-style  enved-power enved-target
 			      enved-waveform-color enved-wave? eps-file eps-left-margin eps-bottom-margin eps-size
 			      foreground-color graph-color graph-cursor highlight-color just-sounds key-binding
@@ -55443,8 +55450,8 @@ EDITS: 1
 	    (check-error-tag 'out-of-range (lambda () (make-file->sample "oboe.snd" -1)))
 	    (check-error-tag 'out-of-range (lambda () (make-file->frame "oboe.snd" 0)))
 	    (check-error-tag 'out-of-range (lambda () (make-file->frame "oboe.snd" -1)))
-	    (check-error-tag 'out-of-range (lambda () (set! (default-output-format) -1)))
-	    (check-error-tag 'out-of-range (lambda () (set! (default-output-type) mus-soundfont)))
+	    (check-error-tag 'out-of-range (lambda () (set! (default-output-data-format) -1)))
+	    (check-error-tag 'out-of-range (lambda () (set! (default-output-header-type) mus-soundfont)))
 	    (check-error-tag 'mus-error (lambda () (mus-sound-chans (string-append sf-dir "bad_location.nist"))))
 	    (check-error-tag 'mus-error (lambda () (mus-sound-chans (string-append sf-dir "bad_field.nist"))))
 	    (if (provided? 'snd-motif)

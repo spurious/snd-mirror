@@ -101,7 +101,7 @@ static void start_file_print_dialog(void)
 {
   if (!file_print_dialog)
     {
-      GtkWidget *print_button, *help_button, *dismiss_button, *epsbox, *epslabel;
+      GtkWidget *help_button, *dismiss_button, *epsbox, *epslabel;
 
       file_print_dialog = snd_gtk_dialog_new();
       SG_SIGNAL_CONNECT(file_print_dialog, "delete_event", file_print_delete_callback, NULL);
@@ -117,19 +117,18 @@ static void start_file_print_dialog(void)
       dismiss_button = gtk_button_new_from_stock(GTK_STOCK_QUIT);
       gtk_widget_set_name(dismiss_button, "quit_button");
 
-      print_button = gtk_button_new_from_stock(GTK_STOCK_PRINT);
-      gtk_widget_set_name(print_button, "doit_button");
+      file_print_ok_button = gtk_button_new_with_label(_("Print"));
+      gtk_widget_set_name(file_print_ok_button, "doit_button");
 
-      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(file_print_dialog)->action_area), print_button, true, true, 4);
+      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(file_print_dialog)->action_area), file_print_ok_button, true, true, 4);
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(file_print_dialog)->action_area), dismiss_button, true, true, 4);
       gtk_box_pack_end(GTK_BOX(GTK_DIALOG(file_print_dialog)->action_area), help_button, true, true, 4);
       SG_SIGNAL_CONNECT(dismiss_button, "clicked", file_print_cancel_callback, NULL);
       SG_SIGNAL_CONNECT(help_button, "clicked", file_print_help_callback, NULL);
-      SG_SIGNAL_CONNECT(print_button, "clicked", file_print_ok_callback, NULL);
+      SG_SIGNAL_CONNECT(file_print_ok_button, "clicked", file_print_ok_callback, NULL);
       gtk_widget_show(dismiss_button);
-      gtk_widget_show(print_button);
+      gtk_widget_show(file_print_ok_button);
       gtk_widget_show(help_button);
-      file_print_ok_button = print_button;
 
       file_print_message = gtk_label_new("");
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(file_print_dialog)->vbox), file_print_message, false, false, 6);

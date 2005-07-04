@@ -342,3 +342,7 @@
 (define mus-error-to-string mus-error-type->string)
 (define save-options save-state)
 (define delete-samples-with-origin delete-samples)
+
+(if (not (defined? 'default-output-type)) (define default-output-type default-output-header-type))
+(if (not (defined? 'default-output-format)) (define default-output-format default-output-data-format))
+

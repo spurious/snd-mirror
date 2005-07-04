@@ -299,6 +299,7 @@
 (CINT "GDK_WINDOW_STATE" "GdkEventType")
 (CINT "GDK_SETTING" "GdkEventType")
 (CINT-250 "GDK_OWNER_CHANGE" "GdkEventType")
+(CINT-271 "GDK_GRAB_BROKEN" "GdkEventType")
 (CINT "GDK_EXPOSURE_MASK" "GdkEventMask")
 (CINT "GDK_POINTER_MOTION_MASK" "GdkEventMask")
 (CINT "GDK_POINTER_MOTION_HINT_MASK" "GdkEventMask")
@@ -2638,6 +2639,10 @@
 (CSTR-250 "GTK_STOCK_MEDIA_RECORD")
 (CSTR-250 "GTK_STOCK_MEDIA_REWIND")
 (CSTR-250 "GTK_STOCK_MEDIA_STOP")
+
+(CSTR-271 "GTK_STOCK_FULLSCREEN")
+(CSTR-271 "GTK_STOCK_INFO")
+(CSTR-271 "GTK_STOCK_LEAVE_FULLSCREEN")
 
 (CCAST "GTK_STYLE(object)" "GtkStyle*")
 (CCHK "GTK_IS_STYLE(object)" "GtkStyle*")
@@ -5503,8 +5508,7 @@
 (CFNC-270 "GtkWidget* gtk_scrolled_window_get_vscrollbar GtkScrolledWindow* scrolled_window")
 (CFNC-270 "void gtk_size_group_set_ignore_hidden GtkSizeGroup* size_group gboolean ignore_hidden")
 (CFNC-270 "gboolean gtk_size_group_get_ignore_hidden GtkSizeGroup* size_group")
-(CFNC-270 "void gtk_stock_set_translate_func gchar* domain GtkTranslateFunc func lambda_data func_data GtkDestroyNotify notify" 'const)
-;;; TODO: what is translate_func?
+;(CFNC-270 "void gtk_stock_set_translate_func gchar* domain GtkTranslateFunc func lambda_data func_data GtkDestroyNotify notify" 'const)
 (CFNC-270 "gboolean gtk_text_iter_forward_visible_line GtkTextIter* iter")
 (CFNC-270 "gboolean gtk_text_iter_backward_visible_line GtkTextIter* iter")
 (CFNC-270 "gboolean gtk_text_iter_forward_visible_lines GtkTextIter* iter gint count")
@@ -5517,4 +5521,12 @@
 ;(CFNC-270 "PangoFontMap* pango_font_get_font_map PangoFont* font")
 
 ;;; omitted "cairo" stuff
+
+(CFNC-271 "void gdk_window_move_region GdkWindow* window GdkRegion* region gint dx gint dy")
+
+;;; from gtkitemfactory:
+;typedef gchar * (*GtkTranslateFunc)	   (const gchar		*path,
+;					    gpointer             func_data);
+; sets label translation func -- not sure how to handle this
+; currently all uses are commented out
 

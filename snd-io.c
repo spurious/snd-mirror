@@ -620,9 +620,9 @@ int open_temp_file(const char *ofile, int chans, file_info *hdr)
   len = snd_strlen(hdr->comment);
   if (!(mus_header_writable(hdr->type, hdr->format)))
     {
-      hdr->type = default_output_type(ss);
-      if (mus_header_writable(hdr->type, default_output_format(ss)))
-	hdr->format = default_output_format(ss);
+      hdr->type = default_output_header_type(ss);
+      if (mus_header_writable(hdr->type, default_output_data_format(ss)))
+	hdr->format = default_output_data_format(ss);
       else
 	{
 	  /* was default_output_* here, but that's for the user's output, not ours */

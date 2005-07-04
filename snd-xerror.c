@@ -290,7 +290,7 @@ void save_post_it_dialog_state(FILE *fd)
       XmString title;
       text = XmTextGetString(post_it_text);
       XtVaGetValues(post_it_dialog, XmNdialogTitle, &title, NULL);
-      XmStringGetLtoR(title, XmFONTLIST_DEFAULT_TAG, &subject);
+      subject = (char *)XmStringUnparse(title, NULL, XmCHARSET_TEXT, XmCHARSET_TEXT, NULL, 0, XmOUTPUT_ALL);
 #if HAVE_SCHEME
       fprintf(fd, "(%s \"%s\" \"%s\")\n", S_info_dialog, subject, text);
 #endif

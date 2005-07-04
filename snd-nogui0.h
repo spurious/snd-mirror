@@ -68,6 +68,7 @@ typedef struct {
   int mark_gc, selected_mark_gc;          
   int mix_gc;           
   struct dialog_play_info *ignore_me; /* for the compiler's benefit */
+  int requestor_dialog;
 } state_context;
 
 typedef struct {

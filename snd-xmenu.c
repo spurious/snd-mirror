@@ -187,7 +187,7 @@ static void view_ctrls_callback(Widget w, XtPointer info, XtPointer context)
   char *label = NULL;
   XtVaGetValues(w, XmNlabelString, &s1, NULL);
   if (XmStringEmpty(s1)) return;
-  XmStringGetLtoR(s1, XmFONTLIST_DEFAULT_TAG, &label);
+  label = (char *)XmStringUnparse(s1, NULL, XmCHARSET_TEXT, XmCHARSET_TEXT, NULL, 0, XmOUTPUT_ALL);
   XmStringFree(s1);
   if ((label) && (strcmp(label, _("Show controls")) == 0))
     show_controls(); 

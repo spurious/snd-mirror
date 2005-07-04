@@ -178,8 +178,8 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
   ss->Sinc_Width = DEFAULT_SINC_WIDTH;
   ss->Default_Output_Chans = DEFAULT_OUTPUT_CHANS;
   ss->Default_Output_Srate = DEFAULT_OUTPUT_SRATE;
-  ss->Default_Output_Type = DEFAULT_OUTPUT_TYPE;
-  ss->Default_Output_Format = DEFAULT_OUTPUT_FORMAT;
+  ss->Default_Output_Header_Type = DEFAULT_OUTPUT_HEADER_TYPE;
+  ss->Default_Output_Data_Format = DEFAULT_OUTPUT_DATA_FORMAT;
   ss->Auto_Resize = DEFAULT_AUTO_RESIZE; 
   ss->Auto_Update = DEFAULT_AUTO_UPDATE; 
   ss->Graphs_Horizontal = DEFAULT_GRAPHS_HORIZONTAL;

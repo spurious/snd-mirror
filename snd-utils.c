@@ -187,6 +187,14 @@ char *file_to_string(const char *filename)
   return(content);
 }
 
+const char *short_data_format_name(int sndlib_format, const char *filename)
+{
+  if (MUS_DATA_FORMAT_OK(sndlib_format))
+    return(mus_data_format_short_name(sndlib_format));
+  else return(mus_header_original_format_name(mus_sound_original_format(filename),
+					      mus_sound_header_type(filename)));
+}
+
 
 #if HAVE_LANGINFO_DECIMAL_POINT || HAVE_LANGINFO_RADIXCHAR
 #if NL_TYPES_H_DEFINES_MALLOC
@@ -356,6 +364,8 @@ void snd_exit(int val)
 #if HAVE_FAM
 #define DEBUGGING_FAM 0
 
+static bool fam_already_warned = false;
+
 #if USE_MOTIF
 static void fam_reader(XtPointer context, int *fd, XtInputId *id)
 #else
@@ -420,41 +430,46 @@ static gboolean fam_reader(GIOChannel *source, GIOCondition condition, gpointer 
 
 static FAMRequest *fam_monitor(void)
 {
-  if (!(ss->fam_connection))
+  if (!fam_already_warned)
     {
-      int err;
-      ss->fam_connection = (FAMConnection *)CALLOC(1, sizeof(FAMConnection));
-      err = FAMOpen(ss->fam_connection);
-      if (err < 0)
+      if (!(ss->fam_connection))
 	{
-	  snd_error("can't start file alteration monitor: %d\n", FAMErrno);
-	  return(NULL);
-	}
-      else
-	{
-	  int fd;
-	  fd = FAMCONNECTION_GETFD(ss->fam_connection);
+	  int err;
+	  ss->fam_connection = (FAMConnection *)CALLOC(1, sizeof(FAMConnection));
+	  err = FAMOpen(ss->fam_connection);
+	  if (err < 0)
+	    {
+	      fam_already_warned = true;
+	      snd_error("can't start file alteration monitor: %d\n", FAMErrno);
+	      return(NULL);
+	    }
+	  else
+	    {
+	      int fd;
+	      fd = FAMCONNECTION_GETFD(ss->fam_connection);
 #if USE_MOTIF
-	  ss->sgx->fam_port = XtAppAddInput(MAIN_APP(ss),
-					    fd,
-					    (XtPointer)XtInputReadMask,
-					    fam_reader,
-					    NULL);
+	      ss->sgx->fam_port = XtAppAddInput(MAIN_APP(ss),
+						fd,
+						(XtPointer)XtInputReadMask,
+						fam_reader,
+						NULL);
 #endif
 #if USE_GTK
-	  {
-	    GIOChannel *channel;
-	    channel = g_io_channel_unix_new(fd);
-	    ss->sgx->fam_port = g_io_add_watch_full(channel, 
-						    G_PRIORITY_DEFAULT, 
-						    (GIOCondition)(G_IO_IN | G_IO_HUP | G_IO_ERR), 
-						    fam_reader, NULL, NULL);
-	    g_io_channel_unref(channel);
-	  }
+	      {
+		GIOChannel *channel;
+		channel = g_io_channel_unix_new(fd);
+		ss->sgx->fam_port = g_io_add_watch_full(channel, 
+							G_PRIORITY_DEFAULT, 
+							(GIOCondition)(G_IO_IN | G_IO_HUP | G_IO_ERR), 
+							fam_reader, NULL, NULL);
+		g_io_channel_unref(channel);
+	      }
 #endif
+	    }
 	}
+      return((FAMRequest *)CALLOC(1, sizeof(FAMRequest)));
     }
-  return((FAMRequest *)CALLOC(1, sizeof(FAMRequest)));
+  return(NULL);
 }
 
 FAMRequest *fam_monitor_file(const char *filename, void *data)
@@ -475,7 +490,11 @@ FAMRequest *fam_monitor_file(const char *filename, void *data)
 	  return(NULL);
 	}
     }
-  else snd_error("can't get fam request for %s: %d\n", filename, FAMErrno);
+  else 
+    {
+      if (!fam_already_warned)
+	snd_error("can't get fam request for %s: %d\n", filename, FAMErrno);
+    }
   return(rp);
 }
 
@@ -494,7 +513,11 @@ FAMRequest *fam_monitor_directory(const char *dir_name, void *data)
 	  return(NULL);
 	}
     }
-  else snd_error("can't get fam request for %s: %d\n", dir_name, FAMErrno);
+  else 
+    {
+      if (!fam_already_warned)
+	snd_error("can't get fam request for %s: %d\n", dir_name, FAMErrno);
+    }
   return(rp);
 }
 
@@ -504,10 +527,13 @@ FAMRequest *fam_unmonitor_file(const char *filename, FAMRequest *rp)
 #if DEBUGGING_FAM
   fprintf(stderr, "unmonitor %s\n", filename);
 #endif
-  err = FAMCancelMonitor(ss->fam_connection, rp);
-  if (err < 0)
-    snd_error("can't unmonitor %s: %d\n", filename, FAMErrno);
-  FREE(rp);
+  if (rp)
+    {
+      err = FAMCancelMonitor(ss->fam_connection, rp);
+      if (err < 0)
+	snd_error("can't unmonitor %s: %d\n", filename, FAMErrno);
+      FREE(rp);
+    }
   return(NULL);
 }
 #endif

@@ -105,8 +105,8 @@ typedef enum {FILE_SAVE_AS, EDIT_SAVE_AS} save_dialog_t;
 
 #define DEFAULT_OUTPUT_CHANS 1
 #define DEFAULT_OUTPUT_SRATE 22050
-#define DEFAULT_OUTPUT_TYPE MUS_NEXT
-#define DEFAULT_OUTPUT_FORMAT MUS_BSHORT
+#define DEFAULT_OUTPUT_HEADER_TYPE MUS_NEXT
+#define DEFAULT_OUTPUT_DATA_FORMAT MUS_BSHORT
 
 #define NO_COMPLETER -1
 #define NO_SELECTION -1
@@ -397,8 +397,8 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_PREVIOUS_FILES, FROM_SAVE_AS_
 #define DEFAULT_INIT_WINDOW_WIDTH 0
 #define DEFAULT_INIT_WINDOW_HEIGHT 0
 
-#define default_output_type(ss) ss->Default_Output_Type
-#define set_default_output_type(a) ss->Default_Output_Type = a
+#define default_output_header_type(ss) ss->Default_Output_Header_Type
+#define set_default_output_header_type(a) ss->Default_Output_Header_Type = a
 
 #define default_output_chans(ss) ss->Default_Output_Chans
 #define set_default_output_chans(a) ss->Default_Output_Chans = a
@@ -406,8 +406,8 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_PREVIOUS_FILES, FROM_SAVE_AS_
 #define default_output_srate(ss) ss->Default_Output_Srate
 #define set_default_output_srate(a) ss->Default_Output_Srate = a
 
-#define default_output_format(ss) ss->Default_Output_Format
-#define set_default_output_format(a) ss->Default_Output_Format = a
+#define default_output_data_format(ss) ss->Default_Output_Data_Format
+#define set_default_output_data_format(a) ss->Default_Output_Data_Format = a
 
 #define dac_size(ss) ss->Dac_Size
 #define set_dac_size(a) ss->Dac_Size = a
