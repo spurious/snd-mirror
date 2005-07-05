@@ -13648,6 +13648,8 @@ if test $ac_cv_lib_fam_FAMOpen = yes; then
 
 	    SAVELIBS=$LIBS
   	    LIBS="$LIBS -lfam"
+	    echo "$as_me:$LINENO: checking whether fam daemon is operational" >&5
+echo $ECHO_N "checking whether fam daemon is operational... $ECHO_C" >&6
             if test "$cross_compiling" = yes; then
   { { echo "$as_me:$LINENO: error: cannot run test program while cross compiling
 See \`config.log' for more details." >&5
@@ -13708,6 +13710,8 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
 
+	   echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6
 	   cat >>confdefs.h <<\_ACEOF
 #define HAVE_FAM_H 1
 _ACEOF
@@ -13723,10 +13727,15 @@ else
 echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
+( exit $ac_status )
+
+	   echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+
+
 fi
 rm -f core *.core gmon.out bb.out conftest$ac_exeext conftest.$ac_objext conftest.$ac_ext
 fi
-
 fi
 
 fi

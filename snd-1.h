@@ -156,6 +156,14 @@ typedef struct {
   Float base;
 } env;
 
+#if HAVE_FAM
+typedef struct fam_info {
+  FAMRequest *rp;
+  void *data;
+  void (*action)(struct fam_info *fp, FAMEvent *fe);
+} fam_info;
+#endif
+
 typedef struct env_editor {
   int *current_xs;
   int *current_ys;
@@ -347,7 +355,7 @@ typedef struct snd_info {
   bool active;
   char *name_string;
 #if HAVE_FAM
-  FAMRequest *file_watcher;
+  fam_info *file_watcher;
   bool writing;
 #endif
   void (*read_only_watcher)(struct snd_info *sp);
@@ -1361,9 +1369,13 @@ char *snd_tempnam(void);
 void snd_exit(int val);
 void g_init_utils(void);
 #if HAVE_FAM
-  FAMRequest *fam_monitor_file(const char *filename, void *data);
-  FAMRequest *fam_monitor_directory(const char *dir_name, void *data);
-  FAMRequest *fam_unmonitor_file(const char *filename, FAMRequest *rp);
+fam_info *fam_monitor_file(const char *filename, 
+			   void *data, 
+			   void (*action)(struct fam_info *fp, FAMEvent *fe));
+fam_info *fam_monitor_directory(const char *dir_name,
+				void *data, 
+				void (*action)(struct fam_info *fp, FAMEvent *fe));
+fam_info *fam_unmonitor_file(const char *filename, fam_info *fp);
 #endif
 #ifdef DEBUGGING
   void set_encloser(char *name);

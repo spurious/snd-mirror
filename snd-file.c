@@ -707,6 +707,46 @@ void reflect_file_change_in_title(void)
   FREE(alist);
 }
 
+#if HAVE_FAM
+static void fam_sp_action(struct fam_info *fp, FAMEvent *fe)
+{
+  snd_info *sp;
+  sp = (snd_info *)(fp->data);
+  if (sp->writing) return;
+  switch (fe->code)
+    {
+    case FAMChanged:
+      /* this includes cp overwriting old etc */
+      if (file_write_date(sp->filename) != sp->write_date) /* otherwise chmod? */
+	{
+	  sp->need_update = true;
+	  if (auto_update(ss))
+	    snd_update(sp);
+	  else snd_file_bomb_icon(sp, true);
+	}
+      else
+	{
+	  /* TODO: write-protection -> put up lock? how to get these bits and tell what has changed? */
+	}
+      break;
+
+    case FAMDeleted:
+      /* snd_update will post a complaint in this case */
+    case FAMCreated:
+    case FAMMoved:
+      sp->need_update = true;
+      if (auto_update(ss))
+	snd_update(sp);
+      else snd_file_bomb_icon(sp, true);
+      break;
+
+    default:
+      /* ignore the rest */
+      break;
+    }
+}
+#endif
+
 static char *snd_opened_sound_file_name(snd_info *sp)
 {
   char *newname;
@@ -796,7 +836,7 @@ snd_info *finish_opening_sound(snd_info *sp, bool selected)
       reflect_equalize_panes_in_menu(active_channels(WITHOUT_VIRTUAL_CHANNELS) > 1);
       reflect_file_change_in_title();
 #if HAVE_FAM
-      sp->file_watcher = fam_monitor_file(sp->filename, (void *)sp);
+      sp->file_watcher = fam_monitor_file(sp->filename, (void *)sp, fam_sp_action);
 #endif
 #if USE_MOTIF
       unlock_control_panel(sp);
@@ -1302,7 +1342,6 @@ static snd_info *snd_update_1(snd_info *sp, const char *ur_filename)
   struct ctrl_state *saved_controls;
   off_t *old_cursors;
   XEN update_hook_result = XEN_FALSE;
-
   if (XEN_HOOKED(update_hook))
     {
       /* #t => return without updating (not recommended!!), proc of 1 arg will be evaluated after update is complete */

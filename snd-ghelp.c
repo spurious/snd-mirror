@@ -386,15 +386,20 @@ void save_help_dialog_state(FILE *fd)
 	  topic = help_history[help_history_pos - 1];
 	  if (topic)
 	    {
-	      help = XEN_TO_C_STRING(g_snd_help(C_TO_XEN_STRING(topic), 0));
-	      if (help)
+	      XEN res;
+	      res = g_snd_help(C_TO_XEN_STRING(topic), 0);
+	      if (XEN_STRING_P(res))
 		{
+		  help = XEN_TO_C_STRING(res);
+		  if (help)
+		    {
 #if HAVE_SCHEME
-		  fprintf(fd, "(%s \"%s\" \"%s\")\n", S_help_dialog, topic, help);
+		      fprintf(fd, "(%s \"%s\" \"%s\")\n", S_help_dialog, topic, help);
 #endif
 #if HAVE_RUBY
-		  fprintf(fd, "%s(\"%s\", \"%s\")\n", TO_PROC_NAME(S_help_dialog), topic, help);
+		      fprintf(fd, "%s(\"%s\", \"%s\")\n", TO_PROC_NAME(S_help_dialog), topic, help);
 #endif
+		    }
 		}
 	    }
 	}

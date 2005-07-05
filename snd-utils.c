@@ -366,6 +366,25 @@ void snd_exit(int val)
 
 static bool fam_already_warned = false;
 
+#if DEBUGGING_FAM
+static char *fam_event_name(int code)
+{
+  switch (code)
+    {
+    case FAMChanged:        return("Changed");        break;
+    case FAMDeleted:        return("Deleted");        break;
+    case FAMCreated:        return("Created");        break;
+    case FAMMoved:          return("Moved");          break;
+    case FAMStartExecuting: return("StartExecuting"); break;
+    case FAMStopExecuting:  return("StopExecuting");  break;
+    case FAMAcknowledge:    return("Acknowledge");    break;
+    case FAMExists:         return("Exists");         break;
+    case FAMEndExist:       return("EndExist");       break;
+    }
+  return("unknown");
+}
+#endif
+
 #if USE_MOTIF
 static void fam_reader(XtPointer context, int *fd, XtInputId *id)
 #else
@@ -376,49 +395,29 @@ static gboolean fam_reader(GIOChannel *source, GIOCondition condition, gpointer 
   if (FAMPending(ss->fam_connection) > 0)
     {
       if (FAMNextEvent(ss->fam_connection, &fe) < 0) 
-	fprintf(stderr,"fam error: %d\n", FAMErrno);
+	snd_error("fam error: %d\n", FAMErrno);
       else
 	{
-	  snd_info *sp;
-	  sp = (snd_info *)(fe.userdata);
-#if DEBUGGING_FAM
-	  fprintf(stderr, "fam %s: %d\n", fe.filename, fe.code);
-#endif
 	  switch (fe.code)
 	    {
-	    case FAMChanged:
-	      /* TODO: check what changes might matter here (write-protection -> put up lock?) */
-#if DEBUGGING_FAM
-	      fprintf(stderr, "%s changed\n", fe.filename);
-#endif	  
-	      break;
-
-	    case FAMDeleted:
-	    case FAMCreated:
-	    case FAMMoved:
-#if DEBUGGING_FAM
-	      fprintf(stderr, "%s moved etc\n", fe.filename);
-#endif	  
-	      if (!(sp->writing))
-		{
-		  sp->need_update = true;
-		  if (auto_update(ss))
-		    snd_update(sp);
-		  else snd_file_bomb_icon(sp, true);
-		}
-	      break;
-
 	    case FAMStartExecuting:
 	    case FAMStopExecuting:
 	    case FAMAcknowledge:
 	    case FAMExists:
 	    case FAMEndExist:
+	      /* ignore these (fp pointer can be a dangling reference here) */
 	      break;
-	      /* these don't matter */
 	    default:
+	      {
+		fam_info *fp = (fam_info *)(fe.userdata);
 #if DEBUGGING_FAM
-	      fprintf(stderr, "%s: unknown fam code: %d!\n", fe.filename, fe.code);
+		fprintf(stderr, "fam %s: %d (%s): %p\n", fe.filename, fe.code, fam_event_name(fe.code), fp);
 #endif
+		if (!fp) 
+		  fprintf(stderr, "no fam user data!");
+		else
+		  (*(fp->action))(fp, &fe);
+	      }
 	      break;
 	    }
 	}
@@ -427,6 +426,19 @@ static gboolean fam_reader(GIOChannel *source, GIOCondition condition, gpointer 
   return(true);
 #endif
 }
+
+static fam_info *make_fam_info(FAMRequest *rp, void *data, void (*action)(struct fam_info *fp, FAMEvent *fe))
+{
+  fam_info *fp;
+  fp = (fam_info *)CALLOC(1, sizeof(fam_info));
+  fp->data = data;
+  fp->action = action;
+  fp->rp = rp;
+  return(fp);
+}
+  
+/* TODO: test rb snd_test change
+ */
 
 static FAMRequest *fam_monitor(void)
 {
@@ -472,9 +484,12 @@ static FAMRequest *fam_monitor(void)
   return(NULL);
 }
 
-FAMRequest *fam_monitor_file(const char *filename, void *data)
+fam_info *fam_monitor_file(const char *filename, 
+			   void *data, 
+			   void (*action)(struct fam_info *fp, FAMEvent *fe))
 {
-  FAMRequest *rp;
+  fam_info *fp = NULL;
+  FAMRequest *rp = NULL;
   int err;
   rp = fam_monitor();
   if (rp)
@@ -482,57 +497,76 @@ FAMRequest *fam_monitor_file(const char *filename, void *data)
 #if DEBUGGING_FAM
       fprintf(stderr, "monitor %s\n", filename);
 #endif
-      err = FAMMonitorFile(ss->fam_connection, filename, rp, data);
+      fp = make_fam_info(rp, data, action);
+      err = FAMMonitorFile(ss->fam_connection, filename, rp, (void *)fp);
       if (err < 0)
 	{
 	  snd_error("can't monitor %s: %d\n", filename, FAMErrno);
 	  FREE(rp);
-	  return(NULL);
+	  rp = NULL;
+	  FREE(fp);
+	  fp = NULL;
 	}
+      else return(fp);
     }
   else 
     {
       if (!fam_already_warned)
 	snd_error("can't get fam request for %s: %d\n", filename, FAMErrno);
     }
-  return(rp);
+  return(NULL);
 }
 
-FAMRequest *fam_monitor_directory(const char *dir_name, void *data)
+fam_info *fam_monitor_directory(const char *dir_name,
+				void *data, 
+				void (*action)(struct fam_info *fp, FAMEvent *fe))
 {
-  FAMRequest *rp;
+  fam_info *fp = NULL;
+  FAMRequest *rp = NULL;
   int err;
   rp = fam_monitor();
   if (rp)
     {
-      err = FAMMonitorDirectory(ss->fam_connection, dir_name, rp, data);
+      fp = make_fam_info(rp, data, action);
+      err = FAMMonitorDirectory(ss->fam_connection, dir_name, rp, (void *)fp);
       if (err < 0)
 	{
 	  snd_error("can't monitor %s: %d\n", dir_name, FAMErrno);
 	  FREE(rp);
-	  return(NULL);
+	  rp = NULL;
+	  FREE(fp);
+	  fp = NULL;
 	}
+      else return(fp);
     }
   else 
     {
       if (!fam_already_warned)
 	snd_error("can't get fam request for %s: %d\n", dir_name, FAMErrno);
     }
-  return(rp);
+  return(NULL);
 }
 
-FAMRequest *fam_unmonitor_file(const char *filename, FAMRequest *rp)
+fam_info *fam_unmonitor_file(const char *filename, fam_info *fp)
 {
   int err;
 #if DEBUGGING_FAM
   fprintf(stderr, "unmonitor %s\n", filename);
 #endif
-  if (rp)
+  if (fp)
     {
-      err = FAMCancelMonitor(ss->fam_connection, rp);
-      if (err < 0)
-	snd_error("can't unmonitor %s: %d\n", filename, FAMErrno);
-      FREE(rp);
+      if (fp->rp)
+	{
+	  err = FAMCancelMonitor(ss->fam_connection, fp->rp);
+	  if (err < 0)
+	    snd_error("can't unmonitor %s: %d\n", filename, FAMErrno);
+	  if (fp->rp)
+	    {
+	      /* FREE(fp->rp);*/ /* /usr/include/fam.h says cancel frees this, but I think that is a mistake */
+	      fp->rp = NULL;
+	    }
+	}
+      FREE(fp);
     }
   return(NULL);
 }

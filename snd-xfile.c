@@ -29,7 +29,6 @@
  * PERHAPS: region save-as as button in region browser?
  * PERHAPS: raw_data: caller can pass continuation and callback funcs
  * SOMEDAY: new file ok: would be nice to cancel 'DoIt' if user deletes file by hand -- use FAM
- * TODO: does just-sounds callback need to fixup list pos?
  * TODO: raw give OGG/Mpeg/Speex choices if the progs can be found [needs configure support] -- why not translate in snd_translate?
  * TODO: various file/directory lists: tie into fam/gamin (also previous files list) -- add xen call?
  */
@@ -720,7 +719,7 @@ static void file_open_ok_callback(Widget w, XtPointer context, XtPointer info)
     }
 }
 
-static file_dialog_info *open_dialog = NULL;
+static file_dialog_info *odat = NULL;
 
 widget_t make_open_file_dialog(bool read_only, bool managed)
 {
@@ -735,43 +734,43 @@ widget_t make_open_file_dialog(bool read_only, bool managed)
       title = _("Open");
       select_title = _("open:");
     }
-  if (open_dialog == NULL)
+  if (!odat)
     {
-      open_dialog = make_file_dialog(read_only, title, select_title, file_open_ok_callback, open_file_help_callback);
-      set_dialog_widget(FILE_OPEN_DIALOG, open_dialog->dialog);
+      odat = make_file_dialog(read_only, title, select_title, file_open_ok_callback, open_file_help_callback);
+      set_dialog_widget(FILE_OPEN_DIALOG, odat->dialog);
       if (just_sounds(ss)) 
 	{
-	  XtVaSetValues(open_dialog->dialog, 
+	  XtVaSetValues(odat->dialog, 
 			XmNfileSearchProc, sound_file_search, 
 			NULL);
-	  open_dialog->fp->need_update = true;
-	  force_directory_reread(open_dialog->dialog);
+	  odat->fp->need_update = true;
+	  force_directory_reread(odat->dialog);
 	}
     }
   else
     {
-      if (open_dialog->file_dialog_read_only != read_only)
+      if (odat->file_dialog_read_only != read_only)
 	{
 	  XmString s1, s2;
 	  s1 = XmStringCreate(select_title, XmFONTLIST_DEFAULT_TAG);
 	  s2 = XmStringCreate(title, XmFONTLIST_DEFAULT_TAG);
-	  XtVaSetValues(open_dialog->dialog, 
+	  XtVaSetValues(odat->dialog, 
 			XmNselectionLabelString, s1, 
 			XmNdialogTitle, s2, 
 			NULL);
 	  XmStringFree(s1);
 	  XmStringFree(s2);
-	  open_dialog->file_dialog_read_only = read_only;
+	  odat->file_dialog_read_only = read_only;
 	}
     }
-  if (open_dialog->fp->new_file_written) 
+  if (odat->fp->new_file_written) 
     {
-      force_directory_reread(open_dialog->dialog);
-      open_dialog->fp->new_file_written = false;
+      force_directory_reread(odat->dialog);
+      odat->fp->new_file_written = false;
     }
-  if ((managed) && (!(XtIsManaged(open_dialog->dialog))))
-    XtManageChild(open_dialog->dialog);
-  return(open_dialog->dialog);
+  if ((managed) && (!(XtIsManaged(odat->dialog))))
+    XtManageChild(odat->dialog);
+  return(odat->dialog);
 }
 
 
@@ -854,24 +853,24 @@ widget_t make_mix_file_dialog(bool managed)
 
 void set_open_file_play_button(bool val)
 {
-  if ((open_dialog) && (open_dialog->dp->play_button))
-    XmToggleButtonSetState(open_dialog->dp->play_button, (Boolean)val, false);
+  if ((odat) && (odat->dp->play_button))
+    XmToggleButtonSetState(odat->dp->play_button, (Boolean)val, false);
   if ((mdat) && (mdat->dp->play_button))
     XmToggleButtonSetState(mdat->dp->play_button, (Boolean)val, false);
 }
 
 void alert_new_file(void) 
 {
-  if (open_dialog)
-    open_dialog->fp->new_file_written = true;
+  if (odat)
+    odat->fp->new_file_written = true;
   if (mdat)
     mdat->fp->new_file_written = true;
 }
 
 void reflect_just_sounds(void)
 {
-  if ((open_dialog) && (open_dialog->fp->just_sounds_button))
-    XmToggleButtonSetState(open_dialog->fp->just_sounds_button, just_sounds(ss), true);
+  if ((odat) && (odat->fp->just_sounds_button))
+    XmToggleButtonSetState(odat->fp->just_sounds_button, just_sounds(ss), true);
   if ((mdat) && (mdat->fp->just_sounds_button))
     XmToggleButtonSetState(mdat->fp->just_sounds_button, just_sounds(ss), true);
 }
@@ -1981,9 +1980,9 @@ widget_t make_edit_save_as_dialog(bool managed)
 
 void save_file_dialog_state(FILE *fd)
 {
-  if ((open_dialog) && (XtIsManaged(open_dialog->dialog)))
+  if ((odat) && (XtIsManaged(odat->dialog)))
     {
-      /* open_dialog->file_dialog_read_only -> "view-sound" dialog -- this distinction currently ignored */
+      /* odat->file_dialog_read_only -> "view-sound" dialog -- this distinction currently ignored */
 #if HAVE_SCHEME
       fprintf(fd, "(%s #t)\n", S_open_file_dialog);
 #endif
@@ -2019,6 +2018,9 @@ static file_data *ndat = NULL;
 static off_t initial_samples = 1;
 static Widget new_file_name = NULL;
 static bool new_file_doit = false;
+#if HAVE_FAM
+  FAMRequest *new_file_doit_watcher = NULL;
+#endif
 
 static void new_file_undoit(void);
 
@@ -2085,6 +2087,8 @@ static void new_file_ok_callback(Widget w, XtPointer context, XtPointer info)
 	    {
 	      XmString ok_label;
 	      msg = mus_format(_("%s exists. If you want to overwrite it, click 'DoIt'"), newer_name);
+	      /* new_file_doit_watcher = fam_monitor_file(newer_name, NULL); */
+
 	      post_file_dialog_error((const char *)msg, (void *)ndat);
 	      clear_error_if_new_filename_changes(new_file_dialog, (void *)ndat);
 	      ok_label = XmStringCreate(_("DoIt"), XmFONTLIST_DEFAULT_TAG);

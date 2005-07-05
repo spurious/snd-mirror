@@ -1087,9 +1087,9 @@ def test00
       [:minibuffer_history_length, 8],
       [:data_clipped, false],
       [:default_output_chans, 1],
-      [:default_output_format, Mus_bshort],
+      [:default_output_data_format, Mus_bshort],
       [:default_output_srate, 22050],
-      [:default_output_type, Mus_next],
+      [:default_output_header_type, Mus_next],
       [:dot_size, 1],
       [:cursor_size, 15],
       [:cursor_style, Cursor_cross],
@@ -1298,9 +1298,9 @@ def test01
       [:minibuffer_history_length, 8],
       [:data_clipped, false],
       [:default_output_chans, 1],
-      [:default_output_format, Mus_bshort],
+      [:default_output_data_format, Mus_bshort],
       [:default_output_srate, 22050],
-      [:default_output_type, Mus_next],
+      [:default_output_header_type, Mus_next],
       [:dot_size, 1],
       [:enved_base, 1.0],
       [:enved_clip?, false],
@@ -1825,9 +1825,9 @@ def test03
       [:minibuffer_history_length, 8, 16],
       [:data_clipped, false, true],
       [:default_output_chans, 1, 2],
-      [:default_output_format, 1, 1],
+      [:default_output_data_format, 1, 1],
       [:default_output_srate, 22050, 44100],
-      [:default_output_type, Mus_next, Mus_aifc],
+      [:default_output_header_type, Mus_next, Mus_aifc],
       [:dot_size, 1, 4],
       [:enved_base, 1.0, 1.5],
       [:enved_clip?, false, true],
@@ -17301,12 +17301,12 @@ def test188
   close_sound(nind)
   delete_file("fmv.snd")
   nind = new_sound("fmv.snd")
-  if (res1 = header_type(nind)) != (res2 = default_output_type)
+  if (res1 = header_type(nind)) != (res2 = default_output_header_type)
     snd_display("new_sound default header_type: %s %s?",
                 mus_header_type_name(res1),
                 mus_header_type_name(res2))
   end
-  if (res1 = data_format(nind)) != (res2 = default_output_format)
+  if (res1 = data_format(nind)) != (res2 = default_output_data_format)
     snd_display("new_sound default data_format: %s %s?",
                 mus_data_format_name(res1),
                 mus_data_format_name(res2))
@@ -34754,10 +34754,10 @@ def test0223
   if (res1 = $clm_channels) != (res2 = default_output_chans)
     snd_display("$clm_channels: %s %s?", res1, res2)
   end
-  if (res1 = $clm_header_type) != (res2 = default_output_type)
+  if (res1 = $clm_header_type) != (res2 = default_output_header_type)
     snd_display("$clm_header_type: %s %s?", res1, res2)
   end
-  if (res1 = $clm_data_format) != (res2 = default_output_format)
+  if (res1 = $clm_data_format) != (res2 = default_output_data_format)
     snd_display("$clm_data_format: %s %s?", res1, res2)
   end
   if (res = $clm_reverb_channels) != 1
@@ -37485,9 +37485,9 @@ def test0224
   # file save-as dialog
   #
   set_default_output_chans(1)
-  set_default_output_format(Mus_bshort)
+  set_default_output_data_format(Mus_bshort)
   set_default_output_srate(22050)
-  set_default_output_type(Mus_next)
+  set_default_output_header_type(Mus_next)
   ind = open_sound("oboe.snd")
   delete_file("test.snd")
   scale_by(2.0)

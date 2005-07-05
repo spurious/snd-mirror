@@ -42191,7 +42191,7 @@ EDITS: 1
       (let ((o2 (optkey-4 1 3 4 5)))
 	(if (not (equal? o2 (list 1 3 4 5))) (snd-display ";optkey-4 3: ~A 2" o2)))
       
-      (if (and (provided? 'snd-motif)
+      (if (and (provided? 'snd-motif) ; TODO: these are in snd-gtk I think -- add to test 23 somehow
 	       (defined? 'variable-display))
 	  (let ((wid1 (make-variable-display "do-loop" "i*1" 'text))
 		(wid2 (make-variable-display "do-loop" "i*2" 'scale '(-1.0 1.0)))
@@ -53480,9 +53480,9 @@ EDITS: 1
 	      gtk_button_get_relief gtk_button_get_type gtk_button_get_use_stock gtk_button_get_use_underline gtk_button_leave
 	      gtk_button_new gtk_button_new_from_stock gtk_button_new_with_mnemonic gtk_button_pressed gtk_button_released
 	      gtk_button_set_alignment gtk_button_set_focus_on_click gtk_button_set_image gtk_button_set_label gtk_button_set_relief
-	      gtk_button_set_use_stock gtk_button_set_use_underline gtk_calendar_clear_marks gtk_calendar_freeze gtk_calendar_get_date
+	      gtk_button_set_use_stock gtk_button_set_use_underline gtk_calendar_clear_marks gtk_calendar_get_date
 	      gtk_calendar_get_display_options gtk_calendar_get_type gtk_calendar_mark_day gtk_calendar_new gtk_calendar_select_day
-	      gtk_calendar_select_month gtk_calendar_set_display_options gtk_calendar_thaw gtk_calendar_unmark_day gtk_cell_editable_editing_done
+	      gtk_calendar_select_month gtk_calendar_set_display_options gtk_calendar_unmark_day gtk_cell_editable_editing_done
 	      gtk_cell_editable_get_type gtk_cell_editable_remove_widget gtk_cell_editable_start_editing gtk_cell_layout_add_attribute gtk_cell_layout_clear
 	      gtk_cell_layout_clear_attributes gtk_cell_layout_get_type gtk_cell_layout_pack_end gtk_cell_layout_pack_start gtk_cell_layout_reorder
 	      gtk_cell_layout_set_attributes gtk_cell_layout_set_cell_data_func gtk_cell_renderer_activate gtk_cell_renderer_combo_get_type gtk_cell_renderer_combo_new
@@ -54227,9 +54227,8 @@ EDITS: 1
       ))
 
 (if (and with-gui
-	 (or (provided? 'xm)
-	     (provided? 'xg))
-	 (or full-test (= snd-test 25) (= snd-test 26) (and keep-going (<= snd-test 28))))
+	 (provided? 'xm)
+	 (or full-test (= snd-test 25) (and keep-going (<= snd-test 28))))
     (if (file-exists? "misc.scm")
 	(load "misc.scm")))
 

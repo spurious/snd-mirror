@@ -935,6 +935,7 @@ if test "$ac_snd_have_gui" != no ; then
 	  [
 	    SAVELIBS=$LIBS
   	    LIBS="$LIBS -lfam"
+	    AC_MSG_CHECKING([whether fam daemon is operational])
             AC_RUN_IFELSE(
               [AC_LANG_PROGRAM(
                 [
@@ -966,11 +967,15 @@ if test "$ac_snd_have_gui" != no ; then
                   exit(0);
                 ])],
           [
+	   AC_MSG_RESULT(yes)
 	   AC_DEFINE(HAVE_FAM_H)
            AC_DEFINE(HAVE_FAM)
            FAM_LIB="-lfam"
-          ])]
-	)])
+          ],
+          [
+	   AC_MSG_RESULT(no)
+	  ]
+	  )])])
     fi
   fi
 fi
