@@ -6396,10 +6396,11 @@ between beg and beg + dur by a (linear) ramp going from rmp0 to rmp1. (<b>ramp-c
 <code><a class=def name="readonly">read-only</a> (<em class=narg>snd</em>)</code>
 </td></tr>
 <tr><td></td><td>
-#t if <i>snd</i> is read-only, #f otherwise.  If you open a write-protected file, or open
+#t if <i>snd</i> is read-only, #f otherwise.  If you open
 a file with <a href="#viewsound">view-sound</a>, read-only is set to #t.
-It can be set at any time (but setting it to #t won't try to unwrite-protect a write-protected file).
-If it is #t, a lock icon is displayed beside the file name.
+read-only does not reflect (or affect) the write permission state of the underlying file; it is a way
+to keep from accidentally clobbering an otherwise writable file.  
+If it is #t (or if the file is not writable), a lock icon is displayed beside the file name.
 </td></tr>
 <tr><td colspan=2></td></tr>
 

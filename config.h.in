@@ -213,6 +213,17 @@
 #undef XEN_DISABLE_DEPRECATED
 #undef GAMIN_VERSION
 
+#undef HAVE_OGG
+#undef PATH_OGG123
+#undef PATH_OGGENC
+#undef HAVE_FLAC
+#undef PATH_FLAC
+#undef HAVE_SPEEX
+#undef PATH_SPEEXDEC
+#undef PATH_SPEEXENC
+#undef HAVE_MPEG
+#undef PATH_MPG123
+
 #ifndef USE_SND
   #define USE_SND 1
 #endif

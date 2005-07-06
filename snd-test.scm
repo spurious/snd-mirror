@@ -56277,12 +56277,8 @@ EDITS: 1
 		    (snd-display ";save protected sound msg: ~A" msg)))
 	      (close-sound ind))
 	    
-	    (let ((ind (open-sound "test.snd")))
-	      (if (not (read-only ind))
-		  (snd-display ";write-protected sound, but read-only not set"))
-	      (system "chmod 644 test.snd")
-	      (delete-file "test.snd")
-	      (close-sound ind))
+	    (system "chmod 644 test.snd")
+	    (delete-file "test.snd")
 	    
 	    (copy-file "oboe.snd" "test.snd")
 	    (system "chmod 200 test.snd")

@@ -548,7 +548,9 @@ void add_channel_data_1(chan_info *cp, int srate, off_t frames, channel_graph_t 
 	  if (len > 1) x1 = XEN_TO_C_DOUBLE(XEN_CADR(res));
 	  if (len > 2) y0 = XEN_TO_C_DOUBLE(XEN_CADDR(res));
 	  if (len > 3) y1 = XEN_TO_C_DOUBLE(XEN_CADDDR(res));
-	  if (len > 4) hook_label = copy_string(XEN_TO_C_STRING(XEN_LIST_REF(res, 4)));
+	  if ((len > 4) && 
+	      (XEN_STRING_P(XEN_LIST_REF(res, 4))))
+	    hook_label = copy_string(XEN_TO_C_STRING(XEN_LIST_REF(res, 4)));
 	  if (len > 5)
 	    {
 	      ymin = XEN_TO_C_DOUBLE(XEN_LIST_REF(res, 5));
@@ -6872,7 +6874,7 @@ to a standard Snd channel graph placed in the widget 'container'."
 	      XEN_LIST_3(C_TO_XEN_STRING(S_make_variable_graph),
 			 C_TO_XEN_STRING("container must be a Form widget with a legitimate window"),
 			 container));
-  sp->read_only = true;
+  sp->user_read_only = true;
   sp->index = find_free_sound_slot_for_channel_display();
   ss->sounds[sp->index] = sp;
   cp = sp->chans[0];

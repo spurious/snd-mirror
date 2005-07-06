@@ -291,7 +291,7 @@ void reflect_file_change_in_label(chan_info *cp)
       len = strlen(shortname(sp)) + 16;
       starred_name = (char *)CALLOC(len, sizeof(char));
       strcpy(starred_name, shortname_indexed(sp));
-      if (sp->read_only) 
+      if (sp->user_read_only || sp->file_read_only)
 	strcat(starred_name, "(*)");
       else strcat(starred_name, "*");
       set_sound_pane_file_label(sp, starred_name);
@@ -6893,7 +6893,7 @@ static bool save_edits_and_update_display(snd_info *sp)
   /* have to decide here what header/data type to write as well -- original? */
   /* if latter, must be able to write all headers! -- perhaps warn user and use snd/aiff/riff/ircam */
 
-  /* sp->read_only already checked */
+  /* read_only already checked */
   char *ofile = NULL;
   bool err = false;
   int saved_errno = 0;
@@ -6966,13 +6966,9 @@ static bool save_edits_and_update_display(snd_info *sp)
   if (!err)
     {
       mus_sound_forget(sp->filename);
-#if HAVE_FAM
       sp->writing = true;
       err = move_file(ofile, sp->filename); /* should we cancel and restart a monitor? */
       sp->writing = false;
-#else
-      err = move_file(ofile, sp->filename);
-#endif
       if (err) saved_errno = errno;
     }
   else saved_errno = errno;
@@ -7001,7 +6997,8 @@ static bool save_edits_and_update_display(snd_info *sp)
 int save_edits_without_display(snd_info *sp, char *new_name, int type, int format, int srate, char *comment, int pos)
 { 
   file_info *hdr;
-  if ((sp->read_only) && (strcmp(new_name, sp->filename) == 0))
+  if ((sp->user_read_only || sp->file_read_only) && 
+      (strcmp(new_name, sp->filename) == 0))
     return(MUS_CANT_OPEN_FILE);
   if (dont_save(sp, new_name)) 
     return(MUS_NO_ERROR);
@@ -7078,7 +7075,7 @@ int save_channel_edits(chan_info *cp, char *ofile, int pos)
   if (strcmp(ofile, sp->filename) == 0)
     {
       char *nfile;
-      if (sp->read_only)
+      if (sp->user_read_only || sp->file_read_only)
 	{
 	  report_in_minibuffer_and_save(sp, _("can't save (extract) channel as %s (%s is write-protected)"), ofile, sp->short_filename);
 	  return(MUS_WRITE_ERROR);
@@ -7102,7 +7099,7 @@ int save_channel_edits(chan_info *cp, char *ofile, int pos)
 void save_edits(snd_info *sp, void *ptr)
 {
   if (sp == NULL) return;
-  if (!sp->read_only)
+  if ((!sp->user_read_only) && (!(sp->file_read_only)))
     {
       int i;
       bool err, need_save;

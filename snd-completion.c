@@ -332,7 +332,9 @@ char *srate_completer(char *text)
   #endif
 #endif
 
-char *filename_completer(char *text)
+enum {ANY_FILE_TYPE, SOUND_FILE_TYPE};
+
+static char *filename_completer_1(char *text, int file_type)
 {
 #if HAVE_OPENDIR
   /* assume text is a partial filename */
@@ -367,19 +369,23 @@ char *filename_completer(char *text)
 	if ((dirp->d_name[0] != '.') && 
 	    (strncmp(dirp->d_name, file_name, len) == 0)) /* match dirp->d_name against rest of text */
 	  {
-	    matches++;
-	    add_possible_completion(dirp->d_name);
-	    if (current_match == NULL)
-	      current_match = copy_string(dirp->d_name);
-	    else 
+	    if ((file_type == ANY_FILE_TYPE) ||
+		(sound_file_p(dirp->d_name)))
 	      {
-		curlen = strlen(current_match);
-		for (j = 0; j < curlen; j++)
-		  if (current_match[j] != dirp->d_name[j])
-		    {
-		      current_match[j] = '\0';
-		      break;
-		    }
+		matches++;
+		add_possible_completion(dirp->d_name);
+		if (current_match == NULL)
+		  current_match = copy_string(dirp->d_name);
+		else 
+		  {
+		    curlen = strlen(current_match);
+		    for (j = 0; j < curlen; j++)
+		      if (current_match[j] != dirp->d_name[j])
+			{
+			  current_match[j] = '\0';
+			  break;
+			}
+		  }
 	      }
 	  }
 #if CLOSEDIR_VOID
@@ -414,7 +420,17 @@ char *filename_completer(char *text)
   return(copy_string(text));
 }
 
-static bool use_filename_completer(sp_filing_t filing)
+char *filename_completer(char *text)
+{
+  return(filename_completer_1(text, ANY_FILE_TYPE));
+}
+
+char *sound_filename_completer(char *text)
+{
+  return(filename_completer_1(text, SOUND_FILE_TYPE));
+}
+
+static bool use_sound_filename_completer(sp_filing_t filing)
 {
   return((filing == INPUT_FILING) ||  /* C-x C-f */
 	 (filing == CHANGE_FILING) || /* C-x C-q */
@@ -431,7 +447,7 @@ char *info_completer(char *text)
       if ((sp->marking) || (sp->finding_mark)) return(copy_string(text)); /* C-x C-m etc */
       if (sp->printing) return(copy_string(text));       /* C-x C-d so anything is possible */
       if (sp->amping) return(env_name_completer(text));
-      if (use_filename_completer(sp->filing)) return(filename_completer(text));
+      if (use_sound_filename_completer(sp->filing)) return(sound_filename_completer(text));
       if (sp->loading) return(filename_completer(text)); /* C-x C-l */
       if (sp->macroing) 
 	{

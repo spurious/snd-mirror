@@ -100,7 +100,7 @@ void x_bomb(snd_info *sp, bool on)
 
 static void inc_bomb(snd_info *sp, void *ptr)
 {
-  if (sp->need_update)
+  if (sp->need_update || sp->file_unreadable)
     {
       int *buf;
       buf = (int *)ptr;
@@ -1660,8 +1660,8 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
   if (sp->nchans == 1) 
     gtk_widget_hide(sw[W_unite]);
   add_sound_data(filename, sp, WITH_GRAPH);
-  if (cant_write(sp->filename)) sp->read_only = true;
-  snd_file_lock_icon(sp, sp->read_only);
+  if (cant_write(sp->filename)) sp->file_read_only = true;
+  snd_file_lock_icon(sp, sp->user_read_only || sp->file_read_only);
   if (old_name)
     report_in_minibuffer(sp, _("(translated %s)"), old_name);
   after_open(sp->index);

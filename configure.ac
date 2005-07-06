@@ -1450,6 +1450,53 @@ AC_SUBST(A_LD_FLAGS)
 
 
 #--------------------------------------------------------------------------------
+# OGG, Flac, Speex, Mpeg, maybe SDIF someday
+# --------------------------------------------------------------------------------
+
+AC_PATH_PROG(PATH_OGG123, ogg123, no) # OGG read
+AC_PATH_PROG(PATH_OGGENC, oggenc, no) # OGG write
+
+if test "$PATH_OGG123" != "no" ; then
+  if test "$PATH_OGGENC" != "no" ; then
+    AC_DEFINE(HAVE_OGG)
+    AC_DEFINE_UNQUOTED(PATH_OGG123, "${PATH_OGG123}")
+    AC_DEFINE_UNQUOTED(PATH_OGGENC, "${PATH_OGGENC}")
+  fi
+fi
+
+
+AC_PATH_PROG(PATH_MPG123, mpg123, no) # MPEG read/write?
+
+if test "$PATH_MPG123" != "no" ; then
+  AC_DEFINE(HAVE_MPEG)
+  AC_DEFINE_UNQUOTED(PATH_MPG123, "${PATH_MPG123}")
+fi
+
+
+AC_PATH_PROG(PATH_SPEEXDEC, speexdec, no) # Speex read
+AC_PATH_PROG(PATH_SPEEXENC, speexenc, no) # Speex write
+
+if test "$PATH_SPEEXDEC" != "no" ; then
+  if test "$PATH_SPEEXENC" != "no" ; then
+    AC_DEFINE(HAVE_SPEEX)
+    AC_DEFINE_UNQUOTED(PATH_SPEEXDEC, "${PATH_SPEEXDEC}")
+    AC_DEFINE_UNQUOTED(PATH_SPEEXENC, "${PATH_SPEEXENC}")
+  fi
+fi
+
+
+AC_PATH_PROG(PATH_FLAC, flac, no) # Falc read/write
+
+if test "$PATH_FLAC" != "no" ; then
+  AC_DEFINE(HAVE_FLAC)
+  AC_DEFINE_UNQUOTED(PATH_FLAC, "${PATH_FLAC}")
+fi
+
+
+# TODO: is sdif writer named tosdif?
+
+
+#--------------------------------------------------------------------------------
 # statvfs
 #--------------------------------------------------------------------------------
 

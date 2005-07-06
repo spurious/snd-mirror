@@ -386,13 +386,14 @@ static char *fam_event_name(int code)
 #endif
 
 #if USE_MOTIF
+/* TODO: make fam a runtime choice, not build time (if it's available at all) */
 static void fam_reader(XtPointer context, int *fd, XtInputId *id)
 #else
 static gboolean fam_reader(GIOChannel *source, GIOCondition condition, gpointer data)
 #endif
 {
   FAMEvent fe; 
-  if (FAMPending(ss->fam_connection) > 0)
+  while (FAMPending(ss->fam_connection) > 0)
     {
       if (FAMNextEvent(ss->fam_connection, &fe) < 0) 
 	snd_error("fam error: %d\n", FAMErrno);
@@ -415,8 +416,7 @@ static gboolean fam_reader(GIOChannel *source, GIOCondition condition, gpointer 
 #endif
 		if (!fp) 
 		  fprintf(stderr, "no fam user data!");
-		else
-		  (*(fp->action))(fp, &fe);
+		else (*(fp->action))(fp, &fe);
 	      }
 	      break;
 	    }
@@ -479,7 +479,7 @@ static FAMRequest *fam_monitor(void)
 #endif
 	    }
 	}
-      return((FAMRequest *)CALLOC(1, sizeof(FAMRequest)));
+      return((FAMRequest *)calloc(1, sizeof(FAMRequest)));
     }
   return(NULL);
 }
@@ -562,7 +562,7 @@ fam_info *fam_unmonitor_file(const char *filename, fam_info *fp)
 	    snd_error("can't unmonitor %s: %d\n", filename, FAMErrno);
 	  if (fp->rp)
 	    {
-	      /* FREE(fp->rp);*/ /* /usr/include/fam.h says cancel frees this, but I think that is a mistake */
+	      /* FREE(fp->rp);*/ /* /usr/include/fam.h says cancel frees this, and valgrind seems to agree */
 	      fp->rp = NULL;
 	    }
 	}

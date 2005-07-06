@@ -9,11 +9,8 @@
 */
 
 
-/* TODO: if file write-protected, fam to get rid of errmsg if user chmods it?
- * TODO: if edit-header of write-protected sound, should we add an 'Unprotect' button?  Is there are "right way" to implement it?
- * PERHAPS: location to mix at in File:Mix? amp/srate sliders?
+/* PERHAPS: location to mix at in File:Mix? amp/srate sliders?
  * TODO: pull-down list of recent files
- * TODO: add a sound filename completer to specialize filename_completer (if just_sounds, or perhaps restrict to sound if any are found)
  * TODO: extract overwrite question from save_as_dialog_save_sound
  * TODO: extract snd_overwrite_ok case: incorporate overwrite here
  * TODO: new file ok: if existing file by new name and it's write protected, we need some better explanation
@@ -29,8 +26,11 @@
  * PERHAPS: region save-as as button in region browser?
  * PERHAPS: raw_data: caller can pass continuation and callback funcs
  * SOMEDAY: new file ok: would be nice to cancel 'DoIt' if user deletes file by hand -- use FAM
- * TODO: raw give OGG/Mpeg/Speex choices if the progs can be found [needs configure support] -- why not translate in snd_translate?
+ * TODO: raw give OGG/Mpeg/Speex choices if the progs can be found -- 
+ *         why not translate in snd_translate, add choices to various dialogs (sndlib too?)
+ *         need to know how to recognize (for read side)
  * TODO: various file/directory lists: tie into fam/gamin (also previous files list) -- add xen call?
+ * TODO: if directory loaded into previous files list via -p, add any new sound files as they appear
  */
 
 
@@ -593,7 +593,7 @@ static file_dialog_info *make_file_dialog(bool read_only, char *title, char *sel
     wtmp = XmFileSelectionBoxGetChild(fd->dialog, XmDIALOG_TEXT);
   if (wtmp) 
     {
-      add_completer_to_textfield(wtmp, add_completer_func(filename_completer));
+      add_completer_to_textfield(wtmp, add_completer_func(sound_filename_completer));
       XtAddCallback(wtmp, XmNfocusCallback, focus_filename_text_callback, (XtPointer)fd);
       XtAddCallback(wtmp, XmNlosingFocusCallback, unfocus_filename_text_callback, (XtPointer)fd);
     }
@@ -2315,20 +2315,33 @@ void make_new_file_dialog(void)
 static Widget edit_header_dialog = NULL;
 static file_data *edat;
 static snd_info *edit_header_sp = NULL;
-
-static void watch_read_only(struct snd_info *sp);
+static bool edit_header_panel_changed = false;
+#if HAVE_FAM
+static fam_info *edit_header_file_read_only_watcher = NULL;
+#endif
 
 static XmString make_edit_header_dialog_title(snd_info *sp)
 {
+  /* dialog may not yet exist */
   char *str;
   XmString xstr;
   str = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
-  if (sp->read_only)
+  if (sp->user_read_only || sp->file_read_only)
     {
-      mus_snprintf(str, PRINT_BUFFER_SIZE, _("Edit header of (write-protected) %s"), sp->short_filename);
-      sp->read_only_watcher = &watch_read_only;
+      if (sp->hdr->type == MUS_RAW)
+	mus_snprintf(str, PRINT_BUFFER_SIZE, _("Add header to (write-protected) %s"), sp->short_filename);
+      else mus_snprintf(str, PRINT_BUFFER_SIZE, _("Edit header of (write-protected) %s"), sp->short_filename);
+      if (edit_header_dialog)
+	set_sensitive(XmMessageBoxGetChild(edit_header_dialog, XmDIALOG_OK_BUTTON), (sp->hdr->type == MUS_RAW));
     }
-  else mus_snprintf(str, PRINT_BUFFER_SIZE, _("Edit header of %s"), sp->short_filename);
+  else 
+    {
+      if (sp->hdr->type == MUS_RAW)
+	mus_snprintf(str, PRINT_BUFFER_SIZE, _("Add header to %s"), sp->short_filename);
+      else mus_snprintf(str, PRINT_BUFFER_SIZE, _("Edit header of %s"), sp->short_filename);
+      if (edit_header_dialog)
+	set_sensitive(XmMessageBoxGetChild(edit_header_dialog, XmDIALOG_OK_BUTTON), edit_header_panel_changed);
+    }
   xstr = XmStringCreate(str, XmFONTLIST_DEFAULT_TAG);
   FREE(str);
   return(xstr);
@@ -2341,14 +2354,20 @@ static void edit_header_help_callback(Widget w, XtPointer context, XtPointer inf
 
 static void edit_header_set_ok_sensitive(Widget w, XtPointer context, XtPointer info)
 {
-  set_sensitive(XmMessageBoxGetChild(edit_header_dialog, XmDIALOG_OK_BUTTON), true);
+  if (!(edit_header_sp->file_read_only))
+    set_sensitive(XmMessageBoxGetChild(edit_header_dialog, XmDIALOG_OK_BUTTON), true);
+  edit_header_panel_changed = true;
 }
 
 static void edit_header_cancel_callback(Widget w, XtPointer context, XtPointer info) 
 {
   XtUnmanageChild(edit_header_dialog);
   unreflect_file_data_panel_change(edat, edit_header_set_ok_sensitive);
-  edit_header_sp->read_only_watcher = NULL;
+  edit_header_sp->user_read_only_watcher = NULL;
+  edit_header_panel_changed = false;
+#if HAVE_FAM
+  edit_header_file_read_only_watcher = fam_unmonitor_file(edit_header_sp->filename, edit_header_file_read_only_watcher);
+#endif
 }
 
 #if DEBUGGING && HAVE_GUILE
@@ -2356,31 +2375,96 @@ static XEN g_apply_edit_header(void)
 {
   if ((edit_header_sp) && (edit_header_sp->active))
     {
-      if (!(edit_header_sp->read_only))
+      if ((!(edit_header_sp->user_read_only)) && (!(edit_header_sp->file_read_only)))
 	edit_header_callback(edit_header_sp, edat, NULL, NULL);
       else snd_error(_("%s is write-protected"), edit_header_sp->short_filename);
     }
   XtUnmanageChild(edit_header_dialog);
   unreflect_file_data_panel_change(edat, edit_header_set_ok_sensitive);
+#if HAVE_FAM
+  edit_header_file_read_only_watcher = fam_unmonitor_file(edit_header_sp->filename, edit_header_file_read_only_watcher);
+#endif
   return(XEN_FALSE);
 }
 #endif
 
-static void watch_read_only(struct snd_info *sp)
+static void watch_user_read_only(struct snd_info *sp, read_only_reason_t reason)
 {
   if ((edit_header_dialog) && 
       (XtIsManaged(edit_header_dialog)) &&
-      (!(sp->read_only)))
+      (sp == edit_header_sp))
     {
-      XmString title;
-      clear_dialog_error(edat);
-      title = make_edit_header_dialog_title(sp);
-      XtVaSetValues(edit_header_dialog, 
-		    XmNmessageString, title, 
-		    NULL);
-      sp->read_only_watcher = NULL;
+      if (reason == USER_READ_ONLY_CHANGED)
+	{
+	  XmString title;
+	  if ((!(sp->file_read_only)) && (!(sp->user_read_only)))
+	    clear_dialog_error(edat);
+	  title = make_edit_header_dialog_title(sp);
+	  XtVaSetValues(edit_header_dialog, 
+			XmNmessageString, title, 
+			NULL);
+	}
+      else /* sound closing, so we shouldn't sit around offering to edit its header */
+	{
+	  clear_dialog_error(edat);
+	  XtUnmanageChild(edit_header_dialog);
+	  if (edit_header_panel_changed)
+	    unreflect_file_data_panel_change(edat, edit_header_set_ok_sensitive);
+	  edit_header_panel_changed = false;
+	}
     }
 }
+
+#if HAVE_FAM
+static void watch_file_read_only(struct fam_info *fp, FAMEvent *fe)
+{
+  /* if file is deleted or permissions change, respond in some debonair manner */
+  snd_info *sp = NULL;
+  sp = (snd_info *)(fp->data);
+  if ((sp->writing) || (sp != edit_header_sp)) return;
+  switch (fe->code)
+    {
+    case FAMChanged:
+#if HAVE_ACCESS
+      {
+	int err;
+	XmString title;
+	if (mus_file_probe(sp->filename))
+	  {
+	    err = access(sp->filename, W_OK);
+	    sp->file_read_only = (err < 0);
+	    if ((!(sp->file_read_only)) && (!(sp->user_read_only)))
+	      clear_dialog_error(edat);
+	    title = make_edit_header_dialog_title(sp);
+	    XtVaSetValues(edit_header_dialog, 
+			  XmNmessageString, title, 
+			  NULL);
+	    return;
+	  }
+      }
+#endif
+      /* else fall through */
+    case FAMDeleted:
+    case FAMCreated:
+    case FAMMoved:
+      /* I don't think it makes sense to continue the dialog at this point */
+      clear_dialog_error(edat);
+      XtUnmanageChild(edit_header_dialog);
+      if (edit_header_panel_changed)
+	unreflect_file_data_panel_change(edat, edit_header_set_ok_sensitive);
+      edit_header_panel_changed = false;
+#if HAVE_FAM
+      edit_header_file_read_only_watcher = fam_unmonitor_file(edit_header_sp->filename, edit_header_file_read_only_watcher);
+#endif
+      edit_header_sp->user_read_only_watcher = NULL;
+      break;
+
+    default:
+      /* ignore the rest */
+      break;
+    }
+}
+#endif
 
 static void edit_header_ok_callback(Widget w, XtPointer context, XtPointer info) 
 {
@@ -2401,15 +2485,18 @@ static void edit_header_ok_callback(Widget w, XtPointer context, XtPointer info)
 	    {
 	      if (!ok)
 		{
-		  if (edit_header_sp->read_only)
-		    edit_header_sp->read_only_watcher = &watch_read_only;
+		  set_sensitive(XmMessageBoxGetChild(edit_header_dialog, XmDIALOG_OK_BUTTON), false);
 		  return;
 		}
 	    }
+	  edit_header_sp->user_read_only_watcher = NULL;
+#if HAVE_FAM
+	  edit_header_file_read_only_watcher = fam_unmonitor_file(edit_header_sp->filename, edit_header_file_read_only_watcher);
+#endif
+	  XtUnmanageChild(edit_header_dialog);
+	  unreflect_file_data_panel_change(edat, edit_header_set_ok_sensitive);
 	}
     }
-  XtUnmanageChild(edit_header_dialog);
-  unreflect_file_data_panel_change(edat, edit_header_set_ok_sensitive);
 }
 
 Widget edit_header(snd_info *sp)
@@ -2421,6 +2508,7 @@ Widget edit_header(snd_info *sp)
   if (!sp) return(NULL);
   edit_header_sp = sp;
   hdr = sp->hdr;
+  edit_header_panel_changed = (hdr->type == MUS_RAW);
 
   xstr4 = make_edit_header_dialog_title(sp);
   if (!edit_header_dialog)
@@ -2501,13 +2589,17 @@ Widget edit_header(snd_info *sp)
       set_file_dialog_sound_attributes(edat, hdr->type, hdr->format, hdr->srate, hdr->chans, hdr->data_location, hdr->samples, hdr->comment);
       raise_dialog(edit_header_dialog);
     }
-  set_sensitive(XmMessageBoxGetChild(edit_header_dialog, XmDIALOG_OK_BUTTON), false); /* nothing needs to be saved when we start */
+  set_sensitive(XmMessageBoxGetChild(edit_header_dialog, XmDIALOG_OK_BUTTON), (hdr->type == MUS_RAW)); /* nothing needs to be saved when we start */
   XmStringFree(xstr4);
   if (hdr->type == MUS_RAW)
     post_file_dialog_error("this file has no header!", (void *)edat);
   else clear_dialog_error(edat);
   if (!(XtIsManaged(edit_header_dialog))) XtManageChild(edit_header_dialog);
   reflect_file_data_panel_change(edat, edit_header_set_ok_sensitive);
+  edit_header_sp->user_read_only_watcher = &watch_user_read_only;
+#if HAVE_FAM
+  edit_header_file_read_only_watcher = fam_monitor_file(edit_header_sp->filename, (void *)sp, watch_file_read_only);
+#endif
   return(edit_header_dialog);
 }
 
@@ -2542,8 +2634,8 @@ typedef enum {NO_REQUESTOR, {FROM_UPDATE}, FROM_VIEW_PREVIOUS_FILES, {FROM_SAVE_
 
 	      FROM_STARTUP -- how to get back to the startup args loop?
 
-	      FROM_REGION_EDIT, FROM_SND_NEW_FILE, [FROM_OPEN_SOUND]
-	      [FROM_OPEN_RAW_SOUND], [FROM_VIEW_SOUND], FROM_NEW_SOUND, {FROM_RAW_DATA_DIALOG}, [FROM_MIX_DIALOG]} open_requestor_t;
+	      [FROM_REGION_EDIT], FROM_NEW_FILE_DIALOG, [FROM_OPEN_SOUND]
+	      [FROM_OPEN_RAW_SOUND], [FROM_VIEW_SOUND], [FROM_NEW_SOUND], {FROM_RAW_DATA_DIALOG}, [FROM_MIX_DIALOG]} open_requestor_t;
 #endif
 
 static void raw_data_ok_callback(Widget w, XtPointer context, XtPointer info) 

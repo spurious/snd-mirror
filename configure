@@ -311,7 +311,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA PACKAGE VERSION FGREP PKG_CONFIG FFTW_LIBS GSL_CONFIG GSL_LIBS GSL_CFLAGS X_CFLAGS X_PRE_LIBS X_LIBS X_EXTRA_LIBS XLIBS XFLAGS GTK_CFLAGS GTK_LIBS GTK_LD_LIBS CAIRO_CFLAGS GX_FILES GX_HEADERS GL_LIBS GL_FILES GL_FLAGS FAM_LIB GUILE_LIBS GUILE_CFLAGS XM_LIBS AUDIO_LIB JACK_LIBS JACK_FLAGS LDSO_FLAGS SO_INSTALL SO_LD A_LD A_LD_FLAGS MIDI_FILES SNDLIB_CONFIG SNDLIB_FILES SNDLIB_LIB SET_MAKE MKINSTALLDIRS MSGFMT GMSGFMT XGETTEXT MSGMERGE USE_NLS LIBICONV LTLIBICONV INTLLIBS LIBINTL LTLIBINTL POSUB MAKE_TARGET LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA PACKAGE VERSION FGREP PKG_CONFIG FFTW_LIBS GSL_CONFIG GSL_LIBS GSL_CFLAGS X_CFLAGS X_PRE_LIBS X_LIBS X_EXTRA_LIBS XLIBS XFLAGS GTK_CFLAGS GTK_LIBS GTK_LD_LIBS CAIRO_CFLAGS GX_FILES GX_HEADERS GL_LIBS GL_FILES GL_FLAGS FAM_LIB GUILE_LIBS GUILE_CFLAGS XM_LIBS AUDIO_LIB JACK_LIBS JACK_FLAGS LDSO_FLAGS SO_INSTALL SO_LD A_LD A_LD_FLAGS PATH_OGG123 PATH_OGGENC PATH_MPG123 PATH_SPEEXDEC PATH_SPEEXENC PATH_FLAC MIDI_FILES SNDLIB_CONFIG SNDLIB_FILES SNDLIB_LIB SET_MAKE MKINSTALLDIRS MSGFMT GMSGFMT XGETTEXT MSGMERGE USE_NLS LIBICONV LTLIBICONV INTLLIBS LIBINTL LTLIBINTL POSUB MAKE_TARGET LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -17272,6 +17272,317 @@ fi
 
 
 
+#--------------------------------------------------------------------------------
+# OGG, Flac, Speex, Mpeg, maybe SDIF someday
+# --------------------------------------------------------------------------------
+
+# Extract the first word of "ogg123", so it can be a program name with args.
+set dummy ogg123; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_path_PATH_OGG123+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  case $PATH_OGG123 in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_PATH_OGG123="$PATH_OGG123" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_PATH_OGG123="$as_dir/$ac_word$ac_exec_ext"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+  test -z "$ac_cv_path_PATH_OGG123" && ac_cv_path_PATH_OGG123="no"
+  ;;
+esac
+fi
+PATH_OGG123=$ac_cv_path_PATH_OGG123
+
+if test -n "$PATH_OGG123"; then
+  echo "$as_me:$LINENO: result: $PATH_OGG123" >&5
+echo "${ECHO_T}$PATH_OGG123" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+ # OGG read
+# Extract the first word of "oggenc", so it can be a program name with args.
+set dummy oggenc; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_path_PATH_OGGENC+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  case $PATH_OGGENC in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_PATH_OGGENC="$PATH_OGGENC" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_PATH_OGGENC="$as_dir/$ac_word$ac_exec_ext"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+  test -z "$ac_cv_path_PATH_OGGENC" && ac_cv_path_PATH_OGGENC="no"
+  ;;
+esac
+fi
+PATH_OGGENC=$ac_cv_path_PATH_OGGENC
+
+if test -n "$PATH_OGGENC"; then
+  echo "$as_me:$LINENO: result: $PATH_OGGENC" >&5
+echo "${ECHO_T}$PATH_OGGENC" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+ # OGG write
+
+if test "$PATH_OGG123" != "no" ; then
+  if test "$PATH_OGGENC" != "no" ; then
+    cat >>confdefs.h <<\_ACEOF
+#define HAVE_OGG 1
+_ACEOF
+
+    cat >>confdefs.h <<_ACEOF
+#define PATH_OGG123 "${PATH_OGG123}"
+_ACEOF
+
+    cat >>confdefs.h <<_ACEOF
+#define PATH_OGGENC "${PATH_OGGENC}"
+_ACEOF
+
+  fi
+fi
+
+
+# Extract the first word of "mpg123", so it can be a program name with args.
+set dummy mpg123; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_path_PATH_MPG123+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  case $PATH_MPG123 in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_PATH_MPG123="$PATH_MPG123" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_PATH_MPG123="$as_dir/$ac_word$ac_exec_ext"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+  test -z "$ac_cv_path_PATH_MPG123" && ac_cv_path_PATH_MPG123="no"
+  ;;
+esac
+fi
+PATH_MPG123=$ac_cv_path_PATH_MPG123
+
+if test -n "$PATH_MPG123"; then
+  echo "$as_me:$LINENO: result: $PATH_MPG123" >&5
+echo "${ECHO_T}$PATH_MPG123" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+ # MPEG read/write?
+
+if test "$PATH_MPG123" != "no" ; then
+  cat >>confdefs.h <<\_ACEOF
+#define HAVE_MPEG 1
+_ACEOF
+
+  cat >>confdefs.h <<_ACEOF
+#define PATH_MPG123 "${PATH_MPG123}"
+_ACEOF
+
+fi
+
+
+# Extract the first word of "speexdec", so it can be a program name with args.
+set dummy speexdec; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_path_PATH_SPEEXDEC+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  case $PATH_SPEEXDEC in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_PATH_SPEEXDEC="$PATH_SPEEXDEC" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_PATH_SPEEXDEC="$as_dir/$ac_word$ac_exec_ext"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+  test -z "$ac_cv_path_PATH_SPEEXDEC" && ac_cv_path_PATH_SPEEXDEC="no"
+  ;;
+esac
+fi
+PATH_SPEEXDEC=$ac_cv_path_PATH_SPEEXDEC
+
+if test -n "$PATH_SPEEXDEC"; then
+  echo "$as_me:$LINENO: result: $PATH_SPEEXDEC" >&5
+echo "${ECHO_T}$PATH_SPEEXDEC" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+ # Speex read
+# Extract the first word of "speexenc", so it can be a program name with args.
+set dummy speexenc; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_path_PATH_SPEEXENC+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  case $PATH_SPEEXENC in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_PATH_SPEEXENC="$PATH_SPEEXENC" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_PATH_SPEEXENC="$as_dir/$ac_word$ac_exec_ext"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+  test -z "$ac_cv_path_PATH_SPEEXENC" && ac_cv_path_PATH_SPEEXENC="no"
+  ;;
+esac
+fi
+PATH_SPEEXENC=$ac_cv_path_PATH_SPEEXENC
+
+if test -n "$PATH_SPEEXENC"; then
+  echo "$as_me:$LINENO: result: $PATH_SPEEXENC" >&5
+echo "${ECHO_T}$PATH_SPEEXENC" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+ # Speex write
+
+if test "$PATH_SPEEXDEC" != "no" ; then
+  if test "$PATH_SPEEXENC" != "no" ; then
+    cat >>confdefs.h <<\_ACEOF
+#define HAVE_SPEEX 1
+_ACEOF
+
+    cat >>confdefs.h <<_ACEOF
+#define PATH_SPEEXDEC "${PATH_SPEEXDEC}"
+_ACEOF
+
+    cat >>confdefs.h <<_ACEOF
+#define PATH_SPEEXENC "${PATH_SPEEXENC}"
+_ACEOF
+
+  fi
+fi
+
+
+# Extract the first word of "flac", so it can be a program name with args.
+set dummy flac; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_path_PATH_FLAC+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  case $PATH_FLAC in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_PATH_FLAC="$PATH_FLAC" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_PATH_FLAC="$as_dir/$ac_word$ac_exec_ext"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+  test -z "$ac_cv_path_PATH_FLAC" && ac_cv_path_PATH_FLAC="no"
+  ;;
+esac
+fi
+PATH_FLAC=$ac_cv_path_PATH_FLAC
+
+if test -n "$PATH_FLAC"; then
+  echo "$as_me:$LINENO: result: $PATH_FLAC" >&5
+echo "${ECHO_T}$PATH_FLAC" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+ # Falc read/write
+
+if test "$PATH_FLAC" != "no" ; then
+  cat >>confdefs.h <<\_ACEOF
+#define HAVE_FLAC 1
+_ACEOF
+
+  cat >>confdefs.h <<_ACEOF
+#define PATH_FLAC "${PATH_FLAC}"
+_ACEOF
+
+fi
+
+
+# TODO: is sdif writer named tosdif?
+
+
 
 #--------------------------------------------------------------------------------
 # statvfs
@@ -20183,6 +20494,12 @@ s,@SO_INSTALL@,$SO_INSTALL,;t t
 s,@SO_LD@,$SO_LD,;t t
 s,@A_LD@,$A_LD,;t t
 s,@A_LD_FLAGS@,$A_LD_FLAGS,;t t
+s,@PATH_OGG123@,$PATH_OGG123,;t t
+s,@PATH_OGGENC@,$PATH_OGGENC,;t t
+s,@PATH_MPG123@,$PATH_MPG123,;t t
+s,@PATH_SPEEXDEC@,$PATH_SPEEXDEC,;t t
+s,@PATH_SPEEXENC@,$PATH_SPEEXENC,;t t
+s,@PATH_FLAC@,$PATH_FLAC,;t t
 s,@MIDI_FILES@,$MIDI_FILES,;t t
 s,@SNDLIB_CONFIG@,$SNDLIB_CONFIG,;t t
 s,@SNDLIB_FILES@,$SNDLIB_FILES,;t t

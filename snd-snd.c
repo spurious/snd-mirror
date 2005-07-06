@@ -29,7 +29,7 @@ snd_info *snd_new_file(char *newname, int header_type, int data_format, int srat
 	  write(chan, buf, size);
 	  snd_close(chan, newname);
 	  FREE(buf);
-	  ss->open_requestor = FROM_SND_NEW_FILE;
+	  ss->open_requestor = FROM_NEW_FILE_DIALOG;
 	  return(sound_is_silence(snd_open_file(newname, FILE_READ_WRITE)));
 	}
     }
@@ -2070,7 +2070,7 @@ static XEN sound_get(XEN snd_n, sp_field_t fld, char *caller)
   switch (fld)
     {
     case SP_SYNC:                return(C_TO_XEN_INT(sp->sync));                       break;
-    case SP_READ_ONLY:           return(C_TO_XEN_BOOLEAN(sp->read_only));              break;
+    case SP_READ_ONLY:           return(C_TO_XEN_BOOLEAN(sp->user_read_only));         break;
     case SP_NCHANS:              return(C_TO_XEN_INT(sp->nchans));                     break;
     case SP_EXPANDING:           return(C_TO_XEN_BOOLEAN(sp->expand_control_p));       break;
     case SP_CONTRASTING:         return(C_TO_XEN_BOOLEAN(sp->contrast_control_p));     break;
@@ -2079,10 +2079,10 @@ static XEN sound_get(XEN snd_n, sp_field_t fld, char *caller)
     case SP_FILTER_DBING:        return(C_TO_XEN_BOOLEAN(sp->filter_control_in_dB));   break;
     case SP_FILTER_HZING:        return(C_TO_XEN_BOOLEAN(sp->filter_control_in_hz));   break;
     case SP_FILTER_ORDER:        return(C_TO_XEN_INT(sp->filter_control_order));       break;
-    case SP_SRATE:               return(C_TO_XEN_INT(sp->hdr->srate));               break;
-    case SP_DATA_FORMAT:         return(C_TO_XEN_INT(sp->hdr->format));              break;
-    case SP_HEADER_TYPE:         return(C_TO_XEN_INT(sp->hdr->type));                break;
-    case SP_DATA_LOCATION:       return(C_TO_XEN_OFF_T(sp->hdr->data_location));     break;
+    case SP_SRATE:               return(C_TO_XEN_INT(sp->hdr->srate));                 break;
+    case SP_DATA_FORMAT:         return(C_TO_XEN_INT(sp->hdr->format));                break;
+    case SP_HEADER_TYPE:         return(C_TO_XEN_INT(sp->hdr->type));                  break;
+    case SP_DATA_LOCATION:       return(C_TO_XEN_OFF_T(sp->hdr->data_location));       break;
     case SP_DATA_SIZE:           return(C_TO_XEN_OFF_T(mus_samples_to_bytes(sp->hdr->format, sp->hdr->samples))); break;
     case SP_SAVE_CONTROLS:       if (!(IS_PLAYER(sp))) save_controls(sp);              break;
     case SP_RESTORE_CONTROLS:    if (!(IS_PLAYER(sp))) restore_controls(sp);           break;
@@ -2230,10 +2230,10 @@ static XEN sound_set(XEN snd_n, XEN val, sp_field_t fld, char *caller)
     case SP_READ_ONLY:
       if (!(IS_PLAYER(sp)))
 	{
-	  sp->read_only = XEN_TO_C_BOOLEAN(val); 
-	  snd_file_lock_icon(sp, sp->read_only);
-	  if (sp->read_only_watcher)
-	    (*(sp->read_only_watcher))(sp);
+	  sp->user_read_only = XEN_TO_C_BOOLEAN(val); 
+	  snd_file_lock_icon(sp, sp->user_read_only || sp->file_read_only);
+	  if (sp->user_read_only_watcher)
+	    (*(sp->user_read_only_watcher))(sp, USER_READ_ONLY_CHANGED);
 	}
       break;
     case SP_EXPANDING:

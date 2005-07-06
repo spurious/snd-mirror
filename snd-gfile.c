@@ -10,11 +10,12 @@
    View:Files and region lists 
 */
 
-/* it would be nice if there some way in gtk to...
+/* it would be nice if there were some way in gtk to...
  *   filter the file list in the FileSelectionDialog
  *   change the label (to "Sound Files") of the FileSelection Files list
  *   filter out local directories in the file_filter (FileChooser)
  *   get some indication that the user clicked 'Save' when there's no filename (FileChooser) 
+ *   get a text entry widget for the file name in Open mode in the FileChooser (I'll have to add this by hand)
  */
 
 
@@ -23,22 +24,24 @@
  * PERHAPS: make file_chooser/file_selection a run-time choice somehow? -- file_chooser is really ugly and stupid...
  * TODO: FileSelection: reflect filename change in selection list and in info
  * SOMEDAY: New file: would be nice to cancel 'DoIt' if user deletes file by hand
- * TODO: edit header: implement watcher for read_only
- * TODO: FileSelection: cancel info in mix/open if filename in textfield doesn't match selected file 
- *       FileSelection: update info as file name is typed, as in write-protected case 
+ * TODO: edit header: implement watchers for read_only (copy snd-xfile)
+ * TODO: FileSelection (+chooser if entry): cancel info in mix/open if filename in textfield doesn't match selected file 
+ *       FileSelection (+chooser if entry): update info as file name is typed, as in write-protected case 
  * TODO: GTK_STOCK_STOP -> C-G? as menu item? -- stop anything
  *         or post a Stop sign whenever the dac is in progress (or any long computation)
  *         similarly for Update
- *         This could be in the sound's pixmap area.
+ *         This could be in the sound's pixmap area except that none of the small stop icons looks good.
+ *         (and who on earth thinks a phillips screw head means "stop"!)
  * TODO: new file: output_name defaulting and so forth 
- * TODO: in error (open) case, can't find msg is scrunched by frame
+ * TODO: FileChooser: add entry for filename in Open case
+ * TODO: can we add sound_filename_completer to open entry?
  */
 
 
 
 #ifndef HAVE_GFCDN
 /* #define HAVE_GFCDN HAVE_GTK_FILE_CHOOSER_DIALOG_NEW */
- #define HAVE_GFCDN 1
+ #define HAVE_GFCDN 0
 #endif
 /* -------- just-sounds file list handlers -------- */
 
@@ -331,7 +334,7 @@ static void dialog_select_callback(GtkTreeSelection *selection, gpointer context
 		   mus_sound_srate(filename),
 		   mus_sound_duration(filename));
       CHANGE_INFO(fd->dialog_info1, buf);
-      SET_INFO_SIZE(fd->dialog_info1, strlen(buf));
+      SET_INFO_SIZE(fd->dialog_info1, 1 + strlen(buf));
       date = mus_sound_write_date(filename);
 #if HAVE_STRFTIME
       strftime(timestr, 64, ", %d-%b-%Y", localtime(&date));
@@ -343,7 +346,7 @@ static void dialog_select_callback(GtkTreeSelection *selection, gpointer context
 		   short_data_format_name(mus_sound_data_format(filename), filename),
 		   timestr);
       CHANGE_INFO(fd->dialog_info2, buf);
-      SET_INFO_SIZE(fd->dialog_info2, strlen(buf));
+      SET_INFO_SIZE(fd->dialog_info2, 1 + strlen(buf));
       FREE(buf);
       gtk_widget_show(fd->dialog_frame);
       gtk_widget_show(fd->dialog_vbox);
@@ -478,6 +481,7 @@ static void file_open_error(const char *error_msg, void *ufd)
   /* called from snd_error, redirecting error handling to the dialog */
   file_dialog_info *fd = (file_dialog_info *)ufd;
   CHANGE_INFO(fd->dialog_info1, error_msg);
+  SET_INFO_SIZE(fd->dialog_info1, strlen(error_msg));
   gtk_widget_show(fd->dialog_frame);
   gtk_widget_show(fd->dialog_vbox);
   gtk_widget_show(fd->dialog_info1);
@@ -2127,9 +2131,7 @@ static GtkWidget *edit_header_dialog = NULL, *edit_header_save_button = NULL;
 static file_data *edat;
 static snd_info *edit_header_sp = NULL;
 
-static void watch_read_only(struct snd_info *sp);
-
-static void watch_read_only(struct snd_info *sp)
+static void watch_read_only(struct snd_info *sp, read_only_reason_t reason)
 {
 }
 
@@ -2146,14 +2148,14 @@ static void edit_header_help_callback(GtkWidget *w, gpointer context)
 static void edit_header_cancel_callback(GtkWidget *w, gpointer context) 
 {
   gtk_widget_hide(edit_header_dialog);
-  edit_header_sp->read_only_watcher = NULL;
+  edit_header_sp->user_read_only_watcher = NULL;
   unreflect_file_data_panel_change(edat, edit_header_set_ok_sensitive);
 }
 
 static gint edit_header_delete_callback(GtkWidget *w, GdkEvent *event, gpointer context)
 {
   gtk_widget_hide(edit_header_dialog);
-  edit_header_sp->read_only_watcher = NULL;
+  edit_header_sp->user_read_only_watcher = NULL;
   unreflect_file_data_panel_change(edat, edit_header_set_ok_sensitive);
   return(true);
 }
@@ -2175,8 +2177,8 @@ static void edit_header_ok_callback(GtkWidget *w, gpointer context)
 	{
 	  if (!ok)
 	    {
-	      if (edit_header_sp->read_only)
-		edit_header_sp->read_only_watcher = &watch_read_only;
+	      if (edit_header_sp->user_read_only)
+		edit_header_sp->user_read_only_watcher = &watch_read_only;
 	      return;
 	    }
 	}

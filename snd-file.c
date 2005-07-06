@@ -279,7 +279,8 @@ static file_info *open_raw_sound(const char *fullname, bool read_only, bool sele
 
       /* open-sound and view-sound do not fall into the raw data dialog */
       if ((ss->open_requestor == FROM_OPEN_SOUND) || 
-	  (ss->open_requestor == FROM_VIEW_SOUND))
+	  (ss->open_requestor == FROM_VIEW_SOUND) ||
+	  (ss->open_requestor == FROM_NEW_SOUND))
 	return(make_file_info_1(fullname));
 
       str = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
@@ -311,7 +312,8 @@ static file_info *tackle_bad_header(const char *fullname, bool read_only, bool s
 
   /* if not from dialog, throw an error ('bad-header) */
   if ((ss->open_requestor == FROM_OPEN_SOUND) || 
-      (ss->open_requestor == FROM_VIEW_SOUND))
+      (ss->open_requestor == FROM_VIEW_SOUND) ||
+      (ss->open_requestor == FROM_NEW_SOUND)) /* this case should not happen! */
     {
       char *caller;
       if (ss->open_requestor == FROM_OPEN_SOUND)
@@ -710,7 +712,8 @@ void reflect_file_change_in_title(void)
 #if HAVE_FAM
 static void fam_sp_action(struct fam_info *fp, FAMEvent *fe)
 {
-  snd_info *sp;
+  snd_info *sp = NULL;
+  /* fp has been checked already */
   sp = (snd_info *)(fp->data);
   if (sp->writing) return;
   switch (fe->code)
@@ -724,16 +727,42 @@ static void fam_sp_action(struct fam_info *fp, FAMEvent *fe)
 	    snd_update(sp);
 	  else snd_file_bomb_icon(sp, true);
 	}
+#if HAVE_ACCESS
       else
 	{
-	  /* TODO: write-protection -> put up lock? how to get these bits and tell what has changed? */
+	  int err;
+	  err = access(sp->filename, R_OK);
+	  if (err < 0)
+	    {
+	      report_in_minibuffer(sp, "%s is read-protected!", sp->short_filename);
+	      sp->file_unreadable = true;
+	      snd_file_bomb_icon(sp, true);
+	    }
+	  else
+	    {
+	      sp->file_unreadable = false;
+	      err = access(sp->filename, W_OK);
+	      sp->file_read_only = (err < 0);
+	      snd_file_lock_icon(sp, sp->user_read_only || sp->file_read_only);
+	    }
 	}
+#endif
       break;
 
     case FAMDeleted:
-      /* snd_update will post a complaint in this case */
+      /* snd_update will post a complaint in this case, but I like it explicit */
+      if (mus_file_probe(sp->filename) == 0)
+	{
+	  /* user deleted file while editing it? */
+	  report_in_minibuffer_and_save(sp, _("%s no longer exists!"), sp->short_filename);
+	  sp->file_unreadable = true;
+	  snd_file_bomb_icon(sp, true);
+	  return;
+	}
+      /* else I don't know why I got this fam code, but fall through to the update case */
     case FAMCreated:
     case FAMMoved:
+      sp->file_unreadable = false;
       sp->need_update = true;
       if (auto_update(ss))
 	snd_update(sp);
@@ -1358,7 +1387,7 @@ static snd_info *snd_update_1(snd_info *sp, const char *ur_filename)
     }
 
   filename = copy_string(ur_filename);
-  read_only = sp->read_only;
+  read_only = sp->user_read_only;
   sa = make_axes_data(sp);
   old_raw = (sp->hdr->type == MUS_RAW);
   if (old_raw)
@@ -2334,7 +2363,7 @@ char *save_as_dialog_save_sound(snd_info *sp, char *str, save_dialog_t save_type
 	   * the current file in save-as; we can't have it both ways -- we'll save the edits 
 	   * in a temp file, then rename/copy the temp, and call update 
 	   */
-	  if (sp->read_only)
+	  if (sp->user_read_only || sp->file_read_only)
 	    {
 	      FREE(fullname);
 	      (*need_directory_update)= false;
@@ -2351,13 +2380,9 @@ char *save_as_dialog_save_sound(snd_info *sp, char *str, save_dialog_t save_type
 	    msg = mus_format(_("save as %s error: %s"), ofile, snd_io_strerror());
 	  else 
 	    {
-#if HAVE_FAM
 	      sp->writing = true;
 	      move_file(ofile, sp->filename); /* should we cancel and restart a monitor? */
 	      sp->writing = false;
-#else
-	      move_file(ofile, sp->filename);
-#endif
 	    }
 	  snd_update(sp);
 	  (*need_directory_update) = false;
@@ -2426,63 +2451,68 @@ bool edit_header_callback(snd_info *sp, file_data *edit_header_data,
 			  void (*inner_handler)(const char *error_msg, void *ufd))
 {
   /* this just changes the header -- it does not actually reformat the data or whatever */
-  int err;
-  if (sp->read_only)
+
+  off_t loc, samples;
+  char *comment, *original_comment = NULL;
+  file_info *hdr;
+  int chans, srate, type, format;
+  if (sp->user_read_only || sp->file_read_only)
     {
       snd_error(_("%s is write-protected"), sp->filename);
       return(false);
     }
-#if HAVE_ACCESS
-  err = access(sp->filename, W_OK);
-#else
-  err = 0;
-#endif
-  if (err == 0)
+#if HAVE_ACCESS && (!HAVE_FAM)
+  if (access(sp->filename, W_OK) < 0)
     {
-      off_t loc, samples;
-      char *comment, *original_comment = NULL;
-      file_info *hdr;
-      int chans, srate, type, format;
-      hdr = sp->hdr;
-
-      /* find out which fields changed -- if possible don't touch the sound data */
-      redirect_snd_error_to(inner_handler, (void *)edit_header_data);
-      comment = get_file_dialog_sound_attributes(edit_header_data, &srate, &chans, &type, &format, &loc, &samples, 1);
-      redirect_snd_error_to(outer_handler, (void *)edit_header_data);
-      if (edit_header_data->error_widget != NOT_A_SCANF_WIDGET) /* bad field value, perhaps */
-	return(false);
-
-      original_comment = mus_sound_comment(sp->filename);
-      if ((hdr->type == MUS_AIFF) || (hdr->type == MUS_AIFC)) mus_header_set_aiff_loop_info(mus_sound_loop_info(sp->filename));
-      mus_sound_forget(sp->filename);
-      if (hdr->type != type)
-	mus_header_change_type(sp->filename, type, format);
-      else
-	{
-	  if (hdr->format != format)
-	    mus_header_change_format(sp->filename, type, format);
-	}
-      if (hdr->chans != chans)
-	mus_header_change_chans(sp->filename, type, chans);
-      if (hdr->srate != srate)
-	mus_header_change_srate(sp->filename, type, srate);
-      if (hdr->samples != samples)
-	mus_header_change_data_size(sp->filename, type, mus_samples_to_bytes(format, samples));
-      if ((type == MUS_NEXT) &&
-	  (hdr->data_location != loc))
-	mus_header_change_location(sp->filename, MUS_NEXT, loc);
-      if (((comment) && (original_comment) && (strcmp(comment, original_comment) != 0)) ||
-	  ((comment) && (original_comment == NULL)) ||
-	  ((comment == NULL) && (original_comment)))
-	mus_header_change_comment(sp->filename, type, comment);
-      if (comment) FREE(comment);
-      if (original_comment) FREE(original_comment);
-      snd_update(sp);
-      return(true);
+      snd_error(_("%s is write-protected"), sp->filename);
+      return(false);
     }
-  else 
-    snd_error(_("can't write file %s: %s"), sp->short_filename, snd_io_strerror());
-  return(false);
+#endif
+  hdr = sp->hdr;
+
+  /* find out which fields changed -- if possible don't touch the sound data */
+  redirect_snd_error_to(inner_handler, (void *)edit_header_data);
+  comment = get_file_dialog_sound_attributes(edit_header_data, &srate, &chans, &type, &format, &loc, &samples, 1);
+  redirect_snd_error_to(outer_handler, (void *)edit_header_data);
+  if (edit_header_data->error_widget != NOT_A_SCANF_WIDGET) /* bad field value, perhaps */
+    return(false);
+
+  if (sp->hdr->type != MUS_RAW)
+    {
+      original_comment = mus_sound_comment(sp->filename);
+      if ((hdr->type == MUS_AIFF) || 
+	  (hdr->type == MUS_AIFC)) 
+	mus_header_set_aiff_loop_info(mus_sound_loop_info(sp->filename));
+    }
+  mus_sound_forget(sp->filename);
+  if (hdr->type != type)
+    {
+      sp->writing = true;
+      mus_header_change_type(sp->filename, type, format);
+      sp->writing = false;
+    }
+  else
+    {
+      if (hdr->format != format)
+	mus_header_change_format(sp->filename, type, format);
+    }
+  if (hdr->chans != chans)
+    mus_header_change_chans(sp->filename, type, chans);
+  if (hdr->srate != srate)
+    mus_header_change_srate(sp->filename, type, srate);
+  if (hdr->samples != samples)
+    mus_header_change_data_size(sp->filename, type, mus_samples_to_bytes(format, samples));
+  if ((type == MUS_NEXT) &&
+      (hdr->data_location != loc))
+    mus_header_change_location(sp->filename, MUS_NEXT, loc);
+  if (((comment) && (original_comment) && (strcmp(comment, original_comment) != 0)) ||
+      ((comment) && (original_comment == NULL)) ||
+      ((comment == NULL) && (original_comment)))
+    mus_header_change_comment(sp->filename, type, comment);
+  if (comment) FREE(comment);
+  if (original_comment) FREE(original_comment);
+  snd_update(sp);
+  return(true);
 }
 
 #if (!USE_NO_GUI)
@@ -2701,7 +2731,7 @@ static XEN g_set_sound_loop_info(XEN snd, XEN vals)
     }
   if (sp == NULL) 
     return(snd_no_such_sound_error(S_setB S_sound_loop_info, snd));
-  if (sp->read_only)
+  if (sp->user_read_only || sp->file_read_only)
     XEN_ERROR(CANNOT_SAVE,
 	      XEN_LIST_3(C_TO_XEN_STRING(S_setB S_sound_loop_info),
 			 C_TO_XEN_STRING(sp->filename),
@@ -2779,13 +2809,9 @@ static XEN g_set_sound_loop_info(XEN snd, XEN vals)
 	      XEN_LIST_3(C_TO_XEN_STRING(S_setB S_sound_loop_info),
 			 C_TO_XEN_STRING(tmp_file),
 			 C_TO_XEN_STRING(snd_io_strerror())));
-#if HAVE_FAM
   sp->writing = true;
   move_file(tmp_file, sp->filename); /* should we cancel and restart a monitor? */
   sp->writing = false;
-#else
-  move_file(tmp_file, sp->filename);
-#endif
   snd_update(sp);
   FREE(tmp_file);
   return(xen_return_first((err == MUS_NO_ERROR) ? XEN_TRUE : C_TO_XEN_INT(err), snd, vals));

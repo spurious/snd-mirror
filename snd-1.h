@@ -156,13 +156,13 @@ typedef struct {
   Float base;
 } env;
 
-#if HAVE_FAM
 typedef struct fam_info {
+#if HAVE_FAM
   FAMRequest *rp;
-  void *data;
   void (*action)(struct fam_info *fp, FAMEvent *fe);
-} fam_info;
 #endif
+  void *data;
+} fam_info;
 
 typedef struct env_editor {
   int *current_xs;
@@ -336,13 +336,13 @@ typedef struct snd_info {
   printing_t printing;
   off_t macroing;
   minibuffer_choice_t minibuffer_on;
-  bool read_only;
+  bool user_read_only, file_read_only;
   chan_info **chans;
   snd_context *sgx;
   file_info *hdr;             /* header of file that would be affected if we were to save current edits */
   int bomb_ctr;
   time_t write_date;          /* check for change behind back while editing */
-  bool need_update;           /* current in-core data does not match actual file (someone wrote it behind our back) */
+  bool need_update, file_unreadable; /* current in-core data does not match actual file (someone wrote it behind our back) */
   channel_style_t channel_style;
   int allocated_chans;        /* snd_info widget tree is never pruned -- can only grow */
   tracking_cursor_t cursor_follows_play;
@@ -354,11 +354,9 @@ typedef struct snd_info {
   struct mini_history *minibuffer_history, *filter_history;
   bool active;
   char *name_string;
-#if HAVE_FAM
   fam_info *file_watcher;
   bool writing;
-#endif
-  void (*read_only_watcher)(struct snd_info *sp);
+  void (*user_read_only_watcher)(struct snd_info *sp, read_only_reason_t reason); /* called if user changes permissions via (set! (read-only...) ) */
 } snd_info;
 
 #define SND_SRATE(sp) (((sp)->hdr)->srate)
@@ -668,6 +666,7 @@ void display_completions(void);
 char *complete_text(char *text, int func);
 void clear_possible_completions(void);
 char *filename_completer(char *text);
+char *sound_filename_completer(char *text);
 char *srate_completer(char *text);
 char *info_completer(char *text);
 char *complete_listener_text(char *old_text, int end, bool *try_completion, char **to_file_text);

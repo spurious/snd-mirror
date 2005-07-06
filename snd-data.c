@@ -304,8 +304,8 @@ snd_info *make_snd_info(snd_info *sip, const char *filename, file_info *hdr, int
 	  sp->allocated_chans = chans;
 	}
     }
-  sp->read_only = read_only;  /* need to be sure this is set before any hooks run */
-  sp->read_only_watcher = NULL;
+  sp->user_read_only = read_only;  /* need to be sure this is set before any hooks run */
+  sp->user_read_only_watcher = NULL;
   sp->index = snd_slot;
   sp->nchans = chans;
   sp->hdr = hdr;
@@ -343,6 +343,11 @@ snd_info *make_snd_info(snd_info *sip, const char *filename, file_info *hdr, int
 void free_snd_info(snd_info *sp)
 {
   int i;
+  if (sp->user_read_only_watcher)
+    {
+      (*(sp->user_read_only_watcher))(sp, SOUND_IS_CLOSING);
+      sp->user_read_only_watcher = NULL;
+    }
   if (sp->sgx)
     {
       /* make sure trough colors are ok upon reuse */
@@ -383,8 +388,10 @@ void free_snd_info(snd_info *sp)
   sp->filing = NOT_FILING;
   sp->applying = false;
   sp->channel_style = CHANNELS_SEPARATE;
-  sp->read_only = false;
+  sp->user_read_only = false;
+  sp->file_read_only = false;
   sp->need_update = false;
+  sp->file_unreadable = false;
   sp->minibuffer_on = MINI_OFF;
   if (sp->search_expr) 
     {
