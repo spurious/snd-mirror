@@ -40,7 +40,7 @@
 
 #ifndef HAVE_GFCDN
 /* #define HAVE_GFCDN HAVE_GTK_FILE_CHOOSER_DIALOG_NEW */
- #define HAVE_GFCDN 1
+ #define HAVE_GFCDN 0
 #endif
 /* -------- just-sounds file list handlers -------- */
 
