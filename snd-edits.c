@@ -167,7 +167,6 @@ static void prune_edits(chan_info *cp, int edpt)
       release_pending_sounds(cp, edpt);
       release_dangling_readers(cp, edpt);
       release_dangling_enved_spectra(cp, edpt);
-      reflect_no_more_redo_in_menu();
     }
 }
 
@@ -242,7 +241,6 @@ static bool prepare_edit_list(chan_info *cp, off_t len, int pos, const char *cal
 	}
     }
   prune_edits(cp, cp->edit_ctr);
-  reflect_undo_ok_in_menu();
   CURRENT_SAMPLES(cp) = len;
   if (cp->edit_ctr > 0)
     CURSOR(cp) = cp->cursors[cp->edit_ctr - 1];
@@ -303,7 +301,6 @@ static void check_for_first_edit(chan_info *cp)
 {
   if ((cp->cgx) && (cp->edit_ctr == 1)) /* first edit on this file (?) */
     {
-      reflect_file_change_in_menu();
       reflect_file_change_in_label(cp);
     }
 }
@@ -6980,7 +6977,6 @@ static bool save_edits_and_update_display(snd_info *sp)
     CURSOR(sp->chans[i]) = old_cursors[i];
   FREE(old_cursors);
   reflect_file_revert_in_label(sp);
-  reflect_file_save_in_menu();
   if (err)
     report_in_minibuffer_and_save(sp, _("file write failed: %s, edits are saved in: %s"), strerror(saved_errno), ofile);
   else report_in_minibuffer(sp, _("wrote %s"), sp->filename); 
@@ -7180,11 +7176,9 @@ void undo_edit(chan_info *cp, int count)
       clear_transform_edit_ctrs(cp);
       reflect_edit_counter_change(cp);
       reflect_sample_change_in_axis(cp);
-      reflect_undo_in_menu();
       if (cp->edit_ctr == 0)
 	{
 	  reflect_file_revert_in_label(sp);
-	  reflect_file_revert_in_menu();
 	}
       if (selection_is_active()) 
 	reflect_edit_with_selection_in_menu();
@@ -7234,14 +7228,10 @@ void redo_edit(chan_info *cp, int count)
       if (cp->edit_ctr >= cp->edit_size) cp->edit_ctr = cp->edit_size - 1;
       while (!(cp->edits[cp->edit_ctr]))
 	cp->edit_ctr--;
-      if (((cp->edit_ctr + 1) == cp->edit_size) || 
-	  (!(cp->edits[cp->edit_ctr + 1])))
-	reflect_no_more_redo_in_menu();
       if (cp->edit_ctr != 0) /* possibly a sync'd redo to chan that has no edits */
 	{
 	  clear_transform_edit_ctrs(cp);
 	  reflect_file_change_in_label(cp);
-	  reflect_redo_in_menu();
 	  reflect_edit_counter_change(cp);
 	  reflect_sample_change_in_axis(cp);
 	  if (selection_is_active()) 

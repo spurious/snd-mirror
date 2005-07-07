@@ -7,77 +7,119 @@
  * PERHAPS: key binding updates here too 
  */
 
-void reflect_file_open_in_menu(void)
+void edit_menu_update(void)
 {
-  set_sensitive(file_close_menu(), true);
-  set_sensitive(file_print_menu(), true);
-  set_sensitive(file_mix_menu(), true);
-  set_sensitive(file_save_as_menu(), true);
-  set_sensitive(file_update_menu(), true);
+  /* called when the "Edit" top level menu is clicked -- make sure all items reflect current Snd state */
+  snd_info *selected_sp = NULL, *any_sp = NULL;
+  chan_info *cp = NULL;
+  bool selection_p = false, region_p = false, file_p = false, undoable_edit_p = false, redoable_edit_p = false;
+  selected_sp = selected_sound();
+  if (selected_sp) 
+    {
+      file_p = true;
+      cp = any_selected_channel(selected_sp);
+      any_sp = selected_sp;
+    }
+  else 
+    {
+      any_sp = any_selected_sound();
+      if (any_sp)
+	{
+	  cp = any_selected_channel(any_sp);
+	  file_p = true;
+	}
+    }
+  selection_p = selection_is_active();
+  region_p = region_ok(region_list_position_to_id(0));
+  if ((cp) && (cp->cgx))
+    {
+      /* TODO: what about sync'd chans here? */
+      undoable_edit_p = (cp->edit_ctr > 0);
+      redoable_edit_p = (!(((cp->edit_ctr + 1) == cp->edit_size) || 
+			   (!(cp->edits[cp->edit_ctr + 1]))));
+    }
+  
+  /* is there an open sound? */
+  set_sensitive(edit_header_menu(), file_p);
+  set_sensitive(edit_find_menu(), file_p);
+  set_sensitive(edit_select_all_menu(), file_p);
+
+  /* is there an active selection? */
+  set_sensitive(edit_cut_menu(), selection_p);
+  set_sensitive(edit_paste_menu(), selection_p);
+  set_sensitive(edit_play_menu(), selection_p);
+  set_sensitive(edit_mix_menu(), selection_p);
+  set_sensitive(edit_save_as_menu(), selection_p);
+
+  /* is there an undoable edit? */
+  set_sensitive(edit_undo_menu(), undoable_edit_p);
+
+  /* is there a redoable edit? */
+  set_sensitive(edit_redo_menu(), redoable_edit_p);
+
+  /* does paste make any sense? */
+  set_sensitive(edit_paste_menu(), selection_p || region_p);  
+ 
+  /* make sure edit-header menu option label correctly reflects current selected sound header type */
+  if (any_sp)
+    set_button_label(edit_header_menu(), (any_sp->hdr->type == MUS_RAW) ? _("Add Header") : _("Edit Header"));
+}
+
+void view_menu_update(void)
+{
 #if USE_MOTIF  
-  set_sensitive(view_equalize_panes_menu(), true);
+  /* does equalize panes make sense? */
+  set_sensitive(view_equalize_panes_menu(), active_channels(WITHOUT_VIRTUAL_CHANNELS) > 1);
 #endif
-  set_sensitive(edit_header_menu(), true);
-  set_sensitive(edit_find_menu(), true);
-  set_sensitive(edit_select_all_menu(), true);
-  if (popup_menu_exists())
-    {
-#if USE_MOTIF
-      set_sensitive(popup_equalize_panes_menu(), true);
-#endif
-      set_sensitive(popup_play_menu(), true);
-      set_sensitive(popup_info_menu(), true);
-    }
+
+  /* are there any viewable regions? */
+  set_sensitive(view_region_menu(), snd_regions() > 0);
+
+  /* graph_style */
+  set_sensitive(view_lines_menu(),          graph_style(ss) != GRAPH_LINES);
+  set_sensitive(view_dots_menu(),           graph_style(ss) != GRAPH_DOTS);
+  set_sensitive(view_filled_menu(),         graph_style(ss) != GRAPH_FILLED);
+  set_sensitive(view_dots_and_lines_menu(), graph_style(ss) != GRAPH_DOTS_AND_LINES);
+  set_sensitive(view_lollipops_menu(),      graph_style(ss) != GRAPH_LOLLIPOPS);
+
+  /* x axis style */
+  set_sensitive(view_x_axis_seconds_menu(),    x_axis_style(ss) != X_AXIS_IN_SECONDS);
+  set_sensitive(view_x_axis_beats_menu(),      x_axis_style(ss) != X_AXIS_IN_BEATS);
+  set_sensitive(view_x_axis_measures_menu(),   x_axis_style(ss) != X_AXIS_IN_MEASURES);
+  set_sensitive(view_x_axis_samples_menu(),    x_axis_style(ss) != X_AXIS_IN_SAMPLES);
+  set_sensitive(view_x_axis_percentage_menu(), x_axis_style(ss) != X_AXIS_AS_PERCENTAGE);
+
+  /* show y zero label */
+  set_menu_label(view_zero_menu(), (show_y_zero(ss)) ? _("Hide Y = 0") : _("Show Y = 0"));
+
+  /* verbose cursor label */
+  set_menu_label(view_cursor_menu(), (verbose_cursor(ss)) ? _("Silent cursor") : _("Verbose cursor"));
+
+  /* channel style */
+  set_sensitive(view_combine_separate_menu(),     channel_style(ss) != CHANNELS_SEPARATE);
+  set_sensitive(view_combine_combined_menu(),     channel_style(ss) != CHANNELS_COMBINED);
+  set_sensitive(view_combine_superimposed_menu(), channel_style(ss) != CHANNELS_SUPERIMPOSED);
+
+  /* show axes */
+  set_sensitive(view_no_axes_menu(),                show_axes(ss) != SHOW_NO_AXES);
+  set_sensitive(view_just_x_axis_menu(),            show_axes(ss) != SHOW_X_AXIS);
+  set_sensitive(view_just_x_axis_unlabelled_menu(), show_axes(ss) != SHOW_X_AXIS_UNLABELLED);
+  set_sensitive(view_all_axes_menu(),               show_axes(ss) != SHOW_ALL_AXES);
+  set_sensitive(view_all_axes_unlabelled_menu(),    show_axes(ss) != SHOW_ALL_AXES_UNLABELLED);
+
+  /* make sure listener menu option label correctly reflects current listener state */
+  set_menu_label(view_listener_menu(), (listener_height() > 10) ? _("Hide listener") : _("Show listener"));
+
+  set_menu_label(view_ctrls_menu(), (in_show_controls(ss)) ? _("Hide controls") : _("Show controls"));
 }
 
-void reflect_file_change_in_menu(void)
+void options_menu_update(void)
 {
-  set_sensitive(file_save_menu(), true);
-  set_sensitive(file_revert_menu(), true);
-  set_sensitive(edit_undo_menu(), true);
-  if (popup_menu_exists())
-    {
-      set_sensitive(popup_undo_menu(), true);
-      set_sensitive(popup_save_menu(), true);
-      set_sensitive(popup_play_menu(), true);
-    }
-}
-
-void reflect_file_lack_in_menu(void)
-{
-  set_sensitive(file_close_menu(), false);
-  set_sensitive(file_save_as_menu(), false);
-  set_sensitive(file_save_menu(), false);
-  set_sensitive(file_revert_menu(), false);
-  set_sensitive(file_print_menu(), false);
-  set_sensitive(file_mix_menu(), false);
-  set_sensitive(file_update_menu(), false);
-  set_sensitive(edit_undo_menu(), false);
-  set_sensitive(edit_redo_menu(), false);
-#if USE_MOTIF
-  set_sensitive(view_equalize_panes_menu(), false);
-#endif
-  set_sensitive(edit_header_menu(), false);
-  set_sensitive(edit_find_menu(), false);
-  set_sensitive(edit_select_all_menu(), false);
-  if (popup_menu_exists())
-    {
-      set_sensitive(popup_undo_menu(), false);
-      set_sensitive(popup_redo_menu(), false);
-      set_sensitive(popup_save_menu(), false);
-      set_sensitive(popup_play_menu(), false);
-      set_sensitive(popup_info_menu(), false);
-#if USE_MOTIF
-      set_sensitive(popup_equalize_panes_menu(), false);
-#endif
-    }
-}
-
-void reflect_equalize_panes_in_menu(bool on)
-{
-#if USE_MOTIF
-  set_sensitive(view_equalize_panes_menu(), on);
-#endif
+  /* zoom focus style */
+  set_sensitive(options_focus_left_menu(),   zoom_focus_style(ss) != ZOOM_FOCUS_LEFT);
+  set_sensitive(options_focus_right_menu(),  zoom_focus_style(ss) != ZOOM_FOCUS_RIGHT);
+  set_sensitive(options_focus_middle_menu(), zoom_focus_style(ss) != ZOOM_FOCUS_MIDDLE);
+  set_sensitive(options_focus_active_menu(), zoom_focus_style(ss) != ZOOM_FOCUS_ACTIVE);
 }
 
 static bool find_any_edits(chan_info *cp, void *ignore)
@@ -85,49 +127,75 @@ static bool find_any_edits(chan_info *cp, void *ignore)
   return(cp->edit_ctr > 0);
 }
 
-static bool find_any_possible_edits(chan_info *cp, void *ignore)
+void file_menu_update(void)
 {
-  return(cp->edit_size > 0);
+  snd_info *any_sp = NULL;
+  bool file_p = false, undoable_edits_p = false, edits_p = false;
+
+  any_sp = any_selected_sound();
+  if (any_sp)
+    {
+      edits_p = map_over_sound_chans(any_sp, find_any_edits, NULL);
+      file_p = true;
+    }
+
+  set_sensitive(file_close_menu(), file_p);
+  set_sensitive(file_print_menu(), file_p);
+  set_sensitive(file_mix_menu(), file_p);
+  set_sensitive(file_save_as_menu(), file_p);
+  set_sensitive(file_update_menu(), file_p);  /* TODO: dependent on need? */
+
+  set_sensitive(file_save_menu(), undoable_edits_p);
+  set_sensitive(file_revert_menu(), undoable_edits_p);
 }
 
-void reflect_file_revert_in_menu(void)
+void popup_menu_update(void)
 {
-  bool editing;
-  editing = map_over_chans(find_any_edits, NULL);
-  if (!editing)
+  snd_info *selected_sp = NULL, *any_sp = NULL;
+  chan_info *cp = NULL;
+  bool file_p = false, undoable_edits_p = false, redoable_edits_p = false;
+
+  selected_sp = selected_sound();
+  if (selected_sp) 
     {
-      set_sensitive(file_save_menu(), false);
-      set_sensitive(file_revert_menu(), false);
-      set_sensitive(edit_undo_menu(), false);
-      if (popup_menu_exists())
+      file_p = true;
+      cp = any_selected_channel(selected_sp);
+      any_sp = selected_sp;
+    }
+  else 
+    {
+      if (any_sp)
 	{
-	  set_sensitive(popup_undo_menu(), false);
-	  set_sensitive(popup_save_menu(), false);
+	  cp = any_selected_channel(any_sp);
+	  file_p = true;
 	}
     }
-  set_sensitive(edit_redo_menu(), true);
-  if (popup_menu_exists()) set_sensitive(popup_redo_menu(), true);
+
+  if ((cp) && (cp->cgx))
+    {
+      /* TODO: what about sync'd chans here? */
+      undoable_edits_p = (cp->edit_ctr > 0);
+      redoable_edits_p = (!(((cp->edit_ctr + 1) == cp->edit_size) || 
+			   (!(cp->edits[cp->edit_ctr + 1]))));
+    }
+
+  file_p = (bool)any_selected_sound();
+
+  set_sensitive(popup_play_menu(), file_p);
+  set_sensitive(popup_info_menu(), file_p);
+  
+  set_sensitive(popup_undo_menu(), undoable_edits_p);
+  set_sensitive(popup_redo_menu(), redoable_edits_p);
+  set_sensitive(popup_save_menu(), undoable_edits_p);
+
+#if USE_MOTIF
+  set_sensitive(view_equalize_panes_menu(), active_channels(WITHOUT_VIRTUAL_CHANNELS) > 1);
+#endif
+
+  set_sensitive(popup_apply_menu(), (file_p && (in_show_controls(ss))));
+  set_sensitive(popup_reset_menu(), (file_p && (in_show_controls(ss))));
 }
 
-void reflect_file_save_in_menu(void)
-{
-  bool editing;
-  editing = map_over_chans(find_any_edits, NULL);
-  if (!editing)
-    {
-      set_sensitive(file_save_menu(), false);
-      set_sensitive(file_revert_menu(), false);
-      set_sensitive(edit_undo_menu(), false);
-      if (popup_menu_exists())
-	{
-	  set_sensitive(popup_undo_menu(), false);
-	  set_sensitive(popup_save_menu(), false);
-	  set_sensitive(popup_redo_menu(), false);
-	}
-      set_sensitive(edit_redo_menu(), false);
-    }
-  editing = map_over_chans(find_any_possible_edits, NULL);
-}
 
 void reflect_file_revert_in_label(snd_info *sp)
 {
@@ -140,77 +208,15 @@ void reflect_file_revert_in_label(snd_info *sp)
     }
 }
 
-void reflect_no_more_redo_in_menu(void)
-{
-  set_sensitive(edit_redo_menu(), false);
-  if (popup_menu_exists()) set_sensitive(popup_redo_menu(), false);
-}
-
+/* TODO: cleanup reflect_edits */
 void reflect_edit_with_selection_in_menu(void)
 {
-  set_sensitive(edit_cut_menu(), true);
-  set_sensitive(edit_paste_menu(), true);
-  set_sensitive(edit_play_menu(), true);
-  set_sensitive(edit_mix_menu(), true);
-  set_sensitive(edit_save_as_menu(), true);
   enved_reflect_selection(true);
 }
 
 void reflect_edit_without_selection_in_menu(void)
 {
-  set_sensitive(edit_cut_menu(), false);
-  set_sensitive(edit_paste_menu(), false);
-  set_sensitive(edit_mix_menu(), false);
-  if ((!(selection_is_active())) && 
-      (!(region_ok(region_list_position_to_id(0))))) 
-    set_sensitive(edit_paste_menu(), false);
-  set_sensitive(edit_play_menu(), false);
-  set_sensitive(edit_save_as_menu(), false);
   enved_reflect_selection(false);
-}
-
-void reflect_undo_in_menu(void)
-{
-  set_sensitive(edit_redo_menu(), true);
-  if (popup_menu_exists()) set_sensitive(popup_redo_menu(), true);
-}
-
-void reflect_redo_in_menu(void)
-{
-  set_sensitive(edit_undo_menu(), true);
-  if (popup_menu_exists()) set_sensitive(popup_undo_menu(), true);
-  reflect_file_change_in_menu();
-}
-
-void reflect_undo_ok_in_menu(void)
-{
-  set_sensitive(edit_undo_menu(), true);
-  if (popup_menu_exists()) set_sensitive(popup_undo_menu(), true);
-}
-
-void reflect_undo_or_redo_in_menu(chan_info *cp)
-{
-  if ((cp) && (cp->cgx))
-    {
-      bool undoable, redoable;
-      undoable = (cp->edit_ctr > 0);
-      redoable = (!(((cp->edit_ctr + 1) == cp->edit_size) || 
-		    (!(cp->edits[cp->edit_ctr + 1]))));
-      set_sensitive(edit_undo_menu(), undoable);
-      if (popup_menu_exists()) set_sensitive(popup_undo_menu(), undoable);
-      set_sensitive(edit_redo_menu(), redoable);
-      if (popup_menu_exists()) set_sensitive(popup_redo_menu(), redoable);
-    }
-}
-
-void reflect_regions_in_menu(void)
-{
-  set_sensitive(view_region_menu(), true);
-}
-
-void reflect_no_regions_in_menu(void)
-{
-  set_sensitive(view_region_menu(), false);
 }
 
 void close_file_from_menu(void)
@@ -251,7 +257,6 @@ void revert_file_from_menu(void)
       for (i = 0; i < sp->nchans; i++) 
 	revert_edits(sp->chans[i]);
       reflect_file_revert_in_label(sp);
-      reflect_file_revert_in_menu();
     }
 }
 
@@ -286,218 +291,18 @@ void save_state_from_menu(void)
     report_in_minibuffer(any_selected_sound(), _("saved state in %s"), save_state_file(ss));
 }
 
-static void chans_graph_style(chan_info *cp, void *ptr) 
-{
-  graph_style_t style = (*((graph_style_t *)ptr)); 
-  cp->time_graph_style = style;
-  cp->lisp_graph_style = style;
-  cp->transform_graph_style = style;
-  update_graph(cp);
-}
-
-void set_graph_style(graph_style_t val)
-{
-  switch (graph_style(ss))
-    {
-    case GRAPH_LINES:          set_sensitive(view_lines_menu(), true);          break;
-    case GRAPH_DOTS:           set_sensitive(view_dots_menu(), true);           break;
-    case GRAPH_FILLED:         set_sensitive(view_filled_menu(), true);         break;
-    case GRAPH_DOTS_AND_LINES: set_sensitive(view_dots_and_lines_menu(), true); break;
-    case GRAPH_LOLLIPOPS:      set_sensitive(view_lollipops_menu(), true);      break;
-    }
-  in_set_graph_style(val);
-  for_each_chan_1(chans_graph_style, (void *)(&val));
-  switch (val)
-    {
-    case GRAPH_LINES:          set_sensitive(view_lines_menu(), false);          break;
-    case GRAPH_DOTS:           set_sensitive(view_dots_menu(), false);           break;
-    case GRAPH_FILLED:         set_sensitive(view_filled_menu(), false);         break;
-    case GRAPH_DOTS_AND_LINES: set_sensitive(view_dots_and_lines_menu(), false); break;
-    case GRAPH_LOLLIPOPS:      set_sensitive(view_lollipops_menu(), false);      break;
-    }
-}
-
-static void chans_marks(chan_info *cp, void *ptr)
-{
-  cp->show_marks = (*((bool *)ptr));
-  update_graph(cp);
-}
-
-void set_show_marks(bool val)
-{
-  in_set_show_marks(val);
-  for_each_chan_1(chans_marks, (void *)(&val));
-}
-
-static void chans_zero(chan_info *cp, void *ptr)
-{
-  cp->show_y_zero = (*((bool *)ptr));
-  update_graph(cp);
-}
-
-void set_show_y_zero(bool val)
-{
-  in_set_show_y_zero(val);
-  if (view_zero_menu())
-    {
-      set_menu_label(view_zero_menu(), 
-		     (val) ? _("Hide Y = 0") : _("Show Y = 0"));
-      for_each_chan_1(chans_zero, (void *)(&val));
-    }
-}
-
-static void clrmini(snd_info *sp, void *ignore) {clear_minibuffer(sp);}
-static void chans_verbose_cursor(chan_info *cp, void *ptr) 
-{
-  cp->verbose_cursor = (*((bool *)ptr));
-  update_graph(cp);
-}
-
-void set_verbose_cursor(bool val)
-{
-  in_set_verbose_cursor(val);
-  if (val == 0) for_each_sound(clrmini, NULL);
-  for_each_chan_1(chans_verbose_cursor, (void *)(&val));
-  if (view_cursor_menu())
-    set_menu_label(view_cursor_menu(), 
-		   (val) ? _("Silent cursor") : _("Verbose cursor"));
-}
-
-void set_view_ctrls_label(const char *lab)
-{
-  set_menu_label(view_ctrls_menu(), lab);
-}
-
-void set_view_listener_label(const char *lab)
-{
-  set_menu_label(view_listener_menu(), lab);
-}
-
 void activate_focus_menu(zoom_focus_t new_focus)
 {
-  if (options_focus_left_menu())
-    {
-      switch (zoom_focus_style(ss))
-	{
-	case ZOOM_FOCUS_LEFT:   set_sensitive(options_focus_left_menu(), true);   break;
-	case ZOOM_FOCUS_RIGHT:  set_sensitive(options_focus_right_menu(), true);  break;
-	case ZOOM_FOCUS_MIDDLE: set_sensitive(options_focus_middle_menu(), true); break;
-	default:                set_sensitive(options_focus_active_menu(), true); break;
-	}
-    }
   set_zoom_focus_style(new_focus);
-  if (options_focus_left_menu())
-    {
-      switch (new_focus)
-	{
-	case ZOOM_FOCUS_LEFT:   set_sensitive(options_focus_left_menu(), false);   break;
-	case ZOOM_FOCUS_RIGHT:  set_sensitive(options_focus_right_menu(), false);  break;
-	case ZOOM_FOCUS_MIDDLE: set_sensitive(options_focus_middle_menu(), false); break;
-	default:                set_sensitive(options_focus_active_menu(), false); break;
-	}
-    }
 }  
-
-void chans_x_axis_style(chan_info *cp, void *ptr)
-{
-  axis_info *ap;
-  x_axis_style_t new_style = (*((x_axis_style_t *)ptr));
-  ap = cp->axis;
-  cp->x_axis_style = new_style;
-  if (ap)
-    {
-      if (ap->xlabel) FREE(ap->xlabel);
-      if (ap->default_xlabel)
-	ap->xlabel = copy_string(ap->default_xlabel);
-      else
-	{
-	  switch (new_style)
-	    {
-	    case X_AXIS_IN_BEATS:      ap->xlabel = copy_string(_("time (beats)"));    break;
-	    case X_AXIS_IN_MEASURES:   ap->xlabel = copy_string(_("time (measures)")); break;
-	    case X_AXIS_IN_SAMPLES:    ap->xlabel = copy_string(_("time (samples)"));  break;
-	    case X_AXIS_AS_PERCENTAGE: ap->xlabel = copy_string(_("time (percent)"));  break;
-	    default:                   ap->xlabel = copy_string(_("time"));            break;
-	    }
-	}
-      update_graph(cp);
-    }
-} 
-
-void set_x_axis_style(x_axis_style_t val)
-{
-  switch (x_axis_style(ss))
-    {
-    case X_AXIS_IN_SECONDS:    set_sensitive(view_x_axis_seconds_menu(), true);    break;
-    case X_AXIS_IN_BEATS:      set_sensitive(view_x_axis_beats_menu(), true);      break;
-    case X_AXIS_IN_MEASURES:   set_sensitive(view_x_axis_measures_menu(), true);   break;
-    case X_AXIS_IN_SAMPLES:    set_sensitive(view_x_axis_samples_menu(), true);    break;
-    case X_AXIS_AS_PERCENTAGE: set_sensitive(view_x_axis_percentage_menu(), true); break;
-    }
-  switch (val)
-    {
-    case X_AXIS_IN_SECONDS:    set_sensitive(view_x_axis_seconds_menu(), false);    break;
-    case X_AXIS_IN_BEATS:      set_sensitive(view_x_axis_beats_menu(), false);      break;
-    case X_AXIS_IN_MEASURES:   set_sensitive(view_x_axis_measures_menu(), false);   break;
-    case X_AXIS_IN_SAMPLES:    set_sensitive(view_x_axis_samples_menu(), false);    break;
-    case X_AXIS_AS_PERCENTAGE: set_sensitive(view_x_axis_percentage_menu(), false); break;
-    }
-  in_set_x_axis_style(val);
-  for_each_chan_1(chans_x_axis_style, (void *)(&val));
-}
 
 void menu_set_show_axes(show_axes_t val)
 {
-  switch (show_axes(ss))
-    {
-    case SHOW_NO_AXES:             set_sensitive(view_no_axes_menu(), true);                break;
-    case SHOW_X_AXIS:              set_sensitive(view_just_x_axis_menu(), true);            break;
-    case SHOW_X_AXIS_UNLABELLED:   set_sensitive(view_just_x_axis_unlabelled_menu(), true); break;
-    case SHOW_ALL_AXES:            set_sensitive(view_all_axes_menu(), true);               break;
-    case SHOW_ALL_AXES_UNLABELLED: set_sensitive(view_all_axes_unlabelled_menu(), true);    break;
-    }
-  switch (val)
-    {
-    case SHOW_NO_AXES:             set_sensitive(view_no_axes_menu(), false);                break;
-    case SHOW_X_AXIS:              set_sensitive(view_just_x_axis_menu(), false);            break;
-    case SHOW_X_AXIS_UNLABELLED:   set_sensitive(view_just_x_axis_unlabelled_menu(), false); break;
-    case SHOW_ALL_AXES:            set_sensitive(view_all_axes_menu(), false);               break;
-    case SHOW_ALL_AXES_UNLABELLED: set_sensitive(view_all_axes_unlabelled_menu(), false);    break;
-    }
   set_show_axes(val);
 }
 
-static void update_sound(snd_info *sp, void *ptr)
-{
-  if (sp)
-    {
-      switch (channel_style(ss))
-	{
-	case CHANNELS_SEPARATE:     separate_sound(sp);    break;
-	case CHANNELS_COMBINED:     combine_sound(sp);     break;
-	case CHANNELS_SUPERIMPOSED: superimpose_sound(sp); break;
-	}
-    }
-}
 
-void set_channel_style(channel_style_t val)
-{
-  switch (channel_style(ss))
-    {
-    case CHANNELS_SEPARATE:     set_sensitive(view_combine_separate_menu(), true);     break;
-    case CHANNELS_COMBINED:     set_sensitive(view_combine_combined_menu(), true);     break;
-    case CHANNELS_SUPERIMPOSED: set_sensitive(view_combine_superimposed_menu(), true); break;
-    }
-  in_set_channel_style(val);
-  switch (val)
-    {
-    case CHANNELS_SEPARATE:     set_sensitive(view_combine_separate_menu(), false);     break;
-    case CHANNELS_COMBINED:     set_sensitive(view_combine_combined_menu(), false);     break;
-    case CHANNELS_SUPERIMPOSED: set_sensitive(view_combine_superimposed_menu(), false); break;
-    }
-  for_each_sound(update_sound, NULL);
-  for_each_chan(update_graph);
-}
+/* ---------------- extlang tie-ins ---------------- */
 
 static XEN snd_no_such_menu_error(const char *caller, XEN id)
 {
@@ -505,26 +310,6 @@ static XEN snd_no_such_menu_error(const char *caller, XEN id)
 	    XEN_LIST_2(C_TO_XEN_STRING(caller),
 		       id));
   return(XEN_FALSE);
-}
-
-static XEN g_save_state_file(void) 
-{
-  return(C_TO_XEN_STRING(save_state_file(ss)));
-}
-
-static void set_save_state_file(char *name)
-{
-  if (save_state_file(ss)) FREE(save_state_file(ss));
-  in_set_save_state_file(copy_string(name));
-  set_sensitive(options_save_state_menu(), (snd_strlen(name) > 0));
-}
-
-static XEN g_set_save_state_file(XEN val) 
-{
-  #define H_save_state_file "(" S_save_state_file "): the name of the saved state file (\"saved-snd." XEN_FILE_EXTENSION "\")"
-  XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, S_setB S_save_state_file, "a string"); 
-  set_save_state_file(XEN_TO_C_STRING(val));
-  return(C_TO_XEN_STRING(save_state_file(ss)));
 }
 
 static XEN *menu_functions = NULL;
@@ -688,15 +473,11 @@ static XEN g_main_menu(XEN which)
 
 
 #ifdef XEN_ARGIFY_1
-XEN_NARGIFY_0(g_save_state_file_w, g_save_state_file)
-XEN_NARGIFY_1(g_set_save_state_file_w, g_set_save_state_file)
 XEN_ARGIFY_2(gl_add_to_main_menu_w, gl_add_to_main_menu)
 XEN_ARGIFY_4(gl_add_to_menu_w, gl_add_to_menu)
 XEN_NARGIFY_2(gl_remove_from_menu_w, gl_remove_from_menu)
 XEN_NARGIFY_1(g_main_menu_w, g_main_menu)
 #else
-#define g_save_state_file_w g_save_state_file
-#define g_set_save_state_file_w g_set_save_state_file
 #define gl_add_to_main_menu_w gl_add_to_main_menu
 #define gl_add_to_menu_w gl_add_to_menu
 #define gl_remove_from_menu_w gl_remove_from_menu
@@ -705,9 +486,6 @@ XEN_NARGIFY_1(g_main_menu_w, g_main_menu)
 
 void g_init_menu(void)
 {
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_save_state_file, g_save_state_file_w, H_save_state_file,
-				   S_setB S_save_state_file, g_set_save_state_file_w, 0, 0, 1, 0);
-  
   XEN_DEFINE_PROCEDURE(S_add_to_main_menu,  gl_add_to_main_menu_w,  1, 1, 0, H_add_to_main_menu);
   XEN_DEFINE_PROCEDURE(S_add_to_menu,       gl_add_to_menu_w,       3, 1, 0, H_add_to_menu);
   XEN_DEFINE_PROCEDURE(S_remove_from_menu,  gl_remove_from_menu_w,  2, 0, 0, H_remove_from_menu);

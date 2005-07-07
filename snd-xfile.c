@@ -31,6 +31,7 @@
  *         need to know how to recognize (for read side)
  * TODO: various file/directory lists: tie into fam/gamin (also previous files list) -- add xen call?
  * TODO: if directory loaded into previous files list via -p, add any new sound files as they appear
+ * TODO: if edit header raw -- no "raw" choice? -- meaningless in that case? -- then no selected type? or use default-output-header-type
  */
 
 
@@ -2320,6 +2321,14 @@ static bool edit_header_panel_changed = false;
 static fam_info *edit_header_file_read_only_watcher = NULL;
 #endif
 
+void cleanup_edit_header_watcher(void)
+{
+#if HAVE_FAM
+  if (edit_header_file_read_only_watcher)
+    edit_header_file_read_only_watcher = fam_unmonitor_file(edit_header_sp->filename, edit_header_file_read_only_watcher);
+#endif
+}
+
 static XmString make_edit_header_dialog_title(snd_info *sp)
 {
   /* dialog may not yet exist */
@@ -2370,24 +2379,6 @@ static void edit_header_cancel_callback(Widget w, XtPointer context, XtPointer i
 #endif
 }
 
-#if DEBUGGING && HAVE_GUILE
-static XEN g_apply_edit_header(void)
-{
-  if ((edit_header_sp) && (edit_header_sp->active))
-    {
-      if ((!(edit_header_sp->user_read_only)) && (!(edit_header_sp->file_read_only)))
-	edit_header_callback(edit_header_sp, edat, NULL, NULL);
-      else snd_error(_("%s is write-protected"), edit_header_sp->short_filename);
-    }
-  XtUnmanageChild(edit_header_dialog);
-  unreflect_file_data_panel_change(edat, edit_header_set_ok_sensitive);
-#if HAVE_FAM
-  edit_header_file_read_only_watcher = fam_unmonitor_file(edit_header_sp->filename, edit_header_file_read_only_watcher);
-#endif
-  return(XEN_FALSE);
-}
-#endif
-
 static void watch_user_read_only(struct snd_info *sp, read_only_reason_t reason)
 {
   if ((edit_header_dialog) && 
@@ -2403,6 +2394,7 @@ static void watch_user_read_only(struct snd_info *sp, read_only_reason_t reason)
 	  XtVaSetValues(edit_header_dialog, 
 			XmNmessageString, title, 
 			NULL);
+	  XmStringFree(title);
 	}
       else /* sound closing, so we shouldn't sit around offering to edit its header */
 	{
@@ -2439,6 +2431,7 @@ static void watch_file_read_only(struct fam_info *fp, FAMEvent *fe)
 	    XtVaSetValues(edit_header_dialog, 
 			  XmNmessageString, title, 
 			  NULL);
+	    XmStringFree(title);
 	    return;
 	  }
       }
@@ -2522,6 +2515,7 @@ Widget edit_header(snd_info *sp)
       xstr2 = XmStringCreate(_("Help"), XmFONTLIST_DEFAULT_TAG);
       xstr3 = XmStringCreate(_("Save"), XmFONTLIST_DEFAULT_TAG);
       titlestr = XmStringCreate(_("Edit Header"), XmFONTLIST_DEFAULT_TAG);
+
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
       XtSetArg(args[n], XmNcancelLabelString, xstr1); n++;
       XtSetArg(args[n], XmNhelpLabelString, xstr2); n++;
@@ -2588,12 +2582,10 @@ Widget edit_header(snd_info *sp)
 		    NULL);
       set_file_dialog_sound_attributes(edat, hdr->type, hdr->format, hdr->srate, hdr->chans, hdr->data_location, hdr->samples, hdr->comment);
       raise_dialog(edit_header_dialog);
+      clear_dialog_error(edat);
     }
   set_sensitive(XmMessageBoxGetChild(edit_header_dialog, XmDIALOG_OK_BUTTON), (hdr->type == MUS_RAW)); /* nothing needs to be saved when we start */
   XmStringFree(xstr4);
-  if (hdr->type == MUS_RAW)
-    post_file_dialog_error("this file has no header!", (void *)edat);
-  else clear_dialog_error(edat);
   if (!(XtIsManaged(edit_header_dialog))) XtManageChild(edit_header_dialog);
   reflect_file_data_panel_change(edat, edit_header_set_ok_sensitive);
   edit_header_sp->user_read_only_watcher = &watch_user_read_only;
@@ -2617,6 +2609,24 @@ void save_edit_header_dialog_state(FILE *fd)
 #endif
     }
 }
+
+#if DEBUGGING && HAVE_GUILE
+static XEN g_apply_edit_header(void)
+{
+  if ((edit_header_sp) && (edit_header_sp->active))
+    {
+      if ((!(edit_header_sp->user_read_only)) && (!(edit_header_sp->file_read_only)))
+	edit_header_callback(edit_header_sp, edat, NULL, NULL);
+      else snd_error(_("%s is write-protected"), edit_header_sp->short_filename);
+    }
+  XtUnmanageChild(edit_header_dialog);
+  unreflect_file_data_panel_change(edat, edit_header_set_ok_sensitive);
+#if HAVE_FAM
+  edit_header_file_read_only_watcher = fam_unmonitor_file(edit_header_sp->filename, edit_header_file_read_only_watcher);
+#endif
+  return(XEN_FALSE);
+}
+#endif
 
 
 

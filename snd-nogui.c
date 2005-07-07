@@ -71,6 +71,7 @@ void handle_listener(bool new_state) {}
 int listener_height(void) {return(0);}
 int listener_width(void) {return(0);}
 bool highlight_unbalanced_paren(void) {return(true);}
+void set_button_label(int label, const char *str) {}
 int file_open_menu(void) {return(0);}
 int file_close_menu(void) {return(0);}
 int file_save_menu(void) {return(0);}
@@ -124,6 +125,8 @@ int popup_undo_menu(void) {return(0);}
 int popup_redo_menu(void) {return(0);}
 int popup_save_menu(void) {return(0);}
 int popup_info_menu(void) {return(0);}
+int popup_apply_menu(void) {return(0);}
+int popup_reset_menu(void) {return(0);}
 bool popup_menu_exists(void) {return(false);}
 void set_menu_label(int w, const char *label) {}
 int g_add_to_main_menu(char *label, int slot) {return(0);}
@@ -242,6 +245,7 @@ int start_file_dialog(bool managed) {return(0);}
 bool view_files_dialog_is_active(void) {return(false);}
 int edit_header(snd_info *sp) {return(0);}
 void save_edit_header_dialog_state(FILE *fd) {}
+void cleanup_edit_header_watcher(void) {}
 widget_t make_edit_save_as_dialog(bool managed) {return(0);}
 widget_t make_file_save_as_dialog(bool managed) {return(0);}
 widget_t make_file_print_dialog(bool managed, bool direct_to_printer) {return(0);}

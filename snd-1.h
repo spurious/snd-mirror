@@ -580,22 +580,15 @@ char **help_name_to_xrefs(const char *name);
 
 /* -------- snd-menu.c -------- */
 
-void reflect_file_open_in_menu (void);
-void reflect_file_change_in_menu (void);
-void reflect_file_lack_in_menu (void);
-void reflect_equalize_panes_in_menu(bool on);
-void reflect_file_revert_in_menu (void);
-void reflect_file_save_in_menu (void);
 void reflect_file_revert_in_label (snd_info *sp);
-void reflect_no_more_redo_in_menu(void);
 void reflect_edit_with_selection_in_menu (void);
 void reflect_edit_without_selection_in_menu (void);
-void reflect_undo_in_menu(void);
-void reflect_redo_in_menu(void);
-void reflect_undo_ok_in_menu(void);
-void reflect_undo_or_redo_in_menu(chan_info *cp);
-void reflect_regions_in_menu(void);
-void reflect_no_regions_in_menu(void);
+
+void edit_menu_update(void);
+void view_menu_update(void);
+void options_menu_update(void);
+void file_menu_update(void);
+void popup_menu_update(void);
 
 void close_file_from_menu(void);
 void save_file_from_menu(void);
@@ -605,16 +598,7 @@ void exit_from_menu(void);
 void save_options_from_menu(void);
 void save_state_from_menu(void);
 void unprotect_callback(int slot);
-void set_graph_style(graph_style_t val);
-void set_show_marks(bool val);
-void set_show_y_zero(bool val);
-void set_verbose_cursor(bool val);
-void set_view_ctrls_label(const char *lab);
-void set_view_listener_label(const char *lab);
 void activate_focus_menu(zoom_focus_t new_focus);
-void set_x_axis_style(x_axis_style_t val);
-void set_channel_style(channel_style_t val);
-void chans_x_axis_style(chan_info *cp, void *ptr);
 void menu_set_show_axes(show_axes_t val);
 
 void g_init_menu(void);
@@ -1181,6 +1165,12 @@ axis_context *mark_context (chan_info *cp);
 axis_context *mix_waveform_context (chan_info *cp);
 void calculate_fft(chan_info *cp);
 void set_min_db(Float db);
+void set_x_axis_style(x_axis_style_t val);
+void set_verbose_cursor(bool val);
+void set_graph_style(graph_style_t val);
+void set_show_marks(bool val);
+void set_show_y_zero(bool val);
+
 
 
 /* -------- snd-axis.c -------- */
@@ -1261,6 +1251,7 @@ void restore_filter_string(snd_info *s, bool back);
 void clear_filter_strings(snd_info *sp);
 void remember_listener_string(char *str);
 void restore_listener_string(bool back);
+void set_channel_style(channel_style_t val);
 
 
 /* -------- snd-file -------- */

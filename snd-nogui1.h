@@ -140,6 +140,8 @@ int popup_undo_menu(void);
 int popup_redo_menu(void);
 int popup_save_menu(void);
 int popup_info_menu(void);
+int popup_apply_menu(void);
+int popup_reset_menu(void);
 bool popup_menu_exists(void);
 void set_menu_label(int w, const char *label);
 void check_menu_labels(int key, int state, bool extended);
@@ -149,6 +151,8 @@ int g_remove_from_menu(int which_menu, char *label);
 void reflect_play_stop_in_popup_menu(void);
 void reflect_play_selection_stop(void);
 int menu_widget(int which_menu);
+void set_button_label(int label, const char *str);
+
 
 
 /* -------- snd-xmain.c -------- */
@@ -317,6 +321,7 @@ int start_file_dialog(bool managed);
 bool view_files_dialog_is_active(void);
 int edit_header(snd_info *sp);
 void save_edit_header_dialog_state(FILE *fd);
+void cleanup_edit_header_watcher(void);
 widget_t make_open_file_dialog(bool read_only, bool managed);
 void set_open_file_play_button(bool val);
 widget_t make_edit_save_as_dialog(bool managed);

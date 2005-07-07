@@ -351,7 +351,7 @@
 			(exact->inexact (/ (frames snd graph-popup-chn) (srate snd)))
 			(maxamp snd #t)
 			(if (comment snd)
-			    (format #f "  comment: ~A~%" (comment snd))
+			    (format #f "  comment: \"~A\"~%" (comment snd))
 			    "")
 			(let ((loops (mus-sound-loop-info (file-name snd))))
 			  (if (not (null? loops))

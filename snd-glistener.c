@@ -876,11 +876,9 @@ void handle_listener(bool open)
       if (!listener_text)
 	make_command_widget(100);
       else gtk_widget_show(listener_text);
-      set_view_listener_label(_("Hide listener"));
     }
   else
     {
-      set_view_listener_label(_("Show listener"));
       gtk_widget_hide(listener_text);
     }
 }

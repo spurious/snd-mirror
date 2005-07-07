@@ -343,14 +343,13 @@ static int first_region_active(void)
       return(i);
   return(NO_REGIONS);
 }
-  
+
 static int check_regions(void)
 {
   int act;
   act = first_region_active();
   if (act == NO_REGIONS) 
     {
-      reflect_no_regions_in_menu();
       reflect_no_regions_in_region_browser();
     }
   return(act);
@@ -771,7 +770,6 @@ int define_region(sync_info *si, off_t *ends)
 	    }
 	}
     }
-  reflect_regions_in_menu();
   reflect_regions_in_region_browser();
   if (region_browser_is_active()) update_region_browser(true);
   return(r->id);
@@ -1194,7 +1192,6 @@ static XEN g_restore_region(XEN pos, XEN chans, XEN len, XEN srate, XEN maxamp, 
   r->end = copy_string(XEN_TO_C_STRING(end));
   r->use_temp_file = REGION_FILE;
   r->filename = copy_string(XEN_TO_C_STRING(filename));
-  reflect_regions_in_menu();
   reflect_regions_in_region_browser();
   return(C_TO_XEN_INT(r->id));
 }

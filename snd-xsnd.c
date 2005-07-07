@@ -2854,7 +2854,6 @@ void show_controls(void)
 {
   int i;
   ctrls_height = open_ctrls_height;
-  set_view_ctrls_label(_("Hide controls"));
   for (i = 0; i < ss->max_sounds; i++)
     {
       snd_info *sp;
@@ -2868,7 +2867,6 @@ void hide_controls(void)
 {
   int i;
   ctrls_height = CLOSED_CTRLS_HEIGHT;
-  set_view_ctrls_label(_("Show controls"));
   for (i = 0; i < ss->max_sounds; i++)
     {
       snd_info *sp;

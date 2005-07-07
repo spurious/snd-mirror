@@ -1732,7 +1732,6 @@ void show_controls(void)
 {
   int i;
   showing_controls = true;
-  set_view_ctrls_label(_("Hide controls"));
   for (i = 0; i < ss->max_sounds; i++)
     {
       snd_info *sp;
@@ -1746,7 +1745,6 @@ void hide_controls(void)
 {
   int i;
   showing_controls = false;
-  set_view_ctrls_label(_("Show controls"));
   for (i = 0; i < ss->max_sounds; i++)
     {
       snd_info *sp;

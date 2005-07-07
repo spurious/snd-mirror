@@ -4692,6 +4692,8 @@ static void reset_y_display(chan_info *cp, double sy, double zy)
   apply_y_axis_change(ap, cp);
 }
 
+static void chans_x_axis_style(chan_info *cp, void *ptr);
+
 static bool call_update_graph = true;
 #define MAX_SPECTRO_SCALE 1000.0
 #define MAX_SPECTRO_ANGLE 360.0
@@ -5494,6 +5496,18 @@ static XEN g_show_y_zero(XEN snd, XEN chn)
   return(C_TO_XEN_BOOLEAN(show_y_zero(ss)));
 }
 
+static void chans_zero(chan_info *cp, void *ptr)
+{
+  cp->show_y_zero = (*((bool *)ptr));
+  update_graph(cp);
+}
+
+void set_show_y_zero(bool val)
+{
+  in_set_show_y_zero(val);
+  for_each_chan_1(chans_zero, (void *)(&val));
+}
+
 static XEN g_set_show_y_zero(XEN on, XEN snd, XEN chn) 
 {
   XEN_ASSERT_TYPE(XEN_BOOLEAN_P(on), on, XEN_ARG_1, S_setB S_show_y_zero, "a boolean");
@@ -5829,6 +5843,18 @@ static XEN g_show_marks(XEN snd, XEN chn)
   return(C_TO_XEN_BOOLEAN(show_marks(ss)));
 }
 
+static void chans_marks(chan_info *cp, void *ptr)
+{
+  cp->show_marks = (*((bool *)ptr));
+  update_graph(cp);
+}
+
+void set_show_marks(bool val)
+{
+  in_set_show_marks(val);
+  for_each_chan_1(chans_marks, (void *)(&val));
+}
+
 static XEN g_set_show_marks(XEN on, XEN snd, XEN chn)
 {
   XEN_ASSERT_TYPE(XEN_BOOLEAN_P(on), on, XEN_ARG_1, S_setB S_show_marks, "a boolean");
@@ -5964,6 +5990,20 @@ static XEN g_verbose_cursor(XEN snd, XEN chn)
   if (XEN_BOUND_P(snd))
     return(channel_get(snd, chn, CP_VERBOSE_CURSOR, S_verbose_cursor));
   return(C_TO_XEN_BOOLEAN(verbose_cursor(ss)));
+}
+
+static void clrmini(snd_info *sp, void *ignore) {clear_minibuffer(sp);}
+static void chans_verbose_cursor(chan_info *cp, void *ptr) 
+{
+  cp->verbose_cursor = (*((bool *)ptr));
+  update_graph(cp);
+}
+
+void set_verbose_cursor(bool val)
+{
+  in_set_verbose_cursor(val);
+  if (val == 0) for_each_sound(clrmini, NULL);
+  for_each_chan_1(chans_verbose_cursor, (void *)(&val));
 }
 
 static XEN g_set_verbose_cursor(XEN on, XEN snd, XEN chn)
@@ -6209,6 +6249,21 @@ of '(" S_graph_lines " " S_graph_dots " " S_graph_dots_and_lines " " S_graph_lol
   return(C_TO_XEN_INT(graph_style(ss)));
 }
 
+static void chans_graph_style(chan_info *cp, void *ptr) 
+{
+  graph_style_t style = (*((graph_style_t *)ptr)); 
+  cp->time_graph_style = style;
+  cp->lisp_graph_style = style;
+  cp->transform_graph_style = style;
+  update_graph(cp);
+}
+
+void set_graph_style(graph_style_t val)
+{
+  in_set_graph_style(val);
+  for_each_chan_1(chans_graph_style, (void *)(&val));
+}
+
 static XEN g_set_graph_style(XEN style, XEN snd, XEN chn)
 {
   graph_style_t val;
@@ -6324,6 +6379,38 @@ percentage of the overall duration (" S_x_axis_as_percentage "), as a beat numbe
   if (XEN_BOUND_P(snd))
     return(channel_get(snd, chn, CP_X_AXIS_STYLE, S_x_axis_style));
   return(C_TO_XEN_INT((int)x_axis_style(ss)));
+}
+
+static void chans_x_axis_style(chan_info *cp, void *ptr)
+{
+  axis_info *ap;
+  x_axis_style_t new_style = (*((x_axis_style_t *)ptr));
+  ap = cp->axis;
+  cp->x_axis_style = new_style;
+  if (ap)
+    {
+      if (ap->xlabel) FREE(ap->xlabel);
+      if (ap->default_xlabel)
+	ap->xlabel = copy_string(ap->default_xlabel);
+      else
+	{
+	  switch (new_style)
+	    {
+	    case X_AXIS_IN_BEATS:      ap->xlabel = copy_string(_("time (beats)"));    break;
+	    case X_AXIS_IN_MEASURES:   ap->xlabel = copy_string(_("time (measures)")); break;
+	    case X_AXIS_IN_SAMPLES:    ap->xlabel = copy_string(_("time (samples)"));  break;
+	    case X_AXIS_AS_PERCENTAGE: ap->xlabel = copy_string(_("time (percent)"));  break;
+	    default:                   ap->xlabel = copy_string(_("time"));            break;
+	    }
+	}
+      update_graph(cp);
+    }
+} 
+
+void set_x_axis_style(x_axis_style_t val)
+{
+  in_set_x_axis_style(val);
+  for_each_chan_1(chans_x_axis_style, (void *)(&val));
 }
 
 static XEN g_set_x_axis_style(XEN style, XEN snd, XEN chn)

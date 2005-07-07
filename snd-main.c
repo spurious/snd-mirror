@@ -24,6 +24,7 @@ int snd_exit_cleanly(bool force_exit)
 		      S_exit_hook);
   if ((XEN_TRUE_P(res)) && (!force_exit)) return(0);
 #if HAVE_FAM
+  cleanup_edit_header_watcher();
   if (ss->fam_connection)
     FAMClose(ss->fam_connection);
   ss->fam_connection = NULL;

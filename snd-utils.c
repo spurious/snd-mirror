@@ -479,7 +479,7 @@ static FAMRequest *fam_monitor(void)
 #endif
 	    }
 	}
-      return((FAMRequest *)calloc(1, sizeof(FAMRequest)));
+      return((FAMRequest *)calloc(1, sizeof(FAMRequest))); /* freed by fam */
     }
   return(NULL);
 }

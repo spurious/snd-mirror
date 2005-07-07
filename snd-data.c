@@ -762,7 +762,6 @@ static void select_sound(snd_info *sp)
       reflect_sound_selection(sp);
       ss->selected_sound = sp->index;
       highlight_selected_sound();
-      reflect_undo_or_redo_in_menu(any_selected_channel(sp));
       new_active_channel_alert();
     }
 }
@@ -799,7 +798,6 @@ void select_channel(snd_info *sp, int chan)
 			    C_TO_XEN_INT(chan)),
 		 S_select_channel_hook);
       ncp = color_selected_channel(sp);
-      reflect_undo_or_redo_in_menu(ncp);
       goto_graph(ncp);
     }
 }
@@ -933,7 +931,7 @@ void display_info(snd_info *sp)
       hdr = sp->hdr;
       if (hdr)
 	{
-	  char *comment = NULL, *ampstr = NULL;
+	  char *comment = NULL, *ampstr = NULL, *quoted_comment = NULL;
 	  char *buffer = NULL;
 	  comment = hdr->comment;
 	  while ((comment) && (*comment) && 
@@ -942,6 +940,8 @@ void display_info(snd_info *sp)
 		  ((*comment) == ' ') || 
 		  ((*comment) == '\xd')))
 	    comment++;
+	  if ((comment) && (*comment))
+	    quoted_comment = mus_format("\"%s\"", comment);
 	  if (mus_sound_maxamp_exists(sp->filename))
 	    ampstr = display_maxamps(sp->filename, sp->nchans);
 	  buffer = (char *)CALLOC(INFO_BUFFER_SIZE, sizeof(char));
@@ -959,10 +959,11 @@ void display_info(snd_info *sp)
 		       mus_data_format_name(hdr->format),
 		       timestr,
 		       (ampstr) ? ampstr : "",
-		       (comment) ? _("\ncomment: ") : "",
-		       (comment) ? comment : "");
+		       (quoted_comment) ? _("\ncomment: ") : "",
+		       (quoted_comment) ? quoted_comment : "");
 	  post_it(sp->short_filename, buffer);
 	  if (ampstr) FREE(ampstr);
+	  if (quoted_comment) FREE(quoted_comment);
 	  FREE(buffer);
 	}
     }

@@ -1,6 +1,9 @@
 #include "snd.h"
 #include <X11/cursorfont.h>
 
+/* PERHAPS: replace all menu reflection funcs with cascading callbacks (is this ok for gtk?) */
+/* PERHAPS: put mw in sgx, and collapse all refs to that */
+
 enum {menu_menu,
         file_menu, f_cascade_menu,
           f_open_menu, f_close_menu, f_save_menu, f_save_as_menu, f_revert_menu, f_exit_menu, f_new_menu,
@@ -100,6 +103,7 @@ void set_menu_label(Widget w, const char *label) {if (w) set_button_label(w, lab
 
 /* -------------------------------- FILE MENU -------------------------------- */
 
+static void file_menu_update_1(Widget w, XtPointer info, XtPointer context) {file_menu_update();}
 static void file_open_callback(Widget w, XtPointer info, XtPointer context) {make_open_file_dialog(false, true);}
 static void file_view_callback(Widget w, XtPointer info, XtPointer context) {make_open_file_dialog(true, true);}
 static void file_new_callback(Widget w, XtPointer info, XtPointer context) {make_new_file_dialog();}
@@ -125,6 +129,9 @@ static void edit_save_as_callback(Widget w, XtPointer info, XtPointer context) {
 static void edit_select_all_callback(Widget w, XtPointer info, XtPointer context) {select_all(current_channel());}
 static void edit_undo_callback(Widget w, XtPointer info, XtPointer context) {undo_edit_with_sync(current_channel(), 1);}
 static void edit_redo_callback(Widget w, XtPointer info, XtPointer context) {redo_edit_with_sync(current_channel(), 1);}
+
+static void edit_menu_update_1(Widget w, XtPointer info, XtPointer context) {edit_menu_update();}
+
 static bool selection_play_stop = false;
 
 static void edit_play_callback(Widget w, XtPointer info, XtPointer context) 
@@ -164,6 +171,7 @@ static void edit_find_callback_1(Widget w, XtPointer info, XtPointer context)
 
 /* -------------------------------- VIEW MENU -------------------------------- */
 
+static void view_menu_update_1(Widget w, XtPointer info, XtPointer context) {view_menu_update();}
 static void view_separate_callback(Widget w, XtPointer info, XtPointer context) {set_channel_style(CHANNELS_SEPARATE);}
 static void view_combined_callback(Widget w, XtPointer info, XtPointer context) {set_channel_style(CHANNELS_COMBINED);}
 static void view_superimposed_callback(Widget w, XtPointer info, XtPointer context) {set_channel_style(CHANNELS_SUPERIMPOSED);}
@@ -181,29 +189,18 @@ static void view_track_dialog_callback(Widget w, XtPointer info, XtPointer conte
 static void view_error_history_callback(Widget w, XtPointer info, XtPointer context) {show_snd_errors();}
 static void view_zero_callback(Widget w, XtPointer info, XtPointer context){set_show_y_zero((!(show_y_zero(ss))));}
 static void view_cursor_callback(Widget w, XtPointer info, XtPointer context){set_verbose_cursor((!(verbose_cursor(ss))));}
+
 static void view_ctrls_callback(Widget w, XtPointer info, XtPointer context)
 {
-  XmString s1;
-  char *label = NULL;
-  XtVaGetValues(w, XmNlabelString, &s1, NULL);
-  if (XmStringEmpty(s1)) return;
-  label = (char *)XmStringUnparse(s1, NULL, XmCHARSET_TEXT, XmCHARSET_TEXT, NULL, 0, XmOUTPUT_ALL);
-  XmStringFree(s1);
-  if ((label) && (strcmp(label, _("Show controls")) == 0))
-    show_controls(); 
-  else hide_controls();
-  if (label) XtFree(label);
-
+  in_set_show_controls(ss, !in_show_controls(ss));
+  if (in_show_controls(ss))
+    show_controls();
+  else hide_controls(); 
 }
 static void view_region_callback_1(Widget w, XtPointer info, XtPointer context) {view_region_callback(w, info, context);}
 static void view_orientation_callback_1(Widget w, XtPointer info, XtPointer context) {view_orientation_callback(w, info, context);}
 static void view_color_callback_1(Widget w, XtPointer info, XtPointer context) {view_color_callback(w, info, context);}
 static void view_files_callback_1(Widget w, XtPointer info, XtPointer context) {view_files_callback(w, info, context);}
-static void view_menu_update(Widget w, XtPointer info, XtPointer context) 
-{
-  /* make sure listener menu option label correctly reflects current listener state */
-  set_view_listener_label((listener_height() > 10) ? _("Hide listener") : _("Show listener"));
-}
 
 static void view_x_axis_seconds_callback(Widget w, XtPointer info, XtPointer context) {set_x_axis_style(X_AXIS_IN_SECONDS);}
 static void view_x_axis_beats_callback(Widget w, XtPointer info, XtPointer context) {set_x_axis_style(X_AXIS_IN_BEATS);}
@@ -221,6 +218,7 @@ static void view_just_x_axis_unlabelled_callback(Widget w, XtPointer info, XtPoi
 
 /* -------------------------------- OPTIONS MENU -------------------------------- */
 
+static void options_menu_update_1(Widget w, XtPointer info, XtPointer context) {options_menu_update();}
 static void options_transform_callback(Widget w, XtPointer info, XtPointer context) {fire_up_transform_dialog(true);}
 #if HAVE_EXTENSION_LANGUAGE
 static void options_save_callback(Widget w, XtPointer info, XtPointer context) {save_options_from_menu();}
@@ -456,7 +454,6 @@ Widget add_menu(void)
   XtSetArg(high_args[high_n], XmNmnemonic, 'V'); high_n++;
   XtSetArg(high_args[high_n], XmNuserData, 2); high_n++;
   mw[v_cascade_menu] = XtCreateManagedWidget(_("View"), xmCascadeButtonWidgetClass, mw[menu_menu], high_args, high_n);
-  XtAddCallback(mw[v_cascade_menu], XmNcascadingCallback, view_menu_update, NULL);
 
   mw[v_ctrls_menu] = XtCreateManagedWidget(_("Show controls"), xmPushButtonWidgetClass, mw[view_menu], main_args, main_n);
   XtAddCallback(mw[v_ctrls_menu], XmNactivateCallback, view_ctrls_callback, NULL);
@@ -723,11 +720,147 @@ Widget add_menu(void)
   XtAddCallback(mw[h_debug_menu], XmNactivateCallback, help_debug_callback, NULL);
 
   XtVaSetValues(mw[menu_menu], XmNmenuHelpWidget, mw[h_cascade_menu], NULL);
+
+  XtAddCallback(mw[f_cascade_menu], XmNcascadingCallback, file_menu_update_1, NULL);
+  XtAddCallback(mw[e_cascade_menu], XmNcascadingCallback, edit_menu_update_1, NULL);
+  XtAddCallback(mw[v_cascade_menu], XmNcascadingCallback, view_menu_update_1, NULL);
+  XtAddCallback(mw[o_cascade_menu], XmNcascadingCallback, options_menu_update_1, NULL);
+
 #ifndef SND_AS_WIDGET
   XtManageChild(mw[menu_menu]);
 #endif
   return(mw[menu_menu]);
 }
+
+/* -------------------------------- POPUP MENU -------------------------------- */
+
+enum {W_pop_menu, W_pop_sep, W_pop_play, W_pop_undo, W_pop_redo, W_pop_save, W_pop_equalize_panes, W_pop_info, W_pop_apply, W_pop_reset};
+#define NUM_POPUP_CHILDREN 10
+static Widget popup_children[NUM_POPUP_CHILDREN];
+
+static void popup_menu_update_1(Widget w, XtPointer info, XtPointer context) {popup_menu_update();}
+
+bool popup_menu_exists(void) {return(popup_menu != NULL);}
+
+Widget popup_play_menu(void) {return(popup_children[W_pop_play]);}
+Widget popup_undo_menu(void) {return(popup_children[W_pop_undo]);}
+Widget popup_redo_menu(void) {return(popup_children[W_pop_redo]);}
+Widget popup_save_menu(void) {return(popup_children[W_pop_save]);}
+Widget popup_equalize_panes_menu(void) {return(popup_children[W_pop_equalize_panes]);}
+Widget popup_info_menu(void) {return(popup_children[W_pop_info]);}
+Widget popup_apply_menu(void) {return(popup_children[W_pop_apply]);}
+Widget popup_reset_menu(void) {return(popup_children[W_pop_reset]);}
+
+static bool stopping = false;
+
+static void popup_play_callback(Widget w, XtPointer info, XtPointer context) 
+{
+  snd_info *sp;
+  sp = any_selected_sound();
+  if (stopping)
+    {
+      stop_playing_all_sounds(PLAY_BUTTON_UNSET);
+      stopping = false;
+      set_button_label(w, _("Play"));
+      if (sp) set_play_button(sp, false);
+    }
+  else
+    {
+      if (sp)
+	{
+	  play_sound(sp, 0, NO_END_SPECIFIED, IN_BACKGROUND, AT_CURRENT_EDIT_POSITION);
+	  stopping = true;
+	  set_button_label(w, _("Stop playing"));
+	}
+    }
+}
+
+void reflect_play_stop_in_popup_menu(void)
+{
+  stopping = false;
+  if (popup_menu)
+    set_button_label(popup_children[W_pop_play], _("Play"));
+}
+
+static void popup_save_callback(Widget w, XtPointer info, XtPointer context) {save_edits(any_selected_sound(), NULL);}
+static void popup_undo_callback(Widget w, XtPointer info, XtPointer context) {undo_edit_with_sync(current_channel(), 1);}
+static void popup_redo_callback(Widget w, XtPointer info, XtPointer context) {redo_edit_with_sync(current_channel(), 1);}
+static void popup_equalize_panes_callback(Widget w, XtPointer info, XtPointer context) {equalize_all_panes();}
+static void popup_info_callback(Widget w, XtPointer info, XtPointer context) 
+{
+  snd_info *sp;
+  sp = any_selected_sound();
+  if (sp) display_info(sp);
+}
+
+static void popup_apply_callback(Widget w, XtPointer info, XtPointer context) {menu_apply_controls(any_selected_sound());}
+static void popup_reset_callback(Widget w, XtPointer info, XtPointer context) {menu_reset_controls(any_selected_sound());}
+
+void post_popup(XButtonPressedEvent *event)
+{
+  XmMenuPosition(popup_menu, event);
+  XtManageChild(popup_menu);
+}
+
+void create_popup_menu(void)
+{
+  /* make it a child of the main window */
+  if (!popup_menu)
+    {
+      Widget mainp;
+      Arg args[20];
+      int n;
+
+      n = 0;
+      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;}
+      mainp = MAIN_PANE(ss);
+      XtSetArg(args[n], XmNpopupEnabled, XmPOPUP_AUTOMATIC_RECURSIVE); n++;
+      XtSetArg(args[n], XmNuserData, 5);
+      popup_menu = XmCreatePopupMenu(mainp, "popup-menu", args, n + 1);
+
+      n = 0;
+      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;}
+
+      popup_children[W_pop_menu] = XtCreateManagedWidget("Snd", xmLabelWidgetClass, popup_menu, args, n);
+
+      popup_children[W_pop_sep] = XtCreateManagedWidget("sep", xmSeparatorWidgetClass, popup_menu, args, n);
+
+      popup_children[W_pop_play] = XtCreateManagedWidget(_("Play"), xmPushButtonWidgetClass, popup_menu, args, n);
+      XtAddCallback(popup_children[W_pop_play], XmNactivateCallback, popup_play_callback, NULL);
+      XtVaSetValues(popup_children[W_pop_play], XmNsensitive, false, NULL);
+
+      popup_children[W_pop_undo] = XtCreateManagedWidget(_("Undo"), xmPushButtonWidgetClass, popup_menu, args, n);
+      XtVaSetValues(popup_children[W_pop_undo], XmNsensitive, false, NULL);
+      XtAddCallback(popup_children[W_pop_undo], XmNactivateCallback, popup_undo_callback, NULL);
+
+      popup_children[W_pop_redo] = XtCreateManagedWidget(_("Redo"), xmPushButtonWidgetClass, popup_menu, args, n);
+      XtVaSetValues(popup_children[W_pop_redo], XmNsensitive, false, NULL);
+      XtAddCallback(popup_children[W_pop_redo], XmNactivateCallback, popup_redo_callback, NULL);
+
+      popup_children[W_pop_save] = XtCreateManagedWidget(_("Save"), xmPushButtonWidgetClass, popup_menu, args, n);
+      XtAddCallback(popup_children[W_pop_save], XmNactivateCallback, popup_save_callback, NULL);
+      XtVaSetValues(popup_children[W_pop_save], XmNsensitive, false, NULL);
+
+      popup_children[W_pop_equalize_panes] = XtCreateManagedWidget(_("Equalize Panes"), xmPushButtonWidgetClass, popup_menu, args, n);
+      XtVaSetValues(popup_children[W_pop_equalize_panes], XmNsensitive, false, NULL);
+      XtAddCallback(popup_children[W_pop_equalize_panes], XmNactivateCallback, popup_equalize_panes_callback, NULL);
+
+      popup_children[W_pop_info] = XtCreateManagedWidget(_("Info"), xmPushButtonWidgetClass, popup_menu, args, n);
+      XtVaSetValues(popup_children[W_pop_info], XmNsensitive, false, NULL);
+      XtAddCallback(popup_children[W_pop_info], XmNactivateCallback, popup_info_callback, NULL);
+
+      popup_children[W_pop_apply] = XtCreateManagedWidget(_("Apply controls"), xmPushButtonWidgetClass, popup_menu, args, n);
+      XtVaSetValues(popup_children[W_pop_apply], XmNsensitive, true, NULL);
+      XtAddCallback(popup_children[W_pop_apply], XmNactivateCallback, popup_apply_callback, NULL);
+
+      popup_children[W_pop_reset] = XtCreateManagedWidget(_("Reset controls"), xmPushButtonWidgetClass, popup_menu, args, n);
+      XtVaSetValues(popup_children[W_pop_reset], XmNsensitive, true, NULL);
+      XtAddCallback(popup_children[W_pop_reset], XmNactivateCallback, popup_reset_callback, NULL);
+
+      XtAddCallback(popup_menu, XmNmapCallback, popup_menu_update_1, NULL);
+    }
+}
+
 
 #define INVALID_MENU -1
 #define CALL_INDEX(Data) (Data >> 16)
@@ -896,117 +1029,6 @@ Widget g_add_to_menu(int which_menu, char *label, int callb, int position)
   return(m);
 }
 
-
-/* -------------------------------- POPUP MENU -------------------------------- */
-
-enum {W_pop_menu, W_pop_sep, W_pop_play, W_pop_undo, W_pop_redo, W_pop_save, W_pop_equalize_panes, W_pop_info, W_pop_apply, W_pop_reset};
-#define NUM_POPUP_CHILDREN 10
-static Widget popup_children[NUM_POPUP_CHILDREN];
-
-bool popup_menu_exists(void) {return(popup_menu != NULL);}
-
-Widget popup_play_menu(void) {return(popup_children[W_pop_play]);}
-Widget popup_undo_menu(void) {return(popup_children[W_pop_undo]);}
-Widget popup_redo_menu(void) {return(popup_children[W_pop_redo]);}
-Widget popup_save_menu(void) {return(popup_children[W_pop_save]);}
-Widget popup_equalize_panes_menu(void) {return(popup_children[W_pop_equalize_panes]);}
-Widget popup_info_menu(void) {return(popup_children[W_pop_info]);}
-
-static bool stopping = false;
-
-static void popup_play_callback(Widget w, XtPointer info, XtPointer context) 
-{
-  snd_info *sp;
-  sp = any_selected_sound();
-  if (stopping)
-    {
-      stop_playing_all_sounds(PLAY_BUTTON_UNSET);
-      stopping = false;
-      set_button_label(w, _("Play"));
-      if (sp) set_play_button(sp, false);
-    }
-  else
-    {
-      if (sp)
-	{
-	  play_sound(sp, 0, NO_END_SPECIFIED, IN_BACKGROUND, AT_CURRENT_EDIT_POSITION);
-	  stopping = true;
-	  set_button_label(w, _("Stop playing"));
-	}
-    }
-}
-
-void reflect_play_stop_in_popup_menu(void)
-{
-  stopping = false;
-  if (popup_menu)
-    set_button_label(popup_children[W_pop_play], _("Play"));
-}
-
-static void popup_save_callback(Widget w, XtPointer info, XtPointer context) {save_edits(any_selected_sound(), NULL);}
-static void popup_undo_callback(Widget w, XtPointer info, XtPointer context) {undo_edit_with_sync(current_channel(), 1);}
-static void popup_redo_callback(Widget w, XtPointer info, XtPointer context) {redo_edit_with_sync(current_channel(), 1);}
-static void popup_equalize_panes_callback(Widget w, XtPointer info, XtPointer context) {equalize_all_panes();}
-static void popup_info_callback(Widget w, XtPointer info, XtPointer context) 
-{
-  snd_info *sp;
-  sp = any_selected_sound();
-  if (sp) display_info(sp);
-}
-
-static void popup_apply_callback(Widget w, XtPointer info, XtPointer context) {menu_apply_controls(any_selected_sound());}
-static void popup_reset_callback(Widget w, XtPointer info, XtPointer context) {menu_reset_controls(any_selected_sound());}
-
-void post_popup(XButtonPressedEvent *event)
-{
-  XmMenuPosition(popup_menu, event);
-  XtManageChild(popup_menu);
-}
-
-void create_popup_menu(void)
-{
-  /* make it a child of the main window */
-  if (!popup_menu)
-    {
-      Widget mainp;
-      Arg args[20];
-      int n;
-
-      n = 0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;}
-      mainp = MAIN_PANE(ss);
-      XtSetArg(args[n], XmNpopupEnabled, XmPOPUP_AUTOMATIC_RECURSIVE); n++;
-      XtSetArg(args[n], XmNuserData, 5);
-      popup_menu = XmCreatePopupMenu(mainp, "popup-menu", args, n + 1);
-
-      popup_children[W_pop_menu] = XtCreateManagedWidget("snd", xmLabelWidgetClass, popup_menu, args, n);
-      popup_children[W_pop_sep] = XtCreateManagedWidget("sep", xmSeparatorWidgetClass, popup_menu, args, n);
-      popup_children[W_pop_play] = XtCreateManagedWidget(_("Play"), xmPushButtonWidgetClass, popup_menu, args, n);
-      XtAddCallback(popup_children[W_pop_play], XmNactivateCallback, popup_play_callback, NULL);
-      XtVaSetValues(popup_children[W_pop_play], XmNsensitive, false, NULL);
-      popup_children[W_pop_undo] = XtCreateManagedWidget(_("Undo"), xmPushButtonWidgetClass, popup_menu, args, n);
-      XtVaSetValues(popup_children[W_pop_undo], XmNsensitive, false, NULL);
-      XtAddCallback(popup_children[W_pop_undo], XmNactivateCallback, popup_undo_callback, NULL);
-      popup_children[W_pop_redo] = XtCreateManagedWidget(_("Redo"), xmPushButtonWidgetClass, popup_menu, args, n);
-      XtVaSetValues(popup_children[W_pop_redo], XmNsensitive, false, NULL);
-      XtAddCallback(popup_children[W_pop_redo], XmNactivateCallback, popup_redo_callback, NULL);
-      popup_children[W_pop_save] = XtCreateManagedWidget(_("Save"), xmPushButtonWidgetClass, popup_menu, args, n);
-      XtAddCallback(popup_children[W_pop_save], XmNactivateCallback, popup_save_callback, NULL);
-      XtVaSetValues(popup_children[W_pop_save], XmNsensitive, false, NULL);
-      popup_children[W_pop_equalize_panes] = XtCreateManagedWidget(_("Equalize Panes"), xmPushButtonWidgetClass, popup_menu, args, n);
-      XtVaSetValues(popup_children[W_pop_equalize_panes], XmNsensitive, false, NULL);
-      XtAddCallback(popup_children[W_pop_equalize_panes], XmNactivateCallback, popup_equalize_panes_callback, NULL);
-      popup_children[W_pop_info] = XtCreateManagedWidget(_("Info"), xmPushButtonWidgetClass, popup_menu, args, n);
-      XtVaSetValues(popup_children[W_pop_info], XmNsensitive, false, NULL);
-      XtAddCallback(popup_children[W_pop_info], XmNactivateCallback, popup_info_callback, NULL);
-      popup_children[W_pop_apply] = XtCreateManagedWidget(_("Apply controls"), xmPushButtonWidgetClass, popup_menu, args, n);
-      XtVaSetValues(popup_children[W_pop_apply], XmNsensitive, true, NULL);
-      XtAddCallback(popup_children[W_pop_apply], XmNactivateCallback, popup_apply_callback, NULL);
-      popup_children[W_pop_reset] = XtCreateManagedWidget(_("Reset controls"), xmPushButtonWidgetClass, popup_menu, args, n);
-      XtVaSetValues(popup_children[W_pop_reset], XmNsensitive, true, NULL);
-      XtAddCallback(popup_children[W_pop_reset], XmNactivateCallback, popup_reset_callback, NULL);
-    }
-}
 
 static XEN g_menu_widgets(void)
 {

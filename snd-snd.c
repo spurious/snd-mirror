@@ -2831,6 +2831,26 @@ static XEN g_channel_style(XEN snd)
   return(C_TO_XEN_INT((int)(sp->channel_style)));
 }
 
+static void update_sound(snd_info *sp, void *ptr)
+{
+  if (sp)
+    {
+      switch (channel_style(ss))
+	{
+	case CHANNELS_SEPARATE:     separate_sound(sp);    break;
+	case CHANNELS_COMBINED:     combine_sound(sp);     break;
+	case CHANNELS_SUPERIMPOSED: superimpose_sound(sp); break;
+	}
+    }
+}
+
+void set_channel_style(channel_style_t val)
+{
+  in_set_channel_style(val);
+  for_each_sound(update_sound, NULL);
+  for_each_chan(update_graph);
+}
+
 static XEN g_set_channel_style(XEN style, XEN snd) 
 {
   snd_info *sp;
@@ -3115,7 +3135,6 @@ static XEN g_revert_sound(XEN index)
       update_graph(sp->chans[i]);
     }
   reflect_file_revert_in_label(sp);
-  reflect_file_revert_in_menu();
   return(XEN_TRUE);
 }
 

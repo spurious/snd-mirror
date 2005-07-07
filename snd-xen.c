@@ -1445,6 +1445,18 @@ static XEN g_snd_tempnam(void)
   return(res);
 }
 
+static XEN g_save_state_file(void) {return(C_TO_XEN_STRING(save_state_file(ss)));}
+static XEN g_set_save_state_file(XEN val) 
+{
+  char *filename;
+  #define H_save_state_file "(" S_save_state_file "): the name of the saved state file (\"saved-snd." XEN_FILE_EXTENSION "\")"
+  XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, S_setB S_save_state_file, "a string"); 
+  filename = XEN_TO_C_STRING(val);
+  if (save_state_file(ss)) FREE(save_state_file(ss));
+  in_set_save_state_file(copy_string(filename));
+  return(C_TO_XEN_STRING(save_state_file(ss)));
+}
+
 static XEN g_save_dir(void) {return(C_TO_XEN_STRING(save_dir(ss)));}
 static XEN g_set_save_dir(XEN val) 
 {
@@ -2828,6 +2840,8 @@ XEN_NARGIFY_1(g_dlclose_w, g_dlclose)
 XEN_NARGIFY_0(g_dlerror_w, g_dlerror)
 XEN_NARGIFY_2(g_dlinit_w, g_dlinit)
 #endif
+XEN_NARGIFY_0(g_save_state_file_w, g_save_state_file)
+XEN_NARGIFY_1(g_set_save_state_file_w, g_set_save_state_file)
 XEN_NARGIFY_0(g_just_sounds_w, g_just_sounds)
 XEN_NARGIFY_1(g_set_just_sounds_w, g_set_just_sounds)
 XEN_NARGIFY_0(g_region_graph_style_w, g_region_graph_style)
@@ -3007,6 +3021,8 @@ XEN_NARGIFY_1(g_i0_w, g_i0)
 #define g_dlerror_w g_dlerror
 #define g_dlinit_w g_dlinit
 #endif
+#define g_save_state_file_w g_save_state_file
+#define g_set_save_state_file_w g_set_save_state_file
 #define g_just_sounds_w g_just_sounds
 #define g_set_just_sounds_w g_set_just_sounds
 #define g_region_graph_style_w g_region_graph_style
@@ -3237,6 +3253,9 @@ void g_initialize_gh(void)
   XEN_DEFINE_CONSTANT(S_zoom_focus_active,     ZOOM_FOCUS_ACTIVE, H_zoom_focus_active);
   XEN_DEFINE_CONSTANT(S_zoom_focus_middle,     ZOOM_FOCUS_MIDDLE, H_zoom_focus_middle);
 
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_save_state_file, g_save_state_file_w, H_save_state_file,
+				   S_setB S_save_state_file, g_set_save_state_file_w, 0, 0, 1, 0);
+  
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_region_graph_style, g_region_graph_style_w, H_region_graph_style,
 				   S_setB S_region_graph_style, g_set_region_graph_style_w,  0, 0, 1, 0);
 

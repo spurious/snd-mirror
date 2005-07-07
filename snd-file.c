@@ -861,8 +861,6 @@ snd_info *finish_opening_sound(snd_info *sp, bool selected)
       sp->need_update = false;
       ss->active_sounds++;
       files = ss->active_sounds;
-      if (files == 1) reflect_file_open_in_menu();
-      reflect_equalize_panes_in_menu(active_channels(WITHOUT_VIRTUAL_CHANNELS) > 1);
       reflect_file_change_in_title();
 #if HAVE_FAM
       sp->file_watcher = fam_monitor_file(sp->filename, (void *)sp, fam_sp_action);
@@ -1001,11 +999,9 @@ void snd_close_file(snd_info *sp)
   files = ss->active_sounds;
   if (files == 0) 
     {
-      reflect_file_lack_in_menu();
       release_pending_track_states();
     }
   reflect_file_change_in_title();
-  reflect_equalize_panes_in_menu(active_channels(WITHOUT_VIRTUAL_CHANNELS) > 1);
   if (!(selection_is_active())) 
     reflect_edit_without_selection_in_menu();
 }

@@ -1493,7 +1493,8 @@ if test "$PATH_FLAC" != "no" ; then
 fi
 
 
-# TODO: is sdif writer named tosdif?
+# TODO: is sdif writer named tosdif?  mpg321 before mpg123?
+# TODO: timidity? id3? ace? etc...
 
 
 #--------------------------------------------------------------------------------
