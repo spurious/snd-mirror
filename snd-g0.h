@@ -120,6 +120,7 @@ typedef struct {
 #if HAVE_FAM
   gint fam_port;
 #endif
+  GtkWidget **mw, **pw;
 } state_context;
 
 #define DEFAULT_TINY_FONT "Monospace 8"
