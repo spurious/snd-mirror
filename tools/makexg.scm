@@ -169,7 +169,8 @@
 	"GtkTextSearchFlags" "GtkTreeIterCompareFunc" "GtkTreeSelectionFunc" "GtkUIManagerItemType" "GtkWindowPosition"
 	"GtkWindowType" "PangoGlyph" "PangoUnderline" "double" "gsize" "gssize" 
 
-	"GtkMenuBar*" "GtkTranslateFunc"
+	"GtkMenuBar*" "GtkTranslateFunc" "GtkMenuPositionFunc" "GtkTreeIterCompareFunc" "GtkTreeSelectionFunc"
+	"GtkDestroyNotify"
 	))
 
 (define no-xen-p 

@@ -1,103 +1,6 @@
 #include "snd.h"
+#include "snd-menu.h"
 #include <X11/cursorfont.h>
-
-/* PERHAPS: replace all menu reflection funcs with cascading callbacks (is this ok for gtk?) */
-/* PERHAPS: put mw in sgx, and collapse all refs to that */
-
-enum {menu_menu,
-        file_menu, f_cascade_menu,
-          f_open_menu, f_close_menu, f_save_menu, f_save_as_menu, f_revert_menu, f_exit_menu, f_new_menu,
-          f_view_menu, f_print_menu, f_mix_menu, f_update_menu, f_record_menu, f_sep_menu,
-        edit_menu, e_cascade_menu,
-          e_cut_menu, e_paste_menu, e_mix_menu, e_play_menu, e_save_as_menu, e_undo_menu,
-          e_redo_menu, e_find_menu, e_edenv_menu, e_header_menu, e_select_all_menu,
-          e_select_sep_menu, e_edit_sep_menu,
-        help_menu, h_cascade_menu,
-          h_about_snd_menu, h_fft_menu, h_find_menu, h_undo_menu, h_sync_menu, h_controls_menu,
-          h_env_menu, h_marks_menu, h_sound_files_menu, h_init_file_menu,
-          h_mix_menu, h_track_menu, h_recording_menu, h_keys_menu, 
-          h_play_menu, h_save_menu, h_resample_menu, h_filter_menu, h_insert_menu, 
-          h_delete_menu, h_reverb_menu, h_debug_menu,
-        option_menu, o_cascade_menu,
-          o_transform_menu,
-          o_focus_style_menu, o_focus_cascade_menu,
-            o_focus_right_menu, o_focus_left_menu, o_focus_middle_menu, o_focus_active_menu,
-          o_save_menu, o_save_state_menu,
-        view_menu, v_cascade_menu,
-          v_equalize_panes_menu, 
-          v_graph_style_menu, v_graph_style_cascade_menu,
-            v_lines_menu, v_dots_menu, v_filled_menu, v_dots_and_lines_menu, v_lollipops_menu,
-          v_zero_menu, v_cursor_menu, v_ctrls_menu, v_listener_menu,
-          v_region_menu,
-          v_combine_menu, v_combine_cascade_menu,
-            v_combine_separate_menu, v_combine_combined_menu, v_combine_superimposed_menu,
-          v_color_menu, v_orientation_menu, 
-          v_files_menu, v_mix_dialog_menu, v_track_dialog_menu,
-          v_x_axis_menu, v_x_axis_cascade_menu,
-            v_x_axis_seconds_menu, v_x_axis_samples_menu, v_x_axis_percentage_menu, v_x_axis_beats_menu, v_x_axis_measures_menu,
-          v_axes_menu, v_axes_cascade_menu,
-            v_no_axes_menu, v_all_axes_menu, v_just_x_axis_menu, v_all_axes_unlabelled_menu, v_just_x_axis_unlabelled_menu,
-          v_error_history_menu,
-          v_sep2_menu
-};
-
-#define NUM_MENU_WIDGETS 106
-static Widget mw[NUM_MENU_WIDGETS];
-
-static Widget popup_menu = NULL;
-
-Widget file_open_menu(void) {return(mw[f_open_menu]);}
-Widget file_close_menu(void) {return(mw[f_close_menu]);}
-Widget file_save_menu(void) {return(mw[f_save_menu]);}
-Widget file_save_as_menu(void) {return(mw[f_save_as_menu]);}
-Widget file_print_menu(void) {return(mw[f_print_menu]);}
-Widget file_revert_menu(void) {return(mw[f_revert_menu]);}
-Widget file_update_menu(void) {return(mw[f_update_menu]);}
-Widget file_mix_menu(void) {return(mw[f_mix_menu]);}
-Widget file_view_menu(void) {return(mw[f_view_menu]);}
-Widget file_new_menu(void) {return(mw[f_new_menu]);}
-
-Widget edit_cut_menu(void) {return(mw[e_cut_menu]);}
-Widget edit_paste_menu(void) {return(mw[e_paste_menu]);}
-Widget edit_mix_menu(void) {return(mw[e_mix_menu]);}
-Widget edit_play_menu(void) {return(mw[e_play_menu]);}
-Widget edit_save_as_menu(void) {return(mw[e_save_as_menu]);}
-Widget edit_undo_menu(void) {return(mw[e_undo_menu]);}
-Widget edit_redo_menu(void) {return(mw[e_redo_menu]);}
-Widget edit_find_menu(void) {return(mw[e_find_menu]);}
-Widget edit_select_all_menu(void) {return(mw[e_select_all_menu]);}
-Widget edit_header_menu(void) {return(mw[e_header_menu]);}
-
-Widget view_equalize_panes_menu(void) {return(mw[v_equalize_panes_menu]);}
-Widget view_region_menu(void) {return(mw[v_region_menu]);}
-Widget view_combine_separate_menu(void) {return(mw[v_combine_separate_menu]);}
-Widget view_combine_combined_menu(void) {return(mw[v_combine_combined_menu]);}
-Widget view_combine_superimposed_menu(void) {return(mw[v_combine_superimposed_menu]);}
-Widget view_lines_menu(void) {return(mw[v_lines_menu]);}
-Widget view_dots_menu(void) {return(mw[v_dots_menu]);}
-Widget view_dots_and_lines_menu(void) {return(mw[v_dots_and_lines_menu]);}
-Widget view_filled_menu(void) {return(mw[v_filled_menu]);}
-Widget view_lollipops_menu(void) {return(mw[v_lollipops_menu]);}
-Widget view_zero_menu(void) {return(mw[v_zero_menu]);}
-Widget view_ctrls_menu(void) {return(mw[v_ctrls_menu]);}
-Widget view_listener_menu(void) {return(mw[v_listener_menu]);}
-Widget view_cursor_menu(void) {return(mw[v_cursor_menu]);}
-Widget view_x_axis_seconds_menu(void) {return(mw[v_x_axis_seconds_menu]);}
-Widget view_x_axis_beats_menu(void) {return(mw[v_x_axis_beats_menu]);}
-Widget view_x_axis_measures_menu(void) {return(mw[v_x_axis_measures_menu]);}
-Widget view_x_axis_samples_menu(void) {return(mw[v_x_axis_samples_menu]);}
-Widget view_x_axis_percentage_menu(void) {return(mw[v_x_axis_percentage_menu]);}
-Widget view_no_axes_menu(void) {return(mw[v_no_axes_menu]);}
-Widget view_all_axes_menu(void) {return(mw[v_all_axes_menu]);}
-Widget view_just_x_axis_menu(void) {return(mw[v_just_x_axis_menu]);}
-Widget view_all_axes_unlabelled_menu(void) {return(mw[v_all_axes_unlabelled_menu]);}
-Widget view_just_x_axis_unlabelled_menu(void) {return(mw[v_just_x_axis_unlabelled_menu]);}
-
-Widget options_save_state_menu(void) {return(mw[o_save_state_menu]);}
-Widget options_focus_left_menu(void) {return(mw[o_focus_left_menu]);}
-Widget options_focus_right_menu(void) {return(mw[o_focus_right_menu]);}
-Widget options_focus_middle_menu(void) {return(mw[o_focus_middle_menu]);}
-Widget options_focus_active_menu(void) {return(mw[o_focus_active_menu]);}
 
 void set_menu_label(Widget w, const char *label) {if (w) set_button_label(w, label);}
 
@@ -108,12 +11,12 @@ static void file_open_callback(Widget w, XtPointer info, XtPointer context) {mak
 static void file_view_callback(Widget w, XtPointer info, XtPointer context) {make_open_file_dialog(true, true);}
 static void file_new_callback(Widget w, XtPointer info, XtPointer context) {make_new_file_dialog();}
 static void file_record_callback(Widget w, XtPointer info, XtPointer context) {snd_record_file();}
-static void file_close_callback(Widget w, XtPointer info, XtPointer context) {close_file_from_menu();}
-static void file_save_callback(Widget w, XtPointer info, XtPointer context) {save_file_from_menu();}
+static void file_close_callback(Widget w, XtPointer info, XtPointer context) {if (any_selected_sound()) snd_close_file(any_selected_sound());}
+static void file_save_callback(Widget w, XtPointer info, XtPointer context) {if (any_selected_sound()) save_edits(any_selected_sound(), NULL);}
 static void file_update_callback(Widget w, XtPointer info, XtPointer context) {update_file_from_menu();}
 static void file_save_as_callback(Widget w, XtPointer info, XtPointer context) {make_file_save_as_dialog(true);}
 static void file_revert_callback(Widget w, XtPointer info, XtPointer context) {revert_file_from_menu();}
-static void file_exit_callback(Widget w, XtPointer info, XtPointer context) {exit_from_menu();}
+static void file_exit_callback(Widget w, XtPointer info, XtPointer context) {if (snd_exit_cleanly(false)) snd_exit(1);}
 static void file_mix_callback_1(Widget w, XtPointer info, XtPointer context) {make_mix_file_dialog(true);}
 static void file_print_callback_1(Widget w, XtPointer info, XtPointer context) {file_print_callback(w, info, context);}
 
@@ -142,7 +45,7 @@ static void edit_play_callback(Widget w, XtPointer info, XtPointer context)
     }
   else
     {
-      set_menu_label(edit_play_menu(), _("Stop"));
+      set_menu_label(edit_play_menu, _("Stop"));
       selection_play_stop = true;
       play_selection(IN_BACKGROUND, AT_CURRENT_EDIT_POSITION);
     }
@@ -150,7 +53,7 @@ static void edit_play_callback(Widget w, XtPointer info, XtPointer context)
 
 void reflect_play_selection_stop(void)
 {
-  set_menu_label(edit_play_menu(), _("Play Selection"));
+  set_menu_label(edit_play_menu, _("Play Selection"));
   selection_play_stop = false;
 }
 
@@ -208,11 +111,11 @@ static void view_x_axis_measures_callback(Widget w, XtPointer info, XtPointer co
 static void view_x_axis_samples_callback(Widget w, XtPointer info, XtPointer context) {set_x_axis_style(X_AXIS_IN_SAMPLES);}
 static void view_x_axis_percentage_callback(Widget w, XtPointer info, XtPointer context) {set_x_axis_style(X_AXIS_AS_PERCENTAGE);}
 
-static void view_no_axes_callback(Widget w, XtPointer info, XtPointer context) {menu_set_show_axes(SHOW_NO_AXES);}
-static void view_all_axes_callback(Widget w, XtPointer info, XtPointer context) {menu_set_show_axes(SHOW_ALL_AXES);}
-static void view_just_x_axis_callback(Widget w, XtPointer info, XtPointer context) {menu_set_show_axes(SHOW_X_AXIS);}
-static void view_all_axes_unlabelled_callback(Widget w, XtPointer info, XtPointer context) {menu_set_show_axes(SHOW_ALL_AXES_UNLABELLED);}
-static void view_just_x_axis_unlabelled_callback(Widget w, XtPointer info, XtPointer context) {menu_set_show_axes(SHOW_X_AXIS_UNLABELLED);}
+static void view_no_axes_callback(Widget w, XtPointer info, XtPointer context) {set_show_axes(SHOW_NO_AXES);}
+static void view_all_axes_callback(Widget w, XtPointer info, XtPointer context) {set_show_axes(SHOW_ALL_AXES);}
+static void view_just_x_axis_callback(Widget w, XtPointer info, XtPointer context) {set_show_axes(SHOW_X_AXIS);}
+static void view_all_axes_unlabelled_callback(Widget w, XtPointer info, XtPointer context) {set_show_axes(SHOW_ALL_AXES_UNLABELLED);}
+static void view_just_x_axis_unlabelled_callback(Widget w, XtPointer info, XtPointer context) {set_show_axes(SHOW_X_AXIS_UNLABELLED);}
 
 
 
@@ -223,10 +126,10 @@ static void options_transform_callback(Widget w, XtPointer info, XtPointer conte
 #if HAVE_EXTENSION_LANGUAGE
 static void options_save_callback(Widget w, XtPointer info, XtPointer context) {save_options_from_menu();}
 #endif
-static void options_focus_right_callback(Widget w, XtPointer info, XtPointer Data) {activate_focus_menu(ZOOM_FOCUS_RIGHT);}
-static void options_focus_left_callback(Widget w, XtPointer info, XtPointer Data) {activate_focus_menu(ZOOM_FOCUS_LEFT);}
-static void options_focus_middle_callback(Widget w, XtPointer info, XtPointer Data) {activate_focus_menu(ZOOM_FOCUS_MIDDLE);}
-static void options_focus_active_callback(Widget w, XtPointer info, XtPointer Data) {activate_focus_menu(ZOOM_FOCUS_ACTIVE);}
+static void options_focus_right_callback(Widget w, XtPointer info, XtPointer Data) {set_zoom_focus_style(ZOOM_FOCUS_RIGHT);}
+static void options_focus_left_callback(Widget w, XtPointer info, XtPointer Data) {set_zoom_focus_style(ZOOM_FOCUS_LEFT);}
+static void options_focus_middle_callback(Widget w, XtPointer info, XtPointer Data) {set_zoom_focus_style(ZOOM_FOCUS_MIDDLE);}
+static void options_focus_active_callback(Widget w, XtPointer info, XtPointer Data) {set_zoom_focus_style(ZOOM_FOCUS_ACTIVE);}
 #if HAVE_EXTENSION_LANGUAGE
 static void options_save_state_callback(Widget w, XtPointer info, XtPointer context) {save_state_from_menu();}
 #endif
@@ -264,25 +167,25 @@ void check_menu_labels(int key, int state, bool extended)
     {
       if (state == snd_ControlMask)
 	{
-	  if (key == snd_K_f) set_label(mw[f_open_menu], _("Open")); else
-	  if (key == snd_K_s) set_label(mw[f_save_menu], _("Save")); else
-	  if (key == snd_K_q) set_label(mw[f_mix_menu], _("Mix")); else
-	  if (key == snd_K_u) set_label(mw[e_undo_menu], _("Undo")); else
-	  if (key == snd_K_r) set_label(mw[e_redo_menu], _("Redo"));
+	  if (key == snd_K_f) set_label(file_open_menu, _("Open")); else
+	  if (key == snd_K_s) set_label(file_save_menu, _("Save")); else
+	  if (key == snd_K_q) set_label(file_mix_menu, _("Mix")); else
+	  if (key == snd_K_u) set_label(edit_undo_menu, _("Undo")); else
+	  if (key == snd_K_r) set_label(edit_redo_menu, _("Redo"));
 	}
       else
 	{
-	  if (key == snd_K_k) set_label(mw[f_close_menu], _("Close")); else
-	  if (key == snd_K_i) set_label(mw[e_paste_menu], _("Insert Selection")); else	  
-	  if (key == snd_K_q) set_label(mw[e_mix_menu], _("Mix Selection")); else	  
-	  if (key == snd_K_p) set_label(mw[e_play_menu], _("Play Selection")); else	  
-	  if (key == snd_K_w) set_label(mw[e_save_as_menu], _("Save Selection"));
+	  if (key == snd_K_k) set_label(file_close_menu, _("Close")); else
+	  if (key == snd_K_i) set_label(edit_paste_menu, _("Insert Selection")); else	  
+	  if (key == snd_K_q) set_label(edit_mix_menu, _("Mix Selection")); else	  
+	  if (key == snd_K_p) set_label(edit_play_menu, _("Play Selection")); else	  
+	  if (key == snd_K_w) set_label(edit_save_as_menu, _("Save Selection"));
 	}
     }
   else 
     {
       if ((key == snd_K_s) && (state == snd_ControlMask))
-	set_label(mw[e_find_menu], _("Find"));
+	set_label(edit_find_menu, _("Find"));
     }
 }
 
@@ -290,7 +193,7 @@ void check_menu_labels(int key, int state, bool extended)
 
 void add_menu_drop(void)
 {
-  add_drop(mw[menu_menu]);
+  add_drop(main_menu);
   /* can't figure out how to add the pulldown menus as well */
 }
 
@@ -301,6 +204,9 @@ Widget add_menu(void)
   static Arg high_args[12];
   Arg sep_args[12];
   int in_n = 0, n, high_n = 0, main_n = 0, start_high_n, k, j;
+
+  ss->sgx->mw = (Widget *)calloc(NUM_MENU_WIDGETS, sizeof(Widget));
+
   if (!(ss->using_schemes))
     {
       XtSetArg(main_args[main_n], XmNbackground, ss->sgx->basic_color); main_n++;
@@ -317,439 +223,426 @@ Widget add_menu(void)
   XtSetArg(high_args[n], XmNrightAttachment, XmATTACH_FORM); n++;
 
 #ifdef SND_AS_WIDGET
-  mw[menu_menu] = XtCreateWidget("mb", xmRowColumnWidgetClass, MAIN_PANE(ss), high_args, n);
+  main_menu = XtCreateWidget("mb", xmRowColumnWidgetClass, MAIN_PANE(ss), high_args, n);
 #else
-  mw[menu_menu] = XmCreateMenuBar(MAIN_PANE(ss), "menuBar", high_args, n);
+  main_menu = XmCreateMenuBar(MAIN_PANE(ss), "menuBar", high_args, n);
 #endif
 
   /* FILE MENU */
   XtSetArg(main_args[main_n], XmNuserData, 0);
-  mw[file_menu] = XmCreatePulldownMenu(mw[menu_menu], "File", main_args, main_n + 1);
+  file_menu = XmCreatePulldownMenu(main_menu, "File", main_args, main_n + 1);
   
   high_n = start_high_n;
-  XtSetArg(high_args[high_n], XmNsubMenuId, mw[file_menu]); high_n++;
+  XtSetArg(high_args[high_n], XmNsubMenuId, file_menu); high_n++;
   XtSetArg(high_args[high_n], XmNmnemonic, 'F'); high_n++;
   XtSetArg(high_args[high_n], XmNuserData, 0); high_n++;
-  mw[f_cascade_menu] = XtCreateManagedWidget(_("File"), xmCascadeButtonWidgetClass, mw[menu_menu], high_args, high_n);
+  file_cascade_menu = XtCreateManagedWidget(_("File"), xmCascadeButtonWidgetClass, main_menu, high_args, high_n);
 
-  mw[f_open_menu] = XtCreateManagedWidget(_("Open   C-x C-f"), xmPushButtonWidgetClass, mw[file_menu], main_args, main_n);
-  XtAddCallback(mw[f_open_menu], XmNactivateCallback, file_open_callback, NULL);
-  XtVaSetValues(mw[f_open_menu], XmNmnemonic, 'O', NULL);
+  file_open_menu = XtCreateManagedWidget(_("Open   C-x C-f"), xmPushButtonWidgetClass, file_menu, main_args, main_n);
+  XtAddCallback(file_open_menu, XmNactivateCallback, file_open_callback, NULL);
+  XtVaSetValues(file_open_menu, XmNmnemonic, 'O', NULL);
 
-  mw[f_close_menu] = XtCreateManagedWidget(_("Close  C-x k"), xmPushButtonWidgetClass, mw[file_menu], in_args, in_n);
-  XtAddCallback(mw[f_close_menu], XmNactivateCallback, file_close_callback, NULL);
-  XtVaSetValues(mw[f_close_menu], XmNmnemonic, 'C', NULL);
+  file_close_menu = XtCreateManagedWidget(_("Close  C-x k"), xmPushButtonWidgetClass, file_menu, in_args, in_n);
+  XtAddCallback(file_close_menu, XmNactivateCallback, file_close_callback, NULL);
+  XtVaSetValues(file_close_menu, XmNmnemonic, 'C', NULL);
   
-  mw[f_save_menu] = XtCreateManagedWidget(_("Save   C-x C-s"), xmPushButtonWidgetClass, mw[file_menu], in_args, in_n);
-  XtAddCallback(mw[f_save_menu], XmNactivateCallback, file_save_callback, NULL);
-  XtVaSetValues(mw[f_save_menu], XmNmnemonic, 'S', NULL);
+  file_save_menu = XtCreateManagedWidget(_("Save   C-x C-s"), xmPushButtonWidgetClass, file_menu, in_args, in_n);
+  XtAddCallback(file_save_menu, XmNactivateCallback, file_save_callback, NULL);
+  XtVaSetValues(file_save_menu, XmNmnemonic, 'S', NULL);
   
-  mw[f_save_as_menu] = XtCreateManagedWidget(_("Save as"), xmPushButtonWidgetClass, mw[file_menu], in_args, in_n);
-  XtAddCallback(mw[f_save_as_menu], XmNactivateCallback, file_save_as_callback, NULL);
-  XtVaSetValues(mw[f_save_as_menu], XmNmnemonic, 'a', NULL);
+  file_save_as_menu = XtCreateManagedWidget(_("Save as"), xmPushButtonWidgetClass, file_menu, in_args, in_n);
+  XtAddCallback(file_save_as_menu, XmNactivateCallback, file_save_as_callback, NULL);
+  XtVaSetValues(file_save_as_menu, XmNmnemonic, 'a', NULL);
   
-  mw[f_revert_menu] = XtCreateManagedWidget(_("Revert"), xmPushButtonWidgetClass, mw[file_menu], in_args, in_n);
-  XtAddCallback(mw[f_revert_menu], XmNactivateCallback, file_revert_callback, NULL);
-  XtVaSetValues(mw[f_revert_menu], XmNmnemonic, 'R', NULL);
+  file_revert_menu = XtCreateManagedWidget(_("Revert"), xmPushButtonWidgetClass, file_menu, in_args, in_n);
+  XtAddCallback(file_revert_menu, XmNactivateCallback, file_revert_callback, NULL);
+  XtVaSetValues(file_revert_menu, XmNmnemonic, 'R', NULL);
   
-  mw[f_mix_menu] = XtCreateManagedWidget(_("Mix    C-x C-q"), xmPushButtonWidgetClass, mw[file_menu], in_args, in_n);
-  XtAddCallback(mw[f_mix_menu], XmNactivateCallback, file_mix_callback_1, NULL);
-  XtVaSetValues(mw[f_mix_menu], XmNmnemonic, 'M', NULL);
+  file_mix_menu = XtCreateManagedWidget(_("Mix    C-x C-q"), xmPushButtonWidgetClass, file_menu, in_args, in_n);
+  XtAddCallback(file_mix_menu, XmNactivateCallback, file_mix_callback_1, NULL);
+  XtVaSetValues(file_mix_menu, XmNmnemonic, 'M', NULL);
 
-  mw[f_update_menu] = XtCreateManagedWidget(_("Update"), xmPushButtonWidgetClass, mw[file_menu], in_args, in_n);
-  XtAddCallback(mw[f_update_menu], XmNactivateCallback, file_update_callback, NULL);
-  XtVaSetValues(mw[f_update_menu], XmNmnemonic, 'U', NULL);
+  file_update_menu = XtCreateManagedWidget(_("Update"), xmPushButtonWidgetClass, file_menu, in_args, in_n);
+  XtAddCallback(file_update_menu, XmNactivateCallback, file_update_callback, NULL);
+  XtVaSetValues(file_update_menu, XmNmnemonic, 'U', NULL);
 
-  mw[f_new_menu] = XtCreateManagedWidget(_("New"), xmPushButtonWidgetClass, mw[file_menu], main_args, main_n);
-  XtAddCallback(mw[f_new_menu], XmNactivateCallback, file_new_callback, NULL);
-  XtVaSetValues(mw[f_new_menu], XmNmnemonic, 'N', NULL);
+  file_new_menu = XtCreateManagedWidget(_("New"), xmPushButtonWidgetClass, file_menu, main_args, main_n);
+  XtAddCallback(file_new_menu, XmNactivateCallback, file_new_callback, NULL);
+  XtVaSetValues(file_new_menu, XmNmnemonic, 'N', NULL);
 
-  mw[f_record_menu] = XtCreateManagedWidget(_("Record"), xmPushButtonWidgetClass, mw[file_menu], main_args, main_n);
-  XtAddCallback(mw[f_record_menu], XmNactivateCallback, file_record_callback, NULL);
+  file_record_menu = XtCreateManagedWidget(_("Record"), xmPushButtonWidgetClass, file_menu, main_args, main_n);
+  XtAddCallback(file_record_menu, XmNactivateCallback, file_record_callback, NULL);
 
-  mw[f_view_menu] = XtCreateManagedWidget(_("View"), xmPushButtonWidgetClass, mw[file_menu], main_args, main_n);
-  XtAddCallback(mw[f_view_menu], XmNactivateCallback, file_view_callback, NULL);
-  XtVaSetValues(mw[f_view_menu], XmNmnemonic, 'V', NULL);
+  file_view_menu = XtCreateManagedWidget(_("View"), xmPushButtonWidgetClass, file_menu, main_args, main_n);
+  XtAddCallback(file_view_menu, XmNactivateCallback, file_view_callback, NULL);
+  XtVaSetValues(file_view_menu, XmNmnemonic, 'V', NULL);
 
-  mw[f_print_menu] = XtCreateManagedWidget(_("Print"), xmPushButtonWidgetClass, mw[file_menu], in_args, in_n);
-  XtAddCallback(mw[f_print_menu], XmNactivateCallback, file_print_callback_1, NULL);
-  XtVaSetValues(mw[f_print_menu], XmNmnemonic, 'P', NULL);
+  file_print_menu = XtCreateManagedWidget(_("Print"), xmPushButtonWidgetClass, file_menu, in_args, in_n);
+  XtAddCallback(file_print_menu, XmNactivateCallback, file_print_callback_1, NULL);
+  XtVaSetValues(file_print_menu, XmNmnemonic, 'P', NULL);
 
   j = 0;
   if (!(ss->using_schemes)) {XtSetArg(sep_args[j], XmNbackground, ss->sgx->basic_color); j++;}
   XtSetArg(sep_args[j], XmNseparatorType, XmSHADOW_ETCHED_IN); j++;
-  mw[f_sep_menu] = XtCreateManagedWidget("", xmSeparatorWidgetClass, mw[file_menu], sep_args, j);
+  file_sep_menu = XtCreateManagedWidget("", xmSeparatorWidgetClass, file_menu, sep_args, j);
 
-  mw[f_exit_menu] = XtCreateManagedWidget(_("Exit"), xmPushButtonWidgetClass, mw[file_menu], main_args, main_n);
-  XtAddCallback(mw[f_exit_menu], XmNactivateCallback, file_exit_callback, NULL);
-  XtVaSetValues(mw[f_exit_menu], XmNmnemonic, 'E', NULL);
+  file_exit_menu = XtCreateManagedWidget(_("Exit"), xmPushButtonWidgetClass, file_menu, main_args, main_n);
+  XtAddCallback(file_exit_menu, XmNactivateCallback, file_exit_callback, NULL);
+  XtVaSetValues(file_exit_menu, XmNmnemonic, 'E', NULL);
 
 
   /* EDIT MENU */
   XtSetArg(main_args[main_n], XmNuserData, 1);
-  mw[edit_menu] = XmCreatePulldownMenu(mw[menu_menu], "Edit", main_args, main_n + 1);
+  edit_menu = XmCreatePulldownMenu(main_menu, "Edit", main_args, main_n + 1);
 
   high_n = start_high_n;
-  XtSetArg(high_args[high_n], XmNsubMenuId, mw[edit_menu]); high_n++;
+  XtSetArg(high_args[high_n], XmNsubMenuId, edit_menu); high_n++;
   XtSetArg(high_args[high_n], XmNmnemonic, 'E'); high_n++;
   XtSetArg(high_args[high_n], XmNuserData, 1); high_n++;
-  mw[e_cascade_menu] = XtCreateManagedWidget(_("Edit"), xmCascadeButtonWidgetClass, mw[menu_menu], high_args, high_n);
+  edit_cascade_menu = XtCreateManagedWidget(_("Edit"), xmCascadeButtonWidgetClass, main_menu, high_args, high_n);
   
-  mw[e_undo_menu] = XtCreateManagedWidget(_("Undo    C-x C-u"), xmPushButtonWidgetClass, mw[edit_menu], in_args, in_n);
-  XtAddCallback(mw[e_undo_menu], XmNactivateCallback, edit_undo_callback, NULL);
-  XtVaSetValues(mw[e_undo_menu], XmNmnemonic, 'U', NULL);
+  edit_undo_menu = XtCreateManagedWidget(_("Undo    C-x C-u"), xmPushButtonWidgetClass, edit_menu, in_args, in_n);
+  XtAddCallback(edit_undo_menu, XmNactivateCallback, edit_undo_callback, NULL);
+  XtVaSetValues(edit_undo_menu, XmNmnemonic, 'U', NULL);
 
-  mw[e_redo_menu] = XtCreateManagedWidget(_("Redo    C-x C-r"), xmPushButtonWidgetClass, mw[edit_menu], in_args, in_n);
-  XtAddCallback(mw[e_redo_menu], XmNactivateCallback, edit_redo_callback, NULL);
-  XtVaSetValues(mw[e_redo_menu], XmNmnemonic, 'R', NULL);
+  edit_redo_menu = XtCreateManagedWidget(_("Redo    C-x C-r"), xmPushButtonWidgetClass, edit_menu, in_args, in_n);
+  XtAddCallback(edit_redo_menu, XmNactivateCallback, edit_redo_callback, NULL);
+  XtVaSetValues(edit_redo_menu, XmNmnemonic, 'R', NULL);
 
 #if HAVE_EXTENSION_LANGUAGE
-  mw[e_find_menu] = XtCreateManagedWidget(_("Find    C-s"), xmPushButtonWidgetClass, mw[edit_menu], in_args, in_n);
-  XtAddCallback(mw[e_find_menu], XmNactivateCallback, edit_find_callback_1, NULL);
-  XtVaSetValues(mw[e_find_menu], XmNmnemonic, 'F', NULL);
+  edit_find_menu = XtCreateManagedWidget(_("Find    C-s"), xmPushButtonWidgetClass, edit_menu, in_args, in_n);
+  XtAddCallback(edit_find_menu, XmNactivateCallback, edit_find_callback_1, NULL);
+  XtVaSetValues(edit_find_menu, XmNmnemonic, 'F', NULL);
 #endif
 
-  mw[e_select_sep_menu] = XtCreateManagedWidget("", xmSeparatorWidgetClass, mw[edit_menu], sep_args, j);
+  edit_select_sep_menu = XtCreateManagedWidget("", xmSeparatorWidgetClass, edit_menu, sep_args, j);
 
-  mw[e_cut_menu] = XtCreateManagedWidget(_("Delete Selection"), xmPushButtonWidgetClass, mw[edit_menu], in_args, in_n);
-  XtAddCallback(mw[e_cut_menu], XmNactivateCallback, edit_cut_callback, NULL);
-  XtVaSetValues(mw[e_cut_menu], XmNmnemonic, 'C', NULL);
+  edit_cut_menu = XtCreateManagedWidget(_("Delete Selection"), xmPushButtonWidgetClass, edit_menu, in_args, in_n);
+  XtAddCallback(edit_cut_menu, XmNactivateCallback, edit_cut_callback, NULL);
+  XtVaSetValues(edit_cut_menu, XmNmnemonic, 'C', NULL);
 
-  mw[e_paste_menu] = XtCreateManagedWidget(_("Insert Selection C-x i"), xmPushButtonWidgetClass, mw[edit_menu], in_args, in_n);
-  XtAddCallback(mw[e_paste_menu], XmNactivateCallback, edit_paste_callback, NULL);
-  XtVaSetValues(mw[e_paste_menu], XmNmnemonic, 'P', NULL);
+  edit_paste_menu = XtCreateManagedWidget(_("Insert Selection C-x i"), xmPushButtonWidgetClass, edit_menu, in_args, in_n);
+  XtAddCallback(edit_paste_menu, XmNactivateCallback, edit_paste_callback, NULL);
+  XtVaSetValues(edit_paste_menu, XmNmnemonic, 'P', NULL);
 
-  mw[e_mix_menu] = XtCreateManagedWidget(_("Mix Selection    C-x q"), xmPushButtonWidgetClass, mw[edit_menu], in_args, in_n);
-  XtAddCallback(mw[e_mix_menu], XmNactivateCallback, edit_mix_callback, NULL);
-  XtVaSetValues(mw[e_mix_menu], XmNmnemonic, 'M', NULL);
+  edit_mix_menu = XtCreateManagedWidget(_("Mix Selection    C-x q"), xmPushButtonWidgetClass, edit_menu, in_args, in_n);
+  XtAddCallback(edit_mix_menu, XmNactivateCallback, edit_mix_callback, NULL);
+  XtVaSetValues(edit_mix_menu, XmNmnemonic, 'M', NULL);
 
-  mw[e_play_menu] = XtCreateManagedWidget(_("Play Selection   C-x p"), xmPushButtonWidgetClass, mw[edit_menu], in_args, in_n);
-  XtAddCallback(mw[e_play_menu], XmNactivateCallback, edit_play_callback, NULL);
-  XtVaSetValues(mw[e_play_menu], XmNmnemonic, 'P', NULL);
+  edit_play_menu = XtCreateManagedWidget(_("Play Selection   C-x p"), xmPushButtonWidgetClass, edit_menu, in_args, in_n);
+  XtAddCallback(edit_play_menu, XmNactivateCallback, edit_play_callback, NULL);
+  XtVaSetValues(edit_play_menu, XmNmnemonic, 'P', NULL);
 
-  mw[e_save_as_menu] = XtCreateManagedWidget(_("Save Selection   C-x w"), xmPushButtonWidgetClass, mw[edit_menu], in_args, in_n);
-  XtAddCallback(mw[e_save_as_menu], XmNactivateCallback, edit_save_as_callback, NULL);
-  XtVaSetValues(mw[e_save_as_menu], XmNmnemonic, 'S', NULL);
+  edit_save_as_menu = XtCreateManagedWidget(_("Save Selection   C-x w"), xmPushButtonWidgetClass, edit_menu, in_args, in_n);
+  XtAddCallback(edit_save_as_menu, XmNactivateCallback, edit_save_as_callback, NULL);
+  XtVaSetValues(edit_save_as_menu, XmNmnemonic, 'S', NULL);
 
-  mw[e_select_all_menu] = XtCreateManagedWidget(_("Select all"), xmPushButtonWidgetClass, mw[edit_menu], in_args, in_n);
-  XtAddCallback(mw[e_select_all_menu], XmNactivateCallback, edit_select_all_callback, NULL);
+  edit_select_all_menu = XtCreateManagedWidget(_("Select all"), xmPushButtonWidgetClass, edit_menu, in_args, in_n);
+  XtAddCallback(edit_select_all_menu, XmNactivateCallback, edit_select_all_callback, NULL);
 
-  mw[e_edit_sep_menu] = XtCreateManagedWidget("", xmSeparatorWidgetClass, mw[edit_menu], sep_args, j);
+  edit_edit_sep_menu = XtCreateManagedWidget("", xmSeparatorWidgetClass, edit_menu, sep_args, j);
 
-  mw[e_edenv_menu] = XtCreateManagedWidget(_("Edit Envelope"), xmPushButtonWidgetClass, mw[edit_menu], main_args, main_n);
-  XtAddCallback(mw[e_edenv_menu], XmNactivateCallback, edit_envelope_callback, NULL);
-  XtVaSetValues(mw[e_edenv_menu], XmNmnemonic, 'E', NULL);
+  edit_env_menu = XtCreateManagedWidget(_("Edit Envelope"), xmPushButtonWidgetClass, edit_menu, main_args, main_n);
+  XtAddCallback(edit_env_menu, XmNactivateCallback, edit_envelope_callback, NULL);
+  XtVaSetValues(edit_env_menu, XmNmnemonic, 'E', NULL);
 
-  mw[e_header_menu] = XtCreateManagedWidget(_("Edit Header"), xmPushButtonWidgetClass, mw[edit_menu], in_args, in_n);
-  XtAddCallback(mw[e_header_menu], XmNactivateCallback, edit_header_callback_1, NULL);
-  XtVaSetValues(mw[e_header_menu], XmNmnemonic, 'H', NULL);
+  edit_header_menu = XtCreateManagedWidget(_("Edit Header"), xmPushButtonWidgetClass, edit_menu, in_args, in_n);
+  XtAddCallback(edit_header_menu, XmNactivateCallback, edit_header_callback_1, NULL);
+  XtVaSetValues(edit_header_menu, XmNmnemonic, 'H', NULL);
 
 
   /* VIEW MENU */
   XtSetArg(main_args[main_n], XmNuserData, 2);
-  mw[view_menu] = XmCreatePulldownMenu(mw[menu_menu], "View", main_args, main_n + 1);
+  view_menu = XmCreatePulldownMenu(main_menu, "View", main_args, main_n + 1);
 
   high_n = start_high_n;
-  XtSetArg(high_args[high_n], XmNsubMenuId, mw[view_menu]); high_n++;
+  XtSetArg(high_args[high_n], XmNsubMenuId, view_menu); high_n++;
   XtSetArg(high_args[high_n], XmNmnemonic, 'V'); high_n++;
   XtSetArg(high_args[high_n], XmNuserData, 2); high_n++;
-  mw[v_cascade_menu] = XtCreateManagedWidget(_("View"), xmCascadeButtonWidgetClass, mw[menu_menu], high_args, high_n);
+  view_cascade_menu = XtCreateManagedWidget(_("View"), xmCascadeButtonWidgetClass, main_menu, high_args, high_n);
 
-  mw[v_ctrls_menu] = XtCreateManagedWidget(_("Show controls"), xmPushButtonWidgetClass, mw[view_menu], main_args, main_n);
-  XtAddCallback(mw[v_ctrls_menu], XmNactivateCallback, view_ctrls_callback, NULL);
-  XtVaSetValues(mw[v_ctrls_menu], XmNmnemonic, 'S', NULL);
+  view_ctrls_menu = XtCreateManagedWidget(_("Show controls"), xmPushButtonWidgetClass, view_menu, main_args, main_n);
+  XtAddCallback(view_ctrls_menu, XmNactivateCallback, view_ctrls_callback, NULL);
+  XtVaSetValues(view_ctrls_menu, XmNmnemonic, 'S', NULL);
 
 #if HAVE_EXTENSION_LANGUAGE
-  mw[v_listener_menu] = XtCreateManagedWidget(_("Open listener"), xmPushButtonWidgetClass, mw[view_menu], main_args, main_n);
-  XtAddCallback(mw[v_listener_menu], XmNactivateCallback, view_listener_callback, NULL);
-  XtVaSetValues(mw[v_listener_menu], XmNmnemonic, 'L', NULL);
+  view_listener_menu = XtCreateManagedWidget(_("Open listener"), xmPushButtonWidgetClass, view_menu, main_args, main_n);
+  XtAddCallback(view_listener_menu, XmNactivateCallback, view_listener_callback, NULL);
+  XtVaSetValues(view_listener_menu, XmNmnemonic, 'L', NULL);
 #endif
 
-  mw[v_mix_dialog_menu] = XtCreateManagedWidget(_("Mixes"), xmPushButtonWidgetClass, mw[view_menu], main_args, main_n);
-  XtAddCallback(mw[v_mix_dialog_menu], XmNactivateCallback, view_mix_dialog_callback, NULL);
+  view_mix_dialog_menu = XtCreateManagedWidget(_("Mixes"), xmPushButtonWidgetClass, view_menu, main_args, main_n);
+  XtAddCallback(view_mix_dialog_menu, XmNactivateCallback, view_mix_dialog_callback, NULL);
 
-  mw[v_track_dialog_menu] = XtCreateManagedWidget(_("Tracks"), xmPushButtonWidgetClass, mw[view_menu], main_args, main_n);
-  XtAddCallback(mw[v_track_dialog_menu], XmNactivateCallback, view_track_dialog_callback, NULL);
+  view_track_dialog_menu = XtCreateManagedWidget(_("Tracks"), xmPushButtonWidgetClass, view_menu, main_args, main_n);
+  XtAddCallback(view_track_dialog_menu, XmNactivateCallback, view_track_dialog_callback, NULL);
 
-  mw[v_region_menu] = XtCreateManagedWidget(_("Regions"), xmPushButtonWidgetClass, mw[view_menu], in_args, in_n);
-  XtAddCallback(mw[v_region_menu], XmNactivateCallback, view_region_callback_1, NULL);
-  XtVaSetValues(mw[v_region_menu], XmNmnemonic, 'R', NULL);
+  view_region_menu = XtCreateManagedWidget(_("Regions"), xmPushButtonWidgetClass, view_menu, in_args, in_n);
+  XtAddCallback(view_region_menu, XmNactivateCallback, view_region_callback_1, NULL);
+  XtVaSetValues(view_region_menu, XmNmnemonic, 'R', NULL);
 
-  mw[v_files_menu] = XtCreateManagedWidget(_("Files"), xmPushButtonWidgetClass, mw[view_menu], main_args, main_n);
-  XtAddCallback(mw[v_files_menu], XmNactivateCallback, view_files_callback_1, NULL);
-  XtVaSetValues(mw[v_files_menu], XmNmnemonic, 'F', NULL);
+  view_files_menu = XtCreateManagedWidget(_("Files"), xmPushButtonWidgetClass, view_menu, main_args, main_n);
+  XtAddCallback(view_files_menu, XmNactivateCallback, view_files_callback_1, NULL);
+  XtVaSetValues(view_files_menu, XmNmnemonic, 'F', NULL);
 
-  mw[v_color_menu] = XtCreateManagedWidget(_("Color"), xmPushButtonWidgetClass, mw[view_menu], main_args, main_n);
-  XtAddCallback(mw[v_color_menu], XmNactivateCallback, view_color_callback_1, NULL);
+  view_color_menu = XtCreateManagedWidget(_("Color"), xmPushButtonWidgetClass, view_menu, main_args, main_n);
+  XtAddCallback(view_color_menu, XmNactivateCallback, view_color_callback_1, NULL);
 
-  mw[v_orientation_menu] = XtCreateManagedWidget(_("Orientation"), xmPushButtonWidgetClass, mw[view_menu], main_args, main_n);
-  XtAddCallback(mw[v_orientation_menu], XmNactivateCallback, view_orientation_callback_1, NULL);
-  XtVaSetValues(mw[v_orientation_menu], XmNmnemonic, 'O', NULL);
+  view_orientation_menu = XtCreateManagedWidget(_("Orientation"), xmPushButtonWidgetClass, view_menu, main_args, main_n);
+  XtAddCallback(view_orientation_menu, XmNactivateCallback, view_orientation_callback_1, NULL);
+  XtVaSetValues(view_orientation_menu, XmNmnemonic, 'O', NULL);
 
-  mw[v_sep2_menu] = XtCreateManagedWidget("", xmSeparatorWidgetClass, mw[view_menu], sep_args, j);
+  view_sep2_menu = XtCreateManagedWidget("", xmSeparatorWidgetClass, view_menu, sep_args, j);
 
-  mw[v_graph_style_menu] = XmCreatePulldownMenu(mw[view_menu], "graph-style", main_args, main_n);
-
-  k = main_n;
-  XtSetArg(main_args[k], XmNsubMenuId, mw[v_graph_style_menu]); k++;
-  mw[v_graph_style_cascade_menu] = XtCreateManagedWidget(_("Graph style"), xmCascadeButtonWidgetClass, mw[view_menu], main_args, k);
-
-  mw[v_lines_menu] = XtCreateManagedWidget(_("lines"), xmPushButtonWidgetClass, mw[v_graph_style_menu], main_args, main_n);
-  XtAddCallback(mw[v_lines_menu], XmNactivateCallback, view_lines_callback, NULL); 
-  if (graph_style(ss) == GRAPH_LINES) set_sensitive(mw[v_lines_menu], false);
-
-  mw[v_dots_menu] = XtCreateManagedWidget(_("dots"), xmPushButtonWidgetClass, mw[v_graph_style_menu], main_args, main_n);
-  XtAddCallback(mw[v_dots_menu], XmNactivateCallback, view_dots_callback, NULL);  
-  if (graph_style(ss) == GRAPH_DOTS) set_sensitive(mw[v_dots_menu], false);
-
-  mw[v_filled_menu] = XtCreateManagedWidget(_("filled"), xmPushButtonWidgetClass, mw[v_graph_style_menu], main_args, main_n);
-  XtAddCallback(mw[v_filled_menu], XmNactivateCallback, view_filled_callback, NULL);  
-  if (graph_style(ss) == GRAPH_FILLED) set_sensitive(mw[v_filled_menu], false);
-
-  mw[v_dots_and_lines_menu] = XtCreateManagedWidget(_("dots and lines"), xmPushButtonWidgetClass, mw[v_graph_style_menu], main_args, main_n);
-  XtAddCallback(mw[v_dots_and_lines_menu], XmNactivateCallback, view_dots_and_lines_callback, NULL);  
-  if (graph_style(ss) == GRAPH_DOTS_AND_LINES) set_sensitive(mw[v_dots_and_lines_menu], false);
-
-  mw[v_lollipops_menu] = XtCreateManagedWidget(_("lollipops"), xmPushButtonWidgetClass, mw[v_graph_style_menu], main_args, main_n);
-  XtAddCallback(mw[v_lollipops_menu], XmNactivateCallback, view_lollipops_callback, NULL);  
-  if (graph_style(ss) == GRAPH_LOLLIPOPS) set_sensitive(mw[v_lollipops_menu], false);
-
-  mw[v_cursor_menu] = XtCreateManagedWidget(_("Verbose cursor"), xmPushButtonWidgetClass, mw[view_menu], main_args, main_n);
-  XtAddCallback(mw[v_cursor_menu], XmNactivateCallback, view_cursor_callback, NULL);
-
-  mw[v_combine_menu] = XmCreatePulldownMenu(mw[view_menu], "combine", main_args, main_n);
+  view_graph_style_menu = XmCreatePulldownMenu(view_menu, "graph-style", main_args, main_n);
 
   k = main_n;
-  XtSetArg(main_args[k], XmNsubMenuId, mw[v_combine_menu]); k++;
-  mw[v_combine_cascade_menu] = XtCreateManagedWidget(_("Channel style"), xmCascadeButtonWidgetClass, mw[view_menu], main_args, k);
+  XtSetArg(main_args[k], XmNsubMenuId, view_graph_style_menu); k++;
+  view_graph_style_cascade_menu = XtCreateManagedWidget(_("Graph style"), xmCascadeButtonWidgetClass, view_menu, main_args, k);
 
-  mw[v_combine_separate_menu] = XtCreateManagedWidget(_("separate"), xmPushButtonWidgetClass, mw[v_combine_menu], main_args, main_n);
-  XtAddCallback(mw[v_combine_separate_menu], XmNactivateCallback, view_separate_callback, NULL); 
-  if (channel_style(ss) == CHANNELS_SEPARATE) set_sensitive(mw[v_combine_separate_menu], false);
+  view_lines_menu = XtCreateManagedWidget(_("lines"), xmPushButtonWidgetClass, view_graph_style_menu, main_args, main_n);
+  XtAddCallback(view_lines_menu, XmNactivateCallback, view_lines_callback, NULL); 
+  if (graph_style(ss) == GRAPH_LINES) set_sensitive(view_lines_menu, false);
 
-  mw[v_combine_combined_menu] = XtCreateManagedWidget(_("combined"), xmPushButtonWidgetClass, mw[v_combine_menu], main_args, main_n);
-  XtAddCallback(mw[v_combine_combined_menu], XmNactivateCallback, view_combined_callback, NULL);  
-  if (channel_style(ss) == CHANNELS_COMBINED) set_sensitive(mw[v_combine_combined_menu], false);
+  view_dots_menu = XtCreateManagedWidget(_("dots"), xmPushButtonWidgetClass, view_graph_style_menu, main_args, main_n);
+  XtAddCallback(view_dots_menu, XmNactivateCallback, view_dots_callback, NULL);  
+  if (graph_style(ss) == GRAPH_DOTS) set_sensitive(view_dots_menu, false);
 
-  mw[v_combine_superimposed_menu] = XtCreateManagedWidget(_("superimposed"), xmPushButtonWidgetClass, mw[v_combine_menu], main_args, main_n);
-  XtAddCallback(mw[v_combine_superimposed_menu], XmNactivateCallback, view_superimposed_callback, NULL);  
-  if (channel_style(ss) == CHANNELS_SUPERIMPOSED) set_sensitive(mw[v_combine_superimposed_menu], false);
+  view_filled_menu = XtCreateManagedWidget(_("filled"), xmPushButtonWidgetClass, view_graph_style_menu, main_args, main_n);
+  XtAddCallback(view_filled_menu, XmNactivateCallback, view_filled_callback, NULL);  
+  if (graph_style(ss) == GRAPH_FILLED) set_sensitive(view_filled_menu, false);
 
-  mw[v_equalize_panes_menu] = XtCreateManagedWidget(_("Equalize Panes"), xmPushButtonWidgetClass, mw[view_menu], in_args, in_n);
-  XtAddCallback(mw[v_equalize_panes_menu], XmNactivateCallback, view_equalize_panes_callback, NULL);
-  XtVaSetValues(mw[v_equalize_panes_menu], XmNmnemonic, 'N', NULL);
+  view_dots_and_lines_menu = XtCreateManagedWidget(_("dots and lines"), xmPushButtonWidgetClass, view_graph_style_menu, main_args, main_n);
+  XtAddCallback(view_dots_and_lines_menu, XmNactivateCallback, view_dots_and_lines_callback, NULL);  
+  if (graph_style(ss) == GRAPH_DOTS_AND_LINES) set_sensitive(view_dots_and_lines_menu, false);
 
-  mw[v_zero_menu] = XtCreateManagedWidget(_("Show Y = 0"), xmPushButtonWidgetClass, mw[view_menu], main_args, main_n);
-  XtAddCallback(mw[v_zero_menu], XmNactivateCallback, view_zero_callback, NULL);
-  XtVaSetValues(mw[v_zero_menu], XmNmnemonic, 'y', NULL);
+  view_lollipops_menu = XtCreateManagedWidget(_("lollipops"), xmPushButtonWidgetClass, view_graph_style_menu, main_args, main_n);
+  XtAddCallback(view_lollipops_menu, XmNactivateCallback, view_lollipops_callback, NULL);  
+  if (graph_style(ss) == GRAPH_LOLLIPOPS) set_sensitive(view_lollipops_menu, false);
 
-  mw[v_x_axis_menu] = XmCreatePulldownMenu(mw[view_menu], "xaxis", main_args, main_n);
+  view_cursor_menu = XtCreateManagedWidget(_("Verbose cursor"), xmPushButtonWidgetClass, view_menu, main_args, main_n);
+  XtAddCallback(view_cursor_menu, XmNactivateCallback, view_cursor_callback, NULL);
 
-  k = main_n;
-  XtSetArg(main_args[k], XmNsubMenuId, mw[v_x_axis_menu]); k++;
-  mw[v_x_axis_cascade_menu] = XtCreateManagedWidget(_("X axis units"), xmCascadeButtonWidgetClass, mw[view_menu], main_args, k);
-
-  mw[v_x_axis_seconds_menu] = XtCreateManagedWidget(_("seconds"), xmPushButtonWidgetClass, mw[v_x_axis_menu], main_args, main_n);
-  XtAddCallback(mw[v_x_axis_seconds_menu], XmNactivateCallback, view_x_axis_seconds_callback, NULL);  
-  set_sensitive(mw[v_x_axis_seconds_menu], false);
-
-  mw[v_x_axis_samples_menu] = XtCreateManagedWidget(_("samples"), xmPushButtonWidgetClass, mw[v_x_axis_menu], main_args, main_n);
-  XtAddCallback(mw[v_x_axis_samples_menu], XmNactivateCallback, view_x_axis_samples_callback, NULL);  
-
-  mw[v_x_axis_percentage_menu] = XtCreateManagedWidget(_("percentage"), xmPushButtonWidgetClass, mw[v_x_axis_menu], main_args, main_n);
-  XtAddCallback(mw[v_x_axis_percentage_menu], XmNactivateCallback, view_x_axis_percentage_callback, NULL);  
-
-  mw[v_x_axis_beats_menu] = XtCreateManagedWidget(_("beats"), xmPushButtonWidgetClass, mw[v_x_axis_menu], main_args, main_n);
-  XtAddCallback(mw[v_x_axis_beats_menu], XmNactivateCallback, view_x_axis_beats_callback, NULL);  
-
-  mw[v_x_axis_measures_menu] = XtCreateManagedWidget(_("measures"), xmPushButtonWidgetClass, mw[v_x_axis_menu], main_args, main_n);
-  XtAddCallback(mw[v_x_axis_measures_menu], XmNactivateCallback, view_x_axis_measures_callback, NULL);  
-
-
-  mw[v_axes_menu] = XmCreatePulldownMenu(mw[view_menu], "axes", main_args, main_n);
+  view_combine_menu = XmCreatePulldownMenu(view_menu, "combine", main_args, main_n);
 
   k = main_n;
-  XtSetArg(main_args[k], XmNsubMenuId, mw[v_axes_menu]); k++;
-  mw[v_axes_cascade_menu] = XtCreateManagedWidget(_("Axes"), xmCascadeButtonWidgetClass, mw[view_menu], main_args, k);
+  XtSetArg(main_args[k], XmNsubMenuId, view_combine_menu); k++;
+  view_combine_cascade_menu = XtCreateManagedWidget(_("Channel style"), xmCascadeButtonWidgetClass, view_menu, main_args, k);
 
-  mw[v_no_axes_menu] = XtCreateManagedWidget(_("no axes"), xmPushButtonWidgetClass, mw[v_axes_menu], main_args, main_n);
-  XtAddCallback(mw[v_no_axes_menu], XmNactivateCallback, view_no_axes_callback, NULL);  
-  if (show_axes(ss) == SHOW_NO_AXES) set_sensitive(mw[v_no_axes_menu], false); /* false because it is already chosen */
+  view_combine_separate_menu = XtCreateManagedWidget(_("separate"), xmPushButtonWidgetClass, view_combine_menu, main_args, main_n);
+  XtAddCallback(view_combine_separate_menu, XmNactivateCallback, view_separate_callback, NULL); 
+  if (channel_style(ss) == CHANNELS_SEPARATE) set_sensitive(view_combine_separate_menu, false);
 
-  mw[v_all_axes_menu] = XtCreateManagedWidget(_("both axes"), xmPushButtonWidgetClass, mw[v_axes_menu], main_args, main_n);
-  XtAddCallback(mw[v_all_axes_menu], XmNactivateCallback, view_all_axes_callback, NULL);  
-  if (show_axes(ss) == SHOW_ALL_AXES) set_sensitive(mw[v_all_axes_menu], false);
+  view_combine_combined_menu = XtCreateManagedWidget(_("combined"), xmPushButtonWidgetClass, view_combine_menu, main_args, main_n);
+  XtAddCallback(view_combine_combined_menu, XmNactivateCallback, view_combined_callback, NULL);  
+  if (channel_style(ss) == CHANNELS_COMBINED) set_sensitive(view_combine_combined_menu, false);
 
-  mw[v_just_x_axis_menu] = XtCreateManagedWidget(_("just x axis"), xmPushButtonWidgetClass, mw[v_axes_menu], main_args, main_n);
-  XtAddCallback(mw[v_just_x_axis_menu], XmNactivateCallback, view_just_x_axis_callback, NULL);  
-  if (show_axes(ss) == SHOW_X_AXIS) set_sensitive(mw[v_just_x_axis_menu], false);
+  view_combine_superimposed_menu = XtCreateManagedWidget(_("superimposed"), xmPushButtonWidgetClass, view_combine_menu, main_args, main_n);
+  XtAddCallback(view_combine_superimposed_menu, XmNactivateCallback, view_superimposed_callback, NULL);  
+  if (channel_style(ss) == CHANNELS_SUPERIMPOSED) set_sensitive(view_combine_superimposed_menu, false);
 
-  mw[v_all_axes_unlabelled_menu] = XtCreateManagedWidget(_("both axes, no labels"), xmPushButtonWidgetClass, mw[v_axes_menu], main_args, main_n);
-  XtAddCallback(mw[v_all_axes_unlabelled_menu], XmNactivateCallback, view_all_axes_unlabelled_callback, NULL);  
-  if (show_axes(ss) == SHOW_ALL_AXES_UNLABELLED) set_sensitive(mw[v_all_axes_unlabelled_menu], false);
+  view_equalize_panes_menu = XtCreateManagedWidget(_("Equalize Panes"), xmPushButtonWidgetClass, view_menu, in_args, in_n);
+  XtAddCallback(view_equalize_panes_menu, XmNactivateCallback, view_equalize_panes_callback, NULL);
+  XtVaSetValues(view_equalize_panes_menu, XmNmnemonic, 'N', NULL);
 
-  mw[v_just_x_axis_unlabelled_menu] = XtCreateManagedWidget(_("just x axis, no label"), xmPushButtonWidgetClass, mw[v_axes_menu], main_args, main_n);
-  XtAddCallback(mw[v_just_x_axis_unlabelled_menu], XmNactivateCallback, view_just_x_axis_unlabelled_callback, NULL);  
-  if (show_axes(ss) == SHOW_X_AXIS_UNLABELLED) set_sensitive(mw[v_just_x_axis_unlabelled_menu], false);
+  view_zero_menu = XtCreateManagedWidget(_("Show Y = 0"), xmPushButtonWidgetClass, view_menu, main_args, main_n);
+  XtAddCallback(view_zero_menu, XmNactivateCallback, view_zero_callback, NULL);
+  XtVaSetValues(view_zero_menu, XmNmnemonic, 'y', NULL);
+
+  view_x_axis_menu = XmCreatePulldownMenu(view_menu, "xaxis", main_args, main_n);
+
+  k = main_n;
+  XtSetArg(main_args[k], XmNsubMenuId, view_x_axis_menu); k++;
+  view_x_axis_cascade_menu = XtCreateManagedWidget(_("X axis units"), xmCascadeButtonWidgetClass, view_menu, main_args, k);
+
+  view_x_axis_seconds_menu = XtCreateManagedWidget(_("seconds"), xmPushButtonWidgetClass, view_x_axis_menu, main_args, main_n);
+  XtAddCallback(view_x_axis_seconds_menu, XmNactivateCallback, view_x_axis_seconds_callback, NULL);  
+  set_sensitive(view_x_axis_seconds_menu, false);
+
+  view_x_axis_samples_menu = XtCreateManagedWidget(_("samples"), xmPushButtonWidgetClass, view_x_axis_menu, main_args, main_n);
+  XtAddCallback(view_x_axis_samples_menu, XmNactivateCallback, view_x_axis_samples_callback, NULL);  
+
+  view_x_axis_percentage_menu = XtCreateManagedWidget(_("percentage"), xmPushButtonWidgetClass, view_x_axis_menu, main_args, main_n);
+  XtAddCallback(view_x_axis_percentage_menu, XmNactivateCallback, view_x_axis_percentage_callback, NULL);  
+
+  view_x_axis_beats_menu = XtCreateManagedWidget(_("beats"), xmPushButtonWidgetClass, view_x_axis_menu, main_args, main_n);
+  XtAddCallback(view_x_axis_beats_menu, XmNactivateCallback, view_x_axis_beats_callback, NULL);  
+
+  view_x_axis_measures_menu = XtCreateManagedWidget(_("measures"), xmPushButtonWidgetClass, view_x_axis_menu, main_args, main_n);
+  XtAddCallback(view_x_axis_measures_menu, XmNactivateCallback, view_x_axis_measures_callback, NULL);  
 
 
-  mw[v_error_history_menu] = XtCreateManagedWidget(_("Error History"), xmPushButtonWidgetClass, mw[view_menu], main_args, main_n);
-  XtAddCallback(mw[v_error_history_menu], XmNactivateCallback, view_error_history_callback, NULL);
+  view_axes_menu = XmCreatePulldownMenu(view_menu, "axes", main_args, main_n);
+
+  k = main_n;
+  XtSetArg(main_args[k], XmNsubMenuId, view_axes_menu); k++;
+  view_axes_cascade_menu = XtCreateManagedWidget(_("Axes"), xmCascadeButtonWidgetClass, view_menu, main_args, k);
+
+  view_no_axes_menu = XtCreateManagedWidget(_("no axes"), xmPushButtonWidgetClass, view_axes_menu, main_args, main_n);
+  XtAddCallback(view_no_axes_menu, XmNactivateCallback, view_no_axes_callback, NULL);  
+  if (show_axes(ss) == SHOW_NO_AXES) set_sensitive(view_no_axes_menu, false); /* false because it is already chosen */
+
+  view_all_axes_menu = XtCreateManagedWidget(_("both axes"), xmPushButtonWidgetClass, view_axes_menu, main_args, main_n);
+  XtAddCallback(view_all_axes_menu, XmNactivateCallback, view_all_axes_callback, NULL);  
+  if (show_axes(ss) == SHOW_ALL_AXES) set_sensitive(view_all_axes_menu, false);
+
+  view_just_x_axis_menu = XtCreateManagedWidget(_("just x axis"), xmPushButtonWidgetClass, view_axes_menu, main_args, main_n);
+  XtAddCallback(view_just_x_axis_menu, XmNactivateCallback, view_just_x_axis_callback, NULL);  
+  if (show_axes(ss) == SHOW_X_AXIS) set_sensitive(view_just_x_axis_menu, false);
+
+  view_all_axes_unlabelled_menu = XtCreateManagedWidget(_("both axes, no labels"), xmPushButtonWidgetClass, view_axes_menu, main_args, main_n);
+  XtAddCallback(view_all_axes_unlabelled_menu, XmNactivateCallback, view_all_axes_unlabelled_callback, NULL);  
+  if (show_axes(ss) == SHOW_ALL_AXES_UNLABELLED) set_sensitive(view_all_axes_unlabelled_menu, false);
+
+  view_just_x_axis_unlabelled_menu = XtCreateManagedWidget(_("just x axis, no label"), xmPushButtonWidgetClass, view_axes_menu, main_args, main_n);
+  XtAddCallback(view_just_x_axis_unlabelled_menu, XmNactivateCallback, view_just_x_axis_unlabelled_callback, NULL);  
+  if (show_axes(ss) == SHOW_X_AXIS_UNLABELLED) set_sensitive(view_just_x_axis_unlabelled_menu, false);
+
+
+  view_error_history_menu = XtCreateManagedWidget(_("Error History"), xmPushButtonWidgetClass, view_menu, main_args, main_n);
+  XtAddCallback(view_error_history_menu, XmNactivateCallback, view_error_history_callback, NULL);
 
 
 
   /* OPTIONS MENU */
   XtSetArg(main_args[main_n], XmNuserData, 3);
-  mw[option_menu] = XmCreatePulldownMenu(mw[menu_menu], "Option", main_args, main_n + 1);
+  options_menu = XmCreatePulldownMenu(main_menu, "Option", main_args, main_n + 1);
 
   high_n = start_high_n;
-  XtSetArg(high_args[high_n], XmNsubMenuId, mw[option_menu]); high_n++;
+  XtSetArg(high_args[high_n], XmNsubMenuId, options_menu); high_n++;
   XtSetArg(high_args[high_n], XmNmnemonic, 'O'); high_n++;
   XtSetArg(high_args[high_n], XmNuserData, 3); high_n++;
-  mw[o_cascade_menu] = XtCreateManagedWidget(_("Options"), xmCascadeButtonWidgetClass, mw[menu_menu], high_args, high_n);
+  options_cascade_menu = XtCreateManagedWidget(_("Options"), xmCascadeButtonWidgetClass, main_menu, high_args, high_n);
 
-  mw[o_transform_menu] = XtCreateManagedWidget(_("Transform Options"), xmPushButtonWidgetClass, mw[option_menu], main_args, main_n);
-  XtAddCallback(mw[o_transform_menu], XmNactivateCallback, options_transform_callback, NULL);
-  XtVaSetValues(mw[o_transform_menu], XmNmnemonic, 't', NULL);
+  options_transform_menu = XtCreateManagedWidget(_("Transform Options"), xmPushButtonWidgetClass, options_menu, main_args, main_n);
+  XtAddCallback(options_transform_menu, XmNactivateCallback, options_transform_callback, NULL);
+  XtVaSetValues(options_transform_menu, XmNmnemonic, 't', NULL);
 
 
-  mw[o_focus_style_menu] = XmCreatePulldownMenu(mw[option_menu], "focusstyle", main_args, main_n);
+  options_focus_style_menu = XmCreatePulldownMenu(options_menu, "focusstyle", main_args, main_n);
 
   k = main_n;
-  XtSetArg(main_args[k], XmNsubMenuId, mw[o_focus_style_menu]); k++;
-  mw[o_focus_cascade_menu] = XtCreateManagedWidget(_("Zoom focus"), xmCascadeButtonWidgetClass, mw[option_menu], main_args, k);
+  XtSetArg(main_args[k], XmNsubMenuId, options_focus_style_menu); k++;
+  options_focus_cascade_menu = XtCreateManagedWidget(_("Zoom focus"), xmCascadeButtonWidgetClass, options_menu, main_args, k);
 
-  mw[o_focus_left_menu] = XtCreateManagedWidget(_("window left edge"), xmPushButtonWidgetClass, mw[o_focus_style_menu], main_args, main_n);
-  XtAddCallback(mw[o_focus_left_menu], XmNactivateCallback, options_focus_left_callback, NULL);  
+  options_focus_left_menu = XtCreateManagedWidget(_("window left edge"), xmPushButtonWidgetClass, options_focus_style_menu, main_args, main_n);
+  XtAddCallback(options_focus_left_menu, XmNactivateCallback, options_focus_left_callback, NULL);  
 
-  mw[o_focus_right_menu] = XtCreateManagedWidget(_("window right edge"), xmPushButtonWidgetClass, mw[o_focus_style_menu], main_args, main_n);
-  XtAddCallback(mw[o_focus_right_menu], XmNactivateCallback, options_focus_right_callback, NULL);  
+  options_focus_right_menu = XtCreateManagedWidget(_("window right edge"), xmPushButtonWidgetClass, options_focus_style_menu, main_args, main_n);
+  XtAddCallback(options_focus_right_menu, XmNactivateCallback, options_focus_right_callback, NULL);  
 
-  mw[o_focus_middle_menu] = XtCreateManagedWidget(_("window midpoint"), xmPushButtonWidgetClass, mw[o_focus_style_menu], main_args, main_n);
-  XtAddCallback(mw[o_focus_middle_menu], XmNactivateCallback, options_focus_middle_callback, NULL);  
+  options_focus_middle_menu = XtCreateManagedWidget(_("window midpoint"), xmPushButtonWidgetClass, options_focus_style_menu, main_args, main_n);
+  XtAddCallback(options_focus_middle_menu, XmNactivateCallback, options_focus_middle_callback, NULL);  
 
-  mw[o_focus_active_menu] = XtCreateManagedWidget(_("cursor or selection"), xmPushButtonWidgetClass, mw[o_focus_style_menu], main_args, main_n);
-  XtAddCallback(mw[o_focus_active_menu], XmNactivateCallback, options_focus_active_callback, NULL);  
-  activate_focus_menu(zoom_focus_style(ss));
+  options_focus_active_menu = XtCreateManagedWidget(_("cursor or selection"), xmPushButtonWidgetClass, options_focus_style_menu, main_args, main_n);
+  XtAddCallback(options_focus_active_menu, XmNactivateCallback, options_focus_active_callback, NULL);  
 
 #if HAVE_EXTENSION_LANGUAGE
-  mw[o_save_menu] = XtCreateManagedWidget(_("Save options"), xmPushButtonWidgetClass, mw[option_menu], main_args, main_n);
-  XtAddCallback(mw[o_save_menu], XmNactivateCallback, options_save_callback, NULL);
-  XtVaSetValues(mw[o_save_menu], XmNmnemonic, 'a', NULL);
+  options_save_menu = XtCreateManagedWidget(_("Save options"), xmPushButtonWidgetClass, options_menu, main_args, main_n);
+  XtAddCallback(options_save_menu, XmNactivateCallback, options_save_callback, NULL);
+  XtVaSetValues(options_save_menu, XmNmnemonic, 'a', NULL);
 
-  mw[o_save_state_menu] = XtCreateManagedWidget(_("Save session"), xmPushButtonWidgetClass, mw[option_menu], main_args, main_n);
-  XtAddCallback(mw[o_save_state_menu], XmNactivateCallback, options_save_state_callback, NULL);
+  options_save_state_menu = XtCreateManagedWidget(_("Save session"), xmPushButtonWidgetClass, options_menu, main_args, main_n);
+  XtAddCallback(options_save_state_menu, XmNactivateCallback, options_save_state_callback, NULL);
 #endif
 
 
   /* HELP MENU */
   XtSetArg(main_args[main_n], XmNuserData, 4);
-  mw[help_menu] = XmCreatePulldownMenu(mw[menu_menu], "Help", main_args, main_n + 1);
+  help_menu = XmCreatePulldownMenu(main_menu, "Help", main_args, main_n + 1);
 
   high_n = start_high_n;
-  XtSetArg(high_args[high_n], XmNsubMenuId, mw[help_menu]); high_n++;
+  XtSetArg(high_args[high_n], XmNsubMenuId, help_menu); high_n++;
   XtSetArg(high_args[high_n], XmNmnemonic, 'H'); high_n++;
   XtSetArg(high_args[high_n], XmNuserData, 4); high_n++;
-  mw[h_cascade_menu] = XtCreateManagedWidget(_("Help"), xmCascadeButtonWidgetClass, mw[menu_menu], high_args, high_n);
+  help_cascade_menu = XtCreateManagedWidget(_("Help"), xmCascadeButtonWidgetClass, main_menu, high_args, high_n);
 
-  mw[h_about_snd_menu] = XtCreateManagedWidget(_("About Snd"), xmPushButtonWidgetClass, mw[help_menu], main_args, main_n);
-  XtAddCallback(mw[h_about_snd_menu], XmNactivateCallback, help_about_snd_callback, NULL);
-  XtVaSetValues(mw[h_about_snd_menu], XmNmnemonic, 'O', NULL);
+  help_about_snd_menu = XtCreateManagedWidget(_("About Snd"), xmPushButtonWidgetClass, help_menu, main_args, main_n);
+  XtAddCallback(help_about_snd_menu, XmNactivateCallback, help_about_snd_callback, NULL);
+  XtVaSetValues(help_about_snd_menu, XmNmnemonic, 'O', NULL);
 
-  mw[h_init_file_menu] = XtCreateManagedWidget(_("Customization"), xmPushButtonWidgetClass, mw[help_menu], main_args, main_n);
-  XtAddCallback(mw[h_init_file_menu], XmNactivateCallback, help_init_file_callback, NULL);
+  help_init_file_menu = XtCreateManagedWidget(_("Customization"), xmPushButtonWidgetClass, help_menu, main_args, main_n);
+  XtAddCallback(help_init_file_menu, XmNactivateCallback, help_init_file_callback, NULL);
 
-  mw[h_controls_menu] = XtCreateManagedWidget(_("Control Panel"), xmPushButtonWidgetClass, mw[help_menu], main_args, main_n);
-  XtAddCallback(mw[h_controls_menu], XmNactivateCallback, help_controls_callback, NULL);
+  help_controls_menu = XtCreateManagedWidget(_("Control Panel"), xmPushButtonWidgetClass, help_menu, main_args, main_n);
+  XtAddCallback(help_controls_menu, XmNactivateCallback, help_controls_callback, NULL);
 
-  mw[h_keys_menu] = XtCreateManagedWidget(_("Key bindings"), xmPushButtonWidgetClass, mw[help_menu], main_args, main_n);
-  XtAddCallback(mw[h_keys_menu], XmNactivateCallback, help_keys_callback, NULL);
+  help_keys_menu = XtCreateManagedWidget(_("Key bindings"), xmPushButtonWidgetClass, help_menu, main_args, main_n);
+  XtAddCallback(help_keys_menu, XmNactivateCallback, help_keys_callback, NULL);
 
-  mw[h_recording_menu] = XtCreateManagedWidget(_("Record"), xmPushButtonWidgetClass, mw[help_menu], main_args, main_n);
-  XtAddCallback(mw[h_recording_menu], XmNactivateCallback, help_recording_callback, NULL);
+  help_recording_menu = XtCreateManagedWidget(_("Record"), xmPushButtonWidgetClass, help_menu, main_args, main_n);
+  XtAddCallback(help_recording_menu, XmNactivateCallback, help_recording_callback, NULL);
 
-  mw[h_play_menu] = XtCreateManagedWidget(_("Play"), xmPushButtonWidgetClass, mw[help_menu], main_args, main_n);
-  XtAddCallback(mw[h_play_menu], XmNactivateCallback, help_play_callback, NULL);
+  help_play_menu = XtCreateManagedWidget(_("Play"), xmPushButtonWidgetClass, help_menu, main_args, main_n);
+  XtAddCallback(help_play_menu, XmNactivateCallback, help_play_callback, NULL);
 
-  mw[h_save_menu] = XtCreateManagedWidget(_("Save"), xmPushButtonWidgetClass, mw[help_menu], main_args, main_n);
-  XtAddCallback(mw[h_save_menu], XmNactivateCallback, help_save_callback, NULL);
+  help_save_menu = XtCreateManagedWidget(_("Save"), xmPushButtonWidgetClass, help_menu, main_args, main_n);
+  XtAddCallback(help_save_menu, XmNactivateCallback, help_save_callback, NULL);
 
-  mw[h_mix_menu] = XtCreateManagedWidget(_("Mix"), xmPushButtonWidgetClass, mw[help_menu], main_args, main_n);
-  XtAddCallback(mw[h_mix_menu], XmNactivateCallback, help_mix_callback, NULL);
+  help_mix_menu = XtCreateManagedWidget(_("Mix"), xmPushButtonWidgetClass, help_menu, main_args, main_n);
+  XtAddCallback(help_mix_menu, XmNactivateCallback, help_mix_callback, NULL);
 
-  mw[h_track_menu] = XtCreateManagedWidget(_("Track"), xmPushButtonWidgetClass, mw[help_menu], main_args, main_n);
-  XtAddCallback(mw[h_track_menu], XmNactivateCallback, help_track_callback, NULL);
+  help_track_menu = XtCreateManagedWidget(_("Track"), xmPushButtonWidgetClass, help_menu, main_args, main_n);
+  XtAddCallback(help_track_menu, XmNactivateCallback, help_track_callback, NULL);
 
-  mw[h_resample_menu] = XtCreateManagedWidget(_("Resample"), xmPushButtonWidgetClass, mw[help_menu], main_args, main_n);
-  XtAddCallback(mw[h_resample_menu], XmNactivateCallback, help_resample_callback, NULL);
+  help_resample_menu = XtCreateManagedWidget(_("Resample"), xmPushButtonWidgetClass, help_menu, main_args, main_n);
+  XtAddCallback(help_resample_menu, XmNactivateCallback, help_resample_callback, NULL);
 
-  mw[h_fft_menu] = XtCreateManagedWidget(_("FFT"), xmPushButtonWidgetClass, mw[help_menu], main_args, main_n);
-  XtAddCallback(mw[h_fft_menu], XmNactivateCallback, help_fft_callback, NULL);
+  help_fft_menu = XtCreateManagedWidget(_("FFT"), xmPushButtonWidgetClass, help_menu, main_args, main_n);
+  XtAddCallback(help_fft_menu, XmNactivateCallback, help_fft_callback, NULL);
 
-  mw[h_filter_menu] = XtCreateManagedWidget(_("Filter"), xmPushButtonWidgetClass, mw[help_menu], main_args, main_n);
-  XtAddCallback(mw[h_filter_menu], XmNactivateCallback, help_filter_callback, NULL);
+  help_filter_menu = XtCreateManagedWidget(_("Filter"), xmPushButtonWidgetClass, help_menu, main_args, main_n);
+  XtAddCallback(help_filter_menu, XmNactivateCallback, help_filter_callback, NULL);
 
-  mw[h_reverb_menu] = XtCreateManagedWidget(_("Reverb"), xmPushButtonWidgetClass, mw[help_menu], main_args, main_n);
-  XtAddCallback(mw[h_reverb_menu], XmNactivateCallback, help_reverb_callback, NULL);
+  help_reverb_menu = XtCreateManagedWidget(_("Reverb"), xmPushButtonWidgetClass, help_menu, main_args, main_n);
+  XtAddCallback(help_reverb_menu, XmNactivateCallback, help_reverb_callback, NULL);
 
-  mw[h_env_menu] = XtCreateManagedWidget(_("Envelope"), xmPushButtonWidgetClass, mw[help_menu], main_args, main_n);
-  XtAddCallback(mw[h_env_menu], XmNactivateCallback, help_env_callback, NULL);
+  help_env_menu = XtCreateManagedWidget(_("Envelope"), xmPushButtonWidgetClass, help_menu, main_args, main_n);
+  XtAddCallback(help_env_menu, XmNactivateCallback, help_env_callback, NULL);
 
-  mw[h_marks_menu] = XtCreateManagedWidget(_("Mark"), xmPushButtonWidgetClass, mw[help_menu], main_args, main_n);
-  XtAddCallback(mw[h_marks_menu], XmNactivateCallback, help_marks_callback, NULL);
+  help_marks_menu = XtCreateManagedWidget(_("Mark"), xmPushButtonWidgetClass, help_menu, main_args, main_n);
+  XtAddCallback(help_marks_menu, XmNactivateCallback, help_marks_callback, NULL);
 
-  mw[h_insert_menu] = XtCreateManagedWidget(_("Insert"), xmPushButtonWidgetClass, mw[help_menu], main_args, main_n);
-  XtAddCallback(mw[h_insert_menu], XmNactivateCallback, help_insert_callback, NULL);
+  help_insert_menu = XtCreateManagedWidget(_("Insert"), xmPushButtonWidgetClass, help_menu, main_args, main_n);
+  XtAddCallback(help_insert_menu, XmNactivateCallback, help_insert_callback, NULL);
 
-  mw[h_delete_menu] = XtCreateManagedWidget(_("Delete"), xmPushButtonWidgetClass, mw[help_menu], main_args, main_n);
-  XtAddCallback(mw[h_delete_menu], XmNactivateCallback, help_delete_callback, NULL);
+  help_delete_menu = XtCreateManagedWidget(_("Delete"), xmPushButtonWidgetClass, help_menu, main_args, main_n);
+  XtAddCallback(help_delete_menu, XmNactivateCallback, help_delete_callback, NULL);
 
-  mw[h_undo_menu] = XtCreateManagedWidget(_("Undo and redo"), xmPushButtonWidgetClass, mw[help_menu], main_args, main_n);
-  XtAddCallback(mw[h_undo_menu], XmNactivateCallback, help_undo_callback, NULL);
+  help_undo_menu = XtCreateManagedWidget(_("Undo and redo"), xmPushButtonWidgetClass, help_menu, main_args, main_n);
+  XtAddCallback(help_undo_menu, XmNactivateCallback, help_undo_callback, NULL);
 
-  mw[h_find_menu] = XtCreateManagedWidget(_("Search"), xmPushButtonWidgetClass, mw[help_menu], main_args, main_n);
-  XtAddCallback(mw[h_find_menu], XmNactivateCallback, help_find_callback, NULL);
+  help_find_menu = XtCreateManagedWidget(_("Search"), xmPushButtonWidgetClass, help_menu, main_args, main_n);
+  XtAddCallback(help_find_menu, XmNactivateCallback, help_find_callback, NULL);
 
-  mw[h_sync_menu] = XtCreateManagedWidget(_("Sync"), xmPushButtonWidgetClass, mw[help_menu], main_args, main_n);
-  XtAddCallback(mw[h_sync_menu], XmNactivateCallback, help_sync_callback, NULL);
+  help_sync_menu = XtCreateManagedWidget(_("Sync"), xmPushButtonWidgetClass, help_menu, main_args, main_n);
+  XtAddCallback(help_sync_menu, XmNactivateCallback, help_sync_callback, NULL);
 
-  mw[h_sound_files_menu] = XtCreateManagedWidget(_("Headers and Data"), xmPushButtonWidgetClass, mw[help_menu], main_args, main_n);
-  XtAddCallback(mw[h_sound_files_menu], XmNactivateCallback, help_sound_files_callback, NULL);
+  help_sound_files_menu = XtCreateManagedWidget(_("Headers and Data"), xmPushButtonWidgetClass, help_menu, main_args, main_n);
+  XtAddCallback(help_sound_files_menu, XmNactivateCallback, help_sound_files_callback, NULL);
 
-  mw[h_debug_menu] = XtCreateManagedWidget(_("Debugging"), xmPushButtonWidgetClass, mw[help_menu], main_args, main_n);
-  XtAddCallback(mw[h_debug_menu], XmNactivateCallback, help_debug_callback, NULL);
+  help_debug_menu = XtCreateManagedWidget(_("Debugging"), xmPushButtonWidgetClass, help_menu, main_args, main_n);
+  XtAddCallback(help_debug_menu, XmNactivateCallback, help_debug_callback, NULL);
 
-  XtVaSetValues(mw[menu_menu], XmNmenuHelpWidget, mw[h_cascade_menu], NULL);
+  XtVaSetValues(main_menu, XmNmenuHelpWidget, help_cascade_menu, NULL);
 
-  XtAddCallback(mw[f_cascade_menu], XmNcascadingCallback, file_menu_update_1, NULL);
-  XtAddCallback(mw[e_cascade_menu], XmNcascadingCallback, edit_menu_update_1, NULL);
-  XtAddCallback(mw[v_cascade_menu], XmNcascadingCallback, view_menu_update_1, NULL);
-  XtAddCallback(mw[o_cascade_menu], XmNcascadingCallback, options_menu_update_1, NULL);
+  XtAddCallback(file_cascade_menu, XmNcascadingCallback, file_menu_update_1, NULL);
+  XtAddCallback(edit_cascade_menu, XmNcascadingCallback, edit_menu_update_1, NULL);
+  XtAddCallback(view_cascade_menu, XmNcascadingCallback, view_menu_update_1, NULL);
+  XtAddCallback(options_cascade_menu, XmNcascadingCallback, options_menu_update_1, NULL);
 
 #ifndef SND_AS_WIDGET
-  XtManageChild(mw[menu_menu]);
+  XtManageChild(main_menu);
 #endif
-  return(mw[menu_menu]);
+  return(main_menu);
 }
+
 
 /* -------------------------------- POPUP MENU -------------------------------- */
 
-enum {W_pop_menu, W_pop_sep, W_pop_play, W_pop_undo, W_pop_redo, W_pop_save, W_pop_equalize_panes, W_pop_info, W_pop_apply, W_pop_reset};
-#define NUM_POPUP_CHILDREN 10
-static Widget popup_children[NUM_POPUP_CHILDREN];
+static Widget popup_menu = NULL;
 
 static void popup_menu_update_1(Widget w, XtPointer info, XtPointer context) {popup_menu_update();}
-
-bool popup_menu_exists(void) {return(popup_menu != NULL);}
-
-Widget popup_play_menu(void) {return(popup_children[W_pop_play]);}
-Widget popup_undo_menu(void) {return(popup_children[W_pop_undo]);}
-Widget popup_redo_menu(void) {return(popup_children[W_pop_redo]);}
-Widget popup_save_menu(void) {return(popup_children[W_pop_save]);}
-Widget popup_equalize_panes_menu(void) {return(popup_children[W_pop_equalize_panes]);}
-Widget popup_info_menu(void) {return(popup_children[W_pop_info]);}
-Widget popup_apply_menu(void) {return(popup_children[W_pop_apply]);}
-Widget popup_reset_menu(void) {return(popup_children[W_pop_reset]);}
 
 static bool stopping = false;
 
@@ -779,7 +672,7 @@ void reflect_play_stop_in_popup_menu(void)
 {
   stopping = false;
   if (popup_menu)
-    set_button_label(popup_children[W_pop_play], _("Play"));
+    set_button_label(popup_play_menu, _("Play"));
 }
 
 static void popup_save_callback(Widget w, XtPointer info, XtPointer context) {save_edits(any_selected_sound(), NULL);}
@@ -807,9 +700,11 @@ void create_popup_menu(void)
   /* make it a child of the main window */
   if (!popup_menu)
     {
-      Widget mainp;
+      Widget mainp, sep, pop;
       Arg args[20];
       int n;
+
+      ss->sgx->pw = (Widget *)calloc(NUM_POPUP_WIDGETS, sizeof(Widget));
 
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;}
@@ -821,46 +716,47 @@ void create_popup_menu(void)
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;}
 
-      popup_children[W_pop_menu] = XtCreateManagedWidget("Snd", xmLabelWidgetClass, popup_menu, args, n);
+      pop = XtCreateManagedWidget("Snd", xmLabelWidgetClass, popup_menu, args, n);
+      sep = XtCreateManagedWidget("sep", xmSeparatorWidgetClass, popup_menu, args, n);
 
-      popup_children[W_pop_sep] = XtCreateManagedWidget("sep", xmSeparatorWidgetClass, popup_menu, args, n);
+      popup_play_menu = XtCreateManagedWidget(_("Play"), xmPushButtonWidgetClass, popup_menu, args, n);
+      XtAddCallback(popup_play_menu, XmNactivateCallback, popup_play_callback, NULL);
+      XtVaSetValues(popup_play_menu, XmNsensitive, false, NULL);
 
-      popup_children[W_pop_play] = XtCreateManagedWidget(_("Play"), xmPushButtonWidgetClass, popup_menu, args, n);
-      XtAddCallback(popup_children[W_pop_play], XmNactivateCallback, popup_play_callback, NULL);
-      XtVaSetValues(popup_children[W_pop_play], XmNsensitive, false, NULL);
+      popup_undo_menu = XtCreateManagedWidget(_("Undo"), xmPushButtonWidgetClass, popup_menu, args, n);
+      XtVaSetValues(popup_undo_menu, XmNsensitive, false, NULL);
+      XtAddCallback(popup_undo_menu, XmNactivateCallback, popup_undo_callback, NULL);
 
-      popup_children[W_pop_undo] = XtCreateManagedWidget(_("Undo"), xmPushButtonWidgetClass, popup_menu, args, n);
-      XtVaSetValues(popup_children[W_pop_undo], XmNsensitive, false, NULL);
-      XtAddCallback(popup_children[W_pop_undo], XmNactivateCallback, popup_undo_callback, NULL);
+      popup_redo_menu = XtCreateManagedWidget(_("Redo"), xmPushButtonWidgetClass, popup_menu, args, n);
+      XtVaSetValues(popup_redo_menu, XmNsensitive, false, NULL);
+      XtAddCallback(popup_redo_menu, XmNactivateCallback, popup_redo_callback, NULL);
 
-      popup_children[W_pop_redo] = XtCreateManagedWidget(_("Redo"), xmPushButtonWidgetClass, popup_menu, args, n);
-      XtVaSetValues(popup_children[W_pop_redo], XmNsensitive, false, NULL);
-      XtAddCallback(popup_children[W_pop_redo], XmNactivateCallback, popup_redo_callback, NULL);
+      popup_save_menu = XtCreateManagedWidget(_("Save"), xmPushButtonWidgetClass, popup_menu, args, n);
+      XtAddCallback(popup_save_menu, XmNactivateCallback, popup_save_callback, NULL);
+      XtVaSetValues(popup_save_menu, XmNsensitive, false, NULL);
 
-      popup_children[W_pop_save] = XtCreateManagedWidget(_("Save"), xmPushButtonWidgetClass, popup_menu, args, n);
-      XtAddCallback(popup_children[W_pop_save], XmNactivateCallback, popup_save_callback, NULL);
-      XtVaSetValues(popup_children[W_pop_save], XmNsensitive, false, NULL);
+      popup_equalize_panes_menu = XtCreateManagedWidget(_("Equalize Panes"), xmPushButtonWidgetClass, popup_menu, args, n);
+      XtVaSetValues(popup_equalize_panes_menu, XmNsensitive, false, NULL);
+      XtAddCallback(popup_equalize_panes_menu, XmNactivateCallback, popup_equalize_panes_callback, NULL);
 
-      popup_children[W_pop_equalize_panes] = XtCreateManagedWidget(_("Equalize Panes"), xmPushButtonWidgetClass, popup_menu, args, n);
-      XtVaSetValues(popup_children[W_pop_equalize_panes], XmNsensitive, false, NULL);
-      XtAddCallback(popup_children[W_pop_equalize_panes], XmNactivateCallback, popup_equalize_panes_callback, NULL);
+      popup_info_menu = XtCreateManagedWidget(_("Info"), xmPushButtonWidgetClass, popup_menu, args, n);
+      XtVaSetValues(popup_info_menu, XmNsensitive, false, NULL);
+      XtAddCallback(popup_info_menu, XmNactivateCallback, popup_info_callback, NULL);
 
-      popup_children[W_pop_info] = XtCreateManagedWidget(_("Info"), xmPushButtonWidgetClass, popup_menu, args, n);
-      XtVaSetValues(popup_children[W_pop_info], XmNsensitive, false, NULL);
-      XtAddCallback(popup_children[W_pop_info], XmNactivateCallback, popup_info_callback, NULL);
+      popup_apply_menu = XtCreateManagedWidget(_("Apply controls"), xmPushButtonWidgetClass, popup_menu, args, n);
+      XtVaSetValues(popup_apply_menu, XmNsensitive, true, NULL);
+      XtAddCallback(popup_apply_menu, XmNactivateCallback, popup_apply_callback, NULL);
 
-      popup_children[W_pop_apply] = XtCreateManagedWidget(_("Apply controls"), xmPushButtonWidgetClass, popup_menu, args, n);
-      XtVaSetValues(popup_children[W_pop_apply], XmNsensitive, true, NULL);
-      XtAddCallback(popup_children[W_pop_apply], XmNactivateCallback, popup_apply_callback, NULL);
-
-      popup_children[W_pop_reset] = XtCreateManagedWidget(_("Reset controls"), xmPushButtonWidgetClass, popup_menu, args, n);
-      XtVaSetValues(popup_children[W_pop_reset], XmNsensitive, true, NULL);
-      XtAddCallback(popup_children[W_pop_reset], XmNactivateCallback, popup_reset_callback, NULL);
+      popup_reset_menu = XtCreateManagedWidget(_("Reset controls"), xmPushButtonWidgetClass, popup_menu, args, n);
+      XtVaSetValues(popup_reset_menu, XmNsensitive, true, NULL);
+      XtAddCallback(popup_reset_menu, XmNactivateCallback, popup_reset_callback, NULL);
 
       XtAddCallback(popup_menu, XmNmapCallback, popup_menu_update_1, NULL);
     }
 }
 
+
+/* ---------------- ext lang tie-ins ---------------- */
 
 #define INVALID_MENU -1
 #define CALL_INDEX(Data) (Data >> 16)
@@ -890,7 +786,7 @@ Widget menu_widget(int which_menu)
   CompositeWidget cw;
   int menu;
   if (which_menu == 5) return(popup_menu); /* special case -- not in main menuBar, presumably */
-  w = mw[menu_menu];
+  w = main_menu;
   cw = (CompositeWidget)w;
   for (i = 0; i < cw->composite.num_children; i++)
     {
@@ -973,13 +869,13 @@ int g_add_to_main_menu(char *label, int slot)
   n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
   XtSetArg(args[n], XmNuserData, PACK_MENU_DATA(slot, new_menu)); n++;
-  m = XmCreatePulldownMenu(mw[menu_menu], label, args, n);
+  m = XmCreatePulldownMenu(main_menu, label, args, n);
 
   n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;}
   XtSetArg(args[n], XmNsubMenuId, m); n++;
   XtSetArg(args[n], XmNuserData, PACK_MENU_DATA(slot, new_menu)); n++;
-  cas = XtCreateManagedWidget(label, xmCascadeButtonWidgetClass, mw[menu_menu], args, n);
+  cas = XtCreateManagedWidget(label, xmCascadeButtonWidgetClass, main_menu, args, n);
   if (slot >= 0) XtAddCallback(cas, XmNcascadingCallback, GHC_callback, NULL);
 
   if (auto_resize(ss)) XtVaSetValues(MAIN_SHELL(ss), XmNallowShellResize, true, NULL);
@@ -1033,12 +929,12 @@ Widget g_add_to_menu(int which_menu, char *label, int callb, int position)
 static XEN g_menu_widgets(void)
 {
   #define H_menu_widgets "(" S_menu_widgets "): a list of top level menu widgets: ((0)main (1)file (2)edit (3)view (4)options (5)help (6)popup)"
-  return(XEN_CONS(XEN_WRAP_WIDGET(mw[menu_menu]),
-	  XEN_CONS(XEN_WRAP_WIDGET(mw[f_cascade_menu]),
-           XEN_CONS(XEN_WRAP_WIDGET(mw[e_cascade_menu]),
-            XEN_CONS(XEN_WRAP_WIDGET(mw[v_cascade_menu]),
-             XEN_CONS(XEN_WRAP_WIDGET(mw[o_cascade_menu]),
-              XEN_CONS(XEN_WRAP_WIDGET(mw[h_cascade_menu]),
+  return(XEN_CONS(XEN_WRAP_WIDGET(main_menu),
+	  XEN_CONS(XEN_WRAP_WIDGET(file_cascade_menu),
+           XEN_CONS(XEN_WRAP_WIDGET(edit_cascade_menu),
+            XEN_CONS(XEN_WRAP_WIDGET(view_cascade_menu),
+             XEN_CONS(XEN_WRAP_WIDGET(options_cascade_menu),
+              XEN_CONS(XEN_WRAP_WIDGET(help_cascade_menu),
 	       XEN_CONS(XEN_WRAP_WIDGET(popup_menu),
 	        XEN_EMPTY_LIST))))))));
 }

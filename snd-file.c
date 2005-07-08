@@ -1002,8 +1002,7 @@ void snd_close_file(snd_info *sp)
       release_pending_track_states();
     }
   reflect_file_change_in_title();
-  if (!(selection_is_active())) 
-    reflect_edit_without_selection_in_menu();
+  enved_reflect_selection(selection_is_active());
 }
 
 

@@ -2,6 +2,9 @@
 
 /* error handlers -- these include the error dialog (in case no sound is active) and an error history list */
 
+/* TODO: remove built-in error history (menu item etc): add as Scheme snd-error-hook example
+ */
+
 static GtkWidget *snd_error_dialog = NULL;
 static GtkWidget *snd_error_history = NULL;
 

@@ -39969,7 +39969,7 @@ static bool xg_already_inited = false;
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("03-Jul-05"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("07-Jul-05"));
       xg_already_inited = true;
 #if WITH_GTK_AND_X11
       Init_libx11();

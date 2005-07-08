@@ -261,8 +261,11 @@ void check_for_event(void)
 
 void force_update(GtkWidget *wid)
 {
-  gdk_window_invalidate_rect(GDK_WINDOW((GTK_WIDGET(wid))->window), NULL, true);
-  gdk_window_process_updates(GDK_WINDOW((GTK_WIDGET(wid))->window), true);
+  if ((wid) && (wid->window))
+    {
+      gdk_window_invalidate_rect(GDK_WINDOW(wid->window), NULL, true);
+      gdk_window_process_updates(GDK_WINDOW(wid->window), true);
+    }
 }
 
 void set_title(const char *title)

@@ -162,6 +162,7 @@ static GdkPixmap *device_pix(int device)
     case MUS_AUDIO_MICROPHONE: 
     default:                   return(mic_pix); break;
     }
+  return(mic_pix); /* make compiler happy */
 }
 
 static gboolean recorder_noop_mouse_enter(GtkWidget *w, GdkEventCrossing *ev, gpointer data)

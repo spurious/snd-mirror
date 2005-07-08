@@ -223,6 +223,10 @@
 #undef PATH_SPEEXENC
 #undef HAVE_MPEG
 #undef PATH_MPG123
+#undef HAVE_TIMIDITY
+#undef PATH_TIMIDITY
+#undef HAVE_MPG321
+#undef PATH_MPG321
 
 #ifndef USE_SND
   #define USE_SND 1

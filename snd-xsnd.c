@@ -1352,7 +1352,6 @@ static void snd_file_glasses_icon(snd_info *sp, bool on, int glass)
     }
 }
 
-#if HAVE_XPM
 static char *bits_to_string(char **icon)
 {
   /* show first few lines */
@@ -1361,7 +1360,6 @@ static char *bits_to_string(char **icon)
   mus_snprintf(buf, 128, "\n%s\n%s\n%s...", icon[0], icon[1], icon[2]);
   return(buf);
 }
-#endif
 
 static void allocate_icons(Widget w)
 { 
@@ -1463,7 +1461,7 @@ void make_sound_icons_transparent_again(Pixel old_color, Pixel new_color)
 }
 
 #else
-void make_icons_transparent_again(Pixel old_color, Pixel new_color) {}
+void make_sound_icons_transparent_again(Pixel old_color, Pixel new_color) {}
 void snd_file_lock_icon(snd_info *sp, bool on) {}
 void snd_file_bomb_icon(snd_info *sp, bool on) 
 {

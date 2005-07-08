@@ -147,6 +147,7 @@ typedef struct {
 #if HAVE_FAM
   XtInputId fam_port;
 #endif
+  Widget *mw, *pw;
 } state_context;
 
 typedef struct {

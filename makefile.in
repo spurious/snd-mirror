@@ -59,7 +59,7 @@ VPATH = @srcdir@
 mkinstalldirs = $(SHELL) $(srcdir)/mkinstalldirs
 
 SNDLIB_HEADERS = config.h sndlib.h sndlib-strings.h clm.h vct.h sndlib2xen.h clm2xen.h xen.h clm-strings.h
-SND_HEADERS = config.h sndlib.h clm.h snd.h snd-0.h snd-1.h snd-strings.h snd-rec.h xen.h
+SND_HEADERS = config.h sndlib.h clm.h snd.h snd-0.h snd-1.h snd-strings.h snd-rec.h xen.h snd-menu.h
 SND_X_HEADERS = snd-x0.h snd-x1.h
 SND_G_HEADERS = snd-g0.h snd-g1.h
 SNDLIB_O_FILES = headers.o audio.o io.o sound.o clm.o xen.o vct.o sndlib2xen.o clm2xen.o

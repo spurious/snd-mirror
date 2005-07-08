@@ -159,7 +159,7 @@ static int greater_compare(const void *a, const void *b)
 
 int main(int argc, char **argv)
 {
-  int i,j,fd,curfile,chars,k,in_comment=0,in_white = 0, calls=0, in_parens=0, in_quotes=0, in_define=0;
+  int i,j,fd,curfile,chars,k,in_comment=0,in_white = 0, calls=0, in_parens=0, in_quotes=0, in_define=0, in_curly=0;
   int maxc[8192],maxf[8192],maxg[8192], mcalls[8192];
   qdata **qs;
   char input[MAX_CHARS];
@@ -318,7 +318,7 @@ int main(int argc, char **argv)
 	  chars = read(fd,input,MAX_CHARS);
 	  for (j = 0; j < chars; j++)
 	    {
-	      if ((in_comment == 0) && (in_define == 0))
+	      if ((in_comment == 0) && (in_define == 0) && (in_curly == 0))
 		{
 		  if ((isalpha(input[j])) || (isdigit(input[j])) || (input[j] == '_'))
 		    {
@@ -368,13 +368,18 @@ int main(int argc, char **argv)
 			    in_define = 1;
 			  else
 			    {
-			      if (input[j] == '(') in_parens++;
-			      if (input[j] == ')') in_parens--;
-			      if (input[j] == '"')
+			      if (input[j] == '{')
+				in_curly = 1;
+			      else
 				{
-				  if (in_quotes == 1)
-				    in_quotes = 0;
-				  else in_quotes = 1;
+				  if (input[j] == '(') in_parens++;
+				  if (input[j] == ')') in_parens--;
+				  if (input[j] == '"')
+				    {
+				      if (in_quotes == 1)
+					in_quotes = 0;
+				      else in_quotes = 1;
+				    }
 				}
 			    }
 			}
@@ -388,6 +393,11 @@ int main(int argc, char **argv)
 		    {
 		      if (input[j] == '\n')
 			in_define = 0;
+		      else
+			{
+			  if (input[j] == '}')
+			    in_curly = 0;
+			}
 		    }
 		}
 	    }

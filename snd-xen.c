@@ -1608,7 +1608,7 @@ be a function of 6 args (snd chan zx x0 x1 range) that returns the new window le
 	XEN_OUT_OF_RANGE_ERROR(S_setB S_zoom_focus_style, 
 			       1, focus, 
 			       "~A, but must be " S_zoom_focus_left ", " S_zoom_focus_right ", " S_zoom_focus_middle ", or " S_zoom_focus_active);
-      activate_focus_menu(choice);
+      set_zoom_focus_style(choice);
       return(C_TO_XEN_INT((int)zoom_focus_style(ss)));
     }
   set_zoom_focus_style(ZOOM_FOCUS_PROC);

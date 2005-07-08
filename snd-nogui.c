@@ -72,63 +72,6 @@ int listener_height(void) {return(0);}
 int listener_width(void) {return(0);}
 bool highlight_unbalanced_paren(void) {return(true);}
 void set_button_label(int label, const char *str) {}
-int file_open_menu(void) {return(0);}
-int file_close_menu(void) {return(0);}
-int file_save_menu(void) {return(0);}
-int file_save_as_menu(void) {return(0);}
-int file_print_menu(void) {return(0);}
-int file_revert_menu(void) {return(0);}
-int file_update_menu(void) {return(0);}
-int file_mix_menu(void) {return(0);}
-int file_view_menu(void) {return(0);}
-int file_new_menu(void) {return(0);}
-int edit_cut_menu(void) {return(0);}
-int edit_paste_menu(void) {return(0);}
-int edit_mix_menu(void) {return(0);}
-int edit_play_menu(void) {return(0);}
-int edit_save_as_menu(void) {return(0);}
-int edit_undo_menu(void) {return(0);}
-int edit_redo_menu(void) {return(0);}
-int edit_find_menu(void) {return(0);}
-int edit_select_all_menu(void) {return(0);}
-int edit_header_menu(void) {return(0);}
-int view_region_menu(void) {return(0);}
-int view_combine_separate_menu(void) {return(0);}
-int view_combine_combined_menu(void) {return(0);}
-int view_combine_superimposed_menu(void) {return(0);}
-int view_lines_menu(void) {return(0);}
-int view_dots_menu(void) {return(0);}
-int view_dots_and_lines_menu(void) {return(0);}
-int view_filled_menu(void) {return(0);}
-int view_lollipops_menu(void) {return(0);}
-int view_zero_menu(void) {return(0);}
-int view_ctrls_menu(void) {return(0);}
-int view_listener_menu(void) {return(0);}
-int view_cursor_menu(void) {return(0);}
-int view_x_axis_seconds_menu(void) {return(0);}
-int view_x_axis_beats_menu(void) {return(0);}
-int view_x_axis_measures_menu(void) {return(0);}
-int view_x_axis_samples_menu(void) {return(0);}
-int view_x_axis_percentage_menu(void) {return(0);}
-int view_no_axes_menu(void) {return(0);}
-int view_all_axes_menu(void) {return(0);}
-int view_all_axes_unlabelled_menu(void) {return(0);}
-int view_just_x_axis_menu(void) {return(0);}
-int view_just_x_axis_unlabelled_menu(void) {return(0);}
-int options_save_state_menu(void) {return(0);}
-int options_focus_left_menu(void) {return(0);}
-int options_focus_right_menu(void) {return(0);}
-int options_focus_middle_menu(void) {return(0);}
-int options_focus_active_menu(void) {return(0);}
-int popup_play_menu(void) {return(0);}
-int popup_undo_menu(void) {return(0);}
-int popup_redo_menu(void) {return(0);}
-int popup_save_menu(void) {return(0);}
-int popup_info_menu(void) {return(0);}
-int popup_apply_menu(void) {return(0);}
-int popup_reset_menu(void) {return(0);}
-bool popup_menu_exists(void) {return(false);}
-void set_menu_label(int w, const char *label) {}
 int g_add_to_main_menu(char *label, int slot) {return(0);}
 widget_t g_add_to_menu(int which_menu, char *label, int callb, int position) {return(0);}
 int g_remove_from_menu(int which_menu, char *label) {return(0);}
@@ -246,6 +189,7 @@ bool view_files_dialog_is_active(void) {return(false);}
 int edit_header(snd_info *sp) {return(0);}
 void save_edit_header_dialog_state(FILE *fd) {}
 void cleanup_edit_header_watcher(void) {}
+void cleanup_new_file_watcher(void) {}
 widget_t make_edit_save_as_dialog(bool managed) {return(0);}
 widget_t make_file_save_as_dialog(bool managed) {return(0);}
 widget_t make_file_print_dialog(bool managed, bool direct_to_printer) {return(0);}

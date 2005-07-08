@@ -1,4 +1,5 @@
 #include "snd.h"
+#include "snd-menu.h"
 
 /* PERHAPS: insert-sound, [insert-selection--exists], insert-region menus (mix-region?)
  * PERHAPS: rename, append?
@@ -7,6 +8,12 @@
  * PERHAPS: key binding updates here too 
  */
 
+static bool find_any_edits(chan_info *cp, void *ignore)
+{
+  return(cp->edit_ctr > 0);
+}
+
+#if (!USE_NO_GUI)
 void edit_menu_update(void)
 {
   /* called when the "Edit" top level menu is clicked -- make sure all items reflect current Snd state */
@@ -40,91 +47,86 @@ void edit_menu_update(void)
     }
   
   /* is there an open sound? */
-  set_sensitive(edit_header_menu(), file_p);
-  set_sensitive(edit_find_menu(), file_p);
-  set_sensitive(edit_select_all_menu(), file_p);
+  set_sensitive(edit_header_menu, file_p);
+  set_sensitive(edit_find_menu, file_p);
+  set_sensitive(edit_select_all_menu, file_p);
 
   /* is there an active selection? */
-  set_sensitive(edit_cut_menu(), selection_p);
-  set_sensitive(edit_paste_menu(), selection_p);
-  set_sensitive(edit_play_menu(), selection_p);
-  set_sensitive(edit_mix_menu(), selection_p);
-  set_sensitive(edit_save_as_menu(), selection_p);
+  set_sensitive(edit_cut_menu, selection_p);
+  set_sensitive(edit_paste_menu, selection_p);
+  set_sensitive(edit_play_menu, selection_p);
+  set_sensitive(edit_mix_menu, selection_p);
+  set_sensitive(edit_save_as_menu, selection_p);
 
   /* is there an undoable edit? */
-  set_sensitive(edit_undo_menu(), undoable_edit_p);
+  set_sensitive(edit_undo_menu, undoable_edit_p);
 
   /* is there a redoable edit? */
-  set_sensitive(edit_redo_menu(), redoable_edit_p);
+  set_sensitive(edit_redo_menu, redoable_edit_p);
 
   /* does paste make any sense? */
-  set_sensitive(edit_paste_menu(), selection_p || region_p);  
+  set_sensitive(edit_paste_menu, selection_p || region_p);  
  
   /* make sure edit-header menu option label correctly reflects current selected sound header type */
   if (any_sp)
-    set_button_label(edit_header_menu(), (any_sp->hdr->type == MUS_RAW) ? _("Add Header") : _("Edit Header"));
+    set_menu_label(edit_header_menu, (any_sp->hdr->type == MUS_RAW) ? _("Add Header") : _("Edit Header"));
 }
 
 void view_menu_update(void)
 {
 #if USE_MOTIF  
   /* does equalize panes make sense? */
-  set_sensitive(view_equalize_panes_menu(), active_channels(WITHOUT_VIRTUAL_CHANNELS) > 1);
+  set_sensitive(view_equalize_panes_menu, active_channels(WITHOUT_VIRTUAL_CHANNELS) > 1);
 #endif
 
   /* are there any viewable regions? */
-  set_sensitive(view_region_menu(), snd_regions() > 0);
+  set_sensitive(view_region_menu, snd_regions() > 0);
 
   /* graph_style */
-  set_sensitive(view_lines_menu(),          graph_style(ss) != GRAPH_LINES);
-  set_sensitive(view_dots_menu(),           graph_style(ss) != GRAPH_DOTS);
-  set_sensitive(view_filled_menu(),         graph_style(ss) != GRAPH_FILLED);
-  set_sensitive(view_dots_and_lines_menu(), graph_style(ss) != GRAPH_DOTS_AND_LINES);
-  set_sensitive(view_lollipops_menu(),      graph_style(ss) != GRAPH_LOLLIPOPS);
+  set_sensitive(view_lines_menu,          graph_style(ss) != GRAPH_LINES);
+  set_sensitive(view_dots_menu,           graph_style(ss) != GRAPH_DOTS);
+  set_sensitive(view_filled_menu,         graph_style(ss) != GRAPH_FILLED);
+  set_sensitive(view_dots_and_lines_menu, graph_style(ss) != GRAPH_DOTS_AND_LINES);
+  set_sensitive(view_lollipops_menu,      graph_style(ss) != GRAPH_LOLLIPOPS);
 
   /* x axis style */
-  set_sensitive(view_x_axis_seconds_menu(),    x_axis_style(ss) != X_AXIS_IN_SECONDS);
-  set_sensitive(view_x_axis_beats_menu(),      x_axis_style(ss) != X_AXIS_IN_BEATS);
-  set_sensitive(view_x_axis_measures_menu(),   x_axis_style(ss) != X_AXIS_IN_MEASURES);
-  set_sensitive(view_x_axis_samples_menu(),    x_axis_style(ss) != X_AXIS_IN_SAMPLES);
-  set_sensitive(view_x_axis_percentage_menu(), x_axis_style(ss) != X_AXIS_AS_PERCENTAGE);
+  set_sensitive(view_x_axis_seconds_menu,    x_axis_style(ss) != X_AXIS_IN_SECONDS);
+  set_sensitive(view_x_axis_beats_menu,      x_axis_style(ss) != X_AXIS_IN_BEATS);
+  set_sensitive(view_x_axis_measures_menu,   x_axis_style(ss) != X_AXIS_IN_MEASURES);
+  set_sensitive(view_x_axis_samples_menu,    x_axis_style(ss) != X_AXIS_IN_SAMPLES);
+  set_sensitive(view_x_axis_percentage_menu, x_axis_style(ss) != X_AXIS_AS_PERCENTAGE);
 
   /* show y zero label */
-  set_menu_label(view_zero_menu(), (show_y_zero(ss)) ? _("Hide Y = 0") : _("Show Y = 0"));
+  set_menu_label(view_zero_menu, (show_y_zero(ss)) ? _("Hide Y = 0") : _("Show Y = 0"));
 
   /* verbose cursor label */
-  set_menu_label(view_cursor_menu(), (verbose_cursor(ss)) ? _("Silent cursor") : _("Verbose cursor"));
+  set_menu_label(view_cursor_menu, (verbose_cursor(ss)) ? _("Silent cursor") : _("Verbose cursor"));
 
   /* channel style */
-  set_sensitive(view_combine_separate_menu(),     channel_style(ss) != CHANNELS_SEPARATE);
-  set_sensitive(view_combine_combined_menu(),     channel_style(ss) != CHANNELS_COMBINED);
-  set_sensitive(view_combine_superimposed_menu(), channel_style(ss) != CHANNELS_SUPERIMPOSED);
+  set_sensitive(view_combine_separate_menu,     channel_style(ss) != CHANNELS_SEPARATE);
+  set_sensitive(view_combine_combined_menu,     channel_style(ss) != CHANNELS_COMBINED);
+  set_sensitive(view_combine_superimposed_menu, channel_style(ss) != CHANNELS_SUPERIMPOSED);
 
   /* show axes */
-  set_sensitive(view_no_axes_menu(),                show_axes(ss) != SHOW_NO_AXES);
-  set_sensitive(view_just_x_axis_menu(),            show_axes(ss) != SHOW_X_AXIS);
-  set_sensitive(view_just_x_axis_unlabelled_menu(), show_axes(ss) != SHOW_X_AXIS_UNLABELLED);
-  set_sensitive(view_all_axes_menu(),               show_axes(ss) != SHOW_ALL_AXES);
-  set_sensitive(view_all_axes_unlabelled_menu(),    show_axes(ss) != SHOW_ALL_AXES_UNLABELLED);
+  set_sensitive(view_no_axes_menu,                show_axes(ss) != SHOW_NO_AXES);
+  set_sensitive(view_just_x_axis_menu,            show_axes(ss) != SHOW_X_AXIS);
+  set_sensitive(view_just_x_axis_unlabelled_menu, show_axes(ss) != SHOW_X_AXIS_UNLABELLED);
+  set_sensitive(view_all_axes_menu,               show_axes(ss) != SHOW_ALL_AXES);
+  set_sensitive(view_all_axes_unlabelled_menu,    show_axes(ss) != SHOW_ALL_AXES_UNLABELLED);
 
   /* make sure listener menu option label correctly reflects current listener state */
-  set_menu_label(view_listener_menu(), (listener_height() > 10) ? _("Hide listener") : _("Show listener"));
+  set_menu_label(view_listener_menu, (listener_height() > 10) ? _("Hide listener") : _("Show listener"));
 
-  set_menu_label(view_ctrls_menu(), (in_show_controls(ss)) ? _("Hide controls") : _("Show controls"));
+  set_menu_label(view_ctrls_menu, (in_show_controls(ss)) ? _("Hide controls") : _("Show controls"));
 }
 
 void options_menu_update(void)
 {
   /* zoom focus style */
-  set_sensitive(options_focus_left_menu(),   zoom_focus_style(ss) != ZOOM_FOCUS_LEFT);
-  set_sensitive(options_focus_right_menu(),  zoom_focus_style(ss) != ZOOM_FOCUS_RIGHT);
-  set_sensitive(options_focus_middle_menu(), zoom_focus_style(ss) != ZOOM_FOCUS_MIDDLE);
-  set_sensitive(options_focus_active_menu(), zoom_focus_style(ss) != ZOOM_FOCUS_ACTIVE);
-}
-
-static bool find_any_edits(chan_info *cp, void *ignore)
-{
-  return(cp->edit_ctr > 0);
+  set_sensitive(options_focus_left_menu,   zoom_focus_style(ss) != ZOOM_FOCUS_LEFT);
+  set_sensitive(options_focus_right_menu,  zoom_focus_style(ss) != ZOOM_FOCUS_RIGHT);
+  set_sensitive(options_focus_middle_menu, zoom_focus_style(ss) != ZOOM_FOCUS_MIDDLE);
+  set_sensitive(options_focus_active_menu, zoom_focus_style(ss) != ZOOM_FOCUS_ACTIVE);
 }
 
 void file_menu_update(void)
@@ -139,14 +141,14 @@ void file_menu_update(void)
       file_p = true;
     }
 
-  set_sensitive(file_close_menu(), file_p);
-  set_sensitive(file_print_menu(), file_p);
-  set_sensitive(file_mix_menu(), file_p);
-  set_sensitive(file_save_as_menu(), file_p);
-  set_sensitive(file_update_menu(), file_p);  /* TODO: dependent on need? */
+  set_sensitive(file_close_menu, file_p);
+  set_sensitive(file_print_menu, file_p);
+  set_sensitive(file_mix_menu, file_p);
+  set_sensitive(file_save_as_menu, file_p);
+  set_sensitive(file_update_menu, file_p);  /* TODO: dependent on need? */
 
-  set_sensitive(file_save_menu(), undoable_edits_p);
-  set_sensitive(file_revert_menu(), undoable_edits_p);
+  set_sensitive(file_save_menu, undoable_edits_p);
+  set_sensitive(file_revert_menu, undoable_edits_p);
 }
 
 void popup_menu_update(void)
@@ -181,21 +183,21 @@ void popup_menu_update(void)
 
   file_p = (bool)any_selected_sound();
 
-  set_sensitive(popup_play_menu(), file_p);
-  set_sensitive(popup_info_menu(), file_p);
+  set_sensitive(popup_play_menu, file_p);
+  set_sensitive(popup_info_menu, file_p);
   
-  set_sensitive(popup_undo_menu(), undoable_edits_p);
-  set_sensitive(popup_redo_menu(), redoable_edits_p);
-  set_sensitive(popup_save_menu(), undoable_edits_p);
+  set_sensitive(popup_undo_menu, undoable_edits_p);
+  set_sensitive(popup_redo_menu, redoable_edits_p);
+  set_sensitive(popup_save_menu, undoable_edits_p);
 
 #if USE_MOTIF
-  set_sensitive(view_equalize_panes_menu(), active_channels(WITHOUT_VIRTUAL_CHANNELS) > 1);
+  set_sensitive(view_equalize_panes_menu, active_channels(WITHOUT_VIRTUAL_CHANNELS) > 1);
 #endif
 
-  set_sensitive(popup_apply_menu(), (file_p && (in_show_controls(ss))));
-  set_sensitive(popup_reset_menu(), (file_p && (in_show_controls(ss))));
+  set_sensitive(popup_apply_menu, (file_p && (in_show_controls(ss))));
+  set_sensitive(popup_reset_menu, (file_p && (in_show_controls(ss))));
 }
-
+#endif
 
 void reflect_file_revert_in_label(snd_info *sp)
 {
@@ -206,31 +208,6 @@ void reflect_file_revert_in_label(snd_info *sp)
       if (!editing)
 	set_sound_pane_file_label(sp, shortname_indexed(sp));
     }
-}
-
-/* TODO: cleanup reflect_edits */
-void reflect_edit_with_selection_in_menu(void)
-{
-  enved_reflect_selection(true);
-}
-
-void reflect_edit_without_selection_in_menu(void)
-{
-  enved_reflect_selection(false);
-}
-
-void close_file_from_menu(void)
-{
-  snd_info *sp;
-  sp = any_selected_sound();
-  if (sp) snd_close_file(sp);
-}
-
-void save_file_from_menu(void)
-{
-  snd_info *sp;
-  sp = any_selected_sound();
-  if (sp) save_edits(sp, NULL);
 }
 
 static void file_update(snd_info *sp, void *ptr)
@@ -260,12 +237,6 @@ void revert_file_from_menu(void)
     }
 }
 
-void exit_from_menu(void)
-{
-  if (snd_exit_cleanly(false))
-    snd_exit(1);
-}
-
 void save_options_from_menu(void)
 {
   FILE *fd;
@@ -291,15 +262,6 @@ void save_state_from_menu(void)
     report_in_minibuffer(any_selected_sound(), _("saved state in %s"), save_state_file(ss));
 }
 
-void activate_focus_menu(zoom_focus_t new_focus)
-{
-  set_zoom_focus_style(new_focus);
-}  
-
-void menu_set_show_axes(show_axes_t val)
-{
-  set_show_axes(val);
-}
 
 
 /* ---------------- extlang tie-ins ---------------- */

@@ -7154,9 +7154,7 @@ void revert_edits(chan_info *cp)
   clear_transform_edit_ctrs(cp);
   reflect_edit_counter_change(cp);
   reflect_sample_change_in_axis(cp);
-  if (selection_is_active())
-    reflect_edit_with_selection_in_menu(); 
-  else reflect_edit_without_selection_in_menu();
+  enved_reflect_selection(selection_is_active());
   update_track_lists(cp, old_ctr - 1);
   update_graph(cp);
   reflect_mix_or_track_change(ANY_MIX_ID, ANY_TRACK_ID, false);
@@ -7180,9 +7178,7 @@ void undo_edit(chan_info *cp, int count)
 	{
 	  reflect_file_revert_in_label(sp);
 	}
-      if (selection_is_active()) 
-	reflect_edit_with_selection_in_menu();
-      else reflect_edit_without_selection_in_menu();
+      enved_reflect_selection(selection_is_active());
       update_track_lists(cp, 0);
       update_graph(cp);
       reflect_mix_or_track_change(ANY_MIX_ID, ANY_TRACK_ID, false);
@@ -7234,9 +7230,7 @@ void redo_edit(chan_info *cp, int count)
 	  reflect_file_change_in_label(cp);
 	  reflect_edit_counter_change(cp);
 	  reflect_sample_change_in_axis(cp);
-	  if (selection_is_active()) 
-	    reflect_edit_with_selection_in_menu(); 
-	  else reflect_edit_without_selection_in_menu();
+	  enved_reflect_selection(selection_is_active());
 	  update_track_lists(cp, 0);
 	  update_graph(cp);
 	  reflect_mix_or_track_change(ANY_MIX_ID, ANY_TRACK_ID, false);

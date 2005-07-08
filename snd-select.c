@@ -196,7 +196,7 @@ bool delete_selection(cut_selection_regraph_t regraph)
     {
       for_each_normal_chan(cp_delete_selection);
       if (regraph == UPDATE_DISPLAY) for_each_normal_chan(update_graph);
-      reflect_edit_without_selection_in_menu();
+      enved_reflect_selection(false);
       if (XEN_HOOKED(selection_changed_hook)) run_hook(selection_changed_hook, XEN_EMPTY_LIST, S_selection_changed_hook);
       return(true);
     }
@@ -216,7 +216,7 @@ void deactivate_selection(void)
 {
   for_each_normal_chan(cp_deactivate_selection);
   for_each_normal_chan(update_graph);
-  reflect_edit_without_selection_in_menu();
+  enved_reflect_selection(false);
   if (XEN_HOOKED(selection_changed_hook)) run_hook(selection_changed_hook, XEN_EMPTY_LIST, S_selection_changed_hook);
   if (selection_creation_chans) 
     selection_creation_chans = free_sync_info(selection_creation_chans);
@@ -238,7 +238,7 @@ void reactivate_selection(chan_info *cp, off_t beg, off_t end)
   cp->selection_visible = false;
   ed->selection_maxamp = -1.0;
   ed->selection_maxamp_position = -1;
-  reflect_edit_with_selection_in_menu();
+  enved_reflect_selection(true);
   if (XEN_HOOKED(selection_changed_hook)) run_hook(selection_changed_hook, XEN_EMPTY_LIST, S_selection_changed_hook);
 }
 
@@ -445,7 +445,7 @@ void finish_selection_creation(void)
     {
       if (selection_creates_region(ss)) 
 	make_region_from_selection();
-      reflect_edit_with_selection_in_menu();
+      enved_reflect_selection(true);
       if (XEN_HOOKED(selection_changed_hook)) 
 	run_hook(selection_changed_hook, 
 		 XEN_EMPTY_LIST, 
@@ -971,12 +971,9 @@ static XEN g_set_selection_member(XEN on, XEN snd, XEN chn)
 	  else cp_set_selection_beg(cp, 0);
 	}
       else cp_deactivate_selection(cp);
+      enved_reflect_selection(selection_is_active());
       if (selection_is_active())
-	{
-	  reflect_edit_with_selection_in_menu();
-	  redraw_selection();
-	}
-      else reflect_edit_without_selection_in_menu();
+	redraw_selection();
       if (XEN_HOOKED(selection_changed_hook)) run_hook(selection_changed_hook, XEN_EMPTY_LIST, S_selection_changed_hook);
     }
   return(on);

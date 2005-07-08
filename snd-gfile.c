@@ -23,7 +23,6 @@
  * TODO: separate funcs to add play/just-sounds buttons (if the latter is possible)
  * PERHAPS: make file_chooser/file_selection a run-time choice somehow? -- file_chooser is really ugly and stupid...
  * TODO: FileSelection: reflect filename change in selection list and in info
- * SOMEDAY: New file: would be nice to cancel 'DoIt' if user deletes file by hand
  * TODO: FileSelection (+chooser if entry): cancel info in mix/open if filename in textfield doesn't match selected file 
  *       FileSelection (+chooser if entry): update info as file name is typed, as in write-protected case 
  * TODO: GTK_STOCK_STOP -> C-G? as menu item? -- stop anything
@@ -40,7 +39,7 @@
 
 #ifndef HAVE_GFCDN
 /* #define HAVE_GFCDN HAVE_GTK_FILE_CHOOSER_DIALOG_NEW */
- #define HAVE_GFCDN 0
+ #define HAVE_GFCDN 1
 #endif
 /* -------- just-sounds file list handlers -------- */
 
@@ -1880,54 +1879,81 @@ void raw_data_dialog_to_file_info(const char *filename, char *title, char *info,
 
 /* -------------------------------- New File -------------------------------- */
 
-static GtkWidget *new_file_dialog = NULL, *new_file_name = NULL;
+static GtkWidget *new_file_dialog = NULL, *new_file_text = NULL, *new_file_ok_button = NULL;
 static file_data *ndat = NULL;
 static off_t initial_samples = 1;
-static bool new_file_doit = false;
+static char *new_file_filename = NULL;
 
-static void new_file_undoit(void);
-static gulong new_file_handler_id = 0;
+#if HAVE_FAM
+static fam_info *new_file_watcher = NULL;
+#else
+static bool new_file_watcher = false;
+#endif
 
-static gboolean new_filename_modify_callback(GtkWidget *w, GdkEventKey *event, gpointer data)
+void cleanup_new_file_watcher(void)
 {
-  file_data *fd = (file_data *)data;
-  if (new_file_doit)
-    new_file_undoit();
-  else
-    {
-      clear_dialog_error(fd);
-      if (new_file_handler_id)
-	{
-	  g_signal_handler_disconnect(new_file_name, new_file_handler_id);
-	  new_file_handler_id = 0;
-	}
-    }
-  return(false);
+#if HAVE_FAM
+  new_file_watcher = fam_unmonitor_file(new_file_filename, new_file_watcher);
+#endif
 }
+
+static gulong new_file_handler_id = 0;
+static gboolean new_filename_modify_callback(GtkWidget *w, GdkEventKey *event, gpointer data);
 
 static void new_file_undoit(void)
 {
-  new_file_doit = false;
   clear_dialog_error(ndat);
   if (new_file_handler_id)
     {
-      g_signal_handler_disconnect(new_file_name, new_file_handler_id);
+      g_signal_handler_disconnect(new_file_text, new_file_handler_id);
       new_file_handler_id = 0;
     }
+  set_button_label(new_file_ok_button, _("Ok"));
+#if HAVE_FAM
+  new_file_watcher = fam_unmonitor_file(new_file_filename, new_file_watcher);
+#else
+  new_file_watcher = false;
+#endif
+}
+
+static gboolean new_filename_modify_callback(GtkWidget *w, GdkEventKey *event, gpointer data)
+{
+  new_file_undoit();
+  return(false);
 }
 
 static void clear_error_if_new_filename_changes(GtkWidget *dialog, void *data)
 {
-  if (new_file_name)
-    new_file_handler_id = SG_SIGNAL_CONNECT(new_file_name, "key_press_event", new_filename_modify_callback, data);
+  if (new_file_text)
+    new_file_handler_id = SG_SIGNAL_CONNECT(new_file_text, "key_press_event", new_filename_modify_callback, data);
 }
+
+#if HAVE_FAM
+static void watch_new_file(struct fam_info *fp, FAMEvent *fe)
+{
+  /* if file is deleted, respond in some debonair manner */
+  switch (fe->code)
+    {
+    case FAMChanged:
+    case FAMDeleted:
+    case FAMCreated:
+    case FAMMoved:
+      new_file_undoit();
+      break;
+
+    default:
+      /* ignore the rest */
+      break;
+    }
+}
+#endif
 
 static void new_file_ok_callback(GtkWidget *w, gpointer context) 
 {
   off_t loc;
   char *comment = NULL, *newer_name = NULL, *msg;
   int header_type, data_format, srate, chans;
-  newer_name = (char *)gtk_entry_get_text(GTK_ENTRY(new_file_name));
+  newer_name = (char *)gtk_entry_get_text(GTK_ENTRY(new_file_text));
   if ((!newer_name) || (!(*newer_name)))
     {
       msg = _("new sound needs a file name ('New file:' field is empty)");
@@ -1947,19 +1973,26 @@ static void new_file_ok_callback(GtkWidget *w, gpointer context)
 	{
 	  snd_info *sp;
 	  /* handle the overwrite hook directly */
-	  if ((!new_file_doit) &&
+	  if (new_file_filename) FREE(new_file_filename);
+	  new_file_filename = mus_expand_filename(newer_name); /* need full filename for fam */
+	  if ((!new_file_watcher) &&
 	      (ask_before_overwrite(ss)) && 
-	      (mus_file_probe(newer_name)))
+	      (mus_file_probe(new_file_filename)))
 	    {
 	      msg = mus_format(_("%s exists. If you want to overwrite it, click 'DoIt'"), newer_name);
+#if HAVE_FAM
+	      new_file_watcher = fam_monitor_file(new_file_filename, NULL, watch_new_file);
+#else
+	      new_file_watcher = true;
+#endif
+	      set_button_label(new_file_ok_button, _("DoIt"));
 	      post_file_dialog_error((const char *)msg, (void *)ndat);
 	      clear_error_if_new_filename_changes(new_file_dialog, (void *)ndat);
 	      FREE(msg);
-	      new_file_doit = true;
 	    }
 	  else
 	    {
-	      if (new_file_doit)
+	      if (new_file_watcher)
 		new_file_undoit();
 	      redirect_snd_error_to(post_file_dialog_error, (void *)ndat);
 	      sp = snd_new_file(newer_name, header_type, data_format, srate, chans, comment, initial_samples);
@@ -2004,7 +2037,7 @@ static void load_new_file_defaults(char *newname)
 	}
       mus_snprintf(filename, 64, _("new-%d.%s"), new_ctr++, extension);
     }
-  gtk_entry_set_text(GTK_ENTRY(new_file_name), filename);  
+  gtk_entry_set_text(GTK_ENTRY(new_file_text), filename);  
   mus_sound_forget(filename);
 
   set_file_dialog_sound_attributes(ndat, header_type, data_format, srate, chans, IGNORE_DATA_LOCATION, initial_samples, new_comment);
@@ -2021,9 +2054,9 @@ static void new_file_cancel_callback(GtkWidget *w, gpointer context)
 static void new_file_reset_callback(GtkWidget *w, gpointer context)
 {
   char *current_name;
-  current_name = (char *)gtk_entry_get_text(GTK_ENTRY(new_file_name));
+  current_name = (char *)gtk_entry_get_text(GTK_ENTRY(new_file_text));
   load_new_file_defaults(current_name);
-  if (new_file_doit)
+  if (new_file_watcher)
     new_file_undoit();
 }
 
@@ -2043,7 +2076,7 @@ void make_new_file_dialog(void)
   char *newname;
   if (!new_file_dialog)
     {
-      GtkWidget *name_label, *hform, *help_button, *cancel_button, *ok_button, *reset_button;
+      GtkWidget *name_label, *hform, *help_button, *cancel_button, *reset_button;
       new_file_dialog = snd_gtk_dialog_new();
       gtk_window_set_title(GTK_WINDOW(new_file_dialog), _("New file"));
       sg_make_resizable(new_file_dialog);
@@ -2057,13 +2090,13 @@ void make_new_file_dialog(void)
       cancel_button = gtk_button_new_from_stock(GTK_STOCK_CANCEL);
       gtk_widget_set_name(cancel_button, "quit_button");
 
-      ok_button = gtk_button_new_from_stock(GTK_STOCK_OK);
-      gtk_widget_set_name(ok_button, "doit_button");
+      new_file_ok_button = gtk_button_new_with_label(_("Ok"));
+      gtk_widget_set_name(new_file_ok_button, "doit_button");
 
       reset_button = gtk_button_new_with_label(_("Reset"));
       gtk_widget_set_name(reset_button, "reset_button");
 
-      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(new_file_dialog)->action_area), ok_button, true, true, 10);
+      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(new_file_dialog)->action_area), new_file_ok_button, true, true, 10);
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(new_file_dialog)->action_area), reset_button, true, true, 10);
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(new_file_dialog)->action_area), cancel_button, true, true, 10);
       gtk_box_pack_end(GTK_BOX(GTK_DIALOG(new_file_dialog)->action_area), help_button, true, true, 10);
@@ -2076,11 +2109,11 @@ void make_new_file_dialog(void)
       gtk_box_pack_start(GTK_BOX(hform), name_label, false, false, 2);
       gtk_widget_show(name_label);
 
-      new_file_name = snd_entry_new(hform, true);
+      new_file_text = snd_entry_new(hform, true);
 
       newname = output_name(NULL); /* fix later */
       if ((newname) && (*newname))
-	gtk_entry_set_text(GTK_ENTRY(new_file_name), newname); /* output_name?? fix later */
+	gtk_entry_set_text(GTK_ENTRY(new_file_text), newname); /* output_name?? fix later */
 
       ndat = make_file_data_panel(GTK_DIALOG(new_file_dialog)->vbox, "data-form", 
 				  WITH_CHANNELS_FIELD, 
@@ -2096,29 +2129,32 @@ void make_new_file_dialog(void)
       SG_SIGNAL_CONNECT(new_file_dialog, "delete_event", new_file_delete_callback, ndat);
       SG_SIGNAL_CONNECT(cancel_button, "clicked", new_file_cancel_callback, ndat);
       SG_SIGNAL_CONNECT(help_button, "clicked", new_file_help_callback, ndat);
-      SG_SIGNAL_CONNECT(ok_button, "clicked", new_file_ok_callback, ndat);
+      SG_SIGNAL_CONNECT(new_file_ok_button, "clicked", new_file_ok_callback, ndat);
       SG_SIGNAL_CONNECT(reset_button, "clicked", new_file_reset_callback, ndat);
+      SG_SIGNAL_CONNECT(new_file_text, "activate", new_file_ok_callback, ndat);
 
       gtk_widget_show(cancel_button);
-      gtk_widget_show(ok_button);
+      gtk_widget_show(new_file_ok_button);
       gtk_widget_show(reset_button);
       gtk_widget_show(help_button);
 
       set_dialog_widget(NEW_FILE_DIALOG, new_file_dialog);
       load_new_file_defaults(NULL);
     }
+#if (!HAVE_FAM)
   else
     {
       /* if overwrite question pends, but file has been deleted in the meantime, go back to normal state */
-      if (new_file_doit)
+      if (new_file_watcher)
 	{
 	  char *new_name;
-	  new_name = (char *)gtk_entry_get_text(GTK_ENTRY(new_file_name));
+	  new_name = (char *)gtk_entry_get_text(GTK_ENTRY(new_file_text));
 	  if ((!new_name) || (!(*new_name)) ||
 	      (!(mus_file_probe(new_name))))
 	    new_file_undoit();
 	}
     }
+#endif
   gtk_widget_show(new_file_dialog);
 }
 
@@ -2368,7 +2404,16 @@ GtkWidget *edit_header(snd_info *sp)
   FREE(str);
 
   gtk_widget_set_sensitive(edit_header_save_button, (hdr->type == MUS_RAW));
-  set_file_dialog_sound_attributes(edat, hdr->type, hdr->format, hdr->srate, hdr->chans, hdr->data_location, hdr->samples, hdr->comment);
+
+  if (hdr->type == MUS_RAW)
+    set_file_dialog_sound_attributes(edat, 
+				     default_output_header_type(ss), 
+				     hdr->format, hdr->srate, hdr->chans, 
+				     hdr->data_location, hdr->samples, hdr->comment);
+  else set_file_dialog_sound_attributes(edat, 
+					hdr->type, hdr->format, hdr->srate, hdr->chans, 
+					hdr->data_location, hdr->samples, hdr->comment);
+
   gtk_widget_show(edit_header_dialog);
   reflect_file_data_panel_change(edat, edit_header_set_ok_sensitive);
   edit_header_sp->user_read_only_watcher = &watch_user_read_only;

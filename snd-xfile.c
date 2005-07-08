@@ -15,7 +15,6 @@
  * TODO: extract snd_overwrite_ok case: incorporate overwrite here
  * TODO: new file ok: if existing file by new name and it's write protected, we need some better explanation
  * TODO: new file: find some way to get around the hidden label bug (unmanage error text etc)
- * TODO: new file: mus_file_probe: use FAM to handle this
  * TODO: check out other paths to raw data dialog
  * PERHAPS: if user changes raw file with dialog up -- adding header for example, should we automatically open it?
  * TODO: should previous files list be monitored via FAM?
@@ -31,7 +30,6 @@
  *         need to know how to recognize (for read side)
  * TODO: various file/directory lists: tie into fam/gamin (also previous files list) -- add xen call?
  * TODO: if directory loaded into previous files list via -p, add any new sound files as they appear
- * TODO: if edit header raw -- no "raw" choice? -- meaningless in that case? -- then no selected type? or use default-output-header-type
  */
 
 
@@ -2017,52 +2015,79 @@ void save_file_dialog_state(FILE *fd)
 static Widget new_file_dialog = NULL;
 static file_data *ndat = NULL;
 static off_t initial_samples = 1;
-static Widget new_file_name = NULL;
-static bool new_file_doit = false;
+static Widget new_file_text = NULL;
+static char *new_file_filename = NULL;
+
 #if HAVE_FAM
-  FAMRequest *new_file_doit_watcher = NULL;
+static fam_info *new_file_watcher = NULL;
+#else
+static bool new_file_watcher = false;
 #endif
 
-static void new_file_undoit(void);
-
-static void new_filename_modify_callback(Widget w, XtPointer context, XtPointer info)
+void cleanup_new_file_watcher(void)
 {
-  file_data *fd = (file_data *)context;
-  XmTextVerifyCallbackStruct *cbs = (XmTextVerifyCallbackStruct *)info;
-  if (new_file_doit)
-    new_file_undoit();
-  else
-    {
-      clear_dialog_error(fd);
-      XtRemoveCallback(new_file_name, XmNmodifyVerifyCallback, new_filename_modify_callback, context);
-    }
-  cbs->doit = true;
+#if HAVE_FAM
+  new_file_watcher = fam_unmonitor_file(new_file_filename, new_file_watcher);
+#endif
 }
+
+static void new_filename_modify_callback(Widget w, XtPointer context, XtPointer info);
 
 static void new_file_undoit(void)
 {
   XmString ok_label;
-  new_file_doit = false;
   ok_label = XmStringCreate(_("Ok"), XmFONTLIST_DEFAULT_TAG);
   XtVaSetValues(new_file_dialog, 
 		XmNokLabelString, ok_label, 
 		NULL);
   XmStringFree(ok_label);
   clear_dialog_error(ndat);
-  XtRemoveCallback(new_file_name, XmNmodifyVerifyCallback, new_filename_modify_callback, (XtPointer)ndat);
+  XtRemoveCallback(new_file_text, XmNmodifyVerifyCallback, new_filename_modify_callback, (XtPointer)ndat);
+#if HAVE_FAM
+  new_file_watcher = fam_unmonitor_file(new_file_filename, new_file_watcher);
+#else
+  new_file_watcher = false;
+#endif
+}
+
+static void new_filename_modify_callback(Widget w, XtPointer context, XtPointer info)
+{
+  XmTextVerifyCallbackStruct *cbs = (XmTextVerifyCallbackStruct *)info;
+  new_file_undoit();
+  cbs->doit = true;
 }
 
 static void clear_error_if_new_filename_changes(Widget dialog, void *data)
 {
-  XtAddCallback(new_file_name, XmNmodifyVerifyCallback, new_filename_modify_callback, (XtPointer)data);
+  XtAddCallback(new_file_text, XmNmodifyVerifyCallback, new_filename_modify_callback, (XtPointer)data);
 }
+
+#if HAVE_FAM
+static void watch_new_file(struct fam_info *fp, FAMEvent *fe)
+{
+  /* if file is deleted, respond in some debonair manner */
+  switch (fe->code)
+    {
+    case FAMChanged:
+    case FAMDeleted:
+    case FAMCreated:
+    case FAMMoved:
+      new_file_undoit();
+      break;
+
+    default:
+      /* ignore the rest */
+      break;
+    }
+}
+#endif
 
 static void new_file_ok_callback(Widget w, XtPointer context, XtPointer info) 
 {
   off_t loc;
   char *comment = NULL, *newer_name = NULL, *msg;
   int header_type, data_format, srate, chans;
-  newer_name = XmTextGetString(new_file_name);
+  newer_name = XmTextGetString(new_file_text);
   if ((!newer_name) || (!(*newer_name)))
     {
       msg = _("new sound needs a file name ('New file:' field is empty)");
@@ -2082,14 +2107,19 @@ static void new_file_ok_callback(Widget w, XtPointer context, XtPointer info)
 	{
 	  snd_info *sp;
 	  /* handle the overwrite hook directly */
-	  if ((!new_file_doit) &&
+	  if (new_file_filename) FREE(new_file_filename);
+	  new_file_filename = mus_expand_filename(newer_name); /* need full filename for fam */
+	  if ((!new_file_watcher) &&
 	      (ask_before_overwrite(ss)) && 
-	      (mus_file_probe(newer_name)))
+	      (mus_file_probe(new_file_filename)))
 	    {
 	      XmString ok_label;
 	      msg = mus_format(_("%s exists. If you want to overwrite it, click 'DoIt'"), newer_name);
-	      /* new_file_doit_watcher = fam_monitor_file(newer_name, NULL); */
-
+#if HAVE_FAM
+	      new_file_watcher = fam_monitor_file(new_file_filename, NULL, watch_new_file);
+#else
+	      new_file_watcher = true;
+#endif
 	      post_file_dialog_error((const char *)msg, (void *)ndat);
 	      clear_error_if_new_filename_changes(new_file_dialog, (void *)ndat);
 	      ok_label = XmStringCreate(_("DoIt"), XmFONTLIST_DEFAULT_TAG);
@@ -2098,14 +2128,13 @@ static void new_file_ok_callback(Widget w, XtPointer context, XtPointer info)
 			    NULL);
 	      XmStringFree(ok_label);
 	      FREE(msg);
-	      new_file_doit = true;
 	    }
 	  else
 	    {
-	      if (new_file_doit)
+	      if (new_file_watcher)
 		new_file_undoit();
 	      redirect_snd_error_to(post_file_dialog_error, (void *)ndat);
-	      sp = snd_new_file(newer_name, header_type, data_format, srate, chans, comment, initial_samples);
+	      sp = snd_new_file(new_file_filename, header_type, data_format, srate, chans, comment, initial_samples);
 	      redirect_snd_error_to(NULL, NULL);
 	      if (!sp)
 		{
@@ -2148,7 +2177,7 @@ static void load_new_file_defaults(char *newname)
 	}
       mus_snprintf(filename, 64, _("new-%d.%s"), new_ctr++, extension);
     }
-  XmTextSetString(new_file_name, filename);  
+  XmTextSetString(new_file_text, filename);  
   mus_sound_forget(filename);
 
   set_file_dialog_sound_attributes(ndat, header_type, data_format, srate, chans, IGNORE_DATA_LOCATION, initial_samples, new_comment);
@@ -2160,10 +2189,10 @@ static void load_new_file_defaults(char *newname)
 static void new_file_reset_callback(Widget w, XtPointer context, XtPointer info) 
 {
   char *current_name;
-  current_name = XmTextGetString(new_file_name);
+  current_name = XmTextGetString(new_file_text);
   load_new_file_defaults(current_name);
   if (current_name) XtFree(current_name);
-  if (new_file_doit)
+  if (new_file_watcher)
     new_file_undoit();
 }
 
@@ -2240,11 +2269,11 @@ void make_new_file_dialog(void)
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNleftWidget, name_label); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-      new_file_name = make_textfield_widget("newtext", form, args, n, ACTIVATABLE, add_completer_func(filename_completer));
+      new_file_text = make_textfield_widget("newtext", form, args, n, ACTIVATABLE, add_completer_func(filename_completer));
 
       n = 0;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
-      XtSetArg(args[n], XmNtopWidget, new_file_name); n++;
+      XtSetArg(args[n], XmNtopWidget, new_file_text); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
@@ -2292,19 +2321,21 @@ void make_new_file_dialog(void)
 
       load_new_file_defaults(NULL);
     }
+#if (!HAVE_FAM)
   else
     {
       /* if overwrite question pends, but file has been deleted in the meantime, go back to normal state */
-      if (new_file_doit)
+      if (new_file_watcher)
 	{
 	  char *new_name;
-	  new_name = XmTextGetString(new_file_name);
+	  new_name = XmTextGetString(new_file_text);
 	  if ((!new_name) || (!(*new_name)) ||
 	      (!(mus_file_probe(new_name))))
 	    new_file_undoit();
 	  if (new_name) XtFree(new_name);
 	}
     }
+#endif
   if (!(XtIsManaged(new_file_dialog))) 
     XtManageChild(new_file_dialog);
 }
@@ -2556,7 +2587,14 @@ Widget edit_header(snd_info *sp)
 				  WITH_COMMENT_FIELD);
       edat->dialog = edit_header_dialog;
 
-      set_file_dialog_sound_attributes(edat, hdr->type, hdr->format, hdr->srate, hdr->chans, hdr->data_location, hdr->samples, hdr->comment);
+      if (hdr->type == MUS_RAW)
+	set_file_dialog_sound_attributes(edat, 
+					 default_output_header_type(ss), 
+					 hdr->format, hdr->srate, hdr->chans, 
+					 hdr->data_location, hdr->samples, hdr->comment);
+      else set_file_dialog_sound_attributes(edat, 
+					    hdr->type, hdr->format, hdr->srate, hdr->chans, 
+					    hdr->data_location, hdr->samples, hdr->comment);
       XtManageChild(edat->error_text);
       XtManageChild(edit_header_dialog);
 
@@ -2580,7 +2618,14 @@ Widget edit_header(snd_info *sp)
       XtVaSetValues(edit_header_dialog, 
 		    XmNmessageString, xstr4, 
 		    NULL);
-      set_file_dialog_sound_attributes(edat, hdr->type, hdr->format, hdr->srate, hdr->chans, hdr->data_location, hdr->samples, hdr->comment);
+      if (hdr->type == MUS_RAW)
+	set_file_dialog_sound_attributes(edat, 
+					 default_output_header_type(ss), 
+					 hdr->format, hdr->srate, hdr->chans, 
+					 hdr->data_location, hdr->samples, hdr->comment);
+      else set_file_dialog_sound_attributes(edat, 
+					    hdr->type, hdr->format, hdr->srate, hdr->chans, 
+					    hdr->data_location, hdr->samples, hdr->comment);
       raise_dialog(edit_header_dialog);
       clear_dialog_error(edat);
     }

@@ -581,26 +581,6 @@ char **help_name_to_xrefs(const char *name);
 /* -------- snd-menu.c -------- */
 
 void reflect_file_revert_in_label (snd_info *sp);
-void reflect_edit_with_selection_in_menu (void);
-void reflect_edit_without_selection_in_menu (void);
-
-void edit_menu_update(void);
-void view_menu_update(void);
-void options_menu_update(void);
-void file_menu_update(void);
-void popup_menu_update(void);
-
-void close_file_from_menu(void);
-void save_file_from_menu(void);
-void update_file_from_menu(void);
-void revert_file_from_menu(void);
-void exit_from_menu(void);
-void save_options_from_menu(void);
-void save_state_from_menu(void);
-void unprotect_callback(int slot);
-void activate_focus_menu(zoom_focus_t new_focus);
-void menu_set_show_axes(show_axes_t val);
-
 void g_init_menu(void);
 
 

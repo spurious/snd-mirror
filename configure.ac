@@ -1473,6 +1473,14 @@ if test "$PATH_MPG123" != "no" ; then
 fi
 
 
+AC_PATH_PROG(PATH_MPG321, mpg321, no) # MPEG read/write?
+
+if test "$PATH_MPG321" != "no" ; then
+  AC_DEFINE(HAVE_MPEG)
+  AC_DEFINE_UNQUOTED(PATH_MPG321, "${PATH_MPG321}")
+fi
+
+
 AC_PATH_PROG(PATH_SPEEXDEC, speexdec, no) # Speex read
 AC_PATH_PROG(PATH_SPEEXENC, speexenc, no) # Speex write
 
@@ -1493,8 +1501,16 @@ if test "$PATH_FLAC" != "no" ; then
 fi
 
 
-# TODO: is sdif writer named tosdif?  mpg321 before mpg123?
-# TODO: timidity? id3? ace? etc...
+AC_PATH_PROG(PATH_TIMIDITY, timidity, no) # Timidity for .mid -> .wav
+
+if test "$PATH_TIMIDITY" != "no" ; then
+  AC_DEFINE(HAVE_TIMIDITY)
+  AC_DEFINE_UNQUOTED(PATH_TIMIDITY, "${PATH_TIMIDITY}")
+fi
+
+
+# TODO: is sdif writer named tosdif? 
+# TODO: id3? ace? etc...
 
 
 #--------------------------------------------------------------------------------
