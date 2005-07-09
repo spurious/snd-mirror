@@ -164,6 +164,9 @@ and run simple lisp[4] functions.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(if (not (defined? '*use-alsa-midi*))
+    (define-toplevel '*use-alsa-midi* #t))
+
 (define rt-defining-macros-clears-cache #t)
 (define rt-verbose #f)
 (define rt-very-verbose #f)
@@ -192,7 +195,7 @@ and run simple lisp[4] functions.
     (string= das-string1 das-string2 0 len 0 len)))
 
 #!
-(rt-symbol-starts-with? 'abwe4wei 'aiai)
+(symbol-starts-with? 'abwe4wei 'aiai)
 !#
 
 (define rt-safety
@@ -244,8 +247,8 @@ and run simple lisp[4] functions.
   #t)
 
 
-;; Need pi.
-(if (not (defined? 'pi))
+;; Need pi.	
+(if (not (defined? 'pi))	
     (define-toplevel 'pi 3.14159265358979))
 
 
@@ -1267,6 +1270,7 @@ and run simple lisp[4] functions.
        (return #f))
      
      (define (expand term)
+       ;;(c-display "term" term)
        (cond ((null? term) term)
 	     ((not (list? term)) term)
 	     ((and (eq? 'set! (car term))
@@ -3937,7 +3941,7 @@ and run simple lisp[4] functions.
 		   (rt-error "Operation vector-ref failed because first argument is not a vector."))
 	       (if (>= ,das-pos (vector-length ,das-vec))
 		   (rt-error "Operation vector-ref failed because the length of the vector is to small"))
-	       `(rt-vector-ref/vector-ref ,das-vec (rt-castint/castint ,das-pos))))
+	       (rt-vector-ref/vector-ref ,das-vec (rt-castint/castint ,das-pos))))
 	  `(begin
 	     (if (not (vector? ,vec))
 		 (rt-error "Operation vector-ref failed because first argument is not a vector."))
@@ -4135,7 +4139,6 @@ and run simple lisp[4] functions.
 		       `(rt_write_bus out-bus ,ch ,val))
 		     channels))))))
 
-
 (define-rt-macro (in . channels)
   (if (null? channels)
       (set! channels '(0 1)))
@@ -4145,7 +4148,8 @@ and run simple lisp[4] functions.
 		   `(rt_read_bus in-bus ,(car channels)))
 		 channels))))
 
-  
+
+
   
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -4339,16 +4343,18 @@ and run simple lisp[4] functions.
 	    ))
 
 
-;; mus-feedback
-(define-rt-macro (mus-feedback ins)
-  `(mus-increment ,ins))
-(define-rt-macro (setter!-mus-feedback ins val)
-  `(setter!-mus-increment ,ins ,val))
 
-;; mus-feedforward
-(define-rt-macro (mus-feedforward ins)
-  `(mus-scaler ,ins))
-(define-rt-macro (setter!-mus-feedforward ins val)
+
+;; mus-feedback	
+(define-rt-macro (mus-feedback ins)	
+  `(mus-increment ,ins))	
+(define-rt-macro (setter!-mus-feedback ins val)	
+  `(setter!-mus-increment ,ins ,val))	
+
+;; mus-feedforward	
+(define-rt-macro (mus-feedforward ins)	
+  `(mus-scaler ,ins))	
+(define-rt-macro (setter!-mus-feedforward ins val)	
   `(setter!-mus-scaler ,ins ,val))
 
 
@@ -4575,27 +4581,22 @@ and run simple lisp[4] functions.
 	  <int> num_visitors
 	  <void-*> readin_raw_func
 	  ;;(<float> (<char-*> <int>)) read_func
-	  <int> channel
 	  <char> filename[500])
-
 
   
 	;;;;;; Buffer handling.
 	;;;;;; A buffer is only freed if no one is using it. Perhaps it should never be freed at all?
 	(<struct-buffer-*> buffers NULL)
 
-	(<struct-buffer-*> find_buffer (lambda ((<char-*> filename)
-						(<int> channel))
+	(<struct-buffer-*> find_buffer (lambda ((<char-*> filename))
 					 (let* ((buffer <struct-buffer-*> buffers))
 					   (while (not (== NULL buffer))
-						  (if (and (== buffer->channel channel)
-							   (not (strncmp buffer->filename filename 499)))
+						  (if (not (strncmp buffer->filename filename 499))
 						      (begin
 							buffer->num_visitors++
 							(return buffer)))
 						  (set! buffer buffer->next))
 					   (set! buffer (calloc 1 (sizeof <struct-buffer>)))
-					   (set! buffer->channel channel)
 					   (strncpy buffer->filename filename 499)
 					   (set! buffer->num_visitors 1)
 					   (set! buffer->next buffers)
@@ -4713,17 +4714,16 @@ and run simple lisp[4] functions.
 					 (ret <struct-mus_rt_readin-*> (calloc 1 (sizeof <struct-mus_rt_readin>)))
 					 (scmret <SCM>)
 					 (filename <char-*> (mus_file_name readin))
-					 (channel <int> (mus_channel readin))
-					 (buffer <struct-buffer-*> (find_buffer filename channel)))
-				    
+					 (buffer <struct-buffer-*> (find_buffer filename))
+					 (channel <int> (mus_channel readin)))
 				    ;;(fprintf stderr (string "readin (make): %x\\n") ret)
 				    
-				    (set! ret->readin readin)
+				   (set! ret->readin readin)
 				   (set! ret->scm_readin scm_readin)
 				   (set! ret->readin_func rt_readin)
 
 				   (set! ret->buffer buffer)
-				   ;;(fprintf stderr (string "readin (make), buffer: %x channel: %d\\n") buffer channel)
+				   ;;(fprintf stderr (string "readin (make), buffer: %x\\n") buffer)
 				   
 				   (if (== NULL buffer->buffer)
 				       (let* ((sfinfo <SF_INFO>)
@@ -4979,6 +4979,160 @@ setter!-rt-mus-location/mus_location
 !#
 
 
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;; ALSA-MIDI. ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+(define *rt-midi* #f)
+
+(if *use-alsa-midi*
+    (eval-c "-lasound"
+	    "#include  <alsa/asoundlib.h>"
+	    (public
+	     (<snd_seq_t-*> create_alsa_seq (lambda ((<char-*> client_name)
+						     (<int> isinput))
+					      (<snd_seq_t-*> seq)
+					      (<int> err)
+					      (set! err (snd_seq_open &seq (string "default") SND_SEQ_OPEN_DUPLEX 0))
+					      (if err
+						  (begin
+						    (fprintf stderr (string ,(<-> "Could not open ALSA sequencer, aborting\\n\\n%s\\n\\n"
+										  "Make sure you have configure ALSA properly and that\\n"
+										  "/proc/asound/seq/clients exists and contains relevant\\n"
+										  "devices.\\n"))
+							     (snd_strerror err))
+						    (return NULL)))
+					      (snd_seq_set_client_name seq client_name)
+					      (set! err (snd_seq_create_simple_port seq
+										    "isinput?\"Input\":\"Output\""
+										    "(isinput?SND_SEQ_PORT_CAP_WRITE:SND_SEQ_PORT_CAP_READ)|SND_SEQ_PORT_CAP_SUBS_READ|SND_SEQ_PORT_CAP_SUBS_WRITE"
+										    SND_SEQ_PORT_TYPE_APPLICATION|SND_SEQ_PORT_TYPE_SPECIFIC))
+					      (if err
+						  (begin
+						    (fprintf stderr (string "Could not create ALSA port (%s)\\n") (snd_strerror err))
+						    (snd_seq_close seq)
+						    (return NULL)))
+					      (return seq)))
+	     (run-now
+	      (printf (string "Alsa library loaded.\\n"))))))
+
+
+
+(if *use-alsa-midi*
+    (set! *rt-midi* (create_alsa_seq "rt-midi" 1)))
+
+
+
+(rt-ec-function <void> receive_midi
+		(lambda (,rt-globalvardecl
+			 (<snd_seq_t-*> seq)
+			 ((<void> (<struct-RT_Globals-*> <int> <int> <int>)) func))
+		  (<snd_seq_event_t-*> event)
+		  (if (snd_seq_event_input_pending seq 1)
+		      "ai:
+                      snd_seq_event_input(seq,&event);
+		      switch(event->type){
+    case SND_SEQ_EVENT_NOTEON:
+      //printf(\"Noteon, channel: %d note: %d vol: %d\\n\",event->data.note.channel,event->data.note.note,event->data.note.velocity);
+      func(rt_globals,0x90+event->data.note.channel,event->data.note.note,event->data.note.velocity);
+      break;
+    case SND_SEQ_EVENT_NOTEOFF:
+      //printf(\"Noteoff, channel: %d note: %d vol: %d\\n\",event->data.note.channel,event->data.note.note,event->data.note.velocity);
+      func(rt_globals,0x90+event->data.note.channel,event->data.note.note,0);
+      break;
+    case SND_SEQ_EVENT_KEYPRESS:
+      //printf(\"Keypress, channel: %d note: %d vol: %d\\n\",event->data.note.channel,event->data.note.note,event->data.note.velocity);
+      func(rt_globals,0xa0+event->data.note.channel,event->data.note.note,event->data.note.velocity);
+      break;
+    case SND_SEQ_EVENT_CONTROLLER:
+      //printf(\"Control: %d %d %d\\n\",event->data.control.channel,event->data.control.param,event->data.control.value);
+      func(rt_globals,0xb0+event->data.control.channel,event->data.control.param,event->data.control.value);
+      break;
+    case SND_SEQ_EVENT_PITCHBEND:
+      //printf(\"Pitch: %d %d %d\\n\",event->data.control.channel,event->data.control.param,event->data.control.value);
+      {
+	int val=event->data.control.value + 0x2000;
+	func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
+      }
+      break;
+    case SND_SEQ_EVENT_CHANPRESS:
+      //printf(\"chanpress: %d %d %d\\n\",event->data.control.channel,event->data.control.param,event->data.control.value);
+      func(rt_globals,0xc0+event->data.control.channel,event->data.control.value,0);
+      break;
+    case SND_SEQ_EVENT_PGMCHANGE:
+      // printf(\"pgmchange: %d %d %d\\n\",event->data.control.channel,event->data.control.param,event->data.control.value);
+      func(rt_globals,0xc0+event->data.control.channel,event->data.control.value,0);
+      break;
+    case SND_SEQ_EVENT_START:
+      func(rt_globals,0xfa,0,0);
+      break;
+    case SND_SEQ_EVENT_CONTINUE:
+      func(rt_globals,0xfb,0,0);
+      break;
+    case SND_SEQ_EVENT_STOP:
+      func(rt_globals,0xfc,0,0);
+      break;
+      //case SND_SEQ_EVENT_SETPOS_TICK:
+      //func(rt_globals,0xf,0,0);
+      //break;
+      //case SND_SEQ_EVENT_SETPOS_TIME:
+      //func(rt_globals,0xf,0,0);
+      //break;
+      //case SND_SEQ_EVENT_TEMPO:
+      //func(rt_globals,0xf,0,0);
+      //break;
+      //case SND_SEQ_EVENT_CLOCK:
+      //func(rt_globals,0xf,0,0);
+      //break;
+      //case SND_SEQ_EVENT_TICK: 
+      //func(rt_globals,0xf,0,0);
+      //break;
+    case SND_SEQ_EVENT_RESET:
+      func(rt_globals,0xff,0,0);
+      break;
+    case SND_SEQ_EVENT_SENSING:
+      func(rt_globals,0xfe,0,0);
+      break;
+    default:
+      break;
+    }
+    if (snd_seq_event_input_pending (seq, 0))
+       goto ai;
+")))
+
+
+(<rt-func> 'receive_midi '<void> '(<snd_seq_t-*>
+				   (<void> (<int> <int> <int>)))
+	   #:needs-rt-globals #t)
+
+(<rt-type> '<snd_seq_t-*>
+	   (lambda (seq)
+	     (and (list? seq)
+		  (= 2 (length seq))
+		  (string? (car seq))
+		  (string=? (car seq) "A_POINTER")
+		  (number? (cadr seq))))
+	   #f)
+
+
+(define-rt-macro (receive-midi func)
+  `(receive_midi *rt-midi* ,func))
+
+
+;; Logic partly taken from pd by Miller Puckette.
+(define-rt-macro (midi-to-freq f)
+  `(cond ((<= ,f 0) 0)
+	 ((> ,f 135) 20000)
+	 (else
+	  (* 8.17579891564 (exp (* .0577622650 ,f))))))
+	  
 
 
 
@@ -5440,11 +5594,12 @@ setter!-rt-mus-location/mus_location
 					'(if (< ch 0)
 					     (rt_error rt_globals (string "Channel number for write-bus less than zero")))
 					"/* */")
+				   
 				   (if (>= ch bus->num_channels)
-				       return
-				       (let* ((time <int> rt_globals->time)
-					      (data <struct-rt_bus_data-*> "&bus->data[(bus->num_channels*rt_globals->framenum)+ch]"))
-					 ,(rt-clean-write-bus 'val)))))
+				       return)
+				   (let* ((time <int> rt_globals->time)
+					  (data <struct-rt_bus_data-*> "&bus->data[(bus->num_channels*rt_globals->framenum)+ch]"))
+				     ,(rt-clean-write-bus 'val))))
 
 (<rt-func> 'rt_write_bus '<void> '(<bus> <int> <float>) #:needs-rt-globals #t)
 
@@ -5466,12 +5621,13 @@ setter!-rt-mus-location/mus_location
 					     (rt_error rt_globals (string "Channel number for read-bus less than zero")))
 					"/* */")
 				   (if (>= ch bus->num_channels)
-				       (return 0)
-				       (let* ((time <int> rt_globals->time_before)
-					      (data <struct-rt_bus_data-*> "&bus->data[(bus->num_channels*rt_globals->framenum)+ch]"))
-					 (return (?kolon (< data->last_written_to time)
-							 0
-							 data->val))))))
+				       (return 0))
+
+				   (let* ((time <int> rt_globals->time_before)
+					  (data <struct-rt_bus_data-*> "&bus->data[(bus->num_channels*rt_globals->framenum)+ch]"))
+				     (return (?kolon (< data->last_written_to time)
+						     0
+						     data->val)))))
 (<rt-func> 'rt_read_bus '<float> '(<bus> <int>) #:needs-rt-globals #t)
 
 (rt-ec-function <vct-*> rt_read_bus_vct (lambda (,rt-globalvardecl (<struct-rt_bus-*> bus))
@@ -5515,6 +5671,7 @@ setter!-rt-mus-location/mus_location
 
 
 
+
 ;;(read-bus bus 0)   -> (rt_read_bus bus 0)      ;; returns float
 ;;(read-bus bus 1)   -> (rt_read_bus bus 1)      ;; returns float
 ;;(read-bus bus)     -> (rt_read_bus_vct bus)    ;; returns vct
@@ -5545,7 +5702,6 @@ setter!-rt-mus-location/mus_location
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; Normal
 (define* (make-var #:optional (val 0))
   (make-vct 1 val))
 (define (read-var var)
@@ -5558,15 +5714,16 @@ setter!-rt-mus-location/mus_location
   `(rt-vct-set!/vct-set! ,var 0 ,val))
 
 
-;; Gliding from last value to new value. (only linear glide...)
 (define (make-glide-var default-val maximum-change)
   (vct default-val default-val maximum-change maximum-change))
+
 (define (write-glide-var var val)
   (vct-set! var 2
 	    (if (> val (vct-ref var 0))
 		(vct-ref var 3)
 		(- (vct-ref var 3))))
   (vct-set! var 1 val))
+
 (define (read-glide-var var)
   (let ((a (vct-ref var 0))
 	(b (vct-ref var 1)))
@@ -5581,6 +5738,7 @@ setter!-rt-mus-location/mus_location
 
 (define-rt (write-glide-var var val)
   ,(cons 'begin (cddr (procedure-source write-glide-var))))
+
 (define-rt (read-glide-var var)
   ,(cons 'begin (cddr (procedure-source read-glide-var))))
 
@@ -5644,11 +5802,11 @@ setter!-rt-mus-location/mus_location
 (define-rt-macro (vct-length vct)
   `(rt-vct-length/vct-length ,vct))
 
-(define-rt-macro (rt-vct-legal-pos das-vct pos funcname body)
+(define-rt-macro (rt-vct-legal-pos das-vct pos2 funcname body)
   (if (rt-is-safety?)
-      `(begin (if (< ,pos 0)
+      `(begin (if (< ,pos2 0)
 		  (rt-error ,(<-> "Illegal second argument for " funcname " pos: pos<0.")))
-	      (if (>= ,pos (vct-length ,das-vct))
+	      (if (>= ,pos2 (vct-length ,das-vct))
 		  (rt-error ,(<-> "Illegal second argument for " funcname "vct-legal-pos: pos>=length.")))
 	      ,body)
       ,body))
@@ -5669,8 +5827,8 @@ setter!-rt-mus-location/mus_location
 			 (rt-vct-ref/vct-ref ,das-vct (rt-castint/castint ,pos)))
       (let ((x (rt-gensym)))
 	`(let ((,x ,pos))
-	   `(rt-vct-legal-pos ,das-vct ,pos "vct-ref"
-			      (rt-vct-ref/vct-ref ,das-vct (rt-castint/castint ,x)))))))
+	   (rt-vct-legal-pos ,das-vct ,pos "vct-ref"
+			     (rt-vct-ref/vct-ref ,das-vct (rt-castint/castint ,x)))))))
 
 
 (define-rt-macro (vct . rest)
@@ -5889,7 +6047,6 @@ setter!-rt-mus-location/mus_location
        (if (not term)
 	   (return #f))
 
-       ;;(c-display term)
        (rt-print "*RT: Inserting types" term)
        
        (set! insert-types-res (rt-insert-types term renamed-vars))
@@ -6052,6 +6209,9 @@ setter!-rt-mus-location/mus_location
 		   ;;  <int> errorvarnum)
 
 		  "#include <jack/ringbuffer.h>"
+		  ,(if *use-alsa-midi*
+		       "#include  <alsa/asoundlib.h>"
+		       "/* */")
 		  
 		  (shared-struct <RT_Event>)
 		  (shared-struct <RT_Procfunc>)
@@ -6898,31 +7058,6 @@ setter!-rt-mus-location/mus_location
 (rt-funcall a)
 
 
-(define fm-bus (make-bus 1))
-
-(definstrument (envset! orig val tid)
-  (let ((e (make-env `(0 ,orig 1 ,val) :duration tid)))
-    (<rt-play> (lambda ()
-                 (write-bus fm-bus (env e))))))
-
-(definstrument (tut freq)
-  (let* ((car (make-oscil :frequency freq))
-	 (amp 0.04)
-	 (ret (<rt-play> (lambda ()
-			   (out (* (oscil car (read-bus fm-bus 0))
-				   amp))))))
-    (-> ret add-method 'freq (lambda ()
-			       freq))
-    ret))
-			 
-
-(define i (tut 120.0))
-
-(envset! (-> i freq) 10.0 3.0)
-
-(-> i stop)
-(rte-silence!)
-(rte-info)
 
 !#
 

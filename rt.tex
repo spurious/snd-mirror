@@ -763,8 +763,25 @@ with the functions \scheme|read-var| and \scheme|write-var|:
 
 (API might change)
 
+\scheme|make-glide-var|, \scheme|read-glide-var| and \scheme|write-glide-var| are functions
+which interpolates the read values to avoid large jumps. Check out source code for syntax.
 
 
+
+
+
+\subsection{Midi}
+
+Receiving alsa midi is supported. Check out rt-examples.scm for a quite large example.
+If you don't want alsa-midi (for example if you're running osx), set \scheme|*use-alsa-midi*|
+to \scheme|#f| before loading rt-compiler.scm.
+
+\begin{schemedisplay}
+(<rt-play> (lambda ()
+              (receive-midi (lambda (control data1 data2)
+                               (declare (<int> control data1 data2))
+                               (printf "gakk! %x %x %x\\n" control data1 data2)))))
+\end{schemedisplay}
 
 
 
@@ -1688,6 +1705,8 @@ For now, you can order the execution by using the fact that instances are always
 \newpage
 \section{History}
 
+08.07.2005: Various bugs fixed, added gliding shared vars and midi. Changed behaviour for read-bus and write-bus.
+
 15.06.2005: Added \scheme|make-ladspa-gui|.
 
 09.06.2005: Redefined \scheme|define-rt| to define rt-functions instead of guile-functions.
@@ -1708,6 +1727,7 @@ faster in some situations)
 
 20.05.2005: Added \scheme|vct|, \scheme|make-vct|, and the bus-system.
 
+%%\section{Emacs}
 
 \newpage
 \section{Notes}

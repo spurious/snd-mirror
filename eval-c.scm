@@ -9,7 +9,7 @@ http://www.notam02.no
 
 This is code to evaluate prefix-notated C-code on the fly with guile.
 See gui.scm, ladspa.scm, rt-compile.scm, rt-engine.scm and snd_conffile.scm
-or examples of use.
+for examples of use.
 
 
 
@@ -607,12 +607,12 @@ Usually just "", but can be "-lsnd" or something if needed.
    ((number? term) (<-> (number->string term) " "))
    ((symbol? term) (<-> (symbol->string term) " "))
    ((char? term) (<-> (string term) " "))
-
+   
    ((list? term)
     (if (string? (car term))
 	(eval-c-eval-funccall term)
 	(let ((type (car term)))
-
+	  
 	  (if (list? type)
 
 	      ;; ((<int> (<int> <int>)) funcname [funcpointer/lambda/NULL])
@@ -629,7 +629,7 @@ Usually just "", but can be "-lsnd" or something if needed.
 	      
 	      ;; (<type> ...) / (func ...)
 	      (if (not (eval-c-symbol-is-type type))
-
+		  
 		  (eval-c-macro-result term)
 		  
 		  ;; (<type> ....)
@@ -673,18 +673,39 @@ Usually just "", but can be "-lsnd" or something if needed.
 				       (eval-c-parse (caddr term)))
 				  
 				  ;; (<int> a (lambda ...))
-				  (<-> (if (> eval-c-level 0)
-					   "static "
-					   "")
-				       (apply <-> (map eval-c-parse (cons (eval-c-get-propertype type)
-									  (cons (eval-c-cify-var varname)
-										(cddr term))))))))))))))))))
+				  (let* ((funcdecl (caddr term))
+					 (lambdaname (car funcdecl))
+					 (typedefs "")
+					 (funcvars (map (lambda (v)
+							  (let ((type (car v))
+								(name (cadr v)))
+							    (if (list? type)
+								(let ((typename (eval-c-get-unique-name)))
+								  (set! typedefs (<-> typedefs
+										      "typedef " (eval-c-etype->ctype (car type)) " (*" typename ")("
+										      (if (not (null? (cadr type)))
+											  (<-> (eval-c-etype->ctype (car (cadr type)))
+											       (apply <-> (map (lambda (t)
+														 (<-> "," (eval-c-etype->ctype t)))
+													       (cdr (cadr type))))))
+										      ");\n"))
+								  (list (eval-c-ctype->etype typename) name))
+								v)))
+							(cadr funcdecl)))
+					 (funcbody (cddr funcdecl)))
+				    (<-> typedefs
+					 (if (> eval-c-level 0)
+					     "static "
+					     "")
+					 (apply <-> (map eval-c-parse (cons (eval-c-get-propertype type)
+									    (cons (eval-c-cify-var varname)
+										  `((,lambdaname ,funcvars
+												 ,@funcbody))))))))))))))))))))
   
 #!
-(eval-c-parse '(<int> (define (ai (<int> avar)) (return 2))))
 (eval-c-parse '(<int> ai (lambda () (return 2))))
-(eval-c-parse '(define (ai (<int> avar)) (return 2)))
-
+(eval-c-parse '(<void> gakk (lambda (((<void> (<int>)) func)) (return 2))))
+(eval-c-parse '(<void> gakk (lambda ((<int> func)) (return 2))))
 !#
 
 (define (eval-c-parse-line term)
@@ -1584,7 +1605,7 @@ int fgetc (FILE
     (close fd)
     (if eval-c-verbose
 	(c-display "Compiling" sourcefile))
-    (system (<-> *eval-c-compiler* " -O3 -shared -o " libfile " " sourcefile " "
+    (system (<-> *eval-c-compiler* " -O3 -fPIC -shared -o " libfile " " sourcefile " "
 		 (if (string=? *eval-c-compiler* "icc")
 		     "-L/opt/intel_cc_80/lib /opt/intel_cc_80/lib/libimf.a"
 		     (<-> "-Wall " (if (getenv "CFLAGS") (getenv "CFLAGS") "") " " (if (getenv "LDFLAGS") (getenv "LDFLAGS") "") " "))

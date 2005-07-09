@@ -118,10 +118,13 @@
 ;;; GUI examples
 
 (definstrument (make-osc-gui)
-  (letrec* ((osc (make-oscil #:frequency 440))
-	    (vol 0.4)
+  (letrec* ((osc (make-oscil #:frequency 0))
+	    (freq (make-glide-var 400 1))
+	    (das-vol 0.4)
+	    (vol (make-glide-var das-vol 0.001))
 	    (instrument (<rt-play> (lambda ()
-				     (out (* vol (oscil osc))))))
+				     (out (* (read-glide-var vol)
+					     (oscil osc (hz->radians (read-glide-var freq))))))))
 	    (exit (lambda ()
 		    (-> instrument stop)
 		    (-> d hide)))
@@ -129,11 +132,13 @@
 			 "Close" exit
 			 "Stop" (<- instrument stop)
 			 "Start" (<- instrument play))))
-    (<slider> d "Frequency" 50 440 20000 (lambda (val) 
-					   (set! (mus-frequency osc) val))
+    (<slider> d "Frequency" 50 440 20000 (lambda (val)
+					   (write-glide-var freq val))
+;;					   (set! (mus-frequency osc) val))
 	      1)
-    (<slider> d "Amplitude" 0 vol 2.0 (lambda (val) 
-					(set! (-> instrument vol) val))
+    (<slider> d "Amplitude" 0 das-vol 2.0 (lambda (val) 
+					(write-glide-var vol val))
+;;					(set! (-> instrument vol) val))
 	      1000)
     (-> d show)))
 
@@ -236,6 +241,15 @@
 				    (+ 1 pan))))))))))
 
 
+(definstrument (play-once-st filename)
+  (let* ((rs-A (make-readin #:file filename #:channel 0))
+         (rs-B (make-readin #:file filename #:channel 1)))
+    (<rt-play> (lambda ()
+                 (if (>= (mus-location rs-A) (mus-length rs-A))
+                     (remove-me)
+                     (out (vct (readin rs-A)
+                               (readin rs-B))))))))
+
 
 #!
 (define filename "/home/kjetil/cemb2.wav")
@@ -252,6 +266,9 @@
 (-> p stop)
 
 (rte-silence!)
+
+(define p (play-once-st filename))
+
 
 !#
 
@@ -484,10 +501,16 @@ This version of the fm-violin assumes it is running within with-sound (where *ou
 ;; Ladspa
 
 (definstrument (ladspatest)
-  (let ((am-pitchshift (make-ladspa "am_pitchshift_1433" "amPitchshift")))
+  ;;(let ((am-pitchshift (make-ladspa "am_pitchshift_1433" "amPitchshift")))
+  (let ((am-pitchshift (make-ladspa "mbeq_1197" "mbeq"))
+	(am-pitchshift2 (make-ladspa "mbeq_1197" "mbeq")))
     (<rt-play> (lambda ()
-		 (out (ladspa-run am-pitchshift
-				  (vct (in 0))))))))
+		 (out (vct (vct-ref (ladspa-run am-pitchshift
+						(vct (in 0)))
+				    0)
+			   (vct-ref (ladspa-run am-pitchshift2
+						(vct (in 1)))
+				    0)))))))
 
 
 
@@ -495,16 +518,18 @@ This version of the fm-violin assumes it is running within with-sound (where *ou
 (define l (ladspatest))
 (ladspa-set! (-> l am-pitchshift) 0 1.5)
 (make-ladspa-gui (-> l am-pitchshift))
+(make-ladspa-gui (-> l am-pitchshift2))
 (-> l stop)
 (rte-info)
-
+(rte-silence!)
+(rte-restart)
 !#
 
 
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Risset
+;; Shepard tones
 
 (definstrument (risset startpitch endpitch num-oscs loop-duration)
   (define starttime (+ 1 (rte-time))) ;; Ensure all starts simultaniously by scheduling one second into the future.
@@ -538,3 +563,61 @@ This version of the fm-violin assumes it is running within with-sound (where *ou
 (rte-restart)
 (rte-info)
 !#
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; A hyper-simple alsa midi softsynth.
+;; (Lack of list-creation functions makes it a bit unelegant and hard to extend...)
+
+(definstrument (midisoftsynth num-voices)
+  (let* ((num-playing 0)
+	 (freqs (make-vct (1+ num-voices)))
+	 (amps (make-vct (1+ num-voices)))
+	 (oscs (apply vector (map (lambda (i) (make-oscil #:frequency 0)) (iota (1+ num-voices))))))
+    (<rt-play> (lambda ()
+		 (receive-midi (lambda (control data1 data2)
+				 (declare (<int> control data1 data2))
+				 (set! control (logand #xf0 control))
+				 ;;(printf "gakk! %x %x %x\\n" control data1 data2)
+				 (if (and (< num-playing num-voices)
+					  (= control #x90)
+					  (> data2 0))
+				     (begin
+				       (vct-set! freqs num-playing data1)
+				       (vct-set! amps num-playing (/ data2 #x7f))
+				       (set! (mus-phase (vector-ref oscs num-playing)) 0)
+				       (set! num-playing (1+ num-playing)))
+				     (if (or (= control #x80)
+					     (and (= control #x90)
+						  (= data2 0)))
+					 (let ((foundit 0))
+					   (range i 0 num-playing
+						  (if (and (not foundit)
+							   (= (vct-ref freqs i) data1))
+						      (begin
+							(set! foundit 1)
+							(set! num-playing (1- num-playing))))
+						  (if foundit
+						      (begin
+							(set! (mus-phase (vector-ref oscs i))
+							      (mus-phase (vector-ref oscs (1+ i))))
+							(vct-set! freqs i (vct-ref freqs (1+ i)))
+							(vct-set! amps i (vct-ref amps (1+ i)))))))))))
+		 (range i 0 num-playing
+			(out (* (oscil (vector-ref oscs i)
+				       (hz->radians (midi-to-freq (vct-ref freqs i))))
+				(vct-ref amps i))))))))
+
+
+#!
+(define i (midisoftsynth 128))
+
+(rte-info)
+(rte-silence!)
+!#
+
+(begin *rt-midi*)
+
+
