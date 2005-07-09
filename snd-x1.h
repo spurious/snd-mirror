@@ -22,9 +22,7 @@ void save_help_dialog_state(FILE *fd);
 
 /* -------- snd-xerror.c -------- */
 
-void add_to_error_history(char *msg, bool popup);
 void post_error_dialog(char *msg);
-void show_snd_errors(void);
 widget_t post_it(const char *subject, const char *str);
 void save_post_it_dialog_state(FILE *fd);
 
@@ -491,7 +489,6 @@ void cleanup_recording (void);
 widget_t snd_record_file(void);
 bool record_dialog_is_active(void);
 void make_recorder_icons_transparent_again(Pixel old_color, Pixel new_color);
-void recorder_error(char *msg);
 void reflect_amp_control_bounds_change_in_recorder(void);
 void g_init_gxrec(void);
 

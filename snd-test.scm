@@ -44607,14 +44607,6 @@ EDITS: 1
 			      (click-button (XmMessageBoxGetChild envd XmDIALOG_CANCEL_BUTTON)) (force-event)
 			      (close-sound ind2))))))
 		  
-		  ;; ---------------- error dialog ----------------
-		  (let ((errord (list-ref (dialog-widgets) 3)))
-		    (XtManageChild errord)
-		    (XtSetKeyboardFocus errord (XmMessageBoxGetChild errord XmDIALOG_OK_BUTTON))
-		    (click-button (XmMessageBoxGetChild errord XmDIALOG_OK_BUTTON)) (force-event)
-		    (if (XtIsManaged errord)
-			(snd-display ";why is error dialog alive?")))
-		  
 		  ;; ---------------- yes-or-no dialog ----------------
 		  (if (provided? 'snd-debug)
 		      (let ((old-val (with-background-processes)))

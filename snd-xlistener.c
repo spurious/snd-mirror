@@ -623,7 +623,7 @@ static void Listener_Backup(Widget w, XEvent *event, char **str, Cardinal *num)
 }
 
 #define NUM_ACTS 20
-static XtActionsRec acts[] = {
+static XtActionsRec acts[NUM_ACTS] = {
   {"no-op", No_op},
   {"activate-keyboard", Activate_keyboard},
   {"yank", Yank},

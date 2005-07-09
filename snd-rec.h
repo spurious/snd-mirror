@@ -102,6 +102,8 @@ void recorder_characterize_devices(int devs, int output_devices);
 void recorder_set_vu_in_val(int chan, mus_sample_t val);
 void recorder_set_vu_out_val(int chan, mus_sample_t val);
 
+void recorder_error(char *msg);
+
 void sensitize_control_buttons(void);
 void unsensitize_control_buttons(void);
 void recorder_start_output_file(const char *comment);

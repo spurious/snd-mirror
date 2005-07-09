@@ -11,13 +11,14 @@ enum {
       W_sx, W_zx,
     W_graph,
     W_gzy, W_gsy,
-    W_up_ev, W_down_ev
+    W_up_ev, W_down_ev,
+    NUM_CHAN_WIDGETS
 };
 
-enum {W_zy_adj, W_zx_adj, W_sy_adj, W_sx_adj, W_gzy_adj, W_gsy_adj};
+enum {W_zy_adj, W_zx_adj, W_sy_adj, W_sx_adj, W_gzy_adj, W_gsy_adj, NUM_CHAN_ADJS};
 
-#define NUM_CHAN_WIDGETS 16
-#define NUM_CHAN_ADJS 6
+/* #define NUM_CHAN_WIDGETS 16 */
+/* #define NUM_CHAN_ADJS 6 */
 
 GtkWidget *channel_graph(chan_info *cp)      {return(cp->cgx->chan_widgets[W_graph]);}
 GtkWidget *channel_sx(chan_info *cp)         {return(cp->cgx->chan_widgets[W_sx]);}

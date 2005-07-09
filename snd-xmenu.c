@@ -2,6 +2,8 @@
 #include "snd-menu.h"
 #include <X11/cursorfont.h>
 
+/* TODO: bounds check or dynamicize all statically-allocated arrays */
+
 void set_menu_label(Widget w, const char *label) {if (w) set_button_label(w, label);}
 
 /* -------------------------------- FILE MENU -------------------------------- */
@@ -89,7 +91,6 @@ static void view_listener_callback(Widget w, XtPointer info, XtPointer context) 
 #endif
 static void view_mix_dialog_callback(Widget w, XtPointer info, XtPointer context) {make_mix_dialog();}
 static void view_track_dialog_callback(Widget w, XtPointer info, XtPointer context) {make_track_dialog();}
-static void view_error_history_callback(Widget w, XtPointer info, XtPointer context) {show_snd_errors();}
 static void view_zero_callback(Widget w, XtPointer info, XtPointer context){set_show_y_zero((!(show_y_zero(ss))));}
 static void view_cursor_callback(Widget w, XtPointer info, XtPointer context){set_verbose_cursor((!(verbose_cursor(ss))));}
 
@@ -497,11 +498,6 @@ Widget add_menu(void)
   view_just_x_axis_unlabelled_menu = XtCreateManagedWidget(_("just x axis, no label"), xmPushButtonWidgetClass, view_axes_menu, main_args, main_n);
   XtAddCallback(view_just_x_axis_unlabelled_menu, XmNactivateCallback, view_just_x_axis_unlabelled_callback, NULL);  
   if (show_axes(ss) == SHOW_X_AXIS_UNLABELLED) set_sensitive(view_just_x_axis_unlabelled_menu, false);
-
-
-  view_error_history_menu = XtCreateManagedWidget(_("Error History"), xmPushButtonWidgetClass, view_menu, main_args, main_n);
-  XtAddCallback(view_error_history_menu, XmNactivateCallback, view_error_history_callback, NULL);
-
 
 
   /* OPTIONS MENU */

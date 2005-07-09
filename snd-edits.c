@@ -8348,7 +8348,6 @@ void check_saved_temp_file(const char *type, XEN filename, XEN date_and_length)
 	      strftime(old_time_buf, TIME_STR_SIZE, STRFTIME_FORMAT, localtime(&old_time));
 	      strftime(new_time_buf, TIME_STR_SIZE, STRFTIME_FORMAT, localtime(&new_time));
 	    }
-	  snd_warning("Saved temp file mismatch!  See error history for details");
 	  if (old_time != new_time)
 	    {
 	      if (old_bytes != new_bytes)
@@ -8364,11 +8363,8 @@ void check_saved_temp_file(const char *type, XEN filename, XEN date_and_length)
 	  else buf = mus_format("Saved %s temp file %s: original length: " OFF_TD "bytes, current: " OFF_TD,
 				 type, file,
 				 old_bytes, new_bytes);
-	  if (buf)
-	    {
-	      add_to_error_history(buf, false);
-	      FREE(buf);
-	    }
+	  snd_warning(buf);
+	  FREE(buf);
 	}
     }
 }

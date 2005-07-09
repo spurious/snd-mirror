@@ -457,6 +457,7 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
     string_to_stdout(name_buf);
   else
     {
+      /* TODO: perhaps just append to listener even if it's closed */
       if (listener_height() > 5)
 	listener_append_and_prompt(name_buf);
       else 
@@ -466,7 +467,6 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
 	      sp = ss->mx_sp;
 	      clear_minibuffer_prompt(sp);
 	      report_in_minibuffer(sp, name_buf);
-	      add_to_error_history(name_buf, false);
 	    }
 	  else snd_error(name_buf);
 	}

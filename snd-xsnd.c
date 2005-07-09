@@ -21,10 +21,11 @@ enum {W_pane,
       W_name, W_name_icon, W_info_label, W_info,
       W_info_sep,
       W_play, W_sync, W_unite,
-      W_control_panel
+      W_control_panel,
+      NUM_SND_WIDGETS
 };
 
-#define NUM_SND_WIDGETS 45
+/* #define NUM_SND_WIDGETS 45 */
 
 Widget unite_button(snd_info *sp) {return(sp->sgx->snd_widgets[W_unite]);}
 Widget filter_graph(snd_info *sp) {return(sp->sgx->snd_widgets[W_filter_env]);}
@@ -2448,7 +2449,7 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
 	  FREE(title);
 	  if (!XtIsManaged(sx->dialog)) XtManageChild(sx->dialog);
 	}
-      for (i = 0; i < NUM_SND_WIDGETS; i++)
+      for (i = 0; i < NUM_SND_WIDGETS - 1; i++)
 	if ((sw[i]) && (!XtIsManaged(sw[i]))) 
 	  XtManageChild(sw[i]);
       for (k = 0; k < nchans; k++) 

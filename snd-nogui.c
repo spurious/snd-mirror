@@ -1,6 +1,7 @@
 #include "snd.h"
 
 void reflect_amp_control_bounds_change_in_recorder(void) {}
+void recorder_error(char *msg) {}
 void snd_help_back_to_top(void) {}
 color_t get_in_between_color(color_t fg, color_t bg) {return(0);}
 void set_find_dialog_label(const char *str) {}
@@ -17,7 +18,6 @@ widget_t post_it(const char *subject, const char *str) {fprintf(stdout, str); re
 void save_post_it_dialog_state(FILE *fd) {}
 void reflect_just_sounds(void) {}
 void save_file_dialog_state(FILE *fd) {}
-void add_to_error_history(char *msg, bool popup) {}
 void post_error_dialog(char *msg) {}
 bool snd_yes_or_no_p(char *format, ...) {return(false);}
 void draw_line (axis_context *ax, int x0, int y0, int x1, int y1) {}
@@ -220,7 +220,6 @@ void lock_recording_audio(void) {}
 void unlock_recording_audio(void) {}
 widget_t snd_record_file(void) {return(0);}
 bool record_dialog_is_active(void) {return(false);}
-void recorder_error(char *msg) {}
 widget_t make_open_file_dialog(bool read_only, bool managed) {return(0);}
 widget_t make_mix_file_dialog(bool managed) {return(0);}
 void clear_listener(void) {}

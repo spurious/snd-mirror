@@ -513,7 +513,6 @@ void report_in_minibuffer_and_save(snd_info *sp, const char *format, ...)
   va_end(ap);
   set_minibuffer_string(sp, buf, true);
   sp->minibuffer_on = MINI_REPORT;
-  add_to_error_history(buf, false);
   FREE(buf);
   /* leave sp->minibuffer off so that keyboard_command doesn't clear it */
 }

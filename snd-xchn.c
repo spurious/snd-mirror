@@ -1,9 +1,10 @@
 #include "snd.h"
 
 enum {W_top, W_form, W_main_window, W_edhist, W_wf_buttons, W_f, W_w, W_left_scrollers, W_zy, W_sy,
-      W_bottom_scrollers, W_sx, W_zx, W_graph, W_gzy, W_gsy
+      W_bottom_scrollers, W_sx, W_zx, W_graph, W_gzy, W_gsy,
+      NUM_CHAN_WIDGETS
 };
-#define NUM_CHAN_WIDGETS 16
+/* #define NUM_CHAN_WIDGETS 16 */
 #define DEFAULT_EDIT_HISTORY_WIDTH 1
 
 Widget channel_main_pane(chan_info *cp)
@@ -1092,7 +1093,7 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Wid
       XtVaSetValues(cw[W_main_window], XmNpaneMinimum, chan_y, NULL);
       if (cw[W_edhist]) XtVaSetValues(XtParent(cw[W_edhist]), XmNpaneMaximum, 1, NULL);
       if ((sp->channel_style != CHANNELS_COMBINED) || (channel == 0))
-	for (i = 0; i < NUM_CHAN_WIDGETS; i++)
+	for (i = 0; i < NUM_CHAN_WIDGETS - 1; i++)
 	  if (cw[i])
 	    if  (!XtIsManaged(cw[i])) 
 	      XtManageChild(cw[i]);
@@ -1287,7 +1288,7 @@ void change_channel_style(snd_info *sp, channel_style_t new_style)
 		      cp->tcgx = NULL;
 		      cx = cp->cgx;
 		      cw = cx->chan_widgets;
-		      for (j = 0; j < NUM_CHAN_WIDGETS; j++)
+		      for (j = 0; j < NUM_CHAN_WIDGETS - 1; j++)
 			if ((cw[j]) && (!XtIsManaged(cw[j]))) 
 			  XtManageChild(cw[j]);
 		      XmToggleButtonSetState(cw[W_f], (Boolean)(cp->graph_transform_p), false);

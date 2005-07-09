@@ -1,89 +1,13 @@
 #include "snd.h" 
 
-/* error handlers -- these include the error dialog (in case no sound is active) and an error history list */
-
-/* TODO: remove built-in error history (menu item etc): add as Scheme snd-error-hook example
- */
-
-static GtkWidget *snd_error_dialog = NULL;
-static GtkWidget *snd_error_history = NULL;
-
-static void dismiss_snd_error(GtkWidget *w, gpointer context)
-{
-  gtk_widget_hide(snd_error_dialog);
-}
-
-static gint delete_snd_error(GtkWidget *w, GdkEvent *event, gpointer context)
-{
-  gtk_widget_hide(snd_error_dialog);
-  return(true);
-}
-
-static void create_snd_error_dialog(bool popup)
-{
-  GtkWidget *ok_button;
-  snd_error_dialog = snd_gtk_dialog_new();
-  SG_SIGNAL_CONNECT(snd_error_dialog, "delete_event", delete_snd_error, NULL);
-  gtk_window_set_title(GTK_WINDOW(snd_error_dialog), _("Error"));
-  sg_make_resizable(snd_error_dialog);
-  gtk_container_set_border_width (GTK_CONTAINER(snd_error_dialog), 10);
-  gtk_window_resize(GTK_WINDOW(snd_error_dialog), 400, 300);
-  gtk_widget_realize(snd_error_dialog);
-
-  ok_button = gtk_button_new_from_stock(GTK_STOCK_OK);
-  gtk_widget_set_name(ok_button, "quit_button");
-
-  gtk_box_pack_start(GTK_BOX(GTK_DIALOG(snd_error_dialog)->action_area), ok_button, false, true, 20);
-  SG_SIGNAL_CONNECT(ok_button, "clicked", dismiss_snd_error, NULL);
-  gtk_widget_show(ok_button);
-  snd_error_history = make_scrolled_text(GTK_DIALOG(snd_error_dialog)->vbox, false, NULL, NULL);
-  if (popup) gtk_widget_show(snd_error_dialog);
-  set_dialog_widget(ERROR_DIALOG, snd_error_dialog);
-}
-
-void add_to_error_history(char *msg, bool popup)
-{
-#if HAVE_STRFTIME
-  char *tim, *buf;
-  time_t ts;
-#endif
-  int pos;
-  if (!snd_error_dialog) 
-    create_snd_error_dialog(popup);
-  else
-    if ((popup) && (!(GTK_WIDGET_VISIBLE(snd_error_dialog))))
-      gtk_widget_show(snd_error_dialog);
-  pos = gtk_text_buffer_get_char_count(gtk_text_view_get_buffer(GTK_TEXT_VIEW(snd_error_history)));
-  if (pos > 0) sg_set_cursor(snd_error_history, pos + 1);
-#if HAVE_STRFTIME
-  tim = (char *)CALLOC(TIME_STR_SIZE, sizeof(char));
-  buf = (char *)CALLOC(TIME_STR_SIZE, sizeof(char));
-  time(&ts);
-  strftime(tim, TIME_STR_SIZE, "%H:%M:%S", localtime(&ts));
-  sprintf(buf, "\n[%s] ", tim);
-  sg_text_insert(snd_error_history, buf);
-  FREE(buf);
-  FREE(tim);
-#endif
-  sg_text_insert(snd_error_history, msg);
-}
 
 void post_error_dialog(char *msg)
 {
-  if (!snd_error_dialog) create_snd_error_dialog(true); else raise_dialog(snd_error_dialog);
-  add_to_error_history(msg, true);
+  post_it("Error", msg);
 }
 
-void show_snd_errors(void)
-{
-  if (snd_error_dialog)
-    {
-      if (GTK_WIDGET_VISIBLE(snd_error_dialog))
-	raise_dialog(snd_error_dialog);
-      gtk_widget_show(snd_error_dialog);
-    }
-  else post_error_dialog("");
-}
+
+/* ---------------- yes or no ---------------- */
 
 static bool yes_or_no = false;
 static GtkWidget *yes_or_no_dialog = NULL;
@@ -209,6 +133,7 @@ static void create_post_it_monolog(void)
 
 widget_t post_it(const char *subject, const char *str)
 {
+  if ((ss == NULL) || (ss->sgx == NULL)) return(NULL);
   if (!(post_it_dialog)) create_post_it_monolog(); else raise_dialog(post_it_dialog);
   gtk_window_set_title(GTK_WINDOW(post_it_dialog), subject);
   gtk_text_buffer_set_text(gtk_text_view_get_buffer(GTK_TEXT_VIEW(post_it_text)), "", 0);

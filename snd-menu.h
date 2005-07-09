@@ -34,11 +34,9 @@ enum {m_menu,
             v_x_axis_seconds_menu, v_x_axis_samples_menu, v_x_axis_percentage_menu, v_x_axis_beats_menu, v_x_axis_measures_menu,
           v_axes_menu, v_axes_cascade_menu,
             v_no_axes_menu, v_all_axes_menu, v_just_x_axis_menu, v_all_axes_unlabelled_menu, v_just_x_axis_unlabelled_menu,
-          v_error_history_menu,
-          v_sep2_menu
+      v_sep2_menu,
+      NUM_MENU_WIDGETS
 };
-
-#define NUM_MENU_WIDGETS 106
 
 #define main_menu (ss->sgx->mw[m_menu])
 
@@ -150,12 +148,11 @@ enum {m_menu,
 #define view_just_x_axis_menu (ss->sgx->mw[v_just_x_axis_menu])
 #define view_all_axes_unlabelled_menu (ss->sgx->mw[v_all_axes_unlabelled_menu])
 #define view_just_x_axis_unlabelled_menu (ss->sgx->mw[v_just_x_axis_unlabelled_menu])
-#define view_error_history_menu (ss->sgx->mw[v_error_history_menu])
 #define view_sep2_menu (ss->sgx->mw[v_sep2_menu])
 
-enum {W_pop_play, W_pop_undo, W_pop_redo, W_pop_save, W_pop_equalize_panes, W_pop_info, W_pop_apply, W_pop_reset};
-
-#define NUM_POPUP_WIDGETS 8
+enum {W_pop_play, W_pop_undo, W_pop_redo, W_pop_save, W_pop_equalize_panes, 
+      W_pop_info, W_pop_apply, W_pop_reset, 
+      NUM_POPUP_WIDGETS};
 
 #define popup_play_menu (ss->sgx->pw[W_pop_play])
 #define popup_undo_menu (ss->sgx->pw[W_pop_undo])

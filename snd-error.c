@@ -110,7 +110,6 @@ void snd_error(char *format, ...)
 #endif
 	  {
 	    snd_info *sp;
-	    add_to_error_history(snd_error_buffer, true);
 	    sp = any_selected_sound();
 	    if ((direct_snd_error_call) ||
 		(ss->catch_exists == 0))

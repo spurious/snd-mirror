@@ -103,7 +103,6 @@ static void view_listener_callback(GtkWidget *w, gpointer info)
 
 static void view_mix_dialog_callback(GtkWidget *w, gpointer info) {make_mix_dialog();}
 static void view_track_dialog_callback(GtkWidget *w, gpointer info) {make_track_dialog();}
-static void view_error_history_callback(GtkWidget *w, gpointer info) {show_snd_errors();}
 static void view_region_callback_1(GtkWidget *w, gpointer info) {view_region_callback(w, info);}
 static void view_orientation_callback_1(GtkWidget *w, gpointer info) {view_orientation_callback(w, info);}
 static void view_color_callback_1(GtkWidget *w, gpointer info) {view_color_callback(w, info);}
@@ -618,13 +617,6 @@ GtkWidget *add_menu(void)
   gtk_menu_shell_append(GTK_MENU_SHELL(view_axes_cascade_menu), view_just_x_axis_unlabelled_menu);
   gtk_widget_show(view_just_x_axis_unlabelled_menu);
   SG_SIGNAL_CONNECT(view_just_x_axis_unlabelled_menu, "activate", view_just_x_axis_unlabelled_callback, NULL);
-
-
-  view_error_history_menu = gtk_menu_item_new_with_label(_("Error History"));
-  ml[v_error_history_menu] = _("Error History");
-  gtk_menu_shell_append(GTK_MENU_SHELL(view_cascade_menu), view_error_history_menu);
-  gtk_widget_show(view_error_history_menu);
-  SG_SIGNAL_CONNECT(view_error_history_menu, "activate", view_error_history_callback, NULL);
 
 
 

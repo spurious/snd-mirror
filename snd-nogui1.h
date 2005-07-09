@@ -15,7 +15,6 @@ void save_help_dialog_state(FILE *fd);
 
 /* -------- snd-xerror.c -------- */
 
-void add_to_error_history(char *msg, bool popup);
 void post_error_dialog(char *msg);
 bool snd_yes_or_no_p(char *format, ...);
 
@@ -60,7 +59,6 @@ bool color_dialog_is_active(void);
 bool orientation_dialog_is_active(void);
 void reflect_spectro(void);
 void set_with_gl(bool val);
-void recorder_error(char *msg);
 
 
 /* -------- snd-xfind.c -------- */

@@ -1226,6 +1226,9 @@ To use the defaults, click the 'Reset' button.",
 }
 
 /* TODO: completion popup should go away after choice, or maybe be embedded as pull down menu */
+/*    this could be handled locally like errors -- local pulldown menu (with continuations etc)
+ */
+
 /*  appears to be Name_completion in snd-xlistener, so triggered via XtAction TAB (different from Listener_completion)
     add_completer:
     snd-xfile.c:    add_completer_to_textfield(wtmp, add_completer_func(filename_completer));

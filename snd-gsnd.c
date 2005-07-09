@@ -9,13 +9,18 @@ enum {W_pane, W_pane_box, W_control_panel,
       W_contrast_form, W_contrast, W_contrast_event, W_contrast_label, W_contrast_number, W_contrast_button,
       W_reverb_form, W_revscl, W_revscl_event, W_revscl_label, W_revscl_number,
       W_revlen, W_revlen_event, W_revlen_label, W_revlen_number, W_reverb_button,
-      W_filter_form, W_filter_label, W_filter_order, W_filter_env, W_filter, W_filter_button, W_filter_dB, W_filter_hz, W_filter_frame,
+      W_filter_form, W_filter_label, W_filter_order, W_filter_env, W_filter, W_filter_button, 
+      W_filter_dB, W_filter_hz, W_filter_frame,
+      NUM_SND_WIDGETS
 };
 
-enum {W_amp_adj, W_speed_adj, W_contrast_adj, W_expand_adj, W_revscl_adj, W_revlen_adj, W_filter_adj};
+enum {W_amp_adj, W_speed_adj, W_contrast_adj, W_expand_adj, W_revscl_adj, 
+      W_revlen_adj, W_filter_adj,
+      NUM_SND_ADJS
+};
 
-#define NUM_SND_WIDGETS 57
-#define NUM_SND_ADJS 7
+/* #define NUM_SND_WIDGETS 57 */
+/* #define NUM_SND_ADJS 7 */
 
 GtkWidget *unite_button(snd_info *sp)   {return(sp->sgx->snd_widgets[W_unite]);}
 GtkWidget *filter_graph(snd_info *sp)   {return(sp->sgx->snd_widgets[W_filter_env]);}

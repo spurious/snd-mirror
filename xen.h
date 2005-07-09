@@ -1374,6 +1374,7 @@ XEN xen_rb_create_hook(char *name, int arity, char *help);
 
 typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
 
+XEN rb_properties(void);
 XEN rb_property(XEN obj, XEN prop);
 XEN rb_set_property(XEN obj, XEN prop, XEN val);
 XEN rb_documentation(XEN name);

@@ -30,7 +30,6 @@
  *         similarly for Update
  *         This could be in the sound's pixmap area except that none of the small stop icons looks good.
  *         (and who on earth thinks a phillips screw head means "stop"!)
- * TODO: new file: output_name defaulting and so forth 
  * TODO: FileChooser: add entry for filename in Open case
  * TODO: can we add sound_filename_completer to open entry?
  */
@@ -38,8 +37,11 @@
 
 
 #ifndef HAVE_GFCDN
-/* #define HAVE_GFCDN HAVE_GTK_FILE_CHOOSER_DIALOG_NEW */
- #define HAVE_GFCDN 0
+  #if DEBUGGING
+     #define HAVE_GFCDN 0
+  #else
+     #define HAVE_GFCDN HAVE_GTK_FILE_CHOOSER_DIALOG_NEW
+  #endif
 #endif
 /* -------- just-sounds file list handlers -------- */
 
@@ -1905,8 +1907,11 @@ static void new_file_undoit(void)
   clear_dialog_error(ndat);
   if (new_file_handler_id)
     {
-      g_signal_handler_disconnect(new_file_text, new_file_handler_id);
-      new_file_handler_id = 0;
+      if (new_file_handler_id)
+	{
+	  g_signal_handler_disconnect(new_file_text, new_file_handler_id);
+	  new_file_handler_id = 0;
+	}
     }
   set_button_label(new_file_ok_button, _("Ok"));
 #if HAVE_FAM
@@ -1994,11 +1999,19 @@ static void new_file_ok_callback(GtkWidget *w, gpointer context)
 	    {
 	      if (new_file_watcher)
 		new_file_undoit();
+	      ss->local_errno = 0;
 	      redirect_snd_error_to(post_file_dialog_error, (void *)ndat);
 	      sp = snd_new_file(newer_name, header_type, data_format, srate, chans, comment, initial_samples);
 	      redirect_snd_error_to(NULL, NULL);
 	      if (!sp)
 		{
+		  if ((ss->local_errno) &&
+		      (mus_file_probe(new_file_filename))) /* see comment in snd-xfile.c */
+#if HAVE_FAM
+		    new_file_watcher = fam_monitor_file(new_file_filename, NULL, watch_new_file);
+#else
+		    new_file_watcher = true;
+#endif
 		  clear_error_if_new_filename_changes(new_file_dialog, (void *)ndat);
 		}
 	      else

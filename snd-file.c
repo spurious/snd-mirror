@@ -280,7 +280,8 @@ static file_info *open_raw_sound(const char *fullname, bool read_only, bool sele
       /* open-sound and view-sound do not fall into the raw data dialog */
       if ((ss->open_requestor == FROM_OPEN_SOUND) || 
 	  (ss->open_requestor == FROM_VIEW_SOUND) ||
-	  (ss->open_requestor == FROM_NEW_SOUND))
+	  (ss->open_requestor == FROM_NEW_SOUND)  ||
+	  (ss->open_requestor == FROM_NEW_FILE_DIALOG))
 	return(make_file_info_1(fullname));
 
       str = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));

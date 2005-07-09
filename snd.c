@@ -62,8 +62,6 @@ static void mus_print_to_snd(char *msg)
       fprintf(stderr, msg);
       return;
     }
-  add_to_error_history(msg, false);
-  if (record_dialog_is_active()) recorder_error(msg);
   if (!(ignore_mus_error(MUS_NO_ERROR, msg)))
     if (msg)
       {

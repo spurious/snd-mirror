@@ -13,10 +13,9 @@
  * TODO: pull-down list of recent files
  * TODO: extract overwrite question from save_as_dialog_save_sound
  * TODO: extract snd_overwrite_ok case: incorporate overwrite here
- * TODO: new file ok: if existing file by new name and it's write protected, we need some better explanation
  * TODO: new file: find some way to get around the hidden label bug (unmanage error text etc)
  * TODO: check out other paths to raw data dialog
- * PERHAPS: if user changes raw file with dialog up -- adding header for example, should we automatically open it?
+ * PERHAPS: if user changes raw file with dialog up -- adding header for example, should we automatically open it? or reflect in panel?
  * TODO: should previous files list be monitored via FAM?
  * TODO: replace "current files" section with something useful --
  *   perhaps a menu for actions on previous files such as insert/mix/open/play
@@ -24,12 +23,16 @@
  * PERHAPS: (alert_new_file): handle all directory update decisions through FAM
  * PERHAPS: region save-as as button in region browser?
  * PERHAPS: raw_data: caller can pass continuation and callback funcs
- * SOMEDAY: new file ok: would be nice to cancel 'DoIt' if user deletes file by hand -- use FAM
- * TODO: raw give OGG/Mpeg/Speex choices if the progs can be found -- 
+ * TODO: raw give OGG/Mpeg/Speex/Flac/Midi choices if the progs can be found -- 
  *         why not translate in snd_translate, add choices to various dialogs (sndlib too?)
  *         need to know how to recognize (for read side)
  * TODO: various file/directory lists: tie into fam/gamin (also previous files list) -- add xen call?
  * TODO: if directory loaded into previous files list via -p, add any new sound files as they appear
+ *
+ * TODO: scheme option for error history menu?
+ * TODO: what if running src, uses its check-event to open raw data -- where is control?
+ *       or similarly, stops at "ok", starts src, clicks ok?
+ * TODO: need array of dialogs for edit_header, new_file -- perhaps all of them?
  */
 
 
@@ -2133,11 +2136,28 @@ static void new_file_ok_callback(Widget w, XtPointer context, XtPointer info)
 	    {
 	      if (new_file_watcher)
 		new_file_undoit();
+	      ss->local_errno = 0;
 	      redirect_snd_error_to(post_file_dialog_error, (void *)ndat);
 	      sp = snd_new_file(new_file_filename, header_type, data_format, srate, chans, comment, initial_samples);
 	      redirect_snd_error_to(NULL, NULL);
 	      if (!sp)
 		{
+		  if ((ss->local_errno) &&
+		    /* some sort of file system error -- this is confusing because fam sends
+		     *   a "deleted" event if we don't have write permission -- as if we had
+		     *   created it, then immediately deleted it.  So, if the file doesn't
+		     *   already exist, I can't monitor for some relevant change (except
+		     *   perhaps at the directory level, but that's getting ridiculous).
+		     */
+		      (mus_file_probe(new_file_filename)))
+		    /* that is, the thing exists, so user could delete it or change its permission bits;
+		     *  in any case, we won't be confused by an immediate irrelevant delete event
+		     */
+#if HAVE_FAM
+		    new_file_watcher = fam_monitor_file(new_file_filename, NULL, watch_new_file);
+#else
+		    new_file_watcher = true;
+#endif
 		  clear_error_if_new_filename_changes(new_file_dialog, (void *)ndat);
 		}
 	      else
@@ -2677,46 +2697,93 @@ static XEN g_apply_edit_header(void)
 
 /* -------------------------------- Raw Data Dialog -------------------------------- */
 
-static Widget raw_data_dialog = NULL;
-static off_t raw_data_location = 0;
-static file_data *rdat = NULL;
-static bool raw_data_read_only = false, raw_data_sound_selected = false;
-static char *raw_data_filename = NULL, *raw_data_info = NULL;
+/* we keep an array of raw data dialogs so that any number can be active at once */
+/* TODO: gtk side for raw_infos */
 
-#if 0
-typedef enum {NO_REQUESTOR, {FROM_UPDATE}, FROM_VIEW_PREVIOUS_FILES, {FROM_SAVE_AS_DIALOG}, [FROM_DRAG_AND_DROP], [FROM_OPEN_DIALOG],
-	      {FROM_RECORDER}, [FROM_KEYBOARD], 
+typedef struct raw_info {
+  Widget dialog;
+  off_t location;
+  file_data *rdat;
+  bool read_only;
+  bool selected;
+  char *filename;
+  char *help;
+  open_requestor_t requestor;
+  snd_info *sp;
+  Widget requestor_dialog;
+} raw_info;
 
-	      FROM_STARTUP -- how to get back to the startup args loop?
+static int raw_info_size = 0;
+static raw_info **raw_infos = NULL;
 
-	      [FROM_REGION_EDIT], FROM_NEW_FILE_DIALOG, [FROM_OPEN_SOUND]
-	      [FROM_OPEN_RAW_SOUND], [FROM_VIEW_SOUND], [FROM_NEW_SOUND], {FROM_RAW_DATA_DIALOG}, [FROM_MIX_DIALOG]} open_requestor_t;
-#endif
+static raw_info *new_raw_dialog(void)
+{
+  int loc = -1;
+  if (raw_info_size == 0)
+    {
+      loc = 0;
+      raw_info_size = 4;
+      raw_infos = (raw_info **)CALLOC(raw_info_size, sizeof(raw_info *));
+    }
+  else
+    {
+      int i;
+      for (i = 0; i < raw_info_size; i++)
+	if ((!raw_infos[i]) ||
+	    (!(XtIsManaged(raw_infos[i]->dialog))))
+	  {
+	    loc = i;
+	    break;
+	  }
+      if (loc == -1)
+	{
+	  loc = raw_info_size;
+	  raw_info_size += 4;
+	  raw_infos = (raw_info **)REALLOC(raw_infos, raw_info_size * sizeof(raw_info *));
+	  for (i = loc; i < raw_info_size; i++) raw_infos[i] = NULL;
+	}
+    }
+  if (!raw_infos[loc])
+    {
+      raw_infos[loc] = (raw_info *)CALLOC(1, sizeof(raw_info));
+      raw_infos[loc]->dialog = NULL;
+      raw_infos[loc]->filename = NULL;
+      raw_infos[loc]->help = NULL;
+    }
+  raw_infos[loc]->requestor = NO_REQUESTOR;
+  raw_infos[loc]->sp = NULL;
+  raw_infos[loc]->location = 0;
+  return(raw_infos[loc]);
+}
+
+/* TODO: only remaining unchecked case: FROM_VIEW_PREVIOUS_FILES
+ */
 
 static void raw_data_ok_callback(Widget w, XtPointer context, XtPointer info) 
 {
+  raw_info *rp = (raw_info *)context;
   int raw_srate, raw_chans, raw_data_format;
-  redirect_snd_error_to(post_file_panel_error, (void *)rdat);
-  get_file_dialog_sound_attributes(rdat, &raw_srate, &raw_chans, NULL, &raw_data_format, &raw_data_location, NULL, 1);
+  redirect_snd_error_to(post_file_panel_error, (void *)(rp->rdat));
+  get_file_dialog_sound_attributes(rp->rdat, &raw_srate, &raw_chans, NULL, &raw_data_format, &(rp->location), NULL, 1);
   redirect_snd_error_to(NULL, NULL);
-  if (rdat->error_widget != NOT_A_SCANF_WIDGET)
+  if (rp->rdat->error_widget != NOT_A_SCANF_WIDGET)
     {
-      clear_error_if_panel_changes(raw_data_dialog, (void *)rdat);
+      clear_error_if_panel_changes(rp->dialog, (void *)(rp->rdat));
     }
   else
     {
       mus_header_set_raw_defaults(raw_srate, raw_chans, raw_data_format);
-      mus_sound_override_header(raw_data_filename, raw_srate, raw_chans, 
-				raw_data_format, MUS_RAW, raw_data_location,
+      mus_sound_override_header(rp->filename, raw_srate, raw_chans, 
+				raw_data_format, MUS_RAW, rp->location,
 				mus_bytes_to_samples(raw_data_format, 
-						     mus_sound_length(raw_data_filename) - raw_data_location));
+						     mus_sound_length(rp->filename) - rp->location));
       /* choose action based on how we got here */
-      if ((ss->sgx->requestor_dialog) &&
-	  (ss->open_requestor == FROM_MIX_DIALOG))
+      if ((rp->requestor_dialog) &&
+	  (rp->requestor == FROM_MIX_DIALOG))
 	{
 	  /* TODO: what is this about? ss->open_requestor = FROM_RAW_DATA_DIALOG;*/
 	  ss->reloading_updated_file = true; /* don't reread lack-of-header! */
-	  mix_complete_file_at_cursor(any_selected_sound(), raw_data_filename, with_mix_tags(ss), 0);
+	  mix_complete_file_at_cursor(any_selected_sound(), rp->filename, with_mix_tags(ss), 0);
 	  ss->reloading_updated_file = false;
 	}
       else
@@ -2727,61 +2794,63 @@ static void raw_data_ok_callback(Widget w, XtPointer context, XtPointer info)
 	   */
 	  file_info *hdr;
 	  hdr = (file_info *)CALLOC(1, sizeof(file_info));
-	  hdr->name = copy_string(raw_data_filename);
+	  hdr->name = copy_string(rp->filename);
 	  hdr->type = MUS_RAW;
 	  hdr->srate = raw_srate;
 	  hdr->chans = raw_chans;
 	  hdr->format = raw_data_format;
 	  hdr->samples = mus_bytes_to_samples(raw_data_format, 
-					      mus_sound_length(raw_data_filename) - raw_data_location);
-	  hdr->data_location = raw_data_location;
+					      mus_sound_length(rp->filename) - rp->location);
+	  hdr->data_location = rp->location;
 	  hdr->comment = NULL;
-	  if (ss->open_requestor == FROM_KEYBOARD)
+	  if (rp->requestor == FROM_KEYBOARD)
 	    {
-	      clear_minibuffer(ss->open_requestor_sp);
-	      raw_data_sound_selected = true;
+	      clear_minibuffer(rp->sp);
+	      rp->selected = true;
 	    }
-	  finish_opening_sound(add_sound_window(raw_data_filename, raw_data_read_only, hdr), raw_data_sound_selected);
+	  finish_opening_sound(add_sound_window(rp->filename, rp->read_only, hdr), rp->selected);
 	}
-      XtUnmanageChild(raw_data_dialog);
+      XtUnmanageChild(rp->dialog);
     }
 }
 
 static void raw_data_cancel_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  XtUnmanageChild(raw_data_dialog);
-  if ((ss->sgx->requestor_dialog) && 
-      ((ss->open_requestor == FROM_OPEN_DIALOG) ||
-       (ss->open_requestor == FROM_MIX_DIALOG)))
-    XtManageChild(ss->sgx->requestor_dialog);
+  raw_info *rp = (raw_info *)context;
+  XtUnmanageChild(rp->dialog);
+  if ((rp->requestor_dialog) && 
+      ((rp->requestor == FROM_OPEN_DIALOG) ||
+       (rp->requestor == FROM_MIX_DIALOG)))
+    XtManageChild(rp->requestor_dialog);
 }
 
 static void raw_data_reset_callback(Widget w, XtPointer context, XtPointer info) 
 {
+  raw_info *rp = (raw_info *)context;
   int raw_srate, raw_chans, raw_data_format;
-  raw_data_location = 0;
+  rp->location = 0;
   mus_header_raw_defaults(&raw_srate, &raw_chans, &raw_data_format); /* pick up defaults */  
-  set_file_dialog_sound_attributes(rdat, 
+  set_file_dialog_sound_attributes(rp->rdat, 
 				   IGNORE_HEADER_TYPE, 
-				   raw_data_format, raw_srate, raw_chans, raw_data_location, 
+				   raw_data_format, raw_srate, raw_chans, rp->location, 
 				   IGNORE_SAMPLES, NULL);
-  if (XtIsManaged(rdat->error_text))
-    XtUnmanageChild(rdat->error_text);
+  if (XtIsManaged(rp->rdat->error_text))
+    XtUnmanageChild(rp->rdat->error_text);
 }
 
 static void raw_data_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  raw_data_dialog_help(raw_data_info);
+  raw_info *rp = (raw_info *)context;
+  raw_data_dialog_help(rp->help);
 }
 
-static Widget main_w;
-static void make_raw_data_dialog(const char *filename, const char *title)
+static void make_raw_data_dialog(raw_info *rp, const char *filename, const char *title)
 {
   XmString xstr1, xstr2, xstr3, xstr4, titlestr;
   int n;
   int raw_srate, raw_chans, raw_data_format;
   Arg args[20];
-  Widget reset_button;
+  Widget reset_button, main_w;
 
   xstr1 = XmStringCreate(_("Cancel"), XmFONTLIST_DEFAULT_TAG); /* needed by template dialog */
   xstr2 = XmStringCreate(_("Help"), XmFONTLIST_DEFAULT_TAG);
@@ -2801,11 +2870,11 @@ static void make_raw_data_dialog(const char *filename, const char *title)
   XtSetArg(args[n], XmNnoResize, false); n++;
   XtSetArg(args[n], XmNautoUnmanage, false); n++;
   /* not transient -- we want this window to remain visible if possible */
-  raw_data_dialog = XmCreateWarningDialog(MAIN_SHELL(ss), "raw data", args, n);
+  rp->dialog = XmCreateWarningDialog(MAIN_SHELL(ss), "raw data", args, n);
 
-  XtAddCallback(raw_data_dialog, XmNcancelCallback, raw_data_cancel_callback, NULL);
-  XtAddCallback(raw_data_dialog, XmNhelpCallback,   raw_data_help_callback,   NULL);
-  XtAddCallback(raw_data_dialog, XmNokCallback,     raw_data_ok_callback,     NULL);
+  XtAddCallback(rp->dialog, XmNcancelCallback, raw_data_cancel_callback, (XtPointer)rp);
+  XtAddCallback(rp->dialog, XmNhelpCallback,   raw_data_help_callback,   (XtPointer)rp);
+  XtAddCallback(rp->dialog, XmNokCallback,     raw_data_ok_callback,     (XtPointer)rp);
   XmStringFree(xstr1);
   XmStringFree(xstr2);
   XmStringFree(xstr3);
@@ -2818,99 +2887,107 @@ static void make_raw_data_dialog(const char *filename, const char *title)
       XtSetArg(args[n], XmNbackground, ss->sgx->doit_again_button_color); n++;
       XtSetArg(args[n], XmNarmColor, ss->sgx->pushed_button_color); n++;
     }
-  reset_button = XtCreateManagedWidget(_("Reset"), xmPushButtonGadgetClass, raw_data_dialog, args, n);
-  XtAddCallback(reset_button, XmNactivateCallback, raw_data_reset_callback, NULL);
+  reset_button = XtCreateManagedWidget(_("Reset"), xmPushButtonGadgetClass, rp->dialog, args, n);
+  XtAddCallback(reset_button, XmNactivateCallback, raw_data_reset_callback, (XtPointer)rp);
 
   mus_header_raw_defaults(&raw_srate, &raw_chans, &raw_data_format); /* pick up defaults */
 
   n = 0;
   XtSetArg(args[n], XmNallowResize, true); n++;
   XtSetArg(args[n], XmNresizePolicy, XmRESIZE_NONE); n++;
-  main_w = XtCreateManagedWidget("raw-main", xmFormWidgetClass, raw_data_dialog, args, n);
+  main_w = XtCreateManagedWidget("raw-main", xmFormWidgetClass, rp->dialog, args, n);
 
   n = 0;
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-  rdat = make_file_data_panel(main_w, "data-form", args, n, 
-			      WITH_CHANNELS_FIELD, 
-			      MUS_RAW, raw_data_format, 
-			      WITH_DATA_LOCATION_FIELD, 
-			      WITHOUT_SAMPLES_FIELD,
-			      WITH_ERROR_FIELD, 
-			      WITHOUT_HEADER_TYPE_FIELD, 
-			      WITHOUT_COMMENT_FIELD);
-  rdat->dialog = raw_data_dialog;
+  rp->rdat = make_file_data_panel(main_w, "data-form", args, n, 
+				  WITH_CHANNELS_FIELD, 
+				  MUS_RAW, raw_data_format, 
+				  WITH_DATA_LOCATION_FIELD, 
+				  WITHOUT_SAMPLES_FIELD,
+				  WITH_ERROR_FIELD, 
+				  WITHOUT_HEADER_TYPE_FIELD, 
+				  WITHOUT_COMMENT_FIELD);
+  rp->rdat->dialog = rp->dialog;
 
-  set_file_dialog_sound_attributes(rdat, 
+  set_file_dialog_sound_attributes(rp->rdat, 
 				   IGNORE_HEADER_TYPE, 
-				   raw_data_format, raw_srate, raw_chans, raw_data_location, 
+				   raw_data_format, raw_srate, raw_chans, rp->location, 
 				   IGNORE_SAMPLES, NULL);
 
-  map_over_children(raw_data_dialog, set_main_color_of_widget, NULL);
+  map_over_children(rp->dialog, set_main_color_of_widget, NULL);
   if (!(ss->using_schemes)) 
     {
-      XtVaSetValues(XmMessageBoxGetChild(raw_data_dialog, XmDIALOG_OK_BUTTON),     XmNarmColor,   ss->sgx->pushed_button_color, NULL);
-      XtVaSetValues(XmMessageBoxGetChild(raw_data_dialog, XmDIALOG_CANCEL_BUTTON), XmNarmColor,   ss->sgx->pushed_button_color, NULL);
-      XtVaSetValues(XmMessageBoxGetChild(raw_data_dialog, XmDIALOG_HELP_BUTTON),   XmNarmColor,   ss->sgx->pushed_button_color, NULL);
-      XtVaSetValues(XmMessageBoxGetChild(raw_data_dialog, XmDIALOG_OK_BUTTON),     XmNbackground, ss->sgx->doit_button_color,   NULL);
-      XtVaSetValues(XmMessageBoxGetChild(raw_data_dialog, XmDIALOG_CANCEL_BUTTON), XmNbackground, ss->sgx->quit_button_color,   NULL);
-      XtVaSetValues(XmMessageBoxGetChild(raw_data_dialog, XmDIALOG_HELP_BUTTON),   XmNbackground, ss->sgx->help_button_color,   NULL);
+      XtVaSetValues(XmMessageBoxGetChild(rp->dialog, XmDIALOG_OK_BUTTON),     XmNarmColor,   ss->sgx->pushed_button_color, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(rp->dialog, XmDIALOG_CANCEL_BUTTON), XmNarmColor,   ss->sgx->pushed_button_color, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(rp->dialog, XmDIALOG_HELP_BUTTON),   XmNarmColor,   ss->sgx->pushed_button_color, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(rp->dialog, XmDIALOG_OK_BUTTON),     XmNbackground, ss->sgx->doit_button_color,   NULL);
+      XtVaSetValues(XmMessageBoxGetChild(rp->dialog, XmDIALOG_CANCEL_BUTTON), XmNbackground, ss->sgx->quit_button_color,   NULL);
+      XtVaSetValues(XmMessageBoxGetChild(rp->dialog, XmDIALOG_HELP_BUTTON),   XmNbackground, ss->sgx->help_button_color,   NULL);
       XtVaSetValues(reset_button, XmNselectColor, ss->sgx->pushed_button_color, NULL);
-      XtVaSetValues(rdat->format_list, XmNbackground, ss->sgx->white, XmNforeground, ss->sgx->black, NULL);
+      XtVaSetValues(rp->rdat->format_list, XmNbackground, ss->sgx->white, XmNforeground, ss->sgx->black, NULL);
     }
 
-  XtManageChild(rdat->error_text);
-  XtManageChild(raw_data_dialog);
-  XtUnmanageChild(rdat->error_text); 
-  set_dialog_widget(RAW_DATA_DIALOG, raw_data_dialog);
+  XtManageChild(rp->rdat->error_text);
+  XtManageChild(rp->dialog);
+  XtUnmanageChild(rp->rdat->error_text); 
+  set_dialog_widget(RAW_DATA_DIALOG, rp->dialog); /* TODO: this no longer makes sense */
 }
 
 void raw_data_dialog_to_file_info(const char *filename, char *title, char *info, bool read_only, bool selected)
 {
   /* put up dialog for srate, chans, data format */
-  raw_data_read_only = read_only;
-  raw_data_sound_selected = selected;
-  if (raw_data_filename) FREE(raw_data_filename);
-  raw_data_filename = copy_string(filename);
-  if ((ss->sgx->requestor_dialog) &&
-      ((ss->open_requestor == FROM_OPEN_DIALOG) ||
-       (ss->open_requestor == FROM_MIX_DIALOG)))
-    XtUnmanageChild(ss->sgx->requestor_dialog);
+  raw_info *rp;
+  rp = new_raw_dialog();
+  rp->read_only = read_only;
+  rp->selected = selected;
+  if (rp->filename) FREE(rp->filename);
+  rp->filename = copy_string(filename);
+  rp->requestor = ss->open_requestor;
+  rp->requestor_dialog = ss->sgx->requestor_dialog;
+  rp->sp = ss->open_requestor_sp;
+  ss->open_requestor = NO_REQUESTOR;
+  ss->sgx->requestor_dialog = NULL;
+  ss->open_requestor_sp = NULL;
+  if ((rp->requestor_dialog) &&
+      ((rp->requestor == FROM_OPEN_DIALOG) ||
+       (rp->requestor == FROM_MIX_DIALOG)))
+    XtUnmanageChild(rp->requestor_dialog);
   if (!title) 
     title = mus_format("no header found on %s\n", filename);
-  if (!raw_data_dialog) 
-    make_raw_data_dialog(filename, title);
+  if (!(rp->dialog))
+    make_raw_data_dialog(rp, filename, title);
   else
     {
       XmString xstr4;
       xstr4 = XmStringCreate(title, XmFONTLIST_DEFAULT_TAG);
-      XtVaSetValues(raw_data_dialog, 
+      XtVaSetValues(rp->dialog, 
 		    XmNmessageString, xstr4, 
 		    NULL);
       XmStringFree(xstr4);
     }
   FREE(title);
-  if (raw_data_info) FREE(raw_data_info);
+  if (rp->help) FREE(rp->help);
   if (info)
     {
-      XtVaSetValues(XmMessageBoxGetChild(raw_data_dialog, XmDIALOG_HELP_BUTTON), 
+      XtVaSetValues(XmMessageBoxGetChild(rp->dialog, XmDIALOG_HELP_BUTTON), 
 		    XmNbackground, ss->sgx->green, 
 		    NULL);
-      raw_data_info = copy_string(info);
+      rp->help = copy_string(info);
       FREE(info);
     }
   else
     {
-      XtVaSetValues(XmMessageBoxGetChild(raw_data_dialog, XmDIALOG_HELP_BUTTON), 
+      XtVaSetValues(XmMessageBoxGetChild(rp->dialog, XmDIALOG_HELP_BUTTON), 
 		    XmNbackground, ss->sgx->help_button_color, 
 		    NULL);
-      raw_data_info = NULL;
+      rp->help = NULL;
     }
-  raise_dialog(raw_data_dialog);
-  if (!XtIsManaged(raw_data_dialog)) 
-    XtManageChild(raw_data_dialog);
+  raise_dialog(rp->dialog);
+  if (!XtIsManaged(rp->dialog)) 
+    XtManageChild(rp->dialog);
 }
 
 

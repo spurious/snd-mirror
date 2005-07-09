@@ -9349,62 +9349,6 @@ and return the dialog widget.</td></tr>
 <tr><td colspan=2><code><a class=def name="vusize">vu-size</a> ()</code></td></tr>
 <tr><td></td><td>overall size of the recorder VU meters. (1.0)</td></tr>
 
-<!-- yes-or-no? -->
-<tr><td colspan=2><code><a class=def name="yesornop">yes-or-no?</a> (ques)</code></td></tr>
-<tr><td></td><td>modal error dialog, #t if user clicks "yes", otherwise #f. 
-</td></tr>
-<tr><td></td><td>
-In normal use, this is a very annoying thing to call because
-it forces everything to stop until the poor user clicks a button; in Snd, it's used for questions like "destroy disk?".
-While developing code, however, yes-or-no? can be a very handy way to stop and restart a computation.
-Say we're trying to get remove-clicks in examp.scm to work, and can't see why a click is being missed.  We can use
-yes-or-no? to step through the samples one at a time, breaking out of the computation at any time (the ellipses here
-mark code omissions -- see the original for details):
-</td></tr>
-
-<tr><td></td><td><table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
-    (call-with-current-continuation
-     (lambda (return)
-       (do ((ctr loc (1+ ctr)))
-	   ((= ctr len) #f)
-	...
-	 (let ((local-max (max .1 (<a class=quiet href="#vctpeak">vct-peak</a> samps))))
-	   (<a class=quiet href="#sndprint">snd-print</a> (format #f "~A " local-max))
-	   (if (<em class=red>yes-or-no?</em> "continue?")
-	       (if (and (&gt; (abs (- samp0 samp1)) local-max)
-                        ...
-		   (return (1- ctr)))
-	       (return #f)
-               ...
-	       <!-- )))))) -->
-</pre></td></tr></table></td></tr>
-<tr><td></td><td>
-But this is kinda dumb; we really should use a continuation here:
-</td></tr>
-
-<tr><td></td><td><table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
-    (call-with-current-continuation
-     (lambda (return)
-       (do ((ctr loc (1+ ctr)))
-	   ((= ctr len) #f)
-         ...
-	 (let ((local-max (max .1 (<a class=quiet href="#vctpeak">vct-peak</a> samps))))
-	   (call-with-current-continuation
-	    (lambda (go-on)
-	      (<a class=quiet href="#sndprint">snd-print</a> (format #f "~A: ~A (~A) " ctr local-max samp2))
-	      (return go-on)
-	      (if (and (&gt; (abs (- samp0 samp1)) local-max)
-                  ...
-		  (return (1- ctr))
-		  <!-- )))))))) -->
-</pre></td></tr></table></td></tr>
-<tr><td></td><td>
-Now save the continuation after the first call, and whenever you want to
-pick up where you last left off, call it as a function of no arguments.
-This method leaves all the rest of Snd operational (in particular the
-listener), whereas yes-or-no? tries to freeze everything until you
-click its button.
-</td></tr>
 </table>
 
 <!-- INDEX somedialogs:Dialogs -->
@@ -9464,8 +9408,6 @@ Here is a partial list of the dialogs scattered around Snd.
     <td><a href="#colordialog">color-dialog</a>, <a href="#colormap">colormap</a> and its friends</td><td></td></tr>
 <tr><td></td><td colspan=2>Spectrogram viewing angle</td><td>View:<a href="snd.html#orientationbrowser">Orientation</a></td>
     <td><a href="#orientationdialog">orientation-dialog</a>, <a href="#spectroxangle">spectro-x-angle</a> and its friends</td><td></td></tr>
-<tr><td></td><td colspan=2>Errors</td><td>View:<a href="snd.html#errorhistory">Error history</a></td>
-    <td></td><td></td></tr>
 <tr><td></td><td colspan=2>FFT choices</td><td>Options:<a href="snd.html#viewfft">Transforms</a></td>
     <td><a href="#transformdialog">transform-dialog</a>, <a href="#transformsize">transform-size</a> and its friends</td><td></td></tr>
 <tr><td></td><td colspan=2>Help choices</td><td>Help:*</td>
@@ -9477,8 +9419,6 @@ Here is a partial list of the dialogs scattered around Snd.
     <td><a href="sndscm.html#ladspadoc">install-ladspa-menues</a>, <a href="#ladspadir">ladspa-dir</a>, <a href="grfsnd.html#applyladspa">apply-ladspa</a></td><td></td></tr>
 <tr><td></td><td colspan=2>Rename or delete sound</td><td>File:Rename and File:Delete</td>
     <td><a href="sndscm.html#adddeleteoption">add-rename-option</a>, <a href="sndscm.html#adddeleteoption">add-delete-option</a></td><td></td></tr>
-<tr><td></td><td colspan=2>Demand a yes or no answer</td><td></td>
-    <td><a href="#yesornop">yes-or-no?</a></td><td></td></tr>
 <tr><td></td><td colspan=2>Font choice</td><td>View:Select font</td>
     <td><a href="sndscm.html#makefontselectordialog">make-font-selector-dialog</a>, <a href="#axislabelfont">axis-label-font</a> and its friends</td><td></td></tr>
 <tr><td></td><td colspan=2>Color choice</td><td>View:Select file</td>
@@ -9519,7 +9459,7 @@ add menu <i>menu-label</i> to top-level menu whose index is
 The built-in
 Snd menus are numbered from 0 ('File') to 5 ('Popup'); 'Help' is menu 4.  If the label and callback are #f, a separator is added to the menu.
 <i>position</i> sets the position of the new menu option; it defaults to the end of the menu.  See new-effects.scm for many examples.
-<br><br><pre>
+<br><pre>
   (<em class=red>add-to-menu</em> 1 "Stop Playing" 
     (lambda () (<a class=quiet href="#stopplaying">stop-playing</a>)))
 <br>
@@ -9527,20 +9467,7 @@ Snd menus are numbered from 0 ('File') to 5 ('Popup'); 'Help' is menu 4.  If the
     (lambda () (set! (<a class=quiet href="#windowheight">window-height</a>) (/ (<a class=quiet href="#windowheight">window-height</a>) 2))))
 </pre></td></tr>
 <tr><td></td><td>
-As a slightly more elaborate example, the following adds a Delete option to the File menu:
 </td></tr>
-
-<tr><td></td><td><table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
-(<em class=red>add-to-menu</em> 0 "Delete" ; add Delete option to File menu
-	     (lambda ()
-	       ;; close current sound and delete it (after requesting confirmation)
-	       (if (<a class=quiet href="#selectedsound">selected-sound</a>)
-		   (let ((filename (<a class=quiet href="#filename">file-name</a>)))
-		     (<a class=quiet href="#closesound">close-sound</a>)
-		     (if (<a class=quiet href="#yesornop">yes-or-no?</a> (format #f "delete ~S?" filename))
-			 (delete-file filename)))))
-	     8) ; place after File:New
-</pre></td></tr></table></td></tr>
 
 <!-- remove-from-menu -->
 <tr><td colspan=2><code><a class=def name="removefrommenu">remove-from-menu</a> (top-menu menu-label)</code></td></tr>
@@ -10169,8 +10096,7 @@ return possible completions of <i>name</i>, a string or a symbol.
 <tr><td colspan=2>
 <code><a class=def name="snderror">snd-error</a> (str)</code></td></tr>
 <tr><td></td><td>
-reports the error message <i>str</i> in the Error dialog, saves <i>str</i> in the error history list 
-(see <a href="snd.html#errorhistory">View:Error History</a>), 
+reports the error message <i>str</i> in some way,
 and returns <i>str</i>.  See also <a href="#muserrorhook">mus-error-hook</a> and <a href="#snderrorhook">snd-error-hook</a>.
 </td></tr>
 
@@ -10879,7 +10805,7 @@ The four "-widgets" procedures return lists of possibly useful widgets:
                      5:x-zoom 6:y-zoom 7:edit history list 
                      8:right(united-chans) y-position 9:right y-zoom) + others in gtk
 
-  dialog-widgets:  '(0:color_dialog 1:orientation_dialog 2:enved_dialog 3:error_dialog 
+  dialog-widgets:  '(0:color_dialog 1:orientation_dialog 2:enved_dialog 3:#f
                      4:yes_or_no_dialog 5:transform_dialog 6:file_open_dialog 
                      7:file_save_as_dialog 8:view_files_dialog 9:raw_data_dialog 
                      10:new_file_dialog 11:file_mix_dialog 12:edit_header_dialog 

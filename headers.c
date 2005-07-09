@@ -5075,7 +5075,7 @@ int mus_header_write(const char *name, int type, int in_srate, int in_chans, off
   off_t siz;
   chan = mus_file_create(name);
   if (chan == -1) 
-    return(mus_error(MUS_CANT_OPEN_FILE, "mus_header_write for %s failed: %s", name, STRERROR(errno)));
+    return(mus_error(MUS_CANT_OPEN_FILE, "can't write %s: %s", name, STRERROR(errno)));
   if (mus_header_write_hook)
     (*mus_header_write_hook)(name);
   siz = mus_samples_to_bytes(format, size_in_samples);

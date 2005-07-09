@@ -1,122 +1,13 @@
 #include "snd.h"
 
-/* error handlers -- these include the error dialog (in case no sound is active) and an error history list */
-
-static Widget snd_error_dialog = NULL;
-static Widget snd_error_history = NULL;
-
-static void create_snd_error_dialog(bool popup)
-{
-  Arg args[32];
-  int n;
-  XmString titlestr;
-  titlestr = XmStringCreate(_("Error"), XmFONTLIST_DEFAULT_TAG);
-  n = 0;
-  if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
-  XtSetArg(args[n], XmNresizePolicy, XmRESIZE_GROW); n++;
-  XtSetArg(args[n], XmNnoResize, false); n++;
-  XtSetArg(args[n], XmNdialogTitle, titlestr); n++;
-  snd_error_dialog = XmCreateErrorDialog(MAIN_PANE(ss), "error", args, n);
-
-  XtUnmanageChild(XmMessageBoxGetChild(snd_error_dialog, XmDIALOG_SYMBOL_LABEL));
-  XtUnmanageChild(XmMessageBoxGetChild(snd_error_dialog, XmDIALOG_CANCEL_BUTTON));
-  XtUnmanageChild(XmMessageBoxGetChild(snd_error_dialog, XmDIALOG_HELP_BUTTON));
-
-  n = attach_all_sides(args, 0);
-  XtSetArg(args[n], XmNeditMode, XmMULTI_LINE_EDIT); n++;
-  XtSetArg(args[n], XmNscrollBarDisplayPolicy, XmAS_NEEDED); n++;
-  XtSetArg(args[n], XmNeditable, false); n++;
-  XtSetArg(args[n], XmNautoShowCursorPosition, false); n++;
-  XtSetArg(args[n], XmNcursorPositionVisible, false); n++;
-  XtSetArg(args[n], XmNscrollingPolicy, XmAUTOMATIC); n++;
-  XtSetArg(args[n], XmNheight,200); n++;
-  XtSetArg(args[n], XmNwidth, 400); n++;
-  snd_error_history = XmCreateScrolledText(snd_error_dialog, _("Error History"), args, n);
-  XtManageChild(snd_error_history);
-
-  if (popup) 
-    XtManageChild(snd_error_dialog);
-
-  if (!(ss->using_schemes)) map_over_children(snd_error_dialog, set_main_color_of_widget, NULL);
-  XmStringFree(titlestr);
-  if (!(ss->using_schemes))
-    {
-      /* the name "OK" is from Motif, so shouldn't be translated */
-      XtVaSetValues(XtNameToWidget(snd_error_dialog, "OK"), XmNarmColor, ss->sgx->pushed_button_color, NULL);
-      XtVaSetValues(XtNameToWidget(snd_error_dialog, "OK"), XmNbackground, ss->sgx->quit_button_color, NULL);
-      XtVaSetValues(snd_error_history, XmNbackground, ss->sgx->white, XmNforeground, ss->sgx->black, NULL);
-    }
-  set_dialog_widget(ERROR_DIALOG, snd_error_dialog);
-}
-
-#define MAX_ERROR_HISTORY_LENGTH 32768
-/* I think XmTextPosition = Position = short */
-
-void add_to_error_history(char *msg, bool popup)
-{
-#if HAVE_STRFTIME
-  char *tim, *buf;
-  time_t ts;
-#endif
-  XmTextPosition pos;
-  if ((ss == NULL) || (ss->sgx == NULL)) return; /* an attempt to call this before X/Motif is ready */
-  if (!snd_error_dialog) 
-    create_snd_error_dialog(popup);
-  else
-    if ((popup) && 
-	(!(XtIsManaged(snd_error_dialog))))
-      XtManageChild(snd_error_dialog);
-#if HAVE_STRFTIME
-  tim = (char *)CALLOC(TIME_STR_SIZE, sizeof(char));
-  buf = (char *)CALLOC(TIME_STR_SIZE, sizeof(char));
-  time(&ts);
-  strftime(tim, TIME_STR_SIZE, "%H:%M:%S", localtime(&ts));
-  sprintf(buf, "\n[%s] ", tim);
-  pos = XmTextGetLastPosition(snd_error_history);
-  if (pos == 0) 
-    XmTextSetString(snd_error_history, buf);
-  else XmTextInsert(snd_error_history, pos, buf);
-  FREE(buf);
-  FREE(tim);
-#endif
-  pos = XmTextGetLastPosition(snd_error_history);
-  if ((pos == 0) || (pos > MAX_ERROR_HISTORY_LENGTH))
-    XmTextSetString(snd_error_history, msg);
-  else 
-    {
-      XmTextInsert(snd_error_history, pos, msg);
-#if 0
-      /* major memory leak here in Motif */
-      if (XmGetVisibility(snd_error_history) != XmVISIBILITY_FULLY_OBSCURED)
-	{
-	  pos = XmTextGetLastPosition(snd_error_history);
-	  XmTextShowPosition(snd_error_history, pos - 1); /* if pos here, stupid thing segfaults! */
-	}
-#endif
-    }
-}
-
+/* TODO: replace error dialog popup */
 void post_error_dialog(char *msg)
 {
-  XmString error_msg;
-  if (!snd_error_dialog) create_snd_error_dialog(true);
-  error_msg = XmStringCreate(msg, XmFONTLIST_DEFAULT_TAG);
-  XtVaSetValues(snd_error_dialog, XmNmessageString, error_msg, NULL);
-  if (!(XtIsManaged(snd_error_dialog)))
-    XtManageChild(snd_error_dialog);
-  XmStringFree(error_msg);
+  post_it("Error", msg);
 }
 
-void show_snd_errors(void)
-{
-  if (snd_error_dialog)
-    {
-      if (!(XtIsManaged(snd_error_dialog))) 
-	XtManageChild(snd_error_dialog);
-      else raise_dialog(snd_error_dialog);
-    }
-  else post_error_dialog("");
-}
+
+/* ---------------- yes or no dialog: will go away soon! ---------------- */
 
 static bool yes_or_no = false;
 
@@ -265,6 +156,7 @@ widget_t post_it(const char *subject, const char *str)
 {
   /* place string in scrollable help window */
   XmString xstr1, xstr2;
+  if ((ss == NULL) || (ss->sgx == NULL)) return(NULL); /* an attempt to call this before X/Motif is ready */
   if (!(post_it_dialog)) 
     create_post_it_monolog(); 
   else raise_dialog(post_it_dialog);
