@@ -963,36 +963,6 @@ void free_mixes(chan_info *cp)
   cp->have_mixes = false;
 }
 
-disk_space_t disk_space_p(snd_info *sp, off_t bytes, off_t other_bytes, char *filename)
-{
-  off_t kfree, kneeded;
-  kfree = disk_kspace(filename);
-  if (kfree < 0) 
-    {
-      report_in_minibuffer_and_save(sp, snd_io_strerror()); 
-      return(NO_PROBLEM);  /* what?? -- disk_kspace => -1 if no such disk, etc -- not really a disk *space* problem */
-    }
-  kneeded = bytes >> 10;
-  if (kfree < kneeded)
-    {
-      if (other_bytes > 0)
-	{
-	  off_t kother;
-	  kother = other_bytes >> 10;
-	  if (kother > kfree)
-	    {
-	      report_in_minibuffer_and_save(sp, _("only " PRId64 " Kbytes left on disk, changing to 16-bit temp output"), kfree);
-	      return(HUNKER_DOWN);
-	    }
-	}
-      if (!(snd_yes_or_no_p(_("only " PRId64 " Kbytes left on disk; continue?"), kfree)))
-	return(GIVE_UP);
-      report_in_minibuffer(sp, _("ok -- here we go..."));
-      return(BLIND_LEAP);
-    }
-  return(NO_PROBLEM);
-}
-
 static char *save_as_temp_file(mus_sample_t **raw_data, int chans, int len, int nominal_srate)
 {
   char *newname;
@@ -1008,8 +978,8 @@ static char *save_as_temp_file(mus_sample_t **raw_data, int chans, int len, int 
   mus_file_open_descriptors(ofd, newname, format, 4, 28, chans, MUS_NEXT);
   /* mus_file_set_data_clipped(ofd, data_clipped(ss)); */
   lseek(ofd, 28, SEEK_SET);
-  no_space = disk_space_p(any_selected_sound(), len * chans * 4, 0, newname);
-  if (no_space != GIVE_UP)
+  no_space = disk_space_p(any_selected_sound(), len * chans * 4, newname);
+  if (no_space == DISK_SPACE_OK)
     mus_file_write(ofd, 0, len - 1, chans, raw_data);
   if (mus_file_close(ofd) != 0)
     snd_error(_("mix save temp: can't close %s: %s!"), newname, snd_io_strerror());
@@ -1137,7 +1107,7 @@ static mix_info *file_mix_samples(off_t beg, off_t num, char *mixfile, chan_info
       snd_error(_("open mix temp file %s hit error: %s"), ofile, snd_open_strerror()); 
       return(NULL);
     }
-  if ((disk_space_p(sp, num * 4, 0, ofile)) != GIVE_UP)
+  if ((disk_space_p(sp, num * 4, ofile)) == DISK_SPACE_OK)
     csf = init_sample_read(beg, cp, READ_FORWARD);
   if (csf == NULL) /* i.e. no space for temp, I guess */
     {
@@ -1410,7 +1380,7 @@ int mix_complete_file_at_cursor(snd_info *sp, char *str, bool with_tag, int trac
       cp = any_selected_channel(sp);
       err = mix_complete_file(sp, CURSOR(cp), fullname, with_tag, DONT_DELETE_ME, track_id, false);
       if (err == MIX_FILE_NO_FILE) 
-	report_in_minibuffer_and_save(sp, _("can't mix file: %s, %s"), str, snd_io_strerror());
+	report_in_minibuffer(sp, _("can't mix file: %s, %s"), str, snd_io_strerror());
       if (fullname) FREE(fullname);
       return(err);
     }
@@ -1474,7 +1444,6 @@ static void remix_file(mix_info *md, const char *origin, bool redisplay)
   off_t beg, end, i, num;
   int j = 0, ofd = 0, size;
   bool use_temp_file;
-  disk_space_t no_space;
   Float val = 0.0, maxy, miny;
   snd_info *cursp;
   mix_fd *add = NULL, *sub = NULL;
@@ -1525,6 +1494,7 @@ static void remix_file(mix_info *md, const char *origin, bool redisplay)
   use_temp_file = (num >= MAX_BUFFER_SIZE);
   if (use_temp_file)
     {
+      disk_space_t no_space;
       ofile = snd_tempnam();
 #if DEBUGGING
       {
@@ -1546,37 +1516,15 @@ static void remix_file(mix_info *md, const char *origin, bool redisplay)
 	  snd_error(_("can't write mix temp file %s: %s\n"), ofile, snd_open_strerror());
 	  return;
 	}
-      no_space = disk_space_p(cursp, num * 4, num * 2, ofile);
-      switch (no_space)
+      no_space = disk_space_p(cursp, num * 4, ofile);
+      if (no_space != DISK_SPACE_OK)
 	{
-	case GIVE_UP:
 	  close_temp_file(ofile, ofd, ohdr->type, 0, cursp);
 	  free_file_info(ohdr);
 	  snd_remove(ofile, REMOVE_FROM_CACHE);
 	  FREE(ofile);
 	  cp->edit_hook_checked = false;
 	  return;
-	  break;
-	case HUNKER_DOWN:
-	  close_temp_file(ofile, ofd, ohdr->type, 0, cursp);
-	  if (mus_bytes_per_sample(MUS_OUT_FORMAT) == 2)
-	    ohdr->format = MUS_OUT_FORMAT;
-	  else
-	    {
-	      if (mus_bytes_per_sample(MUS_COMPATIBLE_FORMAT) == 2)
-		ohdr->format = MUS_COMPATIBLE_FORMAT;
-	      else
-#if MUS_LITTLE_ENDIAN
-		ohdr->format = MUS_LSHORT;
-#else
-		ohdr->format = MUS_BSHORT;
-#endif
-	    }
-	  ofd = open_temp_file(ofile, 1, ohdr);
-	  break;
-	case NO_PROBLEM: 
-	case BLIND_LEAP: 
-	  break;
 	}
       lseek(ofd, ohdr->data_location, SEEK_SET);
     }

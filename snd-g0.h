@@ -113,13 +113,12 @@ typedef struct {
   GdkGC *fltenv_basic_gc, *fltenv_data_gc;
 
   GtkWidget **dialogs;
+  int num_dialogs, dialogs_size;
   bool graph_is_active;
   GtkWidget *requestor_dialog; /* TODO: completion? */
   
   GdkCursor *arrow_cursor, *wait_cursor, *graph_cursor;
-#if HAVE_FAM
   gint fam_port;
-#endif
   GtkWidget **mw, **pw;
 } state_context;
 

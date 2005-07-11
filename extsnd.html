@@ -10816,6 +10816,7 @@ The four "-widgets" procedures return lists of possibly useful widgets:
 <p>
 <i>dialog-widgets</i> entries are #f for any dialog that has not
 yet been created.  In gtk, the first element of the main-widgets list is the top level shell's window.
+If there are several copies of a given dialog, the dialog-widgets list entry is a list of widgets.
 </p>
 <p>To remove the y-position slider (which is only there
 for looks):

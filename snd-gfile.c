@@ -30,8 +30,8 @@
  *         similarly for Update
  *         This could be in the sound's pixmap area except that none of the small stop icons looks good.
  *         (and who on earth thinks a phillips screw head means "stop"!)
- * TODO: FileChooser: add entry for filename in Open case
- * TODO: can we add sound_filename_completer to open entry?
+ * TODO: FileChooser: add entry for filename in Open case (with completion)
+ * TODO: snd_error_within_xen to simplify error handling from Scheme etc
  */
 
 
@@ -236,6 +236,16 @@ static void unpad(gpointer w, gpointer data)
     GTK_CELL_RENDERER(w)->ypad = 0;
 }
 
+static gboolean filer_key_press(GtkWidget *w, GdkEventKey *event, gpointer data)
+{
+  if (event->keyval == GDK_Tab)
+    {
+      gtk_entry_set_text(GTK_ENTRY(w), sound_filename_completer((char *)gtk_entry_get_text(GTK_ENTRY(w))));
+      return(true);
+    }
+  return(false);
+}
+
 static char *snd_filer_get_filename(GtkWidget *dialog)
 {
   return(copy_string((char *)gtk_file_selection_get_filename(GTK_FILE_SELECTION(dialog))));
@@ -283,6 +293,7 @@ static GtkWidget *snd_filer_new(char *title, bool saving,
   entry = filer->selection_entry;
   gtk_widget_modify_bg(entry, GTK_STATE_NORMAL, ss->sgx->white);
   connect_mouse_to_text(entry);
+  SG_SIGNAL_CONNECT(entry, "key_press_event", filer_key_press, NULL);
 
   SG_SIGNAL_CONNECT(new_dialog, "delete_event", gdelete, fd);
   SG_SIGNAL_CONNECT(filer->ok_button, "clicked", ok, fd);
@@ -749,41 +760,41 @@ char *get_file_dialog_sound_attributes(file_data *fdat, int *srate, int *chans, 
   if ((srate) && (fdat->srate_text))
     {
       str = (char *)gtk_entry_get_text(GTK_ENTRY(fdat->srate_text)); 
+      fdat->scanf_widget = SRATE_WIDGET;
       if ((str) && (*str))
-	{
-	  fdat->scanf_widget = SRATE_WIDGET;
-	  (*srate) = string_to_int_with_error(str, 1, "srate"); 
-	}
+	(*srate) = string_to_int_with_error(str, 1, "srate"); 
+      else snd_error("no srate?");
     }
 
   if ((chans) && (fdat->chans_text))
     {
       str = (char *)gtk_entry_get_text(GTK_ENTRY(fdat->chans_text)); 
+      fdat->scanf_widget = CHANS_WIDGET;
       if ((str) && (*str))
-	{
-	  fdat->scanf_widget = CHANS_WIDGET;
-	  (*chans) = string_to_int_with_error(str, min_chan, "chans"); 
-	}
+	(*chans) = string_to_int_with_error(str, min_chan, "chans"); 
+       else
+ 	{
+ 	  if (min_chan > 0)
+ 	    snd_error("no chans?");
+ 	}
     }
 
   if ((location) && (fdat->location_text))
     {
       str = (char *)gtk_entry_get_text(GTK_ENTRY(fdat->location_text)); 
+      fdat->scanf_widget = DATA_LOCATION_WIDGET;
       if ((str) && (*str))
-	{
-	  fdat->scanf_widget = DATA_LOCATION_WIDGET;
-	  (*location) = string_to_off_t_with_error(str, 0, "data location"); 
-	}
+	(*location) = string_to_off_t_with_error(str, 0, "data location"); 
+      else snd_error("no data location?");
     }
 
   if ((samples) && (fdat->samples_text))
     {
       str = (char *)gtk_entry_get_text(GTK_ENTRY(fdat->samples_text)); 
+      fdat->scanf_widget = SAMPLES_WIDGET;
       if ((str) && (*str))
-	{
-	  fdat->scanf_widget = SAMPLES_WIDGET;
-	  (*samples) = string_to_off_t_with_error(str, 0, "samples"); 
-	}
+	(*samples) = string_to_off_t_with_error(str, 0, "samples"); 
+      else snd_error("no samples?");
     }
   fdat->scanf_widget = SAMPLES_WIDGET;
 
@@ -881,39 +892,50 @@ static void set_file_dialog_sound_attributes(file_data *fdat, int type, int form
     widget_off_t_to_text(fdat->samples_text, samples);
 }
 
+static gboolean data_panel_srate_key_press(GtkWidget *w, GdkEventKey *event, gpointer data)
+{
+  if (event->keyval == GDK_Tab)
+    {
+      gtk_entry_set_text(GTK_ENTRY(w), srate_completer((char *)gtk_entry_get_text(GTK_ENTRY(w))));
+      return(true);
+    }
+  return(false);
+}
+
+
 #define NUM_REFLECTION_IDS 7
 enum {REFLECT_SRATE_ID, REFLECT_CHANS_ID, REFLECT_SAMPLES_ID, REFLECT_LOCATION_ID, 
       REFLECT_COMMENT_ID, REFLECT_FORMAT_ID, REFLECT_HEADER_ID};
 
-static void reflect_file_data_panel_change(file_data *fd, void (*change_action)(GtkWidget *w, gpointer context))
+static void reflect_file_data_panel_change(file_data *fd, void *data, void (*change_action)(GtkWidget *w, gpointer context))
 {
   if (!(fd->reflection_ids))
     fd->reflection_ids = (gulong *)CALLOC(NUM_REFLECTION_IDS, sizeof(gulong));
   if (fd->srate_text)
-    fd->reflection_ids[REFLECT_SRATE_ID] = SG_SIGNAL_CONNECT(fd->srate_text, "changed", change_action, (gpointer)fd);
+    fd->reflection_ids[REFLECT_SRATE_ID] = SG_SIGNAL_CONNECT(fd->srate_text, "changed", change_action, (gpointer)data);
   if (fd->chans_text)
-    fd->reflection_ids[REFLECT_CHANS_ID] = SG_SIGNAL_CONNECT(fd->chans_text, "changed", change_action, (gpointer)fd);
+    fd->reflection_ids[REFLECT_CHANS_ID] = SG_SIGNAL_CONNECT(fd->chans_text, "changed", change_action, (gpointer)data);
   if (fd->samples_text)
-    fd->reflection_ids[REFLECT_SAMPLES_ID] = SG_SIGNAL_CONNECT(fd->samples_text, "changed", change_action, (gpointer)fd);
+    fd->reflection_ids[REFLECT_SAMPLES_ID] = SG_SIGNAL_CONNECT(fd->samples_text, "changed", change_action, (gpointer)data);
   if (fd->location_text)
-    fd->reflection_ids[REFLECT_LOCATION_ID] = SG_SIGNAL_CONNECT(fd->location_text, "changed", change_action, (gpointer)fd);
+    fd->reflection_ids[REFLECT_LOCATION_ID] = SG_SIGNAL_CONNECT(fd->location_text, "changed", change_action, (gpointer)data);
   if (fd->comment_text)
     {
       if (GTK_IS_TEXT_VIEW(fd->comment_text))
 	fd->reflection_ids[REFLECT_COMMENT_ID] = 
-          SG_SIGNAL_CONNECT(gtk_text_view_get_buffer(GTK_TEXT_VIEW(fd->comment_text)), "changed", change_action, (gpointer)fd);
-      else fd->reflection_ids[REFLECT_COMMENT_ID] = SG_SIGNAL_CONNECT(fd->comment_text, "changed", change_action, (gpointer)fd);
+          SG_SIGNAL_CONNECT(gtk_text_view_get_buffer(GTK_TEXT_VIEW(fd->comment_text)), "changed", change_action, (gpointer)data);
+      else fd->reflection_ids[REFLECT_COMMENT_ID] = SG_SIGNAL_CONNECT(fd->comment_text, "changed", change_action, (gpointer)data);
     }
   /* these are technically the wrong callback type, but we ignore the widget */
   if (fd->format_list)
     fd->reflection_ids[REFLECT_FORMAT_ID] = 
-      SG_SIGNAL_CONNECT(gtk_tree_view_get_selection(GTK_TREE_VIEW(fd->format_list)), "changed", change_action, (gpointer)fd);
+      SG_SIGNAL_CONNECT(gtk_tree_view_get_selection(GTK_TREE_VIEW(fd->format_list)), "changed", change_action, (gpointer)data);
   if (fd->header_list)
     fd->reflection_ids[REFLECT_HEADER_ID] = 
-      SG_SIGNAL_CONNECT(gtk_tree_view_get_selection(GTK_TREE_VIEW(fd->header_list)), "changed", change_action, (gpointer)fd);
+      SG_SIGNAL_CONNECT(gtk_tree_view_get_selection(GTK_TREE_VIEW(fd->header_list)), "changed", change_action, (gpointer)data);
 }
 
-static void unreflect_file_data_panel_change(file_data *fd, void (*change_action)(GtkWidget *w, gpointer context))
+static void unreflect_file_data_panel_change(file_data *fd, void *data, void (*change_action)(GtkWidget *w, gpointer context))
 {
   int i;
   if (!(fd->reflection_ids)) return;
@@ -1272,6 +1294,7 @@ file_data *make_file_data_panel(GtkWidget *parent, char *name,
   gtk_menu_shell_append(GTK_MENU_SHELL(sbar), sitem);
 
   fdat->srate_text = snd_entry_new(scbox, true);
+  SG_SIGNAL_CONNECT(fdat->srate_text, "key_press_event", data_panel_srate_key_press, NULL);
 
   SG_SIGNAL_CONNECT(s8,  "activate", s8_callback, (gpointer)fdat);
   SG_SIGNAL_CONNECT(s22,  "activate", s22_callback, (gpointer)fdat);
@@ -1701,107 +1724,164 @@ void save_file_dialog_state(FILE *fd)
 
 /* -------------------------------- Raw Data Dialog -------------------------------- */
 
-static GtkWidget *raw_data_dialog = NULL;
-static file_data *rdat = NULL;
-static off_t raw_data_location = 0;
-static bool raw_data_read_only = false, raw_data_sound_selected = false;
-static char *raw_data_filename = NULL, *raw_data_info = NULL;
+typedef struct raw_info {
+  GtkWidget *dialog;
+  off_t location;
+  file_data *rdat;
+  bool read_only;
+  bool selected;
+  char *filename;
+  char *help;
+  open_requestor_t requestor;
+  snd_info *sp;
+  GtkWidget *requestor_dialog;
+} raw_info;
+
+static int raw_info_size = 0;
+static raw_info **raw_infos = NULL;
+
+static raw_info *new_raw_dialog(void)
+{
+  int loc = -1;
+  if (raw_info_size == 0)
+    {
+      loc = 0;
+      raw_info_size = 4;
+      raw_infos = (raw_info **)CALLOC(raw_info_size, sizeof(raw_info *));
+    }
+  else
+    {
+      int i;
+      for (i = 0; i < raw_info_size; i++)
+	if ((!raw_infos[i]) ||
+	    (!(GTK_WIDGET_VISIBLE(raw_infos[i]->dialog))))
+	  {
+	    loc = i;
+	    break;
+	  }
+      if (loc == -1)
+	{
+	  loc = raw_info_size;
+	  raw_info_size += 4;
+	  raw_infos = (raw_info **)REALLOC(raw_infos, raw_info_size * sizeof(raw_info *));
+	  for (i = loc; i < raw_info_size; i++) raw_infos[i] = NULL;
+	}
+    }
+  if (!raw_infos[loc])
+    {
+      raw_infos[loc] = (raw_info *)CALLOC(1, sizeof(raw_info));
+      raw_infos[loc]->dialog = NULL;
+      raw_infos[loc]->filename = NULL;
+      raw_infos[loc]->help = NULL;
+    }
+  raw_infos[loc]->requestor = NO_REQUESTOR;
+  raw_infos[loc]->sp = NULL;
+  raw_infos[loc]->location = 0;
+  return(raw_infos[loc]);
+}
 
 static void raw_data_ok_callback(GtkWidget *w, gpointer context)
 {
+  raw_info *rp = (raw_info *)context;
   int raw_srate, raw_chans, raw_data_format;
-  redirect_snd_error_to(post_file_panel_error, (void *)rdat);
-  get_file_dialog_sound_attributes(rdat, &raw_srate, &raw_chans, NULL, &raw_data_format, &raw_data_location, NULL, 1);
+  redirect_snd_error_to(post_file_panel_error, (void *)(rp->rdat));
+  get_file_dialog_sound_attributes(rp->rdat, &raw_srate, &raw_chans, NULL, &raw_data_format, &(rp->location), NULL, 1);
   redirect_snd_error_to(NULL, NULL);
-  if (rdat->error_widget != NOT_A_SCANF_WIDGET)
+  if (rp->rdat->error_widget != NOT_A_SCANF_WIDGET)
     {
-      clear_error_if_panel_changes(raw_data_dialog, (void *)rdat);
+      clear_error_if_panel_changes(rp->dialog, (void *)(rp->rdat));
     }
   else
     {
       mus_header_set_raw_defaults(raw_srate, raw_chans, raw_data_format);
-      mus_sound_override_header(raw_data_filename, raw_srate, raw_chans, 
-				raw_data_format, MUS_RAW, raw_data_location,
+      mus_sound_override_header(rp->filename, raw_srate, raw_chans, 
+				raw_data_format, MUS_RAW, rp->location,
 				mus_bytes_to_samples(raw_data_format, 
-						     mus_sound_length(raw_data_filename) - raw_data_location));
+						     mus_sound_length(rp->filename) - rp->location));
       /* choose action based on how we got here */
-      if ((ss->sgx->requestor_dialog) &&
-	  (ss->open_requestor == FROM_MIX_DIALOG))
+      if ((rp->requestor_dialog) &&
+	  (rp->requestor == FROM_MIX_DIALOG))
 	{
 	  ss->reloading_updated_file = true; /* don't reread lack-of-header! */
-	  mix_complete_file_at_cursor(any_selected_sound(), raw_data_filename, with_mix_tags(ss), 0);
+	  mix_complete_file_at_cursor(any_selected_sound(), rp->filename, with_mix_tags(ss), 0);
 	  ss->reloading_updated_file = false;
 	}
       else
 	{
 	  file_info *hdr;
 	  hdr = (file_info *)CALLOC(1, sizeof(file_info));
-	  hdr->name = copy_string(raw_data_filename);
+	  hdr->name = copy_string(rp->filename);
 	  hdr->type = MUS_RAW;
 	  hdr->srate = raw_srate;
 	  hdr->chans = raw_chans;
 	  hdr->format = raw_data_format;
 	  hdr->samples = mus_bytes_to_samples(raw_data_format, 
-					      mus_sound_length(raw_data_filename) - raw_data_location);
-	  hdr->data_location = raw_data_location;
+					      mus_sound_length(rp->filename) - rp->location);
+	  hdr->data_location = rp->location;
 	  hdr->comment = NULL;
-	  if (ss->open_requestor == FROM_KEYBOARD)
+	  if (rp->requestor == FROM_KEYBOARD)
 	    {
-	      clear_minibuffer(ss->open_requestor_sp);
-	      raw_data_sound_selected = true;
+	      clear_minibuffer(rp->sp);
+	      rp->selected = true;
 	    }
-	  finish_opening_sound(add_sound_window(raw_data_filename, raw_data_read_only, hdr), raw_data_sound_selected);
+	  finish_opening_sound(add_sound_window(rp->filename, rp->read_only, hdr), rp->selected);
 	}
-      gtk_widget_hide(raw_data_dialog);
+      gtk_widget_hide(rp->dialog);
     }
 }
 
 static void raw_data_cancel_callback(GtkWidget *w, gpointer context)
 {
-  gtk_widget_hide(raw_data_dialog);
-  if ((ss->sgx->requestor_dialog) && 
-      ((ss->open_requestor == FROM_OPEN_DIALOG) ||
-       (ss->open_requestor == FROM_MIX_DIALOG)))
-    gtk_widget_show(ss->sgx->requestor_dialog);
+  raw_info *rp = (raw_info *)context;
+  gtk_widget_hide(rp->dialog);
+  if ((rp->requestor_dialog) && 
+      ((rp->requestor == FROM_OPEN_DIALOG) ||
+       (rp->requestor == FROM_MIX_DIALOG)))
+    gtk_widget_show(rp->requestor_dialog);
 }
 
 static gint raw_data_delete_callback(GtkWidget *w, GdkEvent *event, gpointer context) 
 {
-  if ((ss->sgx->requestor_dialog) && 
-      ((ss->open_requestor == FROM_OPEN_DIALOG) ||
-       (ss->open_requestor == FROM_MIX_DIALOG)))
-    gtk_widget_show(ss->sgx->requestor_dialog);
+  raw_info *rp = (raw_info *)context;
+  if ((rp->requestor_dialog) && 
+      ((rp->requestor == FROM_OPEN_DIALOG) ||
+       (rp->requestor == FROM_MIX_DIALOG)))
+    gtk_widget_show(rp->requestor_dialog);
   return(true);
 }
 
 static void raw_data_reset_callback(GtkWidget *w, gpointer context) 
 {
+  raw_info *rp = (raw_info *)context;
   int raw_srate, raw_chans, raw_data_format;
-  raw_data_location = 0;
+  rp->location = 0;
   mus_header_raw_defaults(&raw_srate, &raw_chans, &raw_data_format); /* pick up defaults */  
-  set_file_dialog_sound_attributes(rdat, 
+  set_file_dialog_sound_attributes(rp->rdat, 
 				   IGNORE_HEADER_TYPE, 
-				   raw_data_format, raw_srate, raw_chans, raw_data_location, 
+				   raw_data_format, raw_srate, raw_chans, rp->location, 
 				   IGNORE_SAMPLES, NULL);
-  gtk_widget_hide(rdat->error_text);
+  gtk_widget_hide(rp->rdat->error_text);
 }
 
 static void raw_data_help_callback(GtkWidget *w, gpointer context) 
 {
-  raw_data_dialog_help(raw_data_info);
+  raw_info *rp = (raw_info *)context;
+  raw_data_dialog_help(rp->help);
 }
 
-static void make_raw_data_dialog(const char *filename, const char *title)
+static void make_raw_data_dialog(raw_info *rp, const char *filename, const char *title)
 {
   GtkWidget *resetB, *helpB, *cancelB, *okB;
   int raw_srate, raw_chans, raw_data_format;
  
-  raw_data_dialog = snd_gtk_dialog_new();
-  gtk_window_set_title(GTK_WINDOW(raw_data_dialog), _("No Header on File"));
-  sg_make_resizable(raw_data_dialog);
-  gtk_container_set_border_width(GTK_CONTAINER(raw_data_dialog), 10);
-  gtk_window_resize(GTK_WINDOW(raw_data_dialog), 350, 260);
-  gtk_widget_realize(raw_data_dialog);
+  rp->dialog = snd_gtk_dialog_new();
+  if (!title)
+    gtk_window_set_title(GTK_WINDOW(rp->dialog), _("No header on file"));
+  else gtk_window_set_title(GTK_WINDOW(rp->dialog), title);
+  sg_make_resizable(rp->dialog);
+  gtk_container_set_border_width(GTK_CONTAINER(rp->dialog), 10);
+  gtk_window_resize(GTK_WINDOW(rp->dialog), 350, 260);
+  gtk_widget_realize(rp->dialog);
 
   helpB = gtk_button_new_from_stock(GTK_STOCK_HELP);
   gtk_widget_set_name(helpB, "help_button");
@@ -1815,67 +1895,75 @@ static void make_raw_data_dialog(const char *filename, const char *title)
   okB = gtk_button_new_from_stock(GTK_STOCK_OK);
   gtk_widget_set_name(okB, "doit_button");
 
-  gtk_box_pack_start(GTK_BOX(GTK_DIALOG(raw_data_dialog)->action_area), okB, true, true, 10);
-  gtk_box_pack_start(GTK_BOX(GTK_DIALOG(raw_data_dialog)->action_area), resetB, true, true, 10);
-  gtk_box_pack_start(GTK_BOX(GTK_DIALOG(raw_data_dialog)->action_area), cancelB, true, true, 10);
-  gtk_box_pack_end(GTK_BOX(GTK_DIALOG(raw_data_dialog)->action_area), helpB, true, true, 10);
+  gtk_box_pack_start(GTK_BOX(GTK_DIALOG(rp->dialog)->action_area), okB, true, true, 10);
+  gtk_box_pack_start(GTK_BOX(GTK_DIALOG(rp->dialog)->action_area), resetB, true, true, 10);
+  gtk_box_pack_start(GTK_BOX(GTK_DIALOG(rp->dialog)->action_area), cancelB, true, true, 10);
+  gtk_box_pack_end(GTK_BOX(GTK_DIALOG(rp->dialog)->action_area), helpB, true, true, 10);
 
   mus_header_raw_defaults(&raw_srate, &raw_chans, &raw_data_format); /* pick up defaults */
 
-  rdat = make_file_data_panel(GTK_DIALOG(raw_data_dialog)->vbox, "data-form", 
-			      WITH_CHANNELS_FIELD, 
-			      MUS_RAW, raw_data_format, 
-			      WITH_DATA_LOCATION_FIELD, 
-			      WITHOUT_SAMPLES_FIELD,
-			      WITH_ERROR_FIELD, 
-			      WITHOUT_HEADER_TYPE_FIELD, 
-			      WITHOUT_COMMENT_FIELD);
-  rdat->dialog = raw_data_dialog;
-  set_file_dialog_sound_attributes(rdat, 
+  rp->rdat = make_file_data_panel(GTK_DIALOG(rp->dialog)->vbox, "data-form", 
+				  WITH_CHANNELS_FIELD, 
+				  MUS_RAW, raw_data_format, 
+				  WITH_DATA_LOCATION_FIELD, 
+				  WITHOUT_SAMPLES_FIELD,
+				  WITH_ERROR_FIELD, 
+				  WITHOUT_HEADER_TYPE_FIELD, 
+				  WITHOUT_COMMENT_FIELD);
+  rp->rdat->dialog = rp->dialog;
+  set_file_dialog_sound_attributes(rp->rdat, 
 				   IGNORE_HEADER_TYPE, 
-				   raw_data_format, raw_srate, raw_chans, raw_data_location, 
+				   raw_data_format, raw_srate, raw_chans, rp->location, 
 				   IGNORE_SAMPLES, NULL);
 
-  SG_SIGNAL_CONNECT(raw_data_dialog, "delete_event", raw_data_delete_callback, rdat);
-  SG_SIGNAL_CONNECT(okB, "clicked", raw_data_ok_callback, rdat);
+  SG_SIGNAL_CONNECT(rp->dialog, "delete_event", raw_data_delete_callback, rp);
+  SG_SIGNAL_CONNECT(okB, "clicked", raw_data_ok_callback, rp);
 
-  SG_SIGNAL_CONNECT(helpB, "clicked", raw_data_help_callback, rdat);
-  SG_SIGNAL_CONNECT(resetB, "clicked", raw_data_reset_callback, rdat);
-  SG_SIGNAL_CONNECT(cancelB, "clicked", raw_data_cancel_callback, rdat);
+  SG_SIGNAL_CONNECT(helpB, "clicked", raw_data_help_callback, rp);
+  SG_SIGNAL_CONNECT(resetB, "clicked", raw_data_reset_callback, rp);
+  SG_SIGNAL_CONNECT(cancelB, "clicked", raw_data_cancel_callback, rp);
 
   gtk_widget_show(okB);
   gtk_widget_show(cancelB);
   gtk_widget_show(helpB);
   gtk_widget_show(resetB);
 
-  set_dialog_widget(RAW_DATA_DIALOG, raw_data_dialog);
+  set_dialog_widget(RAW_DATA_DIALOG, rp->dialog);
 }
 
 void raw_data_dialog_to_file_info(const char *filename, char *title, char *info, bool read_only, bool selected)
 {
-  raw_data_read_only = read_only;
-  raw_data_sound_selected = selected;
-  if (raw_data_filename) FREE(raw_data_filename);
-  raw_data_filename = copy_string(filename);
-  if ((ss->sgx->requestor_dialog) &&
-      ((ss->open_requestor == FROM_OPEN_DIALOG) ||
-       (ss->open_requestor == FROM_MIX_DIALOG)))
+  raw_info *rp;
+  rp = new_raw_dialog();
+  rp->read_only = read_only;
+  rp->selected = selected;
+  if (rp->filename) FREE(rp->filename);
+  rp->filename = copy_string(filename);
+  rp->requestor = ss->open_requestor;
+  rp->requestor_dialog = ss->sgx->requestor_dialog;
+  rp->sp = ss->open_requestor_sp;
+  ss->open_requestor = NO_REQUESTOR;
+  ss->sgx->requestor_dialog = NULL;
+  ss->open_requestor_sp = NULL;
+  if ((rp->requestor_dialog) &&
+      ((rp->requestor == FROM_OPEN_DIALOG) ||
+       (rp->requestor == FROM_MIX_DIALOG)))
     gtk_widget_hide(ss->sgx->requestor_dialog);
   if (!title) 
     title = mus_format("no header found on %s\n", filename);
-  if (!raw_data_dialog) 
-    make_raw_data_dialog(filename, title);
-  else gtk_window_set_title(GTK_WINDOW(raw_data_dialog), title);
+  if (!rp->dialog) 
+    make_raw_data_dialog(rp, filename, title);
+  else gtk_window_set_title(GTK_WINDOW(rp->dialog), title);
   FREE(title);
-  if (raw_data_info) FREE(raw_data_info);
+  if (rp->help) FREE(rp->help);
   if (info)
     {
-      raw_data_info = copy_string(info);
+      rp->help = copy_string(info);
       FREE(info);
     }
-  else raw_data_info = NULL;
-  raise_dialog(raw_data_dialog);
-  gtk_widget_show(raw_data_dialog);
+  else rp->help = NULL;
+  raise_dialog(rp->dialog);
+  gtk_widget_show(rp->dialog);
 }
 
 
@@ -1885,18 +1973,11 @@ static GtkWidget *new_file_dialog = NULL, *new_file_text = NULL, *new_file_ok_bu
 static file_data *ndat = NULL;
 static off_t initial_samples = 1;
 static char *new_file_filename = NULL;
-
-#if HAVE_FAM
 static fam_info *new_file_watcher = NULL;
-#else
-static bool new_file_watcher = false;
-#endif
 
 void cleanup_new_file_watcher(void)
 {
-#if HAVE_FAM
   new_file_watcher = fam_unmonitor_file(new_file_filename, new_file_watcher);
-#endif
 }
 
 static gulong new_file_handler_id = 0;
@@ -1914,11 +1995,7 @@ static void new_file_undoit(void)
 	}
     }
   set_button_label(new_file_ok_button, _("Ok"));
-#if HAVE_FAM
   new_file_watcher = fam_unmonitor_file(new_file_filename, new_file_watcher);
-#else
-  new_file_watcher = false;
-#endif
 }
 
 static gboolean new_filename_modify_callback(GtkWidget *w, GdkEventKey *event, gpointer data)
@@ -1933,10 +2010,10 @@ static void clear_error_if_new_filename_changes(GtkWidget *dialog, void *data)
     new_file_handler_id = SG_SIGNAL_CONNECT(new_file_text, "key_press_event", new_filename_modify_callback, data);
 }
 
-#if HAVE_FAM
 static void watch_new_file(struct fam_info *fp, FAMEvent *fe)
 {
   /* if file is deleted, respond in some debonair manner */
+#if HAVE_FAM
   switch (fe->code)
     {
     case FAMChanged:
@@ -1950,8 +2027,8 @@ static void watch_new_file(struct fam_info *fp, FAMEvent *fe)
       /* ignore the rest */
       break;
     }
-}
 #endif
+}
 
 static void new_file_ok_callback(GtkWidget *w, gpointer context) 
 {
@@ -1985,11 +2062,7 @@ static void new_file_ok_callback(GtkWidget *w, gpointer context)
 	      (mus_file_probe(new_file_filename)))
 	    {
 	      msg = mus_format(_("%s exists. If you want to overwrite it, click 'DoIt'"), newer_name);
-#if HAVE_FAM
 	      new_file_watcher = fam_monitor_file(new_file_filename, NULL, watch_new_file);
-#else
-	      new_file_watcher = true;
-#endif
 	      set_button_label(new_file_ok_button, _("DoIt"));
 	      post_file_dialog_error((const char *)msg, (void *)ndat);
 	      clear_error_if_new_filename_changes(new_file_dialog, (void *)ndat);
@@ -2007,11 +2080,7 @@ static void new_file_ok_callback(GtkWidget *w, gpointer context)
 		{
 		  if ((ss->local_errno) &&
 		      (mus_file_probe(new_file_filename))) /* see comment in snd-xfile.c */
-#if HAVE_FAM
 		    new_file_watcher = fam_monitor_file(new_file_filename, NULL, watch_new_file);
-#else
-		    new_file_watcher = true;
-#endif
 		  clear_error_if_new_filename_changes(new_file_dialog, (void *)ndat);
 		}
 	      else
@@ -2175,23 +2244,69 @@ void make_new_file_dialog(void)
 
 /* ---------------- Edit Header ---------------- */
 
-static GtkWidget *edit_header_dialog = NULL, *edit_header_save_button = NULL;
-static file_data *edat;
-static snd_info *edit_header_sp = NULL;
-static bool edit_header_panel_changed = false;
-#if HAVE_FAM
-static fam_info *edit_header_file_read_only_watcher = NULL;
-#endif
+typedef struct edhead_info {
+  GtkWidget *dialog, *save_button;
+  file_data *edat;
+  snd_info *sp;
+  bool panel_changed;
+  fam_info *file_ro_watcher;
+} edhead_info;
+
+static int edhead_info_size = 0;
+static edhead_info **edhead_infos = NULL;
+
+static edhead_info *new_edhead_dialog(void)
+{
+  int loc = -1;
+  if (edhead_info_size == 0)
+    {
+      loc = 0;
+      edhead_info_size = 4;
+      edhead_infos = (edhead_info **)CALLOC(edhead_info_size, sizeof(edhead_info *));
+    }
+  else
+    {
+      int i;
+      for (i = 0; i < edhead_info_size; i++)
+	if ((!edhead_infos[i]) ||
+	    (!(GTK_WIDGET_VISIBLE(edhead_infos[i]->dialog))))
+	  {
+	    loc = i;
+	    break;
+	  }
+      if (loc == -1)
+	{
+	  loc = edhead_info_size;
+	  edhead_info_size += 4;
+	  edhead_infos = (edhead_info **)REALLOC(edhead_infos, edhead_info_size * sizeof(edhead_info *));
+	  for (i = loc; i < edhead_info_size; i++) edhead_infos[i] = NULL;
+	}
+    }
+  if (!edhead_infos[loc])
+    {
+      edhead_infos[loc] = (edhead_info *)CALLOC(1, sizeof(edhead_info));
+      edhead_infos[loc]->dialog = NULL;
+      edhead_infos[loc]->panel_changed = false;
+    }
+  edhead_infos[loc]->sp = NULL;
+  edhead_infos[loc]->file_ro_watcher = NULL;
+  return(edhead_infos[loc]);
+}
 
 void cleanup_edit_header_watcher(void)
 {
-#if HAVE_FAM
-  if (edit_header_file_read_only_watcher)
-    edit_header_file_read_only_watcher = fam_unmonitor_file(edit_header_sp->filename, edit_header_file_read_only_watcher);
-#endif
+  int i;
+  for (i = 0; i < edhead_info_size; i++)
+    if (edhead_infos[i])
+      {
+	edhead_info *ep;
+	ep = edhead_infos[i];
+	if (ep->file_ro_watcher)
+	  ep->file_ro_watcher = fam_unmonitor_file(ep->sp->filename, ep->file_ro_watcher);
+      }
 }
 
-static char *make_edit_header_dialog_title(snd_info *sp)
+static char *make_header_dialog_title(edhead_info *ep, snd_info *sp)
 {
   /* dialog may not yet exist */
   char *str;
@@ -2201,16 +2316,16 @@ static char *make_edit_header_dialog_title(snd_info *sp)
       if (sp->hdr->type == MUS_RAW)
 	mus_snprintf(str, PRINT_BUFFER_SIZE, _("Add header to (write-protected) %s"), sp->short_filename);
       else mus_snprintf(str, PRINT_BUFFER_SIZE, _("Edit header of (write-protected) %s"), sp->short_filename);
-      if (edit_header_dialog)
-	set_sensitive(edit_header_save_button, (sp->hdr->type == MUS_RAW));
+      if (ep->dialog)
+	set_sensitive(ep->save_button, (sp->hdr->type == MUS_RAW));
     }
   else 
     {
       if (sp->hdr->type == MUS_RAW)
 	mus_snprintf(str, PRINT_BUFFER_SIZE, _("Add header to %s"), sp->short_filename);
       else mus_snprintf(str, PRINT_BUFFER_SIZE, _("Edit header of %s"), sp->short_filename);
-      if (edit_header_dialog)
-	set_sensitive(edit_header_save_button, edit_header_panel_changed);
+      if (ep->dialog)
+	set_sensitive(ep->save_button, ep->panel_changed);
     }
   return(str);
 }
@@ -2222,66 +2337,72 @@ static void edit_header_help_callback(GtkWidget *w, gpointer context)
 
 static void edit_header_set_ok_sensitive(GtkWidget *w, gpointer context) 
 {
-  if (!(edit_header_sp->file_read_only))
-    gtk_widget_set_sensitive(edit_header_save_button, true);
-  edit_header_panel_changed = true;
+  edhead_info *ep = (edhead_info *)context;
+  if (!(ep->sp->file_read_only))
+    gtk_widget_set_sensitive(ep->save_button, true);
+  ep->panel_changed = true;
 }
 
-static void edit_header_done(void)
+static void edit_header_done(edhead_info *ep)
 {
-  gtk_widget_hide(edit_header_dialog);
-  unreflect_file_data_panel_change(edat, edit_header_set_ok_sensitive);
-  edit_header_sp->user_read_only_watcher = NULL;
-  edit_header_panel_changed = false;
-#if HAVE_FAM
-  edit_header_file_read_only_watcher = fam_unmonitor_file(edit_header_sp->filename, edit_header_file_read_only_watcher);
-#endif
+  gtk_widget_hide(ep->dialog);
+  unreflect_file_data_panel_change(ep->edat, (void *)ep, edit_header_set_ok_sensitive);
+  ep->sp->user_read_only_watcher = NULL;
+  ep->sp->user_read_only_watcher_context = NULL;
+  ep->panel_changed = false;
+  ep->file_ro_watcher = fam_unmonitor_file(ep->sp->filename, ep->file_ro_watcher);
 }
 
 static void edit_header_cancel_callback(GtkWidget *w, gpointer context) 
 {
-  edit_header_done();
+  edit_header_done((edhead_info *)context);
 }
 
 static gint edit_header_delete_callback(GtkWidget *w, GdkEvent *event, gpointer context)
 {
-  edit_header_done();
+  edit_header_done((edhead_info *)context);
   return(true);
 }
 
 static void watch_user_read_only(struct snd_info *sp, read_only_reason_t reason)
 {
-  if ((edit_header_dialog) && 
-      (GTK_WIDGET_VISIBLE(edit_header_dialog)) &&
-      (sp == edit_header_sp))
+  edhead_info *ep = (edhead_info *)(sp->user_read_only_watcher_context);
+  if ((ep->dialog) && 
+      (GTK_WIDGET_VISIBLE(ep->dialog)) &&
+      (sp == ep->sp))
     {
       if (reason == USER_READ_ONLY_CHANGED)
 	{
 	  char *title;
 	  if ((!(sp->file_read_only)) && (!(sp->user_read_only)))
-	    clear_dialog_error(edat);
-	  title = make_edit_header_dialog_title(sp);
-	  gtk_window_set_title(GTK_WINDOW(edit_header_dialog), title);
+	    clear_dialog_error(ep->edat);
+	  title = make_header_dialog_title(ep, sp);
+	  gtk_window_set_title(GTK_WINDOW(ep->dialog), title);
 	  FREE(title);
 	}
       else /* sound closing, so we shouldn't sit around offering to edit its header */
 	{
-	  clear_dialog_error(edat);
-	  gtk_widget_hide(edit_header_dialog);
-	  if (edit_header_panel_changed)
-	    unreflect_file_data_panel_change(edat, edit_header_set_ok_sensitive);
-	  edit_header_panel_changed = false;
+	  clear_dialog_error(ep->edat);
+	  gtk_widget_hide(ep->dialog);
+	  if (ep->panel_changed)
+	    unreflect_file_data_panel_change(ep->edat, (void *)ep, edit_header_set_ok_sensitive);
+	  ep->panel_changed = false;
+ 	  ep->file_ro_watcher = fam_unmonitor_file(ep->sp->filename, ep->file_ro_watcher);
+ 	  ep->sp->user_read_only_watcher = NULL;
+ 	  ep->sp->user_read_only_watcher_context = NULL;
+	  ep->sp = NULL;
 	}
     }
 }
 
-#if HAVE_FAM
 static void watch_file_read_only(struct fam_info *fp, FAMEvent *fe)
 {
+#if HAVE_FAM
   /* if file is deleted or permissions change, respond in some debonair manner */
+  edhead_info *ep = (edhead_info *)(fp->data);
   snd_info *sp = NULL;
-  sp = (snd_info *)(fp->data);
-  if ((sp->writing) || (sp != edit_header_sp)) return;
+  sp = ep->sp;
+  if (sp->writing) return;
   switch (fe->code)
     {
     case FAMChanged:
@@ -2294,9 +2415,9 @@ static void watch_file_read_only(struct fam_info *fp, FAMEvent *fe)
 	    err = access(sp->filename, W_OK);
 	    sp->file_read_only = (err < 0);
 	    if ((!(sp->file_read_only)) && (!(sp->user_read_only)))
-	      clear_dialog_error(edat);
-	    title = make_edit_header_dialog_title(sp);
-	    gtk_window_set_title(GTK_WINDOW(edit_header_dialog), title);
+	      clear_dialog_error(ep->edat);
+	    title = make_header_dialog_title(ep, sp);
+	    gtk_window_set_title(GTK_WINDOW(ep->dialog), title);
 	    FREE(title);
 	    return;
 	  }
@@ -2307,51 +2428,50 @@ static void watch_file_read_only(struct fam_info *fp, FAMEvent *fe)
     case FAMCreated:
     case FAMMoved:
       /* I don't think it makes sense to continue the dialog at this point */
-      clear_dialog_error(edat);
-      gtk_widget_hide(edit_header_dialog);
-      if (edit_header_panel_changed)
-	unreflect_file_data_panel_change(edat, edit_header_set_ok_sensitive);
-      edit_header_panel_changed = false;
-#if HAVE_FAM
-      edit_header_file_read_only_watcher = fam_unmonitor_file(edit_header_sp->filename, edit_header_file_read_only_watcher);
-#endif
-      edit_header_sp->user_read_only_watcher = NULL;
+      clear_dialog_error(ep->edat);
+      gtk_widget_hide(ep->dialog);
+      if (ep->panel_changed)
+	unreflect_file_data_panel_change(ep->edat, (void *)ep, edit_header_set_ok_sensitive);
+      ep->panel_changed = false;
+      ep->file_ro_watcher = fam_unmonitor_file(ep->sp->filename, ep->file_ro_watcher);
+      ep->sp->user_read_only_watcher = NULL;
+      ep->sp->user_read_only_watcher_context = NULL;
       break;
 
     default:
       /* ignore the rest */
       break;
     }
-}
 #endif
+}
 
 static void edit_header_ok_callback(GtkWidget *w, gpointer context) 
 {
-  if ((edit_header_sp) && (edit_header_sp->active))
+  edhead_info *ep = (edhead_info *)context;
+  if ((ep->sp) && (ep->sp->active))
     {
       bool ok;
-      redirect_snd_error_to(post_file_dialog_error, (void *)edat);
-      ok = edit_header_callback(edit_header_sp, edat, post_file_dialog_error, post_file_panel_error);
+      redirect_snd_error_to(post_file_dialog_error, (void *)(ep->edat));
+      ok = edit_header_callback(ep->sp, ep->edat, post_file_dialog_error, post_file_panel_error);
       redirect_snd_error_to(NULL, NULL);
-      if (edat->error_widget != NOT_A_SCANF_WIDGET)
+      if (ep->edat->error_widget != NOT_A_SCANF_WIDGET)
 	{
-	  clear_error_if_panel_changes(edit_header_dialog, (void *)edat);
+	  clear_error_if_panel_changes(ep->dialog, (void *)(ep->edat));
 	  return;
 	}
       else
 	{
 	  if (!ok)
 	    {
-	      set_sensitive(edit_header_save_button, false);
+	      set_sensitive(ep->save_button, false);
 	      return;
 	    }
 	}
-      edit_header_sp->user_read_only_watcher = NULL;
-#if HAVE_FAM
-      edit_header_file_read_only_watcher = fam_unmonitor_file(edit_header_sp->filename, edit_header_file_read_only_watcher);
-#endif
-      gtk_widget_hide(edit_header_dialog);
-      unreflect_file_data_panel_change(edat, edit_header_set_ok_sensitive);
+      ep->sp->user_read_only_watcher = NULL;
+      ep->sp->user_read_only_watcher_context = NULL;
+      ep->file_ro_watcher = fam_unmonitor_file(ep->sp->filename, ep->file_ro_watcher);
+      gtk_widget_hide(ep->dialog);
+      unreflect_file_data_panel_change(ep->edat, (void *)ep, edit_header_set_ok_sensitive);
     }
 }
 
@@ -2359,21 +2479,41 @@ GtkWidget *edit_header(snd_info *sp)
 {
   char *str;
   file_info *hdr;
+  int i;
+  edhead_info *ep = NULL;
 
   if (!sp) return(NULL);
-  edit_header_sp = sp;
-  hdr = sp->hdr;
-  edit_header_panel_changed = (hdr->type == MUS_RAW);
+  /* look for a dialog already editing this sound, raise if found, else make a new one */
+  if (edhead_info_size > 0)
+    {
+      for (i = 0; i < edhead_info_size; i++)
+	if ((edhead_infos[i]) &&
+	    ((edhead_infos[i]->sp == sp) ||
+	     ((edhead_infos[i]->sp) && /* maybe same sound open twice -- only one edit header dialog for it */
+	      (edhead_infos[i]->sp->inuse == SOUND_NORMAL) &&
+	      (edhead_infos[i]->sp->filename) &&
+	      (strcmp(sp->filename, edhead_infos[i]->sp->filename) == 0))))
+	  {
+	    ep = edhead_infos[i];
+	    break;
+	  }
+    }
+  if (!ep)
+    ep = new_edhead_dialog();
 
-  if (!edit_header_dialog)
+  ep->sp = sp;
+  hdr = sp->hdr;
+  ep->panel_changed = (hdr->type == MUS_RAW);
+
+  if (!ep->dialog)
     {
       GtkWidget *help_button, *cancel_button;
-      edit_header_dialog = snd_gtk_dialog_new();
-      /* gtk_window_set_title(GTK_WINDOW(edit_header_dialog), _("Edit Header")); */
-      sg_make_resizable(edit_header_dialog);
-      gtk_container_set_border_width (GTK_CONTAINER(edit_header_dialog), 10);
-      gtk_window_resize(GTK_WINDOW(edit_header_dialog), 400, 250);
-      gtk_widget_realize(edit_header_dialog);
+      ep->dialog = snd_gtk_dialog_new();
+      /* gtk_window_set_title(GTK_WINDOW(ep->dialog), _("Edit Header")); */
+      sg_make_resizable(ep->dialog);
+      gtk_container_set_border_width (GTK_CONTAINER(ep->dialog), 10);
+      gtk_window_resize(GTK_WINDOW(ep->dialog), 400, 250);
+      gtk_widget_realize(ep->dialog);
 
       help_button = gtk_button_new_from_stock(GTK_STOCK_HELP);
       gtk_widget_set_name(help_button, "help_button");
@@ -2381,73 +2521,80 @@ GtkWidget *edit_header(snd_info *sp)
       cancel_button = gtk_button_new_from_stock(GTK_STOCK_CANCEL);
       gtk_widget_set_name(cancel_button, "quit_button");
 
-      edit_header_save_button = gtk_button_new_from_stock(GTK_STOCK_SAVE);
-      gtk_widget_set_name(edit_header_save_button, "doit_button");
+      ep->save_button = gtk_button_new_from_stock(GTK_STOCK_SAVE);
+      gtk_widget_set_name(ep->save_button, "doit_button");
 
-      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(edit_header_dialog)->action_area), cancel_button, true, true, 10);
-      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(edit_header_dialog)->action_area), edit_header_save_button, true, true, 10);
-      gtk_box_pack_end(GTK_BOX(GTK_DIALOG(edit_header_dialog)->action_area), help_button, true, true, 10);
+      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(ep->dialog)->action_area), cancel_button, true, true, 10);
+      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(ep->dialog)->action_area), ep->save_button, true, true, 10);
+      gtk_box_pack_end(GTK_BOX(GTK_DIALOG(ep->dialog)->action_area), help_button, true, true, 10);
 
-      edat = make_file_data_panel(GTK_DIALOG(edit_header_dialog)->vbox, _("Edit Header"), 
-				  WITH_CHANNELS_FIELD, 
-				  hdr->type, 
-				  hdr->format, 
-				  WITH_DATA_LOCATION_FIELD, 
-				  WITH_SAMPLES_FIELD,
-				  WITH_ERROR_FIELD, 
-				  WITH_HEADER_TYPE_FIELD, 
-				  WITH_COMMENT_FIELD);
-      edat->dialog = edit_header_dialog;
+      ep->edat = make_file_data_panel(GTK_DIALOG(ep->dialog)->vbox, _("Edit Header"), 
+				      WITH_CHANNELS_FIELD, 
+				      hdr->type, 
+				      hdr->format, 
+				      WITH_DATA_LOCATION_FIELD, 
+				      WITH_SAMPLES_FIELD,
+				      WITH_ERROR_FIELD, 
+				      WITH_HEADER_TYPE_FIELD, 
+				      WITH_COMMENT_FIELD);
+      ep->edat->dialog = ep->dialog;
 
-      SG_SIGNAL_CONNECT(edit_header_dialog, "delete_event", edit_header_delete_callback, edat);
-      SG_SIGNAL_CONNECT(cancel_button, "clicked", edit_header_cancel_callback, edat);
-      SG_SIGNAL_CONNECT(help_button, "clicked", edit_header_help_callback, edat);
-      SG_SIGNAL_CONNECT(edit_header_save_button, "clicked", edit_header_ok_callback, edat);
+      SG_SIGNAL_CONNECT(ep->dialog, "delete_event", edit_header_delete_callback, ep);
+      SG_SIGNAL_CONNECT(cancel_button, "clicked", edit_header_cancel_callback, ep);
+      SG_SIGNAL_CONNECT(help_button, "clicked", edit_header_help_callback, ep);
+      SG_SIGNAL_CONNECT(ep->save_button, "clicked", edit_header_ok_callback, ep);
 
       gtk_widget_show(cancel_button);
-      gtk_widget_show(edit_header_save_button);
+      gtk_widget_show(ep->save_button);
       gtk_widget_show(help_button);
 
-      set_dialog_widget(EDIT_HEADER_DIALOG, edit_header_dialog);
+      set_dialog_widget(EDIT_HEADER_DIALOG, ep->dialog);
     }
-  else clear_dialog_error(edat);
+  else clear_dialog_error(ep->edat);
 
-  str = make_edit_header_dialog_title(sp);
-  gtk_window_set_title(GTK_WINDOW(edit_header_dialog), str);
+  str = make_header_dialog_title(ep, sp);
+  gtk_window_set_title(GTK_WINDOW(ep->dialog), str);
   FREE(str);
 
-  gtk_widget_set_sensitive(edit_header_save_button, (hdr->type == MUS_RAW));
+  gtk_widget_set_sensitive(ep->save_button, (hdr->type == MUS_RAW));
 
   if (hdr->type == MUS_RAW)
-    set_file_dialog_sound_attributes(edat, 
+    set_file_dialog_sound_attributes(ep->edat, 
 				     default_output_header_type(ss), 
 				     hdr->format, hdr->srate, hdr->chans, 
 				     hdr->data_location, hdr->samples, hdr->comment);
-  else set_file_dialog_sound_attributes(edat, 
+  else set_file_dialog_sound_attributes(ep->edat, 
 					hdr->type, hdr->format, hdr->srate, hdr->chans, 
 					hdr->data_location, hdr->samples, hdr->comment);
 
-  gtk_widget_show(edit_header_dialog);
-  reflect_file_data_panel_change(edat, edit_header_set_ok_sensitive);
-  edit_header_sp->user_read_only_watcher = &watch_user_read_only;
-#if HAVE_FAM
-  edit_header_file_read_only_watcher = fam_monitor_file(edit_header_sp->filename, (void *)sp, watch_file_read_only);
-#endif
-
-  return(edit_header_dialog);
+  gtk_widget_show(ep->dialog);
+  reflect_file_data_panel_change(ep->edat, (void *)ep, edit_header_set_ok_sensitive);
+  ep->sp->user_read_only_watcher = &watch_user_read_only;
+  ep->sp->user_read_only_watcher_context = (void *)ep;
+  ep->file_ro_watcher = fam_monitor_file(ep->sp->filename, (void *)ep, watch_file_read_only);
+  return(ep->dialog);
 }
 
 void save_edit_header_dialog_state(FILE *fd)
 {
-  if ((edit_header_dialog) && (GTK_WIDGET_VISIBLE(edit_header_dialog)) && (snd_ok(edit_header_sp)))
-    {
+  int i;
+  for (i = 0; i < edhead_info_size; i++)
+    if (edhead_infos[i])
+      {
+	edhead_info *ep;
+	ep = edhead_infos[i];
+	if ((ep->dialog) && 
+	    (GTK_WIDGET_VISIBLE(ep->dialog)) && 
+	    (snd_ok(ep->sp)))
+	  {
 #if HAVE_SCHEME
-      fprintf(fd, "(%s (%s \"%s\"))\n", S_edit_header_dialog, S_find_sound, edit_header_sp->short_filename);
+	    fprintf(fd, "(%s (%s \"%s\"))\n", S_edit_header_dialog, S_find_sound, ep->sp->short_filename);
 #endif
 #if HAVE_RUBY
-      fprintf(fd, "%s(%s(\"%s\"))\n", TO_PROC_NAME(S_edit_header_dialog), TO_PROC_NAME(S_find_sound), edit_header_sp->short_filename);
+	    fprintf(fd, "%s(%s(\"%s\"))\n", TO_PROC_NAME(S_edit_header_dialog), TO_PROC_NAME(S_find_sound), ep->sp->short_filename);
 #endif
-    }
+	  }
+      }
 }
 
 

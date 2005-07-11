@@ -135,9 +135,7 @@ void set_button_label(Widget label, const char *str);
 
 void snd_doit(int argc, char **argv);
 color_t get_in_between_color(color_t fg, color_t bg);
-#if (!HAVE_FAM)
-  void auto_update_restart(void);
-#endif
+void auto_update_restart(void);
 
 #ifdef SND_AS_WIDGET
   void snd_as_widget(int argc, char **argv, XtAppContext app, Widget parent, Arg *caller_args, int caller_argn);

@@ -157,10 +157,8 @@ typedef struct {
 } env;
 
 typedef struct fam_info {
-#if HAVE_FAM
   FAMRequest *rp;
   void (*action)(struct fam_info *fp, FAMEvent *fe);
-#endif
   void *data;
 } fam_info;
 
@@ -356,7 +354,9 @@ typedef struct snd_info {
   char *name_string;
   fam_info *file_watcher;
   bool writing;
-  void (*user_read_only_watcher)(struct snd_info *sp, read_only_reason_t reason); /* called if user changes permissions via (set! (read-only...) ) */
+  void (*user_read_only_watcher)(struct snd_info *sp, read_only_reason_t reason);
+  /* called if user changes permissions via (set! (read-only...) ) */
+  void *user_read_only_watcher_context;
 } snd_info;
 
 #define SND_SRATE(sp) (((sp)->hdr)->srate)
@@ -460,9 +460,7 @@ typedef struct snd_state {
   bool jump_ok, exiting;
   env_editor *enved;
   Tempus click_time;
-#if HAVE_FAM
   FAMConnection *fam_connection;
-#endif
 } snd_state;
 
 extern snd_state *ss;
@@ -1332,13 +1330,14 @@ char *string_to_colon(char *val);
 char *filename_without_home_directory(const char *name);
 char *just_filename(char *name);
 char *file_to_string(const char *filename);
+disk_space_t disk_space_p(snd_info *sp, off_t bytes, char *filename);
 const char *short_data_format_name(int sndlib_format, const char *filename);
 char *prettyf(Float num, int tens);
 char *shorter_tempnam(const char *dir, const char *prefix);
 char *snd_tempnam(void);
 void snd_exit(int val);
 void g_init_utils(void);
-#if HAVE_FAM
+
 fam_info *fam_monitor_file(const char *filename, 
 			   void *data, 
 			   void (*action)(struct fam_info *fp, FAMEvent *fe));
@@ -1346,7 +1345,7 @@ fam_info *fam_monitor_directory(const char *dir_name,
 				void *data, 
 				void (*action)(struct fam_info *fp, FAMEvent *fe));
 fam_info *fam_unmonitor_file(const char *filename, fam_info *fp);
-#endif
+
 #ifdef DEBUGGING
   void set_encloser(char *name);
 #endif
@@ -1372,7 +1371,6 @@ void g_init_listener(void);
 
 /* -------- snd-mix.c -------- */
 
-disk_space_t disk_space_p(snd_info *sp, off_t bytes, off_t other_bytes, char *filename);
 mix_context *make_mix_context(chan_info *cp);
 mix_context *free_mix_context(mix_context *ms);
 void free_mix_list(chan_info *cp);
@@ -1525,10 +1523,8 @@ void save_macro_state(FILE *fd);
 
 #ifdef __GNUC__
   void report_in_minibuffer(snd_info *sp, const char *format, ...)  __attribute__ ((format (printf, 2, 3)));
-  void report_in_minibuffer_and_save(snd_info *sp, const char *format, ...)  __attribute__ ((format (printf, 2, 3)));
 #else
   void report_in_minibuffer(snd_info *sp, const char *format, ...);
-  void report_in_minibuffer_and_save(snd_info *sp, const char *format, ...);
 #endif
 void clear_minibuffer(snd_info *sp);
 void clear_minibuffer_prompt(snd_info *sp);

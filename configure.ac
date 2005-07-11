@@ -915,8 +915,6 @@ FAM_LIB=""
 if test "$ac_snd_have_gui" != no ; then
   if test "$with_fam" != no ; then
     # look for the File Alteration Monitor (gamin or SGI's fam -- both use fam.h and libfam apparently)
-    # TODO: doesn't this need an explicit include for fam.h? 
-    # TODO: look for gamin before fam
     AC_MSG_CHECKING(for Gamin)
     if test x$PKG_CONFIG != xno && $PKG_CONFIG gamin --exists ; then
        gamin_version="`$PKG_CONFIG gamin --modversion`"
@@ -1508,9 +1506,6 @@ if test "$PATH_TIMIDITY" != "no" ; then
   AC_DEFINE_UNQUOTED(PATH_TIMIDITY, "${PATH_TIMIDITY}")
 fi
 
-
-# TODO: is sdif writer named tosdif? 
-# TODO: id3? ace? etc...
 
 
 #--------------------------------------------------------------------------------

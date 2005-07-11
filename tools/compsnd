@@ -540,3 +540,7 @@ make allclean
 ./configure --without-fam --quiet
 make
 make allclean
+make allclean
+./configure --without-fam --with-gtk --quiet
+make
+make allclean

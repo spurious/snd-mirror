@@ -119,7 +119,7 @@
 
 (definstrument (make-osc-gui)
   (letrec* ((osc (make-oscil #:frequency 0))
-	    (freq (make-glide-var 400 1))
+	    (freq (make-glide-var 440 1))
 	    (das-vol 0.4)
 	    (vol (make-glide-var das-vol 0.001))
 	    (instrument (<rt-play> (lambda ()
@@ -134,11 +134,9 @@
 			 "Start" (<- instrument play))))
     (<slider> d "Frequency" 50 440 20000 (lambda (val)
 					   (write-glide-var freq val))
-;;					   (set! (mus-frequency osc) val))
 	      1)
     (<slider> d "Amplitude" 0 das-vol 2.0 (lambda (val) 
 					(write-glide-var vol val))
-;;					(set! (-> instrument vol) val))
 	      1000)
     (-> d show)))
 
@@ -501,7 +499,11 @@ This version of the fm-violin assumes it is running within with-sound (where *ou
 ;; Ladspa
 
 (definstrument (ladspatest)
-  ;;(let ((am-pitchshift (make-ladspa "am_pitchshift_1433" "amPitchshift")))
+  (let ((am-pitchshift (make-ladspa "am_pitchshift_1433" "amPitchshift")))
+    (<rt-play> (lambda ()
+		 (out (ladspa-run am-pitchshift (vct (in 0))))))))
+
+(definstrument (ladspatest-st)
   (let ((am-pitchshift (make-ladspa "mbeq_1197" "mbeq"))
 	(am-pitchshift2 (make-ladspa "mbeq_1197" "mbeq")))
     (<rt-play> (lambda ()
@@ -618,6 +620,5 @@ This version of the fm-violin assumes it is running within with-sound (where *ou
 (rte-silence!)
 !#
 
-(begin *rt-midi*)
 
 

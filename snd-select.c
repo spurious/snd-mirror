@@ -627,7 +627,6 @@ int save_selection(char *ofile, int type, int format, int srate, const char *com
   /* type and format have already been checked */
   int ofd, comlen, err = MUS_NO_ERROR, bps;
   bool reporting = false;
-  disk_space_t no_space;
   off_t oloc;
   sync_info *si = NULL;
   off_t *ends;
@@ -652,13 +651,13 @@ int save_selection(char *ofile, int type, int format, int srate, const char *com
   ofd = snd_reopen_write(ofile);
   if (sp)
     {
+      disk_space_t no_space;
       bool copy_ok = false;
       bps = mus_bytes_per_sample(format);
       num = dur * bps * chans;
-      no_space = disk_space_p(sp, num, 0, ofile);
-      if (no_space == GIVE_UP)
+      no_space = disk_space_p(sp, num, ofile);
+      if (no_space != DISK_SPACE_OK)
 	{
-	  /* has already interacted with user about disk problem */
 	  snd_close(ofd, ofile);
 	  si = free_sync_info(si);
 	  return(MUS_WRITE_ERROR);

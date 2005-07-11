@@ -15,7 +15,7 @@ snd_info *snd_new_file(char *newname, int header_type, int data_format, int srat
 			     data_format, new_comment, 
 			     snd_strlen(new_comment), NULL);
       if (err == -1)
-	snd_error(_("can't write %s"),newname);
+	snd_error(_("can't write %s: %s"), newname, snd_io_strerror());
       else
 	{
 	  int chan;
@@ -3280,7 +3280,7 @@ Omitted arguments take their value from the sound being saved.\n\
 
   snd_info *sp;
   file_info *hdr;
-  int ht = -1, df = -1, sr = -1, chan = -1, err = MUS_NO_ERROR;
+  int ht = -1, df = -1, sr = -1, chan = -1, err = MUS_NO_ERROR, edit_position = AT_CURRENT_EDIT_POSITION;
   char *fname = NULL, *file = NULL, *outcom = NULL;
   XEN args[16]; 
   XEN keys[8];
@@ -3352,6 +3352,19 @@ Omitted arguments take their value from the sound being saved.\n\
 			 C_TO_XEN_STRING(mus_data_format_name(df))));
   if (chan >= sp->nchans)
     return(snd_no_such_channel_error(S_save_sound_as, index, keys[5]));
+  if (got_edpos)
+    {
+      edit_position = to_c_edit_position(sp->chans[(chan >= 0) ? chan : 0], edpos, S_save_sound_as, 7);
+      for (i = 0; i < sp->nchans; i++)
+	if (edit_position > sp->chans[i]->edit_ctr)
+	  XEN_ERROR(NO_SUCH_EDIT,
+		    XEN_LIST_3(C_TO_XEN_STRING(S_save_sound_as),
+			       C_TO_XEN_STRING("edpos: ~A, but ~A chan ~A has ~A edits"),
+			       XEN_LIST_4(C_TO_XEN_INT(edit_position),
+					  C_TO_XEN_STRING(sp->short_filename),
+					  C_TO_XEN_INT(i),
+					  C_TO_XEN_INT(sp->chans[i]->edit_ctr))));
+    }
   fname = mus_expand_filename(file);
   if (outcom == NULL) 
     {
@@ -3360,21 +3373,15 @@ Omitted arguments take their value from the sound being saved.\n\
     }
   if (!(run_before_save_as_hook(sp, fname, false, sr, ht, df, outcom)))
     {
-      if (got_edpos)
-	{
-	  if (chan >= 0)
-	    err = save_channel_edits(sp->chans[chan], fname, to_c_edit_position(sp->chans[chan], edpos, S_save_sound_as, 7));
-	  else err = save_edits_without_display(sp, fname, ht, df, sr, outcom, to_c_edit_position(sp->chans[0], edpos, S_save_sound_as, 7));
-	}
-      else
-	{
-	  /* channel edpos's may be different in multi-chan case, but we want to save all the latest versions */
-	  if (chan >= 0)
-	    err = save_channel_edits(sp->chans[chan], fname, AT_CURRENT_EDIT_POSITION);
-	  else err = save_edits_without_display(sp, fname, ht, df, sr, outcom, AT_CURRENT_EDIT_POSITION);
-	}
+      if (chan >= 0)
+	err = save_channel_edits(sp->chans[chan], fname, edit_position);
+      else err = save_edits_without_display(sp, fname, ht, df, sr, outcom, edit_position);
     }
-  if (free_outcom) {FREE(outcom); outcom = NULL;}
+  if (free_outcom) 
+    {
+      FREE(outcom); 
+      outcom = NULL;
+    }
   if (err == MUS_NO_ERROR) 
     run_after_save_as_hook(sp, fname, false); /* true => from dialog */
   else

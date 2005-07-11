@@ -205,7 +205,6 @@ void raise_dialog(GtkWidget *w)
    * hidden behind other windows, with no easy way to raise it back to the top, so...
    */
   gtk_widget_show(w);
-  /* gdk_window_raise(w->window); */
   gtk_window_present(GTK_WINDOW(w));
 }
 

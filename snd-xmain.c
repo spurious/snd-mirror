@@ -208,28 +208,20 @@ void auto_update_restart(void)
 				       (XtTimerCallbackProc)auto_update_check,
 				       (XtPointer)NULL);
 }
+#else
+void auto_update_restart(void) {}
 #endif
 
 #ifndef SND_AS_WIDGET
-static void dismiss_all_dialogs(void)
-{
-  state_context *sx;
-  int i;
-  sx = ss->sgx;
-  if (record_dialog_is_active()) close_recorder_audio();
-  if (sx->dialogs)
-    for (i = 0; i < NUM_DIALOGS; i++)
-      if (sx->dialogs[i])
-	if (XtIsManaged(sx->dialogs[i])) 
-	  XtUnmanageChild(sx->dialogs[i]);
-}
-
-static int *live_dialogs = NULL;
+/* handle iconification */
+static Widget *iconify_active_dialogs = NULL;
 static void minify_maxify_window(Widget w, XtPointer context, XEvent *event, Boolean *cont) 
 {
   XMapEvent *ev = (XMapEvent *)event;
   state_context *sx;
   int i;
+  if ((!ss) || (!(ss->sgx)) || (!(ss->sgx->dialogs)))
+    return;
   sx = ss->sgx;
   /* ev->type can be several things, but the ones we care about here are
    * MapNotify and UnmapNotify.  Snd dialogs are "windows" in X-jargon, so
@@ -252,21 +244,31 @@ static void minify_maxify_window(Widget w, XtPointer context, XEvent *event, Boo
    */
   if (ev->type == UnmapNotify) 
     {
-      if ((sx) && (sx->dialogs))
-	{
-	  if (live_dialogs == NULL)
-	    live_dialogs = (int *)CALLOC(NUM_DIALOGS, sizeof(int));
-	  for (i = 0; i < NUM_DIALOGS; i++)
-	    live_dialogs[i] = ((sx->dialogs[i]) && (XtIsManaged(sx->dialogs[i])));
-	}
-      dismiss_all_dialogs();
+      if (iconify_active_dialogs) FREE(iconify_active_dialogs);
+      iconify_active_dialogs = (Widget *)CALLOC(ss->sgx->num_dialogs, sizeof(Widget));
+
+      for (i = 0; i < ss->sgx->num_dialogs; i++)
+	if (ss->sgx->dialogs[i])
+	  {
+	    if (XtIsManaged(ss->sgx->dialogs[i]))
+	      iconify_active_dialogs[i] = ss->sgx->dialogs[i];
+	    XtUnmanageChild(ss->sgx->dialogs[i]);
+	  }
     }
   else
     {
-      if ((ev->type == MapNotify) && (sx) && (sx->dialogs) && (live_dialogs))
-	for (i = 0; i < NUM_DIALOGS; i++)
-	  if ((live_dialogs[i]) && (sx->dialogs[i]))
-	    XtManageChild(sx->dialogs[i]);
+      if (ev->type == MapNotify)
+	{
+	  if (iconify_active_dialogs) 
+	    {
+	      for (i = 0; i < ss->sgx->num_dialogs; i++)
+		if (iconify_active_dialogs[i])
+		  XtManageChild(iconify_active_dialogs[i]);
+
+	      FREE(iconify_active_dialogs);
+	      iconify_active_dialogs = NULL;
+	    }
+	}
     }
 }
 #endif

@@ -502,21 +502,6 @@ void report_in_minibuffer(snd_info *sp, const char *format, ...)
   /* leave sp->minibuffer off so that keyboard_command doesn't clear it */
 }
 
-void report_in_minibuffer_and_save(snd_info *sp, const char *format, ...)
-{
-  char *buf;
-  va_list ap;
-  if (!(sp->active)) return;
-  if (!(sp->sgx)) return;
-  va_start(ap, format);
-  buf = vstr(format, ap);
-  va_end(ap);
-  set_minibuffer_string(sp, buf, true);
-  sp->minibuffer_on = MINI_REPORT;
-  FREE(buf);
-  /* leave sp->minibuffer off so that keyboard_command doesn't clear it */
-}
-
 void clear_minibuffer(snd_info *sp)
 {
   clear_minibuffer_prompt(sp);
@@ -890,7 +875,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 		  }
 		else 
 		  {
-		    report_in_minibuffer_and_save(sp, _("can't access %s! temp dir is unchanged"), newdir);
+		    report_in_minibuffer(sp, _("can't access %s! temp dir is unchanged"), newdir);
 		    if (newdir) FREE(newdir);
 		  }
 	      }
@@ -932,7 +917,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 			clear_minibuffer(sp);
 		      }
 		  }
-		else report_in_minibuffer_and_save(sp, _("can't read %s's header"), str);
+		else report_in_minibuffer(sp, _("can't read %s's header"), str);
 		FREE(filename);
 	      }
 	      break;

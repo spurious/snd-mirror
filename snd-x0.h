@@ -139,14 +139,13 @@ typedef struct {
   GC fltenv_basic_gc, fltenv_data_gc;
   Widget listener_pane;
   Widget *dialogs;
+  int num_dialogs, dialogs_size;
   Cursor graph_cursor, wait_cursor;
   Widget completion_requestor, requestor_dialog;
 #if HAVE_GL
   GLXContext cx;
 #endif
-#if HAVE_FAM
   XtInputId fam_port;
-#endif
   Widget *mw, *pw;
 } state_context;
 

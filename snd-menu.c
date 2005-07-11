@@ -40,7 +40,6 @@ void edit_menu_update(void)
   region_p = region_ok(region_list_position_to_id(0));
   if ((cp) && (cp->cgx))
     {
-      /* TODO: what about sync'd chans here? */
       undoable_edit_p = (cp->edit_ctr > 0);
       redoable_edit_p = (!(((cp->edit_ctr + 1) == cp->edit_size) || 
 			   (!(cp->edits[cp->edit_ctr + 1]))));
@@ -175,7 +174,6 @@ void popup_menu_update(void)
 
   if ((cp) && (cp->cgx))
     {
-      /* TODO: what about sync'd chans here? */
       undoable_edits_p = (cp->edit_ctr > 0);
       redoable_edits_p = (!(((cp->edit_ctr + 1) == cp->edit_size) || 
 			   (!(cp->edits[cp->edit_ctr + 1]))));

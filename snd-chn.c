@@ -1900,7 +1900,7 @@ static int display_transform_peaks(chan_info *ucp, char *filename)
       if (mcf) FREE(mcf);
       if (fd == NULL) 
 	{
-	  report_in_minibuffer_and_save(sp, _("can't write %s: %s"), filename, snd_open_strerror());
+	  report_in_minibuffer(sp, _("can't write %s: %s"), filename, snd_open_strerror());
 	  err = 1;
 	}
       else tmp_file = false;
@@ -1984,7 +1984,7 @@ static int display_transform_peaks(chan_info *ucp, char *filename)
 	    }
 	}
       if (FCLOSE(fd) != 0)
-	report_in_minibuffer_and_save(sp, _("can't close %s: %s"), filename, snd_io_strerror());
+	report_in_minibuffer(sp, _("can't close %s: %s"), filename, snd_io_strerror());
       if (tmp_file)
 	{
 	  char *str;

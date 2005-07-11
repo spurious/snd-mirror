@@ -718,8 +718,6 @@ static const int mulaw[256] = {
   #define MUS_SAMPLE_UNSCALED(n) ((n) * (1 << (MUS_SAMPLE_BITS - 16)))
 #endif
 
-/* TODO: 64-bit systems can lose chan 2? */
-
 static int mus_read_any_1(int tfd, int beg, int chans, int nints, mus_sample_t **bufs, mus_sample_t **cm, char *inbuf)
 {
   int loclim;

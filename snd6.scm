@@ -74,18 +74,6 @@
 (define (mus-file-set-data-clipped fd val) (set! (mus-file-data-clipped fd) val))
 (define (mus-sound-set-maxamp file vals) (set! (mus-sound-maxamp file) vals))
 
-(define (dismiss-all-dialogs)
-  (if (provided? 'xm)
-      (for-each
-       (lambda (dialog)
-	 (if dialog
-	     (if (provided? 'snd-motif)
-		 (if (XtIsManaged dialog)
-		     (XtUnmanageChild dialog))
-		 (if (provided? 'snd-gtk)
-		     (gtk_widget_hide dialog)))))
-       (dialog-widgets))))
-
 (define (change-property w a v) (set! (window-property w a) v))
 
 ;;; to get a vector from samples, use vct->vector

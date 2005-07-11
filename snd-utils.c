@@ -187,6 +187,25 @@ char *file_to_string(const char *filename)
   return(content);
 }
 
+disk_space_t disk_space_p(snd_info *sp, off_t bytes, char *filename)
+{
+  off_t kfree, kneeded;
+  kfree = disk_kspace(filename);
+  if (kfree < 0) 
+    {
+      snd_error(_("can't access %s: %s"), filename, snd_io_strerror()); 
+      return(NO_DISK_SPACE);
+    }
+  kneeded = bytes >> 10;
+  if (kfree < kneeded)
+    {
+      snd_error(_("not enough space left on disk: only " PRId64 " kbytes available"), kfree);
+      return(NOT_ENOUGH_DISK_SPACE);
+    }
+  return(DISK_SPACE_OK);
+}
+
+
 const char *short_data_format_name(int sndlib_format, const char *filename)
 {
   if (MUS_DATA_FORMAT_OK(sndlib_format))
@@ -570,6 +589,29 @@ fam_info *fam_unmonitor_file(const char *filename, fam_info *fp)
     }
   return(NULL);
 }
+#else
+/* no fam */
+
+fam_info *fam_monitor_file(const char *filename, 
+			   void *data, 
+			   void (*action)(struct fam_info *fp, FAMEvent *fe))
+{
+  return((fam_info *)calloc(1, sizeof(fam_info)));
+}
+
+fam_info *fam_monitor_directory(const char *dir_name,
+				void *data, 
+				void (*action)(struct fam_info *fp, FAMEvent *fe))
+{
+  return((fam_info *)calloc(1, sizeof(fam_info)));
+}
+
+fam_info *fam_unmonitor_file(const char *filename, fam_info *fp)
+{
+  if (fp) free(fp);
+  return(NULL);
+}
+
 #endif
 
 

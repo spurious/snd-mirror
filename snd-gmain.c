@@ -52,6 +52,46 @@ static gint window_close(GtkWidget *w, GdkEvent *event, gpointer context)
     snd_exit(0);
   return(false);
 }
+
+static GtkWidget **iconify_active_dialogs = NULL;
+static gint window_iconify(GtkWidget *w, GdkEventWindowState *event, gpointer context)
+{
+  int i;
+  if ((!ss) || (!(ss->sgx)) || (!(ss->sgx->dialogs)))
+    return(false);
+  if (event->new_window_state & GDK_WINDOW_STATE_ICONIFIED)
+    {
+      /* presumably we are now iconified */
+
+      if (iconify_active_dialogs) FREE(iconify_active_dialogs);
+      iconify_active_dialogs = (GtkWidget **)CALLOC(ss->sgx->num_dialogs, sizeof(GtkWidget *));
+
+      for (i = 0; i < ss->sgx->num_dialogs; i++)
+	if (ss->sgx->dialogs[i])
+	  {
+	    if (GTK_WIDGET_VISIBLE(ss->sgx->dialogs[i]))
+	      iconify_active_dialogs[i] = ss->sgx->dialogs[i];
+	    gtk_widget_hide(ss->sgx->dialogs[i]);
+	  }
+    }
+  else
+    {
+      if (!(event->new_window_state & GDK_WINDOW_STATE_ICONIFIED))
+	{
+	  /* this is confusing -- can I assume I've been deiconified or not?  if not, how to tell? */
+	  if (iconify_active_dialogs) 
+	    {
+	      for (i = 0; i < ss->sgx->num_dialogs; i++)
+		if (iconify_active_dialogs[i])
+		  gtk_widget_show(iconify_active_dialogs[i]);
+
+	      FREE(iconify_active_dialogs);
+	      iconify_active_dialogs = NULL;
+	    }
+	}
+    }
+  return(false);
+}
 #endif
 
 #if (!HAVE_FAM)
@@ -75,6 +115,8 @@ void auto_update_restart(void)
   if (auto_update_proc == 0)
     g_timeout_add_full(0, (guint32)(auto_update_interval(ss) * 1000), auto_update_check, NULL, NULL);
 }
+#else
+void auto_update_restart(void) {}
 #endif
 
 static GdkAtom snd_v, snd_c;
@@ -276,6 +318,8 @@ static Cessate startup_funcs(gpointer context)
 #endif
       /* trap outer-level Close for cleanup check */
       SG_SIGNAL_CONNECT(MAIN_SHELL(ss), "delete_event", window_close, NULL);
+      /* when iconified, we need to hide any dialogs as well */
+      SG_SIGNAL_CONNECT(MAIN_SHELL(ss), "window_state_event", window_iconify, NULL);
 #endif
       ss->sgx->graph_cursor = gdk_cursor_new((GdkCursorType)in_graph_cursor(ss));
       ss->sgx->wait_cursor = gdk_cursor_new(GDK_WATCH);

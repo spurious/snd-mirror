@@ -466,11 +466,11 @@ static void check_dialog_widget_table(void)
 static XEN g_dialog_widgets(void)
 {
   #define H_dialog_widgets "(" S_dialog_widgets "): dialog widgets (each #f if not yet created): (list \
-(0 " S_color_dialog ") (1 " S_orientation_dialog ") (2 " S_enved_dialog ") (3 " S_snd_error ") (4 " S_yes_or_no_p ") (5 " S_transform_dialog ") \
-(6 " S_open_file_dialog ") (7 " S_save_sound_dialog ") (8 " S_view_files_dialog ") (9 raw data dialog) (10 new file dialog) \
-(11 " S_mix_file_dialog ") (12 " S_edit_header_dialog ") (13 " S_find_dialog ") (14 " S_help_dialog ") (15 listener completion) \
-(16 " S_view_mixes_dialog ") (17 " S_print_dialog ") (18 " S_recorder_dialog ") (19 " S_view_regions_dialog ") \
-(20 " S_info_dialog ") (21 " S_view_tracks_dialog "))"
+ (0 " S_color_dialog ") (1 " S_orientation_dialog ") (2 " S_enved_dialog ") (3 " S_snd_error ") (4 " S_yes_or_no_p ") (5 " S_transform_dialog ") \
+ (6 " S_open_file_dialog ") (7 " S_save_sound_dialog ") (8 " S_view_files_dialog ") (9 raw data dialog) (10 new file dialog) \
+ (11 " S_mix_file_dialog ") (12 " S_edit_header_dialog ") (13 " S_find_dialog ") (14 " S_help_dialog ") (15 listener completion) \
+ (16 " S_view_mixes_dialog ") (17 " S_print_dialog ") (18 " S_recorder_dialog ") (19 " S_view_regions_dialog ") \
+ (20 " S_info_dialog ") (21 " S_view_tracks_dialog "))"
 
   check_dialog_widget_table();
   return(XEN_VECTOR_TO_LIST(dialog_widgets));
@@ -485,12 +485,36 @@ void set_dialog_widget(snd_dialog_t which, widget_t wid)
 #endif
   sx = ss->sgx;
   if (sx->dialogs == NULL)
-    sx->dialogs = (widget_t *)CALLOC(NUM_DIALOGS, sizeof(widget_t));
-  sx->dialogs[(int)which] = wid;
+    {
+      sx->dialogs_size = 8;
+      sx->num_dialogs = 0;
+      sx->dialogs = (widget_t *)CALLOC(sx->dialogs_size, sizeof(widget_t));
+    }
+  else
+    {
+      if (sx->num_dialogs == sx->dialogs_size)
+	{
+	  int i;
+	  sx->dialogs_size += 8;
+	  sx->dialogs = (widget_t *)REALLOC(sx->dialogs, sx->dialogs_size * sizeof(widget_t));
+	  for (i = sx->num_dialogs; i < sx->dialogs_size; i++) sx->dialogs[i] = NULL;
+	}
+    }
+  sx->dialogs[sx->num_dialogs++] = wid;
   check_dialog_widget_table();
-  XEN_VECTOR_SET(dialog_widgets, 
-		 (int)which, 
-		 XEN_WRAP_WIDGET(wid));
+  if (XEN_FALSE_P(XEN_VECTOR_REF(dialog_widgets, (int)which)))
+    XEN_VECTOR_SET(dialog_widgets, (int)which, 
+		   XEN_WRAP_WIDGET(wid));
+  else 
+    {
+      if (XEN_WIDGET_P(XEN_VECTOR_REF(dialog_widgets, (int)which)))
+	XEN_VECTOR_SET(dialog_widgets, (int)which, 
+		       XEN_LIST_2(XEN_WRAP_WIDGET(wid), 
+				  XEN_VECTOR_REF(dialog_widgets, (int)which)));
+      else XEN_VECTOR_SET(dialog_widgets, (int)which, 
+			  XEN_CONS(XEN_WRAP_WIDGET(wid), 
+				   XEN_VECTOR_REF(dialog_widgets, (int)which)));
+    }
   run_new_widget_hook(wid);
 }
 

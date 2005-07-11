@@ -658,7 +658,7 @@ int close_temp_file(const char *filename, int ofd, int type, off_t bytes, snd_in
     {
       kused = bytes >> 10;
       if ((kused > kleft) && (sp))
-	report_in_minibuffer_and_save(sp, _("disk nearly full: used " PRId64 " Kbytes in the last operation, leaving " PRId64), kused, kleft);
+	report_in_minibuffer(sp, _("disk nearly full: used " PRId64 " Kbytes in the last operation, leaving " PRId64), kused, kleft);
     }
   return(err);
 }

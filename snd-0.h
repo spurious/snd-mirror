@@ -33,6 +33,12 @@
   #define PRId64 "%d"
 #endif
 
+#if (!HAVE_FAM)
+  #define FAMRequest int
+  #define FAMEvent int
+  #define FAMConnection void*
+#endif
+
 #define NO_SUCH_MIX          XEN_ERROR_TYPE("no-such-mix")
 #define NO_SUCH_TRACK        XEN_ERROR_TYPE("no-such-track")
 #define NO_SUCH_REGION       XEN_ERROR_TYPE("no-such-region")
@@ -146,7 +152,7 @@ typedef enum {SND_REOPEN_CLOSED_FILE, SND_OPEN_CHANNEL, SND_COPY_READER, SND_INS
 typedef enum {CURSOR_CROSS, CURSOR_LINE, CURSOR_PROC} cursor_style_t;
 typedef enum {SHOW_NO_AXES, SHOW_ALL_AXES, SHOW_X_AXIS, SHOW_ALL_AXES_UNLABELLED, SHOW_X_AXIS_UNLABELLED} show_axes_t;
 typedef enum {DONT_NORMALIZE, NORMALIZE_BY_CHANNEL, NORMALIZE_BY_SOUND, NORMALIZE_GLOBALLY} fft_normalize_t;
-typedef enum {NO_PROBLEM, BLIND_LEAP, GIVE_UP, HUNKER_DOWN} disk_space_t;
+typedef enum {NO_DISK_SPACE, NOT_ENOUGH_DISK_SPACE, DISK_SPACE_OK} disk_space_t;
 typedef enum {CHAN_GC, CHAN_IGC, CHAN_SELGC, CHAN_CGC, CHAN_MGC, CHAN_MXGC, CHAN_TMPGC} chan_gc_t;
 typedef enum {CURRENT_FILE_VIEWER, PREVIOUS_FILE_VIEWER, REGION_VIEWER} file_viewer_t;
 typedef enum {COLOR_DIALOG, ORIENTATION_DIALOG, ENVED_DIALOG, UNUSED_DIALOG, YES_OR_NO_DIALOG, TRANSFORM_DIALOG,

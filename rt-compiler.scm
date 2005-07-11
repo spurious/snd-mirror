@@ -4580,7 +4580,7 @@ and run simple lisp[4] functions.
 	  <int> num_frames
 	  <int> num_visitors
 	  <void-*> readin_raw_func
-	  ;;(<float> (<char-*> <int>)) read_func
+	  <int> channel
 	  <char> filename[500])
 
   
@@ -4588,10 +4588,12 @@ and run simple lisp[4] functions.
 	;;;;;; A buffer is only freed if no one is using it. Perhaps it should never be freed at all?
 	(<struct-buffer-*> buffers NULL)
 
-	(<struct-buffer-*> find_buffer (lambda ((<char-*> filename))
+	(<struct-buffer-*> find_buffer (lambda ((<char-*> filename)
+						(<int> channel))
 					 (let* ((buffer <struct-buffer-*> buffers))
 					   (while (not (== NULL buffer))
-						  (if (not (strncmp buffer->filename filename 499))
+						  (if (and (== buffer->channel channel)
+							   (not (strncmp buffer->filename filename 499)))
 						      (begin
 							buffer->num_visitors++
 							(return buffer)))
@@ -4714,8 +4716,8 @@ and run simple lisp[4] functions.
 					 (ret <struct-mus_rt_readin-*> (calloc 1 (sizeof <struct-mus_rt_readin>)))
 					 (scmret <SCM>)
 					 (filename <char-*> (mus_file_name readin))
-					 (buffer <struct-buffer-*> (find_buffer filename))
-					 (channel <int> (mus_channel readin)))
+					 (channel <int> (mus_channel readin))
+					 (buffer <struct-buffer-*> (find_buffer filename channel)))
 				    ;;(fprintf stderr (string "readin (make): %x\\n") ret)
 				    
 				   (set! ret->readin readin)

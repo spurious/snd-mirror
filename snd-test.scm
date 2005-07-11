@@ -256,6 +256,30 @@
 				 (set! j (1+ j))))
 			   (return #f)))))))))))
 
+(define (dismiss-all-dialogs)
+  "(dismiss-all-dialogs) hides all dialogs"
+  (if (or (provided? 'xm)
+	  (provided? 'xg))
+      (for-each
+       (lambda (dialog)
+	 (if dialog
+	     (if (symbol? (car dialog))
+		 (if (provided? 'snd-motif)
+		     (if (XtIsManaged dialog)
+			 (XtUnmanageChild dialog))
+		     (if (provided? 'snd-gtk)
+			 (gtk_widget_hide dialog)))
+		 (for-each
+		  (lambda (d)
+		    (if (symbol? (car d))
+			(if (provided? 'snd-motif)
+			    (if (XtIsManaged d)
+				(XtUnmanageChild d))
+			    (if (provided? 'snd-gtk)
+				(gtk_widget_hide d)))))
+		  dialog))))
+       (dialog-widgets))))
+
 (define ran-state (seed->random-state (current-time)))
 (define my-random
   (lambda (n)
@@ -592,7 +616,7 @@
       (if (not (equal? (auto-update)  #f)) 
 	  (snd-display ";auto-update set def: ~A" (auto-update)))
       (set! (channel-style) (channel-style))
-      (if (not (equal? (channel-style)  0 )) 
+      (if (not (equal? (channel-style)  1 )) 
 	  (snd-display ";channel-style set def: ~A" (channel-style)))
       (set! (color-cutoff) (color-cutoff))
       (if (fneq (color-cutoff)  0.003 )
@@ -991,7 +1015,7 @@
 	'audio-output-device (audio-output-device) 0
 	'auto-resize (auto-resize) #t 
 	'auto-update (auto-update) #f
-	'channel-style (channel-style) 0 
+	'channel-style (channel-style) 1
 	'color-cutoff (color-cutoff) 0.003 
 	'color-inverted (color-inverted) #t
 	'color-scale (color-scale) 1.0 
@@ -2002,7 +2026,7 @@
 	  (mus-audio-set-oss-buffers 4 12)
 	  
 	  (let ((str (strftime "%d-%b %H:%M %Z" (localtime (mus-sound-write-date "oboe.snd")))))
-	    (if (not (string=? str "15-May 07:30 PDT"))
+	    (if (not (string=? str "10-Jul 10:20 PDT"))
 		(snd-display ";mus-sound-write-date oboe.snd: ~A?" str)))
 	  (let ((str (strftime "%d-%b %H:%M %Z" (localtime (mus-sound-write-date "pistol.snd")))))
 	    (if (not (string-=? str "01-Jul 13:06 PDT"))
@@ -2203,7 +2227,7 @@
 	  (if (and (not (= (mus-sound-type-specifier "oboe.snd") #x646e732e))  ;little endian reader
 		   (not (= (mus-sound-type-specifier "oboe.snd") #x2e736e64))) ;big endian reader
 	      (snd-display ";oboe: mus-sound-type-specifier: ~X?" (mus-sound-type-specifier "oboe.snd")))
-	  (if (not (string-=? (strftime "%d-%b-%Y %H:%M" (localtime (file-write-date "oboe.snd"))) "15-May-2005 07:30"))
+	  (if (not (string-=? (strftime "%d-%b-%Y %H:%M" (localtime (file-write-date "oboe.snd"))) "10-Jul-2005 10:20"))
 	      (snd-display ";oboe: file-write-date: ~A?" (strftime "%d-%b-%Y %H:%M" (localtime (file-write-date "oboe.snd")))))
 	  (play-sound-1 "oboe.snd")
 	  
@@ -23258,17 +23282,6 @@ EDITS: 5
 		    (snd-display ";linked name text (no index): ~A ~A" linked-str (widget-text (cadr (sound-widgets ind))))))
 	    (close-sound ind)))
       
-      (if (and (provided? 'xm)
-	       (provided? 'snd-motif))
-	  (begin
-	    (snd-error "a test")
-	    (let ((errwid (list-ref (dialog-widgets) 3)))
-	      (if (not (Widget? errwid))
-		  (snd-display ";snd-error no dialog?")
-		  (let ((OK (find-child errwid "OK")))
-		    (if (Widget? OK)
-			(XtCallCallbacks OK XmNactivateCallback #f)))))))
-
       (define-envelope test-ramp '(0 0 1 1))
       (if (not (equal? test-ramp '(0 0 1 1))) (snd-display ";define-envelope test-ramp: ~A" test-ramp))
       (define-envelope test-ramp '(0 1 1 0))

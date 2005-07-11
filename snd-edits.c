@@ -4483,23 +4483,26 @@ static int channel_to_file(chan_info *cp, const char *ofile, int edpos)
   sf[0] = init_sample_read_any(0, cp, READ_FORWARD, edpos);
   if (sf[0] == NULL)
     {
-      err = MUS_ERROR;
       FREE(sf);
-      sf = NULL;
-      XEN_ERROR(NO_SUCH_EDIT,
-		XEN_LIST_3(C_TO_XEN_STRING(S_save_sound_as),
-			   C_TO_XEN_STRING("edpos: ~A, but ~A chan ~A has ~A edits"),
-			   XEN_LIST_4(C_TO_XEN_INT(edpos),
-				      C_TO_XEN_STRING(cp->sound->short_filename),
-				      C_TO_XEN_INT(cp->chan),
-				      C_TO_XEN_INT(cp->edit_ctr))));
+      snd_error(_("no such edit: %s[%d]: %d (this channel has %d edit%s"),
+		cp->sound->short_filename,
+		cp->chan,
+		edpos,
+		cp->edit_ctr,
+		(cp->edit_ctr == 1) ? "" : "s");
     }
   else
     {
       err = snd_make_file(ofile, 1, sp->hdr, sf, cp->samples[edpos]);
       free_snd_fd(sf[0]);
+      FREE(sf);
+      if ((err != MUS_NO_ERROR) &&
+	  (err != MUS_INTERRUPTED))
+	snd_error("can't save %s chan %d: %s", 
+		  cp->sound->short_filename,
+		  cp->chan,
+		  snd_io_strerror());
     }
-  FREE(sf);
   return(err);
 }
 
@@ -4569,7 +4572,7 @@ void edit_history_to_file(FILE *fd, chan_info *cp)
 	      len = cp->samples[i];
 	      err = channel_to_file(cp, nfile, i);
 	      if (err != MUS_NO_ERROR)
-		report_in_minibuffer_and_save(cp->sound, _("edit history save data as %s hit error: %s"), nfile, snd_io_strerror());
+		report_in_minibuffer(cp->sound, _("edit history save data as %s error: %s"), nfile, snd_io_strerror());
 #if HAVE_RUBY
 	      fprintf(fd, "      %s(\"%s\", " OFF_TD ", sfile, %d, ", TO_PROC_NAME(S_override_samples_with_origin), nfile, len, cp->chan);
 	      if (ed->origin) 
@@ -5642,12 +5645,12 @@ bool delete_samples(off_t beg, off_t num, chan_info *cp, int edpos)
   else
     {
       if (num == 1)
-	report_in_minibuffer_and_save(cp->sound, 
-				      _("can't delete sample " PRId64 " (current len = " PRId64 ")"), 
-				      beg, len);
-      else report_in_minibuffer_and_save(cp->sound, 
-					 _("can't delete samples " PRId64 " to " PRId64 " (current len = " PRId64")"), 
-					 beg, beg + num - 1, len);
+	report_in_minibuffer(cp->sound, 
+			     _("can't delete sample " PRId64 " (current len = " PRId64 ")"), 
+			     beg, len);
+      else report_in_minibuffer(cp->sound, 
+				_("can't delete samples " PRId64 " to " PRId64 " (current len = " PRId64")"), 
+				beg, beg + num - 1, len);
     }
   return(true);
 }
@@ -6473,7 +6476,10 @@ static snd_fd *init_sample_read_any_with_bufsize(off_t samp, chan_info *cp, read
   if (!ed) return(NULL);
   sp = cp->sound;
   if (sp->inuse == SOUND_IDLE) return(NULL);
-  if (sp->need_update) 
+#if 1
+  /* TODO: why is this happening when it should not? */
+  if ((sp->need_update) &&
+      (!(sp->writing)))
     {
       if (mus_file_probe(sp->filename) == 0)
 	{
@@ -6482,6 +6488,7 @@ static snd_fd *init_sample_read_any_with_bufsize(off_t samp, chan_info *cp, read
 	}
       else snd_warning(_("file %s has changed since we last read it!"), sp->short_filename);
     }
+#endif
   curlen = cp->samples[edit_position];
   /* snd_fd allocated only here */
   sf = (snd_fd *)CALLOC(1, sizeof(snd_fd)); /* only creation point */
@@ -6978,7 +6985,7 @@ static bool save_edits_and_update_display(snd_info *sp)
   FREE(old_cursors);
   reflect_file_revert_in_label(sp);
   if (err)
-    report_in_minibuffer_and_save(sp, _("file write failed: %s, edits are saved in: %s"), strerror(saved_errno), ofile);
+    report_in_minibuffer(sp, _("file write failed: %s, edits are saved in: %s"), strerror(saved_errno), ofile);
   else report_in_minibuffer(sp, _("wrote %s"), sp->filename); 
   if (ofile) 
     {
@@ -7064,33 +7071,37 @@ int save_channel_edits(chan_info *cp, char *ofile, int pos)
   /* channel extraction -- does not (normally) cause reversion of edits, or change of in-window file, etc */
   snd_info *sp;
   int err;
+
   sp = cp->sound;
   err = MUS_NO_ERROR;
-  if (!(snd_overwrite_ok(ofile))) return(MUS_NO_ERROR); /* no error because decision was explicit */
-  if (pos == AT_CURRENT_EDIT_POSITION) pos = cp->edit_ctr;
-  if (strcmp(ofile, sp->filename) == 0)
+  if (!(snd_overwrite_ok(ofile))) 
+    return(MUS_NO_ERROR);                     /* no error because decision was explicit */
+
+  if (pos == AT_CURRENT_EDIT_POSITION) 
+    pos = cp->edit_ctr;
+  if (strcmp(ofile, sp->filename) == 0)       /* overwriting current file with one of its channels */
     {
       char *nfile;
       if (sp->user_read_only || sp->file_read_only)
 	{
-	  report_in_minibuffer_and_save(sp, _("can't save (extract) channel as %s (%s is write-protected)"), ofile, sp->short_filename);
+	  snd_error(_("can't save channel as %s (%s is write-protected)"), ofile, sp->short_filename);
 	  return(MUS_WRITE_ERROR);
 	}
-      /* here we're overwriting the current (possibly multi-channel) file with one of its channels */
       nfile = snd_tempnam();
-      err = channel_to_file(cp, nfile, pos);
-      if (err != MUS_NO_ERROR)
-	report_in_minibuffer_and_save(sp, _("save channel as %s hit error: %s"), nfile, snd_io_strerror());
-      else 
+      err = channel_to_file(cp, nfile, pos);  /* snd_error unless MUS_INTERRUPTED */
+      if (err == MUS_NO_ERROR)
 	{
-	  err = move_file(nfile, ofile);
-	  if (err == 0) snd_update(sp);
+	  err = move_file(nfile, ofile);      /* can call snd_error */
+	  if (err == 0) 
+	    snd_update(sp);
 	}
       FREE(nfile);
     }
-  else err = channel_to_file(cp, ofile, pos);
+  else err = channel_to_file(cp, ofile, pos); /* snd_error unless MUS_INTERRUPTED */
   return(err);
 }
+
+/* TODO: mminibuffer -> error or warning */
 
 void save_edits(snd_info *sp, void *ptr)
 {
@@ -7131,7 +7142,7 @@ void save_edits(snd_info *sp, void *ptr)
 	    }
 	  err = save_edits_and_update_display(sp);
 	  if (err)
-	    report_in_minibuffer_and_save(sp, "%s: %s", sp->filename, snd_io_strerror());
+	    report_in_minibuffer(sp, "%s: %s", sp->filename, snd_io_strerror());
 	  else
 	    {
 	      if (sp->edited_region) 
@@ -7142,7 +7153,7 @@ void save_edits(snd_info *sp, void *ptr)
 	report_in_minibuffer(sp, _("(no changes need to be saved)"));
     }
   else
-    report_in_minibuffer_and_save(sp, _("can't write %s (it is read-only)"), sp->short_filename);
+    report_in_minibuffer(sp, _("can't write %s (it is read-only)"), sp->short_filename);
 }
 
 void revert_edits(chan_info *cp)

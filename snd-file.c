@@ -710,9 +710,9 @@ void reflect_file_change_in_title(void)
   FREE(alist);
 }
 
-#if HAVE_FAM
 static void fam_sp_action(struct fam_info *fp, FAMEvent *fe)
 {
+#if HAVE_FAM
   snd_info *sp = NULL;
   /* fp has been checked already */
   sp = (snd_info *)(fp->data);
@@ -755,7 +755,7 @@ static void fam_sp_action(struct fam_info *fp, FAMEvent *fe)
       if (mus_file_probe(sp->filename) == 0)
 	{
 	  /* user deleted file while editing it? */
-	  report_in_minibuffer_and_save(sp, _("%s no longer exists!"), sp->short_filename);
+	  report_in_minibuffer(sp, _("%s no longer exists!"), sp->short_filename);
 	  sp->file_unreadable = true;
 	  snd_file_bomb_icon(sp, true);
 	  return;
@@ -774,8 +774,8 @@ static void fam_sp_action(struct fam_info *fp, FAMEvent *fe)
       /* ignore the rest */
       break;
     }
-}
 #endif
+}
 
 static char *snd_opened_sound_file_name(snd_info *sp)
 {
@@ -863,9 +863,7 @@ snd_info *finish_opening_sound(snd_info *sp, bool selected)
       ss->active_sounds++;
       files = ss->active_sounds;
       reflect_file_change_in_title();
-#if HAVE_FAM
       sp->file_watcher = fam_monitor_file(sp->filename, (void *)sp, fam_sp_action);
-#endif
 #if USE_MOTIF
       unlock_control_panel(sp);
 #endif
@@ -969,9 +967,8 @@ void snd_close_file(snd_info *sp)
 		      XEN_LIST_1(C_TO_XEN_INT(sp->index)),
 		      S_close_hook);
   if (XEN_TRUE_P(res)) return;
-#if HAVE_FAM
   sp->file_watcher = fam_unmonitor_file(sp->filename, sp->file_watcher);
-#endif
+
   /* exit does not go through this function to clean up temps -- see snd_exit_cleanly in snd-main.c */
   if (selection_creation_in_progress()) finish_selection_creation();
   if (ss->deferred_regions > 0)
@@ -1366,6 +1363,10 @@ static snd_info *snd_update_1(snd_info *sp, const char *ur_filename)
   snd_info *saved_sp;
   struct ctrl_state *saved_controls;
   off_t *old_cursors;
+  fam_info *old_file_watcher;
+  void (*old_user_read_only_watcher)(struct snd_info *sp, read_only_reason_t reason);
+  void *old_user_read_only_watcher_context;
+
   XEN update_hook_result = XEN_FALSE;
   if (XEN_HOOKED(update_hook))
     {
@@ -1420,7 +1421,15 @@ static snd_info *snd_update_1(snd_info *sp, const char *ur_filename)
 	  ncp->amp_envs = NULL;
 	}
     }
+
+  old_file_watcher = sp->file_watcher; /* will be unmonitored in snd_close_file, but we need to know if it is being monitored now */
+  old_user_read_only_watcher = sp->user_read_only_watcher;
+  sp->user_read_only_watcher = NULL;   /* don't confuse watchers with a temporary close! */
+  old_user_read_only_watcher_context = sp->user_read_only_watcher_context;
+  sp->user_read_only_watcher_context = NULL;
+
   snd_close_file(sp);
+
   /* no mus_sound_forget here because we may be simply re-interpreting the existing data (set! (data-format) ...) etc */
   /* this normalizes the fft/lisp/wave state so we need to reset it after reopen */
   alert_new_file();
@@ -1432,6 +1441,12 @@ static snd_info *snd_update_1(snd_info *sp, const char *ur_filename)
     mus_header_set_raw_defaults(old_srate, old_chans, old_format);
   if (nsp)
     {
+      /* if header is bad, nsp can be null awaiting raw data dialog's return */
+      if (old_file_watcher)
+	nsp->file_watcher = fam_monitor_file(nsp->filename, (void *)nsp, fam_sp_action); /* might be a different sp as well as underlying file */
+      nsp->user_read_only_watcher = old_user_read_only_watcher;
+      nsp->user_read_only_watcher_context = old_user_read_only_watcher_context;
+
       nsp->saved_controls = saved_controls;
       if (saved_controls) restore_controls(nsp);
       if (nsp->nchans == sp_chans) sound_restore_chan_info(nsp, saved_sp);
@@ -1470,19 +1485,25 @@ snd_info *snd_update(snd_info *sp)
 {
   Latus app_x, app_y;
   if (sp->edited_region) return(sp);
-  if (mus_file_probe(sp->filename) == 0)
+  if ((sp->inuse == SOUND_NORMAL) &&
+      (sp->filename))
     {
-      /* user deleted file while editing it? */
-      report_in_minibuffer_and_save(sp, _("%s no longer exists!"), sp->short_filename);
-      return(sp);
+      if (mus_file_probe(sp->filename) == 0)
+	{
+	  /* user deleted file while editing it? */
+	  /* report_in_minibuffer(sp, _("%s no longer exists!"), sp->short_filename); */
+	  /* TODO: why is this happening? with a null filename! */
+	  snd_error(_("%s no longer exists!"), sp->short_filename);
+	  return(sp);
+	}
+      app_x = widget_width(MAIN_SHELL(ss));
+      app_y = widget_height(MAIN_SHELL(ss));
+      sp = snd_update_1(sp, sp->filename);
+      if (sp)
+	report_in_minibuffer(sp, _("updated %s"), sp->short_filename);
+      else snd_error(_("update failed!")); /* TODO: give a reason! */
+      set_widget_size(MAIN_SHELL(ss), app_x, app_y);
     }
-  app_x = widget_width(MAIN_SHELL(ss));
-  app_y = widget_height(MAIN_SHELL(ss));
-  sp = snd_update_1(sp, sp->filename);
-  if (sp)
-    report_in_minibuffer(sp, _("updated %s"), sp->short_filename);
-  else snd_error(_("update failed!"));
-  set_widget_size(MAIN_SHELL(ss), app_x, app_y);
   return(sp);
 }
 
