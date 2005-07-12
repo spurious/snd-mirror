@@ -190,8 +190,8 @@ int edit_header(snd_info *sp) {return(0);}
 void save_edit_header_dialog_state(FILE *fd) {}
 void cleanup_edit_header_watcher(void) {}
 void cleanup_new_file_watcher(void) {}
-widget_t make_edit_save_as_dialog(bool managed) {return(0);}
-widget_t make_file_save_as_dialog(bool managed) {return(0);}
+widget_t make_selection_save_as_dialog(bool managed) {return(0);}
+widget_t make_sound_save_as_dialog(bool managed) {return(0);}
 widget_t make_file_print_dialog(bool managed, bool direct_to_printer) {return(0);}
 void save_print_dialog_state(FILE *fd) {}
 axis_info *enved_make_axis(const char *name, axis_context *ax, int ex0, int ey0, int width, int height, 

@@ -17,7 +17,6 @@
  *   perhaps a menu for actions on previous files such as insert/mix/open/play
  *   or a grouping thing as in the (unimplemented) regions dialog
  * PERHAPS: (alert_new_file): handle all directory update decisions through FAM
- * PERHAPS: region save-as as button in region browser?
  * TODO: raw give OGG/Mpeg/Speex/Flac/Midi choices if the progs can be found -- 
  *
  *   Save as: present extra header type options for the writers we found during configure (how to tabulate formats?)
@@ -1638,8 +1637,8 @@ static void unreflect_file_data_panel_change(file_data *fd, void *data, void (*c
 
 
 static file_data *sdat = NULL;
-static Widget save_as_dialog = NULL, file_save_as_file_name;
-static save_dialog_t save_as_dialog_type = FILE_SAVE_AS;
+static Widget save_as_dialog = NULL, sound_save_as_file_name;
+static save_dialog_t save_as_dialog_type = SOUND_SAVE_AS;
 static file_pattern_info *save_as_fp;
 static dialog_play_info *save_as_dp;
 
@@ -1662,7 +1661,7 @@ static void save_as_ok_callback(Widget w, XtPointer context, XtPointer info)
       return;
     }
   
-  str = XmTextGetString(file_save_as_file_name);
+  str = XmTextGetString(sound_save_as_file_name);
   sp = any_selected_sound();
   clear_minibuffer(sp);
   if ((str) && (*str))
@@ -1682,7 +1681,7 @@ static void save_as_ok_callback(Widget w, XtPointer context, XtPointer info)
 	    force_directory_reread(save_as_dialog);
 	  XtUnmanageChild(save_as_dialog);
 	  report_in_minibuffer(sp, "%s saved as %s", sp->short_filename, str);
-	  if ((save_as_dialog_type == FILE_SAVE_AS) && 
+	  if ((save_as_dialog_type == SOUND_SAVE_AS) && 
 	      (need_directory_update))
 	    run_after_save_as_hook(sp, str, true); /* true => from dialog */
 	}
@@ -1715,7 +1714,7 @@ static void save_as_extract_callback(Widget w, XtPointer context, XtPointer info
       return;
     }
 
-  str = XmTextGetString(file_save_as_file_name);
+  str = XmTextGetString(sound_save_as_file_name);
   sp = any_selected_sound();
   clear_minibuffer(sp);
   if ((chan > sp->nchans) ||
@@ -1785,7 +1784,7 @@ static void save_as_extract_callback(Widget w, XtPointer context, XtPointer info
 		  XtUnmanageChild(save_as_dialog);
 		  report_in_minibuffer(sp, "%s channel %d saved as %s", sp->short_filename, chan, str);
 		  if ((sp) && (str) && 
-		      (save_as_dialog_type == FILE_SAVE_AS) && 
+		      (save_as_dialog_type == SOUND_SAVE_AS) && 
 		      (need_directory_update))
 		    run_after_save_as_hook(sp, str, true); /* true => from dialog */
 		}
@@ -1882,8 +1881,8 @@ static void make_save_as_dialog(char *sound_name, int header_type, int format_ty
       XmStringFree(s1);
       XmStringFree(xmstr1);
       XmStringFree(xmstr2);
-      file_save_as_file_name = XtNameToWidget(save_as_dialog, "Text");
-      if (!(file_save_as_file_name)) file_save_as_file_name = XmFileSelectionBoxGetChild(save_as_dialog, XmDIALOG_TEXT);
+      sound_save_as_file_name = XtNameToWidget(save_as_dialog, "Text");
+      if (!(sound_save_as_file_name)) sound_save_as_file_name = XmFileSelectionBoxGetChild(save_as_dialog, XmDIALOG_TEXT);
 
       XtAddCallback(save_as_dialog, XmNhelpCallback, save_as_help_callback, NULL);
       XtAddCallback(save_as_dialog, XmNcancelCallback, save_as_cancel_callback, NULL);
@@ -1921,7 +1920,7 @@ static void make_save_as_dialog(char *sound_name, int header_type, int format_ty
 	}
       XtAddCallback(XmFileSelectionBoxGetChild(save_as_dialog, XmDIALOG_LIST),
 		    XmNbrowseSelectionCallback, save_as_dialog_select_callback, (XtPointer)save_as_dp);
-      XtAddCallback(file_save_as_file_name, XmNvalueChangedCallback, save_as_file_exists_check, (XtPointer)save_as_dialog);
+      XtAddCallback(sound_save_as_file_name, XmNvalueChangedCallback, save_as_file_exists_check, (XtPointer)save_as_dialog);
 
       /* this must come after the file data panel so that Motif puts it in the button box, not the main work area */
       n = 0;
@@ -1934,7 +1933,7 @@ static void make_save_as_dialog(char *sound_name, int header_type, int format_ty
       XtAddCallback(extractB, XmNactivateCallback, save_as_extract_callback, NULL);
 
       XtManageChild(save_as_dialog);
-      set_dialog_widget(FILE_SAVE_AS_DIALOG, save_as_dialog);
+      set_dialog_widget(SOUND_SAVE_AS_DIALOG, save_as_dialog);
     }
   else
     {
@@ -1950,12 +1949,12 @@ static void make_save_as_dialog(char *sound_name, int header_type, int format_ty
     }
 }
 
-widget_t make_file_save_as_dialog(bool managed)
+widget_t make_sound_save_as_dialog(bool managed)
 {
   snd_info *sp = NULL;
   char *com = NULL;
   file_info *hdr = NULL;
-  save_as_dialog_type = FILE_SAVE_AS;
+  save_as_dialog_type = SOUND_SAVE_AS;
   sp = any_selected_sound();
   if (sp) hdr = sp->hdr;
   make_save_as_dialog((char *)((sp) ? sp->short_filename : ""),
@@ -1972,9 +1971,9 @@ widget_t make_file_save_as_dialog(bool managed)
   return(save_as_dialog);
 }
 
-widget_t make_edit_save_as_dialog(bool managed)
+widget_t make_selection_save_as_dialog(bool managed)
 {
-  save_as_dialog_type = EDIT_SAVE_AS;
+  save_as_dialog_type = SELECTION_SAVE_AS;
   make_save_as_dialog(_("current selection"),
 		      default_output_header_type(ss),
 		      default_output_data_format(ss));
@@ -2015,10 +2014,10 @@ void save_file_dialog_state(FILE *fd)
   if ((save_as_dialog) && (XtIsManaged(save_as_dialog)))
     {
 #if HAVE_SCHEME
-      fprintf(fd, "(%s #t)\n", (save_as_dialog_type == FILE_SAVE_AS) ? S_save_sound_dialog : S_save_selection_dialog);
+      fprintf(fd, "(%s #t)\n", (save_as_dialog_type == SOUND_SAVE_AS) ? S_save_sound_dialog : S_save_selection_dialog);
 #endif
 #if HAVE_RUBY
-      fprintf(fd, "%s(true)\n", TO_PROC_NAME((save_as_dialog_type == FILE_SAVE_AS) ? S_save_sound_dialog : S_save_selection_dialog));
+      fprintf(fd, "%s(true)\n", TO_PROC_NAME((save_as_dialog_type == SOUND_SAVE_AS) ? S_save_sound_dialog : S_save_selection_dialog));
 #endif
     }
 }

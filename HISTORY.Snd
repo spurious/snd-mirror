@@ -1,5 +1,6 @@
 Snd change log
 
+  14-Jul:    snd 7.14.
   5-Jul:     default-output-type -> default-output-header-type,
              default-output-format -> default-output-data-format.
   1-Jul:     --with-fam configuration switch.

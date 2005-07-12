@@ -479,11 +479,10 @@ and run simple lisp[4] functions.
 			  (body)))))
 	     
 	     ;;((eq? 'rt-begin (car term))
-	      
 	     ;;((and (eq? 'rt-begin (car term))
-;;		   (eq? '<void> returntype))
-;;	      (c-display "jepp")
-;;	      (insert `(begin ,@(cdr term)) returntype))
+	;;	   (eq? '<void> returntype))
+	 ;;     (c-display "jepp")
+	  ;;    (insert `(begin ,@(cdr term)) returntype))
 	     
 	     (else
 	      (default-behaviour))))
@@ -4560,7 +4559,6 @@ and run simple lisp[4] functions.
   <int> channels
   <off_t> location
   <float> increment
-  ;;<char-*> file_name
   <off_t> length
   <mus_any-*> readin
   <SCM> scm_readin)
@@ -4600,6 +4598,7 @@ and run simple lisp[4] functions.
 						  (set! buffer buffer->next))
 					   (set! buffer (calloc 1 (sizeof <struct-buffer>)))
 					   (strncpy buffer->filename filename 499)
+					   (set! buffer->channel channel)
 					   (set! buffer->num_visitors 1)
 					   (set! buffer->next buffers)
 					   (set! buffers buffer)
@@ -4718,6 +4717,7 @@ and run simple lisp[4] functions.
 					 (filename <char-*> (mus_file_name readin))
 					 (channel <int> (mus_channel readin))
 					 (buffer <struct-buffer-*> (find_buffer filename channel)))
+
 				    ;;(fprintf stderr (string "readin (make): %x\\n") ret)
 				    
 				   (set! ret->readin readin)
@@ -4775,8 +4775,8 @@ and run simple lisp[4] functions.
 					 (sf_close sndfile)))
 
 				   
-				   (set! ret->channel   channel)
 				   (set! ret->channels  (mus_channels readin))
+				   (set! ret->channel channel)
 				   (set! ret->location  0)
 				   (set! ret->increment (mus_increment readin))
 				   (set! ret->length    (mus_length readin))
@@ -5324,6 +5324,7 @@ setter!-rt-mus-location/mus_location
 	    (dialog (<dialog> name exit
 			      "Close" exit
 			      "Reset" Reset
+			      "Print" (lambda () (print-ladspa das-ladspa))
 			      (if (assoc (string-append libraryname effectname) ladspa-help-assoclist)
 				  "Help"
 				  "Not much help")
@@ -5382,6 +5383,21 @@ setter!-rt-mus-location/mus_location
     dialog))
     
 
+(define (print-ladspa das-ladspa)
+  (let ((ladspa (car das-ladspa)))
+    (define (stupid->nonstupid stupid)
+      (let ((gakk (-> ladspa controlin_port_nums)))
+	(- (length gakk) (length (member stupid gakk)))))
+    (define (s->n stupid)
+      (stupid->nonstupid stupid))
+    (if (> (-> ladspa num_controls_in) 0)
+	(begin
+	  (c-display "\n(let ((plugin l))")
+	  (for-each (lambda (portnum)
+		      (c-display "  (ladspa-set! plugin" portnum (ladspa-get das-ladspa (s->n portnum)) ")"))
+		    (-> ladspa controlin_port_nums))
+	  (c-display ")")))))
+
 	 
 (define (make-ladspa libname pluginname)
   (let* ((descriptor #f)
@@ -5411,15 +5427,20 @@ setter!-rt-mus-location/mus_location
 	     (srate)
 	     1)
 	 (if (not (ishint portnum LADSPA_HINT_BOUNDED_ABOVE))
-	     4                                   ;The value Ardour use.
+	     (if (not (ishint portnum  LADSPA_HINT_TOGGLED))
+		 4                                   ;The value Ardour use.
+		 1)
 	     (caddr (list-ref (.PortRangeHints descriptor) portnum)))))
 
     
     (set! descriptor (ladspa-descriptor libname pluginname))
+    (if (not descriptor)
+	(throw (symbol-append 'ladspa-plugin-not-found- (string->symbol libname) '- (string->symbol pluginname))))
+    
     (set! ladspa (<mus_rt_ladspa> #:descriptor (list "A_POINTER" (cadr descriptor))))
 		  
     (-> ladspa handle (list "A_POINTER" (cadr (ladspa-instantiate descriptor (c-integer (mus-srate))))))
-
+        
     (c-for-each (lambda (n x)
 		      (if (> (logand x LADSPA_PORT_CONTROL) 0)
 			  (if (> (logand x LADSPA_PORT_INPUT) 0)
@@ -5434,7 +5455,7 @@ setter!-rt-mus-location/mus_location
     (-> ladspa controlout_port_nums output-controls)
     (-> ladspa audioin_port_nums input-audios)
     (-> ladspa audioout_port_nums output-audios)
-    
+
     (-> ladspa num_controls_in (length input-controls))
     (-> ladspa num_controls_out (length output-controls))
     (-> ladspa num_audio_outs (length output-audios))

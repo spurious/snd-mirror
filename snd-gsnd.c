@@ -169,8 +169,8 @@ static void make_pixmaps(void)
 
 static gboolean name_pix_expose(GtkWidget *w, GdkEventExpose *ev, gpointer data)
 {
-  snd_info *sp = (snd_info *)data;
   /*
+  snd_info *sp = (snd_info *)data;
     Gdk-CRITICAL **: gdk_draw_drawable: assertion `src != NULL' failed
     #3  0x403f94e8 in gdk_draw_drawable (drawable=0x878dfe0, gc=0x8600430, 
         src=0x0, xsrc=0, ysrc=0, xdest=0, ydest=4, width=16, height=16)

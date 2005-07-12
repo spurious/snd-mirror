@@ -487,8 +487,8 @@ file_data *make_file_data_panel(GtkWidget *parent, char *name,
 				dialog_data_location_t with_loc, dialog_samples_t with_samples,
 				dialog_error_t with_error, dialog_header_type_t with_header_type,
 				dialog_comment_t with_comment);
-widget_t make_file_save_as_dialog(bool managed);
-widget_t make_edit_save_as_dialog(bool managed);
+widget_t make_sound_save_as_dialog(bool managed);
+widget_t make_selection_save_as_dialog(bool managed);
 ww_info *make_title_row(GtkWidget *formw, char *top_str, char *main_str, dialog_pad_t pad, dialog_sort_t with_sort, dialog_paned_t with_pane);
 regrow *make_regrow(GtkWidget *ww, GtkSignalFunc play_callback, GtkSignalFunc name_callback);
 void make_cur_name_row(int old_size, int new_size);

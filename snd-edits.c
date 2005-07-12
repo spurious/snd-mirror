@@ -6476,8 +6476,7 @@ static snd_fd *init_sample_read_any_with_bufsize(off_t samp, chan_info *cp, read
   if (!ed) return(NULL);
   sp = cp->sound;
   if (sp->inuse == SOUND_IDLE) return(NULL);
-#if 1
-  /* TODO: why is this happening when it should not? */
+
   if ((sp->need_update) &&
       (!(sp->writing)))
     {
@@ -6488,7 +6487,7 @@ static snd_fd *init_sample_read_any_with_bufsize(off_t samp, chan_info *cp, read
 	}
       else snd_warning(_("file %s has changed since we last read it!"), sp->short_filename);
     }
-#endif
+
   curlen = cp->samples[edit_position];
   /* snd_fd allocated only here */
   sf = (snd_fd *)CALLOC(1, sizeof(snd_fd)); /* only creation point */

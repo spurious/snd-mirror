@@ -1,8 +1,9 @@
 #include "snd.h"
 
-/* PERHAPS: insert/mix buttons
+/* PERHAPS: insert/mix/save-as buttons
  * PERHAPS: amp/srate sliders as in mix panel
  * PERHAPS: some way to group or list these to handle as motifs
+ * PERHAPS: multiple region browsers?
  */
 
 /* -------- region browser -------- */

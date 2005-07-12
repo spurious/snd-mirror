@@ -1039,10 +1039,10 @@ char **yellow_pan_bits(void) {return(yellow_pan_xpm);}
 static char bg_line[32];
 void make_icons_transparent(char *color)
 {
+#if (HAVE_XPM) || (USE_GTK)
   int i;
   char **tmp;
   sprintf(bg_line, "-      c %s s %s", color, color); /* the background color isn't known at compile time */
-#if (HAVE_XPM) || (USE_GTK)
   mini_lock_xpm[1] = bg_line;
   blank_xpm[1] = bg_line;
   speed_l_xpm[1] = bg_line;
@@ -1059,6 +1059,7 @@ void make_icons_transparent(char *color)
     }
 #endif 
 #if USE_GTK
+  sprintf(bg_line, "-      c %s s %s", color, color); /* the background color isn't known at compile time */
   speaker_xpm[1] = bg_line;
   blue_speaker_xpm[1] = bg_line;
   mic_xpm[1] = bg_line;

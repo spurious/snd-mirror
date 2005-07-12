@@ -357,13 +357,16 @@
 				  (set! types-21 (cons type types-21))
 				  (if (eq? extra '22)
 				      (set! types-22 (cons type types-22))
-				      (if (eq? extra '23)
+				      (if (or (eq? extra '23)
+					      (eq? extra 'callback-23))
 					  (set! types-23 (cons type types-23))
 					  (if (eq? extra '236)
 					      (set! types-236 (cons type types-236))
-					      (if (eq? extra '250)
+					      (if (or (eq? extra '250)
+						      (eq? extra 'callback-250))
 						  (set! types-250 (cons type types-250))
-						  (if (eq? extra '256)
+						  (if (or (eq? extra '256)
+							  (eq? extra 'callback-256))
 						      (set! types-256 (cons type types-256))
 						      (if (eq? extra '260)
 							  (set! types-260 (cons type types-260))
@@ -551,7 +554,8 @@
 			(list 'GtkClipboardImageReceivedFunc
 			      "void"
 			      "clip_image_received"
-			      (parse-args "GtkClipboard* clipboard GdkPixbuf* pixbuf lambda_data func_data" 'callback-256)
+			      (parse-args "GtkClipboard* clipboard GdkPixbuf* pixbuf lambda_data func_data" 'callback) ; 'callback-256)
+			      ;; these arg types are not new in 256, but this parse-args precedes the basic ones, so comment out the callback-256
 			      'permanent)
 			(list 'GLogFunc
 			      "void"
@@ -1633,10 +1637,10 @@
 (hey "#define XEN_lambda_data_P(Arg) 1~%")
 
 (hey "#define C_TO_XEN_GtkTreeViewSearchEqualFunc(Arg) WRAP_FOR_XEN(\"GtkTreeViewSearchEqualFunc\", Arg)~%")
-(hey "#define C_TO_XEN_GtkTreeIterCompareFunc(Arg) WRAP_FOR_XEN(\"GtkTreeViewSearchEqualFunc\", Arg)~%")
-(hey "#define C_TO_XEN_GtkTreeSelectionFunc(Arg) WRAP_FOR_XEN(\"GtkTreeSelectionFunc\", Arg)~%")
-(hey "#define C_TO_XEN_GtkMenuPositionFunc(Arg) WRAP_FOR_XEN(\"GtkMenuPositionFunc\", Arg)~%")
-(hey "#define C_TO_XEN_GtkDestroyNotify(Arg) WRAP_FOR_XEN(\"GtkDestroyNotify\", Arg)~%")
+;(hey "#define C_TO_XEN_GtkTreeIterCompareFunc(Arg) WRAP_FOR_XEN(\"GtkTreeViewSearchEqualFunc\", Arg)~%")
+;(hey "#define C_TO_XEN_GtkTreeSelectionFunc(Arg) WRAP_FOR_XEN(\"GtkTreeSelectionFunc\", Arg)~%")
+;(hey "#define C_TO_XEN_GtkMenuPositionFunc(Arg) WRAP_FOR_XEN(\"GtkMenuPositionFunc\", Arg)~%")
+;(hey "#define C_TO_XEN_GtkDestroyNotify(Arg) WRAP_FOR_XEN(\"GtkDestroyNotify\", Arg)~%")
 (hey "#define XEN_TO_C_GdkFilterReturn(Arg) (GdkFilterReturn)XEN_TO_C_INT(Arg)~%")
 
 (hey "#define XEN_TO_C_String(Arg) ((XEN_STRING_P(Arg)) ? XEN_TO_C_STRING(Arg) : NULL)~%")

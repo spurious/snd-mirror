@@ -2086,7 +2086,7 @@ static XEN g_save_selection_dialog(XEN managed)
   widget_t w;
   #define H_save_selection_dialog "(" S_save_selection_dialog "): start the Selection Save-as dialog"
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(managed), managed, XEN_ONLY_ARG, S_save_selection_dialog, "a boolean");
-  w = make_edit_save_as_dialog(XEN_TO_C_BOOLEAN(managed));
+  w = make_selection_save_as_dialog(XEN_TO_C_BOOLEAN(managed));
   return(XEN_WRAP_WIDGET(w));
 }
 
@@ -2095,7 +2095,7 @@ static XEN g_save_sound_dialog(XEN managed)
   widget_t w;
   #define H_save_sound_dialog "(" S_save_sound_dialog "): start the File Save-as dialog"
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(managed), managed, XEN_ONLY_ARG, S_save_sound_dialog, "a boolean");
-  w = make_file_save_as_dialog(XEN_TO_C_BOOLEAN(managed));
+  w = make_sound_save_as_dialog(XEN_TO_C_BOOLEAN(managed));
   return(XEN_WRAP_WIDGET(w));
 }
 

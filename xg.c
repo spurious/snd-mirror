@@ -306,10 +306,6 @@ static void define_xm_obj(void)
 #define XEN_TO_C_lambda_data(Arg) (gpointer)gxg_ptr
 #define XEN_lambda_data_P(Arg) 1
 #define C_TO_XEN_GtkTreeViewSearchEqualFunc(Arg) WRAP_FOR_XEN("GtkTreeViewSearchEqualFunc", Arg)
-#define C_TO_XEN_GtkTreeIterCompareFunc(Arg) WRAP_FOR_XEN("GtkTreeViewSearchEqualFunc", Arg)
-#define C_TO_XEN_GtkTreeSelectionFunc(Arg) WRAP_FOR_XEN("GtkTreeSelectionFunc", Arg)
-#define C_TO_XEN_GtkMenuPositionFunc(Arg) WRAP_FOR_XEN("GtkMenuPositionFunc", Arg)
-#define C_TO_XEN_GtkDestroyNotify(Arg) WRAP_FOR_XEN("GtkDestroyNotify", Arg)
 #define XEN_TO_C_GdkFilterReturn(Arg) (GdkFilterReturn)XEN_TO_C_INT(Arg)
 #define XEN_TO_C_String(Arg) ((XEN_STRING_P(Arg)) ? XEN_TO_C_STRING(Arg) : NULL)
 #define C_TO_XEN_String(Arg) ((Arg != NULL) ? C_TO_XEN_STRING(Arg) : XEN_FALSE)
@@ -357,13 +353,7 @@ XM_TYPE_PTR(GtkTreeView_, GtkTreeView*)
 XM_TYPE_PTR(GtkTreeViewColumn_, GtkTreeViewColumn*)
 XM_TYPE_PTR(GtkCellRenderer_, GtkCellRenderer*)
 XM_TYPE_PTR(GtkTreeSelection_, GtkTreeSelection*)
-XM_TYPE_PTR(GtkFileFilterInfo_, GtkFileFilterInfo*)
-XM_TYPE_PTR(GtkEntryCompletion_, GtkEntryCompletion*)
-XM_TYPE_PTR(GtkIconView_, GtkIconView*)
 XM_TYPE_PTR(GdkPixbuf_, GdkPixbuf*)
-#define C_TO_XEN_GLogLevelFlags(Arg) C_TO_XEN_INT(Arg)
-#define XEN_TO_C_GLogLevelFlags(Arg) (GLogLevelFlags)(XEN_TO_C_INT(Arg))
-#define XEN_GLogLevelFlags_P(Arg) XEN_INTEGER_P(Arg)
 #define C_TO_XEN_GType(Arg) C_TO_XEN_ULONG(Arg)
 #define XEN_TO_C_GType(Arg) (GType)(XEN_TO_C_ULONG(Arg))
 #define XEN_GType_P(Arg) XEN_ULONG_P(Arg)
@@ -853,6 +843,8 @@ XM_TYPE_PTR_1(GdkBitmap__, GdkBitmap**)
 #endif
 
 #if HAVE_GTK_FILE_CHOOSER_DIALOG_NEW
+XM_TYPE_PTR(GtkFileFilterInfo_, GtkFileFilterInfo*)
+XM_TYPE_PTR(GtkEntryCompletion_, GtkEntryCompletion*)
 #define C_TO_XEN_GtkCalendarDisplayOptions(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GtkCalendarDisplayOptions(Arg) (GtkCalendarDisplayOptions)(XEN_TO_C_INT(Arg))
 #define XEN_GtkCalendarDisplayOptions_P(Arg) XEN_INTEGER_P(Arg)
@@ -898,11 +890,15 @@ XM_TYPE_PTR_2(GtkAccelMap_, GtkAccelMap*)
 #endif
 
 #if HAVE_GTK_ABOUT_DIALOG_NEW
+XM_TYPE_PTR(GtkIconView_, GtkIconView*)
 XM_TYPE_PTR_1(GtkCellView_, GtkCellView*)
 XM_TYPE_PTR_1(GtkAboutDialog_, GtkAboutDialog*)
 #endif
 
 #if HAVE_GDK_PANGO_RENDERER_NEW
+#define C_TO_XEN_GLogLevelFlags(Arg) C_TO_XEN_INT(Arg)
+#define XEN_TO_C_GLogLevelFlags(Arg) (GLogLevelFlags)(XEN_TO_C_INT(Arg))
+#define XEN_GLogLevelFlags_P(Arg) XEN_INTEGER_P(Arg)
 #define C_TO_XEN_PangoEllipsizeMode(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_PangoEllipsizeMode(Arg) (PangoEllipsizeMode)(XEN_TO_C_INT(Arg))
 #define XEN_PangoEllipsizeMode_P(Arg) XEN_INTEGER_P(Arg)
@@ -39812,7 +39808,7 @@ static bool xg_already_inited = false;
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("09-Jul-05"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("11-Jul-05"));
       xg_already_inited = true;
 #if WITH_GTK_AND_X11
       Init_libx11();

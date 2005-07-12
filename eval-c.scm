@@ -1781,26 +1781,28 @@ int fgetc (FILE
 ;; This one will never return an integer array, unless das-make-func is set to ec-make-ints. Same
 ;; goes for creating a double-array; das-make-func must be set to ec-make-doubles.
 (define* (ec-make-array array #:key das-make-func das-ret)
-  (let* ((make-func (if das-make-func
-			das-make-func
-		       (cond ((string? (car array)) ec-make-strings)
-			     ((ec-pointer? (car array)) ec-make-pointers)
-			     (else ec-make-floats))))
-	 (ret (if das-ret
-		  das-ret
-		  (make-func (length array))))
-	 (put-func (cond ((eq? ec-make-strings make-func) ec-put-strings-element)
-			 ((eq? ec-make-pointers make-func) ec-put-pointers-element)
-			 ((eq? ec-make-floats make-func) ec-put-floats-element)
-			 ((eq? ec-make-doubles make-func) ec-put-doubles-element)
-			 ((eq? ec-make-ints make-func) ec-put-ints-element)
-			 (else
-			  (c-display "Illegal das-make-func argument for ec-make-array: " das-make-func)))))
-
-    (c-for-each (lambda (n val)
-		  (put-func ret val n))
-		array)
-    ret))
+  (if (null? array)
+      #f
+      (let* ((make-func (if das-make-func
+			    das-make-func
+			    (cond ((string? (car array)) ec-make-strings)
+				  ((ec-pointer? (car array)) ec-make-pointers)
+				  (else ec-make-floats))))
+	     (ret (if das-ret
+		      das-ret
+		      (make-func (length array))))
+	     (put-func (cond ((eq? ec-make-strings make-func) ec-put-strings-element)
+			     ((eq? ec-make-pointers make-func) ec-put-pointers-element)
+			     ((eq? ec-make-floats make-func) ec-put-floats-element)
+			     ((eq? ec-make-doubles make-func) ec-put-doubles-element)
+			     ((eq? ec-make-ints make-func) ec-put-ints-element)
+			     (else
+			      (c-display "Illegal das-make-func argument for ec-make-array: " das-make-func)))))
+	
+	(c-for-each (lambda (n val)
+		      (put-func ret val n))
+		    array)
+	ret)))
 
 (define (ec-get-nullterminated-somethings array get-func)
   (let ((ret '()))
@@ -1940,7 +1942,8 @@ int fgetc (FILE
 					 (list? newval))
 				    (begin
 				      (set! ,(symbol-append 'num- name) (length newval))
-				      (ec-make-array (if (procedure? (car newval))
+				      (ec-make-array (if (and (not (null? newval))
+							      (procedure? (car newval)))
 							 (map (lambda (a) (->2 a get-c-object))
 							      newval)
 							 newval)

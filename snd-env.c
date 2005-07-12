@@ -14,14 +14,20 @@ XEN envelope_base_sym;
 #if HAVE_GUILE
   #define XEN_VARIABLE_PROPERTY(Obj, Prop)          scm_object_property(Obj, Prop)
   #define XEN_SET_VARIABLE_PROPERTY(Obj, Prop, Val) scm_set_object_property_x(XEN_VARIABLE_REF(Obj), Prop, Val)
+/*
   #define XEN_OBJECT_PROPERTY(Obj, Prop)            scm_object_property(Obj, Prop)
-  #define XEN_SET_OBJECT_PROPERTY(Obj, Prop, Val)   scm_set_object_property_x(Obj, Prop, Val)
+*/
+  #if DEBUGGING
+    #define XEN_SET_OBJECT_PROPERTY(Obj, Prop, Val)   scm_set_object_property_x(Obj, Prop, Val)
+  #endif
 #endif
 #if HAVE_RUBY
   #define XEN_VARIABLE_PROPERTY(Obj, Prop)          rb_property(rb_obj_id(Obj), Prop)
   #define XEN_SET_VARIABLE_PROPERTY(Obj, Prop, Val) rb_set_property(rb_obj_id(Obj), Prop, Val)
+/*
   #define XEN_OBJECT_PROPERTY(Obj, Prop)            rb_property(rb_obj_id(Obj), Prop)
   #define XEN_SET_OBJECT_PROPERTY(Obj, Prop, Val)   rb_set_property(rb_obj_id(Obj), Prop, Val)
+*/
 #endif
 #if (!HAVE_EXTENSION_LANGUAGE)
   #define XEN_VARIABLE_PROPERTY(Obj, Prop)          0

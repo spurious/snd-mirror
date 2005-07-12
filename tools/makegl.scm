@@ -296,19 +296,24 @@
 					   "GLdouble*" "GLfloat*" "GLvoid*" "GLuint*"
 					   "GLboolean*" "void*" "GLint*" "GLshort*"
 					   "GLsizei" "GLclampd" "GLclampf" "GLbitfield" "GLshort" "GLubyte" "GLbyte"
+					   "unsigned_long"
 					   "void**")))
 			(if (string=? (car typ) "constchar*")
 			    (hey "#define C_TO_XEN_~A(Arg) C_TO_XEN_~A((char *)(Arg))~%" (no-stars (car typ)) (cdr typ))
 			    (hey "#define C_TO_XEN_~A(Arg) C_TO_XEN_~A(Arg)~%" (no-stars (car typ)) (cdr typ))))
-		    (hey "#define XEN_TO_C_~A(Arg) (~A)(XEN_TO_C_~A(Arg))~%" 
-			 (no-stars (car typ)) (car typ) (cdr typ))
-		    (hey "#define XEN_~A_P(Arg) XEN_~A_P(Arg)~%" 
-			 (no-stars (car typ))
-			 (if (string=? (cdr typ) "INT") 
-			     "INTEGER" 
-			     (if (string=? (cdr typ) "DOUBLE")
-				 "NUMBER"
-				 (cdr typ)))))
+		    (if (not (member (car typ)
+				     (list "constchar*")))
+			(hey "#define XEN_TO_C_~A(Arg) (~A)(XEN_TO_C_~A(Arg))~%" 
+			     (no-stars (car typ)) (car typ) (cdr typ)))
+		    (if (not (member (car typ)
+				     (list "constchar*")))
+			(hey "#define XEN_~A_P(Arg) XEN_~A_P(Arg)~%" 
+			     (no-stars (car typ))
+			     (if (string=? (cdr typ) "INT") 
+				 "INTEGER" 
+				 (if (string=? (cdr typ) "DOUBLE")
+				     "NUMBER"
+				     (cdr typ))))))
 		  (begin
 		    (hey "#define XEN_~A_P(Arg) 1~%" (no-stars (car typ)))
 		    (hey "#define XEN_TO_C_~A(Arg) ((gpointer)Arg)~%" (no-stars (car typ)))))))

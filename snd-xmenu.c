@@ -16,7 +16,7 @@ static void file_record_callback(Widget w, XtPointer info, XtPointer context) {s
 static void file_close_callback(Widget w, XtPointer info, XtPointer context) {if (any_selected_sound()) snd_close_file(any_selected_sound());}
 static void file_save_callback(Widget w, XtPointer info, XtPointer context) {if (any_selected_sound()) save_edits(any_selected_sound(), NULL);}
 static void file_update_callback(Widget w, XtPointer info, XtPointer context) {update_file_from_menu();}
-static void file_save_as_callback(Widget w, XtPointer info, XtPointer context) {make_file_save_as_dialog(true);}
+static void file_save_as_callback(Widget w, XtPointer info, XtPointer context) {make_sound_save_as_dialog(true);}
 static void file_revert_callback(Widget w, XtPointer info, XtPointer context) {revert_file_from_menu();}
 static void file_exit_callback(Widget w, XtPointer info, XtPointer context) {if (snd_exit_cleanly(false)) snd_exit(1);}
 static void file_mix_callback_1(Widget w, XtPointer info, XtPointer context) {make_mix_file_dialog(true);}
@@ -30,7 +30,7 @@ static void edit_mix_callback(Widget w, XtPointer info, XtPointer context) {add_
 static void edit_envelope_callback(Widget w, XtPointer info, XtPointer context) {create_envelope_editor();}
 static void edit_cut_callback(Widget w, XtPointer info, XtPointer context) {delete_selection(UPDATE_DISPLAY);}
 static void edit_paste_callback(Widget w, XtPointer info, XtPointer context) {insert_selection_from_menu();}
-static void edit_save_as_callback(Widget w, XtPointer info, XtPointer context) {make_edit_save_as_dialog(true);}
+static void edit_save_as_callback(Widget w, XtPointer info, XtPointer context) {make_selection_save_as_dialog(true);}
 static void edit_select_all_callback(Widget w, XtPointer info, XtPointer context) {select_all(current_channel());}
 static void edit_undo_callback(Widget w, XtPointer info, XtPointer context) {undo_edit_with_sync(current_channel(), 1);}
 static void edit_redo_callback(Widget w, XtPointer info, XtPointer context) {redo_edit_with_sync(current_channel(), 1);}

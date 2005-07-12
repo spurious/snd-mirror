@@ -153,6 +153,7 @@
   (define (get-port portnum)
     (ports portnum))
 
+  ;; Not used.
   (define (set-port! portnum vct)
     (display "ai: ")(display handle)(newline)
     (ports portnum vct)
@@ -454,7 +455,9 @@
 	   (srate)
 	   1)
        (if (not (ishint portnum LADSPA_HINT_BOUNDED_ABOVE))
-	   4                                   ;The value Ardour use.
+	   (if (not (ishint portnum  LADSPA_HINT_TOGGLED))
+	       4                                   ;The value Ardour use.
+	       1)
 	   (caddr (list-ref (.PortRangeHints this->descriptor) portnum)))))
 
 
@@ -879,9 +882,7 @@
 			   (let* ((dir (opendir path))
 				  (entry (readdir dir)))
 			     (while (not (eof-object? entry))
-				    (if (and (not (string=? "." entry))
-					     (not (string=? ".." entry)))
-					(lrdf_read_file (string-append "file://" path "/" entry)))
+				    (lrdf_read_file (string-append "file://" path "/" entry))
 				    (set! entry (readdir dir)))
 			     (closedir dir)))
 			 (lambda (key . args)

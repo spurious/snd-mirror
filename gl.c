@@ -95,7 +95,6 @@ XL_TYPE_1(Display, Display*)
 #define XEN_int_P(Arg) XEN_INTEGER_P(Arg)
 XL_TYPE_PTR_1(int_, int*)
 XL_TYPE(GLXContext, GLXContext)
-#define C_TO_XEN_unsigned_long(Arg) C_TO_XEN_ULONG(Arg)
 #define XEN_TO_C_unsigned_long(Arg) (unsigned_long)(XEN_TO_C_ULONG(Arg))
 #define XEN_unsigned_long_P(Arg) XEN_ULONG_P(Arg)
 #define C_TO_XEN_Bool(Arg) C_TO_XEN_BOOLEAN(Arg)
@@ -167,8 +166,6 @@ XL_TYPE_PTR_1(GLdouble_, GLdouble*)
 #define XEN_TO_C_GLdouble(Arg) (GLdouble)(XEN_TO_C_DOUBLE(Arg))
 #define XEN_GLdouble_P(Arg) XEN_NUMBER_P(Arg)
 #define C_TO_XEN_constchar_(Arg) C_TO_XEN_STRING((char *)(Arg))
-#define XEN_TO_C_constchar_(Arg) (constchar*)(XEN_TO_C_STRING(Arg))
-#define XEN_constchar__P(Arg) XEN_STRING_P(Arg)
 #define XEN_TO_C_GLclampd(Arg) (GLclampd)(XEN_TO_C_DOUBLE(Arg))
 #define XEN_GLclampd_P(Arg) XEN_NUMBER_P(Arg)
 XL_TYPE_PTR_1(GLfloat_, GLfloat*)
@@ -5954,7 +5951,7 @@ static bool gl_already_inited = false;
       define_integers();
       define_functions();
       XEN_YES_WE_HAVE("gl");
-      XEN_DEFINE("gl-version", C_TO_XEN_STRING("21-Jun-05"));
+      XEN_DEFINE("gl-version", C_TO_XEN_STRING("11-Jul-05"));
       gl_already_inited = true;
     }
 }

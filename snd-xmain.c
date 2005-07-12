@@ -42,13 +42,15 @@
 #define CHANNEL_SASH_INDENT -10
 #define CHANNEL_SASH_SIZE 0
 /* 0 means: use Motif default size */
-#define PLAIN_ICON 1
-#define XPM_ICON 2
 
-#ifdef SGI
-  #define ICON_TYPE PLAIN_ICON
-#else
-  #define ICON_TYPE XPM_ICON
+#ifndef SND_AS_WIDGET
+  #define PLAIN_ICON 1
+  #define XPM_ICON 2
+  #ifdef SGI
+    #define ICON_TYPE PLAIN_ICON
+  #else
+    #define ICON_TYPE XPM_ICON
+  #endif
 #endif
 
 #define POSITION_SLIDER_WIDTH 13
@@ -273,7 +275,9 @@ static void minify_maxify_window(Widget w, XtPointer context, XEvent *event, Boo
 }
 #endif
 
+#ifndef SND_AS_WIDGET
 static Atom snd_v, snd_c;
+#endif
 
 #if HAVE_EXTENSION_LANGUAGE
 static XEN window_property_changed_hook;
@@ -598,15 +602,18 @@ static Pixel get_color(Widget shell, char *rs_color, char *defined_color, char *
   return(tmp_color.pixel);
 }
 
+#ifdef SND_AS_WIDGET
+
+void snd_as_widget(int argc, char **argv, XtAppContext app, Widget parent, Arg *caller_args, int caller_argn)
+{
+
+#else
+
 static char *fallbacks[] = {
   "*fontList: " DEFAULT_FONTLIST,
   NULL
 };
 
-#ifdef SND_AS_WIDGET
-void snd_as_widget(int argc, char **argv, XtAppContext app, Widget parent, Arg *caller_args, int caller_argn)
-{
-#else
 void snd_doit(int argc, char **argv)
 {
   XtAppContext app;     

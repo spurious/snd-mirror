@@ -410,6 +410,7 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+14-Jul:  Snd 7.14.\n\
 5-Jul:   default-output-type -> default-output-header-type, \n\
          default-output-format -> default-output-data-format.\n\
 1-Jul:   --with-fam configuration switch.\n\
@@ -419,8 +420,6 @@ void about_snd_help(void)
 20-Jun:  'Extract' option to Save as dialogs (to extract a channel).\n\
 13-Jun:  folded gl-ruby.c into gl.c, xm-ruby.c into xm.c, xg-ruby.c into xg.c.\n\
 6-June:  removed save-options (use save-state).\n\
-1-June:  snd 7.13.\n\
-         show-axes View:Axes menu.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",
@@ -1736,6 +1735,7 @@ static int levenstein(const char *s1, const char *s2)
   return(val);
 }
 
+/* PERHAPS: since help-names is alphabetized (tnames in index.cl), we could use binary search rather than linear in snd-url and others */
 char *snd_url(const char *name)
 {
   /* (snd-url "save-sound-as") -> "extsnd.html#savesoundas" */

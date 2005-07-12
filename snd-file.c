@@ -1427,6 +1427,7 @@ static snd_info *snd_update_1(snd_info *sp, const char *ur_filename)
   sp->user_read_only_watcher = NULL;   /* don't confuse watchers with a temporary close! */
   old_user_read_only_watcher_context = sp->user_read_only_watcher_context;
   sp->user_read_only_watcher_context = NULL;
+  /* TODO: do I need to save sp->writing? ->unreadable? */
 
   snd_close_file(sp);
 
@@ -1442,7 +1443,8 @@ static snd_info *snd_update_1(snd_info *sp, const char *ur_filename)
   if (nsp)
     {
       /* if header is bad, nsp can be null awaiting raw data dialog's return */
-      if (old_file_watcher)
+      if ((old_file_watcher) &&
+	  (!(nsp->file_watcher)))
 	nsp->file_watcher = fam_monitor_file(nsp->filename, (void *)nsp, fam_sp_action); /* might be a different sp as well as underlying file */
       nsp->user_read_only_watcher = old_user_read_only_watcher;
       nsp->user_read_only_watcher_context = old_user_read_only_watcher_context;
@@ -1491,9 +1493,9 @@ snd_info *snd_update(snd_info *sp)
       if (mus_file_probe(sp->filename) == 0)
 	{
 	  /* user deleted file while editing it? */
-	  /* report_in_minibuffer(sp, _("%s no longer exists!"), sp->short_filename); */
-	  /* TODO: why is this happening? with a null filename! */
-	  snd_error(_("%s no longer exists!"), sp->short_filename);
+	  report_in_minibuffer(sp, _("%s no longer exists!"), sp->short_filename);
+	  /* TODO: use snd_warning? */
+	  /* snd_error(_("%s no longer exists!"), sp->short_filename); */
 	  return(sp);
 	}
       app_x = widget_width(MAIN_SHELL(ss));
@@ -1501,7 +1503,7 @@ snd_info *snd_update(snd_info *sp)
       sp = snd_update_1(sp, sp->filename);
       if (sp)
 	report_in_minibuffer(sp, _("updated %s"), sp->short_filename);
-      else snd_error(_("update failed!")); /* TODO: give a reason! */
+      /* else there might be some legit reason such as raw data dialog in progress */
       set_widget_size(MAIN_SHELL(ss), app_x, app_y);
     }
   return(sp);
@@ -2370,7 +2372,7 @@ char *save_as_dialog_save_sound(snd_info *sp, char *str, save_dialog_t save_type
       return(mus_format(_("%s not overwritten"), str));
     }
 
-  if (!(run_before_save_as_hook(sp, fullname, save_type != FILE_SAVE_AS, srate, type, format, comment)))
+  if (!(run_before_save_as_hook(sp, fullname, save_type != SOUND_SAVE_AS, srate, type, format, comment)))
     {
       if (strcmp(fullname, sp->filename) == 0) /* save-as to mimic save (overwrite current) */
 	{
@@ -2390,7 +2392,7 @@ char *save_as_dialog_save_sound(snd_info *sp, char *str, save_dialog_t save_type
 	  /* also what if a sound is write-protected in one window, and not in another? */
 
 	  ofile = snd_tempnam(); 
-	  if (save_type == FILE_SAVE_AS)
+	  if (save_type == SOUND_SAVE_AS)
 	    result = save_edits_without_display(sp, ofile, type, format, srate, comment, AT_CURRENT_EDIT_POSITION);
 	  else result = save_selection(ofile, type, format, srate, comment, SAVE_ALL_CHANS);
 	  if (result != MUS_NO_ERROR)
@@ -2431,7 +2433,7 @@ char *save_as_dialog_save_sound(snd_info *sp, char *str, save_dialog_t save_type
 	      snd_close_file(collision->sp);
 	    }
 	  mus_sound_forget(fullname);
-	  if (save_type == FILE_SAVE_AS)
+	  if (save_type == SOUND_SAVE_AS)
 	    result = save_edits_without_display(sp, str, type, format, srate, comment, AT_CURRENT_EDIT_POSITION);
 	  else result = save_selection(str, type, format, srate, comment, SAVE_ALL_CHANS);
 	  if (result != MUS_NO_ERROR)

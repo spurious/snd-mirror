@@ -1422,7 +1422,7 @@ file_data *make_file_data_panel(GtkWidget *parent, char *name,
 
 static file_data *sdat = NULL;
 static GtkWidget *save_as_dialog = NULL;
-static save_dialog_t save_as_dialog_type = FILE_SAVE_AS;
+static save_dialog_t save_as_dialog_type = SOUND_SAVE_AS;
 static char *save_as_filename = NULL;
 
 static void save_as_ok_callback(GtkWidget *w, gpointer null_data)
@@ -1468,7 +1468,7 @@ static void save_as_ok_callback(GtkWidget *w, gpointer null_data)
 	  */
 	  gtk_widget_hide(save_as_dialog);
 	  report_in_minibuffer(sp, "%s saved as %s", sp->short_filename, save_as_filename);
-	  if ((save_as_dialog_type == FILE_SAVE_AS) && 
+	  if ((save_as_dialog_type == SOUND_SAVE_AS) && 
 	      (need_directory_update))
 	    run_after_save_as_hook(sp, save_as_filename, true); /* true => from dialog */
 	}
@@ -1574,7 +1574,7 @@ static void save_as_extract_callback(GtkWidget *w, gpointer null_data)
 		  gtk_widget_hide(save_as_dialog);
 		  report_in_minibuffer(sp, "%s channel %d saved as %s", sp->short_filename, chan, str);
 		  if ((sp) && (str) && 
-		      (save_as_dialog_type == FILE_SAVE_AS) && 
+		      (save_as_dialog_type == SOUND_SAVE_AS) && 
 		      (need_directory_update))
 		    run_after_save_as_hook(sp, str, true); /* true => from dialog */
 		}
@@ -1632,7 +1632,7 @@ static void make_save_as_dialog(char *sound_name, int header_type, int format_ty
 				  WITH_HEADER_TYPE_FIELD, 
 				  WITH_COMMENT_FIELD);
       sdat->dialog = save_as_dialog;
-      set_dialog_widget(FILE_SAVE_AS_DIALOG, save_as_dialog);
+      set_dialog_widget(SOUND_SAVE_AS_DIALOG, save_as_dialog);
     }
   else
     {
@@ -1641,12 +1641,12 @@ static void make_save_as_dialog(char *sound_name, int header_type, int format_ty
   FREE(file_string);
 }
 
-widget_t make_file_save_as_dialog(bool managed)
+widget_t make_sound_save_as_dialog(bool managed)
 {
   snd_info *sp = NULL;
   char *com = NULL;
   file_info *hdr = NULL;
-  save_as_dialog_type = FILE_SAVE_AS;
+  save_as_dialog_type = SOUND_SAVE_AS;
   sp = any_selected_sound();
   if (sp) hdr = sp->hdr;
   make_save_as_dialog((char *)((sp) ? sp->short_filename : ""),
@@ -1663,9 +1663,9 @@ widget_t make_file_save_as_dialog(bool managed)
   return(save_as_dialog);
 }
 
-widget_t make_edit_save_as_dialog(bool managed)
+widget_t make_selection_save_as_dialog(bool managed)
 {
-  save_as_dialog_type = EDIT_SAVE_AS;
+  save_as_dialog_type = SELECTION_SAVE_AS;
   make_save_as_dialog(_("current selection"),
 		      default_output_header_type(ss),
 		      default_output_data_format(ss));
@@ -1712,10 +1712,10 @@ void save_file_dialog_state(FILE *fd)
   if ((save_as_dialog) && (GTK_WIDGET_VISIBLE(save_as_dialog)))
     {
 #if HAVE_SCHEME
-      fprintf(fd, "(%s #t)\n", (save_as_dialog_type == FILE_SAVE_AS) ? S_save_sound_dialog : S_save_selection_dialog);
+      fprintf(fd, "(%s #t)\n", (save_as_dialog_type == SOUND_SAVE_AS) ? S_save_sound_dialog : S_save_selection_dialog);
 #endif
 #if HAVE_RUBY
-      fprintf(fd, "%s(true)\n", TO_PROC_NAME((save_as_dialog_type == FILE_SAVE_AS) ? S_save_sound_dialog : S_save_selection_dialog));
+      fprintf(fd, "%s(true)\n", TO_PROC_NAME((save_as_dialog_type == SOUND_SAVE_AS) ? S_save_sound_dialog : S_save_selection_dialog));
 #endif
     }
 }
