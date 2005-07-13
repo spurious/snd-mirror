@@ -404,12 +404,7 @@ static char *fam_event_name(int code)
 }
 #endif
 
-#if USE_MOTIF
-/* TODO: make fam a runtime choice, not build time (if it's available at all) */
-static void fam_reader(XtPointer context, int *fd, XtInputId *id)
-#else
-static gboolean fam_reader(GIOChannel *source, GIOCondition condition, gpointer data)
-#endif
+static void fam_check(void)
 {
   FAMEvent fe; 
   while (FAMPending(ss->fam_connection) > 0)
@@ -418,33 +413,50 @@ static gboolean fam_reader(GIOChannel *source, GIOCondition condition, gpointer 
 	snd_error("fam error: %d\n", FAMErrno);
       else
 	{
-	  switch (fe.code)
+	  if (!(ss->checking_explicitly)) 
+	    /* not in check_for_event -- we can't just ignore these because gamin hangs */
 	    {
-	    case FAMStartExecuting:
-	    case FAMStopExecuting:
-	    case FAMAcknowledge:
-	    case FAMExists:
-	    case FAMEndExist:
-	      /* ignore these (fp pointer can be a dangling reference here) */
-	      break;
-	    default:
-	      {
-		fam_info *fp = (fam_info *)(fe.userdata);
+	      switch (fe.code)
+		{
+		case FAMStartExecuting:
+		case FAMStopExecuting:
+		case FAMAcknowledge:
+		case FAMExists:
+		case FAMEndExist:
+		  /* ignore these (fp pointer can be a dangling reference here) */
+		  break;
+		default:
+		  {
+		    fam_info *fp = (fam_info *)(fe.userdata);
 #if DEBUGGING_FAM
-		fprintf(stderr, "fam %s: %d (%s): %p\n", fe.filename, fe.code, fam_event_name(fe.code), fp);
+		    fprintf(stderr, "fam %s: %d (%s): %p\n", fe.filename, fe.code, fam_event_name(fe.code), fp);
 #endif
-		if (!fp) 
-		  fprintf(stderr, "no fam user data!");
-		else (*(fp->action))(fp, &fe);
-	      }
-	      break;
+		    if (!fp) 
+		      fprintf(stderr, "no fam user data!");
+		    else (*(fp->action))(fp, &fe);
+		  }
+		  break;
+		}
 	    }
 	}
     }
-#if USE_GTK
-  return(true);
-#endif
 }
+
+
+#if USE_MOTIF
+/* TODO: make fam a runtime choice, not build time (if it's available at all) */
+static void fam_reader(XtPointer context, int *fd, XtInputId *id)
+{
+  fam_check();
+}
+#else
+static gboolean fam_reader(GIOChannel *source, GIOCondition condition, gpointer data)
+{
+  fam_check();
+  return(true);
+}
+#endif
+
 
 static fam_info *make_fam_info(FAMRequest *rp, void *data, void (*action)(struct fam_info *fp, FAMEvent *fe))
 {
@@ -498,7 +510,7 @@ static FAMRequest *fam_monitor(void)
 #endif
 	    }
 	}
-      return((FAMRequest *)calloc(1, sizeof(FAMRequest))); /* freed by fam */
+      return((FAMRequest *)CALLOC(1, sizeof(FAMRequest)));
     }
   return(NULL);
 }
@@ -581,7 +593,10 @@ fam_info *fam_unmonitor_file(const char *filename, fam_info *fp)
 	    snd_error("can't unmonitor %s: %d\n", filename, FAMErrno);
 	  if (fp->rp)
 	    {
-	      /* FREE(fp->rp);*/ /* /usr/include/fam.h says cancel frees this, and valgrind seems to agree */
+	      FREE(fp->rp); 
+	      /* /usr/include/fam.h implies that cancel frees this, but valgrind seems to disagree */
+	      /* as far as I can see, gamin (libgamin/gam_api.c) does not free it */
+	      /*   nor does fam (fam/fam.c++ in 2.6.10 does not, and their test case assumes it won't) */
 	      fp->rp = NULL;
 	    }
 	}
@@ -611,7 +626,6 @@ fam_info *fam_unmonitor_file(const char *filename, fam_info *fp)
   if (fp) free(fp);
   return(NULL);
 }
-
 #endif
 
 

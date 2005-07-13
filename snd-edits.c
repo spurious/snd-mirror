@@ -5644,6 +5644,10 @@ bool delete_samples(off_t beg, off_t num, chan_info *cp, int edpos)
     }
   else
     {
+      /* TODO: handle error locally (via xen error in g_delete_samples below)
+       *   hmmm -- this is called all over the place -- maybe some other way?
+       *   -> change to snd_error and use local redirection?
+       */
       if (num == 1)
 	report_in_minibuffer(cp->sound, 
 			     _("can't delete sample " PRId64 " (current len = " PRId64 ")"), 
@@ -6983,6 +6987,8 @@ static bool save_edits_and_update_display(snd_info *sp)
     CURSOR(sp->chans[i]) = old_cursors[i];
   FREE(old_cursors);
   reflect_file_revert_in_label(sp);
+  /* TODO: at least save this error somewhere hard-to-delete (listener?)
+   */
   if (err)
     report_in_minibuffer(sp, _("file write failed: %s, edits are saved in: %s"), strerror(saved_errno), ofile);
   else report_in_minibuffer(sp, _("wrote %s"), sp->filename); 
@@ -7076,6 +7082,13 @@ int save_channel_edits(chan_info *cp, char *ofile, int pos)
   if (!(snd_overwrite_ok(ofile))) 
     return(MUS_NO_ERROR);                     /* no error because decision was explicit */
 
+  /* TODO: get rid of this snd_overwrite_ok 
+   * snd-g|xfile -- handle locally via DoIt or whatever -- actually extract already checks!
+   * snd-kbd -- handle via minibuffer local callbacks
+   * snd-sig -- should not check at all (writing a temp)
+   * snd-snd -- save-sound-as from code -- should not check
+   */
+
   if (pos == AT_CURRENT_EDIT_POSITION) 
     pos = cp->edit_ctr;
   if (strcmp(ofile, sp->filename) == 0)       /* overwriting current file with one of its channels */
@@ -7137,6 +7150,12 @@ void save_edits(snd_info *sp, void *ptr)
 	    {
 	      bool yes;
 	      yes = snd_yes_or_no_p(_("%s changed on disk! Save anyway?"), sp->short_filename);
+	      /* TODO: get rid of yes_or_no -- all are fixable -- then remove snd-g|xerror.c:
+	       *   snd-g|xmenu: (File:Save and Popup:Save) -- handle via separate dialog I guess (sigh) with dynamic callbacks
+	       *     will need multiple such dialogs, clearing if sound is closed etc
+	       *   snd-kbd: (C-s action) -- handle locally via specialized dynamic callbacks 
+	       *   snd-snd: see comment l3116 -- handle locally
+	       */
 	      if (!yes) return;
 	    }
 	  err = save_edits_and_update_display(sp);

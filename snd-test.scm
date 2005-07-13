@@ -80,7 +80,7 @@
 
 ;(setlocale LC_ALL "de_DE")
 
-(define tests 1)
+(define tests 3)
 (define keep-going #f)
 (define all-args #f) ; huge arg testing
 (define with-big-file #t)
@@ -47383,8 +47383,9 @@ EDITS: 1
 		      (if (not (equal? (XmRenderTableGetTags copy) (list "two" "three" "four")))
 			  (snd-display ";XmRenderTableRemoveRenditions: ~A" (XmRenderTableGetTags copy)))
 		      (let ((another (XmRenderTableCvtFromProp (cadr (main-widgets)) prop (string-length prop))))
-			(if (not (XmRenderTable? another)) (snd-display ";XmRenderTableCvtFromProp: ~A" another))
-			(XmRenderTableFree another))
+			(if (not (XmRenderTable? another)) 
+			    (snd-display ";XmRenderTableCvtFromProp: ~A" another)
+			    (XmRenderTableFree another)))
 		      )))
 		
 		(let ((tabl (XmStringTableParseStringArray (list "hi" "ho") 2 "hiho" XmCHARSET_TEXT #f 0 #f)))

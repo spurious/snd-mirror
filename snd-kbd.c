@@ -536,7 +536,6 @@ static void prompt(snd_info *sp, char *msg, char *preload)
   goto_minibuffer(sp);
 }
 
-static int region_count = 0;
 static void get_amp_expression(snd_info *sp, int count, bool over_selection) 
 {
   prompt(sp, _("env:"), NULL); 
@@ -821,27 +820,38 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 		  }
 	      }
 	      break;
-	    case REGION_FILING:
+	    case SELECTION_FILING:
 	      {
-		char *filename;
-		filename = mus_expand_filename(str);
-		/* TODO: can this overwrite question be handled locally? */
-		if (!(snd_overwrite_ok(filename))) 
+		clear_minibuffer(sp); /* get rid of prompt */
+		if (selection_is_active())
 		  {
-		    FREE(filename); 
-		    return;
+		    char *filename;
+		    filename = mus_expand_filename(str);
+		    /* TODO: can this overwrite question be handled locally? -- move to save_selection? */
+		    /*
+		      the continuation could be built into a temporary callback:
+		      post ok/cancel buttons, 
+		           add callback to ok to save selection then remove callbacks,
+		           cancel callback just removes itself and add.
+		      in the no-prob case, just go ahead and save
+
+		      need two more buttons in xsnd on the info row: ok/cancel normally disabled
+		        if sound closed, need to clear and disable them
+		      also need to accept "y" or "yes" (etc) in minibuffer as response -- how is this internationalized?
+		    */
+		    /*   if ((ask_before_overwrite(ss)) && (mus_file_probe(ofile)))
+		     */
+		    if (!(snd_overwrite_ok(filename))) 
+		      {
+			FREE(filename); 
+			return;
+		      }
+		    err = save_selection(filename, default_output_header_type(ss), default_output_data_format(ss), SND_SRATE(sp), NULL, SAVE_ALL_CHANS);
+		    if (err == MUS_NO_ERROR)
+		      report_in_minibuffer(sp, _("selection saved as %s"), filename);
+		    FREE(filename);
 		  }
-		if ((region_count == 0) && (selection_is_active()))
-		  err = save_selection(filename, default_output_header_type(ss), default_output_data_format(ss), SND_SRATE(sp), NULL, SAVE_ALL_CHANS);
-		else err = save_region(region_count, filename, default_output_data_format(ss));
-		if (err == MUS_NO_ERROR)
-		  {
-		    clear_minibuffer(sp); /* get rid of prompt */
-		    report_in_minibuffer(sp, _("%s saved as %s"), 
-					 ((region_count == 0) && (selection_is_active())) ? "selection" : "region",
-					 filename);
-		  }
-		FREE(filename);
+		else report_in_minibuffer(sp, _("no selection to save"));
 	      }
 	      break;
 	    case CHANNEL_FILING:
@@ -1855,9 +1865,8 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 		  else no_selection_error(sp); 
 		  break;
 		case snd_K_W: case snd_K_w:
-		  region_count = ((!got_ext_count) ? 0 : (int)ext_count);
 		  prompt(sp, _("file:"), NULL); 
-		  sp->filing = REGION_FILING; 
+		  sp->filing = SELECTION_FILING; 
 		  searching = true;
 		  break;
 		case snd_K_Z: case snd_K_z: 

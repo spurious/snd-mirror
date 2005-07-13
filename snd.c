@@ -326,6 +326,7 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
 
   ss->max_sounds = 4;                 /* expands to accommodate any number of files */
   ss->stopped_explicitly = false;     /* C-g sets this flag so that we can interrupt various loops */
+  ss->checking_explicitly = false;
   ss->reloading_updated_file = 0;
   ss->selected_sound = NO_SELECTION;
   ss->mx_sp = NULL;

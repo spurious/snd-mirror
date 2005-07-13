@@ -2103,7 +2103,7 @@ all the samples between the cursor and the next mark.</p>
     (list (/ (<a class=quiet href="extsnd.html#selectionposition">selection-position</a>) (<a class=quiet href="extsnd.html#srate">srate</a>))
 	  (/ (+ (<a class=quiet href="extsnd.html#selectionposition">selection-position</a>) (<a class=quiet href="extsnd.html#selectionframes">selection-frames</a>)) (<a class=quiet href="extsnd.html#srate">srate</a>))))
 </pre></small></code></td></tr>
-<tr><td>C-x w</td><td>save selection as file</td><td><code><small>(lambda (arg) (prompt "file:" save-region)) ;save-selection if no arg</small></code></td></tr>
+<tr><td>C-x w</td><td>save selection as file</td><td><code><small>(lambda (arg) (prompt "file:" save-selection))</small></code></td></tr>
 <tr><td>C-x <A NAME="cxz"></a>z</td><td>smooth selection</td><td><code><small>smooth-selection</small></code></td></tr>
 <tr><td valign=top>C-x /</td><td valign=top>place named mark</td>
 <td><code><small><pre>

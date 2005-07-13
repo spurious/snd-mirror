@@ -280,6 +280,8 @@ void color_sashes(Widget w, void *ptr)
     XmChangeColor(w, (Pixel)ss->sgx->sash_color);
 }
 
+/* SOMEDAY: replace all check-for-events with background processes */
+
 void check_for_event(void)
 {
   /* this is needed to force label updates and provide interrupts from long computations */
@@ -292,7 +294,9 @@ void check_for_event(void)
   while (true)
     {
       msk = XtAppPending(app);
-      if (msk & XtIMXEvent) /* was also tracking alternate input events, but these are problematic if libfam is in use */
+      /* if (msk & (XtIMXEvent | XtIMAlternateInput)) */
+      if (msk & XtIMXEvent)
+	/* was also tracking alternate input events, but these are problematic if libfam is in use (even with check) */
 	{
 	  XtAppNextEvent(app, &event);
 	  XtDispatchEvent(&event);

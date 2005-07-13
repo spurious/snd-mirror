@@ -133,7 +133,7 @@ static void sound_file_search(Widget dialog, XmFileSelectionBoxCallbackStruct *i
 
   XtVaGetValues(dialog, XmNuserData, &fp, NULL);
   pattern = (char *)XmStringUnparse(data->pattern, NULL, XmCHARSET_TEXT, XmCHARSET_TEXT, NULL, 0, XmOUTPUT_ALL);
-  our_dir = (char *)XmStringUnparse(data->dir, NULL, XmCHARSET_TEXT, XmCHARSET_TEXT, NULL, 0, XmOUTPUT_ALL);
+  our_dir = (char *)XmStringUnparse(data->dir,     NULL, XmCHARSET_TEXT, XmCHARSET_TEXT, NULL, 0, XmOUTPUT_ALL);
 
   if (fp->full_pathname == NULL) 
     fp->full_pathname = (char *)CALLOC(512, sizeof(char));
@@ -1755,6 +1755,7 @@ static void save_as_extract_callback(Widget w, XtPointer context, XtPointer info
 	      fullname = mus_expand_filename(str);
 	      if (!(snd_overwrite_ok(fullname))) 
 		{
+		  /* TODO: handle this overwrite right here */
 		  FREE(fullname);
 		  need_directory_update = false;
 		  msg = mus_format(_("%s not overwritten"), str);

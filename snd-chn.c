@@ -1900,6 +1900,7 @@ static int display_transform_peaks(chan_info *ucp, char *filename)
       if (mcf) FREE(mcf);
       if (fd == NULL) 
 	{
+	  /* TODO: handle this check in g_peaks -- xen error or something -- better name needed than "peaks" */
 	  report_in_minibuffer(sp, _("can't write %s: %s"), filename, snd_open_strerror());
 	  err = 1;
 	}

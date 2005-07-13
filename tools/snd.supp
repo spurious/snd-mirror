@@ -1684,3 +1684,86 @@
    fun:_XlcCreateLC
    fun:_XlcDefaultLoader
 }
+
+{
+   mem-19
+   Memcheck:Leak
+   fun:malloc
+   fun:XtMalloc
+   fun:XmRenderTableCopy
+   fun:*
+}
+
+{
+   mem20
+   Memcheck:Leak
+   fun:malloc
+   fun:XtMalloc
+   fun:_XmCachePixmap
+   fun:*
+}
+
+{
+   mem21
+   Memcheck:Leak
+   fun:malloc
+   fun:XtMalloc
+   fun:Xm*
+}
+
+{
+   mem22
+   Memcheck:Leak
+   fun:malloc
+   fun:XtMalloc
+   fun:_XmStringSourceCreate
+}
+
+{
+   mem23
+   Memcheck:Leak
+   fun:malloc
+   fun:realloc
+   fun:scm_*
+}
+
+{
+   mem24
+   Memcheck:Leak
+   fun:malloc
+   fun:XtMalloc
+   fun:Xt*
+}
+
+{
+   mem25
+   Memcheck:Leak
+   fun:malloc
+   fun:XtMalloc
+   fun:_Xm*
+}
+
+{
+   mem26
+   Memcheck:Leak
+   fun:malloc
+   fun:__gmp_*
+}
+
+{
+   mem27
+   Memcheck:Leak
+   fun:malloc
+   fun:XtMalloc
+   obj:/usr/X11R6/lib/libXm.so.3.0.1
+   fun:Xm*
+}
+
+{
+   mem28
+   Memcheck:Leak
+   fun:calloc
+   fun:XtCalloc
+   obj:/usr/X11R6/lib/libXm.so.3.0.1
+   obj:/usr/X11R6/lib/libXt.so.6.0
+}

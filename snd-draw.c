@@ -466,7 +466,7 @@ static void check_dialog_widget_table(void)
 static XEN g_dialog_widgets(void)
 {
   #define H_dialog_widgets "(" S_dialog_widgets "): dialog widgets (each #f if not yet created): (list \
- (0 " S_color_dialog ") (1 " S_orientation_dialog ") (2 " S_enved_dialog ") (3 " S_snd_error ") (4 " S_yes_or_no_p ") (5 " S_transform_dialog ") \
+ (0 " S_color_dialog ") (1 " S_orientation_dialog ") (2 " S_enved_dialog ") (3 #f) (4 #f) (5 " S_transform_dialog ") \
  (6 " S_open_file_dialog ") (7 " S_save_sound_dialog ") (8 " S_view_files_dialog ") (9 raw data dialog) (10 new file dialog) \
  (11 " S_mix_file_dialog ") (12 " S_edit_header_dialog ") (13 " S_find_dialog ") (14 " S_help_dialog ") (15 listener completion) \
  (16 " S_view_mixes_dialog ") (17 " S_print_dialog ") (18 " S_recorder_dialog ") (19 " S_view_regions_dialog ") \

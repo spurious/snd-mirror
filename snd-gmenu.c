@@ -2,6 +2,7 @@
 #include "snd-menu.h"
 
 /* PERHAPS: use gtk stock images here */
+/* PERHAPS: figure out how to take part in the window manager themes choice -- how to handle in Motif? */
 
 static const char *ml[NUM_MENU_WIDGETS];
 

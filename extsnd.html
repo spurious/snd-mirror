@@ -4636,7 +4636,27 @@ replaces the normal "+" cursor with an "x":
 <code><a class=def name="dataformat">data-format</a> (<em class=narg>snd</em>)</code>
 </td></tr>
 <tr><td></td><td>
-<i>snd</i>'s data format (e.g. mus-bshort).  <br><br>If you encounter a file
+<i>snd</i>'s data format -- the encoding used for the sound samples (e.g. mus-bshort).
+
+<br><br>
+<A NAME="describedataformats"></A>
+The standard formats nowadays are mus-bshort (big-endian 16-bit integers), mus-bfloat
+(32-bit big-endian floats), and mus-bint (32-bit big-endian integers), and the
+corresponding little-endian versions: mus-lshort, mus-lfloat, and mus-lint.
+If you're using an Intel-style PC, you're using a little-endian machine;
+Macs (at least PowerPC Macs), Suns, and most SGI's use big-endian.  If you
+write a Next file and use little-endian data, some programs other than Snd
+may complain; similarly, RIFF wants little-endian and AIFC wants big-endian
+data (both can handle the other kind, but most sound-related programs don't know
+that).  In the old days, when disk space was at a premium, 8-bit formats
+were used a lot: mus-mulaw and mus-alaw (kludges for a kind of 8-bit float),
+mus-byte and mus-ubyte (8-bit ints, unsigned in the latter case).  A few
+DACs want a particular kind of data, but Snd handles that conversion internally.
+Anything less than 12 bits will sound bad -- Perry Cook's book "Real Sound Synthesis"
+has examples.  
+
+<br><br>
+If you encounter a file
 with an unknown format, or a header that has the wrong format, 
 you can set this field forcing Snd to interpret the data in any 
 way you like.  Similar remarks apply to the <a class=quiet href="#srate">srate</a>, <a class=quiet href="#datalocation">data-location</a>,
@@ -4689,8 +4709,6 @@ To turn a data-format number into a string, use <a href="#musdataformatname">mus
 the data format of some sound file, use <a href="#sounddataformat">mus-sound-data-format</a>.
 The default output (<a class=quiet href="#newsound">new-sound</a>, 
 <a class=quiet href="#savesoundas">save-sound-as</a>) data-format is <a href="#defaultoutputdataformat">default-output-data-format</a>.
-
-<A NAME="describedataformats">TODO: describe formats</A>
 </td></tr>
 
 <tr><td colspan=2></td></tr>
@@ -5218,12 +5236,20 @@ in; if greater than 1.0, fewer ticks are displayed.  This mainly affects the gri
 <code><a class=def name="headertype">header-type</a> (<em class=narg>snd</em>)</code>
 </td></tr>
 <tr><td></td><td>
-The header type (e.g. mus-aiff) of the file that underlies <i>snd</i>.  Snd can read about 60 header types, and write 7 or so.
+The header type (e.g. mus-aiff) of the file that underlies <i>snd</i>.  
+<A NAME="describeheadertypes"></A>
+Snd can read about 60 header types, and write 7 or so.
+"aiff" and "aifc" come from Apple, "riff" is the Microsoft "wave" header,
+"nist" comes from the NIST-Sphere package, "next" or "sun" is the Next/Sun
+(".au") header, "ircam" is IRCAM's extension of the Next header, and "raw"
+means the sound file has no header.  If you change the header type to "raw",
+any existing header is removed.
 Each header type has its own peculiarities; if in doubt, use mus-next because it is simple,
 and can handle any data format that Snd can write (whereas each of the others is restricted in this regard).
-The writable header types are mus-next, mus-nist (NIST Sphere), mus-aiff (obsolete, rarely needed), mus-aifc, mus-riff (MS wave),
-mus-ircam, and mus-raw (no header -- it's up to you to remember what's in the file).  For descriptions of the headers,
+The writable header types are mus-next, mus-nist, mus-aiff (obsolete, rarely needed), mus-aifc, mus-riff,
+mus-ircam, and mus-raw.  For technical descriptions of the headers,
 see headers.c; for actual sound files, see sf.tar.gz at ccrma-ftp.
+<br><br>
 To turn a type number into a string, use <a href="#musheadertypename">mus-header-type-name</a>. To get
 the header type of some sound file, use <a href="#soundheadertype">mus-sound-header-type</a>.
 If you set the header-type, the sound file is rewritten with the new header.  The default output
@@ -5237,8 +5263,6 @@ Snd will throw up its hands and say "maybe it's a raw (headerless)
 sound"; it will then look at open-raw-sound-hook before trying
 other fallbacks (such as the Raw File Dialog).
 See examp.scm or dlp/misc.scm (MPEG, OGG, etc).
-
-<A NAME="describeheadertypes">TODO: describe headers</A>
 
 </td></tr>
 <tr><td colspan=2></td></tr>

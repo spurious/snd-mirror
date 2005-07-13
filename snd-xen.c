@@ -8,14 +8,16 @@
  */
 
 /* TODO: get rid of all yes_or_no calls (it is wrong in every case), and move that garbage to Scheme/Ruby
- *   snd-edits (save_channel_edits!)
- *   snd-file (save_as_dialog_save!!)
- *   snd-io (snd_overwrite_ok: snd-xfile, snd-file save_as!!, snd-kbd: save-region)
+ *   snd-edits:
+ *     all of these are fixable:
+ *       snd-edits (save_channel_edits!)
+ *       snd-file (save_as_dialog_save!!)
+ *       snd-io (snd_overwrite_ok: snd-xfile, snd-file save_as!!, snd-kbd: save-region
  *   extensions.scm: check-for-unsaved-edits
- *   misc.scm: delete question in File:Delete menu -- is this a good idea?
+ *   misc.scm: delete question in File:Delete menu -- another local callback set
  *   snd-motif.scm: same code as above
  * many of these need some way to post a local ok/cancel button and a question, then
- *   some sort of continuation -- this is a global need in snd-motif dialogs
+ *   use local callbacks for continuation -- this should even work in extensions.scm
  * TODO: report_in_minibuffer -> snd_error|warning except for informational stuff
  *     then need the within_xen trap, within_keyboard (?) etc
  */
