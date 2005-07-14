@@ -15,7 +15,6 @@ void save_help_dialog_state(FILE *fd);
 
 /* -------- snd-xerror.c -------- */
 
-void post_error_dialog(char *msg);
 bool snd_yes_or_no_p(char *format, ...);
 
 

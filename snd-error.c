@@ -116,7 +116,7 @@ void snd_error(char *format, ...)
 	      {
 		if ((sp) && (sp->active))
 		  report_in_minibuffer(sp, snd_error_buffer);
-		else post_error_dialog(snd_error_buffer);
+		else post_it("Error", snd_error_buffer);
 	      }
 	  }
 #ifdef SND_AS_WIDGET

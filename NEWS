@@ -38,8 +38,8 @@ use libfam (from fam or gamin -- file alteration monitor) in a few cases
 
 removed edpos arg to make-snd->sample.
 
-removed the possibility of saving a region via C-x w -- it just saves
-  the selection now.
+removed the possibility of saving a region via C-x w -- it just refers
+  to the selection now.
 
 folded gl-ruby.c into gl.c, xm-ruby.c into xm.c, xg-ruby.c into xg.c.
   (This was part of an attempt to use Gauche/Stklos/Chicken in place of Guile).
@@ -118,7 +118,5 @@ with much help from: Mike Scholz, Kjetil Matheussen, Rob Komar,
   sound editors.  Much smarter completion choice presentation.  Built-in 
   support for OGG, Flac, Speex, Mpeg, Midi etc (if the relevant programs are 
   accessible during configuration).  Multiple copies of all dialogs (this 
-  works now for some).  Region browser save-as/mix/insert choices. Get
-  rid of the yes-or-no dialog.  Etc... -- as always, ideas are welcome --
-  I've somehow become interested in user-interface stuff -- probably just
-  a passing fit)
+  works now for some dialogs).  Region browser save-as/mix/insert choices. 
+  Get rid of the yes-or-no dialog.)

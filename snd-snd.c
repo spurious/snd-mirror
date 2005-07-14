@@ -2039,7 +2039,7 @@ static XEN g_bomb(XEN snd, XEN on)
 
 typedef enum {SP_SYNC, SP_READ_ONLY, SP_NCHANS, SP_CONTRASTING, SP_EXPANDING, SP_REVERBING, SP_FILTERING, SP_FILTER_ORDER,
 	      SP_SRATE, SP_DATA_FORMAT, SP_DATA_LOCATION, SP_HEADER_TYPE, SP_SAVE_CONTROLS, SP_RESTORE_CONTROLS, SP_SELECTED_CHANNEL,
-	      SP_COMMENT, SP_FILE_NAME, SP_SHORT_FILE_NAME, SP_CLOSE, SP_UPDATE, SP_SAVE, SP_CURSOR_FOLLOWS_PLAY, SP_SHOW_CONTROLS,
+	      SP_COMMENT, SP_FILE_NAME, SP_SHORT_FILE_NAME, SP_CLOSE, SP_UPDATE, SP_CURSOR_FOLLOWS_PLAY, SP_SHOW_CONTROLS,
 	      SP_FILTER_DBING, SP_SPEED_TONES, SP_SPEED_STYLE, SP_RESET_CONTROLS,
 	      SP_AMP, SP_CONTRAST, SP_CONTRAST_AMP, SP_EXPAND, SP_EXPAND_LENGTH, SP_EXPAND_RAMP, SP_EXPAND_HOP,
 	      SP_SPEED, SP_REVERB_LENGTH, SP_REVERB_FEEDBACK, SP_REVERB_SCALE, SP_REVERB_LOW_PASS,
@@ -2091,7 +2091,6 @@ static XEN sound_get(XEN snd_n, sp_field_t fld, char *caller)
     case SP_FILE_NAME:           return(C_TO_XEN_STRING(sp->filename));                break;
     case SP_SHORT_FILE_NAME:     return(C_TO_XEN_STRING(sp->short_filename));          break;
     case SP_CLOSE:               if (!(IS_PLAYER(sp))) snd_close_file(sp);             break;
-    case SP_SAVE:                if (!(IS_PLAYER(sp))) save_edits(sp, NULL);           break;
     case SP_UPDATE:              
       if (!(IS_PLAYER(sp))) 
 	{
@@ -3113,11 +3112,28 @@ static XEN g_update_sound(XEN snd_n)
   return(sound_get(snd_n, SP_UPDATE, S_update_sound));
 }
 
-/* should this throw an error if write-protected or whatever (not snd_error in this context)?  */
-static XEN g_save_sound(XEN snd_n) 
+static XEN g_save_sound(XEN index) 
 {
+  snd_info *sp;
   #define H_save_sound "(" S_save_sound " (snd #f)): save snd (update the on-disk data to match Snd's current version)"
-  return(sound_get(snd_n, SP_SAVE, S_save_sound));
+  ASSERT_SOUND(S_save_sound, index, 1);
+  sp = get_sp(index, NO_PLAYERS);
+  if (sp == NULL) 
+    return(snd_no_such_sound_error(S_save_sound, index));
+  if ((sp->user_read_only) || (sp->file_read_only))
+    {
+      XEN_ERROR(CANNOT_SAVE,
+		XEN_LIST_2(C_TO_XEN_STRING(S_save_sound),
+			   C_TO_XEN_STRING(mus_format(_("%s (index %d) is write-protected"), 
+						      sp->short_filename, 
+						      sp->index))));
+      return(XEN_FALSE);
+    }
+  /* TODO: should this not use report-in-mini or yes-or-no -- save_edits_without_blather or something 
+   * TODO: save_edits_without_display needs a caller arg -- error assumes save-sound-as
+   */
+  save_edits(sp, NULL);          
+  return(C_TO_XEN_INT(sp->index));
 }
 
 static XEN g_revert_sound(XEN index)

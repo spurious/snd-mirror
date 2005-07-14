@@ -18,7 +18,6 @@ widget_t post_it(const char *subject, const char *str) {fprintf(stdout, str); re
 void save_post_it_dialog_state(FILE *fd) {}
 void reflect_just_sounds(void) {}
 void save_file_dialog_state(FILE *fd) {}
-void post_error_dialog(char *msg) {}
 bool snd_yes_or_no_p(char *format, ...) {return(false);}
 void draw_line (axis_context *ax, int x0, int y0, int x1, int y1) {}
 void fill_rectangle (axis_context *ax, int x0, int y0, int width, int height) {}

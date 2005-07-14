@@ -131,7 +131,7 @@ void options_menu_update(void)
 void file_menu_update(void)
 {
   snd_info *any_sp = NULL;
-  bool file_p = false, undoable_edits_p = false, edits_p = false;
+  bool file_p = false, edits_p = false;
 
   any_sp = any_selected_sound();
   if (any_sp)
@@ -146,8 +146,9 @@ void file_menu_update(void)
   set_sensitive(file_save_as_menu, file_p);
   set_sensitive(file_update_menu, file_p);
 
-  set_sensitive(file_save_menu, undoable_edits_p);
-  set_sensitive(file_revert_menu, undoable_edits_p);
+  set_sensitive(file_save_menu, edits_p);
+  set_sensitive(file_revert_menu, edits_p);
+  /* TODO: check these settings in snd-test somehow */
 }
 
 void popup_menu_update(void)

@@ -22,10 +22,6 @@ void save_help_dialog_state(FILE *fd);
 
 /* -------- snd-gerror.c -------- */
 
-void post_error_dialog(char *msg);
-widget_t post_it(const char *subject, const char *str);
-void save_post_it_dialog_state(FILE *fd);
-
 #ifdef __GNUC__
   bool snd_yes_or_no_p(const char *format, ...) __attribute__ ((format (printf, 1, 2)));
 #else
@@ -514,6 +510,9 @@ void g_init_gxfile(void);
 void clear_deleted_snd_info(struct dialog_play_info *fd);
 void reflect_just_sounds(void);
 void save_file_dialog_state(FILE *fd);
+widget_t post_it(const char *subject, const char *str);
+void save_post_it_dialog_state(FILE *fd);
+
 
 
 /* -------- snd-gprint.c -------- */

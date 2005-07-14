@@ -2598,6 +2598,78 @@ void save_edit_header_dialog_state(FILE *fd)
 }
 
 
+
+/* ---------------- POST-IT MONOLOG ---------------- */
+
+#define POST_IT_ROWS 12
+#define POST_IT_COLUMNS 56
+
+static GtkWidget *post_it_text = NULL, *post_it_dialog = NULL;
+
+static void dismiss_post_it(GtkWidget *w, gpointer context) {gtk_widget_hide(post_it_dialog);}
+
+static gint delete_post_it(GtkWidget *w, GdkEvent *event, gpointer context) 
+{
+  gtk_widget_hide(post_it_dialog);
+  return(true);
+}
+
+static void create_post_it_monolog(void)
+{
+  /* create scrollable but not editable text window */
+  GtkWidget *ok_button;
+  post_it_dialog = gtk_dialog_new();
+  SG_SIGNAL_CONNECT(post_it_dialog, "delete_event", delete_post_it, NULL);
+
+  gtk_window_set_title(GTK_WINDOW(post_it_dialog), _("Info"));
+  sg_make_resizable(post_it_dialog);
+  gtk_container_set_border_width(GTK_CONTAINER(post_it_dialog), 10);
+  gtk_window_resize(GTK_WINDOW(post_it_dialog), POST_IT_COLUMNS * 9, POST_IT_ROWS * 20);
+  gtk_widget_realize(post_it_dialog);
+
+  ok_button = gtk_button_new_from_stock(GTK_STOCK_OK);
+  gtk_widget_set_name(ok_button, "quit_button");
+
+  gtk_box_pack_start(GTK_BOX(GTK_DIALOG(post_it_dialog)->action_area), ok_button, false, true, 20);
+  SG_SIGNAL_CONNECT(ok_button, "clicked", dismiss_post_it, NULL);
+  gtk_widget_show(ok_button);
+
+  post_it_text = make_scrolled_text(GTK_DIALOG(post_it_dialog)->vbox, false, NULL, NULL);
+  gtk_text_view_set_left_margin(GTK_TEXT_VIEW(post_it_text), 10);
+  gtk_widget_show(post_it_dialog);
+  set_dialog_widget(POST_IT_DIALOG, post_it_dialog);
+}
+
+widget_t post_it(const char *subject, const char *str)
+{
+  if ((ss == NULL) || (ss->sgx == NULL)) return(NULL);
+  if (!(post_it_dialog)) create_post_it_monolog(); else raise_dialog(post_it_dialog);
+  gtk_window_set_title(GTK_WINDOW(post_it_dialog), subject);
+  gtk_text_buffer_set_text(gtk_text_view_get_buffer(GTK_TEXT_VIEW(post_it_text)), "", 0);
+  sg_text_insert(post_it_text, (char *)str);
+  return(post_it_dialog);
+}
+
+void save_post_it_dialog_state(FILE *fd)
+{
+  if ((post_it_dialog) && (GTK_WIDGET_VISIBLE(post_it_dialog)))
+    {
+      const gchar *subject;
+      gchar *text;
+      subject = gtk_window_get_title(GTK_WINDOW(post_it_dialog)); /* don't free subject! */
+      text = sg_get_text(post_it_text, 0, -1);
+#if HAVE_SCHEME
+      fprintf(fd, "(%s \"%s\" \"%s\")\n", S_info_dialog, subject, text);
+#endif
+#if HAVE_RUBY
+      fprintf(fd, "%s(\"%s\", \"%s\")\n", TO_PROC_NAME(S_info_dialog), subject, text);
+#endif
+      if (text) g_free(text);
+    }
+}
+
+
+
 /* ---------------- mouse enter|leave-label ---------------- */
 
 static XEN mouse_enter_label_hook;

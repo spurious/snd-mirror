@@ -80,7 +80,7 @@
 
 ;(setlocale LC_ALL "de_DE")
 
-(define tests 3)
+(define tests 1)
 (define keep-going #f)
 (define all-args #f) ; huge arg testing
 (define with-big-file #t)
@@ -9709,23 +9709,18 @@ EDITS: 5
 	  (let ((ind (open-sound "obtest.snd")))
 	    (set! (read-only ind) #t)
 	    (delete-samples 0 1000 ind 0)
-	    (let ((val (save-sound ind)))
-	      (if val (snd-display ";save-sound read-only: ~A" val)))
-	    (if (not (equal? (edits ind) (list 1 0))) (snd-display ";read-only ignored? ~A" (edits ind)))
-	    (if with-gui
-		(let ((str (widget-text (list-ref (sound-widgets ind) 3))))
-		  (if (not (string=? str "can't write obtest.snd (it is read-only)"))
-		      (snd-display ";read-only report-in-minibuffer: ~A?" str))
-		  (set! str (widget-text (list-ref (sound-widgets ind) 4))) ; listener
-		  (if (not (string? str))
-		      (snd-display ";widget-text of listener?: ~A?" str))))
+	    (let ((val (catch #t
+			      (lambda ()
+				(save-sound ind))
+			      (lambda args args))))
+	      (if (integer? val) (snd-display ";save-sound read-only: ~A" val))
+	      (if (not (equal? (edits ind) (list 1 0))) (snd-display ";read-only ignored? ~A" (edits ind))))
 	    (set! (read-only ind) #f)
 	    (revert-sound ind)
-	    (save-sound ind)
-	    (if with-gui
-		(let ((str (widget-text (list-ref (sound-widgets ind) 3))))
-		  (if (not (string=? str "(no changes need to be saved)"))
-		      (snd-display ";save unneeded report-in-minibuffer: ~A?" str))))
+	    (let ((tag (catch #t
+			      (lambda () (save-sound ind))
+			      (lambda args args))))
+	      (if (not (integer? tag)) (snd-display ";save-sound read-write: ~A" tag)))
 	    (key (char->integer #\j) 4)
 	    (if with-gui
 		(let ((str (widget-text (list-ref (sound-widgets ind) 3))))
@@ -9765,12 +9760,11 @@ EDITS: 5
 	  
 	  (let ((ind (view-sound "obtest.snd")))
 	    (delete-samples 0 1000 ind 0)
-	    (save-sound ind)
-	    (if (not (equal? (edits ind) (list 1 0))) (snd-display ";view read-only ignored? ~A" (edits ind)))
-	    (if with-gui
-		(let ((str (widget-text (list-ref (sound-widgets ind) 3))))
-		  (if (not (string=? str "can't write obtest.snd (it is read-only)"))
-		      (snd-display ";view read-only report-in-minibuffer: ~A?" str))))
+	    (let ((tag (catch #t
+			      (lambda () (save-sound ind))
+			      (lambda args args))))
+	      (if (integer? tag) (snd-display ";save-viewed-sound: ~A" tag))
+	      (if (not (equal? (edits ind) (list 1 0))) (snd-display ";view read-only ignored? ~A" (edits ind))))
 	    (close-sound ind))
 	  
 	  (let ((ind (new-sound "test.snd" mus-next mus-bfloat 22050 1)))
@@ -42175,6 +42169,7 @@ EDITS: 1
 	(close-sound ind)
 	(if (file-exists? "test5.snd") (snd-display ";auto-delete mix (with-tag)?")))
       )        
+
       (let ((o2 (optkey-1 1)))
 	(if (not (equal? o2 1)) (snd-display ";optkey-1: ~A" o2)))
       (let ((o2 (optkey-1 :a 1)))
