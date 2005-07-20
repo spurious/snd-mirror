@@ -65,6 +65,8 @@
  * but only if it can be included in this file.
  */
 
+/* TODO: check out OSX 10.4 stuff */
+
 #include <config.h>
 
 #if USE_SND
@@ -5098,11 +5100,11 @@ int mus_header_write(const char *name, int type, int in_srate, int in_chans, off
       break;
     default:
       CLOSE(chan);
-      return(mus_error(MUS_UNSUPPORTED_HEADER_TYPE,  "mus_header_write: can't write %s header for %s", mus_header_type_name(type), name));
+      return(mus_error(MUS_UNSUPPORTED_HEADER_TYPE,  "can't write %s header for %s", mus_header_type_name(type), name));
       break;
     }
   if (CLOSE(chan) != 0)
-    return(mus_error(MUS_CANT_CLOSE_FILE, "mus_header_write: can't close %s: %s", name, STRERROR(errno)));
+    return(mus_error(MUS_CANT_CLOSE_FILE, "can't close %s: %s", name, STRERROR(errno)));
   return(err);
 }
 

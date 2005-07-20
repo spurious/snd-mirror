@@ -6,6 +6,24 @@ static bool defining_macro = false;
 #define MIN_KEY_STATE 0
 #define MAX_KEY_STATE 15
 
+/* TODO: why C-s twice to open find in mini?
+ */
+
+/* TODO: redirect should return the current handler, so we can replace it
+ */
+#if 0
+static void report_snd_error_in_listener(const char *error_msg, void *usp)
+{
+  listener_append((char *)error_msg); /* TODO: needs prepended ";" */
+}
+#endif
+
+/*
+  redirect_snd_error_to(report_snd_error_in_listener, (void *)sp);
+  redirect_snd_error_to(NULL, NULL);
+*/
+
+
 /* -------- Keyboard Macros -------- */
 /* optimized for the most common case (pure keyboard commands) */
 
@@ -669,7 +687,6 @@ static chan_info *goto_next_graph (chan_info *cp, int count)
 }
 
 
-
 #if HAVE_DIRENT_H
   #include <dirent.h>
 #else
@@ -685,10 +702,20 @@ static chan_info *goto_next_graph (chan_info *cp, int count)
   #endif
 #endif
 
+
+void errors_to_minibuffer(const char *msg, void *data)
+{
+  display_minibuffer_error((snd_info *)data, msg);
+}
+
+static void printout_to_minibuffer(const char *msg, void *data)
+{
+  report_in_minibuffer((snd_info *)data, msg);
+}
+
 void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 {
   bool s_or_r = false;
-  int err;
   chan_info *active_chan;
   static char *str = NULL;
   if (str) /* leftover from previous call */
@@ -739,6 +766,8 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 	      /* check for procedure as arg, or lambda form:
 	       * (lambda (y) (> y .1)) 
 	       * if returns #t, search stops
+	       *
+	       * if error in scheme, don't go ahead with the search!
 	       */
 	      if (sp->search_expr) FREE(sp->search_expr);
 	      sp->search_expr = copy_string(str);
@@ -748,12 +777,16 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 		  sp->search_proc_loc = NOT_A_GC_LOC;
 		}
 	      sp->search_proc = XEN_UNDEFINED;
+	      redirect_errors_to(errors_to_minibuffer, (void *)sp);
 	      proc = snd_catch_any(eval_str_wrapper, str, str);
-	      if (procedure_ok_with_error(proc, 1, _("find"), _("find"), 1))
+	      if ((XEN_PROCEDURE_P(proc)) && /* redundant but avoids unwanted error message via snd_error */
+		  (procedure_ok_with_error(proc, 1, _("find"), _("find"), 1)))
 		{
 		  sp->search_proc = proc;
 		  sp->search_proc_loc = snd_protect(proc);
  		}
+	      else active_chan = NULL; /* don't try to search! */
+	      redirect_errors_to(NULL, NULL);
 	      if (active_chan) active_chan->last_search_result = SEARCH_OK;
 	    }
 	}
@@ -804,6 +837,8 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 	{
 	  switch (sp->filing)
 	    {
+
+	      /* open file */
 	    case INPUT_FILING:
 	      {
 		snd_info *nsp;
@@ -812,7 +847,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 		ss->sgx->requestor_dialog = NULL;
 #endif
 		ss->open_requestor_sp = sp;
-		nsp = snd_open_file(str, FILE_READ_WRITE);
+		nsp = snd_open_file(str, FILE_READ_WRITE); /* TODO: error_with_mini */
 		if (nsp) 
 		  {
 		    select_channel(nsp, 0);
@@ -820,56 +855,122 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 		  }
 	      }
 	      break;
-	    case SELECTION_FILING:
-	      {
-		clear_minibuffer(sp); /* get rid of prompt */
-		if (selection_is_active())
-		  {
-		    char *filename;
-		    filename = mus_expand_filename(str);
-		    /* TODO: can this overwrite question be handled locally? -- move to save_selection? */
-		    /*
-		      the continuation could be built into a temporary callback:
-		      post ok/cancel buttons, 
-		           add callback to ok to save selection then remove callbacks,
-		           cancel callback just removes itself and add.
-		      in the no-prob case, just go ahead and save
 
-		      need two more buttons in xsnd on the info row: ok/cancel normally disabled
-		        if sound closed, need to clear and disable them
-		      also need to accept "y" or "yes" (etc) in minibuffer as response -- how is this internationalized?
-		    */
-		    /*   if ((ask_before_overwrite(ss)) && (mus_file_probe(ofile)))
-		     */
-		    if (!(snd_overwrite_ok(filename))) 
-		      {
-			FREE(filename); 
-			return;
-		      }
-		    err = save_selection(filename, default_output_header_type(ss), default_output_data_format(ss), SND_SRATE(sp), NULL, SAVE_ALL_CHANS);
-		    if (err == MUS_NO_ERROR)
-		      report_in_minibuffer(sp, _("selection saved as %s"), filename);
-		    FREE(filename);
-		  }
-		else report_in_minibuffer(sp, _("no selection to save"));
-	      }
+	      /* save selection */
+	    case DOIT_SELECTION_FILING: /* if user responded to prompt about overwriting */
+	      /* clear prompt and text widget without clearing all the fields (like sp->filing!) */
+	      clear_minibuffer_prompt(sp);
+	      set_minibuffer_string(sp, NULL, true);
+	      if (strcasecmp(str, "yes") != 0)
+		{
+		  if (sp->filing_filename)
+		    {
+		      FREE(sp->filing_filename);
+		      sp->filing_filename = NULL;
+		    }
+		  report_in_minibuffer(sp, _("selection not saved"));
+		  sp->filing = NOT_FILING;
+		  return;
+		}
+	      /* else fall through... */
+	    case SELECTION_FILING:
+	      if (selection_is_active())
+		{
+		  io_error_t io_err;
+		  char *filename = NULL;
+		  if (sp->filing == SELECTION_FILING)
+		    {
+		      clear_minibuffer_prompt(sp);
+		      set_minibuffer_string(sp, NULL, true);
+		      filename = mus_expand_filename(str);
+		      if ((ask_before_overwrite(ss)) && 
+			  (mus_file_probe(filename)))
+			{
+			  /* ask user whether to go on. */
+			  char *ques;
+			  ques = mus_format(_("%s exists: overwrite?"), str);
+			  prompt(sp, ques, NULL);
+			  FREE(ques);
+			  sp->filing_filename = filename;
+			  sp->filing = DOIT_SELECTION_FILING;
+			  return;
+			}
+		    }
+		  else 
+		    {
+		      filename = sp->filing_filename;
+		      sp->filing_filename = NULL;
+		    }
+		  io_err = save_selection(filename,
+					  default_output_header_type(ss), 
+					  default_output_data_format(ss), 
+					  SND_SRATE(sp), NULL, SAVE_ALL_CHANS);
+		  if (io_err == IO_NO_ERROR)
+		    report_in_minibuffer(sp, _("selection saved as %s"), filename);
+		  else report_in_minibuffer(sp, _("selection not saved"));
+		  /* TODO: else some sort of error message! */
+		  FREE(filename);
+		}
+	      else report_in_minibuffer(sp, _("no selection to save"));
+	      sp->filing = NOT_FILING;
 	      break;
+
+	      /* save channel -- the same loop as selection case above */
+	    case DOIT_CHANNEL_FILING:
+	      clear_minibuffer_prompt(sp);
+	      set_minibuffer_string(sp, NULL, true);
+	      if (strcasecmp(str, "yes") != 0)
+		{
+		  if (sp->filing_filename)
+		    {
+		      FREE(sp->filing_filename);
+		      sp->filing_filename = NULL;
+		    }
+		  report_in_minibuffer(sp, _("channel not saved"));
+		  sp->filing = NOT_FILING;
+		  return;
+		}
+	      /* else fall through... */
 	    case CHANNEL_FILING:
 	      {
-		char *filename;
-		filename = mus_expand_filename(str);
-		err = save_channel_edits(active_chan, filename, AT_CURRENT_EDIT_POSITION);
-		if (err == MUS_NO_ERROR)
+		io_error_t io_err;
+		char *filename = NULL;
+		if (sp->filing == CHANNEL_FILING)
 		  {
-		    clear_minibuffer(sp);
-		    report_in_minibuffer(sp, _("channel %d saved as %s"), 
-					 active_chan->chan,
-					 filename);
+		    clear_minibuffer_prompt(sp);
+		    set_minibuffer_string(sp, NULL, true);
+		    filename = mus_expand_filename(str);
+		    if ((ask_before_overwrite(ss)) && 
+			(mus_file_probe(filename)))
+		      {
+			/* ask user whether to go on. */
+			char *ques;
+			ques = mus_format(_("%s exists: overwrite?"), str);
+			prompt(sp, ques, NULL);
+			FREE(ques);
+			sp->filing_filename = filename;
+			sp->filing = DOIT_CHANNEL_FILING;
+			return;
+		      }
 		  }
+		else 
+		  {
+		    filename = sp->filing_filename;
+		    sp->filing_filename = NULL;
+		  }
+		io_err = save_channel_edits(active_chan, filename, AT_CURRENT_EDIT_POSITION);
+		if (io_err == IO_NO_ERROR)
+		  report_in_minibuffer(sp, _("channel %d saved as %s"), 
+				       active_chan->chan,
+				       filename);
+		else report_in_minibuffer(sp, _("channel not saved"));
 		if (filename) FREE(filename);
+		sp->filing = NOT_FILING;
 	      }
 	      break;
+
 #if HAVE_OPENDIR
+	      /* set temp-dir */
 	    case TEMP_FILING:
 	      {
 		DIR *dp;
@@ -891,10 +992,16 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 	      }
 	      break;
 #endif
+
+	      /* mix file */
 	    case CHANGE_FILING:
 	      clear_minibuffer(sp);
+	      redirect_errors_to(errors_to_minibuffer, (void *)sp);
 	      mix_complete_file_at_cursor(sp, str, with_mix_tags(ss), 0);
+	      redirect_errors_to(NULL, NULL);
 	      break;
+
+	      /* insert file */
 	    case INSERT_FILING:
 	      {
 		int nc;
@@ -920,17 +1027,21 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 			    chan_beg = CURSOR(active_chan);
 			    origin = mus_format("%s" PROC_OPEN "\"%s\"" PROC_SEP OFF_TD PROC_SEP "%d", 
 						TO_PROC_NAME(S_insert_sound), filename, chan_beg, j);
+			    redirect_errors_to(errors_to_minibuffer, (void *)sp);
 			    if (file_insert_samples(chan_beg, len, filename, ncp, j, DONT_DELETE_ME, origin, ncp->edit_ctr))
 			      update_graph(ncp);
+			    redirect_errors_to(NULL, NULL);
 			    FREE(origin);
 			  }
 			clear_minibuffer(sp);
 		      }
 		  }
-		else report_in_minibuffer(sp, _("can't read %s's header"), str);
+		else report_in_minibuffer(sp, _("can't read %s's header"), str); /* TODO: better error */
 		FREE(filename);
 	      }
 	      break;
+
+	      /* execute macro */
 	    case MACRO_FILING: 
 	      if ((macro_cmds) && (macro_size > 0))
 		{
@@ -949,6 +1060,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 	{
 	  env *e;
 	  if (!active_chan) active_chan = sp->chans[0];
+	  redirect_errors_to(errors_to_minibuffer, (void *)sp);
 	  e = string_to_env(str);
 	  if (e)
 	    {
@@ -963,6 +1075,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 			     C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 0);
 	      e = free_env(e);
 	    }
+	  redirect_errors_to(NULL, NULL);
 	  sp->selectioning = false;
 	  sp->amping = 0;
 	  clear_minibuffer(sp);
@@ -971,9 +1084,11 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 #if HAVE_EXTENSION_LANGUAGE
       if (sp->macroing)
 	{
+	  redirect_snd_print_to(printout_to_minibuffer, (void *)sp);
+	  redirect_errors_to(errors_to_minibuffer, (void *)sp);
 	  execute_named_macro(active_chan, str, sp->macroing);
 	  /* if this is a close command from the current minibuffer, the sound may not exist when we return */
-	  ss->mx_sp = NULL;
+	  redirect_everything_to(NULL, NULL);
 	  if (sp == NULL) return;
 	  sp->macroing = 0;
 	  return;
@@ -988,6 +1103,8 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
       if (snd_strlen(str) > 0)
 	{
 	  XEN proc;
+	  redirect_snd_print_to(printout_to_minibuffer, (void *)sp);
+	  redirect_errors_to(errors_to_minibuffer, (void *)sp);
 	  if (sp->raw_prompt)
 	    proc = C_TO_XEN_STRING(str);
 	  else proc = snd_catch_any(eval_str_wrapper, str, str);
@@ -997,15 +1114,19 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 	      XEN_CALL_1(sp->prompt_callback, proc, "prompt callback func");
 	      snd_unprotect_at(loc);
 	    }
+	  redirect_everything_to(NULL, NULL);
 	}
       sp->prompting = false;
-      clear_minibuffer(sp);
+      /* clear_minibuffer(sp); */ /* TODO: how to cleanup here? */
       return;
     }
 #endif
   if (snd_strlen(str) > 0)
     {
-      snd_eval_str(str);
+      redirect_snd_print_to(printout_to_minibuffer, (void *)sp);
+      redirect_errors_to(errors_to_minibuffer, (void *)sp);
+      snd_report_result(snd_catch_any(eval_str_wrapper, (void *)str, str), str);
+      redirect_everything_to(NULL, NULL);
       sp->selectioning = false;
     }
   else clear_minibuffer(sp);
@@ -1087,7 +1208,7 @@ static void window_frames_selection(chan_info *cp)
     }
 }
 
-
+/* TODO: error_with_mini -- isn't this always minibuffer related? */
 static off_t get_count_1(char *number_buffer, int number_ctr, bool dot_seen, chan_info *cp)
 {
   /* allow floats here = secs */
@@ -1142,7 +1263,7 @@ static Float state_amount (int state)
   return(amount);
 }
 
-static void no_selection_error(snd_info *sp)
+static void no_selection_error(snd_info *sp) /* TODO: fold */
 {
   report_in_minibuffer(sp, _("no active selection"));
 }
@@ -1188,6 +1309,7 @@ void control_g(snd_info *sp)
   #define SND_KEYMASK (snd_ShiftMask | snd_ControlMask | snd_MetaMask)
 #endif
 
+/* TODO: error_with_mini throughout */
 void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 {
   /* we can't use the meta bit in some cases because this is trapped at a higher level for the Menu mnemonics */
@@ -1247,7 +1369,6 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
       ((keysym == snd_K_X) || (keysym == snd_K_x)))
     {
       /* named macros invoked and saved here */
-      ss->mx_sp = sp;
       prompt(sp, "M-x:", NULL);
       sp->macroing = count;
       return;
@@ -1753,14 +1874,13 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 		char buf[2];
 		buf[0] = keysym; 
 		buf[1] = 0;
-		if (listener_height() > 5)
+		if (listener_is_visible())
 		  {
 		    goto_listener();
 		    listener_append(buf);
 		  }
 		else 
 		  {
-		    ss->mx_sp = sp;
 		    prompt(sp, "M-x:", buf);
 		    sp->macroing = count;
 		    clear_search = false;
@@ -2054,7 +2174,16 @@ static XEN g_prompt_in_minibuffer(XEN msg, XEN callback, XEN snd_n, XEN raw)
 {
   #define H_prompt_in_minibuffer "(" S_prompt_in_minibuffer " msg (callback #f) (snd #f) (raw #f)): post msg in snd's minibuffer \
 then when the user eventually responds, invoke the function callback, if any, with the response.  If 'raw' is #t, the response is \
-returned as a string; otherwise it is evaluated first as Scheme code"
+returned as a string; otherwise it is evaluated first as Scheme code.  For example, the following fragment asks for \
+a yes-or-no response, then takes some action:\n\n\
+  (define* (yes-or-no question action-if-yes action-if-no #:optional snd)\n\
+    (prompt-in-minibuffer question\n\
+			  (lambda (response)\n\
+                            (clear-minibuffer)\n\
+			    (if (string=? response \"yes\")\n\
+			        (action-if-yes snd)\n\
+			        (action-if-no snd)))\n\
+			  snd #t))\n"
 
   snd_info *sp;
   XEN_ASSERT_TYPE(XEN_STRING_P(msg), msg, XEN_ARG_1, S_prompt_in_minibuffer, "a string");
@@ -2095,17 +2224,34 @@ returned as a string; otherwise it is evaluated first as Scheme code"
   return(callback);
 }
 
-static XEN g_report_in_minibuffer(XEN msg, XEN snd_n)
+static XEN g_report_in_minibuffer(XEN msg, XEN snd_n, XEN as_error)
 {
-  #define H_report_in_minibuffer "(" S_report_in_minibuffer " msg (snd #f)): display msg in snd's minibuffer"
+  #define H_report_in_minibuffer "(" S_report_in_minibuffer " msg (snd #f) (as-error #f)): display msg in snd's minibuffer. \
+If 'as-error' is " PROC_TRUE ", place the message in the minibuffer's error label."
   snd_info *sp;
   XEN_ASSERT_TYPE(XEN_STRING_P(msg), msg, XEN_ARG_1, S_report_in_minibuffer, "a string");
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(as_error), as_error, XEN_ARG_2, S_report_in_minibuffer, "a boolean");
   ASSERT_SOUND(S_report_in_minibuffer, snd_n, 2);
   sp = get_sp(snd_n, NO_PLAYERS);
   if ((sp == NULL) || (sp->inuse != SOUND_NORMAL))
     return(snd_no_such_sound_error(S_report_in_minibuffer, snd_n));
-  report_in_minibuffer(sp, XEN_TO_C_STRING(msg));
+  if (XEN_TRUE_P(as_error))
+    display_minibuffer_error(sp, XEN_TO_C_STRING(msg));
+  else report_in_minibuffer(sp, XEN_TO_C_STRING(msg));
   return(msg);
+}
+
+static XEN g_clear_minibuffer(XEN snd)
+{
+  #define H_clear_minibuffer "(" S_clear_minibuffer " snd) clears snd's minibuffer (erasing any \
+error message as well)."
+  snd_info *sp;
+  ASSERT_SOUND(S_clear_minibuffer, snd, 1);
+  sp = get_sp(snd, NO_PLAYERS);
+  if ((sp == NULL) || (sp->inuse != SOUND_NORMAL))
+    return(snd_no_such_sound_error(S_clear_minibuffer, snd));
+  clear_minibuffer(sp);
+  return(XEN_FALSE);
 }
 
 static XEN g_control_g_x(void)
@@ -2135,7 +2281,8 @@ XEN_ARGIFY_3(g_unbind_key_w, g_unbind_key)
 XEN_ARGIFY_4(g_key_w, g_key)
 XEN_ARGIFY_1(g_save_macros_w, g_save_macros)
 XEN_NARGIFY_0(g_control_g_x_w, g_control_g_x)
-XEN_ARGIFY_2(g_report_in_minibuffer_w, g_report_in_minibuffer)
+XEN_ARGIFY_1(g_clear_minibuffer_w, g_clear_minibuffer)
+XEN_ARGIFY_3(g_report_in_minibuffer_w, g_report_in_minibuffer)
 XEN_ARGIFY_4(g_prompt_in_minibuffer_w, g_prompt_in_minibuffer)
 XEN_NARGIFY_4(g_snd_simulate_keystroke_w, g_snd_simulate_keystroke)
 #else
@@ -2145,6 +2292,7 @@ XEN_NARGIFY_4(g_snd_simulate_keystroke_w, g_snd_simulate_keystroke)
 #define g_key_w g_key
 #define g_save_macros_w g_save_macros
 #define g_control_g_x_w g_control_g_x
+#define g_clear_minibuffer_w g_clear_minibuffer
 #define g_report_in_minibuffer_w g_report_in_minibuffer
 #define g_prompt_in_minibuffer_w g_prompt_in_minibuffer
 #define g_snd_simulate_keystroke_w g_snd_simulate_keystroke
@@ -2170,7 +2318,8 @@ void g_init_kbd(void)
   XEN_DEFINE_PROCEDURE(S_key,                    g_key_w,                    2, 2, 0, H_key);
   XEN_DEFINE_PROCEDURE(S_save_macros,            g_save_macros_w,            0, 1, 0, H_save_macros);
   XEN_DEFINE_PROCEDURE(S_c_g_x,                  g_control_g_x_w,            0, 0, 0, H_control_g_x);  
-  XEN_DEFINE_PROCEDURE(S_report_in_minibuffer,   g_report_in_minibuffer_w,   1, 1, 0, H_report_in_minibuffer);
+  XEN_DEFINE_PROCEDURE(S_clear_minibuffer,       g_clear_minibuffer_w,       0, 1, 0, H_clear_minibuffer);
+  XEN_DEFINE_PROCEDURE(S_report_in_minibuffer,   g_report_in_minibuffer_w,   1, 2, 0, H_report_in_minibuffer);
   XEN_DEFINE_PROCEDURE(S_prompt_in_minibuffer,   g_prompt_in_minibuffer_w,   1, 3, 0, H_prompt_in_minibuffer);
   XEN_DEFINE_PROCEDURE(S_snd_simulate_keystroke, g_snd_simulate_keystroke_w, 4, 0, 0, "internal testing function");
 }

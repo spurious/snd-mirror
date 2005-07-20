@@ -50,6 +50,12 @@
    */
 #endif
 
+#if USE_SND && MAC_OSX && HAVE_RUBY
+  /* if using Ruby, OpenTransport.h T_* definitions collide with Ruby's -- it isn't needed here, so... */
+  #define REDEFINE_HAVE_RUBY 1
+  #undef HAVE_RUBY
+#endif
+
 #if USE_SND
   #include "snd.h"
 #else
@@ -60,6 +66,9 @@
 #if USE_SND && MAC_OSX
   #define USE_MOTIF 1
   #undef USE_NO_GUI
+  #if REDEFINE_HAVE_RUBY
+    #define HAVE_RUBY 1
+  #endif
 #endif
 
 #include <math.h>

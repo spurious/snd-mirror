@@ -20,16 +20,6 @@ void save_help_dialog_state(FILE *fd);
 
 
 
-/* -------- snd-xerror.c -------- */
-
-#ifdef __GNUC__
-  bool snd_yes_or_no_p(const char *format, ...) __attribute__ ((format (printf, 1, 2)));
-#else
-  bool snd_yes_or_no_p(const char *format, ...);
-#endif
-
-
-
 /* -------- snd-xdraw.c -------- */
 
 void draw_line (axis_context *ax, int x0, int y0, int x1, int y1);
@@ -99,6 +89,7 @@ void color_listener(Pixel pix);
 void color_listener_text(Pixel pix);
 void listener_append(char *msg);
 void handle_listener(bool new_state);
+bool listener_exists(void);
 int listener_height(void);
 int listener_width(void);
 Widget make_togglebutton_widget(char *name, Widget parent, Arg *args, int n);
@@ -337,8 +328,6 @@ void goto_minibuffer(snd_info *sp);
 void set_minibuffer_string(snd_info *sp, char *str, bool update);
 void set_minibuffer_cursor_position(snd_info *sp, int pos);
 char *get_minibuffer_string(snd_info *sp);
-void sound_unlock_control_panel(snd_info *sp, void *ptr);
-void sound_lock_control_panel(snd_info *sp, void *ptr);
 void snd_info_cleanup(snd_info *sp);
 void set_amp(snd_info *sp, Float val);
 int amp_to_scroll(Float minval, Float val, Float maxval);
@@ -366,7 +355,6 @@ void snd_file_bomb_icon(snd_info *sp, bool on);
 void x_bomb(snd_info *sp, bool on);
 snd_info *add_sound_window (char *filename, bool read_only, file_info *hdr);
 void set_sound_pane_file_label(snd_info *sp, char *str);
-void unlock_control_panel(snd_info *sp);
 void equalize_sound_panes(snd_info *sp, chan_info *ncp, bool all_panes);
 void color_filter_waveform(Pixel color);
 void reflect_amp_env_completion(snd_info *sp);
@@ -384,6 +372,9 @@ XmString initial_speed_label(speed_style_t style);
 void g_init_gxsnd(void);
 void make_sound_icons_transparent_again(Pixel old_color, Pixel new_color);
 void reflect_sound_selection(snd_info *sp);
+void wait_for_decision(snd_info*sp, void (*ok)(snd_info *p, void *data), void (*cancel)(snd_info *p, void *data), void *data);
+void display_minibuffer_error(snd_info *sp, const char *str);
+void clear_minibuffer_error(snd_info *sp);
 
 
 /* -------- snd-xfile.c -------- */

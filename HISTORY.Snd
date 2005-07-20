@@ -1,5 +1,7 @@
 Snd change log
 
+  21-Jul:    clear-minibuffer, new as-error arg to report-in-minibuffer.
+  15-Jul:    removed yes-or-no? with associated dialog (and snd-g|xerror.c).
   14-Jul:    snd 7.14.
   5-Jul:     default-output-type -> default-output-header-type,
              default-output-format -> default-output-data-format.

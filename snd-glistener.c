@@ -883,6 +883,11 @@ void handle_listener(bool open)
     }
 }
 
+bool listener_exists(void)
+{
+  return((bool)listener_text);
+}
+
 int listener_height(void) 
 {
   if ((listener_text) && (GTK_WIDGET_VISIBLE(listener_text)))

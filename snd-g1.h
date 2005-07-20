@@ -19,17 +19,6 @@ void snd_help_back_to_top(void);
 void save_help_dialog_state(FILE *fd);
 
 
-
-/* -------- snd-gerror.c -------- */
-
-#ifdef __GNUC__
-  bool snd_yes_or_no_p(const char *format, ...) __attribute__ ((format (printf, 1, 2)));
-#else
-  bool snd_yes_or_no_p(const char *format, ...);
-#endif
-
-
-
 /* -------- snd-gdraw.c -------- */
 
 void draw_line (axis_context *ax, int x0, int y0, int x1, int y1);
@@ -87,6 +76,7 @@ void color_listener(GdkColor *pix);
 void color_listener_text(GdkColor *pix);
 void handle_listener(bool new_state);
 void snd_completion_help(int matches, char **buffer);
+bool listener_exists(void);
 int listener_height(void);
 int listener_width(void);
 void goto_listener(void);
@@ -401,6 +391,8 @@ void finish_progress_report(snd_info *sp, enved_progress_t from_enved);
 void progress_report(snd_info *sp, const char *funcname, int curchan, int chans, Float pct, enved_progress_t from_enved);
 void g_init_gxsnd(void);
 void reflect_sound_selection(snd_info *sp);
+void display_minibuffer_error(snd_info *sp, const char *str);
+void clear_minibuffer_error(snd_info *sp);
 
 
 /* -------- snd-gmix.c -------- */

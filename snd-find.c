@@ -229,15 +229,24 @@ char *global_search(read_direction_t direction)
 #define REPORT_TICKS 10
 #define TREE_REPORT_TICKS 100
 
+static bool find_eval_error_p = false;
+static void send_find_errors_to_minibuffer(const char *msg, void *data)
+{
+  find_eval_error_p = true;
+  display_minibuffer_error((snd_info *)data, msg);
+  ss->stopped_explicitly = true;
+}
+
 static off_t cursor_find_forward(snd_info *sp, chan_info *cp, int count)
 {
   int passes = 0, tick = 0;
   off_t i = 0, end, start;
   snd_fd *sf = NULL;
   XEN res = XEN_FALSE;
+  bool progress_displayed = false;
   if (search_in_progress) 
     {
-      report_in_minibuffer(sp, _("search in progress"));
+      display_minibuffer_error(sp, _("search already in progress"));
       return(-1);
     }
   search_in_progress = true;
@@ -264,8 +273,12 @@ static off_t cursor_find_forward(snd_info *sp, chan_info *cp, int count)
 	    {
 	      if (tick > (MANY_PASSES * TREE_REPORT_TICKS))
 		{
+		  char *msg;
 		  tick = 0;
-		  report_in_minibuffer(sp, "search at minute %d", (int)floor(i / (SND_SRATE(sp) * 60)));
+		  msg = mus_format("search at minute %d", (int)floor(i / (SND_SRATE(sp) * 60)));
+		  display_minibuffer_error(sp, msg);
+		  FREE(msg);
+		  progress_displayed = true;
 		}
 	    }
 	}
@@ -273,6 +286,7 @@ static off_t cursor_find_forward(snd_info *sp, chan_info *cp, int count)
   else
     {
       ss->stopped_explicitly = false;
+      redirect_errors_to(send_find_errors_to_minibuffer, (void *)sp);
       for (i = start, passes = 0; i < end; i++, passes++)
 	{
 	  res = XEN_CALL_1(sp->search_proc, 
@@ -287,10 +301,14 @@ static off_t cursor_find_forward(snd_info *sp, chan_info *cp, int count)
 	    {
 	      check_for_event();
 	      tick++;
-	      if (tick > REPORT_TICKS)
+	      if ((tick > REPORT_TICKS) && (!(ss->stopped_explicitly)))
 		{
+		  char *msg;
 		  tick = 0;
-		  report_in_minibuffer(sp, "search at minute %d", (int)floor(i / (SND_SRATE(sp) * 60)));
+		  msg = mus_format("search at minute %d", (int)floor(i / (SND_SRATE(sp) * 60)));
+		  display_minibuffer_error(sp, msg);
+		  FREE(msg);
+		  progress_displayed = true;
 		}
 	      /* if user types C-s during an active search, we risk stomping on our current pointers */
 	      if (!(sp->active)) break;
@@ -300,6 +318,9 @@ static off_t cursor_find_forward(snd_info *sp, chan_info *cp, int count)
 	}
     }
   ss->stopped_explicitly = false;
+  if ((progress_displayed) &&
+      (!find_eval_error_p))
+    clear_minibuffer_error(sp);
   free_snd_fd(sf);
   search_in_progress = false;
   if (count != 0) return(-1); /* impossible sample number, so => failure */
@@ -308,15 +329,17 @@ static off_t cursor_find_forward(snd_info *sp, chan_info *cp, int count)
   return(i);
 }
 
+/* TODO for->back checks */
 static off_t cursor_find_backward(snd_info *sp, chan_info *cp, int count)
 {
   off_t i = 0, start, tick = 0;
   int passes = 0;
   snd_fd *sf = NULL;
   XEN res = XEN_FALSE;
+  bool progress_displayed = false;
   if (search_in_progress) 
     {
-      report_in_minibuffer(sp, _("search in progress"));
+      display_minibuffer_error(sp, _("search already in progress"));
       return(-1);
     }
   search_in_progress = true;
@@ -342,8 +365,12 @@ static off_t cursor_find_backward(snd_info *sp, chan_info *cp, int count)
 	    {
 	      if (tick > (MANY_PASSES * TREE_REPORT_TICKS))
 		{
+		  char *msg;
 		  tick = 0;
-		  report_in_minibuffer(sp, "search at minute %d", (int)floor(i / (SND_SRATE(sp) * 60)));
+		  msg = mus_format("search at minute %d", (int)floor(i / (SND_SRATE(sp) * 60)));
+		  display_minibuffer_error(sp, msg);
+		  FREE(msg);
+		  progress_displayed = true;
 		}
 	    }
 	}
@@ -351,6 +378,7 @@ static off_t cursor_find_backward(snd_info *sp, chan_info *cp, int count)
   else
     {
       ss->stopped_explicitly = false;
+      redirect_errors_to(send_find_errors_to_minibuffer, (void *)sp);
       for (i = start, passes = 0; i >= 0; i--, passes++)
 	{
 	  /* sp search proc as ptree */
@@ -369,8 +397,12 @@ static off_t cursor_find_backward(snd_info *sp, chan_info *cp, int count)
 	      tick++;
 	      if (tick > REPORT_TICKS)
 		{
+		  char *msg;
 		  tick = 0;
-		  report_in_minibuffer(sp, "search at minute %d", (int)floor(i / (SND_SRATE(sp) * 60)));
+		  msg = mus_format("search at minute %d", (int)floor(i / (SND_SRATE(sp) * 60)));
+		  display_minibuffer_error(sp, msg);
+		  FREE(msg);
+		  progress_displayed = true;
 		}
 	      if (!(sp->active)) break;
 	      passes = 0;
@@ -379,6 +411,9 @@ static off_t cursor_find_backward(snd_info *sp, chan_info *cp, int count)
 	}
     }
   ss->stopped_explicitly = false;
+  if ((progress_displayed) &&
+      (!find_eval_error_p))
+    clear_minibuffer_error(sp);
   free_snd_fd(sf);
   search_in_progress = false;
   if (count != 0) return(-1); /* impossible sample number, so => failure */
@@ -403,13 +438,18 @@ void cursor_search(chan_info *cp, int count)
   snd_info *sp;
   sp = cp->sound;
   if (search_in_progress) 
-    report_in_minibuffer(sp, _("search in progress"));
+    display_minibuffer_error(sp, _("search already in progress"));
   else
     {
       if (sp->searching)
 	{
 	  off_t samp;
-	  if ((!(XEN_PROCEDURE_P(sp->search_proc))) && (sp->search_tree == NULL)) return; /* no search expr */
+	  if ((!(XEN_PROCEDURE_P(sp->search_proc))) && 
+	      (sp->search_tree == NULL)) 
+	    {
+	      sp->searching = 0;
+	      return; /* no search expr */
+	    }
 	  if (sp->search_expr)
 	    {
 	      /* see note above about closures */
@@ -428,34 +468,48 @@ void cursor_search(chan_info *cp, int count)
 		sp->search_tree = form_to_ptree_1_b_without_env(C_STRING_TO_XEN_FORM(sp->search_expr));
 	      if (sp->search_tree == NULL)
 		{
+		  redirect_errors_to(errors_to_minibuffer, (void *)sp);
 		  sp->search_proc = snd_catch_any(eval_str_wrapper, sp->search_expr, sp->search_expr);
-		  sp->search_proc_loc = snd_protect(sp->search_proc);
+		  redirect_errors_to(NULL, NULL);
+		  if (XEN_PROCEDURE_P(sp->search_proc))
+		    sp->search_proc_loc = snd_protect(sp->search_proc);
+		  else return;
 		}
 	    }
+	  redirect_errors_to(send_find_errors_to_minibuffer, (void *)sp);
 	  if (count > 0)
 	    samp = cursor_find_forward(sp, cp, count);
 	  else samp = cursor_find_backward(sp, cp, -count);
-	  if (samp == -1) 
-	    { 
-	      report_in_minibuffer(sp, _("%s%snot found%s"), 
-				   (sp->search_expr) ? sp->search_expr : "", 
-				   (sp->search_expr) ? ": " : "",
-				   (cp->last_search_result == SEARCH_FAILED) ? _(" (wrapped)") : "");
-	      cp->last_search_result = SEARCH_FAILED;
+	  redirect_errors_to(NULL, NULL);
+	  if (find_eval_error_p)
+	    {
+	      find_eval_error_p = false;
+	      sp->searching = false;
 	    }
 	  else
 	    {
-	      char *s1, *s2;
-	      report_in_minibuffer(sp, _("%s%sy = %s at %s (" PRId64 ")"),
-				   (sp->search_expr) ? sp->search_expr : "",
-				   (sp->search_expr) ? ": " : "",
-				   s1 = prettyf(chn_sample(samp, cp, cp->edit_ctr), 2),
-				   s2 = prettyf((double)samp / (double)SND_SRATE(sp), 2),
-				   samp);
-	      cp->last_search_result = SEARCH_OK;
-	      FREE(s1);
-	      FREE(s2);
-	      cursor_moveto_without_verbosity(cp, samp);
+	      if (samp == -1) 
+		{ 
+		  char *msg;
+		  msg = mus_format("not found%s", 
+				   (cp->last_search_result == SEARCH_FAILED) ? " (wrapped)" : "");
+		  display_minibuffer_error(sp, msg);
+		  FREE(msg);
+		  cp->last_search_result = SEARCH_FAILED;
+		}
+	      else
+		{
+		  char *s1, *s2, *msg;
+		  s1 = prettyf(chn_sample(samp, cp, cp->edit_ctr), 2);
+		  s2 = prettyf((double)samp / (double)SND_SRATE(sp), 2);
+		  msg = mus_format("%s at %s (" PRId64 ")", s1, s2, samp);
+		  display_minibuffer_error(sp, msg);
+		  FREE(s1);
+		  FREE(s2);
+		  FREE(msg);
+		  cp->last_search_result = SEARCH_OK;
+		  cursor_moveto_without_verbosity(cp, samp);
+		}
 	    }
 	}
       else get_find_expression(sp, count);

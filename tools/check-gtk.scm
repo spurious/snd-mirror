@@ -96,8 +96,8 @@
 (define* (CFNC-270 data #:optional spec)
   (fgrep (cadr-str data) 270))
 
-(define* (CFNC-272 data #:optional spec)
-  (fgrep (cadr-str data) 272))
+(define* (CFNC-273 data #:optional spec)
+  (fgrep (cadr-str data) 273))
 
 (define* (CFNC-22 data)
   (fgrep (cadr-str data) 22))
@@ -114,8 +114,8 @@
 (define (CSTR-250 name)
   (fgrep name 250))
 
-(define (CSTR-272 name)
-  (fgrep name 272))
+(define (CSTR-273 name)
+  (fgrep name 273))
 
 (define (CDBL name)
   #f)
@@ -159,8 +159,8 @@
 (define* (CINT-270 name #:optional type)
   (fgrep name 270))
 
-(define* (CINT-272 name #:optional type)
-  (fgrep name 272))
+(define* (CINT-273 name #:optional type)
+  (fgrep name 273))
 
 (define (CCAST name type) ; this is the cast (type *)obj essentially but here it's (list type* (cadr obj))
   #f)

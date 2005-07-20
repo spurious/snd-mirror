@@ -1,6 +1,6 @@
 # Configuration script for Snd
 
-AC_INIT(snd, 7.14, bil@ccrma.stanford.edu, ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-7.tar.gz)
+AC_INIT(snd, 7.15, bil@ccrma.stanford.edu, ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-7.tar.gz)
 
 INVOKED_PROG="$[0]"
 INVOKED_ARGS="$[@]"
@@ -17,7 +17,7 @@ audio_system="unknown"
 MAKE_TARGET="snd"
 
 PACKAGE=snd
-VERSION=7.13
+VERSION=7.15
 AC_DEFINE_UNQUOTED(PACKAGE, "$PACKAGE")
 AC_DEFINE_UNQUOTED(VERSION, "$VERSION")
 AC_SUBST(PACKAGE)
@@ -179,7 +179,7 @@ LIBS=""
 
 AC_HEADER_DIRENT
 AC_CHECK_HEADERS(fcntl.h limits.h unistd.h string.h sys/soundcard.h machine/soundcard.h gsl/gsl_version.h sys/mixer.h stdbool.h)
-AC_CHECK_HEADERS(libc.h sys/statvfs.h setjmp.h sys/fpu.h dlfcn.h sys/param.h byteswap.h stdint.h)
+AC_CHECK_HEADERS(libc.h sys/statvfs.h setjmp.h dlfcn.h sys/param.h byteswap.h stdint.h)
 AC_CHECK_HEADER(/usr/local/lib/oss/include/sys/soundcard.h,[AC_DEFINE(USR_LOCAL_LIB_OSS)])
 AC_CHECK_HEADER(/usr/lib/oss/include/sys/soundcard.h,[AC_DEFINE(USR_LIB_OSS)])
 AC_CHECK_HEADER(/opt/oss/include/sys/soundcard.h,[AC_DEFINE(OPT_OSS)])
@@ -240,6 +240,8 @@ AC_CHECK_LIB(m, jn,
 #--------------------------------------------------------------------------------
 # fftw
 #--------------------------------------------------------------------------------
+
+# TODO: there is apparently fftw3.pc -- incorporate (will need cflags too, I think)
 
 SAVELIBS=$LIBS
 FFTW_LIBS=""
@@ -358,6 +360,8 @@ fi
 # X/Motif
 #--------------------------------------------------------------------------------
 
+# TODO: on the mac, we need -lSM -lICE after all the other X libs
+
 ac_snd_have_gui=no
 
 AC_PATH_XTRA
@@ -399,6 +403,7 @@ else
     if test x$motif_prefix != x ; then
     AC_CHECK_FILE($motif_prefix/lib/libXm.a,[
       X_PRE_LIBS="$motif_prefix/lib/libXm.a $X_LIBS $X_PRE_LIBS -lXt"
+      XFLAGS="-I$motif_prefix/include $XFLAGS"
 	],	
 	[
       AC_MSG_WARN(can't find $motif_prefix/lib/libXm.a!)
@@ -466,7 +471,8 @@ else
     XLIBS="$X_PRE_LIBS $X_POST_LIBS"
     TEST_LIBS="$TEST_PRE_LIBS $TEST_POST_LIBS"
 
-    AC_CHECK_LIB(Xm, XmCreateForm, 
+    AC_CHECK_LIB(m, XmCreateForm, 
+          # was Xm here but that introduces a bogus -lXm into the load list
 	[
 	  with_motif=yes
 	  ac_snd_have_gui=yes
@@ -734,14 +740,6 @@ else
 	# gtk 2.2
 	AC_CHECK_LIB(m, gtk_file_chooser_dialog_new, [AC_DEFINE(HAVE_GTK_FILE_CHOOSER_DIALOG_NEW)], ,$GTK_LIBS)
 	# gtk 2.3
-	AC_CHECK_LIB(m, gtk_expander_get_use_markup, [AC_DEFINE(HAVE_GTK_EXPANDER_GET_USE_MARKUP)], ,$GTK_LIBS)
-	# gtk 2.3.1
-	AC_CHECK_LIB(m, gtk_menu_shell_cancel, [AC_DEFINE(HAVE_GTK_MENU_SHELL_CANCEL)], ,$GTK_LIBS)
-	# gtk 2.3.2
-	AC_CHECK_LIB(m, gtk_combo_box_popup, [AC_DEFINE(HAVE_GTK_COMBO_BOX_POPUP)], ,$GTK_LIBS)
-	# gtk 2.3.4
-	AC_CHECK_LIB(m, gtk_combo_box_entry_new_text, [AC_DEFINE(HAVE_GTK_COMBO_BOX_ENTRY_NEW_TEXT)], ,$GTK_LIBS)
-	# gtk 2.3.5
 	AC_CHECK_LIB(m, gtk_file_chooser_set_filename,
 	[
     	  OLD_CFLAGS="$CFLAGS"
@@ -764,14 +762,6 @@ else
 	# gtk 2.4.0|1|2|3|4: no API changes
 	AC_CHECK_LIB(m, gtk_about_dialog_new, [AC_DEFINE(HAVE_GTK_ABOUT_DIALOG_NEW)], ,$GTK_LIBS)
 	# gtk 2.5.0
-	AC_CHECK_LIB(m, gtk_label_set_ellipsize, [AC_DEFINE(HAVE_GTK_LABEL_SET_ELLIPSIZE)], ,$GTK_LIBS)
-	# gtk 2.5.1
-	AC_CHECK_LIB(m, gtk_file_chooser_button_new, [AC_DEFINE(HAVE_GTK_FILE_CHOOSER_BUTTON_NEW)], ,$GTK_LIBS)
-	# gtk 2.5.2
-	AC_CHECK_LIB(m, gtk_menu_tool_button_new, [AC_DEFINE(HAVE_GTK_MENU_TOOL_BUTTON_NEW)],  ,$GTK_LIBS)
-	# gtk 2.5.4 
-	AC_CHECK_LIB(m, gtk_label_get_single_line_mode, [AC_DEFINE(HAVE_GTK_LABEL_GET_SINGLE_LINE_MODE)],  ,$GTK_LIBS)
-	# gtk 2.5.5
 	AC_CHECK_LIB(m, gdk_pango_renderer_new, [AC_DEFINE(HAVE_GDK_PANGO_RENDERER_NEW)],  ,$GTK_LIBS)
 	# gtk 2.5.6
 	AC_CHECK_LIB(m, gtk_text_layout_get_iter_at_position, [AC_DEFINE(HAVE_GTK_TEXT_LAYOUT_GET_ITER_AT_POSITION)],  ,$GTK_LIBS)
@@ -790,6 +780,8 @@ else
 	# gtk 2.7.0
 	# cairo needs xfixes xextensions fixesext libXfixes fontconfig libXrender libpixman libXft2 glitz 
 	#   and innumerable *.pc files scattered all over the world-wide-web
+	AC_CHECK_LIB(m, gtk_tree_view_get_visible_range, [AC_DEFINE(HAVE_GTK_TREE_VIEW_GET_VISIBLE_RANGE)],  ,$GTK_LIBS)
+	# gtk 2.7.3
 
         if test "$with_x11" = yes ; then
 	  AC_DEFINE(WITH_GTK_AND_X11)

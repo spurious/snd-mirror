@@ -252,6 +252,11 @@ void provide_listener_help(char *source)
     }
 }
 
+bool listener_is_visible(void)
+{
+  return(listener_height() > 5);
+}
+
 #if (!USE_NO_GUI)
 #if USE_GTK
 #define GUI_TEXT_END(w) gtk_text_buffer_get_char_count(gtk_text_view_get_buffer(GTK_TEXT_VIEW(w)))
@@ -597,14 +602,14 @@ static XEN g_show_listener(void)
 {
   #define H_show_listener "(" S_show_listener "): opens the lisp listener pane"
   handle_listener(true); 
-  return(C_TO_XEN_BOOLEAN(listener_height() > 5));
+  return(C_TO_XEN_BOOLEAN(listener_is_visible()));
 }
 
 static XEN g_set_show_listener(XEN val)
 {
   XEN_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, XEN_ONLY_ARG, S_setB S_show_listener, "a boolean");
   handle_listener(XEN_TO_C_BOOLEAN(val));
-  return(C_TO_XEN_BOOLEAN(listener_height() > 5));
+  return(C_TO_XEN_BOOLEAN(listener_is_visible()));
 }
 
 static XEN g_listener_prompt(void) {return(C_TO_XEN_STRING(listener_prompt(ss)));}

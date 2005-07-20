@@ -245,7 +245,6 @@ int main(int argc, char **argv)
   add_file("snd-xen.c");
   add_file("snd-ladspa.c");
   add_file("snd-xutils.c");
-  add_file("snd-xerror.c");
   add_file("snd-xhelp.c");
   add_file("snd-xfind.c");
   add_file("snd-xmenu.c");
@@ -269,7 +268,6 @@ int main(int argc, char **argv)
   add_file("snd-xfile.c");
   add_file("snd-xxen.c");
   add_file("snd-gutils.c");
-  add_file("snd-gerror.c");
   add_file("snd-ghelp.c");
   add_file("snd-gfind.c");
   add_file("snd-gmenu.c");
@@ -396,7 +394,12 @@ int main(int argc, char **argv)
 		      else
 			{
 			  if (input[j] == '}')
-			    in_curly = 0;
+			    in_curly = 2;
+			  else
+			    {
+			      if (input[j] == ';')
+				in_curly = 0;
+			    }
 			}
 		    }
 		}

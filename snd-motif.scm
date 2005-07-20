@@ -463,8 +463,8 @@ Box: (install-searcher (lambda (file) (= (mus-sound-srate file) 44100)))"
        (if (and (not (string=? (XtName n) "snd-name-form")) 
 		(not (string=? (XtName (XtParent n)) "snd-name-form")))
 	   (XtUnmanageChild n))))
-    (XtSetValues swc (list XmNpaneMaximum 18 
-			   XmNpaneMinimum 18))
+    (XtSetValues swc (list XmNpaneMaximum 1 
+			   XmNpaneMinimum 1))
     (remove-from-menu 2 "Show controls")
     (XtManageChild swc)))
 
@@ -1937,22 +1937,32 @@ Reverb-feedback sets the scaler on the feedback.
 	    (let* ((app (car (main-widgets)))
 		   (widgets (sound-widgets snd))
 		   (minibuffer (list-ref widgets 3))
+		   (unite-button (list-ref widgets 6))
+		   (sync-button (list-ref widgets 9))
 		   (name-form (XtParent minibuffer)) ; "snd-name-form"
 		   (space (kmg (disk-kspace (file-name snd))))
-		   (str (XmStringCreateLocalized space))
-		   (new-label (XtCreateManagedWidget "space:" xmLabelWidgetClass name-form 
-				(list XmNbackground      (basic-color)
-				      XmNleftAttachment  XmATTACH_WIDGET
-				      XmNleftWidget      minibuffer
-				      XmNlabelString     str
-				      XmNrightAttachment XmATTACH_NONE
-				      XmNtopAttachment   XmATTACH_FORM))))
-	      (XmStringFree str)
-	      (set! previous-label (list snd new-label app))
-	      (set! labelled-snds (cons previous-label labelled-snds))))
+		   (str (XmStringCreateLocalized space)))
+	      (XtUnmanageChild minibuffer)
+	      (XtVaSetValues minibuffer (list XmNrightAttachment XmATTACH_NONE))
+	      (let ((new-label (XtCreateManagedWidget "space:" xmLabelWidgetClass name-form 
+				 (list XmNbackground      (basic-color)
+				       XmNleftAttachment  XmATTACH_NONE
+				       XmNlabelString     str
+				       XmNrightAttachment XmATTACH_WIDGET
+				       XmNrightWidget     (if (XtIsManaged unite-button)
+							      unite-button
+							      sync-button)
+				       XmNtopAttachment   XmATTACH_FORM))))
+		(XtVaSetValues minibuffer (list XmNrightWidget new-label XmNrightAttachment XmATTACH_WIDGET))
+		(XtManageChild minibuffer)
+		(XmStringFree str)
+		(set! previous-label (list snd new-label app))
+		(set! labelled-snds (cons previous-label labelled-snds)))))
 	(XtAppAddTimeOut (caddr previous-label) 10000 show-label previous-label)))))
 
 ;(add-hook! after-open-hook show-disk-space)
+
+;;; TODO: check all minibuffer re-attachments 
 
 
 ;;; -------- add amp sliders in control panel for multi-channel sounds
@@ -2167,12 +2177,11 @@ Reverb-feedback sets the scaler on the feedback.
   "(add-delete-option) adds a delete (file) option to the File menu"
   (add-to-menu 0 "Delete" ; add Delete option to File menu
 	       (lambda ()
-		 ;; close current sound and delete it (after requesting confirmation)
+		 ;; close current sound and delete it
 		 (if (selected-sound)
 		     (let ((filename (file-name)))
 		       (close-sound)
-		       (if (yes-or-no? (format #f "delete ~S?" filename))
-			   (delete-file filename)))))
+		       (delete-file filename))))
 	       8)) ; place after File:New
 
 (define (add-rename-option)

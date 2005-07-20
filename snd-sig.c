@@ -261,7 +261,7 @@ static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp, XE
       for (ip = 0; ip < si->chans; ip++)
 	{
 	  char *ofile, *saved_chan_file;
-	  int err;
+	  io_error_t io_err;
 	  ok = false;
       	  ucp = si->cps[ip];
 	  if (!(editable_p(ucp))) continue;
@@ -278,8 +278,8 @@ static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp, XE
 	  ofile = snd_tempnam();
 
 	  saved_chan_file = snd_tempnam();
-	  err = save_channel_edits(ucp, saved_chan_file, to_c_edit_position(ucp, edpos, S_convolve_with, arg_pos));
-	  if (err != MUS_NO_ERROR)
+	  io_err = save_channel_edits(ucp, saved_chan_file, to_c_edit_position(ucp, edpos, S_convolve_with, arg_pos));
+	  if (io_err != IO_NO_ERROR)
 	    {
 	      if (ofile) FREE(ofile);
 	      free_sync_state(sc);
@@ -391,6 +391,9 @@ static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp, XE
 	  ucp->edit_hook_checked = false;
 	  if (ofile) FREE(ofile);
 	  check_for_event();
+	  /* TODO: in all these cases, the event might include closing the current sound --
+	   *   need to checkl cp->active and sp->active
+	   */
 	  if (ss->stopped_explicitly) 
 	    {
 	      stop_point = ip;
@@ -622,7 +625,11 @@ static void swap_channels(chan_info *cp0, chan_info *cp1, off_t beg, off_t dur, 
       temp_file = true; 
       ofile0 = snd_tempnam();
       hdr0 = make_temp_header(ofile0, SND_SRATE(sp0), 1, dur, (char *)S_swap_channels);
-      ofd0 = open_temp_file(ofile0, 1, hdr0);
+      {
+	/* TODO: better error */
+	io_error_t io_err = IO_NO_ERROR;
+	ofd0 = open_temp_file(ofile0, 1, hdr0, &io_err);
+      }
       if (ofd0 == -1)
 	{
 	  cp0->edit_hook_checked = false;
@@ -634,7 +641,11 @@ static void swap_channels(chan_info *cp0, chan_info *cp1, off_t beg, off_t dur, 
       datumb = mus_bytes_per_sample(hdr0->format);
       ofile1 = snd_tempnam();
       hdr1 = make_temp_header(ofile1, SND_SRATE(sp0), 1, dur, (char *)S_swap_channels);
-      ofd1 = open_temp_file(ofile1, 1, hdr1);
+      {
+	/* TODO: better error */
+	io_error_t io_err = IO_NO_ERROR;
+	ofd1 = open_temp_file(ofile1, 1, hdr1, &io_err);
+      }
       if (ofd1 == -1)
 	{
 	  cp0->edit_hook_checked = false;
@@ -789,7 +800,11 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, off_t beg, off_t 
   if (reporting) start_progress_report(sp, from_enved);
   ofile = snd_tempnam();
   hdr = make_temp_header(ofile, SND_SRATE(sp), 1, dur, (char *)origin);
-  ofd = open_temp_file(ofile, 1, hdr);
+  {
+    /* TODO: better error */
+    io_error_t io_err = IO_NO_ERROR;
+    ofd = open_temp_file(ofile, 1, hdr, &io_err);
+  }
   if (ofd == -1)
     {
       cp->edit_hook_checked = false;
@@ -1186,7 +1201,11 @@ static char *clm_channel(chan_info *cp, mus_any *gen, off_t beg, off_t dur, int 
       temp_file = true; 
       ofile = snd_tempnam();
       hdr = make_temp_header(ofile, SND_SRATE(sp), 1, dur + overlap, S_clm_channel);
-      ofd = open_temp_file(ofile, 1, hdr);
+      {
+	/* TODO: better error */
+	io_error_t io_err = IO_NO_ERROR;
+	ofd = open_temp_file(ofile, 1, hdr, &io_err);
+      }
       if (ofd == -1)
 	{
 	  cp->edit_hook_checked = false;
@@ -1290,7 +1309,11 @@ static char *convolution_filter(chan_info *cp, int order, env *e, snd_fd *sf, of
     hdr->format = MUS_BFLOAT;
   else hdr->format = MUS_BDOUBLE;
 #endif
-  ofd = open_temp_file(ofile, 1, hdr);
+  {
+    /* TODO: better error */
+    io_error_t io_err = IO_NO_ERROR;
+    ofd = open_temp_file(ofile, 1, hdr, &io_err);
+  }
   if (ofd == -1)
     {
       cp->edit_hook_checked = false;
@@ -1409,7 +1432,11 @@ static char *direct_filter(chan_info *cp, int order, env *e, snd_fd *sf, off_t b
       temp_file = true; 
       ofile = snd_tempnam();
       hdr = make_temp_header(ofile, SND_SRATE(sp), 1, dur, (char *)origin);
-      ofd = open_temp_file(ofile, 1, hdr);
+      {
+	/* TODO: better error */
+	io_error_t io_err = IO_NO_ERROR;
+	ofd = open_temp_file(ofile, 1, hdr, &io_err);
+      }
       if (ofd == -1)
 	{
 	  cp->edit_hook_checked = false;
@@ -1780,7 +1807,11 @@ static char *reverse_channel(chan_info *cp, snd_fd *sf, off_t beg, off_t dur, XE
       temp_file = true; 
       ofile = snd_tempnam();
       hdr = make_temp_header(ofile, SND_SRATE(sp), 1, dur, caller);
-      ofd = open_temp_file(ofile, 1, hdr);
+      {
+	/* TODO: better error */
+	io_error_t io_err = IO_NO_ERROR;
+	ofd = open_temp_file(ofile, 1, hdr, &io_err);
+      }
       if (ofd == -1)
 	{
 	  if (ofile) FREE(ofile);
@@ -2116,7 +2147,11 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool over_selection,
 	  temp_file = true; 
 	  ofile = snd_tempnam(); 
 	  hdr = make_temp_header(ofile, SND_SRATE(sp), si->chans, dur, (char *)origin);
-	  ofd = open_temp_file(ofile, si->chans, hdr);
+	  {
+	    /* TODO: better error */
+	    io_error_t io_err = IO_NO_ERROR;
+	    ofd = open_temp_file(ofile, si->chans, hdr, &io_err);
+	  }
 	  if (ofd == -1)
 	    {
 	      if (e) mus_free(egen);
@@ -2584,7 +2619,11 @@ static char *run_channel(chan_info *cp, struct ptree *pt, off_t beg, off_t dur, 
       temp_file = true; 
       ofile = snd_tempnam();
       hdr = make_temp_header(ofile, SND_SRATE(sp), 1, dur, "run_channel temp");
-      ofd = open_temp_file(ofile, 1, hdr);
+      {
+	/* TODO: better error */
+	io_error_t io_err = IO_NO_ERROR;
+	ofd = open_temp_file(ofile, 1, hdr, &io_err);
+      }
       if (ofd == -1)
 	{
 	  free_snd_fd(sf); 

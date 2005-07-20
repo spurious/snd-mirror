@@ -299,7 +299,7 @@
 (CINT "GDK_WINDOW_STATE" "GdkEventType")
 (CINT "GDK_SETTING" "GdkEventType")
 (CINT-250 "GDK_OWNER_CHANGE" "GdkEventType")
-(CINT-272 "GDK_GRAB_BROKEN" "GdkEventType")
+(CINT-273 "GDK_GRAB_BROKEN" "GdkEventType")
 (CINT "GDK_EXPOSURE_MASK" "GdkEventMask")
 (CINT "GDK_POINTER_MOTION_MASK" "GdkEventMask")
 (CINT "GDK_POINTER_MOTION_HINT_MASK" "GdkEventMask")
@@ -2640,9 +2640,9 @@
 (CSTR-250 "GTK_STOCK_MEDIA_REWIND")
 (CSTR-250 "GTK_STOCK_MEDIA_STOP")
 
-(CSTR-272 "GTK_STOCK_FULLSCREEN")
-(CSTR-272 "GTK_STOCK_INFO")
-(CSTR-272 "GTK_STOCK_LEAVE_FULLSCREEN")
+(CSTR-273 "GTK_STOCK_FULLSCREEN")
+(CSTR-273 "GTK_STOCK_INFO")
+(CSTR-273 "GTK_STOCK_LEAVE_FULLSCREEN")
 
 (CCAST "GTK_STYLE(object)" "GtkStyle*")
 (CCHK "GTK_IS_STYLE(object)" "GtkStyle*")
@@ -4964,18 +4964,6 @@
 
 (CFNC "gpointer g_list_nth_data GList* list guint n")
 
-
-;(CINT-236 "GTK_FILE_CHOOSER_ACTION" "GtkFileChooserProp")
-;(CINT-236 "GTK_FILE_CHOOSER_PROP_FILE_SYSTEM_BACKEND" "GtkFileChooserProp")
-;(CINT-236 "GTK_FILE_CHOOSER_PROP_FILTER" "GtkFileChooserProp")
-;(CINT-236 "GTK_FILE_CHOOSER_PROP_FOLDER_MODE" "GtkFileChooserProp")
-;(CINT-236 "GTK_FILE_CHOOSER_PROP_LOCAL_ONLY" "GtkFileChooserProp")
-;(CINT-236 "GTK_FILE_CHOOSER_PROP_PREVIEW_WIDGET" "GtkFileChooserProp")
-;(CINT-236 "GTK_FILE_CHOOSER_PROP_PREVIEW_WIDGET_ACTIVE" "GtkFileChooserProp")
-;(CINT-236 "GTK_FILE_CHOOSER_PROP_EXTRA_WIDGET" "GtkFileChooserProp")
-;(CINT-236 "GTK_FILE_CHOOSER_PROP_SELECT_MULTIPLE" "GtkFileChooserProp")
-;(CINT-236 "GTK_FILE_CHOOSER_PROP_SHOW_HIDDEN" "GtkFileChooserProp")
-
 (CCAST-236 "GTK_ACCEL_MAP(obj)" "GtkAccelMap")
 (CCHK-236 "GTK_IS_ACCEL_MAP(obj)" "GtkAccelMap")
 
@@ -5522,7 +5510,7 @@
 
 ;;; omitted "cairo" stuff
 
-(CFNC-272 "void gdk_window_move_region GdkWindow* window GdkRegion* region gint dx gint dy")
+(CFNC-273 "void gdk_window_move_region GdkWindow* window GdkRegion* region gint dx gint dy")
 
 ;;; from gtkitemfactory:
 ;typedef gchar * (*GtkTranslateFunc)	   (const gchar		*path,
@@ -5532,7 +5520,31 @@
 
 ;;; gtk 2.7.2
 
-(CFNC-272 "gboolean gtk_about_dialog_get_wrap_license GtkAboutDialog* about")
-(CFNC-272 "void gtk_about_dialog_set_wrap_license GtkAboutDialog* about gboolean wrap_license")
+(CFNC-273 "gboolean gtk_about_dialog_get_wrap_license GtkAboutDialog* about")
+(CFNC-273 "void gtk_about_dialog_set_wrap_license GtkAboutDialog* about gboolean wrap_license")
 
+
+;;; 2.7.3
+
+(CINT-273 "GTK_FILE_CHOOSER_CONFIRMATION_CONFIRM" "GtkFileChooserConfirmation")
+(CINT-273 "GTK_FILE_CHOOSER_CONFIRMATION_ACCEPT_FILENAME" "GtkFileChooserConfirmation")
+(CINT-273 "GTK_FILE_CHOOSER_CONFIRMATION_SELECT_AGAIN" "GtkFileChooserConfirmation")
+(CINT-273 "GTK_FILE_CHOOSER_PROP_DO_OVERWRITE_CONFIRMATION" "GtkFileChooserProp")
+; why are these commented out?
+(CINT-273 "GTK_FILE_CHOOSER_ACTION" "GtkFileChooserProp")
+(CINT-273 "GTK_FILE_CHOOSER_PROP_FILE_SYSTEM_BACKEND" "GtkFileChooserProp")
+(CINT-273 "GTK_FILE_CHOOSER_PROP_FILTER" "GtkFileChooserProp")
+(CINT-273 "GTK_FILE_CHOOSER_PROP_FOLDER_MODE" "GtkFileChooserProp")
+(CINT-273 "GTK_FILE_CHOOSER_PROP_LOCAL_ONLY" "GtkFileChooserProp")
+(CINT-273 "GTK_FILE_CHOOSER_PROP_PREVIEW_WIDGET" "GtkFileChooserProp")
+(CINT-273 "GTK_FILE_CHOOSER_PROP_PREVIEW_WIDGET_ACTIVE" "GtkFileChooserProp")
+(CINT-273 "GTK_FILE_CHOOSER_PROP_EXTRA_WIDGET" "GtkFileChooserProp")
+(CINT-273 "GTK_FILE_CHOOSER_PROP_SELECT_MULTIPLE" "GtkFileChooserProp")
+(CINT-273 "GTK_FILE_CHOOSER_PROP_SHOW_HIDDEN" "GtkFileChooserProp")
+
+(CFNC-273 "void gtk_file_chooser_set_do_overwrite_confirmation GtkFileChooser* chooser gboolean do_overwrite_confirmation")
+(CFNC-273 "gboolean gtk_file_chooser_get_do_overwrite_confirmation GtkFileChooser* chooser")
+(CFNC-273 "GtkTreeModel* gtk_tree_row_reference_get_model GtkTreeRowReference* reference")
+(CFNC-273 "void gtk_tree_view_column_queue_resize GtkTreeViewColumn* tree_column")
+(CFNC-273 "gboolean gtk_tree_view_get_visible_range GtkTreeView* tree_view GtkTreePath** [start_path] GtkTreePath** [end_path]")
 

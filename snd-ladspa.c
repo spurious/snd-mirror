@@ -713,13 +713,15 @@ Information about about parameters can be acquired using " S_analyse_ladspa "."
 			 XEN_TO_C_STRING(origin));
 
   /* Open the output file, using the header we've been working on. */
-  ofd = open_temp_file(ofile, outchans, hdr);
-  if (ofd == -1)
-    XEN_ERROR(CANNOT_SAVE,
-	      XEN_LIST_3(C_TO_XEN_STRING(S_apply_ladspa),
-			 C_TO_XEN_STRING(ofile),
-			 C_TO_XEN_STRING(snd_io_strerror())));
-
+  {
+    io_error_t io_err = IO_NO_ERROR; /* TODO: better error */
+    ofd = open_temp_file(ofile, outchans, hdr, &io_err);
+    if (io_err != IO_NO_ERROR)
+      XEN_ERROR(CANNOT_SAVE,
+		XEN_LIST_3(C_TO_XEN_STRING(S_apply_ladspa),
+			   C_TO_XEN_STRING(ofile),
+			   C_TO_XEN_STRING(snd_io_strerror())));
+  }
   /* Tidy up header. */
   datumb = mus_bytes_per_sample(hdr->format);
 

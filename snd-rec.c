@@ -1450,7 +1450,8 @@ static Cessate read_adc(void)
 
 void recorder_start_output_file(const char *comment)
 {
-  int comlen, err, i;
+  int comlen, i;
+  io_error_t err;
   off_t oloc = 0;
   char *msg;
 #if DEBUGGING
@@ -1460,8 +1461,9 @@ void recorder_start_output_file(const char *comment)
   comlen *= 4;
   err = snd_write_header(rp->output_file, rp->output_header_type, rp->srate, rp->out_chans, 28 + comlen, 0,
 			 rp->output_data_format, comment, snd_strlen(comment), NULL);
-  if (err == -1)
+  if (err != IO_NO_ERROR)
     {
+      /* TODO: better error */
       msg = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
       mus_snprintf(msg, PRINT_BUFFER_SIZE, "%s:\n %s", rp->output_file, snd_io_strerror());
       recorder_error(msg);

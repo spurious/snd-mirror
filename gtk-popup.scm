@@ -791,7 +791,8 @@ all saved edit lists."
 			      ((= i chns))
 			    (let* ((old-val (assoc (cons snd i) edhist-funcs)))
 			      (if old-val
-				  (set-car! old-val (format #f "~A[~A]" name i))))))))
+				  (set-car! old-val (format #f "~A[~A]" name i))))))
+			#f))
 (for-each add-edhist-popup (sounds))
 
 

@@ -87,7 +87,7 @@ static void view_filled_callback(Widget w, XtPointer info, XtPointer context) {s
 static void view_dots_and_lines_callback(Widget w, XtPointer info, XtPointer context) {set_graph_style(GRAPH_DOTS_AND_LINES);}
 static void view_lollipops_callback(Widget w, XtPointer info, XtPointer context) {set_graph_style(GRAPH_LOLLIPOPS);}
 #if HAVE_EXTENSION_LANGUAGE
-static void view_listener_callback(Widget w, XtPointer info, XtPointer context) {handle_listener((listener_height() < 5));}
+static void view_listener_callback(Widget w, XtPointer info, XtPointer context) {handle_listener(!(listener_is_visible()));}
 #endif
 static void view_mix_dialog_callback(Widget w, XtPointer info, XtPointer context) {make_mix_dialog();}
 static void view_track_dialog_callback(Widget w, XtPointer info, XtPointer context) {make_track_dialog();}

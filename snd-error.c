@@ -14,6 +14,12 @@ static char *snd_error_buffer = NULL;
 static XEN snd_error_hook; 
 static XEN snd_warning_hook; 
 
+void redirect_snd_warning_to(void (*handler)(const char *warning_msg, void *ufd), void *data)
+{
+  ss->snd_warning_handler = handler;
+  ss->snd_warning_data = data;
+}
+
 void snd_warning(char *format, ...)
 {
   va_list ap;
@@ -27,6 +33,13 @@ void snd_warning(char *format, ...)
   vsprintf(snd_error_buffer, format, ap);
 #endif
   va_end(ap);
+
+  if (ss->snd_warning_handler)
+    {
+      (*(ss->snd_warning_handler))(snd_error_buffer, ss->snd_warning_data);
+      return;
+    }
+
   if ((XEN_HOOKED(snd_warning_hook)) &&
       (XEN_NOT_FALSE_P(run_or_hook(snd_warning_hook, 
 				   XEN_LIST_1(C_TO_XEN_STRING(snd_error_buffer)),
@@ -60,13 +73,10 @@ void set_error_display(void (*func)(const char *))
 
 static bool direct_snd_error_call = false;
 
-static void (*snd_error_handler)(const char *error_msg, void *ufd) = NULL;
-static void *snd_error_data;
-
 void redirect_snd_error_to(void (*handler)(const char *error_msg, void *ufd), void *data)
 {
-  snd_error_handler = handler;
-  snd_error_data = data;
+  ss->snd_error_handler = handler;
+  ss->snd_error_data = data;
 }
 
 void snd_error(char *format, ...)
@@ -83,9 +93,9 @@ void snd_error(char *format, ...)
 #endif
   va_end(ap);
 
-  if (snd_error_handler)
+  if (ss->snd_error_handler)
     {
-      (*snd_error_handler)(snd_error_buffer, snd_error_data);
+      (*(ss->snd_error_handler))(snd_error_buffer, ss->snd_error_data);
       return;
     }
 
@@ -115,7 +125,7 @@ void snd_error(char *format, ...)
 		(ss->catch_exists == 0))
 	      {
 		if ((sp) && (sp->active))
-		  report_in_minibuffer(sp, snd_error_buffer);
+		  report_in_minibuffer(sp, snd_error_buffer); /* TODO: this truncates the message! needs word wrap in either case */
 		else post_it("Error", snd_error_buffer);
 	      }
 	  }
@@ -140,7 +150,7 @@ static XEN g_snd_error(XEN msg)
 {
   #define H_snd_error "(" S_snd_error " str): reports error message str (normally in the error dialog)"
   XEN_ASSERT_TYPE(XEN_STRING_P(msg), msg, XEN_ONLY_ARG, S_snd_error, "a string");
-  direct_snd_error_call = true;
+  direct_snd_error_call = true; /* TODO: this looks bogus and should use redirection */
   snd_error(XEN_TO_C_STRING(msg));
   direct_snd_error_call = false;
   return(msg);

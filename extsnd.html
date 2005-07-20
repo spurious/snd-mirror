@@ -4382,6 +4382,16 @@ number of channels in <i>snd</i>.
 <tr><td colspan=2></td></tr>
 
 
+<!-- clear-minibuffer -->
+<tr><td colspan=2>
+<code><a class=def name="clearminibuffer">clear-minibuffer</a> (<i>snd</i>)</code>
+</td></tr>
+<tr><td></td><td>
+Clears <i>snd</i>'s minibuffer area (both text and error messages).
+</td></tr>
+<tr><td colspan=2></td></tr>
+
+
 <!-- clm-channel -->
 <tr><td colspan=2>
 <code><a class=def name="clmchannel">clm-channel</a> (clm-gen <i>beg dur snd chn edpos overlap origin</i>)</code>
@@ -6027,19 +6037,20 @@ See ladspa.scm.
 Post <i>msg</i> in <i>snd</i>'s minibuffer, and when you respond,
 call <i>callback</i> with the response as the callback's argument.
 If <i>callback</i> is specified it should be either #f or a function of 
-one argument.  If 'raw' is #t, the response is returned as a string; otherwise it is evaluated first.
+one argument (the raw response if 'raw' is #t, otherwise the evaluated response).
+For example, the following fragment asks for 
+a yes-or-no response, then takes some action:
 </td></tr>
-
 <tr><td></td><td>
 <table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
-(<em class=red>prompt-in-minibuffer</em> "sample 0 via func:"
-  (lambda (func) 
-    (set! (<a class=quiet href="#sample">sample</a> 0) (func (<a class=quiet href="#sample">sample</a> 0)))))
-    ;; here we're assuming you will type a function in response to the prompt
-    ;;   the value returned by the function will be the new sample 0 value
-    ;;   the function should take one argument, the current sample 0 value
-    ;; now if you respond: (lambda (y) (+ y .5))
-    ;; sample 0 will be set to itself + .5
+  (define* (yes-or-no question action-if-yes action-if-no #:optional snd)
+    (<em class=red>prompt-in-minibuffer</em> question
+		 	  (lambda (response)
+			    (<a class=quiet href="#clearminibuffer">clear-minibuffer</a>)
+			    (if (string=? response "yes")
+			        (action-if-yes snd)
+			        (action-if-no snd)))
+			  snd #t))
 </pre></td></tr></table></td></tr>
 
 <tr><td></td><td>
@@ -6470,12 +6481,14 @@ In Ruby, <b>redo</b> is a part of the loop handling, so Snd's redo is renamed re
 
 <!-- report-in-minibuffer -->
 <tr><td colspan=2>
-<code><a class=def name="reportinminibuffer">report-in-minibuffer</a> (msg <i>snd</i>)</code>
+<code><a class=def name="reportinminibuffer">report-in-minibuffer</a> (msg <i>snd as-error</i>)</code>
 </td></tr>
 <tr><td></td><td>
 post <i>msg</i> in <i>snd</i>'s minibuffer.  This is the text widget between the sound's filename and the buttons
 on the right, beneath the graph.  It is intended to mimic Emacs' minibuffer, being useful mainly for short,
-temporary messages.  C-g clears it.  See also <a href="#promptinminibuffer">prompt-in-minibuffer</a>.
+temporary messages.  C-g clears it, as does <a href="#clearminibuffer">clear-minibuffer</a>.  
+If 'as-error' is #t, the message is placed in the minibuffer error label, rather than in the text entry area.
+See also <a href="#promptinminibuffer">prompt-in-minibuffer</a>.
 </td></tr>
 <tr><td colspan=2></td></tr>
 

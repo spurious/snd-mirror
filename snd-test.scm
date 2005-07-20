@@ -23257,6 +23257,7 @@ EDITS: 5
 		(if (or (not (string? txt))
 			(not (string=? str txt)))
 		    (snd-display ";name text: ~A ~A" str txt)))))
+	(clear-minibuffer)
 	(close-sound ind))
       (if (file-exists? "link-oboe.snd")
 	  (let* ((ind (open-sound "link-oboe.snd"))
@@ -44615,24 +44616,6 @@ EDITS: 1
 			      (click-button (XmMessageBoxGetChild envd XmDIALOG_CANCEL_BUTTON)) (force-event)
 			      (close-sound ind2))))))
 		  
-		  ;; ---------------- yes-or-no dialog ----------------
-		  (if (provided? 'snd-debug)
-		      (let ((old-val (with-background-processes)))
-			(set! (with-background-processes) #f)
-			(let* ((val (yes-or-no? "hiho"))
-			       (yesd (list-ref (dialog-widgets) 4)))
-			  (if (not yesd)
-			      (snd-display ";no yes dialog"))
-			  (XtManageChild yesd)
-			  (click-button (XmMessageBoxGetChild yesd XmDIALOG_OK_BUTTON)) (force-event))
-			(let* ((val (yes-or-no? "hiho"))
-			       (yesd (list-ref (dialog-widgets) 4)))
-			  (if (not yesd)
-			      (snd-display ";no no dialog"))
-			  (XtManageChild yesd)
-			  (click-button (XmMessageBoxGetChild yesd XmDIALOG_CANCEL_BUTTON)) (force-event))
-			(set! (with-background-processes) old-val)))
-		  
 		  ;; ---------------- transform dialog ----------------
 		  (let* ((transd (list-ref (dialog-widgets) 5))
 			 (beta (find-child transd "beta-scale")))
@@ -54401,7 +54384,7 @@ EDITS: 1
 		     recorder-file recorder-gain recorder-in-amp recorder-in-format recorder-max-duration recorder-out-amp
 		     recorder-out-chans recorder-out-format recorder-out-type recorder-srate recorder-trigger redo region-chans view-regions-dialog
 		     region-graph-style region-frames region-position region-maxamp region-maxamp-position 
-		     selection-maxamp selection-maxamp-position region-sample region->vct
+		     selection-maxamp selection-maxamp-position region-sample region->vct clear-minibuffer
 		     region-srate regions region?  remove-from-menu report-in-minibuffer reset-controls restore-controls
 		     restore-marks restore-region reverb-control-decay reverb-control-feedback recorder-in-chans
 		     reverb-control-length reverb-control-lowpass reverb-control-scale reverb-control?  reverse-sound
@@ -55695,7 +55678,6 @@ EDITS: 1
 	    (check-error-tag 'wrong-type-arg (lambda () (info-dialog (list 0 1) "hiho")))
 	    (check-error-tag 'no-such-sound (lambda () (edit-header-dialog 1234)))
 	    (check-error-tag 'no-such-track (lambda () (make-track-sample-reader 0)))
-	    (check-error-tag 'wrong-type-arg (lambda () (yes-or-no? (list 0 1))))
 	    (check-error-tag 'no-such-file (lambda () (open-sound "/bad/baddy.snd")))
 	    (check-error-tag 'no-such-file (lambda () (open-raw-sound "/bad/baddy.snd" 1 22050 mus-lshort)))
 	    (check-error-tag 'no-such-file (lambda () (view-sound "/bad/baddy.snd")))

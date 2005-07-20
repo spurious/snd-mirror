@@ -11,6 +11,7 @@ enum {W_pane, W_pane_box, W_control_panel,
       W_revlen, W_revlen_event, W_revlen_label, W_revlen_number, W_reverb_button,
       W_filter_form, W_filter_label, W_filter_order, W_filter_env, W_filter, W_filter_button, 
       W_filter_dB, W_filter_hz, W_filter_frame,
+      W_error_info_frame, W_error_info_label,
       NUM_SND_WIDGETS
 };
 
@@ -19,9 +20,6 @@ enum {W_amp_adj, W_speed_adj, W_contrast_adj, W_expand_adj, W_revscl_adj,
       NUM_SND_ADJS
 };
 
-/* #define NUM_SND_WIDGETS 57 */
-/* #define NUM_SND_ADJS 7 */
-
 GtkWidget *unite_button(snd_info *sp)   {return(sp->sgx->snd_widgets[W_unite]);}
 GtkWidget *filter_graph(snd_info *sp)   {return(sp->sgx->snd_widgets[W_filter_env]);}
 
@@ -29,12 +27,24 @@ GtkWidget *w_snd_pane(snd_info *sp)     {return(sp->sgx->snd_widgets[W_pane]);}
 GtkWidget *w_snd_pane_box(snd_info *sp) {return(sp->sgx->snd_widgets[W_pane_box]);}
 GtkWidget *w_snd_name(snd_info *sp)     {return(sp->sgx->snd_widgets[W_name]);}
 
-#define CONTROL_PANEL(Sp)        Sp->sgx->snd_widgets[W_control_panel]
-#define PLAY_BUTTON(Sp)          Sp->sgx->snd_widgets[W_play]
+#define NAME_BOX(Sp)             Sp->sgx->snd_widgets[W_name_form]
+#define MINIBUFFER_SEPARATOR(Sp) Sp->sgx->snd_widgets[W_info_sep]
+#define MINIBUFFER_LABEL(Sp)     Sp->sgx->snd_widgets[W_info_label]
+#define MINIBUFFER_TEXT(Sp)      Sp->sgx->snd_widgets[W_info]
 #define NAME_PIX(Sp)             Sp->sgx->snd_widgets[W_name_pix]
+#define SYNC_BUTTON(Sp)          Sp->sgx->snd_widgets[W_sync]
+#define PLAY_BUTTON(Sp)          Sp->sgx->snd_widgets[W_play]
+#define UNITE_BUTTON(Sp)         Sp->sgx->snd_widgets[W_unite]
+
+#define ERROR_INFO(Sp)           Sp->sgx->snd_widgets[W_error_info_label]
+#define ERROR_INFO_FRAME(Sp)     Sp->sgx->snd_widgets[W_error_info_frame]
+
+
+#define CONTROL_PANEL(Sp)        Sp->sgx->snd_widgets[W_control_panel]
+
 #define SPEED_ARROW(Sp)          Sp->sgx->snd_widgets[W_speed_pix]
-#define AMP_LABEL(Sp)            Sp->sgx->snd_widgets[W_amp_number]
 #define SPEED_LABEL(Sp)          Sp->sgx->snd_widgets[W_speed_number]
+#define AMP_LABEL(Sp)            Sp->sgx->snd_widgets[W_amp_number]
 #define EXPAND_LABEL(Sp)         Sp->sgx->snd_widgets[W_expand_number]
 #define EXPAND_BUTTON(Sp)        Sp->sgx->snd_widgets[W_expand_button]
 #define CONTRAST_LABEL(Sp)       Sp->sgx->snd_widgets[W_contrast_number]
@@ -47,10 +57,6 @@ GtkWidget *w_snd_name(snd_info *sp)     {return(sp->sgx->snd_widgets[W_name]);}
 #define FILTER_BUTTON(Sp)        Sp->sgx->snd_widgets[W_filter_button]
 #define FILTER_DB_BUTTON(Sp)     Sp->sgx->snd_widgets[W_filter_dB]
 #define FILTER_HZ_BUTTON(Sp)     Sp->sgx->snd_widgets[W_filter_hz]
-#define MINIBUFFER_SEPARATOR(Sp) Sp->sgx->snd_widgets[W_info_sep]
-#define MINIBUFFER_LABEL(Sp)     Sp->sgx->snd_widgets[W_info_label]
-#define MINIBUFFER_TEXT(Sp)      Sp->sgx->snd_widgets[W_info]
-#define SYNC_BUTTON(Sp)          Sp->sgx->snd_widgets[W_sync]
 
 #define AMP_ADJUSTMENT(Sp)       Sp->sgx->snd_adjs[W_amp_adj]
 #define SPEED_ADJUSTMENT(Sp)     Sp->sgx->snd_adjs[W_speed_adj]
@@ -58,6 +64,34 @@ GtkWidget *w_snd_name(snd_info *sp)     {return(sp->sgx->snd_widgets[W_name]);}
 #define CONTRAST_ADJUSTMENT(Sp)  Sp->sgx->snd_adjs[W_contrast_adj]
 #define REVSCL_ADJUSTMENT(Sp)    Sp->sgx->snd_adjs[W_revscl_adj]
 #define REVLEN_ADJUSTMENT(Sp)    Sp->sgx->snd_adjs[W_revlen_adj]
+
+
+/* -------- minibuffer error -------- */
+
+static void watch_minibuffer(GtkWidget *w, gpointer context)
+{
+  clear_minibuffer_error((snd_info *)context);
+}
+
+void clear_minibuffer_error(snd_info *sp)
+{
+  gtk_widget_hide(ERROR_INFO_FRAME(sp));
+  gtk_widget_hide(ERROR_INFO(sp));
+  if (sp->sgx->minibuffer_watcher)
+    {
+      g_signal_handler_disconnect(MINIBUFFER_TEXT(sp), sp->sgx->minibuffer_watcher);
+      sp->sgx->minibuffer_watcher = 0;
+    }
+}
+
+void display_minibuffer_error(snd_info *sp, const char *str) 
+{
+  gtk_entry_set_text(GTK_ENTRY(ERROR_INFO(sp)), str);
+  gtk_widget_show(ERROR_INFO(sp));
+  gtk_widget_show(ERROR_INFO_FRAME(sp));
+  if (!(sp->sgx->minibuffer_watcher))
+    sp->sgx->minibuffer_watcher = SG_SIGNAL_CONNECT(MINIBUFFER_TEXT(sp), "changed", watch_minibuffer, (gpointer)sp);
+}
 
 
 /* -------- PIXMAPS -------- */
@@ -226,7 +260,6 @@ void make_minibuffer_label(snd_info *sp, char *str)
 static void minibuffer_activate_callback(GtkWidget *w, gpointer data)
 {
   snd_info *sp = (snd_info *)data;
-  ss->mx_sp = sp; 
   snd_minibuffer_activate(sp, 0, false);
   sp->sgx->mini_active = true;
 }
@@ -1314,8 +1347,11 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       gtk_paned_add1(GTK_PANED(sw[W_pane]), sw[W_pane_box]);
       gtk_widget_show(sw[W_pane_box]);
 
-      sw[W_name_form] = gtk_hbox_new(false, 0);
-      gtk_box_pack_end(GTK_BOX(sw[W_pane_box]), sw[W_name_form], false, false, 0);
+      ERROR_INFO_FRAME(sp) = gtk_frame_new(NULL);
+      gtk_box_pack_end(GTK_BOX(sw[W_pane_box]), ERROR_INFO_FRAME(sp), false, false, 10);
+
+      NAME_BOX(sp) = gtk_hbox_new(false, 0);
+      gtk_box_pack_end(GTK_BOX(sw[W_pane_box]), NAME_BOX(sp), false, false, 0);
       
       for (i = 0; i < nchans; i++) 
 	add_channel_window(sp, i, chan_min_y, 0, NULL, WITH_FW_BUTTONS, WITH_EVENTS);
@@ -1329,7 +1365,7 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       /* -------- NAME FIELDS -------- */
 
       sw[W_name_event] = gtk_event_box_new();
-      gtk_box_pack_start(GTK_BOX(sw[W_name_form]), sw[W_name_event], false, false, 5);
+      gtk_box_pack_start(GTK_BOX(NAME_BOX(sp)), sw[W_name_event], false, false, 5);
       gtk_widget_show(sw[W_name_event]);
       SG_SIGNAL_CONNECT(sw[W_name_event], "button_press_event", name_click_callback, sp);
       
@@ -1337,48 +1373,54 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       gtk_container_add(GTK_CONTAINER(sw[W_name_event]), sw[W_name]);
       gtk_widget_show(sw[W_name]);
       
-      sw[W_name_pix] = gtk_drawing_area_new();
-      gtk_widget_set_events(sw[W_name_pix], GDK_EXPOSURE_MASK);
-      gtk_widget_set_size_request(sw[W_name_pix], 16, 16);
-      gtk_box_pack_start(GTK_BOX(sw[W_name_form]), sw[W_name_pix], false, false, 0);
-      gtk_widget_show(sw[W_name_pix]);
-      SG_SIGNAL_CONNECT(sw[W_name_pix], "expose_event", name_pix_expose, sp);
+      NAME_PIX(sp) = gtk_drawing_area_new();
+      gtk_widget_set_events(NAME_PIX(sp), GDK_EXPOSURE_MASK);
+      gtk_widget_set_size_request(NAME_PIX(sp), 16, 16);
+      gtk_box_pack_start(GTK_BOX(NAME_BOX(sp)), NAME_PIX(sp), false, false, 0);
+      gtk_widget_show(NAME_PIX(sp));
+      SG_SIGNAL_CONNECT(NAME_PIX(sp), "expose_event", name_pix_expose, sp);
 
-      sw[W_info_sep] = gtk_vseparator_new();
-      gtk_box_pack_start(GTK_BOX(sw[W_name_form]), sw[W_info_sep], false, false, 4);
-      gtk_widget_show(sw[W_info_sep]);
+      MINIBUFFER_SEPARATOR(sp) = gtk_vseparator_new();
+      gtk_box_pack_start(GTK_BOX(NAME_BOX(sp)), MINIBUFFER_SEPARATOR(sp), false, false, 4);
+      gtk_widget_show(MINIBUFFER_SEPARATOR(sp));
       
-      sw[W_info_label] = gtk_label_new(NULL);
-      gtk_box_pack_start(GTK_BOX(sw[W_name_form]), sw[W_info_label], false, false, 0);
-      gtk_widget_show(sw[W_info_label]);
+      MINIBUFFER_LABEL(sp) = gtk_label_new(NULL);
+      gtk_box_pack_start(GTK_BOX(NAME_BOX(sp)), MINIBUFFER_LABEL(sp), false, false, 0);
+      gtk_widget_show(MINIBUFFER_LABEL(sp));
       
-      sw[W_info] = snd_entry_new(sw[W_name_form], false);
-      SG_SIGNAL_CONNECT(sw[W_info], "key_press_event", minibuffer_key_callback, sp);
-      SG_SIGNAL_CONNECT(sw[W_info], "activate", minibuffer_activate_callback, sp);
-      SG_SIGNAL_CONNECT(sw[W_info], "enter_notify_event", minibuffer_mouse_enter, sp);
-      SG_SIGNAL_CONNECT(sw[W_info], "leave_notify_event", minibuffer_mouse_leave, sp);
+      MINIBUFFER_TEXT(sp) = snd_entry_new(NAME_BOX(sp), false);
+      SG_SIGNAL_CONNECT(MINIBUFFER_TEXT(sp), "key_press_event", minibuffer_key_callback, sp);
+      SG_SIGNAL_CONNECT(MINIBUFFER_TEXT(sp), "activate", minibuffer_activate_callback, sp);
+      SG_SIGNAL_CONNECT(MINIBUFFER_TEXT(sp), "enter_notify_event", minibuffer_mouse_enter, sp);
+      SG_SIGNAL_CONNECT(MINIBUFFER_TEXT(sp), "leave_notify_event", minibuffer_mouse_leave, sp);
 
       /* now fill from other end */
       
-      sw[W_play] = gtk_check_button_new_with_label(_("play"));
-      gtk_box_pack_end(GTK_BOX(sw[W_name_form]), sw[W_play], false, false, 0);
-      SG_SIGNAL_CONNECT(sw[W_play], "button_press_event", play_button_callback, sp);
-      SG_SIGNAL_CONNECT(sw[W_play], "toggled", play_button_click_callback, sp);
-      gtk_widget_show(sw[W_play]);
+      PLAY_BUTTON(sp) = gtk_check_button_new_with_label(_("play"));
+      gtk_box_pack_end(GTK_BOX(NAME_BOX(sp)), PLAY_BUTTON(sp), false, false, 0);
+      SG_SIGNAL_CONNECT(PLAY_BUTTON(sp), "button_press_event", play_button_callback, sp);
+      SG_SIGNAL_CONNECT(PLAY_BUTTON(sp), "toggled", play_button_click_callback, sp);
+      gtk_widget_show(PLAY_BUTTON(sp));
       
-      sw[W_sync] = gtk_check_button_new_with_label(_("sync"));
-      gtk_box_pack_end(GTK_BOX(sw[W_name_form]), sw[W_sync], false, false, 0);
-      SG_SIGNAL_CONNECT(sw[W_sync], "button_press_event", sync_button_callback, sp);
-      SG_SIGNAL_CONNECT(sw[W_sync], "toggled", sync_button_click, sp);
-      gtk_widget_show(sw[W_sync]);
+      SYNC_BUTTON(sp) = gtk_check_button_new_with_label(_("sync"));
+      gtk_box_pack_end(GTK_BOX(NAME_BOX(sp)), SYNC_BUTTON(sp), false, false, 0);
+      SG_SIGNAL_CONNECT(SYNC_BUTTON(sp), "button_press_event", sync_button_callback, sp);
+      SG_SIGNAL_CONNECT(SYNC_BUTTON(sp), "toggled", sync_button_click, sp);
+      gtk_widget_show(SYNC_BUTTON(sp));
       
-      sw[W_unite] = gtk_check_button_new_with_label(_("unite"));
-      gtk_box_pack_end(GTK_BOX(sw[W_name_form]), sw[W_unite], false, false, 0);
-      SG_SIGNAL_CONNECT(sw[W_unite], "button_press_event", unite_button_callback, sp);
-      SG_SIGNAL_CONNECT(sw[W_unite], "toggled", unite_button_click, sp);
-      gtk_widget_show(sw[W_unite]);
+      UNITE_BUTTON(sp) = gtk_check_button_new_with_label(_("unite"));
+      gtk_box_pack_end(GTK_BOX(NAME_BOX(sp)), UNITE_BUTTON(sp), false, false, 0);
+      SG_SIGNAL_CONNECT(UNITE_BUTTON(sp), "button_press_event", unite_button_callback, sp);
+      SG_SIGNAL_CONNECT(UNITE_BUTTON(sp), "toggled", unite_button_click, sp);
+      gtk_widget_show(UNITE_BUTTON(sp));
       
-      gtk_widget_show(sw[W_name_form]);
+      gtk_widget_show(NAME_BOX(sp));
+
+      /* -------- minibuffer error display -------- */
+
+      ERROR_INFO(sp) = snd_gtk_label_new(NULL, ss->sgx->highlight_color);
+      gtk_container_add(GTK_CONTAINER(ERROR_INFO_FRAME(sp)), ERROR_INFO(sp));
+      gtk_widget_show(ERROR_INFO(sp));
 
       /* if control-panel */
       
@@ -1641,7 +1683,7 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
     { /* re-manage currently inactive chan */
       if (sound_style(ss) == SOUNDS_IN_SEPARATE_WINDOWS) 
 	raise_dialog(sx->dialog);
-      gtk_widget_show(sw[W_unite]);
+      gtk_widget_show(UNITE_BUTTON(sp));
       gtk_widget_show(sw[W_pane]);
       for (k = 0; k < nchans; k++) 
 	add_channel_window(sp, k, chan_min_y, 0, NULL, WITH_FW_BUTTONS, WITH_EVENTS);
@@ -1663,7 +1705,7 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
     }
 
   if (sp->nchans == 1) 
-    gtk_widget_hide(sw[W_unite]);
+    gtk_widget_hide(UNITE_BUTTON(sp));
   add_sound_data(filename, sp, WITH_GRAPH);
   if (cant_write(sp->filename)) sp->file_read_only = true;
   snd_file_lock_icon(sp, sp->user_read_only || sp->file_read_only);
@@ -1695,6 +1737,7 @@ void snd_info_cleanup(snd_info *sp)
     {
       snd_context *sx;
       sx = sp->sgx;
+      clear_minibuffer_error(sp);
       if (SYNC_BUTTON(sp))
 	{
 	  set_toggle_button(SYNC_BUTTON(sp), false, false, (void *)sp);

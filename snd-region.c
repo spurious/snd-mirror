@@ -560,7 +560,8 @@ static int save_region_1(char *ofile, int type, int format, int srate, int reg, 
       if (r->use_temp_file == REGION_DEFERRED) 
 	deferred_region_to_temp_file(r);
       comlen = snd_strlen(comment);
-      if ((snd_write_header(ofile, type, srate, r->chans, 28, r->chans * r->frames, format, comment, comlen, NULL)) == -1)
+      /* TODO: better error */
+      if ((snd_write_header(ofile, type, srate, r->chans, 28, r->chans * r->frames, format, comment, comlen, NULL)) != IO_NO_ERROR)
 	return(MUS_HEADER_WRITE_FAILED);
       oloc = mus_header_data_location();
       if ((ofd = snd_reopen_write(ofile)) == -1) 
@@ -643,7 +644,8 @@ static int paste_region_1(int n, chan_info *cp, bool add, off_t beg, int trk)
 {
   region *r;
   char *origin = NULL;
-  int i, err = MUS_NO_ERROR, id = -1;
+  int i, id = -1;
+  io_error_t io_err;
   sync_info *si = NULL;
   r = id_to_region(n);
   if ((r == NULL) || (r->frames == 0)) return(INVALID_REGION);
@@ -655,8 +657,8 @@ static int paste_region_1(int n, chan_info *cp, bool add, off_t beg, int trk)
     {
       char *newname;
       newname = shorter_tempnam(temp_dir(ss), "snd_");
-      err = copy_file(r->filename, newname);
-      if (err != MUS_NO_ERROR)
+      io_err = copy_file(r->filename, newname);
+      if (io_err != IO_NO_ERROR)
 	{
 	  cp->edit_hook_checked = false;
 	  snd_error(_("can't save mix temp file (%s: %s)"), newname, snd_io_strerror());
@@ -675,8 +677,8 @@ static int paste_region_1(int n, chan_info *cp, bool add, off_t beg, int trk)
       if (r->use_temp_file == REGION_FILE)
 	{
 	  tempfile = snd_tempnam();
-	  err = copy_file(r->filename, tempfile);
-	  if (err != MUS_NO_ERROR)
+	  io_err = copy_file(r->filename, tempfile);
+	  if (io_err != IO_NO_ERROR)
 	    {
 	      if (si) si = free_sync_info(si);
 	      cp->edit_hook_checked = false;
@@ -872,7 +874,11 @@ static void deferred_region_to_temp_file(region *r)
 #else
       hdr = make_temp_header(r->filename, r->srate, r->chans, 0, (char *)c__FUNCTION__);
 #endif
-      ofd = open_temp_file(r->filename, r->chans, hdr);
+      {
+	/* TODO: better error */
+	io_error_t io_err = IO_NO_ERROR;
+	ofd = open_temp_file(r->filename, r->chans, hdr, &io_err);
+      }
       if (ofd == -1)
 	snd_error(_("can't write region temp file %s: %s"), r->filename, snd_io_strerror());
       else
@@ -1024,6 +1030,7 @@ void save_regions(FILE *fd)
 	  newname = run_save_state_hook(ofile);
 	  FREE(ofile);
 	  copy_file(r->filename, newname);
+	  /* TODO: check error? */
 #if HAVE_RUBY
 	  fprintf(fd, "%s(%d, %d, " OFF_TD ", %d, %.4f, \"%s\", \"%s\", \"%s\", ",
 	          "restore_region", i, r->chans, r->frames, r->srate, r->maxamp, r->name, r->start, r->end);
@@ -1063,13 +1070,13 @@ void region_edit(int pos)
 	snd_error(_("region %d already being edited"), r->id);
       else
 	{
-	  int err;
+	  io_error_t io_err;
 	  char *temp_region_name;
 	  if (r->use_temp_file == REGION_DEFERRED) 
 	    deferred_region_to_temp_file(r);
 	  temp_region_name = shorter_tempnam(temp_dir(ss), "region-");
-	  err = copy_file(r->filename, temp_region_name);
-	  if (err == MUS_NO_ERROR)
+	  io_err = copy_file(r->filename, temp_region_name);
+	  if (io_err == IO_NO_ERROR)
 	    {
 	      snd_info *sp;
 	      ss->open_requestor = FROM_REGION_EDIT;
@@ -1115,7 +1122,8 @@ void save_region_backpointer(snd_info *sp)
 {
   /* region being edited, user chose 'save' */
   region *r;
-  int i, err;
+  int i;
+  io_error_t io_err;
   r = sp->edited_region;
   /* update r's data in file, deleting old, redisplay if browser active etc */
   if (r == regions[0]) deactivate_selection();
@@ -1132,8 +1140,8 @@ void save_region_backpointer(snd_info *sp)
     }
   /* make new region temp file */
   r->filename = snd_tempnam();
-  err = copy_file(r->editor_name, r->filename);
-  if (err != MUS_NO_ERROR)
+  io_err = copy_file(r->editor_name, r->filename);
+  if (io_err != IO_NO_ERROR)
     snd_error(_("can't make region temp file (%s: %s)"), 
 	      r->filename, 
 	      snd_io_strerror());

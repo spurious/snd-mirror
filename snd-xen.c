@@ -7,19 +7,15 @@
  *   In Ruby, rand is protected as kernel_rand.
  */
 
-/* TODO: get rid of all yes_or_no calls (it is wrong in every case), and move that garbage to Scheme/Ruby
- *   snd-edits:
- *     all of these are fixable:
- *       snd-edits (save_channel_edits!)
- *       snd-file (save_as_dialog_save!!)
- *       snd-io (snd_overwrite_ok: snd-xfile, snd-file save_as!!, snd-kbd: save-region
- *   extensions.scm: check-for-unsaved-edits
- *   misc.scm: delete question in File:Delete menu -- another local callback set
- *   snd-motif.scm: same code as above
- * many of these need some way to post a local ok/cancel button and a question, then
- *   use local callbacks for continuation -- this should even work in extensions.scm
- * TODO: report_in_minibuffer -> snd_error|warning except for informational stuff
+/* TODO: report_in_minibuffer -> snd_error|warning except for informational stuff
  *     then need the within_xen trap, within_keyboard (?) etc
+ */
+
+/* TODO: keep track of which hook (and which hook-function) is executing,
+ *   if error, remove that function (and mention the context/name in the error msg)
+ * TODO: xen.h need XEN_REMOVE_HOOK_FUNCTION or some equivalent [hooks.h takes the hook function which is useless here]
+ *
+ * TODO: ctrls -> controls throughout. (may be collisions) 
  */
 
 /* -------- protect XEN vars from GC -------- */
@@ -215,17 +211,42 @@ static char *scheme_to_ruby(const char *name)
 
 /* -------- error handling -------- */
 
-static bool send_error_output_to_stdout = false;
 static char *last_file_loaded = NULL;
 
-static void string_to_stdout(const char *msg)
+void redirect_xen_error_to(void (*handler)(const char *msg, void *ufd), void *data) /* currently could be local */
 {
-  char *str;
-  write(fileno(stdout), msg, snd_strlen(msg));
-  str = (char *)CALLOC(4 + snd_strlen(listener_prompt(ss)), sizeof(char));
-  sprintf(str, "\n%s", listener_prompt(ss));
-  write(fileno(stdout), str, snd_strlen(str));
-  FREE(str);
+#if DEBUGGING
+  fprintf(stderr,"redirect xen %p\n", handler);
+#endif
+  ss->xen_error_handler = handler;
+  ss->xen_error_data = data;
+}
+
+void redirect_snd_print_to(void (*handler)(const char *msg, void *ufd), void *data)
+{
+  ss->snd_print_handler = handler;
+  ss->snd_print_data = data;
+}
+
+void redirect_everything_to(void (*handler)(const char *msg, void *ufd), void *data)
+{
+#if DEBUGGING
+  fprintf(stderr,"redirect everything\n");
+#endif
+  redirect_snd_error_to(handler, data);
+  redirect_xen_error_to(handler, data);
+  redirect_snd_warning_to(handler, data);
+  redirect_snd_print_to(handler, data);
+}
+
+void redirect_errors_to(void (*handler)(const char *msg, void *ufd), void *data)
+{
+#if DEBUGGING
+  fprintf(stderr,"redirect errors %p\n", handler);
+#endif
+  redirect_snd_error_to(handler, data);
+  redirect_xen_error_to(handler, data);
+  redirect_snd_warning_to(handler, data);
 }
 
 static char *gl_print(XEN result);
@@ -341,7 +362,6 @@ static XEN snd_format_if_needed(XEN args)
 #if HAVE_GUILE
 static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error handler, data = handler_data = caller's name */
 {
-  snd_info *sp;
   char *possible_code;
   XEN port;
   int port_gc_loc, stack_gc_loc;
@@ -357,6 +377,7 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
 		       SCM_OPN | SCM_WRTNG,
 		       "snd error handler");
   port_gc_loc = snd_protect(port);
+  XEN_PUTS("\n", port);
 
   if ((DEBUGGING) || (ss->batch_mode))
     {
@@ -458,23 +479,17 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
     }
   XEN_FLUSH_PORT(port); /* needed to get rid of trailing garbage chars?? -- might be pointless now */
   name_buf = copy_string(XEN_TO_C_STRING(XEN_PORT_TO_STRING(port)));
-  if (send_error_output_to_stdout)
-    string_to_stdout(name_buf);
+#if DEBUGGING
+  fprintf(stderr, "xen_error: %p\n", ss->xen_error_handler);
+#endif
+  if (ss->xen_error_handler)
+    (*(ss->xen_error_handler))(name_buf, ss->xen_error_data);
   else
     {
-      /* TODO: perhaps just append to listener even if it's closed */
-      if (listener_height() > 5)
+      if (listener_exists())
 	listener_append_and_prompt(name_buf);
-      else 
-	{
-	  if (ss->mx_sp)
-	    {
-	      sp = ss->mx_sp;
-	      clear_minibuffer_prompt(sp);
-	      report_in_minibuffer(sp, name_buf);
-	    }
-	  else snd_error(name_buf);
-	}
+      if (!(listener_is_visible()))
+	snd_error(name_buf);
     }
   snd_unprotect_at(port_gc_loc);
   if (name_buf) FREE(name_buf);
@@ -519,6 +534,10 @@ void snd_rb_raise(XEN tag, XEN throw_args)
 	}
     }
   /* backtrace perhaps via xen_rb_report_error (via rescue) in xen.c? */
+  /* TODO: where are Ruby errors sent??
+     if (ss->xen_error_handler)
+       (*(ss->xen_error_handler))(error_message, ss->xen_error_data);
+  */
   rb_raise(err, msg);
 }
 #endif
@@ -923,60 +942,32 @@ static char *gl_print(XEN result)
   return(newbuf);
 }
 
-void snd_eval_str(char *buf)
-{
-  snd_report_result(snd_catch_any(eval_str_wrapper, (void *)buf, buf), buf);
-}
-
 void snd_report_result(XEN result, char *buf)
 {
+  /* kbd macros, startup evalled args */
   char *str = NULL;
   str = gl_print(result);
-  if (ss->mx_sp)
+  if (ss->snd_print_handler)
+    (*(ss->snd_print_handler))(str, ss->snd_print_data);
+  else
     {
-      snd_info *sp = NULL;
-      sp = ss->mx_sp;
-      clear_minibuffer_prompt(sp);
-      report_in_minibuffer(sp, str);
-    }
-  if (listener_height() > 5)
-    {
-      if (buf) listener_append(buf);
-      listener_append_and_prompt(str);
+      if (listener_exists())
+	{
+	  if (buf) listener_append(buf);
+	  listener_append_and_prompt(str);
+	}
     }
   if (str) FREE(str);
 }
 
 void snd_report_listener_result(XEN form)
 {
-  char *str = NULL;
-  XEN result;
-  listener_append("\n");
 #if HAVE_RUBY
-  str = gl_print(form);
-  result = form;
+  snd_report_result(form, "\n");
 #endif
 #if HAVE_SCHEME
-  result = snd_catch_any(eval_form_wrapper, (void *)form, NULL);
-  str = gl_print(result);
+  snd_report_result(snd_catch_any(eval_form_wrapper, (void *)form, NULL), "\n");
 #endif
-  if (listener_height() > 5)
-    listener_append_and_prompt(str);
-  if (str) FREE(str);
-}
-
-void snd_eval_property_str(char *buf)
-{
-  XEN result;
-  int loc;
-  char *str;
-  if ((snd_strlen(buf) == 0) || ((snd_strlen(buf) == 1) && (buf[0] == '\n'))) return;
-  result = snd_catch_any(eval_str_wrapper, (void *)buf, buf);
-  loc = snd_protect(result);
-  str = gl_print(result);
-  listener_append_and_prompt(str);
-  if (str) FREE(str);
-  snd_unprotect_at(loc);
 }
 
 static char *stdin_str = NULL;
@@ -1015,6 +1006,11 @@ static char *stdin_check_for_full_expression(char *newstr)
   return(stdin_str);
 }
 
+static void string_to_stdout(const char *msg, void *ignored)
+{
+  fprintf(stdout, "%s\n", msg);
+}
+
 void snd_eval_stdin_str(char *buf)
 {
   /* we may get incomplete expressions here */
@@ -1026,28 +1022,51 @@ void snd_eval_stdin_str(char *buf)
     {
       XEN result;
       int loc;
-      send_error_output_to_stdout = true;
+      redirect_everything_to(string_to_stdout, NULL);
       result = snd_catch_any(eval_str_wrapper, (void *)str, str);
+      redirect_everything_to(NULL, NULL);
       loc = snd_protect(result);
-      send_error_output_to_stdout = false;
       if (stdin_str) FREE(stdin_str);
       /* same as str here; if c-g! evaluated from stdin, clear_listener is called which frees/nullifies stdin_str */
       stdin_str = NULL;
       str = gl_print(result);
-      string_to_stdout(str);
+      string_to_stdout(str, NULL);
       if (str) FREE(str);
       snd_unprotect_at(loc);
     }
 }
 
+static void string_to_stderr_and_listener(const char *msg, void *ignore)
+{
+  fprintf(stderr, "%s\n", msg);
+  if (listener_exists())
+    {
+      listener_append((char *)msg);
+      listener_append("\n");
+    }
+  else 
+    {
+      if (ss->startup_errors)
+	{
+	  char *temp;
+	  temp = ss->startup_errors;
+	  ss->startup_errors = mus_format("%s\n%s %s\n", ss->startup_errors, listener_prompt(ss), msg);
+	  FREE(temp);
+	}
+      else ss->startup_errors = copy_string(msg); /* initial prompt is already there */
+    }
+}
+
 void snd_load_init_file(bool no_global, bool no_init)
 {
-  /* look for ".snd" on the home directory */
-  /* called only in snd-xmain.c at initialization time */
+  /* look for ".snd" on the home directory; return true if an error occurred (to try to get that info to the user's attention) */
+  /* called only in snd-g|xmain.c at initialization time */
   int fd;
   XEN result = XEN_TRUE;
   char *str = NULL;
   #define SND_CONF "/etc/snd.conf"
+  redirect_snd_print_to(string_to_stdout, NULL);
+  redirect_errors_to(string_to_stderr_and_listener, NULL);
   if (!no_global)
     {
       fd = OPEN(SND_CONF, O_RDONLY, 0);
@@ -1063,8 +1082,16 @@ void snd_load_init_file(bool no_global, bool no_init)
       fd = OPEN(str, O_RDONLY, 0);
       if (fd != -1) 
 	{
+	  char *expr;
+#if HAVE_RUBY	  
+	  expr = mus_format("load(%s)", ss->init_file);
+#endif
+#if HAVE_SCHEME
+	  expr = mus_format("(load %s)", ss->init_file);
+#endif
 	  snd_close(fd, str);
-	  result = snd_catch_any(eval_file_wrapper, (void *)str, "(load ~/.snd)");
+	  result = snd_catch_any(eval_file_wrapper, (void *)str, expr);
+	  FREE(expr);
 	}
       if (str) FREE(str);
     }
@@ -1082,6 +1109,7 @@ void snd_load_init_file(bool no_global, bool no_init)
       snd_unprotect_at(loc);
     }
 #endif
+  redirect_everything_to(NULL, NULL);
 }
 
 void snd_load_file(char *filename)
@@ -2111,13 +2139,6 @@ static XEN g_print_dialog(XEN managed, XEN direct_to_printer)
   return(XEN_WRAP_WIDGET(w));
 }
 
-static XEN g_yes_or_no_p(XEN msg) 
-{
-  #define H_yes_or_no_p "(" S_yes_or_no_p " message): display message and wait for 'y' or 'n'; return #t if 'y'"
-  XEN_ASSERT_TYPE(XEN_STRING_P(msg), msg, XEN_ONLY_ARG, S_yes_or_no_p, "a string");
-  return(C_TO_XEN_BOOLEAN(snd_yes_or_no_p(XEN_TO_C_STRING(msg))));
-}
-
 static XEN g_info_dialog(XEN subject, XEN msg)
 {
   widget_t w;
@@ -2553,7 +2574,15 @@ XEN run_or_hook (XEN hook, XEN args, const char *caller)
       if (!(XEN_EQ_P(args, XEN_EMPTY_LIST)))
 	result = XEN_APPLY(XEN_CAR(procs), args, caller);
       else result = XEN_CALL_0(XEN_CAR(procs), caller);
-      if (XEN_NOT_FALSE_P(result)) hook_result = result; /* return last non-#f result */
+      if (XEN_NOT_FALSE_P(result)) 
+#if HAVE_GUILE
+	{
+	  if (!(XEN_EQ_P(result, SCM_UNSPECIFIED)))
+	    hook_result = result; /* return last non-#f result, but not #<unspecified>! */
+	}
+#else
+        hook_result = result;
+#endif
       procs = XEN_CDR (procs);
     }
   return(xen_return_first(hook_result, args));
@@ -2987,7 +3016,6 @@ XEN_ARGIFY_1(g_save_sound_dialog_w, g_save_sound_dialog)
 XEN_ARGIFY_2(g_print_dialog_w, g_print_dialog)
 XEN_NARGIFY_2(g_info_dialog_w, g_info_dialog)
 XEN_NARGIFY_0(g_sounds_w, g_sounds)
-XEN_NARGIFY_1(g_yes_or_no_p_w, g_yes_or_no_p)
 XEN_NARGIFY_0(g_abort_w, g_abort)
 XEN_NARGIFY_0(g_abortq_w, g_abortq)
 XEN_NARGIFY_0(g_snd_version_w, g_snd_version)
@@ -3168,7 +3196,6 @@ XEN_NARGIFY_1(g_i0_w, g_i0)
 #define g_print_dialog_w g_print_dialog
 #define g_info_dialog_w g_info_dialog
 #define g_sounds_w g_sounds
-#define g_yes_or_no_p_w g_yes_or_no_p
 #define g_abort_w g_abort
 #define g_abortq_w g_abortq
 #define g_snd_version_w g_snd_version
@@ -3472,7 +3499,6 @@ void g_initialize_gh(void)
   XEN_DEFINE_PROCEDURE(S_print_dialog,          g_print_dialog_w,          0, 2, 0, H_print_dialog);
   XEN_DEFINE_PROCEDURE(S_info_dialog,           g_info_dialog_w,           2, 0, 0, H_info_dialog);
   XEN_DEFINE_PROCEDURE(S_sounds,                g_sounds_w,                0, 0, 0, H_sounds);
-  XEN_DEFINE_PROCEDURE(S_yes_or_no_p,           g_yes_or_no_p_w,           1, 0, 0, H_yes_or_no_p);
   XEN_DEFINE_PROCEDURE(S_abort,                 g_abort_w,                 0, 0, 0, H_abort);
   XEN_DEFINE_PROCEDURE(S_c_g,                   g_abortq_w,                0, 0, 0, H_abortQ);
   XEN_DEFINE_PROCEDURE(S_snd_version,           g_snd_version_w,           0, 0, 0, H_snd_version);

@@ -9,13 +9,13 @@ snd_info *snd_new_file(char *newname, int header_type, int data_format, int srat
   /* caller checks newname != null, and runs overwrite hook */
   if (mus_header_writable(header_type, data_format))
     {
-      int err;
+      io_error_t err;
       err = snd_write_header(newname, header_type, srate, chans, 0, /* 0 is loc? */
 			     samples * chans, /* total samples apparently */
 			     data_format, new_comment, 
 			     snd_strlen(new_comment), NULL);
-      if (err == -1)
-	snd_error(_("can't write %s: %s"), newname, snd_io_strerror());
+      if (err != IO_NO_ERROR)
+	snd_error(_("can't write %s: %s"), newname, snd_io_strerror()); /* TODO: better error */
       else
 	{
 	  int chan;
@@ -1731,7 +1731,11 @@ static bool apply_controls(apply_state *ap)
 	    }
 	  orig_dur = apply_dur;
 	  apply_dur = (off_t)(mult_dur * (apply_dur + added_dur));
-	  ap->ofd = open_temp_file(ap->ofile, ap->hdr->chans, ap->hdr);
+	  {
+	    /* TODO: better error */
+	    io_error_t io_err = IO_NO_ERROR;
+	    ap->ofd = open_temp_file(ap->ofile, ap->hdr->chans, ap->hdr, &io_err);
+	  }
 	  if (ap->ofd == -1)
 	    {
 	      snd_error(_("can't open apply temp file %s: %s\n"), ap->ofile, snd_open_strerror());
@@ -3296,7 +3300,8 @@ Omitted arguments take their value from the sound being saved.\n\
 
   snd_info *sp;
   file_info *hdr;
-  int ht = -1, df = -1, sr = -1, chan = -1, err = MUS_NO_ERROR, edit_position = AT_CURRENT_EDIT_POSITION;
+  int ht = -1, df = -1, sr = -1, chan = -1, edit_position = AT_CURRENT_EDIT_POSITION;
+  io_error_t io_err = IO_NO_ERROR;
   char *fname = NULL, *file = NULL, *outcom = NULL;
   XEN args[16]; 
   XEN keys[8];
@@ -3390,26 +3395,29 @@ Omitted arguments take their value from the sound being saved.\n\
   if (!(run_before_save_as_hook(sp, fname, false, sr, ht, df, outcom)))
     {
       if (chan >= 0)
-	err = save_channel_edits(sp->chans[chan], fname, edit_position);
-      else err = save_edits_without_display(sp, fname, ht, df, sr, outcom, edit_position);
+	io_err = save_channel_edits(sp->chans[chan], fname, edit_position);
+      else io_err = save_edits_without_display(sp, fname, ht, df, sr, outcom, edit_position);
     }
   if (free_outcom) 
     {
       FREE(outcom); 
       outcom = NULL;
     }
-  if (err == MUS_NO_ERROR) 
+  if (io_err == IO_NO_ERROR) 
     run_after_save_as_hook(sp, fname, false); /* true => from dialog */
   else
     {
-      XEN errstr;
-      errstr = C_TO_XEN_STRING(fname);
-      if (fname) {FREE(fname); fname = NULL;}
-      XEN_ERROR(CANNOT_SAVE,
-		XEN_LIST_4(C_TO_XEN_STRING(S_save_sound_as),
-			   errstr,
-			   C_TO_XEN_STRING(mus_error_type_to_string(err)),
-			   C_TO_XEN_STRING(snd_open_strerror())));
+      if (io_err != IO_SAVE_HOOK_CANCELLATION)
+	{
+	  XEN errstr;
+	  errstr = C_TO_XEN_STRING(fname);
+	  if (fname) {FREE(fname); fname = NULL;}
+	  XEN_ERROR(CANNOT_SAVE,
+		    XEN_LIST_4(C_TO_XEN_STRING(S_save_sound_as),
+			       errstr,
+			       C_TO_XEN_INT((int)io_err), /* TODO: better error */
+			       C_TO_XEN_STRING(snd_open_strerror())));
+	}
     }
   if (fname) FREE(fname);
   return(args[orig_arg[0] - 1]);
@@ -4684,7 +4692,11 @@ create a new sound file 'file' (writing float data), return the file descriptor 
   hdr->type = type;
   if (comment)
     hdr->comment = copy_string(comment);
-  result = open_temp_file(filename, chans, hdr);
+  {
+    /* TODO: better error */
+    io_error_t io_err = IO_NO_ERROR;
+    result = open_temp_file(filename, chans, hdr, &io_err);
+  }
   if (result == -1) 
     {
       free_file_info(hdr);
@@ -4706,7 +4718,7 @@ static XEN g_close_sound_file(XEN g_fd, XEN g_bytes)
 {
   #define H_close_sound_file "(" S_close_sound_file " fd bytes): close file fd, updating its header to report 'bytes' bytes of data"
   file_info *hdr;
-  int result, fd;
+  int fd;
   off_t bytes;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(g_fd), g_fd, XEN_ARG_1, S_close_sound_file, "an integer");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(g_bytes), g_bytes, XEN_ARG_2, S_close_sound_file, "a number");
@@ -4720,10 +4732,11 @@ static XEN g_close_sound_file(XEN g_fd, XEN g_bytes)
       snd_close(fd, "sound file");
       return(snd_no_such_file_error(S_close_sound_file, g_fd));
     }
-  result = close_temp_file(hdr->name, fd, hdr->type, bytes, any_selected_sound());
+  close_temp_file(hdr->name, fd, hdr->type, bytes, any_selected_sound());
+  /* TODO: trap error here and in all close_temp_files */
   unset_temp_fd(fd);
   free_file_info(hdr);
-  return(C_TO_XEN_INT(result));
+  return(C_TO_XEN_INT(0));
 }
 
 static XEN g_vct2soundfile(XEN g_fd, XEN obj, XEN g_nums)

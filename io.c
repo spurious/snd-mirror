@@ -430,6 +430,7 @@ int mus_file_open_descriptors(int tfd, const char *name, int format, int size /*
     {
       io_fd_size = tfd + IO_FD_ALLOC_SIZE;
       io_fds = (io_fd **)CALLOC(io_fd_size, sizeof(io_fd *));
+      if (!io_fds) return(MUS_MEMORY_ALLOCATION_FAILED);
     }
   if (io_fd_size <= tfd)
     {
@@ -439,7 +440,10 @@ int mus_file_open_descriptors(int tfd, const char *name, int format, int size /*
       for (i = lim; i < io_fd_size; i++) io_fds[i] = NULL;
     }
   if (io_fds[tfd] == NULL)
-    io_fds[tfd] = (io_fd *)CALLOC(1, sizeof(io_fd));
+    {
+      io_fds[tfd] = (io_fd *)CALLOC(1, sizeof(io_fd));
+      if (!(io_fds[tfd])) return(MUS_MEMORY_ALLOCATION_FAILED);
+    }
 
   fd = io_fds[tfd];
   fd->data_format = format;
@@ -468,7 +472,7 @@ bool mus_file_data_clipped(int tfd)
 int mus_file_set_data_clipped(int tfd, bool clipped)
 {
   io_fd *fd;
-  if ((io_fds == NULL) || (tfd >= io_fd_size) || (tfd < 0) || (io_fds[tfd] == NULL)) return(MUS_ERROR);
+  if ((io_fds == NULL) || (tfd >= io_fd_size) || (tfd < 0) || (io_fds[tfd] == NULL)) return(MUS_FILE_DESCRIPTORS_NOT_INITIALIZED);
   fd = io_fds[tfd];
   fd->data_clipped = clipped;
   return(MUS_NO_ERROR);
@@ -477,7 +481,7 @@ int mus_file_set_data_clipped(int tfd, bool clipped)
 int mus_file_set_header_type(int tfd, int type)
 {
   io_fd *fd;
-  if ((io_fds == NULL) || (tfd >= io_fd_size) || (tfd < 0) || (io_fds[tfd] == NULL)) return(MUS_ERROR);
+  if ((io_fds == NULL) || (tfd >= io_fd_size) || (tfd < 0) || (io_fds[tfd] == NULL)) return(MUS_FILE_DESCRIPTORS_NOT_INITIALIZED);
   fd = io_fds[tfd];
   fd->header_type = type;
   return(MUS_NO_ERROR);
@@ -486,7 +490,7 @@ int mus_file_set_header_type(int tfd, int type)
 int mus_file_header_type(int tfd)
 {
   io_fd *fd;
-  if ((io_fds == NULL) || (tfd >= io_fd_size) || (tfd < 0) || (io_fds[tfd] == NULL)) return(MUS_ERROR);
+  if ((io_fds == NULL) || (tfd >= io_fd_size) || (tfd < 0) || (io_fds[tfd] == NULL)) return(MUS_FILE_DESCRIPTORS_NOT_INITIALIZED);
   fd = io_fds[tfd];
   return(fd->header_type);
 }
@@ -519,7 +523,7 @@ char *mus_file_fd_name(int tfd)
 int mus_file_set_chans (int tfd, int chans)
 {
   io_fd *fd;
-  if ((io_fds == NULL) || (tfd >= io_fd_size) || (tfd < 0) || (io_fds[tfd] == NULL)) return(MUS_ERROR);
+  if ((io_fds == NULL) || (tfd >= io_fd_size) || (tfd < 0) || (io_fds[tfd] == NULL)) return(MUS_FILE_DESCRIPTORS_NOT_INITIALIZED);
   fd = io_fds[tfd];
   fd->chans = chans;
   return(MUS_NO_ERROR);
@@ -584,12 +588,16 @@ int mus_file_reopen_write(const char *arg)
 int mus_file_close(int fd)
 {
   io_fd *fdp;
-  if ((io_fds == NULL) || (fd >= io_fd_size) || (fd < 0) || (io_fds[fd] == NULL)) return(MUS_ERROR);
+  int close_result = 0;
+  if ((io_fds == NULL) || (fd >= io_fd_size) || (fd < 0) || (io_fds[fd] == NULL)) return(MUS_FILE_DESCRIPTORS_NOT_INITIALIZED);
   fdp = io_fds[fd];
   if (fdp->name) {FREE(fdp->name); fdp->name = NULL;}
   FREE(fdp);
   io_fds[fd] = NULL;
-  return(CLOSE(fd));
+  close_result = CLOSE(fd);
+  if (close_result < 0)
+    return(MUS_CANT_CLOSE_FILE);
+  return(MUS_NO_ERROR);
 }
 
 

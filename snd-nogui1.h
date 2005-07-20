@@ -13,11 +13,6 @@ void snd_help_back_to_top(void);
 void save_help_dialog_state(FILE *fd);
 
 
-/* -------- snd-xerror.c -------- */
-
-bool snd_yes_or_no_p(char *format, ...);
-
-
 /* -------- snd-xdraw.c -------- */
 
 void draw_line (axis_context *ax, int x0, int y0, int x1, int y1);
@@ -75,6 +70,7 @@ void listener_append_and_prompt(char *msg);
 void goto_listener(void);
 void listener_append(char *msg);
 void handle_listener(bool new_state);
+bool listener_exists(void);
 int listener_height(void);
 int listener_width(void);
 void clear_listener(void);
@@ -243,6 +239,8 @@ void finish_progress_report(snd_info *sp, enved_progress_t from_enved);
 void progress_report(snd_info *sp, const char *funcname, int curchan, int chans, Float pct, enved_progress_t from_enved);
 void reflect_amp_env_in_progress(snd_info *sp);
 void reflect_sound_selection(snd_info *sp);
+void display_minibuffer_error(snd_info *sp, const char *str);
+void clear_minibuffer_error(snd_info *sp);
 
 
 /* -------- snd-xfile.c -------- */

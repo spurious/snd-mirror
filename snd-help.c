@@ -410,6 +410,8 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+21-Jul:  clear-minibuffer, new as-error arg to report-in-minibuffer.\n\
+15-Jul:  removed yes-or-no? with associated dialog (and snd-g|xerror.c).\n\
 14-Jul:  Snd 7.14.\n\
 5-Jul:   default-output-type -> default-output-header-type, \n\
          default-output-format -> default-output-data-format.\n\
@@ -419,7 +421,6 @@ void about_snd_help(void)
 24-Jun:  channels-combined is now the default channel-style.\n\
 20-Jun:  'Extract' option to Save as dialogs (to extract a channel).\n\
 13-Jun:  folded gl-ruby.c into gl.c, xm-ruby.c into xm.c, xg-ruby.c into xg.c.\n\
-6-June:  removed save-options (use save-state).\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",

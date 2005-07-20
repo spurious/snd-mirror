@@ -330,6 +330,7 @@ typedef struct snd_info {
   off_t marking;
   int searching, amping;
   sp_filing_t filing;
+  char *filing_filename;
   bool prompting, loading, finding_mark, selectioning;
   printing_t printing;
   off_t macroing;
@@ -366,7 +367,7 @@ typedef struct snd_state {
   int active_sounds;
   Latus channel_min_height;
   snd_info **sounds;
-  char *search_expr, *startup_title;
+  char *search_expr, *startup_title, *startup_errors;
   struct ptree *search_tree;
   XEN search_proc;
   XEN file_sort_proc;
@@ -378,7 +379,6 @@ typedef struct snd_state {
   int position_slider_width, zoom_slider_width, toggle_size, channel_sash_indent, sash_size, channel_sash_size, sash_indent;
   char *init_file;
   int max_sounds;
-  snd_info *mx_sp;
   char *translated_filename;
   print_choice_t print_choice;
   snd_apply_t apply_choice;
@@ -387,7 +387,7 @@ typedef struct snd_state {
   int reloading_updated_file;
   Latus init_window_width, init_window_height;
   Locus init_window_x, init_window_y;
-  bool graph_hook_active, lisp_graph_hook_active;
+  bool graph_hook_active, lisp_graph_hook_active; /* TODO: can these be replaced by current_hook? */
   bool Show_Transform_Peaks, Show_Y_Zero, Show_Marks;
   with_grid_t Show_Grid;
   bool Fft_Log_Frequency, Fft_Log_Magnitude;
@@ -453,6 +453,7 @@ typedef struct snd_state {
   Float lin_dB;
   char *HTML_Dir, *HTML_Program;
   bool error_lock;
+  char *io_error_info;
   int deferred_regions;
   open_requestor_t open_requestor;
   snd_info *open_requestor_sp;
@@ -461,6 +462,16 @@ typedef struct snd_state {
   env_editor *enved;
   Tempus click_time;
   FAMConnection *fam_connection;
+  eval_hook_t current_hook;
+  int current_hook_function;
+  void (*snd_error_handler)(const char *error_msg, void *data);
+  void *snd_error_data;
+  void (*snd_warning_handler)(const char *warning_msg, void *data);
+  void *snd_warning_data;
+  void (*xen_error_handler)(const char *error_msg, void *data);
+  void *xen_error_data;
+  void (*snd_print_handler)(const char *msg, void *data);
+  void *snd_print_data;
 } snd_state;
 
 extern snd_state *ss;
@@ -504,14 +515,15 @@ int snd_io_open(const char *filename, int flags, mode_t mode);
 
 int snd_open_read(const char *arg);
 int snd_reopen_write(const char *arg);
-int snd_write_header(const char *name, int type, int srate, int chans, off_t loc, off_t samples, int format, const char *comment, int len, int *loops);
-bool snd_overwrite_ok(const char *ofile);
+io_error_t snd_write_header(const char *name, int type, int srate, int chans, off_t loc, off_t samples, 
+			    int format, const char *comment, int len, int *loops);
+io_error_t sndlib_error_to_snd(int sndlib_err);
 snd_io *make_file_state(int fd, file_info *hdr, int chan, off_t beg, int suggested_bufsize);
 void file_buffers_forward(off_t ind0, off_t ind1, off_t indx, snd_fd *sf, snd_data *cur_snd);
 void file_buffers_back(off_t ind0, off_t ind1, off_t indx, snd_fd *sf, snd_data *cur_snd);
-int snd_remove(const char *name, cache_remove_t forget);
-int snd_close(int fd, const char *name);
-void snd_fclose(FILE *fd, const char *name);
+io_error_t snd_remove(const char *name, cache_remove_t forget);
+io_error_t snd_close(int fd, const char *name);
+io_error_t snd_fclose(FILE *fd, const char *name);
 void remember_temp(const char *filename, int chans);
 void forget_temps(void);
 snd_data *make_snd_data_file(const char *name, snd_io *io, file_info *hdr, file_delete_t temp, int ctr, int temp_chan);
@@ -519,8 +531,8 @@ snd_data *copy_snd_data(snd_data *sd, off_t beg, int bufsize);
 snd_data *free_snd_data(snd_data *sf);
 snd_data *make_snd_data_buffer(mus_sample_t *data, int len, int ctr);
 snd_data *make_snd_data_buffer_for_simple_channel(int len);
-int open_temp_file(const char *ofile, int chans, file_info *hdr);
-int close_temp_file(const char *filename, int ofd, int type, off_t bytes, snd_info *sp);
+int open_temp_file(const char *ofile, int chans, file_info *hdr, io_error_t *err);
+io_error_t close_temp_file(const char *filename, int ofd, int type, off_t bytes, snd_info *sp);
 
 
 /* -------- snd-help.c -------- */
@@ -614,6 +626,7 @@ void g_init_errors(void);
   void set_error_display (void (*func)(const char *));
 #endif
 void redirect_snd_error_to(void (*handler)(const char *error_msg, void *ufd), void *data);
+void redirect_snd_warning_to(void (*handler)(const char *warning_msg, void *ufd), void *data);
 
 
 /* -------- snd-completion.c -------- */
@@ -799,9 +812,9 @@ void undo_edit_with_sync(chan_info *cp, int count);
 void redo_edit_with_sync(chan_info *cp, int count);
 void undo_edit(chan_info *cp, int count);
 void redo_edit(chan_info *cp, int count);
-int save_channel_edits(chan_info *cp, char *ofile, int pos);
+io_error_t save_channel_edits(chan_info *cp, char *ofile, int pos);
 void save_edits(snd_info *sp, void *ptr);
-int save_edits_without_display(snd_info *sp, char *new_name, int type, int format, int srate, char *comment, int pos);
+io_error_t save_edits_without_display(snd_info *sp, char *new_name, int type, int format, int srate, char *comment, int pos);
 void revert_edits(chan_info *cp);
 off_t current_location(snd_fd *sf);
 void g_init_edits(void);
@@ -857,6 +870,10 @@ bool transform_p(int type);
 
 /* -------- snd-xen.c -------- */
 
+void redirect_xen_error_to(void (*handler)(const char *msg, void *ufd), void *data);
+void redirect_snd_print_to(void (*handler)(const char *msg, void *ufd), void *data);
+void redirect_errors_to(void (*handler)(const char *msg, void *ufd), void *data);
+void redirect_everything_to(void (*handler)(const char *msg, void *ufd), void *data);
 XEN snd_catch_any(XEN_CATCH_BODY_TYPE body, void *body_data, const char *caller);
 XEN snd_throw(XEN key, XEN args);
 XEN snd_no_such_file_error(const char *caller, XEN filename);
@@ -903,10 +920,8 @@ off_t string_to_off_t_with_error(char *str, off_t lo, const char *field_name);
 char *output_comment(file_info *hdr);
 void snd_load_init_file(bool nog, bool noi);
 void snd_load_file(char *filename);
-void snd_eval_str(char *buf);
 void snd_report_result(XEN result, char *buf);
 void snd_report_listener_result(XEN form);
-void snd_eval_property_str(char *buf);
 void snd_eval_stdin_str(char *buf);
 void g_snd_callback(int callb);
 void clear_stdin(void);
@@ -939,7 +954,7 @@ bool delete_selection(cut_selection_regraph_t regraph);
 void move_selection(chan_info *cp, int x);
 void finish_selection_creation(void);
 int select_all(chan_info *cp);
-int save_selection(char *ofile, int type, int format, int srate, const char *comment, int chan);
+io_error_t save_selection(char *ofile, int type, int format, int srate, const char *comment, int chan);
 bool selection_creation_in_progress(void);
 void cancel_selection_watch(void);
 void add_selection_or_region(int reg, chan_info *cp);
@@ -1257,8 +1272,8 @@ snd_info *snd_open_file(const char *filename, bool read_only);
 snd_info *snd_open_file_unselected (const char *filename);
 snd_info *finish_opening_sound(snd_info *sp, bool selected);
 void snd_close_file(snd_info *sp);
-int copy_file(const char *oldname, const char *newname);
-int move_file(const char *oldfile, const char *newfile);
+io_error_t copy_file(const char *oldname, const char *newname);
+io_error_t move_file(const char *oldfile, const char *newfile);
 snd_info *make_sound_readable(const char *filename, bool post_close);
 snd_info *snd_update(snd_info *sp);
 char *view_curfiles_name(int pos);
@@ -1364,7 +1379,7 @@ char *listener_prompt_with_cr(void);
 int check_balance(char *expr, int start, int end, bool in_listener);
 int find_matching_paren(char *str, int parens, int pos, char *prompt, int *highlight_pos);
 void provide_listener_help(char *source);
-
+bool listener_is_visible(void);
 void g_init_listener(void);
 
 
@@ -1526,6 +1541,7 @@ void save_macro_state(FILE *fd);
 #else
   void report_in_minibuffer(snd_info *sp, const char *format, ...);
 #endif
+void errors_to_minibuffer(const char *msg, void *data);
 void clear_minibuffer(snd_info *sp);
 void clear_minibuffer_prompt(snd_info *sp);
 void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta);

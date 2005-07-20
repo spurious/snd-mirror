@@ -96,10 +96,7 @@ static void view_ctrls_callback(GtkWidget *w, gpointer info)
 }
 
 #if HAVE_EXTENSION_LANGUAGE
-static void view_listener_callback(GtkWidget *w, gpointer info) 
-{
-  handle_listener(listener_height() < 5);
-}
+static void view_listener_callback(GtkWidget *w, gpointer info) {handle_listener(!(listener_is_visible()));}
 #endif
 
 static void view_mix_dialog_callback(GtkWidget *w, gpointer info) {make_mix_dialog();}

@@ -95,6 +95,8 @@ typedef struct {
   Widget tab;
   struct env_editor *flt;
   Widget dialog;
+  Dimension minibuffer_height;
+  bool minibuffer_watcher;
 } snd_context;
 
 typedef enum {NOT_A_SCANF_WIDGET, SRATE_WIDGET, CHANS_WIDGET, DATA_LOCATION_WIDGET, SAMPLES_WIDGET} scanf_widget_t;

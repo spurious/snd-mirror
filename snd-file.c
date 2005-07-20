@@ -361,7 +361,7 @@ file_info *make_file_info(const char *fullname, bool read_only, bool selected)
 
       type = mus_sound_header_type(fullname);
       if (type == MUS_ERROR)        /* if something went wrong */
-	type = mus_header_type();   /*    try top read it anyway... */
+	type = mus_header_type();   /*    try to read it anyway... */
       if (MUS_HEADER_TYPE_OK(type)) /* at least the header type seems plausible */
 	{
 	  /* check header fields */
@@ -864,9 +864,6 @@ snd_info *finish_opening_sound(snd_info *sp, bool selected)
       files = ss->active_sounds;
       reflect_file_change_in_title();
       sp->file_watcher = fam_monitor_file(sp->filename, (void *)sp, fam_sp_action);
-#if USE_MOTIF
-      unlock_control_panel(sp);
-#endif
       add_to_current_files(sp->short_filename);
     }
   map_over_separate_chans(channel_open_pane, NULL);
@@ -1004,7 +1001,7 @@ void snd_close_file(snd_info *sp)
 }
 
 
-int copy_file(const char *oldname, const char *newname)
+io_error_t copy_file(const char *oldname, const char *newname)
 {
   /* make newname a copy of oldname */
   int ifd, ofd;
@@ -1012,12 +1009,12 @@ int copy_file(const char *oldname, const char *newname)
   char *buf = NULL;
   total = 0;
   ifd = OPEN(oldname, O_RDONLY, 0);
-  if (ifd == -1) return(MUS_CANT_OPEN_FILE);
+  if (ifd == -1) return(IO_CANT_OPEN_FILE);
   ofd = CREAT(newname, 0666);
   if (ofd == -1) 
     {
       snd_close(ifd, oldname);
-      return(MUS_CANT_OPEN_FILE);
+      return(IO_CANT_OPEN_FILE);
     }
   buf = (char *)CALLOC(8192, sizeof(char));
   while ((bytes = read(ifd, buf, 8192)))
@@ -1029,37 +1026,37 @@ int copy_file(const char *oldname, const char *newname)
 	  snd_close(ofd, newname);
 	  snd_close(ifd, oldname);
 	  FREE(buf); 
-	  return(MUS_WRITE_ERROR);
+	  return(IO_WRITE_ERROR);
 	}
     }
   snd_close(ifd, oldname);
   wb = disk_kspace(newname);
   snd_close(ofd, newname);
   FREE(buf);
-  total = total >> 10;
-  if (wb < 0) 
-    snd_warning("%s: %s\n", newname, snd_io_strerror());
-  else
-    if (total > wb) 
-      snd_warning(_("disk is nearly full: used " PRId64 " Kbytes leaving " PRId64),
-		  total, wb);
-  return(MUS_NO_ERROR);
+  if (wb < 0)
+    return(IO_DISK_FULL);
+  return(IO_NO_ERROR);
 }
 
-int move_file(const char *oldfile, const char *newfile)
+io_error_t move_file(const char *oldfile, const char *newfile)
 {
-  int err = 0;
-  if ((err = (RENAME(oldfile, newfile))))
+  io_error_t err = IO_NO_ERROR;
+  int rename_err;
+  rename_err = RENAME(oldfile, newfile);
+  if (rename_err != 0)
     {
       if (errno == EXDEV)
 	{
 	  err = copy_file(oldfile, newfile);
-	  if (!err) 
-	    snd_remove(oldfile, REMOVE_FROM_CACHE);
+	  if (err == IO_NO_ERROR)
+	    {
+	      rename_err = snd_remove(oldfile, REMOVE_FROM_CACHE);
+	      if (rename_err == -1)
+		return(IO_CANT_MOVE_FILE);
+	    }
 	}
     }
-  if (err != 0)
-    snd_error(_("error while overwriting %s: %s"), newfile, snd_io_strerror());
+  /* TODO: this had snd_error which we need to push upwards */
   return(err);
 }
 
@@ -2358,24 +2355,18 @@ char *save_as_dialog_save_sound(snd_info *sp, char *str, save_dialog_t save_type
   /* returns true if new file not yet opened, false if opened (same name as old) or if cancelled by error of some sort */
   same_name_info *collision = NULL;
   char *fullname, *msg = NULL;
-  int result = 0;
-  if (sp) clear_minibuffer(sp);
+
+  if (sp) clear_minibuffer(sp); /* TODO: why this? */
   alert_new_file();
   /* now check in-core files -- need to close any of same name -- if edited what to do? */
   /* also it's possible the new file name is the same as the current file name(!) */
   fullname = mus_expand_filename(str);
 
-  if (!(snd_overwrite_ok(fullname))) 
-    {
-      FREE(fullname);
-      (*need_directory_update) = false;
-      return(mus_format(_("%s not overwritten"), str));
-    }
-
   if (!(run_before_save_as_hook(sp, fullname, save_type != SOUND_SAVE_AS, srate, type, format, comment)))
     {
       if (strcmp(fullname, sp->filename) == 0) /* save-as to mimic save (overwrite current) */
 	{
+	  io_error_t io_err;
 	  char *ofile;
 	  /* normally save-as saves the current edit tree, merely saving the current state
 	   * in a separate, presumably inactive file; here we're being asked to overwrite
@@ -2393,23 +2384,31 @@ char *save_as_dialog_save_sound(snd_info *sp, char *str, save_dialog_t save_type
 
 	  ofile = snd_tempnam(); 
 	  if (save_type == SOUND_SAVE_AS)
-	    result = save_edits_without_display(sp, ofile, type, format, srate, comment, AT_CURRENT_EDIT_POSITION);
-	  else result = save_selection(ofile, type, format, srate, comment, SAVE_ALL_CHANS);
-	  if (result != MUS_NO_ERROR)
-	    msg = mus_format(_("save as %s error: %s"), ofile, snd_io_strerror());
-	  else 
+	    io_err = save_edits_without_display(sp, ofile, type, format, srate, comment, AT_CURRENT_EDIT_POSITION);
+	  else io_err = save_selection(ofile, type, format, srate, comment, SAVE_ALL_CHANS); /* TODO: fixup save_selection */
+	  if ((io_err != IO_SAVE_HOOK_CANCELLATION) &&
+	      (io_err != IO_INTERRUPTED))
 	    {
-	      sp->writing = true;
-	      move_file(ofile, sp->filename); /* should we cancel and restart a monitor? */
-	      sp->writing = false;
+	      if (io_err != IO_NO_ERROR)
+		/* need decode of io_error here -- selection file etc */
+		msg = mus_format(_("save as %s error: %s"), ofile, snd_io_strerror());
+	      else 
+		{
+		  io_error_t io_err;
+		  sp->writing = true;
+		  io_err = move_file(ofile, sp->filename); /* should we cancel and restart a monitor? */
+		  sp->writing = false;
+		  /* TODO: handle possible io err here */
+		}
+	      snd_update(sp);
 	    }
-	  snd_update(sp);
 	  (*need_directory_update) = false;
 	  FREE(ofile);
 	  FREE(fullname);
 	}
       else
 	{
+	  io_error_t io_err;
 	  collision = (same_name_info *)CALLOC(1, sizeof(same_name_info));
 	  collision->filename = fullname;
 	  collision->edits = 0;
@@ -2420,6 +2419,8 @@ char *save_as_dialog_save_sound(snd_info *sp, char *str, save_dialog_t save_type
 	      /* if no edits, we'll just close, overwrite, reopen */
 	      /* if edits, we need to ask user what to do */
 	      /* we don't need to check for overwrites at this point */
+#if 0
+	      /* TODO: replace this question */
 	      if (collision->edits > 0)
 		{
 		  if (!(snd_yes_or_no_p(_("%s has unsaved edits. Clobber them?"), str)))
@@ -2430,26 +2431,31 @@ char *save_as_dialog_save_sound(snd_info *sp, char *str, save_dialog_t save_type
 		      return(mus_format(_("%s not overwritten"), str));
 		    }
 		}
+#endif
 	      snd_close_file(collision->sp);
 	    }
 	  mus_sound_forget(fullname);
 	  if (save_type == SOUND_SAVE_AS)
-	    result = save_edits_without_display(sp, str, type, format, srate, comment, AT_CURRENT_EDIT_POSITION);
-	  else result = save_selection(str, type, format, srate, comment, SAVE_ALL_CHANS);
-	  if (result != MUS_NO_ERROR)
+	    io_err = save_edits_without_display(sp, str, type, format, srate, comment, AT_CURRENT_EDIT_POSITION);
+	  else io_err = save_selection(str, type, format, srate, comment, SAVE_ALL_CHANS);
+	  if ((io_err != IO_SAVE_HOOK_CANCELLATION) &&
+	      (io_err != IO_INTERRUPTED))
 	    {
-	      msg = mus_format("%s: %s", str, snd_io_strerror());
-	      (*need_directory_update) = false;
-	    }
-	  if (collision->sp) 
-	    {
-	      ss->open_requestor = FROM_SAVE_AS_DIALOG;
-	      snd_open_file(fullname, FILE_READ_WRITE);
-	      (*need_directory_update) = false;
-	    }
-	  else 
-	    {
-	      if (!msg) (*need_directory_update) = true;
+	      if (io_err != IO_NO_ERROR)
+		{
+		  msg = mus_format("%s: %s", str, snd_io_strerror());
+		  (*need_directory_update) = false;
+		}
+	      if (collision->sp) 
+		{
+		  ss->open_requestor = FROM_SAVE_AS_DIALOG;
+		  snd_open_file(fullname, FILE_READ_WRITE);
+		  (*need_directory_update) = false;
+		}
+	      else 
+		{
+		  if (!msg) (*need_directory_update) = true;
+		}
 	    }
 	  FREE(fullname);
 	  FREE(collision);
@@ -2731,7 +2737,8 @@ static XEN g_set_sound_loop_info(XEN snd, XEN vals)
   snd_info *sp;
   char *tmp_file;
   file_info *hdr;
-  int type, len = 0, err = MUS_NO_ERROR;
+  int type, len = 0;
+  
   XEN start0 = XEN_UNDEFINED, end0 = XEN_UNDEFINED; 
   XEN start1 = XEN_UNDEFINED, end1 = XEN_UNDEFINED; 
   XEN mode0 = XEN_UNDEFINED, mode1 = XEN_UNDEFINED;
@@ -2818,22 +2825,32 @@ static XEN g_set_sound_loop_info(XEN snd, XEN vals)
    *   it would not be so hard).
    */
   tmp_file = snd_tempnam();
-  err = save_edits_without_display(sp, tmp_file, type, 
-				   hdr->format, 
-				   hdr->srate, 
-				   hdr->comment,
-				   AT_CURRENT_EDIT_POSITION);
-  if (err != MUS_NO_ERROR)
-    XEN_ERROR(CANNOT_SAVE,
-	      XEN_LIST_3(C_TO_XEN_STRING(S_setB S_sound_loop_info),
-			 C_TO_XEN_STRING(tmp_file),
-			 C_TO_XEN_STRING(snd_io_strerror())));
-  sp->writing = true;
-  move_file(tmp_file, sp->filename); /* should we cancel and restart a monitor? */
-  sp->writing = false;
-  snd_update(sp);
-  FREE(tmp_file);
-  return(xen_return_first((err == MUS_NO_ERROR) ? XEN_TRUE : C_TO_XEN_INT(err), snd, vals));
+  {
+    io_error_t err;
+    err = save_edits_without_display(sp, tmp_file, type, 
+				     hdr->format, 
+				     hdr->srate, 
+				     hdr->comment,
+				     AT_CURRENT_EDIT_POSITION);
+    if ((err != IO_NO_ERROR) &&
+	(err != IO_SAVE_HOOK_CANCELLATION))
+      {
+	XEN_ERROR(CANNOT_SAVE,
+		  XEN_LIST_3(C_TO_XEN_STRING(S_setB S_sound_loop_info),
+			     C_TO_XEN_STRING(tmp_file),
+			     C_TO_XEN_STRING(snd_io_strerror())));
+	return(XEN_FALSE); /* not executed -- just for emphasis */
+      }
+    sp->writing = true;
+    if (err == IO_SAVE_HOOK_CANCELLATION)
+      snd_remove(tmp_file, IGNORE_CACHE);
+    else move_file(tmp_file, sp->filename); /* should we cancel and restart a monitor? */ /* TODO: err check from move_file */
+    sp->writing = false;
+    if (err != IO_SAVE_HOOK_CANCELLATION) 
+      snd_update(sp);
+    FREE(tmp_file); /* TODO: better error */
+    return(xen_return_first((err == IO_NO_ERROR) ? XEN_TRUE : C_TO_XEN_INT((int)err), snd, vals));
+  }
 }
 
 static XEN g_soundfont_info(XEN snd)

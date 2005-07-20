@@ -114,8 +114,7 @@ void view_menu_update(void)
   set_sensitive(view_all_axes_unlabelled_menu,    show_axes(ss) != SHOW_ALL_AXES_UNLABELLED);
 
   /* make sure listener menu option label correctly reflects current listener state */
-  set_menu_label(view_listener_menu, (listener_height() > 10) ? _("Hide listener") : _("Show listener"));
-
+  set_menu_label(view_listener_menu, (listener_is_visible()) ? _("Hide listener") : _("Show listener"));
   set_menu_label(view_ctrls_menu, (in_show_controls(ss)) ? _("Hide controls") : _("Show controls"));
 }
 

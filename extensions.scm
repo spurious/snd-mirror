@@ -345,33 +345,61 @@ to end of channel, beg defaults to 0, snd defaults to the currently selected sou
 ;;;    that asks the user for confirmation before closing a sound if there are unsaved
 ;;;    edits on that sound.  if 'on' is #f, remove those hooks.
 
+;;; TODO: Ruby side (extensions.rb)
+
 (define* (check-for-unsaved-edits #:optional (check #t))
   "(check-for-unsaved-edits #:optional (check #t)) -> sets up hooks to check for and ask about unsaved edits when a sound is closed.
 If 'check' is #f, the hooks are removed."
-  (let ((dummy #f)) ; make new guile happy
-    (define (unsaved-edits-at-close? ind)
-      (letrec ((unsaved-edits-in-chan? 
+  (let () ; make new guile happy
+
+    (define* (yes-or-no? question action-if-yes action-if-no #:optional snd)
+      (clear-minibuffer snd)
+      (prompt-in-minibuffer question
+			    (lambda (response)
+			      (clear-minibuffer snd)
+			      (if (string=? response "yes")
+				  (action-if-yes snd)
+				  (action-if-no snd)))
+			    snd #t))
+
+    (define (ignore-unsaved-edits-at-close? ind exiting)
+      (letrec ((ignore-unsaved-edits-in-chan? 
 		(lambda (chan)
+		  (display (format #f "check ~A[~D] " (file-name ind) chan))
 		  (if (>= chan (channels ind))
-		      #f
+		      #t
 		      (let ((eds (edits ind chan)))
+			(display (format #f "~A edits " (car eds)))
 			(if (> (car eds) 0)
-			    (not (yes-or-no? ;that is, "yes" => exit
-				  (format #f "~A has ~D unsaved edit~P in channel ~D, exit anyway? " 
-					  (short-file-name ind) 
-					  (car eds)
-					  (car eds)
-					  chan)))
-			    (unsaved-edits-in-chan? (1+ chan))))))))
-	(unsaved-edits-in-chan? 0)))
+			    (begin
+			      (yes-or-no?
+			       (format #f "~A~A has unsaved edits.  Close anyway? " 
+				       (short-file-name ind) 
+				       (if (> (channels ind) 1)
+					   (format #f "[~A]" chan)
+					   ""))
+			       (lambda (snd)
+				 (revert-sound ind)
+				 (close-sound ind)
+				 (if exiting (exit)))
+			       (lambda (snd)
+				 #f)
+			       ind)
+			      (display "return #f ")
+			      #f)
+			    (ignore-unsaved-edits-in-chan? (1+ chan))))))))
+	(ignore-unsaved-edits-in-chan? 0)))
     
-    (define (unsaved-edits-at-exit?)
-      (letrec ((unsaved-edits-at-exit-1?
+    (define (ignore-unsaved-edits-at-exit?)
+      (letrec ((ignore-unsaved-edits-at-exit-1?
 		(lambda (snds)
-		  (and (not (null? snds))
-		       (or (unsaved-edits-at-close? (car snds))
-			   (unsaved-edits-at-exit-1? (cdr snds)))))))
-	(unsaved-edits-at-exit-1? (sounds))))
+		  (or (null? snds)
+		      (and (ignore-unsaved-edits-at-close? (car snds) #t)
+			   (ignore-unsaved-edits-at-exit-1? (cdr snds)))))))
+	(ignore-unsaved-edits-at-exit-1? (sounds))))
+
+    (define (unsaved-edits-at-exit?) (not (ignore-unsaved-edits-at-exit?)))
+    (define (unsaved-edits-at-close? snd) (let ((val (not (ignore-unsaved-edits-at-close? snd #f)))) (display (format #f "close: ~A" val)) val))
     
     (if check
 	(begin

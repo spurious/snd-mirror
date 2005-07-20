@@ -11,7 +11,7 @@
  *     HAVE_GDK_PANGO_RENDERER_NEW for gtk 2.5.6
  *     HAVE_GTK_TEXT_LAYOUT_GET_ITER_AT_POSITION for gtk 2.6.0
  *     HAVE_GTK_MENU_BAR_GET_CHILD_PACK_DIRECTION for gtk 2.7.0
- *     HAVE_GTK_ABOUT_DIALOG_GET_WRAP_LICENSE for gtk 2.7.2
+ *     HAVE_GTK_TREE_VIEW_GET_VISIBLE_RANGE for gtk 2.7.3
  *
  * reference args initial values are usually ignored, resultant values are returned in a list.
  * null ptrs are passed and returned as #f, trailing "user_data" callback function arguments are optional (default: #f).
@@ -43,46 +43,47 @@
  *     win32-specific functions
  *
  * HISTORY:
- *     9-Jul:     gtk 2.7.2 changes.  Collapse 2.3.1 to 2.3.5 into 2.3.6, 2.5.1 to 2.5.5 into 2.5.6.
- *     5-Jul:     gtk 2.7.1 changes.
- *     23-Jun:    gtk 2.7.0 changes.
+ *     21-Jul:    gtk 2.7.3.
+ *     9-Jul:     gtk 2.7.2.  Collapse 2.3.1 to 2.3.5 into 2.3.6, 2.5.1 to 2.5.5 into 2.5.6.
+ *     5-Jul:     gtk 2.7.1.
+ *     23-Jun:    gtk 2.7.0.
  *     13-Jun:    folded xg-ruby.c into xg.c.
  *     21-Feb:    changed libxm to libxg, xm-version to xg-version.
  *     10-Jan:    plugged some memory leaks.
  *     4-Jan:     removed deprecated XEN_VECTOR_ELEMENTS.
  *     --------
- *     30-Dec:    gtk 2.6.0 changes.
+ *     30-Dec:    gtk 2.6.0.
  *     8-Dec:     added some g_log handler funcs.
  *     6-Dec:     added check for lost callback context.
  *                tightened type (pointer) checking considerably (#f only acceptable if explicit @ used in xgdata.scm).
- *                gtk 2.5.6 and pango 1.7.0 changes.
+ *                gtk 2.5.6 and pango 1.7.0.
  *     3-Dec:     changed GPOINTER cast func to accept non-lists.
- *     15-Nov:    gtk 2.5.5 changes.
- *     29-Oct:    gtk 2.5.4 changes.
- *     27-Aug:    gtk 2.5.2 changes. removed the PANGO_ENGINE and PANGO_BACKEND stuff.
- *     5-Aug:     gtk 2.5.1 changes.
- *     21-Jul:    gtk 2.5.0 changes.
+ *     15-Nov:    gtk 2.5.5.
+ *     29-Oct:    gtk 2.5.4.
+ *     27-Aug:    gtk 2.5.2. removed the PANGO_ENGINE and PANGO_BACKEND stuff.
+ *     5-Aug:     gtk 2.5.1.
+ *     21-Jul:    gtk 2.5.0.
  *     2-Jun:     gdk_atom_name needs to free return value
  *     28-May:    GtkFileSelection struct support put back in -- need ok_button et al.
  *     14-Apr:    make-target-entry.
  *     4-Apr:     various additions, deletions, and bugfixes for snd-test 26
  *     29-Mar:    support for some ... args.
  *     22-Mar:    g_source_remove and related changes.
- *     11-Mar:    gtk 2.3.6 changes.
- *     4-Mar:     gtk 2.3.5 changes.
- *     26-Feb:    gtk 3.2.4 changes.
+ *     11-Mar:    gtk 2.3.6.
+ *     4-Mar:     gtk 2.3.5.
+ *     26-Feb:    gtk 3.2.4.
  *     12-Feb:    g_list_nth_data (Kjetil S. Matheussen).
- *     6-Feb:     gtk 2.3.2 changes.
+ *     6-Feb:     gtk 2.3.2.
  *     --------
- *     16-Dec:    gtk 2.3.1 changes.
- *     1-Dec:     gtk 2.3 changes.
+ *     16-Dec:    gtk 2.3.1.
+ *     1-Dec:     gtk 2.3.
  *     15-Sep:    removed client_window GtkIMMulticontext struct field (for Gtk 2.2.4).
  *     26-May:    removed nugatory GdkInputFunction stuff and some unused type converters.
  *     7-Apr:     GTK_RC_STYLE has two incompatible definitions in gtk! (gtkwidget.h, gtkrc.h) -- will use int case.
  *     1-Apr:     gdk_property_get uses scm_mem2string in some cases now.
  *     31-Mar:    gchar* -> xen string bugfix (thanks to Friedrich Delgado Friedrichs).
  *     10-Mar:    Ruby Xm_Version.
- *     6-Jan:     gtk 2.2 changes.
+ *     6-Jan:     gtk 2.2.
  *     --------
  *     18-Nov:    Ruby/Gtk bugfixes.
  *     28-Oct:    gtk 2.1 additions.
@@ -903,7 +904,7 @@ XM_TYPE_PTR_1(GtkAboutDialog_, GtkAboutDialog*)
 #define XEN_TO_C_PangoEllipsizeMode(Arg) (PangoEllipsizeMode)(XEN_TO_C_INT(Arg))
 #define XEN_PangoEllipsizeMode_P(Arg) XEN_INTEGER_P(Arg)
 XM_TYPE_1(PangoAttrFilterFunc, PangoAttrFilterFunc)
-XM_TYPE_NO_P_2(PangoScript, PangoScript)
+#define C_TO_XEN_PangoScript(Arg) C_TO_XEN_INT(Arg)
 XM_TYPE_PTR(PangoScriptIter_, PangoScriptIter*)
 XM_TYPE_PTR_1(GtkFileChooserButton_, GtkFileChooserButton*)
 XM_TYPE_PTR_1(GtkMenuToolButton_, GtkMenuToolButton*)
@@ -919,8 +920,12 @@ XM_TYPE_PTR_1(GValue_, GValue*)
 #endif
 
 #if HAVE_GTK_MENU_BAR_GET_CHILD_PACK_DIRECTION
-XM_TYPE(GtkIconViewDropPosition, GtkIconViewDropPosition)
-XM_TYPE(GtkPackDirection, GtkPackDirection)
+#define C_TO_XEN_GtkIconViewDropPosition(Arg) C_TO_XEN_INT(Arg)
+#define XEN_TO_C_GtkIconViewDropPosition(Arg) (GtkIconViewDropPosition)(XEN_TO_C_INT(Arg))
+#define XEN_GtkIconViewDropPosition_P(Arg) XEN_INTEGER_P(Arg)
+#define C_TO_XEN_GtkPackDirection(Arg) C_TO_XEN_INT(Arg)
+#define XEN_TO_C_GtkPackDirection(Arg) (GtkPackDirection)(XEN_TO_C_INT(Arg))
+#define XEN_GtkPackDirection_P(Arg) XEN_INTEGER_P(Arg)
 XM_TYPE_PTR_1(GtkMenuBar_, GtkMenuBar*)
 #endif
 
@@ -25345,6 +25350,47 @@ gboolean wrap_license)"
   gtk_about_dialog_set_wrap_license(XEN_TO_C_GtkAboutDialog_(about), XEN_TO_C_gboolean(wrap_license));
   return(XEN_FALSE);
 }
+static XEN gxg_gtk_file_chooser_set_do_overwrite_confirmation(XEN chooser, XEN do_overwrite_confirmation)
+{
+  #define H_gtk_file_chooser_set_do_overwrite_confirmation "void gtk_file_chooser_set_do_overwrite_confirmation(GtkFileChooser* chooser, \
+gboolean do_overwrite_confirmation)"
+  XEN_ASSERT_TYPE(XEN_GtkFileChooser__P(chooser), chooser, 1, "gtk_file_chooser_set_do_overwrite_confirmation", "GtkFileChooser*");
+  XEN_ASSERT_TYPE(XEN_gboolean_P(do_overwrite_confirmation), do_overwrite_confirmation, 2, "gtk_file_chooser_set_do_overwrite_confirmation", "gboolean");
+  gtk_file_chooser_set_do_overwrite_confirmation(XEN_TO_C_GtkFileChooser_(chooser), XEN_TO_C_gboolean(do_overwrite_confirmation));
+  return(XEN_FALSE);
+}
+static XEN gxg_gtk_file_chooser_get_do_overwrite_confirmation(XEN chooser)
+{
+  #define H_gtk_file_chooser_get_do_overwrite_confirmation "gboolean gtk_file_chooser_get_do_overwrite_confirmation(GtkFileChooser* chooser)"
+  XEN_ASSERT_TYPE(XEN_GtkFileChooser__P(chooser), chooser, 1, "gtk_file_chooser_get_do_overwrite_confirmation", "GtkFileChooser*");
+  return(C_TO_XEN_gboolean(gtk_file_chooser_get_do_overwrite_confirmation(XEN_TO_C_GtkFileChooser_(chooser))));
+}
+static XEN gxg_gtk_tree_row_reference_get_model(XEN reference)
+{
+  #define H_gtk_tree_row_reference_get_model "GtkTreeModel* gtk_tree_row_reference_get_model(GtkTreeRowReference* reference)"
+  XEN_ASSERT_TYPE(XEN_GtkTreeRowReference__P(reference), reference, 1, "gtk_tree_row_reference_get_model", "GtkTreeRowReference*");
+  return(C_TO_XEN_GtkTreeModel_(gtk_tree_row_reference_get_model(XEN_TO_C_GtkTreeRowReference_(reference))));
+}
+static XEN gxg_gtk_tree_view_column_queue_resize(XEN tree_column)
+{
+  #define H_gtk_tree_view_column_queue_resize "void gtk_tree_view_column_queue_resize(GtkTreeViewColumn* tree_column)"
+  XEN_ASSERT_TYPE(XEN_GtkTreeViewColumn__P(tree_column), tree_column, 1, "gtk_tree_view_column_queue_resize", "GtkTreeViewColumn*");
+  gtk_tree_view_column_queue_resize(XEN_TO_C_GtkTreeViewColumn_(tree_column));
+  return(XEN_FALSE);
+}
+static XEN gxg_gtk_tree_view_get_visible_range(XEN tree_view, XEN start_path, XEN end_path)
+{
+  #define H_gtk_tree_view_get_visible_range "gboolean gtk_tree_view_get_visible_range(GtkTreeView* tree_view, \
+GtkTreePath** [start_path], GtkTreePath** [end_path])"
+  GtkTreePath* ref_start_path = NULL;
+  GtkTreePath* ref_end_path = NULL;
+  XEN_ASSERT_TYPE(XEN_GtkTreeView__P(tree_view), tree_view, 1, "gtk_tree_view_get_visible_range", "GtkTreeView*");
+  {
+    XEN result = XEN_FALSE;
+    result = C_TO_XEN_gboolean(gtk_tree_view_get_visible_range(XEN_TO_C_GtkTreeView_(tree_view), &ref_start_path, &ref_end_path));
+    return(XEN_LIST_3(result, C_TO_XEN_GtkTreePath_(ref_start_path), C_TO_XEN_GtkTreePath_(ref_end_path)));
+   }
+}
 #endif
 
 #define WRAPPED_OBJECT_P(Obj) (XEN_LIST_P(Obj) && (XEN_LIST_LENGTH(Obj) >= 2) && (XEN_SYMBOL_P(XEN_CAR(Obj))))
@@ -30394,6 +30440,11 @@ XEN_NARGIFY_2(gxg_gtk_window_present_with_time_w, gxg_gtk_window_present_with_ti
 XEN_NARGIFY_4(gxg_gdk_window_move_region_w, gxg_gdk_window_move_region)
 XEN_NARGIFY_1(gxg_gtk_about_dialog_get_wrap_license_w, gxg_gtk_about_dialog_get_wrap_license)
 XEN_NARGIFY_2(gxg_gtk_about_dialog_set_wrap_license_w, gxg_gtk_about_dialog_set_wrap_license)
+XEN_NARGIFY_2(gxg_gtk_file_chooser_set_do_overwrite_confirmation_w, gxg_gtk_file_chooser_set_do_overwrite_confirmation)
+XEN_NARGIFY_1(gxg_gtk_file_chooser_get_do_overwrite_confirmation_w, gxg_gtk_file_chooser_get_do_overwrite_confirmation)
+XEN_NARGIFY_1(gxg_gtk_tree_row_reference_get_model_w, gxg_gtk_tree_row_reference_get_model)
+XEN_NARGIFY_1(gxg_gtk_tree_view_column_queue_resize_w, gxg_gtk_tree_view_column_queue_resize)
+XEN_ARGIFY_3(gxg_gtk_tree_view_get_visible_range_w, gxg_gtk_tree_view_get_visible_range)
 #endif
 
 XEN_NARGIFY_1(gxg_GPOINTER_w, gxg_GPOINTER)
@@ -33954,6 +34005,11 @@ XEN_NARGIFY_0(gxg_make_PangoLogAttr_w, gxg_make_PangoLogAttr)
 #define gxg_gdk_window_move_region_w gxg_gdk_window_move_region
 #define gxg_gtk_about_dialog_get_wrap_license_w gxg_gtk_about_dialog_get_wrap_license
 #define gxg_gtk_about_dialog_set_wrap_license_w gxg_gtk_about_dialog_set_wrap_license
+#define gxg_gtk_file_chooser_set_do_overwrite_confirmation_w gxg_gtk_file_chooser_set_do_overwrite_confirmation
+#define gxg_gtk_file_chooser_get_do_overwrite_confirmation_w gxg_gtk_file_chooser_get_do_overwrite_confirmation
+#define gxg_gtk_tree_row_reference_get_model_w gxg_gtk_tree_row_reference_get_model
+#define gxg_gtk_tree_view_column_queue_resize_w gxg_gtk_tree_view_column_queue_resize
+#define gxg_gtk_tree_view_get_visible_range_w gxg_gtk_tree_view_get_visible_range
 #endif
 
 #define gxg_GPOINTER_w gxg_GPOINTER
@@ -37521,6 +37577,11 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gdk_window_move_region, gxg_gdk_window_move_region_w, 4, 0, 0, H_gdk_window_move_region);
   XG_DEFINE_PROCEDURE(gtk_about_dialog_get_wrap_license, gxg_gtk_about_dialog_get_wrap_license_w, 1, 0, 0, H_gtk_about_dialog_get_wrap_license);
   XG_DEFINE_PROCEDURE(gtk_about_dialog_set_wrap_license, gxg_gtk_about_dialog_set_wrap_license_w, 2, 0, 0, H_gtk_about_dialog_set_wrap_license);
+  XG_DEFINE_PROCEDURE(gtk_file_chooser_set_do_overwrite_confirmation, gxg_gtk_file_chooser_set_do_overwrite_confirmation_w, 2, 0, 0, H_gtk_file_chooser_set_do_overwrite_confirmation);
+  XG_DEFINE_PROCEDURE(gtk_file_chooser_get_do_overwrite_confirmation, gxg_gtk_file_chooser_get_do_overwrite_confirmation_w, 1, 0, 0, H_gtk_file_chooser_get_do_overwrite_confirmation);
+  XG_DEFINE_PROCEDURE(gtk_tree_row_reference_get_model, gxg_gtk_tree_row_reference_get_model_w, 1, 0, 0, H_gtk_tree_row_reference_get_model);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_column_queue_resize, gxg_gtk_tree_view_column_queue_resize_w, 1, 0, 0, H_gtk_tree_view_column_queue_resize);
+  XG_DEFINE_PROCEDURE(gtk_tree_view_get_visible_range, gxg_gtk_tree_view_get_visible_range_w, 1, 2, 0, H_gtk_tree_view_get_visible_range);
 #endif
 
   XG_DEFINE_PROCEDURE(GPOINTER, gxg_GPOINTER_w, 1, 0, 0, NULL);
@@ -39318,6 +39379,20 @@ static void define_integers(void)
 
 #if HAVE_GTK_ABOUT_DIALOG_GET_WRAP_LICENSE
   DEFINE_INTEGER(GDK_GRAB_BROKEN);
+  DEFINE_INTEGER(GTK_FILE_CHOOSER_CONFIRMATION_CONFIRM);
+  DEFINE_INTEGER(GTK_FILE_CHOOSER_CONFIRMATION_ACCEPT_FILENAME);
+  DEFINE_INTEGER(GTK_FILE_CHOOSER_CONFIRMATION_SELECT_AGAIN);
+  DEFINE_INTEGER(GTK_FILE_CHOOSER_PROP_DO_OVERWRITE_CONFIRMATION);
+  DEFINE_INTEGER(GTK_FILE_CHOOSER_ACTION);
+  DEFINE_INTEGER(GTK_FILE_CHOOSER_PROP_FILE_SYSTEM_BACKEND);
+  DEFINE_INTEGER(GTK_FILE_CHOOSER_PROP_FILTER);
+  DEFINE_INTEGER(GTK_FILE_CHOOSER_PROP_FOLDER_MODE);
+  DEFINE_INTEGER(GTK_FILE_CHOOSER_PROP_LOCAL_ONLY);
+  DEFINE_INTEGER(GTK_FILE_CHOOSER_PROP_PREVIEW_WIDGET);
+  DEFINE_INTEGER(GTK_FILE_CHOOSER_PROP_PREVIEW_WIDGET_ACTIVE);
+  DEFINE_INTEGER(GTK_FILE_CHOOSER_PROP_EXTRA_WIDGET);
+  DEFINE_INTEGER(GTK_FILE_CHOOSER_PROP_SELECT_MULTIPLE);
+  DEFINE_INTEGER(GTK_FILE_CHOOSER_PROP_SHOW_HIDDEN);
 #endif
 
   DEFINE_ULONG(GDK_TYPE_PIXBUF);
@@ -39808,7 +39883,7 @@ static bool xg_already_inited = false;
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("11-Jul-05"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("19-Jul-05"));
       xg_already_inited = true;
 #if WITH_GTK_AND_X11
       Init_libx11();

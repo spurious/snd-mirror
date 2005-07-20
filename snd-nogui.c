@@ -1,5 +1,7 @@
 #include "snd.h"
 
+void display_minibuffer_error(snd_info *sp, const char *str) {fprintf(stderr, "%s\n", str);}
+void clear_minibuffer_error(snd_info *sp) {}
 void reflect_amp_control_bounds_change_in_recorder(void) {}
 void recorder_error(char *msg) {}
 void snd_help_back_to_top(void) {}
@@ -18,7 +20,6 @@ widget_t post_it(const char *subject, const char *str) {fprintf(stdout, str); re
 void save_post_it_dialog_state(FILE *fd) {}
 void reflect_just_sounds(void) {}
 void save_file_dialog_state(FILE *fd) {}
-bool snd_yes_or_no_p(char *format, ...) {return(false);}
 void draw_line (axis_context *ax, int x0, int y0, int x1, int y1) {}
 void fill_rectangle (axis_context *ax, int x0, int y0, int width, int height) {}
 void fill_polygon(axis_context *ax, int points, ...) {}
@@ -67,6 +68,7 @@ void append_listener_text(int end, char *msg) {}
 void listener_delete_text(int new_end) {}
 void listener_append(char *msg) {fprintf(stderr, "%s", msg);}
 void handle_listener(bool new_state) {}
+bool listener_exists(void) {return(false);}
 int listener_height(void) {return(0);}
 int listener_width(void) {return(0);}
 bool highlight_unbalanced_paren(void) {return(true);}

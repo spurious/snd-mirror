@@ -966,14 +966,16 @@ void free_mixes(chan_info *cp)
 static char *save_as_temp_file(mus_sample_t **raw_data, int chans, int len, int nominal_srate)
 {
   char *newname;
-  int format, ofd, err;
+  int format, ofd;
+  io_error_t err;
   disk_space_t no_space;
   format = MUS_OUT_FORMAT;
   newname = shorter_tempnam(temp_dir(ss), "snd_mix_");
                       /* we're writing our own private version of this thing, so we can use our own formats */
   err = snd_write_header(newname, MUS_NEXT, nominal_srate, chans, 28, len * chans, format, NULL, 0, NULL);
   /* Watch out!  28's below are assuming no comment here! */
-  if (err == -1) return(NULL);
+  if (err != IO_NO_ERROR) return(NULL);
+  /* TODO: better error here */
   ofd = snd_reopen_write(newname);
   mus_file_open_descriptors(ofd, newname, format, 4, 28, chans, MUS_NEXT);
   /* mus_file_set_data_clipped(ofd, data_clipped(ss)); */
@@ -1099,7 +1101,11 @@ static mix_info *file_mix_samples(off_t beg, off_t num, char *mixfile, chan_info
     }
   ofile = snd_tempnam();
   ohdr = make_temp_header(ofile, SND_SRATE(sp), 1, 0, (char *)origin);
-  ofd = open_temp_file(ofile, 1, ohdr);
+  {
+    /* TODO: better error */
+    io_error_t io_err = IO_NO_ERROR;
+    ofd = open_temp_file(ofile, 1, ohdr, &io_err);
+  }
   if (ofd == -1) 
     {
       free_file_info(ihdr);
@@ -1507,7 +1513,11 @@ static void remix_file(mix_info *md, const char *origin, bool redisplay)
 #else
       ohdr = make_temp_header(ofile, SND_SRATE(cursp), 1, 0, (char *)origin);
 #endif
-      ofd = open_temp_file(ofile, 1, ohdr);
+      {
+	/* TODO: better error */
+	io_error_t io_err = IO_NO_ERROR;
+	ofd = open_temp_file(ofile, 1, ohdr, &io_err);
+      }
       if (ofd == -1)
 	{
 	  free_file_info(ohdr);

@@ -79,10 +79,6 @@ static void mus_print_to_snd(char *msg)
       }
 }
 
-#if HAVE_SYS_FPU_H
-  #include <sys/fpu.h>
-#endif
-
 #if HAVE_GSL
 #include <gsl/gsl_ieee_utils.h>
 #include <gsl/gsl_errno.h>
@@ -113,11 +109,6 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
 {
   int i;
 
-#if HAVE_SYS_FPU_H
-  union fpc_csr f; f.fc_word = get_fpc_csr(); f.fc_struct.flush = 1; set_fpc_csr(f.fc_word);
-  /* what the hell? -- can this be deleted? */
-#endif
-
 #if HAVE_GSL
   /* if HAVE_GSL and the environment variable GSL_IEEE_MODE exists, use it */
   /* GSL_IEEE_MODE=double-precision,mask-underflow,mask-denormalized */
@@ -144,6 +135,7 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
 #endif
 
   ss = (snd_state *)CALLOC(1, sizeof(snd_state));
+  ss->startup_errors = NULL;
   mus_sound_initialize(); /* has to precede version check (mus_audio_moniker needs to be setup in Alsa/Oss) */
 
 #if HAVE_RUBY
@@ -329,7 +321,6 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
   ss->checking_explicitly = false;
   ss->reloading_updated_file = 0;
   ss->selected_sound = NO_SELECTION;
-  ss->mx_sp = NULL;
   ss->sounds = (snd_info **)CALLOC(ss->max_sounds, sizeof(snd_info *));
   ss->print_choice = PRINT_SND;
   ss->graph_hook_active = false;
@@ -338,6 +329,12 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
   ss->exiting = false;
   ss->deferred_regions = 0;
   ss->fam_connection = NULL;
+  ss->snd_error_data = NULL;
+  ss->snd_error_handler = NULL;
+  ss->snd_warning_data = NULL;
+  ss->snd_warning_handler = NULL;
+  ss->xen_error_data = NULL;
+  ss->xen_error_handler = NULL;
 
 #if USE_NO_GUI || HAVE_RUBY
   ss->catch_exists = 1; /* scm_shell */

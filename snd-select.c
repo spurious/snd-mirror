@@ -320,11 +320,12 @@ sync_info *selection_sync(void)
 static int mix_selection(chan_info *cp, off_t beg)
 {
   char *tempfile = NULL, *origin = NULL;
-  int err, id = INVALID_MIX_ID;
+  int id = INVALID_MIX_ID;
+  io_error_t io_err;
   if (!(editable_p(cp))) return(id);
   tempfile = snd_tempnam();
-  err = save_selection(tempfile, MUS_NEXT, MUS_OUT_FORMAT, SND_SRATE(cp->sound), NULL, SAVE_ALL_CHANS);
-  if (err == MUS_NO_ERROR)
+  io_err = save_selection(tempfile, MUS_NEXT, MUS_OUT_FORMAT, SND_SRATE(cp->sound), NULL, SAVE_ALL_CHANS);
+  if (io_err == IO_NO_ERROR)
     {
       sync_info *si_out;
       si_out = sync_to_chan(cp);
@@ -350,16 +351,17 @@ void add_selection_or_region(int reg, chan_info *cp)
     }
 }
 
-static int insert_selection(chan_info *cp, off_t beg)
+static io_error_t insert_selection(chan_info *cp, off_t beg)
 {
   char *tempfile = NULL, *origin = NULL;
-  int i, err = MUS_NO_ERROR, out_format = MUS_OUT_FORMAT;
-  if (!(editable_p(cp))) return(MUS_NO_ERROR);
+  int i, out_format = MUS_OUT_FORMAT;
+  io_error_t io_err = IO_NO_ERROR;
+  if (!(editable_p(cp))) return(IO_NO_ERROR); /* TODO: is this really the right thing? */
   if (mus_header_writable(MUS_NEXT, cp->sound->hdr->format))
     out_format = cp->sound->hdr->format;
   tempfile = snd_tempnam();
-  err = save_selection(tempfile, MUS_NEXT, out_format, SND_SRATE(cp->sound), NULL, SAVE_ALL_CHANS);
-  if (err == MUS_NO_ERROR)
+  io_err = save_selection(tempfile, MUS_NEXT, out_format, SND_SRATE(cp->sound), NULL, SAVE_ALL_CHANS);
+  if (io_err == IO_NO_ERROR)
     {
       sync_info *si_out, *si_in;
       si_out = sync_to_chan(cp);
@@ -391,7 +393,7 @@ static int insert_selection(chan_info *cp, off_t beg)
     }
   if (tempfile) FREE(tempfile);
   cp->edit_hook_checked = false;
-  return(err);
+  return(io_err);
 }
 
 void insert_selection_or_region(int reg, chan_info *cp)
@@ -622,10 +624,11 @@ void move_selection(chan_info *cp, int x)
   move_selection_1(cp, x);
 }
 
-int save_selection(char *ofile, int type, int format, int srate, const char *comment, int chan)
+io_error_t save_selection(char *ofile, int type, int format, int srate, const char *comment, int chan)
 {
   /* type and format have already been checked */
-  int ofd, comlen, err = MUS_NO_ERROR, bps;
+  int ofd, comlen, bps;
+  io_error_t io_err = IO_NO_ERROR;
   bool reporting = false;
   off_t oloc;
   sync_info *si = NULL;
@@ -642,10 +645,12 @@ int save_selection(char *ofile, int type, int format, int srate, const char *com
   if (chan == SAVE_ALL_CHANS)
     chans = si->chans;
   else chans = 1;
-  if ((snd_write_header(ofile, type, srate, chans, 28, chans * dur, format, comment, comlen, NULL)) == -1) 
+  /* TODO: better error */
+  io_err = snd_write_header(ofile, type, srate, chans, 28, chans * dur, format, comment, comlen, NULL);
+  if (io_err != IO_NO_ERROR)
     {
       si = free_sync_info(si);
-      return(MUS_HEADER_WRITE_FAILED);
+      return(io_err);
     }
   oloc = mus_header_data_location();
   ofd = snd_reopen_write(ofile);
@@ -660,7 +665,7 @@ int save_selection(char *ofile, int type, int format, int srate, const char *com
 	{
 	  snd_close(ofd, ofile);
 	  si = free_sync_info(si);
-	  return(MUS_WRITE_ERROR);
+	  return(IO_DISK_FULL);
 	}
       copy_ok = ((format == sp->hdr->format) && 
 		 (chans == sp->nchans) &&
@@ -687,7 +692,12 @@ int save_selection(char *ofile, int type, int format, int srate, const char *com
 	  lseek(ofd, oloc, SEEK_SET);
 	  fdi = mus_file_open_read(sp->filename); /* this does not read the header */
 	  if (fdi == -1)
-	    snd_error(_("can't read selection's original sound? %s: %s"), sp->filename, snd_io_strerror());
+	    {
+	      snd_close(ofd, ofile);
+	      si = free_sync_info(si);
+	      return(IO_CANT_READ_SELECTION_FILE);
+	    }
+	  /* snd_error(_("can't read selection's original sound? %s: %s"), sp->filename, snd_io_strerror()); */
 	  else
 	    {
 	      iloc = mus_sound_data_location(sp->filename);
@@ -706,7 +716,7 @@ int save_selection(char *ofile, int type, int format, int srate, const char *com
 	  snd_close(ofd, ofile);
 	  si = free_sync_info(si);
 	  alert_new_file();
-	  return(MUS_NO_ERROR);
+	  return(IO_NO_ERROR);
 	}
     }
   reporting = ((sp) && (dur > REPORTING_SIZE));
@@ -745,21 +755,23 @@ int save_selection(char *ofile, int type, int format, int srate, const char *com
       j++;
       if (j == FILE_BUFFER_SIZE)
 	{
-	  err = mus_file_write(ofd, 0, j - 1, chans, data);
+	  io_err = sndlib_error_to_snd(mus_file_write(ofd, 0, j - 1, chans, data));
 	  j = 0;
-	  if (err == MUS_ERROR) break; /* error message already posted */
+	  if (io_err != IO_NO_ERROR)
+	    break; /* error message already posted TODO: fix this! */
+	      
 	  if (reporting) 
 	    progress_report(sp, S_save_selection, chans - 1, chans, (Float)((double)ioff / (double)dur), NOT_FROM_ENVED);
 	  if (ss->stopped_explicitly)
 	    {
 	      ss->stopped_explicitly = false;
 	      snd_warning(_("save selection stopped"));
-	      err = MUS_ERROR;
+	      io_err = IO_INTERRUPTED;
 	      break;
 	    }
 	}
     }
-  if ((err == MUS_NO_ERROR) && (j > 0)) 
+  if ((io_err == IO_NO_ERROR) && (j > 0)) 
     mus_file_write(ofd, 0, j - 1, chans, data);
   if (reporting) finish_progress_report(sp, NOT_FROM_ENVED);
   for (i = 0; i < chans; i++)
@@ -772,13 +784,11 @@ int save_selection(char *ofile, int type, int format, int srate, const char *com
   si = free_sync_info(si);
   FREE(ends);
   if (mus_file_close(ofd) != 0)
-    {
-      snd_error(_("save selection: can't close %s: %s!"), ofile, snd_io_strerror());
-      return(MUS_CANT_CLOSE_FILE);
-    }
+    return(IO_CANT_CLOSE_FILE);
   alert_new_file();
-  return(err);
+  return(io_err);
 }
+/* TODO: check save_selection upwards (no longer calls snd_error) */
 
 
 static XEN g_delete_selection(void)
@@ -799,13 +809,13 @@ static XEN g_insert_selection(XEN beg, XEN snd, XEN chn)
     {
       chan_info *cp;
       off_t samp;
-      int err = MUS_NO_ERROR;
+      io_error_t io_err = IO_NO_ERROR;
       ASSERT_CHANNEL(S_insert_selection, snd, chn, 2);
       XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(beg), beg, XEN_ARG_1, S_insert_selection, "a number");
       cp = get_cp(snd, chn, S_insert_selection);
       samp = beg_to_sample(beg, S_insert_selection);
-      err = insert_selection(cp, samp);
-      return(C_TO_XEN_BOOLEAN((err == MUS_NO_ERROR)));
+      io_err = insert_selection(cp, samp);
+      return(C_TO_XEN_BOOLEAN((io_err == IO_NO_ERROR)));
     }
   return(snd_no_active_selection_error(S_insert_selection));
 }
@@ -1010,9 +1020,10 @@ static XEN g_save_selection(XEN arglist)
 {
   #define H_save_selection "(" S_save_selection " :file :header-type :data-format :srate :comment :channel): \
 save the current selection in file using the indicated file attributes.  If channel is given, save only that channel."
-  int type = MUS_NEXT, format = MUS_OUT_FORMAT, sr = 0, err, chn = 0;
-  char *com = NULL, *fname = NULL, *file = NULL;
 
+  int type = MUS_NEXT, format = MUS_OUT_FORMAT, sr = 0, chn = 0;
+  io_error_t io_err = IO_NO_ERROR;
+  char *com = NULL, *fname = NULL, *file = NULL;
   XEN args[12]; 
   XEN keys[6];
   int orig_arg[6] = {0, 0, 0, 0, 0, 0};
@@ -1059,9 +1070,11 @@ save the current selection in file using the indicated file attributes.  If chan
 			 C_TO_XEN_STRING(_("srate can't be <= 0")),
 			 C_TO_XEN_INT(sr)));
   fname = mus_expand_filename(file);
-  err = save_selection(fname, type, format, sr, com, chn);
+  io_err = save_selection(fname, type, format, sr, com, chn);
   if (fname) FREE(fname);
-  if (err != MUS_NO_ERROR) 
+  if ((io_err != IO_NO_ERROR) &&
+      (io_err != IO_INTERRUPTED) &&
+      (io_err != IO_SAVE_HOOK_CANCELLATION))
     XEN_ERROR(CANNOT_SAVE,
 	      XEN_LIST_2(C_TO_XEN_STRING(S_save_selection),
 			 C_TO_XEN_STRING(snd_open_strerror())));

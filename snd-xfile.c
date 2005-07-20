@@ -31,6 +31,8 @@
  * TODO: what if running src, uses its check-event to open raw data -- where is control?
  *       or similarly, stops at "ok", starts src, clicks ok?
  * TODO: need array of dialogs for save-as, enved?, open?, view?, mix, perhaps the rest
+ * TODO: edit-properties dialog (extension of edit-header)
+ * TODO: redirect xen errors
  */
 
 
@@ -82,6 +84,7 @@ static void color_file_selection_box(Widget w)
       if (!wtmp) wtmp = XmFileSelectionBoxGetChild(w, XmDIALOG_TEXT);
       if (wtmp)
 	{
+	  XtVaSetValues(wtmp,     XmNhighlightThickness,  1,                          NULL);
 	  XtAddCallback(wtmp,     XmNfocusCallback,       textfield_focus_callback,   NULL);
 	  XtAddCallback(wtmp,     XmNlosingFocusCallback, textfield_unfocus_callback, NULL);
 	  XtAddEventHandler(wtmp, EnterWindowMask, false, mouse_enter_text_callback,  NULL);
@@ -92,6 +95,7 @@ static void color_file_selection_box(Widget w)
       if (!ftmp) ftmp = XmFileSelectionBoxGetChild(w, XmDIALOG_FILTER_TEXT);	
       if (ftmp)
 	{
+	  XtVaSetValues(ftmp,     XmNhighlightThickness,  1,                          NULL);
 	  XtAddCallback(ftmp,     XmNfocusCallback,       textfield_focus_callback,   NULL);
 	  XtAddCallback(ftmp,     XmNlosingFocusCallback, textfield_unfocus_callback, NULL);
 	  XtAddEventHandler(ftmp, EnterWindowMask, false, mouse_enter_text_callback,  NULL);
@@ -1755,9 +1759,9 @@ static void save_as_extract_callback(Widget w, XtPointer context, XtPointer info
 	    {
 	      char *fullname = NULL;
 	      fullname = mus_expand_filename(str);
-	      if (!(snd_overwrite_ok(fullname))) 
+	      if (false)
 		{
-		  /* TODO: handle this overwrite right here */
+		  /* TODO: handle this overwrite right here and above -- one case for both (gfile too) */
 		  FREE(fullname);
 		  need_directory_update = false;
 		  msg = mus_format(_("%s not overwritten"), str);
@@ -1767,8 +1771,9 @@ static void save_as_extract_callback(Widget w, XtPointer context, XtPointer info
 		}
 	      else
 		{
+		  io_error_t io_err;
 		  redirect_snd_error_to(post_file_dialog_error, (void *)sdat);
-		  err = save_channel_edits(sp->chans[chan], str, AT_CURRENT_EDIT_POSITION);
+		  io_err = save_channel_edits(sp->chans[chan], str, AT_CURRENT_EDIT_POSITION);
 		  redirect_snd_error_to(NULL, NULL);
 		  need_directory_update = true;
 		}

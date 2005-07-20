@@ -292,13 +292,6 @@ int snd_open_read(const char *arg)
   return(fd);
 }
 
-bool snd_overwrite_ok(const char *ofile)
-{
-  if ((ask_before_overwrite(ss)) && (mus_file_probe(ofile)))
-    return(snd_yes_or_no_p(_("file %s exists. Overwrite?"), ofile));
-  return(true);
-}
-
 int snd_reopen_write(const char *arg)
 {
   int fd;
@@ -317,13 +310,48 @@ int snd_reopen_write(const char *arg)
 
 static int local_mus_error = MUS_NO_ERROR;
 static mus_error_handler_t *old_error_handler;
-static void local_mus_error2snd(int type, char *msg) {local_mus_error = type;}
-
-int snd_write_header(const char *name, int type, int srate, int chans, off_t loc, 
-		     off_t samples, int format, const char *comment, int len, int *loops)
+static void local_mus_error2snd(int type, char *msg) 
 {
-  int err;
+  local_mus_error = type;
+  if (ss->io_error_info) FREE(ss->io_error_info);
+  ss->io_error_info = copy_string(msg);
+}
+
+io_error_t sndlib_error_to_snd(int sndlib_err)
+{
+  /* "mus_error" in sndlib is an int that includes all kinds of error conditions that
+   *    aren't relevant to file IO in Snd; I need to translate to a more restrictive
+   *    set to make it easier to generate informative error messages.
+   */
+  if (sndlib_err >= 0)
+    switch (sndlib_err)
+      {
+      case MUS_NO_ERROR:                 return(IO_NO_ERROR);
+      case MUS_MEMORY_ALLOCATION_FAILED: return(IO_NO_MEMORY);
+      case MUS_CANT_OPEN_FILE:           return(IO_CANT_OPEN_FILE);
+      case MUS_NO_SUCH_CHANNEL:          return(IO_BAD_CHANNEL);
+      case MUS_NO_FILE_NAME_PROVIDED:    return(IO_NO_FILENAME);
+      case MUS_UNSUPPORTED_DATA_FORMAT:  return(IO_BAD_DATA_FORMAT);
+      case MUS_HEADER_READ_FAILED:       return(IO_BAD_HEADER);
+      case MUS_UNSUPPORTED_HEADER_TYPE:  return(IO_BAD_HEADER_TYPE);
+      case MUS_FILE_DESCRIPTORS_NOT_INITIALIZED: return(IO_SNDLIB_UNINITIALIZED);
+      case MUS_NOT_A_SOUND_FILE:         return(IO_NOT_A_SOUND_FILE);
+      case MUS_FILE_CLOSED:              return(IO_FILE_CLOSED);
+      case MUS_WRITE_ERROR:              return(IO_WRITE_ERROR);
+      case MUS_HEADER_WRITE_FAILED:      return(IO_CANT_REOPEN_FILE);
+      case MUS_CANT_OPEN_TEMP_FILE:      return(IO_CANT_OPEN_FILE);
+      case MUS_INTERRUPTED:              return(IO_INTERRUPTED);
+      case MUS_CANT_CLOSE_FILE:          return(IO_CANT_CLOSE_FILE);
+      }
+  return(IO_UNKNOWN_SNDLIB_ERROR);
+}
+
+io_error_t snd_write_header(const char *name, int type, int srate, int chans, off_t loc, 
+			    off_t samples, int format, const char *comment, int len, int *loops)
+{
+  int err; /* sndlib-style error */
   /* trap mus_error locally here so that callers of open_temp_file can cleanup sample readers and whatnot */
+  local_mus_error = MUS_NO_ERROR;
   old_error_handler = mus_error_set_handler(local_mus_error2snd);
   mus_sound_forget(name);
   mus_header_set_aiff_loop_info(loops);
@@ -335,44 +363,45 @@ int snd_write_header(const char *name, int type, int srate, int chans, off_t loc
 	  err = too_many_files_cleanup();
 	  if (err != -1) 
 	    err = mus_header_write(name, type, srate, chans, loc, samples, format, comment, len);
+	  else return(IO_TOO_MANY_OPEN_FILES);
 	}
     }
   if (err != -1)
     mus_header_set_aiff_loop_info(NULL);
   mus_error_set_handler(old_error_handler);
-  if ((err == -1) || (local_mus_error != MUS_NO_ERROR))
-    {
-      local_mus_error = MUS_NO_ERROR;
-      return(-1);
-    }
-  return(err);
+  return(sndlib_error_to_snd(local_mus_error));
 }
 
-int snd_remove(const char *name, cache_remove_t forget)
+/* TODO: in each of these cases, the errno is saved in ss->local_errno -- make sure it gets noticed somewhere */
+io_error_t snd_remove(const char *name, cache_remove_t forget)
 {
   int err = 0;
   if (forget == REMOVE_FROM_CACHE) mus_sound_forget(name); /* no error here if not in sound tables */
   err = REMOVE(name);
-  if (err == -1)
-    snd_warning(_("can't remove file %s: %s"), name, snd_io_strerror());
-  return(err);
+  /* TODO: this had snd_warning which we need to push upwards */
+  if (err != 0)
+    return(IO_CANT_REMOVE_FILE);
+  return(IO_NO_ERROR);
 }
 
-int snd_close(int fd, const char *name)
+io_error_t snd_close(int fd, const char *name)
 {
-  int val;
-  val = CLOSE(fd);
-  if (val != 0)
-    snd_warning(_("can't close file %d (%s): %s"), fd, name, snd_io_strerror());
-  return(val);
+  int err;
+  err = CLOSE(fd);
+  if (err != 0)
+    return(IO_CANT_CLOSE_FILE);
+  /* TODO: this had snd_warning which we need to push upwards */
+  return(IO_NO_ERROR);
 }
 
-void snd_fclose(FILE *fd, const char *name)
+io_error_t snd_fclose(FILE *fd, const char *name)
 {
-  int val;
-  val = FCLOSE(fd);
-  if (val != 0)
-    snd_warning(_("can't close file %s: %s"), name, snd_io_strerror());
+  int err;
+  err = FCLOSE(fd);
+  if (err != 0)
+    return(IO_CANT_CLOSE_FILE);
+  /* TODO: this had snd_warning which we need to push upwards */
+  return(IO_NO_ERROR);
 }
 
 
@@ -614,9 +643,10 @@ snd_data *free_snd_data(snd_data *sd)
   return(NULL);
 }
 
-int open_temp_file(const char *ofile, int chans, file_info *hdr)
+int open_temp_file(const char *ofile, int chans, file_info *hdr, io_error_t *err)
 {
-  int ofd, len, err;
+  /* returns io fd */
+  int ofd, len, sl_err = MUS_NO_ERROR;
   len = snd_strlen(hdr->comment);
   if (!(mus_header_writable(hdr->type, hdr->format)))
     {
@@ -630,36 +660,43 @@ int open_temp_file(const char *ofile, int chans, file_info *hdr)
 	  hdr->format = MUS_OUT_FORMAT;
 	}
     }
-  err = snd_write_header(ofile, hdr->type, hdr->srate, chans, 0, 0, hdr->format, hdr->comment, len, hdr->loops);
-  if (err == -1) return(-1);
-  if ((ofd = snd_reopen_write(ofile)) == -1) return(-1);
+  (*err) = snd_write_header(ofile, hdr->type, hdr->srate, chans, 0, 0, hdr->format, hdr->comment, len, hdr->loops);
+  if ((*err) != IO_NO_ERROR)
+    {
+      /* -1 as fd */
+      return(-1);
+    }
+  if ((ofd = snd_reopen_write(ofile)) == -1)
+    {
+      (*err) = IO_CANT_REOPEN_FILE;
+      return(-1);
+    }
   hdr->data_location = mus_header_data_location(); /* header might have changed size (aiff extras) */
-  mus_file_open_descriptors(ofd,
-			    ofile,
-			    hdr->format,
-			    mus_bytes_per_sample(hdr->format),
-			    hdr->data_location,
-			    chans,
-			    hdr->type);
+  sl_err = mus_file_open_descriptors(ofd,
+				     ofile,
+				     hdr->format,
+				     mus_bytes_per_sample(hdr->format),
+				     hdr->data_location,
+				     chans,
+				     hdr->type);
+  if (sl_err != MUS_NO_ERROR)
+    (*err) = sndlib_error_to_snd(sl_err);
   lseek(ofd, hdr->data_location, SEEK_SET);
   return(ofd);
 }
 
-int close_temp_file(const char *filename, int ofd, int type, off_t bytes, snd_info *sp)
+io_error_t close_temp_file(const char *filename, int ofd, int type, off_t bytes, snd_info *sp)
 {
-  off_t kleft, kused;
   int err;
   err = mus_file_close(ofd);
-  mus_header_change_data_size(filename, type, bytes);
-  kleft = disk_kspace(filename);
-  if (kleft < 0)
-    snd_error(_("disk full?: %s"), snd_io_strerror());
-  else
+  if (err == MUS_NO_ERROR)
     {
-      kused = bytes >> 10;
-      if ((kused > kleft) && (sp))
-	report_in_minibuffer(sp, _("disk nearly full: used " PRId64 " Kbytes in the last operation, leaving " PRId64), kused, kleft);
+      local_mus_error = MUS_NO_ERROR;
+      old_error_handler = mus_error_set_handler(local_mus_error2snd);
+      mus_header_change_data_size(filename, type, bytes);
+      mus_error_set_handler(old_error_handler);
+      return(sndlib_error_to_snd(local_mus_error));
     }
-  return(err);
+  return(sndlib_error_to_snd(err));
 }
 

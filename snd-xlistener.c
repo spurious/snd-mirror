@@ -844,6 +844,7 @@ Widget make_textfield_widget(char *name, Widget parent, Arg *args, int n, text_c
       actions_loaded = true;
     }
   /* can't use XmNuserData here because it is in use elsewhere (snd-xmix.c) */
+  XtSetArg(args[n], XmNhighlightThickness, 1); n++;
   XtSetArg(args[n], XmNcursorPositionVisible, false); n++;
   df = XtCreateManagedWidget(name, xmTextFieldWidgetClass, parent, args, n);
   XtAddCallback(df, XmNfocusCallback, textfield_focus_callback, NULL);
@@ -894,6 +895,7 @@ Widget make_text_widget(char *name, Widget parent, Arg *args, int n)
   XtSetArg(args[n], XmNeditMode, XmMULTI_LINE_EDIT); n++;
   /* XmNblinkRate 0 turns off the cursor blink */
   XtSetArg(args[n], XmNcursorPositionVisible, false); n++;
+  XtSetArg(args[n], XmNhighlightThickness, 1); n++;
   df = XmCreateScrolledText(parent, name, args, n);
   XtManageChild(df);
   XtAddCallback(df, XmNfocusCallback, textfield_focus_callback, NULL);
@@ -1105,6 +1107,7 @@ static void make_command_widget(int height)
       XtSetArg(args[n], XmNvalue, listener_prompt(ss)); n++;
       XtSetArg(args[n], XmNpendingDelete, false); n++; /* don't cut selection upon paste */
       XtSetArg(args[n], XmNpositionIndex, XmLAST_POSITION); n++;
+      XtSetArg(args[n], XmNhighlightThickness, 1); n++;
       listener_text = XmCreateScrolledText(listener_pane, "lisp-listener", args, n);
       ss->sgx->listener_pane = listener_text;
 
@@ -1167,7 +1170,7 @@ void handle_listener(bool open)
       else 
 	{
 	  XtManageChild(listener_pane);
-	  if (listener_height() < 5)
+	  if (!(listener_is_visible()))
 	    {
 	      XtUnmanageChild(listener_pane);
 	      XtVaSetValues(listener_pane, XmNpaneMinimum, 100, XmNpaneMaximum, LOTSA_PIXELS, NULL);
@@ -1180,6 +1183,11 @@ void handle_listener(bool open)
     {
       XtUnmanageChild(listener_pane);
     }
+}
+
+bool listener_exists(void)
+{
+  return((bool)listener_text);
 }
 
 int listener_height(void)

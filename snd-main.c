@@ -966,7 +966,7 @@ static char *save_state_or_error (char *save_state_name)
       (change-samples-with-origin 965 4412 "set! -mix-0 (mix \"/home/bil/cl/1a.snd\" 965 0)" "3.snd" sfile 0 #f (list 1117710308 17780))
       */
 
-      if (listener_height() >= 5) pss_ss(save_fd, S_show_listener, b2s(true));
+      pss_ss(save_fd, S_show_listener, b2s(listener_is_visible()));
 
       /* the problem here (with saving hooks) is that it is not straightforward to save the function source
        *   (with the current print-set! source option, or with an earlier procedure->string function using
@@ -1063,6 +1063,11 @@ static XEN g_script_args(void)
   return(lst);
 }
 
+static void printout_to_stdout(const char *msg, void *ignore)
+{
+  fprintf(stdout, "%s\n", msg);
+}
+
 int handle_next_startup_arg(int auto_open_ctr, char **auto_open_file_names, bool with_title, int args)
 {
   char *argname;
@@ -1116,7 +1121,9 @@ int handle_next_startup_arg(int auto_open_ctr, char **auto_open_file_names, bool
 		      script_arg = auto_open_ctr;
 		      script_argn = args;
 		      script_args = auto_open_file_names;
+		      redirect_everything_to(printout_to_stdout, NULL);
 		      snd_load_file(auto_open_file_names[auto_open_ctr]);
+		      redirect_everything_to(NULL, NULL);
 		      if (script_arg > auto_open_ctr)
 			auto_open_ctr = script_arg;
 		    }
@@ -1131,7 +1138,14 @@ int handle_next_startup_arg(int auto_open_ctr, char **auto_open_file_names, bool
 		      if ((auto_open_ctr >= args) ||
 			  (auto_open_file_names[auto_open_ctr] == NULL))
 			snd_error(_("%s but no form to evaluate?"), argname);
-		      else snd_eval_str(auto_open_file_names[auto_open_ctr]);
+		      else 
+			{
+			  char *buf;
+			  buf = auto_open_file_names[auto_open_ctr];
+			  redirect_everything_to(printout_to_stdout, NULL);
+			  snd_report_result(snd_catch_any(eval_str_wrapper, (void *)buf, buf), buf);
+			  redirect_everything_to(NULL, NULL);
+			}
 		    }
 		  else
 		    {

@@ -139,11 +139,17 @@ static gboolean who_called(GtkWidget *w, GdkEvent *event, gpointer context)
 	{
 	  if (version[0])
 	    {
-	      if ((!(XEN_HOOKED(window_property_changed_hook))) ||
-		  (!(XEN_TRUE_P(run_or_hook(window_property_changed_hook,
-					    XEN_LIST_1(C_TO_XEN_STRING((char *)(version[0]))),
-					    S_window_property_changed_hook)))))
-		snd_eval_property_str((char *)(version[0]));
+	      char *buf;
+	      buf = (char *)(version[0]);
+	      if ((snd_strlen(buf) > 1) ||
+		  ((snd_strlen(buf) == 1) && (buf[0] != '\n')))
+		{
+		  if ((!(XEN_HOOKED(window_property_changed_hook))) ||
+		      (!(XEN_TRUE_P(run_or_hook(window_property_changed_hook,
+						XEN_LIST_1(C_TO_XEN_STRING(buf)),
+						S_window_property_changed_hook)))))
+		    snd_report_result(snd_catch_any(eval_str_wrapper, (void *)buf, buf), NULL);
+		}
 	      free(version[0]);
 	    }
 	}
@@ -380,6 +386,13 @@ static Cessate startup_funcs(gpointer context)
 	      (sp->inuse == SOUND_NORMAL) &&
 	      (sp->selected_channel == NO_SELECTION)) /* don't clobber possible select-channel in loaded startup files */
 	    select_channel(sp, 0);
+	}
+      if (ss->startup_errors)
+	{
+	  handle_listener(true);
+	  listener_append(ss->startup_errors);
+	  FREE(ss->startup_errors);
+	  ss->startup_errors = NULL;
 	}
       return(BACKGROUND_QUIT); 
       break;

@@ -32,6 +32,10 @@
  *         (and who on earth thinks a phillips screw head means "stop"!)
  * TODO: FileChooser: add entry for filename in Open case (with completion)
  * TODO: snd_error_within_xen to simplify error handling from Scheme etc
+
+* GtkFileChooser
+ - Add overwrite confirmation for SAVE mode [Federico Mena Quintero]
+
  */
 
 
@@ -1540,7 +1544,7 @@ static void save_as_extract_callback(GtkWidget *w, gpointer null_data)
 	    {
 	      char *fullname = NULL;
 	      fullname = mus_expand_filename(str);
-	      if (!(snd_overwrite_ok(fullname))) 
+	      if (false) /* TODO: fix this! */
 		{
 		  FREE(fullname);
 		  need_directory_update = false;
@@ -1551,10 +1555,11 @@ static void save_as_extract_callback(GtkWidget *w, gpointer null_data)
 		}
 	      else
 		{
+		  io_error_t io_err;
 		  redirect_snd_error_to(post_file_dialog_error, (void *)sdat);
-		  err = save_channel_edits(sp->chans[chan], str, AT_CURRENT_EDIT_POSITION);
+		  io_err = save_channel_edits(sp->chans[chan], str, AT_CURRENT_EDIT_POSITION);
 		  redirect_snd_error_to(NULL, NULL);
-		  /* returns MUS_NO_ERROR but nothing written if not overwrite_ok */
+		  /* returns IO_WRITE_CANCELLATION but nothing written if not overwrite_ok */
 		  need_directory_update = true;
 		}
 	    }

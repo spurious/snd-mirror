@@ -122,12 +122,11 @@
 (define (add-delete-option)
   (add-to-menu 0 "Delete" ; add Delete option to File menu
 	       (lambda ()
-		 ;; close current sound and delete it (after requesting confirmation)
+		 ;; close current sound and delete it
 		 (if (>= (selected-sound) 0)
 		     (let ((filename (file-name)))
 		       (close-sound)
-		       (if (yes-or-no? (format #f "delete ~S?" filename))
-			   (delete-file filename)))))
+		       (delete-file filename))))
 	       8)) ; place after File:New
 
 (define (add-rename-option)
