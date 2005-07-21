@@ -26,6 +26,9 @@ make xm
 echo ' '
 echo ' '
 ./snd --version
+echo '(let ((hxm (dlopen (string-append (getcwd) "/xm.so")))) (dlinit hxm "Init_libxm") (display XmARROWS_END) (exit))' > tmp.scm
+./snd tmp.scm
+rm tmp.scm
 make clmclean
 make sndinfo
 make audinfo
@@ -40,6 +43,9 @@ echo ' CFLAGS="-Wall" GUILE_CONFIG_path=/home/bil/test/bin '
 make
 make xm
 snd --version
+echo '(let ((hxm (dlopen (string-append (getcwd) "/xm.so")))) (dlinit hxm "Init_libxm") (display XmARROWS_END) (exit))' > tmp.scm
+./snd tmp.scm
+rm tmp.scm
 make allclean
 # echo ' CC=g++ CFLAGS="-Wall" GUILE_CONFIG_path=/home/bil/test/bin '
 # ./configure --quiet CC=g++ CFLAGS="-Wall" GUILE_CONFIG_path=/home/bil/test/bin
@@ -90,6 +96,9 @@ echo ' '
 echo ' '
 ./snd --version
 make xg
+echo '(let ((hxm (dlopen (string-append (getcwd) "/xg.so")))) (dlinit hxm "Init_libxg") (display GTK_ARROW_UP) (exit))' > tmp.scm
+./snd tmp.scm
+rm tmp.scm
 rm xg.o
 echo ' CC=g++ CFLAGS="-Wall" --with-gtk --disable-deprecated '
 ./configure --quiet CFLAGS="-Wall" --with-gtk --disable-deprecated
@@ -104,6 +113,7 @@ echo ' CC=g++ --with-gtk CFLAGS="-Wall -DHAVE_GFCDN=0" '
 ./configure --quiet CC=g++ --with-gtk CFLAGS="-Wall -DHAVE_GFCDN=0"
 make
 snd --version
+make xg
 
 echo ' -------------------------------- no-guile -------------------------------- '
 make allclean
@@ -287,6 +297,9 @@ rm xm.o
 echo ' CC=g++ --with-static-xm '
 ./configure --quiet CC=g++ --with-static-xm
 make xm
+echo '(let ((hxm (dlopen (string-append (getcwd) "/xm.so")))) (dlinit hxm "Init_libxm") (display XmARROWS_END) (exit))' > tmp.scm
+./snd tmp.scm
+rm tmp.scm
 
 make allclean
 echo ' CFLAGS="-Wall" --with-static-xm --without-xpm --without-xp '

@@ -18,7 +18,7 @@
     (let ((hxm (dlopen "xm.so")))
       (if (string? hxm)
 	  (snd-error (format #f "popup.scm needs the xm module: ~A" hxm))
-	  (dlinit hxm "init_xm"))))
+	  (dlinit hxm "Init_libxm"))))
 
 (if (not (defined? 'for-each-child))
     (define (for-each-child w func)

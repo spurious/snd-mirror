@@ -7137,8 +7137,7 @@ void save_edits(snd_info *sp, void *ptr)
 	    {
 	      bool yes = true;
 	      /* yes = snd_yes_or_no_p(_("%s changed on disk! Save anyway?"), sp->short_filename); */
-	      /* TODO: get rid of yes_or_no -- all are fixable -- then remove snd-g|xerror.c:
-	       *   snd-g|xmenu: (File:Save and Popup:Save) -- handle via separate dialog I guess (sigh) with dynamic callbacks
+	      /* TODO: yes-or-no case: snd-g|xmenu: (File:Save and Popup:Save) -- handle via separate dialog I guess (sigh) with dynamic callbacks
 	       *     will need multiple such dialogs, clearing if sound is closed etc
 	       */
 	      if (!yes) return;

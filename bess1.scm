@@ -28,8 +28,8 @@
 (use-modules (ice-9 optargs) (ice-9 format))
 
 ;; You may correct next two lines to fit your needs.
-(load-extension "libsndlib" "init_sndlib")
-(load-extension "libxm" "init_xm")
+(load-extension "libsndlib" "Init_sndlib")
+(load-extension "libxm" "Init_libxm")
 
 (define* (main #:rest args) (rt-motif))
 ;;(define* (main #:rest args) (rt-motif #:srate 11025 #:bufsize 1024))

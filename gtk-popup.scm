@@ -9,10 +9,10 @@
 (provide 'snd-gtk-popup.scm)
 
 (if (not (provided? 'xg))
-    (let ((hxm (dlopen "xm.so")))
+    (let ((hxm (dlopen "xg.so")))
       (if (string? hxm)
 	  (snd-error (format #f "gtk-popup.scm needs the xg module: ~A" hxm))
-	  (dlinit hxm "init_xm"))))
+	  (dlinit hxm "Init_libxg"))))
 
 (define (change-label w new-label)
   "(change-label widget new-label) changes widget's label to be new-label"

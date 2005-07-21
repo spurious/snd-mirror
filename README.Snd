@@ -581,19 +581,18 @@ colormap of the entire system is hijacked while Snd is running.
 
 ---- Mac OSX: ---- 
 
-The Snd configure process is confused by the lack of pkg-config (if
-Gtk requested), and for Motif, by a problem with dynamic loading, so
-you need to run configure, then fixup some portions of the makefile
-before running make.  In Motif, you need to make sure libXt.a is
-loaded:
+First, install the X11SDK and X11User packages.  The first is in one
+of the Installer directories, the second (in 10.4) is on the first
+install disk under System/Packages or some such name.  These give
+you the X11 server and its header files.
 
-MOTIF_LIBS =  -L/usr/X11R6/lib  -lSM -lICE /usr/local/lib/libXm.a /usr/X11R6/lib/libXp.a /usr/X11R6/lib/libXt.a -lXext -lXpm -lX11
-# MOTIF_LIBS =  -L/usr/X11R6/lib  -lSM -lICE -lXm -lXt -lX11  -lXext -lXp -lXpm
+If you want to use Motif (recommended), get and install the openmotif
+package.  I think you'll need to include the --with-static-motif
+switch in the configuration process, and perhaps --with-motif-prefix=
+/usr/OpenMotif (or wherever libXm got written by the installer).
 
-or, if you installed libXm.a in /sw/lib (via Fink, or something):
-
-MOTIF_LIBS = -L/usr/X11R6/lib -lSM -lICE /sw/lib/libXm.a /usr/X11R6/lib/libXp.a /usr/X11R6/lib/libXt.a -lXext -lXpm -lX11
-
+If you want to use Gtk, he Snd configure process is confused by the 
+lack of pkg-config -- I've forgotten how to deal with this.
 
 And you'll probably need to add some things to the GUILE library list:
 
@@ -603,15 +602,6 @@ or, in the fink case:
 
 GUILE_LIBS = -L/sw/lib -lguile -lm /sw/lib/libguile.a
 GUILE_CFLAGS = -I/sw/include/
-
-
-If configure didn't find Gtk or Motif, it's possible the header flags will
-also need to be fixed:
-
-# GX_HEADERS = $(NO_GUI_HEADERS)
-# GX_FILES = $(NO_GUI_O_FILES)
-GX_HEADERS = $(SND_X_HEADERS)
-GX_FILES = $(X_O_FILES)
 
 
 If the openmotif package forgot to include libXm.a, a version is

@@ -45,10 +45,7 @@
     (let ((hxm (dlopen "xm.so")))
       (if (string? hxm)
 	  (snd-error (format #f "snd-motif.scm needs the xm module: ~A" hxm))
-	  (dlinit hxm "init_xm"))))
-
-;;; apparently the new way within Guile to do this is (load-extension "xm" "init_xm")
-;;;   but that forces us to use Libtool's very poor dlopen wrapper.
+	  (dlinit hxm "Init_libxm"))))
 
 (if (not (provided? 'snd-extensions.scm)) (load-from-path "extensions.scm"))
 (if (not (provided? 'snd-play.scm)) (load-from-path "play.scm"))

@@ -241,14 +241,33 @@ AC_CHECK_LIB(m, jn,
 # fftw
 #--------------------------------------------------------------------------------
 
-# TODO: there is apparently fftw3.pc -- incorporate (will need cflags too, I think)
-
-SAVELIBS=$LIBS
 FFTW_LIBS=""
+FFTW_CFLAGS=""
 if test "$with_fftw" != no; then
-  LIBS="$LIBS -lfftw3 -lm"
-  AC_MSG_CHECKING([for fftw-3])
-  AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <fftw3.h>],
+  AC_MSG_CHECKING(for fftw3)
+  if test x$PKG_CONFIG != xno ; then
+    if $PKG_CONFIG fftw3 --exists ; then
+      FFTW_LIBS="`$PKG_CONFIG fftw3 --libs`"
+      FFTW_CFLAGS="`$PKG_CONFIG fftw3 --cflags`"
+      AC_DEFINE(HAVE_FFTW3)
+      AC_MSG_RESULT(yes)
+    else
+      AC_MSG_RESULT(no)
+      AC_MSG_CHECKING(for fftw2)
+      if test $PKG_CONFIG fftw --exists ; then
+        FFTW_LIBS="`$PKG_CONFIG fftw --libs`"
+        FFTW_CFLAGS="`$PKG_CONFIG fftw --cflags`"
+        AC_DEFINE(HAVE_FFTW)
+        AC_MSG_RESULT(yes)
+      else
+        AC_MSG_RESULT(no)
+      fi
+    fi
+  else
+    SAVELIBS=$LIBS
+    LIBS="$LIBS -lfftw3 -lm"
+    AC_MSG_CHECKING([for fftw-3])
+    AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <fftw3.h>],
 		                [fftw_plan plan; fftw_execute(plan)])],
 		[AC_MSG_RESULT(yes)
 		 AC_DEFINE(HAVE_FFTW3)
@@ -264,9 +283,11 @@ if test "$with_fftw" != no; then
 		   		 FFTW_LIBS="-lrfftw -lfftw"],
 		  		[AC_MSG_RESULT(no)])
 		])
+    LIBS=$SAVELIBS
+  fi
 fi
 AC_SUBST(FFTW_LIBS)
-LIBS=$SAVELIBS
+AC_SUBST(FFTW_CFLAGS)
 
 
 #--------------------------------------------------------------------------------
@@ -1078,7 +1099,9 @@ else
   fi
 
 if test $GUILE_CONFIG_works = yes; then
+
   GUILE_CFLAGS="`${GUILE_CONFIG_path}${GUILE_CONFIG_name} compile`"
+
   if test "$GUILE_LIB_path" != "" ; then
     # MacOSX linker doesn't know the -rpath stuff, but user may have placed Guile in /usr/lib/snd/bin
     case "$host" in
@@ -1103,8 +1126,15 @@ if test $GUILE_CONFIG_works = yes; then
     AC_SUBST(GUILE_CFLAGS)
     if test "$XM_LIBS" = ""; then
       XM_LIBS="$GUILE_LIBS"
+      if test "`${GUILE_CONFIG_path}${GUILE_name} -c '(display (string>=? (version) "1.6.8"))'`" = "#t"; then
+        # the -pthread business confuses ld
+        new_libs=`echo " $XM_LIBS " | sed -e 's/-pthread //'`
+        LD_XM_LIBS="$new_libs"
+      fi
     fi
+
     AC_SUBST(XM_LIBS)
+    AC_SUBST(LD_XM_LIBS)
     AC_SUBST(GUILE_LIBS)
     AC_DEFINE(HAVE_GUILE)
     AC_DEFINE(HAVE_SCHEME)

@@ -65,8 +65,6 @@
  * but only if it can be included in this file.
  */
 
-/* TODO: check out OSX 10.4 stuff */
-
 #include <config.h>
 
 #if USE_SND

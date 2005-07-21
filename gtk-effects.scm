@@ -4,10 +4,10 @@
 (provide 'snd-gtk-effects.scm)
  
 (if (not (provided? 'xg))
-    (let ((hxm (dlopen "xm.so")))
+    (let ((hxm (dlopen "xg.so")))
       (if (string? hxm)
 	  (snd-error (format #f "gtk-effects.scm needs the xg module: ~A" hxm))
-	  (dlinit hxm "init_xm"))))
+	  (dlinit hxm "Init_libxg"))))
 
 (define pi 3.141592653589793)
 

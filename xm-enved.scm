@@ -6,12 +6,18 @@
 (use-modules (ice-9 common-list) (ice-9 format))
 (provide 'snd-xm-enved.scm)
 
-(if (and (not (provided? 'xm))
-	 (not (provided? 'xg)))
-    (let ((hxm (dlopen "xm.so")))
-      (if (string? hxm)
-	  (snd-error (format #f "xe-enved.scm needs the xm module: ~A" hxm))
-	  (dlinit hxm "init_xm"))))
+(if (provided? 'snd-motif)
+    (if (not (provided? 'xm))
+	(let ((hxm (dlopen "xm.so")))
+	  (if (string? hxm)
+	      (snd-error (format #f "xm-enved.scm needs the xm module: ~A" hxm))
+	      (dlinit hxm "Init_libxm"))))
+    (if (provided? 'snd-gtk)
+	(if (not (provided? 'xg))
+	    (let ((hxm (dlopen "xg.so")))
+	      (if (string? hxm)
+		  (snd-error (format #f "xm-enved.scm needs the xg module: ~A" hxm))
+		  (dlinit hxm "Init_libxg"))))))
 
 (define xe-envelope
   (make-procedure-with-setter

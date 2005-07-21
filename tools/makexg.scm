@@ -1,8 +1,6 @@
 #!/usr/local/bin/guile -s
 !#
 
-;;; TODO: merge changes into libxm config.h.in and .ac 
-
 ;;; makexg.scm creates the gtk2/gdk/pango/glib bindings using xgdata.scm, writes xg.c, xg-ruby.c, xg-x11.h
 
 (use-modules (ice-9 debug))

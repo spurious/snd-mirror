@@ -24,10 +24,10 @@
 (provide 'snd-snd-gtk.scm)
 
 (if (not (provided? 'xg))
-    (let ((hxm (dlopen "xm.so")))
+    (let ((hxm (dlopen "xg.so")))
       (if (string? hxm)
 	  (snd-error (format #f "snd-gtk.scm needs the xg module: ~A" hxm))
-	  (dlinit hxm "init_xm"))))
+	  (dlinit hxm "Init_libxg"))))
 
 (if (not (provided? 'snd-extensions.scm)) (load-from-path "extensions.scm"))
 (if (not (provided? 'snd-play.scm)) (load-from-path "play.scm"))

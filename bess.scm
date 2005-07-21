@@ -9,12 +9,12 @@
 (let ((sndlib (dynamic-link "sndlib.so")))
   (if (not (dynamic-object? sndlib))
       (error "can't find sndlib.so")
-      (dynamic-call (dynamic-func "init_sndlib" sndlib) #f)))
+      (dynamic-call (dynamic-func "Init_sndlib" sndlib) #f)))
 
 (let ((libxm (dynamic-link "libxm.so")))
   (if (not (dynamic-object? libxm))
       (error "can't find libxm")
-      (dynamic-call (dynamic-func "init_xm" libxm) #f)))
+      (dynamic-call (dynamic-func "Init_libxm" libxm) #f)))
 
 ;;; if these fail, first strace bess.scm and see where it failed
 ;;; if it actually did find the library, try running Snd and (dlopen "sndlib.so")

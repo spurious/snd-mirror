@@ -6,7 +6,7 @@
     (let ((hxm (dlopen "xm.so")))
       (if (string? hxm)
 	  (snd-error (format #f "event.scm needs the xm module: ~A" hxm))
-	  (dlinit hxm "init_xm"))))
+	  (dlinit hxm "Init_libxm"))))
 
 
 (define key-event

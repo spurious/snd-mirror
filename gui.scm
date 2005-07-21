@@ -53,15 +53,15 @@
 
 (if use-gtk
     (if (not (provided? 'xg))
-	(let ((hxm (dlopen "xm.so")))
+	(let ((hxm (dlopen "xg.so")))
 	  (if (string? hxm)
 	      (snd-error (format #f "gui.scm needs the xg module: ~A" hxm))
-	      (dlinit hxm "init_xm"))))
+	      (dlinit hxm "Init_libxg"))))
     (if (not (provided? 'xm))
 	(let ((hxm (dlopen "xm.so")))
 	  (if (string? hxm)
 	      (snd-error (format #f "gui.scm needs the xm module: ~A" hxm))
-	      (dlinit hxm "init_xm")))))
+	      (dlinit hxm "Init_libxm")))))
     
 
 

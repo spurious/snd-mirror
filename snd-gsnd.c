@@ -73,6 +73,9 @@ static void watch_minibuffer(GtkWidget *w, gpointer context)
   clear_minibuffer_error((snd_info *)context);
 }
 
+/* TODO: entry here so multi-lines not displayed correctly */
+/* TODO: check libxm load process for the -pthread bug */
+
 void clear_minibuffer_error(snd_info *sp)
 {
   gtk_widget_hide(ERROR_INFO_FRAME(sp));

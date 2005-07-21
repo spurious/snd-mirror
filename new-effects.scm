@@ -5,7 +5,7 @@
     (let ((hxm (dlopen "xm.so")))
       (if (string? hxm)
 	  (snd-error (format #f "new-effects.scm needs the xm module: ~A" hxm))
-	  (dlinit hxm "init_xm"))))
+	  (dlinit hxm "Init_libxm"))))
 
 (define pi 3.141592653589793)
 (if (not (provided? 'snd-snd-motif.scm)) (load-from-path "snd-motif.scm")) ; raise-dialog
