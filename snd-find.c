@@ -286,7 +286,6 @@ static off_t cursor_find_forward(snd_info *sp, chan_info *cp, int count)
   else
     {
       ss->stopped_explicitly = false;
-      redirect_errors_to(send_find_errors_to_minibuffer, (void *)sp);
       for (i = start, passes = 0; i < end; i++, passes++)
 	{
 	  res = XEN_CALL_1(sp->search_proc, 
@@ -378,7 +377,6 @@ static off_t cursor_find_backward(snd_info *sp, chan_info *cp, int count)
   else
     {
       ss->stopped_explicitly = false;
-      redirect_errors_to(send_find_errors_to_minibuffer, (void *)sp);
       for (i = start, passes = 0; i >= 0; i--, passes++)
 	{
 	  /* sp search proc as ptree */

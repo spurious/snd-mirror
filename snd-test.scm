@@ -2298,7 +2298,11 @@
 				     (strftime "%a %d-%b-%Y %H:%M %Z" 
 					       (localtime (current-time))))))
 	    (set! (comment ob) str)
-	    (save-sound-as "test.snd" ob mus-aifc mus-bdouble)
+	    (let ((tag (catch #t
+			      (lambda ()
+				(save-sound-as "test.snd" ob mus-aifc mus-bdouble))
+			      (lambda args (car args)))))
+	      (if (eq? tag 'cannot-save) (snd-display ";save-sound-as test.snd write trouble")))
 	    (set! (filter-control-in-hz) #t)
 	    (let ((ab (open-sound "test.snd")))
 	      (if (and (provided? 'xm) (provided? 'snd-debug))
@@ -19253,6 +19257,7 @@ EDITS: 5
 			 (if (fneq old-val new-val)
 			     (snd-display ";[~A] ~A: ~A ~A ~A" (if (= k 0) 'run 'apply) name i old-val new-val))))
 		     (if (and (not (eq? name 'polyshape))
+			      (not (eq? name 'waveshape))
 			      (not not-zero))
 			 (snd-display ";~A not much of a reset test!" name)))))))
 	 make-procs run-procs func-names))
@@ -24256,10 +24261,6 @@ EDITS: 5
 	(key (char->integer #\s) 4 ind 0)
 	(if (not (= (cursor ind 0) 4423))
 	    (snd-display ";search-procedure C-s C-s cursor: ~D?" (cursor ind 0)))
-	(if with-gui
-	    (let ((str (widget-text (list-ref (sound-widgets ind) 3))))
-	      (if (not (string=? str "y = .101 at .201 (4423)"))
-		  (snd-display ";C-s 4423 report-in-minibuffer: ~A?" str))))
 	(let ((str (with-output-to-string (lambda () (display (procedure-source (search-procedure ind)))))))
 	  (if (not (string=? str "(lambda (n4) (> n4 0.1))"))
 	      (snd-display ";search-procedure: ~A?" str)))
@@ -24270,11 +24271,6 @@ EDITS: 5
 	(key (char->integer #\s) 4 ind 0)
 	(if (not (= (cursor ind 0) 0))
 	    (snd-display ";search-procedure C-s C-s cursor failed: ~D?" (cursor ind 0)))
-	(if with-gui
-	    (let ((str (widget-text (list-ref (sound-widgets ind) 3))))
-	      (if (not (or (string=? str "not found") ; the lack of search expr is a bug
-			   (string=? str "not found (wrapped)")))
-		  (snd-display ";C-s failure report-in-minibuffer: ~A?" str))))
 	(let ((str (with-output-to-string (lambda () (display (procedure-source (search-procedure ind)))))))
 	  (if (not (string=? str "(lambda (n) (> n 0.2))"))
 	      (snd-display ";search-procedure (1): ~A?" str)))
@@ -42731,10 +42727,6 @@ EDITS: 1
 		  (dismiss-all-dialogs)
 		  (key (char->integer #\x) 4 i1)
 		  (key (char->integer #\e) 4 i1) (force-event)
-		  (let ((str (widget-text (list-ref (sound-widgets i1) 3)))
-			(size (widget-size (list-ref (sound-widgets i1) 3))))
-		    (if (not (string=? str "no macro active?"))
-			(snd-display ";C-x C-e report-in-minibuffer: ~A ~A?" str size)))
 
 		  (dismiss-all-dialogs)
 		  (key (char->integer #\x) 4 i1)
@@ -43595,10 +43587,7 @@ EDITS: 1
 		      (key-event minibuffer snd-tab-key 0) (force-event)
 		      (key-event minibuffer snd-return-key 0) (force-event)
 		      (if (not (= (edit-position) edit-pos))
-			  (snd-display ";C-x C-i empty file not a no-op?"))
-		      (let ((str (widget-text minibuffer)))
-			(if (not (string=? str "file z.snd has no data"))
-			    (snd-display ";C-x C-i z.snd minibuffer text: ~A" str))))
+			  (snd-display ";C-x C-i empty file not a no-op?")))
 		    (key-event cwid (char->integer #\x) 4) (force-event)
 		    (key-event cwid (char->integer #\q) 4) (force-event)
 		    (widget-string minibuffer "oboe.snd")
@@ -45708,9 +45697,6 @@ EDITS: 1
 		  (snd-display ";screen height: ~A" (.height scr)))
 	      (if (not (= (.width scr) 1600))
 		  (snd-display ";screen width: ~A" (.width scr)))
-	      (let ((ratio (/ (.mwidth scr) (.width scr))))
-		(if (> (abs (- (* ratio (.height scr)) (.mheight scr))) 2)
-		    (snd-display ";mheight/width: ~A ~A" (.mheight scr) (.mwidth scr))))
 	      (if (not (= (.ndepths scr) 7))
 		  (snd-display ";screen ndepths: ~A" (.ndepths scr)))
 	      (let ((dps (.depths scr)))
@@ -45916,7 +45902,7 @@ EDITS: 1
 ;		      (XFreeModifiermap lmapk) ;prone to segfault in X
 		      )))
 
-	      (if (not (= (XExtendedMaxRequestSize dpy) 1048575))
+	      (if (not (= (XExtendedMaxRequestSize dpy) 4194303))
 		  (snd-display ";XExtendedMaxRequestSize ~A" (XExtendedMaxRequestSize dpy)))
 	      (if (not (= (XMaxRequestSize dpy) 65535))
 		  (snd-display ";XMaxRequestSize ~A" (XMaxRequestSize dpy)))
@@ -45946,7 +45932,7 @@ EDITS: 1
 	      
 	      (if (< (QLength dpy) 0) (snd-display ";QLength: ~A" (QLength dpy)))
 	      (if (not (= (ScreenCount dpy) 1)) (snd-display ";ScreenCount: ~A" (ScreenCount dpy)))
-	      (if (not (string=? (ServerVendor dpy) "The XFree86 Project, Inc")) (snd-display ";ServerVendor: ~A" (ServerVendor dpy)))
+	      (if (not (string=? (ServerVendor dpy) "The X.Org Foundation")) (snd-display ";ServerVendor: ~A" (ServerVendor dpy)))
 	      (if (not (= (ProtocolRevision dpy) 0)) (snd-display ";ProtocolRevision: ~A" (ProtocolRevision dpy)))
 	      (if (not (= (ProtocolVersion dpy) 11)) (snd-display ";ProtocolVersion: ~A" (ProtocolVersion dpy)))
 	      (if (not (number? (VendorRelease dpy))) (snd-display ";VendorRelease: ~A" (VendorRelease dpy)))
@@ -46062,7 +46048,7 @@ EDITS: 1
 	      
 	      (if (< (XQLength dpy) 0) (snd-display ";XQLength: ~A" (XQLength dpy)))
 	      (if (not (= (XScreenCount dpy) 1)) (snd-display ";XScreenCount: ~A" (XScreenCount dpy)))
-	      (if (not (string=? (XServerVendor dpy) "The XFree86 Project, Inc")) (snd-display ";XServerVendor: ~A" (XServerVendor dpy)))
+	      (if (not (string=? (XServerVendor dpy) "The X.Org Foundation")) (snd-display ";XServerVendor: ~A" (XServerVendor dpy)))
 	      (if (not (= (XProtocolRevision dpy) 0)) (snd-display ";XProtocolRevision: ~A" (XProtocolRevision dpy)))
 	      (if (not (= (XProtocolVersion dpy) 11)) (snd-display ";XProtocolVersion: ~A" (XProtocolVersion dpy)))
 	      (if (not (number? (XVendorRelease dpy))) (snd-display ";XVendorRelease: ~A" (XVendorRelease dpy)))
@@ -56220,22 +56206,27 @@ EDITS: 1
 	    (set! (window-y) 10)
 	    (dismiss-all-dialogs)
 
+	    (if (file-exists? "test.snd")
+		(begin
+		  (system "chmod 644 test.snd")
+		  (delete-file "test.snd")))
+
+	    
 	    (copy-file "oboe.snd" "test.snd")
 	    (let ((ind (open-sound "test.snd")))
 	      (delete-file "test.snd")
-	      (let ((val (update-sound ind)))
-		(let ((msg (widget-text (list-ref (sound-widgets ind) 3))))
-		  (if (or (not (string? msg))
-			  (not (string=? msg "test.snd no longer exists!")))
-		      (snd-display ";delete sound msg: ~A" msg))))
+	      (let ((tag (catch #t
+				(lambda ()
+				  (update-sound ind))
+				(lambda args (car args)))))
+		(if (not (eq? tag 'cant-update-file))
+		    (snd-display ";update-sound after deletion: ~A" tag)))
 	      (delete-sample 10)
-	      (catch #t
-		     (lambda () (save-sound ind))
-		     (lambda args #f))
-	      (let ((msg (widget-text (list-ref (sound-widgets ind) 3))))
-		(if (or (not (string? msg))
-			(not (string=? msg (format #f "~A/test.snd has disappeared!" (getcwd)))))
-		    (snd-display ";save deleted sound msg: ~A" msg)))
+	      (let ((tag (catch #t
+				(lambda () (save-sound ind))
+				(lambda args (car args)))))
+		(if (not (eq? tag 'cannot-save))
+		    (snd-display ";save file deleted: ~A" tag)))
 	      (close-sound ind))
 	    
 	    (copy-file "oboe.snd" "test.snd")
@@ -56250,16 +56241,13 @@ EDITS: 1
 	    (let ((ind (open-sound "test.snd")))
 	      (system "chmod 400 test.snd")
 	      (delete-sample 10)
-	      (catch #t
-		     (lambda () (save-sound ind))
-		     (lambda args #f))
-	      (let ((msg (widget-text (list-ref (sound-widgets ind) 3))))
-		(if (or (not (string? msg))
-			(not (string=? (substring msg 0 57)
-				       (format #f "file write failed: Permission denied, edits are saved in:"))))
-		    (snd-display ";save protected sound msg: ~A" msg)))
+	      (let ((tag (catch #t
+				(lambda () (save-sound ind))
+				(lambda args (car args)))))
+		(if (not (eq? tag 'cannot-save))
+		    (snd-display ";save protected sound msg: ~A" tag)))
 	      (close-sound ind))
-	    
+
 	    (system "chmod 644 test.snd")
 	    (delete-file "test.snd")
 	    
@@ -56273,7 +56261,7 @@ EDITS: 1
 		  (snd-display ";open read-protected sound: ~A" tag)))
 	    (system "chmod 644 test.snd")
 	    (delete-file "test.snd")
-	    
+
 	    (copy-file "oboe.snd" "test.snd")
 	    (system "chmod 400 test.snd")
 	    (let ((ind (open-sound "oboe.snd")))

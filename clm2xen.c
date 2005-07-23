@@ -192,9 +192,12 @@ static bool local_arity_ok(XEN proc, int args) /* from snd-xen.c minus (inconven
   arity = XEN_ARITY(proc);
 #if HAVE_RUBY
   rargs = XEN_TO_C_INT(arity);
+  return(xen_rb_arity_ok(rargs, args));
+  /*
   if ((rargs > args) ||
       ((rargs < 0) && (-rargs > args)))
     return(false);
+  */
 #endif
 #if HAVE_SCHEME
   rargs = XEN_TO_C_INT(XEN_CAR(arity));

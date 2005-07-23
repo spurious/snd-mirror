@@ -2,6 +2,8 @@
 
 /* X side of file print */
 
+/* TODO error label and redirection */
+
 static GtkWidget *file_print_dialog = NULL;
 static GtkWidget *file_print_name = NULL;
 static GtkWidget *file_print_eps_or_lpr = NULL;
@@ -69,7 +71,7 @@ static void file_print_ok_callback(GtkWidget *w, gpointer context)
 	    }
 	  err = lpr(name);
 	  if ((err != 0) && (nsp)) report_in_minibuffer(nsp, _("can't print!"));
-	  /* tried to redirect stderr here and pick it up afterwards, to no avail */
+	  /* TODO: redirect to print dialog */
 	  snd_remove(name, IGNORE_CACHE);
 	  FREE(name);
 	}

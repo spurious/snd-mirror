@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Wed Sep 04 18:34:00 CEST 2002
-# Last: Mon May 23 03:14:14 CEST 2005
+# Last: Mon Jul 04 18:01:59 CEST 2005
 
 # Commentary:
 #
@@ -1549,6 +1549,14 @@ def set_mus_b2(gen, val)
   set_mus_ycoeff(gen, 2, val)
 end
 
+# backward compatible aliases (snd7.scm)
+if provided?(:snd)
+  alias save_options               save_state
+  alias delete_samples_with_origin delete_samples
+  alias default_output_type        default_output_header_type
+  alias default_output_format      default_output_data_format
+end
+
 class Mus
   # clm_gen.call(a1, a2) requires 2 arguments but clm_gen.run([a1, [a2]])
   # 0, 1 or 2.
@@ -2231,7 +2239,7 @@ if provided? :snd_nogui
 else
   def close_sound_extend(snd)
     # 5 == Notebook
-    if main_widgets[5] and selected_sound <= snd
+    if main_widgets[5] and selected_sound and selected_sound <= snd
       idx = 0
       snds = sounds() and idx = snds.index(snd)
       close_sound(snd)

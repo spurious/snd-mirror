@@ -11,8 +11,8 @@
  */
 
 #define XEN_MAJOR_VERSION 1
-#define XEN_MINOR_VERSION 35
-#define XEN_VERSION "1.35"
+#define XEN_MINOR_VERSION 36
+#define XEN_VERSION "1.36"
 
 /* HISTORY:
  *
@@ -1379,6 +1379,7 @@ XEN rb_property(XEN obj, XEN prop);
 XEN rb_set_property(XEN obj, XEN prop, XEN val);
 XEN rb_documentation(XEN name);
 XEN rb_set_documentation(XEN name, XEN help);
+bool xen_rb_arity_ok(int rargs, int args);
 #endif
 /* end HAVE_RUBY */
 

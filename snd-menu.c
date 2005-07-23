@@ -214,7 +214,11 @@ static void file_update(snd_info *sp, void *ptr)
   if ((sp) && (sp->edited_region == NULL) &&
       ((sp->need_update) || 
        (file_write_date(sp->filename) != sp->write_date)))
-    snd_update(sp);
+    {
+      redirect_everything_to(printout_to_minibuffer, (void *)sp);
+      snd_update(sp);
+      redirect_everything_to(NULL, NULL);
+    }
 }
 
 void update_file_from_menu(void)
@@ -247,17 +251,38 @@ void save_options_from_menu(void)
   else
     {
       if (any_selected_sound())
-	report_in_minibuffer(any_selected_sound(), 
-			     _("saved options in %s"), ss->init_file);
+	report_in_minibuffer(any_selected_sound(), _("saved options in %s"), ss->init_file);
     }
+}
+
+static bool save_state_error_p = false;
+static void save_state_from_menu_error_handler(const char *msg, void *ignore)
+{
+  /* SOMEDAY: need some way to post this if no files open [also below] */
+  if (any_selected_sound())
+    report_in_minibuffer(any_selected_sound(), msg);
+  save_state_error_p = true;
 }
 
 void save_state_from_menu(void)
 {
-  if ((save_state_file(ss)) && 
-      (save_state(save_state_file(ss)) == 0) && 
-      (any_selected_sound()))
-    report_in_minibuffer(any_selected_sound(), _("saved state in %s"), save_state_file(ss));
+  if (save_state_file(ss))
+    {
+      save_state_error_p = false;
+      redirect_everything_to(save_state_from_menu_error_handler, NULL);
+      save_state(save_state_file(ss));
+      redirect_everything_to(NULL, NULL);
+      if (!save_state_error_p)
+	{
+	  if (any_selected_sound())
+	    report_in_minibuffer(any_selected_sound(), _("saved state in %s"), save_state_file(ss));
+	}
+    }
+  else 
+    {
+      if (any_selected_sound())
+	report_in_minibuffer(any_selected_sound(), _("can't save state: save-state-file is null"));
+    }
 }
 
 

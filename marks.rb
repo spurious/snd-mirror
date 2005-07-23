@@ -2,7 +2,7 @@
 
 # Translator: Michael Scholz <scholz-micha@gmx.de>
 # Created: Wed Mar 23 02:08:47 CET 2005
-# Last: Wed May 18 19:04:45 CEST 2005
+# Last: Fri May 27 21:28:04 CEST 2005
 
 # Commentary:
 #
@@ -271,7 +271,11 @@ plays the portion between the marks (searching for plausible default marks)")
            false
          end
     if mark?(m1) and mark?(m2)
-      play(mark_sample(m1), mark_home(m1)[0], mark_home(m1)[1], false, mark_sample(m2))
+      pos1 = mark_sample(m1)
+      pos2 = mark_sample(m2)
+      beg = [pos1, pos2].min
+      len = [pos1, pos2].max
+      play(beg, mark_home(m1).car, mark_home(m1).cadr, false, len)
     end
   end
 

@@ -1638,7 +1638,7 @@ static bool apply_controls(apply_state *ap)
 	}
       if (need_scaling)
 	scale_by(cp, scalers, si->chans, false);
-      else report_in_minibuffer(sp, "apply controls: no changes to apply!"); /* need some sort of feedback to explain lack of edit */
+      else snd_warning(_("apply controls: no changes to apply!"));
       sp->sync = old_sync;
       FREE(scalers);
       si = free_sync_info(si);
@@ -1769,7 +1769,7 @@ static bool apply_controls(apply_state *ap)
 	      if (ap->i >= apply_dur) ap->slice++;
 	      check_for_event();
 	      /* if C-G, stop_applying called which cancels and backs out */
-	      if (ss->stopped_explicitly)
+	      if ((ss->stopped_explicitly) || (!(sp->active)))
 		{
 		  finish_progress_report(sp, NOT_FROM_ENVED);
 		  apply_reporting = false;
@@ -1928,7 +1928,9 @@ void menu_apply_controls(snd_info *sp)
       if (ap)
 	{
 	  sp->applying = true;
+	  redirect_everything_to(printout_to_minibuffer, (void *)sp);
 	  while (apply_controls(ap));
+	  redirect_everything_to(NULL, NULL);
 	}
     }
 }
@@ -2052,7 +2054,7 @@ typedef enum {SP_SYNC, SP_READ_ONLY, SP_NCHANS, SP_CONTRASTING, SP_EXPANDING, SP
 	      SP_FILTER_ENVELOPE
 } sp_field_t;
 
-static XEN sound_get(XEN snd_n, sp_field_t fld, char *caller)
+static XEN sound_get(XEN snd_n, sp_field_t fld, const char *caller)
 {
   snd_info *sp;
   int i;
@@ -2099,7 +2101,7 @@ static XEN sound_get(XEN snd_n, sp_field_t fld, char *caller)
       if (!(IS_PLAYER(sp))) 
 	{
 	  mus_sound_forget(sp->filename); /* old record must be out-of-date, so flush it (write date can be troublesome) */
-	  sp = snd_update(sp); 
+	  sp = snd_update_within_xen(sp, caller); 
 	  if (sp) return(C_TO_XEN_INT(sp->index));
 	} 
       break;
@@ -2293,7 +2295,7 @@ static XEN sound_set(XEN snd_n, XEN val, sp_field_t fld, char *caller)
 	    XEN_OUT_OF_RANGE_ERROR(S_setB S_srate, 1, val, "~A: impossible srate");
 	  mus_sound_set_srate(sp->filename, ival);
 	  sp->hdr->srate = ival;
-	  snd_update(sp); 
+	  snd_update_within_xen(sp, caller); 
 	}
       break;
     case SP_NCHANS: 
@@ -2304,7 +2306,7 @@ static XEN sound_set(XEN snd_n, XEN val, sp_field_t fld, char *caller)
 	    XEN_OUT_OF_RANGE_ERROR(S_setB S_channels, 1, val, "~A: highly unlikely number of channels");
 	  mus_sound_set_chans(sp->filename, ival);
 	  sp->hdr->chans = ival;
-	  snd_update(sp); 
+	  snd_update_within_xen(sp, caller); 
 	}
       break;
     case SP_DATA_FORMAT:
@@ -2330,7 +2332,7 @@ static XEN sound_set(XEN snd_n, XEN val, sp_field_t fld, char *caller)
 		  if ((cp) && (cp->amp_envs) && (cp->amp_envs[cp->edit_ctr]))
 		    cp->amp_envs[cp->edit_ctr] = free_amp_env(cp, cp->edit_ctr);
 		}
-	      snd_update(sp);
+	      snd_update_within_xen(sp, caller);
 	    }
 	  else XEN_OUT_OF_RANGE_ERROR(S_setB S_data_format, 1, val, "~A: unknown data format");
 	}
@@ -2342,7 +2344,7 @@ static XEN sound_set(XEN snd_n, XEN val, sp_field_t fld, char *caller)
 	  if (MUS_HEADER_TYPE_OK(ival))
 	    {
 	      mus_sound_set_header_type(sp->filename, ival);
-	      snd_update(sp); 
+	      snd_update_within_xen(sp, caller); 
 	    }
 	  else XEN_OUT_OF_RANGE_ERROR(S_setB S_header_type, 1, val, "~A: unknown header type");
 	}
@@ -2355,7 +2357,7 @@ static XEN sound_set(XEN snd_n, XEN val, sp_field_t fld, char *caller)
 	  if (loc >= 0)
 	    {
 	      mus_sound_set_data_location(sp->filename, loc);
-	      snd_update(sp); 
+	      snd_update_within_xen(sp, caller); 
 	    }
 	  else XEN_OUT_OF_RANGE_ERROR(S_setB S_data_location, 1, val, "data location ~A < 0?");
 	}
@@ -2368,7 +2370,7 @@ static XEN sound_set(XEN snd_n, XEN val, sp_field_t fld, char *caller)
 	  if (size >= 0)
 	    {
 	      mus_sound_set_samples(sp->filename, mus_bytes_to_samples(sp->hdr->format, size));
-	      snd_update(sp); 
+	      snd_update_within_xen(sp, caller); 
 	    }
 	  else XEN_OUT_OF_RANGE_ERROR(S_setB S_data_size, 1, val, "data size ~A < 0?");
 	}
@@ -3116,14 +3118,26 @@ static XEN g_update_sound(XEN snd_n)
   return(sound_get(snd_n, SP_UPDATE, S_update_sound));
 }
 
+static void save_sound_error_handler(const char *msg, void *data)
+{
+  redirect_snd_error_to(NULL, NULL);
+  redirect_snd_warning_to(NULL, NULL);
+  XEN_ERROR(CANNOT_SAVE,
+	    XEN_LIST_2(C_TO_XEN_STRING((char *)data),
+		       C_TO_XEN_STRING(msg)));
+}
+
 static XEN g_save_sound(XEN index) 
 {
   snd_info *sp;
+  io_error_t err = IO_NO_ERROR;
   #define H_save_sound "(" S_save_sound " (snd #f)): save snd (update the on-disk data to match Snd's current version)"
   ASSERT_SOUND(S_save_sound, index, 1);
+
   sp = get_sp(index, NO_PLAYERS);
   if (sp == NULL) 
     return(snd_no_such_sound_error(S_save_sound, index));
+
   if ((sp->user_read_only) || (sp->file_read_only))
     {
       XEN_ERROR(CANNOT_SAVE,
@@ -3133,10 +3147,21 @@ static XEN g_save_sound(XEN index)
 						      sp->index))));
       return(XEN_FALSE);
     }
-  /* TODO: should this not use report-in-mini or yes-or-no -- save_edits_without_blather or something 
-   * TODO: save_edits_without_display needs a caller arg -- error assumes save-sound-as
-   */
-  save_edits(sp, NULL);          
+
+  redirect_snd_error_to(save_sound_error_handler, (void *)S_save_sound);
+  redirect_snd_warning_to(save_sound_error_handler, (void *)S_save_sound);
+  err = save_edits(sp);      
+  redirect_snd_error_to(NULL, NULL);
+  redirect_snd_warning_to(NULL, NULL);
+
+  /* if err and we got here, report it */
+  if ((err != IO_NO_ERROR) &&
+      (err != IO_NO_CHANGES))
+    XEN_ERROR(CANNOT_SAVE,
+	      XEN_LIST_3(C_TO_XEN_STRING(S_save_sound),
+			 C_TO_XEN_STRING(io_error_name(err)),
+			 C_TO_XEN_INT(sp->index)));
+	      
   return(C_TO_XEN_INT(sp->index));
 }
 
@@ -3415,7 +3440,7 @@ Omitted arguments take their value from the sound being saved.\n\
 	  XEN_ERROR(CANNOT_SAVE,
 		    XEN_LIST_4(C_TO_XEN_STRING(S_save_sound_as),
 			       errstr,
-			       C_TO_XEN_INT((int)io_err), /* TODO: better error */
+			       C_TO_XEN_INT((int)io_err),
 			       C_TO_XEN_STRING(snd_open_strerror())));
 	}
     }
@@ -3898,6 +3923,19 @@ static XEN g_set_filter_control_envelope(XEN val, XEN snd)
 
 WITH_REVERSED_ARGS(g_set_filter_control_envelope_reversed, g_set_filter_control_envelope)
 
+static void squelch_printout(const char *msg, void *ignore)
+{
+}
+
+static void apply_controls_error(const char *msg, void *data)
+{
+  redirect_snd_warning_to(NULL, NULL);
+  redirect_snd_error_to(NULL, NULL);
+  XEN_ERROR(XEN_ERROR_TYPE("cannot-apply-controls"),
+	    XEN_LIST_2(C_TO_XEN_STRING((char *)data),
+		       C_TO_XEN_STRING(msg)));
+}
+
 #if HAVE_GUILE_DYNAMIC_WIND
 static void before_controls_to_channel(void *ignore) {}
 static void after_controls_to_channel(void *context) 
@@ -3909,13 +3947,20 @@ static void after_controls_to_channel(void *context)
   restore_control_settings(sp, cs);
   free_control_settings(cs);
 }
+
 static XEN controls_to_channel_body(void *context)
 {
   ctrl_state *cs = (ctrl_state *)context;
   apply_state *ap;
   ap = (apply_state *)(cs->ap);
   if (ap)
-    while (apply_controls(ap));
+    {
+      redirect_snd_error_to(apply_controls_error, (void *)S_controls_to_channel);
+      redirect_snd_warning_to(squelch_printout, NULL);
+      while (apply_controls(ap));
+      redirect_snd_warning_to(NULL, NULL); /* no-op message pointless within xen */
+      redirect_snd_error_to(NULL, NULL);
+    }
   return(XEN_FALSE);
 }
 #endif
@@ -4053,7 +4098,13 @@ where each inner list entry can also be #f."
 				(void *)saved_settings);
 #else
       if (ap)
-	while (apply_controls(ap));
+	{
+	  redirect_snd_error_to(apply_controls_error, (void *)S_controls_to_channel);
+	  redirect_snd_warning_to(squelch_printout, NULL);
+	  while (apply_controls(ap));
+	  redirect_snd_warning_to(NULL, NULL); /* no-op message pointless within xen */
+	  redirect_snd_error_to(NULL, NULL);
+	}
       sp->selected_channel = old_selected_channel;
       restore_control_settings(sp, saved_settings);
       free_control_settings(saved_settings);
@@ -4093,7 +4144,13 @@ The 'choices' are 0 (apply to sound), 1 (apply to channel), and 2 (apply to sele
       sp->applying = true;
       ap = (apply_state *)make_apply_state(sp);
       if (ap)
-	while (apply_controls(ap));
+	{
+	  redirect_snd_error_to(apply_controls_error, (void *)S_apply_controls);
+	  redirect_snd_warning_to(squelch_printout, NULL);
+	  while (apply_controls(ap));
+	  redirect_snd_warning_to(NULL, NULL); /* no-op message pointless within xen */
+	  redirect_snd_error_to(NULL, NULL);
+	}
       return(snd);
     }
   return(snd_no_such_sound_error(S_apply_controls, snd));

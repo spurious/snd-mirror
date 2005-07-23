@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Sat Jan 03 17:30:23 CET 2004
-# Last: Wed May 18 19:04:33 CEST 2005
+# Last: Fri Jul 22 01:31:01 CEST 2005
 
 # Commentary:
 # 
@@ -29,7 +29,6 @@
 #  backward_sample(count, snd, chn)
 #  
 #  append_to_minibuffer(msg, snd = false)
-#  dismiss_all_dialogs
 #  
 #  back_or_forth_graph(count)
 #  forward_graph(count)
@@ -105,7 +104,8 @@
 #  make_selection(beg, len, snd, chn)
 #  delete_selection_and_smooth()
 #  eval_over_selection(&func)
-#  
+#
+#  yes_or_no?(question, action_if_yes, action_if_no, snd)
 #  check_for_unsaved_edits(check)
 #  remember_sound_state
 #  
@@ -484,25 +484,6 @@ sets selection from mono files (from external program)")
       else
         report_in_minibuffer(msg, snd)
       end
-    end
-  end
-
-  def dismiss_all_dialogs
-    old_sigsegv = trap("SIGSEGV", "SIG_IGN")
-    (dialog_widgets or []).each do |w|
-      next unless w
-      hide_widget(w)
-    end
-  rescue
-    nil
-  ensure
-    case old_sigsegv
-    when Proc
-      trap("SIGSEGV", &old_sigsegv)
-    when String
-      trap("SIGSEGV", old_sigsegv)
-    else
-      trap("SIGSEGV", "SIG_DFL")
     end
   end
 
@@ -1337,11 +1318,7 @@ snd defaults to the currently selected sound.")
   add_help(:eval_over_selection,
           "eval_over_selection(&func)  evaluates func on each sample in the current selection")
   def eval_over_selection(func1 = nil, &func2)
-    func = if block_given?
-             func2
-           else
-             func1
-           end
+    func = (block_given? ? func2 : func1)
     if proc?(func) and selection?
       beg = selection_position()
       len = selection_frames()
@@ -1370,38 +1347,63 @@ snd defaults to the currently selected sound.")
            end, true, "C-x x: eval over selection")
 =end
 
+  def yes_or_no?(question, action_if_yes, action_if_no, snd = false)
+    clear_minibuffer(snd)
+    prompt_in_minibuffer(question,
+                         lambda do |response|
+                           clear_minibuffer(snd)
+                           if response == "yes"
+                             action_if_yes.call(snd)
+                           else
+                             action_if_no.call(snd)
+                           end
+                         end, snd, true)
+  end
+
   # check_for_unsaved_edits(check)
   add_help(:check_for_unsaved_edits,
            "check_for_unsaved_edits([check=true]) \
 -> sets up hooks to check for and ask about unsaved edits when a sound is closed.
 If 'check' is false, the hooks are removed.")
   def check_for_unsaved_edits(check = true)
-    unsaved_edits_at_close = lambda do |snd|
-      callcc do |c|
-        channels(snd).times do |chn|
-          eds = edits(snd, chn)
-          if eds[0] > 0
-            unless yes_or_no?(format("%s has %d unsaved edit(s) in channel %d, exit anyway?",
-                                     short_file_name(snd), eds[0], chn))
-              c.call(true)
-            end
-          end
+    ignore_unsaved_edits_at_close_p = lambda do |snd, exiting|
+      flag = true
+      channels(snd).times do |chn|
+        Snd.display("check %s[%d] ", file_name(snd), chn)
+        eds = edits(snd, chn)
+        Snd.display("%s edits ", eds.car)
+        if eds.car > 0
+          yes_or_no?(format("%s has %d unsaved edit(s) in channel %d.  Close anyway?",
+                            short_file_name(snd), eds[0], chn),
+                     lambda do |snd|
+                       revert_sound(snd)
+                       close_sound(snd)
+                       exiting and exit(0)
+                     end,
+                     lambda do |snd| false end, snd)
+          Snd.display("return false ")
+          flag = false
         end
-        false
       end
+      flag
+    end
+    ignore_unsaved_edits_at_exit_p = lambda do
+      Snd.sounds.each do |snd|
+        ignore_unsaved_edits_at_close_p.call(snd, true)
+      end
+    end
+    unsaved_edits_at_exit_p = lambda do !ignore_unsaved_edits_at_exit_p.call end
+    unsaved_edits_at_close_p = lambda do |snd|
+      val = ignore_unsaved_edits_at_close_p.call(snd, false)
+      Snd.display("close: %s", val)
+      val
     end
     if check
       unless $close_hook.member?("unsaved-edits-at-close?")
-        $close_hook.add_hook!("unsaved-edits-at-close?") do |s| unsaved_edits_at_close.call(s) end
+        $close_hook.add_hook!("unsaved-edits-at-close?", &unsaved_edits_at_close_p)
       end
       unless $exit_hook.member?("unsaved-edits-at-exit?")
-        $exit_hook.add_hook!("unsaved-edits-at-exit?") do | |
-          if Snd.sounds.detect do |snd| unsaved_edits_at_close.call(snd) end
-            true
-          else
-            false
-          end
-        end
+        $exit_hook.add_hook!("unsaved-edits-at-exit?", &unsaved_edits_at_exit_p)
       end
     else
       $close_hook.remove_hook!("unsaved-edits-at-close?")
@@ -1528,7 +1530,7 @@ inserts the file. file can be the file name or a list [file_name, beg = 0, chn =
   end
   
   add_help(:undo_channel,
-          "undo_channel([edits=1, [snd=false, [chn=false]]]) is the regularized version of undo" )
+           "undo_channel([edits=1, [snd=false, [chn=false]]]) is the regularized version of undo")
   def undo_channel(edits = 1, snd = false, chn = false)
     if snd and sync(snd).nonzero? and chn
       set_edit_position([edit_position(snd, chn) - edits, 0].max, snd, chn)

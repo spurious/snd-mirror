@@ -7,15 +7,14 @@
  *   In Ruby, rand is protected as kernel_rand.
  */
 
-/* TODO: report_in_minibuffer -> snd_error|warning except for informational stuff
- *     then need the within_xen trap, within_keyboard (?) etc
- */
-
 /* TODO: keep track of which hook (and which hook-function) is executing,
  *   if error, remove that function (and mention the context/name in the error msg)
  * TODO: xen.h need XEN_REMOVE_HOOK_FUNCTION or some equivalent [hooks.h takes the hook function which is useless here]
  *
  * TODO: ctrls -> controls throughout. (may be collisions) 
+ * TODO: trap snd_error|warning in within xen (except explicit cases)
+ * SOMEDAY: try mac/sparc gtk
+ * TODO: finish the mac case for README.Snd
  */
 
 /* -------- protect XEN vars from GC -------- */
@@ -213,26 +212,56 @@ static char *scheme_to_ruby(const char *name)
 
 static char *last_file_loaded = NULL;
 
+#if DEBUGGING
+void redirect_xen_error_to_1(void (*handler)(const char *msg, void *ufd), void *data, const char *caller) /* currently could be local */
+#else
 void redirect_xen_error_to(void (*handler)(const char *msg, void *ufd), void *data) /* currently could be local */
+#endif
 {
 #if DEBUGGING
-  fprintf(stderr,"redirect xen %p\n", handler);
+  if ((handler) && (ss->xen_error_handler))
+    fprintf(stderr,"%s: redirect over xen from %s\n", caller, ss->xen_error_caller);
+  if (ss->xen_error_caller) FREE(ss->xen_error_caller);
+  ss->xen_error_caller = copy_string(caller);
 #endif
   ss->xen_error_handler = handler;
   ss->xen_error_data = data;
 }
 
+#if DEBUGGING
+void redirect_snd_print_to_1(void (*handler)(const char *msg, void *ufd), void *data, const char *caller)
+#else
 void redirect_snd_print_to(void (*handler)(const char *msg, void *ufd), void *data)
+#endif
 {
+#if DEBUGGING
+  if ((handler) && (ss->snd_print_handler))
+    fprintf(stderr,"%s: redirect over print from %s\n", caller, ss->snd_print_caller);
+  if (ss->snd_print_caller) FREE(ss->snd_print_caller);
+  ss->snd_print_caller = copy_string(caller);
+#endif
   ss->snd_print_handler = handler;
   ss->snd_print_data = data;
 }
 
+#if DEBUGGING
+void redirect_everything_to_1(void (*handler)(const char *msg, void *ufd), void *data, const char *caller)
+{
+  redirect_snd_error_to_1(handler, data, caller);
+  redirect_xen_error_to_1(handler, data, caller);
+  redirect_snd_warning_to_1(handler, data, caller);
+  redirect_snd_print_to_1(handler, data, caller);
+}
+
+void redirect_errors_to_1(void (*handler)(const char *msg, void *ufd), void *data, const char *caller)
+{
+  redirect_snd_error_to_1(handler, data, caller);
+  redirect_xen_error_to_1(handler, data, caller);
+  redirect_snd_warning_to_1(handler, data, caller);
+}
+#else
 void redirect_everything_to(void (*handler)(const char *msg, void *ufd), void *data)
 {
-#if DEBUGGING
-  fprintf(stderr,"redirect everything\n");
-#endif
   redirect_snd_error_to(handler, data);
   redirect_xen_error_to(handler, data);
   redirect_snd_warning_to(handler, data);
@@ -241,13 +270,11 @@ void redirect_everything_to(void (*handler)(const char *msg, void *ufd), void *d
 
 void redirect_errors_to(void (*handler)(const char *msg, void *ufd), void *data)
 {
-#if DEBUGGING
-  fprintf(stderr,"redirect errors %p\n", handler);
-#endif
   redirect_snd_error_to(handler, data);
   redirect_xen_error_to(handler, data);
   redirect_snd_warning_to(handler, data);
 }
+#endif
 
 static char *gl_print(XEN result);
 
@@ -479,9 +506,6 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
     }
   XEN_FLUSH_PORT(port); /* needed to get rid of trailing garbage chars?? -- might be pointless now */
   name_buf = copy_string(XEN_TO_C_STRING(XEN_PORT_TO_STRING(port)));
-#if DEBUGGING
-  fprintf(stderr, "xen_error: %p\n", ss->xen_error_handler);
-#endif
   if (ss->xen_error_handler)
     (*(ss->xen_error_handler))(name_buf, ss->xen_error_data);
   else
@@ -616,9 +640,12 @@ bool procedure_arity_ok(XEN proc, int args)
   arity = XEN_ARITY(proc);
 #if HAVE_RUBY
   rargs = XEN_TO_C_INT(arity);
+  return(xen_rb_arity_ok(rargs, args));
+  /*
   if ((rargs > args) ||
       ((rargs < 0) && (-rargs > args)))
-    return(false);
+      return(false);
+  */
 #endif
 #if HAVE_SCHEME
   loc = snd_protect(arity);
@@ -653,6 +680,10 @@ char *procedure_ok(XEN proc, int args, const char *caller, const char *arg_name,
       arity = XEN_ARITY(proc);
 #if HAVE_RUBY
       rargs = XEN_TO_C_INT(arity);
+      if (!xen_rb_arity_ok(rargs, args))
+ 	return(mus_format(_("%s function (%s arg %d) should take %d args, not %d"),
+ 			  arg_name, caller, argn, args, (rargs < 0) ? (-rargs) : rargs));
+      /*
       if ((rargs > args) ||
 	  ((rargs < 0) && (-rargs > args)))
 	return(mus_format(_("%s function (%s arg %d) should take %d args, not %d"), 
@@ -660,6 +691,7 @@ char *procedure_ok(XEN proc, int args, const char *caller, const char *arg_name,
       if ((args == 0) && (rargs != 0))
 	return(mus_format(_("%s function (%s arg %d) should take no args, not %d"), 
 			  arg_name, caller, argn, (rargs < 0) ? (-rargs) : rargs));
+      */
 #endif
 #if HAVE_SCHEME
       loc = snd_protect(arity);

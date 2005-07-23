@@ -463,6 +463,9 @@ bool sound_data_equalp(sound_data *v1, sound_data *v2)
 
 static XEN equalp_sound_data(XEN obj1, XEN obj2)
 {
+#if HAVE_RUBY
+  if ((!(SOUND_DATA_P(obj1))) || (!(SOUND_DATA_P(obj2)))) return(XEN_FALSE);
+#endif
   return(xen_return_first(C_TO_XEN_BOOLEAN(sound_data_equalp((sound_data *)XEN_OBJECT_REF(obj1), (sound_data *)XEN_OBJECT_REF(obj2))), obj1, obj2));
 }
 

@@ -2,7 +2,7 @@
 
 # Translator: Michael Scholz <scholz-micha@gmx.de>
 # Created: Mon Mar 07 13:50:44 CET 2005
-# Last: Thu May 19 19:12:24 CEST 2005
+# Last: Tue Jun 28 01:27:24 CEST 2005
 
 # Commentary:
 #
@@ -184,6 +184,7 @@
 #  make_windowed_maxamp(size = 128)
 #  windowed_maxamp(gen, y)
 #  harmonicizer(freq, coeffs, pairs, order, bw, beg, dur, snd, chn, edpos)
+#  linear_src_channel(srinc, snd = false, chn = false)
 
 # Code:
 
@@ -193,6 +194,9 @@ require "complex"
 
 module Dsp
   # src_duration (see src-channel in extsnd.html)
+  add_help(:src_duration,
+           "src_duration(envelope)  returns the new duration of a sound after using 'envelope' \
+for time-varying sampling-rate conversion.")
   def src_duration(e)
     e.map! do |x| x.to_f end
     ex0 = e.first
@@ -1966,6 +1970,9 @@ returns the amplitude and initial-phase (for sin) at freq between beg and dur")
   # filter returned by spectrum2coeffs above will be a problem (it always returns
   # a "linear phase" filter).
 
+  add_help(:invert_filter,
+           "invert_filter(coeffs)  \
+tries to return an inverse filter to undo the effect of the FIR filter coeffs.")
   def invert_filter(fcoeffs)
     order = fcoeffs.length + 32
     coeffs = Vct.new(order)
@@ -2068,10 +2075,17 @@ returns the amplitude and initial-phase (for sin) at freq between beg and dur")
     end
   end
 
+  add_help(:make_window_maxamp,
+           "make_windowed_maxamp(size = 128)  returns a windowed-maxamp generator.  \
+The generator keeps a running window of the last 'size' inputs, \
+returning the maxamp in that window.")
   def make_windowed_maxamp(size = 128)
     Windowed_maxamp.new(size)
   end
 
+  add_help(:windowed_maxamp,
+           "windowed_maxamp(gen, input)  \
+returns the maxamp in a running window on the last few inputs.")
   def windowed_maxamp(gen, y)
     gen.windowed_maxamp(y)
   end
@@ -2079,6 +2093,10 @@ returns the amplitude and initial-phase (for sin) at freq between beg and dur")
   # harmonicizer (each harmonic is split into a set of harmonics via Chebyshev polynomials)
   # obviously very similar to ssb_bank above, but splits harmonics
   # individually, rather than pitch-shifting them
+  add_help(:harmonicizer,
+           "harmonicizer(freq, coeffs, pairs,
+[order=40, [bw=50.0, [beg=0, [dur=false, [snd=false [chn=false, [edpos=false]]]]]]])  \
+splits out each harmonic and replaces it with the spectrum given in coeffs")
   def harmonicizer(freq, coeffs, pairs,
                    order = 40,
                    bw = 50.0,
@@ -2127,6 +2145,33 @@ returns the amplitude and initial-phase (for sin) at freq between beg and dur")
       end
     end
   end
+
+  # linear sampling rate conversion
+
+  add_help(:linear_src_channel,
+          "linear_src_channel(sr, [snd=false, [chn=false]]) \
+performs sampling rate conversion using linear interpolation.")
+  def linear_src_channel(srinc, snd = false, chn = false)
+    rd = make_sample_reader(0, snd, chn)
+    last = rd.call
+    nxt = rd.call
+    intrp = 0.0
+    tempfile = with_sound(:clm, true, :output, snd_tempnam, :srate, srate()) do
+      samp = 0
+      until sample_reader_at_end?(rd)
+        if (pos = intrp) >= 1.0
+          pos.floor.times do |i| last, nxt = nxt, rd.call end
+          pos -= pos.floor
+        end
+        intrp = pos + pos.floor
+        out_any(samp, last + pos * (nxt - last), 0, $output)
+        samp += 1
+      end
+    end.output
+    len = mus_sound_frames(tempfile)
+    set_samples(0, len - 1, tempfile, snd, chn, true, "%s(%s", get_func_name, srinc, 0, false, true)
+  end
+  # first true=truncate to new length, false=at current edpos, true=auto delete temp file
 end
 
 include Dsp

@@ -1,7 +1,7 @@
 # clm-ins.rb -- CLM instruments translated to Snd/Ruby -*- snd-ruby -*-
 
 # Translator: Michael Scholz <scholz-micha@gmx.de>
-# Last: Thu Mar 24 02:57:49 CET 2005
+# Last: Fri May 20 03:35:43 CEST 2005
 
 # Instruments work with
 #   with_sound (CLM, sample2file gens)
@@ -290,35 +290,39 @@ end
 #
 # Dexter Morrill's FM-trumpet: from CMJ feb 77 p51
 def fm_trumpet(start, dur, *args)
-  frq1       = get_args(args, :frq1, 250.0)
-  frq2       = get_args(args, :frq2, 1500.0)
-  amp1       = get_args(args, :amp1, 0.5)
-  amp2       = get_args(args, :amp2, 0.1)
-  ampatt1    = get_args(args, :ampatt1, 0.03)
-  ampdec1    = get_args(args, :ampdec1, 0.35)
-  ampatt2    = get_args(args, :ampatt2, 0.03)
-  ampdec2    = get_args(args, :ampdec2, 0.3)
-  modfrq1    = get_args(args, :modfrq1, 250.0)
-  modind11   = get_args(args, :modind11, 0.0)
-  modind12   = get_args(args, :modind12, 2.66)
-  modfrq2    = get_args(args, :modfrq2, 250.0)
-  modind21   = get_args(args, :modind21, 0.0)
-  modind22   = get_args(args, :modind22, 1.8)
-  rvibamp    = get_args(args, :rvibamp, 0.007)
-  rvibfrq    = get_args(args, :rvibfrq, 125.0)
-  vibamp     = get_args(args, :vibamp, 0.007)
-  vibfrq     = get_args(args, :vibfrq, 7.0)
-  vibatt     = get_args(args, :vibatt, 0.6)
-  vibdec     = get_args(args, :vibdec, 0.2)
-  frqskw     = get_args(args, :frqskw, 0.03)
-  frqatt     = get_args(args, :frqatt, 0.06)
-  ampenv1    = get_args(args, :ampenv1, [0, 0, 25, 1, 75, 0.9, 100, 0])
-  ampenv2    = get_args(args, :ampenv2, [0, 0, 25, 1, 75, 0.9, 100, 0])
-  indenv1    = get_args(args, :indenv1, [0, 0, 25, 1, 75, 0.9, 100, 0])
-  indenv2    = get_args(args, :indenv2, [0, 0, 25, 1, 75, 0.9, 100, 0])
-  degree     = get_args(args, :degree, 0.0)
-  distance   = get_args(args, :distance, 1.0)
-  rev_amount = get_args(args, :reverb_amount, 0.005)
+  frq1, frq2, amp1, amp2, ampatt1, ampdec1, ampatt2, ampdec2, modfrq1, modind11, modind12 = nil
+  modfrq2, modind21, modind22, rvibamp, rvibfrq, vibamp, vibfrq, vibatt, vibdec = nil
+  frqskw, frqatt, ampenv1, ampenv2, indenv1, indenv2, degree, distance, reverb_amount = nil
+  optkey(args, binding,
+         [:frq1, 250.0],
+         [:frq2, 1500.0],
+         [:amp1, 0.5],
+         [:amp2, 0.1],
+         [:ampatt1, 0.03],
+         [:ampdec1, 0.35],
+         [:ampatt2, 0.03],
+         [:ampdec2, 0.3],
+         [:modfrq1, 250.0],
+         [:modind11, 0.0],
+         [:modind12, 2.66],
+         [:modfrq2, 250.0],
+         [:modind21, 0.0],
+         [:modind22, 1.8],
+         [:rvibamp, 0.007],
+         [:rvibfrq, 125.0],
+         [:vibamp, 0.007],
+         [:vibfrq, 7.0],
+         [:vibatt, 0.6],
+         [:vibdec, 0.2],
+         [:frqskw, 0.03],
+         [:frqatt, 0.06],
+         [:ampenv1, [0, 0, 25, 1, 75, 0.9, 100, 0]],
+         [:ampenv2, [0, 0, 25, 1, 75, 0.9, 100, 0]],
+         [:indenv1, [0, 0, 25, 1, 75, 0.9, 100, 0]],
+         [:indenv2, [0, 0, 25, 1, 75, 0.9, 100, 0]],
+         [:degree, 0.0],
+         [:distance, 1.0],
+         [:reverb_amount, 0.005])
   dur = dur.to_f
   per_vib_f = make_env(:envelope, stretch_envelope([0, 1, 25, 0.1, 75, 0, 100, 0],
                                                    25,
@@ -352,7 +356,7 @@ def fm_trumpet(start, dur, *args)
   car2 = make_oscil(:frequency, 0.0)
   car2_f = make_env(:envelope, stretch_envelope(ampenv2, 25, ampattpt2, 75, ampdecpt2),
                     :scaler, amp2, :duration, dur)
-  run_instrument(start, dur, :degree, degree, :distance, distance, :reverb_amount, rev_amount) do
+  run_instrument(start, dur, :degree, degree, :distance, distance, :reverb_amount, reverb_amount) do
     frq_change = hz2radians((1.0 + rand_interp(ran_vib)) * \
                             (1.0 + env(per_vib_f) * oscil(per_vib)) * (1.0 + env(frq_f)))
     env(car1_f) * \
@@ -462,43 +466,46 @@ end
 # slightly simplified [MS]
 add_help(:stereo_flute,
         "stereo_flute(start, dur, freq, flow, *key_args) 
-  key_args :flow_envelope   = [0, 1, 100, 1]
-           :decay           = 0.01
-	   :noise           = 0.0356
-           :embouchure_size = 0.5
-           :fbk_scl1        = 0.5
-	   :fbk_scl2        = 0.55
-           :out_scl         = 1.0
-	   :a0              = 0.7
-           :b1              = -0.3
-           :vib_rate        = 5
-           :vib_amount      = 0.03
-           :ran_rate        = 5
-           :ran_amount      = 0.03
+ :flow_envelope   = [0, 1, 100, 1]
+ :decay           = 0.01
+ :noise           = 0.0356
+ :embouchure_size = 0.5
+ :fbk_scl1        = 0.5
+ :fbk_scl2        = 0.55
+ :out_scl         = 1.0
+ :a0              = 0.7
+ :b1              = -0.3
+ :vib_rate        = 5
+ :vib_amount      = 0.03
+ :ran_rate        = 5
+ :ran_amount      = 0.03
 is a physical model of a flute: \
 stereo_flute(0, 1, 440, 0.55, :flow_envelope, [0, 0, 1, 1, 2, 1, 3, 0])")
 def stereo_flute(start, dur, freq, flow, *args)
-  flow_env   = get_args(args, :flow_envelope, [0, 1, 100, 1])
-  decay      = get_args(args, :decay, 0.01)   # additional time for instrument to decay
-  noise      = get_args(args, :noise, 0.0356)
-  emb_size   = get_args(args, :embouchure_size, 0.5)
-  fbk_scl1   = get_args(args, :fbk_scl1, 0.5) # these two are crucial for good results
-  fbk_scl2   = get_args(args, :fbk_scl2, 0.55)
-  out_scl    = get_args(args, :out_scl, 1.0)
-  a0         = get_args(args, :a0, 0.7)       # filter coefficients
-  b1         = get_args(args, :b1, -0.3)
-  vib_rate   = get_args(args, :vib_rate, 5)
-  vib_amount = get_args(args, :vib_amount, 0.03)
-  ran_rate   = get_args(args, :ran_rate, 5)
-  ran_amount = get_args(args, :ran_amount, 0.03)
+  flow_envelope, decay, noise, embouchure_size, fbk_scl1, fbk_scl2, out_scl = nil
+  a0, b1, vib_rate, vib_amount, ran_rate, ran_amount = nil
+  optkey(args, binding,
+         [:flow_envelope, [0, 1, 100, 1]],
+         [:decay, 0.01],   # additional time for instrument to decay
+         [:noise, 0.0356],
+         [:embouchure_size, 0.5],
+         [:fbk_scl1, 0.5], # these two are crucial for good results
+         [:fbk_scl2, 0.55],
+         [:out_scl, 1.0],
+         [:a0, 0.7],       # filter coefficients
+         [:b1, -0.3],
+         [:vib_rate, 5],
+         [:vib_amount, 0.03],
+         [:ran_rate, 5],
+         [:ran_amount, 0.03])
   beg        = seconds2samples(start)
-  flowf      = make_env(:envelope, flow_env, :scaler, flow,
+  flowf      = make_env(:envelope, flow_envelope, :scaler, flow,
                         :start, beg, :end, beg + seconds2samples(dur - decay))
   periodic_vib = make_oscil(:frequency, vib_rate)
   ran_vib    = make_rand_interp(:frequency, ran_rate)
   breath     = make_rand(:frequency, @srate / 2.0, :amplitude, 1)
   period_samples = (@srate / freq).floor
-  embouchure_samples = (emb_size * period_samples).floor
+  embouchure_samples = (embouchure_size * period_samples).floor
   embouchure = make_delay(embouchure_samples, :initial_element, 0.0)
   bore       = make_delay(period_samples)
   reflection_lp_filter = make_one_pole(a0, b1)
@@ -559,9 +566,11 @@ end
 def fm_insect(start, dur, freq, amp, amp_env,
               mod_freq, mod_skew, mod_freq_env, mod_index, mod_index_env,
               fm_index, fm_ratio, *args)
-  degree     = get_args(args, :degree, 0.0)
-  distance   = get_args(args, :distance, 1.0)
-  rev_amount = get_args(args, :reverb_amount, 0.005)
+  degree, distance, reverb_amount = nil
+  optkey(args, binding,
+         [:degree, 0.0],
+         [:distance, 1.0],
+         [:reverb_amount, 0.005])
   carrier = make_oscil(:frequency, freq)
   fm1_osc = make_oscil(:frequency, mod_freq)
   fm2_osc = make_oscil(:frequency, fm_ratio * freq)
@@ -569,7 +578,7 @@ def fm_insect(start, dur, freq, amp, amp_env,
   indf = make_env(:envelope, mod_index_env, :scaler, hz2radians(mod_index), :duration, dur)
   modfrqf = make_env(:envelope, mod_freq_env, :scaler, hz2radians(mod_skew), :duration, dur)
   fm2_amp = hz2radians(fm_index * fm_ratio * freq)
-  run_instrument(start, dur, :degree, degree, :distance, distance, :reverb_amount, rev_amount) do
+  run_instrument(start, dur, :degree, degree, :distance, distance, :reverb_amount, reverb_amount) do
     garble_in = env(indf) * oscil(fm1_osc, env(modfrqf))
     garble_out = fm2_amp * oscil(fm2_osc, garble_in)
     env(ampf) * oscil(carrier, garble_out + garble_in)
@@ -645,9 +654,11 @@ end
 #
 # Paul Weineke's gong.
 def gong(start, dur, freq, amp, *args)
-  degree     = get_args(args, :degree, 0.0)
-  distance   = get_args(args, :distance, 1.0)
-  rev_amount = get_args(args, :reverb_amount, 0.005)
+  degree, distance, reverb_amount = nil
+  optkey(args, binding,
+         [:degree, 0.0],
+         [:distance, 1.0],
+         [:reverb_amount, 0.005])
   mfq1 = freq * 1.16
   mfq2 = freq * 3.14
   mfq3 = freq * 1.005
@@ -671,7 +682,7 @@ def gong(start, dur, freq, amp, *args)
   mod1 = make_oscil(:frequency, mfq1)
   mod2 = make_oscil(:frequency, mfq2)
   mod3 = make_oscil(:frequency, mfq3)
-  run_instrument(start, dur, :degree, degree, :distance, distance, :reverb_amount, rev_amount) do
+  run_instrument(start, dur, :degree, degree, :distance, distance, :reverb_amount, reverb_amount) do
     env(ampfun) * oscil(carrier,
                         env(indxfun1) * oscil(mod1) + \
                         env(indxfun2) * oscil(mod2) + \
@@ -705,9 +716,11 @@ end
 # side-band) spectra.  The basic idea here is a variant of sin x sin y
 # - cos x cos y = cos (x + y)
 def pqw(start, dur, spacing_freq, carrier_freq, amp, ampfun, indexfun, partials, *args)
-  degree     = get_args(args, :degree, 0.0)
-  distance   = get_args(args, :distance, 1.0)
-  rev_amount = get_args(args, :reverb_amount, 0.005)
+  degree, distance, reverb_amount = nil
+  optkey(args, binding,
+         [:degree, 0.0],
+         [:distance, 1.0],
+         [:reverb_amount, 0.005])
   normalized_partials = normalize_partials(partials)
   spacing_cos = make_oscil(:frequency, spacing_freq, :initial_phase, HALF_PI)
   spacing_sin = make_oscil(:frequency, spacing_freq)
@@ -720,7 +733,7 @@ def pqw(start, dur, spacing_freq, carrier_freq, amp, ampfun, indexfun, partials,
   r = carrier_freq / spacing_freq.to_f
   tr = make_triangle_wave(:frequency, 5, :amplitude, hz2radians(0.005 * spacing_freq))
   rn = make_rand_interp(:frequency, 12, :amplitude, hz2radians(0.005 * spacing_freq))
-  run_instrument(start, dur, :degree, degree, :distance, distance, :reverb_amount, rev_amount) do
+  run_instrument(start, dur, :degree, degree, :distance, distance, :reverb_amount, reverb_amount) do
     vib = triangle_wave(tr) + rand_interp(rn)
     ax = [1.0, env(ind_env)].min * oscil(spacing_cos, vib)
     fax = polynomial(cos_coeffs, ax)
@@ -924,9 +937,11 @@ end
 # lp_coeff controls the strength of the low pass filter inserted in the feedback loop
 # volume can be used to boost the reverb output
 def nrev_rb(start, dur, *args)
-  reverb_factor = get_args(args, :reverb_factor, 1.09)
-  lp_coeff      = get_args(args, :lp_coeff, 0.7)
-  volume        = get_args(args, :volume, 1.0)
+  reverb_factor, lp_coeff, volume = nil
+  optkey(args, binding,
+         [:reverb_factor, 1.09],
+         [:lp_coeff, 0.7],
+         [:volume, 1.0])
   next_prime = lambda do |val|
     if val.prime?
       val
@@ -1271,9 +1286,9 @@ end
 # with_sound() do two_tab(0, 1, 440, 0.5) end
 
 # LBJ-PIANO
-$rbm_piano_attack_duration = 0.04
-$rbm_piano_release_duration = 0.2
-$rbm_db_drop_per_second = -10.0
+$clm_piano_attack_duration = 0.04
+$clm_piano_release_duration = 0.2
+$clm_db_drop_per_second = -10.0
 
 Piano_Spectra = [[1.97, 0.0326, 2.99, 0.0086, 3.95, 0.0163, 4.97, 0.0178, 5.98, 0.0177, 6.95, 0.0315, 8.02, 0.0001,
     8.94, 0.0076,  9.96, 0.0134, 10.99, 0.0284, 11.98, 0.0229, 13.02, 0.0229, 13.89, 0.0010, 15.06, 0.0090, 16.00, 0.0003,
@@ -1676,14 +1691,16 @@ Piano_Spectra = [[1.97, 0.0326, 2.99, 0.0086, 3.95, 0.0163, 4.97, 0.0178, 5.98, 
    [1.01, 0.0298, 2.01, 0.0005]]
 
 def lbj_piano(start, dur, freq, amp, *args)
-  pfreq      = get_args(args, :pfreq, freq)
-  degree     = get_args(args, :degree, 45.0)
-  distance   = get_args(args, :distance, 1.0)
-  rev_amount = get_args(args, :reverb_amount, 0.0)
+  pfreq, degree, distance, reverb_amount = nil
+  optkey(args, binding,
+         [:pfreq, freq],
+         [:degree, 45.0],
+         [:distance, 1.0],
+         [:reverb_amount, 0.0])
   get_piano_partials = lambda do |frq| Piano_Spectra[(12 * (log(frq / 32.703) / log(2))).round] end
   make_piano_ampfun = lambda do |dr|
-    release_amp = db2linear($rbm_db_drop_per_second * dr)
-    attack_time = $rbm_piano_attack_duration * 100.0 / dr
+    release_amp = db2linear($clm_db_drop_per_second * dr)
+    attack_time = $clm_piano_attack_duration * 100.0 / dr
     [0, 0, attack_time / 4, 1.0, attack_time, 1.0, 100, release_amp]
   end
   # This thing sounds pretty good down low, below middle c or so.
@@ -1702,8 +1719,8 @@ def lbj_piano(start, dur, freq, amp, *args)
   # give you fold over (hmmm...maybe I can get those high notes to
   # sparkle after all).
   partials = normalize_partials(get_piano_partials.call(pfreq))
-  newdur = dur + $rbm_piano_attack_duration + $rbm_piano_release_duration
-  env1dur = newdur - $rbm_piano_release_duration
+  newdur = dur + $clm_piano_attack_duration + $clm_piano_release_duration
+  env1dur = newdur - $clm_piano_release_duration
   env1samples = (env1dur * @srate).floor
   siz = (partials.length / 2).floor
   oscils = Array.new(siz)
@@ -1719,7 +1736,10 @@ def lbj_piano(start, dur, freq, amp, *args)
     oscils[j] = make_oscil(:frequency, partials[i] * freq)
     j += 1
   end
-  run_instrument(start, newdur, :degree, degree, :distance, distance, :reverb_amount, rev_amount) do
+  run_instrument(start, newdur,
+                 :degree, degree,
+                 :distance, distance,
+                 :reverb_amount, reverb_amount) do
     sktr += 1
     let(0.0) do |sum|
       oscils.each_with_index do |osc, i| sum += (oscil(osc) * alist[i]) end
@@ -1734,9 +1754,11 @@ def resflt(start, dur, driver,
            ranfreq, noiamp, noifun, cosamp, cosfreq1, cosfreq0, cosnum,
            ampcosfun, freqcosfun,
            frq1, r1, g1, frq2, r2, g2, frq3, r3, g3, *args)
-  degree     = get_args(args, :degree, 0.0)
-  distance   = get_args(args, :distance, 1.0)
-  rev_amount = get_args(args, :reverb_amount, 0.005)
+  degree, distance, reverb_amount = nil
+  optkey(args, binding,
+         [:degree, 0.0],
+         [:distance, 1.0],
+         [:reverb_amount, 0.005])
   # driver=0 -- use sum of cosines to drive the filter,
   # driver=1 -- use white noise
   # if noise used, ranfreq=frequency of random number generator,
@@ -1777,7 +1799,7 @@ def resflt(start, dur, driver,
        else
          make_sum_of_cosines(:frequency, cosfreq0, :cosines, cosnum)
        end
-  run_instrument(start, dur, :distance, distance, :degree, degree, :reverb_amount, rev_amount) do
+  run_instrument(start, dur, :distance, distance, :degree, degree, :reverb_amount, reverb_amount) do
     input1 = env(ampf) * (with_noise ? rand(rn) : sum_of_cosines(cn, env(frqf)))
     two_pole(f1, input1 * g1) + two_pole(f2, input1 * g2) + two_pole(f3, input1 * g3)
   end
@@ -1793,9 +1815,7 @@ end
 
 # SCRATCH
 def scratch(start, file, src_ratio, turntable)
-  unless File.exist?(file)
-    error("%s: file doesn't exist, %s", get_func_name, file.inspect)
-  end
+  assert_type(File.exists?(file), file, 1, "an existing file")
   f = make_file2sample(file)
   turn_i = 1
   turns = turntable.length
@@ -1844,27 +1864,31 @@ end
 #
 # spectral modeling (SMS)
 def pins(start, dur, file, amp, *args)
-  unless File.exist?(file)
-    error("%s: file doesn't exist, %s", get_func_name, file.inspect)
-  end
-  transposition = get_args(args, :transposition, 1.0) # this can be used to transpose the sound
-  time_scaler   = get_args(args, :time_scaler, 1.0) # this can make things happen faster
-  # (< 1.0)/slower (> 1.0) in the output
-  fftsize       = get_args(args, :fftsize, 256)     # should be a power of 2
-  # at 22050 srate, this is ok for sounds above 300Hz or so, below
-  # that you need 512 or 1024, at 44100, probably best to double these
-  # sizes -- it takes some searching sometimes.
-  highest_bin   = get_args(args, :highest_bin, 128) # how high in fft data should we
-  # search for peaks
-  max_peaks     = get_args(args, :max_peaks, 16)    # how many spectral peaks to track at
-  # the maximum
-  attack        = get_args(args, :attack, nil)      # whether to use original attack via
-  # time domain splice
-  # do the sliding fft shuffle, translate to polar coordinates, find
-  # spectral peaks, match with current, do some interesting
-  # transformation, resynthesize using oscils All the envelopes are
-  # created on the fly.  max-peaks is how many of these peaks we are
-  # willing to track at any given time.
+  assert_type(File.exists?(file), file, 2, "an existing file")
+  transposition, time_scaler, fftsize, highest_bin, max_peaks, attack = nil
+  optkey(args, binding,
+         [:transposition, 1.0], # this can be used to transpose the sound
+         [:time_scaler, 1.0],   # this can make things happen faster
+                                # (< 1.0)/slower (> 1.0) in the output
+         [:fftsize, 256],       # should be a power of 2
+                                # at 22050 srate, this is ok for
+                                # sounds above 300Hz or so, below that
+                                # you need 512 or 1024, at 44100,
+                                # probably best to double these sizes
+                                # -- it takes some searching
+                                # sometimes.
+         [:highest_bin, 128],   # how high in fft data should we search for peaks
+         [:max_peaks, 16],      # how many spectral peaks to track at the maximum
+         :attack)               # whether to use original attack via time domain splice
+                                # do the sliding fft shuffle,
+                                # translate to polar coordinates, find
+                                # spectral peaks, match with current,
+                                # do some interesting transformation,
+                                # resynthesize using oscils All the
+                                # envelopes are created on the fly.
+                                # max-peaks is how many of these peaks
+                                # we are willing to track at any given
+                                # time.
   fil = make_file2sample(file)
   file_duration = ws_duration(file)
   fdr = make_vct(fftsize)
@@ -2130,9 +2154,7 @@ end
 # shape, segment length, hop length, and input file resampling rate
 def exp_snd(file, start, dur, amp,
             exp_amt = 1.0, ramp = 0.4, seglen = 0.15, sr = 1.0, hop = 0.05, ampenv = nil)
-  unless File.exist?(file)
-    error("%s: file doesn't exist, %s", get_func_name, file.inspect)
-  end
+  assert_type(File.exists?(file), file, 0, "an existing file")
   f0 = make_ws_reader(file, :start, 0)
   expenv = make_env(:envelope, (exp_amt.kind_of?(Array) ? exp_amt : [0, exp_amt, 1, exp_amt]),
                     :duration, dur)
@@ -2240,12 +2262,8 @@ Grn = Struct.new("Grn",
                  :loc, :segctr, :whichseg, :ramplen, :steadylen, :trigger)
 
 def expfil(start, dur, hopsecs, rampsecs, steadysecs, file1, file2)
-  unless File.exist?(file1)
-    error("%s: file doesn't exist, %s", get_func_name, file1.inspect)
-  end
-  unless File.exist?(file2)
-    error("%s: file doesn't exist, %s", get_func_name, file2.inspect)
-  end
+  assert_type(File.exists?(file1), file1, 5, "an existing file")
+  assert_type(File.exists?(file2), file2, 6, "an existing file")
   fil1 = make_file2sample(file1)
   fil2 = make_file2sample(file2)
   hop = seconds2samples(hopsecs)
@@ -2374,21 +2392,22 @@ nil doesnt print anything, which will speed up a bit the process.
 =end
 #
 def graph_eq(file, *args)
-  unless File.exist?(file)
-    error("%s: file doesn't exist, %s", get_func_name, file.inspect)
-  end
-  start           = get_args(args, :start, 0)
-  dur             = get_args(args, :dur, 0)
-  or_beg          = get_args(args, :or_beg, 0)
-  amp             = get_args(args, :amp, 1)
-  amp_env         = get_args(args, :amp_env, [0, 1, 0.8, 1, 1, 0])
-  amp_base        = get_args(args, :amp_base, 1)
-  offset_gain     = get_args(args, :offset_gain, 0)
-  gain_freq_list  = get_args(args, :gain_freq_list, [[0, 1, 1, 0], 440, [0, 0, 1, 1], 660])
-  filt_gain_scale = get_args(args, :filt_gain_scale, 1)
-  filt_gain_base  = get_args(args, :filt_gain_base, 1)
-  a1              = get_args(args, :a1, 0.99)
-  stats           = get_args(args, :stats, nil)
+  assert_type(File.exists?(file), file, 0, "an existing file")
+  start, dur, or_beg, amp, amp_env, amp_base, offset_gain = nil
+  gain_freq_list, filt_gain_scale, filt_gain_base, a1, stats = nil
+  optkey(args, binding,
+         [:start, 0],
+         [:dur, 0],
+         [:or_beg, 0],
+         [:amp, 1],
+         [:amp_env, [0, 1, 0.8, 1, 1, 0]],
+         [:amp_base, 1],
+         [:offset_gain, 0],
+         [:gain_freq_list, [[0, 1, 1, 0], 440, [0, 0, 1, 1], 660]],
+         [:filt_gain_scale, 1],
+         [:filt_gain_base, 1],
+         [:a1, 0.99],
+         :stats)
   durata = (dur.zero? ? ws_duration(file) : dur)
   beg, len = times2samples(start, durata)
   or_start = (or_beg * ws_srate(file)).round
@@ -2442,9 +2461,7 @@ end
 # noise
 # this is based on Perry Cook's Scrubber.m
 def anoi(infile, start, dur, fftsize = 128, amp_scaler = 1.0, r = TWO_PI)
-  unless File.exist?(infile)
-    error("%s: file doesn't exist, %s", get_func_name, infile.inspect)
-  end
+  assert_type(File.exists?(infile), infile, 0, "an existing file")
   freq_inc = (fftsize / 2).floor
   fdi = make_vct(fftsize)
   fdr = make_vct(fftsize)
@@ -2518,20 +2535,19 @@ mjkoskin@sci.fi
 #     list represents one input channel's amps into one output channel
 #     each element of the list can be a number, a list (turned into an
 #     env) or an env
-def fullmix(in_file, start = 0, outdur = nil, *args)
-  unless File.exist?(in_file)
-    error("%s: file doesn't exist, %s", get_func_name, in_file.inspect)
-  end
-  inbeg      = get_args(args, :beg, 0)
-  matrix     = get_args(args, :matrix, nil)
-  sr         = get_args(args, :srate, nil)
-  rev_amount = get_args(args, :reverb_amount, nil)
-  t = (sr or 1.0)
-  dur = (outdur or (ws_duration(in_file) / t.abs))
+def fullmix(in_file,
+            start = 0.0,
+            outdur = nil,
+            inbeg = 0.0,
+            matrix = nil,
+            srate = nil,
+            reverb_amount = 0.05)
+  assert_type(File.exists?(in_file), in_file, 0, "an existing file")
+  dur = Float((outdur or (ws_duration(in_file) / Float((srate or 1.0)).abs)))
   in_chans = ws_channels(in_file)
-  inloc = (inbeg * ws_srate(in_file)).round
+  inloc = (Float(inbeg) * ws_srate(in_file)).round
   mx = file = envs = rev_mx = revframe = false
-  if sr
+  if srate
     file = make_array(in_chans) do |chn|
       make_ws_reader(in_file, :start, inloc, :channel, chn)
     end
@@ -2541,10 +2557,10 @@ def fullmix(in_file, start = 0, outdur = nil, *args)
   if matrix
     mx = make_mixer([in_chans, @channels].max)
   end
-  if @reverb and rev_amount.kind_of?(Numeric) and (rev_amount > 0.0)
+  if @ws_reverb and reverb_amount.positive?
     rev_mx = make_mixer(in_chans)
     in_chans.times do |chn|
-      mixer_set!(rev_mx, chn, 0, rev_amount)
+      mixer_set!(rev_mx, chn, 0, reverb_amount)
     end
     revframe = make_frame(1)
   end
@@ -2559,7 +2575,7 @@ def fullmix(in_file, start = 0, outdur = nil, *args)
           mixer_set!(mx, ichn, ochn, outn)
         when Array, Mus
           unless envs
-            envs = make_array(in_chans) do make_array(@channels) end
+            envs = make_array(in_chans) do make_array(@channels, false) end
           end
           if env?(outn)
             envs[ichn][ochn] = outn
@@ -2567,30 +2583,29 @@ def fullmix(in_file, start = 0, outdur = nil, *args)
             envs[ichn][ochn] = make_env(:envelope, outn, :duration, dur)
           end
         else
-          error("%s: unknown element in matrix: %s", get_func_name, outn.inspect)
+          Snd.warning("unknown element in matrix: %s", outn.inspect)
         end
       end
     end
   when Numeric
-    # matrix is a number (global scaler)
+    # matrix is a number in this case (a global scaler)
     in_chans.times do |i|
-      # this is different from CLM fullmix.ins which puts scaler in
-      # all entries??
-      mixer_set!(mx, i, i, matrix) if i < @channels
+      if i < @channels then mixer_set!(mx, i, i, matrix) end
     end
   end
-  run_fullmix(start, dur, in_chans, sr, inloc, file, mx, rev_mx, revframe, envs)
-  if sr
-    file.each do |rd|
-      close_ws_reader(in_file, rd)
-    end
-  end
+  start = Float(start)
+  # to satisfy with_sound-option :info and :notehook
+  with_sound_info(name = get_func_name, start, dur)
+  # normally run_instrument stores debugging informations
+  @clm_instruments.store(binding, [name, start, dur])
+  run_fullmix(start, dur, in_chans, srate, inloc, file, mx, rev_mx, revframe, envs)
+  array?(file) and file.each do |rd| close_ws_reader(in_file, rd) end
 end
 
 class Snd_Instrument
   def run_fullmix(start, dur, in_chans, sr, inloc, file, mx, rev_mx, revframe, envs)
-    # to satisfy with_sound-option :info and :notehook [MS]
-    with_sound_info(get_func_name(2), start, dur)
+    # normally run_instrument stores debugging informations
+    @clm_instruments.store(binding, [get_func_name, start, dur])
     beg = seconds2samples(start)
     samps = seconds2samples(dur)
     unless sr
@@ -2644,8 +2659,8 @@ end
 
 class CLM_Instrument
   def run_fullmix(start, dur, in_chans, sr, inloc, file, mx, rev_mx, revframe, envs)
-    # to satisfy with_sound-option :info and :notehook [MS]
-    with_sound_info(get_func_name(2), start, dur)
+    # normally run_instrument stores debugging informations
+    @clm_instruments.store(binding, [get_func_name, start, dur])
     beg = seconds2samples(start)
     samps = seconds2samples(dur)
     unless sr
@@ -2681,9 +2696,7 @@ end
 =begin
 with_sound(:channels, 2, :statistics, true) do
   fullmix("pistol.snd")
-  fullmix("oboe.snd", 1, 2,
-          :beg, 0,
-          :matrix, [[0.1, make_env(:envelope, [0, 0, 1, 1], :duration, 2, :scaler, 0.5)]])
+  fullmix("oboe.snd", 1, 2, 0, [[0.1, make_env([0, 0, 1, 1], :duration, 2, :scaler, 0.5)]])
 end
 =end
 
@@ -2719,15 +2732,14 @@ end
 
 # ;;; create a constant envelope if argument is a number
 def envelope_or_number(val)
+  assert_type((number?(val) or array?(val) or vct?(val)), val, 0, "a number, an array or a vct")
   case val
   when Numeric
-    [0, val, 1, val]
+    [0, Float(val), 1, Float(val)]
   when Vct
-    vct2list(val)
+    val.to_a
   when Array
     val
-  else
-    error("%s: Number, Array, or Vct required", get_func_name())
   end
 end
 
@@ -2739,8 +2751,10 @@ end
 
 # ;;; Grain envelopes
 def raised_cosine(*args)
-  duty_cycle = get_args(args, :duty_cycle, 100)
-  length     = get_args(args, :length, 128)
+  duty_cycle, length = nil
+  optkey(args, binding,
+         [:duty_cycle, 100],
+         [:length, 128])
   active = length * duty_cycle.to_f * 0.01
   incr = PI / (active - 1.0)
   start = (length - active) / 2.0
@@ -2815,37 +2829,42 @@ Grani_to_grain_random      = 4
 Grani_to_grain_allchans    = 5
 
 def grani(start, dur, amp, file, *args)
-  unless File.exist?(file)
-    error("%s: file doesn't exist, %s", get_func_name, file.inspect)
-  end
-  input_channel             = get_args(args, :input_channel, 0)
-  grains                    = get_args(args, :grains, 0)
-  amp_envelope              = get_args(args, :amp_envelope, [0, 0, 0.3, 1, 0.7, 1, 1, 0])
-  grain_envelope            = get_args(args, :grain_envelope, [0, 0, 0.3, 1, 0.7, 1, 1, 0])
-  grain_envelope_end        = get_args(args, :grain_envelope_end, false)
-  grain_envelope_transition = get_args(args, :grain_envelope_transition, [0, 0, 1, 1])
-  grain_envelope_array_size = get_args(args, :grain_envelope_array_size, 512)
-  grain_duration            = get_args(args, :grain_duration, 0.1)
-  grain_duration_spread     = get_args(args, :grain_spread, 0.0)
-  grain_duration_limit      = get_args(args, :grain_limit, 0.002)
-  srate                     = get_args(args, :srate, 0.0)
-  srate_spread              = get_args(args, :srate_spread, 0.0)
-  srate_linear              = get_args(args, :srate_linear, false)
-  srate_base                = get_args(args, :srate_base, 2.0 ** (1.0 / 12))
-  srate_error               = get_args(args, :srate_error, 0.01)
-  grain_start               = get_args(args, :grain_start, [0, 0, 1, 1])
-  grain_start_spread        = get_args(args, :grain_start_spread, 0.0)
-  grain_start_in_seconds    = get_args(args, :grain_start_in_seconds, false)
-  grain_density             = get_args(args, :grain_density, 10.0)
-  grain_density_spread      = get_args(args, :grain_density_spread, 0.0)
-  reverb_amount             = get_args(args, :reverb_amount, 0.01)
-  reverse                   = get_args(args, :reverse, false)
-  where_to                  = get_args(args, :where_to, 0)
-  where_bins                = get_args(args, :where_bins, [])
-  grain_distance            = get_args(args, :grain_distance, 1.0)
-  grain_distance_spread     = get_args(args, :grain_distance_spread, 0.0)
-  grain_degree              = get_args(args, :grain_degree, 45.0)
-  grain_degree_spread       = get_args(args, :grain_degree_spread, 0.0)
+  assert_type(File.exists?(file), file, 3, "an existing file")
+  input_channel, grain_degree_spread = nil
+  grains, amp_envelope, grain_envelope, grain_envelope_end, grain_envelope_transition = nil
+  grain_envelope_array_size, grain_duration, grain_duration_spread, grain_duration_limit = nil
+  srate, srate_spread, srate_linear, srate_base, srate_error, grain_start, grain_start_spread = nil
+  grain_start_in_seconds, grain_density, grain_density_spread, reverb_amount, reverse = nil
+  where_to, where_bins, grain_distance, grain_distance_spread, grain_degree = nil
+  optkey(args, binding,
+         [:input_channel, 0],
+         [:grains, 0],
+         [:amp_envelope, [0, 0, 0.3, 1, 0.7, 1, 1, 0]],
+         [:grain_envelope, [0, 0, 0.3, 1, 0.7, 1, 1, 0]],
+         [:grain_envelope_end, false],
+         [:grain_envelope_transition, [0, 0, 1, 1]],
+         [:grain_envelope_array_size, 512],
+         [:grain_duration, 0.1],
+         [:grain_spread, 0.0],
+         [:grain_limit, 0.002],
+         [:srate, 0.0],
+         [:srate_spread, 0.0],
+         [:srate_linear, false],
+         [:srate_base, 2.0 ** (1.0 / 12)],
+         [:srate_error, 0.01],
+         [:grain_start, [0, 0, 1, 1]],
+         [:grain_start_spread, 0.0],
+         [:grain_start_in_seconds, false],
+         [:grain_density, 10.0],
+         [:grain_density_spread, 0.0],
+         [:reverb_amount, 0.01],
+         [:reverse, false],
+         [:where_to, 0],
+         [:where_bins, []],
+         [:grain_distance, 1.0],
+         [:grain_distance_spread, 0.0],
+         [:grain_degree, 45.0],
+         [:grain_degree_spread, 0.0])
   beg, fin = times2samples(start, dur)
   in_file_channels = ws_channels(file)
   in_file_sr       = ws_srate(file)
@@ -3046,9 +3065,6 @@ def grani(start, dur, amp, file, *args)
     end
   end
   close_ws_reader(file, rd)
-  if @verbose
-    message("grains: %d, sample ratio: %f", grain_counter, samples / (fin.to_f - beg))
-  end
 end
 
 =begin

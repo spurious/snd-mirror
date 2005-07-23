@@ -6,15 +6,19 @@ static Widget file_print_dialog = NULL;
 static Widget file_print_name = NULL;
 static Widget file_print_eps_or_lpr = NULL;
 static char print_string[PRINT_BUFFER_SIZE];
+static Widget error_info_box, error_info_frame, error_info;
 
 static void file_print_help_callback(Widget w, XtPointer context, XtPointer info)
 {
   print_dialog_help();
 }
 
+static void clear_error(void);
+
 static void file_print_cancel_callback(Widget w, XtPointer context, XtPointer info)
 {
   ss->print_choice = PRINT_SND;
+  clear_error();
   XtUnmanageChild(file_print_dialog);
 }
 
@@ -23,6 +27,47 @@ static int lpr (char *name)
   /* make some desultory effort to print the file */
   mus_snprintf(print_string, PRINT_BUFFER_SIZE, "lpr %s", name);
   return(system(print_string));
+}
+
+static void watch_print(Widget w, XtPointer context, XtPointer info)
+{
+  clear_error();
+}
+
+static Widget rc;
+static bool print_watching = false, print_error = false;
+static void clear_error(void)
+{
+  XtUnmanageChild(rc);
+  XtUnmanageChild(error_info_box);
+  XtVaSetValues(file_print_eps_or_lpr, XmNbottomAttachment, XmATTACH_FORM, NULL);
+  XtManageChild(rc);
+  print_error = false;
+  if (print_watching)
+    {
+      print_watching = false;
+      XtRemoveCallback(file_print_name, XmNvalueChangedCallback, watch_print, NULL);
+      XtRemoveCallback(file_print_name, XmNvalueChangedCallback, watch_print, NULL);
+    }
+}
+
+static void report_in_error_info(const char *msg, void *ignore)
+{
+  XmString s1;
+  print_error = true;
+  s1 = XmStringCreate((char *)msg, XmFONTLIST_DEFAULT_TAG);
+  XtVaSetValues(error_info, XmNlabelString, s1, NULL);
+  XmStringFree(s1);
+  if (!(XtIsManaged(error_info_box)))
+    {
+      XtUnmanageChild(rc);
+      XtVaSetValues(file_print_eps_or_lpr, XmNbottomAttachment, XmATTACH_NONE, NULL);
+      XtManageChild(error_info_box);
+      XtManageChild(rc);
+      print_watching = true;
+      XtAddCallback(file_print_name, XmNvalueChangedCallback, watch_print, NULL);
+      XtAddCallback(file_print_eps_or_lpr, XmNvalueChangedCallback, watch_print, NULL);
+    }
 }
 
 static printing_t printing = NOT_PRINTING;
@@ -59,26 +104,32 @@ static void file_print_ok_callback(Widget w, XtPointer context, XtPointer info)
 	  int err = 0;
 	  char *name;
 	  name = snd_tempnam();
+
+	  redirect_snd_error_to(report_in_error_info, NULL);
 	  switch (ss->print_choice)
 	    {
 	    case PRINT_SND: snd_print(name); break;
 	    case PRINT_ENV: enved_print(name); break;
 	    }
-	  err = lpr(name);
-	  if ((err != 0) && (nsp)) report_in_minibuffer(nsp, _("can't print!"));
-	  /* TODO: redirect print error to dialog */
-
-	  /* tried to redirect stderr here and pick it up afterwards, to no avail */
-	  snd_remove(name, IGNORE_CACHE);
+	  redirect_snd_error_to(NULL, NULL);
+	  if (!print_error)
+	    {
+	      err = lpr(name); /* lpr apparently insists on printing to stderr? */
+	      if (err != 0)
+		report_in_error_info(_("can't print!"), NULL);
+	      snd_remove(name, IGNORE_CACHE);
+	    }
 	  FREE(name);
 	}
       else 
 	{
+	  redirect_snd_error_to(report_in_error_info, NULL);
 	  switch (ss->print_choice)
 	    {
 	    case PRINT_SND: snd_print(str = XmTextGetString(file_print_name)); break;
 	    case PRINT_ENV: enved_print(str = XmTextGetString(file_print_name)); break;
 	    }
+	  redirect_snd_error_to(NULL, NULL);
 	  if (str) XtFree(str);
 	}
     }
@@ -104,7 +155,7 @@ static void start_file_print_dialog(XmString xmstr4, bool managed)
 {
   if (!file_print_dialog)
     {
-      Widget dl, rc;
+      Widget dl;
       XmString xmstr1, xmstr2, xmstr3, titlestr;
       Arg args[20];
       int n;
@@ -135,7 +186,8 @@ static void start_file_print_dialog(XmString xmstr4, bool managed)
       XtAddCallback(file_print_dialog, XmNcancelCallback, file_print_cancel_callback, NULL);
       XtAddCallback(file_print_dialog, XmNokCallback, file_print_ok_callback, NULL);
 
-      rc = XtCreateManagedWidget("form", xmFormWidgetClass, file_print_dialog, NULL, 0);
+      n = 0;
+      rc = XtCreateManagedWidget("form", xmFormWidgetClass, file_print_dialog, args, n);
 
       n = 0;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
@@ -160,6 +212,31 @@ static void start_file_print_dialog(XmString xmstr4, bool managed)
       XtSetArg(args[n], XmNtopWidget, file_print_name); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
       file_print_eps_or_lpr = make_togglebutton_widget(_("direct to printer"), rc, args, n);
+
+      /* error display */
+
+      n = 0;
+      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;}
+      XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
+      XtSetArg(args[n], XmNtopWidget, file_print_eps_or_lpr); n++;
+      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNallowResize, true); n++; 
+
+      error_info_box = XtCreateWidget("error-box", xmRowColumnWidgetClass, rc, args, n);
+
+      n = 0;
+      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;}
+      XtSetArg(args[n], XmNmarginHeight, 4); n++;
+      error_info_frame = XtCreateManagedWidget("error-frame", xmFrameWidgetClass, error_info_box, args, n);
+
+      n = 0;
+      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;}
+      XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;
+      error_info = XtCreateManagedWidget("error-info", xmLabelWidgetClass, error_info_frame, args, n);
+
+      XtVaSetValues(file_print_eps_or_lpr, XmNbottomAttachment, XmATTACH_FORM, NULL);
 
       if (managed) XtManageChild(file_print_dialog);
 

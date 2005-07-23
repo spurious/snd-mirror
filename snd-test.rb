@@ -24,6 +24,7 @@
 #  test 21: new stuff
 #  test 23: with-sound
 #  test 24: user-interface
+#  test 28: errors
 #  test all done
 
 # snd -noinit -load snd-test.rb         # all tests
@@ -137,7 +138,7 @@ def main_test
   # test25
   # test26
   # test27
-  # test28
+  test28
 end
 
 def snd_info(*args)
@@ -257,20 +258,57 @@ def list_p(obj)
   array?(obj) and (not obj.empty?)
 end
 
-def arity_ok(func, args)
-  if integer?(res = Snd.catch do method(func).arity end.first)
-    if res >= 0
-      res == args
-    else
-      res.abs <= args
-    end
+def any_arity(obj)
+  case obj
+  when Proc, Method
+    obj.arity
+  when String, Symbol
+    method(obj).arity
   else
-    false
+    0
+  end
+end
+
+# RUBY_RELEASE_DATE < "2004-03-18" ? old : new
+#                                    old   new
+# lambda do         end.arity         -1     0 !!!
+# lambda do ||      end.arity          0     0
+# lambda do |a|     end.arity         -1     1 !!!
+# lambda do |*a|    end.arity         -1    -1
+# lambda do |a, b|  end.arity          2     2
+# lambda do |a, *b| end.arity         -2    -2
+# etc.
+
+if RUBY_RELEASE_DATE < "2004-03-18"
+  def arity_ok(func, args)
+    if integer?(rargs = Snd.catch do any_arity(func) end.first)
+      if rargs >= 2 or rargs == 0
+        rargs == args
+      elsif rargs <= -2
+        rargs.abs <= args
+      else                      # rargs -1 remains
+        args.between?(-1, 1)
+      end
+    else
+      false
+    end
+  end
+else
+  def arity_ok(func, args)
+    if integer?(rargs = Snd.catch do any_arity(func) end.first)
+      if rargs >= 0
+        rargs == args
+      else
+        rargs.abs <= args
+      end
+    else
+      false
+    end
   end
 end
 
 def set_arity_ok(func, args)
-  arity_ok("set_#{func}", args) or arity_ok(func, args)
+  arity_ok("set_#{func}", args)
 end
 
 # let proc $snd_error_hook("sndtestrc") untouched
@@ -278,6 +316,32 @@ end
 def reset_almost_all_hooks
   reset_all_hooks
   if proc? $my_snd_error_hook then $snd_error_hook.add_hook!("sndtestrc", &$my_snd_error_hook) end
+end
+
+def dismiss_all_dialogs
+  if provided? :xm or provided? :xg
+    dialog_widgets.each do |dialog|
+      if array?(dialog)
+        if symbol?(dialog.car)
+          if provided? :snd_motif
+            if RXtIsManaged(dialog) then RXtUnmanageChild(dialog) end
+          elsif provided? :snd_gtk
+              Rgtk_widget_hide(dialog)
+          end
+        else
+          dialog.each do |d|
+            if symbol?(d.car)
+              if provided? :snd_motif
+                if RXtIsManaged(d) then RXtUnmanageChild(d) end
+              elsif provided? :snd_gtk
+                Rgtk_widget_hide(d)
+              end
+            end
+          end
+        end
+      end
+    end
+  end
 end
 
 set_mus_file_buffer_size($default_file_buffer_size)
@@ -428,7 +492,8 @@ def finish_snd_test
   snd_info("total    %s\n", $overall_start_time.inspect)
   save_listener("test.output")
   show_listener
-  File.rename(ENV["HOME"] + "/dot-snd", ENV["HOME"] + "/.snd")
+  dot_snd = ENV["HOME"] + "/dot-snd"
+  File.exists?(dot_snd) and File.rename(dot_snd, ENV["HOME"] + "/.snd")
   fs = 0
   [$original_save_dir, $original_temp_dir, "/tmp"].each do |path|
     if File.exists?(path)
@@ -467,7 +532,6 @@ def finish_snd_test
    "test.reverb",
    "test.snd",
    "test.snd.snd",
-   "test.temp",
    "test.wav",
    "test.xpm",
    "test2.snd",
@@ -957,6 +1021,7 @@ def test00
       [:Normalize_globally, 3],
       [:X_axis_in_samples, 1],
       [:X_axis_in_beats, 3],
+      [:X_axis_in_measures, 4],
       [:X_axis_in_seconds, 0],
       [:X_axis_as_percentage, 2],
       [:Enved_add_point, 0],
@@ -1075,7 +1140,7 @@ def test00
       [:audio_output_device, 0],
       [:auto_resize, true],
       [:auto_update, false],
-      [:channel_style, 0],
+      [:channel_style, 1],
       [:color_cutoff, 0.003],
       [:color_inverted, true],
       [:color_scale, 1.0],
@@ -1126,6 +1191,7 @@ def test00
       [:max_transform_peaks, 100],
       [:max_regions, 16],
       [:min_dB, -60.0],
+      [:mus_file_data_clipped, false],
       [:log_freq_start, 32.0],
       [:selection_creates_region, true],
       [:transform_normalization, Normalize_by_channel],
@@ -1185,6 +1251,7 @@ def test00
       [:wavo_trace, 64],
       [:x_axis_style, 0],
       [:beats_per_minute, 60.0],
+      [:beats_per_measure, 4],
       [:zero_pad, 0],
       [:zoom_focus_style, 2],
       [:mix_waveform_height, 20],
@@ -1279,7 +1346,7 @@ def test01
       [:audio_output_device, 0],
       [:auto_resize, true],
       [:auto_update, false],
-      [:channel_style, 0],
+      [:channel_style, 1],
       [:color_cutoff, 0.003],
       [:color_inverted, true],
       [:color_scale, 1.0],
@@ -1404,6 +1471,7 @@ def test01
       [:wavo_trace, 64],
       [:x_axis_style, 0],
       [:beats_per_minute, 60.0],
+      [:beats_per_measure, 4],
       [:zero_pad, 0],
       [:zoom_focus_style, 2],
       [:mix_waveform_height, 20],
@@ -1521,7 +1589,7 @@ def test02
     # test_headers("a2.asf", 1, 8000, 0.0, "asf", "unknown")
     test_headers("a1.asf", 1, 16000, 3.736562, "asf", "unknown")
     test_headers("a2.asf", 1, 8000, 4.630625, "asf", "unknown")
-    test_headers("addf8.afsp", 1, 8000, 2.9760000705719, "Sun", "big endian short (16 bits)")
+    test_headers("addf8.afsp", 1, 8000, 2.9760000705719, "Sun/Next", "big endian short (16 bits)")
     test_headers("addf8.d", 1, 8000, 2.9760000705719, "SPPACK", "big endian short (16 bits)")
     test_headers("addf8.dwd", 1, 8000, 2.976000071, "DiamondWare", "little endian short (16 bits)")
     test_headers("addf8.nh", 2, 44100, 0.269931972, "raw (no header)", "big endian short (16 bits)")
@@ -1544,7 +1612,7 @@ def test02
     test_headers("clbonef.wav", 1, 22050, 2.57832193374634, "RIFF", "little endian float (32 bits)")
     test_headers("cranker.krz", 1, 44100, 3.48267579, "Kurzweil 2000", "big endian short (16 bits)")
     test_headers("d40130.aif", 1, 10000, 0.100000001490116, "AIFF", "big endian short (16 bits)")
-    test_headers("d40130.au", 1, 10000, 0.100000001490116, "Sun", "big endian short (16 bits)")
+    test_headers("d40130.au", 1, 10000, 0.100000001490116, "Sun/Next", "big endian short (16 bits)")
     test_headers("d40130.dsf", 1, 8000, 0.125, "Delusion", "little endian short (16 bits)")
     test_headers("d40130.fsm", 1, 8000, 0.12524999678, "Farandole", "little endian short (16 bits)")
     test_headers("d40130.iff", 1, 10000, 0.100000001490116, "SVX8", "signed byte (8 bits)")
@@ -1566,7 +1634,7 @@ def test02
     test_headers("digit0v0.aiff", 1, 8000, 0.560000002384186, "AIFC", "big endian short (16 bits)")
     test_headers("esps-16.snd", 1, 8000, 3.09737491607666, "ESPS", "big endian short (16 bits)")
     test_headers("forest.aiff", 2, 44100, 3.907143, "AIFF", "big endian short (16 bits)")
-    test_headers("g721.au", 1, 11025, 4.35328817367554, "Sun", "unknown")
+    test_headers("g721.au", 1, 11025, 4.35328817367554, "Sun/Next", "unknown")
     test_headers("g722.aifc", 1, 44100, 0.0184353739023209, "AIFC", "unknown")
     test_headers("gong.wve", 1, 8000, 3.96799993515015, "PSION", "alaw (8 bits)")
     test_headers("gsm610.wav", 1, 11025, 1.7687075138092, "RIFF", "unknown")
@@ -1580,7 +1648,7 @@ def test02
     test_headers("mocksong.wav", 1, 11025, 7.869569301605, "RIFF", "little endian short (16 bits)")
     test_headers("mono24.wav", 1, 22050, 1.98997735977173, "RIFF", "little endian int (24 bits)")
     test_headers("msadpcm.wav", 1, 11025, 4.43501138687134, "RIFF", "unknown")
-    test_headers("n8.snd", 1, 44100, 0.0367800444364548, "Sun", "signed byte (8 bits)")
+    test_headers("n8.snd", 1, 44100, 0.0367800444364548, "Sun/Next", "signed byte (8 bits)")
     test_headers("nasahal.aif", 1, 11025, 9.89841270446777, "AIFF", "signed byte (8 bits)")
     # test_headers("nasahal.avi", 1, 11025, 0.0, "AVI", "unknown")
     test_headers("nasahal.avi", 1, 11025, 10.432744, "AVI", "little endian short (16 bits)")
@@ -1596,14 +1664,14 @@ def test02
     test_headers("nasahal8.wav", 1, 11025, 9.89841270446777, "RIFF", "unsigned byte (8 bits)")
     test_headers("nasahalad.smp", 1, 11025, 4.94920635223389,
                  "Goldwave sample", "little endian short (16 bits)")
-    test_headers("next-16.snd", 1, 22050, 1.00004529953003, "Sun", "big endian short (16 bits)")
-    test_headers("next-8.snd", 1, 22050, 0.226757362484932, "Sun", "signed byte (8 bits)")
-    test_headers("next-dbl.snd", 1, 22050, 0.226757362484932, "Sun", "big endian double (64 bits)")
+    test_headers("next-16.snd", 1, 22050, 1.00004529953003, "Sun/Next", "big endian short (16 bits)")
+    test_headers("next-8.snd", 1, 22050, 0.226757362484932, "Sun/Next", "signed byte (8 bits)")
+    test_headers("next-dbl.snd", 1, 22050, 0.226757362484932, "Sun/Next", "big endian double (64 bits)")
     test_headers("oboe.ldbl", 1, 22050, 2.30512475967407, "RIFF", "little endian double (64 bits)")
-    test_headers("next-flt.snd", 1, 22050, 0.226757362484932, "Sun", "big endian float (32 bits)")
+    test_headers("next-flt.snd", 1, 22050, 0.226757362484932, "Sun/Next", "big endian float (32 bits)")
     test_headers("aifc-float.snd", 1, 22050, 0.2267573624849, "AIFC", "big endian float (32 bits)")
-    test_headers("next-mulaw.snd", 1, 8012, 2.03295063972473, "Sun", "mulaw (8 bits)")
-    test_headers("next24.snd", 1, 44100, 0.0367800444364548, "Sun", "big endian int (24 bits)")
+    test_headers("next-mulaw.snd", 1, 8012, 2.03295063972473, "Sun/Next", "mulaw (8 bits)")
+    test_headers("next24.snd", 1, 44100, 0.0367800444364548, "Sun/Next", "big endian int (24 bits)")
     test_headers("nist-01.wav", 1, 16000, 2.26912498474121, "NIST", "little endian short (16 bits)")
     test_headers("nist-10.wav", 1, 16000, 2.26912498474121, "NIST", "big endian short (16 bits)")
     test_headers("nist-16.snd", 1, 16000, 1.02400004863739, "NIST", "big endian short (16 bits)")
@@ -1622,9 +1690,9 @@ def test02
     test_headers("o2_12bit.aiff", 1, 44100, 0.036780044436, "AIFF", "big endian short (16 bits)")
     test_headers("o2_18bit.aiff", 1, 44100, 0.0367800444364548, "AIFF", "big endian int (24 bits)")
     test_headers("o2_711u.wave", 1, 44100, 0.0367800444364548, "RIFF", "mulaw (8 bits)")
-    test_headers("o2_722.snd", 1, 44100, 0.0183900222182274, "Sun", "unknown")
+    test_headers("o2_722.snd", 1, 44100, 0.0183900222182274, "Sun/Next", "unknown")
     test_headers("o2_726.aiff", 1, 8000, 0.0367499999701977, "AIFC", "unknown")
-    test_headers("o2_726.snd", 1, 44100, 0.0230158735066652, "Sun", "unknown")
+    test_headers("o2_726.snd", 1, 44100, 0.0230158735066652, "Sun/Next", "unknown")
     test_headers("o2_728.aiff", 1, 8000, 0.0367499999701977, "AIFC", "unknown")
     test_headers("o2_8.iff", 1, 44100, 0.0367800444364548, "SVX8", "signed byte (8 bits)")
     test_headers("o2_8.voc", 1, 44100, 0.0370294786989689, "VOC", "unsigned byte (8 bits)")
@@ -1634,9 +1702,9 @@ def test02
     test_headers("o2_u8.avr", 1, 44100, 0.0367800444364548, "AVR", "unsigned byte (8 bits)")
     test_headers("o2_u8.wave", 1, 44100, 0.0367800444364548, "RIFF", "unsigned byte (8 bits)")
     test_headers("o28.mpc", 1, 44100, 0.036780, "AKAI 4", "little endian short (16 bits)")
-    test_headers("oboe.g721", 1, 22050, 1.15287983417511, "Sun", "unknown")
-    test_headers("oboe.g723_24", 1, 22050, 0.864761888980865, "Sun", "unknown")
-    test_headers("oboe.g723_40", 1, 22050, 1.44126987457275, "Sun", "unknown")
+    test_headers("oboe.g721", 1, 22050, 1.15287983417511, "Sun/Next", "unknown")
+    test_headers("oboe.g723_24", 1, 22050, 0.864761888980865, "Sun/Next", "unknown")
+    test_headers("oboe.g723_40", 1, 22050, 1.44126987457275, "Sun/Next", "unknown")
     test_headers("oboe.kts", 1, 22050, 2.305125, "Korg", "big endian short (16 bits)")
     test_headers("oboe.its", 1, 22050, 2.305125, "Impulse Tracker", "little endian short (16 bits)")
     test_headers("oboe.sf2", 1, 22050, 2.305124759674, "SoundFont", "little endian short (16 bits)")
@@ -1655,7 +1723,7 @@ def test02
     test_headers("riff-8-u.snd", 1, 11025, 0.506848096847534, "RIFF", "unsigned byte (8 bits)")
     test_headers("rooster.wve", 1, 8000, 2.04800009727478, "PSION", "alaw (8 bits)")
     test_headers("sd1-16.snd", 1, 44100, 0.40054, "Sound Designer 1", "big endian short (16 bits)")
-    # test_headers("segfault.snd", 16777216, 576061440, 1.24986669902682e-7, "Sun", "unknown")
+    # test_headers("segfault.snd", 16777216, 576061440, 1.24986669902682e-7, "Sun/Next", "unknown")
     test_headers("sf-16.snd", 1, 22050, 1.88766443729401, "IRCAM", "big endian short (16 bits)")
     test_headers("si654.adc", 1, 16000, 6.71362495422363, "ADC/OGI", "big endian short (16 bits)")
     test_headers("smp-16.snd", 1, 8000, 5.2028751373291, "SMP", "little endian short (16 bits)")
@@ -1669,8 +1737,8 @@ def test02
     test_headers("sound.vox", 2, 44100, 0.0442177, "raw (no header)", "big endian short (16 bits)")
     test_headers("step.omf", 1, 11025, 8.70666694641113, "OMF", "signed byte (8 bits)")
     test_headers("step.qt", 1, 11025, 8.70630359649658, "Quicktime", "unsigned byte (8 bits)")
-    test_headers("sun-16-afsp.snd", 1, 8000, 2.9760000705719, "Sun", "big endian short (16 bits)")
-    test_headers("sun-mulaw.snd", 1, 8000, 4.61950016021729, "Sun", "mulaw (8 bits)")
+    test_headers("sun-16-afsp.snd", 1, 8000, 2.9760000705719, "Sun/Next", "big endian short (16 bits)")
+    test_headers("sun-mulaw.snd", 1, 8000, 4.61950016021729, "Sun/Next", "mulaw (8 bits)")
     test_headers("sw1038t_short.wav", 2, 8000, 6.0, "NIST", "mulaw (8 bits)")
     test_headers("swirl.pat", 1, 22050, 1.0619500875473,
                  "Gravis Ultrasound patch", "unsigned little endian short (16 bits)")
@@ -1718,7 +1786,7 @@ def test02
     test_headers("wood16.smp", 2, 44100, 0.03678004, "snack SMP", "little endian short (16 bits)")
     test_headers("wood24.aiff", 1, 44100, 0.0367800444364548, "AIFF", "big endian int (24 bits)")
     test_headers("woodblock.aiff", 1, 44100, 0.03678, "AIFF", "big endian short (16 bits)")
-    test_headers("woodflt.snd", 1, 44100, 0.0367800444364548, "Sun", "big endian float (32 bits)")
+    test_headers("woodflt.snd", 1, 44100, 0.0367800444364548, "Sun/Next", "big endian float (32 bits)")
     test_headers("RealDrums.sf2", 1, 44100, 6.397256, "SoundFont", "little endian short (16 bits)")
     test_headers("32bit.sf", 1, 44100, 4.6, "IRCAM", "little endian float (32 bits, unscaled)")
     test_headers("PCM_48_8bit_m.w64", 1, 48000, 0.375, "SoundForge", "unsigned byte (8 bits)")
@@ -1940,6 +2008,7 @@ def test03
       [:with_gl, provided?(:gl), false],
       [:x_axis_style, 0, 1],
       [:beats_per_minute, 30.0, 120.0],
+      [:beats_per_measure, 1, 120],
       [:zero_pad, 0, 1],
       [:zoom_focus_style, 2, 1],
       [:window_width, window_width, 300],
@@ -3405,7 +3474,7 @@ def test134
     res = Snd.catch do open_sound("test.snd") end.first
     if number?(res) and sound?(res)
       snd_display("open_sound garbage %s: %s?", magic, res)
-      close_sound(res)
+      if sound?(res) then close_sound(res) end
     end
     delete_file("test.snd")
     mus_sound_forget("test.snd")
@@ -3416,7 +3485,7 @@ def test134
     res = Snd.catch do open_sound("test.snd") end.first
     if number?(res) and sound?(res)
       snd_display("open_sound plausible garbage %s: %s?", magic, res)
-      close_sound(res)
+      if sound?(res) then close_sound(res) end
     end
     delete_file("test.snd")
     mus_sound_forget("test.snd")
@@ -3433,7 +3502,7 @@ def test134
     res = Snd.catch do open_sound("test.snd") end.first
     if number?(res) and sound?(res)
       snd_display("open_sound very plausible garbage %s: %s?", magic, res)
-      close_sound(res)
+      if sound?(res) then close_sound(res) end
     end
     ctr += 1
   end
@@ -6186,7 +6255,7 @@ def test105
     snd_display("fft y_axis_label: %s", res)
   end
   set_y_axis_label("hiho")
-
+  # 
   if number?(transform_frames) and transform_frames.zero?
     snd_display("transform_graph? transform-frames: %d?", trandform_frames)
   end
@@ -8710,27 +8779,16 @@ def test255
   ind = open_sound("obtest.snd")
   set_read_only(true, ind)
   delete_samples(0, 1000, ind, 0)
-  if res = save_sound(ind)
-    snd_display("save_sound read_only: %s?", res)
+  if integer?((res = Snd.catch do save_sound(ind) end).first)
+    snd_display("save_sound read_only: %s", res)
   end
   if (res = edits(ind)) != [1, 0]
-    snd_display("read_only ignored? ", res)
-  end
-  unless provided? :snd_nogui
-    if (res = widget_text(sound_widgets(ind)[3])) != "can't write obtest.snd (it is read-only)"
-      snd_display("read_only report_in_minibuffer: %s?", res)
-    end
-    unless string?(res = widget_text(sound_widgets(ind)[4]))
-      snd_display("widget_text of listener: %s?", res)
-    end
+    snd_display("read_only ignored: %s?", res)
   end
   set_read_only(false, ind)
   revert_sound(ind)
-  save_sound(ind)
-  unless provided? :snd_nogui
-    if (res = widget_text(sound_widgets(ind)[3])) != "(no changes need to be saved)"
-      snd_display("save unneeded report_in_minibuffer: %s?", res)
-    end
+  unless integer?((res = Snd.catch do save_sound(ind) end).first)
+    snd_display("save_sound read_write: %s", res)
   end
   key(?j, 4)
   unless provided? :snd_nogui
@@ -8777,15 +8835,10 @@ def test255
   #
   view_sound("obtest.snd")
   delete_samples(0, 1000, ind, 0)
-  save_sound(ind)
-  if (res = edits(ind)) != [1, 0]
-    snd_display("view read_only ignored? ", res)
+  if integer?((res = Snd.catch do save_sound(ind) end).first)
+    snd_display("save_viewed_sound: %s", res)
   end
-  unless provided? :snd_nogui
-    if (res = widget_text(sound_widgets(ind)[3])) != "can't write obtest.snd (it is read-only)"
-      snd_display("view read_only report_in_minibuffer: %s?", res)
-    end
-  end
+  if (res = edits(ind)) != [1, 0] then snd_display("view read_only ignored: %s?", res) end
   close_sound(ind)
   #
   ind = new_sound("test.snd", Mus_next, Mus_bfloat, 22050, 1)
@@ -8915,7 +8968,9 @@ def test255
   if (res = scan_again.call) != [true, 4463]
     snd_display("scan_again: %s?", res)
   end
-  if (res = find_channel(lambda do |y| find_channel(lambda do |yy| yy > 0.1 end) end)) != [[true, 4423], 0]
+  if (res = find_channel(lambda do |y|
+                           find_channel(lambda do |yy| yy > 0.1 end)
+                         end)) != [[true, 4423], 0]
     snd_display("find twice: %s?", res)
   end
   if (res = find_channel(lambda do |y| count_matches(lambda do |yy| yy > 0.1 end) end)) != [2851, 0]
@@ -23072,20 +23127,9 @@ def test11
         res1 != (res2 = format("%d: %s", ind, short_file_name(ind)))
       snd_display("name text: %s %s?", res1, res2)
     end
-    close_sound
+    clear_minibuffer
+    close_sound(ind)
     set_show_indices(false)
-    #
-    if provided?(:xm) and provided?(:snd_motif)
-      snd_error("a test")
-      errwid = dialog_widgets[3]
-      if RWidget?(errwid)
-        if RWidget?(ok = find_child(errwid, "OK"))
-          RXtCallCallbacks(ok, RXmNactivateCallback, false)
-        end
-      else
-        snd_display("snd_error no dialog?")
-      end
-    end
     #
     define_envelope("test_ramp", [0, 0, 1, 1])
     if $test_ramp != [0, 0, 1, 1]
@@ -25607,6 +25651,7 @@ def test14
       [:time_graph?, true, false, true],
       [:x_axis_style, false, 0, 2],
       [:beats_per_minute, false, 60.0, 120.0],
+      [:beats_per_measure, false, 4, 120],
       [:zero_pad, false, 0, 2],
       [:zoom_focus_style, false, 0, 3]].each do |func, index_p, minval, maxval|
       index = if index_p then choose_fd.call else false end
@@ -25626,7 +25671,7 @@ def test14
         end
       end
     end
-#    save_options("hiho.rb")
+    # save_options("hiho.rb")
     if transform_type != Fourier_transform
       set_transform_graph?(false, true, true)
       set_transform_size([transform_size, 128].min)
@@ -25821,7 +25866,7 @@ def test0015
   if all_chans != [[obi, s2i, s2i], [0, 0, 1]] and all_chans != [[s2i, s2i, obi], [0, 1, 0]]
     snd_display("all_chans (2): %s?", all_chans)
   end
-  if finfo("oboe.snd") != "oboe.snd: chans: 1, srate: 22050, Sun, big endian short (16 bits), len: 2.305"
+  if finfo("oboe.snd") != "oboe.snd: chans: 1, srate: 22050, Sun/Next, big endian short (16 bits), len: 2.305"
     snd_display("finfo: %s?", finfo("oboe.snd"))
   end
   close_sound(s2i)
@@ -26333,6 +26378,7 @@ def test0215
    [:graphs_horizontal, false],
    [:x_axis_style, X_axis_in_samples],
    [:beats_per_minute, 120.0],
+   [:beats_per_measure, 3],
    [:cursor_size, 15],
    [:cursor_style, Cursor_cross],
    [:show_sonogram_cursor, true]].each do |func, nv|
@@ -29719,7 +29765,7 @@ def test0019
   end
   delete_file(save_state_file)
   save_state(save_state_file)
-#  save_options("test.temp")
+  # save_optins("test.temp")
   close_sound(nind)
   Snd.regions.apply(:forget_region)
   load(save_state_file)
@@ -29792,57 +29838,6 @@ def test0019
   if (res = edit_fragment(5)) != ["pad-channel", "zero", 100, 20]
     snd_display("save_edit_history 5: %s?", res)
   end
-  if (res = display_edits) != "
-EDITS: 5
-
- (begin) [0:2]:
-   (at 0, cp->sounds[0][0:50827, 1.000]) [file: " + cwd + "oboe.snd[0]]
-   (at 50828, end_mark)
-
- (set 1 1) ; set_sample(1, 0.5000 [1:4]:
-   (at 0, cp->sounds[0][0:0, 1.000]) [file: " + cwd + "oboe.snd[0]]
-   (at 1, cp->sounds[1][0:0, 1.000]) [buf: 1] 
-   (at 2, cp->sounds[0][2:50827, 1.000]) [file: " + cwd + "oboe.snd[0]]
-   (at 50828, end_mark)
-
- (delete 100 1) ; delete_samples(100, 1 [2:5]:
-   (at 0, cp->sounds[0][0:0, 1.000]) [file: " + cwd + "oboe.snd[0]]
-   (at 1, cp->sounds[1][0:0, 1.000]) [buf: 1] 
-   (at 2, cp->sounds[0][2:99, 1.000]) [file: " + cwd + "oboe.snd[0]]
-   (at 100, cp->sounds[0][101:50827, 1.000]) [file: " + cwd + "oboe.snd[0]]
-   (at 50827, end_mark)
-
- (insert 10 1) ; insert_sample(10, 0.5000 [3:7]:
-   (at 0, cp->sounds[0][0:0, 1.000]) [file: " + cwd + "oboe.snd[0]]
-   (at 1, cp->sounds[1][0:0, 1.000]) [buf: 1] 
-   (at 2, cp->sounds[0][2:9, 1.000]) [file: " + cwd + "oboe.snd[0]]
-   (at 10, cp->sounds[2][0:0, 1.000]) [buf: 1] 
-   (at 11, cp->sounds[0][10:99, 1.000]) [file: " + cwd + "oboe.snd[0]]
-   (at 101, cp->sounds[0][101:50827, 1.000]) [file: " + cwd + "oboe.snd[0]]
-   (at 50828, end_mark)
-
- (scale 0 50828) ; scale_channel(2.000, 0, false [4:7]:
-   (at 0, cp->sounds[0][0:0, 2.000]) [file: " + cwd + "oboe.snd[0]]
-   (at 1, cp->sounds[1][0:0, 2.000]) [buf: 1] 
-   (at 2, cp->sounds[0][2:9, 2.000]) [file: " + cwd + "oboe.snd[0]]
-   (at 10, cp->sounds[2][0:0, 2.000]) [buf: 1] 
-   (at 11, cp->sounds[0][10:99, 2.000]) [file: " + cwd + "oboe.snd[0]]
-   (at 101, cp->sounds[0][101:50827, 2.000]) [file: " + cwd + "oboe.snd[0]]
-   (at 50828, end_mark)
-
- (silence 100 20) ; pad-channel [5:9]:
-   (at 0, cp->sounds[0][0:0, 2.000]) [file: " + cwd + "oboe.snd[0]]
-   (at 1, cp->sounds[1][0:0, 2.000]) [buf: 1] 
-   (at 2, cp->sounds[0][2:9, 2.000]) [file: " + cwd + "oboe.snd[0]]
-   (at 10, cp->sounds[2][0:0, 2.000]) [buf: 1] 
-   (at 11, cp->sounds[0][10:98, 2.000]) [file: " + cwd + "oboe.snd[0]]
-   (at 100, cp->sounds[-1][0:19, 0.000])
-   (at 120, cp->sounds[0][99:99, 2.000]) [file: " + cwd + "oboe.snd[0]]
-   (at 121, cp->sounds[0][101:50827, 2.000]) [file: " + cwd + "oboe.snd[0]]
-   (at 50848, end_mark)
-"
-    snd_display("display_edits: %s?", res)
-  end
   save_edit_history("hiho.rb", nind, 0)
   scale_sound_to(1.0, 0, frames(nind, 0), nind, 0)
   eds = edit_position(nind, 0)
@@ -29878,6 +29873,28 @@ EDITS: 5
   end
   close_sound(nind)
   #
+  add_sound_file_extension("ogg")
+  add_sound_file_extension("OGG")
+  add_sound_file_extension("sf")
+  add_sound_file_extension("SF2")
+  add_sound_file_extension("mp3")
+  add_sound_file_extension("MP3")
+  add_sound_file_extension("W01")
+  add_sound_file_extension("W02")
+  add_sound_file_extension("W03")
+  add_sound_file_extension("W04")
+  add_sound_file_extension("W05")
+  add_sound_file_extension("W06")
+  add_sound_file_extension("W07")
+  add_sound_file_extension("W08")
+  add_sound_file_extension("W09")
+  add_sound_file_extension("W10")
+  add_sound_file_extension("w01")
+  add_sound_file_extension("w02")
+  add_sound_file_extension("w03")
+  add_sound_file_extension("w04")
+  add_sound_file_extension("w05")
+  # 
   ind = new_sound("fmv.snd")
   set_sample(10, 0.1)
   save_sound(ind)
@@ -29890,8 +29907,6 @@ EDITS: 5
   load("t1.rb")
   ind = find_sound("fmv.snd")
   unless sound?(ind) then snd_display("save_state restored but no sound?") end
-  new_eds = display_edits(ind)
-  if eds != new_eds then snd_display("save_state from %s to %s?", eds, new_eds) end
   3.upto(5) do |i|
     set_sample(i, i * 0.1)
     eds = display_edits(ind)
@@ -29902,8 +29917,6 @@ EDITS: 5
     load("t1.rb")
     ind = find_sound("fmv.snd")
     unless sound?(ind) then snd_display("save_state %d restored but no sound?", i) end
-    new_eds = display_edits(ind)
-    if eds != new_eds then snd_display("save_state %d from %s to %s?", i, eds, new_eds) end
   end
   close_sound(ind)
   delete_file("t1.rb")
@@ -29939,10 +29952,6 @@ EDITS: 5
   if (not sound?(ind)) or (not sound?(ind1))
     snd_display("save_state (2) restored but no sound? %s %s", ind, ind1)
   end
-  new_eds = display_edits(ind)
-  new_eds1 = display_edits(ind1)
-  if eds != new_eds then snd_display("save_state (1) from %s to %s?", eds, new_eds) end
-  if eds1 != new_eds1 then snd_display("save_state (2) from %s to %s?", eds1, new_eds1) end
   close_sound(ind)
   close_sound(ind1)
   delete_file("t1.rb")
@@ -29963,11 +29972,35 @@ EDITS: 5
   set_speed_control_style(Speed_control_as_semitone, ind, 0)
   set_cursor(1234, ind, 0)
   set_eps_file("hiho.eps")
+  old_srate = mus_srate
+  old_file_buffer_size = mus_file_buffer_size
+  old_array_print_length = mus_array_print_length
+  old_clm_table_size = $clm_table_size
+  set_mus_srate(48000)
+  set_mus_array_print_length(24)
+  set_mus_file_buffer_size(4096)
+  $clm_table_size = 256
   delete_file("s61.rb")
   save_state("s61.rb")
   close_sound(ind)
   Snd.regions.apply(:forget_region)
   load("s61.rb")
+  if fneq(res = mus_srate, 48000.0)
+    snd_display("save/restore mus_srate: %s", res)
+  end
+  if (res = mus_file_buffer_size) != 4096
+    snd_display("save/restore mus_file_buffer_size: %s", res)
+  end
+  if (res = mus_array_print_length) != 24
+    snd_display("save/restore mus_array_print_length: %s", res)
+  end
+  if (res = $clm_table_size) != 256
+    snd_display("save/restore $clm_table_size: %s", res)
+  end
+  set_mus_srate(old_srate)
+  set_mus_array_print_length(old_array_print_length)
+  set_mus_file_buffer_size(old_file_buffer_size)
+  $clm_table_size = old_clm_table_size
   set_save_dir(old_save_dir)
   ind = find_sound("oboe.snd")
   if (res = show_axes(ind, 0)) != Show_no_axes
@@ -30000,30 +30033,7 @@ EDITS: 5
   if (res = eps_file) != "hiho.eps"
     snd_display("save eps_file: %s?", res)
   end
-  set_eps_file(old_save_dir)
-  if (res = display_edits) != "
-EDITS: 2
-
- (begin) [0:2]:
-   (at 0, cp->sounds[0][0:50827, 1.000]) [file: " + cwd + "oboe.snd[0]]
-   (at 50828, end_mark)
-
- (set 100 32) ; set-samples [1:4]:
-   (at 0, cp->sounds[0][0:99, 1.000]) [file: " + cwd + "oboe.snd[0]]
-   (at 100, cp->sounds[1][0:31, 1.000]) [buf: 32] 
-   (at 132, cp->sounds[0][132:50827, 1.000]) [file: " + cwd + "oboe.snd[0]]
-   (at 50828, end_mark)
-
- (set 1000 10000) ; map-channel [2:6]:
-   (at 0, cp->sounds[0][0:99, 1.000]) [file: " + cwd + "oboe.snd[0]]
-   (at 100, cp->sounds[1][0:31, 1.000]) [buf: 32] 
-   (at 132, cp->sounds[0][132:999, 1.000]) [file: " + cwd + "oboe.snd[0]]
-   (at 1000, cp->sounds[2][0:9999, 1.000]) [buf: 10000] 
-   (at 11000, cp->sounds[0][11000:50827, 1.000]) [file: " + cwd + "oboe.snd[0]]
-   (at 50828, end_mark)
-"
-    snd_display("no save dir edits: %s?", res)
-  end
+  set_eps_file(old_eps_file)
   delete_file("s61.rb")
   close_sound(ind)
 end
@@ -30661,6 +30671,38 @@ def test0219
   end
   if (res = frames) != frs + 2
     snd_display("edit_list2function called (9): %s %s?", frs, res)
+  end
+  revert_sound(ind)
+  # insert_samples with data
+  insert_samples(0, 100, Vct.new(100, 0.1))
+  if (res = frames) != frs + 100
+    snd_display("edit_list2function insert_samples (100): %s %s?", frs, res)
+  end
+  unless proc?(func = edit_list2function)
+    snd_display("edit_list2function 9a: %s", func)
+  end
+  func.call(ind, 0)
+  if (res = frames) != frs + 200
+    snd_display("edit_list2function insert_samples (200): %s %s?", frs, res)
+  end
+  unless vequal(res = channel2vct(0, 5), vct(0.1, 0.1, 0.1, 0.1, 0.1))
+    snd_display("edit_list2function func 9a: %s?", res)
+  end
+  revert_sound(ind)
+  # set_samples with data
+  set_samples(0, 100, Vct.new(100, 0.1))
+  if (res = frames) != frs
+    snd_display("edit_list2function set_samples (1): %s %s?", frs, res)
+  end
+  unless proc?(func = edit_list2function)
+    snd_display("edit_list2function 9b: %s", func)
+  end
+  func.call(ind, 0)
+  if (res = frames) != frs
+    snd_display("edit_list2function set_samples (2): %s %s?", frs, res)
+  end
+  unless vequal(res = channel2vct(0, 5), vct(0.1, 0.1, 0.1, 0.1, 0.1))
+    snd_display("edit_list2function func 9b: %s?", res)
   end
   revert_sound(ind)
   # simple 1 sample set
@@ -36916,7 +36958,8 @@ def test0124
   [["samples", X_axis_in_samples],
     ["percentage", X_axis_as_percentage],
     ["beats", X_axis_in_beats],
-    ["seconds", X_axis_in_seconds]].each do |name, style|
+    ["seconds", X_axis_in_seconds],
+    ["measures", X_axis_in_measures]].each do |name, style|
     RXtCallCallbacks(menu_option(name), RXmNactivateCallback, snd_global_state)
     if x_axis_style != style
       snd_display("x_axis_style %s: %s?", name, x_axis_style)
@@ -37535,8 +37578,8 @@ def test0224
   delete_file("test.snd")
   save_sound_dialog
   saved = dialog_widgets[7]
-  types = find_child(saved, "header type")
-  formats = find_child(saved, "data format")
+  types = find_child(saved, "header-type")
+  formats = find_child(saved, "data-format")
   srtxt = find_child(saved, "srate-text")
   comtxt = find_child(saved, "comment-text")
   cancel = RXmFileSelectionBoxGetChild(saved, RXmDIALOG_CANCEL_BUTTON)
@@ -37612,8 +37655,8 @@ def test0324
   saved = dialog_widgets[7]
   ok = RXmFileSelectionBoxGetChild(saved, RXmDIALOG_OK_BUTTON)
   filetext = RXmFileSelectionBoxGetChild(saved, RXmDIALOG_TEXT)
-  types = find_child(saved, "header type")
-  formats = find_child(saved, "data format")
+  types = find_child(saved, "header-type")
+  formats = find_child(saved, "data-format")
   RXmListSelectPos(types, 1, true)
   RXmListSelectPos(formats, 1, true)
   RXmTextSetString(filetext, "test.snd")
@@ -38242,9 +38285,1646 @@ end
 
 # ---------------- test 28: errors ----------------
 
+def make_identity_mixer(chans)
+  if integer?(chans) and chans < 256
+    m1 = make_mixer(chans)
+    if mixer?(m1)
+      chans.times do |i| mixer_set!(m1, i, i, 1.0) end
+    end
+    m1
+  else
+    false
+  end
+end
+
+def check_error_tag(expected_tag, &thunk)
+  if (tag = Snd.catch do thunk.call end.first) != expected_tag
+    snd_display("%s %s: %s at line %s",
+                get_func_name,
+                expected_tag,
+                tag,
+                array?(ca = caller(1).first.scan(/^.*:(\d+):in/).first) ? ca.first : "0000")
+  end
+end
+
+Procs = [:add_mark, :add_sound_file_extension, :add_to_main_menu, :add_to_menu,
+  :add_transform, :amp_control, :as_one_edit, :ask_before_overwrite, :audio_input_device,
+  :audio_output_device, :auto_resize, :auto_update, :autocorrelate, :axis_info,
+  :axis_label_font, :axis_numbers_font, :basic_color, :bind_key, :bomb, :c_g?, :apply_controls,
+  :change_samples_with_origin, :channel_style, :channel_widgets, :channels, :chans, :peaks_font,
+  :bold_peaks_font, :close_sound, :color_cutoff, :color_dialog, :colormap_ref, :add_colormap,
+  :delete_colormap, :colormap_size, :colormap_name, :color_inverted, :color_scale, :color2list,
+  :colormap, :color?, :comment, :contrast_control, :contrast_control_amp, :contrast_control?,
+  :convolve_selection_with, :convolve_with, :channel_properties, :amp_control_bounds,
+  :speed_control_bounds, :expand_control_bounds, :contrast_control_bounds,
+  :reverb_control_length_bounds, :reverb_control_scale_bounds, :cursor_update_interval,
+  :cursor_location_offset, :auto_update_interval, :count_matches, :current_font, :cursor,
+  :cursor_color, :cursor_follows_play, :cursor_size, :cursor_style, :dac_combines_channels,
+  :dac_size, :data_clipped, :data_color, :data_format, :data_location, :data_size,
+  :default_output_chans, :default_output_data_format, :default_output_srate,
+  :default_output_header_type,
+  :define_envelope, :delete_mark, :delete_marks, :forget_region, :delete_sample,
+  :delete_samples, :delete_selection, :dialog_widgets, :display_edits, :dot_size,
+  :draw_dot, :draw_dots, :draw_line, :draw_lines, :draw_string, :edit_header_dialog,
+  :edit_fragment, :edit_position, :edit_tree, :edits, :env_selection, :env_sound,
+  :enved_envelope, :enved_base, :enved_clip?, :enved_in_dB, :enved_dialog, :enved_style,
+  :enved_power, :enved_target, :enved_waveform_color, :enved_wave?, :eps_file, :eps_left_margin,
+  :eps_bottom_margin, :eps_size, :expand_control, :expand_control_hop, :expand_control_jitter,
+  :expand_control_length, :expand_control_ramp, :expand_control?, :fft, :fft_window_beta,
+  :fft_log_frequency, :fft_log_magnitude, :transform_size, :disk_kspace, :transform_graph_type,
+  :fft_window, :transform_graph?, :view_files_dialog, :mix_file_dialog, :file_name,
+  :fill_polygon, :fill_rectangle, :filter_sound, :filter_control_in_dB, :filter_control_envelope,
+  :enved_filter_order, :enved_filter, :filter_control_in_hz, :filter_control_order,
+  :filter_selection, :filter_channel, :filter_control_waveform_color, :filter_control?,
+  :find_channel, :find_mark, :find_sound, :finish_progress_report, :foreground_color, :frames,
+  :free_sample_reader, :graph, :transform?, :delete_transform, :graph_color, :graph_cursor,
+  :graph_data, :graph2ps, :graph_style, :lisp_graph?, :graphs_horizontal, :header_type,
+  :help_dialog, :info_dialog, :highlight_color, :call_in, :insert_region, :insert_sample,
+  :insert_samples, :insert_samples_with_origin, :insert_selection, :insert_silence,
+  :insert_sound, :just_sounds, :key, :key_binding, :left_sample, :listener_color,
+  :listener_font, :listener_prompt, :listener_selection, :listener_text_color, :main_widgets,
+  :make_color, :make_graph_data, :make_mix_sample_reader, :make_player, :make_region,
+  :make_region_sample_reader, :make_sample_reader, :make_track_sample_reader, :map_chan,
+  :mark_color, :mark_name, :mark_sample, :mark_sync, :mark_sync_max, :mark_home, :marks,
+  :mark?, :max_transform_peaks, :max_regions, :maxamp, :maxamp_position, :menu_widgets,
+  :minibuffer_history_length, :min_dB, :log_freq_start, :mix, :mixes, :mix_amp, :mix_amp_env,
+  :mix_tag_position, :mix_chans, :mix_color, :mix_track, :mix_frames, :mix_locked?, :mix?,
+  :view_mixes_dialog, :mix_position, :view_tracks_dialog, :track_dialog_track, :mix_dialog_mix,
+  :mix_inverted?, :mix_region, :mix_sample_reader?, :mix_selection, :mix_sound, :mix_home,
+  :mix_speed, :mix_tag_height, :mix_tag_width, :mark_tag_height, :mark_tag_width, :mix_tag_y,
+  :mix_vct, :mix_waveform_height, :time_graph_style, :lisp_graph_style, :transform_graph_style,
+  :read_mix_sample, :read_track_sample, :next_sample, :transform_normalization, :equalize_panes,
+  :open_raw_sound, :open_sound, :orientation_dialog, :peak_env_info, :peaks, :play,
+  :play_and_wait, :play_mix, :play_region, :play_selection, :play_track, :player?, :players,
+  :position_color, :position2x, :position2y, :preload_directory, :preload_file,
+  :previous_files_sort, :previous_sample, :print_length, :progress_report, :prompt_in_minibuffer,
+  :pushed_button_color, :read_only, :recorder_in_device, :read_peak_env_info_file,
+  :recorder_autoload, :recorder_buffer_size, :recorder_dialog, :recorder_file, :recorder_gain,
+  :recorder_in_amp, :recorder_in_format, :recorder_max_duration, :recorder_out_amp,
+  :recorder_out_chans, :recorder_out_format, :recorder_out_type, :recorder_srate,
+  :recorder_trigger, :region_chans, :view_regions_dialog, :region_graph_style,
+  :region_frames, :region_position, :region_maxamp, :region_maxamp_position, :selection_maxamp,
+  :selection_maxamp_position, :region_sample, :region2vct, :region_srate, :regions, :region?,
+  :remove_from_menu, :report_in_minibuffer, :reset_controls, :restore_controls, :restore_marks,
+  :restore_region, :reverb_control_decay, :reverb_control_feedback, :recorder_in_chans,
+  :reverb_control_length, :reverb_control_lowpass, :reverb_control_scale, :reverb_control?,
+  :reverse_sound, :reverse_selection, :revert_sound, :right_sample, :sample, :sample_reader_at_end?,
+  :sample_reader?, :samples, :sample_reader_position, :samples2sound_data, :sash_color,
+  :save_controls, :ladspa_dir, :save_dir, :save_edit_history, :save_envelopes, :save_listener,
+  :save_marks, :save_region, :save_selection, :save_sound, :save_sound_as, :save_state,
+  :save_state_file, :scale_by, :scale_selection_by, :scale_selection_to, :scale_to,
+  :scan_chan, :search_procedure, :select_all, :select_channel, :select_sound, :selected_channel,
+  :selected_data_color, :selected_graph_color, :selected_sound, :selection_position,
+  :selection_color, :selection_creates_region, :selection_frames, :selection_member?,
+  :selection?, :short_file_name, :show_axes, :show_backtrace, :show_controls,
+  :show_transform_peaks, :show_indices, :show_listener, :show_marks, :show_mix_waveforms,
+  :show_selection_transform, :show_y_zero, :sinc_width, :show_grid, :show_sonogram_cursor,
+  :grid_density, :smooth_sound, :smooth_selection, :snd_print, :snd_spectrum, :snd_tempnam,
+  :snd_version, :sound_files_in_directory, :sound_loop_info, :sound_widgets, :soundfont_info,
+  :sound?, :sounds, :spectro_cutoff, :spectro_hop, :spectro_start, :spectro_x_angle,
+  :spectro_x_scale, :spectro_y_angle, :spectro_y_scale, :spectro_z_angle, :spectro_z_scale,
+  :speed_control, :speed_control_style, :speed_control_tones, :squelch_update, :srate,
+  :src_sound, :src_selection, :start_progress_report, :stop_player, :stop_playing,
+  :swap_channels, :syncd_marks, :sync, :sound_properties, :temp_dir, :text_focus_color,
+  :tiny_font, :track_sample_reader?, :region_sample_reader?, :transform_dialog,
+  :transform_sample, :transform2vct, :transform_frames, :transform_type, :trap_segfault,
+  :optimization, :unbind_key, :update_transform_graph, :update_time_graph,
+  :update_lisp_graph, :update_sound, :run_safety, :clm_table_size, :vct2sound_file,
+  :verbose_cursor, :view_sound, :vu_font, :vu_font_size, :vu_size, :wavelet_type,
+  :time_graph?, :time_graph_type, :wavo_hop, :wavo_trace, :window_height, :window_width,
+  :window_x, :window_y, :with_mix_tags, :with_relative_panes, :with_gl, :write_peak_env_info_file,
+  :x_axis_style, :beats_per_measure, :beats_per_minute, :x_bounds, :x_position_slider,
+  :x2position, :x_zoom_slider, :mus_header_type2string, :mus_data_format2string, :y_bounds,
+  :y_position_slider, :y2position, :y_zoom_slider, :zero_pad, :zoom_color, :zoom_focus_style,
+  :mus_sound_samples, :mus_sound_frames, :mus_sound_duration, :mus_sound_datum_size,
+  :mus_sound_data_location, :data_size, :mus_sound_chans, :mus_sound_srate,
+  :mus_sound_header_type, :mus_sound_data_format, :mus_sound_length, :mus_sound_type_specifier,
+  :mus_header_type_name, :mus_data_format_name, :mus_sound_comment, :mus_sound_write_date,
+  :mus_bytes_per_sample, :mus_sound_loop_info, :mus_audio_report, :mus_audio_sun_outputs,
+  :mus_sound_maxamp, :mus_sound_maxamp_exists?, :mus_sound_open_input, :mus_sound_open_output,
+  :mus_sound_reopen_output, :mus_sound_close_input, :mus_sound_close_output, :mus_sound_read,
+  :mus_sound_write, :mus_sound_seek_frame, :mus_file_prescaler, :mus_file_data_clipped,
+  :average, :average?, :make_average, :mus_expand_filename, :make_sound_data, :sound_data_ref,
+  :sound_data_set!, :sound_data?, :sound_data_length, :sound_data_maxamp, :sound_data_chans,
+  :sound_data2vct, :vct2sound_data, :all_pass, :all_pass?, :amplitude_modulate, :array2file,
+  :array_interp, :mus_interpolate, :asymmetric_fm, :asymmetric_fm?, :sound_data2sound_data,
+  :clear_array, :comb, :comb?, :contrast_enhancement, :convolution, :convolve, :convolve?,
+  :db2linear, :degrees2radians, :delay, :delay?, :dot_product, :env, :env_interp, :env?,
+  :file2array, :file2frame, :file2frame?, :file2sample, :file2sample?, :filter, :filter?,
+  :fir_filter, :fir_filter?, :formant, :formant_bank, :formant?, :frame_multiply, :frame_add,
+  :frame2file, :clear_minibuffer,
+  :frame2file?, :frame2frame, :frame2list, :frame2sample, :frame_ref, :frame_set!, :frame?,
+  :granulate, :granulate?, :hz2radians, :iir_filter, :iir_filter?, :in_any, :ina, :inb,
+  :linear2db, :locsig, :locsig_ref, :locsig_reverb_ref, :locsig_reverb_set!, :locsig_set!,
+  :locsig?, :make_all_pass, :make_asymmetric_fm, :make_comb, :make_convolve, :make_delay,
+  :make_env, :make_fft_window, :make_file2frame, :make_file2sample, :make_filter,
+  :make_fir_filter, :make_formant, :make_frame, :make_frame2file, :make_granulate,
+  :make_iir_filter, :make_locsig, :move_locsig, :make_mixer, :make_notch, :make_one_pole,
+  :make_one_zero, :make_oscil, :make_ppolar, :make_pulse_train, :make_rand, :make_rand_interp,
+  :make_readin, :make_sample2file, :make_sawtooth_wave, :make_sine_summation, :make_square_wave,
+  :make_src, :make_sum_of_cosines, :make_sum_of_sines, :make_ssb_am, :make_table_lookup,
+  :make_triangle_wave, :make_two_pole, :make_two_zero, :make_wave_train, :make_waveshape,
+  :make_zpolar, :mixer_multiply, :mixer_ref, :mixer_set!, :mixer?, :mixer_add, :multiply_arrays,
+  :mus_array_print_length, :mus_channel, :mus_channels, :make_polyshape, :mus_close,
+  :mus_cosines, :mus_data, :mus_feedback, :mus_feedforward, :mus_fft, :mus_formant_radius,
+  :mus_frequency, :mus_hop, :mus_increment, :mus_input?, :mus_file_name, :mus_length,
+  :mus_location, :mus_mix, :mus_order, :mus_output?, :mus_phase, :mus_ramp, :mus_random,
+  :mus_scaler, :mus_srate, :mus_xcoeffs, :mus_ycoeffs, :notch, :notch?, :one_pole, :one_pole?,
+  :one_zero, :one_zero?, :oscil, :oscil?, :out_any, :outa, :outb, :outc, :outd,
+  :partials2polynomial, :partials2wave, :partials2waveshape, :phase_partials2wave,
+  :polynomial, :pulse_train, :pulse_train?, :radians2degrees, :radians2hz, :rand,
+  :rand_interp, :rand_interp?, :rand?, :readin, :readin?, :rectangular2polar, :ring_modulate,
+  :sample2file, :sample2file?, :sample2frame, :sawtooth_wave, :sawtooth_wave?, :sine_summation,
+  :sine_summation?, :spectrum, :square_wave, :square_wave?, :src, :src?, :sum_of_cosines,
+  :sum_of_sines, :ssb_am, :sum_of_cosines?, :sum_of_sines?, :ssb_am?, :table_lookup,
+  :table_lookup?, :tap, :triangle_wave, :triangle_wave?, :two_pole, :two_pole?, :two_zero,
+  :two_zero?, :wave_train, :wave_train?, :waveshape, :waveshape?, :make_vct, :vct_add!,
+  :vct_subtract!, :vct_copy, :vct_length, :vct_multiply!, :vct_offset!, :vct_ref, :vct_scale!,
+  :vct_fill!, :vct_set!, :mus_audio_describe, :vct_peak, :vct?, :list2vct, :vct2list,
+  :vector2vct, :vct2vector, :vct_move!, :vct_reverse!, :vct_subseq, :vct, :little_endian?,
+  :vct2string, :clm_channel, :env_channel, :map_channel, :scan_channel, :play_channel,
+  :reverse_channel, :seconds2samples, :samples2seconds, :smooth_channel, :vct2channel,
+  :channel2vct, :src_channel, :scale_channel, :ramp_channel, :pad_channel, :normalize_channel,
+  :cursor_position, :clear_listener, :mus_sound_prune, :mus_sound_forget, :xramp_channel,
+  :ptree_channel, :snd2sample, :snd2sample?, :make_snd2sample, :make_scalar_mixer,
+  :beats_per_minute, :beats_per_measure, :channel_amp_envs, :convolve_files,
+  :filter_control_coeffs, :locsig_type, :make_phase_vocoder, :mus_audio_mixer_read,
+  :mus_describe, :mus_error_type2string, :mus_file_buffer_size, :mus_name, :mus_offset,
+  :mus_reset, :mus_rand_seed, :mus_width, :phase_vocoder?,
+  :polar2rectangular, :previous_files_sort_procedure, :phase_vocoder_amp_increments,
+  :phase_vocoder_amps, :phase_vocoder_freqs, :phase_vocoder_outctr,
+  :phase_vocoder_phase_increments, :phase_vocoder_phases, :mus_generator?, :read_sample,
+  :reset_listener_cursor, :goto_listener_end, :sample_reader_home, :selection_chans,
+  :selection_srate, :snd_gcs, :snd_warning, :sine_bank, :vct_map, :make_variable_graph,
+  :channel_data, :x_axis_label, :variable_graph?, :y_axis_label, :snd_url, :snd_urls,
+  :tempo_control_bounds, :free_player, :quit_button_color, :help_button_color,
+  :reset_button_color, :doit_button_color, :doit_again_button_color, :track, :tracks,
+  :track?, :make_track, :track_amp, :track_position, :track_frames, :track_speed,
+  :track_tempo, :track_amp_env, :track_track, :delete_track, :delete_mix, :track_color,
+  :free_track, :delay_tick, :dac_is_running, :draw_axes, :copy_mix, :copy_track,
+  :copy_sample_reader, :html_dir, :html_program, :lock_track, :make_fir_coeffs,
+  :make_identity_mixer, :mus_interp_type, :mus_make_error, :mus_run, :phase_vocoder,
+  :player_home, :redo_edit, :undo_edit, :widget_position, :widget_size,
+  ((defined? window_property) ? :window_property : :identity),
+  :focus_widget]
+
+Set_procs = [:amp_control, :ask_before_overwrite, :audio_input_device, :audio_output_device,
+  :auto_resize,
+  :auto_update, :axis_label_font, :axis_numbers_font, :channel_style, :peaks_font,
+  :bold_peaks_font, :color_cutoff, :color_inverted, :color_scale, :contrast_control,
+  :contrast_control_amp, :amp_control_bounds, :speed_control_bounds, :expand_control_bounds,
+  :contrast_control_bounds, :reverb_control_length_bounds, :reverb_control_scale_bounds,
+  :cursor_update_interval, :cursor_location_offset, :contrast_control?, :auto_update_interval,
+  :current_font, :cursor, :cursor_color, :channel_properties, :cursor_follows_play, :cursor_size,
+  :cursor_style, :dac_combines_channels, :dac_size, :data_clipped, :data_color,
+  :default_output_chans, :default_output_data_format, :default_output_srate,
+  :default_output_header_type,
+  :dot_size, :enved_envelope, :enved_base, :enved_clip?, :enved_in_dB, :enved_style, :enved_power,
+  :enved_target, :enved_waveform_color, :enved_wave?, :eps_file, :eps_left_margin,
+  :eps_bottom_margin, :eps_size, :expand_control, :expand_control_hop, :expand_control_jitter,
+  :expand_control_length, :expand_control_ramp, :expand_control?, :fft_window_beta,
+  :fft_log_frequency, :fft_log_magnitude, :transform_size, :transform_graph_type, :fft_window,
+  :transform_graph?, :filter_control_in_dB, :filter_control_envelope, :enved_filter_order,
+  :enved_filter, :filter_control_in_hz, :filter_control_order, :filter_control_waveform_color,
+  :filter_control?, :foreground_color, :graph_color, :graph_cursor, :graph_style, :lisp_graph?,
+  :graphs_horizontal, :highlight_color, :just_sounds, :left_sample, :listener_color,
+  :listener_font, :listener_prompt, :listener_text_color, :mark_color, :mark_name, :mark_sample,
+  :mark_sync, :max_transform_peaks, :max_regions, :min_dB, :log_freq_start, :mix_amp,
+  :mix_amp_env, :mix_tag_position, :mix_chans, :mix_color, :mix_locked?, :mix_inverted?,
+  :mix_position, :mix_speed, :mix_tag_height, :mix_tag_width, :mix_tag_y, :mark_tag_width,
+  :mark_tag_height, :mix_waveform_height, :transform_normalization, :equalize_panes,
+  :position_color, :recorder_in_device, :previous_files_sort, :print_length,
+  :pushed_button_color, :recorder_autoload, :recorder_buffer_size, :recorder_dialog,
+  :recorder_file, :recorder_gain, :recorder_in_amp, :recorder_in_format, :recorder_max_duration,
+  :recorder_out_amp, :recorder_out_chans, :recorder_out_format, :recorder_out_type,
+  :recorder_srate, :region_graph_style, :recorder_trigger, :reverb_control_decay,
+  :reverb_control_feedback, :recorder_in_chans, :reverb_control_length, :reverb_control_lowpass,
+  :reverb_control_scale, :time_graph_style, :lisp_graph_style, :transform_graph_style,
+  :reverb_control?, :sash_color, :ladspa_dir, :save_dir, :save_state_file, :selected_data_color,
+  :selected_graph_color, :selection_color, :selection_creates_region, :show_axes,
+  :show_backtrace, :show_controls, :show_transform_peaks, :show_indices, :show_marks,
+  :show_mix_waveforms, :show_selection_transform, :show_listener, :show_y_zero, :show_grid,
+  :show_sonogram_cursor, :sinc_width, :spectro_cutoff, :spectro_hop, :spectro_start,
+  :spectro_x_angle, :grid_density, :spectro_x_scale, :spectro_y_angle, :spectro_y_scale,
+  :spectro_z_angle, :spectro_z_scale, :speed_control, :speed_control_style, :speed_control_tones,
+  :squelch_update, :sync, :sound_properties, :temp_dir, :text_focus_color, :tiny_font, :y_bounds,
+  :transform_type, :trap_segfault, :optimization, :verbose_cursor, :vu_font, :vu_font_size,
+  :vu_size, :wavelet_type, :x_bounds, :time_graph?, :wavo_hop, :wavo_trace, :with_gl,
+  :with_mix_tags, :x_axis_style, :beats_per_minute, :zero_pad, :zoom_color, :zoom_focus_style,
+  :with_relative_panes, :window_x, :window_y, :window_width, :window_height, :mix_dialog_mix,
+  :track_dialog_track, :beats_per_measure, :channels, :chans, :colormap, :comment, :data_format,
+  :data_location, :data_size, :edit_position, :frames, :header_type, :maxamp,
+  :minibuffer_history_length, :read_only, :right_sample, :sample, :samples, :selected_channel,
+  :colormap_size, :colormap?, :selected_sound, :selection_position, :selection_frames,
+  :selection_member?, :sound_loop_info, :srate, :time_graph_type, :x_position_slider,
+  :x_zoom_slider, :tempo_control_bounds, :y_position_slider, :y_zoom_slider, :sound_data_ref,
+  :mus_array_print_length, :mus_cosines, :mus_data, :mus_feedback, :mus_feedforward,
+  :mus_formant_radius, :mus_frequency, :mus_hop, :mus_increment, :mus_length, :mus_location,
+  :mus_phase, :mus_ramp, :mus_scaler, :vct_ref, :x_axis_label, :filter_control_coeffs,
+  :locsig_type, :mus_file_buffer_size, :mus_rand_seed, :mus_width, :clm_table_size, :run_safety,
+  :mus_offset, :mus_reset, :previous_files_sort_procedure, :phase_vocoder_amp_increments,
+  :phase_vocoder_amps, :phase_vocoder_freqs, :phase_vocoder_outctr,
+  :phase_vocoder_phase_increments, :phase_vocoder_phases, :quit_button_color,
+  :help_button_color, :reset_button_color, :doit_button_color, :doit_again_button_color,
+  :track_amp, :track_position, :track_speed, :track_tempo, :track_amp_env, :track_color,
+  :html_dir, :html_program, :mus_interp_type, :widget_position, :widget_size,
+  ((defined? window_property) ? :window_property : :widget_size),
+  :mixer_ref, :frame_ref, :locsig_ref, :locsig_reverb_ref, :mus_file_prescaler,
+  :mus_file_data_clipped]
+
+Make_procs = [:make_all_pass, :make_asymmetric_fm, :make_snd2sample, :make_average,
+  :make_comb, :make_convolve, :make_delay, :make_env, :make_fft_window, :make_file2frame,
+  :make_file2sample, :make_filter, :make_fir_filter, :make_formant, :make_frame,
+  :make_frame2file, :make_granulate, :make_iir_filter, :make_locsig, :make_mixer,
+  :make_notch, :make_one_pole, :make_one_zero, :make_oscil, :make_ppolar, :make_pulse_train,
+  :make_rand, :make_rand_interp, :make_readin, :make_sample2file, :make_sawtooth_wave,
+  :make_sine_summation, :make_square_wave, :make_src, :make_sum_of_cosines, :make_sum_of_sines,
+  :make_table_lookup, :make_triangle_wave, :make_two_pole, :make_two_zero, :make_wave_train,
+  :make_waveshape, :make_zpolar, :make_phase_vocoder, :make_ssb_am, :make_polyshape,
+  :make_color, :make_player, :make_track, :make_region, :make_scalar_mixer]
+
+Keyargs = [:frequency, :initial_phase, :wave, :cosines, :amplitude, :ratio, :size,
+  :a0, :a1, :a2, :b1, :b2, :input, :srate, :file, :channel, :start, :initial_contents,
+  :initial_element, :scaler, :feedforward, :feedback, :max_size, :radius, :gain,
+  :partials, :r, :a, :n, :fill_time, :order, :xcoeffs, :ycoeffs, :envelope, :base,
+  :duration, :offset, :end, :direction, :degree, :distance, :reverb, :output, :fft_size,
+  :expansion, :length, :hop, :ramp, :jitter, :type, :format, :comment, :channels, :filter,
+  :revout, :width, :edit, :synthesize, :analyze, :interp, :overlap, :pitch, :distribution,
+  :sines, :dur]
+
+Procs0 = Procs.find_all do |n| function?(n) and arity_ok(n, 0) end
+Set_procs0 = Set_procs.find_all do |n| function?(n) and set_arity_ok(n, 1) end
+Procs1 = Procs.find_all do |n| function?(n) and arity_ok(n, 1) end
+Set_procs1 = Set_procs.find_all do |n| function?(n) and set_arity_ok(n, 2) end
+Procs2 = Procs.find_all do |n| function?(n) and arity_ok(n, 2) end
+Set_procs2 = Set_procs.find_all do |n| function?(n) and set_arity_ok(n, 3) end
+Procs3 = Procs.find_all do |n| function?(n) and arity_ok(n, 3) end
+Set_procs3 = Set_procs.find_all do |n| function?(n) and set_arity_ok(n, 4) end
+Procs4 = Procs.find_all do |n| function?(n) and arity_ok(n, 4) end
+Set_procs4 = Set_procs.find_all do |n| function?(n) and set_arity_ok(n, 5) end
+Procs5 = Procs.find_all do |n| function?(n) and arity_ok(n, 5) end
+Procs6 = Procs.find_all do |n| function?(n) and arity_ok(n, 6) end
+Procs7 = Procs.find_all do |n| function?(n) and arity_ok(n, 7) end
+Procs8 = Procs.find_all do |n| function?(n) and arity_ok(n, 8) end
+Procs10 = Procs.find_all do |n| function?(n) and arity_ok(n, 10) end
+
+$delay_32 = make_delay(32)
+$color_95 = make_color_with_catch(0.95, 0.95, 0.95)
+$vector_0 = make_array(0)
+$vct_3 = make_vct(3)
+$vct_5 = make_vct(5)
+$car_main = (provided?(:nogui) ? false : main_widgets.car)
+$cadr_main = (provided?(:nogui) ? false : main_widgets.cadr)
+$sound_data_23 = make_sound_data(2, 3)
+$a_hook = make_hook("test", 2)
+
+def test0028
+  procs1 = [:amp_control, :bomb, :apply_controls, :channels, :chans, :close_sound, :comment,
+    :contrast_control, :amp_control_bounds, :speed_control_bounds, :expand_control_bounds,
+    :contrast_control_bounds, :reverb_control_length_bounds, :reverb_control_scale_bounds,
+    :contrast_control_amp, :contrast_control?, :data_format, :data_location, :data_size,
+    :expand_control, :expand_control_hop, :expand_control_jitter, :expand_control_length,
+    :expand_control_ramp, :expand_control?, :file_name, :filter_control_in_dB,
+    :filter_control_in_hz, :filter_control_envelope, :filter_control_order, :filter_control?,
+    :finish_progress_report, :frames, :header_type, :progress_report, :read_only,
+    :reset_controls, :restore_controls, :reverb_control_decay, :reverb_control_feedback,
+    :reverb_control_length, :reverb_control_lowpass, :reverb_control_scale, :reverb_control?,
+    :save_controls, :select_sound, :short_file_name, :sound_loop_info, :soundfont_info,
+    :speed_control, :speed_control_style, :speed_control_tones, :srate, :channel_style,
+    :start_progress_report, :sync, :sound_properties, :swap_channels]
+  procs1.each do |n|
+    if (tag = Snd.catch do snd_func(n, 123) end).first != :no_such_sound
+      snd_display("snd :no_such_sound %s: %s", n, tag)
+    end
+  end
+  [$vct_5, sqrt(-1.0), 1.5, "hiho"].each do |arg|
+    procs1.each do |n|
+      next if n == :progress_report
+      if (tag = Snd.catch do snd_func(n, arg) end).first != :wrong_type_arg
+        snd_display("snd :wrong_type_arg %s: %s %s", n, tag, arg)
+      end
+    end
+  end
+  progs2 = [:amp_control, :channels, :chans, :comment,
+    :contrast_control, :amp_control_bounds, :speed_control_bounds, :expand_control_bounds,
+    :contrast_control_bounds, :reverb_control_length_bounds, :reverb_control_scale_bounds,
+    :contrast_control_amp, :contrast_control?, :data_format, :data_location, :data_size,
+    :expand_control, :expand_control_hop, :expand_control_jitter, :expand_control_length,
+    :expand_control_ramp, :expand_control?, :filter_control_in_dB,
+    :filter_control_in_hz, :filter_control_envelope, :filter_control_order, :filter_control?,
+    :frames, :header_type, :read_only,
+    :reverb_control_decay, :reverb_control_feedback,
+    :reverb_control_length, :reverb_control_lowpass, :reverb_control_scale, :reverb_control?,
+    :sound_loop_info,
+    :speed_control, :speed_control_style, :speed_control_tones, :srate, :channel_style, :sync]
+  [$vct_5, sqrt(-1.0), 1.5, "hiho"].each do |arg|
+    progs2.each_with_index do |n, i|
+      if (tag = Snd.catch do
+            case n
+            when :channels, :chans, :data_format, :data_location, :data_size,
+              :header_type, :srate, :comment
+              # g_set_channels(snd, val)
+              set_snd_func(n, arg, 0)
+            else
+              # g_set_amp_control(val, snd, chn)
+              set_snd_func(n, 0, arg)
+            end
+          end).first != :wrong_type_arg
+        snd_display("snd set :wrong_type_arg %d %s: %s %s", i, n, tag, arg)
+      end
+    end
+  end
+  progs3 = [:amp_control,
+    :contrast_control, :amp_control_bounds, :speed_control_bounds, :expand_control_bounds,
+    :contrast_control_bounds, :reverb_control_length_bounds, :reverb_control_scale_bounds,
+    :contrast_control_amp, :contrast_control?,
+    :expand_control, :expand_control_hop, :expand_control_jitter, :expand_control_length,
+    :expand_control_ramp, :expand_control?, :filter_control_in_dB,
+    :filter_control_in_hz, :filter_control_envelope, :filter_control_order, :filter_control?,
+    :reverb_control_decay, :reverb_control_feedback,
+    :reverb_control_length, :reverb_control_lowpass, :reverb_control_scale, :reverb_control?,
+    :speed_control, :speed_control_style, :speed_control_tones, :channel_style, :sync]
+  index = open_sound("obtest.snd")
+  [$vct_5, sqrt(-1.0), "hiho"].each do |arg|
+    progs3.each_with_index do |n, i|
+      if (tag = Snd.catch do set_snd_func(n, arg, index) end).first != :wrong_type_arg
+        snd_display("snd safe set :wrong_type_arg %d %s: %s %s", i, n, tag, arg)
+      end
+    end
+  end
+  close_sound(index)
+  [Array.new(1), "hiho", sqrt(-1.0), 1.5, [1, 0], [0, 1]].each do |arg|
+    [:make_vct, :vct_copy, :vct_length, :vct2list, :vct_peak].each do |n|
+      if (tag = Snd.catch do snd_func(n, arg) end).first != :wrong_type_arg
+        snd_display("vct 0 :wrong_type_arg %s: %s %s", n, tag, arg)
+      end
+    end
+  end
+  [Array.new(1), "hiho", sqrt(-1.0), 1.5, [1, 0], [0, 1]].each do |arg1|
+    [$vct_5, "hiho", sqrt(-1.0), 1.5, [1, 0], [0, 1]].each do |arg2|
+      [:vct_add!, :vct_subtract!, :vct_multiply!, :vct_ref,
+        :vct_scale!, :vct_fill!, :vct_map!].each do |n|
+        case tag = (res = Snd.catch do snd_func(n, arg1, arg2) end).first
+        when :wrong_type_arg, :wrong_number_of_args, :mus_error
+          nil
+        else
+          snd_display("vct 1 :wrong_whatever %s: %s %s %s (%s)", n, tag, arg1, arg2, res)
+        end
+      end
+    end
+  end
+  [Array.new(1), "hiho", sqrt(-1.0), [1, 0], [0, 1]].each do |arg|
+    [:vct_add!, :vct_subtract!, :vct_multiply!, :vct_ref,
+      :vct_scale!, :vct_fill!, :vct_map!].each do |n|
+      if (tag = Snd.catch do snd_func(n, $vct_3, arg) end).first != :wrong_type_arg
+        snd_display("vct 2 :wrong_type_arg %s: %s %s", n, tag, arg)
+      end
+    end
+  end
+  if (tag = Snd.catch do make_vct(-23) end).first != :out_of_range
+    snd_display("make_vct -23: %s", tag)
+  end
+  if (tag = Snd.catch do Vct.new(-23) end).first != :out_of_range
+    snd_display("Vct.new -23: %s", tag)
+  end
+  v = $vct_3
+  if (tag = Snd.catch do vct_ref(v, 12) end).first != :out_of_range
+    snd_display("vct_ref 12: %s", tag)
+  end
+  if (tag = Snd.catch do v[12] end).first != :out_of_range
+    snd_display("v[12]: %s", tag)
+  end
+  procs_p = [:all_pass?, :asymmetric_fm?, :comb?, :convolve?, :delay?, :env?,
+    :file2frame?, :file2sample?, :snd2sample?, :filter?, :fir_filter?, :formant?,
+    :frame2file?, :frame?, :granulate?, :iir_filter?, :locsig?, :mixer?, :mus_input?,
+    :mus_output?, :notch?, :one_pole?, :one_zero?, :oscil?, :phase_vocoder?,
+    :pulse_train?, :rand_interp?, :rand?, :readin?, :sample2file?, :sawtooth_wave?,
+    :sine_summation?, :square_wave?, :src?, :sum_of_cosines?, :sum_of_sines?,
+    :table_lookup?, :triangle_wave?, :two_pole?, :two_zero?, :wave_train?, :waveshape?,
+    :color?, :mix_sample_reader?, :average?, :ssb_am?, :sample_reader?,
+    :track_sample_reader?, :region_sample_reader?, :vct?]
+  [Array.new(1), "hiho", sqrt(-1.0), 1.5, [1, 0], [0, 1]].each do |arg|
+    procs_p.each do |n|
+      if (tag = Snd.catch do snd_func(n, arg) end).first.kind_of?(TrueClass)
+        snd_display("?proc %s: %s %s", n, tag, arg)
+      end
+    end
+  end
+  procs_p.each do |n|
+    next if n == :oscil?
+    if (tag = Snd.catch do snd_func(n, make_oscil(440)) end).first.kind_of?(TrueClass)
+      snd_display("oscil?proc %s: %s", n, tag)
+    end
+  end
+  [:reverse_selection, :selection_position, :selection_frames, :smooth_selection,
+    :scale_selection_to, :play_selection, :insert_selection, :delete_selection, :mix_selection,
+    :src_selection, :filter_selection, :env_selection].each do |n|
+    if (tag = Snd.catch do
+          case n
+          when :src_selection, :filter_selection, :env_selection
+            snd_func(n, 0.0)
+          else
+            snd_func(n)
+          end
+        end).first != :no_active_selection
+      snd_display("selection %s: %s", n, tag)
+    end
+  end
+  trk = make_track
+  [:track, :track_amp, :track_position, :track_frames, :track_speed, :track_tempo,
+    :track_amp_env, :track_track, :delete_track, :track_color].each do |n|
+    if (tag = Snd.catch do snd_func(n, trk + 1) end).first != :no_such_track
+      snd_display("track %s: %s", n, tag)
+    end
+  end
+  [:track_amp, :track_position, :track_speed,
+    :track_tempo, :track_amp_env, :track_track, :track_color
+  ].zip([1.0, 0, 1.0, 1.0, [0, 0, 1, 1], trk - 1, make_color_with_catch(1, 0, 0)]) do |n, a|
+    if (tag = Snd.catch do set_snd_func(n, trk + 1, a) end).first != :no_such_track
+      snd_display("set_track %s: %s", n, tag)
+    end
+  end
+  # Array.new(1): *partials_* functions return :bad_type (odd length partials list?)
+  [Array.new(2), $color_95, sqrt(-1.0)].each do |arg|
+    [:all_pass, :asymmetric_fm, :clear_array, :comb, :convolve, :db2linear,
+      :average, :degrees2radians, :delay, :env, :formant, :frame2list, :granulate,
+      :hz2radians, :linear2db, :make_all_pass, :make_asymmetric_fm, :make_comb,
+      :make_convolve, :make_delay, :make_env, :make_file2frame, :make_file2sample,
+      :make_filter, :make_fir_filter, :make_formant, :make_frame, :make_granulate,
+      :make_iir_filter, :make_locsig, :make_notch, :make_one_pole, :make_one_zero,
+      :make_oscil, :make_ppolar, :make_pulse_train, :make_rand, :make_rand_interp,
+      :make_readin, :make_sawtooth_wave, :make_sine_summation, :make_square_wave,
+      :make_src, :make_sum_of_cosines, :make_sum_of_sines, :make_table_lookup,
+      :make_triangle_wave, :make_two_pole, :make_two_zero, :make_wave_train, :make_ssb_am,
+      :make_waveshape, :make_zpolar, :mus_channel, :mus_channels, :make_polyshape,
+      :mus_cosines, :mus_data, :mus_feedback, :mus_feedforward, :mus_formant_radius,
+      :mus_frequency, :mus_hop, :mus_increment, :mus_length, :mus_file_name, :mus_location,
+      :mus_order, :mus_phase, :mus_ramp, :mus_random, :mus_run, :mus_scaler, :mus_xcoeffs,
+      :mus_ycoeffs, :notch, :one_pole, :one_zero, :make_average, :seconds2samples,
+      :samples2seconds, :oscil, :partials2polynomial, :partials2wave, :partials2waveshape,
+      :phase_partials2wave, :phase_vocoder, :pulse_train, :radians2degrees, :radians2hz,
+      :rand, :rand_interp, :readin, :sawtooth_wave, :sine_summation, :square_wave, :src,
+      :sum_of_cosines, :sum_of_sines, :table_lookup, :tap, :triangle_wave, :two_pole,
+      :two_zero, :wave_train, :waveshape, :ssb_am].each_with_index do |n, i|
+      if (tag = Snd.catch do snd_func(n, arg) end).first != :wrong_type_arg
+        snd_display("clm %s: tag %s, arg %s [%d]", n, tag, arg, i)
+      end
+    end
+  end
+  [:all_pass, :array_interp, :asymmetric_fm, :comb, :contrast_enhancement, :convolution,
+    :convolve, :average, :convolve_files, :delay, :dot_product, :env_interp, :file2frame,
+    :file2sample, :snd2sample, :filter, :fir_filter, :formant, :formant_bank,
+    :frame_multiply, :frame_add, :frame2frame, :frame_ref, :frame2sample, :granulate,
+    :iir_filter, :ina, :inb, :locsig_ref, :locsig_reverb_ref, :make_all_pass,
+    :make_asymmetric_fm, :make_comb, :make_delay, :make_env, :make_fft_window,
+    :make_filter, :make_fir_filter, :make_formant, :make_frame, :make_granulate,
+    :make_iir_filter, :make_locsig, :make_notch, :make_one_pole, :make_one_zero,
+    :make_oscil, :make_phase_vocoder, :make_ppolar, :make_pulse_train, :make_rand,
+    :make_rand_interp, :make_readin, :make_sawtooth_wave, :make_average, :make_sine_summation,
+    :make_square_wave, :make_src, :make_sum_of_cosines, :make_sum_of_sines,
+    :make_table_lookup, :make_triangle_wave, :make_two_pole, :make_two_zero,
+    :make_wave_train, :make_waveshape, :make_zpolar, :mixer_multiply, :mixer_add,
+    :multiply_arrays, :notch, :one_pole, :one_zero, :oscil, :partials2polynomial,
+    :partials2wave, :partials2waveshape, :make_polyshape, :phase_partials2wave,
+    :phase_vocoder, :polynomial, :pulse_train, :rand, :rand_interp, :rectangular2polar,
+    :ring_modulate, :sample2frame, :sawtooth_wave, :sine_summation, :square_wave, :src,
+    :sum_of_cosines, :sum_of_sines, :sine_bank, :table_lookup, :tap, :triangle_wave,
+    :two_pole, :two_zero, :wave_train, :waveshape, :ssb_am, :make_ssb_am].each do |n|
+    case tag = (res = Snd.catch do snd_func(n, make_oscil, $vct_5) end).first
+    when :wrong_type_arg, :bad_arity, :mus_error
+      nil
+    else
+      snd_display("clm 1 %s: %s %s", n, tag, res)
+    end
+  end
+  [:mus_cosines, :mus_data, :mus_feedback, :mus_feedforward,
+    :mus_formant_radius, :mus_frequency, :mus_hop, :mus_increment, :mus_length, :mus_location,
+    :mus_phase, :mus_ramp, :mus_scaler].each do |n|
+    if (tag = Snd.catch do set_snd_func(n, make_oscil, $vector_0) end).first != :wrong_type_arg
+      snd_display("mus_gen %s: %s", n, tag)
+    end
+  end
+  mus_procs = [:mus_sound_samples, :mus_sound_frames, :mus_sound_duration, :mus_sound_datum_size,
+    :mus_sound_data_location, :mus_sound_chans, :mus_sound_srate, :mus_sound_header_type,
+    :mus_sound_data_format, :mus_sound_length, :mus_sound_type_specifier, :mus_header_type_name,
+    :mus_data_format_name, :mus_sound_comment, :mus_sound_write_date, :mus_bytes_per_sample,
+    :mus_sound_loop_info, :mus_sound_maxamp, :mus_sound_maxamp_exists?, :mus_header_type2string,
+    :mus_data_format2string]
+  mus_procs.each do |n|
+    if (tag = Snd.catch do snd_func(n, $vct_5) end).first != :wrong_type_arg
+      snd_display("mus_sound %s: %s", n, tag)
+    end
+  end
+  mus_procs.each do |n|
+    if (tag = Snd.catch do snd_func(n) end).first != :wrong_number_of_args
+      snd_display("no arg mus_sound %s: %s", n, tag)
+    end
+  end
+end
+
+def test0128
+  [:mus_sound_samples, :mus_sound_frames, :mus_sound_duration, :mus_sound_datum_size,
+    :mus_sound_data_location, :mus_sound_chans, :mus_sound_srate, :mus_sound_header_type,
+    :mus_sound_data_format, :mus_sound_length, :mus_sound_type_specifier,
+    :mus_sound_comment, :mus_sound_write_date, :mus_sound_maxamp,
+    :mus_sound_maxamp_exists?].each do |n|
+    if (tag = Snd.catch do snd_func(n, "/bad/baddy") end).first != :mus_error
+      snd_display("bad file mus_sound %s: %s", n, tag)
+    end
+  end
+  mus_sound_forget("/bad/baddy")
+  [:channel_widgets, :count_matches, :cursor, :channel_properties, :cursor_follows_play,
+    :cursor_position, :cursor_size, :cursor_style, :delete_sample, :display_edits, :dot_size,
+    :draw_dots, :draw_lines, :edit_fragment, :edit_position, :edit_tree, :edits,
+    :fft_window_beta, :fft_log_frequency, :fft_log_magnitude, :transform_size,
+    :transform_graph_type, :fft_window, :transform_graph?, :find_channel, :graph, :graph_style,
+    :lisp_graph?, :insert_region, :insert_sound, :time_graph_style, :lisp_graph_style,
+    :transform_graph_style, :left_sample, :make_graph_data, :map_chan, :max_transform_peaks,
+    :maxamp, :maxamp_position, :min_dB, :mix_region, :transform_normalization,
+    :peak_env_info, :peaks, :play, :play_and_wait, :position2x, :position2y, :reverse_sound,
+    :revert_sound, :right_sample, :sample, :samples2sound_data, :save_sound, :save_sound_as,
+    :scan_chan, :select_channel, :show_axes, :show_transform_peaks, :show_marks,
+    :show_mix_waveforms, :show_y_zero, :show_grid, :show_sonogram_cursor, :spectro_cutoff,
+    :spectro_hop, :spectro_start, :spectro_x_angle, :spectro_x_scale, :spectro_y_angle,
+    :grid_density, :spectro_y_scale, :spectro_z_angle, :spectro_z_scale, :squelch_update,
+    :transform_sample, :transform2vct, :transform_frames, :transform_type,
+    :update_transform_graph, :update_time_graph, :update_lisp_graph, :update_sound,
+    :wavelet_type, :time_graph?, :time_graph_type, :wavo_hop, :wavo_trace, :x_bounds,
+    :x_position_slider, :x_zoom_slider, :x_axis_label, :y_axis_label, :y_bounds,
+    :y_position_slider, :y_zoom_slider, :zero_pad].each_with_index do |n, i|
+    case tag = (res = Snd.catch do snd_func(n, $vct_5) end).first
+    when :wrong_type_arg, :no_such_sound
+      nil
+    else
+      snd_display("%d: chn (no snd) procs %s: %s", i, n, res)
+    end
+  end
+  [:channel_widgets, :count_matches, :cursor, :channel_properties, :cursor_position,
+    :cursor_size, :cursor_style, :delete_sample, :display_edits, :dot_size, :draw_dots,
+    :draw_lines, :edit_fragment, :edit_position, :edit_tree, :edits, :fft_window_beta,
+    :fft_log_frequency, :fft_log_magnitude, :transform_size, :transform_graph_type,
+    :fft_window, :transform_graph?, :find_channel, :graph, :graph_style, :lisp_graph?,
+    :insert_region,
+    :insert_sound, :left_sample, :time_graph_style, :lisp_graph_style, :transform_graph_style,
+    :make_graph_data, :map_chan, :max_transform_peaks, :maxamp, :maxamp_position, :min_dB,
+    :mix_region, :transform_normalization, :peak_env_info, :peaks, :play, :play_and_wait,
+    :position2x, :position2y, :reverse_sound, :right_sample, :sample, :samples2sound_data,
+    :save_sound_as, :scan_chan, :show_axes, :show_transform_peaks, :show_marks,
+    :show_mix_waveforms, :show_y_zero, :show_grid, :show_sonogram_cursor, :spectro_cutoff,
+    :spectro_hop, :spectro_start, :spectro_x_angle, :spectro_x_scale, :spectro_y_angle,
+    :spectro_y_scale, :spectro_z_angle, :spectro_z_scale, :squelch_update, :grid_density,
+    :transform_sample, :transform2vct, :transform_frames, :transform_type,
+    :update_transform_graph, :update_time_graph, :update_lisp_graph, :wavelet_type,
+    :time_graph?, :time_graph_type, :wavo_hop, :wavo_trace, :x_bounds, :x_position_slider,
+    :x_zoom_slider, :x_axis_label, :y_axis_label, :y_bounds, :y_position_slider,
+    :y_zoom_slider, :zero_pad].each_with_index do |n, i|
+    if (tag = Snd.catch do snd_func(n, 0, $vct_5) end).first != :wrong_type_arg
+      snd_display("%d: chn (no chn) procs %s: %s", i, n, tag)
+    end
+  end
+  [:channel_widgets, :cursor, :cursor_follows_play, :channel_properties, :cursor_position,
+    :cursor_size, :cursor_style, :delete_sample, :display_edits, :dot_size, :edit_fragment,
+    :edit_position, :edit_tree, :edits, :env_sound, :fft_window_beta, :fft_log_frequency,
+    :fft_log_magnitude, :transform_size, :transform_graph_type, :fft_window, :transform_graph?,
+    :filter_sound, :graph_data, :graph_style, :lisp_graph?, :insert_region, :left_sample,
+    :time_graph_style, :lisp_graph_style, :transform_graph_style, :make_graph_data,
+    :max_transform_peaks, :maxamp, :maxamp_position, :min_dB, :transform_normalization,
+    :peak_env_info, :play, :play_and_wait, :position2x, :position2y, :redo_edit, :reverse_sound,
+    :revert_sound, :right_sample, :sample, :samples2sound_data, :save_sound, :scale_by,
+    :scale_to, :show_axes, :show_transform_peaks, :show_marks, :show_mix_waveforms,
+    :show_y_zero, :show_grid, :show_sonogram_cursor, :spectro_cutoff, :spectro_hop,
+    :spectro_start, :spectro_x_angle, :spectro_x_scale, :spectro_y_angle, :spectro_y_scale,
+    :spectro_z_angle, :spectro_z_scale, :squelch_update, :grid_density, :src_sound,
+    :transform_sample, :transform2vct, :transform_frames, :transform_type, :undo_edit,
+    :update_transform_graph, :update_time_graph, :update_lisp_graph, :update_sound,
+    :wavelet_type, :time_graph?, :time_graph_type, :wavo_hop, :wavo_trace, :x_bounds,
+    :x_position_slider, :normalize_channel, :x2position, :x_zoom_slider, :y_bounds,
+    :y_position_slider, :x_axis_label, :y_axis_label, :y2position, :y_zoom_slider,
+    :zero_pad, :scale_channel].each_with_index do |n, i|
+    if (tag = Snd.catch do snd_func(n, 1234) end).first != :no_such_sound
+      snd_display("%d: chn procs %s: %s", i, n, tag)
+    end
+  end
+  [:delete_sample, :edit_fragment, :graph_data, :graph_style, :play, :play_and_wait,
+    :position2x, :position2y, :redo_edit, :time_graph_style, :lisp_graph_style,
+    :transform_graph_style, :scale_by, :scale_to, :undo_edit, :x2position, :y2position,
+    :x_axis_label].each_with_index do |n, i|
+    if (tag = Snd.catch do snd_func(n, 0, 1234) end).first != :no_such_sound
+      snd_display("%d: snd(1) chn procs %s: %s", i, n, tag)
+    end
+  end
+  index = open_sound("oboe.snd")
+  [:delete_sample, :edit_fragment, :graph_data, :play, :play_and_wait,
+    :position2x, :position2y, :redo_edit,
+    :scale_by, :scale_to, :undo_edit, :x2position, :y2position].each_with_index do |n, i|
+    if (tag = Snd.catch do snd_func(n, 0, index, 1234) end).first != :no_such_channel
+      snd_display("%d: snd(1 1234) chn procs %s: %s", i, n, tag)
+    end
+  end
+  [:channel_widgets, :cursor, :cursor_position, :cursor_size, :cursor_style,
+    :display_edits, :dot_size, :edit_position, :edit_tree, :edits, :fft_window_beta,
+    :fft_log_frequency, :fft_log_magnitude, :transform_size, :transform_graph_type,
+    :fft_window, :transform_graph?, :graph_style, :lisp_graph?, :left_sample,
+    :time_graph_style, :lisp_graph_style, :transform_graph_style, :make_graph_data,
+    :max_transform_peaks, :maxamp, :maxamp_position, :min_dB, :transform_normalization,
+    :peak_env_info, :reverse_sound, :right_sample, :show_axes, :show_transform_peaks,
+    :show_marks, :show_mix_waveforms, :show_y_zero, :show_grid, :show_sonogram_cursor,
+    :grid_density, :spectro_cutoff, :spectro_hop, :spectro_start, :spectro_x_angle,
+    :spectro_x_scale, :spectro_y_angle, :spectro_y_scale, :spectro_z_angle,
+    :spectro_z_scale, :squelch_update, :transform2vct, :transform_frames,
+    :transform_type, :update_transform_graph, :update_time_graph, :update_lisp_graph,
+    :wavelet_type, :time_graph?, :time_graph_type, :wavo_hop, :wavo_trace,
+    :x_bounds, :x_position_slider, :x_axis_label, :x_zoom_slider, :y_bounds,
+    :y_position_slider, :y_zoom_slider, :zero_pad,
+    :channel_properties].each_with_index do |n, i|
+    if (tag = Snd.catch do snd_func(n, index, 1234) end).first != :no_such_channel
+      snd_display("%d: chn procs %s: %s", i, n, tag)
+    end
+  end
+  [:channel_widgets, :cursor, :cursor_position, :display_edits, :dot_size,
+    :edit_tree, :edits, :fft_window_beta, :fft_log_frequency, :fft_log_magnitude,
+    :transform_size, :transform_graph_type, :fft_window, :transform_graph?,
+    :graph_style, :lisp_graph?, :left_sample, :make_graph_data,
+    :max_transform_peaks, :maxamp, :maxamp_position, :time_graph_style,
+    :lisp_graph_style, :transform_graph_style, :min_dB, :transform_normalization,
+    :peak_env_info, :reverse_sound, :right_sample, :show_axes, :grid_density,
+    :show_transform_peaks, :show_marks, :show_mix_waveforms, :show_y_zero,
+    :show_grid, :show_sonogram_cursor, :spectro_cutoff, :spectro_hop, :spectro_start,
+    :spectro_x_angle, :spectro_x_scale, :spectro_y_angle, :spectro_y_scale,
+    :spectro_z_angle, :spectro_z_scale, :squelch_update, :transform2vct,
+    :transform_frames, :transform_type, :update_transform_graph, :update_time_graph,
+    :update_lisp_graph, :wavelet_type, :time_graph?, :time_graph_type, :wavo_hop,
+    :wavo_trace, :x_bounds, :x_position_slider, :x_zoom_slider, :y_bounds,
+    :y_position_slider, :y_zoom_slider, :zero_pad, :x_axis_label].each_with_index do |n, i|
+    tag = Snd.catch do set_snd_func(n, $vct_5, index, 0) end
+    if tag.first != :wrong_type_arg and tag.first != :no_method_error and tag.first != :name_error
+      snd_display("%d: set chn procs %s: %s", i, n, tag)
+    end
+  end
+  close_sound(index)
+  [:mix_amp, :mix_amp_env, :mix_tag_position, :mix_chans, :mix_track, :mix_frames,
+    :mix_locked?, :mix_inverted?, :mix_position, :mix_home, :mix_speed,
+    :mix_tag_y].each_with_index do |n, i|
+    if (tag = Snd.catch do snd_func(n, $vct_5) end).first != :wrong_type_arg
+      snd_display("%d: mix (1) procs %s: %s", i, n, tag)
+    end
+  end
+  [:mix_amp, :mix_tag_position, :mix_chans, :mix_track, :mix_frames,
+    :mix_locked?, :mix_inverted?, :mix_position, :mix_home, :mix_speed,
+    :mix_tag_y].each_with_index do |n, i|
+    if (tag = Snd.catch do snd_func(n, 1234) end).first != :no_such_mix
+      snd_display("%d: mix (2) procs %s: %s", i, n, tag)
+    end
+  end
+  [:mix_tag_position, :mix_track, :mix_locked?, :mix_inverted?, :mix_position,
+    :mix_speed, :mix_tag_y].each_with_index do |n, i|
+    if (tag = Snd.catch do set_snd_func(n, 1234, $vct_5) end).first != :wrong_type_arg
+      snd_display("%d: set mix (3) procs %s: %s", i, n, tag)
+    end
+  end
+  index = open_sound("oboe.snd")
+  id = mix_sound("oboe.snd", 10)
+  [:mix_tag_position, :mix_track, :mix_locked?, :mix_inverted?, :mix_position,
+    :mix_speed, :mix_tag_y].each_with_index do |n, i|
+    if (tag = Snd.catch do set_snd_func(n, id, $vct_5) end).first != :wrong_type_arg
+      snd_display("%d: set mix (4) procs %s: %s", i, n, tag)
+    end
+  end
+  close_sound(index)
+  [:add_mark, :mark_name, :mark_sample, :mark_sync, :mark_home, :delete_mark,
+    :delete_marks, :find_mark].each_with_index do |n, i|
+    if (tag = Snd.catch do snd_func(n, $vct_5) end).first != :wrong_type_arg
+      snd_display("%d: mark (1) procs %s: %s", i, n, tag)
+    end
+  end
+  [:mark_name, :mark_sample, :mark_sync, :mark_home, :delete_mark].each_with_index do |n, i|
+    if (tag = Snd.catch do snd_func(n, 1234) end).first != :no_such_mark
+      snd_display("%d: mark (2) procs %s: %s", i, n, tag)
+    end
+  end
+  index = open_sound("oboe.snd")
+  id = add_mark(0, index, 0)
+  [:mark_name, :mark_sample, :mark_sync].each_with_index do |n, i|
+    if (tag = Snd.catch do set_snd_func(n, id, $vct_5) end).first != :wrong_type_arg
+      snd_display("%d: set mark (3) procs %s: %s", i, n, tag)
+    end
+  end
+  close_sound(index)
+  [$vct_5, [0, 1], sqrt(-1.0), "hiho", [0, 1]].each do |arg|
+    [:play_region, :region_chans, :region_frames, :region_position,
+      :region_maxamp, :region_maxamp_position, :region_sample, :region2vct,
+      :region_srate, :forget_region].each_with_index do |n, i|
+      if (tag = Snd.catch do snd_func(n, arg) end).first != :wrong_type_arg
+        snd_display("%d: region (1) procs %s: %s %s", i, n, tag, arg)
+      end
+    end
+  end
+  [:play_region, :region_chans, :region_frames, :region_position,
+    :region_maxamp, :region_maxamp_position, :region_srate,
+    :forget_region].each_with_index do |n, i|
+    if (tag = Snd.catch do snd_func(n, 1234) end).first != :no_such_region
+      snd_display("%d: region (2) procs %s: %s", i, n, tag)
+    end
+  end
+  [:enved_filter_order, :enved_filter, :filter_control_waveform_color,
+    :ask_before_overwrite, :auto_resize, :auto_update, :axis_label_font,
+    :axis_numbers_font, :basic_color, :bind_key, :channel_style, :color_cutoff,
+    :color_dialog, :color_inverted, :color_scale, :cursor_color,
+    :dac_combines_channels, :dac_size, :data_clipped, :data_color,
+    :default_output_chans, :default_output_data_format, :default_output_srate,
+    :default_output_header_type, :enved_envelope, :enved_base, :enved_clip?,
+    :enved_in_dB, :enved_dialog, :enved_style, :enved_power, :enved_target,
+    :enved_waveform_color, :enved_wave?, :eps_file, :eps_left_margin,
+    :eps_bottom_margin, :eps_size, :foreground_color, :graph_color, :graph_cursor,
+    :highlight_color, :just_sounds, :key_binding, :listener_color, :listener_font,
+    :listener_prompt, :listener_text_color, :max_regions,
+    :minibuffer_history_length, :mix_waveform_height, :region_graph_style,
+    :position_color, :time_graph_style, :lisp_graph_style, :transform_graph_style,
+    :peaks_font, :bold_peaks_font, :previous_files_sort, :print_length,
+    :pushed_button_color, :recorder_in_device, :recorder_autoload,
+    :recorder_buffer_size, :recorder_file, :recorder_in_format,
+    :recorder_max_duration, :recorder_out_chans, :recorder_in_chans,
+    :recorder_out_format, :recorder_out_type, :recorder_srate, :recorder_trigger,
+    :sash_color, :ladspa_dir, :save_dir, :save_state_file, :selected_channel,
+    :selected_data_color, :selected_graph_color, :selected_sound,
+    :selection_creates_region, :show_backtrace, :show_controls, :show_indices,
+    :show_listener, :show_selection_transform, :sinc_width, :temp_dir,
+    :text_focus_color, :tiny_font, :trap_segfault, :optimization, :unbind_key,
+    :verbose_cursor, :vu_font, :vu_font_size, :vu_size, :window_height,
+    :beats_per_measure, :window_width, :window_x, :window_y, :with_gl,
+    :with_mix_tags, :x_axis_style, :beats_per_minute, :zoom_color, :mix_tag_height,
+    :mix_tag_width, :with_relative_panes, :run_safety, :clm_table_size,
+    :mark_tag_width, :mark_tag_height, :quit_button_color, :help_button_color,
+    :reset_button_color, :doit_button_color, :doit_again_button_color].each_with_index do |n, i|
+    case n
+    when :bind_key, :color_dialog, :enved_dialog, :key_binding, :unbind_key
+      next
+    end
+    if (tag = Snd.catch do set_snd_func(n, $vct_5) end).first != :wrong_type_arg
+      snd_display("%d: misc procs %s: %s", i, n, tag)
+    end
+  end
+  [:after_graph_hook, :lisp_graph_hook, :before_transform_hook,
+    :mix_release_hook, :save_hook, :before_save_as_hook, :after_save_as_hook,
+    :save_state_hook, :new_sound_hook, :mus_error_hook, :mouse_enter_graph_hook,
+    :mouse_leave_graph_hook, :open_raw_sound_hook, :select_channel_hook,
+    :output_name_hook, :after_open_hook, :close_hook, :draw_mark_hook,
+    :just_sounds_hook, :mark_click_hook, :listener_click_hook, :mix_click_hook,
+    :after_save_state_hook, :before_save_state_hook, :mark_hook, :mark_drag_hook,
+    :mark_drag_triangle_hook, :mix_drag_hook, :name_click_hook, :after_apply_hook,
+    :open_hook, :output_comment_hook, :help_hook, :play_hook, :dac_hook,
+    :new_widget_hook, :read_hook, :bad_header_hook, :snd_error_hook,
+    :snd_warning_hook, :start_hook, :start_playing_hook, :stop_playing_hook,
+    :mouse_enter_listener_hook, :mouse_leave_listener_hook,
+    :window_property_changed_hook, :select_sound_hook, :previous_files_select_hook,
+    :during_open_hook, :after_transform_hook, :mouse_enter_label_hook,
+    :mouse_leave_label_hook, :initial_graph_hook, :graph_hook, :key_press_hook,
+    :mouse_drag_hook, :mouse_press_hook, :mouse_click_hook, :enved_hook].each_with_index do |n, i|
+    hook = eval("$#{n}")
+    fnc = lambda do || 1 + 2 end
+    if (tag = Snd.catch do hook.add_hook!("test28-1", &fnc) end).first != :wrong_type_arg
+      snd_display("%d: hooks (1) %s: %s", i, n, tag)
+    end
+  end
+  [:exit_hook, :stop_dac_hook, :stop_playing_selection_hook,
+    :color_hook, :orientation_hook, :start_playing_selection_hook,
+    :selection_changed_hook].each_with_index do |n, i|
+    hook = eval("$#{n}")
+    fnc = lambda do |a, b, c| a + b + c end
+    if (tag = Snd.catch do hook.add_hook!("test28-2", &fnc) end).first != :wrong_type_arg
+      snd_display("%d: hooks (2) %s: %s", i, n, tag)
+    end
+  end
+end
+
+def test0228
+  check_error_tag(:no_such_envelope) do set_enved_envelope("not-an-env") end
+  check_error_tag(:cannot_save) do save_envelopes("/bad/baddy") end
+  check_error_tag(:bad_arity) do set_search_procedure(lambda do |a, b, c| a end) end
+  check_error_tag(:no_such_sound) do set_search_procedure(1234, lambda do |a| a end) end
+  check_error_tag(:no_such_channel) do make_sample_reader(0, "oboe.snd", 1) end
+  check_error_tag(:no_such_channel) do make_sample_reader(0, "oboe.snd", -1) end
+  check_error_tag(:bad_arity) do bind_key(?p, 0, lambda do |a, b| play_often([1, a].max) end) end
+  check_error_tag(:bad_arity) do set_zoom_focus_style(lambda do |a| 0 end) end
+  check_error_tag(:wrong_type_arg) do
+    mus_mix("oboe.snd", "pistol.snd", 0, 12, 0, make_mixer(1, 1.0), "a string")
+  end
+  check_error_tag(:bad_header) do mus_mix("test.snd", $sf_dir + "bad_chans.aifc") end
+  check_error_tag(:mus_error) do mus_mix("test.snd", $sf_dir + "bad_length.aifc") end
+  check_error_tag(:bad_header) do mus_mix($sf_dir + "bad_chans.aifc", "oboe.snd") end
+  check_error_tag(:no_such_sound) do set_sound_loop_info(123, [0, 0, 1, 1]) end
+  check_error_tag(:mus_error) do
+    new_sound("fmv.snd", Mus_nist, Mus_bfloat, 22050, 2, "this is a comment")
+  end
+  check_error_tag(:no_such_player) do player_home(123) end
+  check_error_tag(:no_such_file) do set_temp_dir("/hiho") end
+  check_error_tag(:no_such_file) do set_save_dir("/hiho") end
+  check_error_tag(:out_of_range) do snd_transform(20, make_vct(4)) end
+  check_error_tag(:bad_header) do mus_sound_maxamp($sf_dir + "bad_chans.snd") end
+  check_error_tag(:bad_header) do set_mus_sound_maxamp($sf_dir + "bad_chans.snd", [0.0, 0.0]) end
+  check_error_tag(:no_such_sound) do restore_marks(123, 123, 123, []) end
+  check_error_tag(:mus_error) do play($sf_dir + "midi60.mid") end
+  check_error_tag(:wrong_type_arg) do make_iir_filter(:order, 32, :ycoeffs, make_vct(4)) end
+  check_error_tag(:out_of_range) do make_table_lookup(:size, 123456789) end
+  check_error_tag(:out_of_range) do make_src(:srate, -0.5) end
+  check_error_tag(:out_of_range) do make_granulate(:ramp, -0.5) end
+  check_error_tag(:out_of_range) do make_granulate(:ramp, 1.5) end
+  check_error_tag(:out_of_range) do new_sound("test.snd", :channels, 0) end
+  check_error_tag(:out_of_range) do new_sound("test.snd", :srate, 0) end
+  check_error_tag(:out_of_range) do new_sound("test.snd", :size, -1) end
+  check_error_tag(:out_of_range) do make_readin("oboe.snd", :size, 0) end
+  check_error_tag(:out_of_range) do make_readin("oboe.snd", :size, -1) end
+  check_error_tag(:out_of_range) do make_file2sample("oboe.snd", 0) end
+  check_error_tag(:out_of_range) do make_file2sample("oboe.snd", -1) end
+  check_error_tag(:out_of_range) do make_file2frame("oboe.snd", 0) end
+  check_error_tag(:out_of_range) do make_file2frame("oboe.snd", -1) end
+  check_error_tag(:out_of_range) do set_default_output_data_format(-1) end
+  check_error_tag(:out_of_range) do set_default_output_header_type(Mus_soundfont) end
+  check_error_tag(:mus_error) do mus_sound_chans($sf_dir + "bad_location.nist") end
+  check_error_tag(:mus_error) do mus_sound_chans($sf_dir + "bad_field.nist") end
+  if provided? :snd_motif
+    check_error_tag(:no_such_widget) do widget_position([:Widget, 0]) end
+    check_error_tag(:no_such_widget) do widget_size([:Widget, 0]) end
+    check_error_tag(:no_such_widget) do widget_text([:Widget, 0]) end
+    check_error_tag(:no_such_widget) do set_widget_position([:Widget, 0], [0, 0]) end
+    check_error_tag(:no_such_widget) do set_widget_size([:Widget, 0], [10, 10]) end
+    check_error_tag(:no_such_widget) do set_widget_text([:Widget, 0], "hiho") end
+  end
+  check_error_tag(:no_such_menu) do main_menu(-1) end
+  check_error_tag(:no_such_menu) do main_menu(111) end
+  # INFO: wrong_number_of_args in Ruby
+  # check_error_tag(:mus_error) do vct_map(lambda do || 1.0 end) end
+  check_error_tag(:wrong_number_of_args) do vct_map(lambda do || 1.0 end) end
+  check_error_tag(:out_of_range) do new_sound("hiho", 123) end
+  check_error_tag(:out_of_range) do new_sound("hiho", Mus_nist, 123) end
+  check_error_tag(:mus_error) do new_sound("hiho", Mus_nist, Mus_bfloat) end
+  check_error_tag(:out_of_range) do make_sound_data(0, 1) end
+  check_error_tag(:out_of_range) do make_sound_data(-2, 1) end
+  check_error_tag(:out_of_range) do make_sound_data(1, -1) end
+  check_error_tag(:out_of_range) do make_sound_data(1, 0) end
+  check_error_tag(:out_of_range) do mus_sound_close_output(0, 1) end
+  check_error_tag(:out_of_range) do mus_sound_close_output(1, 1) end
+  check_error_tag(:out_of_range) do mus_sound_close_output(2, 1) end
+  check_error_tag(:out_of_range) do mus_sound_close_input(0) end
+  check_error_tag(:out_of_range) do mus_sound_close_input(1) end
+  check_error_tag(:out_of_range) do mus_sound_close_input(2) end
+  check_error_tag(:out_of_range) do set_mus_array_print_length(-1) end
+  check_error_tag(:out_of_range) do set_print_length(-1) end
+  check_error_tag(:wrong_type_arg) do vector2vct(make_array(3, "hio")) end
+  check_error_tag(:wrong_type_arg) do vct([false]) end
+  check_error_tag(:out_of_range) do set_enved_style(12) end
+  check_error_tag(:out_of_range) do make_color(1.5, 0.0, 0.0) end
+  check_error_tag(:out_of_range) do make_color(-0.5, 0.0, 0.0) end
+  check_error_tag(:out_of_range) do set_tempo_control_bounds([9.0, 0.0]) end
+  check_error_tag(:wrong_type_arg) do set_tempo_control_bounds([0.0]) end
+  check_error_tag(:wrong_type_arg) do set_tempo_control_bounds([0.0, "hiho"]) end
+  check_error_tag(:cannot_print) do graph2ps() end
+  ind = open_sound("oboe.snd")
+  set_selection_creates_region(true)
+  select_all
+  check_error_tag(:mus_error) do save_selection("sel0.snd", :not_a_key, 3) end
+  check_error_tag(:wrong_type_arg) do read_only([ind]) end
+  check_error_tag(:wrong_type_arg) do frames(ind, [0]) end
+  check_error_tag(:wrong_type_arg) do smooth_sound(0, -10) end
+  check_error_tag(:out_of_range) do
+    hi = make_sound_data(1, 10)
+    samples2sound_data(0, 8, false, false, hi, false, 2)
+  end
+  check_error_tag(:cannot_save) do write_peak_env_info_file(ind, 0, "/baddy/hi") end
+  check_error_tag(:no_such_channel) do mix_selection(0, ind, 123) end
+  check_error_tag(:no_such_channel) do insert_selection(0, ind, 123) end
+  check_error_tag(:out_of_range) do set_channels(ind, 0) end
+  check_error_tag(:out_of_range) do set_channels(ind, -1) end
+  check_error_tag(:out_of_range) do set_channels(ind, 12340) end
+  check_error_tag(:out_of_range) do set_data_format(ind, 12340) end
+  check_error_tag(:out_of_range) do set_header_type(ind, 12340) end
+  check_error_tag(:out_of_range) do set_srate(ind, 0) end
+  check_error_tag(:out_of_range) do set_data_location(ind, -1) end
+  check_error_tag(:out_of_range) do set_data_size(ind, -1) end
+  check_error_tag(:no_such_sample) do set_sample(-1, -1) end
+  check_error_tag(:no_such_sample) do sample(-1) end
+  check_error_tag(:out_of_range) do set_frames(-10) end
+  check_error_tag(:out_of_range) do set_min_dB(0.0) end
+  check_error_tag(:out_of_range) do set_min_dB(0.0, ind, 0) end
+  check_error_tag(:out_of_range) do start_playing(1, -22) end
+  check_error_tag(:out_of_range) do start_playing(1, 0) end
+  check_error_tag(:out_of_range) do
+    set_filter_control_envelope([0.0, 1.0, 0.1, -0.1, 1.0, 0.0], ind)
+  end
+  check_error_tag(:out_of_range) do
+    set_filter_control_envelope([0.0, 1.0, 0.1, 1.1, 1.0, 0.0], ind)
+  end
+  check_error_tag(:mus_error) do filter_sound([0, 0, 0.1, 0.1, 0.05, 0.1, 1, 1], 32) end
+  check_error_tag(:out_of_range) do apply_controls(ind, 123) end
+  check_error_tag(:out_of_range) do set_speed_control_bounds([0.0, 2.0]) end
+  check_error_tag(:out_of_range) do set_expand_control_bounds([0.0, 2.0]) end
+  check_error_tag(:out_of_range) do set_speed_control_bounds([2.0, 0.0]) end
+  check_error_tag(:out_of_range) do set_expand_control_bounds([2.0, 0.0]) end
+  check_error_tag(:out_of_range) do vct2sound_file(123, $vct_3, 4) end  
+  check_error_tag(:out_of_range) do vct2sound_file(123, $vct_3, -4) end  
+  check_error_tag(:mus_error) do vct2sound_file(123, $vct_3, 2) end
+  check_error_tag(:bad_header) do insert_sound($sf_dir + "bad_chans.snd") end
+  check_error_tag(:mus_error) do convolve_with($sf_dir + "bad_chans.snd") end
+  check_error_tag(:cannot_save) do save_sound_as("hiho.snd", ind, -12) end
+  check_error_tag(:cannot_save) do save_sound_as("hiho.snd", ind, Mus_next, -12) end
+  check_error_tag(:cannot_save) do save_sound_as("test.snd", ind, Mus_nist, Mus_bdouble) end
+  check_error_tag(:cannot_save) do save_sound_as("test.snd", ind, Mus_aifc, Mus_lfloat) end
+  check_error_tag(:cannot_save) do save_sound_as("test.snd", ind, Mus_riff, Mus_bshort) end
+  check_error_tag(:cannot_save) do save_sound_as("test.snd", ind, Mus_voc, Mus_bshort) end
+  check_error_tag(:cannot_save) do save_selection("test.snd", Mus_riff, Mus_bshort) end
+  check_error_tag(:cannot_save) do save_selection("test.snd", Mus_voc, Mus_bshort) end
+  check_error_tag(:wrong_type_arg) do play_selection(0, lambda do | | false end) end
+  check_error_tag(:wrong_type_arg) do play_selection(0, 0) end
+  check_error_tag(:wrong_type_arg) do play_selection(0, lambda do |a, b| false end) end
+  check_error_tag(:no_data) do draw_lines([]) end
+  check_error_tag(:out_of_range) do src_channel(make_env([0, 0, 1, 1], :end, 10)) end
+  check_error_tag(:out_of_range) do src_channel(make_env([0, 1, 1, 0], :end, 10)) end
+  check_error_tag(:out_of_range) do src_channel(make_env([0, 1, 1, -1], :end, 10)) end
+  check_error_tag(:out_of_range) do src_channel(make_env([0, -1, 1, 1], :end, 10)) end
+  check_error_tag(:out_of_range) do src_sound(make_env([0, 0, 1, 1], :end, 10)) end
+  check_error_tag(:out_of_range) do src_sound(make_env([0, 1, 1, 0], :end, 10)) end
+  check_error_tag(:out_of_range) do src_sound(make_env([0, 1, 1, -1], :end, 10)) end
+  check_error_tag(:out_of_range) do src_sound(make_env([0, -1, 1, 1], :end, 10)) end
+  check_error_tag(:mus_error) do make_readin(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0) end
+  check_error_tag(:out_of_range) do filter_sound($vct_3, 32) end
+  check_error_tag(:out_of_range) do filter_sound([0, 0, 1, 1], 0) end
+  check_error_tag(:no_such_sound) do swap_channels(ind, 0, 12345, 0) end
+  check_error_tag(:no_such_sample) do scan_channel(lambda do |n| false end, frames() * 2) end
+  check_error_tag(:no_such_sample) do map_channel(lambda do |n| false end, frames() * 2) end
+  check_error_tag(:no_such_sample) do mix_vct(vct(0.1, 0.2, 0.3), -1, ind, 0, true) end
+  check_error_tag(:out_of_range) do snd_spectrum(Vct.new(8), 0, -123) end
+  check_error_tag(:out_of_range) do snd_spectrum(Vct.new(8), 0, 0) end
+  check_error_tag(:no_such_file) do play("/baddy/hiho") end
+  check_error_tag(:mus_error) do play($sf_dir + "nist-shortpack.wav") end
+  check_error_tag(:no_such_sound) do play(0, 123) end
+  check_error_tag(:no_such_channel) do play(0, ind, 123) end
+  check_error_tag(:no_such_channel) do make_player(ind, 123) end
+  check_error_tag(:no_such_file) do mix("/baddy/hiho") end
+  check_error_tag(:no_such_channel) do mix("oboe.snd", 0, 2) end
+  check_error_tag(:no_such_file) do mix_sound("/baddy/hiho", 0) end
+  check_error_tag(:no_such_file) do insert_sound("/baddy/hiho.snd") end
+  check_error_tag(:no_such_file) do insert_samples(0, 10, "/baddy/hiho.snd") end
+  # INFO: [] is NULL in C and not ary.length == 0
+  # check_error_tag(:no_data) do set_filter_control_envelope([], ind) end
+  check_error_tag(:wrong_type_arg) do set_filter_control_envelope([], ind) end
+  check_error_tag(:out_of_range) do set_data_format(ind, 123) end
+  check_error_tag(:out_of_range) do set_header_type(ind, 123) end
+  check_error_tag(:no_such_channel) do set_selected_channel(ind, 123) end
+  check_error_tag(:bad_arity) do set_search_procedure(ind, lambda do |a, b, c| true end) end
+  check_error_tag(:bad_arity) do map_chan(lambda do |a, b, c| 1.0 end) end
+  check_error_tag(:bad_arity) do scan_chan(lambda do |a, b, c| 1.0 end) end
+  check_error_tag(:bad_arity) do set_cursor_style(lambda do |a| 32 end, ind, 0) end
+  check_error_tag(:bad_arity) do find_channel(lambda do | | 1.0 end) end
+  check_error_tag(:bad_arity) do count_matches(lambda do | | 1.0 end) end
+  check_error_tag(:no_such_graphics_context) do draw_line(0, 0, 1, 1, ind, 0, 1234) end
+  check_error_tag(:no_such_graphics_context) do foreground_color(ind, 0, 1234) end
+  check_error_tag(:no_such_graphics_context) do current_font(ind, 0, 1234) end
+  check_error_tag(:no_such_graphics_context) do
+    graph_data([$vct_3, $vct_3], ind, 0, 1234, 0, 1, 0)
+  end
+  check_error_tag(:no_such_axis) do position2x(100, ind, 0, 1234) end
+  check_error_tag(:no_such_axis) do position2y(100, ind, 0, 1234) end
+  check_error_tag(:no_such_axis) do x2position(100, ind, 0, 1234) end
+  check_error_tag(:no_such_axis) do y2position(100, ind, 0, 1234) end
+  check_error_tag(:no_such_axis) do axis_info(ind, 0, 1234) end
+  check_error_tag(:out_of_range) do
+    draw_axes(channel_widgets.car, snd_gcs.car, "hiho", 0.0, 1.0, -1.0, 1.0, X_axis_in_seconds,1234)
+  end
+  check_error_tag(:out_of_range) do
+    draw_axes(channel_widgets.car, snd_gcs.car, "hiho", 0.0, 1.0, -1.0, 1.0, 1234)
+  end
+  check_error_tag(:no_such_channel) do axis_info(ind, 1234) end
+  check_error_tag(:no_such_sound) do axis_info(1234) end
+  set_time_graph_type(Graph_once)
+  check_error_tag(:out_of_range) do set_x_bounds([0, 0]) end
+  check_error_tag(:out_of_range) do set_x_bounds([0.1, -0.1]) end
+  check_error_tag(:out_of_range) do set_y_bounds([0.2, 0.1]) end
+  check_error_tag(:out_of_range) do make_region(100, 0) end
+  check_error_tag(:no_such_sample) do delete_sample(-1) end
+  check_error_tag(:no_such_sample) do delete_sample(2 * frames(ind)) end
+  if regions.empty? then make_region(0, 100) end
+  check_error_tag(:no_such_channel) do region_sample(0, regions.car, 1234) end
+  check_error_tag(:no_such_channel) do region_frames(regions.car, 1234) end
+  check_error_tag(:no_such_channel) do region_position(regions.car, 1234) end
+  check_error_tag(:no_such_region) do region2vct(0, 1, -1) end
+  check_error_tag(:no_such_channel) do region2vct(0, 1, regions.car, 1234) end
+  check_error_tag(:cannot_save) do save_sound_as("/bad/baddy.snd") end
+  check_error_tag(:no_such_sound) do transform_sample(0, 1, 1234) end
+  check_error_tag(:no_such_channel) do transform_sample(0, 1, ind, 1234) end
+  check_error_tag(:no_such_sound) do samples2sound_data(0, 100, 1234) end
+  check_error_tag(:no_such_channel) do samples2sound_data(0, 100, ind, 1234) end
+  check_error_tag(:no_such_sound) do graph(vct(0, 1), "hi", 0, 1, 0, 1, 1234) end
+  check_error_tag(:no_such_channel) do graph(vct(0, 1), "hi", 0, 1, 0, 1, ind, 1234) end
+  check_error_tag(:wrong_type_arg) do play_region(regions.car, false, lambda do | | false end) end
+  set_selection_member?(false, true)
+  check_error_tag(:no_active_selection) do filter_selection(vct(0, 0, 1, 1), 4) end
+  check_error_tag(:no_active_selection) do save_selection("/bad/baddy.snd") end
+  check_error_tag(:no_active_selection) do env_selection([0, 0, 1, 1]) end
+  check_error_tag(:no_such_region) do save_region(1234, "/bad/baddy.snd") end
+  make_region(0, 100, ind, 0)
+  check_error_tag(:cannot_save) do save_selection("/bad/baddy.snd") end
+  check_error_tag(:cannot_save) do save_region(regions.car, "/bad/baddy.snd") end
+  check_error_tag(:no_such_track) do make_track_sample_reader(0, 1234, 0) end
+  check_error_tag(:no_such_track) do make_track_sample_reader(1234, 0, 0) end
+  check_error_tag(:no_such_mix) do make_mix_sample_reader(1234) end
+  check_error_tag(:no_such_mix) do set_mix_track(1234, 4321) end
+  check_error_tag(:no_such_sound) do make_region(0, 12, 1234, true) end
+  set_read_only(true, ind)
+  check_error_tag(:cannot_save) do set_sound_loop_info(ind, [0, 0, 1, 1]) end
+  check_error_tag(:no_such_direction) do make_sample_reader(0, ind, 0, 123) end
+  check_error_tag(:no_such_direction) do make_sample_reader(0, ind, 0, 0) end
+  check_error_tag(:no_such_direction) do make_sample_reader(0, ind, 0, -2) end
+  check_error_tag(:no_data) do scale_by([]) end
+  check_error_tag(:no_data) do scale_to([]) end
+  check_error_tag(:no_such_sample) do ptree_channel(lambda do |y| y + 0.1 end, 1234567) end
+  check_error_tag(:bad_arity) do prompt_in_minibuffer("hi", lambda do |x, y| x + y end) end
+  check_error_tag(:no_such_sample) do set_selection_position(-999, ind, 0) end
+  check_error_tag(:wrong_type_arg) do set_selection_frames(-999, ind, 0) end
+  check_error_tag(:wrong_type_arg) do set_selection_frames(0, ind, 0) end
+  check_error_tag(:no_such_edit) do edit_fragment(-1) end
+  check_error_tag(:no_such_edit) do edit_fragment(101, ind, 0) end
+  check_error_tag(:no_such_edit) do edit_tree(ind, 0, -2) end
+  check_error_tag(:no_such_edit) do edit_tree(ind, 0, 101) end
+  check_error_tag(:no_such_sample) do add_mark(-1) end
+  check_error_tag(:no_such_sample) do add_mark(frames() * 2) end
+  check_error_tag(:no_such_file) do convolve_with("/bad/baddy") end
+  check_error_tag(:no_such_file) do mix("/bad/baddy") end
+  check_error_tag(:no_such_sound) do swap_channels(ind, 0, 123) end
+  check_error_tag(:out_of_range) do set_show_axes(123, ind, 0) end
+  check_error_tag(:out_of_range) do set_show_axes(-123, ind, 0) end
+  check_error_tag(:out_of_range) do set_x_axis_style(123, ind, 0) end
+  check_error_tag(:out_of_range) do set_x_axis_style(-123, ind, 0) end
+  check_error_tag(:out_of_range) do set_graph_style(123, ind, 0) end
+  check_error_tag(:out_of_range) do set_graph_style(-123, ind, 0) end
+  check_error_tag(:out_of_range) do env_sound([0, 0, 1, 1], 0, false, -1.5) end
+  check_error_tag(:out_of_range) do xramp_channel(0.0, 1.0, -1.6) end
+  check_error_tag(:no_such_sample) do samples2sound_data(-1) end
+  check_error_tag(:out_of_range) do samples2sound_data(0, 2, ind, 0, SoundData.new(1, 4), 0, -1) end
+  check_error_tag(:wrong_type_arg) do set_samples(0, 2, -1) end
+  check_error_tag(:wrong_type_arg) do left_sample([0]) end
+  check_error_tag(:wrong_type_arg) do amp_control([0]) end
+  check_error_tag(:wrong_type_arg) do sound_loop_info([0]) end
+  check_error_tag(:wrong_type_arg) do add_mark(123, [0]) end
+  check_error_tag(:no_such_sound) do filter_channel([0, 0, 1, 1], 100, false, false, 1234, 0) end
+  check_error_tag(:no_such_channel) do filter_channel([0, 0, 1, 1], 100, false, false, ind, 1) end
+  check_error_tag(:no_such_channel) do filter_channel(vct(0, 0, 1, 1), 4, false, false, ind, 1) end
+  check_error_tag(:out_of_range) do filter_sound(vct(0, 0, 1, 1), 0) end
+  check_error_tag(:out_of_range) do filter_sound(vct(0, 0, 1, 1), 10) end
+  check_error_tag(:wrong_type_arg) do
+    play(0, false, false, false, false, false, lambda do | | false end)
+  end
+  check_error_tag(:out_of_range) do set_reverb_control_length_bounds([0.1, 0.01], ind) end
+  check_error_tag(:out_of_range) do set_reverb_control_scale_bounds([0.1, 0.01], ind) end
+  check_error_tag(:wrong_type_arg) do undo_edit(log0) end
+  check_error_tag(:wrong_type_arg) do scale_by(false) end
+  check_error_tag(:wrong_type_arg) do scale_by(make_mixer(2, 0.1, 0.1, 0.2, 0.2)) end
+  check_error_tag(:wrong_type_arg) do src_sound(3.0, 1.0, true) end
+  check_error_tag(:wrong_type_arg) do src_sound(3.0, 1.0, ind, true) end
+  close_sound(ind)
+  check_error_tag(:bad_arity) do add_transform("hiho", "time", 0, 1, lambda do | | 1.0 end) end
+  check_error_tag(:cannot_save) do save_state("/bad/baddy") end
+  check_error_tag(:no_such_menu) do add_to_menu(1234, "hi", lambda do | | false end) end
+  check_error_tag(:bad_arity) do add_to_main_menu("hi", lambda do |a, b| false end) end
+  check_error_tag(:bad_arity) do add_to_menu(1, "hi", lambda do |a, b| false end) end
+  check_error_tag(:mus_error) do open_sound_file("/bad/baddy.snd") end
+  check_error_tag(:out_of_range) do close_sound_file(0, 0) end
+  check_error_tag(:out_of_range) do set_transform_type(-1) end
+  check_error_tag(:out_of_range) do set_transform_type(123) end
+  check_error_tag(:wrong_type_arg) do help_dialog([0, 1], "hiho") end
+  check_error_tag(:wrong_type_arg) do info_dialog([0, 1], "hiho") end
+  check_error_tag(:no_such_sound) do edit_header_dialog(1234) end
+  check_error_tag(:no_such_track) do make_track_sample_reader(0) end
+  check_error_tag(:no_such_file) do open_sound("/bad/baddy.snd") end
+  check_error_tag(:no_such_file) do open_raw_sound("/bad/baddy.snd", 1, 22050, Mus_lshort) end
+  check_error_tag(:no_such_file) do view_sound("/bad/baddy.snd") end
+  check_error_tag(:no_such_file) do make_sample_reader(0, "/bad/baddy.snd") end
+  check_error_tag(:no_such_region) do make_region_sample_reader(0, 1234567) end
+  check_error_tag(:no_such_mix) do mix_tag_position(12345) end
+  check_error_tag(:no_such_key) do bind_key(12345678, 0, false) end
+  check_error_tag(:no_such_key) do bind_key(-1, 0, false) end
+  check_error_tag(:no_such_key) do bind_key(12, 17, false) end
+  check_error_tag(:no_such_key) do bind_key(12, -1, false) end
+  check_error_tag(:no_such_key) do key_binding(12345678, 0) end
+  check_error_tag(:no_such_key) do key_binding(-1, 0) end
+  check_error_tag(:no_such_key) do key_binding(12, 17) end
+  check_error_tag(:no_such_key) do key_binding(12, -1) end
+  check_error_tag(:wrong_type_arg) do send_mozilla(-1) end
+  check_error_tag(:bad_header) do file2array($sf_dir + "bad_chans.snd", 0, 0, 123, Vct.new(123)) end
+  check_error_tag(:bad_header) do make_readin($sf_dir + "bad_chans.snd") end
+  check_error_tag(:wrong_type_arg) do make_iir_filter(30, Vct.new(3)) end
+  check_error_tag(:out_of_range) do make_wave_train(:size, 2 ** 30) end
+  check_error_tag(:out_of_range) do set_mus_srate(0.0) end
+  check_error_tag(:out_of_range) do set_mus_srate(-1000) end
+  check_error_tag(:out_of_range) do dot_product(Vct.new(3), Vct.new(3), -1) end
+  check_error_tag(:out_of_range) do sine_bank(Vct.new(3), Vct.new(3), -1) end
+  check_error_tag(:out_of_range) do multiply_arrays(Vct.new(3), Vct.new(3), -1) end
+  check_error_tag(:out_of_range) do
+    make_delay(3, :initial_element, 0.0, :initial_contents, vct(0.1, 0.2, 0.3))
+  end
+  check_error_tag(:out_of_range) do
+    make_delay(3, :max_size, 100, :initial_contents, vct(0.1, 0.2, 0.3))
+  end
+  check_error_tag(:out_of_range) do make_table_lookup(:size, 100, :wave, Vct.new(3)) end
+  check_error_tag(:out_of_range) do make_wave_train(:size, 100, :wave, Vct.new(3)) end
+  check_error_tag(:out_of_range) do make_waveshape(:size, 100, :wave, Vct.new(3)) end
+  check_error_tag(:out_of_range) do make_waveshape(:size, 2 ** 30) end
+  check_error_tag(:out_of_range) do make_granulate(:max_size, 2 ** 30) end
+  check_error_tag(:out_of_range) do make_ssb_am(100, 12345678) end
+  check_error_tag(:mus_error) do make_rand(:envelope, [0, 0, 1, 1], :distribution, Vct.new(10)) end
+  check_error_tag(:mus_error) do make_rand(:envelope, [0, 0, 1]) end
+  check_error_tag(:out_of_range) do make_rand(:envelope, [0, 0, 1, 1], :size, -2) end
+  check_error_tag(:out_of_range) do make_rand(:envelope, [0, 0, 1, 1], :size, 1234567890) end
+  check_error_tag(:bad_arity) do
+    grn = make_granulate
+    granulate(grn, false, lambda do |a, s, d| false end)
+  end
+  check_error_tag(:bad_arity) do
+    pv = make_phase_vocoder
+    phase_vocoder(pv, false, lambda do | | false end)
+  end
+  check_error_tag(:bad_arity) do
+    pv = make_phase_vocoder
+    phase_vocoder(pv, false, false, lambda do | | false end)
+  end
+  check_error_tag(:bad_arity) do
+    pv = make_phase_vocoder
+    phase_vocoder(pv, false, false, false, lambda do | | false end)
+  end
+  check_error_tag(:mus_error) do
+    f = make_filter(3, :xcoeffs, $vct_3, :ycoeffs, $vct_3)
+    mus_xcoeff(f, 4)
+  end
+  check_error_tag(:mus_error) do
+    f = make_filter(3, :xcoeffs, $vct_3, :ycoeffs, $vct_3)
+    mus_ycoeff(f, 4)
+  end
+  check_error_tag(:mus_error) do
+    f = make_filter(3, :xcoeffs, $vct_3, :ycoeffs, $vct_3)
+    set_mus_xcoeff(f, 4, 1.0)
+  end
+  check_error_tag(:mus_error) do
+    f = make_filter(3, :xcoeffs, $vct_3, :ycoeffs, $vct_3)
+    set_mus_ycoeff(f, 4, 1.0)
+  end
+  check_error_tag(:wrong_type_arg) do make_filter(:ycoeffs, Vct.new(4), :order, 12) end
+  check_error_tag(:mus_error) do
+    hi = make_oscil
+    set_mus_offset(hi, 1)
+  end
+  check_error_tag(:out_of_range) do make_frame(-1) end
+  check_error_tag(:mus_error) do
+    hi = make_frame(2, 0.1, 0.2)
+    frame_ref(hi, 3)
+  end
+  check_error_tag(:out_of_range) do make_scalar_mixer(0, 0.1) end
+  check_error_tag(:mus_error) do
+    m = make_mixer(2)
+    mixer_ref(m, 3, 4)
+  end
+  check_error_tag(:out_of_range) do open_sound_file("test.snd", :channels, -1) end
+  check_error_tag(:out_of_range) do open_sound_file("test.snd", :srate, -1) end
+  check_error_tag(:bad_arity) do add_colormap("baddy", lambda do | | false end) end
+  check_error_tag(:bad_arity) do add_colormap("baddy", lambda do |a, b, c| false end) end
+  check_error_tag(:out_of_range) do make_phase_vocoder(:fft_size, 2 ** 30) end
+  check_error_tag(:out_of_range) do
+    sr = make_src(:input, lambda do |dir| 1.0 end)
+    src(sr, 2000000.0)
+  end
+  check_error_tag(:out_of_range) do partials2polynomial([1, 1], -1) end
+  check_error_tag(:out_of_range) do partials2polynomial([1, 1], 3) end
+  check_error_tag(:out_of_range) do make_polyshape(440.0, :partials, [1, 1], :kind, -1) end
+  check_error_tag(:out_of_range) do make_polyshape(440.0, :partials, [1, 1], :kind, 3) end
+  if provided? :snd_motif
+    [:widget_position, :widget_size, :widget_text,
+      :hide_widget, :show_widget, :focus_widget].each do |n|
+      if (tag = Snd.catch do snd_func(n, [:Widget, 0]) end).first != :no_such_widget
+        snd_display("%s of null widget: %s", n, tag)
+      end
+    end
+  end
+end
+
+def test0328
+  # now try everything! (all we care about here is that Snd keeps running)
+  random_args = [1.5, "/hiho", [0, 1], 1234, $vct_3, :wave,
+    -1, 0, 1, false, true, [], $vector_0, 12345678901234567890, log0]
+  #
+  # key args
+  #
+  Keyargs.each do |arg1|
+    random_args.each do |arg2|
+      Make_procs.each do |n|
+        Snd.catch do snd_func(n, arg1, arg2) end
+      end
+    end
+  end
+  random_args.each do |arg1|
+    Keyargs.each do |arg2|
+      random_args.each do |arg3|
+        Make_procs.each do |n|
+          Snd.catch do snd_func(n, arg1, arg2, arg3) end
+        end
+      end
+    end
+  end
+  random_args.each do |arg1|
+    Keyargs.each do |arg2|
+      random_args.each do |arg3|
+        Keyargs.each do |arg4|
+          Make_procs.each do |n|
+            Snd.catch do snd_func(n, arg1, arg2, arg3, arg4) end
+          end
+        end
+      end
+    end
+  end
+  #
+  # 0 Args
+  #
+  Procs0.each do |n|
+    if (tag = Snd.catch do snd_func(n) end).first == :wrong_number_of_args
+      snd_display("procs0: %s %s\n# %s", tag, n, snd_help(n))
+    end
+  end
+  dismiss_all_dialogs
+  #
+  # 1 Arg
+  #
+  [1.5, "/hiho", [0, 1], 1234, $vct_3, $color_95, [0, 1], :mus_error, sqrt(-1.0), $delay_32,
+    lambda do | | true end, $vct_5, $sound_data_23, :order, 0, 1, -1, $a_hook, false, true,
+    ?c, 0.0, 1.0, -1.0, [], 4, 2, 8, 16, 32, 64, $vector_0, 2.0 ** 21.5, 2.0, -18.0,
+    $car_main, $cadr_main, 12345678901234567890, log0].each do |arg|
+    Procs1.each do |n|
+      if (tag = Snd.catch do snd_func(n, arg) end).first == :wrong_number_of_args
+        snd_display("procs1: %s %s\n# %s", tag, n, snd_help(n))
+      end
+    end
+  end
+  #
+  # 2 Arg
+  #
+  # INFO: [] and $vector_0 removed because of define_envelope crashs.
+  if $all_args
+    args = [1.5, "/hiho", [0, 1], 1234, $vct_3, $color_95, :mus_error, sqrt(-1.0), $delay_32,
+      lambda do | | true end, $vct_5, $sound_data_23, :order, 0, 1, -1, $a_hook, false, true, ?c,
+      0.0, 1.0, -1.0, 4, 2, 8, 16, 32, 64, 2.0 ** 21.5, 2.0 ** -18.0,
+      $car_main, $cadr_main, 12345678901234567890, log0]
+  else
+    args = [1.5, "/hiho", [0, 1], 1234, $vct_3, $color_95, sqrt(-1.0), $delay_32, :feedback,
+      -1, 0, false, true, 12345678901234567890, log0]
+  end
+  args.each do |arg1|
+    args.each do |arg2|
+      Procs2.each do |n|
+        if (tag = Snd.catch do snd_func(n, arg1, arg2) end).first == :wrong_number_of_args
+          snd_display("procs2: %s %s\n# %s", tag, n, snd_help(n))
+        end
+      end
+    end
+  end
+  #
+  # set no Args
+  #
+  if $all_args
+    args = [1.5, "/hiho", [0, 1], 1234, $vct_3, $color_95, :mus_error, sqrt(-1.0), $delay_32,
+      lambda do | | true end, $vct_5, $sound_data_23, :order, 0, 1, -1, $a_hook, false, true,
+      ?c, 0.0, 1.0, -1.0, 4, 2, 8, 16, 32, 64, 2.0 ** 21.5, 2.0 ** -18.0,
+      $car_main, $cadr_main, 12345678901234567890, log0]
+  else
+    args = [1.5, "/hiho", [0, 1], 1234, $vct_3, $color_95, :mus_error, sqrt(-1.0), $delay_32,
+      lambda do | | true end, $vct_5, $sound_data_23, :order, 0, 1, -1, $a_hook, false, true,
+      12345678901234567890, log0]
+  end
+  args.each do |val|
+    Set_procs0.each do |n|
+      if (tag = Snd.catch do set_snd_func(n, val) end).first == :wrong_number_of_args
+        snd_display("set_procs0: %s set_%s\n# %s", tag, n, snd_help(n))
+      end
+    end
+  end
+  #
+  # set 1 Arg
+  #
+  if $all_args
+    args = [1.5, "/hiho", [0, 1], 1234, $vct_3, $color_95, :mus_error, sqrt(-1.0), $delay_32,
+      lambda do | | true end, $vct_5, $sound_data_23, :order, 0, 1, -1, $a_hook, false, true,
+      ?c, 0.0, 1.0, -1.0, 4, 2, 8, 16, 32, 64, 2.0 ** 21.5, 2.0 ** -18.0,
+      $car_main, $cadr_main, 12345678901234567890, log0]
+  else
+    args = [1.5, "/hiho", [0, 1], 1234, $vct_3, $color_95, :mus_error, sqrt(-1.0), $delay_32,
+      lambda do | | true end, $vct_5, $sound_data_23, :order, 0, 1, -1, $a_hook, false, true,
+      12345678901234567890, log0]
+  end
+  args.each do |arg1|
+    args.each do |arg2|
+      Set_procs1.each do |n|
+        if (tag = Snd.catch do set_snd_func(n, arg1, arg2) end).first == :wrong_number_of_args
+          snd_display("set_procs1: %s set_%s\n# %s", tag, n, snd_help(n))
+        end
+      end
+    end
+  end
+  #
+  # set 2 Args
+  #
+  if $all_args
+    args = [1.5, "/hiho", [0, 1], 1234, $vct_3, $color_95, :mus_error, sqrt(-1.0), $delay_32,
+      lambda do | | true end, $vct_5, $sound_data_23, :order, 0, 1, -1, $a_hook, false, true,
+      ?c, 0.0, 1.0, -1.0, 4, 2, 8, 16, 32, 64, 2.0 ** 21.5, 2.0 ** -18.0,
+      $car_main, $cadr_main, 12345678901234567890, log0]
+  else
+    args = [1.5, "/hiho", [0, 1], 1234, $vct_3, $color_95, :mus_error, sqrt(-1.0), $delay_32,
+      lambda do | | true end, $vct_5, $sound_data_23, :order, 0, 1, -1, $a_hook, false, true,
+      12345678901234567890, log0]
+  end
+  args.each do |arg1|
+    args.each do |arg2|
+      args.each do |arg3|
+        Set_procs2.each do |n|
+          if (tag = Snd.catch do
+                set_snd_func(n, arg1, arg2, arg3)
+              end).first == :wrong_number_of_args
+            snd_display("set_procs2: %s set_%s\n# %s", tag, n, snd_help(n))
+          end
+        end
+      end
+    end
+  end
+  if $all_args
+    #
+    # 3 Args
+    #
+    args = [1.5, "/hiho", [0, 1], 1234, $vct_3, $color_95, :mus_error, sqrt(-1.0), $delay_32,
+      lambda do | | true end, $vct_5, $sound_data_23, :order, 0, 1, -1, $a_hook, false, true,
+      12345678901234567890, log0]
+    args.each do |arg1|
+      args.each do |arg2|
+        args.each do |arg3|
+          Set_procs3.each do |n|
+            if (tag = Snd.catch do
+                  snd_func(n, arg1, arg2, arg3)
+                end).first == :wrong_number_of_args
+              snd_display("procs3: %s %s\n# %s", tag, n, snd_help(n))
+            end
+          end
+        end
+      end
+    end
+    #
+    # set 3 Args
+    #
+    args = [1.5, "/hiho", [0, 1], 1234, $vct_3, $color_95, :mus_error, sqrt(-1.0), $delay_32,
+      lambda do | | true end, $vct_5, $sound_data_23, :order, 0, 1, -1, $a_hook, false, true,
+      12345678901234567890, log0]
+    args.each do |arg1|
+      args.each do |arg2|
+        args.each do |arg3|
+          args.each do |arg4|
+            Set_procs3.each do |n|
+              if (tag = Snd.catch do
+                    snd_func(n, arg1, arg2, arg3, arg4)
+                  end).first == :wrong_number_of_args
+                snd_display("set_procs3: %s set_%s\n# %s", tag, n, snd_help(n))
+              end
+            end
+          end
+        end
+      end
+    end
+    #
+    # 4 Args
+    #
+    args = [1.5, "/hiho", [0, 1], 1234, $vct_3, $color_95, :mus_error, sqrt(-1.0), $delay_32,
+      lambda do | | true end, $vct_5, $sound_data_23, :order, 0, 1, -1, $a_hook, false, true,
+      12345678901234567890, log0]
+    args.each do |arg1|
+      args.each do |arg2|
+        args.each do |arg3|
+          args.each do |arg4|
+            Set_procs4.each do |n|
+              if (tag = Snd.catch do
+                    snd_func(n, arg1, arg2, arg3, arg4)
+                  end).first == :wrong_number_of_args
+                snd_display("procs4: %s %s\n# %s", tag, n, snd_help(n))
+              end
+            end
+          end
+        end
+      end
+    end
+    #
+    # set 4 Args
+    #
+    args = [1.5, "/hiho", [0, 1], 1234, $vct_3, $color_95, :mus_error, sqrt(-1.0), $delay_32,
+      lambda do | | true end, $vct_5, $sound_data_23, :order, 0, 1, -1, $a_hook, false, true,
+      12345678901234567890, log0]
+    args.each do |arg1|
+      args.each do |arg2|
+        args.each do |arg3|
+          args.each do |arg4|
+            args.each do |arg5|
+              Set_procs4.each do |n|
+                if (tag = Snd.catch do
+                      snd_func(n, arg1, arg2, arg3, arg4, arg5)
+                    end).first == :wrong_number_of_args
+                  snd_display("set_procs4: %s set_%s\n# %s", tag, n, snd_help(n))
+                end
+              end
+            end
+          end
+        end
+      end
+    end
+    clear_sincs
+    stop_playing
+    #
+    # 5 Args
+    #
+    args = [1.5, "/hiho", 1234, $vct_3, sqrt(-1.0), 1, -1, false, true, 12345678901234567890, log0]
+    args.each do |arg1|
+      args.each do |arg2|
+        args.each do |arg3|
+          args.each do |arg4|
+            args.each do |arg5|
+              Set_procs5.each do |n|
+                if (tag = Snd.catch do
+                      snd_func(n, arg1, arg2, arg3, arg4, arg5)
+                    end).first == :wrong_number_of_args
+                  snd_display("procs5: %s %s\n# %s", tag, n, snd_help(n))
+                end
+              end
+            end
+          end
+        end
+      end
+    end
+    #
+    # 6 Args
+    #
+    args = [1.5, "/hiho", [0, 1], -1234, $vct_3, false, true]
+    args.each do |arg1|
+      args.each do |arg2|
+        args.each do |arg3|
+          args.each do |arg4|
+            args.each do |arg5|
+              args.each do |arg6|
+                Set_procs6.each do |n|
+                  if (tag = Snd.catch do
+                        snd_func(n, arg1, arg2, arg3, arg4, arg5, arg6)
+                      end).first == :wrong_number_of_args
+                    snd_display("procs6: %s %s\n# %s", tag, n, snd_help(n))
+                  end
+                end
+              end
+            end
+          end
+        end
+      end
+    end
+    #
+    # 8 Args
+    #
+    args = [1.5, "/hiho", -1, 1234]
+    args.each do |arg1|
+      args.each do |arg2|
+        args.each do |arg3|
+          args.each do |arg4|
+            args.each do |arg5|
+              args.each do |arg6|
+                args.each do |arg7|
+                  args.each do |arg8|
+                    Set_procs8.each do |n|
+                      if (tag = Snd.catch do
+                            snd_func(n, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8)
+                          end).first == :wrong_number_of_args
+                        snd_display("procs8: %s %s\n# %s", tag, n, snd_help(n))
+                      end
+                    end
+                  end
+                end
+              end
+            end
+          end
+        end
+      end
+    end
+    clear_sincs
+    #
+    # 10 Args
+    #
+    args = [1.5, "/hiho", -1, 1234]
+    args.each do |arg1|
+      args.each do |arg2|
+        args.each do |arg3|
+          args.each do |arg4|
+            args.each do |arg5|
+              args.each do |arg6|
+                args.each do |arg7|
+                  args.each do |arg8|
+                    args.each do |arg9|
+                      args.each do |arg10|
+                        Set_procs10.each do |n|
+                          if (tag = Snd.catch do
+                                snd_func(n, arg1, arg2, arg3, arg4, arg5,
+                                         arg6, arg7, arg8, arg9, arg10)
+                              end).first == :wrong_number_of_args
+                            snd_display("procs10: %s %s\n# %s", tag, n, snd_help(n))
+                          end
+                        end
+                      end
+                    end
+                  end
+                end
+              end
+            end
+          end
+        end
+      end
+    end
+  end
+end
+
+def test0428
+  if defined? :mus_audio_reinitialize then mus_audio_reinitialize end
+  set_window_y(10)
+  dismiss_all_dialogs
+  # 
+  file_copy("oboe.snd", "test.snd")
+  ind = open_sound("test.snd")
+  delete_file("test.snd")
+  val = update_sound(ind)
+  msg = widget_text(sound_widgets(ind)[3])
+  if (not string?(msg)) or msg != "test.snd no longer exists!"
+    snd_display("delete sound msg: %s?", msg)
+  end
+  delete_sample(10)
+  Snd.catch do save_sound(ind) end
+  msg = widget_text(sound_widgets(ind)[3])
+  if (not string?(msg)) or msg != cwd + "test.snd has disappeared!"
+    snd_display("save deleted sound msg: %s?", msg)
+  end
+  close_sound(ind)
+  # 
+  file_copy("oboe.snd", "test.snd")
+  ind = open_sound("test.snd")
+  reg = select_all
+  delete_file("test.snd")
+  view_regions_dialog
+  dismiss_all_dialogs
+  close_sound(ind)
+  # 
+  file_copy("oboe.snd", "test.snd")
+  ind = open_sound("test.snd")
+  File.chmod(0400, "test.snd")
+  delete_sample(10)
+  Snd.catch do save_sound(ind) end
+  msg = widget_text(sound_widgets(ind)[3])
+  if (not string?(msg)) or msg !~ /file write failed: Permission denied, edits are saved in:/
+    snd_display("save protected sound msg: %s?", msg)
+  end
+  close_sound(ind)
+  File.chmod(0644, "test.snd")
+  delete_file("test.snd")
+  # 
+  file_copy("oboe.snd", "test.snd")
+  File.chmod(0200, "test.snd")
+  if (res = Snd.catch do open_sound("test.snd") end).first != :no_such_file
+    snd_display("open read_protected sound: %s", res)
+  end
+  File.chmod(0644, "test.snd")
+  delete_file("test.snd")
+  # 
+  file_copy("oboe.snd", "test.snd")
+  File.chmod(0400, "test.snd")
+  ind = open_sound("oboe.snd")
+  delete_sample(10)
+  if (res = Snd.catch do save_sound_as("test.snd") end).first != :cannot_save
+    snd_display("save_as write_protected sound: %s", res)
+  end
+  close_sound(ind)
+  File.chmod(0644, "test.snd")
+  delete_file("test.snd")
+end
+  
 def test28
   if $test28
     $before_test_hook.call(28)
+    set_with_background_processes(true)
+    if $all_args
+      snd_display("procs: 0: %d %d, 1: %d %d, 2: %d %d, 3: %d %d, 4: %d %d, 5: %d, 6: %d, 7: %d, 8: %d, 10: %d",
+                  Procs0.length, Set_procs0.length,
+                  Procs1.length, Set_procs1.length,
+                  Procs2.length, Set_procs2.length,
+                  Procs3.length, Set_procs3.length,
+                  Procs4.length, Set_procs4.length,
+                  Procs5.length, Procs6.length, Procs7.length, Procs8.length, Procs10.length)
+    end
+    reset_almost_all_hooks
+    test0028
+    test0128
+    test0228
+    test0328
+    test0428
     $after_test_hook.call(28)
   end
 end

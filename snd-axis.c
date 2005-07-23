@@ -168,6 +168,7 @@ static char *measure_number(chan_info *cp, Float val)
 
 axis_info *free_axis_info(axis_info *ap)
 {
+  if (!ap) return(NULL);
   if (ap->x_ticks) ap->x_ticks = free_tick_descriptor(ap->x_ticks);
   if (ap->y_ticks) ap->y_ticks = free_tick_descriptor(ap->y_ticks);
   if (ap->ax) ap->ax = free_axis_context(ap->ax);

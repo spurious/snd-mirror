@@ -1,5 +1,21 @@
 #include "snd.h"
 
+static char *io_error_names[] = {"no error", "save hook cancellation", "bad channel", "bad edit position", "read protected", 
+				 "no file", "bad location", "cant reopen file", "too many open files", "unknown sndlib error", 
+				 "no memory", "cant open file", "no filename", "bad data format", "bad header type", "sndlib uninitialized", 
+				 "not a sound file", "file closed", "write error", "read error", "interrupted", "cant close file", 
+				 "bad header", "disk full", "write protected", "write cancellation", "cant move file", "cant remove file", 
+				 "cant read selection file", "cant open temp file", "need write confirmation", "no changes"
+};
+
+const char *io_error_name(io_error_t err)
+{
+  if ((err >= 0) &&
+      (err <= IO_NO_CHANGES))
+    return(io_error_names[(int)err]);
+  return("unknown io_error");
+}
+
 /* these are needed as C ints below */
 #ifndef DEBUGGING
   #define DEBUGGING 0
@@ -14,8 +30,18 @@ static char *snd_error_buffer = NULL;
 static XEN snd_error_hook; 
 static XEN snd_warning_hook; 
 
+#if DEBUGGING
+void redirect_snd_warning_to_1(void (*handler)(const char *warning_msg, void *ufd), void *data, const char *caller)
+#else
 void redirect_snd_warning_to(void (*handler)(const char *warning_msg, void *ufd), void *data)
+#endif
 {
+#if DEBUGGING
+  if ((handler) && (ss->snd_warning_handler))
+    fprintf(stderr,"%s: redirect over warn from %s\n", caller, ss->snd_warning_caller);
+  if (ss->snd_warning_caller) FREE(ss->snd_warning_caller);
+  ss->snd_warning_caller = copy_string(caller);
+#endif
   ss->snd_warning_handler = handler;
   ss->snd_warning_data = data;
 }
@@ -51,7 +77,7 @@ void snd_warning(char *format, ...)
       sp = any_selected_sound();
       if ((sp) && (sp->active))
 	report_in_minibuffer(sp, snd_error_buffer);
-      else fprintf(stderr, snd_error_buffer);
+      else fprintf(stderr, snd_error_buffer); /* TODO: need some better error handling here */
     }
   else fprintf(stderr, snd_error_buffer);
 #if DEBUGGING
@@ -73,8 +99,18 @@ void set_error_display(void (*func)(const char *))
 
 static bool direct_snd_error_call = false;
 
+#if DEBUGGING
+void redirect_snd_error_to_1(void (*handler)(const char *error_msg, void *ufd), void *data, const char *caller)
+#else
 void redirect_snd_error_to(void (*handler)(const char *error_msg, void *ufd), void *data)
+#endif
 {
+#if DEBUGGING
+  if ((handler) && (ss->snd_error_handler))
+    fprintf(stderr,"%s: redirect over snd error from %s\n", caller, ss->snd_error_caller);
+  if (ss->snd_error_caller) FREE(ss->snd_error_caller);
+  ss->snd_error_caller = copy_string(caller);
+#endif
   ss->snd_error_handler = handler;
   ss->snd_error_data = data;
 }

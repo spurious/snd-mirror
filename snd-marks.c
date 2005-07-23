@@ -519,7 +519,7 @@ mark *add_mark(off_t samp, const char *name, chan_info *cp)
     }
 }
 
-void delete_mark_samp(off_t samp, chan_info *cp)
+bool delete_mark_samp(off_t samp, chan_info *cp)
 {
   if ((cp) && (cp->marks))
     {
@@ -552,15 +552,15 @@ void delete_mark_samp(off_t samp, chan_info *cp)
 		    }
 		  cp->mark_ctr[ed]--;
 		  run_mark_hook(cp, id, MARK_DELETE);
-		  return;
+		  return(true);
 		}
 	    }
 	}
     }
-  report_in_minibuffer(cp->sound, _("no mark at sample " PRId64), samp);
+  return(false);
 }
 
-static void delete_mark_id(int id, chan_info *cp)
+static bool delete_mark_id(int id, chan_info *cp)
 {
   if ((cp) && (cp->marks))
     {
@@ -591,12 +591,12 @@ static void delete_mark_id(int id, chan_info *cp)
 		    }
 		  cp->mark_ctr[ed]--;
 		  run_mark_hook(cp, id, MARK_DELETE);
-		  return;
+		  return(true);
 		}
 	    }
 	}
     }
-  report_in_minibuffer(cp->sound, _("no mark with id: %d"), id);
+  return(false);
 }
 
 static void delete_marks(chan_info *cp)
@@ -799,20 +799,14 @@ static mark *find_nth_mark(chan_info *cp, int count)
   return(mp);
 }
 
-void goto_mark(chan_info *cp, int count)
+bool goto_mark(chan_info *cp, int count)
 {
-  if ((!cp) || (!cp->marks))
-    {
-      if (cp) report_in_minibuffer(cp->sound, _("no marks"));
-    }
-  else
-    {
-      mark *mp;
-      mp = find_nth_mark(cp, count);
-      if (!mp) 
-	report_in_minibuffer(cp->sound, _("no such mark"));
-      else cursor_moveto(cp, mp->samp);
-    }
+  mark *mp;
+  if ((!cp) || (!cp->marks)) return(false);
+  mp = find_nth_mark(cp, count);
+  if (!mp) return(false);
+  cursor_moveto(cp, mp->samp);
+  return(true);
 }
 
 void goto_named_mark(chan_info *cp, const char *name)
@@ -983,7 +977,7 @@ void ripple_marks(chan_info *cp, off_t beg, off_t change)
     }
 }
 
-void mark_define_region(chan_info *cp, int count)
+bool mark_define_region(chan_info *cp, int count)
 {
   if (cp)
     {
@@ -1018,12 +1012,12 @@ void mark_define_region(chan_info *cp, int count)
 		      update_graph(si->cps[i]);
 		    }
 		  si = free_sync_info(si);
+		  return(true);
 		}
 	    }
-	  else report_in_minibuffer(cp->sound, _("no such mark"));
 	}
-      else report_in_minibuffer(cp->sound, _("no marks"));
     }
+  return(false);
 }
 
 void save_mark_list(FILE *fd, chan_info *cp)
@@ -2151,8 +2145,9 @@ static XEN g_delete_mark(XEN id_n)
   m = find_mark_from_id(id, cp, AT_CURRENT_EDIT_POSITION);
   if (m == NULL) 
     return(snd_no_such_mark_error(S_delete_mark, id_n));
-  delete_mark_id(id, cp[0]);
-  update_graph(cp[0]);
+  if (delete_mark_id(id, cp[0]))
+    update_graph(cp[0]);
+  else return(snd_no_such_mark_error(S_delete_mark, id_n));
   return(id_n);
 }
 

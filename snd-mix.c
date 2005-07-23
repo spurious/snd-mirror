@@ -1386,7 +1386,7 @@ int mix_complete_file_at_cursor(snd_info *sp, char *str, bool with_tag, int trac
       cp = any_selected_channel(sp);
       err = mix_complete_file(sp, CURSOR(cp), fullname, with_tag, DONT_DELETE_ME, track_id, false);
       if (err == MIX_FILE_NO_FILE) 
-	report_in_minibuffer(sp, _("can't mix file: %s, %s"), str, snd_io_strerror());
+	snd_error("can't mix file: %s, %s", str, snd_io_strerror());
       if (fullname) FREE(fullname);
       return(err);
     }
@@ -3181,7 +3181,9 @@ static void play_mix(mix_info *md, off_t beg, bool from_gui)
 	      mus_audio_write(play_fd, (char *)buf, frames * datum_bytes);
 #endif
 	      check_for_event();
-	      if ((ss->stopped_explicitly) || ((from_gui) && (mix_play_stopped())))
+	      if ((ss->stopped_explicitly) || 
+		  ((from_gui) && (mix_play_stopped())) || 
+		  (!(sp->active)))
 		{
 		  ss->stopped_explicitly = false;
 		  report_in_minibuffer(sp, _("stopped"));
@@ -7632,7 +7634,9 @@ static void play_track(int track_num, int chan, off_t beg, bool from_gui)
 	      mus_audio_write(playfd, (char *)buf, frames * datum_bytes * chans);
 #endif
 	      check_for_event();
-	      if ((ss->stopped_explicitly) || ((from_gui) && (track_play_stopped())))
+	      if ((ss->stopped_explicitly) || 
+		  ((from_gui) && (track_play_stopped())) ||
+		  (!(sp->active)))
 		{
 		  ss->stopped_explicitly = false;
 		  report_in_minibuffer(sp, _("stopped"));

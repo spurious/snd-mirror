@@ -2,7 +2,7 @@
 
 # Translator: Michael Scholz <scholz-micha@gmx.de>
 # Created: Tue Apr 05 00:17:04 CEST 2005
-# Last: Sat May 21 21:24:40 CEST 2005
+# Last: Tue May 31 04:41:01 CEST 2005
 
 # Commentary:
 #
@@ -200,7 +200,7 @@ displays time domain graph using current colormap (just an example of colormap-r
         chan_offset = axinf[13] - 10
         y_offset = chan_offset + (height / 2.0).round
         grf_chn = (channel_style(snd) == Channels_separate ? chn : 0)
-        new_peaks = axinf[18]
+        new_peaks = axinf[19]
         data0 = false
         data1 = false
         if width > 10 and height > 10 and frames(snd, chn) > 0 and

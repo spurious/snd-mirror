@@ -1337,7 +1337,7 @@ static int make_graph_1(chan_info *cp, double cur_srate, bool normal, bool *two_
 		  if (samps > 10000000)
 		    {
 		      check_for_event();
-		      if ((ap->changed) || (ss->stopped_explicitly))
+		      if ((ap->changed) || (ss->stopped_explicitly) || (!(cp->active)))
 			{
 			  ss->stopped_explicitly = false;
 			  ap->changed = false;
@@ -1881,123 +1881,6 @@ static void make_fft_graph(chan_info *cp, axis_info *fap, axis_context *ax, with
     }
   if (cp->selection_transform_size != 0) display_selection_transform_size(cp, fap);
   if (with_hook == WITH_HOOK) after_transform(cp, scale);
-}
-
-static int display_transform_peaks(chan_info *ucp, char *filename)
-{
-  /* put (sync'd) peak info in help window */
-  snd_info *sp;
-  FILE *fd = NULL;
-  int i, chn, err = 0;
-  bool tmp_file = true;
-  sync_info *si = NULL;
-  sp = ucp->sound;
-  si = sync_to_chan(ucp);
-  if ((filename) && (snd_strlen(filename) > 0))
-    {
-      char *mcf = NULL;
-      fd = FOPEN(mcf = mus_expand_filename(filename), "w");
-      if (mcf) FREE(mcf);
-      if (fd == NULL) 
-	{
-	  /* TODO: handle this check in g_peaks -- xen error or something -- better name needed than "peaks" */
-	  report_in_minibuffer(sp, _("can't write %s: %s"), filename, snd_open_strerror());
-	  err = 1;
-	}
-      else tmp_file = false;
-    }
-  if (tmp_file)
-    {
-      filename = snd_tempnam();
-      fd = FOPEN(filename, "w");
-    }
-  if (fd) 
-    {
-#if HAVE_STRFTIME
-      char *timbuf;
-      time_t ts;
-      timbuf = (char *)CALLOC(TIME_STR_SIZE, sizeof(char));
-      time(&ts);
-      strftime(timbuf, TIME_STR_SIZE, STRFTIME_FORMAT, localtime(&ts));
-      fprintf(fd, _("Snd: fft peaks (%s)\n\n"), timbuf);
-      FREE(timbuf);
-#else
-      fprintf(fd, _("Snd: fft peaks (%s)\n\n"));
-#endif
-      for (chn = 0; chn < si->chans; chn++)
-	{
-	  chan_info *cp;
-	  fft_info *fp;
-	  cp = si->cps[chn];
-	  fp = cp->fft;
-	  if (fp)
-	    {
-	      axis_info *fap;
-	      fap = fp->axis;
-	      if ((fap) && (fap->graph_active))
-		{
-		  Float srate2;
-		  axis_info *ap;
-		  fft_peak *peak_freqs = NULL;
-		  fft_peak *peak_amps = NULL;
-		  Float *data;
-		  int num_peaks,samps, tens, srate;
-		  Float samples_per_pixel;
-		  ap = cp->axis;
-		  sp = cp->sound;
-		  data = fp->data;
-		  samps = fp->current_size / 2;
-		  samples_per_pixel = (Float)samps / (Float)(fap->x_axis_x1 - fap->x_axis_x0);
-		  srate = SND_SRATE(sp);
-		  srate2 = (Float)srate * .5;
-		  if (samps > (5 * srate)) 
-		    tens = 2; 
-		  else 
-		    if (samps > (int)srate2) 
-		      tens = 1; 
-		    else 
-		      if (samps > (srate / 20)) 
-			tens = 0; 
-		      else tens = -1;
-		  peak_freqs = (fft_peak *)CALLOC(cp->max_transform_peaks, sizeof(fft_peak));
-		  peak_amps = (fft_peak *)CALLOC(cp->max_transform_peaks, sizeof(fft_peak));
-		  num_peaks = find_and_sort_transform_peaks(data, peak_freqs, cp->max_transform_peaks, samps, 1, samples_per_pixel, fp->scale);
-		  if ((num_peaks != 1) || 
-		      (peak_freqs[0].freq != 0.0))
-		    {
-		      fprintf(fd, sp->short_filename);
-		      if (sp->nchans > 1) fprintf(fd, _(": chan %d"), cp->chan);
-		      fprintf(fd, _(", fft %d points beginning at sample " PRId64 " (%.3f secs), %s\n\n"),
-			      fp->current_size, 
-			      ap->losamp, 
-			      (float)((double)(ap->losamp) / (double)srate),
-			      mus_fft_window_name(cp->fft_window));
-		      for (i = 0; i < num_peaks; i++)
-			fprintf(fd, "  %.*f  %.5f\n",
-				tens, 
-				peak_freqs[i].freq * srate2, 
-				peak_freqs[i].amp); 
-		      fprintf(fd, "\n");
-		    }
-		  if (peak_freqs) {FREE(peak_freqs); peak_freqs = NULL;}
-		  if (peak_amps) {FREE(peak_amps); peak_amps = NULL;}
-		}
-	    }
-	}
-      if (FCLOSE(fd) != 0)
-	report_in_minibuffer(sp, _("can't close %s: %s"), filename, snd_io_strerror());
-      if (tmp_file)
-	{
-	  char *str;
-	  str = file_to_string(filename);
-	  post_it("fft peaks", str);
-	  FREE(str);
-	  err = snd_remove(filename, IGNORE_CACHE);
-	  FREE(filename);
-	}
-    }
-  if (si) si = free_sync_info(si);
-  return(err);
 }
 
 #if USE_NO_GUI
@@ -4989,6 +4872,7 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, cp_field_t fld, char *calle
     case CP_FRAMES:
       if (cp->editable)
 	{
+	  bool need_update = true;
 	  /* if less than current, delete, else zero pad */
 	  curlen = CURRENT_SAMPLES(cp);
 	  newlen = XEN_TO_C_OFF_T_OR_ELSE(on, curlen);
@@ -4997,15 +4881,16 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, cp_field_t fld, char *calle
 	  if (curlen > newlen)
 	    {
 	      if (newlen > 0)
-		delete_samples(newlen - 1, curlen - newlen, cp, cp->edit_ctr);
-	      else delete_samples(0, curlen, cp, cp->edit_ctr);
+		need_update = delete_samples(newlen - 1, curlen - newlen, cp, cp->edit_ctr);
+	      else need_update = delete_samples(0, curlen, cp, cp->edit_ctr);
 	    }
 	  else
 	    {
 	      if (newlen > curlen)
 		extend_with_zeros(cp, curlen, newlen - curlen, cp->edit_ctr);
 	    }
-	  update_graph(cp);
+	  if (need_update)
+	    update_graph(cp);
 	}
       break;
     case CP_PROPERTIES:
@@ -6526,25 +6411,144 @@ static XEN g_set_graphs_horizontal(XEN val, XEN snd, XEN chn)
 WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_graphs_horizontal_reversed, g_set_graphs_horizontal)
 
 
-static XEN g_peaks(XEN filename, XEN snd_n, XEN chn_n)
+static void write_transform_peaks(FILE *fd, chan_info *ucp)
+{
+  /* put (sync'd) peak info in (possibly temporary) file */
+  int i, chn;
+  sync_info *si = NULL;
+#if HAVE_STRFTIME
+  char *timbuf;
+  time_t ts;
+  timbuf = (char *)CALLOC(TIME_STR_SIZE, sizeof(char));
+  time(&ts);
+  strftime(timbuf, TIME_STR_SIZE, STRFTIME_FORMAT, localtime(&ts));
+  fprintf(fd, _("Snd: fft peaks (%s)\n\n"), timbuf);
+  FREE(timbuf);
+#else
+  fprintf(fd, _("Snd: fft peaks\n\n")); /* TODO: need a way to test the not HAVE_STRFTIME case */
+#endif
+  si = sync_to_chan(ucp);
+  for (chn = 0; chn < si->chans; chn++)
+    {
+      snd_info *sp;
+      chan_info *cp;
+      fft_info *fp;
+      cp = si->cps[chn];
+      fp = cp->fft;
+      if (fp)
+	{
+	  axis_info *fap;
+	  fap = fp->axis;
+	  if ((fap) && (fap->graph_active))
+	    {
+	      Float srate2;
+	      axis_info *ap;
+	      fft_peak *peak_freqs = NULL;
+	      fft_peak *peak_amps = NULL;
+	      Float *data;
+	      int num_peaks,samps, tens, srate;
+	      Float samples_per_pixel;
+	      ap = cp->axis;
+	      sp = cp->sound;
+	      data = fp->data;
+	      samps = fp->current_size / 2;
+	      samples_per_pixel = (Float)samps / (Float)(fap->x_axis_x1 - fap->x_axis_x0);
+	      srate = SND_SRATE(sp);
+	      srate2 = (Float)srate * .5;
+	      if (samps > (5 * srate)) 
+		tens = 2; 
+	      else 
+		if (samps > (int)srate2) 
+		  tens = 1; 
+		else 
+		  if (samps > (srate / 20)) 
+		    tens = 0; 
+		  else tens = -1;
+	      peak_freqs = (fft_peak *)CALLOC(cp->max_transform_peaks, sizeof(fft_peak));
+	      peak_amps = (fft_peak *)CALLOC(cp->max_transform_peaks, sizeof(fft_peak));
+	      num_peaks = find_and_sort_transform_peaks(data, peak_freqs, cp->max_transform_peaks, samps, 1, samples_per_pixel, fp->scale);
+	      if ((num_peaks != 1) || 
+		  (peak_freqs[0].freq != 0.0))
+		{
+		  fprintf(fd, sp->short_filename);
+		  if (sp->nchans > 1) fprintf(fd, _(": chan %d"), cp->chan);
+		  fprintf(fd, _(", fft %d points beginning at sample " PRId64 " (%.3f secs), %s\n\n"),
+			  fp->current_size, 
+			  ap->losamp, 
+			  (float)((double)(ap->losamp) / (double)srate),
+			  mus_fft_window_name(cp->fft_window));
+		  for (i = 0; i < num_peaks; i++)
+		    fprintf(fd, "  %.*f  %.5f\n",
+			    tens, 
+			    peak_freqs[i].freq * srate2, 
+			    peak_freqs[i].amp); 
+		  fprintf(fd, "\n");
+		}
+	      if (peak_freqs) {FREE(peak_freqs); peak_freqs = NULL;}
+	      if (peak_amps) {FREE(peak_amps); peak_amps = NULL;}
+	    }
+	}
+    }
+  if (si) si = free_sync_info(si);
+}
+
+static XEN g_peaks(XEN filename, XEN snd_n, XEN chn_n) /* SOMEDAY: "peaks" is a bad name */
 {
   #define H_peaks "(" S_peaks " (filename #f) (snd #f) (chn #f)): write current fft peaks data to filename, or \
-to the help dialog if filename is omitted"
+to the info dialog if filename is omitted"
 
+  char *name = NULL, *str;
   chan_info *cp;
-  char *name = NULL;
-  int err;
+  bool post_to_dialog = true;
+  FILE *fd = NULL;
   XEN_ASSERT_TYPE((XEN_STRING_P(filename) || (XEN_FALSE_P(filename)) || (XEN_NOT_BOUND_P(filename))), filename, XEN_ARG_1, S_peaks, "a string or " PROC_FALSE);
   ASSERT_CHANNEL(S_peaks, snd_n, chn_n, 2);
   cp = get_cp(snd_n, chn_n, S_peaks);
+
   if (XEN_STRING_P(filename))
-    name = mus_expand_filename(XEN_TO_C_STRING(filename));
-  else name = NULL;
-  err = display_transform_peaks(cp, name);
-  if (name) FREE(name);
-  if ((XEN_STRING_P(filename)) && (err == 0)) 
-    return(filename);
-  return(XEN_FALSE);
+    {
+      name = mus_expand_filename(XEN_TO_C_STRING(filename));
+      if ((name) && (snd_strlen(name) > 0))
+	{
+	  fd = FOPEN(name, "w");
+	  post_to_dialog = false;
+	}
+    }
+  else
+    {
+      name = snd_tempnam();
+      fd = FOPEN(name, "w");
+    }
+
+  if (!fd)
+    XEN_ERROR(CANT_OPEN_FILE,
+	      XEN_LIST_3(C_TO_XEN_STRING(S_peaks),
+			 C_TO_XEN_STRING(name),
+			 C_TO_XEN_STRING(snd_io_strerror())));
+
+  write_transform_peaks(fd, cp);
+
+  if (FCLOSE(fd) != 0)
+    XEN_ERROR(CANT_CLOSE_FILE, 
+	      XEN_LIST_3(C_TO_XEN_STRING(S_peaks),
+			 C_TO_XEN_STRING(name),
+			 C_TO_XEN_STRING(snd_io_strerror())));
+  
+  if (post_to_dialog)
+    {
+      io_error_t err;
+      str = file_to_string(name);
+      post_it("fft peaks", str);
+      FREE(str);
+      err = snd_remove(name, IGNORE_CACHE);
+      if (err != IO_NO_ERROR)
+	XEN_ERROR(CANT_DELETE_FILE, 
+		  XEN_LIST_3(C_TO_XEN_STRING(S_peaks),
+			     C_TO_XEN_STRING(name),
+			     C_TO_XEN_STRING(snd_io_strerror())));
+    }
+  FREE(name);
+  return(filename);
 }
 
 static XEN g_left_sample(XEN snd_n, XEN chn_n) 

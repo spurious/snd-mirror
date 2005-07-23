@@ -880,7 +880,7 @@ static void save_sound_state (snd_info *sp, void *ptr)
 static XEN after_save_state_hook;
 static XEN before_save_state_hook;
 
-static char *save_state_or_error (char *save_state_name)
+void save_state(char *save_state_name)
 {
   FILE *save_fd;
   char *locale = NULL;
@@ -894,122 +894,107 @@ static char *save_state_or_error (char *save_state_name)
       append_new_state = XEN_TO_C_BOOLEAN(res);
     }
   save_fd = open_restart_file(save_state_name, append_new_state);
-  if (save_fd == NULL) 
-    return(mus_format(_("can't write %s: %s"), 
-		      save_state_name, 
-		      snd_io_strerror()));
-  else
+  if (save_fd == NULL)
     {
+      snd_error(_("can't write %s: %s"), save_state_name, snd_io_strerror());
+      return;
+    }
 #if HAVE_SCHEME
-      /* try to make sure all previously loaded files are now loaded */
-      save_loaded_files_list(save_fd, save_state_name);
+  /* try to make sure all previously loaded files are now loaded */
+  save_loaded_files_list(save_fd, save_state_name);
 #endif
 #if HAVE_SETLOCALE
-      locale = copy_string(setlocale(LC_NUMERIC, "C")); /* must use decimal point in floats since Scheme assumes that format */
+  locale = copy_string(setlocale(LC_NUMERIC, "C")); /* must use decimal point in floats since Scheme assumes that format */
 #endif
-      save_prevlist(save_fd);                           /* list of previous files (View: Files option) */
-      save_options(save_fd);                            /* options = user-settable global state variables */
-      /* the global settings need to precede possible local settings */
+  save_prevlist(save_fd);                           /* list of previous files (View: Files option) */
+  save_options(save_fd);                            /* options = user-settable global state variables */
+  /* the global settings need to precede possible local settings */
 
-      if (ss->active_sounds > 0)
-	{
-	  if (ss->selected_sound != NO_SELECTION)
-	    {
-#if HAVE_SCHEME
-	      fprintf(save_fd, "\n(define _saved_snd_selected_sound_ #f)\n");
-	      fprintf(save_fd, "(define _saved_snd_selected_channel_ #f)\n");
-#endif
-#if HAVE_RUBY
-	      fprintf(save_fd, "\nsaved_snd_selected_sound = -1\n");
-	      fprintf(save_fd, "saved_snd_selected_channel = -1\n");
-#endif
-	    }
-	  for_each_sound(save_sound_state, (void *)save_fd);      /* current sound state -- will traverse chans */
-	  if (ss->selected_sound != NO_SELECTION)
-	    {
-#if HAVE_SCHEME
-	      fprintf(save_fd, "(if _saved_snd_selected_sound_\n");
-	      fprintf(save_fd, "  (begin\n");
-	      fprintf(save_fd, "    (%s _saved_snd_selected_sound_)\n", S_select_sound);
-	      fprintf(save_fd, "    (%s _saved_snd_selected_channel_)))\n", S_select_channel);
-#endif
-#if HAVE_RUBY
-	      fprintf(save_fd, "if saved_snd_selected_sound != -1\n");
-	      fprintf(save_fd, "  select_sound(saved_snd_selected_sound)\n");
-	      fprintf(save_fd, "  select_channel(saved_snd_selected_channel)\n");
-	      fprintf(save_fd, "end\n");
-#endif
-	    }
-	}
-      fprintf(save_fd, "\n");
-      save_macro_state(save_fd);                              /* current unsaved keyboard macros (snd-chn.c) */
-      save_envelope_editor_state(save_fd);                    /* current envelope editor window state */
-      save_regions(save_fd);                                  /* regions */
-
-      if (transform_dialog_is_active()) fprintf(save_fd, BPAREN "%s" EPAREN "\n", TO_PROC_NAME(S_transform_dialog));
-      if (enved_dialog_is_active()) fprintf(save_fd, BPAREN "%s" EPAREN "\n", TO_PROC_NAME(S_enved_dialog));
-      if (color_dialog_is_active()) fprintf(save_fd, BPAREN "%s" EPAREN "\n", TO_PROC_NAME(S_color_dialog));
-      if (orientation_dialog_is_active()) fprintf(save_fd, BPAREN "%s" EPAREN "\n", TO_PROC_NAME(S_orientation_dialog));
-      if (view_files_dialog_is_active()) fprintf(save_fd, BPAREN "%s" EPAREN "\n", TO_PROC_NAME(S_view_files_dialog));
-      if (region_dialog_is_active()) fprintf(save_fd, BPAREN "%s" EPAREN "\n", TO_PROC_NAME(S_view_regions_dialog));
-      if (record_dialog_is_active()) fprintf(save_fd, BPAREN "%s" EPAREN "\n", TO_PROC_NAME(S_recorder_dialog));
-      save_post_it_dialog_state(save_fd);
-      save_find_dialog_state(save_fd);
-      save_edit_header_dialog_state(save_fd);
-      save_print_dialog_state(save_fd);
-      save_help_dialog_state(save_fd);
-      save_file_dialog_state(save_fd);
-      /* new-file dialog not restored because it hogs the event loop */
-
-      /* TODO: mix/track (and dialogs?) */
-      /* MIX_DIALOG [view-mixes-dialog], TRACK_DIALOG [view-tracks-dialog]
-      (change-samples-with-origin 965 4412 "set! -mix-0 (mix \"/home/bil/cl/1a.snd\" 965 0)" "3.snd" sfile 0 #f (list 1117710308 17780))
-      */
-
-      pss_ss(save_fd, S_show_listener, b2s(listener_is_visible()));
-
-      /* the problem here (with saving hooks) is that it is not straightforward to save the function source
-       *   (with the current print-set! source option, or with an earlier procedure->string function using
-       *   procedure_environment etc); many types print in this case in ways that are not readable.
-       *   The functions may depend on globals that are not in loaded files, or that were changed since
-       *   loading, and trying to map over the current module's obarray, saving each such variable in
-       *   its current form, is a major undertaking (although this can be done for simple vars); additionally, 
-       *   what if the user has changed these before restoring -- should the old forms be restored?
-       */
-
-      if (fneq(mus_srate(), MUS_DEFAULT_SAMPLING_RATE)) pss_sf(save_fd, S_mus_srate, mus_srate());
-      if (mus_file_buffer_size() != MUS_DEFAULT_FILE_BUFFER_SIZE) pss_sd(save_fd, S_mus_file_buffer_size, mus_file_buffer_size());
-      if (mus_array_print_length() != MUS_DEFAULT_ARRAY_PRINT_LENGTH) pss_sd(save_fd, S_mus_array_print_length, mus_array_print_length());
-      if (clm_table_size_c() != MUS_DEFAULT_CLM_TABLE_SIZE) pss_sd(save_fd, S_clm_table_size, clm_table_size_c());
-
-      if (locale)
-	{
-#if HAVE_SETLOCALE
-	  setlocale(LC_NUMERIC, locale);
-#endif
-	  FREE(locale);
-	}
-      snd_fclose(save_fd, save_state_name);
-      if (XEN_HOOKED(after_save_state_hook))
-	run_hook(after_save_state_hook, 
-		 XEN_LIST_1(C_TO_XEN_STRING(save_state_name)),
-		 S_after_save_state_hook);
-    }
-  return(NULL);
-}
-
-int save_state (char *save_state_name)
-{
-  char *error;
-  error = save_state_or_error(save_state_name);
-  if (error)
+  if (ss->active_sounds > 0)
     {
-      snd_error(error);
-      FREE(error);
-      return(-1);
+      if (ss->selected_sound != NO_SELECTION)
+	{
+#if HAVE_SCHEME
+	  fprintf(save_fd, "\n(define _saved_snd_selected_sound_ #f)\n");
+	  fprintf(save_fd, "(define _saved_snd_selected_channel_ #f)\n");
+#endif
+#if HAVE_RUBY
+	  fprintf(save_fd, "\nsaved_snd_selected_sound = -1\n");
+	  fprintf(save_fd, "saved_snd_selected_channel = -1\n");
+#endif
+	}
+      for_each_sound(save_sound_state, (void *)save_fd);      /* current sound state -- will traverse chans */
+      if (ss->selected_sound != NO_SELECTION)
+	{
+#if HAVE_SCHEME
+	  fprintf(save_fd, "(if _saved_snd_selected_sound_\n");
+	  fprintf(save_fd, "  (begin\n");
+	  fprintf(save_fd, "    (%s _saved_snd_selected_sound_)\n", S_select_sound);
+	  fprintf(save_fd, "    (%s _saved_snd_selected_channel_)))\n", S_select_channel);
+#endif
+#if HAVE_RUBY
+	  fprintf(save_fd, "if saved_snd_selected_sound != -1\n");
+	  fprintf(save_fd, "  select_sound(saved_snd_selected_sound)\n");
+	  fprintf(save_fd, "  select_channel(saved_snd_selected_channel)\n");
+	  fprintf(save_fd, "end\n");
+#endif
+	}
     }
-  return(0);
+  fprintf(save_fd, "\n");
+  save_macro_state(save_fd);                              /* current unsaved keyboard macros (snd-chn.c) */
+  save_envelope_editor_state(save_fd);                    /* current envelope editor window state */
+  save_regions(save_fd);                                  /* regions */
+  
+  if (transform_dialog_is_active()) fprintf(save_fd, BPAREN "%s" EPAREN "\n", TO_PROC_NAME(S_transform_dialog));
+  if (enved_dialog_is_active()) fprintf(save_fd, BPAREN "%s" EPAREN "\n", TO_PROC_NAME(S_enved_dialog));
+  if (color_dialog_is_active()) fprintf(save_fd, BPAREN "%s" EPAREN "\n", TO_PROC_NAME(S_color_dialog));
+  if (orientation_dialog_is_active()) fprintf(save_fd, BPAREN "%s" EPAREN "\n", TO_PROC_NAME(S_orientation_dialog));
+  if (view_files_dialog_is_active()) fprintf(save_fd, BPAREN "%s" EPAREN "\n", TO_PROC_NAME(S_view_files_dialog));
+  if (region_dialog_is_active()) fprintf(save_fd, BPAREN "%s" EPAREN "\n", TO_PROC_NAME(S_view_regions_dialog));
+  if (record_dialog_is_active()) fprintf(save_fd, BPAREN "%s" EPAREN "\n", TO_PROC_NAME(S_recorder_dialog));
+  save_post_it_dialog_state(save_fd);
+  save_find_dialog_state(save_fd);
+  save_edit_header_dialog_state(save_fd);
+  save_print_dialog_state(save_fd);
+  save_help_dialog_state(save_fd);
+  save_file_dialog_state(save_fd);
+  /* new-file dialog not restored because it hogs the event loop */
+  
+  /* TODO: mix/track (and dialogs?) */
+  /* MIX_DIALOG [view-mixes-dialog], TRACK_DIALOG [view-tracks-dialog]
+     (change-samples-with-origin 965 4412 "set! -mix-0 (mix \"/home/bil/cl/1a.snd\" 965 0)" "3.snd" sfile 0 #f (list 1117710308 17780))
+  */
+  
+  pss_ss(save_fd, S_show_listener, b2s(listener_is_visible()));
+  
+  /* the problem here (with saving hooks) is that it is not straightforward to save the function source
+   *   (with the current print-set! source option, or with an earlier procedure->string function using
+   *   procedure_environment etc); many types print in this case in ways that are not readable.
+   *   The functions may depend on globals that are not in loaded files, or that were changed since
+   *   loading, and trying to map over the current module's obarray, saving each such variable in
+   *   its current form, is a major undertaking (although this can be done for simple vars); additionally, 
+   *   what if the user has changed these before restoring -- should the old forms be restored?
+   */
+  
+  if (fneq(mus_srate(), MUS_DEFAULT_SAMPLING_RATE)) pss_sf(save_fd, S_mus_srate, mus_srate());
+  if (mus_file_buffer_size() != MUS_DEFAULT_FILE_BUFFER_SIZE) pss_sd(save_fd, S_mus_file_buffer_size, mus_file_buffer_size());
+  if (mus_array_print_length() != MUS_DEFAULT_ARRAY_PRINT_LENGTH) pss_sd(save_fd, S_mus_array_print_length, mus_array_print_length());
+  if (clm_table_size_c() != MUS_DEFAULT_CLM_TABLE_SIZE) pss_sd(save_fd, S_clm_table_size, clm_table_size_c());
+  
+  if (locale)
+    {
+#if HAVE_SETLOCALE
+      setlocale(LC_NUMERIC, locale);
+#endif
+      FREE(locale);
+    }
+  snd_fclose(save_fd, save_state_name);
+  if (XEN_HOOKED(after_save_state_hook))
+    run_hook(after_save_state_hook, 
+	     XEN_LIST_1(C_TO_XEN_STRING(save_state_name)),
+	     S_after_save_state_hook);
 }
+
 
 static char *file_extension(char *arg)
 {
@@ -1199,25 +1184,28 @@ int handle_next_startup_arg(int auto_open_ctr, char **auto_open_file_names, bool
   return(auto_open_ctr + 1);
 }
 
+static void save_state_error_handler(const char *msg, void *data)
+{
+  char *filename = (char *)data;
+  redirect_snd_error_to(NULL, NULL);
+  XEN_ERROR(CANNOT_SAVE,
+	    XEN_LIST_2(C_TO_XEN_STRING(S_save_state),
+		       C_TO_XEN_STRING((filename) ? filename : save_state_file(ss))));
+}
+
 static XEN g_save_state(XEN filename) 
 {
   #define H_save_state "(" S_save_state " filename): save the current Snd state in filename; (load filename) restores it.  The \
 default " S_save_state " filename is " DEFAULT_SAVE_STATE_FILE ". It can be changed via " S_save_state_file "."
-  char *error;
+
   XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(filename), filename, XEN_ONLY_ARG, S_save_state, "a string");
+
+  redirect_snd_error_to(save_state_error_handler, (void *)filename);
   if (XEN_BOUND_P(filename))
-    error = save_state_or_error(XEN_TO_C_STRING(filename));
-  else error = save_state_or_error(save_state_file(ss));
-  if (error)
-    {
-      XEN result;
-      result = C_TO_XEN_STRING(error);
-      FREE(error);
-      XEN_ERROR(CANNOT_SAVE,
-		XEN_LIST_3(C_TO_XEN_STRING(S_save_state),
-			   (XEN_BOUND_P(filename)) ? filename : C_TO_XEN_STRING(save_state_file(ss)),
-			   result));
-    }
+    save_state(XEN_TO_C_STRING(filename));
+  else save_state(save_state_file(ss));
+  redirect_snd_error_to(NULL, NULL);
+
   if (XEN_BOUND_P(filename))
     return(filename);
   return(C_TO_XEN_STRING(save_state_file(ss)));

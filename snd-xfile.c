@@ -2869,7 +2869,10 @@ static void raw_data_ok_callback(Widget w, XtPointer context, XtPointer info)
 	  (rp->requestor == FROM_MIX_DIALOG))
 	{
 	  ss->reloading_updated_file = true; /* don't reread lack-of-header! */
+	  /* redirection may be still set here, but I'll make it obvious */
+	  redirect_snd_error_to(file_open_error, (void *)mdat);
 	  mix_complete_file_at_cursor(any_selected_sound(), rp->filename, with_mix_tags(ss), 0);
+	  redirect_snd_error_to(NULL, NULL);
 	  ss->reloading_updated_file = false;
 	}
       else

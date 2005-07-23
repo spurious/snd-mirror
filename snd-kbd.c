@@ -9,20 +9,6 @@ static bool defining_macro = false;
 /* TODO: why C-s twice to open find in mini?
  */
 
-/* TODO: redirect should return the current handler, so we can replace it
- */
-#if 0
-static void report_snd_error_in_listener(const char *error_msg, void *usp)
-{
-  listener_append((char *)error_msg); /* TODO: needs prepended ";" */
-}
-#endif
-
-/*
-  redirect_snd_error_to(report_snd_error_in_listener, (void *)sp);
-  redirect_snd_error_to(NULL, NULL);
-*/
-
 
 /* -------- Keyboard Macros -------- */
 /* optimized for the most common case (pure keyboard commands) */
@@ -708,7 +694,7 @@ void errors_to_minibuffer(const char *msg, void *data)
   display_minibuffer_error((snd_info *)data, msg);
 }
 
-static void printout_to_minibuffer(const char *msg, void *data)
+void printout_to_minibuffer(const char *msg, void *data)
 {
   report_in_minibuffer((snd_info *)data, msg);
 }
@@ -908,7 +894,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 		  if (io_err == IO_NO_ERROR)
 		    report_in_minibuffer(sp, _("selection saved as %s"), filename);
 		  else report_in_minibuffer(sp, _("selection not saved"));
-		  /* TODO: else some sort of error message! */
+		  /* TODO: else some sort of error message! (io trans) */
 		  FREE(filename);
 		}
 	      else report_in_minibuffer(sp, _("no selection to save"));
@@ -986,7 +972,10 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 		  }
 		else 
 		  {
-		    report_in_minibuffer(sp, _("can't access %s! temp dir is unchanged"), newdir);
+		    char *msg;
+		    msg = mus_format(_("can't access %s! temp dir is unchanged"), newdir);
+		    display_minibuffer_error(sp, msg);
+		    FREE(msg);
 		    if (newdir) FREE(newdir);
 		  }
 	      }
@@ -1013,7 +1002,12 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 		    off_t len;
 		    len = mus_sound_frames(filename);
 		    if (len == 0)
-		      report_in_minibuffer(sp, _("file %s has no data"), str);
+		      {
+			char *msg;
+			msg = mus_format(_("file %s has no data"), str);
+			display_minibuffer_error(sp, msg);
+			FREE(msg);
+		      }
 		    else
 		      {
 			int i, j;
@@ -1036,7 +1030,13 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 			clear_minibuffer(sp);
 		      }
 		  }
-		else report_in_minibuffer(sp, _("can't read %s's header"), str); /* TODO: better error */
+		else 
+		  {
+		    char *msg;
+		    msg = mus_format(_("can't read %s's header"), str);
+		    display_minibuffer_error(sp, msg);
+		    FREE(msg);
+		  }
 		FREE(filename);
 	      }
 	      break;
@@ -1245,7 +1245,8 @@ static off_t get_count(char *number_buffer, int number_ctr, bool dot_seen, chan_
   val = get_count_1(number_buffer, number_ctr, dot_seen, cp);
   if (!mark_wise) return(val);
   old_cursor = CURSOR(cp);
-  goto_mark(cp, val);
+  if (!(goto_mark(cp, val)))
+    report_in_minibuffer(cp->sound, _("no such mark"));
   val = CURSOR(cp) - old_cursor; /* will be 0 if no relevant marks */
   CURSOR(cp) = old_cursor;
   return(val);
@@ -1429,7 +1430,8 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 	      break;
 	    case snd_K_J: case snd_K_j: 
 	      cp->cursor_on = true; 
-	      goto_mark(cp, count); 
+	      if (!(goto_mark(cp, count)))
+		report_in_minibuffer(cp->sound, _("no such mark"));
 	      break;
 	    case snd_K_K: case snd_K_k: 
 	      cp->cursor_on = true; 
@@ -1449,7 +1451,11 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 		    mk = add_mark(CURSOR(cp), NULL, cp);
 		    display_channel_marks(cp);
 		  }
-		else delete_mark_samp(CURSOR(cp), cp);
+		else 
+		  {
+		    if (!(delete_mark_samp(CURSOR(cp), cp)))
+		      report_in_minibuffer(cp->sound, _("no mark at sample " PRId64), CURSOR(cp));
+		  }
 		if ((keysym == snd_K_M) && 
 		    (cp->sound->sync != 0))
 		  {
@@ -1470,7 +1476,11 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 				  display_channel_marks(si->cps[i]);
 				}
 			    }
-			  else delete_mark_samp(CURSOR(cp), si->cps[i]);
+			  else 
+			    {
+			      if (!(delete_mark_samp(CURSOR(cp), si->cps[i])))
+				report_in_minibuffer(cp->sound, _("no mark at sample " PRId64), CURSOR(cp));
+			    }
 			}
 		    si = free_sync_info(si);
 		  }
@@ -1695,7 +1705,9 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 	      redo_edit_with_sync(cp, ext_count); 
 	      break;
 	    case snd_K_S: case snd_K_s: 
-	      save_edits(sp, NULL); 
+	      redirect_everything_to(printout_to_minibuffer, (void *)sp);
+	      save_edits(sp); 
+	      redirect_everything_to(NULL, NULL);
 	      break;
 	    case snd_K_T: case snd_K_t: 
 	      stop_playing_sound(sp, PLAY_C_T); 
@@ -1788,7 +1800,9 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 	      zx_incremented(cp, 1.0 / (1.0 + state_amount(state))); 
 	      break;
 	    case snd_K_Home: 
+	      redirect_everything_to(printout_to_minibuffer, (void *)sp);
 	      sp = snd_update(sp); 
+	      redirect_everything_to(NULL, NULL);
 	      break;
 	    case snd_K_space: 
 	      if (play_in_progress())
@@ -1918,7 +1932,8 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 		  handle_cursor(cp, CURSOR_ON_LEFT);
 		  break;
 		case snd_K_C: case snd_K_c: 
-		  mark_define_region(cp, (!got_ext_count) ? 1 : ext_count); 
+		  if (!(mark_define_region(cp, (!got_ext_count) ? 1 : ext_count)))
+		    report_in_minibuffer(cp->sound, _("no such mark"));
 		  break;
 		case snd_K_D: case snd_K_d: 
 		  prompt(sp, _("temp dir:"), NULL); 

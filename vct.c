@@ -198,6 +198,9 @@ XEN_MAKE_OBJECT_PRINT_PROCEDURE(vct, print_vct, vct_to_string)
 
 static XEN equalp_vct(XEN obj1, XEN obj2)
 {
+#if HAVE_RUBY
+  if ((!(VCT_P(obj1))) || (!(VCT_P(obj2)))) return(XEN_FALSE);
+#endif
   return(xen_return_first(C_TO_XEN_BOOLEAN(vct_equalp((vct *)XEN_OBJECT_REF(obj1), (vct *)XEN_OBJECT_REF(obj2))), obj1, obj2));
 }
 

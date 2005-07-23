@@ -4415,7 +4415,7 @@ static io_error_t snd_make_file(const char *ofile, int chans, file_info *hdr, sn
 		      progress_report(cp->sound, NULL, 1, 1, (Float)((double)total / (double)length), NOT_FROM_ENVED);
 		    }
 		  check_for_event();
-		  if (ss->stopped_explicitly)
+		  if ((ss->stopped_explicitly) || ((cp) && (!(cp->active))))
 		    {
 		      ss->stopped_explicitly = false;
 		      snd_warning(_("file save cancelled by C-g"));
@@ -4450,7 +4450,7 @@ static io_error_t snd_make_file(const char *ofile, int chans, file_info *hdr, sn
 		  progress_report(cp->sound, NULL, 1, 1, (Float)((double)total / (double)length), NOT_FROM_ENVED);
 		}
 	      check_for_event();
-	      if (ss->stopped_explicitly)
+	      if ((ss->stopped_explicitly) || ((cp) && (!(cp->active))))
 		{
 		  ss->stopped_explicitly = false;
 		  snd_warning(_("file save cancelled by C-g"));
@@ -4576,8 +4576,13 @@ void edit_history_to_file(FILE *fd, chan_info *cp)
 	      FREE(ofile);
 	      len = cp->samples[i];
 	      io_err = channel_to_file(cp, nfile, i);
+
 	      if (io_err != IO_NO_ERROR)
-		report_in_minibuffer(cp->sound, _("edit history save data as %s error: %s"), nfile, snd_io_strerror());
+		{
+		  /* error is trapped at lower level and pulled up via redirection */
+		  FREE(nfile);
+		  return;
+		}
 #if HAVE_RUBY
 	      fprintf(fd, "      %s(\"%s\", " OFF_TD ", sfile, %d, ", TO_PROC_NAME(S_override_samples_with_origin), nfile, len, cp->chan);
 	      if (ed->origin) 
@@ -4908,12 +4913,30 @@ static char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
 	      switch (ed->edit_type)
 		{
 		case INSERTION_EDIT: 
-		  function = mus_format("%s%s %s, snd, chn)", function, (first) ? "" : ";", ed->origin);
-		  break;
-		case CHANGE_EDIT:
- 		  if ((ed->origin) &&
- 		      ((strncmp(ed->origin, "set_mix", 7) == 0) ||
- 		       (strncmp(ed->origin, "set_track", 9) == 0)))
+ 		  if ((!(ed->origin)) || (strcmp(ed->origin, TO_PROC_NAME(S_insert_samples)) == 0))
+ 		    {
+ 		      /* from HAVE_SCHEME above */
+ 		      /* save data in temp file, use insert-samples with file name */
+ 		      char *ofile;
+ 		      ofile = edit_list_data_to_temp_file(cp, ed, DELETE_ME);
+ 		      function = mus_format("%s %s(" OFF_TD ", " OFF_TD ", \"%s\", snd, chn)", function, TO_PROC_NAME(S_insert_samples), ed->beg, ed->len, ofile);
+ 		      FREE(ofile);
+ 		    }
+ 		  else function = mus_format("%s%s %s, snd, chn)", function, (first) ? "" : ";", ed->origin);
+  		  break;
+  		case CHANGE_EDIT:
+ 		  if ((!(ed->origin)) || (strcmp(ed->origin, "set-samples") == 0))
+ 		    {
+ 		      /* from HAVE_SCHEME above */
+ 		      /* save data in temp file, use set-samples with file name */
+ 		      char *ofile;
+ 		      ofile = edit_list_data_to_temp_file(cp, ed, DELETE_ME);
+ 		      function = mus_format("%s set_samples(" OFF_TD ", " OFF_TD ", \"%s\", snd, chn)", function, ed->beg, ed->len, ofile);
+ 		      FREE(ofile);
+ 		    }
+ 		  else if ((ed->origin) &&
+ 			   ((strncmp(ed->origin, "set_mix", 7) == 0) ||
+ 			    (strncmp(ed->origin, "set_track", 9) == 0)))
  		    function = mus_format("%s%s %s", function, (first) ? "" : ";", ed->origin);
  		  else function = mus_format("%s%s %s%ssnd, chn)",
  					     function,
@@ -5646,22 +5669,9 @@ bool delete_samples(off_t beg, off_t num, chan_info *cp, int edpos)
       cp->edits[cp->edit_ctr] = delete_samples_from_list(beg, num, edpos, cp);
       reflect_mix_or_track_change(ANY_MIX_ID, ANY_TRACK_ID, false);
       after_edit(cp);
+      return(true);
     }
-  else
-    {
-      /* TODO: handle error locally (via xen error in g_delete_samples below)
-       *   hmmm -- this is called all over the place -- maybe some other way?
-       *   -> change to snd_error and use local redirection?
-       */
-      if (num == 1)
-	report_in_minibuffer(cp->sound, 
-			     _("can't delete sample " PRId64 " (current len = " PRId64 ")"), 
-			     beg, len);
-      else report_in_minibuffer(cp->sound, 
-				_("can't delete samples " PRId64 " to " PRId64 " (current len = " PRId64")"), 
-				beg, beg + num - 1, len);
-    }
-  return(true);
+  return(false);
 }
 
 
@@ -6898,7 +6908,7 @@ void copy_then_swap_channels(chan_info *cp0, chan_info *cp1, int pos0, int pos1)
   update_graph(cp1);
 }
 
-static bool save_edits_and_update_display(snd_info *sp)
+static io_error_t save_edits_and_update_display(snd_info *sp)
 {
   /* open temp, write current state, rename to old, reopen and clear all state */
   /* can't overwrite current because we may have cut/paste backpointers scattered around the current edit list */
@@ -6907,8 +6917,6 @@ static bool save_edits_and_update_display(snd_info *sp)
 
   /* read_only already checked */
   char *ofile = NULL;
-  bool err = false;
-  int saved_errno = 0;
   int i;
   off_t samples = 0;
   off_t *old_cursors = NULL;
@@ -6916,36 +6924,38 @@ static bool save_edits_and_update_display(snd_info *sp)
   snd_fd **sf;
   void *sa;
   file_info *sphdr = NULL;
-  if (dont_save(sp, NULL)) return(false);
+  io_error_t io_err = IO_NO_ERROR;
+
+  if (dont_save(sp, NULL)) return(IO_SAVE_HOOK_CANCELLATION);
   ofile = snd_tempnam(); 
   /* this will use user's TMPDIR if temp_dir(ss) is not set, else stdio.h's P_tmpdir else /tmp */
-  sa = make_axes_data(sp);
+
   sf = (snd_fd **)CALLOC(sp->nchans, sizeof(snd_fd *));
   for (i = 0; i < sp->nchans; i++)
     {
       sf[i] = init_sample_read(0, sp->chans[i], READ_FORWARD);
-      if (sf[i] == NULL) err = true;
+      if (sf[i] == NULL)
+	{
+	  int j;
+	  for (j = 0; j < i; j++) free_snd_fd(sf[j]);
+	  FREE(sf);
+	  return(IO_BAD_CHANNEL); /* TODO: not really right -- get this from init_sample_read */
+	}
       if (samples < CURRENT_SAMPLES(sp->chans[i]))
 	samples = CURRENT_SAMPLES(sp->chans[i]);
     }
-  if (!err)
-    {
-      io_error_t io_err = IO_NO_ERROR;
-      report_in_minibuffer(sp, _("saving %s"), sp->short_filename);
-      sphdr = sp->hdr;
+  sphdr = sp->hdr;
 
-      /* write the new file */
-      io_err = snd_make_file(ofile, sp->nchans, sp->hdr, sf, samples);
-      /* TODO: catch error */
-      if (io_err != IO_NO_ERROR) err = MUS_ERROR; /* a stop-gap */
-    }
-  if (err) 
+  /* write the new file */
+  io_err = snd_make_file(ofile, sp->nchans, sp->hdr, sf, samples);
+  if (io_err != IO_NO_ERROR) 
     {
       for (i = 0; i < sp->nchans; i++) free_snd_fd(sf[i]);
       FREE(sf);
-      sa = free_axes_data(sa);
-      return(err);
+      return(io_err);
     }
+
+  sa = make_axes_data(sp);
   sphdr->samples = samples * sp->nchans;
   collapse_marks(sp);
   old_cursors = (off_t *)CALLOC(sp->nchans, sizeof(off_t));
@@ -6974,23 +6984,21 @@ static bool save_edits_and_update_display(snd_info *sp)
     }
   FREE(sf);
 
-#if (!HAVE_ACCESS)
-  err = false;
-#else
-  err = access(sp->filename, W_OK);
-#endif
-  /* very weird -- in Linux we can write a write-protected file?? */
-  if (!err)
+#if (HAVE_ACCESS)
+  if (access(sp->filename, W_OK)) /* TODO: if fam, unnecessary? */
     {
-      io_error_t io_err;
-      mus_sound_forget(sp->filename);
-      sp->writing = true;
-      io_err = move_file(ofile, sp->filename); /* should we cancel and restart a monitor? */
-      sp->writing = false;
-      if (io_err != IO_NO_ERROR) saved_errno = errno;
-      /* TODO: this used to issue a snd_warning */
+      sa = free_axes_data(sa);
+      return(IO_WRITE_PROTECTED);
     }
-  else saved_errno = errno;
+#endif
+
+  mus_sound_forget(sp->filename);
+  sp->writing = true;
+  io_err = move_file(ofile, sp->filename); /* should we cancel and restart a monitor? */
+  sp->writing = false;
+  if (io_err != IO_NO_ERROR)
+    return(io_err);
+
   sp->write_date = file_write_date(sp->filename);
   add_sound_data(sp->filename, sp, WITHOUT_INITIAL_GRAPH_HOOK);
   restore_axes_data(sp, sa, mus_sound_duration(sp->filename), true);
@@ -6999,19 +7007,15 @@ static bool save_edits_and_update_display(snd_info *sp)
     CURSOR(sp->chans[i]) = old_cursors[i];
   FREE(old_cursors);
   reflect_file_revert_in_label(sp);
-  /* TODO: at least save this error somewhere hard-to-delete (listener?)
-   */
-  if (err)
-    report_in_minibuffer(sp, _("file write failed: %s, edits are saved in: %s"), strerror(saved_errno), ofile);
-  else report_in_minibuffer(sp, _("wrote %s"), sp->filename); 
   if (ofile) 
     {
       FREE(ofile); 
       ofile = NULL;
     }
+  /* TODO: if fam, do we need this? */
   if (auto_update(ss)) 
     for_each_sound(sound_not_current, NULL);
-  return(false); /* don't erase our error message for the special write-permission problem */
+  return(IO_NO_ERROR);
 }
 
 io_error_t save_edits_without_display(snd_info *sp, char *new_name, int type, int format, int srate, char *comment, int pos)
@@ -7100,62 +7104,58 @@ io_error_t save_channel_edits(chan_info *cp, char *ofile, int pos)
   return(err);
 }
 
-/* TODO: mminibuffer -> error or warning */
-
-void save_edits(snd_info *sp, void *ptr)
+io_error_t save_edits(snd_info *sp)
 {
-  if (sp == NULL) return;
-  if ((!sp->user_read_only) && (!(sp->file_read_only)))
+  int i;
+  bool need_save = false;
+  io_error_t err;
+
+  if (sp == NULL)
+    snd_error("save edits of null sound!");
+  if ((sp->user_read_only) || (sp->file_read_only))
+    return(IO_WRITE_PROTECTED);
+
+  for (i = 0; i < sp->nchans; i++)
     {
-      int i;
-      bool err, need_save;
-      need_save = false;
-      for (i = 0; i < sp->nchans; i++)
+      chan_info *cp;
+      cp = sp->chans[i];
+      if (cp->edit_ctr > 0) 
 	{
-	  chan_info *cp;
-	  cp = sp->chans[i];
-	  if (cp->edit_ctr > 0) 
-	    {
-	      need_save = true;
-	      break;
-	    }
+	  need_save = true;
+	  break;
 	}
-      if (need_save)
-	{
-	  /* TODO: use FAM for these? */
-	  time_t current_write_date;
-	  /* check for change to file while we were editing it */
-	  current_write_date = file_write_date(sp->filename);
-	  /* returns -1 if file does not exist (stat -> -1) */
-	  if (current_write_date < 0)
-	    {
-	      report_in_minibuffer(sp, _("%s has disappeared!"), sp->filename); 
-	      /* unless by chance it fits in one in-core buffer, there's nothing we can do now */
-	      return;
-	    }
-	  if ((current_write_date - sp->write_date) > 1) /* weird!! In Redhat 7.1 these can differ by 1?? Surely this is a bug! */
-	    {
-	      bool yes = true;
-	      /* yes = snd_yes_or_no_p(_("%s changed on disk! Save anyway?"), sp->short_filename); */
-	      /* TODO: yes-or-no case: snd-g|xmenu: (File:Save and Popup:Save) -- handle via separate dialog I guess (sigh) with dynamic callbacks
-	       *     will need multiple such dialogs, clearing if sound is closed etc
-	       */
-	      if (!yes) return;
-	    }
-	  err = save_edits_and_update_display(sp);
-	  if (err)
-	    report_in_minibuffer(sp, "%s: %s", sp->filename, snd_io_strerror());
-	  else
-	    {
-	      if (sp->edited_region) 
-		save_region_backpointer(sp);
-	    }
-	}
-      else
-	report_in_minibuffer(sp, _("(no changes need to be saved)"));
     }
-  else
-    report_in_minibuffer(sp, _("can't write %s (it is read-only)"), sp->short_filename);
+  if (!need_save) return(IO_NO_CHANGES);
+
+  /* TODO: use FAM for these? */
+  time_t current_write_date;
+  /* check for change to file while we were editing it */
+  current_write_date = file_write_date(sp->filename);
+  /* returns -1 if file does not exist (stat -> -1) */
+  if (current_write_date < 0)
+    {
+      snd_error(_("can't save edits; %s has disappeared!"), sp->filename); 
+      /* unless by chance it fits in one in-core buffer, there's nothing we can do now */
+      return(IO_CANT_OPEN_FILE);
+    }
+  if ((current_write_date - sp->write_date) > 1) /* weird!! In Redhat 7.1 these can differ by 1?? Surely this is a bug! */
+    {
+      if (ask_before_overwrite(ss))
+	return(IO_NEED_WRITE_CONFIRMATION);
+      
+      /* yes = snd_yes_or_no_p(_("%s changed on disk! Save anyway?"), sp->short_filename); */
+      /* TODO: yes-or-no case: snd-g|xmenu: (File:Save and Popup:Save) -- handle via separate dialog I guess (sigh) with dynamic callbacks
+       *     will need multiple such dialogs, clearing if sound is closed etc
+       */
+      
+    }
+  err = save_edits_and_update_display(sp);
+  if (err == IO_NO_ERROR)
+    {
+      if (sp->edited_region) 
+	save_region_backpointer(sp);
+    }
+  return(err);
 }
 
 void revert_edits(chan_info *cp)
@@ -8131,7 +8131,7 @@ Float channel_local_maxamp(chan_info *cp, off_t beg, off_t num, int edpos, off_t
 	  if (j > 1000000)
 	    {
 	      check_for_event();
-	      if (ss->stopped_explicitly)
+	      if ((ss->stopped_explicitly) || (!(cp->active)))
 		{
 		  ss->stopped_explicitly = false;
 		  report_in_minibuffer(cp->sound, _("maxamp check interrupted..."));
@@ -8727,7 +8727,7 @@ insert data (either a vct, a list of samples, or a filename) into snd's channel 
       ivals = g_floats_to_samples(vect, &ilen, S_insert_samples, 3);
       if (ivals)
 	{
-	  if (!origin) origin = copy_string(S_insert_samples);
+ 	  if (!origin) origin = copy_string(TO_PROC_NAME(S_insert_samples));
 	  insert_samples(beg, (off_t)ilen, ivals, cp, origin, pos);
 	  FREE(ivals);
 	}

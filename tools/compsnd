@@ -11,7 +11,7 @@ fgrep -e " #(" *.scm
 fgrep -e "the the " *.c
 fgrep -e "the the " *.html
 va.scm
-check-gtk.scm
+tools/check-gtk.scm
 
 echo ' -------------------------------- basic configure test -------------------------------- '
 rm -f snd

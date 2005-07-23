@@ -2728,12 +2728,18 @@ static void dismiss_record_callback(Widget w, XtPointer context, XtPointer info)
     }
 }
 
+static void errors_to_recorder(const char *msg, void *data)
+{
+  recorder_error((char *)msg);
+}
+
 void finish_recording(recorder_info *rp)
 {
   XmString s1 = NULL, s2 = NULL;
   char *str;
   snd_info *sp;
   Float duration;
+  if (rp->output_file_descriptor < 0) return;
   sensitize_control_buttons();
   if (!(ss->using_schemes)) XmChangeColor(record_button, (Pixel)ss->sgx->doit_button_color);
   s1 = XmStringCreate(_("Reset"), XmFONTLIST_DEFAULT_TAG);
@@ -2743,9 +2749,13 @@ void finish_recording(recorder_info *rp)
   XtVaSetValues(record_button, XmNlabelString, s2, NULL);
   XmStringFree(s2);
   if (mus_file_close(rp->output_file_descriptor) != 0)
-    snd_error(_("Record Done: can't close %s: %s!"),
-	      rp->output_file,
-	      snd_io_strerror());
+    {
+      snd_warning(_("Record Done: can't close %s: %s (%d)!"),
+		  rp->output_file,
+		  snd_io_strerror(),
+		  rp->output_file_descriptor);
+      return;
+    }
   mus_header_change_data_size(rp->output_file,
 			      rp->output_header_type,
 			      rp->total_output_frames * rp->out_chans * mus_bytes_per_sample(rp->output_data_format));
@@ -2763,9 +2773,11 @@ void finish_recording(recorder_info *rp)
   if (rp->autoload)
     {
       ss->open_requestor = FROM_RECORDER;
+      redirect_everything_to(errors_to_recorder, (void *)rp);
       if ((sp = find_sound(rp->output_file, 0)))
 	snd_update(sp);
       else snd_open_file(rp->output_file, FILE_READ_WRITE);
+      redirect_everything_to(NULL, NULL);
     }
 }
 

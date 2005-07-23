@@ -1510,7 +1510,7 @@ static sono_slice_t run_all_ffts(sonogram_state *sg)
 		      NOT_FROM_ENVED);
       sg->minibuffer_needs_to_be_cleared = true;
       sg->msg_ctr = 8;
-      if (!(cp->graph_transform_p)) return(SONO_QUIT);
+      if ((!(cp->graph_transform_p)) || !(cp->active)) return(SONO_QUIT);
     }
   if (si->active_slices < si->total_slices)
     {

@@ -1708,6 +1708,11 @@ static void dismiss_record_callback(GtkWidget *w, gpointer context)
   close_recorder_audio();
 }
 
+static void errors_to_recorder(const char *msg, void *data)
+{
+  recorder_error((char *)msg);
+}
+
 void finish_recording(recorder_info *rp)
 {
   char *str;
@@ -1734,9 +1739,11 @@ void finish_recording(recorder_info *rp)
     {
       snd_info *sp;
       ss->open_requestor = FROM_RECORDER;
+      redirect_everything_to(errors_to_recorder, (void *)rp);
       if ((sp = find_sound(rp->output_file, 0)))
 	snd_update(sp);
       else snd_open_file(rp->output_file, FILE_READ_WRITE);
+      redirect_everything_to(NULL, NULL);
     }
 }
 

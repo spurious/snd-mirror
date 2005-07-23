@@ -735,7 +735,10 @@ static void fam_sp_action(struct fam_info *fp, FAMEvent *fe)
 	  err = access(sp->filename, R_OK);
 	  if (err < 0)
 	    {
-	      report_in_minibuffer(sp, "%s is read-protected!", sp->short_filename);
+	      char *msg;
+	      msg = mus_format(_("%s is read-protected!"), sp->short_filename);
+	      display_minibuffer_error(sp, msg); /* TODO: this should clear if the permission bits change */
+	      FREE(msg);
 	      sp->file_unreadable = true;
 	      snd_file_bomb_icon(sp, true);
 	    }
@@ -1489,21 +1492,40 @@ snd_info *snd_update(snd_info *sp)
     {
       if (mus_file_probe(sp->filename) == 0)
 	{
-	  /* user deleted file while editing it? */
-	  report_in_minibuffer(sp, _("%s no longer exists!"), sp->short_filename);
-	  /* TODO: use snd_warning? */
-	  /* snd_error(_("%s no longer exists!"), sp->short_filename); */
+	  snd_error(_("%s no longer exists!"), sp->short_filename);
 	  return(sp);
 	}
       app_x = widget_width(MAIN_SHELL(ss));
       app_y = widget_height(MAIN_SHELL(ss));
       sp = snd_update_1(sp, sp->filename);
-      if (sp)
-	report_in_minibuffer(sp, _("updated %s"), sp->short_filename);
-      /* else there might be some legit reason such as raw data dialog in progress */
       set_widget_size(MAIN_SHELL(ss), app_x, app_y);
     }
   return(sp);
+}
+
+static void snd_update_warning_handler(const char *msg, void *data)
+{
+  report_in_minibuffer((snd_info *)data, msg);
+}
+
+static void snd_update_error_handler(const char *msg, void *data)
+{
+  redirect_snd_error_to(NULL, NULL);
+  redirect_snd_warning_to(NULL, NULL);
+  XEN_ERROR(CANT_UPDATE_FILE,
+	    XEN_LIST_2(C_TO_XEN_STRING((char *)data),
+		       C_TO_XEN_STRING(msg)));
+}
+
+snd_info *snd_update_within_xen(snd_info *sp, const char *caller)
+{
+  snd_info *nsp;
+  redirect_snd_error_to(snd_update_error_handler, (void *)caller);
+  redirect_snd_warning_to(snd_update_warning_handler, (void *)sp);
+  nsp = snd_update(sp);
+  redirect_snd_error_to(NULL, NULL);
+  redirect_snd_warning_to(NULL, NULL);
+  return(nsp);
 }
 
 static XEN after_save_as_hook;
@@ -2746,6 +2768,8 @@ static XEN g_set_sound_loop_info(XEN snd, XEN vals)
   XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(vals) || XEN_LIST_P_WITH_LENGTH(vals, len), vals, XEN_ARG_2, S_setB S_sound_loop_info, "a list");
   if (XEN_NOT_BOUND_P(vals))
     {
+      /* what is going on here? -- (set! (sound-loop-info) (list...))? */
+      XEN_ASSERT_TYPE(XEN_LIST_P(snd), snd, XEN_ARG_1, S_setB S_sound_loop_info, "a list");
       vals = snd;
       len = XEN_LIST_LENGTH(vals); 
       sp = get_sp(XEN_UNDEFINED, NO_PLAYERS);

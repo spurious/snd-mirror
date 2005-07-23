@@ -789,12 +789,51 @@ VALUE xen_rb_hook_c_new(char *name, int arity, char *help)
   return xen_rb_hook_initialize(3, args, hook_alloc(xen_rb_cHook));
 }
 
+/*
+  RUBY_RELEASE_DATE < "2004-03-18" ? old : new
+
+  lambda do         end.arity 	    -1     0 !!!
+  lambda do ||      end.arity 	     0     0
+  lambda do |a|     end.arity 	    -1     1 !!!
+  lambda do |*a|    end.arity 	    -1    -1
+  lambda do |a, b|  end.arity 	     2     2
+  lambda do |a, *b| end.arity 	    -2    -2
+  etc.
+*/
+
+#ifdef RUBY_VERSION
+  #define XEN_RUBY_RELEASE_DATE  RUBY_RELEASE_DATE
+#else
+  #define XEN_RUBY_RELEASE_DATE  XEN_TO_C_STRING(XEN_EVAL_C_STRING("RUBY_RELEASE_DATE"))
+#endif
+
+#define RUBY_NEW_ARITY_DATE   "2004-03-18"
+#define OLD_RUBY_ARITY()      (strcmp(XEN_RUBY_RELEASE_DATE, RUBY_NEW_ARITY_DATE) < 0)
+#define NEW_RUBY_ARITY()      (strcmp(XEN_RUBY_RELEASE_DATE, RUBY_NEW_ARITY_DATE) >= 0)
+
+bool xen_rb_arity_ok(int rargs, int args)
+{
+  if (OLD_RUBY_ARITY())
+    {
+      if ((rargs >= 2) || (rargs == 0))
+	return (rargs == args);
+      else if (rargs <= -2)
+	return (abs(rargs) <= args);
+      else			/* rargs -1 remains (no 1 exists) */
+	return ((args == 1) || (args == 0) || (args == -1));
+    }
+  else /* NEW_RUBY_ARITY */
+    return ((rargs >= 0) ? (rargs == args) : (abs(rargs) <= args));
+}
+ 
 static VALUE xen_rb_hook_add_hook(int argc, VALUE *argv, VALUE hook)
 {
   VALUE name, func;
+  int args = XEN_TO_C_INT(rb_iv_get(hook, "@arity"));
   rb_scan_args(argc, argv, "1&", &name, &func);
   XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_1, c__FUNCTION__, "a char*");
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(func), func, XEN_ARG_2, c__FUNCTION__, "a procedure");
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(func) && xen_rb_arity_ok(XEN_TO_C_INT(XEN_ARITY(func)), args),
+		  func, XEN_ARG_2, c__FUNCTION__, "a procedure");
   rb_ary_push(rb_iv_get(hook, "@procs"), rb_ary_new3(2, name, func));
   return hook;
 }

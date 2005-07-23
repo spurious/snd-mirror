@@ -266,6 +266,7 @@ static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp, XE
       	  ucp = si->cps[ip];
 	  if (!(editable_p(ucp))) continue;
 	  sp = ucp->sound;
+	  if (!(sp->active)) continue;
 	  if ((ip > 0) && (sp != gsp)) 
 	    finish_progress_report(gsp, NOT_FROM_ENVED);
 	  if ((ip == 0) || (sp != gsp)) 
@@ -391,9 +392,6 @@ static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp, XE
 	  ucp->edit_hook_checked = false;
 	  if (ofile) FREE(ofile);
 	  check_for_event();
-	  /* TODO: in all these cases, the event might include closing the current sound --
-	   *   need to checkl cp->active and sp->active
-	   */
 	  if (ss->stopped_explicitly) 
 	    {
 	      stop_point = ip;
@@ -669,6 +667,7 @@ static void swap_channels(chan_info *cp0, chan_info *cp1, off_t beg, off_t dur, 
   c1 = init_sample_read_any(beg, cp1, READ_FORWARD, pos1);
   if (temp_file)
     {
+      ss->stopped_explicitly = false;
       j = 0;
       for (k = 0; k < dur; k++)
 	{
@@ -682,20 +681,40 @@ static void swap_channels(chan_info *cp0, chan_info *cp1, off_t beg, off_t dur, 
 	      err = mus_file_write(ofd1, 0, j - 1, 1, data1);
 	      j = 0;
 	      if (err == -1) break;
-	      if (reporting) progress_report(sp0, "scl", 1, 1, (Float)((double)k / (double)dur), NOT_FROM_ENVED);
+	      if (reporting) 
+		{
+		  progress_report(sp0, S_swap_channels, 1, 1, (Float)((double)k / (double)dur), NOT_FROM_ENVED);
+		  if (ss->stopped_explicitly) break;
+		  if ((!(cp0->active)) || (!(cp1->active)))
+		    {
+		      ss->stopped_explicitly = true;
+		      break;
+		    }
+		}
 	    }
 	}
-      if (j > 0) 
+      if (!(ss->stopped_explicitly))
 	{
-	  mus_file_write(ofd0, 0, j - 1, 1, data0);
-	  mus_file_write(ofd1, 0, j - 1, 1, data1);
+	  if (j > 0) 
+	    {
+	      mus_file_write(ofd0, 0, j - 1, 1, data0);
+	      mus_file_write(ofd1, 0, j - 1, 1, data1);
+	    }
 	}
       close_temp_file(ofile0, ofd0, hdr0->type, dur * datumb, sp0);
       close_temp_file(ofile1, ofd1, hdr1->type, dur * datumb, sp0); /* sp0 used here in case of error report */
       free_file_info(hdr0);
       free_file_info(hdr1);
-      file_change_samples(beg, dur, ofile0, cp0, 0, DELETE_ME, LOCK_MIXES, S_swap_channels, cp0->edit_ctr);
-      file_change_samples(beg, dur, ofile1, cp1, 0, DELETE_ME, LOCK_MIXES, S_swap_channels, cp1->edit_ctr);
+      if (!(ss->stopped_explicitly))
+	{
+	  file_change_samples(beg, dur, ofile0, cp0, 0, DELETE_ME, LOCK_MIXES, S_swap_channels, cp0->edit_ctr);
+	  file_change_samples(beg, dur, ofile1, cp1, 0, DELETE_ME, LOCK_MIXES, S_swap_channels, cp1->edit_ctr);
+	}
+      else
+	{
+	  report_in_minibuffer(sp0, _("swap interrupted"));
+	  ss->stopped_explicitly = false;
+	}
       if (ofile0) {FREE(ofile0); ofile0 = NULL;}
       if (ofile1) {FREE(ofile1); ofile1 = NULL;}
       if (reporting) finish_progress_report(sp0, NOT_FROM_ENVED);
@@ -835,6 +854,11 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, off_t beg, off_t 
 		    {
 		      progress_report(sp, origin, curchan + 1, chans, (Float)((double)(sr->sample) / (double)dur), from_enved);
 		      if (ss->stopped_explicitly) break;
+		      if (!(sp->active))
+			{
+			  ss->stopped_explicitly = true;
+			  break;
+			}
 		    }
 		}
 	    }
@@ -854,6 +878,11 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, off_t beg, off_t 
 		    {
 		      progress_report(sp, origin, curchan + 1, chans, (Float)((double)(sr->sample) / (double)dur), from_enved);
 		      if (ss->stopped_explicitly) break;
+		      if (!(sp->active))
+			{
+			  ss->stopped_explicitly = true;
+			  break;
+			}
 		    }
 		}
 	    }
@@ -915,6 +944,11 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, off_t beg, off_t 
 		{
 		  progress_report(sp, origin, curchan + 1, chans, (Float)((double)(sr->sample) / (double)dur), from_enved);
 		  if (ss->stopped_explicitly) break;
+		  if (!(sp->active))
+		    {
+		      ss->stopped_explicitly = true;
+		      break;
+		    }
 		}
 	    }
 	  if (next_pass != sr->sample)             /* tick env forward dependent on sr->sample */
@@ -941,7 +975,8 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, off_t beg, off_t 
     }
   if (reporting) finish_progress_report(sp, from_enved);
   sr = free_src(sr);
-  if ((!(ss->stopped_explicitly)) && (j > 0)) mus_file_write(ofd, 0, j - 1, 1, data);
+  if ((!(ss->stopped_explicitly)) && (j > 0)) 
+    mus_file_write(ofd, 0, j - 1, 1, data);
   close_temp_file(ofile, ofd, hdr->type, k * datumb, sp);
   hdr = free_file_info(hdr);
   if (!(ss->stopped_explicitly))
@@ -1341,6 +1376,7 @@ static char *convolution_filter(chan_info *cp, int order, env *e, snd_fd *sf, of
       data[0] = (mus_sample_t *)CALLOC(MAX_BUFFER_SIZE, sizeof(mus_sample_t)); 
       idata = data[0];
       if (reporting) start_progress_report(sp, from_enved);
+      ss->stopped_explicitly = false;
       for (offk = 0; offk < dur; offk++)
 	{
 	  Float x;
@@ -1352,14 +1388,29 @@ static char *convolution_filter(chan_info *cp, int order, env *e, snd_fd *sf, of
 	      err = mus_file_write(ofd, 0, j - 1, 1, data);
 	      j = 0;
 	      if (err == -1) break;
-	      if (reporting) 
-		progress_report(sp, origin, 1, 1, (Float)((double)offk / (double)dur), from_enved);
+	      if (reporting)
+		{
+		  progress_report(sp, origin, 1, 1, (Float)((double)offk / (double)dur), from_enved);
+		  if (ss->stopped_explicitly) break;
+		  if (!(sp->active))
+		    {
+		      ss->stopped_explicitly = true;
+		      break;
+		    }
+		}
 	    }
 	}
       if (reporting) finish_progress_report(sp, from_enved);
-      if (j > 0) mus_file_write(ofd, 0, j - 1, 1, data);
+      if ((j > 0) && (!(ss->stopped_explicitly)))
+	mus_file_write(ofd, 0, j - 1, 1, data);
       close_temp_file(ofile, ofd, hdr->type, dur * datumb, sp);
-      file_change_samples(beg, dur, ofile, cp, 0, DELETE_ME, LOCK_MIXES, origin, cp->edit_ctr);
+      if (!(ss->stopped_explicitly))
+	file_change_samples(beg, dur, ofile, cp, 0, DELETE_ME, LOCK_MIXES, origin, cp->edit_ctr);
+      else 
+	{
+	  report_in_minibuffer(sp, _("filter interrupted"));
+	  ss->stopped_explicitly = false;
+	}
       mus_free(gen);
       FREE(data[0]);
       FREE(data);
@@ -1529,6 +1580,11 @@ static char *direct_filter(chan_info *cp, int order, env *e, snd_fd *sf, off_t b
 		{
 		  progress_report(sp, origin, 1, 1, (Float)((double)offk / (double)dur), from_enved);
 		  if (ss->stopped_explicitly) return(NULL);
+		  if (!(sp->active))
+		    {
+		      ss->stopped_explicitly = true;
+		      break;
+		    }
 		}
 	    }
 	}
@@ -1683,6 +1739,7 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, enved_prog
 	{
 	  cp = si->cps[i];
 	  sp = cp->sound;
+	  if (!(sp->active)) continue;
 	  if (scdur == 0) 
 	    dur = to_c_edit_samples(cp, edpos, caller, arg_pos);
 	  else dur = scdur;
@@ -1702,7 +1759,7 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, enved_prog
 	  if (ss->stopped_explicitly)
 	    {
 	      ss->stopped_explicitly = false;
-	      report_in_minibuffer(sp, _("stopped"));
+	      report_in_minibuffer(sp, _("filter stopped"));
 	      break;
 	    }
 	}
@@ -1941,6 +1998,7 @@ static void reverse_sound(chan_info *ncp, bool over_selection, XEN edpos, int ar
     }
   if (ss->stopped_explicitly)
     {
+      report_in_minibuffer(sp, _("reverse stopped"));
       ss->stopped_explicitly = false;
       for (i = 0; i <= stop_point; i++)
 	{
@@ -2189,12 +2247,19 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool over_selection,
 		  j++;
 		  if ((temp_file) && (j == MAX_BUFFER_SIZE))
 		    {
-		      if (reporting) 
-			progress_report(sp, origin, 0, 0, (Float)((double)ioff / ((double)dur)), from_enved);
+		      if (reporting)
+			{
+			  progress_report(sp, origin, 0, 0, (Float)((double)ioff / ((double)dur)), from_enved);
+			  if (ss->stopped_explicitly) break;
+			  if (!(sp->active))
+			    {
+			      ss->stopped_explicitly = true;
+			      break;
+			    }
+			}
 		      err = mus_file_write(ofd, 0, j - 1, si->chans, data);
 		      j = 0;
 		      if (err == -1) break;
-		      if (ss->stopped_explicitly) break;
 		    }
 		}
 	    }
@@ -2234,11 +2299,18 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool over_selection,
 		  if ((temp_file) && (j == MAX_BUFFER_SIZE))
 		    {
 		      if (reporting)
-			progress_report(sp, origin, 0, 0, (Float)((double)ioff / ((double)dur)), from_enved);
+			{
+			  progress_report(sp, origin, 0, 0, (Float)((double)ioff / ((double)dur)), from_enved);
+			  if (ss->stopped_explicitly) break;
+			  if (!(sp->active))
+			    {
+			      ss->stopped_explicitly = true;
+			      break;
+			    }
+			}
 		      err = mus_file_write(ofd, 0, j - 1, 1, data);
 		      j = 0;
 		      if (err == -1) break;
-		      if (ss->stopped_explicitly) break;
 		    }
 		}
 	    }
@@ -2820,11 +2892,15 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
 		  if (rpt > rpt4)
 		    {
 		      progress_report(sp, caller, 1, 1, (Float)((double)kp / (double)num), NOT_FROM_ENVED);
+		      if (!(sp->active))
+			{
+			  ss->stopped_explicitly = true;
+			  break;
+			}
 		      rpt = 0;		    
 		    }
 		}
-	      if (ss->stopped_explicitly) 
-		break;
+	      if (ss->stopped_explicitly) break;
 	    }
 	  if (outgen) mus_free(outgen);
 	  sf = free_snd_fd(sf);
@@ -3201,14 +3277,18 @@ static XEN scan_body(void *context)
 	  if (rpt > rpt4)
 	    {
 	      progress_report(sc->sp, sc->caller, 1, 1, (Float)((double)kp / (double)(sc->num)), NOT_FROM_ENVED);
+	      if (!(sc->sp->active))
+		{
+		  ss->stopped_explicitly = true;
+		  break;
+		}
 	      rpt = 0;
 	    }
 	}
       if (ss->stopped_explicitly)
 	{
 	  ss->stopped_explicitly = false;
-	  report_in_minibuffer(sc->sp, _("C-G stopped %s at sample " PRId64), 
-			       sc->caller, kp + sc->beg);
+	  report_in_minibuffer(sc->sp, _("%s stopped at sample " PRId64), sc->caller, kp + sc->beg);
 	  break;
 	}
     }
@@ -3347,14 +3427,18 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn,
 	  if (rpt > rpt4)
 	    {
 	      progress_report(sp, caller, 1, 1, (Float)((double)kp / (double)num), NOT_FROM_ENVED);
+	      if (!(sp->active))
+		{
+		  ss->stopped_explicitly = true;
+		  break;
+		}
 	      rpt = 0;
 	    }
 	}
       if (ss->stopped_explicitly)
 	{
 	  ss->stopped_explicitly = false;
-	  report_in_minibuffer(sp, _("C-G stopped %s at sample " PRId64), 
-			       caller, kp + beg);
+	  report_in_minibuffer(sp, _("%s stopped at sample " PRId64), caller, kp + beg);
 	  break;
 	}
     }

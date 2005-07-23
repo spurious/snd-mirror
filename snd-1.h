@@ -472,6 +472,9 @@ typedef struct snd_state {
   void *xen_error_data;
   void (*snd_print_handler)(const char *msg, void *data);
   void *snd_print_data;
+#if DEBUGGING
+  char *snd_error_caller, *xen_error_caller, *snd_print_caller, *snd_warning_caller;
+#endif
 } snd_state;
 
 extern snd_state *ss;
@@ -603,7 +606,7 @@ int snd_exit_cleanly(bool force_exit);
 void sound_not_current(snd_info *sp, void *dat);
 void set_init_filename(const char *filename);
 FILE *open_snd_init_file (void);
-int save_state (char *save_state_name);
+void save_state (char *save_state_name);
 void global_control_panel_state(void);
 int handle_next_startup_arg(int auto_open_ctr, char **auto_open_file_names, bool with_title, int args);
 
@@ -612,6 +615,7 @@ void g_init_main(void);
 
 /* --------- snd-error.c -------- */
 
+const char *io_error_name(io_error_t err);
 #ifdef __GNUC__
   void snd_error(char *format, ...)  __attribute__ ((format (printf, 1, 2)));
   void snd_warning(char *format, ...)  __attribute__ ((format (printf, 1, 2)));
@@ -625,8 +629,16 @@ void g_init_errors(void);
 #ifdef SND_AS_WIDGET
   void set_error_display (void (*func)(const char *));
 #endif
+
+#if DEBUGGING
+#define redirect_snd_error_to(Handler, Data) redirect_snd_error_to_1(Handler, Data, __FUNCTION__)
+#define redirect_snd_warning_to(Handler, Data) redirect_snd_warning_to_1(Handler, Data, __FUNCTION__)
+void redirect_snd_error_to_1(void (*handler)(const char *error_msg, void *ufd), void *data, const char *caller);
+void redirect_snd_warning_to_1(void (*handler)(const char *warning_msg, void *ufd), void *data, const char *caller);
+#else
 void redirect_snd_error_to(void (*handler)(const char *error_msg, void *ufd), void *data);
 void redirect_snd_warning_to(void (*handler)(const char *warning_msg, void *ufd), void *data);
+#endif
 
 
 /* -------- snd-completion.c -------- */
@@ -689,17 +701,17 @@ off_t move_play_mark(chan_info *cp, off_t *mc, Locus cx);
 void finish_moving_play_mark(chan_info *cp);
 void finish_moving_mark(chan_info *cp, mark *m);
 mark *add_mark(off_t samp, const char *name, chan_info *cp);
-void delete_mark_samp(off_t samp, chan_info *cp);
+bool delete_mark_samp(off_t samp, chan_info *cp);
 void free_mark_list(chan_info *cp, int ignore);
 void collapse_marks (snd_info *sp);
-void goto_mark(chan_info *cp, int count);
+bool goto_mark(chan_info *cp, int count);
 void goto_named_mark(chan_info *cp, const char *name);
 mark *active_mark(chan_info *cp);
 off_t mark_beg(chan_info *cp);
 void display_channel_marks(chan_info *cp);
 void release_pending_marks(chan_info *cp, int edit_ctr);
 void ripple_marks(chan_info *cp, off_t beg, off_t change);
-void mark_define_region(chan_info *cp, int count);
+bool mark_define_region(chan_info *cp, int count);
 void save_mark_list(FILE *fd, chan_info *cp);
 void reverse_marks(chan_info *cp, off_t beg, off_t dur);
 void src_marks(chan_info *cp, Float ratio, off_t old_samps, off_t new_samps, off_t beg, bool over_selection);
@@ -813,7 +825,7 @@ void redo_edit_with_sync(chan_info *cp, int count);
 void undo_edit(chan_info *cp, int count);
 void redo_edit(chan_info *cp, int count);
 io_error_t save_channel_edits(chan_info *cp, char *ofile, int pos);
-void save_edits(snd_info *sp, void *ptr);
+io_error_t save_edits(snd_info *sp);
 io_error_t save_edits_without_display(snd_info *sp, char *new_name, int type, int format, int srate, char *comment, int pos);
 void revert_edits(chan_info *cp);
 off_t current_location(snd_fd *sf);
@@ -870,10 +882,21 @@ bool transform_p(int type);
 
 /* -------- snd-xen.c -------- */
 
+#if DEBUGGING
+#define redirect_xen_error_to(Handler, Data) redirect_xen_error_to_1(Handler, Data, __FUNCTION__)
+#define redirect_snd_print_to(Handler, Data) redirect_snd_print_to_1(Handler, Data, __FUNCTION__)
+#define redirect_everything_to(Handler, Data) redirect_everything_to_1(Handler, Data, __FUNCTION__)
+#define redirect_errors_to(Handler, Data) redirect_errors_to_1(Handler, Data, __FUNCTION__)
+void redirect_xen_error_to_1(void (*handler)(const char *msg, void *ufd), void *data, const char *caller);
+void redirect_snd_print_to_1(void (*handler)(const char *msg, void *ufd), void *data, const char *caller);
+void redirect_errors_to_1(void (*handler)(const char *msg, void *ufd), void *data, const char *caller);
+void redirect_everything_to_1(void (*handler)(const char *msg, void *ufd), void *data, const char *caller);
+#else
 void redirect_xen_error_to(void (*handler)(const char *msg, void *ufd), void *data);
 void redirect_snd_print_to(void (*handler)(const char *msg, void *ufd), void *data);
 void redirect_errors_to(void (*handler)(const char *msg, void *ufd), void *data);
 void redirect_everything_to(void (*handler)(const char *msg, void *ufd), void *data);
+#endif
 XEN snd_catch_any(XEN_CATCH_BODY_TYPE body, void *body_data, const char *caller);
 XEN snd_throw(XEN key, XEN args);
 XEN snd_no_such_file_error(const char *caller, XEN filename);
@@ -1276,6 +1299,7 @@ io_error_t copy_file(const char *oldname, const char *newname);
 io_error_t move_file(const char *oldfile, const char *newfile);
 snd_info *make_sound_readable(const char *filename, bool post_close);
 snd_info *snd_update(snd_info *sp);
+snd_info *snd_update_within_xen(snd_info *sp, const char *caller);
 char *view_curfiles_name(int pos);
 void view_curfiles_play(int pos, bool play);
 void view_curfiles_select(int pos);
@@ -1542,6 +1566,7 @@ void save_macro_state(FILE *fd);
   void report_in_minibuffer(snd_info *sp, const char *format, ...);
 #endif
 void errors_to_minibuffer(const char *msg, void *data);
+void printout_to_minibuffer(const char *msg, void *data);
 void clear_minibuffer(snd_info *sp);
 void clear_minibuffer_prompt(snd_info *sp);
 void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta);
