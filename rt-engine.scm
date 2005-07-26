@@ -1,4 +1,4 @@
-<
+
 #!
 
 rt-engine.scm
@@ -824,29 +824,25 @@ procfuncs=sorted
 	(<int> rt_remove_procfunc_do (lambda ((<struct-RT_Engine-*> engine)
 					       (<struct-RT_Procfunc-*> toremove))
 					  
-					  (if (> toremove->visitors 0)
-					      (begin
-						
-						;;(fprintf stderr (string "removing: %u, visitors: %d\\n") event toremove->visitors)
-						toremove->visitors--
-
-						(if (== 0 toremove->visitors)
-						    (begin
-						      engine->num_procfuncs--
-						      
-						      (rt_unprotect_procfunc engine toremove)
-						      
-						      (if (== toremove->prev NULL)
-							  (begin
-							    (set! engine->procfuncs toremove->next)
-							    (if (!= NULL engine->procfuncs)
-								(set! engine->procfuncs->prev NULL)))
-							  (begin
-							    (set! toremove->prev->next toremove->next)
-							    (if (!= toremove->next NULL)
-								(set! toremove->next->prev toremove->prev))))
-						      (return 1)))))
-					  (return 0)))
+				       toremove->visitors--
+				       
+				       (if (== 0 toremove->visitors)
+					   (begin
+					     engine->num_procfuncs--
+					     
+					     (rt_unprotect_procfunc engine toremove)
+					     
+					     (if (== toremove->prev NULL)
+						 (begin
+						   (set! engine->procfuncs toremove->next)
+						   (if (!= NULL engine->procfuncs)
+						       (set! engine->procfuncs->prev NULL)))
+						 (begin
+						   (set! toremove->prev->next toremove->next)
+						   (if (!= toremove->next NULL)
+						       (set! toremove->next->prev toremove->prev))))
+					     (return 1))
+					   (return 0))))
 
 	 (functions->public
 

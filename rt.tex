@@ -776,6 +776,7 @@ Receiving alsa midi is supported. Check out rt-examples.scm for a quite large ex
 If you don't want alsa-midi (for example if you're running osx), set \scheme|*use-alsa-midi*|
 to \scheme|#f| before loading rt-compiler.scm.
 
+Receving inside the rt-process:
 \begin{schemedisplay}
 (<rt-play> (lambda ()
               (receive-midi (lambda (control data1 data2)
@@ -783,6 +784,13 @@ to \scheme|#f| before loading rt-compiler.scm.
                                (printf "gakk! %x %x %x\\n" control data1 data2)))))
 \end{schemedisplay}
 
+Receiving in guile:
+\begin{schemedisplay}
+(receive-midi (lambda (control data1 data2)
+                 (c-display control data1 data2)))
+\end{schemedisplay}
+
+To turn off receiving in guile, call the function \scheme|(stop-receiving-midi!)|.
 
 
 \subsection{Ladspa plugins}

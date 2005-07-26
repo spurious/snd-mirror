@@ -622,3 +622,194 @@ This version of the fm-violin assumes it is running within with-sound (where *ou
 
 
 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Another midi sofsynth, using samples. This one is a bit more advanced. Actually, it
+;; sounds very nice. However, it use Guile for reading midi, and Guile is not allways
+;; able to keep up (turning off the garbage collector might help, but that is dangerous!),
+;; sometimes making the sounds lag.
+
+(definstrument (midisoftsampler filename srcval vol)
+  (let* ((read (make-readin filename))
+	 (sr (make-src #:srate srcval #:width 5))
+	 (attack (make-env `(0 0    0.7 ,(* 1.9 vol)    1.0 ,vol) #:duration 0.1))
+	 (release (make-env `(0 ,vol    1 0) #:duration 0.5))
+	 (is-attacking #t)
+	 (is-releasing #f))
+    (<rt-play> (lambda ()
+		 (if (>= (mus-location read) (mus-length read))
+		     (set! (mus-increment read) -1)
+		     (if (<= (mus-location read) 0)
+			 (set! (mus-increment read) 1)))
+		 (let ((outval (src sr 0.0 (lambda (direction)
+					     (readin read)))))
+		   (cond ((and is-releasing
+			       (not is-attacking))
+			  (out (* (env release) outval))
+			  (if (>= (mus-location release) (mus-length release))
+			      (remove-me)))
+			 (is-attacking
+			  (out (* (env attack) outval))
+			  (if (>= (mus-location attack) (mus-length attack))
+			      (set! is-attacking #f)))
+			 (else
+			  (out (* vol outval)))))))))
+
+
+(define (start-synth filename middlenote)
+  (define synths '())
+  (define (play note vol)
+    (let ((middlenote (midi-to-freq middlenote))
+	  (srcval (midi-to-freq note))) 
+      (set! srcval (- srcval middlenote))
+      (set! srcval (/ srcval middlenote))
+      (set! srcval (1+ srcval))
+      (set! synths (cons (list note
+			       (midisoftsampler filename srcval (/ vol 256)))
+			 synths))))
+  (define (stop note)
+    (let ((synth (any (lambda (s)
+			(if (= note (car s))
+			    s
+			    #f))
+		      synths)))
+      (if (not synth)
+	  (c-display "Error, unable to remove" note)
+	  (begin
+	    (set! (-> (cadr synth) is-releasing) #t)
+	    (set! synths (delete! synth synths eq?))))))
+  (receive-midi (lambda (control data1 data2)
+		  (set! control (logand #xf0 control))
+		  (cond ((and (= #x90 control)
+			      (not (= 0 data2)))
+			 (play data1 data2))
+			((or (= control #x80)
+			     (and (= control #x90)
+				  (= data2 0)))
+			 (stop data1))))))
+  
+#!
+(define filename "/home/kjetil/flute2.wav")
+(start-synth filename 60)
+(start-synth filename 68)
+(start-synth filename 78)
+(start-synth filename 90)
+
+(begin
+  (stop-receiving-midi!)
+  (rte-silence!))
+
+#!
+
+
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Same midisoftsynth as the one above. But now properly
+;;; made, reading midi inside the realtime thread.
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(definstrument (midisoftsampler filename middlenote #:key (attack 1.5) (release 0.5) (src-width 5))
+  (let* ((num-synths 16)
+	 (num-playing 0)
+	 (synths (apply vector (map (lambda (n)
+				      (vector (vct 0 1 0 0 0 0)
+					      (make-rt-readin filename)
+					      (make-src #:srate 0 #:width src-width)
+					      (make-env `(0 0    0.7 1.9    1.0 1.0) #:duration attack)
+					      (make-env `(0 1    1 0) #:duration release)))
+				    (iota num-synths)))))
+    (<rt-play> (lambda ()
+		 (define Yis-playing 0)
+		 (define Ynote 1)
+		 (define Yis-attacking 2)
+		 (define Yis-releasing 3)
+		 (define Ysrc-val 4)
+		 (define Yvol 5)
+		 (define Yread 1)
+		 (define Ysr 2)
+		 (define Yattack 3)
+		 (define Yrelease 4)
+		 (receive-midi (lambda (control data1 data2)
+				 (declare (<int> control data1 data2))
+				 (set! control (logand #xf0 control))
+				 (if (and (< num-playing num-synths)
+					  (= control #x90)
+					  (> data2 0))
+				     (range i 0 num-synths
+					    (let* ((synth (vector-ref synths i))
+						   (vars (vector-ref synth 0)))
+					      (if (not (vct-ref vars Yis-playing))
+						  (begin
+						    (set! (mus-location (the  <rt-readin> (vector-ref synth Yread)) 0))
+						    (mus-reset (vector-ref synth Ysr))
+						    (mus-reset (vector-ref synth Yattack))
+						    (mus-reset (vector-ref synth Yrelease))
+						    (vct-set! vars Yis-playing 1)
+						    (vct-set! vars Ynote data1)
+						    (vct-set! vars Yis-attacking 1)
+						    (vct-set! vars Yis-releasing 0)
+						    (vct-set! vars Ysrc-val (let ((middlenote (midi-to-freq middlenote))
+										  (srcval (midi-to-freq data1))) 
+									      (set! srcval (- srcval middlenote))
+									      (set! srcval (/ srcval middlenote))
+									      (1+ srcval)))
+						    (vct-set! vars Yvol (/ data2 256))
+						    (set! num-playing (1+ num-playing))
+						    (break)))))
+				     (if (or (= control #x80)
+					     (and (= control #x90)
+						  (= data2 0)))
+					 (range i 0 num-synths
+						(let* ((synth (vector-ref synths i))
+						       (vars (vector-ref synth 0)))
+						  (if (and (= (the <int> (vct-ref vars Ynote))
+							      data1)
+							   (vct-ref vars Yis-playing)
+							   (not (vct-ref vars Yis-releasing)))
+						      (begin
+							(vct-set! vars Yis-releasing 1)
+							(break)))))))))
+		 (range i 0 num-synths
+			(let* ((synth (the <SCM> (vector-ref synths i)))
+			       (vars (vector-ref synth 0)))
+			  (if (vct-ref vars Yis-playing)
+			      (let ((read (the <rt-readin> (vector-ref synth Yread)))
+				    (sr (vector-ref synth Ysr))
+				    (attack (vector-ref synth Yattack))
+				    (release (vector-ref synth Yrelease))
+				    (is-attacking (vct-ref vars Yis-attacking))
+				    (is-releasing (vct-ref vars Yis-releasing))
+				    (src-val (vct-ref vars Ysrc-val))
+				    (vol (vct-ref vars Yvol)))
+				(if (>= (mus-location read) (mus-length read))
+				    (set! (mus-increment read) -1)
+				    (if (<= (mus-location read) 0)
+					(set! (mus-increment read) 1)))
+				(let ((outval (src sr src-val (lambda (direction)
+								(readin (vector-ref synth Yread))))))
+				  (cond ((and is-releasing
+					      (not is-attacking))
+					 (out (* vol (env release) outval))
+					 (if (>= (mus-location release) (mus-length release))
+					     (begin
+					       (vct-set! vars Yis-playing #f)
+					       (set! num-playing (1- num-playing)))))
+					(is-attacking
+					 (out (* vol (env attack) outval))
+					 (if (>= (mus-location attack) (mus-length attack))
+					     (vct-set! vars Yis-attacking #f)))
+					(else
+					 (out (* vol outval)))))))))))))
+  
+
+#!
+(define filename "/home/kjetil/flute2.wav")
+(midisoftsampler filename 60))
+(rte-silence!)
+(rte-info)
+!#
+
+

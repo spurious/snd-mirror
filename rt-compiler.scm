@@ -1,4 +1,3 @@
-
 #!
 
 rt-compiler.scm
@@ -1374,7 +1373,7 @@ and run simple lisp[4] functions.
 	 (if is-guile-var
 	     (set! renamed-guile-vars (cons (list name newname) renamed-guile-vars)))
 	 (if is-guile-var
-	     (c-display "guilevar" name newname))
+	     (c-display "Variable" name "renamed as" newname))
 	 (hashq-set! all-renamed-variables newname #t)
 	 newname))
      
@@ -3223,7 +3222,10 @@ and run simple lisp[4] functions.
 
 
 (define-c-macro (the type somethingmore)
-  `(cast ,type ,somethingmore))
+  (let ((c-type (hashq-ref rt-types type)))
+    (if c-type
+	`(cast ,(-> c-type c-type) ,somethingmore)
+	`(cast ,type ,somethingmore))))
 
 (define-rt-macro (inexact->exact z)
   `(the <int> ,z))
@@ -4339,6 +4341,7 @@ and run simple lisp[4] functions.
 	    (<float-*> xcoeffs ())
 	    (<float-*> ycoeffs ())
 	    ;;(<void-*> wrapper ())
+	    (<void> reset ())
 	    ))
 
 
@@ -5134,9 +5137,81 @@ setter!-rt-mus-location/mus_location
 	 ((> ,f 135) 20000)
 	 (else
 	  (* 8.17579891564 (exp (* .0577622650 ,f))))))
-	  
+
+(define (midi-to-freq f)
+  (* 8.17579891564 (exp (* .0577622650 f))))  
+
+#!
+(caddr (assq 'receive_midi rt-ec-functions))
+!#
+
+(if *use-alsa-midi*
+    (eval-c ""
+	    "#include  <alsa/asoundlib.h>"
+	    "struct RT_Globals{SCM ret;};"
+	    ,(caddr (assq 'receive_midi rt-ec-functions))
+	    (<void> receiver (lambda ((<struct-RT_Globals-*> globals)
+				      (<int> data1)
+				      (<int> data2)
+				      (<int> data3))
+			       (set! globals->ret (scm_cons (scm_cons (MAKE_INTEGER data1)
+								      (scm_cons (MAKE_INTEGER data2)
+										(scm_cons (MAKE_INTEGER data3)
+											  SCM_EOL)))
+							    globals->ret))))
+	    (public
+	     (<SCM> rt-receive-midi (lambda ((<snd_seq_t-*> seq))
+				      (<struct-RT_Globals> globals)
+				      (set! globals.ret SCM_EOL)
+				      (receive_midi &globals seq receiver)
+				      (return globals.ret))))
+	    ))
 
 
+
+
+
+(define all-midi-receivers '())
+(define midi-receivers-running #f)
+(define *midi-poll-freq* 500)
+
+(define (receive-midi func)
+  (letrec ((poll-freq (/ 1000 *midi-poll-freq* ))
+	   (das-loop (lambda ()
+		       (if (not midi-receivers-running)
+			   (set! all-midi-receivers '())
+			   (begin
+			     (for-each (lambda (ai)
+					 (for-each (lambda (func)
+						     (catch #t
+							    (lambda ()
+							      (apply func ai))
+							    (lambda (key . args)
+							      (c-display "Error: key/args" key args))))
+						   all-midi-receivers))
+				       (reverse! (rt-receive-midi *rt-midi*)))
+			     (in poll-freq das-loop)))))
+	   (add-it (lambda ()
+		     (if (and (not midi-receivers-running)
+			      (not (null? all-midi-receivers)))
+			 (in 50 add-it)
+			 (begin
+			   (set! midi-receivers-running #t)
+			   (set! all-midi-receivers (cons func all-midi-receivers))
+			   (if (= 1 (length all-midi-receivers))
+			       (das-loop)))))))
+    (add-it)))
+
+
+(define (stop-receiving-midi!)
+  (set! midi-receivers-running #f))
+
+#!
+(receive-midi (lambda (data1 data2 data3)
+		(if (not (= data1 254))
+		    (c-display data1 data2 data3))))
+(stop-receiving-midi!)
+!#
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -6685,7 +6760,7 @@ setter!-rt-mus-location/mus_location
 									       (lambda ()
 										 (,(car getter) procarg))
 									       (lambda (newval)
-										 (,setterfuncname procarg newval))))))
+										 (,setterfuncname procarg (rt-number-2-rt newval)))))))
 					      getternames
 					      setternames)
 				       
