@@ -216,7 +216,6 @@ void set_enved_wave_p(bool val) {}
 void set_enved_in_dB(bool val) {}
 bool enved_dialog_is_active(void) {return(false);}
 void set_enved_filter_order(int order) {}
-void enved_reflect_selection(bool on) {}
 void lock_recording_audio(void) {}
 void unlock_recording_audio(void) {}
 widget_t snd_record_file(void) {return(0);}

@@ -9644,8 +9644,8 @@ int mus_audio_mixer_read(int dev, int field, int chan, float *val) {return(MUS_E
 int mus_audio_mixer_write(int dev, int field, int chan, float *val) {return(MUS_ERROR);}
 int mus_audio_initialize(void) {return(MUS_ERROR);}
 int mus_audio_systems(void) {return(0);}
-char *mus_audio_system_name(int system) {return("unknown");}
-char *mus_audio_moniker(void) {return("unknown audio");}
+char *mus_audio_system_name(int system) {return("none");}
+char *mus_audio_moniker(void) {return("no audio support");}
 #endif
 
 

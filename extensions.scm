@@ -345,8 +345,6 @@ to end of channel, beg defaults to 0, snd defaults to the currently selected sou
 ;;;    that asks the user for confirmation before closing a sound if there are unsaved
 ;;;    edits on that sound.  if 'on' is #f, remove those hooks.
 
-;;; TODO: Ruby side (extensions.rb)
-
 (define* (check-for-unsaved-edits #:optional (check #t))
   "(check-for-unsaved-edits #:optional (check #t)) -> sets up hooks to check for and ask about unsaved edits when a sound is closed.
 If 'check' is #f, the hooks are removed."

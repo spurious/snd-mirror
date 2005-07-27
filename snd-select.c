@@ -1,6 +1,85 @@
 #include "snd.h"
 #include "clm2xen.h"
 
+
+/* -------- watcher lists -------- */
+
+typedef struct {
+  void (*watcher)(selection_watcher_reason_t reason, void *data);
+  void *context;
+} selection_watcher;
+
+static selection_watcher **selection_watchers = NULL;
+static int selection_watchers_size = 0;
+
+#define SELECTION_WATCHER_SIZE_INCREMENT 2
+
+int add_selection_watcher(void (*watcher)(selection_watcher_reason_t reason, void *data), void *context)
+{
+  int loc = -1;
+  if (!(selection_watchers))
+    {
+      loc = 0;
+      selection_watchers_size = SELECTION_WATCHER_SIZE_INCREMENT;
+      selection_watchers = (selection_watcher **)CALLOC(selection_watchers_size, sizeof(selection_watcher *));
+    }
+  else
+    {
+      int i;
+      for (i = 0; i < selection_watchers_size; i++)
+	if (!(selection_watchers[i]))
+	  {
+	    loc = i;
+	    break;
+	  }
+      if (loc == -1)
+	{
+	  loc = selection_watchers_size;
+	  selection_watchers_size += SELECTION_WATCHER_SIZE_INCREMENT;
+	  selection_watchers = (selection_watcher **)REALLOC(selection_watchers, selection_watchers_size * sizeof(selection_watcher *));
+	  for (i = loc; i < selection_watchers_size; i++) selection_watchers[i] = NULL;
+	}
+    }
+  selection_watchers[loc] = (selection_watcher *)CALLOC(1, sizeof(selection_watcher));
+  selection_watchers[loc]->watcher = watcher;
+  selection_watchers[loc]->context = context;
+  return(loc);
+}
+
+bool remove_selection_watcher(int loc)
+{
+  if ((selection_watchers) &&
+      (loc < selection_watchers_size) &&
+      (loc >= 0) &&
+      (selection_watchers[loc]))
+    {
+      FREE(selection_watchers[loc]);
+      selection_watchers[loc] = NULL;
+      return(true);
+    }
+  return(false);
+}
+
+bool call_selection_watchers(selection_watcher_reason_t reason)
+{
+  bool got_one = false;
+  if (selection_watchers)
+    {
+      int i;
+      for (i = 0; i < selection_watchers_size; i++)
+	{
+	  if (selection_watchers[i])
+	    {
+	      (*(selection_watchers[i]->watcher))(reason, selection_watchers[i]->context);
+	      got_one = true;
+	    }
+	}
+    }
+  return(got_one);
+}
+
+
+
 static XEN selection_changed_hook;
 
 static bool cp_has_selection(chan_info *cp, void *ignore)
@@ -196,7 +275,7 @@ bool delete_selection(cut_selection_regraph_t regraph)
     {
       for_each_normal_chan(cp_delete_selection);
       if (regraph == UPDATE_DISPLAY) for_each_normal_chan(update_graph);
-      enved_reflect_selection(false);
+      call_selection_watchers(SELECTION_INACTIVE);
       if (XEN_HOOKED(selection_changed_hook)) run_hook(selection_changed_hook, XEN_EMPTY_LIST, S_selection_changed_hook);
       return(true);
     }
@@ -216,7 +295,7 @@ void deactivate_selection(void)
 {
   for_each_normal_chan(cp_deactivate_selection);
   for_each_normal_chan(update_graph);
-  enved_reflect_selection(false);
+  call_selection_watchers(SELECTION_INACTIVE);
   if (XEN_HOOKED(selection_changed_hook)) run_hook(selection_changed_hook, XEN_EMPTY_LIST, S_selection_changed_hook);
   if (selection_creation_chans) 
     selection_creation_chans = free_sync_info(selection_creation_chans);
@@ -238,7 +317,7 @@ void reactivate_selection(chan_info *cp, off_t beg, off_t end)
   cp->selection_visible = false;
   ed->selection_maxamp = -1.0;
   ed->selection_maxamp_position = -1;
-  enved_reflect_selection(true);
+  call_selection_watchers(SELECTION_ACTIVE);
   if (XEN_HOOKED(selection_changed_hook)) run_hook(selection_changed_hook, XEN_EMPTY_LIST, S_selection_changed_hook);
 }
 
@@ -447,7 +526,7 @@ void finish_selection_creation(void)
     {
       if (selection_creates_region(ss)) 
 	make_region_from_selection();
-      enved_reflect_selection(true);
+      call_selection_watchers(SELECTION_ACTIVE);
       if (XEN_HOOKED(selection_changed_hook)) 
 	run_hook(selection_changed_hook, 
 		 XEN_EMPTY_LIST, 
@@ -980,7 +1059,7 @@ static XEN g_set_selection_member(XEN on, XEN snd, XEN chn)
 	  else cp_set_selection_beg(cp, 0);
 	}
       else cp_deactivate_selection(cp);
-      enved_reflect_selection(selection_is_active());
+      call_selection_watchers(SELECTION_CHANGED);
       if (selection_is_active())
 	redraw_selection();
       if (XEN_HOOKED(selection_changed_hook)) run_hook(selection_changed_hook, XEN_EMPTY_LIST, S_selection_changed_hook);

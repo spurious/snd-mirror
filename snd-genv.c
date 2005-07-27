@@ -742,6 +742,7 @@ static void fir_button_pressed(GtkWidget *w, gpointer context)
   if (enved_wave_p(ss)) env_redisplay();
 }
 
+static void enved_selection_watcher(selection_watcher_reason_t reason, void *data);
 #define BB_MARGIN 3
 
 GtkWidget *create_envelope_editor (void)
@@ -1018,6 +1019,8 @@ GtkWidget *create_envelope_editor (void)
       reflect_apply_state();
       reflect_segment_state();
       set_dialog_widget(ENVED_DIALOG, enved_dialog);
+
+      add_selection_watcher(enved_selection_watcher, NULL);
     }
   else raise_dialog(enved_dialog);
   active_channel = current_channel();
@@ -1082,7 +1085,7 @@ void set_enved_filter_order(int order)
     }
 }
 
-void enved_reflect_selection(bool on)
+static void enved_reflect_selection(bool on)
 {
   if ((enved_dialog) && (!within_selection_src))
     {
@@ -1096,6 +1099,16 @@ void enved_reflect_selection(bool on)
 	  (enved_wave_p(ss)) && 
 	  (!showing_all_envs)) 
 	env_redisplay();
+    }
+}
+
+static void enved_selection_watcher(selection_watcher_reason_t reason, void *data)
+{
+  switch (reason)
+    {
+    case SELECTION_INACTIVE: enved_reflect_selection(false);                 break;
+    case SELECTION_ACTIVE:   enved_reflect_selection(true);                  break;
+    default:                 enved_reflect_selection(selection_is_active()); break;
     }
 }
 

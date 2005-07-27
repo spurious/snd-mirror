@@ -288,6 +288,13 @@ typedef struct chan_info {
 #define CURRENT_SAMPLES(Cp) (Cp)->samples[(Cp)->edit_ctr]
 #define CURSOR(Cp) (Cp)->cursors[(Cp)->edit_ctr]
 
+typedef struct {
+  void (*watcher)(struct snd_info *sp, sp_watcher_reason_t reason, int list_loc);
+  void *context;
+  int loc;
+  sp_watcher_t type;
+} sp_watcher;
+
 typedef struct snd_info {
   sound_inuse_t inuse;
   int index;
@@ -355,9 +362,8 @@ typedef struct snd_info {
   char *name_string;
   fam_info *file_watcher;
   bool writing;
-  void (*user_read_only_watcher)(struct snd_info *sp, read_only_reason_t reason);
-  /* called if user changes permissions via (set! (read-only...) ) */
-  void *user_read_only_watcher_context;
+  sp_watcher **watchers;
+  int watchers_size;
 } snd_info;
 
 #define SND_SRATE(sp) (((sp)->hdr)->srate)
@@ -956,6 +962,9 @@ void set_log_freq_start(Float base);
 
 /* -------- snd-select.c -------- */
 
+int add_selection_watcher(void (*watcher)(selection_watcher_reason_t reason, void *data), void *context);
+bool remove_selection_watcher(int loc);
+bool call_selection_watchers(selection_watcher_reason_t reason);
 bool selection_is_active(void);
 bool selection_is_active_in_channel(chan_info *cp);
 bool selection_is_visible_in_channel(chan_info *cp);
@@ -1250,6 +1259,9 @@ snd_info *snd_new_file(char *newname, int header_type, int data_format, int srat
 #if HAVE_RATIOS
   void snd_rationalize(Float a, int *num, int *den);
 #endif
+int add_sp_watcher(snd_info *sp, sp_watcher_t type, void (*watcher)(struct snd_info *sp, sp_watcher_reason_t reason, int list_loc), void *context);
+bool remove_sp_watcher(snd_info *sp, int loc);
+bool call_sp_watchers(snd_info *sp, sp_watcher_t type, sp_watcher_reason_t reason);
 
 void g_init_snd(void);
 XEN snd_no_such_sound_error(const char *caller, XEN n);
@@ -1286,6 +1298,7 @@ file_info *make_temp_header(const char *fullname, int srate, int chans, off_t sa
 dir *free_dir (dir *dp);
 bool sound_file_p(char *name);
 bool plausible_sound_file_p(const char *name);
+snd_info *file_is_open_elsewhere_and_has_unsaved_edits(snd_info *sp, const char *fullname);
 bool run_just_sounds_hook(const char *name);
 void init_sound_file_extensions(void);
 void save_added_sound_file_extensions(FILE *fd);
@@ -1326,9 +1339,11 @@ void init_prevfiles(int size);
 void add_directory_to_prevlist(const char *dirname);
 void make_prevfiles_list_1(void);
 char **set_header_and_data_positions(file_data *fdat, int type, int format);
+/*
 char *save_as_dialog_save_sound(snd_info *sp, char *str, save_dialog_t save_type, 
 			     int srate, int type, int format, char *comment,
 			     bool *need_directory_update);
+*/
 bool edit_header_callback(snd_info *sp, file_data *edit_header_data, 
 			  void (*outer_handler)(const char *error_msg, void *ufd),
 			  void (*inner_handler)(const char *error_msg, void *ufd));
@@ -1368,6 +1383,7 @@ char *snd_open_strerror(void);
 char *string_to_colon(char *val);
 char *filename_without_home_directory(const char *name);
 char *just_filename(char *name);
+bool directory_exists(char *name);
 char *file_to_string(const char *filename);
 disk_space_t disk_space_p(snd_info *sp, off_t bytes, char *filename);
 const char *short_data_format_name(int sndlib_format, const char *filename);

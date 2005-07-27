@@ -445,7 +445,6 @@ void set_enved_wave_p(bool val);
 void set_enved_in_dB(bool val);
 bool enved_dialog_is_active(void);
 void set_enved_filter_order(int order);
-void enved_reflect_selection(bool on);
 void color_enved_waveform(Pixel pix);
 void g_init_gxenv(void);
 

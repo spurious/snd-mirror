@@ -29,6 +29,31 @@ echo ' '
 echo '(let ((hxm (dlopen (string-append (getcwd) "/xm.so")))) (dlinit hxm "Init_libxm") (display XmARROWS_END) (exit))' > tmp.scm
 ./snd tmp.scm
 rm tmp.scm
+
+sed config.h -e 's/#define HAVE_STRFTIME 1/#define HAVE_STRFTIME 0/' > tmp
+mv tmp config.h
+make
+
+sed config.h -e 's/#define HAVE_READLINK 1/#define HAVE_READLINK 0/' > tmp
+mv tmp config.h
+make
+
+sed config.h -e 's/#define HAVE_GETCWD 1/#define HAVE_GETCWD 0/' > tmp
+mv tmp config.h
+make
+
+sed config.h -e 's/#define HAVE_LSTAT 1/#define HAVE_LSTAT 0/' > tmp
+mv tmp config.h
+make
+
+sed config.h -e 's/#define HAVE_ACCESS 1/#define HAVE_ACCESS 0/' > tmp
+mv tmp config.h
+make
+
+sed config.h -e 's/#define HAVE_STRCASECMP 1/#define HAVE_STRCASECMP 0/' > tmp
+mv tmp config.h
+make
+
 make clmclean
 make sndinfo
 make audinfo
@@ -297,9 +322,6 @@ rm xm.o
 echo ' CC=g++ --with-static-xm '
 ./configure --quiet CC=g++ --with-static-xm
 make xm
-echo '(let ((hxm (dlopen (string-append (getcwd) "/xm.so")))) (dlinit hxm "Init_libxm") (display XmARROWS_END) (exit))' > tmp.scm
-./snd tmp.scm
-rm tmp.scm
 
 make allclean
 echo ' CFLAGS="-Wall" --with-static-xm --without-xpm --without-xp '

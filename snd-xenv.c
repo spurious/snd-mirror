@@ -796,6 +796,8 @@ static void FIR_click_callback(Widget w, XtPointer context, XtPointer info)
   if (enved_wave_p(ss)) env_redisplay();
 }
 
+static void enved_selection_watcher(selection_watcher_reason_t reason, void *data);
+
 Widget create_envelope_editor(void)
 {
   if (!enved_dialog)
@@ -1436,6 +1438,8 @@ Widget create_envelope_editor(void)
       reflect_apply_state();
       reflect_segment_state();
       set_dialog_widget(ENVED_DIALOG, enved_dialog);
+
+      add_selection_watcher(enved_selection_watcher, NULL);
     }
   else raise_dialog(enved_dialog);
   if (!XtIsManaged(enved_dialog)) 
@@ -1507,7 +1511,7 @@ void set_enved_filter_order(int order)
     }
 }
 
-void enved_reflect_selection(bool on)
+static void enved_reflect_selection(bool on)
 {
   if ((enved_dialog) && (!within_selection_src))
     {
@@ -1522,6 +1526,16 @@ void enved_reflect_selection(bool on)
 	  (enved_wave_p(ss)) && 
 	  (!showing_all_envs)) 
 	env_redisplay();
+    }
+}
+
+static void enved_selection_watcher(selection_watcher_reason_t reason, void *data)
+{
+  switch (reason)
+    {
+    case SELECTION_INACTIVE: enved_reflect_selection(false);                 break;
+    case SELECTION_ACTIVE:   enved_reflect_selection(true);                  break;
+    default:                 enved_reflect_selection(selection_is_active()); break;
     }
 }
 

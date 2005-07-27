@@ -14,7 +14,6 @@
  * TODO: ctrls -> controls throughout. (may be collisions) 
  * TODO: trap snd_error|warning in within xen (except explicit cases)
  * SOMEDAY: try mac/sparc gtk
- * TODO: finish the mac case for README.Snd
  */
 
 /* -------- protect XEN vars from GC -------- */

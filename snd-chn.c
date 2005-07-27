@@ -6425,7 +6425,7 @@ static void write_transform_peaks(FILE *fd, chan_info *ucp)
   fprintf(fd, _("Snd: fft peaks (%s)\n\n"), timbuf);
   FREE(timbuf);
 #else
-  fprintf(fd, _("Snd: fft peaks\n\n")); /* TODO: need a way to test the not HAVE_STRFTIME case */
+  fprintf(fd, _("Snd: fft peaks\n\n"));
 #endif
   si = sync_to_chan(ucp);
   for (chn = 0; chn < si->chans; chn++)

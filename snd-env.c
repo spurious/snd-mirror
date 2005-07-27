@@ -1524,7 +1524,8 @@ and 'base' into the envelope editor."
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(base) || XEN_FALSE_P(base), base, XEN_ARG_3, S_define_envelope, "a float or " PROC_FALSE);
   ename = XEN_TO_C_STRING(name);
   e = xen_to_env(data);
-  if ((e) && (XEN_NUMBER_P(base)))
+  if (!e) return(XEN_FALSE);
+  if (XEN_NUMBER_P(base))
     e->base = XEN_TO_C_DOUBLE(base);
 #if HAVE_RUBY
   alert_envelope_editor(xen_scheme_global_variable_to_ruby(ename), e);

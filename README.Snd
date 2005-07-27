@@ -583,15 +583,18 @@ colormap of the entire system is hijacked while Snd is running.
 
 First, install the X11SDK and X11User packages.  The first is in one
 of the Installer directories, the second (in 10.4) is on the first
-install disk under System/Packages or some such name.  These give
-you the X11 server and its header files.
+install disk under System/Installation/Packages/X11User.pkg or some 
+such name.  These give you the X11 server and its header files.
 
 If you want to use Motif (recommended), get and install the openmotif
 package.  I think you'll need to include the --with-static-motif
 switch in the configuration process, and perhaps --with-motif-prefix=
 /usr/OpenMotif (or wherever libXm got written by the installer).
+If you get some complaint about identifiers that look like they come
+from libSM or libICE, add -lICE -lSM to the end of the library
+list in the makefile.
 
-If you want to use Gtk, he Snd configure process is confused by the 
+If you want to use Gtk, the Snd configure process is confused by the 
 lack of pkg-config -- I've forgotten how to deal with this.
 
 And you'll probably need to add some things to the GUILE library list:
@@ -606,7 +609,7 @@ GUILE_CFLAGS = -I/sw/include/
 
 If the openmotif package forgot to include libXm.a, a version is
 at ccrma-ftp.  If the Mac loader complains that it it out of date,
-run ranlib: ranlib libXm.a (you may need to be root to do this).
+run ranlib: ranlib libXm.a (you may need to admin privileges to do this).
 
 
 I haven't tried Gtk+ in OSX for maybe a year, but back then I made

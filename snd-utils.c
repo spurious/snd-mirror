@@ -143,7 +143,7 @@ char *string_to_colon(char *val)
 
 char *filename_without_home_directory(const char *name)
 {
-  /* since we don't want to mess with freeing these guys, I'll just return a pointer into the name */
+  /* since I don't want to mess with freeing these guys, I'll just return a pointer into the name */
   int i, len, last_slash;
   last_slash = 0;
   len = strlen(name);
@@ -166,6 +166,26 @@ char *just_filename(char *name)
 	break;
       }
   return(nodir);
+}
+
+bool directory_exists(char *name)
+{
+  char temp;
+  bool result;
+  int i, len, last_slash = -1;
+  len = strlen(name);
+  for (i = 0; i < len; i++) 
+    if (name[i] == '/') 
+      last_slash = i;
+  if (last_slash <= 0)
+    return(true);
+  if (last_slash >= len - 1) /* can't be > */
+    return(directory_p(name));
+  temp = name[last_slash + 1];
+  name[last_slash + 1] = '\0';
+  result = directory_p(name);
+  name[last_slash + 1] = temp;
+  return(result);
 }
 
 char *file_to_string(const char *filename)

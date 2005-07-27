@@ -545,6 +545,9 @@ int mus_file_open_read(const char *arg)
 
 bool mus_file_probe(const char *arg) 
 {
+#if HAVE_ACCESS
+  return(access(arg, F_OK) == 0);
+#else
   int fd;
 #ifdef O_NONBLOCK
   fd = OPEN(arg, O_RDONLY, O_NONBLOCK);
@@ -554,6 +557,7 @@ bool mus_file_probe(const char *arg)
   if (fd == -1) return(false);
   if (CLOSE(fd) != 0) return(false);
   return(true);
+#endif
 }
 
 int mus_file_open_write(const char *arg)

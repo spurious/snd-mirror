@@ -4,9 +4,9 @@
 enum {m_menu,
         f_menu, f_cascade_menu,
           f_open_menu, f_close_menu, f_save_menu, f_save_as_menu, f_revert_menu, f_exit_menu, f_new_menu,
-          f_view_menu, f_print_menu, f_mix_menu, f_update_menu, f_record_menu, f_sep_menu,
+          f_view_menu, f_print_menu, f_mix_menu, f_insert_menu, f_update_menu, f_record_menu, f_sep_menu,
         e_menu, e_cascade_menu,
-          e_cut_menu, e_paste_menu, e_mix_menu, e_play_menu, e_save_as_menu, e_undo_menu,
+      e_cut_menu, e_paste_menu, e_mix_menu, e_play_menu, e_save_as_menu, e_undo_menu,
           e_redo_menu, e_find_menu, e_env_menu, e_header_menu, e_select_all_menu,
           e_select_sep_menu, e_edit_sep_menu,
         h_menu, h_cascade_menu,
@@ -52,6 +52,7 @@ enum {m_menu,
 #define file_view_menu (ss->sgx->mw[f_view_menu])
 #define file_print_menu (ss->sgx->mw[f_print_menu])
 #define file_mix_menu (ss->sgx->mw[f_mix_menu])
+#define file_insert_menu (ss->sgx->mw[f_insert_menu])
 #define file_update_menu (ss->sgx->mw[f_update_menu])
 #define file_record_menu (ss->sgx->mw[f_record_menu])
 #define file_sep_menu (ss->sgx->mw[f_sep_menu])

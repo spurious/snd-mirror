@@ -27,6 +27,8 @@ GtkWidget *w_snd_pane(snd_info *sp)     {return(sp->sgx->snd_widgets[W_pane]);}
 GtkWidget *w_snd_pane_box(snd_info *sp) {return(sp->sgx->snd_widgets[W_pane_box]);}
 GtkWidget *w_snd_name(snd_info *sp)     {return(sp->sgx->snd_widgets[W_name]);}
 
+/* SOMEDAY: finish incorporating these macro names */
+
 #define NAME_BOX(Sp)             Sp->sgx->snd_widgets[W_name_form]
 #define MINIBUFFER_SEPARATOR(Sp) Sp->sgx->snd_widgets[W_info_sep]
 #define MINIBUFFER_LABEL(Sp)     Sp->sgx->snd_widgets[W_info_label]
@@ -74,7 +76,6 @@ static void watch_minibuffer(GtkWidget *w, gpointer context)
 }
 
 /* TODO: entry here so multi-lines not displayed correctly */
-/* TODO: check libxm load process for the -pthread bug */
 
 void clear_minibuffer_error(snd_info *sp)
 {

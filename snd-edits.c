@@ -4503,9 +4503,10 @@ static io_error_t channel_to_file(chan_info *cp, const char *ofile, int edpos)
       FREE(sf);
       if ((err != IO_NO_ERROR) &&
 	  (err != IO_INTERRUPTED))
-	snd_error("can't save %s chan %d: %s", 
+	snd_error("can't save %s chan %d: %s %s", 
 		  cp->sound->short_filename,
 		  cp->chan,
+		  ofile,
 		  snd_io_strerror());
     }
   return(err);
@@ -7167,7 +7168,7 @@ void revert_edits(chan_info *cp)
   clear_transform_edit_ctrs(cp);
   reflect_edit_counter_change(cp);
   reflect_sample_change_in_axis(cp);
-  enved_reflect_selection(selection_is_active());
+  call_selection_watchers(SELECTION_IN_DOUBT);
   update_track_lists(cp, old_ctr - 1);
   update_graph(cp);
   reflect_mix_or_track_change(ANY_MIX_ID, ANY_TRACK_ID, false);
@@ -7191,7 +7192,7 @@ void undo_edit(chan_info *cp, int count)
 	{
 	  reflect_file_revert_in_label(sp);
 	}
-      enved_reflect_selection(selection_is_active());
+      call_selection_watchers(SELECTION_IN_DOUBT);
       update_track_lists(cp, 0);
       update_graph(cp);
       reflect_mix_or_track_change(ANY_MIX_ID, ANY_TRACK_ID, false);
@@ -7243,7 +7244,7 @@ void redo_edit(chan_info *cp, int count)
 	  reflect_file_change_in_label(cp);
 	  reflect_edit_counter_change(cp);
 	  reflect_sample_change_in_axis(cp);
-	  enved_reflect_selection(selection_is_active());
+	  call_selection_watchers(SELECTION_IN_DOUBT);
 	  update_track_lists(cp, 0);
 	  update_graph(cp);
 	  reflect_mix_or_track_change(ANY_MIX_ID, ANY_TRACK_ID, false);

@@ -1545,9 +1545,12 @@ static char *describe_dac(void)
 static void dac_error(void)
 {
   stop_playing_all_sounds_without_hook(PLAY_ERROR);
-  snd_error(_("can't play %s: %s"),
-	    describe_dac(),
-	    (last_print) ? last_print : "reason not known");
+  if ((!last_print) &&
+      (mus_audio_systems() == 0))
+    snd_error("can't play: no audio support");
+  else snd_error(_("can't play %s: %s"),
+		 describe_dac(),
+		 (last_print) ? last_print : "reason not known");
 }
 
 

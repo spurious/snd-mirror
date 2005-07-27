@@ -305,7 +305,8 @@ snd_info *make_snd_info(snd_info *sip, const char *filename, file_info *hdr, int
 	}
     }
   sp->user_read_only = read_only;  /* need to be sure this is set before any hooks run */
-  sp->user_read_only_watcher = NULL;
+  sp->watchers = NULL;
+  sp->watchers_size = 0;
   sp->index = snd_slot;
   sp->nchans = chans;
   sp->hdr = hdr;
@@ -343,10 +344,16 @@ snd_info *make_snd_info(snd_info *sip, const char *filename, file_info *hdr, int
 void free_snd_info(snd_info *sp)
 {
   int i;
-  if (sp->user_read_only_watcher)
+  if (sp->watchers)
     {
-      (*(sp->user_read_only_watcher))(sp, SOUND_IS_CLOSING);
-      sp->user_read_only_watcher = NULL;
+      int i;
+      call_sp_watchers(sp, SP_ANY_WATCHER, SP_IS_CLOSING);
+      for (i = 0; i < sp->watchers_size; i++)
+	if (sp->watchers[i])
+	  FREE(sp->watchers[i]); /* normally watcher will do this, I assume */
+      FREE(sp->watchers);
+      sp->watchers = NULL;
+      sp->watchers_size = 0;
     }
   if (sp->sgx)
     {

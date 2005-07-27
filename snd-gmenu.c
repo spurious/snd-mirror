@@ -22,6 +22,7 @@ static void file_save_as_callback(GtkWidget *w, gpointer info) {make_sound_save_
 static void file_revert_callback(GtkWidget *w, gpointer info) {revert_file_from_menu();}
 static void file_exit_callback(GtkWidget *w, gpointer info) {if (snd_exit_cleanly(false)) snd_exit(1);}
 static void file_mix_callback_1(GtkWidget *w, gpointer info) {make_mix_file_dialog(true);}
+static void file_insert_callback_1(GtkWidget *w, gpointer info) {}
 static void file_print_callback_1(GtkWidget *w, gpointer info) {file_print_callback(w, info);}
 
 
@@ -233,6 +234,13 @@ GtkWidget *add_menu(void)
   gtk_widget_show(file_mix_menu);
   set_sensitive(file_mix_menu, false);
   SG_SIGNAL_CONNECT(file_mix_menu, "activate", file_mix_callback_1, NULL);
+
+  file_insert_menu = gtk_menu_item_new_with_label(_("Insert"));
+  ml[f_insert_menu] = _("Insert");
+  gtk_menu_shell_append(GTK_MENU_SHELL(file_cascade_menu), file_insert_menu);
+  gtk_widget_show(file_insert_menu);
+  set_sensitive(file_insert_menu, false);
+  SG_SIGNAL_CONNECT(file_insert_menu, "activate", file_insert_callback_1, NULL);
 
   file_update_menu = gtk_menu_item_new_with_label(_("Update"));
   ml[f_update_menu] = _("Update");
@@ -826,6 +834,7 @@ GtkWidget *add_menu(void)
   SG_SIGNAL_CONNECT(help_debug_menu, "activate", help_debug_callback, NULL);
 
 #ifndef SND_AS_WIDGET
+  /* TODO: insert accel? */
   gtk_menu_set_accel_group(GTK_MENU(file_cascade_menu), accel_group);
   gtk_widget_add_accelerator(file_open_menu, "activate", accel_group, GDK_O, GDK_MOD1_MASK, GTK_ACCEL_VISIBLE);
   gtk_widget_add_accelerator(file_close_menu, "activate", accel_group, GDK_C, GDK_MOD1_MASK, GTK_ACCEL_VISIBLE);

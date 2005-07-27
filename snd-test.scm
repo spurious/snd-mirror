@@ -44858,7 +44858,7 @@ EDITS: 1
 		    (let ((wid (save-selection-dialog)))
 		      (if (not (equal? wid (list-ref (dialog-widgets) 7)))
 			  (snd-display ";save-selection-dialog -> ~A ~A" wid (list-ref (dialog-widgets) 7))))
-		    (let* ((saved (list-ref (dialog-widgets) 7))
+		    (let* ((saved (list-ref (dialog-widgets) 22))
 			   (ok (XmFileSelectionBoxGetChild saved XmDIALOG_OK_BUTTON))
 			   (filetext (XmFileSelectionBoxGetChild saved XmDIALOG_TEXT))
 			   (types (find-child saved "header-type")) ; list

@@ -437,7 +437,6 @@ void set_enved_target(enved_target_t val);
 void set_enved_wave_p(bool val);
 void set_enved_in_dB(bool val);
 bool enved_dialog_is_active(void);
-void enved_reflect_selection(bool on);
 void set_enved_filter_order(int order);
 void color_enved_waveform(GdkColor *pix);
 void g_init_gxenv(void);

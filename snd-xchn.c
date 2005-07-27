@@ -717,19 +717,9 @@ void reflect_edit_counter_change(chan_info *cp)
 	  XtVaSetValues(lst, XmNtopItemPosition, cp->edit_ctr, NULL);
       goto_graph(cp);
     }
-#if WITH_RELATIVE_PANES
-  else
-    {
-      snd_info *sp;
-      sp = cp->sound;
-      if ((cp->chan > 0) && (sp->channel_style != CHANNELS_SEPARATE))
-	{
-	  lst = EDIT_HISTORY_LIST(sp->chans[0]);
-	  if ((lst) && (widget_width(lst) > 1))
-	    XmListSelectPos(lst, cp->edit_ctr + 1 + cp->edhist_base, false);
-	}
-    }
-#endif
+  if ((cp->edit_ctr == 0) &&
+      (cp->sound->watchers))
+    call_sp_watchers(cp->sound, SP_REVERT_WATCHER, SP_REVERTED);
 }
 
 /* for combined cases, the incoming chan_info pointer is always chan[0], 

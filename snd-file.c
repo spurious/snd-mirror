@@ -92,6 +92,7 @@ time_t file_write_date(const char *filename)
   return((time_t)(statbuf.st_mtime));
 }
 
+
 static int fallback_srate = 0, fallback_chans = 0, fallback_format = MUS_UNKNOWN;
 static int original_srate = 0, original_chans = 0, original_format = MUS_UNKNOWN;
 
@@ -286,11 +287,7 @@ static file_info *open_raw_sound(const char *fullname, bool read_only, bool sele
 
       str = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
       mus_snprintf(str, PRINT_BUFFER_SIZE, _("No header found for %s"), filename_without_home_directory(fullname));
-      raw_data_dialog_to_file_info(fullname, 
-				   str,
-				   NULL,
-				   read_only,
-				   selected);
+      raw_data_dialog_to_file_info(fullname, str, NULL, read_only, selected);
     }
 #endif
   return(NULL);
@@ -337,11 +334,7 @@ static file_info *tackle_bad_header(const char *fullname, bool read_only, bool s
       {
 	char *info = NULL, *title = NULL;
 	title = raw_data_explanation(fullname, make_file_info_1(fullname), &info);
-	raw_data_dialog_to_file_info(fullname, 
-				     title,
-				     info,
-				     read_only,
-				     selected);
+	raw_data_dialog_to_file_info(fullname, title, info, read_only, selected);
       }
   }
 #endif
@@ -1000,7 +993,7 @@ void snd_close_file(snd_info *sp)
       release_pending_track_states();
     }
   reflect_file_change_in_title();
-  enved_reflect_selection(selection_is_active());
+  call_selection_watchers(SELECTION_IN_DOUBT);
 }
 
 
@@ -1364,8 +1357,8 @@ static snd_info *snd_update_1(snd_info *sp, const char *ur_filename)
   struct ctrl_state *saved_controls;
   off_t *old_cursors;
   fam_info *old_file_watcher;
-  void (*old_user_read_only_watcher)(struct snd_info *sp, read_only_reason_t reason);
-  void *old_user_read_only_watcher_context;
+  sp_watcher **old_watchers;
+  int old_watchers_size;
 
   XEN update_hook_result = XEN_FALSE;
   if (XEN_HOOKED(update_hook))
@@ -1423,10 +1416,11 @@ static snd_info *snd_update_1(snd_info *sp, const char *ur_filename)
     }
 
   old_file_watcher = sp->file_watcher; /* will be unmonitored in snd_close_file, but we need to know if it is being monitored now */
-  old_user_read_only_watcher = sp->user_read_only_watcher;
-  sp->user_read_only_watcher = NULL;   /* don't confuse watchers with a temporary close! */
-  old_user_read_only_watcher_context = sp->user_read_only_watcher_context;
-  sp->user_read_only_watcher_context = NULL;
+  old_watchers = sp->watchers;
+  old_watchers_size = sp->watchers_size;
+  sp->watchers = NULL;       /* don't confuse watchers with a temporary close! */
+  sp->watchers_size = 0;
+
   /* TODO: do I need to save sp->writing? ->unreadable? */
 
   snd_close_file(sp);
@@ -1446,8 +1440,8 @@ static snd_info *snd_update_1(snd_info *sp, const char *ur_filename)
       if ((old_file_watcher) &&
 	  (!(nsp->file_watcher)))
 	nsp->file_watcher = fam_monitor_file(nsp->filename, (void *)nsp, fam_sp_action); /* might be a different sp as well as underlying file */
-      nsp->user_read_only_watcher = old_user_read_only_watcher;
-      nsp->user_read_only_watcher_context = old_user_read_only_watcher_context;
+      nsp->watchers = old_watchers;
+      nsp->watchers_size = old_watchers_size;
 
       nsp->saved_controls = saved_controls;
       if (saved_controls) restore_controls(nsp);
@@ -1532,12 +1526,13 @@ static XEN after_save_as_hook;
 
 void run_after_save_as_hook(snd_info *sp, const char *already_saved_as_name, bool from_save_as_dialog)
 {
+  /* might be save-selection, as well as save-sound-as */
   if (XEN_HOOKED(after_save_as_hook))
     {
       char *fullname;
       fullname = mus_expand_filename(already_saved_as_name);
       run_progn_hook(after_save_as_hook,
-		     XEN_LIST_3(C_TO_XEN_INT(sp->index),
+		     XEN_LIST_3((sp) ? C_TO_XEN_INT(sp->index) : XEN_FALSE,
 				C_TO_XEN_STRING(fullname),
 				C_TO_XEN_BOOLEAN(from_save_as_dialog)),
 		     S_after_save_as_hook);
@@ -1550,13 +1545,14 @@ static bool before_save_as_hook_active = false;
 
 bool run_before_save_as_hook(snd_info *sp, const char *save_as_filename, bool selection, int srate, int type, int format, char *comment)
 {
+  /* might be save-selection, as well as save-sound-as */
   if (before_save_as_hook_active) return(false);
   if (XEN_HOOKED(before_save_as_hook))
     {
       XEN result = XEN_FALSE;
       before_save_as_hook_active = true;
       result = run_progn_hook(before_save_as_hook,
-			      XEN_LIST_7(C_TO_XEN_INT(sp->index),
+			      XEN_LIST_7((sp) ? C_TO_XEN_INT(sp->index) : XEN_FALSE,
 					 C_TO_XEN_STRING(save_as_filename),
 					 C_TO_XEN_BOOLEAN(selection),
 					 C_TO_XEN_INT(srate),
@@ -2131,6 +2127,7 @@ static XEN g_set_previous_files_sort_procedure(XEN proc)
 #define NUM_AIFF_FORMATS 4
 #define NUM_NIST_FORMATS 7
 #define NUM_RAW_FORMATS 18
+static int NUM_OGG_FORMATS = 0, NUM_FLAC_FORMATS = 0, NUM_SPEEX_FORMATS = 0, NUM_MPEG_FORMATS = 0;
 
 #define NEXT_POSITION 0
 #define AIFC_POSITION 1
@@ -2139,6 +2136,7 @@ static XEN g_set_previous_files_sort_procedure(XEN proc)
 #define AIFF_POSITION 4
 #define IRCAM_POSITION 5
 #define NIST_POSITION 6
+static int OGG_POSITION = -1, FLAC_POSITION = -1, SPEEX_POSITION = -1, MPEG_POSITION = -1;
 
 static char **next_data_formats, **ircam_data_formats, **wave_data_formats, **aifc_data_formats, **aiff_data_formats, **nist_data_formats, **raw_data_formats;
 
@@ -2146,14 +2144,13 @@ static int next_dfs[NUM_NEXT_FORMATS] = {MUS_BSHORT, MUS_MULAW, MUS_BYTE, MUS_BF
 static int ircam_dfs[NUM_IRCAM_FORMATS] = {MUS_BSHORT, MUS_MULAW, MUS_BFLOAT, MUS_BINT, MUS_ALAW};
 static int wave_dfs[NUM_WAVE_FORMATS] = {MUS_MULAW, MUS_ALAW, MUS_UBYTE, MUS_LSHORT, MUS_LINT, MUS_LFLOAT, MUS_LDOUBLE, MUS_L24INT};
 static int aifc_dfs[NUM_AIFC_FORMATS] = {MUS_BSHORT, MUS_MULAW, MUS_BYTE, MUS_BINT, MUS_ALAW, MUS_B24INT,
-					 MUS_BFLOAT, MUS_BDOUBLE, MUS_UBYTE, MUS_LSHORT,
-					 MUS_LINT, MUS_L24INT, MUS_UBSHORT};
+					 MUS_BFLOAT, MUS_BDOUBLE, MUS_UBYTE, MUS_LSHORT, MUS_LINT, MUS_L24INT, MUS_UBSHORT};
 static int aiff_dfs[NUM_AIFF_FORMATS] = {MUS_BSHORT, MUS_BINT, MUS_BYTE, MUS_B24INT};
 static int nist_dfs[NUM_NIST_FORMATS] = {MUS_BSHORT, MUS_LSHORT, MUS_BINT, MUS_LINT, MUS_BYTE, MUS_B24INT, MUS_L24INT};
 static int raw_dfs[NUM_RAW_FORMATS] = {MUS_BSHORT, MUS_MULAW, MUS_BYTE, MUS_BFLOAT, MUS_BINT, MUS_ALAW,
 				       MUS_UBYTE, MUS_B24INT, MUS_BDOUBLE, MUS_LSHORT, MUS_LINT,
-				       MUS_LFLOAT, MUS_LDOUBLE, MUS_UBSHORT, MUS_ULSHORT,
-				       MUS_L24INT, MUS_BINTN, MUS_LINTN};
+				       MUS_LFLOAT, MUS_LDOUBLE, MUS_UBSHORT, MUS_ULSHORT, MUS_L24INT, MUS_BINTN, MUS_LINTN};
+static int *ogg_dfs = NULL, *flac_dfs = NULL, *speex_dfs = NULL, *mpeg_dfs = NULL;
 
 void initialize_format_lists(void)
 {
@@ -2186,6 +2183,10 @@ int header_type_from_position(int position)
     case AIFF_POSITION:  return(MUS_AIFF);  break;
     case NIST_POSITION:  return(MUS_NIST);  break;
     }
+  if (position == OGG_POSITION) return(MUS_OGG);
+  if (position == FLAC_POSITION) return(MUS_FLAC);
+  if (position == SPEEX_POSITION) return(MUS_SPEEX);
+  if (position == MPEG_POSITION) return(MUS_MPEG);
   return(MUS_RAW);
 }
 
@@ -2201,6 +2202,10 @@ int data_format_from_position(int header, int position)
     case MUS_AIFF:  return(aiff_dfs[position]);  break;
     case MUS_NIST:  return(nist_dfs[position]);  break;
     }
+  if (header == MUS_OGG) return(OGG_POSITION);
+  if (header == MUS_FLAC) return(FLAC_POSITION);
+  if (header == MUS_SPEEX) return(SPEEX_POSITION);
+  if (header == MUS_MPEG) return(MPEG_POSITION);
   return(position);
 }
 
@@ -2259,6 +2264,18 @@ char **set_header_and_data_positions(file_data *fdat, int type, int format)
       for (i = 0; i < NUM_AIFF_FORMATS; i++) if (format == aiff_dfs[i]) {fdat->format_pos = i; break;}
       break;
     }
+  if (type == MUS_OGG)
+    {
+    }
+  if (type == MUS_FLAC)
+    {
+    }
+  if (type == MUS_SPEEX)
+    {
+    }
+  if (type == MUS_MPEG)
+    {
+    }
   return(fl);
 }
 
@@ -2267,13 +2284,25 @@ void set_header_type_and_format_from_position(file_data *fdat, int pos)
   fdat->header_pos = pos;
   switch (pos)
     {
-    case NEXT_POSITION: fdat->current_type = MUS_NEXT; fdat->current_format = MUS_BSHORT; break;
-    case NIST_POSITION: fdat->current_type = MUS_NIST; fdat->current_format = MUS_BSHORT; break;
-    case AIFC_POSITION: fdat->current_type = MUS_AIFC; fdat->current_format = MUS_BSHORT; break;
-    case RIFF_POSITION: fdat->current_type = MUS_RIFF; fdat->current_format = MUS_LSHORT; break;
+    case NEXT_POSITION:  fdat->current_type = MUS_NEXT;  fdat->current_format = MUS_BSHORT; break;
+    case NIST_POSITION:  fdat->current_type = MUS_NIST;  fdat->current_format = MUS_BSHORT; break;
+    case AIFC_POSITION:  fdat->current_type = MUS_AIFC;  fdat->current_format = MUS_BSHORT; break;
+    case RIFF_POSITION:  fdat->current_type = MUS_RIFF;  fdat->current_format = MUS_LSHORT; break;
     case IRCAM_POSITION: fdat->current_type = MUS_IRCAM; fdat->current_format = MUS_BSHORT; break;
-    case RAW_POSITION: fdat->current_type = MUS_RAW; fdat->current_format = MUS_BSHORT; break;
-    case AIFF_POSITION: fdat->current_type = MUS_AIFF; fdat->current_format = MUS_BSHORT; break;
+    case RAW_POSITION:   fdat->current_type = MUS_RAW;   fdat->current_format = MUS_BSHORT; break;
+    case AIFF_POSITION:  fdat->current_type = MUS_AIFF;  fdat->current_format = MUS_BSHORT; break;
+    }
+  if (pos == OGG_POSITION)
+    {
+    }
+  if (pos == FLAC_POSITION)
+    {
+    }
+  if (pos == SPEEX_POSITION)
+    {
+    }
+  if (pos == MPEG_POSITION)
+    {
     }
 }
 
@@ -2334,6 +2363,18 @@ char **set_header_positions_from_type(file_data *fdat, int header_type, int data
       dfs = aiff_dfs; 
       break;
     }
+  if (header_type == MUS_OGG)
+    {
+    }
+  if (header_type == MUS_FLAC)
+    {
+    }
+  if (header_type == MUS_SPEEX)
+    {
+    }
+  if (header_type == MUS_MPEG)
+    {
+    }
   fdat->format_pos = 0;
   for (i = 0; i < fdat->formats; i++) 
     if (data_format == dfs[i]) 
@@ -2344,154 +2385,47 @@ char **set_header_positions_from_type(file_data *fdat, int header_type, int data
   return(formats);
 }
 
+
 typedef struct {
-  snd_info *sp;
+  snd_info *parlous_sp, *current_sp;
   char *filename;
-  int edits;
 } same_name_info;
 
 static bool check_for_same_name(snd_info *sp1, void *ur_info)
 {
   same_name_info *info = (same_name_info *)ur_info;
-  if ((sp1) && (strcmp(sp1->filename, info->filename) == 0))
+  if ((sp1) && 
+      (sp1 != info->current_sp) &&
+      (strcmp(sp1->filename, info->filename) == 0))
     {
       int i;
-      info->sp = sp1;
       for (i = 0; i < sp1->nchans; i++) 
 	{
 	  chan_info *cp;
 	  cp = sp1->chans[i];
-	  if (info->edits < cp->edit_ctr) 
-	    info->edits = cp->edit_ctr;
+	  if (cp->edit_ctr > 0)
+	    {
+	      info->parlous_sp = sp1;
+	      return(true);
+	    }
 	}
-      return(true); /* stop immediately and deal with this one */
     }
   return(false);
 }
 
-char *save_as_dialog_save_sound(snd_info *sp, char *str, save_dialog_t save_type, 
-				int srate, int type, int format, char *comment,
-				bool *need_directory_update)
+snd_info *file_is_open_elsewhere_and_has_unsaved_edits(snd_info *sp, const char *fullname)
 {
-  /* only from save-as dialog where type/format are known to be writable */
-  /* returns true if new file not yet opened, false if opened (same name as old) or if cancelled by error of some sort */
-  same_name_info *collision = NULL;
-  char *fullname, *msg = NULL;
-
-  if (sp) clear_minibuffer(sp); /* TODO: why this? */
-  alert_new_file();
-  /* now check in-core files -- need to close any of same name -- if edited what to do? */
-  /* also it's possible the new file name is the same as the current file name(!) */
-  fullname = mus_expand_filename(str);
-
-  if (!(run_before_save_as_hook(sp, fullname, save_type != SOUND_SAVE_AS, srate, type, format, comment)))
-    {
-      if (strcmp(fullname, sp->filename) == 0) /* save-as to mimic save (overwrite current) */
-	{
-	  io_error_t io_err;
-	  char *ofile;
-	  /* normally save-as saves the current edit tree, merely saving the current state
-	   * in a separate, presumably inactive file; here we're being asked to overwrite
-	   * the current file in save-as; we can't have it both ways -- we'll save the edits 
-	   * in a temp file, then rename/copy the temp, and call update 
-	   */
-	  if (sp->user_read_only || sp->file_read_only)
-	    {
-	      FREE(fullname);
-	      (*need_directory_update)= false;
-	      return(mus_format(_("can't overwrite %s (it is write-protected)"), sp->short_filename));
-	    }
-	  /* it's possible also that the same-named file is open in several windows -- for now we'll ignore that */
-	  /* also what if a sound is write-protected in one window, and not in another? */
-
-	  ofile = snd_tempnam(); 
-	  if (save_type == SOUND_SAVE_AS)
-	    io_err = save_edits_without_display(sp, ofile, type, format, srate, comment, AT_CURRENT_EDIT_POSITION);
-	  else io_err = save_selection(ofile, type, format, srate, comment, SAVE_ALL_CHANS); /* TODO: fixup save_selection */
-	  if ((io_err != IO_SAVE_HOOK_CANCELLATION) &&
-	      (io_err != IO_INTERRUPTED))
-	    {
-	      if (io_err != IO_NO_ERROR)
-		/* need decode of io_error here -- selection file etc */
-		msg = mus_format(_("save as %s error: %s"), ofile, snd_io_strerror());
-	      else 
-		{
-		  io_error_t io_err;
-		  sp->writing = true;
-		  io_err = move_file(ofile, sp->filename); /* should we cancel and restart a monitor? */
-		  sp->writing = false;
-		  /* TODO: handle possible io err here */
-		}
-	      snd_update(sp);
-	    }
-	  (*need_directory_update) = false;
-	  FREE(ofile);
-	  FREE(fullname);
-	}
-      else
-	{
-	  io_error_t io_err;
-	  collision = (same_name_info *)CALLOC(1, sizeof(same_name_info));
-	  collision->filename = fullname;
-	  collision->edits = 0;
-	  collision->sp = NULL;
-	  map_over_sounds(check_for_same_name, (void *)collision);
-	  if (collision->sp) /* sound open twice in Snd, other case has unsaved edits */
-	    {
-	      /* if no edits, we'll just close, overwrite, reopen */
-	      /* if edits, we need to ask user what to do */
-	      /* we don't need to check for overwrites at this point */
-#if 0
-	      /* TODO: replace this question */
-	      if (collision->edits > 0)
-		{
-		  if (!(snd_yes_or_no_p(_("%s has unsaved edits. Clobber them?"), str)))
-		    {
-		      FREE(fullname); 
-		      FREE(collision); 
-		      (*need_directory_update) = false;
-		      return(mus_format(_("%s not overwritten"), str));
-		    }
-		}
-#endif
-	      snd_close_file(collision->sp);
-	    }
-	  mus_sound_forget(fullname);
-	  if (save_type == SOUND_SAVE_AS)
-	    io_err = save_edits_without_display(sp, str, type, format, srate, comment, AT_CURRENT_EDIT_POSITION);
-	  else io_err = save_selection(str, type, format, srate, comment, SAVE_ALL_CHANS);
-	  if ((io_err != IO_SAVE_HOOK_CANCELLATION) &&
-	      (io_err != IO_INTERRUPTED))
-	    {
-	      if (io_err != IO_NO_ERROR)
-		{
-		  msg = mus_format("%s: %s", str, snd_io_strerror());
-		  (*need_directory_update) = false;
-		}
-	      if (collision->sp) 
-		{
-		  ss->open_requestor = FROM_SAVE_AS_DIALOG;
-		  snd_open_file(fullname, FILE_READ_WRITE);
-		  (*need_directory_update) = false;
-		}
-	      else 
-		{
-		  if (!msg) (*need_directory_update) = true;
-		}
-	    }
-	  FREE(fullname);
-	  FREE(collision);
-	}
-    }
-  else 
-    {
-      FREE(fullname);
-      (*need_directory_update) = false;
-      return(mus_format(_("%s not saved due to %s"), sp->short_filename, S_before_save_as_hook));
-    }
-  return(msg);
+  same_name_info *collision;
+  snd_info *result;
+  collision = (same_name_info *)CALLOC(1, sizeof(same_name_info));
+  collision->filename = (char *)fullname;
+  collision->parlous_sp = NULL;
+  collision->current_sp = sp;
+  map_over_sounds(check_for_same_name, (void *)collision);
+  result = collision->parlous_sp;
+  FREE(collision);
+  return(result);
 }
-
 
 bool edit_header_callback(snd_info *sp, file_data *edit_header_data, 
 			  void (*outer_handler)(const char *error_msg, void *ufd),

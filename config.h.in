@@ -88,6 +88,7 @@
 #undef ALPHA
 #undef SUN
 #undef OPENBSD
+#undef NETBSD
 #undef WINDOZE
 #undef HAVE_OSS
 #undef HAVE_ALSA

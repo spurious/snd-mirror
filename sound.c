@@ -435,7 +435,7 @@ static void display_sound_file_entry(FILE *fp, const char *name, sound_file *sf)
 #if HAVE_STRFTIME
       strftime(timestr, 64, "%a %d-%b-%Y %H:%M:%S", localtime(&date));
 #else
-      sprintf(timestr, "%d", date);
+      sprintf(timestr, "%d", (int)date);
 #endif
     }
   else sprintf(timestr, "(date cleared)");

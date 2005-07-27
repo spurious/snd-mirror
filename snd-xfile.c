@@ -30,9 +30,11 @@
  * TODO: scheme option for error history menu?
  * TODO: what if running src, uses its check-event to open raw data -- where is control?
  *       or similarly, stops at "ok", starts src, clicks ok?
- * TODO: need array of dialogs for save-as, enved?, open?, view?, mix, perhaps the rest
+ * TODO: need array of dialogs for enved?, open?, view?, mix, perhaps the rest
  * TODO: edit-properties dialog (extension of edit-header)
- * TODO: redirect xen errors
+ * TODO: option:settings dialog (global vars)
+ * PERHAPS: audio:settings for display, perhaps reset -- as opposed to using the recorder
+ * TODO: check that xen-errors are redirected locally (save-as-hook etc)
  */
 
 
@@ -539,7 +541,7 @@ static file_dialog_info *make_file_dialog(bool read_only, char *title, char *sel
   file_dialog_info *fd;
   Arg args[20];
   int n;
-  XmString s1, s2, ok_label;
+  XmString s1, s2, ok_label, filter_list_label, cancel_label, filter_button_label;
   Widget wtmp = NULL, rc1, rc2;
   fd = (file_dialog_info *)CALLOC(1, sizeof(file_dialog_info));
   fd->fp = (file_pattern_info *)CALLOC(1, sizeof(file_pattern_info));
@@ -554,10 +556,16 @@ static file_dialog_info *make_file_dialog(bool read_only, char *title, char *sel
   s1 = XmStringCreate(select_title, XmFONTLIST_DEFAULT_TAG);
   s2 = XmStringCreate(title, XmFONTLIST_DEFAULT_TAG);
   ok_label = XmStringCreate(title, XmFONTLIST_DEFAULT_TAG);
+  filter_list_label = XmStringCreate(_("files listed:"), XmFONTLIST_DEFAULT_TAG);
+  filter_button_label = XmStringCreate(_("Update"), XmFONTLIST_DEFAULT_TAG);
+  cancel_label = XmStringCreate(_("Dismiss"), XmFONTLIST_DEFAULT_TAG);
 
   XtSetArg(args[n], XmNokLabelString, ok_label); n++;
   XtSetArg(args[n], XmNselectionLabelString, s1); n++;
   XtSetArg(args[n], XmNdialogTitle, s2); n++;
+  XtSetArg(args[n], XmNfilterLabelString, filter_list_label); n++;
+  XtSetArg(args[n], XmNapplyLabelString, filter_button_label); n++;
+  XtSetArg(args[n], XmNcancelLabelString, cancel_label); n++;
   XtSetArg(args[n], XmNuserData, (XtPointer)(fd->fp)); n++;
 
   if (just_sounds(ss))
@@ -575,6 +583,9 @@ static file_dialog_info *make_file_dialog(bool read_only, char *title, char *sel
   XmStringFree(s1);
   XmStringFree(s2);
   XmStringFree(ok_label);
+  XmStringFree(filter_list_label);
+  XmStringFree(filter_button_label);
+  XmStringFree(cancel_label);
 
   rc1 = XtVaCreateManagedWidget("filebuttons-rc1", 
 				xmRowColumnWidgetClass, fd->dialog,
@@ -692,14 +703,11 @@ static void file_open_ok_callback(Widget w, XtPointer context, XtPointer info)
       if (!(directory_p(filename)))               /* this can be a directory name if the user clicked 'ok' when he meant 'cancel' */
 	{
 	  snd_info *sp;
-	  /* the possible snd_error calls are so deeply buried here that it's easiest just to redirect the error handler to us */
 	  redirect_snd_error_to(file_open_error, (void *)fd);
 	  ss->sgx->requestor_dialog = w;
 	  ss->open_requestor = FROM_OPEN_DIALOG;
 	  sp = snd_open_file(filename, fd->file_dialog_read_only);
 	  redirect_snd_error_to(NULL, NULL);
-	  /* now snd_error is back to normal */
-	  
 	  if (sp) 
 	    {
 	      XtUnmanageChild(w);
@@ -709,6 +717,7 @@ static void file_open_ok_callback(Widget w, XtPointer context, XtPointer info)
 	    {
 	      if (ss->open_requestor != FROM_RAW_DATA_DIALOG)
 		clear_error_if_open_changes(fd->dialog, (void *)fd);
+	      /* TODO: if no such file, fam here? */
 	    }
 	  if (filename) XtFree(filename);
 	}
@@ -804,9 +813,7 @@ static void file_mix_ok_callback(Widget w, XtPointer context, XtPointer info)
 	  ss->open_requestor = FROM_MIX_DIALOG;
 	  err = mix_complete_file_at_cursor(any_selected_sound(), filename, with_mix_tags(ss), 0);
 	  redirect_snd_error_to(NULL, NULL);
-	  if (err == 0) 
-	    XtUnmanageChild(w);
-	  else
+	  if (err != 0) 
 	    {
 	      if (ss->open_requestor != FROM_RAW_DATA_DIALOG)
 		clear_error_if_open_changes(fd->dialog, (void *)fd);
@@ -1532,15 +1539,15 @@ file_data *make_file_data_panel(Widget parent, char *name, Arg *in_args, int in_
 	  XtSetArg(args[n], XmNtopAttachment, XmATTACH_NONE); n++;
 	}
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
       XtSetArg(args[n], XmNborderColor, ss->sgx->black); n++;
       XtSetArg(args[n], XmNborderWidth, 2); n++;
       XtSetArg(args[n], XmNmarginWidth, 10); n++;
       XtSetArg(args[n], XmNmarginHeight, 10); n++;
-      fdat->error_text = XtCreateManagedWidget("", xmLabelWidgetClass, parent, args, n);
-      XtUnmanageChild(fdat->error_text);
+      fdat->error_text = XtCreateWidget("", xmLabelWidgetClass, parent, args, n);
+      /* XtUnmanageChild(fdat->error_text); */
     }
 
   if (with_comment != WITHOUT_COMMENT_FIELD)
@@ -1632,174 +1639,438 @@ static void unreflect_file_data_panel_change(file_data *fd, void *data, void (*c
 
 
 /* -------- save as dialog (file and edit menus) -------- */
-/* 
- * 19-June-97 simply save the current state under the new name and return
- *    to the current state/file (different from emacs) -- this keeps mix console intact
- *    across backups and so on, and seems more useful to me than switching to the new file.
- * 12-Nov-01 make this choice settable via emacs-style-save-as.
- * 6-Dec-04 need a hook here since gtk changes constantly
- * 20-Jun-05 improve error handling (redirect snd_error etc), add "Extract" option
- */
 
+typedef struct {
+  file_data *panel_data;
+  Widget dialog, filename_widget;
+  char *filename;
+  save_dialog_t type;
+  file_pattern_info *fp;
+  dialog_play_info *dp;
+  fam_info *file_watcher;
+  int selection_watcher_loc;
+} save_as_dialog_info;
 
-static file_data *sdat = NULL;
-static Widget save_as_dialog = NULL, sound_save_as_file_name;
-static save_dialog_t save_as_dialog_type = SOUND_SAVE_AS;
-static file_pattern_info *save_as_fp;
-static dialog_play_info *save_as_dp;
+static save_as_dialog_info *save_sound_as = NULL, *save_selection_as = NULL;
+
+static save_as_dialog_info *new_save_as_dialog_info(save_dialog_t type)
+{
+  save_as_dialog_info *sd;
+  sd = (save_as_dialog_info *)CALLOC(1, sizeof(save_as_dialog_info));
+  sd->type = type;
+  sd->selection_watcher_loc = -1;
+  return(sd);
+}
+
+static void save_as_selection_watcher(selection_watcher_reason_t reason, void *data)
+{
+  save_as_dialog_info *sd = (save_as_dialog_info *)data;
+  if ((reason == SELECTION_ACTIVE) ||
+      (selection_is_active()))
+    {
+      clear_dialog_error(sd->panel_data);
+      remove_selection_watcher(sd->selection_watcher_loc);
+      sd->selection_watcher_loc = -1;
+    }
+}
+
+static void save_as_filename_modify_callback(Widget w, XtPointer context, XtPointer info);
+
+static void save_as_undoit(save_as_dialog_info *sd)
+{
+  XmString ok_label;
+  ok_label = XmStringCreate(_("Save"), XmFONTLIST_DEFAULT_TAG);
+  XtVaSetValues(sd->dialog,
+		XmNokLabelString, ok_label, 
+		NULL);
+  XmStringFree(ok_label);
+  clear_dialog_error(sd->panel_data);
+  XtRemoveCallback(sd->filename_widget, XmNmodifyVerifyCallback, save_as_filename_modify_callback, (XtPointer)(sd->panel_data));
+  sd->file_watcher = fam_unmonitor_file(sd->filename, sd->file_watcher);
+}
+
+static void save_as_filename_modify_callback(Widget w, XtPointer context, XtPointer info)
+{
+  XmTextVerifyCallbackStruct *cbs = (XmTextVerifyCallbackStruct *)info;
+  save_as_undoit((save_as_dialog_info *)context);
+  cbs->doit = true;
+}
+
+static void clear_error_if_save_as_filename_changes(Widget dialog, void *data)
+{
+  save_as_dialog_info *sd = (save_as_dialog_info *)data;
+  XtAddCallback(sd->filename_widget, XmNmodifyVerifyCallback, save_as_filename_modify_callback, (XtPointer)data);
+}
+
+static void watch_save_as_file(struct fam_info *fp, FAMEvent *fe)
+{
+#if HAVE_FAM
+  /* if file is deleted, respond in some debonair manner */
+  switch (fe->code)
+    {
+    case FAMChanged:
+    case FAMDeleted:
+    case FAMCreated:
+    case FAMMoved:
+      save_as_undoit((save_as_dialog_info *)(fp->data));
+      break;
+
+    default:
+      /* ignore the rest */
+      break;
+    }
+#endif
+}
+
+static void save_as_watch_user_read_only(struct snd_info *sp, sp_watcher_reason_t reason, int loc)
+{
+  file_data *pdat = (file_data *)(sp->watchers[loc]->context);
+  clear_dialog_error(pdat);
+  remove_sp_watcher(sp, loc);
+}
+
+/* TODO: merge save and extract callback duplicated code */
 
 static void save_as_ok_callback(Widget w, XtPointer context, XtPointer info)
 { 
-  char *str = NULL, *comment, *msg = NULL;
-  snd_info *sp;
+  save_as_dialog_info *sd = (save_as_dialog_info *)context;
+  char *str = NULL, *comment = NULL, *msg = NULL, *fullname = NULL;
+  snd_info *sp = NULL;
   int type, format, srate, chans;
-  bool need_directory_update = false;
+  bool file_exists;
   off_t location, samples;
+  io_error_t io_err = IO_NO_ERROR;
 
-  clear_dialog_error(sdat);
-  redirect_snd_error_to(post_file_panel_error, (void *)sdat);
-  comment = get_file_dialog_sound_attributes(sdat, &srate, &chans, &type, &format, &location, &samples, 0);
-  redirect_snd_error_to(NULL, NULL);
-  if (sdat->error_widget != NOT_A_SCANF_WIDGET)
+  clear_dialog_error(sd->panel_data);
+
+  if ((sd->type == SELECTION_SAVE_AS) &&
+      (!(selection_is_active())))
     {
-      clear_error_if_panel_changes(save_as_dialog, (void *)sdat);
-      if (comment) FREE(comment);
+      msg = _("no selection to save");
+      post_file_dialog_error((const char *)msg, (void *)(sd->panel_data));
+      if (sd->selection_watcher_loc < 0)
+	sd->selection_watcher_loc = add_selection_watcher(save_as_selection_watcher, (void *)sd);
       return;
     }
-  
-  str = XmTextGetString(sound_save_as_file_name);
+
   sp = any_selected_sound();
-  clear_minibuffer(sp);
-  if ((str) && (*str))
+  if (!sp)
     {
-      redirect_snd_error_to(post_file_dialog_error, (void *)sdat);
-      msg = save_as_dialog_save_sound(sp, str, save_as_dialog_type, srate, type, format, comment, &need_directory_update);
-      redirect_snd_error_to(NULL, NULL);
-      if (msg)
-	{
-	  post_file_dialog_error((const char *)msg, (void *)sdat);
-	  clear_error_if_filename_changes(save_as_dialog, (void *)sdat);
-	  FREE(msg);
-	}
-      else
-	{
-	  if (need_directory_update) 
-	    force_directory_reread(save_as_dialog);
-	  XtUnmanageChild(save_as_dialog);
-	  report_in_minibuffer(sp, "%s saved as %s", sp->short_filename, str);
-	  if ((save_as_dialog_type == SOUND_SAVE_AS) && 
-	      (need_directory_update))
-	    run_after_save_as_hook(sp, str, true); /* true => from dialog */
-	}
+      msg = _("nothing to save");
+      post_file_dialog_error((const char *)msg, (void *)(sd->panel_data));
+      clear_error_if_filename_changes(sd->dialog, (void *)(sd->panel_data));
+      return;
+    }
+
+  /* get output filename */
+  str = XmTextGetString(sd->filename_widget);
+  if ((!str) || (!*str))
+    {
+      msg = _("can't save: no file name given");
+      post_file_dialog_error((const char *)msg, (void *)(sd->panel_data));
+      clear_error_if_filename_changes(sd->dialog, (void *)(sd->panel_data));
+      return;
+    }
+
+  /* get output file attributes */
+  redirect_snd_error_to(post_file_panel_error, (void *)(sd->panel_data));
+  comment = get_file_dialog_sound_attributes(sd->panel_data, &srate, &chans, &type, &format, &location, &samples, 0);
+  redirect_snd_error_to(NULL, NULL);
+  if (sd->panel_data->error_widget != NOT_A_SCANF_WIDGET)
+    {
+      clear_error_if_panel_changes(sd->dialog, (void *)(sd->panel_data));
+      if (comment) FREE(comment);
       XtFree(str);
+      return;
     }
-  else 
+
+  if (sd->type == SOUND_SAVE_AS)
+    clear_minibuffer(sp);
+
+  fullname = mus_expand_filename(str);
+  if (run_before_save_as_hook(sp, fullname, sd->type != SOUND_SAVE_AS, srate, type, format, comment))
     {
-      msg = _("not saved (no file name given)");
-      post_file_dialog_error((const char *)msg, (void *)sdat);
-      clear_error_if_filename_changes(save_as_dialog, (void *)sdat);
+      msg = mus_format(_("save cancelled by %s"), S_before_save_as_hook);
+      post_file_dialog_error((const char *)msg, (void *)(sd->panel_data));
+      clear_error_if_filename_changes(sd->dialog, (void *)(sd->panel_data));      
+      FREE(msg);
+      FREE(fullname);
+      if (comment) FREE(comment);
+      XtFree(str);
+      return;
     }
+
+  file_exists = mus_file_probe(fullname);
+  if ((sd->type == SOUND_SAVE_AS) &&
+      (strcmp(fullname, sp->filename) == 0))
+    {
+      /* save-as here is the same as save */
+      if ((sp->user_read_only) || 
+	  (sp->file_read_only))
+	{
+	  msg = mus_format(_("can't overwrite %s (it is write-protected)"), sp->short_filename);
+	  post_file_dialog_error((const char *)msg, (void *)(sd->panel_data));
+	  clear_error_if_filename_changes(sd->dialog, (void *)(sd->panel_data)); 
+	  if (sp->user_read_only)
+	    add_sp_watcher(sp, SP_READ_ONLY_WATCHER, save_as_watch_user_read_only, (void *)(sd->panel_data));
+	  FREE(msg);
+	  FREE(fullname);
+	  if (comment) FREE(comment);
+	  XtFree(str);
+	  return;
+	}
+    }
+  else
+    {
+      if (!(sd->file_watcher))
+	{
+	  /* check for overwrites that are questionable -- DoIt click will return here with sd->file_watcher active */
+	  snd_info *parlous_sp = NULL;
+	  if ((file_exists) &&
+	      ((ask_before_overwrite(ss)) ||
+	       ((sd->type == SOUND_SAVE_AS) &&
+		(parlous_sp = file_is_open_elsewhere_and_has_unsaved_edits(sp, fullname)))))	   
+	    {
+	      XmString ok_label;
+	      msg = mus_format(_("%s exists%s. To overwrite it, click 'DoIt'"), 
+			       str,
+			       (parlous_sp) ? ", and has unsaved edits" : "");
+	      sd->file_watcher = fam_monitor_file(fullname, (void *)sd, watch_save_as_file);
+	      post_file_dialog_error((const char *)msg, (void *)(sd->panel_data));
+	      clear_error_if_save_as_filename_changes(sd->dialog, (void *)(sd->panel_data));
+	      ok_label = XmStringCreate(_("DoIt"), XmFONTLIST_DEFAULT_TAG);
+	      XtVaSetValues(sd->dialog, 
+			    XmNokLabelString, ok_label, 
+			    NULL);
+	      XmStringFree(ok_label);
+	      FREE(msg);
+	      FREE(fullname);
+	      if (comment) FREE(comment);
+	      XtFree(str);
+	      return;
+	    }
+	}
+    }
+
+  /* try to save... if it exists already, first write as temp, then move */
+  if (sd->file_watcher)
+    save_as_undoit(sd);
+  ss->local_errno = 0;
+
+  redirect_snd_error_to(post_file_dialog_error, (void *)(sd->panel_data));
+  if (sd->type == SOUND_SAVE_AS)
+    io_err = save_edits_without_display(sp, fullname, type, format, srate, comment, AT_CURRENT_EDIT_POSITION);
+  else
+    {
+      char *ofile;
+      if (file_exists)
+	ofile = snd_tempnam();
+      else ofile = copy_string(fullname);
+      io_err = save_selection(ofile, type, format, srate, comment, SAVE_ALL_CHANS);
+      if (io_err == IO_NO_ERROR)
+	io_err = move_file(ofile, fullname);
+      FREE(ofile);
+    }
+  redirect_snd_error_to(NULL, NULL);
+  if (io_err == IO_NO_ERROR)
+    {
+      if (!file_exists)
+	force_directory_reread(sd->dialog);
+      if (sd->type == SOUND_SAVE_AS)
+	report_in_minibuffer(sp, "%s saved as %s", sp->short_filename, str);
+      else report_in_minibuffer(sp, "selection saved as %s", str);
+      run_after_save_as_hook(sp, str, true); /* true => from dialog */
+      XtUnmanageChild(sd->dialog);
+    }
+  else
+    {
+      msg = mus_format("save as %s error: %s", str, io_error_name(io_err));
+      post_file_dialog_error((const char *)msg, (void *)(sd->panel_data));
+      clear_error_if_filename_changes(sd->dialog, (void *)(sd->panel_data));
+      FREE(msg);
+    }
+  FREE(fullname);
+  XtFree(str);
   if (comment) FREE(comment);
 } 
 
 static void save_as_extract_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  char *str = NULL, *comment, *msg = NULL;
-  snd_info *sp;
-  int type, format, srate, chan = 0, err = 0;
-  bool need_directory_update = false;
+  save_as_dialog_info *sd = (save_as_dialog_info *)context;
+  char *str = NULL, *comment, *msg = NULL, *fullname = NULL;
+  snd_info *sp = NULL;
+  int type, format, srate, chan = 0, extractable_chans = 0;
+  bool file_exists = false;
   off_t location, samples;
-  clear_dialog_error(sdat);
-  redirect_snd_error_to(post_file_panel_error, (void *)sdat);
-  comment = get_file_dialog_sound_attributes(sdat, &srate, &chan, &type, &format, &location, &samples, 0);
-  redirect_snd_error_to(NULL, NULL);
-  if (sdat->error_widget != NOT_A_SCANF_WIDGET)
+  io_error_t io_err;
+
+  clear_dialog_error(sd->panel_data);
+
+  if ((sd->type == SELECTION_SAVE_AS) &&
+      (!(selection_is_active())))
     {
-      clear_error_if_panel_changes(save_as_dialog, (void *)sdat);
-      if (comment) FREE(comment);
+      msg = _("can't extract: no selection");
+      post_file_dialog_error((const char *)msg, (void *)(sd->panel_data));
+      if (sd->selection_watcher_loc < 0)
+	sd->selection_watcher_loc = add_selection_watcher(save_as_selection_watcher, (void *)sd);
       return;
     }
 
-  str = XmTextGetString(sound_save_as_file_name);
+  /* get output filename */
+  str = XmTextGetString(sd->filename_widget);
+  if ((!str) || (!*str))
+    {
+      msg = _("can't extract: no file name given");
+      post_file_dialog_error((const char *)msg, (void *)(sd->panel_data));
+      clear_error_if_filename_changes(sd->dialog, (void *)(sd->panel_data));
+      return;
+    }
+
+  /* get output file attributes */
+  redirect_snd_error_to(post_file_panel_error, (void *)(sd->panel_data));
+  comment = get_file_dialog_sound_attributes(sd->panel_data, &srate, &chan, &type, &format, &location, &samples, 0);
+  redirect_snd_error_to(NULL, NULL);
+  if (sd->panel_data->error_widget != NOT_A_SCANF_WIDGET)
+    {
+      clear_error_if_panel_changes(sd->dialog, (void *)(sd->panel_data));
+      if (comment) FREE(comment);
+      XtFree(str);
+      return;
+    }
+
+  /* check that chan-to-extract choice makes sense */
   sp = any_selected_sound();
-  clear_minibuffer(sp);
-  if ((chan > sp->nchans) ||
-      (((sp->nchans > 1) && (chan == sp->nchans)) ||
+  if (sd->type == SOUND_SAVE_AS)
+    {
+      clear_minibuffer(sp);
+      extractable_chans = sp->nchans;
+    }
+  else extractable_chans = selection_chans();
+  if ((chan > extractable_chans) ||
+      (((extractable_chans > 1) && (chan == extractable_chans)) ||
        (chan < 0)))
     {
-      if (chan > sp->nchans)
-	msg = mus_format("can't extract channel %d (sound has %d chan%s)", 
-			 chan, sp->nchans, 
-			 (sp->nchans > 1) ? "s" : "");
-      else msg = mus_format("can't extract channel %d (first chan is numbered 0)", chan);
-      post_file_dialog_error((const char *)msg, (void *)sdat);
-      clear_error_if_chans_changes(save_as_dialog, (void *)sdat);
+      if (chan > extractable_chans)
+	msg = mus_format("can't extract chan %d (%s has %d chan%s)", 
+			 chan, 
+			 (sd->type == SOUND_SAVE_AS) ? "sound" : "selection",
+			 extractable_chans, 
+			 (extractable_chans > 1) ? "s" : "");
+      else msg = mus_format("can't extract chan %d (first chan is numbered 0)", chan);
+      post_file_dialog_error((const char *)msg, (void *)(sd->panel_data));
+      clear_error_if_chans_changes(sd->dialog, (void *)(sd->panel_data));
       FREE(msg);
+      if (comment) FREE(comment);
+      XtFree(str);
+      return;
+    }
+
+  /* check before-save-as-hook (non-#f return -> do not save) */
+  fullname = mus_expand_filename(str);
+  if (run_before_save_as_hook(sp, fullname, sd->type != SOUND_SAVE_AS, srate, type, format, comment))
+    {
+      msg = mus_format(_("extract cancelled by %s"), S_before_save_as_hook);
+      post_file_dialog_error((const char *)msg, (void *)(sd->panel_data));
+      clear_error_if_filename_changes(sd->dialog, (void *)(sd->panel_data));      
+      FREE(msg);
+      FREE(fullname);
+      if (comment) FREE(comment);
+      XtFree(str);
+      return;
+    }
+
+  file_exists = mus_file_probe(fullname);
+  if ((sd->type == SOUND_SAVE_AS) &&
+      (strcmp(fullname, sp->filename) == 0))
+    {
+      /* save-as here is the same as save */
+      if ((sp->user_read_only) || 
+	  (sp->file_read_only))
+	{
+	  msg = mus_format(_("can't overwrite %s (it is write-protected)"), sp->short_filename);
+	  post_file_dialog_error((const char *)msg, (void *)(sd->panel_data));
+	  clear_error_if_filename_changes(sd->dialog, (void *)(sd->panel_data)); 
+	  if (sp->user_read_only)
+	    add_sp_watcher(sp, SP_READ_ONLY_WATCHER, save_as_watch_user_read_only, (void *)(sd->panel_data));
+	  FREE(msg);
+	  FREE(fullname);
+	  if (comment) FREE(comment);
+	  XtFree(str);
+	  return;
+	}
     }
   else
     {
-      if ((!str) || (!*str))
+      if (!(sd->file_watcher))
 	{
-	  msg = _("not saved (no file name given)");
-	  post_file_dialog_error((const char *)msg, (void *)sdat);
-	  clear_error_if_filename_changes(save_as_dialog, (void *)sdat);
-	}
-      else
-	{
-	  bool unmanage = true;
-	  msg = NULL;
-	  err = MUS_NO_ERROR;
-	  if (sp->nchans == 1)
+	  /* check for overwrites that are questionable -- DoIt click will return here with sd->file_watcher active */
+	  snd_info *parlous_sp = NULL;
+	  if ((file_exists) &&
+	      ((ask_before_overwrite(ss)) ||
+	       ((sd->type == SOUND_SAVE_AS) &&
+		(parlous_sp = file_is_open_elsewhere_and_has_unsaved_edits(sp, fullname)))))	   
 	    {
-	      redirect_snd_error_to(post_file_dialog_error, (void *)sdat);
-	      msg = save_as_dialog_save_sound(sp, str, save_as_dialog_type, srate, type, format, comment, &need_directory_update);
-	      redirect_snd_error_to(NULL, NULL);
+	      XmString ok_label;
+	      msg = mus_format(_("%s exists%s. To overwrite it, click 'DoIt'"), 
+			       str,
+			       (parlous_sp) ? ", and has unsaved edits" : "");
+	      sd->file_watcher = fam_monitor_file(fullname, (void *)sd, watch_save_as_file);
+	      post_file_dialog_error((const char *)msg, (void *)(sd->panel_data));
+	      clear_error_if_save_as_filename_changes(sd->dialog, (void *)(sd->panel_data));
+	      ok_label = XmStringCreate(_("DoIt"), XmFONTLIST_DEFAULT_TAG);
+	      XtVaSetValues(sd->dialog, 
+			    XmNokLabelString, ok_label, 
+			    NULL);
+	      XmStringFree(ok_label);
+	      FREE(msg);
+	      FREE(fullname);
+	      if (comment) FREE(comment);
+	      XtFree(str);
+	      return;
 	    }
-	  else 
-	    {
-	      char *fullname = NULL;
-	      fullname = mus_expand_filename(str);
-	      if (false)
-		{
-		  /* TODO: handle this overwrite right here and above -- one case for both (gfile too) */
-		  FREE(fullname);
-		  need_directory_update = false;
-		  msg = mus_format(_("%s not overwritten"), str);
-		  post_file_dialog_error((const char *)msg, (void *)sdat);
-		  clear_error_if_filename_changes(save_as_dialog, (void *)sdat);
-		  unmanage = false;
-		}
-	      else
-		{
-		  io_error_t io_err;
-		  redirect_snd_error_to(post_file_dialog_error, (void *)sdat);
-		  io_err = save_channel_edits(sp->chans[chan], str, AT_CURRENT_EDIT_POSITION);
-		  redirect_snd_error_to(NULL, NULL);
-		  need_directory_update = true;
-		}
-	    }
-	  if (unmanage)
-	    {
-	      if ((msg) || (err != MUS_NO_ERROR))
-		{
-		  post_file_dialog_error((const char *)msg, (void *)sdat);
-		  clear_error_if_filename_changes(save_as_dialog, (void *)sdat);
-		  if (msg) FREE(msg);
-		}
-	      else
-		{
-		  if (need_directory_update) force_directory_reread(save_as_dialog);
-		  XtUnmanageChild(save_as_dialog);
-		  report_in_minibuffer(sp, "%s channel %d saved as %s", sp->short_filename, chan, str);
-		  if ((sp) && (str) && 
-		      (save_as_dialog_type == SOUND_SAVE_AS) && 
-		      (need_directory_update))
-		    run_after_save_as_hook(sp, str, true); /* true => from dialog */
-		}
-	    }
-	  XtFree(str);
 	}
     }
+
+  /* try to save... if it exists already, first write as temp, then move */
+  if (sd->file_watcher)
+    save_as_undoit(sd);
+  ss->local_errno = 0;
+
+  redirect_snd_error_to(post_file_dialog_error, (void *)(sd->panel_data));
+  if (sd->type == SOUND_SAVE_AS)
+    io_err = save_channel_edits(sp->chans[chan], fullname, AT_CURRENT_EDIT_POSITION); /* protects if same name */
+  else 
+    {
+      char *ofile;
+      if (file_exists)
+	ofile = snd_tempnam();
+      else ofile = copy_string(fullname);
+      io_err = save_selection(ofile, type, format, srate, comment, chan);
+      if (io_err == IO_NO_ERROR)
+	io_err = move_file(ofile, fullname);
+      FREE(ofile);
+    }
+  redirect_snd_error_to(NULL, NULL);
+  if (io_err == IO_NO_ERROR)
+    {
+      if (!file_exists)
+	force_directory_reread(sd->dialog);
+      if (sd->type == SOUND_SAVE_AS)
+	report_in_minibuffer(sp, "%s chan %d saved as %s", sp->short_filename, chan, str);
+      else report_in_minibuffer(sp, "selection chan %d saved as %s", chan, str);
+      run_after_save_as_hook(sp, str, true); /* true => from dialog */
+      XtUnmanageChild(sd->dialog);
+    }
+  else
+    {
+      msg = mus_format("extract chan as %s error: %s", str, io_error_name(io_err));
+      /* TODO: drag up the actual error here! */
+      post_file_dialog_error((const char *)msg, (void *)(sd->panel_data));
+      clear_error_if_filename_changes(sd->dialog, (void *)(sd->panel_data));
+      FREE(msg);
+    }
+  FREE(fullname);
+  XtFree(str);
   if (comment) FREE(comment);
 }
 
@@ -1823,7 +2094,8 @@ static void save_as_dialog_select_callback(Widget w, XtPointer context, XtPointe
 
 static void save_as_cancel_callback(Widget w, XtPointer context, XtPointer info)
 { 
-  XtUnmanageChild(save_as_dialog);
+  save_as_dialog_info *sd = (save_as_dialog_info *)context;
+  XtUnmanageChild(sd->dialog);
 } 
 
 static void save_as_help_callback(Widget w, XtPointer context, XtPointer info) 
@@ -1837,10 +2109,25 @@ static void save_as_file_exists_check(Widget w, XtPointer context, XtPointer inf
   char *filename = NULL;
   XmString s1;
   filename = XmTextGetString(w);
-  if ((filename) && (*filename) && 
-      (mus_file_probe(filename)) && 
-      (!directory_p(filename)))
-    s1 = XmStringCreate(_("save as (overwriting):"), XmFONTLIST_DEFAULT_TAG);
+  if ((filename) && (*filename))
+    {
+      if ((mus_file_probe(filename)) && 
+	  (!directory_p(filename)))
+	{
+#if HAVE_ACCESS
+	  if (access(filename, W_OK) < 0)
+	    s1 = XmStringCreate(_("save as (file write-protected?):"), XmFONTLIST_DEFAULT_TAG);
+	  else
+#endif
+	  s1 = XmStringCreate(_("save as (overwriting):"), XmFONTLIST_DEFAULT_TAG);
+	}
+      else
+	{
+	  if (!(directory_exists(filename)))
+	    s1 = XmStringCreate(_("save as (no such directory?):"), XmFONTLIST_DEFAULT_TAG);
+	  else s1 = XmStringCreate(_("save as:"), XmFONTLIST_DEFAULT_TAG);
+	}
+    }
   else s1 = XmStringCreate(_("save as:"), XmFONTLIST_DEFAULT_TAG);
   XtVaSetValues(dialog, 
 		XmNselectionLabelString, s1, 
@@ -1848,14 +2135,16 @@ static void save_as_file_exists_check(Widget w, XtPointer context, XtPointer inf
   if (filename) XtFree(filename);
 }
 
-static void make_save_as_dialog(char *sound_name, int header_type, int format_type)
+static void make_save_as_dialog(save_as_dialog_info *sd, char *sound_name, int header_type, int format_type)
 {
   char *file_string;
-  if (!save_as_dialog)
+
+  if (!(sd->dialog))
     {
       Arg args[32];
       int n;
       XmString xmstr1, xmstr2, s1;
+      XmString filter_list_label, cancel_label, filter_button_label;
       Widget extractB, mainform;
 
       n = 0;
@@ -1872,9 +2161,18 @@ static void make_save_as_dialog(char *sound_name, int header_type, int format_ty
       xmstr2 = XmStringCreate(file_string, XmFONTLIST_DEFAULT_TAG);
       XtSetArg(args[n], XmNdialogTitle, xmstr2); n++;
 
-      save_as_fp = (file_pattern_info *)CALLOC(1, sizeof(file_pattern_info));
-      save_as_fp->in_just_sounds_update = false;
-      save_as_dp = (dialog_play_info *)CALLOC(1, sizeof(dialog_play_info));
+      filter_list_label = XmStringCreate(_("files listed:"), XmFONTLIST_DEFAULT_TAG);
+      XtSetArg(args[n], XmNfilterLabelString, filter_list_label); n++;
+
+      filter_button_label = XmStringCreate(_("Update"), XmFONTLIST_DEFAULT_TAG);
+      XtSetArg(args[n], XmNapplyLabelString, filter_button_label); n++;
+
+      cancel_label = XmStringCreate(_("Dismiss"), XmFONTLIST_DEFAULT_TAG);
+      XtSetArg(args[n], XmNcancelLabelString, cancel_label); n++;
+
+      sd->fp = (file_pattern_info *)CALLOC(1, sizeof(file_pattern_info));
+      sd->fp->in_just_sounds_update = false;
+      sd->dp = (dialog_play_info *)CALLOC(1, sizeof(dialog_play_info));
 
       XtSetArg(args[n], XmNresizePolicy, XmRESIZE_GROW); n++;
       XtSetArg(args[n], XmNnoResize, false); n++;
@@ -1882,33 +2180,37 @@ static void make_save_as_dialog(char *sound_name, int header_type, int format_ty
       XtSetArg(args[n], XmNchildPlacement, XmPLACE_ABOVE_SELECTION); n++;
       XtSetArg(args[n], XmNallowOverlap, false); n++;
       XtSetArg(args[n], XmNheight, 600); n++;
-      XtSetArg(args[n], XmNuserData, (XtPointer)save_as_fp); n++;
-      save_as_dialog = XmCreateFileSelectionDialog(MAIN_SHELL(ss), "save-as", args, n);
+      XtSetArg(args[n], XmNuserData, (XtPointer)sd->fp); n++;
+      sd->dialog = XmCreateFileSelectionDialog(MAIN_SHELL(ss), "save-as", args, n); /* TODO: why does this stay on top? */
       FREE(file_string);
 
       XmStringFree(s1);
       XmStringFree(xmstr1);
       XmStringFree(xmstr2);
-      sound_save_as_file_name = XtNameToWidget(save_as_dialog, "Text");
-      if (!(sound_save_as_file_name)) sound_save_as_file_name = XmFileSelectionBoxGetChild(save_as_dialog, XmDIALOG_TEXT);
+      XmStringFree(filter_list_label);
+      XmStringFree(filter_button_label);
+      XmStringFree(cancel_label);
 
-      XtAddCallback(save_as_dialog, XmNhelpCallback, save_as_help_callback, NULL);
-      XtAddCallback(save_as_dialog, XmNcancelCallback, save_as_cancel_callback, NULL);
-      XtAddCallback(save_as_dialog, XmNokCallback, save_as_ok_callback, NULL);
+      sd->filename_widget = XtNameToWidget(sd->dialog, "Text");
+      if (!(sd->filename_widget)) sd->filename_widget = XmFileSelectionBoxGetChild(sd->dialog, XmDIALOG_TEXT);
 
-      save_as_fp->dialog = save_as_dialog;
-      save_as_dp->dialog = save_as_dialog;
+      XtAddCallback(sd->dialog, XmNhelpCallback, save_as_help_callback, (XtPointer)sd);
+      XtAddCallback(sd->dialog, XmNcancelCallback, save_as_cancel_callback, (XtPointer)sd);
+      XtAddCallback(sd->dialog, XmNokCallback, save_as_ok_callback, (XtPointer)sd);
 
-      mainform = XtVaCreateManagedWidget("filebuttons-mainform", xmFormWidgetClass, save_as_dialog, NULL);
-      add_play_and_just_sounds_buttons(save_as_dialog, mainform, save_as_fp, save_as_dp);
+      sd->fp->dialog = sd->dialog;
+      sd->dp->dialog = sd->dialog;
+
+      mainform = XtVaCreateManagedWidget("filebuttons-mainform", xmFormWidgetClass, sd->dialog, NULL);
+      add_play_and_just_sounds_buttons(sd->dialog, mainform, sd->fp, sd->dp);
 
       n = 0;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
-      XtSetArg(args[n], XmNtopWidget, save_as_fp->just_sounds_button); n++;
+      XtSetArg(args[n], XmNtopWidget, sd->fp->just_sounds_button); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-      sdat = make_file_data_panel(mainform, "data-form", args, n, 
+      sd->panel_data = make_file_data_panel(mainform, "data-form", args, n, 
 				  WITH_EXTRACT_CHANNELS_FIELD, 
 				  header_type, format_type, 
 				  WITHOUT_DATA_LOCATION_FIELD, 
@@ -1916,19 +2218,19 @@ static void make_save_as_dialog(char *sound_name, int header_type, int format_ty
 				  WITH_ERROR_FIELD, 
 				  WITH_HEADER_TYPE_FIELD, 
 				  WITH_COMMENT_FIELD);
-      sdat->dialog = save_as_dialog;
+      sd->panel_data->dialog = sd->dialog;
 
-      color_file_selection_box(save_as_dialog);
+      color_file_selection_box(sd->dialog);
       if (!(ss->using_schemes))	
 	{
-	  XtVaSetValues(sdat->format_list, XmNbackground, ss->sgx->white, XmNforeground, ss->sgx->black, NULL);
-	  XtVaSetValues(sdat->header_list, XmNbackground, ss->sgx->white, XmNforeground, ss->sgx->black, NULL);
-	  XtVaSetValues(save_as_fp->just_sounds_button, XmNselectColor, ss->sgx->pushed_button_color, NULL);
-	  XtVaSetValues(save_as_dp->play_button, XmNselectColor, ss->sgx->pushed_button_color, NULL);
+	  XtVaSetValues(sd->panel_data->format_list, XmNbackground, ss->sgx->white, XmNforeground, ss->sgx->black, NULL);
+	  XtVaSetValues(sd->panel_data->header_list, XmNbackground, ss->sgx->white, XmNforeground, ss->sgx->black, NULL);
+	  XtVaSetValues(sd->fp->just_sounds_button, XmNselectColor, ss->sgx->pushed_button_color, NULL);
+	  XtVaSetValues(sd->dp->play_button, XmNselectColor, ss->sgx->pushed_button_color, NULL);
 	}
-      XtAddCallback(XmFileSelectionBoxGetChild(save_as_dialog, XmDIALOG_LIST),
-		    XmNbrowseSelectionCallback, save_as_dialog_select_callback, (XtPointer)save_as_dp);
-      XtAddCallback(sound_save_as_file_name, XmNvalueChangedCallback, save_as_file_exists_check, (XtPointer)save_as_dialog);
+      XtAddCallback(XmFileSelectionBoxGetChild(sd->dialog, XmDIALOG_LIST),
+		    XmNbrowseSelectionCallback, save_as_dialog_select_callback, (XtPointer)(sd->dp));
+      XtAddCallback(sd->filename_widget, XmNvalueChangedCallback, save_as_file_exists_check, (XtPointer)(sd->dialog));
 
       /* this must come after the file data panel so that Motif puts it in the button box, not the main work area */
       n = 0;
@@ -1937,11 +2239,13 @@ static void make_save_as_dialog(char *sound_name, int header_type, int format_ty
 	  XtSetArg(args[n], XmNbackground, ss->sgx->doit_again_button_color); n++;
 	  XtSetArg(args[n], XmNarmColor,   ss->sgx->pushed_button_color); n++;
 	}
-      extractB = XtCreateManagedWidget(_("Extract"), xmPushButtonGadgetClass, save_as_dialog, args, n);
-      XtAddCallback(extractB, XmNactivateCallback, save_as_extract_callback, NULL);
+      extractB = XtCreateManagedWidget(_("Extract"), xmPushButtonGadgetClass, sd->dialog, args, n);
+      XtAddCallback(extractB, XmNactivateCallback, save_as_extract_callback, (XtPointer)sd);
 
-      XtManageChild(save_as_dialog);
-      set_dialog_widget(SOUND_SAVE_AS_DIALOG, save_as_dialog);
+      XtManageChild(sd->dialog);
+      if (sd->type == SOUND_SAVE_AS)
+	set_dialog_widget(SOUND_SAVE_AS_DIALOG, sd->dialog);
+      else set_dialog_widget(SELECTION_SAVE_AS_DIALOG, sd->dialog);
     }
   else
     {
@@ -1949,7 +2253,7 @@ static void make_save_as_dialog(char *sound_name, int header_type, int format_ty
       file_string = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
       mus_snprintf(file_string, PRINT_BUFFER_SIZE, _("save %s"), sound_name);
       xmstr2 = XmStringCreate(file_string, XmFONTLIST_DEFAULT_TAG);
-      XtVaSetValues(save_as_dialog, 
+      XtVaSetValues(sd->dialog, 
 		    XmNdialogTitle, xmstr2, 
 		    NULL);
       XmStringFree(xmstr2);
@@ -1962,38 +2266,53 @@ widget_t make_sound_save_as_dialog(bool managed)
   snd_info *sp = NULL;
   char *com = NULL;
   file_info *hdr = NULL;
-  save_as_dialog_type = SOUND_SAVE_AS;
+  save_as_dialog_info *sd;
+
+  if (!save_sound_as)
+    save_sound_as = new_save_as_dialog_info(SOUND_SAVE_AS);
+  sd = save_sound_as;
+
   sp = any_selected_sound();
   if (sp) hdr = sp->hdr;
-  make_save_as_dialog((char *)((sp) ? sp->short_filename : ""),
+  make_save_as_dialog(sd,
+		      (char *)((sp) ? sp->short_filename : ""),
 		      default_output_header_type(ss),
 		      default_output_data_format(ss));
-  set_file_dialog_sound_attributes(sdat,
-				   sdat->current_type,
-				   sdat->current_format,
+  set_file_dialog_sound_attributes(sd->panel_data,
+				   sd->panel_data->current_type,
+				   sd->panel_data->current_format,
 				   (hdr) ? hdr->srate : selection_srate(), 
 				   IGNORE_CHANS, IGNORE_DATA_LOCATION, IGNORE_SAMPLES,
 				   com = output_comment(hdr));
   if (com) FREE(com);
-  if ((managed) && (!XtIsManaged(save_as_dialog))) XtManageChild(save_as_dialog);
-  return(save_as_dialog);
+  if ((managed) && (!XtIsManaged(sd->dialog))) 
+    XtManageChild(sd->dialog);
+  return(sd->dialog);
 }
 
 widget_t make_selection_save_as_dialog(bool managed)
 {
-  save_as_dialog_type = SELECTION_SAVE_AS;
-  make_save_as_dialog(_("current selection"),
+  save_as_dialog_info *sd;
+
+  if (!save_selection_as)
+    save_selection_as = new_save_as_dialog_info(SELECTION_SAVE_AS);
+  sd = save_selection_as;
+
+  make_save_as_dialog(sd,
+		      _("current selection"),
 		      default_output_header_type(ss),
 		      default_output_data_format(ss));
-  set_file_dialog_sound_attributes(sdat,
-				   sdat->current_type,
-				   sdat->current_format,
+  set_file_dialog_sound_attributes(sd->panel_data,
+				   sd->panel_data->current_type,
+				   sd->panel_data->current_format,
 				   selection_srate(), 
 				   IGNORE_CHANS, IGNORE_DATA_LOCATION, IGNORE_SAMPLES, 
 				   NULL);
-  if ((managed) && (!XtIsManaged(save_as_dialog))) XtManageChild(save_as_dialog);
-  return(save_as_dialog);
+  if ((managed) && (!XtIsManaged(sd->dialog))) 
+    XtManageChild(sd->dialog);
+  return(sd->dialog);
 }
+
 
 
 /* -------- save/restore for all these dialogs -------- */
@@ -2019,16 +2338,26 @@ void save_file_dialog_state(FILE *fd)
       fprintf(fd, "%s(true)\n", TO_PROC_NAME(S_mix_file_dialog));
 #endif
     }
-  if ((save_as_dialog) && (XtIsManaged(save_as_dialog)))
+  if ((save_sound_as) && (XtIsManaged(save_sound_as->dialog)))
     {
 #if HAVE_SCHEME
-      fprintf(fd, "(%s #t)\n", (save_as_dialog_type == SOUND_SAVE_AS) ? S_save_sound_dialog : S_save_selection_dialog);
+      fprintf(fd, "(%s #t)\n", S_save_sound_dialog);
 #endif
 #if HAVE_RUBY
-      fprintf(fd, "%s(true)\n", TO_PROC_NAME((save_as_dialog_type == SOUND_SAVE_AS) ? S_save_sound_dialog : S_save_selection_dialog));
+      fprintf(fd, "%s(true)\n", TO_PROC_NAME(S_save_sound_dialog));
+#endif
+    }
+  if ((save_selection_as) && (XtIsManaged(save_selection_as->dialog)))
+    {
+#if HAVE_SCHEME
+      fprintf(fd, "(%s #t)\n", S_save_selection_dialog);
+#endif
+#if HAVE_RUBY
+      fprintf(fd, "%s(true)\n", TO_PROC_NAME(S_save_selection_dialog));
 #endif
     }
 }
+
 
 
 /* -------------------------------- New File -------------------------------- */
@@ -2042,7 +2371,8 @@ static fam_info *new_file_watcher = NULL;
 
 void cleanup_new_file_watcher(void)
 {
-  new_file_watcher = fam_unmonitor_file(new_file_filename, new_file_watcher);
+  if (new_file_watcher)
+    new_file_watcher = fam_unmonitor_file(new_file_filename, new_file_watcher);
 }
 
 static void new_filename_modify_callback(Widget w, XtPointer context, XtPointer info);
@@ -2369,6 +2699,7 @@ typedef struct edhead_info {
   snd_info *sp;
   bool panel_changed;
   fam_info *file_ro_watcher;
+  int sp_ro_watcher_loc;
 } edhead_info;
 
 static int edhead_info_size = 0;
@@ -2470,20 +2801,20 @@ static void edit_header_cancel_callback(Widget w, XtPointer context, XtPointer i
   edhead_info *ep = (edhead_info *)context;
   XtUnmanageChild(ep->dialog);
   unreflect_file_data_panel_change(ep->edat, (void *)ep, edit_header_set_ok_sensitive);
-  ep->sp->user_read_only_watcher = NULL;
-  ep->sp->user_read_only_watcher_context = NULL;
+  remove_sp_watcher(ep->sp, ep->sp_ro_watcher_loc);
   ep->panel_changed = false;
   ep->file_ro_watcher = fam_unmonitor_file(ep->sp->filename, ep->file_ro_watcher);
 }
 
-static void watch_user_read_only(struct snd_info *sp, read_only_reason_t reason)
+static void edit_header_watch_user_read_only(struct snd_info *sp, sp_watcher_reason_t reason, int loc)
 {
-  edhead_info *ep = (edhead_info *)(sp->user_read_only_watcher_context);
+  edhead_info *ep;
+  ep = (edhead_info *)(sp->watchers[loc]->context);
   if ((ep->dialog) && 
       (XtIsManaged(ep->dialog)) &&
       (sp == ep->sp))
     {
-      if (reason == USER_READ_ONLY_CHANGED)
+      if (reason == SP_READ_ONLY_CHANGED) /* SP_IS_CLOSING is other choice */
 	{
 	  XmString title;
 	  if ((!(sp->file_read_only)) && (!(sp->user_read_only)))
@@ -2502,8 +2833,7 @@ static void watch_user_read_only(struct snd_info *sp, read_only_reason_t reason)
 	  XtUnmanageChild(ep->dialog);
 	  ep->panel_changed = false;
 	  ep->file_ro_watcher = fam_unmonitor_file(ep->sp->filename, ep->file_ro_watcher);
-	  ep->sp->user_read_only_watcher = NULL;
-	  ep->sp->user_read_only_watcher_context = NULL;
+	  remove_sp_watcher(ep->sp, loc);
 	  ep->sp = NULL;
 	}
     }
@@ -2550,8 +2880,7 @@ static void watch_file_read_only(struct fam_info *fp, FAMEvent *fe)
 	unreflect_file_data_panel_change(ep->edat, (void *)ep, edit_header_set_ok_sensitive);
       ep->panel_changed = false;
       ep->file_ro_watcher = fam_unmonitor_file(ep->sp->filename, ep->file_ro_watcher);
-      ep->sp->user_read_only_watcher = NULL;
-      ep->sp->user_read_only_watcher_context = NULL;
+      remove_sp_watcher(ep->sp, ep->sp_ro_watcher_loc);
       break;
 
     default:
@@ -2590,8 +2919,7 @@ static void edit_header_ok_callback(Widget w, XtPointer context, XtPointer info)
 		  return;
 		}
 	    }
-	  ep->sp->user_read_only_watcher = NULL;
-	  ep->sp->user_read_only_watcher_context = NULL;
+	  remove_sp_watcher(ep->sp, ep->sp_ro_watcher_loc);
 	  ep->file_ro_watcher = fam_unmonitor_file(ep->sp->filename, ep->file_ro_watcher);
 	  XtUnmanageChild(ep->dialog);
 	  unreflect_file_data_panel_change(ep->edat, (void *)ep, edit_header_set_ok_sensitive);
@@ -2730,8 +3058,7 @@ Widget edit_header(snd_info *sp)
   XmStringFree(xstr4);
   if (!(XtIsManaged(ep->dialog))) XtManageChild(ep->dialog);
   reflect_file_data_panel_change(ep->edat, (void *)ep, edit_header_set_ok_sensitive);
-  ep->sp->user_read_only_watcher = &watch_user_read_only;
-  ep->sp->user_read_only_watcher_context = (void *)ep;
+  ep->sp_ro_watcher_loc = add_sp_watcher(ep->sp, SP_READ_ONLY_WATCHER, edit_header_watch_user_read_only, (void *)ep);
   ep->file_ro_watcher = fam_monitor_file(ep->sp->filename, (void *)ep, watch_file_read_only);
   return(ep->dialog);
 }

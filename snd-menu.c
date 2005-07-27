@@ -142,6 +142,7 @@ void file_menu_update(void)
   set_sensitive(file_close_menu, file_p);
   set_sensitive(file_print_menu, file_p);
   set_sensitive(file_mix_menu, file_p);
+  set_sensitive(file_insert_menu, file_p);
   set_sensitive(file_save_as_menu, file_p);
   set_sensitive(file_update_menu, file_p);
 
