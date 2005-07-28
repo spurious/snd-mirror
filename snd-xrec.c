@@ -1205,7 +1205,8 @@ static void make_file_info_pane(recorder_info *rp, Widget file_pane, int ndevs)
 				WITHOUT_SAMPLES_FIELD, 
 				WITHOUT_ERROR_FIELD, 
 				WITH_HEADER_TYPE_FIELD, 
-				WITH_COMMENT_FIELD);
+				WITH_COMMENT_FIELD,
+				WITH_BUILTIN_HEADERS);
   recdat->dialog = recorder;
   XtVaGetValues(recdat->comment_text, XmNy, &pane_max, NULL);
   XtAddCallback(recdat->srate_text, XmNactivateCallback, srate_changed_callback, NULL); /* this is a no-op -- textfield widget is not activatable */

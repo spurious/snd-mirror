@@ -473,7 +473,8 @@ file_data *make_file_data_panel(GtkWidget *parent, char *name,
 				int header_type, int data_format,
 				dialog_data_location_t with_loc, dialog_samples_t with_samples,
 				dialog_error_t with_error, dialog_header_type_t with_header_type,
-				dialog_comment_t with_comment);
+				dialog_comment_t with_comment,
+				header_choice_t header_choice);
 widget_t make_sound_save_as_dialog(bool managed);
 widget_t make_selection_save_as_dialog(bool managed);
 ww_info *make_title_row(GtkWidget *formw, char *top_str, char *main_str, dialog_pad_t pad, dialog_sort_t with_sort, dialog_paned_t with_pane);
@@ -492,6 +493,7 @@ bool view_files_dialog_is_active(void);
 void raw_data_dialog_to_file_info(const char *filename, char *title, char *info, bool read_only, bool selected);
 void make_new_file_dialog(void);
 widget_t make_mix_file_dialog(bool managed);
+widget_t make_insert_file_dialog(bool managed);
 GtkWidget *edit_header(snd_info *sp);
 void save_edit_header_dialog_state(FILE *fd);
 void cleanup_edit_header_watcher(void);

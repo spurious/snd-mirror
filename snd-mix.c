@@ -1210,10 +1210,6 @@ static mix_info *file_mix_samples(off_t beg, off_t num, char *mixfile, chan_info
  *                     a notion of initial scalers
  */
 
-#define MIX_FILE_NO_MIX -1
-#define MIX_FILE_NO_FILE -2
-#define MIX_FILE_NO_SP -3
-
 int mix_file(off_t beg, off_t num, int chans, chan_info **cps, char *mixinfile, file_delete_t temp, const char *origin, bool with_tag, int track_id)
 {
   /* loop through out_chans cps writing the new mixed temp files and fixing up the edit trees */
@@ -1387,6 +1383,11 @@ int mix_complete_file_at_cursor(snd_info *sp, char *str, bool with_tag, int trac
       err = mix_complete_file(sp, CURSOR(cp), fullname, with_tag, DONT_DELETE_ME, track_id, false);
       if (err == MIX_FILE_NO_FILE) 
 	snd_error("can't mix file: %s, %s", str, snd_io_strerror());
+      else
+	{
+	  if (err == MIX_FILE_NO_MIX) 
+	    snd_error("no data to mix in %s", str);
+	}
       if (fullname) FREE(fullname);
       return(err);
     }

@@ -1858,6 +1858,8 @@ Does not work.
 
 (add-to-menu edit-menu #f #f)
 
+;;; this is now built-in (27-Jul-05)
+#!
 (add-to-menu edit-menu "Insert file"
   (lambda ()
     (select-file
@@ -1867,6 +1869,7 @@ Does not work.
 	      (insert-sound filename (cursor) 0 (selected-sound) (selected-channel))
 	      (insert-sound filename))))
       "Insert file" "." "*" "File will be inserted at cursor location.")))
+!#
 
 (define (append-sound filename)
   ;; appends sound file

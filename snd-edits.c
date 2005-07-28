@@ -5560,6 +5560,53 @@ bool insert_samples(off_t beg, off_t num, mus_sample_t *vals, chan_info *cp, con
   return(true);
 }
 
+bool insert_complete_file(snd_info *sp, const char *str, off_t chan_beg)
+{
+  int nc;
+  bool ok = false;
+  char *filename;
+  filename = mus_expand_filename(str);
+  nc = mus_sound_chans(filename); /* mus_error should go through snd_error or possibly xen error, so another isn't needed(?) */
+  if (nc > 0)
+    {
+      off_t len;
+      len = mus_sound_frames(filename);
+      if (len == 0)
+	snd_error(_("%s has no data"), str);
+      else
+	{
+	  int i, j, first_chan = 0;
+	  char *origin;
+	  chan_info *ncp;
+	  if (sp->sync != 0)
+	    ncp = sp->chans[0];
+	  else ncp = any_selected_channel(sp);
+	  first_chan = ncp->chan;
+	  for (i = first_chan, j = 0; (j < nc) && (i < sp->nchans); i++, j++)
+	    {
+	      ncp = sp->chans[i];
+	      origin = mus_format("%s" PROC_OPEN "\"%s\"" PROC_SEP OFF_TD PROC_SEP "%d", 
+				  TO_PROC_NAME(S_insert_sound), filename, chan_beg, j);
+	      ok = file_insert_samples(chan_beg, len, filename, ncp, j, DONT_DELETE_ME, origin, ncp->edit_ctr);
+	      if (ok)
+		update_graph(ncp);
+	      FREE(origin);
+	    }
+	}
+    }
+  FREE(filename);
+  return(ok);
+}
+
+bool insert_complete_file_at_cursor(snd_info *sp, const char *filename)
+{
+  chan_info *ncp;
+  ncp = any_selected_channel(sp);
+  return(insert_complete_file(sp, filename, CURSOR(ncp)));
+}
+
+
+
 /* -------------------------------- delete samples -------------------------------- */
 
 static ed_list *delete_section_from_list(off_t beg, off_t num, ed_list *current_state)

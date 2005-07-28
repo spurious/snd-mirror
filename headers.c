@@ -459,6 +459,10 @@ const char *mus_header_type_name(int type)
     case MUS_TWINVQ:           return("TwinVQ");                  break;
     case MUS_SDIF:             return("IRCAM sdif");              break;
     case MUS_NVF:              return("Creative NVF");            break;
+    case MUS_OGG:              return("Ogg Vorbis");              break;
+    case MUS_FLAC:             return("Flac");                    break;
+    case MUS_SPEEX:            return("Speex");                   break;
+    case MUS_MPEG:             return("mpeg");                    break;
     default:                   return("unsupported");             break;
     }
 }

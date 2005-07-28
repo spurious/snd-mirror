@@ -5295,7 +5295,7 @@ insert a silence: <a href="#padchannel">pad-channel</a>, <a href="#insertsilence
 insert a region: <a href="#insertregion">insert-region</a><br>
 insert the selection: <a href="#insertselection">insert-selection</a><br>
 insert a vct of samples: <a href="#insertsamples">insert-samples</a><br>
-insert a sound: <a href="#insertsound">insert-sound</a><br>
+insert a sound: <a href="#insertsound">insert-sound</a> or <a href="#insertfiledialog">insert-file-dialog</a><br>
 append a sound and silence: <a href="#appendsound">append-sound</a><br>
 </blockquote></small>
 </td></tr></TABLE>
@@ -9102,6 +9102,12 @@ See <i>html</i> in index.scm.
 <br><code>(info-dialog "xyzzy" "are we having fUn?")</code>
 </td></tr>
 
+<!-- insert-file-dialog -->
+<tr><td colspan=2><code><a class=def name="insertfiledialog">insert-file-dialog</a> (<i>managed</i>)</code></td></tr>
+<tr><td></td><td>create and (if <i>managed</i> which defaults to #t) activate the File:Insert dialog.
+Return the dialog widget.
+</td></tr>
+
 <!-- just-sounds -->
 <tr><td colspan=2><code><a class=def name="justsounds">just-sounds</a> ()</code></td></tr>
 <tr><td width=50></td><td>In Motif and in Gtk versions 2.3 or later,
@@ -10848,7 +10854,7 @@ The four "-widgets" procedures return lists of possibly useful widgets:
                      10:new_file_dialog 11:file_mix_dialog 12:edit_header_dialog 
                      13:find_dialog 14:help_dialog 15:completion_dialog 16:view_mixes_dialog
                      17:print_dialog 18:recorder_dialog 19:view_regions_dialog, 20:info_dialog
-                     21:view_tracks_dialog 22:selection_save_as_dialog)
+                     21:view_tracks_dialog 22:selection_save_as_dialog, 23:insert_file_dialog)
 </pre>
 <p>
 <i>dialog-widgets</i> entries are #f for any dialog that has not

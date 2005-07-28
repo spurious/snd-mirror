@@ -20,7 +20,7 @@ static void file_save_as_callback(Widget w, XtPointer info, XtPointer context) {
 static void file_revert_callback(Widget w, XtPointer info, XtPointer context) {revert_file_from_menu();}
 static void file_exit_callback(Widget w, XtPointer info, XtPointer context) {if (snd_exit_cleanly(false)) snd_exit(1);}
 static void file_mix_callback_1(Widget w, XtPointer info, XtPointer context) {make_mix_file_dialog(true);}
-static void file_insert_callback_1(Widget w, XtPointer info, XtPointer context) {}
+static void file_insert_callback_1(Widget w, XtPointer info, XtPointer context) {make_insert_file_dialog(true);}
 static void file_print_callback_1(Widget w, XtPointer info, XtPointer context) {file_print_callback(w, info, context);}
 
 
@@ -164,15 +164,15 @@ static void help_delete_callback (Widget w, XtPointer info, XtPointer context) {
 
 void check_menu_labels(int key, int state, bool extended)
 {
-  /* user has redefined key, so erase it from the menu label */
+  /* user has redefined key, so erase old key binding info from the menu label */
   if (extended)
     {
       if (state == snd_ControlMask)
 	{
-	  /* TODO: insert case here? */
 	  if (key == snd_K_f) set_label(file_open_menu, _("Open")); else
 	  if (key == snd_K_s) set_label(file_save_menu, _("Save")); else
 	  if (key == snd_K_q) set_label(file_mix_menu, _("Mix")); else
+	  if (key == snd_K_i) set_label(file_insert_menu, _("Insert")); else
 	  if (key == snd_K_u) set_label(edit_undo_menu, _("Undo")); else
 	  if (key == snd_K_r) set_label(edit_redo_menu, _("Redo"));
 	}
@@ -265,7 +265,7 @@ Widget add_menu(void)
   XtAddCallback(file_mix_menu, XmNactivateCallback, file_mix_callback_1, NULL);
   XtVaSetValues(file_mix_menu, XmNmnemonic, 'M', NULL);
 
-  file_insert_menu = XtCreateManagedWidget(_("Insert"), xmPushButtonWidgetClass, file_menu, in_args, in_n); /* TODO: accel? */
+  file_insert_menu = XtCreateManagedWidget(_("Insert C-x C-i"), xmPushButtonWidgetClass, file_menu, in_args, in_n);
   XtAddCallback(file_insert_menu, XmNactivateCallback, file_insert_callback_1, NULL);
   XtVaSetValues(file_insert_menu, XmNmnemonic, 'I', NULL);
 

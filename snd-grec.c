@@ -855,7 +855,8 @@ static void make_file_info_pane(recorder_info *rp, GtkWidget *file_pane, int nde
 				WITHOUT_SAMPLES_FIELD, 
 				WITHOUT_ERROR_FIELD, 
 				WITH_HEADER_TYPE_FIELD, 
-				WITH_COMMENT_FIELD);
+				WITH_COMMENT_FIELD,
+				WITH_BUILTIN_HEADERS);
   SG_SIGNAL_CONNECT(recdat->srate_text, "activate", srate_changed_callback, NULL);
 
 #if SGI

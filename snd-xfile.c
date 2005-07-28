@@ -4,6 +4,7 @@
    File|Edit:Save-as, 
    File:Open|View, 
    File|Edit:Mix, 
+   File:Insert,
    File:Edit-Header,
    File:New
    Info and Raw
@@ -11,19 +12,14 @@
 */
 
 
-/* PERHAPS: location to mix at in File:Mix? amp/srate sliders?
- * TODO: pull-down list of recent files
+/* TODO: pull-down list of recent files
  * TODO: new file: find some way to get around the hidden label bug (unmanage error text etc)
  * PERHAPS: if user changes raw file with dialog up -- adding header for example, should we automatically open it? or reflect in panel?
  * TODO: replace "current files" section with something useful --
  *   perhaps a menu for actions on previous files such as insert/mix/open/play
  *   or a grouping thing as in the (unimplemented) regions dialog
  * PERHAPS: (alert_new_file): handle all directory update decisions through FAM
- * TODO: raw give OGG/Mpeg/Speex/Flac/Midi choices if the progs can be found -- 
- *
- *   Save as: present extra header type options for the writers we found during configure (how to tabulate formats?)
- *   Raw data: ditto for readers, also perhaps change title if we recognize Ogg etc
- *
+ * TODO: raw give OGG/Mpeg/Speex/Flac/Midi read choices if the progs can be found
  * TODO: various file/directory lists: tie into fam/gamin (also previous files list) -- add xen call?
  * TODO: if directory loaded into previous files list via -p, add any new sound files as they appear
  *
@@ -35,10 +31,13 @@
  * TODO: option:settings dialog (global vars)
  * PERHAPS: audio:settings for display, perhaps reset -- as opposed to using the recorder
  * TODO: check that xen-errors are redirected locally (save-as-hook etc)
+ * TODO: open no such file goes to post it? -- from startup args!
+ * TODO: in mix/insert: panel for mix at cursor/beginning/end/mark/sample (num)
+ * TODO: doc ogg etc output
  */
 
 
-/* ---------------- open/mix dialogs ---------------- */
+/* ---------------- open/mix/insert dialogs ---------------- */
 
 static void color_file_selection_box(Widget w)
 {
@@ -807,17 +806,22 @@ static void file_mix_ok_callback(Widget w, XtPointer context, XtPointer info)
       file_dialog_stop_playing(fd->dp);
       if (!(directory_p(filename)))               /* this can be a directory name if the user clicked 'ok' when he meant 'cancel' */
 	{
-	  int err;
+	  int id_or_error;
+	  snd_info *sp;
+	  sp = any_selected_sound();
 	  redirect_snd_error_to(file_open_error, (void *)fd);
 	  ss->sgx->requestor_dialog = w;
 	  ss->open_requestor = FROM_MIX_DIALOG;
-	  err = mix_complete_file_at_cursor(any_selected_sound(), filename, with_mix_tags(ss), 0);
+	  id_or_error = mix_complete_file_at_cursor(sp, filename, with_mix_tags(ss), 0);
+	  /* "id_or_error" here is either one of the mix id's or an error indication such as MIX_FILE_NO_MIX */
+	  /*    the possible error conditions have been checked alreay, or go through snd_error */
 	  redirect_snd_error_to(NULL, NULL);
-	  if (err != 0) 
+	  if (id_or_error < 0) /* actually -1 .. -3 */
 	    {
 	      if (ss->open_requestor != FROM_RAW_DATA_DIALOG)
 		clear_error_if_open_changes(fd->dialog, (void *)fd);
 	    }
+	  else report_in_minibuffer(sp, _("%s mixed in at cursor"), filename);
 	  if (filename) XtFree(filename);
 	}
       else 
@@ -843,7 +847,7 @@ widget_t make_mix_file_dialog(bool managed)
   /* called from the menu */
   if (mdat == NULL)
     {
-      mdat = make_file_dialog(true, _("Mix"), _("mix in:"), file_mix_ok_callback, mix_file_help_callback);
+      mdat = make_file_dialog(true, _("Mix Sound"), _("mix in:"), file_mix_ok_callback, mix_file_help_callback);
       set_dialog_widget(FILE_MIX_DIALOG, mdat->dialog);
       if (just_sounds(ss)) 
 	{
@@ -860,6 +864,81 @@ widget_t make_mix_file_dialog(bool managed)
 }
 
 
+/* -------- File:Insert dialog -------- */
+
+static void file_insert_ok_callback(Widget w, XtPointer context, XtPointer info)
+{
+  XmFileSelectionBoxCallbackStruct *cbs = (XmFileSelectionBoxCallbackStruct *)info;
+  file_dialog_info *fd = (file_dialog_info *)context;
+  char *filename = NULL;
+  ASSERT_WIDGET_TYPE(XmIsFileSelectionBox(w), w);
+  filename = (char *)XmStringUnparse(cbs->value, NULL, XmCHARSET_TEXT, XmCHARSET_TEXT, NULL, 0, XmOUTPUT_ALL);
+  if ((!filename) || (!(*filename)))
+    {
+      file_open_error(_("no filename given"), (void *)fd);
+      clear_error_if_open_changes(fd->dialog, (void *)fd);
+    }
+  else
+    {
+      file_dialog_stop_playing(fd->dp);
+      if (!(directory_p(filename)))               /* this can be a directory name if the user clicked 'ok' when he meant 'cancel' */
+	{
+	  bool ok = false;
+	  snd_info *sp;
+	  sp = any_selected_sound();
+	  ss->sgx->requestor_dialog = w;
+	  ss->open_requestor = FROM_INSERT_DIALOG;
+	  redirect_snd_error_to(file_open_error, (void *)fd);
+	  ok = insert_complete_file_at_cursor(sp, filename);
+	  redirect_snd_error_to(NULL, NULL);
+	  if (!ok)
+	    {
+	      if (ss->open_requestor != FROM_RAW_DATA_DIALOG)
+		clear_error_if_open_changes(fd->dialog, (void *)fd);
+	    }
+	  else report_in_minibuffer(sp, _("%s inserted at cursor"), filename);
+	  if (filename) XtFree(filename);
+	}
+      else 
+	{
+	  char *str;
+	  str = mus_format(_("%s is a directory"), filename);
+	  file_open_error(str, (void *)fd);
+	  clear_error_if_open_changes(fd->dialog, (void *)fd);
+	  FREE(str);
+	}
+    }
+}
+  
+static void insert_file_help_callback (Widget w, XtPointer context, XtPointer info) 
+{
+  insert_file_dialog_help();
+}
+
+static file_dialog_info *idat = NULL;
+
+widget_t make_insert_file_dialog(bool managed)
+{
+  /* called from the menu */
+  if (idat == NULL)
+    {
+      idat = make_file_dialog(true, _("Insert Sound"), _("insert:"), file_insert_ok_callback, insert_file_help_callback);
+      set_dialog_widget(FILE_INSERT_DIALOG, idat->dialog);
+      if (just_sounds(ss)) 
+	{
+	  XtVaSetValues(idat->dialog, 
+			XmNfileSearchProc, sound_file_search, 
+			NULL);
+	  idat->fp->need_update = true;
+	  force_directory_reread(idat->dialog);
+	}
+    }
+  if ((managed) && (!XtIsManaged(idat->dialog)))
+    XtManageChild(idat->dialog);
+  return(idat->dialog);
+}
+
+
 /* -------- reflect outside changes -------- */
 
 void set_open_file_play_button(bool val)
@@ -868,6 +947,8 @@ void set_open_file_play_button(bool val)
     XmToggleButtonSetState(odat->dp->play_button, (Boolean)val, false);
   if ((mdat) && (mdat->dp->play_button))
     XmToggleButtonSetState(mdat->dp->play_button, (Boolean)val, false);
+  if ((idat) && (idat->dp->play_button))
+    XmToggleButtonSetState(idat->dp->play_button, (Boolean)val, false);
 }
 
 void alert_new_file(void) 
@@ -876,6 +957,8 @@ void alert_new_file(void)
     odat->fp->new_file_written = true;
   if (mdat)
     mdat->fp->new_file_written = true;
+  if (idat)
+    idat->fp->new_file_written = true;
 }
 
 void reflect_just_sounds(void)
@@ -884,6 +967,8 @@ void reflect_just_sounds(void)
     XmToggleButtonSetState(odat->fp->just_sounds_button, just_sounds(ss), true);
   if ((mdat) && (mdat->fp->just_sounds_button))
     XmToggleButtonSetState(mdat->fp->just_sounds_button, just_sounds(ss), true);
+  if ((idat) && (idat->fp->just_sounds_button))
+    XmToggleButtonSetState(idat->fp->just_sounds_button, just_sounds(ss), true);
 }
 
 
@@ -892,7 +977,9 @@ void reflect_just_sounds(void)
 
 #define NUM_VISIBLE_HEADERS 5
 
-char *get_file_dialog_sound_attributes(file_data *fdat, int *srate, int *chans, int *type, int *format, off_t *location, off_t *samples, int min_chan)
+char *get_file_dialog_sound_attributes(file_data *fdat, 
+				       int *srate, int *chans, int *type, int *format, off_t *location, off_t *samples, 
+				       int min_chan)
 {
   char *str;
   int n;
@@ -999,7 +1086,8 @@ char *get_file_dialog_sound_attributes(file_data *fdat, int *srate, int *chans, 
 #define IGNORE_SRATE -1
 #define IGNORE_HEADER_TYPE -1
 
-static void set_file_dialog_sound_attributes(file_data *fdat, int type, int format, int srate, int chans, off_t location, off_t samples, char *comment)
+static void set_file_dialog_sound_attributes(file_data *fdat, 
+					     int type, int format, int srate, int chans, off_t location, off_t samples, char *comment)
 {
   int i;
   char **fl = NULL;
@@ -1048,6 +1136,7 @@ static void set_file_dialog_sound_attributes(file_data *fdat, int type, int form
       (fdat->samples_text))
     widget_off_t_to_text(fdat->samples_text, samples);
 }
+
 
 /* -------- error handling -------- */
 
@@ -1214,15 +1303,13 @@ static void chans_drop(Widget w, XtPointer context, XtPointer info)
 
 #define PANEL_COMMENT_SPACE 8
 
-#define NUM_HEADER_TYPES 7
-static char *header_short_names[NUM_HEADER_TYPES] = {"sun  ", "aifc ", "wave ", "raw  ", "aiff ", "ircam", "nist "};
-
 file_data *make_file_data_panel(Widget parent, char *name, Arg *in_args, int in_n, 
 				dialog_channels_t with_chan, 
 				int header_type, int data_format,
 				dialog_data_location_t with_loc, dialog_samples_t with_samples,
 				dialog_error_t with_error, dialog_header_type_t with_header_type,
-				dialog_comment_t with_comment)
+				dialog_comment_t with_comment,
+				header_choice_t header_choice)
 {
   Widget form, header_label, data_label, srate_label, chans_label, sep1, sep2 = NULL, sep3, sep4;
   Widget comment_label = NULL, location_label, samples_label;
@@ -1231,14 +1318,21 @@ file_data *make_file_data_panel(Widget parent, char *name, Arg *in_args, int in_
   Arg args[32];
   int i, n;
   XmString *strs;
-  int dformats = 0;
-  char **formats = NULL;
+  int nformats = 0, nheaders = 0;
+  char **formats = NULL, **headers = NULL;
+
+  switch (header_choice)
+    {
+    case WITH_READABLE_HEADERS: headers = short_readable_headers(&nheaders); break;
+    case WITH_WRITABLE_HEADERS: headers = short_writable_headers(&nheaders); break;
+    case WITH_BUILTIN_HEADERS:  headers = short_builtin_headers(&nheaders);  break;
+    }
 
   fdat = (file_data *)CALLOC(1, sizeof(file_data));
   fdat->current_type = header_type;
   fdat->current_format = data_format;
   formats = set_header_positions_from_type(fdat, header_type, data_format);
-  dformats = fdat->formats;
+  nformats = fdat->formats;
 
   /* pick up all args from caller */
   form = XtCreateManagedWidget(name, xmFormWidgetClass, parent, in_args, in_n);
@@ -1265,9 +1359,9 @@ file_data *make_file_data_panel(Widget parent, char *name, Arg *in_args, int in_
       header_label = XtCreateManagedWidget(_("header"), xmLabelWidgetClass, form, args, n);
       
       /* what is selected depends on current type */
-      strs = (XmString *)CALLOC(NUM_HEADER_TYPES, sizeof(XmString)); 
-      for (i = 0; i < NUM_HEADER_TYPES; i++) 
-	strs[i] = XmStringCreate(header_short_names[i], XmFONTLIST_DEFAULT_TAG);
+      strs = (XmString *)CALLOC(nheaders, sizeof(XmString)); 
+      for (i = 0; i < nheaders; i++) 
+	strs[i] = XmStringCreate(headers[i], XmFONTLIST_DEFAULT_TAG);
 
       n = 0;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
@@ -1279,12 +1373,12 @@ file_data *make_file_data_panel(Widget parent, char *name, Arg *in_args, int in_
       XtSetArg(args[n], XmNlistMarginWidth, 1); n++;
       XtSetArg(args[n], XmNuserData, (XtPointer)fdat); n++;
       XtSetArg(args[n], XmNitems, strs); n++;
-      XtSetArg(args[n], XmNitemCount, NUM_HEADER_TYPES); n++;
+      XtSetArg(args[n], XmNitemCount, nheaders); n++;
       XtSetArg(args[n], XmNvisibleItemCount, NUM_VISIBLE_HEADERS); n++;
       fdat->header_list = XmCreateScrolledList(form, "header-type", args, n);
       XtManageChild(fdat->header_list);
 
-      for (i = 0; i < NUM_HEADER_TYPES; i++) 
+      for (i = 0; i < nheaders; i++) 
 	XmStringFree(strs[i]);
       FREE(strs);
       XmListSelectPos(fdat->header_list, fdat->header_pos + 1, false);
@@ -1335,14 +1429,14 @@ file_data *make_file_data_panel(Widget parent, char *name, Arg *in_args, int in_
   XtSetArg(args[n], XmNuserData, (XtPointer)fdat); n++;
   fdat->format_list = XmCreateScrolledList(form, "data-format", args, n);
 
-  strs = (XmString *)CALLOC(dformats, sizeof(XmString)); 
-  for (i = 0; i < dformats; i++) 
+  strs = (XmString *)CALLOC(nformats, sizeof(XmString)); 
+  for (i = 0; i < nformats; i++) 
     strs[i] = XmStringCreate(formats[i], XmFONTLIST_DEFAULT_TAG);
   XtVaSetValues(fdat->format_list, 
 		XmNitems, strs, 
-		XmNitemCount, dformats, 
+		XmNitemCount, nformats, 
 		NULL);
-  for (i = 0; i < dformats; i++) 
+  for (i = 0; i < nformats; i++) 
     XmStringFree(strs[i]);
   FREE(strs);
 
@@ -1734,9 +1828,9 @@ static void save_as_watch_user_read_only(struct snd_info *sp, sp_watcher_reason_
 static void save_as_ok_callback(Widget w, XtPointer context, XtPointer info)
 { 
   save_as_dialog_info *sd = (save_as_dialog_info *)context;
-  char *str = NULL, *comment = NULL, *msg = NULL, *fullname = NULL;
+  char *str = NULL, *comment = NULL, *msg = NULL, *fullname = NULL, *tmpfile = NULL;
   snd_info *sp = NULL;
-  int type, format, srate, chans;
+  int type, format, srate, chans, output_type;
   bool file_exists;
   off_t location, samples;
   io_error_t io_err = IO_NO_ERROR;
@@ -1775,6 +1869,7 @@ static void save_as_ok_callback(Widget w, XtPointer context, XtPointer info)
   /* get output file attributes */
   redirect_snd_error_to(post_file_panel_error, (void *)(sd->panel_data));
   comment = get_file_dialog_sound_attributes(sd->panel_data, &srate, &chans, &type, &format, &location, &samples, 0);
+  output_type = type;
   redirect_snd_error_to(NULL, NULL);
   if (sd->panel_data->error_widget != NOT_A_SCANF_WIDGET)
     {
@@ -1857,23 +1952,43 @@ static void save_as_ok_callback(Widget w, XtPointer context, XtPointer info)
     save_as_undoit(sd);
   ss->local_errno = 0;
 
+  if (encoded_header_p(type))
+    {
+      output_type = type;
+      format = MUS_LSHORT;
+      type = MUS_RIFF;
+      tmpfile = snd_tempnam();
+    }
+  else
+    {
+      tmpfile = fullname;
+    }
+
   redirect_snd_error_to(post_file_dialog_error, (void *)(sd->panel_data));
   if (sd->type == SOUND_SAVE_AS)
-    io_err = save_edits_without_display(sp, fullname, type, format, srate, comment, AT_CURRENT_EDIT_POSITION);
+    io_err = save_edits_without_display(sp, tmpfile, type, format, srate, comment, AT_CURRENT_EDIT_POSITION);
   else
     {
       char *ofile;
-      if (file_exists)
+      if (file_exists) /* file won't exist if we're encoding, so this isn't as wasteful as it looks */
 	ofile = snd_tempnam();
-      else ofile = copy_string(fullname);
+      else ofile = copy_string(tmpfile);
       io_err = save_selection(ofile, type, format, srate, comment, SAVE_ALL_CHANS);
       if (io_err == IO_NO_ERROR)
 	io_err = move_file(ofile, fullname);
       FREE(ofile);
     }
   redirect_snd_error_to(NULL, NULL);
+
   if (io_err == IO_NO_ERROR)
     {
+      if (encoded_header_p(output_type))
+	{
+	  snd_encode(output_type, tmpfile, fullname);
+	  snd_remove(tmpfile, REMOVE_FROM_CACHE);
+	  FREE(tmpfile);
+	}
+
       if (!file_exists)
 	force_directory_reread(sd->dialog);
       if (sd->type == SOUND_SAVE_AS)
@@ -1889,6 +2004,7 @@ static void save_as_ok_callback(Widget w, XtPointer context, XtPointer info)
       clear_error_if_filename_changes(sd->dialog, (void *)(sd->panel_data));
       FREE(msg);
     }
+
   FREE(fullname);
   XtFree(str);
   if (comment) FREE(comment);
@@ -1897,9 +2013,9 @@ static void save_as_ok_callback(Widget w, XtPointer context, XtPointer info)
 static void save_as_extract_callback(Widget w, XtPointer context, XtPointer info) 
 {
   save_as_dialog_info *sd = (save_as_dialog_info *)context;
-  char *str = NULL, *comment, *msg = NULL, *fullname = NULL;
+  char *str = NULL, *comment, *msg = NULL, *fullname = NULL, *tmpfile = NULL;
   snd_info *sp = NULL;
-  int type, format, srate, chan = 0, extractable_chans = 0;
+  int type, format, srate, chan = 0, extractable_chans = 0, output_type;
   bool file_exists = false;
   off_t location, samples;
   io_error_t io_err;
@@ -1929,6 +2045,7 @@ static void save_as_extract_callback(Widget w, XtPointer context, XtPointer info
   /* get output file attributes */
   redirect_snd_error_to(post_file_panel_error, (void *)(sd->panel_data));
   comment = get_file_dialog_sound_attributes(sd->panel_data, &srate, &chan, &type, &format, &location, &samples, 0);
+  output_type = type;
   redirect_snd_error_to(NULL, NULL);
   if (sd->panel_data->error_widget != NOT_A_SCANF_WIDGET)
     {
@@ -2031,14 +2148,26 @@ static void save_as_extract_callback(Widget w, XtPointer context, XtPointer info
 	}
     }
 
-  /* try to save... if it exists already, first write as temp, then move */
+  /* try to save... if it exists already (or needs encoding), first write as temp, then move (or encode) */
   if (sd->file_watcher)
     save_as_undoit(sd);
   ss->local_errno = 0;
 
+  if (encoded_header_p(type))
+    {
+      output_type = type;
+      format = MUS_LSHORT;
+      type = MUS_RIFF;
+      tmpfile = snd_tempnam();
+    }
+  else
+    {
+      tmpfile = fullname;
+    }
+
   redirect_snd_error_to(post_file_dialog_error, (void *)(sd->panel_data));
   if (sd->type == SOUND_SAVE_AS)
-    io_err = save_channel_edits(sp->chans[chan], fullname, AT_CURRENT_EDIT_POSITION); /* protects if same name */
+    io_err = save_channel_edits(sp->chans[chan], tmpfile, AT_CURRENT_EDIT_POSITION); /* protects if same name */
   else 
     {
       char *ofile;
@@ -2053,6 +2182,13 @@ static void save_as_extract_callback(Widget w, XtPointer context, XtPointer info
   redirect_snd_error_to(NULL, NULL);
   if (io_err == IO_NO_ERROR)
     {
+      if (encoded_header_p(output_type))
+	{
+	  snd_encode(output_type, tmpfile, fullname);
+	  snd_remove(tmpfile, REMOVE_FROM_CACHE);
+	  FREE(tmpfile);
+	}
+
       if (!file_exists)
 	force_directory_reread(sd->dialog);
       if (sd->type == SOUND_SAVE_AS)
@@ -2211,13 +2347,14 @@ static void make_save_as_dialog(save_as_dialog_info *sd, char *sound_name, int h
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       sd->panel_data = make_file_data_panel(mainform, "data-form", args, n, 
-				  WITH_EXTRACT_CHANNELS_FIELD, 
-				  header_type, format_type, 
-				  WITHOUT_DATA_LOCATION_FIELD, 
-				  WITHOUT_SAMPLES_FIELD,
-				  WITH_ERROR_FIELD, 
-				  WITH_HEADER_TYPE_FIELD, 
-				  WITH_COMMENT_FIELD);
+					    WITH_EXTRACT_CHANNELS_FIELD, 
+					    header_type, format_type, 
+					    WITHOUT_DATA_LOCATION_FIELD, 
+					    WITHOUT_SAMPLES_FIELD,
+					    WITH_ERROR_FIELD, 
+					    WITH_HEADER_TYPE_FIELD, 
+					    WITH_COMMENT_FIELD,
+					    WITH_WRITABLE_HEADERS);
       sd->panel_data->dialog = sd->dialog;
 
       color_file_selection_box(sd->dialog);
@@ -2336,6 +2473,15 @@ void save_file_dialog_state(FILE *fd)
 #endif
 #if HAVE_RUBY
       fprintf(fd, "%s(true)\n", TO_PROC_NAME(S_mix_file_dialog));
+#endif
+    }
+  if ((idat) && (XtIsManaged(idat->dialog)))
+    {
+#if HAVE_SCHEME
+      fprintf(fd, "(%s #t)\n", S_insert_file_dialog);
+#endif
+#if HAVE_RUBY
+      fprintf(fd, "%s(true)\n", TO_PROC_NAME(S_insert_file_dialog));
 #endif
     }
   if ((save_sound_as) && (XtIsManaged(save_sound_as->dialog)))
@@ -2645,7 +2791,8 @@ void make_new_file_dialog(void)
 				  WITH_SAMPLES_FIELD,
 				  WITH_ERROR_FIELD, 
 				  WITH_HEADER_TYPE_FIELD, 
-				  WITH_COMMENT_FIELD);
+				  WITH_COMMENT_FIELD,
+				  WITH_BUILTIN_HEADERS);
       ndat->dialog = new_file_dialog;
       XtManageChild(ndat->error_text);
       XtManageChild(new_file_dialog);
@@ -3009,7 +3156,8 @@ Widget edit_header(snd_info *sp)
 				      WITH_SAMPLES_FIELD,
 				      WITH_ERROR_FIELD, 
 				      WITH_HEADER_TYPE_FIELD, 
-				      WITH_COMMENT_FIELD);
+				      WITH_COMMENT_FIELD,
+				      WITH_BUILTIN_HEADERS);
       ep->edat->dialog = ep->dialog;
 
       if (hdr->type == MUS_RAW)
@@ -3192,13 +3340,26 @@ static void raw_data_ok_callback(Widget w, XtPointer context, XtPointer info)
 				mus_bytes_to_samples(raw_data_format, 
 						     mus_sound_length(rp->filename) - rp->location));
       /* choose action based on how we got here */
+
+      /* TODO: snd-test insert file */
+      /* TODO: tmpfile if decoding (translation style) */
+
       if ((rp->requestor_dialog) &&
-	  (rp->requestor == FROM_MIX_DIALOG))
+	  ((rp->requestor == FROM_MIX_DIALOG) ||
+	   (rp->requestor == FROM_INSERT_DIALOG)))
 	{
 	  ss->reloading_updated_file = true; /* don't reread lack-of-header! */
 	  /* redirection may be still set here, but I'll make it obvious */
-	  redirect_snd_error_to(file_open_error, (void *)mdat);
-	  mix_complete_file_at_cursor(any_selected_sound(), rp->filename, with_mix_tags(ss), 0);
+	  if (rp->requestor == FROM_MIX_DIALOG)
+	    {
+	      redirect_snd_error_to(file_open_error, (void *)mdat);
+	      mix_complete_file_at_cursor(any_selected_sound(), rp->filename, with_mix_tags(ss), 0);
+	    }
+	  else
+	    {
+	      redirect_snd_error_to(file_open_error, (void *)idat);
+	      insert_complete_file_at_cursor(any_selected_sound(), rp->filename);
+	    }
 	  redirect_snd_error_to(NULL, NULL);
 	  ss->reloading_updated_file = false;
 	}
@@ -3328,7 +3489,8 @@ static void make_raw_data_dialog(raw_info *rp, const char *filename, const char 
 				  WITHOUT_SAMPLES_FIELD,
 				  WITH_ERROR_FIELD, 
 				  WITHOUT_HEADER_TYPE_FIELD, 
-				  WITHOUT_COMMENT_FIELD);
+				  WITHOUT_COMMENT_FIELD,
+				  WITH_READABLE_HEADERS);
   rp->rdat->dialog = rp->dialog;
 
   set_file_dialog_sound_attributes(rp->rdat, 

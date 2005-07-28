@@ -254,7 +254,7 @@ if test "$with_fftw" != no; then
     else
       AC_MSG_RESULT(no)
       AC_MSG_CHECKING(for fftw2)
-      if test $PKG_CONFIG fftw --exists ; then
+      if $PKG_CONFIG fftw --exists ; then
         FFTW_LIBS="`$PKG_CONFIG fftw --libs`"
         FFTW_CFLAGS="`$PKG_CONFIG fftw --cflags`"
         AC_DEFINE(HAVE_FFTW)
@@ -712,7 +712,8 @@ else
 	 AC_MSG_WARN([can't find the Motif library! -- will look for Gtk])
          with_gtk=yes
 	 with_motif=no
-        ])
+        ],
+	$TEST_LIBS)
     LIBS=$SAVELIBS
     CFLAGS=$SAVEFLAGS
 
@@ -803,6 +804,8 @@ else
 	#   and innumerable *.pc files scattered all over the world-wide-web
 	AC_CHECK_LIB(m, gtk_tree_view_get_visible_range, [AC_DEFINE(HAVE_GTK_TREE_VIEW_GET_VISIBLE_RANGE)],  ,$GTK_LIBS)
 	# gtk 2.7.3
+	AC_CHECK_LIB(m, gtk_dialog_get_response_for_widget, [AC_DEFINE(HAVE_GTK_DIALOG_GET_RESPONSE_FOR_WIDGET)],  ,$GTK_LIBS)
+	# for snd-gfile (2.7.0)
 
         if test "$with_x11" = yes ; then
 	  AC_DEFINE(WITH_GTK_AND_X11)
@@ -1473,13 +1476,13 @@ AC_SUBST(A_LD_FLAGS)
 # OGG, Flac, Speex, Mpeg, maybe SDIF someday
 # --------------------------------------------------------------------------------
 
-AC_PATH_PROG(PATH_OGG123, ogg123, no) # OGG read
+AC_PATH_PROG(PATH_OGGDEC, oggdec, no) # OGG read
 AC_PATH_PROG(PATH_OGGENC, oggenc, no) # OGG write
 
-if test "$PATH_OGG123" != "no" ; then
+if test "$PATH_OGGDEC" != "no" ; then
   if test "$PATH_OGGENC" != "no" ; then
     AC_DEFINE(HAVE_OGG)
-    AC_DEFINE_UNQUOTED(PATH_OGG123, "${PATH_OGG123}")
+    AC_DEFINE_UNQUOTED(PATH_OGGDEC, "${PATH_OGGDEC}")
     AC_DEFINE_UNQUOTED(PATH_OGGENC, "${PATH_OGGENC}")
   fi
 fi

@@ -81,6 +81,8 @@ typedef struct {
   scanf_widget_t scanf_widget, error_widget;
   bool extracting;
   gulong *reflection_ids;
+  int num_header_types;
+  char **header_short_names;
 } file_data;
 
 typedef struct {

@@ -984,60 +984,27 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 
 	      /* mix file */
 	    case CHANGE_FILING:
-	      clear_minibuffer(sp);
-	      redirect_errors_to(errors_to_minibuffer, (void *)sp);
-	      mix_complete_file_at_cursor(sp, str, with_mix_tags(ss), 0);
-	      redirect_errors_to(NULL, NULL);
+	      {
+		int id_or_error;
+		clear_minibuffer(sp);
+		redirect_errors_to(errors_to_minibuffer, (void *)sp);
+		id_or_error = mix_complete_file_at_cursor(sp, str, with_mix_tags(ss), 0);
+		redirect_errors_to(NULL, NULL);
+		if (id_or_error >= 0)
+		  report_in_minibuffer(sp, _("%s mixed in at cursor"), str);
+	      }
 	      break;
 
 	      /* insert file */
 	    case INSERT_FILING:
 	      {
-		int nc;
-		char *filename;
-		filename = mus_expand_filename(str);
-		nc = mus_sound_chans(filename);
-		if (nc > 0)
-		  {
-		    off_t len;
-		    len = mus_sound_frames(filename);
-		    if (len == 0)
-		      {
-			char *msg;
-			msg = mus_format(_("file %s has no data"), str);
-			display_minibuffer_error(sp, msg);
-			FREE(msg);
-		      }
-		    else
-		      {
-			int i, j;
-			off_t chan_beg;
-			char *origin;
-			chan_info *ncp;
-			if (!active_chan) active_chan = sp->chans[0];
-			for (i = active_chan->chan, j = 0; (j < nc) && (i < sp->nchans); i++, j++)
-			  {
-			    ncp = sp->chans[i];
-			    chan_beg = CURSOR(active_chan);
-			    origin = mus_format("%s" PROC_OPEN "\"%s\"" PROC_SEP OFF_TD PROC_SEP "%d", 
-						TO_PROC_NAME(S_insert_sound), filename, chan_beg, j);
-			    redirect_errors_to(errors_to_minibuffer, (void *)sp);
-			    if (file_insert_samples(chan_beg, len, filename, ncp, j, DONT_DELETE_ME, origin, ncp->edit_ctr))
-			      update_graph(ncp);
-			    redirect_errors_to(NULL, NULL);
-			    FREE(origin);
-			  }
-			clear_minibuffer(sp);
-		      }
-		  }
-		else 
-		  {
-		    char *msg;
-		    msg = mus_format(_("can't read %s's header"), str);
-		    display_minibuffer_error(sp, msg);
-		    FREE(msg);
-		  }
-		FREE(filename);
+		int err;
+		clear_minibuffer(sp);
+		redirect_errors_to(errors_to_minibuffer, (void *)sp);
+		err = insert_complete_file_at_cursor(sp, str);
+		redirect_errors_to(NULL, NULL);
+		if (err == 0)
+		  report_in_minibuffer(sp, _("%s inserted at cursor"), str);
 	      }
 	      break;
 

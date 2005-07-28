@@ -34,7 +34,7 @@
 #define SASH_COLOR           "lightgreen"
 
 #define HELP_BUTTON_COLOR    "lightsteelblue2"
-#define QUIT_BUTTON_COLOR    "indianred2"
+#define QUIT_BUTTON_COLOR    "salmon1"
 #define RESET_BUTTON_COLOR   "goldenrod1"
 #define DOIT_BUTTON_COLOR    "palegreen2"
 #define DOIT_AGAIN_BUTTON_COLOR "darkolivegreen1"

@@ -437,7 +437,7 @@
     #define XEN_DEFINE_VARIABLE(Name, Var, Value) Var = XEN_PROTECT_FROM_GC(scm_c_define(Name, Value))
   #endif
 #else
-  #define XEN_DEFINE_VARIABLE(Name, Var, Value) Var = gh_define(Name, Value)
+#define XEN_DEFINE_VARIABLE(Name, Var, Value) Var = gh_define((char *)(Name), Value)
 #endif
 
 #if HAVE_SCM_C_DEFINE
@@ -457,10 +457,10 @@
       }
   #endif
 #else
-  #define XEN_DEFINE(Name, Value) gh_define(Name, Value)
+#define XEN_DEFINE(Name, Value) gh_define((char *)(Name), Value)
   #define XEN_DEFINE_CONSTANT(Name, Value, Help) \
     { \
-      gh_define(Name, C_TO_XEN_INT(Value)); \
+      gh_define((char *)(Name), C_TO_XEN_INT(Value));	\
       if (Help) XEN_SET_DOCUMENTATION(Name, Help); \
     }
 #endif

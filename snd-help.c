@@ -410,6 +410,8 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+28-Jul:  File:Insert menu item and dialog added, also insert-file-dialog.\n\
+         File:Save as can write OGG, Speex, and Flac files.\n\
 21-Jul:  clear-minibuffer, new as-error arg to report-in-minibuffer.\n\
 15-Jul:  removed yes-or-no? with associated dialog (and snd-g|xerror.c).\n\
 14-Jul:  Snd 7.14.\n\
@@ -420,7 +422,6 @@ void about_snd_help(void)
          changed find to find-channel to avoid collision with Scheme's srfi-1.\n\
 24-Jun:  channels-combined is now the default channel-style.\n\
 20-Jun:  'Extract' option to Save as dialogs (to extract a channel).\n\
-13-Jun:  folded gl-ruby.c into gl.c, xm-ruby.c into xm.c, xg-ruby.c into xg.c.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",
@@ -1278,8 +1279,8 @@ static char *open_file_xrefs[7] = {
 
 void open_file_dialog_help(void)
 {
-  snd_help_with_xrefs("File",
-"The selected file will be opened in a new pane. \
+  snd_help_with_xrefs("Open File",
+"The file will be opened in a new pane, if it's a sound file. \
 If you click the 'Sound Files Only' button, only those files in the current directory that look vaguely like sound files will be displayed.",
 		      WITH_WORD_WRAP,
 		      open_file_xrefs,
@@ -1288,12 +1289,22 @@ If you click the 'Sound Files Only' button, only those files in the current dire
 
 void mix_file_dialog_help(void)
 {
-  snd_help_with_xrefs("File",
-"The selected file will be mixed at the cursor in the selected sound. If you click the 'Sound Files Only' button, \
+  snd_help_with_xrefs("Mix File",
+"The file will be mixed (added into) at the cursor in the selected sound. If you click the 'Sound Files Only' button, \
 only those files in the current directory that look vaguely like sound files will be displayed.",
 		      WITH_WORD_WRAP,
 		      snd_xrefs("Mix"),
 		      snd_xref_urls("Mix"));
+}
+
+void insert_file_dialog_help(void)
+{
+  snd_help_with_xrefs("Insert File",
+"The file will be inserted (pasted in) at the cursor in the selected sound. If you click the 'Sound Files Only' button, \
+only those files in the current directory that look vaguely like sound files will be displayed.",
+		      WITH_WORD_WRAP,
+		      snd_xrefs("Insert"),
+		      snd_xref_urls("Insert"));
 }
 
 void find_dialog_help(void)

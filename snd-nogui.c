@@ -222,6 +222,7 @@ widget_t snd_record_file(void) {return(0);}
 bool record_dialog_is_active(void) {return(false);}
 widget_t make_open_file_dialog(bool read_only, bool managed) {return(0);}
 widget_t make_mix_file_dialog(bool managed) {return(0);}
+widget_t make_insert_file_dialog(bool managed) {return(0);}
 void clear_listener(void) {}
 int menu_widget(int which_menu) {return(0);}
 void get_current_color(int colormap, int j, unsigned short *r, unsigned short *g, unsigned short *b) {}

@@ -383,7 +383,8 @@ char *get_file_dialog_sound_attributes(file_data *fdat, int *srate, int *chans, 
 file_data *make_file_data_panel(Widget parent, char *name, Arg *args, int n, dialog_channels_t with_chan, 
 				int header_type, int data_format, dialog_data_location_t with_loc, 
 				dialog_samples_t with_samples, dialog_error_t with_error, 
-				dialog_header_type_t with_header_type, dialog_comment_t with_comment);
+				dialog_header_type_t with_header_type, dialog_comment_t with_comment,
+				header_choice_t header_choice);
 void alert_new_file(void);
 widget_t make_open_file_dialog(bool read_only, bool managed);
 widget_t make_sound_save_as_dialog(bool managed);
@@ -409,6 +410,7 @@ void cleanup_edit_header_watcher(void);
 void cleanup_new_file_watcher(void);
 void set_open_file_play_button(bool val);
 widget_t make_mix_file_dialog(bool managed);
+widget_t make_insert_file_dialog(bool managed);
 void g_init_gxfile(void);
 void clear_deleted_snd_info(struct dialog_play_info *dp);
 void reflect_just_sounds(void);

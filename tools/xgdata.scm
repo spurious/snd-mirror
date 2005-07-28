@@ -3601,6 +3601,7 @@
 (CFNC "GType pango_attr_list_get_type void")
 (CFNC "PangoAttrList* pango_attr_list_new void") ; FREE
 (CFNC "void pango_attr_list_ref PangoAttrList* list")
+;;; TODO: in 1.9.1 this is PangoAttrList *pango_attr_list_ref (PangoAttrList  *list);
 (CFNC "void pango_attr_list_unref PangoAttrList* list")
 (CFNC "PangoAttrList* pango_attr_list_copy PangoAttrList* list")
 (CFNC "void pango_attr_list_insert PangoAttrList* list PangoAttribute* attr")
@@ -5530,7 +5531,7 @@
 (CINT-273 "GTK_FILE_CHOOSER_CONFIRMATION_ACCEPT_FILENAME" "GtkFileChooserConfirmation")
 (CINT-273 "GTK_FILE_CHOOSER_CONFIRMATION_SELECT_AGAIN" "GtkFileChooserConfirmation")
 (CINT-273 "GTK_FILE_CHOOSER_PROP_DO_OVERWRITE_CONFIRMATION" "GtkFileChooserProp")
-; why are these commented out?
+; why were these commented out?
 (CINT-273 "GTK_FILE_CHOOSER_ACTION" "GtkFileChooserProp")
 (CINT-273 "GTK_FILE_CHOOSER_PROP_FILE_SYSTEM_BACKEND" "GtkFileChooserProp")
 (CINT-273 "GTK_FILE_CHOOSER_PROP_FILTER" "GtkFileChooserProp")
@@ -5548,3 +5549,27 @@
 (CFNC-273 "void gtk_tree_view_column_queue_resize GtkTreeViewColumn* tree_column")
 (CFNC-273 "gboolean gtk_tree_view_get_visible_range GtkTreeView* tree_view GtkTreePath** [start_path] GtkTreePath** [end_path]")
 
+
+#!
+;;; Pango 1.9.1
+! void pango_cairo_context_set_hinting (PangoContext *context,
+! 				      gboolean      hinting);
+! gboolean pango_cairo_context_get_hinting (PangoContext *context);
+! void                        pango_cairo_context_set_font_options (PangoContext               *context,
+! 								  const cairo_font_options_t *options);
+! const cairo_font_options_t *pango_cairo_context_get_font_options (PangoContext               *context);
+! 
+! void               pango_cairo_context_set_resolution     (PangoContext       *context,
+! 							   double              dpi);
+! double             pango_cairo_context_get_resolution     (PangoContext       *context);
++ #define PANGO_TYPE_ITEM (pango_item_get_type ())
++ 
++ GType pango_item_get_type (void) G_GNUC_CONST;
++ 
+! #define PANGO_TYPE_LAYOUT_LINE (pango_layout_line_get_type ())
+! 
+! GType    pango_layout_line_get_type     (void) G_GNUC_CONST;
+! 
+! PangoLayoutLine *pango_layout_line_ref   (PangoLayoutLine *line); type change
++ G_GNUC_CONST gboolean pango_is_zero_width (gunichar ch);
+!#

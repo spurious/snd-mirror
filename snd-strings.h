@@ -254,6 +254,7 @@
 #endif
 #define S_info_dialog                   "info-dialog"
 #define S_initial_graph_hook            "initial-graph-hook"
+#define S_insert_file_dialog            "insert-file-dialog"
 #define S_insert_region                 "insert-region"
 #define S_insert_sample                 "insert-sample"
 #define S_insert_samples                "insert-samples"

@@ -1,5 +1,7 @@
 Snd change log
 
+  28-Jul:    File:Insert menu item and dialog added, also insert-file-dialog.
+             File:Save as can write OGG, Speex, and Flac files.
   21-Jul:    clear-minibuffer, new as-error arg to report-in-minibuffer.
   15-Jul:    removed yes-or-no? with associated dialog (and snd-g|xerror.c).
   14-Jul:    snd 7.14.

@@ -1,11 +1,10 @@
 #include "snd.h"
 
-/* take a tranquillizer... (or maybe "abandon hope...") */
-
 /* various file-related dialogs:
    File|Edit-Save-as, 
    File:Open|View, 
-   File|Edit-Mix, 
+   File|Edit-Mix,
+   File:Insert,
    File:Edit-Header, Raw, New
    View:Files and region lists 
 */
@@ -31,7 +30,7 @@
  *         This could be in the sound's pixmap area except that none of the small stop icons looks good.
  *         (and who on earth thinks a phillips screw head means "stop"!)
  * TODO: FileChooser: add entry for filename in Open case (with completion)
- * open no such file goes to post it? -- can't get this to happen again... -- from startup args!
+ * TODO: many of the button labels are wrong: cancel->quit, open->mix etc
  */
 
 
@@ -193,9 +192,10 @@ static GtkWidget *file_chooser_button(GtkFileChooserDialog *dialog, int response
 {
   /* find a given goddamn button -- this code borrowed from gtk/gtkfilechooserdialog.c */
   /*    dialog uses button_new_from_stock to create these */
-
-  GList *children, *l;
   GtkWidget *result = NULL;
+
+#if HAVE_GTK_DIALOG_GET_RESPONSE_FOR_WIDGET
+  GList *children, *l;
   children = gtk_container_get_children(GTK_CONTAINER(GTK_DIALOG(dialog)->action_area));
   for (l = children; l; l = l->next)
     {
@@ -210,6 +210,8 @@ static GtkWidget *file_chooser_button(GtkFileChooserDialog *dialog, int response
 	}
     }
   g_list_free(children);
+#endif
+
   return(result);
 }
 
@@ -720,7 +722,6 @@ static gint file_mix_delete_callback(GtkWidget *w, GdkEvent *event, gpointer con
 
 static void file_mix_ok_callback(GtkWidget *w, gpointer context)
 {
-  gpointer hide_me = 0;
   char *filename = NULL;
   filename = snd_filer_get_filename(mdat->dialog);
   if ((!filename) || (!(*filename)))
@@ -733,17 +734,20 @@ static void file_mix_ok_callback(GtkWidget *w, gpointer context)
       file_dialog_stop_playing(mdat->dp);
       if (!(directory_p(filename)))
 	{
+	  snd_info *sp;
 	  int err;
+	  sp = any_selected_sound();
 	  redirect_snd_error_to(file_open_error, (void *)mdat);
 	  ss->sgx->requestor_dialog = mdat->dialog;
 	  ss->open_requestor = FROM_MIX_DIALOG;
-	  err = mix_complete_file_at_cursor(any_selected_sound(), filename, with_mix_tags(ss), 0);
+	  err = mix_complete_file_at_cursor(sp, filename, with_mix_tags(ss), 0);
 	  redirect_snd_error_to(NULL, NULL);
-	  if (err != 0) 
+	  if (err < 0) 
 	    {
 	      if (ss->open_requestor != FROM_RAW_DATA_DIALOG)
 		clear_error_if_open_changes(mdat->dialog, (void *)mdat);
 	    }
+	  else report_in_minibuffer(sp, _("%s mixed in at cursor"), filename);
 	}
       else 
 	{
@@ -770,12 +774,93 @@ widget_t make_mix_file_dialog(bool managed)
   return(mdat->dialog);
 }
 
+
+/* -------- File:Insert dialog -------- */
+
+static file_dialog_info *idat = NULL;
+
+static void file_insert_cancel_callback(GtkWidget *w, gpointer context)
+{
+  file_dialog_stop_playing(idat->dp);
+  gtk_widget_hide(idat->dialog);
+}
+
+static void file_insert_help_callback(GtkWidget *w, gpointer context)
+{
+  insert_file_dialog_help();
+}
+
+static gint file_insert_delete_callback(GtkWidget *w, GdkEvent *event, gpointer context)
+{
+  file_dialog_stop_playing(idat->dp);
+  gtk_widget_hide(idat->dialog);
+  return(true);
+}
+
+static void file_insert_ok_callback(GtkWidget *w, gpointer context)
+{
+  file_dialog_info *fd = (file_dialog_info *)context;
+  char *filename;
+  filename = snd_filer_get_filename(idat->dialog);
+  if ((!filename) || (!(*filename)))
+    {
+      file_open_error(_("no filename given"), (void *)fd);
+      clear_error_if_open_changes(fd->dialog, (void *)fd);
+    }
+  else
+    {
+      file_dialog_stop_playing(fd->dp);
+      if (!(directory_p(filename)))               /* this can be a directory name if the user clicked 'ok' when he meant 'cancel' */
+	{
+	  bool ok = false;
+	  snd_info *sp;
+	  sp = any_selected_sound();
+	  ss->sgx->requestor_dialog = w;
+	  ss->open_requestor = FROM_INSERT_DIALOG;
+	  redirect_snd_error_to(file_open_error, (void *)fd);
+	  ok = insert_complete_file_at_cursor(sp, filename);
+	  redirect_snd_error_to(NULL, NULL);
+	  if (!ok)
+	    {
+	      if (ss->open_requestor != FROM_RAW_DATA_DIALOG)
+		clear_error_if_open_changes(fd->dialog, (void *)fd);
+	    }
+	  else report_in_minibuffer(sp, _("%s inserted at cursor"), filename);
+	}
+      else 
+	{
+	  char *str;
+	  str = mus_format(_("%s is a directory"), filename);
+	  file_open_error(str, (void *)fd);
+	  clear_error_if_open_changes(fd->dialog, (void *)fd);
+	  FREE(str);
+	}
+    }
+  if (filename) FREE(filename);
+}
+  
+widget_t make_insert_file_dialog(bool managed)
+{
+  if (idat == NULL)
+    idat = make_file_dialog(true, _("insert file:"), FILE_INSERT_DIALOG,
+			    (Callback_Func)file_insert_ok_callback,
+			    (GtkSignalFunc)file_insert_delete_callback,
+			    (Callback_Func)file_insert_cancel_callback,
+			    (Callback_Func)file_insert_help_callback);
+  if (managed) gtk_widget_show(idat->dialog);
+  return(idat->dialog);
+}
+
+
+
 void set_open_file_play_button(bool val) 
 {
   if ((odat) && (odat->dp->play_button))
     set_toggle_button(odat->dp->play_button, val, false, (gpointer)odat);
   if ((mdat) && (mdat->dp->play_button))
     set_toggle_button(mdat->dp->play_button, val, false, (gpointer)mdat);
+  if ((idat) && (idat->dp->play_button))
+    set_toggle_button(idat->dp->play_button, val, false, (gpointer)mdat);
 }
 
 void reflect_just_sounds(void)
@@ -785,6 +870,8 @@ void reflect_just_sounds(void)
     gtk_file_chooser_set_filter(GTK_FILE_CHOOSER(odat->dialog), (just_sounds(ss)) ? sound_files_filter : all_files_filter);
   if (mdat)
     gtk_file_chooser_set_filter(GTK_FILE_CHOOSER(mdat->dialog), (just_sounds(ss)) ? sound_files_filter : all_files_filter);
+  if (idat)
+    gtk_file_chooser_set_filter(GTK_FILE_CHOOSER(idat->dialog), (just_sounds(ss)) ? sound_files_filter : all_files_filter);
 #endif
 }
 
@@ -1145,9 +1232,6 @@ static void post_file_panel_error(const char *error_msg, void *ufd)
 
 /* -------- file data choices -------- */
 
-#define NUM_HEADER_TYPES 7
-static char *header_short_names[NUM_HEADER_TYPES] = {"snd  ", "aifc ", "wave ", "raw  ", "aiff ", "ircam", "nist "};
-
 static void update_header_type_list(GtkTreeSelection *selection, gpointer gp)
 {
   /* needed to reflect type selection in format list */
@@ -1162,8 +1246,8 @@ static void update_header_type_list(GtkTreeSelection *selection, gpointer gp)
   if (!(gtk_tree_selection_get_selected(selection, &model, &iter))) return;
 
   gtk_tree_model_get(model, &iter, 0, &value, -1);
-  for (i = 0; i < NUM_HEADER_TYPES; i++)
-    if (strcmp(value, header_short_names[i]) == 0)
+  for (i = 0; i < fd->num_header_types; i++)
+    if (strcmp(value, fd->header_short_names[i]) == 0)
       {
 	fd->header_pos = i;
 	if (fd->current_type != i)
@@ -1187,7 +1271,7 @@ static void update_data_format_list(GtkTreeSelection *selection, gpointer gp)
   gchar *value = NULL;
   int i;
   GtkTreeModel *model;
-  int dformats = 0;
+  int nformats = 0;
   char **formats = NULL;
   file_data *fd = (file_data *)gp;
 
@@ -1197,8 +1281,8 @@ static void update_data_format_list(GtkTreeSelection *selection, gpointer gp)
 
   gtk_tree_model_get(model, &iter, 0, &value, -1);
   formats = set_header_positions_from_type(fd, fd->current_type, fd->current_format);
-  dformats = fd->formats;
-  for (i = 0; i < dformats; i++)
+  nformats = fd->formats;
+  for (i = 0; i < nformats; i++)
     if (strcmp(value, formats[i]) == 0)
       {
 	fd->format_pos = i;
@@ -1270,20 +1354,30 @@ file_data *make_file_data_panel(GtkWidget *parent, char *name,
 				dialog_samples_t with_samples,
 				dialog_error_t with_error, 
 				dialog_header_type_t with_header_type,
-				dialog_comment_t with_comment)
+				dialog_comment_t with_comment, 
+				header_choice_t header_choice)
 {
   GtkWidget *form, *scbox, *combox = NULL;
   file_data *fdat;
-  int dformats = 0;
-  char **formats = NULL;
+  int nformats = 0, nheaders = 0;
+  char **formats = NULL, **headers = NULL;
   GtkWidget *s8, *s22, *s44, *s48;
   GtkWidget *sbar, *sitem, *smenu;
+
+  switch (header_choice)
+    {
+    case WITH_READABLE_HEADERS: headers = short_readable_headers(&nheaders); break;
+    case WITH_WRITABLE_HEADERS: headers = short_writable_headers(&nheaders); break;
+    case WITH_BUILTIN_HEADERS:  headers = short_builtin_headers(&nheaders);  break;
+    }
 
   fdat = (file_data *)CALLOC(1, sizeof(file_data));
   fdat->current_type = header_type;
   fdat->current_format = data_format;
   formats = set_header_positions_from_type(fdat, header_type, data_format);
-  dformats = fdat->formats;
+  nformats = fdat->formats;
+  fdat->header_short_names = headers;
+  fdat->num_header_types = nheaders;
 
   form = gtk_hbox_new(false, 0);
   gtk_box_pack_start(GTK_BOX(parent), form, false, false, 4); /* ??? */
@@ -1292,7 +1386,8 @@ file_data *make_file_data_panel(GtkWidget *parent, char *name,
   /* header type */
   if (with_header_type == WITH_HEADER_TYPE_FIELD)
     {
-      fdat->header_list = sg_make_list(_("header"), form, BOX_PACK, (gpointer)fdat, NUM_HEADER_TYPES, header_short_names, 
+      fdat->header_list = sg_make_list(_("header"), form, BOX_PACK, (gpointer)fdat, 
+				       nheaders, headers, 
 				       GTK_SIGNAL_FUNC(update_header_type_list), 0, 0, 0, 0);
       /* header_list is a gtk list */
       sg_list_select(fdat->header_list, fdat->header_pos);
@@ -1300,7 +1395,8 @@ file_data *make_file_data_panel(GtkWidget *parent, char *name,
     }
 
   /* data format */
-  fdat->format_list = sg_make_list(_("data"), form, BOX_PACK, (gpointer)fdat, dformats, formats, 
+  fdat->format_list = sg_make_list(_("data"), form, BOX_PACK, (gpointer)fdat, 
+				   nformats, formats, 
 				   GTK_SIGNAL_FUNC(update_data_format_list), 0, 0, 0, 0);
   sg_list_select(fdat->format_list, fdat->format_pos);
   gtk_widget_show(fdat->format_list);
@@ -1560,13 +1656,14 @@ static void save_as_watch_user_read_only(struct snd_info *sp, sp_watcher_reason_
 }
 
 /* TODO: merge save and extract callback duplicated code */
+/* TODO: in gtk filesel if out name exists, you have to click save twice! -- how to disable this stupidity? */
 
 static void save_as_ok_callback(GtkWidget *w, gpointer data)
 {
   save_as_dialog_info *sd = (save_as_dialog_info *)data;
-  char *str = NULL, *comment = NULL, *msg = NULL, *fullname = NULL;
+  char *str = NULL, *comment = NULL, *msg = NULL, *fullname = NULL, *tmpfile = NULL;
   snd_info *sp = NULL;
-  int type, format, srate, chans;
+  int type, format, srate, chans, output_type;
   bool file_exists;
   off_t location, samples;
   io_error_t io_err = IO_NO_ERROR;
@@ -1605,6 +1702,7 @@ static void save_as_ok_callback(GtkWidget *w, gpointer data)
   /* get output file attributes */
   redirect_snd_error_to(post_file_panel_error, (void *)(sd->panel_data));
   comment = get_file_dialog_sound_attributes(sd->panel_data, &srate, &chans, &type, &format, &location, &samples, 0);
+  output_type = type;
   redirect_snd_error_to(NULL, NULL);
   if (sd->panel_data->error_widget != NOT_A_SCANF_WIDGET)
     {
@@ -1665,7 +1763,7 @@ static void save_as_ok_callback(GtkWidget *w, gpointer data)
 			       str,
 			       (parlous_sp) ? ", and has unsaved edits" : "",
 #if HAVE_GFCDN
-			       GTK_STOCK_YES
+			       "Yes"
 #else
 			       "DoIt"
 #endif
@@ -1697,9 +1795,21 @@ static void save_as_ok_callback(GtkWidget *w, gpointer data)
     save_as_undoit(sd);
   ss->local_errno = 0;
 
+  if (encoded_header_p(type))
+    {
+      output_type = type;
+      format = MUS_LSHORT;
+      type = MUS_RIFF;
+      tmpfile = snd_tempnam();
+    }
+  else
+    {
+      tmpfile = fullname;
+    }
+
   redirect_snd_error_to(post_file_dialog_error, (void *)(sd->panel_data));
   if (sd->type == SOUND_SAVE_AS)
-    io_err = save_edits_without_display(sp, fullname, type, format, srate, comment, AT_CURRENT_EDIT_POSITION);
+    io_err = save_edits_without_display(sp, tmpfile, type, format, srate, comment, AT_CURRENT_EDIT_POSITION);
   else
     {
       char *ofile;
@@ -1714,10 +1824,13 @@ static void save_as_ok_callback(GtkWidget *w, gpointer data)
   redirect_snd_error_to(NULL, NULL);
   if (io_err == IO_NO_ERROR)
     {
-      /*
-      if (!file_exists)
-	force_directory_reread(sd->dialog);
-      */
+      if (encoded_header_p(output_type))
+	{
+	  snd_encode(output_type, tmpfile, fullname);
+	  snd_remove(tmpfile, REMOVE_FROM_CACHE);
+	  FREE(tmpfile);
+	}
+
       if (sd->type == SOUND_SAVE_AS)
 	report_in_minibuffer(sp, "%s saved as %s", sp->short_filename, str);
       else report_in_minibuffer(sp, "selection saved as %s", str);
@@ -1739,9 +1852,9 @@ static void save_as_ok_callback(GtkWidget *w, gpointer data)
 static void save_as_extract_callback(GtkWidget *w, gpointer data)
 {
   save_as_dialog_info *sd = (save_as_dialog_info *)data;
-  char *str = NULL, *comment, *msg = NULL, *fullname = NULL;
+  char *str = NULL, *comment, *msg = NULL, *fullname = NULL, *tmpfile = NULL;
   snd_info *sp = NULL;
-  int type, format, srate, chan = 0, extractable_chans = 0;
+  int type, format, srate, chan = 0, extractable_chans = 0, output_type;
   bool file_exists = false;
   off_t location, samples;
   io_error_t io_err;
@@ -1771,6 +1884,7 @@ static void save_as_extract_callback(GtkWidget *w, gpointer data)
   /* get output file attributes */
   redirect_snd_error_to(post_file_panel_error, (void *)(sd->panel_data));
   comment = get_file_dialog_sound_attributes(sd->panel_data, &srate, &chan, &type, &format, &location, &samples, 0);
+  output_type = type;
   redirect_snd_error_to(NULL, NULL);
   if (sd->panel_data->error_widget != NOT_A_SCANF_WIDGET)
     {
@@ -1856,7 +1970,7 @@ static void save_as_extract_callback(GtkWidget *w, gpointer data)
 			       str,
 			       (parlous_sp) ? ", and has unsaved edits" : "",
 #if HAVE_GFCDN
-			       GTK_STOCK_YES
+			       "Yes"
 #else
 			       "DoIt"
 #endif
@@ -1888,9 +2002,21 @@ static void save_as_extract_callback(GtkWidget *w, gpointer data)
     save_as_undoit(sd);
   ss->local_errno = 0;
 
+  if (encoded_header_p(type))
+    {
+      output_type = type;
+      format = MUS_LSHORT;
+      type = MUS_RIFF;
+      tmpfile = snd_tempnam();
+    }
+  else
+    {
+      tmpfile = fullname;
+    }
+
   redirect_snd_error_to(post_file_dialog_error, (void *)(sd->panel_data));
   if (sd->type == SOUND_SAVE_AS)
-    io_err = save_channel_edits(sp->chans[chan], fullname, AT_CURRENT_EDIT_POSITION); /* protects if same name */
+    io_err = save_channel_edits(sp->chans[chan], tmpfile, AT_CURRENT_EDIT_POSITION); /* protects if same name */
   else 
     {
       char *ofile;
@@ -1905,10 +2031,13 @@ static void save_as_extract_callback(GtkWidget *w, gpointer data)
   redirect_snd_error_to(NULL, NULL);
   if (io_err == IO_NO_ERROR)
     {
-      /*
-      if (!file_exists)
-	force_directory_reread(sd->dialog);
-      */
+      if (encoded_header_p(output_type))
+	{
+	  snd_encode(output_type, tmpfile, fullname);
+	  snd_remove(tmpfile, REMOVE_FROM_CACHE);
+	  FREE(tmpfile);
+	}
+
       if (sd->type == SOUND_SAVE_AS)
 	report_in_minibuffer(sp, "%s chan %d saved as %s", sp->short_filename, chan, str);
       else report_in_minibuffer(sp, "selection chan %d saved as %s", chan, str);
@@ -2017,7 +2146,8 @@ static void make_save_as_dialog(save_as_dialog_info *sd, char *sound_name, int h
 					    WITHOUT_SAMPLES_FIELD,
 					    WITH_ERROR_FIELD, 
 					    WITH_HEADER_TYPE_FIELD, 
-					    WITH_COMMENT_FIELD);
+					    WITH_COMMENT_FIELD,
+					    WITH_WRITABLE_HEADERS);
       sd->panel_data->dialog = sd->dialog;
       if (sd->type == SOUND_SAVE_AS)
 	set_dialog_widget(SOUND_SAVE_AS_DIALOG, sd->dialog);
@@ -2123,6 +2253,15 @@ void save_file_dialog_state(FILE *fd)
       fprintf(fd, "%s(true)\n", TO_PROC_NAME(S_mix_file_dialog));
 #endif
     }
+  if ((idat) && (GTK_WIDGET_VISIBLE(idat->dialog)))
+    {
+#if HAVE_SCHEME
+      fprintf(fd, "(%s #t)\n", S_insert_file_dialog);
+#endif
+#if HAVE_RUBY
+      fprintf(fd, "%s(true)\n", TO_PROC_NAME(S_insert_file_dialog));
+#endif
+    }
   if ((save_sound_as) && (GTK_WIDGET_VISIBLE(save_sound_as->dialog)))
     {
 #if HAVE_SCHEME
@@ -2223,11 +2362,21 @@ static void raw_data_ok_callback(GtkWidget *w, gpointer context)
 						     mus_sound_length(rp->filename) - rp->location));
       /* choose action based on how we got here */
       if ((rp->requestor_dialog) &&
-	  (rp->requestor == FROM_MIX_DIALOG))
+	  ((rp->requestor == FROM_MIX_DIALOG) ||
+	   (rp->requestor == FROM_INSERT_DIALOG)))
 	{
 	  ss->reloading_updated_file = true; /* don't reread lack-of-header! */
-	  redirect_snd_error_to(file_open_error, (void *)mdat);
-	  mix_complete_file_at_cursor(any_selected_sound(), rp->filename, with_mix_tags(ss), 0);
+	  /* redirection may be still set here, but I'll make it obvious */
+	  if (rp->requestor == FROM_MIX_DIALOG)
+	    {
+	      redirect_snd_error_to(file_open_error, (void *)mdat);
+	      mix_complete_file_at_cursor(any_selected_sound(), rp->filename, with_mix_tags(ss), 0);
+	    }
+	  else
+	    {
+	      redirect_snd_error_to(file_open_error, (void *)idat);
+	      insert_complete_file_at_cursor(any_selected_sound(), rp->filename);
+	    }
 	  redirect_snd_error_to(NULL, NULL);
 	  ss->reloading_updated_file = false;
 	}
@@ -2334,7 +2483,8 @@ static void make_raw_data_dialog(raw_info *rp, const char *filename, const char 
 				  WITHOUT_SAMPLES_FIELD,
 				  WITH_ERROR_FIELD, 
 				  WITHOUT_HEADER_TYPE_FIELD, 
-				  WITHOUT_COMMENT_FIELD);
+				  WITHOUT_COMMENT_FIELD,
+				  WITH_READABLE_HEADERS);
   rp->rdat->dialog = rp->dialog;
   set_file_dialog_sound_attributes(rp->rdat, 
 				   IGNORE_HEADER_TYPE, 
@@ -2630,7 +2780,8 @@ void make_new_file_dialog(void)
 				  WITH_SAMPLES_FIELD,
 				  WITH_ERROR_FIELD, 
 				  WITH_HEADER_TYPE_FIELD, 
-				  WITH_COMMENT_FIELD);
+				  WITH_COMMENT_FIELD,
+				  WITH_BUILTIN_HEADERS);
       ndat->dialog = new_file_dialog;
 
       SG_SIGNAL_CONNECT(new_file_dialog, "delete_event", new_file_delete_callback, ndat);
@@ -2959,7 +3110,8 @@ GtkWidget *edit_header(snd_info *sp)
 				      WITH_SAMPLES_FIELD,
 				      WITH_ERROR_FIELD, 
 				      WITH_HEADER_TYPE_FIELD, 
-				      WITH_COMMENT_FIELD);
+				      WITH_COMMENT_FIELD,
+				      WITH_BUILTIN_HEADERS);
       ep->edat->dialog = ep->dialog;
 
       SG_SIGNAL_CONNECT(ep->dialog, "delete_event", edit_header_delete_callback, ep);

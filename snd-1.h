@@ -577,6 +577,7 @@ void find_dialog_help(void);
 void completion_dialog_help(void);
 void open_file_dialog_help(void);
 void mix_file_dialog_help(void);
+void insert_file_dialog_help(void);
 void save_as_dialog_help(void);
 char* word_wrap(const char *text, int widget_len);
 void g_init_help(void);
@@ -791,7 +792,10 @@ void after_edit(chan_info *cp);
 bool extend_with_zeros(chan_info *cp, off_t beg, off_t num, int edpos);
 void extend_edit_list(chan_info *cp, int edpos);
 bool insert_samples(off_t beg, off_t num, mus_sample_t *vals, chan_info *cp, const char *origin, int edpos);
-bool file_insert_samples(off_t beg, off_t num, char *tempfile, chan_info *cp, int chan, file_delete_t auto_delete, const char *origin, int edpos);
+bool file_insert_samples(off_t beg, off_t num, char *tempfile, chan_info *cp, int chan, 
+			 file_delete_t auto_delete, const char *origin, int edpos);
+bool insert_complete_file_at_cursor(snd_info *sp, const char *filename);
+bool insert_complete_file(snd_info *sp, const char *str, off_t chan_beg);
 bool delete_samples(off_t beg, off_t num, chan_info *cp, int edpos);
 bool change_samples(off_t beg, off_t num, mus_sample_t *vals, chan_info *cp, lock_mix_t lock, const char *origin, int edpos);
 bool file_change_samples(off_t beg, off_t num, char *tempfile, chan_info *cp, int chan, 
@@ -1339,11 +1343,11 @@ void init_prevfiles(int size);
 void add_directory_to_prevlist(const char *dirname);
 void make_prevfiles_list_1(void);
 char **set_header_and_data_positions(file_data *fdat, int type, int format);
-/*
-char *save_as_dialog_save_sound(snd_info *sp, char *str, save_dialog_t save_type, 
-			     int srate, int type, int format, char *comment,
-			     bool *need_directory_update);
-*/
+char **short_writable_headers(int *len);
+char **short_readable_headers(int *len);
+char **short_builtin_headers(int *len);
+bool encoded_header_p(int header_type);
+void snd_encode(int type, const char *input_filename, const char *output_filename);
 bool edit_header_callback(snd_info *sp, file_data *edit_header_data, 
 			  void (*outer_handler)(const char *error_msg, void *ufd),
 			  void (*inner_handler)(const char *error_msg, void *ufd));

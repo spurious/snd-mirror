@@ -311,7 +311,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA PACKAGE VERSION FGREP PKG_CONFIG FFTW_LIBS FFTW_CFLAGS GSL_CONFIG GSL_LIBS GSL_CFLAGS X_CFLAGS X_PRE_LIBS X_LIBS X_EXTRA_LIBS XLIBS XFLAGS GTK_CFLAGS GTK_LIBS GTK_LD_LIBS CAIRO_CFLAGS GX_FILES GX_HEADERS GL_LIBS GL_FILES GL_FLAGS FAM_LIB GUILE_LIBS GUILE_CFLAGS XM_LIBS LD_XM_LIBS AUDIO_LIB JACK_LIBS JACK_FLAGS LDSO_FLAGS SO_INSTALL SO_LD A_LD A_LD_FLAGS PATH_OGG123 PATH_OGGENC PATH_MPG123 PATH_MPG321 PATH_SPEEXDEC PATH_SPEEXENC PATH_FLAC PATH_TIMIDITY MIDI_FILES SNDLIB_CONFIG SNDLIB_FILES SNDLIB_LIB SET_MAKE MKINSTALLDIRS USE_NLS MSGFMT GMSGFMT XGETTEXT MSGMERGE INTL_MACOSX_LIBS LIBICONV LTLIBICONV INTLLIBS LIBINTL LTLIBINTL POSUB MAKE_TARGET LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA PACKAGE VERSION FGREP PKG_CONFIG FFTW_LIBS FFTW_CFLAGS GSL_CONFIG GSL_LIBS GSL_CFLAGS X_CFLAGS X_PRE_LIBS X_LIBS X_EXTRA_LIBS XLIBS XFLAGS GTK_CFLAGS GTK_LIBS GTK_LD_LIBS CAIRO_CFLAGS GX_FILES GX_HEADERS GL_LIBS GL_FILES GL_FLAGS FAM_LIB GUILE_LIBS GUILE_CFLAGS XM_LIBS LD_XM_LIBS AUDIO_LIB JACK_LIBS JACK_FLAGS LDSO_FLAGS SO_INSTALL SO_LD A_LD A_LD_FLAGS PATH_OGGDEC PATH_OGGENC PATH_MPG123 PATH_MPG321 PATH_SPEEXDEC PATH_SPEEXENC PATH_FLAC PATH_TIMIDITY MIDI_FILES SNDLIB_CONFIG SNDLIB_FILES SNDLIB_LIB SET_MAKE MKINSTALLDIRS USE_NLS MSGFMT GMSGFMT XGETTEXT MSGMERGE INTL_MACOSX_LIBS LIBICONV LTLIBICONV INTLLIBS LIBINTL LTLIBINTL POSUB MAKE_TARGET LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -8132,7 +8132,7 @@ echo "${ECHO_T}yes" >&6
 echo "${ECHO_T}no" >&6
       echo "$as_me:$LINENO: checking for fftw2" >&5
 echo $ECHO_N "checking for fftw2... $ECHO_C" >&6
-      if test $PKG_CONFIG fftw --exists ; then
+      if $PKG_CONFIG fftw --exists ; then
         FFTW_LIBS="`$PKG_CONFIG fftw --libs`"
         FFTW_CFLAGS="`$PKG_CONFIG fftw --cflags`"
         cat >>confdefs.h <<\_ACEOF
@@ -10435,7 +10435,7 @@ if test "${ac_cv_lib_m_XmCreateForm+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-lm  $LIBS"
+LIBS="-lm $TEST_LIBS $LIBS"
 cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
@@ -12522,6 +12522,78 @@ _ACEOF
 fi
 
 	# gtk 2.7.3
+	echo "$as_me:$LINENO: checking for gtk_dialog_get_response_for_widget in -lm" >&5
+echo $ECHO_N "checking for gtk_dialog_get_response_for_widget in -lm... $ECHO_C" >&6
+if test "${ac_cv_lib_m_gtk_dialog_get_response_for_widget+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lm $GTK_LIBS $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char gtk_dialog_get_response_for_widget ();
+int
+main ()
+{
+gtk_dialog_get_response_for_widget ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_m_gtk_dialog_get_response_for_widget=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_lib_m_gtk_dialog_get_response_for_widget=no
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_m_gtk_dialog_get_response_for_widget" >&5
+echo "${ECHO_T}$ac_cv_lib_m_gtk_dialog_get_response_for_widget" >&6
+if test $ac_cv_lib_m_gtk_dialog_get_response_for_widget = yes; then
+  cat >>confdefs.h <<\_ACEOF
+#define HAVE_GTK_DIALOG_GET_RESPONSE_FOR_WIDGET 1
+_ACEOF
+
+fi
+
+	# for snd-gfile (2.7.0)
 
         if test "$with_x11" = yes ; then
 	  cat >>confdefs.h <<\_ACEOF
@@ -16833,16 +16905,16 @@ fi
 # OGG, Flac, Speex, Mpeg, maybe SDIF someday
 # --------------------------------------------------------------------------------
 
-# Extract the first word of "ogg123", so it can be a program name with args.
-set dummy ogg123; ac_word=$2
+# Extract the first word of "oggdec", so it can be a program name with args.
+set dummy oggdec; ac_word=$2
 echo "$as_me:$LINENO: checking for $ac_word" >&5
 echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
-if test "${ac_cv_path_PATH_OGG123+set}" = set; then
+if test "${ac_cv_path_PATH_OGGDEC+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
-  case $PATH_OGG123 in
+  case $PATH_OGGDEC in
   [\\/]* | ?:[\\/]*)
-  ac_cv_path_PATH_OGG123="$PATH_OGG123" # Let the user override the test with a path.
+  ac_cv_path_PATH_OGGDEC="$PATH_OGGDEC" # Let the user override the test with a path.
   ;;
   *)
   as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
@@ -16852,22 +16924,22 @@ do
   test -z "$as_dir" && as_dir=.
   for ac_exec_ext in '' $ac_executable_extensions; do
   if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_path_PATH_OGG123="$as_dir/$ac_word$ac_exec_ext"
+    ac_cv_path_PATH_OGGDEC="$as_dir/$ac_word$ac_exec_ext"
     echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
     break 2
   fi
 done
 done
 
-  test -z "$ac_cv_path_PATH_OGG123" && ac_cv_path_PATH_OGG123="no"
+  test -z "$ac_cv_path_PATH_OGGDEC" && ac_cv_path_PATH_OGGDEC="no"
   ;;
 esac
 fi
-PATH_OGG123=$ac_cv_path_PATH_OGG123
+PATH_OGGDEC=$ac_cv_path_PATH_OGGDEC
 
-if test -n "$PATH_OGG123"; then
-  echo "$as_me:$LINENO: result: $PATH_OGG123" >&5
-echo "${ECHO_T}$PATH_OGG123" >&6
+if test -n "$PATH_OGGDEC"; then
+  echo "$as_me:$LINENO: result: $PATH_OGGDEC" >&5
+echo "${ECHO_T}$PATH_OGGDEC" >&6
 else
   echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6
@@ -16914,14 +16986,14 @@ echo "${ECHO_T}no" >&6
 fi
  # OGG write
 
-if test "$PATH_OGG123" != "no" ; then
+if test "$PATH_OGGDEC" != "no" ; then
   if test "$PATH_OGGENC" != "no" ; then
     cat >>confdefs.h <<\_ACEOF
 #define HAVE_OGG 1
 _ACEOF
 
     cat >>confdefs.h <<_ACEOF
-#define PATH_OGG123 "${PATH_OGG123}"
+#define PATH_OGGDEC "${PATH_OGGDEC}"
 _ACEOF
 
     cat >>confdefs.h <<_ACEOF
@@ -20443,7 +20515,7 @@ s,@SO_INSTALL@,$SO_INSTALL,;t t
 s,@SO_LD@,$SO_LD,;t t
 s,@A_LD@,$A_LD,;t t
 s,@A_LD_FLAGS@,$A_LD_FLAGS,;t t
-s,@PATH_OGG123@,$PATH_OGG123,;t t
+s,@PATH_OGGDEC@,$PATH_OGGDEC,;t t
 s,@PATH_OGGENC@,$PATH_OGGENC,;t t
 s,@PATH_MPG123@,$PATH_MPG123,;t t
 s,@PATH_MPG321@,$PATH_MPG321,;t t
