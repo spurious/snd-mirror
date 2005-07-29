@@ -480,7 +480,7 @@ def finish_snd_test
   $overall_start_time.stop
   Snd.regions.apply(:forget_region)
   Snd.tracks.apply(:free_track)
-  set_previous_files_sort(0)
+  set_view_files_sort(0)
   clear_sincs
   stop_playing
   reset_almost_all_hooks
@@ -1195,7 +1195,7 @@ def test00
       [:log_freq_start, 32.0],
       [:selection_creates_region, true],
       [:transform_normalization, Normalize_by_channel],
-      [:previous_files_sort, 0],
+      [:view_files_sort, 0],
       [:print_length, 12],
       [:recorder_autoload, false],
       [:recorder_buffer_size, 4096],
@@ -1412,7 +1412,7 @@ def test01
       [:log_freq_start, 32.0],
       [:selection_creates_region, true],
       [:transform_normalization, Normalize_by_channel],
-      [:previous_files_sort, 0],
+      [:view_files_sort, 0],
       [:print_length, 12],
       [:recorder_autoload, false],
       [:recorder_buffer_size, 4096],
@@ -1948,7 +1948,7 @@ def test03
       [:mark_tag_width, 10, 20],
       [:selection_creates_region, true, false],
       [:transform_normalization, Normalize_by_channel, Dont_normalize],
-      [:previous_files_sort, 0, 1],
+      [:view_files_sort, 0, 1],
       [:print_length, 12, 16],
       [:recorder_autoload, false, true],
       [:recorder_out_chans, 2, 1],
@@ -2047,7 +2047,7 @@ def test03
       [:filter_control_order, 20, [-10, -1, 0]],
       [:max_transform_peaks, 100, [-1]],
       [:max_regions, 16, [-1, -123]],
-      [:previous_files_sort, 0, [-1, 123]],
+      [:view_files_sort, 0, [-1, 123]],
       [:reverb_control_length, 1.0, [-1.0]],
       [:show_axes, 1, [-1, 123]],
       [:sinc_width, 10, [-10]],
@@ -8065,7 +8065,7 @@ def test205
   snd_display("filter_sound maxamp 3: %s?", maxamp) if maxamp > 0.02
   close_sound(ind)
   #
-  set_previous_files_sort_procedure(lambda do |lst|
+  set_view_files_sort_procedure(lambda do |lst|
                                       lst.sort do |a, b|
                                         dura = mus_sound_duration(a)
                                         durb = mus_sound_duration(b)
@@ -8078,19 +8078,19 @@ def test205
                                         end
                                       end
                                     end)
-  unless proc?(res = previous_files_sort_procedure)
-    snd_display("previous_files_sort_procedure: %s", res)
+  unless proc?(res = view_files_sort_procedure)
+    snd_display("view_files_sort_procedure: %s", res)
   end
-  set_previous_files_sort(5)
+  set_view_files_sort(5)
   close_sound(ind1)
   #
   if (res = Snd.catch do
-        set_previous_files_sort_procedure(lambda do |a, b, c| false end)
+        set_view_files_sort_procedure(lambda do |a, b, c| false end)
       end).first != :bad_arity
-    snd_display("previous_files_sort_procedure arity error: %s?", res.inspect)
+    snd_display("view_files_sort_procedure arity error: %s?", res.inspect)
   end
-  5.times do |i| set_previous_files_sort(i) end
-  set_previous_files_sort(1)
+  5.times do |i| set_view_files_sort(i) end
+  set_view_files_sort(1)
   dismiss_all_dialogs
 end
 
@@ -25611,7 +25611,7 @@ def test14
       [:log_freq_start, false, 50.0, 5.0],
       [:selection_creates_region, false, false, true],
       [:transform_normalization, false, Dont_normalize, Normalize_globally],
-      [:previous_files_sort, false, 0, 5],
+      [:view_files_sort, false, 0, 5],
       [:print_length, false, 2, 32],
       [:region_graph_style, false, Graph_lines, Graph_lollipops],
       [:reverb_control_decay, false, 0.0, 2.0],
@@ -38238,7 +38238,7 @@ def test24
     $before_test_hook.call(24)
     install_save_peak_env # env.rb contains peak-env.scm
     if $initial_graph_hook.empty? then snd_display("restore peaks failed?") end
-    set_previous_files_sort_procedure(false)
+    set_view_files_sort_procedure(false)
     set_max_regions(16)
     reset_almost_all_hooks
     $bad_header_hook.add_hook!("test24") do |n| true end
@@ -38357,7 +38357,7 @@ Procs = [:add_mark, :add_sound_file_extension, :add_to_main_menu, :add_to_menu,
   :open_raw_sound, :open_sound, :orientation_dialog, :peak_env_info, :peaks, :play,
   :play_and_wait, :play_mix, :play_region, :play_selection, :play_track, :player?, :players,
   :position_color, :position2x, :position2y, :preload_directory, :preload_file,
-  :previous_files_sort, :previous_sample, :print_length, :progress_report, :prompt_in_minibuffer,
+  :view_files_sort, :previous_sample, :print_length, :progress_report, :prompt_in_minibuffer,
   :pushed_button_color, :read_only, :recorder_in_device, :read_peak_env_info_file,
   :recorder_autoload, :recorder_buffer_size, :recorder_dialog, :recorder_file, :recorder_gain,
   :recorder_in_amp, :recorder_in_format, :recorder_max_duration, :recorder_out_amp,
@@ -38451,7 +38451,7 @@ Procs = [:add_mark, :add_sound_file_extension, :add_to_main_menu, :add_to_menu,
   :filter_control_coeffs, :locsig_type, :make_phase_vocoder, :mus_audio_mixer_read,
   :mus_describe, :mus_error_type2string, :mus_file_buffer_size, :mus_name, :mus_offset,
   :mus_reset, :mus_rand_seed, :mus_width, :phase_vocoder?,
-  :polar2rectangular, :previous_files_sort_procedure, :phase_vocoder_amp_increments,
+  :polar2rectangular, :view_files_sort_procedure, :phase_vocoder_amp_increments,
   :phase_vocoder_amps, :phase_vocoder_freqs, :phase_vocoder_outctr,
   :phase_vocoder_phase_increments, :phase_vocoder_phases, :mus_generator?, :read_sample,
   :reset_listener_cursor, :goto_listener_end, :sample_reader_home, :selection_chans,
@@ -38493,7 +38493,7 @@ Set_procs = [:amp_control, :ask_before_overwrite, :audio_input_device, :audio_ou
   :mix_amp_env, :mix_tag_position, :mix_chans, :mix_color, :mix_locked?, :mix_inverted?,
   :mix_position, :mix_speed, :mix_tag_height, :mix_tag_width, :mix_tag_y, :mark_tag_width,
   :mark_tag_height, :mix_waveform_height, :transform_normalization, :equalize_panes,
-  :position_color, :recorder_in_device, :previous_files_sort, :print_length,
+  :position_color, :recorder_in_device, :view_files_sort, :print_length,
   :pushed_button_color, :recorder_autoload, :recorder_buffer_size, :recorder_dialog,
   :recorder_file, :recorder_gain, :recorder_in_amp, :recorder_in_format, :recorder_max_duration,
   :recorder_out_amp, :recorder_out_chans, :recorder_out_format, :recorder_out_type,
@@ -38522,7 +38522,7 @@ Set_procs = [:amp_control, :ask_before_overwrite, :audio_input_device, :audio_ou
   :mus_formant_radius, :mus_frequency, :mus_hop, :mus_increment, :mus_length, :mus_location,
   :mus_phase, :mus_ramp, :mus_scaler, :vct_ref, :x_axis_label, :filter_control_coeffs,
   :locsig_type, :mus_file_buffer_size, :mus_rand_seed, :mus_width, :clm_table_size, :run_safety,
-  :mus_offset, :mus_reset, :previous_files_sort_procedure, :phase_vocoder_amp_increments,
+  :mus_offset, :mus_reset, :view_files_sort_procedure, :phase_vocoder_amp_increments,
   :phase_vocoder_amps, :phase_vocoder_freqs, :phase_vocoder_outctr,
   :phase_vocoder_phase_increments, :phase_vocoder_phases, :quit_button_color,
   :help_button_color, :reset_button_color, :doit_button_color, :doit_again_button_color,
@@ -39040,7 +39040,7 @@ def test0128
     :listener_prompt, :listener_text_color, :max_regions,
     :minibuffer_history_length, :mix_waveform_height, :region_graph_style,
     :position_color, :time_graph_style, :lisp_graph_style, :transform_graph_style,
-    :peaks_font, :bold_peaks_font, :previous_files_sort, :print_length,
+    :peaks_font, :bold_peaks_font, :view_files_sort, :print_length,
     :pushed_button_color, :recorder_in_device, :recorder_autoload,
     :recorder_buffer_size, :recorder_file, :recorder_in_format,
     :recorder_max_duration, :recorder_out_chans, :recorder_in_chans,
@@ -39076,7 +39076,7 @@ def test0128
     :new_widget_hook, :read_hook, :bad_header_hook, :snd_error_hook,
     :snd_warning_hook, :start_hook, :start_playing_hook, :stop_playing_hook,
     :mouse_enter_listener_hook, :mouse_leave_listener_hook,
-    :window_property_changed_hook, :select_sound_hook, :previous_files_select_hook,
+    :window_property_changed_hook, :select_sound_hook, :view_files_select_hook,
     :during_open_hook, :after_transform_hook, :mouse_enter_label_hook,
     :mouse_leave_label_hook, :initial_graph_hook, :graph_hook, :key_press_hook,
     :mouse_drag_hook, :mouse_press_hook, :mouse_click_hook, :enved_hook].each_with_index do |n, i|

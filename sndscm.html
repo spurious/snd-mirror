@@ -1251,7 +1251,6 @@ I'm slowly dividing out related groups of procedures to separate files.
     <li>multicolored rxvt printout
     <li>lisp graph with draggable x axis
     <li>pointer-focus
-    <li>files-popup-buffer
     <li>Emacs-like C-x b handling
     <li>open-next-file-in-directory
   </ul>
@@ -1521,16 +1520,6 @@ in rxvt:
 echo '\e[41m This is red! \e[0m'
 </pre>
 <br>
-<pre>
-  <em class=emdef>files-popup-buffer</em>
-</pre>
-<p>This is a mouse-enter-label-hook function for the View:Files dialog;
-it hides all sounds but the one the mouse is pointing to in the current files list.
-The pointer-focus style of interaction uses similar hooks.  There is also
-a first stab at Emacs-like C-x b support here; the file name in the prompt
-should be a string (i.e. in quotes), unlike Emacs.  This still needs work
-especially for multichannel sounds.
-</p>
 <pre>
   <em class=emdef>open-next-file-in-directory</em>
 </pre>

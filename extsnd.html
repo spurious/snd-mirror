@@ -1727,26 +1727,6 @@ filled for the DAC (see <a href="sndscm.html#enveddoc">enved.scm</a> and <a href
 </td></tr>
 <tr><td colspan=3></td></tr>
 
-<!-- previous-files-select-hook -->
-<tr><td colspan=2>
-<code><a class=def name="previousfilesselecthook">previous-files-select-hook</a> (filename)</code></td><td align=right><b>or</b>
-</td></tr>
-<tr><td></td><td colspan=2>
-called each time a file is selected in the View Files dialog's previous files list.
-If it returns #t, the file is not opened in Snd (the default action).  We can use this
-hook to use the previous files list for whatever purpose seems handy. 
-Say we want to click a file to have it mixed into the currently selected sound at
-the cursor:
-</td></tr>
-<tr><td></td><td colspan=2>
-<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
-(add-hook! <em class=red>previous-files-select-hook</em>
-  (lambda (file)
-    (<a class=quiet href="#mix">mix</a> file (<a class=quiet href="#cursor">cursor</a>))
-    #t))
-</pre></td></tr></table></td></tr>
-<tr><td colspan=3></td></tr>
-
 <!-- print-hook -->
 <tr><td colspan=2>
 <code><a class=def name="printhook">print-hook</a> (text)</code></td><td align=right><b>progn</b>
@@ -1985,6 +1965,26 @@ the returned procedure to make sure the mark pane is reactivated right away when
       (<a class=quiet href="#sndprint">snd-print</a> "ok!"))))
 </pre></td></tr></table>
 </td></tr><tr><td colspan=3></td></tr>
+
+<!-- view-files-select-hook -->
+<tr><td colspan=2>
+<code><a class=def name="previousfilesselecthook">view-files-select-hook</a> (filename)</code></td><td align=right><b>or</b>
+</td></tr>
+<tr><td></td><td colspan=2>
+called each time a file is selected in the View Files dialog's previous files list.
+If it returns #t, the file is not opened in Snd (the default action).  We can use this
+hook to use the previous files list for whatever purpose seems handy. 
+Say we want to click a file to have it mixed into the currently selected sound at
+the cursor:
+</td></tr>
+<tr><td></td><td colspan=2>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
+(add-hook! <em class=red>view-files-select-hook</em>
+  (lambda (file)
+    (<a class=quiet href="#mix">mix</a> file (<a class=quiet href="#cursor">cursor</a>))
+    #t))
+</pre></td></tr></table></td></tr>
+<tr><td colspan=3></td></tr>
 
 <!-- window-property-changed-hook -->
 <tr><td colspan=2>
@@ -9168,33 +9168,6 @@ If the xm module is loaded, we could add our own info via:
 <tr><td colspan=2><code><a class=def name="orientationdialog">orientation-dialog</a> (<i>managed</i>)</code></td></tr>
 <tr><td></td><td>Create and (if <i>managed</i> which defaults to #t) activate the <a href="snd.html#orientationbrowser">Orientation</a> dialog. Return the dialog widget.</td></tr>
 
-<!-- previous-files-sort -->
-<tr><td colspan=2><code><a class=def name="previousfilessort">previous-files-sort</a> ()</code></td></tr>
-<tr><td></td><td>The sort function choice in the View:Files dialog (0=unsorted, 1=name, 2=date, 3=size, 4=entry, 5=user procedure).</td></tr>
-
-<!-- previous-files-sort-procedure -->
-<tr><td colspan=2><code><a class=def name="filessortproc">previous-files-sort-procedure</a> ()</code></td></tr>
-<tr><td></td><td>Procedure used to sort files in the files dialog.  It takes one argument, the list of files, and
-should return that list, sorted as it pleases.  The following sorts the list by decreasing max amp:
-</td></tr>
-
-<tr><td></td><td><table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
-(set! (<em class=red>previous-files-sort-procedure</em>)
-  (lambda (lst)
-    (sort lst 
-	  (lambda (a b)
-	    (define (mxall mxcur mxlst)
-	      (if (null? mxlst)
-		  mxcur
-		  (mxall (max mxcur (cadr mxlst)) (cddr mxlst))))
-	    (let ((mxa (<em class=red>mus-sound-maxamp</em> a))
-		  (mxb (<em class=red>mus-sound-maxamp</em> b)))
-	      (or (null? mxb)
-		  (and (not (null? mxa))
-		       (&gt; (mxall 0.0 mxa)
-			  (mxall 0.0 mxb)))))))))
-</pre></td></tr></table></td></tr>
-
 <!-- print-dialog -->
 <tr><td colspan=2><code><a class=def name="printdialog">print-dialog</a> (<i>managed direct-to-printer</i>)</code></td></tr>
 <tr><td></td><td>Create and (if <i>managed</i> which defaults to #t) activate the File:Print dialog. Return the dialog widget.</td></tr>
@@ -9363,8 +9336,35 @@ default: 4.
 <!-- view-files-dialog -->
 <tr><td colspan=2><code><a class=def name="viewfilesdialog">view-files-dialog</a> (<i>managed</i>)</code></td></tr>
 <tr><td></td><td>create and (if <i>managed</i> which defaults to #t) activate the 
-View:Files <a href="snd.html#prevfiles">list</a> of current and previous files (not the file browser),
+View:Files <a href="snd.html#viewfiles">list</a> of current and previous files (not the file browser),
 and return the dialog widget.</td></tr>
+
+<!-- view-files-sort -->
+<tr><td colspan=2><code><a class=def name="previousfilessort">view-files-sort</a> ()</code></td></tr>
+<tr><td></td><td>The sort function choice in the View:Files dialog (0=unsorted, 1=name, 2=date, 3=size, 4=entry, 5=user procedure).</td></tr>
+
+<!-- view-files-sort-procedure -->
+<tr><td colspan=2><code><a class=def name="filessortproc">view-files-sort-procedure</a> ()</code></td></tr>
+<tr><td></td><td>Procedure used to sort files in the files dialog.  It takes one argument, the list of files, and
+should return that list, sorted as it pleases.  The following sorts the list by decreasing max amp:
+</td></tr>
+
+<tr><td></td><td><table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
+(set! (<em class=red>view-files-sort-procedure</em>)
+  (lambda (lst)
+    (sort lst 
+	  (lambda (a b)
+	    (define (mxall mxcur mxlst)
+	      (if (null? mxlst)
+		  mxcur
+		  (mxall (max mxcur (cadr mxlst)) (cddr mxlst))))
+	    (let ((mxa (<em class=red>mus-sound-maxamp</em> a))
+		  (mxb (<em class=red>mus-sound-maxamp</em> b)))
+	      (or (null? mxb)
+		  (and (not (null? mxa))
+		       (&gt; (mxall 0.0 mxa)
+			  (mxall 0.0 mxb)))))))))
+</pre></td></tr></table></td></tr>
 
 <!-- view-mixes-dialog -->
 <tr><td colspan=2><code><a class=def name="viewmixesdialog">view-mixes-dialog</a> ()</code></td></tr>
@@ -9440,7 +9440,7 @@ Here is a partial list of the dialogs scattered around Snd.
     <td><a href="#viewmixesdialog">view-mixes-dialog</a>, <a href="#viewtracksdialog">view-tracks-dialog</a></td><td></td></tr>
 <tr><td></td><td colspan=2>View regions</td><td>View:<a href="snd.html#regionbrowser">Regions</a></td>
     <td><a href="#viewregionsdialog">view-regions-dialog</a></td><td></td></tr>
-<tr><td></td><td colspan=2>View previously loaded files</td><td>View:<a href="snd.html#prevfiles">Files</a></td>
+<tr><td></td><td colspan=2>View previously loaded files</td><td>View:<a href="snd.html#viewfiles">Files</a></td>
     <td><a href="#viewfilesdialog">view-files-dialog</a></td><td></td></tr>
   <tr><td></td><td></td><td><a href="sndscm.html#nb">nb</a></td>
       <td colspan=2>post info about each file as mouse passes over it</td><td></td></tr>
@@ -10050,7 +10050,7 @@ loads a file into Snd for editing.
 <code><a class=def name="preloaddirectory">preload-directory</a> (dir)</code></td></tr>
 <tr><td></td><td>
 preload sound files from directory <i>dir</i> (see -<a href="snd.html#minusp">p</a>).  Preloading a file means
-placing it in the list of previous files in the View menu's <a href="snd.html#prevfiles">View Files</a> dialog.
+placing it in the list of previous files in the View menu's <a href="snd.html#viewfiles">View Files</a> dialog.
 By preloading all the files you might want to use, you can use that dialog to access them conveniently.
 See <a href="sndscm.html#nbdoc">nb.scm</a>.
 </td></tr>
@@ -10059,7 +10059,7 @@ See <a href="sndscm.html#nbdoc">nb.scm</a>.
 <tr><td colspan=2>
 <code><a class=def name="preloadfile">preload-file</a> (file)</code></td></tr>
 <tr><td></td><td>
-preload <i>file</i>, placing it in the View menu's <a href="snd.html#prevfiles">View Files</a> dialog as
+preload <i>file</i>, placing it in the View menu's <a href="snd.html#viewfiles">View Files</a> dialog as
 a previous file (as if you had opened and closed it).
 </td></tr>
 

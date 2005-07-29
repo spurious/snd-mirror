@@ -48,12 +48,15 @@
 ;;; -------- Insert/append file
 ;;;
 
+;;; this is now built-in (27-Jul-05)
+#!
 (add-to-menu special-menu "Insert file"
   (lambda ()
     (select-file
       (lambda (filename)
         (insert-sound filename))
       "Insert file" "." "*" "File will be inserted at cursor location.")))
+!#
 
 (add-to-menu edit-menu "Append file"
   (lambda ()

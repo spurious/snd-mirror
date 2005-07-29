@@ -2126,7 +2126,7 @@ static XEN g_view_files_dialog(XEN managed)
   widget_t w;
   #define H_view_files_dialog "(" S_view_files_dialog "): start the View Files dialog"
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(managed), managed, XEN_ONLY_ARG, S_view_files_dialog, "a boolean");
-  w = start_file_dialog(XEN_TO_C_BOOLEAN(managed));
+  w = start_view_files_dialog(XEN_TO_C_BOOLEAN(managed));
   return(XEN_WRAP_WIDGET(w));
 }
 

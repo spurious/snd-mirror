@@ -1187,7 +1187,7 @@ void mem_report(void)
   for (i = 0; i < 512; i++)
     if (mus_file_fd_name(i))
       fprintf(Fp, "[%d]: %s\n", i, mus_file_fd_name(i));
-  fprintf(Fp, "\n\nprevlist: %d %d\n", get_prevfile_end(), get_max_prevfile_end());
+  fprintf(Fp, "\n\nview files list: %d %d\n", get_view_files_end(), get_max_view_files_end());
   fprintf(Fp, "\n\n");
   save_listener_text(Fp);
   for (i = 0; i < file_size; i++)

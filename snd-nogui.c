@@ -177,16 +177,14 @@ void progress_report(snd_info *sp, const char *funcname, int curchan, int chans,
 char *get_file_dialog_sound_attributes(file_data *fdat, int *srate, int *chans, int *type, int *format, off_t *location, off_t *samples, int min_chan) {return(NULL);}
 void alert_new_file(void) {}
 void make_new_file_dialog(void) {}
-void make_cur_name_row(int old_size, int new_size) {}
-void make_prev_name_row(int old_size, int new_size) {}
-void make_prevfiles_list (void) {}
-void make_curfiles_list (void) {}
-void curfile_highlight(int i) {}
-void set_file_sort_sensitive(bool sensitive) {}
-void set_file_browser_play_button(char *name, int state) {}
-void highlight_selected_sound(void) {}
-int start_file_dialog(bool managed) {return(0);}
+
+void make_vf_row(int old_size, int new_size) {}
+void make_view_files_list (void) {}
+void set_view_files_sort_sensitive(bool sensitive) {}
+void set_view_files_play_button(char *name, int state) {}
+int start_view_files_dialog(bool managed) {return(0);}
 bool view_files_dialog_is_active(void) {return(false);}
+
 int edit_header(snd_info *sp) {return(0);}
 void save_edit_header_dialog_state(FILE *fd) {}
 void cleanup_edit_header_watcher(void) {}

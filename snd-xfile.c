@@ -18,8 +18,8 @@
  * TODO: replace "current files" section with something useful --
  *   perhaps a menu for actions on previous files such as insert/mix/open/play
  *   or a grouping thing as in the (unimplemented) regions dialog
+ *   also a way to add dirs/files directly
  * PERHAPS: (alert_new_file): handle all directory update decisions through FAM
- * TODO: raw give OGG/Mpeg/Speex/Flac/Midi read choices if the progs can be found
  * TODO: various file/directory lists: tie into fam/gamin (also previous files list) -- add xen call?
  * TODO: if directory loaded into previous files list via -p, add any new sound files as they appear
  *
@@ -33,7 +33,7 @@
  * TODO: check that xen-errors are redirected locally (save-as-hook etc)
  * TODO: open no such file goes to post it? -- from startup args!
  * TODO: in mix/insert: panel for mix at cursor/beginning/end/mark/sample (num)
- * TODO: doc ogg etc output
+ * TODO: c-x c-n for new, or should c-x c-f behave as in emacs
  */
 
 
@@ -3341,7 +3341,6 @@ static void raw_data_ok_callback(Widget w, XtPointer context, XtPointer info)
 						     mus_sound_length(rp->filename) - rp->location));
       /* choose action based on how we got here */
 
-      /* TODO: snd-test insert file */
       /* TODO: tmpfile if decoding (translation style) */
 
       if ((rp->requestor_dialog) &&
@@ -3368,7 +3367,7 @@ static void raw_data_ok_callback(Widget w, XtPointer context, XtPointer info)
 	  /* FROM_OPEN_DIALOG (has requestor_dialog)
 	   * FROM_KEYBOARD (has requestor_sp)
 	   * FROM_DRAG_AND_DROP (just open, no needed side effects)
-	   * FROM_VIEW_PREVIOUS_FILES (ditto)
+	   * FROM_VIEW_FILES (ditto)
 	   */
 	  file_info *hdr;
 	  hdr = (file_info *)CALLOC(1, sizeof(file_info));
@@ -3679,22 +3678,17 @@ static void mouse_leave_label_or_enter(regrow *r, XEN hook, const char *caller)
     {
       char *label = NULL;
       bool need_free = false;
-      if (r->parent == CURRENT_FILE_VIEWER)
-	label = get_curfullname(r->pos);
+      if (r->parent == FILE_VIEWER)
+	label = get_view_files_full_name(r->pos);
       else
 	{
-	  if (r->parent == PREVIOUS_FILE_VIEWER)
-	    label = get_prevfullname(r->pos);
-	  else
-	    {
-	      XmString s1 = NULL;
-	      /* it's a bit tedious to get the current button label... */
-	      XtVaGetValues(r->nm, XmNlabelString, &s1, NULL);
-	      if (XmStringEmpty(s1)) return;
-	      label = (char *)XmStringUnparse(s1, NULL, XmCHARSET_TEXT, XmCHARSET_TEXT, NULL, 0, XmOUTPUT_ALL);
-	      if (label) need_free = true;
-	      XmStringFree(s1);
-	    }
+	  XmString s1 = NULL;
+	  /* it's a bit tedious to get the current button label... */
+	  XtVaGetValues(r->nm, XmNlabelString, &s1, NULL);
+	  if (XmStringEmpty(s1)) return;
+	  label = (char *)XmStringUnparse(s1, NULL, XmCHARSET_TEXT, XmCHARSET_TEXT, NULL, 0, XmOUTPUT_ALL);
+	  if (label) need_free = true;
+	  XmStringFree(s1);
 	}
       if (label)
 	run_hook(hook,
@@ -3859,7 +3853,7 @@ ww_info *make_title_row(Widget formw, char *top_str, char *main_str, dialog_pad_
       wwi->bysize =  XtCreateManagedWidget(_("size"),  xmPushButtonWidgetClass, smenu, args, n);
       wwi->byentry = XtCreateManagedWidget(_("entry"), xmPushButtonWidgetClass, smenu, args, n);
       wwi->byproc =  XtCreateManagedWidget(_("proc"),  xmPushButtonWidgetClass, smenu, args, n);
-      XtSetSensitive(wwi->byproc, XEN_PROCEDURE_P(ss->file_sort_proc));
+      XtSetSensitive(wwi->byproc, XEN_PROCEDURE_P(ss->view_files_sort_proc));
 
       XtManageChild(sbar);
     }
@@ -3986,33 +3980,18 @@ regrow *make_regrow(Widget ww, Widget last_row, XtCallbackProc play_callback, Xt
 /* -------- view files dialog -------- */
 
 static Widget view_files_dialog = NULL;
-static int vf_selected_file = -1;
-static Widget vf_curww, vf_prevlst, vf_curlst, vf_prevww;
+static Widget vf_lst, vf_ww;
+static regrow **vf_row = NULL;
 
-static regrow **cur_name_row = NULL;
-static regrow **prev_name_row = NULL;
-
-void make_cur_name_row(int old_size, int new_size)
+void make_vf_row(int old_size, int new_size)
 {
-  if (cur_name_row == NULL)
-    cur_name_row = (regrow **)CALLOC(new_size, sizeof(regrow *));
+  if (vf_row == NULL)
+    vf_row = (regrow **)CALLOC(new_size, sizeof(regrow *));
   else 
     {
       int i;
-      cur_name_row = (regrow **)REALLOC(cur_name_row, new_size * sizeof(regrow *));
-      for (i = old_size; i < new_size; i++) cur_name_row[i] = NULL;
-    }
-}
-
-void make_prev_name_row(int old_size, int new_size)
-{
-  if (prev_name_row == NULL)
-    prev_name_row = (regrow **)CALLOC(new_size, sizeof(regrow *));
-  else 
-    {
-      int i;
-      prev_name_row = (regrow **)REALLOC(prev_name_row, new_size * sizeof(regrow *));
-      for (i = old_size; i < new_size; i++) prev_name_row[i] = NULL;
+      vf_row = (regrow **)REALLOC(vf_row, new_size * sizeof(regrow *));
+      for (i = old_size; i < new_size; i++) vf_row[i] = NULL;
     }
 }
 
@@ -4028,220 +4007,129 @@ static void view_files_dismiss_callback(Widget w, XtPointer context, XtPointer i
 
 static void view_files_clear_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  /* clear previous files list and associated widget list */
-  clear_prevlist();
+  clear_view_files_list();
 }
 
 static void view_files_update_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  /* run through previous files list looking for any that have been deleted behind our back */
-  update_prevlist();
-  if (view_files_dialog_is_active()) make_prevfiles_list();
+  /* run through view files list looking for any that have been deleted behind our back */
+  update_view_files_list();
+  if (view_files_dialog_is_active()) make_view_files_list();
 }
 
-void set_file_browser_play_button(char *name, int state)
+void set_view_files_play_button(char *name, int state)
 {
   if (view_files_dialog_is_active())
     {
-      int i, list = 0;
-      i = find_curfile_regrow(name); 
-      if (i != -1) list = 1; else i = find_prevfile_regrow(name);
+      int i;
+      i = find_view_files_regrow(name);
       if (i != -1)
 	{
 	  regrow *r;
-	  if (list) r = cur_name_row[i]; else r = prev_name_row[i];
+	  r = vf_row[i];
 	  XmToggleButtonSetState(r->pl, (Boolean)state, false);
 	}
     }
 }
 
-static void view_curfiles_play_callback(Widget w, XtPointer context, XtPointer info) 
-{
-  regrow *r = (regrow *)context;
-  XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
-  ASSERT_WIDGET_TYPE(XmIsToggleButton(w), w);
-  view_curfiles_play(r->pos, cb->set);
-}
-
-static void curfile_unhighlight(void)
-{
-  if ((view_files_dialog_is_active()) && 
-      (!(ss->using_schemes)) && 
-      (vf_selected_file != -1))
-    {
-      regrow *r;
-      r = cur_name_row[vf_selected_file];
-      XtVaSetValues(r->rw, XmNbackground, ss->sgx->highlight_color, NULL);
-      XtVaSetValues(r->nm, XmNbackground, ss->sgx->highlight_color, NULL);
-      vf_selected_file = -1;
-    }
-}
-
-void curfile_highlight(int i)
-{
-  if ((view_files_dialog_is_active()) && 
-      (!(ss->using_schemes)))
-    {
-      regrow *r;
-      if (vf_selected_file != -1) curfile_unhighlight();
-      r = cur_name_row[i];
-      XtVaSetValues(r->rw, XmNbackground, ss->sgx->zoom_color, NULL);
-      XtVaSetValues(r->nm, XmNbackground, ss->sgx->zoom_color, NULL);
-      vf_selected_file = i;
-    }
-}
-
-static void view_curfiles_select_callback(Widget w, XtPointer context, XtPointer info) 
-{
-  regrow *r = (regrow *)context;
-  view_curfiles_select(r->pos);
-}
-
-static void view_prevfiles_play_callback(Widget w, XtPointer context, XtPointer info) 
+static void view_files_play_callback(Widget w, XtPointer context, XtPointer info) 
 {
   /* open and play -- close at end or when button off toggled */
   regrow *r = (regrow *)context;
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
   ASSERT_WIDGET_TYPE(XmIsToggleButton(w), w);
-  if (view_prevfiles_play(r->pos, cb->set))
+  if (view_files_play(r->pos, cb->set))
     XmToggleButtonSetState(w, false, false);
 }
 
-static void view_prevfiles_select_callback(Widget w, XtPointer context, XtPointer info) 
+static void view_files_select_callback(Widget w, XtPointer context, XtPointer info) 
 {
   /* open and set as selected */
   regrow *r = (regrow *)context;
-  view_prevfiles_select(r->pos);
+  view_files_select(r->pos);
 }
 
-void highlight_selected_sound(void)
+
+static void sort_view_files_by_name(Widget w, XtPointer context, XtPointer info) 
 {
-  snd_info *sp;
-  sp = selected_sound();
-  if (sp)
-    {
-      int i;
-      i = find_curfile_regrow(sp->short_filename);
-      if (i != -1) 
-	curfile_highlight(i); 
-      else curfile_unhighlight();
-    }
-  else curfile_unhighlight();
+  set_view_files_sort(SORT_BY_NAME);
+  make_view_files_list();
 }
 
-void make_curfiles_list (void)
+static void sort_view_files_by_date(Widget w, XtPointer context, XtPointer info) 
 {
-  int i, lim;
-  Widget last_row = NULL;
-  regrow *r;
-  lim = get_curfile_end();
-  for (i = 0; i < lim; i++)
-    {
-      r = cur_name_row[i];
-      if (r == NULL)
-	{
-	  r = make_regrow(vf_curww, last_row, view_curfiles_play_callback, view_curfiles_select_callback);
-	  cur_name_row[i] = r;
-	  r->pos = i;
-	  r->parent = CURRENT_FILE_VIEWER;
-	}
-      set_button_label(r->nm, view_curfiles_name(r->pos));
-      XmToggleButtonSetState(r->pl, false, false);
-      if (!(XtIsManaged(r->rw))) XtManageChild(r->rw);
-      last_row = r->rw;
-    }
-  lim = get_max_curfile_end();
-  for (i = get_curfile_end(); i < lim; i++)
-    if ((r = cur_name_row[i]))
-      if (XtIsManaged(r->rw)) 
-	XtUnmanageChild(r->rw);
-  set_max_curfile_end(get_curfile_end());
-  highlight_selected_sound();
-  XtManageChild(vf_curlst);
+  set_view_files_sort(SORT_BY_DATE);
+  make_view_files_list();
 }
 
-static void sort_prevfiles_by_name(Widget w, XtPointer context, XtPointer info) 
+static void sort_view_files_by_size(Widget w, XtPointer context, XtPointer info) 
 {
-  set_previous_files_sort(1);
-  make_prevfiles_list();
+  set_view_files_sort(SORT_BY_SIZE);
+  make_view_files_list();
 }
 
-static void sort_prevfiles_by_date(Widget w, XtPointer context, XtPointer info) 
+static void sort_view_files_by_entry_order(Widget w, XtPointer context, XtPointer info) 
 {
-  set_previous_files_sort(2);
-  make_prevfiles_list();
+  set_view_files_sort(SORT_BY_ENTRY);
+  make_view_files_list();
 }
 
-static void sort_prevfiles_by_size(Widget w, XtPointer context, XtPointer info) 
+static void sort_view_files_by_user_procedure(Widget w, XtPointer context, XtPointer info) 
 {
-  set_previous_files_sort(3);
-  make_prevfiles_list();
+  set_view_files_sort(SORT_BY_PROC);
+  make_view_files_list();
 }
 
-static void sort_prevfiles_by_entry_order(Widget w, XtPointer context, XtPointer info) 
-{
-  set_previous_files_sort(4);
-  make_prevfiles_list();
-}
-
-static void sort_prevfiles_by_user_procedure(Widget w, XtPointer context, XtPointer info) 
-{
-  set_previous_files_sort(5);
-  make_prevfiles_list();
-}
-
-void make_prevfiles_list (void)
+void make_view_files_list (void)
 {
   int i, lim;
   Widget last_row = NULL;
   regrow *r;
-  if (get_prevfile_end() >= 0)
+  if (get_view_files_end() >= 0)
     {
-      make_prevfiles_list_1();
-      lim = get_prevfile_end();
+      make_view_files_list_1();
+      lim = get_view_files_end();
       for (i = 0; i <= lim; i++)
 	{
-	  if (!((r = prev_name_row[i])))
+	  if (!((r = vf_row[i])))
 	    {
-	      r = make_regrow(vf_prevww, last_row, view_prevfiles_play_callback, view_prevfiles_select_callback);
-	      prev_name_row[i] = r;
+	      r = make_regrow(vf_ww, last_row, view_files_play_callback, view_files_select_callback);
+	      vf_row[i] = r;
 	      r->pos = i;
-	      r->parent = PREVIOUS_FILE_VIEWER;
+	      r->parent = FILE_VIEWER;
 	    }
-	  set_button_label(r->nm, get_prevname(r->pos));
+	  set_button_label(r->nm, get_view_files_name(r->pos));
 	  XmToggleButtonSetState(r->pl, false, false);
 	  if (!(XtIsManaged(r->rw))) XtManageChild(r->rw);
 	  last_row = r->rw;
 	}
     }
-  lim = get_max_prevfile_end();
-  for (i = get_prevfile_end() + 1; i <= lim; i++)
-    if ((r = prev_name_row[i]))
+  lim = get_max_view_files_end();
+  for (i = get_view_files_end() + 1; i <= lim; i++)
+    if ((r = vf_row[i]))
       if (XtIsManaged(r->rw)) 
 	XtUnmanageChild(r->rw);
-  set_max_prevfile_end(get_prevfile_end());
-  if (!(XtIsManaged(vf_prevlst))) 
-    XtManageChild(vf_prevlst);
+  set_max_view_files_end(get_view_files_end());
+  if (!(XtIsManaged(vf_lst))) 
+    XtManageChild(vf_lst);
 }
 
 static Widget byproc = NULL;
-void set_file_sort_sensitive(bool sensitive)
+void set_view_files_sort_sensitive(bool sensitive)
 {
   if (byproc)
     XtSetSensitive(byproc, sensitive);
 }
 
-/* play open for prevfile, play save select for curfile, preload process for prevfile (snd-clm) */
-
-static void start_view_files_dialog(bool managed)
+Widget start_view_files_dialog(bool managed)
 {
   /* fire up a dialog window with a list of currently open files, 
    * currently selected file also selected in list --
    * if user selects one (browse mode), so does Snd (via equalize_sound_panes etc)
    * use snd_info label as is (short-form with '*' etc)
-   * secondary list of previously edited files (if still in existence) --
+   * secondary list of viewly edited files (if still in existence) --
    * click here re-opens the file.  (The overall form is similar to the regions browser).
-   * The previous files list requires that we keep such a list as we go along, on the
+   * The view files list requires that we keep such a list as we go along, on the
    * off-chance this browser will be fired up.  (Such files may be subsequently moved or deleted).
    */
   bool new_dialog = false;
@@ -4252,10 +4140,9 @@ static void start_view_files_dialog(bool managed)
       ww_info *wwl;
       regrow *r;
       XmString xdismiss, xhelp, xclear, titlestr;
-      Widget mainform, curform, prevform, updateB, sep;
+      Widget mainform, viewform, updateB, sep, leftform;
 
       new_dialog = true;
-      vf_selected_file = -1;
       xdismiss = XmStringCreate(_("Dismiss"), XmFONTLIST_DEFAULT_TAG);
       xhelp = XmStringCreate(_("Help"), XmFONTLIST_DEFAULT_TAG);
       xclear = XmStringCreate(_("Clear"), XmFONTLIST_DEFAULT_TAG);
@@ -4316,12 +4203,12 @@ static void start_view_files_dialog(bool managed)
       XtSetArg(args[n], XmNrightPosition, 49); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
-      curform = XtCreateManagedWidget("curform", xmFormWidgetClass, mainform, args, n);
+      leftform = XtCreateManagedWidget("leftform", xmFormWidgetClass, mainform, args, n);
 
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
-      XtSetArg(args[n], XmNleftWidget, curform); n++;
+      XtSetArg(args[n], XmNleftWidget, leftform); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
@@ -4336,56 +4223,37 @@ static void start_view_files_dialog(bool managed)
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
-      prevform = XtCreateManagedWidget("prevform", xmFormWidgetClass, mainform, args, n);
+      viewform = XtCreateManagedWidget("viewform", xmFormWidgetClass, mainform, args, n);
 
-      /* current files section: save play current files | files */
-      wwl = make_title_row(curform, _("play"), _("current files"),
-			   PAD_TITLE_ON_RIGHT, WITHOUT_SORT_BUTTON, WITHOUT_PANED_WINDOW);
-      vf_curww = wwl->ww;
-      vf_curlst = wwl->list;
-      if (!(ss->using_schemes)) 
-	map_over_children(vf_curlst, set_main_color_of_widget, NULL);
-      FREE(wwl); 
-      wwl = NULL;
-      if (get_curfile_size() == 0) /* apparently we need at least one row to get Motif to allocate the outer widgets correctly */
-	{                    /* not curfile_end here since it is tracking currently active files before this dialog is created */
-	  init_curfiles(4);
-	  cur_name_row = (regrow **)CALLOC(4, sizeof(regrow *));
-	  r = make_regrow(vf_curww, NULL, view_curfiles_play_callback, view_curfiles_select_callback);
-	  cur_name_row[0] = r;
-	  r->pos = 0;
-	  r->parent = CURRENT_FILE_VIEWER;
-	}
+      /* view files section: play view files | files */
+      wwl = make_title_row(viewform, _("play"), _("files"), PAD_TITLE_ON_LEFT, WITH_SORT_BUTTON, WITHOUT_PANED_WINDOW);
 
-      /* previous files section: play previous files | files */
-      wwl = make_title_row(prevform, _("play"), _("previous files"), PAD_TITLE_ON_LEFT, WITH_SORT_BUTTON, WITHOUT_PANED_WINDOW);
-
-      XtAddCallback(wwl->byname,  XmNactivateCallback, sort_prevfiles_by_name,           NULL);
-      XtAddCallback(wwl->bydate,  XmNactivateCallback, sort_prevfiles_by_date,           NULL);
-      XtAddCallback(wwl->bysize,  XmNactivateCallback, sort_prevfiles_by_size,           NULL);
-      XtAddCallback(wwl->byentry, XmNactivateCallback, sort_prevfiles_by_entry_order,    NULL);
-      XtAddCallback(wwl->byproc,  XmNactivateCallback, sort_prevfiles_by_user_procedure, NULL);
+      XtAddCallback(wwl->byname,  XmNactivateCallback, sort_view_files_by_name,           NULL);
+      XtAddCallback(wwl->bydate,  XmNactivateCallback, sort_view_files_by_date,           NULL);
+      XtAddCallback(wwl->bysize,  XmNactivateCallback, sort_view_files_by_size,           NULL);
+      XtAddCallback(wwl->byentry, XmNactivateCallback, sort_view_files_by_entry_order,    NULL);
+      XtAddCallback(wwl->byproc,  XmNactivateCallback, sort_view_files_by_user_procedure, NULL);
 
       byproc = wwl->byproc;
-      vf_prevww = wwl->ww;
-      vf_prevlst = wwl->list;
+      vf_ww = wwl->ww;
+      vf_lst = wwl->list;
       if (!(ss->using_schemes)) 
-	map_over_children(vf_prevlst, set_main_color_of_widget, NULL);
+	map_over_children(vf_lst, set_main_color_of_widget, NULL);
       FREE(wwl); 
       wwl = NULL;
-      if (get_prevfile_size() == 0)
+      if (get_view_files_size() == 0)
 	{
-	  init_prevfiles(4);
-	  prev_name_row = (regrow **)CALLOC(4, sizeof(regrow *));
-	  r = make_regrow(vf_prevww, NULL, view_prevfiles_play_callback, view_prevfiles_select_callback);
-	  prev_name_row[0] = r;
+	  init_view_files(4);
+	  vf_row = (regrow **)CALLOC(4, sizeof(regrow *));
+	  r = make_regrow(vf_ww, NULL, view_files_play_callback, view_files_select_callback);
+	  vf_row[0] = r;
 	  r->pos = 0;
-	  r->parent = PREVIOUS_FILE_VIEWER;
+	  r->parent = FILE_VIEWER;
 	}
       set_dialog_widget(VIEW_FILES_DIALOG, view_files_dialog);
     }
-  make_curfiles_list();
-  make_prevfiles_list();
+
+  make_view_files_list();
   if (managed)
     {
       if (new_dialog)
@@ -4399,7 +4267,7 @@ static void start_view_files_dialog(bool managed)
 	  raise_dialog(view_files_dialog);
 	}
     }
-  highlight_selected_sound();
+  return(view_files_dialog);
 }
 
 void view_files_callback(Widget w, XtPointer context, XtPointer info)
@@ -4407,15 +4275,10 @@ void view_files_callback(Widget w, XtPointer context, XtPointer info)
   start_view_files_dialog(true);
 }
 
-Widget start_file_dialog(bool managed)
-{
-  start_view_files_dialog(managed);
-  return(view_files_dialog);
-}
-
 bool view_files_dialog_is_active(void)
 {
-  return((view_files_dialog) && (XtIsManaged(view_files_dialog)));
+  return((view_files_dialog) && 
+	 (XtIsManaged(view_files_dialog)));
 }
 
 
@@ -4432,7 +4295,7 @@ void g_init_gxfile(void)
 {
 #if HAVE_SCHEME
   #define H_mouse_enter_label_hook S_mouse_enter_label_hook " (type position label): called when the mouse enters a file viewer or region label. \
-The 'type' is 0 for the current files list, 1 for previous files, and 2 for regions. The 'position' \
+The 'type' is 1 for view-files, and 2 for regions. The 'position' \
 is the scrolled list position of the label. The label itself is 'label'. We could use the 'finfo' procedure in examp.scm \
 to popup file info as follows: \n\
 (add-hook! " S_mouse_enter_label_hook "\n\
@@ -4442,7 +4305,7 @@ to popup file info as follows: \n\
 See also nb.scm."
 #else
   #define H_mouse_enter_label_hook S_mouse_enter_label_hook " (type position label): called when the mouse enters a file viewer or region label. \
-The 'type' is 0 for the current files list, 1 for previous files, and 2 for regions. The 'position' \
+The 'type' is 1 for view-files, and 2 for regions. The 'position' \
 is the scrolled list position of the label. The label itself is 'label'."
 #endif
 

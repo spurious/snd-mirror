@@ -1,5 +1,6 @@
 Snd change log
 
+  29-Jul:    previous-files-* -> view-files-* (sort, sort-procedure, select-hook).
   28-Jul:    File:Insert menu item and dialog added, also insert-file-dialog.
              File:Save as can write OGG, Speex, and Flac files.
   21-Jul:    clear-minibuffer, new as-error arg to report-in-minibuffer.

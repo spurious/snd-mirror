@@ -1685,30 +1685,7 @@ as env moves to 0.0, low-pass gets more intense; amplitude and low-pass amount m
 ;(add-hook! mouse-enter-text-hook (lambda (w) (focus-widget w)))
 
 
-;;; -------- View: Files dialog chooses which sound is displayed
-;;;
-;;; by Anders Vinjar
-
-(define (files-popup-buffer type position name)
-  "(files-popup-buffer type position name) hides all sounds but the one the mouse touched in the current files list. Use with mouse-enter-label-hook"
-  (let ((snd (find-sound name)))
-    (if snd
-	(let* ((curr-buffer (or (selected-sound) (car sounds)))
-	       (width (car (widget-size (car (sound-widgets curr-buffer)))))
-	       (height (cadr (widget-size (car (sound-widgets curr-buffer))))))
-	  (for-each 
-	   (lambda (n)
-	     (hide-widget (car (sound-widgets n))))
-	   (sounds))
-	  (show-widget (car (sound-widgets snd)))
-	  (set! (widget-size (car (sound-widgets snd)))
-		(list width height))
-	  (select-sound snd)))))
-
-;(add-hook! mouse-enter-label-hook files-popup-buffer)
-
-
-;;; -------- C-x b support along the same lines 
+;;; -------- C-x b support: hide all but one of the current sounds (more like Emacs)
 ;;;
 ;;;  this could also hide all but the current channel, but I can't decide if that's a good idea
 

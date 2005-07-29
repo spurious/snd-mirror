@@ -780,7 +780,6 @@ Receving inside the rt-process:
 \begin{schemedisplay}
 (<rt-play> (lambda ()
               (receive-midi (lambda (control data1 data2)
-                               (declare (<int> control data1 data2))
                                (printf "gakk! %x %x %x\\n" control data1 data2)))))
 \end{schemedisplay}
 
@@ -791,6 +790,10 @@ Receiving in guile:
 \end{schemedisplay}
 
 To turn off receiving in guile, call the function \scheme|(stop-receiving-midi!)|.
+
+The guile and rt versions of receive-midi should not be used simultaniously since they
+read from the same alsa seq from two different threads without using mutex, semaphores or 
+similar mechanisms.
 
 
 \subsection{Ladspa plugins}

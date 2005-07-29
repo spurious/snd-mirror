@@ -768,7 +768,6 @@ static void select_sound(snd_info *sp)
     {
       reflect_sound_selection(sp);
       ss->selected_sound = sp->index;
-      highlight_selected_sound();
       new_active_channel_alert();
     }
 }

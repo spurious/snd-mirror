@@ -3258,15 +3258,9 @@ static gboolean mouse_name(XEN hook, GtkWidget *w, const char *caller)
       if (r)
 	{
 	  char *label = NULL;
-	  if (r->parent == CURRENT_FILE_VIEWER)
-	    label = get_curfullname(r->pos);
-	  else
-	    {
-	      if (r->parent == PREVIOUS_FILE_VIEWER)
-		label = get_prevfullname(r->pos);
-	      else
-		label = (char *)gtk_label_get_text(GTK_LABEL(GTK_BIN(w)->child));
-	    }
+	  if (r->parent == FILE_VIEWER)
+	    label = get_view_files_full_name(r->pos);
+	  else label = (char *)gtk_label_get_text(GTK_LABEL(GTK_BIN(w)->child));
 	  if (label)
 	    run_hook(hook,
 		     XEN_LIST_3(C_TO_XEN_INT(r->parent),
@@ -3296,7 +3290,7 @@ static gboolean label_leave_callback(GtkWidget *w, GdkEventCrossing *ev, gpointe
  */
 
 static GtkWidget *byproc = NULL;
-void set_file_sort_sensitive(bool sensitive)
+void set_view_files_sort_sensitive(bool sensitive)
 {
   if (byproc)
     set_sensitive(byproc, sensitive);
@@ -3441,33 +3435,18 @@ regrow *make_regrow(GtkWidget *ww, GtkSignalFunc play_callback, GtkSignalFunc na
 /* -------- view files dialog -------- */
 
 static GtkWidget *view_files_dialog = NULL;
-static int vf_selected_file = -1;
-static GtkWidget *vf_curww, *vf_prevlst, *vf_curlst, *vf_prevww;
+static GtkWidget *vf_lst, *vf_ww;
+static regrow **view_files_row = NULL;
 
-static regrow **cur_name_row = NULL;
-static regrow **prev_name_row = NULL;
-
-void make_cur_name_row(int old_size, int new_size)
+void make_vf_row(int old_size, int new_size)
 {
-  if (cur_name_row == NULL)
-    cur_name_row = (regrow **)CALLOC(new_size, sizeof(regrow *));
+  if (view_files_row == NULL)
+    view_files_row = (regrow **)CALLOC(new_size, sizeof(regrow *));
   else 
     {
       int i;
-      cur_name_row = (regrow **)REALLOC(cur_name_row, new_size * sizeof(regrow *));
-      for (i = old_size; i < new_size; i++) cur_name_row[i] = NULL;
-    }
-}
-
-void make_prev_name_row(int old_size, int new_size)
-{
-  if (prev_name_row == NULL)
-    prev_name_row = (regrow **)CALLOC(new_size, sizeof(regrow *));
-  else 
-    {
-      int i;
-      prev_name_row = (regrow **)REALLOC(prev_name_row, new_size * sizeof(regrow *));
-      for (i = old_size; i < new_size; i++) prev_name_row[i] = NULL;
+      view_files_row = (regrow **)REALLOC(view_files_row, new_size * sizeof(regrow *));
+      for (i = old_size; i < new_size; i++) view_files_row[i] = NULL;
     }
 }
 
@@ -3489,216 +3468,116 @@ static gint view_files_delete_callback(GtkWidget *w, GdkEvent *event, gpointer c
 
 static void view_files_clear_callback(GtkWidget *w, gpointer context) 
 {
-  /* clear previous files list and associated widget list */
-  clear_prevlist();
+  /* clear files list and associated widget list */
+  clear_view_files_list();
 }
 
 static void view_files_update_callback(GtkWidget *w, gpointer context) 
 {
-  /* run through previous files list looking for any that have been deleted behind our back */
-  update_prevlist();
-  if (view_files_dialog_is_active()) make_prevfiles_list();
+  /* run through files list looking for any that have been deleted behind our back */
+  update_view_files_list();
+  if (view_files_dialog_is_active()) make_view_files_list();
 }
 
-void set_file_browser_play_button(char *name, int state)
+void set_view_files_play_button(char *name, int state)
 {
   if (view_files_dialog_is_active())
     {
-      int i, list = 0;
-      i = find_curfile_regrow(name); 
-      if (i != -1) list = 1; else i = find_prevfile_regrow(name);
+      int i;
+      i = find_view_files_regrow(name);
       if (i != -1)
 	{
 	  regrow *r;
-	  if (list) r = cur_name_row[i]; else r = prev_name_row[i];
+	  r = view_files_row[i];
 	  set_toggle_button(r->pl, state, false, (void *)r);
 	}
     }
 }
 
-static void view_curfiles_play_callback(GtkWidget *w, gpointer context) 
-{
-  regrow *r = (regrow *)context;
-  view_curfiles_play(r->pos, GTK_TOGGLE_BUTTON(w)->active);
-}
-
-static void curfile_unhighlight(void)
-{
-  if (view_files_dialog_is_active())
-    {
-      if (vf_selected_file != -1)
-	{
-	  regrow *r;
-	  r = cur_name_row[vf_selected_file];
-	  gtk_widget_modify_bg(r->nm, GTK_STATE_NORMAL, ss->sgx->basic_color);
-	  gtk_widget_modify_base(r->nm, GTK_STATE_NORMAL, ss->sgx->basic_color);
-	  gtk_widget_modify_bg(r->rw, GTK_STATE_NORMAL, ss->sgx->basic_color);
-	  gtk_widget_modify_base(r->rw, GTK_STATE_NORMAL, ss->sgx->basic_color);
-	  vf_selected_file = -1;
-	}
-    }
-}
-
-void curfile_highlight(int i)
-{
-  if (view_files_dialog_is_active())
-    {
-      regrow *r;
-      if (vf_selected_file != -1) curfile_unhighlight();
-      r = cur_name_row[i];
-      gtk_widget_modify_bg(r->nm, GTK_STATE_NORMAL, ss->sgx->zoom_color);
-      gtk_widget_modify_base(r->nm, GTK_STATE_NORMAL, ss->sgx->zoom_color);
-      gtk_widget_modify_bg(r->rw, GTK_STATE_NORMAL, ss->sgx->zoom_color);
-      gtk_widget_modify_base(r->rw, GTK_STATE_NORMAL, ss->sgx->zoom_color);
-      vf_selected_file = i;
-    }
-}
-
-static void view_curfiles_select_callback(GtkWidget *w, gpointer context) 
-{
-  regrow *r = (regrow *)context;
-  view_curfiles_select(r->pos);
-}
-
-static void view_prevfiles_play_callback(GtkWidget *w, gpointer context) 
+static void view_files_play_callback(GtkWidget *w, gpointer context) 
 {
   /* open and play -- close at end or when button off toggled */
   regrow *r = (regrow *)context;
-  if (view_prevfiles_play(r->pos, GTK_TOGGLE_BUTTON(w)->active))
+  if (view_files_play(r->pos, GTK_TOGGLE_BUTTON(w)->active))
     set_toggle_button(w, false, false, (void *)r);
 }
 
-static void view_prevfiles_select_callback(GtkWidget *w, gpointer context) 
+static void view_files_select_callback(GtkWidget *w, gpointer context) 
 {
   /* open and set as selected */
   regrow *r = (regrow *)context;
-  view_prevfiles_select(r->pos);
+  view_files_select(r->pos);
 }
 
-void highlight_selected_sound(void)
+static void sort_view_files_by_name(GtkWidget *w, gpointer context) 
 {
-  snd_info *sp;
-  sp = selected_sound();
-  if (sp)
-    {
-      int i;
-      i = find_curfile_regrow(sp->short_filename);
-      if (i != -1) 
-	curfile_highlight(i); 
-      else curfile_unhighlight();
-    }
-  else curfile_unhighlight();
+  set_view_files_sort(SORT_BY_NAME);
+  make_view_files_list();
 }
 
-void make_curfiles_list (void)
+static void sort_view_files_by_date(GtkWidget *w, gpointer context) 
 {
-  int i, lim;
-  regrow *r;
-  lim = get_curfile_end();
-  for (i = 0; i < lim; i++)
-    {
-      r = cur_name_row[i];
-      if (r == NULL)
-	{
-	  r = make_regrow(vf_curww, (void (*)())view_curfiles_play_callback, (void (*)())view_curfiles_select_callback);
-	  cur_name_row[i] = r;
-	  r->pos = i;
-	  r->parent = CURRENT_FILE_VIEWER;
-	}
-      set_button_label(r->nm, view_curfiles_name(r->pos));
-      set_toggle_button(r->pl, false, false, (void *)r);
-      gtk_widget_show(r->rw);
-    }
-  lim = get_max_curfile_end();
-  for (i = get_curfile_end(); i < lim; i++)
-    if ((r = cur_name_row[i]))
-      if (GTK_WIDGET_VISIBLE(r->rw)) 
-	gtk_widget_hide(r->rw);
-  set_max_curfile_end(get_curfile_end());
-  highlight_selected_sound();
-  gtk_widget_show(vf_curlst);
+  set_view_files_sort(SORT_BY_DATE);
+  make_view_files_list();
 }
 
-static void sort_prevfiles_by_name(GtkWidget *w, gpointer context) 
+static void sort_view_files_by_size(GtkWidget *w, gpointer context) 
 {
-  set_previous_files_sort(1);
-  make_prevfiles_list();
+  set_view_files_sort(SORT_BY_SIZE);
+  make_view_files_list();
 }
 
-static void sort_prevfiles_by_date(GtkWidget *w, gpointer context) 
+static void sort_view_files_by_entry(GtkWidget *w, gpointer context) 
 {
-  set_previous_files_sort(2);
-  make_prevfiles_list();
+  set_view_files_sort(SORT_BY_ENTRY);
+  make_view_files_list();
 }
 
-static void sort_prevfiles_by_size(GtkWidget *w, gpointer context) 
+static void sort_view_files_by_user_procedure(GtkWidget *w, gpointer context) 
 {
-  set_previous_files_sort(3);
-  make_prevfiles_list();
+  set_view_files_sort(SORT_BY_PROC);
+  make_view_files_list();
 }
 
-static void sort_prevfiles_by_entry(GtkWidget *w, gpointer context) 
-{
-  set_previous_files_sort(4);
-  make_prevfiles_list();
-}
-
-static void sort_prevfiles_by_user_procedure(GtkWidget *w, gpointer context) 
-{
-  set_previous_files_sort(5);
-  make_prevfiles_list();
-}
-
-void make_prevfiles_list (void)
+void make_view_files_list (void)
 {
   int i, lim;
   regrow *r;
-  if (get_prevfile_end() >= 0)
+  if (get_view_files_end() >= 0)
     {
-      make_prevfiles_list_1();
-      lim = get_prevfile_end();
+      make_view_files_list_1();
+      lim = get_view_files_end();
       for (i = 0; i <= lim; i++)
 	{
-	  if (!((r = prev_name_row[i])))
+	  if (!((r = view_files_row[i])))
 	    {
-	      r = make_regrow(vf_prevww, (void (*)())view_prevfiles_play_callback, (void (*)())view_prevfiles_select_callback);
-	      prev_name_row[i] = r;
+	      r = make_regrow(vf_ww, (void (*)())view_files_play_callback, (void (*)())view_files_select_callback);
+	      view_files_row[i] = r;
 	      r->pos = i;
-	      r->parent = PREVIOUS_FILE_VIEWER;
+	      r->parent = FILE_VIEWER;
 	    }
-	  set_button_label(r->nm, get_prevname(r->pos));
+	  set_button_label(r->nm, get_view_files_name(r->pos));
 	  set_toggle_button(r->pl, false, false, (void *)r);
 	  gtk_widget_show(r->rw);
 	}
     }
-  lim = get_max_prevfile_end();
-  for (i = get_prevfile_end() + 1; i <= lim; i++)
-    if ((r = prev_name_row[i]))
+  lim = get_max_view_files_end();
+  for (i = get_view_files_end() + 1; i <= lim; i++)
+    if ((r = view_files_row[i]))
       if (GTK_WIDGET_VISIBLE(r->rw)) 
 	gtk_widget_hide(r->rw);
-  set_max_prevfile_end(get_prevfile_end());
-  if (!(GTK_WIDGET_VISIBLE(vf_prevlst))) gtk_widget_show(vf_prevlst);
+  set_max_view_files_end(get_view_files_end());
+  if (!(GTK_WIDGET_VISIBLE(vf_lst))) gtk_widget_show(vf_lst);
 }
 
-/* play open for prevfile, play select for curfile, preload process for prevfile (snd-clm) */
+/* play open for view_files, preload */
 
-static GtkWidget *fs1, *fs3;
-
-static void start_view_files_dialog(bool managed)
+GtkWidget *start_view_files_dialog(bool managed)
 {
-  /* fire up a dialog window with a list of currently open files, 
-   * currently selected file also selected in list
-   * use snd_info label as is (short-form with '*' etc)
-   * secondary list of previously edited files (if still in existence) --
-   * click here re-opens the file.  (The overall form is similar to the regions browser).
-   * The previous files list requires that we keep such a list as we go along, on the
-   * off-chance this browser will be fired up.  (Such files may be subsequently moved or deleted).
-   */
   if (!view_files_dialog)
     {
       ww_info *wwl;
-      GtkWidget *mainform, *curform, *prevform, *updateB, *helpB, *dismissB, *clearB, *sep;
-      vf_selected_file = -1;
+      GtkWidget *mainform, *leftform, *fileform, *updateB, *helpB, *dismissB, *clearB, *sep;
       view_files_dialog = snd_gtk_dialog_new();
       gtk_window_set_title(GTK_WINDOW(view_files_dialog), _("Files"));
       sg_make_resizable(view_files_dialog);
@@ -3738,57 +3617,40 @@ static void start_view_files_dialog(bool managed)
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(view_files_dialog)->vbox), mainform, true, true, 0);
       gtk_widget_show(mainform);
       
-      curform = gtk_vbox_new(false, 0);
-      gtk_box_pack_start(GTK_BOX(mainform), curform, true, true, 0);
-      gtk_widget_show(curform);
+      leftform = gtk_vbox_new(false, 0);
+      gtk_box_pack_start(GTK_BOX(mainform), leftform, true, true, 0);
+      gtk_widget_show(leftform);
 
       sep = gtk_vseparator_new();
       gtk_box_pack_start(GTK_BOX(mainform), sep, false, false, 0);
       gtk_widget_show(sep);
 
-      prevform = gtk_vbox_new(false, 0);
-      gtk_box_pack_start(GTK_BOX(mainform), prevform, true, true, 0);
-      gtk_widget_show(prevform);
+      fileform = gtk_vbox_new(false, 0);
+      gtk_box_pack_start(GTK_BOX(mainform), fileform, true, true, 0);
+      gtk_widget_show(fileform);
 
-      /* current files section: save play current files | files */
-      wwl = make_title_row(curform, _("play"), _("current files"), PAD_TITLE_ON_RIGHT, WITHOUT_SORT_BUTTON, WITHOUT_PANED_WINDOW);
-      fs1 = wwl->tophbox;
-      
-      vf_curww = wwl->list; /* different from Motif */
-      vf_curlst = wwl->list;
-      FREE(wwl); 
-      wwl = NULL;
+      /* files section: play files | files */
+      wwl = make_title_row(fileform, _("play"), _("files"), PAD_TITLE_ON_LEFT, WITH_SORT_BUTTON, WITHOUT_PANED_WINDOW);
 
-      /* previous files section: play previous files | files */
-      wwl = make_title_row(prevform, _("play"), _("previous files"), PAD_TITLE_ON_LEFT, WITH_SORT_BUTTON, WITHOUT_PANED_WINDOW);
-      fs3 = wwl->tophbox;
-
-      SG_SIGNAL_CONNECT(wwl->byname,  "activate", sort_prevfiles_by_name, NULL);
-      SG_SIGNAL_CONNECT(wwl->bydate,  "activate", sort_prevfiles_by_date, NULL);
-      SG_SIGNAL_CONNECT(wwl->bysize,  "activate", sort_prevfiles_by_size, NULL);
-      SG_SIGNAL_CONNECT(wwl->byentry,  "activate", sort_prevfiles_by_entry, NULL);
-      SG_SIGNAL_CONNECT(wwl->byproc,  "activate", sort_prevfiles_by_user_procedure, NULL);
-      vf_prevww = wwl->list;
-      vf_prevlst = wwl->list;
+      SG_SIGNAL_CONNECT(wwl->byname,  "activate", sort_view_files_by_name, NULL);
+      SG_SIGNAL_CONNECT(wwl->bydate,  "activate", sort_view_files_by_date, NULL);
+      SG_SIGNAL_CONNECT(wwl->bysize,  "activate", sort_view_files_by_size, NULL);
+      SG_SIGNAL_CONNECT(wwl->byentry,  "activate", sort_view_files_by_entry, NULL);
+      SG_SIGNAL_CONNECT(wwl->byproc,  "activate", sort_view_files_by_user_procedure, NULL);
+      vf_ww = wwl->list;
+      vf_lst = wwl->list;
       FREE(wwl); 
       wwl = NULL;
       set_dialog_widget(VIEW_FILES_DIALOG, view_files_dialog);
     }
-  make_curfiles_list();
-  make_prevfiles_list();
+  make_view_files_list();
   if (managed) gtk_widget_show(view_files_dialog);
-  highlight_selected_sound();
+  return(view_files_dialog);
 }
 
 void view_files_callback(GtkWidget *w, gpointer context)
 {
   start_view_files_dialog(true);
-}
-
-GtkWidget *start_file_dialog(bool managed)
-{
-  start_view_files_dialog(managed);
-  return(view_files_dialog);
 }
 
 bool view_files_dialog_is_active(void)
@@ -3802,7 +3664,7 @@ void g_init_gxfile(void)
 {
 #if HAVE_SCHEME
   #define H_mouse_enter_label_hook S_mouse_enter_label_hook " (type position label): called when the mouse enters a file viewer or region label. \
-The 'type' is 0 for the current files list, 1 for previous files, and 2 for regions. The 'position' \
+The 'type' is 1 for view-files, and 2 for regions. The 'position' \
 is the scrolled list position of the label. The label itself is 'label'. We could use the 'finfo' procedure in examp.scm \
 to popup file info as follows: \n\
 (add-hook! mouse-enter-label-hook\n\
@@ -3813,7 +3675,7 @@ See also nb.scm."
 #endif
 #if HAVE_RUBY
   #define H_mouse_enter_label_hook S_mouse_enter_label_hook " (type position label): called when the mouse enters a file viewer or region label. \
-The 'type' is 0 for the current files list, 1 for previous files, and 2 for regions. The 'position' \
+The 'type' is 1 for view-files, and 2 for regions. The 'position' \
 is the scrolled list position of the label. The label itself is 'label'."
 #endif
 

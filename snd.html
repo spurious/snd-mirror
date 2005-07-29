@@ -241,47 +241,47 @@ is included in the <a href="http://ccrma.stanford.edu/planetccrma/software/">Pla
 <tr>
 <td><a href="#mixingfiles">Mix</a></td>
 <td><a href="#editcut">Mix Selection</a></td>
-<td><a href="#prevfiles">Files</a></td>
+<td><a href="#viewfiles">Files</a></td>
 <td></td>
 <td><a href="#menuplay">Play</a></td>
 </tr>
 <tr>
-<td><a href="#updatefile">Update</a></td>
+<td><a href="#insertfile">Insert</a></td>
 <td><a href="#cxp">Play Selection</a></td>
 <td><a href="#colorbrowser">Color</a></td>
 <td></td>
 <td><a href="#savefile">Save</a></td>
 </tr>
 <tr>
-<td><a href="#newfile">New</a></td>
+<td><a href="#updatefile">Update</a></td>
 <td><a href="#cxw">Save Selection</a></td>
 <td><a href="#orientationbrowser">Orientation</a></td>
 <td></td>
 <td><a href="#mixingfiles">Mix</a></td>
 </tr>
 <tr>
-<td><a href="#recordfile">Record</a></td>
+<td><a href="#newfile">New</a></td>
 <td><a href="#menuselectall">Select all</a></td>
 <td><a href="#viewdots">Graph style</a></td>
 <td></td>
 <td><a href="#speed">Resample</a></td>
 </tr>
 <tr>
-<td><a href="#openfile">View</a></td>
+<td><a href="#recordfile">Record</a></td>
 <td><a href="#editenvelope">Edit Envelope</a></td>
 <td><a href="extsnd.html#verbosecursor">Verbose cursor</a></td>
 <td></td>
 <td><a href="#viewfft">FFT</a></td>
 </tr>
 <tr>
-<td><a href="#printfile">Print</a></td>
+<td><a href="#openfile">View</a></td>
 <td><a href="#editheader">Edit Header</a></td>
 <td><a href="#unitebutton">Channel style</a></td>
 <td></td>
 <td><a href="#filtercontrol">Filter</a></td>
 </tr>
 <tr>
-<td><a href="#exitfile">Exit</a></td>
+<td><a href="#printfile">Print</a></td>
 <td></td>
 <td><a href="#menuequalizepanes">Equalize Panes</a></td>
 <td></td>
@@ -295,7 +295,7 @@ is included in the <a href="http://ccrma.stanford.edu/planetccrma/software/">Pla
 <td><a href="#ampenvs">Envelope</a></td>
 </tr>
 <tr>
-<td></td>
+<td><a href="#exitfile">Exit</a></td>
 <td></td>
 <td><a href="extsnd.html#xaxisstyle">X axis units</a></td>
 <td></td>
@@ -439,9 +439,10 @@ falling asleep, but I don't know how to fix it -- the grumpy programmer in me is
 <tr><td><a href="#savefile">Save</a></td><td>save current edits, overwriting previous version</td><td>(C-x C-s)</td></tr>
 <tr><td><a href="#savefileas">Save as</a></td><td>save current edits under a new name, stay in current file</td><td></td></tr>
 <tr><td><a href="#revertfile">Revert</a></td><td>flush edits</td><td></td></tr>
+<tr><td><a href="#mixingfiles">Mix</a></td><td>mix file</td><td>(C-x C-q)</td></tr>
+<tr><td><a href="#insertfile">Insert</a></td><td>insert file</td><td>(C-x C-i)</td></tr>
 <tr><td><a href="#updatefile">Update</a></td><td>re-read file (data changed behind Snd's back)</td><td></td></tr>
 <tr><td><a href="#viewfile">View</a></td><td>open file read-only</td><td></td></tr>
-<tr><td><a href="#mixingfiles">Mix</a></td><td>mix file</td><td>(C-x C-q)</td></tr>
 <tr><td><a href="#newfile">New</a></td><td>create a new, empty file</td><td></td></tr>
 <tr><td><a href="#recordfile">Record</a></td><td>record sound producing a new file</td><td></td></tr>
 <tr><td><a href="#printfile">Print</a></td><td>produce a Postscript version of current display</td><td></td></tr>
@@ -458,6 +459,7 @@ falling asleep, but I don't know how to fix it -- the grumpy programmer in me is
         <!-- I(update file):M(File: Update)(updatefile) --><!-- I(update file):K([Home]) --><!-- I(update file):A(updatefile) -->
 	<!-- I(update file):O(auto-update)(autoupdateinterval) -->
         <!-- I(mix file):M(File: Mix)(mixingfiles) --> <!-- I(mix file):A(mixingfiles) -->
+        <!-- I(insert file):M(File: Insert)(insertfile) --> <!-- I(insert file):A(insertfile) -->
         <!-- I(record sound):M(File: Record)(recordfile) --> <!-- I(record sound):A(recordfile) -->
         <!-- I(change format):M(File: Save as)(savefileas) --><!-- I(change format):O(Edit: Edit header)(editheader) -->
 	<!-- I(mix file):O(see mix.scm for tracks) -->
@@ -470,7 +472,7 @@ its arguments for file names, and opens any it finds.</p>
 <p>If there are no arguments, Snd comes up as a bare menu bar.
 If a name is preceded by <A class=def NAME="minusp">"-p"</a> or "-preload", it is treated as a directory
 name and all sound files found in that directory are preloaded
-into the <a href="#prevfiles">previous files</a> list.  To
+into the <a href="#viewfiles">previous files</a> list.  To
 load arbitrary Snd customizations (your own code, or a <a href="#savedstate">saved state</a> file),
 precede the file name with <A class=def NAME="minusl">"-l"</a> or "-load" (or use the load function). </p>
 <pre>
@@ -565,6 +567,7 @@ filter as fancy as you like (see <a href="extsnd.html#justsoundshook">just-sound
   <li>IEEE text, Mus10, SAM 16-bit (modes 1 and 4), AVI
   <li>NIST shortpack, HCOM, Intel, IBM, and Oki (Dialogic) ADPCM, 
   <li>G721, G723_24, G723_40, MIDI sample dump
+  <li>Ogg, Speex, Flac, Midi, Mpeg (if possible -- these are also writable via File:Save as)
   </ul>
 </ul>
         <!-- I(file formats):A(formats) -->
@@ -674,7 +677,9 @@ of this file is "snd.eps"; it can be set via <a href="extsnd.html#epsfile">eps-f
 </p>
 
 <p>To mix files, see <a href="#mixingfiles">"Mix Files"</a>.
-To record a file, see <a href="#recordfile">"Record Files"</a>.</p>
+To record a file, see <a href="#recordfile">"Record Files"</a>.
+The <a href="#insertfile">Insert</a> option inserts a file at the cursor.
+</p>
 
 <A NAME="exitfile"></a><p>Finally, to exit Snd cleanly (that is, removing any
 temporary files, and cleaning up some system stuff),
@@ -697,7 +702,7 @@ flushed (but see the function check-for-unsaved-edits in <a href="sndscm.html#ex
 <tr><td><a href="#mixdialog">Mixes</a></td><td>mix browser</td><td></td></tr>
 <tr><td><a href="#mixdialog">Tracks</a></td><td>track browser</td><td></td></tr>
 <tr><td><a href="#regionbrowser">Regions</a></td><td>a browser to examine the region stack</td><td></td></tr>
-<tr><td><a href="#prevfiles">Files</a></td><td>a browser of currently and previously loaded files</td><td></td></tr>
+<tr><td><a href="#viewfiles">Files</a></td><td>a browser of previously loaded files</td><td></td></tr>
 <tr><td><a href="#colorbrowser">Color</a></td><td>a browser that chooses color maps</td><td></td></tr>
 <tr><td><a href="#orientationbrowser">Orientation</a></td><td>a browser that sets spectrogram and wavogram orientation</td><td></td></tr>
 <tr><td><a href="#unitebutton">Channel style</a></td><td>separate, combined or superimposed channels</td><td></td></tr>
@@ -748,17 +753,11 @@ printer characteristics.
 to reflect the currently active sound.  The same information is displayed in the
 minibuffer when you click the file name.</p>
 
-<p>The <a href="#prevfiles">Files</a> option starts the file browser:</p>
-<img src="files.png" alt="picture of file browser" align=left hspace=20>
-<p>The file browser window shown here provides two lists, one of
-the currently active files in Snd, and
-the other of <A NAME="prevfiles"></a>previously active files.  The currently selected
-sound is highlighted.
-The
-play button plays the file.
-Click a current file name, and
-that sound becomes the selected sound in the main
-Snd window.  Click a previous file name, and 
+<p>The <A NAME="viewfiles">Files</a> option starts the file browser
+which provides a list of interesting files,
+and other stuff -- this is currently under construction...
+The play button plays the file.
+Double click a previous file name, and 
 that file is opened in Snd.
 The 'update' button runs through the previous files
 list checking for files that have been deleted or moved behind Snd's back.
@@ -968,7 +967,7 @@ midpoint of the current window.</p>
         <!-- I(undo edit):M(Edit: Undo)(undoredo) --><!-- I(undo edit):K(C-_ or C-x C-u)(cxcu) --><!-- I(undo edit):O(Popup: Undo) -->
         <!-- I(redo edit):M(Edit: Redo)(undoredo) --><!-- I(redo edit):K(C-x C-r)(cxcr) --><!-- I(redo edit):O(Popup: Redo) -->
         <!-- I(find):M(Edit: Find)(menufind) --><!-- I(find):K(C-s or C-r)(cs) --><!-- I(cut selection):M(Edit: Cut)(editcut) -->
-	<!-- I(find):L(find)(find) --><!-- I(find):O(count-matches)(countmatches) -->
+	<!-- I(find):L(find-channel)(findchannel) --><!-- I(find):O(count-matches)(countmatches) -->
         <!-- I(cut selection):A(editoperations) --><!-- I(delete samples):M(Edit: Cut)(editcut) --><!-- I(delete samples):A(editoperations) -->
         <!-- I(insert selection):M(Edit: Paste)(editcut) --><!-- I(insert selection):K(C-y or C-x i)(cxi) --><!-- I(insert selection):A(editcut) -->
         <!-- I(mix selection):M(Edit: Mix)(editcut) --><!-- I(mix selection):K(C-x q)(cxq) --><!-- I(mix selection):A(editcut) -->
@@ -1297,6 +1296,7 @@ be invoked from the keyboard:</p>
   <A NAME="cxcd"></a>C-x C-d   print
   <A NAME="cxcf"></a>C-x C-f   open file 
   <A NAME="cxcs"></a>C-x C-s   save file
+  C-x C-i   insert file
   C-x C-w   save currently selected channel as file
 </pre>
 <p>The Print command produces a PostScript
@@ -1319,7 +1319,7 @@ associated keyboard commands are:</p>
   <A NAME="cw"></a>C-w      delete current selected portion
 
   <A NAME="co"></a>C-o      insert a zero sample at cursor
-  C-x i    insert region at cursor (arg = region number)
+  C-x i    insert selection at cursor
   <A NAME="cxci"></a>C-x C-i  insert file 
 
   C-y      paste in current selection at cursor
@@ -1327,11 +1327,10 @@ associated keyboard commands are:</p>
   C-x q    mix in region (arg = region number)
   <A NAME="cxcq"></a>C-x C-q  mix in file
 </pre>
-<p>Insertion takes place just ahead of the cursor; to insert after the
-cursor, define a command something like:</p>
-<pre>
-  (<a class=quiet href="extsnd.html#bindkey">bind-key</a> (char-&gt;integer #\i) 0 (lambda () "insert region after cursor" (<a class=quiet href="extsnd.html#insertregion">insert-region</a> (1+ (<a class=quiet href="extsnd.html#cursor">cursor</a>)))))
-</pre>
+<p>The <A NAME="insertfile">File:Insert</a> menu option inserts a sound file at the cursor, and
+the Edit:Insert Selection menu option does the same with the current selection.
+</p>
+
 
 <h4><A NAME="multichannel">Multichannel operations</a></h4>
 
@@ -2171,7 +2170,7 @@ and M-p reloads the listener with the last line you typed, ready to be edited.
 To delete listener text back to the previous command, use C-_.
 </p>
         <!-- I(amp env):K(C-x C-a, C-x a)(cxca) --><!-- I(print file):K(C-x C-d)(cxcd) --><!-- I(insert file):K(C-x C-i)(cxci) -->
-        <!-- I(insert file):A(cxci) --><!-- I(mix file):K(C-x C-q)(cxcq) -->
+        <!-- I(mix file):K(C-x C-q)(cxcq) -->
         <!-- I(smooth samples):K(C-x C-z)(cxcz) --><!-- I(smooth samples):A(cxcz) -->
 	<!-- I(continue session):K(C-x C-l)(cxcl) -->
 	<!-- I(smooth samples):O(smooth-sound)(smoothsound) -->
@@ -2293,13 +2292,13 @@ panel are:</p>
 <h2>Customization and Extension</h2>
 
 <p>See <a href="extsnd.html#extsndcontents">extsnd.html</a>.</p>
-<br>
+
 
 <table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2><A NAME="index">Index</a></h2></td></tr></table>
 <br>
 <center>
 
-<table border=8 bordercolor="lightsteelblue" cellpadding=2 rows=119>
+<table border rows=119>
   <caption>Index</caption>
   <!-- created whenever -->
   <tr><th>Action</th><th>Menu</th><th>Keyboard</th><th>Lisp</th><th>Other</th></tr>
@@ -2351,16 +2350,16 @@ panel are:</p>
   <tr><td><a href="#Xfftbeta">fft window parameter</a></td><td><small>Options: <a href="#Xfftbeta">Transform</a></small></td><td><br></td><td><a href="extsnd.html#fftbeta"><small>fft-window-beta</small></a></td><td><br></td></tr>
   <tr><td><a href="#fftstyle">fft/sono/spectrogram</a></td><td><small>Options: <a href="extsnd.html#transformgraphtype">Transform</a></small></td><td><br></td><td><a href="extsnd.html#transformgraphtype"><small>transform-graph-type</small></a></td><td><br></td></tr>
   <tr><td><a href="#formats">file formats</a></td><td><small>File: <a href="#savefileas">Save as</a></small></td><td><br></td><td><a href="extsnd.html#dataformat"><small>data-format</small></a></td><td><br></td></tr>
-  <tr><td><a href="#prevfiles">file lists</a></td><td><small>View: <a href="#prevfiles">Files</a></small></td><td><br></td><td><a href="extsnd.html#viewfilesdialog"><small>view-files-dialog</small></a></td><td><a href="extsnd.html#mouseenterlabelhook"><small>mouse-enter-label-hook</small></a></td></tr>
+  <tr><td><a href="#viewfiles">file lists</a></td><td><small>View: <a href="#viewfiles">Files</a></small></td><td><br></td><td><a href="extsnd.html#viewfilesdialog"><small>view-files-dialog</small></a></td><td><a href="extsnd.html#mouseenterlabelhook"><small>mouse-enter-label-hook</small></a></td></tr>
   <tr><td><a href="#filtercontrol">filter</a></td><td><small>Edit: <a href="#editenvelope">Edit Env</a></small></td><td><br></td><td><a href="extsnd.html#filtercontrolenvelope"><small>filter-control-envelope</small></a></td><td><a href="#filtercontrol"><small>see filter controls</small></a></td></tr>
   <tr><td><a href="extsnd.html#filtersound">filter samples</a></td><td><small>Edit: <a href="#editenvelope">Edit Env</a></small></td><td><br></td><td><a href="extsnd.html#filtersound"><small>filter-sound</small></a></td><td><a href="extsnd.html#filterselection"><small>filter-selection</small></a></td></tr>
   <tr><td><a href="#menufind">find</a></td><td><small>Edit: <a href="#menufind">Find</a></small></td><td><a href="#cs"><small>Cs or Cr</small></a></td><td><a href="extsnd.html#findchannel"><small>find-channel</small></a></td><td><a href="extsnd.html#countmatches"><small>count-matches</small></a></td></tr>
   <tr><td><a href="#verticalpane">horizontal panes</a></td><td><br></td><td><br></td><td><a href="extsnd.html#graphshorizontal"><small>graphs-horizontal</small></a></td><td><a href="#verticalpane"><small>-h switch to Snd</small></a></td></tr>
-  <tr><td><a href="#cxci">insert file</a></td><td><br></td><td><a href="#cxci"><small>Cx Ci</small></a></td><td><a href="extsnd.html#insertsound"><small>insert-sound</small></a></td><td><br></td></tr>
+  <tr><td><a href="#insertfile">insert file</a></td><td><small>File: <a href="#insertfile">Insert</a></small></td><td><a href="#cxci"><small>Cx Ci</small></a></td><td><a href="extsnd.html#insertsound"><small>insert-sound</small></a></td><td><br></td></tr>
   <tr><td><a href="#editcut">insert selection</a></td><td><small>Edit: <a href="#editcut">Paste</a></small></td><td><a href="#cxi"><small>Cy or Cx i</small></a></td><td><a href="extsnd.html#insertselection"><small>insert-selection</small></a></td><td><a href="extsnd.html#insertregion"><small>insert-region</small></a></td></tr>
   <tr><td><a href="#co">insert zeros</a></td><td><small>Effects: <a href="sndscm.html#effectsdoc">Add Silence</a></small></td><td><a href="#cz"><small>Co, Cz</small></a></td><td><a href="extsnd.html#insertsilence"><small>insert-silence</small></a></td><td><a href="extsnd.html#padchannel"><small>pad-channel</small></a></td></tr>
   <tr><td><a href="#kgc">interrupt Snd</a></td><td><br></td><td><a href="#kgc"><small>Cg</small></a></td><td><a href="extsnd.html#stopplaying"><small>stop-playing</small></a></td><td><a href="extsnd.html#cgx"><small>c-g!</small></a></td></tr>
-  <tr><td><a href="#kbdmacros">keyboard macros</a></td><td><br></td><td><a href="#kce"><small>C(, Cx e<!-- ) --></small></a></td><td><a href="extsnd.html#key"><small>key</small></a></td><td><br></td></tr>
+  <tr><td><a href="#kbdmacros">keyboard macros</a></td><td><br></td><td><a href="#kce"><small>C(, Cx e</small></a></td><td><a href="extsnd.html#key"><small>key</small></a></td><td><br></td></tr> <!-- ) -->
   <tr><td><a href="extsnd.html#maxamp">max amp</a></td><td><br></td><td><br></td><td><a href="extsnd.html#maxamp"><small>maxamp</small></a></td><td><br></td></tr>
   <tr><td><a href="#mixingfiles">mix file</a></td><td><small>File: <a href="#mixingfiles">Mix</a></small></td><td><a href="#cxcq"><small>Cx Cq</small></a></td><td><a href="extsnd.html#mix"><small>mix</small></a></td><td><small>see mix.scm for tracks</small></td></tr>
   <tr><td><a href="#editcut">mix selection</a></td><td><small>Edit: <a href="#editcut">Mix</a></small></td><td><a href="#cxq"><small>Cx q</small></a></td><td><a href="extsnd.html#mixselection"><small>mix-selection</small></a></td><td><a href="extsnd.html#mixregion"><small>mix-region</small></a></td></tr>
@@ -2399,7 +2398,7 @@ panel are:</p>
   <tr><td><a href="#saveoptions">save options</a></td><td><small>Options: <a href="#saveoptions">Save options</a></small></td><td><br></td><td><br></td><td><br></td></tr>
   <tr><td><a href="#cxw">save selection</a></td><td><small>Edit: <a href="#cxw">Save selection</a></small></td><td><a href="#cxw"><small>Cx w</small></a></td><td><a href="extsnd.html#saveregion"><small>save-region</small></a></td><td><a href="extsnd.html#saveselection"><small>save-selection</small></a></td></tr>
   <tr><td><a href="#savedstate">save session</a></td><td><small>Options: <a href="#savedstate">Save session</a></small></td><td><br></td><td><a href="extsnd.html#savestate"><small>save-state</small></a></td><td><br></td></tr>
-  <tr><td><a href="#prevfiles">select sound</a></td><td><br></td><td><a href="#cxo"><small>Cx o</small></a></td><td><a href="extsnd.html#selectedsound"><small>selected-sound</small></a></td><td><small>File dialog: click file</small></td></tr>
+  <tr><td><a href="#viewfiles">select sound</a></td><td><br></td><td><a href="#cxo"><small>Cx o</small></a></td><td><a href="extsnd.html#selectedsound"><small>selected-sound</small></a></td><td><small>File dialog: click file</small></td></tr>
   <tr><td><a href="#fw">show freq domain</a></td><td><br></td><td><br></td><td><a href="extsnd.html#transformgraphp"><small>transform-graph?</small></a></td><td><a href="#fw"><small>'f' button</small></a></td></tr>
   <tr><td><a href="extsnd.html#showmarks">show marks</a></td><td><br></td><td><br></td><td><a href="extsnd.html#showmarks"><small>show-marks</small></a></td><td><br></td></tr>
   <tr><td><a href="#fw">show time domain</a></td><td><br></td><td><br></td><td><a href="extsnd.html#timegraphp"><small>time-graph?</small></a></td><td><a href="#fw"><small>'w' button</small></a></td></tr>

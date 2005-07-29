@@ -370,7 +370,7 @@ void save_options(FILE *fd)
   if (show_axes(ss) != DEFAULT_SHOW_AXES) pss_ss(fd, S_show_axes, show_axes2string(show_axes(ss)));
   if (show_marks(ss) != DEFAULT_SHOW_MARKS) pss_ss(fd, S_show_marks, b2s(show_marks(ss)));
   if (data_clipped(ss) != DEFAULT_DATA_CLIPPED) pss_ss(fd, S_data_clipped, b2s(data_clipped(ss)));
-  if (previous_files_sort(ss) != DEFAULT_PREVIOUS_FILES_SORT) pss_sd(fd, S_previous_files_sort, previous_files_sort(ss));
+  if (view_files_sort(ss) != DEFAULT_VIEW_FILES_SORT) pss_sd(fd, S_view_files_sort, view_files_sort(ss));
   if (fft_log_magnitude(ss) != DEFAULT_FFT_LOG_MAGNITUDE) pss_ss(fd, S_fft_log_magnitude, b2s(fft_log_magnitude(ss)));
   if (fft_log_frequency(ss) != DEFAULT_FFT_LOG_FREQUENCY) pss_ss(fd, S_fft_log_frequency, b2s(fft_log_frequency(ss)));
   if (print_length(ss) != DEFAULT_PRINT_LENGTH) pss_sd(fd, S_print_length, print_length(ss));
@@ -906,7 +906,7 @@ void save_state(char *save_state_name)
 #if HAVE_SETLOCALE
   locale = copy_string(setlocale(LC_NUMERIC, "C")); /* must use decimal point in floats since Scheme assumes that format */
 #endif
-  save_prevlist(save_fd);                           /* list of previous files (View: Files option) */
+  save_view_files_list(save_fd);                    /* list of files (View: Files option) */
   save_options(save_fd);                            /* options = user-settable global state variables */
   /* the global settings need to precede possible local settings */
 
@@ -1079,7 +1079,7 @@ int handle_next_startup_arg(int auto_open_ctr, char **auto_open_file_names, bool
 	      if ((auto_open_ctr >= args) ||
 		  (auto_open_file_names[auto_open_ctr] == NULL))
 		snd_error(_("%s but no directory to preload?"), argname);
-	      else add_directory_to_prevlist(auto_open_file_names[auto_open_ctr]);
+	      else add_directory_to_view_files_list(auto_open_file_names[auto_open_ctr]);
 	    }
 	  else
 	    {

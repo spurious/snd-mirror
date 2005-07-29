@@ -268,14 +268,12 @@ static const unsigned char I_Maui[4] = {'M','a','u','i'};  /* Turtle Beach */
 static const unsigned char I_SDIF[4] = {'S','D','I','F'};  /* IRCAM sdif */
 static const unsigned char I_NVF_[4] = {'N','V','F',' '};  /* Nomad II Creative NVF */
 static const unsigned char I_VFMT[4] = {'V','F','M','T'};  /* Nomad II Creative NVF */
-#if 0
 static const unsigned char I_Spee[4] = {'S','p','e','e'};  /* Speex word 1 (actual file starts with "OggS") */
 static const unsigned char I_x___[4] = {'x',' ',' ',' '};  /* Speex word 2 */
 static const unsigned char I_OggS[4] = {'O','g','g','S'};  /* Ogg-related files, apparently -- ogg123 has "vorbis" instead of "Speex" */
 static const unsigned char I_fLaC[4] = {'f','L','a','C'};  /* FLAC */
 /* it appears that Rezound .rez files start with "DavyBlox" */
 /* similarly rx2 files start with "CAT "? */
-#endif
 
 #define I_IRCAM_VAX  0x0001a364
 #define I_IRCAM_SUN  0x0002a364
@@ -463,6 +461,7 @@ const char *mus_header_type_name(int type)
     case MUS_FLAC:             return("Flac");                    break;
     case MUS_SPEEX:            return("Speex");                   break;
     case MUS_MPEG:             return("mpeg");                    break;
+      /* TODO: how to force decode of mpeg (or recognize it)? */
     default:                   return("unsupported");             break;
     }
 }
@@ -4811,6 +4810,22 @@ static int mus_header_read_1(const char *filename, int chan)
     {
       header_type = MUS_ADF;
       return(read_adf_header(filename, chan));
+    }
+  if (match_four_chars((unsigned char *)hdrbuf, I_fLaC))
+    {
+      header_type = MUS_FLAC;
+      return(MUS_NO_ERROR);
+    }
+  if (match_four_chars((unsigned char *)hdrbuf, I_OggS))
+    {
+      if ((hdrbuf[29] == 'v') && (hdrbuf[30] == 'o') && (hdrbuf[31] == 'r'))
+	header_type = MUS_OGG;
+      else
+	{
+	  if ((hdrbuf[28] == 'S') && (hdrbuf[29] == 'p') && (hdrbuf[30] == 'e'))
+	    header_type = MUS_SPEEX;
+	}
+      return(MUS_NO_ERROR);
     }
   if ((match_four_chars((unsigned char *)hdrbuf, I_file)) && 
       (match_four_chars((unsigned char *)(hdrbuf + 4), I__sam)))

@@ -390,19 +390,17 @@ widget_t make_open_file_dialog(bool read_only, bool managed);
 widget_t make_sound_save_as_dialog(bool managed);
 widget_t make_selection_save_as_dialog(bool managed);
 void make_new_file_dialog(void);
+
 ww_info *make_title_row(Widget formw, char *top_str, char *main_str, dialog_pad_t pad, dialog_sort_t with_sort, dialog_paned_t with_pane);
 regrow *make_regrow(Widget ww, Widget last_row, XtCallbackProc play_callback, XtCallbackProc name_callback);
-void make_prevfiles_list (void);
-void make_curfiles_list (void);
-void curfile_highlight(int i);
-void make_cur_name_row(int old_size, int new_size);
-void make_prev_name_row(int old_size, int new_size);
-void set_file_browser_play_button(char *name, int state);
-void set_file_sort_sensitive(bool sensitive);
-void highlight_selected_sound(void);
+void make_view_files_list (void);
+void make_vf_row(int old_size, int new_size);
+void set_view_files_play_button(char *name, int state);
+void set_view_files_sort_sensitive(bool sensitive);
 void view_files_callback(Widget w, XtPointer context, XtPointer info);
-Widget start_file_dialog(bool managed);
+Widget start_view_files_dialog(bool managed);
 bool view_files_dialog_is_active(void);
+
 void raw_data_dialog_to_file_info(const char *filename, char *title, char *info, bool read_only, bool selected);
 Widget edit_header(snd_info *sp);
 void save_edit_header_dialog_state(FILE *fd);

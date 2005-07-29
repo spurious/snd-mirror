@@ -251,7 +251,7 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
   ss->jump_ok = false;
   ss->Optimization = DEFAULT_OPTIMIZATION;
   ss->Print_Length = DEFAULT_PRINT_LENGTH;
-  ss->Previous_Files_Sort = DEFAULT_PREVIOUS_FILES_SORT;
+  ss->View_Files_Sort = DEFAULT_VIEW_FILES_SORT;
   ss->Show_Mix_Waveforms = DEFAULT_SHOW_MIX_WAVEFORMS;
   ss->Mix_Waveform_Height = DEFAULT_MIX_WAVEFORM_HEIGHT;
   ss->Mix_Tag_Width = DEFAULT_MIX_TAG_WIDTH;
@@ -344,7 +344,7 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
   g_initialize_gh();
   ss->search_proc = XEN_UNDEFINED;
   ss->search_expr = NULL;
-  ss->file_sort_proc = XEN_UNDEFINED;
+  ss->view_files_sort_proc = XEN_UNDEFINED;
   ss->search_tree = NULL;
   mus_error_set_handler(mus_error_to_snd);
   mus_print_set_handler(mus_print_to_snd);

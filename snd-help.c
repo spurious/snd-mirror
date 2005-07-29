@@ -410,6 +410,7 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+29-Jul:  previous-files-* -> view-files-* (sort, sort-procedure, select-hook).\n\
 28-Jul:  File:Insert menu item and dialog added, also insert-file-dialog.\n\
          File:Save as can write OGG, Speex, and Flac files.\n\
 21-Jul:  clear-minibuffer, new as-error arg to report-in-minibuffer.\n\
@@ -1425,31 +1426,30 @@ but you can use Gimp or some such program to get a screenshot, and print that.",
 }
 
 static char *view_files_xrefs[6] = {
-  "place sound in previous sounds list: {preload-file}",
-  "place all sounds from a directory in previous files list: {preload-directory}",
-  "specialize previous file selection: {previous-files-select-hook}",
-  "the sort choice: {previous-files-sort}",
-  "the sort procedure if choice is 'proc': {previous-files-sort-procedure}",
+  "place sound in view files list: {preload-file}",
+  "place all sounds from a directory in view files list: {preload-directory}",
+  "specialize view files selection: {view-files-select-hook}",
+  "the sort choice: {view-files-sort}",
+  "the sort procedure if choice is 'proc': {view-files-sort-procedure}",
   NULL};
 
 void view_files_dialog_help(void)
 {
   snd_help_with_xrefs("File Browser",
-"The View:Files dialog provides two lists, one of the currently active files in Snd, and \
-the other of previously active files.  The currently selected sound is highlighted. The \
-play button plays the file. Click a current file name, and that sound becomes the selected sound in the main \
-Snd window.  Click a previous file name, and that file is opened in Snd. The 'update' button runs through the previous files \
-list checking for files that have been deleted or moved behind Snd's back. 'Clear' clears the previous files list. \
+"TODO: rewrite this. \
+The \
+play button plays the file. \
+Double click a file name, and that file is opened in Snd. The 'update' button runs through the files \
+list checking for files that have been deleted or moved behind Snd's back. 'Clear' clears the files list. \
 \n\n\
-The previous files list can be preloaded via the -p switch to Snd, and by the functions " S_preload_file " \
+The files list can be preloaded via the -p switch to Snd, and by the functions " S_preload_file " \
 and " S_preload_directory ". By preloading your 'working set' of sounds, you can avoid the bother of picking them up one by one from the \
-clumsy file selection box. See nb.scm for an extension of this dialog that posts various kinds of information \
-about each file as the mouse passes over it. \
+clumsy file selection box. \
 \n\n\
 The 'sort' label on the right activates a menu of sorting choices; 'name' sorts the \
-previous files list alphabetically, 'date' sorts by date written, 'size' sorts by the \
+files list alphabetically, 'date' sorts by date written, 'size' sorts by the \
 number of samples in the sound, and 'entry' sorts by the order the sound appears in the \
-absence of explicit sorting.  The variable " S_previous_files_sort " refers to this menu.",
+absence of explicit sorting.  The variable " S_view_files_sort " refers to this menu.",
 		      WITH_WORD_WRAP,
 		      view_files_xrefs,
 		      NULL);

@@ -477,19 +477,17 @@ file_data *make_file_data_panel(GtkWidget *parent, char *name,
 				header_choice_t header_choice);
 widget_t make_sound_save_as_dialog(bool managed);
 widget_t make_selection_save_as_dialog(bool managed);
+
 ww_info *make_title_row(GtkWidget *formw, char *top_str, char *main_str, dialog_pad_t pad, dialog_sort_t with_sort, dialog_paned_t with_pane);
 regrow *make_regrow(GtkWidget *ww, GtkSignalFunc play_callback, GtkSignalFunc name_callback);
-void make_cur_name_row(int old_size, int new_size);
-void make_prev_name_row(int old_size, int new_size);
-void make_prevfiles_list (void);
-void make_curfiles_list (void);
-void curfile_highlight(int i);
-void set_file_browser_play_button(char *name, int state);
-void highlight_selected_sound(void);
-void set_file_sort_sensitive(bool sensitive);
+void make_vf_row(int old_size, int new_size);
+void make_view_files_list (void);
+void set_view_files_play_button(char *name, int state);
+void set_view_files_sort_sensitive(bool sensitive);
 void view_files_callback(GtkWidget *w, gpointer info);
-GtkWidget *start_file_dialog(bool managed);
+GtkWidget *start_view_files_dialog(bool managed);
 bool view_files_dialog_is_active(void);
+
 void raw_data_dialog_to_file_info(const char *filename, char *title, char *info, bool read_only, bool selected);
 void make_new_file_dialog(void);
 widget_t make_mix_file_dialog(bool managed);

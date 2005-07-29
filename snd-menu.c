@@ -4,7 +4,6 @@
 /* PERHAPS: insert-region menus -> browser
  * PERHAPS: rename, append?
  * PERHAPS: explode sf2 if sf2 being edited?
- * PERHAPS: OGG/MPEG3 etc choices for save-as if the encoders exist? (read side as well)
  * PERHAPS: key binding updates here too 
  */
 

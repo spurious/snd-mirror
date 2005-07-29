@@ -4997,53 +4997,16 @@ setter!-rt-mus-location/mus_location
 
 (define *rt-midi* #f)
 
-(if *use-alsa-midi*
-    (eval-c "-lasound"
-	    "#include  <alsa/asoundlib.h>"
-	    (public
-	     (<snd_seq_t-*> create_alsa_seq (lambda ((<char-*> client_name)
-						     (<int> isinput))
-					      (<snd_seq_t-*> seq)
-					      (<int> err)
-					      (set! err (snd_seq_open &seq (string "default") SND_SEQ_OPEN_DUPLEX 0))
-					      (if err
-						  (begin
-						    (fprintf stderr (string ,(<-> "Could not open ALSA sequencer, aborting\\n\\n%s\\n\\n"
-										  "Make sure you have configure ALSA properly and that\\n"
-										  "/proc/asound/seq/clients exists and contains relevant\\n"
-										  "devices.\\n"))
-							     (snd_strerror err))
-						    (return NULL)))
-					      (snd_seq_set_client_name seq client_name)
-					      (set! err (snd_seq_create_simple_port seq
-										    "isinput?\"Input\":\"Output\""
-										    "(isinput?SND_SEQ_PORT_CAP_WRITE:SND_SEQ_PORT_CAP_READ)|SND_SEQ_PORT_CAP_SUBS_READ|SND_SEQ_PORT_CAP_SUBS_WRITE"
-										    SND_SEQ_PORT_TYPE_APPLICATION|SND_SEQ_PORT_TYPE_SPECIFIC))
-					      (if err
-						  (begin
-						    (fprintf stderr (string "Could not create ALSA port (%s)\\n") (snd_strerror err))
-						    (snd_seq_close seq)
-						    (return NULL)))
-					      (return seq)))
-	     (run-now
-	      (printf (string "Alsa library loaded.\\n"))))))
 
-
-
-(if *use-alsa-midi*
-    (set! *rt-midi* (create_alsa_seq "rt-midi" 1)))
-
-
-
-(rt-ec-function <void> receive_midi
-		(lambda (,rt-globalvardecl
-			 (<snd_seq_t-*> seq)
-			 ((<void> (<struct-RT_Globals-*> <int> <int> <int>)) func))
-		  (<snd_seq_event_t-*> event)
-		  (if (snd_seq_event_input_pending seq 1)
-		      "ai:
+(define rt-alsa-midi-parser-func
+  '(<void> receive_midi (lambda ((<struct-RT_Globals-*> rt_globals)
+				 (<snd_seq_t-*> seq)
+				 ((<void> (<struct-RT_Globals-*> <int> <int> <int>)) func))
+			  (<snd_seq_event_t-*> event)
+			  (if (snd_seq_event_input_pending seq 1)
+	 "ai:
                       snd_seq_event_input(seq,&event);
-		      switch(event->type){
+      switch(event->type){
     case SND_SEQ_EVENT_NOTEON:
       //printf(\"Noteon, channel: %d note: %d vol: %d\\n\",event->data.note.channel,event->data.note.note,event->data.note.velocity);
       func(rt_globals,0x90+event->data.note.channel,event->data.note.note,event->data.note.velocity);
@@ -5063,8 +5026,8 @@ setter!-rt-mus-location/mus_location
     case SND_SEQ_EVENT_PITCHBEND:
       //printf(\"Pitch: %d %d %d\\n\",event->data.control.channel,event->data.control.param,event->data.control.value);
       {
-	int val=event->data.control.value + 0x2000;
-	func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
+int val=event->data.control.value + 0x2000;
+func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
       }
       break;
     case SND_SEQ_EVENT_CHANPRESS:
@@ -5110,11 +5073,108 @@ setter!-rt-mus-location/mus_location
     }
     if (snd_seq_event_input_pending (seq, 0))
        goto ai;
-")))
+"))))
 
 
-(<rt-func> 'receive_midi '<void> '(<snd_seq_t-*>
-				   (<void> (<int> <int> <int>)))
+
+(if *use-alsa-midi*
+    (eval-c "-lasound"
+	    "#include <stdio.h>"
+	    "#include  <alsa/asoundlib.h>"
+	    (public
+	     (<snd_seq_t-*> create_alsa_seq (lambda ((<char-*> client_name)
+						     (<int> isinput))
+					      (<snd_seq_t-*> seq)
+					      (<int> err)
+					      (set! err (snd_seq_open &seq (string "default") SND_SEQ_OPEN_DUPLEX 0))
+					      (if err
+						  (begin
+						    (fprintf stderr (string ,(<-> "Could not open ALSA sequencer, aborting\\n\\n%s\\n\\n"
+										  "Make sure you have configure ALSA properly and that\\n"
+										  "/proc/asound/seq/clients exists and contains relevant\\n"
+										  "devices.\\n"))
+							     (snd_strerror err))
+						    (return NULL)))
+					      (snd_seq_set_client_name seq client_name)
+					      (set! err (snd_seq_create_simple_port seq
+										    "isinput?\"Input\":\"Output\""
+										    "(isinput?SND_SEQ_PORT_CAP_WRITE:SND_SEQ_PORT_CAP_READ)|SND_SEQ_PORT_CAP_SUBS_READ|SND_SEQ_PORT_CAP_SUBS_WRITE"
+										    SND_SEQ_PORT_TYPE_APPLICATION|SND_SEQ_PORT_TYPE_SPECIFIC))
+					      (if err
+						  (begin
+						    (fprintf stderr (string "Could not create ALSA port (%s)\\n") (snd_strerror err))
+						    (snd_seq_close seq)
+						    (return NULL)))
+					      (return seq))))
+
+	    "struct RT_Globals{int *controls;int *data1s;int *data2s;int num_events;SCM ret;};"
+	    
+	    ,rt-alsa-midi-parser-func
+
+	    
+	    (<void> receiver (lambda ((<struct-RT_Globals-*> globals)
+				      (<int> control)
+				      (<int> data1)
+				      (<int> data2))
+			       (if (== globals->num_events 500)
+				   return)
+			       (set! globals->controls[globals->num_events] control)
+			       (set! globals->data1s[globals->num_events] data1)
+			       (set! globals->data2s[globals->num_events] data2)
+			       globals->num_events++))
+	    (<nonstatic-void> rt_receive_midi (lambda ((<void-*> data)
+						       (<int> time)
+						       (<snd_seq_t-*> seq)
+						       ((<void> (<void-*> <int> <int> <int>)) func))
+						(<static-int> controls[500])
+						(<static-int> data1s[500])
+						(<static-int> data2s[500])
+						(<static-int> num_events 0)
+						(<static-int> last_read_time 0)
+						(if (!= time last_read_time)
+						    (begin
+						      (<struct-RT_Globals> globals)
+						      (set! globals.controls controls)
+						      (set! globals.data1s data1s)
+						      (set! globals.data2s data2s)
+						      (set! globals.num_events 0)
+						      (receive_midi &globals seq receiver)
+						      (set! num_events globals.num_events)
+						      (set! last_read_time time)))
+						(for-each 0 num_events
+							  (lambda (n)
+							    (func data controls[n] data1s[n] data2s[n])))))
+	    
+	    (<void> receiver2 (lambda ((<struct-RT_Globals-*> globals)
+				       (<int> data1)
+				       (<int> data2)
+				       (<int> data3))
+				(set! globals->ret (scm_cons (scm_cons (MAKE_INTEGER data1)
+								       (scm_cons (MAKE_INTEGER data2)
+										 (scm_cons (MAKE_INTEGER data3)
+											   SCM_EOL)))
+							     globals->ret))))
+	    (public
+	     (<SCM> rt-receive-midi (lambda ((<snd_seq_t-*> seq))
+				      (<struct-RT_Globals> globals)
+				      (set! globals.ret SCM_EOL)
+				      (receive_midi &globals seq receiver2)
+				      (return globals.ret))))
+	    (run-now
+	     (printf (string "Alsa library loaded.\\n")))))
+	    
+
+
+
+
+
+(if *use-alsa-midi*
+    (set! *rt-midi* (create_alsa_seq "rt-midi" 1)))
+
+
+(<rt-func> 'rt_receive_midi '<void> '(<int>
+				      <snd_seq_t-*>
+				      (<void> (<int> <int> <int>)))
 	   #:needs-rt-globals #t)
 
 (<rt-type> '<snd_seq_t-*>
@@ -5127,8 +5187,27 @@ setter!-rt-mus-location/mus_location
 	   #f)
 
 
+(define-c-macro (rt-get-time)
+  "rt_globals->time")
+(<rt-func> 'rt-get-time '<int> '() #:is-immediate #t)
+(define-c-macro (rt-midi-read)
+  "rt_globals->is_midi_read")
+(<rt-func> 'rt-midi-read '<int> '() #:is-immediate #t)
+(define-c-macro (rt-midi-is-read!)
+  "rt_globals->is_midi_read=1")
+(<rt-func> 'rt-midi-is-read! '<void> '() #:is-immediate #t)
+
 (define-rt-macro (receive-midi func)
-  `(receive_midi *rt-midi* ,func))
+  (let ((func (if (and (list? func)
+		       (eq? 'lambda (car func)))
+		  `(lambda ,(cadr func)
+		     (declare (<int> ,@(cadr func)))
+		     ,@(cddr func))
+		  func)))
+    `(if (not (rt-midi-read))
+	 (begin
+	   (rt_receive_midi (rt-get-time) *rt-midi* ,func)
+	   (rt-midi-is-read!)))))
 
 
 ;; Logic partly taken from pd by Miller Puckette.
@@ -5144,29 +5223,6 @@ setter!-rt-mus-location/mus_location
 #!
 (caddr (assq 'receive_midi rt-ec-functions))
 !#
-
-(if *use-alsa-midi*
-    (eval-c ""
-	    "#include  <alsa/asoundlib.h>"
-	    "struct RT_Globals{SCM ret;};"
-	    ,(caddr (assq 'receive_midi rt-ec-functions))
-	    (<void> receiver (lambda ((<struct-RT_Globals-*> globals)
-				      (<int> data1)
-				      (<int> data2)
-				      (<int> data3))
-			       (set! globals->ret (scm_cons (scm_cons (MAKE_INTEGER data1)
-								      (scm_cons (MAKE_INTEGER data2)
-										(scm_cons (MAKE_INTEGER data3)
-											  SCM_EOL)))
-							    globals->ret))))
-	    (public
-	     (<SCM> rt-receive-midi (lambda ((<snd_seq_t-*> seq))
-				      (<struct-RT_Globals> globals)
-				      (set! globals.ret SCM_EOL)
-				      (receive_midi &globals seq receiver)
-				      (return globals.ret))))
-	    ))
-
 
 
 
@@ -6333,6 +6389,7 @@ setter!-rt-mus-location/mus_location
 		    <int> framenum
 		    <int> time
 		    <int> time_before
+		    <int> is_midi_read
 		    ;;<int> num_outs
 		    ;;<float-**> outs
 		    ;;<int> num_ins
@@ -6390,7 +6447,8 @@ setter!-rt-mus-location/mus_location
 		   (<nonstatic-extern-scm_t_bits> rt_bus_tag)
 
 		   "extern float rt_readin(struct mus_rt_readin*)"
-		   
+		   "extern void rt_receive_midi(struct RT_Globals *,int,snd_seq_t*,void (*)(struct RT_Globals *, int, int, int))"
+
 		   "typedef float (*ThreadFunc)(void)"
 		   "typedef float (*ReadinFunc)(struct mus_rt_readin*)"
 
@@ -6457,6 +6515,7 @@ setter!-rt-mus-location/mus_location
 						  
 						  (set! rt_globals->allocplace_end engine->allocplace_end)
 
+						  (set! rt_globals->is_midi_read 0)
 
 						  ;;((<struct-rt_bus-*> renamed_var__3 renamed_var__3_mirror out-bus rt_gen529))
 						  ;; Copying buses

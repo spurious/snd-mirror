@@ -773,9 +773,9 @@
       (set! (transform-normalization) (transform-normalization))
       (if (not (equal? (transform-normalization)  normalize-by-channel)) 
 	  (snd-display ";transform-normalization set def: ~A" (transform-normalization)))
-      (set! (previous-files-sort) (previous-files-sort))
-      (if (not (equal? (previous-files-sort)  0 )) 
-	  (snd-display ";previous-files-sort set def: ~A" (previous-files-sort)))
+      (set! (view-files-sort) (view-files-sort))
+      (if (not (equal? (view-files-sort)  0 )) 
+	  (snd-display ";view-files-sort set def: ~A" (view-files-sort)))
       (set! (print-length) (print-length))
       (if (not (equal? (print-length)  12 )) 
 	  (snd-display ";print-length set def: ~A" (print-length)))
@@ -1088,7 +1088,7 @@
 	'log-freq-start (log-freq-start) 32.0
 	'selection-creates-region (selection-creates-region) #t 
 	'transform-normalization (transform-normalization) normalize-by-channel
-	'previous-files-sort (previous-files-sort) 0 
+	'view-files-sort (view-files-sort) 0 
 	'print-length (print-length) 12 
 	'read-only (without-errors (read-only)) 'no-such-sound
 	'recorder-autoload (recorder-autoload) #f
@@ -1679,7 +1679,7 @@
 	  (list 'mark-tag-width mark-tag-width 10 20)
 	  (list 'selection-creates-region selection-creates-region #t #f)
 	  (list 'transform-normalization transform-normalization normalize-by-channel dont-normalize)
-	  (list 'previous-files-sort previous-files-sort 0 1)
+	  (list 'view-files-sort view-files-sort 0 1)
 	  (list 'print-length print-length 12 16)
 	  (list 'recorder-autoload recorder-autoload #f #t)
 	  (list 'recorder-out-chans recorder-out-chans 2 1)
@@ -1791,7 +1791,7 @@
 	  (list 'filter-control-order filter-control-order 20 '(-10 -1 0))
 	  (list 'max-transform-peaks max-transform-peaks 100 '(-1))
 	  (list 'max-regions max-regions 16 '(-1 -123))
-	  (list 'previous-files-sort previous-files-sort 0 '(-1 123))
+	  (list 'view-files-sort view-files-sort 0 '(-1 123))
 	  (list 'reverb-control-length reverb-control-length 1.0 '(-1.0))
 	  (list 'show-axes show-axes 1 '(-1 123))
 	  (list 'sinc-width sinc-width 10 '(-10))
@@ -8949,25 +8949,25 @@ EDITS: 5
 	  (if (and (provided? 'xm) (provided? 'snd-debug))
 	      (XtCallCallbacks (menu-option "Files") XmNactivateCallback (snd-global-state))
 	      (view-files-dialog))
-	  (set! (previous-files-sort-procedure)
+	  (set! (view-files-sort-procedure)
 		(lambda (lst)
 		  (sort lst 
 			(lambda (a b)
 			  (> (mus-sound-duration a) (mus-sound-duration b))))))
-	  (if (not (procedure? (previous-files-sort-procedure)))
-	      (snd-display ";previous-files-sort-procedure: ~A" (previous-files-sort-procedure)))
-	  (set! (previous-files-sort) 5)
+	  (if (not (procedure? (view-files-sort-procedure)))
+	      (snd-display ";view-files-sort-procedure: ~A" (view-files-sort-procedure)))
+	  (set! (view-files-sort) 5)
 	  (close-sound ind1)
 	  (let ((val (catch #t
 			    (lambda ()
-			      (set! (previous-files-sort-procedure) (lambda (a b c) #f)))
+			      (set! (view-files-sort-procedure) (lambda (a b c) #f)))
 			    (lambda args (car args)))))
 	    (if (not (eq? val 'bad-arity))
-		(snd-display ";previous-files-sort-procedure arity error: ~A" val)))
+		(snd-display ";view-files-sort-procedure arity error: ~A" val)))
 	  (do ((i 0 (1+ i)))
 	      ((= i 5))
-	    (set! (previous-files-sort) i))
-	  (set! (previous-files-sort) 1)
+	    (set! (view-files-sort) i))
+	  (set! (view-files-sort) 1)
 	  (dismiss-all-dialogs)
 	  )
 	
@@ -23165,6 +23165,9 @@ EDITS: 5
 	  (let ((wid (mix-file-dialog #f)))
 	    (if (not (equal? wid (list-ref (dialog-widgets) 11)))
 		(snd-display ";mix-file-dialog-> ~A ~A" wid (list-ref (dialog-widgets) 11))))
+	  (let ((wid (insert-file-dialog #f)))
+	    (if (not (equal? wid (list-ref (dialog-widgets) 23)))
+		(snd-display ";insert-file-dialog-> ~A ~A" wid (list-ref (dialog-widgets) 23))))
 	  (if (not (provided? 'snd-gtk))
 	      (begin
 					;(recorder-dialog) 
@@ -23797,7 +23800,7 @@ EDITS: 5
   (add-hook! print-hook arg1) (carg1 print-hook)
   (add-hook! read-hook arg1) (carg1 read-hook)
   (add-hook! bad-header-hook arg1) (carg1 bad-header-hook)
-  (add-hook! previous-files-select-hook arg1) (carg1 previous-files-select-hook)
+  (add-hook! view-files-select-hook arg1) (carg1 view-files-select-hook)
   (add-hook! output-name-hook arg1) (carg1 output-name-hook)
   
   (add-hook! exit-hook arg0) (carg0 exit-hook)
@@ -26051,7 +26054,7 @@ EDITS: 5
 		(list 'log-freq-start log-freq-start #f 50.0 5.0)
 		(list 'selection-creates-region selection-creates-region #f #f #t)
 		(list 'transform-normalization transform-normalization #f dont-normalize normalize-globally)
-		(list 'previous-files-sort previous-files-sort #f 0 5)
+		(list 'view-files-sort view-files-sort #f 0 5)
 		(list 'print-length print-length #f 2 32)
 		(list 'region-graph-style region-graph-style #f graph-lines graph-lollipops)
 		(list 'reverb-control-decay reverb-control-decay #f 0.0 2.0)
@@ -42512,7 +42515,7 @@ EDITS: 1
 	    (string-set! new-str i #\_)
 	    (string-set! new-str i c))))))
 
-(set! (previous-files-sort-procedure) #f)
+(set! (view-files-sort-procedure) #f)
 
 (define* (widget-string widget text #:optional (cleared #t))
   (define (shifted? ch)
@@ -54346,7 +54349,7 @@ EDITS: 1
 		     transform-graph-type fft-window transform-graph? view-files-dialog mix-file-dialog file-name fill-polygon
 		     fill-rectangle filter-sound filter-control-in-dB filter-control-envelope enved-filter-order enved-filter
 		     filter-control-in-hz filter-control-order filter-selection filter-channel filter-control-waveform-color filter-control? find-channel
-		     find-mark find-sound finish-progress-report foreground-color
+		     find-mark find-sound finish-progress-report foreground-color insert-file-dialog
 		     frames free-sample-reader graph transform? delete-transform
 		     graph-color graph-cursor graph-data graph->ps graph-style lisp-graph?  graphs-horizontal header-type
 		     help-dialog info-dialog highlight-color in insert-region insert-sample insert-samples
@@ -54364,7 +54367,7 @@ EDITS: 1
 		     read-mix-sample read-track-sample next-sample
 		     transform-normalization equalize-panes open-raw-sound open-sound orientation-dialog
 		     peak-env-info peaks play play-and-wait play-mix play-region play-selection play-track player? players
-		     position-color position->x position->y preload-directory preload-file previous-files-sort previous-sample
+		     position-color position->x position->y preload-directory preload-file view-files-sort previous-sample
 		     print-length progress-report prompt-in-minibuffer pushed-button-color read-only
 		     recorder-in-device read-peak-env-info-file recorder-autoload recorder-buffer-size recorder-dialog
 		     recorder-file recorder-gain recorder-in-amp recorder-in-format recorder-max-duration recorder-out-amp
@@ -54441,7 +54444,7 @@ EDITS: 1
 		     locsig-type make-phase-vocoder mus-audio-mixer-read
 		     mus-describe mus-error-type->string mus-file-buffer-size mus-name mus-offset mus-out-format mus-reset
 		     mus-rand-seed mus-width phase-vocoder?
-		     polar->rectangular previous-files-sort-procedure 
+		     polar->rectangular view-files-sort-procedure 
 		     phase-vocoder-amp-increments phase-vocoder-amps phase-vocoder-freqs phase-vocoder-outctr 
 		     phase-vocoder-phase-increments phase-vocoder-phases mus-generator?
 
@@ -54504,7 +54507,7 @@ EDITS: 1
 			 mark-name mark-sample mark-sync max-transform-peaks max-regions min-dB log-freq-start mix-amp
 			 mix-amp-env mix-tag-position mix-chans mix-color mix-locked? mix-inverted? mix-position
 			 mix-speed mix-tag-height mix-tag-width mix-tag-y mark-tag-width mark-tag-height mix-waveform-height transform-normalization
-			 equalize-panes position-color recorder-in-device previous-files-sort print-length pushed-button-color
+			 equalize-panes position-color recorder-in-device view-files-sort print-length pushed-button-color
 			 recorder-autoload recorder-buffer-size recorder-dialog recorder-file recorder-gain recorder-in-amp
 			 recorder-in-format recorder-max-duration recorder-out-amp recorder-out-chans recorder-out-format recorder-out-type
 			 recorder-srate region-graph-style recorder-trigger reverb-control-decay reverb-control-feedback recorder-in-chans
@@ -54527,7 +54530,7 @@ EDITS: 1
 			 mus-increment mus-length mus-location mus-phase mus-ramp mus-scaler vct-ref x-axis-label
 			 filter-control-coeffs locsig-type mus-file-buffer-size 
 			 mus-rand-seed mus-width clm-table-size run-safety mus-offset mus-reset
-			 previous-files-sort-procedure phase-vocoder-amp-increments phase-vocoder-amps 
+			 view-files-sort-procedure phase-vocoder-amp-increments phase-vocoder-amps 
 			 phase-vocoder-freqs phase-vocoder-outctr phase-vocoder-phase-increments phase-vocoder-phases 
 			 quit-button-color help-button-color reset-button-color doit-button-color doit-again-button-color
 			 track-amp track-position track-speed track-tempo track-amp-env track-color
@@ -55282,7 +55285,7 @@ EDITS: 1
 			      listener-color listener-font listener-prompt listener-text-color max-regions
 			      minibuffer-history-length mix-waveform-height region-graph-style position-color
 			      time-graph-style lisp-graph-style transform-graph-style peaks-font bold-peaks-font
-			      previous-files-sort print-length pushed-button-color recorder-in-device recorder-autoload
+			      view-files-sort print-length pushed-button-color recorder-in-device recorder-autoload
 			      recorder-buffer-size recorder-file recorder-in-format recorder-max-duration recorder-out-chans recorder-in-chans
 			      recorder-out-format recorder-out-type recorder-srate recorder-trigger sash-color ladspa-dir save-dir save-state-file
 			      selected-channel selected-data-color selected-graph-color 
@@ -55351,7 +55354,7 @@ EDITS: 1
 			    (list mouse-leave-listener-hook 'mouse-leave-listener-hook)
 			    (list window-property-changed-hook 'window-property-changed-hook)
 			    (list select-sound-hook 'select-sound-hook)
-			    (list previous-files-select-hook 'previous-files-select-hook)
+			    (list view-files-select-hook 'view-files-select-hook)
 			    (list during-open-hook 'during-open-hook)
 			    (list after-transform-hook 'after-transform-hook)
 			    (list mouse-enter-label-hook 'mouse-enter-label-hook)
@@ -56299,7 +56302,7 @@ EDITS: 1
    (lambda (n)
      (forget-region n))
    regs))
-(set! (previous-files-sort) 0)
+(set! (view-files-sort) 0)
 
 (if (file-exists? "saved-snd.scm") (delete-file "saved-snd.scm"))
 (gc)(gc)

@@ -322,7 +322,7 @@ void set_play_button(snd_info *sp, bool val)
   if ((sp->sgx) && (!(IS_PLAYER(sp))))
     {
       set_toggle_button(PLAY_BUTTON(sp), val, false, (void *)sp);
-      set_file_browser_play_button(sp->short_filename, val);
+      set_view_files_play_button(sp->short_filename, val);
     }
 }
 
@@ -357,7 +357,7 @@ static void play_button_click_callback(GtkWidget *w, gpointer data)
 	sp->cursor_follows_play = FOLLOW_ONCE;
       else sp->cursor_follows_play = DONT_FOLLOW;
     }
-  set_file_browser_play_button(sp->short_filename, on);
+  set_view_files_play_button(sp->short_filename, on);
   cp = any_selected_channel(sp);
   goto_graph(cp);
   if (on) 
