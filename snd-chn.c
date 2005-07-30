@@ -274,6 +274,10 @@ void set_sound_channel_style(snd_info *sp, channel_style_t val)
     case CHANNELS_COMBINED:     combine_sound(sp);     break;
     case CHANNELS_SUPERIMPOSED: superimpose_sound(sp); break;
     }
+#if DEBUGGING
+  if (sp->channel_style != val) 
+    fprintf(stderr,"channel-style did not change: %d -> %d\n", (int)val, (int)(sp->channel_style));
+#endif
 }
 
 bool chan_fft_in_progress(chan_info *cp)

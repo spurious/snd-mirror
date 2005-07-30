@@ -105,7 +105,7 @@ static void view_track_dialog_callback(GtkWidget *w, gpointer info) {make_track_
 static void view_region_callback_1(GtkWidget *w, gpointer info) {view_region_callback(w, info);}
 static void view_orientation_callback_1(GtkWidget *w, gpointer info) {view_orientation_callback(w, info);}
 static void view_color_callback_1(GtkWidget *w, gpointer info) {view_color_callback(w, info);}
-static void view_files_callback_1(GtkWidget *w, gpointer info) {view_files_callback(w, info);}
+static void view_files_callback(GtkWidget *w, gpointer info) {start_view_files_dialog(true);}
 
 static void view_x_axis_seconds_callback(GtkWidget *w, gpointer info) {set_x_axis_style(X_AXIS_IN_SECONDS);}
 static void view_x_axis_beats_callback(GtkWidget *w, gpointer info) {set_x_axis_style(X_AXIS_IN_BEATS);}
@@ -435,7 +435,7 @@ GtkWidget *add_menu(void)
   ml[v_files_menu] = _("Files");
   gtk_menu_shell_append(GTK_MENU_SHELL(view_cascade_menu), view_files_menu);
   gtk_widget_show(view_files_menu);
-  SG_SIGNAL_CONNECT(view_files_menu, "activate", view_files_callback_1, NULL);
+  SG_SIGNAL_CONNECT(view_files_menu, "activate", view_files_callback, NULL);
 
   view_color_menu = gtk_menu_item_new_with_label(_("Color"));
   ml[v_color_menu] = _("Color");

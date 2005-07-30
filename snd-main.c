@@ -1078,7 +1078,7 @@ int handle_next_startup_arg(int auto_open_ctr, char **auto_open_file_names, bool
 	      auto_open_ctr++;
 	      if ((auto_open_ctr >= args) ||
 		  (auto_open_file_names[auto_open_ctr] == NULL))
-		snd_error(_("%s but no directory to preload?"), argname);
+		snd_error(_("%s but no directory to add?"), argname);
 	      else add_directory_to_view_files_list(auto_open_file_names[auto_open_ctr]);
 	    }
 	  else

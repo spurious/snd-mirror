@@ -1,35 +1,35 @@
 ;;; Snd tests
 ;;;
-;;;  test 0: constants                          [388]
-;;;  test 1: defaults                           [946]
-;;;  test 2: headers                            [1143]
-;;;  test 3: variables                          [1447]
-;;;  test 4: sndlib                             [1838]
-;;;  test 5: simple overall checks              [3645]
-;;;  test 6: vcts                               [11045]
-;;;  test 7: colors                             [11355]
-;;;  test 8: clm                                [11857]
-;;;  test 9: mix                                [19324]
-;;;  test 10: marks                             [22382]
-;;;  test 11: dialogs                           [23085]
-;;;  test 12: extensions                        [23402]
-;;;  test 13: menus, edit lists, hooks, etc     [23819]
-;;;  test 14: all together now                  [25169]
-;;;  test 15: chan-local vars                   [26234]
-;;;  test 16: regularized funcs                 [27494]
-;;;  test 17: dialogs and graphics              [31861]
-;;;  test 18: enved                             [31936]
-;;;  test 19: save and restore                  [31956]
-;;;  test 20: transforms                        [33461]
-;;;  test 21: new stuff                         [35119]
-;;;  test 22: run                               [35995]
-;;;  test 23: with-sound                        [41456]
-;;;  test 24: user-interface                    [42459]
-;;;  test 25: X/Xt/Xm                           [45620]
-;;;  test 26: Gtk                               [50116]
-;;;  test 27: GL                                [54108]
-;;;  test 28: errors                            [54219]
-;;;  test all done                              [56308]
+;;;  test 0: constants                          [412]
+;;;  test 1: defaults                           [974]
+;;;  test 2: headers                            [1173]
+;;;  test 3: variables                          [1477]
+;;;  test 4: sndlib                             [1869]
+;;;  test 5: simple overall checks              [3687]
+;;;  test 6: vcts                               [11081]
+;;;  test 7: colors                             [11391]
+;;;  test 8: clm                                [11893]
+;;;  test 9: mix                                [19352]
+;;;  test 10: marks                             [22410]
+;;;  test 11: dialogs                           [23113]
+;;;  test 12: extensions                        [23423]
+;;;  test 13: menus, edit lists, hooks, etc     [23840]
+;;;  test 14: all together now                  [25181]
+;;;  test 15: chan-local vars                   [26246]
+;;;  test 16: regularized funcs                 [27506]
+;;;  test 17: dialogs and graphics              [31873]
+;;;  test 18: enved                             [31948]
+;;;  test 19: save and restore                  [31968]
+;;;  test 20: transforms                        [33449]
+;;;  test 21: new stuff                         [35107]
+;;;  test 22: run                               [35983]
+;;;  test 23: with-sound                        [41482]
+;;;  test 24: user-interface                    [42486]
+;;;  test 25: X/Xt/Xm                           [45604]
+;;;  test 26: Gtk                               [50098]
+;;;  test 27: GL                                [54088]
+;;;  test 28: errors                            [54198]
+;;;  test all done                              [56286]
 ;;;
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 ;;; need all html example code in autotests
@@ -24004,8 +24004,8 @@ EDITS: 5
 		(fneq sr (srate fd)))
 	    (snd-display ";copyfile(1): ~A ~A ~A ~A?" (frames fd) (chans fd) (srate fd) (maxamp fd)))
 	(let ((eds (edits)))
-	  (preload-file "oboe.snd")
-	  (preload-directory ".")
+	  (add-file-to-view-files-list "oboe.snd")
+	  (add-directory-to-view-files-list ".")
 	  (select-all)
 	  (copyfile-1 #t)
 	  (if (not (equal? (edit-fragment) '("(cp)" "set" 0 50828))) (snd-display ";copyfile-1 (select): ~A?" (edit-fragment)))
@@ -44859,8 +44859,8 @@ EDITS: 1
 		    (make-selection 2000 3000 ind 0)
 		    (scale-selection-by 2.0)
 		    (let ((wid (save-selection-dialog)))
-		      (if (not (equal? wid (list-ref (dialog-widgets) 7)))
-			  (snd-display ";save-selection-dialog -> ~A ~A" wid (list-ref (dialog-widgets) 7))))
+		      (if (not (equal? wid (list-ref (dialog-widgets) 22)))
+			  (snd-display ";save-selection-dialog -> ~A ~A" wid (list-ref (dialog-widgets) 22))))
 		    (let* ((saved (list-ref (dialog-widgets) 22))
 			   (ok (XmFileSelectionBoxGetChild saved XmDIALOG_OK_BUTTON))
 			   (filetext (XmFileSelectionBoxGetChild saved XmDIALOG_TEXT))
@@ -44926,24 +44926,16 @@ EDITS: 1
 		    (let ((ind (open-sound "2.snd")))
 		      (close-sound ind))
 		    (let* ((filed (list-ref (dialog-widgets) 8))
-			   (curform (find-child filed "curform"))
-			   (prevform (find-child filed "prevform"))
-			   (sort-menu (find-child prevform "sort"))
+			   (viewform (find-child filed "viewform"))
+			   (sort-menu (find-child viewform "sort"))
 			   (option-holder (cadr (XtGetValues sort-menu (list XmNsubMenuId 0))))
-			   (rw1 (find-child prevform "rw"))
+			   (rw1 (find-child viewform "rw"))
 			   (pl1 (find-child rw1 "pl"))
 			   (nm1 (find-child rw1 "nm"))
-			   (name (cadr (XmStringGetLtoR (cadr (XtVaGetValues nm1 (list XmNlabelString 0))) XmFONTLIST_DEFAULT_TAG)))
-			   (rw2 (find-child curform "rw"))
-			   (pl2 (find-child rw2 "pl"))
-			   (nm2 (find-child rw2 "nm")))
-					;(add-hook! mouse-enter-label-hook (lambda (a b c) (snd-display ";~A ~A ~A" a b c)))
+			   (name (cadr (XmStringGetLtoR (cadr (XtVaGetValues nm1 (list XmNlabelString 0))) XmFONTLIST_DEFAULT_TAG))))
 		      (enter-event nm1) (force-event)
 		      (leave-event nm1) (force-event)
-		      (enter-event nm2) (force-event)
-		      (leave-event nm2) (force-event)
 		      (click-button pl1) (force-event)
-		      (click-button pl2) (force-event)
 		      (if (not (hook-empty? initial-graph-hook))
 			  (begin
 			    (catch #t
@@ -44953,12 +44945,9 @@ EDITS: 1
 				     (click-button nm1)
 				     (if (or (= (length (sounds)) 0)
 					     (not (string=? (short-file-name (car (sounds))) name)))
-					 (snd-display ";click previous: ~A ~A" name (map short-file-name (sounds))))
-				     (XmToggleButtonSetState pl2 #t #t)
-				     (XmToggleButtonSetState pl2 #f #t))
+					 (snd-display ";click view-files name: ~A ~A" name (map short-file-name (sounds)))))
 				   (lambda args args))
 			    (enter-event nm1) (force-event)
-			    (set! name (cadr (XmStringGetLtoR (cadr (XtVaGetValues nm2 (list XmNlabelString 0))) XmFONTLIST_DEFAULT_TAG)))
 			    (close-sound (car (sounds)))
 			    (for-each-child option-holder
 					    (lambda (w)
@@ -44979,7 +44968,6 @@ EDITS: 1
 			(if (XtIsSensitive proc) (XtCallCallbacks entry XmNactivateCallback (snd-global-state)))
 			(XtCallCallbacks name XmNactivateCallback (snd-global-state)))
 		      (click-button (XmMessageBoxGetChild filed XmDIALOG_CANCEL_BUTTON)) (force-event)     ;clear
-		      (set! name (cadr (XmStringGetLtoR (cadr (XtVaGetValues nm2 (list XmNlabelString 0))) XmFONTLIST_DEFAULT_TAG)))
 		      (XtSetKeyboardFocus filed (XmMessageBoxGetChild filed XmDIALOG_OK_BUTTON))
 		      (click-button (XmMessageBoxGetChild filed XmDIALOG_OK_BUTTON)) (force-event)
 		      (reset-hook! mouse-enter-label-hook)
@@ -44989,46 +44977,7 @@ EDITS: 1
 		    (close-sound ind1)
 		    (close-sound ind2))
 		  
-		  ;; ---------------- raw data dialog ----------------
-		  (if (provided? 'snd-debug)
-		      (let ((old-val (with-background-processes)))
-			(set! (with-background-processes) #f)
-			(let ((rf (open-sound (string-append sf-dir "addf8.nh"))))
-			  (if (not (sound? rf))
-			      (snd-display ";raw-data file: ~A" rf)
-			      (close-sound rf))
-			  (if (not (list-ref (dialog-widgets) 9))
-			      (snd-display ";raw-data open: ~A" (list-ref (dialog-widgets) 9))
-			      (let ((rd (list-ref (dialog-widgets) 9)))
-				(click-button (XmMessageBoxGetChild rd XmDIALOG_CANCEL_BUTTON)) (force-event))))
-			(reset-hook! bad-header-hook)
-; no longer works -- open-sound can't invoke the bad-header or raw-data dialogs
-;			(if (file-exists? (string-append home-dir "/sf1/bogus.snd"))
-;			    (let ((ind (open-sound (string-append home-dir "/sf1/bogus.snd"))))
-;			      (let ((rd (list-ref (dialog-widgets) 9)))
-;				(if (XtIsManaged rd)
-;				    (begin
-;				      (click-button (XmMessageBoxGetChild rd XmDIALOG_HELP_BUTTON)) (force-event)
-;				      (click-button (XmMessageBoxGetChild rd XmDIALOG_CANCEL_BUTTON)) (force-event))))))
-			(set! (with-background-processes) old-val)))
 		  (add-hook! bad-header-hook (lambda (n) #t))
-		  
-		  ;; ---------------- file:new dialog ----------------
-		  (if (defined? 'new-file-dialog)
-		      (begin
-			(reset-hook! output-name-hook)
-			(add-hook! output-name-hook (lambda (ignored) "hiho.snd"))
-			(let ((old-val (with-background-processes)))
-			  (set! (with-background-processes) #f)
-			  (let ((newind (new-file-dialog)))
-			    (if (not (sound? newind)) 
-				(snd-display ";new file dialog: ~A" newind)
-				(begin
-				  (if (not (string=? (short-file-name newind) "hiho.snd"))
-				      (snd-display ";output-name-hook: ~A" (short-file-name newind)))
-				  (close-sound newind))))
-			  (reset-hook! output-name-hook)
-			  (set! (with-background-processes) old-val))))
 		  
 		  ;; ---------------- file:mix dialog ----------------
 		  (if (list-ref (dialog-widgets) 11)
@@ -54367,7 +54316,7 @@ EDITS: 1
 		     read-mix-sample read-track-sample next-sample
 		     transform-normalization equalize-panes open-raw-sound open-sound orientation-dialog
 		     peak-env-info peaks play play-and-wait play-mix play-region play-selection play-track player? players
-		     position-color position->x position->y preload-directory preload-file view-files-sort previous-sample
+		     position-color position->x position->y add-directory-to-view-files-list add-file-to-view-files-list view-files-sort previous-sample
 		     print-length progress-report prompt-in-minibuffer pushed-button-color read-only
 		     recorder-in-device read-peak-env-info-file recorder-autoload recorder-buffer-size recorder-dialog
 		     recorder-file recorder-gain recorder-in-amp recorder-in-format recorder-max-duration recorder-out-amp

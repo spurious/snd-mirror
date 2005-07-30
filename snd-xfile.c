@@ -34,6 +34,12 @@
  * TODO: open no such file goes to post it? -- from startup args!
  * TODO: in mix/insert: panel for mix at cursor/beginning/end/mark/sample (num)
  * TODO: c-x c-n for new, or should c-x c-f behave as in emacs
+ * TODO: add|delete-file-filter, file-filters tied to all file dialogs (panel of radio buttons where just sounds is now)
+ *
+ * TODO: other such lists: sound-file-extensions transforms colormaps envelopes [html-dirs] key-bindings macros
+ *                     add|delete-completer, completers
+ *   or just present the lists, -- no need for add|remove-*
+ *    add-colormap add-file-filter add-sound-file-extension add-transform delete-colormap delete-file-filter delete-transform
  */
 
 
@@ -3667,7 +3673,8 @@ void save_post_it_dialog_state(FILE *fd)
 
 
 
-/* -------- mouse-enter|leave-label hooks (used in View:Files) -------- */
+/* -------- mouse-enter|leave-label hooks (used in View:Files and Region Browser) -------- */
+
 static XEN mouse_enter_label_hook;
 static XEN mouse_leave_label_hook;
 
@@ -3700,223 +3707,21 @@ static void mouse_leave_label_or_enter(regrow *r, XEN hook, const char *caller)
     }
 }
 
-static void mouse_enter_label(Widget w, XtPointer context, XEvent *event, Boolean *flag)
+void mouse_enter_label(Widget w, XtPointer context, XEvent *event, Boolean *flag)
 {
   mouse_leave_label_or_enter((regrow *)context, mouse_enter_label_hook, S_mouse_enter_label_hook);
 }
 
-static void mouse_leave_label(Widget w, XtPointer context, XEvent *event, Boolean *flag)
+void mouse_leave_label(Widget w, XtPointer context, XEvent *event, Boolean *flag)
 {
   mouse_leave_label_or_enter((regrow *)context, mouse_leave_label_hook, S_mouse_leave_label_hook);
 }
 
 
-/* -------- files browser and regions list widgetry -------- */
-/*
- * the region and file browsers share much widgetry -- they are supposed to look the same
- */
 
-ww_info *make_title_row(Widget formw, char *top_str, char *main_str, dialog_pad_t pad, dialog_sort_t with_sort, dialog_paned_t with_pane)
-{
-  int n;
-  Arg args[32];
-  Widget plw, rlw, sep1 = NULL;
-  Widget smenu, sbar;
-  ww_info *wwi;
-  wwi = (ww_info *)CALLOC(1, sizeof(ww_info));
-  
-  if (main_str)
-    {
-      n = 0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;}
-      XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
-      XtSetArg(args[n], XmNalignment, XmALIGNMENT_CENTER); n++;	
-      rlw = XtCreateManagedWidget(main_str, xmLabelWidgetClass, formw, args, n);
-      
-      n = 0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;}
-      XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
-      XtSetArg(args[n], XmNtopWidget, rlw); n++;
-      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
-      XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
-      XtSetArg(args[n], XmNseparatorType, XmDOUBLE_LINE); n++;
-      sep1 = XtCreateManagedWidget("sep", xmSeparatorWidgetClass, formw, args, n);
-    }
+/* -------- view files dialog -------- */
 
-  if (with_pane == WITH_PANED_WINDOW)
-    {
-      n = 0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
-      XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-      if (main_str)
-	{
-	  XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
-	  XtSetArg(args[n], XmNtopWidget, sep1); n++;
-	}
-      else
-	{
-	  XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
-	}
-      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNallowResize, true); n++;
-      wwi->panes = XtCreateManagedWidget("panes", xmPanedWindowWidgetClass, formw, args, n);
-
-      n = 0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
-      n = attach_all_sides(args, n);
-      XtSetArg(args[n], XmNpaneMinimum, 40); n++;
-      wwi->toppane = XtCreateManagedWidget("toppane", xmFormWidgetClass, wwi->panes, args, n);
-      formw = wwi->toppane;
-    }
-  else 
-    {
-      wwi->panes = formw;
-      wwi->toppane = formw;
-    }
-
-  n = 0;
-  if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
-  if (pad == PAD_TITLE_ON_LEFT)
-    {
-      XtSetArg(args[n], XmNleftAttachment, XmATTACH_POSITION); n++;
-      XtSetArg(args[n], XmNleftPosition, 5); n++;
-    }
-  else
-    {
-      XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
-    }
-  XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
-  if (with_pane == WITH_PANED_WINDOW)
-    {
-      XtSetArg(args[n], XmNtopAttachment, XmATTACH_NONE); n++;
-    }
-  else
-    {
-      if (main_str)
-	{
-	  XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
-	  XtSetArg(args[n], XmNtopWidget, sep1); n++;
-	}
-      else
-	{
-	  XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
-	}
-    }
-  XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
-  plw = XtCreateManagedWidget(top_str, xmLabelWidgetClass, formw, args, n);
-  wwi->plw = plw;
-
-  if (with_sort == WITH_SORT_BUTTON)
-    {
-      n = 0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
-      XtSetArg(args[n], XmNleftAttachment, XmATTACH_NONE); n++;
-      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
-      if (main_str)
-	{
-	  XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
-	  XtSetArg(args[n], XmNtopWidget, sep1); n++;
-	}
-      else
-	{
-	  XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
-	}
-      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
-      XtSetArg(args[n], XmNshadowThickness, 0); n++;
-      XtSetArg(args[n], XmNhighlightThickness, 0); n++;
-      XtSetArg(args[n], XmNmarginHeight, 0); n++;
-      sbar = XmCreateMenuBar(formw, "menuBar", args, n);
-
-      n = 0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
-      smenu = XmCreatePulldownMenu(sbar, _("sort"), args, n);
-
-      n = 0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
-      XtSetArg(args[n], XmNsubMenuId, smenu); n++;
-      XtSetArg(args[n], XmNshadowThickness, 0); n++;
-      XtSetArg(args[n], XmNhighlightThickness, 0); n++;
-      XtSetArg(args[n], XmNmarginHeight, 1); n++;
-      XtCreateManagedWidget("sort", xmCascadeButtonWidgetClass, sbar, args, n);
-      
-      n = 0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
-      wwi->byname =  XtCreateManagedWidget(_("name"),  xmPushButtonWidgetClass, smenu, args, n);
-      wwi->bydate =  XtCreateManagedWidget(_("date"),  xmPushButtonWidgetClass, smenu, args, n);
-      wwi->bysize =  XtCreateManagedWidget(_("size"),  xmPushButtonWidgetClass, smenu, args, n);
-      wwi->byentry = XtCreateManagedWidget(_("entry"), xmPushButtonWidgetClass, smenu, args, n);
-      wwi->byproc =  XtCreateManagedWidget(_("proc"),  xmPushButtonWidgetClass, smenu, args, n);
-      XtSetSensitive(wwi->byproc, XEN_PROCEDURE_P(ss->view_files_sort_proc));
-
-      XtManageChild(sbar);
-    }
-  
-  n = 0;
-  if (pad == PAD_TITLE_ON_LEFT) 
-    {
-      XtSetArg(args[n], XmNleftAttachment, XmATTACH_POSITION); n++;
-      XtSetArg(args[n], XmNleftPosition, 5); n++;
-    }
-  else
-    {
-      XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
-    }
-  if (pad == PAD_TITLE_ON_RIGHT)
-    {
-      XtSetArg(args[n], XmNrightAttachment, XmATTACH_POSITION); n++;
-      XtSetArg(args[n], XmNrightPosition, 95); n++;
-    }
-  else
-    {
-      if (pad == PAD_TITLE_ON_LEFT)
-	{
-	  XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-	}
-      else
-	{
-	  XtSetArg(args[n], XmNrightAttachment, XmATTACH_POSITION); n++;
-	  XtSetArg(args[n], XmNrightPosition, 70); n++;
-	}
-    }
-  XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
-  XtSetArg(args[n], XmNtopWidget, plw); n++;
-  if (pad == DONT_PAD_TITLE)
-    {
-      if (with_pane == WITH_PANED_WINDOW)
-	{
-	  XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
-	}
-      else
-	{
-	  XtSetArg(args[n], XmNbottomAttachment, XmATTACH_POSITION); n++;
-	  XtSetArg(args[n], XmNbottomPosition, 40); n++;
-	}
-    }
-  else
-    {
-      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
-    }
-  XtSetArg(args[n], XmNscrollingPolicy, XmAUTOMATIC); n++;
-  XtSetArg(args[n], XmNscrollBarDisplayPolicy, XmSTATIC); n++;
-  wwi->list = XmCreateScrolledWindow(formw, "reglist", args, n);
-
-  n = attach_all_sides(args, 0);
-  wwi->ww = XtCreateManagedWidget("ww", xmFormWidgetClass, wwi->list, args, n);
-  XtVaSetValues(wwi->list, 
-		XmNworkWindow, wwi->ww, 
-		NULL);
-  
-  return(wwi);
-}
-
-regrow *make_regrow(Widget ww, Widget last_row, XtCallbackProc play_callback, XtCallbackProc name_callback)
+static regrow *make_regrow(Widget ww, Widget last_row, XtCallbackProc play_callback, XtCallbackProc name_callback)
 {
   int n;
   Arg args[32];
@@ -3974,10 +3779,6 @@ regrow *make_regrow(Widget ww, Widget last_row, XtCallbackProc play_callback, Xt
   FREE(n3);
   return(r);
 }
-
-
-
-/* -------- view files dialog -------- */
 
 static Widget view_files_dialog = NULL;
 static Widget vf_lst, vf_ww;
@@ -4048,7 +3849,6 @@ static void view_files_select_callback(Widget w, XtPointer context, XtPointer in
   regrow *r = (regrow *)context;
   view_files_select(r->pos);
 }
-
 
 static void sort_view_files_by_name(Widget w, XtPointer context, XtPointer info) 
 {
@@ -4123,33 +3923,23 @@ void set_view_files_sort_sensitive(bool sensitive)
 
 Widget start_view_files_dialog(bool managed)
 {
-  /* fire up a dialog window with a list of currently open files, 
-   * currently selected file also selected in list --
-   * if user selects one (browse mode), so does Snd (via equalize_sound_panes etc)
-   * use snd_info label as is (short-form with '*' etc)
-   * secondary list of viewly edited files (if still in existence) --
-   * click here re-opens the file.  (The overall form is similar to the regions browser).
-   * The view files list requires that we keep such a list as we go along, on the
-   * off-chance this browser will be fired up.  (Such files may be subsequently moved or deleted).
-   */
   bool new_dialog = false;
   if (!view_files_dialog)
     {
       int n;
       Arg args[20];
-      ww_info *wwl;
       regrow *r;
-      XmString xdismiss, xhelp, xclear, titlestr;
-      Widget mainform, viewform, updateB, sep, leftform;
+      XmString xdismiss, xhelp, titlestr, s1;
+      Widget mainform, viewform, updateB, clearB, vertical_sep, leftform;
+      Widget left_title, left_title_sep, add_text, add_label, sep1, sep2, sep3;
+      Widget bydate, bysize, byname, byentry, plw, rlw, sbar, smenu;
 
       new_dialog = true;
       xdismiss = XmStringCreate(_("Dismiss"), XmFONTLIST_DEFAULT_TAG);
       xhelp = XmStringCreate(_("Help"), XmFONTLIST_DEFAULT_TAG);
-      xclear = XmStringCreate(_("Clear"), XmFONTLIST_DEFAULT_TAG);
       titlestr = XmStringCreate(_("Files"), XmFONTLIST_DEFAULT_TAG);
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
-      XtSetArg(args[n], XmNcancelLabelString, xclear); n++;
       XtSetArg(args[n], XmNhelpLabelString, xhelp); n++;
       XtSetArg(args[n], XmNokLabelString, xdismiss); n++;
       XtSetArg(args[n], XmNautoUnmanage, false); n++;
@@ -4157,35 +3947,22 @@ Widget start_view_files_dialog(bool managed)
       XtSetArg(args[n], XmNresizePolicy, XmRESIZE_GROW); n++;
       XtSetArg(args[n], XmNnoResize, false); n++;
       XtSetArg(args[n], XmNtransient, false); n++;
-      view_files_dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), "File Browser", args, n);
+      view_files_dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), "Files", args, n);
 
-      XtAddCallback(view_files_dialog, XmNcancelCallback, view_files_clear_callback,   NULL);
       XtAddCallback(view_files_dialog, XmNhelpCallback,   view_files_help_callback,    NULL);
       XtAddCallback(view_files_dialog, XmNokCallback,     view_files_dismiss_callback, NULL);
+
       XmStringFree(xhelp);
       XmStringFree(xdismiss);
-      XmStringFree(xclear);
       XmStringFree(titlestr);
 
       if (!(ss->using_schemes))
 	{
 	  XtVaSetValues(XmMessageBoxGetChild(view_files_dialog, XmDIALOG_OK_BUTTON),     XmNarmColor,   ss->sgx->pushed_button_color, NULL);
-	  XtVaSetValues(XmMessageBoxGetChild(view_files_dialog, XmDIALOG_CANCEL_BUTTON), XmNarmColor,   ss->sgx->pushed_button_color, NULL);
 	  XtVaSetValues(XmMessageBoxGetChild(view_files_dialog, XmDIALOG_HELP_BUTTON),   XmNarmColor,   ss->sgx->pushed_button_color, NULL);
 	  XtVaSetValues(XmMessageBoxGetChild(view_files_dialog, XmDIALOG_OK_BUTTON),     XmNbackground, ss->sgx->quit_button_color,   NULL);
-	  XtVaSetValues(XmMessageBoxGetChild(view_files_dialog, XmDIALOG_CANCEL_BUTTON), XmNbackground, ss->sgx->reset_button_color,  NULL);
 	  XtVaSetValues(XmMessageBoxGetChild(view_files_dialog, XmDIALOG_HELP_BUTTON),   XmNbackground, ss->sgx->help_button_color,   NULL);
 	}
-
-      n = 0;
-      if (!(ss->using_schemes)) 
-	{
-	  XtSetArg(args[n], XmNbackground, ss->sgx->doit_button_color); n++;
-	  XtSetArg(args[n], XmNarmColor, ss->sgx->pushed_button_color); n++;
-	}
-      updateB = XtCreateManagedWidget(_("Update"), xmPushButtonGadgetClass, view_files_dialog, args, n);
-      /* need Gadget if we want a subsequent XmNbackgroundPixmap change to be reflected in the button */
-      XtAddCallback(updateB, XmNactivateCallback, view_files_update_callback, NULL);
 
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
@@ -4196,6 +3973,8 @@ Widget start_view_files_dialog(bool managed)
       XtSetArg(args[n], XmNbottomWidget, XmMessageBoxGetChild(view_files_dialog, XmDIALOG_SEPARATOR)); n++;
       mainform = XtCreateManagedWidget("formd", xmFormWidgetClass, view_files_dialog, args, n);
 
+
+      /* -------- left side controls -------- */
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
@@ -4206,6 +3985,29 @@ Widget start_view_files_dialog(bool managed)
       leftform = XtCreateManagedWidget("leftform", xmFormWidgetClass, mainform, args, n);
 
       n = 0;
+      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;}
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
+      XtSetArg(args[n], XmNalignment, XmALIGNMENT_CENTER); n++;	
+      left_title = XtCreateManagedWidget("actions", xmLabelWidgetClass, leftform, args, n);
+      
+      n = 0;
+      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;}
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
+      XtSetArg(args[n], XmNtopWidget, left_title); n++;
+      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
+      XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
+      XtSetArg(args[n], XmNseparatorType, XmDOUBLE_LINE); n++;
+      left_title_sep = XtCreateManagedWidget("sep", xmSeparatorWidgetClass, leftform, args, n);
+
+
+
+      /* -------- middle vertical separator -------- */
+      n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNleftWidget, leftform); n++;
@@ -4214,33 +4016,198 @@ Widget start_view_files_dialog(bool managed)
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNorientation, XmVERTICAL); n++;
       XtSetArg(args[n], XmNseparatorType, XmSHADOW_ETCHED_IN); n++;
-      sep = XtCreateManagedWidget("sep", xmSeparatorWidgetClass, mainform, args, n);
+      vertical_sep = XtCreateManagedWidget("vertical-sep", xmSeparatorWidgetClass, mainform, args, n);
+
+
+
+      /* -------- right side file box -------- */
 
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
-      XtSetArg(args[n], XmNleftWidget, sep); n++;
+      XtSetArg(args[n], XmNleftWidget, vertical_sep); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
       viewform = XtCreateManagedWidget("viewform", xmFormWidgetClass, mainform, args, n);
 
-      /* view files section: play view files | files */
-      wwl = make_title_row(viewform, _("play"), _("files"), PAD_TITLE_ON_LEFT, WITH_SORT_BUTTON, WITHOUT_PANED_WINDOW);
+      /* Add dir/file text entry at bottom */
+      n = 0;
+      s1 = XmStringCreate(_("add:"), XmFONTLIST_DEFAULT_TAG);
+      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
+      XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
+      XtSetArg(args[n], XmNtopAttachment, XmATTACH_NONE); n++;
+      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
+      XtSetArg(args[n], XmNlabelString, s1); n++;
+      XtSetArg(args[n], XmNshadowThickness, 0); n++;
+      XtSetArg(args[n], XmNhighlightThickness, 0); n++;
+      add_label = XtCreateManagedWidget("add", xmLabelWidgetClass, viewform, args, n);
+      XmStringFree(s1);
 
-      XtAddCallback(wwl->byname,  XmNactivateCallback, sort_view_files_by_name,           NULL);
-      XtAddCallback(wwl->bydate,  XmNactivateCallback, sort_view_files_by_date,           NULL);
-      XtAddCallback(wwl->bysize,  XmNactivateCallback, sort_view_files_by_size,           NULL);
-      XtAddCallback(wwl->byentry, XmNactivateCallback, sort_view_files_by_entry_order,    NULL);
-      XtAddCallback(wwl->byproc,  XmNactivateCallback, sort_view_files_by_user_procedure, NULL);
+      n = 0;
+      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
+      XtSetArg(args[n], XmNtopAttachment, XmATTACH_NONE); n++;
+      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
+      XtSetArg(args[n], XmNleftWidget, add_label); n++;
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+      add_text = make_textfield_widget("add-text", viewform, args, n, ACTIVATABLE, add_completer_func(filename_completer));
+      
+      /* TODO: add_text get dir/file callback + check completer */
+      /* PERHAPS: pulldown of dirs currently in? */
+      /* file filters here also */
 
-      byproc = wwl->byproc;
-      vf_ww = wwl->ww;
-      vf_lst = wwl->list;
+      n = 0;
+      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNtopAttachment, XmATTACH_NONE); n++;
+      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_WIDGET); n++;
+      XtSetArg(args[n], XmNbottomWidget, add_text); n++;
+      XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
+      XtSetArg(args[n], XmNseparatorType, XmNO_LINE); n++;
+      XtSetArg(args[n], XmNheight, 4); n++;
+      sep2 = XtCreateManagedWidget("sep2", xmSeparatorWidgetClass, viewform, args, n);
+
+      n = 0;
+      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
+      XtSetArg(args[n], XmNmarginTop, 0); n++;
+      XtSetArg(args[n], XmNmarginBottom, 0); n++;
+      XtSetArg(args[n], XmNshadowThickness, 1); n++;
+      XtSetArg(args[n], XmNhighlightThickness, 1); n++;
+      XtSetArg(args[n], XmNtopAttachment, XmATTACH_NONE); n++;
+      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_WIDGET); n++;
+      XtSetArg(args[n], XmNbottomWidget, sep2); n++;
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_POSITION); n++;
+      XtSetArg(args[n], XmNrightPosition, 50); n++;
+      updateB = XtCreateManagedWidget(_("Update"), xmPushButtonGadgetClass, viewform, args, n);
+      /* need Gadget if we want a subsequent XmNbackgroundPixmap change to be reflected in the button */
+      XtAddCallback(updateB, XmNactivateCallback, view_files_update_callback, NULL);
+
+      n = 0;
+      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
+      XtSetArg(args[n], XmNmarginTop, 0); n++;
+      XtSetArg(args[n], XmNmarginBottom, 0); n++;
+      XtSetArg(args[n], XmNshadowThickness, 1); n++;
+      XtSetArg(args[n], XmNhighlightThickness, 1); n++;
+      XtSetArg(args[n], XmNtopAttachment, XmATTACH_NONE); n++;
+      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_WIDGET); n++;
+      XtSetArg(args[n], XmNbottomWidget, sep2); n++;
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
+      XtSetArg(args[n], XmNleftWidget, updateB); n++;
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+      clearB = XtCreateManagedWidget(_("Clear"), xmPushButtonGadgetClass, viewform, args, n);
+      XtAddCallback(clearB, XmNactivateCallback, view_files_clear_callback, NULL);
+
+      n = 0;
+      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNtopAttachment, XmATTACH_NONE); n++;
+      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_WIDGET); n++;
+      XtSetArg(args[n], XmNbottomWidget, updateB); n++;
+      XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
+      XtSetArg(args[n], XmNseparatorType, XmNO_LINE); n++;
+      XtSetArg(args[n], XmNheight, 4); n++;
+      sep3 = XtCreateManagedWidget("sep3", xmSeparatorWidgetClass, viewform, args, n);
+
+
+      n = 0;
+      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;}
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
+      XtSetArg(args[n], XmNalignment, XmALIGNMENT_CENTER); n++;	
+      rlw = XtCreateManagedWidget(_("files"), xmLabelWidgetClass, viewform, args, n);
+      
+      n = 0;
+      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;}
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
+      XtSetArg(args[n], XmNtopWidget, rlw); n++;
+      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
+      XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
+      XtSetArg(args[n], XmNseparatorType, XmDOUBLE_LINE); n++;
+      sep1 = XtCreateManagedWidget("sep", xmSeparatorWidgetClass, viewform, args, n);
+
+      n = 0;
+      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_POSITION); n++;
+      XtSetArg(args[n], XmNleftPosition, 5); n++;
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
+      XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
+      XtSetArg(args[n], XmNtopWidget, sep1); n++;
+      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
+      plw = XtCreateManagedWidget(_("play"), xmLabelWidgetClass, viewform, args, n);
+
+      n = 0;
+      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_NONE); n++;
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
+      XtSetArg(args[n], XmNtopWidget, sep1); n++;
+      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
+      XtSetArg(args[n], XmNshadowThickness, 0); n++;
+      XtSetArg(args[n], XmNhighlightThickness, 0); n++;
+      XtSetArg(args[n], XmNmarginHeight, 0); n++;
+      sbar = XmCreateMenuBar(viewform, "menuBar", args, n);
+
+      n = 0;
+      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
+      smenu = XmCreatePulldownMenu(sbar, _("sort"), args, n);
+
+      n = 0;
+      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
+      XtSetArg(args[n], XmNsubMenuId, smenu); n++;
+      XtSetArg(args[n], XmNshadowThickness, 0); n++;
+      XtSetArg(args[n], XmNhighlightThickness, 0); n++;
+      XtSetArg(args[n], XmNmarginHeight, 1); n++;
+      XtCreateManagedWidget("sort", xmCascadeButtonWidgetClass, sbar, args, n);
+      
+      n = 0;
+      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
+      byname =  XtCreateManagedWidget(_("name"),  xmPushButtonWidgetClass, smenu, args, n);
+      bydate =  XtCreateManagedWidget(_("date"),  xmPushButtonWidgetClass, smenu, args, n);
+      bysize =  XtCreateManagedWidget(_("size"),  xmPushButtonWidgetClass, smenu, args, n);
+      byentry = XtCreateManagedWidget(_("entry"), xmPushButtonWidgetClass, smenu, args, n);
+      byproc =  XtCreateManagedWidget(_("proc"),  xmPushButtonWidgetClass, smenu, args, n);
+      XtSetSensitive(byproc, XEN_PROCEDURE_P(ss->view_files_sort_proc));
+
+      XtManageChild(sbar);
+  
+      n = 0;
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_POSITION); n++;
+      XtSetArg(args[n], XmNleftPosition, 5); n++;
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
+      XtSetArg(args[n], XmNtopWidget, plw); n++;
+      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_WIDGET); n++;
+      XtSetArg(args[n], XmNbottomWidget, sep3); n++;
+      XtSetArg(args[n], XmNscrollingPolicy, XmAUTOMATIC); n++;
+      XtSetArg(args[n], XmNscrollBarDisplayPolicy, XmSTATIC); n++;
+      vf_lst = XmCreateScrolledWindow(viewform, "reglist", args, n);
+
+      n = attach_all_sides(args, 0);
+      vf_ww = XtCreateManagedWidget("ww", xmFormWidgetClass, vf_lst, args, n);
+      XtVaSetValues(vf_lst, 
+		    XmNworkWindow, vf_ww, 
+		    NULL);
+
+      XtAddCallback(byname,  XmNactivateCallback, sort_view_files_by_name,           NULL);
+      XtAddCallback(bydate,  XmNactivateCallback, sort_view_files_by_date,           NULL);
+      XtAddCallback(bysize,  XmNactivateCallback, sort_view_files_by_size,           NULL);
+      XtAddCallback(byentry, XmNactivateCallback, sort_view_files_by_entry_order,    NULL);
+      XtAddCallback(byproc,  XmNactivateCallback, sort_view_files_by_user_procedure, NULL);
+
       if (!(ss->using_schemes)) 
 	map_over_children(vf_lst, set_main_color_of_widget, NULL);
-      FREE(wwl); 
-      wwl = NULL;
+
       if (get_view_files_size() == 0)
 	{
 	  init_view_files(4);
@@ -4270,11 +4237,6 @@ Widget start_view_files_dialog(bool managed)
   return(view_files_dialog);
 }
 
-void view_files_callback(Widget w, XtPointer context, XtPointer info)
-{
-  start_view_files_dialog(true);
-}
-
 bool view_files_dialog_is_active(void)
 {
   return((view_files_dialog) && 
@@ -4282,14 +4244,6 @@ bool view_files_dialog_is_active(void)
 }
 
 
-
-#if DEBUGGING && HAVE_GUILE
-static XEN g_new_file_dialog(void)
-{
-  make_new_file_dialog();
-  return(XEN_FALSE);
-}
-#endif
 
 void g_init_gxfile(void)
 {
@@ -4315,7 +4269,6 @@ is the scrolled list position of the label. The label itself is 'label'."
   mouse_leave_label_hook = XEN_DEFINE_HOOK(S_mouse_leave_label_hook, 3, H_mouse_leave_label_hook);
 
 #if DEBUGGING && HAVE_GUILE
-  XEN_DEFINE_PROCEDURE("new-file-dialog", g_new_file_dialog, 0, 0, 0, "internal testing function");
   XEN_DEFINE_PROCEDURE("apply-edit-header", g_apply_edit_header, 0, 0, 0, "internal testing function");
 #endif
 }

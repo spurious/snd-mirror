@@ -372,7 +372,6 @@ XmString initial_speed_label(speed_style_t style);
 void g_init_gxsnd(void);
 void make_sound_icons_transparent_again(Pixel old_color, Pixel new_color);
 void reflect_sound_selection(snd_info *sp);
-void wait_for_decision(snd_info*sp, void (*ok)(snd_info *p, void *data), void (*cancel)(snd_info *p, void *data), void *data);
 void display_minibuffer_error(snd_info *sp, const char *str);
 void clear_minibuffer_error(snd_info *sp);
 
@@ -390,14 +389,13 @@ widget_t make_open_file_dialog(bool read_only, bool managed);
 widget_t make_sound_save_as_dialog(bool managed);
 widget_t make_selection_save_as_dialog(bool managed);
 void make_new_file_dialog(void);
+void mouse_enter_label(Widget w, XtPointer context, XEvent *event, Boolean *flag);
+void mouse_leave_label(Widget w, XtPointer context, XEvent *event, Boolean *flag);
 
-ww_info *make_title_row(Widget formw, char *top_str, char *main_str, dialog_pad_t pad, dialog_sort_t with_sort, dialog_paned_t with_pane);
-regrow *make_regrow(Widget ww, Widget last_row, XtCallbackProc play_callback, XtCallbackProc name_callback);
-void make_view_files_list (void);
+void make_view_files_list(void);
 void make_vf_row(int old_size, int new_size);
 void set_view_files_play_button(char *name, int state);
 void set_view_files_sort_sensitive(bool sensitive);
-void view_files_callback(Widget w, XtPointer context, XtPointer info);
 Widget start_view_files_dialog(bool managed);
 bool view_files_dialog_is_active(void);
 

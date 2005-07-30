@@ -90,7 +90,7 @@ the usual Xt/X-related flags like -xrm).</p>
 <tr><td><code>-noglob</code></td>                 <td>don't read /etc/snd.conf</td></tr>
 <tr><td><code>-noinit</code></td>                 <td>don't read ~/.snd</td></tr>
 <tr><td><code>-nostdin</code></td>                <td>don't watch for possible input from stdin</td></tr>
-<tr><td><code>-p -preload &lt;dir&gt;</code></td> <td>preload sound files in directory &lt;dir&gt; (snd -p .)</td></tr>
+<tr><td><code>-p -preload &lt;dir&gt;</code></td> <td>add sound files in directory &lt;dir&gt; to the View:Files list (snd -p .)</td></tr>
 <tr><td><code>-l -load &lt;file&gt;</code></td>   <td>load Scheme or Ruby code in &lt;file&gt; (snd -l test.scm)</td></tr>
 <tr><td><code>-e -eval expr</code></td>           <td>evaluate expr</td></tr>
 <tr><td><code>-b -batch &lt;file&gt;</code></td>  <td>load Scheme or Ruby code in &lt;file&gt; as a batch (no GUI) job</td></tr>
@@ -109,7 +109,8 @@ snd -e "(set! (<a class=quiet href="extsnd.html#datacolor">data-color</a>) (<a c
 ./snd -eval '(begin (display (+ 1 2)) (<a class=quiet href="extsnd.html#exit">exit</a>))'
 </pre>
 <p>prints "3" and exits.  The "-title" argument works in both versions of Snd.
-The following adds "WAV" to the sound file extension table before preloading the directory:
+The following adds "WAV" to the sound file extension table before adding all the sound files in the directory to the
+View:Files dialog's list:
 </p>
 <pre>
 snd -e '(<a class=quiet href="extsnd.html#addsoundfileextension">add-sound-file-extension</a> "WAV")' -p /home/bil/sounds

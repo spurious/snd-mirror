@@ -9542,6 +9542,20 @@ exit Snd via "abort", presumably to fall into the C debugger (gdb).  To stop som
 use <a href="#cgp">C-g</a>.
 </td></tr>
 
+<!-- add-directory-to-view-files-list -->
+<tr><td colspan=2>
+<code><a class=def name="adddirectorytoviewfileslist">add-directory-to-view-files-list</a> (dir)</code></td></tr>
+<tr><td></td><td>
+add the sound files in directory <i>dir</i> to the list of files in the View:Files dialog.  
+</td></tr>
+
+<!-- add-file-to-view-files-list -->
+<tr><td colspan=2>
+<code><a class=def name="addfiletoviewfileslist">add-file-to-view-files-list</a> (file)</code></td></tr>
+<tr><td></td><td>
+add <i>file</i> to the list of files in the View:Files dialog.
+</td></tr>
+
 <!-- add-sound-file-extension -->
 <tr><td colspan=2>
 <code><a class=def name="addsoundfileextension">add-sound-file-extension</a> (ext)</code></td></tr>
@@ -10043,24 +10057,6 @@ loads a file into Snd for editing.
     (<em class=red>vct-&gt;sound-file</em> fd v2 10) ; v2 has 10 samples of sound data, presumably
     (<em class=red>close-sound-file</em> fd 10))
 </pre>
-</td></tr>
-
-<!-- preload-directory -->
-<tr><td colspan=2>
-<code><a class=def name="preloaddirectory">preload-directory</a> (dir)</code></td></tr>
-<tr><td></td><td>
-preload sound files from directory <i>dir</i> (see -<a href="snd.html#minusp">p</a>).  Preloading a file means
-placing it in the list of previous files in the View menu's <a href="snd.html#viewfiles">View Files</a> dialog.
-By preloading all the files you might want to use, you can use that dialog to access them conveniently.
-See <a href="sndscm.html#nbdoc">nb.scm</a>.
-</td></tr>
-
-<!-- preload-file -->
-<tr><td colspan=2>
-<code><a class=def name="preloadfile">preload-file</a> (file)</code></td></tr>
-<tr><td></td><td>
-preload <i>file</i>, placing it in the View menu's <a href="snd.html#viewfiles">View Files</a> dialog as
-a previous file (as if you had opened and closed it).
 </td></tr>
 
 <!-- reset-listener-cursor -->
@@ -11338,7 +11334,6 @@ If #t and GL is loaded, use GL where possible (default is #t if HAVE_GL).</td></
 	<!-- I(max amp):L(maxamp)(maxamp) -->
 	<!-- I(max amp):A(maxamp) -->
         <!-- I(define mark):L(add-mark)(addmark) -->
-	<!-- I(preload directory):L(preload-directory)(preloaddirectory) -->
         <!-- I(color):L(color-dialog)(colordialog) -->
 	<!-- I(color):O(color-scale,color-cutoff)(colorscale) -->
         <!-- I(orientation):L(orientation-dialog)(orientationdialog) -->

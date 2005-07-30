@@ -484,7 +484,6 @@ void make_vf_row(int old_size, int new_size);
 void make_view_files_list (void);
 void set_view_files_play_button(char *name, int state);
 void set_view_files_sort_sensitive(bool sensitive);
-void view_files_callback(GtkWidget *w, gpointer info);
 GtkWidget *start_view_files_dialog(bool managed);
 bool view_files_dialog_is_active(void);
 

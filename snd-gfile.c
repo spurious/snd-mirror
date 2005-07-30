@@ -3296,6 +3296,8 @@ void set_view_files_sort_sensitive(bool sensitive)
     set_sensitive(byproc, sensitive);
 }
 
+/* TODO: gtk: no more make_title_row or the rest of it */
+
 ww_info *make_title_row(GtkWidget *formw, char *top_str, char *main_str, dialog_pad_t pad, dialog_sort_t with_sort, dialog_paned_t with_pane)
 {
   GtkWidget *sep1, *cww;
@@ -3646,11 +3648,6 @@ GtkWidget *start_view_files_dialog(bool managed)
   make_view_files_list();
   if (managed) gtk_widget_show(view_files_dialog);
   return(view_files_dialog);
-}
-
-void view_files_callback(GtkWidget *w, gpointer context)
-{
-  start_view_files_dialog(true);
 }
 
 bool view_files_dialog_is_active(void)

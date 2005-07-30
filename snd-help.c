@@ -410,6 +410,7 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+30-Jul:  preload-directory -> add-directory-to-view-files-list, preload-file -> add-file-to-view-files-list.\n\
 29-Jul:  previous-files-* -> view-files-* (sort, sort-procedure, select-hook).\n\
 28-Jul:  File:Insert menu item and dialog added, also insert-file-dialog.\n\
          File:Save as can write OGG, Speex, and Flac files.\n\
@@ -1426,8 +1427,8 @@ but you can use Gimp or some such program to get a screenshot, and print that.",
 }
 
 static char *view_files_xrefs[6] = {
-  "place sound in view files list: {preload-file}",
-  "place all sounds from a directory in view files list: {preload-directory}",
+  "place sound in view files list: {add-file-to-view-files-list}",
+  "place all sounds from a directory in view files list: {add-directory-to-view-files-list}",
   "specialize view files selection: {view-files-select-hook}",
   "the sort choice: {view-files-sort}",
   "the sort procedure if choice is 'proc': {view-files-sort-procedure}",
@@ -1436,15 +1437,13 @@ static char *view_files_xrefs[6] = {
 void view_files_dialog_help(void)
 {
   snd_help_with_xrefs("File Browser",
-"TODO: rewrite this. \
-The \
-play button plays the file. \
+"The View:Files dialog provides a list of sounds and various things to do with them.\
+The play button plays the file. \
 Double click a file name, and that file is opened in Snd. The 'update' button runs through the files \
 list checking for files that have been deleted or moved behind Snd's back. 'Clear' clears the files list. \
 \n\n\
-The files list can be preloaded via the -p switch to Snd, and by the functions " S_preload_file " \
-and " S_preload_directory ". By preloading your 'working set' of sounds, you can avoid the bother of picking them up one by one from the \
-clumsy file selection box. \
+Files can be added to the list via the -p startup switch, and by the functions " S_add_file_to_view_files_list " \
+and " S_add_directory_to_view_files_list ". \
 \n\n\
 The 'sort' label on the right activates a menu of sorting choices; 'name' sorts the \
 files list alphabetically, 'date' sorts by date written, 'size' sorts by the \

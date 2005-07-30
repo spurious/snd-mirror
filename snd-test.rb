@@ -23703,8 +23703,8 @@ def test0013
     snd_display("copyfile_1 (1): %s %s %s %s?", frames(fd), chans(fd), srate(fd), maxamp(fd))
   end
   eds = edits
-  preload_file("oboe.snd")
-  preload_directory(".")
+  add_file_to_view_files_list("oboe.snd")
+  add_directory_to_view_files_list(".")
   select_all
   copyfile_1(true)
   if (res = edit_fragment) != ["(cp)", "set", 0, 50828]
@@ -38356,7 +38356,7 @@ Procs = [:add_mark, :add_sound_file_extension, :add_to_main_menu, :add_to_menu,
   :read_mix_sample, :read_track_sample, :next_sample, :transform_normalization, :equalize_panes,
   :open_raw_sound, :open_sound, :orientation_dialog, :peak_env_info, :peaks, :play,
   :play_and_wait, :play_mix, :play_region, :play_selection, :play_track, :player?, :players,
-  :position_color, :position2x, :position2y, :preload_directory, :preload_file,
+  :position_color, :position2x, :position2y, :add_directory_to_view_files_list, :add_file_to_view_files_list,
   :view_files_sort, :previous_sample, :print_length, :progress_report, :prompt_in_minibuffer,
   :pushed_button_color, :read_only, :recorder_in_device, :read_peak_env_info_file,
   :recorder_autoload, :recorder_buffer_size, :recorder_dialog, :recorder_file, :recorder_gain,

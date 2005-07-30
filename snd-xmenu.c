@@ -105,7 +105,7 @@ static void view_ctrls_callback(Widget w, XtPointer info, XtPointer context)
 static void view_region_callback_1(Widget w, XtPointer info, XtPointer context) {view_region_callback(w, info, context);}
 static void view_orientation_callback_1(Widget w, XtPointer info, XtPointer context) {view_orientation_callback(w, info, context);}
 static void view_color_callback_1(Widget w, XtPointer info, XtPointer context) {view_color_callback(w, info, context);}
-static void view_files_callback_1(Widget w, XtPointer info, XtPointer context) {view_files_callback(w, info, context);}
+static void view_files_callback(Widget w, XtPointer info, XtPointer context) {start_view_files_dialog(true);}
 
 static void view_x_axis_seconds_callback(Widget w, XtPointer info, XtPointer context) {set_x_axis_style(X_AXIS_IN_SECONDS);}
 static void view_x_axis_beats_callback(Widget w, XtPointer info, XtPointer context) {set_x_axis_style(X_AXIS_IN_BEATS);}
@@ -389,7 +389,7 @@ Widget add_menu(void)
   XtVaSetValues(view_region_menu, XmNmnemonic, 'R', NULL);
 
   view_files_menu = XtCreateManagedWidget(_("Files"), xmPushButtonWidgetClass, view_menu, main_args, main_n);
-  XtAddCallback(view_files_menu, XmNactivateCallback, view_files_callback_1, NULL);
+  XtAddCallback(view_files_menu, XmNactivateCallback, view_files_callback, NULL);
   XtVaSetValues(view_files_menu, XmNmnemonic, 'F', NULL);
 
   view_color_menu = XtCreateManagedWidget(_("Color"), xmPushButtonWidgetClass, view_menu, main_args, main_n);

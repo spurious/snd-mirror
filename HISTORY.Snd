@@ -1,5 +1,6 @@
 Snd change log
 
+  30-Jul:    preload-directory -> add-directory-to-view-files-list, preload-file -> add-file-to-view-files-list.
   29-Jul:    previous-files-* -> view-files-* (sort, sort-procedure, select-hook).
   28-Jul:    File:Insert menu item and dialog added, also insert-file-dialog.
              File:Save as can write OGG, Speex, and Flac files.

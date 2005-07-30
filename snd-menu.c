@@ -115,6 +115,8 @@ void view_menu_update(void)
   /* make sure listener menu option label correctly reflects current listener state */
   set_menu_label(view_listener_menu, (listener_is_visible()) ? _("Hide listener") : _("Show listener"));
   set_menu_label(view_ctrls_menu, (in_show_controls(ss)) ? _("Hide controls") : _("Show controls"));
+
+  /* set_sensitive(view_files_menu, get_view_files_end() >= 0); */
 }
 
 void options_menu_update(void)

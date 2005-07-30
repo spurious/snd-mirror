@@ -1,4 +1,4 @@
-/* Audio hardware handlers (SGI, OSS, ALSA, Sun, Mac, Windows, Mac OSX, Jack, ESD, HPUX) */
+/* Audio hardware handlers (SGI, OSS, ALSA, Sun, Mac, Windows, Mac OSX, Jack, ESD, HPUX, NetBSD) */
 
 /*
  * layout of this file:
@@ -13,6 +13,7 @@
  *    ESD
  *    JACK
  *    HPUX
+ *    NetBSD
  *    audio describers
  */
 
@@ -9555,6 +9556,7 @@ int mus_audio_read(int line, char *buf, int bytes)
 #if defined(NETBSD) && (!(defined(AUDIO_OK)))
 #define AUDIO_OK
 /* taken from Xanim */
+/* bugfixes from Thomas Kraus 30-Jul-05 */
 #include <errno.h>
 #include <fcntl.h>
 #include <sys/audioio.h>
@@ -9565,12 +9567,14 @@ int mus_audio_read(int line, char *buf, int bytes)
 
 int mus_audio_open_output(int dev, int srate, int chans, int format, int size) 
 {
+  int line;
   audio_info_t a_info;
+
   line = open("/dev/audio", O_WRONLY | O_NDELAY);
   if (line == -1)
     {
       if (errno == EBUSY) 
-	return(mus_error(MUS_AUDIO_OUTPUT_BUSY, NULL));
+	return(mus_error(MUS_AUDIO_CANT_OPEN, NULL));
       else return(mus_error(MUS_AUDIO_DEVICE_NOT_AVAILABLE, NULL));
     }
   AUDIO_INITINFO(&a_info);
@@ -9592,10 +9596,10 @@ int mus_audio_open_output(int dev, int srate, int chans, int format, int size)
   ioctl(line, AUDIO_SETINFO, &a_info);
   AUDIO_INITINFO(&a_info);
   a_info.play.sample_rate = srate;
-  a.info.play.port = AUDIO_SPEAKER | AUDIO_HEADPHONE | AUDIO_LINE_OUT;
+  a_info.play.port = AUDIO_SPEAKER | AUDIO_HEADPHONE | AUDIO_LINE_OUT;
   ioctl(line, AUDIO_SETINFO, &a_info);
   return(line);
-  /* a.info.blocksize after getinfo */
+  /* a_info.blocksize after getinfo */
 }
 
 int mus_audio_write(int line, char *buf, int bytes) 

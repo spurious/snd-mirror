@@ -158,27 +158,12 @@ typedef struct {
   Pixel color;
 } mix_context;
 
-typedef enum {WITHOUT_PANED_WINDOW, WITH_PANED_WINDOW} dialog_paned_t;
-typedef enum {DONT_PAD_TITLE, PAD_TITLE_ON_RIGHT, PAD_TITLE_ON_LEFT} dialog_pad_t;
-typedef enum {WITHOUT_SORT_BUTTON, WITH_SORT_BUTTON} dialog_sort_t;
 typedef enum {WITHOUT_CHANNELS_FIELD, WITH_CHANNELS_FIELD, WITH_EXTRACT_CHANNELS_FIELD} dialog_channels_t;
 typedef enum {WITHOUT_SAMPLES_FIELD, WITH_SAMPLES_FIELD} dialog_samples_t;
 typedef enum {WITHOUT_DATA_LOCATION_FIELD, WITH_DATA_LOCATION_FIELD} dialog_data_location_t;
 typedef enum {WITHOUT_ERROR_FIELD, WITH_ERROR_FIELD} dialog_error_t;
 typedef enum {WITHOUT_HEADER_TYPE_FIELD, WITH_HEADER_TYPE_FIELD} dialog_header_type_t;
 typedef enum {WITHOUT_COMMENT_FIELD, WITH_COMMENT_FIELD, WITH_UNLABELLED_COMMENT_FIELD} dialog_comment_t;
-
-typedef struct {
-  Widget ww;
-  Widget list;
-  Widget plw;
-  Widget bydate;
-  Widget bysize;
-  Widget byname;
-  Widget byentry;
-  Widget byproc;
-  Widget panes, toppane;
-} ww_info;
 
 #define snd_ShiftMask ShiftMask
 #define snd_ControlMask ControlMask

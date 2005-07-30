@@ -471,8 +471,8 @@ its arguments for file names, and opens any it finds.</p>
 </pre>
 <p>If there are no arguments, Snd comes up as a bare menu bar.
 If a name is preceded by <A class=def NAME="minusp">"-p"</a> or "-preload", it is treated as a directory
-name and all sound files found in that directory are preloaded
-into the <a href="#viewfiles">previous files</a> list.  To
+name and all sound files found in that directory are added
+to the <a href="#viewfiles">View:Files</a> list.  To
 load arbitrary Snd customizations (your own code, or a <a href="#savedstate">saved state</a> file),
 precede the file name with <A class=def NAME="minusl">"-l"</a> or "-load" (or use the load function). </p>
 <pre>
@@ -480,7 +480,6 @@ precede the file name with <A class=def NAME="minusl">"-l"</a> or "-load" (or us
 </pre>
 <p>opens the sound file oboe.snd and loads the Scheme code in <a href="sndscm.html#exampdoc">examp.scm</a>.</p>
 
-        <!-- I(preload directory):O(-p switch to Snd)(minusp) --><!-- I(preload directory):A(minusp) -->
         <!-- I(continue session):O(-l switch to Snd)(minusl) -->
 
 <p>Normally Snd adds each new sound below those currently being
@@ -763,12 +762,9 @@ The 'update' button runs through the previous files
 list checking for files that have been deleted or moved behind Snd's back.
 'Clear' clears the previous files list. </p>
 
-<p>The previous
-files list can be preloaded via the -p switch to Snd, and the functions <a href="extsnd.html#preloadfile">preload-file</a>
-and <a href="extsnd.html#preloaddirectory">preload-directory</a>.
-By preloading your "working set" of sounds, you can avoid
-the bother of picking them up one by one from the
-clumsy file selection box.
+<p>Files can be added to the list at startup
+via the -p switch, and the functions <a href="extsnd.html#addfiletoviewfileslist">add-file-to-view-files-list</a>
+and <a href="extsnd.html#adddirectorytoviewfileslist">add-directory-to-view-files-list</a>.
 See nb.scm for an extension of this dialog that posts various kinds of information
 about each file as the mouse passes over it.
 </p>
@@ -2298,7 +2294,7 @@ panel are:</p>
 <br>
 <center>
 
-<table border rows=119>
+<table border rows=118>
   <caption>Index</caption>
   <!-- created whenever -->
   <tr><th>Action</th><th>Menu</th><th>Keyboard</th><th>Lisp</th><th>Other</th></tr>
@@ -2381,7 +2377,6 @@ panel are:</p>
   <tr><td><a href="#cq">play channel</a></td><td><br></td><td><a href="#cq"><small>Cq, Ct</small></a></td><td><a href="extsnd.html#playchannel"><small>play-channel</small></a></td><td><a href="extsnd.html#play"><small>play</small></a></td></tr>
   <tr><td><a href="extsnd.html#play">play file</a></td><td><small>Popup: Play</small></td><td><br></td><td><a href="extsnd.html#play"><small>play, stop</small></a></td><td><small>File or main window: 'play'</small></td></tr>
   <tr><td><a href="#cxp">play selection</a></td><td><small>Edit: <a href="#cxp">Play</a></small></td><td><a href="#cxp"><small>Cx p</small></a></td><td><a href="extsnd.html#playselection"><small>play-selection</small></a></td><td><a href="extsnd.html#playregion"><small>play-region</small></a></td></tr>
-  <tr><td><a href="#minusp">preload directory</a></td><td><br></td><td><br></td><td><a href="extsnd.html#preloaddirectory"><small>preload-directory</small></a></td><td><a href="#minusp"><small>-p switch to Snd</small></a></td></tr>
   <tr><td><a href="#printfile">print file</a></td><td><small>File: <a href="#printfile">Print</a></small></td><td><a href="#cxcd"><small>Cx Cd</small></a></td><td><a href="extsnd.html#graph_to_ps"><small>graph-&gt;ps</small></a></td><td><br></td></tr>
   <tr><td><a href="#recordfile">record sound</a></td><td><small>File: <a href="#recordfile">Record</a></small></td><td><br></td><td><a href="extsnd.html#recorderdialog"><small>recorder-dialog</small></a></td><td><br></td></tr>
   <tr><td><a href="#undoredo">redo edit</a></td><td><small>Edit: <a href="#undoredo">Redo</a></small></td><td><a href="#cxcr"><small>Cx Cr</small></a></td><td><a href="extsnd.html#redo"><small>redo</small></a></td><td><small>Popup: Redo</small></td></tr>

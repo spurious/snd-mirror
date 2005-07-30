@@ -1767,11 +1767,11 @@ void save_view_files_list(FILE *fd)
     for (i = 0; i <= view_files_end; i++)
 #if HAVE_RUBY
       fprintf(fd, "%s \"%s\"\n",
-	      xen_scheme_procedure_to_ruby(S_preload_file),
+	      xen_scheme_procedure_to_ruby(S_add_file_to_view_files_list),
 #endif
 #if HAVE_SCHEME
       fprintf(fd, "(%s \"%s\")\n",
-	      S_preload_file,
+	      S_add_file_to_view_files_list,
 #endif
 	      view_files_full_names[i]);
 #endif
@@ -2999,19 +2999,19 @@ each inner list has the form: (name start loopstart loopend)"
   return(outlist);
 }
 
-static XEN g_preload_directory(XEN directory) 
+static XEN g_add_directory_to_view_files_list(XEN directory) 
 {
-  #define H_preload_directory "(" S_preload_directory " dir): preload into the View:Files dialog any sounds in dir"
-  XEN_ASSERT_TYPE(XEN_STRING_P(directory), directory, XEN_ONLY_ARG, S_preload_directory, "a string");
+  #define H_add_directory_to_view_files_list "(" S_add_directory_to_view_files_list " dir): adds any sound files in 'dir' to the View:Files dialog"
+  XEN_ASSERT_TYPE(XEN_STRING_P(directory), directory, XEN_ONLY_ARG, S_add_directory_to_view_files_list, "a string");
   add_directory_to_view_files_list(XEN_TO_C_STRING(directory));
   return(directory);
 }
 
-static XEN g_preload_file(XEN file) 
+static XEN g_add_file_to_view_files_list(XEN file) 
 {
-  #define H_preload_file "(" S_preload_file " file): preload file into the View:Files dialog"
+  #define H_add_file_to_view_files_list "(" S_add_file_to_view_files_list " file): adds file to the View:Files dialog's list"
   char *name = NULL;
-  XEN_ASSERT_TYPE(XEN_STRING_P(file), file, XEN_ONLY_ARG, S_preload_file, "a string");
+  XEN_ASSERT_TYPE(XEN_STRING_P(file), file, XEN_ONLY_ARG, S_add_file_to_view_files_list, "a string");
   name = mus_expand_filename(XEN_TO_C_STRING(file));
   if (mus_file_probe(name))
     add_to_view_files(filename_without_home_directory(name), name);
@@ -3100,8 +3100,8 @@ static XEN g_set_view_files_sort(XEN val)
 XEN_NARGIFY_1(g_add_sound_file_extension_w, g_add_sound_file_extension)
 XEN_NARGIFY_1(g_file_write_date_w, g_file_write_date)
 XEN_ARGIFY_1(g_soundfont_info_w, g_soundfont_info)
-XEN_NARGIFY_1(g_preload_directory_w, g_preload_directory)
-XEN_NARGIFY_1(g_preload_file_w, g_preload_file)
+XEN_NARGIFY_1(g_add_directory_to_view_files_list_w, g_add_directory_to_view_files_list)
+XEN_NARGIFY_1(g_add_file_to_view_files_list_w, g_add_file_to_view_files_list)
 XEN_ARGIFY_1(g_sound_files_in_directory_w, g_sound_files_in_directory)
 XEN_ARGIFY_1(g_sound_loop_info_w, g_sound_loop_info)
 XEN_ARGIFY_2(g_set_sound_loop_info_w, g_set_sound_loop_info)
@@ -3117,8 +3117,8 @@ XEN_NARGIFY_1(g_set_view_files_sort_w, g_set_view_files_sort)
 #define g_add_sound_file_extension_w g_add_sound_file_extension
 #define g_file_write_date_w g_file_write_date
 #define g_soundfont_info_w g_soundfont_info
-#define g_preload_directory_w g_preload_directory
-#define g_preload_file_w g_preload_file
+#define g_add_directory_to_view_files_list_w g_add_directory_to_view_files_list
+#define g_add_file_to_view_files_list_w g_add_file_to_view_files_list
 #define g_sound_files_in_directory_w g_sound_files_in_directory
 #define g_sound_loop_info_w g_sound_loop_info
 #define g_set_sound_loop_info_w g_set_sound_loop_info
@@ -3134,17 +3134,17 @@ XEN_NARGIFY_1(g_set_view_files_sort_w, g_set_view_files_sort)
 
 void g_init_file(void)
 {
-  XEN_DEFINE_PROCEDURE(S_add_sound_file_extension,    g_add_sound_file_extension_w, 1, 0, 0, H_add_sound_file_extension);
-  XEN_DEFINE_PROCEDURE(S_file_write_date,             g_file_write_date_w,          1, 0, 0, H_file_write_date);
-  XEN_DEFINE_PROCEDURE(S_soundfont_info,              g_soundfont_info_w,           0, 1, 0, H_soundfont_info);
-  XEN_DEFINE_PROCEDURE(S_preload_directory,           g_preload_directory_w,        1, 0, 0, H_preload_directory);
-  XEN_DEFINE_PROCEDURE(S_preload_file,                g_preload_file_w,             1, 0, 0, H_preload_file);
-  XEN_DEFINE_PROCEDURE(S_sound_files_in_directory,    g_sound_files_in_directory_w, 0, 1, 0, H_sound_files_in_directory);
-  XEN_DEFINE_PROCEDURE(S_open_file_dialog,            g_open_file_dialog_w,         0, 1, 0, H_open_file_dialog);
-  XEN_DEFINE_PROCEDURE(S_mix_file_dialog,             g_mix_file_dialog_w,          0, 1, 0, H_mix_file_dialog);
-  XEN_DEFINE_PROCEDURE(S_insert_file_dialog,          g_insert_file_dialog_w,       0, 1, 0, H_insert_file_dialog);
-  XEN_DEFINE_PROCEDURE(S_disk_kspace,                 g_disk_kspace_w,              1, 0, 0, H_disk_kspace);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_sound_loop_info, g_sound_loop_info_w, H_sound_loop_info,
+  XEN_DEFINE_PROCEDURE(S_add_sound_file_extension,         g_add_sound_file_extension_w,         1, 0, 0, H_add_sound_file_extension);
+  XEN_DEFINE_PROCEDURE(S_file_write_date,                  g_file_write_date_w,                  1, 0, 0, H_file_write_date);
+  XEN_DEFINE_PROCEDURE(S_soundfont_info,                   g_soundfont_info_w,                   0, 1, 0, H_soundfont_info);
+  XEN_DEFINE_PROCEDURE(S_add_directory_to_view_files_list, g_add_directory_to_view_files_list_w, 1, 0, 0, H_add_directory_to_view_files_list);
+  XEN_DEFINE_PROCEDURE(S_add_file_to_view_files_list,      g_add_file_to_view_files_list_w,      1, 0, 0, H_add_file_to_view_files_list);
+  XEN_DEFINE_PROCEDURE(S_sound_files_in_directory,         g_sound_files_in_directory_w,         0, 1, 0, H_sound_files_in_directory);
+  XEN_DEFINE_PROCEDURE(S_open_file_dialog,                 g_open_file_dialog_w,                 0, 1, 0, H_open_file_dialog);
+  XEN_DEFINE_PROCEDURE(S_mix_file_dialog,                  g_mix_file_dialog_w,                  0, 1, 0, H_mix_file_dialog);
+  XEN_DEFINE_PROCEDURE(S_insert_file_dialog,               g_insert_file_dialog_w,               0, 1, 0, H_insert_file_dialog);
+  XEN_DEFINE_PROCEDURE(S_disk_kspace,                      g_disk_kspace_w,                      1, 0, 0, H_disk_kspace);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_sound_loop_info,      g_sound_loop_info_w, H_sound_loop_info,
 				   S_setB S_sound_loop_info, g_set_sound_loop_info_w,  0, 1, 1, 1);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_view_files_sort, g_view_files_sort_w, H_view_files_sort,
@@ -3204,10 +3204,3 @@ files list of the View Files dialog.  If it returns #t, the default action, open
 
   view_files_select_hook = XEN_DEFINE_HOOK(S_view_files_select_hook, 1, H_view_files_select_hook); /* arg = filename */
 }
-
-
-/* TODO: doc test scm rb etc
-#define S_view_files_select_hook        "view-files-select-hook"
-#define S_view_files_sort               "view-files-sort"
-#define S_view_files_sort_procedure     "view-files-sort-procedure"
-*/

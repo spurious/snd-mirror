@@ -918,11 +918,11 @@ void change_channel_style(snd_info *sp, channel_style_t new_style)
     {
       channel_style_t old_style;
       old_style = sp->channel_style;
+      sp->channel_style = new_style;
       if (new_style != old_style)
 	{
 	  int i;
 	  int height[1];
-	  sp->channel_style = new_style;
 	  if ((new_style == CHANNELS_SEPARATE) || (old_style == CHANNELS_SEPARATE))
 	    {
 	      GtkWidget* lst;
@@ -973,6 +973,7 @@ void change_channel_style(snd_info *sp, channel_style_t new_style)
 		  ncp = sp->chans[i];
 		  cleanup_cw(ncp);
 		  ncp->tcgx = mcgx;
+		  fixup_cp_cgx_ax_wn(ncp);
 		  reset_mix_graph_parent(ncp);
 		}
 	      channel_open_pane(sp->chans[0], NULL);
@@ -988,6 +989,7 @@ void change_channel_style(snd_info *sp, channel_style_t new_style)
 		  chan_context *cx;
 		  /* height[0] = total space available */
 		  height[0] /= sp->nchans;
+
 		  map_over_sound_chans(sp, channel_open_pane, NULL);
 		  for (i = 0; i < sp->nchans; i++) reset_mix_graph_parent(sp->chans[i]);
 		  pcp = sp->chans[0];
@@ -997,6 +999,7 @@ void change_channel_style(snd_info *sp, channel_style_t new_style)
 		      chan_info *cp;
 		      cp = sp->chans[i];
 		      cp->tcgx = NULL;
+		      fixup_cp_cgx_ax_wn(cp);
 		      cx = cp->cgx;
 		      cw = cx->chan_widgets;
 		      gtk_widget_show_all(cw[W_main_window]);
@@ -1009,7 +1012,9 @@ void change_channel_style(snd_info *sp, channel_style_t new_style)
 		  if (sp->selected_channel > 0) color_selected_channel(sp);
 		}
 	    }
-	  if ((new_style == CHANNELS_COMBINED) && (sp->selected_channel > 0)) color_selected_channel(sp);
+	  if ((new_style == CHANNELS_COMBINED) && 
+	      (sp->selected_channel > 0)) 
+	    color_selected_channel(sp);
 	}
     }
 }

@@ -277,16 +277,74 @@ static void region_edit_callback(Widget w, XtPointer context, XtPointer info)
     region_edit(current_region);
 }
 
+static regrow *make_regrow(Widget ww, Widget last_row, XtCallbackProc play_callback, XtCallbackProc name_callback)
+{
+  int n;
+  Arg args[32];
+  regrow *r;
+  XmString s1;
+  XtCallbackList n1, n3;
+
+  s1 = XmStringCreate("", XmFONTLIST_DEFAULT_TAG);
+  r = (regrow *)CALLOC(1, sizeof(regrow));
+
+  n = 0;
+  if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;}
+  XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
+  XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+  XtSetArg(args[n], XmNtopAttachment, (last_row) ? XmATTACH_WIDGET : XmATTACH_FORM); n++;
+  if (last_row) {XtSetArg(args[n], XmNtopWidget, last_row); n++;}
+  XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
+  XtSetArg(args[n], XmNheight, 18); n++; 
+  r->rw = XtCreateWidget("rw", xmFormWidgetClass, ww, args, n);
+
+  n = 0;
+  if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;}
+  XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
+  XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
+  XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
+  XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
+  if (!(ss->using_schemes)) {XtSetArg(args[n], XmNselectColor, ss->sgx->pushed_button_color); n++;}
+  XtSetArg(args[n], XmNlabelString, s1); n++;
+  XtSetArg(args[n], XmNvalueChangedCallback, n1 = make_callback_list(play_callback, (XtPointer)r)); n++;
+  if (ss->toggle_size > 0) {XtSetArg(args[n], XmNindicatorSize, ss->toggle_size); n++;}
+  XtSetArg(args[n], XmNmarginWidth, 8); n++;
+  r->pl = make_togglebutton_widget("pl", r->rw, args, n);
+
+  n = 0;
+  if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;}
+  XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
+  XtSetArg(args[n], XmNleftWidget, r->pl); n++;
+  XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+  XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
+  XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
+  XtSetArg(args[n], XmNshadowThickness, 0); n++;
+  XtSetArg(args[n], XmNhighlightThickness, 0); n++;
+  XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;
+  XtSetArg(args[n], XmNfillOnArm, false); n++;
+  XtSetArg(args[n], XmNrecomputeSize, false); n++;
+  XtSetArg(args[n], XmNwidth, 300); n++;
+  XtSetArg(args[n], XmNactivateCallback, n3 = make_callback_list(name_callback, (XtPointer)r)); n++;
+  r->nm = XtCreateManagedWidget("nm", xmPushButtonWidgetClass, r->rw, args, n);
+  XmStringFree(s1);
+
+  XtAddEventHandler(r->nm, EnterWindowMask, false, mouse_enter_label, (XtPointer)r);
+  XtAddEventHandler(r->nm, LeaveWindowMask, false, mouse_leave_label, (XtPointer)r);
+
+  FREE(n1);
+  FREE(n3);
+  return(r);
+}
+
 static void make_region_dialog(void)
 {
   int n, i, id;
   Arg args[32];
-  Widget formw, last_row, ww, infosep, fr ,rw;
-  Widget prtb, editb;
+  Widget formw, last_row, infosep, fr ,rw;
+  Widget prtb, editb, plw, panes, toppane, sep1 = NULL;
   XmString xok, xdelete, xhelp, titlestr;
   regrow *r;
   chan_info *cp;
-  ww_info *wwl;
 
   xok = XmStringCreate(_("Dismiss"), XmFONTLIST_DEFAULT_TAG);
   xhelp = XmStringCreate(_("Help"), XmFONTLIST_DEFAULT_TAG);
@@ -332,10 +390,47 @@ static void make_region_dialog(void)
   XtSetArg(args[n], XmNbottomWidget, XmMessageBoxGetChild(region_dialog, XmDIALOG_SEPARATOR)); n++;
   formw = XtCreateManagedWidget("formw", xmFormWidgetClass, region_dialog, args, n);
 
-  wwl = make_title_row(formw, _("play"), NULL, DONT_PAD_TITLE, WITHOUT_SORT_BUTTON, WITH_PANED_WINDOW);
-  ww = wwl->ww;
-  region_ww = ww;
-  region_list = wwl->list;
+  n = 0;
+  if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
+  XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
+  XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+  XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
+  XtSetArg(args[n], XmNtopWidget, sep1); n++;
+  XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
+  XtSetArg(args[n], XmNallowResize, true); n++;
+  panes = XtCreateManagedWidget("panes", xmPanedWindowWidgetClass, formw, args, n);
+
+  n = 0;
+  if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
+  n = attach_all_sides(args, n);
+  XtSetArg(args[n], XmNpaneMinimum, 40); n++;
+  toppane = XtCreateManagedWidget("toppane", xmFormWidgetClass, panes, args, n);
+
+  n = 0;
+  if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
+  XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
+  XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
+  XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
+  XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
+  plw = XtCreateManagedWidget(_("play"), xmLabelWidgetClass, toppane, args, n);
+  
+  n = 0;
+  XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
+  XtSetArg(args[n], XmNrightAttachment, XmATTACH_POSITION); n++;
+  XtSetArg(args[n], XmNrightPosition, 70); n++;
+  XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
+  XtSetArg(args[n], XmNtopWidget, plw); n++;
+  XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
+  XtSetArg(args[n], XmNscrollingPolicy, XmAUTOMATIC); n++;
+  XtSetArg(args[n], XmNscrollBarDisplayPolicy, XmSTATIC); n++;
+  region_list = XmCreateScrolledWindow(toppane, "reglist", args, n);
+
+  n = attach_all_sides(args, 0);
+  region_ww = XtCreateManagedWidget("ww", xmFormWidgetClass, region_list, args, n);
+  XtVaSetValues(region_list, 
+		XmNworkWindow, region_ww, 
+		NULL);
+
   if (!(ss->using_schemes)) map_over_children(region_list, set_main_color_of_widget, NULL);
   last_row = NULL;
   
@@ -343,7 +438,7 @@ static void make_region_dialog(void)
   region_rows_size = max_regions(ss);
   for (i = 0; i < max_regions(ss); i++)
     {
-      r = make_regrow(ww, last_row, region_play_callback, region_focus_callback);
+      r = make_regrow(region_ww, last_row, region_play_callback, region_focus_callback);
       region_rows[i] = r;
       r->pos = i;
       r->parent = REGION_VIEWER;
@@ -361,7 +456,7 @@ static void make_region_dialog(void)
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNorientation, XmVERTICAL); n++;
   XtSetArg(args[n], XmNseparatorType, XmSHADOW_ETCHED_IN); n++;
-  infosep = XtCreateManagedWidget("infosep", xmSeparatorWidgetClass, wwl->toppane, args, n);
+  infosep = XtCreateManagedWidget("infosep", xmSeparatorWidgetClass, toppane, args, n);
 
   n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;}
@@ -371,7 +466,7 @@ static void make_region_dialog(void)
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
   XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;
-  reg_srtxt = XtCreateManagedWidget(_("srate:"), xmLabelWidgetClass, wwl->toppane, args, n);
+  reg_srtxt = XtCreateManagedWidget(_("srate:"), xmLabelWidgetClass, toppane, args, n);
 
   n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;}
@@ -382,7 +477,7 @@ static void make_region_dialog(void)
   XtSetArg(args[n], XmNtopWidget, reg_srtxt); n++;
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
   XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;
-  reg_chntxt = XtCreateManagedWidget(_("chans:"), xmLabelWidgetClass, wwl->toppane, args, n);
+  reg_chntxt = XtCreateManagedWidget(_("chans:"), xmLabelWidgetClass, toppane, args, n);
 
   n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;}
@@ -393,7 +488,7 @@ static void make_region_dialog(void)
   XtSetArg(args[n], XmNtopWidget, reg_chntxt); n++;
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
   XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;
-  reg_lentxt = XtCreateManagedWidget(_("length:"), xmLabelWidgetClass, wwl->toppane, args, n);
+  reg_lentxt = XtCreateManagedWidget(_("length:"), xmLabelWidgetClass, toppane, args, n);
 
   n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;}
@@ -404,7 +499,7 @@ static void make_region_dialog(void)
   XtSetArg(args[n], XmNtopWidget, reg_lentxt); n++;
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
   XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;
-  reg_maxtxt = XtCreateManagedWidget(_("maxamp:"), xmLabelWidgetClass, wwl->toppane, args, n);
+  reg_maxtxt = XtCreateManagedWidget(_("maxamp:"), xmLabelWidgetClass, toppane, args, n);
 
 
   n = 0;
@@ -417,7 +512,7 @@ static void make_region_dialog(void)
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNshadowType, XmSHADOW_ETCHED_IN); n++;
   XtSetArg(args[n], XmNshadowThickness, 1); n++;
-  fr = XtCreateManagedWidget("reg-fr", xmFrameWidgetClass, wwl->toppane, args, n);
+  fr = XtCreateManagedWidget("reg-fr", xmFrameWidgetClass, toppane, args, n);
   
   n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
@@ -450,7 +545,7 @@ static void make_region_dialog(void)
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;}
   n = attach_all_sides(args, n);
   XtSetArg(args[n], XmNpaneMinimum, 150); n++;
-  region_grf = XtCreateManagedWidget("grf", xmFormWidgetClass, wwl->panes, args, n);
+  region_grf = XtCreateManagedWidget("grf", xmFormWidgetClass, panes, args, n);
 
   XtManageChild(region_dialog);
   if (widget_width(region_dialog) < 400) set_widget_width(region_dialog, 400);
@@ -463,9 +558,9 @@ static void make_region_dialog(void)
   if (!(ss->using_schemes)) 
     {
       XtVaSetValues(region_rows[0]->nm, XmNbackground, ss->sgx->white, XmNforeground, ss->sgx->black, NULL);
-      map_over_children(wwl->panes, color_sashes, NULL);
+      map_over_children(panes, color_sashes, NULL);
     }
-  XtVaSetValues(wwl->toppane, XmNpaneMinimum, 1, NULL);
+  XtVaSetValues(toppane, XmNpaneMinimum, 1, NULL);
   XtVaSetValues(region_grf, XmNpaneMinimum, 1, NULL);
 
   XtAddCallback(channel_graph(cp), XmNresizeCallback, region_resize_callback, (XtPointer)cp);
@@ -481,8 +576,6 @@ static void make_region_dialog(void)
   make_region_labels(rsp->hdr);
   highlight_region();
   region_update_graph(cp);
-  FREE(wwl); 
-  wwl = NULL;
   set_dialog_widget(REGION_DIALOG, region_dialog);
 }
 

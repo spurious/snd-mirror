@@ -2394,7 +2394,7 @@ class Snd
 
     if provided? :snd
       def add_sound_path(path)
-        preload_directory(path)
+        add_directory_to_view_files_list(path)
         Snd_path.push(path)
       end
       

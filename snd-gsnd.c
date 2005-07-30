@@ -336,6 +336,9 @@ void set_control_panel_play_button(snd_info *sp)
 }
 
 static int last_play_state = 0;
+/* these "last-*-state" variables are trying to catch C-M-click info which is then used
+ *   presumably by the immediately following value-changed callback for the given button.
+ */
 
 static gboolean play_button_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
@@ -479,7 +482,6 @@ static void unite_button_click(GtkWidget *w, gpointer data)
     }
   else val = CHANNELS_SEPARATE;
   set_sound_channel_style(sp, val);
-  last_combine_state = 0;
 }
 
 static gboolean name_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
