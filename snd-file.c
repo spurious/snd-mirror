@@ -827,8 +827,6 @@ static XEN snd_memo_sound;
 static XEN open_hook;
 static XEN close_hook;
 
-static void add_to_view_files(const char *shortname, const char *fullname);
-
 #if HAVE_GUILE_DYNAMIC_WIND
 /* cleanup even if error in file lookup process */
 typedef struct {
@@ -982,7 +980,7 @@ void snd_close_file(snd_info *sp)
 	sequester_deferred_regions(sp->chans[i], -1);
   sp->inuse = SOUND_IDLE;
   for (i = 0; i < sp->nchans; i++) sp->chans[i]->squelch_update = true;
-  add_to_view_files(sp->short_filename, sp->filename);
+  add_file_to_default_view_files_dialog(sp->filename);
   if (sp->playing) stop_playing_sound(sp, PLAY_CLOSE);
   if (sp->sgx) 
     {
@@ -1575,424 +1573,6 @@ bool run_before_save_as_hook(snd_info *sp, const char *save_as_filename, bool se
       return(!(XEN_FALSE_P(result)));
     }
   return(false);
-}
-
-
-
-/* View:Files lists */
-
-/* TODO: if no files in view files list, make menu item insensitive */
-
-static int view_files_size = 0;
-static char **view_files_names = NULL;
-static char **view_files_full_names = NULL;
-static int *view_files_times = NULL;
-static int view_files_end = -1;
-static int max_view_files_end = -1;
-static int view_files_time = 0;
-
-char *get_view_files_name(int n) {return(view_files_names[n]);}
-char *get_view_files_full_name(int n) {return(view_files_full_names[n]);}
-int get_max_view_files_end(void) {return(max_view_files_end);}
-void set_max_view_files_end(int n) {max_view_files_end = n;}
-int get_view_files_end(void) {return(view_files_end);}
-int get_view_files_size(void) {return(view_files_size);}
-
-static XEN view_files_select_hook;
-
-void view_files_select(int pos)
-{
-  XEN res = XEN_FALSE;
-  if (XEN_HOOKED(view_files_select_hook))
-    res = run_or_hook(view_files_select_hook,
-		      XEN_LIST_1(C_TO_XEN_STRING(view_files_full_names[pos])),
-		      S_view_files_select_hook);
-  if (XEN_NOT_TRUE_P(res))
-    {
-      snd_info *sp;
-      ss->open_requestor = FROM_VIEW_FILES;
-      sp = snd_open_file(view_files_full_names[pos], FILE_READ_WRITE);
-      if (sp) select_channel(sp, 0); 
-    }
-}
-
-bool view_files_play(int pos, bool play)
-{
-  static snd_info *play_sp;
-  if (play)
-    {
-      if (play_sp)
-	{
-	  if (play_sp->playing) return(true); /* can't play two of these at once */
-	  if ((view_files_names[pos] == NULL) || 
-	      (strcmp(play_sp->short_filename, view_files_names[pos]) != 0))
-	    {
-	      completely_free_snd_info(play_sp);
-	      play_sp = NULL;
-	    }
-	}
-      if ((!play_sp) && 
-	  (view_files_full_names[pos]))
-	{
-	  if (mus_file_probe(view_files_full_names[pos]))
-	    play_sp = make_sound_readable(view_files_full_names[pos], false);
-	  else snd_error(_("play file: can't find %s: %s"), view_files_full_names[pos], snd_io_strerror());
-	}
-      if (play_sp)
-	{
-	  play_sp->short_filename = view_files_names[pos];
-	  play_sp->filename = NULL;
-	  play_sound(play_sp, 0, NO_END_SPECIFIED, IN_BACKGROUND, AT_CURRENT_EDIT_POSITION);
-	}
-      else return(true); /* can't find or setup file */
-    }
-  else
-    { /* play toggled off */
-      if ((play_sp) && (play_sp->playing)) 
-	stop_playing_sound(play_sp, PLAY_BUTTON_UNSET);
-    }
-  return(false);
-}
-
-static void add_file_to_view_files_list(const char *filename, const char *fullname)
-{
-  int k;
-  if (find_view_files_regrow(filename) != -1) return;
-  view_files_end++;
-  if (view_files_end == view_files_size)
-    {
-      int new_size;
-      new_size = view_files_size + 32;
-      if (view_files_size == 0)
-	{
-	  view_files_names = (char **)CALLOC(new_size, sizeof(char *));
-	  view_files_full_names = (char **)CALLOC(new_size, sizeof(char *));
-	  view_files_times = (int *)CALLOC(new_size, sizeof(int));
-	}
-      else
-	{
-	  int i;
-	  view_files_names = (char **)REALLOC(view_files_names, new_size * sizeof(char *));
-	  view_files_full_names = (char **)REALLOC(view_files_full_names, new_size * sizeof(char *));
-	  view_files_times = (int *)REALLOC(view_files_times, new_size * sizeof(int));
-	  for (i = view_files_size; i < new_size; i++) 
-	    {
-	      view_files_names[i] = NULL; 
-	      view_files_full_names[i] = NULL; 
-	      view_files_times[i] = 0;
-	    }
-	}
-      make_vf_row(view_files_size, new_size);
-      view_files_size = new_size;
-    }
-  for (k = view_files_end; k > 0; k--) 
-    {
-      view_files_names[k] = view_files_names[k - 1]; 
-      view_files_full_names[k] = view_files_full_names[k - 1];
-      view_files_times[k] = view_files_times[k - 1];
-    }
-  view_files_names[0] = copy_string(filename);
-  view_files_full_names[0] = copy_string(fullname);
-  view_files_times[0] = view_files_time++;
-  if (max_view_files_end < view_files_end) 
-    max_view_files_end = view_files_end;
-}
-
-void add_directory_to_view_files_list(const char *dirname)
-{
-  dir *sound_files = NULL;
-  sound_files = find_sound_files_in_dir(dirname);
-  if ((sound_files) && (sound_files->len > 0))
-    {
-      char *fullpathname = NULL;
-      char **fullnames;
-      int i, end;
-      fullpathname = (char *)CALLOC(FILENAME_MAX, sizeof(char));
-      strcpy(fullpathname, dirname);
-      if (dirname[strlen(dirname) - 1] != '/') 
-	strcat(fullpathname, "/");
-      end = strlen(fullpathname);
-      fullnames = (char **)CALLOC(sound_files->len, sizeof(char *));
-      for (i = 0; i < sound_files->len; i++) 
-	{
-	  fullnames[i] = copy_string(strcat(fullpathname, sound_files->files[i]));
-	  fullpathname[end] = '\0';
-	}
-      for (i = 0; i < sound_files->len; i++) 
-	{
-	  add_file_to_view_files_list(sound_files->files[i], fullnames[i]);
-	  FREE(fullnames[i]); 
-	  fullnames[i] = NULL;
-	}
-      FREE(fullnames);
-      free_dir(sound_files);
-      FREE(fullpathname);
-    }
-  if (view_files_dialog_is_active()) make_view_files_list();
-}
-
-static void add_to_view_files(const char *shortname, const char *fullname)
-{
-  add_file_to_view_files_list(shortname, fullname);
-  if (view_files_dialog_is_active())
-    make_view_files_list();
-}
-
-void init_view_files(int size)
-{
-  if (view_files_size == 0)
-    {
-      view_files_size = size;
-      view_files_names = (char **)CALLOC(view_files_size, sizeof(char *));
-      view_files_full_names = (char **)CALLOC(view_files_size, sizeof(char *));
-      view_files_times = (int *)CALLOC(view_files_size, sizeof(int));
-    }
-}
-
-int find_view_files_regrow(const char *shortname)
-{
-  int i;
-  if (view_files_names)
-    for (i = 0; i <= view_files_end; i++)
-      if (strcmp(view_files_names[i], shortname) == 0) 
-	return(i);
-  return(-1);
-}
-
-void save_view_files_list(FILE *fd)
-{
-#if HAVE_EXTENSION_LANGUAGE
-  int i;
-  if (view_files_full_names)
-    for (i = 0; i <= view_files_end; i++)
-#if HAVE_RUBY
-      fprintf(fd, "%s \"%s\"\n",
-	      xen_scheme_procedure_to_ruby(S_add_file_to_view_files_list),
-#endif
-#if HAVE_SCHEME
-      fprintf(fd, "(%s \"%s\")\n",
-	      S_add_file_to_view_files_list,
-#endif
-	      view_files_full_names[i]);
-#endif
-}
-
-void clear_view_files_list(void)
-{
-  int i;
-  if (view_files_names)
-    {
-      for (i = 0; i < view_files_size; i++)
-	if (view_files_names[i]) 
-	  {
-	    FREE(view_files_names[i]); 
-	    view_files_names[i] = NULL;
-	    FREE(view_files_full_names[i]); 
-	    view_files_full_names[i] = NULL;
-	  }
-      view_files_end = -1;
-      view_files_time = 0;
-      make_view_files_list();
-    }
-}
-
-void update_view_files_list(void)
-{
-  /* here we need the file's full name */
-  if (view_files_names)
-    {
-      int i, j;
-      for (i = 0; i <= view_files_end; i++)
-	if (view_files_names[i]) 
-	  {
-	    int fd;
-	    fd = OPEN(view_files_full_names[i], O_RDONLY, 0);
-	    if (fd == -1) 
-	      {
-		FREE(view_files_names[i]); 
-		view_files_names[i] = NULL;
-		FREE(view_files_full_names[i]); 
-		view_files_full_names[i] = NULL;
-	      }
-	    else snd_close(fd, view_files_full_names[i]);
-	  }
-      for (i = 0, j = 0; i <= view_files_end; i++)
-	if (view_files_names[i])
-	  {
-	    if (i != j) 
-	      {
-		view_files_names[j] = view_files_names[i]; 
-		view_files_names[i] = NULL;
-		view_files_full_names[j] = view_files_full_names[i];
-		view_files_full_names[i] = NULL;
-		view_files_times[j] = view_files_times[i];
-	      }
-	    j++;
-	  }
-      view_files_end = j - 1;
-    }
-}
-
-
-/* sort view_files list by name (aphabetical), or some number (date written, size, entry order, srate? type?) */
-
-typedef struct {
-  int vals, times;
-  off_t samps;
-  char *a1, *a2;
-} heapdata;
-
-static int alphabet_compare(const void *a, const void *b)
-{
-  heapdata *d1 = *(heapdata **)a;
-  heapdata *d2 = *(heapdata **)b;
-  return(strcmp(d1->a1, d2->a1));
-}
-
-static int greater_compare(const void *a, const void *b)
-{
-  heapdata *d1 = *(heapdata **)a;
-  heapdata *d2 = *(heapdata **)b;
-  if (d1->samps > d2->samps) 
-    return(1); 
-  else 
-    {
-      if (d1->samps == d2->samps) 
-	return(0); 
-      else return(-1);
-    }
-}
-
-static int less_compare(const void *a, const void *b)
-{
-  heapdata *d1 = *(heapdata **)a;
-  heapdata *d2 = *(heapdata **)b;
-  if (d1->vals < d2->vals) 
-    return(1); 
-  else 
-    {
-      if (d1->vals == d2->vals) 
-	return(0); 
-      else return(-1);
-    }
-}
-
-void make_view_files_list_1(void)
-{
-  update_view_files_list();
-  if (view_files_end >= 0)
-    {
-      heapdata **data;
-      int i, len;
-      len = view_files_end + 1;
-      data = (heapdata **)CALLOC(len, sizeof(heapdata *));
-      for (i = 0; i < len; i++)
-	{
-	  data[i] = (heapdata *)CALLOC(1, sizeof(heapdata));
-	  data[i]->a1 = view_files_names[i];
-	  data[i]->a2 = view_files_full_names[i];
-	  data[i]->times = view_files_times[i];
-	}
-      switch (view_files_sort(ss))
-	{
-	case SORT_BY_NAME: 
-	  qsort((void *)data, view_files_end + 1, sizeof(heapdata *), alphabet_compare);
-	  break;
-	case SORT_BY_DATE:
-	  for (i = 0; i <= view_files_end; i++) 
-	    data[i]->vals = file_write_date(view_files_full_names[i]);
-	  qsort((void *)data, view_files_end + 1, sizeof(heapdata *), less_compare);
-	  break;
-	case SORT_BY_SIZE:
-	  for (i = 0; i <= view_files_end; i++) 
-	    data[i]->samps = mus_sound_samples(view_files_full_names[i]);
-	  qsort((void *)data, view_files_end + 1, sizeof(heapdata *), greater_compare);
-	  break;
-	case SORT_BY_ENTRY:
-	  for (i = 0; i <= view_files_end; i++) 
-	    data[i]->vals = view_files_times[i];
-	  qsort((void *)data, view_files_end + 1, sizeof(heapdata *), less_compare);
-	  break;
-	case SORT_BY_PROC:
-	  if (XEN_PROCEDURE_P(ss->view_files_sort_proc))
-	    {
-	      XEN file_list;
-	      int j, gc_loc;
-	      char *name;
-	      file_list = XEN_EMPTY_LIST;
-	      for (i = view_files_end; i >= 0; i--) 
-		file_list = XEN_CONS(C_TO_XEN_STRING(view_files_full_names[i]), file_list);
-	      gc_loc = snd_protect(file_list);
-	      file_list = XEN_COPY_ARG(XEN_CALL_1(ss->view_files_sort_proc, file_list, "view files sort"));
-	      snd_unprotect_at(gc_loc); /* unprotect old version */
-	      gc_loc = snd_protect(file_list); /* protect new */
-	      if (XEN_LIST_P(file_list))
-		{
-		  for (i = 0; (i < len) && (XEN_NOT_NULL_P(file_list)); i++, file_list = XEN_CDR(file_list))
-		    {
-		      name = XEN_TO_C_STRING(XEN_CAR(file_list));
-		      for (j = 0; j < len; j++)
-			if (strcmp(data[j]->a2, name) == 0)
-			  {
-			    view_files_names[i] = data[j]->a1;
-			    view_files_full_names[i] = data[j]->a2;
-			    view_files_times[i] = data[j]->times;
-			  }
-		    }
-		}
-	      snd_unprotect_at(gc_loc);
-	    }
-	  for (i = 0; i < len; i++) FREE(data[i]);
-	  FREE(data);
-	  return;
-	  break;
-	}
-      for (i = 0; i < len; i++)
-	{
-	  view_files_names[i] = data[i]->a1;
-	  view_files_full_names[i] = data[i]->a2;
-	  view_files_times[i] = data[i]->times;
-	  FREE(data[i]);
-	}
-      FREE(data);
-    }
-}
-
-static XEN g_view_files_sort_procedure(void)
-{
-  #define H_view_files_sort_procedure "(" S_view_files_sort_procedure "): sort procedure for the current files viewer"
-  return(ss->view_files_sort_proc);
-}
-
-static XEN g_set_view_files_sort_procedure(XEN proc)
-{
-  char *error = NULL;
-  if (XEN_PROCEDURE_P(ss->view_files_sort_proc))
-    {
-      snd_unprotect_at(ss->view_files_sort_proc_loc);
-      ss->view_files_sort_proc_loc = NOT_A_GC_LOC;
-    }
-  ss->view_files_sort_proc = XEN_UNDEFINED;
-  error = procedure_ok(proc, 1, "file sort", "sort", 1);
-  if (error == NULL)
-    {
-      ss->view_files_sort_proc = proc;
-      if (XEN_PROCEDURE_P(proc))
-	{
-	  ss->view_files_sort_proc_loc = snd_protect(proc);
-	  set_view_files_sort_sensitive(true);
-	}
-      else set_view_files_sort_sensitive(false);
-    }
-  else 
-    {
-      XEN errstr;
-      set_view_files_sort_sensitive(false);
-      errstr = C_TO_XEN_STRING(error);
-      FREE(error);
-      return(snd_bad_arity_error(S_setB S_view_files_sort_procedure, errstr, proc));
-    }
-  return(proc);
 }
 
 
@@ -3003,7 +2583,7 @@ static XEN g_add_directory_to_view_files_list(XEN directory)
 {
   #define H_add_directory_to_view_files_list "(" S_add_directory_to_view_files_list " dir): adds any sound files in 'dir' to the View:Files dialog"
   XEN_ASSERT_TYPE(XEN_STRING_P(directory), directory, XEN_ONLY_ARG, S_add_directory_to_view_files_list, "a string");
-  add_directory_to_view_files_list(XEN_TO_C_STRING(directory));
+  add_directory_to_default_view_files_dialog(XEN_TO_C_STRING(directory));
   return(directory);
 }
 
@@ -3014,7 +2594,7 @@ static XEN g_add_file_to_view_files_list(XEN file)
   XEN_ASSERT_TYPE(XEN_STRING_P(file), file, XEN_ONLY_ARG, S_add_file_to_view_files_list, "a string");
   name = mus_expand_filename(XEN_TO_C_STRING(file));
   if (mus_file_probe(name))
-    add_to_view_files(filename_without_home_directory(name), name);
+    add_file_to_default_view_files_dialog(name);
   if (name) FREE(name);
   return(file);
 }
@@ -3078,22 +2658,85 @@ static XEN g_insert_file_dialog(XEN managed)
   return(XEN_WRAP_WIDGET(w));
 }
 
-static XEN g_view_files_sort(void) {return(C_TO_XEN_INT(view_files_sort(ss)));}
-static XEN g_set_view_files_sort(XEN val) 
+static XEN g_view_files_dialog(XEN managed)
 {
-  #define H_view_files_sort "(" S_view_files_sort "): sort choice in view files (0 = unsorted, 1 = by name, \
-2 = by write date, 3 = by size, 4 = by directory order, 5 = by " S_view_files_sort_procedure "."
+  widget_t w;
+  #define H_view_files_dialog "(" S_view_files_dialog "): start the View Files dialog"
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(managed), managed, XEN_ONLY_ARG, S_view_files_dialog, "a boolean");
+  w = start_view_files_dialog(XEN_TO_C_BOOLEAN(managed));
+  return(XEN_WRAP_WIDGET(w));
+}
 
-  int choice;
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_view_files_sort, "an integer"); 
-  update_view_files_list();
-  choice = XEN_TO_C_INT(val);
-  if ((choice < 0) || (choice > 5))
-    XEN_OUT_OF_RANGE_ERROR(S_setB S_view_files_sort, 1, val, "~A, but must be between 0.0 and 0..5");
-  set_view_files_sort(choice);
-  if (view_files_dialog_is_active()) 
-    make_view_files_list();
-  return(C_TO_XEN_INT(view_files_sort(ss)));
+static XEN g_edit_header_dialog(XEN snd_n) 
+{
+  widget_t w;
+  #define H_edit_header_dialog "(" S_edit_header_dialog " snd): start the Edit Header dialog on sound snd"
+  snd_info *sp; 
+  sp = get_sp(snd_n, NO_PLAYERS);
+  if ((sp == NULL) || (sp->inuse != SOUND_NORMAL))
+    return(snd_no_such_sound_error(S_edit_header_dialog, snd_n));
+  w = edit_header(sp);
+  return(XEN_WRAP_WIDGET(w));
+}
+
+static XEN g_save_selection_dialog(XEN managed)
+{
+  widget_t w;
+  #define H_save_selection_dialog "(" S_save_selection_dialog "): start the Selection Save-as dialog"
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(managed), managed, XEN_ONLY_ARG, S_save_selection_dialog, "a boolean");
+  w = make_selection_save_as_dialog(XEN_TO_C_BOOLEAN(managed));
+  return(XEN_WRAP_WIDGET(w));
+}
+
+static XEN g_save_sound_dialog(XEN managed)
+{
+  widget_t w;
+  #define H_save_sound_dialog "(" S_save_sound_dialog "): start the File Save-as dialog"
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(managed), managed, XEN_ONLY_ARG, S_save_sound_dialog, "a boolean");
+  w = make_sound_save_as_dialog(XEN_TO_C_BOOLEAN(managed));
+  return(XEN_WRAP_WIDGET(w));
+}
+
+static XEN g_info_dialog(XEN subject, XEN msg)
+{
+  widget_t w;
+  #define H_info_dialog "(" S_info_dialog " subject message): start the Info window with subject and message"
+  XEN_ASSERT_TYPE(XEN_STRING_P(subject), subject, XEN_ARG_1, S_info_dialog, "a string");
+  XEN_ASSERT_TYPE(XEN_STRING_P(msg), msg, XEN_ARG_2, S_info_dialog, "a string");
+  w = post_it(XEN_TO_C_STRING(subject), XEN_TO_C_STRING(msg));
+  return(XEN_WRAP_WIDGET(w));
+}
+
+static XEN g_view_files_sort_procedure(void)
+{
+  #define H_view_files_sort_procedure "(" S_view_files_sort_procedure "): sort procedure for the current files viewer"
+  return(ss->view_files_sort_proc);
+}
+
+static XEN g_set_view_files_sort_procedure(XEN proc)
+{
+  char *error = NULL;
+  if (XEN_PROCEDURE_P(ss->view_files_sort_proc))
+    {
+      snd_unprotect_at(ss->view_files_sort_proc_loc);
+      ss->view_files_sort_proc_loc = NOT_A_GC_LOC;
+    }
+  ss->view_files_sort_proc = XEN_UNDEFINED;
+  error = procedure_ok(proc, 1, "file sort", "sort", 1);
+  if (error == NULL)
+    {
+      ss->view_files_sort_proc = proc;
+      if (XEN_PROCEDURE_P(proc))
+	ss->view_files_sort_proc_loc = snd_protect(proc);
+    }
+  else 
+    {
+      XEN errstr;
+      errstr = C_TO_XEN_STRING(error);
+      FREE(error);
+      return(snd_bad_arity_error(S_setB S_view_files_sort_procedure, errstr, proc));
+    }
+  return(proc);
 }
 
 #ifdef XEN_ARGIFY_1
@@ -3111,8 +2754,11 @@ XEN_NARGIFY_1(g_disk_kspace_w, g_disk_kspace)
 XEN_ARGIFY_1(g_open_file_dialog_w, g_open_file_dialog)
 XEN_ARGIFY_1(g_mix_file_dialog_w, g_mix_file_dialog)
 XEN_ARGIFY_1(g_insert_file_dialog_w, g_insert_file_dialog)
-XEN_NARGIFY_0(g_view_files_sort_w, g_view_files_sort)
-XEN_NARGIFY_1(g_set_view_files_sort_w, g_set_view_files_sort)
+XEN_ARGIFY_1(g_view_files_dialog_w, g_view_files_dialog)
+XEN_ARGIFY_1(g_edit_header_dialog_w, g_edit_header_dialog)
+XEN_ARGIFY_1(g_save_selection_dialog_w, g_save_selection_dialog)
+XEN_ARGIFY_1(g_save_sound_dialog_w, g_save_sound_dialog)
+XEN_NARGIFY_2(g_info_dialog_w, g_info_dialog)
 #else
 #define g_add_sound_file_extension_w g_add_sound_file_extension
 #define g_file_write_date_w g_file_write_date
@@ -3128,8 +2774,11 @@ XEN_NARGIFY_1(g_set_view_files_sort_w, g_set_view_files_sort)
 #define g_open_file_dialog_w g_open_file_dialog
 #define g_mix_file_dialog_w g_mix_file_dialog
 #define g_insert_file_dialog_w g_insert_file_dialog
-#define g_view_files_sort_w g_view_files_sort
-#define g_set_view_files_sort_w g_set_view_files_sort
+#define g_view_files_dialog_w g_view_files_dialog
+#define g_edit_header_dialog_w g_edit_header_dialog
+#define g_save_selection_dialog_w g_save_selection_dialog
+#define g_save_sound_dialog_w g_save_sound_dialog
+#define g_info_dialog_w g_info_dialog
 #endif
 
 void g_init_file(void)
@@ -3143,12 +2792,14 @@ void g_init_file(void)
   XEN_DEFINE_PROCEDURE(S_open_file_dialog,                 g_open_file_dialog_w,                 0, 1, 0, H_open_file_dialog);
   XEN_DEFINE_PROCEDURE(S_mix_file_dialog,                  g_mix_file_dialog_w,                  0, 1, 0, H_mix_file_dialog);
   XEN_DEFINE_PROCEDURE(S_insert_file_dialog,               g_insert_file_dialog_w,               0, 1, 0, H_insert_file_dialog);
+  XEN_DEFINE_PROCEDURE(S_view_files_dialog,                g_view_files_dialog_w,                0, 1, 0, H_view_files_dialog);
+  XEN_DEFINE_PROCEDURE(S_edit_header_dialog,               g_edit_header_dialog_w,               0, 1, 0, H_edit_header_dialog);
+  XEN_DEFINE_PROCEDURE(S_save_selection_dialog,            g_save_selection_dialog_w,            0, 1, 0, H_save_selection_dialog);
+  XEN_DEFINE_PROCEDURE(S_save_sound_dialog,                g_save_sound_dialog_w,                0, 1, 0, H_save_sound_dialog);
+  XEN_DEFINE_PROCEDURE(S_info_dialog,                      g_info_dialog_w,                      2, 0, 0, H_info_dialog);
   XEN_DEFINE_PROCEDURE(S_disk_kspace,                      g_disk_kspace_w,                      1, 0, 0, H_disk_kspace);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_sound_loop_info,      g_sound_loop_info_w, H_sound_loop_info,
 				   S_setB S_sound_loop_info, g_set_sound_loop_info_w,  0, 1, 1, 1);
-
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_view_files_sort, g_view_files_sort_w, H_view_files_sort,
-				   S_setB S_view_files_sort, g_set_view_files_sort_w,  0, 0, 1, 0);
 
   XEN_DEFINE_VARIABLE(S_snd_opened_sound, snd_opened_sound, XEN_FALSE);
   XEN_DEFINE_VARIABLE("memo-sound", snd_memo_sound, XEN_FALSE); /* backwards compatibility */
@@ -3198,9 +2849,4 @@ the newly updated sound may have a different index."
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_view_files_sort_procedure, g_view_files_sort_procedure_w, H_view_files_sort_procedure,
                                    S_setB S_view_files_sort_procedure, g_set_view_files_sort_procedure_w,  0, 0, 1, 0);
-
-  #define H_view_files_select_hook S_view_files_select_hook "(filename): called when a file is selected in the \
-files list of the View Files dialog.  If it returns #t, the default action, opening the file, is omitted."
-
-  view_files_select_hook = XEN_DEFINE_HOOK(S_view_files_select_hook, 1, H_view_files_select_hook); /* arg = filename */
 }

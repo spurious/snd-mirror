@@ -1432,7 +1432,7 @@ file_data *make_file_data_panel(GtkWidget *parent, char *name,
   gtk_menu_item_set_submenu(GTK_MENU_ITEM(sitem), smenu);
   gtk_menu_shell_append(GTK_MENU_SHELL(sbar), sitem);
 
-  fdat->srate_text = snd_entry_new(scbox, true);
+  fdat->srate_text = snd_entry_new(scbox, WITH_WHITE_BACKGROUND);
   SG_SIGNAL_CONNECT(fdat->srate_text, "key_press_event", data_panel_srate_key_press, NULL);
 
   SG_SIGNAL_CONNECT(s8,  "activate", s8_callback, (gpointer)fdat);
@@ -1482,7 +1482,7 @@ file_data *make_file_data_panel(GtkWidget *parent, char *name,
       gtk_menu_item_set_submenu(GTK_MENU_ITEM(citem), cmenu);
       gtk_menu_shell_append(GTK_MENU_SHELL(cbar), citem);
 
-      fdat->chans_text = snd_entry_new(scbox, true);
+      fdat->chans_text = snd_entry_new(scbox, WITH_WHITE_BACKGROUND);
 
       SG_SIGNAL_CONNECT(c1,  "activate", c1_callback, (gpointer)fdat);
       SG_SIGNAL_CONNECT(c2,  "activate", c2_callback, (gpointer)fdat);
@@ -1496,7 +1496,7 @@ file_data *make_file_data_panel(GtkWidget *parent, char *name,
 	  gtk_box_pack_start(GTK_BOX(scbox), loclab, false, false, 0);
 	  gtk_widget_show(loclab);
 
-	  fdat->location_text = snd_entry_new(scbox, true);
+	  fdat->location_text = snd_entry_new(scbox, WITH_WHITE_BACKGROUND);
 	}
     }
 
@@ -1508,7 +1508,7 @@ file_data *make_file_data_panel(GtkWidget *parent, char *name,
       gtk_box_pack_start(GTK_BOX(scbox), samplab, false, false, 0);
       gtk_widget_show(samplab);
 
-      fdat->samples_text = snd_entry_new(scbox, true);
+      fdat->samples_text = snd_entry_new(scbox, WITH_WHITE_BACKGROUND);
     }
   else
     {
@@ -2766,7 +2766,7 @@ void make_new_file_dialog(void)
       gtk_box_pack_start(GTK_BOX(hform), name_label, false, false, 2);
       gtk_widget_show(name_label);
 
-      new_file_text = snd_entry_new(hform, true);
+      new_file_text = snd_entry_new(hform, WITH_WHITE_BACKGROUND);
 
       newname = output_name(NULL); /* fix later */
       if ((newname) && (*newname))
@@ -3173,7 +3173,7 @@ void save_edit_header_dialog_state(FILE *fd)
 
 
 
-/* ---------------- POST-IT MONOLOG ---------------- */
+/* ---------------- Post-it Monolog ---------------- */
 
 #define POST_IT_ROWS 12
 #define POST_IT_COLUMNS 56
@@ -3244,6 +3244,27 @@ void save_post_it_dialog_state(FILE *fd)
 
 
 
+/* -------- view files dialog -------- */
+
+typedef struct {
+  GtkWidget *rw, *nm, *pl;  
+  int pos;
+  file_viewer_t parent;
+  void *vdat;
+} regrow;
+
+typedef struct {
+  GtkWidget *dialog, *file_list;
+  regrow **file_list_entries;
+  int size;
+  char **names;
+  char **full_names;
+  int *times;
+  int end;
+  int curtime;
+  view_files_sort_t sorter;
+} view_files_info;
+
 /* ---------------- mouse enter|leave-label ---------------- */
 
 static XEN mouse_enter_label_hook;
@@ -3259,7 +3280,7 @@ static gboolean mouse_name(XEN hook, GtkWidget *w, const char *caller)
 	{
 	  char *label = NULL;
 	  if (r->parent == FILE_VIEWER)
-	    label = get_view_files_full_name(r->pos);
+	    label = ((view_files_info *)(r->vdat))->full_names[r->pos];
 	  else label = (char *)gtk_label_get_text(GTK_LABEL(GTK_BIN(w)->child));
 	  if (label)
 	    run_hook(hook,
@@ -3272,149 +3293,28 @@ static gboolean mouse_name(XEN hook, GtkWidget *w, const char *caller)
   return(false);
 }
 
-static gboolean label_enter_callback(GtkWidget *w, GdkEventCrossing *ev, gpointer gp)
+gboolean label_enter_callback(GtkWidget *w, GdkEventCrossing *ev, gpointer gp)
 {
   return(mouse_name(mouse_enter_label_hook, w, S_mouse_enter_label_hook));
 }
 
-static gboolean label_leave_callback(GtkWidget *w, GdkEventCrossing *ev, gpointer gp)
+gboolean label_leave_callback(GtkWidget *w, GdkEventCrossing *ev, gpointer gp)
 {
   return(mouse_name(mouse_leave_label_hook, w, S_mouse_leave_label_hook));
 }
 
 
 
-/* -------- files browser and regions list widgetry -------- */
-/*
- * the region and file browsers share much widgetry -- they are supposed to look the same
- */
-
-static GtkWidget *byproc = NULL;
-void set_view_files_sort_sensitive(bool sensitive)
-{
-  if (byproc)
-    set_sensitive(byproc, sensitive);
-}
-
-/* TODO: gtk: no more make_title_row or the rest of it */
-
-ww_info *make_title_row(GtkWidget *formw, char *top_str, char *main_str, dialog_pad_t pad, dialog_sort_t with_sort, dialog_paned_t with_pane)
-{
-  GtkWidget *sep1, *cww;
-  ww_info *wwi;
-  wwi = (ww_info *)CALLOC(1, sizeof(ww_info));
-  /* assuming "formw" is a vbox */
-  if (main_str)
-    {
-      GtkWidget *rlw;
-      rlw = snd_gtk_label_new(main_str, ss->sgx->highlight_color);
-      gtk_box_pack_start(GTK_BOX(formw), rlw, false, false, 0);
-      gtk_widget_show(rlw);
-
-      sep1 = gtk_hseparator_new();
-      gtk_box_pack_start(GTK_BOX(formw), sep1, false, false, 2);
-      gtk_widget_modify_bg(sep1, GTK_STATE_NORMAL, ss->sgx->zoom_color);
-      gtk_widget_show(sep1);
-    }
-  
-  if (with_pane == WITH_PANED_WINDOW)
-    {
-      GtkWidget *phbox;
-      wwi->panes = gtk_vpaned_new();
-      gtk_box_pack_start(GTK_BOX(formw), wwi->panes, true, true, 0);
-      gtk_widget_show(wwi->panes);
-
-      wwi->toppane = gtk_hbox_new(false, 0);
-      gtk_paned_add1(GTK_PANED(wwi->panes), wwi->toppane);
-      gtk_widget_show(wwi->toppane);
-
-      phbox = gtk_vbox_new(false, 0);
-      gtk_box_pack_start(GTK_BOX(wwi->toppane), phbox, true, true, 4);
-      gtk_widget_show(phbox);
-
-      formw = phbox;
-    }
-  else 
-    {
-      wwi->panes = formw;
-      wwi->toppane = formw;
-    }
-
-  if (with_sort != WITH_SORT_BUTTON)
-    {
-      sep1 = gtk_vseparator_new(); /* not hsep -- damned thing insists on drawing a line */
-      gtk_box_pack_start(GTK_BOX(formw), sep1, false, false, 2);
-      gtk_widget_show(sep1);
-    }
-
-  wwi->tophbox = gtk_hbox_new(false, 0);
-  gtk_box_pack_start(GTK_BOX(formw), wwi->tophbox, false, false, 4);
-  gtk_widget_show(wwi->tophbox);
-
-  wwi->plw = gtk_label_new(top_str); 
-  gtk_box_pack_start(GTK_BOX(wwi->tophbox), wwi->plw, false, false, (pad == PAD_TITLE_ON_LEFT) ? 5 : 2);
-  gtk_widget_show(wwi->plw);
-
-  if (with_sort == WITH_SORT_BUTTON)
-    {
-      GtkWidget *sbar, *sitem, *smenu;
-      sbar = gtk_menu_bar_new();
-      gtk_box_pack_end(GTK_BOX(wwi->tophbox), sbar, false, false, 0);
-      gtk_widget_show(sbar);
-
-      smenu = gtk_menu_new();
-      wwi->byname = gtk_menu_item_new_with_label(_("name"));
-      wwi->bydate = gtk_menu_item_new_with_label(_("date"));
-      wwi->bysize = gtk_menu_item_new_with_label(_("size"));
-      wwi->byentry = gtk_menu_item_new_with_label(_("entry"));
-      wwi->byproc = gtk_menu_item_new_with_label(_("proc"));
-
-      gtk_menu_shell_append(GTK_MENU_SHELL(smenu), wwi->byname);
-      gtk_menu_shell_append(GTK_MENU_SHELL(smenu), wwi->bydate);
-      gtk_menu_shell_append(GTK_MENU_SHELL(smenu), wwi->bysize);
-      gtk_menu_shell_append(GTK_MENU_SHELL(smenu), wwi->byentry);
-      gtk_menu_shell_append(GTK_MENU_SHELL(smenu), wwi->byproc);
-
-      gtk_widget_show(wwi->byname);
-      gtk_widget_show(wwi->bydate);
-      gtk_widget_show(wwi->bysize);
-      gtk_widget_show(wwi->byentry);
-      gtk_widget_show(wwi->byproc);
-      byproc = wwi->byproc;
-
-      sitem = gtk_menu_item_new_with_label(_("sort"));
-      gtk_widget_show(sitem);
-      gtk_menu_item_set_submenu(GTK_MENU_ITEM(sitem), smenu);
-      gtk_menu_shell_append(GTK_MENU_SHELL(sbar), sitem);
-    }
-  else
-    {
-      sep1 = gtk_vseparator_new();
-      gtk_box_pack_start(GTK_BOX(formw), sep1, false, false, 2);
-      gtk_widget_show(sep1);
-    }
-
-  wwi->list = gtk_vbox_new(false, 0);
-
-  cww = gtk_scrolled_window_new(NULL, NULL);
-  gtk_box_pack_start(GTK_BOX(formw), cww, true, true, 0);
-  gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(cww), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
-  gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(cww), wwi->list);
-
-  gtk_widget_show(wwi->list);
-  gtk_widget_show(cww);
-
-  return(wwi);
-}
-
-regrow *make_regrow(GtkWidget *ww, GtkSignalFunc play_callback, GtkSignalFunc name_callback)
+static regrow *make_regrow(view_files_info *vdat, 
+			   GtkSignalFunc play_callback, GtkSignalFunc name_callback)
 {
   regrow *r;
   r = (regrow *)CALLOC(1, sizeof(regrow));
+  r->vdat = (void *)vdat;
+  r->parent = FILE_VIEWER;
 
-  /* assume "ww" is a vbox widget in this case */
   r->rw = gtk_hbox_new(false, 0);
-  gtk_box_pack_start(GTK_BOX(ww), r->rw, false, false, 0);
+  gtk_box_pack_start(GTK_BOX(vdat->file_list), r->rw, false, false, 0);
   gtk_widget_show(r->rw);
 
   r->pl = gtk_check_button_new();
@@ -3425,32 +3325,452 @@ regrow *make_regrow(GtkWidget *ww, GtkSignalFunc play_callback, GtkSignalFunc na
   r->nm = gtk_button_new_with_label("");
   sg_left_justify_button(r->nm);
   gtk_box_pack_start(GTK_BOX(r->rw), r->nm, true, true, 2);
+
   SG_SIGNAL_CONNECT(r->nm, "clicked", name_callback, r);
   SG_SIGNAL_CONNECT(r->nm, "enter_notify_event", label_enter_callback, r);
   SG_SIGNAL_CONNECT(r->nm, "leave_notify_event", label_leave_callback, r);
+
   set_user_data(G_OBJECT(r->nm), (gpointer)r);
   gtk_widget_show(r->nm);
-
   return(r);
 }
 
-/* -------- view files dialog -------- */
+static void view_files_clear_list(view_files_info *vdat);
 
-static GtkWidget *view_files_dialog = NULL;
-static GtkWidget *vf_lst, *vf_ww;
-static regrow **view_files_row = NULL;
+static int view_files_info_size = 0;
+static view_files_info **view_files_infos = NULL;
 
-void make_vf_row(int old_size, int new_size)
+static view_files_info *new_view_files_dialog(void)
 {
-  if (view_files_row == NULL)
-    view_files_row = (regrow **)CALLOC(new_size, sizeof(regrow *));
-  else 
+  int loc = -1;
+  if (view_files_info_size == 0)
+    {
+      loc = 0;
+      view_files_info_size = 4;
+      view_files_infos = (view_files_info **)CALLOC(view_files_info_size, sizeof(view_files_info *));
+    }
+  else
     {
       int i;
-      view_files_row = (regrow **)REALLOC(view_files_row, new_size * sizeof(regrow *));
-      for (i = old_size; i < new_size; i++) view_files_row[i] = NULL;
+      for (i = 0; i < view_files_info_size; i++)
+	if ((!view_files_infos[i]) ||
+	    (!(view_files_infos[i]->dialog)) ||
+	    (!(GTK_WIDGET_VISIBLE(view_files_infos[i]->dialog))))
+	  {
+	    loc = i;
+	    break;
+	  }
+      if (loc == -1)
+	{
+	  loc = view_files_info_size;
+	  view_files_info_size += 4;
+	  view_files_infos = (view_files_info **)REALLOC(view_files_infos, view_files_info_size * sizeof(view_files_info *));
+	  for (i = loc; i < view_files_info_size; i++) view_files_infos[i] = NULL;
+	}
+    }
+  if (!view_files_infos[loc])
+    {
+      view_files_info *v;
+      view_files_infos[loc] = (view_files_info *)CALLOC(1, sizeof(view_files_info));
+      v = view_files_infos[loc];
+      v->dialog = NULL;
+      v->file_list = NULL;
+      v->file_list_entries = NULL;
+      v->size = 0;
+      v->end = -1;
+      v->names = NULL;
+      v->full_names = NULL;
+      v->curtime = 0;
+      v->times = NULL;
+    }
+  /* don't clear at this point! */
+  view_files_infos[loc]->sorter = view_files_sort(ss);
+  return(view_files_infos[loc]);
+}
+
+
+/* REMEMBER: sort case sensitive at cascade based on proc-p */
+
+static XEN view_files_select_hook;
+
+static void view_files_select(view_files_info *vdat, int pos)
+{
+  XEN res = XEN_FALSE;
+  if (XEN_HOOKED(view_files_select_hook))
+    res = run_or_hook(view_files_select_hook,
+		      XEN_LIST_1(C_TO_XEN_STRING(vdat->full_names[pos])),
+		      S_view_files_select_hook);
+  if (XEN_NOT_TRUE_P(res))
+    {
+      snd_info *sp;
+      ss->open_requestor = FROM_VIEW_FILES;
+      sp = snd_open_file(vdat->full_names[pos], FILE_READ_WRITE);
+      if (sp) select_channel(sp, 0); 
     }
 }
+
+static bool view_files_play(view_files_info *vdat, int pos, bool play)
+{
+  static snd_info *play_sp;
+  if (play)
+    {
+      if (play_sp)
+	{
+	  if (play_sp->playing) return(true); /* can't play two of these at once */
+	  if ((vdat->names[pos] == NULL) || 
+	      (strcmp(play_sp->short_filename, vdat->names[pos]) != 0))
+	    {
+	      completely_free_snd_info(play_sp);
+	      play_sp = NULL;
+	    }
+	}
+      if ((!play_sp) && 
+	  (vdat->full_names[pos]))
+	{
+	  if (mus_file_probe(vdat->full_names[pos]))
+	    play_sp = make_sound_readable(vdat->full_names[pos], false);
+	  else snd_error(_("play file: can't find %s: %s"), vdat->full_names[pos], snd_io_strerror());
+	  /* TODO: redirect error */
+	}
+      if (play_sp)
+	{
+	  play_sp->short_filename = vdat->names[pos];
+	  play_sp->filename = NULL;
+	  play_sound(play_sp, 0, NO_END_SPECIFIED, IN_BACKGROUND, AT_CURRENT_EDIT_POSITION);
+	}
+      else return(true); /* can't find or setup file */
+    }
+  else
+    { /* play toggled off */
+      if ((play_sp) && (play_sp->playing)) 
+	stop_playing_sound(play_sp, PLAY_BUTTON_UNSET);
+    }
+  return(false);
+}
+
+static int view_files_find_row(view_files_info *vdat, const char *shortname)
+{
+  int i;
+  if (vdat->names)
+    for (i = 0; i <= vdat->end; i++)
+      if (strcmp(vdat->names[i], shortname) == 0) 
+	return(i);
+  return(-1);
+}
+
+static void add_file_to_view_files_list(view_files_info *vdat, const char *filename, const char *fullname)
+{
+  int k;
+  if (view_files_find_row(vdat, filename) != -1) return;
+  vdat->end++;
+  if (vdat->end >= vdat->size)
+    {
+      int new_size;
+      new_size = vdat->size + 32;
+      if (vdat->size == 0)
+	{
+	  vdat->names = (char **)CALLOC(new_size, sizeof(char *));
+	  vdat->full_names = (char **)CALLOC(new_size, sizeof(char *));
+	  vdat->times = (int *)CALLOC(new_size, sizeof(int));
+	}
+      else
+	{
+	  int i;
+	  vdat->names = (char **)REALLOC(vdat->names, new_size * sizeof(char *));
+	  vdat->full_names = (char **)REALLOC(vdat->full_names, new_size * sizeof(char *));
+	  vdat->times = (int *)REALLOC(vdat->times, new_size * sizeof(int));
+	  for (i = vdat->size; i < new_size; i++) 
+	    {
+	      vdat->names[i] = NULL; 
+	      vdat->full_names[i] = NULL; 
+	      vdat->times[i] = 0;
+	    }
+	}
+      if (vdat->file_list_entries == NULL)
+	vdat->file_list_entries = (regrow **)CALLOC(new_size, sizeof(regrow *));
+      else 
+	{
+	  int i;
+	  vdat->file_list_entries = (regrow **)REALLOC(vdat->file_list_entries, new_size * sizeof(regrow *));
+	  for (i = vdat->size; i < new_size; i++) vdat->file_list_entries[i] = NULL;
+	}
+      vdat->size = new_size;
+    }
+  for (k = vdat->end; k > 0; k--) 
+    {
+      vdat->names[k] = vdat->names[k - 1]; 
+      vdat->full_names[k] = vdat->full_names[k - 1];
+      vdat->times[k] = vdat->times[k - 1];
+    }
+  vdat->names[0] = copy_string(filename);
+  vdat->full_names[0] = copy_string(fullname);
+  vdat->times[0] = vdat->curtime++;
+}
+
+static void add_directory_to_view_files_list(view_files_info *vdat, const char *dirname)
+{
+  dir *sound_files = NULL;
+  sound_files = find_sound_files_in_dir(dirname);
+  if ((sound_files) && (sound_files->len > 0))
+    {
+      char *fullpathname = NULL;
+      char **fullnames;
+      int i, end;
+      fullpathname = (char *)CALLOC(FILENAME_MAX, sizeof(char));
+      strcpy(fullpathname, dirname);
+      if (dirname[strlen(dirname) - 1] != '/') 
+	strcat(fullpathname, "/");
+      end = strlen(fullpathname);
+      fullnames = (char **)CALLOC(sound_files->len, sizeof(char *));
+      for (i = 0; i < sound_files->len; i++) 
+	{
+	  fullnames[i] = copy_string(strcat(fullpathname, sound_files->files[i]));
+	  fullpathname[end] = '\0';
+	}
+      for (i = 0; i < sound_files->len; i++) 
+	{
+	  add_file_to_view_files_list(vdat, sound_files->files[i], fullnames[i]);
+	  FREE(fullnames[i]); 
+	  fullnames[i] = NULL;
+	}
+      FREE(fullnames);
+      free_dir(sound_files);
+      FREE(fullpathname);
+    }
+}
+
+static void view_files_update_list(view_files_info *vdat);
+
+/* sort view_files list by name (aphabetical), or some number (date written, size, entry order, srate? type?) */
+
+typedef struct {
+  int vals, times;
+  off_t samps;
+  char *a1, *a2;
+} heapdata;
+
+static int alphabet_compare(const void *a, const void *b)
+{
+  heapdata *d1 = *(heapdata **)a;
+  heapdata *d2 = *(heapdata **)b;
+  return(strcmp(d1->a1, d2->a1));
+}
+
+static int greater_compare(const void *a, const void *b)
+{
+  heapdata *d1 = *(heapdata **)a;
+  heapdata *d2 = *(heapdata **)b;
+  if (d1->samps > d2->samps) 
+    return(1); 
+  else 
+    {
+      if (d1->samps == d2->samps) 
+	return(0); 
+      else return(-1);
+    }
+}
+
+static int less_compare(const void *a, const void *b)
+{
+  heapdata *d1 = *(heapdata **)a;
+  heapdata *d2 = *(heapdata **)b;
+  if (d1->vals < d2->vals) 
+    return(1); 
+  else 
+    {
+      if (d1->vals == d2->vals) 
+	return(0); 
+      else return(-1);
+    }
+}
+
+static void view_files_sort_list(view_files_info *vdat)
+{
+  view_files_update_list(vdat);
+  if (vdat->end >= 0)
+    {
+      heapdata **data;
+      int i, len;
+      len = vdat->end + 1;
+      data = (heapdata **)CALLOC(len, sizeof(heapdata *));
+      for (i = 0; i < len; i++)
+	{
+	  data[i] = (heapdata *)CALLOC(1, sizeof(heapdata));
+	  data[i]->a1 = vdat->names[i];
+	  data[i]->a2 = vdat->full_names[i];
+	  data[i]->times = vdat->times[i];
+	}
+      switch (view_files_sort(ss))
+	{
+	case SORT_BY_NAME: 
+	  qsort((void *)data, vdat->end + 1, sizeof(heapdata *), alphabet_compare);
+	  break;
+	case SORT_BY_DATE:
+	  for (i = 0; i <= vdat->end; i++) 
+	    data[i]->vals = file_write_date(vdat->full_names[i]);
+	  qsort((void *)data, vdat->end + 1, sizeof(heapdata *), less_compare);
+	  break;
+	case SORT_BY_SIZE:
+	  for (i = 0; i <= vdat->end; i++) 
+	    data[i]->samps = mus_sound_samples(vdat->full_names[i]);
+	  qsort((void *)data, vdat->end + 1, sizeof(heapdata *), greater_compare);
+	  break;
+	case SORT_BY_ENTRY:
+	  for (i = 0; i <= vdat->end; i++) 
+	    data[i]->vals = vdat->times[i];
+	  qsort((void *)data, vdat->end + 1, sizeof(heapdata *), less_compare);
+	  break;
+	case SORT_BY_PROC:
+	  if (XEN_PROCEDURE_P(ss->view_files_sort_proc))
+	    {
+	      XEN file_list;
+	      int j, gc_loc;
+	      char *name;
+	      file_list = XEN_EMPTY_LIST;
+	      for (i = vdat->end; i >= 0; i--) 
+		file_list = XEN_CONS(C_TO_XEN_STRING(vdat->full_names[i]), file_list);
+	      gc_loc = snd_protect(file_list);
+	      file_list = XEN_COPY_ARG(XEN_CALL_1(ss->view_files_sort_proc, file_list, "view files sort"));
+	      snd_unprotect_at(gc_loc); /* unprotect old version */
+	      gc_loc = snd_protect(file_list); /* protect new */
+	      if (XEN_LIST_P(file_list))
+		{
+		  for (i = 0; (i < len) && (XEN_NOT_NULL_P(file_list)); i++, file_list = XEN_CDR(file_list))
+		    {
+		      name = XEN_TO_C_STRING(XEN_CAR(file_list));
+		      for (j = 0; j < len; j++)
+			if (strcmp(data[j]->a2, name) == 0)
+			  {
+			    vdat->names[i] = data[j]->a1;
+			    vdat->full_names[i] = data[j]->a2;
+			    vdat->times[i] = data[j]->times;
+			  }
+		    }
+		}
+	      snd_unprotect_at(gc_loc);
+	    }
+	  for (i = 0; i < len; i++) FREE(data[i]);
+	  FREE(data);
+	  return;
+	  break;
+	}
+      for (i = 0; i < len; i++)
+	{
+	  vdat->names[i] = data[i]->a1;
+	  vdat->full_names[i] = data[i]->a2;
+	  vdat->times[i] = data[i]->times;
+	  FREE(data[i]);
+	}
+      FREE(data);
+    }
+}
+
+static void view_files_select_callback(GtkWidget *w, gpointer context) 
+{
+  /* open and set as selected */
+  regrow *r = (regrow *)context;
+  view_files_select((view_files_info *)(r->vdat), r->pos);
+}
+
+static void view_files_play_callback(GtkWidget *w, gpointer context) 
+{
+  /* open and play -- close at end or when button off toggled */
+  regrow *r = (regrow *)context;
+  if (view_files_play((view_files_info *)(r->vdat), r->pos, GTK_TOGGLE_BUTTON(w)->active))
+    set_toggle_button(w, false, false, (void *)r);
+}
+
+static void view_files_display_list(view_files_info *vdat)
+{
+  int i;
+  regrow *r;
+  if (!vdat) return;
+  if (!(vdat->dialog)) return;
+  if (vdat->end >= 0)
+    {
+      view_files_sort_list(vdat);
+      for (i = 0; i <= vdat->end; i++)
+	{
+	  r = vdat->file_list_entries[i];
+	  if (!r)
+	    {
+	      r = make_regrow(vdat, (GtkSignalFunc)view_files_play_callback, (GtkSignalFunc)view_files_select_callback);
+	      vdat->file_list_entries[i] = r;
+	      r->pos = i;
+	    }
+	  set_button_label(r->nm, vdat->names[r->pos]);
+	  set_toggle_button(r->pl, false, false, (void *)r);
+	  gtk_widget_show(r->rw);
+	}
+    }
+  for (i = vdat->end + 1; i < vdat->size; i++)
+    {
+      r = vdat->file_list_entries[i];
+      if (r)
+	{
+	  if (GTK_WIDGET_VISIBLE(r->rw)) 
+	    gtk_widget_hide(r->rw);
+	}
+    }
+  if (!(GTK_WIDGET_VISIBLE(vdat->file_list))) 
+    gtk_widget_show(vdat->file_list);
+}
+
+static void view_files_clear_list(view_files_info *vdat)
+{
+  int i;
+  if (vdat->names)
+    {
+      for (i = 0; i < vdat->size; i++)
+	if (vdat->names[i]) 
+	  {
+	    FREE(vdat->names[i]); 
+	    vdat->names[i] = NULL;
+	    FREE(vdat->full_names[i]); 
+	    vdat->full_names[i] = NULL;
+	  }
+      vdat->end = -1;
+      vdat->curtime = 0;
+    }
+}
+
+static void view_files_update_list(view_files_info *vdat)
+{
+  /* here we need the file's full name */
+  if (vdat->names)
+    {
+      int i, j;
+      for (i = 0; i <= vdat->end; i++)
+	if (vdat->names[i]) 
+	  {
+	    int fd;
+	    fd = OPEN(vdat->full_names[i], O_RDONLY, 0);
+	    if (fd == -1) 
+	      {
+		FREE(vdat->names[i]); 
+		vdat->names[i] = NULL;
+		FREE(vdat->full_names[i]); 
+		vdat->full_names[i] = NULL;
+	      }
+	    else snd_close(fd, vdat->full_names[i]);
+	  }
+      for (i = 0, j = 0; i <= vdat->end; i++)
+	if (vdat->names[i])
+	  {
+	    if (i != j) 
+	      {
+		vdat->names[j] = vdat->names[i]; 
+		vdat->names[i] = NULL;
+		vdat->full_names[j] = vdat->full_names[i];
+		vdat->full_names[i] = NULL;
+		vdat->times[j] = vdat->times[i];
+	      }
+	    j++;
+	  }
+      vdat->end = j - 1;
+    }
+}
+
 
 static void view_files_help_callback(GtkWidget *w, gpointer context) 
 {
@@ -3459,164 +3779,143 @@ static void view_files_help_callback(GtkWidget *w, gpointer context)
 
 static void view_files_dismiss_callback(GtkWidget *w, gpointer context) 
 {
-  gtk_widget_hide(view_files_dialog);
+  view_files_info *vdat = (view_files_info *)context;
+  gtk_widget_hide(vdat->dialog);
 }
 
 static gint view_files_delete_callback(GtkWidget *w, GdkEvent *event, gpointer context)
 {
-  gtk_widget_hide(view_files_dialog);
+  view_files_info *vdat = (view_files_info *)context;
+  gtk_widget_hide(vdat->dialog);
   return(true);
 }
 
 static void view_files_clear_callback(GtkWidget *w, gpointer context) 
 {
-  /* clear files list and associated widget list */
-  clear_view_files_list();
+  view_files_info *vdat = (view_files_info *)context;
+  view_files_clear_list(vdat);
+  view_files_display_list(vdat);
+}
+
+static GtkWidget *start_view_files_dialog_1(view_files_info *vdat, bool managed);
+
+static void view_files_new_viewer_callback(GtkWidget *w, gpointer context) 
+{
+  view_files_info *vdat;
+  vdat = new_view_files_dialog();
+  start_view_files_dialog_1(vdat, true);
 }
 
 static void view_files_update_callback(GtkWidget *w, gpointer context) 
 {
-  /* run through files list looking for any that have been deleted behind our back */
-  update_view_files_list();
-  if (view_files_dialog_is_active()) make_view_files_list();
-}
-
-void set_view_files_play_button(char *name, int state)
-{
-  if (view_files_dialog_is_active())
-    {
-      int i;
-      i = find_view_files_regrow(name);
-      if (i != -1)
-	{
-	  regrow *r;
-	  r = view_files_row[i];
-	  set_toggle_button(r->pl, state, false, (void *)r);
-	}
-    }
-}
-
-static void view_files_play_callback(GtkWidget *w, gpointer context) 
-{
-  /* open and play -- close at end or when button off toggled */
-  regrow *r = (regrow *)context;
-  if (view_files_play(r->pos, GTK_TOGGLE_BUTTON(w)->active))
-    set_toggle_button(w, false, false, (void *)r);
-}
-
-static void view_files_select_callback(GtkWidget *w, gpointer context) 
-{
-  /* open and set as selected */
-  regrow *r = (regrow *)context;
-  view_files_select(r->pos);
+  view_files_info *vdat = (view_files_info *)context;
+  /* run through view files list looking for any that have been deleted behind our back */
+  view_files_update_list(vdat);
+  view_files_sort_list(vdat);
+  view_files_display_list(vdat);
 }
 
 static void sort_view_files_by_name(GtkWidget *w, gpointer context) 
 {
-  set_view_files_sort(SORT_BY_NAME);
-  make_view_files_list();
+  view_files_info *vdat = (view_files_info *)context;
+  vdat->sorter = SORT_BY_NAME;
+  view_files_sort_list(vdat);
 }
 
 static void sort_view_files_by_date(GtkWidget *w, gpointer context) 
 {
-  set_view_files_sort(SORT_BY_DATE);
-  make_view_files_list();
+  view_files_info *vdat = (view_files_info *)context;
+  vdat->sorter = SORT_BY_DATE;
+  view_files_sort_list(vdat);
 }
 
 static void sort_view_files_by_size(GtkWidget *w, gpointer context) 
 {
-  set_view_files_sort(SORT_BY_SIZE);
-  make_view_files_list();
+  view_files_info *vdat = (view_files_info *)context;
+  vdat->sorter = SORT_BY_SIZE;
+  view_files_sort_list(vdat);
 }
 
 static void sort_view_files_by_entry(GtkWidget *w, gpointer context) 
 {
-  set_view_files_sort(SORT_BY_ENTRY);
-  make_view_files_list();
+  view_files_info *vdat = (view_files_info *)context;
+  vdat->sorter = SORT_BY_ENTRY;
+  view_files_sort_list(vdat);
 }
 
 static void sort_view_files_by_user_procedure(GtkWidget *w, gpointer context) 
 {
+  view_files_info *vdat = (view_files_info *)context;
   set_view_files_sort(SORT_BY_PROC);
-  make_view_files_list();
+  view_files_sort_list(vdat);
 }
 
-void make_view_files_list (void)
+static void view_files_add_files(GtkWidget *w, gpointer context, gpointer info) 
 {
-  int i, lim;
-  regrow *r;
-  if (get_view_files_end() >= 0)
+  view_files_info *vdat = (view_files_info *)context;
+  char *file_or_dir;
+  file_or_dir = (char *)gtk_entry_get_text(GTK_ENTRY(w));
+  if ((file_or_dir) && (*file_or_dir))
     {
-      make_view_files_list_1();
-      lim = get_view_files_end();
-      for (i = 0; i <= lim; i++)
+      if (directory_p(file_or_dir))
+	add_directory_to_view_files_list(vdat, (const char *)file_or_dir);
+      else
 	{
-	  if (!((r = view_files_row[i])))
+	  char *filename;
+	  filename = mus_expand_filename((const char *)file_or_dir);
+	  if (mus_file_probe(filename))
+	    add_file_to_view_files_list(vdat, file_or_dir, filename);
+	  else
 	    {
-	      r = make_regrow(vf_ww, (void (*)())view_files_play_callback, (void (*)())view_files_select_callback);
-	      view_files_row[i] = r;
-	      r->pos = i;
-	      r->parent = FILE_VIEWER;
+	      /* TODO: error in vf: no such file etc */
 	    }
-	  set_button_label(r->nm, get_view_files_name(r->pos));
-	  set_toggle_button(r->pl, false, false, (void *)r);
-	  gtk_widget_show(r->rw);
+	  FREE(filename);
 	}
+      view_files_sort_list(vdat);
+      view_files_display_list(vdat);
     }
-  lim = get_max_view_files_end();
-  for (i = get_view_files_end() + 1; i <= lim; i++)
-    if ((r = view_files_row[i]))
-      if (GTK_WIDGET_VISIBLE(r->rw)) 
-	gtk_widget_hide(r->rw);
-  set_max_view_files_end(get_view_files_end());
-  if (!(GTK_WIDGET_VISIBLE(vf_lst))) gtk_widget_show(vf_lst);
 }
 
-/* play open for view_files, preload */
-
-GtkWidget *start_view_files_dialog(bool managed)
+static GtkWidget *start_view_files_dialog_1(view_files_info *vdat, bool managed)
 {
-  if (!view_files_dialog)
+  if (!(vdat->dialog))
     {
-      ww_info *wwl;
+      GtkWidget *bydate, *bysize, *byname, *byentry, *byproc;
+      GtkWidget *sep1, *cww, *rlw, *tophbox, *plw, *bbox, *add_text, *add_label, *addbox;
+      GtkWidget *sbar, *sitem, *smenu, *newB;
       GtkWidget *mainform, *leftform, *fileform, *updateB, *helpB, *dismissB, *clearB, *sep;
-      view_files_dialog = snd_gtk_dialog_new();
-      gtk_window_set_title(GTK_WINDOW(view_files_dialog), _("Files"));
-      sg_make_resizable(view_files_dialog);
-      gtk_container_set_border_width (GTK_CONTAINER(view_files_dialog), 10);
-      gtk_window_resize(GTK_WINDOW(view_files_dialog), 400, 200);
-      gtk_widget_realize(view_files_dialog);
+
+      vdat->dialog = snd_gtk_dialog_new();
+      gtk_window_set_title(GTK_WINDOW(vdat->dialog), _("Files"));
+      sg_make_resizable(vdat->dialog);
+      gtk_container_set_border_width (GTK_CONTAINER(vdat->dialog), 10);
+      /* gtk_window_resize(GTK_WINDOW(vdat->dialog), 400, 200); */
+      gtk_widget_realize(vdat->dialog);
 
       helpB = gtk_button_new_from_stock(GTK_STOCK_HELP);
       gtk_widget_set_name(helpB, "help_button");
 
+      newB = gtk_button_new_from_stock(GTK_STOCK_NEW);
+      gtk_widget_set_name(newB, "doit_button");
+
       dismissB = gtk_button_new_from_stock(GTK_STOCK_QUIT);
       gtk_widget_set_name(dismissB, "quit_button");
 
-      updateB = gtk_button_new_from_stock(GTK_STOCK_REFRESH);
-      gtk_widget_set_name(updateB, "doit_button");
+      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(vdat->dialog)->action_area), dismissB, true, true, 10);
+      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(vdat->dialog)->action_area), newB, true, true, 10);
+      gtk_box_pack_end(GTK_BOX(GTK_DIALOG(vdat->dialog)->action_area), helpB, true, true, 10);
 
-      clearB = gtk_button_new_from_stock(GTK_STOCK_CLEAR);
-      gtk_widget_set_name(clearB, "reset_button");
-
-      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(view_files_dialog)->action_area), dismissB, true, true, 10);
-      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(view_files_dialog)->action_area), updateB, true, true, 10);
-      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(view_files_dialog)->action_area), clearB, true, true, 10);
-      gtk_box_pack_end(GTK_BOX(GTK_DIALOG(view_files_dialog)->action_area), helpB, true, true, 10);
-
-      SG_SIGNAL_CONNECT(view_files_dialog, "delete_event", view_files_delete_callback, NULL);
-      SG_SIGNAL_CONNECT(dismissB, "clicked", view_files_dismiss_callback, NULL);
-      SG_SIGNAL_CONNECT(helpB, "clicked", view_files_help_callback, NULL);
-      SG_SIGNAL_CONNECT(updateB, "clicked", view_files_update_callback, NULL);
-      SG_SIGNAL_CONNECT(clearB, "clicked", view_files_clear_callback, NULL);
+      SG_SIGNAL_CONNECT(vdat->dialog, "delete_event", view_files_delete_callback, (gpointer)vdat);
+      SG_SIGNAL_CONNECT(dismissB, "clicked", view_files_dismiss_callback, (gpointer)vdat);
+      SG_SIGNAL_CONNECT(newB, "clicked", view_files_new_viewer_callback, (gpointer)vdat);
+      SG_SIGNAL_CONNECT(helpB, "clicked", view_files_help_callback, (gpointer)vdat);
 
       gtk_widget_show(dismissB);
-      gtk_widget_show(updateB);
+      gtk_widget_show(newB);
       gtk_widget_show(helpB);
-      gtk_widget_show(clearB);
 
       mainform = gtk_hbox_new(false, 0);
-      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(view_files_dialog)->vbox), mainform, true, true, 0);
+      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(vdat->dialog)->vbox), mainform, true, true, 0);
       gtk_widget_show(mainform);
       
       leftform = gtk_vbox_new(false, 0);
@@ -3632,28 +3931,202 @@ GtkWidget *start_view_files_dialog(bool managed)
       gtk_widget_show(fileform);
 
       /* files section: play files | files */
-      wwl = make_title_row(fileform, _("play"), _("files"), PAD_TITLE_ON_LEFT, WITH_SORT_BUTTON, WITHOUT_PANED_WINDOW);
 
-      SG_SIGNAL_CONNECT(wwl->byname,  "activate", sort_view_files_by_name, NULL);
-      SG_SIGNAL_CONNECT(wwl->bydate,  "activate", sort_view_files_by_date, NULL);
-      SG_SIGNAL_CONNECT(wwl->bysize,  "activate", sort_view_files_by_size, NULL);
-      SG_SIGNAL_CONNECT(wwl->byentry,  "activate", sort_view_files_by_entry, NULL);
-      SG_SIGNAL_CONNECT(wwl->byproc,  "activate", sort_view_files_by_user_procedure, NULL);
-      vf_ww = wwl->list;
-      vf_lst = wwl->list;
-      FREE(wwl); 
-      wwl = NULL;
-      set_dialog_widget(VIEW_FILES_DIALOG, view_files_dialog);
+      rlw = snd_gtk_label_new(_("files"), ss->sgx->highlight_color);
+      gtk_box_pack_start(GTK_BOX(fileform), rlw, false, false, 0);
+      gtk_widget_show(rlw);
+
+      sep1 = gtk_hseparator_new();
+      gtk_box_pack_start(GTK_BOX(fileform), sep1, false, false, 2);
+      gtk_widget_modify_bg(sep1, GTK_STATE_NORMAL, ss->sgx->zoom_color);
+      gtk_widget_show(sep1);
+
+      tophbox = gtk_hbox_new(false, 0);
+      gtk_box_pack_start(GTK_BOX(fileform), tophbox, false, false, 4);
+      gtk_widget_show(tophbox);
+
+      plw = gtk_label_new(_("play")); 
+      gtk_box_pack_start(GTK_BOX(tophbox), plw, false, false, 5);
+      gtk_widget_show(plw);
+
+      sbar = gtk_menu_bar_new();
+      gtk_box_pack_end(GTK_BOX(tophbox), sbar, false, false, 0);
+      gtk_widget_show(sbar);
+
+      smenu = gtk_menu_new();
+      byname = gtk_menu_item_new_with_label(_("name"));
+      bydate = gtk_menu_item_new_with_label(_("date"));
+      bysize = gtk_menu_item_new_with_label(_("size"));
+      byentry = gtk_menu_item_new_with_label(_("entry"));
+      byproc = gtk_menu_item_new_with_label(_("proc"));
+
+      gtk_menu_shell_append(GTK_MENU_SHELL(smenu), byname);
+      gtk_menu_shell_append(GTK_MENU_SHELL(smenu), bydate);
+      gtk_menu_shell_append(GTK_MENU_SHELL(smenu), bysize);
+      gtk_menu_shell_append(GTK_MENU_SHELL(smenu), byentry);
+      gtk_menu_shell_append(GTK_MENU_SHELL(smenu), byproc);
+
+      gtk_widget_show(byname);
+      gtk_widget_show(bydate);
+      gtk_widget_show(bysize);
+      gtk_widget_show(byentry);
+      gtk_widget_show(byproc);
+
+      sitem = gtk_menu_item_new_with_label(_("sort"));
+      gtk_widget_show(sitem);
+      gtk_menu_item_set_submenu(GTK_MENU_ITEM(sitem), smenu);
+      gtk_menu_shell_append(GTK_MENU_SHELL(sbar), sitem);
+
+      SG_SIGNAL_CONNECT(byname,  "activate", sort_view_files_by_name, NULL);
+      SG_SIGNAL_CONNECT(bydate,  "activate", sort_view_files_by_date, NULL);
+      SG_SIGNAL_CONNECT(bysize,  "activate", sort_view_files_by_size, NULL);
+      SG_SIGNAL_CONNECT(byentry,  "activate", sort_view_files_by_entry, NULL);
+      SG_SIGNAL_CONNECT(byproc,  "activate", sort_view_files_by_user_procedure, NULL);
+
+      vdat->file_list = gtk_vbox_new(false, 0);
+
+      cww = gtk_scrolled_window_new(NULL, NULL);
+      gtk_box_pack_start(GTK_BOX(fileform), cww, true, true, 0);
+      gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(cww), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+      gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(cww), vdat->file_list);
+
+      gtk_widget_show(vdat->file_list);
+      gtk_widget_show(cww);
+
+      bbox = gtk_hbox_new(false, 0);
+      gtk_box_pack_start(GTK_BOX(fileform), bbox, false, false, 0);
+      gtk_widget_show(bbox);
+
+      updateB = gtk_button_new_from_stock(GTK_STOCK_REFRESH);
+      gtk_widget_set_name(updateB, "doit_button");
+
+      clearB = gtk_button_new_from_stock(GTK_STOCK_CLEAR);
+      gtk_widget_set_name(clearB, "reset_button");
+
+      gtk_box_pack_start(GTK_BOX(bbox), updateB, true, true, 10);
+      gtk_box_pack_end(GTK_BOX(bbox), clearB, true, true, 10);
+
+      SG_SIGNAL_CONNECT(updateB, "clicked", view_files_update_callback, (gpointer)vdat);
+      SG_SIGNAL_CONNECT(clearB, "clicked", view_files_clear_callback, (gpointer)vdat);
+
+      gtk_widget_show(updateB);
+      gtk_widget_show(clearB);
+
+      addbox = gtk_hbox_new(false, 0);
+      gtk_box_pack_end(GTK_BOX(fileform), addbox, false, false, 0);
+      gtk_widget_show(addbox);
+
+      add_label = gtk_label_new(_("add:"));
+      gtk_box_pack_start(GTK_BOX(addbox), add_label, false, false, 4);
+      gtk_widget_show(add_label);
+
+      add_text = snd_entry_new(addbox, WITH_WHITE_BACKGROUND);
+      SG_SIGNAL_CONNECT(add_text, "activate", view_files_add_files, (gpointer)vdat);
+
+      set_dialog_widget(VIEW_FILES_DIALOG, vdat->dialog);
     }
-  make_view_files_list();
-  if (managed) gtk_widget_show(view_files_dialog);
-  return(view_files_dialog);
+  if (managed) 
+    {
+      view_files_display_list(vdat);
+      gtk_widget_show(vdat->dialog);
+    }
+  return(vdat->dialog);
 }
 
-bool view_files_dialog_is_active(void)
+static view_files_info *find_view_files_dialog(void)
 {
-  return((view_files_dialog) && (GTK_WIDGET_VISIBLE(view_files_dialog)));
+  /* first look for any existing dialog managed, then any at all, if none create one */
+  int i;
+  for (i = 0; i < view_files_info_size; i++)
+    if ((view_files_infos[i]) &&
+	(view_files_infos[i]->dialog) &&
+	(GTK_WIDGET_VISIBLE(view_files_infos[i]->dialog)))
+      return(view_files_infos[i]); /* found an active dialog -- use it */
+  return(new_view_files_dialog());
 }
+
+GtkWidget *start_view_files_dialog(bool managed)
+{
+  return(start_view_files_dialog_1(find_view_files_dialog(), managed));
+}
+
+static void view_files_save_list(view_files_info *vdat, FILE *fd)
+{
+#if HAVE_EXTENSION_LANGUAGE
+  int i;
+  if (vdat->full_names)
+    for (i = 0; i <= vdat->end; i++)
+#if HAVE_RUBY
+      fprintf(fd, "%s \"%s\"\n",
+	      xen_scheme_procedure_to_ruby(S_add_file_to_view_files_list),
+	      vdat->full_names[i]);
+#endif
+#if HAVE_SCHEME
+      fprintf(fd, "(%s \"%s\")\n",
+	      S_add_file_to_view_files_list,
+	      vdat->full_names[i]);
+#endif
+#endif
+}
+
+void save_view_files_dialogs(FILE *fd) 
+{
+  if ((view_files_infos[0]) &&
+      (view_files_infos[0]->dialog) &&
+      (GTK_WIDGET_VISIBLE(view_files_infos[0]->dialog)))
+    {
+      view_files_save_list(view_files_infos[0], fd);
+#if HAVE_SCHEME
+      fprintf(fd, "(%s #t)\n", S_view_files_dialog);
+#endif
+#if HAVE_RUBY
+      fprintf(fd, "%s(true)\n", TO_PROC_NAME(S_view_files_dialog));
+#endif
+    }
+}
+
+void add_directory_to_default_view_files_dialog(const char *dirname) 
+{
+  view_files_info *vdat;
+  vdat = find_view_files_dialog();
+  add_directory_to_view_files_list(vdat, dirname);
+}
+
+void add_file_to_default_view_files_dialog(const char *filename) 
+{
+  view_files_info *vdat;
+  char *full_filename;
+  vdat = find_view_files_dialog();
+  full_filename = mus_expand_filename((const char *)filename);
+  if (mus_file_probe(full_filename))
+    add_file_to_view_files_list(vdat, filename, full_filename);
+  FREE(full_filename);
+}
+
+
+static XEN g_view_files_sort(void) {return(C_TO_XEN_INT(view_files_sort(ss)));}
+static XEN g_set_view_files_sort(XEN val) 
+{
+  #define H_view_files_sort "(" S_view_files_sort "): sort choice in view files (0 = unsorted, 1 = by name, \
+2 = by write date, 3 = by size, 4 = by directory order, 5 = by " S_view_files_sort_procedure "."
+
+  int choice;
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_view_files_sort, "an integer"); 
+  choice = XEN_TO_C_INT(val);
+  if ((choice < 0) || (choice > 5))
+    XEN_OUT_OF_RANGE_ERROR(S_setB S_view_files_sort, 1, val, "~A, but must be between 0 and 5");
+  set_view_files_sort((view_files_sort_t)choice);
+  return(C_TO_XEN_INT((int)view_files_sort(ss)));
+}
+
+
+#ifdef XEN_ARGIFY_1
+XEN_NARGIFY_0(g_view_files_sort_w, g_view_files_sort)
+XEN_NARGIFY_1(g_set_view_files_sort_w, g_set_view_files_sort)
+#else
+#define g_view_files_sort_w g_view_files_sort
+#define g_set_view_files_sort_w g_set_view_files_sort
+#endif
 
 
 
@@ -3680,6 +4153,14 @@ is the scrolled list position of the label. The label itself is 'label'."
 
   mouse_enter_label_hook = XEN_DEFINE_HOOK(S_mouse_enter_label_hook, 3, H_mouse_enter_label_hook);
   mouse_leave_label_hook = XEN_DEFINE_HOOK(S_mouse_leave_label_hook, 3, H_mouse_leave_label_hook);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_view_files_sort, g_view_files_sort_w, H_view_files_sort,
+				   S_setB S_view_files_sort, g_set_view_files_sort_w,  0, 0, 1, 0);
+
+  #define H_view_files_select_hook S_view_files_select_hook "(filename): called when a file is selected in the \
+files list of the View Files dialog.  If it returns #t, the default action, opening the file, is omitted."
+
+  view_files_select_hook = XEN_DEFINE_HOOK(S_view_files_select_hook, 1, H_view_files_select_hook); /* arg = filename */
 }
 
 

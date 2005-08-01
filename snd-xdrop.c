@@ -6,6 +6,7 @@ static Atom FILE_NAME;               /* Sun uses this, SGI uses STRING */
 static Atom COMPOUND_TEXT;           /* various Motif widgets use this and the next */
 static Atom _MOTIF_COMPOUND_STRING;
 static Atom text_plain;              /* gtk uses this -- untested here */
+static Atom TEXT;                    /* ditto */
 
 #define WITH_DRAG_CONVERSION 0
 
@@ -19,7 +20,7 @@ static char *atom_to_filename(Atom type, XtPointer value, unsigned long length)
 {
   unsigned long i;
   char *str = NULL;
-  if ((type == XA_STRING) || (type == FILE_NAME) || (type == text_plain))
+  if ((type == XA_STRING) || (type == FILE_NAME) || (type == text_plain) || (type == TEXT))
     {
       str = (char *)CALLOC(length + 1, sizeof(char));
       for (i = 0; i < length; i++)
@@ -38,11 +39,26 @@ static char *atom_to_filename(Atom type, XtPointer value, unsigned long length)
       if ((type == COMPOUND_TEXT) || (type == _MOTIF_COMPOUND_STRING))
 	{
 	  char *temp;
-	  XmString cvt;
+	  XmString cvt, tmp;
+	  XmParseTable parser = (XmParseTable)XtCalloc(1, sizeof(XmParseMapping));
+	  int n;
+	  Arg args[12];
+
+	  /* create parse table to catch separator in XmString and insert "\n" in output */
+	  /*   multiple file names are passed this way in Motif */
+	  tmp = XmStringSeparatorCreate();
+	  n = 0;
+	  XtSetArg(args[n], XmNincludeStatus, XmINSERT); n++;
+	  XtSetArg(args[n], XmNsubstitute, tmp); n++;
+	  XtSetArg(args[n], XmNpattern, "\n"); n++;
+	  parser[0] = XmParseMappingCreate(args, n);
+
 	  if (type == _MOTIF_COMPOUND_STRING)
 	    cvt = XmCvtByteStreamToXmString((unsigned char *)value);
 	  else cvt = XmCvtCTToXmString((char *)value);
-	  temp = (char *)XmStringUnparse(cvt, NULL, XmCHARSET_TEXT, XmCHARSET_TEXT, NULL, 0, XmOUTPUT_ALL);
+	  temp = (char *)XmStringUnparse(cvt, NULL, XmCHARSET_TEXT, XmCHARSET_TEXT, parser, 1, XmOUTPUT_ALL);
+
+	  XmParseTableFree(parser, 1);
 	  XmStringFree(cvt);
 	  str = copy_string(temp);
 	  XtFree(temp);
@@ -57,6 +73,7 @@ static void massage_selection(Widget w, XtPointer context, Atom *selection, Atom
 {
   char *str = NULL;
   str = atom_to_filename(*type, value, *length);
+  /* str can contain more than one name (separated by cr) */
   if (str)
     {
       if ((!(XEN_HOOKED(drop_hook))) || 
@@ -70,6 +87,7 @@ static void massage_selection(Widget w, XtPointer context, Atom *selection, Atom
 	  if (XmIsRowColumn(caller)) /* top menuBar widget or top level menu */
 	    {
 	      ss->open_requestor = FROM_DRAG_AND_DROP;
+	      /* TODO: handle mult-file request her and below */
 	      sp = snd_open_file(str, FILE_READ_WRITE);
 	      if (sp) select_channel(sp, 0);
 	    }
@@ -96,20 +114,28 @@ static void handle_drop(Widget w, XtPointer context, XtPointer info)
   int n, i, num_targets, k;
   Atom *targets;
   XmDropTransferEntryRec entries[2];
+
   if ((cb->dropAction != XmDROP) || 
-      (cb->operation != XmDROP_COPY))
+      ((cb->operation != XmDROP_COPY) &&
+       (cb->operation != XmDROP_LINK)))
     {
       cb->dropSiteStatus = XmINVALID_DROP_SITE;
       return;
     }
+
   k = -1;
-  XtVaGetValues(cb->dragContext, XmNexportTargets, &targets, XmNnumExportTargets, &num_targets, NULL);
+  XtVaGetValues(cb->dragContext, 
+		XmNexportTargets, &targets, 
+		XmNnumExportTargets, &num_targets, 
+		NULL);
+
   for (i = 0; i < num_targets; i++) 
     if ((targets[i] == XA_STRING) || 
 	(targets[i] == FILE_NAME) ||
 	(targets[i] == COMPOUND_TEXT) ||
 	(targets[i] == _MOTIF_COMPOUND_STRING) ||
-	(targets[i] == text_plain))
+	(targets[i] == TEXT) ||
+	(targets[i] == text_plain)) /* gtk apparently, also UTF8_STRING */
       {
 	k = i; 
 	break;
@@ -131,6 +157,7 @@ static void handle_drop(Widget w, XtPointer context, XtPointer info)
       XmDropTransferStart(cb->dragContext, args, n);
       return;
     }
+
   entries[0].target = targets[k];
   entries[0].client_data = (XtPointer)w;
   mx = cb->x;
@@ -139,7 +166,8 @@ static void handle_drop(Widget w, XtPointer context, XtPointer info)
   XtSetArg(args[n], XmNdropTransfers, entries); n++;
   XtSetArg(args[n], XmNnumDropTransfers, 1); n++;
   XtSetArg(args[n], XmNtransferProc, massage_selection); n++;
-  cb->operation = XmDROP_COPY;
+  /* cb->operation = XmDROP_COPY; */
+
   XmDropTransferStart(cb->dragContext, args, n);
 }
 
@@ -218,6 +246,7 @@ static void handle_drag(Widget w, XtPointer context, XtPointer info)
 		      if ((targets[i] == XA_STRING) || 
 			  (targets[i] == FILE_NAME) ||
 			  (targets[i] == COMPOUND_TEXT) ||
+			  (targets[i] == TEXT) ||
 			  (targets[i] == _MOTIF_COMPOUND_STRING) ||
 			  (targets[i] == text_plain))
 			{
@@ -263,11 +292,12 @@ static void handle_drag(Widget w, XtPointer context, XtPointer info)
     }
 }
 
+#define NUM_TARGETS 6
 void add_drop(Widget w)
 {
   Display *dpy;
   int n;
-  Atom targets[5];
+  Atom targets[NUM_TARGETS];
   Arg args[12];
   dpy = MAIN_DISPLAY(ss);
 #if WITH_DRAG_CONVERSION
@@ -282,10 +312,14 @@ void add_drop(Widget w)
   targets[3] = _MOTIF_COMPOUND_STRING;
   text_plain = XInternAtom(dpy, "text/plain", false);
   targets[4] = text_plain;
+  TEXT = XInternAtom(dpy, "TEXT", false);
+  targets[5] = TEXT;
+  /* TODO: could we add audio/wav -- what are the audio types in this context? */
+  /* TODO: add support for array of strings/filenames -- what is the type? */
   n = 0;
   XtSetArg(args[n], XmNdropSiteOperations, XmDROP_COPY); n++;
   XtSetArg(args[n], XmNimportTargets, targets); n++;
-  XtSetArg(args[n], XmNnumImportTargets, 5); n++;
+  XtSetArg(args[n], XmNnumImportTargets, NUM_TARGETS); n++;
   XtSetArg(args[n], XmNdropProc, handle_drop); n++;
   XtSetArg(args[n], XmNdragProc, handle_drag); n++;
   XmDropSiteRegister(w, args, n);

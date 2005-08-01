@@ -841,7 +841,7 @@ static void make_file_info_pane(recorder_info *rp, GtkWidget *file_pane, int nde
   gtk_box_pack_start(GTK_BOX(filebox), file_label, false, false, 0);
   gtk_widget_show(file_label);
 
-  file_text = snd_entry_new(filebox, true);
+  file_text = snd_entry_new(filebox, WITH_WHITE_BACKGROUND);
 
   ff_sep3 = gtk_hseparator_new();
   gtk_box_pack_start(GTK_BOX(left_form), ff_sep3, false, false, 8);
@@ -882,7 +882,7 @@ static void make_file_info_pane(recorder_info *rp, GtkWidget *file_pane, int nde
   gtk_box_pack_start(GTK_BOX(durbox), rec_size_label, false, false, 0);
   gtk_widget_show(rec_size_label);
 
-  rec_size_text = snd_entry_new(durbox, true);
+  rec_size_text = snd_entry_new(durbox, WITH_WHITE_BACKGROUND);
   SG_SIGNAL_CONNECT(rec_size_text,  "activate", rec_size_changed_callback, NULL);
   widget_int_to_text(rec_size_text, rp->buffer_size);
 

@@ -906,7 +906,7 @@ void save_state(char *save_state_name)
 #if HAVE_SETLOCALE
   locale = copy_string(setlocale(LC_NUMERIC, "C")); /* must use decimal point in floats since Scheme assumes that format */
 #endif
-  save_view_files_list(save_fd);                    /* list of files (View: Files option) */
+  save_view_files_dialogs(save_fd);                 /* list of files (View: Files option) */
   save_options(save_fd);                            /* options = user-settable global state variables */
   /* the global settings need to precede possible local settings */
 
@@ -949,7 +949,6 @@ void save_state(char *save_state_name)
   if (enved_dialog_is_active()) fprintf(save_fd, BPAREN "%s" EPAREN "\n", TO_PROC_NAME(S_enved_dialog));
   if (color_dialog_is_active()) fprintf(save_fd, BPAREN "%s" EPAREN "\n", TO_PROC_NAME(S_color_dialog));
   if (orientation_dialog_is_active()) fprintf(save_fd, BPAREN "%s" EPAREN "\n", TO_PROC_NAME(S_orientation_dialog));
-  if (view_files_dialog_is_active()) fprintf(save_fd, BPAREN "%s" EPAREN "\n", TO_PROC_NAME(S_view_files_dialog));
   if (region_dialog_is_active()) fprintf(save_fd, BPAREN "%s" EPAREN "\n", TO_PROC_NAME(S_view_regions_dialog));
   if (record_dialog_is_active()) fprintf(save_fd, BPAREN "%s" EPAREN "\n", TO_PROC_NAME(S_recorder_dialog));
   save_post_it_dialog_state(save_fd);
@@ -958,7 +957,7 @@ void save_state(char *save_state_name)
   save_print_dialog_state(save_fd);
   save_help_dialog_state(save_fd);
   save_file_dialog_state(save_fd);
-  /* new-file dialog not restored because it hogs the event loop */
+  save_view_files_dialogs(save_fd);
   
   /* TODO: mix/track (and dialogs?) */
   /* MIX_DIALOG [view-mixes-dialog], TRACK_DIALOG [view-tracks-dialog]
@@ -1079,7 +1078,7 @@ int handle_next_startup_arg(int auto_open_ctr, char **auto_open_file_names, bool
 	      if ((auto_open_ctr >= args) ||
 		  (auto_open_file_names[auto_open_ctr] == NULL))
 		snd_error(_("%s but no directory to add?"), argname);
-	      else add_directory_to_view_files_list(auto_open_file_names[auto_open_ctr]);
+	      else add_directory_to_default_view_files_dialog(auto_open_file_names[auto_open_ctr]);
 	    }
 	  else
 	    {

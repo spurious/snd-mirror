@@ -127,7 +127,7 @@ static void make_edit_find_dialog(bool managed)
       gtk_box_pack_start(GTK_BOX(rc), dl, false, false, 4);
       gtk_widget_show(dl);
 
-      edit_find_text = snd_entry_new(rc, true);
+      edit_find_text = snd_entry_new(rc, WITH_WHITE_BACKGROUND);
       SG_SIGNAL_CONNECT(edit_find_text, "activate", edit_find_next, NULL);
       
       edit_find_label = gtk_label_new(_("global search"));

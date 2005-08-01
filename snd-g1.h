@@ -1,12 +1,6 @@
 #ifndef SND_G1_H
 #define SND_G1_H
 
-typedef struct {
-  GtkWidget *rw, *nm, *pl;
-  int pos;
-  file_viewer_t parent;
-} regrow;
-
 #define SOUND_ENV_EDITOR(Sp) ((env_editor *)(sp->sgx->flt))
 
 /* -------- snd-ghelp.c -------- */
@@ -88,7 +82,7 @@ void listener_append_and_prompt(char *msg);
 void clear_listener(void);
 void set_listener_text_font(void);
 void g_init_gxlistener(void);
-GtkWidget *snd_entry_new(GtkWidget *container, bool with_white_background);
+GtkWidget *snd_entry_new(GtkWidget *container, snd_entry_bg_t with_white_background);
 bool highlight_unbalanced_paren(void);
 void connect_mouse_to_text(GtkWidget *text);
 
@@ -477,16 +471,8 @@ file_data *make_file_data_panel(GtkWidget *parent, char *name,
 				header_choice_t header_choice);
 widget_t make_sound_save_as_dialog(bool managed);
 widget_t make_selection_save_as_dialog(bool managed);
-
-ww_info *make_title_row(GtkWidget *formw, char *top_str, char *main_str, dialog_pad_t pad, dialog_sort_t with_sort, dialog_paned_t with_pane);
-regrow *make_regrow(GtkWidget *ww, GtkSignalFunc play_callback, GtkSignalFunc name_callback);
-void make_vf_row(int old_size, int new_size);
-void make_view_files_list (void);
-void set_view_files_play_button(char *name, int state);
-void set_view_files_sort_sensitive(bool sensitive);
-GtkWidget *start_view_files_dialog(bool managed);
-bool view_files_dialog_is_active(void);
-
+gboolean label_enter_callback(GtkWidget *w, GdkEventCrossing *ev, gpointer gp);
+gboolean label_leave_callback(GtkWidget *w, GdkEventCrossing *ev, gpointer gp);
 void raw_data_dialog_to_file_info(const char *filename, char *title, char *info, bool read_only, bool selected);
 void make_new_file_dialog(void);
 widget_t make_mix_file_dialog(bool managed);
@@ -503,6 +489,10 @@ void save_file_dialog_state(FILE *fd);
 widget_t post_it(const char *subject, const char *str);
 void save_post_it_dialog_state(FILE *fd);
 
+void save_view_files_dialogs(FILE *fd);
+void add_directory_to_default_view_files_dialog(const char *dirname);
+void add_file_to_default_view_files_dialog(const char *dirname);
+GtkWidget *start_view_files_dialog(bool managed);
 
 
 /* -------- snd-gprint.c -------- */

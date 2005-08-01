@@ -427,7 +427,8 @@ typedef struct snd_state {
   int Max_Regions, Max_Transform_Peaks;
   int Audio_Output_Device, Audio_Input_Device;
   bool Show_Backtrace, With_GL, With_Relative_Panes;
-  int Print_Length, Dac_Size, View_Files_Sort;
+  int Print_Length, Dac_Size;
+  view_files_sort_t View_Files_Sort;
   bool Dac_Combines_Channels, Show_Selection_Transform, With_Mix_Tags, Selection_Creates_Region;
   char *Save_State_File, *Listener_Prompt;
   Float Enved_Base, Enved_Power, Auto_Update_Interval;
@@ -1317,22 +1318,6 @@ io_error_t move_file(const char *oldfile, const char *newfile);
 snd_info *make_sound_readable(const char *filename, bool post_close);
 snd_info *snd_update(snd_info *sp);
 snd_info *snd_update_within_xen(snd_info *sp, const char *caller);
-
-void view_files_select(int pos);
-bool view_files_play(int pos, bool play);
-char *get_view_files_name(int n);
-char *get_view_files_full_name(int n);
-int get_max_view_files_end(void);
-void set_max_view_files_end(int n);
-int get_view_files_end(void);
-int get_view_files_size(void);
-void save_view_files_list(FILE *fd);
-int find_view_files_regrow(const char *shortname);
-void clear_view_files_list(void);
-void update_view_files_list(void);
-void init_view_files(int size);
-void add_directory_to_view_files_list(const char *dirname);
-void make_view_files_list_1(void);
 
 char **set_header_and_data_positions(file_data *fdat, int type, int format);
 char **short_writable_headers(int *len);

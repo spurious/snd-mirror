@@ -628,12 +628,12 @@ GtkWidget *make_mix_dialog(void)
       gtk_box_pack_start(GTK_BOX(rc), w_id_label, false, false, 4);
       gtk_widget_show(w_id_label);
 
-      w_id = snd_entry_new(rc, false);
+      w_id = snd_entry_new(rc, WITH_DEFAULT_BACKGROUND);
       SG_SIGNAL_CONNECT(w_id, "activate", id_activated, NULL);
       SG_SIGNAL_CONNECT(w_id, "leave_notify_event", id_check_callback, NULL);
       SG_SIGNAL_CONNECT(w_id, "key_press_event", id_modify_callback, NULL);
 
-      w_beg = snd_entry_new(rc, false);
+      w_beg = snd_entry_new(rc, WITH_DEFAULT_BACKGROUND);
       SG_SIGNAL_CONNECT(w_beg, "activate", beg_activated, NULL);
 
       mix_play = gtk_button_new();
@@ -663,7 +663,7 @@ GtkWidget *make_mix_dialog(void)
       gtk_box_pack_start(GTK_BOX(rc1), w_track_label, false, false, 4);
       gtk_widget_show(w_track_label);
 
-      w_track = snd_entry_new(rc1, false);
+      w_track = snd_entry_new(rc1, WITH_DEFAULT_BACKGROUND);
       SG_SIGNAL_CONNECT(w_track, "activate", mix_track_activated, NULL);
       SG_SIGNAL_CONNECT(w_track, "leave_notify_event", track_check_callback, NULL);
       SG_SIGNAL_CONNECT(w_track, "key_press_event", track_modify_callback, NULL);
@@ -1538,12 +1538,12 @@ GtkWidget *make_track_dialog(void)
       gtk_box_pack_start(GTK_BOX(rc), w_track_id_label, false, false, 4);
       gtk_widget_show(w_track_id_label);
 
-      w_track_id = snd_entry_new(rc, false);
+      w_track_id = snd_entry_new(rc, WITH_DEFAULT_BACKGROUND);
       SG_SIGNAL_CONNECT(w_track_id, "activate", track_id_activated, NULL);
       SG_SIGNAL_CONNECT(w_track_id, "leave_notify_event", track_id_check_callback, NULL);
       SG_SIGNAL_CONNECT(w_track_id, "key_press_event", track_id_modify_callback, NULL);
 
-      w_track_beg = snd_entry_new(rc, false);
+      w_track_beg = snd_entry_new(rc, WITH_DEFAULT_BACKGROUND);
       SG_SIGNAL_CONNECT(w_track_beg, "activate", track_beg_activated, NULL);
 
       w_track_play = gtk_button_new();
@@ -1572,7 +1572,7 @@ GtkWidget *make_track_dialog(void)
       gtk_box_pack_start(GTK_BOX(rc1), w_track_track_label, false, false, 4);
       gtk_widget_show(w_track_track_label);
 
-      w_track_track = snd_entry_new(rc1, false);
+      w_track_track = snd_entry_new(rc1, WITH_DEFAULT_BACKGROUND);
       SG_SIGNAL_CONNECT(w_track_track, "activate", track_track_activated, NULL);
       SG_SIGNAL_CONNECT(w_track_track, "leave_notify_event", track_track_check_callback, NULL);
       SG_SIGNAL_CONNECT(w_track_track, "key_press_event", track_track_modify_callback, NULL);

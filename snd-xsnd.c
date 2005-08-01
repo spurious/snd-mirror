@@ -956,7 +956,6 @@ void set_play_button(snd_info *sp, bool val)
   if ((sp->sgx) && (!(IS_PLAYER(sp))))
     {
       XmToggleButtonSetState(PLAY_BUTTON(sp), (Boolean)val, false);
-      set_view_files_play_button(sp->short_filename, val);
       set_open_file_play_button(val);
     }
 }
@@ -977,7 +976,6 @@ static void play_button_callback(Widget w, XtPointer context, XtPointer info)
 	sp->cursor_follows_play = FOLLOW_ONCE;
       else sp->cursor_follows_play = DONT_FOLLOW;
     }
-  set_view_files_play_button(sp->short_filename, cb->set);
   cp = any_selected_channel(sp);
   goto_graph(cp);
   if (cb->set) 

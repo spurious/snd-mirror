@@ -697,14 +697,15 @@ void connect_mouse_to_text(GtkWidget *text)
   SG_SIGNAL_CONNECT(text, "leave_notify_event", mouse_leave_text_callback, NULL);
 }
 
-GtkWidget *snd_entry_new(GtkWidget *container, bool with_white_background)
+GtkWidget *snd_entry_new(GtkWidget *container, snd_entry_bg_t with_white_background)
 {
   GtkWidget *text;
   text = gtk_entry_new();
   gtk_editable_set_editable(GTK_EDITABLE(text), true);
   gtk_box_pack_start(GTK_BOX(container), text, true, true, 2);
   gtk_widget_show(text);
-  if (with_white_background) gtk_widget_modify_bg(text, GTK_STATE_NORMAL, ss->sgx->white);
+  if (with_white_background == WITH_WHITE_BACKGROUND) 
+    gtk_widget_modify_bg(text, GTK_STATE_NORMAL, ss->sgx->white);
   connect_mouse_to_text(text);
   return(text);
 }

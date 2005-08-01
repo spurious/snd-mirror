@@ -8,6 +8,12 @@
 
 /* -------- region browser -------- */
 
+typedef struct {
+  Widget rw, nm, pl;
+  int pos;
+  file_viewer_t parent;
+} regrow;
+
 static Widget region_dialog = NULL, region_list, region_grf;
 static regrow **region_rows = NULL;
 static int region_rows_size = 0;

@@ -315,7 +315,7 @@ static void create_help_monolog(void)
   gtk_box_pack_start(GTK_BOX(hbox), label, false, false, 0); 
   gtk_widget_show(label);
 
-  search = snd_entry_new(hbox, true);
+  search = snd_entry_new(hbox, WITH_WHITE_BACKGROUND);
   SG_SIGNAL_CONNECT(search, "activate", search_activated, NULL);
   gtk_widget_show(help_dialog);
   SG_SIGNAL_CONNECT(GTK_OBJECT(help_dialog), "expose_event", help_expose_callback, NULL);

@@ -322,7 +322,6 @@ void set_play_button(snd_info *sp, bool val)
   if ((sp->sgx) && (!(IS_PLAYER(sp))))
     {
       set_toggle_button(PLAY_BUTTON(sp), val, false, (void *)sp);
-      set_view_files_play_button(sp->short_filename, val);
     }
 }
 
@@ -360,7 +359,6 @@ static void play_button_click_callback(GtkWidget *w, gpointer data)
 	sp->cursor_follows_play = FOLLOW_ONCE;
       else sp->cursor_follows_play = DONT_FOLLOW;
     }
-  set_view_files_play_button(sp->short_filename, on);
   cp = any_selected_channel(sp);
   goto_graph(cp);
   if (on) 
@@ -1394,7 +1392,7 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       gtk_box_pack_start(GTK_BOX(NAME_BOX(sp)), MINIBUFFER_LABEL(sp), false, false, 0);
       gtk_widget_show(MINIBUFFER_LABEL(sp));
       
-      MINIBUFFER_TEXT(sp) = snd_entry_new(NAME_BOX(sp), false);
+      MINIBUFFER_TEXT(sp) = snd_entry_new(NAME_BOX(sp), WITH_DEFAULT_BACKGROUND);
       SG_SIGNAL_CONNECT(MINIBUFFER_TEXT(sp), "key_press_event", minibuffer_key_callback, sp);
       SG_SIGNAL_CONNECT(MINIBUFFER_TEXT(sp), "activate", minibuffer_activate_callback, sp);
       SG_SIGNAL_CONNECT(MINIBUFFER_TEXT(sp), "enter_notify_event", minibuffer_mouse_enter, sp);
@@ -1641,7 +1639,7 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       SG_SIGNAL_CONNECT(adjs[W_filter_adj], "value_changed", filter_order_callback, sp);
       gtk_widget_show(sw[W_filter_order]);
       
-      sw[W_filter] = snd_entry_new(sw[W_filter_form], false);
+      sw[W_filter] = snd_entry_new(sw[W_filter_form], WITH_DEFAULT_BACKGROUND);
       SG_SIGNAL_CONNECT(sw[W_filter], "activate", filter_activate_callback, sp);
 
       sw[W_filter_hz] = gtk_check_button_new_with_label(_("hz"));

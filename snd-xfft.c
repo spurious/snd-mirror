@@ -394,6 +394,7 @@ static void peaks_activate_callback(Widget w, XtPointer context, XtPointer info)
 	  for_each_chan(calculate_fft);
 	}
       else widget_int_to_text(w, max_transform_peaks(ss));
+      XtFree(str);
     }
 }
 
@@ -414,6 +415,7 @@ static void log_freq_start_activate_callback(Widget w, XtPointer context, XtPoin
       if (new_lfb > 0.0)
 	set_log_freq_start(new_lfb);
       else widget_float_to_text(w, log_freq_start(ss));
+      XtFree(str);
     }
 }
 
@@ -434,6 +436,7 @@ static void min_db_activate_callback(Widget w, XtPointer context, XtPointer info
       if (new_db < 0.0)
 	set_min_db(new_db);
       else widget_float_to_text(w, min_dB(ss));
+      XtFree(str);
     }
 }
 

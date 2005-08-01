@@ -934,7 +934,7 @@ GtkWidget *create_envelope_editor (void)
       gtk_box_pack_start(GTK_BOX(toprow), nameL, false, false, 0);
       gtk_widget_show(nameL);
 
-      textL = snd_entry_new(toprow, true);
+      textL = snd_entry_new(toprow, WITH_WHITE_BACKGROUND);
       SG_SIGNAL_CONNECT(textL, "activate", text_field_activated, NULL);
 
       blank = gdk_pixmap_create_from_xpm_d(MAIN_WINDOW(ss), NULL, NULL, blank_bits());

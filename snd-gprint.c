@@ -190,7 +190,7 @@ static void start_print_dialog(void)
       gtk_box_pack_start(GTK_BOX(epsbox), epslabel, false, false, 2);
       gtk_widget_show(epslabel);
       
-      print_name = snd_entry_new(epsbox, true);
+      print_name = snd_entry_new(epsbox, WITH_WHITE_BACKGROUND);
       gtk_entry_set_text(GTK_ENTRY(print_name), eps_file(ss));
 
       print_eps_or_lpr = gtk_check_button_new_with_label(_("direct to printer"));

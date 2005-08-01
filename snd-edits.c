@@ -7157,6 +7157,7 @@ io_error_t save_edits(snd_info *sp)
   int i;
   bool need_save = false;
   io_error_t err;
+  time_t current_write_date;
 
   if (sp == NULL)
     snd_error("save edits of null sound!");
@@ -7176,7 +7177,7 @@ io_error_t save_edits(snd_info *sp)
   if (!need_save) return(IO_NO_CHANGES);
 
   /* TODO: use FAM for these? */
-  time_t current_write_date;
+
   /* check for change to file while we were editing it */
   current_write_date = file_write_date(sp->filename);
   /* returns -1 if file does not exist (stat -> -1) */

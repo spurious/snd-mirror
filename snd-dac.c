@@ -570,8 +570,6 @@ static void reflect_play_stop (snd_info *sp)
 #if (!USE_NO_GUI)
   set_control_panel_play_button(sp);
 #endif
-  if (sp->short_filename)
-    set_view_files_play_button(sp->short_filename, 0);
   set_open_file_play_button(false);
   reflect_play_stop_in_popup_menu();
 }

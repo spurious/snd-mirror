@@ -2,6 +2,12 @@
 
 /* -------- region browser -------- */
 
+typedef struct {
+  GtkWidget *rw, *nm, *pl;
+  int pos;
+  file_viewer_t parent;
+} regrow;
+
 static GtkWidget *region_dialog = NULL, *region_list, *region_grf;
 static regrow **region_rows = NULL;
 static int region_rows_size = 0;
@@ -287,6 +293,33 @@ static gboolean region_labels_mouse_enter(GtkWidget *w, GdkEventCrossing *ev, gp
   return(false);
 }
 
+static regrow *make_regrow(GtkWidget *ww, GtkSignalFunc play_callback, GtkSignalFunc name_callback)
+{
+  regrow *r;
+  r = (regrow *)CALLOC(1, sizeof(regrow));
+
+  /* assume "ww" is a vbox widget in this case */
+  r->rw = gtk_hbox_new(false, 0);
+  gtk_box_pack_start(GTK_BOX(ww), r->rw, false, false, 0);
+  gtk_widget_show(r->rw);
+
+  r->pl = gtk_check_button_new();
+  gtk_box_pack_start(GTK_BOX(r->rw), r->pl, false, false, 2);
+  SG_SIGNAL_CONNECT(r->pl, "toggled", play_callback, r);
+  gtk_widget_show(r->pl);
+
+  r->nm = gtk_button_new_with_label("");
+  sg_left_justify_button(r->nm);
+  gtk_box_pack_start(GTK_BOX(r->rw), r->nm, true, true, 2);
+  SG_SIGNAL_CONNECT(r->nm, "clicked", name_callback, r);
+  SG_SIGNAL_CONNECT(r->nm, "enter_notify_event", label_enter_callback, r);
+  SG_SIGNAL_CONNECT(r->nm, "leave_notify_event", label_leave_callback, r);
+  set_user_data(G_OBJECT(r->nm), (gpointer)r);
+  gtk_widget_show(r->nm);
+
+  return(r);
+}
+
 static GtkWidget *print_button, *edit_button;
 static GtkWidget *dismiss_button, *help_button, *delete_button;
 
@@ -295,8 +328,9 @@ static void make_region_dialog(void)
   int i, id;
   regrow *r;
   chan_info *cp;
-  ww_info *wwl;
   GtkWidget *infobox, *labels, *labbox;
+  GtkWidget *sep1, *cww, *toppane, *tophbox, *plw, *formw;
+
   region_dialog = snd_gtk_dialog_new();
   SG_SIGNAL_CONNECT(region_dialog, "delete_event", region_browser_delete_callback, NULL);
   gtk_window_set_title(GTK_WINDOW(region_dialog), _("Regions"));
@@ -326,11 +360,49 @@ static void make_region_dialog(void)
   gtk_widget_show(help_button);
   gtk_widget_show(dismiss_button);
 
-  wwl = make_title_row(GTK_DIALOG(region_dialog)->vbox, _("play"), NULL, DONT_PAD_TITLE, WITHOUT_SORT_BUTTON, WITH_PANED_WINDOW);
-  region_list = wwl->list;
+
+  region_grf = gtk_vpaned_new();
+  gtk_box_pack_start(GTK_BOX(GTK_DIALOG(region_dialog)->vbox), region_grf, true, true, 0);
+  gtk_widget_show(region_grf);
+
+  toppane = gtk_hbox_new(false, 0);
+  gtk_paned_add1(GTK_PANED(region_grf), toppane);
+  gtk_widget_show(toppane);
+
+  formw = gtk_vbox_new(false, 0);
+  gtk_box_pack_start(GTK_BOX(toppane), formw, true, true, 4);
+  gtk_widget_show(formw);
+
+  sep1 = gtk_vseparator_new(); /* not hsep -- damned thing insists on drawing a line */
+  gtk_box_pack_start(GTK_BOX(formw), sep1, false, false, 2);
+  gtk_widget_show(sep1);
+
+  tophbox = gtk_hbox_new(false, 0);
+  gtk_box_pack_start(GTK_BOX(formw), tophbox, false, false, 4);
+  gtk_widget_show(tophbox);
+
+  plw = gtk_label_new(_("play")); 
+  gtk_box_pack_start(GTK_BOX(tophbox), plw, false, false, 2);
+  gtk_widget_show(plw);
+
+  sep1 = gtk_vseparator_new();
+  gtk_box_pack_start(GTK_BOX(formw), sep1, false, false, 2);
+  gtk_widget_show(sep1);
+
+
+  region_list = gtk_vbox_new(false, 0);
+
+  cww = gtk_scrolled_window_new(NULL, NULL);
+  gtk_box_pack_start(GTK_BOX(formw), cww, true, true, 0);
+  gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(cww), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+  gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(cww), region_list);
+
+  gtk_widget_show(region_list);
+  gtk_widget_show(cww);
+
 
   infobox = gtk_vbox_new(false, 0);
-  gtk_box_pack_start(GTK_BOX(wwl->toppane), infobox, false, false, 2);
+  gtk_box_pack_start(GTK_BOX(toppane), infobox, false, false, 2);
   gtk_widget_show(infobox);
   
   region_rows = (regrow **)CALLOC(max_regions(ss), sizeof(regrow *));
@@ -396,7 +468,6 @@ static void make_region_dialog(void)
   gtk_widget_modify_bg(print_button, GTK_STATE_NORMAL, ss->sgx->lighter_blue);
   gtk_widget_modify_bg(print_button, GTK_STATE_ACTIVE, ss->sgx->red);
 
-  region_grf = wwl->panes;
   gtk_widget_show(region_dialog);
 
   id = region_list_position_to_id(0);
@@ -419,8 +490,7 @@ static void make_region_dialog(void)
   make_region_labels(rsp->hdr);
   highlight_region();
   region_update_graph(cp);
-  FREE(wwl); 
-  wwl = NULL;
+
   set_dialog_widget(REGION_DIALOG, region_dialog);
 }
 

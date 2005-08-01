@@ -21,6 +21,8 @@
 #define BACKGROUND_REMOVE(func) g_source_remove(func)
 #define BACKGROUND_ADD(func, data) add_work_proc(func, (gpointer)data)
 
+typedef enum {WITH_DEFAULT_BACKGROUND, WITH_WHITE_BACKGROUND} snd_entry_bg_t;
+
 #define widget_t GtkWidget*
 #define XEN_WRAP_WIDGET(Value)   ((Value) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkWidget_"), C_TO_XEN_ULONG((unsigned long)Value)) : XEN_FALSE)
 #define XEN_WRAP_WINDOW(Value)   ((Value) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkWindow_"), C_TO_XEN_ULONG((unsigned long)Value)) : XEN_FALSE)
@@ -138,9 +140,6 @@ typedef struct {
   GdkColor *color;
 } mix_context;
 
-typedef enum {WITHOUT_PANED_WINDOW, WITH_PANED_WINDOW} dialog_paned_t;
-typedef enum {DONT_PAD_TITLE, PAD_TITLE_ON_RIGHT, PAD_TITLE_ON_LEFT} dialog_pad_t;
-typedef enum {WITHOUT_SORT_BUTTON, WITH_SORT_BUTTON} dialog_sort_t;
 typedef enum {CONTAINER_ADD, PANED_ADD, BOX_PACK, TABLE_ATTACH} widget_add_t;
 typedef enum {WITHOUT_CHANNELS_FIELD, WITH_CHANNELS_FIELD, WITH_EXTRACT_CHANNELS_FIELD} dialog_channels_t;
 typedef enum {WITHOUT_SAMPLES_FIELD, WITH_SAMPLES_FIELD} dialog_samples_t;
@@ -148,18 +147,6 @@ typedef enum {WITHOUT_DATA_LOCATION_FIELD, WITH_DATA_LOCATION_FIELD} dialog_data
 typedef enum {WITHOUT_ERROR_FIELD, WITH_ERROR_FIELD} dialog_error_t;
 typedef enum {WITHOUT_HEADER_TYPE_FIELD, WITH_HEADER_TYPE_FIELD} dialog_header_type_t;
 typedef enum {WITHOUT_COMMENT_FIELD, WITH_COMMENT_FIELD, WITH_UNLABELLED_COMMENT_FIELD} dialog_comment_t;
-
-typedef struct {
-  GtkWidget *ww;
-  GtkWidget *list;
-  GtkWidget *plw;
-  GtkWidget *bydate;
-  GtkWidget *bysize;
-  GtkWidget *byname;
-  GtkWidget *byentry;
-  GtkWidget *byproc;
-  GtkWidget *panes, *toppane, *tophbox;
-} ww_info;
 
 #define snd_ShiftMask GDK_SHIFT_MASK
 #define snd_ControlMask GDK_CONTROL_MASK

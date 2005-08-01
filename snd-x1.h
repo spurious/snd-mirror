@@ -1,12 +1,6 @@
 #ifndef SND_X1_H
 #define SND_X1_H
 
-typedef struct {
-  Widget rw, nm, pl;
-  int pos;
-  file_viewer_t parent;
-} regrow;
-
 #define SOUND_ENV_EDITOR(Sp) ((env_editor *)(sp->sgx->flt))
 
 /* -------- snd-xhelp.c -------- */
@@ -391,14 +385,6 @@ widget_t make_selection_save_as_dialog(bool managed);
 void make_new_file_dialog(void);
 void mouse_enter_label(Widget w, XtPointer context, XEvent *event, Boolean *flag);
 void mouse_leave_label(Widget w, XtPointer context, XEvent *event, Boolean *flag);
-
-void make_view_files_list(void);
-void make_vf_row(int old_size, int new_size);
-void set_view_files_play_button(char *name, int state);
-void set_view_files_sort_sensitive(bool sensitive);
-Widget start_view_files_dialog(bool managed);
-bool view_files_dialog_is_active(void);
-
 void raw_data_dialog_to_file_info(const char *filename, char *title, char *info, bool read_only, bool selected);
 Widget edit_header(snd_info *sp);
 void save_edit_header_dialog_state(FILE *fd);
@@ -414,6 +400,10 @@ void save_file_dialog_state(FILE *fd);
 widget_t post_it(const char *subject, const char *str);
 void save_post_it_dialog_state(FILE *fd);
 
+void save_view_files_dialogs(FILE *fd);
+void add_directory_to_default_view_files_dialog(const char *dirname);
+void add_file_to_default_view_files_dialog(const char *dirname);
+Widget start_view_files_dialog(bool managed);
 
 
 /* -------- snd-xenv.c -------- */

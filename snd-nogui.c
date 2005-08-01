@@ -177,14 +177,6 @@ void progress_report(snd_info *sp, const char *funcname, int curchan, int chans,
 char *get_file_dialog_sound_attributes(file_data *fdat, int *srate, int *chans, int *type, int *format, off_t *location, off_t *samples, int min_chan) {return(NULL);}
 void alert_new_file(void) {}
 void make_new_file_dialog(void) {}
-
-void make_vf_row(int old_size, int new_size) {}
-void make_view_files_list (void) {}
-void set_view_files_sort_sensitive(bool sensitive) {}
-void set_view_files_play_button(char *name, int state) {}
-int start_view_files_dialog(bool managed) {return(0);}
-bool view_files_dialog_is_active(void) {return(false);}
-
 int edit_header(snd_info *sp) {return(0);}
 void save_edit_header_dialog_state(FILE *fd) {}
 void cleanup_edit_header_watcher(void) {}
@@ -254,6 +246,11 @@ void set_revscl(snd_info *sp, Float val) {sp->reverb_control_scale = val;}
 void set_filter_order(snd_info *sp, int val) {sp->filter_control_order = val;}
 void set_filter_in_dB(snd_info *sp, bool val) {sp->filter_control_in_dB = val;}
 void set_filter_in_hz(snd_info *sp, bool val) {sp->filter_control_in_hz = val;}
+
+void save_view_files_dialogs(FILE *fd) {}
+void add_directory_to_default_view_files_dialog(const char *dirname) {}
+void add_file_to_default_view_files_dialog(const char *dirname) {}
+widget_t start_view_files_dialog(bool managed) {return(NULL);}
 
 void auto_update_restart(void) {}
 

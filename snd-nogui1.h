@@ -248,14 +248,6 @@ void clear_minibuffer_error(snd_info *sp);
 char *get_file_dialog_sound_attributes(file_data *fdat, int *srate, int *chans, int *type, int *format, off_t *location, off_t *samples, int min_chan);
 void alert_new_file(void);
 void make_new_file_dialog(void);
-
-void make_vf_row(int old_size, int new_size);
-void make_view_files_list (void);
-void set_view_files_play_button(char *name, int state);
-void set_view_files_sort_sensitive(bool sensitive);
-int start_view_files_dialog(bool managed);
-bool view_files_dialog_is_active(void);
-
 int edit_header(snd_info *sp);
 void save_edit_header_dialog_state(FILE *fd);
 void cleanup_edit_header_watcher(void);
@@ -271,6 +263,11 @@ widget_t post_it(const char *subject, const char *str);
 void save_post_it_dialog_state(FILE *fd);
 void reflect_just_sounds(void);
 void save_file_dialog_state(FILE *fd);
+
+void save_view_files_dialogs(FILE *fd);
+void add_directory_to_default_view_files_dialog(const char *dirname);
+void add_file_to_default_view_files_dialog(const char *dirname);
+widget_t start_view_files_dialog(bool managed);
 
 
 /* -------- snd-xenv.c -------- */
@@ -323,6 +320,7 @@ void cleanup_recording (void);
 widget_t snd_record_file(void);
 bool record_dialog_is_active(void);
 void reflect_amp_control_bounds_change_in_recorder(void);
+void recorder_error(char *msg);
 
 
 /* -------- snd-gxutils.c -------- */

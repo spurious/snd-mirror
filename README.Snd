@@ -214,6 +214,7 @@ Paul Davis: the original ALSA support.
 Gerd Rausch: the Sam 9407 support.
 Steven Schultz: the BSD port.
 Ludger Brummer and Charles Nichols: the Mac-OSX port.
+Thomas Klausner: the NetBSD port.
 Plus many other contributions from
   Dave Phillips, 
   Fernando Lopez-Lezcano, 
