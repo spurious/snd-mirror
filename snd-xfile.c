@@ -4598,6 +4598,7 @@ static void view_files_at_mark_callback(Widget w, XtPointer context, XtPointer i
 
 static void view_files_at_mark_text_callback(Widget w, XtPointer context, XtPointer info) 
 {
+#if 0
   view_files_info *vdat = (view_files_info *)context;
   char *str;
   str = XmTextGetString(w);
@@ -4607,6 +4608,7 @@ static void view_files_at_mark_text_callback(Widget w, XtPointer context, XtPoin
       XtFree(str);
     }
   else snd_error("no mark?");
+#endif
 }
 
 

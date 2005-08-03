@@ -24,7 +24,7 @@ static bool ignore_mus_error(int type, char *msg)
   RETSIGTYPE top_level_catch(int ignore);
 #endif
 
-static void mus_error_to_snd(int type, char *msg)
+void mus_error_to_snd(int type, char *msg)
 {
   /* it's possible to get here outside any catch, and in Guile a throw in that case
    *   kills the main program!
