@@ -8,7 +8,7 @@
    File:Edit-Header,
    File:New
    Info and Raw
-   View:Files and region lists 
+   View:Files
 */
 
 
@@ -26,7 +26,7 @@
  * TODO: scheme option for error history menu?
  * TODO: what if running src, uses its check-event to open raw data -- where is control?
  *       or similarly, stops at "ok", starts src, clicks ok?
- * TODO: need array of dialogs for enved?, open?, mix/insert?, perhaps the rest
+ * TODO: need array of dialogs for mix/insert, save-as?
  * TODO: edit-properties dialog (extension of edit-header)
  * TODO: option:settings dialog (global vars)
  * PERHAPS: audio:settings for display, perhaps reset -- as opposed to using the recorder
@@ -36,20 +36,19 @@
  * TODO: c-x c-n for new, or should c-x c-f behave as in emacs
  * TODO: add|delete-file-filter, file-filters tied to all file dialogs (panel of radio buttons where just sounds is now)
  *
- * TODO: other such lists: sound-file-extensions {transforms colormaps envelopes} [html-dirs] key-bindings macros
- *                     add|delete-completer, completers
- *   or just present the lists, -- no need for add|remove-*
- *    add-colormap add-file-filter add-sound-file-extension add-transform delete-colormap delete-file-filter delete-transform
- *
  * PERHAPS: DnD (multi-select etc) to view-files list: ../test/openmotif-2.2.4/demos/programs/filemanager/filemanager
  *    need drop-watchers here, set up on vdat to get possible multi-file string, load each
  *    similarly for the menus -- why doesn't the drag context stuff work?
  *    need same stuff on gtk side -- how do they send multi-names? Qt? etc...
  * TODO: New[Copy?] Viewer button in vf
  * TODO: need c-G play-button off in vf (restored)
- * TODO: open button rather than select->open, don't remove from vf list on open
  * TODO: in nb.scm, get the info dialog out of the line of sight and unmanage it if view-files is unmanaged
  * TODO: extlang view-files-files and view-files-selected-files (settable), view-files-update/clear?
+ * TODO: horizontal pane in view-files
+ * TODO: report-in-minibuffer extended to go to any dialog
+ * TODO: name arg to view-files-sort-proc -- replace "proc"
+ * TODO: always show bg wave in vf
+ * TODO: insert/mix vf choices/pic of new dialog etc -> docs
  */
 
 
@@ -385,7 +384,7 @@ static void add_play_and_just_sounds_buttons(Widget dialog, Widget parent, file_
 typedef struct file_dialog_info {
   bool file_dialog_read_only;
   Widget dialog;
-  Widget dialog_frame, dialog_info1, dialog_info2; /* labels giving info on selected file, or an error message */
+  Widget info_frame, info1, info2; /* labels giving info on selected file, or an error message */
   file_pattern_info *fp;
   dialog_play_info *dp;
 } file_dialog_info;
@@ -418,7 +417,7 @@ static void post_file_info(file_dialog_info *fd, const char *filename)
 	       mus_sound_srate(filename),
 	       mus_sound_duration(filename));
   label = XmStringCreateLocalized(buf);
-  XtVaSetValues(fd->dialog_info1, 
+  XtVaSetValues(fd->info1, 
 		XmNlabelString, label, 
 		NULL);
   XmStringFree(label);
@@ -434,22 +433,22 @@ static void post_file_info(file_dialog_info *fd, const char *filename)
 	       short_data_format_name(mus_sound_data_format(filename), filename),
 	       timestr);
   label = XmStringCreateLocalized(buf);
-  XtVaSetValues(fd->dialog_info2, XmNlabelString, label, NULL);
+  XtVaSetValues(fd->info2, XmNlabelString, label, NULL);
   XmStringFree(label);
   FREE(buf);
 
-  if (!(XtIsManaged(fd->dialog_info2))) 
-    XtManageChild(fd->dialog_info2);
-  if (!(XtIsManaged(fd->dialog_frame))) 
-    XtManageChild(fd->dialog_frame);
+  if (!(XtIsManaged(fd->info2))) 
+    XtManageChild(fd->info2);
+  if (!(XtIsManaged(fd->info_frame))) 
+    XtManageChild(fd->info_frame);
 }
 
 static void unpost_file_info(file_dialog_info *fd)
 {
   if (XtIsManaged(fd->dp->play_button)) 
     XtUnmanageChild(fd->dp->play_button);
-  if (XtIsManaged(fd->dialog_frame)) 
-    XtUnmanageChild(fd->dialog_frame);
+  if (XtIsManaged(fd->info_frame)) 
+    XtUnmanageChild(fd->info_frame);
 }
 
 static void file_dialog_select_callback(Widget w, XtPointer context, XtPointer info)
@@ -608,14 +607,14 @@ static file_dialog_info *make_file_dialog(bool read_only, char *title, char *sel
 				NULL);
   add_play_and_just_sounds_buttons(fd->dialog, rc1, fd->fp, fd->dp);
 
-  fd->dialog_frame = XtVaCreateWidget("", xmFrameWidgetClass, rc1, NULL);
+  fd->info_frame = XtVaCreateWidget("", xmFrameWidgetClass, rc1, NULL);
   rc2 = XtVaCreateManagedWidget("info-rc2", 
-				xmRowColumnWidgetClass, fd->dialog_frame,
+				xmRowColumnWidgetClass, fd->info_frame,
 				XmNorientation, XmVERTICAL,
 				XmNbackground, ss->sgx->highlight_color,
 				NULL);
-  fd->dialog_info1 = XtVaCreateManagedWidget("", xmLabelWidgetClass, rc2, XmNbackground, ss->sgx->highlight_color, NULL);
-  fd->dialog_info2 = XtVaCreateManagedWidget("", xmLabelWidgetClass, rc2, XmNbackground, ss->sgx->highlight_color, NULL);
+  fd->info1 = XtVaCreateManagedWidget("", xmLabelWidgetClass, rc2, XmNbackground, ss->sgx->highlight_color, NULL);
+  fd->info2 = XtVaCreateManagedWidget("", xmLabelWidgetClass, rc2, XmNbackground, ss->sgx->highlight_color, NULL);
   color_file_selection_box(fd->dialog);
 
   wtmp = XtNameToWidget(fd->dialog, "Text");
@@ -661,15 +660,15 @@ static void file_open_error(const char *error_msg, void *ufd)
   file_dialog_info *fd = (file_dialog_info *)ufd;
   XmString msg;
   msg = XmStringCreate((char *)error_msg, XmFONTLIST_DEFAULT_TAG);
-  XtVaSetValues(fd->dialog_info1, 
+  XtVaSetValues(fd->info1, 
 		XmNlabelString, msg, 
 		NULL);
   XmStringFree(msg);
 
-  if (XtIsManaged(fd->dialog_info2))
-    XtUnmanageChild(fd->dialog_info2);
-  if (!(XtIsManaged(fd->dialog_frame))) 
-    XtManageChild(fd->dialog_frame);
+  if (XtIsManaged(fd->info2))
+    XtUnmanageChild(fd->info2);
+  if (!(XtIsManaged(fd->info_frame))) 
+    XtManageChild(fd->info_frame);
 }
 
 static void open_modify_callback(Widget w, XtPointer context, XtPointer info)
@@ -679,8 +678,8 @@ static void open_modify_callback(Widget w, XtPointer context, XtPointer info)
   Widget dialog_filename_text;
   if (!(fd->fp->in_just_sounds_update)) /* auto trigger from just_sounds button -- unwanted! */
     {
-      if (XtIsManaged(fd->dialog_frame))
-	XtUnmanageChild(fd->dialog_frame);
+      if (XtIsManaged(fd->info_frame))
+	XtUnmanageChild(fd->info_frame);
       dialog_filename_text = XtNameToWidget(fd->dialog, "Text");
       if (!dialog_filename_text) 
 	dialog_filename_text = XmFileSelectionBoxGetChild(fd->dialog, XmDIALOG_TEXT);
@@ -3684,6 +3683,8 @@ void save_post_it_dialog_state(FILE *fd)
 
 /* ---------------- view files dialog ---------------- */
 
+typedef enum {VF_AT_CURSOR, VF_AT_END, VF_AT_BEGINNING, VF_AT_MARK, VF_AT_SAMPLE} vf_location_t;
+
 typedef struct {
   Widget rw, nm, pl;
   int pos;
@@ -3704,6 +3705,14 @@ typedef struct {
   int *selected_files;
   int selected_files_size;
   int currently_selected_files;
+  Widget info_frame, info1, info2;
+  Widget at_cursor_button, at_end_button, at_beginning_button, at_mark_button, at_sample_button, at_sample_text, at_mark_text;
+  Float amp;
+  Widget amp_number, amp_scrollbar;
+  off_t location;
+  vf_location_t location_choice;
+  Float speed;
+  Widget speed_number, speed_scrollbar;
 } view_files_info;
 
 
@@ -3864,6 +3873,7 @@ static view_files_info *new_view_files_dialog(void)
       v->times = NULL;
       v->selected_files = NULL;
       v->selected_files_size = 0;
+      v->location_choice = VF_AT_CURSOR;
     }
   /* don't clear at this point! */
   view_files_infos[loc]->currently_selected_files = 0;
@@ -3871,6 +3881,7 @@ static view_files_info *new_view_files_dialog(void)
   return(view_files_infos[loc]);
 }
 
+#if 0
 static char **view_files_selected_files(view_files_info *vdat)
 {
   int len;
@@ -3885,18 +3896,20 @@ static char **view_files_selected_files(view_files_info *vdat)
     }
   return(files);
 }
+#endif
 
 static void view_files_clear_selected_files(view_files_info *vdat)
 {
   int len;
   len = vdat->currently_selected_files;
+  fprintf(stderr,"clear %d\n", len);
   if (len > 0)
     {
       int i;
       for (i = 0; i < len; i++)
 	{
 	  vf_row *r;
-	  r = vdat->file_list_entries[i];
+	  r = vdat->file_list_entries[vdat->selected_files[i]];
 	  if (r)
 	    {
 	      XtVaSetValues(r->rw, XmNbackground, ss->sgx->highlight_color, NULL);
@@ -3949,13 +3962,17 @@ static void view_files_select(vf_row *r, bool add_to_selected)
 
   if (XEN_NOT_TRUE_P(res))
     {
+      /* TODO: if selected sound, include in label or use info1 for the selected file name */
       XmString s1;
       char *title;
+
+      fprintf(stderr,"files select %d\n", (int)add_to_selected);
+
       if (!add_to_selected)
 	view_files_clear_selected_files(vdat);
       if ((add_to_selected) && (vdat->currently_selected_files > 0))
-	title = copy_string("use selected files");
-      else title = mus_format("use %s", vdat->names[r->pos]);
+	title = copy_string("selected files");
+      else title = mus_format("%s", vdat->names[r->pos]);
       s1 = XmStringCreate(title, XmFONTLIST_DEFAULT_TAG);
       XtVaSetValues(vdat->left_title,
 		    XmNlabelString, s1,
@@ -4141,6 +4158,11 @@ static int less_compare(const void *a, const void *b)
     }
 }
 
+static void ignore_mus_error(int type, char *msg)
+{
+  /* squelch error */
+}
+
 static void view_files_sort_list(view_files_info *vdat)
 {
   view_files_update_list(vdat);
@@ -4157,7 +4179,7 @@ static void view_files_sort_list(view_files_info *vdat)
 	  data[i]->a2 = vdat->full_names[i];
 	  data[i]->times = vdat->times[i];
 	}
-      switch (view_files_sort(ss))
+      switch (vdat->sorter)
 	{
 	case SORT_BY_NAME: 
 	  qsort((void *)data, vdat->end + 1, sizeof(heapdata *), alphabet_compare);
@@ -4168,8 +4190,13 @@ static void view_files_sort_list(view_files_info *vdat)
 	  qsort((void *)data, vdat->end + 1, sizeof(heapdata *), less_compare);
 	  break;
 	case SORT_BY_SIZE:
-	  for (i = 0; i <= vdat->end; i++) 
-	    data[i]->samps = mus_sound_samples(vdat->full_names[i]);
+	  mus_error_set_handler(ignore_mus_error);
+	  for (i = 0; i <= vdat->end; i++)
+	    {
+	      data[i]->samps = mus_sound_samples(vdat->full_names[i]);
+	      if (data[i]->samps < 0) data[i]->samps = 0;
+	    }
+	  mus_error_set_handler(mus_error_to_snd);
 	  qsort((void *)data, vdat->end + 1, sizeof(heapdata *), greater_compare);
 	  break;
 	case SORT_BY_ENTRY:
@@ -4381,6 +4408,7 @@ static void sort_view_files_by_name(Widget w, XtPointer context, XtPointer info)
   view_files_info *vdat = (view_files_info *)context;
   vdat->sorter = SORT_BY_NAME;
   view_files_sort_list(vdat); /* TODO : needs to use local sorter */
+  view_files_display_list(vdat);
 }
 
 static void sort_view_files_by_date(Widget w, XtPointer context, XtPointer info) 
@@ -4388,6 +4416,7 @@ static void sort_view_files_by_date(Widget w, XtPointer context, XtPointer info)
   view_files_info *vdat = (view_files_info *)context;
   vdat->sorter = SORT_BY_DATE;
   view_files_sort_list(vdat);
+  view_files_display_list(vdat);
 }
 
 static void sort_view_files_by_size(Widget w, XtPointer context, XtPointer info) 
@@ -4395,6 +4424,7 @@ static void sort_view_files_by_size(Widget w, XtPointer context, XtPointer info)
   view_files_info *vdat = (view_files_info *)context;
   vdat->sorter = SORT_BY_SIZE;
   view_files_sort_list(vdat);
+  view_files_display_list(vdat);
 }
 
 static void sort_view_files_by_entry_order(Widget w, XtPointer context, XtPointer info) 
@@ -4402,6 +4432,7 @@ static void sort_view_files_by_entry_order(Widget w, XtPointer context, XtPointe
   view_files_info *vdat = (view_files_info *)context;
   vdat->sorter = SORT_BY_ENTRY;
   view_files_sort_list(vdat);
+  view_files_display_list(vdat);
 }
 
 static void sort_view_files_by_user_procedure(Widget w, XtPointer context, XtPointer info) 
@@ -4409,6 +4440,7 @@ static void sort_view_files_by_user_procedure(Widget w, XtPointer context, XtPoi
   view_files_info *vdat = (view_files_info *)context;
   set_view_files_sort(SORT_BY_PROC);
   view_files_sort_list(vdat);
+  view_files_display_list(vdat);
 }
 
 static void view_files_add_files(Widget w, XtPointer context, XtPointer info) 
@@ -4438,11 +4470,389 @@ static void view_files_add_files(Widget w, XtPointer context, XtPointer info)
     }
 }
 
-static void sort_menu_update(Widget w, XtPointer info, XtPointer context)
+static void view_files_drop_watcher(Widget w, const char *str, Position x, Position y, void *context)
 {
   view_files_info *vdat = (view_files_info *)context;
-  XtSetSensitive(vdat->byproc, XEN_PROCEDURE_P(ss->view_files_sort_proc));
+  char *filename;
+  filename = mus_expand_filename(str);
+  if (mus_file_probe(filename))
+    add_file_to_view_files_list(vdat, str, filename);
+  FREE(filename);
+  view_files_sort_list(vdat);
+  view_files_display_list(vdat);
 }
+
+static void view_files_open_selected_callback(Widget w, XtPointer context, XtPointer info) 
+{
+  view_files_info *vdat = (view_files_info *)context;
+  snd_info *sp;
+  ss->open_requestor = FROM_VIEW_FILES;
+  /* TODO: open all selected files */
+  if (vdat->currently_selected_files > 0)
+    {
+      sp = snd_open_file(vdat->full_names[vdat->selected_files[0]], FILE_READ_WRITE);
+      if (sp) select_channel(sp, 0); 
+    }
+}
+
+static void view_files_remove_selected_callback(Widget w, XtPointer context, XtPointer info) 
+{
+  int i;
+  view_files_info *vdat = (view_files_info *)context;
+  for (i = 0; i < vdat->currently_selected_files; i++)
+    if (vdat->names[i]) 
+      {
+	FREE(vdat->names[i]); 
+	vdat->names[i] = NULL;
+	FREE(vdat->full_names[i]); 
+	vdat->full_names[i] = NULL;
+      }
+  vdat->currently_selected_files = 0;
+  view_files_update_list(vdat);
+  view_files_display_list(vdat);
+}
+
+static void view_files_insert_selected_callback(Widget w, XtPointer context, XtPointer info) 
+{
+  /*
+  view_files_info *vdat = (view_files_info *)context;
+  fprintf(stderr, "insert selected");
+  */
+}
+
+static void view_files_mix_selected_callback(Widget w, XtPointer context, XtPointer info) 
+{
+  /* 
+  view_files_info *vdat = (view_files_info *)context;
+  fprintf(stderr, "mix selected");
+  */
+}
+
+static void view_files_at_cursor_callback(Widget w, XtPointer context, XtPointer info) 
+{
+  view_files_info *vdat = (view_files_info *)context;
+  XmToggleButtonSetState(vdat->at_cursor_button, true, false);
+  XmToggleButtonSetState(vdat->at_end_button, false, false);
+  XmToggleButtonSetState(vdat->at_beginning_button, false, false);
+  XmToggleButtonSetState(vdat->at_mark_button, false, false);
+  XmToggleButtonSetState(vdat->at_sample_button, false, false);
+  vdat->location_choice = VF_AT_CURSOR;
+}
+
+static void view_files_at_end_callback(Widget w, XtPointer context, XtPointer info) 
+{
+  view_files_info *vdat = (view_files_info *)context;
+  XmToggleButtonSetState(vdat->at_cursor_button, false, false);
+  XmToggleButtonSetState(vdat->at_end_button, true, false);
+  XmToggleButtonSetState(vdat->at_beginning_button, false, false);
+  XmToggleButtonSetState(vdat->at_mark_button, false, false);
+  XmToggleButtonSetState(vdat->at_sample_button, false, false);
+  vdat->location_choice = VF_AT_END;
+}
+
+static void view_files_at_beginning_callback(Widget w, XtPointer context, XtPointer info) 
+{
+  view_files_info *vdat = (view_files_info *)context;
+  XmToggleButtonSetState(vdat->at_cursor_button, false, false);
+  XmToggleButtonSetState(vdat->at_end_button, false, false);
+  XmToggleButtonSetState(vdat->at_beginning_button, true, false);
+  XmToggleButtonSetState(vdat->at_mark_button, false, false);
+  XmToggleButtonSetState(vdat->at_sample_button, false, false);
+  vdat->location_choice = VF_AT_BEGINNING;
+}
+
+static void view_files_at_sample_callback(Widget w, XtPointer context, XtPointer info) 
+{
+  view_files_info *vdat = (view_files_info *)context;
+  XmToggleButtonSetState(vdat->at_cursor_button, false, false);
+  XmToggleButtonSetState(vdat->at_end_button, false, false);
+  XmToggleButtonSetState(vdat->at_beginning_button, false, false);
+  XmToggleButtonSetState(vdat->at_mark_button, false, false);
+  XmToggleButtonSetState(vdat->at_sample_button, true, false);
+  vdat->location_choice = VF_AT_SAMPLE;
+}
+
+static void view_files_at_sample_text_callback(Widget w, XtPointer context, XtPointer info) 
+{
+  view_files_info *vdat = (view_files_info *)context;
+  char *str;
+  str = XmTextGetString(w);
+  if ((str) && (*str))
+    {
+      vdat->location = string_to_off_t_with_error(str, 0, "view-files sample"); 
+      XtFree(str);
+    }
+  else snd_error("no sample number?");
+}
+
+static void view_files_at_mark_callback(Widget w, XtPointer context, XtPointer info) 
+{
+  view_files_info *vdat = (view_files_info *)context;
+  XmToggleButtonSetState(vdat->at_cursor_button, false, false);
+  XmToggleButtonSetState(vdat->at_end_button, false, false);
+  XmToggleButtonSetState(vdat->at_beginning_button, false, false);
+  XmToggleButtonSetState(vdat->at_mark_button, true, false);
+  XmToggleButtonSetState(vdat->at_sample_button, false, false);
+  vdat->location_choice = VF_AT_MARK;
+}
+
+static void view_files_at_mark_text_callback(Widget w, XtPointer context, XtPointer info) 
+{
+  view_files_info *vdat = (view_files_info *)context;
+  char *str;
+  str = XmTextGetString(w);
+  if ((str) && (*str))
+    {
+      vdat->location = mark_id_to_sample(string_to_int_with_error(str, 0, "view-files mark"));
+      XtFree(str);
+    }
+  else snd_error("no mark?");
+}
+
+
+static int vf_speed_to_scroll(Float minval, Float val, Float maxval)
+{
+  if (val <= minval) return(0);
+  if (val >= maxval) return((int)(0.9 * SCROLLBAR_MAX));
+  return(snd_round(0.9 * SCROLLBAR_MAX * ((log(val) - log(minval)) / (log(maxval) - log(minval)))));
+}
+
+static void vf_speed_click_callback(Widget w, XtPointer context, XtPointer info) 
+{
+  view_files_info *vdat = (view_files_info *)context;
+  char speed_number_buffer[6];
+  vdat->speed = speed_changed(1.0,
+			      speed_number_buffer,
+			      speed_control_style(ss),
+			      speed_control_tones(ss),
+			      6);
+  set_label(vdat->speed_number, speed_number_buffer);
+  XtVaSetValues(vdat->speed_scrollbar, XmNvalue, vf_speed_to_scroll(speed_control_min(ss), 1.0, speed_control_max(ss)), NULL);
+}
+
+static void vf_speed_valuechanged_callback(Widget w, XtPointer context, XtPointer info) 
+{
+  view_files_info *vdat = (view_files_info *)context;
+  char speed_number_buffer[6];
+  XmScrollBarCallbackStruct *cb = (XmScrollBarCallbackStruct *)info;
+  vdat->speed = speed_changed(exp(((cb->value) * 
+				   (log(speed_control_max(ss)) - log(speed_control_min(ss))) / 
+				   (0.9 * SCROLLBAR_MAX)) + log(speed_control_min(ss))),
+			      speed_number_buffer,
+			      speed_control_style(ss),
+			      speed_control_tones(ss),
+			      6);
+  set_label(vdat->speed_number, speed_number_buffer);
+}
+
+
+/* -------- amp -------- */
+
+static Float vf_scroll_to_amp(int val)
+{
+  if (val <= 0) 
+    return(amp_control_min(ss));
+  if (val >= (0.9 * SCROLLBAR_MAX)) 
+    return(amp_control_max(ss));
+  if (val > (0.5 * 0.9 * SCROLLBAR_MAX))
+    return((((val / (0.5 * 0.9 * SCROLLBAR_MAX)) - 1.0) * (amp_control_max(ss) - 1.0)) + 1.0);
+  else return((val * (1.0 - amp_control_min(ss)) / (0.5 * 0.9 * SCROLLBAR_MAX)) + amp_control_min(ss));
+}
+
+static int vf_amp_to_scroll(Float amp)
+{
+  return(amp_to_scroll(amp_control_min(ss), amp, amp_control_max(ss)));
+}
+
+static void vf_set_amp(view_files_info *vdat, Float val)
+{
+  char sfs[6];
+  vdat->amp = val;
+  mus_snprintf(sfs, 6, "%.2f", val);
+  set_label(vdat->amp_number, sfs);
+  XtVaSetValues(vdat->amp_scrollbar, 
+		XmNvalue, amp_to_scroll(amp_control_min(ss), 1.0, amp_control_max(ss)), 
+		NULL);
+}
+
+static void vf_amp_click_callback(Widget w, XtPointer context, XtPointer info) 
+{
+  vf_set_amp((view_files_info *)context, 1.0);
+}
+
+static void vf_amp_valuechanged_callback(Widget w, XtPointer context, XtPointer info) 
+{
+  vf_set_amp((view_files_info *)context, 
+	     vf_scroll_to_amp(((XmScrollBarCallbackStruct *)info)->value));
+}
+
+
+/* -------- amp-envs -------- */
+static Widget w_env_frame, w_env;
+#if 0
+static axis_context *ax = NULL;
+static GC cur_gc;
+#endif
+
+static env_editor *spf;
+
+#if 0
+static void show_mix_background_wave(int mix_id, int chan)
+{
+  env_editor *e;
+  int pts;
+  bool two_sided = false;
+  e = spf;
+  if (e == NULL) return;
+  /*
+  pts = prepare_mix_id_waveform(mix_id, e->axis, &two_sided);
+  if (pts > 0)
+    {
+      XSetForeground(MAIN_DISPLAY(ss), ax->gc, ss->sgx->enved_waveform_color);
+      if (two_sided)
+	draw_both_grf_points(1, ax, pts, GRAPH_LINES);
+      else draw_grf_points(1, ax, pts, e->axis, ungrf_y(e->axis, 0.0), GRAPH_LINES);
+      XSetForeground(MAIN_DISPLAY(ss), ax->gc, ss->sgx->black);
+    }
+  */
+}
+#endif
+
+static void mix_amp_env_resize(Widget w, XtPointer context, XtPointer info) 
+{
+#if 0
+  int chans, chan;
+  env **e;
+
+  if (ax == NULL)
+    {
+      XGCValues gv;
+      gv.function = GXcopy;
+      XtVaGetValues(w_env, XmNbackground, &gv.background, XmNforeground, &gv.foreground, NULL);
+      cur_gc = XtGetGC(w_env, GCForeground | GCFunction, &gv);
+      ax = (axis_context *)CALLOC(1, sizeof(axis_context));
+      ax->wn = XtWindow(w_env);
+      ax->dp = XtDisplay(w_env);
+      ax->gc = cur_gc;
+    }
+  else clear_window(ax);
+  chans = mix_dialog_mix_input_chans(mix_dialog_id);
+  e = mix_dialog_envs(mix_dialog_id);
+  for (chan = 0; chan < chans; chan++)
+    {
+      env *cur_env;
+      spfs[chan]->with_dots = true;
+      env_editor_display_env(spfs[chan], e[chan], ax, _("mix env"), (int)(chan * widget_width(w) / chans), 0,
+			     widget_width(w) / chans, widget_height(w), NOT_PRINTING);
+      cur_env = mix_dialog_mix_amp_env(mix_dialog_id, chan);
+      if (cur_env)
+	{
+	  XSetForeground(MAIN_DISPLAY(ss), ax->gc, ss->sgx->enved_waveform_color);
+	  spfs[chan]->with_dots = false;
+	  env_editor_display_env(spfs[chan], cur_env, ax, _("mix env"), (int)(chan * widget_width(w) / chans), 0,
+				 widget_width(w) / chans, widget_height(w), NOT_PRINTING);
+	  XSetForeground(MAIN_DISPLAY(ss), ax->gc, ss->sgx->black);
+	}
+      if (with_mix_background_wave)
+	show_mix_background_wave(mix_dialog_id, chan);
+    }
+#endif
+}
+
+#ifdef MAC_OSX
+static int press_x, press_y;
+#endif
+
+static void mix_drawer_button_motion(Widget w, XtPointer context, XEvent *event, Boolean *cont) 
+{
+#if 0
+  XMotionEvent *ev = (XMotionEvent *)event;
+  int chans, chan;
+  env *e;
+  Float pos;
+
+#ifdef MAC_OSX
+  if ((press_x == ev->x) && (press_y == ev->y)) return;
+#endif
+
+  chans = mix_dialog_mix_input_chans(mix_dialog_id);
+  pos = (Float)(ev->x) / (Float)widget_width(w);
+  chan = (int)(pos * chans);
+  last_clicked_env_chan = chan;
+  e = mix_dialog_env(mix_dialog_id, chan);
+  env_editor_button_motion(spfs[chan], ev->x, ev->y, ev->time, e);
+  mix_amp_env_resize(w, NULL, NULL);
+#endif
+}
+
+static void mix_drawer_button_press(Widget w, XtPointer context, XEvent *event, Boolean *cont) 
+{
+#if 0
+  XButtonEvent *ev = (XButtonEvent *)event;
+  int chans, chan;
+  env *e;
+  Float pos;
+
+#ifdef MAC_OSX
+  press_x = ev->x;
+  press_y = ev->y;
+#endif
+
+  chans = mix_dialog_mix_input_chans(mix_dialog_id);
+  pos = (Float)(ev->x) / (Float)widget_width(w);
+  chan = (int)(pos * chans);
+  last_clicked_env_chan = chan;
+  e = mix_dialog_env(mix_dialog_id, chan);
+  if (env_editor_button_press(spfs[chan], ev->x, ev->y, ev->time, e))
+    mix_amp_env_resize(w, NULL, NULL);
+#endif
+}
+
+static void mix_drawer_button_release(Widget w, XtPointer context, XEvent *event, Boolean *cont) 
+{
+#if 0
+  XButtonEvent *ev = (XButtonEvent *)event;
+  int chans, chan;
+  env *e;
+  Float pos;
+
+  chans = mix_dialog_mix_input_chans(mix_dialog_id);
+  pos = (Float)(ev->x) / (Float)widget_width(w);
+  chan = (int)(pos * chans);
+  last_clicked_env_chan = chan;
+  e = mix_dialog_env(mix_dialog_id, chan);
+  env_editor_button_release(spfs[chan], e);
+  mix_amp_env_resize(w, NULL, NULL);
+#endif
+}
+
+static void blue_textfield_unfocus_callback(Widget w, XtPointer context, XtPointer info)
+{
+  if (!(ss->using_schemes)) 
+    XtVaSetValues(w, XmNbackground, ss->sgx->lighter_blue, NULL);
+  XtVaSetValues(w, XmNcursorPositionVisible, false, NULL);
+}
+
+static void blue_mouse_leave_text_callback(Widget w, XtPointer context, XEvent *event, Boolean *flag)
+{
+  if (!(ss->using_schemes)) 
+    XtVaSetValues(w, XmNbackground, ss->sgx->lighter_blue, NULL);
+  XtVaSetValues(w, XmNcursorPositionVisible, false, NULL);
+}
+
+static void white_mouse_enter_text_callback(Widget w, XtPointer context, XEvent *event, Boolean *flag)
+{
+  if (!(ss->using_schemes)) 
+    XtVaSetValues(w, XmNbackground, ss->sgx->text_focus_color, NULL);
+  XtVaSetValues(w, XmNcursorPositionVisible, true, NULL);
+}
+
+
+
+/* -------------------------------------------------------------------------------- */
+
+/* TODO: open/remove callbacks sensitivity stuff */
+
 
 static Widget start_view_files_dialog_1(view_files_info *vdat, bool managed)
 {
@@ -4450,10 +4860,17 @@ static Widget start_view_files_dialog_1(view_files_info *vdat, bool managed)
     {
       int n;
       Arg args[20];
-      XmString xdismiss, xhelp, titlestr, new_viewer_str, s1;
-      Widget mainform, viewform, updateB, clearB, vertical_sep, leftform;
-      Widget left_title_sep, add_text, add_label, sep1, sep2, sep3, sort_cascade_menu;
+      XmString xdismiss, xhelp, titlestr, new_viewer_str, s1, bstr;
+      Widget mainform, viewform, updateB, clearB, vertical_sep, leftform, rc2;
+      Widget left_title_sep, add_text, add_label, sep1, sep2, sep3, sep4, sort_cascade_menu;
       Widget bydate, bysize, byname, byentry, plw, rlw, sbar, smenu;
+
+      Widget openB, removeB, insertB, mixB;
+      Widget dframe, dform;
+
+      XtCallbackList n2, n4;
+
+      Widget w_sep1, amp_label, speed_label, sep5;
 
       xdismiss = XmStringCreate(_("Dismiss"), XmFONTLIST_DEFAULT_TAG);
       xhelp = XmStringCreate(_("Help"), XmFONTLIST_DEFAULT_TAG);
@@ -4532,6 +4949,404 @@ static Widget start_view_files_dialog_1(view_files_info *vdat, bool managed)
       left_title_sep = XtCreateManagedWidget("sep", xmSeparatorWidgetClass, leftform, args, n);
 
 
+      n = 0;
+      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
+      XtSetArg(args[n], XmNmarginTop, 0); n++;
+      XtSetArg(args[n], XmNmarginBottom, 0); n++;
+      XtSetArg(args[n], XmNshadowThickness, 1); n++;
+      XtSetArg(args[n], XmNhighlightThickness, 1); n++;
+      XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
+      XtSetArg(args[n], XmNtopWidget, left_title_sep); n++;
+      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_POSITION); n++;
+      XtSetArg(args[n], XmNrightPosition, 50); n++;
+      openB = XtCreateManagedWidget(_("Open"), xmPushButtonGadgetClass, leftform, args, n);
+      XtAddCallback(openB, XmNactivateCallback, view_files_open_selected_callback, (XtPointer)vdat);
+
+      n = 0;
+      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
+      XtSetArg(args[n], XmNmarginTop, 0); n++;
+      XtSetArg(args[n], XmNmarginBottom, 0); n++;
+      XtSetArg(args[n], XmNshadowThickness, 1); n++;
+      XtSetArg(args[n], XmNhighlightThickness, 1); n++;
+      XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
+      XtSetArg(args[n], XmNtopWidget, left_title_sep); n++;
+      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
+      XtSetArg(args[n], XmNleftWidget, openB); n++;
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+      removeB = XtCreateManagedWidget(_("Remove"), xmPushButtonGadgetClass, leftform, args, n);
+      XtAddCallback(removeB, XmNactivateCallback, view_files_remove_selected_callback, (XtPointer)vdat);
+
+      n = 0;
+      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;}
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
+      XtSetArg(args[n], XmNtopWidget, openB); n++;
+      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
+      vdat->info_frame = XtCreateManagedWidget("", xmFrameWidgetClass, leftform, args, n);
+
+      rc2 = XtVaCreateManagedWidget("info-rc2", xmRowColumnWidgetClass, vdat->info_frame,
+				    XmNorientation, XmVERTICAL,
+				    XmNbackground, ss->sgx->highlight_color,
+				    NULL);
+      vdat->info1 = XtVaCreateManagedWidget("", xmLabelWidgetClass, rc2, XmNbackground, ss->sgx->highlight_color, NULL);
+      vdat->info2 = XtVaCreateManagedWidget("", xmLabelWidgetClass, rc2, XmNbackground, ss->sgx->highlight_color, NULL);
+
+      n = 0;
+      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
+      XtSetArg(args[n], XmNtopWidget, vdat->info_frame); n++;
+      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
+      XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
+      XtSetArg(args[n], XmNseparatorType, XmNO_LINE); n++;
+      XtSetArg(args[n], XmNheight, 4); n++;
+      sep4 = XtCreateManagedWidget("sep4", xmSeparatorWidgetClass, leftform, args, n);
+
+
+      
+      n = 0;
+      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;}
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNtopAttachment, XmATTACH_NONE); n++;
+      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
+      dframe = XtCreateManagedWidget("", xmFrameWidgetClass, leftform, args, n);
+
+      n = 0;
+      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->zoom_color); n++;}
+      n = attach_all_sides(args, n);
+      dform = XtCreateManagedWidget("dform", xmFormWidgetClass, dframe, args, n);
+
+      n = 0;
+      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;}
+      XtSetArg(args[n], XmNmarginTop, 0); n++;
+      XtSetArg(args[n], XmNmarginBottom, 0); n++;
+      XtSetArg(args[n], XmNshadowThickness, 1); n++;
+      XtSetArg(args[n], XmNhighlightThickness, 1); n++;
+      XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_POSITION); n++;
+      XtSetArg(args[n], XmNrightPosition, 50); n++;
+      mixB = XtCreateManagedWidget(_("Mix"), xmPushButtonGadgetClass, dform, args, n);
+      XtAddCallback(mixB, XmNactivateCallback, view_files_mix_selected_callback, (XtPointer)vdat);
+
+      n = 0;
+      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;}
+      XtSetArg(args[n], XmNmarginTop, 0); n++;
+      XtSetArg(args[n], XmNmarginBottom, 0); n++;
+      XtSetArg(args[n], XmNshadowThickness, 1); n++;
+      XtSetArg(args[n], XmNhighlightThickness, 1); n++;
+      XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
+      XtSetArg(args[n], XmNleftWidget, mixB); n++;
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+      insertB = XtCreateManagedWidget(_("Insert"), xmPushButtonGadgetClass, dform, args, n);
+      XtAddCallback(insertB, XmNactivateCallback, view_files_insert_selected_callback, (XtPointer)vdat);
+
+
+      n = 0;
+      if (!(ss->using_schemes)) 
+	{
+	  XtSetArg(args[n], XmNbackground, ss->sgx->lighter_blue); n++;
+	  XtSetArg(args[n], XmNselectColor, ss->sgx->red); n++;
+	}
+      bstr = XmStringCreate(_("at cursor"), XmFONTLIST_DEFAULT_TAG);
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
+      XtSetArg(args[n], XmNtopWidget, mixB); n++;
+      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
+      XtSetArg(args[n], XmNlabelString, bstr); n++;
+      XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;
+      XtSetArg(args[n], XmNindicatorType, XmONE_OF_MANY); n++;
+      vdat->at_cursor_button = make_togglebutton_widget("at-cursor-button", dform, args, n);
+      XtAddCallback(vdat->at_cursor_button, XmNdisarmCallback, view_files_at_cursor_callback, (XtPointer)vdat);
+      XmStringFree(bstr);
+
+      n = 0;
+      if (!(ss->using_schemes)) 
+	{
+	  XtSetArg(args[n], XmNbackground, ss->sgx->lighter_blue); n++;
+	  XtSetArg(args[n], XmNselectColor, ss->sgx->red); n++;
+	}
+      bstr = XmStringCreate(_("at end"), XmFONTLIST_DEFAULT_TAG);
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
+      XtSetArg(args[n], XmNtopWidget, vdat->at_cursor_button); n++;
+      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
+      XtSetArg(args[n], XmNlabelString, bstr); n++;
+      XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;
+      XtSetArg(args[n], XmNindicatorType, XmONE_OF_MANY); n++;
+      vdat->at_end_button = make_togglebutton_widget("at_end-button", dform, args, n);
+      XtAddCallback(vdat->at_end_button, XmNdisarmCallback, view_files_at_end_callback, (XtPointer)vdat);
+      XmStringFree(bstr);
+
+      n = 0;
+      if (!(ss->using_schemes)) 
+	{
+	  XtSetArg(args[n], XmNbackground, ss->sgx->lighter_blue); n++;
+	  XtSetArg(args[n], XmNselectColor, ss->sgx->red); n++;
+	}
+      bstr = XmStringCreate(_("at beginning"), XmFONTLIST_DEFAULT_TAG);
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
+      XtSetArg(args[n], XmNtopWidget, vdat->at_end_button); n++;
+      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
+      XtSetArg(args[n], XmNlabelString, bstr); n++;
+      XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;
+      XtSetArg(args[n], XmNindicatorType, XmONE_OF_MANY); n++;
+      vdat->at_beginning_button = make_togglebutton_widget("at-beginning-button", dform, args, n);
+      XtAddCallback(vdat->at_beginning_button, XmNdisarmCallback, view_files_at_beginning_callback, (XtPointer)vdat);
+      XmStringFree(bstr);
+
+      n = 0;
+      if (!(ss->using_schemes)) 
+	{
+	  XtSetArg(args[n], XmNbackground, ss->sgx->lighter_blue); n++;
+	  XtSetArg(args[n], XmNselectColor, ss->sgx->red); n++;
+	}
+      bstr = XmStringCreate(_("at sample"), XmFONTLIST_DEFAULT_TAG);
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
+      XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
+      XtSetArg(args[n], XmNtopWidget, vdat->at_beginning_button); n++;
+      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
+      XtSetArg(args[n], XmNlabelString, bstr); n++;
+      XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;
+      XtSetArg(args[n], XmNindicatorType, XmONE_OF_MANY); n++;
+      vdat->at_sample_button = make_togglebutton_widget("at-sample-button", dform, args, n);
+      XtAddCallback(vdat->at_sample_button, XmNdisarmCallback, view_files_at_sample_callback, (XtPointer)vdat);
+      XmStringFree(bstr);
+
+      n = 0;
+      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->lighter_blue); n++;}
+      XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
+      XtSetArg(args[n], XmNtopWidget, vdat->at_beginning_button); n++;
+      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
+      XtSetArg(args[n], XmNleftWidget, vdat->at_sample_button); n++;
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+      vdat->at_sample_text = make_textfield_widget("at-sample-text", dform, args, n, NOT_ACTIVATABLE, NO_COMPLETER);
+      XtAddCallback(vdat->at_sample_text, XmNactivateCallback, view_files_at_sample_text_callback, (XtPointer)vdat);
+      XtRemoveCallback(vdat->at_sample_text, XmNlosingFocusCallback, textfield_unfocus_callback, NULL);
+      XtAddCallback(vdat->at_sample_text, XmNlosingFocusCallback, blue_textfield_unfocus_callback, NULL);
+      XtAddEventHandler(vdat->at_sample_text, LeaveWindowMask, false, blue_mouse_leave_text_callback, NULL);
+      XtAddEventHandler(vdat->at_sample_text, EnterWindowMask, false, white_mouse_enter_text_callback, NULL);
+
+      n = 0;
+      if (!(ss->using_schemes)) 
+	{
+	  XtSetArg(args[n], XmNbackground, ss->sgx->lighter_blue); n++;
+	  XtSetArg(args[n], XmNselectColor, ss->sgx->red); n++;
+	}
+      bstr = XmStringCreate(_("at mark"), XmFONTLIST_DEFAULT_TAG);
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
+      XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
+      XtSetArg(args[n], XmNtopWidget, vdat->at_sample_button); n++;
+      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNlabelString, bstr); n++;
+      XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;
+      XtSetArg(args[n], XmNindicatorType, XmONE_OF_MANY); n++;
+      vdat->at_mark_button = make_togglebutton_widget("at-beginning-button", dform, args, n);
+      XtAddCallback(vdat->at_mark_button, XmNdisarmCallback, view_files_at_mark_callback, (XtPointer)vdat);
+      XmStringFree(bstr);
+
+      n = 0;
+      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->lighter_blue); n++;}
+      XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
+      XtSetArg(args[n], XmNtopWidget, vdat->at_sample_text); n++;
+      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
+      XtSetArg(args[n], XmNleftWidget, vdat->at_sample_text); n++;
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+      vdat->at_mark_text = make_textfield_widget("at-mark-text", dform, args, n, NOT_ACTIVATABLE, NO_COMPLETER);
+      XtAddCallback(vdat->at_mark_text, XmNactivateCallback, view_files_at_mark_text_callback, (XtPointer)vdat);
+      XtRemoveCallback(vdat->at_mark_text, XmNlosingFocusCallback, textfield_unfocus_callback, NULL);
+      XtAddCallback(vdat->at_mark_text, XmNlosingFocusCallback, blue_textfield_unfocus_callback, NULL);
+      XtAddEventHandler(vdat->at_mark_text, LeaveWindowMask, false, blue_mouse_leave_text_callback, NULL);
+      XtAddEventHandler(vdat->at_mark_text, EnterWindowMask, false, white_mouse_enter_text_callback, NULL);
+
+      XtVaSetValues(vdat->at_mark_button, 
+		    XmNrightAttachment, XmATTACH_WIDGET, 
+		    XmNrightWidget, vdat->at_mark_text, 
+		    NULL);
+
+      /* expandible section -- top is sep4, bottom is dframe
+       */
+
+      n = 0;      
+      /* AMP */
+      s1 = XmStringCreate(_("amp:"), XmFONTLIST_DEFAULT_TAG);
+      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
+      XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
+      XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
+      XtSetArg(args[n], XmNtopWidget, sep4); n++;
+      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
+      XtSetArg(args[n], XmNlabelString, s1); n++;
+      /* XtSetArg(args[n], XmNmarginHeight, CONTROLS_MARGIN); n++; */
+      XtSetArg(args[n], XmNrecomputeSize, false); n++;
+      XtSetArg(args[n], XmNshadowThickness, 0); n++;
+      XtSetArg(args[n], XmNhighlightThickness, 0); n++;
+      XtSetArg(args[n], XmNfillOnArm, false); n++;
+      amp_label = make_pushbutton_widget ("amp-label", leftform, args, n);
+      XtAddCallback(amp_label, XmNactivateCallback, vf_amp_click_callback, (XtPointer)vdat);
+      XmStringFree(s1);
+
+      n = 0;
+      s1 = XmStringCreate("1.0   ", XmFONTLIST_DEFAULT_TAG);
+      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
+      XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
+      XtSetArg(args[n], XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
+      XtSetArg(args[n], XmNtopWidget, amp_label); n++;
+      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
+      XtSetArg(args[n], XmNleftWidget, amp_label); n++;
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
+      /* XtSetArg(args[n], XmNmarginHeight, CONTROLS_MARGIN); n++; */
+      XtSetArg(args[n], XmNrecomputeSize, false); n++;
+      XtSetArg(args[n], XmNlabelString, s1); n++;
+      XtSetArg(args[n], XmNmarginRight, 3); n++;
+      vdat->amp_number = XtCreateManagedWidget ("amp-number", xmLabelWidgetClass, leftform, args, n);
+      XmStringFree(s1);
+
+      n = 0;      
+      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->position_color); n++;}
+      XtSetArg(args[n], XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
+      XtSetArg(args[n], XmNtopWidget, vdat->amp_number); n++;
+      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
+      XtSetArg(args[n], XmNheight, 16); n++;
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
+      XtSetArg(args[n], XmNleftWidget, vdat->amp_number); n++;
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
+      XtSetArg(args[n], XmNmaximum, SCROLLBAR_MAX); n++;
+      XtSetArg(args[n], XmNvalue, vf_amp_to_scroll(1.0)); n++;
+      XtSetArg(args[n], XmNvalueChangedCallback, n2 = make_callback_list(vf_amp_valuechanged_callback, (XtPointer)vdat)); n++;
+      vdat->amp_scrollbar = XtCreateManagedWidget("amp", xmScrollBarWidgetClass, leftform, args, n);
+
+      n = 0;
+      /* SPEED */
+      s1 = XmStringCreate(_("speed:"), XmFONTLIST_DEFAULT_TAG);
+      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
+      XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
+      XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
+      XtSetArg(args[n], XmNtopWidget, amp_label); n++;
+      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
+      XtSetArg(args[n], XmNlabelString, s1); n++;
+      /* XtSetArg(args[n], XmNmarginHeight, CONTROLS_MARGIN); n++;  */
+      XtSetArg(args[n], XmNrecomputeSize, false); n++;
+      XtSetArg(args[n], XmNshadowThickness, 0); n++;
+      XtSetArg(args[n], XmNhighlightThickness, 0); n++;
+      XtSetArg(args[n], XmNfillOnArm, false); n++;
+      speed_label = make_pushbutton_widget ("speed-label", leftform, args, n);
+      XtAddCallback(speed_label, XmNactivateCallback, vf_speed_click_callback, (XtPointer)vdat);
+      XmStringFree(s1);
+
+      n = 0;
+      s1 = initial_speed_label(speed_control_style(ss));
+      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
+      XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
+      XtSetArg(args[n], XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
+      XtSetArg(args[n], XmNtopWidget, speed_label); n++;
+      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
+      XtSetArg(args[n], XmNleftWidget, speed_label); n++;
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
+      XtSetArg(args[n], XmNlabelString, s1); n++;
+      /* XtSetArg(args[n], XmNmarginHeight, CONTROLS_MARGIN); n++; */
+      XtSetArg(args[n], XmNrecomputeSize, false); n++;
+      XtSetArg(args[n], XmNmarginRight, 3); n++;
+      vdat->speed_number = XtCreateManagedWidget ("speed-number", xmLabelWidgetClass, leftform, args, n);
+      XmStringFree(s1);
+
+      n = 0;
+      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->position_color); n++;}
+      XtSetArg(args[n], XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
+      XtSetArg(args[n], XmNtopWidget, vdat->speed_number); n++;
+      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
+      XtSetArg(args[n], XmNleftWidget, vdat->speed_number); n++;
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
+      XtSetArg(args[n], XmNmaximum, SCROLLBAR_MAX); n++;
+      XtSetArg(args[n], XmNvalue, vf_speed_to_scroll(speed_control_min(ss), 1.0, speed_control_max(ss))); n++;
+      XtSetArg(args[n], XmNheight, 16); n++;
+      XtSetArg(args[n], XmNvalueChangedCallback, n4 = make_callback_list(vf_speed_valuechanged_callback, (XtPointer)vdat)); n++;
+      vdat->speed_scrollbar = XtCreateManagedWidget("speed-scroll", xmScrollBarWidgetClass, leftform, args, n);
+
+
+      /* separator before envelope */
+      n = 0;
+      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
+      XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
+      XtSetArg(args[n], XmNtopWidget, vdat->speed_scrollbar); n++;
+      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
+      XtSetArg(args[n], XmNheight, 8); n++;
+      XtSetArg(args[n], XmNseparatorType, XmNO_LINE); n++;
+      w_sep1 = XtCreateManagedWidget("dialog-sep1", xmSeparatorWidgetClass, leftform, args, n);
+
+      n = 0;
+      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNtopAttachment, XmATTACH_NONE); n++;
+      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_WIDGET); n++;
+      XtSetArg(args[n], XmNbottomWidget, dframe); n++;
+      XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
+      XtSetArg(args[n], XmNseparatorType, XmNO_LINE); n++;
+      XtSetArg(args[n], XmNheight, 4); n++;
+      sep5 = XtCreateManagedWidget("sep5", xmSeparatorWidgetClass, leftform, args, n);
+
+
+      /* amp env */
+      n = 0;
+      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
+      XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
+      XtSetArg(args[n], XmNtopWidget, w_sep1); n++;
+      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_WIDGET); n++;
+      XtSetArg(args[n], XmNbottomWidget, sep5); n++;
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_POSITION); n++;
+      XtSetArg(args[n], XmNleftPosition, 4); n++;
+
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_POSITION); n++;
+      XtSetArg(args[n], XmNrightPosition, 98); n++;
+      /*
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_WIDGET); n++;
+      XtSetArg(args[n], XmNrightWidget, w_dB_frame); n++;
+      */
+      XtSetArg(args[n], XmNallowResize, true); n++;
+      XtSetArg(args[n], XmNshadowType, XmSHADOW_ETCHED_IN); n++;
+      XtSetArg(args[n], XmNshadowThickness, 4); n++;
+      w_env_frame = XtCreateManagedWidget("amp-env-frame", xmFrameWidgetClass, leftform, args, n);
+
+      n = 0;
+      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;}
+      XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNallowResize, true); n++;
+      w_env = XtCreateManagedWidget("amp-env-window", xmDrawingAreaWidgetClass, w_env_frame, args, n);
+
+
+
 
       /* -------- middle vertical separator -------- */
       n = 0;
@@ -4543,6 +5358,7 @@ static Widget start_view_files_dialog_1(view_files_info *vdat, bool managed)
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNorientation, XmVERTICAL); n++;
       XtSetArg(args[n], XmNseparatorType, XmSHADOW_ETCHED_IN); n++;
+      XtSetArg(args[n], XmNwidth, 4); n++;
       vertical_sep = XtCreateManagedWidget("vertical-sep", xmSeparatorWidgetClass, mainform, args, n);
 
 
@@ -4707,9 +5523,9 @@ static Widget start_view_files_dialog_1(view_files_info *vdat, bool managed)
       vdat->byproc =  XtCreateManagedWidget(_("proc"),  xmPushButtonWidgetClass, smenu, args, n);
       /* PERHAPS: proc list here as file-filter */
       XtSetSensitive(vdat->byproc, XEN_PROCEDURE_P(ss->view_files_sort_proc));
+      /* don't deal with this via a cascading callback -- damned thing segfaults for no ascertainable reason! */
 
       XtManageChild(sbar);
-      XtAddCallback(sort_cascade_menu, XmNcascadingCallback, sort_menu_update, (XtPointer)vdat);
 
       n = 0;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_POSITION); n++;
@@ -4728,7 +5544,7 @@ static Widget start_view_files_dialog_1(view_files_info *vdat, bool managed)
       XtVaSetValues(vdat->file_list, 
 		    XmNworkWindow, vdat->file_list_holder, 
 		    NULL);
-      add_drop(vdat->file_list);
+      add_drop(vdat->file_list, view_files_drop_watcher, (void *)vdat);
 
       if (managed) view_files_display_list(vdat);
 
@@ -4744,15 +5560,46 @@ static Widget start_view_files_dialog_1(view_files_info *vdat, bool managed)
       set_dialog_widget(VIEW_FILES_DIALOG, vdat->dialog);
       if (managed)
 	XtManageChild(vdat->dialog);
+
+
+      XtAddCallback(w_env, XmNresizeCallback, mix_amp_env_resize, NULL);
+      XtAddCallback(w_env, XmNexposeCallback, mix_amp_env_resize, NULL);
+
+      spf = new_env_editor();
+
+      XtAddEventHandler(w_env, ButtonPressMask, false, mix_drawer_button_press, NULL);
+      XtAddEventHandler(w_env, ButtonMotionMask, false, mix_drawer_button_motion, NULL);
+      XtAddEventHandler(w_env, ButtonReleaseMask, false, mix_drawer_button_release, NULL);
+
+      XmToggleButtonSetState(vdat->at_cursor_button, true, false);
+
+      FREE(n2);
+      FREE(n4);
+
     }
   else
     {
       if (!XtIsManaged(vdat->dialog)) 
 	XtManageChild(vdat->dialog);
       raise_dialog(vdat->dialog);
-      if (managed) view_files_display_list(vdat);
+      if (managed) 
+	{
+	  view_files_sort_list(vdat);
+	  view_files_display_list(vdat);
+	}
     }
   return(vdat->dialog);
+}
+
+void view_files_set_sort_by_proc_sensitive(bool sensitive)
+{
+  int i;
+  for (i = 0; i < view_files_info_size; i++)
+    if ((view_files_infos[i]) &&
+	(view_files_infos[i]->dialog))
+      {
+	XtSetSensitive(view_files_infos[i]->byproc, sensitive);
+      }
 }
 
 static view_files_info *find_view_files_dialog(void)

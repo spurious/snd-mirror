@@ -410,6 +410,7 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+2-Aug:   sound-file-extensions as settable list.\n\
 30-Jul:  preload-directory -> add-directory-to-view-files-list, preload-file -> add-file-to-view-files-list.\n\
 29-Jul:  previous-files-* -> view-files-* (sort, sort-procedure, select-hook).\n\
 28-Jul:  File:Insert menu item and dialog added, also insert-file-dialog.\n\
@@ -422,8 +423,6 @@ void about_snd_help(void)
 1-Jul:   --with-fam configuration switch.\n\
 27-Jun:  output-name-hook now takes an argument, the current output file name.\n\
          changed find to find-channel to avoid collision with Scheme's srfi-1.\n\
-24-Jun:  channels-combined is now the default channel-style.\n\
-20-Jun:  'Extract' option to Save as dialogs (to extract a channel).\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",

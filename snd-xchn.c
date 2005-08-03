@@ -755,6 +755,12 @@ static void cp_graph_key_press(Widget w, XtPointer context, XEvent *event, Boole
   key_press_callback(cp, ev->x, ev->y, ev->state, keysym);
 }
 
+static void channel_drop_watcher(Widget w, const char *str, Position x, Position y, void *context)
+{
+  int data = (int)context;
+  mix_at_x_y(data, str, x, y);
+}
+
 int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Widget main, fw_button_t button_style, bool with_events)
 {
   int i;
@@ -1006,10 +1012,12 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Wid
       XtAddEventHandler(cw[W_graph], ButtonMotionMask, false, graph_button_motion, (XtPointer)cp);
       if (main == NULL)
 	{
+	  int data;
 	  XtAddEventHandler(cw[W_graph], EnterWindowMask, false, graph_mouse_enter, NULL);
 	  XtAddEventHandler(cw[W_graph], LeaveWindowMask, false, graph_mouse_leave, (XtPointer)cp);
 	  XtAddEventHandler(cw[W_graph], KeyPressMask, false, cp_graph_key_press, (XtPointer)cp);
-	  add_drop(cw[W_graph]);
+	  data = PACK_SOUND_AND_CHANNEL(sp->index, cp->chan);
+	  add_drop(cw[W_graph], channel_drop_watcher, (void *)data);
 	}
 
       FREE(n1);

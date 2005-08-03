@@ -625,6 +625,11 @@ static const gint config_attributes[] = {
 };
 #endif
 
+static void channel_drop_watcher(GtkWidget *w, const char *filename, int x, int y, void *data)
+{
+  mix_at_x_y(get_user_int_data(G_OBJECT(w)), filename, x, y);
+}
+
 int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, GtkWidget *main, fw_button_t button_style, bool with_events)
 {
   GtkWidget **cw;
@@ -684,7 +689,7 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Gtk
       gtk_widget_set_gl_capability(GTK_WIDGET(cw[W_graph]), gdk_gl_config_new(&config_attributes[0]), GDK_GL_RGBA_TYPE, NULL, true);
   #endif
 #endif
-      add_drop(cw[W_graph]);
+      add_drop(cw[W_graph], channel_drop_watcher, NULL);
       set_user_int_data(G_OBJECT(cw[W_graph]), PACK_SOUND_AND_CHANNEL(sp->index, cp->chan));
       gtk_widget_set_events(cw[W_graph], GDK_ALL_EVENTS_MASK);
       GTK_WIDGET_SET_FLAGS(cw[W_graph], GTK_CAN_FOCUS);

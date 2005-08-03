@@ -2391,6 +2391,30 @@ static XEN g_add_sound_file_extension(XEN ext)
   return(ext);
 }
 
+/* TODO: test/doc sound-file-extensions */
+static XEN g_sound_file_extensions(void)
+{
+  #define H_sound_file_extensions "(" S_sound_file_extensions ") -> list of current sound file extensions (used \
+by the just-sounds file filters)"
+
+  XEN res = XEN_EMPTY_LIST;
+  int i;
+  for (i = 0; i < sound_file_extensions_end; i++)
+    res = XEN_CONS(C_TO_XEN_STRING(sound_file_extensions[i]),
+		   res);
+  return(res);
+}
+
+static XEN g_set_sound_file_extensions(XEN lst)
+{
+  XEN lst1;
+  sound_file_extensions_end = 0;
+  default_sound_file_extensions = 0;
+  for (lst1 = XEN_COPY_ARG(lst); XEN_NOT_NULL_P(lst1); lst1 = XEN_CDR(lst1))
+    add_sound_file_extension(XEN_TO_C_STRING(XEN_CAR(lst1)));
+  return(lst);
+}
+
 static XEN g_file_write_date(XEN file)
 {
   #define S_file_write_date "file-write-date"
@@ -2722,25 +2746,31 @@ static XEN g_set_view_files_sort_procedure(XEN proc)
       ss->view_files_sort_proc_loc = NOT_A_GC_LOC;
     }
   ss->view_files_sort_proc = XEN_UNDEFINED;
-  error = procedure_ok(proc, 1, "file sort", "sort", 1);
-  if (error == NULL)
+  if (XEN_PROCEDURE_P(proc))
     {
-      ss->view_files_sort_proc = proc;
-      if (XEN_PROCEDURE_P(proc))
-	ss->view_files_sort_proc_loc = snd_protect(proc);
+      error = procedure_ok(proc, 1, "file sort", "sort", 1);
+      view_files_set_sort_by_proc_sensitive(error == NULL);
+      if (error == NULL)
+	{
+	  ss->view_files_sort_proc = proc;
+	  ss->view_files_sort_proc_loc = snd_protect(proc);
+	}
+      else 
+	{
+	  XEN errstr;
+	  errstr = C_TO_XEN_STRING(error);
+	  FREE(error);
+	  return(snd_bad_arity_error(S_setB S_view_files_sort_procedure, errstr, proc));
+	}
     }
-  else 
-    {
-      XEN errstr;
-      errstr = C_TO_XEN_STRING(error);
-      FREE(error);
-      return(snd_bad_arity_error(S_setB S_view_files_sort_procedure, errstr, proc));
-    }
+  else view_files_set_sort_by_proc_sensitive(false);
   return(proc);
 }
 
 #ifdef XEN_ARGIFY_1
 XEN_NARGIFY_1(g_add_sound_file_extension_w, g_add_sound_file_extension)
+XEN_NARGIFY_0(g_sound_file_extensions_w, g_sound_file_extensions)
+XEN_NARGIFY_1(g_set_sound_file_extensions_w, g_set_sound_file_extensions)
 XEN_NARGIFY_1(g_file_write_date_w, g_file_write_date)
 XEN_ARGIFY_1(g_soundfont_info_w, g_soundfont_info)
 XEN_NARGIFY_1(g_add_directory_to_view_files_list_w, g_add_directory_to_view_files_list)
@@ -2761,6 +2791,8 @@ XEN_ARGIFY_1(g_save_sound_dialog_w, g_save_sound_dialog)
 XEN_NARGIFY_2(g_info_dialog_w, g_info_dialog)
 #else
 #define g_add_sound_file_extension_w g_add_sound_file_extension
+#define g_sound_file_extensions_w g_sound_file_extensions
+#define g_set_sound_file_extensions_w g_set_sound_file_extensions
 #define g_file_write_date_w g_file_write_date
 #define g_soundfont_info_w g_soundfont_info
 #define g_add_directory_to_view_files_list_w g_add_directory_to_view_files_list
@@ -2784,6 +2816,9 @@ XEN_NARGIFY_2(g_info_dialog_w, g_info_dialog)
 void g_init_file(void)
 {
   XEN_DEFINE_PROCEDURE(S_add_sound_file_extension,         g_add_sound_file_extension_w,         1, 0, 0, H_add_sound_file_extension);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_sound_file_extensions, g_sound_file_extensions_w, H_sound_file_extensions,
+				   S_setB S_sound_file_extensions, g_set_sound_file_extensions_w,  0, 0, 1, 0);
+
   XEN_DEFINE_PROCEDURE(S_file_write_date,                  g_file_write_date_w,                  1, 0, 0, H_file_write_date);
   XEN_DEFINE_PROCEDURE(S_soundfont_info,                   g_soundfont_info_w,                   0, 1, 0, H_soundfont_info);
   XEN_DEFINE_PROCEDURE(S_add_directory_to_view_files_list, g_add_directory_to_view_files_list_w, 1, 0, 0, H_add_directory_to_view_files_list);

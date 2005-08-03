@@ -3708,7 +3708,7 @@ static int set_mix_amp_env_1(int n, int chan, env *val, bool remix)
 int set_mix_amp_env(int n, int chan, env *val) {return(set_mix_amp_env_1(n, chan, val, true));}
 void mix_dialog_set_mix_amp_env_without_edit(int n, int chan, env *val) {set_mix_amp_env_1(n, chan, val, false);}
 
-void mix_at_x_y(int data, char *filename, int x, int y)
+void mix_at_x_y(int data, const char *filename, int x, int y)
 {
   int chn, snd;
   chn = UNPACK_CHANNEL(data);

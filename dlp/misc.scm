@@ -51,14 +51,15 @@
    (for-each-child
      widget
      (lambda (w)
-       (if (or (not (XmIsPushButton w))
-	       (string=? (XtName w) "revlen-label")
-	       (string=? (XtName w) "revscl-label")
-	       (string=? (XtName w) "contrast-label")
-	       (string=? (XtName w) "expand-label")
-	       (string=? (XtName w) "srate-label")
-	       (string=? (XtName w) "amp-label"))
-           (XtSetValues w (list XmNbackgroundPixmap wd))))))
+       (if (and (Widget? w)
+		(or (not (XmIsPushButton w))
+		    (string=? (XtName w) "revlen-label")
+		    (string=? (XtName w) "revscl-label")
+		    (string=? (XtName w) "contrast-label")
+		    (string=? (XtName w) "expand-label")
+		    (string=? (XtName w) "srate-label")
+		    (string=? (XtName w) "amp-label")))
+	   (XtSetValues w (list XmNbackgroundPixmap wd))))))
 
 (paint-all (cadr (main-widgets)))
 (for-each

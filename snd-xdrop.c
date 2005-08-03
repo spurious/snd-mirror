@@ -1,5 +1,77 @@
 #include "snd.h"
 
+/* -------- drop watcher lists -------- */
+
+/* the rigamarole for dealing with a drop is so messed up that I think it's
+ *   worth the trouble of setting up a separate callback list -- hence the
+ *   drop watchers
+ */
+
+/* TODO: handle array of filenames in drop -- need to try gtk/qt file managers first */
+
+typedef struct {
+  void (*watcher)(Widget w, const char *message, Position x, Position y, void *data);
+  Widget caller;
+  void *context;
+} drop_watcher;
+
+static drop_watcher **drop_watchers = NULL;
+static int drop_watchers_size = 0;
+
+#define DROP_WATCHER_SIZE_INCREMENT 2
+
+static int add_drop_watcher(Widget w, void (*watcher)(Widget w, const char *message, Position x, Position y, void *data), void *context)
+{
+  int loc = -1;
+  if (!(drop_watchers))
+    {
+      loc = 0;
+      drop_watchers_size = DROP_WATCHER_SIZE_INCREMENT;
+      drop_watchers = (drop_watcher **)CALLOC(drop_watchers_size, sizeof(drop_watcher *));
+    }
+  else
+    {
+      int i;
+      for (i = 0; i < drop_watchers_size; i++)
+	if (!(drop_watchers[i]))
+	  {
+	    loc = i;
+	    break;
+	  }
+      if (loc == -1)
+	{
+	  loc = drop_watchers_size;
+	  drop_watchers_size += DROP_WATCHER_SIZE_INCREMENT;
+	  drop_watchers = (drop_watcher **)REALLOC(drop_watchers, drop_watchers_size * sizeof(drop_watcher *));
+	  for (i = loc; i < drop_watchers_size; i++) drop_watchers[i] = NULL;
+	}
+    }
+  drop_watchers[loc] = (drop_watcher *)CALLOC(1, sizeof(drop_watcher));
+  drop_watchers[loc]->watcher = watcher;
+  drop_watchers[loc]->context = context;
+  drop_watchers[loc]->caller = w;
+  return(loc);
+}
+
+#if 0
+static bool remove_drop_watcher(int loc)
+{
+  if ((drop_watchers) &&
+      (loc < drop_watchers_size) &&
+      (loc >= 0) &&
+      (drop_watchers[loc]))
+    {
+      FREE(drop_watchers[loc]);
+      drop_watchers[loc] = NULL;
+      return(true);
+    }
+  return(false);
+}
+#endif
+
+
+
+
 /* can't move axes if icon dragged to end of graph because the entire system freezes! */
 
 static Atom FILE_NAME;               /* Sun uses this, SGI uses STRING */
@@ -9,6 +81,7 @@ static Atom text_plain;              /* gtk uses this -- untested here */
 static Atom TEXT;                    /* ditto */
 
 #define WITH_DRAG_CONVERSION 0
+/* this appears to be broken */
 
 #if WITH_DRAG_CONVERSION
 static Atom _MOTIF_DROP;             /* to query in-coming drag for filename */
@@ -79,28 +152,24 @@ static void massage_selection(Widget w, XtPointer context, Atom *selection, Atom
       if ((!(XEN_HOOKED(drop_hook))) || 
 	  (!(XEN_TRUE_P(run_or_hook(drop_hook,
 				    XEN_LIST_1(C_TO_XEN_STRING(str)),
-				    "drop")))))
+				    S_drop_hook)))))
 	{
-	  snd_info *sp = NULL;
-	  Widget caller;
+	  Widget caller; /* "w" above is the transfer control widget, not the drop-receiver */
 	  caller = (Widget)((XmDropTransferEntry)context)->client_data;
-	  if (XmIsRowColumn(caller)) /* top menuBar widget or top level menu */
+	  if (drop_watchers)
 	    {
-	      ss->open_requestor = FROM_DRAG_AND_DROP;
-	      /* TODO: handle mult-file request her and below */
-	      sp = snd_open_file(str, FILE_READ_WRITE);
-	      if (sp) select_channel(sp, 0);
-	    }
-	  else
-	    {
-	      if (XmIsDrawingArea(caller)) /* channel graph */
+	      int i;
+	      for (i = 0; i < drop_watchers_size; i++)
 		{
-		  int data;
-		  XtVaGetValues(caller, XmNuserData, &data, NULL);
-		  mix_at_x_y(data, str, mx, my);
+		  if (drop_watchers[i])
+		    {
+		      drop_watcher *d;
+		      d = drop_watchers[i];
+		      if (d->caller == caller)
+			(*(d->watcher))(caller, (const char *)str, mx, my, d->context);
+		    }
 		}
 	    }
-	  /* value is the file name if dropped icon from filer */
 	}
       FREE(str);
     }
@@ -157,11 +226,11 @@ static void handle_drop(Widget w, XtPointer context, XtPointer info)
       XmDropTransferStart(cb->dragContext, args, n);
       return;
     }
-
-  entries[0].target = targets[k];
-  entries[0].client_data = (XtPointer)w;
+  
   mx = cb->x;
   my = cb->y;
+  entries[0].target = targets[k];
+  entries[0].client_data = (XtPointer)w;
   n = 0;
   XtSetArg(args[n], XmNdropTransfers, entries); n++;
   XtSetArg(args[n], XmNnumDropTransfers, 1); n++;
@@ -293,7 +362,7 @@ static void handle_drag(Widget w, XtPointer context, XtPointer info)
 }
 
 #define NUM_TARGETS 6
-void add_drop(Widget w)
+void add_drop(Widget w, void (*watcher)(Widget w, const char *message, Position x, Position y, void *data), void *context)
 {
   Display *dpy;
   int n;
@@ -315,14 +384,14 @@ void add_drop(Widget w)
   TEXT = XInternAtom(dpy, "TEXT", false);
   targets[5] = TEXT;
   /* TODO: could we add audio/wav -- what are the audio types in this context? */
-  /* TODO: add support for array of strings/filenames -- what is the type? */
   n = 0;
-  XtSetArg(args[n], XmNdropSiteOperations, XmDROP_COPY); n++;
+  XtSetArg(args[n], XmNdropSiteOperations, XmDROP_COPY | XmDROP_LINK); n++;
   XtSetArg(args[n], XmNimportTargets, targets); n++;
   XtSetArg(args[n], XmNnumImportTargets, NUM_TARGETS); n++;
   XtSetArg(args[n], XmNdropProc, handle_drop); n++;
   XtSetArg(args[n], XmNdragProc, handle_drag); n++;
   XmDropSiteRegister(w, args, n);
+  add_drop_watcher(w, watcher, context);
 }
 
 void g_init_gxdrop(void)

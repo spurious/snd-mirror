@@ -151,7 +151,7 @@ void reflect_min_db_in_transform_dialog(void);
 
 /* -------- snd-xdrop.c -------- */
 
-void add_drop(Widget w);
+void add_drop(Widget w, void (*watcher)(Widget w, const char *message, Position x, Position y, void *data), void *context);
 void g_init_gxdrop(void);
 
 
@@ -404,6 +404,7 @@ void save_view_files_dialogs(FILE *fd);
 void add_directory_to_default_view_files_dialog(const char *dirname);
 void add_file_to_default_view_files_dialog(const char *dirname);
 Widget start_view_files_dialog(bool managed);
+void view_files_set_sort_by_proc_sensitive(bool sensitive);
 
 
 /* -------- snd-xenv.c -------- */

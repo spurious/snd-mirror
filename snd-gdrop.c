@@ -1,43 +1,94 @@
 #include "snd.h"
 
-enum {TARGET_STRING, TARGET_UTF8};
+typedef struct {
+  void (*watcher)(GtkWidget *w, const char *message, int x, int y, void *data);
+  GtkWidget *caller;
+  void *context;
+} drop_watcher;
+
+static drop_watcher **drop_watchers = NULL;
+static int drop_watchers_size = 0;
+
+#define DROP_WATCHER_SIZE_INCREMENT 2
+
+static int add_drop_watcher(GtkWidget *w, void (*watcher)(GtkWidget *w, const char *message, int x, int y, void *data), void *context)
+{
+  int loc = -1;
+  if (!(drop_watchers))
+    {
+      loc = 0;
+      drop_watchers_size = DROP_WATCHER_SIZE_INCREMENT;
+      drop_watchers = (drop_watcher **)CALLOC(drop_watchers_size, sizeof(drop_watcher *));
+    }
+  else
+    {
+      int i;
+      for (i = 0; i < drop_watchers_size; i++)
+	if (!(drop_watchers[i]))
+	  {
+	    loc = i;
+	    break;
+	  }
+      if (loc == -1)
+	{
+	  loc = drop_watchers_size;
+	  drop_watchers_size += DROP_WATCHER_SIZE_INCREMENT;
+	  drop_watchers = (drop_watcher **)REALLOC(drop_watchers, drop_watchers_size * sizeof(drop_watcher *));
+	  for (i = loc; i < drop_watchers_size; i++) drop_watchers[i] = NULL;
+	}
+    }
+  drop_watchers[loc] = (drop_watcher *)CALLOC(1, sizeof(drop_watcher));
+  drop_watchers[loc]->watcher = watcher;
+  drop_watchers[loc]->context = context;
+  drop_watchers[loc]->caller = w;
+  return(loc);
+}
+
+
+enum {TARGET_STRING, TARGET_UTF8, TARGET_URL};
 
 static GtkTargetEntry target_table[] = {
   {"STRING",        0, TARGET_STRING},
   {"FILE_NAME",     0, TARGET_STRING},
   {"text/plain",    0, TARGET_STRING}, /* untested */
-  {"COMPOUND_TEXT", 0, TARGET_STRING}, /* hmm... -- why does Motif have elaborate converters for this if it's just a string? */
-  {"UTF8_STRING",   0, TARGET_UTF8}    /* untested */
+  {"COMPOUND_TEXT", 0, TARGET_STRING}, 
+  {"UTF8_STRING",   0, TARGET_UTF8},    /* untested */
+  {"text/uri-list", 0, TARGET_URL}
 };
 
 static XEN drop_hook;
 
-static void drag_data_received (GtkWidget *widget, GdkDragContext *context, gint x, gint y, 
-				GtkSelectionData *data, guint info, guint time)
+static void drag_data_received(GtkWidget *caller, GdkDragContext *context, gint x, gint y, 
+			       GtkSelectionData *data, guint info, guint time)
 {
   /* data->target */
   if ((data->length >= 0) && 
       (data->format == 8))
     {
+      gsize bread, bwritten;
+      GError *error;
+      char *filename;
+      if (info == TARGET_STRING)
+	filename = (char *)(data->data);
+      else filename = (char *)g_filename_from_utf8((gchar *)(data->data), data->length, &bread, &bwritten, &error);
       if ((!(XEN_HOOKED(drop_hook))) || 
 	  (!(XEN_TRUE_P(run_or_hook(drop_hook,
-				    XEN_LIST_1(C_TO_XEN_STRING((char *)(data->data))),
-				    "drop")))))
+				    XEN_LIST_1(C_TO_XEN_STRING(filename)),
+				    S_drop_hook)))))
 	{
-	  gsize bread, bwritten;
-	  GError *error;
-	  char *filename;
-	  if (info == TARGET_STRING)
-	    filename = (char *)(data->data);
-	  else filename = (char *)g_filename_from_utf8((gchar *)(data->data), data->length, &bread, &bwritten, &error);
-	  if (GTK_IS_DRAWING_AREA(widget))
-	    mix_at_x_y(get_user_int_data(G_OBJECT(widget)), filename, x, y);
-	  else
+	  if (drop_watchers)
 	    {
-	      snd_info *sp = NULL;
-	      ss->open_requestor = FROM_DRAG_AND_DROP;
-	      sp = snd_open_file(filename, FILE_READ_WRITE);
-	      if (sp) select_channel(sp, 0);
+	      int i;
+	      for (i = 0; i < drop_watchers_size; i++)
+		{
+		  if (drop_watchers[i])
+		    {
+		      drop_watcher *d;
+		      d = drop_watchers[i];
+		      if (d->caller == caller)
+			(*(d->watcher))(caller, (const char *)filename, x, y, d->context);
+		    }
+		}
 	    }
 	}
       gtk_drag_finish (context, true, false, time);
@@ -105,13 +156,14 @@ static gboolean drag_motion(GtkWidget *widget, GdkDragContext *context, gint x, 
   return(true); /* this is what the examples return in gtk/tests/testdnd.c -- don't know what it means, if anything */
 }
 
-void add_drop(GtkWidget *w)
+void add_drop(GtkWidget *w, void (*watcher)(GtkWidget *w, const char *message, int x, int y, void *data), void *context)
 {
-  gtk_drag_dest_set(w, GTK_DEST_DEFAULT_ALL, target_table, 5, (GdkDragAction)(GDK_ACTION_COPY | GDK_ACTION_MOVE));
+  gtk_drag_dest_set(w, GTK_DEST_DEFAULT_ALL, target_table, 6, (GdkDragAction)(GDK_ACTION_COPY | GDK_ACTION_MOVE | GDK_ACTION_LINK));
   /* this (the cast to GdkDragAction) is actually a bug in gtk -- they are OR'ing these together so the correct type is some flavor of int */
   SG_SIGNAL_CONNECT(w, "drag_data_received", drag_data_received, NULL);
   SG_SIGNAL_CONNECT(w, "drag_motion", drag_motion, NULL);
   SG_SIGNAL_CONNECT(w, "drag_leave", drag_leave, NULL);
+  add_drop_watcher(w, watcher, context);
 }
 
 

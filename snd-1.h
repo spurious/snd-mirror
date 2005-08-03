@@ -730,6 +730,7 @@ void g_init_marks(void);
 void *sound_store_marks(snd_info *sp);
 void sound_restore_marks(snd_info *sp, void *marks);
 void backup_mark_list(chan_info *cp, int cur);
+off_t mark_id_to_sample(int id);
 
 
 
@@ -1453,7 +1454,7 @@ int set_mix_position(int mix_id, off_t beg);
 bool mix_ok(int n);
 env **mix_dialog_envs(int n);
 env *mix_dialog_env(int n, int chan);
-void mix_at_x_y(int data, char *filename, int x, int y);
+void mix_at_x_y(int data, const char *filename, int x, int y);
 int next_mix_id(int id);
 int previous_mix_id(int id);
 void reflect_edit_in_mix_dialog_envs(int n);
@@ -1548,6 +1549,7 @@ void fire_up_recorder(void);
 
 /* -------- snd.c -------- */
 
+void mus_error_to_snd(int type, char *msg);
 #if SND_AS_WIDGET
   snd_state *snd_main(int argc, char **argv);
 #endif

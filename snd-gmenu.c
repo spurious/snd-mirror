@@ -164,6 +164,14 @@ static void help_save_callback (GtkWidget *w, gpointer info) {save_help();}
 
 void check_menu_labels(int key, int state, bool extended) {}
 
+static void menu_drop_watcher(GtkWidget *w, const char *filename, int x, int y, void *data)
+{
+  snd_info *sp = NULL;
+  ss->open_requestor = FROM_DRAG_AND_DROP;
+  sp = snd_open_file(filename, FILE_READ_WRITE);
+  if (sp) select_channel(sp, 0);
+}
+
 
 /* -------------------------------- MAIN MENU -------------------------------- */
 
@@ -179,7 +187,7 @@ GtkWidget *add_menu(void)
 
   main_menu = gtk_menu_bar_new();
   ml[m_menu] = NULL;
-  add_drop(main_menu);
+  add_drop(main_menu, menu_drop_watcher, NULL);
   gtk_box_pack_start(GTK_BOX(MAIN_PANE(ss)), main_menu, false, true, 0);
   gtk_widget_show(main_menu);
 

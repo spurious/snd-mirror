@@ -250,7 +250,8 @@ void set_filter_in_hz(snd_info *sp, bool val) {sp->filter_control_in_hz = val;}
 void save_view_files_dialogs(FILE *fd) {}
 void add_directory_to_default_view_files_dialog(const char *dirname) {}
 void add_file_to_default_view_files_dialog(const char *dirname) {}
-widget_t start_view_files_dialog(bool managed) {return(NULL);}
+widget_t start_view_files_dialog(bool managed) {return(0);}
+void view_files_set_sort_by_proc_sensitive(bool sensitive) {}
 
 void auto_update_restart(void) {}
 

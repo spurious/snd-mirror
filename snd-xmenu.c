@@ -194,10 +194,18 @@ void check_menu_labels(int key, int state, bool extended)
 
 /* -------------------------------- MAIN MENU -------------------------------- */
 
+static void menu_drop_watcher(Widget w, const char *str, Position x, Position y, void *data)
+{
+  snd_info *sp = NULL;
+  ss->open_requestor = FROM_DRAG_AND_DROP;
+  /* TODO: handle mult-file request here and below */
+  sp = snd_open_file(str, FILE_READ_WRITE);
+  if (sp) select_channel(sp, 0);
+}
+
 void add_menu_drop(void)
 {
-  add_drop(main_menu);
-  /* can't figure out how to add the pulldown menus as well */
+  add_drop(main_menu, menu_drop_watcher, NULL);
 }
 
 Widget add_menu(void)
