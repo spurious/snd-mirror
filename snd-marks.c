@@ -132,6 +132,15 @@ static mark *find_mark_from_id(int id, chan_info **cps, int pos)
   return(NULL);
 }
 
+off_t mark_id_to_sample(int id)
+{
+  mark *m;
+  m = find_mark_from_id(id, NULL, AT_CURRENT_EDIT_POSITION);
+  if (m)
+    return(m->samp);
+  return(-1);
+}
+
 static mark *find_named_mark_1(chan_info *cp, mark *mp, void *uname)
 {
   char *name = (char *)uname;
