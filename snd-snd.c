@@ -1940,9 +1940,9 @@ void menu_reset_controls(snd_info *sp)
   reset_controls(sp);
 }
 
-/* -------- watcher lists -------- */
+/* -------- sp watcher lists -------- */
 
-#define WATCHER_SIZE_INCREMENT 2
+#define SP_WATCHER_SIZE_INCREMENT 2
 
 int add_sp_watcher(snd_info *sp, sp_watcher_t type, void (*watcher)(struct snd_info *sp, sp_watcher_reason_t reason, int list_loc), void *context)
 {
@@ -1950,7 +1950,7 @@ int add_sp_watcher(snd_info *sp, sp_watcher_t type, void (*watcher)(struct snd_i
   if (!(sp->watchers))
     {
       loc = 0;
-      sp->watchers_size = WATCHER_SIZE_INCREMENT;
+      sp->watchers_size = SP_WATCHER_SIZE_INCREMENT;
       sp->watchers = (sp_watcher **)CALLOC(sp->watchers_size, sizeof(sp_watcher *));
     }
   else
@@ -1965,7 +1965,7 @@ int add_sp_watcher(snd_info *sp, sp_watcher_t type, void (*watcher)(struct snd_i
       if (loc == -1)
 	{
 	  loc = sp->watchers_size;
-	  sp->watchers_size += WATCHER_SIZE_INCREMENT;
+	  sp->watchers_size += SP_WATCHER_SIZE_INCREMENT;
 	  sp->watchers = (sp_watcher **)REALLOC(sp->watchers, sp->watchers_size * sizeof(sp_watcher *));
 	  for (i = loc; i < sp->watchers_size; i++) sp->watchers[i] = NULL;
 	}

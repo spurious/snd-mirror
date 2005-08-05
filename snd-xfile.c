@@ -44,13 +44,13 @@
  * TODO: need c-G play-button off in vf (restored)
  * TODO: in nb.scm, get the info dialog out of the line of sight and unmanage it if view-files is unmanaged
  * TODO: extlang view-files-files and view-files-selected-files (settable), view-files-update/clear?
- *        these require (ideally) some way to distinguish which viewer is of interest
+ *        these require (ideally) some way to distinguish which viewer is of interest: no_such_widget (snd-0.h)
  * TODO: horizontal pane in view-files
  * TODO: report-in-minibuffer extended to go to any dialog
- * TODO: name arg to view-files-sort-proc -- replace "proc"
  * TODO: always show bg wave in vf
  * TODO: insert/mix vf choices/pic of new dialog etc -> docs
  * TODO: will need at least a reset button for the vf env, perhaps reset for entire vf
+ * TODO: for save: view-files-env|amp|speed (widget->index translation internally)
  */
 
 
@@ -3715,7 +3715,6 @@ typedef struct {
   Widget at_cursor_button, at_end_button, at_beginning_button, at_mark_button, at_sample_button, at_sample_text, at_mark_text;
   Float amp;
   Widget amp_number, amp_scrollbar;
-  off_t location;
   vf_location_t location_choice;
   Float speed;
   Widget speed_number, speed_scrollbar;
@@ -3724,6 +3723,7 @@ typedef struct {
   GC env_gc;
   env_editor *spf;
   env *e;
+  int open_file_watcher_loc;
 } view_files_info;
 
 
@@ -3834,6 +3834,28 @@ static vf_row *make_vf_row(view_files_info *vdat,
   return(r);
 }
 
+static void vf_mix_insert_buttons_set_sensitive(view_files_info *vdat, bool sensitive);
+static void vf_open_remove_buttons_set_sensitive(view_files_info *vdat, bool sensitive);
+
+static void vf_file_open_watcher(ss_watcher_reason_t reason, int loc)
+{
+  ss_watcher *data;
+  view_files_info *vdat;
+  data = ss->watchers[loc];
+  vdat = (view_files_info *)(data->context);
+  if ((vdat->dialog) &&
+      (XtIsManaged(vdat->dialog)))
+    {
+      /* reasons are SS_FILE_OPENED|CLOSED, but it's not worth the trouble of splitting them out here */
+      vf_mix_insert_buttons_set_sensitive(vdat, 
+					  ((vdat->currently_selected_files > 0) &&
+					   (any_selected_sound())));
+      vf_open_remove_buttons_set_sensitive(vdat, 
+					   (vdat->currently_selected_files > 0));
+    }
+  /* TODO: add similar watchers to Mix|Insert dialogs */
+}
+
 static void view_files_clear_list(view_files_info *vdat);
 
 static int view_files_info_size = 0;
@@ -3869,28 +3891,67 @@ static view_files_info *new_view_files_dialog(void)
     }
   if (!view_files_infos[loc])
     {
-      view_files_info *v;
+      view_files_info *vdat;
       view_files_infos[loc] = (view_files_info *)CALLOC(1, sizeof(view_files_info));
-      v = view_files_infos[loc];
-      v->dialog = NULL;
-      v->file_list = NULL;
-      v->file_list_holder = NULL;
-      v->file_list_entries = NULL;
-      v->size = 0;
-      v->end = -1;
-      v->names = NULL;
-      v->full_names = NULL;
-      v->curtime = 0;
-      v->times = NULL;
-      v->selected_files = NULL;
-      v->selected_files_size = 0;
-      v->location_choice = VF_AT_CURSOR;
-      v->e = default_env(1.0, 1.0);
+      vdat = view_files_infos[loc];
+      vdat->dialog = NULL;
+      vdat->file_list = NULL;
+      vdat->file_list_holder = NULL;
+      vdat->file_list_entries = NULL;
+      vdat->size = 0;
+      vdat->end = -1;
+      vdat->names = NULL;
+      vdat->full_names = NULL;
+      vdat->curtime = 0;
+      vdat->times = NULL;
+      vdat->selected_files = NULL;
+      vdat->selected_files_size = 0;
+      vdat->location_choice = VF_AT_CURSOR;
+      vdat->e = default_env(1.0, 1.0);
+      vdat->open_file_watcher_loc = add_ss_watcher(SS_FILE_OPEN_WATCHER, vf_file_open_watcher, (void *)vdat);
     }
   /* don't clear at this point! */
   view_files_infos[loc]->currently_selected_files = 0;
   view_files_infos[loc]->sorter = view_files_sort(ss);
   return(view_files_infos[loc]);
+}
+
+static int vf_dialog_to_index(Widget dialog)
+{
+  int i;
+  for (i = 0; i < view_files_info_size; i++)
+    if ((view_files_infos[i]) &&
+	(view_files_infos[i]->dialog == dialog))
+      return(i);
+  return(-1);
+}
+
+static view_files_info *vf_dialog_to_info(Widget dialog)
+{
+  int index;
+  index = vf_dialog_to_index(dialog);
+  if (index >= 0)
+    return(view_files_infos[index]);
+  return(NULL);
+}
+
+void view_files_set_sort_proc_name(const char *name)
+{
+  int i;
+  XmString new_name;
+  if (ss->view_files_sort_proc_name)
+    FREE(ss->view_files_sort_proc_name);
+  ss->view_files_sort_proc_name = copy_string(name);
+  new_name = XmStringCreate((char *)name, XmFONTLIST_DEFAULT_TAG);
+  for (i = 0; i < view_files_info_size; i++)
+    if ((view_files_infos[i]) &&
+	(view_files_infos[i]->byproc))
+      {
+	XtVaSetValues(view_files_infos[i]->byproc, 
+		      XmNlabelString, new_name,
+		      NULL);
+      }
+  XmStringFree(new_name);
 }
 
 static char **view_files_selected_files(view_files_info *vdat)
@@ -3906,6 +3967,30 @@ static char **view_files_selected_files(view_files_info *vdat)
 	files[i] = copy_string(vdat->full_names[vdat->selected_files[i]]);
     }
   return(files);
+}
+
+static void vf_mix_insert_buttons_set_sensitive(view_files_info *vdat, bool sensitive)
+{
+  if (vdat->mixB)
+    {
+      XtSetSensitive(vdat->mixB, sensitive);
+      XtSetSensitive(vdat->insertB, sensitive);
+    }
+}
+
+static void vf_open_remove_buttons_set_sensitive(view_files_info *vdat, bool sensitive)
+{
+  if (vdat->openB)
+    {
+      XtSetSensitive(vdat->removeB, sensitive);
+      XtSetSensitive(vdat->openB, sensitive);
+    }
+}
+
+static void vf_clear_button_set_sensitive(view_files_info *vdat, bool sensitive)
+{
+  if (vdat->clearB)
+    XtSetSensitive(vdat->clearB, sensitive);
 }
 
 static void view_files_clear_selected_files(view_files_info *vdat)
@@ -3927,6 +4012,24 @@ static void view_files_clear_selected_files(view_files_info *vdat)
 	}
     }
   vdat->currently_selected_files = 0;
+  vf_mix_insert_buttons_set_sensitive(vdat, false);
+  vf_open_remove_buttons_set_sensitive(vdat, false);
+}
+
+static void view_files_unselect_file(view_files_info *vdat, vf_row *r)
+{
+  XtVaSetValues(r->rw, XmNbackground, ss->sgx->highlight_color, NULL);
+  XtVaSetValues(r->nm, XmNbackground, ss->sgx->highlight_color, NULL);
+  if (vdat->currently_selected_files > 1)
+    {
+      /* need to fixup selected_files list */
+      int i, new_loc = 0;
+      for (i = 0; i < vdat->currently_selected_files; i++)
+	if (vdat->selected_files[i] != r->pos)
+	  vdat->selected_files[new_loc++] = vdat->selected_files[i];
+    }
+  vdat->currently_selected_files--;
+  if (vdat->currently_selected_files < 0) vdat->currently_selected_files = 0;
 }
 
 static int view_files_add_selected_file(view_files_info *vdat, vf_row *r)
@@ -3957,6 +4060,35 @@ static int view_files_add_selected_file(view_files_info *vdat, vf_row *r)
   return(vdat->currently_selected_files);
 }
 
+static void vf_fixup_selected_files(view_files_info *vdat, char **saved_selected_files, int len)
+{
+  /* various things change the order or contents of the files list, so the selected locs list needs to reflect that */
+  int i, newly_selected = 0;
+  for (i = 0; i < len; i++)
+    {
+      int j;
+      for (j = 0; j <= vdat->end; j++)
+	if ((vdat->full_names[j]) &&
+	    (strcmp(vdat->full_names[j], saved_selected_files[i]) == 0))
+	  {
+	    vf_row *old_r, *new_r;
+	    /* fprintf(stderr,"old %d at %d -> %d at %d\n", vdat->selected_files[i], i, j, newly_selected); */
+	    old_r = vdat->file_list_entries[vdat->selected_files[i]];
+	    vdat->selected_files[newly_selected++] = j;
+	    new_r = vdat->file_list_entries[j];
+	    if (new_r != old_r)
+	      {
+		XtVaSetValues(new_r->rw, XmNbackground, ss->sgx->zoom_color, NULL);
+		XtVaSetValues(new_r->nm, XmNbackground, ss->sgx->zoom_color, NULL);
+		XtVaSetValues(old_r->rw, XmNbackground, ss->sgx->highlight_color, NULL);
+		XtVaSetValues(old_r->nm, XmNbackground, ss->sgx->highlight_color, NULL);
+	      }
+	    break;
+	  }
+    }
+  vdat->currently_selected_files = newly_selected;
+}
+
 
 static void post_vf_info(view_files_info *vdat, int pos)
 {
@@ -3974,30 +4106,25 @@ static void unpost_vf_info(view_files_info *vdat)
   XmStringFree(s2);
 }
 
-static void vf_left_buttons_set_sensitive(view_files_info *vdat, bool sensitive)
+static int view_files_find_row(view_files_info *vdat, const char *shortname)
 {
-  XtSetSensitive(vdat->mixB, sensitive);
-  XtSetSensitive(vdat->insertB, sensitive);
-  XtSetSensitive(vdat->removeB, sensitive);
-  XtSetSensitive(vdat->openB, sensitive);
-}
-
-static void vf_clear_button_set_sensitive(view_files_info *vdat, bool sensitive)
-{
-  XtSetSensitive(vdat->clearB, sensitive);
+  int i;
+  if (vdat->names)
+    for (i = 0; i <= vdat->end; i++)
+      if (strcmp(vdat->names[i], shortname) == 0) 
+	return(i);
+  return(-1);
 }
 
 static XEN view_files_select_hook;
 
-/* TODO: click of selected should unselect */
-/* TODO: remove doesn't, or it removes the wrong one? (and remove from selected list) */
-/* TODO: move info up to label section */
 /* TODO: clip/db buttons for graph?? */
 
 static void view_files_select(vf_row *r, bool add_to_selected)
 {
   view_files_info *vdat = (view_files_info *)(r->vdat);
   XEN res = XEN_FALSE;
+
   if (XEN_HOOKED(view_files_select_hook))
     res = run_or_hook(view_files_select_hook,
 		      XEN_LIST_1(C_TO_XEN_STRING(vdat->full_names[r->pos])),
@@ -4007,23 +4134,47 @@ static void view_files_select(vf_row *r, bool add_to_selected)
     {
       XmString s1;
       char *title;
-      if (!add_to_selected)
-	view_files_clear_selected_files(vdat);
-      if ((add_to_selected) && (vdat->currently_selected_files > 0))
-	title = copy_string("selected files");
-      else title = mus_format("%s", vdat->names[r->pos]);
-      s1 = XmStringCreate(title, XmFONTLIST_DEFAULT_TAG);
-      XtVaSetValues(vdat->left_title,
-		    XmNlabelString, s1,
-		    NULL);
-      XmStringFree(s1);
-      FREE(title);
+      int i, curloc = -1;
+      for (i = 0; i < vdat->currently_selected_files; i++)
+	if (vdat->selected_files[i] == r->pos)
+	  {
+	    curloc = r->pos;
+	    break;
+	  }
+      if (curloc == -1)
+	{
+	                                /* file not currently selected */
+	  if (!add_to_selected)         /* not shift click, so remove all currently selected files first */
+	    view_files_clear_selected_files(vdat);
 
-      if (plausible_sound_file_p(vdat->full_names[r->pos]))
-	post_vf_info(vdat, r->pos);
-      else unpost_vf_info(vdat);
+	  /* remake left side title */
+	  if ((add_to_selected) && 
+	      (vdat->currently_selected_files > 0))
+	    title = copy_string("selected files");
+	  else title = mus_format("%s", vdat->names[r->pos]);
+	  s1 = XmStringCreate(title, XmFONTLIST_DEFAULT_TAG);
+	  XtVaSetValues(vdat->left_title,
+			XmNlabelString, s1,
+			NULL);
+	  XmStringFree(s1);
+	  FREE(title);
 
-      view_files_add_selected_file(vdat, r);
+	  if (plausible_sound_file_p(vdat->full_names[r->pos]))
+	    post_vf_info(vdat, r->pos);
+	  else unpost_vf_info(vdat);
+
+	  view_files_add_selected_file(vdat, r);
+	}
+      else
+	{
+	  /* file already selected, so remove from selected files list */
+	  view_files_unselect_file(vdat, r);
+	}
+      vf_mix_insert_buttons_set_sensitive(vdat, 
+					  ((vdat->currently_selected_files > 0) &&
+					   (any_selected_sound())));
+      vf_open_remove_buttons_set_sensitive(vdat, 
+					   (vdat->currently_selected_files > 0));
     }
 }
 
@@ -4066,19 +4217,8 @@ static bool view_files_play(view_files_info *vdat, int pos, bool play)
   return(false);
 }
 
-static int view_files_find_row(view_files_info *vdat, const char *shortname)
-{
-  int i;
-  if (vdat->names)
-    for (i = 0; i <= vdat->end; i++)
-      if (strcmp(vdat->names[i], shortname) == 0) 
-	return(i);
-  return(-1);
-}
-
 static void add_file_to_view_files_list(view_files_info *vdat, const char *filename, const char *fullname)
 {
-  int k;
   if (view_files_find_row(vdat, filename) != -1) return;
   vdat->end++;
   if (vdat->end >= vdat->size)
@@ -4114,15 +4254,10 @@ static void add_file_to_view_files_list(view_files_info *vdat, const char *filen
 	}
       vdat->size = new_size;
     }
-  for (k = vdat->end; k > 0; k--) 
-    {
-      vdat->names[k] = vdat->names[k - 1]; 
-      vdat->full_names[k] = vdat->full_names[k - 1];
-      vdat->times[k] = vdat->times[k - 1];
-    }
-  vdat->names[0] = copy_string(filename);
-  vdat->full_names[0] = copy_string(fullname);
-  vdat->times[0] = vdat->curtime++;
+  vdat->names[vdat->end] = copy_string(filename);
+  vdat->full_names[vdat->end] = copy_string(fullname);
+  vdat->times[vdat->end] = vdat->curtime++;
+  vf_clear_button_set_sensitive(vdat, true);
 }
 
 static void add_directory_to_view_files_list(view_files_info *vdat, const char *dirname)
@@ -4209,7 +4344,11 @@ static void ignore_mus_error(int type, char *msg)
 
 static void view_files_sort_list(view_files_info *vdat)
 {
-  view_files_update_list(vdat);
+  int i, old_len;
+  char **old_names = NULL;
+  old_len = vdat->currently_selected_files;
+  if (old_len > 0)
+    old_names = view_files_selected_files(vdat);
   if (vdat->end >= 0)
     {
       heapdata **data;
@@ -4278,18 +4417,23 @@ static void view_files_sort_list(view_files_info *vdat)
 	      snd_unprotect_at(gc_loc);
 	    }
 	  for (i = 0; i < len; i++) FREE(data[i]);
-	  FREE(data);
-	  return;
 	  break;
 	}
-      for (i = 0; i < len; i++)
-	{
-	  vdat->names[i] = data[i]->a1;
-	  vdat->full_names[i] = data[i]->a2;
-	  vdat->times[i] = data[i]->times;
-	  FREE(data[i]);
-	}
+      if (vdat->sorter != SORT_BY_PROC)
+	for (i = 0; i < len; i++)
+	  {
+	    vdat->names[i] = data[i]->a1;
+	    vdat->full_names[i] = data[i]->a2;
+	    vdat->times[i] = data[i]->times;
+	    FREE(data[i]);
+	  }
       FREE(data);
+    }
+  if (old_names)
+    {
+      vf_fixup_selected_files(vdat, old_names, old_len);
+      for (i = 0; i < old_len; i++) FREE(old_names[i]);
+      FREE(old_names);
     }
 }
 
@@ -4365,28 +4509,31 @@ static void view_files_clear_list(view_files_info *vdat)
 	  }
       vdat->end = -1;
       vdat->curtime = 0;
+      vf_clear_button_set_sensitive(vdat, false);
     }
 }
 
 static void view_files_update_list(view_files_info *vdat)
 {
   /* here we need the file's full name */
+  int i, old_len;
+  char **old_names = NULL;
+  old_len = vdat->currently_selected_files;
+  if (old_len > 0) 
+    old_names = view_files_selected_files(vdat);
   if (vdat->names)
     {
       int i, j;
       for (i = 0; i <= vdat->end; i++)
 	if (vdat->names[i]) 
 	  {
-	    int fd;
-	    fd = OPEN(vdat->full_names[i], O_RDONLY, 0);
-	    if (fd == -1) 
+	    if (!(mus_file_probe(vdat->full_names[i])))
 	      {
 		FREE(vdat->names[i]); 
 		vdat->names[i] = NULL;
 		FREE(vdat->full_names[i]); 
 		vdat->full_names[i] = NULL;
 	      }
-	    else snd_close(fd, vdat->full_names[i]);
 	  }
       for (i = 0, j = 0; i <= vdat->end; i++)
 	if (vdat->names[i])
@@ -4402,6 +4549,13 @@ static void view_files_update_list(view_files_info *vdat)
 	    j++;
 	  }
       vdat->end = j - 1;
+      vf_clear_button_set_sensitive(vdat, vdat->end >= 0);
+    }
+  if (old_names)
+    {
+      vf_fixup_selected_files(vdat, old_names, old_len);
+      for (i = 0; i < old_len; i++) FREE(old_names[i]);
+      FREE(old_names);
     }
 }
 
@@ -4451,7 +4605,7 @@ static void sort_view_files_by_name(Widget w, XtPointer context, XtPointer info)
 {
   view_files_info *vdat = (view_files_info *)context;
   vdat->sorter = SORT_BY_NAME;
-  view_files_sort_list(vdat); /* TODO : needs to use local sorter */
+  view_files_sort_list(vdat); 
   view_files_display_list(vdat);
 }
 
@@ -4559,21 +4713,72 @@ static void view_files_remove_selected_callback(Widget w, XtPointer context, XtP
   view_files_display_list(vdat);
 }
 
+static off_t vf_location(view_files_info *vdat)
+{
+  snd_info *sp;
+  chan_info *cp;
+  char *str;
+  switch (vdat->location_choice)
+    {
+    case VF_AT_CURSOR:
+      sp = any_selected_sound();
+      if (sp)
+	{
+	  cp = any_selected_channel(sp);
+	  return(CURSOR(cp));
+	}
+      break;
+    case VF_AT_END:
+      sp = any_selected_sound();
+      if (sp)
+	{
+	  cp = any_selected_channel(sp);
+	  return(CURRENT_SAMPLES(cp));
+	}
+      break;
+    case VF_AT_BEGINNING:
+      return(0);
+      break;
+    case VF_AT_MARK:
+      /* TODO: watcher for mark/sample if error */
+      str = XmTextGetString(vdat->at_mark_text);
+      if ((str) && (*str))
+	{
+	  return(mark_id_to_sample(string_to_int_with_error(str, 0, "view-files mark")));
+	  /* TODO: mark valid check */
+	  XtFree(str);
+	}
+      else snd_error("no mark?");
+      break;
+    case VF_AT_SAMPLE:
+      str = XmTextGetString(vdat->at_sample_text);
+      if ((str) && (*str))
+	{
+	  return(string_to_off_t_with_error(str, 0, "view-files sample")); 
+	  XtFree(str);
+	}
+      else snd_error("no sample number?");
+      break;
+    }
+  return(0);
+}
+
 static void view_files_insert_selected_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  /*
   view_files_info *vdat = (view_files_info *)context;
-  fprintf(stderr, "insert selected");
-  */
+  off_t beg;
+  beg = vf_location(vdat);
+  /* write temp (if needed -- amp/speed/env) then insert_complete_file[_at_cursor], handle temp cleanup */
 }
 
 static void view_files_mix_selected_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  /* 
   view_files_info *vdat = (view_files_info *)context;
-  fprintf(stderr, "mix selected");
-  */
-  /* mix at vdat->location (via location_choice) in selected chan(s) -- post acknowledgement */
+  off_t beg;
+  beg = vf_location(vdat);
+  /* mix unchanged, then set amp/speed/env as needed to mix */
+  /* with-tag button? */
+
 }
 
 /* TODO: undo last action button */
@@ -4622,19 +4827,6 @@ static void view_files_at_sample_callback(Widget w, XtPointer context, XtPointer
   vdat->location_choice = VF_AT_SAMPLE;
 }
 
-static void view_files_at_sample_text_callback(Widget w, XtPointer context, XtPointer info) 
-{
-  view_files_info *vdat = (view_files_info *)context;
-  char *str;
-  str = XmTextGetString(w);
-  if ((str) && (*str))
-    {
-      vdat->location = string_to_off_t_with_error(str, 0, "view-files sample"); 
-      XtFree(str);
-    }
-  else snd_error("no sample number?");
-}
-
 static void view_files_at_mark_callback(Widget w, XtPointer context, XtPointer info) 
 {
   view_files_info *vdat = (view_files_info *)context;
@@ -4644,19 +4836,6 @@ static void view_files_at_mark_callback(Widget w, XtPointer context, XtPointer i
   XmToggleButtonSetState(vdat->at_mark_button, true, false);
   XmToggleButtonSetState(vdat->at_sample_button, false, false);
   vdat->location_choice = VF_AT_MARK;
-}
-
-static void view_files_at_mark_text_callback(Widget w, XtPointer context, XtPointer info) 
-{
-  view_files_info *vdat = (view_files_info *)context;
-  char *str;
-  str = XmTextGetString(w);
-  if ((str) && (*str))
-    {
-      vdat->location = mark_id_to_sample(string_to_int_with_error(str, 0, "view-files mark"));
-      XtFree(str);
-    }
-  else snd_error("no mark?");
 }
 
 
@@ -4875,9 +5054,6 @@ static void white_mouse_enter_text_callback(Widget w, XtPointer context, XEvent 
 
 
 /* -------------------------------------------------------------------------------- */
-
-/* TODO: open/remove callbacks sensitivity stuff */
-
 
 static Widget start_view_files_dialog_1(view_files_info *vdat, bool managed)
 {
@@ -5187,7 +5363,6 @@ static Widget start_view_files_dialog_1(view_files_info *vdat, bool managed)
       XtSetArg(args[n], XmNleftWidget, vdat->at_sample_button); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       vdat->at_sample_text = make_textfield_widget("at-sample-text", bform, args, n, NOT_ACTIVATABLE, NO_COMPLETER);
-      XtAddCallback(vdat->at_sample_text, XmNactivateCallback, view_files_at_sample_text_callback, (XtPointer)vdat);
       XtRemoveCallback(vdat->at_sample_text, XmNlosingFocusCallback, textfield_unfocus_callback, NULL);
       XtAddCallback(vdat->at_sample_text, XmNlosingFocusCallback, blue_textfield_unfocus_callback, NULL);
       XtAddEventHandler(vdat->at_sample_text, LeaveWindowMask, false, blue_mouse_leave_text_callback, NULL);
@@ -5227,7 +5402,6 @@ static Widget start_view_files_dialog_1(view_files_info *vdat, bool managed)
       XtSetArg(args[n], XmNleftWidget, vdat->at_mark_button); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       vdat->at_mark_text = make_textfield_widget("at-mark-text", bform, args, n, NOT_ACTIVATABLE, NO_COMPLETER);
-      XtAddCallback(vdat->at_mark_text, XmNactivateCallback, view_files_at_mark_text_callback, (XtPointer)vdat);
       XtRemoveCallback(vdat->at_mark_text, XmNlosingFocusCallback, textfield_unfocus_callback, NULL);
       XtAddCallback(vdat->at_mark_text, XmNlosingFocusCallback, blue_textfield_unfocus_callback, NULL);
       XtAddEventHandler(vdat->at_mark_text, LeaveWindowMask, false, blue_mouse_leave_text_callback, NULL);
@@ -5570,7 +5744,7 @@ static Widget start_view_files_dialog_1(view_files_info *vdat, bool managed)
       bydate =  XtCreateManagedWidget(_("date"),  xmPushButtonWidgetClass, smenu, args, n);
       bysize =  XtCreateManagedWidget(_("size"),  xmPushButtonWidgetClass, smenu, args, n);
       byentry = XtCreateManagedWidget(_("entry"), xmPushButtonWidgetClass, smenu, args, n);
-      vdat->byproc =  XtCreateManagedWidget(_("proc"),  xmPushButtonWidgetClass, smenu, args, n);
+      vdat->byproc =  XtCreateManagedWidget(ss->view_files_sort_proc_name,  xmPushButtonWidgetClass, smenu, args, n);
       /* PERHAPS: proc list here as file-filter */
       XtSetSensitive(vdat->byproc, XEN_PROCEDURE_P(ss->view_files_sort_proc));
       /* don't deal with this via a cascading callback -- damned thing segfaults for no ascertainable reason! */
@@ -5621,12 +5795,14 @@ static Widget start_view_files_dialog_1(view_files_info *vdat, bool managed)
       XtAddEventHandler(vdat->env_drawer, ButtonMotionMask, false, vf_drawer_button_motion, (XtPointer)vdat);
       XtAddEventHandler(vdat->env_drawer, ButtonReleaseMask, false, vf_drawer_button_release, (XtPointer)vdat);
 
-      /* XmToggleButtonSetState(vdat->at_cursor_button, true, false); */
-
       FREE(n1);
       FREE(n2);
       FREE(n3);
       FREE(n4);
+
+      vf_mix_insert_buttons_set_sensitive(vdat, false);
+      vf_open_remove_buttons_set_sensitive(vdat, false); /* need selection */
+      vf_clear_button_set_sensitive(vdat, vdat->end > 0);
 
     }
   else

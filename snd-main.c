@@ -56,6 +56,81 @@ void sound_not_current(snd_info *sp, void *ignore)
     }
 }
 
+
+/* -------- ss watcher lists -------- */
+
+#define SS_WATCHER_SIZE_INCREMENT 2
+
+int add_ss_watcher(ss_watcher_t type, void (*watcher)(ss_watcher_reason_t reason, int loc), void *context)
+{
+  int loc = -1;
+  if (!(ss->watchers))
+    {
+      loc = 0;
+      ss->watchers_size = SS_WATCHER_SIZE_INCREMENT;
+      ss->watchers = (ss_watcher **)CALLOC(ss->watchers_size, sizeof(ss_watcher *));
+    }
+  else
+    {
+      int i;
+      for (i = 0; i < ss->watchers_size; i++)
+	if (!(ss->watchers[i]))
+	  {
+	    loc = i;
+	    break;
+	  }
+      if (loc == -1)
+	{
+	  loc = ss->watchers_size;
+	  ss->watchers_size += SS_WATCHER_SIZE_INCREMENT;
+	  ss->watchers = (ss_watcher **)REALLOC(ss->watchers, ss->watchers_size * sizeof(ss_watcher *));
+	  for (i = loc; i < ss->watchers_size; i++) ss->watchers[i] = NULL;
+	}
+    }
+  ss->watchers[loc] = (ss_watcher *)CALLOC(1, sizeof(ss_watcher));
+  ss->watchers[loc]->watcher = watcher;
+  ss->watchers[loc]->context = context;
+  ss->watchers[loc]->loc = loc;
+  ss->watchers[loc]->type = type;
+  return(loc);
+}
+
+bool remove_ss_watcher(int loc)
+{
+  if ((ss->watchers) &&
+      (loc < ss->watchers_size) &&
+      (loc >= 0) &&
+      (ss->watchers[loc]))
+    {
+      FREE(ss->watchers[loc]);
+      ss->watchers[loc] = NULL;
+      return(true);
+    }
+  return(false);
+}
+
+bool call_ss_watchers(ss_watcher_t type, ss_watcher_reason_t reason)
+{
+  bool got_one = false;
+  if (ss->watchers)
+    {
+      int i;
+      for (i = 0; i < ss->watchers_size; i++)
+	{
+	  if ((ss->watchers[i]) &&
+	      ((type == SS_ANY_WATCHER) ||
+	       (ss->watchers[i]->type == type)))
+	    {
+	      (*(ss->watchers[i]->watcher))(reason, i);
+	      got_one = true;
+	    }
+	}
+    }
+  return(got_one);
+}
+
+
+
 /* ---------------- save sound state (options, or entire state) ---------------- */
 
 #if HAVE_SCHEME

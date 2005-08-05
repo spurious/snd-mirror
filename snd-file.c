@@ -1004,6 +1004,7 @@ void snd_close_file(snd_info *sp)
     }
   reflect_file_change_in_title();
   call_selection_watchers(SELECTION_IN_DOUBT);
+  call_ss_watchers(SS_FILE_OPEN_WATCHER, SS_FILE_CLOSED);
 }
 
 io_error_t copy_file(const char *oldname, const char *newname)
@@ -2736,6 +2737,10 @@ static XEN g_view_files_sort_procedure(void)
   #define H_view_files_sort_procedure "(" S_view_files_sort_procedure "): sort procedure for the current files viewer"
   return(ss->view_files_sort_proc);
 }
+
+/* TODO: some way to set view files proc name 
+ *	  via view_files_set_sort_proc_name(XEN_TO_C_STRING(proc_name));
+ */
 
 static XEN g_set_view_files_sort_procedure(XEN proc)
 {

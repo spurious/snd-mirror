@@ -3303,7 +3303,7 @@ gboolean label_leave_callback(GtkWidget *w, GdkEventCrossing *ev, gpointer gp)
   return(mouse_name(mouse_leave_label_hook, w, S_mouse_leave_label_hook));
 }
 
-
+void view_files_set_sort_proc_name(const char *name) {}
 
 static regrow *make_regrow(view_files_info *vdat, 
 			   GtkSignalFunc play_callback, GtkSignalFunc name_callback)

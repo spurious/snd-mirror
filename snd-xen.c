@@ -2121,45 +2121,6 @@ static XEN g_transform_dialog(XEN managed)
   return(XEN_WRAP_WIDGET(w));
 }
 
-static XEN g_view_files_dialog(XEN managed)
-{
-  widget_t w;
-  #define H_view_files_dialog "(" S_view_files_dialog "): start the View Files dialog"
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(managed), managed, XEN_ONLY_ARG, S_view_files_dialog, "a boolean");
-  w = start_view_files_dialog(XEN_TO_C_BOOLEAN(managed));
-  return(XEN_WRAP_WIDGET(w));
-}
-
-static XEN g_edit_header_dialog(XEN snd_n) 
-{
-  widget_t w;
-  #define H_edit_header_dialog "(" S_edit_header_dialog " snd): start the Edit Header dialog on sound snd"
-  snd_info *sp; 
-  sp = get_sp(snd_n, NO_PLAYERS);
-  if ((sp == NULL) || (sp->inuse != SOUND_NORMAL))
-    return(snd_no_such_sound_error(S_edit_header_dialog, snd_n));
-  w = edit_header(sp);
-  return(XEN_WRAP_WIDGET(w));
-}
-
-static XEN g_save_selection_dialog(XEN managed)
-{
-  widget_t w;
-  #define H_save_selection_dialog "(" S_save_selection_dialog "): start the Selection Save-as dialog"
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(managed), managed, XEN_ONLY_ARG, S_save_selection_dialog, "a boolean");
-  w = make_selection_save_as_dialog(XEN_TO_C_BOOLEAN(managed));
-  return(XEN_WRAP_WIDGET(w));
-}
-
-static XEN g_save_sound_dialog(XEN managed)
-{
-  widget_t w;
-  #define H_save_sound_dialog "(" S_save_sound_dialog "): start the File Save-as dialog"
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(managed), managed, XEN_ONLY_ARG, S_save_sound_dialog, "a boolean");
-  w = make_sound_save_as_dialog(XEN_TO_C_BOOLEAN(managed));
-  return(XEN_WRAP_WIDGET(w));
-}
-
 static XEN g_print_dialog(XEN managed, XEN direct_to_printer) 
 {
   widget_t w;
@@ -2170,15 +2131,6 @@ static XEN g_print_dialog(XEN managed, XEN direct_to_printer)
   return(XEN_WRAP_WIDGET(w));
 }
 
-static XEN g_info_dialog(XEN subject, XEN msg)
-{
-  widget_t w;
-  #define H_info_dialog "(" S_info_dialog " subject message): start the Info window with subject and message"
-  XEN_ASSERT_TYPE(XEN_STRING_P(subject), subject, XEN_ARG_1, S_info_dialog, "a string");
-  XEN_ASSERT_TYPE(XEN_STRING_P(msg), msg, XEN_ARG_2, S_info_dialog, "a string");
-  w = post_it(XEN_TO_C_STRING(subject), XEN_TO_C_STRING(msg));
-  return(XEN_WRAP_WIDGET(w));
-}
 
 
 #if (!USE_NO_GUI)
@@ -2635,6 +2587,7 @@ void after_open(int index)
     run_hook(after_open_hook,
 	     XEN_LIST_1(C_TO_XEN_INT(index)),
 	     S_after_open_hook);
+  call_ss_watchers(SS_FILE_OPEN_WATCHER, SS_FILE_OPENED);
 }
 
 static XEN output_name_hook;
@@ -3040,12 +2993,7 @@ XEN_NARGIFY_0(g_snd_tempnam_w, g_snd_tempnam)
 XEN_ARGIFY_1(g_color_dialog_w, g_color_dialog)
 XEN_ARGIFY_1(g_orientation_dialog_w, g_orientation_dialog)
 XEN_ARGIFY_1(g_transform_dialog_w, g_transform_dialog)
-XEN_ARGIFY_1(g_view_files_dialog_w, g_view_files_dialog)
-XEN_ARGIFY_1(g_edit_header_dialog_w, g_edit_header_dialog)
-XEN_ARGIFY_1(g_save_selection_dialog_w, g_save_selection_dialog)
-XEN_ARGIFY_1(g_save_sound_dialog_w, g_save_sound_dialog)
 XEN_ARGIFY_2(g_print_dialog_w, g_print_dialog)
-XEN_NARGIFY_2(g_info_dialog_w, g_info_dialog)
 XEN_NARGIFY_0(g_sounds_w, g_sounds)
 XEN_NARGIFY_0(g_abort_w, g_abort)
 XEN_NARGIFY_0(g_abortq_w, g_abortq)
@@ -3220,12 +3168,7 @@ XEN_NARGIFY_1(g_i0_w, g_i0)
 #define g_color_dialog_w g_color_dialog
 #define g_orientation_dialog_w g_orientation_dialog
 #define g_transform_dialog_w g_transform_dialog
-#define g_view_files_dialog_w g_view_files_dialog
-#define g_edit_header_dialog_w g_edit_header_dialog
-#define g_save_selection_dialog_w g_save_selection_dialog
-#define g_save_sound_dialog_w g_save_sound_dialog
 #define g_print_dialog_w g_print_dialog
-#define g_info_dialog_w g_info_dialog
 #define g_sounds_w g_sounds
 #define g_abort_w g_abort
 #define g_abortq_w g_abortq
@@ -3523,12 +3466,7 @@ void g_initialize_gh(void)
   XEN_DEFINE_PROCEDURE(S_color_dialog,          g_color_dialog_w,          0, 1, 0, H_color_dialog);
   XEN_DEFINE_PROCEDURE(S_orientation_dialog,    g_orientation_dialog_w,    0, 1, 0, H_orientation_dialog);
   XEN_DEFINE_PROCEDURE(S_transform_dialog,      g_transform_dialog_w,      0, 1, 0, H_transform_dialog);
-  XEN_DEFINE_PROCEDURE(S_view_files_dialog,     g_view_files_dialog_w,     0, 1, 0, H_view_files_dialog);
-  XEN_DEFINE_PROCEDURE(S_edit_header_dialog,    g_edit_header_dialog_w,    0, 1, 0, H_edit_header_dialog);
-  XEN_DEFINE_PROCEDURE(S_save_selection_dialog, g_save_selection_dialog_w, 0, 1, 0, H_save_selection_dialog);
-  XEN_DEFINE_PROCEDURE(S_save_sound_dialog,     g_save_sound_dialog_w,     0, 1, 0, H_save_sound_dialog);
   XEN_DEFINE_PROCEDURE(S_print_dialog,          g_print_dialog_w,          0, 2, 0, H_print_dialog);
-  XEN_DEFINE_PROCEDURE(S_info_dialog,           g_info_dialog_w,           2, 0, 0, H_info_dialog);
   XEN_DEFINE_PROCEDURE(S_sounds,                g_sounds_w,                0, 0, 0, H_sounds);
   XEN_DEFINE_PROCEDURE(S_abort,                 g_abort_w,                 0, 0, 0, H_abort);
   XEN_DEFINE_PROCEDURE(S_c_g,                   g_abortq_w,                0, 0, 0, H_abortQ);

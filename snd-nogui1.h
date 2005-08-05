@@ -269,6 +269,7 @@ void add_directory_to_default_view_files_dialog(const char *dirname);
 void add_file_to_default_view_files_dialog(const char *dirname);
 widget_t start_view_files_dialog(bool managed);
 void view_files_set_sort_by_proc_sensitive(bool sensitive);
+void view_files_set_sort_proc_name(const char *name);
 
 
 /* -------- snd-xenv.c -------- */

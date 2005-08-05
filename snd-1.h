@@ -368,6 +368,13 @@ typedef struct snd_info {
 
 #define SND_SRATE(sp) (((sp)->hdr)->srate)
 
+typedef struct {
+  void (*watcher)(ss_watcher_reason_t reason, int list_loc);
+  void *context;
+  int loc;
+  ss_watcher_t type;
+} ss_watcher;
+
 typedef struct snd_state {
   int selected_sound;         /* NO_SELECTION = none selected = which sound is currently receiving user's attention */
   int active_sounds;
@@ -377,6 +384,7 @@ typedef struct snd_state {
   struct ptree *search_tree;
   XEN search_proc;
   XEN view_files_sort_proc;
+  char *view_files_sort_proc_name;
   int catch_exists, view_files_sort_proc_loc, search_proc_loc, local_errno, local_open_errno;
 #if (!USE_GTK)
   bool using_schemes;
@@ -482,6 +490,8 @@ typedef struct snd_state {
 #if DEBUGGING
   char *snd_error_caller, *xen_error_caller, *snd_print_caller, *snd_warning_caller;
 #endif
+  ss_watcher **watchers;
+  int watchers_size;
 } snd_state;
 
 extern snd_state *ss;
@@ -607,6 +617,9 @@ void g_init_menu(void);
 
 /* -------- snd-main.c -------- */
 
+int add_ss_watcher(ss_watcher_t type, void (*watcher)(ss_watcher_reason_t reason, int list_loc), void *context);
+bool remove_ss_watcher(int loc);
+bool call_ss_watchers(ss_watcher_t type, ss_watcher_reason_t reason);
 void save_options(FILE *fd);
 void open_save_sound_block(snd_info *sp, FILE *fd, bool with_nth);
 void close_save_sound_block(FILE *fd);
