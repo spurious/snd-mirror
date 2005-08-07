@@ -3261,9 +3261,21 @@ typedef struct {
   char **full_names;
   int *times;
   int end;
-  int curtime;
-  view_files_sort_t sorter;
+  int curtime, sorter;
 } view_files_info;
+
+Float view_files_amp(widget_t dialog) {return(0.0);}
+Float view_files_set_amp(widget_t dialog, Float new_amp) {return(0.0);}
+Float view_files_speed(widget_t dialog) {return(0.0);}
+Float view_files_set_speed(widget_t dialog, Float new_speed) {return(0.0);}
+env *view_files_amp_env(widget_t dialog) {return(NULL);}
+env *view_files_set_amp_env(widget_t dialog, env *new_e) {return(NULL);}
+char **view_files_selected_files(widget_t dialog, int *len) {return(NULL);}
+char **view_files_files(widget_t dialog, int *len) {return(NULL);}
+char **view_files_set_selected_files(widget_t dialog, char **files, int len) {return(NULL);}
+char **view_files_set_files(widget_t dialog, char **files, int len) {return(NULL);}
+
+
 
 /* ---------------- mouse enter|leave-label ---------------- */
 
@@ -3391,16 +3403,9 @@ static view_files_info *new_view_files_dialog(void)
 
 /* REMEMBER: sort case sensitive at cascade based on proc-p */
 
-static XEN view_files_select_hook;
-
 static void view_files_select(view_files_info *vdat, int pos)
 {
-  XEN res = XEN_FALSE;
-  if (XEN_HOOKED(view_files_select_hook))
-    res = run_or_hook(view_files_select_hook,
-		      XEN_LIST_1(C_TO_XEN_STRING(vdat->full_names[pos])),
-		      S_view_files_select_hook);
-  if (XEN_NOT_TRUE_P(res))
+  if (view_files_run_select_hook(vdat->full_names[pos]))
     {
       snd_info *sp;
       ss->open_requestor = FROM_VIEW_FILES;
@@ -3620,6 +3625,7 @@ static void view_files_sort_list(view_files_info *vdat)
 	    data[i]->vals = vdat->times[i];
 	  qsort((void *)data, vdat->end + 1, sizeof(heapdata *), less_compare);
 	  break;
+#if 0
 	case SORT_BY_PROC:
 	  if (XEN_PROCEDURE_P(ss->view_files_sort_proc))
 	    {
@@ -3653,6 +3659,7 @@ static void view_files_sort_list(view_files_info *vdat)
 	  FREE(data);
 	  return;
 	  break;
+#endif
 	}
       for (i = 0; i < len; i++)
 	{
@@ -3845,9 +3852,11 @@ static void sort_view_files_by_entry(GtkWidget *w, gpointer context)
 
 static void sort_view_files_by_user_procedure(GtkWidget *w, gpointer context) 
 {
+#if 0
   view_files_info *vdat = (view_files_info *)context;
   set_view_files_sort(SORT_BY_PROC);
   view_files_sort_list(vdat);
+#endif
 }
 
 static void view_files_add_files(GtkWidget *w, gpointer context, gpointer info) 
@@ -3958,19 +3967,25 @@ static GtkWidget *start_view_files_dialog_1(view_files_info *vdat, bool managed)
       bydate = gtk_menu_item_new_with_label(_("date"));
       bysize = gtk_menu_item_new_with_label(_("size"));
       byentry = gtk_menu_item_new_with_label(_("entry"));
+      /*
       byproc = gtk_menu_item_new_with_label(_("proc"));
+      */
 
       gtk_menu_shell_append(GTK_MENU_SHELL(smenu), byname);
       gtk_menu_shell_append(GTK_MENU_SHELL(smenu), bydate);
       gtk_menu_shell_append(GTK_MENU_SHELL(smenu), bysize);
       gtk_menu_shell_append(GTK_MENU_SHELL(smenu), byentry);
+      /*
       gtk_menu_shell_append(GTK_MENU_SHELL(smenu), byproc);
+      */
 
       gtk_widget_show(byname);
       gtk_widget_show(bydate);
       gtk_widget_show(bysize);
       gtk_widget_show(byentry);
+      /*
       gtk_widget_show(byproc);
+      */
 
       sitem = gtk_menu_item_new_with_label(_("sort"));
       gtk_widget_show(sitem);
@@ -3981,7 +3996,9 @@ static GtkWidget *start_view_files_dialog_1(view_files_info *vdat, bool managed)
       SG_SIGNAL_CONNECT(bydate,  "activate", sort_view_files_by_date, NULL);
       SG_SIGNAL_CONNECT(bysize,  "activate", sort_view_files_by_size, NULL);
       SG_SIGNAL_CONNECT(byentry,  "activate", sort_view_files_by_entry, NULL);
+      /*
       SG_SIGNAL_CONNECT(byproc,  "activate", sort_view_files_by_user_procedure, NULL);
+      */
 
       vdat->file_list = gtk_vbox_new(false, 0);
 
@@ -4108,30 +4125,6 @@ void add_file_to_default_view_files_dialog(const char *filename)
 }
 
 
-static XEN g_view_files_sort(void) {return(C_TO_XEN_INT(view_files_sort(ss)));}
-static XEN g_set_view_files_sort(XEN val) 
-{
-  #define H_view_files_sort "(" S_view_files_sort "): sort choice in view files (0 = unsorted, 1 = by name, \
-2 = by write date, 3 = by size, 4 = by directory order, 5 = by " S_view_files_sort_procedure "."
-
-  int choice;
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_view_files_sort, "an integer"); 
-  choice = XEN_TO_C_INT(val);
-  if ((choice < 0) || (choice > 5))
-    XEN_OUT_OF_RANGE_ERROR(S_setB S_view_files_sort, 1, val, "~A, but must be between 0 and 5");
-  set_view_files_sort((view_files_sort_t)choice);
-  return(C_TO_XEN_INT((int)view_files_sort(ss)));
-}
-
-
-#ifdef XEN_ARGIFY_1
-XEN_NARGIFY_0(g_view_files_sort_w, g_view_files_sort)
-XEN_NARGIFY_1(g_set_view_files_sort_w, g_set_view_files_sort)
-#else
-#define g_view_files_sort_w g_view_files_sort
-#define g_set_view_files_sort_w g_set_view_files_sort
-#endif
-
 
 
 void g_init_gxfile(void)
@@ -4157,14 +4150,6 @@ is the scrolled list position of the label. The label itself is 'label'."
 
   mouse_enter_label_hook = XEN_DEFINE_HOOK(S_mouse_enter_label_hook, 3, H_mouse_enter_label_hook);
   mouse_leave_label_hook = XEN_DEFINE_HOOK(S_mouse_leave_label_hook, 3, H_mouse_leave_label_hook);
-
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_view_files_sort, g_view_files_sort_w, H_view_files_sort,
-				   S_setB S_view_files_sort, g_set_view_files_sort_w,  0, 0, 1, 0);
-
-  #define H_view_files_select_hook S_view_files_select_hook "(filename): called when a file is selected in the \
-files list of the View Files dialog.  If it returns #t, the default action, opening the file, is omitted."
-
-  view_files_select_hook = XEN_DEFINE_HOOK(S_view_files_select_hook, 1, H_view_files_select_hook); /* arg = filename */
 }
 
 

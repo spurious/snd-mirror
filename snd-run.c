@@ -105,8 +105,13 @@ static int run_safety = RUN_UNSAFE;
 #if WITH_RUN
 
 #define Int off_t
-#define INT_PT  "i%d(%lld)"
-#define INT_STR "%lld"
+#if (SIZEOF_OFF_T == SIZEOF_LONG)
+  #define INT_PT  "i%d(%ld)"
+  #define INT_STR "%ld"
+#else
+  #define INT_PT  "i%d(%lld)"
+  #define INT_STR "%lld"
+#endif
 #define R_C_TO_XEN_INT C_TO_XEN_OFF_T
 #define R_XEN_TO_C_INT XEN_TO_C_OFF_T
 #define Double double
@@ -8940,9 +8945,7 @@ static void phase_vocoder_5f(int *args, ptree *pt)
 {
   /* in-coming arg1 is descr of which funcs are active -- all arg ctrs are shifted over one to make room */
   mus_xen *gn = (mus_xen *)mus_environ(CLM_ARG_2);
-  /*
-  fprintf(stderr,"funcs: %lld\n", INT_ARG_1);
-  */
+
   if (INT_ARG_1 & 1) gn->input_ptree = FNC_ARG_3;
   if (INT_ARG_1 & 2) gn->analyze_ptree = FNC_ARG_4;
   if (INT_ARG_1 & 4) gn->edit_ptree = FNC_ARG_5;

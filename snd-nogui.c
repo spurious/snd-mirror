@@ -253,6 +253,17 @@ void add_file_to_default_view_files_dialog(const char *dirname) {}
 widget_t start_view_files_dialog(bool managed) {return(0);}
 void view_files_set_sort_by_proc_sensitive(bool sensitive) {}
 void view_files_set_sort_proc_name(const char *name) {}
+Float view_files_amp(widget_t dialog) {return(0.0);}
+Float view_files_set_amp(widget_t dialog, Float new_amp) {return(0.0);}
+Float view_files_speed(widget_t dialog) {return(0.0);}
+Float view_files_set_speed(widget_t dialog, Float new_speed) {return(0.0);}
+env *view_files_amp_env(widget_t dialog) {return(NULL);}
+env *view_files_set_amp_env(widget_t dialog, env *new_e) {return(NULL);}
+char **view_files_selected_files(widget_t dialog, int *len) {return(NULL);}
+char **view_files_files(widget_t dialog, int *len) {return(NULL);}
+char **view_files_set_selected_files(widget_t dialog, char **files, int len) {return(NULL);}
+char **view_files_set_files(widget_t dialog, char **files, int len) {return(NULL);}
+
 
 void auto_update_restart(void) {}
 

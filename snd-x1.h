@@ -406,6 +406,16 @@ void add_file_to_default_view_files_dialog(const char *dirname);
 Widget start_view_files_dialog(bool managed);
 void view_files_set_sort_by_proc_sensitive(bool sensitive);
 void view_files_set_sort_proc_name(const char *name);
+Float view_files_amp(widget_t dialog);
+Float view_files_set_amp(widget_t dialog, Float new_amp);
+Float view_files_speed(widget_t dialog);
+Float view_files_set_speed(widget_t dialog, Float new_speed);
+env *view_files_amp_env(widget_t dialog);
+env *view_files_set_amp_env(widget_t dialog, env *new_e);
+char **view_files_selected_files(widget_t dialog, int *len);
+char **view_files_files(widget_t dialog, int *len);
+char **view_files_set_selected_files(widget_t dialog, char **files, int len);
+char **view_files_set_files(widget_t dialog, char **files, int len);
 
 
 

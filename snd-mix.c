@@ -1296,7 +1296,7 @@ static void after_mix_file(void *context)
 }
 #endif
 
-static int mix_complete_file(snd_info *sp, off_t beg, char *fullname, bool with_tag, file_delete_t auto_delete, int track_id, bool all_chans)
+int mix_complete_file(snd_info *sp, off_t beg, char *fullname, bool with_tag, file_delete_t auto_delete, int track_id, bool all_chans)
 {
   /* no need to save as temp here, but we do need sync info (from menu and keyboard) */
   /* returns -1 if with_tag is false, -2 if no such file */

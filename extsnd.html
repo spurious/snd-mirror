@@ -9343,29 +9343,6 @@ and return the dialog widget.</td></tr>
 <tr><td colspan=2><code><a class=def name="previousfilessort">view-files-sort</a> ()</code></td></tr>
 <tr><td></td><td>The sort function choice in the View:Files dialog (0=unsorted, 1=name, 2=date, 3=size, 4=entry, 5=user procedure).</td></tr>
 
-<!-- view-files-sort-procedure -->
-<tr><td colspan=2><code><a class=def name="filessortproc">view-files-sort-procedure</a> ()</code></td></tr>
-<tr><td></td><td>Procedure used to sort files in the files dialog.  It takes one argument, the list of files, and
-should return that list, sorted as it pleases.  The following sorts the list by decreasing max amp:
-</td></tr>
-
-<tr><td></td><td><table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
-(set! (<em class=red>view-files-sort-procedure</em>)
-  (lambda (lst)
-    (sort lst 
-	  (lambda (a b)
-	    (define (mxall mxcur mxlst)
-	      (if (null? mxlst)
-		  mxcur
-		  (mxall (max mxcur (cadr mxlst)) (cddr mxlst))))
-	    (let ((mxa (<em class=red>mus-sound-maxamp</em> a))
-		  (mxb (<em class=red>mus-sound-maxamp</em> b)))
-	      (or (null? mxb)
-		  (and (not (null? mxa))
-		       (&gt; (mxall 0.0 mxa)
-			  (mxall 0.0 mxb)))))))))
-</pre></td></tr></table></td></tr>
-
 <!-- view-mixes-dialog -->
 <tr><td colspan=2><code><a class=def name="viewmixesdialog">view-mixes-dialog</a> ()</code></td></tr>
 <tr><td></td><td>create and activate the Mix Dialog, return the dialog widget.</td></tr>

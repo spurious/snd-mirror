@@ -33,7 +33,11 @@
 #endif
 
 #if (defined(SIZEOF_OFF_T) && (SIZEOF_OFF_T > 4)) || (defined(_FILE_OFFSET_BITS) && (_FILE_OFFSET_BITS == 64))
-  #define OFF_TD "%lld"
+  #if (SIZEOF_OFF_T == SIZEOF_LONG)
+    #define OFF_TD "%ld"
+  #else
+    #define OFF_TD "%lld"
+  #endif
 #else
   #define OFF_TD "%d"
 #endif

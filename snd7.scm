@@ -347,7 +347,7 @@
 (if (not (defined? 'default-output-format)) (define default-output-format default-output-data-format))
 
 (define previous-files-sort view-files-sort)
-(define previous-files-sort-procedure view-files-sort-procedure)
+;; (define previous-files-sort-procedure view-files-sort-procedure)
 ;; previous-files-select-hook -> view-files-select-hook
 
 (define preload-directory add-directory-to-view-files-list)

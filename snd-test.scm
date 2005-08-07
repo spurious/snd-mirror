@@ -8946,28 +8946,28 @@ EDITS: 5
 	    (if (> (maxamp) .02) (snd-display ";filter-sound maxamp 3: ~A" (maxamp)))
 	    (close-sound ind))
 	  
-	  (if (and (provided? 'xm) (provided? 'snd-debug))
-	      (XtCallCallbacks (menu-option "Files") XmNactivateCallback (snd-global-state))
-	      (view-files-dialog))
-	  (set! (view-files-sort-procedure)
-		(lambda (lst)
-		  (sort lst 
-			(lambda (a b)
-			  (> (mus-sound-duration a) (mus-sound-duration b))))))
-	  (if (not (procedure? (view-files-sort-procedure)))
-	      (snd-display ";view-files-sort-procedure: ~A" (view-files-sort-procedure)))
-	  (set! (view-files-sort) 5)
+;	  (if (and (provided? 'xm) (provided? 'snd-debug))
+;	      (XtCallCallbacks (menu-option "Files") XmNactivateCallback (snd-global-state))
+;	      (view-files-dialog))
+;	  (set! (view-files-sort-procedure)
+;		(lambda (lst)
+;		  (sort lst 
+;			(lambda (a b)
+;			  (> (mus-sound-duration a) (mus-sound-duration b))))))
+;	  (if (not (procedure? (view-files-sort-procedure)))
+;	      (snd-display ";view-files-sort-procedure: ~A" (view-files-sort-procedure)))
+;	  (set! (view-files-sort) 5)
 	  (close-sound ind1)
-	  (let ((val (catch #t
-			    (lambda ()
-			      (set! (view-files-sort-procedure) (lambda (a b c) #f)))
-			    (lambda args (car args)))))
-	    (if (not (eq? val 'bad-arity))
-		(snd-display ";view-files-sort-procedure arity error: ~A" val)))
-	  (do ((i 0 (1+ i)))
-	      ((= i 5))
-	    (set! (view-files-sort) i))
-	  (set! (view-files-sort) 1)
+;	  (let ((val (catch #t
+;			    (lambda ()
+;			      (set! (view-files-sort-procedure) (lambda (a b c) #f)))
+;			    (lambda args (car args)))))
+;	    (if (not (eq? val 'bad-arity))
+;		(snd-display ";view-files-sort-procedure arity error: ~A" val)))
+;	  (do ((i 0 (1+ i)))
+;	      ((= i 5))
+;	    (set! (view-files-sort) i))
+;	  (set! (view-files-sort) 1)
 	  (dismiss-all-dialogs)
 	  )
 	
@@ -42515,7 +42515,7 @@ EDITS: 1
 	    (string-set! new-str i #\_)
 	    (string-set! new-str i c))))))
 
-(set! (view-files-sort-procedure) #f)
+;(set! (view-files-sort-procedure) #f)
 
 (define* (widget-string widget text #:optional (cleared #t))
   (define (shifted? ch)
@@ -44961,11 +44961,12 @@ EDITS: 1
 			    (date (find-child option-holder "date"))
 			    (size (find-child option-holder "size"))
 			    (entry (find-child option-holder "entry"))
-			    (proc (find-child option-holder "proc")))
+			    ;(proc (find-child option-holder "proc"))
+			    )
 			(XtCallCallbacks date XmNactivateCallback (snd-global-state))
 			(XtCallCallbacks size XmNactivateCallback (snd-global-state))
 			(XtCallCallbacks entry XmNactivateCallback (snd-global-state))
-			(if (XtIsSensitive proc) (XtCallCallbacks entry XmNactivateCallback (snd-global-state)))
+			;(if (XtIsSensitive proc) (XtCallCallbacks entry XmNactivateCallback (snd-global-state)))
 			(XtCallCallbacks name XmNactivateCallback (snd-global-state)))
 		      (click-button (XmMessageBoxGetChild filed XmDIALOG_CANCEL_BUTTON)) (force-event)     ;clear
 		      (XtSetKeyboardFocus filed (XmMessageBoxGetChild filed XmDIALOG_OK_BUTTON))
@@ -54393,7 +54394,7 @@ EDITS: 1
 		     locsig-type make-phase-vocoder mus-audio-mixer-read
 		     mus-describe mus-error-type->string mus-file-buffer-size mus-name mus-offset mus-out-format mus-reset
 		     mus-rand-seed mus-width phase-vocoder?
-		     polar->rectangular view-files-sort-procedure 
+		     polar->rectangular ;view-files-sort-procedure 
 		     phase-vocoder-amp-increments phase-vocoder-amps phase-vocoder-freqs phase-vocoder-outctr 
 		     phase-vocoder-phase-increments phase-vocoder-phases mus-generator?
 
@@ -54479,7 +54480,8 @@ EDITS: 1
 			 mus-increment mus-length mus-location mus-phase mus-ramp mus-scaler vct-ref x-axis-label
 			 filter-control-coeffs locsig-type mus-file-buffer-size 
 			 mus-rand-seed mus-width clm-table-size run-safety mus-offset mus-reset
-			 view-files-sort-procedure phase-vocoder-amp-increments phase-vocoder-amps 
+			 ;view-files-sort-procedure 
+			 phase-vocoder-amp-increments phase-vocoder-amps 
 			 phase-vocoder-freqs phase-vocoder-outctr phase-vocoder-phase-increments phase-vocoder-phases 
 			 quit-button-color help-button-color reset-button-color doit-button-color doit-again-button-color
 			 track-amp track-position track-speed track-tempo track-amp-env track-color

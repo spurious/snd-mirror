@@ -383,9 +383,8 @@ typedef struct snd_state {
   char *search_expr, *startup_title, *startup_errors;
   struct ptree *search_tree;
   XEN search_proc;
-  XEN view_files_sort_proc;
-  char *view_files_sort_proc_name;
-  int catch_exists, view_files_sort_proc_loc, search_proc_loc, local_errno, local_open_errno;
+  XEN file_sorters, file_filters;
+  int catch_exists, file_sorters_loc, file_filters_loc, search_proc_loc, local_errno, local_open_errno;
 #if (!USE_GTK)
   bool using_schemes;
 #endif
@@ -435,8 +434,7 @@ typedef struct snd_state {
   int Max_Regions, Max_Transform_Peaks;
   int Audio_Output_Device, Audio_Input_Device;
   bool Show_Backtrace, With_GL, With_Relative_Panes;
-  int Print_Length, Dac_Size;
-  view_files_sort_t View_Files_Sort;
+  int Print_Length, Dac_Size, View_Files_Sort;
   bool Dac_Combines_Channels, Show_Selection_Transform, With_Mix_Tags, Selection_Creates_Region;
   char *Save_State_File, *Listener_Prompt;
   Float Enved_Base, Enved_Power, Auto_Update_Interval;
@@ -1355,6 +1353,7 @@ void set_fallback_format(int fr);
 
 void run_after_save_as_hook(snd_info *sp, const char *already_saved_as_name, bool from_save_as_dialog);
 bool run_before_save_as_hook(snd_info *sp, const char *save_as_filename, bool selection, int srate, int type, int format, char *comment);
+bool view_files_run_select_hook(const char *selected_file);
 
 void g_init_file(void);
 void initialize_format_lists(void);
@@ -1426,6 +1425,7 @@ mix_context *make_mix_context(chan_info *cp);
 mix_context *free_mix_context(mix_context *ms);
 void free_mix_list(chan_info *cp);
 void free_mixes(chan_info *cp);
+int mix_complete_file(snd_info *sp, off_t beg, char *fullname, bool with_tag, file_delete_t auto_delete, int track_id, bool all_chans);
 int mix_complete_file_at_cursor(snd_info *sp, char *str, bool with_tag, int track_id);
 int mix_file(off_t beg, off_t num, int chans, chan_info **cps, char *mixinfile, file_delete_t temp, const char *origin, bool with_tag, int track_id);
 void backup_mix_list(chan_info *cp, int edit_ctr);

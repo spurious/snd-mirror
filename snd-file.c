@@ -2732,6 +2732,7 @@ static XEN g_info_dialog(XEN subject, XEN msg)
   return(XEN_WRAP_WIDGET(w));
 }
 
+#if 0
 static XEN g_view_files_sort_procedure(void)
 {
   #define H_view_files_sort_procedure "(" S_view_files_sort_procedure "): sort procedure for the current files viewer"
@@ -2771,8 +2772,158 @@ static XEN g_set_view_files_sort_procedure(XEN proc)
   else view_files_set_sort_by_proc_sensitive(false);
   return(proc);
 }
+#endif
+
+static int current_file_sorters = 5; /* TODO: fixup */
+static XEN g_view_files_sort(void) {return(C_TO_XEN_INT(view_files_sort(ss)));}
+static XEN g_set_view_files_sort(XEN val) 
+{
+  #define H_view_files_sort "(" S_view_files_sort "): sort choice in view files (" S_sort_files_by_name ", \
+" S_sort_files_by_date ", " S_sort_files_by_size ", " S_sort_files_by_entry ", or an index returned by " S_add_file_sorter "."
+
+  int choice;
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_view_files_sort, "an integer"); 
+  choice = XEN_TO_C_INT(val);
+  if ((choice < 0) ||
+      (choice > current_file_sorters))
+    XEN_OUT_OF_RANGE_ERROR(S_setB S_view_files_sort, 1, val, "must be a valid file-sorter index");
+  set_view_files_sort(choice);
+  return(C_TO_XEN_INT((int)view_files_sort(ss)));
+}
+
+static XEN g_view_files_amp(XEN dialog)
+{
+  #define H_view_files_amp "(" S_view_files_amp " dialog) -> amp setting in the given View:Files dialog"
+  XEN_ASSERT_TYPE(XEN_WIDGET_P(dialog), dialog, XEN_ONLY_ARG, S_view_files_amp, "a view-files dialog widget"); 
+  return(C_TO_XEN_DOUBLE(view_files_amp((widget_t)(XEN_UNWRAP_WIDGET(dialog)))));
+}
+
+static XEN g_view_files_set_amp(XEN dialog, XEN amp)
+{
+  XEN_ASSERT_TYPE(XEN_WIDGET_P(dialog), dialog, XEN_ARG_1, S_setB S_view_files_amp, "a view-files dialog widget"); 
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(amp), amp, XEN_ARG_2, S_setB S_view_files_amp, "a number");
+  view_files_set_amp((widget_t)(XEN_UNWRAP_WIDGET(dialog)), XEN_TO_C_DOUBLE(amp));
+  return(amp);
+}
+
+static XEN g_view_files_speed(XEN dialog)
+{
+  #define H_view_files_speed "(" S_view_files_speed " dialog) -> speed setting in the given View:Files dialog"
+  XEN_ASSERT_TYPE(XEN_WIDGET_P(dialog), dialog, XEN_ONLY_ARG, S_view_files_speed, "a view-files dialog widget"); 
+  return(C_TO_XEN_DOUBLE(view_files_speed((widget_t)(XEN_UNWRAP_WIDGET(dialog)))));
+}
+
+static XEN g_view_files_set_speed(XEN dialog, XEN speed)
+{
+  XEN_ASSERT_TYPE(XEN_WIDGET_P(dialog), dialog, XEN_ONLY_ARG, S_setB S_view_files_speed, "a view-files dialog widget"); 
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(speed), speed, XEN_ARG_2, S_setB S_view_files_speed, "a number");
+  view_files_set_speed((widget_t)(XEN_UNWRAP_WIDGET(dialog)), XEN_TO_C_DOUBLE(speed));
+  return(speed);
+}
+
+static XEN g_view_files_amp_env(XEN dialog)
+{
+  #define H_view_files_amp_env "(" S_view_files_amp_env " dialog) -> amp env breakpoints in the given View:Files dialog"
+  XEN_ASSERT_TYPE(XEN_WIDGET_P(dialog), dialog, XEN_ONLY_ARG, S_view_files_amp_env, "a view-files dialog widget"); 
+  return(env_to_xen(view_files_amp_env((widget_t)(XEN_UNWRAP_WIDGET(dialog)))));
+}
+
+static XEN g_view_files_set_amp_env(XEN dialog, XEN amp_env)
+{
+  XEN_ASSERT_TYPE(XEN_WIDGET_P(dialog), dialog, XEN_ONLY_ARG, S_setB S_view_files_amp_env, "a view-files dialog widget"); 
+  XEN_ASSERT_TYPE(XEN_LIST_P(amp_env), amp_env, XEN_ARG_2, S_setB S_view_files_amp_env, "an envelope");
+  view_files_set_amp_env((widget_t)(XEN_UNWRAP_WIDGET(dialog)), xen_to_env(amp_env));
+  return(amp_env);
+}
+
+static XEN g_view_files_selected_files(XEN dialog)
+{
+  XEN result = XEN_EMPTY_LIST;
+  char **selected_files;
+  int i, len = 0;
+  #define H_view_files_selected_files "(" S_view_files_selected_files " dialog) -> list of files currently selected in the given View:Files dialog"
+  XEN_ASSERT_TYPE(XEN_WIDGET_P(dialog), dialog, XEN_ONLY_ARG, S_view_files_selected_files, "a view-files dialog widget"); 
+  selected_files = view_files_selected_files((widget_t)(XEN_UNWRAP_WIDGET(dialog)), &len);
+  if ((selected_files) && (len > 0))
+    {
+      for (i = 0; i < len; i++)
+	{
+	  result = XEN_CONS(C_TO_XEN_STRING(selected_files[i]), result);
+	  FREE(selected_files[i]);
+	}
+      FREE(selected_files);
+    }
+  return(result);
+}
+
+static XEN g_view_files_set_selected_files(XEN dialog, XEN files)
+{
+  int i, len;
+  char **cfiles = NULL;
+  XEN_ASSERT_TYPE(XEN_WIDGET_P(dialog), dialog, XEN_ARG_1, S_setB S_view_files_selected_files, "a view-files dialog widget");   
+  XEN_ASSERT_TYPE(XEN_LIST_P(files), files, XEN_ARG_2, S_setB S_view_files_selected_files, "a list of files or directories");
+  len = XEN_LIST_LENGTH(files);
+  if (len > 0)
+    {
+      cfiles = (char **)CALLOC(len, sizeof(char *));
+      for (i = 0; i < len; i++)
+	cfiles[i] = XEN_TO_C_STRING(XEN_LIST_REF(files, i));
+      view_files_set_selected_files((widget_t)(XEN_UNWRAP_WIDGET(dialog)), cfiles, len);
+      FREE(cfiles);
+    }
+  return(files);
+}
+
+static XEN g_view_files_files(XEN dialog)
+{
+  XEN result = XEN_EMPTY_LIST;
+  char **files;
+  int i, len = 0;
+  #define H_view_files_files "(" S_view_files_files " dialog) -> list of files currently available in the given View:Files dialog"
+  XEN_ASSERT_TYPE(XEN_WIDGET_P(dialog), dialog, XEN_ONLY_ARG, S_view_files_files, "a view-files dialog widget"); 
+  files = view_files_files((widget_t)(XEN_UNWRAP_WIDGET(dialog)), &len);
+  if ((files) && (len > 0))
+    for (i = 0; i < len; i++)
+      result = XEN_CONS(C_TO_XEN_STRING(files[i]), result);
+  return(result);
+}
+
+static XEN g_view_files_set_files(XEN dialog, XEN files)
+{
+  int i, len;
+  char **cfiles = NULL;
+  XEN_ASSERT_TYPE(XEN_WIDGET_P(dialog), dialog, XEN_ARG_1, S_setB S_view_files_files, "a view-files dialog widget");   
+  XEN_ASSERT_TYPE(XEN_LIST_P(files), files, XEN_ARG_2, S_setB S_view_files_files, "a list of files or directories");
+  len = XEN_LIST_LENGTH(files);
+  if (len > 0)
+    {
+      cfiles = (char **)CALLOC(len, sizeof(char *));
+      for (i = 0; i < len; i++)
+	cfiles[i] = XEN_TO_C_STRING(XEN_LIST_REF(files, i));
+      view_files_set_files((widget_t)(XEN_UNWRAP_WIDGET(dialog)), cfiles, len);
+      FREE(cfiles);
+    }
+  return(files);
+}
+
+static XEN view_files_select_hook;
+
+bool view_files_run_select_hook(const char *selected_file)
+{
+  XEN res = XEN_FALSE;
+  if (XEN_HOOKED(view_files_select_hook))
+    res = run_or_hook(view_files_select_hook,
+		      XEN_LIST_1(C_TO_XEN_STRING(selected_file)),
+		      S_view_files_select_hook);
+  return(XEN_NOT_TRUE_P(res));
+}
+
+/* TODO: doc/test sort-file constants, view-files-amp|speed|amp-env|files|selected-files
+ */
 
 #ifdef XEN_ARGIFY_1
+XEN_NARGIFY_0(g_view_files_sort_w, g_view_files_sort)
+XEN_NARGIFY_1(g_set_view_files_sort_w, g_set_view_files_sort)
 XEN_NARGIFY_1(g_add_sound_file_extension_w, g_add_sound_file_extension)
 XEN_NARGIFY_0(g_sound_file_extensions_w, g_sound_file_extensions)
 XEN_NARGIFY_1(g_set_sound_file_extensions_w, g_set_sound_file_extensions)
@@ -2783,8 +2934,10 @@ XEN_NARGIFY_1(g_add_file_to_view_files_list_w, g_add_file_to_view_files_list)
 XEN_ARGIFY_1(g_sound_files_in_directory_w, g_sound_files_in_directory)
 XEN_ARGIFY_1(g_sound_loop_info_w, g_sound_loop_info)
 XEN_ARGIFY_2(g_set_sound_loop_info_w, g_set_sound_loop_info)
+/*
 XEN_NARGIFY_0(g_view_files_sort_procedure_w, g_view_files_sort_procedure)
 XEN_NARGIFY_1(g_set_view_files_sort_procedure_w, g_set_view_files_sort_procedure)
+*/
 XEN_NARGIFY_1(g_disk_kspace_w, g_disk_kspace)
 XEN_ARGIFY_1(g_open_file_dialog_w, g_open_file_dialog)
 XEN_ARGIFY_1(g_mix_file_dialog_w, g_mix_file_dialog)
@@ -2794,7 +2947,19 @@ XEN_ARGIFY_1(g_edit_header_dialog_w, g_edit_header_dialog)
 XEN_ARGIFY_1(g_save_selection_dialog_w, g_save_selection_dialog)
 XEN_ARGIFY_1(g_save_sound_dialog_w, g_save_sound_dialog)
 XEN_NARGIFY_2(g_info_dialog_w, g_info_dialog)
+XEN_NARGIFY_1(g_view_files_amp_w, g_view_files_amp)
+XEN_NARGIFY_2(g_view_files_set_amp_w, g_view_files_set_amp)
+XEN_NARGIFY_1(g_view_files_speed_w, g_view_files_speed)
+XEN_NARGIFY_2(g_view_files_set_speed_w, g_view_files_set_speed)
+XEN_NARGIFY_1(g_view_files_amp_env_w, g_view_files_amp_env)
+XEN_NARGIFY_2(g_view_files_set_amp_env_w, g_view_files_set_amp_env)
+XEN_NARGIFY_1(g_view_files_selected_files_w, g_view_files_selected_files)
+XEN_NARGIFY_1(g_view_files_files_w, g_view_files_files)
+XEN_NARGIFY_1(g_view_files_set_selected_files_w, g_view_files_set_selected_files)
+XEN_NARGIFY_1(g_view_files_set_files_w, g_view_files_set_files)
 #else
+#define g_view_files_sort_w g_view_files_sort
+#define g_set_view_files_sort_w g_set_view_files_sort
 #define g_add_sound_file_extension_w g_add_sound_file_extension
 #define g_sound_file_extensions_w g_sound_file_extensions
 #define g_set_sound_file_extensions_w g_set_sound_file_extensions
@@ -2805,8 +2970,10 @@ XEN_NARGIFY_2(g_info_dialog_w, g_info_dialog)
 #define g_sound_files_in_directory_w g_sound_files_in_directory
 #define g_sound_loop_info_w g_sound_loop_info
 #define g_set_sound_loop_info_w g_set_sound_loop_info
+/*
 #define g_view_files_sort_procedure_w g_view_files_sort_procedure
 #define g_set_view_files_sort_procedure_w g_set_view_files_sort_procedure
+*/
 #define g_disk_kspace_w g_disk_kspace
 #define g_open_file_dialog_w g_open_file_dialog
 #define g_mix_file_dialog_w g_mix_file_dialog
@@ -2816,11 +2983,37 @@ XEN_NARGIFY_2(g_info_dialog_w, g_info_dialog)
 #define g_save_selection_dialog_w g_save_selection_dialog
 #define g_save_sound_dialog_w g_save_sound_dialog
 #define g_info_dialog_w g_info_dialog
+#define g_view_files_amp_w g_view_files_amp
+#define g_view_files_set_amp_w g_view_files_set_amp
+#define g_view_files_amp_env_w g_view_files_amp_env
+#define g_view_files_set_amp_env_w g_view_files_set_amp_env
+#define g_view_files_speed_w g_view_files_speed
+#define g_view_files_set_speed_w g_view_files_set_speed
+#define g_view_files_selected_files_w g_view_files_selected_files
+#define g_view_files_files_w g_view_files_files
+#define g_view_files_set_selected_files_w g_view_files_set_selected_files
+#define g_view_files_set_files_w g_view_files_set_files
 #endif
 
 void g_init_file(void)
 {
-  XEN_DEFINE_PROCEDURE(S_add_sound_file_extension,         g_add_sound_file_extension_w,         1, 0, 0, H_add_sound_file_extension);
+  XEN_DEFINE_CONSTANT(S_sort_files_by_name, SORT_BY_NAME, "file-sorter choice to sort alphabetically");
+  XEN_DEFINE_CONSTANT(S_sort_files_by_date, SORT_BY_DATE, "file-sorter choice to sort by write date");
+  XEN_DEFINE_CONSTANT(S_sort_files_by_size, SORT_BY_SIZE, "file-sorter choice to sort by size");
+  XEN_DEFINE_CONSTANT(S_sort_files_by_entry, SORT_BY_ENTRY, "file-sorter choice to sort by directory order");
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_view_files_amp, g_view_files_amp_w, H_view_files_amp,
+				   S_setB S_view_files_amp, g_view_files_set_amp_w,  1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_view_files_amp_env, g_view_files_amp_env_w, H_view_files_amp_env,
+				   S_setB S_view_files_amp_env, g_view_files_set_amp_env_w,  1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_view_files_speed, g_view_files_speed_w, H_view_files_speed,
+				   S_setB S_view_files_speed, g_view_files_set_speed_w,  1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_view_files_files, g_view_files_files_w, H_view_files_files,
+				   S_setB S_view_files_files, g_view_files_set_files_w,  1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_view_files_selected_files, g_view_files_selected_files_w, H_view_files_selected_files,
+				   S_setB S_view_files_selected_files, g_view_files_set_selected_files_w,  1, 0, 2, 0);
+
+  XEN_DEFINE_PROCEDURE(S_add_sound_file_extension, g_add_sound_file_extension_w, 1, 0, 0, H_add_sound_file_extension);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_sound_file_extensions, g_sound_file_extensions_w, H_sound_file_extensions,
 				   S_setB S_sound_file_extensions, g_set_sound_file_extensions_w,  0, 0, 1, 0);
 
@@ -2843,6 +3036,9 @@ void g_init_file(void)
 
   XEN_DEFINE_VARIABLE(S_snd_opened_sound, snd_opened_sound, XEN_FALSE);
   XEN_DEFINE_VARIABLE("memo-sound", snd_memo_sound, XEN_FALSE); /* backwards compatibility */
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_view_files_sort, g_view_files_sort_w, H_view_files_sort,
+				   S_setB S_view_files_sort, g_set_view_files_sort_w,  0, 0, 1, 0);
 
   #define H_open_hook S_open_hook " (filename): called each time a file is opened (before the actual open). \
 If it returns #t, the file is not opened."
@@ -2887,6 +3083,12 @@ the newly updated sound may have a different index."
 
   update_hook = XEN_DEFINE_HOOK(S_update_hook, 1, H_update_hook);            /* arg = sound index */
 
+  #define H_view_files_select_hook S_view_files_select_hook "(filename): called when a file is selected in the \
+files list of the View Files dialog.  If it returns #t, the default action, opening the file, is omitted."
+
+  view_files_select_hook = XEN_DEFINE_HOOK(S_view_files_select_hook, 1, H_view_files_select_hook); /* arg = filename */
+  /*
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_view_files_sort_procedure, g_view_files_sort_procedure_w, H_view_files_sort_procedure,
                                    S_setB S_view_files_sort_procedure, g_set_view_files_sort_procedure_w,  0, 0, 1, 0);
+  */
 }

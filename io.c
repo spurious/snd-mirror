@@ -1417,7 +1417,9 @@ char *mus_expand_filename(const char *filename)
 	      FREE(pwd);
 	      strcat(file_name_buf, "/");
 	    }
-	  strcat(file_name_buf, tok);
+	  if (tok[0] == '.') tok++;
+	  if (tok[0])
+	    strcat(file_name_buf, tok);
 	}
     }
   else 

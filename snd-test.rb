@@ -8065,33 +8065,33 @@ def test205
   snd_display("filter_sound maxamp 3: %s?", maxamp) if maxamp > 0.02
   close_sound(ind)
   #
-  set_view_files_sort_procedure(lambda do |lst|
-                                      lst.sort do |a, b|
-                                        dura = mus_sound_duration(a)
-                                        durb = mus_sound_duration(b)
-                                        if dura > durb
-                                          1
-                                        elsif dura < durb
-                                          -1
-                                        else
-                                          0
-                                        end
-                                      end
-                                    end)
-  unless proc?(res = view_files_sort_procedure)
-    snd_display("view_files_sort_procedure: %s", res)
-  end
-  set_view_files_sort(5)
-  close_sound(ind1)
-  #
-  if (res = Snd.catch do
-        set_view_files_sort_procedure(lambda do |a, b, c| false end)
-      end).first != :bad_arity
-    snd_display("view_files_sort_procedure arity error: %s?", res.inspect)
-  end
-  5.times do |i| set_view_files_sort(i) end
-  set_view_files_sort(1)
-  dismiss_all_dialogs
+#  set_view_files_sort_procedure(lambda do |lst|
+#                                      lst.sort do |a, b|
+#                                        dura = mus_sound_duration(a)
+#                                        durb = mus_sound_duration(b)
+#                                        if dura > durb
+#                                          1
+#                                        elsif dura < durb
+#                                          -1
+#                                        else
+#                                          0
+#                                        end
+#                                      end
+#                                    end)
+#  unless proc?(res = view_files_sort_procedure)
+#    snd_display("view_files_sort_procedure: %s", res)
+#  end
+#  set_view_files_sort(5)
+#  close_sound(ind1)
+#  #
+#  if (res = Snd.catch do
+#        set_view_files_sort_procedure(lambda do |a, b, c| false end)
+#      end).first != :bad_arity
+#    snd_display("view_files_sort_procedure arity error: %s?", res.inspect)
+#  end
+#  5.times do |i| set_view_files_sort(i) end
+#  set_view_files_sort(1)
+#  dismiss_all_dialogs
 end
 
 def test215
@@ -38238,7 +38238,7 @@ def test24
     $before_test_hook.call(24)
     install_save_peak_env # env.rb contains peak-env.scm
     if $initial_graph_hook.empty? then snd_display("restore peaks failed?") end
-    set_view_files_sort_procedure(false)
+#    set_view_files_sort_procedure(false)
     set_max_regions(16)
     reset_almost_all_hooks
     $bad_header_hook.add_hook!("test24") do |n| true end
@@ -38451,7 +38451,7 @@ Procs = [:add_mark, :add_sound_file_extension, :add_to_main_menu, :add_to_menu,
   :filter_control_coeffs, :locsig_type, :make_phase_vocoder, :mus_audio_mixer_read,
   :mus_describe, :mus_error_type2string, :mus_file_buffer_size, :mus_name, :mus_offset,
   :mus_reset, :mus_rand_seed, :mus_width, :phase_vocoder?,
-  :polar2rectangular, :view_files_sort_procedure, :phase_vocoder_amp_increments,
+  :polar2rectangular, :phase_vocoder_amp_increments,
   :phase_vocoder_amps, :phase_vocoder_freqs, :phase_vocoder_outctr,
   :phase_vocoder_phase_increments, :phase_vocoder_phases, :mus_generator?, :read_sample,
   :reset_listener_cursor, :goto_listener_end, :sample_reader_home, :selection_chans,
@@ -38522,7 +38522,7 @@ Set_procs = [:amp_control, :ask_before_overwrite, :audio_input_device, :audio_ou
   :mus_formant_radius, :mus_frequency, :mus_hop, :mus_increment, :mus_length, :mus_location,
   :mus_phase, :mus_ramp, :mus_scaler, :vct_ref, :x_axis_label, :filter_control_coeffs,
   :locsig_type, :mus_file_buffer_size, :mus_rand_seed, :mus_width, :clm_table_size, :run_safety,
-  :mus_offset, :mus_reset, :view_files_sort_procedure, :phase_vocoder_amp_increments,
+  :mus_offset, :mus_reset, :phase_vocoder_amp_increments,
   :phase_vocoder_amps, :phase_vocoder_freqs, :phase_vocoder_outctr,
   :phase_vocoder_phase_increments, :phase_vocoder_phases, :quit_button_color,
   :help_button_color, :reset_button_color, :doit_button_color, :doit_again_button_color,

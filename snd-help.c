@@ -410,9 +410,13 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+8-Aug:   removed previous|view-files-sort-procedure.\n\
+         added sort-files-by-name|size|date|entry.\n\
+         added view-files-amp|speed|amp-env|files|selected-files.\n\
+         removed keep-mix-dialog-open-upon-ok from snd-motif.scm.\n\
 2-Aug:   sound-file-extensions as settable list.\n\
 30-Jul:  preload-directory -> add-directory-to-view-files-list, preload-file -> add-file-to-view-files-list.\n\
-29-Jul:  previous-files-* -> view-files-* (sort, sort-procedure, select-hook).\n\
+29-Jul:  previous-files-* -> view-files-* (sort, select-hook).\n\
 28-Jul:  File:Insert menu item and dialog added, also insert-file-dialog.\n\
          File:Save as can write OGG, Speex, and Flac files.\n\
 21-Jul:  clear-minibuffer, new as-error arg to report-in-minibuffer.\n\

@@ -5983,6 +5983,8 @@ static XEN g_set_transform_size(XEN val, XEN snd, XEN chn)
   int len;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ARG_1, S_setB S_transform_size, "an integer"); 
   len = XEN_TO_C_INT(val);
+  if (len <= 0)
+    XEN_OUT_OF_RANGE_ERROR(S_setB S_transform_size, 1, val, "size ~A, but must be > 0");
   if (!(POWER_OF_2_P(len)))
     len = snd_ipow2((int)(log(len + 1) / log(2.0)));
   if (len <= 0) return(XEN_FALSE);
