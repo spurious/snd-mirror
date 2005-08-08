@@ -2023,7 +2023,7 @@
 	  (if (and m1 (= clmtest 0)) (snd-display ";oboe: mus-sound-maxamp-exists before maxamp: ~A" m1))
 	  (if (not (mus-sound-maxamp-exists? "oboe.snd")) 
 	      (snd-display ";oboe: mus-sound-maxamp-exists after maxamp: ~A" (mus-sound-maxamp-exists? "oboe.snd")))
-	  (mus-audio-set-oss-buffers 4 12)
+;	  (mus-audio-set-oss-buffers 4 12)
 	  
 	  (let ((str (strftime "%d-%b %H:%M %Z" (localtime (mus-sound-write-date "oboe.snd")))))
 	    (if (not (string=? str "10-Jul 10:20 PDT"))
@@ -23771,6 +23771,7 @@ EDITS: 5
   (add-hook! after-open-hook arg1) (carg1 after-open-hook)
   (add-hook! update-hook arg1) (carg1 update-hook)
   (add-hook! close-hook arg1) (carg1 close-hook)
+  (add-hook! before-close-hook arg1) (carg1 before-close-hook)
   (add-hook! draw-mark-hook arg1) (carg1 draw-mark-hook)
   (add-hook! drop-hook arg1) (carg1 drop-hook)
   (add-hook! just-sounds-hook arg1) (carg1 just-sounds-hook)
@@ -23803,6 +23804,7 @@ EDITS: 5
   (add-hook! view-files-select-hook arg1) (carg1 view-files-select-hook)
   (add-hook! output-name-hook arg1) (carg1 output-name-hook)
   
+  (add-hook! before-exit-hook arg0) (carg0 before-exit-hook)
   (add-hook! exit-hook arg0) (carg0 exit-hook)
   (add-hook! stop-dac-hook arg0) (carg0 stop-dac-hook)
   (add-hook! stop-playing-selection-hook arg0) (carg0 stop-playing-selection-hook)
@@ -24756,11 +24758,12 @@ EDITS: 5
 	      (snd-display ";snd-error-hook saw: ~A" se))
 	  (reset-hook! snd-error-hook))
 	
-	(add-hook! exit-hook (lambda () #f))
-	(add-hook! exit-hook (lambda () #t))
+	(add-hook! before-exit-hook (lambda () #f))
+	(add-hook! before-exit-hook (lambda () #t))
 	(add-hook! exit-hook (lambda () #f))
 	(exit)
 	(reset-hook! exit-hook)
+	(reset-hook! before-exit-hook)
 	
 	(let ((sh #f))
 	  (if (file-exists? "baddy.snd") (delete-file "baddy.snd"))
@@ -24788,8 +24791,7 @@ EDITS: 5
 		   (lambda (snd)
 		     (if (not (= snd ind))
 			 (snd-display ";close-hook: ~A not ~A?" snd ind))
-		     (set! cl #t)
-		     #f))
+		     (set! cl #t)))
 	
 	(close-sound ind)
 	(if (not cl) (snd-display ";close-hook not called?"))
@@ -34136,8 +34138,11 @@ EDITS: 1
 		 (set! (transform-type) transform)
 		 (for-each
 		  (lambda (size)
-		    (set! (transform-size) size)
-		    (update-transform-graph))
+		    (catch #t
+			   (lambda ()
+			     (set! (transform-size) size)
+			     (update-transform-graph))
+			   (lambda args args)))
 		  (list 8 7 -7 4 3 2 1 0)))
 	       (list fourier-transform wavelet-transform autocorrelation walsh-transform cepstrum haar-transform))
 	      (close-sound index))

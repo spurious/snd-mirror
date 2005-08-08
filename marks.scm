@@ -400,8 +400,7 @@
 		 ;; prune out inactive mark properties
 		 (set! all-mark-properties (remove-if (lambda (val)
 						       (not (mark? (car val))))
-						     all-mark-properties)))
-	     #f))
+						     all-mark-properties)))))
 
 (define (save-mark-properties)
   "(save-mark-properties) sets up an after-save-state-hook function to save any mark-properties"

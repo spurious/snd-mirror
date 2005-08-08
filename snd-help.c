@@ -414,6 +414,7 @@ void about_snd_help(void)
          added sort-files-by-name|size|date|entry.\n\
          added view-files-amp|speed|amp-env|files|selected-files.\n\
          removed keep-mix-dialog-open-upon-ok from snd-motif.scm.\n\
+         before-exit|close-hook.\n\
 2-Aug:   sound-file-extensions as settable list.\n\
 30-Jul:  preload-directory -> add-directory-to-view-files-list, preload-file -> add-file-to-view-files-list.\n\
 29-Jul:  previous-files-* -> view-files-* (sort, select-hook).\n\

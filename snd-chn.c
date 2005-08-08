@@ -3966,8 +3966,8 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 	      else 
 		{
 		  if (key_state & snd_ControlMask)
-		    play_sound(sp, play_mark->samp, NO_END_SPECIFIED, IN_BACKGROUND, AT_CURRENT_EDIT_POSITION);
-		  else play_channel(cp, play_mark->samp, NO_END_SPECIFIED, IN_BACKGROUND, AT_CURRENT_EDIT_POSITION);
+		    play_sound(sp, play_mark->samp, NO_END_SPECIFIED);
+		  else play_channel(cp, play_mark->samp, NO_END_SPECIFIED);
 		}
 	      sp->playing_mark = play_mark;
 	    }
@@ -4175,7 +4175,7 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, Tempus time)
 	      if (!(XEN_TRUE_P(drag_res)))
 		{
 		  sp->speed_control = 0.0;
-		  play_channel(cp, play_mark->samp, NO_END_SPECIFIED, IN_BACKGROUND, AT_CURRENT_EDIT_POSITION);
+		  play_channel(cp, play_mark->samp, NO_END_SPECIFIED);
 		}
 	    }
 	  else

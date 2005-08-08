@@ -13,16 +13,25 @@ static void remove_temp_files(chan_info *cp)
 #endif
 
 static XEN exit_hook;
+static XEN before_exit_hook;
 
 int snd_exit_cleanly(bool force_exit)
 {  
   XEN res = XEN_FALSE;
   ss->exiting = true; /* if segfault during exit code, don't try to restart at event loop! */
-  if (XEN_HOOKED(exit_hook))
-    res = run_or_hook(exit_hook, 
+
+  /* before-exit-hook can cancel the exit, whereas exit-hook can't */
+  if (XEN_HOOKED(before_exit_hook))
+    res = run_or_hook(before_exit_hook, 
 		      XEN_EMPTY_LIST,
-		      S_exit_hook);
+		      S_before_exit_hook);
   if ((XEN_TRUE_P(res)) && (!force_exit)) return(0);
+
+  if (XEN_HOOKED(exit_hook))
+    run_hook(exit_hook, 
+	     XEN_EMPTY_LIST,
+	     S_exit_hook);
+
 #if HAVE_FAM
   cleanup_edit_header_watcher();
   cleanup_new_file_watcher();
@@ -1307,6 +1316,8 @@ XEN_NARGIFY_0(g_script_args_w, g_script_args)
 #define g_script_args_w g_script_args
 #endif
 
+/* TODO: check all uses of these (close too) (rb) */
+
 void g_init_main(void)
 {
   XEN_DEFINE_PROCEDURE(S_save_state,   g_save_state_w,   0, 1, 0, H_save_state);
@@ -1318,8 +1329,12 @@ void g_init_main(void)
   #define H_start_hook S_start_hook " (filename): called upon start-up. If it returns #t, snd exits immediately."
   start_hook = XEN_DEFINE_HOOK(S_start_hook, 1, H_start_hook);                   /* arg = argv filename if any */
 
-  #define H_exit_hook S_exit_hook " (): called upon exit. \
-If it returns #t, Snd does not exit.  This can be used to check for unsaved edits, or to perform cleanup activities."
+  #define H_before_exit_hook S_before_exit_hook " (): called upon exit. \
+If it returns #t, Snd does not exit.  This can be used to check for unsaved edits."
+
+  before_exit_hook = XEN_DEFINE_HOOK(S_before_exit_hook, 0, H_before_exit_hook);
+
+  #define H_exit_hook S_exit_hook " (): called upon exit.  This can be used to perform cleanup activities."
 
   exit_hook = XEN_DEFINE_HOOK(S_exit_hook, 0, H_exit_hook);
 

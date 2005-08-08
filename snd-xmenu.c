@@ -50,7 +50,7 @@ static void edit_play_callback(Widget w, XtPointer info, XtPointer context)
     {
       set_menu_label(edit_play_menu, _("Stop"));
       selection_play_stop = true;
-      play_selection(IN_BACKGROUND, AT_CURRENT_EDIT_POSITION);
+      play_selection(IN_BACKGROUND);
     }
 }
 
@@ -671,7 +671,7 @@ static void popup_play_callback(Widget w, XtPointer info, XtPointer context)
     {
       if (sp)
 	{
-	  play_sound(sp, 0, NO_END_SPECIFIED, IN_BACKGROUND, AT_CURRENT_EDIT_POSITION);
+	  play_sound(sp, 0, NO_END_SPECIFIED);
 	  stopping = true;
 	  set_button_label(w, _("Stop playing"));
 	}

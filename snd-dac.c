@@ -996,15 +996,16 @@ static dac_info *play_channel_1(chan_info *cp, off_t start, off_t end, play_proc
   return(dp);
 }
 
-void play_channel(chan_info *cp, off_t start, off_t end, play_process_t background, int pos)
+void play_channel(chan_info *cp, off_t start, off_t end)
 {
-  play_channel_1(cp, start, end, background, pos, XEN_FALSE, cp->chan);
+  play_channel_1(cp, start, end, IN_BACKGROUND, AT_CURRENT_EDIT_POSITION, XEN_FALSE, cp->chan);
 }
 
-static dac_info *play_sound_1(snd_info *sp, off_t start, off_t end, play_process_t background, int pos, XEN stop_proc)
+static dac_info *play_sound_1(snd_info *sp, off_t start, off_t end, play_process_t background, 
+			      XEN edpos, XEN stop_proc, const char *caller, int arg_pos)
 {
   /* just plays one sound (ignores possible sync) */
-  int i;
+  int i, pos;
   dac_info *dp = NULL, *rtn_dp = NULL;
   if ((background == NOT_IN_BACKGROUND) && 
       (play_list_members > 0)) 
@@ -1013,6 +1014,7 @@ static dac_info *play_sound_1(snd_info *sp, off_t start, off_t end, play_process
   if (call_start_playing_hook(sp)) return(NULL);
   for (i = 0; i < sp->nchans; i++)
     {
+      pos  = to_c_edit_position(sp->chans[i], edpos, caller, arg_pos);
       dp = add_channel_to_play_list(sp->chans[i], sp, start, end, pos, i); /* i = out chan */
       if ((dp) && (rtn_dp == NULL)) rtn_dp = dp;
     }
@@ -1027,16 +1029,16 @@ static dac_info *play_sound_1(snd_info *sp, off_t start, off_t end, play_process
   return(rtn_dp);
 }
 
-void play_sound(snd_info *sp, off_t start, off_t end, play_process_t background, int pos)
+void play_sound(snd_info *sp, off_t start, off_t end)
 {
-  play_sound_1(sp, start, end, background, pos, XEN_FALSE);
+  play_sound_1(sp, start, end, IN_BACKGROUND, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), XEN_FALSE, NULL, 0);
 }
 
 static dac_info *play_channels_1(chan_info **cps, int chans, off_t *starts, off_t *ur_ends, play_process_t background, 
-				 int pos, bool selection, XEN stop_proc)
+				 XEN edpos, bool selection, XEN stop_proc, const char *caller, int arg_pos)
 {
   /* ends can be NULL */
-  int i;
+  int i, pos;
   snd_info *sp = NULL;
   dac_info *dp = NULL, *rtn_dp = NULL;
   off_t *ends;
@@ -1063,6 +1065,7 @@ static dac_info *play_channels_1(chan_info **cps, int chans, off_t *starts, off_
   sp = cps[0]->sound;
   for (i = 0; i < chans; i++) 
     {
+      pos  = to_c_edit_position(cps[i], edpos, caller, arg_pos);
       dp = add_channel_to_play_list(cps[i], sp, starts[i], ends[i], pos, i);
       if (dp) 
 	{
@@ -1082,12 +1085,13 @@ static dac_info *play_channels_1(chan_info **cps, int chans, off_t *starts, off_
   return(rtn_dp);
 }
 
-void play_channels(chan_info **cps, int chans, off_t *starts, off_t *ur_ends, play_process_t background, int pos, bool selection)
+void play_channels(chan_info **cps, int chans, off_t *starts, off_t *ur_ends, 
+		   play_process_t background, XEN edpos, bool selection, const char *caller, int arg_pos)
 {
-  play_channels_1(cps, chans, starts, ur_ends, background, pos, selection, XEN_FALSE);
+  play_channels_1(cps, chans, starts, ur_ends, background, edpos, selection, XEN_FALSE, caller, arg_pos);
 }
 
-static dac_info *play_selection_1(play_process_t background, int pos, XEN stop_proc)
+static dac_info *play_selection_1(play_process_t background, XEN stop_proc)
 {
   /* just plays the current selection */
   dac_info *dp = NULL;
@@ -1111,7 +1115,7 @@ static dac_info *play_selection_1(play_process_t background, int pos, XEN stop_p
 	      /* user might move speed control while playing selection, so ideally we'd watch dp->chn_fd here */
 	      else ends[i] = si->begs[i] + selection_len();
 	    }
-	  dp = play_channels_1(si->cps, si->chans, si->begs, ends, background, pos, true, stop_proc);
+	  dp = play_channels_1(si->cps, si->chans, si->begs, ends, background, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), true, stop_proc, NULL, 0);
 	  si = free_sync_info(si); /* does not free sample readers */
 	  FREE(ends);
 	}
@@ -1119,9 +1123,9 @@ static dac_info *play_selection_1(play_process_t background, int pos, XEN stop_p
   return(dp);
 }
 
-void play_selection(play_process_t background, int pos)
+void play_selection(play_process_t background)
 {
-  play_selection_1(background, pos, XEN_FALSE);
+  play_selection_1(background, XEN_FALSE);
 }
 
 
@@ -2124,15 +2128,15 @@ void initialize_apply(snd_info *sp, int chans, off_t beg, off_t dur)
   switch (ss->apply_choice)
     {
     case APPLY_TO_SOUND: 
-      play_sound(sp, beg, beg + dur, IN_BACKGROUND, AT_CURRENT_EDIT_POSITION); 
+      play_sound(sp, beg, beg + dur); 
       break;
     case APPLY_TO_SELECTION: 
-      play_selection(IN_BACKGROUND, AT_CURRENT_EDIT_POSITION); 
+      play_selection(IN_BACKGROUND); 
       break;
     case APPLY_TO_CHANNEL: 
       if (sp->selected_channel != NO_SELECTION)
 	curchan = sp->selected_channel;
-      play_channel(sp->chans[curchan], beg, beg + dur, IN_BACKGROUND, AT_CURRENT_EDIT_POSITION); 
+      play_channel(sp->chans[curchan], beg, beg + dur); 
       break;
     }
 }
@@ -2218,7 +2222,7 @@ static XEN g_play_1(XEN samp_n, XEN snd_n, XEN chn_n, bool back, bool syncd, XEN
       sp->filename = NULL;
       sp->delete_me = (struct dialog_play_info *)1;
       if (XEN_OFF_T_P(chn_n)) end = XEN_TO_C_OFF_T(chn_n);
-      play_sound_1(sp, samp, end, background, 0, stop_proc);
+      play_sound_1(sp, samp, end, background, edpos, stop_proc, caller, arg_pos);
     }
   else
     {
@@ -2233,7 +2237,6 @@ static XEN g_play_1(XEN samp_n, XEN snd_n, XEN chn_n, bool back, bool syncd, XEN
 	return(snd_no_such_sound_error(caller, snd_n));
       if ((syncd) && (sp->sync != 0) && (!(IS_PLAYER(sp))))
 	{
-	  int pos;
 	  si = snd_sync(sp->sync);
 	  if (end != NO_END_SPECIFIED)
 	    {
@@ -2241,15 +2244,14 @@ static XEN g_play_1(XEN samp_n, XEN snd_n, XEN chn_n, bool back, bool syncd, XEN
 	      for (i = 0; i < si->chans; i++) ends[i] = end;
 	    }
 	  for (i = 0; i < si->chans; i++) si->begs[i] = samp;
-	  pos = to_c_edit_position(si->cps[0], edpos, caller, arg_pos);
-	  play_channels_1(si->cps, si->chans, si->begs, ends, background, pos, false, stop_proc);
+	  play_channels_1(si->cps, si->chans, si->begs, ends, background, edpos, false, stop_proc, caller, arg_pos);
 	  si = free_sync_info(si);
 	  if (ends) FREE(ends);
 	}
       else
 	{
 	  if (!(XEN_INTEGER_P(chn_n)))
-	    play_sound_1(sp, samp, end, background, to_c_edit_position(sp->chans[0], edpos, caller, arg_pos), stop_proc);
+	    play_sound_1(sp, samp, end, background, edpos, stop_proc, caller, arg_pos);
 	  else 
 	    {
 	      int ochan = -1, pos;
@@ -2306,7 +2308,7 @@ before returning."
   back = (!(TO_C_BOOLEAN_OR_FALSE(wait)));
   if (selection_is_active())
     {
-      play_selection_1((back) ? IN_BACKGROUND : NOT_IN_BACKGROUND, AT_CURRENT_EDIT_POSITION, stop_proc);
+      play_selection_1((back) ? IN_BACKGROUND : NOT_IN_BACKGROUND, stop_proc);
       return(XEN_FALSE);
     }
   return(snd_no_active_selection_error(S_play_selection));

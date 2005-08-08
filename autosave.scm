@@ -54,8 +54,7 @@
     (let ((temp-file (auto-save-temp-name snd)))
       (if (file-exists? temp-file)
 	  (delete-file temp-file))
-      (clear-unsaved-edits snd)
-      #f))
+      (clear-unsaved-edits snd)))
   
   (define (auto-save-func)
     (if auto-saving

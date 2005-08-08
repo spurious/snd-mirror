@@ -679,7 +679,8 @@ static char *kmg (int num)
 
 #define MEM_PAD_SIZE 32
 static int mem_size = 0, mem_top = -1;
-static int *pointers = NULL, *true_pointers = NULL, *sizes = NULL, *locations = NULL;
+static int *sizes = NULL, *locations = NULL;
+static void **pointers = NULL, **true_pointers = NULL;
 static char **functions = NULL, **files = NULL;
 static int *lines = NULL;
 static int mem_location = -1;
@@ -753,7 +754,7 @@ static void describe_pointer(void *p)
 {
   int i, loc;
   for (i = mem_top; i >= 0; i--)
-    if (pointers[i] == (int)p)
+    if (pointers[i] == p)
       {
 	loc = locations[i];
 	fprintf(stderr, "%s[%d]:%s, len:%d", files[loc], lines[loc], functions[loc], sizes[loc]);
@@ -797,7 +798,8 @@ static void check_padding(void *p1, void *p2, int len, bool refill)
 }
 
 #define PTR_HISTORY_SIZE 128
-static int ptr_history[PTR_HISTORY_SIZE], ptr_history_loc[PTR_HISTORY_SIZE];
+static void **ptr_history[PTR_HISTORY_SIZE];
+static int ptr_history_loc[PTR_HISTORY_SIZE];
 static int ptr_history_ptr = 0;
 
 void mem_report(void);
@@ -811,14 +813,13 @@ static void *forget_pointer(void *ptr, const char *func, const char *file, int l
   if (ptr == NULL) {fprintf(stderr, "attempt to free NULL"); mem_report(); abort();}
   if (ptr == (void *)FREED_POINTER) {fprintf(stderr," attempt to free pointer twice"); abort();}
   for (i = 0; i < PTR_HISTORY_SIZE; i++)
-    if (ptr_history[i] == (int)ptr)
+    if (ptr_history[i] == ptr)
       {
-	int last_remembered_ptr, last_remembered;
-	last_remembered_ptr = ptr_history[i];
+	int last_remembered;
 	last_remembered = ptr_history_loc[i];
 	ptr_history[i] = 0;
 	ptr_history_loc[i] = -1;
-	rtp = (void *)true_pointers[last_remembered];
+	rtp = true_pointers[last_remembered];
 	check_padding(ptr, rtp, sizes[last_remembered], refill);
 	pointers[last_remembered] = 0;
 	true_pointers[last_remembered] = 0;
@@ -827,9 +828,9 @@ static void *forget_pointer(void *ptr, const char *func, const char *file, int l
 	return(rtp);
       }
   for (i = mem_top; i >= 0; i--)
-    if (pointers[i] == (int)ptr)
+    if (pointers[i] == ptr)
       {
-	rtp = (void *)true_pointers[i];
+	rtp = true_pointers[i];
 	check_padding(ptr, rtp, sizes[i], refill);
 	pointers[i] = 0;
 	true_pointers[i] = 0;
@@ -851,8 +852,8 @@ static void remember_pointer(void *ptr, void *true_ptr, size_t len, const char *
       if (mem_size == 0)
 	{
 	  mem_size = 8192;
-	  pointers = (int *)calloc(mem_size, sizeof(int));
-	  true_pointers = (int *)calloc(mem_size, sizeof(int));
+	  pointers = (void **)calloc(mem_size, sizeof(void *));
+	  true_pointers = (void **)calloc(mem_size, sizeof(void *));
 	  sizes = (int *)calloc(mem_size, sizeof(int));
 	  locations = (int *)calloc(mem_size, sizeof(int));
 	  stacks = (char **)calloc(mem_size, sizeof(char *));
@@ -867,8 +868,8 @@ static void remember_pointer(void *ptr, void *true_ptr, size_t len, const char *
 	  }
       loc = mem_size;
       mem_size += 4096;
-      pointers = (int *)realloc(pointers, mem_size * sizeof(int));
-      true_pointers = (int *)realloc(true_pointers, mem_size * sizeof(int));
+      pointers = (void **)realloc(pointers, mem_size * sizeof(void *));
+      true_pointers = (void **)realloc(true_pointers, mem_size * sizeof(void *));
       sizes = (int *)realloc(sizes, mem_size * sizeof(int));
       locations = (int *)realloc(locations, mem_size * sizeof(int));
       stacks = (char **)realloc(stacks, mem_size * sizeof(char *));
@@ -887,13 +888,13 @@ static void remember_pointer(void *ptr, void *true_ptr, size_t len, const char *
       last_forgotten = -1;
     }
  GOT_ONE:
-  pointers[loc] = (int)ptr;
-  true_pointers[loc] = (int)true_ptr;
+  pointers[loc] = ptr;
+  true_pointers[loc] = true_ptr;
   set_padding(ptr, true_ptr, (int)len);
   sizes[loc] = (int)len;
   locations[loc] = find_mem_location(func, file, line);
   if (encloser) stacks[loc] = encloser;
-  ptr_history[ptr_history_ptr] = (int)ptr;
+  ptr_history[ptr_history_ptr] = ptr;
   ptr_history_loc[ptr_history_ptr++] = loc;
   if (ptr_history_ptr >= PTR_HISTORY_SIZE) ptr_history_ptr = 0;
   if (mem_top < loc) mem_top = loc;
@@ -1171,7 +1172,7 @@ void mem_report(void)
 	  if (have_stacks)
 	    for (j = 0; j < mem_size; j++)
 	      if ((stacks[j]) && (locations[j] == ptr) && (pointers[j]))
-		fprintf(Fp, "    %s    %p\n", stacks[j], (void *)(pointers[j]));
+		fprintf(Fp, "    %s    %p\n", stacks[j], pointers[j]);
 	  if ((strcmp("mus_format", functions[ptr]) == 0) ||
 	      (strcmp("copy_string", functions[ptr]) == 0))
 	    {

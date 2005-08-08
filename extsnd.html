@@ -218,7 +218,7 @@ author included) grumble "just do it".  There are two ways
 this kind of situation is handled in Snd; variables and hooks.
 A hook is a list of callbacks invoked whenever the associated
 event happens.  When Snd exits, for example, any functions found
-on the <a href="#exithook">exit-hook</a> list are evaluated; if any of them returns #t,
+on the <a href="#beforeexithook">before-exit-hook</a> list are evaluated; if any of them returns #t,
 Snd does not exit.</p>
 
 <table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
@@ -232,10 +232,10 @@ Snd does not exit.</p>
 	    (unsaved-edits? (cdr lst)))
 	#f)))
 
-(add-hook! <em class=red>exit-hook</em> (lambda () (unsaved-edits? (<a class=quiet href="#sounds">sounds</a>))))
+(add-hook! <em class=red>before-exit-hook</em> (lambda () (unsaved-edits? (<a class=quiet href="#sounds">sounds</a>))))
 </pre></td></tr></table>
 
-<p>Now when Snd is told to exit, it checks exit-hook, runs
+<p>Now when Snd is told to exit, it checks before-exit-hook, runs
 unsaved-edits?, and if the latter returns #t, if prints
 a worried message in the minibuffer, and refuses to
 exit.  Similar hooks customize actions such as closing
@@ -853,6 +853,30 @@ called if a file has a bogus-looking header. Return #t to give up on that file. 
 </td></tr>
 <tr><td colspan=3></td></tr>
 
+<!-- before-close-hook -->
+<tr><td colspan=2>
+<code><a class=def name="beforeclosehook">before-close-hook</a> (snd) </code></td><td align=right><b>or</b></td>
+</tr>
+<tr><td></td><td colspan=2>
+called when a file is about to be closed.
+If it returns #t, the file is not closed. 
+</td></tr>
+<tr><td></td><td colspan=2>
+<i>close-hook</i> is used in extensions.scm: <i>check-for-unsaved-edits</i>.
+</td></tr>
+<tr><td colspan=3></td></tr>
+
+<!-- before-exit-hook -->
+<tr><td colspan=2>
+<code><a class=def name="beforeexithook">before-exit-hook</a> ()</code></td><td align=right><b>or</b>
+</td></tr>
+<tr><td></td><td colspan=2>
+called upon exit.
+If it returns #t, Snd does not exit.  This can be used to check 
+for unsaved edits (see extensions.scm: <a href="#unsavededitsp">unsaved-edits?</a>).
+</td></tr>
+<tr><td colspan=3></td></tr>
+
 <!-- before-save-as-hook -->
 <tr><td colspan=2>
 <code><a class=def name="beforesaveashook">before-save-as-hook</a> (index filename selection srate type format comment)</code></td><td align=right><b>or</b>
@@ -938,25 +962,22 @@ of a moving mark:
 
 <!-- close-hook -->
 <tr><td colspan=2>
-<code><a class=def name="closehook">close-hook</a> (snd) </code></td><td align=right><b>or</b></td>
+<code><a class=def name="closehook">close-hook</a> (snd) </code></td><td></td>
 </tr>
-
 <tr><td></td><td colspan=2>
-called each time a file is closed (before the close).
-If it returns #t, the file is not closed. 
+called when a file is closed (before the actual close, so the index <i>snd</i> is still valid).
 </td></tr>
 
 <tr><td></td><td colspan=2>
 <table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (add-hook! <em class=red>close-hook</em>
   (lambda (snd) 
-    (system \"sndplay wood16.wav\")
-    #f))
+    (system \"sndplay wood16.wav\")))
 </pre></td></tr></table></td></tr>
 
 <tr><td></td><td colspan=2>
 <i>close-hook</i> is used in autosave.scm, examp.scm, extensions.scm, and peak-env.scm; see, for example,
-<i>check-for-unsaved-edits</i> or <i>remember-sound-state</i> in extensions.scm.
+<i>remember-sound-state</i> in extensions.scm.
 </td></tr>
 <tr><td colspan=3></td></tr>
 
@@ -1068,13 +1089,11 @@ I like the latter.
 
 <!-- exit-hook -->
 <tr><td colspan=2>
-<code><a class=def name="exithook">exit-hook</a> ()</code></td><td align=right><b>or</b>
-</td></tr>
-
+<code><a class=def name="exithook">exit-hook</a> ()</code></td><td></td></tr>
 <tr><td></td><td colspan=2>
 called upon exit.
-If it returns #t, Snd does not exit.  This can be used to check 
-for unsaved edits, or to perform cleanup activities (see autosave.scm, extensions.scm, or <a href="#unsavededitsp">unsaved-edits?</a>).
+This can be used to check 
+to perform cleanup activities (see autosave.scm).
 Guile's exit-hook is shadowed by this variable.
 </td></tr>
 <tr><td colspan=3></td></tr>

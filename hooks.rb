@@ -204,6 +204,8 @@ need a String or Symbol, not %s"
   $mark_drag_triangle_hook      = Hook.new("$mark_drag_triangle_hook", 4)
   $start_playing_selection_hook = Hook.new("$start_playing_selection_hook", 0)
   $selection_changed_hook       = Hook.new("$selection_changed_hook", 0)
+  $before_exit_hook             = Hook.new("$before_exit_hook", 0)
+  $before_close_hook            = Hook.new("$before_close_hook", 1)
   $after_save_as_hook           = Hook.new("$after_save_as_hook", 3)
   $before_save_as_hook          = Hook.new("$before_save_as_hook", 7)
   # unless --with-no-gui
@@ -332,7 +334,9 @@ if defined? $after_graph_hook
     $start_playing_selection_hook,
     $selection_changed_hook,
     $after_save_as_hook,
-    $before_save_as_hook]
+    $before_save_as_hook,
+    $before_exit_hook,
+    $before_close_hook]
 
   unless provided? :snd_nogui
     Snd_hooks.push($recorder_file_hook)

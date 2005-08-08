@@ -1417,7 +1417,6 @@ char *mus_expand_filename(const char *filename)
 	      FREE(pwd);
 	      strcat(file_name_buf, "/");
 	    }
-	  if (tok[0] == '.') tok++;
 	  if (tok[0])
 	    strcat(file_name_buf, tok);
 	}
@@ -1427,7 +1426,7 @@ char *mus_expand_filename(const char *filename)
       file_name_buf = (char *)CALLOC(len + 8, sizeof(char));
       strcpy(file_name_buf, tok);
     }
-  /* get rid of "/../" and "/./" */
+  /* get rid of "/../" and "/./" also "/." at end */
   {
     int slash_at = -1;
     bool found_one = true;
@@ -1463,6 +1462,11 @@ char *mus_expand_filename(const char *filename)
 		}
 	    }
       }
+    len = strlen(file_name_buf);
+    if ((len > 1) &&
+	(file_name_buf[len - 1] == '.') &&
+	(file_name_buf[len - 2] == '/'))
+      file_name_buf[len - 1] = '\0';
   }
 #endif
 #if defined(MPW_C)

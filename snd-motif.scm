@@ -1258,8 +1258,7 @@ Reverb-feedback sets the scaler on the feedback.
   (define (unremark snd)
     (do ((i 0 (1+ i)))
 	((= i (chans snd)))
-      (deactivate-channel snd i))
-    #f)
+      (deactivate-channel snd i)))
 
   (define (open-remarks snd)
     (do ((i 0 (1+ i)))

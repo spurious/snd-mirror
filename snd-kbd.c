@@ -1466,7 +1466,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 	      cursor_move(cp, -count * 128); 
 	      break;
 	    case snd_K_Q: case snd_K_q: 
-	      play_channel(cp, CURSOR(cp), NO_END_SPECIFIED, IN_BACKGROUND, AT_CURRENT_EDIT_POSITION);
+	      play_channel(cp, CURSOR(cp), NO_END_SPECIFIED);
 	      break;
 #if HAVE_EXTENSION_LANGUAGE
 	    case snd_K_R: case snd_K_r: 
@@ -1949,7 +1949,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 		  break;
 		case snd_K_P: case snd_K_p: 
 		  if (!got_ext_count)
-		    play_selection(IN_BACKGROUND, AT_CURRENT_EDIT_POSITION);
+		    play_selection(IN_BACKGROUND);
 		  else play_region(ext_count, IN_BACKGROUND);
 		  break;
 		case snd_K_Q: case snd_K_q: 

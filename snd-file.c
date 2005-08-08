@@ -826,6 +826,7 @@ static XEN snd_opened_sound;
 static XEN snd_memo_sound;
 static XEN open_hook;
 static XEN close_hook;
+static XEN before_close_hook;
 
 #if HAVE_GUILE_DYNAMIC_WIND
 /* cleanup even if error in file lookup process */
@@ -965,11 +966,19 @@ void snd_close_file(snd_info *sp)
 {
   int files, i;
   XEN res = XEN_FALSE;
-  if (XEN_HOOKED(close_hook))
-    res = run_or_hook(close_hook,
+
+  /* before-close-hook can cancel the close, whereas close-hook can't */
+  if (XEN_HOOKED(before_close_hook))
+    res = run_or_hook(before_close_hook,
 		      XEN_LIST_1(C_TO_XEN_INT(sp->index)),
-		      S_close_hook);
+		      S_before_close_hook);
   if (XEN_TRUE_P(res)) return;
+
+  if (XEN_HOOKED(close_hook))
+    run_hook(close_hook,
+	     XEN_LIST_1(C_TO_XEN_INT(sp->index)),
+	     S_close_hook);
+
   sp->file_watcher = fam_unmonitor_file(sp->filename, sp->file_watcher);
 
   /* exit does not go through this function to clean up temps -- see snd_exit_cleanly in snd-main.c */
@@ -2955,8 +2964,8 @@ XEN_NARGIFY_1(g_view_files_amp_env_w, g_view_files_amp_env)
 XEN_NARGIFY_2(g_view_files_set_amp_env_w, g_view_files_set_amp_env)
 XEN_NARGIFY_1(g_view_files_selected_files_w, g_view_files_selected_files)
 XEN_NARGIFY_1(g_view_files_files_w, g_view_files_files)
-XEN_NARGIFY_1(g_view_files_set_selected_files_w, g_view_files_set_selected_files)
-XEN_NARGIFY_1(g_view_files_set_files_w, g_view_files_set_files)
+XEN_NARGIFY_2(g_view_files_set_selected_files_w, g_view_files_set_selected_files)
+XEN_NARGIFY_2(g_view_files_set_files_w, g_view_files_set_files)
 #else
 #define g_view_files_sort_w g_view_files_sort
 #define g_set_view_files_sort_w g_set_view_files_sort
@@ -3043,8 +3052,10 @@ void g_init_file(void)
   #define H_open_hook S_open_hook " (filename): called each time a file is opened (before the actual open). \
 If it returns #t, the file is not opened."
 
-  #define H_close_hook S_close_hook " (snd): called each time a file is closed (before the close). \
+  #define H_before_close_hook S_before_close_hook " (snd): called each time a file is closed (before the close). \
 If it returns #t, the file is not closed."
+
+  #define H_close_hook S_close_hook " (snd): called each time a file is closed (before the close)."
 
   #define H_just_sounds_hook S_just_sounds_hook " (filename): called on each file (after the sound file extension check) if \
 the " S_just_sounds " button is set. Return #f to filter out filename. "
@@ -3059,6 +3070,7 @@ upon File:Save as or " S_save_sound_as " completion."
 before File:Save as or " S_save_sound_as ". Provides a way to fixup a sound just before it is saved."
 
   open_hook =           XEN_DEFINE_HOOK(S_open_hook, 1,           H_open_hook);           /* arg = filename */
+  before_close_hook =   XEN_DEFINE_HOOK(S_before_close_hook, 1,   H_before_close_hook);   /* arg = sound index */
   close_hook =          XEN_DEFINE_HOOK(S_close_hook, 1,          H_close_hook);          /* arg = sound index */
   just_sounds_hook =    XEN_DEFINE_HOOK(S_just_sounds_hook, 1,    H_just_sounds_hook);    /* arg = filename */
   bad_header_hook =     XEN_DEFINE_HOOK(S_bad_header_hook, 1,     H_bad_header_hook);     /* arg = filename */

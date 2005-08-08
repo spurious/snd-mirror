@@ -341,7 +341,7 @@ to end of channel, beg defaults to 0, snd defaults to the currently selected sou
 
 ;;; -------- check-for-unsaved-edits
 ;;;
-;;; (check-for-unsaved-edits #:optional (on #t)): if 'on', add a function to the close-hook and exit-hook
+;;; (check-for-unsaved-edits #:optional (on #t)): if 'on', add a function to before-close-hook and before-exit-hook
 ;;;    that asks the user for confirmation before closing a sound if there are unsaved
 ;;;    edits on that sound.  if 'on' is #f, remove those hooks.
 
@@ -355,7 +355,8 @@ If 'check' is #f, the hooks are removed."
       (prompt-in-minibuffer question
 			    (lambda (response)
 			      (clear-minibuffer snd)
-			      (if (string=? response "yes")
+			      (if (or (string=? response "yes")
+				      (string=? response "y"))
 				  (action-if-yes snd)
 				  (action-if-no snd)))
 			    snd #t))
@@ -363,11 +364,9 @@ If 'check' is #f, the hooks are removed."
     (define (ignore-unsaved-edits-at-close? ind exiting)
       (letrec ((ignore-unsaved-edits-in-chan? 
 		(lambda (chan)
-		  (display (format #f "check ~A[~D] " (file-name ind) chan))
 		  (if (>= chan (channels ind))
 		      #t
 		      (let ((eds (edits ind chan)))
-			(display (format #f "~A edits " (car eds)))
 			(if (> (car eds) 0)
 			    (begin
 			      (yes-or-no?
@@ -383,7 +382,6 @@ If 'check' is #f, the hooks are removed."
 			       (lambda (snd)
 				 #f)
 			       ind)
-			      (display "return #f ")
 			      #f)
 			    (ignore-unsaved-edits-in-chan? (1+ chan))))))))
 	(ignore-unsaved-edits-in-chan? 0)))
@@ -397,17 +395,17 @@ If 'check' is #f, the hooks are removed."
 	(ignore-unsaved-edits-at-exit-1? (sounds))))
 
     (define (unsaved-edits-at-exit?) (not (ignore-unsaved-edits-at-exit?)))
-    (define (unsaved-edits-at-close? snd) (let ((val (not (ignore-unsaved-edits-at-close? snd #f)))) (display (format #f "close: ~A" val)) val))
+    (define (unsaved-edits-at-close? snd) (not (ignore-unsaved-edits-at-close? snd #f)))
     
     (if check
 	(begin
-	  (if (not (member unsaved-edits-at-exit? (hook->list exit-hook)))
-	      (add-hook! exit-hook unsaved-edits-at-exit?))
-	  (if (not (member unsaved-edits-at-close? (hook->list close-hook)))
-	      (add-hook! close-hook unsaved-edits-at-close?)))
+	  (if (not (member unsaved-edits-at-exit? (hook->list before-exit-hook)))
+	      (add-hook! before-exit-hook unsaved-edits-at-exit?))
+	  (if (not (member unsaved-edits-at-close? (hook->list before-close-hook)))
+	      (add-hook! before-close-hook unsaved-edits-at-close?)))
 	(begin
-	  (remove-hook! exit-hook unsaved-edits-at-exit?)
-	  (remove-hook! close-hook unsaved-edits-at-close?)))))
+	  (remove-hook! before-exit-hook unsaved-edits-at-exit?)
+	  (remove-hook! before-close-hook unsaved-edits-at-close?)))))
 
 
 ;;; -------- remember-sound-state

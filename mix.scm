@@ -287,8 +287,7 @@ starting at 'start' (in samples) using 'envelope' to pan (0: all chan 0, 1: all 
 		 ;; prune out inactive mix properties
 		 (set! all-mix-properties (remove-if (lambda (val)
 						       (not (mix? (car val))))
-						     all-mix-properties)))
-	     #f))
+						     all-mix-properties)))))
 
 (define (mix-click-sets-amp)
   (add-hook! mix-click-hook 

@@ -345,7 +345,7 @@ static void play_selected_callback(Widget w, XtPointer context, XtPointer info)
 	      dp->player = make_sound_readable(filename, false);
 	      dp->player->delete_me = dp;
 	      if (dp->player)
-		play_sound(dp->player, 0, NO_END_SPECIFIED, IN_BACKGROUND, AT_CURRENT_EDIT_POSITION);
+		play_sound(dp->player, 0, NO_END_SPECIFIED);
 	    }
 	  XtFree(filename);
 	}
@@ -4347,7 +4347,7 @@ static bool view_files_play(view_files_info *vdat, int pos, bool play)
 	{
 	  play_sp->short_filename = vdat->names[pos];
 	  play_sp->filename = NULL;
-	  play_sound(play_sp, 0, NO_END_SPECIFIED, IN_BACKGROUND, AT_CURRENT_EDIT_POSITION);
+	  play_sound(play_sp, 0, NO_END_SPECIFIED);
 	}
       else return(true); /* can't find or setup file */
     }
@@ -4411,6 +4411,7 @@ static void add_directory_to_view_files_list(view_files_info *vdat, const char *
       char *fullpathname = NULL;
       char **fullnames;
       int i, end;
+      fprintf(stderr,"path: %s\n", dirname);
       fullpathname = (char *)CALLOC(FILENAME_MAX, sizeof(char));
       strcpy(fullpathname, dirname);
       if (dirname[strlen(dirname) - 1] != '/') 

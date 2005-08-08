@@ -1951,7 +1951,8 @@ amplitude envelope over the mixed-in data.
 <pre>
 (enveloped-mix "pistol.snd" 0 '(0 0 1 1 2 0))
 </pre>
-<p><b>check-for-unsaved-edits</b> adds functions to the exit-hook and close-hook to check
+<p><b>check-for-unsaved-edits</b> adds functions to the <a href="extsnd.html#beforeexithook">before-exit-hook</a>
+and <a href="extsnd.html#beforeclosehook">before-close-hook</a> to check
 for unsaved edits before exiting Snd or closing a file.  If its argument is #f, it removes
 those hooks.
 </p>

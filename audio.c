@@ -1365,6 +1365,7 @@ static void describe_audio_state_1(void)
        return(MUS_ERROR); \
      } while (false)
 
+/* TODO: pick up defaults, reset to them if error below (can't set...) */
 static int FRAGMENTS = 4;
 static int FRAGMENT_SIZE = 12;
 static bool fragments_locked = false;

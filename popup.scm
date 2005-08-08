@@ -719,8 +719,7 @@ all saved edit lists."
 				  ((= i chns))
 				(let* ((old-val (assoc (cons snd i) edhist-funcs)))
 				  (if old-val
-				      (set-car! old-val (format #f "~A[~A]" name i))))))
-			    #f))
+				      (set-car! old-val (format #f "~A[~A]" name i))))))))
     edhist-popup))
 
 (define (edit-history-popup-menu snd chn)

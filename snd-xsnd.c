@@ -981,7 +981,7 @@ static void play_button_callback(Widget w, XtPointer context, XtPointer info)
   if (cb->set) 
     {
       XtVaSetValues(w, XmNselectColor, ((sp->cursor_follows_play != DONT_FOLLOW) ? (ss->sgx->green) : (ss->sgx->pushed_button_color)), NULL);
-      play_sound(sp, 0, NO_END_SPECIFIED, IN_BACKGROUND, AT_CURRENT_EDIT_POSITION);
+      play_sound(sp, 0, NO_END_SPECIFIED);
     }
 }
 
@@ -1941,7 +1941,7 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       n = 0;      
       if (need_colors) {XtSetArg(args[n], XmNbackground, ss->sgx->position_color); n++;}
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
-      XtSetArg(args[n], XmNtopWidget, sw[W_amp_label]); n++;
+      XtSetArg(args[n], XmNtopWidget, sw[W_amp_label]); n++; /* TODO: w_amp_number?? */
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNheight, 16); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;

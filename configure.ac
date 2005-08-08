@@ -207,6 +207,8 @@ AM_LANGINFO_DECIMAL_POINT
 AC_CHECK_SIZEOF(off_t)
 AC_CHECK_SIZEOF(long)
 AC_CHECK_SIZEOF(long long)
+AC_CHECK_SIZEOF(void *)
+AC_CHECK_SIZEOF(int)
 AC_TYPE_SIGNAL
 AC_FUNC_STRFTIME
 AC_CHECK_FUNCS(getcwd getwd strerror readlink setlocale access opendir sleep signal statvfs clock)

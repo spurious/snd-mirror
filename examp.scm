@@ -275,8 +275,7 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
 
 (define (close-buffer snd)
   "(close-buffer snd) removes the menu item associated with snd (use with close-hook)"
-  (remove-from-menu buffer-menu (file-name snd))
-  #f)
+  (remove-from-menu buffer-menu (file-name snd)))
 
 ;;; here we're adding this menu handling code to whatever is already happening at open/close-hook time
 
@@ -309,8 +308,7 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
 	  (if (> (length reopen-names) reopen-max-length)
 	      (let ((goner (car reopen-names)))
 		(set! reopen-names (cdr reopen-names))
-		(remove-from-menu reopen-menu goner)))))
-    #f))
+		(remove-from-menu reopen-menu goner)))))))
 
 (define (check-reopen-menu filename)
   "(check-reopen-menu filename) removes filename from the Reopen menu list (use with open-hook)"
@@ -452,7 +450,7 @@ this can be confusing if fft normalization is on (the default)"
 ;;;
 ;;;   (shell "df") for example -- there's probably a more elegant way to do this is in Scheme
 ;;; or to play a sound whenever a file is closed:
-;;;   (add-hook! close-hook (lambda (snd) (shell \"sndplay wood16.wav\") #f))
+;;;   (add-hook! close-hook (lambda (snd) (shell \"sndplay wood16.wav\")))
 
 (use-modules (ice-9 popen))  
 
@@ -1766,8 +1764,7 @@ as env moves to 0.0, low-pass gets more intense; amplitude and low-pass amount m
 		  (sounds))
 		 #f)))
 	(if current-buffer
-	    (open-current-buffer last-width last-height))))
-  #f)
+	    (open-current-buffer last-width last-height)))))
 
 (define (xb-open snd)
   (close-all-buffers)

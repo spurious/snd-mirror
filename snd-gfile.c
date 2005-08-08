@@ -96,7 +96,7 @@ static void play_selected_callback(GtkWidget *w, gpointer data)
 	      dp->player = make_sound_readable(filename, false);
 	      dp->player->delete_me = dp;
 	      if (dp->player)
-		play_sound(dp->player, 0, NO_END_SPECIFIED, IN_BACKGROUND, AT_CURRENT_EDIT_POSITION);
+		play_sound(dp->player, 0, NO_END_SPECIFIED);
 	    }
 	  FREE(filename);
 	}
@@ -3441,7 +3441,7 @@ static bool view_files_play(view_files_info *vdat, int pos, bool play)
 	{
 	  play_sp->short_filename = vdat->names[pos];
 	  play_sp->filename = NULL;
-	  play_sound(play_sp, 0, NO_END_SPECIFIED, IN_BACKGROUND, AT_CURRENT_EDIT_POSITION);
+	  play_sound(play_sp, 0, NO_END_SPECIFIED);
 	}
       else return(true); /* can't find or setup file */
     }

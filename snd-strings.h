@@ -39,6 +39,8 @@
 #define S_basic_color                   "basic-color"
 #define S_beats_per_measure             "beats-per-measure"
 #define S_beats_per_minute              "beats-per-minute"
+#define S_before_close_hook             "before-close-hook"
+#define S_before_exit_hook              "before-exit-hook"
 #define S_before_save_as_hook           "before-save-as-hook"
 #define S_before_save_state_hook        "before-save-state-hook"
 #define S_before_transform_hook         "before-transform-hook"

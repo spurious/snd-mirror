@@ -54,8 +54,7 @@
 		    (catch 'no-such-envelope
 			   (lambda ()
 			     (write-peak-env-info-file snd i peak-file))
-			   (lambda args args))))))))
-    #f)
+			   (lambda args args)))))))))
 
   (define (restore-peak-env-info-upon-open snd chn dur)
     ;; intended as an initial-graph-hook-function
@@ -87,8 +86,7 @@
 
   (add-hook! exit-hook 
 	     (lambda () 
-	       (for-each save-peak-env-info-at-close (sounds)) 
-	       #f)))
+	       (for-each save-peak-env-info-at-close (sounds)))))
 
 
 

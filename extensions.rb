@@ -1399,15 +1399,15 @@ If 'check' is false, the hooks are removed.")
       val
     end
     if check
-      unless $close_hook.member?("unsaved-edits-at-close?")
-        $close_hook.add_hook!("unsaved-edits-at-close?", &unsaved_edits_at_close_p)
+      unless $before_close_hook.member?("unsaved-edits-at-close?")
+        $before_close_hook.add_hook!("unsaved-edits-at-close?", &unsaved_edits_at_close_p)
       end
-      unless $exit_hook.member?("unsaved-edits-at-exit?")
-        $exit_hook.add_hook!("unsaved-edits-at-exit?", &unsaved_edits_at_exit_p)
+      unless $before_exit_hook.member?("unsaved-edits-at-exit?")
+        $before_exit_hook.add_hook!("unsaved-edits-at-exit?", &unsaved_edits_at_exit_p)
       end
     else
-      $close_hook.remove_hook!("unsaved-edits-at-close?")
-      $exit_hook.remove_hook!("unsaved-edits-at-exit?")
+      $before_close_hook.remove_hook!("unsaved-edits-at-close?")
+      $before_exit_hook.remove_hook!("unsaved-edits-at-exit?")
     end
   end
   

@@ -7,6 +7,8 @@
  * PERHAPS: key binding updates here too 
  */
 
+/* TODO: if 2chn, edit chn1, undo not sensitive if chn0 is selected */
+
 static bool find_any_edits(chan_info *cp, void *ignore)
 {
   return(cp->edit_ctr > 0);

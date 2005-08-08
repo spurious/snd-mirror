@@ -1107,10 +1107,11 @@ void stop_playing_all_sounds(play_stop_t reason);
 void stop_playing_region(int n, play_stop_t reason);
 void play_region(int n, play_process_t background);
 void play_region_1(int region, play_process_t background, XEN stop_proc);
-void play_channel(chan_info *cp, off_t start, off_t end, play_process_t background, int pos);
-void play_sound(snd_info *sp, off_t start, off_t end, play_process_t background, int pos);
-void play_channels(chan_info **cps, int chans, off_t *starts, off_t *ends, play_process_t background, int pos, bool selection);
-void play_selection(play_process_t background, int pos);
+void play_channel(chan_info *cp, off_t start, off_t end);
+void play_sound(snd_info *sp, off_t start, off_t end);
+void play_channels(chan_info **cps, int chans, off_t *starts, off_t *ur_ends, 
+		   play_process_t background, XEN edpos, bool selection, const char *caller, int arg_pos);
+void play_selection(play_process_t background);
 void toggle_dac_pausing(void); /* snd-dac.c */
 bool play_in_progress(void);
 void initialize_apply(snd_info *sp, int chans, off_t beg, off_t frames);
