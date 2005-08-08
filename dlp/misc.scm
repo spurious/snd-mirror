@@ -30,7 +30,6 @@
 
 (title-with-date)
 (keep-file-dialog-open-upon-ok)
-(keep-mix-dialog-open-upon-ok)
 (make-hidden-controls-dialog)
 (check-for-unsaved-edits #t)
 (if (not (hook-member show-disk-space after-open-hook))
@@ -64,7 +63,8 @@
 (paint-all (cadr (main-widgets)))
 (for-each
  (lambda (w)
-   (if w
+   (if (and w
+	    (Widget? w))
        (paint-all w)))
  (dialog-widgets))
 
