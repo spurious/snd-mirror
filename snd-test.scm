@@ -30509,15 +30509,11 @@ EDITS: 3
 			       (set! (optimization) old-opt)
 			       (close-sound ind)
 			       times))))
-		     (list "1a.snd" "oboe.snd" "storm.snd" (string-append home-dir "/test/sound/away.snd")))))
+		     (let ((away (string-append home-dir "/test/sound/away.snd")))
+		       (if (file-exists? away)
+			   (list "1a.snd" "oboe.snd" "storm.snd" away)
+			   (list "1a.snd" "oboe.snd" "storm.snd" "lola.snd"))))))
 	  (snd-display ";         scl   rev   env   map   ptree  scn  pad   wrt   clm   mix   src   del")
-;	  (snd-display ";1a:   ~{~6,2F~}" (car data))  
-;	  (snd-display ";oboe: ~{~6,2F~}" (cadr data))  
-;	  (snd-display ";storm:~{~6,2F~}" (caddr data))
-;	  (if (list-p (cadddr data))
-;	      (snd-display ";away: ~{~6,2F~}" (cadddr data)))
-;	  (map (lambda (a) (format #f "~6,2F" a)) (car data))
-
 	  (snd-display ";1a:   ~{~A~}" (map (lambda (a) (format #f "~6,2F" a)) (car data)))
 	  (snd-display ";oboe: ~{~A~}" (map (lambda (a) (format #f "~6,2F" a)) (cadr data)))
 	  (snd-display ";storm:~{~A~}" (map (lambda (a) (format #f "~6,2F" a)) (caddr data)))

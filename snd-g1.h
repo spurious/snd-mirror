@@ -492,7 +492,6 @@ void save_view_files_dialogs(FILE *fd);
 void add_directory_to_default_view_files_dialog(const char *dirname);
 void add_file_to_default_view_files_dialog(const char *dirname);
 GtkWidget *start_view_files_dialog(bool managed);
-void view_files_set_sort_by_proc_sensitive(bool sensitive);
 void view_files_set_sort_proc_name(const char *name);
 Float view_files_amp(widget_t dialog);
 Float view_files_set_amp(widget_t dialog, Float new_amp);

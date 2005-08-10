@@ -3705,6 +3705,9 @@ typedef struct {
   void *vdat;
 } vf_row;
 
+/* TODO: byproc -> list of menu item widgets with associated sort procs */
+/* PERHAPS: how to present filters -- another button alongside sort? -- should sort have margins? */
+
 typedef struct {
   Widget dialog, file_list, file_list_holder, left_title, byproc;
   vf_row **file_list_entries;
@@ -4411,7 +4414,7 @@ static void add_directory_to_view_files_list(view_files_info *vdat, const char *
       char *fullpathname = NULL;
       char **fullnames;
       int i, end;
-      fprintf(stderr,"path: %s\n", dirname);
+      /* fprintf(stderr,"path: %s\n", dirname); */
       fullpathname = (char *)CALLOC(FILENAME_MAX, sizeof(char));
       strcpy(fullpathname, dirname);
       if (dirname[strlen(dirname) - 1] != '/') 
@@ -5000,25 +5003,6 @@ static void vf_post_error(const char *error_msg, void *data)
     }
 }
 
-static void view_files_insert_selected_callback(Widget w, XtPointer context, XtPointer info) 
-{
-  view_files_info *vdat = (view_files_info *)context;
-  off_t beg;
-  vdat->error_p = false;
-  redirect_snd_error_to(vf_post_error, (void *)vdat);
-  beg = vf_location(vdat);
-  redirect_snd_error_to(NULL, NULL);
-  if (!(vdat->error_p))
-    {
-      /* write temp (if needed -- amp/speed/env) then insert_complete_file[_at_cursor], handle temp cleanup */
-      /* bool insert_complete_file(snd_info *sp, const char *str, off_t chan_beg)
-       */
-    }
-  else
-    {
-    }
-}
-
 static bool default_env_p(env *e)
 {
   if (e == NULL) return(true);
@@ -5092,6 +5076,75 @@ static void view_files_mix_selected_callback(Widget w, XtPointer context, XtPoin
       /*
       else 
 	report_in_minibuffer(sp, _("%s mixed in at " OFF_TD), <file>, beg);
+      */
+    }
+  else
+    {
+    }
+}
+
+static void view_files_insert_selected_callback(Widget w, XtPointer context, XtPointer info) 
+{
+  view_files_info *vdat = (view_files_info *)context;
+  off_t beg;
+  vdat->error_p = false;
+  redirect_snd_error_to(vf_post_error, (void *)vdat);
+  beg = vf_location(vdat);
+  redirect_snd_error_to(NULL, NULL);
+  if (!(vdat->error_p))
+    {
+      int i, len;
+      bool ok = false;
+      snd_info *sp;
+      sp = any_selected_sound();
+
+
+      redirect_snd_error_to(vf_post_error, (void *)vdat);
+      ss->sgx->requestor_dialog = w;
+      ss->open_requestor = FROM_VIEW_FILES_INSERT_DIALOG;
+
+
+      /* if srate != 1.0 src
+	 if amp-env env + amp
+	 else if amp != 1.0 amp
+	 use result as insert, handle as temp
+      */
+
+      len = vdat->currently_selected_files;
+      for (i = 0; i < vdat->currently_selected_files; i++)
+	{
+      /* bool insert_complete_file(snd_info *sp, const char *str, off_t chan_beg)
+       */
+
+	  if ((snd_feq(vdat->amp, 1.0)) &&
+	      (snd_feq(vdat->speed, 1.0)) &&
+	      (default_env_p(vdat->amp_env)))
+	    ok = insert_complete_file(sp, 
+					  vdat->full_names[vdat->selected_files[0]], 
+					  beg);
+	  else
+	    {
+	      fprintf(stderr,"not default: %d %d %d %f %f\n", 
+		      snd_feq(vdat->amp, 1.0),
+		      snd_feq(vdat->speed, 1.0),
+		      default_env_p(vdat->amp_env),
+		      vdat->amp,
+		      vdat->speed);
+	    }
+	}
+
+      redirect_snd_error_to(NULL, NULL);
+      if (!ok)
+	{
+	  /*
+	  if (ss->open_requestor != FROM_RAW_DATA_DIALOG)
+	    clear_error_if_open_changes(fd->dialog, (void *)fd);
+	  */
+	}
+      /*
+      else 
+        -- this can be a list of names
+	report_in_minibuffer(sp, _("%s inserted at " OFF_TD), <file>, beg);
       */
 
     }
@@ -5647,12 +5700,7 @@ static Widget start_view_files_dialog_1(view_files_info *vdat, bool managed)
       XtSetArg(args[n], XmNmarginBottom, 0); n++;
       XtSetArg(args[n], XmNshadowThickness, 1); n++;
       XtSetArg(args[n], XmNhighlightThickness, 1); n++;
-      /*
-      XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
-      XtSetArg(args[n], XmNtopWidget, vdat->openB); n++;
-      */
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
-
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_POSITION); n++;
@@ -5666,12 +5714,7 @@ static Widget start_view_files_dialog_1(view_files_info *vdat, bool managed)
       XtSetArg(args[n], XmNmarginBottom, 0); n++;
       XtSetArg(args[n], XmNshadowThickness, 1); n++;
       XtSetArg(args[n], XmNhighlightThickness, 1); n++;
-      /*
-      XtSetArg(args[n], XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
-      XtSetArg(args[n], XmNtopWidget, vdat->mixB); n++;
-      */
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
-
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNleftWidget, vdat->mixB); n++;
@@ -5796,12 +5839,7 @@ static Widget start_view_files_dialog_1(view_files_info *vdat, bool managed)
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->lighter_blue); n++;}
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNtopWidget, vdat->at_sample_text); n++;
-      /*
-      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
-      XtSetArg(args[n], XmNbottomWidget, vdat->at_mark_button); n++;
-      */
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
-
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNleftWidget, vdat->at_mark_button); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
@@ -5817,9 +5855,6 @@ static Widget start_view_files_dialog_1(view_files_info *vdat, bool managed)
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
-      /*
-      XtSetArg(args[n], XmNtopWidget, vdat->at_mark_button); n++;
-      */
       XtSetArg(args[n], XmNtopWidget, bframe); n++;
 
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
@@ -6227,19 +6262,6 @@ static Widget start_view_files_dialog_1(view_files_info *vdat, bool managed)
   if (managed)
     vf_amp_env_resize(vdat->env_drawer, (XtPointer)vdat, NULL);
   return(vdat->dialog);
-}
-
-void view_files_set_sort_by_proc_sensitive(bool sensitive)
-{
-#if 0
-  int i;
-  for (i = 0; i < view_files_info_size; i++)
-    if ((view_files_infos[i]) &&
-	(view_files_infos[i]->dialog))
-      {
-	XtSetSensitive(view_files_infos[i]->byproc, sensitive);
-      }
-#endif
 }
 
 static view_files_info *find_view_files_dialog(void)

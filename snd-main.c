@@ -8,10 +8,6 @@ static void remove_temp_files(chan_info *cp)
   free_mix_list(cp);
 }
 
-#if DEBUGGING
-  void mem_report(void);
-#endif
-
 static XEN exit_hook;
 static XEN before_exit_hook;
 

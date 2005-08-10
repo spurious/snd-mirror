@@ -4067,10 +4067,6 @@ GtkWidget *start_view_files_dialog(bool managed)
   return(start_view_files_dialog_1(find_view_files_dialog(), managed));
 }
 
-void view_files_set_sort_by_proc_sensitive(bool sensitive)
-{
-}
-
 static void view_files_save_list(view_files_info *vdat, FILE *fd)
 {
 #if HAVE_EXTENSION_LANGUAGE

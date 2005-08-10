@@ -270,6 +270,9 @@ static int too_many_files_cleanup(void)
   for_each_normal_chan_1(close_temp_files, (void *)closed);
   if ((*closed) == 0) 
     for_each_region_chan(close_temp_files, (void *)closed);
+#if DEBUGGING
+  fprintf(stderr, "cleared %d\n", (*closed));
+#endif
   if ((*closed) == 0)
     rtn = -1;
   else rtn = (*closed);
@@ -286,6 +289,9 @@ int snd_open_read(const char *arg)
       fd = too_many_files_cleanup();
       if (fd != -1) 
 	fd = OPEN(arg, O_RDONLY, 0);
+#if DEBUGGING
+      else mem_report();
+#endif
       if (fd == -1) 
 	snd_error("%s: %s", arg, snd_io_strerror());
     }

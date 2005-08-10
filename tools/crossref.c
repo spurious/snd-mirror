@@ -178,15 +178,17 @@ int main(int argc, char **argv)
   results = (int *)calloc(names_size, sizeof(int));
   procs = (int *)calloc(names_size, sizeof(int));
 
-  /* add_header("sndlib.h"); */
-  /* add_header("clm.h"); */
+  add_header("sndlib.h");
+  add_header("clm.h");
   add_header("vct.h");
   add_header("sndlib2xen.h");
   add_header("clm2xen.h");
   add_header("snd.h");
-  /* add_header("snd-strings.h"); */
-  /* add_header("sndlib-strings.h");  */
-  /* add_header("clm-strings.h"); */
+#if 0
+  add_header("snd-strings.h");
+  add_header("sndlib-strings.h");
+  add_header("clm-strings.h");
+#endif
   add_header("snd-0.h");
   add_header("snd-1.h");
   add_header("snd-x0.h");
@@ -199,9 +201,10 @@ int main(int argc, char **argv)
   add_header("xen.h");
   add_header("config.h.in");
   add_header("libclm.def");
+  add_header("snd-menu.h");
 
-  add_file("xen.h");
-  add_file("snd.h");
+  /* add_file("xen.h"); */
+  /* add_file("snd.h"); */
 
   add_file("headers.c");
   add_file("audio.c");

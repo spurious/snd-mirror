@@ -551,6 +551,9 @@ snd_data *make_snd_data_buffer(mus_sample_t *data, int len, int ctr);
 snd_data *make_snd_data_buffer_for_simple_channel(int len);
 int open_temp_file(const char *ofile, int chans, file_info *hdr, io_error_t *err);
 io_error_t close_temp_file(const char *filename, int ofd, int type, off_t bytes, snd_info *sp);
+#if DEBUGGING
+  void mem_report(void);
+#endif
 
 
 /* -------- snd-help.c -------- */

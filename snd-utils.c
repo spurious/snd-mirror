@@ -801,8 +801,6 @@ static void check_padding(void *p1, void *p2, int len, bool refill)
 static void **ptr_history[PTR_HISTORY_SIZE];
 static int ptr_history_loc[PTR_HISTORY_SIZE];
 static int ptr_history_ptr = 0;
-
-void mem_report(void);
 static int last_forgotten = -1;
 #define FREED_POINTER 0x99999999
 

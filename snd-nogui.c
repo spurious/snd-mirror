@@ -251,7 +251,6 @@ void save_view_files_dialogs(FILE *fd) {}
 void add_directory_to_default_view_files_dialog(const char *dirname) {}
 void add_file_to_default_view_files_dialog(const char *dirname) {}
 widget_t start_view_files_dialog(bool managed) {return(0);}
-void view_files_set_sort_by_proc_sensitive(bool sensitive) {}
 void view_files_set_sort_proc_name(const char *name) {}
 Float view_files_amp(widget_t dialog) {return(0.0);}
 Float view_files_set_amp(widget_t dialog, Float new_amp) {return(0.0);}

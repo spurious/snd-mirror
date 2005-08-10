@@ -13153,8 +13153,8 @@ sed 's/^/| /' conftest.$ac_ext >&5
 
 echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6
-	       { echo "$as_me:$LINENO: WARNING: can't find the Motif headers! These are in openmotif-devel or some such package -- will look for Gtk" >&5
-echo "$as_me: WARNING: can't find the Motif headers! These are in openmotif-devel or some such package -- will look for Gtk" >&2;}
+	       { echo "$as_me:$LINENO: WARNING: can't find the Motif headers! These are in openmotif-devel or some such package, or perhaps you need to include the --with-motif-prefix switch: --with-motif-prefix=/usr/pkg for example -- I will look for Gtk" >&5
+echo "$as_me: WARNING: can't find the Motif headers! These are in openmotif-devel or some such package, or perhaps you need to include the --with-motif-prefix switch: --with-motif-prefix=/usr/pkg for example -- I will look for Gtk" >&2;}
                with_gtk=yes
 	       with_motif=no
 
@@ -13163,7 +13163,7 @@ rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
 
 fi
 rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
-	  if test "$with_xp" == yes; then
+	  if test "$with_xp" = yes; then
 	    echo "$as_me:$LINENO: checking for XmPrint support" >&5
 echo $ECHO_N "checking for XmPrint support... $ECHO_C" >&6
 	    cat >conftest.$ac_ext <<_ACEOF
@@ -19418,7 +19418,10 @@ fi
 #--------------------------------------------------------------------------------
 # gettext
 #--------------------------------------------------------------------------------
+#
+# this goddamn macro is much more trouble than it is worth!
 
+if test "$enable_nls" != no ; then
 echo "$as_me:$LINENO: checking whether ${MAKE-make} sets \$(MAKE)" >&5
 echo $ECHO_N "checking whether ${MAKE-make} sets \$(MAKE)... $ECHO_C" >&6
 set dummy ${MAKE-make}; ac_make=`echo "$2" | sed 'y,:./+-,___p_,'`
@@ -21408,6 +21411,10 @@ rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
 fi
 
 
+else
+# deperation!
+cp makefile.no-gettext makefile.in
+fi
 
 
 #--------------------------------------------------------------------------------
@@ -21440,12 +21447,10 @@ fi;
 
 if test "$enable_snd_debug" = yes ; then
   CFLAGS="-I. $CFLAGS"
+  if test "$GCC" = yes ; then
+    CFLAGS="$CFLAGS -g3 -Wredundant-decls -Wcast-align -Wmissing-prototypes -Wpointer-arith -Wimplicit -Wreturn-type -Wunused-label -Wunused-variable -Wunused-value -Wcomment -Wformat -Wunused-function -Wuninitialized -Wparentheses -Wall"
+  fi
 else
-  # this taken from swh-plugins-0.3.7/configure.in (with minor changes)
-  # -mcpu=v9 is reported to help on the Sun
-  # MACHINE="-mcpu=${build_cpu} -march=${build_cpu}"
-  # if test ${build_cpu} = "powerpc"; then MACHINE=""; fi
-  # CFLAGS="-I. $CFLAGS ${MACHINE}"
   CFLAGS="-I. $CFLAGS"
 fi
 
@@ -22916,5 +22921,4 @@ if test "$no_create" != yes; then
   # would make configure fail if this is the last instruction.
   $ac_cs_success || { (exit 1); exit 1; }
 fi
-
 

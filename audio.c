@@ -1365,7 +1365,6 @@ static void describe_audio_state_1(void)
        return(MUS_ERROR); \
      } while (false)
 
-/* TODO: pick up defaults, reset to them if error below (can't set...) */
 static int FRAGMENTS = 4;
 static int FRAGMENT_SIZE = 12;
 static bool fragments_locked = false;
@@ -1890,6 +1889,8 @@ static char *sonorus_name(int sys, int offset)
   return(sonorus_buf);
 }
 
+static bool fragment_set_failed = false;
+
 static int oss_mus_audio_open_output(int ur_dev, int srate, int chans, int format, int size)
 {
   /* ur_dev is in general MUS_AUDIO_PACK_SYSTEM(n) | MUS_AUDIO_DEVICE */
@@ -1991,7 +1992,10 @@ static int oss_mus_audio_open_output(int ur_dev, int srate, int chans, int forma
   if (audio_out == -1) return(MUS_ERROR);
 
   /* ioctl(audio_out, SNDCTL_DSP_RESET, 0); */ /* causes clicks */
-  if ((fragments_locked) && ((dev == MUS_AUDIO_DUPLEX_DEFAULT) || (size != 0))) /* only set if user has previously called set_oss_buffers */
+  if ((fragments_locked) && 
+      (!(fragment_set_failed)) &&
+      ((dev == MUS_AUDIO_DUPLEX_DEFAULT) || 
+       (size != 0))) /* only set if user has previously called set_oss_buffers */
     {
       buffer_info = (FRAGMENTS << 16) | (FRAGMENT_SIZE);
       if (ioctl(audio_out, SNDCTL_DSP_SETFRAGMENT, &buffer_info) == -1)
@@ -2010,6 +2014,7 @@ static int oss_mus_audio_open_output(int ur_dev, int srate, int chans, int forma
 	      char *tmp;
 	      fprintf(stderr, tmp = mus_format("can't set %s fragments to: %d x %d",
 					       dev_name, FRAGMENTS, FRAGMENT_SIZE)); /* not an error if ALSA OSS-emulation */
+	      fragment_set_failed = true;
 	      FREE(tmp);
 	    }
         }
@@ -9556,22 +9561,17 @@ int mus_audio_read(int line, char *buf, int bytes)
 
 #if defined(NETBSD) && (!(defined(AUDIO_OK)))
 #define AUDIO_OK
-/* taken from Xanim */
-/* bugfixes from Thomas Kraus 30-Jul-05 */
-#include <errno.h>
+/* started from Xanim a long time ago..., bugfixes from Thomas Klausner 30-Jul-05, worked into better shape Aug-05 */
 #include <fcntl.h>
 #include <sys/audioio.h>
-#include <sys/file.h>
-#include <sys/stat.h>
 #include <sys/ioctl.h>
-#include <sys/ioccom.h>
 
 int mus_audio_open_output(int dev, int srate, int chans, int format, int size) 
 {
   int line;
   audio_info_t a_info;
 
-  line = open("/dev/audio", O_WRONLY | O_NDELAY);
+  line = open("/dev/sound", O_WRONLY | O_NDELAY); /* /dev/audio assume mono 8-bit mulaw */
   if (line == -1)
     {
       if (errno == EBUSY) 
@@ -9621,12 +9621,119 @@ int mus_audio_close(int line)
   */
 
 int mus_audio_open_input(int dev, int srate, int chans, int format, int size) {return(MUS_ERROR);}
-static void describe_audio_state_1(void) {pprint("NetBSD");}
+
+#if 0
+#define	AUDIO_ENCODING_NONE		0 /* no encoding assigned */
+#define	AUDIO_ENCODING_ULAW		1 /* ITU G.711 mu-law */
+#define	AUDIO_ENCODING_ALAW		2 /* ITU G.711 A-law */
+#define	AUDIO_ENCODING_PCM16		3 /* signed linear PCM, obsolete */
+#define AUDIO_ENCODING_LINEAR		AUDIO_ENCODING_PCM16 /* SunOS compat */
+#define	AUDIO_ENCODING_PCM8		4 /* unsigned linear PCM, obsolete */
+#define AUDIO_ENCODING_LINEAR8		AUDIO_ENCODING_PCM8 /* SunOS compat */
+#define	AUDIO_ENCODING_ADPCM		5 /* adaptive differential PCM */
+#define AUDIO_ENCODING_SLINEAR_LE	6
+#define AUDIO_ENCODING_SLINEAR_BE	7
+#define AUDIO_ENCODING_ULINEAR_LE	8
+#define AUDIO_ENCODING_ULINEAR_BE	9
+#define AUDIO_ENCODING_SLINEAR		10
+#define AUDIO_ENCODING_ULINEAR		11
+#define AUDIO_ENCODING_MPEG_L1_STREAM	12
+#define AUDIO_ENCODING_MPEG_L1_PACKETS	13
+#define AUDIO_ENCODING_MPEG_L1_SYSTEM	14
+#define AUDIO_ENCODING_MPEG_L2_STREAM	15
+#define AUDIO_ENCODING_MPEG_L2_PACKETS	16
+#define AUDIO_ENCODING_MPEG_L2_SYSTEM	17
+#endif
+
+static void describe_audio_state_1(void) 
+{
+  audio_device_t dev;
+  int i=0, val;
+
+  int line;
+  audio_info_t a_info;
+  audio_encoding_t e_info;
+  mixer_ctrl_t mx;
+  mixer_devinfo_t mdev;
+
+  line = open("/dev/sound", O_WRONLY | O_NDELAY);
+  if (line == -1)
+    return;
+
+  pprint("NetBSD");
+  fprintf(stderr,"/dev/sound:\n");
+
+  val = ioctl(line, AUDIO_GETDEV, &dev);
+  fprintf(stderr, "%d, name: %s, version: %s, config: %s\n",
+	  val, dev.name, dev.version, dev.config);
+  
+  for (i = 0; ; i++)
+    {
+      e_info.index = i;
+      val = ioctl(line, AUDIO_GETENC, &e_info);
+      if (val != 0) break;
+      fprintf(stderr, "%d: %s, encoding: %d, precision: %d, flags: %d\n",
+	      i, e_info.name, e_info.encoding, e_info.precision, e_info.flags);
+    }
+      fprintf(stderr,"audio_encoding_ulaw: %d, audio_encoding_alaw: %d, audio_encoding_slinear: %d\naudio_encoding_ulinear: %d, audio_encoding_adpcm: %d, audio_encoding_slinear_le: %d\naudio_encoding_slinear_be: %d, audio_encoding_ulinear_le: %d, audio_encoding_ulinear_be: %d\n",
+	      AUDIO_ENCODING_ULAW,
+	      AUDIO_ENCODING_ALAW,
+	      AUDIO_ENCODING_SLINEAR,
+	      AUDIO_ENCODING_ULINEAR,
+	      AUDIO_ENCODING_ADPCM,
+	      AUDIO_ENCODING_SLINEAR_LE,
+	      AUDIO_ENCODING_SLINEAR_BE,
+	      AUDIO_ENCODING_ULINEAR_LE,
+	      AUDIO_ENCODING_ULINEAR_BE);
+
+  ioctl(line, AUDIO_GETPROPS, &val);
+  fprintf(stderr, "full: %d, mmap: %d, rw: %d\n",
+	  val & AUDIO_PROP_FULLDUPLEX,
+	  val & AUDIO_PROP_MMAP,
+	  val & AUDIO_PROP_INDEPENDENT);
+
+  val = ioctl(line, AUDIO_GETINFO, &a_info);
+  fprintf(stderr, "play: srate: %d, chans: %d, precision: %d, encoding: %d, gain: %d (%d:%d), balance: %d (%d:%d ->%d), port:%x (%d %d %d: %x)\n",
+	  a_info.play.sample_rate, a_info.play.channels, a_info.play.precision, a_info.play.encoding, a_info.play.gain,
+	  AUDIO_MIN_GAIN, AUDIO_MAX_GAIN, a_info.play.balance, AUDIO_LEFT_BALANCE, AUDIO_RIGHT_BALANCE, AUDIO_MID_BALANCE,
+	  a_info.play.port, AUDIO_SPEAKER, AUDIO_HEADPHONE, AUDIO_LINE_OUT, a_info.play.avail_ports);
+  fprintf(stderr, "record: srate: %d, chans: %d, precision: %d, encoding: %d, gain: %d, balance: %d, port: %x (%d %d %d: %x)\n",
+	  a_info.record.sample_rate, a_info.record.channels, a_info.record.precision, a_info.record.encoding, 
+	  a_info.record.gain, a_info.record.balance, a_info.record.port, AUDIO_MICROPHONE, AUDIO_LINE_IN, AUDIO_CD,
+	  a_info.record.avail_ports);
+  close(line);
+
+  /* input: AUDIO_INTERNAL_CD_IN */
+
+  fprintf(stderr,"/dev/mixer:\n");
+  line = open("/dev/mixer", O_RDONLY | O_NDELAY);
+  if (line == -1)
+    return;
+
+  val = ioctl(line, AUDIO_GETDEV, &dev);
+  fprintf(stderr, "%d, name: %s, version: %s, config: %s\n",
+	  val, dev.name, dev.version, dev.config);
+  
+  for (i = 0; ; i++)
+    {
+      mdev.index = i;
+      val = ioctl(line, AUDIO_MIXER_DEVINFO, &mdev);
+      if (val != 0) break;
+      
+    }
+  
+#if 0
+typedef struct audio_mixer_name {
+	char name[MAX_AUDIO_DEV_LEN];
+	int msg_id;
+} audio_mixer_name_t;
+#endif
+
+}
+
 int mus_audio_read(int line, char *buf, int bytes) {return(MUS_ERROR);}
 int mus_audio_mixer_read(int dev, int field, int chan, float *val) {return(MUS_ERROR);}
 int mus_audio_mixer_write(int dev, int field, int chan, float *val) {return(MUS_ERROR);}
-void mus_audio_save(void) {}
-void mus_audio_restore(void) {}
 int mus_audio_initialize(void) {return(MUS_ERROR);}
 int mus_audio_systems(void) {return(1);}
 char *mus_audio_system_name(int system) {return("NetBSD");}

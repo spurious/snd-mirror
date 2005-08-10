@@ -691,12 +691,12 @@ else
                                )],
 	      [AC_MSG_RESULT(yes)],
 	      [AC_MSG_RESULT(no)
-	       AC_MSG_WARN([can't find the Motif headers! These are in openmotif-devel or some such package -- will look for Gtk])
+	       AC_MSG_WARN([can't find the Motif headers! These are in openmotif-devel or some such package, or perhaps you need to include the --with-motif-prefix switch: --with-motif-prefix=/usr/pkg for example -- I will look for Gtk])
                with_gtk=yes
 	       with_motif=no
               ])
 	    ])
-	  if test "$with_xp" == yes; then
+	  if test "$with_xp" = yes; then
 	    AC_MSG_CHECKING([for XmPrint support])
 	    AC_COMPILE_IFELSE(
 	      [AC_LANG_PROGRAM([#include <Xm/Print.h>],
@@ -1659,7 +1659,10 @@ AC_SUBST(SNDLIB_LIB)
 #--------------------------------------------------------------------------------
 # gettext
 #--------------------------------------------------------------------------------
+#
+# this goddamn macro is much more trouble than it is worth!
 
+if test "$enable_nls" != no ; then
 AM_GNU_GETTEXT([external])
 
 AC_CHECK_HEADER(nl_types.h,
@@ -1671,6 +1674,10 @@ AC_CHECK_HEADER(nl_types.h,
       AC_MSG_RESULT(yes)
      ],
      [AC_MSG_RESULT(no)])])
+else
+# deperation!
+cp makefile.no-gettext makefile.in
+fi
 
 
 #--------------------------------------------------------------------------------
@@ -1689,12 +1696,10 @@ AC_ARG_ENABLE(deprecated,
 
 if test "$enable_snd_debug" = yes ; then
   CFLAGS="-I. $CFLAGS"
+  if test "$GCC" = yes ; then
+    CFLAGS="$CFLAGS -g3 -Wredundant-decls -Wcast-align -Wmissing-prototypes -Wpointer-arith -Wimplicit -Wreturn-type -Wunused-label -Wunused-variable -Wunused-value -Wcomment -Wformat -Wunused-function -Wuninitialized -Wparentheses -Wall"
+  fi
 else
-  # this taken from swh-plugins-0.3.7/configure.in (with minor changes)
-  # -mcpu=v9 is reported to help on the Sun
-  # MACHINE="-mcpu=${build_cpu} -march=${build_cpu}"
-  # if test ${build_cpu} = "powerpc"; then MACHINE=""; fi
-  # CFLAGS="-I. $CFLAGS ${MACHINE}"
   CFLAGS="-I. $CFLAGS"
 fi
 
@@ -1733,4 +1738,3 @@ fi
 AC_SUBST(CFLAGS)
 AC_SUBST(MAKE_TARGET)
 AC_OUTPUT
-

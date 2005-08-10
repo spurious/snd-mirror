@@ -473,6 +473,9 @@ static void add_snd_file_to_dir_list(dir *dp, const char *name)
     }
 }
 
+
+/* -------- sound file extensions list -------- */
+
 static char **sound_file_extensions = NULL;
 static int sound_file_extensions_size = 0;
 static int sound_file_extensions_end = 0;
@@ -525,6 +528,7 @@ void save_added_sound_file_extensions(FILE *fd)
       }
 }
 
+
 static XEN just_sounds_hook;
 
 bool run_just_sounds_hook(const char *name)
@@ -552,6 +556,7 @@ bool sound_file_p(char *name) /* can't be const (compiler confusion) */
 	return(true);
   return(false);
 }
+
 
 static int local_error = MUS_NO_ERROR;
 static char *local_error_msg = NULL;
@@ -659,6 +664,7 @@ dir *filter_sound_files(dir *dp, char *pattern)
       add_snd_file_to_dir_list(ndp, dp->files[i]);
   return(ndp);
 }
+
 
 typedef struct {
   int active_sounds;
@@ -2393,6 +2399,9 @@ static char *raw_data_explanation(const char *filename, file_info *hdr, char **i
 }
 #endif
 
+
+/* -------- extlang connections -------- */
+
 static XEN g_add_sound_file_extension(XEN ext)
 {
   #define H_add_sound_file_extension "(" S_add_sound_file_extension " ext):  add the file extension 'ext' to the list of sound file extensions"
@@ -2764,7 +2773,6 @@ static XEN g_set_view_files_sort_procedure(XEN proc)
   if (XEN_PROCEDURE_P(proc))
     {
       error = procedure_ok(proc, 1, "file sort", "sort", 1);
-      view_files_set_sort_by_proc_sensitive(error == NULL);
       if (error == NULL)
 	{
 	  ss->view_files_sort_proc = proc;
@@ -2778,7 +2786,6 @@ static XEN g_set_view_files_sort_procedure(XEN proc)
 	  return(snd_bad_arity_error(S_setB S_view_files_sort_procedure, errstr, proc));
 	}
     }
-  else view_files_set_sort_by_proc_sensitive(false);
   return(proc);
 }
 #endif
@@ -2927,8 +2934,57 @@ bool view_files_run_select_hook(const char *selected_file)
   return(XEN_NOT_TRUE_P(res));
 }
 
-/* TODO: doc/test sort-file constants, view-files-amp|speed|amp-env|files|selected-files
+/* TODO: doc/test sort-file constants, view-files-amp|speed|amp-env|files|selected-files (check vf-sort)
+ * TODO: doc/test/implement add|delete|-|file-|filters|sorters
  */
+
+static XEN g_file_filters(void)
+{
+  #define H_file_filters "(" S_file_filters ") -> list of current user-defined file filters"
+  return(ss->file_filters);
+}
+
+static XEN g_set_file_filters(XEN new_list)
+{
+  return(ss->file_filters);
+}
+
+static XEN g_add_file_filter(XEN name, XEN proc)
+{
+  #define H_add_file_filter "(" S_add_file_filter " name proc) -- add proc with identifier name to file filter list"
+  return(ss->file_filters);
+}
+
+static XEN g_delete_file_filter(XEN name)
+{
+  #define H_delete_file_filter "(" S_delete_file_filter " name) -- delete proc with identifier name from file filter list"
+  return(ss->file_filters);
+}
+
+
+static XEN g_file_sorters(void)
+{
+  #define H_file_sorters "(" S_file_sorters ") -> list of current user-defined file sorters"
+  return(ss->file_sorters);
+}
+
+static XEN g_set_file_sorters(XEN new_list)
+{
+  return(ss->file_sorters);
+}
+
+static XEN g_add_file_sorter(XEN name, XEN proc)
+{
+  #define H_add_file_sorter "(" S_add_file_sorter " name proc) -- add proc with identifier name to file sorter list"
+  return(ss->file_sorters);
+}
+
+static XEN g_delete_file_sorter(XEN name)
+{
+  #define H_delete_file_sorter "(" S_delete_file_sorter " name) -- delete proc with identifier name from file sorter list"
+  return(ss->file_sorters);
+}
+
 
 #ifdef XEN_ARGIFY_1
 XEN_NARGIFY_0(g_view_files_sort_w, g_view_files_sort)
@@ -2943,10 +2999,6 @@ XEN_NARGIFY_1(g_add_file_to_view_files_list_w, g_add_file_to_view_files_list)
 XEN_ARGIFY_1(g_sound_files_in_directory_w, g_sound_files_in_directory)
 XEN_ARGIFY_1(g_sound_loop_info_w, g_sound_loop_info)
 XEN_ARGIFY_2(g_set_sound_loop_info_w, g_set_sound_loop_info)
-/*
-XEN_NARGIFY_0(g_view_files_sort_procedure_w, g_view_files_sort_procedure)
-XEN_NARGIFY_1(g_set_view_files_sort_procedure_w, g_set_view_files_sort_procedure)
-*/
 XEN_NARGIFY_1(g_disk_kspace_w, g_disk_kspace)
 XEN_ARGIFY_1(g_open_file_dialog_w, g_open_file_dialog)
 XEN_ARGIFY_1(g_mix_file_dialog_w, g_mix_file_dialog)
@@ -2966,6 +3018,14 @@ XEN_NARGIFY_1(g_view_files_selected_files_w, g_view_files_selected_files)
 XEN_NARGIFY_1(g_view_files_files_w, g_view_files_files)
 XEN_NARGIFY_2(g_view_files_set_selected_files_w, g_view_files_set_selected_files)
 XEN_NARGIFY_2(g_view_files_set_files_w, g_view_files_set_files)
+XEN_NARGIFY_0(g_file_filters_w, g_file_filters)
+XEN_NARGIFY_1(g_set_file_filters_w, g_set_file_filters)
+XEN_NARGIFY_1(g_delete_file_filter_w, g_delete_file_filter)
+XEN_NARGIFY_2(g_add_file_filter_w, g_add_file_filter)
+XEN_NARGIFY_0(g_file_sorters_w, g_file_sorters)
+XEN_NARGIFY_1(g_set_file_sorters_w, g_set_file_sorters)
+XEN_NARGIFY_1(g_delete_file_sorter_w, g_delete_file_sorter)
+XEN_NARGIFY_2(g_add_file_sorter_w, g_add_file_sorter)
 #else
 #define g_view_files_sort_w g_view_files_sort
 #define g_set_view_files_sort_w g_set_view_files_sort
@@ -2979,10 +3039,6 @@ XEN_NARGIFY_2(g_view_files_set_files_w, g_view_files_set_files)
 #define g_sound_files_in_directory_w g_sound_files_in_directory
 #define g_sound_loop_info_w g_sound_loop_info
 #define g_set_sound_loop_info_w g_set_sound_loop_info
-/*
-#define g_view_files_sort_procedure_w g_view_files_sort_procedure
-#define g_set_view_files_sort_procedure_w g_set_view_files_sort_procedure
-*/
 #define g_disk_kspace_w g_disk_kspace
 #define g_open_file_dialog_w g_open_file_dialog
 #define g_mix_file_dialog_w g_mix_file_dialog
@@ -3002,6 +3058,14 @@ XEN_NARGIFY_2(g_view_files_set_files_w, g_view_files_set_files)
 #define g_view_files_files_w g_view_files_files
 #define g_view_files_set_selected_files_w g_view_files_set_selected_files
 #define g_view_files_set_files_w g_view_files_set_files
+#define g_file_filters_w g_file_filters
+#define g_set_file_filters_w g_set_file_filters
+#define g_delete_file_filter_w g_delete_file_filter
+#define g_add_file_filter_w g_add_file_filter
+#define g_file_sorters_w g_file_sorters
+#define g_set_file_sorters_w g_set_file_sorters
+#define g_delete_file_sorter_w g_delete_file_sorter
+#define g_add_file_sorter_w g_add_file_sorter
 #endif
 
 void g_init_file(void)
@@ -3099,8 +3163,20 @@ the newly updated sound may have a different index."
 files list of the View Files dialog.  If it returns #t, the default action, opening the file, is omitted."
 
   view_files_select_hook = XEN_DEFINE_HOOK(S_view_files_select_hook, 1, H_view_files_select_hook); /* arg = filename */
-  /*
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_view_files_sort_procedure, g_view_files_sort_procedure_w, H_view_files_sort_procedure,
-                                   S_setB S_view_files_sort_procedure, g_set_view_files_sort_procedure_w,  0, 0, 1, 0);
-  */
+
+  ss->file_filters = XEN_EMPTY_LIST;
+  ss->file_sorters = XEN_EMPTY_LIST;
+  XEN_PROTECT_FROM_GC(ss->file_filters);
+  XEN_PROTECT_FROM_GC(ss->file_sorters);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_file_filters, g_file_filters_w, H_file_filters,
+				   S_setB S_file_filters, g_set_file_filters_w,  0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE(S_add_file_filter, g_add_file_filter_w, 2, 0, 0, H_add_file_filter);
+  XEN_DEFINE_PROCEDURE(S_delete_file_filter, g_delete_file_filter_w, 1, 0, 0, H_delete_file_filter);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_file_sorters, g_file_sorters_w, H_file_sorters,
+				   S_setB S_file_sorters, g_set_file_sorters_w,  0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE(S_add_file_sorter, g_add_file_sorter_w, 2, 0, 0, H_add_file_sorter);
+  XEN_DEFINE_PROCEDURE(S_delete_file_sorter, g_delete_file_sorter_w, 1, 0, 0, H_delete_file_sorter);
+
 }
