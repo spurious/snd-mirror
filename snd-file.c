@@ -2938,51 +2938,179 @@ bool view_files_run_select_hook(const char *selected_file)
  * TODO: doc/test/implement add|delete|-|file-|filters|sorters
  */
 
+/* -------- file-filters and file-sorters -------- */
+
+#define INITIAL_FILE_FILTERS_SIZE 4
+#define INITIAL_FILE_SORTERS_SIZE 4
+
+static XEN g_vector_to_list(XEN vect)
+{
+  int i, len;
+  XEN lst = XEN_EMPTY_LIST;
+  len = XEN_VECTOR_LENGTH(vect);
+  for (i = len - 1; i >= 0; i--)
+    {
+      XEN ref;
+      ref = XEN_VECTOR_REF(vect, i);
+      if (XEN_PAIR_P(ref))
+	lst = XEN_CONS(ref, lst);
+    }
+  return(lst);
+}
+
+static XEN g_expand_vector(XEN vector, int new_size)
+{
+  int i, len;
+  XEN new_vect;
+  len = XEN_VECTOR_LENGTH(vector);
+  new_vect = XEN_MAKE_VECTOR(new_size, XEN_FALSE);
+  XEN_PROTECT_FROM_GC(new_vect);
+  for (i = 0; i < len; i++)
+    {
+      XEN_VECTOR_SET(new_vect, i, XEN_VECTOR_REF(vector, i));
+      XEN_VECTOR_SET(vector, i, XEN_FALSE);
+    }
+#if HAVE_RUBY
+  XEN_UNPROTECT_FROM_GC(vector);
+#endif
+  return(new_vect);
+}
+
 static XEN g_file_filters(void)
 {
   #define H_file_filters "(" S_file_filters ") -> list of current user-defined file filters"
-  return(ss->file_filters);
+  return(g_vector_to_list(ss->file_filters));
 }
 
 static XEN g_set_file_filters(XEN new_list)
 {
-  return(ss->file_filters);
+  int i, len;
+  XEN_ASSERT_TYPE(XEN_LIST_P(new_list), new_list, XEN_ONLY_ARG, S_setB S_file_filters, "a list of (name proc) pairs"); 
+  len = XEN_VECTOR_LENGTH(ss->file_filters);
+  for (i = 0; i < len; i++)
+    XEN_VECTOR_SET(ss->file_filters, i, XEN_FALSE);
+  len = XEN_LIST_LENGTH(new_list);
+  if (len > ss->file_filters_size)
+    {
+      ss->file_filters_size = len * 2;
+      ss->file_filters = g_expand_vector(ss->file_filters, ss->file_filters_size);
+    }
+  for (i = 0; i < len; i++)
+    XEN_VECTOR_SET(ss->file_filters, i, XEN_LIST_REF(new_list, i)); /* assume each entry is ok */
+  return(g_vector_to_list(ss->file_filters));
 }
 
 static XEN g_add_file_filter(XEN name, XEN proc)
 {
   #define H_add_file_filter "(" S_add_file_filter " name proc) -- add proc with identifier name to file filter list"
-  return(ss->file_filters);
+  int i, len;
+  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_1, S_add_file_filter, "a string");   
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(proc), proc, XEN_ARG_2, S_add_file_filter, "a procedure");   /* TODO arity checks */
+  len = ss->file_filters_size;
+  for (i = 0; i < len; i++)
+    {
+      if (XEN_FALSE_P(XEN_VECTOR_REF(ss->file_filters, i)))
+	{
+	  XEN_VECTOR_SET(ss->file_filters, i, XEN_CONS(name, proc));
+	  return(g_vector_to_list(ss->file_filters));
+	}
+    }
+  ss->file_filters_size = len * 2;
+  ss->file_filters = g_expand_vector(ss->file_filters, ss->file_filters_size);
+  XEN_VECTOR_SET(ss->file_filters, len, XEN_CONS(name, proc));
+  return(g_vector_to_list(ss->file_filters));
 }
 
 static XEN g_delete_file_filter(XEN name)
 {
   #define H_delete_file_filter "(" S_delete_file_filter " name) -- delete proc with identifier name from file filter list"
-  return(ss->file_filters);
+  int i;
+  char *c_name;
+  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ONLY_ARG, S_delete_file_filter, "a file-sorter proc name");   
+  c_name = XEN_TO_C_STRING(name);
+  for (i = 0; i < ss->file_filters_size; i++)
+    {
+      XEN ref;
+      ref = XEN_VECTOR_REF(ss->file_filters, i);
+      if ((XEN_PAIR_P(ref)) &&
+	  (strcmp(XEN_TO_C_STRING(XEN_CAR(ref)), c_name) == 0))
+	XEN_VECTOR_SET(ss->file_filters, i, XEN_FALSE);
+    }
+  return(g_vector_to_list(ss->file_filters));
 }
 
 
 static XEN g_file_sorters(void)
 {
   #define H_file_sorters "(" S_file_sorters ") -> list of current user-defined file sorters"
-  return(ss->file_sorters);
+  return(g_vector_to_list(ss->file_sorters));
 }
+
+void view_files_change_sort_items(void);
 
 static XEN g_set_file_sorters(XEN new_list)
 {
-  return(ss->file_sorters);
+  int i, len;
+  XEN_ASSERT_TYPE(XEN_LIST_P(new_list), new_list, XEN_ONLY_ARG, S_setB S_file_sorters, "a list of (name proc) pairs"); 
+  len = XEN_VECTOR_LENGTH(ss->file_sorters);
+  for (i = 0; i < len; i++)
+    XEN_VECTOR_SET(ss->file_sorters, i, XEN_FALSE);
+  len = XEN_LIST_LENGTH(new_list);
+  if (len > ss->file_sorters_size)
+    {
+      ss->file_sorters_size = len * 2;
+      ss->file_sorters = g_expand_vector(ss->file_sorters, ss->file_sorters_size);
+    }
+  for (i = 0; i < len; i++)
+    XEN_VECTOR_SET(ss->file_sorters, i, XEN_LIST_REF(new_list, i)); /* assume each entry is ok */
+  view_files_reflect_sort_items();
+  return(g_vector_to_list(ss->file_sorters));
 }
 
 static XEN g_add_file_sorter(XEN name, XEN proc)
 {
   #define H_add_file_sorter "(" S_add_file_sorter " name proc) -- add proc with identifier name to file sorter list"
-  return(ss->file_sorters);
+  int i, len;
+  bool happy = false;
+  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_1, S_add_file_sorter, "a string");   
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(proc), proc, XEN_ARG_2, S_add_file_sorter, "a procedure");   /* TODO arity checks */
+  len = ss->file_sorters_size;
+  for (i = 0; i < len; i++)
+    {
+      if (XEN_FALSE_P(XEN_VECTOR_REF(ss->file_sorters, i)))
+	{
+	  XEN_VECTOR_SET(ss->file_sorters, i, XEN_CONS(name, proc));
+	  happy = true;
+	  break;
+	}
+    }
+  if (!happy)
+    {
+      ss->file_sorters_size = len * 2;
+      ss->file_sorters = g_expand_vector(ss->file_sorters, ss->file_sorters_size);
+      XEN_VECTOR_SET(ss->file_sorters, len, XEN_CONS(name, proc));
+    }
+  view_files_reflect_sort_items();
+  return(g_vector_to_list(ss->file_sorters));
 }
 
 static XEN g_delete_file_sorter(XEN name)
 {
   #define H_delete_file_sorter "(" S_delete_file_sorter " name) -- delete proc with identifier name from file sorter list"
-  return(ss->file_sorters);
+  int i;
+  char *c_name;
+  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ONLY_ARG, S_delete_file_sorter, "a file-sorter proc name");   
+  c_name = XEN_TO_C_STRING(name);
+  for (i = 0; i < ss->file_sorters_size; i++)
+    {
+      XEN ref;
+      ref = XEN_VECTOR_REF(ss->file_sorters, i);
+      if ((XEN_PAIR_P(ref)) &&
+	  (strcmp(XEN_TO_C_STRING(XEN_CAR(ref)), c_name) == 0))
+	XEN_VECTOR_SET(ss->file_sorters, i, XEN_FALSE);
+    }
+  view_files_reflect_sort_items();
+  return(g_vector_to_list(ss->file_sorters));
 }
 
 
@@ -3164,8 +3292,14 @@ files list of the View Files dialog.  If it returns #t, the default action, open
 
   view_files_select_hook = XEN_DEFINE_HOOK(S_view_files_select_hook, 1, H_view_files_select_hook); /* arg = filename */
 
-  ss->file_filters = XEN_EMPTY_LIST;
-  ss->file_sorters = XEN_EMPTY_LIST;
+  /* file-filters and file-sorters are lists from user's point of view, but I want to
+   *   make sure they're gc-protected through add/delete/set, and want such code compatible
+   *   with current Ruby xen macros, so I'll use an array internally.
+   */
+  ss->file_filters_size = INITIAL_FILE_FILTERS_SIZE;
+  ss->file_sorters_size = INITIAL_FILE_SORTERS_SIZE;
+  ss->file_filters = XEN_MAKE_VECTOR(ss->file_filters_size, XEN_FALSE);
+  ss->file_sorters = XEN_MAKE_VECTOR(ss->file_sorters_size, XEN_FALSE);
   XEN_PROTECT_FROM_GC(ss->file_filters);
   XEN_PROTECT_FROM_GC(ss->file_sorters);
 

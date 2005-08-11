@@ -3705,7 +3705,6 @@ typedef struct {
   void *vdat;
 } vf_row;
 
-/* TODO: byproc -> list of menu item widgets with associated sort procs */
 /* PERHAPS: how to present filters -- another button alongside sort? -- should sort have margins? */
 
 typedef struct {
@@ -3734,6 +3733,10 @@ typedef struct {
   env *amp_env;
   int open_file_watcher_loc;
   bool error_p;
+  Widget by_name, by_date, by_size, by_entry;
+  Widget *sort_items;
+  int sort_items_size;
+  Widget smenu;
 } view_files_info;
 
 static void view_files_clear_selected_files(view_files_info *vdat);
@@ -3747,6 +3750,7 @@ static void view_files_add_file_or_directory(view_files_info *vdat, const char *
 static int view_files_add_selected_file(view_files_info *vdat, vf_row *r);
 static int view_files_find_row(view_files_info *vdat, const char *name);
 static void view_files_display_list(view_files_info *vdat);
+static void vf_reflect_sort_choice_in_menu(view_files_info *vdat);
 
 
 /* -------- mouse-enter|leave-label hooks (used in View:Files and Region Browser) -------- */
@@ -3928,6 +3932,8 @@ static view_files_info *new_view_files_dialog(void)
       vdat->speed = 1.0;
       vdat->amp_env = default_env(1.0, 1.0);
       vdat->open_file_watcher_loc = add_ss_watcher(SS_FILE_OPEN_WATCHER, vf_open_file_watcher, (void *)vdat);
+      vdat->sort_items_size = 0;
+      vdat->sort_items = NULL;
     }
   /* don't clear at this point! */
   view_files_infos[loc]->currently_selected_files = 0;
@@ -4059,8 +4065,6 @@ char **view_files_set_files(widget_t dialog, char **files, int len)
   view_files_display_list(vdat);
   return(files);
 }
-
-/* TODO: add|delete_file_sorter|filter + file-filters|sorters + add to all file lists */
 
 static void vf_mix_insert_buttons_set_sensitive(view_files_info *vdat, bool sensitive)
 {
@@ -4531,43 +4535,60 @@ static void view_files_sort_list(view_files_info *vdat)
 	    data[i]->vals = vdat->times[i];
 	  qsort((void *)data, vdat->end + 1, sizeof(heapdata *), less_compare);
 	  break;
-#if 0
-	case SORT_BY_PROC:
-	  if (XEN_PROCEDURE_P(ss->view_files_sort_proc))
-	    {
-	      XEN file_list;
-	      int j, gc_loc;
-	      char *name;
-	      file_list = XEN_EMPTY_LIST;
-	      for (i = vdat->end; i >= 0; i--) 
-		file_list = XEN_CONS(C_TO_XEN_STRING(vdat->full_names[i]), file_list);
-	      gc_loc = snd_protect(file_list);
-	      file_list = XEN_COPY_ARG(XEN_CALL_1(ss->view_files_sort_proc, file_list, "view files sort"));
-	      snd_unprotect_at(gc_loc); /* unprotect old version */
-	      gc_loc = snd_protect(file_list); /* protect new */
-	      if (XEN_LIST_P(file_list))
-		{
-		  for (i = 0; (i < len) && (XEN_NOT_NULL_P(file_list)); i++, file_list = XEN_CDR(file_list))
-		    {
-		      name = XEN_TO_C_STRING(XEN_CAR(file_list));
-		      for (j = 0; j < len; j++)
-			if (strcmp(data[j]->a2, name) == 0)
+	default:
+	  {
+	    int sorter_pos;
+	    /* sorter is SORT_BY_PROC + index into file_sorters list */
+	    sorter_pos = vdat->sorter - SORT_BY_PROC;
+	    if ((sorter_pos >= 0) &&
+		(sorter_pos < ss->file_sorters_size))
+	      {
+		XEN proc;
+		proc = XEN_VECTOR_REF(ss->file_sorters, sorter_pos);
+		if (XEN_PAIR_P(proc))
+		  {
+		    XEN file_list;
+		    int j, gc_loc;
+		    char *name;
+		    proc = XEN_CDR(proc);
+		    file_list = XEN_EMPTY_LIST;
+		    for (i = vdat->end; i >= 0; i--) 
+		      file_list = XEN_CONS(C_TO_XEN_STRING(vdat->full_names[i]), file_list);
+		    gc_loc = snd_protect(file_list);
+		    file_list = XEN_COPY_ARG(XEN_CALL_1(proc, file_list, "view files sort"));
+		    snd_unprotect_at(gc_loc);         /* unprotect old version */
+		    gc_loc = snd_protect(file_list);  /* protect new */
+		    if (XEN_LIST_P(file_list))
+		      {
+			for (i = 0; (i < len) && (XEN_NOT_NULL_P(file_list)); i++, file_list = XEN_CDR(file_list))
 			  {
-			    vdat->names[i] = data[j]->a1;
-			    vdat->full_names[i] = data[j]->a2;
-			    vdat->times[i] = data[j]->times;
+			    name = XEN_TO_C_STRING(XEN_CAR(file_list));
+			    for (j = 0; j < len; j++)
+			      if (strcmp(data[j]->a2, name) == 0)
+				{
+				  vdat->names[i] = data[j]->a1;
+				  vdat->full_names[i] = data[j]->a2;
+				  vdat->times[i] = data[j]->times;
+				}
 			  }
-		    }
-		}
-	      snd_unprotect_at(gc_loc);
-	    }
-	  for (i = 0; i < len; i++) FREE(data[i]);
-	  break;
-#endif
+		      }
+		    snd_unprotect_at(gc_loc);
+		  }
+		else
+		  {
+		    /* TODO: error */
+		  }
+	      }
+	    else
+	      {
+		/* TODO: error */
+	      }
+	    for (i = 0; i < len; i++) FREE(data[i]);
+	    break;
+	  }
 	}
-      /*
-      if (vdat->sorter != SORT_BY_PROC)
-      */
+
+      if (vdat->sorter < SORT_BY_PROC)
 	for (i = 0; i < len; i++)
 	  {
 	    vdat->names[i] = data[i]->a1;
@@ -4575,6 +4596,7 @@ static void view_files_sort_list(view_files_info *vdat)
 	    vdat->times[i] = data[i]->times;
 	    FREE(data[i]);
 	  }
+
       FREE(data);
     }
   if (old_names)
@@ -4751,6 +4773,7 @@ static void sort_view_files_by_name(Widget w, XtPointer context, XtPointer info)
 {
   view_files_info *vdat = (view_files_info *)context;
   vdat->sorter = SORT_BY_NAME;
+  vf_reflect_sort_choice_in_menu(vdat);
   view_files_sort_list(vdat); 
   view_files_display_list(vdat);
 }
@@ -4759,6 +4782,7 @@ static void sort_view_files_by_date(Widget w, XtPointer context, XtPointer info)
 {
   view_files_info *vdat = (view_files_info *)context;
   vdat->sorter = SORT_BY_DATE;
+  vf_reflect_sort_choice_in_menu(vdat);
   view_files_sort_list(vdat);
   view_files_display_list(vdat);
 }
@@ -4767,6 +4791,7 @@ static void sort_view_files_by_size(Widget w, XtPointer context, XtPointer info)
 {
   view_files_info *vdat = (view_files_info *)context;
   vdat->sorter = SORT_BY_SIZE;
+  vf_reflect_sort_choice_in_menu(vdat);
   view_files_sort_list(vdat);
   view_files_display_list(vdat);
 }
@@ -4775,19 +4800,21 @@ static void sort_view_files_by_entry_order(Widget w, XtPointer context, XtPointe
 {
   view_files_info *vdat = (view_files_info *)context;
   vdat->sorter = SORT_BY_ENTRY;
+  vf_reflect_sort_choice_in_menu(vdat);
   view_files_sort_list(vdat);
   view_files_display_list(vdat);
 }
 
-#if 0
-static void sort_view_files_by_user_procedure(Widget w, XtPointer context, XtPointer info) 
+static void sort_view_files_by_procedure(Widget w, XtPointer context, XtPointer info) 
 {
   view_files_info *vdat = (view_files_info *)context;
-  set_view_files_sort(SORT_BY_PROC);
+  int index;
+  XtVaGetValues(w, XmNuserData, &index, NULL); /* index is location in list of file-sorters */
+  vdat->sorter = index;
+  vf_reflect_sort_choice_in_menu(vdat);
   view_files_sort_list(vdat);
   view_files_display_list(vdat);
 }
-#endif
 
 static void view_files_add_file_or_directory(view_files_info *vdat, const char *file_or_dir)
 {
@@ -5508,7 +5535,65 @@ static void white_mouse_enter_text_callback(Widget w, XtPointer context, XEvent 
   XtVaSetValues(w, XmNcursorPositionVisible, true, NULL);
 }
 
+static void vf_reflect_sort_choice_in_menu(view_files_info *vdat)
+{
+  int i;
+  set_sensitive(vdat->by_name, vdat->sorter != SORT_BY_NAME);
+  set_sensitive(vdat->by_date, vdat->sorter != SORT_BY_DATE);
+  set_sensitive(vdat->by_size, vdat->sorter != SORT_BY_SIZE);
+  set_sensitive(vdat->by_entry, vdat->sorter != SORT_BY_ENTRY);
+  for (i = 0; i < vdat->sort_items_size; i++)
+    if (XtIsManaged(vdat->sort_items[i]))
+      set_sensitive(vdat->sort_items[i], vdat->sorter != (SORT_BY_PROC + i));
+}
 
+void view_files_reflect_sort_items(void)
+{
+  view_files_info *vdat;
+  int i, j = 0, k;
+  if (view_files_info_size == 0) return;
+  for (i = 0; i < ss->file_sorters_size; i++)
+    {
+      XEN ref;
+      ref = XEN_VECTOR_REF(ss->file_sorters, i);
+      if (XEN_PAIR_P(ref))
+	{
+	  XmString s1;
+	  s1 = XmStringCreate(XEN_TO_C_STRING(XEN_CAR(ref)), XmFONTLIST_DEFAULT_TAG);
+	  for (k = 0; k < view_files_info_size; k++)
+	    if ((view_files_infos[k]) &&
+		(view_files_infos[k]->dialog))
+	      {
+		vdat = view_files_infos[k];
+		XtVaSetValues(vdat->sort_items[j], 
+			      XmNlabelString, s1,
+			      XmNuserData, i + SORT_BY_PROC, /* this is an index into the file_sorters list, not the widget list */
+			      NULL);
+		XtManageChild(vdat->sort_items[j]);
+	      }
+	  j++;
+	  XmStringFree(s1);
+	}
+    }
+
+  for (k = 0; k < view_files_info_size; k++)
+    if ((view_files_infos[k]) &&
+	(view_files_infos[k]->dialog))
+      {
+	vdat = view_files_infos[k];
+	for (i = j; i < vdat->sort_items_size; i++)
+	  XtUnmanageChild(vdat->sort_items[i]);
+	vf_reflect_sort_choice_in_menu(vdat);
+      }
+}
+
+/* (add-file-sorter "duration" 
+		(lambda (lst)
+		  (sort lst 
+			(lambda (a b)
+			  (> (mus-sound-duration a) (mus-sound-duration b))))))
+
+ */
 
 /* -------------------------------------------------------------------------------- */
 
@@ -5521,7 +5606,7 @@ static Widget start_view_files_dialog_1(view_files_info *vdat, bool managed)
       XmString xdismiss, xhelp, titlestr, new_viewer_str, s1, bstr;
       Widget mainform, viewform, vertical_sep, leftform;
       Widget left_title_sep, add_text, add_label, sep1, sep2, sep3, sep4, sep5, sep6, sep7, sort_cascade_menu;
-      Widget bydate, bysize, byname, byentry, plw, rlw, sbar, smenu;
+      Widget plw, rlw, sbar;
       XtCallbackList n1, n2, n3, n4;
       Widget amp_label, speed_label, env_frame;
       Widget bframe, bform;
@@ -6167,11 +6252,11 @@ static Widget start_view_files_dialog_1(view_files_info *vdat, bool managed)
 
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
-      smenu = XmCreatePulldownMenu(sbar, _("sort"), args, n);
+      vdat->smenu = XmCreatePulldownMenu(sbar, _("sort"), args, n);
 
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
-      XtSetArg(args[n], XmNsubMenuId, smenu); n++;
+      XtSetArg(args[n], XmNsubMenuId, vdat->smenu); n++;
       XtSetArg(args[n], XmNshadowThickness, 0); n++;
       XtSetArg(args[n], XmNhighlightThickness, 0); n++;
       XtSetArg(args[n], XmNmarginHeight, 1); n++;
@@ -6179,16 +6264,22 @@ static Widget start_view_files_dialog_1(view_files_info *vdat, bool managed)
       
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
-      byname =  XtCreateManagedWidget(_("name"),  xmPushButtonWidgetClass, smenu, args, n);
-      bydate =  XtCreateManagedWidget(_("date"),  xmPushButtonWidgetClass, smenu, args, n);
-      bysize =  XtCreateManagedWidget(_("size"),  xmPushButtonWidgetClass, smenu, args, n);
-      byentry = XtCreateManagedWidget(_("entry"), xmPushButtonWidgetClass, smenu, args, n);
-#if 0
-      vdat->byproc =  XtCreateManagedWidget(ss->view_files_sort_proc_name,  xmPushButtonWidgetClass, smenu, args, n);
-      /* PERHAPS: proc list here as file-filter */
-      XtSetSensitive(vdat->byproc, XEN_PROCEDURE_P(ss->view_files_sort_proc));
-      /* don't deal with this via a cascading callback -- damned thing segfaults for no ascertainable reason! */
-#endif
+      vdat->by_name =  XtCreateManagedWidget(_("name"),  xmPushButtonWidgetClass, vdat->smenu, args, n);
+      vdat->by_date =  XtCreateManagedWidget(_("date"),  xmPushButtonWidgetClass, vdat->smenu, args, n);
+      vdat->by_size =  XtCreateManagedWidget(_("size"),  xmPushButtonWidgetClass, vdat->smenu, args, n);
+      vdat->by_entry = XtCreateManagedWidget(_("entry"), xmPushButtonWidgetClass, vdat->smenu, args, n);
+
+      /* TODO: sort_items list growth */
+      {
+	/* for now... */
+	int i;
+	vdat->sort_items_size = 4;
+	vdat->sort_items = (Widget *)CALLOC(vdat->sort_items_size, sizeof(Widget));
+	for (i = 0; i < vdat->sort_items_size; i++)
+	  {
+	    vdat->sort_items[i] = XtCreateWidget("unused", xmPushButtonWidgetClass, vdat->smenu, args, n);
+	  }
+      }
 
       XtManageChild(sbar);
 
@@ -6213,13 +6304,16 @@ static Widget start_view_files_dialog_1(view_files_info *vdat, bool managed)
 
       if (managed) view_files_display_list(vdat);
 
-      XtAddCallback(byname,       XmNactivateCallback, sort_view_files_by_name,           (XtPointer)vdat);
-      XtAddCallback(bydate,       XmNactivateCallback, sort_view_files_by_date,           (XtPointer)vdat);
-      XtAddCallback(bysize,       XmNactivateCallback, sort_view_files_by_size,           (XtPointer)vdat);
-      XtAddCallback(byentry,      XmNactivateCallback, sort_view_files_by_entry_order,    (XtPointer)vdat);
-#if 0
-      XtAddCallback(vdat->byproc, XmNactivateCallback, sort_view_files_by_user_procedure, (XtPointer)vdat);
-#endif
+      XtAddCallback(vdat->by_name,     XmNactivateCallback, sort_view_files_by_name,        (XtPointer)vdat);
+      XtAddCallback(vdat->by_date,     XmNactivateCallback, sort_view_files_by_date,        (XtPointer)vdat);
+      XtAddCallback(vdat->by_size,     XmNactivateCallback, sort_view_files_by_size,        (XtPointer)vdat);
+      XtAddCallback(vdat->by_entry,    XmNactivateCallback, sort_view_files_by_entry_order, (XtPointer)vdat);
+      {
+	int i;
+	for (i = 0; i < vdat->sort_items_size; i++)
+	  XtAddCallback(vdat->sort_items[i], XmNactivateCallback, sort_view_files_by_procedure, (XtPointer)vdat);
+      }
+      /* XtAddCallback(sort_cascade_menu, XmNcascadingCallback, vf_display_sort_items, (XtPointer)vdat); -- segfaults */
 
       if (!(ss->using_schemes)) 
 	map_over_children(vdat->file_list, set_main_color_of_widget, NULL);
@@ -6260,7 +6354,10 @@ static Widget start_view_files_dialog_1(view_files_info *vdat, bool managed)
 	}
     }
   if (managed)
-    vf_amp_env_resize(vdat->env_drawer, (XtPointer)vdat, NULL);
+    {
+      vf_amp_env_resize(vdat->env_drawer, (XtPointer)vdat, NULL);
+      view_files_reflect_sort_items();      
+    }
   return(vdat->dialog);
 }
 

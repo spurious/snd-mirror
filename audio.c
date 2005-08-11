@@ -9571,7 +9571,7 @@ int mus_audio_open_output(int dev, int srate, int chans, int format, int size)
   int line;
   audio_info_t a_info;
 
-  line = open("/dev/sound", O_WRONLY | O_NDELAY); /* /dev/audio assume mono 8-bit mulaw */
+  line = open("/dev/sound", O_WRONLY | O_NDELAY); /* /dev/audio assumes mono 8-bit mulaw */
   if (line == -1)
     {
       if (errno == EBUSY) 
@@ -9620,124 +9620,195 @@ int mus_audio_close(int line)
   ioctl(devAudio, AUDIO_SETINFO, &a_info);
   */
 
-int mus_audio_open_input(int dev, int srate, int chans, int format, int size) {return(MUS_ERROR);}
+int mus_audio_open_input(int dev, int srate, int chans, int format, int size) 
+{
+  return(MUS_ERROR);
+}
 
-#if 0
-#define	AUDIO_ENCODING_NONE		0 /* no encoding assigned */
-#define	AUDIO_ENCODING_ULAW		1 /* ITU G.711 mu-law */
-#define	AUDIO_ENCODING_ALAW		2 /* ITU G.711 A-law */
-#define	AUDIO_ENCODING_PCM16		3 /* signed linear PCM, obsolete */
-#define AUDIO_ENCODING_LINEAR		AUDIO_ENCODING_PCM16 /* SunOS compat */
-#define	AUDIO_ENCODING_PCM8		4 /* unsigned linear PCM, obsolete */
-#define AUDIO_ENCODING_LINEAR8		AUDIO_ENCODING_PCM8 /* SunOS compat */
-#define	AUDIO_ENCODING_ADPCM		5 /* adaptive differential PCM */
-#define AUDIO_ENCODING_SLINEAR_LE	6
-#define AUDIO_ENCODING_SLINEAR_BE	7
-#define AUDIO_ENCODING_ULINEAR_LE	8
-#define AUDIO_ENCODING_ULINEAR_BE	9
-#define AUDIO_ENCODING_SLINEAR		10
-#define AUDIO_ENCODING_ULINEAR		11
-#define AUDIO_ENCODING_MPEG_L1_STREAM	12
-#define AUDIO_ENCODING_MPEG_L1_PACKETS	13
-#define AUDIO_ENCODING_MPEG_L1_SYSTEM	14
-#define AUDIO_ENCODING_MPEG_L2_STREAM	15
-#define AUDIO_ENCODING_MPEG_L2_PACKETS	16
-#define AUDIO_ENCODING_MPEG_L2_SYSTEM	17
-#endif
+static int bsd_format_to_sndlib(int encoding)
+{
+  switch (encoding)
+    {
+    case AUDIO_ENCODING_ULAW:       return(MUS_MULAW);   break;
+    case AUDIO_ENCODING_ALAW:       return(MUS_ALAW);    break;
+    case AUDIO_ENCODING_LINEAR:     return(MUS_BSHORT);  break; /* "sun compatible" so probably big-endian? */
+    case AUDIO_ENCODING_SLINEAR:
+    case AUDIO_ENCODING_LINEAR8:    return(MUS_BYTE);    break;
+    case AUDIO_ENCODING_SLINEAR_LE: return(MUS_LSHORT);  break;
+    case AUDIO_ENCODING_SLINEAR_BE: return(MUS_BSHORT);  break;
+    case AUDIO_ENCODING_ULINEAR_LE: return(MUS_ULSHORT); break;
+    case AUDIO_ENCODING_ULINEAR_BE: return(MUS_UBSHORT); break;
+    case AUDIO_ENCODING_ULINEAR:    return(MUS_UBYTE);   break;
+    case AUDIO_ENCODING_NONE:
+    case AUDIO_ENCODING_ADPCM: 
+    default:                        return(MUS_UNKNOWN); break;
+    }
+  return(MUS_UNKNOWN);
+}
 
 static void describe_audio_state_1(void) 
 {
   audio_device_t dev;
-  int i=0, val;
-
+  int i = 0, val, err = 0;
   int line;
+  float amp;
   audio_info_t a_info;
   audio_encoding_t e_info;
-  mixer_ctrl_t mx;
-  mixer_devinfo_t mdev;
 
+  pprint("NetBSD ");
   line = open("/dev/sound", O_WRONLY | O_NDELAY);
   if (line == -1)
     return;
 
-  pprint("NetBSD");
-  fprintf(stderr,"/dev/sound:\n");
+  pprint("/dev/sound:\n");
+  err = ioctl(line, AUDIO_GETDEV, &dev);
+  if (err == 0)
+    {
+      mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, "%s: version: %s (%s)", dev.name, dev.version, dev.config);
+      pprint(audio_strbuf);
+    }
 
-  val = ioctl(line, AUDIO_GETDEV, &dev);
-  fprintf(stderr, "%d, name: %s, version: %s, config: %s\n",
-	  val, dev.name, dev.version, dev.config);
-  
+  err = ioctl(line, AUDIO_GETPROPS, &val);
+  if (err == 0)
+    {
+      if (val & AUDIO_PROP_FULLDUPLEX) 
+	pprint(" full-duplex"); 
+      else pprint(" half-duplex");
+    }
+  pprint("\n");
+
+  err = ioctl(line, AUDIO_GETINFO, &a_info);
+  if (err == 0)
+    {
+      mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, "  play: srate: %d, chans: %d, format: %s (%d bits), ",
+		   a_info.play.sample_rate, 
+		   a_info.play.channels, 
+		   mus_data_format_short_name(bsd_format_to_sndlib(a_info.play.encoding)), 
+		   a_info.play.precision);
+      pprint(audio_strbuf);
+
+      amp = (float)(a_info.play.gain - AUDIO_MIN_GAIN) / (float)(AUDIO_MAX_GAIN - AUDIO_MIN_GAIN);
+      mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, "volume: %.3f %.3f (gain: %d, balance: %d)\n",
+		   amp * (1.0 - ((float)(a_info.play.balance) / (float)(2 * AUDIO_MID_BALANCE))),
+		   amp * ((float)(a_info.play.balance) / (float)(2 * AUDIO_MID_BALANCE)),
+		   a_info.play.gain, a_info.play.balance);
+      pprint(audio_strbuf);
+
+      mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, "  record: srate: %d, chans: %d, format: %s (%d bits), ",
+		   a_info.record.sample_rate, 
+		   a_info.record.channels, 
+		   mus_data_format_short_name(bsd_format_to_sndlib(a_info.record.encoding)), 
+		   a_info.record.precision);
+      pprint(audio_strbuf);
+
+      amp = (float)(a_info.record.gain - AUDIO_MIN_GAIN) / (float)(AUDIO_MAX_GAIN - AUDIO_MIN_GAIN);
+      mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, "volume: %.3f %.3f (gain: %d, balance: %d)\n",
+		   amp * (1.0 - ((float)(a_info.record.balance) / (float)(2 * AUDIO_MID_BALANCE))),
+		   amp * ((float)(a_info.record.balance) / (float)(2 * AUDIO_MID_BALANCE)),
+		   a_info.record.gain, a_info.record.balance);
+      pprint(audio_strbuf);
+    }
+
+  mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, "  available encodings:\n");
+  pprint(audio_strbuf);
+
   for (i = 0; ; i++)
     {
+
       e_info.index = i;
-      val = ioctl(line, AUDIO_GETENC, &e_info);
-      if (val != 0) break;
-      fprintf(stderr, "%d: %s, encoding: %d, precision: %d, flags: %d\n",
-	      i, e_info.name, e_info.encoding, e_info.precision, e_info.flags);
+      err = ioctl(line, AUDIO_GETENC, &e_info);
+      if (err != 0) break;
+
+
+      mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, "    %s (%s, bits: %d)\n",
+		   mus_data_format_short_name(bsd_format_to_sndlib(e_info.encoding)),
+		   e_info.name, 
+		   e_info.precision);
+      pprint(audio_strbuf);
     }
-      fprintf(stderr,"audio_encoding_ulaw: %d, audio_encoding_alaw: %d, audio_encoding_slinear: %d\naudio_encoding_ulinear: %d, audio_encoding_adpcm: %d, audio_encoding_slinear_le: %d\naudio_encoding_slinear_be: %d, audio_encoding_ulinear_le: %d, audio_encoding_ulinear_be: %d\n",
-	      AUDIO_ENCODING_ULAW,
-	      AUDIO_ENCODING_ALAW,
-	      AUDIO_ENCODING_SLINEAR,
-	      AUDIO_ENCODING_ULINEAR,
-	      AUDIO_ENCODING_ADPCM,
-	      AUDIO_ENCODING_SLINEAR_LE,
-	      AUDIO_ENCODING_SLINEAR_BE,
-	      AUDIO_ENCODING_ULINEAR_LE,
-	      AUDIO_ENCODING_ULINEAR_BE);
 
-  ioctl(line, AUDIO_GETPROPS, &val);
-  fprintf(stderr, "full: %d, mmap: %d, rw: %d\n",
-	  val & AUDIO_PROP_FULLDUPLEX,
-	  val & AUDIO_PROP_MMAP,
-	  val & AUDIO_PROP_INDEPENDENT);
-
-  val = ioctl(line, AUDIO_GETINFO, &a_info);
-  fprintf(stderr, "play: srate: %d, chans: %d, precision: %d, encoding: %d, gain: %d (%d:%d), balance: %d (%d:%d ->%d), port:%x (%d %d %d: %x)\n",
-	  a_info.play.sample_rate, a_info.play.channels, a_info.play.precision, a_info.play.encoding, a_info.play.gain,
-	  AUDIO_MIN_GAIN, AUDIO_MAX_GAIN, a_info.play.balance, AUDIO_LEFT_BALANCE, AUDIO_RIGHT_BALANCE, AUDIO_MID_BALANCE,
-	  a_info.play.port, AUDIO_SPEAKER, AUDIO_HEADPHONE, AUDIO_LINE_OUT, a_info.play.avail_ports);
-  fprintf(stderr, "record: srate: %d, chans: %d, precision: %d, encoding: %d, gain: %d, balance: %d, port: %x (%d %d %d: %x)\n",
-	  a_info.record.sample_rate, a_info.record.channels, a_info.record.precision, a_info.record.encoding, 
-	  a_info.record.gain, a_info.record.balance, a_info.record.port, AUDIO_MICROPHONE, AUDIO_LINE_IN, AUDIO_CD,
-	  a_info.record.avail_ports);
   close(line);
 
-  /* input: AUDIO_INTERNAL_CD_IN */
-
+#if 0
+  /* I don't see anything useful in all this mixer data, so I'll omit it */
   fprintf(stderr,"/dev/mixer:\n");
   line = open("/dev/mixer", O_RDONLY | O_NDELAY);
   if (line == -1)
     return;
-
   val = ioctl(line, AUDIO_GETDEV, &dev);
-  fprintf(stderr, "%d, name: %s, version: %s, config: %s\n",
+  fprintf(stderr, "\n%d, name: %s, version: %s, config: %s\n",
 	  val, dev.name, dev.version, dev.config);
-  
   for (i = 0; ; i++)
     {
       mdev.index = i;
       val = ioctl(line, AUDIO_MIXER_DEVINFO, &mdev);
       if (val != 0) break;
-      
+      fprintf(stderr,"%d: name: %s ", i, mdev.label.name);
+      fprintf(stderr,"class: %d, type: %d, units: %s, chans: %d, delta: %d\n", 
+	      mdev.mixer_class, mdev.type, mdev.un.v.units.name, mdev.un.v.num_channels, mdev.un.v.delta);
+      mx.dev = i;
+      ioctl(line, AUDIO_MIXER_READ, &mx);
+      switch (mx.type)
+	{
+	case AUDIO_MIXER_CLASS:
+	  fprintf(stderr, "mixer read: class type?\n"); 
+	  break;
+	case AUDIO_MIXER_ENUM:
+	  fprintf(stderr, "mixer read: enum: %d\n", mx.un.ord);
+	  break;
+	case AUDIO_MIXER_SET:
+	case AUDIO_MIXER_VALUE:
+	  {
+	    int j;
+	    ml = mx.un.value;
+	    fprintf(stderr, "mixer read: level: %d chans [", ml.num_channels);
+	    for (j = 0; j < ml.num_channels; j++)
+	      fprintf(stderr, "%d ", (int)(ml.level[j]));
+	    fprintf(stderr, "]\n");
+	  }
+	  break;
+	default:
+	  fprintf(stderr, "mixer read: unknown type? %d\n", mx.type); 
+	  break;
+	}
     }
-  
-#if 0
-typedef struct audio_mixer_name {
-	char name[MAX_AUDIO_DEV_LEN];
-	int msg_id;
-} audio_mixer_name_t;
 #endif
-
 }
 
-int mus_audio_read(int line, char *buf, int bytes) {return(MUS_ERROR);}
-int mus_audio_mixer_read(int dev, int field, int chan, float *val) {return(MUS_ERROR);}
-int mus_audio_mixer_write(int dev, int field, int chan, float *val) {return(MUS_ERROR);}
-int mus_audio_initialize(void) {return(MUS_ERROR);}
-int mus_audio_systems(void) {return(1);}
-char *mus_audio_system_name(int system) {return("NetBSD");}
-char *mus_audio_moniker(void) {return("NetBSD audio");}
+int mus_audio_read(int line, char *buf, int bytes) 
+{
+  return(MUS_ERROR);
+}
+
+int mus_audio_mixer_read(int dev, int field, int chan, float *val) 
+{
+  return(MUS_ERROR);
+}
+
+int mus_audio_mixer_write(int dev, int field, int chan, float *val) 
+{
+  return(MUS_ERROR);
+}
+
+int mus_audio_initialize(void) 
+{
+  return(MUS_NO_ERROR);
+}
+
+int mus_audio_systems(void) 
+{
+  return(1);
+}
+
+char *mus_audio_system_name(int system) 
+{
+  return("NetBSD");
+}
+
+char *mus_audio_moniker(void) 
+{
+  return("NetBSD audio");
+}
 
 #endif
 

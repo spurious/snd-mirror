@@ -383,6 +383,7 @@ typedef struct snd_state {
   char *search_expr, *startup_title, *startup_errors;
   struct ptree *search_tree;
   XEN search_proc;
+  int file_sorters_size, file_filters_size;
   XEN file_sorters, file_filters;
   int catch_exists, file_sorters_loc, file_filters_loc, search_proc_loc, local_errno, local_open_errno;
 #if (!USE_GTK)

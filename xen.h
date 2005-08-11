@@ -266,10 +266,10 @@
 
 /* ---- vectors ---- */
 #if HAVE_SCM_IS_SIMPLE_VECTOR
-  #define XEN_VECTOR_P(Arg)              scm_is_simple_vector(Arg)
-  #define XEN_VECTOR_LENGTH(Arg)         SCM_SIMPLE_VECTOR_LENGTH(Arg)
-  #define XEN_VECTOR_REF(Vect, Num)      SCM_SIMPLE_VECTOR_REF(Vect, Num)
-  #define XEN_VECTOR_SET(Vect, Num, Val) SCM_SIMPLE_VECTOR_SET(Vect, Num, Val)
+  #define XEN_VECTOR_P(Arg)               scm_is_simple_vector(Arg)
+  #define XEN_VECTOR_LENGTH(Arg)          SCM_SIMPLE_VECTOR_LENGTH(Arg)
+  #define XEN_VECTOR_REF(Vect, Num)       SCM_SIMPLE_VECTOR_REF(Vect, Num)
+  #define XEN_VECTOR_SET(Vect, Num, Val)  SCM_SIMPLE_VECTOR_SET(Vect, Num, Val)
 #else
   #if HAVE_SCM_IS_VECTOR
     #define XEN_VECTOR_P(Arg)              scm_is_vector(Arg)

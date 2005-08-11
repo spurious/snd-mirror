@@ -4120,7 +4120,7 @@ void add_file_to_default_view_files_dialog(const char *filename)
   FREE(full_filename);
 }
 
-
+void view_files_reflect_sort_items(void) {}
 
 
 void g_init_gxfile(void)

@@ -262,6 +262,7 @@ char **view_files_selected_files(widget_t dialog, int *len) {return(NULL);}
 char **view_files_files(widget_t dialog, int *len) {return(NULL);}
 char **view_files_set_selected_files(widget_t dialog, char **files, int len) {return(NULL);}
 char **view_files_set_files(widget_t dialog, char **files, int len) {return(NULL);}
+void view_files_reflect_sort_items(void) {}
 
 
 void auto_update_restart(void) {}
