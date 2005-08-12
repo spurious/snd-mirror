@@ -625,7 +625,7 @@ bool call_ss_watchers(ss_watcher_t type, ss_watcher_reason_t reason);
 void save_options(FILE *fd);
 void open_save_sound_block(snd_info *sp, FILE *fd, bool with_nth);
 void close_save_sound_block(FILE *fd);
-int snd_exit_cleanly(bool force_exit);
+bool snd_exit_cleanly(bool force_exit);
 void sound_not_current(snd_info *sp, void *dat);
 void set_init_filename(const char *filename);
 FILE *open_snd_init_file (void);

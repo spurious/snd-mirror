@@ -20,7 +20,7 @@ static void file_save_callback(GtkWidget *w, gpointer info) {if (any_selected_so
 static void file_update_callback(GtkWidget *w, gpointer info) {update_file_from_menu();}
 static void file_save_as_callback(GtkWidget *w, gpointer info) {make_sound_save_as_dialog(true);}
 static void file_revert_callback(GtkWidget *w, gpointer info) {revert_file_from_menu();}
-static void file_exit_callback(GtkWidget *w, gpointer info) {if (snd_exit_cleanly(false)) snd_exit(1);}
+static void file_exit_callback(GtkWidget *w, gpointer info) {if (snd_exit_cleanly(EXIT_NOT_FORCED)) snd_exit(1);}
 static void file_mix_callback_1(GtkWidget *w, gpointer info) {make_mix_file_dialog(true);}
 static void file_insert_callback_1(GtkWidget *w, gpointer info) {make_insert_file_dialog(true);}
 static void file_print_callback_1(GtkWidget *w, gpointer info) {file_print_callback(w, info);}

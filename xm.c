@@ -21687,6 +21687,7 @@ static XEN gxm_selected_item_count(XEN ptr)
   if (XEN_XmContainerSelectCallbackStruct_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XmContainerSelectCallbackStruct(ptr))->selected_item_count)));
   if (XEN_XmListCallbackStruct_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XmListCallbackStruct(ptr))->selected_item_count)));
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "selected_item_count", "XmListCallbackStruct");
+  return(XEN_FALSE);
 }
 
 static XEN gxm_selected_items(XEN ptr)
@@ -21820,6 +21821,7 @@ static XEN gxm_transfer_id(XEN ptr)
   if (XEN_XmSelectionCallbackStruct_P(ptr)) return(C_TO_XEN_ULONG(((XEN_TO_C_XmSelectionCallbackStruct(ptr))->transfer_id)));
   if (XEN_XmDestinationCallbackStruct_P(ptr)) return(C_TO_XEN_ULONG(((XEN_TO_C_XmDestinationCallbackStruct(ptr))->transfer_id)));
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "transfer_id", "a struct with a transfer_id field");
+  return(XEN_FALSE);
 }
 
 static XEN gxm_length(XEN ptr)

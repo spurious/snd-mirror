@@ -11,7 +11,7 @@ static void remove_temp_files(chan_info *cp)
 static XEN exit_hook;
 static XEN before_exit_hook;
 
-int snd_exit_cleanly(bool force_exit)
+bool snd_exit_cleanly(bool force_exit)
 {  
   XEN res = XEN_FALSE;
   ss->exiting = true; /* if segfault during exit code, don't try to restart at event loop! */
@@ -21,7 +21,7 @@ int snd_exit_cleanly(bool force_exit)
     res = run_or_hook(before_exit_hook, 
 		      XEN_EMPTY_LIST,
 		      S_before_exit_hook);
-  if ((XEN_TRUE_P(res)) && (!force_exit)) return(0);
+  if ((XEN_TRUE_P(res)) && (!force_exit)) return(false);
 
   if (XEN_HOOKED(exit_hook))
     run_hook(exit_hook, 
@@ -43,7 +43,7 @@ int snd_exit_cleanly(bool force_exit)
 #if DEBUGGING
   mem_report();
 #endif
-  return(1);
+  return(true);
 }
 
 void sound_not_current(snd_info *sp, void *ignore)
@@ -1293,7 +1293,7 @@ default " S_save_state " filename is " DEFAULT_SAVE_STATE_FILE ". It can be chan
 static XEN g_exit(XEN val) 
 {
   #define H_exit "(" S_exit "): exit Snd"
-  if (snd_exit_cleanly(false))
+  if (snd_exit_cleanly(EXIT_NOT_FORCED))
     snd_exit(XEN_TO_C_INT_OR_ELSE(val, 1)); 
   return(XEN_FALSE);
 }

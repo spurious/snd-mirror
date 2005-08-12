@@ -1377,7 +1377,7 @@ If 'check' is false, the hooks are removed.")
                             short_file_name(snd), eds[0], chn),
                      lambda do |snd|
                        revert_sound(snd)
-                       close_sound(snd)
+#                      close_sound(snd)
                        exiting and exit(0)
                      end,
                      lambda do |snd| false end, snd)

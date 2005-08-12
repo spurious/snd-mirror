@@ -206,6 +206,8 @@ enum {SORT_BY_NAME, SORT_BY_DATE, SORT_BY_SIZE, SORT_BY_ENTRY, SORT_BY_PROC};
 #define FILE_READ_WRITE false
 #define FILE_SELECTED true
 #define FILE_NOT_SELECTED false
+#define EXIT_FORCED true
+#define EXIT_NOT_FORCED false
 
 #if HAVE_RUBY
   #define TO_PROC_NAME(Str) xen_scheme_procedure_to_ruby(Str)

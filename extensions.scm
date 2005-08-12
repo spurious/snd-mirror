@@ -377,7 +377,7 @@ If 'check' is #f, the hooks are removed."
 					   ""))
 			       (lambda (snd)
 				 (revert-sound ind)
-				 (close-sound ind)
+;				 (close-sound ind)
 				 (if exiting (exit)))
 			       (lambda (snd)
 				 #f)

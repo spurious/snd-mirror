@@ -18,7 +18,7 @@ static void file_save_callback(Widget w, XtPointer info, XtPointer context) {if 
 static void file_update_callback(Widget w, XtPointer info, XtPointer context) {update_file_from_menu();}
 static void file_save_as_callback(Widget w, XtPointer info, XtPointer context) {make_sound_save_as_dialog(true);}
 static void file_revert_callback(Widget w, XtPointer info, XtPointer context) {revert_file_from_menu();}
-static void file_exit_callback(Widget w, XtPointer info, XtPointer context) {if (snd_exit_cleanly(false)) snd_exit(1);}
+static void file_exit_callback(Widget w, XtPointer info, XtPointer context) {if (snd_exit_cleanly(EXIT_NOT_FORCED)) snd_exit(1);}
 static void file_mix_callback_1(Widget w, XtPointer info, XtPointer context) {make_mix_file_dialog(true);}
 static void file_insert_callback_1(Widget w, XtPointer info, XtPointer context) {make_insert_file_dialog(true);}
 static void file_print_callback_1(Widget w, XtPointer info, XtPointer context) {file_print_callback(w, info, context);}

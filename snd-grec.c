@@ -661,6 +661,7 @@ static void change_trigger_callback(GtkAdjustment *adj, gpointer context)
 
 static void device_button_callback(GtkWidget *w, gpointer context) 
 {
+  pane_t *p = (pane_t *)context;
   int button;
   bool on;
 #if SGI || SUN
@@ -1388,12 +1389,14 @@ static void make_vu_meters(pane_t *p, int vu_meters,
   FREE(hboxes);
 }
 
+#if (HAVE_OSS || HAVE_ALSA)
 static gboolean spix_expose(GtkWidget *w, GdkEventExpose *ev, gpointer data)
 {
   Wdesc *wd = (Wdesc *)data;
   gdk_draw_drawable(GDK_DRAWABLE(w->window), ss->sgx->basic_gc, device_pix(wd->device), 0, 0, 2, 4, 12, 12);
   return(false);
 }
+#endif
 
 static void make_vertical_gain_sliders(recorder_info *rp, pane_t *p, 
 				       int num_gains, int gain_ctr, int *mixflds, bool input, GtkWidget *gv)

@@ -37,7 +37,6 @@
  *    similarly for the menus -- why doesn't the drag context stuff work?
  *    need same stuff on gtk side -- how do they send multi-names? Qt? etc...
  * TODO: New[Copy?] Viewer button in vf
- * TODO: need c-G play-button off in vf (restored)
  * TODO: in nb.scm, get the info dialog out of the line of sight and unmanage it if view-files is unmanaged
  * TODO: horizontal pane in view-files
  * TODO: report-in-minibuffer extended to go to any dialog
@@ -3736,7 +3735,7 @@ typedef struct {
   Widget by_name, by_date, by_size, by_entry;
   Widget *sort_items;
   int sort_items_size;
-  Widget smenu;
+  Widget smenu, current_play_button;
 } view_files_info;
 
 static void view_files_clear_selected_files(view_files_info *vdat);
@@ -4327,6 +4326,26 @@ static void view_files_select(vf_row *r, bool add_to_selected)
     }
 }
 
+void view_files_unplay(void)
+{
+  int k;
+  for (k = 0; k < view_files_info_size; k++)
+    if ((view_files_infos[k]) &&
+	(view_files_infos[k]->dialog) &&
+	(XtIsManaged(view_files_infos[k]->dialog)))
+      {
+	view_files_info *vdat;
+	vdat = view_files_infos[k];
+	if ((vdat->current_play_button) &&
+	    (XmIsToggleButton(vdat->current_play_button)) &&
+	    (XmToggleButtonGetState(vdat->current_play_button) != XmUNSET))
+	  {
+	    XmToggleButtonSetState(vdat->current_play_button, false, true);
+	    vdat->current_play_button = NULL;
+	  }
+      }
+}
+
 static bool view_files_play(view_files_info *vdat, int pos, bool play)
 {
   static snd_info *play_sp;
@@ -4361,7 +4380,10 @@ static bool view_files_play(view_files_info *vdat, int pos, bool play)
   else
     { /* play toggled off */
       if ((play_sp) && (play_sp->playing)) 
-	stop_playing_sound(play_sp, PLAY_BUTTON_UNSET);
+	{
+	  stop_playing_sound(play_sp, PLAY_BUTTON_UNSET);
+	  vdat->current_play_button = NULL;
+	}
     }
   return(false);
 }
@@ -4620,10 +4642,13 @@ static void view_files_play_callback(Widget w, XtPointer context, XtPointer info
 {
   /* open and play -- close at end or when button off toggled */
   vf_row *r = (vf_row *)context;
+  view_files_info *vdat;
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
   ASSERT_WIDGET_TYPE(XmIsToggleButton(w), w);
-  if (view_files_play((view_files_info *)(r->vdat), r->pos, cb->set))
+  vdat = (view_files_info *)(r->vdat);
+  if (view_files_play(vdat, r->pos, cb->set))
     XmToggleButtonSetState(w, false, false);
+  else vdat->current_play_button = w;
 }
 
 static void view_files_display_list(view_files_info *vdat)

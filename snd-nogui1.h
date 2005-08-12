@@ -86,10 +86,6 @@ void reflect_play_selection_stop(void);
 int menu_widget(int which_menu);
 void set_button_label(int label, const char *str);
 
-int g_add_to_main_menu(char *label, int slot);
-widget_t g_add_to_menu(int which_menu, char *label, int callb, int position);
-int g_remove_from_menu(int which_menu, char *label);
-
 
 
 /* -------- snd-xmain.c -------- */
@@ -280,6 +276,7 @@ char **view_files_files(widget_t dialog, int *len);
 char **view_files_set_selected_files(widget_t dialog, char **files, int len);
 char **view_files_set_files(widget_t dialog, char **files, int len);
 void view_files_reflect_sort_items(void);
+void view_files_unplay(void);
 
 
 /* -------- snd-xenv.c -------- */
@@ -332,7 +329,6 @@ void cleanup_recording (void);
 widget_t snd_record_file(void);
 bool record_dialog_is_active(void);
 void reflect_amp_control_bounds_change_in_recorder(void);
-void recorder_error(char *msg);
 
 
 /* -------- snd-gxutils.c -------- */

@@ -4473,8 +4473,9 @@ static XEN g_src_1(XEN ratio_or_env, XEN base, XEN snd_n, XEN chn_n, XEN edpos, 
       else
 	{
 	  mus_any *egen;
-	  XEN_ASSERT_TYPE((mus_xen_p(ratio_or_env)) && (mus_env_p(egen = XEN_TO_MUS_ANY(ratio_or_env))), 
-			  ratio_or_env, XEN_ARG_1, caller, "a number, list, or env generator");
+	  XEN_ASSERT_TYPE(mus_xen_p(ratio_or_env), ratio_or_env, XEN_ARG_1, caller, "a number, list, or env generator");
+	  egen = XEN_TO_MUS_ANY(ratio_or_env);
+	  XEN_ASSERT_TYPE(mus_env_p(egen), ratio_or_env, XEN_ARG_1, caller, "a number, list, or env generator");
 	  check_src_envelope(mus_env_breakpoints(egen), mus_data(egen), caller);
 	  src_env_or_num(cp, NULL, 
 			 (mus_phase(egen) >= 0.0) ? 1.0 : -1.0,

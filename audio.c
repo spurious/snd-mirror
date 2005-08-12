@@ -4632,6 +4632,8 @@ static void alsa_describe_audio_state_1(void)
  * record case improved after perusal of Snack 1.6/src/jkAudio_sun.c
  */
 
+/* TODO: opteron audio appears to be broken */
+
 /* apparently input other than 8000 is 16-bit, 8000 is (?) mulaw */
 /* apparently Sun-on-Intel reads/writes little-endian */
 

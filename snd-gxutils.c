@@ -7,7 +7,7 @@
   #define MAIN_DISPLAY(a) GDK_DISPLAY()
 #endif
 
-#if (!USE_GTK) || (!MAC_OSX)
+#if (!USE_GTK) && (!MAC_OSX)
 
 #include <X11/Xatom.h>
 
@@ -184,7 +184,7 @@ void g_init_gxutils(void)
 
 #else
 /* gtk+osx = no X window property access, apparently */
-bool send_mozilla(const char *html_viewer, const char *url) {}
+bool send_mozilla(const char *html_viewer, const char *url) {return(false);}
 void g_init_gxutils(void) {}
 #endif
 

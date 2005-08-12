@@ -48,8 +48,8 @@
 #ifndef SND_AS_WIDGET
 static gint window_close(GtkWidget *w, GdkEvent *event, gpointer context)
 {
-  if (snd_exit_cleanly(true))
-    snd_exit(0);
+  if (snd_exit_cleanly(EXIT_FORCED))
+    snd_exit(0); /* TODO: ?? do we actually get to disagree with the window manager? */
   return(false);
 }
 

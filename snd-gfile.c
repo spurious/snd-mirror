@@ -3276,6 +3276,7 @@ char **view_files_set_selected_files(widget_t dialog, char **files, int len) {re
 char **view_files_set_files(widget_t dialog, char **files, int len) {return(NULL);}
 
 
+void view_files_unplay(void) {}
 
 /* ---------------- mouse enter|leave-label ---------------- */
 

@@ -186,7 +186,8 @@ static XtResource resources[] = {
 #ifndef SND_AS_WIDGET
 static void window_close(Widget w, XtPointer context, XtPointer info)
 {
-  snd_exit_cleanly(true);
+  /* this is called from the window manager close event, not (exit) or the File:Exit item */
+  snd_exit_cleanly(EXIT_FORCED);
 }
 #endif
 

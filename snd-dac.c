@@ -565,13 +565,14 @@ void cleanup_dac(void)
   dac_running = false;
 }
 
-static void reflect_play_stop (snd_info *sp) 
+static void reflect_play_stop(snd_info *sp) 
 {
 #if (!USE_NO_GUI)
   set_control_panel_play_button(sp);
 #endif
   set_open_file_play_button(false);
   reflect_play_stop_in_popup_menu();
+  view_files_unplay();
 }
 
 static void free_player(snd_info *sp);
