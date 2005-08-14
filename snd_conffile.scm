@@ -305,9 +305,9 @@
 
 ;; Selection-position and selection-frames doesn't allways work properly.
 (define (c-selection-position)
-  (selection-position (selected-sound)))
+  (selection-position (c-selected-sound)))
 (define (c-selection-frames)
-  (selection-frames (selected-sound)))
+  (selection-frames (c-selected-sound)))
 
 (define* (c-set-selection-position! snd ch val #:optional (dassync (c-sync? snd)))
   (let ((mustredraw #f))
@@ -338,7 +338,7 @@
 
 ;; Like (selection?) but only for the selected sound.
 (define (c-selection?)
-  (selection-member? (selected-sound)))
+  (selection-member? (c-selected-sound)))
 
 
 
@@ -349,9 +349,9 @@
 
 
 (define (c-set-cursor-pos pos)
-  (c-for-each-channel2 (selected-sound)
+  (c-for-each-channel2 (c-selected-sound)
 		       (lambda (ch)
-			 (set! (cursor (selected-sound) ch) (c-integer pos)))))
+			 (set! (cursor (c-selected-sound) ch) (c-integer pos)))))
 
 
 ;; Like (set-cursor-pos pos), but legalize pos and
@@ -653,7 +653,7 @@
 	   (lambda (snd)
 	     (c-put snd 'play (<play> snd))))
 
-(define* (c-p #:optional (snd (selected-sound)))
+(define* (c-p #:optional (snd (c-selected-sound)))
   (c-get snd 'play))
 
 (define* (c-play #:optional samp)
@@ -931,9 +931,9 @@ Does not work.
 	    (prompt-in-minibuffer "mark: "
 				  (lambda (ret)
 				    (if (> (sync) 0)
-					(my-add-mark (cursor) (selected-sound) (1- (channels)) (my-mark-sync-max) ret)
+					(my-add-mark (cursor) (c-selected-sound) (1- (channels)) (my-mark-sync-max) ret)
 					(set! (mark-name (add-mark (cursor))) ret)))
-				  (selected-sound)
+				  (c-selected-sound)
 				  #t)))
 					      
 
@@ -980,7 +980,7 @@ Does not work.
      (marks sndf))
     (string-append str (format #f "  m)~%"))))
 
-(add-hook! output-comment-hook (lambda (str) (marks->string (selected-sound)) #f))
+(add-hook! output-comment-hook (lambda (str) (marks->string (c-selected-sound)) #f))
 (add-hook! after-open-hook (lambda (snd) (eval-header snd) #f))
 
 
@@ -1098,8 +1098,8 @@ Does not work.
   (if (> chans 0)
       (begin
 	(if (eq? color 'black)
-	    (uncolor-samples (selected-sound) (- chans 1))
-	    (color-samples color start end (selected-sound) (- chans 1)))
+	    (uncolor-samples (c-selected-sound) (- chans 1))
+	    (color-samples color start end (c-selected-sound) (- chans 1)))
 	(color-samples-allchans (- chans 1) color start end))))
 
 
@@ -1129,9 +1129,9 @@ Does not work.
 
 (define (c-make-region)
   (if (not (selection-creates-region))
-      (if (> (c-get (selected-sound) 'region-generation 0) 0)
+      (if (> (c-get (c-selected-sound) 'region-generation 0) 0)
 	  (begin
-	    (c-put (selected-sound) 'region-generation 0)
+	    (c-put (c-selected-sound) 'region-generation 0)
 	    (c-report-and-clear "Please wait, making region...")
 	    (make-region)))))
 
@@ -1191,7 +1191,7 @@ Does not work.
 (define c-last-report-value 0.0)
 
 (define (progress-report pct . various) ;name current-channel channels snd)
-  (c-get-bounds (selected-sound) 0
+  (c-get-bounds (c-selected-sound) 0
 		(lambda (minx miny maxx maxy)
 		  (let ((width (- maxx minx)))
 		    (if (> (abs (- pct c-last-report-value)) (/ 1 width))
@@ -1255,7 +1255,7 @@ Does not work.
 		(y #f))
 	   
 	   (lambda-non-cons (string level color framepos force)
-	     (set! sound-widget (c-editor-widget (selected-sound)))
+	     (set! sound-widget (c-editor-widget (c-selected-sound)))
 	     (set! width (- (car (widget-size sound-widget)) fontwidth))
 	     (set! x (min (- width stringlen) (x->position (/ framepos (srate)))))
 	     (set! dim (list-ref lastpainted level))
@@ -1309,7 +1309,7 @@ Does not work.
 			     n)))))
 	   
 	   (lambda-non-cons (dastime)
-	     (set! time (/ (floor (* 10 (/ dastime (srate (selected-sound))))) 10))
+	     (set! time (/ (floor (* 10 (/ dastime (srate (c-selected-sound))))) 10))
 	     (set! minutes (call-non-cons intdiv time 60))
 	     (set! minutes100 (call-non-cons intdiv minutes 100))
 	     (set! minutes10 (call-non-cons intdiv (- minutes (* minutes100 100)) 10))
@@ -1346,9 +1346,9 @@ Does not work.
 
     (lambda-non-cons (dastime force)
       (set! largetimechange (>= (abs (- dastime last-time-showed))
-				(/ (srate (selected-sound)) 5)))
+				(/ (srate (c-selected-sound)) 5)))
       (set! stereocombined (and (= (channels) 2) 
-				(= (channel-style (selected-sound)) channels-combined)))
+				(= (channel-style (c-selected-sound)) channels-combined)))
       (set! wanttoupdate (or force largetimechange))
       (if wanttoupdate
 	  (set! last-time-showed dastime))
@@ -1379,7 +1379,7 @@ Does not work.
   (add-hook! play-hook
 	     (lambda (samples)
 	       (set! samplecount (+ samplecount (* 40 samples)))
-	       (if (> samplecount (srate (selected-sound)))
+	       (if (> samplecount (srate (c-selected-sound)))
 		   (begin
 		     (set! samplecount 0)
 		     (c-show-times (cursor) #f)))
@@ -1419,8 +1419,8 @@ Does not work.
       unique-sync-num)))
 
 #!
-(display-widget-tree (list-ref (sound-widgets (selected-sound)) 2))
-(find-child (list-ref (sound-widgets (selected-sound)) 2) "snd-name-form")
+(display-widget-tree (list-ref (sound-widgets (c-selected-sound)) 2))
+(find-child (list-ref (sound-widgets (c-selected-sound)) 2) "snd-name-form")
 !#
 
 (add-hook! close-hook
@@ -1430,7 +1430,7 @@ Does not work.
 	     #f))
 
 #!
-(checkbutton-remove (c-get-nameform-button (selected-sound) "sync"))
+(checkbutton-remove (c-get-nameform-button (c-selected-sound) "sync"))
 !#
 
 
@@ -1493,7 +1493,7 @@ Does not work.
   (let ((isenving #f))
     (lambda* (snd #:optional (upperval 2) (lowerval 0))
 	     (if (not isenving)
-		 (let* ((snd (selected-sound))
+		 (let* ((snd (c-selected-sound))
 			(nodelines (c-get snd 'nodelines))
 			(doit (lambda (ch)
 				(let* ((nodeline (nodelines ch))
@@ -1512,7 +1512,7 @@ Does not work.
 
 (bind-key (char->integer #\v) 0
 	  (lambda ()
-	    (c-apply-envelope (selected-sound))))
+	    (c-apply-envelope (c-selected-sound))))
 
 (add-hook! close-hook
 	   (lambda (snd)
@@ -1551,7 +1551,7 @@ Does not work.
 #!
 ;; The brutal method:
 (define (fokus-right)
-  (let ((snd (selected-sound)))
+  (let ((snd (c-selected-sound)))
     (if snd
 	(focus-widget (c-editor-widget snd))))
   (in 100 fokus-right))
@@ -1567,7 +1567,7 @@ Does not work.
 	   (lambda (w)
 	     (in 100
 		 (lambda ()
-		   (let ((snd (selected-sound)))
+		   (let ((snd (c-selected-sound)))
 		     (if snd
 			 (focus-widget (c-editor-widget snd))))))))
 
@@ -1679,11 +1679,11 @@ Does not work.
 	(let* ((width (car (widget-size (car (sound-widgets (car current-buffer))))))
 	       (height (cadr (widget-size (car (sound-widgets (car current-buffer)))))))
 
-	  ;;(c-display "saving:" (selected-sound))
-	  (if (selection-member? (selected-sound))
+	  ;;(c-display "saving:" (c-selected-sound))
+	  (if (selection-member? (c-selected-sound))
 	      (begin
-		(c-put (selected-sound) 'selection-position (c-selection-position))
-		(c-put (selected-sound) 'selection-frames (c-selection-frames))))
+		(c-put (c-selected-sound) 'selection-position (c-selection-position))
+		(c-put (c-selected-sound) 'selection-frames (c-selection-frames))))
 
 	  (call-with-current-continuation
 	   (lambda (give-up)
@@ -1705,12 +1705,12 @@ Does not work.
 	     (report-in-minibuffer "")
 	     (open-current-buffer width height)
 	     (set! (selection-member? #t) #f)
-	     (let ((selpos (c-get (selected-sound) 'selection-position)))
-	       ;;(c-display (selected-sound) selpos)
+	     (let ((selpos (c-get (c-selected-sound) 'selection-position)))
+	       ;;(c-display (c-selected-sound) selpos)
 	       (if selpos
 		   (begin
-		     (c-set-selection-position! (selected-sound) 0 selpos #t)
-		     (c-set-selection-frames! (selected-sound) 0 (c-get (selected-sound) 'selection-frames) #t))))))))
+		     (c-set-selection-position! (c-selected-sound) 0 selpos #t)
+		     (c-set-selection-frames! (c-selected-sound) 0 (c-get (c-selected-sound) 'selection-frames) #t))))))))
 
       
       ;;(set! (widget-size (car (sound-widgets (car current-buffer)))) (list 1000 1000) )
@@ -1866,7 +1866,7 @@ Does not work.
       (lambda (filename)
 	(let ((chans (mus-sound-chans filename)))
 	  (if (= 1 chans)
-	      (insert-sound filename (cursor) 0 (selected-sound) (selected-channel))
+	      (insert-sound filename (cursor) 0 (c-selected-sound) (selected-channel))
 	      (insert-sound filename))))
       "Insert file" "." "*" "File will be inserted at cursor location.")))
 !#
@@ -1903,11 +1903,11 @@ Does not work.
 ;; Save all filenames when exiting.
 (define (c-save-all-filenames filename)
   (let ((fd (open-file filename "w")))
-    (if (selected-sound)
+    (if (c-selected-sound)
 	(for-each (lambda (filename)
 		    (write-line filename fd))
 		  (reverse (delete-duplicates (map (lambda (snd) (file-name snd))
-						   (cons (selected-sound) (sounds)))))))
+						   (cons (c-selected-sound) (sounds)))))))
     (close fd)))
   
 (add-hook! exit-hook (lambda args

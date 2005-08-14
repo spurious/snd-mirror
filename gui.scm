@@ -80,6 +80,15 @@
   (list-ref (channel-widgets snd 0) 0))
 
 
+(define (c-selected-sound)
+  (cond ((selected-sound) (selected-sound))
+	((not (null? (sounds)))
+	 (set! (selected-sound) (car (sounds)))
+	 (selected-sound))
+	(else
+	 #f)))
+
+
 ;; Copied from gtk-popup.scm
 (define* (c-g_signal_connect obj name func #:optional data)
   (g_signal_connect_closure_by_id (GPOINTER obj)
@@ -105,14 +114,22 @@
   (> (sync snd) 0))
 
 
-(define (c-for-each-channel snd func)
-  (if (c-sync? snd)
-      (c-for 0 < (chans snd) 1 func)
-      (func (selected-channel snd))))
 
 (define (c-for-each-channel2 snd func)
   (c-for 0 < (chans snd) 1 func))
 
+(define (c-for-each-channel snd func)
+  (if (c-sync? snd)
+      (let ((oh-yes #f))
+	(for-each (lambda (gakk)
+		    (if (= (car gakk) snd)
+			(begin
+			  (set! oh-yes #t)
+			  (func (cadr gakk)))))
+		  (selection-members))
+	(if (not oh-yes)
+	    (c-for-each-channel2 snd func)))
+      (func (selected-channel snd))))
 
 (define (c-get-channel snd y)
   (define (get-channel ch)
@@ -1249,7 +1266,7 @@
 #!
 (c-for 0 < 0.9 0.1
        (lambda (n)
-	 (<editor-nodeline> (selected-sound) 0 n)))
+	 (<editor-nodeline> (c-selected-sound) 0 n)))
 !#
 
 
@@ -1655,8 +1672,8 @@
     (if use-gtk
 	(gtk_widget_hide this->dialog)
 	(XtUnmanageChild this->dialog))
-    (if (selected-sound)
-	(focus-widget (c-editor-widget (selected-sound)))))
+    (if (c-selected-sound)
+	(focus-widget (c-editor-widget (c-selected-sound)))))
 
   (def-method (show)
     (if use-gtk
@@ -1702,8 +1719,8 @@
 					  0 (g_cclosure_new (lambda (w ev data)
 							      (if deletefunc (deletefunc))
 							      (gtk_widget_hide new-dialog)
-							      (if (selected-sound)
-								  (focus-widget (c-editor-widget (selected-sound)))))
+							      (if (c-selected-sound)
+								  (focus-widget (c-editor-widget (c-selected-sound)))))
 							    #f #f) #f))
 	(let ((titlestr (XmStringCreate label XmFONTLIST_DEFAULT_TAG)))
 	  (set! new-dialog
@@ -1717,8 +1734,8 @@
 	  (XtAddCallback new-dialog XmNcancelCallback (lambda (w c i)
 							(if deletefunc (deletefunc))
 							(XtUnmanageChild new-dialog)
-							(if (selected-sound)
-							    (focus-widget (c-editor-widget (selected-sound))))))
+							(if (c-selected-sound)
+							    (focus-widget (c-editor-widget (c-selected-sound))))))
 	  (XmStringFree titlestr)))
     
     
