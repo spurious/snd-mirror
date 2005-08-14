@@ -986,7 +986,6 @@ void save_state(char *save_state_name)
 #if HAVE_SETLOCALE
   locale = copy_string(setlocale(LC_NUMERIC, "C")); /* must use decimal point in floats since Scheme assumes that format */
 #endif
-  save_view_files_dialogs(save_fd);                 /* list of files (View: Files option) */
   save_options(save_fd);                            /* options = user-settable global state variables */
   /* the global settings need to precede possible local settings */
 
@@ -1150,109 +1149,114 @@ int handle_next_startup_arg(int auto_open_ctr, char **auto_open_file_names, bool
 	return(auto_open_ctr + 1);
       else
 	{
-	  if ((strcmp("-p", argname) == 0) ||
-	      (strcmp("-preload", argname) == 0))
-	    {
-	      /* preload sound files in dir (can be ., should be unquoted) */
-	      auto_open_ctr++;
-	      if ((auto_open_ctr >= args) ||
-		  (auto_open_file_names[auto_open_ctr] == NULL))
-		snd_error(_("%s but no directory to add?"), argname);
-	      else add_directory_to_default_view_files_dialog(auto_open_file_names[auto_open_ctr]);
-	    }
+	  if (strcmp("-init", argname) == 0)
+	    return(auto_open_ctr + 2);
 	  else
 	    {
-	      if ((strcmp("-l", argname) == 0) ||
-		  (strcmp("-load", argname) == 0) ||
-		  (strcmp("-b", argname) == 0) ||
-		  (strcmp("-batch", argname) == 0) ||
-		  ((file_extension(argname)) && 
-		   ((strcmp(file_extension(argname), "scm") == 0) ||
-		    (strcmp(file_extension(argname), "cl") == 0) ||
-		    (strcmp(file_extension(argname), "lisp") == 0) ||
-		    (strcmp(file_extension(argname), "rb") == 0))))
+	      if ((strcmp("-p", argname) == 0) ||
+		  (strcmp("-preload", argname) == 0))
 		{
-		  if ((strcmp("-l", argname) == 0) || 
-		      (strcmp("-load", argname) == 0) ||
-		      (strcmp("-b", argname) == 0) || 
-		      (strcmp("-batch", argname) == 0))
-		    auto_open_ctr++;
+		  /* preload sound files in dir (can be ., should be unquoted) */
+		  auto_open_ctr++;
 		  if ((auto_open_ctr >= args) ||
 		      (auto_open_file_names[auto_open_ctr] == NULL))
-		    snd_error(_("%s but no file to load?"), argname);
-		  else 
-		    {
-		      script_arg = auto_open_ctr;
-		      script_argn = args;
-		      script_args = auto_open_file_names;
-		      redirect_everything_to(printout_to_stdout, NULL);
-		      snd_load_file(auto_open_file_names[auto_open_ctr]);
-		      redirect_everything_to(NULL, NULL);
-		      if (script_arg > auto_open_ctr)
-			auto_open_ctr = script_arg;
-		    }
+		    snd_error(_("%s but no directory to add?"), argname);
+		  else view_files_add_directory(NULL, auto_open_file_names[auto_open_ctr]);
 		}
 	      else
 		{
-		  if ((strcmp("-e", argname) == 0) ||
-		      (strcmp("-eval", argname) == 0))
+		  if ((strcmp("-l", argname) == 0) ||
+		      (strcmp("-load", argname) == 0) ||
+		      (strcmp("-b", argname) == 0) ||
+		      (strcmp("-batch", argname) == 0) ||
+		      ((file_extension(argname)) && 
+		       ((strcmp(file_extension(argname), "scm") == 0) ||
+			(strcmp(file_extension(argname), "cl") == 0) ||
+			(strcmp(file_extension(argname), "lisp") == 0) ||
+			(strcmp(file_extension(argname), "rb") == 0))))
 		    {
-		      /* evaluate expression */
-		      auto_open_ctr++;
+		      if ((strcmp("-l", argname) == 0) || 
+			  (strcmp("-load", argname) == 0) ||
+			  (strcmp("-b", argname) == 0) || 
+			  (strcmp("-batch", argname) == 0))
+			auto_open_ctr++;
 		      if ((auto_open_ctr >= args) ||
 			  (auto_open_file_names[auto_open_ctr] == NULL))
-			snd_error(_("%s but no form to evaluate?"), argname);
+			snd_error(_("%s but no file to load?"), argname);
 		      else 
 			{
-			  char *buf;
-			  buf = auto_open_file_names[auto_open_ctr];
+			  script_arg = auto_open_ctr;
+			  script_argn = args;
+			  script_args = auto_open_file_names;
 			  redirect_everything_to(printout_to_stdout, NULL);
-			  snd_report_result(snd_catch_any(eval_str_wrapper, (void *)buf, buf), buf);
+			  snd_load_file(auto_open_file_names[auto_open_ctr]);
 			  redirect_everything_to(NULL, NULL);
+			  if (script_arg > auto_open_ctr)
+			    auto_open_ctr = script_arg;
 			}
 		    }
 		  else
 		    {
-		      if ((with_title) && 
-			  (strcmp("-title", argname) == 0))
+		      if ((strcmp("-e", argname) == 0) ||
+			  (strcmp("-eval", argname) == 0))
 			{
+			  /* evaluate expression */
 			  auto_open_ctr++;
 			  if ((auto_open_ctr >= args) ||
 			      (auto_open_file_names[auto_open_ctr] == NULL))
-			    snd_error(_("-title but no title?")); /* for gtk -- Xt handles the Motif case */
-			  else ss->startup_title = copy_string(auto_open_file_names[auto_open_ctr]);
+			    snd_error(_("%s but no form to evaluate?"), argname);
+			  else 
+			    {
+			      char *buf;
+			      buf = auto_open_file_names[auto_open_ctr];
+			      redirect_everything_to(printout_to_stdout, NULL);
+			      snd_report_result(snd_catch_any(eval_str_wrapper, (void *)buf, buf), buf);
+			      redirect_everything_to(NULL, NULL);
+			    }
 			}
 		      else
 			{
-			  if (strcmp("-I", argname) == 0)
+			  if ((with_title) && 
+			      (strcmp("-title", argname) == 0))
 			    {
-			      /* added 24-Oct-02: add to load path in either extension language */
 			      auto_open_ctr++;
 			      if ((auto_open_ctr >= args) ||
 				  (auto_open_file_names[auto_open_ctr] == NULL))
-				snd_error(_("-I but no path?"));
-			      else 
-				{
-#if HAVE_RUBY
-				  extern VALUE rb_load_path; /* prepend -I as they appear (kinda unintuitive) */
-				  rb_ary_unshift(rb_load_path, rb_str_new2(auto_open_file_names[auto_open_ctr]));
-#endif
-#if HAVE_SCHEME
-				  char buf[256];
-				  sprintf(buf, "(set! %%load-path (cons \"%s\" %%load-path))", auto_open_file_names[auto_open_ctr]);
-				  XEN_EVAL_C_STRING(buf);
-#endif
-				}
+				snd_error(_("-title but no title?")); /* for gtk -- Xt handles the Motif case */
+			      else ss->startup_title = copy_string(auto_open_file_names[auto_open_ctr]);
 			    }
 			  else
 			    {
-			      if (startup_filename == NULL)
+			      if (strcmp("-I", argname) == 0)
 				{
-				  startup_filename = copy_string(argname);
-				  if (dont_start(startup_filename)) snd_exit(1);
+				  /* added 24-Oct-02: add to load path in either extension language */
+				  auto_open_ctr++;
+				  if ((auto_open_ctr >= args) ||
+				      (auto_open_file_names[auto_open_ctr] == NULL))
+				    snd_error(_("-I but no path?"));
+				  else 
+				    {
+#if HAVE_RUBY
+				      extern VALUE rb_load_path; /* prepend -I as they appear (kinda unintuitive) */
+				      rb_ary_unshift(rb_load_path, rb_str_new2(auto_open_file_names[auto_open_ctr]));
+#endif
+#if HAVE_SCHEME
+				      char buf[256];
+				      sprintf(buf, "(set! %%load-path (cons \"%s\" %%load-path))", auto_open_file_names[auto_open_ctr]);
+				      XEN_EVAL_C_STRING(buf);
+#endif
+				    }
 				}
-			      ss->open_requestor = FROM_STARTUP;
-			      snd_open_file_unselected(argname);
+			      else
+				{
+				  if (startup_filename == NULL)
+				    {
+				      startup_filename = copy_string(argname);
+				      if (dont_start(startup_filename)) snd_exit(1);
+				    }
+				  ss->open_requestor = FROM_STARTUP;
+				  snd_open_file_unselected(argname);
+				}
 			    }
 			}
 		    }

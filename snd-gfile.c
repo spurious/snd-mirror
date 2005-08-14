@@ -3277,6 +3277,11 @@ char **view_files_set_files(widget_t dialog, char **files, int len) {return(NULL
 
 
 void view_files_unplay(void) {}
+int view_files_local_sort(widget_t dialog) {return(0);}
+int view_files_set_local_sort(widget_t dialog, int sort_choice) {return(0);}
+void view_files_add_directory(widget_t dialog, const char *dirname) {}
+void view_files_add_file(widget_t dialog, const char *filename) {}
+
 
 /* ---------------- mouse enter|leave-label ---------------- */
 
@@ -3406,13 +3411,7 @@ static view_files_info *new_view_files_dialog(void)
 
 static void view_files_select(view_files_info *vdat, int pos)
 {
-  if (view_files_run_select_hook(vdat->full_names[pos]))
-    {
-      snd_info *sp;
-      ss->open_requestor = FROM_VIEW_FILES;
-      sp = snd_open_file(vdat->full_names[pos], FILE_READ_WRITE);
-      if (sp) select_channel(sp, 0); 
-    }
+  view_files_run_select_hook(vdat->dialog, vdat->full_names[pos]);
 }
 
 static bool view_files_play(view_files_info *vdat, int pos, bool play)
@@ -4063,7 +4062,7 @@ static view_files_info *find_view_files_dialog(void)
   return(new_view_files_dialog());
 }
 
-GtkWidget *start_view_files_dialog(bool managed)
+GtkWidget *start_view_files_dialog(bool managed, bool make_new)
 {
   return(start_view_files_dialog_1(find_view_files_dialog(), managed));
 }
@@ -4101,24 +4100,6 @@ void save_view_files_dialogs(FILE *fd)
       fprintf(fd, "%s(true)\n", TO_PROC_NAME(S_view_files_dialog));
 #endif
     }
-}
-
-void add_directory_to_default_view_files_dialog(const char *dirname) 
-{
-  view_files_info *vdat;
-  vdat = find_view_files_dialog();
-  add_directory_to_view_files_list(vdat, dirname);
-}
-
-void add_file_to_default_view_files_dialog(const char *filename) 
-{
-  view_files_info *vdat;
-  char *full_filename;
-  vdat = find_view_files_dialog();
-  full_filename = mus_expand_filename((const char *)filename);
-  if (mus_file_probe(full_filename))
-    add_file_to_view_files_list(vdat, filename, full_filename);
-  FREE(full_filename);
 }
 
 void view_files_reflect_sort_items(void) {}

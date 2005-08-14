@@ -995,7 +995,7 @@ void snd_close_file(snd_info *sp)
 	sequester_deferred_regions(sp->chans[i], -1);
   sp->inuse = SOUND_IDLE;
   for (i = 0; i < sp->nchans; i++) sp->chans[i]->squelch_update = true;
-  add_file_to_default_view_files_dialog(sp->filename);
+  view_files_add_file(NULL, sp->filename);
   if (sp->playing) stop_playing_sound(sp, PLAY_CLOSE);
   if (sp->sgx) 
     {
@@ -2622,26 +2622,6 @@ each inner list has the form: (name start loopstart loopend)"
   return(outlist);
 }
 
-static XEN g_add_directory_to_view_files_list(XEN directory) 
-{
-  #define H_add_directory_to_view_files_list "(" S_add_directory_to_view_files_list " dir): adds any sound files in 'dir' to the View:Files dialog"
-  XEN_ASSERT_TYPE(XEN_STRING_P(directory), directory, XEN_ONLY_ARG, S_add_directory_to_view_files_list, "a string");
-  add_directory_to_default_view_files_dialog(XEN_TO_C_STRING(directory));
-  return(directory);
-}
-
-static XEN g_add_file_to_view_files_list(XEN file) 
-{
-  #define H_add_file_to_view_files_list "(" S_add_file_to_view_files_list " file): adds file to the View:Files dialog's list"
-  char *name = NULL;
-  XEN_ASSERT_TYPE(XEN_STRING_P(file), file, XEN_ONLY_ARG, S_add_file_to_view_files_list, "a string");
-  name = mus_expand_filename(XEN_TO_C_STRING(file));
-  if (mus_file_probe(name))
-    add_file_to_default_view_files_dialog(name);
-  if (name) FREE(name);
-  return(file);
-}
-
 static XEN g_sound_files_in_directory(XEN dirname)
 {
   #define H_sound_files_in_directory "(" S_sound_files_in_directory " (directory \".\")): return a list of the sound files in 'directory'"
@@ -2701,15 +2681,6 @@ static XEN g_insert_file_dialog(XEN managed)
   return(XEN_WRAP_WIDGET(w));
 }
 
-static XEN g_view_files_dialog(XEN managed)
-{
-  widget_t w;
-  #define H_view_files_dialog "(" S_view_files_dialog "): start the View Files dialog"
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(managed), managed, XEN_ONLY_ARG, S_view_files_dialog, "a boolean");
-  w = start_view_files_dialog(XEN_TO_C_BOOLEAN(managed));
-  return(XEN_WRAP_WIDGET(w));
-}
-
 static XEN g_edit_header_dialog(XEN snd_n) 
 {
   widget_t w;
@@ -2750,59 +2721,88 @@ static XEN g_info_dialog(XEN subject, XEN msg)
   return(XEN_WRAP_WIDGET(w));
 }
 
-#if 0
-static XEN g_view_files_sort_procedure(void)
+
+/* -------- view-files variables -------- */
+
+static XEN g_view_files_dialog(XEN managed, XEN make_new)
 {
-  #define H_view_files_sort_procedure "(" S_view_files_sort_procedure "): sort procedure for the current files viewer"
-  return(ss->view_files_sort_proc);
+  widget_t w;
+  bool new_dialog = false;
+  #define H_view_files_dialog "(" S_view_files_dialog " managed): start the View Files dialog"
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(managed), managed, XEN_ARG_1, S_view_files_dialog, "a boolean");
+  new_dialog = (XEN_TRUE_P(make_new));
+  w = start_view_files_dialog(XEN_TO_C_BOOLEAN(managed), new_dialog);
+  return(XEN_WRAP_WIDGET(w));
 }
 
-/* TODO: some way to set view files proc name 
- *	  via view_files_set_sort_proc_name(XEN_TO_C_STRING(proc_name));
- */
-
-static XEN g_set_view_files_sort_procedure(XEN proc)
+static XEN g_add_directory_to_view_files_list(XEN directory, XEN dialog) 
 {
-  char *error = NULL;
-  if (XEN_PROCEDURE_P(ss->view_files_sort_proc))
+  #define H_add_directory_to_view_files_list "(" S_add_directory_to_view_files_list " dir w): adds any sound files in 'dir' to the View:Files dialog"
+  XEN_ASSERT_TYPE(XEN_STRING_P(directory), directory, XEN_ARG_1, S_add_directory_to_view_files_list, "a string");
+  if (XEN_NOT_BOUND_P(dialog))
+    view_files_add_directory(NULL, XEN_TO_C_STRING(directory));
+  else
     {
-      snd_unprotect_at(ss->view_files_sort_proc_loc);
-      ss->view_files_sort_proc_loc = NOT_A_GC_LOC;
+      XEN_ASSERT_TYPE(XEN_WIDGET_P(dialog), dialog, XEN_ARG_2, S_add_directory_to_view_files_list, "a view-files dialog widget"); 
+      view_files_add_directory((widget_t)(XEN_UNWRAP_WIDGET(dialog)), XEN_TO_C_STRING(directory));
     }
-  ss->view_files_sort_proc = XEN_UNDEFINED;
-  if (XEN_PROCEDURE_P(proc))
-    {
-      error = procedure_ok(proc, 1, "file sort", "sort", 1);
-      if (error == NULL)
-	{
-	  ss->view_files_sort_proc = proc;
-	  ss->view_files_sort_proc_loc = snd_protect(proc);
-	}
-      else 
-	{
-	  XEN errstr;
-	  errstr = C_TO_XEN_STRING(error);
-	  FREE(error);
-	  return(snd_bad_arity_error(S_setB S_view_files_sort_procedure, errstr, proc));
-	}
-    }
-  return(proc);
+  return(directory);
 }
-#endif
 
-static int current_file_sorters = 5; /* TODO: fixup */
-static XEN g_view_files_sort(void) {return(C_TO_XEN_INT(view_files_sort(ss)));}
-static XEN g_set_view_files_sort(XEN val) 
+static XEN g_add_file_to_view_files_list(XEN file, XEN dialog) 
 {
-  #define H_view_files_sort "(" S_view_files_sort "): sort choice in view files (" S_sort_files_by_name ", \
+  #define H_add_file_to_view_files_list "(" S_add_file_to_view_files_list " file w): adds file to the View:Files dialog's list"
+  char *name = NULL;
+  XEN_ASSERT_TYPE(XEN_STRING_P(file), file, XEN_ARG_1, S_add_file_to_view_files_list, "a string");
+  name = mus_expand_filename(XEN_TO_C_STRING(file));
+  if (mus_file_probe(name))
+    {
+      if (XEN_NOT_BOUND_P(dialog))
+	view_files_add_file(NULL, name);
+      else
+	{
+	  XEN_ASSERT_TYPE(XEN_WIDGET_P(dialog), dialog, XEN_ARG_2, S_add_file_to_view_files_list, "a view-files dialog widget"); 
+	  view_files_add_file((widget_t)(XEN_UNWRAP_WIDGET(dialog)), name);
+	}
+    }
+  if (name) FREE(name);
+  return(file);
+}
+
+static XEN g_view_files_sort(XEN dialog) 
+{
+  if (XEN_BOUND_P(dialog))
+    {
+      XEN_ASSERT_TYPE(XEN_WIDGET_P(dialog), dialog, XEN_ONLY_ARG, S_view_files_sort, "a view-files dialog widget"); 
+      return(C_TO_XEN_INT(view_files_local_sort((widget_t)(XEN_UNWRAP_WIDGET(dialog)))));
+    }
+  return(C_TO_XEN_INT(view_files_sort(ss)));
+}
+
+static XEN g_set_view_files_sort(XEN dialog, XEN val) 
+{
+  #define H_view_files_sort "(" S_view_files_sort "): default sort choice in View:files dialog (" S_sort_files_by_name ", \
 " S_sort_files_by_date ", " S_sort_files_by_size ", " S_sort_files_by_entry ", or an index returned by " S_add_file_sorter "."
 
   int choice;
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_view_files_sort, "an integer"); 
-  choice = XEN_TO_C_INT(val);
+  XEN sort_choice;
+
+  if (XEN_BOUND_P(val)) sort_choice = val; else sort_choice = dialog;
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(sort_choice), sort_choice, XEN_ARG_1, S_setB S_view_files_sort, "an integer"); 
+  choice = XEN_TO_C_INT(sort_choice);
   if ((choice < 0) ||
-      (choice > current_file_sorters))
-    XEN_OUT_OF_RANGE_ERROR(S_setB S_view_files_sort, 1, val, "must be a valid file-sorter index");
+      (choice >= ss->file_sorters_size))
+    XEN_OUT_OF_RANGE_ERROR(S_setB S_view_files_sort, 2, sort_choice, "must be a valid file-sorter index");
+
+  if (XEN_BOUND_P(val))
+    {
+      widget_t w;
+      XEN_ASSERT_TYPE(XEN_WIDGET_P(dialog), dialog, XEN_ARG_1, S_setB S_view_files_sort, "a view-files dialog widget"); 
+      w = (widget_t)(XEN_UNWRAP_WIDGET(dialog));
+      view_files_set_local_sort(w, choice);
+      return(C_TO_XEN_INT((int)view_files_sort(ss)));
+    }
+  /* else set global (default) sort choice */
   set_view_files_sort(choice);
   return(C_TO_XEN_INT((int)view_files_sort(ss)));
 }
@@ -2924,19 +2924,16 @@ static XEN g_view_files_set_files(XEN dialog, XEN files)
 
 static XEN view_files_select_hook;
 
-bool view_files_run_select_hook(const char *selected_file)
+void view_files_run_select_hook(widget_t dialog, const char *selected_file)
 {
-  XEN res = XEN_FALSE;
   if (XEN_HOOKED(view_files_select_hook))
-    res = run_or_hook(view_files_select_hook,
-		      XEN_LIST_1(C_TO_XEN_STRING(selected_file)),
-		      S_view_files_select_hook);
-  return(XEN_NOT_TRUE_P(res));
+    run_hook(view_files_select_hook,
+	     XEN_LIST_2(XEN_WRAP_WIDGET(dialog),
+			C_TO_XEN_STRING(selected_file)),
+	     S_view_files_select_hook);
 }
 
-/* TODO: doc/test sort-file constants, view-files-amp|speed|amp-env|files|selected-files (check vf-sort)
- * TODO: doc/test/implement add|delete|-|file-|filters|sorters
- */
+/* TODO: implement add|delete|-|file-|filters|sorters */
 
 /* -------- file-filters and file-sorters -------- */
 
@@ -3115,15 +3112,15 @@ static XEN g_delete_file_sorter(XEN name)
 
 
 #ifdef XEN_ARGIFY_1
-XEN_NARGIFY_0(g_view_files_sort_w, g_view_files_sort)
-XEN_NARGIFY_1(g_set_view_files_sort_w, g_set_view_files_sort)
+XEN_ARGIFY_1(g_view_files_sort_w, g_view_files_sort)
+XEN_ARGIFY_2(g_set_view_files_sort_w, g_set_view_files_sort)
 XEN_NARGIFY_1(g_add_sound_file_extension_w, g_add_sound_file_extension)
 XEN_NARGIFY_0(g_sound_file_extensions_w, g_sound_file_extensions)
 XEN_NARGIFY_1(g_set_sound_file_extensions_w, g_set_sound_file_extensions)
 XEN_NARGIFY_1(g_file_write_date_w, g_file_write_date)
 XEN_ARGIFY_1(g_soundfont_info_w, g_soundfont_info)
-XEN_NARGIFY_1(g_add_directory_to_view_files_list_w, g_add_directory_to_view_files_list)
-XEN_NARGIFY_1(g_add_file_to_view_files_list_w, g_add_file_to_view_files_list)
+XEN_ARGIFY_2(g_add_directory_to_view_files_list_w, g_add_directory_to_view_files_list)
+XEN_ARGIFY_2(g_add_file_to_view_files_list_w, g_add_file_to_view_files_list)
 XEN_ARGIFY_1(g_sound_files_in_directory_w, g_sound_files_in_directory)
 XEN_ARGIFY_1(g_sound_loop_info_w, g_sound_loop_info)
 XEN_ARGIFY_2(g_set_sound_loop_info_w, g_set_sound_loop_info)
@@ -3131,7 +3128,7 @@ XEN_NARGIFY_1(g_disk_kspace_w, g_disk_kspace)
 XEN_ARGIFY_1(g_open_file_dialog_w, g_open_file_dialog)
 XEN_ARGIFY_1(g_mix_file_dialog_w, g_mix_file_dialog)
 XEN_ARGIFY_1(g_insert_file_dialog_w, g_insert_file_dialog)
-XEN_ARGIFY_1(g_view_files_dialog_w, g_view_files_dialog)
+XEN_ARGIFY_2(g_view_files_dialog_w, g_view_files_dialog)
 XEN_ARGIFY_1(g_edit_header_dialog_w, g_edit_header_dialog)
 XEN_ARGIFY_1(g_save_selection_dialog_w, g_save_selection_dialog)
 XEN_ARGIFY_1(g_save_sound_dialog_w, g_save_sound_dialog)
@@ -3220,13 +3217,13 @@ void g_init_file(void)
 
   XEN_DEFINE_PROCEDURE(S_file_write_date,                  g_file_write_date_w,                  1, 0, 0, H_file_write_date);
   XEN_DEFINE_PROCEDURE(S_soundfont_info,                   g_soundfont_info_w,                   0, 1, 0, H_soundfont_info);
-  XEN_DEFINE_PROCEDURE(S_add_directory_to_view_files_list, g_add_directory_to_view_files_list_w, 1, 0, 0, H_add_directory_to_view_files_list);
-  XEN_DEFINE_PROCEDURE(S_add_file_to_view_files_list,      g_add_file_to_view_files_list_w,      1, 0, 0, H_add_file_to_view_files_list);
+  XEN_DEFINE_PROCEDURE(S_add_directory_to_view_files_list, g_add_directory_to_view_files_list_w, 1, 1, 0, H_add_directory_to_view_files_list);
+  XEN_DEFINE_PROCEDURE(S_add_file_to_view_files_list,      g_add_file_to_view_files_list_w,      1, 1, 0, H_add_file_to_view_files_list);
   XEN_DEFINE_PROCEDURE(S_sound_files_in_directory,         g_sound_files_in_directory_w,         0, 1, 0, H_sound_files_in_directory);
   XEN_DEFINE_PROCEDURE(S_open_file_dialog,                 g_open_file_dialog_w,                 0, 1, 0, H_open_file_dialog);
   XEN_DEFINE_PROCEDURE(S_mix_file_dialog,                  g_mix_file_dialog_w,                  0, 1, 0, H_mix_file_dialog);
   XEN_DEFINE_PROCEDURE(S_insert_file_dialog,               g_insert_file_dialog_w,               0, 1, 0, H_insert_file_dialog);
-  XEN_DEFINE_PROCEDURE(S_view_files_dialog,                g_view_files_dialog_w,                0, 1, 0, H_view_files_dialog);
+  XEN_DEFINE_PROCEDURE(S_view_files_dialog,                g_view_files_dialog_w,                0, 2, 0, H_view_files_dialog);
   XEN_DEFINE_PROCEDURE(S_edit_header_dialog,               g_edit_header_dialog_w,               0, 1, 0, H_edit_header_dialog);
   XEN_DEFINE_PROCEDURE(S_save_selection_dialog,            g_save_selection_dialog_w,            0, 1, 0, H_save_selection_dialog);
   XEN_DEFINE_PROCEDURE(S_save_sound_dialog,                g_save_sound_dialog_w,                0, 1, 0, H_save_sound_dialog);
@@ -3239,7 +3236,7 @@ void g_init_file(void)
   XEN_DEFINE_VARIABLE("memo-sound", snd_memo_sound, XEN_FALSE); /* backwards compatibility */
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_view_files_sort, g_view_files_sort_w, H_view_files_sort,
-				   S_setB S_view_files_sort, g_set_view_files_sort_w,  0, 0, 1, 0);
+				   S_setB S_view_files_sort, g_set_view_files_sort_w,  0, 1, 1, 1);
 
   #define H_open_hook S_open_hook " (filename): called each time a file is opened (before the actual open). \
 If it returns #t, the file is not opened."
@@ -3290,7 +3287,7 @@ the newly updated sound may have a different index."
   #define H_view_files_select_hook S_view_files_select_hook "(filename): called when a file is selected in the \
 files list of the View Files dialog.  If it returns #t, the default action, opening the file, is omitted."
 
-  view_files_select_hook = XEN_DEFINE_HOOK(S_view_files_select_hook, 1, H_view_files_select_hook); /* arg = filename */
+  view_files_select_hook = XEN_DEFINE_HOOK(S_view_files_select_hook, 2, H_view_files_select_hook); /* args = dialog, filename */
 
   /* file-filters and file-sorters are lists from user's point of view, but I want to
    *   make sure they're gc-protected through add/delete/set, and want such code compatible

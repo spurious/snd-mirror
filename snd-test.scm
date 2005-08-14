@@ -509,6 +509,11 @@
 	'show-x-axis show-x-axis 2
 	'show-all-axes-unlabelled show-all-axes-unlabelled 3
 	'show-x-axis-unlabelled show-x-axis-unlabelled 4
+
+	'sort-files-by-name sort-files-by-name 0
+	'sort-files-by-size sort-files-by-size 2
+	'sort-files-by-date sort-files-by-date 1
+	'sort-files-by-entry sort-files-by-entry 3
 	
 	;; sndlib constants
 	'mus-unsupported mus-unsupported 0
@@ -956,6 +961,9 @@
       (set! (audio-output-device) (audio-output-device))
       (if (not (equal? (audio-output-device)  0 )) 
 	  (snd-display ";audio-output-device set def: ~A" (audio-output-device)))
+      (set! (view-files-sort) (view-files-sort))
+      (if (not (= (view-files-sort) sort-files-by-name))
+	  (snd-display ";view-files-sort def: ~A" (view-files-sort)))
       
       (if (not (provided? 'snd-gtk))
 	  (for-each
@@ -1162,6 +1170,7 @@
 	'with-mix-tags (with-mix-tags) #t
 	'with-relative-panes (with-relative-panes) #t
 	'audio-output-device (audio-output-device) 0 
+	'view-files-sort (view-files-sort) 0
 	))
       (if (not *snd-remember-paths*) (snd-display ";*snd-remember-paths*?"))
       (if *snd-opened-sound* (snd-display ";*snd-opened-sound*: ~A" *snd-opened-sound*))
@@ -1855,6 +1864,50 @@
 
       (close-sound ind) 
       (dismiss-all-dialogs)
+      
+      (let ((fs (file-sorters)))
+	(if (not (null? fs)) (snd-display ";file-sorters: ~A" fs))
+	(add-file-sorter 
+	 "duration"
+	 (lambda (lst)
+	   (sort lst 
+		 (lambda (a b)
+		   (> (mus-sound-duration a) (mus-sound-duration b))))))
+	(if (null? (file-sorters)) (snd-display ";add-file-sorter didn't"))
+	(if (not (string=? (caar (file-sorters)) "duration"))
+	    (snd-display ";add-file-sorter: ~A" (file-sorters)))
+	(delete-file-sorter "duration")
+	(if (not (null? (file-sorters))) (snd-display ";delete-file-sorter didn't"))
+	(set! (file-sorters) (list (cons "duration" 
+					 (lambda (lst)
+					   (sort lst 
+						 (lambda (a b)
+						   (> (mus-sound-duration a) (mus-sound-duration b))))))))
+	(if (null? (file-sorters)) (snd-display ";set file-sorter didn't"))
+	(if (not (string=? (caar (file-sorters)) "duration"))
+	    (snd-display ";set file-sorter: ~A" (file-sorters)))
+	(set! (file-sorters) '())
+	(if (not (null? (file-sorters))) (snd-display ";set file-sorter nil didn't")))
+      
+      (let ((fs (file-filters)))
+	(if (not (null? fs)) (snd-display ";file-filters: ~A" fs))
+	(add-file-filter 
+	 "duration"
+	 (lambda (a)
+	   (> (mus-sound-duration a) 1.0)))
+	(if (null? (file-filters)) (snd-display ";add-file-filter didn't"))
+	(if (not (string=? (caar (file-filters)) "duration"))
+	    (snd-display ";add-file-filter: ~A" (file-filters)))
+	(delete-file-filter "duration")
+	(if (not (null? (file-filters))) (snd-display ";delete-file-filter didn't"))
+	(set! (file-filters) (list (cons "duration" 
+					 (lambda (a)
+					   (> (mus-sound-duration a) 1.0)))))
+	(if (null? (file-filters)) (snd-display ";set file-filter didn't"))
+	(if (not (string=? (caar (file-filters)) "duration"))
+	    (snd-display ";set file-filter: ~A" (file-filters)))
+	(set! (file-filters) '())
+	(if (not (null? (file-filters))) (snd-display ";set file-filter nil didn't")))
       
       (if (provided? 'snd-debug)
 	  (begin
@@ -8945,31 +8998,7 @@ EDITS: 5
 	    (filter-sound '(0 0 .29 0 .3 1 .31 0 1 0) 1024)  
 	    (if (> (maxamp) .02) (snd-display ";filter-sound maxamp 3: ~A" (maxamp)))
 	    (close-sound ind))
-	  
-;	  (if (and (provided? 'xm) (provided? 'snd-debug))
-;	      (XtCallCallbacks (menu-option "Files") XmNactivateCallback (snd-global-state))
-;	      (view-files-dialog))
-;	  (set! (view-files-sort-procedure)
-;		(lambda (lst)
-;		  (sort lst 
-;			(lambda (a b)
-;			  (> (mus-sound-duration a) (mus-sound-duration b))))))
-;	  (if (not (procedure? (view-files-sort-procedure)))
-;	      (snd-display ";view-files-sort-procedure: ~A" (view-files-sort-procedure)))
-;	  (set! (view-files-sort) 5)
-	  (close-sound ind1)
-;	  (let ((val (catch #t
-;			    (lambda ()
-;			      (set! (view-files-sort-procedure) (lambda (a b c) #f)))
-;			    (lambda args (car args)))))
-;	    (if (not (eq? val 'bad-arity))
-;		(snd-display ";view-files-sort-procedure arity error: ~A" val)))
-;	  (do ((i 0 (1+ i)))
-;	      ((= i 5))
-;	    (set! (view-files-sort) i))
-;	  (set! (view-files-sort) 1)
-	  (dismiss-all-dialogs)
-	  )
+	  (close-sound ind1))
 	
 	(with-output-to-file "sndtst" 
 	  (lambda ()
@@ -23308,87 +23337,136 @@ EDITS: 5
 	     (list ramp012 "ramp012" .3)
 	     (list test-ramp "test-ramp" 1.0)))
 
-	  (let ((ind (new-sound "fmv.snd" mus-aifc mus-bshort 22050 1 "define-envelope tests" 10)))
-	    (map-channel (lambda (y) 1.0))
-	    (env-sound ramp32)
-	    (let ((data (channel->vct)))
-	      (if (not (vequal data (vct 0.000 0.015 0.037 0.070 0.118 0.189 0.293 0.446 0.670 1.000)))
-		  (snd-display ";define envelope ramp32 env-sound: ~A" data))
-	      (undo)
-	      (env-channel ramp032)
-	      (set! data (channel->vct))
-	      (if (not (vequal data (vct 0.000 0.328 0.552 0.705 0.809 0.880 0.929 0.962 0.985 1.000)))
-		  (snd-display ";define envelope ramp032 env-sound: ~A" data))
-	      (undo)
-	      (if (provided? 'snd-debug)
-		  (begin
-		    (let ((we (window-env ramp32 0 100 0 200)))
-		      (if (not (feql we (list 0.0 0.0 1.0 0.150)))
-			  (snd-display ";window ramp32: ~A" we)))
-		    (let ((we (window-env ramp32 100 100 0 200)))
-		      (if (not (feql we (list 0.0 0.150 1.0 1.0)))
-			  (snd-display ";window (100 100) ramp32: ~A" we)))
-		    (let ((we (window-env ramp032 0 100 0 200)))
-		      (if (not (feql we (list 0.0 0.0 1.0 0.848)))
-			  (snd-display ";window ramp032: ~A" we)))
-		    (let ((we (window-env ramp032 50 50 0 200)))
-		      (if (not (feql we (list 0.0 0.596 1.0 0.848)))
-			  (snd-display ";window (50 50) ramp032: ~A" we)))
-		    (let ((we (window-env ramp12 50 100 0 200)))
-		      (if (not (feql we (list 0.0 0.366 0.5 1.0 1.0 0.366)))
-			  (snd-display ";window ramp12: ~A" we)))
-		    (let ((me (multiply-envs '(0 1 1 1) ramp32 .1)))
-		      (if (not (feql me (list 0.0 0.0 0.1 0.0134 0.2 0.032 0.3 0.059 0.4 0.097 0.5 0.150 0.6 0.226 0.7 0.333 0.8 0.484 0.9 0.697 1.0 1.0)))
-			  (snd-display ";multiply ramp32+flat: ~A" me)))
-		    (let ((me (multiply-envs '(0 0 1 1) ramp32 .1)))
-		      (if (not (feql me (list 0.0 0.0 0.1 0.001 0.2 0.006 0.3 0.017 0.4 0.0388 0.5 0.075 0.6 0.135 0.7 0.233 0.8 0.387 0.9 0.628 1.0 1.0)))
-			  (snd-display ";multiply ramp32+ramp: ~A" me)))
-		    (let ((me (multiply-envs ramp32 ramp032 .1)))
-		      (if (not (feql me (list 0.0 0.0 0.1 0.004 0.2 0.016 0.3 0.039 0.4 0.075 0.5 0.127 0.6 0.204 0.7 0.313 0.8 0.468 0.9 0.688 1.0 1.0)))
-			  (snd-display ";multiply ramp32+ramp032: ~A" me)))
-		    (let ((me (invert-env ramp32)))
-		      (if (or (not (feql me (list 0.0 1.0 1.0 0.0)))
-			      (not (number? (object-property me 'envelope-base)))
-			      (fneq (object-property me 'envelope-base) (/ 1.0 32.0)))
-			  (snd-display ";invert env (ramp32): ~A ~A" me (object-properties me))))
-		    (let ((me (invert-env ramp012)))
-		      (if (or (not (feql me (list 0.0 1.0 1.0 0.0 2.0 1.0)))
-			      (not (number? (object-property me 'envelope-base)))
-			      (fneq (object-property me 'envelope-base) (/ 1.0 0.3)))
-			  (snd-display ";invert env (ramp012): ~A ~A" me (object-properties me))))
-		    (let ((me (invert-env test-ramp)))
-		      (if (or (not (feql me (list 0.0 0.0 1.0 1.0)))
-			      (and (number? (object-property me 'envelope-base))
-				   (fneq (object-property me 'envelope-base) 1.0)))
-			  (snd-display ";invert env (test-ramp): ~A ~A" me (object-properties me))))
-		    (let ((we (window-env ramp32 0 100 0 200 .1)))
-		      (if (not (feql we (list 0.0 0.0 0.200 0.0133 0.400 0.0322 0.600 0.0589 0.800 0.0967 1.0 0.150)))
-			  (snd-display ";window ramp32 i: ~A" we)))
-		    (let ((we (window-env ramp32 100 100 0 200 .2)))
-		      (if (not (feql we (list 0.0 0.150 0.4 0.333 0.8 0.697 1.0 1.0)))
-			  (snd-display ";window (100 100) ramp32 i: ~A" we)))
-		    (let ((we (window-env ramp032 0 100 0 200 .1)))
-		      (if (not (feql we (list 0.0 0.0 0.200 0.300 0.400 0.514 0.600 0.665 0.800 0.772 1.0 0.848)))
-			  (snd-display ";window ramp032 i: ~A" we)))
-		    (let ((we (window-env ramp032 50 50 0 200 .2)))
-		      (if (not (feql we (list 0.0 0.596 0.8 0.813 1.0 0.848)))
-			  (snd-display ";window (50 50) ramp032 i: ~A" we)))
-		    (let ((we (window-env ramp12 50 100 0 200 .1)))
-		      (if (not (feql we (list 0.0 0.366 0.100 0.466 0.200 0.578 0.300 0.704 0.400 0.843 
-					      0.5 1.0 0.60 0.843 0.70 0.704 0.80 0.578 0.90 0.466 1.0 0.366)))
-			  (snd-display ";window ramp12 i: ~A" we)))))
-
-	      (close-sound ind)))
-
-	  (if (or (provided? 'xm) (provided? 'xg))
+      (let ((ind (new-sound "fmv.snd" mus-aifc mus-bshort 22050 1 "define-envelope tests" 10)))
+	(map-channel (lambda (y) 1.0))
+	(env-sound ramp32)
+	(let ((data (channel->vct)))
+	  (if (not (vequal data (vct 0.000 0.015 0.037 0.070 0.118 0.189 0.293 0.446 0.670 1.000)))
+	      (snd-display ";define envelope ramp32 env-sound: ~A" data))
+	  (undo)
+	  (env-channel ramp032)
+	  (set! data (channel->vct))
+	  (if (not (vequal data (vct 0.000 0.328 0.552 0.705 0.809 0.880 0.929 0.962 0.985 1.000)))
+	      (snd-display ";define envelope ramp032 env-sound: ~A" data))
+	  (undo)
+	  (if (provided? 'snd-debug)
 	      (begin
-		(load "oscope.scm")
-		;; oscope exists
-		(if (not (sound-data? (cadr oscope))) (snd-display ";oscope: ~A" oscope))
-		(if (provided? 'snd-motif)
-		    (XtUnmanageChild oscope-dialog)
-		    (gtk_widget_hide oscope-dialog))))
-
+		(let ((we (window-env ramp32 0 100 0 200)))
+		  (if (not (feql we (list 0.0 0.0 1.0 0.150)))
+		      (snd-display ";window ramp32: ~A" we)))
+		(let ((we (window-env ramp32 100 100 0 200)))
+		  (if (not (feql we (list 0.0 0.150 1.0 1.0)))
+		      (snd-display ";window (100 100) ramp32: ~A" we)))
+		(let ((we (window-env ramp032 0 100 0 200)))
+		  (if (not (feql we (list 0.0 0.0 1.0 0.848)))
+		      (snd-display ";window ramp032: ~A" we)))
+		(let ((we (window-env ramp032 50 50 0 200)))
+		  (if (not (feql we (list 0.0 0.596 1.0 0.848)))
+		      (snd-display ";window (50 50) ramp032: ~A" we)))
+		(let ((we (window-env ramp12 50 100 0 200)))
+		  (if (not (feql we (list 0.0 0.366 0.5 1.0 1.0 0.366)))
+		      (snd-display ";window ramp12: ~A" we)))
+		(let ((me (multiply-envs '(0 1 1 1) ramp32 .1)))
+		  (if (not (feql me (list 0.0 0.0 0.1 0.0134 0.2 0.032 0.3 0.059 0.4 0.097 0.5 0.150 0.6 0.226 0.7 0.333 0.8 0.484 0.9 0.697 1.0 1.0)))
+		      (snd-display ";multiply ramp32+flat: ~A" me)))
+		(let ((me (multiply-envs '(0 0 1 1) ramp32 .1)))
+		  (if (not (feql me (list 0.0 0.0 0.1 0.001 0.2 0.006 0.3 0.017 0.4 0.0388 0.5 0.075 0.6 0.135 0.7 0.233 0.8 0.387 0.9 0.628 1.0 1.0)))
+		      (snd-display ";multiply ramp32+ramp: ~A" me)))
+		(let ((me (multiply-envs ramp32 ramp032 .1)))
+		  (if (not (feql me (list 0.0 0.0 0.1 0.004 0.2 0.016 0.3 0.039 0.4 0.075 0.5 0.127 0.6 0.204 0.7 0.313 0.8 0.468 0.9 0.688 1.0 1.0)))
+		      (snd-display ";multiply ramp32+ramp032: ~A" me)))
+		(let ((me (invert-env ramp32)))
+		  (if (or (not (feql me (list 0.0 1.0 1.0 0.0)))
+			  (not (number? (object-property me 'envelope-base)))
+			  (fneq (object-property me 'envelope-base) (/ 1.0 32.0)))
+		      (snd-display ";invert env (ramp32): ~A ~A" me (object-properties me))))
+		(let ((me (invert-env ramp012)))
+		  (if (or (not (feql me (list 0.0 1.0 1.0 0.0 2.0 1.0)))
+			  (not (number? (object-property me 'envelope-base)))
+			  (fneq (object-property me 'envelope-base) (/ 1.0 0.3)))
+		      (snd-display ";invert env (ramp012): ~A ~A" me (object-properties me))))
+		(let ((me (invert-env test-ramp)))
+		  (if (or (not (feql me (list 0.0 0.0 1.0 1.0)))
+			  (and (number? (object-property me 'envelope-base))
+			       (fneq (object-property me 'envelope-base) 1.0)))
+		      (snd-display ";invert env (test-ramp): ~A ~A" me (object-properties me))))
+		(let ((we (window-env ramp32 0 100 0 200 .1)))
+		  (if (not (feql we (list 0.0 0.0 0.200 0.0133 0.400 0.0322 0.600 0.0589 0.800 0.0967 1.0 0.150)))
+		      (snd-display ";window ramp32 i: ~A" we)))
+		(let ((we (window-env ramp32 100 100 0 200 .2)))
+		  (if (not (feql we (list 0.0 0.150 0.4 0.333 0.8 0.697 1.0 1.0)))
+		      (snd-display ";window (100 100) ramp32 i: ~A" we)))
+		(let ((we (window-env ramp032 0 100 0 200 .1)))
+		  (if (not (feql we (list 0.0 0.0 0.200 0.300 0.400 0.514 0.600 0.665 0.800 0.772 1.0 0.848)))
+		      (snd-display ";window ramp032 i: ~A" we)))
+		(let ((we (window-env ramp032 50 50 0 200 .2)))
+		  (if (not (feql we (list 0.0 0.596 0.8 0.813 1.0 0.848)))
+		      (snd-display ";window (50 50) ramp032 i: ~A" we)))
+		(let ((we (window-env ramp12 50 100 0 200 .1)))
+		  (if (not (feql we (list 0.0 0.366 0.100 0.466 0.200 0.578 0.300 0.704 0.400 0.843 
+					  0.5 1.0 0.60 0.843 0.70 0.704 0.80 0.578 0.90 0.466 1.0 0.366)))
+		      (snd-display ";window ramp12 i: ~A" we)))))
+	  
+	  (close-sound ind)))
+      
+      (if (or (provided? 'xm) (provided? 'xg))
+	  (begin
+	    (load "oscope.scm")
+	    ;; oscope exists
+	    (if (not (sound-data? (cadr oscope))) (snd-display ";oscope: ~A" oscope))
+	    (if (provided? 'snd-motif)
+		(XtUnmanageChild oscope-dialog)
+		(gtk_widget_hide oscope-dialog))))
+      
+      (let ((dialog (view-files-dialog #f)))
+	(let ((vfamp (view-files-amp dialog))
+	      (vfs (view-files-speed dialog))
+	      (vfsort (view-files-sort))
+	      (vfsort1 (view-files-sort dialog))
+	      (vfe (view-files-amp-env dialog))
+	      (vffiles (view-files-files dialog))
+	      (vfsel (view-files-selected-files dialog))
+	      (selected-file #f))
+	  (if (fneq vfamp 1.0) (snd-display ";vf amp: ~A" vfamp))
+	  (if (fneq vfs 1.0) (snd-display ";vf spd: ~A" vfs))
+	  (if (not (= vfsort sort-files-by-name)) (snd-display ";vf sort: ~A" vfsort))
+	  (if (not (= vfsort1 sort-files-by-name)) (snd-display ";vf sort(d): ~A" vfsort1))
+	  (if (not (feql vfe (list 0.0 1.0 1.0 1.0))) (snd-display ";vf amp env: ~A" vfe))
+	  (if (not (list? vffiles)) (snd-display ";vf files: ~A" vffiles))
+	  (if (not (list? vfsel)) (snd-display ";vf selected files: ~A" vfsel))
+	  (set! (view-files-amp dialog) 0.5)
+	  (if (fneq (view-files-amp dialog) 0.5) (snd-display ";set vf amp: ~A" (view-files-amp dialog)))
+	  (set! (view-files-speed dialog) 0.5)
+	  (if (fneq (view-files-speed dialog) 0.5) (snd-display ";set vf spd: ~A" (view-files-speed dialog)))
+	  (set! (view-files-sort dialog) sort-files-by-size)
+	  (if (not (= (view-files-sort) sort-files-by-name)) (snd-display ";vf global sort after local set: ~A" (view-files-sort)))
+	  (if (not (= (view-files-sort dialog) sort-files-by-size)) (snd-display ";vf local sort after local set: ~A" (view-files-sort dialog)))
+	  (set! (view-files-sort) sort-files-by-date)
+	  (if (not (= (view-files-sort) sort-files-by-date)) (snd-display ";vf global sort after global set: ~A" (view-files-sort)))    
+	  (if (not (= (view-files-sort dialog) sort-files-by-size)) (snd-display ";vf local sort after global set: ~A" (view-files-sort dialog)))
+	  (set! (view-files-files dialog) (list "oboe.snd" "1a.snd" "pistol.snd" "storm.snd"))
+	  (if (or (and (not (member "1a.snd" (view-files-files dialog)))
+		       (not (member (string-append home-dir "/cl/1a.snd") (view-files-files dialog))))
+		  (and (not (member "pistol.snd" (view-files-files dialog)))
+		       (not (member (string-append home-dir "/cl/pistol.snd") (view-files-files dialog))))
+		  (not (= (length (view-files-files dialog)) 4)))
+	      (snd-display ";vf files set: ~A" (view-files-files dialog)))
+	  (reset-hook! view-files-select-hook)
+	  (add-hook! view-files-select-hook (lambda (w file)
+					      (if (not (string? file))
+						  (snd-display ";vf select hook arg: ~A" file))
+					      (if (not w) (snd-display ";vf select hook dialog: ~A" w))
+					      (set! selected-file file)))
+	  (set! (view-files-selected-files dialog) (list "1a.snd"))
+	  (if (or (not (string? selected-file))
+		  (and (not (equal? selected-file "1a.snd"))
+		       (not (equal? selected-file (string-append home-dir "/cl/1a.snd")))))
+	      (snd-display ";vf set selected select hook arg: ~A" selected-file))
+	  (if (and (not (equal? (view-files-selected-files dialog) (list "1a.snd")))
+		   (not (equal? (view-files-selected-files dialog) (list (string-append home-dir "/cl/1a.snd")))))
+	      (snd-display ";vf selected files set: ~A" (view-files-selected-files dialog)))
+	  ))
+      
       (run-hook after-test-hook 11)
       ))
 
@@ -23765,6 +23843,7 @@ EDITS: 5
   (add-hook! open-raw-sound-hook arg2) (carg2 open-raw-sound-hook)
   (add-hook! select-channel-hook arg2) (carg2 select-channel-hook)
   (add-hook! help-hook arg2) (carg2 help-hook)
+  (add-hook! view-files-select-hook arg2) (carg2 view-files-select-hook)
   
   (add-hook! save-state-hook arg1) (carg1 save-state-hook)
   (add-hook! new-sound-hook arg1) (carg1 new-sound-hook)
@@ -23801,7 +23880,6 @@ EDITS: 5
   (add-hook! print-hook arg1) (carg1 print-hook)
   (add-hook! read-hook arg1) (carg1 read-hook)
   (add-hook! bad-header-hook arg1) (carg1 bad-header-hook)
-  (add-hook! view-files-select-hook arg1) (carg1 view-files-select-hook)
   (add-hook! output-name-hook arg1) (carg1 output-name-hook)
   
   (add-hook! before-exit-hook arg0) (carg0 before-exit-hook)
@@ -26056,7 +26134,7 @@ EDITS: 5
 		(list 'log-freq-start log-freq-start #f 50.0 5.0)
 		(list 'selection-creates-region selection-creates-region #f #f #t)
 		(list 'transform-normalization transform-normalization #f dont-normalize normalize-globally)
-		(list 'view-files-sort view-files-sort #f 0 5)
+		(list 'view-files-sort view-files-sort #f 0 3)
 		(list 'print-length print-length #f 2 32)
 		(list 'region-graph-style region-graph-style #f graph-lines graph-lollipops)
 		(list 'reverb-control-decay reverb-control-decay #f 0.0 2.0)
@@ -42516,8 +42594,6 @@ EDITS: 1
 	    (string-set! new-str i #\_)
 	    (string-set! new-str i c))))))
 
-;(set! (view-files-sort-procedure) #f)
-
 (define* (widget-string widget text #:optional (cleared #t))
   (define (shifted? ch)
     (if (or (and (char>=? ch #\A) (char<=? ch #\Z))
@@ -54395,8 +54471,7 @@ EDITS: 1
 		     locsig-type make-phase-vocoder mus-audio-mixer-read
 		     mus-describe mus-error-type->string mus-file-buffer-size mus-name mus-offset mus-out-format mus-reset
 		     mus-rand-seed mus-width phase-vocoder?
-		     polar->rectangular ;view-files-sort-procedure 
-		     phase-vocoder-amp-increments phase-vocoder-amps phase-vocoder-freqs phase-vocoder-outctr 
+		     polar->rectangular phase-vocoder-amp-increments phase-vocoder-amps phase-vocoder-freqs phase-vocoder-outctr 
 		     phase-vocoder-phase-increments phase-vocoder-phases mus-generator?
 
 		     read-sample reset-listener-cursor goto-listener-end sample-reader-home selection-chans selection-srate snd-gcs
@@ -54481,7 +54556,6 @@ EDITS: 1
 			 mus-increment mus-length mus-location mus-phase mus-ramp mus-scaler vct-ref x-axis-label
 			 filter-control-coeffs locsig-type mus-file-buffer-size 
 			 mus-rand-seed mus-width clm-table-size run-safety mus-offset mus-reset
-			 ;view-files-sort-procedure 
 			 phase-vocoder-amp-increments phase-vocoder-amps 
 			 phase-vocoder-freqs phase-vocoder-outctr phase-vocoder-phase-increments phase-vocoder-phases 
 			 quit-button-color help-button-color reset-button-color doit-button-color doit-again-button-color
@@ -56254,7 +56328,7 @@ EDITS: 1
    (lambda (n)
      (forget-region n))
    regs))
-(set! (view-files-sort) 0)
+(set! (view-files-sort) sort-files-by-name)
 
 (if (file-exists? "saved-snd.scm") (delete-file "saved-snd.scm"))
 (gc)(gc)

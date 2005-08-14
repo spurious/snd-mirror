@@ -1358,7 +1358,7 @@ void set_fallback_format(int fr);
 
 void run_after_save_as_hook(snd_info *sp, const char *already_saved_as_name, bool from_save_as_dialog);
 bool run_before_save_as_hook(snd_info *sp, const char *save_as_filename, bool selection, int srate, int type, int format, char *comment);
-bool view_files_run_select_hook(const char *selected_file);
+void view_files_run_select_hook(widget_t w, const char *selected_file);
 
 void g_init_file(void);
 void initialize_format_lists(void);

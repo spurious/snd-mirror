@@ -105,7 +105,7 @@ static void view_track_dialog_callback(GtkWidget *w, gpointer info) {make_track_
 static void view_region_callback_1(GtkWidget *w, gpointer info) {view_region_callback(w, info);}
 static void view_orientation_callback_1(GtkWidget *w, gpointer info) {view_orientation_callback(w, info);}
 static void view_color_callback_1(GtkWidget *w, gpointer info) {view_color_callback(w, info);}
-static void view_files_callback(GtkWidget *w, gpointer info) {start_view_files_dialog(true);}
+static void view_files_callback(GtkWidget *w, gpointer info) {start_view_files_dialog(true, false);}
 
 static void view_x_axis_seconds_callback(GtkWidget *w, gpointer info) {set_x_axis_style(X_AXIS_IN_SECONDS);}
 static void view_x_axis_beats_callback(GtkWidget *w, gpointer info) {set_x_axis_style(X_AXIS_IN_BEATS);}

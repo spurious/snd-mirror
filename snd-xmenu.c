@@ -105,7 +105,7 @@ static void view_ctrls_callback(Widget w, XtPointer info, XtPointer context)
 static void view_region_callback_1(Widget w, XtPointer info, XtPointer context) {view_region_callback(w, info, context);}
 static void view_orientation_callback_1(Widget w, XtPointer info, XtPointer context) {view_orientation_callback(w, info, context);}
 static void view_color_callback_1(Widget w, XtPointer info, XtPointer context) {view_color_callback(w, info, context);}
-static void view_files_callback(Widget w, XtPointer info, XtPointer context) {start_view_files_dialog(true);}
+static void view_files_callback(Widget w, XtPointer info, XtPointer context) {start_view_files_dialog(true, false);}
 
 static void view_x_axis_seconds_callback(Widget w, XtPointer info, XtPointer context) {set_x_axis_style(X_AXIS_IN_SECONDS);}
 static void view_x_axis_beats_callback(Widget w, XtPointer info, XtPointer context) {set_x_axis_style(X_AXIS_IN_BEATS);}

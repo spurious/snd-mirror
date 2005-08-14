@@ -4519,7 +4519,7 @@ static XEN g_channel_amp_envs(XEN filename, XEN chan, XEN pts, XEN peak_func, XE
 return two vcts of length 'size' containing y vals (min and max) of file's channel chan's amp envs. \
 'peak-file-func' is used to get the name of the associated peak_env_info file if the file is very large. \
 'work-proc-func' is called when the amp envs are ready if the amp envs are gathered in the background. \
-If 'filename' is a sound index (an integer), 'size' is an edit-position, and the current amp envs are returned."
+If 'filename' is a sound index (an integer), 'size' is interpreted as an edit-position, and the current amp envs are returned."
 
   static char *fullname = NULL;
   int len, chn;

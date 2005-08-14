@@ -410,6 +410,10 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+15-Aug:  click of file name no longer opens that file.\n\
+         view-files-select-hook return type no longer matters, and args are: dialog file-name.\n\
+         optional dialog arg to view-files-sort (local set)\n\
+         -init startup switch to set init filename as arg.\n\
 8-Aug:   removed previous|view-files-sort-procedure.\n\
          added sort-files-by-name|size|date|entry.\n\
          added view-files-amp|speed|amp-env|files|selected-files.\n\
@@ -423,11 +427,6 @@ void about_snd_help(void)
 21-Jul:  clear-minibuffer, new as-error arg to report-in-minibuffer.\n\
 15-Jul:  removed yes-or-no? with associated dialog (and snd-g|xerror.c).\n\
 14-Jul:  Snd 7.14.\n\
-5-Jul:   default-output-type -> default-output-header-type, \n\
-         default-output-format -> default-output-data-format.\n\
-1-Jul:   --with-fam configuration switch.\n\
-27-Jun:  output-name-hook now takes an argument, the current output file name.\n\
-         changed find to find-channel to avoid collision with Scheme's srfi-1.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",
@@ -1435,7 +1434,6 @@ static char *view_files_xrefs[6] = {
   "place all sounds from a directory in view files list: {add-directory-to-view-files-list}",
   "specialize view files selection: {view-files-select-hook}",
   "the sort choice: {view-files-sort}",
-  "the sort procedure if choice is 'proc': {view-files-sort-procedure}",
   NULL};
 
 void view_files_dialog_help(void)

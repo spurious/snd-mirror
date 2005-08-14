@@ -248,9 +248,7 @@ void set_filter_in_dB(snd_info *sp, bool val) {sp->filter_control_in_dB = val;}
 void set_filter_in_hz(snd_info *sp, bool val) {sp->filter_control_in_hz = val;}
 
 void save_view_files_dialogs(FILE *fd) {}
-void add_directory_to_default_view_files_dialog(const char *dirname) {}
-void add_file_to_default_view_files_dialog(const char *dirname) {}
-widget_t start_view_files_dialog(bool managed) {return(0);}
+widget_t start_view_files_dialog(bool managed, bool make_new) {return(0);}
 void view_files_set_sort_proc_name(const char *name) {}
 Float view_files_amp(widget_t dialog) {return(0.0);}
 Float view_files_set_amp(widget_t dialog, Float new_amp) {return(0.0);}
@@ -264,6 +262,10 @@ char **view_files_set_selected_files(widget_t dialog, char **files, int len) {re
 char **view_files_set_files(widget_t dialog, char **files, int len) {return(NULL);}
 void view_files_reflect_sort_items(void) {}
 void view_files_unplay(void) {}
+int view_files_local_sort(widget_t dialog) {return(0);}
+int view_files_set_local_sort(widget_t dialog, int sort_choice) {return(0);}
+void view_files_add_directory(widget_t dialog, const char *dirname) {}
+void view_files_add_file(widget_t dialog, const char *filename) {}
 
 
 void auto_update_restart(void) {}

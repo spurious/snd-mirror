@@ -401,9 +401,7 @@ widget_t post_it(const char *subject, const char *str);
 void save_post_it_dialog_state(FILE *fd);
 
 void save_view_files_dialogs(FILE *fd);
-void add_directory_to_default_view_files_dialog(const char *dirname);
-void add_file_to_default_view_files_dialog(const char *dirname);
-Widget start_view_files_dialog(bool managed);
+Widget start_view_files_dialog(bool managed, bool make_new);
 void view_files_set_sort_proc_name(const char *name);
 Float view_files_amp(widget_t dialog);
 Float view_files_set_amp(widget_t dialog, Float new_amp);
@@ -417,6 +415,11 @@ char **view_files_set_selected_files(widget_t dialog, char **files, int len);
 char **view_files_set_files(widget_t dialog, char **files, int len);
 void view_files_reflect_sort_items(void);
 void view_files_unplay(void);
+int view_files_local_sort(widget_t dialog);
+int view_files_set_local_sort(widget_t dialog, int sort_choice);
+void view_files_add_directory(widget_t dialog, const char *dirname);
+void view_files_add_file(widget_t dialog, const char *filename);
+
 
 
 /* -------- snd-xenv.c -------- */

@@ -502,6 +502,8 @@ void snd_doit(int argc, char **argv)
   sg_make_resizable(shell);
 #endif
 
+  set_init_filename(INIT_FILE_NAME);
+
   auto_open_files = argc-1;
   if (argc > 1) auto_open_file_names = (char **)(argv + 1);
   ss->startup_title = copy_string("snd");
@@ -533,6 +535,9 @@ void snd_doit(int argc, char **argv)
 		  if ((strcmp(argv[i], "-b") == 0) || 
 		      (strcmp(argv[i], "-batch") == 0))
 		    batch = true;
+		  else
+		    if (strcmp(argv[i], "-init") == 0)
+		      set_init_filename(argv[++i]);
   ss->batch_mode = batch;
   set_auto_resize(AUTO_RESIZE_DEFAULT);
   ss->zoom_slider_width = ZOOM_SLIDER_WIDTH;
@@ -601,7 +606,6 @@ void snd_doit(int argc, char **argv)
   if (!(set_listener_font(FALLBACK_FONT)))
     fprintf(stderr, _("can't find listener font: %s"), FALLBACK_FONT);
 
-  set_init_filename(INIT_FILE_NAME);
   set_color_map(DEFAULT_SPECTROGRAM_COLOR);
 
   str = mus_expand_filename("~/.gtkrc-2.0");

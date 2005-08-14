@@ -11,11 +11,12 @@
  */
 
 #define XEN_MAJOR_VERSION 1
-#define XEN_MINOR_VERSION 36
-#define XEN_VERSION "1.36"
+#define XEN_MINOR_VERSION 37
+#define XEN_VERSION "1.37"
 
 /* HISTORY:
  *
+ *  12-Aug-05: include guile setter procedure names for better error reporting.
  *  14-Jun-05: XEN_DEFINE (XEN value, not assumed to be int as in XEN_DEFINE_CONSTANT).
  *             XEN_ASSOC, XEN_MEMBER, and XEN_PROCEDURE_NAME for Scheme side.
  *             XEN_DEFINE_HOOK and XEN_DEFINE_SIMPLE_HOOK no longer take the "Var" arg.
@@ -672,6 +673,7 @@ bool xen_integer_p(XEN a);
 #if XEN_DEBUGGING
 XEN xen_guile_dbg_new_procedure(const char *name, XEN (*func)(), int req, int opt, int rst);
 #endif
+
 
 #if HAVE_SCM_C_MAKE_RECTANGULAR
 char *xen_guile_to_c_string_with_eventual_free(XEN str);

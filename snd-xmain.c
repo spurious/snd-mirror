@@ -1,6 +1,6 @@
 #include "snd.h"
 
-/* in Mac OSX 10.3 using Apple's X11, the title bar is sometimes repeated? */
+/* SOMEDAY: how to pick up "theme" settings rather than Xdefaults? */
 
 #define FALLBACK_FONT "fixed"
 #define DEFAULT_FONTLIST "9x15"
@@ -692,6 +692,8 @@ void snd_doit(int argc, char **argv)
   else ss->startup_title = copy_string("snd");
 
   set_sound_style((sound_style_t)snd_rs.horizontal_panes);
+  set_init_filename(snd_rs.init_file_name); 
+
   for (i = 1; i < argc; i++)
     if ((strcmp(argv[i], "-h") == 0) || 
 	(strcmp(argv[i], "-horizontal") == 0))
@@ -722,6 +724,9 @@ void snd_doit(int argc, char **argv)
 		  if ((strcmp(argv[i], "-b") == 0) || 
 		      (strcmp(argv[i], "-batch") == 0))
 		    batch = true;
+		  else
+		    if (strcmp(argv[i], "-init") == 0)
+		      set_init_filename(argv[++i]);
 
   ss->batch_mode = batch;
   if (batch) XtSetMappedWhenManaged(shell, 0);
@@ -853,8 +858,6 @@ void snd_doit(int argc, char **argv)
     fprintf(stderr, _("can't find listener font %s"), snd_rs.listener_font);
 
   if (!(ss->using_schemes)) XtVaSetValues(shell, XmNbackground, sx->basic_color, NULL);
-  
-  set_init_filename(snd_rs.init_file_name);
   set_color_map(snd_rs.spectrogram_color);
 
 #ifndef SND_AS_WIDGET

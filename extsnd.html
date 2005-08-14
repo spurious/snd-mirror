@@ -1985,25 +1985,15 @@ the returned procedure to make sure the mark pane is reactivated right away when
 </pre></td></tr></table>
 </td></tr><tr><td colspan=3></td></tr>
 
+
 <!-- view-files-select-hook -->
 <tr><td colspan=2>
-<code><a class=def name="previousfilesselecthook">view-files-select-hook</a> (filename)</code></td><td align=right><b>or</b>
-</td></tr>
+<code><a class=def name="previousfilesselecthook">view-files-select-hook</a> (dialog filename)</code></td><td></td></tr>
 <tr><td></td><td colspan=2>
-called each time a file is selected in the View Files dialog's previous files list.
-If it returns #t, the file is not opened in Snd (the default action).  We can use this
-hook to use the previous files list for whatever purpose seems handy. 
-Say we want to click a file to have it mixed into the currently selected sound at
-the cursor:
+called each time a file is selected in a View Files dialog's files list.
 </td></tr>
-<tr><td></td><td colspan=2>
-<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
-(add-hook! <em class=red>view-files-select-hook</em>
-  (lambda (file)
-    (<a class=quiet href="#mix">mix</a> file (<a class=quiet href="#cursor">cursor</a>))
-    #t))
-</pre></td></tr></table></td></tr>
 <tr><td colspan=3></td></tr>
+
 
 <!-- window-property-changed-hook -->
 <tr><td colspan=2>
@@ -8964,6 +8954,8 @@ More transforms: <a href="sndscm.html#fractionalfouriertransform">fractional-fou
 </blockquote></small>
 </td></tr></TABLE>
 
+<!-- TODO: divide this up by dialog -->
+
 <!-- Dialogs -->
 <br>
 <table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="snddialogs">Dialogs</a></h3></td></tr></table>
@@ -9352,15 +9344,44 @@ default: 4.
 <tr><td colspan=2><code><a class=def name="transformdialog">transform-dialog</a> (<i>managed</i>)</code></td></tr>
 <tr><td></td><td>create and (if <i>managed</i> which defaults to #t) activate the Options:Transform dialog. Return the dialog widget.</td></tr>
 
+<!-- view-files-amp -->
+<tr><td colspan=2><code><a class=def name="viewfilesamp">view-files-amp</a> (dialog)</code></td></tr>
+<tr><td></td><td>get or set the amp of a View:Files dialog.
+</td></tr>
+
+<!-- view-files-amp-env -->
+<tr><td colspan=2><code><a class=def name="viewfilesampenv">view-files-amp-env</a> (dialog)</code></td></tr>
+<tr><td></td><td>get or set the amp envelope of a View:Files dialog.
+</td></tr>
+
 <!-- view-files-dialog -->
 <tr><td colspan=2><code><a class=def name="viewfilesdialog">view-files-dialog</a> (<i>managed</i>)</code></td></tr>
-<tr><td></td><td>create and (if <i>managed</i> which defaults to #t) activate the 
-View:Files <a href="snd.html#viewfiles">list</a> of current and previous files (not the file browser),
-and return the dialog widget.</td></tr>
+<tr><td></td><td>create and (if <i>managed</i> which defaults to #t) activate a
+View:Files <a href="snd.html#viewfiles">dialog</a> and return the dialog widget.
+</td></tr>
+
+<!-- view-files-files -->
+<tr><td colspan=2><code><a class=def name="viewfilesfiles">view-files-files</a> (dialog)</code></td></tr>
+<tr><td></td><td>get or set the file list of a View:Files dialog (the value is a list of strings).
+</td></tr>
+
+<!-- view-files-selected-files -->
+<tr><td colspan=2><code><a class=def name="viewfilesselectedfiles">view-files-selected-files</a> (dialog)</code></td></tr>
+<tr><td></td><td>get or set which files are selected in a View:Files dialog (the value is a list of strings).
+</td></tr>
 
 <!-- view-files-sort -->
-<tr><td colspan=2><code><a class=def name="previousfilessort">view-files-sort</a> ()</code></td></tr>
-<tr><td></td><td>The sort function choice in the View:Files dialog (0=unsorted, 1=name, 2=date, 3=size, 4=entry, 5=user procedure).</td></tr>
+<tr><td colspan=2><code><a class=def name="previousfilessort">view-files-sort</a> (<i>dialog</i>)</code></td></tr>
+<tr><td></td><td>Either the local (<i>dialog</i>-specific) sort choice, or (if <i>dialog</i> is omitted),
+the default (global) sort function choice in the View:Files dialog.
+The choices are <i>sort-files-by-name</i>, <i>sort-files-by-date</i>, <i>sort-files-by-size</i>, <i>sort-files-by-entry</i> (directory order),
+or the index of any file-sorter.
+</td></tr>
+
+<!-- view-files-speed -->
+<tr><td colspan=2><code><a class=def name="viewfilesspeed">view-files-speed</a> (dialog)</code></td></tr>
+<tr><td></td><td>get or set the speed of a View:Files dialog.
+</td></tr>
 
 <!-- view-mixes-dialog -->
 <tr><td colspan=2><code><a class=def name="viewmixesdialog">view-mixes-dialog</a> ()</code></td></tr>
@@ -9540,16 +9561,37 @@ use <a href="#cgp">C-g</a>.
 
 <!-- add-directory-to-view-files-list -->
 <tr><td colspan=2>
-<code><a class=def name="adddirectorytoviewfileslist">add-directory-to-view-files-list</a> (dir)</code></td></tr>
+<code><a class=def name="adddirectorytoviewfileslist">add-directory-to-view-files-list</a> (dir <i>dialog</i>)</code></td></tr>
 <tr><td></td><td>
 add the sound files in directory <i>dir</i> to the list of files in the View:Files dialog.  
 </td></tr>
 
 <!-- add-file-to-view-files-list -->
 <tr><td colspan=2>
-<code><a class=def name="addfiletoviewfileslist">add-file-to-view-files-list</a> (file)</code></td></tr>
+<code><a class=def name="addfiletoviewfileslist">add-file-to-view-files-list</a> (file <i>dialog</i>)</code></td></tr>
 <tr><td></td><td>
 add <i>file</i> to the list of files in the View:Files dialog.
+</td></tr>
+
+<!-- add-file-filter -->
+<tr><td colspan=2>
+<code><a class=def name="addfilefilter">add-file-filter</a> (name func)</code></td></tr>
+<tr><td></td><td>
+add <i>func</i> to the file-filter list under the name <i>name</i>.  Some dialog file lists include
+a "filter" menu to remove uninteresting files from the file list ("just sounds" for example).  You can add your own filters to this
+menu with add-file-filter.  The name appears as the menu item label corresponding to the function.
+The function should take one argument, a file name, and return #t to retain that file in the file list.
+</td></tr>
+
+<!-- add-file-sorter -->
+<tr><td colspan=2>
+<code><a class=def name="addfilesorter">add-file-sorter</a> (name func)</code></td></tr>
+<tr><td></td><td>
+add <i>func</i> to the file-sorter list under the name <i>name</i>.  Some dialog file lists include
+a "sort" menu to reorder the files in the file list.  You can add your own sort functions to this
+menu with add-file-sorter.  The name appears as the menu item label corresponding to the function.
+The function should take one argument, a list of file names, and return a list of those names
+sorted in some way.
 </td></tr>
 
 <!-- add-sound-file-extension -->
@@ -9936,6 +9978,20 @@ non-CLM users might prefer <a href="#defineenvelope">define-envelope</a>.
 <code>(defvar a-func '(0 0 1 1))</code>.
 </td></tr>
 
+<!-- delete-file-filter -->
+<tr><td colspan=2>
+<code><a class=def name="deletefilefilter">delete-file-filter</a> (name)</code></td></tr>
+<tr><td></td><td>
+delete <i>name</i> (and its corresponding function) from the file-filter list. 
+</td></tr>
+
+<!-- delete-file-sorter -->
+<tr><td colspan=2>
+<code><a class=def name="deletefilesorter">delete-file-sorter</a> (name)</code></td></tr>
+<tr><td></td><td>
+delete <i>name</i> (and its corresponding function) from the file-sorter list. 
+</td></tr>
+
 <!-- equalize-panes -->
 <tr><td colspan=2>
 <code><a class=def name="equalizepanes">equalize-panes</a> (<i>snd</i>)</code></td></tr>
@@ -9955,6 +10011,23 @@ This function is specific to the Motif version of Snd.
 <code><a class=def name="exit">exit</a> (<i>exit-value</i>)</code></td></tr>
 <tr><td></td><td>
 exit Snd.  Guile's exit function is renamed %exit.
+</td></tr>
+
+<!-- file-filters -->
+<tr><td colspan=2>
+<code><a class=def name="filefilters">file-filters</a> ()</code></td></tr>
+<tr><td></td><td>
+the file filters list (settable); a list of pairs: (cons "name" func), where the
+function takes one argument, a file name, and returns #t to retain that file in
+the file list.
+</td></tr>
+
+<!-- file-sorters -->
+<tr><td colspan=2>
+<code><a class=def name="filesorters">file-sorters</a> ()</code></td></tr>
+<tr><td></td><td>
+the file sorters list (settable); a list of pairs: (cons "name" func), where the
+function takes one argument, a list of file names, and returns that list suitably sorted.
 </td></tr>
 
 <!-- goto-listener-end -->
@@ -10341,6 +10414,8 @@ to put the date and time in the Snd title bar.
 
 </table>
 <br>
+
+<!-- TODO: sort constants -->
 
 <table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndconstants">Constants</a></h3></td></tr></table>
 

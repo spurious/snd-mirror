@@ -182,7 +182,7 @@ need a String or Symbol, not %s"
   $mouse_click_hook             = Hook.new("$mouse_click_hook", 7)
   $new_widget_hook              = Hook.new("$new_widget_hook", 1)
   $mark_hook                    = Hook.new("$mark_hook", 4)
-  $view_files_select_hook       = Hook.new("$view_files_select_hook", 1)
+  $view_files_select_hook       = Hook.new("$view_files_select_hook", 2)
   $dac_hook                     = Hook.new("$dac_hook", 1)
   $stop_dac_hook                = Hook.new("$stop_dac_hook", 0)
   $stop_playing_selection_hook  = Hook.new("$stop_playing_selection_hook", 0)
