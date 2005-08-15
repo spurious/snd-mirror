@@ -1541,7 +1541,7 @@ file_data *make_file_data_panel(GtkWidget *parent, char *name,
       else gtk_box_pack_start(GTK_BOX(parent), frame, true, true, 4);  
       gtk_frame_set_shadow_type(GTK_FRAME(frame), GTK_SHADOW_IN);
       gtk_widget_show(frame);
-      fdat->comment_text = make_scrolled_text(frame, true, NULL, NULL);
+      fdat->comment_text = make_scrolled_text(frame, true, NULL);
       connect_mouse_to_text(fdat->comment_text);
     }
 
@@ -2086,8 +2086,8 @@ static void save_as_file_exists_check(GtkWidget *w, gpointer context)
   entry = (GTK_FILE_SELECTION(sd->dialog))->selection_entry;
   if (entry)
     {
-      label = (GTK_FILE_SELECTION(sd->dialog))->selection_text;
       char *filename = NULL;
+      label = (GTK_FILE_SELECTION(sd->dialog))->selection_text;
       filename = (char *)gtk_file_selection_get_filename(GTK_FILE_SELECTION(sd->dialog));
       if ((filename) && (*filename))
 	{
@@ -3208,7 +3208,7 @@ static void create_post_it_monolog(void)
   SG_SIGNAL_CONNECT(ok_button, "clicked", dismiss_post_it, NULL);
   gtk_widget_show(ok_button);
 
-  post_it_text = make_scrolled_text(GTK_DIALOG(post_it_dialog)->vbox, false, NULL, NULL);
+  post_it_text = make_scrolled_text(GTK_DIALOG(post_it_dialog)->vbox, false, NULL);
   gtk_text_view_set_left_margin(GTK_TEXT_VIEW(post_it_text), 10);
   gtk_widget_show(post_it_dialog);
   set_dialog_widget(POST_IT_DIALOG, post_it_dialog);
@@ -3848,15 +3848,6 @@ static void sort_view_files_by_entry(GtkWidget *w, gpointer context)
   view_files_info *vdat = (view_files_info *)context;
   vdat->sorter = SORT_BY_ENTRY;
   view_files_sort_list(vdat);
-}
-
-static void sort_view_files_by_user_procedure(GtkWidget *w, gpointer context) 
-{
-#if 0
-  view_files_info *vdat = (view_files_info *)context;
-  set_view_files_sort(SORT_BY_PROC);
-  view_files_sort_list(vdat);
-#endif
 }
 
 static void view_files_add_files(GtkWidget *w, gpointer context, gpointer info) 

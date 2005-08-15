@@ -359,7 +359,7 @@ else
       GSL_LIBS="$GSL_LIBS $GSL_PREFIX/lib/libgslcblas.a"
     fi
     AC_DEFINE(HAVE_GSL)
-    AC_DEFINE_UNQUOTED(GSL_VERSION,"${gsl_version}")
+    AC_DEFINE_UNQUOTED(MUS_GSL_VERSION,"${gsl_version}")
   fi
 fi
 fi
@@ -754,9 +754,9 @@ else
 	if test x$PKG_CONFIG != xno ; then
           GTK_LD_LIBS="`$PKG_CONFIG gtk+-2.0 --libs-only-L` `$PKG_CONFIG gtk+-2.0 --libs-only-l`"
           pango_version="`$PKG_CONFIG pango --modversion`"
-          AC_DEFINE_UNQUOTED(PANGO_VERSION,"${pango_version}")
+          AC_DEFINE_UNQUOTED(MUS_PANGO_VERSION,"${pango_version}")
 	  atk_version="`$PKG_CONFIG atk --modversion`"
-          AC_DEFINE_UNQUOTED(ATK_VERSION,"${atk_version}")
+          AC_DEFINE_UNQUOTED(MUS_ATK_VERSION,"${atk_version}")
         fi
       	AC_SUBST(GTK_LD_LIBS)
 
@@ -800,7 +800,7 @@ else
                   CAIRO_CFLAGS="`$PKG_CONFIG cairo --cflags-only-I`"
       	          AC_SUBST(CAIRO_CFLAGS)
 	          cairo_version="`$PKG_CONFIG cairo --modversion`"
-                  AC_DEFINE_UNQUOTED(CAIRO_VERSION,"${cairo_version}")
+                  AC_DEFINE_UNQUOTED(MUS_CAIRO_VERSION,"${cairo_version}")
               fi
 	    ],  ,$GTK_LIBS)
 	# gtk 2.7.0
@@ -939,7 +939,7 @@ if test "$ac_snd_have_gui" != no ; then
     if test x$PKG_CONFIG != xno && $PKG_CONFIG gamin --exists ; then
        gamin_version="`$PKG_CONFIG gamin --modversion`"
        AC_MSG_RESULT($gamin_version)
-       AC_DEFINE_UNQUOTED(GAMIN_VERSION,"${gamin_version}")
+       AC_DEFINE_UNQUOTED(MUS_GAMIN_VERSION,"${gamin_version}")
        FAM_LIB="`$PKG_CONFIG gamin --libs`"
        AC_DEFINE(HAVE_FAM_H)
        AC_DEFINE(HAVE_FAM)
@@ -1024,7 +1024,7 @@ AC_ARG_WITH(ruby,
 	      AC_DEFINE(HAVE_RUBY)
 	      AC_DEFINE(HAVE_EXTENSION_LANGUAGE)
               AC_MSG_RESULT($RUBY_VERSION)
-              AC_DEFINE_UNQUOTED(RUBY_VERSION,"${RUBY_VERSION}")
+              AC_DEFINE_UNQUOTED(MUS_RUBY_VERSION,"${RUBY_VERSION}")
               AC_DEFINE_UNQUOTED(RUBY_RELEASE_DATE,"${RUBY_RELEASE_DATE}")
 
 	      GUILE_CFLAGS=`$RUBY -e [['\$:.each {|path| print "-I", path, " "}']]`
@@ -1253,9 +1253,9 @@ if test "$with_esd" = yes ; then
       [
 	AC_DEFINE(ESD)
 	esd_version="`esd-config --version`"
-        AC_DEFINE_UNQUOTED(ESD_VERSION,"${esd_version}")
+        AC_DEFINE_UNQUOTED(MUS_ESD_VERSION,"${esd_version}")
         audiofile_version="`audiofile-config --version`"
-        AC_DEFINE_UNQUOTED(AUDIOFILE_VERSION,"${audiofile_version}")
+        AC_DEFINE_UNQUOTED(MUS_AUDIOFILE_VERSION,"${audiofile_version}")
         AUDIO_LIB="`esd-config --libs`"
 #       ESD_CFLAGS="`esd-config --cflags`"
 	AC_SUBST(AUDIO_LIB)
@@ -1309,7 +1309,7 @@ case "$host" in
                fi
 	       if test x$PKG_CONFIG != xno ; then
                    jack_version="`$PKG_CONFIG jack --modversion`"
-                   AC_DEFINE_UNQUOTED(JACK_VERSION,"${jack_version}")
+                   AC_DEFINE_UNQUOTED(MUS_JACK_VERSION,"${jack_version}")
           	   JACK_LIBS="`$PKG_CONFIG jack --libs`"
           	   JACK_FLAGS="`$PKG_CONFIG jack --cflags`"
                fi
@@ -1676,6 +1676,7 @@ AC_CHECK_HEADER(nl_types.h,
      [AC_MSG_RESULT(no)])])
 else
 # deperation!
+cp makefile.in makefile.gettext
 cp makefile.no-gettext makefile.in
 fi
 

@@ -691,7 +691,7 @@ int open_temp_file(const char *ofile, int chans, file_info *hdr, io_error_t *err
   return(ofd);
 }
 
-io_error_t close_temp_file(const char *filename, int ofd, int type, off_t bytes, snd_info *sp)
+io_error_t close_temp_file(const char *filename, int ofd, int type, off_t bytes)
 {
   int err;
   err = mus_file_close(ofd);

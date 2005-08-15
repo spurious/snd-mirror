@@ -1,6 +1,6 @@
 Snd change log
 
-  15-Aug:    click of file name no longer opens that file.
+  15-Aug:    in View:Files, click of file name no longer opens that file.
              view-files-select-hook return type no longer matters, and args are: dialog file-name.
              optional dialog arg to view-files-sort (local set).
              -init startup switch to set init filename as arg

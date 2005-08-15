@@ -549,6 +549,8 @@ echo ' CFLAGS="-Wall" --with-ruby --disable-nls '
 make
 ./snd --version
 make allclean
+cp makefile.gettext makefile.in
+
 echo ' --with-static-xm CFLAGS="-DXM_DISABLE_DEPRECATED -Wall" '
 ./configure --quiet --with-static-xm CFLAGS="-DXM_DISABLE_DEPRECATED -Wall"
 make

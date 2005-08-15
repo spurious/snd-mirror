@@ -1797,8 +1797,7 @@ static bool apply_controls(apply_state *ap)
 	  close_temp_file(ap->ofile,
 			  ap->ofd,
 			  ap->hdr->type,
-			  apply_dur * (ap->hdr->chans) * mus_bytes_per_sample((ap->hdr)->format),
-			  sp);
+			  apply_dur * (ap->hdr->chans) * mus_bytes_per_sample((ap->hdr)->format));
 	  if ((sp->apply_ok) && (apply_dur > 0))
 	    {
 	      switch (ss->apply_choice)
@@ -4862,7 +4861,7 @@ static XEN g_close_sound_file(XEN g_fd, XEN g_bytes)
       snd_close(fd, "sound file");
       return(snd_no_such_file_error(S_close_sound_file, g_fd));
     }
-  close_temp_file(hdr->name, fd, hdr->type, bytes, any_selected_sound());
+  close_temp_file(hdr->name, fd, hdr->type, bytes);
   /* TODO: trap error here and in all close_temp_files */
   unset_temp_fd(fd);
   free_file_info(hdr);

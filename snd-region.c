@@ -917,7 +917,7 @@ static void deferred_region_to_temp_file(region *r)
 	    }
 	  if (k > 0) 
 	    mus_file_write(ofd, 0, k - 1, r->chans, data);
-	  close_temp_file(r->filename, ofd, hdr->type, len * r->chans * datumb, drp->cps[0]->sound);
+	  close_temp_file(r->filename, ofd, hdr->type, len * r->chans * datumb);
 	  r->maxamp = MUS_SAMPLE_TO_FLOAT(val);
 	  r->maxamp_position = max_position;
 	  for (i = 0; i < r->chans; i++) FREE(data[i]);

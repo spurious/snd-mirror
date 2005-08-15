@@ -772,8 +772,7 @@ Information about about parameters can be acquired using " S_analyse_ladspa "."
 
   close_temp_file(ofile, ofd,
 		  hdr->type,
-		  num * datumb * outchans,
-		  sp);
+		  num * datumb * outchans);
 
   /* Discard tmp header. */
   hdr = free_file_info(hdr);

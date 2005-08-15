@@ -4464,7 +4464,7 @@ static io_error_t snd_make_file(const char *ofile, int chans, file_info *hdr, sn
     sl_err = mus_file_write(ofd, 0, j - 1, chans, obufs);
   if (sl_err == MUS_NO_ERROR)
     {
-      io_err = close_temp_file(ofile, ofd, hdr->type, len * chans * datumb, any_selected_sound());
+      io_err = close_temp_file(ofile, ofd, hdr->type, len * chans * datumb);
       alert_new_file();
     }
   else 
@@ -5560,7 +5560,7 @@ bool insert_samples(off_t beg, off_t num, mus_sample_t *vals, chan_info *cp, con
   return(true);
 }
 
-bool insert_complete_file(snd_info *sp, const char *str, off_t chan_beg)
+bool insert_complete_file(snd_info *sp, const char *str, off_t chan_beg, file_delete_t auto_delete)
 {
   int nc;
   bool ok = false;
@@ -5587,7 +5587,7 @@ bool insert_complete_file(snd_info *sp, const char *str, off_t chan_beg)
 	      ncp = sp->chans[i];
 	      origin = mus_format("%s" PROC_OPEN "\"%s\"" PROC_SEP OFF_TD PROC_SEP "%d", 
 				  TO_PROC_NAME(S_insert_sound), filename, chan_beg, j);
-	      ok = file_insert_samples(chan_beg, len, filename, ncp, j, DONT_DELETE_ME, origin, ncp->edit_ctr);
+	      ok = file_insert_samples(chan_beg, len, filename, ncp, j, auto_delete, origin, ncp->edit_ctr);
 	      if (ok)
 		update_graph(ncp);
 	      FREE(origin);
@@ -5602,7 +5602,7 @@ bool insert_complete_file_at_cursor(snd_info *sp, const char *filename)
 {
   chan_info *ncp;
   ncp = any_selected_channel(sp);
-  return(insert_complete_file(sp, filename, CURSOR(ncp)));
+  return(insert_complete_file(sp, filename, CURSOR(ncp), DONT_DELETE_ME));
 }
 
 

@@ -8214,11 +8214,11 @@ char *mus_audio_system_name(int system) {return esd_name;}
 static char our_name[LABEL_BUFFER_SIZE];
 char *mus_audio_moniker(void) 
 {
-#ifdef ESD_VERSION
-  #ifdef AUDIOFILE_VERSION
-    mus_snprintf(our_name, LABEL_BUFFER_SIZE, "%s: %s (Audiofile %s)", esd_name, ESD_VERSION, AUDIOFILE_VERSION);
+#ifdef MUS_ESD_VERSION
+  #ifdef MUS_AUDIOFILE_VERSION
+    mus_snprintf(our_name, LABEL_BUFFER_SIZE, "%s: %s (Audiofile %s)", esd_name, MUS_ESD_VERSION, MUS_AUDIOFILE_VERSION);
   #else
-    mus_snprintf(our_name, LABEL_BUFFER_SIZE, "%s: %s", esd_name, ESD_VERSION);
+    mus_snprintf(our_name, LABEL_BUFFER_SIZE, "%s: %s", esd_name, MUS_ESD_VERSION);
   #endif
   return(our_name);
 #else

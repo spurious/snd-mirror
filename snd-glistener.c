@@ -722,7 +722,7 @@ static void make_command_widget(int height)
       if (sound_style(ss) != SOUNDS_IN_SEPARATE_WINDOWS)
 	gtk_paned_add2(GTK_PANED(SOUND_PANE(ss)), frame);
       else gtk_container_add(GTK_CONTAINER(MAIN_PANE(ss)), frame);
-      listener_text = make_scrolled_text(frame, true, NULL, NULL);
+      listener_text = make_scrolled_text(frame, true, NULL);
       gtk_widget_set_name(listener_text, "listener_text");
 
       {

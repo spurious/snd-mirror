@@ -313,7 +313,7 @@ void sg_list_insert(GtkWidget *w, int row, char *val);
 void sg_list_select(GtkWidget *lst, int row);
 void sg_list_moveto(GtkWidget *lst, int row);
 
-GtkWidget *make_scrolled_text(GtkWidget *parent, bool editable, GtkWidget *boxer, GtkWidget *paner);
+GtkWidget *make_scrolled_text(GtkWidget *parent, bool editable, GtkWidget *paner);
 GtkWidget *sg_make_list(const char *title, GtkWidget *parent, widget_add_t paned, gpointer gp, int num_items, char **items, 
 			GtkSignalFunc callback, int t1, int t2, int t3, int t4);
 void sg_text_delete(GtkWidget *w, int start, int end);

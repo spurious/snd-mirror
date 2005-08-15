@@ -798,7 +798,7 @@ static void check_padding(void *p1, void *p2, int len, bool refill)
 }
 
 #define PTR_HISTORY_SIZE 128
-static void **ptr_history[PTR_HISTORY_SIZE];
+static void *ptr_history[PTR_HISTORY_SIZE];
 static int ptr_history_loc[PTR_HISTORY_SIZE];
 static int ptr_history_ptr = 0;
 static int last_forgotten = -1;

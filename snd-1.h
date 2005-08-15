@@ -551,7 +551,7 @@ snd_data *free_snd_data(snd_data *sf);
 snd_data *make_snd_data_buffer(mus_sample_t *data, int len, int ctr);
 snd_data *make_snd_data_buffer_for_simple_channel(int len);
 int open_temp_file(const char *ofile, int chans, file_info *hdr, io_error_t *err);
-io_error_t close_temp_file(const char *filename, int ofd, int type, off_t bytes, snd_info *sp);
+io_error_t close_temp_file(const char *filename, int ofd, int type, off_t bytes);
 #if DEBUGGING
   void mem_report(void);
 #endif
@@ -812,7 +812,7 @@ bool insert_samples(off_t beg, off_t num, mus_sample_t *vals, chan_info *cp, con
 bool file_insert_samples(off_t beg, off_t num, char *tempfile, chan_info *cp, int chan, 
 			 file_delete_t auto_delete, const char *origin, int edpos);
 bool insert_complete_file_at_cursor(snd_info *sp, const char *filename);
-bool insert_complete_file(snd_info *sp, const char *str, off_t chan_beg);
+bool insert_complete_file(snd_info *sp, const char *str, off_t chan_beg, file_delete_t auto_delete);
 bool delete_samples(off_t beg, off_t num, chan_info *cp, int edpos);
 bool change_samples(off_t beg, off_t num, mus_sample_t *vals, chan_info *cp, lock_mix_t lock, const char *origin, int edpos);
 bool file_change_samples(off_t beg, off_t num, char *tempfile, chan_info *cp, int chan, 
@@ -1062,6 +1062,7 @@ env *window_env(env *e, off_t local_beg, off_t local_dur, off_t e_beg, off_t e_d
 env *multiply_envs(env *e1, env *e2, Float maxx);
 env *invert_env(env *e);
 env *default_env(Float x1, Float y);
+bool default_env_p(env *e);
 env_editor *new_env_editor(void);
 void env_editor_button_motion(env_editor *edp, int evx, int evy, Tempus motion_time, env *e);
 bool env_editor_button_press(env_editor *edp, int evx, int evy, Tempus time, env *e);
@@ -1359,6 +1360,7 @@ void set_fallback_format(int fr);
 void run_after_save_as_hook(snd_info *sp, const char *already_saved_as_name, bool from_save_as_dialog);
 bool run_before_save_as_hook(snd_info *sp, const char *save_as_filename, bool selection, int srate, int type, int format, char *comment);
 void view_files_run_select_hook(widget_t w, const char *selected_file);
+char *view_files_sort_name(int sort_choice);
 
 void g_init_file(void);
 void initialize_format_lists(void);
@@ -1622,6 +1624,7 @@ int to_c_edit_position(chan_info *cp, XEN edpos, const char *caller, int arg_pos
 off_t to_c_edit_samples(chan_info *cp, XEN edpos, const char *caller, int arg_pos);
 off_t beg_to_sample(XEN beg, const char *caller);
 off_t dur_to_samples(XEN dur, off_t beg, chan_info *cp, int edpos, int argn, const char *caller);
+char *scale_and_src(char **files, int len, int max_chans, Float amp, Float speed, env *amp_env);
 
 
 /* -------- snd-run.c -------- */

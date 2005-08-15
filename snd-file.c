@@ -510,6 +510,21 @@ void init_sound_file_extensions(void)
   add_sound_file_extension("voc");
   add_sound_file_extension("wve");
   add_sound_file_extension("sf2");
+#if HAVE_OGG
+  add_sound_file_extension("ogg");
+#endif
+#if HAVE_SPEEX
+  add_sound_file_extension("speex"); /* ?? */
+#endif
+#if HAVE_FLAC
+  add_sound_file_extension("flac");
+#endif
+#if HAVE_MIDI
+  add_sound_file_extension("mid");
+#endif
+#if HAVE_MPEG
+  add_sound_file_extension("mpeg");
+#endif
   default_sound_file_extensions = sound_file_extensions_end;
 }
 
@@ -995,7 +1010,7 @@ void snd_close_file(snd_info *sp)
 	sequester_deferred_regions(sp->chans[i], -1);
   sp->inuse = SOUND_IDLE;
   for (i = 0; i < sp->nchans; i++) sp->chans[i]->squelch_update = true;
-  view_files_add_file(NULL, sp->filename);
+  view_files_add_file(NULL_WIDGET, sp->filename);
   if (sp->playing) stop_playing_sound(sp, PLAY_CLOSE);
   if (sp->sgx) 
     {
@@ -2740,7 +2755,7 @@ static XEN g_add_directory_to_view_files_list(XEN directory, XEN dialog)
   #define H_add_directory_to_view_files_list "(" S_add_directory_to_view_files_list " dir w): adds any sound files in 'dir' to the View:Files dialog"
   XEN_ASSERT_TYPE(XEN_STRING_P(directory), directory, XEN_ARG_1, S_add_directory_to_view_files_list, "a string");
   if (XEN_NOT_BOUND_P(dialog))
-    view_files_add_directory(NULL, XEN_TO_C_STRING(directory));
+    view_files_add_directory(NULL_WIDGET, XEN_TO_C_STRING(directory));
   else
     {
       XEN_ASSERT_TYPE(XEN_WIDGET_P(dialog), dialog, XEN_ARG_2, S_add_directory_to_view_files_list, "a view-files dialog widget"); 
@@ -2758,7 +2773,7 @@ static XEN g_add_file_to_view_files_list(XEN file, XEN dialog)
   if (mus_file_probe(name))
     {
       if (XEN_NOT_BOUND_P(dialog))
-	view_files_add_file(NULL, name);
+	view_files_add_file(NULL_WIDGET, name);
       else
 	{
 	  XEN_ASSERT_TYPE(XEN_WIDGET_P(dialog), dialog, XEN_ARG_2, S_add_file_to_view_files_list, "a view-files dialog widget"); 
@@ -2767,6 +2782,24 @@ static XEN g_add_file_to_view_files_list(XEN file, XEN dialog)
     }
   if (name) FREE(name);
   return(file);
+}
+
+char *view_files_sort_name(int sort_choice)
+{
+  static char *num = NULL;
+  if (sort_choice < SORT_BY_PROC)
+    {
+      switch (sort_choice)
+	{
+	case SORT_BY_NAME:  return(S_sort_files_by_name);  break;
+	case SORT_BY_SIZE:  return(S_sort_files_by_size);  break;
+	case SORT_BY_DATE:  return(S_sort_files_by_date);  break;
+	case SORT_BY_ENTRY: return(S_sort_files_by_entry); break;
+	}
+    }
+  if (!num) num = (char *)CALLOC(32, sizeof(char));
+  mus_snprintf(num, 32, "%d", sort_choice);
+  return(num);
 }
 
 static XEN g_view_files_sort(XEN dialog) 

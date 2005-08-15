@@ -552,15 +552,13 @@ int sg_cursor_position(GtkWidget *w)
   return(gtk_text_iter_get_offset(&pos));
 }
 
-GtkWidget *make_scrolled_text(GtkWidget *parent, bool editable, GtkWidget *boxer, GtkWidget *paner)
+GtkWidget *make_scrolled_text(GtkWidget *parent, bool editable, GtkWidget *paner)
 {
   /* returns new text widget */
   GtkWidget *sw, *new_text;
   GtkTextBuffer *buf;
   sw = gtk_scrolled_window_new(NULL, NULL);
   gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(sw), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
-  if (boxer)
-    gtk_box_pack_start(GTK_BOX(boxer), sw, true, true, 4);
   new_text = gtk_text_view_new();
   buf = gtk_text_buffer_new(NULL);
   gtk_text_view_set_buffer(GTK_TEXT_VIEW(new_text), buf);

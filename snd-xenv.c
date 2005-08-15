@@ -58,6 +58,7 @@ static void display_env(env *e, char *name, GC cur_gc, int x0, int y0, int width
   axis_context *ax = NULL;  
   ax = (axis_context *)CALLOC(1, sizeof(axis_context));
   ax->wn = XtWindow(drawer);
+  if (!(ax->wn)) return;
   ax->dp = XtDisplay(drawer);
   ax->gc = cur_gc;
   ss->enved->with_dots = dots;

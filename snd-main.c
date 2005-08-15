@@ -1161,7 +1161,7 @@ int handle_next_startup_arg(int auto_open_ctr, char **auto_open_file_names, bool
 		  if ((auto_open_ctr >= args) ||
 		      (auto_open_file_names[auto_open_ctr] == NULL))
 		    snd_error(_("%s but no directory to add?"), argname);
-		  else view_files_add_directory(NULL, auto_open_file_names[auto_open_ctr]);
+		  else view_files_add_directory(NULL_WIDGET, auto_open_file_names[auto_open_ctr]);
 		}
 	      else
 		{

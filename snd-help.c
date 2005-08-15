@@ -276,8 +276,8 @@ char *version_info(void)
                         MUS_DATE, ")",
 #if HAVE_GSL
 	  "\n    GSL",
-  #ifdef GSL_VERSION
-          " ", GSL_VERSION,
+  #ifdef MUS_GSL_VERSION
+          " ", MUS_GSL_VERSION,
   #endif
 #endif
 #if HAVE_FFTW || HAVE_FFTW3
@@ -301,14 +301,14 @@ char *version_info(void)
 	  ", Glib ",     snd_itoa(GLIB_MAJOR_VERSION), ".", 
                          snd_itoa(GLIB_MINOR_VERSION), ".", 
                          snd_itoa(GLIB_MICRO_VERSION),
-  #ifdef PANGO_VERSION
-	  ", Pango ", PANGO_VERSION,
+  #ifdef MUS_PANGO_VERSION
+	  ", Pango ", MUS_PANGO_VERSION,
   #endif
-  #ifdef ATK_VERSION
-	  ", Atk ", ATK_VERSION,
+  #ifdef MUS_ATK_VERSION
+	  ", Atk ", MUS_ATK_VERSION,
   #endif
-  #ifdef CAIRO_VERSION
-	  ", Cairo ", CAIRO_VERSION,
+  #ifdef MUS_CAIRO_VERSION
+	  ", Cairo ", MUS_CAIRO_VERSION,
   #endif
 	  /* would be nice, I suppose, to give the other infinite dependencies here (fontconfig...) */
 #endif
@@ -344,12 +344,12 @@ char *version_info(void)
 	  " 1.0",
   #endif
 #endif
-#ifdef JACK_VERSION
-	  ", Jack: ", JACK_VERSION,
+#ifdef MUS_JACK_VERSION
+	  ", Jack: ", MUS_JACK_VERSION,
 #endif
 #if HAVE_FAM
-  #ifdef GAMIN_VERSION
-	  "\n    Gamin: ", GAMIN_VERSION,
+  #ifdef MUS_GAMIN_VERSION
+	  "\n    Gamin: ", MUS_GAMIN_VERSION,
   #else
 	  "\n    with fam",
   #endif
@@ -410,7 +410,7 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
-15-Aug:  click of file name no longer opens that file.\n\
+15-Aug:  in View:files, click of file name no longer opens that file.\n\
          view-files-select-hook return type no longer matters, and args are: dialog file-name.\n\
          optional dialog arg to view-files-sort (local set)\n\
          -init startup switch to set init filename as arg.\n\

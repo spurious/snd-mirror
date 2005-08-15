@@ -648,7 +648,7 @@ static void swap_channels(chan_info *cp0, chan_info *cp1, off_t beg, off_t dur, 
 	{
 	  cp0->edit_hook_checked = false;
 	  cp1->edit_hook_checked = false;
-	  close_temp_file(ofile0, ofd0, hdr0->type, 0, sp0);
+	  close_temp_file(ofile0, ofd0, hdr0->type, 0);
 	  free_file_info(hdr0);
 	  free_file_info(hdr1);
 	  if (ofile0) FREE(ofile0);
@@ -701,8 +701,8 @@ static void swap_channels(chan_info *cp0, chan_info *cp1, off_t beg, off_t dur, 
 	      mus_file_write(ofd1, 0, j - 1, 1, data1);
 	    }
 	}
-      close_temp_file(ofile0, ofd0, hdr0->type, dur * datumb, sp0);
-      close_temp_file(ofile1, ofd1, hdr1->type, dur * datumb, sp0); /* sp0 used here in case of error report */
+      close_temp_file(ofile0, ofd0, hdr0->type, dur * datumb);
+      close_temp_file(ofile1, ofd1, hdr1->type, dur * datumb);
       free_file_info(hdr0);
       free_file_info(hdr1);
       if (!(ss->stopped_explicitly))
@@ -977,7 +977,7 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, off_t beg, off_t 
   sr = free_src(sr);
   if ((!(ss->stopped_explicitly)) && (j > 0)) 
     mus_file_write(ofd, 0, j - 1, 1, data);
-  close_temp_file(ofile, ofd, hdr->type, k * datumb, sp);
+  close_temp_file(ofile, ofd, hdr->type, k * datumb);
   hdr = free_file_info(hdr);
   if (!(ss->stopped_explicitly))
     {
@@ -1288,7 +1288,7 @@ static char *clm_channel(chan_info *cp, mus_any *gen, off_t beg, off_t dur, int 
   if (temp_file)
     {
       if (j > 0) mus_file_write(ofd, 0, j - 1, 1, data);
-      close_temp_file(ofile, ofd, hdr->type, dur * datumb, sp);
+      close_temp_file(ofile, ofd, hdr->type, dur * datumb);
       hdr = free_file_info(hdr);
       file_change_samples(beg, dur, ofile, cp, 0, DELETE_ME, LOCK_MIXES, origin, cp->edit_ctr);
       if (ofile) 
@@ -1403,7 +1403,7 @@ static char *convolution_filter(chan_info *cp, int order, env *e, snd_fd *sf, of
       if (reporting) finish_progress_report(sp, from_enved);
       if ((j > 0) && (!(ss->stopped_explicitly)))
 	mus_file_write(ofd, 0, j - 1, 1, data);
-      close_temp_file(ofile, ofd, hdr->type, dur * datumb, sp);
+      close_temp_file(ofile, ofd, hdr->type, dur * datumb);
       if (!(ss->stopped_explicitly))
 	file_change_samples(beg, dur, ofile, cp, 0, DELETE_ME, LOCK_MIXES, origin, cp->edit_ctr);
       else 
@@ -1435,13 +1435,13 @@ static char *convolution_filter(chan_info *cp, int order, env *e, snd_fd *sf, of
 	    sndrdat[k] *= (scale * fltdat[k]);         /* fltdat is already reflected around midpoint */
 	  mus_fftw(sndrdat, fsize, -1);
 	  write(ofd, sndrdat, fsize * sizeof(Float));
-	  close_temp_file(ofile, ofd, hdr->type, fsize * sizeof(Float), sp);
+	  close_temp_file(ofile, ofd, hdr->type, fsize * sizeof(Float));
 	  file_change_samples(beg, dur + order, ofile, cp, 0, DELETE_ME, LOCK_MIXES, origin, cp->edit_ctr);
 	  FREE(sndrdat);
 	}
       else 
 	{
-	  close_temp_file(ofile, ofd, hdr->type, 0, sp);
+	  close_temp_file(ofile, ofd, hdr->type, 0);
 	  snd_remove(ofile, REMOVE_FROM_CACHE);
 	}
     }
@@ -1657,7 +1657,7 @@ static char *direct_filter(chan_info *cp, int order, env *e, snd_fd *sf, off_t b
   if (temp_file)
     {
       if (j > 0) mus_file_write(ofd, 0, j - 1, 1, data);
-      close_temp_file(ofile, ofd, hdr->type, dur * datumb, sp);
+      close_temp_file(ofile, ofd, hdr->type, dur * datumb);
       hdr = free_file_info(hdr);
       file_change_samples(beg, dur, ofile, cp, 0, DELETE_ME, LOCK_MIXES, new_origin, cp->edit_ctr);
       if (ofile) {FREE(ofile); ofile = NULL;}
@@ -1925,7 +1925,7 @@ static char *reverse_channel(chan_info *cp, snd_fd *sf, off_t beg, off_t dur, XE
 	    }
 	}
       if (j > 0) mus_file_write(ofd, 0, j - 1, 1, data);
-      close_temp_file(ofile, ofd, hdr->type, dur * datumb, sp);
+      close_temp_file(ofile, ofd, hdr->type, dur * datumb);
       hdr = free_file_info(hdr);
       file_change_samples(beg, dur, ofile, cp, 0, DELETE_ME, LOCK_MIXES, origin, cp->edit_ctr);
       if (ofile) 
@@ -2331,7 +2331,7 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool over_selection,
       if (temp_file)
 	{
 	  if (j > 0) mus_file_write(ofd, 0, j - 1, si->chans, data);
-	  close_temp_file(ofile, ofd, hdr->type, dur * si->chans * datumb, sp);
+	  close_temp_file(ofile, ofd, hdr->type, dur * si->chans * datumb);
 	  free_file_info(hdr);
 	}
       if (reporting) finish_progress_report(sp, from_enved);
@@ -2722,7 +2722,7 @@ static char *run_channel(chan_info *cp, struct ptree *pt, off_t beg, off_t dur, 
 	    }
 	}
       if (j > 0) mus_file_write(ofd, 0, j - 1, 1, data);
-      close_temp_file(ofile, ofd, hdr->type, dur * datumb, sp);
+      close_temp_file(ofile, ofd, hdr->type, dur * datumb);
       hdr = free_file_info(hdr);
       if (err != -1)
 	file_change_samples(beg, dur, ofile, cp, 0, DELETE_ME, LOCK_MIXES, origin, cp->edit_ctr);
@@ -2747,6 +2747,100 @@ static char *run_channel(chan_info *cp, struct ptree *pt, off_t beg, off_t dur, 
   FREE(data);
   cp->edit_hook_checked = false;
   return(NULL);
+}
+
+char *scale_and_src(char **files, int len, int max_chans, Float amp, Float speed, env *amp_env)
+{
+  char *tempfile;
+  snd_fd ***fds = NULL;
+  snd_info **sps = NULL;
+  int i, chan, chans = 0;
+  off_t k, dur = 0;
+  mus_sample_t **data;
+  file_info *hdr = NULL;
+  int j, ofd = 0, datumb = 0, err = 0, srate = 0;
+  io_error_t io_err = IO_NO_ERROR;
+  Float sum;
+  mus_any *e = NULL;
+
+  tempfile = snd_tempnam();
+  fds = (snd_fd ***)CALLOC(len, sizeof(snd_fd **));
+  sps = (snd_info **)CALLOC(len, sizeof(snd_info *));
+  for (i = 0; i < len; i++)
+    {
+      fds[i] = (snd_fd **)CALLOC(max_chans, sizeof(snd_fd *));
+      sps[i] = make_sound_readable(files[i], false);
+      sps[i]->short_filename = filename_without_home_directory(files[i]);
+      sps[i]->filename = NULL; /* why? squelch graphics perhaps? */
+      if (chans < sps[i]->nchans)
+	chans = sps[i]->nchans;
+      if (srate < SND_SRATE(sps[i]))
+	srate = SND_SRATE(sps[i]);
+      for (chan = 0; chan < sps[i]->nchans; chan++)
+	{
+	  fds[i][chan] = init_sample_read(0, sps[i]->chans[chan], READ_FORWARD);
+	  if (dur < sps[i]->chans[chan]->samples[0])
+	    dur = sps[i]->chans[chan]->samples[0];
+	}
+    }
+  /* now we have readers set up for all chans of all sounds about to be mixed/scaled/enveloped/resampled... */
+
+  /* open output sound file */
+  hdr = make_temp_header(tempfile, srate, chans, dur, "scale-and-src temp");
+  ofd = open_temp_file(tempfile, chans, hdr, &io_err);
+  if (ofd == -1)
+    {
+      /* TODO: free everything */
+      return(mus_format(_("can't open temp file %s: %s\n"), tempfile, snd_open_strerror()));
+    }
+  datumb = mus_bytes_per_sample(hdr->format);
+  data = (mus_sample_t **)CALLOC(chans, sizeof(mus_sample_t *));
+  for (i = 0; i < chans; i++)
+    data[i] = (mus_sample_t *)CALLOC(MAX_BUFFER_SIZE, sizeof(mus_sample_t)); 
+
+  if (!(default_env_p(amp_env)))
+    e = mus_make_env(amp_env->data, amp_env->pts, amp, 0.0, 1.0, 0.0, 0, dur - 1, NULL);
+
+  /* TODO: src case */
+  j = 0;
+  for (k = 0; k < dur; k++)
+    {
+      if (e) amp = mus_env(e);
+      for (chan = 0; chan < chans; chan++)
+	{
+	  sum = 0.0;
+	  for (i = 0; i < len; i++)
+	    if (fds[i][chan])
+	      sum += read_sample(fds[i][chan]);
+	  sum *= amp;
+	  data[chan][j] = MUS_FLOAT_TO_SAMPLE(sum);
+	}
+      j++;
+      if (j == MAX_BUFFER_SIZE)
+	{
+	  err = mus_file_write(ofd, 0, j - 1, chans, data);
+	  j = 0;
+	  if (err == -1) break;
+	}
+    }
+  if (j > 0) 
+    mus_file_write(ofd, 0, j - 1, chans, data);
+
+  /* close and free everything */
+  close_temp_file(tempfile, ofd, hdr->type, dur * datumb);
+  hdr = free_file_info(hdr);
+  if (e) mus_free(e);
+
+  for (i = 0; i < len; i++)
+    {
+      for (chan = 0; chan < sps[i]->nchans; chan++)
+	free_snd_fd(fds[i][chan]);
+      FREE(fds[i]);
+      sps[i] = completely_free_snd_info(sps[i]);
+    }
+  FREE(fds);
+  FREE(sps);
+  return(tempfile);
 }
 
 #define MUS_OUTA_1(Frame, Val, Fd) ((*(Fd->core)->write_sample))(Fd, Frame, 0, Val)

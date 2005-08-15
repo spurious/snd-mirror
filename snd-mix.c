@@ -1152,7 +1152,7 @@ static mix_info *file_mix_samples(off_t beg, off_t num, char *mixfile, chan_info
       j++;
     }
   if (j > 0) mus_file_write(ofd, 0, j - 1, 1, &chandata);
-  close_temp_file(ofile, ofd, ohdr->type, num * mus_bytes_per_sample(ohdr->format), sp);
+  close_temp_file(ofile, ofd, ohdr->type, num * mus_bytes_per_sample(ohdr->format));
   mus_file_close(ifd);
   csf = free_snd_fd(csf);
   FREE(data[chan]);
@@ -1530,7 +1530,7 @@ static void remix_file(mix_info *md, const char *origin, bool redisplay)
       no_space = disk_space_p(cursp, num * 4, ofile);
       if (no_space != DISK_SPACE_OK)
 	{
-	  close_temp_file(ofile, ofd, ohdr->type, 0, cursp);
+	  close_temp_file(ofile, ofd, ohdr->type, 0);
 	  free_file_info(ohdr);
 	  snd_remove(ofile, REMOVE_FROM_CACHE);
 	  FREE(ofile);
@@ -1550,7 +1550,7 @@ static void remix_file(mix_info *md, const char *origin, bool redisplay)
 	      /* not actually a no-op unless true_old_beg == true_new_beg */
 	      if (use_temp_file) 
 		{
-		  close_temp_file(ofile, ofd, ohdr->type, 0, cursp);
+		  close_temp_file(ofile, ofd, ohdr->type, 0);
 		  free_file_info(ohdr);
 		  snd_remove(ofile, REMOVE_FROM_CACHE);
 		}
@@ -1589,7 +1589,7 @@ static void remix_file(mix_info *md, const char *origin, bool redisplay)
       cp->edit_hook_checked = false;
       if (use_temp_file) 
 	{
-	  close_temp_file(ofile, ofd, ohdr->type, 0, cursp);
+	  close_temp_file(ofile, ofd, ohdr->type, 0);
 	  free_file_info(ohdr);
 	  snd_remove(ofile, REMOVE_FROM_CACHE);
 	}
@@ -1703,7 +1703,7 @@ static void remix_file(mix_info *md, const char *origin, bool redisplay)
   if (use_temp_file)
     {
       if (j > 0) mus_file_write(ofd, 0, j - 1, 1, &chandata);
-      close_temp_file(ofile, ofd, ohdr->type, num * mus_bytes_per_sample(ohdr->format), cursp);
+      close_temp_file(ofile, ofd, ohdr->type, num * mus_bytes_per_sample(ohdr->format));
       free_file_info(ohdr);
       file_change_samples(beg, num, ofile, cp, 0, DELETE_ME, DONT_LOCK_MIXES, origin, cp->edit_ctr);
     }

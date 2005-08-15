@@ -632,6 +632,10 @@ void snd_as_widget(int argc, char **argv, XtAppContext app, Widget parent, Arg *
 
 static char *fallbacks[] = {
   "*fontList: " DEFAULT_FONTLIST,
+  "*enableEtchedInMenu: True",
+  "*enableThinThickness: True",
+  "*enableToggleColor: True",
+  "*enableToggleVisual: True",
   NULL
 };
 

@@ -42,7 +42,6 @@
  * TODO: report-in-minibuffer extended to go to any dialog
  * TODO: always show bg wave in vf
  * TODO: will need at least a reset button for the vf env, perhaps reset for entire vf
- * TODO: for save: widget->index translation internally
  */
 
 
@@ -4431,7 +4430,8 @@ static void add_file_to_view_files_list(view_files_info *vdat, const char *filen
   vdat->names[vdat->end] = copy_string(filename);
   vdat->full_names[vdat->end] = copy_string(fullname);
   vdat->times[vdat->end] = vdat->curtime++;
-  vf_clear_button_set_sensitive(vdat, true);
+  if ((vdat->dialog) && (XtIsManaged(vdat->dialog)))
+    vf_clear_button_set_sensitive(vdat, true);
 }
 
 static void add_directory_to_view_files_list(view_files_info *vdat, const char *dirname)
@@ -5058,16 +5058,6 @@ static void vf_post_error(const char *error_msg, void *data)
     }
 }
 
-static bool default_env_p(env *e)
-{
-  if (e == NULL) return(true);
-  if (e->pts != 2) return(false);
-  return((snd_feq(e->data[0], 0.0)) &&
-	 (snd_feq(e->data[1], 1.0)) &&
-	 (snd_feq(e->data[2], 1.0)) &&
-	 (snd_feq(e->data[3], 1.0)));
-}
-
 static void view_files_mix_selected_callback(Widget w, XtPointer context, XtPointer info) 
 {
   view_files_info *vdat = (view_files_info *)context;
@@ -5088,37 +5078,34 @@ static void view_files_mix_selected_callback(Widget w, XtPointer context, XtPoin
       ss->sgx->requestor_dialog = w;
       ss->open_requestor = FROM_VIEW_FILES_MIX_DIALOG;
 
-
-      /* if srate != 1.0 src
-	 if amp-env env + amp
-	 else if amp != 1.0 amp
-	 use result as mix, handle as temp
-      */
-
       len = vdat->currently_selected_files;
-      for (i = 0; i < vdat->currently_selected_files; i++)
+      if ((len == 1) &&
+	  (snd_feq(vdat->amp, 1.0)) &&
+	  (snd_feq(vdat->speed, 1.0)) &&
+	  (default_env_p(vdat->amp_env)))
+	id_or_error = mix_complete_file(sp, beg, 
+					vdat->full_names[vdat->selected_files[0]], 
+					with_mix_tags(ss), 
+					DONT_DELETE_ME, 0, true); /* all-chans = true */
+      else
 	{
-
-	  if ((snd_feq(vdat->amp, 1.0)) &&
-	      (snd_feq(vdat->speed, 1.0)) &&
-	      (default_env_p(vdat->amp_env)))
-	    id_or_error = mix_complete_file(sp, beg, 
-					    vdat->full_names[vdat->selected_files[0]], 
-					    with_mix_tags(ss), 
-					    DONT_DELETE_ME, 0, true); /* all-chans = true */
-	  else
-	    {
-	      fprintf(stderr,"not default: %d %d %d %f %f\n", 
-		      snd_feq(vdat->amp, 1.0),
-		      snd_feq(vdat->speed, 1.0),
-		      default_env_p(vdat->amp_env),
-		      vdat->amp,
-		      vdat->speed);
-	    }
+	  char *tempfile;
+	  char **selected_files;
+	  selected_files = vf_selected_files(vdat);
+	  tempfile = scale_and_src(selected_files, len, sp->nchans, vdat->amp, vdat->speed, vdat->amp_env);
+	  id_or_error = mix_complete_file(sp, beg, 
+					  tempfile,
+					  with_mix_tags(ss), 
+					  (sp->nchans > 1) ? MULTICHANNEL_DELETION : DELETE_ME,
+					  0, true); /* all-chans = true */
+	  FREE(tempfile);
+	  for (i = 0; i < len; i++)
+	    FREE(selected_files[i]);
+	  FREE(selected_files);
 	}
 
-	  /* "id_or_error" here is either one of the mix id's or an error indication such as MIX_FILE_NO_MIX */
-	  /*    the possible error conditions have been checked alreay, or go through snd_error */
+      /* "id_or_error" here is either one of the mix id's or an error indication such as MIX_FILE_NO_MIX */
+      /*    the possible error conditions have been checked alreay, or go through snd_error */
 
       redirect_snd_error_to(NULL, NULL);
       if (id_or_error < 0) /* actually -1 .. -3 */
@@ -5153,48 +5140,33 @@ static void view_files_insert_selected_callback(Widget w, XtPointer context, XtP
       snd_info *sp;
       sp = any_selected_sound();
 
-
       redirect_snd_error_to(vf_post_error, (void *)vdat);
       ss->sgx->requestor_dialog = w;
       ss->open_requestor = FROM_VIEW_FILES_INSERT_DIALOG;
 
-
-      /* if srate != 1.0 src
-	 if amp-env env + amp
-	 else if amp != 1.0 amp
-	 use result as insert, handle as temp
-      */
-
       len = vdat->currently_selected_files;
-      for (i = 0; i < vdat->currently_selected_files; i++)
+      if ((len == 1) &&
+	  (snd_feq(vdat->amp, 1.0)) &&
+	  (snd_feq(vdat->speed, 1.0)) &&
+	  (default_env_p(vdat->amp_env)))
+	ok = insert_complete_file(sp, 
+				  vdat->full_names[vdat->selected_files[0]], 
+				  beg,
+				  DONT_DELETE_ME);
+      else
 	{
-	  if ((snd_feq(vdat->amp, 1.0)) &&
-	      (snd_feq(vdat->speed, 1.0)) &&
-	      (default_env_p(vdat->amp_env)))
-	    ok = insert_complete_file(sp, 
-				      vdat->full_names[vdat->selected_files[0]], 
-				      beg);
-	  else
-	    {
-	      /* turn off hooks throughout
-		 open_sound, set squelch_update and unique sync
-		 if amp g_scale_sound: XEN g_scale_by(XEN scalers, XEN snd_n, XEN chn_n)
-		 if amp_env g_env_sound
-		 if src g_src_sound
-		 save as temp and revert and close
-		 insert_complete_file...
-
-		 why not just write a little Scheme/Ruby program and eval_c_string?
-		 or use snd -batch -e...
-	      */
-
-	      fprintf(stderr,"not default: %d %d %d %f %f\n", 
-		      snd_feq(vdat->amp, 1.0),
-		      snd_feq(vdat->speed, 1.0),
-		      default_env_p(vdat->amp_env),
-		      vdat->amp,
-		      vdat->speed);
-	    }
+	  char *tempfile;
+	  char **selected_files;
+	  selected_files = vf_selected_files(vdat);
+	  tempfile = scale_and_src(selected_files, len, sp->nchans, vdat->amp, vdat->speed, vdat->amp_env);
+	  ok = insert_complete_file(sp, 
+				    tempfile,
+				    beg,
+				    (sp->nchans > 1) ? MULTICHANNEL_DELETION : DELETE_ME);
+	  FREE(tempfile);
+	  for (i = 0; i < len; i++)
+	    FREE(selected_files[i]);
+	  FREE(selected_files);
 	}
 
       redirect_snd_error_to(NULL, NULL);
@@ -5473,8 +5445,17 @@ static void vf_amp_env_resize(Widget w, XtPointer context, XtPointer info)
       vdat->env_ax->wn = XtWindow(vdat->env_drawer);
       vdat->env_ax->dp = XtDisplay(vdat->env_drawer);
       vdat->env_ax->gc = vdat->env_gc;
+      if (!(vdat->env_ax->wn)) return;
     }
-  else clear_window(vdat->env_ax);
+  else 
+    {
+      if (!(vdat->env_ax->wn))
+	{
+	  vdat->env_ax->wn = XtWindow(vdat->env_drawer); /* sometimes the dialog window is not ready when display_env gets called */
+	  if (!(vdat->env_ax->wn)) return;
+	}
+      clear_window(vdat->env_ax);
+    }
   vdat->spf->with_dots = true;
   env_editor_display_env(vdat->spf, vdat->amp_env, vdat->env_ax, _("amp env"), 
 			 0, 0,
@@ -6446,33 +6427,15 @@ Widget start_view_files_dialog(bool managed, bool make_new)
     return(start_view_files_dialog_1(new_view_files_dialog(), managed));
   for (i = 0; i < view_files_info_size; i++)
     if ((view_files_infos[i]) &&
-	(view_files_infos[i]->dialog) &&
-	(XtIsManaged(view_files_infos[i]->dialog)))
+	(view_files_infos[i]->dialog))
       {
-	vdat = view_files_infos[i]; /* found an active dialog -- use it */
-	break;
+	vdat = view_files_infos[i];
+	if (XtIsManaged(vdat->dialog))
+	  break;
       }
   if (vdat)
     return(start_view_files_dialog_1(vdat, managed));
   return(start_view_files_dialog_1(new_view_files_dialog(), managed));
-}
-
-static char *file_sort_name(int sort_choice)
-{
-  static char *num = NULL;
-  if (sort_choice < SORT_BY_PROC)
-    {
-      switch (sort_choice)
-	{
-	case SORT_BY_NAME:  return(S_sort_files_by_name);  break;
-	case SORT_BY_SIZE:  return(S_sort_files_by_size);  break;
-	case SORT_BY_DATE:  return(S_sort_files_by_date);  break;
-	case SORT_BY_ENTRY: return(S_sort_files_by_entry); break;
-	}
-    }
-  if (!num) num = (char *)CALLOC(32, sizeof(char));
-  mus_snprintf(num, 32, "%d", sort_choice);
-  return(num);
 }
 
 void save_view_files_dialogs(FILE *fd) 
@@ -6516,21 +6479,44 @@ void save_view_files_dialogs(FILE *fd)
 	    fprintf(fd, "  (set! (view-files-amp-env vf) %s)\n", env_to_string(vdat->amp_env));
 	  }
 	/* assume file-sorters are set up already */
-	fprintf(fd, "  (set! (view-files-sort vf) %s)\n", file_sort_name(vdat->sorter));	    
+	fprintf(fd, "  (set! (view-files-sort vf) %s)\n", view_files_sort_name(vdat->sorter));	    
 	fprintf(fd, ")\n");
+#endif
+#if HAVE_RUBY
+	fprintf(fd, "vf = view_files_dialog(true, true)\n");
+	if (vdat->full_names)
+	  {
+	    fprintf(fd, "  set_view_files_files(vf, [");
+	    for (k = 0; k < vdat->end; k++)
+	      fprintf(fd, "\"%s\", ", vdat->full_names[k]);
+	    fprintf(fd, "\"%s\"])\n", vdat->full_names[vdat->end]);
+	    if (vdat->currently_selected_files > 0)
+	      {
+		fprintf(fd, "  set_view_files_selected_files(vf, [");
+		for (k = 0; k < vdat->currently_selected_files - 1; k++)
+		  fprintf(fd, "\"%s\", ", vdat->full_names[vdat->selected_files[k]]);
+		fprintf(fd, "\"%s\"])\n", vdat->full_names[vdat->selected_files[vdat->currently_selected_files]]);
+	      }
+	  }
+	if (!(snd_feq(vdat->amp, 1.0)))
+	  {
+	    fprintf(fd, "  set_view_files_amp(vf, %.3f)\n", vdat->amp);
+	  }
+	if (!(snd_feq(vdat->speed, 1.0)))
+	  {
+	    fprintf(fd, "  set_view_files_speed(vf, %.3f)\n", vdat->speed);
+	  }
+	if (!(default_env_p(vdat->amp_env)))
+	  {
+	    fprintf(fd, "  set_view_files_amp_env(vf, %s)\n", env_to_string(vdat->amp_env));
+	  }
+	/* assume file-sorters are set up already */
+	fprintf(fd, "  set_view_files_sort(vf, %s)\n", TO_VAR_NAME(view_files_sort_name(vdat->sorter)));	    
+	fprintf(fd, "\n");
 #endif
       }
 #endif
 }
-
-#if 0
-/* TODO: ruby side of save */
-#if HAVE_RUBY
-	      fprintf(fd, "%s \"%s\", vf\n",
-		      xen_scheme_procedure_to_ruby(S_add_file_to_view_files_list),
-		      vdat->full_names[i]);
-#endif
-#endif
 
 void view_files_add_directory(widget_t dialog, const char *dirname) 
 {
@@ -6542,6 +6528,11 @@ void view_files_add_directory(widget_t dialog, const char *dirname)
     {
       if (view_files_info_size > 0)
 	vdat = view_files_infos[0];
+      else 
+	{
+	  vdat = new_view_files_dialog();
+	  start_view_files_dialog_1(vdat, false);
+	}
     }
   if (vdat)
     {
@@ -6561,6 +6552,11 @@ void view_files_add_file(widget_t dialog, const char *filename)
     {
       if (view_files_info_size > 0)
 	vdat = view_files_infos[0];
+      else 
+	{
+	  vdat = new_view_files_dialog();
+	  start_view_files_dialog_1(vdat, false);
+	}
     }
   if (vdat)
     {
@@ -6600,3 +6596,7 @@ is the scrolled list position of the label. The label itself is 'label'."
 #endif
 }
 
+/* TODO: check out peak-env and snd-gfile diffs (double-click to open??)
+ * TODO: always have a selected sound
+ * TODO: check out .dt/sessions/{home|current}/dt.resources. 
+ */

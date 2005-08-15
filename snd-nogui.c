@@ -1,4 +1,6 @@
 #include "snd.h"
+#include "snd-rec.h"
+#include "snd-menu.h"
 
 void display_minibuffer_error(snd_info *sp, const char *str) {fprintf(stderr, "%s\n", str);}
 void clear_minibuffer_error(snd_info *sp) {}

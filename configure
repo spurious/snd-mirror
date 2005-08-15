@@ -10105,7 +10105,7 @@ echo "$as_me: WARNING: Snd needs GSL 0.8 or later" >&2;}
 _ACEOF
 
     cat >>confdefs.h <<_ACEOF
-#define GSL_VERSION "${gsl_version}"
+#define MUS_GSL_VERSION "${gsl_version}"
 _ACEOF
 
   fi
@@ -13375,12 +13375,12 @@ _ACEOF
           GTK_LD_LIBS="`$PKG_CONFIG gtk+-2.0 --libs-only-L` `$PKG_CONFIG gtk+-2.0 --libs-only-l`"
           pango_version="`$PKG_CONFIG pango --modversion`"
           cat >>confdefs.h <<_ACEOF
-#define PANGO_VERSION "${pango_version}"
+#define MUS_PANGO_VERSION "${pango_version}"
 _ACEOF
 
 	  atk_version="`$PKG_CONFIG atk --modversion`"
           cat >>confdefs.h <<_ACEOF
-#define ATK_VERSION "${atk_version}"
+#define MUS_ATK_VERSION "${atk_version}"
 _ACEOF
 
         fi
@@ -14096,7 +14096,7 @@ _ACEOF
 
 	          cairo_version="`$PKG_CONFIG cairo --modversion`"
                   cat >>confdefs.h <<_ACEOF
-#define CAIRO_VERSION "${cairo_version}"
+#define MUS_CAIRO_VERSION "${cairo_version}"
 _ACEOF
 
               fi
@@ -14696,7 +14696,7 @@ echo $ECHO_N "checking for Gamin... $ECHO_C" >&6
        echo "$as_me:$LINENO: result: $gamin_version" >&5
 echo "${ECHO_T}$gamin_version" >&6
        cat >>confdefs.h <<_ACEOF
-#define GAMIN_VERSION "${gamin_version}"
+#define MUS_GAMIN_VERSION "${gamin_version}"
 _ACEOF
 
        FAM_LIB="`$PKG_CONFIG gamin --libs`"
@@ -15062,7 +15062,7 @@ _ACEOF
               echo "$as_me:$LINENO: result: $RUBY_VERSION" >&5
 echo "${ECHO_T}$RUBY_VERSION" >&6
               cat >>confdefs.h <<_ACEOF
-#define RUBY_VERSION "${RUBY_VERSION}"
+#define MUS_RUBY_VERSION "${RUBY_VERSION}"
 _ACEOF
 
               cat >>confdefs.h <<_ACEOF
@@ -17607,12 +17607,12 @@ _ACEOF
 
 	esd_version="`esd-config --version`"
         cat >>confdefs.h <<_ACEOF
-#define ESD_VERSION "${esd_version}"
+#define MUS_ESD_VERSION "${esd_version}"
 _ACEOF
 
         audiofile_version="`audiofile-config --version`"
         cat >>confdefs.h <<_ACEOF
-#define AUDIOFILE_VERSION "${audiofile_version}"
+#define MUS_AUDIOFILE_VERSION "${audiofile_version}"
 _ACEOF
 
         AUDIO_LIB="`esd-config --libs`"
@@ -18156,7 +18156,7 @@ fi
 	       if test x$PKG_CONFIG != xno ; then
                    jack_version="`$PKG_CONFIG jack --modversion`"
                    cat >>confdefs.h <<_ACEOF
-#define JACK_VERSION "${jack_version}"
+#define MUS_JACK_VERSION "${jack_version}"
 _ACEOF
 
           	   JACK_LIBS="`$PKG_CONFIG jack --libs`"
@@ -21413,6 +21413,7 @@ fi
 
 else
 # deperation!
+cp makefile.in makefile.gettext
 cp makefile.no-gettext makefile.in
 fi
 

@@ -456,6 +456,16 @@ env *default_env(Float x1, Float y)
   return(e);
 }
 
+bool default_env_p(env *e)
+{
+  if (e == NULL) return(true);
+  if (e->pts != 2) return(false);
+  return((snd_feq(e->data[0], 0.0)) &&
+	 (snd_feq(e->data[1], 1.0)) &&
+	 (snd_feq(e->data[2], 1.0)) &&
+	 (snd_feq(e->data[3], 1.0)));
+}
+
 env_editor *new_env_editor(void)
 {
   env_editor *edp;
@@ -567,6 +577,7 @@ void env_editor_display_env(env_editor *edp, env *e, axis_context *ax, const cha
       if (edp->with_dots)
 	init_env_axes(ap, name, x0, y0, width, height, ex0, ex1, ey0, ey1, NOT_PRINTING);
     }
+  if (!(ax->wn)) return;
   if (e)
     {
       ix1 = grf_x(e->data[0], ap);
