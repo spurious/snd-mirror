@@ -1,4 +1,5 @@
 #include "snd.h"
+/* #include "snd-file.h" */
 
 /* various file-related dialogs:
    File|Edit:Save-as, 
@@ -42,6 +43,7 @@
  * TODO: report-in-minibuffer extended to go to any dialog
  * TODO: always show bg wave in vf
  * TODO: will need at least a reset button for the vf env, perhaps reset for entire vf
+ * TODO: snd-file.h + entire split
  */
 
 
@@ -3706,7 +3708,7 @@ typedef struct {
 /* PERHAPS: how to present filters -- another button alongside sort? -- should sort have margins? */
 
 typedef struct {
-  Widget dialog, file_list, file_list_holder, left_title, byproc;
+  Widget dialog, file_list, file_list_holder, left_title;
   vf_row **file_list_entries;
   int size;
   char **names;
@@ -3749,10 +3751,12 @@ static int view_files_add_selected_file(view_files_info *vdat, vf_row *r);
 static int view_files_find_row(view_files_info *vdat, const char *name);
 static void view_files_display_list(view_files_info *vdat);
 static void vf_reflect_sort_choice_in_menu(view_files_info *vdat);
+static void vf_post_error(const char *error_msg, void *data);
+static void vf_post_location_error(const char *error_msg, void *data);
 
 
 
-/* -------- mouse-enter|leave-label hooks (used in View:Files and Region Browser) -------- */
+/* -------- mouse-enter|leave-label hooks -------- */
 
 static XEN mouse_enter_label_hook;
 static XEN mouse_leave_label_hook;
@@ -3962,27 +3966,6 @@ static view_files_info *vf_dialog_to_info(Widget dialog)
     return(view_files_infos[index]);
   return(NULL);
 }
-
-#if 0
-void view_files_set_sort_proc_name(const char *name)
-{
-  int i;
-  XmString new_name;
-  if (ss->view_files_sort_proc_name)
-    FREE(ss->view_files_sort_proc_name);
-  ss->view_files_sort_proc_name = copy_string(name);
-  new_name = XmStringCreate((char *)name, XmFONTLIST_DEFAULT_TAG);
-  for (i = 0; i < view_files_info_size; i++)
-    if ((view_files_infos[i]) &&
-	(view_files_infos[i]->byproc))
-      {
-	XtVaSetValues(view_files_infos[i]->byproc, 
-		      XmNlabelString, new_name,
-		      NULL);
-      }
-  XmStringFree(new_name);
-}
-#endif
 
 static char **vf_selected_files(view_files_info *vdat)
 {
@@ -4365,12 +4348,7 @@ static bool view_files_play(view_files_info *vdat, int pos, bool play)
 	}
       if ((!play_sp) && 
 	  (vdat->full_names[pos]))
-	{
-	  if (mus_file_probe(vdat->full_names[pos]))
-	    play_sp = make_sound_readable(vdat->full_names[pos], false);
-	  else snd_error(_("play file: can't find %s: %s"), vdat->full_names[pos], snd_io_strerror());
-	  /* TODO: redirect error */
-	}
+	play_sp = make_sound_readable(vdat->full_names[pos], false);
       if (play_sp)
 	{
 	  play_sp->short_filename = vdat->names[pos];
@@ -4427,11 +4405,14 @@ static void add_file_to_view_files_list(view_files_info *vdat, const char *filen
 	}
       vdat->size = new_size;
     }
-  vdat->names[vdat->end] = copy_string(filename);
-  vdat->full_names[vdat->end] = copy_string(fullname);
-  vdat->times[vdat->end] = vdat->curtime++;
-  if ((vdat->dialog) && (XtIsManaged(vdat->dialog)))
-    vf_clear_button_set_sensitive(vdat, true);
+  if (mus_file_probe(fullname))
+    {
+      vdat->names[vdat->end] = copy_string(filename);
+      vdat->full_names[vdat->end] = copy_string(fullname);
+      vdat->times[vdat->end] = vdat->curtime++;
+      if ((vdat->dialog) && (XtIsManaged(vdat->dialog)))
+	vf_clear_button_set_sensitive(vdat, true);
+    }
 }
 
 static void add_directory_to_view_files_list(view_files_info *vdat, const char *dirname)
@@ -4599,14 +4580,6 @@ static void view_files_sort_list(view_files_info *vdat)
 		      }
 		    snd_unprotect_at(gc_loc);
 		  }
-		else
-		  {
-		    /* TODO: error */
-		  }
-	      }
-	    else
-	      {
-		/* TODO: error */
 	      }
 	    for (i = 0; i < len; i++) FREE(data[i]);
 	    break;
@@ -4638,7 +4611,7 @@ static void view_files_select_callback(Widget w, XtPointer context, XtPointer in
   XButtonEvent *ev;
   ASSERT_WIDGET_TYPE(XmIsPushButton(w), w);
   ev = (XButtonEvent *)(cb->event);
-  view_files_select((vf_row *)context, ev->state & ShiftMask);
+  view_files_select((vf_row *)context, ev->state & snd_ShiftMask);
 }
 
 static void view_files_play_callback(Widget w, XtPointer context, XtPointer info) 
@@ -4850,15 +4823,7 @@ static void view_files_add_file_or_directory(view_files_info *vdat, const char *
   filename = mus_expand_filename((const char *)file_or_dir);
   if (directory_p(filename))
     add_directory_to_view_files_list(vdat, (const char *)filename);
-  else
-    {
-      if (mus_file_probe(filename))
-	add_file_to_view_files_list(vdat, file_or_dir, filename);
-      else
-	{
-	  /* TODO: error in vf: no such file etc */
-	}
-    }
+  else add_file_to_view_files_list(vdat, file_or_dir, filename);
   FREE(filename);
 }
 
@@ -4881,8 +4846,7 @@ static void view_files_drop_watcher(Widget w, const char *str, Position x, Posit
   view_files_info *vdat = (view_files_info *)context;
   char *filename;
   filename = mus_expand_filename(str);
-  if (mus_file_probe(filename))
-    add_file_to_view_files_list(vdat, str, filename);
+  add_file_to_view_files_list(vdat, str, filename);
   FREE(filename);
   view_files_sort_list(vdat);
   view_files_display_list(vdat);
@@ -4893,10 +4857,11 @@ static void view_files_open_selected_callback(Widget w, XtPointer context, XtPoi
   view_files_info *vdat = (view_files_info *)context;
   snd_info *sp;
   ss->open_requestor = FROM_VIEW_FILES;
-  /* TODO: open all selected files */
   if (vdat->currently_selected_files > 0)
     {
-      sp = snd_open_file(vdat->full_names[vdat->selected_files[0]], FILE_READ_WRITE);
+      int i;
+      for (i = 0; i < vdat->currently_selected_files; i++)
+	sp = snd_open_file(vdat->full_names[vdat->selected_files[i]], FILE_READ_WRITE);
       if (sp) select_channel(sp, 0); 
     }
 }
@@ -4973,8 +4938,6 @@ static off_t vf_location(view_files_info *vdat)
   return(pos);
 }
 
-/* TODO: sample text is truncated at the bottom? */
-
 static void vf_clear_error(view_files_info *vdat)
 {
   if (vdat->currently_selected_files == 1)
@@ -5043,7 +5006,12 @@ static void vf_post_error(const char *error_msg, void *data)
 		XmNlabelString, msg, 
 		NULL);
   XmStringFree(msg);
+}
 
+static void vf_post_location_error(const char *error_msg, void *data)
+{
+  view_files_info *vdat = (view_files_info *)data;
+  vf_post_error(error_msg, data);
   if (vdat->location_choice == VF_AT_SAMPLE)
     {
       /* watch at_sample_text or button (undo) */
@@ -5063,7 +5031,7 @@ static void view_files_mix_selected_callback(Widget w, XtPointer context, XtPoin
   view_files_info *vdat = (view_files_info *)context;
   off_t beg;
   vdat->error_p = false;
-  redirect_snd_error_to(vf_post_error, (void *)vdat);
+  redirect_snd_error_to(vf_post_location_error, (void *)vdat);
   beg = vf_location(vdat);
   redirect_snd_error_to(NULL, NULL);
   if (!(vdat->error_p))
@@ -5072,7 +5040,6 @@ static void view_files_mix_selected_callback(Widget w, XtPointer context, XtPoin
       int id_or_error = 0;
       snd_info *sp;
       sp = any_selected_sound();
-
 
       redirect_snd_error_to(vf_post_error, (void *)vdat);
       ss->sgx->requestor_dialog = w;
@@ -5110,7 +5077,7 @@ static void view_files_mix_selected_callback(Widget w, XtPointer context, XtPoin
       redirect_snd_error_to(NULL, NULL);
       if (id_or_error < 0) /* actually -1 .. -3 */
 	{
-	  /*
+	  /* TODO: handle errors here
 	  if (ss->open_requestor != FROM_RAW_DATA_DIALOG)
 	    clear_error_if_open_changes(fd->dialog, (void *)fd);
 	  */
@@ -5130,7 +5097,7 @@ static void view_files_insert_selected_callback(Widget w, XtPointer context, XtP
   view_files_info *vdat = (view_files_info *)context;
   off_t beg;
   vdat->error_p = false;
-  redirect_snd_error_to(vf_post_error, (void *)vdat);
+  redirect_snd_error_to(vf_post_location_error, (void *)vdat);
   beg = vf_location(vdat);
   redirect_snd_error_to(NULL, NULL);
   if (!(vdat->error_p))
@@ -5172,7 +5139,7 @@ static void view_files_insert_selected_callback(Widget w, XtPointer context, XtP
       redirect_snd_error_to(NULL, NULL);
       if (!ok)
 	{
-	  /*
+	  /* TODO: if raw, we need to complete the circle here
 	  if (ss->open_requestor != FROM_RAW_DATA_DIALOG)
 	    clear_error_if_open_changes(fd->dialog, (void *)fd);
 	  */
@@ -5186,6 +5153,7 @@ static void view_files_insert_selected_callback(Widget w, XtPointer context, XtP
     }
   else
     {
+      /* is there anything to do here? */
     }
 }
 
@@ -5640,11 +5608,6 @@ int view_files_set_local_sort(widget_t dialog, int sort_choice)
   return(sort_choice);
 }
 
-
-
-
-/* -------------------------------------------------------------------------------- */
-
 static Widget start_view_files_dialog_1(view_files_info *vdat, bool managed)
 {
   if (!(vdat->dialog))
@@ -5935,6 +5898,8 @@ static Widget start_view_files_dialog_1(view_files_info *vdat, bool managed)
 
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->lighter_blue); n++;}
+      XtSetArg(args[n], XmNborderWidth, 0); n++;
+      XtSetArg(args[n], XmNshadowThickness, 0); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNtopWidget, vdat->at_beginning_button); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
@@ -5960,7 +5925,7 @@ static Widget start_view_files_dialog_1(view_files_info *vdat, bool managed)
       XtSetArg(args[n], XmNrightPosition, 50); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNtopWidget, vdat->at_sample_button); n++;
-      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
+      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNlabelString, bstr); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;
       XtSetArg(args[n], XmNindicatorType, XmONE_OF_MANY); n++;
@@ -5976,6 +5941,8 @@ static Widget start_view_files_dialog_1(view_files_info *vdat, bool managed)
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNleftWidget, vdat->at_mark_button); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNborderWidth, 0); n++;
+      XtSetArg(args[n], XmNshadowThickness, 0); n++;
       vdat->at_mark_text = make_textfield_widget("at-mark-text", bform, args, n, NOT_ACTIVATABLE, NO_COMPLETER);
       XtRemoveCallback(vdat->at_mark_text, XmNlosingFocusCallback, textfield_unfocus_callback, NULL);
       XtAddCallback(vdat->at_mark_text, XmNlosingFocusCallback, blue_textfield_unfocus_callback, NULL);
@@ -6195,9 +6162,7 @@ static Widget start_view_files_dialog_1(view_files_info *vdat, bool managed)
       add_text = make_textfield_widget("add-text", viewform, args, n, ACTIVATABLE, add_completer_func(filename_completer));
       XtAddCallback(add_text, XmNactivateCallback, view_files_add_files, (XtPointer)vdat);
       
-      /* TODO: add_text get dir/file callback + check completer */
-      /* PERHAPS: pulldown of dirs currently in? */
-      /* file filters here also */
+      /* SOMEDAY: file filters here also */
 
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
@@ -6561,8 +6526,7 @@ void view_files_add_file(widget_t dialog, const char *filename)
   if (vdat)
     {
       full_filename = mus_expand_filename((const char *)filename);
-      if (mus_file_probe(full_filename))
-	add_file_to_view_files_list(vdat, filename, full_filename);
+      add_file_to_view_files_list(vdat, filename, full_filename);
       FREE(full_filename);
     }
 }
@@ -6598,5 +6562,7 @@ is the scrolled list position of the label. The label itself is 'label'."
 
 /* TODO: check out peak-env and snd-gfile diffs (double-click to open??)
  * TODO: always have a selected sound
- * TODO: check out .dt/sessions/{home|current}/dt.resources. 
+ * TODO: vf fam + remove if file deleted = no need for update button? -> overall reset?
+ * TODO: sed all config.h macros -> MUS_* (can this be handled in configure.ac with some prefix?)
+ *       also use snd|libxm|sndlib-config.h
  */

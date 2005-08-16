@@ -80,6 +80,7 @@
 		       (if (file-exists? peak-file)
 			   (delete-file peak-file)))))))
 	       
+  (add-hook! after-open-hook save-peak-env-info-at-close) ; TODO: isn't there a completion-func we could use here?
   (add-hook! close-hook save-peak-env-info-at-close)
 
   (add-hook! initial-graph-hook restore-peak-env-info-upon-open)

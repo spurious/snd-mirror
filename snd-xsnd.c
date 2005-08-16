@@ -1117,7 +1117,7 @@ static void minibuffer_click_callback(Widget w, XtPointer context, XtPointer inf
   ev = (XKeyEvent *)(cb->event);
   keysym = XKeycodeToKeysym(XtDisplay(w),
 			    (int)(ev->keycode),
-			    (ev->state & ShiftMask) ? 1 : 0);
+			    (ev->state & snd_ShiftMask) ? 1 : 0);
   snd_minibuffer_activate(sp, keysym, (ev->state & snd_MetaMask));
 }
 

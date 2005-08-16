@@ -4,6 +4,7 @@ Snd change log
              view-files-select-hook return type no longer matters, and args are: dialog file-name.
              optional dialog arg to view-files-sort (local set).
              -init startup switch to set init filename as arg
+	     added snd-file.h
   8-Aug:     removed previous|view-files-sort-procedure.
              added sort-files-by-name|size|date|entry.
              added view-files-amp|speed|amp-env|files|selected-files.

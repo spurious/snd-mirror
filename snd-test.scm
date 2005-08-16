@@ -1909,6 +1909,34 @@
 	(set! (file-filters) '())
 	(if (not (null? (file-filters))) (snd-display ";set file-filter nil didn't")))
       
+      (let ((tag (catch #t
+			(lambda ()
+			  (add-file-sorter 123 (lambda () "oops")))
+			(lambda args args))))
+	(if (not (equal? (car tag) 'wrong-type-arg))
+	    (snd-display ";file-sorter bad car: ~A" tag)))
+      
+      (let ((tag (catch #t
+			(lambda ()
+			  (add-file-filter "no-good" (lambda () "oops")))
+			(lambda args args))))
+	(if (not (equal? (car tag) 'bad-arity))
+	    (snd-display ";file-sorter bad cdr: ~A" tag)))
+      
+      (let ((tag (catch #t
+			(lambda ()
+			  (set! (file-sorters) (list (list "hi" (lambda (a) a)))))
+			(lambda args args))))
+	(if (not (equal? (car tag) 'wrong-type-arg))
+	    (snd-display ";set file-sorters bad car: ~A" tag)))
+      
+      (let ((tag (catch #t
+			(lambda ()
+			  (set! (file-filters) (list (cons "hi" (lambda (a) a)) (cons 123 (lambda (b) b)))))
+			(lambda args args))))
+	(if (not (equal? (car tag) 'wrong-type-arg))
+	    (snd-display ";set file-filters bad car: ~A" tag)))
+
       (if (provided? 'snd-debug)
 	  (begin
 	    (snd-stdin-test "(set! (enved-filter-order) 12)")

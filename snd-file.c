@@ -1,4 +1,5 @@
 #include "snd.h"
+/* #include "snd-file.h" */
 
 #if HAVE_DIRENT_H
   #include <dirent.h>
@@ -3012,6 +3013,23 @@ static XEN g_file_filters(void)
   return(g_vector_to_list(ss->file_filters));
 }
 
+static bool file_filter_ok(XEN name, XEN proc, const char *caller)
+{
+  char *errmsg;
+  XEN errstr;
+  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_1, caller, "a string");   
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(proc), proc, XEN_ARG_2, caller, "a procedure of 1 arg (filename)");
+  errmsg = procedure_ok(proc, 1, caller, "function", 2);
+  if (errmsg)
+    {
+      errstr = C_TO_XEN_STRING(errmsg);
+      FREE(errmsg);
+      snd_bad_arity_error(caller, errstr, proc);
+      return(false);
+    }
+  return(true);
+}
+
 static XEN g_set_file_filters(XEN new_list)
 {
   int i, len;
@@ -3026,7 +3044,16 @@ static XEN g_set_file_filters(XEN new_list)
       ss->file_filters = g_expand_vector(ss->file_filters, ss->file_filters_size);
     }
   for (i = 0; i < len; i++)
-    XEN_VECTOR_SET(ss->file_filters, i, XEN_LIST_REF(new_list, i)); /* assume each entry is ok */
+    {
+      XEN element;
+      int loc;
+      element = XEN_LIST_REF(new_list, i);
+      XEN_ASSERT_TYPE(XEN_PAIR_P(element), element, i, S_setB S_file_filters, "a cons: (name . func)");
+      loc = snd_protect(element);
+      if (file_filter_ok(XEN_CAR(element), XEN_CDR(element), S_setB S_file_filters))
+	XEN_VECTOR_SET(ss->file_filters, i, XEN_LIST_REF(new_list, i));
+      snd_unprotect_at(loc);
+    }
   return(g_vector_to_list(ss->file_filters));
 }
 
@@ -3034,20 +3061,21 @@ static XEN g_add_file_filter(XEN name, XEN proc)
 {
   #define H_add_file_filter "(" S_add_file_filter " name proc) -- add proc with identifier name to file filter list"
   int i, len;
-  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_1, S_add_file_filter, "a string");   
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(proc), proc, XEN_ARG_2, S_add_file_filter, "a procedure");   /* TODO arity checks */
-  len = ss->file_filters_size;
-  for (i = 0; i < len; i++)
+  if (file_filter_ok(name, proc, S_add_file_filter))
     {
-      if (XEN_FALSE_P(XEN_VECTOR_REF(ss->file_filters, i)))
+      len = ss->file_filters_size;
+      for (i = 0; i < len; i++)
 	{
-	  XEN_VECTOR_SET(ss->file_filters, i, XEN_CONS(name, proc));
-	  return(g_vector_to_list(ss->file_filters));
+	  if (XEN_FALSE_P(XEN_VECTOR_REF(ss->file_filters, i)))
+	    {
+	      XEN_VECTOR_SET(ss->file_filters, i, XEN_CONS(name, proc));
+	      return(g_vector_to_list(ss->file_filters));
+	    }
 	}
+      ss->file_filters_size = len * 2;
+      ss->file_filters = g_expand_vector(ss->file_filters, ss->file_filters_size);
+      XEN_VECTOR_SET(ss->file_filters, len, XEN_CONS(name, proc));
     }
-  ss->file_filters_size = len * 2;
-  ss->file_filters = g_expand_vector(ss->file_filters, ss->file_filters_size);
-  XEN_VECTOR_SET(ss->file_filters, len, XEN_CONS(name, proc));
   return(g_vector_to_list(ss->file_filters));
 }
 
@@ -3069,6 +3097,8 @@ static XEN g_delete_file_filter(XEN name)
   return(g_vector_to_list(ss->file_filters));
 }
 
+
+#define file_sorter_ok(A, B, C) file_filter_ok(A, B, C)
 
 static XEN g_file_sorters(void)
 {
@@ -3092,7 +3122,16 @@ static XEN g_set_file_sorters(XEN new_list)
       ss->file_sorters = g_expand_vector(ss->file_sorters, ss->file_sorters_size);
     }
   for (i = 0; i < len; i++)
-    XEN_VECTOR_SET(ss->file_sorters, i, XEN_LIST_REF(new_list, i)); /* assume each entry is ok */
+    {
+      XEN element;
+      int loc;
+      element = XEN_LIST_REF(new_list, i);
+      XEN_ASSERT_TYPE(XEN_PAIR_P(element), element, i, S_setB S_file_sorters, "a cons: (name . func)");
+      loc = snd_protect(element);
+      if (file_sorter_ok(XEN_CAR(element), XEN_CDR(element), S_setB S_file_sorters))
+	XEN_VECTOR_SET(ss->file_sorters, i, XEN_LIST_REF(new_list, i));
+      snd_unprotect_at(loc);
+    }
   view_files_reflect_sort_items();
   return(g_vector_to_list(ss->file_sorters));
 }
@@ -3103,24 +3142,27 @@ static XEN g_add_file_sorter(XEN name, XEN proc)
   int i, len;
   bool happy = false;
   XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_1, S_add_file_sorter, "a string");   
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(proc), proc, XEN_ARG_2, S_add_file_sorter, "a procedure");   /* TODO arity checks */
-  len = ss->file_sorters_size;
-  for (i = 0; i < len; i++)
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(proc), proc, XEN_ARG_2, S_add_file_sorter, "a procedure");
+  if (file_sorter_ok(name, proc, S_add_file_sorter))
     {
-      if (XEN_FALSE_P(XEN_VECTOR_REF(ss->file_sorters, i)))
+      len = ss->file_sorters_size;
+      for (i = 0; i < len; i++)
 	{
-	  XEN_VECTOR_SET(ss->file_sorters, i, XEN_CONS(name, proc));
-	  happy = true;
-	  break;
+	  if (XEN_FALSE_P(XEN_VECTOR_REF(ss->file_sorters, i)))
+	    {
+	      XEN_VECTOR_SET(ss->file_sorters, i, XEN_CONS(name, proc));
+	      happy = true;
+	      break;
+	    }
 	}
+      if (!happy)
+	{
+	  ss->file_sorters_size = len * 2;
+	  ss->file_sorters = g_expand_vector(ss->file_sorters, ss->file_sorters_size);
+	  XEN_VECTOR_SET(ss->file_sorters, len, XEN_CONS(name, proc));
+	}
+      view_files_reflect_sort_items();
     }
-  if (!happy)
-    {
-      ss->file_sorters_size = len * 2;
-      ss->file_sorters = g_expand_vector(ss->file_sorters, ss->file_sorters_size);
-      XEN_VECTOR_SET(ss->file_sorters, len, XEN_CONS(name, proc));
-    }
-  view_files_reflect_sort_items();
   return(g_vector_to_list(ss->file_sorters));
 }
 

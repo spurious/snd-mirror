@@ -457,8 +457,16 @@ static void create_help_monolog(void)
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+  
+  /* in operton-based solaris 10 this (next) line causes an X server error (with no stack...):
+   *   complaint is X_ChangeGC got an invalid font.
+   *   Do I need a configure test program for this?  Is there some other way to force the render table to take effect?
+   */
+#if (!SUN) || (!MUS_LITTLE_ENDIAN)
   XtSetArg(args[n], XmNfontList, NULL); n++; /* needed or new rendertable doesn't take effect! */
   XtSetArg(args[n], XmNrenderTable, rs); n++;
+#endif
+
   XtSetArg(args[n], XmNvisibleItemCount, HELP_XREFS); n++;
   XtSetArg(args[n], XmNscrollBarDisplayPolicy, XmAS_NEEDED); n++;
   related_items = XmCreateScrolledList(inner_holder, "help-list", args, n);

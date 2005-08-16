@@ -723,7 +723,7 @@ Widget fire_up_transform_dialog(bool managed)
       XtSetArg(args[n], XmNresizeWidth, false); n++;
       XtSetArg(args[n], XmNcolumns, 6); n++;
       XtSetArg(args[n], XmNrecomputeSize, false); n++;
-      XtSetArg(args[n], XmNmarginHeight, 1); n++;
+      /* XtSetArg(args[n], XmNmarginHeight, 1); n++; */
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNleftWidget, peaks_button); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
@@ -765,7 +765,7 @@ Widget fire_up_transform_dialog(bool managed)
       XtSetArg(args[n], XmNresizeWidth, false); n++;
       XtSetArg(args[n], XmNcolumns, 6); n++;
       XtSetArg(args[n], XmNrecomputeSize, false); n++;
-      XtSetArg(args[n], XmNmarginHeight, 1); n++;
+      /* XtSetArg(args[n], XmNmarginHeight, 1); n++; */
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNleftWidget, db_button); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
@@ -807,7 +807,7 @@ Widget fire_up_transform_dialog(bool managed)
       XtSetArg(args[n], XmNresizeWidth, false); n++;
       XtSetArg(args[n], XmNcolumns, 6); n++;
       XtSetArg(args[n], XmNrecomputeSize, false); n++;
-      XtSetArg(args[n], XmNmarginHeight, 1); n++;
+      /* XtSetArg(args[n], XmNmarginHeight, 1); n++; */
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNleftWidget, logfreq_button); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;

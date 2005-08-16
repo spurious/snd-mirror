@@ -2749,19 +2749,38 @@ static char *run_channel(chan_info *cp, struct ptree *pt, off_t beg, off_t dur, 
   return(NULL);
 }
 
+typedef struct {
+  snd_fd **fds;
+  int len;
+} scale_and_src_data;
+
+static Float scale_and_src_input(void *data, int direction)
+{
+  scale_and_src_data *sd = (scale_and_src_data *)data;
+  int i;
+  Float sum;
+  sum = 0.0;
+  for (i = 0; i < sd->len; i++)
+    if (sd->fds[i])
+      sum += read_sample(sd->fds[i]);
+  return(sum);
+}
+
 char *scale_and_src(char **files, int len, int max_chans, Float amp, Float speed, env *amp_env)
 {
   char *tempfile;
   snd_fd ***fds = NULL;
   snd_info **sps = NULL;
   int i, chan, chans = 0;
-  off_t k, dur = 0;
+  off_t k, new_dur = 0, dur = 0;
   mus_sample_t **data;
   file_info *hdr = NULL;
   int j, ofd = 0, datumb = 0, err = 0, srate = 0;
   io_error_t io_err = IO_NO_ERROR;
   Float sum;
   mus_any *e = NULL;
+  mus_any **sgens = NULL;
+  scale_and_src_data **sdata = NULL;
 
   tempfile = snd_tempnam();
   fds = (snd_fd ***)CALLOC(len, sizeof(snd_fd **));
@@ -2798,36 +2817,73 @@ char *scale_and_src(char **files, int len, int max_chans, Float amp, Float speed
   for (i = 0; i < chans; i++)
     data[i] = (mus_sample_t *)CALLOC(MAX_BUFFER_SIZE, sizeof(mus_sample_t)); 
 
-  if (!(default_env_p(amp_env)))
-    e = mus_make_env(amp_env->data, amp_env->pts, amp, 0.0, 1.0, 0.0, 0, dur - 1, NULL);
-
-  /* TODO: src case */
-  j = 0;
-  for (k = 0; k < dur; k++)
+  if (!(snd_feq(speed, 1.0)))
     {
-      if (e) amp = mus_env(e);
+      new_dur = (off_t)((double)dur / (double)speed);
+      sgens = (mus_any **)CALLOC(chans, sizeof(mus_any *));
+      sdata = (scale_and_src_data **)CALLOC(chans, sizeof(scale_and_src_data *));
       for (chan = 0; chan < chans; chan++)
 	{
-	  sum = 0.0;
-	  for (i = 0; i < len; i++)
-	    if (fds[i][chan])
-	      sum += read_sample(fds[i][chan]);
-	  sum *= amp;
-	  data[chan][j] = MUS_FLOAT_TO_SAMPLE(sum);
-	}
-      j++;
-      if (j == MAX_BUFFER_SIZE)
-	{
-	  err = mus_file_write(ofd, 0, j - 1, chans, data);
-	  j = 0;
-	  if (err == -1) break;
+	  int m;
+	  sdata[chan] = (scale_and_src_data *)CALLOC(1, sizeof(scale_and_src_data));
+	  sdata[chan]->len = len;
+	  sdata[chan]->fds = (snd_fd **)CALLOC(len, sizeof(snd_fd *));
+	  for (m = 0; m < len; m++)
+	    sdata[chan]->fds[m] = fds[m][chan];
+	  sgens[chan] = mus_make_src(scale_and_src_input, speed, 0, (void *)(sdata[chan])); /* width=0 -> use current default */
 	}
     }
+  else  new_dur = dur;
+
+  if (!(default_env_p(amp_env)))
+    e = mus_make_env(amp_env->data, amp_env->pts, amp, 0.0, 1.0, 0.0, 0, new_dur - 1, NULL);
+
+  j = 0;
+  if (!sgens)
+    {
+      for (k = 0; k < dur; k++)
+	{
+	  if (e) amp = mus_env(e);
+	  for (chan = 0; chan < chans; chan++)
+	    {
+	      sum = 0.0;
+	      for (i = 0; i < len; i++)
+		if (fds[i][chan])
+		  sum += read_sample(fds[i][chan]);
+	      sum *= amp;
+	      data[chan][j] = MUS_FLOAT_TO_SAMPLE(sum);
+	    }
+	  j++;
+	  if (j == MAX_BUFFER_SIZE)
+	    {
+	      err = mus_file_write(ofd, 0, j - 1, chans, data);
+	      j = 0;
+	      if (err == -1) break;
+	    }
+	}
+    }
+  else
+    {
+      for (k = 0; k < new_dur; k++)
+	{
+	  if (e) amp = mus_env(e);
+	  for (chan = 0; chan < chans; chan++)
+	    data[chan][j] = MUS_FLOAT_TO_SAMPLE(amp * mus_src(sgens[chan], 0.0, &scale_and_src_input));
+	  j++;
+	  if (j == MAX_BUFFER_SIZE)
+	    {
+	      err = mus_file_write(ofd, 0, j - 1, chans, data);
+	      j = 0;
+	      if (err == -1) break;
+	    }
+	}
+    }
+
   if (j > 0) 
     mus_file_write(ofd, 0, j - 1, chans, data);
 
   /* close and free everything */
-  close_temp_file(tempfile, ofd, hdr->type, dur * datumb);
+  close_temp_file(tempfile, ofd, hdr->type, new_dur * datumb);
   hdr = free_file_info(hdr);
   if (e) mus_free(e);
 
@@ -2840,6 +2896,23 @@ char *scale_and_src(char **files, int len, int max_chans, Float amp, Float speed
     }
   FREE(fds);
   FREE(sps);
+
+  for (i = 0; i < chans; i++)
+    FREE(data[i]);
+  FREE(data);
+
+  if (sgens)
+    {
+      for (chan = 0; chan < chans; chan++)
+	{
+	  FREE(sdata[chan]->fds);
+	  FREE(sdata[chan]);
+	  mus_free(sgens[chan]);
+	}
+      FREE(sdata);
+      FREE(sgens);
+    }
+
   return(tempfile);
 }
 
