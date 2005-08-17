@@ -269,6 +269,8 @@ Float view_files_speed(widget_t dialog);
 Float view_files_set_speed(widget_t dialog, Float new_speed);
 env *view_files_amp_env(widget_t dialog);
 env *view_files_set_amp_env(widget_t dialog, env *new_e);
+speed_style_t view_files_speed_style(widget_t dialog);
+speed_style_t view_files_set_speed_style(widget_t dialog, speed_style_t speed_style);
 char **view_files_selected_files(widget_t dialog, int *len);
 char **view_files_files(widget_t dialog, int *len);
 char **view_files_set_selected_files(widget_t dialog, char **files, int len);

@@ -5572,4 +5572,20 @@
 ! 
 ! PangoLayoutLine *pango_layout_line_ref   (PangoLayoutLine *line); type change
 + G_GNUC_CONST gboolean pango_is_zero_width (gunichar ch);
+
+
+;;; Pango 1.10.0
++ PangoFontMetrics *pango_fc_font_create_metrics_for_context (PangoFcFont   *font,
++ 							    PangoContext  *context);
++ 
+!       PANGO_SCRIPT_NEW_TAI_LUE,        /* Talu */
+!       PANGO_SCRIPT_BUGINESE,           /* Bugi */
+!       PANGO_SCRIPT_GLAGOLITIC,         /* Glag */
+!       PANGO_SCRIPT_TIFINAGH,           /* Tfng */
+!       PANGO_SCRIPT_SYLOTI_NAGRI,       /* Sylo */
+!       PANGO_SCRIPT_OLD_PERSIAN,        /* Xpeo */
+!       PANGO_SCRIPT_KHAROSHTHI          /* Khar */
+
 !#
+
+

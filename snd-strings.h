@@ -668,6 +668,7 @@
 #define S_view_files_select_hook        "view-files-select-hook"
 #define S_view_files_sort               "view-files-sort"
 #define S_view_files_speed              "view-files-speed"
+#define S_view_files_speed_style        "view-files-speed-style"
 #define S_view_mixes_dialog             "view-mixes-dialog"
 #define S_view_regions_dialog           "view-regions-dialog"
 #define S_view_sound                    "view-sound"

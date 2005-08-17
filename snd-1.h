@@ -614,6 +614,8 @@ char **help_name_to_xrefs(const char *name);
 /* -------- snd-menu.c -------- */
 
 void reflect_file_revert_in_label (snd_info *sp);
+void set_menu_label(widget_t w, const char *label);
+
 void g_init_menu(void);
 
 

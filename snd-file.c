@@ -2886,6 +2886,22 @@ static XEN g_view_files_set_amp_env(XEN dialog, XEN amp_env)
   return(amp_env);
 }
 
+/* TODO: test cf speed style */
+static XEN g_view_files_speed_style(XEN dialog)
+{
+  #define H_view_files_speed_style "(" S_view_files_speed_style " dialog) -> speed_style in use in the given View:Files dialog"
+  XEN_ASSERT_TYPE(XEN_WIDGET_P(dialog), dialog, XEN_ONLY_ARG, S_view_files_speed_style, "a view-files dialog widget"); 
+  return(C_TO_XEN_INT((int)(view_files_speed_style((widget_t)(XEN_UNWRAP_WIDGET(dialog))))));
+}
+
+static XEN g_view_files_set_speed_style(XEN dialog, XEN speed_style)
+{
+  XEN_ASSERT_TYPE(XEN_WIDGET_P(dialog), dialog, XEN_ONLY_ARG, S_setB S_view_files_speed_style, "a view-files dialog widget"); 
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(speed_style), speed_style, XEN_ARG_2, S_setB S_view_files_speed_style, "an int");
+  view_files_set_speed_style((widget_t)(XEN_UNWRAP_WIDGET(dialog)), (speed_style_t)(XEN_TO_C_INT(speed_style)));
+  return(speed_style);
+}
+
 static XEN g_view_files_selected_files(XEN dialog)
 {
   XEN result = XEN_EMPTY_LIST;
@@ -3214,6 +3230,8 @@ XEN_NARGIFY_1(g_view_files_speed_w, g_view_files_speed)
 XEN_NARGIFY_2(g_view_files_set_speed_w, g_view_files_set_speed)
 XEN_NARGIFY_1(g_view_files_amp_env_w, g_view_files_amp_env)
 XEN_NARGIFY_2(g_view_files_set_amp_env_w, g_view_files_set_amp_env)
+XEN_NARGIFY_1(g_view_files_speed_style_w, g_view_files_speed_style)
+XEN_NARGIFY_2(g_view_files_set_speed_style_w, g_view_files_set_speed_style)
 XEN_NARGIFY_1(g_view_files_selected_files_w, g_view_files_selected_files)
 XEN_NARGIFY_1(g_view_files_files_w, g_view_files_files)
 XEN_NARGIFY_2(g_view_files_set_selected_files_w, g_view_files_set_selected_files)
@@ -3252,6 +3270,8 @@ XEN_NARGIFY_2(g_add_file_sorter_w, g_add_file_sorter)
 #define g_view_files_set_amp_w g_view_files_set_amp
 #define g_view_files_amp_env_w g_view_files_amp_env
 #define g_view_files_set_amp_env_w g_view_files_set_amp_env
+#define g_view_files_speed_style_w g_view_files_speed_style
+#define g_view_files_set_speed_style_w g_view_files_set_speed_style
 #define g_view_files_speed_w g_view_files_speed
 #define g_view_files_set_speed_w g_view_files_set_speed
 #define g_view_files_selected_files_w g_view_files_selected_files
@@ -3279,6 +3299,8 @@ void g_init_file(void)
 				   S_setB S_view_files_amp, g_view_files_set_amp_w,  1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_view_files_amp_env, g_view_files_amp_env_w, H_view_files_amp_env,
 				   S_setB S_view_files_amp_env, g_view_files_set_amp_env_w,  1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_view_files_speed_style, g_view_files_speed_style_w, H_view_files_speed_style,
+				   S_setB S_view_files_speed_style, g_view_files_set_speed_style_w,  1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_view_files_speed, g_view_files_speed_w, H_view_files_speed,
 				   S_setB S_view_files_speed, g_view_files_set_speed_w,  1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_view_files_files, g_view_files_files_w, H_view_files_files,

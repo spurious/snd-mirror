@@ -3737,6 +3737,7 @@ typedef struct {
   Widget *sort_items;
   int sort_items_size;
   Widget smenu, current_play_button;
+  speed_style_t speed_style;
 } view_files_info;
 
 static void view_files_clear_selected_files(view_files_info *vdat);
@@ -3937,6 +3938,7 @@ static view_files_info *new_view_files_dialog(void)
       vdat->open_file_watcher_loc = add_ss_watcher(SS_FILE_OPEN_WATCHER, vf_open_file_watcher, (void *)vdat);
       vdat->sort_items_size = 0;
       vdat->sort_items = NULL;
+      vdat->speed_style = speed_control_style(ss);
     }
   /* don't clear at this point! */
   view_files_infos[loc]->currently_selected_files = 0;
@@ -4371,6 +4373,7 @@ static bool view_files_play(view_files_info *vdat, int pos, bool play)
 static void add_file_to_view_files_list(view_files_info *vdat, const char *filename, const char *fullname)
 {
   if (view_files_find_row(vdat, filename) != -1) return;
+  if (!(mus_file_probe(fullname))) return;
   vdat->end++;
   if (vdat->end >= vdat->size)
     {
@@ -4424,11 +4427,14 @@ static void add_directory_to_view_files_list(view_files_info *vdat, const char *
       char *fullpathname = NULL;
       char **fullnames;
       int i, end;
-      /* fprintf(stderr,"path: %s\n", dirname); */
+
+      /* fprintf(stderr,"path: %s ->", dirname); */
       fullpathname = (char *)CALLOC(FILENAME_MAX, sizeof(char));
       strcpy(fullpathname, dirname);
       if (dirname[strlen(dirname) - 1] != '/') 
 	strcat(fullpathname, "/");
+      /* fprintf(stderr," %s (%d)\n", fullpathname, sound_files->len); */
+
       end = strlen(fullpathname);
       fullnames = (char **)CALLOC(sound_files->len, sizeof(char *));
       for (i = 0; i < sound_files->len; i++) 
@@ -5251,7 +5257,7 @@ static void vf_set_speed(view_files_info *vdat, Float val)
   char speed_number_buffer[6];
   vdat->speed = speed_changed(val,
 			      speed_number_buffer,
-			      speed_control_style(ss),
+			      vdat->speed_style,
 			      speed_control_tones(ss),
 			      6);
   set_label(vdat->speed_number, speed_number_buffer);
@@ -5455,6 +5461,25 @@ env *view_files_set_amp_env(widget_t dialog, env *new_e)
     }
   return(new_e);
 }
+
+speed_style_t view_files_speed_style(widget_t dialog)
+{
+  view_files_info *vdat;
+  vdat = vf_dialog_to_info(dialog);
+  if (vdat)
+    return(vdat->speed_style);
+  return(0);
+}
+
+speed_style_t view_files_set_speed_style(widget_t dialog, speed_style_t speed_style)
+{
+  view_files_info *vdat;
+  vdat = vf_dialog_to_info(dialog);
+  if (vdat)
+    vdat->speed_style = speed_style;
+  return(speed_style);
+}
+
 
 #ifdef MAC_OSX
 static int press_x, press_y;

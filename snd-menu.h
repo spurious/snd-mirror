@@ -165,7 +165,6 @@ enum {W_pop_play, W_pop_undo, W_pop_redo, W_pop_save, W_pop_equalize_panes,
 #define popup_reset_menu (ss->sgx->pw[W_pop_reset])
 
 
-void set_menu_label(widget_t w, const char *label);
 void edit_menu_update(void);
 void view_menu_update(void);
 void options_menu_update(void);

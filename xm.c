@@ -5,10 +5,11 @@
 
 #include <config.h>
 
-#define XM_DATE "14-June-05"
+#define XM_DATE "17-Aug-05"
 
 /* HISTORY: 
  *
+ *   17-Aug:    XtSetArg 3rd arg should be 0, not NULL (type mismatch if 64-bit).
  *   14-June:   various xen-related updates (XEN_DEFINE).
  *   13-June:   fold xm-ruby.c into xm.c.
  *   15-Apr:    XGetWindowProperty free bugfix.
@@ -1780,7 +1781,7 @@ static Arg *XEN_TO_C_Args(XEN inargl)
 	  else 
 	    {
 	      if (XEN_FALSE_P(value))
-		XtSetArg(args[i], name, NULL);
+		XtSetArg(args[i], name, 0);
 	      else XEN_ASSERT_TYPE(0, value, 0, name, "procedure of 8 args");
 	    }
 	  break;
@@ -1794,7 +1795,7 @@ static Arg *XEN_TO_C_Args(XEN inargl)
 	  else 
 	    {
 	      if (XEN_FALSE_P(value))
-		XtSetArg(args[i], name, NULL);
+		XtSetArg(args[i], name, 0);
 	      else XEN_ASSERT_TYPE(0, value, 0, name, "procedure of 3 args");
 	    }
 	  break;
@@ -1808,7 +1809,7 @@ static Arg *XEN_TO_C_Args(XEN inargl)
 	  else 
 	    {
 	      if (XEN_FALSE_P(value))
-		XtSetArg(args[i], name, NULL);
+		XtSetArg(args[i], name, 0);
 	      else XEN_ASSERT_TYPE(0, value, 0, name, "procedure of 3 args");
 	    }
 	  break;
@@ -1822,7 +1823,7 @@ static Arg *XEN_TO_C_Args(XEN inargl)
 	  else 
 	    {
 	      if (XEN_FALSE_P(value))
-		XtSetArg(args[i], name, NULL);
+		XtSetArg(args[i], name, 0);
 	      else XEN_ASSERT_TYPE(0, value, 0, name, "procedure of 2 args");
 	    }
 	  break;
@@ -1836,7 +1837,7 @@ static Arg *XEN_TO_C_Args(XEN inargl)
 	  else 
 	    {
 	      if (XEN_FALSE_P(value))
-		XtSetArg(args[i], name, NULL);
+		XtSetArg(args[i], name, 0);
 	      else XEN_ASSERT_TYPE(0, value, 0, name, "procedure of 3 args");
 	    }
 	  break;
@@ -1850,7 +1851,7 @@ static Arg *XEN_TO_C_Args(XEN inargl)
 	  else 
 	    {
 	      if (XEN_FALSE_P(value))
-		XtSetArg(args[i], name, NULL);
+		XtSetArg(args[i], name, 0);
 	      else XEN_ASSERT_TYPE(0, value, 0, name, "procedure of 1 arg");
 	    }
 	  break;
@@ -1876,7 +1877,7 @@ static Arg *XEN_TO_C_Args(XEN inargl)
 	  else 
 	    {
 	      if (XEN_FALSE_P(value))
-		XtSetArg(args[i], name, NULL);
+		XtSetArg(args[i], name, 0);
 	      else XEN_ASSERT_TYPE(0, value, 0, name, "procedure of 3 args");
 	    }
 	  break;
@@ -1891,7 +1892,7 @@ static Arg *XEN_TO_C_Args(XEN inargl)
 	  else 
 	    {
 	      if (XEN_FALSE_P(value))
-		XtSetArg(args[i], name, NULL);
+		XtSetArg(args[i], name, 0);
 	      else XEN_ASSERT_TYPE(0, value, 0, name, "procedure of 2 args");
 	    }
 	  break;
@@ -1905,7 +1906,7 @@ static Arg *XEN_TO_C_Args(XEN inargl)
 	  else 
 	    {
 	      if (XEN_FALSE_P(value))
-		XtSetArg(args[i], name, NULL);
+		XtSetArg(args[i], name, 0);
 	      else XEN_ASSERT_TYPE(0, value, 0, name, "procedure of 1 arg");
 	    }
 	  break;

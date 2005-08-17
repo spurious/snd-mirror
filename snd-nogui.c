@@ -258,6 +258,8 @@ Float view_files_speed(widget_t dialog) {return(0.0);}
 Float view_files_set_speed(widget_t dialog, Float new_speed) {return(0.0);}
 env *view_files_amp_env(widget_t dialog) {return(NULL);}
 env *view_files_set_amp_env(widget_t dialog, env *new_e) {return(NULL);}
+speed_style_t view_files_speed_style(widget_t dialog) {return(speed_control_style(ss));}
+speed_style_t view_files_set_speed_style(widget_t dialog, speed_style_t speed_style) {return(speed_control_style(ss));}
 char **view_files_selected_files(widget_t dialog, int *len) {return(NULL);}
 char **view_files_files(widget_t dialog, int *len) {return(NULL);}
 char **view_files_set_selected_files(widget_t dialog, char **files, int len) {return(NULL);}

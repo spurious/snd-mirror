@@ -661,7 +661,9 @@ static void change_trigger_callback(GtkAdjustment *adj, gpointer context)
 
 static void device_button_callback(GtkWidget *w, gpointer context) 
 {
+#if NEW_SGI_AL || SUN
   pane_t *p = (pane_t *)context;
+#endif
   int button;
   bool on;
 #if SGI || SUN

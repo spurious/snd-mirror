@@ -3334,6 +3334,7 @@ typedef struct {
   GtkWidget **sort_items;
   int sort_items_size;
   GtkWidget *smenu, *current_play_button;
+  speed_style_t speed_style;
 } view_files_info;
 
 static void view_files_clear_selected_files(view_files_info *vdat);
@@ -3364,7 +3365,6 @@ static gboolean mouse_leave_label_or_enter(vf_row *r, XEN hook, const char *call
       (XEN_HOOKED(hook)))
     {
       char *label = NULL;
-      bool need_free = false;
       if (r->parent == FILE_VIEWER)
 	label = ((view_files_info *)(r->vdat))->full_names[r->pos];
       else label = (char *)gtk_label_get_text(GTK_LABEL(GTK_BIN(r->nm)->child));
@@ -3493,6 +3493,7 @@ static view_files_info *new_view_files_dialog(void)
       vdat->open_file_watcher_loc = add_ss_watcher(SS_FILE_OPEN_WATCHER, vf_open_file_watcher, (void *)vdat);
       vdat->sort_items_size = 0;
       vdat->sort_items = NULL;
+      vdat->speed_style = speed_control_style(ss);
     }
   /* don't clear at this point! */
   view_files_infos[loc]->currently_selected_files = 0;
@@ -3786,12 +3787,8 @@ static void vf_fixup_selected_files(view_files_info *vdat, char **saved_selected
 	    new_r = vdat->file_list_entries[j];
 	    if (new_r != old_r)
 	      {
-		/*
-		XtVaSetValues(new_r->rw, XmNbackground, ss->sgx->zoom_color, NULL);
-		XtVaSetValues(new_r->nm, XmNbackground, ss->sgx->zoom_color, NULL);
-		XtVaSetValues(old_r->rw, XmNbackground, ss->sgx->highlight_color, NULL);
-		XtVaSetValues(old_r->nm, XmNbackground, ss->sgx->highlight_color, NULL);
-		*/
+		highlight_row(new_r->nm, new_r->rw);
+		unhighlight_row(old_r->nm, old_r->rw);
 	      }
 	    break;
 	  }
@@ -3915,6 +3912,7 @@ static bool view_files_play(view_files_info *vdat, int pos, bool play)
 static void add_file_to_view_files_list(view_files_info *vdat, const char *filename, const char *fullname)
 {
   if (view_files_find_row(vdat, filename) != -1) return;
+  if (!(mus_file_probe(fullname))) return;
   vdat->end++;
   if (vdat->end >= vdat->size)
     {
@@ -4355,9 +4353,9 @@ static void sort_view_files_by_entry_order(GtkWidget *w, gpointer context)
 static void sort_view_files_by_procedure(GtkWidget *w, gpointer context) 
 {
   view_files_info *vdat = (view_files_info *)context;
-  int index;
-  index = (int)get_user_data(G_OBJECT(w));
-  vdat->sorter = index;
+  long index;
+  index = (long)get_user_data(G_OBJECT(w));
+  vdat->sorter = (int)index;
   vf_reflect_sort_choice_in_menu(vdat);
   view_files_sort_list(vdat);
   view_files_display_list(vdat);
@@ -4787,7 +4785,7 @@ static void vf_set_speed(view_files_info *vdat, Float val)
   char speed_number_buffer[6];
   vdat->speed = speed_changed(val,
 			      speed_number_buffer,
-			      speed_control_style(ss),
+			      vdat->speed_style,
 			      speed_control_tones(ss),
 			      6);
   set_label(vdat->speed_number, speed_number_buffer);
@@ -4874,7 +4872,7 @@ static Float vf_scroll_to_amp(int val)
   else return((val * (1.0 - amp_control_min(ss)) / (0.5 * 0.9 * SCROLLBAR_MAX)) + amp_control_min(ss));
 }
 
-static int vf_amp_to_scroll(Float amp)
+static Float vf_amp_to_scroll(Float amp)
 {
   return(amp_to_scroll(amp_control_min(ss), amp, amp_control_max(ss)));
 }
@@ -4994,6 +4992,25 @@ env *view_files_set_amp_env(widget_t dialog, env *new_e)
     }
   return(new_e);
 }
+
+speed_style_t view_files_speed_style(widget_t dialog)
+{
+  view_files_info *vdat;
+  vdat = vf_dialog_to_info(dialog);
+  if (vdat)
+    return(vdat->speed_style);
+  return(0);
+}
+
+speed_style_t view_files_set_speed_style(widget_t dialog, speed_style_t speed_style)
+{
+  view_files_info *vdat;
+  vdat = vf_dialog_to_info(dialog);
+  if (vdat)
+    vdat->speed_style = speed_style;
+  return(speed_style);
+}
+
 
 #ifdef MAC_OSX
 static int press_x, press_y;
@@ -5283,8 +5300,8 @@ static GtkWidget *start_view_files_dialog_1(view_files_info *vdat, bool managed)
       clearB = gtk_button_new_from_stock(GTK_STOCK_CLEAR);
       gtk_widget_set_name(clearB, "reset_button");
 
-      gtk_box_pack_start(GTK_BOX(bbox), updateB, true, true, 10);
-      gtk_box_pack_end(GTK_BOX(bbox), clearB, true, true, 10);
+      gtk_box_pack_start(GTK_BOX(bbox), updateB, true, true, 1);
+      gtk_box_pack_end(GTK_BOX(bbox), clearB, true, true, 1);
 
       SG_SIGNAL_CONNECT(updateB, "clicked", view_files_update_callback, (gpointer)vdat);
       SG_SIGNAL_CONNECT(clearB, "clicked", view_files_clear_callback, (gpointer)vdat);
@@ -5303,7 +5320,70 @@ static GtkWidget *start_view_files_dialog_1(view_files_info *vdat, bool managed)
       add_text = snd_entry_new(addbox, WITH_WHITE_BACKGROUND);
       SG_SIGNAL_CONNECT(add_text, "activate", view_files_add_files, (gpointer)vdat);
 
+
       /* left side */
+      {
+	GtkWidget *llabel, *ltop_sep,*info1, *info2, *lbox, *openB, *removeB, *frame;
+	GtkWidget *mixB, *insertB, *lbox1;
+
+	llabel = snd_gtk_label_new(_("(no files selected)"), ss->sgx->highlight_color);
+	gtk_box_pack_start(GTK_BOX(leftform), llabel, false, false, 0);
+	gtk_widget_show(llabel);
+
+	ltop_sep = gtk_hseparator_new();
+	gtk_box_pack_start(GTK_BOX(leftform), ltop_sep, false, false, 2);
+	gtk_widget_modify_bg(ltop_sep, GTK_STATE_NORMAL, ss->sgx->zoom_color);
+	gtk_widget_show(ltop_sep);
+
+	info1 = NEW_INFO();
+	gtk_box_pack_start(GTK_BOX(leftform), info1, false, true, INFO_MARGIN);
+
+	info2 = NEW_INFO();
+	gtk_box_pack_start(GTK_BOX(leftform), info2, false, true, INFO_MARGIN);
+
+	lbox = gtk_hbox_new(false, 0);
+	gtk_box_pack_start(GTK_BOX(leftform), lbox, false, false, 0);
+	gtk_widget_show(lbox);
+
+	openB = gtk_button_new_with_label(_("Open"));
+	removeB = gtk_button_new_with_label(_("Remove"));
+
+	gtk_box_pack_start(GTK_BOX(lbox), openB, true, true, 1);
+	gtk_box_pack_end(GTK_BOX(lbox), removeB, true, true, 1);
+
+	SG_SIGNAL_CONNECT(openB, "clicked", view_files_open_selected_callback, (gpointer)vdat);
+	SG_SIGNAL_CONNECT(removeB, "clicked", view_files_remove_selected_callback, (gpointer)vdat);
+
+	gtk_widget_show(openB);
+	gtk_widget_show(removeB);
+
+
+	/* framed stuff */
+	frame = gtk_frame_new(NULL);
+	gtk_frame_set_shadow_type(GTK_FRAME(frame), GTK_SHADOW_ETCHED_IN);
+	gtk_container_set_border_width(GTK_CONTAINER(frame), 3);
+	gtk_widget_modify_bg(frame, GTK_STATE_NORMAL, ss->sgx->black);
+	gtk_widget_show(frame);
+	gtk_box_pack_start(GTK_BOX(leftform), frame, false, false, 0);
+	
+	lbox1 = gtk_hbox_new(false, 0);
+	gtk_container_add(GTK_CONTAINER(frame), lbox1);
+	gtk_widget_show(lbox1);
+
+	mixB = gtk_button_new_with_label(_("Mix"));
+	insertB = gtk_button_new_with_label(_("Insert"));
+
+	gtk_box_pack_start(GTK_BOX(lbox1), mixB, true, true, 1);
+	gtk_box_pack_end(GTK_BOX(lbox1), insertB, true, true, 1);
+
+	SG_SIGNAL_CONNECT(mixB, "clicked", view_files_mix_selected_callback, (gpointer)vdat);
+	SG_SIGNAL_CONNECT(insertB, "clicked", view_files_insert_selected_callback, (gpointer)vdat);
+
+	gtk_widget_show(mixB);
+	gtk_widget_show(insertB);
+	
+
+      }
 
 
       set_dialog_widget(VIEW_FILES_DIALOG, vdat->dialog);

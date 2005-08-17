@@ -1278,20 +1278,24 @@ static void save_state_error_handler(const char *msg, void *data)
 
 static XEN g_save_state(XEN filename) 
 {
+  char *name = NULL;
+  XEN res;
   #define H_save_state "(" S_save_state " filename): save the current Snd state in filename; (load filename) restores it.  The \
 default " S_save_state " filename is " DEFAULT_SAVE_STATE_FILE ". It can be changed via " S_save_state_file "."
 
   XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(filename), filename, XEN_ONLY_ARG, S_save_state, "a string");
 
-  redirect_snd_error_to(save_state_error_handler, (void *)filename);
   if (XEN_BOUND_P(filename))
-    save_state(XEN_TO_C_STRING(filename));
-  else save_state(save_state_file(ss));
+    name = copy_string(XEN_TO_C_STRING(filename));
+  else name = copy_string(save_state_file(ss));
+
+  redirect_snd_error_to(save_state_error_handler, (void *)name);
+  save_state(name);
   redirect_snd_error_to(NULL, NULL);
 
-  if (XEN_BOUND_P(filename))
-    return(filename);
-  return(C_TO_XEN_STRING(save_state_file(ss)));
+  res = C_TO_XEN_STRING(name);
+  FREE(name);
+  return(res);
 }
 
 static XEN g_exit(XEN val) 

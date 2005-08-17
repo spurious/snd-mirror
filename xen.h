@@ -1463,7 +1463,7 @@ bool xen_rb_arity_ok(int rargs, int args);
 #define C_STRING_TO_XEN_FORM(Str) 0
 #define XEN_EVAL_FORM(Form) 0
 #define XEN_EVAL_C_STRING(Arg) 0
-#define XEN_SYMBOL_TO_C_STRING(a) 0
+#define XEN_SYMBOL_TO_C_STRING(a) NULL
 #define XEN_TO_STRING(Obj) "(unknown)"
 #define XEN_WRAP_C_POINTER(a) 0
 #define XEN_UNWRAP_C_POINTER(a) 0
