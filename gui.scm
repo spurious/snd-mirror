@@ -115,6 +115,13 @@
 
 
 
+(define (for-each-line-in-file filename func)
+  (let* ((fd (open-file filename "r"))
+	 (line (read-line fd)))
+    (while (not (eof-object? line))
+	   (func line)
+	   (set! line (read-line fd)))))
+
 (define (c-for-each-channel2 snd func)
   (c-for 0 < (chans snd) 1 func))
 
@@ -1430,6 +1437,12 @@
 (def-class (<button> parent name callback)
 
   (def-var button #f)
+
+  (def-method (remove)
+    (if use-gtk
+	(hide-widget (GTK_WIDGET this->button))
+	;;(gtk_widget_destroy (GTK_WIDGET button))
+	(XtUnmanageChild this->button)))
 
   (if use-gtk
       (begin

@@ -130,30 +130,30 @@
 (set! (selection-creates-region) #f)
 
 ;; Less than 64 seems to be very unreliable.
-(c-define c-minimum-dac-size 1024)
-(if (< (dac-size) c-minimum-dac-size)
-    (set! (dac-size) c-minimum-dac-size))
+(c-define *c-minimum-dac-size* 1024)
+(if (< (dac-size) *c-minimum-dac-size*)
+    (set! (dac-size) *c-minimum-dac-size*))
 
 
 ;; Set graph-style to filled.
 (set! (graph-style) graph-filled)
 
 ;; This is the value for the loop-button.
-(c-define c-islooping #t)
+(c-define *c-islooping* #t)
 
-(c-define c-backgroundcolor (make-color 0.8 0.8 0.78))
-(c-define c-selectioncolor white)
+(c-define *c-backgroundcolor* (make-color 0.8 0.8 0.78))
+(c-define *c-selectioncolor* white)
 
-(c-define c-restore-previous-session #t)
+(c-define *c-restore-previous-session* #t)
+(c-define *c-use-envelope* #f)
+(c-define *c-cursor-color* blue)
 
-(c-define c-cursor-color blue)
-
-(c-define c-zoomfactor 1.2)
+(c-define *c-zoomfactor* 1.2)
 
 ;; Percent of the window to move the cursor forward/backward using which keys.
-(c-define c-cursormovetime-rightleft 2)
-(c-define c-cursormovetime-updown 10)
-(c-define c-cursormovetime-pageupdown 50)
+(c-define *c-cursormovetime-rightleft* 2)
+(c-define *c-cursormovetime-updown* 10)
+(c-define *c-cursormovetime-pageupdown* 50)
 
 ;; Hopefully this will change.
 (define c-setting-cursor-color-cause-redraw #t)
@@ -398,7 +398,7 @@
 		 (set! (cursor-color) yellow)
 		 #f)))
 
-(set! (cursor-color) c-cursor-color)
+(set! (cursor-color) *c-cursor-color*)
 
 (if (not c-setting-cursor-color-cause-redraw)
     (add-hook! stop-playing-hook
@@ -439,59 +439,6 @@
 
 
 
-
-
-
-;;##############################################################
-;; Try to make the window-size stay the same.
-;; Seems to work for me at least.
-;;##############################################################
-
-
-(let ((width 800)
-      (height 600))
-
-
-  (if use-gtk
-      (add-hook! after-open-hook
-		 (lambda (snd)
-		   (let ((w (c-editor-widget snd)))
-		     (c-g_signal_connect w "configure_event"
-					 (lambda (w e i)
-					   (let ((event (GDK_EVENT_CONFIGURE e)))
-					     (set! width (.width event))
-					     (set! height (.height event)))))
-		     )
-		   #f)))
-  
-
-
-  (add-hook! close-hook
-	     (lambda (snd)
-	       (set! (window-width) width)
-	       (set! (window-height) (+ height 90))
-	       #f))
-
-  (add-hook! open-hook
-	     (lambda (filename)
-	       (set! (window-width) width)
-	       (set! (window-height) height)
-	       #f))
-
-
-  (add-hook! after-open-hook 
-	     (lambda (snd)
-	       (set! (window-width) width)
-	       (set! (window-height) (+ height 90))
-	       #f))
-    
-  (add-hook! initial-graph-hook
-	     (lambda (snd chn dur)
-	       (set! (window-width) width)
-	       (set! (window-height) height)
-	       #f))
-  
-  )
 
 
 
@@ -574,7 +521,7 @@
     (define (das-play)
       (play 0 #f #f #f #f #f das-callback))
     (define (das-callback x)
-      (if (and (= x 0) c-islooping)
+      (if (and (= x 0) *c-islooping*)
 	  (das-play)
 	  (set! isplaying #f)))
     (set! isplaying #t)
@@ -595,7 +542,7 @@
     (define (das-play)
       (play (get-selection-start) #f #f #f (get-selection-end) #f das-callback))
     (define (das-callback x)
-      (if (and (= x 0) c-islooping)
+      (if (and (= x 0) *c-islooping*)
 	  (das-play)
 	  (set! isplaying #f)))
     (set! isplaying #t)
@@ -764,12 +711,12 @@ Doesnt work any more.
 ;; -: Zoom out
 (bind-key (char->integer #\-) 0
 	  (lambda x
-	    (c-zoom c-zoomfactor)))
+	    (c-zoom *c-zoomfactor*)))
 
 ;; +: Zoom in
 (bind-key (char->integer #\+) 0
 	  (lambda ()
-	    (c-zoom (/ 1 c-zoomfactor))))
+	    (c-zoom (/ 1 *c-zoomfactor*))))
 
 
 
@@ -799,22 +746,22 @@ Doesnt work any more.
 						  0.01
 						  percent)))))))
   (bind-key #xFF56 0
-	    (m - c-cursormovetime-pageupdown))
+	    (m - *c-cursormovetime-pageupdown*))
   
   (bind-key #xFF55 0
-	    (m + c-cursormovetime-pageupdown))
+	    (m + *c-cursormovetime-pageupdown*))
  
   (bind-key #xFF52 0
-	    (m + c-cursormovetime-updown))
+	    (m + *c-cursormovetime-updown*))
 
   (bind-key #xFF54 0
-	    (m - c-cursormovetime-updown))
+	    (m - *c-cursormovetime-updown*))
 
   (bind-key #xFF51 0
-	    (m - c-cursormovetime-rightleft))
+	    (m - *c-cursormovetime-rightleft*))
 
   (bind-key #xFF53 0
-	    (m + c-cursormovetime-rightleft))
+	    (m + *c-cursormovetime-rightleft*))
 
   (bind-key #xFF57 0
 	    (lambda () (c-set-cursor-pos2 0)))
@@ -899,13 +846,34 @@ Does not work.
 ;;##############################################################
 
 ;; Bacground
-(set! (selected-graph-color) c-backgroundcolor)
-(set! (graph-color) c-backgroundcolor)
+(set! (selected-graph-color) *c-backgroundcolor*)
+(set! (graph-color) *c-backgroundcolor*)
 
 ;; Selection
-(set! (selection-color) c-selectioncolor)
+(set! (selection-color) *c-selectioncolor*)
 
 
+
+
+;;##############################################################
+;; Minibuffer-stuff
+;;##############################################################
+
+(define c-is-prompting-in-minibuffer #f)
+(define prompt-in-minibuffer-old prompt-in-minibuffer)
+(define report-in-minibuffer-old report-in-minibuffer)
+
+(define (prompt-in-minibuffer question func . rest)
+  (set! c-is-prompting-in-minibuffer #t)
+  (apply prompt-in-minibuffer-old (append (list question
+						(lambda (response)
+						  (let ((ret (func response)))
+						    (set! c-is-prompting-in-minibuffer #f)
+						    ret)))
+					  rest)))
+(define (report-in-minibuffer . args)
+  (if (not c-is-prompting-in-minibuffer)
+      (apply report-in-minibuffer-old args)))
 
 
 
@@ -1271,7 +1239,7 @@ Does not work.
 		   
 		   (if (car dim)
 		       (begin
-			 (set! (foreground-color) c-backgroundcolor)
+			 (set! (foreground-color) *c-backgroundcolor*)
 			 (fill-rectangle (car dim) (cadr dim) (caddr dim) (1+ fontheight))))
 		   (c-draw-string sound-widget
 				  color
@@ -1449,15 +1417,15 @@ Does not work.
 				      ;;;;;;;;;;;;;;;; cause checkbutton-set or focus-widget to be called for all other sounds, which again... etc.: and stack runs out.
 				      (begin
 					(set! not-now #t)
-					(set! c-islooping on)
+					(set! *c-islooping* on)
 					(for-each (lambda (s)
 						    (if (not (= s snd)) (c-for-each-nameform-button s "loop"
 												    (lambda (b) 
-												      (checkbutton-set b c-islooping)))))
+												      (checkbutton-set b *c-islooping*)))))
 						  (sounds))
 					(focus-widget (c-editor-widget snd))
 					(set! not-now #f))))
-				c-islooping
+				*c-islooping*
 				(if use-gtk '() (list XmNx (car (widget-position oldplay)))))
 		 (checkbutton-remove oldplay))
 
@@ -1510,37 +1478,85 @@ Does not work.
 		   (c-for-each-channel snd doit)
 		   (set! isenving #f))))))
 
-(bind-key (char->integer #\v) 0
-	  (lambda ()
-	    (c-apply-envelope (c-selected-sound))))
 
-(add-hook! close-hook
-	   (lambda (snd)
-	     (checkbutton-remove (-> (c-get snd 'envbutton) button))))
+(define (c-make-envelope snd)
+  (c-put snd 'nodelines
+	 (<array/map> (channels snd)
+		      (lambda (ch)
+			(<editor-nodeline> snd ch 0.5
+					   (lambda (val)
+					     (format #f "~1,3f" (c-scale val 0 1 2 0)))
+					   (lambda (this)
+					     (if (c-sync? snd)
+						 (c-for-each-channel2 snd
+								      (lambda (newch)
+									(if (not (= ch newch))
+									    (-> ((c-get snd 'nodelines) newch) set-graph!
+										(-> this get-graph))))))))))))
+  
+(define (c-envfunc1)
+  (lambda ()
+    (c-apply-envelope (c-selected-sound))))
+(define (c-envfunc3 snd)
+  (c-make-envelope snd)
+  #f)
+
+(define *c-envelope-enabled* #f)
+
+(define (c-enable-envelope)
+  (if (not *c-envelope-enabled*)
+      (begin
+	(set! *c-envelope-enabled* #t)
+	(for-each (lambda (snd)
+		    (c-make-envelope snd))
+		  (sounds))
+	(bind-key (char->integer #\v) 0 c-envfunc1)
+	(add-hook! after-open-hook c-envfunc3))))
+
+(define (c-disable-envelope)
+  (if *c-envelope-enabled*
+      (begin
+	(set! *c-envelope-enabled* #f)
+	(bind-key (char->integer #\v) 0 (lambda x x))
+	(for-each (lambda (snd)
+		    (let ((envbutton (c-get snd 'envbutton)))
+		      (if envbutton
+			  (-> envbutton remove)))
+		    (let ((nodelines (c-get snd 'nodelines)))
+		      (if nodelines
+			  (begin
+			    (-> nodelines for-each
+				(lambda (n nodeline)
+				  (-> nodeline delete!)))))))
+		  (sounds))
+	(c-redraw)
+	(remove-hook! after-open-hook c-envfunc3))))
 
 (add-hook! after-open-hook
 	   (lambda (snd)
 	     (c-put snd 'envbutton (<button> (c-get-nameform snd)
 					     "Env"
 					     (lambda ()
-					       (c-apply-envelope snd))))
-	     (gtk_widget_set_name (-> (c-get snd 'envbutton) button) "doit_button")
-	     (c-put snd 'nodelines
-		    (<array/map> (channels snd)
-				 (lambda (ch)
-				   (<editor-nodeline> snd ch 0.5
-						      (lambda (val)
-							(format #f "~1,3f" (c-scale val 0 1 2 0)))
-						      (lambda (this)
-							(if (c-sync? snd)
-							    (c-for-each-channel2 snd
-										 (lambda (newch)
-										   (if (not (= ch newch))
-										       (-> ((c-get snd 'nodelines) newch) set-graph!
-											   (-> this get-graph)))))))))))
-	     #f))
+					       (if (not *c-envelope-enabled*)
+						   (c-enable-envelope)
+						   (c-apply-envelope snd)))))
+	     (gtk_widget_set_name (-> (c-get snd 'envbutton) button) "doit_button")))
+
+(add-hook! close-hook
+	   (lambda (snd)
+	     (-> (c-get snd 'envbutton) remove)))
+
+(if *c-use-envelope*
+    (c-enable-envelope))
 
 
+;;(add-hook! after-open-hook
+;;	   (lambda (snd)
+	     
+#!
+(c-disable-envelope)
+(c-enable-envelope)
+!#
 
 
 
@@ -1675,16 +1691,16 @@ Does not work.
 
     (let ((buffer-menu (add-to-main-menu "Buffers")))
 
-      (define (c-switch-to-buf filename)
+      (define* (c-switch-to-buf filename #:optional from-select-sound)
 	(let* ((width (car (widget-size (car (sound-widgets (car current-buffer))))))
 	       (height (cadr (widget-size (car (sound-widgets (car current-buffer)))))))
-
+	  
 	  ;;(c-display "saving:" (c-selected-sound))
 	  (if (selection-member? (c-selected-sound))
 	      (begin
 		(c-put (c-selected-sound) 'selection-position (c-selection-position))
 		(c-put (c-selected-sound) 'selection-frames (c-selection-frames))))
-
+	  
 	  (call-with-current-continuation
 	   (lambda (give-up)
 	     (if (or (not (string? filename))
@@ -1731,7 +1747,18 @@ Does not work.
 	"(close-buffer snd) removes the menu item associated with snd (use with close-hook)"
 	(remove-from-menu buffer-menu (file-name snd))
 	#f)
-      
+
+      (add-hook! select-sound-hook (lambda (snd)
+				     (if current-buffer
+					 (let* ((width (car (widget-size (car (sound-widgets (car current-buffer))))))
+						(height (cadr (widget-size (car (sound-widgets (car current-buffer)))))))
+					   (set! current-buffer (list snd 0))
+					   (let ((sound-pane (car (sound-widgets (car current-buffer)))))
+					     (if sound-pane
+						 (begin
+						   (close-all-buffers)
+						   (show-widget sound-pane))))))))
+
       (add-hook! open-hook c-open-buffer)
       (add-hook! close-hook c-close-buffer)
       ;;(bind-key (char->integer #\b) 0 (lambda (x) (switch-to-buf)))
@@ -1801,6 +1828,9 @@ Does not work.
 ; First make sure the peaks directory is present
 (system (string-append "mkdir " (getenv "HOME") "/peaks >/dev/null 2>/dev/null"))
 (c-load-from-path peak-env)
+(add-hook! after-open-hook save-peak-env-info)
+;;(add-hook! after-save-hook save-peak-env-info)
+;;(add-hook! after-save-as-hook save-peak-env-info)
 
 
 (if use-gtk
@@ -1927,31 +1957,78 @@ Does not work.
 
 
 ;; Load files from previous session.
-
-(if c-restore-previous-session
+  
+(if *c-restore-previous-session*
     (begin
       (system (string-append "touch " (c-open-sounds-filename) " >/dev/null 2>/dev/null"))
-      (let ((fd (open-file (c-open-sounds-filename) "r")))
-	(define (myread)
-	  (let ((line (read-line fd)))
-	    (if (not (eof-object? line))
-		(begin
-		  (catch #t
-			 (lambda ()
-			   (open-sound line))
-			 (lambda (key . args)
-			   (c-display "File \"" line  "\" not found.")
-			   #f))
-		  (myread))
-		(begin
-		  ;;(set! (auto-resize) #f)
-		  (close fd)
-		  (in (if use-gtk 0 2000)
-		      (lambda ()
-			(set! (window-width) 800)
-			(set! (window-height) 600)))))))
-	;;(set! (auto-resize) #t)
-	(myread))))
+      (for-each-line-in-file (c-open-sounds-filename)
+			     (lambda (line)
+			       (catch #t
+				      (lambda ()
+					(open-sound line))
+				      (lambda (key . args)
+					(c-display "File \"" line  "\" not found.")
+					#f))))
+      (in (if use-gtk 0 2000)
+	  (lambda ()
+	    (set! (window-width) 800)
+	    (set! (window-height) 600)))))
+
+
+
+;;##############################################################
+;; Try to make the window-size stay the same.
+;; Seems to work for me at least.
+;;##############################################################
+
+
+(let ((width 800)
+      (height 600))
+
+  (define y-change 106)
+  (define lastheight 0)
+
+  (if use-gtk
+      (add-hook! after-open-hook
+		 (lambda (snd)
+		   (let ((w (c-editor-widget snd)))
+		     (c-g_signal_connect w "configure_event"
+					 (lambda (w e i)
+					   (let ((event (GDK_EVENT_CONFIGURE e)))
+					     (set! width (.width event))
+					     (set! height (.height event)))))
+		     )
+		   #f)))
+  
+
+
+  (add-hook! close-hook
+	     (lambda (snd)
+	       (set! lastheight (window-height))
+	       (set! (window-width) width)
+	       #f))
+
+  (add-hook! open-hook
+	     (lambda (filename)
+	       (set! lastheight (window-height))
+	       (set! (window-width) width)
+	       (set! (window-height) height)
+	       #f))
+
+
+  (add-hook! after-open-hook 
+	     (lambda (snd)
+	       (set! (window-width) width)
+	       (set! (window-height) lastheight) ;;(+ height y-change))
+	       #f))
+    
+  (add-hook! initial-graph-hook
+	     (lambda (snd chn dur)
+	       (set! (window-width) width)
+	       (set! (window-height) height)
+	       #f))
+  
+  )
 
 
 
