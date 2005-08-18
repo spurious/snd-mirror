@@ -206,7 +206,7 @@ static void mix_amp_env_resize(Widget w, XtPointer context, XtPointer info)
     }
 }
 
-#ifdef MAC_OSX
+#ifdef MUS_MAC_OSX
 static int press_x, press_y;
 #endif
 
@@ -217,7 +217,7 @@ static void mix_drawer_button_motion(Widget w, XtPointer context, XEvent *event,
   env *e;
   Float pos;
   if (!(mix_ok_and_unlocked(mix_dialog_id))) return;
-#ifdef MAC_OSX
+#ifdef MUS_MAC_OSX
   if ((press_x == ev->x) && (press_y == ev->y)) return;
 #endif
   chans = mix_dialog_mix_input_chans(mix_dialog_id);
@@ -236,7 +236,7 @@ static void mix_drawer_button_press(Widget w, XtPointer context, XEvent *event, 
   env *e;
   Float pos;
   if (!(mix_ok_and_unlocked(mix_dialog_id))) return;
-#ifdef MAC_OSX
+#ifdef MUS_MAC_OSX
   press_x = ev->x;
   press_y = ev->y;
 #endif
@@ -1275,7 +1275,7 @@ static void track_amp_env_resize(Widget w, XtPointer context, XtPointer info)
     display_track_waveform(track_dialog_id, track_spf->axis);
 }
 
-#ifdef MAC_OSX
+#ifdef MUS_MAC_OSX
 static int track_press_x, track_press_y;
 #endif
 
@@ -1284,7 +1284,7 @@ static void track_drawer_button_motion(Widget w, XtPointer context, XEvent *even
   XMotionEvent *ev = (XMotionEvent *)event;
   env *e;
   if (!(track_p(track_dialog_id))) return;
-#ifdef MAC_OSX
+#ifdef MUS_MAC_OSX
   if ((track_press_x == ev->x) && (track_press_y == ev->y)) return;
 #endif
   e = track_dialog_env(track_dialog_id);
@@ -1297,7 +1297,7 @@ static void track_drawer_button_press(Widget w, XtPointer context, XEvent *event
   XButtonEvent *ev = (XButtonEvent *)event;
   env *e;
   if (!(track_p(track_dialog_id))) return;
-#ifdef MAC_OSX
+#ifdef MUS_MAC_OSX
   track_press_x = ev->x;
   track_press_y = ev->y;
 #endif

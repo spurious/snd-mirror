@@ -4,7 +4,7 @@
   #include <X11/xpm.h>
 #endif
 
-#ifndef SGI
+#ifndef MUS_SGI
   #define TOGGLE_MARGIN 0
 #endif
 
@@ -750,7 +750,7 @@ void set_filter_text(snd_info *sp, char *str)
     XmTextSetString(FILTER_COEFFS_TEXT(sp), str);
 }
 
-#ifdef MAC_OSX
+#ifdef MUS_MAC_OSX
 static int press_x, press_y;
 #endif
 
@@ -759,7 +759,7 @@ static void filter_drawer_button_motion(Widget w, XtPointer context, XEvent *eve
   snd_info *sp = (snd_info *)context;
   XMotionEvent *ev = (XMotionEvent *)event;
   env_editor *edp;
-#ifdef MAC_OSX
+#ifdef MUS_MAC_OSX
   if ((press_x == ev->x) && (press_y == ev->y)) return;
 #endif
   edp = sp->sgx->flt;
@@ -774,7 +774,7 @@ static void filter_drawer_button_press(Widget w, XtPointer context, XEvent *even
   snd_info *sp = (snd_info *)context;
   XButtonEvent *ev = (XButtonEvent *)event;
   env_editor *edp;
-#ifdef MAC_OSX
+#ifdef MUS_MAC_OSX
   press_x = ev->x;
   press_y = ev->y;
 #endif
@@ -2357,7 +2357,7 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       XtSetArg(args[n], XmNshadowThickness, 0); n++;
       XtSetArg(args[n], XmNhighlightThickness, 0); n++;
       XtSetArg(args[n], XmNfillOnArm, false); n++;
-#ifdef SGI
+#ifdef MUS_SGI
       FILTER_LABEL(sp) = XtCreateManagedWidget ("filter-label", xmPushButtonWidgetClass, CONTROLS(sp), args, n);
 #else
       FILTER_LABEL(sp) = XtCreateManagedWidget ("filter-label", xmLabelWidgetClass, CONTROLS(sp), args, n);
@@ -2579,7 +2579,7 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
     }
   if (!(in_show_controls(ss)))
     XtUnmanageChild(CONTROLS(sp));
-  else sound_show_ctrls(sp);
+  else sound_show_controls(sp);
 
   if (sp->nchans == 1) 
     {
@@ -2903,7 +2903,7 @@ void equalize_all_panes(void)
     }
 }
 
-void sound_show_ctrls(snd_info *sp)
+void sound_show_controls(snd_info *sp)
 {
   Dimension hgt;
   XtVaGetValues(FILTER_LABEL(sp),
@@ -2922,7 +2922,7 @@ void sound_show_ctrls(snd_info *sp)
 		NULL);
 }
 
-void sound_hide_ctrls(snd_info *sp)
+void sound_hide_controls(snd_info *sp)
 {
   XtUnmanageChild(CONTROLS(sp));
 }
@@ -2940,7 +2940,7 @@ void show_controls(void)
       snd_info *sp;
       sp = ss->sounds[i];
       if ((sp) && (sp->inuse == SOUND_NORMAL))
-	sound_show_ctrls(sp);
+	sound_show_controls(sp);
     }
 }
 
@@ -2952,7 +2952,7 @@ void hide_controls(void)
       snd_info *sp;
       sp = ss->sounds[i];
       if ((sp) && (sp->inuse == SOUND_NORMAL))
-	sound_hide_ctrls(sp);
+	sound_hide_controls(sp);
     }
 }
 

@@ -16,7 +16,7 @@
 #define XM_FONT_RESOURCE XmNrenderTable
 #define XM_FONT_FREE XmRenderTableFree
 
-#ifdef SGI
+#ifdef MUS_SGI
   #define CLOSED_CTRLS_HEIGHT 22
 #else
   #define CLOSED_CTRLS_HEIGHT 19
@@ -41,7 +41,7 @@
 
 typedef enum {NOT_ACTIVATABLE, ACTIVATABLE} text_cr_t;
 
-#ifdef SGI
+#ifdef MUS_SGI
   #define LINE_MARGIN 10
   #define CONTROLS_MARGIN 0
 #else
@@ -168,7 +168,7 @@ typedef enum {WITHOUT_COMMENT_FIELD, WITH_COMMENT_FIELD, WITH_UNLABELLED_COMMENT
 
 #define snd_ShiftMask ShiftMask
 #define snd_ControlMask ControlMask
-#ifndef SUN
+#ifndef MUS_SUN
   #define snd_MetaMask Mod1Mask
 #else
   #define snd_MetaMask (Mod1Mask | Mod4Mask)

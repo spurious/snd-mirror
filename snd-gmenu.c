@@ -87,7 +87,7 @@ static void view_lollipops_callback(GtkWidget *w, gpointer info) {set_graph_styl
 static void view_zero_callback(GtkWidget *w, gpointer info) {set_show_y_zero((!(show_y_zero(ss))));}
 static void view_cursor_callback(GtkWidget *w, gpointer info) {set_verbose_cursor((!(verbose_cursor(ss))));}
 
-static void view_ctrls_callback(GtkWidget *w, gpointer info)
+static void view_controls_callback(GtkWidget *w, gpointer info)
 {
   in_set_show_controls(ss, !in_show_controls(ss));
   if (in_show_controls(ss))
@@ -406,11 +406,11 @@ GtkWidget *add_menu(void)
   ml[v_cascade_menu] = NULL;
   gtk_menu_item_set_submenu(GTK_MENU_ITEM(view_menu), view_cascade_menu);
 
-  view_ctrls_menu = gtk_menu_item_new_with_label(_("Show controls"));
-  ml[v_ctrls_menu] = _("Show controls");
-  gtk_menu_shell_append(GTK_MENU_SHELL(view_cascade_menu), view_ctrls_menu);
-  gtk_widget_show(view_ctrls_menu);
-  SG_SIGNAL_CONNECT(view_ctrls_menu, "activate", view_ctrls_callback, NULL);
+  view_controls_menu = gtk_menu_item_new_with_label(_("Show controls"));
+  ml[v_controls_menu] = _("Show controls");
+  gtk_menu_shell_append(GTK_MENU_SHELL(view_cascade_menu), view_controls_menu);
+  gtk_widget_show(view_controls_menu);
+  SG_SIGNAL_CONNECT(view_controls_menu, "activate", view_controls_callback, NULL);
 
 #if HAVE_EXTENSION_LANGUAGE
   view_listener_menu = gtk_menu_item_new_with_label(_("Open listener"));

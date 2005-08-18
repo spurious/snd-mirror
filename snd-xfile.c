@@ -213,7 +213,7 @@ static void sound_file_search(Widget dialog, XmFileSelectionBoxCallbackStruct *i
 	  qsort((void *)(cdp->files), cdp->len, sizeof(char *), string_compare);
 	  names = (XmString *)CALLOC(cdp->len, sizeof(XmString));
 
-#ifdef SGI
+#ifdef MUS_SGI
 	  /* this is true only if the SGI "enhanced FSB" is in use, I hope */
 	  if (!(XtNameToWidget(dialog, "Text"))) 
 	    fp->save_dir = fp->full_pathname;
@@ -5468,7 +5468,7 @@ speed_style_t view_files_speed_style(widget_t dialog)
   vdat = vf_dialog_to_info(dialog);
   if (vdat)
     return(vdat->speed_style);
-  return(0);
+  return(SPEED_CONTROL_AS_FLOAT);
 }
 
 speed_style_t view_files_set_speed_style(widget_t dialog, speed_style_t speed_style)
@@ -5481,7 +5481,7 @@ speed_style_t view_files_set_speed_style(widget_t dialog, speed_style_t speed_st
 }
 
 
-#ifdef MAC_OSX
+#ifdef MUS_MAC_OSX
 static int press_x, press_y;
 #endif
 
@@ -5491,7 +5491,7 @@ static void vf_drawer_button_motion(Widget w, XtPointer context, XEvent *event, 
   XMotionEvent *ev = (XMotionEvent *)event;
   Float pos;
 
-#ifdef MAC_OSX
+#ifdef MUS_MAC_OSX
   if ((press_x == ev->x) && (press_y == ev->y)) return;
 #endif
 
@@ -5506,7 +5506,7 @@ static void vf_drawer_button_press(Widget w, XtPointer context, XEvent *event, B
   XButtonEvent *ev = (XButtonEvent *)event;
   Float pos;
 
-#ifdef MAC_OSX
+#ifdef MUS_MAC_OSX
   press_x = ev->x;
   press_y = ev->y;
 #endif
@@ -6585,9 +6585,6 @@ is the scrolled list position of the label. The label itself is 'label'."
 #endif
 }
 
-/* TODO: check out peak-env and snd-gfile diffs (double-click to open??)
- * TODO: always have a selected sound
+/* TODO: always have a selected sound
  * TODO: vf fam + remove if file deleted = no need for update button? -> overall reset?
- * TODO: sed all config.h macros -> MUS_* (can this be handled in configure.ac with some prefix?)
- *       also use snd|libxm|sndlib-config.h
  */

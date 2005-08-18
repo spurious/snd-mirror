@@ -410,6 +410,7 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+18-Aug:  _sndlib.h and sndlib.h.in.\n\
 15-Aug:  in View:files, click of file name no longer opens that file.\n\
          view-files-select-hook return type no longer matters, and args are: dialog file-name.\n\
          optional dialog arg to view-files-sort (local set)\n\
@@ -417,7 +418,7 @@ void about_snd_help(void)
          added snd-file.h\n\
 8-Aug:   removed previous|view-files-sort-procedure.\n\
          added sort-files-by-name|size|date|entry.\n\
-         added view-files-amp|speed|amp-env|files|selected-files.\n\
+         added view-files-amp|speed|amp-env|speed-style|files|selected-files.\n\
          removed keep-mix-dialog-open-upon-ok from snd-motif.scm.\n\
          before-exit|close-hook.\n\
 2-Aug:   sound-file-extensions as settable list.\n\
@@ -1796,7 +1797,7 @@ static char *snd_finder(const char *name, bool got_help)
 
       for (a_def = 0; (!fgrep) && (a_def < NUM_DEFINES); a_def++)
 	{
-#if (!SUN)
+#if (!MUS_SUN)
 	  /* Gnu fgrep: -s switch to fgrep = "silent", I guess (--no-messages) [OSX uses Gnu fgrep] */
 	  /* configure script looks for grep -F or fgrep, setting FGREP_PROG (fgrep is supposedly obsolete) */
 	  command = mus_format(FGREP_PROG " -s \"%s%s" TRAILER "\" %s/*." XEN_FILE_EXTENSION " --line-number > %s", 

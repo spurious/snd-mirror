@@ -28,7 +28,7 @@
  *   whatever headers mount.h needs, which I assume depends on the OS -- not worth the
  *   trouble!  Perhaps there's a better way to handle disk-kspace?
  */
-#if MAC_OSX || defined(__bsdi__)
+#if MUS_MAC_OSX || defined(__bsdi__)
   #include <sys/mount.h>
 #endif
 
@@ -38,7 +38,7 @@
 
 off_t disk_kspace (const char *filename)
 {
-#if SUN
+#if MUS_SUN
   statvfs_t buf; /* else dumb compiler complaint */
 #else
   struct statvfs buf;
@@ -2886,7 +2886,6 @@ static XEN g_view_files_set_amp_env(XEN dialog, XEN amp_env)
   return(amp_env);
 }
 
-/* TODO: test cf speed style */
 static XEN g_view_files_speed_style(XEN dialog)
 {
   #define H_view_files_speed_style "(" S_view_files_speed_style " dialog) -> speed_style in use in the given View:Files dialog"
@@ -2894,6 +2893,7 @@ static XEN g_view_files_speed_style(XEN dialog)
   return(C_TO_XEN_INT((int)(view_files_speed_style((widget_t)(XEN_UNWRAP_WIDGET(dialog))))));
 }
 
+/* PERHAPS: speed-style watcher to reflect set in label (in other cases also?) */
 static XEN g_view_files_set_speed_style(XEN dialog, XEN speed_style)
 {
   XEN_ASSERT_TYPE(XEN_WIDGET_P(dialog), dialog, XEN_ONLY_ARG, S_setB S_view_files_speed_style, "a view-files dialog widget"); 

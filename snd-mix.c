@@ -3097,7 +3097,7 @@ static void erase_mix_waveform(mix_info *md)
 }
 
 
-#if MAC_OSX
+#if MUS_MAC_OSX
   #define OutSample float
   #define MUS_CONVERT(samp) samp
 #else

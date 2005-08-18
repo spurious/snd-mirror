@@ -23,7 +23,7 @@
 #endif
 #include <errno.h>
 #include <stdlib.h>
-#if (defined(NEXT) || (defined(HAVE_LIBC_H) && (!defined(HAVE_UNISTD_H))))
+#if (defined(HAVE_LIBC_H) && (!defined(HAVE_UNISTD_H)))
   #include <libc.h>
 #else
   #if (!(defined(_MSC_VER))) && (!(defined(MPW_C)))
@@ -35,7 +35,7 @@
 #endif
 
 #ifndef NO_SNDLIB
-  #include "sndlib.h"
+  #include "_sndlib.h"
 #else
   int mus_midi_open_read(const char *name);
   int mus_midi_open_write(const char *name);
@@ -255,7 +255,7 @@ char *mus_midi_describe(void)
 
 
 /* ---------------- SGI ---------------- */
-#ifdef SGI
+#ifdef MUS_SGI
 
 #include <dmedia/midi.h>
 
@@ -450,7 +450,7 @@ char *mus_midi_describe(void)
       #if (VAR_LIB_OSS)
         #include "/var/lib/oss/include/sys/soundcard.h"
       #else
-        #if defined(HAVE_SYS_SOUNDCARD_H) || defined(LINUX)
+        #if defined(HAVE_SYS_SOUNDCARD_H) || defined(MUS_LINUX)
           #include <sys/soundcard.h>
         #else
           #if defined(HAVE_MACHINE_SOUNDCARD_H)
@@ -517,7 +517,7 @@ char *mus_midi_describe(void)
 
 /* ---------------- Mac OSX ---------------- */
 
-#ifdef MAC_OSX
+#ifdef MUS_MAC_OSX
 #define MIDI_OK
 #include <CoreMIDI/MIDIServices.h>
 

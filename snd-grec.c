@@ -87,7 +87,7 @@ static GtkWidget *file_duration, *messages = NULL, *record_button, *reset_button
 static GtkWidget **device_buttons;
 static GtkObject *trigger_adj;
 static int device_buttons_size = 0;
-#if NEW_SGI_AL || SUN
+#if NEW_SGI_AL || MUS_SUN
   static int active_device_button = -1;
 #endif
 static int mixer_gains_posted[MAX_SOUNDCARDS];
@@ -661,12 +661,12 @@ static void change_trigger_callback(GtkAdjustment *adj, gpointer context)
 
 static void device_button_callback(GtkWidget *w, gpointer context) 
 {
-#if NEW_SGI_AL || SUN
+#if NEW_SGI_AL || MUS_SUN
   pane_t *p = (pane_t *)context;
 #endif
   int button;
   bool on;
-#if SGI || SUN
+#if MUS_SGI || MUS_SUN
   int other_button, j, n, i;
   bool output;
   float val[2];
@@ -674,7 +674,7 @@ static void device_button_callback(GtkWidget *w, gpointer context)
   rp = get_recorder_info();
 #endif
 
-#if SGI || SUN
+#if MUS_SGI || MUS_SUN
   output = 0;
 #endif
 
@@ -704,7 +704,7 @@ static void device_button_callback(GtkWidget *w, gpointer context)
 	}
     }
 #endif
-#if NEW_SGI_AL || SUN
+#if NEW_SGI_AL || MUS_SUN
   output = (!(recorder_input_device(p->device)));
   if (!output)
     {
@@ -739,7 +739,7 @@ static void device_button_callback(GtkWidget *w, gpointer context)
 	      set_read_in_progress();
 	    }
 	}
-  #ifndef SUN
+  #ifndef MUS_SUN
       else
 	{
 	  if (on)
@@ -813,7 +813,7 @@ static void make_file_info_pane(recorder_info *rp, GtkWidget *file_pane, int nde
   char *name;
   GtkWidget *file_label, *file_form, *button_frame, *button_holder, *duration_label, *rec_size_label, *ff_sep1, *ff_sep2, *ff_sep3, *autoload_file;
   GtkWidget *left_form, *right_form, *filebox, *durbox, *triggerbox;
-#if SGI || SUN
+#if MUS_SGI || MUS_SUN
   float val[1];
   int err;
 #endif
@@ -862,7 +862,7 @@ static void make_file_info_pane(recorder_info *rp, GtkWidget *file_pane, int nde
 				WITH_BUILTIN_HEADERS);
   SG_SIGNAL_CONNECT(recdat->srate_text, "activate", srate_changed_callback, NULL);
 
-#if SGI
+#if MUS_SGI
   err = mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(0) | MUS_AUDIO_MICROPHONE, MUS_AUDIO_SRATE, 0, val);
   if (err == MUS_NO_ERROR) rp->srate = val[0];
 #endif
@@ -2101,7 +2101,7 @@ void reflect_recorder_mixer_gain(int ind, Float val)
 static void initialize_recorder(recorder_info *rp)
 {
   /* picked up initial (widget) values from globals vars */
-#if NEW_SGI_AL || SUN
+#if NEW_SGI_AL || MUS_SUN
   int i;
 #endif
   /* special case initializations */
@@ -2119,7 +2119,7 @@ static void initialize_recorder(recorder_info *rp)
   device_button_callback(device_buttons[rp->digital_in_button], 
 			 all_panes[rp->digital_in_button]);
 #endif
-#if NEW_SGI_AL || SUN
+#if NEW_SGI_AL || MUS_SUN
   /* for simplicity, and until someone complains, new SGI AL machines will just have one active input device */
   active_device_button = rp->microphone_button;
   for (i = 0; i < device_buttons_size - 1; i++)

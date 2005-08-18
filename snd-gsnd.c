@@ -1698,7 +1698,7 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       else reset_controls(sp); /* segfault here in notebook case! */
     }
   gtk_window_set_resizable(GTK_WINDOW(MAIN_SHELL(ss)), true);
-  if (showing_controls) sound_show_ctrls(sp); else sound_hide_ctrls(sp);
+  if (showing_controls) sound_show_controls(sp); else sound_hide_controls(sp);
 
   if (sound_style(ss) == SOUNDS_IN_SEPARATE_WINDOWS)
     {
@@ -1764,12 +1764,12 @@ void snd_info_cleanup(snd_info *sp)
 
 /* ---------------- normalize sounds ---------------- */
 
-void sound_show_ctrls(snd_info *sp)
+void sound_show_controls(snd_info *sp)
 {
   gtk_widget_show_all(CONTROL_PANEL(sp));
 }
 
-void sound_hide_ctrls(snd_info *sp)
+void sound_hide_controls(snd_info *sp)
 {
   gtk_widget_hide_all(CONTROL_PANEL(sp));
 }
@@ -1789,7 +1789,7 @@ void show_controls(void)
       snd_info *sp;
       sp = ss->sounds[i];
       if ((sp) && (sp->inuse == SOUND_NORMAL))
-	sound_show_ctrls(sp);
+	sound_show_controls(sp);
     }
 }
 
@@ -1802,7 +1802,7 @@ void hide_controls(void)
       snd_info *sp;
       sp = ss->sounds[i];
       if ((sp) && (sp->inuse == SOUND_NORMAL))
-	sound_hide_ctrls(sp);
+	sound_hide_controls(sp);
     }
 }
 

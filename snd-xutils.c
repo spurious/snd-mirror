@@ -613,7 +613,7 @@ Pixmap rotate_text (Widget w, char *str, XFontStruct *font, Float angle_in_degre
   rotpix= XCreatePixmap(dp, wn, nwidth, nheight, depth);
   XFillRectangle(dp, pix, d_gc, 0, 0, width, height);
   XFillRectangle(dp, rotpix, d_gc, 0, 0, nwidth, nheight);
-#ifdef SUN
+#ifdef MUS_SUN
   XSync(dp, 0);
   /* needed to get the numbers drawn at all */
 #endif

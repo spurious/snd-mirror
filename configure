@@ -1448,7 +1448,7 @@ host_vendor=`echo $ac_cv_host | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\2/'`
 host_os=`echo $ac_cv_host | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\3/'`
 
 
-          ac_config_headers="$ac_config_headers config.h"
+                    ac_config_headers="$ac_config_headers config.h sndlib.h"
 
                     ac_config_files="$ac_config_files makefile po/Makefile.in"
 
@@ -3164,7 +3164,17 @@ if test "${with_float_samples+set}" = set; then
 _ACEOF
 
             LOCAL_SNDLIB_BITS="0"
-	fi
+         else
+	    cat >>confdefs.h <<\_ACEOF
+#define SNDLIB_USE_FLOATS 0
+_ACEOF
+
+	 fi
+else
+  cat >>confdefs.h <<\_ACEOF
+#define SNDLIB_USE_FLOATS 0
+_ACEOF
+
 fi;
 
 
@@ -3173,11 +3183,17 @@ if test "${with_sample_width+set}" = set; then
   withval="$with_sample_width"
   echo "$as_me:$LINENO: result: Using $with_sample_width bit samples" >&5
 echo "${ECHO_T}Using $with_sample_width bit samples" >&6
-	cat >>confdefs.h <<_ACEOF
+	 cat >>confdefs.h <<_ACEOF
 #define MUS_SAMPLE_BITS $with_sample_width
 _ACEOF
 
-        LOCAL_SNDLIB_BITS=$with_sample_width
+         LOCAL_SNDLIB_BITS=$with_sample_width
+
+else
+  cat >>confdefs.h <<\_ACEOF
+#define MUS_SAMPLE_BITS 24
+_ACEOF
+
 
 fi;
 
@@ -5851,13 +5867,51 @@ echo "$as_me:$LINENO: result: $ac_cv_c_bigendian" >&5
 echo "${ECHO_T}$ac_cv_c_bigendian" >&6
 case $ac_cv_c_bigendian in
   yes)
+    cat >>confdefs.h <<\_ACEOF
+#define MUS_LITTLE_ENDIAN 0
+_ACEOF
 
-cat >>confdefs.h <<\_ACEOF
+		 cat >>confdefs.h <<\_ACEOF
 #define WORDS_BIGENDIAN 1
 _ACEOF
- ;;
+
+		 cat >>confdefs.h <<\_ACEOF
+#define MUS_COMPATIBLE_FORMAT MUS_BSHORT
+_ACEOF
+
+		 if test "$with_float_samples" = yes ; then
+                   cat >>confdefs.h <<\_ACEOF
+#define MUS_OUT_FORMAT MUS_BFLOAT
+_ACEOF
+
+                  else
+                   cat >>confdefs.h <<\_ACEOF
+#define MUS_OUT_FORMAT MUS_BINT
+_ACEOF
+
+ 		 fi
+ 		 ;;
   no)
-     ;;
+    cat >>confdefs.h <<\_ACEOF
+#define MUS_LITTLE_ENDIAN 1
+_ACEOF
+
+    	         cat >>confdefs.h <<\_ACEOF
+#define MUS_COMPATIBLE_FORMAT MUS_LSHORT
+_ACEOF
+
+		 if test "$with_float_samples" = yes ; then
+                   cat >>confdefs.h <<\_ACEOF
+#define MUS_OUT_FORMAT MUS_LFLOAT
+_ACEOF
+
+                  else
+                   cat >>confdefs.h <<\_ACEOF
+#define MUS_OUT_FORMAT MUS_LINT
+_ACEOF
+
+ 		 fi
+		 ;;
   *)
     { { echo "$as_me:$LINENO: error: unknown endianness
 presetting ac_cv_c_bigendian=no (or yes) will help" >&5
@@ -17602,7 +17656,7 @@ fi
 if test $ac_cv_header_esd_h = yes; then
 
 	cat >>confdefs.h <<\_ACEOF
-#define ESD 1
+#define MUS_ESD 1
 _ACEOF
 
 	esd_version="`esd-config --version`"
@@ -17641,7 +17695,7 @@ else
 case "$host" in
     *-*-linux*)
 	cat >>confdefs.h <<\_ACEOF
-#define LINUX 1
+#define MUS_LINUX 1
 _ACEOF
 
         LDSO_FLAGS="-shared"
@@ -18330,7 +18384,7 @@ _ACEOF
 	;;
     *-*-sunos4*)
         cat >>confdefs.h <<\_ACEOF
-#define SUN 1
+#define MUS_SUN 1
 _ACEOF
 
 	LIBS="-lm"
@@ -18338,7 +18392,7 @@ _ACEOF
         ;;
     *-*-solaris*)
 	cat >>confdefs.h <<\_ACEOF
-#define SUN 1
+#define MUS_SUN 1
 _ACEOF
 
 	LIBS="-lm -ldl"
@@ -18349,7 +18403,7 @@ _ACEOF
         ;;
     *-*-hpux*)
         cat >>confdefs.h <<\_ACEOF
-#define HPUX 1
+#define MUS_HPUX 1
 _ACEOF
 
 	audio_system=Hpux
@@ -18357,7 +18411,7 @@ _ACEOF
         ;;
     *-sgi*)
         cat >>confdefs.h <<\_ACEOF
-#define SGI 1
+#define MUS_SGI 1
 _ACEOF
 
 	audio_system=SGI
@@ -18378,7 +18432,7 @@ _ACEOF
         ;;
     alpha*)
         cat >>confdefs.h <<\_ACEOF
-#define ALPHA 1
+#define MUS_ALPHA 1
 _ACEOF
 
         ;;
@@ -18400,28 +18454,28 @@ _ACEOF
 	;;
     *-*-openbsd*)
         cat >>confdefs.h <<\_ACEOF
-#define OPENBSD 1
+#define MUS_OPENBSD 1
 _ACEOF
 
 	audio_system=OpenBSD
         ;;
     *-*-netbsd*)
         cat >>confdefs.h <<\_ACEOF
-#define NETBSD 1
+#define MUS_NETBSD 1
 _ACEOF
 
 	audio_system=NetBSD
         ;;
     *-*-cygwin*)
 	cat >>confdefs.h <<\_ACEOF
-#define WINDOZE 1
+#define MUS_WINDOZE 1
 _ACEOF
 
 	audio_system=Windoze
 	;;
     *-apple-*)
 	cat >>confdefs.h <<\_ACEOF
-#define MAC_OSX 1
+#define MUS_MAC_OSX 1
 _ACEOF
 
 	audio_system=MacOSX
@@ -22035,6 +22089,7 @@ do
   "po/Makefile.in" ) CONFIG_FILES="$CONFIG_FILES po/Makefile.in" ;;
   "default-1" ) CONFIG_COMMANDS="$CONFIG_COMMANDS default-1" ;;
   "config.h" ) CONFIG_HEADERS="$CONFIG_HEADERS config.h" ;;
+  "sndlib.h" ) CONFIG_HEADERS="$CONFIG_HEADERS sndlib.h" ;;
   *) { { echo "$as_me:$LINENO: error: invalid argument: $ac_config_target" >&5
 echo "$as_me: error: invalid argument: $ac_config_target" >&2;}
    { (exit 1); exit 1; }; };;

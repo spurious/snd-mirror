@@ -1,9 +1,11 @@
 /* sndplay plays sounds */
 
-#include <config.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+#include "_sndlib.h"
+
 #if (defined(HAVE_LIBC_H) && (!defined(HAVE_UNISTD_H)))
   #include <libc.h>
 #else
@@ -14,16 +16,14 @@
 #endif
 #include <errno.h>
 
-#include "sndlib.h"
-
 #if MACOS
   #include <console.h>
 #endif
 
-#if MAC_OSX
+#if MUS_MAC_OSX
   #define BUFFER_SIZE 256
 #else
-#if WIN32
+#if MUS_WINDOZE
   /* this setting from Scott Middleton (actually used 8096) */
   #define BUFFER_SIZE 8192
 #else
@@ -31,7 +31,7 @@
 #endif
 #endif
 
-#if MAC_OSX
+#if MUS_MAC_OSX
   #define OutSample float
   #define MUS_CONVERT(samp) MUS_SAMPLE_TO_FLOAT(samp)
 #else
@@ -168,9 +168,9 @@ static int main_not_alsa(int argc, char *argv[])
 	frames = end - start;
       if (!use_multi_card_code)
 	{
-	  bufs = (mus_sample_t **)CALLOC(chans, sizeof(mus_sample_t *));
-	  for (i = 0; i < chans; i++) bufs[i] = (mus_sample_t *)CALLOC(buffer_size, sizeof(mus_sample_t));
-	  obuf = (OutSample *)CALLOC(buffer_size * out_chans, sizeof(OutSample));
+	  bufs = (mus_sample_t **)calloc(chans, sizeof(mus_sample_t *));
+	  for (i = 0; i < chans; i++) bufs[i] = (mus_sample_t *)calloc(buffer_size, sizeof(mus_sample_t));
+	  obuf = (OutSample *)calloc(buffer_size * out_chans, sizeof(OutSample));
 	  outbytes = buffer_size * out_chans * sample_size;
 	  for (m = 0; m < frames; m += buffer_size)
 	    {
@@ -206,7 +206,7 @@ static int main_not_alsa(int argc, char *argv[])
 		}
 	      if (afd == -1)
 		{
-#if defined(LINUX) && defined(PPC)
+#if defined(MUS_LINUX) && defined(PPC)
 		  afd = mus_audio_open_output(MUS_AUDIO_DEFAULT, srate, chans, MUS_COMPATIBLE_FORMAT, 0);
 #else
 		  afd = mus_audio_open_output(MUS_AUDIO_DEFAULT, srate, out_chans, MUS_COMPATIBLE_FORMAT, outbytes);
@@ -218,9 +218,9 @@ static int main_not_alsa(int argc, char *argv[])
 	    }
 	  if (afd != -1) mus_audio_close(afd);
 	  mus_sound_close_input(fd);
-	  for (i = 0; i < chans; i++) FREE(bufs[i]);
-	  FREE(bufs);
-	  FREE(obuf);
+	  for (i = 0; i < chans; i++) free(bufs[i]);
+	  free(bufs);
+	  free(obuf);
 	}
       else
 	{
@@ -240,10 +240,10 @@ static int main_not_alsa(int argc, char *argv[])
 	   */
 	  buffer_size = 256;   /* 128 probably better */
 	  outbytes = buffer_size * 2 * 2; 
-	  qbufs = (mus_sample_t **)CALLOC(chans, sizeof(mus_sample_t *));
-	  for (i = 0; i < chans; i++) qbufs[i] = (mus_sample_t *)CALLOC(buffer_size, sizeof(mus_sample_t));
-	  obuf0 = (short *)CALLOC(buffer_size * 2, sizeof(short));
-	  obuf1 = (short *)CALLOC(buffer_size * 2, sizeof(short));
+	  qbufs = (mus_sample_t **)calloc(chans, sizeof(mus_sample_t *));
+	  for (i = 0; i < chans; i++) qbufs[i] = (mus_sample_t *)calloc(buffer_size, sizeof(mus_sample_t));
+	  obuf0 = (short *)calloc(buffer_size * 2, sizeof(short));
+	  obuf1 = (short *)calloc(buffer_size * 2, sizeof(short));
 	  for (m = 0; m < frames; m += buffer_size)
 	    {
 	      if ((m + buffer_size) <= frames)
@@ -270,10 +270,10 @@ static int main_not_alsa(int argc, char *argv[])
 	  mus_audio_close(afd0);
 	  mus_audio_close(afd1);
 	  mus_sound_close_input(fd);
-	  for (i = 0; i < chans; i++) FREE(qbufs[i]);
-	  FREE(qbufs);
-	  FREE(obuf0);
-	  FREE(obuf1);
+	  for (i = 0; i < chans; i++) free(qbufs[i]);
+	  free(qbufs);
+	  free(obuf0);
+	  free(obuf1);
 	}
     }
   return(0);
@@ -494,15 +494,15 @@ static int main_alsa(int argc, char *argv[])
       /* allocate the list of read buffers, each buffer will hold one channel
 	 of the input soundfile, each sample is going to be mus_sample_t
       */
-      read_bufs = (mus_sample_t **)CALLOC(alloc_chans, sizeof(mus_sample_t *));
+      read_bufs = (mus_sample_t **)calloc(alloc_chans, sizeof(mus_sample_t *));
       for (d = 0; d < allocated; d++)
 	{
 	  int dev = out_devs[d];
 	  for (i = 0; i < out_chans[d]; i++) 
-	    read_bufs[base + i] = (mus_sample_t *)CALLOC(samples_per_chan, sizeof(mus_sample_t));
+	    read_bufs[base + i] = (mus_sample_t *)calloc(samples_per_chan, sizeof(mus_sample_t));
 	  base += out_chans[d];
 	  out_bytes[dev] = samples_per_chan * out_chans[d] * mus_bytes_per_sample(out_format[dev]);
-	  out_buf[dev] = (short *)CALLOC(out_bytes[dev], 1);
+	  out_buf[dev] = (short *)calloc(out_bytes[dev], 1);
 	}
       for (ioff = 0; ioff < frames; ioff += samples_per_chan)
 	{
@@ -554,12 +554,12 @@ static int main_alsa(int argc, char *argv[])
 	  if (afd[dev] != -1) mus_audio_close(afd[dev]);
 	}
       mus_sound_close_input(fd);
-      for (i = 0; i < alloc_chans; i++) FREE(read_bufs[i]);
-      FREE(read_bufs);
+      for (i = 0; i < alloc_chans; i++) free(read_bufs[i]);
+      free(read_bufs);
       for (d = 0; d < allocated; d++)
 	{
 	  int dev = out_devs[d];
-	  FREE(out_buf[dev]);
+	  free(out_buf[dev]);
 	}
     }
   return(0);

@@ -30,6 +30,7 @@
 #endif
 #endif
 
+#include "_sndlib.h"
 #include "clm.h"
 #include "clm-strings.h"
 

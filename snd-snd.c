@@ -2343,8 +2343,8 @@ static XEN sound_set(XEN snd_n, XEN val, sp_field_t fld, char *caller)
       if (!(IS_PLAYER(sp))) 
 	{
 	  if (XEN_TO_C_BOOLEAN(val))
-	    sound_show_ctrls(sp); 
-	  else sound_hide_ctrls(sp); 
+	    sound_show_controls(sp); 
+	  else sound_hide_controls(sp); 
 	}
       break;
     case SP_SPEED_TONES:

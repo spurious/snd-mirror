@@ -43,7 +43,7 @@
 
 #include <config.h>
 
-#if USE_SND && MAC_OSX && USE_MOTIF
+#if USE_SND && MUS_MAC_OSX && USE_MOTIF
   #undef USE_MOTIF
   #define USE_NO_GUI 1
   /* Xt's Boolean collides with MacTypes.h Boolean, but we want snd.h for other stuff,
@@ -51,7 +51,7 @@
    */
 #endif
 
-#if USE_SND && MAC_OSX && HAVE_RUBY
+#if USE_SND && MUS_MAC_OSX && HAVE_RUBY
   /* if using Ruby, OpenTransport.h T_* definitions collide with Ruby's -- it isn't needed here, so... */
   #define REDEFINE_HAVE_RUBY 1
   #undef HAVE_RUBY
@@ -64,7 +64,7 @@
   #define LABEL_BUFFER_SIZE 64
 #endif
 
-#if USE_SND && MAC_OSX
+#if USE_SND && MUS_MAC_OSX
   #define USE_MOTIF 1
   #undef USE_NO_GUI
   #if REDEFINE_HAVE_RUBY
@@ -104,13 +104,13 @@ char *strerror(int errnum)
   #include <sys/sam9407.h>
 #endif
 
-#ifdef MAC_OSX
+#ifdef MUS_MAC_OSX
 #include <CoreServices/CoreServices.h>
 #include <CoreAudio/CoreAudio.h>
 /* these pull in stdbool.h apparently, so they have to precede sndlib.h */
 #endif
 
-#include "sndlib.h"
+#include "_sndlib.h"
 #include "sndlib-strings.h"
 
 #define MUS_STANDARD_ERROR(Error_Type, Error_Message) \
@@ -204,7 +204,7 @@ int device_gains(int ur_dev)
 
 /* ------------------------------- SGI ----------------------------------------- */
 
-#ifdef SGI
+#ifdef MUS_SGI
 #define AUDIO_OK
 
 #include <audio.h>
@@ -1314,7 +1314,7 @@ static void describe_audio_state_1(void)
       #if (VAR_LIB_OSS)
         #include "/var/lib/oss/include/sys/soundcard.h"
       #else
-        #if defined(HAVE_SYS_SOUNDCARD_H) || defined(LINUX)
+        #if defined(HAVE_SYS_SOUNDCARD_H) || defined(MUS_LINUX)
           #include <sys/soundcard.h>
         #else
           #if defined(HAVE_MACHINE_SOUNDCARD_H)
@@ -4637,7 +4637,7 @@ static void alsa_describe_audio_state_1(void)
 /* apparently input other than 8000 is 16-bit, 8000 is (?) mulaw */
 /* apparently Sun-on-Intel reads/writes little-endian */
 
-#if (defined(SUN) || defined(OPENBSD)) && (!(defined(AUDIO_OK)))
+#if (defined(MUS_SUN) || defined(MUS_OPENBSD)) && (!(defined(AUDIO_OK)))
 #define AUDIO_OK
 
 #include <sys/types.h>
@@ -4668,7 +4668,7 @@ void mus_audio_sun_outputs(int speakers, int headphones, int line_out)
 }
 
 
-#ifdef OPENBSD
+#ifdef MUS_OPENBSD
   #define DAC_NAME "/dev/sound"
 #else
   #define DAC_NAME "/dev/audio"
@@ -4747,7 +4747,7 @@ static int to_sun_format(int format)
 #else
     case MUS_BSHORT: 
 #endif
-#ifdef OPENBSD
+#ifdef MUS_OPENBSD
       return(AUDIO_ENCODING_PCM16); 
 #else
       return(AUDIO_ENCODING_LINEAR); 
@@ -4757,7 +4757,7 @@ static int to_sun_format(int format)
 #if defined(AUDIO_ENCODING_LINEAR8)
       return(AUDIO_ENCODING_LINEAR8); break;
 #else
-  #ifdef OPENBSD
+  #ifdef MUS_OPENBSD
       return(AUDIO_ENCODING_PCM8); 
   #else
       return(AUDIO_ENCODING_LINEAR);
@@ -6453,7 +6453,7 @@ int mus_audio_initialize(void)
 
 /* ------------------------------- WINDOZE ----------------------------------------- */
 
-#if defined(WINDOZE) && (!(defined(__CYGWIN__)))
+#if defined(MUS_WINDOZE) && (!(defined(__CYGWIN__)))
 #define AUDIO_OK
 
 #include <windows.h>
@@ -7344,7 +7344,7 @@ int mus_audio_mixer_write(int ur_dev, int field, int chan, float *val)
 
 /* TODO: make bigger buffers work right -- is it possible to set the audio device buffer size? */
 
-#ifdef MAC_OSX
+#ifdef MUS_MAC_OSX
 #define AUDIO_OK 1
 
 /*
@@ -8198,7 +8198,7 @@ char *mus_audio_moniker(void) {return("Mac OSX audio");}
  * 14th Nov 2000: copied SUN drivers here and started to hack.  NJB.   *
  *                                                                     */
 
-#ifdef ESD
+#ifdef MUS_ESD
 #define AUDIO_OK
 
 #include <esd.h>
@@ -9196,7 +9196,7 @@ char *jack_mus_audio_moniker(void) {return("jack");}
  * Sun version changed 28-Jan-99
  */
 
-#if defined(HPUX) && (!(defined(AUDIO_OK)))
+#if defined(MUS_HPUX) && (!(defined(AUDIO_OK)))
 #define AUDIO_OK
 #include <sys/audio.h>
 
@@ -9561,7 +9561,7 @@ int mus_audio_read(int line, char *buf, int bytes)
 
 /* ------------------------------- NETBSD ----------------------------------------- */
 
-#if defined(NETBSD) && (!(defined(AUDIO_OK)))
+#if defined(MUS_NETBSD) && (!(defined(AUDIO_OK)))
 #define AUDIO_OK
 /* started from Xanim a long time ago..., bugfixes from Thomas Klausner 30-Jul-05, worked into better shape Aug-05 */
 #include <fcntl.h>
@@ -9901,7 +9901,7 @@ void mus_reset_audio_c (void)
   audio_initialized = false;
   save_it = NULL;
   version_name = NULL;
-#ifdef SUN
+#ifdef MUS_SUN
   sun_vol_name = NULL;
 #endif
   save_it_len = 0;

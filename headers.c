@@ -90,7 +90,7 @@
   #endif
 #endif
 
-#include "sndlib.h"
+#include "_sndlib.h"
 #include "sndlib-strings.h"
 
 static bool hdrbuf_is_inited = false;

@@ -432,7 +432,7 @@ void display_enved_progress(char *str, Pixmap pix)
 		     NULL);
 }
 
-#ifdef MAC_OSX
+#ifdef MUS_MAC_OSX
 static int press_x, press_y;
 #endif
 
@@ -442,7 +442,7 @@ static void drawer_button_motion(Widget w, XtPointer context, XEvent *event, Boo
   ignore_button_release = false;
   if (!showing_all_envs)
     {
-#ifdef MAC_OSX
+#ifdef MUS_MAC_OSX
       if ((ev->x == press_x) && (ev->y == press_y)) return;
 #endif
       env_editor_button_motion(ss->enved, ev->x, ev->y, ev->time, active_env);
@@ -455,7 +455,7 @@ static void drawer_button_press(Widget w, XtPointer context, XEvent *event, Bool
 {
   XButtonEvent *ev = (XButtonEvent *)event;
   int pos;
-#ifdef MAC_OSX
+#ifdef MUS_MAC_OSX
   press_x = ev->x;
   press_y = ev->y;
 #endif
@@ -924,7 +924,7 @@ Widget create_envelope_editor(void)
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNcolumns, 3); n++;
       XtSetArg(args[n], XmNrecomputeSize, false); n++;
-#ifndef SGI
+#ifndef MUS_SGI
       XtSetArg(args[n], XmNheight, 24); n++;
 #endif
       XtSetArg(args[n], XmNresizeWidth, false); n++;

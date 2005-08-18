@@ -23462,10 +23462,15 @@ EDITS: 5
 	  (if (not (feql vfe (list 0.0 1.0 1.0 1.0))) (snd-display ";vf amp env: ~A" vfe))
 	  (if (not (list? vffiles)) (snd-display ";vf files: ~A" vffiles))
 	  (if (not (list? vfsel)) (snd-display ";vf selected files: ~A" vfsel))
+	  (if (not (= (view-files-speed-style dialog) (speed-control-style)))
+	      (snd-display ";vf speed-style def: ~A ~A" (view-files-speed-style dialog) (speed-control-style)))
 	  (set! (view-files-amp dialog) 0.5)
 	  (if (fneq (view-files-amp dialog) 0.5) (snd-display ";set vf amp: ~A" (view-files-amp dialog)))
 	  (set! (view-files-speed dialog) 0.5)
 	  (if (fneq (view-files-speed dialog) 0.5) (snd-display ";set vf spd: ~A" (view-files-speed dialog)))
+	  (set! (view-files-speed-style dialog) speed-control-as-ratio)
+	  (if (not (= (view-files-speed-style dialog) speed-control-as-ratio))
+	      (snd-display ";vf speed-style set: ~A" (view-files-speed-style dialog)))
 	  (set! (view-files-sort dialog) sort-files-by-size)
 	  (if (not (= (view-files-sort) sort-files-by-name)) (snd-display ";vf global sort after local set: ~A" (view-files-sort)))
 	  (if (not (= (view-files-sort dialog) sort-files-by-size)) (snd-display ";vf local sort after local set: ~A" (view-files-sort dialog)))
@@ -54420,9 +54425,10 @@ EDITS: 1
 		     mix-tag-y mix-vct mix-waveform-height time-graph-style lisp-graph-style transform-graph-style
 					;new-sound 
 		     read-mix-sample read-track-sample next-sample
-		     transform-normalization equalize-panes open-raw-sound open-sound orientation-dialog
+		     transform-normalization equalize-panes open-raw-sound open-sound orientation-dialog previous-sample
 		     peak-env-info peaks play play-and-wait play-mix play-region play-selection play-track player? players
-		     position-color position->x position->y add-directory-to-view-files-list add-file-to-view-files-list view-files-sort previous-sample
+		     position-color position->x position->y add-directory-to-view-files-list add-file-to-view-files-list view-files-sort 
+		     view-files-amp view-files-speed view-files-files view-files-selected-files view-files-speed-style view-files-amp-env
 		     print-length progress-report prompt-in-minibuffer pushed-button-color read-only
 		     recorder-in-device read-peak-env-info-file recorder-autoload recorder-buffer-size recorder-dialog
 		     recorder-file recorder-gain recorder-in-amp recorder-in-format recorder-max-duration recorder-out-amp
@@ -54562,6 +54568,7 @@ EDITS: 1
 			 mix-amp-env mix-tag-position mix-chans mix-color mix-locked? mix-inverted? mix-position
 			 mix-speed mix-tag-height mix-tag-width mix-tag-y mark-tag-width mark-tag-height mix-waveform-height transform-normalization
 			 equalize-panes position-color recorder-in-device view-files-sort print-length pushed-button-color
+			 view-files-amp view-files-speed view-files-files view-files-selected-files view-files-speed-style view-files-amp-env
 			 recorder-autoload recorder-buffer-size recorder-dialog recorder-file recorder-gain recorder-in-amp
 			 recorder-in-format recorder-max-duration recorder-out-amp recorder-out-chans recorder-out-format recorder-out-type
 			 recorder-srate region-graph-style recorder-trigger reverb-control-decay reverb-control-feedback recorder-in-chans
@@ -55349,6 +55356,7 @@ EDITS: 1
 			      window-width window-x window-y with-gl with-mix-tags x-axis-style beats-per-minute zoom-color mix-tag-height
 			      mix-tag-width with-relative-panes run-safety clm-table-size mark-tag-width mark-tag-height
 			      quit-button-color help-button-color reset-button-color doit-button-color doit-again-button-color
+			      view-files-amp view-files-speed view-files-files view-files-selected-files view-files-speed-style view-files-amp-env
 			      ))
 	      (gc)(gc))
 	    

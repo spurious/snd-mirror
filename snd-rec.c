@@ -28,7 +28,7 @@
 #define DEFAULT_RECORDER_MAX_DURATION 1000000.0
 #define DEFAULT_RECORDER_OUT_FORMAT MUS_COMPATIBLE_FORMAT
 
-#if LINUX || __bsdi__
+#if MUS_LINUX || __bsdi__
   #define DEFAULT_RECORDER_OUT_TYPE MUS_RIFF
 #else
   #define DEFAULT_RECORDER_OUT_TYPE MUS_AIFC
@@ -37,7 +37,7 @@
 #define MAX_MIXER_GAINS 128
 #define AUDVAL_SIZE 64
 
-#ifdef SUN
+#ifdef MUS_SUN
   #define DEFAULT_RECORDER_BUFFER_SIZE 4096
   #if MUS_LITTLE_ENDIAN
     #define DEFAULT_RECORDER_IN_FORMAT MUS_LSHORT
@@ -48,7 +48,7 @@
   #endif
 #else
   #define DEFAULT_RECORDER_IN_FORMAT MUS_COMPATIBLE_FORMAT
-  #if MAC_OSX
+  #if MUS_MAC_OSX
     #define DEFAULT_RECORDER_BUFFER_SIZE 1024
     #define DEFAULT_RECORDER_SRATE 44100
   #else
@@ -71,7 +71,7 @@ font_t *get_vu_font(Float size)
   if (!vu_font_name)
     {
       if (size < 0.75) 
-#ifndef SGI
+#ifndef MUS_SGI
 	vu_font_name = "fixed";
 #else
         vu_font_name = "courier";
@@ -362,7 +362,7 @@ int recorder_check_device(int system, int device, int *mixer_gains_posted, int *
 static recorder_info *rp = NULL;
 static Float *mixer_gains = NULL;                /* audio gain values (widgets are per pane) */
 static int in_device;
-#ifndef SUN
+#ifndef MUS_SUN
   static int monitor_data_format;
   static char *monitor_buf = NULL;
 #endif
@@ -595,7 +595,7 @@ static int system_input_buffer_size = 0;
 static char **raw_input_bufs = NULL;                     /* incoming data has not yet been converted to sndlib representation */
 static mus_sample_t input_vu_maxes[MAX_IN_CHANS];        /* VU label values on input chans */
 static mus_sample_t output_vu_maxes[MAX_OUT_CHANS];      /* VU label values on output chans */
-#ifndef SUN
+#ifndef MUS_SUN
   static int input_srates[MAX_SOUNDCARDS];
   static int input_formats[MAX_SOUNDCARDS];
   static int input_buffer_sizes[MAX_SOUNDCARDS];
@@ -639,7 +639,7 @@ void set_record_size (int new_size)
   unlock_recording_audio();
 }
 
-#if (!SUN)
+#if (!MUS_SUN)
 static void get_input_channels(int i)
 {
   rp->input_channels[i] = device_channels(MUS_AUDIO_PACK_SYSTEM(i) | in_device);
@@ -916,10 +916,10 @@ void fire_up_recorder(void)
 #endif
   float val[8];
   int err;
-#ifndef SUN
+#ifndef MUS_SUN
   int new_srate = 0;
 #endif
-#ifdef SGI
+#ifdef MUS_SGI
   int cur_dev;
   long sb[8];
 #endif
@@ -936,7 +936,7 @@ void fire_up_recorder(void)
     }
   for (i = 0; i < rp->systems; i++) rp->input_ports[i] = -1;
   /* the recorder srate sometimes depends purely on external devices */
-#ifdef SGI
+#ifdef MUS_SGI
   cur_dev = MUS_AUDIO_MICROPHONE;
   #if OLD_SGI_AL
     sb[0] = AL_INPUT_SOURCE;
@@ -982,9 +982,9 @@ void fire_up_recorder(void)
 	set_recorder_srate(rp, new_srate);
     rp->hd_audio_out_chans = 2;
   #endif
-#else /* not SGI */
+#else /* not MUS_SGI */
     if (rp->srate <= 0) rp->srate = 22050;
-  #ifdef SUN
+  #ifdef MUS_SUN
     /* turn on "monitor" */
     val[0] = 1.0;
     mus_audio_mixer_write(MUS_AUDIO_PACK_SYSTEM(0) | MUS_AUDIO_MICROPHONE, MUS_AUDIO_IGAIN, 0, val);
@@ -1018,7 +1018,7 @@ void fire_up_recorder(void)
 	  rp->input_channels[i] = ((cur_dev == MUS_AUDIO_DIGITAL_IN) ? 2 : 4);
 	  rp->hd_audio_out_chans = rp->input_channels[i];
 #else
-  #ifdef SUN
+  #ifdef MUS_SUN
 	  rp->input_channels[i] = device_channels(MUS_AUDIO_PACK_SYSTEM(i) | MUS_AUDIO_MICROPHONE);
   #else
 	  get_input_channels(i);
@@ -1035,7 +1035,7 @@ void fire_up_recorder(void)
       return;
     }
 
-#if NEW_SGI_AL || MAC_OSX
+#if NEW_SGI_AL || MUS_MAC_OSX
   rp->input_ports[0] = mus_audio_open_input(MUS_AUDIO_PACK_SYSTEM(0) | MUS_AUDIO_MICROPHONE,
 					    rp->srate,
 					    rp->input_channels[0],
@@ -1049,7 +1049,7 @@ void fire_up_recorder(void)
 					      rp->in_format,
 					      rp->buffer_size);
   #else
-    #ifdef SUN
+    #ifdef MUS_SUN
     rp->input_ports[0] = mus_audio_open_input(MUS_AUDIO_PACK_SYSTEM(0) | MUS_AUDIO_MICROPHONE,
 					      rp->srate,
 					      rp->input_channels[0],
@@ -1068,7 +1068,7 @@ void fire_up_recorder(void)
       return;
     }
   rp->taking_input = true;
-#if (!(HAVE_OSS || SUN || MAC_OSX))
+#if (!(HAVE_OSS || MUS_SUN || MUS_MAC_OSX))
   rp->monitor_port = mus_audio_open_output(MUS_AUDIO_PACK_SYSTEM(0) | MUS_AUDIO_DAC_OUT,
 					   rp->srate,
 					   rp->hd_audio_out_chans,

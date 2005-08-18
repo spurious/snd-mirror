@@ -86,7 +86,7 @@ static Widget rec_size_text, trigger_scale, trigger_label;
 static Widget file_duration, messages = NULL, record_button, reset_button, file_text;
 static Widget *device_buttons;
 static int device_buttons_size = 0;
-#if NEW_SGI_AL || SUN
+#if NEW_SGI_AL || MUS_SUN
   static int active_device_button = -1;
 #endif
 static int mixer_gains_posted[MAX_SOUNDCARDS];
@@ -141,7 +141,7 @@ static unsigned char mic_bits[] = {
    0xf0, 0x00, 0x58, 0x01, 0xa8, 0x01, 0xf8, 0x01, 0x08, 0x01, 0x0f, 0x0f,
    0x09, 0x09, 0x09, 0x09, 0xf9, 0x09, 0xf1, 0x08, 0x61, 0x08, 0xff, 0x0f};
 
-#ifdef SGI
+#ifdef MUS_SGI
 /* SGI form */
 static unsigned char line_in_bits[] = {
    0x00, 0x04, 0x40, 0x02, 0x20, 0x02, 0x24, 0x01, 0x12, 0x01, 0xff, 0x0f,
@@ -957,7 +957,7 @@ static void device_button_callback(Widget w, XtPointer context, XtPointer info)
   bool on;
   int button;
 
-#if SGI || SUN
+#if MUS_SGI || MUS_SUN
   int j, i;
   bool output;
   float val[2];
@@ -966,7 +966,7 @@ static void device_button_callback(Widget w, XtPointer context, XtPointer info)
   recorder_info *rp;
   rp = get_recorder_info();
 
-#if SGI || SUN
+#if MUS_SGI || MUS_SUN
   output = false;
 #endif
 
@@ -1004,7 +1004,7 @@ static void device_button_callback(Widget w, XtPointer context, XtPointer info)
 	}
     }
 #endif
-#if NEW_SGI_AL || SUN
+#if NEW_SGI_AL || MUS_SUN
   output = (!(recorder_input_device(p->device)));
   if (!output)
     {
@@ -1047,7 +1047,7 @@ static void device_button_callback(Widget w, XtPointer context, XtPointer info)
 	      set_read_in_progress();
 	    }
 	}
-  #ifndef SUN
+  #ifndef MUS_SUN
       else
 	{
 	  if (on)
@@ -1126,7 +1126,7 @@ static void make_file_info_pane(recorder_info *rp, Widget file_pane, int ndevs)
   Widget file_label, file_form, button_frame, button_holder, duration_label, rec_size_label,
     ff_form, ff_sep1, ff_sep2, ff_sep3, ff_sep4, autoload_file;
   XtCallbackList n1, n2;
-#if SGI
+#if MUS_SGI
   float val[1];
   int err;
 #endif
@@ -1210,7 +1210,7 @@ static void make_file_info_pane(recorder_info *rp, Widget file_pane, int ndevs)
   recdat->dialog = recorder;
   XtVaGetValues(recdat->comment_text, XmNy, &pane_max, NULL);
   XtAddCallback(recdat->srate_text, XmNactivateCallback, srate_changed_callback, NULL); /* this is a no-op -- textfield widget is not activatable */
-#if SGI
+#if MUS_SGI
   err = mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(0) | MUS_AUDIO_MICROPHONE, MUS_AUDIO_SRATE, 0, val);
   if (err == MUS_NO_ERROR) rp->srate = val[0];
 #endif
@@ -1363,7 +1363,7 @@ static void make_file_info_pane(recorder_info *rp, Widget file_pane, int ndevs)
 	{XtSetArg(args[n], XmNindicatorType, XmONE_OF_MANY); n++;}
       else {XtSetArg(args[n], XmNindicatorType, XmN_OF_MANY); n++;}
 #endif
-#if NEW_SGI_AL || SUN
+#if NEW_SGI_AL || MUS_SUN
       if (recorder_input_device(rp->ordered_devices[i]))
 	{XtSetArg(args[n], XmNindicatorType, XmONE_OF_MANY); n++;}
       else {XtSetArg(args[n], XmNindicatorType, XmN_OF_MANY); n++;}
@@ -3192,7 +3192,7 @@ static void initialize_recorder(recorder_info *rp)
       tone_controls_posted[i] = 0;
     }
 #endif
-#if NEW_SGI_AL || SUN
+#if NEW_SGI_AL || MUS_SUN
   /* for simplicity, and until someone complains, new SGI AL machines will just have one active input device */
   active_device_button = rp->microphone_button;
   for (i = 0; i < device_buttons_size - 1; i++)

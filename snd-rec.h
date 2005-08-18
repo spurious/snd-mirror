@@ -1,7 +1,7 @@
 #ifndef SND_REC_H
 #define SND_REC_H
 
-#ifdef SGI
+#ifdef MUS_SGI
   #include <audio.h>
   #ifdef AL_RESOURCE
     #define NEW_SGI_AL 1

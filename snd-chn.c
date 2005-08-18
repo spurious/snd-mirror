@@ -3871,7 +3871,7 @@ static int fft_axis_start = 0;
 static int mix_tag = NO_MIX_TAG;
 static chan_info *dragged_cp;
 
-#ifdef MAC_OSX
+#ifdef MUS_MAC_OSX
 static int press_x, press_y;
 #endif
 
@@ -3883,7 +3883,7 @@ void graph_button_press_callback(chan_info *cp, int x, int y, int key_state, int
   /* if combining, figure out which virtual channel the mouse is in */
   if (sp->channel_style == CHANNELS_COMBINED) cp = which_channel(sp, y);
   mouse_down_time = time;
-#ifdef MAC_OSX
+#ifdef MUS_MAC_OSX
   press_x = x;
   press_y = y;
 #endif
@@ -4137,7 +4137,7 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, Tempus time)
   /* this needs to be a little slow about deciding that we are dragging, as opposed to a slow click */
   mouse_time = time;
   if ((mouse_time - mouse_down_time) < ss->click_time) return;
-#ifdef MAC_OSX
+#ifdef MUS_MAC_OSX
   /* on the Mac, we seem to get motion events even without any motion, and the times seem very short */
   if ((x == press_x) && (y == press_y)) return;
 #endif

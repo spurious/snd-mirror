@@ -45,7 +45,7 @@
   #include <stdarg.h>
 #endif
 
-#include "sndlib.h"
+#include "_sndlib.h"
 
 /* data translations for big/little endian machines
  *   the m_* forms are macros where possible for speed (dating back to 1991 -- probably not needed)
@@ -348,7 +348,7 @@ void mus_ldouble_to_char(unsigned char *j, double x)
 
 #else
 
-  #ifndef SUN
+  #ifndef MUS_SUN
     #define m_big_endian_short(n)                  (*((short *)n))
     #define m_big_endian_int(n)                    (*((int *)n))
     #define m_big_endian_float(n)                  (*((float *)n))
@@ -535,7 +535,7 @@ int mus_file_set_chans (int tfd, int chans)
 int mus_file_open_read(const char *arg) 
 {
   int fd;
-#ifdef WINDOZE
+#ifdef MUS_WINDOZE
   fd = OPEN(arg, O_RDONLY | O_BINARY, 0);
 #else
   fd = OPEN(arg, O_RDONLY, 0);
@@ -563,7 +563,7 @@ bool mus_file_probe(const char *arg)
 int mus_file_open_write(const char *arg)
 {
   int fd;
-#ifdef WINDOZE
+#ifdef MUS_WINDOZE
   if ((fd = OPEN(arg, O_RDWR | O_BINARY, 0)) == -1)
 #else
   if ((fd = OPEN(arg, O_RDWR, 0)) == -1)
@@ -581,7 +581,7 @@ int mus_file_create(const char *arg)
 int mus_file_reopen_write(const char *arg)
 {
   int fd;
-#ifdef WINDOZE
+#ifdef MUS_WINDOZE
   fd = OPEN(arg, O_RDWR | O_BINARY, 0);
 #else
   fd = OPEN(arg, O_RDWR, 0);

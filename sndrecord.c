@@ -1,9 +1,11 @@
 /* sndrecord records a sound */
 
-#include <config.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+#include "_sndlib.h"
+
 #if (defined(HAVE_LIBC_H) && (!defined(HAVE_UNISTD_H)))
   #include <libc.h>
 #else
@@ -13,12 +15,6 @@
   #include <string.h>
 #endif
 #include <errno.h>
-
-#include "sndlib.h"
-
-#if MACOS
-  #include <console.h>
-#endif
 
 #define CHANNELS 1
 
@@ -46,9 +42,6 @@ int main(int argc, char *argv[])
   int fd, afd, i, err, bytes_per_sample, bytes_per_read;
   float mic_gain[1];
   indata *ibuf;
-#if MACOS
-  argc = ccommand(&argv);
-#endif
   if (argc == 1) {printf("usage: sndrecord outfile\n"); exit(0);}
   afd = -1;
   mus_sound_initialize();

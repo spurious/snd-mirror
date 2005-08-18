@@ -61,7 +61,7 @@
   #include <string.h>
 #endif
 
-#include "sndlib.h"
+#include "_sndlib.h"
 #include "sndlib2xen.h"
 #include "vct.h"
 

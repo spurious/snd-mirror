@@ -53,7 +53,7 @@
 #ifndef SND_AS_WIDGET
   #define PLAIN_ICON 1
   #define XPM_ICON 2
-  #ifdef SGI
+  #ifdef MUS_SGI
     #define ICON_TYPE PLAIN_ICON
   #else
     #define ICON_TYPE XPM_ICON
@@ -62,7 +62,7 @@
 
 #define POSITION_SLIDER_WIDTH 13
 #define ZOOM_SLIDER_WIDTH 10
-#ifndef LINUX
+#ifndef MUS_LINUX
   #define TOGGLE_SIZE 0
 #else
   #define TOGGLE_SIZE 15
@@ -661,7 +661,7 @@ void snd_doit(int argc, char **argv)
   ss->channel_min_height = CHANNEL_MIN_HEIGHT;
   ss->Graph_Cursor = DEFAULT_GRAPH_CURSOR;
 #ifndef SND_AS_WIDGET
-#if ALPHA
+#if MUS_ALPHA
   XtSetArg(args[0], XtNwidth, 640);
   XtSetArg(args[1], XtNheight, 256);
   shell = XtAppInitialize(&app, "Snd", NULL, 0, &argc, argv, fallbacks, args, 2);
@@ -745,7 +745,7 @@ void snd_doit(int argc, char **argv)
   ss->sash_size = snd_rs.sash_size;
   ss->sash_indent = snd_rs.sash_indent;
   ss->toggle_size = snd_rs.toggle_size;
-#ifdef MAC_OS
+#ifdef MUS_MAC_OS
   ss->click_time = XtGetMultiClickTime(dpy);
 #else
   ss->click_time = (Tempus)(0.5 * XtGetMultiClickTime(dpy));

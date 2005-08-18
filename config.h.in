@@ -1,5 +1,5 @@
-#ifndef CONFIG_H_LOADED
-#define CONFIG_H_LOADED
+#ifndef MUS_CONFIG_H_LOADED
+#define MUS_CONFIG_H_LOADED
 
 #undef const
 
@@ -87,20 +87,20 @@
 #undef CONFIGURE_PROG
 #undef CONFIGURE_ARGS
 
-#undef LINUX
-#undef SGI
-#undef ALPHA
-#undef SUN
-#undef OPENBSD
-#undef NETBSD
-#undef WINDOZE
+#undef MUS_LINUX
+#undef MUS_SGI
+#undef MUS_ALPHA
+#undef MUS_SUN
+#undef MUS_OPENBSD
+#undef MUS_NETBSD
+#undef MUS_WINDOZE
 #undef HAVE_OSS
 #undef HAVE_ALSA
 #undef HAVE_JACK
 #undef HAVE_SAM_9407
-#undef MAC_OSX
-#undef ESD
-#undef HPUX
+#undef MUS_MAC_OSX
+#undef MUS_ESD
+#undef MUS_HPUX
 #undef MUS_ESD_VERSION
 #undef MUS_AUDIOFILE_VERSION
 #undef HAVE_KAUDIODEVICEPROPERTYTRANSPORTTYPE

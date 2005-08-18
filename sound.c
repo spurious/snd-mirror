@@ -23,7 +23,7 @@
   #endif
 #endif
 
-#include "sndlib.h"
+#include "_sndlib.h"
 #include "sndlib-strings.h"
 
 #if MACOS

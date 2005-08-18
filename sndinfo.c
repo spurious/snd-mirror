@@ -1,6 +1,5 @@
 /* sndinfo describes sounds */
 
-#include <config.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -17,10 +16,6 @@
 
 #include "sndlib.h"
 
-#if MACOS
-  #include <console.h>
-#endif
-
 static char *display_maxamps(const char *filename, int chans)
 {
   char *ampstr;
@@ -28,9 +23,9 @@ static char *display_maxamps(const char *filename, int chans)
   int i;
   mus_sample_t *vals;
   off_t *times;
-  ampstr = (char *)CALLOC(chans * 32, sizeof(char));
-  vals = (mus_sample_t *)CALLOC(chans, sizeof(mus_sample_t));
-  times = (off_t *)CALLOC(chans, sizeof(off_t));
+  ampstr = (char *)calloc(chans * 32, sizeof(char));
+  vals = (mus_sample_t *)calloc(chans, sizeof(mus_sample_t));
+  times = (off_t *)calloc(chans, sizeof(off_t));
   sprintf(ampstr, "\n  max amp%s: ", (chans > 1) ? "s" : "");
   mus_sound_maxamps(filename, chans, vals, times);
   for (i = 0; i < chans; i++)
@@ -38,8 +33,8 @@ static char *display_maxamps(const char *filename, int chans)
       sprintf(fstr, "%.3f ", MUS_SAMPLE_TO_FLOAT(vals[i]));
       strcat(ampstr, fstr);
     }
-  FREE(vals);
-  FREE(times);
+  free(vals);
+  free(times);
   return(ampstr);
 }
 
@@ -53,9 +48,6 @@ int main(int argc, char *argv[])
   char *comment, *header_name;
   char *format_info = NULL, *format_name, *ampstr = NULL;
   char timestr[64];
-#if MACOS
-  argc = ccommand(&argv);
-#endif
   if (argc == 1) {printf("usage: sndinfo file\n"); exit(0);}
   mus_sound_initialize();
   for (ctr = 1; ctr < argc; ctr++)
@@ -101,10 +93,10 @@ int main(int argc, char *argv[])
 	  fprintf(stdout, "  type: %s\n  format: %s\n  ",
 		  header_name,
 		  format_info);
-#if HAVE_STRFTIME
+
 	  strftime(timestr, 64, "%a %d-%b-%Y %H:%M %Z", localtime(&date));
 	  fprintf(stdout, "written: %s", timestr);
-#endif
+
 	  if ((chans > 0) && (mus_sound_maxamp_exists(argv[ctr])))
 	    {
 	      ampstr = display_maxamps(argv[ctr], chans);

@@ -170,8 +170,8 @@ void x_bomb(snd_info *sp, bool on) {}
 void set_sound_pane_file_label(snd_info *sp, char *str) {}
 void reflect_amp_env_completion(snd_info *sp) {}
 void reflect_sound_selection(snd_info *sp) {}
-void sound_show_ctrls(snd_info *sp) {}
-void sound_hide_ctrls(snd_info *sp) {}
+void sound_show_controls(snd_info *sp) {}
+void sound_hide_controls(snd_info *sp) {}
 bool control_panel_open(snd_info *sp) {return(false);}
 void start_progress_report(snd_info *sp, enved_progress_t from_enved) {}
 void finish_progress_report(snd_info *sp, enved_progress_t from_enved) {}

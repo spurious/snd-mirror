@@ -1611,7 +1611,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 	      set_window_bounds(cp, ext_count); 
 	      break;
 	    case snd_K_C: case snd_K_c: 
-	      sound_hide_ctrls(sp); 
+	      sound_hide_controls(sp); 
 	      break;
 	    case snd_K_D: case snd_K_d: 
 	      prompt(sp, _("eps file:"), NULL); 
@@ -1658,7 +1658,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 	      break;
 	    case snd_K_O: case snd_K_o: 
 	      /* this doesn't change the View:Controls menu label because (sigh...) it's specific to the currently selected sound */
-	      sound_show_ctrls(sp); 
+	      sound_show_controls(sp); 
 	      break;
 	    case snd_K_P: case snd_K_p: 
 	      set_window_size(cp, ext_count); 

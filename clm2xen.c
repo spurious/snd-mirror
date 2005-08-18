@@ -32,7 +32,7 @@
   #endif
 #endif
 
-#include "sndlib.h"
+#include "_sndlib.h"
 #include "clm.h"
 #include "xen.h"
 #include "sndlib2xen.h"

@@ -462,7 +462,7 @@ static void create_help_monolog(void)
    *   complaint is X_ChangeGC got an invalid font.
    *   Do I need a configure test program for this?  Is there some other way to force the render table to take effect?
    */
-#if (!SUN) || (!MUS_LITTLE_ENDIAN)
+#if (!MUS_SUN) || (!MUS_LITTLE_ENDIAN)
   XtSetArg(args[n], XmNfontList, 0); n++; /* needed or new rendertable doesn't take effect! */
                                           /* also, 0, not NULL so types match */
   XtSetArg(args[n], XmNrenderTable, rs); n++;

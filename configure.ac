@@ -7,7 +7,7 @@ INVOKED_ARGS="$[@]"
 
 AC_CONFIG_SRCDIR(snd.c)
 AC_CANONICAL_HOST
-AC_CONFIG_HEADER(config.h)
+AC_CONFIG_HEADERS(config.h sndlib.h)
 AC_CONFIG_FILES(makefile po/Makefile.in )
 AC_PROG_CC
 AC_HEADER_STDC # this needs to precede AC_CHECK_HEADER!
@@ -126,16 +126,21 @@ fi
 LOCAL_SNDLIB_BITS="24"
 AC_ARG_WITH(float-samples,
 	[  --with-float-samples	  use floats as the internal sample respresentation],
-  	if test "$with_float_samples" = yes ; then
-	    AC_DEFINE(SNDLIB_USE_FLOATS)
+  	[if test "$with_float_samples" = yes ; then
+	    AC_DEFINE(SNDLIB_USE_FLOATS, 1)
             LOCAL_SNDLIB_BITS="0"
-	fi)
+         else
+	    AC_DEFINE(SNDLIB_USE_FLOATS, 0)
+	 fi],
+	[AC_DEFINE(SNDLIB_USE_FLOATS, 0)])
 
 AC_ARG_WITH(sample-width,
 	[  --with-sample-width=N   use N bits of samples],
-	AC_MSG_RESULT(Using $with_sample_width bit samples)
-	AC_DEFINE_UNQUOTED(MUS_SAMPLE_BITS,$with_sample_width)
-        LOCAL_SNDLIB_BITS=$with_sample_width
+	[AC_MSG_RESULT(Using $with_sample_width bit samples)
+	 AC_DEFINE_UNQUOTED(MUS_SAMPLE_BITS, $with_sample_width)
+         LOCAL_SNDLIB_BITS=$with_sample_width
+	],
+	[AC_DEFINE(MUS_SAMPLE_BITS, 24)]
 	)
 
 AC_ARG_WITH(motif-prefix,[  --with-motif-prefix=PFX where Motif is installed],
@@ -199,7 +204,23 @@ AC_TYPE_MODE_T
 AC_TYPE_SIZE_T
 AC_TYPE_PID_T
 AC_STRUCT_TM
-AC_C_BIGENDIAN
+AC_C_BIGENDIAN( [AC_DEFINE(MUS_LITTLE_ENDIAN, 0)
+		 AC_DEFINE(WORDS_BIGENDIAN)
+		 AC_DEFINE(MUS_COMPATIBLE_FORMAT, MUS_BSHORT)
+		 if test "$with_float_samples" = yes ; then
+                   AC_DEFINE(MUS_OUT_FORMAT, MUS_BFLOAT)
+                  else
+                   AC_DEFINE(MUS_OUT_FORMAT, MUS_BINT)
+ 		 fi
+ 		],
+		[AC_DEFINE(MUS_LITTLE_ENDIAN, 1)
+    	         AC_DEFINE(MUS_COMPATIBLE_FORMAT, MUS_LSHORT)
+		 if test "$with_float_samples" = yes ; then
+                   AC_DEFINE(MUS_OUT_FORMAT, MUS_LFLOAT)
+                  else
+                   AC_DEFINE(MUS_OUT_FORMAT, MUS_LINT)
+ 		 fi
+		])
 AC_SYS_LARGEFILE
 AC_TYPE_OFF_T
 AC_C_STRINGIZE
@@ -1251,7 +1272,7 @@ if test "$with_esd" = yes ; then
   AC_CHECK_LIB(esd,main,[
     AC_CHECK_HEADER(esd.h,
       [
-	AC_DEFINE(ESD)
+	AC_DEFINE(MUS_ESD)
 	esd_version="`esd-config --version`"
         AC_DEFINE_UNQUOTED(MUS_ESD_VERSION,"${esd_version}")
         audiofile_version="`audiofile-config --version`"
@@ -1271,7 +1292,7 @@ else
 
 case "$host" in
     *-*-linux*) 
-	AC_DEFINE(LINUX)
+	AC_DEFINE(MUS_LINUX)
         LDSO_FLAGS="-shared"
         LIBS="-lm"
 #     This ^ used to be "" but redhat 7 the -lm needs to be explicit
@@ -1375,12 +1396,12 @@ case "$host" in
 	esac
 	;;
     *-*-sunos4*) 
-        AC_DEFINE(SUN)
+        AC_DEFINE(MUS_SUN)
 	LIBS="-lm"
 	audio_system=Sun
         ;;
     *-*-solaris*) 
-	AC_DEFINE(SUN)
+	AC_DEFINE(MUS_SUN)
 	LIBS="-lm -ldl"
 # odd... this causes an error in the sndlib configure (can't find libdl) but is needed here?
 	audio_system=Sun
@@ -1388,12 +1409,12 @@ case "$host" in
 # if __SUNPRO_C we could add -xO3
         ;;
     *-*-hpux*) 
-        AC_DEFINE(HPUX)
+        AC_DEFINE(MUS_HPUX)
 	audio_system=Hpux
 	LDSO_FLAGS="+z -Ae +DA1.1"
         ;;
     *-sgi*) 
-        AC_DEFINE(SGI)
+        AC_DEFINE(MUS_SGI)
 	audio_system=SGI
 	AUDIO_LIB="-laudio"
 	AC_SUBST(AUDIO_LIB)
@@ -1411,7 +1432,7 @@ case "$host" in
 	fi
         ;;
     alpha*) 
-        AC_DEFINE(ALPHA)
+        AC_DEFINE(MUS_ALPHA)
         ;;
     *-*-bsdi*) 
 	AC_DEFINE(HAVE_OSS)
@@ -1424,19 +1445,19 @@ case "$host" in
 	audio_system=OSS
 	;;
     *-*-openbsd*) 
-        AC_DEFINE(OPENBSD)
+        AC_DEFINE(MUS_OPENBSD)
 	audio_system=OpenBSD
         ;;
     *-*-netbsd*) 
-        AC_DEFINE(NETBSD)
+        AC_DEFINE(MUS_NETBSD)
 	audio_system=NetBSD
         ;;
     *-*-cygwin*)
-	AC_DEFINE(WINDOZE)
+	AC_DEFINE(MUS_WINDOZE)
 	audio_system=Windoze
 	;;
     *-apple-*)
-	AC_DEFINE(MAC_OSX)
+	AC_DEFINE(MUS_MAC_OSX)
 	audio_system=MacOSX
 	AUDIO_LIB="-framework CoreAudio -framework CoreFoundation -framework CoreMIDI"
 	AC_SUBST(AUDIO_LIB)

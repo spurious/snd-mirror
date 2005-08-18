@@ -1,5 +1,6 @@
 Snd change log
 
+  18-Aug:    _sndlib.h and sndlib.h.in.
   15-Aug:    in View:Files, click of file name no longer opens that file.
              view-files-select-hook return type no longer matters, and args are: dialog file-name.
              optional dialog arg to view-files-sort (local set).
@@ -7,7 +8,7 @@ Snd change log
 	     added snd-file.h
   8-Aug:     removed previous|view-files-sort-procedure.
              added sort-files-by-name|size|date|entry.
-             added view-files-amp|speed|amp-env|files|selected-files.
+             added view-files-amp|speed|amp-env|speed-style|files|selected-files.
              removed keep-mix-dialog-open-upon-ok from snd-motif.scm
              before-exit|close-hook.
   2-Aug:     sound-file-extensions as settable list.

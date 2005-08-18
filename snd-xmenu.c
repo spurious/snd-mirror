@@ -95,7 +95,7 @@ static void view_track_dialog_callback(Widget w, XtPointer info, XtPointer conte
 static void view_zero_callback(Widget w, XtPointer info, XtPointer context){set_show_y_zero((!(show_y_zero(ss))));}
 static void view_cursor_callback(Widget w, XtPointer info, XtPointer context){set_verbose_cursor((!(verbose_cursor(ss))));}
 
-static void view_ctrls_callback(Widget w, XtPointer info, XtPointer context)
+static void view_controls_callback(Widget w, XtPointer info, XtPointer context)
 {
   in_set_show_controls(ss, !in_show_controls(ss));
   if (in_show_controls(ss))
@@ -376,9 +376,9 @@ Widget add_menu(void)
   XtSetArg(high_args[high_n], XmNuserData, 2); high_n++;
   view_cascade_menu = XtCreateManagedWidget(_("View"), xmCascadeButtonWidgetClass, main_menu, high_args, high_n);
 
-  view_ctrls_menu = XtCreateManagedWidget(_("Show controls"), xmPushButtonWidgetClass, view_menu, main_args, main_n);
-  XtAddCallback(view_ctrls_menu, XmNactivateCallback, view_ctrls_callback, NULL);
-  XtVaSetValues(view_ctrls_menu, XmNmnemonic, 'S', NULL);
+  view_controls_menu = XtCreateManagedWidget(_("Show controls"), xmPushButtonWidgetClass, view_menu, main_args, main_n);
+  XtAddCallback(view_controls_menu, XmNactivateCallback, view_controls_callback, NULL);
+  XtVaSetValues(view_controls_menu, XmNmnemonic, 'S', NULL);
 
 #if HAVE_EXTENSION_LANGUAGE
   view_listener_menu = XtCreateManagedWidget(_("Open listener"), xmPushButtonWidgetClass, view_menu, main_args, main_n);

@@ -116,7 +116,7 @@ void view_menu_update(void)
 
   /* make sure listener menu option label correctly reflects current listener state */
   set_menu_label(view_listener_menu, (listener_is_visible()) ? _("Hide listener") : _("Show listener"));
-  set_menu_label(view_ctrls_menu, (in_show_controls(ss)) ? _("Hide controls") : _("Show controls"));
+  set_menu_label(view_controls_menu, (in_show_controls(ss)) ? _("Hide controls") : _("Show controls"));
 
   /* set_sensitive(view_files_menu, get_view_files_end() >= 0); */
 }
@@ -405,7 +405,7 @@ func (a function of no args) when the new menu is activated. Returns the new men
       if (XEN_PROCEDURE_P(callback)) slot = make_callback_slot();
       if (XEN_INTEGER_P(gpos)) position = XEN_TO_C_INT(gpos);
       result = g_add_to_menu(m,
-#if (SGI) && (!(HAVE_EXTENSION_LANGUAGE)) && (!(defined(__GNUC__)))
+#if (MUS_SGI) && (!(HAVE_EXTENSION_LANGUAGE)) && (!(defined(__GNUC__)))
 			     /* SGI C-compiler thinks NULL:NULL can't be char*! */
 			     (XEN_FALSE_P(label)) ? "" : XEN_TO_C_STRING(label),
 #else

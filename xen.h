@@ -600,7 +600,7 @@
 #define XEN_CALL_2_NO_CATCH(Func, Arg1, Arg2)       scm_apply(Func, Arg1, scm_cons(Arg2, XEN_APPLY_ARG_LIST_END))
 #define XEN_CALL_3_NO_CATCH(Func, Arg1, Arg2, Arg3) scm_apply(Func, Arg1, scm_cons2(Arg2, Arg3, XEN_APPLY_ARG_LIST_END))
 
-#ifdef WINDOZE
+#ifdef MUS_WINDOZE
   #define XEN_APPLY_ARG_LIST_END      scm_cons(SCM_EOL, SCM_EOL)
 #else
   #define XEN_APPLY_ARG_LIST_END      scm_listofnull

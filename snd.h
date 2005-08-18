@@ -39,7 +39,7 @@
   #include <fam.h>
 #endif
 
-#include "sndlib.h"
+#include "_sndlib.h"
 #include "clm.h"
 #include "xen.h"
 #include "sndlib2xen.h"
@@ -70,7 +70,7 @@
 
 #include "snd-strings.h"
 
-#define SND_DATE "17-Aug-05"
+#define SND_DATE "18-Aug-05"
 #define SND_VERSION "7.15"
 #define SND_MAJOR_VERSION "7"
 #define SND_MINOR_VERSION "15"

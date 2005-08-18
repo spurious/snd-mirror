@@ -7,7 +7,7 @@
   #define MAIN_DISPLAY(a) GDK_DISPLAY()
 #endif
 
-#if (!USE_GTK) && (!MAC_OSX)
+#if (!USE_GTK) && (!MUS_MAC_OSX)
 
 #include <X11/Xatom.h>
 

@@ -79,7 +79,7 @@
 #endif
 
 #define SND_INIT_FILE_ENVIRONMENT_NAME "SND_INIT_FILE"
-#ifndef WINDOZE
+#ifndef MUS_WINDOZE
   #define INIT_FILE_NAME "~/.snd"
 #else
   #define INIT_FILE_NAME "snd-init"
@@ -476,7 +476,7 @@ typedef enum {AFTER_APPLY_HOOK, AFTER_EDIT_HOOK, AFTER_GRAPH_HOOK, AFTER_OPEN_HO
      #define DEFAULT_DAC_SIZE 256
   #endif
 #else
-  #if MAC_OSX
+  #if MUS_MAC_OSX
     #define DEFAULT_DAC_SIZE 64
   #else
     #define DEFAULT_DAC_SIZE 1024

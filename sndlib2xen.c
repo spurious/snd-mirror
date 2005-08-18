@@ -23,7 +23,7 @@
 #include <string.h>
 #include <errno.h>
 
-#include "sndlib.h"
+#include "_sndlib.h"
 #include "sndlib-strings.h"
 #include "sndlib2xen.h"
 #include "vct.h"
@@ -287,7 +287,7 @@ static XEN g_mus_audio_sun_outputs(XEN speakers, XEN headphones, XEN line_out)
 {
   #define H_mus_audio_sun_outputs "(" S_mus_audio_sun_outputs " speaker headphones line-out): set the current Sun audio outputs. \
 Each entry should be either 0 (turn off device) or 1 (turn it on)."
-#ifdef SUN
+#ifdef MUS_SUN
   XEN_ASSERT_TYPE(XEN_INTEGER_P(speakers), speakers, XEN_ARG_1, S_mus_audio_sun_outputs, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(headphones), headphones, XEN_ARG_2, S_mus_audio_sun_outputs, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(line_out), line_out, XEN_ARG_3, S_mus_audio_sun_outputs, "an integer");
