@@ -1988,7 +1988,7 @@ the returned procedure to make sure the mark pane is reactivated right away when
 
 <!-- view-files-select-hook -->
 <tr><td colspan=2>
-<code><a class=def name="previousfilesselecthook">view-files-select-hook</a> (dialog filename)</code></td><td></td></tr>
+<code><a class=def name="viewfilesselecthook">view-files-select-hook</a> (dialog filename)</code></td><td></td></tr>
 <tr><td></td><td colspan=2>
 called each time a file is selected in a View Files dialog's files list.
 </td></tr>
@@ -9371,7 +9371,7 @@ View:Files <a href="snd.html#viewfiles">dialog</a> and return the dialog widget.
 </td></tr>
 
 <!-- view-files-sort -->
-<tr><td colspan=2><code><a class=def name="previousfilessort">view-files-sort</a> (<i>dialog</i>)</code></td></tr>
+<tr><td colspan=2><code><a class=def name="viewfilessort">view-files-sort</a> (<i>dialog</i>)</code></td></tr>
 <tr><td></td><td>Either the local (<i>dialog</i>-specific) sort choice, or (if <i>dialog</i> is omitted),
 the default (global) sort function choice in the View:Files dialog.
 The choices are <i>sort-files-by-name</i>, <i>sort-files-by-date</i>, <i>sort-files-by-size</i>, <i>sort-files-by-entry</i> (directory order),
@@ -10421,8 +10421,6 @@ to put the date and time in the Snd title bar.
 </table>
 <br>
 
-<!-- TODO: sort constants -->
-
 <table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndconstants">Constants</a></h3></td></tr></table>
 
 <p><b>Sndlib</b> (see <a href="sndlib.html#sndlibguile">sndlib.html</a> for a complete list):</p>
@@ -10477,7 +10475,7 @@ to put the date and time in the Snd title bar.
   x-axis-in-seconds  x-axis-in-samples  x-axis-as-percentage  x-axis-in-beats  x-axis-in-measures
 </pre><br>
 
-<p><b>Speed Control</b> style (<a href="#speedstyle">speed-control-style</a>):</p>
+<p><b>Speed Control</b> style (<a href="#speedstyle">speed-control-style</a>, <a href="#viewfilesspeedstyle">view-files-speed-style</a>):</p>
 <pre>
   speed-control-as-float     speed-control-as-ratio     speed-control-as-semitone
 </pre><br>
@@ -10530,6 +10528,16 @@ to put the date and time in the Snd title bar.
   prism-colormap           autumn-colormap   winter-colormap  spring-colormap
   summer-colormap          rainbow-colormap  flag-colormap
 </pre>
+
+<p><b>File Sort</b> choice (<a href="#viewfilessort">view-files-sort</a>):</p>
+<pre>
+  sort-files-by-name   sort-files-by-date   sort-files-by-size  sort-files-by-entry
+  or an index returned by <a href="#addfilesorter">add-file-sorter</a>.
+</pre>
+<p><b>sort-files-by-entry</b> is the "unsort" choice -- it just presents files
+in the order they occur in the directory.  "by-date" refers to date written.
+"by-size" refers to number of frames.
+</p>
 
 <br>
 <table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="snderrors">Errors and Debugging</a></h3></td></tr></table>

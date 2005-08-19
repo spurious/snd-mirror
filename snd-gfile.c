@@ -3804,11 +3804,13 @@ static int view_files_find_row(view_files_info *vdat, const char *name)
   int i;
   if (vdat->names)
     for (i = 0; i <= vdat->end; i++)
-      if (strcmp(vdat->names[i], name) == 0) 
-	return(i);
+      if ((vdat->names[i]) && 
+	  (strcmp(vdat->names[i], name) == 0))
+  	return(i);
   if (vdat->full_names)
     for (i = 0; i <= vdat->end; i++)
-      if (strcmp(vdat->full_names[i], name) == 0) 
+      if ((vdat->full_names[i]) && 
+	  (strcmp(vdat->full_names[i], name) == 0))
 	return(i);
   return(-1);
 }
@@ -4770,16 +4772,20 @@ static void view_files_at_mark_callback(GtkWidget *w, gpointer context)
 }
 
 
+static bool ignore_callback = false;
+
 /* -------- speed -------- */
 
-#define SCROLLBAR_MAX 1.0
-/* TODO: fix this! */
-
-static int vf_speed_to_scroll(Float minval, Float val, Float maxval)
+static Float vf_speed_to_scroll(Float minval, Float val, Float maxval)
 {
-  if (val <= minval) return(0);
-  if (val >= maxval) return((int)(0.9 * SCROLLBAR_MAX));
-  return(snd_round(0.9 * SCROLLBAR_MAX * ((log(val) - log(minval)) / (log(maxval) - log(minval)))));
+  if (val <= minval) return(0.0);
+  if (val >= maxval) return(0.9);
+  return(0.9 * ((log(val) - log(minval)) / (log(maxval) - log(minval))));
+}
+
+static Float vf_scroll_to_speed(Float scroll)
+{
+  return(exp((scroll * (log(speed_control_max(ss)) - log(speed_control_min(ss))) / 0.9) + log(speed_control_min(ss))));
 }
 
 static void vf_set_speed(view_files_info *vdat, Float val)
@@ -4791,32 +4797,17 @@ static void vf_set_speed(view_files_info *vdat, Float val)
 			      speed_control_tones(ss),
 			      6);
   set_label(vdat->speed_number, speed_number_buffer);
-  /*
-  XtVaSetValues(vdat->speed_scrollbar, 
-		XmNvalue, vf_speed_to_scroll(speed_control_min(ss), val, speed_control_max(ss)), 
-		NULL);
-  */
+  ignore_callback = true;
+  GTK_ADJUSTMENT(vdat->speed_adj)->value = vf_speed_to_scroll(speed_control_min(ss), vdat->speed, speed_control_max(ss));
+  gtk_adjustment_value_changed(GTK_ADJUSTMENT(vdat->speed_adj));
+  ignore_callback = false;
 }
 
-static void vf_speed_click_callback(GtkWidget *w, gpointer context) 
+static gboolean vf_speed_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer context)
 {
   view_files_info *vdat = (view_files_info *)context;
   vf_set_speed(vdat, 1.0);
-#if 0
-  /* TODO adjs */
-  {
-      GtkObject *adj;
-      adj = SPEED_ADJUSTMENT(sp);
-      ignore_callback = true;
-      GTK_ADJUSTMENT(adj)->value = scroll_to_speed(sp, speed_to_scroll(sp->speed_control_min, val, sp->speed_control_max));
-      gtk_adjustment_value_changed(GTK_ADJUSTMENT(adj));
-      ignore_callback = false;
-
-  XtVaSetValues(vdat->speed_scrollbar, 
-		XmNvalue, vf_speed_to_scroll(speed_control_min(ss), 1.0, speed_control_max(ss)), 
-		NULL);
-  }
-#endif
+  return(false);
 }
 
 Float view_files_speed(widget_t dialog)
@@ -4844,7 +4835,7 @@ static void vf_speed_valuechanged_callback(GtkWidget *w, gpointer context)
   XmScrollBarCallbackStruct *cb = (XmScrollBarCallbackStruct *)info;
   vf_set_speed(vdat, exp((cb->value * 
 			  (log(speed_control_max(ss)) - log(speed_control_min(ss))) / 
-			  (0.9 * SCROLLBAR_MAX)) + log(speed_control_min(ss))));
+			  0.9) + log(speed_control_min(ss))));
 #endif
 }
 
@@ -4855,7 +4846,7 @@ static void vf_speed_drag_callback(GtkWidget *w, gpointer context)
   XmScrollBarCallbackStruct *cb = (XmScrollBarCallbackStruct *)info;
   vf_set_speed(vdat, exp((cb->value * 
 			  (log(speed_control_max(ss)) - log(speed_control_min(ss))) / 
-			  (0.9 * SCROLLBAR_MAX)) + log(speed_control_min(ss))));
+			  0.9) + log(speed_control_min(ss))));
 #endif
 }
 
@@ -4863,15 +4854,17 @@ static void vf_speed_drag_callback(GtkWidget *w, gpointer context)
 
 /* -------- amp -------- */
 
-static Float vf_scroll_to_amp(int val)
+static bool amp_pressed = false, amp_dragged = false;
+
+static Float vf_scroll_to_amp(Float val)
 {
-  if (val <= 0) 
+  if (val <= 0.0) 
     return(amp_control_min(ss));
-  if (val >= (0.9 * SCROLLBAR_MAX)) 
+  if (val >= 0.9) 
     return(amp_control_max(ss));
-  if (val > (0.5 * 0.9 * SCROLLBAR_MAX))
-    return((((val / (0.5 * 0.9 * SCROLLBAR_MAX)) - 1.0) * (amp_control_max(ss) - 1.0)) + 1.0);
-  else return((val * (1.0 - amp_control_min(ss)) / (0.5 * 0.9 * SCROLLBAR_MAX)) + amp_control_min(ss));
+  if (val > (0.5 * 0.9))
+    return((((val / (0.5 * 0.9)) - 1.0) * (amp_control_max(ss) - 1.0)) + 1.0);
+  else return((val * (1.0 - amp_control_min(ss)) / (0.5 * 0.9)) + amp_control_min(ss));
 }
 
 static Float vf_amp_to_scroll(Float amp)
@@ -4885,11 +4878,8 @@ static void vf_set_amp(view_files_info *vdat, Float val)
   vdat->amp = val;
   mus_snprintf(sfs, 6, "%.2f", val);
   set_label(vdat->amp_number, sfs);
-  /*
-  XtVaSetValues(vdat->amp_scrollbar, 
-		XmNvalue, amp_to_scroll(amp_control_min(ss), val, amp_control_max(ss)), 
-		NULL);
-  */
+  GTK_ADJUSTMENT(vdat->amp_adj)->value = vf_amp_to_scroll(vdat->amp);
+  gtk_adjustment_value_changed(GTK_ADJUSTMENT(vdat->amp_adj));
 }
 
 Float view_files_amp(widget_t dialog)
@@ -4910,28 +4900,55 @@ Float view_files_set_amp(widget_t dialog, Float new_amp)
   return(new_amp);
 }
 
-
-static void vf_amp_click_callback(GtkWidget *w, gpointer context) 
+static gboolean vf_amp_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer context)
 {
+  amp_dragged = false;
+  amp_pressed = false;
   vf_set_amp((view_files_info *)context, 1.0);
+  return(false);
 }
 
-static void vf_amp_valuechanged_callback(GtkWidget *w, gpointer context) 
+static gboolean vf_amp_motion_callback(GtkWidget *w, GdkEventMotion *ev, gpointer data)
 {
-  /*
-  vf_set_amp((view_files_info *)context, 
-	     vf_scroll_to_amp(((XmScrollBarCallbackStruct *)info)->value));
-  */
+  Float scrollval;
+  char sfs[6];
+  view_files_info *vdat = (view_files_info *)data;
+
+  if (!amp_pressed) {amp_dragged = false; return(false);}
+  amp_dragged = true;
+
+  scrollval = GTK_ADJUSTMENT(vdat->amp_adj)->value;
+  vdat->amp = vf_scroll_to_amp(scrollval);
+  mus_snprintf(sfs, 6, "%.2f", vdat->amp);
+  set_label(vdat->amp_number, sfs);
+
+  return(false);
 }
 
-static void vf_amp_drag_callback(GtkWidget *w, gpointer context) 
+static gboolean vf_amp_release_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
-  /*
-  vf_set_amp((view_files_info *)context, 
-	     vf_scroll_to_amp(((XmScrollBarCallbackStruct *)info)->value));
-  */
+  Float scrollval;
+  char sfs[6];
+  view_files_info *vdat = (view_files_info *)data;
+
+  amp_pressed = false;
+  if (!amp_dragged) return(false);
+  amp_dragged = false;
+
+  scrollval = GTK_ADJUSTMENT(vdat->amp_adj)->value;
+  vdat->amp = vf_scroll_to_amp(scrollval);
+  mus_snprintf(sfs, 6, "%.2f", vdat->amp);
+  set_label(vdat->amp_number, sfs);
+
+  return(false);
 }
 
+static gboolean vf_amp_press_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
+{
+  amp_pressed = true;
+  amp_dragged = false;
+  return(false);
+}
 
 
 
@@ -5451,9 +5468,7 @@ static GtkWidget *start_view_files_dialog_1(view_files_info *vdat, bool managed)
 	  vdat->amp_event = gtk_event_box_new();
 	  gtk_box_pack_start(GTK_BOX(ampH), vdat->amp_event, false, false, 4);
 	  gtk_widget_show(vdat->amp_event);
-	  /*
-	    SG_SIGNAL_CONNECT(vdat->amp_event, "button_press_event", amp_click_callback, (gpointer)vdat);
-	  */
+	  SG_SIGNAL_CONNECT(vdat->amp_event, "button_press_event", vf_amp_click_callback, (gpointer)vdat);
       
 	  ampL = gtk_label_new(_("amp:"));
 	  gtk_container_add(GTK_CONTAINER(vdat->amp_event), ampL);
@@ -5467,11 +5482,9 @@ static GtkWidget *start_view_files_dialog_1(view_files_info *vdat, bool managed)
 	  vdat->amp_scrollbar = gtk_hscrollbar_new(GTK_ADJUSTMENT(vdat->amp_adj));
 	  gtk_box_pack_start(GTK_BOX(ampH), vdat->amp_scrollbar, true, true, 4);
 
-	  /*
-	  SG_SIGNAL_CONNECT(vdat->amp, "motion_notify_event", amp_motion_callback, (gpointer)vdat);
-	  SG_SIGNAL_CONNECT(vdat->amp, "button_release_event", amp_release_callback, (gpointer)vdat);
-	  SG_SIGNAL_CONNECT(vdat->amp, "button_press_event", amp_press_callback, (gpointer)vdat);
-	  */
+	  SG_SIGNAL_CONNECT(vdat->amp_scrollbar, "motion_notify_event", vf_amp_motion_callback, (gpointer)vdat);
+	  SG_SIGNAL_CONNECT(vdat->amp_scrollbar, "button_release_event", vf_amp_release_callback, (gpointer)vdat);
+	  SG_SIGNAL_CONNECT(vdat->amp_scrollbar, "button_press_event", vf_amp_press_callback, (gpointer)vdat);
 	  gtk_widget_show(vdat->amp_scrollbar);
       
 	  gtk_widget_show(ampH);
@@ -5483,9 +5496,7 @@ static GtkWidget *start_view_files_dialog_1(view_files_info *vdat, bool managed)
 	  vdat->speed_event = gtk_event_box_new();
 	  gtk_box_pack_start(GTK_BOX(speedH), vdat->speed_event, false, false, 4);
 	  gtk_widget_show(vdat->speed_event);
-	  /*
-	  SG_SIGNAL_CONNECT(vdat->speed_event, "button_press_event", speed_click_callback, (gpointer)vdat);
-	  */
+	  SG_SIGNAL_CONNECT(vdat->speed_event, "button_press_event", vf_speed_click_callback, (gpointer)vdat);
       
 	  speedL = gtk_label_new(_("speed:"));
 	  gtk_container_add(GTK_CONTAINER(vdat->speed_event), speedL);

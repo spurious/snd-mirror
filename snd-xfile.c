@@ -4260,11 +4260,13 @@ static int view_files_find_row(view_files_info *vdat, const char *name)
   int i;
   if (vdat->names)
     for (i = 0; i <= vdat->end; i++)
-      if (strcmp(vdat->names[i], name) == 0) 
-	return(i);
+      if ((vdat->names[i]) && 
+	  (strcmp(vdat->names[i], name) == 0))
+  	return(i);
   if (vdat->full_names)
     for (i = 0; i <= vdat->end; i++)
-      if (strcmp(vdat->full_names[i], name) == 0) 
+      if ((vdat->full_names[i]) && 
+	  (strcmp(vdat->full_names[i], name) == 0))
 	return(i);
   return(-1);
 }
@@ -5078,7 +5080,7 @@ static void view_files_mix_selected_callback(Widget w, XtPointer context, XtPoin
 	}
 
       /* "id_or_error" here is either one of the mix id's or an error indication such as MIX_FILE_NO_MIX */
-      /*    the possible error conditions have been checked alreay, or go through snd_error */
+      /*    the possible error conditions have been checked already, or go through snd_error */
 
       redirect_snd_error_to(NULL, NULL);
       if (id_or_error < 0) /* actually -1 .. -3 */
