@@ -1,35 +1,35 @@
 ;;; Snd tests
 ;;;
-;;;  test 0: constants                          [412]
-;;;  test 1: defaults                           [974]
-;;;  test 2: headers                            [1173]
-;;;  test 3: variables                          [1477]
-;;;  test 4: sndlib                             [1869]
-;;;  test 5: simple overall checks              [3687]
-;;;  test 6: vcts                               [11081]
-;;;  test 7: colors                             [11391]
-;;;  test 8: clm                                [11893]
-;;;  test 9: mix                                [19352]
-;;;  test 10: marks                             [22410]
-;;;  test 11: dialogs                           [23113]
-;;;  test 12: extensions                        [23423]
-;;;  test 13: menus, edit lists, hooks, etc     [23840]
-;;;  test 14: all together now                  [25181]
-;;;  test 15: chan-local vars                   [26246]
-;;;  test 16: regularized funcs                 [27506]
-;;;  test 17: dialogs and graphics              [31873]
-;;;  test 18: enved                             [31948]
-;;;  test 19: save and restore                  [31968]
-;;;  test 20: transforms                        [33449]
-;;;  test 21: new stuff                         [35107]
-;;;  test 22: run                               [35983]
-;;;  test 23: with-sound                        [41482]
-;;;  test 24: user-interface                    [42486]
-;;;  test 25: X/Xt/Xm                           [45604]
-;;;  test 26: Gtk                               [50098]
-;;;  test 27: GL                                [54088]
-;;;  test 28: errors                            [54198]
-;;;  test all done                              [56286]
+;;;  test 0: constants                          [413]
+;;;  test 1: defaults                           [983]
+;;;  test 2: headers                            [1183]
+;;;  test 3: variables                          [1487]
+;;;  test 4: sndlib                             [1951]
+;;;  test 5: simple overall checks              [3769]
+;;;  test 6: vcts                               [11139]
+;;;  test 7: colors                             [11449]
+;;;  test 8: clm                                [11951]
+;;;  test 9: mix                                [19410]
+;;;  test 10: marks                             [22468]
+;;;  test 11: dialogs                           [23171]
+;;;  test 12: extensions                        [23535]
+;;;  test 13: menus, edit lists, hooks, etc     [23954]
+;;;  test 14: all together now                  [25295]
+;;;  test 15: chan-local vars                   [26360]
+;;;  test 16: regularized funcs                 [27620]
+;;;  test 17: dialogs and graphics              [31986]
+;;;  test 18: enved                             [32061]
+;;;  test 19: save and restore                  [32081]
+;;;  test 20: transforms                        [33562]
+;;;  test 21: new stuff                         [35223]
+;;;  test 22: run                               [36099]
+;;;  test 23: with-sound                        [41600]
+;;;  test 24: user-interface                    [42604]
+;;;  test 25: X/Xt/Xm                           [45681]
+;;;  test 26: Gtk                               [50175]
+;;;  test 27: GL                                [54165]
+;;;  test 28: errors                            [54275]
+;;;  test all done                              [56365]
 ;;;
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 ;;; need all html example code in autotests
@@ -40,6 +40,18 @@
 
 (define original-save-dir (or (save-dir) "/zap/snd"))
 (define original-temp-dir (or (temp-dir) "/zap/tmp"))
+
+(define (snd-display . args)
+  (let ((str (if (null? (cdr args))
+		 (car args)
+		 (apply format #f args))))
+    (newline) 
+    (display str)
+    (if (not (provided? 'snd-nogui))
+	(begin
+	  (snd-print #\newline)
+	  (snd-print str)))))
+
 
 (define home-dir "/home/bil")
 (define sf-dir "/sf1")
@@ -84,17 +96,6 @@
 (define keep-going #f)
 (define all-args #f) ; huge arg testing
 (define with-big-file #t)
-
-(define (snd-display . args)
-  (let ((str (if (null? (cdr args))
-		 (car args)
-		 (apply format #f args))))
-    (newline) 
-    (display str)
-    (if (not (provided? 'snd-nogui))
-	(begin
-	  (snd-print #\newline)
-	  (snd-print str)))))
 
 (if (not (defined? 'snd-test)) (define snd-test -1))
 (define full-test (< snd-test 0))
@@ -1878,7 +1879,7 @@
 	    (snd-display ";add-file-sorter: ~A" (file-sorters)))
 	(delete-file-sorter "duration")
 	(if (not (null? (file-sorters))) (snd-display ";delete-file-sorter didn't"))
-	(set! (file-sorters) (list (cons "duration" 
+	(set! (file-sorters) (list (list "duration" 
 					 (lambda (lst)
 					   (sort lst 
 						 (lambda (a b)
@@ -1900,7 +1901,7 @@
 	    (snd-display ";add-file-filter: ~A" (file-filters)))
 	(delete-file-filter "duration")
 	(if (not (null? (file-filters))) (snd-display ";delete-file-filter didn't"))
-	(set! (file-filters) (list (cons "duration" 
+	(set! (file-filters) (list (list "duration" 
 					 (lambda (a)
 					   (> (mus-sound-duration a) 1.0)))))
 	(if (null? (file-filters)) (snd-display ";set file-filter didn't"))
@@ -1921,18 +1922,18 @@
 			  (add-file-filter "no-good" (lambda () "oops")))
 			(lambda args args))))
 	(if (not (equal? (car tag) 'bad-arity))
-	    (snd-display ";file-sorter bad cdr: ~A" tag)))
+	    (snd-display ";file-sorter bad cadr: ~A" tag)))
       
       (let ((tag (catch #t
 			(lambda ()
-			  (set! (file-sorters) (list (list "hi" (lambda (a) a)))))
+			  (set! (file-sorters) (list (list 123 (lambda (a) a)))))
 			(lambda args args))))
 	(if (not (equal? (car tag) 'wrong-type-arg))
 	    (snd-display ";set file-sorters bad car: ~A" tag)))
       
       (let ((tag (catch #t
 			(lambda ()
-			  (set! (file-filters) (list (cons "hi" (lambda (a) a)) (cons 123 (lambda (b) b)))))
+			  (set! (file-filters) (list (list "hi" (lambda (a) a)) (list 123 (lambda (b) b)))))
 			(lambda args args))))
 	(if (not (equal? (car tag) 'wrong-type-arg))
 	    (snd-display ";set file-filters bad car: ~A" tag)))
@@ -31349,19 +31350,22 @@ EDITS: 6
 	  (undo 2)
 	  (close-sound ind))
 	
-	(let* ((ind (open-sound (string-append home-dir "/test/sound/away.snd")))
-	       (start (real-time))
-	       (mxs (maxamp ind #t)))
-	  (swap-channels)
-	  (update-time-graph)
-	  (let ((tm (- (real-time) start)))
-	    (if (> tm .1) (snd-display ";swap-channels not optimized? ~A" tm)))
-	  (let ((new-mxs (maxamp ind #t)))
-	    (if (or (fneq (car mxs) (cadr new-mxs))
-		    (fneq (cadr mxs) (car new-mxs)))
-		(snd-display ";swap-channels amps: ~A -> ~A" mxs new-mxs)))
-	  (revert-sound ind)
-	  (close-sound ind))
+	(catch #t
+	       (lambda ()
+		 (let* ((ind (open-sound (string-append home-dir "/test/sound/away.snd")))
+			(start (real-time))
+			(mxs (maxamp ind #t)))
+		   (swap-channels)
+		   (update-time-graph)
+		   (let ((tm (- (real-time) start)))
+		     (if (> tm .1) (snd-display ";swap-channels not optimized? ~A" tm)))
+		   (let ((new-mxs (maxamp ind #t)))
+		     (if (or (fneq (car mxs) (cadr new-mxs))
+			     (fneq (cadr mxs) (car new-mxs)))
+			 (snd-display ";swap-channels amps: ~A -> ~A" mxs new-mxs)))
+		   (revert-sound ind)
+		   (close-sound ind)))
+	       (lambda args args)) ; away.snd may not exist
 	
 	(let ((ind (init-sound 0.5 10 2)))
 	  (save-sound ind)
@@ -38988,14 +38992,16 @@ EDITS: 1
 	      (let ((ok #f))
 		(run (lambda () (set! ok (track? (1+ trk)))))
 		(if ok (snd-display ";run not track?")))
-	      (let ((str "hiho")
-		    (str1 (temp-dir)))
-		(run (lambda () (set! str (temp-dir))))
-		(if (not (string=? str str1)) (snd-display ";run temp-dir: ~A ~A" str str1)))
-	      (let ((str "hiho")
-		    (str1 (save-dir)))
-		(run (lambda () (set! str (save-dir))))
-		(if (not (string=? str str1)) (snd-display ";run save-dir: ~A ~A" str str1)))
+	      (if (string? (temp-dir))
+		  (let ((str "hiho")
+			(str1 (temp-dir)))
+		    (run (lambda () (set! str (temp-dir))))
+		    (if (not (string=? str str1)) (snd-display ";run temp-dir: ~A ~A" str str1))))
+	      (if (string? (save-dir))
+		  (let ((str "hiho")
+			(str1 (save-dir)))
+		    (run (lambda () (set! str (save-dir))))
+		    (if (not (string=? str str1)) (snd-display ";run save-dir: ~A ~A" str str1))))
 	      (let ((mx (mark-sync-max))
 		    (mx1 -1))
 		(run (lambda () (set! mx1 (mark-sync-max))))

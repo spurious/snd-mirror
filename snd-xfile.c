@@ -1,5 +1,5 @@
 #include "snd.h"
-/* #include "snd-file.h" */
+#include "snd-file.h"
 
 /* various file-related dialogs:
    File|Edit:Save-as, 
@@ -43,7 +43,6 @@
  * TODO: report-in-minibuffer extended to go to any dialog
  * TODO: always show bg wave in vf
  * TODO: will need at least a reset button for the vf env, perhaps reset for entire vf
- * TODO: snd-file.h + entire split
  */
 
 
@@ -3694,70 +3693,7 @@ void save_post_it_dialog_state(FILE *fd)
 }
 
 
-/* ---------------- view files dialog ---------------- */
-
-typedef enum {VF_AT_CURSOR, VF_AT_END, VF_AT_BEGINNING, VF_AT_MARK, VF_AT_SAMPLE} vf_location_t;
-
-typedef struct {
-  Widget rw, nm, pl;
-  int pos;
-  file_viewer_t parent;
-  void *vdat;
-} vf_row;
-
-/* PERHAPS: how to present filters -- another button alongside sort? -- should sort have margins? */
-
-typedef struct {
-  Widget dialog, file_list, file_list_holder, left_title;
-  vf_row **file_list_entries;
-  int size;
-  char **names;
-  char **full_names;
-  int *times;
-  int end;
-  int curtime, sorter;
-  int *selected_files;
-  int selected_files_size;
-  int currently_selected_files;
-  Widget info1, info2, openB, mixB, removeB, insertB, clearB, updateB;
-  Widget at_cursor_button, at_end_button, at_beginning_button, at_mark_button, at_sample_button, at_sample_text, at_mark_text;
-  Float amp;
-  Widget amp_number, amp_scrollbar;
-  vf_location_t location_choice;
-  Float speed;
-  Widget speed_number, speed_scrollbar;
-  Widget env_drawer;
-  axis_context *env_ax;
-  GC env_gc;
-  env_editor *spf;
-  env *amp_env;
-  int open_file_watcher_loc;
-  bool error_p;
-  Widget by_name, by_date, by_size, by_entry;
-  Widget *sort_items;
-  int sort_items_size;
-  Widget smenu, current_play_button;
-  speed_style_t speed_style;
-} view_files_info;
-
-static void view_files_clear_selected_files(view_files_info *vdat);
-static void vf_mix_insert_buttons_set_sensitive(view_files_info *vdat, bool sensitive);
-static void vf_open_remove_buttons_set_sensitive(view_files_info *vdat, bool sensitive);
-static void view_files_clear_list(view_files_info *vdat);
-static void view_files_update_list(view_files_info *vdat);
-static Widget start_view_files_dialog_1(view_files_info *vdat, bool managed);
-static void vf_clear_sample(view_files_info *vdat);
-static void view_files_add_file_or_directory(view_files_info *vdat, const char *file_or_dir);
-static int view_files_add_selected_file(view_files_info *vdat, vf_row *r);
-static int view_files_find_row(view_files_info *vdat, const char *name);
-static void view_files_display_list(view_files_info *vdat);
-static void vf_reflect_sort_choice_in_menu(view_files_info *vdat);
-static void vf_post_error(const char *error_msg, void *data);
-static void vf_post_location_error(const char *error_msg, void *data);
-
-
-
-/* -------- mouse-enter|leave-label hooks -------- */
+/* ---------------- VIEW FILES DIALOG ---------------- */
 
 static XEN mouse_enter_label_hook;
 static XEN mouse_leave_label_hook;
@@ -3864,243 +3800,19 @@ static vf_row *make_vf_row(view_files_info *vdat,
   return(r);
 }
 
-static void vf_open_file_watcher(ss_watcher_reason_t reason, int loc)
+void vf_unhighlight_row(widget_t nm, widget_t rw)
 {
-  ss_watcher *data;
-  view_files_info *vdat;
-  data = ss->watchers[loc];
-  vdat = (view_files_info *)(data->context);
-  if ((vdat->dialog) &&
-      (XtIsManaged(vdat->dialog)))
-    {
-      /* reasons are SS_FILE_OPENED|CLOSED, but it's not worth the trouble of splitting them out here */
-      vf_mix_insert_buttons_set_sensitive(vdat, 
-					  ((vdat->currently_selected_files > 0) &&
-					   (any_selected_sound())));
-      vf_open_remove_buttons_set_sensitive(vdat, 
-					   (vdat->currently_selected_files > 0));
-    }
+  XtVaSetValues(rw, XmNbackground, ss->sgx->highlight_color, NULL);
+  XtVaSetValues(nm, XmNbackground, ss->sgx->highlight_color, NULL);
 }
 
-static int view_files_info_size = 0;
-static view_files_info **view_files_infos = NULL;
-
-static view_files_info *new_view_files_dialog(void)
+void vf_highlight_row(widget_t nm, widget_t rw)
 {
-  int loc = -1;
-  if (view_files_info_size == 0)
-    {
-      loc = 0;
-      view_files_info_size = 4;
-      view_files_infos = (view_files_info **)CALLOC(view_files_info_size, sizeof(view_files_info *));
-    }
-  else
-    {
-      int i;
-      for (i = 0; i < view_files_info_size; i++)
-	if ((!view_files_infos[i]) ||
-	    (!(view_files_infos[i]->dialog)) ||
-	    (!(XtIsManaged(view_files_infos[i]->dialog))))
-	  {
-	    loc = i;
-	    break;
-	  }
-      if (loc == -1)
-	{
-	  loc = view_files_info_size;
-	  view_files_info_size += 4;
-	  view_files_infos = (view_files_info **)REALLOC(view_files_infos, view_files_info_size * sizeof(view_files_info *));
-	  for (i = loc; i < view_files_info_size; i++) view_files_infos[i] = NULL;
-	}
-    }
-  if (!view_files_infos[loc])
-    {
-      view_files_info *vdat;
-      view_files_infos[loc] = (view_files_info *)CALLOC(1, sizeof(view_files_info));
-      vdat = view_files_infos[loc];
-      vdat->dialog = NULL;
-      vdat->file_list = NULL;
-      vdat->file_list_holder = NULL;
-      vdat->file_list_entries = NULL;
-      vdat->size = 0;
-      vdat->end = -1;
-      vdat->names = NULL;
-      vdat->full_names = NULL;
-      vdat->curtime = 0;
-      vdat->times = NULL;
-      vdat->selected_files = NULL;
-      vdat->selected_files_size = 0;
-      vdat->location_choice = VF_AT_CURSOR;
-      vdat->error_p = false;
-      vdat->amp = 1.0;
-      vdat->speed = 1.0;
-      vdat->amp_env = default_env(1.0, 1.0);
-      vdat->open_file_watcher_loc = add_ss_watcher(SS_FILE_OPEN_WATCHER, vf_open_file_watcher, (void *)vdat);
-      vdat->sort_items_size = 0;
-      vdat->sort_items = NULL;
-      vdat->speed_style = speed_control_style(ss);
-    }
-  /* don't clear at this point! */
-  view_files_infos[loc]->currently_selected_files = 0;
-  view_files_infos[loc]->sorter = view_files_sort(ss);
-  return(view_files_infos[loc]);
+  XtVaSetValues(rw, XmNbackground, ss->sgx->zoom_color, NULL);
+  XtVaSetValues(nm, XmNbackground, ss->sgx->zoom_color, NULL);
 }
 
-static int vf_dialog_to_index(Widget dialog)
-{
-  int i;
-  if ((!dialog) &&
-      (view_files_infos[0]) &&
-      (view_files_infos[0]->dialog))
-    return(0);
-  for (i = 0; i < view_files_info_size; i++)
-    if ((view_files_infos[i]) &&
-	(view_files_infos[i]->dialog == dialog))
-      return(i);
-  return(-1);
-}
-
-static view_files_info *vf_dialog_to_info(Widget dialog)
-{
-  int index;
-  index = vf_dialog_to_index(dialog);
-  if (index >= 0)
-    return(view_files_infos[index]);
-  return(NULL);
-}
-
-static char **vf_selected_files(view_files_info *vdat)
-{
-  int len;
-  char **files = NULL;
-  len = vdat->currently_selected_files;
-  if (len > 0)
-    {
-      int i;
-      files = (char **)CALLOC(len, sizeof(char *));
-      for (i = 0; i < len; i++) 
-	files[i] = copy_string(vdat->full_names[vdat->selected_files[i]]);
-    }
-  return(files);
-}
-
-char **view_files_selected_files(widget_t dialog, int *len)
-{
-  /* free result */
-  view_files_info *vdat;
-  vdat = vf_dialog_to_info(dialog);
-  if (vdat)
-    {
-      (*len) = vdat->currently_selected_files;
-      return(vf_selected_files(vdat));
-    }
-  (*len) = 0;
-  return(NULL);
-}
-
-char **view_files_set_selected_files(widget_t dialog, char **files, int len)
-{
-  view_files_info *vdat;
-  vdat = vf_dialog_to_info(dialog);
-  if (vdat)
-    {
-      int i;
-      view_files_clear_selected_files(vdat);
-      for (i = 0; i < len; i++)
-	if (files[i])
-	  {
-	    int loc;
-	    loc = view_files_find_row(vdat, (const char *)(files[i]));
-	    if (loc >= 0)
-	      {
-		view_files_add_selected_file(vdat, vdat->file_list_entries[loc]);
-		view_files_run_select_hook(vdat->dialog, (const char *)(files[i]));
-	      }
-	  }
-    }
-  /* display not needed, I think */
-  return(files);
-}
-
-char **view_files_files(widget_t dialog, int *len)
-{
-  /*don't free result! */
-  view_files_info *vdat;
-  vdat = vf_dialog_to_info(dialog);
-  if (vdat)
-    {
-      (*len) = vdat->end + 1;
-      return(vdat->full_names);
-    }
-  (*len) = 0;
-  return(NULL);
-}
-
-char **view_files_set_files(widget_t dialog, char **files, int len)
-{
-  view_files_info *vdat;
-  vdat = vf_dialog_to_info(dialog);
-  if (vdat)
-    {
-      int i;
-      view_files_clear_selected_files(vdat);
-      view_files_clear_list(vdat);
-      for (i = 0; i < len; i++)
-	if (files[i])
-	  view_files_add_file_or_directory(vdat, (const char *)(files[i]));
-    }
-  view_files_display_list(vdat);
-  return(files);
-}
-
-static void vf_mix_insert_buttons_set_sensitive(view_files_info *vdat, bool sensitive)
-{
-  if (vdat->mixB)
-    {
-      XtSetSensitive(vdat->mixB, sensitive);
-      XtSetSensitive(vdat->insertB, sensitive);
-    }
-}
-
-static void vf_open_remove_buttons_set_sensitive(view_files_info *vdat, bool sensitive)
-{
-  if (vdat->openB)
-    {
-      XtSetSensitive(vdat->removeB, sensitive);
-      XtSetSensitive(vdat->openB, sensitive);
-    }
-}
-
-static void vf_clear_button_set_sensitive(view_files_info *vdat, bool sensitive)
-{
-  if (vdat->clearB)
-    XtSetSensitive(vdat->clearB, sensitive);
-}
-
-static void view_files_clear_selected_files(view_files_info *vdat)
-{
-  int len;
-  len = vdat->currently_selected_files;
-  if (len > 0)
-    {
-      int i;
-      for (i = 0; i < len; i++)
-	{
-	  vf_row *r;
-	  r = vdat->file_list_entries[vdat->selected_files[i]];
-	  if (r)
-	    {
-	      XtVaSetValues(r->rw, XmNbackground, ss->sgx->highlight_color, NULL);
-	      XtVaSetValues(r->nm, XmNbackground, ss->sgx->highlight_color, NULL);
-	    }
-	}
-    }
-  vdat->currently_selected_files = 0;
-  vf_mix_insert_buttons_set_sensitive(vdat, false);
-  vf_open_remove_buttons_set_sensitive(vdat, false);
-}
-
-static void vf_post_info(view_files_info *vdat, int pos)
+void vf_post_info(view_files_info *vdat, int pos)
 {
   char *title;
   XmString s3;
@@ -4114,7 +3826,7 @@ static void vf_post_info(view_files_info *vdat, int pos)
   post_sound_info(vdat->info1, vdat->info2, vdat->full_names[pos], false);
 }
 
-static void vf_post_selected_files_list(view_files_info *vdat)
+void vf_post_selected_files_list(view_files_info *vdat)
 {
   int len;
   char *msg1 = NULL, *msg2 = NULL, *title;
@@ -4159,7 +3871,7 @@ static void vf_post_selected_files_list(view_files_info *vdat)
   FREE(msg2);
 }
 
-static void vf_unpost_info(view_files_info *vdat)
+void vf_unpost_info(view_files_info *vdat)
 {
   XmString s1, s2, s3;
   char *title;
@@ -4178,439 +3890,6 @@ static void vf_unpost_info(view_files_info *vdat)
   XtVaSetValues(vdat->info2, XmNlabelString, s2, NULL);
   XmStringFree(s1);
   XmStringFree(s2);
-}
-
-static void view_files_unselect_file(view_files_info *vdat, vf_row *r)
-{
-  XtVaSetValues(r->rw, XmNbackground, ss->sgx->highlight_color, NULL);
-  XtVaSetValues(r->nm, XmNbackground, ss->sgx->highlight_color, NULL);
-  if (vdat->currently_selected_files > 1)
-    {
-      /* need to fixup selected_files list */
-      int i, new_loc = 0;
-      for (i = 0; i < vdat->currently_selected_files; i++)
-	if (vdat->selected_files[i] != r->pos)
-	  vdat->selected_files[new_loc++] = vdat->selected_files[i];
-    }
-  vdat->currently_selected_files--;
-  if (vdat->currently_selected_files < 0) 
-    vdat->currently_selected_files = 0;
-}
-
-static int view_files_add_selected_file(view_files_info *vdat, vf_row *r)
-{
-  /* returns how many are now selected (counting new) */
-  if (vdat->selected_files_size == 0)
-    {
-      vdat->selected_files_size = 4;
-      vdat->selected_files = (int *)CALLOC(vdat->selected_files_size, sizeof(int));
-      vdat->selected_files[0] = r->pos;
-      vdat->currently_selected_files = 1;
-    }
-  else
-    {
-      if (vdat->currently_selected_files >= vdat->selected_files_size)
-	{
-	  vdat->selected_files_size += 4;
-	  vdat->selected_files = (int *)REALLOC(vdat->selected_files, vdat->selected_files_size * sizeof(int));
-	  vdat->selected_files[vdat->currently_selected_files++] = r->pos;
-	}
-      else 
-	{
-	  vdat->selected_files[vdat->currently_selected_files++] = r->pos;
-	}
-    }
-  XtVaSetValues(r->rw, XmNbackground, ss->sgx->zoom_color, NULL);
-  XtVaSetValues(r->nm, XmNbackground, ss->sgx->zoom_color, NULL);
-  return(vdat->currently_selected_files);
-}
-
-static void vf_fixup_selected_files(view_files_info *vdat, char **saved_selected_files, int len)
-{
-  /* various things change the order or contents of the files list, so the selected locs list needs to reflect that */
-  int i, newly_selected = 0;
-  for (i = 0; i < len; i++)
-    {
-      int j;
-      for (j = 0; j <= vdat->end; j++)
-	if ((vdat->full_names[j]) &&
-	    (strcmp(vdat->full_names[j], saved_selected_files[i]) == 0))
-	  {
-	    vf_row *old_r, *new_r;
-	    /* fprintf(stderr,"old %d at %d -> %d at %d\n", vdat->selected_files[i], i, j, newly_selected); */
-	    old_r = vdat->file_list_entries[vdat->selected_files[i]];
-	    vdat->selected_files[newly_selected++] = j;
-	    new_r = vdat->file_list_entries[j];
-	    if (new_r != old_r)
-	      {
-		XtVaSetValues(new_r->rw, XmNbackground, ss->sgx->zoom_color, NULL);
-		XtVaSetValues(new_r->nm, XmNbackground, ss->sgx->zoom_color, NULL);
-		XtVaSetValues(old_r->rw, XmNbackground, ss->sgx->highlight_color, NULL);
-		XtVaSetValues(old_r->nm, XmNbackground, ss->sgx->highlight_color, NULL);
-	      }
-	    break;
-	  }
-    }
-  vdat->currently_selected_files = newly_selected;
-}
-
-
-static int view_files_find_row(view_files_info *vdat, const char *name)
-{
-  int i;
-  if (vdat->names)
-    for (i = 0; i <= vdat->end; i++)
-      if ((vdat->names[i]) && 
-	  (strcmp(vdat->names[i], name) == 0))
-  	return(i);
-  if (vdat->full_names)
-    for (i = 0; i <= vdat->end; i++)
-      if ((vdat->full_names[i]) && 
-	  (strcmp(vdat->full_names[i], name) == 0))
-	return(i);
-  return(-1);
-}
-
-/* TODO: clip/db buttons for graph?? */
-
-static void view_files_select(vf_row *r, bool add_to_selected)
-{
-  view_files_info *vdat = (view_files_info *)(r->vdat);
-  int i, curloc = -1;
-
-  for (i = 0; i < vdat->currently_selected_files; i++)
-    if (vdat->selected_files[i] == r->pos)
-      {
-	curloc = r->pos;
-	break;
-      }
-  if (curloc == -1)
-    {
-      /* file not currently selected */
-      if (!add_to_selected)         /* not shift click, so remove all currently selected files first */
-	view_files_clear_selected_files(vdat);
-      view_files_add_selected_file(vdat, r);
-      view_files_run_select_hook(vdat->dialog, vdat->full_names[r->pos]);
-    }
-  else
-    {
-      /* file already selected, so remove from selected files list */
-      view_files_unselect_file(vdat, r);
-    }
-
-  if ((vdat->currently_selected_files == 0) ||
-      ((vdat->currently_selected_files == 1) &&
-       (!(plausible_sound_file_p(vdat->full_names[vdat->selected_files[0]])))))
-    vf_unpost_info(vdat);
-  else
-    {
-      if (vdat->currently_selected_files == 1)
-	vf_post_info(vdat, vdat->selected_files[0]);
-      else vf_post_selected_files_list(vdat);
-    }
-  vf_mix_insert_buttons_set_sensitive(vdat, 
-				      ((vdat->currently_selected_files > 0) &&
-				       (any_selected_sound())));
-  vf_open_remove_buttons_set_sensitive(vdat, 
-				       (vdat->currently_selected_files > 0));
-}
-
-void view_files_unplay(void)
-{
-  int k;
-  for (k = 0; k < view_files_info_size; k++)
-    if ((view_files_infos[k]) &&
-	(view_files_infos[k]->dialog) &&
-	(XtIsManaged(view_files_infos[k]->dialog)))
-      {
-	view_files_info *vdat;
-	vdat = view_files_infos[k];
-	if ((vdat->current_play_button) &&
-	    (XmIsToggleButton(vdat->current_play_button)) &&
-	    (XmToggleButtonGetState(vdat->current_play_button) != XmUNSET))
-	  {
-	    XmToggleButtonSetState(vdat->current_play_button, false, true);
-	    vdat->current_play_button = NULL;
-	  }
-      }
-}
-
-static bool view_files_play(view_files_info *vdat, int pos, bool play)
-{
-  static snd_info *play_sp;
-  if (play)
-    {
-      if (play_sp)
-	{
-	  if (play_sp->playing) return(true); /* can't play two of these at once */
-	  if ((vdat->names[pos] == NULL) || 
-	      (strcmp(play_sp->short_filename, vdat->names[pos]) != 0))
-	    {
-	      completely_free_snd_info(play_sp);
-	      play_sp = NULL;
-	    }
-	}
-      if ((!play_sp) && 
-	  (vdat->full_names[pos]))
-	play_sp = make_sound_readable(vdat->full_names[pos], false);
-      if (play_sp)
-	{
-	  play_sp->short_filename = vdat->names[pos];
-	  play_sp->filename = NULL;
-	  play_sound(play_sp, 0, NO_END_SPECIFIED);
-	}
-      else return(true); /* can't find or setup file */
-    }
-  else
-    { /* play toggled off */
-      if ((play_sp) && (play_sp->playing)) 
-	{
-	  stop_playing_sound(play_sp, PLAY_BUTTON_UNSET);
-	  vdat->current_play_button = NULL;
-	}
-    }
-  return(false);
-}
-
-static void add_file_to_view_files_list(view_files_info *vdat, const char *filename, const char *fullname)
-{
-  if (view_files_find_row(vdat, filename) != -1) return;
-  if (!(mus_file_probe(fullname))) return;
-  vdat->end++;
-  if (vdat->end >= vdat->size)
-    {
-      int new_size;
-      new_size = vdat->size + 32;
-      if (vdat->size == 0)
-	{
-	  vdat->names = (char **)CALLOC(new_size, sizeof(char *));
-	  vdat->full_names = (char **)CALLOC(new_size, sizeof(char *));
-	  vdat->times = (int *)CALLOC(new_size, sizeof(int));
-	}
-      else
-	{
-	  int i;
-	  vdat->names = (char **)REALLOC(vdat->names, new_size * sizeof(char *));
-	  vdat->full_names = (char **)REALLOC(vdat->full_names, new_size * sizeof(char *));
-	  vdat->times = (int *)REALLOC(vdat->times, new_size * sizeof(int));
-	  for (i = vdat->size; i < new_size; i++) 
-	    {
-	      vdat->names[i] = NULL; 
-	      vdat->full_names[i] = NULL; 
-	      vdat->times[i] = 0;
-	    }
-	}
-      if (vdat->file_list_entries == NULL)
-	vdat->file_list_entries = (vf_row **)CALLOC(new_size, sizeof(vf_row *));
-      else 
-	{
-	  int i;
-	  vdat->file_list_entries = (vf_row **)REALLOC(vdat->file_list_entries, new_size * sizeof(vf_row *));
-	  for (i = vdat->size; i < new_size; i++) vdat->file_list_entries[i] = NULL;
-	}
-      vdat->size = new_size;
-    }
-  if (mus_file_probe(fullname))
-    {
-      vdat->names[vdat->end] = copy_string(filename);
-      vdat->full_names[vdat->end] = copy_string(fullname);
-      vdat->times[vdat->end] = vdat->curtime++;
-      if ((vdat->dialog) && (XtIsManaged(vdat->dialog)))
-	vf_clear_button_set_sensitive(vdat, true);
-    }
-}
-
-static void add_directory_to_view_files_list(view_files_info *vdat, const char *dirname)
-{
-  dir *sound_files = NULL;
-  sound_files = find_sound_files_in_dir(dirname);
-  if ((sound_files) && (sound_files->len > 0))
-    {
-      char *fullpathname = NULL;
-      char **fullnames;
-      int i, end;
-
-      /* fprintf(stderr,"path: %s ->", dirname); */
-      fullpathname = (char *)CALLOC(FILENAME_MAX, sizeof(char));
-      strcpy(fullpathname, dirname);
-      if (dirname[strlen(dirname) - 1] != '/') 
-	strcat(fullpathname, "/");
-      /* fprintf(stderr," %s (%d)\n", fullpathname, sound_files->len); */
-
-      end = strlen(fullpathname);
-      fullnames = (char **)CALLOC(sound_files->len, sizeof(char *));
-      for (i = 0; i < sound_files->len; i++) 
-	{
-	  fullnames[i] = copy_string(strcat(fullpathname, sound_files->files[i]));
-	  fullpathname[end] = '\0';
-	}
-      for (i = 0; i < sound_files->len; i++) 
-	{
-	  add_file_to_view_files_list(vdat, sound_files->files[i], fullnames[i]);
-	  FREE(fullnames[i]); 
-	  fullnames[i] = NULL;
-	}
-      FREE(fullnames);
-      free_dir(sound_files);
-      FREE(fullpathname);
-    }
-}
-
-/* sort view_files list by name (aphabetical), or some number (date written, size, entry order, srate? type?) */
-
-typedef struct {
-  int vals, times;
-  off_t samps;
-  char *a1, *a2;
-} heapdata;
-
-static int alphabet_compare(const void *a, const void *b)
-{
-  heapdata *d1 = *(heapdata **)a;
-  heapdata *d2 = *(heapdata **)b;
-  return(strcmp(d1->a1, d2->a1));
-}
-
-static int greater_compare(const void *a, const void *b)
-{
-  heapdata *d1 = *(heapdata **)a;
-  heapdata *d2 = *(heapdata **)b;
-  if (d1->samps > d2->samps) 
-    return(1); 
-  else 
-    {
-      if (d1->samps == d2->samps) 
-	return(0); 
-      else return(-1);
-    }
-}
-
-static int less_compare(const void *a, const void *b)
-{
-  heapdata *d1 = *(heapdata **)a;
-  heapdata *d2 = *(heapdata **)b;
-  if (d1->vals < d2->vals) 
-    return(1); 
-  else 
-    {
-      if (d1->vals == d2->vals) 
-	return(0); 
-      else return(-1);
-    }
-}
-
-static void ignore_mus_error(int type, char *msg)
-{
-  /* squelch error */
-}
-
-static void view_files_sort_list(view_files_info *vdat)
-{
-  int i, old_len;
-  char **old_names = NULL;
-  old_len = vdat->currently_selected_files;
-  if (old_len > 0)
-    old_names = vf_selected_files(vdat);
-  if (vdat->end >= 0)
-    {
-      heapdata **data;
-      int i, len;
-      len = vdat->end + 1;
-      data = (heapdata **)CALLOC(len, sizeof(heapdata *));
-      for (i = 0; i < len; i++)
-	{
-	  data[i] = (heapdata *)CALLOC(1, sizeof(heapdata));
-	  data[i]->a1 = vdat->names[i];
-	  data[i]->a2 = vdat->full_names[i];
-	  data[i]->times = vdat->times[i];
-	}
-      switch (vdat->sorter)
-	{
-	case SORT_BY_NAME: 
-	  qsort((void *)data, vdat->end + 1, sizeof(heapdata *), alphabet_compare);
-	  break;
-	case SORT_BY_DATE:
-	  for (i = 0; i <= vdat->end; i++) 
-	    data[i]->vals = file_write_date(vdat->full_names[i]);
-	  qsort((void *)data, vdat->end + 1, sizeof(heapdata *), less_compare);
-	  break;
-	case SORT_BY_SIZE:
-	  mus_error_set_handler(ignore_mus_error);
-	  for (i = 0; i <= vdat->end; i++)
-	    {
-	      data[i]->samps = mus_sound_samples(vdat->full_names[i]);
-	      if (data[i]->samps < 0) data[i]->samps = 0;
-	    }
-	  mus_error_set_handler(mus_error_to_snd);
-	  qsort((void *)data, vdat->end + 1, sizeof(heapdata *), greater_compare);
-	  break;
-	case SORT_BY_ENTRY:
-	  for (i = 0; i <= vdat->end; i++) 
-	    data[i]->vals = vdat->times[i];
-	  qsort((void *)data, vdat->end + 1, sizeof(heapdata *), less_compare);
-	  break;
-	default:
-	  {
-	    int sorter_pos;
-	    /* sorter is SORT_BY_PROC + index into file_sorters list */
-	    sorter_pos = vdat->sorter - SORT_BY_PROC;
-	    if ((sorter_pos >= 0) &&
-		(sorter_pos < ss->file_sorters_size))
-	      {
-		XEN proc;
-		proc = XEN_VECTOR_REF(ss->file_sorters, sorter_pos);
-		if (XEN_PAIR_P(proc))
-		  {
-		    XEN file_list;
-		    int j, gc_loc;
-		    char *name;
-		    proc = XEN_CDR(proc);
-		    file_list = XEN_EMPTY_LIST;
-		    for (i = vdat->end; i >= 0; i--) 
-		      file_list = XEN_CONS(C_TO_XEN_STRING(vdat->full_names[i]), file_list);
-		    gc_loc = snd_protect(file_list);
-		    file_list = XEN_COPY_ARG(XEN_CALL_1(proc, file_list, "view files sort"));
-		    snd_unprotect_at(gc_loc);         /* unprotect old version */
-		    gc_loc = snd_protect(file_list);  /* protect new */
-		    if (XEN_LIST_P(file_list))
-		      {
-			for (i = 0; (i < len) && (XEN_NOT_NULL_P(file_list)); i++, file_list = XEN_CDR(file_list))
-			  {
-			    name = XEN_TO_C_STRING(XEN_CAR(file_list));
-			    for (j = 0; j < len; j++)
-			      if (strcmp(data[j]->a2, name) == 0)
-				{
-				  vdat->names[i] = data[j]->a1;
-				  vdat->full_names[i] = data[j]->a2;
-				  vdat->times[i] = data[j]->times;
-				}
-			  }
-		      }
-		    snd_unprotect_at(gc_loc);
-		  }
-	      }
-	    for (i = 0; i < len; i++) FREE(data[i]);
-	    break;
-	  }
-	}
-
-      if (vdat->sorter < SORT_BY_PROC)
-	for (i = 0; i < len; i++)
-	  {
-	    vdat->names[i] = data[i]->a1;
-	    vdat->full_names[i] = data[i]->a2;
-	    vdat->times[i] = data[i]->times;
-	    FREE(data[i]);
-	  }
-
-      FREE(data);
-    }
-  if (old_names)
-    {
-      vf_fixup_selected_files(vdat, old_names, old_len);
-      for (i = 0; i < old_len; i++) FREE(old_names[i]);
-      FREE(old_names);
-    }
 }
 
 static void view_files_select_callback(Widget w, XtPointer context, XtPointer info) 
@@ -4635,7 +3914,7 @@ static void view_files_play_callback(Widget w, XtPointer context, XtPointer info
   else vdat->current_play_button = w;
 }
 
-static void view_files_display_list(view_files_info *vdat)
+void view_files_display_list(view_files_info *vdat)
 {
   int i;
   Widget last_row = NULL;
@@ -4672,72 +3951,6 @@ static void view_files_display_list(view_files_info *vdat)
   if (!(XtIsManaged(vdat->file_list))) 
     XtManageChild(vdat->file_list);
 }
-
-static void view_files_clear_list(view_files_info *vdat)
-{
-  int i;
-  if (vdat->names)
-    {
-      for (i = 0; i < vdat->size; i++)
-	if (vdat->names[i]) 
-	  {
-	    FREE(vdat->names[i]); 
-	    vdat->names[i] = NULL;
-	    FREE(vdat->full_names[i]); 
-	    vdat->full_names[i] = NULL;
-	  }
-      vdat->end = -1;
-      vdat->curtime = 0;
-      vf_clear_button_set_sensitive(vdat, false);
-    }
-}
-
-static void view_files_update_list(view_files_info *vdat)
-{
-  /* here we need the file's full name */
-  int i, old_len;
-  char **old_names = NULL;
-  old_len = vdat->currently_selected_files;
-  if (old_len > 0) 
-    old_names = vf_selected_files(vdat);
-  if (vdat->names)
-    {
-      int i, j;
-      for (i = 0; i <= vdat->end; i++)
-	if (vdat->names[i]) 
-	  {
-	    if (!(mus_file_probe(vdat->full_names[i])))
-	      {
-		FREE(vdat->names[i]); 
-		vdat->names[i] = NULL;
-		FREE(vdat->full_names[i]); 
-		vdat->full_names[i] = NULL;
-	      }
-	  }
-      for (i = 0, j = 0; i <= vdat->end; i++)
-	if (vdat->names[i])
-	  {
-	    if (i != j) 
-	      {
-		vdat->names[j] = vdat->names[i]; 
-		vdat->names[i] = NULL;
-		vdat->full_names[j] = vdat->full_names[i];
-		vdat->full_names[i] = NULL;
-		vdat->times[j] = vdat->times[i];
-	      }
-	    j++;
-	  }
-      vdat->end = j - 1;
-      vf_clear_button_set_sensitive(vdat, vdat->end >= 0);
-    }
-  if (old_names)
-    {
-      vf_fixup_selected_files(vdat, old_names, old_len);
-      for (i = 0; i < old_len; i++) FREE(old_names[i]);
-      FREE(old_names);
-    }
-}
-
 
 static void view_files_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
@@ -4778,54 +3991,42 @@ static void view_files_update_callback(Widget w, XtPointer context, XtPointer in
   view_files_display_list(vdat);
 }
 
-static void sort_view_files_by_name(Widget w, XtPointer context, XtPointer info) 
+static void sort_vf(view_files_info *vdat, int sort_choice)
 {
-  view_files_info *vdat = (view_files_info *)context;
-  vdat->sorter = SORT_BY_NAME;
+  vdat->sorter = sort_choice;
   vf_reflect_sort_choice_in_menu(vdat);
   view_files_sort_list(vdat); 
   view_files_display_list(vdat);
 }
 
+static void sort_view_files_by_name(Widget w, XtPointer context, XtPointer info) 
+{
+  sort_vf((view_files_info *)context, SORT_BY_NAME);
+}
+
 static void sort_view_files_by_date(Widget w, XtPointer context, XtPointer info) 
 {
-  view_files_info *vdat = (view_files_info *)context;
-  vdat->sorter = SORT_BY_DATE;
-  vf_reflect_sort_choice_in_menu(vdat);
-  view_files_sort_list(vdat);
-  view_files_display_list(vdat);
+  sort_vf((view_files_info *)context, SORT_BY_DATE);
 }
 
 static void sort_view_files_by_size(Widget w, XtPointer context, XtPointer info) 
 {
-  view_files_info *vdat = (view_files_info *)context;
-  vdat->sorter = SORT_BY_SIZE;
-  vf_reflect_sort_choice_in_menu(vdat);
-  view_files_sort_list(vdat);
-  view_files_display_list(vdat);
+  sort_vf((view_files_info *)context, SORT_BY_SIZE);
 }
 
 static void sort_view_files_by_entry_order(Widget w, XtPointer context, XtPointer info) 
 {
-  view_files_info *vdat = (view_files_info *)context;
-  vdat->sorter = SORT_BY_ENTRY;
-  vf_reflect_sort_choice_in_menu(vdat);
-  view_files_sort_list(vdat);
-  view_files_display_list(vdat);
+  sort_vf((view_files_info *)context, SORT_BY_ENTRY);
 }
 
 static void sort_view_files_by_procedure(Widget w, XtPointer context, XtPointer info) 
 {
-  view_files_info *vdat = (view_files_info *)context;
   int index;
   XtVaGetValues(w, XmNuserData, &index, NULL); /* index is location in list of file-sorters */
-  vdat->sorter = index;
-  vf_reflect_sort_choice_in_menu(vdat);
-  view_files_sort_list(vdat);
-  view_files_display_list(vdat);
+  sort_vf((view_files_info *)context, index);
 }
 
-static void view_files_add_file_or_directory(view_files_info *vdat, const char *file_or_dir)
+void view_files_add_file_or_directory(view_files_info *vdat, const char *file_or_dir)
 {
   char *filename;
   filename = mus_expand_filename((const char *)file_or_dir);
@@ -4862,39 +4063,15 @@ static void view_files_drop_watcher(Widget w, const char *str, Position x, Posit
 
 static void view_files_open_selected_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  view_files_info *vdat = (view_files_info *)context;
-  snd_info *sp;
-  ss->open_requestor = FROM_VIEW_FILES;
-  if (vdat->currently_selected_files > 0)
-    {
-      int i;
-      for (i = 0; i < vdat->currently_selected_files; i++)
-	sp = snd_open_file(vdat->full_names[vdat->selected_files[i]], FILE_READ_WRITE);
-      if (sp) select_channel(sp, 0); 
-    }
+  view_files_open_selected_files(w, (view_files_info *)context);
 }
 
 static void view_files_remove_selected_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  int i, loc;
-  view_files_info *vdat = (view_files_info *)context;
-  for (i = 0; i < vdat->currently_selected_files; i++)
-    {
-      loc = vdat->selected_files[i];
-      if (vdat->names[loc])
-	{
-	  FREE(vdat->names[loc]); 
-	  vdat->names[loc] = NULL;
-	  FREE(vdat->full_names[loc]); 
-	  vdat->full_names[loc] = NULL;
-	}
-    }
-  vdat->currently_selected_files = 0;
-  view_files_update_list(vdat);
-  view_files_display_list(vdat);
+  view_files_remove_selected_files(w, (view_files_info *)context);
 }
 
-static off_t vf_location(view_files_info *vdat)
+off_t vf_location(view_files_info *vdat)
 {
   off_t pos = 0;
   snd_info *sp;
@@ -4946,18 +4123,7 @@ static off_t vf_location(view_files_info *vdat)
   return(pos);
 }
 
-static void vf_clear_error(view_files_info *vdat)
-{
-  if (vdat->currently_selected_files == 1)
-    vf_post_info(vdat, vdat->selected_files[0]);
-  else
-    {
-      if (vdat->currently_selected_files == 0)
-	vf_unpost_info(vdat);
-      else vf_post_selected_files_list(vdat);
-    }
-  vdat->error_p = false;
-}
+static void vf_clear_sample(view_files_info *vdat);
 
 static void vf_sample_button_modify_callback(Widget w, XtPointer context, XtPointer info)
 {
@@ -4999,7 +4165,7 @@ static void vf_clear_mark(view_files_info *vdat)
   XtRemoveCallback(vdat->at_mark_button, XmNvalueChangedCallback, vf_mark_button_modify_callback, (XtPointer)vdat);
 }
 
-static void vf_post_error(const char *error_msg, void *data)
+void vf_post_error(const char *error_msg, void *data)
 {
   view_files_info *vdat = (view_files_info *)data;
   XmString msg;
@@ -5016,7 +4182,7 @@ static void vf_post_error(const char *error_msg, void *data)
   XmStringFree(msg);
 }
 
-static void vf_post_location_error(const char *error_msg, void *data)
+void vf_post_location_error(const char *error_msg, void *data)
 {
   view_files_info *vdat = (view_files_info *)data;
   vf_post_error(error_msg, data);
@@ -5036,133 +4202,12 @@ static void vf_post_location_error(const char *error_msg, void *data)
 
 static void view_files_mix_selected_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  view_files_info *vdat = (view_files_info *)context;
-  off_t beg;
-  vdat->error_p = false;
-  redirect_snd_error_to(vf_post_location_error, (void *)vdat);
-  beg = vf_location(vdat);
-  redirect_snd_error_to(NULL, NULL);
-  if (!(vdat->error_p))
-    {
-      int i, len;
-      int id_or_error = 0;
-      snd_info *sp;
-      sp = any_selected_sound();
-
-      redirect_snd_error_to(vf_post_error, (void *)vdat);
-      ss->sgx->requestor_dialog = w;
-      ss->open_requestor = FROM_VIEW_FILES_MIX_DIALOG;
-
-      len = vdat->currently_selected_files;
-      if ((len == 1) &&
-	  (snd_feq(vdat->amp, 1.0)) &&
-	  (snd_feq(vdat->speed, 1.0)) &&
-	  (default_env_p(vdat->amp_env)))
-	id_or_error = mix_complete_file(sp, beg, 
-					vdat->full_names[vdat->selected_files[0]], 
-					with_mix_tags(ss), 
-					DONT_DELETE_ME, 0, true); /* all-chans = true */
-      else
-	{
-	  char *tempfile;
-	  char **selected_files;
-	  selected_files = vf_selected_files(vdat);
-	  tempfile = scale_and_src(selected_files, len, sp->nchans, vdat->amp, vdat->speed, vdat->amp_env);
-	  id_or_error = mix_complete_file(sp, beg, 
-					  tempfile,
-					  with_mix_tags(ss), 
-					  (sp->nchans > 1) ? MULTICHANNEL_DELETION : DELETE_ME,
-					  0, true); /* all-chans = true */
-	  FREE(tempfile);
-	  for (i = 0; i < len; i++)
-	    FREE(selected_files[i]);
-	  FREE(selected_files);
-	}
-
-      /* "id_or_error" here is either one of the mix id's or an error indication such as MIX_FILE_NO_MIX */
-      /*    the possible error conditions have been checked already, or go through snd_error */
-
-      redirect_snd_error_to(NULL, NULL);
-      if (id_or_error < 0) /* actually -1 .. -3 */
-	{
-	  /* TODO: handle errors here
-	  if (ss->open_requestor != FROM_RAW_DATA_DIALOG)
-	    clear_error_if_open_changes(fd->dialog, (void *)fd);
-	  */
-	}
-      /*
-      else 
-	report_in_minibuffer(sp, _("%s mixed in at " OFF_TD), <file>, beg);
-      */
-    }
-  else
-    {
-    }
+  view_files_mix_selected_files(w, (view_files_info *)context);
 }
 
 static void view_files_insert_selected_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  view_files_info *vdat = (view_files_info *)context;
-  off_t beg;
-  vdat->error_p = false;
-  redirect_snd_error_to(vf_post_location_error, (void *)vdat);
-  beg = vf_location(vdat);
-  redirect_snd_error_to(NULL, NULL);
-  if (!(vdat->error_p))
-    {
-      int i, len;
-      bool ok = false;
-      snd_info *sp;
-      sp = any_selected_sound();
-
-      redirect_snd_error_to(vf_post_error, (void *)vdat);
-      ss->sgx->requestor_dialog = w;
-      ss->open_requestor = FROM_VIEW_FILES_INSERT_DIALOG;
-
-      len = vdat->currently_selected_files;
-      if ((len == 1) &&
-	  (snd_feq(vdat->amp, 1.0)) &&
-	  (snd_feq(vdat->speed, 1.0)) &&
-	  (default_env_p(vdat->amp_env)))
-	ok = insert_complete_file(sp, 
-				  vdat->full_names[vdat->selected_files[0]], 
-				  beg,
-				  DONT_DELETE_ME);
-      else
-	{
-	  char *tempfile;
-	  char **selected_files;
-	  selected_files = vf_selected_files(vdat);
-	  tempfile = scale_and_src(selected_files, len, sp->nchans, vdat->amp, vdat->speed, vdat->amp_env);
-	  ok = insert_complete_file(sp, 
-				    tempfile,
-				    beg,
-				    (sp->nchans > 1) ? MULTICHANNEL_DELETION : DELETE_ME);
-	  FREE(tempfile);
-	  for (i = 0; i < len; i++)
-	    FREE(selected_files[i]);
-	  FREE(selected_files);
-	}
-
-      redirect_snd_error_to(NULL, NULL);
-      if (!ok)
-	{
-	  /* TODO: if raw, we need to complete the circle here
-	  if (ss->open_requestor != FROM_RAW_DATA_DIALOG)
-	    clear_error_if_open_changes(fd->dialog, (void *)fd);
-	  */
-	}
-      /*
-      else 
-        -- this can be a list of names
-	report_in_minibuffer(sp, _("%s inserted at " OFF_TD), <file>, beg);
-      */
-
-    }
-  else
-    {
-      /* is there anything to do here? */
-    }
+  view_files_mix_selected_files(w, (view_files_info *)context);
 }
 
 static void view_files_at_cursor_callback(Widget w, XtPointer context, XtPointer info) 
@@ -5254,7 +4299,7 @@ static int vf_speed_to_scroll(Float minval, Float val, Float maxval)
   return(snd_round(0.9 * SCROLLBAR_MAX * ((log(val) - log(minval)) / (log(maxval) - log(minval)))));
 }
 
-static void vf_set_speed(view_files_info *vdat, Float val)
+void vf_set_speed(view_files_info *vdat, Float val)
 {
   char speed_number_buffer[6];
   vdat->speed = speed_changed(val,
@@ -5275,24 +4320,6 @@ static void vf_speed_click_callback(Widget w, XtPointer context, XtPointer info)
   XtVaSetValues(vdat->speed_scrollbar, 
 		XmNvalue, vf_speed_to_scroll(speed_control_min(ss), 1.0, speed_control_max(ss)), 
 		NULL);
-}
-
-Float view_files_speed(widget_t dialog)
-{
-  view_files_info *vdat;
-  vdat = vf_dialog_to_info(dialog);
-  if (vdat)
-    return(vdat->speed);
-  return(1.0);
-}
-
-Float view_files_set_speed(widget_t dialog, Float new_speed)
-{
-  view_files_info *vdat;
-  vdat = vf_dialog_to_info(dialog);
-  if (vdat)
-    vf_set_speed(vdat, new_speed);
-  return(new_speed);
 }
 
 static void vf_speed_valuechanged_callback(Widget w, XtPointer context, XtPointer info) 
@@ -5333,7 +4360,7 @@ static int vf_amp_to_scroll(Float amp)
   return(amp_to_scroll(amp_control_min(ss), amp, amp_control_max(ss)));
 }
 
-static void vf_set_amp(view_files_info *vdat, Float val)
+void vf_set_amp(view_files_info *vdat, Float val)
 {
   char sfs[6];
   vdat->amp = val;
@@ -5343,25 +4370,6 @@ static void vf_set_amp(view_files_info *vdat, Float val)
 		XmNvalue, amp_to_scroll(amp_control_min(ss), val, amp_control_max(ss)), 
 		NULL);
 }
-
-Float view_files_amp(widget_t dialog)
-{
-  view_files_info *vdat;
-  vdat = vf_dialog_to_info(dialog);
-  if (vdat)
-    return(vdat->amp);
-  return(0.0);
-}
-
-Float view_files_set_amp(widget_t dialog, Float new_amp)
-{
-  view_files_info *vdat;
-  vdat = vf_dialog_to_info(dialog);
-  if (vdat)
-    vf_set_amp(vdat, new_amp);
-  return(new_amp);
-}
-
 
 static void vf_amp_click_callback(Widget w, XtPointer context, XtPointer info) 
 {
@@ -5440,46 +4448,9 @@ static void vf_amp_env_resize(Widget w, XtPointer context, XtPointer info)
   /* show_mix_background_wave(mix_dialog_id, chan); */
 }
 
-env *view_files_amp_env(widget_t dialog)
+void vf_amp_env_redraw(Widget w, view_files_info *vdat)
 {
-  view_files_info *vdat;
-  vdat = vf_dialog_to_info(dialog);
-  if (vdat)
-    return(vdat->amp_env);
-  return(NULL);
-}
-
-env *view_files_set_amp_env(widget_t dialog, env *new_e)
-{
-  view_files_info *vdat;
-  vdat = vf_dialog_to_info(dialog);
-  if (vdat)
-    {
-      if (vdat->amp_env) free_env(vdat->amp_env);
-      vdat->amp_env = copy_env(new_e);
-      if ((vdat->dialog) &&
-	  (XtIsManaged(vdat->dialog)))
-	vf_amp_env_resize(vdat->env_drawer, (void *)vdat, NULL);
-    }
-  return(new_e);
-}
-
-speed_style_t view_files_speed_style(widget_t dialog)
-{
-  view_files_info *vdat;
-  vdat = vf_dialog_to_info(dialog);
-  if (vdat)
-    return(vdat->speed_style);
-  return(SPEED_CONTROL_AS_FLOAT);
-}
-
-speed_style_t view_files_set_speed_style(widget_t dialog, speed_style_t speed_style)
-{
-  view_files_info *vdat;
-  vdat = vf_dialog_to_info(dialog);
-  if (vdat)
-    vdat->speed_style = speed_style;
-  return(speed_style);
+  vf_amp_env_resize(w, (void *)vdat, NULL);
 }
 
 
@@ -5550,7 +4521,7 @@ static void white_mouse_enter_text_callback(Widget w, XtPointer context, XEvent 
   XtVaSetValues(w, XmNcursorPositionVisible, true, NULL);
 }
 
-static void vf_reflect_sort_choice_in_menu(view_files_info *vdat)
+void vf_reflect_sort_choice_in_menu(view_files_info *vdat)
 {
   int i;
   set_sensitive(vdat->by_name, vdat->sorter != SORT_BY_NAME);
@@ -5562,80 +4533,7 @@ static void vf_reflect_sort_choice_in_menu(view_files_info *vdat)
       set_sensitive(vdat->sort_items[i], vdat->sorter != (SORT_BY_PROC + i));
 }
 
-void view_files_reflect_sort_items(void)
-{
-  view_files_info *vdat;
-
-  int i, j = 0, k;
-  if (view_files_info_size == 0) return;
-  for (i = 0; i < ss->file_sorters_size; i++)
-    {
-      XEN ref;
-      ref = XEN_VECTOR_REF(ss->file_sorters, i);
-      if (XEN_PAIR_P(ref))
-	{
-	  XmString s1;
-	  s1 = XmStringCreate(XEN_TO_C_STRING(XEN_CAR(ref)), XmFONTLIST_DEFAULT_TAG);
-	  for (k = 0; k < view_files_info_size; k++)
-	    if ((view_files_infos[k]) &&
-		(view_files_infos[k]->dialog))
-	      {
-		vdat = view_files_infos[k];
-		XtVaSetValues(vdat->sort_items[j], 
-			      XmNlabelString, s1,
-			      XmNuserData, i + SORT_BY_PROC, /* this is an index into the file_sorters list, not the widget list */
-			      NULL);
-		XtManageChild(vdat->sort_items[j]);
-	      }
-	  j++;
-	  XmStringFree(s1);
-	}
-    }
-
-  for (k = 0; k < view_files_info_size; k++)
-    if ((view_files_infos[k]) &&
-	(view_files_infos[k]->dialog))
-      {
-	vdat = view_files_infos[k];
-	for (i = j; i < vdat->sort_items_size; i++)
-	  XtUnmanageChild(vdat->sort_items[i]);
-	vf_reflect_sort_choice_in_menu(vdat);
-      }
-}
-
-/* (add-file-sorter "duration" 
-		(lambda (lst)
-		  (sort lst 
-			(lambda (a b)
-			  (> (mus-sound-duration a) (mus-sound-duration b))))))
-
- */
-
-
-int view_files_local_sort(widget_t dialog)
-{
-  view_files_info *vdat;
-  vdat = vf_dialog_to_info(dialog);
-  if (vdat)
-    return(vdat->sorter);
-  return(-1);
-}
-
-int view_files_set_local_sort(widget_t dialog, int sort_choice)
-{
-  view_files_info *vdat;
-  vdat = vf_dialog_to_info(dialog);
-  if (vdat)
-    {
-      vdat->sorter = sort_choice;
-      view_files_sort_list(vdat);
-      view_files_display_list(vdat);
-      vf_reflect_sort_choice_in_menu(vdat);
-    }
-  return(sort_choice);
-}
-
-static Widget start_view_files_dialog_1(view_files_info *vdat, bool managed)
+widget_t start_view_files_dialog_1(view_files_info *vdat, bool managed)
 {
   if (!(vdat->dialog))
     {
@@ -6397,165 +5295,9 @@ static Widget start_view_files_dialog_1(view_files_info *vdat, bool managed)
     {
       vf_amp_env_resize(vdat->env_drawer, (XtPointer)vdat, NULL);
       view_files_reflect_sort_items();      
+      vf_clear_button_set_sensitive(vdat, vdat->end >= 0);
     }
   return(vdat->dialog);
-}
-
-static view_files_info *view_files_find_dialog(widget_t dialog)
-{
-  int i;
-  for (i = 0; i < view_files_info_size; i++)
-    if ((view_files_infos[i]) &&
-	(view_files_infos[i]->dialog == dialog))
-      return(view_files_infos[i]);
-  return(NULL);
-}
-
-Widget start_view_files_dialog(bool managed, bool make_new)
-{
-  int i;
-  view_files_info *vdat = NULL;
-  if (make_new)
-    return(start_view_files_dialog_1(new_view_files_dialog(), managed));
-  for (i = 0; i < view_files_info_size; i++)
-    if ((view_files_infos[i]) &&
-	(view_files_infos[i]->dialog))
-      {
-	vdat = view_files_infos[i];
-	if (XtIsManaged(vdat->dialog))
-	  break;
-      }
-  if (vdat)
-    return(start_view_files_dialog_1(vdat, managed));
-  return(start_view_files_dialog_1(new_view_files_dialog(), managed));
-}
-
-void save_view_files_dialogs(FILE *fd) 
-{
-#if HAVE_EXTENSION_LANGUAGE
-  int i;
-  view_files_info *vdat;
-  for (i = 0; i < view_files_info_size; i++)
-    if ((view_files_infos[i]) &&
-	(view_files_infos[i]->dialog) &&
-	(XtIsManaged(view_files_infos[i]->dialog)))
-      {
-	int k;
-	vdat = view_files_infos[i];
-#if HAVE_SCHEME
-	fprintf(fd, "(let ((vf (view-files-dialog #t #t)))\n");
-	if (vdat->full_names)
-	  {
-	    fprintf(fd, "  (set! (view-files-files vf) (list");
-	    for (k = 0; k <= vdat->end; k++)
-	      fprintf(fd, " \"%s\"", vdat->full_names[k]);
-	    fprintf(fd, "))\n");
-	    if (vdat->currently_selected_files > 0)
-	      {
-		fprintf(fd, "  (set! (view-files-selected-files vf) (list");
-		for (k = 0; k < vdat->currently_selected_files; k++)
-		  fprintf(fd, " \"%s\"", vdat->full_names[vdat->selected_files[k]]);
-		fprintf(fd, "))\n");
-	      }
-	  }
-	if (!(snd_feq(vdat->amp, 1.0)))
-	  {
-	    fprintf(fd, "  (set! (view-files-amp vf) %.3f)\n", vdat->amp);
-	  }
-	if (!(snd_feq(vdat->speed, 1.0)))
-	  {
-	    fprintf(fd, "  (set! (view-files-speed vf) %.3f)\n", vdat->speed);
-	  }
-	if (!(default_env_p(vdat->amp_env)))
-	  {
-	    fprintf(fd, "  (set! (view-files-amp-env vf) %s)\n", env_to_string(vdat->amp_env));
-	  }
-	/* assume file-sorters are set up already */
-	fprintf(fd, "  (set! (view-files-sort vf) %s)\n", view_files_sort_name(vdat->sorter));	    
-	fprintf(fd, ")\n");
-#endif
-#if HAVE_RUBY
-	fprintf(fd, "vf = view_files_dialog(true, true)\n");
-	if (vdat->full_names)
-	  {
-	    fprintf(fd, "  set_view_files_files(vf, [");
-	    for (k = 0; k < vdat->end; k++)
-	      fprintf(fd, "\"%s\", ", vdat->full_names[k]);
-	    fprintf(fd, "\"%s\"])\n", vdat->full_names[vdat->end]);
-	    if (vdat->currently_selected_files > 0)
-	      {
-		fprintf(fd, "  set_view_files_selected_files(vf, [");
-		for (k = 0; k < vdat->currently_selected_files - 1; k++)
-		  fprintf(fd, "\"%s\", ", vdat->full_names[vdat->selected_files[k]]);
-		fprintf(fd, "\"%s\"])\n", vdat->full_names[vdat->selected_files[vdat->currently_selected_files]]);
-	      }
-	  }
-	if (!(snd_feq(vdat->amp, 1.0)))
-	  {
-	    fprintf(fd, "  set_view_files_amp(vf, %.3f)\n", vdat->amp);
-	  }
-	if (!(snd_feq(vdat->speed, 1.0)))
-	  {
-	    fprintf(fd, "  set_view_files_speed(vf, %.3f)\n", vdat->speed);
-	  }
-	if (!(default_env_p(vdat->amp_env)))
-	  {
-	    fprintf(fd, "  set_view_files_amp_env(vf, %s)\n", env_to_string(vdat->amp_env));
-	  }
-	/* assume file-sorters are set up already */
-	fprintf(fd, "  set_view_files_sort(vf, %s)\n", TO_VAR_NAME(view_files_sort_name(vdat->sorter)));	    
-	fprintf(fd, "\n");
-#endif
-      }
-#endif
-}
-
-void view_files_add_directory(widget_t dialog, const char *dirname) 
-{
-  view_files_info *vdat = NULL;
-  char *full_filename;
-  if (dialog)
-    vdat = view_files_find_dialog(dialog);
-  else 
-    {
-      if (view_files_info_size > 0)
-	vdat = view_files_infos[0];
-      else 
-	{
-	  vdat = new_view_files_dialog();
-	  start_view_files_dialog_1(vdat, false);
-	}
-    }
-  if (vdat)
-    {
-      full_filename = mus_expand_filename((const char *)dirname);
-      add_directory_to_view_files_list(vdat, full_filename);
-      FREE(full_filename);
-    }
-}
-
-void view_files_add_file(widget_t dialog, const char *filename)
-{
-  view_files_info *vdat = NULL;
-  char *full_filename;
-  if (dialog)
-    vdat = view_files_find_dialog(dialog);
-  else 
-    {
-      if (view_files_info_size > 0)
-	vdat = view_files_infos[0];
-      else 
-	{
-	  vdat = new_view_files_dialog();
-	  start_view_files_dialog_1(vdat, false);
-	}
-    }
-  if (vdat)
-    {
-      full_filename = mus_expand_filename((const char *)filename);
-      add_file_to_view_files_list(vdat, filename, full_filename);
-      FREE(full_filename);
-    }
 }
 
 
@@ -6589,4 +5331,5 @@ is the scrolled list position of the label. The label itself is 'label'."
 
 /* TODO: always have a selected sound
  * TODO: vf fam + remove if file deleted = no need for update button? -> overall reset?
+ * TODO: check prompt-in-minibuffer troubles
  */

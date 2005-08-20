@@ -8945,9 +8945,9 @@ static int jack_mus_audio_initialize(void) {
   audio_initialized = true;
 
   /* Locking all future memory shouldn't be that necessary, and might even freeze the machine in certain situations. */
-  /* So remove MCL_FUTURE from the mlockall call. */
-  munlockall();
-  mlockall(MCL_CURRENT);
+  /* So remove MCL_FUTURE from the mlockall call. (No. We can't do that. It can screw up code using the realtime extension. -Kjetil.*/
+  //munlockall();
+  //mlockall(MCL_CURRENT);
   
   return MUS_NO_ERROR;
 }

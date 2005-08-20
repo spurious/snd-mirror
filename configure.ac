@@ -1719,7 +1719,11 @@ AC_ARG_ENABLE(deprecated,
 if test "$enable_snd_debug" = yes ; then
   CFLAGS="-I. $CFLAGS"
   if test "$GCC" = yes ; then
-    CFLAGS="$CFLAGS -g3 -Wredundant-decls -Wcast-align -Wmissing-prototypes -Wpointer-arith -Wimplicit -Wreturn-type -Wunused-label -Wunused-variable -Wunused-value -Wcomment -Wformat -Wunused-function -Wuninitialized -Wparentheses -Wall"
+    if test "$LOCAL_LANGUAGE" = "Ruby" ; then
+      CFLAGS="$CFLAGS -g3 -Wcast-align -Wpointer-arith -Wimplicit -Wreturn-type -Wunused-label -Wunused-variable -Wunused-value -Wcomment -Wformat -Wunused-function -Wuninitialized -Wparentheses -Wall"
+    else
+      CFLAGS="$CFLAGS -g3 -Wredundant-decls -Wcast-align -Wmissing-prototypes -Wpointer-arith -Wimplicit -Wreturn-type -Wunused-label -Wunused-variable -Wunused-value -Wcomment -Wformat -Wunused-function -Wuninitialized -Wparentheses -Wall"
+    fi
   fi
 else
   CFLAGS="-I. $CFLAGS"

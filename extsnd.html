@@ -10023,7 +10023,7 @@ exit Snd.  Guile's exit function is renamed %exit.
 <tr><td colspan=2>
 <code><a class=def name="filefilters">file-filters</a> ()</code></td></tr>
 <tr><td></td><td>
-the file filters list (settable); a list of pairs: (cons "name" func), where the
+the file filters list (settable); a list of lists: (list "name" func), where the
 function takes one argument, a file name, and returns #t to retain that file in
 the file list.
 </td></tr>
@@ -10032,7 +10032,7 @@ the file list.
 <tr><td colspan=2>
 <code><a class=def name="filesorters">file-sorters</a> ()</code></td></tr>
 <tr><td></td><td>
-the file sorters list (settable); a list of pairs: (cons "name" func), where the
+the file sorters list (settable); a list of lists: (list "name" func), where the
 function takes one argument, a list of file names, and returns that list suitably sorted.
 </td></tr>
 

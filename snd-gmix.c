@@ -72,7 +72,7 @@ static gboolean speed_motion_callback(GtkWidget *w, GdkEventMotion *ev, gpointer
 static gboolean speed_release_callback(GtkWidget *w, GdkEventButton *ev, gpointer data) 
 {
   speed_pressed = false;
-  if (!speed_dragged) return(false);
+  /* if (!speed_dragged) return(false); */
   speed_dragged = false;
   mix_dialog_slider_dragging = false;
   if (!(mix_ok_and_unlocked(mix_dialog_id))) return(false);
@@ -152,7 +152,7 @@ static gboolean amp_release_callback(GtkWidget *w, GdkEventButton *ev, gpointer 
   Float scrollval;
   mix_dialog_slider_dragging = false;
   amp_pressed = false;
-  if (!amp_dragged) return(false);
+  /* if (!amp_dragged) return(false); */
   amp_dragged = false;
   if (!(mix_ok_and_unlocked(mix_dialog_id))) return(false);
   chan = get_user_int_data(G_OBJECT(w));
@@ -963,7 +963,7 @@ static gboolean track_speed_release_callback(GtkWidget *w, GdkEventButton *ev, g
 {
   track_speed_pressed = false;
   track_dialog_slider_dragging = false;
-  if (!track_speed_dragged) return(false);
+  /* if (!track_speed_dragged) return(false); */
   track_speed_dragged = false;
   if (!(track_p(track_dialog_id))) return(false);
   track_dialog_set_speed(track_dialog_id, 
@@ -1044,7 +1044,7 @@ static gboolean track_tempo_release_callback(GtkWidget *w, GdkEventButton *ev, g
 {
   track_tempo_pressed = false;
   track_dialog_slider_dragging = false;
-  if (!track_tempo_dragged) return(false);
+  /* if (!track_tempo_dragged) return(false); */
   if (!(track_p(track_dialog_id))) return(false);
   track_dialog_set_tempo(track_dialog_id, scroll_to_tempo(GTK_ADJUSTMENT(w_track_tempo_adj)->value), false);
   return(false);
@@ -1104,7 +1104,7 @@ static gboolean track_amp_release_callback(GtkWidget *w, GdkEventButton *ev, gpo
 {
   track_amp_pressed = false;
   track_dialog_slider_dragging = false;
-  if (!track_amp_dragged) return(false);
+  /* if (!track_amp_dragged) return(false); */
   if (!(track_p(track_dialog_id))) return(false);
   change_track_amp(scroll_to_amp(GTK_ADJUSTMENT(w_track_amp_adj)->value));
   return(false);

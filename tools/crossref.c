@@ -202,6 +202,7 @@ int main(int argc, char **argv)
   add_header("config.h.in");
   add_header("libclm.def");
   add_header("snd-menu.h");
+  add_header("snd-file.h");
 
   /* add_file("xen.h"); */
   /* add_file("snd.h"); */

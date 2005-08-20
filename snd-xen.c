@@ -11,8 +11,7 @@
  *   if error, remove that function (and mention the context/name in the error msg)
  * TODO: xen.h need XEN_REMOVE_HOOK_FUNCTION or some equivalent [hooks.h takes the hook function which is useless here]
  *
- * TODO: trap snd_error|warning in within xen (except explicit cases)
- * SOMEDAY: try mac/sparc gtk
+ * TODO: trap snd_error|warning within xen (except explicit cases)
  */
 
 /* -------- protect XEN vars from GC -------- */

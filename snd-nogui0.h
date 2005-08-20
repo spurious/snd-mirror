@@ -10,6 +10,12 @@
 #define BACKGROUND_ADD(func, data) func(data)
 
 #define widget_t int
+#define g_adj_t int
+#define gc_t int
+#define widget_is_active(Wid) 0
+#define activate_widget(Wid) Wid = 0
+#define deactivate_widget(Wid) Wid = 0
+
 #define XEN_WRAP_WIDGET(Value) 0
 #define XEN_WRAP_WINDOW(Value) 0
 #define XEN_WRAP_GC(Value) 0
