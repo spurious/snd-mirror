@@ -2524,7 +2524,7 @@
 	      (no-stars (cadr val)) (cadr val) (car val) field))
        vals))
     (if (> (length vals) 2)
-	(hey "  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, ~S, \"pointer to struct with ~A field\");~%"
+	(hey "  XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, ~S, \"pointer to struct with ~A field\");~%  return(XEN_FALSE);~%"
 	     field field))
     (hey "}~%")
     ))
@@ -2572,7 +2572,7 @@
 	      (car val) field (no-stars (cadr val))))
        vals))
     (if (> (length vals) 2)
-	(hey "  XEN_ASSERT_TYPE(0, ptr, XEN_ARG_1, \"set! ~A\", \"pointer to struct with ~A field\");~%"
+	(hey "  XEN_ASSERT_TYPE(0, ptr, XEN_ARG_1, \"set! ~A\", \"pointer to struct with ~A field\");~% return(XEN_FALSE);~%"
 	     field field))
     (hey "  return(val);~%}~%")
     ))

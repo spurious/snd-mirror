@@ -126,7 +126,7 @@ echo '(let ((hxm (dlopen (string-append (getcwd) "/xg.so")))) (dlinit hxm "Init_
 rm tmp.scm
 rm xg.o
 echo ' CC=g++ CFLAGS="-Wall" --with-gtk --disable-deprecated '
-./configure --quiet CFLAGS="-Wall" --with-gtk --disable-deprecated
+./configure --quiet CC=g++ CFLAGS="-Wall" --with-gtk --disable-deprecated
 make xg
 make allclean
 echo ' CC=g++ --with-gtk CFLAGS="-Wall" '

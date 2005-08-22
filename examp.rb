@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Wed Sep 04 18:34:00 CEST 2002
-# Last: Mon Jul 04 18:01:59 CEST 2005
+# Last: Sat Aug 20 01:26:09 CEST 2005
 
 # Commentary:
 #
@@ -94,6 +94,7 @@
 #  cdr
 #  step(n)
 #  apply(func, *rest, &body)
+#  remove_fi(&body)
 #
 # class Vec < Array
 #  Vec[]
@@ -560,6 +561,18 @@ end
 
 def ignore(*rest)
   nil
+end
+
+# backward compatibility aliases (mostly from snd7.scm)
+if provided? :snd
+  alias save_options                    save_state
+  alias delete_samples_with_origin      delete_samples
+  alias default_output_type             default_output_header_type
+  alias default_output_format           default_output_data_format
+  alias previous_files_sort             view_files_sort
+  alias preload_directory               add_directory_to_view_files_list
+  alias preload_file                    add_file_to_view_files_list
+  alias $previous_files_select_hook     $view_files_select_hook
 end
 
 # enum("foo", :bar, "FOO_BAR")
@@ -1112,6 +1125,19 @@ a: 2
     end
     alias * ary_times
   end
+
+  # removes self's items where block is true and returns removed items
+  # in a newly created array (similar to Scheme's remove-if, I hope)
+  def remove_if
+    result = []
+    self.each_with_index do |x, i|
+      if yield(x)
+        result.push(x)
+        self.delete_at(i)
+      end
+    end
+    result
+  end
 end
 
 # name Vector is in use (lib/ruby/1.9/matrix.rb)
@@ -1547,14 +1573,6 @@ end
 
 def set_mus_b2(gen, val)
   set_mus_ycoeff(gen, 2, val)
-end
-
-# backward compatible aliases (snd7.scm)
-if provided?(:snd)
-  alias save_options               save_state
-  alias delete_samples_with_origin delete_samples
-  alias default_output_type        default_output_header_type
-  alias default_output_format      default_output_data_format
 end
 
 class Mus
@@ -1995,8 +2013,8 @@ The hook functions may do their best to deal with multi-line input; \
 they can collect multi-line input and eval it by itself.  \
 One example is install_eval_hooks(file, retval, input, hook, &reset_cursor) in examp.rb.")
 
-# inf-snd.el calls this function each time a line was sent from
-# the emacs buffer.
+# inf-snd.el calls this function each time a line was sent to the
+# emacs buffer.
 def run_emacs_eval_hook(line)
   if $emacs_eval_hook.member?("(emacs)")
     $emacs_eval_hook.call(line)
@@ -2308,7 +2326,7 @@ def verbose_message_string(stack_p, remark, *args)
       str += format("\n%s%s", remark, $!.backtrace.join(fmt_remark))
     end
   else
-    if stack_p
+    if stack_p and caller(2)
       str += format("\n%s%s", remark, caller(2).join(fmt_remark))
     end
   end
@@ -2382,10 +2400,6 @@ def debug_trace(*args)
   clm_message(verbose_message_string(true, "# "))
 end
 
-make_proc_with_setter(:snd_input,
-                      lambda { property(:snd_input, :snd_listener) },
-                      lambda { |val| set_property(:snd_input, :snd_listener, val) })
-
 if provided? :snd then set_snd_input(:snd) end
 
 class Snd
@@ -2394,7 +2408,6 @@ class Snd
 
     if provided? :snd
       def add_sound_path(path)
-        add_directory_to_view_files_list(path)
         Snd_path.push(path)
       end
       
@@ -2590,6 +2603,10 @@ Snd_error_tags = [
   :no_such_sound,
   :gsl_error,
   :no_such_colormap,
+  :cant_close_file,
+  :cant_close_file,
+  :cant_delete_file,
+  :cant_update_file,
   # sndlib2xen.h
   :no_such_channel,
   :no_such_file,
@@ -2973,12 +2990,10 @@ module Examp
   end
 
   add_help(:display_energy,
-           "display_energy([snd=false, [chn=false]]) \
+           "display_energy(snd, chn) \
 is a $lisp_graph_hook function to display the time domain data as energy (squared).
-$lisp_graph_hook.add_hook!(\"energy\") do |snd, chn|
-  display_energy(snd, chn)
-end")
-  def display_energy(snd = false, chn = false)
+$lisp_graph_hook.add_hook!(\"display-energy\", &method(:display_energy).to_proc)")
+  def display_energy(snd, chn)
     ls = left_sample(snd, chn)
     rs = right_sample(snd, chn)
     datal = make_graph_data(snd, chn)
@@ -2992,12 +3007,10 @@ end")
   end
 
   add_help(:display_db,
-           "display_db([snd=false, [chn=false]]) \
+           "display_db(snd, chn) \
 is a lisp-graph-hook function to display the time domain data in dB.
-$lisp_graph_hook.add_hook!(\"db\") do |snd, chn|
-  display_db(snd, chn)
-end")
-  def display_db(snd = false, chn = false)
+$lisp_graph_hook.add_hook!(\"display-db\", &method(:display_db).to_proc)")
+  def display_db(snd, chn)
     if datal = make_graph_data(snd, chn)
       dB = lambda do |val|
         if val < 0.001
@@ -3135,7 +3148,6 @@ end")
         set_sensitive(main_menu($buffer_menu), !$buffer_names.empty?)
       end
     end
-    false
   end
 
   # Reopen Menu
@@ -3175,7 +3187,6 @@ end")
         end
       end
     end
-    false
   end
 
   add_help(:check_reopen_menu,
@@ -3297,11 +3308,19 @@ looks for successive samples that sum to less than 'limit', moving the cursor if
   #   $close-hook.add_hook!() do |snd| shell("sndplay wood16.wav"); false end
 
   add_help(:shell, "shell(*cmd) \
-sends 'cmd' to a shell (executes it as a shell command) and returns the result.")
+sends 'cmd' to a shell (executes it as a shell command) and returns the result string.")
   def shell(*cmd)
-    str = ""
-    File.popen(format(*cmd)) do |f| str << f.gets until f.eof end
-    str
+    if !string?(cmd.first) or cmd.first.empty?
+      ""
+    else
+      str = ""
+      IO.popen(format(*cmd)) do |f|
+        until f.eof?
+          str << f.gets
+        end
+      end
+      str
+    end
   end
 
   # translate mpeg input to 16-bit linear and read into Snd

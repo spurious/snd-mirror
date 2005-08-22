@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Sat Jan 03 17:30:23 CET 2004
-# Last: Fri Jul 22 01:31:01 CEST 2005
+# Last: Fri Aug 12 18:07:53 CEST 2005
 
 # Commentary:
 # 
@@ -888,7 +888,6 @@ sets 'key-val' pair in the given sound's property list and returns 'val'.")
         if tmp_snd_p or (not file_name(snd) =~ /(.+\d+_\d+\.snd$)|(.*\.rev.*$)/)
           rsp.save(snd)
         end
-        false
       end
     end
     set_property(:remember_properties, :object, rsp)
@@ -933,7 +932,6 @@ sets 'key-val' pair in the given sound's property list and returns 'val'.")
 #     if tmp_snd_p or (not file_name(snd) =~ /(.+\\d+_\\d+\\.snd$)|(.*\\.rev.*$)/)
 #       rsp.save(snd)
 #     end
-#     false
 #   end
 # end
 #
@@ -1352,7 +1350,7 @@ snd defaults to the currently selected sound.")
     prompt_in_minibuffer(question,
                          lambda do |response|
                            clear_minibuffer(snd)
-                           if response == "yes"
+                           if response == "yes" or response == "y"
                              action_if_yes.call(snd)
                            else
                              action_if_no.call(snd)
@@ -1377,7 +1375,6 @@ If 'check' is false, the hooks are removed.")
                             short_file_name(snd), eds[0], chn),
                      lambda do |snd|
                        revert_sound(snd)
-#                      close_sound(snd)
                        exiting and exit(0)
                      end,
                      lambda do |snd| false end, snd)
@@ -1394,9 +1391,7 @@ If 'check' is false, the hooks are removed.")
     end
     unsaved_edits_at_exit_p = lambda do !ignore_unsaved_edits_at_exit_p.call end
     unsaved_edits_at_close_p = lambda do |snd|
-      val = ignore_unsaved_edits_at_close_p.call(snd, false)
-      Snd.display("close: %s", val)
-      val
+      ignore_unsaved_edits_at_close_p.call(snd, false)
     end
     if check
       unless $before_close_hook.member?("unsaved-edits-at-close?")

@@ -4,7 +4,7 @@
 
 # Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Tue Apr 08 17:05:03 CEST 2003
-# Last: Sat May 21 23:17:23 CEST 2005
+# Last: Wed Aug 17 17:43:14 CEST 2005
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -398,7 +398,7 @@ with_silence do
 end
 require "hooks"
 
-$clm_version            = "21-05-2005"
+$clm_version            = "17-08-2005"
 $output                 = nil
 $reverb                 = nil
 $clm_file_name          = "test.snd" unless defined? $clm_file_name
@@ -751,7 +751,12 @@ installs the @with_sound_note_hook and prints the line
             when Proc
               @notehook
             when Symbol, String
-              method(@notehook).to_proc
+              # older Ruby versions return -1 on method(:func).to_proc.arity
+              if method(@notehook).to_proc.arity == 3
+                method(@notehook).to_proc
+              else
+                lambda do |inst_name, start, dur| @notehook.call(inst_name, start, dur) end
+              end
             end
       @with_sound_note_hook.add_hook!("with-sound-note-hook", &prc)
     end
@@ -999,14 +1004,14 @@ installs the @with_sound_note_hook and prints the line
   rescue Interrupt, ScriptError, StandardError
     set_mus_srate(@old_srate)
     finish_sound
-    case $!
+    err, $! = $!, nil
+    show_local_variables
+    case err
     when Interrupt, Break
       # C-g, ws_break
-      err, $! = $!, nil
-      show_local_variables
       Snd.message("with_sound body: %s", err.message)
     else
-      raise
+      raise err
     end
   else
     frm2 = ws_frame_location
@@ -1116,9 +1121,10 @@ installs the @with_sound_note_hook and prints the line
     if data_fmt and type
       Snd.message("  format: %s [%s]", mus_data_format_name(data_fmt), mus_header_type_name(type))
     end
-    Snd.message("    real: %1.3f  (utime %1.3f, stime %1.3f)", @rtime, @utime, @stime)
-    if frms > 0
-      Snd.message("   ratio: %1.2f  (uratio %1.2f)", @rtime * (@srate / frms), @utime * (@srate / frms))
+    Snd.message("    real: %1.3f  (utime %1.3f, stime %1.3f)", @rtime, @utime, @stime) # 
+    if frms > 1
+      rt = (@srate / frms)
+      Snd.message("   ratio: %1.2f  (uratio %1.2f)", @rtime * rt, @utime * rt)
     end
   end
   
@@ -1458,11 +1464,11 @@ end
 class With_Snd < Snd_Instrument
   def initialize(*args, &body)
     @clm = false
-    super
+    super(*args, &body)
   end
   
   def run_instrument(start, dur, *locsig_args, &body)
-    super
+    super(start, dur, *locsig_args, &body)
     beg = seconds2samples(start + @offset)
     len = seconds2samples(dur)
     ws_interrupt?
@@ -1484,7 +1490,7 @@ class With_Snd < Snd_Instrument
     ws_interrupt?
     case chan
     when Integer
-      super
+      super(start, dur, chan, &body)
       let(make_sample_reader(beg, @ws_reverb, chan)) do |rd|
         len.times do |i|
           frame2sound_data!(out_data, i, body.call(read_sample(rd), i + beg))
@@ -1660,11 +1666,11 @@ end
 class With_CLM < CLM_Instrument
   def initialize(*args, &body)
     @clm = true
-    super
+    super(*args, &body)
   end
 
   def run_instrument(start, dur, *locsig_args, &body)
-    super
+    super(start, dur, *locsig_args, &body)
     ws_interrupt?
     each_sample(start + @offset, dur) do |samp|
       locsig(@locsig, samp, body.call(samp))
@@ -1677,7 +1683,7 @@ class With_CLM < CLM_Instrument
     ws_interrupt?
     case chan
     when Integer
-      super
+      super(start, dur, chan, &body)
       each_sample(start, dur) do |samp|
         frame2file(@ws_output, samp, body.call(in_any(samp, chan, @ws_reverb), samp))
       end
@@ -1839,7 +1845,7 @@ class With_DAC < Snd_Instrument
   # handles instruments parallel if computing is fast enough
   def initialize(*args, &body)
     @clm = false
-    super
+    super(*args, &body)
     @bufsize = get_args(args, :bufsize, $clm_rt_bufsize)
     @device  = get_args(args, :device, $clm_output_device)
     @ws_reverb = @ws_output = @reverb = false
@@ -1852,7 +1858,7 @@ class With_DAC < Snd_Instrument
   def run_instrument(start, dur, *args, &body)
     # A bad idea; it scales all current parallel instruments in method
     # REAL_RUN with the last called instrument-locsig-gen.
-    super
+    super(start, dur, *args, &body)
     beg, ends = times2samples(start, dur)
     @instruments.push([beg, ends, body])
     ws_interrupt?

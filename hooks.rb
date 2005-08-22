@@ -2,7 +2,7 @@
 
 # Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Sun Dec 21 13:48:01 CET 2003
-# Last: Wed May 18 18:43:20 CEST 2005
+# Last: Mon Aug 15 00:18:25 CEST 2005
 
 # Commentary:
 #

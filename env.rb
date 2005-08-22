@@ -1,7 +1,7 @@
 # env.rb -- snd-7/env.scm
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
-# Last: Thu Apr 07 00:11:20 CEST 2005
+# Last: Fri Aug 19 14:58:57 CEST 2005
 
 # Commentary:
 #
@@ -45,6 +45,17 @@
 #    make_semitones_env(env, *args)
 #    octaves_envelope(env, around, error)
 #    make_octaves_env(env, *args)
+#
+# class Peak_env
+#  initialize(dir)
+#  saved_info(snd)
+#  set_saved_info(snd, new_info)
+#  info_file_name(snd, chn)
+#  save_info_at_close(snd)
+#  restore_info_upon_open(snd, chn, dur)
+#  
+# install_save_peak_env(dir)
+# uninstall_save_peak_env
 
 # Code:
 
@@ -212,13 +223,13 @@ stretch_envelope([0, 0, 1, 1, 2, 0], 0.1, 0.2, 1.5, 1.6)
     end
     fn.map! do |x| x.to_f end unless fn.empty?
     if old_att and (not new_att)
-      snd_raise(:wrong_number_of_args, old_att.inspect, "old_att but no new_att?")
+      Snd.raise(:wrong_number_of_args, old_att.inspect, "old_att but no new_att?")
     else
       if (not new_att)
         fn
       else
         if old_dec and (not new_dec)
-          snd_raise(:wrong_number_of_args,
+          Snd.raise(:wrong_number_of_args,
                     format("%s %s %s", old_att, new_att, old_dec), "old_dec but no new_dec?")
         else
           new_x = x0 = fn[0]
@@ -362,10 +373,13 @@ REFLECTED causes every other repetition to be in reverse.")
 
   class Power_env
     def initialize(*rest)
-      envelope = get_args(rest, :envelope, [0, 0, 1, 100, 1, 1]).map do |x| x.to_f end
-      scaler   = get_args(rest, :scaler, 1.0)
-      offset   = get_args(rest, :offset, 0.0)
-      dur      = get_args(rest, :duration, 0.0)
+      envelope, scaler, offset, duration = nil
+      optkey(rest, binding,
+             [:envelope, [0, 0, 1, 100, 1, 1]],
+             [:scaler, 1.0],
+             [:offset, 0.0],
+             [:duration, 0.0])
+      envelope.map! do |val| Float(val) end
       xext = envelope[-3] - envelope.first
       j = 0
       @envs = make_array(envelope.length / 3 - 1) do |i|
@@ -379,7 +393,7 @@ REFLECTED causes every other repetition to be in reverse.")
                  :base, base,
                  :scaler, scaler,
                  :offset, offset,
-                 :duration, dur * ((x1 - x0) / xext))
+                 :duration, duration * ((x1 - x0) / xext))
       end
       @current_pass = mus_length(@envs.first)
       @current_env = 0
@@ -474,10 +488,12 @@ REFLECTED causes every other repetition to be in reverse.")
   end
 
   def rms_envelope(file, *rest)
-    beg   = get_args(rest, :beg, 0.0)
-    dur   = get_args(rest, :dur, false)
-    rfreq = get_args(rest, :rfreg, 30.0)
-    db    = get_args(rest, :db, false)
+    beg, dur, rfreq, db = nil
+    optkey(rest, binding,
+           [:beg, 0.0],
+           :dur,
+           [:rfreq, 30.0],
+           :db)
     e = []
     incr = 1.0 / rfreq
     fsr = mus_sound_srate(file)
@@ -541,12 +557,14 @@ REFLECTED causes every other repetition to be in reverse.")
   # ;;;   scaler for the converted values
 
   def exp_envelope(env, *args)
-    base       = get_args(args, :base, 2 ** (1.0 / 12)).to_f
-    error      = get_args(args, :error, 0.01).to_f
-    scaler     = get_args(args, :scaler, 1.0).to_f
-    offset     = get_args(args, :offset, 0.0).to_f
-    cutoff     = get_args(args, :cutoff, false)
-    out_scaler = get_args(args, :out_scaler, 1.0).to_f
+    base, error, scaler, offset, cutoff, out_scaler = nil
+    optkey(args, binding,
+           [:base, 2 ** (1.0 / 12)],
+           [:error, 0.01],
+           [:scaler, 1.0],
+           [:offset, 0.0],
+           :cutoff,
+           [:out_scaler, 1.0])
     result = []
     ycutoff = (cutoff ? (base ** (offset + cutoff * scaler)) : false)
     interpolate = lambda do |xl, yl, xh, yh, xi|
@@ -600,16 +618,18 @@ REFLECTED causes every other repetition to be in reverse.")
   end
 
   def make_db_env(env, *args)
-    scaler = get_args(args, :scaler, 1.0)
-    offset = get_args(args, :offset, 0.0)
-    base   = get_args(args, :base, 1.0)
-    dur    = get_args(args, :duration, 0.0)
-    fin    = get_args(args, :end, 0)
-    start  = get_args(args, :start, 0)
-    cutoff = get_args(args, :cutoff, -70)
-    error  = get_args(args, :error, 0.01)
+    scaler, offset, base, duration, len, start, cutoff, error = nil
+    optkey(args, binding,
+           [:scaler, 1.0],
+           [:offset, 0.0],
+           [:base, 1.0],
+           [:duration, 0.0],
+           [:len, 0],
+           [:start, 0],
+           [:cutoff, -70],
+           [:error, 0.01])
     make_env(:envelope, db_envelope(env, cutoff, error), :scaler, scaler, :offset, offset,
-             :base, base, :duration, dur, :end, fin, :start, start)
+             :base, base, :duration, dur, :end, len, :start, start)
   end
 
   # ;;; Pitch envelopes (y units are semitone and octave intervals)
@@ -618,16 +638,18 @@ REFLECTED causes every other repetition to be in reverse.")
   end
 
   def make_semitones_env(env, *args)
-    around = get_args(args, :around, 1.0)
-    scaler = get_args(args, :scaler, 1.0)
-    offset = get_args(args, :offset, 0.0)
-    base   = get_args(args, :base, 1.0)
-    dur    = get_args(args, :duration, 0.0)
-    fin    = get_args(args, :end, 0)
-    start  = get_args(args, :start, 0)
-    error  = get_args(args, :error, 0.01)
+    around, scaler, offset, base, dur, len, start, error = nil
+    optkey(args, binding,
+           [:around, 1.0],
+           [:scaler, 1.0],
+           [:offset, 0.0],
+           [:base, 1.0],
+           [:duration, 0.0],
+           [:len, 0],
+           [:start, 0],
+           [:error, 0.01])
     make_env(:envelope, semitones_envelope(env, around, error), :scaler, scaler, :offset, offset,
-             :base, base, :duration, dur, :end, fin, :start, start)
+             :base, base, :duration, dur, :end, len, :start, start)
   end
 
   def octaves_envelope(env, around = 1.0, error = 0.01)
@@ -635,16 +657,18 @@ REFLECTED causes every other repetition to be in reverse.")
   end
 
   def make_octaves_env(env, *args)
-    around = get_args(args, :around, 1.0)
-    scaler = get_args(args, :scaler, 1.0)
-    offset = get_args(args, :offset, 0.0)
-    base   = get_args(args, :base, 1.0)
-    dur    = get_args(args, :duration, 0.0)
-    fin    = get_args(args, :end, 0)
-    start  = get_args(args, :start, 0)
-    error  = get_args(args, :error, 0.01)
+    around, scaler, offset, base, dur, len, start, error = nil
+    optkey(args, binding,
+           [:around, 1.0],
+           [:scaler, 1.0],
+           [:offset, 0.0],
+           [:base, 1.0],
+           [:duration, 0.0],
+           [:len, 0],
+           [:start, 0],
+           [:error, 0.01])
     make_env(:envelope, octaves_envelope(env, around, error), :scaler, scaler, :offset, offset,
-             :base, base, :duration, dur, :end, fin, :start, start)
+             :base, base, :duration, dur, :end, len, :start, start)
   end
 end
 
@@ -657,7 +681,7 @@ def test_power_env(start, dur, en)
   os = make_oscil()
   pe = make_power_env(:envelope, en, :duration, dur, :scaler, 0.5)
   beg, len = times2samples(start, dur)
-  (beg...len).each do |i| outa(i, power_env(pe) * oscil(os), $rbm_output) end
+  (beg...len).each do |i| outa(i, power_env(pe) * oscil(os), $output) end
 end
 
 with_sound(:channels, 1, :play, 1) do
@@ -666,5 +690,89 @@ with_sound(:channels, 1, :play, 1) do
   test_power_env(2.4, 1, [0, 0, 0,   1, 1, 1,   2, 0.5, 0.123,   3, 1, 321,   4, 0, 0])
 end
 =end
+
+class Peak_env
+  Peak = Struct.new("Peak", :name, :format, :chans)
+  
+  def initialize(dir = ENV["HOME"] + "/.peaks")
+    @saved_peak_info = []
+    @save_info_directory = dir
+  end
+
+  def saved_info(snd)
+    name = file_name(snd)
+    @saved_peak_info.detect do |n| n.name == name end
+  end
+
+  def set_saved_info(snd, new_info)
+    name = file_name(snd)
+    @saved_peak_info.delete_if do |n| n.name == name end
+    @saved_peak_info.push(new_info)
+  end
+
+  def info_file_name(snd, chn)
+    format("%s/%s-%d.peaks", @save_info_directory, file_name(snd).tr("/\\", "_")[1..-1], chn)
+  end
+
+  # intended as a $close_hook function
+  def save_info_at_close(snd)
+    if peak_env_info(snd, 0, 0)
+      saved = false
+      channels(snd).times do |chn|
+        peak_file = mus_expand_filename(info_file_name(snd, chn))
+        if (not File.exists?(peak_file)) or
+            file_write_date(peak_file) < file_write_date(file_name(snd))
+          unless saved
+            set_saved_info(snd, Peak.new(file_name(snd), data_format(snd), channels(snd)))
+            saved = true
+          else
+            Snd.catch(:no_such_envelope) do write_peak_env_info_file(snd, chn, peak_file) end
+          end
+        end
+      end
+    end
+  end
+
+  # intended as an $initial_graph_hook_function
+  def restore_info_upon_open(snd, chn, dur)
+    if (not (peak_info = saved_info(snd))) or
+        (data_format(snd) == peak_info.format and channels(snd) == peak_info.chans)
+      peak_file = mus_expand_filename(info_file_name(snd, chn))
+      if File.exists?(peak_file) and
+          file_write_date(peak_file) > file_write_date(file_name(snd))
+        set_saved_info(snd, Peak.new(file_name(snd), data_format(snd), channels(snd)))
+        read_peak_env_info_file(snd, chn, peak_file)
+      end
+    end
+    false
+  end
+end
+
+def install_save_peak_env(dir = ENV["HOME"] + "/.peaks")
+  peak_env = Peak_env.new(dir)
+  hook_name = "peak-env"
+  $update_hook.add_hook!(hook_name) do |snd|
+    channels(snd).times do |chn|
+      peak_file = mus_expand_filename(peak_env.info_file_name(snd, chn))
+      File.exists?(peak_file) and File.unlink(peak_file)
+    end
+  end
+  $after_open_hook.add_hook!(hook_name) do |snd|
+    peak_env.save_info_at_close(snd)
+  end
+  $close_hook.add_hook!(hook_name) do |snd|
+    peak_env.save_info_at_close(snd)
+  end
+  $initial_graph_hook.add_hook!(hook_name) do |snd, chn, dur|
+      peak_env.restore_info_upon_open(snd, chn, dur)
+  end
+  $exit_hook.add_hook!(hook_name) do
+    Snd.sounds.each do |snd| peak_env.save_info_at_close(snd) end
+  end
+end
+
+def uninstall_save_peak_env
+  [$update_hook, $close_hook, $initial_graph_hook, $exit_hook].apply(:remove_hook!, "peak-env")
+end
 
 # env.rb ends here
