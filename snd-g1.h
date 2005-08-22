@@ -327,6 +327,8 @@ void widget_float_to_text(GtkWidget *w, Float val);
 void widget_off_t_to_text(GtkWidget *w, off_t val);
 void rotate_text(GdkDrawable *wn, GdkGC *gc, PangoFontDescription *font, char *text, int angle, gint x0, gint y0);
 void draw_rotated_axis_label(chan_info *cp, GdkGC *gc, char *text, gint x0, gint y0);
+void ensure_scrolled_window_row_visible(widget_t list, int pos, int num_rows);
+void ensure_list_row_visible(widget_t list, int pos);
 
 
 

@@ -94,7 +94,7 @@
 
 (define tests 1)
 (define keep-going #f)
-(define all-args #f) ; huge arg testing
+(define all-args #t) ; huge arg testing
 (define with-big-file #t)
 
 (if (not (defined? 'snd-test)) (define snd-test -1))
@@ -48859,7 +48859,7 @@ EDITS: 1
 					  (list XmNdragInitiatorProtocolStyle 0 XmNenableThinThickness 0 XmNmotifVersion 0))))
 		(if (not (XmIsDisplay dp)) (snd-display ";XmIsDisplay: ~A" dp))
 		(if (not (= (list-ref vals 1) XmDRAG_PREFER_RECEIVER)) (snd-display ";XmNdragInitiatorProtocolStyle: ~A" (list-ref vals 1)))
-		(if (list-ref vals 3) (snd-display ";XmNenableThinThickness?"))
+		(if (not (list-ref vals 3)) (snd-display ";XmNenableThinThickness?"))
 		(if (not (= (list-ref vals 5) 2002)) (snd-display ";XmGetXmDisplay motif version: ~A" (list-ref vals 5)))
 		(XtAddCallback dp XmNdragStartCallback (lambda (w c i) #f)))
 	      
@@ -48885,7 +48885,7 @@ EDITS: 1
 					  (XKeycodeToKeysym dpy (list 'KeyCode XK_b) 0)
 					  0  (lambda (w c i) #f) '())
 	      
-	      (if (not (XmIsMotifWMRunning (cadr (main-widgets)))) (snd-display ";XmIsMotifWMRunning?"))
+	      (if (XmIsMotifWMRunning (cadr (main-widgets))) (snd-display ";XmIsMotifWMRunning?"))
 	      (install-searcher (lambda (file) (= (mus-sound-srate file) 44100)))
 	      (zync)
 	      (make-hidden-controls-dialog)

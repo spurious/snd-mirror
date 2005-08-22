@@ -1394,9 +1394,9 @@ char *mus_expand_filename(const char *filename)
 	}
       else
 	{
-	  char *pwd = NULL, *res = NULL;
-	  /* get_current_dir_name isn't ready for prime time yet */
+	  char *pwd = NULL;
 #if HAVE_GETCWD
+	  char *res = NULL;
 	  for (i = 64;; i *= 2)
 	    {
 	      if (pwd) FREE(pwd);

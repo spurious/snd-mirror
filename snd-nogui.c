@@ -250,22 +250,15 @@ void set_filter_order(snd_info *sp, int val) {sp->filter_control_order = val;}
 void set_filter_in_dB(snd_info *sp, bool val) {sp->filter_control_in_dB = val;}
 void set_filter_in_hz(snd_info *sp, bool val) {sp->filter_control_in_hz = val;}
 
-void view_files_set_sort_proc_name(const char *name) {}
-Float view_files_amp(widget_t dialog) {return(0.0);}
-Float view_files_set_amp(widget_t dialog, Float new_amp) {return(0.0);}
-Float view_files_speed(widget_t dialog) {return(0.0);}
-Float view_files_set_speed(widget_t dialog, Float new_speed) {return(0.0);}
-env *view_files_amp_env(widget_t dialog) {return(NULL);}
-env *view_files_set_amp_env(widget_t dialog, env *new_e) {return(NULL);}
-
+vf_row *view_files_make_row(view_files_info *vdat, widget_t last_row) {return(NULL);}
 void vf_unhighlight_row(widget_t nm, widget_t rw) {}
 void vf_highlight_row(widget_t nm, widget_t rw) {}
 void vf_post_info(view_files_info *vdat, int pos) {}
 void vf_unpost_info(view_files_info *vdat) {}
-void view_files_display_list(view_files_info *vdat) {}
 off_t vf_location(view_files_info *vdat) {return(0);}
 void vf_post_error(const char *error_msg, void *data) {}
 void vf_post_location_error(const char *error_msg, void *data) {}
+void vf_post_add_error(const char *error_msg, void *data) {}
 widget_t start_view_files_dialog_1(view_files_info *vdat, bool managed) {return(NULL_WIDGET);}
 void vf_post_selected_files_list(view_files_info *vdat) {}
 void view_files_add_file_or_directory(view_files_info *vdat, const char *file_or_dir) {}
@@ -273,6 +266,10 @@ void vf_reflect_sort_choice_in_menu(view_files_info *vdat) {}
 void vf_set_amp(view_files_info *vdat, Float val) {}
 void vf_set_speed(view_files_info *vdat, Float val) {}
 void vf_amp_env_redraw(widget_t w, view_files_info *vdat) {}
+
+
+void ensure_scrolled_window_row_visible(widget_t list, int pos, int num_rows) {}
+void ensure_list_row_visible(widget_t list, int pos) {}
 
 
 void auto_update_restart(void) {}

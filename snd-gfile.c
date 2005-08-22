@@ -2345,7 +2345,7 @@ typedef struct raw_info {
   char *filename;
   char *help;
   open_requestor_t requestor;
-  snd_info *sp;
+  void *requestor_data;
   GtkWidget *requestor_dialog;
 } raw_info;
 
@@ -2387,7 +2387,7 @@ static raw_info *new_raw_dialog(void)
       raw_infos[loc]->help = NULL;
     }
   raw_infos[loc]->requestor = NO_REQUESTOR;
-  raw_infos[loc]->sp = NULL;
+  raw_infos[loc]->requestor_data = NULL;
   raw_infos[loc]->location = 0;
   return(raw_infos[loc]);
 }
@@ -2413,19 +2413,41 @@ static void raw_data_ok_callback(GtkWidget *w, gpointer context)
       /* choose action based on how we got here */
       if ((rp->requestor_dialog) &&
 	  ((rp->requestor == FROM_MIX_DIALOG) ||
-	   (rp->requestor == FROM_INSERT_DIALOG)))
+	   (rp->requestor == FROM_INSERT_DIALOG) ||
+	   (rp->requestor == FROM_VIEW_FILES_MIX_DIALOG) ||
+	   (rp->requestor == FROM_VIEW_FILES_INSERT_DIALOG)))
 	{
 	  ss->reloading_updated_file = true; /* don't reread lack-of-header! */
 	  /* redirection may be still set here, but I'll make it obvious */
-	  if (rp->requestor == FROM_MIX_DIALOG)
+	  switch (rp->requestor)
 	    {
+	    case FROM_MIX_DIALOG:
 	      redirect_snd_error_to(file_open_error, (void *)mdat);
 	      mix_complete_file_at_cursor(any_selected_sound(), rp->filename, with_mix_tags(ss), 0);
-	    }
-	  else
-	    {
+	      break;
+	    case FROM_INSERT_DIALOG:
 	      redirect_snd_error_to(file_open_error, (void *)idat);
 	      insert_complete_file_at_cursor(any_selected_sound(), rp->filename);
+	      break;
+	    case FROM_VIEW_FILES_MIX_DIALOG:
+	      {
+		int err;
+		view_files_info *vdat = (view_files_info *)(rp->requestor_data);
+		redirect_snd_error_to(vf_post_error, rp->requestor_data);
+		err = vf_mix(vdat);
+	      }
+	      break;
+	    case FROM_VIEW_FILES_INSERT_DIALOG:
+	      {
+		int err;
+		view_files_info *vdat = (view_files_info *)(rp->requestor_data);
+		redirect_snd_error_to(vf_post_error, rp->requestor_data);
+		err = vf_insert(vdat);
+	      }
+	      break;
+	    default:
+	      snd_error("wrong requestor type in raw data dialog? %d\n", (int)(rp->requestor));
+	      break;
 	    }
 	  redirect_snd_error_to(NULL, NULL);
 	  ss->reloading_updated_file = false;
@@ -2445,7 +2467,7 @@ static void raw_data_ok_callback(GtkWidget *w, gpointer context)
 	  hdr->comment = NULL;
 	  if (rp->requestor == FROM_KEYBOARD)
 	    {
-	      clear_minibuffer(rp->sp);
+	      clear_minibuffer((snd_info *)(rp->requestor_data));
 	      rp->selected = true;
 	    }
 	  finish_opening_sound(add_sound_window(rp->filename, rp->read_only, hdr), rp->selected);
@@ -2566,10 +2588,8 @@ void raw_data_dialog_to_file_info(const char *filename, char *title, char *info,
   rp->filename = copy_string(filename);
   rp->requestor = ss->open_requestor;
   rp->requestor_dialog = ss->sgx->requestor_dialog;
-  rp->sp = ss->open_requestor_sp;
   ss->open_requestor = NO_REQUESTOR;
   ss->sgx->requestor_dialog = NULL;
-  ss->open_requestor_sp = NULL;
   if ((rp->requestor_dialog) &&
       ((rp->requestor == FROM_OPEN_DIALOG) ||
        (rp->requestor == FROM_MIX_DIALOG)))
@@ -3458,40 +3478,9 @@ static void view_files_play_callback(GtkWidget *w, gpointer context)
   else vdat->current_play_button = w;
 }
 
-void view_files_display_list(view_files_info *vdat)
+vf_row *view_files_make_row(view_files_info *vdat, widget_t ignored)
 {
-  int i;
-  vf_row *r;
-  if (!vdat) return;
-  if (!(vdat->dialog)) return;
-  if (vdat->end >= 0)
-    {
-      view_files_sort_list(vdat);
-      for (i = 0; i <= vdat->end; i++)
-	{
-	  r = vdat->file_list_entries[i];
-	  if (!r)
-	    {
-	      r = make_vf_row(vdat, (GtkSignalFunc)view_files_play_callback, (GtkSignalFunc)view_files_select_callback);
-	      vdat->file_list_entries[i] = r;
-	      r->pos = i;
-	    }
-	  set_button_label(r->nm, vdat->names[r->pos]);
-	  set_toggle_button(r->pl, false, false, (void *)vdat);
-	  if (!(GTK_WIDGET_VISIBLE(r->rw))) gtk_widget_show(r->rw);
-	}
-    }
-  for (i = vdat->end + 1; i < vdat->size; i++)
-    {
-      r = vdat->file_list_entries[i];
-      if (r)
-	{
-	  if (GTK_WIDGET_VISIBLE(r->rw)) 
-	    gtk_widget_hide(r->rw);
-	}
-    }
-  if (!(GTK_WIDGET_VISIBLE(vdat->file_list))) 
-    gtk_widget_show(vdat->file_list);
+  return(make_vf_row(vdat, (GtkSignalFunc)view_files_play_callback, (GtkSignalFunc)view_files_select_callback));
 }
 
 static void view_files_help_callback(GtkWidget *w, gpointer context) 
@@ -3531,15 +3520,13 @@ static void view_files_update_callback(GtkWidget *w, gpointer context)
   view_files_info *vdat = (view_files_info *)context;
   /* run through view files list looking for any that have been deleted behind our back */
   view_files_update_list(vdat);
-  view_files_sort_list(vdat);
   view_files_display_list(vdat);
 }
 
-static sort_vf(view_files_info *vdat, int sort_choice)
+static void sort_vf(view_files_info *vdat, int sort_choice)
 {
   vdat->sorter = SORT_BY_NAME;
   vf_reflect_sort_choice_in_menu(vdat);
-  view_files_sort_list(vdat); 
   view_files_display_list(vdat);
 }
 
@@ -3588,7 +3575,6 @@ static void view_files_add_files(GtkWidget *w, gpointer context)
   if ((file_or_dir) && (*file_or_dir))
     {
       view_files_add_file_or_directory(vdat, (const char *)file_or_dir);
-      view_files_sort_list(vdat);
       view_files_display_list(vdat);
     }
 }
@@ -3600,7 +3586,6 @@ static void view_files_drop_watcher(GtkWidget *w, const char *str, int x, int y,
   filename = mus_expand_filename(str);
   add_file_to_view_files_list(vdat, str, filename);
   FREE(filename);
-  view_files_sort_list(vdat);
   view_files_display_list(vdat);
 }
 
@@ -3729,6 +3714,13 @@ void vf_post_location_error(const char *error_msg, void *data)
       at_mark_text_handler_id = g_signal_connect(vdat->at_mark_text, "changed", G_CALLBACK(vf_mark_text_modify_callback), (gpointer)data);
       at_mark_button_handler_id = g_signal_connect(vdat->at_mark_button, "activated", G_CALLBACK(vf_mark_button_modify_callback), (gpointer)data);
     }
+}
+
+void vf_post_add_error(const char *error_msg, void *data)
+{
+  view_files_info *vdat = (view_files_info *)data;
+  vf_post_error(error_msg, data);
+        /* TODO: clear error if anything changes */
 }
 
 static void view_files_mix_selected_callback(GtkWidget *w, gpointer context) 

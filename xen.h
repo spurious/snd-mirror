@@ -527,7 +527,7 @@
   #define XEN_PROCEDURE_CAST
 #endif
 
-#if XEN_DEBUGGING
+#if XEN_DEBUGGING && HAVE_SCM_C_DEFINE_GSUBR
   #define XEN_NEW_PROCEDURE(Name, Func, Req, Opt, Rst) xen_guile_dbg_new_procedure(Name, XEN_PROCEDURE_CAST Func, Req, Opt, Rst)
 #else
 #if HAVE_SCM_C_DEFINE_GSUBR
@@ -670,7 +670,7 @@ double xen_to_c_double(XEN a);
 double xen_to_c_double_or_else(XEN a, double b);
 int xen_to_c_int(XEN a);
 bool xen_integer_p(XEN a);
-#if XEN_DEBUGGING
+#if XEN_DEBUGGING && HAVE_SCM_C_DEFINE_GSUBR
 XEN xen_guile_dbg_new_procedure(const char *name, XEN (*func)(), int req, int opt, int rst);
 #endif
 

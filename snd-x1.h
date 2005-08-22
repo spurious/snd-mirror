@@ -265,6 +265,8 @@ void widget_float_to_text(Widget w, Float val);
 void widget_off_t_to_text(Widget w, off_t val);
 Pixmap rotate_text (Widget w, char *str, XFontStruct *font, Float angle_in_degrees, int *nw, int *nh, Pixel bg, Pixel fg, GC d_gc);
 void draw_rotated_axis_label(chan_info *cp, GC gc, char *text, int x0, int y0);
+void ensure_list_row_visible(widget_t list, int row);
+void ensure_scrolled_window_row_visible(widget_t list, int pos, int num_rows);
 
 
 /* -------- snd-xchn.c -------- */
@@ -399,7 +401,6 @@ void reflect_just_sounds(void);
 void save_file_dialog_state(FILE *fd);
 widget_t post_it(const char *subject, const char *str);
 void save_post_it_dialog_state(FILE *fd);
-
 
 
 /* -------- snd-xenv.c -------- */

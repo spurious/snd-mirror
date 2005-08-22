@@ -43,6 +43,7 @@
  * TODO: report-in-minibuffer extended to go to any dialog
  * TODO: always show bg wave in vf
  * TODO: will need at least a reset button for the vf env, perhaps reset for entire vf
+ * TODO: all speed scrollers should include a local pull down menu for speed-style
  */
 
 
@@ -485,17 +486,13 @@ static void watch_filename_change(Widget w, XtPointer context, XtPointer info)
     {
       XmStringTable files;
       Widget file_list;
-      int num_files = 0, i, top, visible, pos = -1, l, u;
+      int num_files = 0, i, pos = -1, l, u;
       char *file_list_file = NULL;
 
       file_list = XmFileSelectionBoxGetChild(fd->dialog, XmDIALOG_LIST);
       XtVaGetValues(fd->dialog,
 		    XmNfileListItemCount, &num_files,
 		    XmNfileListItems, &files, /* do not free */
-		    NULL);
-      XtVaGetValues(file_list,
-		    XmNtopItemPosition, &top,
-		    XmNvisibleItemCount, &visible,
 		    NULL);
       l = 0; /* hooray for Knuth... */
       u = num_files - 1;
@@ -516,20 +513,7 @@ static void watch_filename_change(Widget w, XtPointer context, XtPointer info)
 	    l = i + 1;
 	  else u = i - 1;
 	}
-      if (pos >= 0)
-	{
-	  if (pos < top)
-	    XmListSetPos(file_list, pos);
-	  else
-	    {
-	      if (pos >= (top + visible))
-		{
-		  if ((pos + visible) > num_files)
-		    XmListSetBottomPos(file_list, pos);
-		  else XmListSetPos(file_list, pos);
-		}
-	    }
-	}
+      ensure_list_row_visible(file_list, pos);
       if ((mus_file_probe(filename)) && 
 	  (!directory_p(filename)))
 	{
@@ -722,6 +706,7 @@ static void file_open_ok_callback(Widget w, XtPointer context, XtPointer info)
 	  redirect_snd_error_to(file_open_error, (void *)fd);
 	  ss->sgx->requestor_dialog = w;
 	  ss->open_requestor = FROM_OPEN_DIALOG;
+	  ss->open_requestor_data = NULL;
 	  sp = snd_open_file(filename, fd->file_dialog_read_only);
 	  redirect_snd_error_to(NULL, NULL);
 	  if (sp) 
@@ -829,6 +814,7 @@ static void file_mix_ok_callback(Widget w, XtPointer context, XtPointer info)
 	  redirect_snd_error_to(file_open_error, (void *)fd);
 	  ss->sgx->requestor_dialog = w;
 	  ss->open_requestor = FROM_MIX_DIALOG;
+	  ss->open_requestor_data = NULL;
 	  id_or_error = mix_complete_file_at_cursor(sp, filename, with_mix_tags(ss), 0);
 	  /* "id_or_error" here is either one of the mix id's or an error indication such as MIX_FILE_NO_MIX */
 	  /*    the possible error conditions have been checked alreay, or go through snd_error */
@@ -917,6 +903,7 @@ static void file_insert_ok_callback(Widget w, XtPointer context, XtPointer info)
 	  sp = any_selected_sound();
 	  ss->sgx->requestor_dialog = w;
 	  ss->open_requestor = FROM_INSERT_DIALOG;
+	  ss->open_requestor_data = NULL;
 	  redirect_snd_error_to(file_open_error, (void *)fd);
 	  ok = insert_complete_file_at_cursor(sp, filename);
 	  redirect_snd_error_to(NULL, NULL);
@@ -3304,7 +3291,7 @@ typedef struct raw_info {
   char *filename;
   char *help;
   open_requestor_t requestor;
-  snd_info *sp;
+  void *requestor_data;
   Widget requestor_dialog;
 } raw_info;
 
@@ -3346,7 +3333,7 @@ static raw_info *new_raw_dialog(void)
       raw_infos[loc]->help = NULL;
     }
   raw_infos[loc]->requestor = NO_REQUESTOR;
-  raw_infos[loc]->sp = NULL;
+  raw_infos[loc]->requestor_data = NULL;
   raw_infos[loc]->location = 0;
   return(raw_infos[loc]);
 }
@@ -3372,19 +3359,41 @@ static void raw_data_ok_callback(Widget w, XtPointer context, XtPointer info)
       /* choose action based on how we got here */
       if ((rp->requestor_dialog) &&
 	  ((rp->requestor == FROM_MIX_DIALOG) ||
-	   (rp->requestor == FROM_INSERT_DIALOG)))
+	   (rp->requestor == FROM_INSERT_DIALOG) ||
+	   (rp->requestor == FROM_VIEW_FILES_MIX_DIALOG) ||
+	   (rp->requestor == FROM_VIEW_FILES_INSERT_DIALOG)))
 	{
 	  ss->reloading_updated_file = true; /* don't reread lack-of-header! */
 	  /* redirection may be still set here, but I'll make it obvious */
-	  if (rp->requestor == FROM_MIX_DIALOG)
+	  switch (rp->requestor)
 	    {
+	    case FROM_MIX_DIALOG:
 	      redirect_snd_error_to(file_open_error, (void *)mdat);
 	      mix_complete_file_at_cursor(any_selected_sound(), rp->filename, with_mix_tags(ss), 0);
-	    }
-	  else
-	    {
+	      break;
+	    case FROM_INSERT_DIALOG:
 	      redirect_snd_error_to(file_open_error, (void *)idat);
 	      insert_complete_file_at_cursor(any_selected_sound(), rp->filename);
+	      break;
+	    case FROM_VIEW_FILES_MIX_DIALOG:
+	      {
+		int err;
+		view_files_info *vdat = (view_files_info *)(rp->requestor_data);
+		redirect_snd_error_to(vf_post_error, rp->requestor_data);
+		err = vf_mix(vdat);
+	      }
+	      break;
+	    case FROM_VIEW_FILES_INSERT_DIALOG:
+	      {
+		int err;
+		view_files_info *vdat = (view_files_info *)(rp->requestor_data);
+		redirect_snd_error_to(vf_post_error, rp->requestor_data);
+		err = vf_insert(vdat);
+	      }
+	      break;
+	    default:
+	      snd_error("wrong requestor type in raw data dialog? %d\n", (int)(rp->requestor));
+	      break;
 	    }
 	  redirect_snd_error_to(NULL, NULL);
 	  ss->reloading_updated_file = false;
@@ -3392,9 +3401,10 @@ static void raw_data_ok_callback(Widget w, XtPointer context, XtPointer info)
       else
 	{
 	  /* FROM_OPEN_DIALOG (has requestor_dialog)
-	   * FROM_KEYBOARD (has requestor_sp)
+	   * FROM_KEYBOARD (has sp = requestor_data)
 	   * FROM_DRAG_AND_DROP (just open, no needed side effects)
 	   * FROM_VIEW_FILES (ditto)
+	   * FROM_VIEW_FILES_MIX_DIALOG or INSERT -- requestor_data contains needed info to complete the action
 	   */
 	  file_info *hdr;
 	  hdr = (file_info *)CALLOC(1, sizeof(file_info));
@@ -3409,7 +3419,7 @@ static void raw_data_ok_callback(Widget w, XtPointer context, XtPointer info)
 	  hdr->comment = NULL;
 	  if (rp->requestor == FROM_KEYBOARD)
 	    {
-	      clear_minibuffer(rp->sp);
+	      clear_minibuffer((snd_info *)(rp->requestor_data));
 	      rp->selected = true;
 	    }
 	  finish_opening_sound(add_sound_window(rp->filename, rp->read_only, hdr), rp->selected);
@@ -3553,11 +3563,11 @@ void raw_data_dialog_to_file_info(const char *filename, char *title, char *info,
   if (rp->filename) FREE(rp->filename);
   rp->filename = copy_string(filename);
   rp->requestor = ss->open_requestor;
+  rp->requestor_data = ss->open_requestor_data;
   rp->requestor_dialog = ss->sgx->requestor_dialog;
-  rp->sp = ss->open_requestor_sp;
   ss->open_requestor = NO_REQUESTOR;
   ss->sgx->requestor_dialog = NULL;
-  ss->open_requestor_sp = NULL;
+  ss->open_requestor_data = NULL;
   if ((rp->requestor_dialog) &&
       ((rp->requestor == FROM_OPEN_DIALOG) ||
        (rp->requestor == FROM_MIX_DIALOG)))
@@ -3812,6 +3822,33 @@ void vf_highlight_row(widget_t nm, widget_t rw)
   XtVaSetValues(nm, XmNbackground, ss->sgx->zoom_color, NULL);
 }
 
+typedef struct {
+  vf_row *r;
+  color_t old_color;
+} vf_flash_data;
+
+static void vf_unflash_row(XtPointer data, XtIntervalId *id)
+{
+  vf_flash_data *v = (vf_flash_data *)data;
+  XtVaSetValues(v->r->rw, XmNbackground, v->old_color, NULL);
+  XtVaSetValues(v->r->nm, XmNbackground, v->old_color, NULL);
+  FREE(v);
+}
+
+void vf_flash_row(vf_row *r)
+{
+  vf_flash_data *v;
+  v = (vf_flash_data *)CALLOC(1, sizeof(vf_flash_data));
+  v->r = r;
+  XtVaGetValues(r->rw, XmNbackground, &(v->old_color), NULL);
+  XtVaSetValues(r->rw, XmNbackground, ss->sgx->light_blue, NULL);
+  XtVaSetValues(r->nm, XmNbackground, ss->sgx->light_blue, NULL);
+  XtAppAddTimeOut(MAIN_APP(ss),
+		  500,
+		  (XtTimerCallbackProc)vf_unflash_row,
+		  (void *)v);
+}
+
 void vf_post_info(view_files_info *vdat, int pos)
 {
   char *title;
@@ -3914,42 +3951,9 @@ static void view_files_play_callback(Widget w, XtPointer context, XtPointer info
   else vdat->current_play_button = w;
 }
 
-void view_files_display_list(view_files_info *vdat)
+vf_row *view_files_make_row(view_files_info *vdat, widget_t last_row)
 {
-  int i;
-  Widget last_row = NULL;
-  vf_row *r;
-  if (!vdat) return;
-  if (!(vdat->dialog)) return;
-  if (vdat->end >= 0)
-    {
-      view_files_sort_list(vdat);
-      for (i = 0; i <= vdat->end; i++)
-	{
-	  r = vdat->file_list_entries[i];
-	  if (!r)
-	    {
-	      r = make_vf_row(vdat, last_row, view_files_play_callback, view_files_select_callback);
-	      vdat->file_list_entries[i] = r;
-	      r->pos = i;
-	    }
-	  set_button_label(r->nm, vdat->names[r->pos]);
-	  XmToggleButtonSetState(r->pl, false, false);
-	  if (!(XtIsManaged(r->rw))) XtManageChild(r->rw);
-	  last_row = r->rw;
-	}
-    }
-  for (i = vdat->end + 1; i < vdat->size; i++)
-    {
-      r = vdat->file_list_entries[i];
-      if (r)
-	{
-	  if (XtIsManaged(r->rw)) 
-	    XtUnmanageChild(r->rw);
-	}
-    }
-  if (!(XtIsManaged(vdat->file_list))) 
-    XtManageChild(vdat->file_list);
+  return(make_vf_row(vdat, last_row, view_files_play_callback, view_files_select_callback));
 }
 
 static void view_files_help_callback(Widget w, XtPointer context, XtPointer info) 
@@ -3987,7 +3991,6 @@ static void view_files_update_callback(Widget w, XtPointer context, XtPointer in
   view_files_info *vdat = (view_files_info *)context;
   /* run through view files list looking for any that have been deleted behind our back */
   view_files_update_list(vdat);
-  view_files_sort_list(vdat);
   view_files_display_list(vdat);
 }
 
@@ -3995,7 +3998,6 @@ static void sort_vf(view_files_info *vdat, int sort_choice)
 {
   vdat->sorter = sort_choice;
   vf_reflect_sort_choice_in_menu(vdat);
-  view_files_sort_list(vdat); 
   view_files_display_list(vdat);
 }
 
@@ -4045,7 +4047,6 @@ static void view_files_add_files(Widget w, XtPointer context, XtPointer info)
     {
       view_files_add_file_or_directory(vdat, (const char *)file_or_dir);
       XtFree(file_or_dir);
-      view_files_sort_list(vdat);
       view_files_display_list(vdat);
     }
 }
@@ -4057,7 +4058,6 @@ static void view_files_drop_watcher(Widget w, const char *str, Position x, Posit
   filename = mus_expand_filename(str);
   add_file_to_view_files_list(vdat, str, filename);
   FREE(filename);
-  view_files_sort_list(vdat);
   view_files_display_list(vdat);
 }
 
@@ -4165,17 +4165,30 @@ static void vf_clear_mark(view_files_info *vdat)
   XtRemoveCallback(vdat->at_mark_button, XmNvalueChangedCallback, vf_mark_button_modify_callback, (XtPointer)vdat);
 }
 
+static void vf_add_text_modify_callback(Widget w, XtPointer context, XtPointer info);
+
+static void remove_all_pending_clear_callbacks(view_files_info *vdat)
+{
+  /* docs say this is a no-op if the indicated callback does not exist (i.e. not an error or segfault) */
+  XtRemoveCallback(vdat->at_mark_text, XmNmodifyVerifyCallback, vf_mark_text_modify_callback, (XtPointer)vdat);
+  XtRemoveCallback(vdat->at_mark_button, XmNvalueChangedCallback, vf_mark_button_modify_callback, (XtPointer)vdat);
+  XtRemoveCallback(vdat->at_sample_text, XmNmodifyVerifyCallback, vf_sample_text_modify_callback, (XtPointer)vdat);
+  XtRemoveCallback(vdat->at_sample_button, XmNvalueChangedCallback, vf_sample_button_modify_callback, (XtPointer)vdat);
+  XtRemoveCallback(vdat->add_text, XmNmodifyVerifyCallback, vf_add_text_modify_callback, (XtPointer)vdat);
+}
+
 void vf_post_error(const char *error_msg, void *data)
 {
   view_files_info *vdat = (view_files_info *)data;
   XmString msg;
+  remove_all_pending_clear_callbacks(vdat);
   vdat->error_p = true;
   msg = XmStringCreate((char *)error_msg, XmFONTLIST_DEFAULT_TAG);
   XtVaSetValues(vdat->info1,
 		XmNlabelString, msg, 
 		NULL);
   XmStringFree(msg);
-  msg = XmStringCreate("|", XmFONTLIST_DEFAULT_TAG);
+  msg = XmStringCreate("", XmFONTLIST_DEFAULT_TAG);
   XtVaSetValues(vdat->info2,
 		XmNlabelString, msg, 
 		NULL);
@@ -4200,6 +4213,23 @@ void vf_post_location_error(const char *error_msg, void *data)
     }
 }
 
+static void vf_add_text_modify_callback(Widget w, XtPointer context, XtPointer info)
+{
+  XmTextVerifyCallbackStruct *cbs = (XmTextVerifyCallbackStruct *)info;
+  view_files_info *vdat = (view_files_info *)context;
+  vf_clear_error(vdat);
+  XtRemoveCallback(vdat->add_text, XmNmodifyVerifyCallback, vf_add_text_modify_callback, (XtPointer)vdat);
+  cbs->doit = true;
+}
+
+void vf_post_add_error(const char *error_msg, void *data)
+{
+  view_files_info *vdat = (view_files_info *)data;
+  vf_post_error(error_msg, data);
+  XtAddCallback(vdat->add_text, XmNmodifyVerifyCallback, vf_add_text_modify_callback, (XtPointer)vdat);
+  /* what about other clearing actions? */
+}
+
 static void view_files_mix_selected_callback(Widget w, XtPointer context, XtPointer info) 
 {
   view_files_mix_selected_files(w, (view_files_info *)context);
@@ -4207,7 +4237,7 @@ static void view_files_mix_selected_callback(Widget w, XtPointer context, XtPoin
 
 static void view_files_insert_selected_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  view_files_mix_selected_files(w, (view_files_info *)context);
+  view_files_insert_selected_files(w, (view_files_info *)context);
 }
 
 static void view_files_at_cursor_callback(Widget w, XtPointer context, XtPointer info) 
@@ -4541,7 +4571,7 @@ widget_t start_view_files_dialog_1(view_files_info *vdat, bool managed)
       Arg args[20];
       XmString xdismiss, xhelp, titlestr, new_viewer_str, s1, bstr;
       Widget mainform, viewform, vertical_sep, leftform;
-      Widget left_title_sep, add_text, add_label, sep1, sep2, sep3, sep4, sep5, sep6, sep7, sort_cascade_menu;
+      Widget left_title_sep, add_label, sep1, sep2, sep3, sep4, sep5, sep6, sep7, sort_cascade_menu;
       Widget plw, rlw, sbar;
       XtCallbackList n1, n2, n3, n4;
       Widget amp_label, speed_label, env_frame;
@@ -5084,8 +5114,8 @@ widget_t start_view_files_dialog_1(view_files_info *vdat, bool managed)
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNleftWidget, add_label); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-      add_text = make_textfield_widget("add-text", viewform, args, n, ACTIVATABLE, add_completer_func(filename_completer));
-      XtAddCallback(add_text, XmNactivateCallback, view_files_add_files, (XtPointer)vdat);
+      vdat->add_text = make_textfield_widget("add-text", viewform, args, n, ACTIVATABLE, add_completer_func(filename_completer));
+      XtAddCallback(vdat->add_text, XmNactivateCallback, view_files_add_files, (XtPointer)vdat);
       
       /* SOMEDAY: file filters here also */
 
@@ -5095,7 +5125,7 @@ widget_t start_view_files_dialog_1(view_files_info *vdat, bool managed)
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_WIDGET); n++;
-      XtSetArg(args[n], XmNbottomWidget, add_text); n++;
+      XtSetArg(args[n], XmNbottomWidget, vdat->add_text); n++;
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
       XtSetArg(args[n], XmNseparatorType, XmNO_LINE); n++;
       XtSetArg(args[n], XmNheight, 4); n++;
@@ -5287,7 +5317,6 @@ widget_t start_view_files_dialog_1(view_files_info *vdat, bool managed)
 	  if (!XtIsManaged(vdat->dialog)) 
 	    XtManageChild(vdat->dialog);
 	  raise_dialog(vdat->dialog);
-	  view_files_sort_list(vdat);
 	  view_files_display_list(vdat);
 	}
     }

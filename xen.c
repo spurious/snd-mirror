@@ -254,7 +254,7 @@ XEN xen_guile_create_hook(const char *name, int args, const char *help, XEN loca
   return(hook);
 }
 
-#if XEN_DEBUGGING
+#if XEN_DEBUGGING && HAVE_SCM_C_DEFINE_GSUBR
 XEN xen_guile_dbg_new_procedure(const char *name, XEN (*func)(), int req, int opt, int rst)
 {
   /* look for name collisions */
@@ -371,7 +371,9 @@ int xen_to_c_int_or_else(XEN obj, int fallback)
 
 void xen_gc_mark(XEN val)
 {
+#if HAVE_REASONABLE_RB_GC_MARK
   rb_gc_mark(val);
+#endif
 }
 
 XEN xen_rb_cdr(XEN val)
@@ -1117,7 +1119,7 @@ void Init_Hook(void)
 #if HAVE_RB_DEFINE_ALLOC_FUNC
   rb_define_alloc_func(xen_rb_cHook, hook_alloc);
 #else
-  rb_define_singleton_method(xen_rb_cHook, "new", xen_rb_new, -1);
+  rb_define_singleton_method(xen_rb_cHook, "new", XEN_PROCEDURE_CAST xen_rb_new, -1);
 #endif
     
   rb_define_method(xen_rb_cHook, "initialize", XEN_PROCEDURE_CAST xen_rb_hook_initialize, -1);

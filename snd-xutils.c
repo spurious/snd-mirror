@@ -670,3 +670,58 @@ void draw_rotated_axis_label(chan_info *cp, GC gc, char *text, int x0, int y0)
   XCopyArea(dp, pix, XtWindow(widget), gc, 0, 0, w, h, x0, y0); /* XtWindow?? */
   XFreePixmap(dp, pix);  
 }
+
+void ensure_list_row_visible(widget_t list, int pos)
+{
+  int top, visible, num_rows;
+  ASSERT_WIDGET_TYPE(XmIsList(list), list);
+  if (pos >= 0)
+    {
+      XtVaGetValues(list,
+		    XmNtopItemPosition, &top,
+		    XmNvisibleItemCount, &visible,
+		    XmNitemCount, &num_rows,
+		    NULL);
+      if (pos < top)
+	XmListSetPos(list, pos);
+      else
+	{
+	  if (pos >= (top + visible))
+	    {
+	      if ((pos + visible) > num_rows)
+		XmListSetBottomPos(list, pos);
+	      else XmListSetPos(list, pos);
+	    }
+	}
+    }
+}
+
+void ensure_scrolled_window_row_visible(widget_t list, int row, int num_rows)
+{
+  int visible_size, minimum, maximum, value, size, new_value, increment, page_increment;
+  widget_t scrollbar, work_window;
+  ASSERT_WIDGET_TYPE(XmIsScrolledWindow(list), list);
+  XtVaGetValues(list, 
+		XmNverticalScrollBar, &scrollbar, 
+		XmNworkWindow, &work_window,
+		NULL);
+  XtVaGetValues(work_window, XmNheight, &visible_size, NULL);
+  XtVaGetValues(scrollbar, 
+		XmNminimum, &minimum,
+		XmNmaximum, &maximum,
+		XmNvalue, &value,
+		XmNsliderSize, &size,
+		XmNincrement, &increment, /* needed for XmScrollBarSetValues which is needed to force list display update */
+		XmNpageIncrement, &page_increment,
+		NULL);
+  maximum -= size;
+  if (row == 0)
+    new_value = 0;
+  else
+    {
+      if (row >= (num_rows - 1))
+	new_value = maximum;
+      else new_value = (int)((row + 0.5) * ((float)(maximum - minimum) / (float)(num_rows - 1)));
+    }
+  XmScrollBarSetValues(scrollbar, new_value, size, increment, page_increment, true);
+}

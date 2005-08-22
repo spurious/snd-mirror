@@ -912,13 +912,13 @@ static short oki_adjust[8] = {-1, -1, -1, -1, 2, 4, 6, 8};
 
 static short oki_adpcm_decode(char code, struct oki_adpcm_status *stat) 
 {
-  short diff, E, SS, samp;
-  SS = oki_step_size[stat->step_index];
-  E = SS/8;
-  if (code & 0x01) E += SS / 4;
-  if (code & 0x02) E += SS / 2;
-  if (code & 0x04) E += SS;
-  diff = (code & 0x08) ? -E : E;
+  short diff, E8, SS8, samp; /* SS apparently a predefined macro in Solaris 10.4/opteron */
+  SS8 = oki_step_size[stat->step_index];
+  E8 = SS8/8;
+  if (code & 0x01) E8 += SS8 / 4;
+  if (code & 0x02) E8 += SS8 / 2;
+  if (code & 0x04) E8 += SS8;
+  diff = (code & 0x08) ? -E8 : E8;
   samp = stat->last + diff;
   if (samp > 2048) samp = 2048;
   if (samp < -2048) samp = -2048;

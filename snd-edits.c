@@ -5521,14 +5521,9 @@ bool file_insert_samples(off_t beg, off_t num, char *inserted_file, chan_info *c
       lock_affected_mixes(cp, beg, beg);
       reflect_mix_or_track_change(ANY_MIX_ID, ANY_TRACK_ID, false);
       after_edit(cp);
+      return(true);
     }
-  else
-    {
-      XEN_ERROR(NO_SUCH_FILE,
-		XEN_LIST_2(C_TO_XEN_STRING(origin),
-			   C_TO_XEN_STRING(snd_io_strerror())));
-    }
-  return(true);
+  return(false);
 }
 
 bool insert_samples(off_t beg, off_t num, mus_sample_t *vals, chan_info *cp, const char *origin, int edpos)
@@ -8764,6 +8759,7 @@ insert data (either a vct, a list of samples, or a filename) into snd's channel 
 	  FREE(filename);
 	  return(snd_no_such_file_error(S_insert_samples, vect));
 	}
+      if (mus_sound_frames(filename) <= 0) return(C_TO_XEN_INT(0));
       if (!origin) origin = mus_format("%s" PROC_OPEN OFF_TD PROC_SEP OFF_TD PROC_SEP "\"%s\"", TO_PROC_NAME(S_insert_samples), beg, len, filename);
       file_insert_samples(beg, len, filename, cp, 0, (delete_file) ? DELETE_ME : DONT_DELETE_ME, origin, pos);
       if (filename) FREE(filename);

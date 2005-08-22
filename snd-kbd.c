@@ -832,7 +832,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 #if (!USE_NO_GUI)
 		ss->sgx->requestor_dialog = NULL;
 #endif
-		ss->open_requestor_sp = sp;
+		ss->open_requestor_data = (void *)sp;
 		nsp = snd_open_file(str, FILE_READ_WRITE); /* TODO: error_with_mini */
 		if (nsp) 
 		  {

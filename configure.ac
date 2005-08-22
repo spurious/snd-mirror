@@ -1067,6 +1067,17 @@ AC_ARG_WITH(ruby,
               CFLAGS="$GUILE_CFLAGS -lm"
               AC_CHECK_LIB(ruby, rb_gc_disable, [AC_DEFINE(HAVE_RB_GC_DISABLE)])
 	      AC_CHECK_LIB(ruby, rb_ary_dup, [AC_DEFINE(HAVE_RB_ARY_DUP)])
+
+    	      AC_MSG_CHECKING([for working rb_gc_mark])
+              AC_COMPILE_IFELSE(
+                [AC_LANG_PROGRAM([#include <ruby.h>],
+                                 [VALUE val; rb_gc_mark(val)])], 
+                [AC_DEFINE(HAVE_REASONABLE_RB_GC_MARK)
+                 AC_MSG_RESULT(yes)
+                ],
+                 AC_MSG_RESULT(no)
+                )
+
               LIBS="$OLD_LIBS"
               CFLAGS="$OLD_CFLAGS"
               LOCAL_LANGUAGE="Ruby"
@@ -1720,9 +1731,17 @@ if test "$enable_snd_debug" = yes ; then
   CFLAGS="-I. $CFLAGS"
   if test "$GCC" = yes ; then
     if test "$LOCAL_LANGUAGE" = "Ruby" ; then
-      CFLAGS="$CFLAGS -g3 -Wcast-align -Wpointer-arith -Wimplicit -Wreturn-type -Wunused-label -Wunused-variable -Wunused-value -Wcomment -Wformat -Wunused-function -Wuninitialized -Wparentheses -Wall"
+      if test "$CC" = "g++" ; then
+        CFLAGS="$CFLAGS -g3 -Wcast-align -Wpointer-arith -Wimplicit -Wreturn-type -Wunused-label -Wunused-variable -Wunused-value -Wcomment -Wformat -Wunused-function -Wuninitialized -Wparentheses -Wall"
+      else
+        CFLAGS="$CFLAGS -g3 -Wcast-align -Wpointer-arith -Wimplicit -Wreturn-type -Wunused-label -Wunused-variable -Wunused-value -Wcomment -Wformat -Wunused-function -Wuninitialized -Wparentheses -Wall"
+      fi
     else
-      CFLAGS="$CFLAGS -g3 -Wredundant-decls -Wcast-align -Wmissing-prototypes -Wpointer-arith -Wimplicit -Wreturn-type -Wunused-label -Wunused-variable -Wunused-value -Wcomment -Wformat -Wunused-function -Wuninitialized -Wparentheses -Wall"
+      if test "$CC" = "g++" ; then
+        CFLAGS="$CFLAGS -g3 -Wredundant-decls -Wcast-align -Wpointer-arith -Wimplicit -Wreturn-type -Wunused-label -Wunused-variable -Wunused-value -Wcomment -Wformat -Wunused-function -Wuninitialized -Wparentheses -Wall"
+      else
+        CFLAGS="$CFLAGS -g3 -Wredundant-decls -Wcast-align -Wmissing-prototypes -Wpointer-arith -Wimplicit -Wreturn-type -Wunused-label -Wunused-variable -Wunused-value -Wcomment -Wformat -Wunused-function -Wuninitialized -Wparentheses -Wall"
+      fi
     fi
   fi
 else

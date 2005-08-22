@@ -794,3 +794,13 @@ void draw_rotated_axis_label(chan_info *cp, GdkGC *gc, char *text, gint x0, gint
   else w = channel_graph(cp);
   rotate_text(w->window, gc, AXIS_LABEL_FONT(ss), text, 90, x0, y0);
 }
+
+
+/* TODO: gtk side of row visible stuff */
+void ensure_scrolled_window_row_visible(widget_t list, int pos, int num_rows)
+{
+}
+
+void ensure_list_row_visible(widget_t list, int pos)
+{
+}

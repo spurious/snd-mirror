@@ -33,6 +33,7 @@ typedef struct {
   bool error_p;
   int sort_items_size;
   speed_style_t speed_style;
+  off_t beg;
 
   widget_t dialog;
   widget_t file_list;
@@ -66,6 +67,7 @@ typedef struct {
   widget_t current_play_button;
   widget_t amp_event; 
   widget_t speed_event;
+  widget_t add_text;
 
   widget_t* sort_items;
 
@@ -79,21 +81,23 @@ void vf_unhighlight_row(widget_t nm, widget_t rw);
 void vf_highlight_row(widget_t nm, widget_t rw);
 void vf_post_info(view_files_info *vdat, int pos);
 void vf_unpost_info(view_files_info *vdat);
-void view_files_display_list(view_files_info *vdat);
 off_t vf_location(view_files_info *vdat);
 void vf_post_error(const char *error_msg, void *data);
 void vf_post_location_error(const char *error_msg, void *data);
+void vf_post_add_error(const char *error_msg, void *data);
 widget_t start_view_files_dialog_1(view_files_info *vdat, bool managed);
 void vf_post_selected_files_list(view_files_info *vdat);
 void view_files_add_file_or_directory(view_files_info *vdat, const char *file_or_dir);
 void vf_reflect_sort_choice_in_menu(view_files_info *vdat);
+vf_row *view_files_make_row(view_files_info *vdat, widget_t last_row);
 
 void view_files_set_sort_proc_name(const char *name);
 void vf_set_amp(view_files_info *vdat, Float val);
 void vf_set_speed(view_files_info *vdat, Float val);
 void vf_amp_env_redraw(widget_t w, view_files_info *vdat);
+void vf_flash_row(vf_row *r);
 
-
+void view_files_display_list(view_files_info *vdat);
 void view_files_mix_selected_files(widget_t w, view_files_info *vdat);
 void view_files_insert_selected_files(widget_t w, view_files_info *vdat);
 void view_files_open_selected_files(widget_t w, view_files_info *vdat);
@@ -101,7 +105,6 @@ void view_files_remove_selected_files(widget_t w, view_files_info *vdat);
 void view_files_select(vf_row *r, bool add_to_selected);
 bool view_files_play(view_files_info *vdat, int pos, bool play);
 void vf_clear_error(view_files_info *vdat);
-void view_files_sort_list(view_files_info *vdat);
 void view_files_clear_list(view_files_info *vdat);
 view_files_info *new_view_files_dialog(void);
 void view_files_update_list(view_files_info *vdat);
@@ -112,5 +115,7 @@ void vf_mix_insert_buttons_set_sensitive(view_files_info *vdat, bool sensitive);
 void vf_open_remove_buttons_set_sensitive(view_files_info *vdat, bool sensitive);
 void vf_clear_button_set_sensitive(view_files_info *vdat, bool sensitive);
 void view_files_reflect_sort_items(void);
+int vf_mix(view_files_info *vdat);
+bool vf_insert(view_files_info *vdat);
 
 #endif

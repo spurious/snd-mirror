@@ -2729,7 +2729,6 @@ static void vf_fixup_selected_files(view_files_info *vdat, char **saved_selected
   vdat->currently_selected_files = newly_selected;
 }
 
-
 static int view_files_find_row(view_files_info *vdat, const char *name)
 {
   int i;
@@ -2899,22 +2898,6 @@ void view_files_reflect_sort_items(void)
 #endif
 	}
     }
-
-  for (k = 0; k < view_files_info_size; k++)
-    if ((view_files_infos[k]) &&
-	(view_files_infos[k]->dialog))
-      {
-	vdat = view_files_infos[k];
-	for (i = j; i < vdat->sort_items_size; i++)
-#if USE_MOTIF
-	  XtUnmanageChild(vdat->sort_items[i]);
-#else
-  #if USE_GTK
-	  gtk_widget_hide(vdat->sort_items[i]);
-  #endif
-#endif
-	vf_reflect_sort_choice_in_menu(vdat);
-      }
 }
 
 /* (add-file-sorter "duration" 
@@ -2928,8 +2911,34 @@ void view_files_reflect_sort_items(void)
 
 void add_file_to_view_files_list(view_files_info *vdat, const char *filename, const char *fullname)
 {
-  if (view_files_find_row(vdat, filename) != -1) return;
-  if (!(mus_file_probe(fullname))) return;
+  int row;
+  row = view_files_find_row(vdat, filename);
+  if (row != -1)
+    {
+      if ((vdat->dialog) &&
+	  (XtIsManaged(vdat->dialog)) &&
+	  (vdat->file_list_entries[row]))
+	{
+	  ensure_scrolled_window_row_visible(vdat->file_list, row, vdat->end + 1);
+	  vf_flash_row(vdat->file_list_entries[row]);
+	}
+      return;
+    }
+  errno = 0;
+  if (!(mus_file_probe(fullname)))
+    {
+      char *msg;
+      if ((vdat->dialog) &&
+	  (XtIsManaged(vdat->dialog)))
+	{
+	  if (errno != 0)
+	    msg = mus_format("%s: %s", filename, strerror(errno));
+	  else msg = mus_format("%s does not exist", filename);
+	  vf_post_add_error(msg, (void *)vdat);
+	  FREE(msg);
+	}
+      return;
+    }
   vdat->end++;
   if (vdat->end >= vdat->size)
     {
@@ -3056,13 +3065,8 @@ static void ignore_mus_error(int type, char *msg)
   /* squelch error */
 }
 
-void view_files_sort_list(view_files_info *vdat)
+static void view_files_sort_list(view_files_info *vdat)
 {
-  int i, old_len;
-  char **old_names = NULL;
-  old_len = vdat->currently_selected_files;
-  if (old_len > 0)
-    old_names = vf_selected_files(vdat);
   if (vdat->end >= 0)
     {
       heapdata **data;
@@ -3157,12 +3161,55 @@ void view_files_sort_list(view_files_info *vdat)
 
       FREE(data);
     }
-  if (old_names)
+}
+
+void view_files_display_list(view_files_info *vdat)
+{
+  int i;
+  widget_t last_row = NULL_WIDGET; /* ignored in gtk version */
+  vf_row *r;
+  if (!vdat) return;
+  if (!(vdat->dialog)) return;
+  if (vdat->end >= 0)
     {
-      vf_fixup_selected_files(vdat, old_names, old_len);
-      for (i = 0; i < old_len; i++) FREE(old_names[i]);
-      FREE(old_names);
+      int i, old_len;
+      char **old_names = NULL;
+      old_len = vdat->currently_selected_files;
+      if (old_len > 0)
+	old_names = vf_selected_files(vdat);
+      view_files_sort_list(vdat);
+      for (i = 0; i <= vdat->end; i++)
+	{
+	  r = vdat->file_list_entries[i];
+	  if (!r)
+	    {
+	      r = view_files_make_row(vdat, last_row);
+	      vdat->file_list_entries[i] = r;
+	      r->pos = i;
+	    }
+	  set_button_label(r->nm, vdat->names[r->pos]);
+	  set_toggle_button(r->pl, false, false, (void *)vdat);
+	  if (!(widget_is_active(r->rw))) activate_widget(r->rw);
+	  last_row = r->rw;
+	}
+      if (old_names)
+	{
+	  vf_fixup_selected_files(vdat, old_names, old_len);
+	  for (i = 0; i < old_len; i++) FREE(old_names[i]);
+	  FREE(old_names);
+	}
     }
+  for (i = vdat->end + 1; i < vdat->size; i++)
+    {
+      r = vdat->file_list_entries[i];
+      if (r)
+	{
+	  if (widget_is_active(r->rw)) 
+	    deactivate_widget(r->rw);
+	}
+    }
+  if (!(widget_is_active(vdat->file_list))) 
+    activate_widget(vdat->file_list);
 }
 
 void view_files_clear_list(view_files_info *vdat)
@@ -3181,6 +3228,7 @@ void view_files_clear_list(view_files_info *vdat)
       vdat->end = -1;
       vdat->curtime = 0;
       vf_clear_button_set_sensitive(vdat, false);
+      vdat->currently_selected_files = 0;
     }
 }
 
@@ -3243,49 +3291,55 @@ void vf_clear_error(view_files_info *vdat)
   vdat->error_p = false;
 }
 
+int vf_mix(view_files_info *vdat)
+{
+  int len, id_or_error = 0;
+  snd_info *sp;
+  sp = any_selected_sound();
+  len = vdat->currently_selected_files;
+  if ((len == 1) &&
+      (snd_feq(vdat->amp, 1.0)) &&
+      (snd_feq(vdat->speed, 1.0)) &&
+      (default_env_p(vdat->amp_env)))
+    id_or_error = mix_complete_file(sp, vdat->beg, 
+				    vdat->full_names[vdat->selected_files[0]], 
+				    with_mix_tags(ss), 
+				    DONT_DELETE_ME, 0, true); /* all-chans = true */
+  else
+    {
+      int i;
+      char *tempfile;
+      char **selected_files;
+      selected_files = vf_selected_files(vdat);
+      tempfile = scale_and_src(selected_files, len, sp->nchans, vdat->amp, vdat->speed, vdat->amp_env);
+      id_or_error = mix_complete_file(sp, vdat->beg, 
+				      tempfile,
+				      with_mix_tags(ss), 
+				      (sp->nchans > 1) ? MULTICHANNEL_DELETION : DELETE_ME,
+				      0, true); /* all-chans = true */
+      FREE(tempfile);
+      for (i = 0; i < len; i++)
+	FREE(selected_files[i]);
+      FREE(selected_files);
+    }
+  return(id_or_error);
+}
+
 void view_files_mix_selected_files(widget_t w, view_files_info *vdat)
 {
-  off_t beg;
   vdat->error_p = false;
   redirect_snd_error_to(vf_post_location_error, (void *)vdat);
-  beg = vf_location(vdat);
+  vdat->beg = vf_location(vdat);
   redirect_snd_error_to(NULL, NULL);
   if (!(vdat->error_p))
     {
-      int i, len;
       int id_or_error = 0;
-      snd_info *sp;
-      sp = any_selected_sound();
 
       redirect_snd_error_to(vf_post_error, (void *)vdat);
       ss->sgx->requestor_dialog = w;
+      ss->open_requestor_data = (void *)vdat;
       ss->open_requestor = FROM_VIEW_FILES_MIX_DIALOG;
-
-      len = vdat->currently_selected_files;
-      if ((len == 1) &&
-	  (snd_feq(vdat->amp, 1.0)) &&
-	  (snd_feq(vdat->speed, 1.0)) &&
-	  (default_env_p(vdat->amp_env)))
-	id_or_error = mix_complete_file(sp, beg, 
-					vdat->full_names[vdat->selected_files[0]], 
-					with_mix_tags(ss), 
-					DONT_DELETE_ME, 0, true); /* all-chans = true */
-      else
-	{
-	  char *tempfile;
-	  char **selected_files;
-	  selected_files = vf_selected_files(vdat);
-	  tempfile = scale_and_src(selected_files, len, sp->nchans, vdat->amp, vdat->speed, vdat->amp_env);
-	  id_or_error = mix_complete_file(sp, beg, 
-					  tempfile,
-					  with_mix_tags(ss), 
-					  (sp->nchans > 1) ? MULTICHANNEL_DELETION : DELETE_ME,
-					  0, true); /* all-chans = true */
-	  FREE(tempfile);
-	  for (i = 0; i < len; i++)
-	    FREE(selected_files[i]);
-	  FREE(selected_files);
-	}
+      id_or_error = vf_mix(vdat);
 
       /* "id_or_error" here is either one of the mix id's or an error indication such as MIX_FILE_NO_MIX */
       /*    the possible error conditions have been checked already, or go through snd_error */
@@ -3293,82 +3347,84 @@ void view_files_mix_selected_files(widget_t w, view_files_info *vdat)
       redirect_snd_error_to(NULL, NULL);
       if (id_or_error < 0) /* actually -1 .. -3 */
 	{
-	  /* TODO: handle errors here
-	  if (ss->open_requestor != FROM_RAW_DATA_DIALOG)
-	    clear_error_if_open_changes(fd->dialog, (void *)fd);
-	  */
 	}
-      /*
-      else 
-	report_in_minibuffer(sp, _("%s mixed in at " OFF_TD), <file>, beg);
-      */
+      else
+	{
+	  char *msg;
+	  if (vdat->currently_selected_files == 1)
+	    msg = mus_format(_("%s mixed in at " OFF_TD), vdat->names[vdat->selected_files[0]], vdat->beg);
+	  else msg = mus_format(_("selected files mixed in at " OFF_TD), vdat->beg);
+	  vf_post_error(msg, (void *)vdat);
+	  vdat->error_p = false;
+	  FREE(msg);
+	}
     }
+}
+
+bool vf_insert(view_files_info *vdat)
+{
+  int len;
+  bool ok = false;
+  snd_info *sp;
+  sp = any_selected_sound();
+
+  len = vdat->currently_selected_files;
+  if ((len == 1) &&
+      (snd_feq(vdat->amp, 1.0)) &&
+      (snd_feq(vdat->speed, 1.0)) &&
+      (default_env_p(vdat->amp_env)))
+    ok = insert_complete_file(sp, 
+			      vdat->full_names[vdat->selected_files[0]], 
+			      vdat->beg,
+			      DONT_DELETE_ME);
   else
     {
+      int i;
+      char *tempfile;
+      char **selected_files;
+      selected_files = vf_selected_files(vdat);
+      tempfile = scale_and_src(selected_files, len, sp->nchans, vdat->amp, vdat->speed, vdat->amp_env);
+      ok = insert_complete_file(sp, 
+				tempfile,
+				vdat->beg,
+				(sp->nchans > 1) ? MULTICHANNEL_DELETION : DELETE_ME);
+      FREE(tempfile);
+      for (i = 0; i < len; i++)
+	FREE(selected_files[i]);
+      FREE(selected_files);
     }
+  return(ok);
 }
 
 void view_files_insert_selected_files(widget_t w, view_files_info *vdat)
 {
-  off_t beg;
   vdat->error_p = false;
   redirect_snd_error_to(vf_post_location_error, (void *)vdat);
-  beg = vf_location(vdat);
+  vdat->beg = vf_location(vdat);
   redirect_snd_error_to(NULL, NULL);
   if (!(vdat->error_p))
     {
-      int i, len;
       bool ok = false;
-      snd_info *sp;
-      sp = any_selected_sound();
-
       redirect_snd_error_to(vf_post_error, (void *)vdat);
       ss->sgx->requestor_dialog = w;
       ss->open_requestor = FROM_VIEW_FILES_INSERT_DIALOG;
-
-      len = vdat->currently_selected_files;
-      if ((len == 1) &&
-	  (snd_feq(vdat->amp, 1.0)) &&
-	  (snd_feq(vdat->speed, 1.0)) &&
-	  (default_env_p(vdat->amp_env)))
-	ok = insert_complete_file(sp, 
-				  vdat->full_names[vdat->selected_files[0]], 
-				  beg,
-				  DONT_DELETE_ME);
-      else
-	{
-	  char *tempfile;
-	  char **selected_files;
-	  selected_files = vf_selected_files(vdat);
-	  tempfile = scale_and_src(selected_files, len, sp->nchans, vdat->amp, vdat->speed, vdat->amp_env);
-	  ok = insert_complete_file(sp, 
-				    tempfile,
-				    beg,
-				    (sp->nchans > 1) ? MULTICHANNEL_DELETION : DELETE_ME);
-	  FREE(tempfile);
-	  for (i = 0; i < len; i++)
-	    FREE(selected_files[i]);
-	  FREE(selected_files);
-	}
-
+      ss->open_requestor_data = (void *)vdat;
+      ok = vf_insert(vdat);
       redirect_snd_error_to(NULL, NULL);
       if (!ok)
 	{
-	  /* TODO: if raw, we need to complete the circle here
-	  if (ss->open_requestor != FROM_RAW_DATA_DIALOG)
-	    clear_error_if_open_changes(fd->dialog, (void *)fd);
-	  */
+	  /* TODO: handle insert/mix lower level error (why not snd_error? -- xen callers?) */
 	}
-      /*
       else 
-        -- this can be a list of names
-	report_in_minibuffer(sp, _("%s inserted at " OFF_TD), <file>, beg);
-      */
-
-    }
-  else
-    {
-      /* is there anything to do here? */
+	{
+	  char *msg;
+	  if (vdat->currently_selected_files == 1)
+	    msg = mus_format(_("%s mixed in at " OFF_TD), vdat->names[vdat->selected_files[0]], vdat->beg);
+	  else msg = mus_format(_("selected files mixed in at " OFF_TD), vdat->beg);
+	  vf_post_error(msg, (void *)vdat);
+	  vdat->error_p = false;
+	  FREE(msg);
+	}
     }
 }
 
@@ -3466,7 +3522,6 @@ static int view_files_set_local_sort(widget_t dialog, int sort_choice)
   if (vdat)
     {
       vdat->sorter = sort_choice;
-      view_files_sort_list(vdat);
       view_files_display_list(vdat);
       vf_reflect_sort_choice_in_menu(vdat);
     }
@@ -3619,6 +3674,7 @@ void view_files_add_directory(widget_t dialog, const char *dirname)
   if (vdat)
     {
       full_filename = mus_expand_filename((const char *)dirname);
+      /* TODO: if not there or not readable, post error */
       add_directory_to_view_files_list(vdat, full_filename);
       FREE(full_filename);
     }
@@ -3650,7 +3706,7 @@ static void view_files_add_file(widget_t dialog, const char *filename)
 
 void view_files_open_selected_files(widget_t w, view_files_info *vdat)
 {
-  snd_info *sp;
+  snd_info *sp = NULL;
   ss->open_requestor = FROM_VIEW_FILES;
   if (vdat->currently_selected_files > 0)
     {

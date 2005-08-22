@@ -26177,6 +26177,7 @@ gxg_static XEN gxg_visual(XEN ptr)
   if (XEN_GdkImage__P(ptr)) return(C_TO_XEN_GdkVisual_((GdkVisual*)((XEN_TO_C_GdkImage_(ptr))->visual)));
   if (XEN_GdkWindowAttr__P(ptr)) return(C_TO_XEN_GdkVisual_((GdkVisual*)((XEN_TO_C_GdkWindowAttr_(ptr))->visual)));
   XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "visual", "pointer to struct with visual field");
+  return(XEN_FALSE);
 }
 
 static XEN gxg_windowing_data(XEN ptr)
@@ -26185,6 +26186,7 @@ static XEN gxg_windowing_data(XEN ptr)
   if (XEN_GdkDragContext__P(ptr)) return(C_TO_XEN_gpointer((gpointer)((XEN_TO_C_GdkDragContext_(ptr))->windowing_data)));
   if (XEN_GdkImage__P(ptr)) return(C_TO_XEN_gpointer((gpointer)((XEN_TO_C_GdkImage_(ptr))->windowing_data)));
   XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "windowing_data", "pointer to struct with windowing_data field");
+  return(XEN_FALSE);
 }
 
 gxg_static XEN gxg_type(XEN ptr)
@@ -26210,6 +26212,7 @@ gxg_static XEN gxg_type(XEN ptr)
   if (XEN_GdkImage__P(ptr)) return(C_TO_XEN_GdkImageType((GdkImageType)((XEN_TO_C_GdkImage_(ptr))->type)));
   if (XEN_GdkVisual__P(ptr)) return(C_TO_XEN_GdkVisualType((GdkVisualType)((XEN_TO_C_GdkVisual_(ptr))->type)));
   XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "type", "pointer to struct with type field");
+  return(XEN_FALSE);
 }
 
 static XEN gxg_ref_count(XEN ptr)
@@ -26294,6 +26297,7 @@ gxg_static XEN gxg_window(XEN ptr)
   if (XEN_GdkEventDND__P(ptr)) return(C_TO_XEN_GdkWindow_((GdkWindow*)((XEN_TO_C_GdkEventDND_(ptr))->window)));
   if (XEN_GtkWidget__P(ptr)) return(C_TO_XEN_GdkWindow_((GdkWindow*)((XEN_TO_C_GtkWidget_(ptr))->window)));
   XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "window", "pointer to struct with window field");
+  return(XEN_FALSE);
 }
 
 gxg_static XEN gxg_send_event(XEN ptr)
@@ -26316,6 +26320,7 @@ gxg_static XEN gxg_send_event(XEN ptr)
   if (XEN_GdkEventWindowState__P(ptr)) return(C_TO_XEN_gint8((gint8)((XEN_TO_C_GdkEventWindowState_(ptr))->send_event)));
   if (XEN_GdkEventDND__P(ptr)) return(C_TO_XEN_gint8((gint8)((XEN_TO_C_GdkEventDND_(ptr))->send_event)));
   XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "send_event", "pointer to struct with send_event field");
+  return(XEN_FALSE);
 }
 
 static XEN gxg_region(XEN ptr)
@@ -26341,6 +26346,7 @@ gxg_static XEN gxg_state(XEN ptr)
   if (XEN_GdkEventProperty__P(ptr)) return(C_TO_XEN_guint((guint)((XEN_TO_C_GdkEventProperty_(ptr))->state)));
   if (XEN_GtkWidget__P(ptr)) return(C_TO_XEN_guint8((guint8)((XEN_TO_C_GtkWidget_(ptr))->state)));
   XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "state", "pointer to struct with state field");
+  return(XEN_FALSE);
 }
 
 gxg_static XEN gxg_time(XEN ptr)
@@ -26355,6 +26361,7 @@ gxg_static XEN gxg_time(XEN ptr)
   if (XEN_GdkEventProximity__P(ptr)) return(C_TO_XEN_guint32((guint32)((XEN_TO_C_GdkEventProximity_(ptr))->time)));
   if (XEN_GdkEventDND__P(ptr)) return(C_TO_XEN_guint32((guint32)((XEN_TO_C_GdkEventDND_(ptr))->time)));
   XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "time", "pointer to struct with time field");
+  return(XEN_FALSE);
 }
 
 gxg_static XEN gxg_x(XEN ptr)
@@ -26368,6 +26375,7 @@ gxg_static XEN gxg_x(XEN ptr)
   if (XEN_GdkRectangle__P(ptr)) return(C_TO_XEN_gint((gint)((XEN_TO_C_GdkRectangle_(ptr))->x)));
   if (XEN_GdkWindowAttr__P(ptr)) return(C_TO_XEN_gint((gint)((XEN_TO_C_GdkWindowAttr_(ptr))->x)));
   XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "x", "pointer to struct with x field");
+  return(XEN_FALSE);
 }
 
 gxg_static XEN gxg_y(XEN ptr)
@@ -26381,6 +26389,7 @@ gxg_static XEN gxg_y(XEN ptr)
   if (XEN_GdkRectangle__P(ptr)) return(C_TO_XEN_gint((gint)((XEN_TO_C_GdkRectangle_(ptr))->y)));
   if (XEN_GdkWindowAttr__P(ptr)) return(C_TO_XEN_gint((gint)((XEN_TO_C_GdkWindowAttr_(ptr))->y)));
   XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "y", "pointer to struct with y field");
+  return(XEN_FALSE);
 }
 
 static XEN gxg_axes(XEN ptr)
@@ -26389,6 +26398,7 @@ static XEN gxg_axes(XEN ptr)
   if (XEN_GdkEventButton__P(ptr)) return(C_TO_XEN_gdouble_((gdouble*)((XEN_TO_C_GdkEventButton_(ptr))->axes)));
   if (XEN_GdkDevice__P(ptr)) return(C_TO_XEN_GdkDeviceAxis_((GdkDeviceAxis*)((XEN_TO_C_GdkDevice_(ptr))->axes)));
   XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "axes", "pointer to struct with axes field");
+  return(XEN_FALSE);
 }
 
 gxg_static XEN gxg_is_hint(XEN ptr)
@@ -26404,6 +26414,7 @@ static XEN gxg_device(XEN ptr)
   if (XEN_GdkEventScroll__P(ptr)) return(C_TO_XEN_GdkDevice_((GdkDevice*)((XEN_TO_C_GdkEventScroll_(ptr))->device)));
   if (XEN_GdkEventProximity__P(ptr)) return(C_TO_XEN_GdkDevice_((GdkDevice*)((XEN_TO_C_GdkEventProximity_(ptr))->device)));
   XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "device", "pointer to struct with device field");
+  return(XEN_FALSE);
 }
 
 gxg_static XEN gxg_x_root(XEN ptr)
@@ -26414,6 +26425,7 @@ gxg_static XEN gxg_x_root(XEN ptr)
   if (XEN_GdkEventCrossing__P(ptr)) return(C_TO_XEN_gdouble((gdouble)((XEN_TO_C_GdkEventCrossing_(ptr))->x_root)));
   if (XEN_GdkEventDND__P(ptr)) return(C_TO_XEN_gshort((gshort)((XEN_TO_C_GdkEventDND_(ptr))->x_root)));
   XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "x_root", "pointer to struct with x_root field");
+  return(XEN_FALSE);
 }
 
 gxg_static XEN gxg_y_root(XEN ptr)
@@ -26424,6 +26436,7 @@ gxg_static XEN gxg_y_root(XEN ptr)
   if (XEN_GdkEventCrossing__P(ptr)) return(C_TO_XEN_gdouble((gdouble)((XEN_TO_C_GdkEventCrossing_(ptr))->y_root)));
   if (XEN_GdkEventDND__P(ptr)) return(C_TO_XEN_gshort((gshort)((XEN_TO_C_GdkEventDND_(ptr))->y_root)));
   XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "y_root", "pointer to struct with y_root field");
+  return(XEN_FALSE);
 }
 
 gxg_static XEN gxg_button(XEN ptr)
@@ -26508,6 +26521,7 @@ gxg_static XEN gxg_width(XEN ptr)
   if (XEN_GdkWindowAttr__P(ptr)) return(C_TO_XEN_gint((gint)((XEN_TO_C_GdkWindowAttr_(ptr))->width)));
   if (XEN_GtkRequisition__P(ptr)) return(C_TO_XEN_gint((gint)((XEN_TO_C_GtkRequisition_(ptr))->width)));
   XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "width", "pointer to struct with width field");
+  return(XEN_FALSE);
 }
 
 gxg_static XEN gxg_height(XEN ptr)
@@ -26518,6 +26532,7 @@ gxg_static XEN gxg_height(XEN ptr)
   if (XEN_GdkWindowAttr__P(ptr)) return(C_TO_XEN_gint((gint)((XEN_TO_C_GdkWindowAttr_(ptr))->height)));
   if (XEN_GtkRequisition__P(ptr)) return(C_TO_XEN_gint((gint)((XEN_TO_C_GtkRequisition_(ptr))->height)));
   XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "height", "pointer to struct with height field");
+  return(XEN_FALSE);
 }
 
 gxg_static XEN gxg_atom(XEN ptr)
@@ -26556,6 +26571,7 @@ gxg_static XEN gxg_name(XEN ptr)
   if (XEN_GdkDevice__P(ptr)) return(C_TO_XEN_gchar_((gchar*)((XEN_TO_C_GdkDevice_(ptr))->name)));
   if (XEN_GtkWidget__P(ptr)) return(C_TO_XEN_gchar_((gchar*)((XEN_TO_C_GtkWidget_(ptr))->name)));
   XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "name", "pointer to struct with name field");
+  return(XEN_FALSE);
 }
 
 static XEN gxg_changed_mask(XEN ptr)
@@ -26677,6 +26693,7 @@ gxg_static XEN gxg_colormap(XEN ptr)
   if (XEN_GdkWindowAttr__P(ptr)) return(C_TO_XEN_GdkColormap_((GdkColormap*)((XEN_TO_C_GdkWindowAttr_(ptr))->colormap)));
   if (XEN_GtkStyle__P(ptr)) return(C_TO_XEN_GdkColormap_((GdkColormap*)((XEN_TO_C_GtkStyle_(ptr))->colormap)));
   XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "colormap", "pointer to struct with colormap field");
+  return(XEN_FALSE);
 }
 
 gxg_static XEN gxg_byte_order(XEN ptr)
@@ -26692,6 +26709,7 @@ gxg_static XEN gxg_depth(XEN ptr)
   if (XEN_GdkVisual__P(ptr)) return(C_TO_XEN_gint((gint)((XEN_TO_C_GdkVisual_(ptr))->depth)));
   if (XEN_GtkStyle__P(ptr)) return(C_TO_XEN_gint((gint)((XEN_TO_C_GtkStyle_(ptr))->depth)));
   XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "depth", "pointer to struct with depth field");
+  return(XEN_FALSE);
 }
 
 static XEN gxg_bpp(XEN ptr)
@@ -26988,6 +27006,7 @@ static XEN gxg_ok_button(XEN ptr)
   if (XEN_GtkFileSelection__P(ptr)) return(C_TO_XEN_GtkWidget_((GtkWidget*)((XEN_TO_C_GtkFileSelection_(ptr))->ok_button)));
   if (XEN_GtkFontSelectionDialog__P(ptr)) return(C_TO_XEN_GtkWidget_((GtkWidget*)((XEN_TO_C_GtkFontSelectionDialog_(ptr))->ok_button)));
   XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "ok_button", "pointer to struct with ok_button field");
+  return(XEN_FALSE);
 }
 
 static XEN gxg_cancel_button(XEN ptr)
@@ -26996,6 +27015,7 @@ static XEN gxg_cancel_button(XEN ptr)
   if (XEN_GtkFileSelection__P(ptr)) return(C_TO_XEN_GtkWidget_((GtkWidget*)((XEN_TO_C_GtkFileSelection_(ptr))->cancel_button)));
   if (XEN_GtkFontSelectionDialog__P(ptr)) return(C_TO_XEN_GtkWidget_((GtkWidget*)((XEN_TO_C_GtkFontSelectionDialog_(ptr))->cancel_button)));
   XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "cancel_button", "pointer to struct with cancel_button field");
+  return(XEN_FALSE);
 }
 
 static XEN gxg_help_button(XEN ptr)
@@ -27017,6 +27037,7 @@ static XEN gxg_action_area(XEN ptr)
   if (XEN_GtkFileSelection__P(ptr)) return(C_TO_XEN_GtkWidget_((GtkWidget*)((XEN_TO_C_GtkFileSelection_(ptr))->action_area)));
   if (XEN_GtkFontSelectionDialog__P(ptr)) return(C_TO_XEN_GtkWidget_((GtkWidget*)((XEN_TO_C_GtkFontSelectionDialog_(ptr))->action_area)));
   XEN_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "action_area", "pointer to struct with action_area field");
+  return(XEN_FALSE);
 }
 
 static XEN gxg_separator(XEN ptr)
@@ -39883,7 +39904,7 @@ static bool xg_already_inited = false;
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("19-Jul-05"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("20-Aug-05"));
       xg_already_inited = true;
 #if WITH_GTK_AND_X11
       Init_libx11();

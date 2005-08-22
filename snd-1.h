@@ -470,7 +470,7 @@ typedef struct snd_state {
   char *io_error_info;
   int deferred_regions;
   open_requestor_t open_requestor;
-  snd_info *open_requestor_sp;
+  void *open_requestor_data;
   bool batch_mode;
   bool jump_ok, exiting;
   env_editor *enved;
