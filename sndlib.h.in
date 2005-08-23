@@ -17,6 +17,10 @@
 #undef MUS_OUT_FORMAT
 #undef Float
 
+#include <time.h>
+/* time_t used by  mus_sound_write_date */
+#include <sys/types.h>
+/* off_t used everywhere -- should this be redefined to long if not defined in types.h? */
 
 /* not sure how to handle this one cleanly: */
 #ifndef __cplusplus

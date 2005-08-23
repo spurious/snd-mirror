@@ -85,7 +85,7 @@
 #if (defined(HAVE_LIBC_H) && (!defined(HAVE_UNISTD_H)))
   #include <libc.h>
 #else
-  #if (!(defined(_MSC_VER))) && (!(defined(MPW_C)))
+  #if (!(defined(_MSC_VER)))
     #include <unistd.h>
   #endif
 #endif
@@ -96,12 +96,7 @@
 static bool hdrbuf_is_inited = false;
 
 #define HDRBUFSIZ 256
-#ifndef MACOS
-  static unsigned char *hdrbuf;
-#else  
-  static char *hdrbuf;
-#endif
-
+static unsigned char *hdrbuf;
 #define INITIAL_READ_SIZE 32
 
 /* AIFF files can have any number of ANNO chunks, so we'll grab at least 4 of them */
@@ -125,11 +120,7 @@ int mus_header_initialize (void)
   if (!hdrbuf_is_inited)
     {
       hdrbuf_is_inited = true;
-#ifndef MACOS
       hdrbuf = (unsigned char *)CALLOC(HDRBUFSIZ, sizeof(unsigned char));
-#else
-      hdrbuf = (char *)CALLOC(HDRBUFSIZ, sizeof(unsigned char));
-#endif
       aux_comment_start = (off_t *)CALLOC(AUX_COMMENTS, sizeof(off_t));
       aux_comment_end = (off_t *)CALLOC(AUX_COMMENTS, sizeof(off_t));
       loop_modes = (int *)CALLOC(LOOPS, sizeof(int));
@@ -880,11 +871,7 @@ static int seek_and_read(int chan, unsigned char *buf, off_t offset, int nbytes)
 {
   if (offset < 0) return(-1);
   lseek(chan, offset, SEEK_SET);
-#ifndef MACOS
   return(read(chan, buf, nbytes));
-#else
-  return(read(chan, (char *)buf, nbytes));
-#endif
 }
 
 static int read_aiff_marker(int m, unsigned char *buf)
@@ -2318,11 +2305,7 @@ static int write_nist_header(int chan, int wsrate, int wchans, int siz, int form
 	  wchans, wsrate, datum,
 	  ((format == MUS_BSHORT) || (format == MUS_B24INT) || (format == MUS_BINT)) ? "10" : "01",
 	  datum * 8, siz / datum);
-#ifndef MACOS
   write(chan, (unsigned char *)header, 1024);
-#else
-  write(chan, header, 1024);
-#endif
   data_location = 1024;
   FREE(header);
   return(MUS_NO_ERROR);
@@ -5052,11 +5035,8 @@ static mus_error_handler_t *old_error_handler;
 static void local_mus_error(int type, char *msg)
 {
   local_error_type = type;
-#ifdef MPW_C
-  if (local_error_msg) FREE(local_error_msg);
-#else
-  if (local_error_msg) free(local_error_msg);
-#endif
+  if (local_error_msg) 
+    free(local_error_msg);
   if (msg)
     local_error_msg = strdup(msg);
   else local_error_msg = NULL;

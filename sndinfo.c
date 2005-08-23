@@ -6,7 +6,7 @@
 #if (defined(HAVE_LIBC_H) && (!defined(HAVE_UNISTD_H)))
   #include <libc.h>
 #else
-  #if (!(defined(_MSC_VER))) && (!(defined(MPW_C)))
+  #if (!(defined(_MSC_VER)))
     #include <unistd.h>
   #endif
   #include <string.h>

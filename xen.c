@@ -5,11 +5,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#if MACOS
-  #define off_t long
-#else
-  #include <sys/types.h>
-#endif
+#include <sys/types.h>
 #if HAVE_STDINT_H
   #include <stdint.h>
 #endif

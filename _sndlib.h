@@ -7,13 +7,6 @@
 
 #include <config.h>
 
-#if (!(defined(MACOS))) && (defined(MPW_C) || defined(macintosh) || defined(__MRC__))
-  #define MACOS 1
-  #include <MacMemory.h>
-  #include <TextUtils.h>
-  #include <Gestalt.h>
-#endif
-
 #if HAVE_UNISTD_H && (!(defined(_MSC_VER)))
   #include <unistd.h>
 #endif
@@ -237,84 +230,60 @@ enum {MUS_NO_ERROR, MUS_NO_FREQUENCY, MUS_NO_PHASE, MUS_NO_GEN, MUS_NO_LENGTH,
 
 /* keep this list in sync with mus_error_names in sound.c and initmus.lisp */
 
-#ifdef MACOS
-  /* C's calloc/free are incompatible with Mac's SndDisposeChannel (which we can't avoid using) */
-  /*   FREE is used only when we call either CALLOC or MALLOC ourselves -- other cases use free, g_free, XtFree, etc */
-  #define CALLOC(a, b)  NewPtrClear((a) * (b))
-  #define MALLOC(a)     NewPtr((a))
-  #define FREE(a)       DisposePtr((Ptr)(a))
-  #define REALLOC(a, b) NewPtr_realloc((Ptr)(a), (Size)(b))
-  /* implementation in io.c */
-  Ptr NewPtr_realloc(Ptr p, Size newSize);
+#if DEBUGGING
+  #define CALLOC(a, b)  mem_calloc((a), (b), c__FUNCTION__, __FILE__, __LINE__)
+  #define MALLOC(a)     mem_malloc((a), c__FUNCTION__, __FILE__, __LINE__)
+  #define FREE(a)       mem_free(a, c__FUNCTION__, __FILE__, __LINE__)
+  #define REALLOC(a, b) mem_realloc(a, (b), c__FUNCTION__, __FILE__, __LINE__)
 
-  #define OPEN(File, Flags, Mode) open((File), (Flags))
-  #define FOPEN(File, Flags)      fopen((File), (Flags))
-  #define CLOSE(Fd)               close(Fd)
-  #define FCLOSE(Fd)              fclose(Fd)
-  #ifdef MPW_C
-    #define CREAT(File, Flags)    creat((File))
-  #else
-    #define CREAT(File, Flags)    creat((File), 0)
-  #endif
+  #define OPEN(File, Flags, Mode) io_open((File), (Flags), (Mode), c__FUNCTION__, __FILE__, __LINE__)
+  #define FOPEN(File, Flags)      io_fopen((File), (Flags), c__FUNCTION__, __FILE__, __LINE__)
+  #define CLOSE(Fd)               io_close((Fd), c__FUNCTION__, __FILE__, __LINE__)
+  #define FCLOSE(Fd)              io_fclose((Fd), c__FUNCTION__, __FILE__, __LINE__)
+  #define CREAT(File, Flags)      io_creat((File), (Flags), c__FUNCTION__, __FILE__, __LINE__)
   #define RENAME(OldF, NewF)      rename(OldF, NewF)
   #define REMOVE(OldF)            remove(OldF)
   #define STRERROR(Err)           strerror(Err)
 #else
-  #if DEBUGGING
-    #define CALLOC(a, b)  mem_calloc((a), (b), c__FUNCTION__, __FILE__, __LINE__)
-    #define MALLOC(a)     mem_malloc((a), c__FUNCTION__, __FILE__, __LINE__)
-    #define FREE(a)       mem_free(a, c__FUNCTION__, __FILE__, __LINE__)
-    #define REALLOC(a, b) mem_realloc(a, (b), c__FUNCTION__, __FILE__, __LINE__)
+  #define CALLOC(a, b)  calloc((size_t)(a), (size_t)(b))
+  #define MALLOC(a)     malloc((size_t)(a))
+  #define FREE(a)       free(a)
+  #define REALLOC(a, b) realloc(a, (size_t)(b))
 
-    #define OPEN(File, Flags, Mode) io_open((File), (Flags), (Mode), c__FUNCTION__, __FILE__, __LINE__)
-    #define FOPEN(File, Flags)      io_fopen((File), (Flags), c__FUNCTION__, __FILE__, __LINE__)
-    #define CLOSE(Fd)               io_close((Fd), c__FUNCTION__, __FILE__, __LINE__)
-    #define FCLOSE(Fd)              io_fclose((Fd), c__FUNCTION__, __FILE__, __LINE__)
-    #define CREAT(File, Flags)      io_creat((File), (Flags), c__FUNCTION__, __FILE__, __LINE__)
-    #define RENAME(OldF, NewF)      rename(OldF, NewF)
-    #define REMOVE(OldF)            remove(OldF)
-    #define STRERROR(Err)           strerror(Err)
-  #else
-    #define CALLOC(a, b)  calloc((size_t)(a), (size_t)(b))
-    #define MALLOC(a)     malloc((size_t)(a))
-    #define FREE(a)       free(a)
-    #define REALLOC(a, b) realloc(a, (size_t)(b))
-
-    #ifdef MUS_WINDOZE
-      #ifdef FOPEN
-        #undef FOPEN
-      #endif
-      #if USE_SND
-        #define OPEN(File, Flags, Mode) snd_io_open((File), (Flags))
-      #else
-        #define OPEN(File, Flags, Mode) open((File), (Flags))
-      #endif
-    #else
-      #if USE_SND
-        #define OPEN(File, Flags, Mode) snd_io_open((File), (Flags), (Mode))
-      #else
-        #define OPEN(File, Flags, Mode) open((File), (Flags), (Mode))
-      #endif
+  #if MUS_WINDOZE
+    #ifdef FOPEN
+      #undef FOPEN
     #endif
     #if USE_SND
-      #define FOPEN(File, Flags)        snd_io_fopen((File), (Flags))
-      #define CLOSE(Fd)                 snd_io_close(Fd)
-      #define FCLOSE(Fd)                snd_io_fclose(Fd)
-      #define CREAT(File, Flags)        snd_io_creat((File), (Flags))
-      #define RENAME(OldF, NewF)        snd_io_rename(OldF, NewF)
-      #define REMOVE(OldF)              snd_io_remove(OldF)
-      #define STRERROR(Err)             snd_io_strerror()
+      #define OPEN(File, Flags, Mode) snd_io_open((File), (Flags))
     #else
-      #define FOPEN(File, Flags)        fopen((File), (Flags))
-      #define CLOSE(Fd)                 close(Fd)
-      #define FCLOSE(Fd)                fclose(Fd)
-      #define CREAT(File, Flags)        creat((File), (Flags))
-      #define RENAME(OldF, NewF)        rename(OldF, NewF)
-      #define REMOVE(OldF)              remove(OldF)
-      #define STRERROR(Err)             strerror(Err)
+      #define OPEN(File, Flags, Mode) open((File), (Flags))
+    #endif
+  #else
+    #if USE_SND
+      #define OPEN(File, Flags, Mode) snd_io_open((File), (Flags), (Mode))
+     #else
+      #define OPEN(File, Flags, Mode) open((File), (Flags), (Mode))
     #endif
   #endif
-#endif 
+  #if USE_SND
+    #define FOPEN(File, Flags)        snd_io_fopen((File), (Flags))
+    #define CLOSE(Fd)                 snd_io_close(Fd)
+    #define FCLOSE(Fd)                snd_io_fclose(Fd)
+    #define CREAT(File, Flags)        snd_io_creat((File), (Flags))
+    #define RENAME(OldF, NewF)        snd_io_rename(OldF, NewF)
+    #define REMOVE(OldF)              snd_io_remove(OldF)
+    #define STRERROR(Err)             snd_io_strerror()
+  #else
+    #define FOPEN(File, Flags)        fopen((File), (Flags))
+    #define CLOSE(Fd)                 close(Fd)
+    #define FCLOSE(Fd)                fclose(Fd)
+    #define CREAT(File, Flags)        creat((File), (Flags))
+    #define RENAME(OldF, NewF)        rename(OldF, NewF)
+    #define REMOVE(OldF)              remove(OldF)
+    #define STRERROR(Err)             strerror(Err)
+  #endif
+#endif
 
 #ifndef S_setB
   #if HAVE_RUBY
@@ -457,7 +426,7 @@ char *mus_audio_moniker(void);
 #endif
 int mus_audio_compatible_format(int dev);
 
-#ifdef MUS_SUN
+#if MUS_SUN || MUS_NETBSD
   void mus_audio_sun_outputs(int speakers, int headphones, int line_out);
 #endif
 
@@ -620,7 +589,7 @@ char *mus_midi_describe(void);
   int io_fclose(FILE *stream, const char *func, const char *file, int line);
 #endif
 
-#if defined(MPW_C) || (!HAVE_STRDUP)
+#if (!HAVE_STRDUP)
 char *strdup(const char *str);
 #endif
 #if (!HAVE_FILENO)

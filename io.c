@@ -34,7 +34,7 @@
 #if (defined(HAVE_LIBC_H) && (!defined(HAVE_UNISTD_H)))
   #include <libc.h>
 #else
-  #if (!(defined(_MSC_VER))) && (!(defined(MPW_C)))
+  #if (!(defined(_MSC_VER)))
     #include <unistd.h>
   #endif
 #endif
@@ -1039,16 +1039,10 @@ static int checked_write(int tfd, char *buf, int chars)
 			 "attempt to write closed file %s",
 			 fd->name));
       else
-#ifndef MACOS
 	return(mus_error(MUS_WRITE_ERROR,
 			 "mus_write: write error for %s%s%s: only %d of %d bytes written",
 			 fd->name, (errno) ? ": " : "", (errno) ? STRERROR(errno) : "",
 			 bytes, chars));
-#else
-      return(mus_error(MUS_WRITE_ERROR,
-		       "mus_write: write error for %s: only %d of %d bytes written",
-		       fd->name, bytes, chars));
-#endif
     }
   return(MUS_NO_ERROR);
 }
@@ -1278,12 +1272,12 @@ void mus_reset_io_c(void)
 }
 
 
-#if defined(MPW_C) || (!HAVE_STRDUP)
+#if (!HAVE_STRDUP)
 /* this taken from libit-0.7 */
 char *strdup (const char *str)
 {
   char *newstr;
-  newstr = (char *)MALLOC(strlen(str) + 1); /* needs to be upper case to pick up NewPtr in CLM */
+  newstr = (char *)malloc(strlen(str) + 1);
   if (newstr) strcpy(newstr, str);
   return(newstr);
 }
@@ -1301,44 +1295,6 @@ int fileno(FILE *fp)
 	return(1);
     }
   return(2);
-}
-#endif
-
-#ifdef MACOS
-/* realloc replacement, thanks to Michael Klingbeil */
-Ptr NewPtr_realloc(Ptr p, Size newSize)
-{
-  Size oldSize;
-  Ptr  newP;
-  /* zero size means free */
-  if (newSize == 0) 
-    {
-      DisposePtr(p);
-      return 0;
-    }
-  if (p) 
-    {
-      /* first try to reallocate in place */
-      SetPtrSize(p, newSize);
-      if (MemError() == 0)
-	return p;
-    }
-  /* if that fails then try to reallocate */
-  newP = NewPtr(newSize);
-  /* failure */
-  if (newP == 0) 
-    {
-      /* do we do DisposePtr(p) ? */
-      return 0;
-    }
-  /* copy old pointer data */
-  if (p) 
-    {
-      oldSize = GetPtrSize(p);
-      BlockMoveData(p, newP, oldSize);
-      DisposePtr(p);
-    }
-  return newP;
 }
 #endif
 
@@ -1378,10 +1334,6 @@ char *mus_expand_filename(const char *filename)
 	tok[i] = tok[j];
       tok[i] ='\0';
     }
-#ifdef MACOS
-  file_name_buf = (char *)CALLOC(len + 8, sizeof(char));
-  strcpy(file_name_buf, tok);
-#else
   /* get rid of "~/" at start */
   if (tok[0] != '/')
     {
@@ -1468,12 +1420,7 @@ char *mus_expand_filename(const char *filename)
 	(file_name_buf[len - 2] == '/'))
       file_name_buf[len - 1] = '\0';
   }
-#endif
-#if defined(MPW_C)
-  FREE(orig); /* strdup -> MALLOC in MPW */
-#else
   free(orig);
-#endif
   return(file_name_buf);
 }
 

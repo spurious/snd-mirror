@@ -11,11 +11,15 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <stddef.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <time.h>
+#include <stdarg.h>
 
 #if (defined(HAVE_LIBC_H) && (!defined(HAVE_UNISTD_H)))
   #include <libc.h>
 #else
-  #if (!(defined(_MSC_VER))) && (!(defined(MPW_C)))
+  #if (!(defined(_MSC_VER)))
     #include <unistd.h>
   #endif
   #if HAVE_STRING_H
@@ -25,22 +29,6 @@
 
 #include "_sndlib.h"
 #include "sndlib-strings.h"
-
-#if MACOS
-  #ifdef MPW_C
-    #define time_t long
-  #else
-    #include <time.h>
-    #include <stat.h>
-  #endif
-  #define off_t long
-#else
-  #include <sys/types.h>
-  #include <sys/stat.h>
-  #include <time.h>
-#endif
-
-#include <stdarg.h>
 
 static mus_error_handler_t *mus_error_handler = NULL;
 
@@ -201,9 +189,6 @@ static void default_mus_error(int ignore, char *msg)
   fprintf(stderr, msg);
 }
 
-
-
-#ifndef MPW_C
 static time_t local_file_write_date(const char *filename)
 {
   struct stat statbuf;
@@ -212,9 +197,6 @@ static time_t local_file_write_date(const char *filename)
   if (err < 0) return((time_t)0);
   return((time_t)(statbuf.st_mtime));
 }
-#else
-static time_t local_file_write_date(const char *filename) {return(1);}
-#endif
 
 static bool sndlib_initialized = false;
 
@@ -362,11 +344,7 @@ int mus_sound_forget(const char *name)
 	  free_sound_file(sound_table[i]);
 	  sound_table[i] = NULL;
 	}
-#if DEBUGGING || (defined(MPW_C))
-  if (free_name) FREE(short_name); /* copy_string=MALLOC(snd-utils.c) in io.c mus_expand_filename or strdup=MALLOC in MPW */
-#else
-  if (free_name) free(short_name); /* strdup=malloc, presumably */
-#endif
+  if (free_name) FREE(short_name);
   return(MUS_NO_ERROR);
 }
 
@@ -428,7 +406,6 @@ static void display_sound_file_entry(FILE *fp, const char *name, sound_file *sf)
   time_t date;
   char timestr[64];
   char *comment;
-#ifndef MPW_C
   date = sf->write_date;
   if (date != 0)
     {
@@ -439,9 +416,6 @@ static void display_sound_file_entry(FILE *fp, const char *name, sound_file *sf)
 #endif
     }
   else sprintf(timestr, "(date cleared)");
-#else
-  sprintf(timestr, "(date unknown)");
-#endif
   fprintf(fp, "  %s: %s, chans: %d, srate: %d, type: %s, format: %s, samps: " OFF_TD,
 	  name,
 	  timestr,

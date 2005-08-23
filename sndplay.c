@@ -9,16 +9,12 @@
 #if (defined(HAVE_LIBC_H) && (!defined(HAVE_UNISTD_H)))
   #include <libc.h>
 #else
-  #if (!(defined(_MSC_VER))) && (!(defined(MPW_C)))
+  #if (!(defined(_MSC_VER)))
     #include <unistd.h>
   #endif
   #include <string.h>
 #endif
 #include <errno.h>
-
-#if MACOS
-  #include <console.h>
-#endif
 
 #if MUS_MAC_OSX
   #define BUFFER_SIZE 256
@@ -569,10 +565,6 @@ static int main_alsa(int argc, char *argv[])
 
 int main(int argc, char *argv[])
 {
-#if MACOS
-  argc = ccommand(&argv);
-#endif
-
   if (argc == 1) 
     {
       printf("usage: sndplay file\n"); 

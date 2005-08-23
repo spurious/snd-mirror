@@ -311,7 +311,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA PACKAGE VERSION FGREP PKG_CONFIG FFTW_LIBS FFTW_CFLAGS GSL_CONFIG GSL_LIBS GSL_CFLAGS X_CFLAGS X_PRE_LIBS X_LIBS X_EXTRA_LIBS XLIBS XFLAGS GTK_CFLAGS GTK_LIBS GTK_LD_LIBS CAIRO_CFLAGS GX_FILES GX_HEADERS GL_LIBS GL_FILES GL_FLAGS FAM_LIB GUILE_LIBS GUILE_CFLAGS XM_LIBS LD_XM_LIBS AUDIO_LIB JACK_LIBS JACK_FLAGS LDSO_FLAGS SO_INSTALL SO_LD A_LD A_LD_FLAGS PATH_OGGDEC PATH_OGGENC PATH_MPG123 PATH_MPG321 PATH_SPEEXDEC PATH_SPEEXENC PATH_FLAC PATH_TIMIDITY MIDI_FILES SNDLIB_CONFIG SNDLIB_FILES SNDLIB_LIB SET_MAKE MKINSTALLDIRS USE_NLS MSGFMT GMSGFMT XGETTEXT MSGMERGE INTL_MACOSX_LIBS LIBICONV LTLIBICONV INTLLIBS LIBINTL LTLIBINTL POSUB MAKE_TARGET LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA PACKAGE VERSION FGREP PKG_CONFIG FFTW_LIBS FFTW_CFLAGS GSL_CONFIG GSL_LIBS GSL_CFLAGS X_CFLAGS X_PRE_LIBS X_LIBS X_EXTRA_LIBS XLIBS XFLAGS GTK_CFLAGS GTK_LIBS GTK_LD_LIBS CAIRO_CFLAGS GX_FILES GX_HEADERS GL_LIBS GL_FILES GL_FLAGS FAM_LIB GUILE_LIBS GUILE_CFLAGS XM_LIBS LD_XM_LIBS AUDIO_LIB JACK_LIBS JACK_FLAGS LDSO_FLAGS SO_LD PATH_OGGDEC PATH_OGGENC PATH_MPG123 PATH_MPG321 PATH_SPEEXDEC PATH_SPEEXENC PATH_FLAC PATH_TIMIDITY MIDI_FILES SNDLIB_CONFIG SNDLIB_FILES SNDLIB_LIB SET_MAKE MKINSTALLDIRS USE_NLS MSGFMT GMSGFMT XGETTEXT MSGMERGE INTL_MACOSX_LIBS LIBICONV LTLIBICONV INTLLIBS LIBINTL LTLIBINTL POSUB MAKE_TARGET LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -17498,10 +17498,7 @@ fi
 AUDIO_LIB=""
 LDSO_FLAGS=""
 SO_LD="ld"
-SO_INSTALL="install"
-A_LD="ld"
-A_LD_FLAGS=""
-# Python configure.in has a lot of code to get these switches right
+
 JACK_LIBS=""
 JACK_FLAGS=""
 
@@ -18480,9 +18477,7 @@ _ACEOF
 	  LIBS="$LIBS -lmd"
         fi
         LDSO_FLAGS="-shared -all"
-	SO_INSTALL=":"
 	SO_LD=":"
-	A_LD_FLAGS="-non_shared"
 	if test $LOCAL_LANGUAGE = "None"; then
 	  LIBS="$LIBS -lm"
 	fi
@@ -18665,11 +18660,8 @@ fi
 
 
 
-
-
-
 #--------------------------------------------------------------------------------
-# OGG, Flac, Speex, Mpeg, maybe SDIF someday
+# OGG, Flac, Speex, Mpeg, Midi, maybe SDIF (ACE?) someday
 # --------------------------------------------------------------------------------
 
 # Extract the first word of "oggdec", so it can be a program name with args.
@@ -21562,15 +21554,15 @@ if test "$enable_snd_debug" = yes ; then
   if test "$GCC" = yes ; then
     if test "$LOCAL_LANGUAGE" = "Ruby" ; then
       if test "$CC" = "g++" ; then
-        CFLAGS="$CFLAGS -g3 -Wcast-align -Wpointer-arith -Wimplicit -Wreturn-type -Wunused-label -Wunused-variable -Wunused-value -Wcomment -Wformat -Wunused-function -Wuninitialized -Wparentheses -Wall"
+        CFLAGS="$CFLAGS -O -g3 -Wcast-align -Wpointer-arith -Wimplicit -Wreturn-type -Wunused-label -Wunused-variable -Wunused-value -Wcomment -Wformat -Wunused-function -Wuninitialized -Wparentheses -Wall"
       else
-        CFLAGS="$CFLAGS -g3 -Wcast-align -Wpointer-arith -Wimplicit -Wreturn-type -Wunused-label -Wunused-variable -Wunused-value -Wcomment -Wformat -Wunused-function -Wuninitialized -Wparentheses -Wall"
+        CFLAGS="$CFLAGS -O -g3 -Wcast-align -Wpointer-arith -Wimplicit -Wreturn-type -Wunused-label -Wunused-variable -Wunused-value -Wcomment -Wformat -Wunused-function -Wuninitialized -Wparentheses -Wall"
       fi
     else
       if test "$CC" = "g++" ; then
-        CFLAGS="$CFLAGS -g3 -Wredundant-decls -Wcast-align -Wpointer-arith -Wimplicit -Wreturn-type -Wunused-label -Wunused-variable -Wunused-value -Wcomment -Wformat -Wunused-function -Wuninitialized -Wparentheses -Wall"
+        CFLAGS="$CFLAGS -O -g3 -Wredundant-decls -Wcast-align -Wpointer-arith -Wimplicit -Wreturn-type -Wunused-label -Wunused-variable -Wunused-value -Wcomment -Wformat -Wunused-function -Wuninitialized -Wparentheses -Wall"
       else
-        CFLAGS="$CFLAGS -g3 -Wredundant-decls -Wcast-align -Wmissing-prototypes -Wpointer-arith -Wimplicit -Wreturn-type -Wunused-label -Wunused-variable -Wunused-value -Wcomment -Wformat -Wunused-function -Wuninitialized -Wparentheses -Wall"
+        CFLAGS="$CFLAGS -O -g3 -Wredundant-decls -Wcast-align -Wmissing-prototypes -Wpointer-arith -Wimplicit -Wreturn-type -Wunused-label -Wunused-variable -Wunused-value -Wcomment -Wformat -Wunused-function -Wuninitialized -Wparentheses -Wall"
       fi
     fi
   fi
@@ -22297,10 +22289,7 @@ s,@AUDIO_LIB@,$AUDIO_LIB,;t t
 s,@JACK_LIBS@,$JACK_LIBS,;t t
 s,@JACK_FLAGS@,$JACK_FLAGS,;t t
 s,@LDSO_FLAGS@,$LDSO_FLAGS,;t t
-s,@SO_INSTALL@,$SO_INSTALL,;t t
 s,@SO_LD@,$SO_LD,;t t
-s,@A_LD@,$A_LD,;t t
-s,@A_LD_FLAGS@,$A_LD_FLAGS,;t t
 s,@PATH_OGGDEC@,$PATH_OGGDEC,;t t
 s,@PATH_OGGENC@,$PATH_OGGENC,;t t
 s,@PATH_MPG123@,$PATH_MPG123,;t t

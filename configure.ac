@@ -1265,10 +1265,7 @@ fi
 AUDIO_LIB=""
 LDSO_FLAGS=""
 SO_LD="ld"
-SO_INSTALL="install"
-A_LD="ld"
-A_LD_FLAGS=""
-# Python configure.in has a lot of code to get these switches right
+
 JACK_LIBS=""
 JACK_FLAGS=""
 
@@ -1435,9 +1432,7 @@ case "$host" in
 	  LIBS="$LIBS -lmd"
         fi
         LDSO_FLAGS="-shared -all"
-	SO_INSTALL=":"
 	SO_LD=":"
-	A_LD_FLAGS="-non_shared"
 	if test $LOCAL_LANGUAGE = "None"; then
 	  LIBS="$LIBS -lm"
 	fi
@@ -1502,14 +1497,11 @@ AC_SUBST(JACK_LIBS)
 AC_SUBST(JACK_FLAGS)
 
 AC_SUBST(LDSO_FLAGS)
-AC_SUBST(SO_INSTALL)
 AC_SUBST(SO_LD)
-AC_SUBST(A_LD)
-AC_SUBST(A_LD_FLAGS)
 
 
 #--------------------------------------------------------------------------------
-# OGG, Flac, Speex, Mpeg, maybe SDIF someday
+# OGG, Flac, Speex, Mpeg, Midi, maybe SDIF (ACE?) someday
 # --------------------------------------------------------------------------------
 
 AC_PATH_PROG(PATH_OGGDEC, oggdec, no) # OGG read
@@ -1732,15 +1724,15 @@ if test "$enable_snd_debug" = yes ; then
   if test "$GCC" = yes ; then
     if test "$LOCAL_LANGUAGE" = "Ruby" ; then
       if test "$CC" = "g++" ; then
-        CFLAGS="$CFLAGS -g3 -Wcast-align -Wpointer-arith -Wimplicit -Wreturn-type -Wunused-label -Wunused-variable -Wunused-value -Wcomment -Wformat -Wunused-function -Wuninitialized -Wparentheses -Wall"
+        CFLAGS="$CFLAGS -O -g3 -Wcast-align -Wpointer-arith -Wimplicit -Wreturn-type -Wunused-label -Wunused-variable -Wunused-value -Wcomment -Wformat -Wunused-function -Wuninitialized -Wparentheses -Wall"
       else
-        CFLAGS="$CFLAGS -g3 -Wcast-align -Wpointer-arith -Wimplicit -Wreturn-type -Wunused-label -Wunused-variable -Wunused-value -Wcomment -Wformat -Wunused-function -Wuninitialized -Wparentheses -Wall"
+        CFLAGS="$CFLAGS -O -g3 -Wcast-align -Wpointer-arith -Wimplicit -Wreturn-type -Wunused-label -Wunused-variable -Wunused-value -Wcomment -Wformat -Wunused-function -Wuninitialized -Wparentheses -Wall"
       fi
     else
       if test "$CC" = "g++" ; then
-        CFLAGS="$CFLAGS -g3 -Wredundant-decls -Wcast-align -Wpointer-arith -Wimplicit -Wreturn-type -Wunused-label -Wunused-variable -Wunused-value -Wcomment -Wformat -Wunused-function -Wuninitialized -Wparentheses -Wall"
+        CFLAGS="$CFLAGS -O -g3 -Wredundant-decls -Wcast-align -Wpointer-arith -Wimplicit -Wreturn-type -Wunused-label -Wunused-variable -Wunused-value -Wcomment -Wformat -Wunused-function -Wuninitialized -Wparentheses -Wall"
       else
-        CFLAGS="$CFLAGS -g3 -Wredundant-decls -Wcast-align -Wmissing-prototypes -Wpointer-arith -Wimplicit -Wreturn-type -Wunused-label -Wunused-variable -Wunused-value -Wcomment -Wformat -Wunused-function -Wuninitialized -Wparentheses -Wall"
+        CFLAGS="$CFLAGS -O -g3 -Wredundant-decls -Wcast-align -Wmissing-prototypes -Wpointer-arith -Wimplicit -Wreturn-type -Wunused-label -Wunused-variable -Wunused-value -Wcomment -Wformat -Wunused-function -Wuninitialized -Wparentheses -Wall"
       fi
     fi
   fi

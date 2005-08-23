@@ -631,9 +631,6 @@ int main(int argc, char *argv[])
 {
   int fd, afd, i, err;
   short *ibuf;
-#if MACOS
-  argc = ccommand(&amp;argv);
-#endif
   afd = -1;
   mus_sound_initialize();	
   fd = mus_sound_open_output(argv[1], 22050, 1, MUS_BSHORT, MUS_NEXT, "created by sndrecord");
