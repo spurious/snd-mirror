@@ -917,7 +917,7 @@ snd_info *finish_opening_sound(snd_info *sp, bool selected)
   return(sp);
 }
 
-static snd_info *snd_open_file_1(const char *filename, bool selected, bool read_only)
+snd_info *snd_open_file(const char *filename, bool read_only)
 {
   file_info *hdr;
   snd_info *sp;
@@ -945,7 +945,7 @@ static snd_info *snd_open_file_1(const char *filename, bool selected, bool read_
 	    }
 	}
     }
-  hdr = make_file_info(mcf, read_only, selected);
+  hdr = make_file_info(mcf, read_only, FILE_SELECTED);
   if (!hdr) 
     {
       if (mcf) FREE(mcf);
@@ -971,17 +971,7 @@ static snd_info *snd_open_file_1(const char *filename, bool selected, bool read_
   sp = add_sound_window(mcf, read_only, hdr);
   if (mcf) FREE(mcf);
 #endif
-  return(finish_opening_sound(sp, selected));
-}
-
-snd_info *snd_open_file(const char *filename, bool read_only) 
-{
-  return(snd_open_file_1(filename, FILE_SELECTED, read_only));
-}
-
-snd_info *snd_open_file_unselected(const char *filename) 
-{
-  return(snd_open_file_1(filename, FILE_NOT_SELECTED, FILE_READ_WRITE));
+  return(finish_opening_sound(sp, FILE_SELECTED));
 }
 
 static void view_files_add_file(widget_t dialog, const char *filename);
@@ -990,6 +980,7 @@ void snd_close_file(snd_info *sp)
 {
   int files, i;
   XEN res = XEN_FALSE;
+  snd_info *chosen_sp = NULL;
 
   /* before-close-hook can cancel the close, whereas close-hook can't */
   if (XEN_HOOKED(before_close_hook))
@@ -1021,8 +1012,27 @@ void snd_close_file(snd_info *sp)
       set_minibuffer_string(sp, NULL, false); /* false = don't try to update graphs! */
       sp->inuse = SOUND_IDLE;
     }
-  if (sp == selected_sound()) 
-    ss->selected_sound = NO_SELECTION;
+
+  if ((sp == selected_sound()) &&
+      (!(ss->exiting)))
+    {
+      int i, curmax = -1;
+      /* look for the last selected sound, if any */
+      for (i = 0; i < ss->max_sounds; i++)
+	{
+	  snd_info *nsp;
+	  nsp = ss->sounds[i];
+	  if ((nsp) && 
+	      (nsp->inuse == SOUND_NORMAL) &&
+	      (nsp != sp) &&
+	      (nsp->selectpos > curmax))
+	    {
+	      curmax = nsp->selectpos;
+	      chosen_sp = nsp;
+	    }
+	}
+    }
+
   /* if sequester_deferred_regions is in free_snd_info (moved up to this level 15-12-03)
    *   if needs an active-looking sound if its active edit op is a ptree read with an in-use closure.
    *   If the sound is set to SOUND_IDLE, the init function returns 'no-such-sound, and the
@@ -1038,6 +1048,9 @@ void snd_close_file(snd_info *sp)
   reflect_file_change_in_title();
   call_selection_watchers(SELECTION_IN_DOUBT);
   call_ss_watchers(SS_FILE_OPEN_WATCHER, SS_FILE_CLOSED);
+  if (chosen_sp)
+    select_channel(chosen_sp, 0);
+  else ss->selected_sound = NO_SELECTION;
 }
 
 io_error_t copy_file(const char *oldname, const char *newname)
@@ -2610,8 +2623,8 @@ static char **view_files_set_files(widget_t dialog, char **files, int len)
       for (i = 0; i < len; i++)
 	if (files[i])
 	  view_files_add_file_or_directory(vdat, (const char *)(files[i]));
+      view_files_display_list(vdat);
     }
-  view_files_display_list(vdat);
   return(files);
 }
 
@@ -2987,6 +3000,9 @@ void add_file_to_view_files_list(view_files_info *vdat, const char *filename, co
 void add_directory_to_view_files_list(view_files_info *vdat, const char *dirname)
 {
   dir *sound_files = NULL;
+
+  fprintf(stderr,"add dir: %s\n", dirname);
+
   sound_files = find_sound_files_in_dir(dirname);
   if ((sound_files) && (sound_files->len > 0))
     {
@@ -3915,6 +3931,12 @@ static XEN g_view_files_set_selected_files(XEN dialog, XEN files)
   len = XEN_LIST_LENGTH(files);
   if (len > 0)
     {
+      for (i = 0; i < len; i++)
+	if (!(XEN_STRING_P(XEN_LIST_REF(files, i))))
+	  {
+	    XEN_ASSERT_TYPE(0, XEN_LIST_REF(files, i), i, S_setB S_view_files_selected_files, "a filename (string)");
+	    return(XEN_FALSE);
+	  }
       cfiles = (char **)CALLOC(len, sizeof(char *));
       for (i = 0; i < len; i++)
 	cfiles[i] = XEN_TO_C_STRING(XEN_LIST_REF(files, i));
@@ -3947,6 +3969,12 @@ static XEN g_view_files_set_files(XEN dialog, XEN files)
   len = XEN_LIST_LENGTH(files);
   if (len > 0)
     {
+      for (i = 0; i < len; i++)
+	if (!(XEN_STRING_P(XEN_LIST_REF(files, i))))
+	  {
+	    XEN_ASSERT_TYPE(0, XEN_LIST_REF(files, i), i, S_setB S_view_files_files, "a filename (string)");
+	    return(XEN_FALSE);
+	  }
       cfiles = (char **)CALLOC(len, sizeof(char *));
       for (i = 0; i < len; i++)
 	cfiles[i] = XEN_TO_C_STRING(XEN_LIST_REF(files, i));

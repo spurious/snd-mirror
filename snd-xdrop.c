@@ -95,17 +95,26 @@ static char *atom_to_filename(Atom type, XtPointer value, unsigned long length)
   char *str = NULL;
   if ((type == XA_STRING) || (type == FILE_NAME) || (type == text_plain) || (type == TEXT))
     {
-      str = (char *)CALLOC(length + 1, sizeof(char));
-      for (i = 0; i < length; i++)
+      int j = 0, start = 0;
+      if (type == text_plain)
 	{
-	  if (((char *)value)[i] == ' ')
+	  start = 7; /* jump over "file://" */
+	}
+      str = (char *)CALLOC(length + 1, sizeof(char));
+      for (i = start; i < length; i++)
+	{
+	  if ((((char *)value)[i] == ' ') ||
+	      (((char *)value)[i] == '\n') ||
+	      (((char *)value)[i] == (char)13))
 	    {
-	      str[i] = '\0';
+	      str[j] = '\0';
+	      /* actually multiple names can be incoming here, separated by crlf?? */
+	      /* TODO: figure out how to deal with these multi-name drops */
 	      break;
 	    }
-	  else str[i] = ((char *)value)[i];
+	  else str[j++] = ((char *)value)[i];
 	}
-      str[length] = '\0';
+      str[j] = '\0';
     }
   else
     {
@@ -263,9 +272,12 @@ static void report_mouse_position_as_seconds(Widget w, const char *file, Positio
 static void clear_minibuffer_of(Widget w)
 {
   int snd, data;
+  snd_info *sp;
   XtVaGetValues(w, XmNuserData, &data, NULL);
   snd = UNPACK_SOUND(data);
-  clear_minibuffer(ss->sounds[snd]);
+  sp = ss->sounds[snd];
+  if (snd_ok(sp))
+    report_in_minibuffer(sp, " "); /* not clear_minibuffer here! => segfault */
 }
 
 static char *current_file = NULL; /* used only in the broken WITH_DRAG_CONVERSION code */
@@ -273,12 +285,13 @@ static char *current_file = NULL; /* used only in the broken WITH_DRAG_CONVERSIO
 static void handle_drag(Widget w, XtPointer context, XtPointer info)
 {
   XmDragProcCallbackStruct *cb = (XmDragProcCallbackStruct *)info;
-  bool is_menubar;
-  is_menubar = XmIsRowColumn(w);
+  bool is_menubar, is_drawingarea;
+  is_menubar = ((XmIsRowColumn(w)) && (context == ss));
+  is_drawingarea = XmIsDrawingArea(w);
   switch(cb->reason)
     { 
     case XmCR_DROP_SITE_MOTION_MESSAGE:
-      if (!is_menubar)
+      if (is_drawingarea)
 	report_mouse_position_as_seconds(w, (current_file) ? current_file : "file", cb->x, cb->y);
       break;
     case XmCR_DROP_SITE_ENTER_MESSAGE:
@@ -343,7 +356,11 @@ static void handle_drag(Widget w, XtPointer context, XtPointer info)
 	  if (!(ss->using_schemes)) XmChangeColor(w, ss->sgx->pushed_button_color);
 	  FREE(new_title);
 	}
-      else report_mouse_position_as_seconds(w, (current_file) ? current_file : "file", cb->x, cb->y);
+      else 
+	{
+	  if (is_drawingarea)
+	    report_mouse_position_as_seconds(w, (current_file) ? current_file : "file", cb->x, cb->y);
+	}
       break;
     case XmCR_DROP_SITE_LEAVE_MESSAGE: 
       if (is_menubar)
@@ -351,7 +368,11 @@ static void handle_drag(Widget w, XtPointer context, XtPointer info)
 	  reflect_file_change_in_title();
 	  if (!(ss->using_schemes)) XmChangeColor(w, ss->sgx->highlight_color);
 	}
-      else clear_minibuffer_of(w);
+      else 
+	{
+	  if (is_drawingarea)
+	    clear_minibuffer_of(w);
+	}
       if (current_file)
 	{
 	  FREE(current_file);

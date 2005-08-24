@@ -503,6 +503,7 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
     }
   XEN_FLUSH_PORT(port); /* needed to get rid of trailing garbage chars?? -- might be pointless now */
   name_buf = copy_string(XEN_TO_C_STRING(XEN_PORT_TO_STRING(port)));
+
   if (ss->xen_error_handler)
     (*(ss->xen_error_handler))(name_buf, ss->xen_error_data);
   else

@@ -3558,14 +3558,14 @@ static XEN g_make_filter_1(xclm_fir_t choice, XEN arg1, XEN arg2, XEN arg3, XEN 
 	  XEN_ASSERT_TYPE(VCT_P(keys[3]), keys[3], orig_arg[3], caller, "a vct");
 	  if (choice == G_IIR_FILTER)
 	    {
-	      if (ywave)
+	      if (XEN_BOUND_P(ywave))
 		mus_misc_error(caller, "coeffs and ycoeffs passed to " S_make_iir_filter "?", keys[3]);
 	      ywave = keys[3];
 	      y = TO_VCT(ywave);
 	    }
 	  else
 	    {
-	      if (xwave)
+	      if (XEN_BOUND_P(xwave))
 		mus_misc_error(caller, "coeffs and xcoeffs passed to " S_make_fir_filter "?", keys[3]);
 	      xwave = keys[3];
 	      x = TO_VCT(xwave);

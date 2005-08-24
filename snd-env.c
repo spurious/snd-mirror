@@ -1447,20 +1447,21 @@ env *string_to_env(char *str)
   return(NULL);
 #else
   /* TODO: test for these cases somehow (testsnd -e?) */
-  char *tok;
+  char *tok, *tmp;
   int i;
   float f;
   if ((str) && (*str))
     {
+      tmp = copy_string(str);
       i = 0;
       if (env_buffer_size == 0)
 	{
 	  env_buffer_size = ENV_BUFFER_SIZE;
 	  env_buffer = (Float *)CALLOC(ENV_BUFFER_SIZE, sizeof(Float));
 	}
-      if ((*str) == '\'') str++;
-      if ((*str) == '(') str++;
-      tok = strtok(str, env_white_space);
+      if ((*tmp) == '\'') tmp++;
+      if ((*tmp) == '(') tmp++;
+      tok = strtok(tmp, env_white_space);
       while (tok)
 	{
 	  if (!(sscanf(tok, "%f", &f)))
@@ -1479,6 +1480,7 @@ env *string_to_env(char *str)
 	}
       if ((i == 0) || (i & 1)) 
 	snd_error(_("odd length envelope? %s"), str);
+      FREE(tmp);
       return(make_envelope(env_buffer, i));
     }
   return(NULL);

@@ -226,7 +226,7 @@ static void chooser_response_callback(GtkDialog *dialog, gint response_id)
 
 static GtkWidget *file_chooser_button(GtkFileChooserDialog *dialog, int response)
 {
-  /* find a given goddamn button -- this code borrowed from gtk/gtkfilechooserdialog.c */
+  /* find a given dialog button -- this code borrowed from gtk/gtkfilechooserdialog.c */
   /*    dialog uses button_new_from_stock to create these */
   GtkWidget *result = NULL;
 
@@ -4451,7 +4451,7 @@ GtkWidget *start_view_files_dialog_1(view_files_info *vdat, bool managed)
 
 	  vdat->spf = new_env_editor(); /* one global amp env */
 
-      }
+	}
       }
 
       set_dialog_widget(VIEW_FILES_DIALOG, vdat->dialog);
@@ -4491,3 +4491,5 @@ is the scrolled list position of the label. The label itself is 'label'."
 }
 
 
+/* in filesel file_list is a tree_view widget, its parent a scrolled_window
+ */

@@ -21,7 +21,7 @@ bool snd_exit_cleanly(bool force_exit)
     res = run_or_hook(before_exit_hook, 
 		      XEN_EMPTY_LIST,
 		      S_before_exit_hook);
-  if ((XEN_TRUE_P(res)) && (!force_exit)) return(false);
+  if ((XEN_TRUE_P(res)) && (!force_exit)) return(false); /* does it make any sense to call this hook if we're forced to exit anyway? */
 
   if (XEN_HOOKED(exit_hook))
     run_hook(exit_hook, 
@@ -1255,7 +1255,7 @@ int handle_next_startup_arg(int auto_open_ctr, char **auto_open_file_names, bool
 				      if (dont_start(startup_filename)) snd_exit(1);
 				    }
 				  ss->open_requestor = FROM_STARTUP;
-				  snd_open_file_unselected(argname);
+				  snd_open_file(argname, FILE_READ_WRITE);
 				}
 			    }
 			}

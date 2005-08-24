@@ -37,7 +37,7 @@
  *    need drop-watchers here, set up on vdat to get possible multi-file string, load each
  *    similarly for the menus -- why doesn't the drag context stuff work?
  *    need same stuff on gtk side -- how do they send multi-names? Qt? etc...
- * TODO: New[Copy?] Viewer button in vf
+ * PERHAPS: Copy Viewer button in vf
  * TODO: in nb.scm, get the info dialog out of the line of sight and unmanage it if view-files is unmanaged
  * TODO: horizontal pane in view-files
  * TODO: report-in-minibuffer extended to go to any dialog
@@ -4054,10 +4054,34 @@ static void view_files_add_files(Widget w, XtPointer context, XtPointer info)
 static void view_files_drop_watcher(Widget w, const char *str, Position x, Position y, void *context)
 {
   view_files_info *vdat = (view_files_info *)context;
-  char *filename;
-  filename = mus_expand_filename(str);
-  add_file_to_view_files_list(vdat, str, filename);
-  FREE(filename);
+  int i, len, start = 0;
+  /* incoming drop string can contain a list of filenames, separated by cr */
+  len = snd_strlen(str);
+  for (i = 0; i <= len; i++)
+    {
+      if ((i == len) || (str[i] == '\n'))
+	{
+	  if ((i == len) && (start == 0))
+	    {
+	      view_files_add_file_or_directory(vdat, str);
+	    }
+	  else
+	    {
+	      char *tmp;
+	      int j, k, slen;
+	      slen = i - start;
+	      if (slen > 0)
+		{
+		  tmp = (char *)CALLOC(slen, sizeof(char));
+		  for (j = 0, k = start; j < slen; j++, k++)
+		    tmp[j] = str[k];
+		  view_files_add_file_or_directory(vdat, tmp);
+		  start = i + 1;
+		  FREE(tmp);
+		}
+	    }
+	}
+    }
   view_files_display_list(vdat);
 }
 
@@ -5358,7 +5382,6 @@ is the scrolled list position of the label. The label itself is 'label'."
 #endif
 }
 
-/* TODO: always have a selected sound
- * TODO: vf fam + remove if file deleted = no need for update button? -> overall reset?
+/* TODO: vf fam + remove if file deleted = no need for update button? -> overall reset?
  * TODO: check prompt-in-minibuffer troubles
  */

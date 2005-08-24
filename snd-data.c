@@ -317,6 +317,7 @@ snd_info *make_snd_info(snd_info *sip, const char *filename, file_info *hdr, int
   sp->previous_sync = sp->sync;
   initialize_control_panel(sp);
   sp->searching = 0;
+  sp->selectpos = -1;
   if (chans > 1)
     sp->channel_style = channel_style(ss);
   else sp->channel_style = CHANNELS_SEPARATE;
@@ -367,6 +368,7 @@ void free_snd_info(snd_info *sp)
     }
   /* leave most for reuse as in free_chan_info */
   sp->active = false;
+  sp->selectpos = -1;
   if (sp->sgx)
     {
       env_editor *edp;
@@ -756,6 +758,7 @@ chan_info *selected_channel(void)
 
 static XEN select_sound_hook;
 static XEN select_channel_hook;
+static int current_selectpos = 0;
 
 static void select_sound(snd_info *sp)
 {
@@ -770,6 +773,7 @@ static void select_sound(snd_info *sp)
       ss->selected_sound = sp->index;
       new_active_channel_alert();
     }
+  sp->selectpos = current_selectpos++;
 }
 
 chan_info *color_selected_channel(snd_info *sp)

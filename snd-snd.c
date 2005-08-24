@@ -2041,35 +2041,29 @@ bool r_sound_p(int i)
 
 static XEN g_select_sound(XEN snd_n)
 {
-  #define H_select_sound "(" S_select_sound " (snd #f)): sound 'snd' (an index) becomes the current default sound for \
+  #define H_select_sound "(" S_select_sound " snd): sound 'snd' (an index) becomes the current default sound for \
 any editing operations."
 
-  ASSERT_SOUND(S_select_sound, snd_n, 1);
-  if (XEN_FALSE_P(snd_n))
-    ss->selected_sound = NO_SELECTION;
-  else
+  int val;
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(snd_n), snd_n, XEN_ONLY_ARG, S_select_sound, "a sound index (integer)");
+  val = XEN_TO_C_INT(snd_n);
+  if ((val >= 0) && 
+      (val < ss->max_sounds))
     {
-      int val;
-      val = XEN_TO_C_INT_OR_ELSE(snd_n, 0);
-      if ((val >= 0) && 
-	  (val < ss->max_sounds))
+      snd_info *sp;
+      sp = ss->sounds[val];
+      if ((snd_ok(sp)) &&
+	  (sp->inuse == SOUND_NORMAL))
 	{
-	  snd_info *sp;
-	  sp = ss->sounds[val];
-	  if ((snd_ok(sp)) &&
-	      (sp->inuse == SOUND_NORMAL))
-	    {
-	      select_channel(sp, 0);
+	  select_channel(sp, 0);
 #if USE_MOTIF
-	      equalize_sound_panes(sp, sp->chans[0], false);
-	      for_each_chan(update_graph);
+	  equalize_sound_panes(sp, sp->chans[0], false);
+	  for_each_chan(update_graph);
 #endif
-	      return(snd_n);
-	    }
+	  return(snd_n);
 	}
-      return(snd_no_such_sound_error(S_select_sound, snd_n));
     }
-  return(snd_n);
+  return(snd_no_such_sound_error(S_select_sound, snd_n));
 }
 
 static XEN g_select_channel(XEN chn_n)

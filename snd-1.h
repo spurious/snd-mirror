@@ -350,7 +350,7 @@ typedef struct snd_info {
   time_t write_date;          /* check for change behind back while editing */
   bool need_update, file_unreadable; /* current in-core data does not match actual file (someone wrote it behind our back) */
   channel_style_t channel_style;
-  int allocated_chans;        /* snd_info widget tree is never pruned -- can only grow */
+  int allocated_chans, selectpos; 
   tracking_cursor_t cursor_follows_play;
   struct region *edited_region;
   struct dialog_play_info *delete_me;
@@ -1330,7 +1330,6 @@ void save_added_sound_file_extensions(FILE *fd);
 dir *find_sound_files_in_dir (const char *name);
 dir *filter_sound_files(dir *dp, char *pattern);
 snd_info *snd_open_file(const char *filename, bool read_only);
-snd_info *snd_open_file_unselected (const char *filename);
 snd_info *finish_opening_sound(snd_info *sp, bool selected);
 void snd_close_file(snd_info *sp);
 io_error_t copy_file(const char *oldname, const char *newname);
