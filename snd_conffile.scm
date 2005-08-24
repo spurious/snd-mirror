@@ -162,6 +162,7 @@
 ;;(defined? 'stop-playing-hook))
 
 
+(define *c-is-starting-up* #t)
 
 
 ;;##############################################################
@@ -1240,7 +1241,12 @@ Does not work.
 		   (if (car dim)
 		       (begin
 			 (set! (foreground-color) *c-backgroundcolor*)
-			 (fill-rectangle (car dim) (cadr dim) (caddr dim) (1+ fontheight))))
+			 ;(c-draw-string sound-widget
+			;		(list-ref (snd-gcs) 1)
+			;		(car dim) (+ fontheight (cadr dim))
+			;		(cadddr dim))
+			 (fill-rectangle (car dim) (cadr dim) (caddr dim) (+ 2 fontheight))
+			 ))
 		   (c-draw-string sound-widget
 				  color
 				  x (+ fontheight y)
@@ -1684,6 +1690,7 @@ Does not work.
 ;;(set! last-width 700)
 
 
+
 ;; For gtk, the -notebook switch doesn't seem to work very well.
 ;; For motif, the -notebook switch doesn't seem to work very well either.
 (if (or (not use-gtk)
@@ -1737,11 +1744,16 @@ Does not work.
 	    (begin
 	      (c-switch-to-buf filename)
 	      #t)
-	    (begin
+	    (let ((was-starting-up? *c-is-starting-up*))
 	      (add-to-menu buffer-menu 
-			   filename 
-			   (lambda () (c-switch-to-buf filename)))
-	      #f)))
+			   filename
+			   (lambda ()
+			     (if was-starting-up?
+				 (begin
+				   (remove-from-menu buffer-menu filename)
+				   (open-sound filename))
+				 (c-switch-to-buf filename))))
+	      *c-is-starting-up*)))
 
       (define (c-close-buffer snd)
 	"(close-buffer snd) removes the menu item associated with snd (use with close-hook)"
@@ -1939,7 +1951,8 @@ Does not work.
 		  (reverse (delete-duplicates (map (lambda (snd) (file-name snd))
 						   (cons (c-selected-sound) (sounds)))))))
     (close fd)))
-  
+
+
 (add-hook! exit-hook (lambda args
 		       (c-save-all-filenames (c-open-sounds-filename))
 		       #f))
@@ -1950,6 +1963,7 @@ Does not work.
 			     #f))
 			
 
+
 (add-hook! after-open-hook
 	   (lambda (snd)
 	     (hash-set! c-snd-putgetdata snd (make-hash-table 16))
@@ -1959,16 +1973,22 @@ Does not work.
 ;; Load files from previous session.
   
 (if *c-restore-previous-session*
-    (begin
+    (let ((filename #f))
       (system (string-append "touch " (c-open-sounds-filename) " >/dev/null 2>/dev/null"))
       (for-each-line-in-file (c-open-sounds-filename)
 			     (lambda (line)
 			       (catch #t
 				      (lambda ()
+					(set! filename line)
 					(open-sound line))
 				      (lambda (key . args)
 					(c-display "File \"" line  "\" not found.")
 					#f))))
+      (if filename
+	  (begin
+	    (set! *c-is-starting-up* #f)
+	    (open-sound filename)
+	    (set! *c-is-starting-up* #t)))
       (in (if use-gtk 0 2000)
 	  (lambda ()
 	    (set! (window-width) 800)
@@ -2031,7 +2051,7 @@ Does not work.
   )
 
 
-
+(set! *c-is-starting-up* #f)
 
 
 

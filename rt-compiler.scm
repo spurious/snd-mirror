@@ -2358,6 +2358,33 @@ and run simple lisp[4] functions.
 #!
 
 (rt-insert-types2 '(lambda ()
+		     (lambda ()
+		       (let* ((rt_gen498__1 <float>)
+			      (rt_gen500__2 <undefined>)
+			      (rt_gen499__4 <void-*>)
+			      (rt_gen501__6 (lambda (dir__7)
+					      (let* ((rt_gen502__8 (lambda (dire__9)
+								     0.2)))
+						(declare (<int> dir__7))
+						(the <float>
+						     (rt-begin
+						      (rt_gen502__8 dir__7)))))))
+			 (rt-begin
+			  (rt-set*! rt_gen498__1 0.0)
+			  (rt-set*! rt_gen500__2 sr__3)
+			  (rt-set*! rt_gen499__4 (rt-mus-environ/mus_environ rt_gen500__2))
+			  (setter!-mus-environ/mus_set_environ rt_gen500__2 (rt-get-environ))
+			  (set! rt_gen498__1 (rt-mus-src/mus_src rt_gen500__2 renamed_var__5 (rt-begin rt_gen501__6)))
+			  (setter!-mus-environ/mus_set_environ rt_gen500__2 rt_gen499__4) rt_gen498__1)))))
+
+(-> (hashq-ref rt-funcs 'rt-mus-src/mus_src) arg-type 1)
+
+
+(rt-2 '(lambda ()
+	 (src sr das-src (lambda (dire)
+			   0.2))))
+
+(rt-insert-types2 '(lambda ()
 		     (let* ((a (lambda (func)
 				 ;;(declare ((<void> (<int>)) func))
 				 (func 5))))
@@ -4471,7 +4498,7 @@ and run simple lisp[4] functions.
 							 (the <float> (,input-function dir)))))
 	 (set! (mus-environ ,das-gen) ,oldenv)
 	 ,ret)))
-  (<rt-func> 'rt-mus-src/mus_src '<float> '(<mus_src-*> <int> (<float> (<int>))))
+  (<rt-func> 'rt-mus-src/mus_src '<float> '(<mus_src-*> <float> (<float> (<int>))))
   (define-c-macro (rt-mus-src/mus_src gen sr-change input-function)
     (<-> "mus_src(" (eval-c-parse gen) "," (eval-c-parse sr-change) ", (void*)" (eval-c-parse input-function) ")"))
 
@@ -5713,6 +5740,177 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
   `(rt_ladspa_set ,ladspa ,controlnum ,val))
 
 
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;; Ringbuffer. ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+#!
+(define-ec-struct <rt_ringbuffer_b>
+  <SCM> scm_b
+  <vct-*> b
+  <int> s
+  <int> e)
+
+(define-ec-struct <rt_ringbuffer>
+  <struct-rt_ringbuffer_b-*> b0
+  <struct-rt_ringbuffer_b-*> b1
+  <struct-rt_ringbuffer_b-*> b2
+  <int> position
+  <SCM> callback
+  <int> size)
+
+  
+(define *rt-request-ringbuffer* (jack_ringbuffer_create 8192))
+(define *rt-ringbuffer-poll-freq* (/ 1000 500))
+(define *rt-rb-overlap* 10) ;; 10% overlap
+
+(eval-c (<-> "-I" snd-header-files-path " -ffast-math ")
+	"#include <clm.h>"
+	"#include <xen.h>"
+	"#include <vct.h>"
+	"#include <jack/ringbuffer.h>"
+	(shared-struct <rt_ringbuffer_b>)
+	(shared-struct <rt_ringbuffer>)
+	(public
+	 (<void> rt_rb_set_start_endp (lambda ((<struct-rt_ringbuffer-*> rb)
+					       (<int> w1)
+					       (<int> startpos)
+					       (<int> endpos))
+					(let* ((temp <struct-rt_ringbuffer_b-*> NULL))
+					  (cond ((== w1 0)
+						 (set! temp rb->b0))
+						((== w1 1)
+						 (set! temp rb->b1))
+						((== w1 2)
+						 (set! temp rb->b2)))
+					  (set! temp->s startpos)
+					  (set! temp->e endpos))))
+					    
+						 
+	 (<void> rt_rb_swap (lambda ((<struct-rt_ringbuffer-*> rb)
+				     (<int> w1)
+				     (<int> w2))
+			      (let* ((temp1 <struct-rt_ringbuffer_b-*> NULL)
+				     (temp2 <struct-rt_ringbuffer_b-*> NULL))
+				
+				(cond ((== w1 0)
+				       (set! temp1 rb->b0))
+				      ((== w1 1)
+				       (set! temp1 rb->b1))
+				      ((== w1 2)
+				       (set! temp1 rb->b2)))
+				(cond ((== w2 0)
+				       (set! temp2 rb->b0)
+				       (set! rb->b0 temp1))
+				      ((== w2 1)
+				       (set! temp2 rb->b1)
+				       (set! rb->b1 temp1))
+				      ((== w2 2)
+				       (set! temp2 rb->b2)
+				       (set! rb->b2 temp1)))
+				(cond ((== w1 0)
+				       (set! rb->b0 temp2))
+				      ((== w1 1)
+				       (set! rb->b1 temp2))
+				      ((== w1 2)
+				       (set! rb->b2 temp2))))))
+	 
+	 
+	 (<void> rt_check_rb_request (lambda ((<jack_ringbuffer_t-*> req_ringbuffer)
+					      (<SCM> func))
+				       (while (>= (jack_ringbuffer_read_space req_ringbuffer)
+						  (sizeof <struct-rt_ringbuffer-*>))
+					      (let* ((rb <struct-rt_ringbuffer-*> NULL))
+						(jack_ringbuffer_read req_ringbuffer (cast <char-*> rb) (sizeof <struct-rt_ringbuffer-*>))
+						(scm_apply func
+							   (MAKE_POINTER rb)
+							   (scm_list_4 (MAKE_INTEGER rb->position)
+								       (MAKE_INTEGER rb->size)
+								       rb->callback
+								       (scm_list_3 (scm_list_3 rb->b0->scm_b
+											       (MAKE_INTEGER rb->b0->s)
+											       (MAKE_INTEGER rb->b0->e))
+										   (scm_list_3 rb->b1->scm_b
+											       (MAKE_INTEGER rb->b1->s)
+											       (MAKE_INTEGER rb->b1->e))
+										   (scm_list_3 rb->b2->scm_b
+											       (MAKE_INTEGER rb->b2->s)
+											       (MAKE_INTEGER rb->b2->e)))))))))))
+	
+
+		 
+
+(define (rt-ringbuffer-callback rb position size callback poss)
+  (define (start-pos which)
+    (cadr (list-ref poss which)))
+  (define (end-pos which)
+    (caddr (list-ref poss which)))
+  (define (inside? pos which)
+    (let ((whichwhich (list-ref poss which)))
+      (and (>= pos (cadr whichwhich))
+	   (<= pos (caddr whichwhich)))))
+  (define (read which startpos endpos)
+    (call-with-values (lambda ()
+			(callback (car (list-ref poss which)) startpos endpos))
+      (lambda (startpos endpos)
+	(rt_rb_set_start_endp rb which startpos endpos))))
+
+  (if (not (inside? position 1))
+      (cond ((inside? position 0)
+	     (rt_rb_swap rb 0 1)
+	     (rt_rb_swap rb 2 0)
+	     (read 0 (- (start-pos 0)) (size)) (start-pos 0))
+	    ((inside? position 2)
+	     (rt_rb_swap rb 1 2)
+	     (rt_rb swap rb 0 2)
+	     (read 2 (1+ (end-pos 2) (+ 1 (size) (end-pos 2)))))))))
+	  
+
+    
+(define (rt_request_check)
+  (rt_check_rb_request)
+  (in *rt-ringbuffer-poll-freq* rt_request_check))
+(rt_request_check)
+
+(rt_check_rb_request *rt-request-ringbuffer*)      
+  
+(define (make-ringbuffer-location bytes callback)
+  (<rt_ringbuffer> #:b0 (-> (<rt_ringbuffer_b> #:scm_b (make-vct bytes)) get-c-object)
+		   #:b1 (-> (<rt_ringbuffer_b> #:scm_b (make-vct bytes)) get-c-object)
+		   #:b2 (-> (<rt_ringbuffer_b> #:scm_b (make-vct bytes)) get-c-object)
+		   #:callback callback
+		   #:size bytes))
+
+(define r (make-ringbuffer-location 4096 #f))
+
+
+!#
+  
+#!
+(define file (file->sample "/home/kjetil/t1.wav"))
+(define rb (make-ringbuffer-location (* 8192 256)
+				     (lambda (location)
+				       (file->sample file location))))
+(define position 0)
+(<rt-play> 0 100
+	   (lambda ()
+	     (out (* 0.8 (ringbuffer-location rb position))) ;; If data is not available, a value from the buffer is returned instead. Might produce less clicks than zero.
+	     (set! position (1+ position))))
+
+
+;;To delay playing until data is available:
+(<rt-play> 0 100
+	   (lambda ()
+	     (if (ringbuffer-location? rb position)         ;; ringbuffer-location? whether data at the position is available. If \#f, a request is sent.
+		 (begin
+		   (out (* 0.8 (ringbuffer-location rb position)))
+		   (set! position (1+ position))))))
+!#
 
 
 
