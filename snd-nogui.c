@@ -255,6 +255,7 @@ void vf_unhighlight_row(widget_t nm, widget_t rw) {}
 void vf_highlight_row(widget_t nm, widget_t rw) {}
 void vf_post_info(view_files_info *vdat, int pos) {}
 void vf_unpost_info(view_files_info *vdat) {}
+void vf_flash_row(vf_row *r) {}
 off_t vf_location(view_files_info *vdat) {return(0);}
 void vf_post_error(const char *error_msg, void *data) {}
 void vf_post_location_error(const char *error_msg, void *data) {}

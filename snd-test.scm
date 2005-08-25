@@ -94,7 +94,7 @@
 
 (define tests 1)
 (define keep-going #f)
-(define all-args #t) ; huge arg testing
+(define all-args #f) ; huge arg testing
 (define with-big-file #t)
 
 (if (not (defined? 'snd-test)) (define snd-test -1))
@@ -23569,6 +23569,15 @@ EDITS: 5
 	      (open-ctr 0))
 	  (run-hook before-test-hook 12)
 	  (add-sound-file-extension "wave")
+	  (let ((exts (sound-file-extensions)))
+	    (if (not (member "wave" exts))
+		(snd-display ";sound-file-extensions: ~A" exts))
+	    (set! (sound-file-extensions) (list))
+	    (if (not (null? (sound-file-extensions)))
+		(snd-display ";sound-file-extesions set to '(): ~A" (sound-file-extensions)))
+	    (set! (sound-file-extensions) exts)
+	    (if (not (member "wave" exts))
+		(snd-display ";sound-file-extensions reset: ~A" (sound-file-extensions))))
 
       (do ((clmtest 0 (1+ clmtest))) ((= clmtest tests)) 
 	(log-mem clmtest)
@@ -54392,7 +54401,7 @@ EDITS: 1
 (if with-gui
     (begin
       (define procs (list 
-		     add-mark add-sound-file-extension add-to-main-menu add-to-menu add-transform amp-control
+		     add-mark add-sound-file-extension sound-file-extensions add-to-main-menu add-to-menu add-transform amp-control
 		     as-one-edit ask-before-overwrite audio-input-device audio-output-device ; add-player
 		     auto-resize auto-update autocorrelate axis-info axis-label-font axis-numbers-font
 		     basic-color bind-key bomb c-g? apply-controls change-samples-with-origin channel-style
@@ -54555,7 +54564,7 @@ EDITS: 1
       (define set-procs (list 
 			 amp-control ask-before-overwrite audio-input-device audio-output-device auto-resize
 			 auto-update axis-label-font axis-numbers-font ;basic-color 
-			 channel-style peaks-font bold-peaks-font
+			 channel-style peaks-font bold-peaks-font sound-file-extensions
 			 color-cutoff color-inverted color-scale contrast-control contrast-control-amp 
 			 amp-control-bounds speed-control-bounds expand-control-bounds contrast-control-bounds
 			 reverb-control-length-bounds reverb-control-scale-bounds cursor-update-interval cursor-location-offset
@@ -54574,7 +54583,9 @@ EDITS: 1
 			 mix-amp-env mix-tag-position mix-chans mix-color mix-locked? mix-inverted? mix-position
 			 mix-speed mix-tag-height mix-tag-width mix-tag-y mark-tag-width mark-tag-height mix-waveform-height transform-normalization
 			 equalize-panes position-color recorder-in-device view-files-sort print-length pushed-button-color
-			 view-files-amp view-files-speed view-files-files view-files-selected-files view-files-speed-style view-files-amp-env
+			 view-files-amp view-files-speed view-files-speed-style view-files-amp-env
+			 view-files-files 
+			 view-files-selected-files 
 			 recorder-autoload recorder-buffer-size recorder-dialog recorder-file recorder-gain recorder-in-amp
 			 recorder-in-format recorder-max-duration recorder-out-amp recorder-out-chans recorder-out-format recorder-out-type
 			 recorder-srate region-graph-style recorder-trigger reverb-control-decay reverb-control-feedback recorder-in-chans

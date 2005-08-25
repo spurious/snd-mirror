@@ -146,6 +146,7 @@ typedef enum {WITHOUT_VIRTUAL_CHANNELS, WITH_VIRTUAL_CHANNELS} virtual_channels_
 typedef enum {WITH_FW_BUTTONS, WITH_ARROWS} fw_button_t;
 typedef enum {WITHOUT_HOOK, WITH_HOOK} with_hook_t;
 typedef enum {WITHOUT_WORD_WRAP, WITH_WORD_WRAP} with_word_wrap_t;
+typedef enum {DRAG_ENTER, DRAG_LEAVE, DRAG_MOTION} drag_style_t;
 
 #ifndef POPUP_BUTTON
   #define POPUP_BUTTON 3

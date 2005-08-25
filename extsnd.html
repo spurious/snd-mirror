@@ -9608,6 +9608,7 @@ add <i>ext</i> to the list of (case sensitive) sound file extensions used by <a 
 The initial list is ("snd" "aiff" "aif" "wav" "au" "aifc" "voc" "wve" "WAV" "sf2").
 To add "ogg" as a recognized extension: <code>(add-sound-file-extension "ogg")</code><br>
 A Scheme implementation: <a href="sndscm.html#addsoundextension1">add-sound-file-extension-1</a>.
+The list itself is <a href="#soundfileextensions">sound-file-extensions</a>.
 </td></tr>
 
 <!-- bind-key -->
@@ -10360,6 +10361,16 @@ Snd version: a string, normally a date. <b>version</b> is a Guile function.
 <tr><td></td><td>
 post a warning message, <i>str</i>, in the minibuffer, and return <i>str</i>.
 See also <a href="#sndwarninghook">snd-warning-hook</a>.
+</td></tr>
+
+<!-- sound-file-extensions -->
+<tr><td colspan=2>
+<code><a class=def name="soundfileextensions">sound-file-extensions</a> ()</code></td></tr>
+<tr><td></td><td>
+This is the list of sound file extensions used by the "just-sounds" buttons and 
+<a href="#soundfilesindirectory">sound-files-in-directory</a> to try to recognize
+sound files.  It is settable, a list of extensions as strings:
+<code>(set! (sound-file-extensions) (list "snd" "aiff" "aif" "wav" "au" "aifc" "voc" "wve" "WAV" "sf2"))</code>
 </td></tr>
 
 <!-- sound-files-in-directory -->

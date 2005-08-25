@@ -4054,35 +4054,25 @@ static void view_files_add_files(Widget w, XtPointer context, XtPointer info)
 static void view_files_drop_watcher(Widget w, const char *str, Position x, Position y, void *context)
 {
   view_files_info *vdat = (view_files_info *)context;
-  int i, len, start = 0;
-  /* incoming drop string can contain a list of filenames, separated by cr */
-  len = snd_strlen(str);
-  for (i = 0; i <= len; i++)
-    {
-      if ((i == len) || (str[i] == '\n'))
-	{
-	  if ((i == len) && (start == 0))
-	    {
-	      view_files_add_file_or_directory(vdat, str);
-	    }
-	  else
-	    {
-	      char *tmp;
-	      int j, k, slen;
-	      slen = i - start;
-	      if (slen > 0)
-		{
-		  tmp = (char *)CALLOC(slen, sizeof(char));
-		  for (j = 0, k = start; j < slen; j++, k++)
-		    tmp[j] = str[k];
-		  view_files_add_file_or_directory(vdat, tmp);
-		  start = i + 1;
-		  FREE(tmp);
-		}
-	    }
-	}
-    }
+  /* incoming str is a single filename (drop watcher code splits the possible list and calls us on each one) */
+  view_files_add_file_or_directory(vdat, str);
   view_files_display_list(vdat);
+}
+
+static void view_files_drag_watcher(Widget w, const char *str, Position x, Position y, drag_style_t dtype, void *context)
+{
+  view_files_info *vdat = (view_files_info *)context;
+  switch (dtype)
+    {
+    case DRAG_ENTER:
+      XmChangeColor(vdat->file_list, ss->sgx->pushed_button_color);
+      break;
+    case DRAG_LEAVE:
+      XmChangeColor(vdat->file_list, ss->sgx->basic_color);
+      break;
+    default:
+      break;
+    }
 }
 
 static void view_files_open_selected_callback(Widget w, XtPointer context, XtPointer info) 
@@ -5292,7 +5282,7 @@ widget_t start_view_files_dialog_1(view_files_info *vdat, bool managed)
       XtVaSetValues(vdat->file_list, 
 		    XmNworkWindow, vdat->file_list_holder, 
 		    NULL);
-      add_drop(vdat->file_list, view_files_drop_watcher, (void *)vdat);
+      add_drag_and_drop(vdat->file_list, view_files_drop_watcher, view_files_drag_watcher, (void *)vdat);
 
       if (managed) view_files_display_list(vdat);
 

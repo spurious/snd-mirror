@@ -140,7 +140,13 @@ void reflect_min_db_in_transform_dialog(void);
 
 /* -------- snd-gdrop.c -------- */
 
-void add_drop(GtkWidget *w, void (*watcher)(GtkWidget *w, const char *message, int x, int y, void *data), void *context);
+void add_drop(GtkWidget *w, 
+	      void (*watcher)(GtkWidget *w, const char *message, int x, int y, void *data), 
+	      void *context);
+void add_drag_and_drop(GtkWidget *w, 
+		       void (*drop_watcher)(GtkWidget *w, const char *message, int x, int y, void *data), 
+		       void (*drag_watcher)(GtkWidget *w, const char *message, int x, int y, drag_style_t dtype, void *data), 
+		       void *context);
 void g_init_gxdrop(void);
 
 

@@ -311,7 +311,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA PACKAGE VERSION FGREP PKG_CONFIG FFTW_LIBS FFTW_CFLAGS GSL_CONFIG GSL_LIBS GSL_CFLAGS X_CFLAGS X_PRE_LIBS X_LIBS X_EXTRA_LIBS XLIBS XFLAGS GTK_CFLAGS GTK_LIBS GTK_LD_LIBS CAIRO_CFLAGS GX_FILES GX_HEADERS GL_LIBS GL_FILES GL_FLAGS FAM_LIB GUILE_LIBS GUILE_CFLAGS XM_LIBS LD_XM_LIBS AUDIO_LIB JACK_LIBS JACK_FLAGS LDSO_FLAGS SO_LD PATH_OGGDEC PATH_OGGENC PATH_MPG123 PATH_MPG321 PATH_SPEEXDEC PATH_SPEEXENC PATH_FLAC PATH_TIMIDITY MIDI_FILES SNDLIB_CONFIG SNDLIB_FILES SNDLIB_LIB SET_MAKE MKINSTALLDIRS USE_NLS MSGFMT GMSGFMT XGETTEXT MSGMERGE INTL_MACOSX_LIBS LIBICONV LTLIBICONV INTLLIBS LIBINTL LTLIBINTL POSUB MAKE_TARGET LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA PACKAGE VERSION FGREP PKG_CONFIG FFTW_LIBS FFTW_CFLAGS GSL_CONFIG GSL_LIBS GSL_CFLAGS X_CFLAGS X_PRE_LIBS X_LIBS X_EXTRA_LIBS XLIBS XFLAGS GTK_CFLAGS GTK_LIBS GTK_LD_LIBS CAIRO_CFLAGS GX_FILES GX_HEADERS GL_LIBS GL_FILES GL_FLAGS FAM_LIB GUILE_LIBS GUILE_CFLAGS XM_LIBS LD_XM_LIBS AUDIO_LIB JACK_LIBS JACK_FLAGS LDSO_FLAGS SO_FLAGS SO_LD PATH_OGGDEC PATH_OGGENC PATH_MPG123 PATH_MPG321 PATH_SPEEXDEC PATH_SPEEXENC PATH_FLAC PATH_TIMIDITY MIDI_FILES SNDLIB_CONFIG SNDLIB_FILES SNDLIB_LIB SET_MAKE MKINSTALLDIRS USE_NLS MSGFMT GMSGFMT XGETTEXT MSGMERGE INTL_MACOSX_LIBS LIBICONV LTLIBICONV INTLLIBS LIBINTL LTLIBINTL POSUB MAKE_TARGET LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -17497,6 +17497,7 @@ fi
 
 AUDIO_LIB=""
 LDSO_FLAGS=""
+SO_FLAGS=""
 SO_LD="ld"
 
 JACK_LIBS=""
@@ -17754,9 +17755,9 @@ _ACEOF
 
         LDSO_FLAGS="-shared"
         LIBS="-lm"
-#     This ^ used to be "" but redhat 7 the -lm needs to be explicit
-#     it was "" to cancel -lXpm without the needed -L<dir> for the same case
-
+	if test "$GCC" = yes ; then
+	  SO_FLAGS="-fPIC $SO_FLAGS"
+        fi
         audio_system=OSS
 
 	if test "$with_alsa" = yes || test "$with_static_alsa" = yes ; then
@@ -18462,6 +18463,9 @@ _ACEOF
 
 	audio_system=Hpux
 	LDSO_FLAGS="+z -Ae +DA1.1"
+	if test "$GCC" = yes ; then
+	  SO_FLAGS="-fPIC $SO_FLAGS"
+        fi
         ;;
     *-sgi*)
         cat >>confdefs.h <<\_ACEOF
@@ -18495,6 +18499,9 @@ _ACEOF
 
 	LIBS="-lm"
 	audio_system=OSS
+	if test "$GCC" = yes ; then
+	  SO_FLAGS="-fPIC $SO_FLAGS"
+        fi
         ;;
     *-*-freebsd*)
 	cat >>confdefs.h <<\_ACEOF
@@ -18503,6 +18510,9 @@ _ACEOF
 
 	LIBS="-lm"
 	audio_system=OSS
+	if test "$GCC" = yes ; then
+	  SO_FLAGS="-fPIC $SO_FLAGS"
+        fi
 	;;
     *-*-openbsd*)
         cat >>confdefs.h <<\_ACEOF
@@ -18510,6 +18520,9 @@ _ACEOF
 _ACEOF
 
 	audio_system=OpenBSD
+	if test "$GCC" = yes ; then
+	  SO_FLAGS="-fPIC $SO_FLAGS"
+        fi
         ;;
     *-*-netbsd*)
         cat >>confdefs.h <<\_ACEOF
@@ -18517,6 +18530,10 @@ _ACEOF
 _ACEOF
 
 	audio_system=NetBSD
+	if test "$GCC" = yes ; then
+	  SO_FLAGS="-fPIC $SO_FLAGS"
+        fi
+# TODO: fPIC in sndlib/libxm and maybe clm configure's
         ;;
     *-*-cygwin*)
 	cat >>confdefs.h <<\_ACEOF
@@ -18652,6 +18669,7 @@ echo $ECHO_N "checking for audio system... $ECHO_C" >&6
 echo "$as_me:$LINENO: result: $audio_system" >&5
 echo "${ECHO_T}$audio_system" >&6
 fi
+
 
 
 
@@ -22289,6 +22307,7 @@ s,@AUDIO_LIB@,$AUDIO_LIB,;t t
 s,@JACK_LIBS@,$JACK_LIBS,;t t
 s,@JACK_FLAGS@,$JACK_FLAGS,;t t
 s,@LDSO_FLAGS@,$LDSO_FLAGS,;t t
+s,@SO_FLAGS@,$SO_FLAGS,;t t
 s,@SO_LD@,$SO_LD,;t t
 s,@PATH_OGGDEC@,$PATH_OGGDEC,;t t
 s,@PATH_OGGENC@,$PATH_OGGENC,;t t

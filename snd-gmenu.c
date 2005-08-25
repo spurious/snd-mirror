@@ -172,6 +172,30 @@ static void menu_drop_watcher(GtkWidget *w, const char *filename, int x, int y, 
   if (sp) select_channel(sp, 0);
 }
 
+static bool have_drag_title = false;
+static void menu_drag_watcher(GtkWidget *w, const char *str, int x, int y, drag_style_t dtype, void *data)
+{
+  char *new_title;
+  switch (dtype)
+    {
+    case DRAG_MOTION:
+    case DRAG_ENTER:
+      if (!have_drag_title)
+	{
+	  new_title = mus_format("%s: drop to open file", ss->startup_title);
+	  gtk_window_set_title(GTK_WINDOW(MAIN_SHELL(ss)), new_title);
+	  have_drag_title = true;
+	  FREE(new_title);
+	}
+      break;
+    case DRAG_LEAVE:
+      reflect_file_change_in_title();
+      have_drag_title = false;
+      break;
+    }
+}
+
+
 
 /* -------------------------------- MAIN MENU -------------------------------- */
 
@@ -187,7 +211,7 @@ GtkWidget *add_menu(void)
 
   main_menu = gtk_menu_bar_new();
   ml[m_menu] = NULL;
-  add_drop(main_menu, menu_drop_watcher, NULL);
+  add_drag_and_drop(main_menu, menu_drop_watcher, menu_drag_watcher, NULL);
   gtk_box_pack_start(GTK_BOX(MAIN_PANE(ss)), main_menu, false, true, 0);
   gtk_widget_show(main_menu);
 

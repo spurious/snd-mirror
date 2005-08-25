@@ -767,6 +767,39 @@ static void channel_drop_watcher(Widget w, const char *str, Position x, Position
   mix_at_x_y((int)data, str, x, y);
 }
 
+static void channel_drag_watcher(Widget w, const char *str, Position x, Position y, drag_style_t dtype, void *context)
+{
+  int snd, chn, data;
+  snd_info *sp;
+  chan_info *cp;
+  float seconds;
+  XtVaGetValues(w, XmNuserData, &data, NULL);
+  chn = UNPACK_CHANNEL(data);
+  snd = UNPACK_SOUND(data);
+
+  sp = ss->sounds[snd];
+  if (snd_ok(sp))
+    {
+      switch (dtype)
+	{
+	case DRAG_ENTER:
+	case DRAG_MOTION:
+	  cp = sp->chans[chn];
+	  if ((sp->nchans > 1) && (sp->channel_style == CHANNELS_COMBINED))
+	    cp = which_channel(sp, y);    
+	  seconds = (float)(ungrf_x(cp->axis, x));
+	  if (seconds < 0.0) seconds = 0.0;
+	  if (sp->nchans > 1)
+	    report_in_minibuffer(sp, "drop to mix file in chan %d at %.4f", cp->chan + 1, seconds);
+	  else report_in_minibuffer(sp, "drop to mix file at %.4f", seconds);
+	  break;
+	case DRAG_LEAVE:
+	  report_in_minibuffer(sp, " "); /* not clear_minibuffer here! => segfault */
+	  break;
+	}
+    }
+}
+
 int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Widget main, fw_button_t button_style, bool with_events)
 {
   int i;
@@ -1031,7 +1064,7 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Wid
 #else
 	  data = (long)PACK_SOUND_AND_CHANNEL(sp->index, cp->chan);
 #endif
-	  add_drop(cw[W_graph], channel_drop_watcher, (void *)data);
+	  add_drag_and_drop(cw[W_graph], channel_drop_watcher, channel_drag_watcher, (void *)data);
 	}
 
       FREE(n1);

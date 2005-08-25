@@ -75,6 +75,10 @@ typedef struct {
   g_adj_t speed_adj;
 
   gc_t env_gc;
+#if USE_GTK
+  gulong at_sample_text_handler_id, at_mark_text_handler_id;
+  gulong at_sample_button_handler_id, at_mark_button_handler_id;
+#endif
 } view_files_info;
 
 void vf_unhighlight_row(widget_t nm, widget_t rw);

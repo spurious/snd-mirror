@@ -194,18 +194,37 @@ void check_menu_labels(int key, int state, bool extended)
 
 /* -------------------------------- MAIN MENU -------------------------------- */
 
+static void menu_drag_watcher(Widget w, const char *str, Position x, Position y, drag_style_t dtype, void *data)
+{
+  char *new_title;
+  switch (dtype)
+    {
+    case DRAG_ENTER:
+      new_title = mus_format("%s: drop to open file", ss->startup_title);
+      XtVaSetValues(MAIN_SHELL(ss), XmNtitle, (char*)new_title, NULL);
+      if (!(ss->using_schemes)) XmChangeColor(w, ss->sgx->pushed_button_color);
+      FREE(new_title);
+      break;
+    case DRAG_LEAVE:
+      reflect_file_change_in_title();
+      if (!(ss->using_schemes)) XmChangeColor(w, ss->sgx->highlight_color);
+      break;
+    default:
+      break;
+    }
+}
+
 static void menu_drop_watcher(Widget w, const char *str, Position x, Position y, void *data)
 {
   snd_info *sp = NULL;
   ss->open_requestor = FROM_DRAG_AND_DROP;
-  /* TODO: handle mult-file request here and below */
   sp = snd_open_file(str, FILE_READ_WRITE);
   if (sp) select_channel(sp, 0);
 }
 
 void add_menu_drop(void)
 {
-  add_drop(main_menu, menu_drop_watcher, NULL);
+  add_drag_and_drop(main_menu, menu_drop_watcher, menu_drag_watcher, NULL);
 }
 
 Widget add_menu(void)

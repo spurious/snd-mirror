@@ -2512,6 +2512,12 @@ view_files_info *new_view_files_dialog(void)
       vdat->sort_items_size = 0;
       vdat->sort_items = NULL;
       vdat->speed_style = speed_control_style(ss);
+#if USE_GTK
+      vdat->at_sample_text_handler_id = 0;
+      vdat->at_mark_text_handler_id = 0;
+      vdat->at_sample_button_handler_id = 0; 
+      vdat->at_mark_button_handler_id = 0;
+#endif
     }
   /* don't clear at this point! */
   view_files_infos[loc]->currently_selected_files = 0;
@@ -2867,9 +2873,11 @@ void view_files_unplay(void)
 
 void view_files_reflect_sort_items(void)
 {
+  int i;
+#if USE_MOTIF || USE_GTK
   view_files_info *vdat;
-
-  int i, j = 0, k;
+  int j = 0, k;
+#endif
   if (view_files_info_size == 0) return;
   for (i = 0; i < ss->file_sorters_size; i++)
     {
@@ -2902,8 +2910,16 @@ void view_files_reflect_sort_items(void)
 		vdat = view_files_infos[k];
 		set_menu_label(vdat->sort_items[j], 
 			       XEN_TO_C_STRING(XEN_CAR(ref)));
-		set_user_data(G_OBJECT(vdat->sort_items[j]), 
-			      (gpointer)(i + SORT_BY_PROC)); /* this is an index into the file_sorters list, not the widget list */
+		{
+#if (SIZEOF_INT == SIZEOF_VOID_P)
+		  int data;
+#else
+		  long data;
+#endif
+		  data = i + SORT_BY_PROC;
+		  set_user_data(G_OBJECT(vdat->sort_items[j]), 
+				(gpointer)data); /* this is an index into the file_sorters list, not the widget list */
+		}
 		gtk_widget_show(vdat->sort_items[j]);
 	      }
 	  j++;
@@ -2929,7 +2945,7 @@ void add_file_to_view_files_list(view_files_info *vdat, const char *filename, co
   if (row != -1)
     {
       if ((vdat->dialog) &&
-	  (XtIsManaged(vdat->dialog)) &&
+	  (widget_is_active(vdat->dialog)) &&
 	  (vdat->file_list_entries[row]))
 	{
 	  ensure_scrolled_window_row_visible(vdat->file_list, row, vdat->end + 1);
@@ -2942,7 +2958,7 @@ void add_file_to_view_files_list(view_files_info *vdat, const char *filename, co
     {
       char *msg;
       if ((vdat->dialog) &&
-	  (XtIsManaged(vdat->dialog)))
+	  (widget_is_active(vdat->dialog)))
 	{
 	  if (errno != 0)
 	    msg = mus_format("%s: %s", filename, strerror(errno));
@@ -4003,7 +4019,6 @@ static XEN g_add_sound_file_extension(XEN ext)
   return(ext);
 }
 
-/* TODO: test/doc sound-file-extensions */
 static XEN g_sound_file_extensions(void)
 {
   #define H_sound_file_extensions "(" S_sound_file_extensions ") -> list of current sound file extensions (used \
@@ -4019,11 +4034,18 @@ by the just-sounds file filters)"
 
 static XEN g_set_sound_file_extensions(XEN lst)
 {
-  XEN lst1;
+  int i, len;
   sound_file_extensions_end = 0;
   default_sound_file_extensions = 0;
-  for (lst1 = XEN_COPY_ARG(lst); XEN_NOT_NULL_P(lst1); lst1 = XEN_CDR(lst1))
-    add_sound_file_extension(XEN_TO_C_STRING(XEN_CAR(lst1)));
+  len = XEN_LIST_LENGTH(lst);
+  for (i = 0; i < len; i++)
+    if (!(XEN_STRING_P(XEN_LIST_REF(lst, i))))
+      {
+	XEN_ASSERT_TYPE(0, XEN_LIST_REF(lst, i), i, S_setB S_sound_file_extensions, "a filename extension (a string like \"snd\")");
+	return(XEN_FALSE);
+      }
+  for (i = 0; i < len; i++)
+    add_sound_file_extension(XEN_TO_C_STRING(XEN_LIST_REF(lst, i)));
   return(lst);
 }
 

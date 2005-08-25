@@ -3404,6 +3404,11 @@ void vf_highlight_row(GtkWidget *nm, GtkWidget *rw)
   gtk_widget_modify_base(rw, GTK_STATE_NORMAL, ss->sgx->zoom_color);
 }
 
+void vf_flash_row(vf_row *r)
+{
+  /* TODO: gtk side of showing/flashing existing file entry */
+}
+
 void vf_post_info(view_files_info *vdat, int pos)
 {
   char *title;
@@ -3661,14 +3666,16 @@ static void vf_sample_text_modify_callback(GtkWidget *w, gpointer context)
   vf_clear_sample((view_files_info *)context);
 } 
 
-static gulong at_sample_text_handler_id = 0, at_mark_text_handler_id = 0; /* TODO: vdat-specific */
-static gulong at_sample_button_handler_id = 0, at_mark_button_handler_id = 0; /* ditto */
-
 static void vf_clear_sample(view_files_info *vdat)
 {
   vf_clear_error(vdat);
-  g_signal_handler_disconnect(vdat->at_sample_text, at_sample_text_handler_id);
-  g_signal_handler_disconnect(vdat->at_sample_button, at_sample_button_handler_id);
+  if (vdat->at_sample_text_handler_id != 0)
+    {
+      g_signal_handler_disconnect(vdat->at_sample_text, vdat->at_sample_text_handler_id);
+      g_signal_handler_disconnect(vdat->at_sample_button, vdat->at_sample_button_handler_id);
+      vdat->at_sample_text_handler_id = 0;
+      vdat->at_sample_button_handler_id = 0;
+    }
 }
 
 static void vf_clear_mark(view_files_info *vdat);
@@ -3686,8 +3693,13 @@ static void vf_mark_text_modify_callback(GtkWidget *w, gpointer context)
 static void vf_clear_mark(view_files_info *vdat)
 {
   vf_clear_error(vdat);
-  g_signal_handler_disconnect(vdat->at_mark_text, at_mark_text_handler_id);
-  g_signal_handler_disconnect(vdat->at_mark_button, at_mark_button_handler_id);
+  if (vdat->at_mark_text_handler_id != 0)
+    {
+      g_signal_handler_disconnect(vdat->at_mark_text, vdat->at_mark_text_handler_id);
+      g_signal_handler_disconnect(vdat->at_mark_button, vdat->at_mark_button_handler_id);
+      vdat->at_mark_text_handler_id = 0;
+      vdat->at_mark_button_handler_id = 0;
+    }
 }
 
 void vf_post_error(const char *error_msg, void *data)
@@ -3705,14 +3717,14 @@ void vf_post_location_error(const char *error_msg, void *data)
   if (vdat->location_choice == VF_AT_SAMPLE)
     {
       /* watch at_sample_text or button (undo) */
-      at_sample_text_handler_id = g_signal_connect(vdat->at_sample_text, "changed", G_CALLBACK(vf_sample_text_modify_callback), (gpointer)data);
-      at_sample_button_handler_id = g_signal_connect(vdat->at_sample_button, "activated", G_CALLBACK(vf_sample_button_modify_callback), (gpointer)data);
+      vdat->at_sample_text_handler_id = g_signal_connect(vdat->at_sample_text, "changed", G_CALLBACK(vf_sample_text_modify_callback), (gpointer)data);
+      vdat->at_sample_button_handler_id = g_signal_connect(vdat->at_sample_button, "activated", G_CALLBACK(vf_sample_button_modify_callback), (gpointer)data);
     }
   else
     {
       /* watch at_mark_text or button */
-      at_mark_text_handler_id = g_signal_connect(vdat->at_mark_text, "changed", G_CALLBACK(vf_mark_text_modify_callback), (gpointer)data);
-      at_mark_button_handler_id = g_signal_connect(vdat->at_mark_button, "activated", G_CALLBACK(vf_mark_button_modify_callback), (gpointer)data);
+      vdat->at_mark_text_handler_id = g_signal_connect(vdat->at_mark_text, "changed", G_CALLBACK(vf_mark_text_modify_callback), (gpointer)data);
+      vdat->at_mark_button_handler_id = g_signal_connect(vdat->at_mark_button, "activated", G_CALLBACK(vf_mark_button_modify_callback), (gpointer)data);
     }
 }
 
@@ -3845,7 +3857,6 @@ static gboolean vf_speed_motion_callback(GtkWidget *w, GdkEventMotion *ev, gpoin
   return(false);
 }
 
-/* TODO: vf amp/speed clicking the arrows doesn't update the label (true also of mix dialog) */
 static gboolean vf_speed_release_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
   Float scrollval;

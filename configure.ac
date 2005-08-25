@@ -1264,6 +1264,7 @@ fi
 
 AUDIO_LIB=""
 LDSO_FLAGS=""
+SO_FLAGS=""
 SO_LD="ld"
 
 JACK_LIBS=""
@@ -1303,9 +1304,9 @@ case "$host" in
 	AC_DEFINE(MUS_LINUX)
         LDSO_FLAGS="-shared"
         LIBS="-lm"
-#     This ^ used to be "" but redhat 7 the -lm needs to be explicit
-#     it was "" to cancel -lXpm without the needed -L<dir> for the same case
-
+	if test "$GCC" = yes ; then
+	  SO_FLAGS="-fPIC $SO_FLAGS"
+        fi
         audio_system=OSS
 
 	if test "$with_alsa" = yes || test "$with_static_alsa" = yes ; then
@@ -1420,6 +1421,9 @@ case "$host" in
         AC_DEFINE(MUS_HPUX)
 	audio_system=Hpux
 	LDSO_FLAGS="+z -Ae +DA1.1"
+	if test "$GCC" = yes ; then
+	  SO_FLAGS="-fPIC $SO_FLAGS"
+        fi
         ;;
     *-sgi*) 
         AC_DEFINE(MUS_SGI)
@@ -1444,19 +1448,32 @@ case "$host" in
 	AC_DEFINE(HAVE_OSS)
 	LIBS="-lm"
 	audio_system=OSS
+	if test "$GCC" = yes ; then
+	  SO_FLAGS="-fPIC $SO_FLAGS"
+        fi
         ;;
     *-*-freebsd*)
 	AC_DEFINE(HAVE_OSS)
 	LIBS="-lm"
 	audio_system=OSS
+	if test "$GCC" = yes ; then
+	  SO_FLAGS="-fPIC $SO_FLAGS"
+        fi
 	;;
     *-*-openbsd*) 
         AC_DEFINE(MUS_OPENBSD)
 	audio_system=OpenBSD
+	if test "$GCC" = yes ; then
+	  SO_FLAGS="-fPIC $SO_FLAGS"
+        fi
         ;;
     *-*-netbsd*) 
         AC_DEFINE(MUS_NETBSD)
 	audio_system=NetBSD
+	if test "$GCC" = yes ; then
+	  SO_FLAGS="-fPIC $SO_FLAGS"
+        fi
+# TODO: fPIC in sndlib/libxm and maybe clm configure's
         ;;
     *-*-cygwin*)
 	AC_DEFINE(MUS_WINDOZE)
@@ -1497,6 +1514,7 @@ AC_SUBST(JACK_LIBS)
 AC_SUBST(JACK_FLAGS)
 
 AC_SUBST(LDSO_FLAGS)
+AC_SUBST(SO_FLAGS)
 AC_SUBST(SO_LD)
 
 

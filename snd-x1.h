@@ -151,7 +151,13 @@ void reflect_min_db_in_transform_dialog(void);
 
 /* -------- snd-xdrop.c -------- */
 
-void add_drop(Widget w, void (*watcher)(Widget w, const char *message, Position x, Position y, void *data), void *context);
+void add_drop(Widget w, 
+	      void (*watcher)(Widget w, const char *message, Position x, Position y, void *data), 
+	      void *context);
+void add_drag_and_drop(Widget w, 
+		       void (*drop_watcher)(Widget w, const char *message, Position x, Position y, void *data), 
+		       void (*drag_watcher)(Widget w, const char *message, Position x, Position y, drag_style_t dtype, void *data), 
+		       void *context);
 void g_init_gxdrop(void);
 
 
