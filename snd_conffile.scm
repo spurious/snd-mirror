@@ -1689,7 +1689,10 @@ Does not work.
 ;;(set! last-height 500)
 ;;(set! last-width 700)
 
-
+(define c-sounds-in-menu '())
+(define (c-remove-sounds-in-menu filename)
+  (set! c-sounds-in-menu (remove (lambda (name) (string=? name filename))
+				 c-sounds-in-menu)))
 
 ;; For gtk, the -notebook switch doesn't seem to work very well.
 ;; For motif, the -notebook switch doesn't seem to work very well either.
@@ -1745,11 +1748,14 @@ Does not work.
 	      (c-switch-to-buf filename)
 	      #t)
 	    (let ((was-starting-up? *c-is-starting-up*))
+	      (if *c-is-starting-up*
+		  (set! c-sounds-in-menu (cons filename c-sounds-in-menu)))
 	      (add-to-menu buffer-menu 
 			   filename
 			   (lambda ()
 			     (if was-starting-up?
 				 (begin
+				   (c-remove-sounds-in-menu filename)
 				   (remove-from-menu buffer-menu filename)
 				   (open-sound filename))
 				 (c-switch-to-buf filename))))
@@ -1948,8 +1954,9 @@ Does not work.
     (if (c-selected-sound)
 	(for-each (lambda (filename)
 		    (write-line filename fd))
-		  (reverse (delete-duplicates (map (lambda (snd) (file-name snd))
-						   (cons (c-selected-sound) (sounds)))))))
+		  (reverse (delete-duplicates (append (map (lambda (snd) (file-name snd))
+							   (cons (c-selected-sound) (sounds)))
+						      c-sounds-in-menu)))))
     (close fd)))
 
 
@@ -1959,7 +1966,8 @@ Does not work.
 				   
 
 (add-hook! after-open-hook (lambda args
-			     (c-save-all-filenames (c-open-sounds-filename))
+			     (if (not *c-is-starting-up*)
+				 (c-save-all-filenames (c-open-sounds-filename)))
 			     #f))
 			
 
@@ -1979,8 +1987,9 @@ Does not work.
 			     (lambda (line)
 			       (catch #t
 				      (lambda ()
-					(set! filename line)
-					(open-sound line))
+					(if filename
+					    (open-sound filename))
+					(set! filename line))
 				      (lambda (key . args)
 					(c-display "File \"" line  "\" not found.")
 					#f))))
@@ -2001,55 +2010,38 @@ Does not work.
 ;; Seems to work for me at least.
 ;;##############################################################
 
-
 (let ((width 800)
-      (height 600))
+      (height 600)
+      (num-retries 0)
+      (isretrying #f))
+		   
 
-  (define y-change 106)
-  (define lastheight 0)
-
-  (if use-gtk
-      (add-hook! after-open-hook
-		 (lambda (snd)
-		   (let ((w (c-editor-widget snd)))
-		     (c-g_signal_connect w "configure_event"
-					 (lambda (w e i)
-					   (let ((event (GDK_EVENT_CONFIGURE e)))
-					     (set! width (.width event))
-					     (set! height (.height event)))))
-		     )
-		   #f)))
-  
-
-
-  (add-hook! close-hook
-	     (lambda (snd)
-	       (set! lastheight (window-height))
-	       (set! (window-width) width)
-	       #f))
+  (define (dotheretry)
+    (if (> num-retries 0)
+	(begin
+	  (if (not (= (window-width) width))
+	      (set! (window-width) width))
+	  (if (not (= (window-height) height))
+	      (set! (window-height) height))
+	  (set! num-retries (1- num-retries))
+	  (in 2 dotheretry))
+	(set! isretrying #f)))
 
   (add-hook! open-hook
 	     (lambda (filename)
-	       (set! lastheight (window-height))
-	       (set! (window-width) width)
-	       (set! (window-height) height)
-	       #f))
-
-
-  (add-hook! after-open-hook 
-	     (lambda (snd)
-	       (set! (window-width) width)
-	       (set! (window-height) lastheight) ;;(+ height y-change))
-	       #f))
-    
-  (add-hook! initial-graph-hook
-	     (lambda (snd chn dur)
-	       (set! (window-width) width)
-	       (set! (window-height) height)
-	       #f))
+	       (set! height (window-height))
+	       (set! width (window-width))
+	       (set! num-retries 250)))
   
-  )
+  (add-hook! graph-hook
+	     (lambda (snd chn y0 y1)
+	       (if (not isretrying)
+		   (begin
+		     (set! isretrying #t)
+		     (dotheretry))))))
+  
 
+  
 
 (set! *c-is-starting-up* #f)
 
