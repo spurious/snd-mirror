@@ -18533,7 +18533,8 @@ _ACEOF
 	if test "$GCC" = yes ; then
 	  SO_FLAGS="-fPIC $SO_FLAGS"
         fi
-# TODO: fPIC in sndlib/libxm and maybe clm configure's
+# TODO: fPIC in sndlib/libxm and maybe clm makefile.in's
+# TODO: don't assume gcc in sndlib configure.ac
         ;;
     *-*-cygwin*)
 	cat >>confdefs.h <<\_ACEOF
@@ -19025,7 +19026,7 @@ else
   echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6
 fi
- # Falc read/write
+ # Flac read/write
 
 if test "$PATH_FLAC" != "no" ; then
   cat >>confdefs.h <<\_ACEOF
@@ -21533,7 +21534,7 @@ fi
 
 
 else
-# deperation!
+# desperation!
 cp makefile.in makefile.gettext
 cp makefile.no-gettext makefile.in
 fi

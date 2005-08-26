@@ -25,15 +25,18 @@ enum {W_pane,
       NUM_SND_WIDGETS
 };
 
+Widget unite_button(snd_info *sp) {return(sp->sgx->snd_widgets[W_unite]);}
+Widget filter_graph(snd_info *sp) {return(sp->sgx->snd_widgets[W_filter_env]);}
+Widget w_snd_pane(snd_info *sp)   {return(sp->sgx->snd_widgets[W_pane]);}
+Widget w_snd_name(snd_info *sp)   {return(sp->sgx->snd_widgets[W_name]);}
+
 #define ERROR_INFO(Sp)           Sp->sgx->snd_widgets[W_error_info_label]
 #define ERROR_INFO_FRAME(Sp)     Sp->sgx->snd_widgets[W_error_info_frame]
 #define ERROR_INFO_BOX(Sp)       Sp->sgx->snd_widgets[W_error_info_box]
 
-Widget unite_button(snd_info *sp) {return(sp->sgx->snd_widgets[W_unite]);}
-Widget filter_graph(snd_info *sp) {return(sp->sgx->snd_widgets[W_filter_env]);}
-
-Widget w_snd_pane(snd_info *sp)   {return(sp->sgx->snd_widgets[W_pane]);}
-Widget w_snd_name(snd_info *sp)   {return(sp->sgx->snd_widgets[W_name]);}
+#define SND_PANE(Sp)             Sp->sgx->snd_widgets[W_pane]
+#define SND_NAME(Sp)             Sp->sgx->snd_widgets[W_name]
+#define SND_NAME_SEPARATOR(Sp)   Sp->sgx->snd_widgets[W_amp_separator]
 
 #define NAME_BOX(Sp)             Sp->sgx->snd_widgets[W_name_form]
 #define NAME_ICON(Sp)            Sp->sgx->snd_widgets[W_name_icon]
@@ -48,26 +51,41 @@ Widget w_snd_name(snd_info *sp)   {return(sp->sgx->snd_widgets[W_name]);}
 #define CONTROLS(Sp)             Sp->sgx->snd_widgets[W_amp_form]
 #define AMP_SCROLLBAR(Sp)        Sp->sgx->snd_widgets[W_amp]
 #define AMP_LABEL(Sp)            Sp->sgx->snd_widgets[W_amp_number]
+#define AMP_BUTTON(Sp)           Sp->sgx->snd_widgets[W_amp_label]
+
 #define SPEED_SCROLLBAR(Sp)      Sp->sgx->snd_widgets[W_speed]
 #define SPEED_ARROW(Sp)          Sp->sgx->snd_widgets[W_speed_arrow]
 #define SPEED_LABEL(Sp)          Sp->sgx->snd_widgets[W_speed_number]
+#define SPEED_BUTTON(Sp)         Sp->sgx->snd_widgets[W_speed_label]
+
 #define EXPAND_SCROLLBAR(Sp)     Sp->sgx->snd_widgets[W_expand]
 #define EXPAND_LABEL(Sp)         Sp->sgx->snd_widgets[W_expand_number]
-#define EXPAND_BUTTON(Sp)        Sp->sgx->snd_widgets[W_expand_button]
+#define EXPAND_RIGHT_BUTTON(Sp)  Sp->sgx->snd_widgets[W_expand_button]
+#define EXPAND_LEFT_BUTTON(Sp)   Sp->sgx->snd_widgets[W_expand_label]
+
 #define CONTRAST_SCROLLBAR(Sp)   Sp->sgx->snd_widgets[W_contrast]
 #define CONTRAST_LABEL(Sp)       Sp->sgx->snd_widgets[W_contrast_number]
-#define CONTRAST_BUTTON(Sp)      Sp->sgx->snd_widgets[W_contrast_button]
+#define CONTRAST_RIGHT_BUTTON(Sp) Sp->sgx->snd_widgets[W_contrast_button]
+#define CONTRAST_LEFT_BUTTON(Sp) Sp->sgx->snd_widgets[W_contrast_label]
+
 #define REVSCL_SCROLLBAR(Sp)     Sp->sgx->snd_widgets[W_revscl]
 #define REVLEN_SCROLLBAR(Sp)     Sp->sgx->snd_widgets[W_revlen]
 #define REVSCL_LABEL(Sp)         Sp->sgx->snd_widgets[W_revscl_number]
 #define REVLEN_LABEL(Sp)         Sp->sgx->snd_widgets[W_revlen_number]
+#define REVSCL_BUTTON(Sp)        Sp->sgx->snd_widgets[W_revscl_label]
+#define REVLEN_BUTTON(Sp)        Sp->sgx->snd_widgets[W_revlen_label]
 #define REVERB_BUTTON(Sp)        Sp->sgx->snd_widgets[W_reverb_button]
+
 #define FILTER_ORDER_TEXT(Sp)    Sp->sgx->snd_widgets[W_filter_order]
 #define FILTER_COEFFS_TEXT(Sp)   Sp->sgx->snd_widgets[W_filter]
 #define FILTER_BUTTON(Sp)        Sp->sgx->snd_widgets[W_filter_button]
 #define FILTER_DB_BUTTON(Sp)     Sp->sgx->snd_widgets[W_filter_dB]
 #define FILTER_HZ_BUTTON(Sp)     Sp->sgx->snd_widgets[W_filter_hz]
 #define FILTER_LABEL(Sp)         Sp->sgx->snd_widgets[W_filter_label]
+#define FILTER_GRAPH(Sp)         Sp->sgx->snd_widgets[W_filter_env]
+#define FILTER_ORDER_UP(Sp)      Sp->sgx->snd_widgets[W_filter_order_up]
+#define FILTER_ORDER_DOWN(Sp)    Sp->sgx->snd_widgets[W_filter_order_down]
+#define FILTER_FRAME(Sp)         Sp->sgx->snd_widgets[W_filter_frame]
 
 static XmString multi_line_label(const char *s, int *lines)
 {
@@ -460,7 +478,7 @@ void toggle_expand_button(snd_info *sp, bool state)
 {
   if (IS_PLAYER(sp))
     sp->expand_control_p = state;
-  else XmToggleButtonSetState(EXPAND_BUTTON(sp), (Boolean)state, true);
+  else XmToggleButtonSetState(EXPAND_RIGHT_BUTTON(sp), (Boolean)state, true);
 }
 
 
@@ -534,7 +552,7 @@ void toggle_contrast_button(snd_info *sp, bool state)
 {
   if (IS_PLAYER(sp))
     sp->contrast_control_p = state;
-  else XmToggleButtonSetState(CONTRAST_BUTTON(sp), (Boolean)state, true);
+  else XmToggleButtonSetState(CONTRAST_RIGHT_BUTTON(sp), (Boolean)state, true);
 }
 
 
@@ -717,7 +735,7 @@ void display_filter_env(snd_info *sp)
   Widget drawer;
   env_editor *edp;
   edp = sp->sgx->flt;
-  drawer = filter_graph(sp);
+  drawer = FILTER_GRAPH(sp);
   height = widget_height(drawer);
   if (height < MIN_FILTER_GRAPH_HEIGHT) return;
   width = widget_width(drawer);
@@ -1087,7 +1105,7 @@ static void sync_button_callback(Widget w, XtPointer context, XtPointer info)
 
 /* ---------------- UNITE BUTTON ---------------- */
 
-static void unite_button_callback(Widget w, XtPointer context, XtPointer info)
+static void UNITE_BUTTON_callback(Widget w, XtPointer context, XtPointer info)
 {
   /* click if set unsets, click if unset->combine, ctrl-click->superimpose */
   snd_info *sp = (snd_info *)context;
@@ -1188,7 +1206,7 @@ static void watch_sash(Widget w, XtPointer closure, XtPointer info)
 		      (sp->channel_style == CHANNELS_SEPARATE))
 		    {
 		      Widget child;
-		      child = w_snd_pane(sp);
+		      child = SND_PANE(sp);
 		      inner_panes[outer_ctr] = sp->nchans;
 		      inner_sizes[outer_ctr] = (int *)CALLOC(sp->nchans, sizeof(int));
 		      XtVaGetValues(child, XmNheight, &(outer_sizes[outer_ctr]), NULL);
@@ -1214,7 +1232,7 @@ static void watch_sash(Widget w, XtPointer closure, XtPointer info)
 		      (sp->nchans > 1) &&
 		      (sp->channel_style == CHANNELS_SEPARATE))
 		    {
-		      XtVaGetValues(w_snd_pane(sp), XmNheight, &cur_outer_size, NULL);
+		      XtVaGetValues(SND_PANE(sp), XmNheight, &cur_outer_size, NULL);
 		      if ((cur_outer_size > 40) && 
 			  (abs(cur_outer_size - outer_sizes[outer_ctr]) > (sp->nchans * 2)))
 			{
@@ -1380,42 +1398,26 @@ void x_bomb(snd_info *sp, bool on)
   else sp->bomb_ctr = 0;
 }
 
-static void inc_bomb(snd_info *sp, void *ptr)
-{
-  if (sp)
-    {
-      if (sp->need_update || sp->file_unreadable)
-	{
-	  int *buf;
-	  buf = (int *)ptr;
-	  buf[0]++;
-	  show_bomb_icon(sp, sp->bomb_ctr);
-	  sp->bomb_ctr++;
-	}
-    }
-}
-
-static bool bomb_in_progress = false;
-
 static void bomb_check(XtPointer context, XtIntervalId *id)
 {
-  int incs[1];
-  incs[0] = 0;
-  for_each_sound(inc_bomb, (void *)incs);
-  if (incs[0] > 0)
-    XtAppAddTimeOut(MAIN_APP(ss),
-		    (unsigned long)BOMB_TIME,
-		    (XtTimerCallbackProc)bomb_check,
-		    context);
-  else bomb_in_progress = false;
+  snd_info *sp = (snd_info *)context;
+  if ((sp->need_update) || (sp->file_unreadable))
+    {
+      show_bomb_icon(sp, sp->bomb_ctr++);
+      XtAppAddTimeOut(MAIN_APP(ss),
+		      (unsigned long)BOMB_TIME,
+		      (XtTimerCallbackProc)bomb_check,
+		      context);
+    }
+  else sp->bomb_in_progress = false;
 }
 
-/* TODO: bomb_in_progress should be local to sp -- could be a bunch of messed up sounds */
 void snd_file_bomb_icon(snd_info *sp, bool on)
 {
-  if ((on) && (!bomb_in_progress))
+  if ((on) && (!(sp->bomb_in_progress)))
     {
-      bomb_in_progress = true;
+      sp->bomb_in_progress = true;
+      sp->bomb_ctr = 0;
       XtAppAddTimeOut(MAIN_APP(ss),
 		      (unsigned long)BOMB_TIME,
 		      (XtTimerCallbackProc)bomb_check,
@@ -1703,10 +1705,10 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       XtSetArg(args[n], XmNuserData, sp->index); n++;
 
       if (sound_style(ss) == SOUNDS_IN_SEPARATE_WINDOWS)
-	sw[W_pane] = XtCreateManagedWidget("snd-pane", xmPanedWindowWidgetClass, sx->dialog, args, n);
-      else sw[W_pane] = XtCreateManagedWidget("snd-pane", xmPanedWindowWidgetClass, SOUND_PANE(ss), args, n);
+	SND_PANE(sp) = XtCreateManagedWidget("snd-pane", xmPanedWindowWidgetClass, sx->dialog, args, n);
+      else SND_PANE(sp) = XtCreateManagedWidget("snd-pane", xmPanedWindowWidgetClass, SOUND_PANE(ss), args, n);
 
-      XtAddEventHandler(sw[W_pane], KeyPressMask, false, graph_key_press, (XtPointer)sp);
+      XtAddEventHandler(SND_PANE(sp), KeyPressMask, false, graph_key_press, (XtPointer)sp);
       /* if user clicks in controls, then starts typing, try to send key events to current active channel */
       /* all widgets in the control-pane that would otherwise intercept the key events get this event handler */
 
@@ -1723,7 +1725,7 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-      NAME_BOX(sp) = XtCreateManagedWidget("snd-name-form", xmFormWidgetClass, sw[W_pane], args, n);
+      NAME_BOX(sp) = XtCreateManagedWidget("snd-name-form", xmFormWidgetClass, SND_PANE(sp), args, n);
       XtAddEventHandler(NAME_BOX(sp), KeyPressMask, false, graph_key_press, (XtPointer)sp);
 
       n = 0;      
@@ -1860,7 +1862,7 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNselectColor, ss->sgx->pushed_button_color); n++;}
       UNITE_BUTTON(sp) = make_togglebutton_widget(_("unite"), NAME_BOX(sp), args, n);
       XtAddEventHandler(UNITE_BUTTON(sp), KeyPressMask, false, graph_key_press, (XtPointer)sp);
-      XtAddCallback(UNITE_BUTTON(sp), XmNvalueChangedCallback, unite_button_callback, (XtPointer)sp);
+      XtAddCallback(UNITE_BUTTON(sp), XmNvalueChangedCallback, UNITE_BUTTON_callback, (XtPointer)sp);
 
       /* error display */
       n = 0;
@@ -1894,11 +1896,11 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       n = 0;      
       if (need_colors) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
-      XtSetArg(args[n], XmNtopWidget, sw[W_amp_separator]); n++;
+      XtSetArg(args[n], XmNtopWidget, SND_NAME_SEPARATOR(sp)); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-      CONTROLS(sp) = XtCreateManagedWidget ("snd-amp", xmFormWidgetClass, sw[W_pane], args, n);
+      CONTROLS(sp) = XtCreateManagedWidget ("snd-amp", xmFormWidgetClass, SND_PANE(sp), args, n);
       XtAddEventHandler(CONTROLS(sp), KeyPressMask, false, graph_key_press, (XtPointer)sp);
 
       n = 0;      
@@ -1916,9 +1918,9 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       XtSetArg(args[n], XmNshadowThickness, 0); n++;
       XtSetArg(args[n], XmNhighlightThickness, 0); n++;
       XtSetArg(args[n], XmNfillOnArm, false); n++;
-      sw[W_amp_label] = make_pushbutton_widget ("amp-label", CONTROLS(sp), args, n);
-      XtAddEventHandler(sw[W_amp_label], KeyPressMask, false, graph_key_press, (XtPointer)sp);
-      XtAddCallback(sw[W_amp_label], XmNactivateCallback, amp_click_callback, (XtPointer)sp);
+      AMP_BUTTON(sp) = make_pushbutton_widget ("amp-label", CONTROLS(sp), args, n);
+      XtAddEventHandler(AMP_BUTTON(sp), KeyPressMask, false, graph_key_press, (XtPointer)sp);
+      XtAddCallback(AMP_BUTTON(sp), XmNactivateCallback, amp_click_callback, (XtPointer)sp);
       XmStringFree(s1);
 
       n = 0;
@@ -1926,10 +1928,10 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       if (need_colors) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
-      XtSetArg(args[n], XmNtopWidget, sw[W_amp_label]); n++;
+      XtSetArg(args[n], XmNtopWidget, AMP_BUTTON(sp)); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
-      XtSetArg(args[n], XmNleftWidget, sw[W_amp_label]); n++;
+      XtSetArg(args[n], XmNleftWidget, AMP_BUTTON(sp)); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNmarginHeight, CONTROLS_MARGIN); n++;
       XtSetArg(args[n], XmNrecomputeSize, false); n++;
@@ -1941,7 +1943,7 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       n = 0;      
       if (need_colors) {XtSetArg(args[n], XmNbackground, ss->sgx->position_color); n++;}
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
-      XtSetArg(args[n], XmNtopWidget, sw[W_amp_label]); n++; /* TODO: w_amp_number?? */
+      XtSetArg(args[n], XmNtopWidget, AMP_BUTTON(sp)); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNheight, 16); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
@@ -1961,7 +1963,7 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       if (need_colors) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
-      XtSetArg(args[n], XmNtopWidget, sw[W_amp_label]); n++;
+      XtSetArg(args[n], XmNtopWidget, AMP_BUTTON(sp)); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
@@ -1971,9 +1973,9 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       XtSetArg(args[n], XmNshadowThickness, 0); n++;
       XtSetArg(args[n], XmNhighlightThickness, 0); n++;
       XtSetArg(args[n], XmNfillOnArm, false); n++;
-      sw[W_speed_label] = make_pushbutton_widget ("speed-label", CONTROLS(sp), args, n);
-      XtAddEventHandler(sw[W_speed_label], KeyPressMask, false, graph_key_press, (XtPointer)sp);
-      XtAddCallback(sw[W_speed_label], XmNactivateCallback, speed_click_callback, (XtPointer)sp);
+      SPEED_BUTTON(sp) = make_pushbutton_widget ("speed-label", CONTROLS(sp), args, n);
+      XtAddEventHandler(SPEED_BUTTON(sp), KeyPressMask, false, graph_key_press, (XtPointer)sp);
+      XtAddCallback(SPEED_BUTTON(sp), XmNactivateCallback, speed_click_callback, (XtPointer)sp);
       XmStringFree(s1);
 
       n = 0;
@@ -1981,10 +1983,10 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       if (need_colors) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
-      XtSetArg(args[n], XmNtopWidget, sw[W_speed_label]); n++;
+      XtSetArg(args[n], XmNtopWidget, SPEED_BUTTON(sp)); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
-      XtSetArg(args[n], XmNleftWidget, sw[W_speed_label]); n++;
+      XtSetArg(args[n], XmNleftWidget, SPEED_BUTTON(sp)); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNlabelString, s1); n++;
       XtSetArg(args[n], XmNmarginHeight, CONTROLS_MARGIN); n++; 
@@ -1999,7 +2001,7 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
-      XtSetArg(args[n], XmNtopWidget, sw[W_speed_label]); n++;
+      XtSetArg(args[n], XmNtopWidget, SPEED_BUTTON(sp)); n++;
       XtSetArg(args[n], XmNindicatorOn, false); n++;
       XtSetArg(args[n], XmNlabelType, XmPIXMAP); n++;
       XtSetArg(args[n], XmNmarginHeight, 0); n++;
@@ -2028,7 +2030,7 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       n = 0;
       if (need_colors) {XtSetArg(args[n], XmNbackground, ss->sgx->position_color); n++;}
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
-      XtSetArg(args[n], XmNtopWidget, sw[W_speed_label]); n++;
+      XtSetArg(args[n], XmNtopWidget, SPEED_BUTTON(sp)); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNleftWidget, SPEED_LABEL(sp)); n++;
@@ -2049,7 +2051,7 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       if (need_colors) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
-      XtSetArg(args[n], XmNtopWidget, sw[W_speed_label]); n++;
+      XtSetArg(args[n], XmNtopWidget, SPEED_BUTTON(sp)); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
@@ -2059,9 +2061,9 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       XtSetArg(args[n], XmNshadowThickness, 0); n++;
       XtSetArg(args[n], XmNhighlightThickness, 0); n++;
       XtSetArg(args[n], XmNfillOnArm, false); n++;
-      sw[W_expand_label] = make_pushbutton_widget ("expand-label", CONTROLS(sp), args, n);
-      XtAddEventHandler(sw[W_expand_label], KeyPressMask, false, graph_key_press, (XtPointer)sp);
-      XtAddCallback(sw[W_expand_label], XmNactivateCallback, expand_click_callback, (XtPointer)sp);
+      EXPAND_LEFT_BUTTON(sp) = make_pushbutton_widget ("expand-label", CONTROLS(sp), args, n);
+      XtAddEventHandler(EXPAND_LEFT_BUTTON(sp), KeyPressMask, false, graph_key_press, (XtPointer)sp);
+      XtAddCallback(EXPAND_LEFT_BUTTON(sp), XmNactivateCallback, expand_click_callback, (XtPointer)sp);
       XmStringFree(s1);
       
       n = 0;
@@ -2069,10 +2071,10 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       if (need_colors) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
-      XtSetArg(args[n], XmNtopWidget, sw[W_expand_label]); n++;
+      XtSetArg(args[n], XmNtopWidget, EXPAND_LEFT_BUTTON(sp)); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
-      XtSetArg(args[n], XmNleftWidget, sw[W_expand_label]); n++;
+      XtSetArg(args[n], XmNleftWidget, EXPAND_LEFT_BUTTON(sp)); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNmarginHeight, CONTROLS_MARGIN); n++;
       XtSetArg(args[n], XmNrecomputeSize, false); n++;
@@ -2088,7 +2090,7 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
-      XtSetArg(args[n], XmNtopWidget, sw[W_expand_label]); n++;
+      XtSetArg(args[n], XmNtopWidget, EXPAND_LEFT_BUTTON(sp)); n++;
       XtSetArg(args[n], XmNheight, 16); n++;
       XtSetArg(args[n], XmNmarginHeight, CONTROLS_MARGIN); n++;
       XtSetArg(args[n], XmNmarginWidth, 0); n++;
@@ -2097,20 +2099,20 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       XtSetArg(args[n], XmNlabelString, s1); n++;
       if (ss->toggle_size > 0) {XtSetArg(args[n], XmNindicatorSize, ss->toggle_size); n++;}
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNselectColor, ss->sgx->pushed_button_color); n++;}
-      EXPAND_BUTTON(sp) = make_togglebutton_widget("expoff", CONTROLS(sp), args, n);
-      XtAddEventHandler(EXPAND_BUTTON(sp), KeyPressMask, false, graph_key_press, (XtPointer)sp);
-      XtAddCallback(EXPAND_BUTTON(sp), XmNvalueChangedCallback, expand_button_callback, (XtPointer)sp);
+      EXPAND_RIGHT_BUTTON(sp) = make_togglebutton_widget("expoff", CONTROLS(sp), args, n);
+      XtAddEventHandler(EXPAND_RIGHT_BUTTON(sp), KeyPressMask, false, graph_key_press, (XtPointer)sp);
+      XtAddCallback(EXPAND_RIGHT_BUTTON(sp), XmNvalueChangedCallback, expand_button_callback, (XtPointer)sp);
       XmStringFree(s1);
 
       n = 0;
       if (need_colors) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
-      XtSetArg(args[n], XmNtopWidget, sw[W_expand_label]); n++;
+      XtSetArg(args[n], XmNtopWidget, EXPAND_LEFT_BUTTON(sp)); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNleftWidget, EXPAND_LABEL(sp)); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_WIDGET); n++;
-      XtSetArg(args[n], XmNrightWidget, EXPAND_BUTTON(sp)); n++;
+      XtSetArg(args[n], XmNrightWidget, EXPAND_RIGHT_BUTTON(sp)); n++;
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
       XtSetArg(args[n], XmNmaximum, SCROLLBAR_MAX); n++;
       XtSetArg(args[n], XmNvalue, expand_to_scroll(sp->expand_control_min, 1.0, sp->expand_control_max)); n++; 
@@ -2128,7 +2130,7 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       if (need_colors) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
-      XtSetArg(args[n], XmNtopWidget, sw[W_expand_label]); n++;
+      XtSetArg(args[n], XmNtopWidget, EXPAND_LEFT_BUTTON(sp)); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
@@ -2138,9 +2140,9 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       XtSetArg(args[n], XmNshadowThickness, 0); n++;
       XtSetArg(args[n], XmNhighlightThickness, 0); n++;
       XtSetArg(args[n], XmNfillOnArm, false); n++;
-      CONTRAST_LABEL(sp) = make_pushbutton_widget ("contrast-label", CONTROLS(sp), args, n);
-      XtAddEventHandler(CONTRAST_LABEL(sp), KeyPressMask, false, graph_key_press, (XtPointer)sp);
-      XtAddCallback(CONTRAST_LABEL(sp), XmNactivateCallback, contrast_click_callback, (XtPointer)sp);
+      CONTRAST_LEFT_BUTTON(sp) = make_pushbutton_widget ("contrast-label", CONTROLS(sp), args, n);
+      XtAddEventHandler(CONTRAST_LEFT_BUTTON(sp), KeyPressMask, false, graph_key_press, (XtPointer)sp);
+      XtAddCallback(CONTRAST_LEFT_BUTTON(sp), XmNactivateCallback, contrast_click_callback, (XtPointer)sp);
       XmStringFree(s1);
       
       n = 0;
@@ -2148,16 +2150,16 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       if (need_colors) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
-      XtSetArg(args[n], XmNtopWidget, CONTRAST_LABEL(sp)); n++;
+      XtSetArg(args[n], XmNtopWidget, CONTRAST_LEFT_BUTTON(sp)); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
-      XtSetArg(args[n], XmNleftWidget, CONTRAST_LABEL(sp)); n++;
+      XtSetArg(args[n], XmNleftWidget, CONTRAST_LEFT_BUTTON(sp)); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNmarginHeight, CONTROLS_MARGIN); n++;
       XtSetArg(args[n], XmNrecomputeSize, false); n++;
       XtSetArg(args[n], XmNlabelString, s1); n++;
       XtSetArg(args[n], XmNmarginRight, 3); n++;
-      sw[W_contrast_number] = XtCreateManagedWidget ("contrast-number", xmLabelWidgetClass, CONTROLS(sp), args, n);
+      CONTRAST_LABEL(sp) = XtCreateManagedWidget ("contrast-number", xmLabelWidgetClass, CONTROLS(sp), args, n);
       XmStringFree(s1);
       
       n = 0;
@@ -2167,7 +2169,7 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
-      XtSetArg(args[n], XmNtopWidget, CONTRAST_LABEL(sp)); n++;
+      XtSetArg(args[n], XmNtopWidget, CONTRAST_LEFT_BUTTON(sp)); n++;
       XtSetArg(args[n], XmNheight, 16); n++;
       XtSetArg(args[n], XmNmarginHeight, CONTROLS_MARGIN); n++;
       XtSetArg(args[n], XmNmarginWidth, 0); n++;
@@ -2176,20 +2178,20 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       XtSetArg(args[n], XmNspacing, 0); n++;
       if (ss->toggle_size > 0) {XtSetArg(args[n], XmNindicatorSize, ss->toggle_size); n++;}
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNselectColor, ss->sgx->pushed_button_color); n++;}
-      CONTRAST_BUTTON(sp) = make_togglebutton_widget("conoff", CONTROLS(sp), args, n);
-      XtAddEventHandler(CONTRAST_BUTTON(sp), KeyPressMask, false, graph_key_press, (XtPointer)sp);
-      XtAddCallback(CONTRAST_BUTTON(sp), XmNvalueChangedCallback, contrast_button_callback, (XtPointer)sp);
+      CONTRAST_RIGHT_BUTTON(sp) = make_togglebutton_widget("conoff", CONTROLS(sp), args, n);
+      XtAddEventHandler(CONTRAST_RIGHT_BUTTON(sp), KeyPressMask, false, graph_key_press, (XtPointer)sp);
+      XtAddCallback(CONTRAST_RIGHT_BUTTON(sp), XmNvalueChangedCallback, contrast_button_callback, (XtPointer)sp);
       XmStringFree(s1);
 
       n = 0;
       if (need_colors) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
-      XtSetArg(args[n], XmNtopWidget, CONTRAST_LABEL(sp)); n++;
+      XtSetArg(args[n], XmNtopWidget, CONTRAST_LEFT_BUTTON(sp)); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
-      XtSetArg(args[n], XmNleftWidget, sw[W_contrast_number]); n++;
+      XtSetArg(args[n], XmNleftWidget, CONTRAST_LABEL(sp)); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_WIDGET); n++;
-      XtSetArg(args[n], XmNrightWidget, CONTRAST_BUTTON(sp)); n++;
+      XtSetArg(args[n], XmNrightWidget, CONTRAST_RIGHT_BUTTON(sp)); n++;
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
       XtSetArg(args[n], XmNmaximum, SCROLLBAR_MAX); n++;
       XtSetArg(args[n], XmNheight, 16); n++;
@@ -2207,7 +2209,7 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       if (need_colors) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
-      XtSetArg(args[n], XmNtopWidget, CONTRAST_LABEL(sp)); n++;
+      XtSetArg(args[n], XmNtopWidget, CONTRAST_LEFT_BUTTON(sp)); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
@@ -2217,9 +2219,9 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       XtSetArg(args[n], XmNshadowThickness, 0); n++;
       XtSetArg(args[n], XmNhighlightThickness, 0); n++;
       XtSetArg(args[n], XmNfillOnArm, false); n++;
-      sw[W_revscl_label] = make_pushbutton_widget ("revscl-label", CONTROLS(sp), args, n);
-      XtAddEventHandler(sw[W_revscl_label], KeyPressMask, false, graph_key_press, (XtPointer)sp);
-      XtAddCallback(sw[W_revscl_label], XmNactivateCallback, revscl_click_callback, (XtPointer)sp);
+      REVSCL_BUTTON(sp) = make_pushbutton_widget ("revscl-label", CONTROLS(sp), args, n);
+      XtAddEventHandler(REVSCL_BUTTON(sp), KeyPressMask, false, graph_key_press, (XtPointer)sp);
+      XtAddCallback(REVSCL_BUTTON(sp), XmNactivateCallback, revscl_click_callback, (XtPointer)sp);
       XmStringFree(s1);
       
       n = 0;
@@ -2227,10 +2229,10 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       if (need_colors) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
-      XtSetArg(args[n], XmNtopWidget, sw[W_revscl_label]); n++;
+      XtSetArg(args[n], XmNtopWidget, REVSCL_BUTTON(sp)); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
-      XtSetArg(args[n], XmNleftWidget, sw[W_revscl_label]); n++;
+      XtSetArg(args[n], XmNleftWidget, REVSCL_BUTTON(sp)); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNlabelString, s1); n++;
       XtSetArg(args[n], XmNmarginHeight, CONTROLS_MARGIN); n++;
@@ -2242,7 +2244,7 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       n = 0;
       if (need_colors) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
-      XtSetArg(args[n], XmNtopWidget, sw[W_revscl_label]); n++;
+      XtSetArg(args[n], XmNtopWidget, REVSCL_BUTTON(sp)); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNleftWidget, REVSCL_LABEL(sp)); n++;
@@ -2263,11 +2265,11 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       s1 = XmStringCreate("", XmFONTLIST_DEFAULT_TAG);
       if (need_colors) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
-      XtSetArg(args[n], XmNtopWidget, sw[W_revscl_label]); n++;
+      XtSetArg(args[n], XmNtopWidget, REVSCL_BUTTON(sp)); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
-      XtSetArg(args[n], XmNrightWidget, CONTRAST_BUTTON(sp)); n++;
+      XtSetArg(args[n], XmNrightWidget, CONTRAST_RIGHT_BUTTON(sp)); n++;
       XtSetArg(args[n], XmNheight, 16); n++;
       XtSetArg(args[n], XmNmarginHeight, CONTROLS_MARGIN); n++;
       XtSetArg(args[n], XmNmarginWidth, 0); n++;
@@ -2299,9 +2301,9 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       XtSetArg(args[n], XmNshadowThickness, 0); n++;
       XtSetArg(args[n], XmNhighlightThickness, 0); n++;
       XtSetArg(args[n], XmNfillOnArm, false); n++;
-      sw[W_revlen_label] = make_pushbutton_widget("revlen-label", CONTROLS(sp), args, n);
-      XtAddEventHandler(sw[W_revlen_label], KeyPressMask, false, graph_key_press, (XtPointer)sp);
-      XtAddCallback(sw[W_revlen_label], XmNactivateCallback, revlen_click_callback, (XtPointer)sp);
+      REVLEN_BUTTON(sp) = make_pushbutton_widget("revlen-label", CONTROLS(sp), args, n);
+      XtAddEventHandler(REVLEN_BUTTON(sp), KeyPressMask, false, graph_key_press, (XtPointer)sp);
+      XtAddCallback(REVLEN_BUTTON(sp), XmNactivateCallback, revlen_click_callback, (XtPointer)sp);
       XmStringFree(s1);
 
       n = 0;
@@ -2309,10 +2311,10 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       if (need_colors) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
-      XtSetArg(args[n], XmNtopWidget, sw[W_revlen_label]); n++;
+      XtSetArg(args[n], XmNtopWidget, REVLEN_BUTTON(sp)); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
-      XtSetArg(args[n], XmNleftWidget, sw[W_revlen_label]); n++;
+      XtSetArg(args[n], XmNleftWidget, REVLEN_BUTTON(sp)); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNlabelString, s1); n++;
       XtSetArg(args[n], XmNmarginHeight, CONTROLS_MARGIN); n++;
@@ -2324,7 +2326,7 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       n = 0;
       if (need_colors) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
-      XtSetArg(args[n], XmNtopWidget, sw[W_revlen_label]); n++;
+      XtSetArg(args[n], XmNtopWidget, REVLEN_BUTTON(sp)); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNleftWidget, REVLEN_LABEL(sp)); n++;
@@ -2347,7 +2349,7 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       if (need_colors) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
-      XtSetArg(args[n], XmNtopWidget, sw[W_revscl_label]); n++;
+      XtSetArg(args[n], XmNtopWidget, REVSCL_BUTTON(sp)); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
@@ -2397,14 +2399,14 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       XtSetArg(args[n], XmNborderWidth, 0); n++;
       XtSetArg(args[n], XmNmarginWidth, 0); n++;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNarmColor, ss->sgx->pushed_button_color); n++;}
-      sw[W_filter_order_down] = make_pushbutton_widget("", CONTROLS(sp), args, n);
-      XtAddEventHandler(sw[W_filter_order_down], KeyPressMask, false, graph_key_press, (XtPointer)sp);
-      XtAddCallback(sw[W_filter_order_down], XmNactivateCallback, filter_order_down_callback, (XtPointer)sp);
+      FILTER_ORDER_DOWN(sp) = make_pushbutton_widget("", CONTROLS(sp), args, n);
+      XtAddEventHandler(FILTER_ORDER_DOWN(sp), KeyPressMask, false, graph_key_press, (XtPointer)sp);
+      XtAddCallback(FILTER_ORDER_DOWN(sp), XmNactivateCallback, filter_order_down_callback, (XtPointer)sp);
 
       n = 0;
       if (need_colors) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
-      XtSetArg(args[n], XmNtopWidget, sw[W_filter_order_down]); n++;
+      XtSetArg(args[n], XmNtopWidget, FILTER_ORDER_DOWN(sp)); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNleftWidget, FILTER_ORDER_TEXT(sp)); n++;
@@ -2414,9 +2416,9 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       XtSetArg(args[n], XmNborderWidth, 0); n++;
       XtSetArg(args[n], XmNmarginWidth, 0); n++;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNarmColor, ss->sgx->pushed_button_color); n++;}
-      sw[W_filter_order_up] = make_pushbutton_widget("", CONTROLS(sp), args, n);
-      XtAddEventHandler(sw[W_filter_order_up], KeyPressMask, false, graph_key_press, (XtPointer)sp);
-      XtAddCallback(sw[W_filter_order_up], XmNactivateCallback, filter_order_up_callback, (XtPointer)sp);
+      FILTER_ORDER_UP(sp) = make_pushbutton_widget("", CONTROLS(sp), args, n);
+      XtAddEventHandler(FILTER_ORDER_UP(sp), KeyPressMask, false, graph_key_press, (XtPointer)sp);
+      XtAddCallback(FILTER_ORDER_UP(sp), XmNactivateCallback, filter_order_up_callback, (XtPointer)sp);
 
       n = 0;
       s1 = XmStringCreate("", XmFONTLIST_DEFAULT_TAG);
@@ -2478,10 +2480,10 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       if (need_colors) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
-      XtSetArg(args[n], XmNtopWidget, sw[W_filter_order_down]); n++;
+      XtSetArg(args[n], XmNtopWidget, FILTER_ORDER_DOWN(sp)); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
-      XtSetArg(args[n], XmNleftWidget, sw[W_filter_order_down]); n++;
+      XtSetArg(args[n], XmNleftWidget, FILTER_ORDER_DOWN(sp)); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNrightWidget, FILTER_DB_BUTTON(sp)); n++;
       XtSetArg(args[n], XmNmarginHeight, CONTROLS_MARGIN); n++;
@@ -2502,22 +2504,22 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       /* if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;} */
       XtSetArg(args[n], XmNshadowType, XmSHADOW_ETCHED_IN); n++;
       XtSetArg(args[n], XmNshadowThickness, 4); n++;
-      sw[W_filter_frame] = XtCreateManagedWidget("filter-frame", xmFrameWidgetClass, CONTROLS(sp), args, n);
+      FILTER_FRAME(sp) = XtCreateManagedWidget("filter-frame", xmFrameWidgetClass, CONTROLS(sp), args, n);
 
       n = 0;
       if (need_colors) {XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;}
       n = attach_all_sides(args, n);
       XtSetArg(args[n], XmNallowResize, true); n++;
-      sw[W_filter_env] = XtCreateManagedWidget("filter-window", xmDrawingAreaWidgetClass, sw[W_filter_frame], args, n);
-      XtAddCallback(sw[W_filter_env], XmNresizeCallback, filter_drawer_resize, (XtPointer)sp);
-      XtAddCallback(sw[W_filter_env], XmNexposeCallback, filter_drawer_resize, (XtPointer)sp);
+      FILTER_GRAPH(sp) = XtCreateManagedWidget("filter-window", xmDrawingAreaWidgetClass, FILTER_FRAME(sp), args, n);
+      XtAddCallback(FILTER_GRAPH(sp), XmNresizeCallback, filter_drawer_resize, (XtPointer)sp);
+      XtAddCallback(FILTER_GRAPH(sp), XmNexposeCallback, filter_drawer_resize, (XtPointer)sp);
 
       sp->sgx->flt = new_env_editor();
 
-      XtAddEventHandler(sw[W_filter_env], ButtonPressMask, false, filter_drawer_button_press, sp);
-      XtAddEventHandler(sw[W_filter_env], ButtonMotionMask, false, filter_drawer_button_motion, sp);
-      XtAddEventHandler(sw[W_filter_env], ButtonReleaseMask, false, filter_drawer_button_release, sp);
-      XtAddEventHandler(sw[W_filter_env], KeyPressMask, false, graph_key_press, (XtPointer)sp);
+      XtAddEventHandler(FILTER_GRAPH(sp), ButtonPressMask, false, filter_drawer_button_press, sp);
+      XtAddEventHandler(FILTER_GRAPH(sp), ButtonMotionMask, false, filter_drawer_button_motion, sp);
+      XtAddEventHandler(FILTER_GRAPH(sp), ButtonReleaseMask, false, filter_drawer_button_release, sp);
+      XtAddEventHandler(FILTER_GRAPH(sp), KeyPressMask, false, graph_key_press, (XtPointer)sp);
 
       FREE(n1); FREE(n2); FREE(n3); FREE(n4); FREE(n5); FREE(n6);
       FREE(n7); FREE(n8); FREE(n9); FREE(n10); FREE(n11); FREE(n12);
@@ -2537,7 +2539,7 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
 
 
       if (sound_style(ss) != SOUNDS_IN_SEPARATE_WINDOWS)
-	run_new_widget_hook(sw[W_pane]);
+	run_new_widget_hook(SND_PANE(sp));
       else run_new_widget_hook(sx->dialog);
 
 #if WITH_RELATIVE_PANES
@@ -2567,7 +2569,7 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       for (k = 0; k < nchans; k++) 
 	add_channel_window(sp, k, chan_min_y, 0, NULL, WITH_FW_BUTTONS, WITH_EVENTS);
       set_button_label(NAME_LABEL(sp), shortname_indexed(sp));
-      XtVaSetValues(sw[W_pane], XmNuserData, sp->index, NULL);
+      XtVaSetValues(SND_PANE(sp), XmNuserData, sp->index, NULL);
 
       if (sound_style(ss) == SOUNDS_IN_NOTEBOOK)
 	{
@@ -2583,8 +2585,8 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
 
   if (sp->nchans == 1) 
     {
-      XmToggleButtonSetState(unite_button(sp), false, false);
-      XtUnmanageChild(unite_button(sp));
+      XmToggleButtonSetState(UNITE_BUTTON(sp), false, false);
+      XtUnmanageChild(UNITE_BUTTON(sp));
     }
   attach_minibuffer(sp);
   add_sound_data(filename, sp, WITH_GRAPH);
@@ -2630,19 +2632,19 @@ void snd_info_cleanup(snd_info *sp)
       if (SYNC_BUTTON(sp))
 	{
 	  XtVaSetValues(SYNC_BUTTON(sp), XmNset, false, NULL);
-	  XtVaSetValues(EXPAND_BUTTON(sp), XmNset, false, NULL);
-	  XtVaSetValues(CONTRAST_BUTTON(sp), XmNset, false, NULL);
+	  XtVaSetValues(EXPAND_RIGHT_BUTTON(sp), XmNset, false, NULL);
+	  XtVaSetValues(CONTRAST_RIGHT_BUTTON(sp), XmNset, false, NULL);
 	  XtVaSetValues(SPEED_ARROW(sp), XmNset, false, NULL);
 	  XtVaSetValues(FILTER_BUTTON(sp), XmNset, false, NULL);
 	  XtVaSetValues(REVERB_BUTTON(sp), XmNset, false, NULL);
-	  XmToggleButtonSetState(unite_button(sp), false, false);
+	  XmToggleButtonSetState(UNITE_BUTTON(sp), false, false);
 	  sp->channel_style = CHANNELS_SEPARATE;
 	  if (sound_style(ss) == SOUNDS_IN_NOTEBOOK)
 	    {
 	      set_label(sp->sgx->tab, _("none"));
 	      XmChangeColor(sp->sgx->tab, ss->sgx->graph_color);
 	    }
-	  XtUnmanageChild(w_snd_pane(sp));
+	  XtUnmanageChild(SND_PANE(sp));
 	}
       if ((sx->dialog) && 
 	  (XtIsManaged(sx->dialog))) 
@@ -2656,7 +2658,7 @@ void set_sound_pane_file_label(snd_info *sp, char *str)
     {
       if (sp->name_string) FREE(sp->name_string);
       sp->name_string = copy_string(str);
-      set_button_label(w_snd_name(sp), str); /* this causes an expose event, so it's worth minimizing */
+      set_button_label(SND_NAME(sp), str); /* this causes an expose event, so it's worth minimizing */
     }
 }
 
@@ -2690,8 +2692,8 @@ static void even_sounds(snd_info *sp, void *ptr)
 {
   int width;
   width = (*((int *)ptr));
-  XtUnmanageChild(w_snd_pane(sp));
-  XtVaSetValues(w_snd_pane(sp),
+  XtUnmanageChild(SND_PANE(sp));
+  XtVaSetValues(SND_PANE(sp),
 		XmNpaneMinimum, width - 5,
 		XmNpaneMaximum, width + 5,
 		NULL);
@@ -2699,12 +2701,12 @@ static void even_sounds(snd_info *sp, void *ptr)
 
 static void sound_open_pane(snd_info *sp, void *ptr)
 {
-  XtManageChild(w_snd_pane(sp));
+  XtManageChild(SND_PANE(sp));
 }
 
 static void sound_unlock_pane(snd_info *sp, void *ptr)
 {
-  XtVaSetValues(w_snd_pane(sp),
+  XtVaSetValues(SND_PANE(sp),
 		XmNpaneMinimum, 5,
 		XmNpaneMaximum, LOTSA_PIXELS,
 		NULL);
@@ -2846,7 +2848,7 @@ void equalize_all_panes(void)
 	    {
 	      if (nsp->nchans > 1)
 		{
-		  height = widget_height(w_snd_pane(nsp));
+		  height = widget_height(SND_PANE(nsp));
 		  even_channels(nsp, (void *)(&height));
 		  map_over_sound_chans(nsp, channel_open_pane, NULL);
 		  map_over_sound_chans(nsp, channel_unlock_pane, NULL);
@@ -3044,13 +3046,13 @@ void reflect_sound_selection(snd_info *sp)
       if (ss->selected_sound != NO_SELECTION) osp = ss->sounds[ss->selected_sound];
       if ((osp) && (sp != osp) && (osp->inuse == SOUND_NORMAL)) 
 	{
-	  XmChangeColor(w_snd_name(osp), ss->sgx->highlight_color);
+	  XmChangeColor(SND_NAME(osp), ss->sgx->highlight_color);
 	  if (sound_style(ss) == SOUNDS_IN_NOTEBOOK) 
 	    XmChangeColor((osp->sgx)->tab, ss->sgx->graph_color);
 	}
       if (sp->selected_channel != NO_SELECTION) 
 	{
-	  XmChangeColor(w_snd_name(sp), ss->sgx->white);
+	  XmChangeColor(SND_NAME(sp), ss->sgx->white);
 	  if (sound_style(ss) == SOUNDS_IN_NOTEBOOK) 
 	    {
 	      int page, current_page;
@@ -3086,13 +3088,13 @@ widgets: (0)pane (1)name (2)control-panel (3)minibuffer (4)play-button (5)filter
     return(snd_no_such_sound_error(S_sound_widgets, snd));
   if (sp->sgx == NULL)
     return(XEN_EMPTY_LIST);
-  return(XEN_CONS(XEN_WRAP_WIDGET(w_snd_pane(sp)),
-	  XEN_CONS(XEN_WRAP_WIDGET(w_snd_name(sp)),
+  return(XEN_CONS(XEN_WRAP_WIDGET(SND_PANE(sp)),
+	  XEN_CONS(XEN_WRAP_WIDGET(SND_NAME(sp)),
            XEN_CONS(XEN_WRAP_WIDGET(CONTROLS(sp)),
 	    XEN_CONS(XEN_WRAP_WIDGET(MINIBUFFER_TEXT(sp)),
 	     XEN_CONS(XEN_WRAP_WIDGET(PLAY_BUTTON(sp)),
-	      XEN_CONS(XEN_WRAP_WIDGET(filter_graph(sp)), /* this is the drawingarea widget */
-	       XEN_CONS(XEN_WRAP_WIDGET(unite_button(sp)),
+	      XEN_CONS(XEN_WRAP_WIDGET(FILTER_GRAPH(sp)), /* this is the drawingarea widget */
+	       XEN_CONS(XEN_WRAP_WIDGET(UNITE_BUTTON(sp)),
 	        XEN_CONS(XEN_WRAP_WIDGET(MINIBUFFER_LABEL(sp)),
 	         XEN_CONS(XEN_WRAP_WIDGET(NAME_ICON(sp)),
 	          XEN_CONS(XEN_WRAP_WIDGET(SYNC_BUTTON(sp)),

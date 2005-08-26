@@ -488,9 +488,6 @@ static fam_info *make_fam_info(FAMRequest *rp, void *data, void (*action)(struct
   return(fp);
 }
   
-/* TODO: test rb snd_test change
- */
-
 static FAMRequest *fam_monitor(void)
 {
   if (!fam_already_warned)

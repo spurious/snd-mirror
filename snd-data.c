@@ -305,6 +305,7 @@ snd_info *make_snd_info(snd_info *sip, const char *filename, file_info *hdr, int
 	}
     }
   sp->user_read_only = read_only;  /* need to be sure this is set before any hooks run */
+  sp->bomb_in_progress = false;
   sp->watchers = NULL;
   sp->watchers_size = 0;
   sp->index = snd_slot;
@@ -393,6 +394,7 @@ void free_snd_info(snd_info *sp)
   sp->playing = 0;
   sp->searching = 0;
   sp->loading = false;
+  sp->bomb_in_progress = false;
   sp->marking = 0;
   sp->filing = NOT_FILING;
   sp->applying = false;
@@ -724,8 +726,10 @@ static snd_info *any_active_sound(void)
 
 snd_info *selected_sound(void)
 {
-  if (ss->selected_sound != NO_SELECTION)
+  if ((ss->selected_sound != NO_SELECTION) &&
+      (snd_ok(ss->sounds[ss->selected_sound])))
     return(ss->sounds[ss->selected_sound]);
+  ss->selected_sound = NO_SELECTION;
   return(NULL);
 }
 
@@ -739,9 +743,12 @@ snd_info *any_selected_sound (void)
 
 chan_info *any_selected_channel(snd_info *sp)
 {
+  int chan = 0;
   if (sp->selected_channel != NO_SELECTION) 
-    return(sp->chans[sp->selected_channel]);
-  return(sp->chans[0]);
+    chan = sp->selected_channel;
+  if ((sp->chans[chan]) && (sp->chans[chan]->active))
+    return(sp->chans[chan]);
+  return(NULL);
 }
 
 chan_info *selected_channel(void)

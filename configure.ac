@@ -1473,7 +1473,8 @@ case "$host" in
 	if test "$GCC" = yes ; then
 	  SO_FLAGS="-fPIC $SO_FLAGS"
         fi
-# TODO: fPIC in sndlib/libxm and maybe clm configure's
+# TODO: fPIC in sndlib/libxm and maybe clm makefile.in's
+# TODO: don't assume gcc in sndlib configure.ac
         ;;
     *-*-cygwin*)
 	AC_DEFINE(MUS_WINDOZE)
@@ -1562,7 +1563,7 @@ if test "$PATH_SPEEXDEC" != "no" ; then
 fi
 
 
-AC_PATH_PROG(PATH_FLAC, flac, no) # Falc read/write
+AC_PATH_PROG(PATH_FLAC, flac, no) # Flac read/write
 
 if test "$PATH_FLAC" != "no" ; then
   AC_DEFINE(HAVE_FLAC)
@@ -1717,7 +1718,7 @@ AC_CHECK_HEADER(nl_types.h,
      ],
      [AC_MSG_RESULT(no)])])
 else
-# deperation!
+# desperation!
 cp makefile.in makefile.gettext
 cp makefile.no-gettext makefile.in
 fi

@@ -27,9 +27,14 @@ GtkWidget *w_snd_pane(snd_info *sp)     {return(sp->sgx->snd_widgets[W_pane]);}
 GtkWidget *w_snd_pane_box(snd_info *sp) {return(sp->sgx->snd_widgets[W_pane_box]);}
 GtkWidget *w_snd_name(snd_info *sp)     {return(sp->sgx->snd_widgets[W_name]);}
 
-/* SOMEDAY: finish incorporating these macro names */
+#define SND_PANE(Sp)             Sp->sgx->snd_widgets[W_pane]
+#define PANE_BOX(Sp)             Sp->sgx->snd_widgets[W_pane_box]
 
-#define NAME_BOX(Sp)             Sp->sgx->snd_widgets[W_name_form]
+#define NAME_HBOX(Sp)            Sp->sgx->snd_widgets[W_name_form]
+#define NAME_BUTTON(Sp)          Sp->sgx->snd_widgets[W_name]
+#define NAME_EVENT_BOX(Sp)       Sp->sgx->snd_widgets[W_name_event]
+#define NAME_SEPARATOR(Sp)       Sp->sgx->snd_widgets[W_amp_sep]
+
 #define MINIBUFFER_SEPARATOR(Sp) Sp->sgx->snd_widgets[W_info_sep]
 #define MINIBUFFER_LABEL(Sp)     Sp->sgx->snd_widgets[W_info_label]
 #define MINIBUFFER_TEXT(Sp)      Sp->sgx->snd_widgets[W_info]
@@ -41,24 +46,57 @@ GtkWidget *w_snd_name(snd_info *sp)     {return(sp->sgx->snd_widgets[W_name]);}
 #define ERROR_INFO(Sp)           Sp->sgx->snd_widgets[W_error_info_label]
 #define ERROR_INFO_FRAME(Sp)     Sp->sgx->snd_widgets[W_error_info_frame]
 
-
 #define CONTROL_PANEL(Sp)        Sp->sgx->snd_widgets[W_control_panel]
 
+#define AMP_HBOX(Sp)             Sp->sgx->snd_widgets[W_amp_form]
+#define AMP_LABEL(Sp)            Sp->sgx->snd_widgets[W_amp_number]
+#define AMP_BUTTON(Sp)           Sp->sgx->snd_widgets[W_amp_label]
+#define AMP_EVENT_BOX(Sp)        Sp->sgx->snd_widgets[W_amp_event]
+#define AMP_SCROLLBAR(Sp)        Sp->sgx->snd_widgets[W_amp]
+
+#define SPEED_HBOX(Sp)           Sp->sgx->snd_widgets[W_speed_form]
 #define SPEED_ARROW(Sp)          Sp->sgx->snd_widgets[W_speed_pix]
 #define SPEED_LABEL(Sp)          Sp->sgx->snd_widgets[W_speed_number]
-#define AMP_LABEL(Sp)            Sp->sgx->snd_widgets[W_amp_number]
+#define SPEED_EVENT_BOX(Sp)      Sp->sgx->snd_widgets[W_speed_event]
+#define SPEED_BUTTON(Sp)         Sp->sgx->snd_widgets[W_speed_label]
+#define SPEED_SCROLLBAR(Sp)      Sp->sgx->snd_widgets[W_speed]
+
+#define EXPAND_HBOX(Sp)          Sp->sgx->snd_widgets[W_expand_form]
+#define EXPAND_LEFT_BUTTON(Sp)   Sp->sgx->snd_widgets[W_expand_label]
+#define EXPAND_EVENT_BOX(Sp)     Sp->sgx->snd_widgets[W_expand_event]
+#define EXPAND_SCROLLBAR(Sp)     Sp->sgx->snd_widgets[W_expand]
 #define EXPAND_LABEL(Sp)         Sp->sgx->snd_widgets[W_expand_number]
-#define EXPAND_BUTTON(Sp)        Sp->sgx->snd_widgets[W_expand_button]
+#define EXPAND_RIGHT_BUTTON(Sp)  Sp->sgx->snd_widgets[W_expand_button]
+
+#define CONTRAST_HBOX(Sp)        Sp->sgx->snd_widgets[W_contrast_form]
+#define CONTRAST_LEFT_BUTTON(Sp) Sp->sgx->snd_widgets[W_contrast_label]
+#define CONTRAST_EVENT_BOX(Sp)   Sp->sgx->snd_widgets[W_contrast_event]
+#define CONTRAST_SCROLLBAR(Sp)   Sp->sgx->snd_widgets[W_contrast]
 #define CONTRAST_LABEL(Sp)       Sp->sgx->snd_widgets[W_contrast_number]
-#define CONTRAST_BUTTON(Sp)      Sp->sgx->snd_widgets[W_contrast_button]
+#define CONTRAST_RIGHT_BUTTON(Sp) Sp->sgx->snd_widgets[W_contrast_button]
+
+#define REVSCL_EVENT_BOX(Sp)     Sp->sgx->snd_widgets[W_revscl_event]
+#define REVSCL_SCROLLBAR(Sp)     Sp->sgx->snd_widgets[W_revscl]
+#define REVSCL_BUTTON(Sp)        Sp->sgx->snd_widgets[W_revscl_label]
 #define REVSCL_LABEL(Sp)         Sp->sgx->snd_widgets[W_revscl_number]
+
+#define REVLEN_EVENT_BOX(Sp)     Sp->sgx->snd_widgets[W_revlen_event]
+#define REVLEN_BUTTON(Sp)        Sp->sgx->snd_widgets[W_revlen_label]
+#define REVLEN_SCROLLBAR(Sp)     Sp->sgx->snd_widgets[W_revlen]
 #define REVLEN_LABEL(Sp)         Sp->sgx->snd_widgets[W_revlen_number]
-#define REVERB_BUTTON(Sp)        Sp->sgx->snd_widgets[W_reverb_button]
+
+#define REVERB_RIGHT_BUTTON(Sp)  Sp->sgx->snd_widgets[W_reverb_button]
+#define REVERB_HBOX(Sp)          Sp->sgx->snd_widgets[W_reverb_form]
+
+#define FILTER_HBOX(Sp)          Sp->sgx->snd_widgets[W_filter_form]
+#define FILTER_LEFT_BUTTON(Sp)   Sp->sgx->snd_widgets[W_filter_label]
 #define FILTER_ORDER_TEXT(Sp)    Sp->sgx->snd_widgets[W_filter_order]
 #define FILTER_COEFFS_TEXT(Sp)   Sp->sgx->snd_widgets[W_filter]
-#define FILTER_BUTTON(Sp)        Sp->sgx->snd_widgets[W_filter_button]
+#define FILTER_RIGHT_BUTTON(Sp)  Sp->sgx->snd_widgets[W_filter_button]
 #define FILTER_DB_BUTTON(Sp)     Sp->sgx->snd_widgets[W_filter_dB]
 #define FILTER_HZ_BUTTON(Sp)     Sp->sgx->snd_widgets[W_filter_hz]
+#define FILTER_FRAME(Sp)         Sp->sgx->snd_widgets[W_filter_frame]
+#define FILTER_ENV(Sp)           Sp->sgx->snd_widgets[W_filter_env]
 
 #define AMP_ADJUSTMENT(Sp)       Sp->sgx->snd_adjs[W_amp_adj]
 #define SPEED_ADJUSTMENT(Sp)     Sp->sgx->snd_adjs[W_speed_adj]
@@ -66,6 +104,7 @@ GtkWidget *w_snd_name(snd_info *sp)     {return(sp->sgx->snd_widgets[W_name]);}
 #define CONTRAST_ADJUSTMENT(Sp)  Sp->sgx->snd_adjs[W_contrast_adj]
 #define REVSCL_ADJUSTMENT(Sp)    Sp->sgx->snd_adjs[W_revscl_adj]
 #define REVLEN_ADJUSTMENT(Sp)    Sp->sgx->snd_adjs[W_revlen_adj]
+#define FILTER_ADJUSTMENT(Sp)    Sp->sgx->snd_adjs[W_filter_adj]
 
 
 /* -------- minibuffer error -------- */
@@ -141,36 +180,25 @@ void x_bomb(snd_info *sp, bool on)
   if (on) sp->bomb_ctr++; else sp->bomb_ctr = 0;
 }
 
-static void inc_bomb(snd_info *sp, void *ptr)
-{
-  if (sp->need_update || sp->file_unreadable)
-    {
-      int *buf;
-      buf = (int *)ptr;
-      buf[0]++;
-      show_bomb_icon(sp, sp->bomb_ctr);
-      sp->bomb_ctr++;
-    }
-}
-
-static bool bomb_in_progress = false;
-
 static gint bomb_check(gpointer data)
 {
-  int incs[1];
-  incs[0] = 0;
-  for_each_sound(inc_bomb, (void *)incs);
-  if (incs[0] > 0)
-    g_timeout_add_full(0, (guint32)BOMB_TIME, bomb_check, data, NULL);
-  else bomb_in_progress = false;
+  snd_info *sp = (snd_info *)data;
+  if (sp->need_update || sp->file_unreadable)
+    {
+      show_bomb_icon(sp, sp->bomb_ctr);
+      sp->bomb_ctr++;
+      g_timeout_add_full(0, (guint32)BOMB_TIME, bomb_check, data, NULL);
+    }
+  else sp->bomb_in_progress = false;
   return(0);
 }
 
 void snd_file_bomb_icon(snd_info *sp, bool on)
 {
-  if ((on) && (!bomb_in_progress))
+  if ((on) && (!(sp->bomb_in_progress)))
     {
-      bomb_in_progress = true;
+      sp->bomb_in_progress = true;
+      sp->bomb_ctr = 0;
       g_timeout_add_full(0, (guint32)BOMB_TIME, bomb_check, (gpointer)sp, NULL);
     }
 }
@@ -741,7 +769,7 @@ void toggle_expand_button(snd_info *sp, bool state)
 {
   if (IS_PLAYER(sp))
     sp->expand_control_p = state;
-  else set_toggle_button(EXPAND_BUTTON(sp), state, true, (void *)sp);
+  else set_toggle_button(EXPAND_RIGHT_BUTTON(sp), state, true, (void *)sp);
 }
 
 
@@ -815,7 +843,7 @@ void toggle_contrast_button(snd_info *sp, bool state)
 {
   if (IS_PLAYER(sp))
     sp->contrast_control_p = state;
-  else set_toggle_button(CONTRAST_BUTTON(sp), state, true, (void *)sp);
+  else set_toggle_button(CONTRAST_RIGHT_BUTTON(sp), state, true, (void *)sp);
 }
 
 
@@ -955,7 +983,7 @@ void toggle_reverb_button(snd_info *sp, bool state)
 {
   if (IS_PLAYER(sp))
     sp->reverb_control_p = state;
-  else set_toggle_button(REVERB_BUTTON(sp), state, true, (void *)sp);
+  else set_toggle_button(REVERB_RIGHT_BUTTON(sp), state, true, (void *)sp);
 }
 
 
@@ -971,7 +999,7 @@ void display_filter_env(snd_info *sp)
   env_editor *edp;
   if (IS_PLAYER(sp)) return;
   edp = sp->sgx->flt;
-  drawer = filter_graph(sp);
+  drawer = FILTER_ENV(sp);
   height = widget_height(drawer);
   if (height < MIN_FILTER_GRAPH_HEIGHT) return;
   width = widget_width(drawer);
@@ -1076,7 +1104,7 @@ void toggle_filter_button(snd_info *sp, bool state)
 {
   if (IS_PLAYER(sp))
     sp->filter_control_p = state;
-  else set_toggle_button(FILTER_BUTTON(sp), state, true, (void *)sp);
+  else set_toggle_button(FILTER_RIGHT_BUTTON(sp), state, true, (void *)sp);
 }
 
 static void filter_db_callback(GtkWidget *w, gpointer context)
@@ -1324,14 +1352,14 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
     }
   if (make_widgets)
     {
-      sw[W_pane] = gtk_vpaned_new();
-      set_user_int_data(G_OBJECT(sw[W_pane]), sp->index);
-      gtk_container_set_border_width(GTK_CONTAINER(sw[W_pane]), 0);
+      SND_PANE(sp) = gtk_vpaned_new();
+      set_user_int_data(G_OBJECT(SND_PANE(sp)), sp->index);
+      gtk_container_set_border_width(GTK_CONTAINER(SND_PANE(sp)), 0);
       if (sound_style(ss) == SOUNDS_IN_SEPARATE_WINDOWS)
 	{
 	  sx->dialog = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 	  sg_make_resizable(sx->dialog);
-	  gtk_container_add(GTK_CONTAINER(sx->dialog), sw[W_pane]);
+	  gtk_container_add(GTK_CONTAINER(sx->dialog), SND_PANE(sp));
 	  gtk_widget_show(sx->dialog);
 	  SG_SIGNAL_CONNECT(sx->dialog, "delete_event", close_sound_dialog, sp);
 	}
@@ -1342,57 +1370,57 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
 	      GtkWidget *tablab;
 	      tablab = gtk_label_new(sp->short_filename);
 	      gtk_widget_show(tablab);
-	      gtk_notebook_append_page(GTK_NOTEBOOK(SOUND_PANE_BOX(ss)), sw[W_pane], tablab);
+	      gtk_notebook_append_page(GTK_NOTEBOOK(SOUND_PANE_BOX(ss)), SND_PANE(sp), tablab);
 	    }
-	  else gtk_box_pack_start(GTK_BOX(SOUND_PANE_BOX(ss)), sw[W_pane], true, true, 0);
+	  else gtk_box_pack_start(GTK_BOX(SOUND_PANE_BOX(ss)), SND_PANE(sp), true, true, 0);
 	  /* child2 is listener */
 	}
-      sw[W_pane_box] = gtk_vbox_new(false, 0);
-      gtk_paned_add1(GTK_PANED(sw[W_pane]), sw[W_pane_box]);
-      gtk_widget_show(sw[W_pane_box]);
+      PANE_BOX(sp) = gtk_vbox_new(false, 0);
+      gtk_paned_add1(GTK_PANED(SND_PANE(sp)), PANE_BOX(sp));
+      gtk_widget_show(PANE_BOX(sp));
 
       ERROR_INFO_FRAME(sp) = gtk_frame_new(NULL);
-      gtk_box_pack_end(GTK_BOX(sw[W_pane_box]), ERROR_INFO_FRAME(sp), false, false, 10);
+      gtk_box_pack_end(GTK_BOX(PANE_BOX(sp)), ERROR_INFO_FRAME(sp), false, false, 10);
 
-      NAME_BOX(sp) = gtk_hbox_new(false, 0);
-      gtk_box_pack_end(GTK_BOX(sw[W_pane_box]), NAME_BOX(sp), false, false, 0);
+      NAME_HBOX(sp) = gtk_hbox_new(false, 0);
+      gtk_box_pack_end(GTK_BOX(PANE_BOX(sp)), NAME_HBOX(sp), false, false, 0);
       
       for (i = 0; i < nchans; i++) 
 	add_channel_window(sp, i, chan_min_y, 0, NULL, WITH_FW_BUTTONS, WITH_EVENTS);
 
       /* controls etc */
 
-      sw[W_control_panel] = gtk_vbox_new(false, 0);
-      gtk_paned_add2(GTK_PANED(sw[W_pane]), sw[W_control_panel]);
+      CONTROL_PANEL(sp) = gtk_vbox_new(false, 0);
+      gtk_paned_add2(GTK_PANED(SND_PANE(sp)), CONTROL_PANEL(sp));
   
 
       /* -------- NAME FIELDS -------- */
 
-      sw[W_name_event] = gtk_event_box_new();
-      gtk_box_pack_start(GTK_BOX(NAME_BOX(sp)), sw[W_name_event], false, false, 5);
-      gtk_widget_show(sw[W_name_event]);
-      SG_SIGNAL_CONNECT(sw[W_name_event], "button_press_event", name_click_callback, sp);
+      NAME_EVENT_BOX(sp) = gtk_event_box_new();
+      gtk_box_pack_start(GTK_BOX(NAME_HBOX(sp)), NAME_EVENT_BOX(sp), false, false, 5);
+      gtk_widget_show(NAME_EVENT_BOX(sp));
+      SG_SIGNAL_CONNECT(NAME_EVENT_BOX(sp), "button_press_event", name_click_callback, sp);
       
-      sw[W_name] = gtk_label_new(shortname_indexed(sp));
-      gtk_container_add(GTK_CONTAINER(sw[W_name_event]), sw[W_name]);
-      gtk_widget_show(sw[W_name]);
+      NAME_BUTTON(sp) = gtk_label_new(shortname_indexed(sp));
+      gtk_container_add(GTK_CONTAINER(NAME_EVENT_BOX(sp)), NAME_BUTTON(sp));
+      gtk_widget_show(NAME_BUTTON(sp));
       
       NAME_PIX(sp) = gtk_drawing_area_new();
       gtk_widget_set_events(NAME_PIX(sp), GDK_EXPOSURE_MASK);
       gtk_widget_set_size_request(NAME_PIX(sp), 16, 16);
-      gtk_box_pack_start(GTK_BOX(NAME_BOX(sp)), NAME_PIX(sp), false, false, 0);
+      gtk_box_pack_start(GTK_BOX(NAME_HBOX(sp)), NAME_PIX(sp), false, false, 0);
       gtk_widget_show(NAME_PIX(sp));
       SG_SIGNAL_CONNECT(NAME_PIX(sp), "expose_event", name_pix_expose, sp);
 
       MINIBUFFER_SEPARATOR(sp) = gtk_vseparator_new();
-      gtk_box_pack_start(GTK_BOX(NAME_BOX(sp)), MINIBUFFER_SEPARATOR(sp), false, false, 4);
+      gtk_box_pack_start(GTK_BOX(NAME_HBOX(sp)), MINIBUFFER_SEPARATOR(sp), false, false, 4);
       gtk_widget_show(MINIBUFFER_SEPARATOR(sp));
       
       MINIBUFFER_LABEL(sp) = gtk_label_new(NULL);
-      gtk_box_pack_start(GTK_BOX(NAME_BOX(sp)), MINIBUFFER_LABEL(sp), false, false, 0);
+      gtk_box_pack_start(GTK_BOX(NAME_HBOX(sp)), MINIBUFFER_LABEL(sp), false, false, 0);
       gtk_widget_show(MINIBUFFER_LABEL(sp));
       
-      MINIBUFFER_TEXT(sp) = snd_entry_new(NAME_BOX(sp), WITH_DEFAULT_BACKGROUND);
+      MINIBUFFER_TEXT(sp) = snd_entry_new(NAME_HBOX(sp), WITH_DEFAULT_BACKGROUND);
       SG_SIGNAL_CONNECT(MINIBUFFER_TEXT(sp), "key_press_event", minibuffer_key_callback, sp);
       SG_SIGNAL_CONNECT(MINIBUFFER_TEXT(sp), "activate", minibuffer_activate_callback, sp);
       SG_SIGNAL_CONNECT(MINIBUFFER_TEXT(sp), "enter_notify_event", minibuffer_mouse_enter, sp);
@@ -1401,24 +1429,24 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       /* now fill from other end */
       
       PLAY_BUTTON(sp) = gtk_check_button_new_with_label(_("play"));
-      gtk_box_pack_end(GTK_BOX(NAME_BOX(sp)), PLAY_BUTTON(sp), false, false, 0);
+      gtk_box_pack_end(GTK_BOX(NAME_HBOX(sp)), PLAY_BUTTON(sp), false, false, 0);
       SG_SIGNAL_CONNECT(PLAY_BUTTON(sp), "button_press_event", play_button_callback, sp);
       SG_SIGNAL_CONNECT(PLAY_BUTTON(sp), "toggled", play_button_click_callback, sp);
       gtk_widget_show(PLAY_BUTTON(sp));
       
       SYNC_BUTTON(sp) = gtk_check_button_new_with_label(_("sync"));
-      gtk_box_pack_end(GTK_BOX(NAME_BOX(sp)), SYNC_BUTTON(sp), false, false, 0);
+      gtk_box_pack_end(GTK_BOX(NAME_HBOX(sp)), SYNC_BUTTON(sp), false, false, 0);
       SG_SIGNAL_CONNECT(SYNC_BUTTON(sp), "button_press_event", sync_button_callback, sp);
       SG_SIGNAL_CONNECT(SYNC_BUTTON(sp), "toggled", sync_button_click, sp);
       gtk_widget_show(SYNC_BUTTON(sp));
       
       UNITE_BUTTON(sp) = gtk_check_button_new_with_label(_("unite"));
-      gtk_box_pack_end(GTK_BOX(NAME_BOX(sp)), UNITE_BUTTON(sp), false, false, 0);
+      gtk_box_pack_end(GTK_BOX(NAME_HBOX(sp)), UNITE_BUTTON(sp), false, false, 0);
       SG_SIGNAL_CONNECT(UNITE_BUTTON(sp), "button_press_event", unite_button_callback, sp);
       SG_SIGNAL_CONNECT(UNITE_BUTTON(sp), "toggled", unite_button_click, sp);
       gtk_widget_show(UNITE_BUTTON(sp));
       
-      gtk_widget_show(NAME_BOX(sp));
+      gtk_widget_show(NAME_HBOX(sp));
 
       /* -------- minibuffer error display -------- */
 
@@ -1430,271 +1458,271 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       
       /* -------- AMP FIELDS -------- */
       
-      sw[W_amp_sep] = gtk_hseparator_new();
-      gtk_box_pack_start(GTK_BOX(sw[W_control_panel]), sw[W_amp_sep], false, false, 4);
-      gtk_widget_show(sw[W_amp_sep]);
+      NAME_SEPARATOR(sp) = gtk_hseparator_new();
+      gtk_box_pack_start(GTK_BOX(CONTROL_PANEL(sp)), NAME_SEPARATOR(sp), false, false, 4);
+      gtk_widget_show(NAME_SEPARATOR(sp));
       
-      sw[W_amp_form] = gtk_hbox_new(false, 2);
-      gtk_box_pack_start(GTK_BOX(sw[W_control_panel]), sw[W_amp_form], false, false, 0);
+      AMP_HBOX(sp) = gtk_hbox_new(false, 2);
+      gtk_box_pack_start(GTK_BOX(CONTROL_PANEL(sp)), AMP_HBOX(sp), false, false, 0);
       
-      sw[W_amp_event] = gtk_event_box_new();
-      gtk_box_pack_start(GTK_BOX(sw[W_amp_form]), sw[W_amp_event], false, false, 4);
-      gtk_widget_show(sw[W_amp_event]);
-      SG_SIGNAL_CONNECT(sw[W_amp_event], "button_press_event", amp_click_callback, sp);
+      AMP_EVENT_BOX(sp) = gtk_event_box_new();
+      gtk_box_pack_start(GTK_BOX(AMP_HBOX(sp)), AMP_EVENT_BOX(sp), false, false, 4);
+      gtk_widget_show(AMP_EVENT_BOX(sp));
+      SG_SIGNAL_CONNECT(AMP_EVENT_BOX(sp), "button_press_event", amp_click_callback, sp);
       
-      sw[W_amp_label] = gtk_label_new(_("amp:"));
-      gtk_container_add(GTK_CONTAINER(sw[W_amp_event]), sw[W_amp_label]);
-      gtk_widget_show(sw[W_amp_label]);
+      AMP_BUTTON(sp) = gtk_label_new(_("amp:"));
+      gtk_container_add(GTK_CONTAINER(AMP_EVENT_BOX(sp)), AMP_BUTTON(sp));
+      gtk_widget_show(AMP_BUTTON(sp));
       
-      sw[W_amp_number] = gtk_label_new("1.00 ");
-      gtk_box_pack_start(GTK_BOX(sw[W_amp_form]), sw[W_amp_number], false, false, 0);
-      gtk_widget_show(sw[W_amp_number]);
+      AMP_LABEL(sp) = gtk_label_new("1.00 ");
+      gtk_box_pack_start(GTK_BOX(AMP_HBOX(sp)), AMP_LABEL(sp), false, false, 0);
+      gtk_widget_show(AMP_LABEL(sp));
       
-      adjs[W_amp_adj] = gtk_adjustment_new(amp_to_scroll(sp->amp_control_min, 1.0, sp->amp_control_max), 0.0, 1.0, 0.001, 0.01, .1);
-      sw[W_amp] = gtk_hscrollbar_new(GTK_ADJUSTMENT(adjs[W_amp_adj]));
-      gtk_box_pack_start(GTK_BOX(sw[W_amp_form]), sw[W_amp], true, true, 4);
-      SG_SIGNAL_CONNECT(adjs[W_amp_adj], "value_changed", amp_changed_callback, sp);
-      SG_SIGNAL_CONNECT(sw[W_amp], "button_release_event", amp_release_callback, sp);
-      gtk_widget_show(sw[W_amp]);
+      AMP_ADJUSTMENT(sp) = gtk_adjustment_new(amp_to_scroll(sp->amp_control_min, 1.0, sp->amp_control_max), 0.0, 1.0, 0.001, 0.01, .1);
+      AMP_SCROLLBAR(sp) = gtk_hscrollbar_new(GTK_ADJUSTMENT(AMP_ADJUSTMENT(sp)));
+      gtk_box_pack_start(GTK_BOX(AMP_HBOX(sp)), AMP_SCROLLBAR(sp), true, true, 4);
+      SG_SIGNAL_CONNECT(AMP_ADJUSTMENT(sp), "value_changed", amp_changed_callback, sp);
+      SG_SIGNAL_CONNECT(AMP_SCROLLBAR(sp), "button_release_event", amp_release_callback, sp);
+      gtk_widget_show(AMP_SCROLLBAR(sp));
       
-      gtk_widget_show(sw[W_amp_form]);
+      gtk_widget_show(AMP_HBOX(sp));
       
       
       /* -------- SPEED FIELDS -------- */
       
-      sw[W_speed_form] = gtk_hbox_new(false, 2);
-      gtk_box_pack_start(GTK_BOX(sw[W_control_panel]), sw[W_speed_form], false, false, 0);
+      SPEED_HBOX(sp) = gtk_hbox_new(false, 2);
+      gtk_box_pack_start(GTK_BOX(CONTROL_PANEL(sp)), SPEED_HBOX(sp), false, false, 0);
       
-      sw[W_speed_event] = gtk_event_box_new();
-      gtk_box_pack_start(GTK_BOX(sw[W_speed_form]), sw[W_speed_event], false, false, 4);
-      gtk_widget_show(sw[W_speed_event]);
-      SG_SIGNAL_CONNECT(sw[W_speed_event], "button_press_event", speed_click_callback, sp);
+      SPEED_EVENT_BOX(sp) = gtk_event_box_new();
+      gtk_box_pack_start(GTK_BOX(SPEED_HBOX(sp)), SPEED_EVENT_BOX(sp), false, false, 4);
+      gtk_widget_show(SPEED_EVENT_BOX(sp));
+      SG_SIGNAL_CONNECT(SPEED_EVENT_BOX(sp), "button_press_event", speed_click_callback, sp);
       
-      sw[W_speed_label] = gtk_label_new(_("speed:"));
-      gtk_container_add(GTK_CONTAINER(sw[W_speed_event]), sw[W_speed_label]);
-      gtk_widget_show(sw[W_speed_label]);
+      SPEED_BUTTON(sp) = gtk_label_new(_("speed:"));
+      gtk_container_add(GTK_CONTAINER(SPEED_EVENT_BOX(sp)), SPEED_BUTTON(sp));
+      gtk_widget_show(SPEED_BUTTON(sp));
       
       switch (sp->speed_control_style)
 	{
-	case SPEED_CONTROL_AS_RATIO: sw[W_speed_number] = gtk_label_new("  1/1"); break;
-	case SPEED_CONTROL_AS_SEMITONE: sw[W_speed_number] = gtk_label_new("    0"); break;
-	default:  sw[W_speed_number] = gtk_label_new("1.00 "); break;
+	case SPEED_CONTROL_AS_RATIO: SPEED_LABEL(sp) = gtk_label_new("  1/1"); break;
+	case SPEED_CONTROL_AS_SEMITONE: SPEED_LABEL(sp) = gtk_label_new("    0"); break;
+	default:  SPEED_LABEL(sp) = gtk_label_new("1.00 "); break;
 	}
-      gtk_box_pack_start(GTK_BOX(sw[W_speed_form]), sw[W_speed_number], false, false, 0);
-      gtk_widget_show(sw[W_speed_number]);
+      gtk_box_pack_start(GTK_BOX(SPEED_HBOX(sp)), SPEED_LABEL(sp), false, false, 0);
+      gtk_widget_show(SPEED_LABEL(sp));
       
-      adjs[W_speed_adj] = gtk_adjustment_new(speed_to_scroll(sp->speed_control_min, 1.0, sp->speed_control_max), 0.0, 1.0, 0.001, 0.01, .1);
-      sw[W_speed] = gtk_hscrollbar_new(GTK_ADJUSTMENT(adjs[W_speed_adj]));
-      gtk_box_pack_start(GTK_BOX(sw[W_speed_form]), sw[W_speed], true, true, 4);
-      SG_SIGNAL_CONNECT(adjs[W_speed_adj], "value_changed", speed_changed_callback, sp);
-      SG_SIGNAL_CONNECT(sw[W_speed], "button_release_event", speed_release_callback, sp);
-      gtk_widget_show(sw[W_speed]);
+      SPEED_ADJUSTMENT(sp) = gtk_adjustment_new(speed_to_scroll(sp->speed_control_min, 1.0, sp->speed_control_max), 0.0, 1.0, 0.001, 0.01, .1);
+      SPEED_SCROLLBAR(sp) = gtk_hscrollbar_new(GTK_ADJUSTMENT(SPEED_ADJUSTMENT(sp)));
+      gtk_box_pack_start(GTK_BOX(SPEED_HBOX(sp)), SPEED_SCROLLBAR(sp), true, true, 4);
+      SG_SIGNAL_CONNECT(SPEED_ADJUSTMENT(sp), "value_changed", speed_changed_callback, sp);
+      SG_SIGNAL_CONNECT(SPEED_SCROLLBAR(sp), "button_release_event", speed_release_callback, sp);
+      gtk_widget_show(SPEED_SCROLLBAR(sp));
 
-      sw[W_speed_pix] = gtk_drawing_area_new();
-      gtk_widget_set_events(sw[W_speed_pix], GDK_ALL_EVENTS_MASK);
-      gtk_box_pack_start(GTK_BOX(sw[W_speed_form]), sw[W_speed_pix], false, false, 2);
-      gtk_widget_set_size_request(sw[W_speed_pix], 18, 16);
-      gtk_widget_show(sw[W_speed_pix]);
-      SG_SIGNAL_CONNECT(sw[W_speed_pix], "expose_event", speed_arrow_expose, sp);
-      SG_SIGNAL_CONNECT(sw[W_speed_pix], "button_press_event", speed_arrow_press, sp);
+      SPEED_ARROW(sp) = gtk_drawing_area_new();
+      gtk_widget_set_events(SPEED_ARROW(sp), GDK_ALL_EVENTS_MASK);
+      gtk_box_pack_start(GTK_BOX(SPEED_HBOX(sp)), SPEED_ARROW(sp), false, false, 2);
+      gtk_widget_set_size_request(SPEED_ARROW(sp), 18, 16);
+      gtk_widget_show(SPEED_ARROW(sp));
+      SG_SIGNAL_CONNECT(SPEED_ARROW(sp), "expose_event", speed_arrow_expose, sp);
+      SG_SIGNAL_CONNECT(SPEED_ARROW(sp), "button_press_event", speed_arrow_press, sp);
 
-      gtk_widget_show(sw[W_speed_form]);
+      gtk_widget_show(SPEED_HBOX(sp));
       
       
       /* -------- EXPAND FIELDS -------- */
       
-      sw[W_expand_form] = gtk_hbox_new(false, 2);
-      gtk_box_pack_start(GTK_BOX(sw[W_control_panel]), sw[W_expand_form], false, false, 0);
+      EXPAND_HBOX(sp) = gtk_hbox_new(false, 2);
+      gtk_box_pack_start(GTK_BOX(CONTROL_PANEL(sp)), EXPAND_HBOX(sp), false, false, 0);
       
-      sw[W_expand_event] = gtk_event_box_new();
-      gtk_box_pack_start(GTK_BOX(sw[W_expand_form]), sw[W_expand_event], false, false, 4);
-      gtk_widget_show(sw[W_expand_event]);
-      SG_SIGNAL_CONNECT(sw[W_expand_event], "button_press_event", expand_click_callback, sp);
+      EXPAND_EVENT_BOX(sp) = gtk_event_box_new();
+      gtk_box_pack_start(GTK_BOX(EXPAND_HBOX(sp)), EXPAND_EVENT_BOX(sp), false, false, 4);
+      gtk_widget_show(EXPAND_EVENT_BOX(sp));
+      SG_SIGNAL_CONNECT(EXPAND_EVENT_BOX(sp), "button_press_event", expand_click_callback, sp);
       
-      sw[W_expand_label] = gtk_label_new(_("expand:"));
-      gtk_container_add(GTK_CONTAINER(sw[W_expand_event]), sw[W_expand_label]);
-      gtk_widget_show(sw[W_expand_label]);
+      EXPAND_LEFT_BUTTON(sp) = gtk_label_new(_("expand:"));
+      gtk_container_add(GTK_CONTAINER(EXPAND_EVENT_BOX(sp)), EXPAND_LEFT_BUTTON(sp));
+      gtk_widget_show(EXPAND_LEFT_BUTTON(sp));
       
-      sw[W_expand_number] = gtk_label_new("1.00 ");
-      gtk_box_pack_start(GTK_BOX(sw[W_expand_form]), sw[W_expand_number], false, false, 0);
-      gtk_widget_show(sw[W_expand_number]);
+      EXPAND_LABEL(sp) = gtk_label_new("1.00 ");
+      gtk_box_pack_start(GTK_BOX(EXPAND_HBOX(sp)), EXPAND_LABEL(sp), false, false, 0);
+      gtk_widget_show(EXPAND_LABEL(sp));
       
-      adjs[W_expand_adj] = gtk_adjustment_new(expand_to_scroll(sp->expand_control_min, 1.0, sp->expand_control_max), 0.0, 1.0, 0.001, 0.01, .1);
-      sw[W_expand] = gtk_hscrollbar_new(GTK_ADJUSTMENT(adjs[W_expand_adj]));
-      gtk_box_pack_start(GTK_BOX(sw[W_expand_form]), sw[W_expand], true, true, 4);
-      SG_SIGNAL_CONNECT(adjs[W_expand_adj], "value_changed", expand_changed_callback, sp);
-      SG_SIGNAL_CONNECT(sw[W_expand], "button_release_event", expand_release_callback, sp);
-      gtk_widget_show(sw[W_expand]);
+      EXPAND_ADJUSTMENT(sp) = gtk_adjustment_new(expand_to_scroll(sp->expand_control_min, 1.0, sp->expand_control_max), 0.0, 1.0, 0.001, 0.01, .1);
+      EXPAND_SCROLLBAR(sp) = gtk_hscrollbar_new(GTK_ADJUSTMENT(EXPAND_ADJUSTMENT(sp)));
+      gtk_box_pack_start(GTK_BOX(EXPAND_HBOX(sp)), EXPAND_SCROLLBAR(sp), true, true, 4);
+      SG_SIGNAL_CONNECT(EXPAND_ADJUSTMENT(sp), "value_changed", expand_changed_callback, sp);
+      SG_SIGNAL_CONNECT(EXPAND_SCROLLBAR(sp), "button_release_event", expand_release_callback, sp);
+      gtk_widget_show(EXPAND_SCROLLBAR(sp));
       
-      sw[W_expand_button] = gtk_check_button_new();
-      gtk_box_pack_start(GTK_BOX(sw[W_expand_form]), sw[W_expand_button], false, false, 0);
-      SG_SIGNAL_CONNECT(sw[W_expand_button], "clicked", expand_button_callback, sp);
-      gtk_widget_show(sw[W_expand_button]);
+      EXPAND_RIGHT_BUTTON(sp) = gtk_check_button_new();
+      gtk_box_pack_start(GTK_BOX(EXPAND_HBOX(sp)), EXPAND_RIGHT_BUTTON(sp), false, false, 0);
+      SG_SIGNAL_CONNECT(EXPAND_RIGHT_BUTTON(sp), "clicked", expand_button_callback, sp);
+      gtk_widget_show(EXPAND_RIGHT_BUTTON(sp));
       
-      gtk_widget_show(sw[W_expand_form]);
+      gtk_widget_show(EXPAND_HBOX(sp));
       
       
       /* -------- CONTRAST FIELDS -------- */
       
-      sw[W_contrast_form] = gtk_hbox_new(false, 2);
-      gtk_box_pack_start(GTK_BOX(sw[W_control_panel]), sw[W_contrast_form], false, false, 0);
+      CONTRAST_HBOX(sp) = gtk_hbox_new(false, 2);
+      gtk_box_pack_start(GTK_BOX(CONTROL_PANEL(sp)), CONTRAST_HBOX(sp), false, false, 0);
       
-      sw[W_contrast_event] = gtk_event_box_new();
-      gtk_box_pack_start(GTK_BOX(sw[W_contrast_form]), sw[W_contrast_event], false, false, 4);
-      gtk_widget_show(sw[W_contrast_event]);
-      SG_SIGNAL_CONNECT(sw[W_contrast_event], "button_press_event", contrast_click_callback, sp);
+      CONTRAST_EVENT_BOX(sp) = gtk_event_box_new();
+      gtk_box_pack_start(GTK_BOX(CONTRAST_HBOX(sp)), CONTRAST_EVENT_BOX(sp), false, false, 4);
+      gtk_widget_show(CONTRAST_EVENT_BOX(sp));
+      SG_SIGNAL_CONNECT(CONTRAST_EVENT_BOX(sp), "button_press_event", contrast_click_callback, sp);
       
-      sw[W_contrast_label] = gtk_label_new(_("contrast:"));
-      gtk_container_add(GTK_CONTAINER(sw[W_contrast_event]), sw[W_contrast_label]);
-      gtk_widget_show(sw[W_contrast_label]);
+      CONTRAST_LEFT_BUTTON(sp) = gtk_label_new(_("contrast:"));
+      gtk_container_add(GTK_CONTAINER(CONTRAST_EVENT_BOX(sp)), CONTRAST_LEFT_BUTTON(sp));
+      gtk_widget_show(CONTRAST_LEFT_BUTTON(sp));
       
-      sw[W_contrast_number] = gtk_label_new("0.00 ");
-      gtk_box_pack_start(GTK_BOX(sw[W_contrast_form]), sw[W_contrast_number], false, false, 0);
-      gtk_widget_show(sw[W_contrast_number]);
+      CONTRAST_LABEL(sp) = gtk_label_new("0.00 ");
+      gtk_box_pack_start(GTK_BOX(CONTRAST_HBOX(sp)), CONTRAST_LABEL(sp), false, false, 0);
+      gtk_widget_show(CONTRAST_LABEL(sp));
       
-      adjs[W_contrast_adj] = gtk_adjustment_new(0.0, 0.0, 1.0, 0.001, 0.01, .1);
-      sw[W_contrast] = gtk_hscrollbar_new(GTK_ADJUSTMENT(adjs[W_contrast_adj]));
-      gtk_box_pack_start(GTK_BOX(sw[W_contrast_form]), sw[W_contrast], true, true, 4);
-      SG_SIGNAL_CONNECT(adjs[W_contrast_adj], "value_changed", contrast_changed_callback, sp);
-      SG_SIGNAL_CONNECT(sw[W_contrast], "button_release_event", contrast_release_callback, sp);
-      gtk_widget_show(sw[W_contrast]);
+      CONTRAST_ADJUSTMENT(sp) = gtk_adjustment_new(0.0, 0.0, 1.0, 0.001, 0.01, .1);
+      CONTRAST_SCROLLBAR(sp) = gtk_hscrollbar_new(GTK_ADJUSTMENT(CONTRAST_ADJUSTMENT(sp)));
+      gtk_box_pack_start(GTK_BOX(CONTRAST_HBOX(sp)), CONTRAST_SCROLLBAR(sp), true, true, 4);
+      SG_SIGNAL_CONNECT(CONTRAST_ADJUSTMENT(sp), "value_changed", contrast_changed_callback, sp);
+      SG_SIGNAL_CONNECT(CONTRAST_SCROLLBAR(sp), "button_release_event", contrast_release_callback, sp);
+      gtk_widget_show(CONTRAST_SCROLLBAR(sp));
       
-      sw[W_contrast_button] = gtk_check_button_new();
-      gtk_box_pack_start(GTK_BOX(sw[W_contrast_form]), sw[W_contrast_button], false, false, 0);
-      SG_SIGNAL_CONNECT(sw[W_contrast_button], "clicked", contrast_button_callback, sp);
-      gtk_widget_show(sw[W_contrast_button]);
+      CONTRAST_RIGHT_BUTTON(sp) = gtk_check_button_new();
+      gtk_box_pack_start(GTK_BOX(CONTRAST_HBOX(sp)), CONTRAST_RIGHT_BUTTON(sp), false, false, 0);
+      SG_SIGNAL_CONNECT(CONTRAST_RIGHT_BUTTON(sp), "clicked", contrast_button_callback, sp);
+      gtk_widget_show(CONTRAST_RIGHT_BUTTON(sp));
       
-      gtk_widget_show(sw[W_contrast_form]);
+      gtk_widget_show(CONTRAST_HBOX(sp));
       
       
       /* -------- REVERB FIELDS -------- */
       
-      sw[W_reverb_form] = gtk_hbox_new(false, 2);
-      gtk_box_pack_start(GTK_BOX(sw[W_control_panel]), sw[W_reverb_form], false, false, 0);
+      REVERB_HBOX(sp) = gtk_hbox_new(false, 2);
+      gtk_box_pack_start(GTK_BOX(CONTROL_PANEL(sp)), REVERB_HBOX(sp), false, false, 0);
       
-      sw[W_revscl_event] = gtk_event_box_new();
-      gtk_box_pack_start(GTK_BOX(sw[W_reverb_form]), sw[W_revscl_event], false, false, 4);
-      gtk_widget_show(sw[W_revscl_event]);
-      SG_SIGNAL_CONNECT(sw[W_revscl_event], "button_press_event", revscl_click_callback, sp);
+      REVSCL_EVENT_BOX(sp) = gtk_event_box_new();
+      gtk_box_pack_start(GTK_BOX(REVERB_HBOX(sp)), REVSCL_EVENT_BOX(sp), false, false, 4);
+      gtk_widget_show(REVSCL_EVENT_BOX(sp));
+      SG_SIGNAL_CONNECT(REVSCL_EVENT_BOX(sp), "button_press_event", revscl_click_callback, sp);
       
-      sw[W_revscl_label] = gtk_label_new(_("reverb:"));
-      gtk_container_add(GTK_CONTAINER(sw[W_revscl_event]), sw[W_revscl_label]);
-      gtk_widget_show(sw[W_revscl_label]);
+      REVSCL_BUTTON(sp) = gtk_label_new(_("reverb:"));
+      gtk_container_add(GTK_CONTAINER(REVSCL_EVENT_BOX(sp)), REVSCL_BUTTON(sp));
+      gtk_widget_show(REVSCL_BUTTON(sp));
       
-      sw[W_revscl_number] = gtk_label_new("0.000 ");
-      gtk_box_pack_start(GTK_BOX(sw[W_reverb_form]), sw[W_revscl_number], false, false, 0);
-      gtk_widget_show(sw[W_revscl_number]);
+      REVSCL_LABEL(sp) = gtk_label_new("0.000 ");
+      gtk_box_pack_start(GTK_BOX(REVERB_HBOX(sp)), REVSCL_LABEL(sp), false, false, 0);
+      gtk_widget_show(REVSCL_LABEL(sp));
       
-      adjs[W_revscl_adj] = gtk_adjustment_new(0.0, 0.0, 1.0, 0.001, 0.01, .1);
-      sw[W_revscl] = gtk_hscrollbar_new(GTK_ADJUSTMENT(adjs[W_revscl_adj]));
-      gtk_box_pack_start(GTK_BOX(sw[W_reverb_form]), sw[W_revscl], true, true, 4);
-      SG_SIGNAL_CONNECT(adjs[W_revscl_adj], "value_changed", revscl_changed_callback, sp);
-      SG_SIGNAL_CONNECT(sw[W_revscl], "button_release_event", revscl_release_callback, sp);
-      gtk_widget_show(sw[W_revscl]);
+      REVSCL_ADJUSTMENT(sp) = gtk_adjustment_new(0.0, 0.0, 1.0, 0.001, 0.01, .1);
+      REVSCL_SCROLLBAR(sp) = gtk_hscrollbar_new(GTK_ADJUSTMENT(REVSCL_ADJUSTMENT(sp)));
+      gtk_box_pack_start(GTK_BOX(REVERB_HBOX(sp)), REVSCL_SCROLLBAR(sp), true, true, 4);
+      SG_SIGNAL_CONNECT(REVSCL_ADJUSTMENT(sp), "value_changed", revscl_changed_callback, sp);
+      SG_SIGNAL_CONNECT(REVSCL_SCROLLBAR(sp), "button_release_event", revscl_release_callback, sp);
+      gtk_widget_show(REVSCL_SCROLLBAR(sp));
       
-      sw[W_revlen_event] = gtk_event_box_new();
-      gtk_box_pack_start(GTK_BOX(sw[W_reverb_form]), sw[W_revlen_event], false, false, 4);
-      gtk_widget_show(sw[W_revlen_event]);
-      SG_SIGNAL_CONNECT(sw[W_revlen_event], "button_press_event", revlen_click_callback, sp);
+      REVLEN_EVENT_BOX(sp) = gtk_event_box_new();
+      gtk_box_pack_start(GTK_BOX(REVERB_HBOX(sp)), REVLEN_EVENT_BOX(sp), false, false, 4);
+      gtk_widget_show(REVLEN_EVENT_BOX(sp));
+      SG_SIGNAL_CONNECT(REVLEN_EVENT_BOX(sp), "button_press_event", revlen_click_callback, sp);
       
-      sw[W_revlen_label] = gtk_label_new(_("len:"));
-      gtk_container_add(GTK_CONTAINER(sw[W_revlen_event]), sw[W_revlen_label]);
-      gtk_widget_show(sw[W_revlen_label]);
+      REVLEN_BUTTON(sp) = gtk_label_new(_("len:"));
+      gtk_container_add(GTK_CONTAINER(REVLEN_EVENT_BOX(sp)), REVLEN_BUTTON(sp));
+      gtk_widget_show(REVLEN_BUTTON(sp));
       
-      sw[W_revlen_number] = gtk_label_new("1.0 ");
-      gtk_box_pack_start(GTK_BOX(sw[W_reverb_form]), sw[W_revlen_number], false, false, 0);
-      gtk_widget_show(sw[W_revlen_number]);
+      REVLEN_LABEL(sp) = gtk_label_new("1.0 ");
+      gtk_box_pack_start(GTK_BOX(REVERB_HBOX(sp)), REVLEN_LABEL(sp), false, false, 0);
+      gtk_widget_show(REVLEN_LABEL(sp));
       
-      adjs[W_revlen_adj] = gtk_adjustment_new(revlen_to_scroll(sp->reverb_control_length_min, 
+      REVLEN_ADJUSTMENT(sp) = gtk_adjustment_new(revlen_to_scroll(sp->reverb_control_length_min, 
 							       sp->reverb_control_length, 
 							       sp->reverb_control_length_max), 
 					      0.0, 1.0, 0.001, 0.01, .1);
-      sw[W_revlen] = gtk_hscrollbar_new(GTK_ADJUSTMENT(adjs[W_revlen_adj]));
-      gtk_box_pack_start(GTK_BOX(sw[W_reverb_form]), sw[W_revlen], true, true, 4);
-      SG_SIGNAL_CONNECT(adjs[W_revlen_adj], "value_changed", revlen_changed_callback, sp);
-      SG_SIGNAL_CONNECT(sw[W_revlen], "button_release_event", revlen_release_callback, sp);
-      gtk_widget_show(sw[W_revlen]);
+      REVLEN_SCROLLBAR(sp) = gtk_hscrollbar_new(GTK_ADJUSTMENT(REVLEN_ADJUSTMENT(sp)));
+      gtk_box_pack_start(GTK_BOX(REVERB_HBOX(sp)), REVLEN_SCROLLBAR(sp), true, true, 4);
+      SG_SIGNAL_CONNECT(REVLEN_ADJUSTMENT(sp), "value_changed", revlen_changed_callback, sp);
+      SG_SIGNAL_CONNECT(REVLEN_SCROLLBAR(sp), "button_release_event", revlen_release_callback, sp);
+      gtk_widget_show(REVLEN_SCROLLBAR(sp));
       
-      sw[W_reverb_button] = gtk_check_button_new();
-      gtk_box_pack_start(GTK_BOX(sw[W_reverb_form]), sw[W_reverb_button], false, false, 0);
-      SG_SIGNAL_CONNECT(sw[W_reverb_button], "clicked", reverb_button_callback, sp);
-      gtk_widget_show(sw[W_reverb_button]);
+      REVERB_RIGHT_BUTTON(sp) = gtk_check_button_new();
+      gtk_box_pack_start(GTK_BOX(REVERB_HBOX(sp)), REVERB_RIGHT_BUTTON(sp), false, false, 0);
+      SG_SIGNAL_CONNECT(REVERB_RIGHT_BUTTON(sp), "clicked", reverb_button_callback, sp);
+      gtk_widget_show(REVERB_RIGHT_BUTTON(sp));
       
-      gtk_widget_show(sw[W_reverb_form]);
+      gtk_widget_show(REVERB_HBOX(sp));
       
       
       /* -------- FILTER FIELDS -------- */
       
-      sw[W_filter_form] = gtk_hbox_new(false, 2);
-      gtk_box_pack_start(GTK_BOX(sw[W_control_panel]), sw[W_filter_form], false, false, 0);
+      FILTER_HBOX(sp) = gtk_hbox_new(false, 2);
+      gtk_box_pack_start(GTK_BOX(CONTROL_PANEL(sp)), FILTER_HBOX(sp), false, false, 0);
       
-      sw[W_filter_label] = gtk_label_new(_("filter:"));
-      gtk_box_pack_start(GTK_BOX(sw[W_filter_form]), sw[W_filter_label], false, false, 4);
-      gtk_widget_show(sw[W_filter_label]);
+      FILTER_LEFT_BUTTON(sp) = gtk_label_new(_("filter:"));
+      gtk_box_pack_start(GTK_BOX(FILTER_HBOX(sp)), FILTER_LEFT_BUTTON(sp), false, false, 4);
+      gtk_widget_show(FILTER_LEFT_BUTTON(sp));
       
-      adjs[W_filter_adj] = gtk_adjustment_new(20, 2, 100000, 2, 10, 0);
-      sw[W_filter_order] = gtk_spin_button_new(GTK_ADJUSTMENT(adjs[W_filter_adj]), 0.0, 0);
-      gtk_box_pack_start(GTK_BOX(sw[W_filter_form]), sw[W_filter_order], false, false, 2);
-      gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(sw[W_filter_order]), true);
-      SG_SIGNAL_CONNECT(adjs[W_filter_adj], "value_changed", filter_order_callback, sp);
-      gtk_widget_show(sw[W_filter_order]);
+      FILTER_ADJUSTMENT(sp) = gtk_adjustment_new(20, 2, 100000, 2, 10, 0);
+      FILTER_ORDER_TEXT(sp) = gtk_spin_button_new(GTK_ADJUSTMENT(FILTER_ADJUSTMENT(sp)), 0.0, 0);
+      gtk_box_pack_start(GTK_BOX(FILTER_HBOX(sp)), FILTER_ORDER_TEXT(sp), false, false, 2);
+      gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(FILTER_ORDER_TEXT(sp)), true);
+      SG_SIGNAL_CONNECT(FILTER_ADJUSTMENT(sp), "value_changed", filter_order_callback, sp);
+      gtk_widget_show(FILTER_ORDER_TEXT(sp));
       
-      sw[W_filter] = snd_entry_new(sw[W_filter_form], WITH_DEFAULT_BACKGROUND);
-      SG_SIGNAL_CONNECT(sw[W_filter], "activate", filter_activate_callback, sp);
+      FILTER_COEFFS_TEXT(sp) = snd_entry_new(FILTER_HBOX(sp), WITH_DEFAULT_BACKGROUND);
+      SG_SIGNAL_CONNECT(FILTER_COEFFS_TEXT(sp), "activate", filter_activate_callback, sp);
 
-      sw[W_filter_hz] = gtk_check_button_new_with_label(_("hz"));
-      gtk_box_pack_start(GTK_BOX(sw[W_filter_form]), sw[W_filter_hz], false, false, 2);
-      SG_SIGNAL_CONNECT(sw[W_filter_hz], "clicked", filter_hz_callback, sp);
-      gtk_widget_show(sw[W_filter_hz]);
+      FILTER_HZ_BUTTON(sp) = gtk_check_button_new_with_label(_("hz"));
+      gtk_box_pack_start(GTK_BOX(FILTER_HBOX(sp)), FILTER_HZ_BUTTON(sp), false, false, 2);
+      SG_SIGNAL_CONNECT(FILTER_HZ_BUTTON(sp), "clicked", filter_hz_callback, sp);
+      gtk_widget_show(FILTER_HZ_BUTTON(sp));
       
-      sw[W_filter_dB] = gtk_check_button_new_with_label(_("dB"));
-      gtk_box_pack_start(GTK_BOX(sw[W_filter_form]), sw[W_filter_dB], false, false, 2);
-      SG_SIGNAL_CONNECT(sw[W_filter_dB], "clicked", filter_db_callback, sp);
-      gtk_widget_show(sw[W_filter_dB]);
+      FILTER_DB_BUTTON(sp) = gtk_check_button_new_with_label(_("dB"));
+      gtk_box_pack_start(GTK_BOX(FILTER_HBOX(sp)), FILTER_DB_BUTTON(sp), false, false, 2);
+      SG_SIGNAL_CONNECT(FILTER_DB_BUTTON(sp), "clicked", filter_db_callback, sp);
+      gtk_widget_show(FILTER_DB_BUTTON(sp));
       
-      sw[W_filter_button] = gtk_check_button_new();
-      gtk_box_pack_start(GTK_BOX(sw[W_filter_form]), sw[W_filter_button], false, false, 0);
-      SG_SIGNAL_CONNECT(sw[W_filter_button], "clicked", filter_button_callback, sp);
-      gtk_widget_show(sw[W_filter_button]);
+      FILTER_RIGHT_BUTTON(sp) = gtk_check_button_new();
+      gtk_box_pack_start(GTK_BOX(FILTER_HBOX(sp)), FILTER_RIGHT_BUTTON(sp), false, false, 0);
+      SG_SIGNAL_CONNECT(FILTER_RIGHT_BUTTON(sp), "clicked", filter_button_callback, sp);
+      gtk_widget_show(FILTER_RIGHT_BUTTON(sp));
       
-      gtk_widget_show(sw[W_filter_form]);
+      gtk_widget_show(FILTER_HBOX(sp));
       
       
       /* -------- FILTER GRAPH -------- */
       
-      sw[W_filter_frame] = gtk_frame_new(NULL);
-      gtk_box_pack_start(GTK_BOX(sw[W_control_panel]), sw[W_filter_frame], true, true, 10);
+      FILTER_FRAME(sp) = gtk_frame_new(NULL);
+      gtk_box_pack_start(GTK_BOX(CONTROL_PANEL(sp)), FILTER_FRAME(sp), true, true, 10);
       
-      sw[W_filter_env] = gtk_drawing_area_new();
-      gtk_widget_set_events(sw[W_filter_env], GDK_ALL_EVENTS_MASK);
-      gtk_widget_modify_bg(sw[W_filter_env], GTK_STATE_NORMAL, ss->sgx->highlight_color);
-      gtk_container_add(GTK_CONTAINER(sw[W_filter_frame]), sw[W_filter_env]);
-      gtk_widget_show(sw[W_filter_env]);
-      SG_SIGNAL_CONNECT(sw[W_filter_env], "expose_event", filter_drawer_expose, sp);
-      SG_SIGNAL_CONNECT(sw[W_filter_env], "configure_event", filter_drawer_resize, sp);
-      SG_SIGNAL_CONNECT(sw[W_filter_env], "button_press_event", filter_drawer_button_press, sp);
-      SG_SIGNAL_CONNECT(sw[W_filter_env], "button_release_event", filter_drawer_button_release, sp);
-      SG_SIGNAL_CONNECT(sw[W_filter_env], "motion_notify_event", filter_drawer_button_motion, sp);
+      FILTER_ENV(sp) = gtk_drawing_area_new();
+      gtk_widget_set_events(FILTER_ENV(sp), GDK_ALL_EVENTS_MASK);
+      gtk_widget_modify_bg(FILTER_ENV(sp), GTK_STATE_NORMAL, ss->sgx->highlight_color);
+      gtk_container_add(GTK_CONTAINER(FILTER_FRAME(sp)), FILTER_ENV(sp));
+      gtk_widget_show(FILTER_ENV(sp));
+      SG_SIGNAL_CONNECT(FILTER_ENV(sp), "expose_event", filter_drawer_expose, sp);
+      SG_SIGNAL_CONNECT(FILTER_ENV(sp), "configure_event", filter_drawer_resize, sp);
+      SG_SIGNAL_CONNECT(FILTER_ENV(sp), "button_press_event", filter_drawer_button_press, sp);
+      SG_SIGNAL_CONNECT(FILTER_ENV(sp), "button_release_event", filter_drawer_button_release, sp);
+      SG_SIGNAL_CONNECT(FILTER_ENV(sp), "motion_notify_event", filter_drawer_button_motion, sp);
 
-      gtk_widget_show(sw[W_filter_frame]);
+      gtk_widget_show(FILTER_FRAME(sp));
       sp->sgx->flt = new_env_editor();
       
       /* end if control-panel */
-      gtk_widget_show(sw[W_control_panel]);
-      gtk_widget_show(sw[W_pane]);
+      gtk_widget_show(CONTROL_PANEL(sp));
+      gtk_widget_show(SND_PANE(sp));
     } /* new sound ss */
   else
     { /* re-manage currently inactive chan */
       if (sound_style(ss) == SOUNDS_IN_SEPARATE_WINDOWS) 
 	raise_dialog(sx->dialog);
       gtk_widget_show(UNITE_BUTTON(sp));
-      gtk_widget_show(sw[W_pane]);
+      gtk_widget_show(SND_PANE(sp));
       for (k = 0; k < nchans; k++) 
 	add_channel_window(sp, k, chan_min_y, 0, NULL, WITH_FW_BUTTONS, WITH_EVENTS);
-      gtk_label_set_text(GTK_LABEL(sw[W_name]), shortname_indexed(sp));
-      reset_user_int_data(G_OBJECT(sw[W_pane]), sp->index); /* is this necessary? */
+      gtk_label_set_text(GTK_LABEL(NAME_BUTTON(sp)), shortname_indexed(sp));
+      reset_user_int_data(G_OBJECT(SND_PANE(sp)), sp->index); /* is this necessary? */
       if (sound_style(ss) == SOUNDS_IN_NOTEBOOK) 
-	gtk_notebook_set_tab_label_text(GTK_NOTEBOOK(SOUND_PANE_BOX(ss)), sw[W_pane], sp->short_filename);
+	gtk_notebook_set_tab_label_text(GTK_NOTEBOOK(SOUND_PANE_BOX(ss)), SND_PANE(sp), sp->short_filename);
       else reset_controls(sp); /* segfault here in notebook case! */
     }
   gtk_window_set_resizable(GTK_WINDOW(MAIN_SHELL(ss)), true);
@@ -1718,7 +1746,7 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
   after_open(sp->index);
   if (sound_style(ss) == SOUNDS_IN_NOTEBOOK) 
     {
-      sx->page = gtk_notebook_page_num(GTK_NOTEBOOK(SOUND_PANE_BOX(ss)), sw[W_pane]);
+      sx->page = gtk_notebook_page_num(GTK_NOTEBOOK(SOUND_PANE_BOX(ss)), SND_PANE(sp));
       reset_controls(sp);
     }
   if (free_filename) FREE(filename);
@@ -1731,7 +1759,7 @@ void set_sound_pane_file_label(snd_info *sp, char *str)
     {
       if (sp->name_string) FREE(sp->name_string);
       sp->name_string = copy_string(str);
-      set_label(w_snd_name(sp), str);
+      set_label(NAME_BUTTON(sp), str);
     }
 }
 
@@ -1746,16 +1774,16 @@ void snd_info_cleanup(snd_info *sp)
 	{
 	  set_toggle_button(SYNC_BUTTON(sp), false, false, (void *)sp);
 	  set_sync_color(sp);
-	  set_toggle_button(EXPAND_BUTTON(sp), false, false, (void *)sp);
-	  set_toggle_button(CONTRAST_BUTTON(sp), false, false, (void *)sp);
-	  set_toggle_button(FILTER_BUTTON(sp), false, false, (void *)sp);
-	  set_toggle_button(REVERB_BUTTON(sp), false, false, (void *)sp);
-	  set_toggle_button(unite_button(sp), false, false, (void *)sp);
+	  set_toggle_button(EXPAND_RIGHT_BUTTON(sp), false, false, (void *)sp);
+	  set_toggle_button(CONTRAST_RIGHT_BUTTON(sp), false, false, (void *)sp);
+	  set_toggle_button(FILTER_RIGHT_BUTTON(sp), false, false, (void *)sp);
+	  set_toggle_button(REVERB_RIGHT_BUTTON(sp), false, false, (void *)sp);
+	  set_toggle_button(UNITE_BUTTON(sp), false, false, (void *)sp);
 	}
       if ((sx->dialog) && (GTK_WIDGET_VISIBLE(sx->dialog)))
 	gtk_widget_hide(sx->dialog);
 
-      if ((sx->snd_widgets) && (sx->snd_widgets[W_pane])) gtk_widget_hide(sx->snd_widgets[W_pane]);
+      if ((sx->snd_widgets) && (SND_PANE(sp))) gtk_widget_hide(SND_PANE(sp));
       sp->channel_style = CHANNELS_SEPARATE; 
     }
 }
@@ -1849,9 +1877,9 @@ void reflect_sound_selection(snd_info *sp)
   snd_info *osp = NULL;
   if (ss->selected_sound != NO_SELECTION) osp = ss->sounds[ss->selected_sound];
   if ((osp) && (sp != osp) && (osp->inuse == SOUND_NORMAL)) 
-    gtk_widget_modify_fg(w_snd_name(osp), GTK_STATE_NORMAL, ss->sgx->black);
-  if ((w_snd_name(sp)) && (sp->selected_channel != NO_SELECTION))
-    gtk_widget_modify_fg(w_snd_name(sp), GTK_STATE_NORMAL, ss->sgx->red);
+    gtk_widget_modify_fg(NAME_BUTTON(osp), GTK_STATE_NORMAL, ss->sgx->black);
+  if ((NAME_BUTTON(sp)) && (sp->selected_channel != NO_SELECTION))
+    gtk_widget_modify_fg(NAME_BUTTON(sp), GTK_STATE_NORMAL, ss->sgx->red);
   if (sound_style(ss) == SOUNDS_IN_NOTEBOOK) 
     {
       int page, current_page;
@@ -1878,17 +1906,17 @@ pane-box (10)name-form"
     return(snd_no_such_sound_error(S_sound_widgets, snd));
   if (sp->sgx == NULL)
     return(XEN_EMPTY_LIST);
-  return(XEN_CONS(XEN_WRAP_WIDGET(w_snd_pane(sp)),
-	  XEN_CONS(XEN_WRAP_WIDGET(w_snd_name(sp)),
+  return(XEN_CONS(XEN_WRAP_WIDGET(SND_PANE(sp)),
+	  XEN_CONS(XEN_WRAP_WIDGET(NAME_BUTTON(sp)),
            XEN_CONS(XEN_WRAP_WIDGET(CONTROL_PANEL(sp)),
 	    XEN_CONS(XEN_WRAP_WIDGET(MINIBUFFER_TEXT(sp)),
 	     XEN_CONS(XEN_WRAP_WIDGET(PLAY_BUTTON(sp)),
-	      XEN_CONS(XEN_WRAP_WIDGET(filter_graph(sp)), /* this is the (filter) drawingarea widget */
-	       XEN_CONS(XEN_WRAP_WIDGET(unite_button(sp)),
+	      XEN_CONS(XEN_WRAP_WIDGET(FILTER_ENV(sp)), /* this is the (filter) drawingarea widget */
+	       XEN_CONS(XEN_WRAP_WIDGET(UNITE_BUTTON(sp)),
 	        XEN_CONS(XEN_WRAP_WIDGET(MINIBUFFER_LABEL(sp)),
 	         XEN_CONS(XEN_WRAP_WIDGET(NAME_PIX(sp)),
-		  XEN_CONS(XEN_WRAP_WIDGET(w_snd_pane_box(sp)),
-		   XEN_CONS(XEN_WRAP_WIDGET(sp->sgx->snd_widgets[W_name_form]),
+		  XEN_CONS(XEN_WRAP_WIDGET(PANE_BOX(sp)),
+		   XEN_CONS(XEN_WRAP_WIDGET(NAME_HBOX(sp)),
 	            XEN_EMPTY_LIST))))))))))));
 }
 

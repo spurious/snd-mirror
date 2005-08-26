@@ -7644,6 +7644,9 @@ static int sndjack_read_format;
 static SRC_STATE **sndjack_srcstates;
 static double sndjack_srcratio=1.0;
 
+static int jack_mus_watchdog_counter=0;
+
+
 #define SJ_MAX(a,b) (((a)>(b))?(a):(b))
 
 static void sndjack_read_process(jack_nframes_t nframes){
@@ -7753,8 +7756,10 @@ static int sndjack_read(void *buf,int bytes,int chs){
   char *buf_c=buf;
 
   for(i=0;i<nframes;i++){
-    while(sj_r_unread==0)
+    while(sj_r_unread==0){
       pthread_cond_wait(&sndjack_read_cond,&sndjack_read_mutex);
+      jack_mus_watchdog_counter++;
+    }
 
     if(sj_r_xrun>0){
       sj_r_totalxrun+=sj_r_xrun;
@@ -7799,6 +7804,7 @@ static void sndjack_write(sample_t **buf,int nframes,int latencyframes,int chs){
 	  || sj_unread >= SJ_MAX(sj_jackbuffersize*2, latencyframes)
 	  )
       {
+	jack_mus_watchdog_counter++;
 	pthread_cond_wait(&sndjack_cond,&sndjack_mutex);
       }
 
@@ -8056,6 +8062,87 @@ static int jack_mus_audio_initialize(void) {
 static void  jack_mus_audio_set_oss_buffers(int num, int size){
 }
 
+static int jack_mus_isrunning=0;
+static pid_t jack_mus_player_pid;  
+static pthread_t jack_mus_watchdog_thread;
+
+static void *jack_mus_audio_watchdog(void *arg){
+  struct sched_param par;
+
+  par.sched_priority = sched_get_priority_max(SCHED_RR);
+  if(sched_setscheduler(0,SCHED_RR,&par)==-1){
+    fprintf(stderr,"SNDLIB: Unable to set SCHED_RR realtime priority for the watchdog thread. No watchdog.\n");
+    goto exit;
+  }
+
+  for(;;){
+    int last=jack_mus_watchdog_counter;
+    sleep(1);
+
+    if(jack_mus_isrunning && jack_mus_watchdog_counter<last+10){
+      struct sched_param par;
+      fprintf(stderr,"SNDLIB: Setting player to non-realtime for 2 seconds.\n");
+
+      par.sched_priority = 0;
+      if(sched_setscheduler(jack_mus_player_pid,SCHED_OTHER,&par)==-1){
+	fprintf(stderr,"SNDLIB: Unable to set non-realtime priority. Must kill player thread. Sorry!\n");
+	while(1){
+	  kill(jack_mus_player_pid,SIGKILL);
+	  sleep(2);
+	}
+      }
+
+      sleep(2);
+
+      if(jack_mus_isrunning){
+	par.sched_priority = sched_get_priority_min(SCHED_RR)+1;
+	if(sched_setscheduler(jack_mus_player_pid,SCHED_RR,&par)==-1){
+	  fprintf(stderr,"SNDLIB: Could not set back to realtime priority...\n");
+	}else
+	  fprintf(stderr,"SNDLIB: Play thread set back to realtime priority.\n");
+      }
+
+    }
+  }
+ exit:
+  fprintf(stderr,"SNDLIB: Watchdog exiting\n");
+  return NULL;
+}
+
+
+
+static void jack_mus_audio_set_realtime(void){
+  struct sched_param par;
+  static int watchdog_started=0;
+
+  jack_mus_player_pid=getpid();
+
+  if(watchdog_started==0){
+    if(pthread_create(&jack_mus_watchdog_thread,NULL,jack_mus_audio_watchdog,NULL)!=0){
+      fprintf(stderr,"Could not create watchdog. Not running realtime\n");
+      return;
+    }
+    watchdog_started=1;
+  }
+
+  jack_mus_isrunning=1;
+
+  par.sched_priority = sched_get_priority_min(SCHED_RR)+1;
+  if(sched_setscheduler(0,SCHED_RR,&par)==-1){
+    fprintf(stderr,"SNDLIB: Unable to set SCHED_RR realtime priority for the player thread.\n");
+  }{
+    //fprintf(stderr,"Set realtime priority\n");
+  }
+}
+
+static void jack_mus_audio_set_non_realtime(void){
+  struct sched_param par;
+  par.sched_priority = 0;
+  sched_setscheduler(0,SCHED_OTHER,&par);
+  //fprintf(stderr,"Set non-realtime priority\n");
+  jack_mus_isrunning=0;
+}
+
 int jack_mus_audio_open_output(int dev, int srate, int chans, int format, int size){
   if(sndjack_client==NULL){
     if(jack_mus_audio_initialize()==MUS_ERROR)
@@ -8088,6 +8175,8 @@ int jack_mus_audio_open_output(int dev, int srate, int chans, int format, int si
   sndjack_format=format;
   sndjack_num_channels_inuse=chans;
   sndjack_dev=dev;
+
+  jack_mus_audio_set_realtime();
 
   return(MUS_NO_ERROR);
 }
@@ -8187,6 +8276,7 @@ int jack_mus_audio_write(int line, char *buf, int bytes){
  
 int jack_mus_audio_close(int line) 
 {
+  jack_mus_audio_set_non_realtime();
   if(line==sndjack_dev){
     sj_status=SJ_ABOUTTOSTOP;
     sndjack_num_channels_inuse=0;

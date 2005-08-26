@@ -361,7 +361,7 @@ typedef struct snd_info {
   bool active;
   char *name_string;
   fam_info *file_watcher;
-  bool writing;
+  bool writing, bomb_in_progress;
   sp_watcher **watchers;
   int watchers_size;
 } snd_info;

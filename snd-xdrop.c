@@ -99,6 +99,7 @@ static Atom FILE_NAME;               /* Sun uses this, SGI uses STRING */
 static Atom COMPOUND_TEXT;           /* various Motif widgets use this and the next */
 static Atom _MOTIF_COMPOUND_STRING;
 static Atom text_plain;              /* gtk uses this -- apparently a url */
+static Atom uri_list;                /* rox uses this -- looks just like text/plain to me */
 static Atom TEXT;                    /* ditto */
 
 static XEN drop_hook;
@@ -107,7 +108,7 @@ static char *atom_to_string(Atom type, XtPointer value, unsigned long length)
 {
   unsigned long i;
   char *str = NULL;
-  if ((type == XA_STRING) || (type == FILE_NAME) || (type == text_plain) || (type == TEXT))
+  if ((type == XA_STRING) || (type == FILE_NAME) || (type == text_plain) || (type == uri_list) || (type == TEXT))
     {
       str = (char *)CALLOC(length + 1, sizeof(char));
       for (i = 0; i < length; i++)
@@ -230,7 +231,8 @@ static void handle_drop(Widget w, XtPointer context, XtPointer info)
 	(targets[i] == COMPOUND_TEXT) ||
 	(targets[i] == _MOTIF_COMPOUND_STRING) ||
 	(targets[i] == TEXT) ||
-	(targets[i] == text_plain)) /* gtk apparently, also UTF8_STRING */
+	(targets[i] == text_plain) ||
+	(targets[i] == uri_list))
       {
 	k = i; 
 	break;
@@ -288,7 +290,7 @@ static void handle_drag(Widget w, XtPointer context, XtPointer info)
     }
 }
 
-#define NUM_TARGETS 6
+#define NUM_TARGETS 7
 void add_drag_and_drop(Widget w, 
 		       void (*drop_watcher)(Widget w, const char *message, Position x, Position y, void *data), 
 		       void (*drag_watcher)(Widget w, const char *message, Position x, Position y, drag_style_t dtype, void *data), 
@@ -310,7 +312,8 @@ void add_drag_and_drop(Widget w,
   targets[4] = text_plain;
   TEXT = XInternAtom(dpy, "TEXT", false);
   targets[5] = TEXT;
-  /* TODO: could we add audio/wav -- what are the audio types in this context? */
+  uri_list = XInternAtom(dpy, "text/uri-list", false);
+  targets[6] = uri_list;
   n = 0;
   XtSetArg(args[n], XmNdropSiteOperations, XmDROP_COPY | XmDROP_LINK); n++;
   XtSetArg(args[n], XmNimportTargets, targets); n++;
