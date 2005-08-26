@@ -53,6 +53,8 @@
 (provide 'snd-ladspa.scm)
 
 
+(use-modules (ice-9 threads))
+
 
 ;; Increase this number if you can't preview sound because of large latency in the system.
 ;; Note, this is not the latency, just the maximum buffer size. The only bad consequence about
@@ -84,6 +86,9 @@
 	(insert-ladspa-help (cddddr alist)))))
 
 (insert-ladspa-help ladspa-help-texts)
+
+
+(define ladspa-effects-menu (add-to-main-menu "Ladspa"))
 
 
 (def-class (<ladspa> libname plugname)
@@ -520,8 +525,6 @@
 		      (loop (cdr part))))))))
 
 
-  (define ladspa-effects-menu (add-to-main-menu "Ladspa"))
-
   (define ladspa-add-effect-menuitem
     (let* ((num-effects-per-submenu 12)
 	   (ladspa-effect-num num-effects-per-submenu)
@@ -776,34 +779,50 @@
 	  #t)))
 
   ;; Following function made while looking at the source for jack-rack written by Bob Ham.
-  (define (menu-descend menu uri base)
+
+  (define (menu-descend-base menu uri base)
+    ;;(c-display "in")
     (let ((uris (lrdf_get_subclasses uri)))
       (if uris
 	  (let ((n 0))
 	    (while (< n (lrdf_uris_count uris))
+		   ;;(c-display n)
+		   (yield)
 		   (let* ((item (lrdf_uris_get_item uris n))
 			  (label (lrdf_get_label item))
 			  (newmenu (menu-sub-add menu label)))
-		     (menu-descend newmenu item (string-append base "/" label))
-		     (set! n (1+ n))))
+		     (menu-descend newmenu item (string-append base "/" label)))
+		   (set! n (1+ n)))
 	    (lrdf_free_uris uris))))
     (let ((uris (lrdf_get_instances uri)))
       (if uris
 	  (let ((n 0))
 	    (while (< n (lrdf_uris_count uris))
+		   ;;(c-display n)
+		   (yield)
 		   (let* ((item (lrdf_uris_get_item uris n))
 			  (das-ladspa (get-ladspa-with-id (lrdf_get_uid item))))
 		     (if das-ladspa
-			 (apply make-ladspadialog (append das-ladspa (list menu))))
-		     (set! n (1+ n))))
-	    (lrdf_free_uris uris)))))
-  
+			 (apply make-ladspadialog (append das-ladspa (list menu)))))
+		   (set! n (1+ n)))
+	    (lrdf_free_uris uris))))
+    ;;(c-display "out")
+    )
+
+  (define (menu-descend menu uri base)
+    ;;(c-display "menu/uri/base" menu uri base)
+    (menu-descend-base menu uri base))
+
+
   (if (provided? 'snd-lrdf)
       (menu-descend ladspa-effects-menu (string-append (LADSPA-BASE) "Plugin") ""))
-  
   (for-each (lambda (x)
+	      (yield)
 	      (apply make-ladspadialog x))
 	    (get-ladspa-list)))
+
+
+
 
 
 
@@ -814,90 +833,116 @@
 
 (define lrdf-is-inited #f)
 
-(if (and (provided? 'snd-lrdf)
-	 (not lrdf-is-inited))
-    (begin
-      (eval-c "-llrdf"
+(define ladspa-not-initialized #t)
 
-	      "#include <lrdf.h>"
+(call-with-new-thread
+ (lambda ()
 
-	      (proto->public
-	       "void lrdf_init();"
-	       "void lrdf_cleanup();"
-	       ;;"int lrdf_read_files(const char *uri[]);"
-	       "int lrdf_read_file(const char *uri);"
-	       ;;"void lrdf_add_triple(const char *source, const char *subject, const char* predicate, const char *object, enum lrdf_objtype literal);"
-	       "char* lrdf_add_preset(const char *source, const char *label, unsigned long id,                      lrdf_defaults *vals);"
-	       "void lrdf_remove_matches(lrdf_statement *pattern);"
-	       "void lrdf_remove_uri_matches(const char *uri);"
-	       "void lrdf_rebuild_caches();"
-	       "int lrdf_export_by_source(const char *src, const char *file);"
-	       "lrdf_uris *lrdf_match_multi(lrdf_statement *patterns);"
-	       "lrdf_statement *lrdf_matches(lrdf_statement *pattern);"
-	       "lrdf_statement *lrdf_one_match(lrdf_statement *pattern);"
-	       "int lrdf_exists_match(lrdf_statement *pattern);"
-	       "lrdf_uris *lrdf_get_all_superclasses(const char *uri);"
-	       "lrdf_uris *lrdf_get_subclasses(const char *uri);"
-	       "lrdf_uris *lrdf_get_all_subclasses(const char *uri);"
-	       "lrdf_uris *lrdf_get_instances(const char *uri);"
-	       "lrdf_uris *lrdf_get_all_instances(const char *uri);"
-	       "lrdf_statement *lrdf_all_statements();"
-	       "void lrdf_free_uris(lrdf_uris *u);"
-	       "void lrdf_free_statements(lrdf_statement *s);"
-	       "char *lrdf_get_setting_metadata(const char *uri, const char *element);"
-	       "char *lrdf_get_default_uri(unsigned long id);"
-	       "lrdf_uris *lrdf_get_setting_uris(unsigned long id);"
-	       "unsigned long lrdf_get_uid(const char *uri);"
-	       "lrdf_defaults *lrdf_get_setting_values(const char *uri);"
-	       "lrdf_defaults *lrdf_get_scale_values(unsigned long id, unsigned long port);"
-	       "void lrdf_free_setting_values(lrdf_defaults *def);"
-	       "char *lrdf_get_label(const char *uri);")
-
-	      (public
-	       (<int> lrdf_defaults_count (lambda ((<lrdf_defaults*> defs))
-					    (return defs->count)))
-
-	       (<int> lrdf_defaults_pid (lambda ((<lrdf_defaults*> defs)
-						 (<int> n))
-					  (return defs->items[n].pid)))
-
-	       (<float> lrdf_defaults_value (lambda ((<lrdf_defaults*> defs)
-						     (<int> n))
-					      (return defs->items[n].value)))
-
-	       (<int> lrdf_uris_count (lambda ((<lrdf_uris*> uris))
-					(return uris->count)))
-
-	       (<char*> lrdf_uris_get_item (lambda ((<lrdf_uris*> uris)
+   (if (and (provided? 'snd-lrdf)
+	    (not lrdf-is-inited))
+       (begin
+	 (eval-c "-llrdf"
+		 
+		 "#include <lrdf.h>"
+		 
+		 (proto->public
+		  "void lrdf_init();"
+		  "void lrdf_cleanup();"
+		  ;;"int lrdf_read_files(const char *uri[]);"
+		  "int lrdf_read_file(const char *uri);"
+		  ;;"void lrdf_add_triple(const char *source, const char *subject, const char* predicate, const char *object, enum lrdf_objtype literal);"
+		  "char* lrdf_add_preset(const char *source, const char *label, unsigned long id,                      lrdf_defaults *vals);"
+		  "void lrdf_remove_matches(lrdf_statement *pattern);"
+		  "void lrdf_remove_uri_matches(const char *uri);"
+		  "void lrdf_rebuild_caches();"
+		  "int lrdf_export_by_source(const char *src, const char *file);"
+		  "lrdf_uris *lrdf_match_multi(lrdf_statement *patterns);"
+		  "lrdf_statement *lrdf_matches(lrdf_statement *pattern);"
+		  "lrdf_statement *lrdf_one_match(lrdf_statement *pattern);"
+		  "int lrdf_exists_match(lrdf_statement *pattern);"
+		  "lrdf_uris *lrdf_get_all_superclasses(const char *uri);"
+		  "lrdf_uris *lrdf_get_subclasses(const char *uri);"
+		  "lrdf_uris *lrdf_get_all_subclasses(const char *uri);"
+		  "lrdf_uris *lrdf_get_instances(const char *uri);"
+		  "lrdf_uris *lrdf_get_all_instances(const char *uri);"
+		  "lrdf_statement *lrdf_all_statements();"
+		  "void lrdf_free_uris(lrdf_uris *u);"
+		  "void lrdf_free_statements(lrdf_statement *s);"
+		  "char *lrdf_get_setting_metadata(const char *uri, const char *element);"
+		  "char *lrdf_get_default_uri(unsigned long id);"
+		  "lrdf_uris *lrdf_get_setting_uris(unsigned long id);"
+		  "unsigned long lrdf_get_uid(const char *uri);"
+		  "lrdf_defaults *lrdf_get_setting_values(const char *uri);"
+		  "lrdf_defaults *lrdf_get_scale_values(unsigned long id, unsigned long port);"
+		  "void lrdf_free_setting_values(lrdf_defaults *def);"
+		  "char *lrdf_get_label(const char *uri);")
+		 
+		 (public
+		  (<int> lrdf_defaults_count (lambda ((<lrdf_defaults*> defs))
+					       (return defs->count)))
+		  
+		  (<int> lrdf_defaults_pid (lambda ((<lrdf_defaults*> defs)
 						    (<int> n))
-					     (return uris->items[n])))
+					     (return defs->items[n].pid)))
+		  
+		  (<float> lrdf_defaults_value (lambda ((<lrdf_defaults*> defs)
+							(<int> n))
+						 (return defs->items[n].value)))
+		  
+		  (<int> lrdf_uris_count (lambda ((<lrdf_uris*> uris))
+					   (return uris->count)))
+		  
+		  (<char*> lrdf_uris_get_item (lambda ((<lrdf_uris*> uris)
+						       (<int> n))
+						(return uris->items[n])))
+		  
+		  (<char*> LADSPA-BASE (lambda ()
+					 (return LADSPA_BASE)))))
+	 
+	 (lrdf_init)
+	 (for-each (lambda (path)
+		     (catch #t
+			    (lambda ()
+			      (let* ((dir (opendir path))
+				     (entry (readdir dir)))
+				(while (not (eof-object? entry))
+				       (yield)
+				       (if (and (not (string=? "." entry))
+						(not (string=? ".." entry)))
+					   (lrdf_read_file (string-append "file://" path "/" entry)))
+				       (set! entry (readdir dir)))
+				(closedir dir)))
+			    (lambda (key . args)
+			      #f)))
+		   (string-split	(if (getenv "LADSPA_RDF_PATH")
+					    (getenv "LADSPA_RDF_PATH")
+					    "/usr/local/share/ladspa/rdf:/usr/share/ladspa/rdf")
+					#\:))
+	 
+	 (set! lrdf-is-inited #t)))
 
-	       (<char*> LADSPA-BASE (lambda ()
-				      (return LADSPA_BASE)))))
 
-      (lrdf_init)
-      (for-each (lambda (path)
-		  (catch #t
-			 (lambda ()
-			   (let* ((dir (opendir path))
-				  (entry (readdir dir)))
-			     (while (not (eof-object? entry))
-				    (if (and (not (string=? "." entry))
-					     (not (string=? ".." entry)))
-					(lrdf_read_file (string-append "file://" path "/" entry)))
-				    (set! entry (readdir dir)))
-			     (closedir dir)))
-			 (lambda (key . args)
-			   #f)))
-		(string-split	(if (getenv "LADSPA_RDF_PATH")
-				    (getenv "LADSPA_RDF_PATH")
-				    "/usr/local/share/ladspa/rdf:/usr/share/ladspa/rdf")
-				#\:))
-
-      (set! lrdf-is-inited #t)))
+   (install-ladspa-menues)
+   (set! ladspa-not-initialized #f))
+ 
+ (lambda ai
+   (c-display "Thread-error2: " ai)))
 
 
 
-(install-ladspa-menues)
+(define (ladspa-finish-it)
+  (if ladspa-not-initialized
+      (let ((n 300))
+	(while (> n 0)
+	       (yield)
+	       (set! n (1- n)))
+	(in 2 ladspa-finish-it))
+      (c-display "Finished initializing ladspa.")))
+
+(in 200
+    (lambda ()
+      (c-display "SND might be a bit unresponsive for a moment, initializing ladspa in the background...")
+      (ladspa-finish-it)))
+
 
 

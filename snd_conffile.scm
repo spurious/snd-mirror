@@ -1763,7 +1763,19 @@ Does not work.
 
       (define (c-close-buffer snd)
 	"(close-buffer snd) removes the menu item associated with snd (use with close-hook)"
-	(remove-from-menu buffer-menu (file-name snd))
+	(let ((filename (file-name snd)))
+	  (remove-from-menu buffer-menu filename)
+	  (remove-from-menu buffer-menu filename)
+	  (c-remove-sounds-in-menu filename))
+	  (if (and (= 1 (length (sounds)))
+		   (> (length c-sounds-in-menu) 1))
+	      (let ((filename (find (lambda (name)
+				      (not (member name (map file-name (sounds)))))
+				    c-sounds-in-menu)))
+		(if filename
+		    (begin
+		      ;;(c-display "opening " filename)
+		      (open-sound filename)))))
 	#f)
 
       (add-hook! select-sound-hook (lambda (snd)
@@ -1985,14 +1997,16 @@ Does not work.
       (system (string-append "touch " (c-open-sounds-filename) " >/dev/null 2>/dev/null"))
       (for-each-line-in-file (c-open-sounds-filename)
 			     (lambda (line)
-			       (catch #t
-				      (lambda ()
-					(if filename
-					    (open-sound filename))
-					(set! filename line))
-				      (lambda (key . args)
-					(c-display "File \"" line  "\" not found.")
-					#f))))
+			       (if (not (access? line F_OK))
+				   (c-display "File \"" line "\" not found.")
+				   (catch #t
+					  (lambda ()
+					    (if filename
+						(open-sound filename))
+					    (set! filename line))
+					  (lambda (key . args)
+					    (c-display "File \"" line  "\" not found.")
+					    #f)))))
       (if filename
 	  (begin
 	    (set! *c-is-starting-up* #f)
@@ -2029,6 +2043,12 @@ Does not work.
 
   (add-hook! open-hook
 	     (lambda (filename)
+	       (set! height (window-height))
+	       (set! width (window-width))
+	       (set! num-retries 250)))
+  
+  (add-hook! close-hook
+	     (lambda (snd)
 	       (set! height (window-height))
 	       (set! width (window-width))
 	       (set! num-retries 250)))
