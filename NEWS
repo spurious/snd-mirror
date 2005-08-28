@@ -1,122 +1,45 @@
-Snd 7.14:
+Snd 7.15
 
-Many updates from Mike Scholz and Kjetil Matheussen.
+removed yes-or-no? with associated dialog (and snd-g|xerror.c)
+        old Mac OS (8 or 9) support (old-mac-audio.c has the code), also MPW C
+          (this affects CLM as well)
 
-channels-combined is now the default channel-style.
+added clear-minibuffer
+      optional as-error arg to report-in-minibuffer
+      sound-file-extensions as settable list
+      before-exit|close-hook
+      -init startup switch to set init filename as arg
+      netBSD audio support
 
-find changed to find-channel to avoid collision with Scheme's srfi-1.
-  default-output-type -> default-output-header-type,
-  default-output-format -> default-output-data-format
+File:Mix dialog no longer exits upon "mix" (removed keep-mix-dialog-open-upon-ok from snd-motif.scm)
+File:Insert menu item and dialog added, also insert-file-dialog
+read/write support OGG, Speex, and Flac files (via File:Save as)
+read support for Mpeg and Midi
 
-output-name-hook now takes an argument, the current output file name.
+gtk version no longer defaults to happy button colors -- they clash with the fancy icons.
+  as long as I was changing colors, I changed to an "autumnal" theme for the Motif side.
 
-removed save-options (use save-state).
+View:Files dialog completely recast:
+  removed current files list, added various ways to use the selected file(s) in the other list
+  previous-files-* -> view-files-* (sort, select-hook)
+  removed previous-files-sort-procedure
+  added sort-files-by-name|size|date|entry
+  added view-files-amp|speed|amp-env|speed-style|files|selected-files
+  click of file name no longer opens that file -- it just adds it to the selected files list for the dialog
+  view-files-select-hook return type no longer matters, and args are: dialog file-name
+  preload-directory -> add-directory-to-view-files-list
+  preload-file -> add-file-to-view-files-list
+  optional dialog arg to view-files-sort (local set)
 
-added 'Extract' button to Edit|File:Save-as dialogs (to extract a channel).
+added osx-10.4-snd at ccrma-ftp
 
-added 'Reset' buttons to File:New and the raw data dialog.
+_sndlib.h is now an internal header, whereas sndlib.h is intended for programs
+  that use sndlib -- this is an attempt to reduce name-space collisions by
+  sequestering configuration info.
 
-added 'just-sounds' and 'play selected sound' buttons to various dialogs.
-  and some labels are actually pull-down menus.
+checked: OSX 10.4 (gtk/motif/guile/ruby), gtk 2.7.3|4|5, gtk 2.8.0|1|2, NetBSD 2.0, 
+  Solaris 10 (x86 audio is broken), sbcl 0.9.3
 
-error handling much improved in various dialogs, although there's a way's
-  to go still.
+with much help from: Orm Finnendahl, Michael Edwards, Mike Scholz, Thomas Klausner, 
+  Kjetil Matheussen, Petter Reinholdtsen, Rob Komar, Christophe Rhodes
 
-removed View:Error history menu item.  A Scheme/Ruby replacement would
-  be trivial (snd-error-hook + string-append, add-to-menu + info-dialog).
-  This menu item dates back to pre-Guile days when error handling was
-  primitive; I'm currently moving toward a system where all errors are
-  reported and handled in the context of the error (not via some global
-  dialog).
-
-file names and other choices are now persistent across most dialog actions.
-
-use libfam (from fam or gamin -- file alteration monitor) in a few cases 
-  (more to come) -- auto-update-interval is ignored if fam is in use.  I'm
-  still feeling my way around here -- if Snd hangs in fam or gamin, use
-  the configuration switch --without-fam (and please tell me about it!).
-
-removed edpos arg to make-snd->sample.
-
-removed the possibility of saving a region via C-x w -- it just refers
-  to the selection now.
-
-folded gl-ruby.c into gl.c, xm-ruby.c into xm.c, xg-ruby.c into xg.c.
-  (This was part of an attempt to use Gauche/Stklos/Chicken in place of Guile).
-
-linear-src-channel in dsp.scm.
-
-
-checked: gtk 2.6.8 and 2.7.0|1|2 (a pain), Fedora Core 4 (gcc 4.0), sbcl 0.9.2
-
-
-gtk 2.7.* uses a library named Cairo for drawing and font stuff; there is
-  currently a bug in this library that causes Snd to hang if you have lots
-  of printout in the listener.  It also requires about 20 more libraries:
-
-  ldd snd
-        libguile.so.12 => /usr/local/lib/libguile.so.12 (0x40017000)
-        libguile-ltdl.so.1 => /usr/local/lib/libguile-ltdl.so.1 (0x400a4000)
-        libcrypt.so.1 => /lib/libcrypt.so.1 (0x400bb000)
-        libm.so.6 => /lib/tls/libm.so.6 (0x400e8000)
-        libgtk-x11-2.0.so.0 => /usr/local/lib/libgtk-x11-2.0.so.0 (0x4010a000)
-        libgdk-x11-2.0.so.0 => /usr/local/lib/libgdk-x11-2.0.so.0 (0x403e7000)
-        libatk-1.0.so.0 => /usr/lib/libatk-1.0.so.0 (0x40467000)
-        libgdk_pixbuf-2.0.so.0 => /usr/local/lib/libgdk_pixbuf-2.0.so.0 (0x40480000)
-        libpangoxft-1.0.so.0 => /usr/local/lib/libpangoxft-1.0.so.0 (0x40495000)
-        libpangocairo-1.0.so.0 => /usr/local/lib/libpangocairo-1.0.so.0 (0x4049c000)
-        libpangox-1.0.so.0 => /usr/local/lib/libpangox-1.0.so.0 (0x404a2000)
-        libpangoft2-1.0.so.0 => /usr/local/lib/libpangoft2-1.0.so.0 (0x404ae000)
-        libfreetype.so.6 => /usr/lib/libfreetype.so.6 (0x404d1000)
-        libcairo.so.1 => /usr/local/lib/libcairo.so.1 (0x40522000)
-        libpango-1.0.so.0 => /usr/local/lib/libpango-1.0.so.0 (0x40549000)
-        libgobject-2.0.so.0 => /usr/local/lib/libgobject-2.0.so.0 (0x4057d000)
-        libgmodule-2.0.so.0 => /usr/local/lib/libgmodule-2.0.so.0 (0x405b0000)
-        libdl.so.2 => /lib/libdl.so.2 (0x405b5000)
-        libglib-2.0.so.0 => /usr/local/lib/libglib-2.0.so.0 (0x405b8000)
-        libfontconfig.so.1 => /usr/local/lib/libfontconfig.so.1 (0x40636000)
-        libpixman.so.1 => /usr/local/lib/libpixman.so.1 (0x4065b000)
-        libXrender.so.1 => /usr/X11R6/lib/libXrender.so.1 (0x4066f000)
-        libX11.so.6 => /usr/X11R6/lib/libX11.so.6 (0x40677000)
-        libXext.so.6 => /usr/X11R6/lib/libXext.so.6 (0x40757000)
-        libpng12.so.0 => /usr/lib/libpng12.so.0 (0x40765000)
-        libglitz.so.1 => /usr/local/lib/libglitz.so.1 (0x40788000)
-        libGLU.so.1 => /usr/local/lib/libGLU.so.1 (0x407ad000)
-        libGL.so.1 => /usr/local/lib/libGL.so.1 (0x40823000)
-        libgtkglext-x11-1.0.so.0 => /usr/local/lib/libgtkglext-x11-1.0.so.0 (0x40a1a000)
-        libgdkglext-x11-1.0.so.0 => /usr/local/lib/libgdkglext-x11-1.0.so.0 (0x40a1f000)
-        libXmu.so.6 => /usr/X11R6/lib/libXmu.so.6 (0x40a70000)
-        libXt.so.6 => /usr/X11R6/lib/libXt.so.6 (0x40a86000)
-        libSM.so.6 => /usr/X11R6/lib/libSM.so.6 (0x40ad8000)
-        libICE.so.6 => /usr/X11R6/lib/libICE.so.6 (0x40ae1000)
-        libgamin-1.so.0 => /usr/local/lib/libgamin-1.so.0 (0x40af8000)
-        libc.so.6 => /lib/tls/libc.so.6 (0x42000000)
-        libXrandr.so.2 => /usr/X11R6/lib/libXrandr.so.2 (0x40b00000)
-        libXft.so.2 => /usr/local/lib/libXft.so.2 (0x40b04000)
-        libXfixes.so.0 => /usr/local/lib/libXfixes.so.0 (0x40b15000)
-        libXcursor.so.1 => /usr/X11R6/lib/libXcursor.so.1 (0x40b1a000)
-        libz.so.1 => /usr/lib/libz.so.1 (0x40b24000)
-        /lib/ld-linux.so.2 => /lib/ld-linux.so.2 (0x40000000)
-        libexpat.so.0 => /usr/lib/libexpat.so.0 (0x40b32000)
-        libstdc++.so.5 => /usr/lib/libstdc++.so.5 (0x40b52000)
-        libgcc_s.so.1 => /lib/libgcc_s.so.1 (0x40c05000)
-        libpthread.so.0 => /lib/tls/libpthread.so.0 (0x40c0e000)
-
-  and that's only the gtk version!
-
-
-with much help from: Mike Scholz, Kjetil Matheussen, Rob Komar,
-   Anders Vinjar, Phil Reynolds, Jonas Berlin, Chris Chafe,
-   Tim Blechmann, Fernando Lopez-Lezcano
-
-
-(On tap: replace the "current files" list in the View:Files dialog with
-  a panel of operations applicable to the "previous files" list.  Add
-  a preferences dialog, and some global way to get at all the filters.
-  Add fam support to all the directory lists.  Insert/Insert-selection
-  main menus; perhaps Rename/Append.  Key-binding sets to mimic other 
-  sound editors.  Much smarter completion choice presentation.  Built-in 
-  support for OGG, Flac, Speex, Mpeg, Midi etc (if the relevant programs are 
-  accessible during configuration).  Multiple copies of all dialogs (this 
-  works now for some dialogs).  Region browser save-as/mix/insert choices. 
-  Get rid of the yes-or-no dialog.)

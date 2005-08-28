@@ -442,8 +442,12 @@
 #endif
 
 #if HAVE_SCM_C_DEFINE
-  #define XEN_DEFINE(Name, Value) scm_c_define(Name, Value)
   #if XEN_DEBUGGING
+    #define XEN_DEFINE(Name, Value) \
+      { \
+        if (XEN_DEFINED_P(Name)) fprintf(stderr, "%s is defined\n", Name); \
+        scm_c_define(Name, Value); \
+      }
     #define XEN_DEFINE_CONSTANT(Name, Value, Help) \
       { \
         if (XEN_DEFINED_P(Name)) fprintf(stderr, "%s is defined\n", Name); \
@@ -451,6 +455,7 @@
         if (Help) XEN_SET_DOCUMENTATION(Name, Help); \
       }
   #else
+    #define XEN_DEFINE(Name, Value) scm_c_define(Name, Value)
     #define XEN_DEFINE_CONSTANT(Name, Value, Help) \
       { \
         scm_c_define(Name, C_TO_XEN_INT(Value)); \
@@ -458,7 +463,7 @@
       }
   #endif
 #else
-#define XEN_DEFINE(Name, Value) gh_define((char *)(Name), Value)
+  #define XEN_DEFINE(Name, Value) gh_define((char *)(Name), Value)
   #define XEN_DEFINE_CONSTANT(Name, Value, Help) \
     { \
       gh_define((char *)(Name), C_TO_XEN_INT(Value));	\

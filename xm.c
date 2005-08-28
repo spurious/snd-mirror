@@ -353,7 +353,9 @@ static size_t xm_obj_free(XEN obj)
 #if HAVE_RUBY
 static void *xm_obj_free(XEN obj)
 {
-  FREE((void *)obj);
+  void *vobj;
+  vobj = (void *)obj;
+  FREE(vobj);
   return(NULL);
 }
 #endif
@@ -2102,10 +2104,18 @@ static void fixup_args(Widget w, Arg *args, int len)
 	  switch (resource_type(name))
 	    {
 	    case XM_STRING_TABLE:
-	      FREE((XmStringTable *)(args[i].value));
+	      {
+		XmStringTable *st;
+		st = (XmStringTable *)(args[i].value);
+		FREE(st);
+	      }
 	      break;
 	    case XM_WIDGET_LIST:
-	      FREE((Widget *)(args[i].value));
+	      {
+		Widget *w;
+		w =(Widget *)(args[i].value); 
+		FREE(w);
+	      }
 	      break;
 	    case XM_CALLBACK:
 	      cl = (XtCallbackRec *)(args[i].value);
@@ -28339,7 +28349,6 @@ static void define_strings(void)
     #define XmNfirstColumn "firstColumn"
     #define XmNfirstColumnPixmaps "firstColumnPixmaps"
     #define XmNfirstRow "firstRow"
-    #define XmNnumColumns "numColumns"
     #define XmNnumRows "numRows"
     #define XmNselectedColumn "selectedColumn"
     #define XmNshowFind "showFind"
@@ -28352,7 +28361,6 @@ static void define_strings(void)
   DEFINE_RESOURCE(XmNfirstColumn, XM_SHORT);
   DEFINE_RESOURCE(XmNfirstColumnPixmaps, XM_BOOLEAN);
   DEFINE_RESOURCE(XmNfirstRow, XM_SHORT);
-  DEFINE_RESOURCE(XmNnumColumns, XM_SHORT);
   DEFINE_RESOURCE(XmNnumRows, XM_SHORT);
   DEFINE_RESOURCE(XmNselectedColumn, XM_SHORT);
   DEFINE_RESOURCE(XmNshowFind, XM_BOOLEAN);

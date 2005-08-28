@@ -2967,7 +2967,11 @@ static void edit_header_cancel_callback(Widget w, XtPointer context, XtPointer i
   unreflect_file_data_panel_change(ep->edat, (void *)ep, edit_header_set_ok_sensitive);
   remove_sp_watcher(ep->sp, ep->sp_ro_watcher_loc);
   ep->panel_changed = false;
-  ep->file_ro_watcher = fam_unmonitor_file(ep->sp->filename, ep->file_ro_watcher);
+  if ((ep->file_ro_watcher) &&
+      (ep->sp) &&
+      (ep->sp->active) &&
+      (ep->sp->filename))
+    ep->file_ro_watcher = fam_unmonitor_file(ep->sp->filename, ep->file_ro_watcher);
 }
 
 static void edit_header_watch_user_read_only(struct snd_info *sp, sp_watcher_reason_t reason, int loc)
@@ -5374,4 +5378,9 @@ is the scrolled list position of the label. The label itself is 'label'."
 
 /* TODO: vf fam + remove if file deleted = no need for update button? -> overall reset?
  * TODO: check prompt-in-minibuffer troubles
+ * TODO: check hook error output
+  (add-hook! open-hook
+	     (lambda (filename)
+                  (this-is-not-a-function)))
+
  */

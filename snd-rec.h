@@ -127,5 +127,7 @@ void finish_recording(recorder_info *rp);
 #endif
 
 font_t *get_vu_font(Float size);
+void close_recorder_audio(void);
+void fire_up_recorder(void);
 
 #endif

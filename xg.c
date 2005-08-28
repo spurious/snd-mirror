@@ -151,7 +151,9 @@ static size_t xm_obj_free(XEN obj)
 #if HAVE_RUBY
 static void *xm_obj_free(XEN obj)
 {
-  FREE((void *)obj);
+  void *xobj;
+  xobj = (void *)obj;
+  FREE(xobj);
   return(NULL);
 }
 #endif
@@ -39904,7 +39906,7 @@ static bool xg_already_inited = false;
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("20-Aug-05"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("27-Aug-05"));
       xg_already_inited = true;
 #if WITH_GTK_AND_X11
       Init_libx11();

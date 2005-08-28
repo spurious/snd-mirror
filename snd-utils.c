@@ -448,12 +448,15 @@ static void fam_check(void)
 		default:
 		  {
 		    fam_info *fp = (fam_info *)(fe.userdata);
-#if DEBUGGING_FAM
-		    fprintf(stderr, "fam %s: %d (%s): %p\n", fe.filename, fe.code, fam_event_name(fe.code), fp);
-#endif
-		    if (!fp) 
+		    if ((!fp) || (fp->action == fp->data))
 		      fprintf(stderr, "no fam user data!");
-		    else (*(fp->action))(fp, &fe);
+		    else 
+		      {
+#if DEBUGGING_FAM
+			fprintf(stderr, "fam %s: %d (%s): %p\n", fe.filename, fe.code, fam_event_name(fe.code), fp);
+#endif
+			(*(fp->action))(fp, &fe);
+		      }
 		  }
 		  break;
 		}
@@ -549,7 +552,7 @@ fam_info *fam_monitor_file(const char *filename,
       err = FAMMonitorFile(ss->fam_connection, filename, rp, (void *)fp);
       if (err < 0)
 	{
-	  snd_error("can't monitor %s: %d\n", filename, FAMErrno);
+	  snd_error("can't monitor %s: %d (free %p %p)\n", filename, FAMErrno, fp, rp);
 	  FREE(rp);
 	  rp = NULL;
 	  FREE(fp);
@@ -599,7 +602,7 @@ fam_info *fam_unmonitor_file(const char *filename, fam_info *fp)
 {
   int err;
 #if DEBUGGING_FAM
-  fprintf(stderr, "unmonitor %s\n", filename);
+  fprintf(stderr, "unmonitor %s: %p %p\n", filename, fp, fp->rp);
 #endif
   if (fp)
     {
@@ -608,15 +611,15 @@ fam_info *fam_unmonitor_file(const char *filename, fam_info *fp)
 	  err = FAMCancelMonitor(ss->fam_connection, fp->rp);
 	  if (err < 0)
 	    snd_error("can't unmonitor %s: %d\n", filename, FAMErrno);
-	  if (fp->rp)
-	    {
-	      FREE(fp->rp); 
-	      /* /usr/include/fam.h implies that cancel frees this, but valgrind seems to disagree */
-	      /* as far as I can see, gamin (libgamin/gam_api.c) does not free it */
-	      /*   nor does fam (fam/fam.c++ in 2.6.10 does not, and their test case assumes it won't) */
-	      fp->rp = NULL;
-	    }
+	  FREE(fp->rp);
+	  /* /usr/include/fam.h implies that cancel frees this, but valgrind seems to disagree */
+	  /* as far as I can see, gamin (libgamin/gam_api.c) does not free it */
+	  /*   nor does fam (fam/fam.c++ in 2.6.10 does not, and their test case assumes it won't) */
+	  fp->rp = NULL;
+	  /* FREE(fp) below in debugging case will fill this with 'X', 0x858585... */
 	}
+      fp->action = NULL;
+      fp->data = NULL;
       FREE(fp);
     }
   return(NULL);
@@ -928,13 +931,13 @@ void *mem_malloc(int len, const char *func, const char *file, int line)
   return((void *)ptr);
 }
 
-void mem_free(void *ptr, const char *func, const char *file, int line)
+void *mem_free(void *ptr, const char *func, const char *file, int line)
 {
   void *true_ptr;
   /* fprintf(stderr,"free %s %s[%d]: %p\n", func, file, line, ptr); */
   true_ptr = forget_pointer(ptr, func, file, line, true);
   free(true_ptr);
-  ptr = (void *)FREED_POINTER;
+  return((void *)FREED_POINTER);
 }
 
 void *mem_realloc(void *ptr, int size, const char *func, const char *file, int line)

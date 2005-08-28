@@ -410,6 +410,7 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+28-Aug:  snd 7.15.\n\
 18-Aug:  _sndlib.h and sndlib.h.in.\n\
 15-Aug:  in View:files, click of file name no longer opens that file.\n\
          view-files-select-hook return type no longer matters, and args are: dialog file-name.\n\
@@ -428,7 +429,6 @@ void about_snd_help(void)
          File:Save as can write OGG, Speex, and Flac files.\n\
 21-Jul:  clear-minibuffer, new as-error arg to report-in-minibuffer.\n\
 15-Jul:  removed yes-or-no? with associated dialog (and snd-g|xerror.c).\n\
-14-Jul:  Snd 7.14.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",
@@ -2229,6 +2229,7 @@ and its value is returned."
   XEN help_text = XEN_FALSE; 
   char *str = NULL, *new_str, *subject = NULL;
   int min_diff = 1000;
+  bool need_free = false;
 
 #if HAVE_GUILE
   int topic_min = 0;
@@ -2329,7 +2330,10 @@ and its value is returned."
   if ((str == NULL) || 
       (snd_strlen(str) == 0) ||
       (strcmp(str, PROC_FALSE) == 0)) /* Ruby returns "false" here */
-    str = snd_finder(subject, false);
+    {
+      str = snd_finder(subject, false);
+      need_free = true;
+    }
   else 
     {
       if ((min_diff < 1000) && (min_diff > 0))
@@ -2339,6 +2343,7 @@ and its value is returned."
 	  if (more_str)
 	    {
 	      str = mus_format("%s\nOther possibilities:\n%s", str, more_str);
+	      need_free = true;
 	      FREE(more_str);
 	    }
 	}
@@ -2349,6 +2354,11 @@ and its value is returned."
       if (subject)
 	new_str = run_string_hook(help_hook, S_help_hook, str, subject);
       else new_str = copy_string(str);
+      if (need_free)
+	{
+	  FREE(str);
+	  str = NULL;
+	}
       if (widget_wid > 0)
 	{
 	  str = word_wrap(new_str, widget_wid);

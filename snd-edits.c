@@ -4988,7 +4988,7 @@ static ed_list *make_ed_list(int size)
   ed = (ed_list *)CALLOC(1, sizeof(ed_list));
   ed->size = size;
   ed->allocated_size = size;
-  ed->fragments = (ed_fragment **)MALLOC(size * sizeof(ed_fragment *));
+  ed->fragments = (ed_fragment **)malloc(size * sizeof(ed_fragment *));
   for (i = 0; i < size; i++)
     FRAGMENT(ed, i) = (ed_fragment *)calloc(1, sizeof(ed_fragment)); /* "calloc" removes this from the memory tracker -- it's glomming up everything */
   ed->origin = NULL;
@@ -5065,11 +5065,7 @@ static ed_list *free_ed_list(ed_list *ed, chan_info *cp)
 	  for (i = 0; i < ed->allocated_size; i++)
 	    if (FRAGMENT(ed, i))
 	      free(FRAGMENT(ed, i));
-#if (!DEBUGGING) || (defined(__GNUC__))
-	  FREE(FRAGMENTS(ed));
-#else
-	  FREE(((void *)(ed->fragments))); /* SGI compiler won't accept the assignment in the FREE macro (if debugging) */
-#endif
+	  free(FRAGMENTS(ed));
 	}
       if (ed->origin) FREE(ed->origin);
       if (ed->edit_type == PTREE_EDIT)

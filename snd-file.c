@@ -901,7 +901,10 @@ snd_info *finish_opening_sound(snd_info *sp, bool selected)
 #endif
   if (sp) 
     {
-      if (selected) select_channel(sp, 0);
+      if ((selected) &&
+	  (sp->active) &&
+	  (sp->inuse == SOUND_NORMAL))
+	select_channel(sp, 0);
       read_snd_opened_sound_file(sp);
       if ((sp->channel_style != CHANNELS_SEPARATE) && 
 	  (sp->nchans > 1)) 
@@ -978,7 +981,7 @@ static void view_files_add_file(widget_t dialog, const char *filename);
 
 void snd_close_file(snd_info *sp)
 {
-  int files, i;
+  int i;
   XEN res = XEN_FALSE;
   snd_info *chosen_sp = NULL;
 
@@ -1025,6 +1028,7 @@ void snd_close_file(snd_info *sp)
 	  if ((nsp) && 
 	      (nsp->inuse == SOUND_NORMAL) &&
 	      (nsp != sp) &&
+	      (nsp->active) &&
 	      (nsp->selectpos > curmax))
 	    {
 	      curmax = nsp->selectpos;
@@ -1040,8 +1044,7 @@ void snd_close_file(snd_info *sp)
    */
   free_snd_info(sp);
   ss->active_sounds--;
-  files = ss->active_sounds;
-  if (files == 0) 
+  if (ss->active_sounds == 0) 
     {
       release_pending_track_states();
     }
@@ -1049,7 +1052,12 @@ void snd_close_file(snd_info *sp)
   call_selection_watchers(SELECTION_IN_DOUBT);
   call_ss_watchers(SS_FILE_OPEN_WATCHER, SS_FILE_CLOSED);
   if (chosen_sp)
-    select_channel(chosen_sp, 0);
+    {
+#if DEBUGGING
+      if (!(snd_ok(chosen_sp))) {fprintf(stderr, "bad select at close"); abort();}
+#endif
+      select_channel(chosen_sp, 0);
+    }
   else ss->selected_sound = NO_SELECTION;
 }
 
@@ -1495,7 +1503,8 @@ static snd_info *snd_update_1(snd_info *sp, const char *ur_filename)
       /* if header is bad, nsp can be null awaiting raw data dialog's return */
       if ((old_file_watcher) &&
 	  (!(nsp->file_watcher)))
-	nsp->file_watcher = fam_monitor_file(nsp->filename, (void *)nsp, fam_sp_action); /* might be a different sp as well as underlying file */
+	nsp->file_watcher = fam_monitor_file(nsp->filename, (void *)nsp, fam_sp_action); 
+            /* might be a different sp as well as underlying file */
       nsp->watchers = old_watchers;
       nsp->watchers_size = old_watchers_size;
 

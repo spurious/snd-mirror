@@ -174,7 +174,7 @@ static void massage_selection(Widget w, XtPointer context, Atom *selection, Atom
 	      filename = (char *)CALLOC(len, sizeof(char));
 	      for (i = 0; i < len; i++)
 		{
-		  if (isspace(str[i])) /* TODO: handle space in filename */
+		  if ((str[i] == '\n') || (str[i] == '\r')) /* apparently the only space chars here are \n and \r? */
 		    {
 		      if (j > 0)
 			{

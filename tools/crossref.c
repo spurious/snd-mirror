@@ -8,8 +8,11 @@
 #include <stdlib.h>
 #include <fcntl.h>
 #include <string.h>
+#include <stdbool.h>
+
 
 char **names;
+char **hnames;
 char **files;
 char **headers;
 int **counts;
@@ -43,7 +46,7 @@ void add_header(char *name)
   if (headers_ctr == headers_size) fprintf(stderr,"oops headers");
 }
 
-int add_name(char *name)
+int add_name(char *name, char *hdr)
 {
   int i;
   if (name == NULL) return(-1);
@@ -59,6 +62,7 @@ int add_name(char *name)
 
     return(-1);
   for (i=0;i<names_ctr;i++) if (strcmp(names[i],name) == 0) return(-1);
+  hnames[names_ctr] = hdr;
   names[names_ctr++] = name;
   if (names_ctr == names_size) fprintf(stderr,"oops names");
   return(names_ctr - 1);
@@ -139,7 +143,7 @@ static int get_result(char *input, int input_loc, int curname_len)
 }
 
 typedef struct {
-  char *name;
+  char *name, *hname;
   int i, calls, v, results, proc;
 } qdata;
 
@@ -168,6 +172,7 @@ int main(int argc, char **argv)
   
   names_size = 8192;
   names = (char **)calloc(names_size,sizeof(char *));
+  hnames = (char **)calloc(names_size,sizeof(char *));
   voids = (int *)calloc(names_size,sizeof(int));
   files_size = 128;
   files = (char **)calloc(files_size,sizeof(char *));
@@ -334,7 +339,7 @@ int main(int argc, char **argv)
 		      if ((k > 0) && (in_parens == 0) && (in_quotes == 0))
 			{
 			  int loc;
-			  loc = add_name(copy_string(curname));
+			  loc = add_name(copy_string(curname), headers[i]);
 			  if (loc >= 0)
 			    {
 			      int start, n, maybe_proc = 1;
@@ -491,47 +496,6 @@ int main(int argc, char **argv)
 	    if ((j == snd_xen_c) || (j == snd_nogui_c)) maxg[i]++;
 	  }
     }
-#if 0
-  for (k=0;k<10;k++)
-    {
-      fprintf(FD,"\n--------------------------------------------\n");
-      for (i=0;i<names_ctr;i++)
-	{
-	  if (maxf[i] == k)
-	    {
-	      calls = 0;
-	      if (counts[i])
-		for (j=0;j<files_ctr;j++)
-		  calls += counts[i][j];
-	      if ((k - maxg[i]) == 1)
-		fprintf(FD,"\n\n -------- %s: %d --------",names[i], calls);
-	      else fprintf(FD,"\n\n%s: %d",names[i],calls);
-	      for (j=0;j<files_ctr;j++)
-		{
-		  if ((counts[i]) && (counts[i][j] > 0))
-		    fprintf(FD,"\n    %s: %d",files[j],counts[i][j]);
-		}
-	    }
-	}
-    }
-  fprintf(FD,"\n--------------------------------------------\n");
-  for (i=0;i<names_ctr;i++)
-    {
-      if (maxf[i] > 10)
-	{
-	  calls = 0;
-	  if (counts[i])
-	    for (j=0;j<files_ctr;j++)
-	      calls += counts[i][j];
-	  fprintf(FD,"\n\n%s: %d",names[i], calls);
-	  for (j=0;j<files_ctr;j++)
-	    {
-	      if ((counts[i]) && (counts[i][j] > 0))
-		fprintf(FD,"\n    %s: %d",files[j],counts[i][j]);
-	    }
-	}
-    }
-#endif
   for (i=0;i<names_ctr;i++)
     {
       calls = 0;
@@ -549,6 +513,7 @@ int main(int argc, char **argv)
       q->i = i;
       q->v = voids[i];
       q->name = names[i];
+      q->hname = hnames[i];
       q->calls = mcalls[i];
       q->results = results[i];
       q->proc = procs[i];
@@ -556,9 +521,11 @@ int main(int argc, char **argv)
   qsort((void *)qs, names_ctr, sizeof(qdata *), greater_compare);
   for (i=0; i< names_ctr; i++)
     {
+      bool menu_case = false, file_case = false, rec_case = false;
+      int menu_count = 0, file_count = 0, rec_count = 0;
       int nfiles;
       nfiles = 0;
-      fprintf(FD, "\n\n%s: %d", qs[i]->name, qs[i]->calls);
+      fprintf(FD, "\n\n%s: %d [%s]", qs[i]->name, qs[i]->calls, qs[i]->hname);
       if (qs[i]->v) 
 	{
 	  fprintf(FD, " (void)");
@@ -570,14 +537,57 @@ int main(int argc, char **argv)
 	      (strncmp(qs[i]->name, "in_set_", 7) != 0))
 	    fprintf(FD, " (not void but result not used?)");
 	}
+      menu_case = (strcmp(qs[i]->hname, "snd-menu.h") != 0);
+      file_case = (strcmp(qs[i]->hname, "snd-file.h") != 0);
+      rec_case = (strcmp(qs[i]->hname, "snd-rec.h") != 0);
+      menu_count =0;
+      file_count = 0;
+      rec_count = 0;
       for (j=0;j<files_ctr;j++)
 	{
 	  if ((counts[qs[i]->i]) && (counts[qs[i]->i][j] > 0))
 	    {
+	      if (menu_case)
+		{
+		  if ((strcmp(files[j], "snd-menu.c") != 0) &&
+		      (strcmp(files[j], "snd-xmenu.c") != 0) &&
+		      (strcmp(files[j], "snd-gmenu.c") != 0))
+		    {
+		      if (strcmp(files[j], "snd-nogui.c") != 0)
+			menu_case = false;
+		    }
+		  else menu_count++;
+		}
+	      if (file_case)
+		{
+		  if ((strcmp(files[j], "snd-file.c") != 0) &&
+		      (strcmp(files[j], "snd-xfile.c") != 0) &&
+		      (strcmp(files[j], "snd-gfile.c") != 0))
+		    {
+		      if (strcmp(files[j], "snd-nogui.c") != 0)
+			file_case = false;
+		    }
+		  else file_count++;
+		}
+	      if (rec_case)
+		{
+		  if ((strcmp(files[j], "snd-rec.c") != 0) &&
+		      (strcmp(files[j], "snd-xrec.c") != 0) &&
+		      (strcmp(files[j], "snd-grec.c") != 0))
+		    {
+		      if (strcmp(files[j], "snd-nogui.c") != 0)
+			rec_case = false;
+		    }
+		  else rec_count++;
+		}
+
 	      fprintf(FD,"\n    %s: %d",files[j],counts[qs[i]->i][j]);
 	      nfiles++;
 	    }
 	}
+      if ((menu_case) && (menu_count > 0)) fprintf(FD, "\n->SND-MENU.H\n");
+      if ((file_case) && (file_count > 0)) fprintf(FD, "\n->SND-FILE.H\n");
+      if ((rec_case) && (rec_count > 0)) fprintf(FD, "\n->SND-REC.H\n");
       {
 	int m;
 	if ((nfiles > 0) && (lines[qs[i]->i]))

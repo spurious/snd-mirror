@@ -1,5 +1,6 @@
 Snd change log
 
+  28-Aug:    snd 7.15.
   18-Aug:    _sndlib.h and sndlib.h.in.
   15-Aug:    in View:Files, click of file name no longer opens that file.
              view-files-select-hook return type no longer matters, and args are: dialog file-name.

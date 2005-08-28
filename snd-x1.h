@@ -393,7 +393,6 @@ widget_t make_selection_save_as_dialog(bool managed);
 void make_new_file_dialog(void);
 void mouse_enter_label(Widget w, XtPointer context, XEvent *event, Boolean *flag);
 void mouse_leave_label(Widget w, XtPointer context, XEvent *event, Boolean *flag);
-void raw_data_dialog_to_file_info(const char *filename, char *title, char *info, bool read_only, bool selected);
 Widget edit_header(snd_info *sp);
 void save_edit_header_dialog_state(FILE *fd);
 void cleanup_edit_header_watcher(void);

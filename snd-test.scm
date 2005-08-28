@@ -47488,11 +47488,14 @@ EDITS: 1
 			      (snd-display ";fontlistentry font: ~A" (XmFontListEntryGetFont entry)))
 			  (XmFontListEntryFree (XmFontListEntryCreate "hiho" XmFONT_IS_FONT (XmFontListEntryGetFont entry)))
 			  (XmFontListFree (XmFontListCopy font))
-			  (let ((newlist (XmFontListCreate (XmFontListEntryGetFont entry) "hiho")))
-			    (XmFontListAdd newlist (XmFontListEntryGetFont entry) "hiho")
+			  (catch #t
+				 (lambda ()
+				   (let ((newlist (XmFontListCreate (XmFontListEntryGetFont entry) "hiho")))
+				     (XmFontListAdd newlist (XmFontListEntryGetFont entry) "hiho")
 					;(XmFontListRemoveEntry newlist entry)
 					;(XmFontListFree newlist)
-			    )
+				     ))
+				 (lambda args args))
 			  (XmFontListFreeFontContext context)))
 		      (let ((fnt (XmFontListEntryLoad (XtDisplay (cadr (main-widgets)))
 						      "-*-times-medium-r-normal-*-18-*-*-*-*-*-*-*"

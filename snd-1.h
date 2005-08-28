@@ -870,6 +870,7 @@ off_t ed_selection_maxamp_position(chan_info *cp);
 void copy_then_swap_channels(chan_info *cp0, chan_info *cp1, int pos0, int pos1);
 void reflect_file_change_in_label(chan_info *cp);
 void update_track_lists(chan_info *cp, int top_ctr);
+void reflect_file_change_in_title(void);
 
 bool snd_to_sample_p(mus_any *ptr);
 Float snd_to_sample_read(mus_any *ptr, off_t frame, int chan);
@@ -975,7 +976,6 @@ void snd_load_file(char *filename);
 void snd_report_result(XEN result, char *buf);
 void snd_report_listener_result(XEN form);
 void snd_eval_stdin_str(char *buf);
-void g_snd_callback(int callb);
 void clear_stdin(void);
 #if HAVE_RUBY
   void snd_rb_raise(XEN type, XEN info);
@@ -1320,17 +1320,11 @@ file_info *make_file_info(const char *fullname, bool read_only, bool selected);
 file_info *free_file_info(file_info *hdr);
 file_info *copy_header(const char *fullname, file_info *ohdr);
 file_info *make_temp_header(const char *fullname, int srate, int chans, off_t samples, const char *caller);
-dir *free_dir (dir *dp);
 bool sound_file_p(char *name);
-bool plausible_sound_file_p(const char *name);
-snd_info *file_is_open_elsewhere_and_has_unsaved_edits(snd_info *sp, const char *fullname);
-bool run_just_sounds_hook(const char *name);
 void init_sound_file_extensions(void);
 void save_added_sound_file_extensions(FILE *fd);
-dir *find_sound_files_in_dir (const char *name);
 dir *filter_sound_files(dir *dp, char *pattern);
 snd_info *snd_open_file(const char *filename, bool read_only);
-snd_info *finish_opening_sound(snd_info *sp, bool selected);
 void snd_close_file(snd_info *sp);
 io_error_t copy_file(const char *oldname, const char *newname);
 io_error_t move_file(const char *oldfile, const char *newfile);
@@ -1338,22 +1332,9 @@ snd_info *make_sound_readable(const char *filename, bool post_close);
 snd_info *snd_update(snd_info *sp);
 snd_info *snd_update_within_xen(snd_info *sp, const char *caller);
 
-char **set_header_and_data_positions(file_data *fdat, int type, int format);
-char **short_writable_headers(int *len);
-char **short_readable_headers(int *len);
-char **short_builtin_headers(int *len);
-bool encoded_header_p(int header_type);
 int snd_encode(int type, const char *input_filename, const char *output_filename);
 int snd_decode(int type, const char *input_filename, const char *output_filename);
-bool edit_header_callback(snd_info *sp, file_data *edit_header_data, 
-			  void (*outer_handler)(const char *error_msg, void *ufd),
-			  void (*inner_handler)(const char *error_msg, void *ufd));
-void reflect_file_change_in_title(void);
 
-int header_type_from_position(int pos);
-int data_format_from_position(int header, int pos);
-void set_header_type_and_format_from_position(file_data *fdat, int pos);
-char **set_header_positions_from_type(file_data *fdat, int header_type, int data_format);
 void set_fallback_srate(int sr);
 void set_fallback_chans(int ch);
 void set_fallback_format(int fr);
@@ -1565,9 +1546,7 @@ int snd_translate(const char *oldname, const char *newname, int type);
 
 bool record_in_progress(void);
 void save_recorder_state(FILE *fd);
-void close_recorder_audio(void);
 void g_init_recorder(void);
-void fire_up_recorder(void);
 
 
 /* -------- snd.c -------- */

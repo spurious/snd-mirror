@@ -102,7 +102,7 @@ AC_ARG_WITH(gsl,         [  --with-gsl		  use GSL, default=yes if no complex tri
 AC_ARG_WITH(fftw,        [  --with-fftw		  use fftw, default=yes])
 AC_ARG_WITH(xpm,         [  --with-xpm		  use xpm, default=yes])
 AC_ARG_WITH(xp,          [  --with-xp		  use xp, default=no])
-AC_ARG_WITH(fam,         [  --with-fam		  use libfam (Gamin), default= yes])
+AC_ARG_WITH(fam,         [  --with-fam		  use libfam (Gamin), default=yes])
 AC_ARG_WITH(profiling,   [  --with-profiling	  include profiling machinery, default=no, for internal testing])
 
 if test "$with_doubles" = yes ; then
@@ -1794,3 +1794,4 @@ fi
 AC_SUBST(CFLAGS)
 AC_SUBST(MAKE_TARGET)
 AC_OUTPUT
+

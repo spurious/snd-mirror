@@ -3206,11 +3206,16 @@ static XEN g_save_sound(XEN index)
 
   if ((sp->user_read_only) || (sp->file_read_only))
     {
+      char *msg;
+      XEN str;
+      msg = mus_format(_("%s (index %d) is write-protected"), 
+		       sp->short_filename, 
+		       sp->index);
+      str = C_TO_XEN_STRING(msg);
+      FREE(msg);
       XEN_ERROR(CANNOT_SAVE,
 		XEN_LIST_2(C_TO_XEN_STRING(S_save_sound),
-			   C_TO_XEN_STRING(mus_format(_("%s (index %d) is write-protected"), 
-						      sp->short_filename, 
-						      sp->index))));
+			   str));
       return(XEN_FALSE);
     }
 

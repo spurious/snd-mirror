@@ -8824,15 +8824,33 @@ char *mus_audio_moniker(void)
   return("NetBSD audio");
 }
 
+static int cur_chans = 1, cur_srate = 22050;
+
 int mus_audio_write(int line, char *buf, int bytes) 
 {
-  write(line, buf, bytes);
+  /* trouble... AUDIO_WSEEK always returns 0, no way to tell that I'm about to
+   *   hit "hiwat", but when I do, it hangs.  Can't use AUDIO_DRAIN --
+   *   it introduces interruptions.  Not sure what to do...
+   */
+  int b = 0;
+  b = write(line, buf, bytes);
+  usleep(10000);
+  if (b != bytes)
+    {
+      /* hangs at close if we don't handle this somehow */
+      if ((cur_chans == 1) || (cur_srate == 22050))
+	sleep(1);
+      else usleep(10000);
+      if (b < 0) b = 0;
+      mus_audio_write(line, (char *)(buf + b), bytes - b);
+    }
   return(MUS_NO_ERROR);
 }
 
 int mus_audio_close(int line) 
 {
-  /* write(line, (char *)NULL, 0); */
+  usleep(100000);
+  ioctl(line, AUDIO_FLUSH, 0);
   close(line);
   return(MUS_NO_ERROR);
 }
@@ -8882,14 +8900,19 @@ int mus_audio_open_output(int dev, int srate, int chans, int format, int size)
     }
   a_info.play.channels = chans;
   ioctl(line, AUDIO_SETINFO, &a_info);
+  /* actually doesn't set the "ports" field -- always 0 */
 
   ioctl(line, AUDIO_GETINFO, &a_info);
+
   if (a_info.play.sample_rate != srate)
     mus_print("srate: %d -> %d\n", srate, a_info.play.sample_rate);
   if (a_info.play.encoding != sndlib_format_to_bsd(format))
     mus_print("encoding: %d -> %d\n", sndlib_format_to_bsd(format), a_info.play.encoding);
   if (a_info.play.channels != chans)
     mus_print("chans: %d -> %d\n", chans, a_info.play.channels);
+
+  cur_chans = chans;
+  cur_srate = srate;
 
   return(line);
 }
@@ -9292,15 +9315,6 @@ static int print_it = 1;
 static int save_it_len = 0;
 static int save_it_loc = 0;
 
-static void check_save_it(int loc)
-{
-  if (loc >= save_it_len)
-    {
-      save_it_len += 1024;
-      save_it = (char *)REALLOC(save_it, save_it_len * sizeof(char));
-    }
-}
-
 static void pprint(char *str)
 {
   int i, len;
@@ -9313,12 +9327,13 @@ static void pprint(char *str)
       else
 	{
 	  len = strlen(str);
-	  for (i = 0; i < len; i++, save_it_loc++)
+	  if ((len + save_it_loc + 2) >= save_it_len)
 	    {
-	      check_save_it(save_it_loc);
-	      save_it[save_it_loc] = str[i];
+	      save_it_len = (len + save_it_loc + 1024);
+	      save_it = (char *)REALLOC(save_it, save_it_len * sizeof(char));
 	    }
-	  check_save_it(save_it_loc);
+	  for (i = 0; i < len; i++)
+	    save_it[save_it_loc++] = str[i];
 	  save_it[save_it_loc] = 0;
 	}
     }

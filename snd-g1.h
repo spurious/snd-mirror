@@ -480,7 +480,6 @@ widget_t make_sound_save_as_dialog(bool managed);
 widget_t make_selection_save_as_dialog(bool managed);
 gboolean label_enter_callback(GtkWidget *w, GdkEventCrossing *ev, gpointer gp);
 gboolean label_leave_callback(GtkWidget *w, GdkEventCrossing *ev, gpointer gp);
-void raw_data_dialog_to_file_info(const char *filename, char *title, char *info, bool read_only, bool selected);
 void make_new_file_dialog(void);
 widget_t make_mix_file_dialog(bool managed);
 widget_t make_insert_file_dialog(bool managed);

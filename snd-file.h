@@ -95,7 +95,6 @@ void view_files_add_file_or_directory(view_files_info *vdat, const char *file_or
 void vf_reflect_sort_choice_in_menu(view_files_info *vdat);
 vf_row *view_files_make_row(view_files_info *vdat, widget_t last_row);
 
-void view_files_set_sort_proc_name(const char *name);
 void vf_set_amp(view_files_info *vdat, Float val);
 void vf_set_speed(view_files_info *vdat, Float val);
 void vf_amp_env_redraw(widget_t w, view_files_info *vdat);
@@ -121,5 +120,31 @@ void vf_clear_button_set_sensitive(view_files_info *vdat, bool sensitive);
 void view_files_reflect_sort_items(void);
 int vf_mix(view_files_info *vdat);
 bool vf_insert(view_files_info *vdat);
+
+
+char **set_header_and_data_positions(file_data *fdat, int type, int format);
+char **short_writable_headers(int *len);
+char **short_readable_headers(int *len);
+char **short_builtin_headers(int *len);
+void set_header_type_and_format_from_position(file_data *fdat, int pos);
+int header_type_from_position(int pos);
+int data_format_from_position(int header, int pos);
+char **set_header_positions_from_type(file_data *fdat, int header_type, int data_format);
+bool encoded_header_p(int header_type);
+
+snd_info *file_is_open_elsewhere_and_has_unsaved_edits(snd_info *sp, const char *fullname);
+dir *free_dir (dir *dp);
+
+bool plausible_sound_file_p(const char *name);
+dir *find_sound_files_in_dir (const char *name);
+snd_info *finish_opening_sound(snd_info *sp, bool selected);
+bool run_just_sounds_hook(const char *name);
+
+bool edit_header_callback(snd_info *sp, file_data *edit_header_data, 
+			  void (*outer_handler)(const char *error_msg, void *ufd),
+			  void (*inner_handler)(const char *error_msg, void *ufd));
+
+
+void raw_data_dialog_to_file_info(const char *filename, char *title, char *info, bool read_only, bool selected);
 
 #endif
