@@ -505,7 +505,7 @@ static char *snd_print_or_error(char *output)
   else return(copy_string(_("print sound: eps file name needed")));
 }
 
-void snd_print(char *output)
+bool snd_print(char *output)
 {
   char *error;
   error = snd_print_or_error(output);
@@ -513,7 +513,9 @@ void snd_print(char *output)
     {
       snd_error(error);
       FREE(error);
+      return(false);
     }
+  return(true);
 }
 
 void region_print(char *output, char* title, chan_info *cp)

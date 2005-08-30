@@ -336,6 +336,7 @@ static int scroll_to_speed(snd_info *sp, int ival)
 				    sp->speed_control_tones,
 				    6);
   set_label(SPEED_LABEL(sp), speed_number_buffer);
+  /* set_label works with buttons or labels */
   return(ival);
 }
 
@@ -363,6 +364,19 @@ static void speed_click_callback(Widget w, XtPointer context, XtPointer info)
   if (sp->speed_control_style == SPEED_CONTROL_AS_RATIO)
     snd_rationalize(sp->speed_control, &(sp->speed_control_numerator), &(sp->speed_control_denominator));
 #endif
+}
+
+static void speed_label_click_callback(Widget w, XtPointer context, XtPointer info) 
+{
+  snd_info *sp = (snd_info *)context;
+  ASSERT_WIDGET_TYPE(XmIsPushButton(w), w);
+  switch (sp->speed_control_style)
+    {
+    case SPEED_CONTROL_AS_FLOAT:    sp->speed_control_style = SPEED_CONTROL_AS_RATIO;    break;
+    case SPEED_CONTROL_AS_RATIO:    sp->speed_control_style = SPEED_CONTROL_AS_SEMITONE; break;
+    case SPEED_CONTROL_AS_SEMITONE: sp->speed_control_style = SPEED_CONTROL_AS_FLOAT;    break;
+    }
+  set_speed(sp, sp->speed_control);  /* remake label */
 }
 
 static void speed_drag_callback(Widget w, XtPointer context, XtPointer info) 
@@ -1992,7 +2006,12 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       XtSetArg(args[n], XmNmarginHeight, CONTROLS_MARGIN); n++; 
       XtSetArg(args[n], XmNrecomputeSize, false); n++;
       XtSetArg(args[n], XmNmarginRight, 3); n++;
-      SPEED_LABEL(sp) = XtCreateManagedWidget ("speed-number", xmLabelWidgetClass, CONTROLS(sp), args, n);
+      XtSetArg(args[n], XmNshadowThickness, 0); n++;
+      XtSetArg(args[n], XmNhighlightThickness, 0); n++;
+      XtSetArg(args[n], XmNfillOnArm, false); n++;
+      SPEED_LABEL(sp) = make_pushbutton_widget ("speed-number", CONTROLS(sp), args, n);
+      XtAddEventHandler(SPEED_LABEL(sp), KeyPressMask, false, graph_key_press, (XtPointer)sp);
+      XtAddCallback(SPEED_LABEL(sp), XmNactivateCallback, speed_label_click_callback, (XtPointer)sp);
       XmStringFree(s1);
 
       n = 0;

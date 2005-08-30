@@ -48897,7 +48897,7 @@ EDITS: 1
 					  (XKeycodeToKeysym dpy (list 'KeyCode XK_b) 0)
 					  0  (lambda (w c i) #f) '())
 	      
-	      (if (XmIsMotifWMRunning (cadr (main-widgets))) (snd-display ";XmIsMotifWMRunning?"))
+	      (if (not (XmIsMotifWMRunning (cadr (main-widgets)))) (snd-display ";not XmIsMotifWMRunning?"))
 	      (install-searcher (lambda (file) (= (mus-sound-srate file) 44100)))
 	      (zync)
 	      (make-hidden-controls-dialog)
@@ -55376,7 +55376,6 @@ EDITS: 1
 			      window-width window-x window-y with-gl with-mix-tags x-axis-style beats-per-minute zoom-color mix-tag-height
 			      mix-tag-width with-relative-panes run-safety clm-table-size mark-tag-width mark-tag-height
 			      quit-button-color help-button-color reset-button-color doit-button-color doit-again-button-color
-			      view-files-amp view-files-speed view-files-files view-files-selected-files view-files-speed-style view-files-amp-env
 			      ))
 	      (gc)(gc))
 	    

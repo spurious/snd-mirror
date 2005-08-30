@@ -2,10 +2,10 @@
 
 static char *io_error_names[] = {"no error", "save hook cancellation", "bad channel", "bad edit position", "read protected", 
 				 "no file", "bad location", "can't reopen file", "too many open files", "unknown sndlib error", 
-				 "no memory", "can't open file", "no filename", "bad data format", "bad header type", "sndlib uninitialized", 
-				 "not a sound file", "file closed", "write error", "read error", "interrupted", "can't close file", 
-				 "bad header", "disk full", "write protected", "write cancellation", "can't move file", "can't remove file", 
-				 "can't read selection file", "can't open file", "need write confirmation", "no changes"
+				 "no memory", "can't open", "no filename", "bad data format", "bad header type", "sndlib uninitialized", 
+				 "not a sound file", "file closed", "write error", "read error", "interrupted", "can't close", 
+				 "bad header", "disk full", "write protected", "write cancellation", "can't move", "can't remove", 
+				 "can't read selection file", "can't open", "need write confirmation", "no changes"
 };
 
 const char *io_error_name(io_error_t err)
@@ -76,8 +76,12 @@ void snd_warning(char *format, ...)
       snd_info *sp;
       sp = any_selected_sound();
       if ((sp) && (sp->active))
-	report_in_minibuffer(sp, snd_error_buffer);
-      else fprintf(stderr, snd_error_buffer); /* TODO: need some better error handling here */
+	display_minibuffer_error(sp, snd_error_buffer);
+      else 
+	{
+	  listener_append(snd_error_buffer);
+	  fprintf(stderr, snd_error_buffer); 
+	}
     }
   else fprintf(stderr, snd_error_buffer);
 #if DEBUGGING

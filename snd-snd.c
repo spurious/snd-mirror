@@ -15,7 +15,10 @@ snd_info *snd_new_file(char *newname, int header_type, int data_format, int srat
 			     data_format, new_comment, 
 			     snd_strlen(new_comment), NULL);
       if (err != IO_NO_ERROR)
-	snd_error(_("can't write %s: %s"), newname, snd_io_strerror()); /* TODO: better error */
+	snd_error(_("%s %s: %s"), 
+		  io_error_name(err),
+		  newname, 
+		  snd_io_strerror());
       else
 	{
 	  int chan;
@@ -1102,8 +1105,16 @@ Float speed_changed(Float val, char *srcbuf, speed_style_t style, int tones, int
       for (i = 1; i < TOTAL_RATS; i++)
 	if (rat_values[i] > val) 
 	  break;
-      mus_snprintf(srcbuf, srcbuf_size, "%s", rat_names[i - 1]);
-      return(rat_values[i - 1]);
+      if ((rat_values[i] - val) < (val - rat_values[i - 1]))
+	{
+	  mus_snprintf(srcbuf, srcbuf_size, "%s", rat_names[i]);
+	  return(rat_values[i]);
+	}
+      else
+	{
+	  mus_snprintf(srcbuf, srcbuf_size, "%s", rat_names[i - 1]);
+	  return(rat_values[i - 1]);
+	}
 #endif
       break;
     case SPEED_CONTROL_AS_SEMITONE: 
@@ -1645,6 +1656,7 @@ static bool apply_controls(apply_state *ap)
     }
   else
     {
+      io_error_t io_err = IO_NO_ERROR;
       orig_apply_dur = apply_dur;
       switch (ap->slice)
 	{
@@ -1731,14 +1743,13 @@ static bool apply_controls(apply_state *ap)
 	    }
 	  orig_dur = apply_dur;
 	  apply_dur = (off_t)(mult_dur * (apply_dur + added_dur));
-	  {
-	    /* TODO: better error */
-	    io_error_t io_err = IO_NO_ERROR;
-	    ap->ofd = open_temp_file(ap->ofile, ap->hdr->chans, ap->hdr, &io_err);
-	  }
+	  ap->ofd = open_temp_file(ap->ofile, ap->hdr->chans, ap->hdr, &io_err);
 	  if (ap->ofd == -1)
 	    {
-	      snd_error(_("can't open apply temp file %s: %s\n"), ap->ofile, snd_open_strerror());
+	      snd_error(_("%s apply temp file %s: %s\n"), 
+			(io_err != IO_NO_ERROR) ? io_error_name(io_err) : "can't open",
+			ap->ofile, 
+			snd_open_strerror());
 	      sp->applying = false;
 	      ap = free_apply_state(ap);
 	      return(false);
@@ -3221,7 +3232,13 @@ static XEN g_save_sound(XEN index)
 
   redirect_snd_error_to(save_sound_error_handler, (void *)S_save_sound);
   redirect_snd_warning_to(save_sound_error_handler, (void *)S_save_sound);
-  err = save_edits(sp);      
+  {
+    bool asking;
+    asking = ask_before_overwrite(ss);
+    set_ask_before_overwrite(false);
+    err = save_edits(sp);      
+    set_ask_before_overwrite(asking);
+  }
   redirect_snd_error_to(NULL, NULL);
   redirect_snd_warning_to(NULL, NULL);
 
@@ -4768,7 +4785,7 @@ create a new sound file 'file' (writing float data), return the file descriptor 
   int type = MUS_NEXT;
   int format = MUS_BFLOAT;
 #endif
-
+  io_error_t io_err = IO_NO_ERROR;
   XEN args[10]; 
   XEN keys[5];
   int orig_arg[5] = {0, 0, 0, 0, 0};
@@ -4820,13 +4837,17 @@ create a new sound file 'file' (writing float data), return the file descriptor 
   hdr->type = type;
   if (comment)
     hdr->comment = copy_string(comment);
-  {
-    /* TODO: better error */
-    io_error_t io_err = IO_NO_ERROR;
-    result = open_temp_file(filename, chans, hdr, &io_err);
-  }
+  result = open_temp_file(filename, chans, hdr, &io_err);
   if (result == -1) 
     {
+      char *msg;
+      XEN errmsg;
+      msg = mus_format("%s %s: %s",
+		       (io_err != IO_NO_ERROR) ? io_error_name(io_err) : "can't open",
+		       filename,
+		       snd_open_strerror());
+      errmsg = C_TO_XEN_STRING(msg);
+      FREE(msg);
       free_file_info(hdr);
       /* this happens if the header writer hit an error -- need to delete the bogus output file */
       if (mus_file_probe(filename)) snd_remove(filename, REMOVE_FROM_CACHE);
@@ -4834,7 +4855,7 @@ create a new sound file 'file' (writing float data), return the file descriptor 
       filename = NULL;
       XEN_ERROR(MUS_MISC_ERROR,
 		XEN_LIST_2(C_TO_XEN_STRING(S_open_sound_file),
-			   C_TO_XEN_STRING(snd_open_strerror())));
+			   errmsg));
     }
   mus_file_set_data_clipped(result, data_clipped(ss));
   set_temp_fd(result, hdr);
@@ -4847,6 +4868,7 @@ static XEN g_close_sound_file(XEN g_fd, XEN g_bytes)
   #define H_close_sound_file "(" S_close_sound_file " fd bytes): close file fd, updating its header to report 'bytes' bytes of data"
   file_info *hdr;
   int fd;
+  io_error_t io_err = IO_NO_ERROR;
   off_t bytes;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(g_fd), g_fd, XEN_ARG_1, S_close_sound_file, "an integer");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(g_bytes), g_bytes, XEN_ARG_2, S_close_sound_file, "a number");
@@ -4860,11 +4882,21 @@ static XEN g_close_sound_file(XEN g_fd, XEN g_bytes)
       snd_close(fd, "sound file");
       return(snd_no_such_file_error(S_close_sound_file, g_fd));
     }
-  close_temp_file(hdr->name, fd, hdr->type, bytes);
-  /* TODO: trap error here and in all close_temp_files */
+  io_err = close_temp_file(hdr->name, fd, hdr->type, bytes);
   unset_temp_fd(fd);
   free_file_info(hdr);
-  return(C_TO_XEN_INT(0));
+  if (io_err != IO_NO_ERROR)
+    {
+      char *msg;
+      XEN errmsg;
+      msg = mus_format("%s file: %s",
+		       io_error_name(io_err),
+		       snd_io_strerror());
+      errmsg = C_TO_XEN_STRING(msg);
+      FREE(msg);
+      return(errmsg);
+    }
+  return(XEN_FALSE);
 }
 
 static XEN g_vct2soundfile(XEN g_fd, XEN obj, XEN g_nums)

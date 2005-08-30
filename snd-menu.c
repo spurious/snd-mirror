@@ -2,12 +2,9 @@
 #include "snd-menu.h"
 
 /* PERHAPS: insert-region menus -> browser
- * PERHAPS: rename, append?
  * PERHAPS: explode sf2 if sf2 being edited?
  * PERHAPS: key binding updates here too 
  */
-
-/* TODO: if 2chn, edit chn1, undo not sensitive if chn0 is selected */
 
 static bool find_any_edits(chan_info *cp, void *ignore)
 {
@@ -247,15 +244,18 @@ void save_options_from_menu(void)
 {
   FILE *fd;
   fd = open_snd_init_file();
-  if (fd) save_options(fd);
-  if ((!fd) || (FCLOSE(fd) != 0))
-    snd_error(_("save options in %s: %s"),
-	      ss->init_file,
-	      snd_io_strerror());
-  else
+  if (fd) 
     {
+      save_options(fd);
+      snd_fclose(fd, ss->init_file);
       if (any_selected_sound())
 	report_in_minibuffer(any_selected_sound(), _("saved options in %s"), ss->init_file);
+    }
+  else
+    {
+      snd_error(_("save options in %s: %s"),
+		ss->init_file,
+		snd_io_strerror());
     }
 }
 

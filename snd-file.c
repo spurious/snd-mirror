@@ -1061,65 +1061,6 @@ void snd_close_file(snd_info *sp)
   else ss->selected_sound = NO_SELECTION;
 }
 
-io_error_t copy_file(const char *oldname, const char *newname)
-{
-  /* make newname a copy of oldname */
-  int ifd, ofd;
-  off_t bytes, wb, total;
-  char *buf = NULL;
-  total = 0;
-  ifd = OPEN(oldname, O_RDONLY, 0);
-  if (ifd == -1) return(IO_CANT_OPEN_FILE);
-  ofd = CREAT(newname, 0666);
-  if (ofd == -1) 
-    {
-      snd_close(ifd, oldname);
-      return(IO_CANT_OPEN_FILE);
-    }
-  buf = (char *)CALLOC(8192, sizeof(char));
-  while ((bytes = read(ifd, buf, 8192)))
-    {
-      total += bytes;
-      wb = write(ofd, buf, bytes);
-      if (wb != bytes) 
-	{
-	  snd_close(ofd, newname);
-	  snd_close(ifd, oldname);
-	  FREE(buf); 
-	  return(IO_WRITE_ERROR);
-	}
-    }
-  snd_close(ifd, oldname);
-  wb = disk_kspace(newname);
-  snd_close(ofd, newname);
-  FREE(buf);
-  if (wb < 0)
-    return(IO_DISK_FULL);
-  return(IO_NO_ERROR);
-}
-
-io_error_t move_file(const char *oldfile, const char *newfile)
-{
-  io_error_t err = IO_NO_ERROR;
-  int rename_err;
-  rename_err = RENAME(oldfile, newfile);
-  if (rename_err != 0)
-    {
-      if (errno == EXDEV)
-	{
-	  err = copy_file(oldfile, newfile);
-	  if (err == IO_NO_ERROR)
-	    {
-	      rename_err = snd_remove(oldfile, REMOVE_FROM_CACHE);
-	      if (rename_err == -1)
-		return(IO_CANT_MOVE_FILE);
-	    }
-	}
-    }
-  /* TODO: this had snd_error which we need to push upwards */
-  return(err);
-}
-
 #define TEMP_SOUND_INDEX 123456
 /* just a marker for debugging */
 
@@ -3025,9 +2966,6 @@ void add_file_to_view_files_list(view_files_info *vdat, const char *filename, co
 void add_directory_to_view_files_list(view_files_info *vdat, const char *dirname)
 {
   dir *sound_files = NULL;
-
-  fprintf(stderr,"add dir: %s\n", dirname);
-
   sound_files = find_sound_files_in_dir(dirname);
   if ((sound_files) && (sound_files->len > 0))
     {
@@ -3349,15 +3287,22 @@ int vf_mix(view_files_info *vdat)
   else
     {
       int i;
+      bool err = false;
       char *tempfile;
       char **selected_files;
       selected_files = vf_selected_files(vdat);
-      tempfile = scale_and_src(selected_files, len, sp->nchans, vdat->amp, vdat->speed, vdat->amp_env);
-      id_or_error = mix_complete_file(sp, vdat->beg, 
-				      tempfile,
-				      with_mix_tags(ss), 
-				      (sp->nchans > 1) ? MULTICHANNEL_DELETION : DELETE_ME,
-				      0, true); /* all-chans = true */
+      tempfile = scale_and_src(selected_files, len, sp->nchans, vdat->amp, vdat->speed, vdat->amp_env, &err);
+      if (err)
+	{
+	  vf_post_error(tempfile, (void *)vdat);
+	  id_or_error = MIX_FILE_NO_TEMP_FILE;
+	}
+      else
+	id_or_error = mix_complete_file(sp, vdat->beg, 
+					tempfile,
+					with_mix_tags(ss), 
+					(sp->nchans > 1) ? MULTICHANNEL_DELETION : DELETE_ME,
+					0, true); /* all-chans = true */
       FREE(tempfile);
       for (i = 0; i < len; i++)
 	FREE(selected_files[i]);
@@ -3386,7 +3331,7 @@ void view_files_mix_selected_files(widget_t w, view_files_info *vdat)
       /*    the possible error conditions have been checked already, or go through snd_error */
 
       redirect_snd_error_to(NULL, NULL);
-      if (id_or_error < 0) /* actually -1 .. -3 */
+      if (id_or_error < 0) /* actually -1 .. -3 (-4 for temp file error already posted) */
 	{
 	}
       else
@@ -3421,14 +3366,22 @@ bool vf_insert(view_files_info *vdat)
   else
     {
       int i;
+      bool err = false;
       char *tempfile;
       char **selected_files;
       selected_files = vf_selected_files(vdat);
-      tempfile = scale_and_src(selected_files, len, sp->nchans, vdat->amp, vdat->speed, vdat->amp_env);
-      ok = insert_complete_file(sp, 
-				tempfile,
-				vdat->beg,
-				(sp->nchans > 1) ? MULTICHANNEL_DELETION : DELETE_ME);
+      tempfile = scale_and_src(selected_files, len, sp->nchans, vdat->amp, vdat->speed, vdat->amp_env, &err);
+      if (err)
+	{
+	  /* TODO: clear temp file problem?? */
+	  vf_post_error(tempfile, (void *)vdat);
+	  ok = false;
+	}
+      else
+	ok = insert_complete_file(sp, 
+				  tempfile,
+				  vdat->beg,
+				  (sp->nchans > 1) ? MULTICHANNEL_DELETION : DELETE_ME);
       FREE(tempfile);
       for (i = 0; i < len; i++)
 	FREE(selected_files[i]);
@@ -3460,8 +3413,8 @@ void view_files_insert_selected_files(widget_t w, view_files_info *vdat)
 	{
 	  char *msg;
 	  if (vdat->currently_selected_files == 1)
-	    msg = mus_format(_("%s mixed in at " OFF_TD), vdat->names[vdat->selected_files[0]], vdat->beg);
-	  else msg = mus_format(_("selected files mixed in at " OFF_TD), vdat->beg);
+	    msg = mus_format(_("%s inserted at " OFF_TD), vdat->names[vdat->selected_files[0]], vdat->beg);
+	  else msg = mus_format(_("selected files inserted at " OFF_TD), vdat->beg);
 	  vf_post_error(msg, (void *)vdat);
 	  vdat->error_p = false;
 	  FREE(msg);

@@ -1,38 +1,40 @@
 #include "snd.h"
 
+/* rather than try to track error indications through infinite levels of nested calls,
+ *   I think I'll just issue a warning, and let the redirection mechanism deal with it.
+ */
+void snd_remove(const char *name, cache_remove_t forget)
+{
+  int err = 0;
+  if (forget == REMOVE_FROM_CACHE) mus_sound_forget(name); /* no error here if not in sound tables */
+  ss->local_errno = 0;
+  err = remove(name);
+  if (err != 0)
+    snd_warning("remove %s: %s", name, snd_io_strerror());
+}
+
+void snd_close(int fd, const char *name)
+{
+  int err;
+  ss->local_errno = 0;
+  err = close(fd);
+  if (err != 0)
+    snd_warning("close %s: %s", name, snd_io_strerror());
+}
+
+void snd_fclose(FILE *fd, const char *name)
+{
+  int err;
+  ss->local_errno = 0;
+  err = fclose(fd);
+  if (err != 0)
+    snd_warning("fclose %s: %s", name, snd_io_strerror());
+}
+
+
 /* low level IO stuff to keep track of errno */
 
-int snd_io_remove(const char *filename)
-{
-  int result = 0;
-  ss->local_errno = 0;
-  errno = 0;
-  result = remove(filename);
-  if (errno != 0) ss->local_errno = errno;
-  return(result);
-}
-
-int snd_io_rename(const char *old_name, const char *new_name)
-{
-  int result = 0;
-  ss->local_errno = 0;
-  errno = 0;
-  result = rename(old_name, new_name);
-  if (errno != 0) ss->local_errno = errno;
-  return(result);
-}
-
-int snd_io_fclose(FILE *fd)
-{
-  int result = 0;
-  ss->local_errno = 0;
-  errno = 0;
-  result = fclose(fd);
-  if (errno != 0) ss->local_errno = errno;
-  return(result);
-}
-
-FILE *snd_io_fopen(const char *filename, const char *modes)
+FILE *snd_fopen(const char *filename, const char *modes)
 {
   FILE *result = NULL;
   ss->local_errno = 0;
@@ -47,17 +49,7 @@ FILE *snd_io_fopen(const char *filename, const char *modes)
   return(result);
 }
 
-int snd_io_close(int fd)
-{
-  int result = 0;
-  ss->local_errno = 0;
-  errno = 0;
-  result = close(fd);
-  if (errno != 0) ss->local_errno = errno;
-  return(result);
-}
-
-int snd_io_open(const char *filename, int flags, mode_t mode)
+int snd_open(const char *filename, int flags, mode_t mode)
 {
   int result = 0;
   ss->local_errno = 0;
@@ -72,7 +64,7 @@ int snd_io_open(const char *filename, int flags, mode_t mode)
   return(result);
 }
 
-int snd_io_creat(const char *filename, mode_t mode)
+int snd_creat(const char *filename, mode_t mode)
 {
   int result = 0;
   ss->local_errno = 0;
@@ -86,6 +78,61 @@ int snd_io_creat(const char *filename, mode_t mode)
     }
   return(result);
 }
+
+io_error_t move_file(const char *oldfile, const char *newfile)
+{
+  io_error_t err = IO_NO_ERROR;
+  int rename_err;
+  rename_err = rename(oldfile, newfile);
+  if (rename_err != 0)
+    {
+      if (errno == EXDEV)
+	{
+	  err = copy_file(oldfile, newfile);
+	  if (err == IO_NO_ERROR)
+	    snd_remove(oldfile, REMOVE_FROM_CACHE);
+	}
+    }
+  return(err);
+}
+
+io_error_t copy_file(const char *oldname, const char *newname)
+{
+  /* make newname a copy of oldname */
+  int ifd, ofd;
+  off_t bytes, wb, total;
+  char *buf = NULL;
+  total = 0;
+  ifd = OPEN(oldname, O_RDONLY, 0);
+  if (ifd == -1) return(IO_CANT_OPEN_FILE);
+  ofd = CREAT(newname, 0666);
+  if (ofd == -1) 
+    {
+      snd_close(ifd, oldname);
+      return(IO_CANT_OPEN_FILE);
+    }
+  buf = (char *)CALLOC(8192, sizeof(char));
+  while ((bytes = read(ifd, buf, 8192)))
+    {
+      total += bytes;
+      wb = write(ofd, buf, bytes);
+      if (wb != bytes) 
+	{
+	  snd_close(ofd, newname);
+	  snd_close(ifd, oldname);
+	  FREE(buf); 
+	  return(IO_WRITE_ERROR);
+	}
+    }
+  snd_close(ifd, oldname);
+  wb = disk_kspace(newname);
+  snd_close(ofd, newname);
+  FREE(buf);
+  if (wb < 0)
+    return(IO_DISK_FULL);
+  return(IO_NO_ERROR);
+}
+
 
 
 /* file buffers (i.e. a sliding window on a given file's data) */
@@ -377,39 +424,6 @@ io_error_t snd_write_header(const char *name, int type, int srate, int chans, of
   mus_error_set_handler(old_error_handler);
   return(sndlib_error_to_snd(local_mus_error));
 }
-
-/* TODO: in each of these cases, the errno is saved in ss->local_errno -- make sure it gets noticed somewhere */
-io_error_t snd_remove(const char *name, cache_remove_t forget)
-{
-  int err = 0;
-  if (forget == REMOVE_FROM_CACHE) mus_sound_forget(name); /* no error here if not in sound tables */
-  err = REMOVE(name);
-  /* TODO: this had snd_warning which we need to push upwards */
-  if (err != 0)
-    return(IO_CANT_REMOVE_FILE);
-  return(IO_NO_ERROR);
-}
-
-io_error_t snd_close(int fd, const char *name)
-{
-  int err;
-  err = CLOSE(fd);
-  if (err != 0)
-    return(IO_CANT_CLOSE_FILE);
-  /* TODO: this had snd_warning which we need to push upwards */
-  return(IO_NO_ERROR);
-}
-
-io_error_t snd_fclose(FILE *fd, const char *name)
-{
-  int err;
-  err = FCLOSE(fd);
-  if (err != 0)
-    return(IO_CANT_CLOSE_FILE);
-  /* TODO: this had snd_warning which we need to push upwards */
-  return(IO_NO_ERROR);
-}
-
 
 /* there are a few special-case multi-channel temp files that need a kind of reference count to handle deletion */
 /* this machinery affects only these special cases, not temp files in general */

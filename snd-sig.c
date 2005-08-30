@@ -613,6 +613,7 @@ static void swap_channels(chan_info *cp0, chan_info *cp1, off_t beg, off_t dur, 
   mus_sample_t *idata0, *idata1;
   bool reporting = false;
   char *ofile0 = NULL, *ofile1 = NULL;
+  io_error_t io_err = IO_NO_ERROR;
   if (dur <= 0) return;
   if ((!(editable_p(cp0))) || (!(editable_p(cp1)))) return;
   sp0 = cp0->sound;
@@ -623,27 +624,22 @@ static void swap_channels(chan_info *cp0, chan_info *cp1, off_t beg, off_t dur, 
       temp_file = true; 
       ofile0 = snd_tempnam();
       hdr0 = make_temp_header(ofile0, SND_SRATE(sp0), 1, dur, (char *)S_swap_channels);
-      {
-	/* TODO: better error */
-	io_error_t io_err = IO_NO_ERROR;
-	ofd0 = open_temp_file(ofile0, 1, hdr0, &io_err);
-      }
+      ofd0 = open_temp_file(ofile0, 1, hdr0, &io_err);
       if (ofd0 == -1)
 	{
 	  cp0->edit_hook_checked = false;
 	  cp1->edit_hook_checked = false;
 	  free_file_info(hdr0);
-	  snd_error(_("can't open " S_swap_channels " temp file %s: %s\n"), ofile0, snd_open_strerror());
+	  snd_error(_("%s " S_swap_channels " temp file %s: %s\n"), 
+		    (io_err != IO_NO_ERROR) ? io_error_name(io_err) : "can't open",
+		    ofile0, 
+		    snd_open_strerror());
 	  return;
 	}
       datumb = mus_bytes_per_sample(hdr0->format);
       ofile1 = snd_tempnam();
       hdr1 = make_temp_header(ofile1, SND_SRATE(sp0), 1, dur, (char *)S_swap_channels);
-      {
-	/* TODO: better error */
-	io_error_t io_err = IO_NO_ERROR;
-	ofd1 = open_temp_file(ofile1, 1, hdr1, &io_err);
-      }
+      ofd1 = open_temp_file(ofile1, 1, hdr1, &io_err);
       if (ofd1 == -1)
 	{
 	  cp0->edit_hook_checked = false;
@@ -652,7 +648,10 @@ static void swap_channels(chan_info *cp0, chan_info *cp1, off_t beg, off_t dur, 
 	  free_file_info(hdr0);
 	  free_file_info(hdr1);
 	  if (ofile0) FREE(ofile0);
-	  snd_error(_("can't open " S_swap_channels " temp file %s: %s\n"), ofile1, snd_open_strerror());
+	  snd_error(_("%s " S_swap_channels " temp file %s: %s\n"), 
+		    (io_err != IO_NO_ERROR) ? io_error_name(io_err) : "can't open",
+		    ofile1, 
+		    snd_open_strerror());
 	  return;
 	}
     }
@@ -808,6 +807,7 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, off_t beg, off_t 
   off_t k;
   char *ofile = NULL;
   mus_sample_t *idata;
+  io_error_t io_err = IO_NO_ERROR;
   src_state *sr;
   if ((ratio == 1.0) && (egen == NULL)) return(NULL);
   sp = cp->sound;
@@ -819,15 +819,14 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, off_t beg, off_t 
   if (reporting) start_progress_report(sp, from_enved);
   ofile = snd_tempnam();
   hdr = make_temp_header(ofile, SND_SRATE(sp), 1, dur, (char *)origin);
-  {
-    /* TODO: better error */
-    io_error_t io_err = IO_NO_ERROR;
-    ofd = open_temp_file(ofile, 1, hdr, &io_err);
-  }
+  ofd = open_temp_file(ofile, 1, hdr, &io_err);
   if (ofd == -1)
     {
       cp->edit_hook_checked = false;
-      return(mus_format(_("can't open %s temp file %s: %s\n"), origin, ofile, snd_open_strerror()));
+      return(mus_format(_("%s %s temp file %s: %s\n"), 
+			(io_err != IO_NO_ERROR) ? io_error_name(io_err) : "can't open",
+			origin, ofile, 
+			snd_open_strerror()));
     }
   data = (mus_sample_t **)MALLOC(sizeof(mus_sample_t *));
   data[0] = (mus_sample_t *)CALLOC(MAX_BUFFER_SIZE, sizeof(mus_sample_t)); 
@@ -1234,18 +1233,18 @@ static char *clm_channel(chan_info *cp, mus_any *gen, off_t beg, off_t dur, int 
   if ((dur + overlap) > MAX_BUFFER_SIZE)
     {
       temp_file = true; 
+      io_error_t io_err = IO_NO_ERROR;
       ofile = snd_tempnam();
       hdr = make_temp_header(ofile, SND_SRATE(sp), 1, dur + overlap, S_clm_channel);
-      {
-	/* TODO: better error */
-	io_error_t io_err = IO_NO_ERROR;
-	ofd = open_temp_file(ofile, 1, hdr, &io_err);
-      }
+      ofd = open_temp_file(ofile, 1, hdr, &io_err);
       if (ofd == -1)
 	{
 	  cp->edit_hook_checked = false;
 	  free_snd_fd(sf); 
-	  return(mus_format(_("can't open %s temp file %s: %s\n"), S_clm_channel, ofile, snd_open_strerror()));
+	  return(mus_format(_("%s %s temp file %s: %s\n"), 
+			    (io_err != IO_NO_ERROR) ? io_error_name(io_err) : "can't open",
+			    S_clm_channel, ofile, 
+			    snd_open_strerror()));
 	}
       datumb = mus_bytes_per_sample(hdr->format);
     }
@@ -1327,6 +1326,7 @@ static char *convolution_filter(chan_info *cp, int order, env *e, snd_fd *sf, of
   char *ofile = NULL;
   int fsize;
   Float *fltdat = NULL;
+  io_error_t io_err = IO_NO_ERROR;
   if (!(editable_p(cp))) return(NULL);
   sp = cp->sound;
   dur += order;
@@ -1344,15 +1344,14 @@ static char *convolution_filter(chan_info *cp, int order, env *e, snd_fd *sf, of
     hdr->format = MUS_BFLOAT;
   else hdr->format = MUS_BDOUBLE;
 #endif
-  {
-    /* TODO: better error */
-    io_error_t io_err = IO_NO_ERROR;
-    ofd = open_temp_file(ofile, 1, hdr, &io_err);
-  }
+  ofd = open_temp_file(ofile, 1, hdr, &io_err);
   if (ofd == -1)
     {
       cp->edit_hook_checked = false;
-      return(mus_format(_("can't open %s temp file %s: %s\n"), origin, ofile, snd_open_strerror()));
+      return(mus_format(_("%s %s temp file %s: %s\n"), 
+			(io_err != IO_NO_ERROR) ? io_error_name(io_err) : "can't open",
+			origin, ofile, 
+			snd_open_strerror()));
     }
   if (fsize > MAX_SINGLE_FFT_SIZE)
     {
@@ -1471,6 +1470,7 @@ static char *direct_filter(chan_info *cp, int order, env *e, snd_fd *sf, off_t b
   mus_sample_t **data;
   mus_sample_t *idata;
   char *ofile = NULL;
+  io_error_t io_err = IO_NO_ERROR;
   if (!(editable_p(cp))) return(NULL);
   sp = cp->sound;
   if ((!over_selection) || (!truncate))
@@ -1483,15 +1483,14 @@ static char *direct_filter(chan_info *cp, int order, env *e, snd_fd *sf, off_t b
       temp_file = true; 
       ofile = snd_tempnam();
       hdr = make_temp_header(ofile, SND_SRATE(sp), 1, dur, (char *)origin);
-      {
-	/* TODO: better error */
-	io_error_t io_err = IO_NO_ERROR;
-	ofd = open_temp_file(ofile, 1, hdr, &io_err);
-      }
+      ofd = open_temp_file(ofile, 1, hdr, &io_err);
       if (ofd == -1)
 	{
 	  cp->edit_hook_checked = false;
-	  return(mus_format(_("can't open %s temp file %s: %s\n"), origin, ofile, snd_open_strerror()));
+	  return(mus_format(_("%s %s temp file %s: %s\n"), 
+			    (io_err != IO_NO_ERROR) ? io_error_name(io_err) : "can't open",
+			    origin, ofile, 
+			    snd_open_strerror()));
 	}
       datumb = mus_bytes_per_sample(hdr->format);
     }
@@ -1851,6 +1850,7 @@ static char *reverse_channel(chan_info *cp, snd_fd *sf, off_t beg, off_t dur, XE
   mus_sample_t **data;
   mus_sample_t *idata;
   char *ofile = NULL;
+  io_error_t io_err = IO_NO_ERROR;
   if ((beg < 0) || (dur <= 0)) return(NULL);
   if (!(editable_p(cp))) return(NULL);
   /* if last was reverse and start/end match, we could just copy preceding edlist entry, or undo/redo etc --
@@ -1864,16 +1864,15 @@ static char *reverse_channel(chan_info *cp, snd_fd *sf, off_t beg, off_t dur, XE
       temp_file = true; 
       ofile = snd_tempnam();
       hdr = make_temp_header(ofile, SND_SRATE(sp), 1, dur, caller);
-      {
-	/* TODO: better error */
-	io_error_t io_err = IO_NO_ERROR;
-	ofd = open_temp_file(ofile, 1, hdr, &io_err);
-      }
+      ofd = open_temp_file(ofile, 1, hdr, &io_err);
       if (ofd == -1)
 	{
 	  if (ofile) FREE(ofile);
 	  cp->edit_hook_checked = false;	  
-	  return(mus_format(_("can't open %s temp file %s: %s\n"), caller, ofile, snd_open_strerror()));
+	  return(mus_format(_("%s %s temp file %s: %s\n"), 
+			    (io_err != IO_NO_ERROR) ? io_error_name(io_err) : "can't open",
+			    caller, ofile, 
+			    snd_open_strerror()));
 	}
       datumb = mus_bytes_per_sample(hdr->format);
     }
@@ -2203,20 +2202,20 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool over_selection,
       if (dur > MAX_BUFFER_SIZE) /* if smaller than this, we don't gain anything by using a temp file (its buffers are this large) */
 	{
 	  temp_file = true; 
+	  io_error_t io_err = IO_NO_ERROR;
 	  ofile = snd_tempnam(); 
 	  hdr = make_temp_header(ofile, SND_SRATE(sp), si->chans, dur, (char *)origin);
-	  {
-	    /* TODO: better error */
-	    io_error_t io_err = IO_NO_ERROR;
-	    ofd = open_temp_file(ofile, si->chans, hdr, &io_err);
-	  }
+	  ofd = open_temp_file(ofile, si->chans, hdr, &io_err);
 	  if (ofd == -1)
 	    {
 	      if (e) mus_free(egen);
 	      for (i = 0; i < si->chans; i++) 
 		sfs[i] = free_snd_fd(sfs[i]);
 	      free_sync_state(sc);
-	      snd_error(_("can't open %s temp file %s: %s\n"), origin, ofile, snd_open_strerror());
+	      snd_error(_("%s %s temp file %s: %s\n"), 
+			(io_err != IO_NO_ERROR) ? io_error_name(io_err) : "can't open",
+			origin, ofile, 
+			snd_open_strerror());
 	      FREE(ofile);
 	      if (e) mus_free(egen);
 	      return;
@@ -2689,18 +2688,18 @@ static char *run_channel(chan_info *cp, struct ptree *pt, off_t beg, off_t dur, 
   if (dur > MAX_BUFFER_SIZE)
     {
       temp_file = true; 
+      io_error_t io_err = IO_NO_ERROR;
       ofile = snd_tempnam();
       hdr = make_temp_header(ofile, SND_SRATE(sp), 1, dur, "run_channel temp");
-      {
-	/* TODO: better error */
-	io_error_t io_err = IO_NO_ERROR;
-	ofd = open_temp_file(ofile, 1, hdr, &io_err);
-      }
+      ofd = open_temp_file(ofile, 1, hdr, &io_err);
       if (ofd == -1)
 	{
 	  free_snd_fd(sf); 
 	  cp->edit_hook_checked = false;
-	  return(mus_format(_("can't open %s temp file %s: %s\n"), caller, ofile, snd_open_strerror()));
+	  return(mus_format(_("%s %s temp file %s: %s\n"), 
+			    (io_err != IO_NO_ERROR) ? io_error_name(io_err) : "can't open",
+			    caller, ofile, 
+			    snd_open_strerror()));
 	}
       datumb = mus_bytes_per_sample(hdr->format);
     }
@@ -2766,7 +2765,7 @@ static Float scale_and_src_input(void *data, int direction)
   return(sum);
 }
 
-char *scale_and_src(char **files, int len, int max_chans, Float amp, Float speed, env *amp_env)
+char *scale_and_src(char **files, int len, int max_chans, Float amp, Float speed, env *amp_env, bool *temp_file_err)
 {
   char *tempfile;
   snd_fd ***fds = NULL;
@@ -2781,8 +2780,35 @@ char *scale_and_src(char **files, int len, int max_chans, Float amp, Float speed
   mus_any *e = NULL;
   mus_any **sgens = NULL;
   scale_and_src_data **sdata = NULL;
-
+  (*temp_file_err) = false;
   tempfile = snd_tempnam();
+
+  for (i = 0; i < len; i++)
+    {
+      int fchans, fsrate;
+      off_t flen;
+      fchans = mus_sound_chans(files[i]);
+      flen = mus_sound_frames(files[i]);
+      fsrate = mus_sound_srate(files[i]);
+      if (chans < fchans) chans = fchans;
+      if (srate < fsrate) srate = fsrate;
+      if (dur < flen) dur = flen;
+    }
+
+  /* open output sound file */
+  hdr = make_temp_header(tempfile, srate, chans, dur, "scale-and-src temp");
+  ofd = open_temp_file(tempfile, chans, hdr, &io_err);
+  if (ofd == -1)
+    {
+      (*temp_file_err) = true;
+      free_file_info(hdr);
+      FREE(tempfile);
+      return(mus_format(_("%s temp file %s: %s\n"), 
+			(io_err != IO_NO_ERROR) ? io_error_name(io_err) : "can't open",
+			tempfile, 
+			snd_open_strerror()));
+    }
+
   fds = (snd_fd ***)CALLOC(len, sizeof(snd_fd **));
   sps = (snd_info **)CALLOC(len, sizeof(snd_info *));
   for (i = 0; i < len; i++)
@@ -2791,27 +2817,12 @@ char *scale_and_src(char **files, int len, int max_chans, Float amp, Float speed
       sps[i] = make_sound_readable(files[i], false);
       sps[i]->short_filename = filename_without_home_directory(files[i]);
       sps[i]->filename = NULL; /* why? squelch graphics perhaps? */
-      if (chans < sps[i]->nchans)
-	chans = sps[i]->nchans;
-      if (srate < SND_SRATE(sps[i]))
-	srate = SND_SRATE(sps[i]);
       for (chan = 0; chan < sps[i]->nchans; chan++)
-	{
-	  fds[i][chan] = init_sample_read(0, sps[i]->chans[chan], READ_FORWARD);
-	  if (dur < sps[i]->chans[chan]->samples[0])
-	    dur = sps[i]->chans[chan]->samples[0];
-	}
+	fds[i][chan] = init_sample_read(0, sps[i]->chans[chan], READ_FORWARD);
     }
+
   /* now we have readers set up for all chans of all sounds about to be mixed/scaled/enveloped/resampled... */
 
-  /* open output sound file */
-  hdr = make_temp_header(tempfile, srate, chans, dur, "scale-and-src temp");
-  ofd = open_temp_file(tempfile, chans, hdr, &io_err);
-  if (ofd == -1)
-    {
-      /* TODO: free everything */
-      return(mus_format(_("can't open temp file %s: %s\n"), tempfile, snd_open_strerror()));
-    }
   datumb = mus_bytes_per_sample(hdr->format);
   data = (mus_sample_t **)CALLOC(chans, sizeof(mus_sample_t *));
   for (i = 0; i < chans; i++)

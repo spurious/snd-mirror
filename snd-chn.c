@@ -6533,25 +6533,13 @@ to the info dialog if filename is omitted"
 			 C_TO_XEN_STRING(snd_io_strerror())));
 
   write_transform_peaks(fd, cp);
-
-  if (FCLOSE(fd) != 0)
-    XEN_ERROR(CANT_CLOSE_FILE, 
-	      XEN_LIST_3(C_TO_XEN_STRING(S_peaks),
-			 C_TO_XEN_STRING(name),
-			 C_TO_XEN_STRING(snd_io_strerror())));
-  
+  snd_fclose(fd, name);
   if (post_to_dialog)
     {
-      io_error_t err;
       str = file_to_string(name);
       post_it("fft peaks", str);
       FREE(str);
-      err = snd_remove(name, IGNORE_CACHE);
-      if (err != IO_NO_ERROR)
-	XEN_ERROR(CANT_DELETE_FILE, 
-		  XEN_LIST_3(C_TO_XEN_STRING(S_peaks),
-			     C_TO_XEN_STRING(name),
-			     C_TO_XEN_STRING(snd_io_strerror())));
+      snd_remove(name, IGNORE_CACHE);
     }
   FREE(name);
   return(filename);

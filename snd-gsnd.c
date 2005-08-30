@@ -4,7 +4,7 @@ enum {W_pane, W_pane_box, W_control_panel,
       W_name_form, W_name, W_name_event, W_name_pix, W_info_label, W_info, W_info_sep,
       W_play, W_sync, W_unite,
       W_amp_form, W_amp_event, W_amp, W_amp_label, W_amp_number, W_amp_sep,
-      W_speed_form, W_speed, W_speed_event, W_speed_label, W_speed_number, W_speed_pix,
+      W_speed_form, W_speed, W_speed_event, W_speed_label, W_speed_label_event, W_speed_number, W_speed_pix,
       W_expand_form, W_expand, W_expand_event, W_expand_label, W_expand_number, W_expand_button,
       W_contrast_form, W_contrast, W_contrast_event, W_contrast_label, W_contrast_number, W_contrast_button,
       W_reverb_form, W_revscl, W_revscl_event, W_revscl_label, W_revscl_number,
@@ -58,6 +58,7 @@ GtkWidget *w_snd_name(snd_info *sp)     {return(sp->sgx->snd_widgets[W_name]);}
 #define SPEED_ARROW(Sp)          Sp->sgx->snd_widgets[W_speed_pix]
 #define SPEED_LABEL(Sp)          Sp->sgx->snd_widgets[W_speed_number]
 #define SPEED_EVENT_BOX(Sp)      Sp->sgx->snd_widgets[W_speed_event]
+#define SPEED_LABEL_EVENT_BOX(Sp) Sp->sgx->snd_widgets[W_speed_label_event]
 #define SPEED_BUTTON(Sp)         Sp->sgx->snd_widgets[W_speed_label]
 #define SPEED_SCROLLBAR(Sp)      Sp->sgx->snd_widgets[W_speed]
 
@@ -638,6 +639,19 @@ static gboolean speed_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer 
   if (sp->speed_control_style == SPEED_CONTROL_AS_RATIO)
     snd_rationalize(sp->speed_control, &(sp->speed_control_numerator), &(sp->speed_control_denominator));
 #endif
+  return(false);
+}
+
+static gboolean speed_label_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
+{
+  snd_info *sp = (snd_info *)data;
+  switch (sp->speed_control_style)
+    {
+    case SPEED_CONTROL_AS_FLOAT:    sp->speed_control_style = SPEED_CONTROL_AS_RATIO;    break;
+    case SPEED_CONTROL_AS_RATIO:    sp->speed_control_style = SPEED_CONTROL_AS_SEMITONE; break;
+    case SPEED_CONTROL_AS_SEMITONE: sp->speed_control_style = SPEED_CONTROL_AS_FLOAT;    break;
+    }
+  set_speed(sp, sp->speed_control);  /* remake label */
   return(false);
 }
 
@@ -1502,13 +1516,18 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       gtk_container_add(GTK_CONTAINER(SPEED_EVENT_BOX(sp)), SPEED_BUTTON(sp));
       gtk_widget_show(SPEED_BUTTON(sp));
       
+      SPEED_LABEL_EVENT_BOX(sp) = gtk_event_box_new();
+      gtk_box_pack_start(GTK_BOX(SPEED_HBOX(sp)), SPEED_LABEL_EVENT_BOX(sp), false, false, 4);
+      gtk_widget_show(SPEED_LABEL_EVENT_BOX(sp));
+      SG_SIGNAL_CONNECT(SPEED_LABEL_EVENT_BOX(sp), "button_press_event", speed_label_click_callback, sp);
+
       switch (sp->speed_control_style)
 	{
-	case SPEED_CONTROL_AS_RATIO: SPEED_LABEL(sp) = gtk_label_new("  1/1"); break;
+	case SPEED_CONTROL_AS_RATIO:    SPEED_LABEL(sp) = gtk_label_new("  1/1"); break;
 	case SPEED_CONTROL_AS_SEMITONE: SPEED_LABEL(sp) = gtk_label_new("    0"); break;
-	default:  SPEED_LABEL(sp) = gtk_label_new("1.00 "); break;
+	default:                        SPEED_LABEL(sp) = gtk_label_new("1.00 "); break;
 	}
-      gtk_box_pack_start(GTK_BOX(SPEED_HBOX(sp)), SPEED_LABEL(sp), false, false, 0);
+      gtk_container_add(GTK_CONTAINER(SPEED_LABEL_EVENT_BOX(sp)), SPEED_LABEL(sp));
       gtk_widget_show(SPEED_LABEL(sp));
       
       SPEED_ADJUSTMENT(sp) = gtk_adjustment_new(speed_to_scroll(sp->speed_control_min, 1.0, sp->speed_control_max), 0.0, 1.0, 0.001, 0.01, .1);

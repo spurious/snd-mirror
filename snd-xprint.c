@@ -111,8 +111,12 @@ static void print_ok_callback(Widget w, XtPointer context, XtPointer info)
 	  redirect_snd_error_to(report_in_error_info, NULL);
 	  switch (ss->print_choice)
 	    {
-	    case PRINT_SND: snd_print(name);   break;
-	    case PRINT_ENV: enved_print(name); break;
+	    case PRINT_SND: 
+	      snd_print(name);
+	      break;
+	    case PRINT_ENV: 
+	      enved_print(name); 
+	      break;
 	    }
 	  redirect_snd_error_to(NULL, NULL);
 	  if (!print_error)
@@ -127,10 +131,16 @@ static void print_ok_callback(Widget w, XtPointer context, XtPointer info)
       else 
 	{
 	  redirect_snd_error_to(report_in_error_info, NULL);
+	  str = XmTextGetString(print_name);
 	  switch (ss->print_choice)
 	    {
-	    case PRINT_SND: snd_print(str = XmTextGetString(print_name)); break;
-	    case PRINT_ENV: enved_print(str = XmTextGetString(print_name)); break;
+	    case PRINT_SND: 
+	      if (snd_print(str))
+		report_in_minibuffer(nsp, "printed current view to %s", str);
+	      break;
+	    case PRINT_ENV: 
+	      enved_print(str); 
+	      break;
 	    }
 	  redirect_snd_error_to(NULL, NULL);
 	  if (str) XtFree(str);

@@ -43,7 +43,6 @@
  * TODO: report-in-minibuffer extended to go to any dialog
  * TODO: always show bg wave in vf
  * TODO: will need at least a reset button for the vf env, perhaps reset for entire vf
- * TODO: all speed scrollers should include a local pull down menu for speed-style
  */
 
 
@@ -4370,6 +4369,26 @@ static void vf_speed_click_callback(Widget w, XtPointer context, XtPointer info)
 		NULL);
 }
 
+static void speed_label_click_callback(Widget w, XtPointer context, XtPointer info) 
+{
+  char speed_number_buffer[6];
+  view_files_info *vdat = (view_files_info *)context;
+  ASSERT_WIDGET_TYPE(XmIsPushButton(w), w);
+  switch (vdat->speed_style)
+    {
+    case SPEED_CONTROL_AS_FLOAT:    vdat->speed_style = SPEED_CONTROL_AS_RATIO;    break;
+    case SPEED_CONTROL_AS_RATIO:    vdat->speed_style = SPEED_CONTROL_AS_SEMITONE; break;
+    case SPEED_CONTROL_AS_SEMITONE: vdat->speed_style = SPEED_CONTROL_AS_FLOAT;    break;
+    }
+  speed_changed(vdat->speed,
+		speed_number_buffer,
+		vdat->speed_style,
+		speed_control_tones(ss),
+		6);
+  set_label(vdat->speed_number, speed_number_buffer);
+}
+
+
 static void vf_speed_valuechanged_callback(Widget w, XtPointer context, XtPointer info) 
 {
   view_files_info *vdat = (view_files_info *)context;
@@ -5023,7 +5042,11 @@ widget_t start_view_files_dialog_1(view_files_info *vdat, bool managed)
       /* XtSetArg(args[n], XmNmarginHeight, CONTROLS_MARGIN); n++; */
       XtSetArg(args[n], XmNrecomputeSize, false); n++;
       XtSetArg(args[n], XmNmarginRight, 3); n++;
-      vdat->speed_number = XtCreateManagedWidget ("speed-number", xmLabelWidgetClass, leftform, args, n);
+      XtSetArg(args[n], XmNshadowThickness, 0); n++;
+      XtSetArg(args[n], XmNhighlightThickness, 0); n++;
+      XtSetArg(args[n], XmNfillOnArm, false); n++;
+      vdat->speed_number = make_pushbutton_widget ("speed-number", leftform, args, n);
+      XtAddCallback(vdat->speed_number, XmNactivateCallback, speed_label_click_callback, (XtPointer)vdat);
       XmStringFree(s1);
 
       n = 0;
@@ -5238,7 +5261,7 @@ widget_t start_view_files_dialog_1(view_files_info *vdat, bool managed)
 
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
-      vdat->smenu = XmCreatePulldownMenu(sbar, _("sort"), args, n);
+      vdat->smenu = XmCreatePulldownMenu(sbar, "sort-menu", args, n);
 
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
@@ -5246,7 +5269,7 @@ widget_t start_view_files_dialog_1(view_files_info *vdat, bool managed)
       XtSetArg(args[n], XmNshadowThickness, 0); n++;
       XtSetArg(args[n], XmNhighlightThickness, 0); n++;
       XtSetArg(args[n], XmNmarginHeight, 1); n++;
-      sort_cascade_menu = XtCreateManagedWidget("sort", xmCascadeButtonWidgetClass, sbar, args, n);
+      sort_cascade_menu = XtCreateManagedWidget(_("sort"), xmCascadeButtonWidgetClass, sbar, args, n);
       
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}

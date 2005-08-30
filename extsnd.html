@@ -3380,6 +3380,11 @@ See also <a href="sndscm.html#panmixselection">pan-mix-selection</a> in mix.scm.
 <tr><td></td><td>speed (resampling ratio) of <i>mix</i>; 1.0 (default) means no resampling; 2.0 reads the mix data twice as fast.
 </td></tr>
 
+<!-- mix-speed-style -->
+<tr><td colspan=2><code><a class=def name="mixspeedstyle">mix-speed-style</a> (mix)</code></td></tr>
+<tr><td></td><td>speed-style choice of <i>mix</i>; default follows <a href="#speedstyle">speed-control-style</a>.
+</td></tr>
+
 <!-- mix-tag-height -->
 <tr><td colspan=2><code><a class=def name="mixtagheight">mix-tag-height</a> ()</code></td></tr>
 <tr><td></td><td>mix tag height in pixels (default: 14)
@@ -3619,6 +3624,11 @@ track are moved.
 <tr><td colspan=2><code><a class=def name="trackspeed">track-speed</a> (track-id)</code></td></tr>
 <tr><td width=50><br></td><td>Track speed.  This affects the resampling of each mix, not the speed at
 which the mixes occur (the latter is controlled by <a href="#tracktempo">track-tempo</a>).
+</td></tr>
+
+<!-- track-speed-style -->
+<tr><td colspan=2><code><a class=def name="trackspeedstyle">track-speed-style</a> (track-id)</code></td></tr>
+<tr><td></td><td>speed-style choice of <i>track-id</i>; default follows <a href="#speedstyle">speed-control-style</a>.
 </td></tr>
 
 <!-- track-tempo -->
@@ -8518,6 +8528,7 @@ The speed control can be interpreted as a
 float, (<i>speed-control-as-float</i>, the default), as a ratio 
 of relatively small integers (<i>speed-control-as-ratio</i>), or as a step in a 
 microtonal scale (<i>speed-control-as-semitone</i>).  
+In the various speed controls, you can click the number to cycle through the speed style choices.
 </td></tr>
 <tr><td colspan=2></td></tr>
 

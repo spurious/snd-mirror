@@ -837,8 +837,13 @@ io_error_t save_selection(char *ofile, int type, int format, int srate, const ch
 	  io_err = sndlib_error_to_snd(mus_file_write(ofd, 0, j - 1, chans, data));
 	  j = 0;
 	  if (io_err != IO_NO_ERROR)
-	    break; /* error message already posted TODO: fix this! */
-	      
+	    {
+	      snd_warning("%s %s: %s",
+			  io_error_name(io_err),
+			  ofile,
+			  snd_io_strerror());
+	      break; 
+	    }
 	  if (reporting) 
 	    progress_report(sp, S_save_selection, chans - 1, chans, (Float)((double)ioff / (double)dur), NOT_FROM_ENVED);
 	  if (ss->stopped_explicitly)

@@ -371,7 +371,7 @@ static sound_file *check_write_date(const char *name, sound_file *sf)
 	      data_size = lseek(chan, 0L, SEEK_END);
 	      sf->true_file_length = data_size;
 	      sf->samples = mus_bytes_to_samples(sf->data_format, data_size);
-	      CLOSE(chan);  
+	      CLOSE(chan, name);  
 	      return(sf);
 	    }
 	  /* otherwise our data base is out-of-date, so clear it out */
@@ -700,7 +700,7 @@ char *mus_sound_comment(const char *name)
       lseek(fd, start, SEEK_SET);
       sc = (char *)CALLOC(len + 1, sizeof(char));
       read(fd, sc, len);
-      CLOSE(fd);
+      CLOSE(fd, name);
       if (((mus_sound_header_type(name) == MUS_AIFF) || 
 	   (mus_sound_header_type(name) == MUS_AIFC)) &&
 	  (sf->aux_comment_start))

@@ -1,5 +1,8 @@
 #include "snd.h"
 
+/* TODO: local speed-control-style (need track side, test) (also check that set mix resets style etc)
+ */
+
 /* ---------------- mix dialog ---------------- */
 
 static Widget mix_dialog = NULL;
@@ -24,7 +27,7 @@ static Float scroll_to_speed(Widget speed_number, int ival)
   Float speed;
   speed = speed_changed(exp((ival * (log(speed_control_max(ss)) - log(speed_control_min(ss))) / (0.9 * SCROLLBAR_MAX)) + log(speed_control_min(ss))),
 			speed_number_buffer,
-			speed_control_style(ss),
+			mix_speed_style(mix_dialog_id),
 			speed_control_tones(ss),
 			6);
   set_label(speed_number, speed_number_buffer);
@@ -38,12 +41,31 @@ static void speed_click_callback(Widget w, XtPointer context, XtPointer info)
   mix_dialog_set_mix_speed(mix_dialog_id, 
 			   speed_changed(1.0,
 					 speed_number_buffer,
-					 speed_control_style(ss),
+					 mix_speed_style(mix_dialog_id),
 					 speed_control_tones(ss),
 					 6),
 			   mix_dialog_slider_dragging);
   set_label(w_speed_number, speed_number_buffer);
   XtVaSetValues(w_speed, XmNvalue, speed_to_scroll(speed_control_min(ss), 1.0, speed_control_max(ss)), NULL);
+}
+
+static void speed_label_click_callback(Widget w, XtPointer context, XtPointer info) 
+{
+  char speed_number_buffer[6];
+  ASSERT_WIDGET_TYPE(XmIsPushButton(w), w);
+  if (!(mix_ok_and_unlocked(mix_dialog_id))) return;
+  switch (mix_speed_style(mix_dialog_id))
+    {
+    case SPEED_CONTROL_AS_FLOAT:    set_mix_speed_style(mix_dialog_id, SPEED_CONTROL_AS_RATIO);    break;
+    case SPEED_CONTROL_AS_RATIO:    set_mix_speed_style(mix_dialog_id, SPEED_CONTROL_AS_SEMITONE); break;
+    case SPEED_CONTROL_AS_SEMITONE: set_mix_speed_style(mix_dialog_id, SPEED_CONTROL_AS_FLOAT);    break;
+    }
+  speed_changed(mix_dialog_mix_speed(mix_dialog_id),
+		speed_number_buffer,
+		mix_speed_style(mix_dialog_id),
+		speed_control_tones(ss),
+		6);
+  set_label(w_speed_number, speed_number_buffer);
 }
 
 static void speed_drag_callback(Widget w, XtPointer context, XtPointer info) 
@@ -760,7 +782,11 @@ Widget make_mix_dialog(void)
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNlabelString, s1); n++;
       XtSetArg(args[n], XmNrecomputeSize, false); n++;
-      w_speed_number = XtCreateManagedWidget("mix-speed-number", xmLabelWidgetClass, mainform, args, n);
+      XtSetArg(args[n], XmNshadowThickness, 0); n++;
+      XtSetArg(args[n], XmNhighlightThickness, 0); n++;
+      XtSetArg(args[n], XmNfillOnArm, false); n++;
+      w_speed_number = make_pushbutton_widget ("mix-speed-number", mainform, args, n);
+      XtAddCallback(w_speed_number, XmNactivateCallback, speed_label_click_callback, NULL);
       XmStringFree(s1);
 
       n = 0;
@@ -987,7 +1013,7 @@ static void update_mix_dialog(int mix_id)
 	  cp = mix_dialog_mix_channel(mix_dialog_id);
 	  val = mix_dialog_mix_speed(mix_dialog_id);
 	  XtVaSetValues(w_speed, XmNvalue, speed_to_scroll(speed_control_min(ss), val, speed_control_max(ss)), NULL);
-	  speed_changed(val, lab, speed_control_style(ss), speed_control_tones(ss), 6);
+	  speed_changed(val, lab, mix_speed_style(mix_dialog_id), speed_control_tones(ss), 6);
 	  set_label(w_speed_number, lab);
 	  widget_int_to_text(w_track, mix_dialog_mix_track(mix_dialog_id));
 	  widget_int_to_text(w_id, mix_dialog_id);
@@ -1097,6 +1123,24 @@ static void track_speed_drag_callback(Widget w, XtPointer context, XtPointer inf
   track_dialog_set_speed(track_dialog_id, 
 			 scroll_to_speed(w_track_speed_number, ival),
 			 true);
+}
+
+static void track_speed_label_click_callback(Widget w, XtPointer context, XtPointer info) 
+{
+  char speed_number_buffer[6];
+  ASSERT_WIDGET_TYPE(XmIsPushButton(w), w);
+  switch (speed_control_style(ss))
+    {
+    case SPEED_CONTROL_AS_FLOAT:    in_set_speed_control_style(ss, SPEED_CONTROL_AS_RATIO);    break;
+    case SPEED_CONTROL_AS_RATIO:    in_set_speed_control_style(ss, SPEED_CONTROL_AS_SEMITONE); break;
+    case SPEED_CONTROL_AS_SEMITONE: in_set_speed_control_style(ss, SPEED_CONTROL_AS_FLOAT);    break;
+    }
+  speed_changed(track_dialog_track_speed(track_dialog_id),
+		speed_number_buffer,
+		speed_control_style(ss),
+		speed_control_tones(ss),
+		6);
+  set_label(w_track_speed_number, speed_number_buffer);
 }
 
 static void track_speed_valuechanged_callback(Widget w, XtPointer context, XtPointer info) 
@@ -1833,7 +1877,11 @@ Widget make_track_dialog(void)
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNlabelString, s1); n++;
       XtSetArg(args[n], XmNrecomputeSize, false); n++;
-      w_track_speed_number = XtCreateManagedWidget("track-speed-number", xmLabelWidgetClass, mainform, args, n);
+      XtSetArg(args[n], XmNshadowThickness, 0); n++;
+      XtSetArg(args[n], XmNhighlightThickness, 0); n++;
+      XtSetArg(args[n], XmNfillOnArm, false); n++;
+      w_track_speed_number = make_pushbutton_widget ("track-speed-number", mainform, args, n);
+      XtAddCallback(w_track_speed_number, XmNactivateCallback, track_speed_label_click_callback, NULL);
       XmStringFree(s1);
 
       n = 0;

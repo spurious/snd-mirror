@@ -2139,16 +2139,30 @@ static XEN g_save_macros(XEN file)
 {
   #define H_save_macros "(" S_save_macros " (file \"~/.snd\")): save keyboard macros file"
   FILE *fd = NULL;
+  char *name;
   XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(file), file, XEN_ONLY_ARG, S_save_macros, "a string");
   if (XEN_STRING_P(file))
-    fd = FOPEN(XEN_TO_C_STRING(file), "a");
-  else fd = open_snd_init_file();
-  if (fd) save_macro_state(fd);
-  if ((!fd) || (FCLOSE(fd) != 0))
-    XEN_ERROR(CANNOT_SAVE,
-	      XEN_LIST_3(C_TO_XEN_STRING(S_save_macros),
-			 file,
-			 C_TO_XEN_STRING(snd_io_strerror())));
+    {
+      name = XEN_TO_C_STRING(file);
+      fd = FOPEN(name, "a");
+    }
+  else 
+    {
+      name = "init file";
+      fd = open_snd_init_file();
+    }
+  if (fd) 
+    {
+      save_macro_state(fd);
+      snd_fclose(fd, name);
+    }
+  else
+    {
+      XEN_ERROR(CANNOT_SAVE,
+		XEN_LIST_3(C_TO_XEN_STRING(S_save_macros),
+			   file,
+			   C_TO_XEN_STRING(snd_io_strerror())));
+    }
   return(file);
 }
 

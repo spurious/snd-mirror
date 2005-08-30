@@ -5557,7 +5557,7 @@ bool insert_complete_file(snd_info *sp, const char *str, off_t chan_beg, file_de
   bool ok = false;
   char *filename;
   filename = mus_expand_filename(str);
-  nc = mus_sound_chans(filename); /* mus_error should go through snd_error or possibly xen error, so another isn't needed(?) */
+  nc = mus_sound_chans(filename); /* TODO: no error here!! mus_error should go through snd_error or possibly xen error, so another isn't needed(?) */
   if (nc > 0)
     {
       off_t len;
@@ -7133,9 +7133,10 @@ io_error_t save_channel_edits(chan_info *cp, char *ofile, int pos)
       if (err == IO_NO_ERROR)
 	{
 	  int move_err;
-	  move_err = move_file(nfile, ofile);      /* can call snd_error */
+	  move_err = move_file(nfile, ofile);
 	  if (move_err == 0)
 	    snd_update(sp);
+	  /* TODO: else warning? */
 	}
       FREE(nfile);
     }
@@ -7181,11 +7182,13 @@ io_error_t save_edits(snd_info *sp)
   if ((current_write_date - sp->write_date) > 1) /* weird!! In Redhat 7.1 these can differ by 1?? Surely this is a bug! */
     {
       if (ask_before_overwrite(ss))
-	return(IO_NEED_WRITE_CONFIRMATION);
+	return(IO_NEED_WRITE_CONFIRMATION); /* prompt */
       
       /* yes = snd_yes_or_no_p(_("%s changed on disk! Save anyway?"), sp->short_filename); */
-      /* TODO: yes-or-no case: snd-g|xmenu: (File:Save and Popup:Save) -- handle via separate dialog I guess (sigh) with dynamic callbacks
-       *     will need multiple such dialogs, clearing if sound is closed etc
+      /* TODO: old yes-or-no case needs fixup
+       * snd-kbd (C-s): could prompt in minibuffer and upon response, come here
+       * snd-snd: save-sound (xen) overrides already
+       * snd-g|xmenu: File:save and Popup:save -- in  either case, there is a sound open being saved -- use minibuffer
        */
       
     }
@@ -7347,14 +7350,14 @@ static XEN g_display_edits(XEN snd, XEN chn, XEN edpos, XEN with_source)
 	    display_ed_list(cp, tmp, pos, cp->edits[pos], include_source);
 	  else 
 	    {
-	      FCLOSE(tmp);
+	      snd_fclose(tmp, name);
 	      XEN_ERROR(NO_SUCH_EDIT,
 			XEN_LIST_2(C_TO_XEN_STRING(S_display_edits),
 				   edpos));
 	    }
 	}
       else display_edits(cp, tmp, include_source);
-      FCLOSE(tmp);
+      snd_fclose(tmp, name);
     }
   else XEN_ERROR(CANNOT_SAVE,
 		 XEN_LIST_3(C_TO_XEN_STRING(S_display_edits),
@@ -7874,10 +7877,12 @@ static XEN g_save_edit_history(XEN filename, XEN snd, XEN chn)
 {
   #define H_save_edit_history "(" S_save_edit_history " filename (snd #f) (chn #f)): save snd channel's chn edit history in filename"
   FILE *fd;
+  char *name;
   char *mcf = NULL;
   XEN_ASSERT_TYPE(XEN_STRING_P(filename), filename, XEN_ARG_1, S_save_edit_history, "a string");
   ASSERT_CHANNEL(S_save_edit_history, snd, chn, 2);
-  mcf = mus_expand_filename(XEN_TO_C_STRING(filename));
+  name = XEN_TO_C_STRING(filename);
+  mcf = mus_expand_filename(name);
   fd = FOPEN(mcf, "w");
   if (mcf) FREE(mcf);
   if (fd)
@@ -7911,12 +7916,15 @@ static XEN g_save_edit_history(XEN filename, XEN snd, XEN chn)
 		}
 	    }
 	}
+      snd_fclose(fd, name);
     }
-  if ((!fd) || (FCLOSE(fd) != 0))
-    XEN_ERROR(CANNOT_SAVE,
-	      XEN_LIST_3(C_TO_XEN_STRING(S_save_edit_history),
-			 filename,
-			 C_TO_XEN_STRING(snd_open_strerror())));
+  else
+    {
+      XEN_ERROR(CANNOT_SAVE,
+		XEN_LIST_3(C_TO_XEN_STRING(S_save_edit_history),
+			   filename,
+			   C_TO_XEN_STRING(snd_open_strerror())));
+    }
   return(filename);
 }
 

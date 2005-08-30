@@ -863,6 +863,7 @@ static void deferred_region_to_temp_file(region *r)
   else
     {
       off_t max_position = 0;
+      io_error_t io_err = IO_NO_ERROR;
 #if DEBUGGING
       char *regstr;
       regstr = mus_format("region %d (%s: %s %s), from %s[%d]",
@@ -874,13 +875,12 @@ static void deferred_region_to_temp_file(region *r)
 #else
       hdr = make_temp_header(r->filename, r->srate, r->chans, 0, (char *)c__FUNCTION__);
 #endif
-      {
-	/* TODO: better error */
-	io_error_t io_err = IO_NO_ERROR;
-	ofd = open_temp_file(r->filename, r->chans, hdr, &io_err);
-      }
+      ofd = open_temp_file(r->filename, r->chans, hdr, &io_err);
       if (ofd == -1)
-	snd_error(_("can't write region temp file %s: %s"), r->filename, snd_io_strerror());
+	snd_error(_("%s region temp file %s: %s"), 
+		  (io_err != IO_NO_ERROR) ? io_error_name(io_err) : "can't open",
+		  r->filename, 
+		  snd_open_strerror());
       else
 	{
 	  sfs = (snd_fd **)CALLOC(r->chans, sizeof(snd_fd *));

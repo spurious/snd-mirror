@@ -524,13 +524,15 @@ typedef struct {
 
 /* -------- snd-io.c -------- */
 
-int snd_io_creat(const char *filename, mode_t mode);
-int snd_io_remove(const char *filename);
-int snd_io_rename(const char *old_name, const char *new_name);
-int snd_io_fclose(FILE *fd);
-FILE *snd_io_fopen(const char *filename, const char *modes);
-int snd_io_close(int fd);
-int snd_io_open(const char *filename, int flags, mode_t mode);
+int snd_creat(const char *filename, mode_t mode);
+FILE *snd_fopen(const char *filename, const char *modes);
+int snd_open(const char *filename, int flags, mode_t mode);
+
+void snd_remove(const char *name, cache_remove_t forget);
+void snd_close(int fd, const char *name);
+void snd_fclose(FILE *fd, const char *name);
+io_error_t copy_file(const char *oldname, const char *newname);
+io_error_t move_file(const char *oldfile, const char *newfile);
 
 int snd_open_read(const char *arg);
 int snd_reopen_write(const char *arg);
@@ -540,9 +542,6 @@ io_error_t sndlib_error_to_snd(int sndlib_err);
 snd_io *make_file_state(int fd, file_info *hdr, int chan, off_t beg, int suggested_bufsize);
 void file_buffers_forward(off_t ind0, off_t ind1, off_t indx, snd_fd *sf, snd_data *cur_snd);
 void file_buffers_back(off_t ind0, off_t ind1, off_t indx, snd_fd *sf, snd_data *cur_snd);
-io_error_t snd_remove(const char *name, cache_remove_t forget);
-io_error_t snd_close(int fd, const char *name);
-io_error_t snd_fclose(FILE *fd, const char *name);
 void remember_temp(const char *filename, int chans);
 void forget_temps(void);
 snd_data *make_snd_data_file(const char *name, snd_io *io, file_info *hdr, file_delete_t temp, int ctr, int temp_chan);
@@ -705,7 +704,7 @@ void ps_set_label_font(void);
 void ps_set_bold_peak_numbers_font(void);
 void ps_set_peak_numbers_font(void);
 void ps_set_tiny_numbers_font(void);
-void snd_print(char *output);
+bool snd_print(char *output);
 void region_print(char *output, char* title, chan_info *cp);
 void print_enved(char *output, int y0);
 void g_init_print(void);
@@ -1326,8 +1325,6 @@ void save_added_sound_file_extensions(FILE *fd);
 dir *filter_sound_files(dir *dp, char *pattern);
 snd_info *snd_open_file(const char *filename, bool read_only);
 void snd_close_file(snd_info *sp);
-io_error_t copy_file(const char *oldname, const char *newname);
-io_error_t move_file(const char *oldfile, const char *newfile);
 snd_info *make_sound_readable(const char *filename, bool post_close);
 snd_info *snd_update(snd_info *sp);
 snd_info *snd_update_within_xen(snd_info *sp, const char *caller);
@@ -1494,6 +1491,8 @@ int previous_track_id(int id);
 char *track_dialog_track_info(int id);
 void release_pending_track_states(void);
 void display_track_waveform(int track_id, axis_info *ap);
+speed_style_t mix_speed_style(int id);
+speed_style_t set_mix_speed_style(int id, speed_style_t choice);
 
 struct mix_fd;
 struct track_fd;
@@ -1606,7 +1605,7 @@ int to_c_edit_position(chan_info *cp, XEN edpos, const char *caller, int arg_pos
 off_t to_c_edit_samples(chan_info *cp, XEN edpos, const char *caller, int arg_pos);
 off_t beg_to_sample(XEN beg, const char *caller);
 off_t dur_to_samples(XEN dur, off_t beg, chan_info *cp, int edpos, int argn, const char *caller);
-char *scale_and_src(char **files, int len, int max_chans, Float amp, Float speed, env *amp_env);
+char *scale_and_src(char **files, int len, int max_chans, Float amp, Float speed, env *amp_env, bool *err);
 
 
 /* -------- snd-run.c -------- */

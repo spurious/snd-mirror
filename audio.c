@@ -7571,6 +7571,7 @@ void describe_audio_state_1(void)
 #include <jack/jack.h>
 #include <samplerate.h>
 #include <sys/mman.h>
+#include <signal.h>
 
 #if MUS_LITTLE_ENDIAN
 #  define MUS_COMP_SHORT MUS_LSHORT

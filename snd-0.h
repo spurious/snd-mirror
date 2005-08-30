@@ -140,6 +140,7 @@ typedef enum {SOUND_SAVE_AS, SELECTION_SAVE_AS, REGION_SAVE_AS, MIX_SAVE_AS, TRA
 #define MIX_FILE_NO_MIX -1
 #define MIX_FILE_NO_FILE -2
 #define MIX_FILE_NO_SP -3
+#define MIX_FILE_NO_TEMP_FILE -4
 
 typedef enum {NOT_IN_BACKGROUND, IN_BACKGROUND} play_process_t;
 typedef enum {WITHOUT_VIRTUAL_CHANNELS, WITH_VIRTUAL_CHANNELS} virtual_channels_t;

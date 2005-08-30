@@ -67,6 +67,7 @@ typedef struct {
   widget_t current_play_button;
   widget_t amp_event; 
   widget_t speed_event;
+  widget_t speed_label_event;
   widget_t add_text;
 
   widget_t* sort_items;

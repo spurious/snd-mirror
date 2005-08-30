@@ -1165,9 +1165,11 @@ cache info to the file given or stdout"
   else
     {
       FILE *fd;
-      fd = FOPEN(local_mus_expand_filename(XEN_TO_C_STRING(file)), "w");
+      char *name;
+      name = XEN_TO_C_STRING(file);
+      fd = FOPEN(local_mus_expand_filename(name), "w");
       mus_sound_report_cache(fd);
-      FCLOSE(fd);
+      FCLOSE(fd, name);
       return(file);
     }
   return(res);

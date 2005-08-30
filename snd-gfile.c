@@ -3843,31 +3843,39 @@ static gboolean vf_speed_click_callback(GtkWidget *w, GdkEventButton *ev, gpoint
   vf_set_speed(vdat, 1.0);
   return(false);
 }
+
+static gboolean vf_speed_label_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer context)
+{
+  view_files_info *vdat = (view_files_info *)context;
+  speed_dragged = false;
+  speed_pressed = false;
+
+  switch (vdat->speed_style)
+    {
+    case SPEED_CONTROL_AS_FLOAT:    vdat->speed_style = SPEED_CONTROL_AS_RATIO;    break;
+    case SPEED_CONTROL_AS_RATIO:    vdat->speed_style = SPEED_CONTROL_AS_SEMITONE; break;
+    case SPEED_CONTROL_AS_SEMITONE: vdat->speed_style = SPEED_CONTROL_AS_FLOAT;    break;
+    }
+
+  vf_set_speed_label(vdat, vf_scroll_to_speed(GTK_ADJUSTMENT(vdat->speed_adj)->value));
+  return(false);
+}
+
 static gboolean vf_speed_motion_callback(GtkWidget *w, GdkEventMotion *ev, gpointer data)
 {
-  Float scrollval;
   view_files_info *vdat = (view_files_info *)data;
-
   if (!speed_pressed) {speed_dragged = false; return(false);}
   speed_dragged = true;
-
-  scrollval = GTK_ADJUSTMENT(vdat->speed_adj)->value;
-  vf_set_speed_label(vdat, vf_scroll_to_speed(scrollval));
-
+  vf_set_speed_label(vdat, vf_scroll_to_speed(GTK_ADJUSTMENT(vdat->speed_adj)->value));
   return(false);
 }
 
 static gboolean vf_speed_release_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
-  Float scrollval;
   view_files_info *vdat = (view_files_info *)data;
-
   speed_pressed = false;
-  /* if (!speed_dragged) return(false); */
   speed_dragged = false;
-
-  scrollval = GTK_ADJUSTMENT(vdat->speed_adj)->value;
-  vf_set_speed_label(vdat, vf_scroll_to_speed(scrollval));
+  vf_set_speed_label(vdat, vf_scroll_to_speed(GTK_ADJUSTMENT(vdat->speed_adj)->value));
   return(false);
 }
 
@@ -4421,13 +4429,18 @@ GtkWidget *start_view_files_dialog_1(view_files_info *vdat, bool managed)
 	  gtk_container_add(GTK_CONTAINER(vdat->speed_event), speedL);
 	  gtk_widget_show(speedL);
 
+	  vdat->speed_label_event = gtk_event_box_new();
+	  gtk_box_pack_start(GTK_BOX(speedH), vdat->speed_label_event, false, false, 4);
+	  gtk_widget_show(vdat->speed_label_event);
+	  SG_SIGNAL_CONNECT(vdat->speed_label_event, "button_press_event", vf_speed_label_click_callback, (gpointer)vdat);
+      
 	  switch (vdat->speed_style)
 	    {
 	    case SPEED_CONTROL_AS_RATIO:    vdat->speed_number = gtk_label_new("1/1"); break;
 	    case SPEED_CONTROL_AS_SEMITONE: vdat->speed_number = gtk_label_new("1"); break;
 	    default:                        vdat->speed_number = gtk_label_new("1.00"); break;
 	    }
-	  gtk_box_pack_start(GTK_BOX(speedH), vdat->speed_number, false, false, 0);
+	  gtk_container_add(GTK_CONTAINER(vdat->speed_label_event), vdat->speed_number);
 	  gtk_widget_show(vdat->speed_number);
       
 	  vdat->speed_adj = gtk_adjustment_new(0.45, 0.0, 1.0, 0.001, 0.01, .1);

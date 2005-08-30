@@ -1388,7 +1388,7 @@ char *mus_header_aiff_aux_comment(const char *name, off_t *starts, off_t *ends)
 		}
 	    }
 	}
-      CLOSE(fd);
+      CLOSE(fd, name);
     }
   return(sc);
 }
@@ -1741,7 +1741,7 @@ char *mus_header_riff_aux_comment(const char *name, off_t *starts, off_t *ends)
       lseek(fd, i, SEEK_SET);
       auxcom = (char *)CALLOC(end - i + 2, sizeof(char));
       read(fd, auxcom, end - i + 1);
-      CLOSE(fd);
+      CLOSE(fd, name);
       i += 4;
       while (i < end)
 	{
@@ -5051,8 +5051,7 @@ int mus_header_read(const char *name)
   old_error_handler = mus_error_set_handler(local_mus_error);
   err = mus_header_read_1(name, chan);
   mus_error_set_handler(old_error_handler);
-  if (CLOSE(chan) != 0)
-    return(mus_error(MUS_CANT_CLOSE_FILE, "can't close %s: %s", name, STRERROR(errno)));
+  CLOSE(chan, name);
   if (err != MUS_NO_ERROR)
     return(mus_error(local_error_type, local_error_msg)); /* pass error info on up the chain now that we've cleaned up the open file descriptor */
   return(err);
@@ -5096,12 +5095,11 @@ int mus_header_write(const char *name, int type, int in_srate, int in_chans, off
       data_format = format;
       break;
     default:
-      CLOSE(chan);
+      CLOSE(chan, name);
       return(mus_error(MUS_UNSUPPORTED_HEADER_TYPE,  "can't write %s header for %s", mus_header_type_name(type), name));
       break;
     }
-  if (CLOSE(chan) != 0)
-    return(mus_error(MUS_CANT_CLOSE_FILE, "can't close %s: %s", name, STRERROR(errno)));
+  CLOSE(chan, name);
   return(err);
 }
 
@@ -5180,11 +5178,11 @@ int mus_header_change_data_size(const char *filename, int type, off_t size) /* i
       write_nist_header(chan, mus_header_srate(), mus_header_chans(), size, mus_header_format());
       break;
     default:
-      CLOSE(chan);
+      CLOSE(chan, filename);
       return(mus_error(MUS_UNSUPPORTED_HEADER_TYPE, "mus_header_change_data_size: can't update %s headers", mus_header_type_name(type)));
       break;
     }
-  CLOSE(chan);
+  CLOSE(chan, filename);
   return(err);
 }
 
@@ -5241,7 +5239,7 @@ int mus_header_change_chans(const char *filename, int type, int new_chans)
       write(fd, hdrbuf, 2);
       break;
     }
-  CLOSE(fd);
+  CLOSE(fd, filename);
   return(err);
 }
 
@@ -5295,7 +5293,7 @@ int mus_header_change_srate(const char *filename, int type, int new_srate)
       write(fd, hdrbuf, 4);
       break;
     }
-  CLOSE(fd);
+  CLOSE(fd, filename);
   return(err);
 }
 
@@ -5324,7 +5322,7 @@ int mus_header_change_type(const char *filename, int new_type, int new_format)
 		  ifd = mus_file_open_read(filename);
 		  lseek(ifd, comment_start, SEEK_SET);
 		  read(ifd, (unsigned char *)comment, len);
-		  CLOSE(ifd);
+		  CLOSE(ifd, filename);
 		}
 	      data_size = data_size * mus_bytes_per_sample(data_format) / mus_bytes_per_sample(new_format);
 	      mus_header_write(new_file, new_type, srate, chans, loc, data_size, new_format, comment, len);
@@ -5336,11 +5334,11 @@ int mus_header_change_type(const char *filename, int new_type, int new_format)
 	  lseek(ofd, 0L, SEEK_END);
 	  buf = (char *)CALLOC(8192, sizeof(char));
 	  while ((nbytes = read(ifd, buf, 8192))) write(ofd, buf, nbytes);
-	  CLOSE(ifd);
-	  CLOSE(ofd);
+	  CLOSE(ifd, filename);
+	  CLOSE(ofd, new_file);
 	  FREE(buf);
 	  if (comment) FREE(comment);
-	  RENAME(new_file, filename);
+	  rename(new_file, filename);
 	  FREE(new_file);
 	}
     }
@@ -5432,7 +5430,7 @@ int mus_header_change_format(const char *filename, int type, int new_format)
       write(fd, hdrbuf, 2);
       break;
     }
-  CLOSE(fd);
+  CLOSE(fd, filename);
   return(err);
 }
 
@@ -5449,7 +5447,7 @@ int mus_header_change_location(const char *filename, int type, off_t new_locatio
       mus_bint_to_char((unsigned char *)hdrbuf, new_location);
       write(fd, hdrbuf, 4);
     }
-  CLOSE(fd);
+  CLOSE(fd, filename);
   return(err);
 }
 
@@ -5467,7 +5465,7 @@ int mus_header_change_comment(const char *filename, int type, char *new_comment)
 	  lseek(fd, 16L, SEEK_SET);
 	  if (new_comment) len = strlen(new_comment);
 	  write_ircam_comment(fd, new_comment, len);
-	  CLOSE(fd);
+	  CLOSE(fd, filename);
 	  break;
 	case MUS_NEXT:
 	  fd = mus_file_reopen_write(filename);
@@ -5481,7 +5479,7 @@ int mus_header_change_comment(const char *filename, int type, char *new_comment)
 		write_next_comment(fd, new_comment, strlen(new_comment), data_location); /* there's room to overwrite old comment */
 	      else need_ripple = true;
 	    }
-	  CLOSE(fd);
+	  CLOSE(fd, filename);
 	  break;
 	default:
 	  need_ripple = true;
@@ -5505,10 +5503,10 @@ int mus_header_change_comment(const char *filename, int type, char *new_comment)
 	  lseek(ofd, 0L, SEEK_END);
 	  buf = (char *)CALLOC(8192, sizeof(char));
 	  while ((nbytes = read(ifd, buf, 8192))) write(ofd, buf, nbytes);
-	  CLOSE(ifd);
-	  CLOSE(ofd);
+	  CLOSE(ifd, filename);
+	  CLOSE(ofd, new_file);
 	  FREE(buf);
-	  RENAME(new_file, filename);
+	  rename(new_file, filename);
 	  FREE(new_file);
 	}
     }
@@ -5677,7 +5675,7 @@ bool mus_header_no_header(const char *filename)
   if (chan == -1) 
     return(mus_error(MUS_CANT_OPEN_FILE, "mus_header: can't open %s: %s", filename, STRERROR(errno)));
   bytes = read(chan, hdrbuf, INITIAL_READ_SIZE);
-  CLOSE(chan);
+  CLOSE(chan, filename);
   if (bytes > 4) 
     ok = ((match_four_chars((unsigned char *)hdrbuf, I_DSND)) || 
 	  (match_four_chars((unsigned char *)hdrbuf, I_DECN)) ||

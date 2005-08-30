@@ -1814,7 +1814,7 @@ static char *snd_finder(const char *name, bool got_help)
 	  fgrep = file_to_string(tempnam);
 	}
     }
-  REMOVE(tempnam);
+  snd_remove(tempnam, IGNORE_CACHE);
   FREE(tempnam);
 
   if (url)

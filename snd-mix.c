@@ -34,6 +34,7 @@ typedef struct {
   file_delete_t temporary;     /* in-filename was written by us and needs to be deleted when mix state is deleted */
   snd_info *add_snd;           /* readable snd_info struct for mix input */
   int id, x, nx, y, tagx, tagy, height, orig_chan, orig_edit_ctr; 
+  speed_style_t speed_style;
   env **dialog_envs;           /* mix dialog version of current amp envs */
   bool save_needed;            /* for mix drag display */
 } mix_info;
@@ -329,6 +330,7 @@ static mix_info *make_mix_info(chan_info *cp)
   md->wg = set_mix_info_context(cp);
   md->y = 0;
   md->height = mix_waveform_height(ss);
+  md->speed_style = speed_control_style(ss);
   md->dialog_envs = NULL;
   return(md);
 }
@@ -974,8 +976,11 @@ static char *save_as_temp_file(mus_sample_t **raw_data, int chans, int len, int 
                       /* we're writing our own private version of this thing, so we can use our own formats */
   err = snd_write_header(newname, MUS_NEXT, nominal_srate, chans, 28, len * chans, format, NULL, 0, NULL);
   /* Watch out!  28's below are assuming no comment here! */
-  if (err != IO_NO_ERROR) return(NULL);
-  /* TODO: better error here */
+  if (err != IO_NO_ERROR)
+    {
+      snd_warning("%s %s: %s", io_error_name(err), newname, snd_io_strerror());
+      return(NULL);
+    }
   ofd = snd_reopen_write(newname);
   mus_file_open_descriptors(ofd, newname, format, 4, 28, chans, MUS_NEXT);
   /* mus_file_set_data_clipped(ofd, data_clipped(ss)); */
@@ -1078,6 +1083,7 @@ static mix_info *file_mix_samples(off_t beg, off_t num, char *mixfile, chan_info
   mix_info *md = NULL;
   off_t i, j, len, size;
   file_info *ihdr, *ohdr;
+  io_error_t io_err = IO_NO_ERROR;
   if (num <= 0) return(NULL); /* a no-op -- mixing in an empty file */
   if (!(editable_p(cp))) return(NULL);
   len = CURRENT_SAMPLES(cp);
@@ -1101,16 +1107,15 @@ static mix_info *file_mix_samples(off_t beg, off_t num, char *mixfile, chan_info
     }
   ofile = snd_tempnam();
   ohdr = make_temp_header(ofile, SND_SRATE(sp), 1, 0, (char *)origin);
-  {
-    /* TODO: better error */
-    io_error_t io_err = IO_NO_ERROR;
-    ofd = open_temp_file(ofile, 1, ohdr, &io_err);
-  }
+  ofd = open_temp_file(ofile, 1, ohdr, &io_err);
   if (ofd == -1) 
     {
       free_file_info(ihdr);
       cp->edit_hook_checked = false;
-      snd_error(_("open mix temp file %s hit error: %s"), ofile, snd_open_strerror()); 
+      snd_error(_("%s mix temp file %s: %s"), 
+		(io_err != IO_NO_ERROR) ? io_error_name(io_err) : "can't open",
+		ofile, 
+		snd_open_strerror()); 
       return(NULL);
     }
   if ((disk_space_p(sp, num * 4, ofile)) == DISK_SPACE_OK)
@@ -1501,6 +1506,7 @@ static void remix_file(mix_info *md, const char *origin, bool redisplay)
   use_temp_file = (num >= MAX_BUFFER_SIZE);
   if (use_temp_file)
     {
+      io_error_t io_err = IO_NO_ERROR;
       disk_space_t no_space;
       ofile = snd_tempnam();
 #if DEBUGGING
@@ -1514,17 +1520,16 @@ static void remix_file(mix_info *md, const char *origin, bool redisplay)
 #else
       ohdr = make_temp_header(ofile, SND_SRATE(cursp), 1, 0, (char *)origin);
 #endif
-      {
-	/* TODO: better error */
-	io_error_t io_err = IO_NO_ERROR;
-	ofd = open_temp_file(ofile, 1, ohdr, &io_err);
-      }
+      ofd = open_temp_file(ofile, 1, ohdr, &io_err);
       if (ofd == -1)
 	{
 	  free_file_info(ohdr);
 	  FREE(ofile);
 	  cp->edit_hook_checked = false;
-	  snd_error(_("can't write mix temp file %s: %s\n"), ofile, snd_open_strerror());
+	  snd_error(_("%s mix temp file %s: %s\n"), 
+		    (io_err != IO_NO_ERROR) ? io_error_name(io_err) : "can't open",
+		    ofile, 
+		    snd_open_strerror());
 	  return;
 	}
       no_space = disk_space_p(cursp, num * 4, ofile);
@@ -3924,6 +3929,51 @@ static XEN g_mix_home(XEN n)
 		    C_TO_XEN_INT((md->cp->chan))));
 }
 
+speed_style_t mix_speed_style(int id)
+{
+  mix_info *md; 
+  md = md_from_id(id);
+  return(md->speed_style);
+}
+
+static XEN g_mix_speed_style(XEN n)
+{
+  #define H_mix_speed_style "(" S_mix_speed_style " id): speed-style choice for mix"
+  mix_info *md; 
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(n), n, XEN_ONLY_ARG, S_mix_speed_style, "mix id (an integer)");
+  md = md_from_id(XEN_TO_C_INT(n));
+  if (md == NULL)
+    return(snd_no_such_mix_error(S_mix_speed_style, n));
+  return(C_TO_XEN_INT((int)(md->speed_style)));
+}
+
+speed_style_t set_mix_speed_style(int id, speed_style_t choice)
+{
+  mix_info *md; 
+  md = md_from_id(id);
+  md->speed_style = choice;
+  return(choice);
+}
+
+static XEN g_set_mix_speed_style(XEN n, XEN speed)
+{
+  speed_style_t spd;
+  mix_info *md; 
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(n), n, XEN_ARG_1, S_setB S_mix_speed_style, "mix id (an integer)");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(speed), speed, XEN_ARG_2, S_setB S_mix_speed_style, "an integer"); 
+  md = md_from_id(XEN_TO_C_INT(n));
+  if (md == NULL)
+    return(snd_no_such_mix_error(S_setB S_mix_speed_style, n));
+  spd = (speed_style_t)XEN_TO_C_INT(speed);
+  if (spd > SPEED_CONTROL_AS_SEMITONE)
+    XEN_OUT_OF_RANGE_ERROR(S_setB S_mix_speed_style, 
+			   1, speed, 
+			   "~A, but must be " S_speed_control_as_float ", " S_speed_control_as_ratio ", or " S_speed_control_as_semitone);
+  md->speed_style = spd;
+  return(speed);
+}
+
+
 static XEN g_mix_amp(XEN n, XEN uchan) 
 {
   #define H_mix_amp "(" S_mix_amp " id (chan 0)): amp of mix's channel chan"
@@ -4622,8 +4672,11 @@ mix data (a vct) into snd's channel chn starting at beg; return the new mix id"
 	    }
 	}
       newname = save_as_temp_file(&data, 1, len, SND_SRATE(cp->sound));
-      mix_id = mix_file(bg, len, 1, &cp, newname, DELETE_ME, (char *)((edname == NULL) ? S_mix_vct : edname), with_mixer, track_num); /* ORIGIN? */
-      FREE(newname);
+      if (newname)
+	{
+	  mix_id = mix_file(bg, len, 1, &cp, newname, DELETE_ME, (char *)((edname == NULL) ? S_mix_vct : edname), with_mixer, track_num); /* ORIGIN? */
+	  FREE(newname);
+	}
     }
   update_graph(cp);
   FREE(data);
@@ -4700,6 +4753,8 @@ XEN_NARGIFY_1(g_mix_tag_y_w, g_mix_tag_y)
 XEN_NARGIFY_2(g_set_mix_tag_y_w, g_set_mix_tag_y)
 XEN_NARGIFY_1(g_mix_speed_w, g_mix_speed)
 XEN_NARGIFY_2(g_set_mix_speed_w, g_set_mix_speed)
+XEN_NARGIFY_1(g_mix_speed_style_w, g_mix_speed_style)
+XEN_NARGIFY_2(g_set_mix_speed_style_w, g_set_mix_speed_style)
 XEN_NARGIFY_0(g_mix_waveform_height_w, g_mix_waveform_height)
 XEN_NARGIFY_1(g_set_mix_waveform_height_w, g_set_mix_waveform_height)
 XEN_NARGIFY_1(g_mix_tag_xy_w, g_mix_tag_xy)
@@ -4742,6 +4797,8 @@ XEN_NARGIFY_1(g_delete_mix_w, g_delete_mix)
 #define g_set_mix_tag_y_w g_set_mix_tag_y
 #define g_mix_speed_w g_mix_speed
 #define g_set_mix_speed_w g_set_mix_speed
+#define g_mix_speed_style_w g_mix_speed_style
+#define g_set_mix_speed_style_w g_set_mix_speed_style
 #define g_mix_waveform_height_w g_mix_waveform_height
 #define g_set_mix_waveform_height_w g_set_mix_waveform_height
 #define g_mix_tag_xy_w g_mix_tag_xy
@@ -4797,6 +4854,9 @@ void g_init_mix(void)
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_tag_y, g_mix_tag_y_w, H_mix_tag_y, S_setB S_mix_tag_y, g_set_mix_tag_y_w, 1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_speed, g_mix_speed_w, H_mix_speed, S_setB S_mix_speed, g_set_mix_speed_w, 1, 0, 2, 0);
 
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_speed_style, g_mix_speed_style_w, H_mix_speed_style, 
+				   S_setB S_mix_speed_style, g_set_mix_speed_style_w, 1, 0, 2, 0);
+
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_tag_position, g_mix_tag_position_w, H_mix_tag_position, 
 				   S_setB S_mix_tag_position, g_set_mix_tag_position_w, 1, 0, 2, 0);
 
@@ -4848,6 +4908,7 @@ typedef struct {
   int track;
   color_t color;
   bool color_set; /* groan... 0 is a legit Pixel value */
+  speed_style_t speed_style;
 } track_state;
 
 typedef struct {

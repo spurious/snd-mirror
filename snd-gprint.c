@@ -120,20 +120,22 @@ static void print_ok_callback(GtkWidget *w, gpointer context)
 	}
       else 
 	{
+	  char *str;
+	  str = (char *)gtk_entry_get_text(GTK_ENTRY(print_name));
 	  redirect_snd_error_to(report_in_error_info, NULL);
 	  switch (ss->print_choice)
 	    {
 	    case PRINT_SND: 
-	      snd_print((char *)gtk_entry_get_text(GTK_ENTRY(print_name))); 
+	      if (snd_print(str))
+		report_in_minibuffer(nsp, "printed current view to %s", str);
 	      break;
 	    case PRINT_ENV: 
-	      enved_print((char *)gtk_entry_get_text(GTK_ENTRY(print_name))); 
+	      enved_print(str);
 	      break;
 	    }
 	  redirect_snd_error_to(NULL, NULL);
 	}
     }
-  /* TODO report in minibuffer or something to say that we printed */
   printing = NOT_PRINTING;
   if (ss->print_choice == PRINT_SND)
     {

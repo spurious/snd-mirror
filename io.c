@@ -555,7 +555,7 @@ bool mus_file_probe(const char *arg)
   fd = OPEN(arg, O_RDONLY, 0);
 #endif
   if (fd == -1) return(false);
-  if (CLOSE(fd) != 0) return(false);
+  CLOSE(fd, arg);
   return(true);
 #endif
 }
@@ -598,7 +598,7 @@ int mus_file_close(int fd)
   if (fdp->name) {FREE(fdp->name); fdp->name = NULL;}
   FREE(fdp);
   io_fds[fd] = NULL;
-  close_result = CLOSE(fd);
+  close_result = close(fd);
   if (close_result < 0)
     return(MUS_CANT_CLOSE_FILE);
   return(MUS_NO_ERROR);
