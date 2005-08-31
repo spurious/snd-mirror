@@ -3404,9 +3404,27 @@ void vf_highlight_row(GtkWidget *nm, GtkWidget *rw)
   gtk_widget_modify_base(rw, GTK_STATE_NORMAL, ss->sgx->zoom_color);
 }
 
+static gint vf_unflash_row(gpointer data)
+{
+  vf_row *r = (vf_row *)data;
+  view_files_info *vdat;
+  int i;
+  vdat = (view_files_info *)(r->vdat);
+  for (i = 0; i < vdat->currently_selected_files; i++)
+    if (vdat->selected_files[i] == r->pos)
+      {
+	vf_highlight_row(r->nm, r->rw);
+	return(0);
+      }
+  vf_unhighlight_row(r->nm, r->rw);
+  return(0);
+}
+
 void vf_flash_row(vf_row *r)
 {
-  /* TODO: gtk side of showing/flashing existing file entry */
+  gtk_widget_modify_bg(r->nm, GTK_STATE_NORMAL, ss->sgx->light_blue);
+  gtk_widget_modify_base(r->nm, GTK_STATE_NORMAL, ss->sgx->light_blue);
+  g_timeout_add_full(0, (guint32)500, vf_unflash_row, (gpointer)r, NULL);
 }
 
 void vf_post_info(view_files_info *vdat, int pos)
@@ -4111,7 +4129,7 @@ GtkWidget *start_view_files_dialog_1(view_files_info *vdat, bool managed)
     {
       GtkWidget *sep1, *cww, *rlw, *tophbox, *plw, *bbox, *add_text, *add_label, *addbox;
       GtkWidget *sbar, *sitem, *newB;
-      GtkWidget *mainform, *leftform, *fileform, *helpB, *dismissB, *sep;
+      GtkWidget *mainform, *leftform, *fileform, *helpB, *dismissB;
 
       vdat->dialog = snd_gtk_dialog_new();
       gtk_window_set_title(GTK_WINDOW(vdat->dialog), _("Files"));
@@ -4142,20 +4160,17 @@ GtkWidget *start_view_files_dialog_1(view_files_info *vdat, bool managed)
       gtk_widget_show(newB);
       gtk_widget_show(helpB);
 
-      mainform = gtk_hbox_new(false, 0);
+      mainform = gtk_hpaned_new();
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(vdat->dialog)->vbox), mainform, true, true, 0);
+      gtk_widget_set_name(mainform, "the_unpane");
       gtk_widget_show(mainform);
-      
+
       leftform = gtk_vbox_new(false, 0);
-      gtk_box_pack_start(GTK_BOX(mainform), leftform, true, true, 0);
+      gtk_paned_add1(GTK_PANED(mainform), leftform);
       gtk_widget_show(leftform);
 
-      sep = gtk_vseparator_new();
-      gtk_box_pack_start(GTK_BOX(mainform), sep, false, false, 0);
-      gtk_widget_show(sep);
-
       fileform = gtk_vbox_new(false, 0);
-      gtk_box_pack_start(GTK_BOX(mainform), fileform, true, true, 0);
+      gtk_paned_add2(GTK_PANED(mainform), fileform);
       gtk_widget_show(fileform);
 
       /* files section: play files | files */

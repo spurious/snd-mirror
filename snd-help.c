@@ -410,6 +410,7 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+31-Aug:  mix|track-speed-style.\n\
 28-Aug:  snd 7.15.\n\
 18-Aug:  _sndlib.h and sndlib.h.in.\n\
 15-Aug:  in View:files, click of file name no longer opens that file.\n\
@@ -427,8 +428,6 @@ void about_snd_help(void)
 29-Jul:  previous-files-* -> view-files-* (sort, select-hook).\n\
 28-Jul:  File:Insert menu item and dialog added, also insert-file-dialog.\n\
          File:Save as can write OGG, Speex, and Flac files.\n\
-21-Jul:  clear-minibuffer, new as-error arg to report-in-minibuffer.\n\
-15-Jul:  removed yes-or-no? with associated dialog (and snd-g|xerror.c).\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",

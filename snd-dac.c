@@ -1961,6 +1961,39 @@ static bool start_audio_output_1 (void)
     }
   for (i = 0; i < MAX_DEVICES; i++) dev_fd[i] = -1;
   snd_dacp->out_format = MUS_COMPATIBLE_FORMAT;
+
+#ifdef SUN
+  /* can audio hardware handle this data format? */
+  err = mus_audio_mixer_read(audio_output_device(ss), MUS_AUDIO_FORMAT, 32, val);
+  {
+    bool happy = false;
+    for (i = 1; i <= (int)(val[0]); i++)
+      if ((int)(val[i]) == MUS_COMPATIBLE_FORMAT)
+	{
+	  happy = true;
+	  break;
+	}
+    if (!happy)
+      {
+	int max_bits = -1, best_fit = 0;
+	for (i = 1; i <= (int)(val[0]); i++)
+	  if (mus_bytes_per_sample((int)(val[i])) > max_bits)
+	    {
+	      best_fit = (int)(val[i]);
+	      max_bits = mus_bytes_per_sample(best_fit); /* probably mus-mulaw is all we get */
+	    }
+	if (max_bits == -1)
+	  {
+	    snd_warning("can't find any playable data format!");
+	    return(false);
+	  }
+	snd_dacp->out_format = best_fit;
+      }
+  }
+  /* but there's still trouble -- on opteron solaris 10, the only playable srate is 48000, but the mixer lies about it! */
+  /*   I can't see what to do in this case */
+#endif
+
   if (available_chans < snd_dacp->channels) 
     {
       if (dac_combines_channels(ss)) 

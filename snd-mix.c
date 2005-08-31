@@ -3947,11 +3947,13 @@ static XEN g_mix_speed_style(XEN n)
   return(C_TO_XEN_INT((int)(md->speed_style)));
 }
 
-speed_style_t set_mix_speed_style(int id, speed_style_t choice)
+speed_style_t set_mix_speed_style(int id, speed_style_t choice, bool from_gui)
 {
   mix_info *md; 
   md = md_from_id(id);
   md->speed_style = choice;
+  if (!from_gui) 
+    reflect_mix_or_track_change(id, ANY_TRACK_ID, false); /* currently can't happen (all calls are from mix dialog) */
   return(choice);
 }
 
@@ -5148,6 +5150,7 @@ static track_state *copy_track_state(track_state *old_ts, bool copy_amp_env)
     {
       ts->amp = old_ts->amp;
       ts->speed = old_ts->speed;
+      ts->speed_style = old_ts->speed_style;
       ts->tempo = old_ts->tempo;
       ts->track = old_ts->track;
       if (copy_amp_env) ts->amp_env = copy_env(old_ts->amp_env); else ts->amp_env = NULL;
@@ -5158,6 +5161,7 @@ static track_state *copy_track_state(track_state *old_ts, bool copy_amp_env)
     {
       ts->amp = 1.0;
       ts->speed = 1.0;
+      ts->speed_style = speed_control_style(ss);
       ts->tempo = 1.0;
       ts->amp_env = NULL;
       ts->track = 0;
@@ -7054,6 +7058,48 @@ static XEN g_set_track_speed(XEN id, XEN val)
   return(val);
 }
 
+speed_style_t track_speed_style(int id)
+{
+  track_state *ts;
+  ts = active_track_state(id);
+  if (ts) return(ts->speed_style);
+  return(speed_control_style(ss));
+}
+
+static XEN g_track_speed_style(XEN n)
+{
+  #define H_track_speed_style "(" S_track_speed_style " id): speed-style choice for track"
+  int track_id;
+  track_id = xen_to_c_track(n, S_track_speed_style);
+  return(C_TO_XEN_INT(track_speed_style(track_id)));
+}
+
+speed_style_t set_track_speed_style(int id, speed_style_t choice, bool from_gui)
+{
+  track_state *ts;
+  ts = active_track_state(id);
+  if (ts) ts->speed_style = choice;
+  if (!from_gui) 
+    reflect_mix_or_track_change(id, ANY_TRACK_ID, false);
+  return(choice);
+}
+
+static XEN g_set_track_speed_style(XEN n, XEN speed)
+{
+  speed_style_t spd;
+  int track_id;
+  track_id = xen_to_c_track(n, S_setB S_track_speed_style);
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(speed), speed, XEN_ARG_2, S_setB S_track_speed_style, "an integer"); 
+  spd = (speed_style_t)XEN_TO_C_INT(speed);
+  if (spd > SPEED_CONTROL_AS_SEMITONE)
+    XEN_OUT_OF_RANGE_ERROR(S_setB S_track_speed_style, 
+			   1, speed, 
+			   "~A, but must be " S_speed_control_as_float ", " S_speed_control_as_ratio ", or " S_speed_control_as_semitone);
+  set_track_speed_style(track_id, spd, false);
+  return(speed);
+}
+
+
 
 /* ---------------- track-tempo ---------------- */
 
@@ -7251,6 +7297,7 @@ static int copy_mix(int id, off_t beg)
       new_id = new_md->id;
       new_md->active_mix_state->track = 0;
       new_md->active_mix_state->tag_position = md->active_mix_state->tag_position;
+      new_md->speed_style = md->speed_style;
       if (md->current_state > 0)
 	{
 	  mix_state *cs, *old_cs;
@@ -7286,6 +7333,7 @@ static int make_initial_track_state(int id)
   old_ts = active_track_state(id);
   new_ts->amp = old_ts->amp;
   new_ts->speed = old_ts->speed;
+  new_ts->speed_style = old_ts->speed_style;
   new_ts->tempo = old_ts->tempo;
   new_ts->track = 0;
   new_ts->amp_env = copy_env(old_ts->amp_env);
@@ -8020,6 +8068,8 @@ XEN_NARGIFY_1(g_track_amp_w, g_track_amp)
 XEN_NARGIFY_2(g_set_track_amp_w, g_set_track_amp)
 XEN_NARGIFY_1(g_track_speed_w, g_track_speed)
 XEN_NARGIFY_2(g_set_track_speed_w, g_set_track_speed)
+XEN_NARGIFY_1(g_track_speed_style_w, g_track_speed_style)
+XEN_NARGIFY_2(g_set_track_speed_style_w, g_set_track_speed_style)
 XEN_NARGIFY_1(g_track_tempo_w, g_track_tempo)
 XEN_NARGIFY_2(g_set_track_tempo_w, g_set_track_tempo)
 XEN_NARGIFY_1(g_track_amp_env_w, g_track_amp_env)
@@ -8058,6 +8108,8 @@ XEN_NARGIFY_1(g_set_tempo_control_bounds_w, g_set_tempo_control_bounds)
 #define g_set_track_amp_w g_set_track_amp
 #define g_track_speed_w g_track_speed
 #define g_set_track_speed_w g_set_track_speed
+#define g_track_speed_style_w g_track_speed_style
+#define g_set_track_speed_style_w g_set_track_speed_style
 #define g_track_tempo_w g_track_tempo
 #define g_set_track_tempo_w g_set_track_tempo
 #define g_track_amp_env_w g_track_amp_env
@@ -8111,6 +8163,9 @@ void g_init_track(void)
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_track_amp_env,  g_track_amp_env_w,  H_track_amp_env,  S_setB S_track_amp_env,  g_set_track_amp_env_w,  1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_track_position, g_track_position_w, H_track_position, S_setB S_track_position, g_set_track_position_w, 1, 1, 2, 1);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_track_track,    g_track_track_w,    H_track_track,    S_setB S_track_track,    g_set_track_track_w,    1, 0, 2, 0);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_track_speed_style, g_track_speed_style_w, H_track_speed_style, 
+				   S_setB S_track_speed_style, g_set_track_speed_style_w, 1, 0, 2, 0);
 
   XEN_DEFINE_PROCEDURE(S_track_frames, g_track_frames_w, 1, 1, 0, H_track_frames);
   XEN_DEFINE_PROCEDURE(S_delete_track, g_delete_track_w, 1, 0, 0, H_delete_track);

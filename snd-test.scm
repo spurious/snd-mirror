@@ -19432,6 +19432,7 @@ EDITS: 5
 		  (inv (mix-inverted? mix-id))
 		  (anc (mix-tag-position mix-id))
 		  (spd (mix-speed mix-id))
+		  (spdstyle (mix-speed-style mix-id))
 		  (trk (mix-track mix-id))
 		  (snd (car (mix-home mix-id)))
 		  (chn (cadr (mix-home mix-id)))
@@ -19478,6 +19479,7 @@ EDITS: 5
 	      (if (not (= chns 1)) (snd-display ";mix-chans: ~A?" chn))
 	      (if (fneq amp 1.0) (snd-display ";mix-amp: ~A?" amp))
 	      (if (fneq spd 1.0) (snd-display ";mix-speed: ~A?" spd))
+	      (if (not (= spdstyle (speed-control-style))) (snd-display ";mix-speed-style: ~A ~A" spdstyle (speed-control-style)))
 	      (catch 'mus-error
 		     (lambda () (play-mix mix-id))
 		     (lambda args (snd-display ";can't play mix")))
@@ -19488,6 +19490,9 @@ EDITS: 5
 	      (set! (mix-position mix-id) 200) 
 	      (set! (mix-amp mix-id 0) 0.5) 
 	      (set! (mix-speed mix-id) 2.0) 
+	      (set! (mix-speed-style mix-id) speed-control-as-ratio)
+	      (if (not (= (mix-speed-style mix-id) speed-control-as-ratio)) 
+		  (snd-display ";set mix-speed-style: ~A" (mix-speed-style mix-id)))
 	      (let ((trk (make-track mix-id)))
 		(let ((tag (catch #t
 				  (lambda () (play-track 1231233))
@@ -19793,6 +19798,11 @@ EDITS: 5
 		(snd-display ";1 track-amp: ~A ~A" (track-amp tr1) (mix-amp (car id1) 0)))
 	    (if (fneq (track-speed tr1) (mix-speed (car id1)))
 		(snd-display ";1 track-speed: ~A ~A" (track-speed tr1) (mix-speed (car id1))))
+	    (if (not (= (track-speed-style tr1) (speed-control-style)))
+		(snd-display ";track-speed-style: ~A ~A" (track-speed-style tr1) (speed-control-style)))
+	    (set! (track-speed-style tr1) speed-control-as-semitone)
+	    (if (not (= (track-speed-style tr1) speed-control-as-semitone))
+		(snd-display ";set track-speed-style: ~A" (track-speed-style tr1)))
 	    (if (not (vequal (track->vct tr1) (mix->vct (car id1))))
 		(snd-display ";1 track->vct ~A ~A" (track->vct tr1) (mix->vct (car id1))))
 	    (set! (track-amp tr1) 0.0)
@@ -20341,6 +20351,8 @@ EDITS: 5
 	  (if (not (= (mix-frames copy) (mix-frames original))) (snd-display ";copy-mix frames: ~A ~A" (mix-frames copy) (mix-frames original)))
 	  (if (not (= (mix-position copy) pos)) (snd-display ";copy-mix set position: ~A ~A ~A" (mix-position copy) pos (mix-position original)))   
 	  (if (fneq (mix-speed copy) (mix-speed original)) (snd-display ";copy-mix speed: ~A ~A" (mix-speed copy) (mix-speed original)))
+	  (if (not (= (mix-speed-style copy) (mix-speed-style original))) 
+	      (snd-display ";copy-mix speed-style: ~A ~A" (mix-speed-style copy) (mix-speed-style original)))
 	  (if (fneq (mix-maxamp copy) (mix-maxamp original)) (snd-display ";copy-mix maxamp: ~A ~A" (mix-maxamp copy) (mix-maxamp original)))
 	  (do ((i 0 (1+ i)))
 	      ((= i (mix-chans copy)))
@@ -20537,6 +20549,8 @@ EDITS: 5
 	  (if (not (= (track-frames copy) (track-frames original))) (snd-display ";copy-track frames: ~A ~A" (track-frames copy) (track-frames original)))
 	  (if (not (= (track-position copy) pos)) (snd-display ";copy-track set position: ~A ~A ~A" (track-position copy) pos (track-position original)))   
 	  (if (fneq (track-speed copy) (track-speed original)) (snd-display ";copy-track speed: ~A ~A" (track-speed copy) (track-speed original)))
+	  (if (not (= (track-speed-style copy) (track-speed-style original)))
+	      (snd-display ";copy-track speed-style: ~A ~A" (track-speed-style copy) (track-speed-style original)))
 	  (if (fneq (track-amp copy) (track-amp original)) (snd-display ";copy-track amp: ~A ~A" (track-amp copy) (track-amp original)))
 	  (let ((copy-amp-env (track-amp-env copy))
 		(original-amp-env (track-amp-env original)))
@@ -23739,9 +23753,9 @@ EDITS: 5
 			 (if (not (eq? tag 'no-such-mix))
 			     (snd-display ";~A: ~A" b tag))))
 		     (list mix-amp mix-tag-position mix-chans mix-track mix-frames mix-locked?
-			   mix-position mix-home mix-speed mix-tag-y)
+			   mix-position mix-home mix-speed mix-speed-style mix-tag-y)
 		     (list 'mix-amp 'mix-tag-position 'mix-chans 'mix-track 'mix-frames 'mix-locked?
-			   'mix-position 'mix-home 'mix-speed 'mix-tag-y)))
+			   'mix-position 'mix-home 'mix-speed 'mix-speed-style 'mix-tag-y)))
 		  ))))
 	  (reset-hook! mix-click-hook)
 	  (reset-hook! close-hook)
@@ -54438,7 +54452,7 @@ EDITS: 1
 		     mark-sample mark-sync mark-sync-max mark-home marks mark?  max-transform-peaks max-regions
 		     maxamp maxamp-position menu-widgets minibuffer-history-length min-dB log-freq-start mix mixes mix-amp mix-amp-env
 		     mix-tag-position mix-chans mix-color mix-track mix-frames mix-locked? mix? view-mixes-dialog mix-position view-tracks-dialog
-		     track-dialog-track mix-dialog-mix mix-inverted?
+		     track-dialog-track mix-dialog-mix mix-inverted? mix-speed-style
 		     mix-region mix-sample-reader?  mix-selection mix-sound mix-home mix-speed mix-tag-height mix-tag-width mark-tag-height mark-tag-width
 		     mix-tag-y mix-vct mix-waveform-height time-graph-style lisp-graph-style transform-graph-style
 					;new-sound 
@@ -54532,7 +54546,7 @@ EDITS: 1
 		     quit-button-color help-button-color reset-button-color doit-button-color doit-again-button-color
 
 		     track tracks track? make-track track-amp track-position track-frames track-speed track-tempo track-amp-env
-		     track-track delete-track delete-mix track-color free-track
+		     track-track delete-track delete-mix track-color free-track track-speed-style
 
 		     delay-tick dac-is-running draw-axes copy-mix copy-track copy-sample-reader html-dir html-program
 		     lock-track make-fir-coeffs make-identity-mixer mus-interp-type mus-make-error mus-run phase-vocoder
@@ -54584,7 +54598,8 @@ EDITS: 1
 			 just-sounds left-sample listener-color listener-font listener-prompt listener-text-color mark-color
 			 mark-name mark-sample mark-sync max-transform-peaks max-regions min-dB log-freq-start mix-amp
 			 mix-amp-env mix-tag-position mix-chans mix-color mix-locked? mix-inverted? mix-position
-			 mix-speed mix-tag-height mix-tag-width mix-tag-y mark-tag-width mark-tag-height mix-waveform-height transform-normalization
+			 mix-speed mix-speed-style mix-tag-height mix-tag-width mix-tag-y mark-tag-width mark-tag-height 
+			 mix-waveform-height transform-normalization
 			 equalize-panes position-color recorder-in-device view-files-sort print-length pushed-button-color
 			 view-files-amp view-files-speed view-files-speed-style view-files-amp-env
 			 view-files-files 
@@ -54614,7 +54629,7 @@ EDITS: 1
 			 phase-vocoder-amp-increments phase-vocoder-amps 
 			 phase-vocoder-freqs phase-vocoder-outctr phase-vocoder-phase-increments phase-vocoder-phases 
 			 quit-button-color help-button-color reset-button-color doit-button-color doit-again-button-color
-			 track-amp track-position track-speed track-tempo track-amp-env track-color
+			 track-amp track-position track-speed track-speed-style track-tempo track-amp-env track-color
 
 			 html-dir html-program mus-interp-type widget-position widget-size 
 			 (if (defined? 'window-property) window-property widget-size)
@@ -54937,7 +54952,8 @@ EDITS: 1
 					(lambda args (car args)))))
 			    (if (not (eq? tag 'no-such-track))
 				(snd-display ";track ~A: ~A" n tag))))
-			(list track track-amp track-position track-frames track-speed track-tempo track-amp-env track-track delete-track track-color))
+			(list track track-amp track-position track-frames track-speed track-speed-style 
+			      track-tempo track-amp-env track-track delete-track track-color))
 	      (for-each (lambda (n a)
 			  (let ((tag
 				 (catch #t
@@ -54946,8 +54962,8 @@ EDITS: 1
 					(lambda args (car args)))))
 			    (if (not (eq? tag 'no-such-track))
 				(snd-display ";set track ~A: ~A" n tag))))
-			(list track-amp track-position track-speed track-tempo track-amp-env track-track track-color)
-			(list 1.0 0 1.0 1.0 '(0 0 1 1) (1- trk) (make-color-with-catch 1 0 0))))
+			(list track-amp track-position track-speed track-speed-style track-tempo track-amp-env track-track track-color)
+			(list 1.0 0 1.0 speed-control-as-float 1.0 '(0 0 1 1) (1- trk) (make-color-with-catch 1 0 0))))
 
 	    (for-each (lambda (arg)
 			(let ((ctr 0))
@@ -55234,7 +55250,7 @@ EDITS: 1
 				(snd-display ";~D: mix procs ~A: ~A" ctr n tag))
 			    (set! ctr (+ ctr 1))))
 			(list mix-amp mix-amp-env mix-tag-position mix-chans mix-track mix-frames mix-locked? mix-inverted?
-			      mix-position mix-home mix-speed mix-tag-y))) 
+			      mix-position mix-home mix-speed mix-speed-style mix-tag-y))) 
 	    
 	    (let ((ctr 0))
 	      (for-each (lambda (n)
@@ -55247,7 +55263,7 @@ EDITS: 1
 				(snd-display ";~D: mix procs ~A: ~A" ctr n tag))
 			    (set! ctr (+ ctr 1))))
 			(list mix-amp mix-tag-position mix-chans mix-track mix-frames mix-locked? mix-inverted?
-			      mix-position mix-home mix-speed mix-tag-y)))
+			      mix-position mix-home mix-speed mix-speed-style mix-tag-y)))
 	    
 	    (let ((ctr 0))
 	      (for-each (lambda (n)
@@ -55260,7 +55276,7 @@ EDITS: 1
 				(snd-display ";~D: mix procs ~A: ~A" ctr n tag))
 			    (set! ctr (+ ctr 1))))
 			(list mix-tag-position mix-chans mix-track mix-locked? mix-inverted?
-			      mix-position mix-home mix-speed mix-tag-y))) 
+			      mix-position mix-home mix-speed mix-speed-style mix-tag-y))) 
 	    
 	    (let* ((ctr 0)
 		   (index (open-sound "oboe.snd"))
@@ -55275,7 +55291,7 @@ EDITS: 1
 				(snd-display ";~D: mix procs ~A: ~A" ctr n tag))
 			    (set! ctr (+ ctr 1))))
 			(list mix-tag-position mix-chans mix-track mix-locked? mix-inverted?
-			      mix-position mix-home mix-speed mix-tag-y))
+			      mix-position mix-home mix-speed mix-speed-style mix-tag-y))
 	      (close-sound index))
 	    
 	    (let ((ctr 0))

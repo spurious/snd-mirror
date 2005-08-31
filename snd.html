@@ -752,16 +752,20 @@ printer characteristics.
 to reflect the currently active sound.  The same information is displayed in the
 minibuffer when you click the file name.</p>
 
-<!-- TODO: rewrite vf doc -->
-<p>The <A NAME="viewfiles">Files</a> option starts the file browser
-which provides a list of interesting files,
-and other stuff -- this is currently under construction...
-The play button plays the file.
-Double click a previous file name, and 
-that file is opened in Snd.
-The 'update' button runs through the previous files
+<p>The <A NAME="viewfiles">Files</a> option 
+starts a dialog with a list of interesting files,
+controls for amplitude, speed (sampling rate change), and amplitude envelope,
+and buttons to mix, insert, or open the selected files.
+This dialog is sort of a combination of the File:Mix and View:Mixes dialog, aimed
+at making it easy to toss together bunches of sound files.
+In the file list, the button on the left plays the file.
+The 'update' button runs through the file
 list checking for files that have been deleted or moved behind Snd's back.
-'Clear' clears the previous files list. </p>
+'Clear' clears the list.  'sort' is a drop-down menu of file sorting possibilities.
+You can add to this list either by dragging file icons around the screen (which I think
+is a very awkward thing to do), or by calling add-file-sorter and friends, or
+by typing the file or directory name in the 'add:' text widget.
+</p>
 
 <img src="vf.png" alt="View:Files dialog">
 

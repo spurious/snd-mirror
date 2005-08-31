@@ -16,7 +16,7 @@ static void file_view_callback(GtkWidget *w, gpointer info) {make_open_file_dial
 static void file_new_callback(GtkWidget *w, gpointer info) {make_new_file_dialog();}
 static void file_record_callback(GtkWidget *w, gpointer info) {snd_record_file();}
 static void file_close_callback(GtkWidget *w, gpointer info) {if (any_selected_sound()) snd_close_file(any_selected_sound());}
-static void file_save_callback(GtkWidget *w, gpointer info) {if (any_selected_sound()) save_edits(any_selected_sound());} /* TODO redirect */
+static void file_save_callback(GtkWidget *w, gpointer info) {if (any_selected_sound()) save_edits_with_prompt(any_selected_sound());}
 static void file_update_callback(GtkWidget *w, gpointer info) {update_file_from_menu();}
 static void file_save_as_callback(GtkWidget *w, gpointer info) {make_sound_save_as_dialog(true);}
 static void file_revert_callback(GtkWidget *w, gpointer info) {revert_file_from_menu();}
@@ -931,7 +931,7 @@ static void popup_play_callback(GtkWidget *w, gpointer info)
 
 static void popup_save_callback(GtkWidget *w, gpointer info) 
 {
-  save_edits(any_selected_sound()); /* TODO redirect */
+  save_edits_with_prompt(any_selected_sound());
   gtk_widget_hide(popup_menu);
 }
 

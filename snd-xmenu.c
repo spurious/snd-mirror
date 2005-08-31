@@ -14,7 +14,7 @@ static void file_view_callback(Widget w, XtPointer info, XtPointer context) {mak
 static void file_new_callback(Widget w, XtPointer info, XtPointer context) {make_new_file_dialog();}
 static void file_record_callback(Widget w, XtPointer info, XtPointer context) {snd_record_file();}
 static void file_close_callback(Widget w, XtPointer info, XtPointer context) {if (any_selected_sound()) snd_close_file(any_selected_sound());}
-static void file_save_callback(Widget w, XtPointer info, XtPointer context) {if (any_selected_sound()) save_edits(any_selected_sound());} /* TODO redirect */
+static void file_save_callback(Widget w, XtPointer info, XtPointer context) {if (any_selected_sound()) save_edits_with_prompt(any_selected_sound());}
 static void file_update_callback(Widget w, XtPointer info, XtPointer context) {update_file_from_menu();}
 static void file_save_as_callback(Widget w, XtPointer info, XtPointer context) {make_sound_save_as_dialog(true);}
 static void file_revert_callback(Widget w, XtPointer info, XtPointer context) {revert_file_from_menu();}
@@ -704,7 +704,7 @@ void reflect_play_stop_in_popup_menu(void)
     set_button_label(popup_play_menu, _("Play"));
 }
 
-static void popup_save_callback(Widget w, XtPointer info, XtPointer context) {save_edits(any_selected_sound());} /* TODO redirect */
+static void popup_save_callback(Widget w, XtPointer info, XtPointer context) {save_edits_with_prompt(any_selected_sound());}
 static void popup_undo_callback(Widget w, XtPointer info, XtPointer context) {undo_edit_with_sync(current_channel(), 1);}
 static void popup_redo_callback(Widget w, XtPointer info, XtPointer context) {redo_edit_with_sync(current_channel(), 1);}
 static void popup_equalize_panes_callback(Widget w, XtPointer info, XtPointer context) {equalize_all_panes();}

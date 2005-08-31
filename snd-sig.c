@@ -1232,8 +1232,8 @@ static char *clm_channel(chan_info *cp, mus_any *gen, off_t beg, off_t dur, int 
     }
   if ((dur + overlap) > MAX_BUFFER_SIZE)
     {
-      temp_file = true; 
       io_error_t io_err = IO_NO_ERROR;
+      temp_file = true; 
       ofile = snd_tempnam();
       hdr = make_temp_header(ofile, SND_SRATE(sp), 1, dur + overlap, S_clm_channel);
       ofd = open_temp_file(ofile, 1, hdr, &io_err);
@@ -2201,8 +2201,8 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool over_selection,
       sfs = sc->sfs;
       if (dur > MAX_BUFFER_SIZE) /* if smaller than this, we don't gain anything by using a temp file (its buffers are this large) */
 	{
-	  temp_file = true; 
 	  io_error_t io_err = IO_NO_ERROR;
+	  temp_file = true; 
 	  ofile = snd_tempnam(); 
 	  hdr = make_temp_header(ofile, SND_SRATE(sp), si->chans, dur, (char *)origin);
 	  ofd = open_temp_file(ofile, si->chans, hdr, &io_err);
@@ -2687,8 +2687,8 @@ static char *run_channel(chan_info *cp, struct ptree *pt, off_t beg, off_t dur, 
     }
   if (dur > MAX_BUFFER_SIZE)
     {
-      temp_file = true; 
       io_error_t io_err = IO_NO_ERROR;
+      temp_file = true; 
       ofile = snd_tempnam();
       hdr = make_temp_header(ofile, SND_SRATE(sp), 1, dur, "run_channel temp");
       ofd = open_temp_file(ofile, 1, hdr, &io_err);

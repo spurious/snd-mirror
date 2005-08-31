@@ -799,8 +799,13 @@ void draw_rotated_axis_label(chan_info *cp, GdkGC *gc, char *text, gint x0, gint
 /* TODO: gtk side of row visible stuff */
 void ensure_scrolled_window_row_visible(widget_t list, int pos, int num_rows)
 {
+  /* view files file list */
+  /*   called in snd-file.c on vdat->file_list which is a vbox... -> need its parent(?) cww = scrolled window */
+  /*   actual parent is an internal viewport, then cww */
+  /* gtk_scrolled_window_get_vadjustment or in 2.7.0 gtk_scrolled_window_get_vscrollbar -- what is this? */
 }
 
 void ensure_list_row_visible(widget_t list, int pos)
 {
+  /* file dialog file list */
 }

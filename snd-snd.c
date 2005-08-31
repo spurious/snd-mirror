@@ -3232,13 +3232,7 @@ static XEN g_save_sound(XEN index)
 
   redirect_snd_error_to(save_sound_error_handler, (void *)S_save_sound);
   redirect_snd_warning_to(save_sound_error_handler, (void *)S_save_sound);
-  {
-    bool asking;
-    asking = ask_before_overwrite(ss);
-    set_ask_before_overwrite(false);
-    err = save_edits(sp);      
-    set_ask_before_overwrite(asking);
-  }
+  err = save_edits_without_asking(sp);      
   redirect_snd_error_to(NULL, NULL);
   redirect_snd_warning_to(NULL, NULL);
 

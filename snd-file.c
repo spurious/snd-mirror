@@ -1426,8 +1426,6 @@ static snd_info *snd_update_1(snd_info *sp, const char *ur_filename)
   sp->watchers = NULL;       /* don't confuse watchers with a temporary close! */
   sp->watchers_size = 0;
 
-  /* TODO: do I need to save sp->writing? ->unreadable? */
-
   snd_close_file(sp);
 
   /* no mus_sound_forget here because we may be simply re-interpreting the existing data (set! (data-format) ...) etc */

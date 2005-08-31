@@ -4631,10 +4631,9 @@ static void alsa_describe_audio_state_1(void)
  * record case improved after perusal of Snack 1.6/src/jkAudio_sun.c
  */
 
-/* TODO: opteron audio appears to be broken */
+/* SOMEDAY: opteron audio appears to be broken -- I tried installing Jurgen Keil's drivers, but they made no difference */
 
 /* apparently input other than 8000 is 16-bit, 8000 is (?) mulaw */
-/* apparently Sun-on-Intel reads/writes little-endian */
 
 #if (defined(MUS_SUN) || defined(MUS_OPENBSD)) && (!(defined(AUDIO_OK)))
 #define AUDIO_OK
@@ -4811,21 +4810,27 @@ int mus_audio_open_output(int ur_dev, int srate, int chans, int format, int size
   info.play.encoding = encode;
   err = ioctl(audio_fd, AUDIO_SETINFO, &info); 
   if (err == -1) 
-    RETURN_ERROR_EXIT(MUS_AUDIO_CANT_WRITE, audio_fd,
-		      mus_format("can't set srate %d, chans %d, bits %d, and encode %d on output %s (%s)",
-				 srate, chans, bits, encode,
-				 mus_audio_device_name(dev), dev_name));
-  if ((int)info.play.channels != chans) 
-    RETURN_ERROR_EXIT(MUS_AUDIO_CHANNELS_NOT_AVAILABLE, audio_fd,
-		      mus_format("can't set output %s (%s) channels to %d",
-				 mus_audio_device_name(dev), dev_name, chans));
-  if (((int)info.play.precision != bits) || 
-      ((int)info.play.encoding != encode)) 
-    RETURN_ERROR_EXIT(MUS_AUDIO_FORMAT_NOT_AVAILABLE, audio_fd,
-		      mus_format("can't set output %s (%s) format to %d bits, %d encode (%s)",
-				 mus_audio_device_name(dev), dev_name,
-				 bits, encode, 
-				 mus_data_format_name(format)));
+    {
+      ioctl(audio_fd, AUDIO_GETINFO, &info); 
+
+      if ((int)info.play.channels != chans) 
+	RETURN_ERROR_EXIT(MUS_AUDIO_CHANNELS_NOT_AVAILABLE, audio_fd,
+			  mus_format("can't set output %s (%s) channels to %d",
+				     mus_audio_device_name(dev), dev_name, chans));
+      
+      if (((int)info.play.precision != bits) || 
+	  ((int)info.play.encoding != encode)) 
+	RETURN_ERROR_EXIT(MUS_AUDIO_FORMAT_NOT_AVAILABLE, audio_fd,
+			  mus_format("can't set output %s (%s) format to %d bits, %d encode (%s)",
+				     mus_audio_device_name(dev), dev_name,
+				     bits, encode, 
+				     mus_data_format_name(format)));
+      
+      if ((int)info.play.sample_rate != srate) 
+	RETURN_ERROR_EXIT(MUS_AUDIO_CHANNELS_NOT_AVAILABLE, audio_fd,
+			  mus_format("can't set output %s (%s) srate to %d",
+				     mus_audio_device_name(dev), dev_name, srate));
+    }
   /* man audio sez the play.buffer_size field is not currently supported */
   /* but since the default buffer size is 8180! we need ioctl(audio_fd, I_SETSIG, ...) */
   ioctl(audio_fd, I_FLUSH, FLUSHR);
@@ -5090,34 +5095,41 @@ int mus_audio_mixer_read(int ur_dev, int field, int chan, float *val)
 	  */
 	  if (err == -1) 
 	    RETURN_ERROR_EXIT(MUS_AUDIO_CANT_READ, audio_fd,
-			      mus_format("can't get device info on %s (%s)",
+			      mus_format("can't get data format info for %s (%s)",
 					 dev_name, 
 					 mus_audio_device_name(dev)));
 	  port = 1;
+	  if ((ad.name) &&
+	      (strcmp(ad.name, "SUNW,audio810") == 0))
+	    {
+	      val[0] = 1;
+	      val[1] = MUS_MULAW;
+	    }
+	  else
+	    {
 #ifndef AUDIO_DEV_AMD
-	  if ((ad.name) && 
-	      (strcmp(ad.name, "SUNW, am79c30") != 0))
+	      if ((ad.name) && 
+		  (strcmp(ad.name, "SUNW, am79c30") != 0))
 #else
-	  if (ad == AUDIO_DEV_AMD)
+	      if (ad == AUDIO_DEV_AMD)
 #endif
-	    {
-	      if (chan > port) val[port] = MUS_BSHORT; 
-	      port++;
-	    }
+		{
+		  if (chan > port) val[port++] = MUS_BSHORT; 
+		}
 #ifndef AUDIO_DEV_AMD
-	  if ((ad.name) && 
-	      (strcmp(ad.name, "SUNW, sbpro") != 0) && 
-	      (strcmp(ad.name, "SUNW, sb16") != 0))
-	    {
-	      if (chan > port) val[port] = MUS_ALAW; 
-	      port++;
-	    }
+	      if ((ad.name) && 
+		  (strcmp(ad.name, "SUNW, sbpro") != 0) && 
+		  (strcmp(ad.name, "SUNW, sb16") != 0))
+		{
+		  if (chan > port) val[port++] = MUS_ALAW; 
+		}
 #endif
-          if (chan > port) val[port] = MUS_MULAW;
+	      if (chan > port) val[port++] = MUS_MULAW;
 #if MUS_LITTLE_ENDIAN
-	  if (chan > (port + 1)) val[++port] = MUS_LSHORT;
+	      if (chan > port) val[port++] = MUS_LSHORT;
 #endif
-          val[0] = port;
+	      val[0] = port - 1;
+	    }
         }
       else
         {

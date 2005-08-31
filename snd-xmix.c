@@ -1,8 +1,5 @@
 #include "snd.h"
 
-/* TODO: local speed-control-style (need track side, test) (also check that set mix resets style etc)
- */
-
 /* ---------------- mix dialog ---------------- */
 
 static Widget mix_dialog = NULL;
@@ -56,9 +53,9 @@ static void speed_label_click_callback(Widget w, XtPointer context, XtPointer in
   if (!(mix_ok_and_unlocked(mix_dialog_id))) return;
   switch (mix_speed_style(mix_dialog_id))
     {
-    case SPEED_CONTROL_AS_FLOAT:    set_mix_speed_style(mix_dialog_id, SPEED_CONTROL_AS_RATIO);    break;
-    case SPEED_CONTROL_AS_RATIO:    set_mix_speed_style(mix_dialog_id, SPEED_CONTROL_AS_SEMITONE); break;
-    case SPEED_CONTROL_AS_SEMITONE: set_mix_speed_style(mix_dialog_id, SPEED_CONTROL_AS_FLOAT);    break;
+    case SPEED_CONTROL_AS_FLOAT:    set_mix_speed_style(mix_dialog_id, SPEED_CONTROL_AS_RATIO, true);    break;
+    case SPEED_CONTROL_AS_RATIO:    set_mix_speed_style(mix_dialog_id, SPEED_CONTROL_AS_SEMITONE, true); break;
+    case SPEED_CONTROL_AS_SEMITONE: set_mix_speed_style(mix_dialog_id, SPEED_CONTROL_AS_FLOAT, true);    break;
     }
   speed_changed(mix_dialog_mix_speed(mix_dialog_id),
 		speed_number_buffer,
@@ -1101,7 +1098,7 @@ static void track_speed_click_callback(Widget w, XtPointer context, XtPointer in
   track_dialog_set_speed(track_dialog_id,
 			 speed_changed(1.0,
 				       sfs,
-				       speed_control_style(ss),
+				       track_speed_style(track_dialog_id),
 				       speed_control_tones(ss),
 				       6),
 			 track_dialog_slider_dragging);
@@ -1129,15 +1126,15 @@ static void track_speed_label_click_callback(Widget w, XtPointer context, XtPoin
 {
   char speed_number_buffer[6];
   ASSERT_WIDGET_TYPE(XmIsPushButton(w), w);
-  switch (speed_control_style(ss))
+  switch (track_speed_style(track_dialog_id))
     {
-    case SPEED_CONTROL_AS_FLOAT:    in_set_speed_control_style(ss, SPEED_CONTROL_AS_RATIO);    break;
-    case SPEED_CONTROL_AS_RATIO:    in_set_speed_control_style(ss, SPEED_CONTROL_AS_SEMITONE); break;
-    case SPEED_CONTROL_AS_SEMITONE: in_set_speed_control_style(ss, SPEED_CONTROL_AS_FLOAT);    break;
+    case SPEED_CONTROL_AS_FLOAT:    set_track_speed_style(track_dialog_id, SPEED_CONTROL_AS_RATIO, true);    break;
+    case SPEED_CONTROL_AS_RATIO:    set_track_speed_style(track_dialog_id, SPEED_CONTROL_AS_SEMITONE, true); break;
+    case SPEED_CONTROL_AS_SEMITONE: set_track_speed_style(track_dialog_id, SPEED_CONTROL_AS_FLOAT, true);    break;
     }
   speed_changed(track_dialog_track_speed(track_dialog_id),
 		speed_number_buffer,
-		speed_control_style(ss),
+		track_speed_style(track_dialog_id),
 		speed_control_tones(ss),
 		6);
   set_label(w_track_speed_number, speed_number_buffer);
@@ -2134,7 +2131,7 @@ static void update_track_dialog(int track_id)
 	  char *temp = NULL;
 	  val = track_dialog_track_speed(track_dialog_id);
 	  XtVaSetValues(w_track_speed, XmNvalue, speed_to_scroll(speed_control_min(ss), val, speed_control_max(ss)), NULL);
-	  speed_changed(val, lab, speed_control_style(ss), speed_control_tones(ss), 6);
+	  speed_changed(val, lab, track_speed_style(track_dialog_id), speed_control_tones(ss), 6);
 	  set_label(w_track_speed_number, lab);
 	  widget_int_to_text(w_track_track, track_dialog_track_track(track_dialog_id));
 	  widget_int_to_text(w_track_id, track_dialog_id);

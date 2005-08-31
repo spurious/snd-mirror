@@ -497,6 +497,7 @@ void report_in_minibuffer(snd_info *sp, const char *format, ...)
   char *buf;
   va_list ap;
   if ((!sp) || (!(sp->active)) || (!(sp->sgx)) || (sp->inuse != SOUND_NORMAL)) return;
+  if ((sp->minibuffer_on == MINI_PROMPT) || (sp->minibuffer_on == MINI_USER)) return;
   va_start(ap, format);
   buf = vstr(format, ap);
   va_end(ap);
@@ -738,6 +739,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
   str = get_minibuffer_string(sp);
   if ((str) && (*str))
     remember_mini_string(sp, str);
+  sp->minibuffer_on = MINI_REPORT;
 
 #if HAVE_EXTENSION_LANGUAGE
   if (sp->searching)
@@ -1017,6 +1019,16 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 		}
 	      else report_in_minibuffer(sp, _("no previous macro"));
 	      break;
+	    case SAVE_EDITS_FILING:
+	      if ((str[0] == 'y') ||
+		  (str[0] == 'Y'))
+		{
+		  sp->need_update = false;
+		  clear_minibuffer_error(sp);
+		  save_edits_and_update_display(sp);
+		}
+	      clear_minibuffer(sp);
+	      break;
 	    default:
 	      break;
 	    }
@@ -1084,6 +1096,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 	  redirect_everything_to(NULL, NULL);
 	}
       sp->prompting = false;
+      sp->minibuffer_on = MINI_REPORT;
       /* clear_minibuffer(sp); */ /* TODO: how to cleanup here? */
       return;
     }
@@ -1172,6 +1185,19 @@ static void window_frames_selection(chan_info *cp)
 	  (selection_is_active_in_channel(sp->chans[0])) && 
 	  (sp->sync != (cp->sound->sync)))
 	set_x_axis_x0x1(sp->chans[0], x0, x1);
+    }
+}
+
+void save_edits_with_prompt(snd_info *sp)
+{
+  io_error_t err;
+  redirect_everything_to(printout_to_minibuffer, (void *)sp);
+  err = save_edits(sp); 
+  redirect_everything_to(NULL, NULL);
+  if (err == IO_NEED_WRITE_CONFIRMATION)
+    {
+      prompt(sp, _("file has changed; overwrite anyway?"), NULL); 
+      sp->filing = SAVE_EDITS_FILING; 
     }
 }
 
@@ -1288,7 +1314,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
   static off_t count = 1;
   static bool got_count = false;
   static bool m = false;
-  bool searching = false, cursor_searching = false, clear_search = true;
+  bool dont_clear_minibuffer = false, cursor_searching = false, clear_search = true;
   int hashloc, i, state;
   off_t loc;
   static off_t ext_count = 1;
@@ -1393,7 +1419,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 	      break; 
 	    case snd_K_I: case snd_K_i: 
 	      show_cursor_info(cp); 
-	      searching = true; 
+	      dont_clear_minibuffer = true; 
 	      break;
 	    case snd_K_J: case snd_K_j: 
 	      cp->cursor_on = true; 
@@ -1472,13 +1498,13 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 	    case snd_K_R: case snd_K_r: 
 	      cp->cursor_on = true; 
 	      cursor_search(cp, -count); 
-	      searching = true; 
+	      dont_clear_minibuffer = true; 
 	      cursor_searching = true; 
 	      break;
 	    case snd_K_S: case snd_K_s: 
 	      cp->cursor_on = true; 
 	      cursor_search(cp, count); 
-	      searching = true; 
+	      dont_clear_minibuffer = true; 
 	      cursor_searching = true; 
 	      break;
 #endif
@@ -1605,7 +1631,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 	    {
 	    case snd_K_A: case snd_K_a: 
 	      get_amp_expression(sp, ext_count, OVER_SOUND);
-	      searching = true; 
+	      dont_clear_minibuffer = true; 
 	      break;
 	    case snd_K_B: case snd_K_b: 
 	      set_window_bounds(cp, ext_count); 
@@ -1616,7 +1642,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 	    case snd_K_D: case snd_K_d: 
 	      prompt(sp, _("eps file:"), NULL); 
 	      sp->printing = ((ext_count != 0) ? PRINTING : NOT_PRINTING);
-	      searching = true; 
+	      dont_clear_minibuffer = true; 
 	      break;
 	    case snd_K_E: case snd_K_e: 
 	      if (macro_size == 0)
@@ -1625,13 +1651,13 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 		{
 		  prompt(sp, _("macro name:"), NULL); 
 		  sp->filing = MACRO_FILING; 
-		  searching = true; 
+		  dont_clear_minibuffer = true; 
 		}
 	      break;
 	    case snd_K_F: case snd_K_f: 
 	      prompt(sp, _("file:"), NULL); 
 	      sp->filing = INPUT_FILING; 
-	      searching = true; 
+	      dont_clear_minibuffer = true; 
 	      break;
 	    case snd_K_G: case snd_K_g: 
 	      control_g(sp);
@@ -1639,7 +1665,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 	    case snd_K_I: case snd_K_i: 
 	      prompt(sp, _("insert file:"), NULL); 
 	      sp->filing = INSERT_FILING; 
-	      searching = true; 
+	      dont_clear_minibuffer = true; 
 	      break;
 	    case snd_K_J: case snd_K_j:
 	      cp->cursor_on = true; 
@@ -1648,13 +1674,13 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 	    case snd_K_L: case snd_K_l: 
 	      prompt(sp, _("load:"), NULL); 
 	      sp->loading = true;
-	      searching = true; 
+	      dont_clear_minibuffer = true; 
 	      break;
 	    case snd_K_M: case snd_K_m:
 	      cp->cursor_on = true; 
 	      prompt_named_mark(cp);
 	      set_show_marks(true); 
-	      searching = true; 
+	      dont_clear_minibuffer = true; 
 	      break;
 	    case snd_K_O: case snd_K_o: 
 	      /* this doesn't change the View:Controls menu label because (sigh...) it's specific to the currently selected sound */
@@ -1666,15 +1692,14 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 	    case snd_K_Q: case snd_K_q: 
 	      prompt(sp, _("mix file:"), NULL); 
 	      sp->filing = CHANGE_FILING; 
-	      searching = true; 
+	      dont_clear_minibuffer = true; 
 	      break;
 	    case snd_K_R: case snd_K_r: 
 	      redo_edit_with_sync(cp, ext_count); 
 	      break;
 	    case snd_K_S: case snd_K_s: 
-	      redirect_everything_to(printout_to_minibuffer, (void *)sp);
-	      save_edits(sp); 
-	      redirect_everything_to(NULL, NULL);
+	      save_edits_with_prompt(sp);
+	      dont_clear_minibuffer = true; 
 	      break;
 	    case snd_K_T: case snd_K_t: 
 	      stop_playing_sound(sp, PLAY_C_T); 
@@ -1688,7 +1713,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 	    case snd_K_W: case snd_K_w: 
 	      prompt(sp, _("file:"), NULL); 
 	      sp->filing = CHANNEL_FILING; 
-	      searching = true; 
+	      dont_clear_minibuffer = true; 
 	      break;
 	    case snd_K_Z: case snd_K_z: 
 	      cp->cursor_on = true; 
@@ -1890,7 +1915,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 		  if (selection_is_active_in_channel(cp)) 
 		    {
 		      get_amp_expression(sp, (!got_ext_count) ? 1 : ext_count, OVER_SELECTION); 
-		      searching = true; 
+		      dont_clear_minibuffer = true; 
 		    } 
 		  else no_selection_error(sp); 
 		  break;
@@ -1905,7 +1930,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 		case snd_K_D: case snd_K_d: 
 		  prompt(sp, _("temp dir:"), NULL); 
 		  sp->filing = TEMP_FILING; 
-		  searching = true; 
+		  dont_clear_minibuffer = true; 
 		  break;
 		case snd_K_E: case snd_K_e: 
 		  if (defining_macro) 
@@ -1930,7 +1955,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 		case snd_K_J: case snd_K_j: 
 		  prompt(sp, _("mark:"), NULL); 
 		  sp->finding_mark = true; 
-		  searching = true; 
+		  dont_clear_minibuffer = true; 
 		  break;
 		case snd_K_K: case snd_K_k: 
 		  snd_close_file(sp); 
@@ -1969,7 +1994,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 		case snd_K_W: case snd_K_w:
 		  prompt(sp, _("file:"), NULL); 
 		  sp->filing = SELECTION_FILING; 
-		  searching = true;
+		  dont_clear_minibuffer = true;
 		  break;
 		case snd_K_Z: case snd_K_z: 
 		  if (selection_is_active_in_channel(cp))
@@ -2018,7 +2043,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 		  cp->cursor_on = true;
 		  prompt_named_mark(cp); 
 		  set_show_marks(true); 
-		  searching = true; 
+		  dont_clear_minibuffer = true; 
 		  break;
 		default:
 		  report_in_minibuffer(sp, _("C-x %s undefined"), key_to_name(keysym));
@@ -2034,7 +2059,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
   if (!extended_mode) {got_ext_count = false; ext_count = 1;}
   if ((sp) && (clear_search))
     {
-      if ((sp->minibuffer_on == MINI_FIND) && (!searching))
+      if ((sp->minibuffer_on == MINI_FIND) && (!dont_clear_minibuffer))
 	clear_minibuffer(sp);
       else 
 	if (!cursor_searching) 

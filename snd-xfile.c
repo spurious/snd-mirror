@@ -32,14 +32,8 @@
  * TODO: in mix/insert: panel for mix at cursor/beginning/end/mark/sample (num)
  * TODO: c-x c-n for new, or should c-x c-f behave as in emacs
  * TODO: add|delete-file-filter, file-filters tied to all file dialogs (panel of radio buttons where just sounds is now)
- *
- * PERHAPS: DnD (multi-select etc) to view-files list: ../test/openmotif-2.2.4/demos/programs/filemanager/filemanager
- *    need drop-watchers here, set up on vdat to get possible multi-file string, load each
- *    similarly for the menus -- why doesn't the drag context stuff work?
- *    need same stuff on gtk side -- how do they send multi-names? Qt? etc...
  * PERHAPS: Copy Viewer button in vf
  * TODO: in nb.scm, get the info dialog out of the line of sight and unmanage it if view-files is unmanaged
- * TODO: horizontal pane in view-files
  * TODO: report-in-minibuffer extended to go to any dialog
  * TODO: always show bg wave in vf
  * TODO: will need at least a reset button for the vf env, perhaps reset for entire vf
@@ -4607,7 +4601,7 @@ widget_t start_view_files_dialog_1(view_files_info *vdat, bool managed)
       int n;
       Arg args[20];
       XmString xdismiss, xhelp, titlestr, new_viewer_str, s1, bstr;
-      Widget mainform, viewform, vertical_sep, leftform;
+      Widget mainform, viewform, leftform;
       Widget left_title_sep, add_label, sep1, sep2, sep3, sep4, sep5, sep6, sep7, sort_cascade_menu;
       Widget plw, rlw, sbar;
       XtCallbackList n1, n2, n3, n4;
@@ -4657,15 +4651,16 @@ widget_t start_view_files_dialog_1(view_files_info *vdat, bool managed)
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNbottomWidget, XmMessageBoxGetChild(vdat->dialog, XmDIALOG_SEPARATOR)); n++;
-      mainform = XtCreateManagedWidget("formd", xmFormWidgetClass, vdat->dialog, args, n);
+      XtSetArg(args[n], XmNsashIndent, 2); n++;
+      XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
+      mainform = XtCreateManagedWidget("formd", xmPanedWindowWidgetClass, vdat->dialog, args, n);
 
 
       /* -------- left side controls -------- */
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNrightAttachment, XmATTACH_POSITION); n++;
-      XtSetArg(args[n], XmNrightPosition, 49); n++;
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
       leftform = XtCreateManagedWidget("leftform", xmFormWidgetClass, mainform, args, n);
@@ -5106,28 +5101,10 @@ widget_t start_view_files_dialog_1(view_files_info *vdat, bool managed)
       XtSetArg(args[n], XmNheight, 100); n++;
       vdat->env_drawer = XtCreateManagedWidget("amp-env-window", xmDrawingAreaWidgetClass, env_frame, args, n);
 
-
-
-      /* -------- middle vertical separator -------- */
+      /* right side */
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
-      XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
-      XtSetArg(args[n], XmNleftWidget, leftform); n++;
-      XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
-      XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNorientation, XmVERTICAL); n++;
-      XtSetArg(args[n], XmNseparatorType, XmSHADOW_ETCHED_IN); n++;
-      XtSetArg(args[n], XmNwidth, 4); n++;
-      vertical_sep = XtCreateManagedWidget("vertical-sep", xmSeparatorWidgetClass, mainform, args, n);
-
-
-      /* -------- right side file box -------- */
-
-      n = 0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
-      XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
-      XtSetArg(args[n], XmNleftWidget, vertical_sep); n++;
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;

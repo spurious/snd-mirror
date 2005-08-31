@@ -4539,7 +4539,16 @@ static char *edit_list_data_to_temp_file(chan_info *cp, ed_list *ed, file_delete
   sd = cp->sounds[ed->sound_location];
   if (sd->type == SND_DATA_BUFFER)
     mus_array_to_file(ofile, sd->buffered_data, ed->len, 22050, 1);
-  else copy_file(sd->filename, ofile); /* TODO: check error? */
+  else 
+    {
+      io_error_t io_err;
+      io_err = copy_file(sd->filename, ofile);
+      if (io_err != IO_NO_ERROR)
+	snd_warning("%s edit list temp file %s: %s",
+		    io_error_name(io_err),
+		    ofile,
+		    snd_io_strerror());
+    }
   if (delete_me == DELETE_ME) remember_temp(ofile, 1); /* deletion upon exit (forget_temps) if a temp (edit-list->function, but not save-state) */
   return(ofile);
 }
@@ -6540,10 +6549,10 @@ static snd_fd *init_sample_read_any_with_bufsize(off_t samp, chan_info *cp, read
     {
       if (mus_file_probe(sp->filename) == 0)
 	{
-	  snd_warning(_("file %s no longer exists!"), sp->short_filename);
+	  snd_warning(_("%s no longer exists!"), sp->short_filename);
 	  return(NULL);
 	}
-      else snd_warning(_("file %s has changed since we last read it!"), sp->short_filename);
+      else snd_warning(_("%s has changed since we last read it!"), sp->short_filename);
     }
 
   curlen = cp->samples[edit_position];
@@ -6947,7 +6956,7 @@ void copy_then_swap_channels(chan_info *cp0, chan_info *cp1, int pos0, int pos1)
   update_graph(cp1);
 }
 
-static io_error_t save_edits_and_update_display(snd_info *sp)
+io_error_t save_edits_and_update_display(snd_info *sp)
 {
   /* open temp, write current state, rename to old, reopen and clear all state */
   /* can't overwrite current because we may have cut/paste backpointers scattered around the current edit list */
@@ -7144,7 +7153,7 @@ io_error_t save_channel_edits(chan_info *cp, char *ofile, int pos)
   return(err);
 }
 
-io_error_t save_edits(snd_info *sp)
+static io_error_t save_edits_1(snd_info *sp, bool ask)
 {
   int i;
   bool need_save = false;
@@ -7168,8 +7177,6 @@ io_error_t save_edits(snd_info *sp)
     }
   if (!need_save) return(IO_NO_CHANGES);
 
-  /* TODO: use FAM for these? */
-
   /* check for change to file while we were editing it */
   current_write_date = file_write_date(sp->filename);
   /* returns -1 if file does not exist (stat -> -1) */
@@ -7179,19 +7186,10 @@ io_error_t save_edits(snd_info *sp)
       /* unless by chance it fits in one in-core buffer, there's nothing we can do now */
       return(IO_CANT_OPEN_FILE);
     }
-  if ((current_write_date - sp->write_date) > 1) /* weird!! In Redhat 7.1 these can differ by 1?? Surely this is a bug! */
-    {
-      if (ask_before_overwrite(ss))
-	return(IO_NEED_WRITE_CONFIRMATION); /* prompt */
-      
-      /* yes = snd_yes_or_no_p(_("%s changed on disk! Save anyway?"), sp->short_filename); */
-      /* TODO: old yes-or-no case needs fixup
-       * snd-kbd (C-s): could prompt in minibuffer and upon response, come here
-       * snd-snd: save-sound (xen) overrides already
-       * snd-g|xmenu: File:save and Popup:save -- in  either case, there is a sound open being saved -- use minibuffer
-       */
-      
-    }
+  if ((ask) &&
+      (ask_before_overwrite(ss)) &&
+      ((current_write_date - sp->write_date) > 1)) /* In Redhat 7.1 these can differ by 1?? Surely this is a bug! */
+    return(IO_NEED_WRITE_CONFIRMATION);            /* see snd-kbd.c save_edits_with_prompt for the rest of this */
   err = save_edits_and_update_display(sp);
   if (err == IO_NO_ERROR)
     {
@@ -7199,6 +7197,16 @@ io_error_t save_edits(snd_info *sp)
 	save_region_backpointer(sp);
     }
   return(err);
+}
+
+io_error_t save_edits(snd_info *sp)
+{
+  return(save_edits_1(sp, true));
+}
+
+io_error_t save_edits_without_asking(snd_info *sp)
+{
+  return(save_edits_1(sp, false));
 }
 
 void revert_edits(chan_info *cp)

@@ -64,9 +64,9 @@ static gboolean speed_label_click_callback(GtkWidget *w, GdkEventButton *ev, gpo
   if (!(mix_ok_and_unlocked(mix_dialog_id))) return(false);
   switch (mix_speed_style(mix_dialog_id))
     {
-    case SPEED_CONTROL_AS_FLOAT:    set_mix_speed_style(mix_dialog_id, SPEED_CONTROL_AS_RATIO);    break;
-    case SPEED_CONTROL_AS_RATIO:    set_mix_speed_style(mix_dialog_id, SPEED_CONTROL_AS_SEMITONE); break;
-    case SPEED_CONTROL_AS_SEMITONE: set_mix_speed_style(mix_dialog_id, SPEED_CONTROL_AS_FLOAT);    break;
+    case SPEED_CONTROL_AS_FLOAT:    set_mix_speed_style(mix_dialog_id, SPEED_CONTROL_AS_RATIO, true);    break;
+    case SPEED_CONTROL_AS_RATIO:    set_mix_speed_style(mix_dialog_id, SPEED_CONTROL_AS_SEMITONE, true); break;
+    case SPEED_CONTROL_AS_SEMITONE: set_mix_speed_style(mix_dialog_id, SPEED_CONTROL_AS_FLOAT, true);    break;
     }
   set_speed_label(w_speed_number, mix_dialog_mix_speed(mix_dialog_id));
   return(false);
@@ -731,7 +731,7 @@ GtkWidget *make_mix_dialog(void)
       gtk_widget_show(w_speed_label_event);
       SG_SIGNAL_CONNECT(w_speed_label_event, "button_press_event", speed_label_click_callback, NULL);
 
-      switch (DEFAULT_SPEED_CONTROL_STYLE)
+      switch (speed_control_style(ss))
 	{
 	case SPEED_CONTROL_AS_RATIO:    w_speed_number = gtk_label_new("1/1");  break;
 	case SPEED_CONTROL_AS_SEMITONE: w_speed_number = gtk_label_new("1");    break;
@@ -972,11 +972,11 @@ static gboolean track_speed_label_click_callback(GtkWidget *w, GdkEventButton *e
   track_speed_pressed = false;
   track_speed_dragged = false;
   if (!(track_p(track_dialog_id))) return(false);
-  switch (speed_control_style(ss))
+  switch (track_speed_style(track_dialog_id))
     {
-    case SPEED_CONTROL_AS_FLOAT:    in_set_speed_control_style(ss, SPEED_CONTROL_AS_RATIO);    break;
-    case SPEED_CONTROL_AS_RATIO:    in_set_speed_control_style(ss, SPEED_CONTROL_AS_SEMITONE); break;
-    case SPEED_CONTROL_AS_SEMITONE: in_set_speed_control_style(ss, SPEED_CONTROL_AS_FLOAT);    break;
+    case SPEED_CONTROL_AS_FLOAT:    set_track_speed_style(track_dialog_id, SPEED_CONTROL_AS_RATIO, true);    break;
+    case SPEED_CONTROL_AS_RATIO:    set_track_speed_style(track_dialog_id, SPEED_CONTROL_AS_SEMITONE, true); break;
+    case SPEED_CONTROL_AS_SEMITONE: set_track_speed_style(track_dialog_id, SPEED_CONTROL_AS_FLOAT, true);    break;
     }
   set_speed_label(w_track_speed_number, track_dialog_track_speed(track_dialog_id));
   return(false);
@@ -1636,7 +1636,7 @@ GtkWidget *make_track_dialog(void)
       gtk_widget_show(w_track_speed_label_event);
       SG_SIGNAL_CONNECT(w_track_speed_label_event, "button_press_event", track_speed_label_click_callback, NULL);
       
-      switch (DEFAULT_SPEED_CONTROL_STYLE)
+      switch (speed_control_style(ss))
 	{
 	case SPEED_CONTROL_AS_RATIO:    w_track_speed_number = gtk_label_new("1/1");  break;
 	case SPEED_CONTROL_AS_SEMITONE: w_track_speed_number = gtk_label_new("1");    break;

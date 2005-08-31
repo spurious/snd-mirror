@@ -765,6 +765,7 @@ style \"reset\" = \"default_button\"\n\
 }\n\
 \n\
 widget \"*.reset_button\" style \"reset\"\n\
+widget \"*.the_unpane\" style \"default\"\n\
 ");
       }
 #endif
