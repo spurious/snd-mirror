@@ -795,17 +795,43 @@ void draw_rotated_axis_label(chan_info *cp, GdkGC *gc, char *text, gint x0, gint
   rotate_text(w->window, gc, AXIS_LABEL_FONT(ss), text, 90, x0, y0);
 }
 
-
-/* TODO: gtk side of row visible stuff */
-void ensure_scrolled_window_row_visible(widget_t list, int pos, int num_rows)
+void ensure_scrolled_window_row_visible(widget_t list, int row, int num_rows)
 {
   /* view files file list */
-  /*   called in snd-file.c on vdat->file_list which is a vbox... -> need its parent(?) cww = scrolled window */
-  /*   actual parent is an internal viewport, then cww */
-  /* gtk_scrolled_window_get_vadjustment or in 2.7.0 gtk_scrolled_window_get_vscrollbar -- what is this? */
+  /*   called in snd-file.c on vdat->file_list which is a vbox; its parent is a viewport */
+  GtkWidget *parent;
+  GtkAdjustment *v;
+  gdouble maximum, size, new_value, minimum;
+  parent = gtk_widget_get_parent(list);
+  v = gtk_viewport_get_vadjustment(GTK_VIEWPORT(parent));
+  maximum = v->upper;
+  minimum = v->lower;
+  size = v->page_size;
+  maximum -= size;
+  if (row == 0)
+    new_value = 0.0;
+  else
+    {
+      if (row >= (num_rows - 1))
+	new_value = maximum;
+      else new_value = ((row + 0.5) * ((maximum - minimum) / (float)(num_rows - 1)));
+    }
+  if (new_value != v->value)
+    gtk_adjustment_set_value(v, new_value);
 }
 
 void ensure_list_row_visible(widget_t list, int pos)
 {
-  /* file dialog file list */
+  /* TODO: ensure visible for file dialog file list */
+  /* in filesel file_list is a tree_view widget, its parent a scrolled_window,
+   *   but what about filechooser?
+   *   and how to get # rows in either?
+   */
+#if 0
+  GtkWidget *parent;
+  GtkAdjustment *v;
+  gdouble maximum, size, new_value, minimum;
+  parent = gtk_widget_get_parent(list);
+  v = gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(parent));
+#endif
 }

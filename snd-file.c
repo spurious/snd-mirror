@@ -766,7 +766,7 @@ static void fam_sp_action(struct fam_info *fp, FAMEvent *fe)
 	    {
 	      char *msg;
 	      msg = mus_format(_("%s is read-protected!"), sp->short_filename);
-	      display_minibuffer_error(sp, msg); /* TODO: this should clear if the permission bits change */
+	      display_minibuffer_error(sp, msg);
 	      FREE(msg);
 	      sp->file_unreadable = true;
 	      snd_file_bomb_icon(sp, true);
@@ -774,6 +774,7 @@ static void fam_sp_action(struct fam_info *fp, FAMEvent *fe)
 	  else
 	    {
 	      sp->file_unreadable = false;
+	      clear_minibuffer_error(sp);
 	      err = access(sp->filename, W_OK);
 	      sp->file_read_only = (err < 0);
 	      snd_file_lock_icon(sp, sp->user_read_only || sp->file_read_only);
@@ -3371,15 +3372,17 @@ bool vf_insert(view_files_info *vdat)
       tempfile = scale_and_src(selected_files, len, sp->nchans, vdat->amp, vdat->speed, vdat->amp_env, &err);
       if (err)
 	{
-	  /* TODO: clear temp file problem?? */
 	  vf_post_error(tempfile, (void *)vdat);
 	  ok = false;
 	}
       else
-	ok = insert_complete_file(sp, 
-				  tempfile,
-				  vdat->beg,
-				  (sp->nchans > 1) ? MULTICHANNEL_DELETION : DELETE_ME);
+	{
+	  vf_clear_error(vdat);
+	  ok = insert_complete_file(sp, 
+				    tempfile,
+				    vdat->beg,
+				    (sp->nchans > 1) ? MULTICHANNEL_DELETION : DELETE_ME);
+	}
       FREE(tempfile);
       for (i = 0; i < len; i++)
 	FREE(selected_files[i]);
@@ -3666,8 +3669,23 @@ void view_files_add_directory(widget_t dialog, const char *dirname)
   if (vdat)
     {
       full_filename = mus_expand_filename((const char *)dirname);
-      /* TODO: if not there or not readable, post error */
-      add_directory_to_view_files_list(vdat, full_filename);
+      if (!(mus_file_probe(full_filename)))
+	{
+	  char *msg;
+	  if ((vdat->dialog) &&
+	      (widget_is_active(vdat->dialog)))
+	    {
+	      if (errno != 0)
+		msg = mus_format("%s: %s", full_filename, strerror(errno));
+	      else msg = mus_format("%s does not exist", full_filename);
+	      vf_post_add_error(msg, (void *)vdat);
+	      FREE(msg);
+	    }
+	}
+      else
+	{
+	  add_directory_to_view_files_list(vdat, full_filename);
+	}
       FREE(full_filename);
     }
 }
@@ -4158,11 +4176,25 @@ static XEN g_set_sound_loop_info(XEN snd, XEN vals)
     sp->writing = true;
     if (err == IO_SAVE_HOOK_CANCELLATION)
       snd_remove(tmp_file, IGNORE_CACHE);
-    else move_file(tmp_file, sp->filename); /* should we cancel and restart a monitor? */ /* TODO: err check from move_file */
+    else 
+      {
+	err = move_file(tmp_file, sp->filename);
+	if (err != IO_NO_ERROR)
+	  {
+	    FREE(tmp_file);
+	    sp->writing = false;
+	    XEN_ERROR(CANT_UPDATE_FILE,
+		      XEN_LIST_4(C_TO_XEN_STRING(S_setB S_sound_loop_info),
+				 C_TO_XEN_STRING(sp->filename),
+				 C_TO_XEN_STRING(io_error_name(err)),
+				 C_TO_XEN_STRING(snd_io_strerror())));
+	    return(XEN_FALSE);
+	  }
+      }
     sp->writing = false;
     if (err != IO_SAVE_HOOK_CANCELLATION) 
       snd_update(sp);
-    FREE(tmp_file); /* TODO: better error */
+    FREE(tmp_file);
     return(xen_return_first((err == IO_NO_ERROR) ? XEN_TRUE : C_TO_XEN_INT((int)err), snd, vals));
   }
 }

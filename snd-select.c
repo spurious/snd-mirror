@@ -435,7 +435,7 @@ static io_error_t insert_selection(chan_info *cp, off_t beg)
   char *tempfile = NULL, *origin = NULL;
   int i, out_format = MUS_OUT_FORMAT;
   io_error_t io_err = IO_NO_ERROR;
-  if (!(editable_p(cp))) return(IO_NO_ERROR); /* TODO: is this really the right thing? */
+  if (!(editable_p(cp))) return(IO_EDIT_HOOK_CANCELLATION);
   if (mus_header_writable(MUS_NEXT, cp->sound->hdr->format))
     out_format = cp->sound->hdr->format;
   tempfile = snd_tempnam();
@@ -477,11 +477,18 @@ static io_error_t insert_selection(chan_info *cp, off_t beg)
 
 void insert_selection_or_region(int reg, chan_info *cp)
 {
+  io_error_t err = IO_NO_ERROR;
   if (cp) 
     {
-      if ((reg == 0) && (selection_is_active()))
-	insert_selection(cp, CURSOR(cp));
-      else paste_region(reg, cp);
+      bool got_selection;
+      got_selection = ((reg == 0) && (selection_is_active()));
+      if (got_selection)
+	err = insert_selection(cp, CURSOR(cp));
+      else err = paste_region(reg, cp);
+      if (err != IO_NO_ERROR)
+	report_in_minibuffer(cp->sound, "can't insert %s: %s",
+			     (got_selection) ? "selection" : "region",
+			     io_error_name(err));
     }
 }
 

@@ -290,6 +290,7 @@ Snd:
   http://www.notam02.no/9
   http://www.justlinux.org
   http://www.linuxjournal.com/article.php?sid=7274
+  http://cvs.freebsoft.org/repository/fvoxedit/
 
 Guile/Scheme:
   http://www.gnu.org/software/guile/guile.html
@@ -337,16 +338,16 @@ TROUBLES:
 ---- audio: ----
 
 In Linux, Snd sometimes can't seem to play or record when other
-applications are happy -- if this happens, please run the function
-mus-audio-describe (via M-x) and send me whatever it prints out.
+applications are happy -- if this happens, please evaluate the function
+mus-audio-describe, and send me whatever it prints out.
 
 If you're running esd, you need to build Snd with the configuration
 switch --with-esd.  Otherwise, it's likely you'll get an error
 from the 'play' button complaining about data formats, probably
 that it can't play big-endian shorts.
 
-The Record dialog only works in Linux (OSS, perhaps ALSA), Sun, some
-SGI systems, and perhaps Mac OSX.
+The Record dialog only works in Linux (OSS, perhaps ALSA), Sun (not x86),
+some SGI systems, and perhaps Mac OSX.
 
 
 ---- ALSA: ----
@@ -596,7 +597,8 @@ from libSM or libICE, add -lICE -lSM to the end of the library
 list in the makefile.
 
 If you want to use Gtk, the Snd configure process is confused by the 
-lack of pkg-config -- I've forgotten how to deal with this.
+lack of pkg-config -- I've forgotten how to deal with this -- maybe
+let some auto-installed like DarwinPorts handle it for you.
 
 And you'll probably need to add some things to the GUILE library list:
 
@@ -613,12 +615,6 @@ at ccrma-ftp.  If the Mac loader complains that it it out of date,
 run ranlib: ranlib libXm.a (you may need to admin privileges to do this).
 
 
-I haven't tried Gtk+ in OSX for maybe a year, but back then I made
-these changes:
-
-GTK_LIBS = /usr/local/lib/libgmodule.a /usr/local/lib/libglib.a /usr/local/lib/libgdk.a /usr/local/lib/libgtk.a -L/usr/X11R6/lib -lXext -lX11 -lm
-
-	
 If C-f (and other such commands) doesn't work, either try toggling
 the "w" button, or add the focus-widget related hooks from grfsnd.html
 to your initialization file:

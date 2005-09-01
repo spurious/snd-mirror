@@ -2,11 +2,11 @@
 #include "snd-file.h"
 
 /* various file-related dialogs:
-   File|Edit:Save-as, 
-   File:Open|View, 
-   File|Edit:Mix, 
-   File:Insert,
-   File:Edit-Header,
+   File|Edit:Save-as
+   File:Open|View
+   File|Edit:Mix
+   File:Insert
+   File:Edit-Header
    File:New
    Info and Raw
    View:Files
@@ -30,13 +30,15 @@
  * TODO: check that xen-errors are redirected locally (save-as-hook etc)
  * TODO: open no such file goes to post it? -- from startup args!
  * TODO: in mix/insert: panel for mix at cursor/beginning/end/mark/sample (num)
- * TODO: c-x c-n for new, or should c-x c-f behave as in emacs
  * TODO: add|delete-file-filter, file-filters tied to all file dialogs (panel of radio buttons where just sounds is now)
+ *       the sorters could be handled similarly -- a panel of radio buttons with name chosen by default
+ *       would need local versions of the sort_choice variable
  * PERHAPS: Copy Viewer button in vf
  * TODO: in nb.scm, get the info dialog out of the line of sight and unmanage it if view-files is unmanaged
  * TODO: report-in-minibuffer extended to go to any dialog
  * TODO: always show bg wave in vf
  * TODO: will need at least a reset button for the vf env, perhaps reset for entire vf
+ * TODO: check new configure cases (86-64, solaris, mac)
  */
 
 
@@ -244,6 +246,8 @@ static void sound_file_search(Widget dialog, XmFileSelectionBoxCallbackStruct *i
   if (pattern) XtFree(pattern);
   fp->need_update = false;
 }
+
+/* TODO: does directory accept uri-lists? -- can convertcallback be replaced/extended? */
 
 static void force_directory_reread(Widget dialog)
 {
@@ -613,6 +617,9 @@ static file_dialog_info *make_file_dialog(bool read_only, char *title, char *sel
     {
       add_completer_to_textfield(wtmp, add_completer_func(filename_completer));
       XtAddCallback(wtmp, XmNvalueChangedCallback, unpost_if_filter_changed, (XtPointer)fd);
+      /* ideally we'd add a "sort" pulldown menu here, but I can't see any way to do it except to
+       *   grab the current Xm/FileSB.c code and start hacking.
+       */
     }
 
   if (!(ss->using_schemes)) 

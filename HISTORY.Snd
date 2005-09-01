@@ -1,6 +1,8 @@
 Snd change log
 
   31-Aug:    mix|track-speed-style.
+             changed recorder-in|out-format -> recorder-in|out-data-format,
+                     recorder-out-type -> recorder-out-header-type
   28-Aug:    snd 7.15.
   18-Aug:    _sndlib.h and sndlib.h.in.
   15-Aug:    in View:Files, click of file name no longer opens that file.

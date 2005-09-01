@@ -640,7 +640,7 @@ int save_region(int n, char *ofile, int data_format)
 
 #define NOT_EDITABLE -2
 
-static int paste_region_1(int n, chan_info *cp, bool add, off_t beg, int trk)
+static int paste_region_1(int n, chan_info *cp, bool add, off_t beg, int trk, io_error_t *err)
 {
   region *r;
   char *origin = NULL;
@@ -649,7 +649,11 @@ static int paste_region_1(int n, chan_info *cp, bool add, off_t beg, int trk)
   sync_info *si = NULL;
   r = id_to_region(n);
   if ((r == NULL) || (r->frames == 0)) return(INVALID_REGION);
-  if (!(editable_p(cp))) return(NOT_EDITABLE);
+  if (!(editable_p(cp))) 
+    {
+      (*err) = IO_EDIT_HOOK_CANCELLATION;
+      return(NOT_EDITABLE);
+    }
   if (r->use_temp_file == REGION_DEFERRED)
     deferred_region_to_temp_file(r);
   si = sync_to_chan(cp);
@@ -661,7 +665,8 @@ static int paste_region_1(int n, chan_info *cp, bool add, off_t beg, int trk)
       if (io_err != IO_NO_ERROR)
 	{
 	  cp->edit_hook_checked = false;
-	  snd_error(_("can't save mix temp file (%s: %s)"), newname, snd_io_strerror());
+	  (*err) = io_err;
+	  return(INVALID_REGION);
 	}
       else 
 	{
@@ -682,7 +687,7 @@ static int paste_region_1(int n, chan_info *cp, bool add, off_t beg, int trk)
 	    {
 	      if (si) si = free_sync_info(si);
 	      cp->edit_hook_checked = false;
-	      snd_error(_("can't make region %d temp file (%s: %s)"), n, tempfile, snd_io_strerror());
+	      (*err) = io_err;
 	      return(INVALID_REGION);
 	    }
 	  else
@@ -707,8 +712,16 @@ static int paste_region_1(int n, chan_info *cp, bool add, off_t beg, int trk)
   return(id);
 }
 
-void paste_region(int n, chan_info *cp) {paste_region_1(n, cp, false, CURSOR(cp), 0);}
-void add_region(int n, chan_info *cp) {paste_region_1(n, cp, true, CURSOR(cp), 0);}
+static io_error_t paste_region_2(int n, chan_info *cp, bool add, off_t beg, int trk)
+{
+  io_error_t err = IO_NO_ERROR;
+  int id;
+  id = paste_region_1(n, cp, add, beg, trk, &err);
+  return(err);
+}
+
+io_error_t paste_region(int n, chan_info *cp) {return(paste_region_2(n, cp, false, CURSOR(cp), 0));}
+io_error_t add_region(int n, chan_info *cp) {return(paste_region_2(n, cp, true, CURSOR(cp), 0));}
 
 int define_region(sync_info *si, off_t *ends)
 {
@@ -1212,6 +1225,7 @@ insert region data into snd's channel chn starting at start-samp"
   chan_info *cp;
   int rg;
   off_t samp;
+  io_error_t err = IO_NO_ERROR;
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samp_n), samp_n, XEN_ARG_1, S_insert_region, "a number");
   XEN_ASSERT_TYPE(XEN_REGION_IF_BOUND_P(reg_n), reg_n, XEN_ARG_2, S_insert_region, "a region id");
   ASSERT_CHANNEL(S_insert_region, snd_n, chn_n, 3);
@@ -1220,7 +1234,12 @@ insert region data into snd's channel chn starting at start-samp"
   if (!(region_ok(rg)))
     return(snd_no_such_region_error(S_insert_region, reg_n));
   samp = beg_to_sample(samp_n, S_insert_region);
-  paste_region_1(rg, cp, false, samp, 0);
+  err = paste_region_2(rg, cp, false, samp, 0);
+  if ((err != IO_NO_ERROR) &&
+      (err != IO_EDIT_HOOK_CANCELLATION))
+    XEN_ERROR(CANT_UPDATE_FILE,
+	      XEN_LIST_2(C_TO_XEN_STRING(S_insert_region),
+			 C_TO_XEN_STRING(io_error_name(err))));
   update_graph(cp);
   return(reg_n);
 }
@@ -1516,6 +1535,7 @@ mix region into snd's channel chn starting at chn-samp; return new mix id."
 
   chan_info *cp;
   off_t samp;
+  io_error_t err = IO_NO_ERROR;
   int rg, id = -1, track_id = 0;
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(chn_samp_n), chn_samp_n, XEN_ARG_1, S_mix_region, "a number");
   XEN_ASSERT_TYPE(XEN_REGION_IF_BOUND_P(reg_n), reg_n, XEN_ARG_2, S_mix_region, "a region id");
@@ -1533,8 +1553,13 @@ mix region into snd's channel chn starting at chn-samp; return new mix id."
     XEN_ERROR(NO_SUCH_TRACK,
 	      XEN_LIST_2(C_TO_XEN_STRING(S_mix_region),
 			 tid));
-  id = paste_region_1(rg, cp, true, samp, track_id);
+  id = paste_region_1(rg, cp, true, samp, track_id, &err);
   /* id might legitmately be invalid mix id if with_mix_tags is #f */
+  if ((err != IO_NO_ERROR) &&
+      (err != IO_EDIT_HOOK_CANCELLATION))
+    XEN_ERROR(CANT_UPDATE_FILE,
+	      XEN_LIST_2(C_TO_XEN_STRING(S_mix_region),
+			 C_TO_XEN_STRING(io_error_name(err))));
   return(C_TO_XEN_INT(id));
 }
 

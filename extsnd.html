@@ -8120,7 +8120,7 @@ channel's local amp-control value is set instead of the sound's.  This affects
 <tr><td></td><td>
 The amp-control min and max amounts as a list.  The default is
 (list 0.0 8.0).  The value 1.0 should be in the given range, since it is placed in the middle of the slider's range.
-If no <i>snd</i> argument is given, this also affects the Mix, Track, and Record dialogs.
+If no <i>snd</i> argument is given, this also affects the Mix, Track, View:Files, and Record dialogs.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -8514,7 +8514,7 @@ current <a class=quiet href="snd.html#speed">speed</a>.  A speed of 2 plays the 
 <tr><td></td><td>
 The speed-control min and max amounts as a list.  The default is
 (list 0.05 20.0).
-If no <i>snd</i> argument is given, this also affects the Mix and Track.
+If no <i>snd</i> argument is given, this also affects the Mix, Track, and View:Files dialogs.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -8543,6 +8543,10 @@ style (default: 12).
 </td></tr>
 <tr><td colspan=2></td></tr>
 </table>
+
+<!-- tempo-control-bounds -->
+<tr><td colspan=2><code><a class=def name="tempocontrolbounds">tempo-control-bounds</a> ()</code></td></tr>
+<tr><td></td><td>Track dialog tempo slider bounds (defaults to (list 0.0 8.0)).</td></tr>
 
 <p>
 <a href="sndscm.html#makehiddencontrolsdialog">make-hidden-controls-dialog</a> in
@@ -8965,17 +8969,17 @@ More transforms: <a href="sndscm.html#fractionalfouriertransform">fractional-fou
 </blockquote></small>
 </td></tr></TABLE>
 
-<!-- TODO: divide this up by dialog -->
 
 <!-- Dialogs -->
 <br>
 <table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="snddialogs">Dialogs</a></h3></td></tr></table>
 
-<p>The built-in dialogs, accessible from the main menu, provide the standard, but very clumsy
+<p>The built-in dialogs, accessible from the main menu, provide the standard, but sometimes clumsy
 ways to open and save sounds, edit envelopes and headers, and set various global variables.
 In addition, many other dialogs are implemented in various Scheme/Ruby files.  
 The following
-functions refer to the built-in dialogs.
+functions refer to the built-in dialogs.  They were aimed originally at semi-internal needs like
+saving the current Snd state, but might be useful elsewhere.
 Functions such as <b>color-dialog</b> normally create and start the dialog in question; that is,
 <code>(color-dialog)</code> puts the color dialog on the screen.  If you're trying instead to
 customize the dialog in some way (in your initialization file, for example), you want the
@@ -9105,19 +9109,6 @@ list of urls.
 </pre></td></tr></table>
 </td></tr>
 
-<!-- html-dir -->
-<tr><td colspan=2><code><a class=def name="htmldir">html-dir</a> ()</code></td></tr>
-<tr><td></td><td>The directory to search for documentation if an HTML reader is in use.
-See <i>html</i> in index.scm.
-</td></tr>
-
-<!-- html-program -->
-<tr><td colspan=2><code><a class=def name="htmlprogram">html-program</a> ()</code></td></tr>
-<tr><td></td><td>The program to use to read HTML files (defaults to "mozilla", but can also be "netscape").
-On the Mac, you need to give the full path to the executable image: "/Applications/Safari.app/Contents/MacOS/Safari".
-See <i>html</i> in index.scm.
-</td></tr>
-
 <!-- info-dialog -->
 <tr><td colspan=2 valign=top><code><a class=def name="infodialog">info-dialog</a> (subject info) </code></td></tr>
 <tr><td></td><td>start the info dialog with title <i>subject</i> and body <i>info</i>. Return the dialog widget.<br>
@@ -9129,14 +9120,6 @@ See <i>html</i> in index.scm.
 <tr><td></td><td>create and (if <i>managed</i> which defaults to #t) activate the File:Insert dialog.
 Return the dialog widget.
 </td></tr>
-
-<!-- just-sounds -->
-<tr><td colspan=2><code><a class=def name="justsounds">just-sounds</a> ()</code></td></tr>
-<tr><td width=50></td><td>In Motif and in Gtk versions 2.3 or later,
-if <i>just-sounds</i> is #t,
-the file lists displayed by the file selection dialogs are filtered to show just
-sound files (see <a href="#addsoundfileextension">add-sound-file-extension</a> and
-<a href="#justsoundshook">just-sounds-hook</a>).</td></tr>
 
 <!-- listener-color -->
 <tr><td colspan=2><code><a class=def name="listenercolor">listener-color</a> ()</code></td></tr>
@@ -9194,10 +9177,6 @@ If the xm module is loaded, we could add our own info via:
 <tr><td colspan=2><code><a class=def name="printdialog">print-dialog</a> (<i>managed direct-to-printer</i>)</code></td></tr>
 <tr><td></td><td>Create and (if <i>managed</i> which defaults to #t) activate the File:Print dialog. Return the dialog widget.</td></tr>
 
-<!-- print-length -->
-<tr><td colspan=2><code><a class=def name="printlength">print-length</a> ()</code></td></tr>
-<tr><td></td><td>number of elements of lists and vectors that are printed. default: 12.</td></tr>
-
 <!-- recorder-autoload -->
 <tr><td colspan=2><code><a class=def name="recorderautoload">recorder-autoload</a> ()</code></td></tr>
 <tr><td></td><td>The '<a href="snd.html#Xautoload">autoload</a>' button in the recorder dialog. default: #f.</td></tr>
@@ -9224,7 +9203,7 @@ If it returns a string, that becomes the output filename.
 <table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (add-hook! <em class=red>recorder-file-hook</em>
   (lambda (name)
-    (let* ((header (<a class=quiet href="#recorderouttype">recorder-out-type</a>))
+    (let* ((header (<a class=quiet href="#recorderoutheadertype">recorder-out-header-type</a>))
 	   (extension (if (or (= header <a class=quiet href="#headertype">mus-aifc</a>) (= header <a class=quiet href="#headertype">mus-aiff</a>)) ".aif"
 			  (if (= header <a class=quiet href="#headertype">mus-next</a>) ".snd"
 			      ".wav"))))
@@ -9257,8 +9236,8 @@ If it returns a string, that becomes the output filename.
 <tr><td colspan=2><code><a class=def name="recorderindevice">recorder-in-device</a> ()</code></td></tr>
 <tr><td></td><td>Input device for recorder.<br><br><code>(set! (recorder-in-device) mus-audio-line-in)</code></td></tr>
 
-<!-- recorder-in-format -->
-<tr><td colspan=2><code><a class=def name="recorderinformat">recorder-in-format</a> ()</code></td></tr>
+<!-- recorder-in-data-format -->
+<tr><td colspan=2><code><a class=def name="recorderindataformat">recorder-in-data-format</a> ()</code></td></tr>
 <tr><td></td><td>Incoming data format for the recorder. default 16-bit linear.</td></tr>
 
 <!-- recorder-max-duration -->
@@ -9273,12 +9252,12 @@ If it returns a string, that becomes the output filename.
 <tr><td colspan=2><code><a class=def name="recorderoutchans">recorder-out-chans</a> ()</code></td></tr>
 <tr><td></td><td>Recorder output file channels. (default: 2)</td></tr>
 
-<!-- recorder-out-format -->
-<tr><td colspan=2><code><a class=def name="recorderoutformat">recorder-out-format</a> ()</code></td></tr>
+<!-- recorder-out-data-format -->
+<tr><td colspan=2><code><a class=def name="recorderoutdataformat">recorder-out-data-format</a> ()</code></td></tr>
 <tr><td></td><td>recorder output file data format.</td></tr>
 
-<!-- recorder-out-type -->
-<tr><td colspan=2><code><a class=def name="recorderouttype">recorder-out-type</a> ()</code></td></tr>
+<!-- recorder-out-header-type -->
+<tr><td colspan=2><code><a class=def name="recorderoutheadertype">recorder-out-header-type</a> ()</code></td></tr>
 <tr><td></td><td>recorder output file header type.</td></tr>
 
 <!-- recorder-srate -->
@@ -9342,10 +9321,6 @@ default: 4.
 
 <tr><td colspan=2><code><a href="#spectrozscale">spectro-z-scale</a> ()</code></td></tr>
 <tr><td></td><td>Same for z-axis. default: 0.1</td></tr>
-
-<!-- tempo-control-bounds -->
-<tr><td colspan=2><code><a class=def name="tempocontrolbounds">tempo-control-bounds</a> ()</code></td></tr>
-<tr><td></td><td>Track dialog tempo slider bounds (defaults to (list 0.0 8.0)).</td></tr>
 
 <!-- track-dialog-track -->
 <tr><td colspan=2><code><a class=def name="trackdialogtrack">track-dialog-track</a> ()</code></td></tr>
@@ -9474,7 +9449,7 @@ Here is a partial list of the dialogs scattered around Snd.
     <td><a href="#viewmixesdialog">view-mixes-dialog</a>, <a href="#viewtracksdialog">view-tracks-dialog</a></td><td></td></tr>
 <tr><td></td><td colspan=2>View regions</td><td>View:<a href="snd.html#regionbrowser">Regions</a></td>
     <td><a href="#viewregionsdialog">view-regions-dialog</a></td><td></td></tr>
-<tr><td></td><td colspan=2>View previously loaded files</td><td>View:<a href="snd.html#viewfiles">Files</a></td>
+<tr><td></td><td colspan=2>View interesting files</td><td>View:<a href="snd.html#viewfiles">Files</a></td>
     <td><a href="#viewfilesdialog">view-files-dialog</a></td><td></td></tr>
   <tr><td></td><td></td><td><a href="sndscm.html#nb">nb</a></td>
       <td colspan=2>post info about each file as mouse passes over it</td><td></td></tr>
@@ -10064,6 +10039,29 @@ create Postscript picture of current display.
 <i>file</i> defaults to <a href="#epsfile">eps-file</a>.
 </td></tr>
 
+<!-- html-dir -->
+<tr><td colspan=2><code><a class=def name="htmldir">html-dir</a> ()</code></td></tr>
+<tr><td></td><td>The directory to search for documentation if an HTML reader is in use.
+See <i>html</i> in index.scm.
+</td></tr>
+
+<!-- html-program -->
+<tr><td colspan=2><code><a class=def name="htmlprogram">html-program</a> ()</code></td></tr>
+<tr><td></td><td>The program to use to read HTML files (defaults to "mozilla", but can also be "netscape").
+On the Mac, you need to give the full path to the executable image: "/Applications/Safari.app/Contents/MacOS/Safari".
+See <i>html</i> in index.scm.
+</td></tr>
+
+<!-- just-sounds -->
+<tr><td colspan=2><code><a class=def name="justsounds">just-sounds</a> ()</code></td></tr>
+<tr><td width=50></td><td>In Motif and in Gtk versions 2.3 or later,
+if <i>just-sounds</i> is #t,
+the file lists displayed by the file selection dialogs are filtered to show just
+sound files (see <a href="#addsoundfileextension">add-sound-file-extension</a> and
+<a href="#justsoundshook">just-sounds-hook</a>).
+See also <a href="#filefilters">file-filters</a>.
+</td></tr>
+
 <!-- in -->
 <tr><td colspan=2>
 <code><a class=def name="gin">in</a> (ms thunk)</code></td></tr>
@@ -10145,6 +10143,10 @@ loads a file into Snd for editing.
     (<em class=red>close-sound-file</em> fd 10))
 </pre>
 </td></tr>
+
+<!-- print-length -->
+<tr><td colspan=2><code><a class=def name="printlength">print-length</a> ()</code></td></tr>
+<tr><td></td><td>number of elements of lists and vectors that are printed. default: 12.</td></tr>
 
 <!-- reset-listener-cursor -->
 <tr><td colspan=2>

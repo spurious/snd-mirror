@@ -23033,21 +23033,21 @@ def test11
       unless string?(res = recorder_file)
         snd_display("set_recorder_file: %s?", res)
       end
-      set_recorder_in_format(Mus_mulaw)
-      if (res = recorder_in_format) != Mus_mulaw
-        snd_display("set_recorder_in_format: %s?", res)
+      set_recorder_in_data_format(Mus_mulaw)
+      if (res = recorder_in_data_format) != Mus_mulaw
+        snd_display("set_recorder_in_data_format: %s?", res)
       end
       set_recorder_in_device(Mus_audio_line_in)
       if (res = recorder_in_device) != Mus_audio_line_in
         snd_display("set_recorder_in_device: %s?", res)
       end
-      set_recorder_out_format(Mus_mulaw)
-      if (res = recorder_out_format) != Mus_mulaw
-        snd_display("set_recorder_out_format: %s?", res)
+      set_recorder_out_data_format(Mus_mulaw)
+      if (res = recorder_out_data_format) != Mus_mulaw
+        snd_display("set_recorder_out_data_format: %s?", res)
       end
-      set_recorder_out_type(Mus_aifc)
-      if (res = recorder_out_type) != Mus_aifc
-        snd_display("set_recorder_out_type: %s?", res)
+      set_recorder_out_header_type(Mus_aifc)
+      if (res = recorder_out_header_type) != Mus_aifc
+        snd_display("set_recorder_out_header_type: %s?", res)
       end
       set_recorder_srate(44100)
       if (res = recorder_srate) != 44100
@@ -37165,7 +37165,7 @@ def test0224
   # recorder dialog
   #
   $recorder_file_hook.add_hook!("test 24") do |name|
-    extension = case recorder_out_type
+    extension = case recorder_out_header_type
                 when Mus_aifc, Mus_aiff
                   ".aif"
                 when Mus_next
@@ -38451,8 +38451,8 @@ Procs = [:add_mark, :add_sound_file_extension, :add_to_main_menu, :add_to_menu,
   :view_files_sort, :print_length, :progress_report, :prompt_in_minibuffer,
   :pushed_button_color, :read_only, :recorder_in_device, :read_peak_env_info_file,
   :recorder_autoload, :recorder_buffer_size, :recorder_dialog, :recorder_file, :recorder_gain,
-  :recorder_in_amp, :recorder_in_format, :recorder_max_duration, :recorder_out_amp,
-  :recorder_out_chans, :recorder_out_format, :recorder_out_type, :recorder_srate,
+  :recorder_in_amp, :recorder_in_data_format, :recorder_max_duration, :recorder_out_amp,
+  :recorder_out_chans, :recorder_out_data_format, :recorder_out_header_type, :recorder_srate,
   :recorder_trigger, :region_chans, :view_regions_dialog, :region_graph_style,
   :region_frames, :region_position, :region_maxamp, :region_maxamp_position, :selection_maxamp,
   :selection_maxamp_position, :region_sample, :region2vct, :region_srate, :regions, :region?,
@@ -38588,8 +38588,8 @@ Set_procs = [:amp_control, :ask_before_overwrite, :audio_input_device, :audio_ou
   :pushed_button_color, :recorder_autoload, :recorder_buffer_size, :recorder_dialog,
   :view_files_amp, :view_files_speed, :view_files_files, :view_files_selected_files,
   :view_files_speed_style, :view_files_amp_env,
-  :recorder_file, :recorder_gain, :recorder_in_amp, :recorder_in_format, :recorder_max_duration,
-  :recorder_out_amp, :recorder_out_chans, :recorder_out_format, :recorder_out_type,
+  :recorder_file, :recorder_gain, :recorder_in_amp, :recorder_in_data_format, :recorder_max_duration,
+  :recorder_out_amp, :recorder_out_chans, :recorder_out_data_format, :recorder_out_header_type,
   :recorder_srate, :region_graph_style, :recorder_trigger, :reverb_control_decay,
   :reverb_control_feedback, :recorder_in_chans, :reverb_control_length, :reverb_control_lowpass,
   :reverb_control_scale, :time_graph_style, :lisp_graph_style, :transform_graph_style,
@@ -39137,9 +39137,9 @@ def test0128
     :position_color, :time_graph_style, :lisp_graph_style, :transform_graph_style,
     :peaks_font, :bold_peaks_font, :view_files_sort, :print_length,
     :pushed_button_color, :recorder_in_device, :recorder_autoload,
-    :recorder_buffer_size, :recorder_file, :recorder_in_format,
+    :recorder_buffer_size, :recorder_file, :recorder_in_data_format,
     :recorder_max_duration, :recorder_out_chans, :recorder_in_chans,
-    :recorder_out_format, :recorder_out_type, :recorder_srate, :recorder_trigger,
+    :recorder_out_data_format, :recorder_out_header_type, :recorder_srate, :recorder_trigger,
     :sash_color, :ladspa_dir, :save_dir, :save_state_file, :selected_channel,
     :selected_data_color, :selected_graph_color, :selected_sound,
     :selection_creates_region, :show_backtrace, :show_controls, :show_indices,

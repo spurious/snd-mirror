@@ -6,32 +6,16 @@
 #include "snd-rec.h"
 #include "sndlib-strings.h"
 
-#define S_recorder_autoload     "recorder-autoload"
-#define S_recorder_buffer_size  "recorder-buffer-size"
-#define S_recorder_file         "recorder-file"
-#define S_recorder_gain         "recorder-gain"
-#define S_recorder_in_amp       "recorder-in-amp"
-#define S_recorder_in_chans     "recorder-in-chans"
-#define S_recorder_in_format    "recorder-in-format"
-#define S_recorder_in_device    "recorder-in-device"
-#define S_recorder_max_duration "recorder-max-duration"
-#define S_recorder_out_amp      "recorder-out-amp"
-#define S_recorder_out_chans    "recorder-out-chans"
-#define S_recorder_out_format   "recorder-out-format"
-#define S_recorder_out_type     "recorder-out-type"
-#define S_recorder_srate        "recorder-srate"
-#define S_recorder_trigger      "recorder-trigger"
-
 #define DEFAULT_RECORDER_FILE NULL
 #define DEFAULT_RECORDER_AUTOLOAD false
 #define DEFAULT_RECORDER_TRIGGER 0.0
 #define DEFAULT_RECORDER_MAX_DURATION 1000000.0
-#define DEFAULT_RECORDER_OUT_FORMAT MUS_COMPATIBLE_FORMAT
+#define DEFAULT_RECORDER_OUT_DATA_FORMAT MUS_COMPATIBLE_FORMAT
 
 #if MUS_LINUX || __bsdi__
-  #define DEFAULT_RECORDER_OUT_TYPE MUS_RIFF
+  #define DEFAULT_RECORDER_OUT_HEADER_TYPE MUS_RIFF
 #else
-  #define DEFAULT_RECORDER_OUT_TYPE MUS_AIFC
+  #define DEFAULT_RECORDER_OUT_HEADER_TYPE MUS_AIFC
 #endif
 
 #define MAX_MIXER_GAINS 128
@@ -39,15 +23,10 @@
 
 #ifdef MUS_SUN
   #define DEFAULT_RECORDER_BUFFER_SIZE 4096
-  #if MUS_LITTLE_ENDIAN
-    #define DEFAULT_RECORDER_IN_FORMAT MUS_LSHORT
-    #define DEFAULT_RECORDER_SRATE 22050
-  #else
-    #define DEFAULT_RECORDER_IN_FORMAT MUS_MULAW
-    #define DEFAULT_RECORDER_SRATE 8000
-  #endif
+  #define DEFAULT_RECORDER_IN_DATA_FORMAT MUS_MULAW
+  #define DEFAULT_RECORDER_SRATE 8000
 #else
-  #define DEFAULT_RECORDER_IN_FORMAT MUS_COMPATIBLE_FORMAT
+  #define DEFAULT_RECORDER_IN_DATA_FORMAT MUS_COMPATIBLE_FORMAT
   #if MUS_MAC_OSX
     #define DEFAULT_RECORDER_BUFFER_SIZE 1024
     #define DEFAULT_RECORDER_SRATE 44100
@@ -377,9 +356,9 @@ static void init_recorder(void)
   rp->buffer_size = DEFAULT_RECORDER_BUFFER_SIZE;
   rp->out_chans = DEFAULT_RECORDER_OUT_CHANS;
   rp->in_chans = DEFAULT_RECORDER_IN_CHANS;
-  rp->output_data_format = DEFAULT_RECORDER_OUT_FORMAT;
-  rp->output_header_type = DEFAULT_RECORDER_OUT_TYPE;
-  rp->in_format = DEFAULT_RECORDER_IN_FORMAT;
+  rp->output_data_format = DEFAULT_RECORDER_OUT_DATA_FORMAT;
+  rp->output_header_type = DEFAULT_RECORDER_OUT_HEADER_TYPE;
+  rp->in_format = DEFAULT_RECORDER_IN_DATA_FORMAT;
   rp->srate = DEFAULT_RECORDER_SRATE;
   rp->trigger = DEFAULT_RECORDER_TRIGGER;
   rp->max_duration = DEFAULT_RECORDER_MAX_DURATION;
@@ -443,20 +422,20 @@ void save_recorder_state(FILE *fd)
   if (rp->buffer_size != DEFAULT_RECORDER_BUFFER_SIZE) fprintf(fd, "(set! (%s) %d)\n", S_recorder_buffer_size, rp->buffer_size);
   if (rp->out_chans != DEFAULT_RECORDER_OUT_CHANS) fprintf(fd, "(set! (%s) %d)\n", S_recorder_out_chans, rp->out_chans);
   if (rp->in_chans != DEFAULT_RECORDER_IN_CHANS) fprintf(fd, "(set! (%s) %d)\n", S_recorder_in_chans, rp->in_chans);
-  if ((rp->output_data_format != DEFAULT_RECORDER_OUT_FORMAT) &&
+  if ((rp->output_data_format != DEFAULT_RECORDER_OUT_DATA_FORMAT) &&
       (MUS_DATA_FORMAT_OK(rp->output_data_format)))
     fprintf(fd, "(set! (%s) %s)\n", 
-	    S_recorder_out_format, 
+	    S_recorder_out_data_format, 
 	    mus_data_format_to_string(rp->output_data_format));
-  if ((rp->output_header_type != DEFAULT_RECORDER_OUT_TYPE) &&
+  if ((rp->output_header_type != DEFAULT_RECORDER_OUT_HEADER_TYPE) &&
       (MUS_HEADER_TYPE_OK(rp->output_header_type)))
     fprintf(fd, "(set! (%s) %s)\n", 
-	    S_recorder_out_type, 
+	    S_recorder_out_header_type, 
 	    mus_header_type_to_string(rp->output_header_type));
-  if ((rp->in_format != DEFAULT_RECORDER_IN_FORMAT) &&
+  if ((rp->in_format != DEFAULT_RECORDER_IN_DATA_FORMAT) &&
       (MUS_DATA_FORMAT_OK(rp->in_format)))
     fprintf(fd, "(set! (%s) %s)\n", 
-	    S_recorder_in_format, 
+	    S_recorder_in_data_format, 
 	    mus_data_format_to_string(rp->in_format));
   if (in_device != MUS_AUDIO_DEFAULT) fprintf(fd, "(set! (%s) %d)\n", S_recorder_in_device, in_device);
   if (rp->srate != DEFAULT_RECORDER_SRATE) fprintf(fd, "(set! (%s) %d)\n", S_recorder_srate, rp->srate);
@@ -469,19 +448,19 @@ void save_recorder_state(FILE *fd)
   if (rp->buffer_size != DEFAULT_RECORDER_BUFFER_SIZE) fprintf(fd, "set_%s %d\n", TO_PROC_NAME(S_recorder_buffer_size), rp->buffer_size);
   if (rp->out_chans != DEFAULT_RECORDER_OUT_CHANS) fprintf(fd, "set_%s %d\n", TO_PROC_NAME(S_recorder_out_chans), rp->out_chans);
   if (rp->in_chans != DEFAULT_RECORDER_IN_CHANS) fprintf(fd, "set_%s %d\n", TO_PROC_NAME(S_recorder_in_chans), rp->in_chans);
-  if ((rp->output_data_format != DEFAULT_RECORDER_OUT_FORMAT) &&
+  if ((rp->output_data_format != DEFAULT_RECORDER_OUT_DATA_FORMAT) &&
       (MUS_DATA_FORMAT_OK(rp->output_data_format)))
     fprintf(fd, "set_%s %s\n", 
-	    TO_PROC_NAME(S_recorder_out_format), 
+	    TO_PROC_NAME(S_recorder_out_data_format), 
 	    mus_data_format_to_string(rp->output_data_format));
   if (MUS_HEADER_TYPE_OK(rp->output_header_type))
     fprintf(fd, "set_%s %s\n", 
-	    TO_PROC_NAME(S_recorder_out_type), 
+	    TO_PROC_NAME(S_recorder_out_header_type), 
 	    mus_header_type_to_string(rp->output_header_type));
-  if ((rp->in_format != DEFAULT_RECORDER_IN_FORMAT) &&
+  if ((rp->in_format != DEFAULT_RECORDER_IN_DATA_FORMAT) &&
       (MUS_DATA_FORMAT_OK(rp->in_format)))
     fprintf(fd, "set_%s %s\n", 
-	    TO_PROC_NAME(S_recorder_in_format),
+	    TO_PROC_NAME(S_recorder_in_data_format),
 	    mus_data_format_to_string(rp->in_format));
   if (in_device != MUS_AUDIO_DEFAULT) fprintf(fd, "set_%s %d\n", TO_PROC_NAME(S_recorder_in_device), in_device);
   if (rp->srate != DEFAULT_RECORDER_SRATE) fprintf(fd, "set_%s %d\n", TO_PROC_NAME(S_recorder_srate), rp->srate);
@@ -1631,15 +1610,15 @@ static XEN g_set_recorder_file(XEN val)
   return(C_TO_XEN_STRING(rp->output_file));
 }
 
-static XEN g_recorder_in_format(void) 
+static XEN g_recorder_in_data_format(void) 
 {
   init_recorder(); 
   return(C_TO_XEN_INT(rp->in_format));
 }
-static XEN g_set_recorder_in_format(XEN val) 
+static XEN g_set_recorder_in_data_format(XEN val) 
 {
-  #define H_recorder_in_format "(" S_recorder_in_format "): default recorder incoming data format (16 bit linear usually)"
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_recorder_in_format, "an integer"); 
+  #define H_recorder_in_data_format "(" S_recorder_in_data_format "): default recorder incoming data format (16 bit linear usually)"
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_recorder_in_data_format, "an integer"); 
   init_recorder(); 
   rp->in_format = XEN_TO_C_INT(val);
   return(C_TO_XEN_INT(rp->in_format));
@@ -1695,39 +1674,39 @@ static XEN g_set_recorder_in_chans(XEN val)
   return(C_TO_XEN_INT(rp->in_chans));
 }
 
-static XEN g_recorder_out_format(void) 
+static XEN g_recorder_out_data_format(void) 
 {
   init_recorder(); 
   return(C_TO_XEN_INT(rp->output_data_format));
 }
-static XEN g_set_recorder_out_format(XEN val) 
+static XEN g_set_recorder_out_data_format(XEN val) 
 {
   int df;
-  #define H_recorder_out_format "(" S_recorder_out_format "): recorder output data format"
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_recorder_out_format, "a data format"); 
+  #define H_recorder_out_data_format "(" S_recorder_out_data_format "): recorder output data format"
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_recorder_out_data_format, "a data format"); 
   init_recorder(); 
   df = XEN_TO_C_INT(val);
   if (MUS_DATA_FORMAT_OK(df))
     rp->output_data_format = df;
-  else XEN_OUT_OF_RANGE_ERROR(S_setB S_recorder_out_format, XEN_ONLY_ARG, val, "a data format");
+  else XEN_OUT_OF_RANGE_ERROR(S_setB S_recorder_out_data_format, XEN_ONLY_ARG, val, "a data format");
   return(C_TO_XEN_INT(rp->output_data_format));
 }
 
-static XEN g_recorder_out_type(void) 
+static XEN g_recorder_out_header_type(void) 
 {
   init_recorder(); 
   return(C_TO_XEN_INT(rp->output_header_type));
 }
-static XEN g_set_recorder_out_type(XEN val) 
+static XEN g_set_recorder_out_header_type(XEN val) 
 {
   int ht;
-  #define H_recorder_out_type "(" S_recorder_out_type "): recorder output header type"
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_recorder_out_type, "a header type");
+  #define H_recorder_out_header_type "(" S_recorder_out_header_type "): recorder output header type"
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_recorder_out_header_type, "a header type");
   init_recorder(); 
   ht = XEN_TO_C_INT(val);
   if (MUS_HEADER_TYPE_OK(ht))
     rp->output_header_type = ht;
-  else XEN_OUT_OF_RANGE_ERROR(S_setB S_recorder_out_type, XEN_ONLY_ARG, val, "a header type");
+  else XEN_OUT_OF_RANGE_ERROR(S_setB S_recorder_out_header_type, XEN_ONLY_ARG, val, "a header type");
   return(C_TO_XEN_INT(rp->output_header_type));
 }
 
@@ -1930,18 +1909,18 @@ XEN_NARGIFY_0(g_recorder_buffer_size_w, g_recorder_buffer_size)
 XEN_NARGIFY_1(g_set_recorder_buffer_size_w, g_set_recorder_buffer_size)
 XEN_NARGIFY_0(g_recorder_file_w, g_recorder_file)
 XEN_NARGIFY_1(g_set_recorder_file_w, g_set_recorder_file)
-XEN_NARGIFY_0(g_recorder_in_format_w, g_recorder_in_format)
-XEN_NARGIFY_1(g_set_recorder_in_format_w, g_set_recorder_in_format)
+XEN_NARGIFY_0(g_recorder_in_data_format_w, g_recorder_in_data_format)
+XEN_NARGIFY_1(g_set_recorder_in_data_format_w, g_set_recorder_in_data_format)
 XEN_NARGIFY_0(g_recorder_in_device_w, g_recorder_in_device)
 XEN_NARGIFY_1(g_set_recorder_in_device_w, g_set_recorder_in_device)
 XEN_NARGIFY_0(g_recorder_out_chans_w, g_recorder_out_chans)
 XEN_NARGIFY_1(g_set_recorder_out_chans_w, g_set_recorder_out_chans)
 XEN_NARGIFY_0(g_recorder_in_chans_w, g_recorder_in_chans)
 XEN_NARGIFY_1(g_set_recorder_in_chans_w, g_set_recorder_in_chans)
-XEN_NARGIFY_0(g_recorder_out_format_w, g_recorder_out_format)
-XEN_NARGIFY_1(g_set_recorder_out_format_w, g_set_recorder_out_format)
-XEN_NARGIFY_0(g_recorder_out_type_w, g_recorder_out_type)
-XEN_NARGIFY_1(g_set_recorder_out_type_w, g_set_recorder_out_type)
+XEN_NARGIFY_0(g_recorder_out_data_format_w, g_recorder_out_data_format)
+XEN_NARGIFY_1(g_set_recorder_out_data_format_w, g_set_recorder_out_data_format)
+XEN_NARGIFY_0(g_recorder_out_header_type_w, g_recorder_out_header_type)
+XEN_NARGIFY_1(g_set_recorder_out_header_type_w, g_set_recorder_out_header_type)
 XEN_NARGIFY_0(g_recorder_srate_w, g_recorder_srate)
 XEN_NARGIFY_1(g_set_recorder_srate_w, g_set_recorder_srate)
 XEN_NARGIFY_0(g_recorder_trigger_w, g_recorder_trigger)
@@ -1968,18 +1947,18 @@ XEN_NARGIFY_1(g_set_vu_size_w, g_set_vu_size)
 #define g_set_recorder_buffer_size_w g_set_recorder_buffer_size
 #define g_recorder_file_w g_recorder_file
 #define g_set_recorder_file_w g_set_recorder_file
-#define g_recorder_in_format_w g_recorder_in_format
-#define g_set_recorder_in_format_w g_set_recorder_in_format
+#define g_recorder_in_data_format_w g_recorder_in_data_format
+#define g_set_recorder_in_data_format_w g_set_recorder_in_data_format
 #define g_recorder_in_device_w g_recorder_in_device
 #define g_set_recorder_in_device_w g_set_recorder_in_device
 #define g_recorder_out_chans_w g_recorder_out_chans
 #define g_set_recorder_out_chans_w g_set_recorder_out_chans
 #define g_recorder_in_chans_w g_recorder_in_chans
 #define g_set_recorder_in_chans_w g_set_recorder_in_chans
-#define g_recorder_out_format_w g_recorder_out_format
-#define g_set_recorder_out_format_w g_set_recorder_out_format
-#define g_recorder_out_type_w g_recorder_out_type
-#define g_set_recorder_out_type_w g_set_recorder_out_type
+#define g_recorder_out_data_format_w g_recorder_out_data_format
+#define g_set_recorder_out_data_format_w g_set_recorder_out_data_format
+#define g_recorder_out_header_type_w g_recorder_out_header_type
+#define g_set_recorder_out_header_type_w g_set_recorder_out_header_type
 #define g_recorder_srate_w g_recorder_srate
 #define g_set_recorder_srate_w g_set_recorder_srate
 #define g_recorder_trigger_w g_recorder_trigger
@@ -2012,8 +1991,8 @@ void g_init_recorder(void)
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_recorder_file, g_recorder_file_w, H_recorder_file,
 				   S_setB S_recorder_file, g_set_recorder_file_w,  0, 0, 1, 0);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_recorder_in_format, g_recorder_in_format_w, H_recorder_in_format,
-				   S_setB S_recorder_in_format, g_set_recorder_in_format_w,  0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_recorder_in_data_format, g_recorder_in_data_format_w, H_recorder_in_data_format,
+				   S_setB S_recorder_in_data_format, g_set_recorder_in_data_format_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_recorder_in_device, g_recorder_in_device_w, H_recorder_in_device,
 				   S_setB S_recorder_in_device, g_set_recorder_in_device_w,  0, 0, 1, 0);
@@ -2024,11 +2003,11 @@ void g_init_recorder(void)
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_recorder_in_chans, g_recorder_in_chans_w, H_recorder_in_chans,
 				   S_setB S_recorder_in_chans, g_set_recorder_in_chans_w,  0, 0, 1, 0);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_recorder_out_format, g_recorder_out_format_w, H_recorder_out_format,
-				   S_setB S_recorder_out_format, g_set_recorder_out_format_w,  0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_recorder_out_data_format, g_recorder_out_data_format_w, H_recorder_out_data_format,
+				   S_setB S_recorder_out_data_format, g_set_recorder_out_data_format_w,  0, 0, 1, 0);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_recorder_out_type, g_recorder_out_type_w, H_recorder_out_type,
-				   S_setB S_recorder_out_type, g_set_recorder_out_type_w,  0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_recorder_out_header_type, g_recorder_out_header_type_w, H_recorder_out_header_type,
+				   S_setB S_recorder_out_header_type, g_set_recorder_out_header_type_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_recorder_srate, g_recorder_srate_w, H_recorder_srate,
 				   S_setB S_recorder_srate, g_set_recorder_srate_w,  0, 0, 1, 0);

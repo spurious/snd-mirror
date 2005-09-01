@@ -2,12 +2,14 @@
 #include "snd-file.h"
 
 /* various file-related dialogs:
-   File|Edit-Save-as, 
-   File:Open|View, 
-   File|Edit-Mix,
-   File:Insert,
-   File:Edit-Header, Raw, New
-   View:Files and region lists 
+   File|Edit:Save-as
+   File:Open|View
+   File|Edit:Mix
+   File:Insert
+   File:Edit-Header
+   File:New
+   Info and Raw
+   View:Files
 */
 
 /* it would be nice if there were some way in gtk to...
@@ -35,7 +37,6 @@
  */
 
 
-
 #ifndef HAVE_GFCDN
   #if DEBUGGING
      #define HAVE_GFCDN 0
@@ -43,6 +44,7 @@
      #define HAVE_GFCDN HAVE_GTK_FILE_CHOOSER_DIALOG_NEW
   #endif
 #endif
+
 /* -------- just-sounds file list handlers -------- */
 
 #if HAVE_GFCDN
@@ -4528,7 +4530,3 @@ is the scrolled list position of the label. The label itself is 'label'."
   mouse_enter_label_hook = XEN_DEFINE_HOOK(S_mouse_enter_label_hook, 3, H_mouse_enter_label_hook);
   mouse_leave_label_hook = XEN_DEFINE_HOOK(S_mouse_leave_label_hook, 3, H_mouse_leave_label_hook);
 }
-
-
-/* in filesel file_list is a tree_view widget, its parent a scrolled_window
- */

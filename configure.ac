@@ -406,9 +406,6 @@ fi
 # X/Motif
 #--------------------------------------------------------------------------------
 
-# TODO: on the mac, we need -lSM -lICE after all the other X libs
-# TODO: on solaris gtk we need -lX11
-
 ac_snd_have_gui=no
 
 AC_PATH_XTRA
@@ -432,6 +429,12 @@ else
   AC_DEFINE(HAVE_X)
   XFLAGS="$X_CFLAGS"
   X_POST_LIBS="-lX11 $X_EXTRA_LIBS"
+
+  case "$host" in
+    *-apple-*)
+      X_POST_LIBS="$X_POST_LIBS -lSM -lICE"
+      ;;
+  esac
 
 # this needs to precede the Xm check
   TEST_PRE_LIBS="$X_LIBS $X_PRE_LIBS"
@@ -780,6 +783,13 @@ else
 	  atk_version="`$PKG_CONFIG atk --modversion`"
           AC_DEFINE_UNQUOTED(MUS_ATK_VERSION,"${atk_version}")
         fi
+
+	case "$host" in
+	  *-*-solaris*) 
+	    GTK_LD_LIBS="$GTK_LD_LIBS -lX11"
+	    ;; 
+	esac
+
       	AC_SUBST(GTK_LD_LIBS)
 
 	AC_CHECK_LIB(m, gdk_draw_pixbuf, [AC_DEFINE(HAVE_GDK_DRAW_PIXBUF)], ,$GTK_LIBS)
@@ -1474,8 +1484,6 @@ case "$host" in
 	if test "$GCC" = yes ; then
 	  SO_FLAGS="-fPIC $SO_FLAGS"
         fi
-# TODO: fPIC in sndlib/libxm and maybe clm makefile.in's
-# TODO: don't assume gcc in sndlib configure.ac
         ;;
     *-*-cygwin*)
 	AC_DEFINE(MUS_WINDOZE)

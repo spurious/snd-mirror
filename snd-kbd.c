@@ -828,20 +828,40 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 
 	      /* open file */
 	    case INPUT_FILING:
-	      {
-		snd_info *nsp;
-		ss->open_requestor = FROM_KEYBOARD;
+	      if (str)
+		{
+		  char *filename;
+		  snd_info *nsp;
+		  filename = mus_expand_filename(str);
+		  if (mus_file_probe(filename))
+		    {
+		      ss->open_requestor = FROM_KEYBOARD;
 #if (!USE_NO_GUI)
-		ss->sgx->requestor_dialog = NULL;
+		      ss->sgx->requestor_dialog = NULL;
 #endif
-		ss->open_requestor_data = (void *)sp;
-		nsp = snd_open_file(str, FILE_READ_WRITE); /* TODO: error_with_mini */
-		if (nsp) 
-		  {
-		    select_channel(nsp, 0);
-		    clear_minibuffer(sp);
-		  }
-	      }
+		      ss->open_requestor_data = (void *)sp;
+		      nsp = snd_open_file(str, FILE_READ_WRITE);
+		    }
+		  else
+		    {
+		      /* C-x C_f <name-of-nonexistent-file> -> open new sound */
+		      nsp = snd_new_file(filename, 
+					 default_output_header_type(ss),
+					 default_output_data_format(ss),
+					 default_output_srate(ss),
+					 default_output_chans(ss),
+					 NULL, 1); /* at least 1 sample needed for new sound data buffer creation */
+		      /* now should this file be deleted upon exit?? */
+		    }
+		  FREE(filename);
+		  if (nsp) 
+		    {
+		      select_channel(nsp, 0);
+		      clear_minibuffer(sp);
+		    }
+		  else snd_warning("can't open %s!", str);
+		}
+	      /* C-x C-f <cr> is no-op (emacs) */
 	      break;
 
 	      /* save selection */

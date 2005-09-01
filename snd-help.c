@@ -411,6 +411,8 @@ void about_snd_help(void)
 	    "\nRecent changes include:\n\
 \n\
 31-Aug:  mix|track-speed-style.\n\
+         changed recorder-in|out-format -> recorder-in|out-data-format,\n\
+                 recorder-out-type -> recorder-out-header-type\n\
 28-Aug:  snd 7.15.\n\
 18-Aug:  _sndlib.h and sndlib.h.in.\n\
 15-Aug:  in View:files, click of file name no longer opens that file.\n\

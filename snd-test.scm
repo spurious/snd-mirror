@@ -23245,14 +23245,14 @@ EDITS: 5
 					;(recorder-dialog) 
 		(set! (recorder-file) "hiho.snd")
 		(if (not (string=? (recorder-file) "hiho.snd")) (snd-display ";set-recorder-file: ~A?" (recorder-file)))
-		(set! (recorder-in-format) mus-mulaw)
-		(if (not (= (recorder-in-format) mus-mulaw)) (snd-display ";set-recorder-in-format: ~A?" (recorder-in-format)))
+		(set! (recorder-in-data-format) mus-mulaw)
+		(if (not (= (recorder-in-data-format) mus-mulaw)) (snd-display ";set-recorder-in-data-format: ~A?" (recorder-in-data-format)))
 		(set! (recorder-in-device) mus-audio-line-in)
 		(if (not (= (recorder-in-device) mus-audio-line-in)) (snd-display ";set-recorder-in-device: ~A?" (recorder-in-device)))
-		(set! (recorder-out-format) mus-mulaw)
-		(if (not (= (recorder-out-format) mus-mulaw)) (snd-display ";set-recorder-out-format: ~A?" (recorder-out-format)))
-		(set! (recorder-out-type) mus-aifc)
-		(if (not (= (recorder-out-type) mus-aifc)) (snd-display ";set-recorder-out-type: ~A?" (recorder-out-type)))
+		(set! (recorder-out-data-format) mus-mulaw)
+		(if (not (= (recorder-out-data-format) mus-mulaw)) (snd-display ";set-recorder-out-data-format: ~A?" (recorder-out-data-format)))
+		(set! (recorder-out-header-type) mus-aifc)
+		(if (not (= (recorder-out-header-type) mus-aifc)) (snd-display ";set-recorder-out-header-type: ~A?" (recorder-out-header-type)))
 		(set! (recorder-srate) 44100)
 		(if (not (= (recorder-srate) 44100)) (snd-display ";set-recorder-srate: ~A?" (recorder-srate)))
 		(set! (recorder-gain 0) 0.5)
@@ -44219,7 +44219,7 @@ EDITS: 1
 		(begin
 		  (add-hook! recorder-file-hook
 			     (lambda (name)
-			       (let* ((header (recorder-out-type))
+			       (let* ((header (recorder-out-header-type))
 				      (extension (if (or (= header mus-aifc) (= header mus-aiff)) ".aif"
 						     (if (= header mus-next) ".snd"
 							 ".wav"))))
@@ -48911,7 +48911,7 @@ EDITS: 1
 					  (XKeycodeToKeysym dpy (list 'KeyCode XK_b) 0)
 					  0  (lambda (w c i) #f) '())
 	      
-	      (if (not (XmIsMotifWMRunning (cadr (main-widgets)))) (snd-display ";not XmIsMotifWMRunning?"))
+	      (if (XmIsMotifWMRunning (cadr (main-widgets))) (snd-display ";not XmIsMotifWMRunning?"))
 	      (install-searcher (lambda (file) (= (mus-sound-srate file) 44100)))
 	      (zync)
 	      (make-hidden-controls-dialog)
@@ -54463,8 +54463,8 @@ EDITS: 1
 		     view-files-amp view-files-speed view-files-files view-files-selected-files view-files-speed-style view-files-amp-env
 		     print-length progress-report prompt-in-minibuffer pushed-button-color read-only
 		     recorder-in-device read-peak-env-info-file recorder-autoload recorder-buffer-size recorder-dialog
-		     recorder-file recorder-gain recorder-in-amp recorder-in-format recorder-max-duration recorder-out-amp
-		     recorder-out-chans recorder-out-format recorder-out-type recorder-srate recorder-trigger redo region-chans view-regions-dialog
+		     recorder-file recorder-gain recorder-in-amp recorder-in-data-format recorder-max-duration recorder-out-amp
+		     recorder-out-chans recorder-out-data-format recorder-out-header-type recorder-srate recorder-trigger redo region-chans view-regions-dialog
 		     region-graph-style region-frames region-position region-maxamp region-maxamp-position 
 		     selection-maxamp selection-maxamp-position region-sample region->vct clear-minibuffer
 		     region-srate regions region?  remove-from-menu report-in-minibuffer reset-controls restore-controls
@@ -54605,7 +54605,7 @@ EDITS: 1
 			 view-files-files 
 			 view-files-selected-files 
 			 recorder-autoload recorder-buffer-size recorder-dialog recorder-file recorder-gain recorder-in-amp
-			 recorder-in-format recorder-max-duration recorder-out-amp recorder-out-chans recorder-out-format recorder-out-type
+			 recorder-in-data-format recorder-max-duration recorder-out-amp recorder-out-chans recorder-out-data-format recorder-out-header-type
 			 recorder-srate region-graph-style recorder-trigger reverb-control-decay reverb-control-feedback recorder-in-chans
 			 reverb-control-length reverb-control-lowpass reverb-control-scale time-graph-style lisp-graph-style transform-graph-style
 			 reverb-control? sash-color ladspa-dir save-dir save-state-file selected-data-color selected-graph-color
@@ -55383,8 +55383,8 @@ EDITS: 1
 			      minibuffer-history-length mix-waveform-height region-graph-style position-color
 			      time-graph-style lisp-graph-style transform-graph-style peaks-font bold-peaks-font
 			      view-files-sort print-length pushed-button-color recorder-in-device recorder-autoload
-			      recorder-buffer-size recorder-file recorder-in-format recorder-max-duration recorder-out-chans recorder-in-chans
-			      recorder-out-format recorder-out-type recorder-srate recorder-trigger sash-color ladspa-dir save-dir save-state-file
+			      recorder-buffer-size recorder-file recorder-in-data-format recorder-max-duration recorder-out-chans recorder-in-chans
+			      recorder-out-data-format recorder-out-header-type recorder-srate recorder-trigger sash-color ladspa-dir save-dir save-state-file
 			      selected-channel selected-data-color selected-graph-color 
 			      selected-sound selection-creates-region show-backtrace show-controls show-indices show-listener
 			      show-selection-transform sinc-width temp-dir text-focus-color tiny-font

@@ -10332,9 +10332,6 @@ fi
 # X/Motif
 #--------------------------------------------------------------------------------
 
-# TODO: on the mac, we need -lSM -lICE after all the other X libs
-# TODO: on solaris gtk we need -lX11
-
 ac_snd_have_gui=no
 
 echo "$as_me:$LINENO: checking for X" >&5
@@ -11751,6 +11748,12 @@ _ACEOF
 
   XFLAGS="$X_CFLAGS"
   X_POST_LIBS="-lX11 $X_EXTRA_LIBS"
+
+  case "$host" in
+    *-apple-*)
+      X_POST_LIBS="$X_POST_LIBS -lSM -lICE"
+      ;;
+  esac
 
 # this needs to precede the Xm check
   TEST_PRE_LIBS="$X_LIBS $X_PRE_LIBS"
@@ -13439,6 +13442,13 @@ _ACEOF
 _ACEOF
 
         fi
+
+	case "$host" in
+	  *-*-solaris*)
+	    GTK_LD_LIBS="$GTK_LD_LIBS -lX11"
+	    ;;
+	esac
+
 
 
 	echo "$as_me:$LINENO: checking for gdk_draw_pixbuf in -lm" >&5
@@ -18534,8 +18544,6 @@ _ACEOF
 	if test "$GCC" = yes ; then
 	  SO_FLAGS="-fPIC $SO_FLAGS"
         fi
-# TODO: fPIC in sndlib/libxm and maybe clm makefile.in's
-# TODO: don't assume gcc in sndlib configure.ac
         ;;
     *-*-cygwin*)
 	cat >>confdefs.h <<\_ACEOF

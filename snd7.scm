@@ -354,3 +354,6 @@
 (define preload-directory add-directory-to-view-files-list)
 (define preload-file add-file-to-view-files-list)
 
+(if (not (defined? 'recorder-in-format)) (define recorder-in-format recorder-in-data-format))
+(if (not (defined? 'recorder-out-format)) (define recorder-out-format recorder-out-data-format))
+(if (not (defined? 'recorder-out-type)) (define recorder-out-type recorder-out-header-type))
