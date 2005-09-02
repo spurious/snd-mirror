@@ -770,6 +770,13 @@ else
     if test "$with_gtk" = yes ; then
      	GX_FILES="G_O_FILES"
       	GX_HEADERS="SND_G_HEADERS"
+
+	case "$host" in
+	  *-*-solaris*) 
+	    GTK_LIBS="$GTK_LIBS -lX11"
+	    ;; 
+	esac
+
       	AC_SUBST(GTK_LIBS)
       	AC_SUBST(GTK_CFLAGS)
       	AC_DEFINE(USE_GTK)
@@ -783,12 +790,6 @@ else
 	  atk_version="`$PKG_CONFIG atk --modversion`"
           AC_DEFINE_UNQUOTED(MUS_ATK_VERSION,"${atk_version}")
         fi
-
-	case "$host" in
-	  *-*-solaris*) 
-	    GTK_LD_LIBS="$GTK_LD_LIBS -lX11"
-	    ;; 
-	esac
 
       	AC_SUBST(GTK_LD_LIBS)
 

@@ -2117,8 +2117,6 @@ int snd_decode(int type, const char *input_filename, const char *output_filename
     }
   return(0);
 }
-/* TODO: is there a similar ext prog for matlab translation? ace? */
-
 
 typedef struct {
   snd_info *parlous_sp, *current_sp;

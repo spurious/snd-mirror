@@ -5528,7 +5528,7 @@ static void describe_audio_state_1(void)
 	    sr->num_samp_rates = num;
 	    sr->type = (choice == 0) ? AUDIO_PLAY : AUDIO_RECORD;
 	    err = ioctl(audio_fd, AUDIO_MIXER_GET_SAMPLE_RATES, sr);
-	    if (sr->num_samp_rates <= num) break;
+	    if ((int)(sr->num_samp_rates) <= num) break;
 	    free(sr);
 	    sr = NULL;
 	  }
@@ -5543,7 +5543,7 @@ static void describe_audio_state_1(void)
 	      }
 	    else
 	      {
-		for (i = 0; i < sr->num_samp_rates; i++)
+		for (i = 0; i < (int)(sr->num_samp_rates); i++)
 		  {
 		    mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, " %d", sr->samp_rates[i]);
 		    pprint(audio_strbuf);

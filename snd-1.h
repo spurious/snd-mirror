@@ -1035,7 +1035,6 @@ file_info *fixup_region_data(chan_info *cp, int chan, int n);
 region_state *region_report(void);
 void free_region_state (region_state *r);
 int remove_region_from_list(int pos);
-int save_region(int n, char *ofile, int data_format);
 io_error_t paste_region(int n, chan_info *cp);
 io_error_t add_region(int n, chan_info *cp);
 int define_region(sync_info *si, off_t *ends);

@@ -14,6 +14,8 @@
 
 /* CHANGES:
  *
+ * bil: 1-Sep-05: moved stuff around for better error handling.
+ *                added code to handle 0-input plugins ("analog osc" in swh for example).
  * bil: 21-Sep-03 added plugin help menu item.
  * bil: 1-Aug-03  added direct struct readers for LADSPA_Descriptor
  * bil: 6-Jan-03  use FREE, not free.
@@ -439,6 +441,7 @@ list is the name of the port. Other hint information may follow this to help \
 a user interface edit the parameter in a useful way."
 
   long lIndex;
+  int inchans, outchans;
   const LADSPA_Descriptor *psDescriptor;
   char *pcFilename, *pcLabel, *pcTmp;
   XEN xenList, xenPortData;
@@ -472,6 +475,10 @@ a user interface edit the parameter in a useful way."
     return(XEN_FALSE);
   }
 
+  isLADSPAPluginSupported(psDescriptor);
+  inchans = lInputCount;
+  outchans = lOutputCount;
+
   xenList = XEN_EMPTY_LIST;
   for (lIndex = psDescriptor->PortCount - 1; lIndex >= 0; lIndex--)
     if (LADSPA_IS_PORT_CONTROL(psDescriptor->PortDescriptors[lIndex])
@@ -502,9 +509,13 @@ a user interface edit the parameter in a useful way."
     }
 
   xenList = XEN_CONS(C_TO_XEN_STRING((char *)psDescriptor->Name),
-		     XEN_CONS(C_TO_XEN_STRING((char *)psDescriptor->Maker),
-			      XEN_CONS(C_TO_XEN_STRING((char *)psDescriptor->Copyright),
-				       XEN_CONS(xenList, XEN_EMPTY_LIST))));
+	     XEN_CONS(C_TO_XEN_STRING((char *)psDescriptor->Maker),
+	      XEN_CONS(C_TO_XEN_STRING((char *)psDescriptor->Copyright),
+	       XEN_CONS(XEN_LIST_4(C_TO_XEN_STRING("inputs:"),
+				   C_TO_XEN_INT(inchans),
+				   C_TO_XEN_STRING("outputs:"),
+				   C_TO_XEN_INT(outchans)),
+		XEN_CONS(xenList, XEN_EMPTY_LIST)))));
   return(xen_return_first(xenList, ladspa_plugin_filename, ladspa_plugin_label));
 }
 
@@ -539,24 +550,32 @@ Information about about parameters can be acquired using " S_analyse_ladspa "."
   chan_info *cp, *ncp;
   snd_info *sp;
   char *ofile, *msg;
-  int i, j, ofd, datumb, err = 0, inchans = 1, readers = 1, outchans = 1;
+  int i, j, ofd, datumb, err = 0, inchans = 1, readers = 0, outchans = 1;
   off_t num;
-  snd_fd **sf;
+  snd_fd **sf = NULL;
   file_info *hdr;
   XEN errmsg;
   mus_sample_t **data;
   LADSPA_Data **pfInputBuffer = NULL;
   LADSPA_Data **pfOutputBuffer = NULL;
+  io_error_t io_err = IO_NO_ERROR;
+  snd_fd *tmp_fd;
 
   if (!g_bLADSPAInitialised)
     loadLADSPA();
 
-  /* First parameter should be a file reader or list thereod. */
-  XEN_ASSERT_TYPE(sf_p(reader) || XEN_LIST_P(reader),
+  /* First parameter should be a file reader or list thereof. */
+  XEN_ASSERT_TYPE(sf_p(reader) || XEN_LIST_P(reader) || XEN_FALSE_P(reader),
 		  reader,
 		  XEN_ARG_1,
-		  S_apply_ladspa, "a sample-reader or a list of readers");
-  if (XEN_LIST_P(reader)) readers = XEN_LIST_LENGTH(reader);
+		  S_apply_ladspa, "a sample-reader, a list of readers, or " PROC_FALSE);
+  if (XEN_LIST_P(reader)) 
+    readers = XEN_LIST_LENGTH(reader);
+  else
+    {
+      if (!(XEN_FALSE_P(reader)))
+	readers = 1;
+    }
 
   /* Second parameter should be a list of two strings, then any number
      (inc 0) of numbers. */
@@ -570,6 +589,10 @@ Information about about parameters can be acquired using " S_analyse_ladspa "."
 		  samples,
 		  XEN_ARG_3,
 		  S_apply_ladspa, "a number");
+  /* Get sample count. */
+  num = XEN_TO_C_OFF_T(samples);
+  if (num <= 0) return(XEN_FALSE);
+
   /* The fourth parameter is a tag to identify the edit. */
   XEN_ASSERT_TYPE(XEN_STRING_P(origin),
 		  origin,
@@ -591,15 +614,15 @@ Information about about parameters can be acquired using " S_analyse_ladspa "."
   isLADSPAPluginSupported(psDescriptor);
   inchans = lInputCount;
   outchans = lOutputCount;
-  if ((inchans == 0) || (outchans == 0))
+  if (outchans == 0)
     XEN_ERROR(PLUGIN_ERROR,
 	      XEN_LIST_3(C_TO_XEN_STRING(S_apply_ladspa),
 			 ladspa_plugin_configuration,
-			 C_TO_XEN_STRING(_("Snd plugins must have at least 1 input and output"))));
+			 C_TO_XEN_STRING(_("Snd plugins must have at least 1 output"))));
 
   if (inchans != readers)
     {
-      msg = mus_format(_("Ladspa %s inputs (%d) != sample-readers (%d)"), pcLabel, readers, inchans);
+      msg = mus_format(_("Ladspa %s required inputs (%d) != sample-readers (%d)"), pcLabel, inchans, readers);
       errmsg = C_TO_XEN_STRING(msg);
       FREE(msg);
       XEN_ERROR(PLUGIN_ERROR,
@@ -622,6 +645,20 @@ Information about about parameters can be acquired using " S_analyse_ladspa "."
   FREE(msg);
   pfControls = (LADSPA_Data *)MALLOC(psDescriptor->PortCount * sizeof(LADSPA_Data));
 
+  if (inchans > 0)
+    {
+      if (XEN_LIST_P(reader))
+	tmp_fd = get_sf(XEN_LIST_REF(reader, 0));
+      else tmp_fd = get_sf(reader);
+      cp = tmp_fd->cp;
+      sp = cp->sound;
+    }
+  else
+    {
+      sp = selected_sound();
+      cp = selected_channel();
+    }
+
   /* Get parameters. */
   xenParameters = XEN_COPY_ARG(XEN_CDR(XEN_CDR(ladspa_plugin_configuration)));
   for (lPortIndex = 0; lPortIndex < psDescriptor->PortCount; lPortIndex++) 
@@ -639,25 +676,6 @@ Information about about parameters can be acquired using " S_analyse_ladspa "."
     }
   }
 
-  sf = (snd_fd **)CALLOC(readers, sizeof(snd_fd *));
-
-  /* Get sample count. */
-  num = XEN_TO_C_OFF_T(samples);
-
-  /* Local version of sound descriptor. */
-  if (XEN_LIST_P(reader))
-    {
-      for (i = 0; i < readers; i++)
-	sf[i] = get_sf(XEN_LIST_REF(reader, i));
-    }
-  else sf[0] = get_sf(reader);
-
-  /* Channel info structure. */
-  cp = sf[0]->cp;
-
-  /* Sound information. */
-  sp = (cp->sound);
-
   lSampleRate = (unsigned long)(sp->hdr->srate);
   psHandle = (LADSPA_Handle *)psDescriptor->instantiate(psDescriptor, lSampleRate);
   if (!psHandle)
@@ -666,10 +684,55 @@ Information about about parameters can be acquired using " S_analyse_ladspa "."
 			 ladspa_plugin_configuration,
 			 C_TO_XEN_STRING("plugin did not instantiate")));
 
+  /* Temporary file name. */
+  ofile = snd_tempnam();
+
+  /* Create initial header for output file */
+  hdr = make_temp_header(ofile,
+			 SND_SRATE(sp),
+			 outchans,
+			 num,
+			 XEN_TO_C_STRING(origin));
+
+  /* Open the output file, using the header we've been working on. */
+  ofd = open_temp_file(ofile, outchans, hdr, &io_err);
+  if (io_err != IO_NO_ERROR)
+    {
+      if (ofd == -1)
+	{
+	  free_file_info(hdr);
+	  if (pfControls) FREE(pfControls);
+	  psDescriptor->cleanup(psHandle);
+	  XEN_ERROR(CANNOT_SAVE,
+		    XEN_LIST_3(C_TO_XEN_STRING(S_apply_ladspa),
+			       C_TO_XEN_STRING(ofile),
+			       C_TO_XEN_STRING(snd_io_strerror())));
+	  return(XEN_FALSE);
+	}
+      snd_warning("%s %s: %s", S_apply_ladspa, ofile, io_error_name(io_err));
+    }
+  /* Tidy up header. */
+  datumb = mus_bytes_per_sample(hdr->format);
+
+  if (readers > 0)
+    {
+      sf = (snd_fd **)CALLOC(readers, sizeof(snd_fd *));
+
+      /* Local version of sound descriptor. */
+      if (XEN_LIST_P(reader))
+	{
+	  for (i = 0; i < readers; i++)
+	    sf[i] = get_sf(XEN_LIST_REF(reader, i));
+	}
+      else sf[0] = get_sf(reader);
+    }
   /* this code added 20-Sep-01 */
-  pfInputBuffer = (LADSPA_Data **)CALLOC(inchans, sizeof(LADSPA_Data *));
-  for (i = 0; i < inchans; i++)
-    pfInputBuffer[i] = (LADSPA_Data *)CALLOC(MAX_BUFFER_SIZE, sizeof(LADSPA_Data));
+  if (inchans > 0)
+    {
+      pfInputBuffer = (LADSPA_Data **)CALLOC(inchans, sizeof(LADSPA_Data *));
+      for (i = 0; i < inchans; i++)
+	pfInputBuffer[i] = (LADSPA_Data *)CALLOC(MAX_BUFFER_SIZE, sizeof(LADSPA_Data));
+    }
   pfOutputBuffer = (LADSPA_Data **)CALLOC(outchans, sizeof(LADSPA_Data *));
   for (i = 0; i < outchans; i++)
     pfOutputBuffer[i] = (LADSPA_Data *)CALLOC(MAX_BUFFER_SIZE, sizeof(LADSPA_Data));
@@ -701,69 +764,47 @@ Information about about parameters can be acquired using " S_analyse_ladspa "."
     }
   }
 
-  /* Temporary file name. */
-  ofile = snd_tempnam();
-
-  /* Create initial header for output file, stealing info from input
-     file. */
-  hdr = make_temp_header(ofile,
-			 SND_SRATE(sp),
-			 outchans,
-			 num,
-			 XEN_TO_C_STRING(origin));
-
-  /* Open the output file, using the header we've been working on. */
-  {
-    io_error_t io_err = IO_NO_ERROR; /* TODO: better error */
-    ofd = open_temp_file(ofile, outchans, hdr, &io_err);
-    if (io_err != IO_NO_ERROR)
-      XEN_ERROR(CANNOT_SAVE,
-		XEN_LIST_3(C_TO_XEN_STRING(S_apply_ladspa),
-			   C_TO_XEN_STRING(ofile),
-			   C_TO_XEN_STRING(snd_io_strerror())));
-  }
-  /* Tidy up header. */
-  datumb = mus_bytes_per_sample(hdr->format);
-
   if (psDescriptor->activate)
     psDescriptor->activate(psHandle);
 
   lAt = 0;
   ss->stopped_explicitly = false;
-  while (lAt < num) {
+  while (lAt < num) 
+    {
 
-    /* Decide how much audio to process this frame. */
-    lBlockSize = num - lAt;
-    if (lBlockSize > MAX_BUFFER_SIZE)
-      lBlockSize = MAX_BUFFER_SIZE;
+      /* Decide how much audio to process this frame. */
+      lBlockSize = num - lAt;
+      if (lBlockSize > MAX_BUFFER_SIZE)
+	lBlockSize = MAX_BUFFER_SIZE;
 
-    /* Prepare the input data. */
-    for (i = 0; i < readers; i++)
-      for (lSampleIndex = 0; lSampleIndex < lBlockSize; lSampleIndex++) {
-	pfInputBuffer[i][lSampleIndex] = read_sample_to_float(sf[i]);
-      }
+      /* Prepare the input data. */
+      if (readers > 0)
+	for (i = 0; i < readers; i++)
+	  for (lSampleIndex = 0; lSampleIndex < lBlockSize; lSampleIndex++) {
+	    pfInputBuffer[i][lSampleIndex] = read_sample_to_float(sf[i]);
+	  }
 
-    /* Run the plugin. */
-    psDescriptor->run(psHandle, lBlockSize);
+      /* Run the plugin. */
+      psDescriptor->run(psHandle, lBlockSize);
 
-    /* Prepare the output data. */
-    for (i = 0; i < outchans; i++)
-      for (lSampleIndex = 0; lSampleIndex < lBlockSize; lSampleIndex++)
-	data[i][lSampleIndex] = MUS_FLOAT_TO_SAMPLE(pfOutputBuffer[i][lSampleIndex]);
+      /* Prepare the output data. */
+      for (i = 0; i < outchans; i++)
+	for (lSampleIndex = 0; lSampleIndex < lBlockSize; lSampleIndex++)
+	  data[i][lSampleIndex] = MUS_FLOAT_TO_SAMPLE(pfOutputBuffer[i][lSampleIndex]);
 
-    /* Send the output data to the outside world. */
-    err = mus_file_write(ofd,
-			 0,
-			 lBlockSize - 1,
-			 outchans,
-			 data);
-    if (err == -1)
-      break;
-    if (ss->stopped_explicitly)
-      break;
+      /* Send the output data to the outside world. */
+      err = mus_file_write(ofd,
+			   0,
+			   lBlockSize - 1,
+			   outchans,
+			   data);
+      if (err == -1)
+	break;
+      if (ss->stopped_explicitly)
+	break;
 
-    lAt += lBlockSize;
-  }
+      lAt += lBlockSize;
+    }
 
   if (psDescriptor->deactivate)
     psDescriptor->deactivate(psHandle);
@@ -780,8 +821,20 @@ Information about about parameters can be acquired using " S_analyse_ladspa "."
     {
       for (i = 0, j = 0; i < outchans; i++)
 	{
-	  ncp = sf[j]->cp;
-	  if (file_change_samples(sf[j]->initial_samp,
+	  off_t beg;
+	  if (sf)
+	    {
+	      ncp = sf[j]->cp;
+	      beg = sf[j]->initial_samp;
+	    }
+	  else 
+	    {
+	      beg = 0;
+	      if (i < sp->nchans)
+		ncp = sp->chans[i];
+	      else break;
+	    }
+	  if (file_change_samples(beg,
 				  num,
 				  ofile,
 				  ncp,
@@ -801,21 +854,25 @@ Information about about parameters can be acquired using " S_analyse_ladspa "."
       ss->stopped_explicitly = false;
     }
   if (ofile) FREE(ofile);
-  for (i = 0; i < inchans; i++)
-    FREE(pfInputBuffer[i]);
+  if (inchans > 0)
+    {
+      for (i = 0; i < inchans; i++)
+	FREE(pfInputBuffer[i]);
+      FREE(pfInputBuffer);
+    }
   /* sf[i] is directly from scheme, so it will presumably handle reader gc */
   for (i = 0; i < outchans; i++)
     {
       FREE(pfOutputBuffer[i]);
       FREE(data[i]);
     }
+  FREE(pfOutputBuffer);
   if (sf) FREE(sf);
   if (pfControls) FREE(pfControls);
   FREE(data);
-  FREE(pfInputBuffer);
-  FREE(pfOutputBuffer);
   return(xen_return_first(XEN_FALSE, ladspa_plugin_configuration, origin));
 }
+
 
 #if HAVE_EXTENSION_LANGUAGE
 #if HAVE_SCHEME
@@ -1116,7 +1173,8 @@ XEN_NARGIFY_4(g_ladspa_connect_port_w, g_ladspa_connect_port)
 
 void g_ladspa_to_snd(void)
 {
-  XEN_DEFINE_PROCEDURE(S_analyse_ladspa,    g_analyse_ladspa_w,    2, 0, 0, H_analyse_ladspa);
+  XEN_DEFINE_PROCEDURE(S_analyse_ladspa,    g_analyse_ladspa_w,    2, 0, 0, H_analyse_ladspa); /* British spelling not used anywhere else, so why here? */
+  XEN_DEFINE_PROCEDURE("analyze-ladspa",    g_analyse_ladspa_w,    2, 0, 0, H_analyse_ladspa);
   XEN_DEFINE_PROCEDURE(S_apply_ladspa,      g_apply_ladspa_w,      4, 0, 0, H_apply_ladspa);
   XEN_DEFINE_PROCEDURE(S_init_ladspa,       g_init_ladspa_w,       0, 0, 0, H_init_ladspa);
   XEN_DEFINE_PROCEDURE(S_list_ladspa,       g_list_ladspa_w,       0, 0, 0, H_list_ladspa);

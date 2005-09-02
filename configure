@@ -13421,6 +13421,13 @@ echo "$as_me: WARNING: trouble with gtk -- will try to make Snd without any GUI"
      	GX_FILES="G_O_FILES"
       	GX_HEADERS="SND_G_HEADERS"
 
+	case "$host" in
+	  *-*-solaris*)
+	    GTK_LIBS="$GTK_LIBS -lX11"
+	    ;;
+	esac
+
+
 
       	cat >>confdefs.h <<\_ACEOF
 #define USE_GTK 1
@@ -13442,12 +13449,6 @@ _ACEOF
 _ACEOF
 
         fi
-
-	case "$host" in
-	  *-*-solaris*)
-	    GTK_LD_LIBS="$GTK_LD_LIBS -lX11"
-	    ;;
-	esac
 
 
 

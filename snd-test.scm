@@ -24279,9 +24279,9 @@ EDITS: 5
 	  (reset-hook! new-widget-hook))
 	
 	(if (provided? 'snd-ladspa)
-	    (if (file-exists? "/home/bil/test/ladspa_sdk/plugins")
+	    (if (file-exists? "/home/bil/test/ladspa/ladspa_sdk/plugins")
 		(begin
-		  (set! (ladspa-dir) "/home/bil/test/ladspa_sdk/plugins")
+		  (set! (ladspa-dir) "/home/bil/test/ladspa/ladspa_sdk/plugins")
 		  (init-ladspa)
 		  (let* ((ptr (ladspa-descriptor "delay" "delay_5s"))
 			 (label (.Label ptr))
@@ -24359,9 +24359,56 @@ EDITS: 5
 				    (lambda ()
 				      (apply-ladspa (list (make-sample-reader 0) (make-sample-reader 0)) (list #f) 1000 "delayed"))
 				    (lambda args (car args)))))
-		    (if (not (eq? tag 'wrong-type-arg)) (snd-display ";apply-ladspa tag: ~A" tag))))
+		    (if (not (eq? tag 'wrong-type-arg)) (snd-display ";apply-ladspa tag: ~A" tag)))
+
+		  (set! (ladspa-dir) "/home/bil/test/ladspa/vocoder-0.3")
+		  (init-ladspa)
+		  (if (not (equal? (list-ladspa) (list (list "vocoder" "vocoder"))))
+		      (snd-display ";list-ladspa vocoder: ~A" (list-ladspa)))
+		  (if (not (list? (analyze-ladspa "vocoder" "vocoder")))
+		      (snd-display ";analyze-ladspa vocoder: ~A" (analyze-ladspa "vocoder" "vocoder")))
+		  (let ((hi (ladspa-descriptor "vocoder" "vocoder")))
+		    (if (not (string=? (.Name hi) "Vocoder"))
+			(snd-display ";ladspa vocoder name: ~A" (.Name hi))))
+		  
+		  (let ((snd (open-sound "1a.snd")))
+		    (apply-ladspa (list (make-sample-reader 0) (make-sample-reader 0)) 
+				  (list "vocoder" "vocoder" 12 .5 .5 .5 .5 .5 .5 .5 .5 .5 .5 .5 .5 .5 .5 .5 .5) 
+				  (frames) "vocoder")
+		    (undo)
+		    
+		    (set! (ladspa-dir) "/home/bil/test/ladspa/lib/ladspa")
+		    (init-ladspa)
+		    (for-each (lambda (plug) (apply analyse-ladspa plug)) (list-ladspa))
+		    
+		    (if (not (list? (analyse-ladspa "amp_1181" "amp")))
+			(snd-display ";analyze-ladspa can't find amp_1181"))
+		    
+		    (apply-ladspa (make-sample-reader 0) (list "amp_1181" "amp" -6) (frames) "amp")
+		    (apply-ladspa (make-sample-reader 0) (list "amp_1181" "amp" 6) (frames) "amp")
+		    (close-sound snd))
+		  
+		  (let ((snd (open-sound "2a.snd")))
+		    
+		    (let ((tag 
+			   (catch #t
+				  (lambda ()
+				    (apply-ladspa (list (make-sample-reader 0 snd 0) (make-sample-reader 0 snd 1)) 
+						  (list "amp_1181" "amp" 6 -6) (frames) "amp"))
+				  (lambda args (car args)))))
+		      (if (not (equal? tag 'plugin-error))
+			  (snd-display ";apply-ladspa bad inputs: ~A" tag)))
+		    
+		    (apply-ladspa (list (make-sample-reader 0 snd 0) (make-sample-reader 0 snd 0)) 
+				  (list "ringmod_1188" "ringmod_2i1o" 1) (frames) "ringmod")
+		    (apply-ladspa #f (list "analogue_osc_1416" "analogueOsc" 2 440.0 0.1 0.0) (frames) "osc")
+		    (apply-ladspa #f (list "sin_cos_1881" "sinCos" 440.0 1.0) (frames) "sincos")
+		    (apply-ladspa (list (make-sample-reader 0 snd 0) (make-sample-reader 0 snd 1)) 
+				  (list "dj_eq_1901" "dj_eq" -6 0 6) (frames) "djeq")
+		    (close-sound snd)))
+
 		(snd-display ";ladspa loaded but can't find plugin directory: ~A" (ladspa-dir)))))
-	
+      
       (revert-sound fd)
       (close-sound fd)
       (for-each close-sound (sounds))

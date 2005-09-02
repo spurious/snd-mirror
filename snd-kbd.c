@@ -497,7 +497,7 @@ void report_in_minibuffer(snd_info *sp, const char *format, ...)
   char *buf;
   va_list ap;
   if ((!sp) || (!(sp->active)) || (!(sp->sgx)) || (sp->inuse != SOUND_NORMAL)) return;
-  if ((sp->minibuffer_on == MINI_PROMPT) || (sp->minibuffer_on == MINI_USER)) return;
+  if ((sp->minibuffer_on == MINI_PROMPT) || (sp->minibuffer_on == MINI_USER)) return; /* TODO: also MINI_FIND? */
   va_start(ap, format);
   buf = vstr(format, ap);
   va_end(ap);
@@ -914,9 +914,10 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 					  default_output_data_format(ss), 
 					  SND_SRATE(sp), NULL, SAVE_ALL_CHANS);
 		  if (io_err == IO_NO_ERROR)
-		    report_in_minibuffer(sp, _("selection saved as %s"), filename);
-		  else report_in_minibuffer(sp, _("selection not saved"));
-		  /* TODO: else some sort of error message! (io trans) */
+		    report_in_minibuffer(sp, "selection saved as %s", filename);
+		  else report_in_minibuffer(sp, "selection not saved: %s %s", 
+					    io_error_name(io_err), 
+					    filename);
 		  FREE(filename);
 		}
 	      else report_in_minibuffer(sp, _("no selection to save"));
@@ -1277,10 +1278,6 @@ static Float state_amount (int state)
   return(amount);
 }
 
-static void no_selection_error(snd_info *sp) /* TODO: fold */
-{
-  report_in_minibuffer(sp, _("no active selection"));
-}
 
 static bool stop_selecting(int keysym, int state)
 {
@@ -1937,7 +1934,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 		      get_amp_expression(sp, (!got_ext_count) ? 1 : ext_count, OVER_SELECTION); 
 		      dont_clear_minibuffer = true; 
 		    } 
-		  else no_selection_error(sp); 
+		  else report_in_minibuffer(sp, _("no active selection"));
 		  break;
 		case snd_K_B: case snd_K_b: 
 		  cp->cursor_on = true; 
@@ -1984,7 +1981,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 		  cp->cursor_on = true;
 		  if (selection_is_active_in_channel(cp))
 		    cursor_moveto(cp, (off_t)(selection_beg(cp) + 0.5 * selection_len()));
-		  else no_selection_error(sp); 
+		  else report_in_minibuffer(sp, _("no active selection"));
 		  handle_cursor_with_sync(cp, CURSOR_IN_MIDDLE);
 		  break;
 		case snd_K_O: case snd_K_o: 
@@ -2009,7 +2006,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 		case snd_K_V: case snd_K_v: 
 		  if (selection_is_active_in_channel(cp))
 		    window_frames_selection(cp); 
-		  else no_selection_error(sp); 
+		  else report_in_minibuffer(sp, _("no active selection"));
 		  break;
 		case snd_K_W: case snd_K_w:
 		  prompt(sp, _("file:"), NULL); 
@@ -2019,7 +2016,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 		case snd_K_Z: case snd_K_z: 
 		  if (selection_is_active_in_channel(cp))
 		    cos_smooth(cp, CURSOR(cp), (!got_ext_count) ? 1 : ext_count, OVER_SELECTION); 
-		  else no_selection_error(sp); 
+		  else report_in_minibuffer(sp, _("no active selection"));
 		  break;
 		case snd_K_Right:   
 		  sx_incremented(cp, state_amount(state));
