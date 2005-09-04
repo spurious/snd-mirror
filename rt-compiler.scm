@@ -36,6 +36,10 @@ and run simple lisp[4] functions.
 !#
 
 
+
+
+
+
 (provide 'snd-rt-compiler.scm)
 
 (use-modules (srfi srfi-1))
@@ -4771,7 +4775,7 @@ and run simple lisp[4] functions.
 				   ;;(fprintf stderr (string "readin (make), buffer: %x\\n") buffer)
 				   
 				   (if (== NULL buffer->buffer)
-				       (let* ((sfinfo <SF_INFO>)
+				       (let* ((sfinfo <SF_INFO> {0})
 					      (sndfile <SNDFILE-*> (sf_open filename SFM_READ &sfinfo))
 					      (framesize <int> 4)
 					      (format <int> (& SF_FORMAT_SUBMASK sfinfo.format)))
@@ -4779,9 +4783,11 @@ and run simple lisp[4] functions.
 					 ;;(SCM_ASSERT (!= NULL sndfile) scm_readin 0 (string "make-rt-readin: Could not open file."))
 					 (if (== NULL sndfile)
 					     (begin
-					       (printf (string "file not found\\n"))
-					       (return SCM_UNDEFINED)))
-					       
+					       (printf (string "libsndfile could not open file: "))
+					       (printf filename)
+					       (printf (string "\\n"))
+					       (return SCM_BOOL_F)))
+					 
 					 (cond ((== format SF_FORMAT_PCM_S8)
 						(set! framesize 1)
 						(set! buffer->readin_raw_func get_byte))
@@ -4836,10 +4842,19 @@ and run simple lisp[4] functions.
 
 
 (define (make-rt-readin areadin)
-  (if (string? areadin)
-      (make-rt-readin2 (make-readin areadin))
-      (make-rt-readin2 areadin)))
-       
+  (let ((ret (if (string? areadin)
+		 (make-rt-readin2 (make-readin areadin))
+		 (make-rt-readin2 areadin))))
+    (if (not ret)
+	(begin
+	  (c-display "Could not make rt-readin for" areadin)
+	  (throw 'could-not-make-rt-readin))
+	ret)))
+
+#!
+(make-rt-readin "/home/kjetil/flute2.wav")
+!#
+
 ;;(<rt-type> '<rt-readin> rt-readin-p 'rt_scm_to_rt_readin #:transformfunc SCM_SMOB_DATA #:c-type '<struct-mus_rt_readin-*> #:subtype-of '<mus_any-*>)
 (<rt-type> '<rt-readin>
 	   (lambda (readin)
@@ -5226,6 +5241,13 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
 		  (number? (cadr seq))))
 	   #f)
 
+(define-c-macro (rt-get-exact-time)
+  "(rt_globals->time+rt_globals->framenum)")
+(<rt-func> 'rt-get-exact-time '<int> '() #:is-immediate #t)
+
+(define-rt-macro (get-time)
+  `(/ (rt-get-exact-time) (mus-srate)))
+	 
 
 (define-c-macro (rt-get-time)
   "rt_globals->time")
@@ -5912,6 +5934,75 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
 		   (set! position (1+ position))))))
 !#
 
+
+
+
+
+
+;; rt -> snd
+
+
+(define rt-rb-read 0)
+(define rt-rb-write 1)
+(define rt-rb-unread 2)
+(define rt-rb-isrunning 3)
+
+(define rt-running-ringbuffers '())
+
+(define (make-ringbuffer size)
+  (let ((ret (make-vct (+ 1 rt-rb-unread size))))
+    ret))
+
+(define (ringbuffer-get rb func)
+  (letrec ((ai (lambda ()
+		  (if (= 0 (vct-ref rb rt-rb-isrunning))
+		      (set! rt-running-ringbuffers (remove (lambda (x) (eq? x rb)) rt-running-ringbuffers))
+		      (begin
+			(while (> (c-integer (vct-ref rb rt-rb-unread)) 0)
+			       (let ((read-pos (c-integer (vct-ref rb rt-rb-read))))
+				 (func (vct-ref rb (+ 4 read-pos)))
+				 (vct-set! rb rt-rb-read (if (>= read-pos (- (vct-length rb) 6))
+							     0
+							     (1+ read-pos))))
+			       (vct-set! rb rt-rb-unread (1- (vct-ref rb rt-rb-unread))))
+			(in 2 ai))))))
+    (vct-set! rb rt-rb-isrunning 1)
+    (set! rt-running-ringbuffers (cons rb rt-running-ringbuffers))
+    (ai)))
+
+(define (ringbuffer-stop rb)
+  (vct-set! rb rt-rb-isrunning 0))
+(define (ringbuffer-stop-all)
+  (for-each ringbuffer-stop rt-running-ringbuffers))
+
+(define-rt (put-ringbuffer rb val)
+  (if (= 0 (vct-ref rb rt-rb-isrunning))
+      #t
+      (if (>= (vct-ref rb rt-rb-unread) (- (vct-length rb) 6))
+	  (begin
+	    (printf "Ringbuffer full\\n")
+	    #f)
+	  (let ((write-pos (vct-ref rb rt-rb-write)))
+	    (declare (<int> write-pos))
+	    (vct-set! rb (+ write-pos 4) val)
+	    (vct-set! rb rt-rb-write (if (>= write-pos (- (vct-length rb) 6))
+					 0
+					 (1+ write-pos)))
+	    (vct-set! rb rt-rb-unread (1+ (vct-ref rb rt-rb-unread)))
+	    #t))))
+	
+  
+#!
+(define rb (make-ringbuffer 2000))
+(<rt-play> 0 10
+	   (lambda ()
+	     (put-ringbuffer rb (in 0))))
+(ringbuffer-get rb
+		(lambda (val)
+		  (c-display "got:" val)))
+	      
+(ringbuffer-stop rb)
+!#
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -7167,7 +7258,6 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
 
 
 (define-macro (rt-play-macro play-type eval-type rest)
-  ;;(c-display play-type rest)
   (let ((start #f)
 	(dur #f)
 	(func (last rest))
