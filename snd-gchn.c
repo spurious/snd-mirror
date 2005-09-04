@@ -139,13 +139,13 @@ static void gzy_changed(float value, chan_info *cp)
   cp->gzy = value;
   GTK_ADJUSTMENT(gsy_adj(cp))->page_size = value; 
   gtk_adjustment_changed(GTK_ADJUSTMENT(gsy_adj(cp)));
-  for_each_sound_chan(cp->sound, update_graph);
+  for_each_sound_chan(cp->sound, update_graph_or_warn);
 }
 
 static void gsy_changed(float value, chan_info *cp)
 {
   cp->gsy = cp->gzy * value;
-  for_each_sound_chan(cp->sound, update_graph);
+  for_each_sound_chan(cp->sound, update_graph_or_warn);
 }
 
 Float gsy_value(chan_info *cp)
@@ -313,8 +313,8 @@ static gboolean channel_expose_callback(GtkWidget *w, GdkEventExpose *ev, gpoint
     return(false);
   sp = cp->sound;
   if (sp->channel_style != CHANNELS_SEPARATE)
-    for_each_sound_chan(sp, update_graph);
-  else update_graph(cp);
+    for_each_sound_chan(sp, update_graph_or_warn);
+  else update_graph_or_warn(cp);
   return(false);
 }
 
@@ -656,7 +656,7 @@ static void channel_drag_watcher(GtkWidget *w, const char *filename, int x, int 
 	  else report_in_minibuffer(sp, "drop to mix file at %.4f", seconds);
 	  break;
 	case DRAG_LEAVE:
-	  report_in_minibuffer(sp, " "); /* not clear_minibuffer here! => segfault */
+	  string_to_minibuffer(sp, " "); /* not clear_minibuffer here! => segfault */
 	  break;
 	}
     }

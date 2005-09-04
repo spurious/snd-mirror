@@ -1175,6 +1175,7 @@ bool chan_fft_in_progress(chan_info *cp);
 void force_fft_clear(chan_info *cp);
 void chan_info_cleanup(chan_info *cp);
 void update_graph(chan_info *cp);
+void update_graph_or_warn(chan_info *cp);
 void add_channel_data(char *filename, chan_info *cp, channel_graph_t graphed);
 void add_channel_data_1(chan_info *cp, int srate, off_t frames, channel_graph_t graphed);
 void set_x_bounds(axis_info *ap);
@@ -1570,6 +1571,7 @@ void save_macro_state(FILE *fd);
 #else
   void report_in_minibuffer(snd_info *sp, const char *format, ...);
 #endif
+void string_to_minibuffer(snd_info *sp, const char *buf);
 void errors_to_minibuffer(const char *msg, void *data);
 void printout_to_minibuffer(const char *msg, void *data);
 void clear_minibuffer(snd_info *sp);

@@ -11,9 +11,13 @@ static char *io_error_names[] = {"no error", "save-hook cancellation", "bad chan
 const char *io_error_name(io_error_t err)
 {
   if ((err >= 0) &&
-      (err <= IO_NO_CHANGES))
+      (err < IO_ERROR_NUM))
     return(io_error_names[(int)err]);
-  return("unknown io_error");
+#if DEBUGGING
+  fprintf(stderr, "unknown io_error: %d\n", err);
+  abort();
+#endif
+  return(mus_format("unknown io_error: %d", err));
 }
 
 /* these are needed as C ints below */
@@ -165,7 +169,7 @@ void snd_error(char *format, ...)
 		(ss->catch_exists == 0))
 	      {
 		if ((sp) && (sp->active))
-		  report_in_minibuffer(sp, snd_error_buffer); /* TODO: this truncates the message! needs word wrap in either case */
+		  string_to_minibuffer(sp, snd_error_buffer); /* TODO: this truncates the message! needs word wrap in either case */
 		else post_it("Error", snd_error_buffer);
 	      }
 	  }

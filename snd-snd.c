@@ -1931,7 +1931,7 @@ void menu_apply_controls(snd_info *sp)
   apply_beg = 0;
   apply_dur = 0;
   if (sp->applying) 
-    report_in_minibuffer(sp, "already applying...");
+    string_to_minibuffer(sp, "already applying...");
   else
     {
       ap = (apply_state *)make_apply_state(sp);
@@ -3237,8 +3237,7 @@ static XEN g_save_sound(XEN index)
   redirect_snd_warning_to(NULL, NULL);
 
   /* if err and we got here, report it */
-  if ((err != IO_NO_ERROR) &&
-      (err != IO_NO_CHANGES))
+  if (SERIOUS_IO_ERROR(err))
     XEN_ERROR(CANNOT_SAVE,
 	      XEN_LIST_3(C_TO_XEN_STRING(S_save_sound),
 			 C_TO_XEN_STRING(io_error_name(err)),

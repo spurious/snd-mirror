@@ -19,7 +19,6 @@
  * PERHAPS: (alert_new_file): handle all directory update decisions through FAM
  * TODO: various file/directory lists: tie into fam/gamin (also previous files list) -- add xen call?
  * TODO: if directory loaded into previous files list via -p, add any new sound files as they appear
- *
  * TODO: scheme option for error history menu?
  * TODO: what if running src, uses its check-event to open raw data -- where is control?
  *       or similarly, stops at "ok", starts src, clicks ok?
@@ -38,7 +37,7 @@
  * TODO: report-in-minibuffer extended to go to any dialog
  * TODO: always show bg wave in vf
  * TODO: will need at least a reset button for the vf env, perhaps reset for entire vf
- * TODO: check new configure cases (86-64, solaris, mac)
+ * TODO: vf fam + remove if file deleted = no need for update button? -> overall reset?
  */
 
 
@@ -2016,7 +2015,7 @@ static void save_as_ok_callback(Widget w, XtPointer context, XtPointer info)
     }
   else
     {
-      msg = mus_format("save as %s error: %s", str, io_error_name(io_err));
+      msg = mus_format("save as %s: %s", str, io_error_name(io_err));
       post_file_dialog_error((const char *)msg, (void *)(sd->panel_data));
       clear_error_if_filename_changes(sd->dialog, (void *)(sd->panel_data));
       FREE(msg);
@@ -2216,7 +2215,7 @@ static void save_as_extract_callback(Widget w, XtPointer context, XtPointer info
     }
   else
     {
-      msg = mus_format("extract chan as %s error: %s", str, io_error_name(io_err));
+      msg = mus_format("extract chan as %s: %s", str, io_error_name(io_err));
       /* TODO: drag up the actual error here! */
       post_file_dialog_error((const char *)msg, (void *)(sd->panel_data));
       clear_error_if_filename_changes(sd->dialog, (void *)(sd->panel_data));
@@ -4660,8 +4659,8 @@ widget_t start_view_files_dialog_1(view_files_info *vdat, bool managed)
       XtSetArg(args[n], XmNbottomWidget, XmMessageBoxGetChild(vdat->dialog, XmDIALOG_SEPARATOR)); n++;
       XtSetArg(args[n], XmNsashIndent, 2); n++;
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
+      XtSetArg(args[n], XmNspacing, 24); n++;
       mainform = XtCreateManagedWidget("formd", xmPanedWindowWidgetClass, vdat->dialog, args, n);
-
 
       /* -------- left side controls -------- */
       n = 0;
@@ -4978,7 +4977,7 @@ widget_t start_view_files_dialog_1(view_files_info *vdat, bool managed)
       XmStringFree(s1);
 
       n = 0;
-      s1 = XmStringCreate("1.0   ", XmFONTLIST_DEFAULT_TAG);
+      s1 = XmStringCreate("1.0 ", XmFONTLIST_DEFAULT_TAG);
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
@@ -4990,7 +4989,7 @@ widget_t start_view_files_dialog_1(view_files_info *vdat, bool managed)
       /* XtSetArg(args[n], XmNmarginHeight, CONTROLS_MARGIN); n++; */
       XtSetArg(args[n], XmNrecomputeSize, false); n++;
       XtSetArg(args[n], XmNlabelString, s1); n++;
-      XtSetArg(args[n], XmNmarginRight, 3); n++;
+      /* XtSetArg(args[n], XmNmarginRight, 3); n++; */
       vdat->amp_number = XtCreateManagedWidget ("amp-number", xmLabelWidgetClass, leftform, args, n);
       XmStringFree(s1);
 
@@ -5043,7 +5042,7 @@ widget_t start_view_files_dialog_1(view_files_info *vdat, bool managed)
       XtSetArg(args[n], XmNlabelString, s1); n++;
       /* XtSetArg(args[n], XmNmarginHeight, CONTROLS_MARGIN); n++; */
       XtSetArg(args[n], XmNrecomputeSize, false); n++;
-      XtSetArg(args[n], XmNmarginRight, 3); n++;
+      /* XtSetArg(args[n], XmNmarginRight, 3); n++; */
       XtSetArg(args[n], XmNshadowThickness, 0); n++;
       XtSetArg(args[n], XmNhighlightThickness, 0); n++;
       XtSetArg(args[n], XmNfillOnArm, false); n++;
@@ -5382,12 +5381,3 @@ is the scrolled list position of the label. The label itself is 'label'."
   XEN_DEFINE_PROCEDURE("apply-edit-header", g_apply_edit_header, 0, 0, 0, "internal testing function");
 #endif
 }
-
-/* TODO: vf fam + remove if file deleted = no need for update button? -> overall reset?
- * TODO: check prompt-in-minibuffer troubles
- * TODO: check hook error output
-  (add-hook! open-hook
-	     (lambda (filename)
-                  (this-is-not-a-function)))
-
- */

@@ -3600,8 +3600,8 @@
 (CFNC "PangoAttribute* pango_attr_scale_new double scale_factor")
 (CFNC "GType pango_attr_list_get_type void")
 (CFNC "PangoAttrList* pango_attr_list_new void") ; FREE
-(CFNC "void pango_attr_list_ref PangoAttrList* list")
-;;; TODO: in 1.9.1 this is PangoAttrList *pango_attr_list_ref (PangoAttrList  *list);
+;;; (CFNC "void pango_attr_list_ref PangoAttrList* list")
+;;; changed in 1.9.1
 (CFNC "void pango_attr_list_unref PangoAttrList* list")
 (CFNC "PangoAttrList* pango_attr_list_copy PangoAttrList* list")
 (CFNC "void pango_attr_list_insert PangoAttrList* list PangoAttribute* attr")
@@ -3826,7 +3826,8 @@
 (CFNC "int pango_layout_get_line_count PangoLayout* layout")
 (CFNC "PangoLayoutLine* pango_layout_get_line PangoLayout* layout int line")
 (CFNC "GSList* pango_layout_get_lines PangoLayout* layout")
-(CFNC "void pango_layout_line_ref PangoLayoutLine* line")
+;;; (CFNC "void pango_layout_line_ref PangoLayoutLine* line")
+;;; changed 1.9 or thereabouts
 (CFNC "void pango_layout_line_unref PangoLayoutLine* line")
 (CFNC "gboolean pango_layout_line_x_to_index PangoLayoutLine* line int x_pos int* [index] int* [trailing]")
 (CFNC "void pango_layout_line_index_to_x PangoLayoutLine* line int index gboolean trailing int* [x_pos]")
@@ -5551,41 +5552,30 @@
 
 
 #!
-;;; Pango 1.9.1
-! void pango_cairo_context_set_hinting (PangoContext *context,
-! 				      gboolean      hinting);
-! gboolean pango_cairo_context_get_hinting (PangoContext *context);
-! void                        pango_cairo_context_set_font_options (PangoContext               *context,
-! 								  const cairo_font_options_t *options);
-! const cairo_font_options_t *pango_cairo_context_get_font_options (PangoContext               *context);
-! 
-! void               pango_cairo_context_set_resolution     (PangoContext       *context,
-! 							   double              dpi);
-! double             pango_cairo_context_get_resolution     (PangoContext       *context);
-+ #define PANGO_TYPE_ITEM (pango_item_get_type ())
-+ 
-+ GType pango_item_get_type (void) G_GNUC_CONST;
-+ 
-! #define PANGO_TYPE_LAYOUT_LINE (pango_layout_line_get_type ())
-! 
-! GType    pango_layout_line_get_type     (void) G_GNUC_CONST;
-! 
-! PangoLayoutLine *pango_layout_line_ref   (PangoLayoutLine *line); type change
-+ G_GNUC_CONST gboolean pango_is_zero_width (gunichar ch);
+;;; handle these when gtk changes in some ascertainable manner
+;;; Pango 1.9.1 and 1.10
 
+(CINT-285 "PANGO_SCRIPT_NEW_TAI_LUE" "PangoScript")
+(CINT-285 "PANGO_SCRIPT_BUGINESE" "PangoScript")
+(CINT-285 "PANGO_SCRIPT_GLAGOLITIC" "PangoScript")
+(CINT-285 "PANGO_SCRIPT_TIFINAGH" "PangoScript")
+(CINT-285 "PANGO_SCRIPT_SYLOTI_NAGRI" "PangoScript")
+(CINT-285 "PANGO_SCRIPT_OLD_PERSIAN" "PangoScript")
+(CINT-285 "PANGO_SCRIPT_KHAROSHTHI" "PangoScript")
 
-;;; Pango 1.10.0
-+ PangoFontMetrics *pango_fc_font_create_metrics_for_context (PangoFcFont   *font,
-+ 							    PangoContext  *context);
-+ 
-!       PANGO_SCRIPT_NEW_TAI_LUE,        /* Talu */
-!       PANGO_SCRIPT_BUGINESE,           /* Bugi */
-!       PANGO_SCRIPT_GLAGOLITIC,         /* Glag */
-!       PANGO_SCRIPT_TIFINAGH,           /* Tfng */
-!       PANGO_SCRIPT_SYLOTI_NAGRI,       /* Sylo */
-!       PANGO_SCRIPT_OLD_PERSIAN,        /* Xpeo */
-!       PANGO_SCRIPT_KHAROSHTHI          /* Khar */
+(CLNG-285 "PANGO_TYPE_ITEM")
+(CLNG-285 "PANGO_TYPE_LAYOUT_LINE")
+
+(CFNC-285 "PangoAttrList* pango_attr_list_ref PangoAttrList* list")
+(CFNC-285 "void pango_cairo_context_set_hinting PangoContext* context gboolean hinting")
+(CFNC-285 "gboolean pango_cairo_context_get_hinting PangoContext* context")
+(CFNC-285 "void pango_cairo_context_set_font_options PangoContext* context cairo_font_options_t* options")
+(CFNC-285 "const cairo_font_options_t* pango_cairo_context_get_font_options PangoContext* context")
+(CFNC-285 "void pango_cairo_context_set_resolution PangoContext* context double dpi")
+(CFNC-285 "double pango_cairo_context_get_resolution PangoContext* context")
+(CFNC-285 "GType pango_item_get_type void")
+(CFNC-285 "GType pango_layout_line_get_type void")
+(CFNC-285 "PangoLayoutLine* pango_layout_line_ref PangoLayoutLine* line")
+(CFNC-285 "gboolean pango_is_zero_width gunichar ch" 'const-return)
 
 !#
-
-

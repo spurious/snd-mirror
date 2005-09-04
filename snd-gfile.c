@@ -31,9 +31,9 @@
  *         or post a Stop sign whenever the dac is in progress (or any long computation)
  *         similarly for Update
  *         This could be in the sound's pixmap area except that none of the small stop icons looks good.
- *         (and who on earth thinks a phillips screw head means "stop"!)
  * TODO: FileChooser: add entry for filename in Open case (with completion)
  * TODO: many of the button labels are wrong: cancel->quit, open->mix etc
+ * PERHAPS: instant play stop upon c-g via mixer amp controls (then reset when the thing has actually closed)--mute control?
  */
 
 
@@ -1891,7 +1891,7 @@ static void save_as_ok_callback(GtkWidget *w, gpointer data)
     }
   else
     {
-      msg = mus_format("save as %s error: %s", str, io_error_name(io_err));
+      msg = mus_format("save as %s: %s", str, io_error_name(io_err));
       post_file_dialog_error((const char *)msg, (void *)(sd->panel_data));
       clear_error_if_filename_changes(sd->dialog, (void *)(sd->panel_data));
       FREE(msg);
@@ -2098,7 +2098,7 @@ static void save_as_extract_callback(GtkWidget *w, gpointer data)
     }
   else
     {
-      msg = mus_format("extract chan as %s error: %s", str, io_error_name(io_err));
+      msg = mus_format("extract chan as %s: %s", str, io_error_name(io_err));
       post_file_dialog_error((const char *)msg, (void *)(sd->panel_data));
       clear_error_if_filename_changes(sd->dialog, (void *)(sd->panel_data));
       FREE(msg);
@@ -3748,11 +3748,23 @@ void vf_post_location_error(const char *error_msg, void *data)
     }
 }
 
+static gboolean vf_add_text_modify_callback(GtkWidget *w, GdkEventKey *event, gpointer data)
+{
+  view_files_info *vdat = (view_files_info *)data;
+  vf_clear_error(vdat);
+  if (vdat->add_text_handler_id)
+    {
+      g_signal_handler_disconnect(w, vdat->add_text_handler_id);
+      vdat->add_text_handler_id = 0;
+    }
+  return(false);
+}
+
 void vf_post_add_error(const char *error_msg, void *data)
 {
   view_files_info *vdat = (view_files_info *)data;
   vf_post_error(error_msg, data);
-        /* TODO: clear error if anything changes */
+  vdat->add_text_handler_id = SG_SIGNAL_CONNECT(vdat->add_text, "key_press_event", vf_add_text_modify_callback, data);
 }
 
 static void view_files_mix_selected_callback(GtkWidget *w, gpointer context) 
@@ -4129,7 +4141,7 @@ GtkWidget *start_view_files_dialog_1(view_files_info *vdat, bool managed)
 {
   if (!(vdat->dialog))
     {
-      GtkWidget *sep1, *cww, *rlw, *tophbox, *plw, *bbox, *add_text, *add_label, *addbox;
+      GtkWidget *sep1, *cww, *rlw, *tophbox, *plw, *bbox, *add_label, *addbox;
       GtkWidget *sbar, *sitem, *newB;
       GtkWidget *mainform, *leftform, *fileform, *helpB, *dismissB;
 
@@ -4167,6 +4179,28 @@ GtkWidget *start_view_files_dialog_1(view_files_info *vdat, bool managed)
       gtk_widget_set_name(mainform, "the_unpane");
       gtk_widget_show(mainform);
 
+      {
+	GtkWidget *lmargin, *rmargin;
+	/* these exist solely to put some blank space around the handle */
+
+	lmargin = gtk_hbox_new(false, 0); 
+	gtk_paned_add1(GTK_PANED(mainform), lmargin);	
+	gtk_widget_show(lmargin);
+
+	rmargin = gtk_hbox_new(false, 0);
+	gtk_paned_add2(GTK_PANED(mainform), rmargin);	
+	gtk_widget_show(rmargin);
+
+	leftform = gtk_vbox_new(false, 0);
+	gtk_box_pack_start(GTK_BOX(lmargin), leftform, true, true, 4);
+	gtk_widget_show(leftform);
+
+	fileform = gtk_vbox_new(false, 0);
+	gtk_box_pack_start(GTK_BOX(rmargin), fileform, true, true, 4);
+	gtk_widget_show(fileform);
+      }
+#if 0
+      /* here's the original... */
       leftform = gtk_vbox_new(false, 0);
       gtk_paned_add1(GTK_PANED(mainform), leftform);
       gtk_widget_show(leftform);
@@ -4174,6 +4208,7 @@ GtkWidget *start_view_files_dialog_1(view_files_info *vdat, bool managed)
       fileform = gtk_vbox_new(false, 0);
       gtk_paned_add2(GTK_PANED(mainform), fileform);
       gtk_widget_show(fileform);
+#endif
 
       /* files section: play files | files */
 
@@ -4280,8 +4315,8 @@ GtkWidget *start_view_files_dialog_1(view_files_info *vdat, bool managed)
       gtk_box_pack_start(GTK_BOX(addbox), add_label, false, false, 4);
       gtk_widget_show(add_label);
 
-      add_text = snd_entry_new(addbox, WITH_WHITE_BACKGROUND);
-      SG_SIGNAL_CONNECT(add_text, "activate", view_files_add_files, (gpointer)vdat);
+      vdat->add_text = snd_entry_new(addbox, WITH_WHITE_BACKGROUND);
+      SG_SIGNAL_CONNECT(vdat->add_text, "activate", view_files_add_files, (gpointer)vdat);
 
 
       /* left side */

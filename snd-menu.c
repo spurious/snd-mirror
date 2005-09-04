@@ -262,9 +262,7 @@ void save_options_from_menu(void)
 static bool save_state_error_p = false;
 static void save_state_from_menu_error_handler(const char *msg, void *ignore)
 {
-  /* SOMEDAY: need some way to post this if no files open [also below] */
-  if (any_selected_sound())
-    report_in_minibuffer(any_selected_sound(), msg);
+  snd_warning((char *)msg);
   save_state_error_p = true;
 }
 
@@ -284,8 +282,7 @@ void save_state_from_menu(void)
     }
   else 
     {
-      if (any_selected_sound())
-	report_in_minibuffer(any_selected_sound(), _("can't save state: save-state-file is null"));
+      snd_warning(_("can't save state: save-state-file is null"));
     }
 }
 

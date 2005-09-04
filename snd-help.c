@@ -555,14 +555,11 @@ extsnd.html, or snd-debug.  For notelist debugging, see ws-backtrace.",
 		      debug_urls);
 }
 
-/* TODO: Scheme syntax in places here ("define" for env var) */
-
 void env_help(void) 
 {
   snd_help_with_xrefs("Envelope", 
-"An envelope in Snd is a list of x y break-point pairs. The x axis range is arbitrary. To define a triangle curve: '(0 0 1 1 2 0). \
-There is no preset limit on the number of breakpoints.  Envelopes can be defined with define and referred to thereafter by name. \
-Use the envelope editor to draw envelopes with the mouse. \
+"An envelope in Snd is a list (array in Ruby) of x y break-point pairs. The x axis range is arbitrary. To define a triangle curve: '(0 0 1 1 2 0). \
+There is no preset limit on the number of breakpoints. Use the envelope editor to draw envelopes with the mouse. \
 \n\n\
 To apply an envelope to a sound, use " S_env_sound " or the extended command C-x C-a.  If this command gets a numeric \
 argument, the envelope is applied from the cursor for that many samples. Otherwise, the envelope is \
@@ -1567,12 +1564,16 @@ static void colors_help(void)
 "A color in Snd is an object with three fields representing the rgb (red green blue) settings \
 as numbers between 0.0 and 1.0. A color object is created via " S_make_color ":\n\
 \n\
->(define blue (make-color 0 0 1))\n\
+>(define blue (make-color 0.0 0.0 1.0))\n\
+\n\
+or in Ruby:\n\
+\n\
+Blue = make_color(0.0, 0.0, 1.0)\n\
 \n\
 This declares the Scheme variable \"blue\" and gives it the value of the color whose rgb components \
 include only blue in full force. The X11 color names are defined in rgb.scm. The overall widget background color is " S_basic_color ".\n\
 \n\
->(set! (basic-color) blue)\n\
+>(set! (basic-color) blue)  ; in Ruby: set_basic_color(Blue)\n\
 \n\
 The color variables are:\n\
 " S_basic_color ":  main Snd color.\n\

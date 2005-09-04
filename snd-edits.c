@@ -4380,9 +4380,9 @@ static io_error_t snd_make_file(const char *ofile, int chans, file_info *hdr, sn
   mus_sample_t **obufs;
   io_error_t io_err = IO_NO_ERROR;
   int sl_err = MUS_NO_ERROR;
-  ofd = open_temp_file(ofile, chans, hdr, &io_err); /* TODO: better error */
+  ofd = open_temp_file(ofile, chans, hdr, &io_err);
   if (ofd == -1) 
-    return(IO_CANT_OPEN_TEMP_FILE);
+    return(io_err);
   mus_file_set_data_clipped(ofd, data_clipped(ss));
   datumb = mus_bytes_per_sample(hdr->format);
   obufs = (mus_sample_t **)MALLOC(chans * sizeof(mus_sample_t *));
@@ -4811,8 +4811,7 @@ static char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
 		  else function = mus_format("%s (%s snd chn)", function, ed->origin);
 		  break;
 		case CHANGE_EDIT:
-		  /* TODO: don't forget Ruby below for file-related insert/change cases */
-		  if ((!(ed->origin)) || (strcmp(ed->origin, "set-samples") == 0)) /* TODO: swap-channels? */
+		  if ((!(ed->origin)) || (strcmp(ed->origin, "set-samples") == 0))
 		    {
 		      /* save data in temp file, use set-samples with file name */
 		      char *ofile;
@@ -8190,7 +8189,7 @@ Float channel_local_maxamp(chan_info *cp, off_t beg, off_t num, int edpos, off_t
 	      if ((ss->stopped_explicitly) || (!(cp->active)))
 		{
 		  ss->stopped_explicitly = false;
-		  report_in_minibuffer(cp->sound, _("maxamp check interrupted..."));
+		  string_to_minibuffer(cp->sound, _("maxamp check interrupted..."));
 		  break;
 		}
 	    }

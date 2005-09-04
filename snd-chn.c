@@ -436,7 +436,7 @@ static XEN dpy_body(void *context)
 }
 #endif
 
-void update_graph(chan_info *cp)
+static void update_graph_1(chan_info *cp, bool warn)
 {
   /* don't put display stuff here!  This is needed so that the fft display does not get caught in a loop */
   double cur_srate;
@@ -452,11 +452,8 @@ void update_graph(chan_info *cp)
   if (cp->squelch_update)
     {
 #if (!USE_NO_GUI)
-      if (sp)
-	{
-	  set_minibuffer_string(sp, "(update squelched)", false); /* this has tripped me one too many times... */
-	  sp->minibuffer_on = MINI_REPORT;
-	}
+      if ((warn) && (sp))
+	string_to_minibuffer(sp, "(update squelched)"); /* this has tripped me one too many times... */
 #endif
       return;
     }
@@ -492,6 +489,16 @@ void update_graph(chan_info *cp)
   display_channel_data(cp);
   updating = false;
 #endif
+}
+
+void update_graph(chan_info *cp)
+{
+  update_graph_1(cp, false);
+}
+
+void update_graph_or_warn(chan_info *cp)
+{
+  update_graph_1(cp, true);
 }
 
 #define INITIAL_EDIT_SIZE 8
@@ -706,7 +713,7 @@ void apply_y_axis_change (axis_info *ap, chan_info *cp)
 {
   snd_info *sp;
   set_y_bounds(ap);
-  update_graph(cp);
+  update_graph_or_warn(cp);
   sp = cp->sound;
   if (sp->channel_style != CHANNELS_SEPARATE)
     {
@@ -727,7 +734,7 @@ void apply_y_axis_change (axis_info *ap, chan_info *cp)
 		  nap->zy = zy;
 		  nap->sy = sy;
 		  set_y_bounds(nap);
-		  update_graph(ncp);
+		  update_graph_or_warn(ncp);
 		}
 	    }
 	}
@@ -798,7 +805,7 @@ void reset_x_display(chan_info *cp, double sx, double zx)
   set_x_bounds(ap);
   resize_sx(cp);
   resize_zx(cp);
-  update_graph(cp);
+  update_graph_or_warn(cp);
 }
 
 static void update_xs(chan_info *ncp, axis_info *ap)
@@ -824,7 +831,7 @@ void apply_x_axis_change(axis_info *ap, chan_info *cp)
   sp = cp->sound;
   sp->lacp = cp;
   set_x_bounds(ap);
-  update_graph(cp);
+  update_graph_or_warn(cp);
   if (sp->sync != 0)
     {
       sync_info *si;
@@ -2005,7 +2012,7 @@ static void make_sonogram(chan_info *cp)
 	      if ((ss->stopped_explicitly) || (!(cp->active))) /* user closed file while trying to print */
 		{
 		  ss->stopped_explicitly = false;
-		  report_in_minibuffer(sp, _("stopped"));
+		  string_to_minibuffer(sp, _("stopped"));
 		  break;
 		}
 	    }
@@ -2415,7 +2422,7 @@ static bool make_spectrogram(chan_info *cp)
 		  if ((ss->stopped_explicitly) || (!(cp->active)))
 		    {
 		      ss->stopped_explicitly = false;
-		      report_in_minibuffer(sp, _("stopped"));
+		      string_to_minibuffer(sp, _("stopped"));
 		      break;
 		    }
 		}
@@ -2472,7 +2479,7 @@ static bool make_spectrogram(chan_info *cp)
 		  if ((ss->stopped_explicitly) || (!(cp->active)))
 		    {
 		      ss->stopped_explicitly = false;
-		      report_in_minibuffer(sp, _("stopped"));
+		      string_to_minibuffer(sp, _("stopped"));
 		      break;
 		    }
 		}
@@ -3543,8 +3550,7 @@ void show_cursor_info(chan_info *cp)
 	    }
 	}
     }
-  set_minibuffer_string(sp, expr_str, true);
-  sp->minibuffer_on = MINI_CURSOR;
+  string_to_minibuffer(sp, expr_str);
   FREE(expr_str);
   FREE(s1);
   FREE(s2);
@@ -3711,7 +3717,7 @@ void waveb(chan_info *cp, bool on)
 {
   cp->graph_time_p = on;
   set_toggle_button(channel_w(cp), on, false, (void *)cp);
-  update_graph(cp);
+  update_graph_or_warn(cp);
 }
 
 static void propagate_wf_state(snd_info *sp)
@@ -3730,7 +3736,7 @@ static void propagate_wf_state(snd_info *sp)
       set_toggle_button(channel_f(cp), f, false, (void *)cp);
       set_toggle_button(channel_w(cp), w, false, (void *)cp);
     }
-  for_each_sound_chan(sp, update_graph);
+  for_each_sound_chan(sp, update_graph_or_warn);
 }
 
 void f_button_callback(chan_info *cp, bool on, bool with_control)
@@ -3742,7 +3748,7 @@ void f_button_callback(chan_info *cp, bool on, bool with_control)
     propagate_wf_state(sp);
   else
     {
-      update_graph(cp);
+      update_graph_or_warn(cp);
       if (with_control)
 	{
 	  int i;
@@ -3758,7 +3764,7 @@ void f_button_callback(chan_info *cp, bool on, bool with_control)
 #else
 		  set_toggle_button(channel_f(ncp), on, false, (void *)cp);
 #endif
-		  update_graph(ncp);
+		  update_graph_or_warn(ncp);
 		}
 	    }
 	}
@@ -3775,7 +3781,7 @@ void w_button_callback(chan_info *cp, bool on, bool with_control)
     propagate_wf_state(sp);
   else
     {
-      update_graph(cp);
+      update_graph_or_warn(cp);
       if (with_control)
 	{
 	  int i;
@@ -3791,7 +3797,7 @@ void w_button_callback(chan_info *cp, bool on, bool with_control)
 #else
 		  set_toggle_button(channel_w(ncp), on, false, (void *)cp);
 #endif
-		  update_graph(ncp);
+		  update_graph_or_warn(ncp);
 		}
 	    }
 	}
@@ -4072,7 +4078,7 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 	      {
 		char *str;
 		str = describe_fft_point(cp, x, y);
-		report_in_minibuffer(sp, str);
+		string_to_minibuffer(sp, str);
 		if (str) FREE(str);
 	      }
 	      break;
@@ -4264,7 +4270,7 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, Tempus time)
 		{
 		  char *str;
 		  str = describe_fft_point(cp, x, y);
-		  report_in_minibuffer(cp->sound, str);
+		  string_to_minibuffer(cp->sound, str);
 		  if (str) FREE(str);
 		}
 	      break;
@@ -4283,9 +4289,9 @@ void channel_resize(chan_info *cp)
   if (sp->channel_style != CHANNELS_SEPARATE)
     {
       if (cp->chan == 0)
-	for_each_sound_chan(sp, update_graph);
+	for_each_sound_chan(sp, update_graph_or_warn);
     }
-  else update_graph(cp);
+  else update_graph_or_warn(cp);
 }
 
 void edit_history_select(chan_info *cp, int row)

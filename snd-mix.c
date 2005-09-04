@@ -3192,7 +3192,7 @@ static void play_mix(mix_info *md, off_t beg, bool from_gui)
 		  (!(sp->active)))
 		{
 		  ss->stopped_explicitly = false;
-		  report_in_minibuffer(sp, _("stopped"));
+		  string_to_minibuffer(sp, _("stopped"));
 		  break;
 		}
 	    }
@@ -7749,7 +7749,7 @@ static void play_track(int track_num, int chan, off_t beg, bool from_gui)
 		  (!(sp->active)))
 		{
 		  ss->stopped_explicitly = false;
-		  report_in_minibuffer(sp, _("stopped"));
+		  string_to_minibuffer(sp, _("stopped"));
 		  break;
 		}
 	    }

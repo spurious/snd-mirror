@@ -1152,8 +1152,7 @@ insert region data into snd's channel chn starting at start-samp"
     return(snd_no_such_region_error(S_insert_region, reg_n));
   samp = beg_to_sample(samp_n, S_insert_region);
   err = paste_region_2(rg, cp, false, samp, 0);
-  if ((err != IO_NO_ERROR) &&
-      (err != IO_EDIT_HOOK_CANCELLATION))
+  if (SERIOUS_IO_ERROR(err))
     XEN_ERROR(CANT_UPDATE_FILE,
 	      XEN_LIST_2(C_TO_XEN_STRING(S_insert_region),
 			 C_TO_XEN_STRING(io_error_name(err))));
@@ -1552,8 +1551,7 @@ mix region into snd's channel chn starting at chn-samp; return new mix id."
 			 tid));
   id = paste_region_1(rg, cp, true, samp, track_id, &err);
   /* id might legitmately be invalid mix id if with_mix_tags is #f */
-  if ((err != IO_NO_ERROR) &&
-      (err != IO_EDIT_HOOK_CANCELLATION))
+  if (SERIOUS_IO_ERROR(err))
     XEN_ERROR(CANT_UPDATE_FILE,
 	      XEN_LIST_2(C_TO_XEN_STRING(S_mix_region),
 			 C_TO_XEN_STRING(io_error_name(err))));

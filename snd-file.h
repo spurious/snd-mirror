@@ -79,6 +79,7 @@ typedef struct {
 #if USE_GTK
   gulong at_sample_text_handler_id, at_mark_text_handler_id;
   gulong at_sample_button_handler_id, at_mark_button_handler_id;
+  gulong add_text_handler_id;
 #endif
 } view_files_info;
 

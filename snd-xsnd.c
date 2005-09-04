@@ -2977,7 +2977,7 @@ void hide_controls(void)
     }
 }
 
-int control_panel_height(snd_info *sp) /* TODOL: this is smaller by about 20 than it used to be */
+int control_panel_height(snd_info *sp) /* TODO: this is smaller by about 20 than it used to be */
 {
   return(widget_height(CONTROLS(sp)));
 }
@@ -3003,7 +3003,7 @@ void progress_report(snd_info *sp, const char *funcname, int curchan, int chans,
     display_enved_progress(expr_str, mini_glasses[which]);
   else 
     {
-      report_in_minibuffer(sp, expr_str);
+      string_to_minibuffer(sp, expr_str);
       snd_file_glasses_icon(sp, true, which);
     }
   if (chans > 1) 
@@ -3021,7 +3021,7 @@ void progress_report(snd_info *sp, const char *funcname, int curchan, int chans,
   else mus_snprintf(expr_str, PRINT_BUFFER_SIZE, "%s: %d%%", funcname, which);
   if (from_enved == FROM_ENVED)
     display_enved_progress(expr_str, 0);
-  else report_in_minibuffer(sp, expr_str);
+  else string_to_minibuffer(sp, expr_str);
   FREE(expr_str);
 #endif
   check_for_event();
@@ -3041,7 +3041,7 @@ void finish_progress_report(snd_info *sp, enved_progress_t from_enved)
 #else
   if (from_enved == FROM_ENVED)
     display_enved_progress((ss->stopped_explicitly) ? _("stopped") : "", 0);
-  else report_in_minibuffer(sp, (ss->stopped_explicitly) ? _("stopped") : "");
+  else string_to_minibuffer(sp, (ss->stopped_explicitly) ? _("stopped") : "");
 #endif
 }
 

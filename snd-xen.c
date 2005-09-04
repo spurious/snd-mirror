@@ -2009,7 +2009,6 @@ Float string_to_Float(char *str)
 #endif
 }
 
-/* PERHAPS: sscanf -> cant_read_header in headers.c and snd-trans.c */
 /* TODO: replace string_to_* with redirected versions */
 int string_to_int(char *str) 
 {

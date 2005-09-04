@@ -142,7 +142,7 @@ static void gzy_changed(int value, chan_info *cp)
   else new_gsy = cp->gsy;
   if (new_gsy < 0.0) new_gsy = 0.0;
   set_scrollbar(channel_gsy(cp), new_gsy, new_size, SCROLLBAR_MAX);
-  for_each_sound_chan(cp->sound, update_graph);
+  for_each_sound_chan(cp->sound, update_graph_or_warn);
 }
 
 static void gsy_changed(int value, chan_info *cp)
@@ -150,7 +150,7 @@ static void gsy_changed(int value, chan_info *cp)
   Float low;
   low = get_scrollbar(channel_gsy(cp), value, SCROLLBAR_MAX);
   cp->gsy = (1.0 - cp->gzy) * low;
-  for_each_sound_chan(cp->sound, update_graph);
+  for_each_sound_chan(cp->sound, update_graph_or_warn);
 }
 
 void fixup_gsy(chan_info *cp, Float low, Float high)
@@ -432,9 +432,9 @@ static void channel_expose_callback(Widget w, XtPointer context, XtPointer info)
   if (sp->channel_style != CHANNELS_SEPARATE)
     {
       if ((cp->chan == 0) && (ev->width > 10) && (ev->height > 10))
-	for_each_sound_chan(sp, update_graph);
+	for_each_sound_chan(sp, update_graph_or_warn);
     }
-  else update_graph(cp);
+  else update_graph_or_warn(cp);
 }
 
 static void channel_resize_callback(Widget w, XtPointer context, XtPointer info)
@@ -794,7 +794,7 @@ static void channel_drag_watcher(Widget w, const char *str, Position x, Position
 	  else report_in_minibuffer(sp, "drop to mix file at %.4f", seconds);
 	  break;
 	case DRAG_LEAVE:
-	  report_in_minibuffer(sp, " "); /* not clear_minibuffer here! => segfault */
+	  string_to_minibuffer(sp, " "); /* not clear_minibuffer here! => segfault */
 	  break;
 	}
     }

@@ -711,7 +711,7 @@ static void swap_channels(chan_info *cp0, chan_info *cp1, off_t beg, off_t dur, 
 	}
       else
 	{
-	  report_in_minibuffer(sp0, _("swap interrupted"));
+	  string_to_minibuffer(sp0, _("swap interrupted"));
 	  ss->stopped_explicitly = false;
 	}
       if (ofile0) {FREE(ofile0); ofile0 = NULL;}
@@ -1040,7 +1040,7 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, off_t beg, off_t 
     }
   else
     {
-      report_in_minibuffer(sp, _("src interrupted"));
+      string_to_minibuffer(sp, _("src interrupted"));
       ss->stopped_explicitly = false;
     }
   if (old_marks) FREE(old_marks);
@@ -1407,7 +1407,7 @@ static char *convolution_filter(chan_info *cp, int order, env *e, snd_fd *sf, of
 	file_change_samples(beg, dur, ofile, cp, 0, DELETE_ME, LOCK_MIXES, origin, cp->edit_ctr);
       else 
 	{
-	  report_in_minibuffer(sp, _("filter interrupted"));
+	  string_to_minibuffer(sp, _("filter interrupted"));
 	  ss->stopped_explicitly = false;
 	}
       mus_free(gen);
@@ -1758,7 +1758,7 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, enved_prog
 	  if (ss->stopped_explicitly)
 	    {
 	      ss->stopped_explicitly = false;
-	      report_in_minibuffer(sp, _("filter stopped"));
+	      string_to_minibuffer(sp, _("filter stopped"));
 	      break;
 	    }
 	}
@@ -1997,7 +1997,7 @@ static void reverse_sound(chan_info *ncp, bool over_selection, XEN edpos, int ar
     }
   if (ss->stopped_explicitly)
     {
-      report_in_minibuffer(sp, _("reverse stopped"));
+      string_to_minibuffer(sp, _("reverse stopped"));
       ss->stopped_explicitly = false;
       for (i = 0; i <= stop_point; i++)
 	{

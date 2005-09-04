@@ -423,7 +423,6 @@ static off_t cursor_find_backward(snd_info *sp, chan_info *cp, int count)
 
 static void get_find_expression(snd_info *sp, int count)
 {
-  /* clear previous ? */
   set_minibuffer_string(sp, NULL, true);
   make_minibuffer_label(sp, "find:");
   sp->minibuffer_on = MINI_FIND;
@@ -446,6 +445,7 @@ void cursor_search(chan_info *cp, int count)
 	      (sp->search_tree == NULL)) 
 	    {
 	      sp->searching = 0;
+	      clear_minibuffer_prompt(cp->sound);
 	      return; /* no search expr */
 	    }
 	  if (sp->search_expr)

@@ -6634,10 +6634,7 @@ static void report_in_minibuffer_s(int *args, ptree *pt)
   snd_info *sp;
   sp = run_get_sp(2, args, pt->ints);
   if (sp)
-    {
-      set_minibuffer_string(sp, STRING_ARG_1, true);
-      sp->minibuffer_on = MINI_REPORT;
-    }
+    string_to_minibuffer(sp, STRING_ARG_1);
 }
 
 static char *descr_report_in_minibuffer_s(int *args, ptree *pt) 

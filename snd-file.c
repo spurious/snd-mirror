@@ -1504,7 +1504,7 @@ snd_info *snd_update(snd_info *sp)
 
 static void snd_update_warning_handler(const char *msg, void *data)
 {
-  report_in_minibuffer((snd_info *)data, msg);
+  string_to_minibuffer((snd_info *)data, msg);
 }
 
 static void snd_update_error_handler(const char *msg, void *data)
@@ -2464,6 +2464,7 @@ view_files_info *new_view_files_dialog(void)
       vdat->at_mark_text_handler_id = 0;
       vdat->at_sample_button_handler_id = 0; 
       vdat->at_mark_button_handler_id = 0;
+      vdat->add_text_handler_id = 0;
 #endif
     }
   /* don't clear at this point! */
@@ -4177,7 +4178,7 @@ static XEN g_set_sound_loop_info(XEN snd, XEN vals)
     else 
       {
 	err = move_file(tmp_file, sp->filename);
-	if (err != IO_NO_ERROR)
+	if (SERIOUS_IO_ERROR(err))
 	  {
 	    FREE(tmp_file);
 	    sp->writing = false;
