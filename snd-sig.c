@@ -152,7 +152,7 @@ static sync_state *get_sync_state_1(snd_info *sp, chan_info *cp, off_t beg, bool
 	    }
 	  else 
 	    {
-	      snd_warning(_("no selection"));
+	      snd_warning_without_format(_("no selection"));
 	      return(NULL);
 	    }
 	}
@@ -202,7 +202,7 @@ static sync_state *get_sync_state_without_snd_fds(snd_info *sp, chan_info *cp, o
 	    }
 	  else
 	    {
-	      snd_warning(_("no selection"));
+	      snd_warning_without_format(_("no selection"));
 	      return(NULL);
 	    }
 	}
@@ -1113,7 +1113,7 @@ void src_env_or_num(chan_info *cp, env *e, Float ratio, bool just_num,
 	    }
 	  if (errmsg)
 	    {
-	      snd_error(errmsg);
+	      snd_error_without_format(errmsg);
 	      break;
 	    }
 	  if (ss->stopped_explicitly) 
@@ -1750,7 +1750,7 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, enved_prog
 	  errstr = convolution_filter(cp, order, e, sfs[i], si->begs[i], dur, (origin) ? origin : caller, from_enved, NULL);
 	  if (errstr) 
 	    {
-	      snd_error(errstr);
+	      snd_error_without_format(errstr);
 	      break;
 	    }
 	  sfs[i] = free_snd_fd(sfs[i]);
@@ -1833,7 +1833,7 @@ void apply_filter(chan_info *ncp, int order, env *e, enved_progress_t from_enved
   error = apply_filter_or_error(ncp, order, e, from_enved, caller, origin, over_selection, ur_a, gen, edpos, arg_pos, truncate);
   if (error)
     {
-      snd_error(error);
+      snd_error_without_format(error);
       FREE(error);
     }
 }
@@ -1984,7 +1984,7 @@ static void reverse_sound(chan_info *ncp, bool over_selection, XEN edpos, int ar
 	  sfs[i] = free_snd_fd(sfs[i]);
 	  if (errmsg)
 	    {
-	      snd_error(errmsg);
+	      snd_error_without_format(errmsg);
 	      FREE(errmsg);
 	      break;
 	    }

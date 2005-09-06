@@ -1755,7 +1755,7 @@ called each time some Snd-generated response (<i>text</i>) is about to be append
 If it returns some non-#f result, Snd assumes you've sent the text out yourself, as well as any needed prompt.
 The prompt is important!  Snd uses it to find the current form to evaluate, so if your print hook
 forgets to include it, you can end up with a comatose listener.  To get out of this state, include
-the prompt by hand (i.e. type "&gt;(reset-hook! print-hook)").
+the prompt by hand (i.e. type in the shell that Snd started in, "&gt;(reset-hook! print-hook)").
 This is intended to make it possible to
 distinguish Snd responses from user-typing, or add arbitrarily fancy prompts, etc.
 </td></tr>
@@ -1856,7 +1856,7 @@ desensitize the "selection" button when there is no selection.
 <code><a class=def name="snderrorhook">snd-error-hook</a> (error-message)</code></td><td align=right><b>or</b>
 </td></tr>
 <tr><td></td><td colspan=2>
-called upon snd-error.
+called upon snd-error, and if the listener is closed, any Scheme or Ruby error.
 If it returns #t, Snd flushes the error (it assumes you've 
 reported it via the hook).
 </td></tr>
@@ -10224,8 +10224,9 @@ return possible completions of <i>name</i>, a string or a symbol.
 <tr><td colspan=2>
 <code><a class=def name="snderror">snd-error</a> (str)</code></td></tr>
 <tr><td></td><td>
-reports the error message <i>str</i> in some way,
-and returns <i>str</i>.  See also <a href="#muserrorhook">mus-error-hook</a> and <a href="#snderrorhook">snd-error-hook</a>.
+throws 'snd-error with the error message 'str'.  This is a way to dive directly into
+Snd's error handling mechanism.
+See also <a href="#muserrorhook">mus-error-hook</a> and <a href="#snderrorhook">snd-error-hook</a>.
 </td></tr>
 
 <!-- snd-help -->

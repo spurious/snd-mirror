@@ -12,6 +12,8 @@
  * TODO: xen.h need XEN_REMOVE_HOOK_FUNCTION or some equivalent [hooks.h takes the hook function which is useless here]
  *
  * TODO: trap snd_error|warning within xen (except explicit cases)
+ * PERHAPS: snd-error-hook is confusing because people associate it with any Snd error, as opposed to snd_error
+ *          perhaps it should be moved here? or included somehow?
  */
 
 /* -------- protect XEN vars from GC -------- */
@@ -504,14 +506,18 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
   XEN_FLUSH_PORT(port); /* needed to get rid of trailing garbage chars?? -- might be pointless now */
   name_buf = copy_string(XEN_TO_C_STRING(XEN_PORT_TO_STRING(port)));
 
-  if (ss->xen_error_handler)
-    (*(ss->xen_error_handler))(name_buf, ss->xen_error_data);
-  else
+  if (!(run_snd_error_hook(name_buf)))
     {
-      if (listener_exists())
-	listener_append_and_prompt(name_buf);
-      if (!(listener_is_visible()))
-	snd_error(name_buf);
+      if (ss->xen_error_handler)
+	(*(ss->xen_error_handler))(name_buf, ss->xen_error_data);
+      else
+	{
+	  if (listener_exists())
+	    listener_append_and_prompt(name_buf);
+	  if (!(listener_is_visible()))
+	    snd_error_without_redirection_or_hook(name_buf);
+	  /* we're in xen_error from the redirection point of view and we already check snd-error-hook */
+	}
     }
   snd_unprotect_at(port_gc_loc);
   if (name_buf) FREE(name_buf);
@@ -556,11 +562,14 @@ void snd_rb_raise(XEN tag, XEN throw_args)
 	}
     }
   /* backtrace perhaps via xen_rb_report_error (via rescue) in xen.c? */
-  /* TODO: where are Ruby errors sent??
-     if (ss->xen_error_handler)
-       (*(ss->xen_error_handler))(error_message, ss->xen_error_data);
-  */
-  rb_raise(err, msg);
+  /* TODO: where are Ruby errors sent?? */
+
+  if (!(run_snd_error_hook(name_buf)))
+    {
+      if (ss->xen_error_handler)
+	(*(ss->xen_error_handler))(error_message, ss->xen_error_data);
+      else rb_raise(err, msg);
+    }
 }
 #endif
 /* end HAVE_RUBY */
@@ -718,7 +727,7 @@ bool procedure_ok_with_error(XEN proc, int req_args, const char *caller, const c
   errmsg = procedure_ok(proc, req_args, caller, arg_name, argn);
   if (errmsg)
     {
-      snd_error(errmsg);
+      snd_error_without_format(errmsg);
       FREE(errmsg);
       return(false);
     }
@@ -1133,7 +1142,7 @@ void snd_load_init_file(bool no_global, bool no_init)
       str = gl_print(result);
       if (str)
 	{
-	  snd_error(str);
+	  snd_error_without_format(str);
 	  FREE(str);
 	}
       snd_unprotect_at(loc);
@@ -1181,7 +1190,7 @@ void snd_load_file(char *filename)
       str = gl_print(result);
       if (str)
 	{
-	  snd_error(str);
+	  snd_error_without_format(str);
 	  FREE(str);
 	}
       snd_unprotect_at(loc);
@@ -1215,7 +1224,7 @@ static XEN g_snd_print(XEN msg)
 static XEN print_hook;
 static int print_depth = 0;
 
-bool listener_print_p(char *msg)
+bool listener_print_p(const char *msg)
 {
   XEN res = XEN_FALSE;
   if ((msg) && (print_depth == 0) && (strlen(msg) > 0) && (XEN_HOOKED(print_hook)))

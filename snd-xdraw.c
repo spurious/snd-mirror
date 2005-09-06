@@ -590,7 +590,7 @@ void allocate_color_map(int colormap)
 	      if ((XAllocColor(dpy, cmap, &tmp_color)) == 0)
 		{
 		  if (!warned_color)
-		    snd_error(_("can't even allocate black?!?"));
+		    snd_error_without_format(_("can't even allocate black?!?"));
 		  warned_color = true;
 		}
 	    }

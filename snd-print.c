@@ -511,7 +511,7 @@ bool snd_print(char *output)
   error = snd_print_or_error(output);
   if (error)
     {
-      snd_error(error);
+      snd_error_without_format(error);
       FREE(error);
       return(false);
     }
@@ -531,7 +531,7 @@ void region_print(char *output, char* title, chan_info *cp)
 	}
       else snd_error(_("print region %s failed: %s"), output, snd_io_strerror());
     }
-  else snd_error(_("print region: eps file name needed"));
+  else snd_error_without_format(_("print region: eps file name needed"));
 }
 
 void print_enved(char *output, int y0)
@@ -549,7 +549,7 @@ void print_enved(char *output, int y0)
 	}
       else snd_error(_("print env %s failed: %s"), output, snd_io_strerror());
     }
-  else snd_error(_("print envelope: eps file name needed"));
+  else snd_error_without_format(_("print envelope: eps file name needed"));
 }
 
 static XEN g_graph_to_ps(XEN filename)

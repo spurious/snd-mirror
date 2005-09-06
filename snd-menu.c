@@ -262,7 +262,7 @@ void save_options_from_menu(void)
 static bool save_state_error_p = false;
 static void save_state_from_menu_error_handler(const char *msg, void *ignore)
 {
-  snd_warning((char *)msg);
+  snd_warning_without_format(msg);
   save_state_error_p = true;
 }
 
@@ -282,7 +282,7 @@ void save_state_from_menu(void)
     }
   else 
     {
-      snd_warning(_("can't save state: save-state-file is null"));
+      snd_warning_without_format(_("can't save state: save-state-file is null"));
     }
 }
 

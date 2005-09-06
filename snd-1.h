@@ -647,6 +647,10 @@ const char *io_error_name(io_error_t err);
   void snd_error(char *format, ...);
   void snd_warning(char *format, ...);
 #endif
+void snd_error_without_redirection_or_hook(const char *msg);
+void snd_error_without_format(const char *msg);
+void snd_warning_without_format(const char *msg);
+bool run_snd_error_hook(const char *msg);
 
 void g_init_errors(void);
 
@@ -964,7 +968,7 @@ XEN run_hook(XEN hook, XEN args, const char *caller);
 void during_open(int fd, char *file, open_reason_t reason);
 void after_open(int index);
 char *output_name(const char *current_name);
-bool listener_print_p(char *msg);
+bool listener_print_p(const char *msg);
 #if (!USE_NO_GUI)
   Float check_color_range(const char *caller, XEN val);
 #endif

@@ -410,6 +410,7 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+6-Sep:   snd-error is now (throw 'snd-error ...).\n\
 31-Aug:  mix|track-speed-style.\n\
          changed recorder-in|out-format -> recorder-in|out-data-format,\n\
                  recorder-out-type -> recorder-out-header-type\n\

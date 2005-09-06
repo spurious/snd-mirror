@@ -131,7 +131,7 @@ void save_listener_text(FILE *fp)
     }
 }
 
-void append_listener_text(int end, char *msg)
+void append_listener_text(int end, const char *msg)
 {
   /* "end" arg needed in Motif */
   if ((listener_print_p(msg)) && (listener_text))
@@ -139,7 +139,7 @@ void append_listener_text(int end, char *msg)
       int chars;
       chars = gtk_text_buffer_get_char_count(LISTENER_BUFFER);
       if (chars > 0) sg_set_cursor(listener_text, chars + 1);
-      sg_text_insert(listener_text, msg);
+      sg_text_insert(listener_text, (char *)msg);
     }
 }
 
@@ -201,7 +201,7 @@ void snd_completion_help(int matches, char **pbuffer)
 
 /* ---------------- command widget replacement ---------------- */
 
-void listener_append(char *msg)
+void listener_append(const char *msg)
 {
   if (listener_text)
     {
@@ -212,7 +212,7 @@ void listener_append(char *msg)
     }
 }
 
-void listener_append_and_prompt(char *msg)
+void listener_append_and_prompt(const char *msg)
 {
   if (listener_text)
     {

@@ -624,6 +624,7 @@ fam_info *fam_unmonitor_file(const char *filename, fam_info *fp)
     }
   return(NULL);
 }
+
 #else
 /* no fam */
 

@@ -1481,7 +1481,6 @@ static snd_info *snd_update_1(snd_info *sp, const char *ur_filename)
   return(nsp);
 }
 
-/* TODO: if channels_combined, I think the window gets smaller each time */
 snd_info *snd_update(snd_info *sp)
 {
   Latus app_x, app_y;

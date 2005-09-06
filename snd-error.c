@@ -28,11 +28,17 @@ const char *io_error_name(io_error_t err)
   #define USE_NO_GUI 0
 #endif
 
-#define SND_ERROR_BUFFER_SIZE 1024
-static char *snd_error_buffer = NULL;
-
 static XEN snd_error_hook; 
 static XEN snd_warning_hook; 
+
+bool run_snd_error_hook(const char *msg)
+{
+  return((XEN_HOOKED(snd_error_hook)) &&
+	 (XEN_NOT_FALSE_P(run_or_hook(snd_error_hook, 
+				      XEN_LIST_1(C_TO_XEN_STRING(msg)),
+				      S_snd_error_hook))));
+}
+
 
 #if DEBUGGING
 void redirect_snd_warning_to_1(void (*handler)(const char *warning_msg, void *ufd), void *data, const char *caller)
@@ -50,52 +56,6 @@ void redirect_snd_warning_to(void (*handler)(const char *warning_msg, void *ufd)
   ss->snd_warning_data = data;
 }
 
-void snd_warning(char *format, ...)
-{
-  va_list ap;
-  if (snd_error_buffer == NULL) 
-    snd_error_buffer = (char *)CALLOC(SND_ERROR_BUFFER_SIZE, sizeof(char));
-#if HAVE_VPRINTF
-  va_start(ap, format);
-#if HAVE_VSNPRINTF
-  vsnprintf(snd_error_buffer, SND_ERROR_BUFFER_SIZE, format, ap);
-#else
-  vsprintf(snd_error_buffer, format, ap);
-#endif
-  va_end(ap);
-
-  if (ss->snd_warning_handler)
-    {
-      (*(ss->snd_warning_handler))(snd_error_buffer, ss->snd_warning_data);
-      return;
-    }
-
-  if ((XEN_HOOKED(snd_warning_hook)) &&
-      (XEN_NOT_FALSE_P(run_or_hook(snd_warning_hook, 
-				   XEN_LIST_1(C_TO_XEN_STRING(snd_error_buffer)),
-				   S_snd_warning_hook))))
-    return;
-  if ((ss) && (!(ss->batch_mode)) && (ss->max_sounds > 0))
-    {
-      snd_info *sp;
-      sp = any_selected_sound();
-      if ((sp) && (sp->active))
-	display_minibuffer_error(sp, snd_error_buffer);
-      else 
-	{
-	  listener_append(snd_error_buffer);
-	  fprintf(stderr, snd_error_buffer); 
-	}
-    }
-  else fprintf(stderr, snd_error_buffer);
-#if DEBUGGING
-  fprintf(stderr, snd_error_buffer);
-#endif
-#else
-  fprintf(stderr, "warning...");
-#endif
-}
-
 #ifdef SND_AS_WIDGET
 static void (*snd_error_display)(const char *);
 
@@ -104,8 +64,6 @@ void set_error_display(void (*func)(const char *))
   snd_error_display = func;
 }
 #endif
-
-static bool direct_snd_error_call = false;
 
 #if DEBUGGING
 void redirect_snd_error_to_1(void (*handler)(const char *error_msg, void *ufd), void *data, const char *caller)
@@ -123,6 +81,119 @@ void redirect_snd_error_to(void (*handler)(const char *error_msg, void *ufd), vo
   ss->snd_error_data = data;
 }
 
+static void snd_error_1(const char *msg, bool with_redirection_and_hook)
+{
+  if (with_redirection_and_hook)
+    {
+      if (ss->snd_error_handler)
+	{
+	  (*(ss->snd_error_handler))(msg, ss->snd_error_data);
+	  return;
+	}
+      
+      if (run_snd_error_hook(msg))
+	return;
+    }
+#if USE_NO_GUI
+  fprintf(stderr, msg);
+#else
+  if ((ss) && (ss->sgx))
+    {
+      if ((DEBUGGING) || (ss->batch_mode))
+	fprintf(stderr, msg);
+#ifdef SND_AS_WIDGET
+      if (snd_error_display) 
+	snd_error_display(msg);
+      else
+	{
+	  /* don't break (unlikely) existing code? */
+#endif
+	  {
+	    snd_info *sp;
+	    sp = any_selected_sound();
+	    if (ss->catch_exists == 0) /* not from xen(?) */
+	      {
+		if ((sp) && (sp->active))
+		  string_to_minibuffer(sp, msg); /* TODO: this truncates the message! needs word wrap in either case --
+						  *   wouldn't it be better to use display_minibuffer_error here?
+						  *   would need to clear it under some set of heuristics...
+						  */
+		else post_it("Error", msg);
+	      }
+	  }
+#ifdef SND_AS_WIDGET
+	}
+#endif
+    }
+  else 
+    {
+      fprintf(stderr, msg);
+      fputc('\n', stderr);
+    }
+#endif
+  /* end USE_NO_GUI */
+}
+
+static void snd_warning_1(const char *msg)
+{
+  if (ss->snd_warning_handler)
+    {
+      (*(ss->snd_warning_handler))(msg, ss->snd_warning_data);
+      return;
+    }
+
+  if ((XEN_HOOKED(snd_warning_hook)) &&
+      (XEN_NOT_FALSE_P(run_or_hook(snd_warning_hook, 
+				   XEN_LIST_1(C_TO_XEN_STRING(msg)),
+				   S_snd_warning_hook))))
+    return;
+
+  if ((ss) && (!(ss->batch_mode)) && (ss->max_sounds > 0))
+    {
+      snd_info *sp;
+      sp = any_selected_sound();
+      if ((sp) && (sp->active))
+	display_minibuffer_error(sp, msg);
+      else 
+	{
+	  listener_append(msg);
+	  fprintf(stderr, msg); 
+	}
+    }
+  else fprintf(stderr, msg);
+#if DEBUGGING
+  fprintf(stderr, msg);
+#endif
+}
+
+
+#define SND_ERROR_BUFFER_SIZE 1024
+static char *snd_error_buffer = NULL;
+
+void snd_warning(char *format, ...)
+{
+  va_list ap;
+  if (snd_error_buffer == NULL) 
+    snd_error_buffer = (char *)CALLOC(SND_ERROR_BUFFER_SIZE, sizeof(char));
+#if HAVE_VPRINTF
+  va_start(ap, format);
+#if HAVE_VSNPRINTF
+  vsnprintf(snd_error_buffer, SND_ERROR_BUFFER_SIZE, format, ap);
+#else
+  vsprintf(snd_error_buffer, format, ap);
+#endif
+  va_end(ap);
+  snd_warning_1(snd_error_buffer);
+#else
+  fprintf(stderr, "warning...");
+#endif
+}
+
+void snd_warning_without_format(const char *msg)
+{
+  snd_warning_1(msg);
+}
+
 void snd_error(char *format, ...)
 {
 #if HAVE_VPRINTF
@@ -136,67 +207,32 @@ void snd_error(char *format, ...)
   vsprintf(snd_error_buffer, format, ap);
 #endif
   va_end(ap);
-
-  if (ss->snd_error_handler)
-    {
-      (*(ss->snd_error_handler))(snd_error_buffer, ss->snd_error_data);
-      return;
-    }
-
-  if ((XEN_HOOKED(snd_error_hook)) &&
-      (XEN_NOT_FALSE_P(run_or_hook(snd_error_hook, 
-				   XEN_LIST_1(C_TO_XEN_STRING(snd_error_buffer)),
-				   S_snd_error_hook))))
-    return;
-#if USE_NO_GUI
-  fprintf(stderr, snd_error_buffer);
-#else
-  if ((ss) && (ss->sgx))
-    {
-      if ((DEBUGGING) || (ss->batch_mode))
-	fprintf(stderr, snd_error_buffer);
-#ifdef SND_AS_WIDGET
-      if (snd_error_display) 
-	snd_error_display(snd_error_buffer);
-      else
-	{
-	  /* don't break (unlikely) existing code? */
-#endif
-	  {
-	    snd_info *sp;
-	    sp = any_selected_sound();
-	    if ((direct_snd_error_call) ||
-		(ss->catch_exists == 0))
-	      {
-		if ((sp) && (sp->active))
-		  string_to_minibuffer(sp, snd_error_buffer); /* TODO: this truncates the message! needs word wrap in either case */
-		else post_it("Error", snd_error_buffer);
-	      }
-	  }
-#ifdef SND_AS_WIDGET
-	}
-#endif
-    }
-  else 
-    {
-      fprintf(stderr, snd_error_buffer);
-      fputc('\n', stderr);
-    }
-#endif
-  /* end USE_NO_GUI */
+  snd_error_1(snd_error_buffer, true);
 #else
   fprintf(stderr, "error...");
   fputc('\n', stderr);
 #endif
 }
 
+void snd_error_without_redirection_or_hook(const char *msg)
+{
+  snd_error_1(msg, false);
+}
+
+void snd_error_without_format(const char *msg)
+{
+  snd_error_1(msg, true);
+}
+
 static XEN g_snd_error(XEN msg)
 {
-  #define H_snd_error "(" S_snd_error " str): reports error message str (normally in the error dialog)"
+  #define H_snd_error "(" S_snd_error " str): throws a 'snd-error error"
   XEN_ASSERT_TYPE(XEN_STRING_P(msg), msg, XEN_ONLY_ARG, S_snd_error, "a string");
-  direct_snd_error_call = true; /* TODO: this looks bogus and should use redirection */
-  snd_error(XEN_TO_C_STRING(msg));
-  direct_snd_error_call = false;
+
+  /* xen error will call snd-error-hook and avoid redirection */
+  XEN_ERROR(XEN_ERROR_TYPE("snd-error"),
+	    XEN_LIST_2(C_TO_XEN_STRING(S_snd_error),
+		       msg));
   return(msg);
 }
   

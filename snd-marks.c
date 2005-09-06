@@ -1866,7 +1866,7 @@ static XEN g_restore_marks(XEN size, XEN snd, XEN chn, XEN marklist)
     {
       lst = XEN_CAR(olst);
       if (!(XEN_LIST_P(lst)))
-	snd_error(S_restore_marks ": mark list messed up");
+	snd_error_without_format(S_restore_marks ": mark list messed up");
       else
 	{
 	  cp->mark_size[i] = XEN_TO_C_INT(XEN_CAR(lst));
@@ -1883,7 +1883,7 @@ static XEN g_restore_marks(XEN size, XEN snd, XEN chn, XEN marklist)
 		  XEN el;
 		  el = XEN_CAR(molst);
 		  if (!(XEN_LIST_P(el))) 
-		    snd_error(S_restore_marks ": saved mark data is not a list?? ");
+		    snd_error_without_format(S_restore_marks ": saved mark data is not a list?? ");
 		  else
 		    {
 		      XEN sm;

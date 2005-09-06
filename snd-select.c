@@ -437,7 +437,7 @@ void add_selection_or_region(int reg, chan_info *cp)
 			     (got_selection) ? "selection" : "region",
 			     io_error_name(io_err));
     }
-  else snd_error("no channel to mix into?");
+  else snd_error_without_format("no channel to mix into?");
 }
 
 static io_error_t insert_selection(chan_info *cp, off_t beg)
@@ -872,7 +872,7 @@ io_error_t save_selection(char *ofile, int type, int format, int srate, const ch
 	  if (ss->stopped_explicitly)
 	    {
 	      ss->stopped_explicitly = false;
-	      snd_warning(_("save selection stopped"));
+	      snd_warning_without_format(_("save selection stopped"));
 	      io_err = IO_INTERRUPTED;
 	      break;
 	    }

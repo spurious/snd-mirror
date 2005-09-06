@@ -1496,7 +1496,7 @@ int recorder_get_devices(recorder_info *rp, int *outs)
       cur_devices = (int)(audval[0]);
       if (cur_devices == 0) 
 	{
-	  snd_error(_("no audio devices available")); 
+	  snd_error_without_format(_("no audio devices available")); 
 	  return(-1);
 	}
       for (i = 0; i < cur_devices; i++) 
@@ -1514,7 +1514,7 @@ int recorder_get_devices(recorder_info *rp, int *outs)
     }
   if (input_devices == 0) 
     {
-      snd_error(_("no audio input devices available")); 
+      snd_error_without_format(_("no audio input devices available")); 
       return(-1);
     }
   (*outs) = output_devices;

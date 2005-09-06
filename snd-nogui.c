@@ -64,12 +64,12 @@ void reflect_spectro(void) {}
 void reflect_peaks_in_transform_dialog(void) {}
 void reflect_log_freq_start_in_transform_dialog(void) {}
 void reflect_min_db_in_transform_dialog(void) {}
-void listener_append_and_prompt(char *msg) {fprintf(stderr, "%s", msg);}
+void listener_append_and_prompt(const char *msg) {fprintf(stderr, "%s", msg);}
 void goto_listener(void) {}
 void save_listener_text(FILE *fp) {}
-void append_listener_text(int end, char *msg) {}
+void append_listener_text(int end, const char *msg) {}
 void listener_delete_text(int new_end) {}
-void listener_append(char *msg) {fprintf(stderr, "%s", msg);}
+void listener_append(const char *msg) {fprintf(stderr, "%s", msg);}
 void handle_listener(bool new_state) {}
 bool listener_exists(void) {return(false);}
 int listener_height(void) {return(0);}
@@ -579,10 +579,10 @@ void snd_doit(int argc, char **argv)
   if (sigsetjmp(envHandleEventsLoop, 1))
     {
       if (!(ss->exiting))
-	snd_error(_("Caught seg fault (will try to continue):\n"));
+	snd_error_without_format(_("Caught seg fault (will try to continue):\n"));
       else
 	{
-	  snd_error(_("Caught seg fault while trying to exit.\n"));
+	  snd_error_without_format(_("Caught seg fault while trying to exit.\n"));
 	  exit(0);
 	}
     }
@@ -590,7 +590,7 @@ void snd_doit(int argc, char **argv)
   if (setjmp(top_level_jump))
     {
       if (!(ss->jump_ok))
-	snd_error(_("Caught top level error (will try to continue):\n"));
+	snd_error_without_format(_("Caught top level error (will try to continue):\n"));
       else ss->jump_ok = false;
     }
 #endif

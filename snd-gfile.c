@@ -945,7 +945,7 @@ char *get_file_dialog_sound_attributes(file_data *fdat, int *srate, int *chans, 
       fdat->scanf_widget = SRATE_WIDGET;
       if ((str) && (*str))
 	(*srate) = string_to_int_with_error(str, 1, "srate"); 
-      else snd_error("no srate?");
+      else snd_error_without_format("no srate?");
     }
 
   if ((chans) && (fdat->chans_text))
@@ -957,7 +957,7 @@ char *get_file_dialog_sound_attributes(file_data *fdat, int *srate, int *chans, 
        else
  	{
  	  if (min_chan > 0)
- 	    snd_error("no chans?");
+ 	    snd_error_without_format("no chans?");
  	}
     }
 
@@ -967,7 +967,7 @@ char *get_file_dialog_sound_attributes(file_data *fdat, int *srate, int *chans, 
       fdat->scanf_widget = DATA_LOCATION_WIDGET;
       if ((str) && (*str))
 	(*location) = string_to_off_t_with_error(str, 0, "data location"); 
-      else snd_error("no data location?");
+      else snd_error_without_format("no data location?");
     }
 
   if ((samples) && (fdat->samples_text))
@@ -976,7 +976,7 @@ char *get_file_dialog_sound_attributes(file_data *fdat, int *srate, int *chans, 
       fdat->scanf_widget = SAMPLES_WIDGET;
       if ((str) && (*str))
 	(*samples) = string_to_off_t_with_error(str, 0, "samples"); 
-      else snd_error("no samples?");
+      else snd_error_without_format("no samples?");
     }
   fdat->scanf_widget = SAMPLES_WIDGET;
 
@@ -3657,9 +3657,9 @@ off_t vf_location(view_files_info *vdat)
 	{
 	  pos = mark_id_to_sample(string_to_int_with_error(str, 0, "mark"));
 	  if (pos < 0)
-	    snd_error("no such mark");
+	    snd_error_without_format("no such mark");
 	}
-      else snd_error("no mark?");
+      else snd_error_without_format("no mark?");
       break;
     case VF_AT_SAMPLE:
       str = (char *)gtk_entry_get_text(GTK_ENTRY(vdat->at_sample_text));
@@ -3668,7 +3668,7 @@ off_t vf_location(view_files_info *vdat)
 	  pos = string_to_off_t_with_error(str, 0, "sample"); 
 	  /* pos already checked for lower bound */
 	}
-      else snd_error("no sample number?");
+      else snd_error_without_format("no sample number?");
       break;
     }
   return(pos);

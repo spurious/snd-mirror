@@ -310,7 +310,7 @@ static bool got_local_error = false;
 static void local_mus_error(int type, char *msg)
 {
   got_local_error = true;
-  snd_error(msg);
+  snd_error_without_format(msg);
 }
 
 Float *sample_linear_env(env *e, int order)
@@ -1550,7 +1550,7 @@ static void dac_error(void)
   stop_playing_all_sounds_without_hook(PLAY_ERROR);
   if ((!last_print) &&
       (mus_audio_systems() == 0))
-    snd_error("can't play: no audio support");
+    snd_error_without_format("can't play: no audio support");
   else snd_error(_("can't play %s: %s"),
 		 describe_dac(),
 		 (last_print) ? last_print : "reason not known");
@@ -1984,7 +1984,7 @@ static bool start_audio_output_1 (void)
 	    }
 	if (max_bits == -1)
 	  {
-	    snd_warning("can't find any playable data format!");
+	    snd_warning_without_format("can't find any playable data format!");
 	    return(false);
 	  }
 	snd_dacp->out_format = best_fit;

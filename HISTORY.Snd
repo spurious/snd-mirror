@@ -1,5 +1,6 @@
 Snd change log
 
+  6-Sep:     snd-error is now (throw 'snd-error ...).
   31-Aug:    mix|track-speed-style.
              changed recorder-in|out-format -> recorder-in|out-data-format,
                      recorder-out-type -> recorder-out-header-type

@@ -1649,7 +1649,7 @@ static bool apply_controls(apply_state *ap)
 	}
       if (need_scaling)
 	scale_by(cp, scalers, si->chans, false);
-      else snd_warning(_("apply controls: no changes to apply!"));
+      else snd_warning_without_format(_("apply controls: no changes to apply!"));
       sp->sync = old_sync;
       FREE(scalers);
       si = free_sync_info(si);

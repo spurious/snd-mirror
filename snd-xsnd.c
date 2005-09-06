@@ -1119,7 +1119,7 @@ static void sync_button_callback(Widget w, XtPointer context, XtPointer info)
 
 /* ---------------- UNITE BUTTON ---------------- */
 
-static void UNITE_BUTTON_callback(Widget w, XtPointer context, XtPointer info)
+static void unite_button_callback(Widget w, XtPointer context, XtPointer info)
 {
   /* click if set unsets, click if unset->combine, ctrl-click->superimpose */
   snd_info *sp = (snd_info *)context;
@@ -1876,7 +1876,7 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNselectColor, ss->sgx->pushed_button_color); n++;}
       UNITE_BUTTON(sp) = make_togglebutton_widget(_("unite"), NAME_BOX(sp), args, n);
       XtAddEventHandler(UNITE_BUTTON(sp), KeyPressMask, false, graph_key_press, (XtPointer)sp);
-      XtAddCallback(UNITE_BUTTON(sp), XmNvalueChangedCallback, UNITE_BUTTON_callback, (XtPointer)sp);
+      XtAddCallback(UNITE_BUTTON(sp), XmNvalueChangedCallback, unite_button_callback, (XtPointer)sp);
 
       /* error display */
       n = 0;
@@ -2977,7 +2977,7 @@ void hide_controls(void)
     }
 }
 
-int control_panel_height(snd_info *sp) /* TODO: this is smaller by about 20 than it used to be */
+int control_panel_height(snd_info *sp)
 {
   return(widget_height(CONTROLS(sp)));
 }

@@ -24384,18 +24384,18 @@ def test0113
   $snd_warning_hook.add_hook!("snd-test") do |msg| sw = true end
   $snd_error_hook.add_hook!("snd-test") do |msg| se = true end
   $mus_error_hook.add_hook!("snd-test") do |type, msg| me = true end
-  snd_error("uhoh")
+#  snd_error("uhoh")
   snd_warning("hiho")
   mus_sound_samples("/bad/baddy")
-  snd_display("$snd_error_hook not called?") unless se
+#  snd_display("$snd_error_hook not called?") unless se
   snd_display("$snd_warning_hook not called?") unless sw
   snd_display("$mus_error_hook not called?") unless me
   $snd_error_hook.reset_hook!
   $snd_warning_hook.reset_hook!
   $mus_error_hook.reset_hook!
-  $snd_error_hook.add_hook!("snd-test") do |msg| se = msg; false end
-  snd_error("not an error")
-  snd_display("$snd_error_hook saw: %s", se) if se != "not an error"
+#  $snd_error_hook.add_hook!("snd-test") do |msg| se = msg; false end
+#  snd_error("not an error")
+#  snd_display("$snd_error_hook saw: %s", se) if se != "not an error"
   $snd_error_hook.reset_hook!
   if proc? $my_snd_error_hook then $snd_error_hook.add_hook!("sndtestrc", &$my_snd_error_hook) end
   #
@@ -25532,11 +25532,11 @@ def test14
     undo_hook.reset_hook!
     edit_hook.reset_hook!
     $snd_error_hook.reset_hook!
-    $snd_error_hook.add_hook!("snd-test") do |msg|
-      if msg != "hiho" then snd_display("$snd_error_hook: %s?", msg) end
-      true
-    end
-    snd_error("hiho")
+#    $snd_error_hook.add_hook!("snd-test") do |msg|
+#      if msg != "hiho" then snd_display("$snd_error_hook: %s?", msg) end
+#      true
+#    end
+#    snd_error("hiho")
     $snd_warning_hook.reset_hook!
     $snd_warning_hook.add_hook!("snd-test") do |msg|
       if msg != "hiho" then snd_display("$snd_warning_hook: %s?", msg) end

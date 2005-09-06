@@ -24921,7 +24921,7 @@ EDITS: 5
 		       (set! me #t)
 		       #t))
 	  
-	  (snd-error "uhoh")
+;	  (snd-error "uhoh")
 	  (snd-warning "hiho")
 	  (mus-sound-samples "/bad/baddy")
 	  
@@ -24931,13 +24931,13 @@ EDITS: 5
 	  (reset-hook! snd-error-hook)
 	  (reset-hook! snd-warning-hook)
 	  (reset-hook! mus-error-hook)
-	  (add-hook! snd-error-hook
-		     (lambda (msg)
-		       (set! se msg)
-		       #f))
-	  (snd-error "not an error")
-	  (if (not (string=? se "not an error"))
-	      (snd-display ";snd-error-hook saw: ~A" se))
+;	  (add-hook! snd-error-hook
+;		     (lambda (msg)
+;		       (set! se msg)
+;		       #f))
+;	  (snd-error "not an error")
+;	  (if (not (string=? se "not an error"))
+;	      (snd-display ";snd-error-hook saw: ~A" se))
 	  (reset-hook! snd-error-hook))
 	
 	(add-hook! before-exit-hook (lambda () #f))
@@ -26018,11 +26018,11 @@ EDITS: 5
 	    (undo 2)
 	    (reset-hook! (undo-hook))
 	    (reset-hook! (edit-hook))
-	    (add-hook! snd-error-hook 
-		       (lambda (msg) 
-			 (if (not (string=? msg "hiho")) (snd-display ";snd-error-hook: ~A?" msg))
-			 #t))
-	    (snd-error "hiho")
+;	    (add-hook! snd-error-hook 
+;		       (lambda (msg) 
+;			 (if (not (string=? msg "hiho")) (snd-display ";snd-error-hook: ~A?" msg))
+;			 #t))
+;	    (snd-error "hiho")
 	    (add-hook! snd-warning-hook 
 		       (lambda (msg) 
 			 (if (not (string=? msg "hiho")) (snd-display ";snd-warning-hook: ~A?" msg))

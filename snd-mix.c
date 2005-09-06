@@ -3142,7 +3142,7 @@ static void play_mix(mix_info *md, off_t beg, bool from_gui)
   if ((err != MUS_NO_ERROR) || (outchans <= 0))
     {
       clear_minibuffer(sp);
-      snd_error(_("can't get basic soundcard info!"));
+      snd_error_without_format(_("can't get basic soundcard info!"));
       return;
     }
   err = mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(0) | audio_output_device(ss), MUS_AUDIO_SAMPLES_PER_CHANNEL, 2, val);
@@ -7688,7 +7688,7 @@ static void play_track(int track_num, int chan, off_t beg, bool from_gui)
   if ((err != MUS_NO_ERROR) || (outchans <= 0))
     {
       clear_minibuffer(sp);
-      snd_error(_("can't get basic soundcard info!"));
+      snd_error_without_format(_("can't get basic soundcard info!"));
       return;
     }
   err = mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(0) | audio_output_device(ss), MUS_AUDIO_SAMPLES_PER_CHANNEL, 2, val);

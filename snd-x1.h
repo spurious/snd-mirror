@@ -75,13 +75,13 @@ void mouse_leave_text_callback(Widget w, XtPointer context, XEvent *event, Boole
 void add_completer_to_textfield(Widget w, int completer);
 void snd_completion_help(int matches, char **buffer);
 void listener_delete_text(int new_end);
-void listener_append_and_prompt(char *msg);
+void listener_append_and_prompt(const char *msg);
 void save_listener_text(FILE *fp);
-void append_listener_text(int end, char *msg);
+void append_listener_text(int end, const char *msg);
 void goto_listener(void);
 void color_listener(Pixel pix);
 void color_listener_text(Pixel pix);
-void listener_append(char *msg);
+void listener_append(const char *msg);
 void handle_listener(bool new_state);
 bool listener_exists(void);
 int listener_height(void);

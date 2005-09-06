@@ -113,12 +113,17 @@ static void color_file_selection_box(Widget w)
 
 typedef struct file_pattern_info {
   /* just-sounds file lists */
-  bool need_update, new_file_written, in_just_sounds_update;
+  bool resort_file_list; 
+  bool reread_directory;
+  bool in_just_sounds_update;
   Widget dialog, just_sounds_button;
   XmSearchProc default_search_proc;
   char *save_dir,*last_dir;
   dir *sound_files, *current_files;
   char *last_pattern, *full_pathname;
+#if HAVE_FAM
+  fam_info *directory_watcher;
+#endif
 } file_pattern_info;
 
 static int string_compare(const void *ss1, const void *ss2)
@@ -153,7 +158,7 @@ static void sound_file_search(Widget dialog, XmFileSelectionBoxCallbackStruct *i
     {
       if ((fp->last_dir == NULL) || 
 	  (strcmp(our_dir, fp->last_dir) != 0) || 
-	  (fp->new_file_written))
+	  (fp->reread_directory))
 	{
 	  if (fp->current_files) 
 	    fp->current_files = free_dir(fp->current_files);
@@ -168,7 +173,7 @@ static void sound_file_search(Widget dialog, XmFileSelectionBoxCallbackStruct *i
 	  if (fp->sound_files) 
 	    free_dir(fp->sound_files);
 	  fp->sound_files = find_sound_files_in_dir(our_dir);
-	  fp->need_update = true;
+	  fp->resort_file_list = true;
 	}
       if (fp->last_pattern)
 	{
@@ -181,7 +186,7 @@ static void sound_file_search(Widget dialog, XmFileSelectionBoxCallbackStruct *i
     {
       if ((fp->last_pattern == NULL) || 
 	  (strcmp(pattern, fp->last_pattern) != 0) || 
-	  (fp->new_file_written))
+	  (fp->reread_directory))
 	  {
 	    if (fp->last_pattern) 
 	      {
@@ -194,12 +199,12 @@ static void sound_file_search(Widget dialog, XmFileSelectionBoxCallbackStruct *i
 	    if ((fp->sound_files) && 
 		(fp->sound_files->len > 0)) 
 	      fp->current_files = filter_sound_files(fp->sound_files, pattern);
-	    fp->need_update = true;
+	    fp->resort_file_list = true;
 	  }
       cdp = fp->current_files;
     }  
-  fp->new_file_written = false;
-  if (fp->need_update)
+  fp->reread_directory = false;
+  if (fp->resort_file_list)
     {
       XmString *names = NULL;
       if ((cdp) && (cdp->len > 0))
@@ -243,10 +248,8 @@ static void sound_file_search(Widget dialog, XmFileSelectionBoxCallbackStruct *i
     }
   if (our_dir) XtFree(our_dir);
   if (pattern) XtFree(pattern);
-  fp->need_update = false;
+  fp->resort_file_list = false;
 }
-
-/* TODO: does directory accept uri-lists? -- can convertcallback be replaced/extended? */
 
 static void force_directory_reread(Widget dialog)
 {
@@ -289,7 +292,7 @@ static void just_sounds_callback(Widget w, XtPointer context, XtPointer info)
 		     XmNfileListLabelString, lab,
 		     NULL);
   XmStringFree(lab);
-  fp->need_update = true;
+  fp->resort_file_list = true;
   fp->in_just_sounds_update = true;
   force_directory_reread(fp->dialog);
   fp->in_just_sounds_update = false;
@@ -756,7 +759,7 @@ widget_t make_open_file_dialog(bool read_only, bool managed)
 	  XtVaSetValues(odat->dialog, 
 			XmNfileSearchProc, sound_file_search, 
 			NULL);
-	  odat->fp->need_update = true;
+	  odat->fp->resort_file_list = true;
 	  force_directory_reread(odat->dialog);
 	}
     }
@@ -776,10 +779,10 @@ widget_t make_open_file_dialog(bool read_only, bool managed)
 	  odat->file_dialog_read_only = read_only;
 	}
     }
-  if (odat->fp->new_file_written) 
+  if (odat->fp->reread_directory) 
     {
       force_directory_reread(odat->dialog);
-      odat->fp->new_file_written = false;
+      odat->fp->reread_directory = false;
     }
   if ((managed) && (!(XtIsManaged(odat->dialog))))
     XtManageChild(odat->dialog);
@@ -867,7 +870,7 @@ widget_t make_mix_file_dialog(bool managed)
 	  XtVaSetValues(mdat->dialog, 
 			XmNfileSearchProc, sound_file_search, 
 			NULL);
-	  mdat->fp->need_update = true;
+	  mdat->fp->resort_file_list = true;
 	  force_directory_reread(mdat->dialog);
 	}
       mdat->open_file_watcher_loc = add_ss_watcher(SS_FILE_OPEN_WATCHER, file_open_file_watcher, (void *)mdat);
@@ -944,7 +947,7 @@ widget_t make_insert_file_dialog(bool managed)
 	  XtVaSetValues(idat->dialog, 
 			XmNfileSearchProc, sound_file_search, 
 			NULL);
-	  idat->fp->need_update = true;
+	  idat->fp->resort_file_list = true;
 	  force_directory_reread(idat->dialog);
 	}
       idat->open_file_watcher_loc = add_ss_watcher(SS_FILE_OPEN_WATCHER, file_open_file_watcher, (void *)idat);
@@ -970,11 +973,11 @@ void set_open_file_play_button(bool val)
 void alert_new_file(void) 
 {
   if (odat)
-    odat->fp->new_file_written = true;
+    odat->fp->reread_directory = true;
   if (mdat)
-    mdat->fp->new_file_written = true;
+    mdat->fp->reread_directory = true;
   if (idat)
-    idat->fp->new_file_written = true;
+    idat->fp->reread_directory = true;
 }
 
 void reflect_just_sounds(void)
@@ -1014,7 +1017,7 @@ char *get_file_dialog_sound_attributes(file_data *fdat,
 	  (*srate) = string_to_int_with_error(str, 1, "srate"); 
 	  XtFree(str);
 	}
-      else snd_error("no srate?");
+      else snd_error_without_format("no srate?");
     }
 
   if ((chans) && (fdat->chans_text))
@@ -1029,7 +1032,7 @@ char *get_file_dialog_sound_attributes(file_data *fdat,
       else
 	{
 	  if (min_chan > 0)
-	    snd_error("no chans?");
+	    snd_error_without_format("no chans?");
 	}
     }
   
@@ -1042,7 +1045,7 @@ char *get_file_dialog_sound_attributes(file_data *fdat,
 	  (*location) = string_to_off_t_with_error(str, 0, "data location"); 
 	  XtFree(str);
 	}
-      else snd_error("no data location?");
+      else snd_error_without_format("no data location?");
     }
 
   if ((samples) && (fdat->samples_text))
@@ -1054,7 +1057,7 @@ char *get_file_dialog_sound_attributes(file_data *fdat,
 	  (*samples) = string_to_off_t_with_error(str, 0, "samples"); 
 	  XtFree(str);
 	}
-      else snd_error("no samples?");
+      else snd_error_without_format("no samples?");
     }
   fdat->scanf_widget = SAMPLES_WIDGET;
 
@@ -2215,8 +2218,7 @@ static void save_as_extract_callback(Widget w, XtPointer context, XtPointer info
     }
   else
     {
-      msg = mus_format("extract chan as %s: %s", str, io_error_name(io_err));
-      /* TODO: drag up the actual error here! */
+      msg = mus_format("extract chan as %s: %s (%s)", str, io_error_name(io_err), snd_io_strerror());
       post_file_dialog_error((const char *)msg, (void *)(sd->panel_data));
       clear_error_if_filename_changes(sd->dialog, (void *)(sd->panel_data));
       FREE(msg);
@@ -2333,7 +2335,7 @@ static void make_save_as_dialog(save_as_dialog_info *sd, char *sound_name, int h
       XtSetArg(args[n], XmNallowOverlap, false); n++;
       XtSetArg(args[n], XmNheight, 600); n++;
       XtSetArg(args[n], XmNuserData, (XtPointer)sd->fp); n++;
-      sd->dialog = XmCreateFileSelectionDialog(MAIN_SHELL(ss), "save-as", args, n); /* TODO: why does this stay on top? */
+      sd->dialog = XmCreateFileSelectionDialog(MAIN_SHELL(ss), "save-as", args, n);
       FREE(file_string);
 
       XmStringFree(s1);
@@ -3706,7 +3708,7 @@ void save_post_it_dialog_state(FILE *fd)
 }
 
 
-/* ---------------- VIEW FILES DIALOG ---------------- */
+/* ---------------- view files dialog ---------------- */
 
 static XEN mouse_enter_label_hook;
 static XEN mouse_leave_label_hook;
@@ -3982,11 +3984,19 @@ static void view_files_clear_callback(Widget w, XtPointer context, XtPointer inf
 
 static void view_files_new_viewer_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  view_files_info *vdat;
+  view_files_info *vdat = (view_files_info *)context;
+  if ((vdat) && 
+      (vdat->dialog) &&
+      (XtIsManaged(vdat->dialog)))
+    {
+      Position x = 0, y = 0;
+      /* jog the current one over a bit -- otherwise the new one lands exactly on top of the old! */
+      XtVaGetValues(vdat->dialog, XmNx, &x, XmNy, &y, NULL);
+      XtVaSetValues(vdat->dialog, XmNx, x + 30, XmNy, y - 30, NULL);
+    }
   vdat = new_view_files_dialog();
   start_view_files_dialog_1(vdat, true);
-  /* TODO: copy caller? */
-  /* TODO: place somewhere visible (not right under the current one!) */
+
 }
 
 static void view_files_update_callback(Widget w, XtPointer context, XtPointer info) 
@@ -4122,9 +4132,9 @@ off_t vf_location(view_files_info *vdat)
 	  pos = mark_id_to_sample(string_to_int_with_error(str, 0, "mark"));
 	  XtFree(str);
 	  if (pos < 0)
-	    snd_error("no such mark");
+	    snd_error_without_format("no such mark");
 	}
-      else snd_error("no mark?");
+      else snd_error_without_format("no mark?");
       break;
     case VF_AT_SAMPLE:
       str = XmTextGetString(vdat->at_sample_text);
@@ -4134,7 +4144,7 @@ off_t vf_location(view_files_info *vdat)
 	  XtFree(str);
 	  /* pos already checked for lower bound */
 	}
-      else snd_error("no sample number?");
+      else snd_error_without_format("no sample number?");
       break;
     }
   return(pos);

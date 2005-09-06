@@ -1023,10 +1023,10 @@ void snd_doit(int argc, char **argv)
   if (sigsetjmp(envHandleEventsLoop, 1))
     {
       if (!(ss->exiting))
-	snd_error(_("Caught seg fault (will try to continue):\n"));
+	snd_error_without_format(_("Caught seg fault (will try to continue):\n"));
       else
 	{
-	  snd_error(_("Caught seg fault while trying to exit.\n"));
+	  snd_error_without_format(_("Caught seg fault while trying to exit.\n"));
 	  exit(0);
 	}
     }
@@ -1034,7 +1034,7 @@ void snd_doit(int argc, char **argv)
   if (setjmp(top_level_jump))
     {
       if (!(ss->jump_ok))
-	snd_error(_("Caught top level error (will try to continue):\n"));
+	snd_error_without_format(_("Caught top level error (will try to continue):\n"));
       else ss->jump_ok = false;
     }
 #endif

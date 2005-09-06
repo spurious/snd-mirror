@@ -1222,7 +1222,7 @@ int handle_next_startup_arg(int auto_open_ctr, char **auto_open_file_names, bool
 			      auto_open_ctr++;
 			      if ((auto_open_ctr >= args) ||
 				  (auto_open_file_names[auto_open_ctr] == NULL))
-				snd_error(_("-title but no title?")); /* for gtk -- Xt handles the Motif case */
+				snd_error_without_format(_("-title but no title?")); /* for gtk -- Xt handles the Motif case */
 			      else ss->startup_title = copy_string(auto_open_file_names[auto_open_ctr]);
 			    }
 			  else
@@ -1233,7 +1233,7 @@ int handle_next_startup_arg(int auto_open_ctr, char **auto_open_file_names, bool
 				  auto_open_ctr++;
 				  if ((auto_open_ctr >= args) ||
 				      (auto_open_file_names[auto_open_ctr] == NULL))
-				    snd_error(_("-I but no path?"));
+				    snd_error_without_format(_("-I but no path?"));
 				  else 
 				    {
 #if HAVE_RUBY
@@ -1319,8 +1319,6 @@ XEN_NARGIFY_0(g_script_args_w, g_script_args)
 #define g_set_script_arg_w g_set_script_arg
 #define g_script_args_w g_script_args
 #endif
-
-/* TODO: check all uses of these (close too) (rb) */
 
 void g_init_main(void)
 {

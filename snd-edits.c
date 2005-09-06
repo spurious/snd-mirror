@@ -4418,7 +4418,7 @@ static io_error_t snd_make_file(const char *ofile, int chans, file_info *hdr, sn
 		  if ((ss->stopped_explicitly) || ((cp) && (!(cp->active))))
 		    {
 		      ss->stopped_explicitly = false;
-		      snd_warning(_("file save cancelled by C-g"));
+		      snd_warning_without_format(_("file save cancelled by C-g"));
 		      sl_err = MUS_INTERRUPTED;
 		      break;
 		    }
@@ -4453,7 +4453,7 @@ static io_error_t snd_make_file(const char *ofile, int chans, file_info *hdr, sn
 	      if ((ss->stopped_explicitly) || ((cp) && (!(cp->active))))
 		{
 		  ss->stopped_explicitly = false;
-		  snd_warning(_("file save cancelled by C-g"));
+		  snd_warning_without_format(_("file save cancelled by C-g"));
 		  sl_err = MUS_INTERRUPTED;
 		  break;
 		}
@@ -7032,7 +7032,7 @@ io_error_t save_edits_and_update_display(snd_info *sp)
   FREE(sf);
 
 #if (HAVE_ACCESS)
-  if (access(sp->filename, W_OK)) /* TODO: if fam, unnecessary? */
+  if (access(sp->filename, W_OK))
     {
       sa = free_axes_data(sa);
       return(IO_WRITE_PROTECTED);
@@ -7130,7 +7130,7 @@ io_error_t save_channel_edits(chan_info *cp, char *ofile, int pos)
     pos = cp->edit_ctr;
   if (strcmp(ofile, sp->filename) == 0)       /* overwriting current file with one of its channels */
     {
-      char *nfile;
+      char *nfile = NULL;
       if (sp->user_read_only || sp->file_read_only)
 	{
 	  snd_error(_("can't save channel as %s (%s is write-protected)"), ofile, sp->short_filename);
@@ -7140,13 +7140,23 @@ io_error_t save_channel_edits(chan_info *cp, char *ofile, int pos)
       err = channel_to_file(cp, nfile, pos);  /* snd_error unless MUS_INTERRUPTED (???) */
       if (err == IO_NO_ERROR)
 	{
-	  int move_err;
-	  move_err = move_file(nfile, ofile);
-	  if (move_err == 0)
+	  err = move_file(nfile, ofile);
+	  if (err == IO_NO_ERROR)
 	    snd_update(sp);
-	  /* TODO: else warning? */
+	  else
+	    {
+	      if (SERIOUS_IO_ERROR(err))
+		{
+		  FREE(nfile);
+		  nfile = NULL;
+		  snd_error("save channel %s -> %s: %s (%s)", 
+			    nfile, ofile, 
+			    io_error_name(err),
+			    snd_io_strerror());
+		}
+	    }
 	}
-      FREE(nfile);
+      if (nfile) FREE(nfile);
     }
   else err = channel_to_file(cp, ofile, pos); /* snd_error unless MUS_INTERRUPTED */
   return(err);
@@ -7160,7 +7170,7 @@ static io_error_t save_edits_1(snd_info *sp, bool ask)
   time_t current_write_date;
 
   if (sp == NULL)
-    snd_error("save edits of null sound!");
+    snd_error_without_format("save edits of null sound!");
   if ((sp->user_read_only) || (sp->file_read_only))
     return(IO_WRITE_PROTECTED);
 
@@ -8431,7 +8441,7 @@ void check_saved_temp_file(const char *type, XEN filename, XEN date_and_length)
 	  else buf = mus_format("Saved %s temp file %s: original length: " OFF_TD "bytes, current: " OFF_TD,
 				 type, file,
 				 old_bytes, new_bytes);
-	  snd_warning(buf);
+	  snd_warning_without_format(buf);
 	  FREE(buf);
 	}
     }
