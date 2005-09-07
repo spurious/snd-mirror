@@ -1,7 +1,7 @@
 #!/usr/bin/expect -f
 set timeout 1800
 cd ../tmp
-spawn ftp -i goggle
+spawn ftp -i fatty
 expect "ftp> "
 send "cd /mnt/zip/bil\r"
 expect {

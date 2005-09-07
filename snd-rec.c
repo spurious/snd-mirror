@@ -1442,9 +1442,9 @@ void recorder_start_output_file(const char *comment)
 			 rp->output_data_format, comment, snd_strlen(comment), NULL);
   if (err != IO_NO_ERROR)
     {
-      /* TODO: better error */
       msg = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
-      mus_snprintf(msg, PRINT_BUFFER_SIZE, "%s:\n %s", rp->output_file, snd_io_strerror());
+      mus_snprintf(msg, PRINT_BUFFER_SIZE, "%s: %s (%s)\n", 
+		   rp->output_file, io_error_name(err), snd_io_strerror());
       recorder_error(msg);
       FREE(msg);
       rp->recording = false;

@@ -118,7 +118,7 @@ static void record_report(GtkWidget *text, ...)
   va_end(ap);
 }
 
-void recorder_error(char *msg)
+void recorder_error(const char *msg)
 {
   if ((recorder) && (messages))
     record_report(messages, msg, NULL);
@@ -775,22 +775,10 @@ static void autoload_file_callback(GtkWidget *w, gpointer context)
   rp->autoload = GTK_TOGGLE_BUTTON(w)->active;
 }
 
-static void srate_changed_callback(GtkWidget *w, gpointer context) 
+static void post_error_in_message_pane(const char *error_msg, void *data)
 {
-  char *str;
-  str = (char *)gtk_entry_get_text(GTK_ENTRY(recdat->srate_text)); /* w here gets segfault!! */
-  if (str) 
-    {
-      int n;
-      recorder_info *rp;
-      rp = get_recorder_info();
-      n = string_to_int(str);
-      if ((n > 0) && (n != rp->srate))
-	{
-	  rp->srate = n;
-	  recorder_set_audio_srate(MUS_AUDIO_DEFAULT, rp->srate, 0, rp->taking_input);
-	}
-    }
+  recorder_error(error_msg);
+  /* no need for clearing mechanism since the message pane is just a list of on-going messages */
 }
 
 static void rec_size_changed_callback(GtkWidget *w, gpointer context) 
@@ -802,7 +790,9 @@ static void rec_size_changed_callback(GtkWidget *w, gpointer context)
       int n;
       recorder_info *rp;
       rp = get_recorder_info();
-      n = string_to_int(str);
+      redirect_snd_error_to(post_error_in_message_pane, (void *)recdat);
+      n = string_to_int_with_error(str, 1, "buffer size");
+      redirect_snd_error_to(NULL, NULL);
       if ((n > 0) && (n != rp->buffer_size)) set_record_size(n);
     }
 }
@@ -860,7 +850,6 @@ static void make_file_info_pane(recorder_info *rp, GtkWidget *file_pane, int nde
 				WITH_HEADER_TYPE_FIELD, 
 				WITH_COMMENT_FIELD,
 				WITH_BUILTIN_HEADERS);
-  SG_SIGNAL_CONNECT(recdat->srate_text, "activate", srate_changed_callback, NULL);
 
 #if MUS_SGI
   err = mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(0) | MUS_AUDIO_MICROPHONE, MUS_AUDIO_SRATE, 0, val);
@@ -1770,7 +1759,9 @@ static void record_button_callback(GtkWidget *w, gpointer context)
 
       if (!(rp->taking_input)) fire_up_recorder();
       old_srate = rp->srate;
+      redirect_snd_error_to(post_error_in_message_pane, (void *)recdat);
       comment = get_file_dialog_sound_attributes(recdat, &rs, &ochns, &rp->output_header_type, &ofmt, &oloc, &samples, 1); 
+      redirect_snd_error_to(NULL, NULL);
       rp->output_data_format = ofmt;
       if (rp->out_chans == 0)
 	{

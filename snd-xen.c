@@ -2018,7 +2018,10 @@ Float string_to_Float(char *str)
 #endif
 }
 
-/* TODO: replace string_to_* with redirected versions */
+/* TODO: replace string_to_* with redirected versions
+ *       s_to_F: g|xmix xfft
+ *       s_to_i: many
+ */
 int string_to_int(char *str) 
 {
 #if HAVE_EXTENSION_LANGUAGE

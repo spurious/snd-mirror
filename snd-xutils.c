@@ -515,7 +515,6 @@ int attach_all_sides(Arg *args, int n)
   return(n);
 }
 
-
 void widget_int_to_text(Widget w, int val)
 {
   char *str;

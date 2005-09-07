@@ -125,7 +125,7 @@ static void record_report(Widget text, ...)
   va_end(ap);
 }
 
-void recorder_error(char *msg)
+void recorder_error(const char *msg)
 {
   if ((recorder) && (messages)) /* on SGI during make_recorder, errors can try to print to not-yet-ready messages pane */
     record_report(messages, msg, NULL);
@@ -1083,40 +1083,6 @@ static void autoload_file_callback(Widget w, XtPointer context, XtPointer info)
   rp->autoload = XmToggleButtonGetState(w);
 }
 
-static void srate_changed_callback(Widget w, XtPointer context, XtPointer info) 
-{
-  char *str;
-  recorder_info *rp;
-  rp = get_recorder_info();
-  str = XmTextGetString(w); 
-  if (str) 
-    {
-      int n;
-      n = string_to_int(str);
-      if ((n > 0) && (n != rp->srate))
-	{
-	  rp->srate = n;
-	  recorder_set_audio_srate(MUS_AUDIO_DEFAULT, rp->srate, 0, rp->taking_input);
-	}
-      XtFree(str);
-    }
-}
-
-static void rec_size_changed_callback(Widget w, XtPointer context, XtPointer info) 
-{
-  char *str;
-  recorder_info *rp;
-  rp = get_recorder_info();
-  str = XmTextGetString(w); 
-  if (str) 
-    {
-      int n;
-      n = string_to_int(str);
-      if ((n > 0) && (n != rp->buffer_size)) set_record_size(n);
-      XtFree(str);
-    }
-}
-
 static void make_file_info_pane(recorder_info *rp, Widget file_pane, int ndevs)
 {
   int i, n, init_n;
@@ -1209,7 +1175,6 @@ static void make_file_info_pane(recorder_info *rp, Widget file_pane, int ndevs)
 				WITH_BUILTIN_HEADERS);
   recdat->dialog = recorder;
   XtVaGetValues(recdat->comment_text, XmNy, &pane_max, NULL);
-  XtAddCallback(recdat->srate_text, XmNactivateCallback, srate_changed_callback, NULL); /* this is a no-op -- textfield widget is not activatable */
 #if MUS_SGI
   err = mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(0) | MUS_AUDIO_MICROPHONE, MUS_AUDIO_SRATE, 0, val);
   if (err == MUS_NO_ERROR) rp->srate = val[0];
@@ -1258,7 +1223,6 @@ static void make_file_info_pane(recorder_info *rp, Widget file_pane, int ndevs)
   XtSetArg(args[n], XmNrecomputeSize, false); n++;
   XtSetArg(args[n], XmNcolumns, 6); n++;
   rec_size_text = make_textfield_widget("rectext", file_form, args, n, NOT_ACTIVATABLE, NO_COMPLETER);
-  XtAddCallback(rec_size_text, XmNactivateCallback, rec_size_changed_callback, NULL);
   mus_snprintf(timbuf, TIME_STR_SIZE, "%d", rp->buffer_size);
   XmTextSetString(rec_size_text, timbuf);
 
@@ -1419,7 +1383,11 @@ void unlock_recording_audio(void)
 
 /* -------------------------------- DEVICE PANE -------------------------------- */
 
-
+static void post_error_in_message_pane(const char *error_msg, void *data)
+{
+  recorder_error(error_msg);
+  /* no need for clearing mechanism since the message pane is just a list of on-going messages */
+}
 
 static void vu_reset_callback(Widget w, XtPointer context, XtPointer info) 
 {
@@ -1468,7 +1436,9 @@ static void meter_button_callback(Widget w, XtPointer context, XtPointer info)
       str = XmTextGetString(recdat->chans_text); 
       if (str) 
 	{
-	  n = string_to_int(str);
+	  redirect_snd_error_to(post_error_in_message_pane, (void *)rp);
+	  n = string_to_int_with_error(str, 1, "chans");
+	  redirect_snd_error_to(NULL, NULL);
 	  XtFree(str);
 	}
       else n = 0;
@@ -2803,7 +2773,9 @@ static void record_button_callback(Widget w, XtPointer context, XtPointer info)
     {
       if (!(rp->taking_input)) fire_up_recorder();
       old_srate = rp->srate;
+      redirect_snd_error_to(post_error_in_message_pane, (void *)recdat);
       comment = get_file_dialog_sound_attributes(recdat, &rs, &ochns, &rp->output_header_type, &ofmt, &oloc, &samples, 1); 
+      redirect_snd_error_to(NULL, NULL);
       rp->output_data_format = ofmt;
       if (rp->out_chans == 0)
 	{
@@ -2901,6 +2873,18 @@ static void record_button_callback(Widget w, XtPointer context, XtPointer info)
 	      return;
 	    }
 	}
+
+      str = XmTextGetString(rec_size_text); 
+      if (str) 
+	{
+	  int n;
+	  redirect_snd_error_to(post_error_in_message_pane, (void *)recdat);
+	  n = string_to_int_with_error(str, 1, "buffer size");
+	  redirect_snd_error_to(NULL, NULL);
+	  if ((n > 0) && (n != rp->buffer_size)) set_record_size(n);
+	  XtFree(str);
+	}
+
       if (!(ss->using_schemes)) XmChangeColor(w, (Pixel)ss->sgx->red);
       s1 = XmStringCreate(_("Cancel"), XmFONTLIST_DEFAULT_TAG);
       XtVaSetValues(reset_button, XmNlabelString, s1, NULL);
