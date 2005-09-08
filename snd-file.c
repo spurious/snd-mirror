@@ -179,11 +179,10 @@ static file_info *translate_file(const char *filename, int type)
       fd = CREAT(tempname, 0666);
       if (fd == -1)
 	{
-	  snd_error(_("can't write translation temp file: %s or %s!"),
-		    newname, tempname);
+	  if (loops) FREE(loops);
 	  FREE(newname);
 	  FREE(tempname);
-	  if (loops) FREE(loops);
+	  snd_error(_("can't write translation temp file! (%s)"), snd_open_strerror());
 	  return(NULL);
 	}
       FREE(newname);

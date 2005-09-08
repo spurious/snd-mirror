@@ -20,7 +20,8 @@ void erase_rectangle (chan_info *cp, axis_context *ax, int x0, int y0, int width
 
 void draw_string (axis_context *ax, int x0, int y0, char *str, int len)
 {
-  XDrawString(ax->dp, ax->wn, ax->gc, x0, y0, str, len);
+  if ((str) && (*str))
+    XDrawString(ax->dp, ax->wn, ax->gc, x0, y0, str, len);
 }
 
 void gtk_style_draw_string (axis_context *ax, int x0, int y0, char *str, int len)

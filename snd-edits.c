@@ -7044,7 +7044,11 @@ io_error_t save_edits_and_update_display(snd_info *sp)
   io_err = move_file(ofile, sp->filename); /* should we cancel and restart a monitor? */
   sp->writing = false;
   if (io_err != IO_NO_ERROR)
-    return(io_err);
+    {
+      if (ofile) FREE(ofile);
+      if (old_cursors) FREE(old_cursors);
+      return(io_err);
+    }
 
   sp->write_date = file_write_date(sp->filename);
   add_sound_data(sp->filename, sp, WITHOUT_INITIAL_GRAPH_HOOK);

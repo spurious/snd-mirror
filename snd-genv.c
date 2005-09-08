@@ -775,7 +775,7 @@ GtkWidget *create_envelope_editor (void)
       helpB = gtk_button_new_from_stock(GTK_STOCK_HELP);
       gtk_widget_set_name(helpB, "help_button");
 
-      cancelB = gtk_button_new_with_label(_("Dismiss"));
+      cancelB = gtk_button_new_with_label("Dismiss");
       gtk_widget_set_name(cancelB, "quit_button");
 
       applyB = gtk_button_new_with_label(_("Apply"));

@@ -32,7 +32,6 @@
  *         similarly for Update
  *         This could be in the sound's pixmap area except that none of the small stop icons looks good.
  * TODO: FileChooser: add entry for filename in Open case (with completion)
- * TODO: many of the button labels are wrong: cancel->quit, open->mix etc
  * PERHAPS: instant play stop upon c-g via mixer amp controls (then reset when the thing has actually closed)--mute control?
  */
 
@@ -1707,16 +1706,12 @@ static void save_as_watch_user_read_only(struct snd_info *sp, sp_watcher_reason_
   remove_sp_watcher(sp, loc);
 }
 
-/* TODO: merge save and extract callback duplicated code */
-/* TODO: in gtk filesel if out name exists, you have to click save twice! -- how to disable this stupidity? */
-
-static void save_as_ok_callback(GtkWidget *w, gpointer data)
+static void save_or_extract(save_as_dialog_info *sd, bool saving)
 {
-  save_as_dialog_info *sd = (save_as_dialog_info *)data;
   char *str = NULL, *comment = NULL, *msg = NULL, *fullname = NULL, *tmpfile = NULL;
   snd_info *sp = NULL;
-  int type, format, srate, chans, output_type;
-  bool file_exists;
+  int type, format, srate, chans, output_type, chan = 0, extractable_chans = 0;
+  bool file_exists = false;
   off_t location, samples;
   io_error_t io_err = IO_NO_ERROR;
 
@@ -1725,7 +1720,9 @@ static void save_as_ok_callback(GtkWidget *w, gpointer data)
   if ((sd->type == SELECTION_SAVE_AS) &&
       (!(selection_is_active())))
     {
-      msg = _("no selection to save");
+      if (saving)
+	msg = _("no selection to save");
+      else msg = _("can't extract: no selection");
       post_file_dialog_error((const char *)msg, (void *)(sd->panel_data));
       if (sd->selection_watcher_loc < 0)
 	sd->selection_watcher_loc = add_selection_watcher(save_as_selection_watcher, (void *)sd);
@@ -1735,7 +1732,9 @@ static void save_as_ok_callback(GtkWidget *w, gpointer data)
   sp = any_selected_sound();
   if (!sp)
     {
-      msg = _("nothing to save");
+      if (saving)
+	msg = _("nothing to save");
+      else msg = _("nothing to extract");
       post_file_dialog_error((const char *)msg, (void *)(sd->panel_data));
       clear_error_if_filename_changes(sd->dialog, (void *)(sd->panel_data));
       return;
@@ -1745,7 +1744,9 @@ static void save_as_ok_callback(GtkWidget *w, gpointer data)
   str = snd_filer_get_filename(sd->dialog);
   if ((!str) || (!*str))
     {
-      msg = _("can't save: no file name given");
+      if (saving)
+	msg = _("can't save: no file name given");
+      else msg = _("can't extract: no file name given");
       post_file_dialog_error((const char *)msg, (void *)(sd->panel_data));
       clear_error_if_filename_changes(sd->dialog, (void *)(sd->panel_data));
       return;
@@ -1753,7 +1754,9 @@ static void save_as_ok_callback(GtkWidget *w, gpointer data)
 
   /* get output file attributes */
   redirect_snd_error_to(post_file_panel_error, (void *)(sd->panel_data));
-  comment = get_file_dialog_sound_attributes(sd->panel_data, &srate, &chans, &type, &format, &location, &samples, 0);
+  if (saving)
+    comment = get_file_dialog_sound_attributes(sd->panel_data, &srate, &chans, &type, &format, &location, &samples, 0);
+  else comment = get_file_dialog_sound_attributes(sd->panel_data, &srate, &chan, &type, &format, &location, &samples, 0);
   output_type = type;
   redirect_snd_error_to(NULL, NULL);
   if (sd->panel_data->error_widget != NOT_A_SCANF_WIDGET)
@@ -1764,220 +1767,43 @@ static void save_as_ok_callback(GtkWidget *w, gpointer data)
       return;
     }
 
-  if (sd->type == SOUND_SAVE_AS)
-    clear_minibuffer(sp);
-
-  fullname = mus_expand_filename(str);
-  if (run_before_save_as_hook(sp, fullname, sd->type != SOUND_SAVE_AS, srate, type, format, comment))
-    {
-      msg = mus_format(_("save cancelled by %s"), S_before_save_as_hook);
-      post_file_dialog_error((const char *)msg, (void *)(sd->panel_data));
-      clear_error_if_filename_changes(sd->dialog, (void *)(sd->panel_data));      
-      FREE(msg);
-      FREE(fullname);
-      if (comment) FREE(comment);
-      if (str) FREE(str);
-      return;
-    }
-
-  file_exists = mus_file_probe(fullname);
-  if ((sd->type == SOUND_SAVE_AS) &&
-      (strcmp(fullname, sp->filename) == 0))
-    {
-      /* save-as here is the same as save */
-      if ((sp->user_read_only) || 
-	  (sp->file_read_only))
-	{
-	  msg = mus_format(_("can't overwrite %s (it is write-protected)"), sp->short_filename);
-	  post_file_dialog_error((const char *)msg, (void *)(sd->panel_data));
-	  clear_error_if_filename_changes(sd->dialog, (void *)(sd->panel_data)); 
-	  if (sp->user_read_only)
-	    add_sp_watcher(sp, SP_READ_ONLY_WATCHER, save_as_watch_user_read_only, (void *)(sd->panel_data));
-	  FREE(msg);
-	  FREE(fullname);
-	  if (comment) FREE(comment);
-	  if (str) FREE(str);
-	  return;
-	}
-    }
-  else
-    {
-      if (!(sd->file_watcher))
-	{
-	  /* check for overwrites that are questionable -- DoIt click will return here with sd->file_watcher active */
-	  snd_info *parlous_sp = NULL;
-	  if ((file_exists) &&
-	      ((ask_before_overwrite(ss)) ||
-	       ((sd->type == SOUND_SAVE_AS) &&
-		(parlous_sp = file_is_open_elsewhere_and_has_unsaved_edits(sp, fullname)))))	   
-	    {
-	      msg = mus_format(_("%s exists%s. To overwrite it, click '%s'"), 
-			       str,
-			       (parlous_sp) ? ", and has unsaved edits" : "",
-#if HAVE_GFCDN
-			       "Yes"
-#else
-			       "DoIt"
-#endif
-			       );
-	      sd->file_watcher = fam_monitor_file(fullname, (void *)sd, watch_save_as_file);
-	      post_file_dialog_error((const char *)msg, (void *)(sd->panel_data));
-	      clear_error_if_save_as_filename_changes(sd->dialog, (void *)(sd->panel_data));
-#if HAVE_GFCDN
-	      {
-		GtkWidget *ok_button;
-		ok_button = file_chooser_button(GTK_FILE_CHOOSER_DIALOG(sd->dialog), GTK_RESPONSE_OK);
-		if (ok_button)
-		  gtk_button_set_label(GTK_BUTTON(ok_button), GTK_STOCK_YES);
-	      }
-#else
-	      set_button_label((GTK_FILE_SELECTION(sd->dialog))->ok_button, _("DoIt"));
-#endif
-	      FREE(msg);
-	      FREE(fullname);
-	      if (comment) FREE(comment);
-	      if (str) FREE(str);
-	      return;
-	    }
-	}
-    }
-
-  /* try to save... if it exists already, first write as temp, then move */
-  if (sd->file_watcher)
-    save_as_undoit(sd);
-  ss->local_errno = 0;
-
-  if (encoded_header_p(type))
-    {
-      output_type = type;
-      format = MUS_LSHORT;
-      type = MUS_RIFF;
-      tmpfile = snd_tempnam();
-    }
-  else
-    {
-      tmpfile = fullname;
-    }
-
-  redirect_snd_error_to(post_file_dialog_error, (void *)(sd->panel_data));
-  if (sd->type == SOUND_SAVE_AS)
-    io_err = save_edits_without_display(sp, tmpfile, type, format, srate, comment, AT_CURRENT_EDIT_POSITION);
-  else
-    {
-      char *ofile;
-      if (file_exists)
-	ofile = snd_tempnam();
-      else ofile = copy_string(fullname);
-      io_err = save_selection(ofile, type, format, srate, comment, SAVE_ALL_CHANS);
-      if (io_err == IO_NO_ERROR)
-	io_err = move_file(ofile, fullname);
-      FREE(ofile);
-    }
-  redirect_snd_error_to(NULL, NULL);
-  if (io_err == IO_NO_ERROR)
-    {
-      if (encoded_header_p(output_type))
-	{
-	  snd_encode(output_type, tmpfile, fullname);
-	  snd_remove(tmpfile, REMOVE_FROM_CACHE);
-	  FREE(tmpfile);
-	}
-
-      if (sd->type == SOUND_SAVE_AS)
-	report_in_minibuffer(sp, "%s saved as %s", sp->short_filename, str);
-      else report_in_minibuffer(sp, "selection saved as %s", str);
-      run_after_save_as_hook(sp, str, true); /* true => from dialog */
-      gtk_widget_hide(sd->dialog);
-    }
-  else
-    {
-      msg = mus_format("save as %s: %s", str, io_error_name(io_err));
-      post_file_dialog_error((const char *)msg, (void *)(sd->panel_data));
-      clear_error_if_filename_changes(sd->dialog, (void *)(sd->panel_data));
-      FREE(msg);
-    }
-  FREE(fullname);
-  if (comment) FREE(comment);
-  if (str) FREE(str);
-} 
-
-static void save_as_extract_callback(GtkWidget *w, gpointer data)
-{
-  save_as_dialog_info *sd = (save_as_dialog_info *)data;
-  char *str = NULL, *comment, *msg = NULL, *fullname = NULL, *tmpfile = NULL;
-  snd_info *sp = NULL;
-  int type, format, srate, chan = 0, extractable_chans = 0, output_type;
-  bool file_exists = false;
-  off_t location, samples;
-  io_error_t io_err;
-
-  clear_dialog_error(sd->panel_data);
-
-  if ((sd->type == SELECTION_SAVE_AS) &&
-      (!(selection_is_active())))
-    {
-      msg = _("can't extract: no selection");
-      post_file_dialog_error((const char *)msg, (void *)(sd->panel_data));
-      if (sd->selection_watcher_loc < 0)
-	sd->selection_watcher_loc = add_selection_watcher(save_as_selection_watcher, (void *)sd);
-      return;
-    }
-
-  /* get output filename */
-  str = snd_filer_get_filename(sd->dialog);
-  if ((!str) || (!*str))
-    {
-      msg = _("can't extract: no file name given");
-      post_file_dialog_error((const char *)msg, (void *)(sd->panel_data));
-      clear_error_if_filename_changes(sd->dialog, (void *)(sd->panel_data));
-      return;
-    }
-
-  /* get output file attributes */
-  redirect_snd_error_to(post_file_panel_error, (void *)(sd->panel_data));
-  comment = get_file_dialog_sound_attributes(sd->panel_data, &srate, &chan, &type, &format, &location, &samples, 0);
-  output_type = type;
-  redirect_snd_error_to(NULL, NULL);
-  if (sd->panel_data->error_widget != NOT_A_SCANF_WIDGET)
-    {
-      clear_error_if_panel_changes(sd->dialog, (void *)(sd->panel_data));
-      if (comment) FREE(comment);
-      if (str) FREE(str);
-      return;
-    }
-
-  /* check that chan-to-extract choice makes sense */
-  sp = any_selected_sound();
   if (sd->type == SOUND_SAVE_AS)
     {
       clear_minibuffer(sp);
+      if (!saving)
       extractable_chans = sp->nchans;
     }
-  else extractable_chans = selection_chans();
-  if ((chan > extractable_chans) ||
-      (((extractable_chans > 1) && (chan == extractable_chans)) ||
-       (chan < 0)))
+  else 
     {
-      if (chan > extractable_chans)
-	msg = mus_format("can't extract chan %d (%s has %d chan%s)", 
-			 chan, 
-			 (sd->type == SOUND_SAVE_AS) ? "sound" : "selection",
-			 extractable_chans, 
-			 (extractable_chans > 1) ? "s" : "");
-      else msg = mus_format("can't extract chan %d (first chan is numbered 0)", chan);
-      post_file_dialog_error((const char *)msg, (void *)(sd->panel_data));
-      clear_error_if_chans_changes(sd->dialog, (void *)(sd->panel_data));
-      FREE(msg);
-      if (comment) FREE(comment);
-      if (str) FREE(str);
-      return;
+      if (!saving)
+	extractable_chans = selection_chans();
+    }
+  if (!saving)
+    {
+      if ((chan > extractable_chans) ||
+	  (((extractable_chans > 1) && (chan == extractable_chans)) ||
+	   (chan < 0)))
+	{
+	  if (chan > extractable_chans)
+	    msg = mus_format("can't extract chan %d (%s has %d chan%s)", 
+			     chan, 
+			     (sd->type == SOUND_SAVE_AS) ? "sound" : "selection",
+			     extractable_chans, 
+			     (extractable_chans > 1) ? "s" : "");
+	  else msg = mus_format("can't extract chan %d (first chan is numbered 0)", chan);
+	  post_file_dialog_error((const char *)msg, (void *)(sd->panel_data));
+	  clear_error_if_chans_changes(sd->dialog, (void *)(sd->panel_data));
+	  FREE(msg);
+	  if (comment) FREE(comment);
+	  if (str) FREE(str);
+	  return;
+	}
     }
 
-  /* check before-save-as-hook (non-#f return -> do not save) */
   fullname = mus_expand_filename(str);
   if (run_before_save_as_hook(sp, fullname, sd->type != SOUND_SAVE_AS, srate, type, format, comment))
     {
-      msg = mus_format(_("extract cancelled by %s"), S_before_save_as_hook);
+      msg = mus_format(_("%s cancelled by %s"), (saving) ? "save" : "extract", S_before_save_as_hook);
       post_file_dialog_error((const char *)msg, (void *)(sd->panel_data));
       clear_error_if_filename_changes(sd->dialog, (void *)(sd->panel_data));      
       FREE(msg);
@@ -2068,19 +1894,24 @@ static void save_as_extract_callback(GtkWidget *w, gpointer data)
 
   redirect_snd_error_to(post_file_dialog_error, (void *)(sd->panel_data));
   if (sd->type == SOUND_SAVE_AS)
-    io_err = save_channel_edits(sp->chans[chan], tmpfile, AT_CURRENT_EDIT_POSITION); /* protects if same name */
-  else 
+    {
+      if (saving)
+	io_err = save_edits_without_display(sp, tmpfile, type, format, srate, comment, AT_CURRENT_EDIT_POSITION);
+      else io_err = save_channel_edits(sp->chans[chan], tmpfile, AT_CURRENT_EDIT_POSITION); /* protects if same name */
+    }
+  else
     {
       char *ofile;
-      if (file_exists)
+      if (file_exists) /* file won't exist if we're encoding, so this isn't as wasteful as it looks */
 	ofile = snd_tempnam();
-      else ofile = copy_string(fullname);
-      io_err = save_selection(ofile, type, format, srate, comment, chan);
+      else ofile = copy_string(tmpfile);
+      io_err = save_selection(ofile, type, format, srate, comment, (saving) ? SAVE_ALL_CHANS : chan);
       if (io_err == IO_NO_ERROR)
 	io_err = move_file(ofile, fullname);
       FREE(ofile);
     }
   redirect_snd_error_to(NULL, NULL);
+
   if (io_err == IO_NO_ERROR)
     {
       if (encoded_header_p(output_type))
@@ -2090,15 +1921,24 @@ static void save_as_extract_callback(GtkWidget *w, gpointer data)
 	  FREE(tmpfile);
 	}
 
-      if (sd->type == SOUND_SAVE_AS)
-	report_in_minibuffer(sp, "%s chan %d saved as %s", sp->short_filename, chan, str);
-      else report_in_minibuffer(sp, "selection chan %d saved as %s", chan, str);
+      if (saving)
+	{
+	  if (sd->type == SOUND_SAVE_AS)
+	    report_in_minibuffer(sp, "%s saved as %s", sp->short_filename, str);
+	  else report_in_minibuffer(sp, "selection saved as %s", str);
+	}
+      else
+	{
+	  if (sd->type == SOUND_SAVE_AS)
+	    report_in_minibuffer(sp, "%s chan %d saved as %s", sp->short_filename, chan, str);
+	  else report_in_minibuffer(sp, "selection chan %d saved as %s", chan, str);
+	}
       run_after_save_as_hook(sp, str, true); /* true => from dialog */
       gtk_widget_hide(sd->dialog);
     }
   else
     {
-      msg = mus_format("extract chan as %s: %s", str, io_error_name(io_err));
+      msg = mus_format("%s as %s: %s (%s)", (saving) ? "save" : "extract chan", str, io_error_name(io_err), snd_io_strerror());
       post_file_dialog_error((const char *)msg, (void *)(sd->panel_data));
       clear_error_if_filename_changes(sd->dialog, (void *)(sd->panel_data));
       FREE(msg);
@@ -2107,6 +1947,19 @@ static void save_as_extract_callback(GtkWidget *w, gpointer data)
   if (comment) FREE(comment);
   if (str) FREE(str);
 }
+
+static void save_as_ok_callback(GtkWidget *w, gpointer data)
+{ 
+  save_or_extract((save_as_dialog_info *)data, true);
+}
+
+static void save_as_extract_callback(GtkWidget *w, gpointer data)
+{
+  save_or_extract((save_as_dialog_info *)data, false);
+}
+
+
+/* TODO: in gtk filesel if out name exists, you have to click save twice! -- how to disable this stupidity? */
 
 static void save_as_cancel_callback(GtkWidget *w, gpointer data)
 { 

@@ -23,6 +23,7 @@ void draw_string (axis_context *ax, int x0, int y0, char *str, int len)
   PangoLayout *layout = NULL;
   PangoContext *ctx;
   if ((ax->wn == NULL) || (ax->current_font == NULL)) return;
+  if ((!str) || (!(*str))) return;
   if (!(g_utf8_validate(str, -1, NULL)))
     {
 #if DEBUGGING

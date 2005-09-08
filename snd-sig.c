@@ -2212,12 +2212,12 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool over_selection,
 	      for (i = 0; i < si->chans; i++) 
 		sfs[i] = free_snd_fd(sfs[i]);
 	      free_sync_state(sc);
+	      if (e) mus_free(egen);
 	      snd_error(_("%s %s temp file %s: %s\n"), 
 			(io_err != IO_NO_ERROR) ? io_error_name(io_err) : "can't open",
 			origin, ofile, 
 			snd_open_strerror());
 	      FREE(ofile);
-	      if (e) mus_free(egen);
 	      return;
 	    }
 	  datumb = mus_bytes_per_sample(hdr->format);
