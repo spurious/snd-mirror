@@ -483,7 +483,8 @@ void undo_help(void)
 "Snd supports 'unlimited undo' in the sense that you can move back and forth in the list of edits without any \
 limit on how long that list can get.  The data displayed is always the edited form thereof.  Each editing operation \
 extends the current edit list; each undo backs up in that list, and each redo moves forward in the list of previously \
-un-done edits.  Besides the Edit and Popup menu options, there are these keyboard commands: \
+un-done edits.  Besides the Edit and Popup menu options, and the " S_undo " and " S_redo " functions, \
+there are these keyboard sequences: \
 \n\n\
   C-x r     redo last edit\n\
   C-x u     undo last edit\n\
@@ -491,7 +492,7 @@ un-done edits.  Besides the Edit and Popup menu options, there are these keyboar
   C-x C-u   undo last edit\n\
   C-_       undo last edit\n\
 \n\
-Revert is the same as undoing all edits.\n\n\
+Revert is the same as undo all edits.\n\n\
 In the listener, C-M-g deletes all text, and C-_ deletes back to the previous command.",
 		      WITH_WORD_WRAP,
 		      snd_xrefs("Undo"),

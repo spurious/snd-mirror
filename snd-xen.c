@@ -10,10 +10,7 @@
 /* TODO: keep track of which hook (and which hook-function) is executing,
  *   if error, remove that function (and mention the context/name in the error msg)
  * TODO: xen.h need XEN_REMOVE_HOOK_FUNCTION or some equivalent [hooks.h takes the hook function which is useless here]
- *
  * TODO: trap snd_error|warning within xen (except explicit cases)
- * PERHAPS: snd-error-hook is confusing because people associate it with any Snd error, as opposed to snd_error
- *          perhaps it should be moved here? or included somehow?
  */
 
 /* -------- protect XEN vars from GC -------- */
@@ -564,10 +561,10 @@ void snd_rb_raise(XEN tag, XEN throw_args)
   /* backtrace perhaps via xen_rb_report_error (via rescue) in xen.c? */
   /* TODO: where are Ruby errors sent?? */
 
-  if (!(run_snd_error_hook(name_buf)))
+  if (!(run_snd_error_hook(msg)))
     {
       if (ss->xen_error_handler)
-	(*(ss->xen_error_handler))(error_message, ss->xen_error_data);
+	(*(ss->xen_error_handler))(msg, ss->xen_error_data);
       else rb_raise(err, msg);
     }
 }

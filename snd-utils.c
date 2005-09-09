@@ -405,8 +405,8 @@ void snd_exit(int val)
 
 static bool fam_already_warned = false;
 
-#if DEBUGGING_FAM
-static char *fam_event_name(int code)
+char *fam_event_name(int code);
+char *fam_event_name(int code)
 {
   switch (code)
     {
@@ -422,7 +422,6 @@ static char *fam_event_name(int code)
     }
   return("unknown");
 }
-#endif
 
 static void fam_check(void)
 {

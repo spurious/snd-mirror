@@ -270,7 +270,10 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
   "(open-buffer filename) adds a menu item that will select filename (use with open-hook)"
   (add-to-menu buffer-menu 
 	       filename 
-	       (lambda () (select-sound (find-sound filename))))
+	       (lambda () 
+		 (let ((ind (find-sound filename)))
+		   (if (sound? ind) 
+		       (select-sound ind)))))
   #f)
 
 (define (close-buffer snd)

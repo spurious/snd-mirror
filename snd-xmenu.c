@@ -2,8 +2,6 @@
 #include "snd-menu.h"
 #include <X11/cursorfont.h>
 
-/* TODO: bounds check or dynamicize all statically-allocated arrays */
-
 void set_menu_label(Widget w, const char *label) {if (w) set_button_label(w, label);}
 
 /* -------------------------------- FILE MENU -------------------------------- */
@@ -797,6 +795,7 @@ static void SND_callback(Widget w, XtPointer info, XtPointer context)
   int callb;
   XtVaGetValues(w, XmNuserData, &callb, NULL);
   g_snd_callback(CALL_INDEX(callb)); /* menu option activate callback */
+  if (callb < 0) fprintf(stderr,"%s callback: %d\n", XtName(w), callb); /* this exists solely to prevent an inexplicable segfault in dual x86_64 FC4 systems?? */
 }
 
 static void GHC_callback(Widget w, XtPointer info, XtPointer context) 

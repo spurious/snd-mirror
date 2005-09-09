@@ -125,25 +125,53 @@ typedef struct file_pattern_info {
 } file_pattern_info;
 
 #if HAVE_FAM
+char *fam_event_name(int code);
 static void watch_current_directory_contents(struct fam_info *fp, FAMEvent *fe)
 {
   /* if file deleted, and dialog is active, remove from file list (if it's in it),
    *         added, add to list
    * if dialog inactive, set "force re-read" flag, and notice it when remanaged: File:*, dialog starters like open-file-dialog
    */
+
+  /* if file is deleted, respond in some debonair manner */
+  fprintf(stderr,"%s: %s\n", fam_event_name(fe->code), fe->filename);
+
+  switch (fe->code)
+    {
+    case FAMChanged:
+    case FAMDeleted:
+    case FAMCreated:
+    case FAMMoved:
+      break;
+
+    default:
+      /* ignore the rest */
+      break;
+    }
+  
 }
 
 static void default_file_search(Widget dialog, XmFileSelectionBoxCallbackStruct *info)
 {
-  /* char *our_dir; */
+  char *our_dir;
   file_pattern_info *fp;
   ASSERT_WIDGET_TYPE(XmIsFileSelectionBox(dialog), dialog);
   XtVaGetValues(dialog, XmNuserData, &fp, NULL);
   (*(fp->default_search_proc))(dialog, info);
 
 #if 0
-  our_dir = (char *)XmStringUnparse(data->dir, NULL, XmCHARSET_TEXT, XmCHARSET_TEXT, NULL, 0, XmOUTPUT_ALL);
+  our_dir = (char *)XmStringUnparse(info->dir, NULL, XmCHARSET_TEXT, XmCHARSET_TEXT, NULL, 0, XmOUTPUT_ALL);
+  fprintf(stderr,"search %s (%s)\n", our_dir, fp->last_dir);
   /* if it's not the same as fp->last_dir, we need to unmonitor last_dir and monitor this one */
+  if (strcmp(our_dir, fp->last_dir) != 0)
+    {
+      if (fp->directory_watcher)
+	fam_unmonitor_file(fp->last_dir, fp->directory_watcher); /* filename actually ignored */
+      fp->directory_watcher = fam_monitor_directory(our_dir, (void *)fp, watch_current_directory_contents);
+      fprintf(stderr,"monitoring %s\n", our_dir);
+    }
+  /* fp->last_dir = copy_string(our_dir); */
+  /* last_dir currently refers to the saved just_sounds list */
 
   XtFree(our_dir);
 #endif
