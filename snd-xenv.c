@@ -273,7 +273,26 @@ static void enved_reset(void)
   env_redisplay();
 }
 
-/* TODO: string_to_* in env ed (order, env as breakpoints) -> redirect */
+static void clear_point_label(void);
+static void clear_xenv_error(void)
+{
+  if (brkptL) 
+    clear_point_label();
+}
+
+static void unpost_xenv_error(XtPointer data, XtIntervalId *id)
+{
+  clear_xenv_error();
+}
+
+static void errors_to_xenv_text(const char *msg, void *data)
+{
+  set_button_label(brkptL, msg);
+  XtAppAddTimeOut(MAIN_APP(ss),
+		  5000,
+		  (XtTimerCallbackProc)unpost_xenv_error,
+		  NULL);
+}
 
 static void order_field_activated(void)
 {
@@ -283,11 +302,14 @@ static void order_field_activated(void)
   if ((str) && (*str))
     {
       int order;
-      order = string_to_int(str);
+      redirect_errors_to(errors_to_xenv_text, NULL);
+      order = string_to_int_with_error(str, 1, "order");
+      redirect_errors_to(NULL, NULL);
       if (order & 1) order++;
       if ((order > 0) && 
 	  (order < 2000)) 
 	set_enved_filter_order(order);
+      else widget_int_to_text(orderL, enved_filter_order(ss));
     }
   if (str) XtFree(str);
 }

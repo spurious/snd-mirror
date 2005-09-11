@@ -972,8 +972,7 @@ bool listener_print_p(const char *msg);
 #if (!USE_NO_GUI)
   Float check_color_range(const char *caller, XEN val);
 #endif
-int string_to_int(char *str);
-Float string_to_Float(char *str);
+Float string_to_Float_with_error(char *str, Float lo, const char *file_name);
 int string_to_int_with_error(char *str, int lo, const char *field_name);
 off_t string_to_off_t_with_error(char *str, off_t lo, const char *field_name);
 char *output_comment(file_info *hdr);

@@ -336,6 +336,28 @@ static GdkPixmap *speaker_off_pix, *speaker_on_pix, *mix_speaker_pix, *mix_track
 
 static bool id_changed = false;
 
+static GtkWidget *error_frame = NULL, *error_label = NULL;
+
+static void clear_mix_error(void)
+{
+  if ((error_frame) && (GTK_WIDGET_VISIBLE(error_frame)))
+    gtk_widget_hide(error_frame);
+}
+
+static gint unpost_mix_error(gpointer data)
+{
+  clear_mix_error();
+  return(0);
+}
+
+static void errors_to_mix_text(const char *msg, void *data)
+{
+  int lines = 0;
+  set_label(error_label, msg);
+  gtk_widget_show(error_frame);
+  g_timeout_add_full(0, (guint32)5000, unpost_mix_error, NULL, NULL);
+}
+
 static void id_activated(GtkWidget *w, gpointer context)
 {
   char *val;
@@ -344,7 +366,9 @@ static void id_activated(GtkWidget *w, gpointer context)
   if (val)
     {
       int id;
-      id = string_to_int(val);
+      redirect_errors_to(errors_to_mix_text, NULL);
+      id = string_to_int_with_error(val, 0, "id");
+      redirect_errors_to(NULL, NULL);
       if (mix_ok_and_unlocked(id)) 
 	{
 	  mix_dialog_id = id;
@@ -373,12 +397,17 @@ static void beg_activated(GtkWidget *w, gpointer context)
   if (val)
     {
       chan_info *cp;
+      Float beg;
       char *up_to_colon;
       up_to_colon = string_to_colon(val);
       cp = mix_dialog_mix_channel(mix_dialog_id);
-      set_mix_position(mix_dialog_id, (off_t)(string_to_Float(up_to_colon) * SND_SRATE(cp->sound)));
-      FREE(up_to_colon);
+      redirect_errors_to(errors_to_mix_text, NULL);
+      beg = string_to_Float_with_error(up_to_colon, 0.0, "begin time");
+      redirect_errors_to(NULL, NULL);
+      if (beg >= 0.0)
+	set_mix_position(mix_dialog_id, (off_t)(beg * SND_SRATE(cp->sound)));
       update_mix_dialog(mix_dialog_id);
+      FREE(up_to_colon);
     }
 }
 
@@ -392,14 +421,12 @@ static void mix_track_activated(GtkWidget *w, gpointer context)
   if (val)
     {
       int trk;
-      trk = string_to_int(val);
+      redirect_errors_to(errors_to_mix_text, NULL);
+      trk = string_to_int_with_error(val, 0, "track");
+      redirect_errors_to(NULL, NULL);
       if (trk >= 0)
 	mix_dialog_set_mix_track(mix_dialog_id, trk);
-      else
-	{
-	  gtk_entry_set_text(GTK_ENTRY(w_beg), "track must be >= 0");
-	  widget_int_to_text(w_track, mix_dialog_mix_track(mix_dialog_id));
-	}
+      else widget_int_to_text(w_track, mix_dialog_mix_track(mix_dialog_id));
     }
 }
 
@@ -529,11 +556,13 @@ static void apply_mix_dialog(GtkWidget *w, gpointer context)
 
 static void dismiss_mix_dialog(GtkWidget *w, gpointer context)
 {
+  clear_mix_error();
   gtk_widget_hide(mix_dialog);
 }
 
 static gint delete_mix_dialog(GtkWidget *w, GdkEvent *event, gpointer context)
 {
+  clear_mix_error();
   gtk_widget_hide(mix_dialog);
   return(true);
 }
@@ -543,6 +572,7 @@ static GtkWidget *nextb, *previousb, *apply_button;
 static void mix_next_callback(GtkWidget *w, gpointer context)
 {
   int id;
+  clear_mix_error();
   id = next_mix_id(mix_dialog_id);
   if (id != INVALID_MIX_ID)
     {
@@ -556,6 +586,7 @@ static void mix_next_callback(GtkWidget *w, gpointer context)
 static void mix_previous_callback(GtkWidget *w, gpointer context)
 {
   int id;
+  clear_mix_error();
   id = previous_mix_id(mix_dialog_id);
   if (id != INVALID_MIX_ID)
     {
@@ -616,6 +647,14 @@ GtkWidget *make_mix_dialog(void)
       gtk_box_pack_end(GTK_BOX(GTK_DIALOG(mix_dialog)->action_area), help_button, true, true, 10);
       SG_SIGNAL_CONNECT(help_button, "clicked", mix_dialog_help_callback, NULL);
       gtk_widget_show(help_button);
+
+      /* normally hidden error indication at top */
+      error_frame = gtk_frame_new(NULL);
+      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(mix_dialog)->vbox), error_frame, false, false, 4);
+
+      error_label = gtk_label_new("");
+      gtk_container_add(GTK_CONTAINER(error_frame), error_label);
+      gtk_widget_show(error_label);
 
 
       /* top row of mix id name position track etc */
@@ -842,6 +881,8 @@ GtkWidget *make_mix_dialog(void)
       gtk_widget_show(mix_dialog);
       set_dialog_widget(MIX_DIALOG, mix_dialog);
       gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w_clip), true);
+
+      gtk_widget_hide(error_frame);
     }
   else 
     {
@@ -1269,6 +1310,29 @@ static GdkPixmap *track_speaker_pix;
 
 static bool track_id_changed = false;
 
+static GtkWidget *track_error_frame = NULL, *track_error_label = NULL;
+
+static void clear_track_error(void)
+{
+  if ((track_error_frame) && (GTK_WIDGET_VISIBLE(track_error_frame)))
+    gtk_widget_hide(track_error_frame);
+}
+
+static gint unpost_track_error(gpointer data)
+{
+  clear_track_error();
+  return(0);
+}
+
+static void errors_to_track_text(const char *msg, void *data)
+{
+  int lines = 0;
+  set_label(track_error_label, msg);
+  gtk_widget_show(track_error_frame);
+  g_timeout_add_full(0, (guint32)5000, unpost_track_error, NULL, NULL);
+}
+
+
 static void track_id_activated(GtkWidget *w, gpointer context)
 {
   char *val;
@@ -1277,11 +1341,17 @@ static void track_id_activated(GtkWidget *w, gpointer context)
   if (val)
     {
       int id;
-      id = string_to_int(val);
-      if (track_p(id)) 
+      redirect_errors_to(errors_to_track_text, NULL);
+      id = string_to_int_with_error(val, 0, "track");
+      redirect_errors_to(NULL, NULL);
+      if (id >= 0)
 	{
-	  track_dialog_id = id;
-	  update_track_dialog(id);
+	  if (track_p(id))
+	    {
+	      track_dialog_id = id;
+	      update_track_dialog(id);
+	    }
+	  else errors_to_track_text(_("no such track"), NULL);
 	}
     }
 }
@@ -1333,22 +1403,20 @@ static void track_beg_activated(GtkWidget *w, gpointer context)
 	  Float beg;
 	  char *up_to_colon;
 	  up_to_colon = string_to_colon(val);
-	  beg = string_to_Float(up_to_colon);
+	  redirect_errors_to(errors_to_track_text, NULL);
+	  beg = string_to_Float_with_error(up_to_colon, 0.0, "begin time");
+	  redirect_errors_to(NULL, NULL);
 	  FREE(up_to_colon);
 	  if (beg >= 0.0)
 	    {
 	      set_track_position(track_dialog_id, (off_t)(beg * SND_SRATE(cp->sound)));
 	      update_track_dialog(track_dialog_id);
 	    }
-	  else 
-	    {
-	      set_label(w_track_text, _("begin time < 0.0?"));
-	      redisplay_track_bounds();
-	    }
+	  else redisplay_track_bounds(); 
 	}
       else 
 	{
-	  set_label(w_track_text, _("no mixes in track, so begin time ignored"));
+	  errors_to_track_text(_("no mixes in track, so begin time ignored"), NULL);
 	  redisplay_track_bounds();
 	}
     }
@@ -1364,22 +1432,21 @@ static void track_track_activated(GtkWidget *w, gpointer context)
   if (val)
     {
       int id;
-      id = string_to_int(val);
+
+      redirect_errors_to(errors_to_track_text, NULL);
+      id = string_to_int_with_error(val, 0, "track");
+      redirect_errors_to(NULL, NULL);
       if (id >= 0)
 	{
 	  if ((id == track_dialog_id) ||
 	      (!(set_track_track(track_dialog_id, id))))
 	    {
-	      set_label(w_track_text, _("circular track chain"));
+	      errors_to_track_text(_("circular track chain"), NULL);
 	      widget_int_to_text(w_track_track, track_dialog_track_track(track_dialog_id));
 	    }
 	  else update_track_dialog(id);
 	}
-      else
-	{
-	  set_label(w_track_text, _("track must be >= 0"));
-	  widget_int_to_text(w_track_track, track_dialog_track_track(track_dialog_id));
-	}
+      else widget_int_to_text(w_track_track, track_dialog_track_track(track_dialog_id));
     }
 }
 
@@ -1463,11 +1530,13 @@ static void apply_track_dialog(GtkWidget *w, gpointer context)
 
 static void dismiss_track_dialog(GtkWidget *w, gpointer context)
 {
+  clear_track_error();
   gtk_widget_hide(track_dialog);
 }
 
 static gint delete_track_dialog(GtkWidget *w, GdkEvent *event, gpointer context)
 {
+  clear_track_error();
   gtk_widget_hide(track_dialog);
   return(true);
 }
@@ -1477,6 +1546,7 @@ static GtkWidget *track_nextb, *track_previousb;
 static void track_next_callback(GtkWidget *w, gpointer context)
 {
   int id;
+  clear_track_error();
   id = next_track_id(track_dialog_id);
   if (id != INVALID_TRACK_ID)
     {
@@ -1490,6 +1560,7 @@ static void track_next_callback(GtkWidget *w, gpointer context)
 static void track_previous_callback(GtkWidget *w, gpointer context)
 {
   int id;
+  clear_track_error();
   id = previous_track_id(track_dialog_id);
   if (id != INVALID_TRACK_ID)
     {
@@ -1549,6 +1620,16 @@ GtkWidget *make_track_dialog(void)
       gtk_box_pack_end(GTK_BOX(GTK_DIALOG(track_dialog)->action_area), help_button, true, true, 10);
       SG_SIGNAL_CONNECT(help_button, "clicked", track_dialog_help_callback, NULL);
       gtk_widget_show(help_button);
+
+
+      /* normally hidden error indication at top */
+      track_error_frame = gtk_frame_new(NULL);
+      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(track_dialog)->vbox), track_error_frame, false, false, 4);
+
+      track_error_label = gtk_label_new("");
+      gtk_container_add(GTK_CONTAINER(track_error_frame), track_error_label);
+      gtk_widget_show(track_error_label);
+
 
       rc_top = gtk_hbox_new(false, 0);
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(track_dialog)->vbox), rc_top, false, false, 4);
@@ -1757,6 +1838,7 @@ GtkWidget *make_track_dialog(void)
       if ((widget_width(track_dialog) > 0) && (widget_height(track_dialog) < 300))
 	set_widget_size(track_dialog, widget_width(track_dialog), 300);
       gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w_clip), true);
+      gtk_widget_hide(track_error_frame);
     }
   else 
     {

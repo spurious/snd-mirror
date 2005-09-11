@@ -1995,13 +1995,19 @@ reading edit version edpos"
   return(sdobj);
 }
 
-Float string_to_Float(char *str) 
+Float string_to_Float_with_error(char *str, Float lo, const char *field_name)
 {
 #if HAVE_EXTENSION_LANGUAGE
   XEN res;
+  Float f;
   res = snd_catch_any(eval_str_wrapper, (void *)str, "string->float");
   if (XEN_NUMBER_P(res))
-    return(XEN_TO_C_DOUBLE(res));
+    {
+      f = XEN_TO_C_DOUBLE(res);
+      if (f < lo)
+	snd_error(_("%s: %.3f is invalid"), field_name, f);
+      else return(f);
+    }
   else snd_error(_("%s is not a number"), str);
   return(0.0);
 #else
@@ -2010,30 +2016,11 @@ Float string_to_Float(char *str)
     {
       if (!(sscanf(str, "%f", &res)))
 	snd_error(_("%s is not a number"), str);
-    }
-  return(res);
-#endif
-}
-
-/* TODO: replace string_to_* with redirected versions
- *       s_to_F: g|xmix xfft
- *       s_to_i: many
- */
-int string_to_int(char *str) 
-{
-#if HAVE_EXTENSION_LANGUAGE
-  XEN res;
-  res = snd_catch_any(eval_str_wrapper, (void *)str, "string->int");
-  if (XEN_NUMBER_P(res))
-    return(XEN_TO_C_INT_OR_ELSE(res, 0));
-  else snd_error(_("%s is not a number"), str);
-  return(0);
-#else
-  int res = 0;
-  if (str) 
-    {
-      if (!(sscanf(str, "%d", &res)))
-	snd_error(_("%s is not a number"), str);
+      else
+	{
+	  if (res < lo)
+	    snd_error(_("%s: %.3f is invalid"), field_name, res);
+	}
     }
   return(res);
 #endif

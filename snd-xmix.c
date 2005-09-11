@@ -290,6 +290,40 @@ static Widget w_id = NULL, w_beg = NULL, w_track = NULL, mix_play = NULL, mix_tr
 
 static bool track_changed = false;
 
+static Widget error_frame = NULL, error_label = NULL;
+
+static void clear_mix_error(void)
+{
+  if ((error_frame) && (XtIsManaged(error_frame)))
+    XtUnmanageChild(error_frame);
+}
+
+static void unpost_mix_error(XtPointer data, XtIntervalId *id)
+{
+  clear_mix_error();
+}
+
+static void errors_to_mix_text(const char *msg, void *data)
+{
+  int lines = 0;
+  XmString label;
+  label = multi_line_label(msg, &lines);
+  XtVaSetValues(error_label, 
+		XmNlabelString, label, 
+		XmNheight, lines * 20,
+		NULL);
+  XtVaSetValues(error_frame, XmNheight, lines * 20, NULL);
+  XmStringFree(label);
+  XtManageChild(error_frame);
+  /* since the offending text is automatically overwritten, we can't depend on subsequent text modify callbacks
+   *   to clear things, so we'll just use a timer
+   */
+  XtAppAddTimeOut(MAIN_APP(ss),
+		  5000,
+		  (XtTimerCallbackProc)unpost_mix_error,
+		  NULL);
+}
+
 static void track_activated(void)
 {
   char *val;
@@ -299,14 +333,12 @@ static void track_activated(void)
   if (val)
     {
       int trk;
-      trk = string_to_int(val);
+      redirect_errors_to(errors_to_mix_text, NULL);
+      trk = string_to_int_with_error(val, 0, "track");
+      redirect_errors_to(NULL, NULL);
       if (trk >= 0)
 	mix_dialog_set_mix_track(mix_dialog_id, trk);
-      else
-	{
-	  XmTextSetString(w_beg, _("track must be >= 0"));
-	  widget_int_to_text(w_track, mix_dialog_mix_track(mix_dialog_id));
-	}
+      else widget_int_to_text(w_track, mix_dialog_mix_track(mix_dialog_id));
       XtFree(val);
     }
 }
@@ -333,7 +365,9 @@ static void id_activated(void)
   if (val)
     {
       int id;
-      id = string_to_int(val);
+      redirect_errors_to(errors_to_mix_text, NULL);
+      id = string_to_int_with_error(val, 0, "id");
+      redirect_errors_to(NULL, NULL);
       if (mix_ok_and_unlocked(id))
 	{
 	  mix_dialog_id = id;
@@ -362,9 +396,14 @@ static void beg_activated(void)
     {
       chan_info *cp;
       char *up_to_colon;
-      up_to_colon = string_to_colon(val);
+      Float beg;
       cp = mix_dialog_mix_channel(mix_dialog_id);
-      set_mix_position(mix_dialog_id, (off_t)(string_to_Float(up_to_colon) * SND_SRATE(cp->sound)));
+      up_to_colon = string_to_colon(val);
+      redirect_errors_to(errors_to_mix_text, NULL);
+      beg = string_to_Float_with_error(up_to_colon, 0.0, "begin time");
+      redirect_errors_to(NULL, NULL);
+      if (beg >= 0.0)
+	set_mix_position(mix_dialog_id, (off_t)(beg * SND_SRATE(cp->sound)));
       update_mix_dialog(mix_dialog_id);
       FREE(up_to_colon);
       XtFree(val);
@@ -389,6 +428,7 @@ static void apply_mix_dialog_callback(Widget w, XtPointer context, XtPointer inf
 static void dismiss_mix_dialog_callback(Widget w, XtPointer context, XtPointer info) 
 {
   Widget active_widget;
+  clear_mix_error();
   active_widget = XmGetFocusWidget(mix_dialog);
   if (active_widget == XmMessageBoxGetChild(mix_dialog, XmDIALOG_OK_BUTTON))
     XtUnmanageChild(mix_dialog);
@@ -487,6 +527,7 @@ static Widget nextb, previousb;
 static void mix_next_callback(Widget w, XtPointer context, XtPointer info)
 {
   int id;
+  clear_mix_error();
   id = next_mix_id(mix_dialog_id);
   if (id != INVALID_MIX_ID)
     {
@@ -500,6 +541,7 @@ static void mix_next_callback(Widget w, XtPointer context, XtPointer info)
 static void mix_previous_callback(Widget w, XtPointer context, XtPointer info)
 {
   int id;
+  clear_mix_error();
   id = previous_mix_id(mix_dialog_id);
   if (id != INVALID_MIX_ID)
     {
@@ -925,6 +967,23 @@ Widget make_mix_dialog(void)
       w_dB = make_togglebutton_widget(_("dB"), w_dB_row, args, n);
       XtAddCallback(w_dB, XmNvalueChangedCallback, mix_dB_callback, NULL);
 
+
+      n = 0;
+      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
+      XtSetArg(args[n], XmNtopAttachment, XmATTACH_NONE); n++;
+      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNallowResize, true); n++;
+      XtSetArg(args[n], XmNshadowType, XmSHADOW_ETCHED_IN); n++;
+      XtSetArg(args[n], XmNshadowThickness, 2); n++;
+      error_frame = XtCreateManagedWidget("error-frame", xmFrameWidgetClass, mainform, args, n);
+
+      n = 0;
+      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;}
+      error_label = XtCreateManagedWidget("", xmLabelWidgetClass, error_frame, args, n);
+
+      
       /* amp env */
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
@@ -933,13 +992,8 @@ Widget make_mix_dialog(void)
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_POSITION); n++;
       XtSetArg(args[n], XmNleftPosition, 4); n++;
-      /*
-      XtSetArg(args[n], XmNrightAttachment, XmATTACH_POSITION); n++;
-      XtSetArg(args[n], XmNrightPosition, 98); n++;
-      */
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNrightWidget, w_dB_frame); n++;
-
       XtSetArg(args[n], XmNallowResize, true); n++;
       XtSetArg(args[n], XmNshadowType, XmSHADOW_ETCHED_IN); n++;
       XtSetArg(args[n], XmNshadowThickness, 4); n++;
@@ -966,6 +1020,8 @@ Widget make_mix_dialog(void)
       XtAddEventHandler(w_env, ButtonReleaseMask, false, mix_drawer_button_release, NULL);
 
       set_dialog_widget(MIX_DIALOG, mix_dialog);
+
+      XtUnmanageChild(error_frame);
     }
   else 
     {
@@ -1363,6 +1419,41 @@ static Widget w_track_text; /* error msgs, mix lists etc */
 
 static bool track_track_changed = false;
 
+static Widget track_error_frame = NULL, track_error_label = NULL;
+
+static void clear_track_error(void)
+{
+  if ((track_error_frame) && (XtIsManaged(track_error_frame)))
+    XtUnmanageChild(track_error_frame);
+}
+
+static void unpost_track_error(XtPointer data, XtIntervalId *id)
+{
+  clear_track_error();
+}
+
+static void errors_to_track_text(const char *msg, void *data)
+{
+  int lines = 0;
+  XmString label;
+  label = multi_line_label(msg, &lines);
+  XtVaSetValues(track_error_label, 
+		XmNlabelString, label, 
+		XmNheight, lines * 20,
+		NULL);
+  XtVaSetValues(track_error_frame, XmNheight, lines * 20, NULL);
+  XmStringFree(label);
+  XtManageChild(track_error_frame);
+  /* since the offending text is automatically overwritten, we can't depend on subsequent text modify callbacks
+   *   to clear things, so we'll just use a timer
+   */
+  XtAppAddTimeOut(MAIN_APP(ss),
+		  5000,
+		  (XtTimerCallbackProc)unpost_track_error,
+		  NULL);
+}
+
+
 static void track_track_activated(void)
 {
   char *val;
@@ -1372,22 +1463,20 @@ static void track_track_activated(void)
   if (val)
     {
       int id;
-      id = string_to_int(val);
+      redirect_errors_to(errors_to_track_text, NULL);
+      id = string_to_int_with_error(val, 0, "track");
+      redirect_errors_to(NULL, NULL);
       if (id >= 0)
 	{
 	  if ((id == track_dialog_id) ||
 	      (!(set_track_track(track_dialog_id, id))))
 	    {
-	      set_label(w_track_text, _("circular track chain"));
+	      errors_to_track_text(_("circular track chain"), NULL);
 	      widget_int_to_text(w_track_track, track_dialog_track_track(track_dialog_id));
 	    }
 	  else update_track_dialog(id);
 	}
-      else
-	{
-	  set_label(w_track_text, _("track must be >= 0"));
-	  widget_int_to_text(w_track_track, track_dialog_track_track(track_dialog_id));
-	}
+      else widget_int_to_text(w_track_track, track_dialog_track_track(track_dialog_id));
       XtFree(val);
     }
 }
@@ -1413,15 +1502,17 @@ static void track_id_activated(void)
   if (val)
     {
       int id;
-      id = string_to_int(val);
-      if (track_p(id))
+      redirect_errors_to(errors_to_track_text, NULL);
+      id = string_to_int_with_error(val, 0, "track");
+      redirect_errors_to(NULL, NULL);
+      if (id >= 0)
 	{
-	  track_dialog_id = id;
-	  update_track_dialog(id);
-	}
-      else
-	{
-	  set_label(w_track_text, _("no such track"));	  
+	  if (track_p(id))
+	    {
+	      track_dialog_id = id;
+	      update_track_dialog(id);
+	    }
+	  else errors_to_track_text(_("no such track"), NULL);
 	}
       XtFree(val);
     }
@@ -1473,22 +1564,20 @@ static void track_beg_activated(void)
 	  Float beg;
 	  char *up_to_colon;
 	  up_to_colon = string_to_colon(val);
-	  beg = string_to_Float(up_to_colon);
+	  redirect_errors_to(errors_to_track_text, NULL);
+	  beg = string_to_Float_with_error(up_to_colon, 0.0, "begin time");
+	  redirect_errors_to(NULL, NULL);
 	  FREE(up_to_colon);
 	  if (beg >= 0.0)
 	    {
 	      set_track_position(track_dialog_id, (off_t)(beg * SND_SRATE(cp->sound)));
 	      update_track_dialog(track_dialog_id);
 	    }
-	  else 
-	    {
-	      set_label(w_track_text, _("begin time < 0.0?"));
-	      redisplay_track_bounds();
-	    }
+	  else redisplay_track_bounds(); 
 	}
       else 
 	{
-	  set_label(w_track_text, _("no mixes in track, so begin time ignored"));
+	  errors_to_track_text(_("no mixes in track, so begin time ignored"), NULL);
 	  redisplay_track_bounds();
 	}
       XtFree(val);
@@ -1530,6 +1619,7 @@ static void apply_track_dialog_callback(Widget w, XtPointer context, XtPointer i
 static void dismiss_track_dialog_callback(Widget w, XtPointer context, XtPointer info) 
 {
   Widget active_widget;
+  clear_track_error();
   active_widget = XmGetFocusWidget(track_dialog);
   if (active_widget == XmMessageBoxGetChild(track_dialog, XmDIALOG_OK_BUTTON))
     XtUnmanageChild(track_dialog);
@@ -1608,6 +1698,7 @@ static Widget track_nextb, track_previousb;
 static void track_next_callback(Widget w, XtPointer context, XtPointer info)
 {
   int id;
+  clear_track_error();
   id = next_track_id(track_dialog_id);
   if (id != INVALID_TRACK_ID)
     {
@@ -1621,6 +1712,7 @@ static void track_next_callback(Widget w, XtPointer context, XtPointer info)
 static void track_previous_callback(Widget w, XtPointer context, XtPointer info)
 {
   int id;
+  clear_track_error();
   id = previous_track_id(track_dialog_id);
   if (id != INVALID_TRACK_ID)
     {
@@ -2056,6 +2148,22 @@ Widget make_track_dialog(void)
       w_dB = make_togglebutton_widget(_("dB"), w_dB_row, args, n);
       XtAddCallback(w_dB, XmNvalueChangedCallback, track_dB_callback, NULL);
 
+      n = 0;
+      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
+      XtSetArg(args[n], XmNtopAttachment, XmATTACH_NONE); n++;
+      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNallowResize, true); n++;
+      XtSetArg(args[n], XmNshadowType, XmSHADOW_ETCHED_IN); n++;
+      XtSetArg(args[n], XmNshadowThickness, 2); n++;
+      track_error_frame = XtCreateManagedWidget("track-error-frame", xmFrameWidgetClass, mainform, args, n);
+
+      n = 0;
+      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;}
+      track_error_label = XtCreateManagedWidget("", xmLabelWidgetClass, track_error_frame, args, n);
+
+
       /* amp env */
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
@@ -2064,14 +2172,8 @@ Widget make_track_dialog(void)
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_POSITION); n++;
       XtSetArg(args[n], XmNleftPosition, 4); n++;
-      XtSetArg(args[n], XmNrightAttachment, XmATTACH_POSITION); n++;
-      /*
-      XtSetArg(args[n], XmNrightPosition, 98); n++;
-      XtSetArg(args[n], XmNallowResize, true); n++;
-      */
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNrightWidget, w_dB_frame); n++;
-
       XtSetArg(args[n], XmNshadowType, XmSHADOW_ETCHED_IN); n++;
       XtSetArg(args[n], XmNshadowThickness, 4); n++;
       w_track_env_frame = XtCreateManagedWidget("track-amp-env-frame", xmFrameWidgetClass, mainform, args, n);
@@ -2097,6 +2199,8 @@ Widget make_track_dialog(void)
       XtAddEventHandler(w_track_env, ButtonReleaseMask, false, track_drawer_button_release, NULL);
 
       set_dialog_widget(TRACK_DIALOG, track_dialog);
+
+      XtUnmanageChild(track_error_frame);
     }
   else 
     {

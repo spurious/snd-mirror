@@ -16,12 +16,12 @@ static void print_help_callback(Widget w, XtPointer context, XtPointer info)
   print_dialog_help();
 }
 
-static void clear_error(void);
+static void clear_print_error(void);
 
 static void print_cancel_callback(Widget w, XtPointer context, XtPointer info)
 {
   ss->print_choice = PRINT_SND;
-  clear_error();
+  clear_print_error();
   XtUnmanageChild(print_dialog);
 }
 
@@ -34,12 +34,12 @@ static int lpr (char *name)
 
 static void watch_print(Widget w, XtPointer context, XtPointer info)
 {
-  clear_error();
+  clear_print_error();
 }
 
 static Widget rc;
 static bool print_watching = false, print_error = false;
-static void clear_error(void)
+static void clear_print_error(void)
 {
   XtUnmanageChild(rc);
   XtUnmanageChild(error_info_box);

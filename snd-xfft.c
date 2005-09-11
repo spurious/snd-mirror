@@ -7,6 +7,7 @@ static Widget type_list, size_list, wavelet_list, window_list, window_beta_scale
 static Widget db_button, peaks_button, logfreq_button, sono_button, spectro_button, normo_button, normalize_button, selection_button;
 static Widget graph_label, graph_drawer;
 static Widget peak_txt, db_txt, freq_base_txt;
+static Widget error_frame, error_label;
 
 static GC gc, fgc;
 
@@ -374,6 +375,40 @@ static void white_mouse_enter_text_callback(Widget w, XtPointer context, XEvent 
   XtVaSetValues(w, XmNcursorPositionVisible, true, NULL);
 }
 
+
+static void clear_fft_error(void)
+{
+  if ((error_frame) && (XtIsManaged(error_frame)))
+    XtUnmanageChild(error_frame);
+}
+
+static void unpost_fft_error(XtPointer data, XtIntervalId *id)
+{
+  clear_fft_error();
+}
+
+static void errors_to_fft_text(const char *msg, void *data)
+{
+  int lines = 0;
+  XmString label;
+  label = multi_line_label(msg, &lines);
+  XtVaSetValues(error_label, 
+		XmNlabelString, label, 
+		XmNheight, lines * 20,
+		NULL);
+  XtVaSetValues(error_frame, XmNheight, lines * 20, NULL);
+  XmStringFree(label);
+  XtManageChild(error_frame);
+  /* since the offending text is automatically overwritten, we can't depend on subsequent text modify callbacks
+   *   to clear things, so we'll just use a timer
+   */
+  XtAppAddTimeOut(MAIN_APP(ss),
+		  5000,
+		  (XtTimerCallbackProc)unpost_fft_error,
+		  NULL);
+}
+
+
 void reflect_peaks_in_transform_dialog(void)
 {
   if (transform_dialog)
@@ -387,7 +422,9 @@ static void peaks_activate_callback(Widget w, XtPointer context, XtPointer info)
   if ((str) && (*str))
     {
       int new_peaks;
-      new_peaks = string_to_int(str);
+      redirect_errors_to(errors_to_fft_text, NULL);
+      new_peaks = string_to_int_with_error(str, 1, "peaks");
+      redirect_errors_to(NULL, NULL);
       if (new_peaks >= 1)
 	{
 	  set_max_transform_peaks(new_peaks);
@@ -411,7 +448,9 @@ static void log_freq_start_activate_callback(Widget w, XtPointer context, XtPoin
   if ((str) && (*str))
     {
       Float new_lfb;
-      new_lfb = string_to_Float(str);
+      redirect_errors_to(errors_to_fft_text, NULL);
+      new_lfb = string_to_Float_with_error(str, 0.0, "log freq start");
+      redirect_errors_to(NULL, NULL);
       if (new_lfb > 0.0)
 	set_log_freq_start(new_lfb);
       else widget_float_to_text(w, log_freq_start(ss));
@@ -432,7 +471,9 @@ static void min_db_activate_callback(Widget w, XtPointer context, XtPointer info
   if ((str) && (*str))
     {
       Float new_db;
-      new_db = string_to_Float(str);
+      redirect_errors_to(errors_to_fft_text, NULL);
+      new_db = string_to_Float_with_error(str, -10000.0, "dB");
+      redirect_errors_to(NULL, NULL);
       if (new_db < 0.0)
 	set_min_db(new_db);
       else widget_float_to_text(w, min_dB(ss));
@@ -514,6 +555,22 @@ Widget fire_up_transform_dialog(bool managed)
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNbottomWidget, XmMessageBoxGetChild(transform_dialog, XmDIALOG_SEPARATOR)); n++;
       mainform = XtCreateManagedWidget("mainform", xmFormWidgetClass, transform_dialog, args, n);
+
+
+      n = 0;
+      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
+      XtSetArg(args[n], XmNtopAttachment, XmATTACH_NONE); n++;
+      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNallowResize, true); n++;
+      XtSetArg(args[n], XmNshadowType, XmSHADOW_ETCHED_IN); n++;
+      XtSetArg(args[n], XmNshadowThickness, 2); n++;
+      error_frame = XtCreateManagedWidget("error-frame", xmFrameWidgetClass, mainform, args, n);
+
+      n = 0;
+      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;}
+      error_label = XtCreateManagedWidget("", xmLabelWidgetClass, error_frame, args, n);
 
 
       /* now 6 boxes within the main box:
@@ -978,7 +1035,6 @@ Widget fire_up_transform_dialog(bool managed)
       XtAddCallback(window_list, XmNbrowseSelectionCallback, window_browse_callback, NULL);
 
 
-
       /* GRAPH */
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
@@ -1017,6 +1073,7 @@ Widget fire_up_transform_dialog(bool managed)
       XtSetArg(args[n], XmNallowResize, true); n++;
       graph_drawer = XtCreateManagedWidget("graph-drawer", xmDrawingAreaWidgetClass, graph_form, args, n);
 
+
       gv.function = GXcopy;
       XtVaGetValues(graph_drawer, XmNbackground, &gv.background, XmNforeground, &gv.foreground, NULL);
       gc = XtGetGC(graph_drawer, GCForeground | GCFunction, &gv);
@@ -1047,6 +1104,8 @@ Widget fire_up_transform_dialog(bool managed)
       FREE(n1);
       FREE(n2);
       set_dialog_widget(TRANSFORM_DIALOG, transform_dialog);
+
+      XtUnmanageChild(error_frame);
     }
   else
     {

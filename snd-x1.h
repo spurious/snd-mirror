@@ -273,6 +273,7 @@ Pixmap rotate_text (Widget w, char *str, XFontStruct *font, Float angle_in_degre
 void draw_rotated_axis_label(chan_info *cp, GC gc, char *text, int x0, int y0);
 void ensure_list_row_visible(widget_t list, int row);
 void ensure_scrolled_window_row_visible(widget_t list, int pos, int num_rows);
+XmString multi_line_label(const char *s, int *lines);
 
 
 /* -------- snd-xchn.c -------- */

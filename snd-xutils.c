@@ -724,3 +724,31 @@ void ensure_scrolled_window_row_visible(widget_t list, int row, int num_rows)
     }
   XmScrollBarSetValues(scrollbar, new_value, size, increment, page_increment, true);
 }
+
+XmString multi_line_label(const char *s, int *lines)
+{
+  /* taken from the Motif FAQ */
+  XmString xms1, xms2, line, separator;
+  char *p, *tmp;
+  (*lines) = 1;
+  tmp = copy_string(s);
+  separator = XmStringSeparatorCreate();
+  p = strtok(tmp, "\n");
+  xms1 = XmStringCreateLocalized(p);
+  p = strtok(NULL, "\n");
+  while (p)
+    {
+      (*lines)++;
+      line = XmStringCreateLocalized(p);
+      xms2 = XmStringConcat(xms1, separator);
+      XmStringFree(xms1);
+      xms1 = XmStringConcat(xms2, line);
+      XmStringFree(xms2);
+      XmStringFree(line);
+      p = strtok(NULL, "\n");
+    }
+  XmStringFree(separator);
+  FREE(tmp);
+  return(xms1);
+}
+

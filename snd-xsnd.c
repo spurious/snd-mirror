@@ -87,33 +87,6 @@ Widget w_snd_name(snd_info *sp)   {return(sp->sgx->snd_widgets[W_name]);}
 #define FILTER_ORDER_DOWN(Sp)    Sp->sgx->snd_widgets[W_filter_order_down]
 #define FILTER_FRAME(Sp)         Sp->sgx->snd_widgets[W_filter_frame]
 
-static XmString multi_line_label(const char *s, int *lines)
-{
-  /* taken from the Motif FAQ */
-  XmString xms1, xms2, line, separator;
-  char *p, *tmp;
-  (*lines) = 1;
-  tmp = copy_string(s);
-  separator = XmStringSeparatorCreate();
-  p = strtok(tmp, "\n");
-  xms1 = XmStringCreateLocalized(p);
-  p = strtok(NULL, "\n");
-  while (p)
-    {
-      (*lines)++;
-      line = XmStringCreateLocalized(p);
-      xms2 = XmStringConcat(xms1, separator);
-      XmStringFree(xms1);
-      xms1 = XmStringConcat(xms2, line);
-      XmStringFree(xms2);
-      XmStringFree(line);
-      p = strtok(NULL, "\n");
-    }
-  XmStringFree(separator);
-  FREE(tmp);
-  return(xms1);
-}
-
 static void watch_minibuffer(Widget w, XtPointer context, XtPointer info)
 {
   clear_minibuffer_error((snd_info *)context);
@@ -907,6 +880,17 @@ static void filter_order_down_callback(Widget w, XtPointer context, XtPointer in
     set_filter_order(sp, sp->filter_control_order - 2);
 }
 
+static void get_filter_order(snd_info *sp, char *str)
+{
+  int order;
+  redirect_errors_to(errors_to_minibuffer, (void *)sp);
+  order = string_to_int_with_error(str, 1, "filter order");
+  redirect_errors_to(NULL, NULL);
+  if (order & 1) order++;
+  if (order <= 0) order = 2;
+  sp->filter_control_order = order;
+}
+
 static void filter_activate_callback(Widget w, XtPointer context, XtPointer info)
 {
   /* make an envelope out of the data */
@@ -936,11 +920,7 @@ static void filter_activate_callback(Widget w, XtPointer context, XtPointer info
   str = XmTextGetString(FILTER_ORDER_TEXT(sp));
   if ((str) && (*str))
     {
-      int order;
-      order = string_to_int(str);
-      if (order & 1) order++;
-      if (order <= 0) order = 2;
-      sp->filter_control_order = order;
+      get_filter_order(sp, str);
       XtFree(str);
     }
   (SOUND_ENV_EDITOR(sp))->edited = true;
@@ -956,11 +936,7 @@ static void filter_order_activate_callback(Widget w, XtPointer context, XtPointe
   str = XmTextGetString(w);
   if ((str) && (*str))
     {
-      int order;
-      order = string_to_int(str);
-      if (order & 1) order++;
-      if (order <= 0) order = 2;
-      sp->filter_control_order = order;
+      get_filter_order(sp, str);
       sp->filter_control_changed = true;
       display_filter_env(sp);
       XtFree(str);

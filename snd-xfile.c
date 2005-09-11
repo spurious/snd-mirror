@@ -35,7 +35,7 @@
  * TODO: always show bg wave in vf
  * TODO: will need at least a reset button for the vf env, perhaps reset for entire vf
  * TODO: vf fam + remove if file deleted = no need for update button? -> overall reset?
- * TODO: dialog error handling in gxmix(track)/gxregion/gprint/gxenv/gxfft + all in the rb/scm files
+ * TODO: dialog error handling in gprint + all in the rb/scm files [string_to_env|form also]
  */
 
 
