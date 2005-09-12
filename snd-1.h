@@ -972,9 +972,9 @@ bool listener_print_p(const char *msg);
 #if (!USE_NO_GUI)
   Float check_color_range(const char *caller, XEN val);
 #endif
-Float string_to_Float_with_error(char *str, Float lo, const char *file_name);
-int string_to_int_with_error(char *str, int lo, const char *field_name);
-off_t string_to_off_t_with_error(char *str, off_t lo, const char *field_name);
+Float string_to_Float(char *str, Float lo, const char *file_name);
+int string_to_int(char *str, int lo, const char *field_name);
+off_t string_to_off_t(char *str, off_t lo, const char *field_name);
 char *output_comment(file_info *hdr);
 void snd_load_init_file(bool nog, bool noi);
 void snd_load_file(char *filename);
@@ -1370,7 +1370,7 @@ char *snd_strcat(char *errmsg, const char *str, int *err_size);
 char *snd_io_strerror(void);
 char *snd_open_strerror(void);
 char *string_to_colon(char *val);
-char *filename_without_home_directory(const char *name);
+char *filename_without_directory(const char *name);
 char *just_filename(char *name);
 bool directory_exists(char *name);
 char *file_to_string(const char *filename);
@@ -1389,6 +1389,8 @@ fam_info *fam_monitor_directory(const char *dir_name,
 				void *data, 
 				void (*action)(struct fam_info *fp, FAMEvent *fe));
 fam_info *fam_unmonitor_file(const char *filename, fam_info *fp);
+fam_info *fam_unmonitor_directory(const char *filename, fam_info *fp);
+char *fam_event_name(int code);
 
 #ifdef DEBUGGING
   void set_encloser(char *name);

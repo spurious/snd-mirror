@@ -288,7 +288,7 @@ static file_info *open_raw_sound(const char *fullname, bool read_only, bool sele
 	return(make_file_info_1(fullname));
 
       str = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
-      mus_snprintf(str, PRINT_BUFFER_SIZE, _("No header found for %s"), filename_without_home_directory(fullname));
+      mus_snprintf(str, PRINT_BUFFER_SIZE, _("No header found for %s"), filename_without_directory(fullname));
       raw_data_dialog_to_file_info(fullname, str, NULL, read_only, selected);
     }
 #endif
@@ -711,7 +711,7 @@ void reflect_file_change_in_title(void)
 	j = alist->active_sounds; 
       else j = 4;
       for (i = 0; i < j; i++)
-	len += snd_strlen(filename_without_home_directory(alist->names[i]));
+	len += snd_strlen(filename_without_directory(alist->names[i]));
     }
   title_buffer = (char *)CALLOC(len, sizeof(char));
   mus_snprintf(title_buffer, len, "%s%s", 
@@ -724,7 +724,7 @@ void reflect_file_change_in_title(void)
       else j = 4;
       for (i = 0; i < j; i++)
 	{
-	  strcat(title_buffer, filename_without_home_directory(alist->names[i]));
+	  strcat(title_buffer, filename_without_directory(alist->names[i]));
 	  if (i < j - 1)
 	    strcat(title_buffer, ", ");
 	}
@@ -2368,7 +2368,7 @@ static char *raw_data_explanation(const char *filename, file_info *hdr, char **i
   file_string = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
   mus_snprintf(file_string, PRINT_BUFFER_SIZE,
 	       "Bad header found on %s", 
-	       filename_without_home_directory(filename));
+	       filename_without_directory(filename));
   FREE(tmp_str);
   free_file_info(hdr);
   return(file_string);
@@ -2450,6 +2450,10 @@ view_files_info *new_view_files_dialog(void)
       vdat->selected_files_size = 0;
       vdat->location_choice = VF_AT_CURSOR;
       vdat->error_p = false;
+      vdat->need_update = false;
+      vdat->dirs_size = 0;
+      vdat->dirs = NULL;
+      vdat->dir_names = NULL;
       vdat->amp = 1.0;
       vdat->speed = 1.0;
       vdat->amp_env = default_env(1.0, 1.0);
@@ -2551,7 +2555,7 @@ static char **view_files_set_selected_files(widget_t dialog, char **files, int l
 
 static char **view_files_files(widget_t dialog, int *len)
 {
-  /*don't free result! */
+  /* don't free result! */
   view_files_info *vdat;
   vdat = vf_dialog_to_info(dialog);
   if (vdat)
@@ -2839,6 +2843,17 @@ void view_files_reflect_sort_items(void)
 		(view_files_infos[k]->dialog))
 	      {
 		vdat = view_files_infos[k];
+		if (j >= vdat->sort_items_size)
+		  {
+		    int n = 0, k, old_size;
+		    Arg args[20];
+		    old_size = vdat->sort_items_size;
+		    if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
+		    vdat->sort_items_size += 4;
+		    vdat->sort_items = (Widget *)REALLOC(vdat->sort_items, vdat->sort_items_size * sizeof(Widget));
+		    for (k = old_size; k < vdat->sort_items_size; k++)
+		      vdat->sort_items[k] = XtCreateWidget("unused", xmPushButtonWidgetClass, vdat->smenu, args, n);
+		  }
 		XtVaSetValues(vdat->sort_items[j], 
 			      XmNlabelString, s1,
 			      XmNuserData, i + SORT_BY_PROC, /* this is an index into the file_sorters list, not the widget list */
@@ -2854,6 +2869,18 @@ void view_files_reflect_sort_items(void)
 		(view_files_infos[k]->dialog))
 	      {
 		vdat = view_files_infos[k];
+		if (j >= vdat->sort_items_size)
+		  {
+		    int k, old_size;
+		    old_size = vdat->sort_items_size;
+		    vdat->sort_items_size += 4;
+		    vdat->sort_items = (GtkWidget **)REALLOC(vdat->sort_items, vdat->sort_items_size * sizeof(GtkWidget *));
+		    for (k = old_size; k < vdat->sort_items_size; k++)
+		      {
+			vdat->sort_items[k] = gtk_menu_item_new_with_label("unused");
+			gtk_menu_shell_append(GTK_MENU_SHELL(vdat->smenu), vdat->sort_items[i]);
+		      }
+		  }
 		set_menu_label(vdat->sort_items[j], 
 			       XEN_TO_C_STRING(XEN_CAR(ref)));
 		{
@@ -2884,36 +2911,8 @@ void view_files_reflect_sort_items(void)
  */
 
 
-void add_file_to_view_files_list(view_files_info *vdat, const char *filename, const char *fullname)
+static void vf_add_file(view_files_info *vdat, const char *filename, const char *fullname)
 {
-  int row;
-  row = view_files_find_row(vdat, filename);
-  if (row != -1)
-    {
-      if ((vdat->dialog) &&
-	  (widget_is_active(vdat->dialog)) &&
-	  (vdat->file_list_entries[row]))
-	{
-	  ensure_scrolled_window_row_visible(vdat->file_list, row, vdat->end + 1);
-	  vf_flash_row(vdat->file_list_entries[row]);
-	}
-      return;
-    }
-  errno = 0;
-  if (!(mus_file_probe(fullname)))
-    {
-      char *msg;
-      if ((vdat->dialog) &&
-	  (widget_is_active(vdat->dialog)))
-	{
-	  if (errno != 0)
-	    msg = mus_format("%s: %s", filename, strerror(errno));
-	  else msg = mus_format("%s does not exist", filename);
-	  vf_post_add_error(msg, (void *)vdat);
-	  FREE(msg);
-	}
-      return;
-    }
   vdat->end++;
   if (vdat->end >= vdat->size)
     {
@@ -2948,20 +2947,184 @@ void add_file_to_view_files_list(view_files_info *vdat, const char *filename, co
 	}
       vdat->size = new_size;
     }
-  if (mus_file_probe(fullname))
+  vdat->names[vdat->end] = copy_string(filename);
+  vdat->full_names[vdat->end] = copy_string(fullname);
+  vdat->times[vdat->end] = vdat->curtime++;
+}
+
+void add_file_to_view_files_list(view_files_info *vdat, const char *filename, const char *fullname)
+{
+  int row;
+  row = view_files_find_row(vdat, filename);
+  if (row != -1)
     {
-      vdat->names[vdat->end] = copy_string(filename);
-      vdat->full_names[vdat->end] = copy_string(fullname);
-      vdat->times[vdat->end] = vdat->curtime++;
-      if ((vdat->dialog) && 
+      if ((vdat->dialog) &&
+	  (widget_is_active(vdat->dialog)) &&
+	  (vdat->file_list_entries[row]))
+	{
+	  ensure_scrolled_window_row_visible(vdat->file_list, row, vdat->end + 1);
+	  vf_flash_row(vdat->file_list_entries[row]);
+	}
+      return;
+    }
+  errno = 0;
+  if (!(mus_file_probe(fullname)))
+    {
+      char *msg;
+      if ((vdat->dialog) &&
 	  (widget_is_active(vdat->dialog)))
-	vf_clear_button_set_sensitive(vdat, true);
+	{
+	  if (errno != 0)
+	    msg = mus_format("%s: %s", filename, strerror(errno));
+	  else msg = mus_format("%s does not exist", filename);
+	  vf_post_add_error(msg, (void *)vdat);
+	  FREE(msg);
+	}
+      return;
+    }
+  vf_add_file(vdat, filename, fullname);
+  if ((vdat->dialog) && 
+      (widget_is_active(vdat->dialog)))
+    vf_clear_button_set_sensitive(vdat, true);
+}
+
+static void view_files_unmonitor_directories(view_files_info *vdat)
+{
+  if (vdat->dirs)
+    {
+      int i;
+      for (i = 0; i < vdat->dirs_size; i++)
+	if (vdat->dirs[i])
+	  {
+	    vdat->dirs[i] = fam_unmonitor_directory(vdat->dir_names[i], vdat->dirs[i]);
+	    FREE(vdat->dir_names[i]);
+	    vdat->dir_names[i] = NULL;
+	  }
+      FREE(vdat->dirs);
+      vdat->dirs = NULL;
+      FREE(vdat->dir_names);
+      vdat->dir_names = NULL;
+      vdat->dirs_size = 0;
     }
 }
 
+#if HAVE_FAM
+static void vf_add_file_if_absent(view_files_info *vdat, char *filename)
+{
+  int row;
+  row = view_files_find_row(vdat, filename);
+  if (row == -1)
+    {
+      vf_add_file(vdat, filename_without_directory(filename), filename);
+      vdat->need_update = true;
+    }
+}
+
+static void vf_remove_file_if_present(view_files_info *vdat, char *filename)
+{
+  int row;
+  row = view_files_find_row(vdat, filename);
+  fprintf(stderr,"look for %s -> %d\n", filename, row);
+  if (row != -1)
+    vdat->need_update = true;
+}
+
+static void vf_watch_directory(struct fam_info *fp, FAMEvent *fe)
+{
+  view_files_info *vdat;
+  if (!(sound_file_p(fe->filename))) return;
+  vdat = (view_files_info *)(fp->data);
+
+  fprintf(stderr,"vf: %s: %s\n", fam_event_name(fe->code), fe->filename);
+
+  switch (fe->code)
+    {
+    case FAMChanged:
+      if (access(fe->filename, R_OK) == 0)
+	vf_add_file_if_absent(vdat, fe->filename);
+      else vf_remove_file_if_present(vdat, fe->filename);
+      break;
+    case FAMDeleted:
+    case FAMMoved:
+      /* it's an existing file that is moved? -- I see the old name?? */
+      vf_remove_file_if_present(vdat, fe->filename);
+      break;
+    case FAMCreated:
+      vf_add_file_if_absent(vdat, fe->filename);
+      break;
+
+    default:
+      /* ignore the rest */
+      break;
+    }
+  if (vdat->need_update)
+    {
+      view_files_update_list(vdat);
+      vdat->need_update = false;
+      if ((vdat->dialog) &&
+	  (widget_is_active(vdat->dialog)))
+	view_files_display_list(vdat);
+    }
+}
+#else
+static void vf_watch_directory(struct fam_info *fp, FAMEvent *fe) {}
+#endif
+
+static void view_files_monitor_directory(view_files_info *vdat, const char *dirname)
+{
+  int i, loc = -1;
+  if (vdat->dirs)
+    {
+      for (i = 0; i < vdat->dirs_size; i++)
+	if (vdat->dirs[i])
+	  {
+	    if (strcmp(vdat->dir_names[i], dirname))
+	      return;
+	  }
+	else
+	  {
+	    loc = i;
+	    break;
+	  }
+      if (loc == -1)
+	{
+	  loc = vdat->dirs_size;
+	  vdat->dirs_size += 4;
+	  vdat->dirs = (fam_info **)REALLOC(vdat->dirs, vdat->dirs_size * sizeof(fam_info *));
+	  vdat->dir_names = (char **)REALLOC(vdat->dir_names, vdat->dirs_size * sizeof(char *));
+	  for (i = loc; i < vdat->dirs_size; i++)
+	    {
+	      vdat->dirs[i] = NULL;
+	      vdat->dir_names[i] = NULL;
+	    }
+	}
+    }
+  else
+    {
+      vdat->dirs_size = 4;
+      loc = 0;
+      vdat->dirs = (fam_info **)CALLOC(vdat->dirs_size, sizeof(fam_info *));
+      vdat->dir_names = (char **)CALLOC(vdat->dirs_size, sizeof(char *));
+    }
+  redirect_snd_error_to(vf_post_error, (void *)vdat);
+  vdat->dirs[loc] = fam_monitor_directory(dirname, (void *)vdat, vf_watch_directory);
+  redirect_snd_error_to(NULL, NULL);
+  if (vdat->dirs[loc])
+    vdat->dir_names[loc] = copy_string(dirname);
+}
+
+/* also will need a way to add/remove a file if created(and a sound file)/deleted/made-readable/made-unreadable */
+/* what about temps coming and going -- should we just add a need-update switch for later remanage? */
+/*   remanagement only through start_view_files_dialog -- this file */
+/*   perhaps ss->making|deleting_temp_file -> ignore this fam event? */
+/* alert_new_file: edits (snd_make_file), here (snd_update_1), save-region|selection -- I guess save-as goes through snd_make_file? */
+
+
 void add_directory_to_view_files_list(view_files_info *vdat, const char *dirname)
 {
+  /* I think all directory additions come through here */
   dir *sound_files = NULL;
+  view_files_monitor_directory(vdat, dirname);
   sound_files = find_sound_files_in_dir(dirname);
   if ((sound_files) && (sound_files->len > 0))
     {
@@ -3190,6 +3353,7 @@ void view_files_display_list(view_files_info *vdat)
 void view_files_clear_list(view_files_info *vdat)
 {
   int i;
+  view_files_unmonitor_directories(vdat);
   if (vdat->names)
     {
       for (i = 0; i < vdat->size; i++)

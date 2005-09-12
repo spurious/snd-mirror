@@ -791,7 +791,7 @@ static void rec_size_changed_callback(GtkWidget *w, gpointer context)
       recorder_info *rp;
       rp = get_recorder_info();
       redirect_snd_error_to(post_error_in_message_pane, NULL);
-      n = string_to_int_with_error(str, 1, "buffer size");
+      n = string_to_int(str, 1, "buffer size");
       redirect_snd_error_to(NULL, NULL);
       if ((n > 0) && (n != rp->buffer_size)) set_record_size(n);
     }
@@ -1011,7 +1011,7 @@ static void meter_button_callback(GtkWidget *w, gpointer context)
       if (str) 
 	{
 	  redirect_snd_error_to(post_error_in_message_pane, NULL);
-	  n = string_to_int_with_error(str, 1, "chans");
+	  n = string_to_int(str, 1, "chans");
 	  redirect_snd_error_to(NULL, NULL);
 	}
       else n = 0;

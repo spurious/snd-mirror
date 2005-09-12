@@ -215,7 +215,7 @@ void redirect_xen_error_to(void (*handler)(const char *msg, void *ufd), void *da
 #endif
 {
 #if DEBUGGING
-  if ((handler) && (ss->xen_error_handler))
+  if ((false) && (handler) && (ss->xen_error_handler))
     fprintf(stderr,"%s: redirect over xen from %s\n", caller, ss->xen_error_caller);
   if (ss->xen_error_caller) FREE(ss->xen_error_caller);
   ss->xen_error_caller = copy_string(caller);
@@ -231,7 +231,7 @@ void redirect_snd_print_to(void (*handler)(const char *msg, void *ufd), void *da
 #endif
 {
 #if DEBUGGING
-  if ((handler) && (ss->snd_print_handler))
+  if ((false) && (handler) && (ss->snd_print_handler))
     fprintf(stderr,"%s: redirect over print from %s\n", caller, ss->snd_print_caller);
   if (ss->snd_print_caller) FREE(ss->snd_print_caller);
   ss->snd_print_caller = copy_string(caller);
@@ -1995,7 +1995,7 @@ reading edit version edpos"
   return(sdobj);
 }
 
-Float string_to_Float_with_error(char *str, Float lo, const char *field_name)
+Float string_to_Float(char *str, Float lo, const char *field_name)
 {
 #if HAVE_EXTENSION_LANGUAGE
   XEN res;
@@ -2026,7 +2026,7 @@ Float string_to_Float_with_error(char *str, Float lo, const char *field_name)
 #endif
 }
 
-int string_to_int_with_error(char *str, int lo, const char *field_name) 
+int string_to_int(char *str, int lo, const char *field_name) 
 {
 #if HAVE_EXTENSION_LANGUAGE
   XEN res;
@@ -2057,7 +2057,7 @@ int string_to_int_with_error(char *str, int lo, const char *field_name)
 #endif
 }
 
-off_t string_to_off_t_with_error(char *str, off_t lo, const char *field_name)
+off_t string_to_off_t(char *str, off_t lo, const char *field_name)
 {
 #if HAVE_EXTENSION_LANGUAGE
   XEN res;

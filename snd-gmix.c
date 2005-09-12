@@ -352,7 +352,6 @@ static gint unpost_mix_error(gpointer data)
 
 static void errors_to_mix_text(const char *msg, void *data)
 {
-  int lines = 0;
   set_label(error_label, msg);
   gtk_widget_show(error_frame);
   g_timeout_add_full(0, (guint32)5000, unpost_mix_error, NULL, NULL);
@@ -367,7 +366,7 @@ static void id_activated(GtkWidget *w, gpointer context)
     {
       int id;
       redirect_errors_to(errors_to_mix_text, NULL);
-      id = string_to_int_with_error(val, 0, "id");
+      id = string_to_int(val, 0, "id");
       redirect_errors_to(NULL, NULL);
       if (mix_ok_and_unlocked(id)) 
 	{
@@ -402,7 +401,7 @@ static void beg_activated(GtkWidget *w, gpointer context)
       up_to_colon = string_to_colon(val);
       cp = mix_dialog_mix_channel(mix_dialog_id);
       redirect_errors_to(errors_to_mix_text, NULL);
-      beg = string_to_Float_with_error(up_to_colon, 0.0, "begin time");
+      beg = string_to_Float(up_to_colon, 0.0, "begin time");
       redirect_errors_to(NULL, NULL);
       if (beg >= 0.0)
 	set_mix_position(mix_dialog_id, (off_t)(beg * SND_SRATE(cp->sound)));
@@ -422,7 +421,7 @@ static void mix_track_activated(GtkWidget *w, gpointer context)
     {
       int trk;
       redirect_errors_to(errors_to_mix_text, NULL);
-      trk = string_to_int_with_error(val, 0, "track");
+      trk = string_to_int(val, 0, "track");
       redirect_errors_to(NULL, NULL);
       if (trk >= 0)
 	mix_dialog_set_mix_track(mix_dialog_id, trk);
@@ -1326,7 +1325,6 @@ static gint unpost_track_error(gpointer data)
 
 static void errors_to_track_text(const char *msg, void *data)
 {
-  int lines = 0;
   set_label(track_error_label, msg);
   gtk_widget_show(track_error_frame);
   g_timeout_add_full(0, (guint32)5000, unpost_track_error, NULL, NULL);
@@ -1342,7 +1340,7 @@ static void track_id_activated(GtkWidget *w, gpointer context)
     {
       int id;
       redirect_errors_to(errors_to_track_text, NULL);
-      id = string_to_int_with_error(val, 0, "track");
+      id = string_to_int(val, 0, "track");
       redirect_errors_to(NULL, NULL);
       if (id >= 0)
 	{
@@ -1404,7 +1402,7 @@ static void track_beg_activated(GtkWidget *w, gpointer context)
 	  char *up_to_colon;
 	  up_to_colon = string_to_colon(val);
 	  redirect_errors_to(errors_to_track_text, NULL);
-	  beg = string_to_Float_with_error(up_to_colon, 0.0, "begin time");
+	  beg = string_to_Float(up_to_colon, 0.0, "begin time");
 	  redirect_errors_to(NULL, NULL);
 	  FREE(up_to_colon);
 	  if (beg >= 0.0)
@@ -1434,7 +1432,7 @@ static void track_track_activated(GtkWidget *w, gpointer context)
       int id;
 
       redirect_errors_to(errors_to_track_text, NULL);
-      id = string_to_int_with_error(val, 0, "track");
+      id = string_to_int(val, 0, "track");
       redirect_errors_to(NULL, NULL);
       if (id >= 0)
 	{

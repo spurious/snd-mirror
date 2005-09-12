@@ -313,7 +313,7 @@ snd_info *make_snd_info(snd_info *sip, const char *filename, file_info *hdr, int
   sp->hdr = hdr;
   sp->inuse = SOUND_NORMAL;
   sp->filename = copy_string(filename);
-  sp->short_filename = filename_without_home_directory(sp->filename); /* a pointer into filename, not a new string */
+  sp->short_filename = filename_without_directory(sp->filename); /* a pointer into filename, not a new string */
   sp->sync = DEFAULT_SYNC;
   sp->previous_sync = sp->sync;
   initialize_control_panel(sp);
@@ -898,7 +898,7 @@ snd_info *find_sound(const char *name, int nth)
   char *sname;
   int i, which = 0;
   if (name == NULL) return(NULL);
-  sname = filename_without_home_directory(name);
+  sname = filename_without_directory(name);
   for (i = 0; i < ss->max_sounds; i++)
     {
       snd_info *sp;

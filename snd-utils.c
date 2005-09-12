@@ -141,7 +141,7 @@ char *string_to_colon(char *val)
   return(up_to_colon);
 }
 
-char *filename_without_home_directory(const char *name)
+char *filename_without_directory(const char *name)
 {
   /* since I don't want to mess with freeing these guys, I'll just return a pointer into the name */
   int i, len, last_slash;
@@ -157,7 +157,7 @@ char *just_filename(char *name)
 {
   char *nodir;
   int i, len;
-  nodir = copy_string(filename_without_home_directory(name));
+  nodir = copy_string(filename_without_directory(name));
   len = strlen(nodir);
   for (i = 0; i < len; i++) 
     if (nodir[i] == '.') 
@@ -405,7 +405,6 @@ void snd_exit(int val)
 
 static bool fam_already_warned = false;
 
-char *fam_event_name(int code);
 char *fam_event_name(int code)
 {
   switch (code)
@@ -646,7 +645,17 @@ fam_info *fam_unmonitor_file(const char *filename, fam_info *fp)
   if (fp) free(fp);
   return(NULL);
 }
+
+char *fam_event_name(int code)
+{
+  return("no fam!");
+}
 #endif
+
+fam_info *fam_unmonitor_directory(const char *filename, fam_info *fp)
+{
+  return(fam_unmonitor_file(filename, fp));
+}
 
 
 #if DEBUGGING

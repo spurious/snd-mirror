@@ -31,11 +31,12 @@
  *       the sorters could be handled similarly -- a panel of radio buttons with name chosen by default
  *       would need local versions of the sort_choice variable -- use default searcher for all choices
  * TODO: in nb.scm, get the info dialog out of the line of sight and unmanage it if view-files is unmanaged
- * TODO: report-in-minibuffer extended to go to any dialog
  * TODO: always show bg wave in vf
  * TODO: will need at least a reset button for the vf env, perhaps reset for entire vf
- * TODO: vf fam + remove if file deleted = no need for update button? -> overall reset?
- * TODO: dialog error handling in gprint + all in the rb/scm files [string_to_env|form also]
+ * TODO: no need for vf update button -- what to replace it with in fam case?
+ * TODO: dialog error handling in gprint + all in the rb/scm files
+ * TODO: use threads for long multi-channel computations (src/reverb/flt/xen)
+ * TODO: fb: clm/cmn, audio? sndlib -wl bug, s2: valgrind
  */
 
 
@@ -119,13 +120,11 @@ typedef struct file_pattern_info {
   char *save_dir,*last_dir;
   dir *sound_files, *current_files;
   char *last_pattern, *full_pathname;
-#if HAVE_FAM
   fam_info *directory_watcher;
-#endif
 } file_pattern_info;
 
 #if HAVE_FAM
-char *fam_event_name(int code);
+# if 0
 static void watch_current_directory_contents(struct fam_info *fp, FAMEvent *fe)
 {
   /* if file deleted, and dialog is active, remove from file list (if it's in it),
@@ -150,10 +149,13 @@ static void watch_current_directory_contents(struct fam_info *fp, FAMEvent *fe)
     }
   
 }
+#endif
 
 static void default_file_search(Widget dialog, XmFileSelectionBoxCallbackStruct *info)
 {
+#if 0
   char *our_dir;
+#endif
   file_pattern_info *fp;
   ASSERT_WIDGET_TYPE(XmIsFileSelectionBox(dialog), dialog);
   XtVaGetValues(dialog, XmNuserData, &fp, NULL);
@@ -457,7 +459,7 @@ static void post_sound_info(Widget info1, Widget info2, const char *filename, bo
 
   buf = (char *)CALLOC(LABEL_BUFFER_SIZE, sizeof(char));
   mus_snprintf(buf, LABEL_BUFFER_SIZE, "%s%s%d chan%s, %d Hz, %.3f secs",
-	       (with_filename) ? filename_without_home_directory(filename) : "",
+	       (with_filename) ? filename_without_directory(filename) : "",
 	       (with_filename) ? ": " : "",
 	       mus_sound_chans(filename),
 	       (mus_sound_chans(filename) > 1) ? "s" : "",
@@ -1071,7 +1073,7 @@ char *get_file_dialog_sound_attributes(file_data *fdat,
       fdat->scanf_widget = SRATE_WIDGET;
       if ((str) && (*str))
 	{
-	  (*srate) = string_to_int_with_error(str, 1, "srate"); 
+	  (*srate) = string_to_int(str, 1, "srate"); 
 	  XtFree(str);
 	}
       else snd_error_without_format("no srate?");
@@ -1083,7 +1085,7 @@ char *get_file_dialog_sound_attributes(file_data *fdat,
       fdat->scanf_widget = CHANS_WIDGET;
       if ((str) && (*str))
 	{
-	  (*chans) = string_to_int_with_error(str, min_chan, "chans"); 
+	  (*chans) = string_to_int(str, min_chan, "chans"); 
 	  XtFree(str);
 	}
       else
@@ -1099,7 +1101,7 @@ char *get_file_dialog_sound_attributes(file_data *fdat,
       fdat->scanf_widget = DATA_LOCATION_WIDGET;
       if ((str) && (*str))
 	{
-	  (*location) = string_to_off_t_with_error(str, 0, "data location"); 
+	  (*location) = string_to_off_t(str, 0, "data location"); 
 	  XtFree(str);
 	}
       else snd_error_without_format("no data location?");
@@ -1111,7 +1113,7 @@ char *get_file_dialog_sound_attributes(file_data *fdat,
       fdat->scanf_widget = SAMPLES_WIDGET;
       if ((str) && (*str))
 	{
-	  (*samples) = string_to_off_t_with_error(str, 0, "samples"); 
+	  (*samples) = string_to_off_t(str, 0, "samples"); 
 	  XtFree(str);
 	}
       else snd_error_without_format("no samples?");
@@ -4046,7 +4048,7 @@ off_t vf_location(view_files_info *vdat)
       str = XmTextGetString(vdat->at_mark_text);
       if ((str) && (*str))
 	{
-	  pos = mark_id_to_sample(string_to_int_with_error(str, 0, "mark"));
+	  pos = mark_id_to_sample(string_to_int(str, 0, "mark"));
 	  XtFree(str);
 	  if (pos < 0)
 	    snd_error_without_format("no such mark");
@@ -4057,7 +4059,7 @@ off_t vf_location(view_files_info *vdat)
       str = XmTextGetString(vdat->at_sample_text);
       if ((str) && (*str))
 	{
-	  pos = string_to_off_t_with_error(str, 0, "sample"); 
+	  pos = string_to_off_t(str, 0, "sample"); 
 	  XtFree(str);
 	  /* pos already checked for lower bound */
 	}
@@ -4531,7 +4533,7 @@ widget_t start_view_files_dialog_1(view_files_info *vdat, bool managed)
 {
   if (!(vdat->dialog))
     {
-      int n;
+      int i, n;
       Arg args[20];
       XmString xdismiss, xhelp, titlestr, new_viewer_str, s1, bstr;
       Widget mainform, viewform, leftform;
@@ -5188,17 +5190,10 @@ widget_t start_view_files_dialog_1(view_files_info *vdat, bool managed)
       vdat->by_size =  XtCreateManagedWidget(_("size"),  xmPushButtonWidgetClass, vdat->smenu, args, n);
       vdat->by_entry = XtCreateManagedWidget(_("entry"), xmPushButtonWidgetClass, vdat->smenu, args, n);
 
-      /* TODO: sort_items list growth */
-      {
-	/* for now... */
-	int i;
-	vdat->sort_items_size = 4;
-	vdat->sort_items = (Widget *)CALLOC(vdat->sort_items_size, sizeof(Widget));
-	for (i = 0; i < vdat->sort_items_size; i++)
-	  {
-	    vdat->sort_items[i] = XtCreateWidget("unused", xmPushButtonWidgetClass, vdat->smenu, args, n);
-	  }
-      }
+      vdat->sort_items_size = 4;
+      vdat->sort_items = (Widget *)CALLOC(vdat->sort_items_size, sizeof(Widget));
+      for (i = 0; i < vdat->sort_items_size; i++)
+	vdat->sort_items[i] = XtCreateWidget("unused", xmPushButtonWidgetClass, vdat->smenu, args, n);
 
       XtManageChild(sbar);
 

@@ -129,7 +129,7 @@ static void post_sound_info(GtkWidget *info1, GtkWidget *info2, const char *file
 
   buf = (char *)CALLOC(LABEL_BUFFER_SIZE, sizeof(char));
   mus_snprintf(buf, LABEL_BUFFER_SIZE, "%s%s%d chan%s, %d Hz, %.3f secs",
-	       (with_filename) ? filename_without_home_directory(filename) : "",
+	       (with_filename) ? filename_without_directory(filename) : "",
 	       (with_filename) ? ": " : "",
 	       mus_sound_chans(filename),
 	       (mus_sound_chans(filename) > 1) ? "s" : "",
@@ -943,7 +943,7 @@ char *get_file_dialog_sound_attributes(file_data *fdat, int *srate, int *chans, 
       str = (char *)gtk_entry_get_text(GTK_ENTRY(fdat->srate_text)); 
       fdat->scanf_widget = SRATE_WIDGET;
       if ((str) && (*str))
-	(*srate) = string_to_int_with_error(str, 1, "srate"); 
+	(*srate) = string_to_int(str, 1, "srate"); 
       else snd_error_without_format("no srate?");
     }
 
@@ -952,7 +952,7 @@ char *get_file_dialog_sound_attributes(file_data *fdat, int *srate, int *chans, 
       str = (char *)gtk_entry_get_text(GTK_ENTRY(fdat->chans_text)); 
       fdat->scanf_widget = CHANS_WIDGET;
       if ((str) && (*str))
-	(*chans) = string_to_int_with_error(str, min_chan, "chans"); 
+	(*chans) = string_to_int(str, min_chan, "chans"); 
        else
  	{
  	  if (min_chan > 0)
@@ -965,7 +965,7 @@ char *get_file_dialog_sound_attributes(file_data *fdat, int *srate, int *chans, 
       str = (char *)gtk_entry_get_text(GTK_ENTRY(fdat->location_text)); 
       fdat->scanf_widget = DATA_LOCATION_WIDGET;
       if ((str) && (*str))
-	(*location) = string_to_off_t_with_error(str, 0, "data location"); 
+	(*location) = string_to_off_t(str, 0, "data location"); 
       else snd_error_without_format("no data location?");
     }
 
@@ -974,7 +974,7 @@ char *get_file_dialog_sound_attributes(file_data *fdat, int *srate, int *chans, 
       str = (char *)gtk_entry_get_text(GTK_ENTRY(fdat->samples_text)); 
       fdat->scanf_widget = SAMPLES_WIDGET;
       if ((str) && (*str))
-	(*samples) = string_to_off_t_with_error(str, 0, "samples"); 
+	(*samples) = string_to_off_t(str, 0, "samples"); 
       else snd_error_without_format("no samples?");
     }
   fdat->scanf_widget = SAMPLES_WIDGET;
@@ -3508,7 +3508,7 @@ off_t vf_location(view_files_info *vdat)
       str = (char *)gtk_entry_get_text(GTK_ENTRY(vdat->at_mark_text));
       if ((str) && (*str))
 	{
-	  pos = mark_id_to_sample(string_to_int_with_error(str, 0, "mark"));
+	  pos = mark_id_to_sample(string_to_int(str, 0, "mark"));
 	  if (pos < 0)
 	    snd_error_without_format("no such mark");
 	}
@@ -3518,7 +3518,7 @@ off_t vf_location(view_files_info *vdat)
       str = (char *)gtk_entry_get_text(GTK_ENTRY(vdat->at_sample_text));
       if ((str) && (*str))
 	{
-	  pos = string_to_off_t_with_error(str, 0, "sample"); 
+	  pos = string_to_off_t(str, 0, "sample"); 
 	  /* pos already checked for lower bound */
 	}
       else snd_error_without_format("no sample number?");
@@ -3994,6 +3994,7 @@ GtkWidget *start_view_files_dialog_1(view_files_info *vdat, bool managed)
 {
   if (!(vdat->dialog))
     {
+      int i;
       GtkWidget *sep1, *cww, *rlw, *tophbox, *plw, *bbox, *add_label, *addbox;
       GtkWidget *sbar, *sitem, *newB;
       GtkWidget *mainform, *leftform, *fileform, *helpB, *dismissB;
@@ -4097,17 +4098,13 @@ GtkWidget *start_view_files_dialog_1(view_files_info *vdat, bool managed)
       gtk_menu_shell_append(GTK_MENU_SHELL(vdat->smenu), vdat->by_size);
       gtk_menu_shell_append(GTK_MENU_SHELL(vdat->smenu), vdat->by_entry);
 
-      {
-	/* for now... */
-	int i;
-	vdat->sort_items_size = 4;
-	vdat->sort_items = (GtkWidget **)CALLOC(vdat->sort_items_size, sizeof(GtkWidget *));
-	for (i = 0; i < vdat->sort_items_size; i++)
-	  {
-	    vdat->sort_items[i] = gtk_menu_item_new_with_label("unused");
-	    gtk_menu_shell_append(GTK_MENU_SHELL(vdat->smenu), vdat->sort_items[i]);
-	  }
-      }
+      vdat->sort_items_size = 4;
+      vdat->sort_items = (GtkWidget **)CALLOC(vdat->sort_items_size, sizeof(GtkWidget *));
+      for (i = 0; i < vdat->sort_items_size; i++)
+	{
+	  vdat->sort_items[i] = gtk_menu_item_new_with_label("unused");
+	  gtk_menu_shell_append(GTK_MENU_SHELL(vdat->smenu), vdat->sort_items[i]);
+	}
 
       gtk_widget_show(vdat->by_name);
       gtk_widget_show(vdat->by_date);

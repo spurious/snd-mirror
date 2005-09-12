@@ -2815,7 +2815,7 @@ char *scale_and_src(char **files, int len, int max_chans, Float amp, Float speed
     {
       fds[i] = (snd_fd **)CALLOC(max_chans, sizeof(snd_fd *));
       sps[i] = make_sound_readable(files[i], false);
-      sps[i]->short_filename = filename_without_home_directory(files[i]);
+      sps[i]->short_filename = filename_without_directory(files[i]);
       sps[i]->filename = NULL; /* why? squelch graphics perhaps? */
       for (chan = 0; chan < sps[i]->nchans; chan++)
 	fds[i][chan] = init_sample_read(0, sps[i]->chans[chan], READ_FORWARD);

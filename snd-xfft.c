@@ -423,7 +423,7 @@ static void peaks_activate_callback(Widget w, XtPointer context, XtPointer info)
     {
       int new_peaks;
       redirect_errors_to(errors_to_fft_text, NULL);
-      new_peaks = string_to_int_with_error(str, 1, "peaks");
+      new_peaks = string_to_int(str, 1, "peaks");
       redirect_errors_to(NULL, NULL);
       if (new_peaks >= 1)
 	{
@@ -449,7 +449,7 @@ static void log_freq_start_activate_callback(Widget w, XtPointer context, XtPoin
     {
       Float new_lfb;
       redirect_errors_to(errors_to_fft_text, NULL);
-      new_lfb = string_to_Float_with_error(str, 0.0, "log freq start");
+      new_lfb = string_to_Float(str, 0.0, "log freq start");
       redirect_errors_to(NULL, NULL);
       if (new_lfb > 0.0)
 	set_log_freq_start(new_lfb);
@@ -472,7 +472,7 @@ static void min_db_activate_callback(Widget w, XtPointer context, XtPointer info
     {
       Float new_db;
       redirect_errors_to(errors_to_fft_text, NULL);
-      new_db = string_to_Float_with_error(str, -10000.0, "dB");
+      new_db = string_to_Float(str, -10000.0, "dB");
       redirect_errors_to(NULL, NULL);
       if (new_db < 0.0)
 	set_min_db(new_db);

@@ -177,7 +177,9 @@ static void execute_named_macro(chan_info *cp, char *name, off_t count)
       int one_edit, i, loc, form_loc;
       XEN form, result = XEN_UNDEFINED;
       one_edit = cp->edit_ctr + 1;
+      redirect_errors_to(errors_to_minibuffer, (void *)(cp->sound));
       form = string_to_form(name);
+      redirect_errors_to(NULL, NULL);
       form_loc = snd_protect(form);
       for (i = 0; i < count; i++)
 	result = snd_catch_any(eval_form_wrapper, (void *)form, name);

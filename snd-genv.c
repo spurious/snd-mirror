@@ -242,6 +242,25 @@ static void enved_filter_order_callback(GtkWidget *w, gpointer data)
   set_enved_filter_order(gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(orderL)));
 }
 
+static void clear_point_label(void);
+static void clear_genv_error(void)
+{
+  if (brktxtL) 
+    clear_point_label();
+}
+
+static gint unpost_genv_error(gpointer data)
+{
+  clear_genv_error();
+  return(0);
+}
+
+static void errors_to_genv_text(const char *msg, void *data)
+{
+  gtk_label_set_text(GTK_LABEL(brktxtL), msg);
+  g_timeout_add_full(0, (guint32)5000, unpost_genv_error, NULL, NULL);
+}
+
 static void text_field_activated(GtkWidget *w, gpointer context)
 { /* might be breakpoints to load or an envelope name (<cr> in enved text field) */
   char *str = NULL;
@@ -260,7 +279,12 @@ static void text_field_activated(GtkWidget *w, gpointer context)
 	      set_sensitive(saveB, false);
 	      env_redisplay(); /* updates label */
 	    }
-	  else e = string_to_env(str);
+	  else 
+	    {
+	      redirect_errors_to(errors_to_genv_text, NULL);
+	      e = string_to_env(str);
+	      redirect_errors_to(NULL, NULL);
+	    }
 	}
       if (e) 
 	{

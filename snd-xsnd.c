@@ -884,7 +884,7 @@ static void get_filter_order(snd_info *sp, char *str)
 {
   int order;
   redirect_errors_to(errors_to_minibuffer, (void *)sp);
-  order = string_to_int_with_error(str, 1, "filter order");
+  order = string_to_int(str, 1, "filter order");
   redirect_errors_to(NULL, NULL);
   if (order & 1) order++;
   if (order <= 0) order = 2;
@@ -913,7 +913,9 @@ static void filter_activate_callback(Widget w, XtPointer context, XtPointer info
   if ((str) && (*str)) remember_filter_string(sp, str);
 
   if (sp->filter_control_envelope) sp->filter_control_envelope = free_env(sp->filter_control_envelope);
+  redirect_errors_to(errors_to_minibuffer, (void *)sp);
   sp->filter_control_envelope = string_to_env(str);
+  redirect_errors_to(NULL, NULL);
   if (str) XtFree(str);
   if (!(sp->filter_control_envelope)) /* maybe user cleared text field? */
     sp->filter_control_envelope = default_env(sp->filter_control_xmax, 1.0);

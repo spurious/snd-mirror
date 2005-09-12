@@ -1,8 +1,6 @@
 #include "snd.h"
 #include "snd-rec.h"
 
-/* TODO: redirect file panel errors */
-
 #if HAVE_XPM
   #include <X11/xpm.h>
 #endif
@@ -1437,7 +1435,7 @@ static void meter_button_callback(Widget w, XtPointer context, XtPointer info)
       if (str) 
 	{
 	  redirect_snd_error_to(post_error_in_message_pane, (void *)rp);
-	  n = string_to_int_with_error(str, 1, "chans");
+	  n = string_to_int(str, 1, "chans");
 	  redirect_snd_error_to(NULL, NULL);
 	  XtFree(str);
 	}
@@ -2879,7 +2877,7 @@ static void record_button_callback(Widget w, XtPointer context, XtPointer info)
 	{
 	  int n;
 	  redirect_snd_error_to(post_error_in_message_pane, (void *)recdat);
-	  n = string_to_int_with_error(str, 1, "buffer size");
+	  n = string_to_int(str, 1, "buffer size");
 	  redirect_snd_error_to(NULL, NULL);
 	  if ((n > 0) && (n != rp->buffer_size)) set_record_size(n);
 	  XtFree(str);

@@ -303,7 +303,7 @@ static void order_field_activated(void)
     {
       int order;
       redirect_errors_to(errors_to_xenv_text, NULL);
-      order = string_to_int_with_error(str, 1, "order");
+      order = string_to_int(str, 1, "order");
       redirect_errors_to(NULL, NULL);
       if (order & 1) order++;
       if ((order > 0) && 
@@ -333,7 +333,12 @@ static void text_field_activated(void)
 	      set_sensitive(saveB, false);
 	      env_redisplay(); /* updates label */
 	    }
-	  else e = string_to_env(str);
+	  else 
+	    {
+	      redirect_errors_to(errors_to_xenv_text, NULL);
+	      e = string_to_env(str);
+	      redirect_errors_to(NULL, NULL);
+	    }
 	}
       if (e) 
 	{

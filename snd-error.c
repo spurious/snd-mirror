@@ -47,7 +47,7 @@ void redirect_snd_warning_to(void (*handler)(const char *warning_msg, void *ufd)
 #endif
 {
 #if DEBUGGING
-  if ((handler) && (ss->snd_warning_handler))
+  if ((false) && (handler) && (ss->snd_warning_handler))
     fprintf(stderr,"%s: redirect over warn from %s\n", caller, ss->snd_warning_caller);
   if (ss->snd_warning_caller) FREE(ss->snd_warning_caller);
   ss->snd_warning_caller = copy_string(caller);
@@ -72,7 +72,7 @@ void redirect_snd_error_to(void (*handler)(const char *error_msg, void *ufd), vo
 #endif
 {
 #if DEBUGGING
-  if ((handler) && (ss->snd_error_handler))
+  if ((false) && (handler) && (ss->snd_error_handler))
     fprintf(stderr,"%s: redirect over snd error from %s\n", caller, ss->snd_error_caller);
   if (ss->snd_error_caller) FREE(ss->snd_error_caller);
   ss->snd_error_caller = copy_string(caller);

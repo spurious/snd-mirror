@@ -6,7 +6,7 @@
  *    SGI new and old audio library
  *    OSS (with Sam 9407 support)
  *    ALSA
- *    Sun (has switches for OPENBSD, but they're untested)
+ *    Sun (has switches for OpenBSD, but they're untested)
  *    Windows 95/98
  *    OSX
  *    ESD

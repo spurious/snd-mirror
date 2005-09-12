@@ -2252,7 +2252,7 @@ static XEN g_play_1(XEN samp_n, XEN snd_n, XEN chn_n, bool back, bool syncd, XEN
 				  C_TO_XEN_STRING(mus_header_original_format_name(mus_sound_original_format(play_name),
 										  mus_sound_header_type(play_name)))));
       sp = make_sound_readable(play_name, false);
-      sp->short_filename = filename_without_home_directory(play_name);
+      sp->short_filename = filename_without_directory(play_name);
       sp->filename = NULL;
       sp->delete_me = (struct dialog_play_info *)1;
       if (XEN_OFF_T_P(chn_n)) end = XEN_TO_C_OFF_T(chn_n);

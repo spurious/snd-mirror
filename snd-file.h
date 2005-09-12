@@ -35,6 +35,11 @@ typedef struct {
   speed_style_t speed_style;
   off_t beg;
 
+  int dirs_size;
+  fam_info **dirs;
+  char **dir_names;
+  bool need_update;
+
   widget_t dialog;
   widget_t file_list;
   widget_t file_list_holder;
@@ -69,14 +74,13 @@ typedef struct {
   widget_t speed_event;
   widget_t speed_label_event;
   widget_t add_text;
-
   widget_t* sort_items;
-
-  g_adj_t amp_adj;
-  g_adj_t speed_adj;
 
   gc_t env_gc;
 #if USE_GTK
+  g_adj_t amp_adj;
+  g_adj_t speed_adj;
+
   gulong at_sample_text_handler_id, at_mark_text_handler_id;
   gulong at_sample_button_handler_id, at_mark_button_handler_id;
   gulong add_text_handler_id;
