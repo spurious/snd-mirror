@@ -93,7 +93,7 @@
 ;(setlocale LC_ALL "de_DE")
 
 (define tests 1)
-(define keep-going #f)
+(define keep-going #t)
 (define all-args #f) ; huge arg testing
 (define with-big-file #t)
 
@@ -46166,7 +46166,9 @@ EDITS: 1
 		(if (not (= (.your_event_mask attr) #x628033)) (snd-display ";your_event_mask: ~X" (.your_event_mask attr)))
 		(if (not (= (.all_event_masks attr) #xe28033)) (snd-display ";all_event_masks: ~X" (.all_event_masks attr)))
 		(if (not (Screen? (.screen attr))) (snd-display ";XGetWindowAttributes screen: ~A" (.screen attr)))
-		(if (not (= (.do_not_propagate_mask attr) 0)) (snd-display ";XGetWindowAttributes do_not_propagate_mask: ~A" (.do_not_propagate_mask attr)))
+		(if (and (not (= (.do_not_propagate_mask attr) 0)) 
+			 (not (= (.do_not_propagate_mask attr) 8204)))
+		    (snd-display ";XGetWindowAttributes do_not_propagate_mask: ~A" (.do_not_propagate_mask attr)))
 		(if (not (= (.backing_planes attr) AllPlanes)) (snd-display ";XGetWindowAttributes backing_planes: ~A" (.backing_planes attr)))
 		(if (not (= (.win_gravity attr) 1)) (snd-display ";XGetWindowAttributes win_gravity: ~A" (.win_gravity attr)))
 		(if (not (= (.bit_gravity attr) 0)) (snd-display ";XGetWindowAttributes bit_gravity: ~A" (.bit_gravity attr)))

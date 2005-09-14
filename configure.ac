@@ -67,6 +67,7 @@ AC_DEFINE_UNQUOTED(CONFIGURE_ARGS, "$INVOKED_ARGS")
 #   --without-fam         libfam can be obsolete, but it's not clear how to test this
 #   --with-profiling      add profiling flags [branch counts] (for testing)
 #   --with-midi           include sndlib midi module
+#   --enable-threads      include pthread stuff (still in the debugging stage)
 #   GUILE_CONFIG_path     where to look for guile-config
 #   GUILE_CONFIG_name     Fink (OSX) includes guile-config under funny names
 #   GUILE_name            same problem
@@ -173,6 +174,7 @@ AC_ARG_WITH(snd-as-widget,
 	fi)
 
 
+
 #--------------------------------------------------------------------------------
 # standard libraries, header files, functions, OSS special cases
 #--------------------------------------------------------------------------------
@@ -184,7 +186,7 @@ LIBS=""
 
 AC_HEADER_DIRENT
 AC_CHECK_HEADERS(fcntl.h limits.h unistd.h string.h sys/soundcard.h machine/soundcard.h gsl/gsl_version.h sys/mixer.h stdbool.h)
-AC_CHECK_HEADERS(libc.h sys/statvfs.h setjmp.h dlfcn.h sys/param.h byteswap.h stdint.h)
+AC_CHECK_HEADERS(libc.h sys/statvfs.h setjmp.h dlfcn.h sys/param.h byteswap.h stdint.h pthread.h)
 AC_CHECK_HEADER(/usr/local/lib/oss/include/sys/soundcard.h,[AC_DEFINE(USR_LOCAL_LIB_OSS)])
 AC_CHECK_HEADER(/usr/lib/oss/include/sys/soundcard.h,[AC_DEFINE(USR_LIB_OSS)])
 AC_CHECK_HEADER(/opt/oss/include/sys/soundcard.h,[AC_DEFINE(OPT_OSS)])
@@ -252,6 +254,21 @@ AC_LINK_IFELSE(
   [AC_MSG_RESULT(no)])
 
 AC_PATH_PROG(PKG_CONFIG, pkg-config, no)
+
+
+# check for pthreads 
+AC_ARG_ENABLE(threads,
+  [  --enable-threads      include pthread support],
+  if test "$enable_threads" = yes ; then
+    if test "$ac_cv_header_pthread_h" = yes ; then
+      AC_DEFINE(WITH_THREADS)
+      CFLAGS="$CFLAGS -D_REENTRANT"
+      LIBS="$LIBS -lpthread"
+    else
+      AC_MSG_WARN([can't enable threads -- can't find pthread.h])
+    fi
+  fi)
+
 
 
 # look for special functions in libm
@@ -1315,7 +1332,7 @@ case "$host" in
     *-*-linux*) 
 	AC_DEFINE(MUS_LINUX)
         LDSO_FLAGS="-shared"
-        LIBS="-lm"
+        LIBS="$LIBS -lm"
 	if test "$GCC" = yes ; then
 	  SO_FLAGS="-fPIC $SO_FLAGS"
         fi
@@ -1418,12 +1435,12 @@ case "$host" in
 	;;
     *-*-sunos4*) 
         AC_DEFINE(MUS_SUN)
-	LIBS="-lm"
+	LIBS="$LIBS -lm"
 	audio_system=Sun
         ;;
     *-*-solaris*) 
 	AC_DEFINE(MUS_SUN)
-	LIBS="-lm -ldl"
+	LIBS="$LIBS -lm -ldl"
 # odd... this causes an error in the sndlib configure (can't find libdl) but is needed here?
 	audio_system=Sun
 	LDSO_FLAGS="-G"
@@ -1443,7 +1460,7 @@ case "$host" in
 	AUDIO_LIB="-laudio"
 	AC_SUBST(AUDIO_LIB)
         if test $GUILE_CONFIG_works = no; then
- 	  LIBS="-lc -lm -lmd"
+ 	  LIBS="$LIBS -lc -lm -lmd"
         else
 	  LIBS="$LIBS -lmd"
         fi
@@ -1458,7 +1475,7 @@ case "$host" in
         ;;
     *-*-bsdi*) 
 	AC_DEFINE(HAVE_OSS)
-	LIBS="-lm"
+	LIBS="$LIBS -lm"
 	audio_system=OSS
 	if test "$GCC" = yes ; then
 	  SO_FLAGS="-fPIC $SO_FLAGS"
@@ -1466,7 +1483,7 @@ case "$host" in
         ;;
     *-*-freebsd*)
 	AC_DEFINE(HAVE_OSS)
-	LIBS="-lm"
+	LIBS="$LIBS -lm"
 	audio_system=OSS
 	if test "$GCC" = yes ; then
 	  SO_FLAGS="-fPIC $SO_FLAGS"

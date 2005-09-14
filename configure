@@ -853,6 +853,7 @@ Optional Features:
   --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
   --disable-largefile     omit support for large files
+  --enable-threads      include pthread support
   --enable-snd-debug      include internal Snd debugging functions
   --disable-nls           do not use Native Language Support
   --disable-rpath         do not hardcode runtime library paths
@@ -2945,6 +2946,7 @@ _ACEOF
 #   --without-fam         libfam can be obsolete, but it's not clear how to test this
 #   --with-profiling      add profiling flags [branch counts] (for testing)
 #   --with-midi           include sndlib midi module
+#   --enable-threads      include pthread stuff (still in the debugging stage)
 #   GUILE_CONFIG_path     where to look for guile-config
 #   GUILE_CONFIG_name     Fink (OSX) includes guile-config under funny names
 #   GUILE_name            same problem
@@ -3255,6 +3257,7 @@ _ACEOF
 	    MAKE_TARGET=widget
 	fi
 fi;
+
 
 
 #--------------------------------------------------------------------------------
@@ -3833,7 +3836,8 @@ done
 
 
 
-for ac_header in libc.h sys/statvfs.h setjmp.h dlfcn.h sys/param.h byteswap.h stdint.h
+
+for ac_header in libc.h sys/statvfs.h setjmp.h dlfcn.h sys/param.h byteswap.h stdint.h pthread.h
 do
 as_ac_Header=`echo "ac_cv_header_$ac_header" | $as_tr_sh`
 if eval "test \"\${$as_ac_Header+set}\" = set"; then
@@ -9540,6 +9544,27 @@ else
   echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6
 fi
+
+
+
+# check for pthreads
+# Check whether --enable-threads or --disable-threads was given.
+if test "${enable_threads+set}" = set; then
+  enableval="$enable_threads"
+  if test "$enable_threads" = yes ; then
+    if test "$ac_cv_header_pthread_h" = yes ; then
+      cat >>confdefs.h <<\_ACEOF
+#define WITH_THREADS 1
+_ACEOF
+
+      CFLAGS="$CFLAGS -D_REENTRANT"
+      LIBS="$LIBS -lpthread"
+    else
+      { echo "$as_me:$LINENO: WARNING: can't enable threads -- can't find pthread.h" >&5
+echo "$as_me: WARNING: can't enable threads -- can't find pthread.h" >&2;}
+    fi
+  fi
+fi;
 
 
 
@@ -17766,7 +17791,7 @@ case "$host" in
 _ACEOF
 
         LDSO_FLAGS="-shared"
-        LIBS="-lm"
+        LIBS="$LIBS -lm"
 	if test "$GCC" = yes ; then
 	  SO_FLAGS="-fPIC $SO_FLAGS"
         fi
@@ -18454,7 +18479,7 @@ _ACEOF
 #define MUS_SUN 1
 _ACEOF
 
-	LIBS="-lm"
+	LIBS="$LIBS -lm"
 	audio_system=Sun
         ;;
     *-*-solaris*)
@@ -18462,7 +18487,7 @@ _ACEOF
 #define MUS_SUN 1
 _ACEOF
 
-	LIBS="-lm -ldl"
+	LIBS="$LIBS -lm -ldl"
 # odd... this causes an error in the sndlib configure (can't find libdl) but is needed here?
 	audio_system=Sun
 	LDSO_FLAGS="-G"
@@ -18488,7 +18513,7 @@ _ACEOF
 	AUDIO_LIB="-laudio"
 
         if test $GUILE_CONFIG_works = no; then
- 	  LIBS="-lc -lm -lmd"
+ 	  LIBS="$LIBS -lc -lm -lmd"
         else
 	  LIBS="$LIBS -lmd"
         fi
@@ -18509,7 +18534,7 @@ _ACEOF
 #define HAVE_OSS 1
 _ACEOF
 
-	LIBS="-lm"
+	LIBS="$LIBS -lm"
 	audio_system=OSS
 	if test "$GCC" = yes ; then
 	  SO_FLAGS="-fPIC $SO_FLAGS"
@@ -18520,7 +18545,7 @@ _ACEOF
 #define HAVE_OSS 1
 _ACEOF
 
-	LIBS="-lm"
+	LIBS="$LIBS -lm"
 	audio_system=OSS
 	if test "$GCC" = yes ; then
 	  SO_FLAGS="-fPIC $SO_FLAGS"

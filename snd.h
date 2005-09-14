@@ -38,6 +38,9 @@
 #if HAVE_FAM_H
   #include <fam.h>
 #endif
+#if WITH_THREADS && HAVE_PTHREAD_H
+  #include <pthread.h>
+#endif
 
 #include "_sndlib.h"
 #include "clm.h"
@@ -70,7 +73,7 @@
 
 #include "snd-strings.h"
 
-#define SND_DATE "13-Sep-05"
+#define SND_DATE "15-Sep-05"
 #define SND_VERSION "7.16"
 #define SND_MAJOR_VERSION "7"
 #define SND_MINOR_VERSION "16"

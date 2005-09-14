@@ -3024,7 +3024,6 @@ static void vf_remove_file_if_present(view_files_info *vdat, char *filename)
 {
   int row;
   row = view_files_find_row(vdat, filename);
-  fprintf(stderr,"look for %s -> %d\n", filename, row);
   if (row != -1)
     vdat->need_update = true;
 }
@@ -3034,9 +3033,6 @@ static void vf_watch_directory(struct fam_info *fp, FAMEvent *fe)
   view_files_info *vdat;
   if (!(sound_file_p(fe->filename))) return;
   vdat = (view_files_info *)(fp->data);
-
-  fprintf(stderr,"vf: %s: %s\n", fam_event_name(fe->code), fe->filename);
-
   switch (fe->code)
     {
     case FAMChanged:

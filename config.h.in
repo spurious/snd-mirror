@@ -79,6 +79,7 @@
 #undef HAVE_BYTESWAP_H
 #undef HAVE_STDINT_H
 #undef HAVE_FAM_H
+#undef HAVE_PTHREAD_H
 #undef FGREP_PROG
 
 #undef ENABLE_NLS
@@ -121,6 +122,8 @@
 #undef HAVE_FAM
 #undef HAVE_FAM_NO_EXISTS
 #undef MUS_GAMIN_VERSION
+
+#undef WITH_THREADS
 
 #undef HAVE_GL
 #undef JUST_GL

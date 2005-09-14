@@ -354,6 +354,9 @@ char *version_info(void)
 	  "\n    with fam",
   #endif
 #endif
+#if WITH_THREADS
+	  "\n    with threads",
+#endif
 #if SND_AS_WIDGET
 	  _("\n    compiled as a widget"),
 #endif
@@ -410,6 +413,7 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+15-Sep:  --enable-threads configure switch, and first use thereof (FIR filtering).\n\
 6-Sep:   snd-error is now (throw 'snd-error ...).\n\
 31-Aug:  mix|track-speed-style.\n\
          changed recorder-in|out-format -> recorder-in|out-data-format,\n\
@@ -421,16 +425,6 @@ void about_snd_help(void)
          optional dialog arg to view-files-sort (local set)\n\
          -init startup switch to set init filename as arg.\n\
          added snd-file.h\n\
-8-Aug:   removed previous|view-files-sort-procedure.\n\
-         added sort-files-by-name|size|date|entry.\n\
-         added view-files-amp|speed|amp-env|speed-style|files|selected-files.\n\
-         removed keep-mix-dialog-open-upon-ok from snd-motif.scm.\n\
-         before-exit|close-hook.\n\
-2-Aug:   sound-file-extensions as settable list.\n\
-30-Jul:  preload-directory -> add-directory-to-view-files-list, preload-file -> add-file-to-view-files-list.\n\
-29-Jul:  previous-files-* -> view-files-* (sort, select-hook).\n\
-28-Jul:  File:Insert menu item and dialog added, also insert-file-dialog.\n\
-         File:Save as can write OGG, Speex, and Flac files.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",
