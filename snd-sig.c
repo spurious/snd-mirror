@@ -258,6 +258,7 @@ static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp, XE
 	       filename, amp);
   if (!(ss->stopped_explicitly))
     {
+      /* SOMEDAY: convolve could probably be threaded */
       for (ip = 0; ip < si->chans; ip++)
 	{
 	  char *ofile, *saved_chan_file;
@@ -1083,6 +1084,7 @@ void src_env_or_num(chan_info *cp, env *e, Float ratio, bool just_num,
 
   if (!(ss->stopped_explicitly))
     {
+      /* SOMEDAY: src could probably be threaded */
       for (i = 0; i < si->chans; i++)
 	{
 	  off_t dur;
@@ -1558,6 +1560,7 @@ static void *pfilter_direct_run(void *context)
   sf = arg->sf;
 
   /* this code should not call anything that might tickle either Scheme or Ruby */
+  /*   I think it's possible for a ptree reader to call xen stuff in snd-run -- may need disable this? */
 
   arg->data = (mus_sample_t **)MALLOC(sizeof(mus_sample_t *));
   arg->data[0] = (mus_sample_t *)CALLOC(MAX_BUFFER_SIZE, sizeof(mus_sample_t)); 
@@ -2070,7 +2073,6 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, enved_prog
 	  pthread_t *threads = NULL;
 	  pfilter_direct_args_t **args = NULL;
 	  void *retval;
-	  /* TODO: cancel all if stopped (and how to notice?) */
 	  if (si->chans > 1)
 	    {
 	      threads = (pthread_t *)CALLOC(si->chans, sizeof(pthread_t));
@@ -2093,9 +2095,6 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, enved_prog
 #if WITH_THREADS
 	      if (si->chans > 1)
 		{
-#if DEBUGGING
-		  fprintf(stderr,"call thread %d\n", i);
-#endif
 		  args[i] = make_pfilter_direct_arg(cp, order, e, sfs[i], si->begs[i], dur,
 						    (origin) ? origin : caller, truncate, from_enved, over_selection,
 						    gen, a);
@@ -2301,6 +2300,7 @@ static void reverse_sound(chan_info *ncp, bool over_selection, XEN edpos, int ar
     {
       for (i = 0; i < si->chans; i++)
 	{
+	  /* PERHAPS: reverse-sound could be threaded */
 	  char *errmsg = NULL;
 	  off_t dur;
 	  cp = si->cps[i];

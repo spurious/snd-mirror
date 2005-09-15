@@ -366,8 +366,10 @@ static void pcp_sl(FILE *fd, const char *name, Float val1, Float val2, int chan)
 
 void save_options(FILE *fd)
 { /* for save options menu choice (.snd) -- mostly saving snd_state info */
+#if HAVE_STRFTIME
   time_t ts;
   char time_buf[TIME_STR_SIZE];
+#endif
   char *locale = NULL;
 
 #if HAVE_SETLOCALE

@@ -67,7 +67,7 @@ AC_DEFINE_UNQUOTED(CONFIGURE_ARGS, "$INVOKED_ARGS")
 #   --without-fam         libfam can be obsolete, but it's not clear how to test this
 #   --with-profiling      add profiling flags [branch counts] (for testing)
 #   --with-midi           include sndlib midi module
-#   --enable-threads      include pthread stuff (still in the debugging stage)
+#   --enable-threads      include pthread stuff
 #   GUILE_CONFIG_path     where to look for guile-config
 #   GUILE_CONFIG_name     Fink (OSX) includes guile-config under funny names
 #   GUILE_name            same problem

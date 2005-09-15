@@ -5,10 +5,11 @@
 
 #include <config.h>
 
-#define XM_DATE "17-Aug-05"
+#define XM_DATE "16-Sep-05"
 
 /* HISTORY: 
  *
+ *   16-Sep:    XmUNSPECIFIED_PIXEL and friends should be unsigned long (not int).
  *   17-Aug:    XtSetArg 3rd arg should be 0, not NULL (type mismatch if 64-bit).
  *   14-June:   various xen-related updates (XEN_DEFINE).
  *   13-June:   fold xm-ruby.c into xm.c.
@@ -28875,7 +28876,16 @@ static void define_integers(void)
   DEFINE_INTEGER(XtInputReadMask);
   DEFINE_INTEGER(XtInputWriteMask);
   DEFINE_INTEGER(XtInputExceptMask);
+
+  /* XtAllEvents is unsigned long EventMask: #define XtAllEvents ((EventMask) -1L)
+   *   which I assume should be positive
+   */
+#if 0
   DEFINE_INTEGER(XtAllEvents);
+#else
+  DEFINE_ULONG(XtAllEvents);
+#endif
+
   DEFINE_INTEGER(XtIMXEvent);
   DEFINE_INTEGER(XtIMTimer);
   DEFINE_INTEGER(XtIMAlternateInput);
@@ -29577,10 +29587,22 @@ static void define_integers(void)
   DEFINE_INTEGER(XmDUPLICATE);
   DEFINE_INTEGER(XmAS_IS);
   DEFINE_INTEGER(XmFORCE_COLOR);
+
+  /* the next 4 are dependent on (Pixel)(~0) which is unsigned long in X terminology, but we then subtract from it --
+   *    that is, XmHIGHLIGHT_COLOR is: ((Pixel)(~0)) - 2, which I assume is intended to be a positive number
+   */
+#if 0
   DEFINE_INTEGER(XmUNSPECIFIED_PIXEL);
   DEFINE_INTEGER(XmDEFAULT_SELECT_COLOR);
   DEFINE_INTEGER(XmREVERSED_GROUND_COLORS);
   DEFINE_INTEGER(XmHIGHLIGHT_COLOR);
+#else
+  DEFINE_ULONG(XmUNSPECIFIED_PIXEL);
+  DEFINE_ULONG(XmDEFAULT_SELECT_COLOR);
+  DEFINE_ULONG(XmREVERSED_GROUND_COLORS);
+  DEFINE_ULONG(XmHIGHLIGHT_COLOR);
+#endif
+
   DEFINE_INTEGER(XmUNSPECIFIED_LOAD_MODEL);
   DEFINE_INTEGER(XmLOAD_DEFERRED);
   DEFINE_INTEGER(XmLOAD_IMMEDIATE);

@@ -8588,7 +8588,7 @@ static XEN g_change_samples_with_origin(XEN samp_0, XEN samps, XEN origin, XEN v
     {
       mus_sample_t *ivals;
       ivals = (mus_sample_t *)MALLOC(len * sizeof(mus_sample_t));
-      if (len > XEN_VECTOR_LENGTH(vect)) len = XEN_VECTOR_LENGTH(vect);
+      if (len > (off_t)(XEN_VECTOR_LENGTH(vect))) len = XEN_VECTOR_LENGTH(vect);
       if (len <= 0) return(XEN_FALSE); /* should this be an error? */
 #if SNDLIB_USE_FLOATS
       for (i = 0; i < len; i++) ivals[i] = XEN_TO_C_DOUBLE(XEN_VECTOR_REF(vect, i));
@@ -8827,7 +8827,7 @@ static XEN g_insert_samples_with_origin(XEN samp, XEN samps, XEN origin, XEN vec
       mus_sample_t *ivals;
       int i;
       ivals = (mus_sample_t *)MALLOC(len * sizeof(mus_sample_t));
-      if (len > XEN_VECTOR_LENGTH(vect)) len = XEN_VECTOR_LENGTH(vect);
+      if (len > (off_t)(XEN_VECTOR_LENGTH(vect))) len = XEN_VECTOR_LENGTH(vect);
       if (len <= 0) return(XEN_FALSE); /* should this be an error? */
 #if SNDLIB_USE_FLOATS
       for (i = 0; i < len; i++) ivals[i] = XEN_TO_C_DOUBLE(XEN_VECTOR_REF(vect, i));

@@ -1446,13 +1446,14 @@ env *string_to_env(char *str)
   else snd_error(_("%s is not a list"), str);
   return(NULL);
 #else
-  /* TODO: test for these cases somehow (testsnd -e?) */
   char *tok, *tmp;
   int i;
   float f;
   if ((str) && (*str))
     {
+      char *old_tmp;
       tmp = copy_string(str);
+      old_tmp = tmp;
       i = 0;
       if (env_buffer_size == 0)
 	{
@@ -1480,7 +1481,7 @@ env *string_to_env(char *str)
 	}
       if ((i == 0) || (i & 1)) 
 	snd_error(_("odd length envelope? %s"), str);
-      FREE(tmp);
+      FREE(old_tmp);
       return(make_envelope(env_buffer, i));
     }
   return(NULL);
@@ -1935,8 +1936,8 @@ and decay portions in the envelope editor."
   ss->enved->clip_p = DEFAULT_ENVED_CLIP_P;
 
 #if DEBUGGING && HAVE_GUILE
-  XEN_DEFINE_PROCEDURE("window-env", g_window_env, 5, 1, 0, NULL);
-  XEN_DEFINE_PROCEDURE("multiply-envs", g_multiply_envs, 3, 0, 0, NULL);
-  XEN_DEFINE_PROCEDURE("invert-env", g_invert_env, 1, 0, 0, NULL);
+  XEN_DEFINE_PROCEDURE("window-env", g_window_env, 5, 1, 0, "internal testing function");
+  XEN_DEFINE_PROCEDURE("multiply-envs", g_multiply_envs, 3, 0, 0, "internal testing function");
+  XEN_DEFINE_PROCEDURE("invert-env", g_invert_env, 1, 0, 0, "internal testing function");
 #endif
 }

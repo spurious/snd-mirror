@@ -599,7 +599,7 @@
 	(cons "gchar" "CHAR")
 	(cons "char*" "String")
 	(cons "gchar*" "String")
-	(cons "guchar*" "String") ; added 30-Jul-02 then removed then put back...
+	(cons "guchar*" "String") ; added 30-Jul-02 then removed then put back... -- this is a real mess!
 	(cons "guint" "ULONG")
 	(cons "guint16" "INT")
 	(cons "gint" "INT")

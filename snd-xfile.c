@@ -35,8 +35,8 @@
  * TODO: will need at least a reset button for the vf env, perhaps reset for entire vf
  * TODO: no need for vf update button -- what to replace it with in fam case?
  * TODO: dialog error handling in gprint + all in the rb/scm files
- * TODO: use threads for long multi-channel computations (src/reverb/flt/xen)
- *         gcc -D_REENTRANT ... -lpthread
+ * TODO: use threads for long multi-channel computations (src/reverb/ptree)
+ *           -- include example of Guile multithread -- tmp123.scm (needs test)
  * TODO: fb: clm/cmn, audio? sndlib -wl bug, s2: valgrind
  */
 

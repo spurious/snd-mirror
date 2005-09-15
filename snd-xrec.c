@@ -98,7 +98,9 @@ static int current_vu_label = 0;
 static void record_report(Widget text, ...)
 {
   /* place time-stamped message in text window */
+#if HAVE_STRFTIME
   time_t ts;
+#endif
   XmTextPosition pos, textpos = 0;
   va_list ap;
   static char *msgbuf = NULL;

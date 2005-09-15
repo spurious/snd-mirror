@@ -581,3 +581,20 @@ make allclean
 ./configure --without-fam --with-gtk --quiet
 make
 make allclean
+
+./configure --enable-threads
+make
+./snd --version
+make allclean
+
+./configure --enable-threads CC=g++
+make
+./snd --version
+make allclean
+
+./configure --enable-threads --with-gtk --with-ruby
+make
+./snd --version
+make allclean
+
+

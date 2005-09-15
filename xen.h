@@ -2,6 +2,7 @@
 #define XEN_H
 
 /* SOMEDAY: we're using flags (config.h) like HAVE_COMPLEX_TRIG and defining HAVE_RATIOS -- bad names */
+/* TODO: check out the 64-bit int/long ambiguities in Guile 1.7 */
 
 /* macros for extension language support 
  *
@@ -11,11 +12,12 @@
  */
 
 #define XEN_MAJOR_VERSION 1
-#define XEN_MINOR_VERSION 37
-#define XEN_VERSION "1.37"
+#define XEN_MINOR_VERSION 38
+#define XEN_VERSION "1.38"
 
 /* HISTORY:
  *
+ *  16-Sep-05: removed some debugging extras that caused confusion on 64-bit machines.
  *  12-Aug-05: include guile setter procedure names for better error reporting.
  *  14-Jun-05: XEN_DEFINE (XEN value, not assumed to be int as in XEN_DEFINE_CONSTANT).
  *             XEN_ASSOC, XEN_MEMBER, and XEN_PROCEDURE_NAME for Scheme side.
@@ -428,40 +430,18 @@
 #endif
 
 #if HAVE_SCM_C_DEFINE
-  #if XEN_DEBUGGING
-    #define XEN_DEFINE_VARIABLE(Name, Var, Value) \
-      { \
-        if (XEN_DEFINED_P(Name)) fprintf(stderr, "%s is defined\n", Name); \
-        Var = XEN_PROTECT_FROM_GC(scm_c_define(Name, Value)); \
-      }
-  #else
-    #define XEN_DEFINE_VARIABLE(Name, Var, Value) Var = XEN_PROTECT_FROM_GC(scm_c_define(Name, Value))
-  #endif
+  #define XEN_DEFINE_VARIABLE(Name, Var, Value) Var = XEN_PROTECT_FROM_GC(scm_c_define(Name, Value))
 #else
-#define XEN_DEFINE_VARIABLE(Name, Var, Value) Var = gh_define((char *)(Name), Value)
+  #define XEN_DEFINE_VARIABLE(Name, Var, Value) Var = gh_define((char *)(Name), Value)
 #endif
 
 #if HAVE_SCM_C_DEFINE
-  #if XEN_DEBUGGING
-    #define XEN_DEFINE(Name, Value) \
-      { \
-        if (XEN_DEFINED_P(Name)) fprintf(stderr, "%s is defined\n", Name); \
-        scm_c_define(Name, Value); \
-      }
-    #define XEN_DEFINE_CONSTANT(Name, Value, Help) \
-      { \
-        if (XEN_DEFINED_P(Name)) fprintf(stderr, "%s is defined\n", Name); \
-        scm_c_define(Name, C_TO_XEN_INT(Value)); \
-        if (Help) XEN_SET_DOCUMENTATION(Name, Help); \
-      }
-  #else
-    #define XEN_DEFINE(Name, Value) scm_c_define(Name, Value)
-    #define XEN_DEFINE_CONSTANT(Name, Value, Help) \
-      { \
-        scm_c_define(Name, C_TO_XEN_INT(Value)); \
-        if (Help) XEN_SET_DOCUMENTATION(Name, Help); \
-      }
-  #endif
+  #define XEN_DEFINE(Name, Value) scm_c_define(Name, Value)
+  #define XEN_DEFINE_CONSTANT(Name, Value, Help) \
+    { \
+      scm_c_define(Name, C_TO_XEN_INT(Value)); \
+      if (Help) XEN_SET_DOCUMENTATION(Name, Help); \
+    }
 #else
   #define XEN_DEFINE(Name, Value) gh_define((char *)(Name), Value)
   #define XEN_DEFINE_CONSTANT(Name, Value, Help) \
@@ -543,7 +523,7 @@
 #endif
 
 #define XEN_DEFINE_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg, Doc) \
-  if (Doc != (char *)NULL) \
+  if (Doc != NULL)						\
     scm_set_procedure_property_x(XEN_NEW_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg), XEN_DOCUMENTATION_SYMBOL, C_TO_XEN_STRING(Doc)); \
   else XEN_NEW_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg)
 
@@ -934,31 +914,11 @@ char *xen_guile_to_c_string_with_eventual_free(XEN str);
 #define XEN_REQUIRED_ARGS(Func)          xen_rb_required_args(XEN_ARITY(Func))
 #define XEN_REQUIRED_ARGS_OK(Func, Args) (xen_rb_required_args(XEN_ARITY(Func)) == Args)
 
-#if XEN_DEBUGGING
-/* the otiose casts to int here are required by g++ */
-
-#define XEN_DEFINE_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg, Doc) \
-  do { \
-      if (((int)Func ## _Rst != -1) && (RstArg != 1)) fprintf(stderr,"%s rest args: %d %d?\n", Name, (int)Func ## _Rst, RstArg); \
-      if (((int)Func ## _Rst == -1) && (RstArg != 0)) fprintf(stderr,"%s rest args: %d %d?\n", Name, (int)Func ## _Rst, RstArg); \
-      if (((int)Func ## _Opt != 0) && (OptArg == 0)) fprintf(stderr,"%s opt args: %d %d?\n", Name, (int)Func ## _Opt, OptArg); \
-      if (((int)Func ## _Opt == 0) && (OptArg != 0)) fprintf(stderr,"%s opt args: %d %d?\n", Name, (int)Func ## _Opt, OptArg); \
-      if (((int)Func ## _Req != 0) && (OptArg != 0)) fprintf(stderr,"%s req/opt args: %d %d?\n", Name, (int)Func ## _Req, OptArg); \
-      if (((int)Func ## _Req != 0) && (ReqArg != (int)Func ## _Req)) fprintf(stderr,"%s req args: %d %d?\n", Name, (int)Func ## _Req, ReqArg); \
-      if (((int)Func ## _Req == 0) && (OptArg + ReqArg != (int)Func ## _Opt)) \
-        fprintf(stderr,"%s total args: %d %d + %d?\n", Name, (int)Func ## _Opt, ReqArg, OptArg); \
-      rb_define_global_function(xen_scheme_procedure_to_ruby(Name), XEN_PROCEDURE_CAST Func, ((RstArg > 0) ? -2 : ((OptArg > 0) ? -1 : ReqArg))); \
-      if (Doc != NULL) C_SET_OBJECT_HELP(xen_scheme_procedure_to_ruby(Name), Doc); \
-    } while (0)
-
-#else
-
 #define XEN_DEFINE_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg, Doc) \
   do { \
       rb_define_global_function(xen_scheme_procedure_to_ruby(Name), XEN_PROCEDURE_CAST Func, ((RstArg > 0) ? -2 : (OptArg > 0) ? -1 : ReqArg)); \
       if (Doc != NULL) C_SET_OBJECT_HELP(xen_scheme_procedure_to_ruby(Name), Doc); \
     } while (0)
-#endif
 
 #define XEN_DEFINE_PROCEDURE_WITH_SETTER(Get_Name, Get_Func, Get_Help, Set_Name, Set_Func, Get_Req, Get_Opt, Set_Req, Set_Opt) \
   do { \
@@ -1023,209 +983,6 @@ char *xen_guile_to_c_string_with_eventual_free(XEN str);
 #endif
 #define XEN_THROW(Type, Info)           xen_rb_raise(Type, Info)
 
-#if XEN_DEBUGGING
-
-/* -------------------------------- XEN_DEBUGGING (arg checks in XEN_DEFINE_PROCEDURE) -------------------------------- */
-#define XEN_ARGIFY_1(OutName, InName) \
-  static int OutName ## _Req = 0; \
-  static int OutName ## _Opt = 1; \
-  static int OutName ## _Rst = -1; \
-  static XEN OutName(int argc, XEN *argv, XEN self) \
-  { \
-    return(InName((argc > 0) ? argv[0] : XEN_UNDEFINED)); \
-  }
-
-#define XEN_ARGIFY_2(OutName, InName) \
-  static int OutName ## _Req = 0; \
-  static int OutName ## _Opt = 2; \
-  static int OutName ## _Rst = -1; \
-  static XEN OutName(int argc, XEN *argv, XEN self) \
-  { \
-    return(InName((argc > 0) ? argv[0] : XEN_UNDEFINED, \
-		  (argc > 1) ? argv[1] : XEN_UNDEFINED)); \
-  }
-
-#define XEN_ARGIFY_3(OutName, InName) \
-  static int OutName ## _Req = 0; \
-  static int OutName ## _Opt = 3; \
-  static int OutName ## _Rst = -1; \
-  static XEN OutName(int argc, XEN *argv, XEN self) \
-  { \
-    return(InName((argc > 0) ? argv[0] : XEN_UNDEFINED, \
-		  (argc > 1) ? argv[1] : XEN_UNDEFINED, \
-		  (argc > 2) ? argv[2] : XEN_UNDEFINED)); \
-  }
-
-#define XEN_ARGIFY_4(OutName, InName) \
-  static int OutName ## _Req = 0; \
-  static int OutName ## _Opt = 4; \
-  static int OutName ## _Rst = -1; \
-  static XEN OutName(int argc, XEN *argv, XEN self) \
-  { \
-    return(InName((argc > 0) ? argv[0] : XEN_UNDEFINED, \
-		  (argc > 1) ? argv[1] : XEN_UNDEFINED, \
-		  (argc > 2) ? argv[2] : XEN_UNDEFINED, \
-		  (argc > 3) ? argv[3] : XEN_UNDEFINED)); \
-  }
-
-#define XEN_ARGIFY_5(OutName, InName) \
-  static int OutName ## _Req = 0; \
-  static int OutName ## _Opt = 5; \
-  static int OutName ## _Rst = -1; \
-  static XEN OutName(int argc, XEN *argv, XEN self) \
-  { \
-    return(InName((argc > 0) ? argv[0] : XEN_UNDEFINED, \
-		  (argc > 1) ? argv[1] : XEN_UNDEFINED, \
-		  (argc > 2) ? argv[2] : XEN_UNDEFINED, \
-		  (argc > 3) ? argv[3] : XEN_UNDEFINED, \
-		  (argc > 4) ? argv[4] : XEN_UNDEFINED)); \
-  }
-
-#define XEN_ARGIFY_6(OutName, InName) \
-  static int OutName ## _Req = 0; \
-  static int OutName ## _Opt = 6; \
-  static int OutName ## _Rst = -1; \
-  static XEN OutName(int argc, XEN *argv, XEN self) \
-  { \
-    return(InName((argc > 0) ? argv[0] : XEN_UNDEFINED, \
-		  (argc > 1) ? argv[1] : XEN_UNDEFINED, \
-		  (argc > 2) ? argv[2] : XEN_UNDEFINED, \
-		  (argc > 3) ? argv[3] : XEN_UNDEFINED, \
-		  (argc > 4) ? argv[4] : XEN_UNDEFINED, \
-		  (argc > 5) ? argv[5] : XEN_UNDEFINED)); \
-  }
-
-#define XEN_ARGIFY_7(OutName, InName) \
-  static int OutName ## _Req = 0; \
-  static int OutName ## _Opt = 7; \
-  static int OutName ## _Rst = -1; \
-  static XEN OutName(int argc, XEN *argv, XEN self) \
-  { \
-    return(InName((argc > 0) ? argv[0] : XEN_UNDEFINED, \
-		  (argc > 1) ? argv[1] : XEN_UNDEFINED, \
-		  (argc > 2) ? argv[2] : XEN_UNDEFINED, \
-		  (argc > 3) ? argv[3] : XEN_UNDEFINED, \
-		  (argc > 4) ? argv[4] : XEN_UNDEFINED, \
-		  (argc > 5) ? argv[5] : XEN_UNDEFINED, \
-		  (argc > 6) ? argv[6] : XEN_UNDEFINED)); \
-  }
-
-#define XEN_ARGIFY_8(OutName, InName) \
-  static int OutName ## _Req = 0; \
-  static int OutName ## _Opt = 8; \
-  static int OutName ## _Rst = -1; \
-  static XEN OutName(int argc, XEN *argv, XEN self) \
-  { \
-    return(InName((argc > 0) ? argv[0] : XEN_UNDEFINED, \
-		  (argc > 1) ? argv[1] : XEN_UNDEFINED, \
-		  (argc > 2) ? argv[2] : XEN_UNDEFINED, \
-		  (argc > 3) ? argv[3] : XEN_UNDEFINED, \
-		  (argc > 4) ? argv[4] : XEN_UNDEFINED, \
-		  (argc > 5) ? argv[5] : XEN_UNDEFINED, \
-		  (argc > 6) ? argv[6] : XEN_UNDEFINED, \
-		  (argc > 7) ? argv[7] : XEN_UNDEFINED)); \
-  }
-
-#define XEN_ARGIFY_9(OutName, InName) \
-  static int OutName ## _Req = 0; \
-  static int OutName ## _Opt = 9; \
-  static int OutName ## _Rst = -1; \
-  static XEN OutName(int argc, XEN *argv, XEN self) \
-  { \
-    return(InName((argc > 0) ? argv[0] : XEN_UNDEFINED, \
-		  (argc > 1) ? argv[1] : XEN_UNDEFINED, \
-		  (argc > 2) ? argv[2] : XEN_UNDEFINED, \
-		  (argc > 3) ? argv[3] : XEN_UNDEFINED, \
-		  (argc > 4) ? argv[4] : XEN_UNDEFINED, \
-		  (argc > 5) ? argv[5] : XEN_UNDEFINED, \
-		  (argc > 6) ? argv[6] : XEN_UNDEFINED, \
-		  (argc > 7) ? argv[7] : XEN_UNDEFINED, \
-		  (argc > 8) ? argv[8] : XEN_UNDEFINED)); \
-  }
-
-#define XEN_ARGIFY_10(OutName, InName) \
-  static int OutName ## _Req = 0; \
-  static int OutName ## _Opt = 10; \
-  static int OutName ## _Rst = -1; \
-  static XEN OutName(int argc, XEN *argv, XEN self) \
-  { \
-    return(InName((argc > 0) ? argv[0] : XEN_UNDEFINED, \
-		  (argc > 1) ? argv[1] : XEN_UNDEFINED, \
-		  (argc > 2) ? argv[2] : XEN_UNDEFINED, \
-		  (argc > 3) ? argv[3] : XEN_UNDEFINED, \
-		  (argc > 4) ? argv[4] : XEN_UNDEFINED, \
-		  (argc > 5) ? argv[5] : XEN_UNDEFINED, \
-		  (argc > 6) ? argv[6] : XEN_UNDEFINED, \
-		  (argc > 7) ? argv[7] : XEN_UNDEFINED, \
-		  (argc > 8) ? argv[8] : XEN_UNDEFINED, \
-		  (argc > 9) ? argv[9] : XEN_UNDEFINED)); \
-  }
-
-#define XEN_NARGIFY_0(OutName, InName) \
-  static int OutName ## _Req = 0; \
-  static int OutName ## _Opt = 0; \
-  static int OutName ## _Rst = -1; \
-  static XEN OutName(void) {return(InName());}
-
-#define XEN_NARGIFY_1(OutName, InName) \
-  static int OutName ## _Req = 1; \
-  static int OutName ## _Opt = 0; \
-  static int OutName ## _Rst = -1; \
-  static XEN OutName(XEN self, XEN Arg) {return(InName(Arg));}
-#define XEN_NARGIFY_2(OutName, InName) \
-  static int OutName ## _Req = 2; \
-  static int OutName ## _Opt = 0; \
-  static int OutName ## _Rst = -1; \
-  static XEN OutName(XEN self, XEN Arg1, XEN Arg2) {return(InName(Arg1, Arg2));}
-#define XEN_NARGIFY_3(OutName, InName) \
-  static int OutName ## _Req = 3; \
-  static int OutName ## _Opt = 0; \
-  static int OutName ## _Rst = -1; \
-  static XEN OutName(XEN self, XEN Arg1, XEN Arg2, XEN Arg3) {return(InName(Arg1, Arg2, Arg3));}
-#define XEN_NARGIFY_4(OutName, InName) \
-  static int OutName ## _Req = 4; \
-  static int OutName ## _Opt = 0; \
-  static int OutName ## _Rst = -1; \
-  static XEN OutName(XEN self, XEN Arg1, XEN Arg2, XEN Arg3, XEN Arg4) {return(InName(Arg1, Arg2, Arg3, Arg4));}
-#define XEN_NARGIFY_5(OutName, InName) \
-  static int OutName ## _Req = 5; \
-  static int OutName ## _Opt = 0; \
-  static int OutName ## _Rst = -1; \
-  static XEN OutName(XEN self, XEN Arg1, XEN Arg2, XEN Arg3, XEN Arg4, XEN Arg5) {return(InName(Arg1, Arg2, Arg3, Arg4, Arg5));}
-#define XEN_NARGIFY_6(OutName, InName) \
-  static int OutName ## _Req = 6; \
-  static int OutName ## _Opt = 0; \
-  static int OutName ## _Rst = -1; \
-  static XEN OutName(XEN self, XEN Arg1, XEN Arg2, XEN Arg3, XEN Arg4, XEN Arg5, XEN Arg6) \
-    {return(InName(Arg1, Arg2, Arg3, Arg4, Arg5, Arg6));}
-#define XEN_NARGIFY_7(OutName, InName) \
-  static int OutName ## _Req = 7; \
-  static int OutName ## _Opt = 0; \
-  static int OutName ## _Rst = -1; \
-  static XEN OutName(XEN self, XEN Arg1, XEN Arg2, XEN Arg3, XEN Arg4, XEN Arg5, XEN Arg6, XEN Arg7) \
-    {return(InName(Arg1, Arg2, Arg3, Arg4, Arg5, Arg6, Arg7));}
-#define XEN_NARGIFY_8(OutName, InName) \
-  static int OutName ## _Req = 8; \
-  static int OutName ## _Opt = 0; \
-  static int OutName ## _Rst = -1; \
-  static XEN OutName(XEN self, XEN Arg1, XEN Arg2, XEN Arg3, XEN Arg4, XEN Arg5, XEN Arg6, XEN Arg7, XEN Arg8) \
-    {return(InName(Arg1, Arg2, Arg3, Arg4, Arg5, Arg6, Arg7, Arg8));}
-#define XEN_NARGIFY_9(OutName, InName) \
-  static int OutName ## _Req = 9; \
-  static int OutName ## _Opt = 0; \
-  static int OutName ## _Rst = -1; \
-  static XEN OutName(XEN self, XEN Arg1, XEN Arg2, XEN Arg3, XEN Arg4, XEN Arg5, XEN Arg6, XEN Arg7, XEN Arg8, XEN Arg9) \
-    {return(InName(Arg1, Arg2, Arg3, Arg4, Arg5, Arg6, Arg7, Arg8, Arg9));}
-
-#define XEN_VARGIFY(OutName, InName) \
-  static int OutName ## _Req = 0; \
-  static int OutName ## _Opt = 0; \
-  static int OutName ## _Rst = 1; \
-  static XEN OutName(XEN self, XEN Args) {return(InName(Args));}
-
-#else
-
-/* -------------------------------- not XEN_DEBUGGING -------------------------------- */
 #define XEN_ARGIFY_1(OutName, InName) \
   static XEN OutName(int argc, XEN *argv, XEN self) \
   { \
@@ -1347,7 +1104,6 @@ char *xen_guile_to_c_string_with_eventual_free(XEN str);
   {return(InName(Arg1, Arg2, Arg3, Arg4, Arg5, Arg6, Arg7, Arg8, Arg9));}
 
 #define XEN_VARGIFY(OutName, InName) static XEN OutName(XEN self, XEN Args) {return(InName(Args));}
-#endif
 
 XEN xen_rb_cdr(XEN val);
 XEN xen_rb_cons(XEN arg1, XEN arg2);
