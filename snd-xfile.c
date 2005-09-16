@@ -17,11 +17,9 @@
  * TODO: new file: find some way to get around the hidden label bug (unmanage error text etc)
  * PERHAPS: if user changes raw file with dialog up -- adding header for example, should we automatically open it? or reflect in panel?
  * PERHAPS: (alert_new_file): handle all directory update decisions through FAM (region/select/file/edits)
- * TODO: various file/directory lists: tie into fam/gamin (also previous files list) -- add xen call?
- * TODO: if directory loaded into previous files list via -p, add any new sound files as they appear
+ * TODO: various file/directory lists: tie into fam/gamin -- add xen call?
  * TODO: what if running src, uses its check-event to open raw data -- where is control?
  *       or similarly, stops at "ok", starts src, clicks ok?
- * TODO: need array of dialogs for mix/insert, save-as?
  * TODO: edit-properties dialog (extension of edit-header)
  * TODO: option:settings dialog (global vars)
  * PERHAPS: audio:settings for display, perhaps reset -- as opposed to using the recorder
@@ -30,14 +28,13 @@
  * TODO: add|delete-file-filter, file-filters tied to all file dialogs (panel of radio buttons where just sounds is now)
  *       the sorters could be handled similarly -- a panel of radio buttons with name chosen by default
  *       would need local versions of the sort_choice variable -- use default searcher for all choices
- * TODO: in nb.scm, get the info dialog out of the line of sight and unmanage it if view-files is unmanaged
  * TODO: always show bg wave in vf
  * TODO: will need at least a reset button for the vf env, perhaps reset for entire vf
  * TODO: no need for vf update button -- what to replace it with in fam case?
  * TODO: dialog error handling in gprint + all in the rb/scm files
  * TODO: use threads for long multi-channel computations (src/reverb/ptree)
- *           -- include example of Guile multithread -- tmp123.scm (needs test)
- * TODO: fb: clm/cmn, audio? sndlib -wl bug, s2: valgrind
+ *           -- include example of Guile multithread -- tmp123.scm (broken...)
+ * TODO: fb: clm/cmn [no usable lisp!], audio? sndlib -wl bug
  */
 
 

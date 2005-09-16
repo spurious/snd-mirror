@@ -1,7 +1,5 @@
 #include "snd.h"
 
-/* SOMEDAY: how to pick up "theme" settings rather than Xdefaults? */
-
 #define FALLBACK_FONT "fixed"
 #define DEFAULT_FONTLIST "9x15"
 

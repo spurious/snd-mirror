@@ -582,17 +582,17 @@ make allclean
 make
 make allclean
 
-./configure --enable-threads
+./configure --enable-threads --quiet
 make
 ./snd --version
 make allclean
 
-./configure --enable-threads CC=g++
+./configure --enable-threads --quiet CC=g++
 make
 ./snd --version
 make allclean
 
-./configure --enable-threads --with-gtk --with-ruby
+./configure --enable-threads --with-gtk --with-ruby --quiet
 make
 ./snd --version
 make allclean

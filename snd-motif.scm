@@ -1904,8 +1904,8 @@ Reverb-feedback sets the scaler on the feedback.
 	  "disk full!"
 	  (if (> num 1024)
 	      (if (> num (* 1024 1024))
-		  (format #f "space: ~6,3FG" (round (/ num (* 1024 1024))))
-		  (format #f "space: ~6,3FM" (round (/ num 1024.0))))
+		  (format #f "space: ~6,3FG" (/ num (* 1024.0 1024.0)))
+		  (format #f "space: ~6,3FM" (/ num 1024.0)))
 	      (format #f "space: ~10DK" num))))
     (define (show-label data id)
       (if (sound? (car data))
@@ -1914,39 +1914,39 @@ Reverb-feedback sets the scaler on the feedback.
 	    (XtSetValues (cadr data) (list XmNlabelString str))
 	    (XmStringFree str)
 	    (XtAppAddTimeOut (caddr data) 10000 show-label data))))
-    (lambda (snd)
+    (lambda* (#:optional snd-arg)
       "(show-disk-space) adds a label to the minibuffer area showing the current free space (for use with after-open-hook)"
-      (let ((previous-label (find-if (lambda (n) (= (car n) snd)) labelled-snds)))
+      (let* ((snd (or snd-arg (selected-sound)))
+	     (previous-label (find-if (lambda (n) (= (car n) snd)) labelled-snds)))
 	(if (not previous-label)
-	    (let* ((app (car (main-widgets)))
-		   (widgets (sound-widgets snd))
-		   (minibuffer (list-ref widgets 3))
-		   (unite-button (list-ref widgets 6))
-		   (sync-button (list-ref widgets 9))
-		   (name-form (XtParent minibuffer)) ; "snd-name-form"
-		   (space (kmg (disk-kspace (file-name snd))))
-		   (str (XmStringCreateLocalized space)))
-	      (XtUnmanageChild minibuffer)
-	      (XtVaSetValues minibuffer (list XmNrightAttachment XmATTACH_NONE))
-	      (let ((new-label (XtCreateManagedWidget "space:" xmLabelWidgetClass name-form 
-				 (list XmNbackground      (basic-color)
-				       XmNleftAttachment  XmATTACH_NONE
-				       XmNlabelString     str
-				       XmNrightAttachment XmATTACH_WIDGET
-				       XmNrightWidget     (if (XtIsManaged unite-button)
-							      unite-button
-							      sync-button)
-				       XmNtopAttachment   XmATTACH_FORM))))
-		(XtVaSetValues minibuffer (list XmNrightWidget new-label XmNrightAttachment XmATTACH_WIDGET))
-		(XtManageChild minibuffer)
-		(XmStringFree str)
-		(set! previous-label (list snd new-label app))
-		(set! labelled-snds (cons previous-label labelled-snds)))))
-	(XtAppAddTimeOut (caddr previous-label) 10000 show-label previous-label)))))
+	    (if (not snd)
+		(snd-error "no sound found for disk space label")
+		(let* ((app (car (main-widgets)))
+		       (widgets (sound-widgets snd))
+		       (minibuffer (list-ref widgets 3))
+		       (unite-button (list-ref widgets 6))
+		       (sync-button (list-ref widgets 9))
+		       (name-form (XtParent minibuffer)) ; "snd-name-form"
+		       (space (kmg (disk-kspace (file-name snd))))
+		       (str (XmStringCreateLocalized space)))
+		  (XtUnmanageChild minibuffer)
+		  (XtVaSetValues minibuffer (list XmNrightAttachment XmATTACH_NONE))
+		  (let ((new-label (XtCreateManagedWidget "space:" xmLabelWidgetClass name-form 
+							  (list XmNbackground      (basic-color)
+								XmNleftAttachment  XmATTACH_NONE
+								XmNlabelString     str
+								XmNrightAttachment XmATTACH_WIDGET
+								XmNrightWidget     (if (XtIsManaged unite-button)
+										       unite-button
+										       sync-button)
+								XmNtopAttachment   XmATTACH_FORM))))
+		    (XtVaSetValues minibuffer (list XmNrightWidget new-label XmNrightAttachment XmATTACH_WIDGET))
+		    (XtManageChild minibuffer)
+		    (XmStringFree str)
+		    (set! previous-label (list snd new-label app))
+		    (set! labelled-snds (cons previous-label labelled-snds))
+		    (XtAppAddTimeOut (caddr previous-label) 10000 show-label previous-label)))))))))
 
-;(add-hook! after-open-hook show-disk-space)
-
-;;; TODO: check all minibuffer re-attachments 
 
 
 ;;; -------- add amp sliders in control panel for multi-channel sounds

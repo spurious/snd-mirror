@@ -676,7 +676,7 @@ Reverb-feedback sets the scaler on the feedback.
 	  "disk full!"
 	  (if (> num 1024)
 	      (if (> num (* 1024 1024))
-		  (format #f "space: ~6,3FG" (/ num (* 1024 1024)))
+		  (format #f "space: ~6,3FG" (/ num (* 1024.0 1024.0)))
 		  (format #f "space: ~6,3FM" (/ num 1024.0)))
 	      (format #f "space: ~10DK" num))))
 
@@ -687,20 +687,22 @@ Reverb-feedback sets the scaler on the feedback.
 	    (g_timeout_add 10000 show-label data) ; every 10 seconds recheck space
 	    0)))
 
-    (lambda (snd)
+    (lambda* (#:optional snd-arg)
       "(show-disk-space) adds a label to the minibuffer area showing the current free space (for use with after-open-hook)"
-      (let ((previous-label (find-if (lambda (n) (= (car n) snd)) labelled-snds)))
+      (let* ((snd (or snd-arg (selected-sound)))
+	     (previous-label (find-if (lambda (n) (= (car n) snd)) labelled-snds)))
 	(if (not previous-label)
-	    (let* ((name-form (list-ref (sound-widgets) 10))
-		   (space (kmg (disk-kspace (file-name snd))))
-		   (new-label (gtk_label_new space)))
-	      (gtk_box_pack_start (GTK_BOX name-form) new-label #f #f 6)
-	      (gtk_widget_show new-label)
-	      (set! previous-label (list snd new-label))
-	      (set! labelled-snds (cons previous-label labelled-snds))))
-	(g_timeout_add 10000 show-label previous-label)))))
+	    (if (not snd)
+		(snd-error "no sound found for disk space label")
+		(let* ((name-form (list-ref (sound-widgets) 10))
+		       (space (kmg (disk-kspace (file-name snd))))
+		       (new-label (gtk_label_new space)))
+		  (gtk_box_pack_start (GTK_BOX name-form) new-label #f #f 6)
+		  (gtk_widget_show new-label)
+		  (set! previous-label (list snd new-label))
+		  (set! labelled-snds (cons previous-label labelled-snds))
+		  (g_timeout_add 10000 show-label previous-label))))))))
 
-;(add-hook! after-open-hook show-disk-space)
 
 
 ;;; -------- remove top level menu

@@ -46164,7 +46164,7 @@ EDITS: 1
 		(if (not (equal? (.backing_pixel attr) (list 'Pixel 0))) (snd-display ";XGetWindowAttributes backing_pixel: ~A" (.backing_pixel attr)))
 		(if (not (= (.map_state attr) 2)) (snd-display ";XGetWindowAttributes map_state: ~A" (.map_state attr)))
 		(if (not (= (.your_event_mask attr) #x628033)) (snd-display ";your_event_mask: ~X" (.your_event_mask attr)))
-		(if (not (= (.all_event_masks attr) #xe28033)) (snd-display ";all_event_masks: ~X" (.all_event_masks attr)))
+		(if (not (= (.all_event_masks attr) #x628033)) (snd-display ";all_event_masks: ~X" (.all_event_masks attr)))
 		(if (not (Screen? (.screen attr))) (snd-display ";XGetWindowAttributes screen: ~A" (.screen attr)))
 		(if (and (not (= (.do_not_propagate_mask attr) 0)) 
 			 (not (= (.do_not_propagate_mask attr) 8204)))
@@ -47607,25 +47607,28 @@ EDITS: 1
 		(if (not (equal? (XmRenderTableGetTags rendertable) (list "one" "two" "three" "four")))
 		    (snd-display ";tags: ~A~%" (XmRenderTableGetTags rendertable)))
 		(let* ((rend (XmRenderTableGetRendition rendertable "one"))
-		       (r (XmRenditionRetrieve rend
-					       (list XmNrenditionForeground 0
-						     XmNfontName 0
-						     XmNfontType 0
-						     XmNtag 0))))
-		  (if (or (not (string=? (list-ref r 7) "one"))
-			  (not (string=? (list-ref r 3) "fixed")))
-		      (snd-display ";rendertable: ~A" r))
-		  (let* ((str (XmStringPutRendition (XmStringCreateLocalized "hiho") "one"))
-			 (ctx (cadr (XmStringInitContext str)))
-			 (comp (XmStringPeekNextComponent ctx))
-			 (comp1 (XmStringPeekNextTriple ctx))
-			 (comp2 (XmStringGetNextComponent ctx)))
-		    (if (not (= comp XmSTRING_COMPONENT_RENDITION_BEGIN)) (snd-display ";XmStringPeekNextComponent: ~A" comp))
-		    (if (not (= comp1 comp)) (snd-display ";XmStringPeekNextTriple: ~A" comp1))
-		    (if (not (= (list-ref comp2 4) comp)) (snd-display ";XmStringGetNextComponent: ~A" comp2)))
-		  (XmRenditionUpdate rend (list XmNstrikethruType XmSINGLE_LINE))
-		  (if (not (= (cadr (XmRenditionRetrieve rend (list XmNstrikethruType 0))) XmSINGLE_LINE))
-		      (snd-display ";XmRenditionUpdate: ~A ~A" (cadr (XtGetValues rend (list XmNstrikethruType 0))) XmSINGLE_LINE)))
+		       (r (and rend (XmRenditionRetrieve rend
+							 (list XmNrenditionForeground 0
+							       XmNfontName 0
+							       XmNfontType 0
+							       XmNtag 0)))))
+		  (if (and rend r)
+		      (begin
+			(if (or (not (string=? (list-ref r 7) "one"))
+				(not (string=? (list-ref r 3) "fixed")))
+			    (snd-display ";rendertable: ~A" r))
+			(let* ((str (XmStringPutRendition (XmStringCreateLocalized "hiho") "one"))
+			       (ctx (cadr (XmStringInitContext str)))
+			       (comp (XmStringPeekNextComponent ctx))
+			       (comp1 (XmStringPeekNextTriple ctx))
+			       (comp2 (XmStringGetNextComponent ctx)))
+			  (if (not (= comp XmSTRING_COMPONENT_RENDITION_BEGIN)) (snd-display ";XmStringPeekNextComponent: ~A" comp))
+			  (if (not (= comp1 comp)) (snd-display ";XmStringPeekNextTriple: ~A" comp1))
+			  (if (not (= (list-ref comp2 4) comp)) (snd-display ";XmStringGetNextComponent: ~A" comp2)))
+			(XmRenditionUpdate rend (list XmNstrikethruType XmSINGLE_LINE))
+			(if (not (= (cadr (XmRenditionRetrieve rend (list XmNstrikethruType 0))) XmSINGLE_LINE))
+			    (snd-display ";XmRenditionUpdate: ~A ~A" (cadr (XtGetValues rend (list XmNstrikethruType 0))) XmSINGLE_LINE)))
+		      (snd-display ";r and rend: ~A ~A~%" r rend)))
 		(let ((r1 (XmRenditionCreate (cadr (main-widgets)) "r1" (list XmNfontName "fixed"))))
 		  (XmRenditionFree r1))
 		

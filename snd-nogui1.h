@@ -161,7 +161,6 @@ void set_widget_x(int w, int x);
 void set_widget_y(int w, int y);
 void set_mix_color(int color);
 void ensure_scrolled_window_row_visible(widget_t list, int pos, int num_rows);
-void ensure_list_row_visible(widget_t list, int pos);
 
 
 /* -------- snd-xchn.c -------- */

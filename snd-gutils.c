@@ -819,19 +819,3 @@ void ensure_scrolled_window_row_visible(widget_t list, int row, int num_rows)
   if (new_value != v->value)
     gtk_adjustment_set_value(v, new_value);
 }
-
-void ensure_list_row_visible(widget_t list, int pos)
-{
-  /* TODO: ensure visible for file dialog file list */
-  /* in filesel file_list is a tree_view widget, its parent a scrolled_window,
-   *   but what about filechooser?
-   *   and how to get # rows in either?
-   */
-#if 0
-  GtkWidget *parent;
-  GtkAdjustment *v;
-  gdouble maximum, size, new_value, minimum;
-  parent = gtk_widget_get_parent(list);
-  v = gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(parent));
-#endif
-}

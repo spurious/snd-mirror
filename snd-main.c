@@ -100,6 +100,7 @@ int add_ss_watcher(ss_watcher_t type, void (*watcher)(ss_watcher_reason_t reason
   return(loc);
 }
 
+#if 0
 bool remove_ss_watcher(int loc)
 {
   if ((ss->watchers) &&
@@ -113,6 +114,7 @@ bool remove_ss_watcher(int loc)
     }
   return(false);
 }
+#endif
 
 bool call_ss_watchers(ss_watcher_t type, ss_watcher_reason_t reason)
 {

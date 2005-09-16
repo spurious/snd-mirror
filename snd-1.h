@@ -621,7 +621,7 @@ void g_init_menu(void);
 /* -------- snd-main.c -------- */
 
 int add_ss_watcher(ss_watcher_t type, void (*watcher)(ss_watcher_reason_t reason, int list_loc), void *context);
-bool remove_ss_watcher(int loc);
+/* bool remove_ss_watcher(int loc); */
 bool call_ss_watchers(ss_watcher_t type, ss_watcher_reason_t reason);
 void save_options(FILE *fd);
 void open_save_sound_block(snd_info *sp, FILE *fd, bool with_nth);

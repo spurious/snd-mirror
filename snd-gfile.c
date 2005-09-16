@@ -27,10 +27,6 @@
  * TODO: FileSelection: reflect filename change in selection list and in info
  * TODO: FileSelection (+chooser if entry): cancel info in mix/open if filename in textfield doesn't match selected file 
  *       FileSelection (+chooser if entry): update info as file name is typed, as in write-protected case 
- * TODO: GTK_STOCK_STOP -> C-G? as menu item? -- stop anything
- *         or post a Stop sign whenever the dac is in progress (or any long computation)
- *         similarly for Update
- *         This could be in the sound's pixmap area except that none of the small stop icons looks good.
  * TODO: FileChooser: add entry for filename in Open case (with completion)
  * PERHAPS: instant play stop upon c-g via mixer amp controls (then reset when the thing has actually closed)--mute control?
  */

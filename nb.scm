@@ -58,6 +58,7 @@
 		(prune-file ptr files)
 		(gdbm-close! ptr)))))))
 
+(define nb-mouse-response-time 0)
 
 (define (files-popup-info type position name)
   "(files-popup-info type position name) is intended as a mouse-enter-label hook function. 
@@ -97,6 +98,7 @@ It causes a description of the file to popup when the mouse crosses the filename
 
   (let ((alert-color (make-color 1.0 1.0 .94))
 	(region-viewer 2))
+    (set! nb-mouse-response-time (get-internal-real-time))
     (if (not (= type region-viewer))
 	(let ((info-exists (list-ref (dialog-widgets) 20)))
 	  (info-dialog name (file-info name))
@@ -109,6 +111,14 @@ It causes a description of the file to popup when the mouse crosses the filename
 		      (set! (widget-position info-widget) (list (+ (car files-position) (car files-size) 10)
 								(+ (cadr files-position) 10)))))))))))
 
+
+(define (files-popdown-info type position name)
+  (let ((cur-time (get-internal-real-time)))
+    (in 1000 (lambda ()
+	       (if (> cur-time nb-mouse-response-time)
+		   (hide-widget (list-ref (dialog-widgets) 20)))))))
+
 (add-hook! mouse-enter-label-hook files-popup-info)
+(add-hook! mouse-leave-label-hook files-popdown-info)
 
 

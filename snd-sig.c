@@ -2033,17 +2033,11 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, enved_prog
 	      continue;
 	    }
 	  errstr = convolution_filter(cp, order, e, sfs[i], si->begs[i], dur, (origin) ? origin : caller, from_enved, NULL);
-	  if (errstr) 
-	    {
-	      snd_error_without_format(errstr);
-	      break;
-	    }
 	  sfs[i] = free_snd_fd(sfs[i]);
 	  check_for_event();
-	  if (ss->stopped_explicitly)
+	  if ((errstr) || (ss->stopped_explicitly))
 	    {
-	      ss->stopped_explicitly = false;
-	      string_to_minibuffer(sp, _("filter stopped"));
+	      stop_point = i;
 	      break;
 	    }
 	}
@@ -2073,7 +2067,8 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, enved_prog
 	  pthread_t *threads = NULL;
 	  pfilter_direct_args_t **args = NULL;
 	  void *retval;
-	  if (si->chans > 1)
+	  if (si->chans > 1) 
+	    /* PERHAPS: add a search here of underlying readers for any xen calls (and bypass threads if any) */
 	    {
 	      threads = (pthread_t *)CALLOC(si->chans, sizeof(pthread_t));
 	      args = (pfilter_direct_args_t **)CALLOC(si->chans, sizeof(pfilter_direct_args_t *));
@@ -2102,7 +2097,7 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, enved_prog
 		    break;
 		  retcode = pthread_create(&(threads[i]), NULL, pfilter_direct_run, (void *)(args[i]));
 		  if (retcode != 0)
-		    fprintf (stderr, "create %d failed %d\n", i, retcode);
+		    snd_warning("create thread %d failed: %d\n", i, retcode);
 		}
 	      else
 		{
@@ -2111,9 +2106,7 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, enved_prog
 				     (origin) ? origin : caller, truncate, from_enved, over_selection,
 				     gen, a);
 	      sfs[i] = free_snd_fd(sfs[i]);
-	      if (errstr)
-		return(errstr);
-	      if (ss->stopped_explicitly) 
+	      if ((errstr) || (ss->stopped_explicitly))
 		{
 		  stop_point = i;
 		  break;
@@ -2127,13 +2120,14 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, enved_prog
 		{
 		  retcode = pthread_join(threads[i], &retval);
 		  if (retcode != 0)
-		    fprintf (stderr, "join %d failed %d\n", i, retcode);
+		    snd_warning("join thread %d failed: %d\n", i, retcode);
 		}
 	      for (i = 0; i < si->chans; i++)
 		{
 		  pfilter_direct_finish((void *)(args[i]));
 		  sfs[i] = free_snd_fd(sfs[i]);
-		  /* TODO: errstr = result here if not null */
+		  if ((!errstr) && (args[i]->result))
+		    errstr = args[i]->result;
 		  FREE(args[i]);
 		}
 	      FREE(threads);
@@ -2141,20 +2135,21 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, enved_prog
 	    }
 #endif
 	}
-      if (ss->stopped_explicitly)
-	{
-	  /* clean up and undo all edits up to stop_point */
-	  ss->stopped_explicitly = false;
-	  for (i = 0; i <= stop_point; i++)
-	    {
-	      cp = si->cps[i];
-	      undo_edit(cp, 1);
-	    }
-	}
       if ((a) && (!ur_a)) FREE(a);
     }
+  if (ss->stopped_explicitly)
+    {
+      /* clean up and undo all edits up to stop_point */
+      string_to_minibuffer(sp, _("filter stopped"));
+      ss->stopped_explicitly = false;
+      for (i = 0; i <= stop_point; i++)
+	{
+	  cp = si->cps[i];
+	  undo_edit(cp, 1);
+	}
+    }
   free_sync_state(sc);
-  return(NULL);
+  return(errstr);
 }
 
 void apply_filter(chan_info *ncp, int order, env *e, enved_progress_t from_enved, 

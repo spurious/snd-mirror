@@ -559,7 +559,6 @@ void snd_rb_raise(XEN tag, XEN throw_args)
 	}
     }
   /* backtrace perhaps via xen_rb_report_error (via rescue) in xen.c? */
-  /* TODO: where are Ruby errors sent?? */
 
   if (!(run_snd_error_hook(msg)))
     {
