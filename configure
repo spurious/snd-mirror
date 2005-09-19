@@ -2946,7 +2946,7 @@ _ACEOF
 #   --without-fam         libfam can be obsolete, but it's not clear how to test this
 #   --with-profiling      add profiling flags [branch counts] (for testing)
 #   --with-midi           include sndlib midi module
-#   --enable-threads      include pthread stuff (still in the debugging stage)
+#   --enable-threads      include pthread stuff
 #   GUILE_CONFIG_path     where to look for guile-config
 #   GUILE_CONFIG_name     Fink (OSX) includes guile-config under funny names
 #   GUILE_name            same problem
@@ -18549,6 +18549,7 @@ _ACEOF
 	audio_system=OSS
 	if test "$GCC" = yes ; then
 	  SO_FLAGS="-fPIC $SO_FLAGS"
+          LDSO_FLAGS="-shared"
         fi
 	;;
     *-*-openbsd*)
@@ -19579,7 +19580,13 @@ fi
 # this goddamn macro is much more trouble than it is worth!
 
 if test "$enable_nls" != no ; then
-echo "$as_me:$LINENO: checking whether ${MAKE-make} sets \$(MAKE)" >&5
+  case "$host" in
+    *-*-freebsd*)
+      enable_rpath=no
+	;;
+  esac
+
+  echo "$as_me:$LINENO: checking whether ${MAKE-make} sets \$(MAKE)" >&5
 echo $ECHO_N "checking whether ${MAKE-make} sets \$(MAKE)... $ECHO_C" >&6
 set dummy ${MAKE-make}; ac_make=`echo "$2" | sed 'y,:./+-,___p_,'`
 if eval "test \"\${ac_cv_prog_make_${ac_make}_set+set}\" = set"; then
@@ -21373,7 +21380,7 @@ _ACEOF
 
 
 
-if test "${ac_cv_header_nl_types_h+set}" = set; then
+  if test "${ac_cv_header_nl_types_h+set}" = set; then
   echo "$as_me:$LINENO: checking for nl_types.h" >&5
 echo $ECHO_N "checking for nl_types.h... $ECHO_C" >&6
 if test "${ac_cv_header_nl_types_h+set}" = set; then
@@ -21513,7 +21520,7 @@ fi
 if test $ac_cv_header_nl_types_h = yes; then
   echo "$as_me:$LINENO: checking whether nl_types.h defines MALLOC" >&5
 echo $ECHO_N "checking whether nl_types.h defines MALLOC... $ECHO_C" >&6
-   cat >conftest.$ac_ext <<_ACEOF
+     cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
 cat confdefs.h >>conftest.$ac_ext
@@ -21554,7 +21561,7 @@ if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
 #define NL_TYPES_H_DEFINES_MALLOC 1
 _ACEOF
 
-      echo "$as_me:$LINENO: result: yes" >&5
+        echo "$as_me:$LINENO: result: yes" >&5
 echo "${ECHO_T}yes" >&6
 
 else

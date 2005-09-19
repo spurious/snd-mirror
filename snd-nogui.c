@@ -18,7 +18,6 @@ int snd_help(const char *subject, const char *help, with_word_wrap_t with_wrap) 
 int snd_help_with_xrefs(const char *subject, const char *helpstr, with_word_wrap_t with_wrap, char **xrefs, char **urls) {return(0);}
 void snd_help_append(char *text) {fprintf(stdout, text);}
 int help_text_width(const char *txt, int start, int end) {return(0);}
-void save_help_dialog_state(FILE *fd) {}
 widget_t post_it(const char *subject, const char *str) {fprintf(stdout, str); return(0);}
 void save_post_it_dialog_state(FILE *fd) {}
 void reflect_just_sounds(void) {}
@@ -104,11 +103,11 @@ bool set_peaks_font(char *font) {if (ss->Peaks_Font) FREE(ss->Peaks_Font); ss->P
 bool set_bold_peaks_font(char *font) {if (ss->Bold_Peaks_Font) FREE(ss->Bold_Peaks_Font); ss->Bold_Peaks_Font = copy_string(font); return(false);}
 bool set_axis_label_font(char *font) {if (ss->Axis_Label_Font) FREE(ss->Axis_Label_Font); ss->Axis_Label_Font = copy_string(font); return(false);}
 bool set_axis_numbers_font(char *font) {if (ss->Axis_Numbers_Font) FREE(ss->Axis_Numbers_Font); ss->Axis_Numbers_Font = copy_string(font); return(false);}
-int label_width(char *txt) {return(0);}
-int number_width(char *num) {return(0);}
+int label_width(const char *txt) {return(0);}
+int number_width(const char *num) {return(0);}
 int number_height(void) {return(0);}
 int label_height(void) {return(0);}
-int mark_name_width(char *txt) {return(0);}
+int mark_name_width(const char *txt) {return(0);}
 void clear_window(axis_context *ax) {}
 void set_title(const char *title) {}
 void goto_window(int text) {}

@@ -136,21 +136,21 @@ bool set_axis_numbers_font(char *font)
   return(false);
 }
 
-int label_width(char *txt)
+int label_width(const char *txt)
 {
   if (txt)
     return(XTextWidth(AXIS_LABEL_FONT(ss), txt, strlen(txt)));
   else return(0);
 }
 
-int mark_name_width(char *txt)
+int mark_name_width(const char *txt)
 {
   if (txt)
     return(XTextWidth(ss->sgx->peaks_fontstruct, txt, strlen(txt)));
   return(0);
 }
 
-int number_width(char *num)
+int number_width(const char *num)
 {
   if (num)
     return(XTextWidth(AXIS_NUMBERS_FONT(ss), num, strlen(num)));

@@ -65,6 +65,8 @@ static bool run_global_search (gfd *g)
 		  res = XEN_CALL_1(ss->search_proc,
 				   C_TO_XEN_DOUBLE((double)(samp)), 
 				   "global search func");
+		  if (ss->stopped_explicitly)
+		    return(STOP_SEARCHING);
 		  if (XEN_TRUE_P(res))
 		    {
 		      g->n = i;
@@ -196,24 +198,25 @@ char *global_search(read_direction_t direction)
 	    }
 	  if (ss->stopped_explicitly) break;
 	}
-      if (fd->n == -1)
-	{
-	  if (ss->stopped_explicitly)
-	    mus_snprintf(search_message, PRINT_BUFFER_SIZE, _("search stopped"));
-	  else mus_snprintf(search_message, PRINT_BUFFER_SIZE, _("%s: not found"), ss->search_expr);
-	  /* printed by find_ok_callback in snd-xmenu.c */
-	}
+      if (ss->stopped_explicitly)
+	mus_snprintf(search_message, PRINT_BUFFER_SIZE, _("search stopped"));
       else
 	{
-	  /* fd->n is winner, fd->inc is how far forward we searched from current cursor loc */
-	  cp = fd->cps[fd->n];
-	  set_find_dialog_label("");
-          cp->cursor_on = true;
-	  if (direction == READ_FORWARD)
-	    cursor_move(cp, fd->inc);
-	  else cursor_move(cp, -fd->inc);
-	  /* now in its own info window show find state, and update graph if needed */
-	  show_cursor_info(cp);
+	  if (fd->n == -1)
+	    mus_snprintf(search_message, PRINT_BUFFER_SIZE, _("%s: not found"), ss->search_expr);
+	  else
+	    {
+	      /* fd->n is winner, fd->inc is how far forward we searched from current cursor loc */
+	      cp = fd->cps[fd->n];
+	      set_find_dialog_label("");
+	      cp->cursor_on = true;
+	      if (direction == READ_FORWARD)
+		cursor_move(cp, fd->inc);
+	      else cursor_move(cp, -fd->inc);
+	      /* now in its own info window show find state, and update graph if needed */
+	      show_cursor_info(cp);
+	      mus_snprintf(search_message, PRINT_BUFFER_SIZE, "found at " PRId64, CURSOR(cp));
+	    }
 	}
       ss->stopped_explicitly = false;
       for (i = 0; i < chans; i++) 
@@ -328,7 +331,6 @@ static off_t cursor_find_forward(snd_info *sp, chan_info *cp, int count)
   return(i);
 }
 
-/* TODO for->back checks */
 static off_t cursor_find_backward(snd_info *sp, chan_info *cp, int count)
 {
   off_t i = 0, start, tick = 0;
@@ -432,6 +434,7 @@ static void get_find_expression(snd_info *sp, int count)
 
 void cursor_search(chan_info *cp, int count)
 {
+  /* called only in snd-kbd so all errors should go to minibuffer, and search should be stopped upon error */
   snd_info *sp;
   sp = cp->sound;
   if (search_in_progress) 

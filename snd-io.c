@@ -153,9 +153,9 @@ static void c_io_bufclr (snd_io *io, int beg)
 static void reposition_file_buffers_1(off_t loc, snd_io *io)
 {
   /* called when loc is outside the current in-core frame for the file pointed to by io */
-  int frames;
+  off_t frames;
   /* local frames is buffer-local, not a sample number. */
-  frames = (int)(io->frames - loc);
+  frames = io->frames - loc;
   if (frames > io->bufsize) frames = io->bufsize;
   if (frames <= 0)                   /* tried to access beyond current end of file */
     {

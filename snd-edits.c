@@ -5565,13 +5565,13 @@ bool insert_complete_file(snd_info *sp, const char *str, off_t chan_beg, file_de
   bool ok = false;
   char *filename;
   filename = mus_expand_filename(str);
-  nc = mus_sound_chans(filename); /* TODO: no error here!! mus_error should go through snd_error or possibly xen error, so another isn't needed(?) */
+  nc = mus_sound_chans(filename);
   if (nc > 0)
     {
       off_t len;
       len = mus_sound_frames(filename);
       if (len == 0)
-	snd_error(_("%s has no data"), str);
+	snd_warning(_("%s has no data"), str);
       else
 	{
 	  int i, j, first_chan = 0;
@@ -5593,6 +5593,7 @@ bool insert_complete_file(snd_info *sp, const char *str, off_t chan_beg, file_de
 	    }
 	}
     }
+  else snd_warning(_("can't read %s"), str);
   FREE(filename);
   return(ok);
 }

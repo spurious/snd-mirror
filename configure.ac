@@ -1487,6 +1487,7 @@ case "$host" in
 	audio_system=OSS
 	if test "$GCC" = yes ; then
 	  SO_FLAGS="-fPIC $SO_FLAGS"
+          LDSO_FLAGS="-shared"
         fi
 	;;
     *-*-openbsd*) 
@@ -1733,17 +1734,23 @@ AC_SUBST(SNDLIB_LIB)
 # this goddamn macro is much more trouble than it is worth!
 
 if test "$enable_nls" != no ; then
-AM_GNU_GETTEXT([external])
+  case "$host" in
+    *-*-freebsd*)
+      enable_rpath=no
+	;;
+  esac
 
-AC_CHECK_HEADER(nl_types.h,
-  [AC_MSG_CHECKING([whether nl_types.h defines MALLOC])
-   AC_COMPILE_IFELSE(
-     [AC_LANG_PROGRAM([#include <langinfo.h>],
-		      [char i; i = MALLOC; return(0)])],
-     [AC_DEFINE(NL_TYPES_H_DEFINES_MALLOC)
-      AC_MSG_RESULT(yes)
-     ],
-     [AC_MSG_RESULT(no)])])
+  AM_GNU_GETTEXT([external])
+
+  AC_CHECK_HEADER(nl_types.h,
+    [AC_MSG_CHECKING([whether nl_types.h defines MALLOC])
+     AC_COMPILE_IFELSE(
+       [AC_LANG_PROGRAM([#include <langinfo.h>],
+		        [char i; i = MALLOC; return(0)])],
+       [AC_DEFINE(NL_TYPES_H_DEFINES_MALLOC)
+        AC_MSG_RESULT(yes)
+       ],
+       [AC_MSG_RESULT(no)])])
 else
 # desperation!
 cp makefile.in makefile.gettext

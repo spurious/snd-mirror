@@ -5315,6 +5315,7 @@ The MultiList widget creation function"
 
 static XEN gxm_XmIsMultiList(XEN arg)
 {
+  #define H_XmIsMultiList "XmIsMultiList(arg) -> #t if arg is a MultiList widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsMultiList", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsMultiList(XEN_TO_C_Widget(arg))));
 }
@@ -5443,6 +5444,7 @@ The TabStack widget creation function"
 
 static XEN gxm_XmIsTabStack(XEN arg)
 {
+  #define H_XmIsTabStack "XmIsTabStack(arg) -> #t if arg is a TabStack widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsTabStack", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsTabStack(XEN_TO_C_Widget(arg))));
 }
@@ -5494,6 +5496,7 @@ The DataField widget creation function"
 
 static XEN gxm_XmIsDataField(XEN arg)
 {
+  #define H_XmIsDataField "XmIsDataField(arg) -> #t if arg is a DataField widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsDataField", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsDataField(XEN_TO_C_Widget(arg))));
 }
@@ -5635,6 +5638,7 @@ The ButtonBox widget creation function"
 
 static XEN gxm_XmIsButtonBox(XEN arg)
 {
+  #define H_XmIsButtonBox "XmIsButtonBox(arg) -> #t if arg is a ButtonBox widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsButtonBox", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsButtonBox(XEN_TO_C_Widget(arg))));
 }
@@ -5654,6 +5658,7 @@ The Column widget creation function"
 
 static XEN gxm_XmIsColumn(XEN arg)
 {
+  #define H_XmIsColumn "XmIsColumn(arg) -> #t if arg is a Column widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsColumn", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsColumn(XEN_TO_C_Widget(arg))));
 }
@@ -5689,6 +5694,7 @@ return(gxm_new_widget("XmCreateDropDown", XmCreateCombinationBox2, arg1, arg2, a
 
 static XEN gxm_XmIsDropDown(XEN arg)
 {
+  #define H_XmIsDropDown "XmIsDropDown(arg) -> #t if arg is a DropDown widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsDropDown", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsDropDown(XEN_TO_C_Widget(arg))));
 }
@@ -8165,42 +8171,49 @@ The MessageBox widget creation function"
 
 static XEN gxm_XmIsMessageBox(XEN arg)
 {
+  #define H_XmIsMessageBox "XmIsMessageBox(arg) -> #t if arg is a MessageBox widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsMessageBox", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsMessageBox(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsArrowButtonGadget(XEN arg)
 {
+  #define H_XmIsArrowButtonGadget "XmIsArrowButtonGadget(arg) -> #t if arg is an ArrowButton gadget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsArrowButtonGadget", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsArrowButtonGadget(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsArrowButton(XEN arg)
 {
+  #define H_XmIsArrowButton "XmIsArrowButton(arg) -> #t if arg is an ArrowButton widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsArrowButton", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsArrowButton(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsNotebook(XEN arg)
 {
+  #define H_XmIsNotebook "XmIsNotebook(arg) -> #t if arg is a Notebook widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsNotebook", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsNotebook(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsPanedWindow(XEN arg)
 {
+  #define H_XmIsPanedWindow "XmIsPanedWindow(arg) -> #t if arg is a PanedWindow widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsPanedWindow", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsPanedWindow(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsBulletinBoard(XEN arg)
 {
+  #define H_XmIsBulletinBoard "XmIsBulletinBoard(arg) -> #t if arg is a BulletinBoard widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsBulletinBoard", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsBulletinBoard(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsPrimitive(XEN arg)
 {
+  #define H_XmIsPrimitive "XmIsPrimitive(arg) -> #t if arg is a Primitive widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsPrimitive", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsPrimitive(XEN_TO_C_Widget(arg))));
 }
@@ -8208,7 +8221,7 @@ static XEN gxm_XmIsPrimitive(XEN arg)
 #if HAVE_XM_XP
 static XEN gxm_XmIsPrintShell(XEN arg)
 {
-  #define H_XmIsPrintShell "Boolean XmIsPrintShell(Widget)"
+  #define H_XmIsPrintShell "Boolean XmIsPrintShell "XmIsPrintShell "Boolean XmIsPrintShell(Widget)"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsPrintShell", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsPrintShell(XEN_TO_C_Widget(arg))));
 }
@@ -8216,246 +8229,287 @@ static XEN gxm_XmIsPrintShell(XEN arg)
 
 static XEN gxm_XmIsCascadeButtonGadget(XEN arg)
 {
+  #define H_XmIsCascadeButtonGadget "XmIsCascadeButtonGadget(arg) -> #t if arg is a CascadeButtonGadget gadget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsCascadeButtonGadget", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsCascadeButtonGadget(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsCascadeButton(XEN arg)
 {
+  #define H_XmIsCascadeButton "XmIsCascadeButton(arg) -> #t if arg is a CascadeButton widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsCascadeButton", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsCascadeButton(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsPushButtonGadget(XEN arg)
 {
+  #define H_XmIsPushButtonGadget "XmIsPushButtonGadget(arg) -> #t if arg is a PushButtonGadget gadget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsPushButtonGadget", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsPushButtonGadget(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsPushButton(XEN arg)
 {
+  #define H_XmIsPushButton "XmIsPushButton(arg) -> #t if arg is a PushButton widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsPushButton", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsPushButton(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsComboBox(XEN arg)
 {
+  #define H_XmIsComboBox "XmIsComboBox(arg) -> #t if arg is a ComboBox widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsComboBox", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsComboBox(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsCommand(XEN arg)
 {
+  #define H_XmIsCommand "XmIsCommand(arg) -> #t if arg is a Command widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsCommand", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsCommand(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsRowColumn(XEN arg)
 {
+  #define H_XmIsRowColumn "XmIsRowColumn(arg) -> #t if arg is a RowColumn widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsRowColumn", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsRowColumn(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsContainer(XEN arg)
 {
+  #define H_XmIsContainer "XmIsContainer(arg) -> #t if arg is a Container widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsContainer", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsContainer(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsScreen(XEN arg)
 {
+  #define H_XmIsScreen "XmIsScreen(arg) -> #t if arg is a Screen widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsScreen", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsScreen(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsScale(XEN arg)
 {
+  #define H_XmIsScale "XmIsScale(arg) -> #t if arg is a Scale widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsScale", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsScale(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsScrollBar(XEN arg)
 {
+  #define H_XmIsScrollBar "XmIsScrollBar(arg) -> #t if arg is a ScrollBar widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsScrollBar", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsScrollBar(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsDialogShell(XEN arg)
 {
+  #define H_XmIsDialogShell "XmIsDialogShell(arg) -> #t if arg is a DialogShell widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsDialogShell", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsDialogShell(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsScrolledWindow(XEN arg)
 {
+  #define H_XmIsScrolledWindow "XmIsScrolledWindow(arg) -> #t if arg is a ScrolledWindow widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsScrolledWindow", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsScrolledWindow(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsDisplay(XEN arg)
 {
+  #define H_XmIsDisplay "XmIsDisplay(arg) -> #t if arg is a Display widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsDisplay", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsDisplay(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsSelectionBox(XEN arg)
 {
+  #define H_XmIsSelectionBox "XmIsSelectionBox(arg) -> #t if arg is a SelectionBox widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsSelectionBox", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsSelectionBox(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsDragContext(XEN arg)
 {
+  #define H_XmIsDragContext "XmIsDragContext(arg) -> #t if arg is a DragContext widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsDragContext", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsDragContext(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsSeparatorGadget(XEN arg)
 {
+  #define H_XmIsSeparatorGadget "XmIsSeparatorGadget(arg) -> #t if arg is a SeparatorGadget gadget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsSeparatorGadget", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsSeparatorGadget(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsDragIconObjectClass(XEN arg)
 {
+  #define H_XmIsDragIconObjectClass "XmIsDragIconObjectClass(arg) -> #t if arg is a DragIconObjectClass widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsDragIconObjectClass", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsDragIconObjectClass(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsSeparator(XEN arg)
 {
+  #define H_XmIsSeparator "XmIsSeparator(arg) -> #t if arg is a Separator widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsSeparator", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsSeparator(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsDrawingArea(XEN arg)
 {
+  #define H_XmIsDrawingArea "XmIsDrawingArea(arg) -> #t if arg is a DrawingArea widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsDrawingArea", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsDrawingArea(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsDrawnButton(XEN arg)
 {
+  #define H_XmIsDrawnButton "XmIsDrawnButton(arg) -> #t if arg is a DrawnButton widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsDrawnButton", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsDrawnButton(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsDropSiteManager(XEN arg)
 {
+  #define H_XmIsDropSiteManager "XmIsDropSiteManager(arg) -> #t if arg is a DropSiteManager widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsDropSiteManager", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsDropSiteManager(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsDropTransfer(XEN arg)
 {
+  #define H_XmIsDropTransfer "XmIsDropTransfer(arg) -> #t if arg is a DropTransfer widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsDropTransfer", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsDropTransfer(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsTextField(XEN arg)
 {
+  #define H_XmIsTextField "XmIsTextField(arg) -> #t if arg is a TextField widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsTextField", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsTextField(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsFileSelectionBox(XEN arg)
 {
+  #define H_XmIsFileSelectionBox "XmIsFileSelectionBox(arg) -> #t if arg is a FileSelectionBox widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsFileSelectionBox", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsFileSelectionBox(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsText(XEN arg)
 {
+  #define H_XmIsText "XmIsText(arg) -> #t if arg is a Text widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsText", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsText(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsForm(XEN arg)
 {
+  #define H_XmIsForm "XmIsForm(arg) -> #t if arg is a Form widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsForm", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsForm(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsFrame(XEN arg)
 {
+  #define H_XmIsFrame "XmIsFrame(arg) -> #t if arg is a Frame widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsFrame", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsFrame(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsGadget(XEN arg)
 {
+  #define H_XmIsGadget "XmIsGadget(arg) -> #t if arg is a Gadget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsGadget", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsGadget(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsToggleButtonGadget(XEN arg)
 {
+  #define H_XmIsToggleButtonGadget "XmIsToggleButtonGadget(arg) -> #t if arg is a ToggleButtonGadget gadget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsToggleButtonGadget", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsToggleButtonGadget(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsGrabShell(XEN arg)
 {
+  #define H_XmIsGrabShell "XmIsGrabShell(arg) -> #t if arg is a GrabShell widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsGrabShell", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsGrabShell(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsToggleButton(XEN arg)
 {
+  #define H_XmIsToggleButton "XmIsToggleButton(arg) -> #t if arg is a ToggleButton widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsToggleButton", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsToggleButton(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsIconGadget(XEN arg)
 {
+  #define H_XmIsIconGadget "XmIsIconGadget(arg) -> #t if arg is a IconGadget widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsIconGadget", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsIconGadget(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsIconHeader(XEN arg)
 {
+  #define H_XmIsIconHeader "XmIsIconHeader(arg) -> #t if arg is a IconHeader widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsIconHeader", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsIconHeader(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsLabelGadget(XEN arg)
 {
+  #define H_XmIsLabelGadget "XmIsLabelGadget(arg) -> #t if arg is a LabelGadget widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsLabelGadget", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsLabelGadget(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsLabel(XEN arg)
 {
+  #define H_XmIsLabel "XmIsLabel(arg) -> #t if arg is a Label widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsLabel", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsLabel(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsVendorShell(XEN arg)
 {
+  #define H_XmIsVendorShell "XmIsVendorShell(arg) -> #t if arg is a VendorShell widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsVendorShell", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsVendorShell(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsList(XEN arg)
 {
+  #define H_XmIsList "XmIsList(arg) -> #t if arg is a List widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsList", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsList(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsMainWindow(XEN arg)
 {
+  #define H_XmIsMainWindow "XmIsMainWindow(arg) -> #t if arg is a MainWindow widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsMainWindow", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsMainWindow(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsManager(XEN arg)
 {
+  #define H_XmIsManager "XmIsManager(arg) -> #t if arg is a Manager widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsManager", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsManager(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsMenuShell(XEN arg)
 {
+  #define H_XmIsMenuShell "XmIsMenuShell(arg) -> #t if arg is a MenuShell widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsMenuShell", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsMenuShell(XEN_TO_C_Widget(arg))));
 }
@@ -26110,7 +26164,7 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XFreeColormap, gxm_XFreeColormap_w, 2, 0, 0, H_XFreeColormap);
   XM_DEFINE_PROCEDURE(XFreeColors, gxm_XFreeColors_w, 5, 0, 0, H_XFreeColors);
   XM_DEFINE_PROCEDURE(XFreeCursor, gxm_XFreeCursor_w, 2, 0, 0, H_XFreeCursor);
-  XM_DEFINE_PROCEDURE(XFreeExtensionList, gxm_XFreeExtensionList_w, 1, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XFreeExtensionList, gxm_XFreeExtensionList_w, 1, 0, 0, "XFreeExtensionList(list) frees list (from XListExtensions)");
   XM_DEFINE_PROCEDURE(XFreeFont, gxm_XFreeFont_w, 2, 0, 0, H_XFreeFont);
   XM_DEFINE_PROCEDURE(XFreeFontInfo, gxm_XFreeFontInfo_w, 3, 0, 0, H_XFreeFontInfo);
   XM_DEFINE_PROCEDURE(XFreeFontNames, gxm_XFreeFontNames_w, 1, 0, 0, H_XFreeFontNames);
@@ -26122,8 +26176,8 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XGetErrorText, gxm_XGetErrorText_w, 4, 0, 0, H_XGetErrorText);
   XM_DEFINE_PROCEDURE(XGetFontProperty, gxm_XGetFontProperty_w, 2, 0, 0, H_XGetFontProperty);
   XM_DEFINE_PROCEDURE(XGetGCValues, gxm_XGetGCValues_w, 3, 0, 0, H_XGetGCValues);
-  XM_DEFINE_PROCEDURE(XGCValues, gxm_XGCValues_w, 0, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XEvent, gxm_XEvent_w, 0, 1, 0, NULL);
+  XM_DEFINE_PROCEDURE(XGCValues, gxm_XGCValues_w, 0, 0, 0, "XGCValues returns a new XGCValue struct");
+  XM_DEFINE_PROCEDURE(XEvent, gxm_XEvent_w, 0, 1, 0, "XEvent returns a new XEvent struct");
   XM_DEFINE_PROCEDURE(XGetGeometry, gxm_XGetGeometry_w, 2, 0, 0, H_XGetGeometry);
   XM_DEFINE_PROCEDURE(XGetIconName, gxm_XGetIconName_w, 2, 0, 0, H_XGetIconName);
   XM_DEFINE_PROCEDURE(XGetInputFocus, gxm_XGetInputFocus_w, 1, 0, 0, H_XGetInputFocus);
@@ -26366,38 +26420,38 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(IsMiscFunctionKey, gxm_IsMiscFunctionKey_w, 1, 0, 0, H_IsMiscFunctionKey);
   XM_DEFINE_PROCEDURE(IsModifierKey, gxm_IsModifierKey_w, 1, 0, 0, H_IsModifierKey);
 
-  XM_DEFINE_PROCEDURE(XButtonEvent?, XEN_XButtonEvent_p_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XCirculateEvent?, XEN_XCirculateEvent_p_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XCirculateRequestEvent?, XEN_XCirculateRequestEvent_p_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XClientMessageEvent?, XEN_XClientMessageEvent_p_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XColormapEvent?, XEN_XColormapEvent_p_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XConfigureEvent?, XEN_XConfigureEvent_p_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XConfigureRequestEvent?, XEN_XConfigureRequestEvent_p_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XCreateWindowEvent?, XEN_XCreateWindowEvent_p_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XCrossingEvent?, XEN_XCrossingEvent_p_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XDestroyWindowEvent?, XEN_XDestroyWindowEvent_p_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XErrorEvent?, XEN_XErrorEvent_p_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XExposeEvent?, XEN_XExposeEvent_p_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XFocusChangeEvent?, XEN_XFocusChangeEvent_p_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XGraphicsExposeEvent?, XEN_XGraphicsExposeEvent_p_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XGravityEvent?, XEN_XGravityEvent_p_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XKeyEvent?, XEN_XKeyEvent_p_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XKeymapEvent?, XEN_XKeymapEvent_p_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XMapEvent?, XEN_XMapEvent_p_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XMapRequestEvent?, XEN_XMapRequestEvent_p_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XMappingEvent?, XEN_XMappingEvent_p_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XMotionEvent?, XEN_XMotionEvent_p_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XNoExposeEvent?, XEN_XNoExposeEvent_p_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XPropertyEvent?, XEN_XPropertyEvent_p_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XReparentEvent?, XEN_XReparentEvent_p_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XResizeRequestEvent?, XEN_XResizeRequestEvent_p_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XSelectionClearEvent?, XEN_XSelectionClearEvent_p_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XSelectionEvent?, XEN_XSelectionEvent_p_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XSelectionRequestEvent?, XEN_XSelectionRequestEvent_p_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XSetWindowAttributes?, XEN_XSetWindowAttributes_p_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XUnmapEvent?, XEN_XUnmapEvent_p_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XVisibilityEvent?, XEN_XVisibilityEvent_p_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XIconSize?, XEN_XIconSize_p_w, 1, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XButtonEvent?, XEN_XButtonEvent_p_w, 1, 0, 0, "#t if arg is a XButtonEvent");
+  XM_DEFINE_PROCEDURE(XCirculateEvent?, XEN_XCirculateEvent_p_w, 1, 0, 0, "#t if arg is a XCirculateEvent");
+  XM_DEFINE_PROCEDURE(XCirculateRequestEvent?, XEN_XCirculateRequestEvent_p_w, 1, 0, 0, "#t if arg is a XCirculateRequestEvent");
+  XM_DEFINE_PROCEDURE(XClientMessageEvent?, XEN_XClientMessageEvent_p_w, 1, 0, 0, "#t if arg is a XClientMessageEvent");
+  XM_DEFINE_PROCEDURE(XColormapEvent?, XEN_XColormapEvent_p_w, 1, 0, 0, "#t if arg is a XColormapEvent");
+  XM_DEFINE_PROCEDURE(XConfigureEvent?, XEN_XConfigureEvent_p_w, 1, 0, 0, "#t if arg is a XConfigureEvent");
+  XM_DEFINE_PROCEDURE(XConfigureRequestEvent?, XEN_XConfigureRequestEvent_p_w, 1, 0, 0, "#t if arg is a XConfigureRequestEvent");
+  XM_DEFINE_PROCEDURE(XCreateWindowEvent?, XEN_XCreateWindowEvent_p_w, 1, 0, 0, "#t if arg is a XCreateWindowEvent");
+  XM_DEFINE_PROCEDURE(XCrossingEvent?, XEN_XCrossingEvent_p_w, 1, 0, 0, "#t if arg is a XCrossingEvent");
+  XM_DEFINE_PROCEDURE(XDestroyWindowEvent?, XEN_XDestroyWindowEvent_p_w, 1, 0, 0, "#t if arg is a XDestroyWindowEvent");
+  XM_DEFINE_PROCEDURE(XErrorEvent?, XEN_XErrorEvent_p_w, 1, 0, 0, "#t if arg is a XErrorEvent");
+  XM_DEFINE_PROCEDURE(XExposeEvent?, XEN_XExposeEvent_p_w, 1, 0, 0, "#t if arg is a XExposeEvent");
+  XM_DEFINE_PROCEDURE(XFocusChangeEvent?, XEN_XFocusChangeEvent_p_w, 1, 0, 0, "#t if arg is a XFocusChangeEvent");
+  XM_DEFINE_PROCEDURE(XGraphicsExposeEvent?, XEN_XGraphicsExposeEvent_p_w, 1, 0, 0, "#t if arg is a XGraphicsExposeEvent");
+  XM_DEFINE_PROCEDURE(XGravityEvent?, XEN_XGravityEvent_p_w, 1, 0, 0, "#t if arg is a XGravityEvent");
+  XM_DEFINE_PROCEDURE(XKeyEvent?, XEN_XKeyEvent_p_w, 1, 0, 0, "#t if arg is a XKeyEvent");
+  XM_DEFINE_PROCEDURE(XKeymapEvent?, XEN_XKeymapEvent_p_w, 1, 0, 0, "#t if arg is a XKeymapEvent");
+  XM_DEFINE_PROCEDURE(XMapEvent?, XEN_XMapEvent_p_w, 1, 0, 0, "#t if arg is a XMapEvent");
+  XM_DEFINE_PROCEDURE(XMapRequestEvent?, XEN_XMapRequestEvent_p_w, 1, 0, 0, "#t if arg is a XMapRequestEvent");
+  XM_DEFINE_PROCEDURE(XMappingEvent?, XEN_XMappingEvent_p_w, 1, 0, 0, "#t if arg is a XMappingEvent");
+  XM_DEFINE_PROCEDURE(XMotionEvent?, XEN_XMotionEvent_p_w, 1, 0, 0, "#t if arg is a XMotionEvent");
+  XM_DEFINE_PROCEDURE(XNoExposeEvent?, XEN_XNoExposeEvent_p_w, 1, 0, 0, "#t if arg is a XNoExposeEvent");
+  XM_DEFINE_PROCEDURE(XPropertyEvent?, XEN_XPropertyEvent_p_w, 1, 0, 0, "#t if arg is a XPropertyEvent");
+  XM_DEFINE_PROCEDURE(XReparentEvent?, XEN_XReparentEvent_p_w, 1, 0, 0, "#t if arg is a XReparentEvent");
+  XM_DEFINE_PROCEDURE(XResizeRequestEvent?, XEN_XResizeRequestEvent_p_w, 1, 0, 0, "#t if arg is a XResizeRequestEvent");
+  XM_DEFINE_PROCEDURE(XSelectionClearEvent?, XEN_XSelectionClearEvent_p_w, 1, 0, 0, "#t if arg is a XSelectionClearEvent");
+  XM_DEFINE_PROCEDURE(XSelectionEvent?, XEN_XSelectionEvent_p_w, 1, 0, 0, "#t if arg is a XSelectionEvent");
+  XM_DEFINE_PROCEDURE(XSelectionRequestEvent?, XEN_XSelectionRequestEvent_p_w, 1, 0, 0, "#t if arg is a XSelectionRequestEvent");
+  XM_DEFINE_PROCEDURE(XSetWindowAttributes?, XEN_XSetWindowAttributes_p_w, 1, 0, 0, "#t if arg is a XSetWindowAttributes");
+  XM_DEFINE_PROCEDURE(XUnmapEvent?, XEN_XUnmapEvent_p_w, 1, 0, 0, "#t if arg is a XUnmapEvent");
+  XM_DEFINE_PROCEDURE(XVisibilityEvent?, XEN_XVisibilityEvent_p_w, 1, 0, 0, "#t if arg is a XVisibilityEvent");
+  XM_DEFINE_PROCEDURE(XIconSize?, XEN_XIconSize_p_w, 1, 0, 0, "#t if arg is a XIconSize object");
 
 #if HAVE_MOTIF
   XM_DEFINE_PROCEDURE(XmCreateMessageBox, gxm_XmCreateMessageBox_w, 3, 1, 0, H_XmCreateMessageBox);
@@ -26792,65 +26846,65 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XmProcessTraversal, gxm_XmProcessTraversal_w, 2, 0, 0, H_XmProcessTraversal);
   XM_DEFINE_PROCEDURE(XmCreateMenuShell, gxm_XmCreateMenuShell_w, 3, 1, 0, H_XmCreateMenuShell);
 
-  XM_DEFINE_PROCEDURE(XmIsMessageBox, gxm_XmIsMessageBox_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmIsArrowButtonGadget, gxm_XmIsArrowButtonGadget_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmIsArrowButton, gxm_XmIsArrowButton_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmIsNotebook, gxm_XmIsNotebook_w, 1, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XmIsMessageBox, gxm_XmIsMessageBox_w, 1, 0, 0, H_XmIsMessageBox);
+  XM_DEFINE_PROCEDURE(XmIsArrowButtonGadget, gxm_XmIsArrowButtonGadget_w, 1, 0, 0, H_XmIsArrowButtonGadget);
+  XM_DEFINE_PROCEDURE(XmIsArrowButton, gxm_XmIsArrowButton_w, 1, 0, 0, H_XmIsArrowButton);
+  XM_DEFINE_PROCEDURE(XmIsNotebook, gxm_XmIsNotebook_w, 1, 0, 0, H_XmIsNotebook);
 #if HAVE_XM_XP
-  XM_DEFINE_PROCEDURE(XmIsPrintShell, gxm_XmIsPrintShell_w, 1, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XmIsPrintShell, gxm_XmIsPrintShell_w, 1, 0, 0, H_XmIsPrintShell);
 #endif
-  XM_DEFINE_PROCEDURE(XmIsComboBox, gxm_XmIsComboBox_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmIsContainer, gxm_XmIsContainer_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmIsGrabShell, gxm_XmIsGrabShell_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmIsIconGadget, gxm_XmIsIconGadget_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmIsIconHeader, gxm_XmIsIconHeader_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmIsPanedWindow, gxm_XmIsPanedWindow_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmIsBulletinBoard, gxm_XmIsBulletinBoard_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmIsPrimitive, gxm_XmIsPrimitive_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmIsCascadeButtonGadget, gxm_XmIsCascadeButtonGadget_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmIsCascadeButton, gxm_XmIsCascadeButton_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmIsPushButtonGadget, gxm_XmIsPushButtonGadget_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmIsPushButton, gxm_XmIsPushButton_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmIsCommand, gxm_XmIsCommand_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmIsRowColumn, gxm_XmIsRowColumn_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmIsScale, gxm_XmIsScale_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmIsScreen, gxm_XmIsScreen_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmIsScrollBar, gxm_XmIsScrollBar_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmIsDialogShell, gxm_XmIsDialogShell_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmIsScrolledWindow, gxm_XmIsScrolledWindow_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmIsDisplay, gxm_XmIsDisplay_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmIsSelectionBox, gxm_XmIsSelectionBox_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmIsDragContext, gxm_XmIsDragContext_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmIsSeparatorGadget, gxm_XmIsSeparatorGadget_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmIsDragIconObjectClass, gxm_XmIsDragIconObjectClass_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmIsSeparator, gxm_XmIsSeparator_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmIsDrawingArea, gxm_XmIsDrawingArea_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmIsDrawnButton, gxm_XmIsDrawnButton_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmIsDropSiteManager, gxm_XmIsDropSiteManager_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmIsDropTransfer, gxm_XmIsDropTransfer_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmIsTextField, gxm_XmIsTextField_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmIsFileSelectionBox, gxm_XmIsFileSelectionBox_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmIsText, gxm_XmIsText_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmIsForm, gxm_XmIsForm_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmIsFrame, gxm_XmIsFrame_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmIsGadget, gxm_XmIsGadget_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmIsToggleButtonGadget, gxm_XmIsToggleButtonGadget_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmIsToggleButton, gxm_XmIsToggleButton_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmIsLabelGadget, gxm_XmIsLabelGadget_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmIsLabel, gxm_XmIsLabel_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmIsVendorShell, gxm_XmIsVendorShell_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmIsList, gxm_XmIsList_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmIsMainWindow, gxm_XmIsMainWindow_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmIsManager, gxm_XmIsManager_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmIsMenuShell, gxm_XmIsMenuShell_w, 1, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XmIsComboBox, gxm_XmIsComboBox_w, 1, 0, 0, H_XmIsComboBox);
+  XM_DEFINE_PROCEDURE(XmIsContainer, gxm_XmIsContainer_w, 1, 0, 0, H_XmIsContainer);
+  XM_DEFINE_PROCEDURE(XmIsGrabShell, gxm_XmIsGrabShell_w, 1, 0, 0, H_XmIsGrabShell);
+  XM_DEFINE_PROCEDURE(XmIsIconGadget, gxm_XmIsIconGadget_w, 1, 0, 0, H_XmIsIconGadget);
+  XM_DEFINE_PROCEDURE(XmIsIconHeader, gxm_XmIsIconHeader_w, 1, 0, 0, H_XmIsIconHeader);
+  XM_DEFINE_PROCEDURE(XmIsPanedWindow, gxm_XmIsPanedWindow_w, 1, 0, 0, H_XmIsPanedWindow);
+  XM_DEFINE_PROCEDURE(XmIsBulletinBoard, gxm_XmIsBulletinBoard_w, 1, 0, 0, H_XmIsBulletinBoard);
+  XM_DEFINE_PROCEDURE(XmIsPrimitive, gxm_XmIsPrimitive_w, 1, 0, 0, H_XmIsPrimitive);
+  XM_DEFINE_PROCEDURE(XmIsCascadeButtonGadget, gxm_XmIsCascadeButtonGadget_w, 1, 0, 0, H_XmIsCascadeButtonGadget);
+  XM_DEFINE_PROCEDURE(XmIsCascadeButton, gxm_XmIsCascadeButton_w, 1, 0, 0, H_XmIsCascadeButton);
+  XM_DEFINE_PROCEDURE(XmIsPushButtonGadget, gxm_XmIsPushButtonGadget_w, 1, 0, 0, H_XmIsPushButtonGadget);
+  XM_DEFINE_PROCEDURE(XmIsPushButton, gxm_XmIsPushButton_w, 1, 0, 0, H_XmIsPushButton);
+  XM_DEFINE_PROCEDURE(XmIsCommand, gxm_XmIsCommand_w, 1, 0, 0, H_XmIsCommand);
+  XM_DEFINE_PROCEDURE(XmIsRowColumn, gxm_XmIsRowColumn_w, 1, 0, 0, H_XmIsRowColumn);
+  XM_DEFINE_PROCEDURE(XmIsScale, gxm_XmIsScale_w, 1, 0, 0, H_XmIsScale);
+  XM_DEFINE_PROCEDURE(XmIsScreen, gxm_XmIsScreen_w, 1, 0, 0, H_XmIsScreen);
+  XM_DEFINE_PROCEDURE(XmIsScrollBar, gxm_XmIsScrollBar_w, 1, 0, 0, H_XmIsScrollBar);
+  XM_DEFINE_PROCEDURE(XmIsDialogShell, gxm_XmIsDialogShell_w, 1, 0, 0, H_XmIsDialogShell);
+  XM_DEFINE_PROCEDURE(XmIsScrolledWindow, gxm_XmIsScrolledWindow_w, 1, 0, 0, H_XmIsScrolledWindow);
+  XM_DEFINE_PROCEDURE(XmIsDisplay, gxm_XmIsDisplay_w, 1, 0, 0, H_XmIsDisplay);
+  XM_DEFINE_PROCEDURE(XmIsSelectionBox, gxm_XmIsSelectionBox_w, 1, 0, 0, H_XmIsSelectionBox);
+  XM_DEFINE_PROCEDURE(XmIsDragContext, gxm_XmIsDragContext_w, 1, 0, 0, H_XmIsDragContext);
+  XM_DEFINE_PROCEDURE(XmIsSeparatorGadget, gxm_XmIsSeparatorGadget_w, 1, 0, 0, H_XmIsSeparatorGadget);
+  XM_DEFINE_PROCEDURE(XmIsDragIconObjectClass, gxm_XmIsDragIconObjectClass_w, 1, 0, 0, H_XmIsDragIconObjectClass);
+  XM_DEFINE_PROCEDURE(XmIsSeparator, gxm_XmIsSeparator_w, 1, 0, 0, H_XmIsSeparator);
+  XM_DEFINE_PROCEDURE(XmIsDrawingArea, gxm_XmIsDrawingArea_w, 1, 0, 0, H_XmIsDrawingArea);
+  XM_DEFINE_PROCEDURE(XmIsDrawnButton, gxm_XmIsDrawnButton_w, 1, 0, 0, H_XmIsDrawnButton);
+  XM_DEFINE_PROCEDURE(XmIsDropSiteManager, gxm_XmIsDropSiteManager_w, 1, 0, 0, H_XmIsDropSiteManager);
+  XM_DEFINE_PROCEDURE(XmIsDropTransfer, gxm_XmIsDropTransfer_w, 1, 0, 0, H_XmIsDropTransfer);
+  XM_DEFINE_PROCEDURE(XmIsTextField, gxm_XmIsTextField_w, 1, 0, 0, H_XmIsTextField);
+  XM_DEFINE_PROCEDURE(XmIsFileSelectionBox, gxm_XmIsFileSelectionBox_w, 1, 0, 0, H_XmIsFileSelectionBox);
+  XM_DEFINE_PROCEDURE(XmIsText, gxm_XmIsText_w, 1, 0, 0, H_XmIsText);
+  XM_DEFINE_PROCEDURE(XmIsForm, gxm_XmIsForm_w, 1, 0, 0, H_XmIsForm);
+  XM_DEFINE_PROCEDURE(XmIsFrame, gxm_XmIsFrame_w, 1, 0, 0, H_XmIsFrame);
+  XM_DEFINE_PROCEDURE(XmIsGadget, gxm_XmIsGadget_w, 1, 0, 0, H_XmIsGadget);
+  XM_DEFINE_PROCEDURE(XmIsToggleButtonGadget, gxm_XmIsToggleButtonGadget_w, 1, 0, 0, H_XmIsToggleButtonGadget);
+  XM_DEFINE_PROCEDURE(XmIsToggleButton, gxm_XmIsToggleButton_w, 1, 0, 0, H_XmIsToggleButton);
+  XM_DEFINE_PROCEDURE(XmIsLabelGadget, gxm_XmIsLabelGadget_w, 1, 0, 0, H_XmIsLabelGadget);
+  XM_DEFINE_PROCEDURE(XmIsLabel, gxm_XmIsLabel_w, 1, 0, 0, H_XmIsLabel);
+  XM_DEFINE_PROCEDURE(XmIsVendorShell, gxm_XmIsVendorShell_w, 1, 0, 0, H_XmIsVendorShell);
+  XM_DEFINE_PROCEDURE(XmIsList, gxm_XmIsList_w, 1, 0, 0, H_XmIsList);
+  XM_DEFINE_PROCEDURE(XmIsMainWindow, gxm_XmIsMainWindow_w, 1, 0, 0, H_XmIsMainWindow);
+  XM_DEFINE_PROCEDURE(XmIsManager, gxm_XmIsManager_w, 1, 0, 0, H_XmIsManager);
+  XM_DEFINE_PROCEDURE(XmIsMenuShell, gxm_XmIsMenuShell_w, 1, 0, 0, H_XmIsMenuShell);
   XM_DEFINE_PROCEDURE(XmListGetSelectedPos, gxm_XmListGetSelectedPos_w, 1, 0, 0, H_XmListGetSelectedPos);
 #endif
 #if HAVE_XmCreateButtonBox
-  XM_DEFINE_PROCEDURE(XmIsButtonBox, gxm_XmIsButtonBox_w, 1, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XmIsButtonBox, gxm_XmIsButtonBox_w, 1, 0, 0, H_XmIsButtonBox);
   XM_DEFINE_PROCEDURE(XmCreateButtonBox, gxm_XmCreateButtonBox_w, 3, 1, 0, H_XmCreateButtonBox);
 #endif
 #if HAVE_XmCreateDataField
-  XM_DEFINE_PROCEDURE(XmIsDataField, gxm_XmIsDataField_w, 1, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XmIsDataField, gxm_XmIsDataField_w, 1, 0, 0, H_XmIsDataField);
   XM_DEFINE_PROCEDURE(XmCreateDataField, gxm_XmCreateDataField_w, 3, 1, 0, H_XmCreateDataField);
   XM_DEFINE_PROCEDURE(XmDataFieldSetString, gxm_XmDataFieldSetString_w, 2, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XmDataFieldGetString, gxm_XmDataFieldGetString_w, 1, 0, 0, NULL);
@@ -26868,7 +26922,7 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XmDataFieldSetInsertionPosition, gxm_XmDataFieldSetInsertionPosition_w, 2, 0, 0, NULL);
 #endif
 #if HAVE_XmCreateMultiList
-  XM_DEFINE_PROCEDURE(XmIsMultiList, gxm_XmIsMultiList_w, 1, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XmIsMultiList, gxm_XmIsMultiList_w, 1, 0, 0, H_XmIsMultiList);
   XM_DEFINE_PROCEDURE(XmCreateMultiList, gxm_XmCreateMultiList_w, 3, 1, 0, H_XmCreateMultiList);
   XM_DEFINE_PROCEDURE(XmMultiListDeselectAllItems, gxm_XmMultiListDeselectAllItems_w, 1, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XmMultiListUnselectAllItems, gxm_XmMultiListUnselectAllItems_w, 1, 0, 0, NULL);
@@ -26884,7 +26938,7 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XmMultiListGetSelectedRows, gxm_XmMultiListGetSelectedRows_w, 1, 0, 0, NULL);
 #endif
 #if HAVE_XmCreateTabStack
-  XM_DEFINE_PROCEDURE(XmIsTabStack, gxm_XmIsTabStack_w, 1, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XmIsTabStack, gxm_XmIsTabStack_w, 1, 0, 0, H_XmIsTabStack);
   XM_DEFINE_PROCEDURE(XmTabStackGetSelectedTab, gxm_XmTabStackGetSelectedTab_w, 1, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XmTabStackSelectTab, gxm_XmTabStackSelectTab_w, 2, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XmCreateTabStack, gxm_XmCreateTabStack_w, 3, 1, 0, H_XmCreateTabStack);
@@ -26895,13 +26949,13 @@ static void define_procedures(void)
 #endif
 #if HAVE_XmCreateColumn
   XM_DEFINE_PROCEDURE(XmCreateColumn, gxm_XmCreateColumn_w, 3, 1, 0, H_XmCreateColumn);
-  XM_DEFINE_PROCEDURE(XmIsColumn, gxm_XmIsColumn_w, 1, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XmIsColumn, gxm_XmIsColumn_w, 1, 0, 0, H_XmIsColumn);
 #if HAVE_XmColumnGetChildLabel
   XM_DEFINE_PROCEDURE(XmColumnGetChildLabel, gxm_XmColumnGetChildLabel_w, 1, 0, 0, NULL);
 #endif
 #endif
 #if HAVE_XmCreateDropDown
-  XM_DEFINE_PROCEDURE(XmIsDropDown, gxm_XmIsDropDown_w, 1, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XmIsDropDown, gxm_XmIsDropDown_w, 1, 0, 0, H_XmIsDropDown);
   XM_DEFINE_PROCEDURE(XmDropDownGetValue, gxm_XmDropDownGetValue_w, 1, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XmDropDownGetList, gxm_XmDropDownGetList_w, 1, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XmDropDownGetText, gxm_XmDropDownGetText_w, 1, 0, 0, NULL);
@@ -26910,22 +26964,22 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XmCreateDropDown, gxm_XmCreateDropDown_w, 3, 1, 0, H_XmCreateDropDown);
 #endif
 #if HAVE_XmCreateButtonBox
-  XM_DEFINE_PROCEDURE(XmButtonBox?, gxm_XmIsButtonBox_w, 1, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XmButtonBox?, gxm_XmIsButtonBox_w, 1, 0, 0, H_XmIsButtonBox);
 #endif
 #if HAVE_XmCreateMultiList
-  XM_DEFINE_PROCEDURE(XmMultiList?, gxm_XmIsMultiList_w, 1, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XmMultiList?, gxm_XmIsMultiList_w, 1, 0, 0, H_XmIsMultiList);
 #endif
 #if HAVE_XmCreateTabStack
-  XM_DEFINE_PROCEDURE(XmTabStack?, gxm_XmIsTabStack_w, 1, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XmTabStack?, gxm_XmIsTabStack_w, 1, 0, 0, H_XmIsTabStack);
 #endif
 #if HAVE_XmCreateDataField
-  XM_DEFINE_PROCEDURE(XmDataField?, gxm_XmIsDataField_w, 1, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XmDataField?, gxm_XmIsDataField_w, 1, 0, 0, H_XmIsDataField);
 #endif
 #if HAVE_XmCreateDropDown
-  XM_DEFINE_PROCEDURE(XmDropDown?, gxm_XmIsDropDown_w, 1, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XmDropDown?, gxm_XmIsDropDown_w, 1, 0, 0, H_XmIsDropDown);
 #endif
 #if HAVE_XmCreateColumn
-  XM_DEFINE_PROCEDURE(XmColumn?, gxm_XmIsColumn_w, 1, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XmColumn?, gxm_XmIsColumn_w, 1, 0, 0, H_XmIsColumn);
 #endif
 
 #if HAVE_MOTIF
@@ -26966,9 +27020,9 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XmFontListInitFontContext, gxm_XmFontListInitFontContext_w, 1, 0, 0, H_XmFontListInitFontContext);
   XM_DEFINE_PROCEDURE(XmFontListFreeFontContext, gxm_XmFontListFreeFontContext_w, 1, 0, 0, H_XmFontListFreeFontContext);
 
-  XM_DEFINE_PROCEDURE(XmFontContext?, XEN_XmFontContext_p_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmFontListEntry?, XEN_XmFontListEntry_p_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmFontList?, XEN_XmFontList_p_w, 1, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XmFontContext?, XEN_XmFontContext_p_w, 1, 0, 0, "#t if arg is a XmFontContext");
+  XM_DEFINE_PROCEDURE(XmFontListEntry?, XEN_XmFontListEntry_p_w, 1, 0, 0, "#t if arg is a XmFontListEntry");
+  XM_DEFINE_PROCEDURE(XmFontList?, XEN_XmFontList_p_w, 1, 0, 0, "#t if arg is a XmFontList");
   XM_DEFINE_PROCEDURE(XmFontListCreate, gxm_XmFontListCreate_w, 2, 0, 0, H_XmFontListCreate);
   XM_DEFINE_PROCEDURE(XmTrackingLocate, gxm_XmTrackingLocate_w, 3, 0, 0, H_XmTrackingLocate);
   XM_DEFINE_PROCEDURE(XmFontListGetNextFont, gxm_XmFontListGetNextFont_w, 1, 0, 0, H_XmFontListGetNextFont);
@@ -27017,121 +27071,121 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XAddPixel, gxm_XAddPixel_w, 2, 0, 0, H_XAddPixel);
 
 #if HAVE_MOTIF
-  XM_DEFINE_PROCEDURE(XtAppContext?, XEN_XtAppContext_p_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XtRequestId?, XEN_XtRequestId_p_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XtWorkProcId?, XEN_XtWorkProcId_p_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XtInputId?, XEN_XtInputId_p_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XtIntervalId?, XEN_XtIntervalId_p_w, 1, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XtAppContext?, XEN_XtAppContext_p_w, 1, 0, 0, "#t if arg is a XtAppContext");
+  XM_DEFINE_PROCEDURE(XtRequestId?, XEN_XtRequestId_p_w, 1, 0, 0, "#t if arg is a XtRequestId");
+  XM_DEFINE_PROCEDURE(XtWorkProcId?, XEN_XtWorkProcId_p_w, 1, 0, 0, "#t if arg is a XtWorkProcId");
+  XM_DEFINE_PROCEDURE(XtInputId?, XEN_XtInputId_p_w, 1, 0, 0, "#t if arg is a XtInputId");
+  XM_DEFINE_PROCEDURE(XtIntervalId?, XEN_XtIntervalId_p_w, 1, 0, 0, "#t if arg is a XtIntervalId");
 #endif
-  XM_DEFINE_PROCEDURE(Screen?, XEN_Screen_p_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XEvent?, XEN_XEvent_p_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XRectangle?, XEN_XRectangle_p_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XArc?, XEN_XArc_p_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XPoint?, XEN_XPoint_p_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XSegment?, XEN_XSegment_p_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XColor?, XEN_XColor_p_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(Atom?, XEN_Atom_p_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(Colormap?, XEN_Colormap_p_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XModifierKeymap?, XEN_XModifierKeymap_p_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(Depth?, XEN_Depth_p_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(Display?, XEN_Display_p_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(Drawable?, XEN_Window_p_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(Font?, XEN_Font_p_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(GC?, XEN_GC_p_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(KeySym?, XEN_KeySym_p_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(Pixel?, XEN_Pixel_p_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(Pixmap?, XEN_Pixmap_p_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(Region?, XEN_Region_p_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(Time?, XEN_Time_p_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(Visual?, XEN_Visual_p_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(Window?, XEN_Window_p_w, 1, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(Screen?, XEN_Screen_p_w, 1, 0, 0, "#t if arg is a Screen");
+  XM_DEFINE_PROCEDURE(XEvent?, XEN_XEvent_p_w, 1, 0, 0, "#t if arg is a XEvent");
+  XM_DEFINE_PROCEDURE(XRectangle?, XEN_XRectangle_p_w, 1, 0, 0, "#t if arg is a XRectangle");
+  XM_DEFINE_PROCEDURE(XArc?, XEN_XArc_p_w, 1, 0, 0, "#t if arg is a XArc");
+  XM_DEFINE_PROCEDURE(XPoint?, XEN_XPoint_p_w, 1, 0, 0, "#t if arg is a XPoint");
+  XM_DEFINE_PROCEDURE(XSegment?, XEN_XSegment_p_w, 1, 0, 0, "#t if arg is a XSegment");
+  XM_DEFINE_PROCEDURE(XColor?, XEN_XColor_p_w, 1, 0, 0, "#t if arg is a XColor");
+  XM_DEFINE_PROCEDURE(Atom?, XEN_Atom_p_w, 1, 0, 0, "#t if arg is an Atom");
+  XM_DEFINE_PROCEDURE(Colormap?, XEN_Colormap_p_w, 1, 0, 0, "#t if arg is a Colormap");
+  XM_DEFINE_PROCEDURE(XModifierKeymap?, XEN_XModifierKeymap_p_w, 1, 0, 0, "#t if arg is a XModifierKeymap");
+  XM_DEFINE_PROCEDURE(Depth?, XEN_Depth_p_w, 1, 0, 0, "#t if arg is a Depth");
+  XM_DEFINE_PROCEDURE(Display?, XEN_Display_p_w, 1, 0, 0, "#t if arg is a Display");
+  XM_DEFINE_PROCEDURE(Drawable?, XEN_Window_p_w, 1, 0, 0, "#t if arg is a Drawable");
+  XM_DEFINE_PROCEDURE(Font?, XEN_Font_p_w, 1, 0, 0, "#t if arg is a Font");
+  XM_DEFINE_PROCEDURE(GC?, XEN_GC_p_w, 1, 0, 0, "#t if arg is a GC");
+  XM_DEFINE_PROCEDURE(KeySym?, XEN_KeySym_p_w, 1, 0, 0, "#t if arg is a KeySym");
+  XM_DEFINE_PROCEDURE(Pixel?, XEN_Pixel_p_w, 1, 0, 0, "#t if arg is a Pixel");
+  XM_DEFINE_PROCEDURE(Pixmap?, XEN_Pixmap_p_w, 1, 0, 0, "#t if arg is a Pixmap");
+  XM_DEFINE_PROCEDURE(Region?, XEN_Region_p_w, 1, 0, 0, "#t if arg is a Region");
+  XM_DEFINE_PROCEDURE(Time?, XEN_Time_p_w, 1, 0, 0, "#t if arg is a Time");
+  XM_DEFINE_PROCEDURE(Visual?, XEN_Visual_p_w, 1, 0, 0, "#t if arg is a Visual");
+  XM_DEFINE_PROCEDURE(Window?, XEN_Window_p_w, 1, 0, 0, "#t if arg is a Window");
 #if HAVE_MOTIF
-  XM_DEFINE_PROCEDURE(Widget?, XEN_Widget_p_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmStringContext?, XEN_XmStringContext_p_w, 1, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(Widget?, XEN_Widget_p_w, 1, 0, 0, "#t if arg is a Widget");
+  XM_DEFINE_PROCEDURE(XmStringContext?, XEN_XmStringContext_p_w, 1, 0, 0, "#t if arg is a XmStringContext");
 #endif
-  XM_DEFINE_PROCEDURE(XFontProp?, XEN_XFontProp_p_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XFontSet?, XEN_XFontSet_p_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XFontStruct?, XEN_XFontStruct_p_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XGCValues?, XEN_XGCValues_p_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XImage?, XEN_XImage_p_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XVisualInfo?, XEN_XVisualInfo_p_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XWMHints?, XEN_XWMHints_p_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XWindowAttributes?, XEN_XWindowAttributes_p_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XWindowChanges?, XEN_XWindowChanges_p_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(KeyCode?, XEN_KeyCode_p_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XContext?, XEN_XContext_p_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XCharStruct?, XEN_XCharStruct_p_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XTextItem?, XEN_XTextItem_p_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XStandardColormap?, XEN_XStandardColormap_p_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(Cursor?, XEN_Cursor_p_w, 1, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XFontProp?, XEN_XFontProp_p_w, 1, 0, 0, "#t if arg is a XFontProp");
+  XM_DEFINE_PROCEDURE(XFontSet?, XEN_XFontSet_p_w, 1, 0, 0, "#t if arg is a XFontSet");
+  XM_DEFINE_PROCEDURE(XFontStruct?, XEN_XFontStruct_p_w, 1, 0, 0, "#t if arg is a XFontStruct");
+  XM_DEFINE_PROCEDURE(XGCValues?, XEN_XGCValues_p_w, 1, 0, 0, "#t if arg is a XGCValues");
+  XM_DEFINE_PROCEDURE(XImage?, XEN_XImage_p_w, 1, 0, 0, "#t if arg is a XImage");
+  XM_DEFINE_PROCEDURE(XVisualInfo?, XEN_XVisualInfo_p_w, 1, 0, 0, "#t if arg is a XVisualInfo");
+  XM_DEFINE_PROCEDURE(XWMHints?, XEN_XWMHints_p_w, 1, 0, 0, "#t if arg is a XWMHints");
+  XM_DEFINE_PROCEDURE(XWindowAttributes?, XEN_XWindowAttributes_p_w, 1, 0, 0, "#t if arg is a XWindowAttributes");
+  XM_DEFINE_PROCEDURE(XWindowChanges?, XEN_XWindowChanges_p_w, 1, 0, 0, "#t if arg is a XWindowChanges");
+  XM_DEFINE_PROCEDURE(KeyCode?, XEN_KeyCode_p_w, 1, 0, 0, "#t if arg is a KeyCode");
+  XM_DEFINE_PROCEDURE(XContext?, XEN_XContext_p_w, 1, 0, 0, "#t if arg is a XContext");
+  XM_DEFINE_PROCEDURE(XCharStruct?, XEN_XCharStruct_p_w, 1, 0, 0, "#t if arg is a XCharStruct");
+  XM_DEFINE_PROCEDURE(XTextItem?, XEN_XTextItem_p_w, 1, 0, 0, "#t if arg is a XTextItem");
+  XM_DEFINE_PROCEDURE(XStandardColormap?, XEN_XStandardColormap_p_w, 1, 0, 0, "#t if arg is a XStandardColormap");
+  XM_DEFINE_PROCEDURE(Cursor?, XEN_Cursor_p_w, 1, 0, 0, "#t if arg is a Cursor");
 #if HAVE_XM_XP
-  XM_DEFINE_PROCEDURE(XPContext?, XEN_XPContext_p_w, 1, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XPContext?, XEN_XPContext_p_w, 1, 0, 0, "#t if arg is a XPContext");
 #endif
 #if HAVE_MOTIF
-  XM_DEFINE_PROCEDURE(WidgetClass?, XEN_WidgetClass_p_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmString?, XEN_XmString_p_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmToggleButton?, gxm_XmIsToggleButton_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmDrawingArea?, gxm_XmIsDrawingArea_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmPushButton?, gxm_XmIsPushButton_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmTextField?, gxm_XmIsTextField_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmFileSelectionBox?, gxm_XmIsFileSelectionBox_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmText?, gxm_XmIsText_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmFrame?, gxm_XmIsFrame_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmLabel?, gxm_XmIsLabel_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmList?, gxm_XmIsList_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmArrowButton?, gxm_XmIsArrowButton_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmScrollBar?, gxm_XmIsScrollBar_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmCommand?, gxm_XmIsCommand_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmScale?, gxm_XmIsScale_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmRowColumn?, gxm_XmIsRowColumn_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmTab?, XEN_XmTab_p_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmNotebook?, gxm_XmIsNotebook_w, 1, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(WidgetClass?, XEN_WidgetClass_p_w, 1, 0, 0, "#t if arg is a WidgetClass");
+  XM_DEFINE_PROCEDURE(XmString?, XEN_XmString_p_w, 1, 0, 0, "#t if arg is a XmString");
+  XM_DEFINE_PROCEDURE(XmToggleButton?, gxm_XmIsToggleButton_w, 1, 0, 0, H_XmIsToggleButton);
+  XM_DEFINE_PROCEDURE(XmDrawingArea?, gxm_XmIsDrawingArea_w, 1, 0, 0, H_XmIsDrawingArea);
+  XM_DEFINE_PROCEDURE(XmPushButton?, gxm_XmIsPushButton_w, 1, 0, 0, H_XmIsPushButton);
+  XM_DEFINE_PROCEDURE(XmTextField?, gxm_XmIsTextField_w, 1, 0, 0, H_XmIsTextField);
+  XM_DEFINE_PROCEDURE(XmFileSelectionBox?, gxm_XmIsFileSelectionBox_w, 1, 0, 0, H_XmIsFileSelectionBox);
+  XM_DEFINE_PROCEDURE(XmText?, gxm_XmIsText_w, 1, 0, 0, H_XmIsText);
+  XM_DEFINE_PROCEDURE(XmFrame?, gxm_XmIsFrame_w, 1, 0, 0, H_XmIsFrame);
+  XM_DEFINE_PROCEDURE(XmLabel?, gxm_XmIsLabel_w, 1, 0, 0, H_XmIsLabel);
+  XM_DEFINE_PROCEDURE(XmList?, gxm_XmIsList_w, 1, 0, 0, H_XmIsList);
+  XM_DEFINE_PROCEDURE(XmArrowButton?, gxm_XmIsArrowButton_w, 1, 0, 0, H_XmIsArrowButton);
+  XM_DEFINE_PROCEDURE(XmScrollBar?, gxm_XmIsScrollBar_w, 1, 0, 0, H_XmIsScrollBar);
+  XM_DEFINE_PROCEDURE(XmCommand?, gxm_XmIsCommand_w, 1, 0, 0, H_XmIsCommand);
+  XM_DEFINE_PROCEDURE(XmScale?, gxm_XmIsScale_w, 1, 0, 0, H_XmIsScale);
+  XM_DEFINE_PROCEDURE(XmRowColumn?, gxm_XmIsRowColumn_w, 1, 0, 0, H_XmIsRowColumn);
+  XM_DEFINE_PROCEDURE(XmTab?, XEN_XmTab_p_w, 1, 0, 0, "#t if arg is a Tab");
+  XM_DEFINE_PROCEDURE(XmNotebook?, gxm_XmIsNotebook_w, 1, 0, 0, H_XmIsNotebook);
 #if HAVE_XM_XP
-  XM_DEFINE_PROCEDURE(XmPrintShell?, gxm_XmIsPrintShell_w, 1, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XmPrintShell?, gxm_XmIsPrintShell_w, 1, 0, 0, H_XmIsPrintShell);
 #endif
-  XM_DEFINE_PROCEDURE(XmComboBox?, gxm_XmIsComboBox_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmContainer?, gxm_XmIsContainer_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmIconHeader?, gxm_XmIsIconHeader_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmGrabShell?, gxm_XmIsGrabShell_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmRendition?, XEN_XmRendition_p_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmRenderTable?, XEN_XmRenderTable_p_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmIconGadget?, gxm_XmIsIconGadget_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmTabList?, XEN_XmTabList_p_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmParseMapping?, XEN_XmParseMapping_p_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmPanedWindow?, gxm_XmIsPanedWindow_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmScrolledWindow?, gxm_XmIsScrolledWindow_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmCascadeButton?, gxm_XmIsCascadeButton_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmForm?, gxm_XmIsForm_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmBulletinBoard?, gxm_XmIsBulletinBoard_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmScreen?, gxm_XmIsScreen_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmDialogShell?, gxm_XmIsDialogShell_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmDisplay?, gxm_XmIsDisplay_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmSelectionBox?, gxm_XmIsSelectionBox_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmDragContext?, gxm_XmIsDragContext_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmDragIconObjectClass?, gxm_XmIsDragIconObjectClass_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmSeparator?, gxm_XmIsSeparator_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmDropSiteManager?, gxm_XmIsDropSiteManager_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmDropTransfer?, gxm_XmIsDropTransfer_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmVendorShell?, gxm_XmIsVendorShell_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmMainWindow?, gxm_XmIsMainWindow_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmMessageBox?, gxm_XmIsMessageBox_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmManager?, gxm_XmIsManager_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmMenuShell?, gxm_XmIsMenuShell_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmLabelGadget?, gxm_XmIsLabelGadget_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmPushButtonGadget?, gxm_XmIsPushButtonGadget_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmSeparatorGadget?, gxm_XmIsSeparatorGadget_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmArrowButtonGadget?, gxm_XmIsArrowButtonGadget_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmCascadeButtonGadget?, gxm_XmIsCascadeButtonGadget_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmToggleButtonGadget?, gxm_XmIsToggleButtonGadget_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmDrawnButton?, gxm_XmIsDrawnButton_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmPrimitive?, gxm_XmIsPrimitive_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmTextSource?, XEN_XmTextSource_p_w, 1, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XmComboBox?, gxm_XmIsComboBox_w, 1, 0, 0, H_XmIsComboBox);
+  XM_DEFINE_PROCEDURE(XmContainer?, gxm_XmIsContainer_w, 1, 0, 0, H_XmIsContainer);
+  XM_DEFINE_PROCEDURE(XmIconHeader?, gxm_XmIsIconHeader_w, 1, 0, 0, H_XmIsIconHeader);
+  XM_DEFINE_PROCEDURE(XmGrabShell?, gxm_XmIsGrabShell_w, 1, 0, 0, H_XmIsGrabShell);
+  XM_DEFINE_PROCEDURE(XmRendition?, XEN_XmRendition_p_w, 1, 0, 0, "#t if arg is a Rendition");
+  XM_DEFINE_PROCEDURE(XmRenderTable?, XEN_XmRenderTable_p_w, 1, 0, 0, "#t if arg is a RenderTable");
+  XM_DEFINE_PROCEDURE(XmIconGadget?, gxm_XmIsIconGadget_w, 1, 0, 0, H_XmIsIconGadget);
+  XM_DEFINE_PROCEDURE(XmTabList?, XEN_XmTabList_p_w, 1, 0, 0, "#t if arg is a TabList");
+  XM_DEFINE_PROCEDURE(XmParseMapping?, XEN_XmParseMapping_p_w, 1, 0, 0, "#t if arg is a ParseMapping");
+  XM_DEFINE_PROCEDURE(XmPanedWindow?, gxm_XmIsPanedWindow_w, 1, 0, 0, H_XmIsPanedWindow);
+  XM_DEFINE_PROCEDURE(XmScrolledWindow?, gxm_XmIsScrolledWindow_w, 1, 0, 0, H_XmIsScrolledWindow);
+  XM_DEFINE_PROCEDURE(XmCascadeButton?, gxm_XmIsCascadeButton_w, 1, 0, 0, H_XmIsCascadeButton);
+  XM_DEFINE_PROCEDURE(XmForm?, gxm_XmIsForm_w, 1, 0, 0, H_XmIsForm);
+  XM_DEFINE_PROCEDURE(XmBulletinBoard?, gxm_XmIsBulletinBoard_w, 1, 0, 0, H_XmIsBulletinBoard);
+  XM_DEFINE_PROCEDURE(XmScreen?, gxm_XmIsScreen_w, 1, 0, 0, H_XmIsScreen);
+  XM_DEFINE_PROCEDURE(XmDialogShell?, gxm_XmIsDialogShell_w, 1, 0, 0, H_XmIsDialogShell);
+  XM_DEFINE_PROCEDURE(XmDisplay?, gxm_XmIsDisplay_w, 1, 0, 0, H_XmIsDisplay);
+  XM_DEFINE_PROCEDURE(XmSelectionBox?, gxm_XmIsSelectionBox_w, 1, 0, 0, H_XmIsSelectionBox);
+  XM_DEFINE_PROCEDURE(XmDragContext?, gxm_XmIsDragContext_w, 1, 0, 0, H_XmIsDragContext);
+  XM_DEFINE_PROCEDURE(XmDragIconObjectClass?, gxm_XmIsDragIconObjectClass_w, 1, 0, 0, H_XmIsDragIconObjectClass);
+  XM_DEFINE_PROCEDURE(XmSeparator?, gxm_XmIsSeparator_w, 1, 0, 0, H_XmIsSeparator);
+  XM_DEFINE_PROCEDURE(XmDropSiteManager?, gxm_XmIsDropSiteManager_w, 1, 0, 0, H_XmIsDropSiteManager);
+  XM_DEFINE_PROCEDURE(XmDropTransfer?, gxm_XmIsDropTransfer_w, 1, 0, 0, H_XmIsDropTransfer);
+  XM_DEFINE_PROCEDURE(XmVendorShell?, gxm_XmIsVendorShell_w, 1, 0, 0, H_XmIsVendorShell);
+  XM_DEFINE_PROCEDURE(XmMainWindow?, gxm_XmIsMainWindow_w, 1, 0, 0, H_XmIsMainWindow);
+  XM_DEFINE_PROCEDURE(XmMessageBox?, gxm_XmIsMessageBox_w, 1, 0, 0, H_XmIsMessageBox);
+  XM_DEFINE_PROCEDURE(XmManager?, gxm_XmIsManager_w, 1, 0, 0, H_XmIsManager);
+  XM_DEFINE_PROCEDURE(XmMenuShell?, gxm_XmIsMenuShell_w, 1, 0, 0, H_XmIsMenuShell);
+  XM_DEFINE_PROCEDURE(XmLabelGadget?, gxm_XmIsLabelGadget_w, 1, 0, 0, H_XmIsLabelGadget);
+  XM_DEFINE_PROCEDURE(XmPushButtonGadget?, gxm_XmIsPushButtonGadget_w, 1, 0, 0, H_XmIsPushButtonGadget);
+  XM_DEFINE_PROCEDURE(XmSeparatorGadget?, gxm_XmIsSeparatorGadget_w, 1, 0, 0, H_XmIsSeparatorGadget);
+  XM_DEFINE_PROCEDURE(XmArrowButtonGadget?, gxm_XmIsArrowButtonGadget_w, 1, 0, 0, H_XmIsArrowButtonGadget);
+  XM_DEFINE_PROCEDURE(XmCascadeButtonGadget?, gxm_XmIsCascadeButtonGadget_w, 1, 0, 0, H_XmIsCascadeButtonGadget);
+  XM_DEFINE_PROCEDURE(XmToggleButtonGadget?, gxm_XmIsToggleButtonGadget_w, 1, 0, 0, H_XmIsToggleButtonGadget);
+  XM_DEFINE_PROCEDURE(XmDrawnButton?, gxm_XmIsDrawnButton_w, 1, 0, 0, H_XmIsDrawnButton);
+  XM_DEFINE_PROCEDURE(XmPrimitive?, gxm_XmIsPrimitive_w, 1, 0, 0, H_XmIsPrimitive);
+  XM_DEFINE_PROCEDURE(XmTextSource?, XEN_XmTextSource_p_w, 1, 0, 0, "#t if arg is a TextSource");
 #endif
 
 #if HAVE_XPM
-  XM_DEFINE_PROCEDURE(XpmAttributes?, XEN_XpmAttributes_p_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XpmImage?, XEN_XpmImage_p_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XpmColorSymbol?, XEN_XpmColorSymbol_p_w, 1, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XpmAttributes?, XEN_XpmAttributes_p_w, 1, 0, 0, "#t if arg is a XpmAttributes");
+  XM_DEFINE_PROCEDURE(XpmImage?, XEN_XpmImage_p_w, 1, 0, 0, "#t if arg is a XpmImage");
+  XM_DEFINE_PROCEDURE(XpmColorSymbol?, XEN_XpmColorSymbol_p_w, 1, 0, 0, "#t if arg is a XpmColorSymbol");
 #endif
 #if HAVE_SCHEME && HAVE_MOTIF
   XEN_DEFINE_PROCEDURE("->string", c_to_xen_string_w, 1, 0, 0, H_to_string);

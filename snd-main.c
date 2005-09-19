@@ -1038,7 +1038,6 @@ void save_state(char *save_state_name)
   save_find_dialog_state(save_fd);
   save_edit_header_dialog_state(save_fd);
   save_print_dialog_state(save_fd);
-  save_help_dialog_state(save_fd);
   save_file_dialog_state(save_fd);
   save_view_files_dialogs(save_fd);
   

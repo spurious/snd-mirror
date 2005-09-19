@@ -2,9 +2,55 @@
 
 /* -------- edit find -------- */
 
-/* TODO: trap syntax errors? in find and post in that dialog */
-
 static Widget edit_find_dialog, edit_find_text, cancelB, edit_find_label, findnextB;
+
+static Widget find_error_frame = NULL, find_error_label = NULL;
+
+static void clear_find_error(void);
+static void edit_find_modify_callback(Widget w, XtPointer context, XtPointer info)
+{
+  clear_find_error();
+}
+
+static void clear_find_error(void)
+{
+  if ((find_error_frame) && (XtIsManaged(find_error_frame)))
+    XtUnmanageChild(find_error_frame);
+  XtRemoveCallback(edit_find_text, XmNmodifyVerifyCallback, edit_find_modify_callback, NULL);
+  /* squeezing out the error label room here moves the text widget, which is irritating since it
+   *   means the text we're typing gets lost 
+   */
+}
+
+static void errors_to_find_text(const char *msg, void *data)
+{
+  Dimension find_height = 0;
+  int lines = 0;
+  XmString label;
+  set_find_dialog_label("error");
+  label = multi_line_label(msg, &lines);
+  XtVaSetValues(find_error_label, 
+		XmNlabelString, label, 
+		XmNheight, lines * 20,
+		NULL);
+  XtVaSetValues(find_error_frame, XmNheight, lines * 20, NULL);
+  XtVaGetValues(edit_find_dialog, XmNheight, &find_height, NULL);
+  if (find_height < (lines * 20 + 140))
+    {
+      XtUnmanageChild(edit_find_dialog);
+      XtVaSetValues(edit_find_dialog, XmNheight, 140 + 20 * lines, NULL);
+      XtManageChild(edit_find_dialog);
+    }
+  XmStringFree(label);
+  XtManageChild(find_error_frame);
+  XtAddCallback(edit_find_text, XmNmodifyVerifyCallback, edit_find_modify_callback, NULL);
+}
+
+static void stop_search_if_error(const char *msg, void *data)
+{
+  errors_to_find_text(msg, data);
+  ss->stopped_explicitly = true; /* should be noticed in global_search in snd-find.c */
+}
 
 static void edit_find_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
@@ -32,7 +78,9 @@ static void edit_find_ok_callback(read_direction_t direction, Widget w, XtPointe
 	  free_ptree(ss->search_tree);
 	  ss->search_tree = NULL;
 	}
+      redirect_errors_to(errors_to_find_text, NULL);
       proc = snd_catch_any(eval_str_wrapper, str, str);
+      redirect_errors_to(NULL, NULL);
       if ((XEN_PROCEDURE_P(proc)) && (procedure_arity_ok(proc, 1)))
 	{
 	  ss->search_proc = proc;
@@ -42,7 +90,7 @@ static void edit_find_ok_callback(read_direction_t direction, Widget w, XtPointe
 	  buf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
 	  mus_snprintf(buf, PRINT_BUFFER_SIZE, _("find: %s"), str);
 	  set_label(edit_find_label, buf);
-	  XmTextSetString(edit_find_text, NULL);
+	  /* XmTextSetString(edit_find_text, NULL); */
 	  FREE(buf);
 	}
     }
@@ -54,7 +102,7 @@ static void edit_find_ok_callback(read_direction_t direction, Widget w, XtPointe
 	  buf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
 	  mus_snprintf(buf, PRINT_BUFFER_SIZE, _("find: %s"), XEN_AS_STRING(ss->search_proc));
 	  set_label(edit_find_label, buf);
-	  XmTextSetString(edit_find_text, NULL);
+	  /* XmTextSetString(edit_find_text, NULL); */
 	  FREE(buf);
 	}
     }
@@ -64,7 +112,9 @@ static void edit_find_ok_callback(read_direction_t direction, Widget w, XtPointe
       s1 = XmStringCreate(_("Stop"), XmFONTLIST_DEFAULT_TAG);
       XtVaSetValues(cancelB, XmNlabelString, s1, NULL);
       XmStringFree(s1);
+      redirect_xen_error_to(stop_search_if_error, NULL);
       str = global_search(direction);
+      redirect_xen_error_to(NULL, NULL);
       s1 = XmStringCreate(_("Dismiss"), XmFONTLIST_DEFAULT_TAG);
       XtVaSetValues(cancelB, XmNlabelString, s1, NULL);
       XmStringFree(s1);
@@ -76,13 +126,22 @@ void set_find_dialog_label(const char *str) {if (edit_find_label) set_label(edit
 static void edit_find_next_callback(Widget w, XtPointer context, XtPointer info) {edit_find_ok_callback(READ_FORWARD, w, context, info);}
 static void edit_find_previous_callback(Widget w, XtPointer context, XtPointer info) {edit_find_ok_callback(READ_BACKWARD, w, context, info);}
 
+static void find_dialog_close(Widget w, XtPointer context, XtPointer info)
+{
+  clear_find_error();
+}
+
 static void edit_find_cancel_callback(Widget w, XtPointer context, XtPointer info)
 {
   if (XmGetFocusWidget(edit_find_dialog) == XmMessageBoxGetChild(edit_find_dialog, XmDIALOG_OK_BUTTON))
     {
       if (ss->checking_explicitly)
 	ss->stopped_explicitly = true;
-      else XtUnmanageChild(edit_find_dialog);
+      else 
+	{
+	  XtUnmanageChild(edit_find_dialog);
+	  clear_find_error();
+	}
     }
   else edit_find_next_callback(w, context, info);
 } 
@@ -149,11 +208,28 @@ static void make_edit_find_dialog(bool managed)
       
       n = 0;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNtopWidget, edit_find_text); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       edit_find_label = XtCreateManagedWidget("global search", xmLabelWidgetClass, rc, args, n);
+      
+      n = 0;
+      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
+      XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
+      XtSetArg(args[n], XmNtopWidget, edit_find_label); n++;
+      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNallowResize, true); n++;
+      XtSetArg(args[n], XmNshadowType, XmSHADOW_ETCHED_IN); n++;
+      XtSetArg(args[n], XmNshadowThickness, 2); n++;
+      find_error_frame = XtCreateManagedWidget("find-error-frame", xmFrameWidgetClass, rc, args, n);
+
+      n = 0;
+      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;}
+      find_error_label = XtCreateManagedWidget("", xmLabelWidgetClass, find_error_frame, args, n);
+
       
       if (!(ss->using_schemes)) 
 	{
@@ -167,7 +243,16 @@ static void make_edit_find_dialog(bool managed)
 	}
       cancelB = XmMessageBoxGetChild(edit_find_dialog, XmDIALOG_OK_BUTTON);
       set_dialog_widget(FIND_DIALOG, edit_find_dialog);
+
+      XtUnmanageChild(find_error_frame);
+
       if (managed) XtManageChild(edit_find_dialog);
+
+      {
+	Atom wm_delete_window;
+	wm_delete_window = XmInternAtom(MAIN_DISPLAY(ss), "WM_DELETE_WINDOW", false);
+	XmAddWMProtocolCallback(XtParent(edit_find_dialog), wm_delete_window, find_dialog_close, NULL);
+      }
     }
   else
     {

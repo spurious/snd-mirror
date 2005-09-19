@@ -93,7 +93,7 @@
 ;(setlocale LC_ALL "de_DE")
 
 (define tests 1)
-(define keep-going #t)
+(define keep-going #f)
 (define all-args #f) ; huge arg testing
 (define with-big-file #t)
 
@@ -308,6 +308,7 @@
 (if (not (defined? 'before-test-hook)) (define before-test-hook (make-hook 1)))
 (if (not (defined? 'after-test-hook)) (define after-test-hook (make-hook 1)))
 (add-hook! before-test-hook (lambda (n)
+			      (dismiss-all-dialogs)
 			      (set! test-number n)
 			      (if (and (> n 0) (number? (vector-ref timings (- n 1))))
 				  (vector-set! timings (- n 1) (hundred (- (real-time) (vector-ref timings (- n 1))))))
@@ -23513,6 +23514,7 @@ EDITS: 5
 	  (if (and (not (equal? (view-files-selected-files dialog) (list "1a.snd")))
 		   (not (equal? (view-files-selected-files dialog) (list (string-append home-dir "/cl/1a.snd")))))
 	      (snd-display ";vf selected files set: ~A" (view-files-selected-files dialog)))
+	  (hide-widget dialog)
 	  ))
       
       (run-hook after-test-hook 11)

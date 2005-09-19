@@ -452,7 +452,6 @@ const char *mus_header_type_name(int type)
     case MUS_FLAC:             return("Flac");                    break;
     case MUS_SPEEX:            return("Speex");                   break;
     case MUS_MPEG:             return("mpeg");                    break;
-      /* TODO: how to force decode of mpeg (or recognize it)? */
     default:                   return("unsupported");             break;
     }
 }

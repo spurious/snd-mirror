@@ -10,7 +10,6 @@ Widget snd_help_with_xrefs(const char *subject, const char *helpstr, with_word_w
 int help_text_width(const char *txt, int start, int end);
 void snd_help_append(char *text);
 void snd_help_back_to_top(void);
-void save_help_dialog_state(FILE *fd);
 
 
 
@@ -226,11 +225,11 @@ bool set_peaks_font(char *font);
 bool set_bold_peaks_font(char *font);
 bool set_axis_label_font(char *font);
 bool set_axis_numbers_font(char *font);
-int label_width(char *txt);
-int number_width(char *num);
+int label_width(const char *txt);
+int number_width(const char *num);
 int number_height(void);
 int label_height(void);
-int mark_name_width(char *txt);
+int mark_name_width(const char *txt);
 void map_over_children (Widget w, void (*func)(Widget w, void *ptr), void *userptr);
 void clear_window(axis_context *ax);
 void raise_dialog(Widget w);

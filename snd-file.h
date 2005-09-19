@@ -145,6 +145,7 @@ bool plausible_sound_file_p(const char *name);
 dir *find_sound_files_in_dir (const char *name);
 snd_info *finish_opening_sound(snd_info *sp, bool selected);
 bool run_just_sounds_hook(const char *name);
+dir *filter_sound_files(dir *dp, char *pattern);
 
 bool edit_header_callback(snd_info *sp, file_data *edit_header_data, 
 			  void (*outer_handler)(const char *error_msg, void *ufd),

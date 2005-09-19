@@ -99,7 +99,7 @@ bool set_axis_numbers_font(char *font)
   return(false);
 }
 
-int sg_text_width(char *txt, PangoFontDescription *font)
+int sg_text_width(const char *txt, PangoFontDescription *font)
 {
   int wid = 0;
   PangoLayout *layout = NULL;
@@ -127,21 +127,21 @@ int sg_text_width(char *txt, PangoFontDescription *font)
   return(wid);
 }
 
-int label_width(char *txt)
+int label_width(const char *txt)
 {
   if (txt)
     return(sg_text_width(txt, AXIS_LABEL_FONT(ss)));
   else return(0);
 }
 
-int mark_name_width(char *txt)
+int mark_name_width(const char *txt)
 {
   if (txt)
     return(sg_text_width(txt, PEAKS_FONT(ss)));
   return(0);
 }
 
-int number_width(char *num)
+int number_width(const char *num)
 {
   if (num)
     return(sg_text_width(num, AXIS_NUMBERS_FONT(ss)));

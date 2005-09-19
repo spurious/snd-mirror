@@ -401,7 +401,7 @@ typedef struct snd_state {
   int reloading_updated_file;
   Latus init_window_width, init_window_height;
   Locus init_window_x, init_window_y;
-  bool graph_hook_active, lisp_graph_hook_active; /* TODO: can these be replaced by current_hook? */
+  bool graph_hook_active, lisp_graph_hook_active;
   bool Show_Transform_Peaks, Show_Y_Zero, Show_Marks;
   with_grid_t Show_Grid;
   bool Fft_Log_Frequency, Fft_Log_Magnitude;
@@ -476,8 +476,6 @@ typedef struct snd_state {
   env_editor *enved;
   Tempus click_time;
   FAMConnection *fam_connection;
-  eval_hook_t current_hook;
-  int current_hook_function;
   void (*snd_error_handler)(const char *error_msg, void *data);
   void *snd_error_data;
   void (*snd_warning_handler)(const char *warning_msg, void *data);
@@ -1328,7 +1326,6 @@ file_info *make_temp_header(const char *fullname, int srate, int chans, off_t sa
 bool sound_file_p(char *name);
 void init_sound_file_extensions(void);
 void save_added_sound_file_extensions(FILE *fd);
-dir *filter_sound_files(dir *dp, char *pattern);
 snd_info *snd_open_file(const char *filename, bool read_only);
 void snd_close_file(snd_info *sp);
 snd_info *make_sound_readable(const char *filename, bool post_close);

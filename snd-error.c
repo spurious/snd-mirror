@@ -114,10 +114,7 @@ static void snd_error_1(const char *msg, bool with_redirection_and_hook)
 	    if (ss->catch_exists == 0) /* not from xen(?) */
 	      {
 		if ((sp) && (sp->active))
-		  string_to_minibuffer(sp, msg); /* TODO: this truncates the message! needs word wrap in either case --
-						  *   wouldn't it be better to use display_minibuffer_error here?
-						  *   would need to clear it under some set of heuristics...
-						  */
+		  display_minibuffer_error(sp, msg);
 		else post_it("Error", msg);
 	      }
 	  }

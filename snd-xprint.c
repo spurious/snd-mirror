@@ -2,9 +2,6 @@
 
 /* X side of file print */
 
-/* TODO: how to get the dialog to expand to fit the error message? */
-/* TODO: fam if permission trouble? */
-
 static Widget print_dialog = NULL;
 static Widget print_name = NULL;
 static Widget print_eps_or_lpr = NULL;
@@ -20,9 +17,13 @@ static void clear_print_error(void);
 
 static void print_cancel_callback(Widget w, XtPointer context, XtPointer info)
 {
-  ss->print_choice = PRINT_SND;
-  clear_print_error();
-  XtUnmanageChild(print_dialog);
+  if (XmGetFocusWidget(print_dialog) == XmMessageBoxGetChild(print_dialog, XmDIALOG_CANCEL_BUTTON))
+    {
+      ss->print_choice = PRINT_SND;
+      clear_print_error();
+      XtUnmanageChild(print_dialog);
+    }
+  /* else it's the <cr> from the text widget probably */
 }
 
 static int lpr (char *name)
@@ -57,14 +58,26 @@ static void clear_print_error(void)
 static void report_in_error_info(const char *msg, void *ignore)
 {
   XmString s1;
+  if ((!msg) || (!(*msg))) return;
   print_error = true;
   s1 = XmStringCreate((char *)msg, XmFONTLIST_DEFAULT_TAG);
   XtVaSetValues(error_info, XmNlabelString, s1, NULL);
   XmStringFree(s1);
   if (!(XtIsManaged(error_info_box)))
     {
+      Dimension text_wid = 0, dialog_wid = 0;
+      XmFontList fonts;
+      XtVaGetValues(error_info, XmNfontList, &fonts, NULL);
+      XtVaGetValues(print_dialog, XmNwidth, &dialog_wid, NULL);
+      text_wid = XmStringWidth(fonts, s1);
       XtUnmanageChild(rc);
       XtVaSetValues(print_eps_or_lpr, XmNbottomAttachment, XmATTACH_NONE, NULL);
+      if (text_wid > dialog_wid)
+	{
+	  XtUnmanageChild(print_dialog);
+	  XtVaSetValues(print_dialog, XmNwidth, text_wid + 40, NULL);
+	  XtManageChild(print_dialog);
+	}
       XtManageChild(error_info_box);
       XtManageChild(rc);
       print_watching = true;
@@ -86,6 +99,7 @@ static void print_ok_callback(Widget w, XtPointer context, XtPointer info)
     {
       bool print_it;
       char *str = NULL;
+      clear_print_error();
       if (ss->print_choice == PRINT_SND)
 	{
 	  plab = XmStringCreate(_("Stop"), XmFONTLIST_DEFAULT_TAG);
@@ -189,6 +203,7 @@ static void start_print_dialog(XmString xmstr4, bool managed)
       XtSetArg(args[n], XmNresizePolicy, XmRESIZE_GROW); n++;
       XtSetArg(args[n], XmNallowResize, true); n++;
       XtSetArg(args[n], XmNnoResize, false); n++;
+      XtSetArg(args[n], XmNtransient, false); n++; /* this gives us the resize handles */
       print_dialog = XmCreateMessageDialog(MAIN_PANE(ss), _("eps file:"), args, n);
 
       XmStringFree(xmstr1);
@@ -217,7 +232,7 @@ static void start_print_dialog(XmString xmstr4, bool managed)
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNvalue, eps_file(ss)); n++;
-      print_name = make_textfield_widget("text", rc, args, n, NOT_ACTIVATABLE, NO_COMPLETER);
+      print_name = make_textfield_widget("text", rc, args, n, ACTIVATABLE, NO_COMPLETER);
 
       n = 0;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
@@ -237,7 +252,7 @@ static void start_print_dialog(XmString xmstr4, bool managed)
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNallowResize, true); n++; 
-
+      XtSetArg(args[n], XmNmargin, 0); n++;
       error_info_box = XtCreateWidget("error-box", xmRowColumnWidgetClass, rc, args, n);
 
       n = 0;

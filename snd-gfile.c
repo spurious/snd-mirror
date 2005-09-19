@@ -615,6 +615,7 @@ static void open_modify_callback(GtkFileChooser *dialog, gpointer data)
  *   that triggered the error, so our error is immediately erased
  */
 static gulong key_press_handler_id = 0, selection_changed_handler_id = 0;
+
 static void clear_open_handlers(GtkWidget *dialog)
 {
   if (key_press_handler_id)
@@ -636,12 +637,14 @@ static gboolean open_modify_key_press(GtkWidget *w, GdkEventKey *event, gpointer
   clear_open_handlers(fd->dialog);
   return(false);
 }
+
 static void open_modify_selection_changed(GtkTreeSelection *selection, gpointer data)
 {
   file_dialog_info *fd = (file_dialog_info *)data;
   clear_file_error_label(fd);
   clear_open_handlers(fd->dialog);
 }
+
 #endif
 
 static void clear_error_if_open_changes(GtkWidget *dialog, void *data)

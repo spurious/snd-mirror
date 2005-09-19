@@ -3109,7 +3109,6 @@ static void view_files_monitor_directory(view_files_info *vdat, const char *dirn
     vdat->dir_names[loc] = copy_string(dirname);
 }
 
-/* also will need a way to add/remove a file if created(and a sound file)/deleted/made-readable/made-unreadable */
 /* what about temps coming and going -- should we just add a need-update switch for later remanage? */
 /*   remanagement only through start_view_files_dialog -- this file */
 /*   perhaps ss->making|deleting_temp_file -> ignore this fam event? */
@@ -3487,10 +3486,7 @@ void view_files_mix_selected_files(widget_t w, view_files_info *vdat)
       /*    the possible error conditions have been checked already, or go through snd_error */
 
       redirect_snd_error_to(NULL, NULL);
-      if (id_or_error < 0) /* actually -1 .. -3 (-4 for temp file error already posted) */
-	{
-	}
-      else
+      if (id_or_error >= 0)
 	{
 	  char *msg;
 	  if (vdat->currently_selected_files == 1)
@@ -3558,16 +3554,14 @@ void view_files_insert_selected_files(widget_t w, view_files_info *vdat)
     {
       bool ok = false;
       redirect_snd_error_to(vf_post_error, (void *)vdat);
+      redirect_snd_warning_to(vf_post_error, (void *)vdat);
       ss->sgx->requestor_dialog = w;
       ss->open_requestor = FROM_VIEW_FILES_INSERT_DIALOG;
       ss->open_requestor_data = (void *)vdat;
       ok = vf_insert(vdat);
       redirect_snd_error_to(NULL, NULL);
-      if (!ok)
-	{
-	  /* TODO: handle insert/mix lower level error (why not snd_error? -- xen callers?) */
-	}
-      else 
+      redirect_snd_warning_to(NULL, NULL);
+      if (ok)
 	{
 	  char *msg;
 	  if (vdat->currently_selected_files == 1)
@@ -3577,6 +3571,7 @@ void view_files_insert_selected_files(widget_t w, view_files_info *vdat)
 	  vdat->error_p = false;
 	  FREE(msg);
 	}
+      /* else we've already posted whatever went wrong (make_file_info etc) */
     }
 }
 
@@ -4486,7 +4481,10 @@ static XEN g_info_dialog(XEN subject, XEN msg)
 }
 
 
-/* TODO: implement add|delete|-|file-|filters|sorters */
+/* TODO: implement add|delete|-|file-|filters|sorters 
+ *         view-files[|open|mix|insert?]-file-filter (default: just-sounds)
+ *         similarly for *-sort, except that vf case is already done
+ */
 
 /* -------- file-filters and file-sorters -------- */
 

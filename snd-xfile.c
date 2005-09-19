@@ -14,7 +14,7 @@
 
 
 /* TODO: pull-down list of recent files
- * TODO: new file: find some way to get around the hidden label bug (unmanage error text etc)
+ * TODO: new file: find some way to get around the hidden label bug (unmanage error text etc) -- see snd-xfind
  * PERHAPS: if user changes raw file with dialog up -- adding header for example, should we automatically open it? or reflect in panel?
  * PERHAPS: (alert_new_file): handle all directory update decisions through FAM (region/select/file/edits)
  * TODO: various file/directory lists: tie into fam/gamin -- add xen call?
@@ -34,7 +34,6 @@
  * TODO: dialog error handling in gprint + all in the rb/scm files
  * TODO: use threads for long multi-channel computations (src/reverb/ptree)
  *           -- include example of Guile multithread -- tmp123.scm (broken...)
- * TODO: fb: clm/cmn [no usable lisp!], audio? sndlib -wl bug
  */
 
 
@@ -447,6 +446,11 @@ static void file_cancel_callback (Widget w, XtPointer context, XtPointer info)
   XtUnmanageChild (w);
 }
 
+static void file_wm_delete_callback (Widget w, XtPointer context, XtPointer info) 
+{
+  file_dialog_stop_playing((dialog_play_info *)context);
+}
+
 static void post_sound_info(Widget info1, Widget info2, const char *filename, bool with_filename)
 {
   /* filename is known[strongly believed] to be a sound file, etc */
@@ -693,6 +697,13 @@ static file_dialog_info *make_file_dialog(bool read_only, char *title, char *sel
   XtAddCallback(fd->dialog, XmNhelpCallback, file_help_proc, NULL);
   XtAddCallback(XmFileSelectionBoxGetChild(fd->dialog, XmDIALOG_LIST),
 		XmNbrowseSelectionCallback, file_dialog_select_callback, (XtPointer)fd);
+
+  {
+    Atom wm_delete_window;
+    wm_delete_window = XmInternAtom(MAIN_DISPLAY(ss), "WM_DELETE_WINDOW", false);
+    XmAddWMProtocolCallback(XtParent(fd->dialog), wm_delete_window, file_wm_delete_callback, (XtPointer)(fd->dp));
+  }
+
   return(fd);
 }
 
@@ -2878,10 +2889,8 @@ static void edit_header_set_ok_sensitive(Widget w, XtPointer context, XtPointer 
   ep->panel_changed = true;
 }
 
-static void edit_header_cancel_callback(Widget w, XtPointer context, XtPointer info) 
+static void eh_cancel(edhead_info *ep)
 {
-  edhead_info *ep = (edhead_info *)context;
-  XtUnmanageChild(ep->dialog);
   unreflect_file_data_panel_change(ep->edat, (void *)ep, edit_header_set_ok_sensitive);
   remove_sp_watcher(ep->sp, ep->sp_ro_watcher_loc);
   ep->panel_changed = false;
@@ -2890,6 +2899,18 @@ static void edit_header_cancel_callback(Widget w, XtPointer context, XtPointer i
       (ep->sp->active) &&
       (ep->sp->filename))
     ep->file_ro_watcher = fam_unmonitor_file(ep->sp->filename, ep->file_ro_watcher);
+}
+
+static void edit_header_cancel_callback(Widget w, XtPointer context, XtPointer info) 
+{
+  edhead_info *ep = (edhead_info *)context;
+  XtUnmanageChild(ep->dialog);
+  eh_cancel(ep);
+}
+
+static void edit_header_wm_delete_callback(Widget w, XtPointer context, XtPointer info) 
+{
+  eh_cancel((edhead_info *)context);
 }
 
 static void edit_header_watch_user_read_only(struct snd_info *sp, sp_watcher_reason_t reason, int loc)
@@ -3123,6 +3144,13 @@ Widget edit_header(snd_info *sp)
 	  XtVaSetValues(ep->edat->format_list, XmNbackground, ss->sgx->white, XmNforeground, ss->sgx->black, NULL);
 	}
       set_dialog_widget(EDIT_HEADER_DIALOG, ep->dialog);
+
+      {
+	Atom wm_delete_window;
+	wm_delete_window = XmInternAtom(MAIN_DISPLAY(ss), "WM_DELETE_WINDOW", false);
+	XmAddWMProtocolCallback(XtParent(ep->dialog), wm_delete_window, edit_header_wm_delete_callback, (XtPointer)ep);
+      }
+
       XtUnmanageChild(ep->edat->error_text);
     }
   else 

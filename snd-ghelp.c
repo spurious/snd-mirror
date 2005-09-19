@@ -375,33 +375,3 @@ void snd_help_back_to_top(void)
       gtk_text_view_scroll_to_iter(GTK_TEXT_VIEW(help_text), &pos, 0.0, true, 0.0, 0.0);
     }
 }
-
-void save_help_dialog_state(FILE *fd)
-{
-  if ((help_dialog) && (GTK_WIDGET_VISIBLE(help_dialog)))
-    {
-      char *topic = NULL, *help = NULL;
-      if ((help_history) && (help_history_pos > 0))
-	{
-	  topic = help_history[help_history_pos - 1];
-	  if (topic)
-	    {
-	      XEN res;
-	      res = g_snd_help(C_TO_XEN_STRING(topic), 0);
-	      if (XEN_STRING_P(res))
-		{
-		  help = XEN_TO_C_STRING(res);
-		  if (help)
-		    {
-#if HAVE_SCHEME
-		      fprintf(fd, "(%s \"%s\" \"%s\")\n", S_help_dialog, topic, help);
-#endif
-#if HAVE_RUBY
-		      fprintf(fd, "%s(\"%s\", \"%s\")\n", TO_PROC_NAME(S_help_dialog), topic, help);
-#endif
-		    }
-		}
-	    }
-	}
-    }
-}
