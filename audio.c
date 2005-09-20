@@ -8917,11 +8917,11 @@ int mus_audio_open_output(int dev, int srate, int chans, int format, int size)
 
   ioctl(line, AUDIO_GETINFO, &a_info);
 
-  if (a_info.play.sample_rate != srate)
+  if ((int)(a_info.play.sample_rate) != srate)
     mus_print("srate: %d -> %d\n", srate, a_info.play.sample_rate);
-  if (a_info.play.encoding != sndlib_format_to_bsd(format))
+  if ((int)(a_info.play.encoding) != sndlib_format_to_bsd(format))
     mus_print("encoding: %d -> %d\n", sndlib_format_to_bsd(format), a_info.play.encoding);
-  if (a_info.play.channels != chans)
+  if ((int)(a_info.play.channels) != chans)
     mus_print("chans: %d -> %d\n", chans, a_info.play.channels);
 
   cur_chans = chans;

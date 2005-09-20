@@ -8841,7 +8841,8 @@ done
 
 
 
-for ac_func in getcwd getwd strerror readlink setlocale access opendir sleep signal statvfs clock
+
+for ac_func in getcwd getwd strerror readlink setlocale access opendir sleep signal statvfs clock getline
 do
 as_ac_var=`echo "ac_cv_func_$ac_func" | $as_tr_sh`
 echo "$as_me:$LINENO: checking for $ac_func" >&5
@@ -18548,6 +18549,7 @@ _ACEOF
 	LIBS="$LIBS -lm"
 	audio_system=OSS
 	if test "$GCC" = yes ; then
+	  SO_LD="gcc"
 	  SO_FLAGS="-fPIC $SO_FLAGS"
           LDSO_FLAGS="-shared"
         fi
@@ -18569,7 +18571,9 @@ _ACEOF
 
 	audio_system=NetBSD
 	if test "$GCC" = yes ; then
+	  SO_LD="gcc"
 	  SO_FLAGS="-fPIC $SO_FLAGS"
+          LDSO_FLAGS="-shared"
         fi
         ;;
     *-*-cygwin*)
@@ -19580,12 +19584,6 @@ fi
 # this goddamn macro is much more trouble than it is worth!
 
 if test "$enable_nls" != no ; then
-  case "$host" in
-    *-*-freebsd*)
-      enable_rpath=no
-	;;
-  esac
-
   echo "$as_me:$LINENO: checking whether ${MAKE-make} sets \$(MAKE)" >&5
 echo $ECHO_N "checking whether ${MAKE-make} sets \$(MAKE)... $ECHO_C" >&6
 set dummy ${MAKE-make}; ac_make=`echo "$2" | sed 'y,:./+-,___p_,'`

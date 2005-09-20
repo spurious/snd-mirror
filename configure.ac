@@ -234,7 +234,7 @@ AC_CHECK_SIZEOF(void *)
 AC_CHECK_SIZEOF(int)
 AC_TYPE_SIGNAL
 AC_FUNC_STRFTIME
-AC_CHECK_FUNCS(getcwd getwd strerror readlink setlocale access opendir sleep signal statvfs clock)
+AC_CHECK_FUNCS(getcwd getwd strerror readlink setlocale access opendir sleep signal statvfs clock getline)
 AC_CHECK_FUNCS(vsnprintf snprintf memmove strdup lstat fileno strcasecmp)
 AC_FUNC_CLOSEDIR_VOID
 AC_FUNC_VPRINTF
@@ -1486,6 +1486,7 @@ case "$host" in
 	LIBS="$LIBS -lm"
 	audio_system=OSS
 	if test "$GCC" = yes ; then
+	  SO_LD="gcc"
 	  SO_FLAGS="-fPIC $SO_FLAGS"
           LDSO_FLAGS="-shared"
         fi
@@ -1501,7 +1502,9 @@ case "$host" in
         AC_DEFINE(MUS_NETBSD)
 	audio_system=NetBSD
 	if test "$GCC" = yes ; then
+	  SO_LD="gcc"
 	  SO_FLAGS="-fPIC $SO_FLAGS"
+          LDSO_FLAGS="-shared"
         fi
         ;;
     *-*-cygwin*)
@@ -1734,12 +1737,6 @@ AC_SUBST(SNDLIB_LIB)
 # this goddamn macro is much more trouble than it is worth!
 
 if test "$enable_nls" != no ; then
-  case "$host" in
-    *-*-freebsd*)
-      enable_rpath=no
-	;;
-  esac
-
   AM_GNU_GETTEXT([external])
 
   AC_CHECK_HEADER(nl_types.h,

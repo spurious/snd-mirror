@@ -3156,7 +3156,9 @@ void reflect_recorder_mixer_gain(int ind, Float val)
 static void initialize_recorder(recorder_info *rp)
 {
   /* picked up initial (widget) values from globals vars */
+#if (!MUS_NETBSD)
   int i;
+#endif
   /* special case initializations */
 #if OLD_SGI_AL
   /* in this case, digital in blocks out the others */

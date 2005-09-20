@@ -565,7 +565,11 @@ static XEN xen_rb_rep(XEN ig)
   buffer = (char **)calloc(1, sizeof(char *));
   buffer[0] = (char *)calloc(size, sizeof(char));
   fprintf(stdout, ">");
+#if HAVE_GETLINE
   getline(buffer, &size, stdin);
+#else
+  fgets(buffer, size, stdin);
+#endif
   val = xen_rb_eval_string_with_error(buffer[0]);
   str = XEN_AS_STRING(val);
   fprintf(stdout, "%s\n", (str) ? str : "nil");
