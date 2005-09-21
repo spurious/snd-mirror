@@ -1,6 +1,6 @@
 #include "snd.h"
 
-/* PERHAPS: insert/mix/save-as buttons
+/* PERHAPS: insert/mix/save-as buttons, also delete->remove and put it in the "edit...print" section
  * PERHAPS: amp/srate sliders as in mix panel
  * PERHAPS: some way to group or list these to handle as motifs
  * PERHAPS: multiple region browsers?
@@ -354,7 +354,7 @@ static void make_region_dialog(void)
 
   xok = XmStringCreate(_("Dismiss"), XmFONTLIST_DEFAULT_TAG);
   xhelp = XmStringCreate(_("Help"), XmFONTLIST_DEFAULT_TAG);
-  xdelete = XmStringCreate(_("Delete"), XmFONTLIST_DEFAULT_TAG);
+  xdelete = XmStringCreate(_("Unlist"), XmFONTLIST_DEFAULT_TAG);
   titlestr = XmStringCreate(_("Regions"), XmFONTLIST_DEFAULT_TAG);
 
   n = 0;

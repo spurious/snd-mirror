@@ -186,7 +186,7 @@ LIBS=""
 
 AC_HEADER_DIRENT
 AC_CHECK_HEADERS(fcntl.h limits.h unistd.h string.h sys/soundcard.h machine/soundcard.h gsl/gsl_version.h sys/mixer.h stdbool.h)
-AC_CHECK_HEADERS(libc.h sys/statvfs.h setjmp.h dlfcn.h sys/param.h byteswap.h stdint.h pthread.h)
+AC_CHECK_HEADERS(libc.h sys/statvfs.h setjmp.h dlfcn.h sys/param.h byteswap.h stdint.h pthread.h sys/mount.h)
 AC_CHECK_HEADER(/usr/local/lib/oss/include/sys/soundcard.h,[AC_DEFINE(USR_LOCAL_LIB_OSS)])
 AC_CHECK_HEADER(/usr/lib/oss/include/sys/soundcard.h,[AC_DEFINE(USR_LIB_OSS)])
 AC_CHECK_HEADER(/opt/oss/include/sys/soundcard.h,[AC_DEFINE(OPT_OSS)])
@@ -234,7 +234,7 @@ AC_CHECK_SIZEOF(void *)
 AC_CHECK_SIZEOF(int)
 AC_TYPE_SIGNAL
 AC_FUNC_STRFTIME
-AC_CHECK_FUNCS(getcwd getwd strerror readlink setlocale access opendir sleep signal statvfs clock getline)
+AC_CHECK_FUNCS(getcwd getwd strerror readlink setlocale access opendir sleep signal statvfs statfs clock getline)
 AC_CHECK_FUNCS(vsnprintf snprintf memmove strdup lstat fileno strcasecmp)
 AC_FUNC_CLOSEDIR_VOID
 AC_FUNC_VPRINTF
@@ -964,7 +964,7 @@ if test "$have_gl" = yes ; then
   case "$host" in
     *-apple-*)
       GL_LIBS="-framework OpenGL"
-      # is this in place of or in additon to -lGL etc?
+      # is this in place of or in addition to -lGL etc?
       ;;
   esac
 else
@@ -1628,6 +1628,34 @@ if test "$ac_cv_func_statvfs" = yes ; then
       AC_MSG_RESULT(yes)
     else
       AC_MSG_RESULT(no)
+    fi
+  fi
+fi
+
+statfs_ok=0
+if test $statvfs_ok = 0 ; then
+  if test "$ac_cv_func_statfs" = yes ; then
+    if test "$ac_cv_header_sys_param_h" = yes ; then
+      if test "$ac_cv_header_sys_mount_h" = yes ; then
+        AC_MSG_CHECKING([for statfs])
+        AC_COMPILE_IFELSE(
+         [AC_LANG_PROGRAM([#include <sys/param.h>
+                           #include <sys/mount.h>
+                          ],
+                          [struct statfs buf;
+                           int size = 0;
+  			   statfs("test.snd", &buf);
+                           if (buf.f_bsize = 1024)
+			     size = (int)(buf.f_bavail)
+			  ])],
+          AC_DEFINE(USE_STATFS)
+          statfs_ok=1)
+        if test $statfs_ok = 1; then
+          AC_MSG_RESULT(yes)
+        else
+          AC_MSG_RESULT(no)
+        fi
+      fi
     fi
   fi
 fi

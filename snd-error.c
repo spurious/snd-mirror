@@ -87,7 +87,16 @@ static void snd_error_1(const char *msg, bool with_redirection_and_hook)
     {
       if (ss->snd_error_handler)
 	{
-	  (*(ss->snd_error_handler))(msg, ss->snd_error_data);
+	  /* make sure it doesn't call itself recursively */
+	  void (*old_snd_error_handler)(const char *error_msg, void *data);
+	  void *old_snd_error_data;
+	  old_snd_error_handler = ss->snd_error_handler;
+	  old_snd_error_data = ss->snd_error_data;
+	  ss->snd_error_handler = NULL;
+	  ss->snd_error_data = NULL;
+	  (*(old_snd_error_handler))(msg, old_snd_error_data);
+	  ss->snd_error_handler = old_snd_error_handler;
+	  ss->snd_error_data = old_snd_error_data;
 	  return;
 	}
       
@@ -135,7 +144,16 @@ static void snd_warning_1(const char *msg)
 {
   if (ss->snd_warning_handler)
     {
-      (*(ss->snd_warning_handler))(msg, ss->snd_warning_data);
+      /* make sure it doesn't call itself recursively */
+      void (*old_snd_warning_handler)(const char *msg, void *data);
+      void *old_snd_warning_data;
+      old_snd_warning_handler = ss->snd_warning_handler;
+      old_snd_warning_data = ss->snd_warning_data;
+      ss->snd_warning_handler = NULL;
+      ss->snd_warning_data = NULL;
+      (*(old_snd_warning_handler))(msg, old_snd_warning_data);
+      ss->snd_warning_handler = old_snd_warning_handler;
+      ss->snd_warning_data = old_snd_warning_data;
       return;
     }
 

@@ -4,13 +4,12 @@
 static char *current_match = NULL;
 
 #if HAVE_GUILE
-
+#if defined(SCM_MODULE_OBARRAY)
 static int xen_return_first_int(int a, ...)
 {
   return(a);
 }
 
-#if defined(SCM_MODULE_OBARRAY)
 static int scan_tab(XEN tab, char *text, int len, int matches)
 {
   int i, n;

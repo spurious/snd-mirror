@@ -4198,7 +4198,7 @@ GtkWidget *start_view_files_dialog_1(view_files_info *vdat, bool managed)
 	gtk_widget_show(lbox);
 
 	vdat->openB = gtk_button_new_with_label(_("Open"));
-	vdat->removeB = gtk_button_new_with_label(_("Remove"));
+	vdat->removeB = gtk_button_new_with_label(_("Unlist"));
 
 	gtk_box_pack_start(GTK_BOX(lbox), vdat->openB, true, true, 1);
 	gtk_box_pack_end(GTK_BOX(lbox), vdat->removeB, true, true, 1);

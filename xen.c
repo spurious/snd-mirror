@@ -568,7 +568,7 @@ static XEN xen_rb_rep(XEN ig)
 #if HAVE_GETLINE
   getline(buffer, &size, stdin);
 #else
-  fgets(buffer, size, stdin);
+  fgets(buffer[0], size, stdin);
 #endif
   val = xen_rb_eval_string_with_error(buffer[0]);
   str = XEN_AS_STRING(val);

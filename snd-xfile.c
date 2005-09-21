@@ -4703,7 +4703,7 @@ widget_t start_view_files_dialog_1(view_files_info *vdat, bool managed)
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNleftWidget, vdat->openB); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-      vdat->removeB = XtCreateManagedWidget(_("Remove"), xmPushButtonGadgetClass, leftform, args, n);
+      vdat->removeB = XtCreateManagedWidget(_("Unlist"), xmPushButtonGadgetClass, leftform, args, n);
       XtAddCallback(vdat->removeB, XmNactivateCallback, view_files_remove_selected_callback, (XtPointer)vdat);
 
       n = 0;

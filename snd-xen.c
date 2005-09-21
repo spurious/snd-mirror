@@ -219,6 +219,20 @@ void redirect_xen_error_to(void (*handler)(const char *msg, void *ufd), void *da
   ss->xen_error_data = data;
 }
 
+static void call_xen_error_handler(const char *msg)
+{
+  /* make sure it doesn't call itself recursively */
+  void (*old_xen_error_handler)(const char *msg, void *data);
+  void *old_xen_error_data;
+  old_xen_error_handler = ss->xen_error_handler;
+  old_xen_error_data = ss->xen_error_data;
+  ss->xen_error_handler = NULL;
+  ss->xen_error_data = NULL;
+  (*(old_xen_error_handler))(msg, old_xen_error_data);
+  ss->xen_error_handler = old_xen_error_handler;
+  ss->xen_error_data = old_xen_error_data;
+}
+
 #if DEBUGGING
 void redirect_snd_print_to_1(void (*handler)(const char *msg, void *ufd), void *data, const char *caller)
 #else
@@ -501,7 +515,7 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
   if (!(run_snd_error_hook(name_buf)))
     {
       if (ss->xen_error_handler)
-	(*(ss->xen_error_handler))(name_buf, ss->xen_error_data);
+	call_xen_error_handler(name_buf);
       else
 	{
 	  if (listener_exists())
@@ -558,7 +572,7 @@ void snd_rb_raise(XEN tag, XEN throw_args)
   if (!(run_snd_error_hook(msg)))
     {
       if (ss->xen_error_handler)
-	(*(ss->xen_error_handler))(msg, ss->xen_error_data);
+	call_xen_error_handler(msg);
       else rb_raise(err, msg);
     }
 }
@@ -978,7 +992,18 @@ void snd_report_result(XEN result, char *buf)
   char *str = NULL;
   str = gl_print(result);
   if (ss->snd_print_handler)
-    (*(ss->snd_print_handler))(str, ss->snd_print_data);
+    {
+      /* make sure it doesn't call itself recursively */
+      void (*old_snd_print_handler)(const char *msg, void *data);
+      void *old_snd_print_data;
+      old_snd_print_handler = ss->snd_print_handler;
+      old_snd_print_data = ss->snd_print_data;
+      ss->snd_print_handler = NULL;
+      ss->snd_print_data = NULL;
+      (*(old_snd_print_handler))(str, old_snd_print_data);
+      ss->snd_print_handler = old_snd_print_handler;
+      ss->snd_print_data = old_snd_print_data;
+    }
   else
     {
       if (listener_exists())

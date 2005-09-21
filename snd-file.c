@@ -20,7 +20,7 @@
   #include <sys/statvfs.h>
 #endif
 
-#if (__bsdi__ || HAVE_SYS_PARAM_H)
+#if __bsdi__ || HAVE_SYS_PARAM_H
   #include <sys/param.h>
 #endif
 
@@ -28,12 +28,28 @@
  *   whatever headers mount.h needs, which I assume depends on the OS -- not worth the
  *   trouble!  Perhaps there's a better way to handle disk-kspace?
  */
-#if MUS_MAC_OSX || defined(__bsdi__)
+#if MUS_MAC_OSX || __bsdi__ || MUS_NETBSD
   #include <sys/mount.h>
 #endif
 
 #if (!USE_STATVFS)
-  off_t disk_kspace (const char *filename) {return(1234567);}
+#if USE_STATFS
+off_t disk_kspace (const char *filename)
+{
+  struct statfs buf;
+  int err;
+  err = statfs(filename, &buf);
+  if (err == 0)
+    {
+      if (buf.f_bsize == 1024) 
+	return(buf.f_bavail);
+      return((off_t)(buf.f_bsize * ((double)(buf.f_bavail) / 1024.0)));
+    }
+  return(err);
+}
+#else
+off_t disk_kspace (const char *filename) {return(1234567);}
+#endif
 #else
 
 off_t disk_kspace (const char *filename)
@@ -47,8 +63,9 @@ off_t disk_kspace (const char *filename)
   err = statvfs(filename, &buf);
   if (err == 0)
     {
-      if (buf.f_frsize == 1024) return(buf.f_bfree);
-      else return((off_t)(buf.f_frsize * ((double)(buf.f_bfree) / 1024.0)));
+      if (buf.f_frsize == 1024) 
+	return(buf.f_bfree);
+      return((off_t)(buf.f_frsize * ((double)(buf.f_bfree) / 1024.0)));
     }
   return(err);
 }

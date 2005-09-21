@@ -318,7 +318,7 @@ static int too_many_files_cleanup(void)
   if ((*closed) == 0) 
     for_each_region_chan(close_temp_files, (void *)closed);
 #if DEBUGGING
-  fprintf(stderr, "cleared %d\n", (*closed));
+  fprintf(stderr, " cleared %d\n", (*closed));
 #endif
   if ((*closed) == 0)
     rtn = -1;
@@ -363,7 +363,7 @@ int snd_reopen_write(const char *arg)
 
 static int local_mus_error = MUS_NO_ERROR;
 static mus_error_handler_t *old_error_handler;
-static void local_mus_error2snd(int type, char *msg) 
+static void local_mus_error_to_snd(int type, char *msg) 
 {
   local_mus_error = type;
   if (ss->io_error_info) FREE(ss->io_error_info);
@@ -409,7 +409,7 @@ io_error_t snd_write_header(const char *name, int type, int srate, int chans, of
   int err; /* sndlib-style error */
   /* trap mus_error locally here so that callers of open_temp_file can cleanup sample readers and whatnot */
   local_mus_error = MUS_NO_ERROR;
-  old_error_handler = mus_error_set_handler(local_mus_error2snd);
+  old_error_handler = mus_error_set_handler(local_mus_error_to_snd);
   mus_sound_forget(name);
   mus_header_set_aiff_loop_info(loops);
   err = mus_header_write(name, type, srate, chans, loc, samples, format, comment, len);
@@ -420,7 +420,11 @@ io_error_t snd_write_header(const char *name, int type, int srate, int chans, of
 	  err = too_many_files_cleanup();
 	  if (err != -1) 
 	    err = mus_header_write(name, type, srate, chans, loc, samples, format, comment, len);
-	  else return(IO_TOO_MANY_OPEN_FILES);
+	  else 
+	    {
+	      mus_error_set_handler(old_error_handler);
+	      return(IO_TOO_MANY_OPEN_FILES);
+	    }
 	}
     }
   if (err != -1)
@@ -716,7 +720,7 @@ io_error_t close_temp_file(const char *filename, int ofd, int type, off_t bytes)
   if (err == MUS_NO_ERROR)
     {
       local_mus_error = MUS_NO_ERROR;
-      old_error_handler = mus_error_set_handler(local_mus_error2snd);
+      old_error_handler = mus_error_set_handler(local_mus_error_to_snd);
       mus_header_change_data_size(filename, type, bytes);
       mus_error_set_handler(old_error_handler);
       return(sndlib_error_to_snd(local_mus_error));

@@ -302,6 +302,16 @@
 	 (lambda () (make-color c1 c2 c3))
 	 (lambda args safe-color)))
 
+(define* (safe-display-edits #:optional (snd #f) (chn #f) (edpos #f) (with-source #t))
+  (catch #t
+	 (lambda () (display-edits snd chn edpos with-source))
+	 (lambda args (snd-display ";display-edits error: ~A" args))))
+
+(define (safe-divide a b)
+  (if (zero? b)
+      a
+      (/ a b)))
+
 (define timings (make-vector (+ total-tests 1) 0))
 
 (snd-display ";;~A" (snd-version))
@@ -4049,22 +4059,22 @@ EDITS: 1
 ")))
 	    (snd-display ";new 5: ~A" (display-edits)))
 	(delete-samples 3 4)
-	(if (not (string-=? (display-edits ind 0 2) "
+	(if (not (string-=? (safe-display-edits ind 0 2) "
  (delete 3 4) ; delete-samples 3 4 [2:3]:
    (at 0, cp->sounds[1][0:2, 1.000]) [buf: 10] 
    (at 3, cp->sounds[1][7:9, 1.000]) [buf: 10] 
    (at 6, end_mark)
 "))
-	    (snd-display ";new 6: ~A" (display-edits ind 0 2)))
+	    (snd-display ";new 6: ~A" (safe-display-edits ind 0 2)))
 	(set! (samples 1 4) (make-vct 4))
-	(if (not (string-=? (display-edits ind 0 3) "
+	(if (not (string-=? (safe-display-edits ind 0 3) "
  (set 1 4) ; set-samples [3:4]:
    (at 0, cp->sounds[1][0:0, 1.000]) [buf: 10] 
    (at 1, cp->sounds[2][0:3, 1.000]) [buf: 4] 
    (at 5, cp->sounds[1][9:9, 1.000]) [buf: 10] 
    (at 6, end_mark)
 "))
-	    (snd-display ";new 7: ~A" (display-edits ind 0 3)))
+	    (snd-display ";new 7: ~A" (safe-display-edits ind 0 3)))
 	(undo 2)
 	(insert-samples 2 3 (make-vct 3))
 	(insert-samples 2 1 (make-vct 1))
@@ -4115,7 +4125,7 @@ EDITS: 5
 ")))
 	    (snd-display ";new 8: ~A" (display-edits)))
 	(delete-samples 2 1)
-	(if (not (string-=? (display-edits ind 0 6) "
+	(if (not (string-=? (safe-display-edits ind 0 6) "
  (delete 2 1) ; delete-samples 2 1 [6:7]:
    (at 0, cp->sounds[1][0:1, 1.000]) [buf: 10] 
    (at 2, cp->sounds[2][0:0, 1.000]) [buf: 3] 
@@ -4125,88 +4135,88 @@ EDITS: 5
    (at 14, cp->sounds[5][0:0, 1.000]) [buf: 1] 
    (at 15, end_mark)
 "))
-	    (snd-display ";new 9: ~A" (display-edits ind 0 6)))
+	    (snd-display ";new 9: ~A" (safe-display-edits ind 0 6)))
 	(delete-samples 0 5)
-	(if (not (string-=? (display-edits ind 0 7) "
+	(if (not (string-=? (safe-display-edits ind 0 7) "
  (delete 0 5) ; delete-samples 0 5 [7:4]:
    (at 0, cp->sounds[2][2:2, 1.000]) [buf: 3] 
    (at 1, cp->sounds[1][2:9, 1.000]) [buf: 10] 
    (at 9, cp->sounds[5][0:0, 1.000]) [buf: 1] 
    (at 10, end_mark)
 "))
-	    (snd-display ";new 10: ~A" (display-edits ind 0 7)))
+	    (snd-display ";new 10: ~A" (safe-display-edits ind 0 7)))
 	(delete-samples 6 4)
-	(if (not (string-=? (display-edits ind 0 8) "
+	(if (not (string-=? (safe-display-edits ind 0 8) "
  (delete 6 4) ; delete-samples 6 4 [8:3]:
    (at 0, cp->sounds[2][2:2, 1.000]) [buf: 3] 
    (at 1, cp->sounds[1][2:6, 1.000]) [buf: 10] 
    (at 6, end_mark)
 "))
-	    (snd-display ";new 11: ~A" (display-edits ind 0 8)))
+	    (snd-display ";new 11: ~A" (safe-display-edits ind 0 8)))
 	(delete-samples 0 1)
-	(if (not (string-=? (display-edits ind 0 9) "
+	(if (not (string-=? (safe-display-edits ind 0 9) "
  (delete 0 1) ; delete-samples 0 1 [9:2]:
    (at 0, cp->sounds[1][2:6, 1.000]) [buf: 10] 
    (at 5, end_mark)
 "))
-	    (snd-display ";new 12: ~A" (display-edits ind 0 9)))
+	    (snd-display ";new 12: ~A" (safe-display-edits ind 0 9)))
 	
 	(delete-samples 0 5)
-	(if (not (string-=? (display-edits ind 0 10) "
+	(if (not (string-=? (safe-display-edits ind 0 10) "
  (delete 0 5) ; delete-samples 0 5 [10:1]:
    (at 0, end_mark)
 "))
-	    (snd-display ";new 13: ~A" (display-edits ind 0 10)))
+	    (snd-display ";new 13: ~A" (safe-display-edits ind 0 10)))
 	(delete-samples 0 10)
 	(if (not (= (edit-position) 10))
 	    (snd-display ";no-op delete deleted something! ~A" (display-edits)))
 	(insert-samples 0 3 (make-vct 3))
-	(if (not (string-=? (display-edits ind 0 11) "
+	(if (not (string-=? (safe-display-edits ind 0 11) "
  (insert 0 3) ; insert-samples [11:2]:
    (at 0, cp->sounds[6][0:2, 1.000]) [buf: 3] 
    (at 3, end_mark)
 "))
-	    (snd-display ";new 14: ~A" (display-edits ind 0 11)))
+	    (snd-display ";new 14: ~A" (safe-display-edits ind 0 11)))
 	(delete-samples 2 1)
-	(if (not (string-=? (display-edits ind 0 12) "
+	(if (not (string-=? (safe-display-edits ind 0 12) "
  (delete 2 1) ; delete-samples 2 1 [12:2]:
    (at 0, cp->sounds[6][0:1, 1.000]) [buf: 3] 
    (at 2, end_mark)
 "))
-	    (snd-display ";new 15: ~A" (display-edits ind 0 12)))
+	    (snd-display ";new 15: ~A" (safe-display-edits ind 0 12)))
 	(set! (sample 0) .5)
-	(if (not (string-=? (display-edits ind 0 13) "
+	(if (not (string-=? (safe-display-edits ind 0 13) "
  (set 0 1) ; set-sample 0 0.5000 [13:3]:
    (at 0, cp->sounds[7][0:0, 1.000]) [buf: 1] 
    (at 1, cp->sounds[6][1:1, 1.000]) [buf: 3] 
    (at 2, end_mark)
 "))
-	    (snd-display ";new 16: ~A" (display-edits ind 0 13)))
+	    (snd-display ";new 16: ~A" (safe-display-edits ind 0 13)))
 	(set! (sample 1) .5)
-	(if (not (string-=? (display-edits ind 0 14) "
+	(if (not (string-=? (safe-display-edits ind 0 14) "
  (set 1 1) ; set-sample 1 0.5000 [14:3]:
    (at 0, cp->sounds[7][0:0, 1.000]) [buf: 1] 
    (at 1, cp->sounds[8][0:0, 1.000]) [buf: 1] 
    (at 2, end_mark)
 "))
-	    (snd-display ";new 17: ~A" (display-edits ind 0 14)))  
+	    (snd-display ";new 17: ~A" (safe-display-edits ind 0 14)))  
 	(map-channel (lambda (y) 1.0) 0 10)
-	(if (not (string-=? (display-edits ind 0 15) "
+	(if (not (string-=? (safe-display-edits ind 0 15) "
  (set 0 10) ; map-channel [15:2]:
    (at 0, cp->sounds[9][0:9, 1.000]) [buf: 10] 
    (at 10, end_mark)
 "))
-	    (snd-display ";new 18: ~A" (display-edits ind 0 15)))  
+	    (snd-display ";new 18: ~A" (safe-display-edits ind 0 15)))  
 	(insert-samples 0 10 (make-vct 10))
-	(if (not (string-=? (display-edits ind 0 16) "
+	(if (not (string-=? (safe-display-edits ind 0 16) "
  (insert 0 10) ; insert-samples [16:3]:
    (at 0, cp->sounds[10][0:9, 1.000]) [buf: 10] 
    (at 10, cp->sounds[9][0:9, 1.000]) [buf: 10] 
    (at 20, end_mark)
 "))
-	    (snd-display ";new 19: ~A" (display-edits ind 0 16)))
+	    (snd-display ";new 19: ~A" (safe-display-edits ind 0 16)))
 	(set! (samples 2 3) (make-vct 3))
-	(if (not (string-=? (display-edits ind 0 17) "
+	(if (not (string-=? (safe-display-edits ind 0 17) "
  (set 2 3) ; set-samples [17:5]:
    (at 0, cp->sounds[10][0:1, 1.000]) [buf: 10] 
    (at 2, cp->sounds[11][0:2, 1.000]) [buf: 3] 
@@ -4214,25 +4224,25 @@ EDITS: 5
    (at 10, cp->sounds[9][0:9, 1.000]) [buf: 10] 
    (at 20, end_mark)
 "))
-	    (snd-display ";new 20: ~A" (display-edits ind 0 17)))
+	    (snd-display ";new 20: ~A" (safe-display-edits ind 0 17)))
 	(set! (samples 0 12) (make-vct 12))
-	(if (not (string-=? (display-edits ind 0 18) "
+	(if (not (string-=? (safe-display-edits ind 0 18) "
  (set 0 12) ; set-samples [18:3]:
    (at 0, cp->sounds[12][0:11, 1.000]) [buf: 12] 
    (at 12, cp->sounds[9][2:9, 1.000]) [buf: 10] 
    (at 20, end_mark)
 "))
-	    (snd-display ";new 21: ~A" (display-edits ind 0 18)))
+	    (snd-display ";new 21: ~A" (safe-display-edits ind 0 18)))
 	(set! (samples 30 10) (make-vct 10))
-	(if (not (string-=? (display-edits ind 0 19) "
+	(if (not (string-=? (safe-display-edits ind 0 19) "
  (silence 20 11) ; pad-channel [19:4]:
    (at 0, cp->sounds[12][0:11, 1.000]) [buf: 12] 
    (at 12, cp->sounds[9][2:9, 1.000]) [buf: 10] 
    (at 20, cp->sounds[-1][0:10, 0.000])
    (at 31, end_mark)
 "))
-	    (snd-display ";new 22 silence extension: ~A" (display-edits ind 0 19)))
-	(if (not (string-=? (display-edits ind 0 20) "
+	    (snd-display ";new 22 silence extension: ~A" (safe-display-edits ind 0 19)))
+	(if (not (string-=? (safe-display-edits ind 0 20) "
  (set 30 10) ; set-samples [20:5]:
    (at 0, cp->sounds[12][0:11, 1.000]) [buf: 12] 
    (at 12, cp->sounds[9][2:9, 1.000]) [buf: 10] 
@@ -4240,47 +4250,47 @@ EDITS: 5
    (at 30, cp->sounds[13][0:9, 1.000]) [buf: 10] 
    (at 40, end_mark)
 "))
-	    (snd-display ";new 21: ~A" (display-edits ind 0 20)))
+	    (snd-display ";new 21: ~A" (safe-display-edits ind 0 20)))
 	(close-sound ind))
       
       ;; scale/ramp
       (let ((ind (new-sound "test.snd")))
 	(map-channel (lambda (y) 1.0) 0 10)
 	(scale-channel 0.5)
-	(if (not (string-=? (display-edits ind 0 2) "
+	(if (not (string-=? (safe-display-edits ind 0 2) "
  (scale 0 10) ; scale-channel 0.500 0 #f [2:2]:
    (at 0, cp->sounds[1][0:9, 0.500]) [buf: 10] 
    (at 10, end_mark)
 "))
-	    (snd-display ";scl 0: ~A" (display-edits ind 0 2)))
+	    (snd-display ";scl 0: ~A" (safe-display-edits ind 0 2)))
 	(undo)
 	(scale-channel 0.5 0 3)
-	(if (not (string-=? (display-edits ind 0 2) "
+	(if (not (string-=? (safe-display-edits ind 0 2) "
  (scale 0 3) ; scale-channel 0.500 0 3 [2:3]:
    (at 0, cp->sounds[1][0:2, 0.500]) [buf: 10] 
    (at 3, cp->sounds[1][3:9, 1.000]) [buf: 10] 
    (at 10, end_mark)
 "))
-	    (snd-display ";scl 1: ~A" (display-edits ind 0 2)))
+	    (snd-display ";scl 1: ~A" (safe-display-edits ind 0 2)))
 	(undo)
 	(scale-channel 0.5 5 5)
-	(if (not (string-=? (display-edits ind 0 2) "
+	(if (not (string-=? (safe-display-edits ind 0 2) "
  (scale 5 5) ; scale-channel 0.500 5 5 [2:3]:
    (at 0, cp->sounds[1][0:4, 1.000]) [buf: 10] 
    (at 5, cp->sounds[1][5:9, 0.500]) [buf: 10] 
    (at 10, end_mark)
 "))
-	    (snd-display ";scl 2: ~A" (display-edits ind 0 2)))
+	    (snd-display ";scl 2: ~A" (safe-display-edits ind 0 2)))
 	(undo)
 	(scale-channel 0.5 2 4)
-	(if (not (string-=? (display-edits ind 0 2) "
+	(if (not (string-=? (safe-display-edits ind 0 2) "
  (scale 2 4) ; scale-channel 0.500 2 4 [2:4]:
    (at 0, cp->sounds[1][0:1, 1.000]) [buf: 10] 
    (at 2, cp->sounds[1][2:5, 0.500]) [buf: 10] 
    (at 6, cp->sounds[1][6:9, 1.000]) [buf: 10] 
    (at 10, end_mark)
 "))
-	    (snd-display ";scl 2a: ~A" (display-edits ind 0 2)))
+	    (snd-display ";scl 2a: ~A" (safe-display-edits ind 0 2)))
 	(undo)
 	(scale-channel 0.5 10 10)
 	(if (not (= (edit-position) 1))
@@ -4289,43 +4299,43 @@ EDITS: 5
 	(if (not (= (edit-position) 1))
 	    (snd-display ";scale way beyond end edited? ~A" (display-edits)))
 	(scale-channel 0.5 5 10)
-	(if (not (string-=? (display-edits ind 0 2) "
+	(if (not (string-=? (safe-display-edits ind 0 2) "
  (scale 5 5) ; scale-channel 0.500 5 5 [2:3]:
    (at 0, cp->sounds[1][0:4, 1.000]) [buf: 10] 
    (at 5, cp->sounds[1][5:9, 0.500]) [buf: 10] 
    (at 10, end_mark)
 "))
-	    (snd-display ";scl 3: ~A" (display-edits ind 0 2)))
+	    (snd-display ";scl 3: ~A" (safe-display-edits ind 0 2)))
 	(undo)
 	(set! (sample 4) .5)
-	(if (not (string-=? (display-edits ind 0 2) "
+	(if (not (string-=? (safe-display-edits ind 0 2) "
  (set 4 1) ; set-sample 4 0.5000 [2:4]:
    (at 0, cp->sounds[1][0:3, 1.000]) [buf: 10] 
    (at 4, cp->sounds[2][0:0, 1.000]) [buf: 1] 
    (at 5, cp->sounds[1][5:9, 1.000]) [buf: 10] 
    (at 10, end_mark)
 "))
-	    (snd-display ";scl 4: ~A" (display-edits ind 0 2)))
+	    (snd-display ";scl 4: ~A" (safe-display-edits ind 0 2)))
 	(scale-channel 0.5 0 4)
-	(if (not (string-=? (display-edits ind 0 3) "
+	(if (not (string-=? (safe-display-edits ind 0 3) "
  (scale 0 4) ; scale-channel 0.500 0 4 [3:4]:
    (at 0, cp->sounds[1][0:3, 0.500]) [buf: 10] 
    (at 4, cp->sounds[2][0:0, 1.000]) [buf: 1] 
    (at 5, cp->sounds[1][5:9, 1.000]) [buf: 10] 
    (at 10, end_mark)
 "))
-	    (snd-display ";scl 5: ~A" (display-edits ind 0 3)))
+	    (snd-display ";scl 5: ~A" (safe-display-edits ind 0 3)))
 	(scale-channel 0.5 4 1)
-	(if (not (string-=? (display-edits ind 0 4) "
+	(if (not (string-=? (safe-display-edits ind 0 4) "
  (scale 4 1) ; scale-channel 0.500 4 1 [4:4]:
    (at 0, cp->sounds[1][0:3, 0.500]) [buf: 10] 
    (at 4, cp->sounds[2][0:0, 0.500]) [buf: 1] 
    (at 5, cp->sounds[1][5:9, 1.000]) [buf: 10] 
    (at 10, end_mark)
 "))
-	    (snd-display ";scl 6: ~A" (display-edits ind 0 4)))
+	    (snd-display ";scl 6: ~A" (safe-display-edits ind 0 4)))
 	(scale-channel 0.5 0 7)
-	(if (not (string-=? (display-edits ind 0 5) "
+	(if (not (string-=? (safe-display-edits ind 0 5) "
  (scale 0 7) ; scale-channel 0.500 0 7 [5:5]:
    (at 0, cp->sounds[1][0:3, 0.250]) [buf: 10] 
    (at 4, cp->sounds[2][0:0, 0.250]) [buf: 1] 
@@ -4333,9 +4343,9 @@ EDITS: 5
    (at 7, cp->sounds[1][7:9, 1.000]) [buf: 10] 
    (at 10, end_mark)
 "))
-	    (snd-display ";scl 7: ~A" (display-edits ind 0 5)))
+	    (snd-display ";scl 7: ~A" (safe-display-edits ind 0 5)))
 	(scale-channel 0.5 1 4)
-	(if (not (string-=? (display-edits ind 0 6) "
+	(if (not (string-=? (safe-display-edits ind 0 6) "
  (scale 1 4) ; scale-channel 0.500 1 4 [6:6]:
    (at 0, cp->sounds[1][0:0, 0.250]) [buf: 10] 
    (at 1, cp->sounds[1][1:3, 0.125]) [buf: 10] 
@@ -4344,10 +4354,10 @@ EDITS: 5
    (at 7, cp->sounds[1][7:9, 1.000]) [buf: 10] 
    (at 10, end_mark)
 "))
-	    (snd-display ";scl 8: ~A" (display-edits ind 0 6)))
+	    (snd-display ";scl 8: ~A" (safe-display-edits ind 0 6)))
 	(undo 4)
 	(scale-channel 0.5 1 8)
-	(if (not (string-=? (display-edits ind 0 3) "
+	(if (not (string-=? (safe-display-edits ind 0 3) "
  (scale 1 8) ; scale-channel 0.500 1 8 [3:6]:
    (at 0, cp->sounds[1][0:0, 1.000]) [buf: 10] 
    (at 1, cp->sounds[1][1:3, 0.500]) [buf: 10] 
@@ -4356,63 +4366,63 @@ EDITS: 5
    (at 9, cp->sounds[1][9:9, 1.000]) [buf: 10] 
    (at 10, end_mark)
 "))
-	    (snd-display ";scl 9: ~A" (display-edits ind 0 3)))
+	    (snd-display ";scl 9: ~A" (safe-display-edits ind 0 3)))
 	(undo 2)
 	
 	(ramp-channel 0.0 1.0)
-	(if (not (string-=? (display-edits ind 0 2) "
+	(if (not (string-=? (safe-display-edits ind 0 2) "
  (ramp 0 10) ; ramp-channel 0.000 1.000 0 #f [2:2]:
    (at 0, cp->sounds[1][0:9, 1.000, [1]-0.000 -> 1.000]) [buf: 10] 
    (at 10, end_mark)
 "))
-	    (snd-display ";ramp 0: ~A" (display-edits ind 0 2)))
+	    (snd-display ";ramp 0: ~A" (safe-display-edits ind 0 2)))
 	(scale-channel 0.5)
-	(if (not (string-=? (display-edits ind 0 3) "
+	(if (not (string-=? (safe-display-edits ind 0 3) "
  (scale 0 10) ; scale-channel 0.500 0 #f [3:2]:
    (at 0, cp->sounds[1][0:9, 0.500, [1]-0.000 -> 1.000]) [buf: 10] 
    (at 10, end_mark)
 "))
-	    (snd-display ";ramp 1: ~A" (display-edits ind 0 3)))
+	    (snd-display ";ramp 1: ~A" (safe-display-edits ind 0 3)))
 	(undo)
 	(scale-channel 0.5 0 5)
-	(if (not (string-=? (display-edits ind 0 3) "
+	(if (not (string-=? (safe-display-edits ind 0 3) "
  (scale 0 5) ; scale-channel 0.500 0 5 [3:3]:
    (at 0, cp->sounds[1][0:4, 0.500, [1]-0.000 -> 0.444]) [buf: 10] 
    (at 5, cp->sounds[1][5:9, 1.000, [1]0.556 -> 1.000]) [buf: 10] 
    (at 10, end_mark)
 "))
-	    (snd-display ";ramp 2: ~A" (display-edits ind 0 3)))
+	    (snd-display ";ramp 2: ~A" (safe-display-edits ind 0 3)))
 	(undo)
 	(scale-channel 0.5 2 4)
-	(if (not (string-=? (display-edits ind 0 3) "
+	(if (not (string-=? (safe-display-edits ind 0 3) "
  (scale 2 4) ; scale-channel 0.500 2 4 [3:4]:
    (at 0, cp->sounds[1][0:1, 1.000, [1]-0.000 -> 0.111]) [buf: 10] 
    (at 2, cp->sounds[1][2:5, 0.500, [1]0.222 -> 0.556]) [buf: 10] 
    (at 6, cp->sounds[1][6:9, 1.000, [1]0.667 -> 1.000]) [buf: 10] 
    (at 10, end_mark)
 "))
-	    (snd-display ";ramp 3: ~A" (display-edits ind 0 3)))
+	    (snd-display ";ramp 3: ~A" (safe-display-edits ind 0 3)))
 	(undo)
 	(scale-channel 0.5 5 5)
-	(if (not (string-=? (display-edits ind 0 3) "
+	(if (not (string-=? (safe-display-edits ind 0 3) "
  (scale 5 5) ; scale-channel 0.500 5 5 [3:3]:
    (at 0, cp->sounds[1][0:4, 1.000, [1]-0.000 -> 0.444]) [buf: 10] 
    (at 5, cp->sounds[1][5:9, 0.500, [1]0.556 -> 1.000]) [buf: 10] 
    (at 10, end_mark)
 "))
-	    (snd-display ";ramp 4: ~A" (display-edits ind 0 3)))
+	    (snd-display ";ramp 4: ~A" (safe-display-edits ind 0 3)))
 	(undo 2)
 	(ramp-channel .2 .6 2 6)
-	(if (not (string-=? (display-edits ind 0 2) "
+	(if (not (string-=? (safe-display-edits ind 0 2) "
  (ramp 2 6) ; ramp-channel 0.200 0.600 2 6 [2:4]:
    (at 0, cp->sounds[1][0:1, 1.000]) [buf: 10] 
    (at 2, cp->sounds[1][2:7, 1.000, [1]0.200 -> 0.600]) [buf: 10] 
    (at 8, cp->sounds[1][8:9, 1.000]) [buf: 10] 
    (at 10, end_mark)
 "))
-	    (snd-display ";ramp 5: ~A" (display-edits ind 0 2)))
+	    (snd-display ";ramp 5: ~A" (safe-display-edits ind 0 2)))
 	(scale-channel 0.5 0 5)
-	(if (not (string-=? (display-edits ind 0 3) "
+	(if (not (string-=? (safe-display-edits ind 0 3) "
  (scale 0 5) ; scale-channel 0.500 0 5 [3:5]:
    (at 0, cp->sounds[1][0:1, 0.500]) [buf: 10] 
    (at 2, cp->sounds[1][2:4, 0.500, [1]0.200 -> 0.360]) [buf: 10] 
@@ -4420,20 +4430,20 @@ EDITS: 5
    (at 8, cp->sounds[1][8:9, 1.000]) [buf: 10] 
    (at 10, end_mark)
 "))
-	    (snd-display ";ramp 6: ~A" (display-edits ind 0 3)))
+	    (snd-display ";ramp 6: ~A" (safe-display-edits ind 0 3)))
 	(undo)
 	(scale-channel 0.5 2 6)
-	(if (not (string-=? (display-edits ind 0 3) "
+	(if (not (string-=? (safe-display-edits ind 0 3) "
  (scale 2 6) ; scale-channel 0.500 2 6 [3:4]:
    (at 0, cp->sounds[1][0:1, 1.000]) [buf: 10] 
    (at 2, cp->sounds[1][2:7, 0.500, [1]0.200 -> 0.600]) [buf: 10] 
    (at 8, cp->sounds[1][8:9, 1.000]) [buf: 10] 
    (at 10, end_mark)
 "))
-	    (snd-display ";ramp 7: ~A" (display-edits ind 0 3)))
+	    (snd-display ";ramp 7: ~A" (safe-display-edits ind 0 3)))
 	(undo)
 	(scale-channel 0.5 5 4)
-	(if (not (string-=? (display-edits ind 0 3) "
+	(if (not (string-=? (safe-display-edits ind 0 3) "
  (scale 5 4) ; scale-channel 0.500 5 4 [3:6]:
    (at 0, cp->sounds[1][0:1, 1.000]) [buf: 10] 
    (at 2, cp->sounds[1][2:4, 1.000, [1]0.200 -> 0.360]) [buf: 10] 
@@ -4442,10 +4452,10 @@ EDITS: 5
    (at 9, cp->sounds[1][9:9, 1.000]) [buf: 10] 
    (at 10, end_mark)
 "))
-	    (snd-display ";ramp 8: ~A" (display-edits ind 0 3)))
+	    (snd-display ";ramp 8: ~A" (safe-display-edits ind 0 3)))
 	(undo)
 	(set! (sample 4) .5)
-	(if (not (string-=? (display-edits ind 0 3) "
+	(if (not (string-=? (safe-display-edits ind 0 3) "
  (set 4 1) ; set-sample 4 0.5000 [3:6]:
    (at 0, cp->sounds[1][0:1, 1.000]) [buf: 10] 
    (at 2, cp->sounds[1][2:3, 1.000, [1]0.200 -> 0.280]) [buf: 10] 
@@ -4454,10 +4464,10 @@ EDITS: 5
    (at 8, cp->sounds[1][8:9, 1.000]) [buf: 10] 
    (at 10, end_mark)
 "))
-	    (snd-display ";ramp 9: ~A" (display-edits ind 0 3)))
+	    (snd-display ";ramp 9: ~A" (safe-display-edits ind 0 3)))
 	(undo)
 	(scale-channel 0.5 4 1)
-	(if (not (string-=? (display-edits ind 0 3) "
+	(if (not (string-=? (safe-display-edits ind 0 3) "
  (scale 4 1) ; scale-channel 0.500 4 1 [3:6]:
    (at 0, cp->sounds[1][0:1, 1.000]) [buf: 10] 
    (at 2, cp->sounds[1][2:3, 1.000, [1]0.200 -> 0.280]) [buf: 10] 
@@ -4466,10 +4476,10 @@ EDITS: 5
    (at 8, cp->sounds[1][8:9, 1.000]) [buf: 10] 
    (at 10, end_mark)
 "))
-	    (snd-display ";ramp 10: ~A" (display-edits ind 0 3)))
+	    (snd-display ";ramp 10: ~A" (safe-display-edits ind 0 3)))
 	(undo)
 	(delete-sample 4)
-	(if (not (string-=? (display-edits ind 0 3) "
+	(if (not (string-=? (safe-display-edits ind 0 3) "
  (delete 4 1) ; delete-samples 4 1 [3:5]:
    (at 0, cp->sounds[1][0:1, 1.000]) [buf: 10] 
    (at 2, cp->sounds[1][2:3, 1.000, [1]0.200 -> 0.280]) [buf: 10] 
@@ -4477,10 +4487,10 @@ EDITS: 5
    (at 7, cp->sounds[1][8:9, 1.000]) [buf: 10] 
    (at 9, end_mark)
 "))
-	    (snd-display ";ramp 11: ~A" (display-edits ind 0 3)))
+	    (snd-display ";ramp 11: ~A" (safe-display-edits ind 0 3)))
 	(undo)
 	(delete-samples 4 2)
-	(if (not (string-=? (display-edits ind 0 3) "
+	(if (not (string-=? (safe-display-edits ind 0 3) "
  (delete 4 2) ; delete-samples 4 2 [3:5]:
    (at 0, cp->sounds[1][0:1, 1.000]) [buf: 10] 
    (at 2, cp->sounds[1][2:3, 1.000, [1]0.200 -> 0.280]) [buf: 10] 
@@ -4488,10 +4498,10 @@ EDITS: 5
    (at 6, cp->sounds[1][8:9, 1.000]) [buf: 10] 
    (at 8, end_mark)
 "))
-	    (snd-display ";ramp 12: ~A" (display-edits ind 0 3)))
+	    (snd-display ";ramp 12: ~A" (safe-display-edits ind 0 3)))
 	(undo)
 	(delete-samples 4 3)
-	(if (not (string-=? (display-edits ind 0 3) "
+	(if (not (string-=? (safe-display-edits ind 0 3) "
  (delete 4 3) ; delete-samples 4 3 [3:5]:
    (at 0, cp->sounds[1][0:1, 1.000]) [buf: 10] 
    (at 2, cp->sounds[1][2:3, 1.000, [1]0.200 -> 0.280]) [buf: 10] 
@@ -4499,30 +4509,30 @@ EDITS: 5
    (at 5, cp->sounds[1][8:9, 1.000]) [buf: 10] 
    (at 7, end_mark)
 "))
-	    (snd-display ";ramp 13: ~A" (display-edits ind 0 3)))
+	    (snd-display ";ramp 13: ~A" (safe-display-edits ind 0 3)))
 	(undo)
 	(delete-samples 4 4)
-	(if (not (string-=? (display-edits ind 0 3) "
+	(if (not (string-=? (safe-display-edits ind 0 3) "
  (delete 4 4) ; delete-samples 4 4 [3:4]:
    (at 0, cp->sounds[1][0:1, 1.000]) [buf: 10] 
    (at 2, cp->sounds[1][2:3, 1.000, [1]0.200 -> 0.280]) [buf: 10] 
    (at 4, cp->sounds[1][8:9, 1.000]) [buf: 10] 
    (at 6, end_mark)
 "))
-	    (snd-display ";ramp 14: ~A" (display-edits ind 0 3)))
+	    (snd-display ";ramp 14: ~A" (safe-display-edits ind 0 3)))
 	(undo)
 	(delete-samples 4 5)
-	(if (not (string-=? (display-edits ind 0 3) "
+	(if (not (string-=? (safe-display-edits ind 0 3) "
  (delete 4 5) ; delete-samples 4 5 [3:4]:
    (at 0, cp->sounds[1][0:1, 1.000]) [buf: 10] 
    (at 2, cp->sounds[1][2:3, 1.000, [1]0.200 -> 0.280]) [buf: 10] 
    (at 4, cp->sounds[1][9:9, 1.000]) [buf: 10] 
    (at 5, end_mark)
 "))
-	    (snd-display ";ramp 15: ~A" (display-edits ind 0 3)))
+	    (snd-display ";ramp 15: ~A" (safe-display-edits ind 0 3)))
 	(undo)
 	(scale-channel 0.5 4 2)
-	(if (not (string-=? (display-edits ind 0 3) "
+	(if (not (string-=? (safe-display-edits ind 0 3) "
  (scale 4 2) ; scale-channel 0.500 4 2 [3:6]:
    (at 0, cp->sounds[1][0:1, 1.000]) [buf: 10] 
    (at 2, cp->sounds[1][2:3, 1.000, [1]0.200 -> 0.280]) [buf: 10] 
@@ -4531,10 +4541,10 @@ EDITS: 5
    (at 8, cp->sounds[1][8:9, 1.000]) [buf: 10] 
    (at 10, end_mark)
 "))
-	    (snd-display ";ramp 16: ~A" (display-edits ind 0 3)))
+	    (snd-display ";ramp 16: ~A" (safe-display-edits ind 0 3)))
 	(undo)
 	(pad-channel 4 1)
-	(if (not (string-=? (display-edits ind 0 3) "
+	(if (not (string-=? (safe-display-edits ind 0 3) "
  (silence 4 1) ; pad-channel [3:6]:
    (at 0, cp->sounds[1][0:1, 1.000]) [buf: 10] 
    (at 2, cp->sounds[1][2:3, 1.000, [1]0.200 -> 0.280]) [buf: 10] 
@@ -4543,61 +4553,61 @@ EDITS: 5
    (at 9, cp->sounds[1][8:9, 1.000]) [buf: 10] 
    (at 11, end_mark)
 "))
-	    (snd-display ";ramp 17: ~A" (display-edits ind 0 3)))
+	    (snd-display ";ramp 17: ~A" (safe-display-edits ind 0 3)))
 	(close-sound ind))
       
       ;; xramp
       (let ((ind (new-sound "test.snd")))
 	(map-channel (lambda (y) 1.0) 0 10)
 	(xramp-channel 0.0 1.0 32.0)
-	(if (not (string-=? (display-edits ind 0 2) "
+	(if (not (string-=? (safe-display-edits ind 0 2) "
  (ramp 0 10) ; xramp-channel 0.000 1.000 32.000 0 #f [2:2]:
    (at 0, cp->sounds[1][0:9, 1.000, [4]0.000 -> 3.466, off: -0.032, scl: 0.032]) [buf: 10] 
    (at 10, end_mark)
 "))
-	    (snd-display ";xramp 1: ~A" (display-edits ind 0 2)))
+	    (snd-display ";xramp 1: ~A" (safe-display-edits ind 0 2)))
 	(undo)
 	(xramp-channel 0.0 1.0 0.325)
-	(if (not (string-=? (display-edits ind 0 2) "
+	(if (not (string-=? (safe-display-edits ind 0 2) "
  (ramp 0 10) ; xramp-channel 0.000 1.000 0.325 0 #f [2:2]:
    (at 0, cp->sounds[1][0:9, 1.000, [4]-0.000 -> -1.124, off: 1.481, scl: -1.481]) [buf: 10] 
    (at 10, end_mark)
 "))
-	    (snd-display ";xramp 2: ~A" (display-edits ind 0 2)))
+	    (snd-display ";xramp 2: ~A" (safe-display-edits ind 0 2)))
 	(undo)
 	(xramp-channel 0.0 1.0 0.0)
-	(if (not (string-=? (display-edits ind 0 2) (string-append "
+	(if (not (string-=? (safe-display-edits ind 0 2) (string-append "
  (scale 0 10) ; scale-channel 0.000 0 #f [2:2]:
    (at 0, cp->sounds[0][0:9, 0.000]) [file: " (getcwd) "/test.snd[0]]
    (at 10, end_mark)
 ")))
-	    (snd-display ";xramp 3: ~A" (display-edits ind 0 2)))
+	    (snd-display ";xramp 3: ~A" (safe-display-edits ind 0 2)))
 	(undo)
 	(xramp-channel 0.0 1.0 1.0)
-	(if (not (string-=? (display-edits ind 0 2) "
+	(if (not (string-=? (safe-display-edits ind 0 2) "
  (ramp 0 10) ; ramp-channel 0.000 1.000 0 #f [2:2]:
    (at 0, cp->sounds[1][0:9, 1.000, [1]-0.000 -> 1.000]) [buf: 10] 
    (at 10, end_mark)
 "))
-	    (snd-display ";xramp 4: ~A" (display-edits ind 0 2)))
+	    (snd-display ";xramp 4: ~A" (safe-display-edits ind 0 2)))
 	(undo)
 	(xramp-channel 0.5 1.5 32.0)
-	(if (not (string-=? (display-edits ind 0 2) "
+	(if (not (string-=? (safe-display-edits ind 0 2) "
  (ramp 0 10) ; xramp-channel 0.500 1.500 32.000 0 #f [2:2]:
    (at 0, cp->sounds[1][0:9, 1.000, [4]0.000 -> 3.466, off: 0.468, scl: 0.032]) [buf: 10] 
    (at 10, end_mark)
 "))
-	    (snd-display ";xramp 5: ~A" (display-edits ind 0 2)))
+	    (snd-display ";xramp 5: ~A" (safe-display-edits ind 0 2)))
 	(if (or (fneq (maxamp) 1.5) (fneq (sample 0) 0.5))
 	    (snd-display ";xramp 5 vals: ~A ~A" (maxamp) (sample 0)))
 	(undo)
 	(xramp-channel -0.5 1.5 32.0)
-	(if (not (string-=? (display-edits ind 0 2) "
+	(if (not (string-=? (safe-display-edits ind 0 2) "
  (ramp 0 10) ; xramp-channel -0.500 1.500 32.000 0 #f [2:2]:
    (at 0, cp->sounds[1][0:9, 1.000, [4]0.000 -> 3.466, off: -0.565, scl: 0.065]) [buf: 10] 
    (at 10, end_mark)
 "))
-	    (snd-display ";xramp 6: ~A" (display-edits ind 0 2)))
+	    (snd-display ";xramp 6: ~A" (safe-display-edits ind 0 2)))
 	(if (or (fneq (maxamp) 1.5) (fneq (sample 0) -0.5))
 	    (snd-display ";xramp 6 vals: ~A ~A" (maxamp) (sample 0)))
 	(undo)
@@ -4605,74 +4615,74 @@ EDITS: 5
 	(let ((vals (channel->vct))
 	      (ctr 0))
 	  (scale-channel 0.5)
-	  (if (not (string-=? (display-edits ind 0 3) "
+	  (if (not (string-=? (safe-display-edits ind 0 3) "
  (scale 0 10) ; scale-channel 0.500 0 #f [3:2]:
    (at 0, cp->sounds[1][0:9, 0.500, [4]0.000 -> 3.466, off: -0.032, scl: 0.032]) [buf: 10] 
    (at 10, end_mark)
 "))
-	      (snd-display ";xramp 7: ~A" (display-edits ind 0 3)))
+	      (snd-display ";xramp 7: ~A" (safe-display-edits ind 0 3)))
 	  (set! ctr 0)
 	  (let ((baddy (scan-chan (lambda (y) (if (fneq y (* 0.5 (vct-ref vals ctr))) #t (begin (set! ctr (1+ ctr)) #f))))))
 	    (if baddy (snd-display ";trouble in xramp 7: ~A" baddy)))
 	  (undo)
 	  (delete-sample 0)
-	  (if (not (string-=? (display-edits ind 0 3) "
+	  (if (not (string-=? (safe-display-edits ind 0 3) "
  (delete 0 1) ; delete-samples 0 1 [3:2]:
    (at 0, cp->sounds[1][1:9, 1.000, [4]0.385 -> 3.466, off: -0.032, scl: 0.032]) [buf: 10] 
    (at 9, end_mark)
 "))
-	      (snd-display ";xramp 8: ~A" (display-edits ind 0 3)))
+	      (snd-display ";xramp 8: ~A" (safe-display-edits ind 0 3)))
 	  (set! ctr 1)
 	  (let ((baddy (scan-chan (lambda (y) (if (fneq y (vct-ref vals ctr)) #t (begin (set! ctr (1+ ctr)) #f))))))
 	    (if baddy (snd-display ";trouble in xramp 8: ~A" baddy)))
 	  (undo)
 	  (delete-samples 0 2)
-	  (if (not (string-=? (display-edits ind 0 3) "
+	  (if (not (string-=? (safe-display-edits ind 0 3) "
  (delete 0 2) ; delete-samples 0 2 [3:2]:
    (at 0, cp->sounds[1][2:9, 1.000, [4]0.770 -> 3.466, off: -0.032, scl: 0.032]) [buf: 10] 
    (at 8, end_mark)
 "))
-	      (snd-display ";xramp 9: ~A" (display-edits ind 0 3)))
+	      (snd-display ";xramp 9: ~A" (safe-display-edits ind 0 3)))
 	  (set! ctr 2)
 	  (let ((baddy (scan-chan (lambda (y) (if (fneq y (vct-ref vals ctr)) #t (begin (set! ctr (1+ ctr)) #f))))))
 	    (if baddy (snd-display ";trouble in xramp 9: ~A" baddy)))
 	  (undo)
 	  (delete-sample 0)
 	  (delete-sample 0)
-	  (if (not (string-=? (display-edits ind 0 4) "
+	  (if (not (string-=? (safe-display-edits ind 0 4) "
  (delete 0 1) ; delete-samples 0 1 [4:2]:
    (at 0, cp->sounds[1][2:9, 1.000, [4]0.770 -> 3.466, off: -0.032, scl: 0.032]) [buf: 10] 
    (at 8, end_mark)
 "))
-	      (snd-display ";xramp 10: ~A" (display-edits ind 0 4)))
+	      (snd-display ";xramp 10: ~A" (safe-display-edits ind 0 4)))
 	  (undo 2)
 	  (delete-sample 4)
-	  (if (not (string-=? (display-edits ind 0 3) "
+	  (if (not (string-=? (safe-display-edits ind 0 3) "
  (delete 4 1) ; delete-samples 4 1 [3:3]:
    (at 0, cp->sounds[1][0:3, 1.000, [4]0.000 -> 1.155, off: -0.032, scl: 0.032]) [buf: 10] 
    (at 4, cp->sounds[1][5:9, 1.000, [4]1.925 -> 3.466, off: -0.032, scl: 0.032]) [buf: 10] 
    (at 9, end_mark)
 "))
-	      (snd-display ";xramp 11: ~A" (display-edits ind 0 3)))
+	      (snd-display ";xramp 11: ~A" (safe-display-edits ind 0 3)))
 	  (undo)
 	  (delete-samples 4 2)
-	  (if (not (string-=? (display-edits ind 0 3) "
+	  (if (not (string-=? (safe-display-edits ind 0 3) "
  (delete 4 2) ; delete-samples 4 2 [3:3]:
    (at 0, cp->sounds[1][0:3, 1.000, [4]0.000 -> 1.155, off: -0.032, scl: 0.032]) [buf: 10] 
    (at 4, cp->sounds[1][6:9, 1.000, [4]2.310 -> 3.466, off: -0.032, scl: 0.032]) [buf: 10] 
    (at 8, end_mark)
 "))
-	      (snd-display ";xramp 12: ~A" (display-edits ind 0 3)))
+	      (snd-display ";xramp 12: ~A" (safe-display-edits ind 0 3)))
 	  (undo)
 	  (scale-channel 0.5 4 2)
-	  (if (not (string-=? (display-edits ind 0 3) "
+	  (if (not (string-=? (safe-display-edits ind 0 3) "
  (scale 4 2) ; scale-channel 0.500 4 2 [3:4]:
    (at 0, cp->sounds[1][0:3, 1.000, [4]0.000 -> 1.155, off: -0.032, scl: 0.032]) [buf: 10] 
    (at 4, cp->sounds[1][4:5, 0.500, [4]1.540 -> 1.925, off: -0.032, scl: 0.032]) [buf: 10] 
    (at 6, cp->sounds[1][6:9, 1.000, [4]2.310 -> 3.466, off: -0.032, scl: 0.032]) [buf: 10] 
    (at 10, end_mark)
 "))
-	      (snd-display ";xramp 13: ~A" (display-edits ind 0 3)))
+	      (snd-display ";xramp 13: ~A" (safe-display-edits ind 0 3)))
 	  (set! ctr 0)
 	  (let ((baddy (scan-chan (lambda (y)
 				    (if (or (and (> ctr 5) (fneq y (vct-ref vals ctr)))
@@ -4683,54 +4693,54 @@ EDITS: 5
 	    (if baddy (snd-display ";trouble in xramp 8: ~A" baddy)))
 	  (undo)
 	  (scale-channel 0.5 0 2)
-	  (if (not (string-=? (display-edits ind 0 3) "
+	  (if (not (string-=? (safe-display-edits ind 0 3) "
  (scale 0 2) ; scale-channel 0.500 0 2 [3:3]:
    (at 0, cp->sounds[1][0:1, 0.500, [4]0.000 -> 0.385, off: -0.032, scl: 0.032]) [buf: 10] 
    (at 2, cp->sounds[1][2:9, 1.000, [4]0.770 -> 3.466, off: -0.032, scl: 0.032]) [buf: 10] 
    (at 10, end_mark)
 "))
-	      (snd-display ";xramp 14: ~A" (display-edits ind 0 3)))
+	      (snd-display ";xramp 14: ~A" (safe-display-edits ind 0 3)))
 	  (undo)
 	  (pad-channel 4 2)
-	  (if (not (string-=? (display-edits ind 0 3) "
+	  (if (not (string-=? (safe-display-edits ind 0 3) "
  (silence 4 2) ; pad-channel [3:4]:
    (at 0, cp->sounds[1][0:3, 1.000, [4]0.000 -> 1.155, off: -0.032, scl: 0.032]) [buf: 10] 
    (at 4, cp->sounds[-1][0:1, 0.000])
    (at 6, cp->sounds[1][4:9, 1.000, [4]1.540 -> 3.466, off: -0.032, scl: 0.032]) [buf: 10] 
    (at 12, end_mark)
 "))
-	      (snd-display ";xramp 15: ~A" (display-edits ind 0 3)))
+	      (snd-display ";xramp 15: ~A" (safe-display-edits ind 0 3)))
 	  (undo)
 	  (set! (sample 4) 1.0)
-	  (if (not (string-=? (display-edits ind 0 3) "
+	  (if (not (string-=? (safe-display-edits ind 0 3) "
  (set 4 1) ; set-sample 4 1.0000 [3:4]:
    (at 0, cp->sounds[1][0:3, 1.000, [4]0.000 -> 1.155, off: -0.032, scl: 0.032]) [buf: 10] 
    (at 4, cp->sounds[2][0:0, 1.000]) [buf: 1] 
    (at 5, cp->sounds[1][5:9, 1.000, [4]1.925 -> 3.466, off: -0.032, scl: 0.032]) [buf: 10] 
    (at 10, end_mark)
 "))
-	      (snd-display ";xramp 16: ~A" (display-edits ind 0 3)))
+	      (snd-display ";xramp 16: ~A" (safe-display-edits ind 0 3)))
 	  (undo)
 	  (set! (samples 4 2) (make-vct 2))
-	  (if (not (string-=? (display-edits ind 0 3) "
+	  (if (not (string-=? (safe-display-edits ind 0 3) "
  (set 4 2) ; set-samples [3:4]:
    (at 0, cp->sounds[1][0:3, 1.000, [4]0.000 -> 1.155, off: -0.032, scl: 0.032]) [buf: 10] 
    (at 4, cp->sounds[2][0:1, 1.000]) [buf: 2] 
    (at 6, cp->sounds[1][6:9, 1.000, [4]2.310 -> 3.466, off: -0.032, scl: 0.032]) [buf: 10] 
    (at 10, end_mark)
 "))
-	      (snd-display ";xramp 17: ~A" (display-edits ind 0 3)))
+	      (snd-display ";xramp 17: ~A" (safe-display-edits ind 0 3)))
 	  (undo)
 	  (scale-channel 0.5)
 	  (set! (samples 4 2) (make-vct 2))
-	  (if (not (string-=? (display-edits ind 0 4) "
+	  (if (not (string-=? (safe-display-edits ind 0 4) "
  (set 4 2) ; set-samples [4:4]:
    (at 0, cp->sounds[1][0:3, 0.500, [4]0.000 -> 1.155, off: -0.032, scl: 0.032]) [buf: 10] 
    (at 4, cp->sounds[2][0:1, 1.000]) [buf: 2] 
    (at 6, cp->sounds[1][6:9, 0.500, [4]2.310 -> 3.466, off: -0.032, scl: 0.032]) [buf: 10] 
    (at 10, end_mark)
 "))
-	      (snd-display ";xramp 18: ~A" (display-edits ind 0 4)))
+	      (snd-display ";xramp 18: ~A" (safe-display-edits ind 0 4)))
 	  )
 	(close-sound ind))
       
@@ -4740,7 +4750,7 @@ EDITS: 5
 	    ((= i 10))
 	  (scale-channel 0.5 (* i 10) 10))
 	(ramp-channel 0.0 1.0)
-	(if (not (string=? (display-edits ind 0 12) "
+	(if (not (string=? (safe-display-edits ind 0 12) "
  (ramp 0 100) ; ramp-channel 0.000 1.000 0 #f [12:11]:
    (at 0, cp->sounds[1][0:9, 0.500, [1]0.000 -> 0.091]) [buf: 100] 
    (at 10, cp->sounds[1][10:19, 0.500, [1]0.101 -> 0.192]) [buf: 100] 
@@ -4754,11 +4764,11 @@ EDITS: 5
    (at 90, cp->sounds[1][90:99, 0.500, [1]0.909 -> 1.000]) [buf: 100] 
    (at 100, end_mark)
 "))
-	    (snd-display ";multi-ramp 1: ~A" (display-edits ind 0 12)))
+	    (snd-display ";multi-ramp 1: ~A" (safe-display-edits ind 0 12)))
 	(if (fneq (maxamp) 0.5) (snd-display ";multi ramp 1 maxamp: ~A" (maxamp)))
 	(undo)
 	(ramp-channel 0.1 1.0 10 90)
-	(if (not (string=? (display-edits ind 0 12) "
+	(if (not (string=? (safe-display-edits ind 0 12) "
  (ramp 10 90) ; ramp-channel 0.100 1.000 10 90 [12:11]:
    (at 0, cp->sounds[1][0:9, 0.500]) [buf: 100] 
    (at 10, cp->sounds[1][10:19, 0.500, [1]0.100 -> 0.191]) [buf: 100] 
@@ -4772,11 +4782,11 @@ EDITS: 5
    (at 90, cp->sounds[1][90:99, 0.500, [1]0.909 -> 1.000]) [buf: 100] 
    (at 100, end_mark)
 "))
-	    (snd-display ";multi-ramp 2: ~A" (display-edits ind 0 12)))
+	    (snd-display ";multi-ramp 2: ~A" (safe-display-edits ind 0 12)))
 	(if (fneq (maxamp) 0.5) (snd-display ";multi ramp 2 maxamp: ~A" (maxamp)))
 	(undo)
 	(ramp-channel 0.0 0.9 0 90)
-	(if (not (string=? (display-edits ind 0 12) "
+	(if (not (string=? (safe-display-edits ind 0 12) "
  (ramp 0 90) ; ramp-channel 0.000 0.900 0 90 [12:11]:
    (at 0, cp->sounds[1][0:9, 0.500, [1]0.000 -> 0.091]) [buf: 100] 
    (at 10, cp->sounds[1][10:19, 0.500, [1]0.101 -> 0.192]) [buf: 100] 
@@ -4790,13 +4800,13 @@ EDITS: 5
    (at 90, cp->sounds[1][90:99, 0.500]) [buf: 100] 
    (at 100, end_mark)
 "))
-	    (snd-display ";multi-ramp 3: ~A" (display-edits ind 0 12)))
+	    (snd-display ";multi-ramp 3: ~A" (safe-display-edits ind 0 12)))
 	(if (fneq (maxamp) 0.5) (snd-display ";multi ramp 3 maxamp: ~A" (maxamp)))
 	(if (fneq (sample 89) 0.45) (snd-display ";multi ramp 3 sample 89: ~A" (sample 89)))
 	(if (fneq (sample 90) 0.5) (snd-display ";multi ramp 3 sample 90: ~A" (sample 90)))
 	(undo)
 	(ramp-channel 0.1 0.9 10 80)
-	(if (not (string=? (display-edits ind 0 12) "
+	(if (not (string=? (safe-display-edits ind 0 12) "
  (ramp 10 80) ; ramp-channel 0.100 0.900 10 80 [12:11]:
    (at 0, cp->sounds[1][0:9, 0.500]) [buf: 100] 
    (at 10, cp->sounds[1][10:19, 0.500, [1]0.100 -> 0.191]) [buf: 100] 
@@ -4810,14 +4820,14 @@ EDITS: 5
    (at 90, cp->sounds[1][90:99, 0.500]) [buf: 100] 
    (at 100, end_mark)
 "))
-	    (snd-display ";multi-ramp 4: ~A" (display-edits ind 0 12)))
+	    (snd-display ";multi-ramp 4: ~A" (safe-display-edits ind 0 12)))
 	(revert-sound)
 	(map-channel (lambda (y) 1.0) 0 100)
 	(ramp-channel 0.0 1.0)
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
 	  (scale-channel 0.5 (* i 10) 10))
-	(if (not (string=? (display-edits ind 0 12) "
+	(if (not (string=? (safe-display-edits ind 0 12) "
  (scale 90 10) ; scale-channel 0.500 90 10 [12:11]:
    (at 0, cp->sounds[1][0:9, 0.500, [1]0.000 -> 0.091]) [buf: 100] 
    (at 10, cp->sounds[1][10:19, 0.500, [1]0.101 -> 0.192]) [buf: 100] 
@@ -4831,7 +4841,7 @@ EDITS: 5
    (at 90, cp->sounds[1][90:99, 0.500, [1]0.909 -> 1.000]) [buf: 100] 
    (at 100, end_mark)
 "))
-	    (snd-display ";multi-ramp 5: ~A" (display-edits ind 0 12)))
+	    (snd-display ";multi-ramp 5: ~A" (safe-display-edits ind 0 12)))
 	(close-sound ind))
       
       (let ((ind (new-sound "test.snd")))
@@ -4848,7 +4858,7 @@ EDITS: 5
 	  (do ((i 0 (1+ i)))
 	      ((= i 10))
 	    (scale-channel 0.5 (* i 10) 10))
-	  (if (not (string=? (display-edits ind 0 12 #f) "
+	  (if (not (string=? (safe-display-edits ind 0 12 #f) "
  (scale 90 10) ; scale-channel 0.500 90 10 [12:11]:
    (at 0, cp->sounds[1][0:9, 0.500, loc: 0, pos: 0, scl: 1.000]) [buf: 100] 
    (at 10, cp->sounds[1][10:19, 0.500, loc: 0, pos: 10, scl: 1.000]) [buf: 100] 
@@ -4862,7 +4872,7 @@ EDITS: 5
    (at 90, cp->sounds[1][90:99, 0.500, loc: 0, pos: 90, scl: 1.000]) [buf: 100] 
    (at 100, end_mark)
 "))
-	      (snd-display ";multi-tree 0: ~A" (display-edits ind 0 12 #f)))
+	      (snd-display ";multi-tree 0: ~A" (safe-display-edits ind 0 12 #f)))
 	  (let ((scl-data (vct-scale! (channel->vct) 2.0)))
 	    (if (not (vequal map-data scl-data))
 		(snd-display ";map and ptree->scl cosine disagree: ~A ~A" map-data scl-data)))
@@ -4873,7 +4883,7 @@ EDITS: 5
 	      ((= i 10))
 	    (scale-channel 0.5 (* i 10) 10))
 	  (cosine-channel-via-ptree 0 100)
-	  (if (not (string=? (display-edits ind 0 12 #f) "
+	  (if (not (string=? (safe-display-edits ind 0 12 #f) "
  (ptree[0] 0 100) ; ptree-channel [12:11]:
    (at 0, cp->sounds[1][0:9, 1.000, loc: 0, pos: 0, scl: 0.500]) [buf: 100] 
    (at 10, cp->sounds[1][10:19, 1.000, loc: 0, pos: 10, scl: 0.500]) [buf: 100] 
@@ -4887,7 +4897,7 @@ EDITS: 5
    (at 90, cp->sounds[1][90:99, 1.000, loc: 0, pos: 90, scl: 0.500]) [buf: 100] 
    (at 100, end_mark)
 "))
-	      (snd-display ";multi-tree 1: ~A" (display-edits ind 0 12 #f)))
+	      (snd-display ";multi-tree 1: ~A" (safe-display-edits ind 0 12 #f)))
 	  (let ((scl-data (vct-scale! (channel->vct) 2.0)))
 	    (if (not (vequal map-data scl-data))
 		(snd-display ";map and scl->ptree cosine disagree: ~A ~A" map-data scl-data)))
@@ -4905,7 +4915,7 @@ EDITS: 5
 	  (do ((i 0 (1+ i)))
 	      ((= i 10))
 	    (scale-channel 0.5 (* i 10) 10))
-	  (if (not (string-=? (display-edits ind 0 12 #f) "
+	  (if (not (string-=? (safe-display-edits ind 0 12 #f) "
  (scale 90 10) ; scale-channel 0.500 90 10 [12:11]:
    (at 0, cp->sounds[1][0:9, 0.500]) [buf: 100] 
    (at 10, cp->sounds[1][10:19, 0.500, loc: 0, pos: 0, scl: 1.000]) [buf: 100] 
@@ -4919,7 +4929,7 @@ EDITS: 5
    (at 90, cp->sounds[1][90:99, 0.500, loc: 0, pos: 80, scl: 1.000]) [buf: 100] 
    (at 100, end_mark)
 "))
-	      (snd-display ";multi-tree 2: ~A" (display-edits ind 0 12 #f)))
+	      (snd-display ";multi-tree 2: ~A" (safe-display-edits ind 0 12 #f)))
 	  (let ((scl-data (vct-scale! (channel->vct) 2.0)))
 	    (if (not (vequal map-data scl-data))
 		(snd-display ";map and scl->ptree 10:90 cosine disagree: ~A ~A" map-data scl-data)))
@@ -4936,7 +4946,7 @@ EDITS: 5
 	  (let ((tree-data (vct-scale! (channel->vct) 2.0)))
 	    (if (not (vequal map-data tree-data))
 		(snd-display ";map and ptree 10:80 cosine disagree: ~A ~A" map-data tree-data)))
-	  (if (not (string-=? (display-edits ind 0 12 #f) "
+	  (if (not (string-=? (safe-display-edits ind 0 12 #f) "
  (ptree[0] 10 80) ; ptree-channel [12:11]:
    (at 0, cp->sounds[1][0:9, 0.500]) [buf: 100] 
    (at 10, cp->sounds[1][10:19, 1.000, loc: 0, pos: 0, scl: 0.500]) [buf: 100] 
@@ -4950,7 +4960,7 @@ EDITS: 5
    (at 90, cp->sounds[1][90:99, 0.500]) [buf: 100] 
    (at 100, end_mark)
 "))
-	      (snd-display ";multi-tree 3: ~A" (display-edits ind 0 12 #f)))
+	      (snd-display ";multi-tree 3: ~A" (safe-display-edits ind 0 12 #f)))
 	  (let ((scl-data (vct-scale! (channel->vct) 2.0)))
 	    (if (not (vequal map-data scl-data))
 		(snd-display ";map and scl->ptree 10:80 cosine disagree: ~A ~A" map-data scl-data)))
@@ -4969,7 +4979,7 @@ EDITS: 5
 	  (do ((i 0 (1+ i)))
 	      ((= i 10))
 	    (scale-channel 0.5 (* i 10) 10))
-	  (if (not (string-=? (display-edits ind 0 13 #f) "
+	  (if (not (string-=? (safe-display-edits ind 0 13 #f) "
  (scale 90 10) ; scale-channel 0.500 90 10 [13:11]:
    (at 0, cp->sounds[1][0:9, 0.500, [1]0.000 -> 0.091, loc: 0, pos: 0, scl: 1.000]) [buf: 100] 
    (at 10, cp->sounds[1][10:19, 0.500, [1]0.101 -> 0.192, loc: 0, pos: 10, scl: 1.000]) [buf: 100] 
@@ -4983,7 +4993,7 @@ EDITS: 5
    (at 90, cp->sounds[1][90:99, 0.500, [1]0.909 -> 1.000, loc: 0, pos: 90, scl: 1.000]) [buf: 100] 
    (at 100, end_mark)
 "))
-	      (snd-display ";multi-tree 4: ~A" (display-edits ind 0 13 #f)))
+	      (snd-display ";multi-tree 4: ~A" (safe-display-edits ind 0 13 #f)))
 	  (let ((scl-data (vct-scale! (channel->vct) 2.0)))
 	    (if (not (vequal map-data scl-data))
 		(snd-display ";map and (scl) ptree->ramp cosine disagree: ~A ~A" map-data scl-data)))
@@ -4995,7 +5005,7 @@ EDITS: 5
 	      ((= i 10))
 	    (scale-channel 0.5 (* i 10) 10))
 	  (cosine-channel-via-ptree 0 100)
-	  (if (not (string-=? (display-edits ind 0 13 #f) "
+	  (if (not (string-=? (safe-display-edits ind 0 13 #f) "
  (ptree[0] 0 100) ; ptree-channel [13:11]:
    (at 0, cp->sounds[1][0:9, 1.000, [1]0.000 -> 0.091, loc: 0, pos: 0, scl: 0.500]) [buf: 100] 
    (at 10, cp->sounds[1][10:19, 1.000, [1]0.101 -> 0.192, loc: 0, pos: 10, scl: 0.500]) [buf: 100] 
@@ -5009,13 +5019,13 @@ EDITS: 5
    (at 90, cp->sounds[1][90:99, 1.000, [1]0.909 -> 1.000, loc: 0, pos: 90, scl: 0.500]) [buf: 100] 
    (at 100, end_mark)
 "))
-	      (snd-display ";multi-tree 5: ~A" (display-edits ind 0 13 #f)))
+	      (snd-display ";multi-tree 5: ~A" (safe-display-edits ind 0 13 #f)))
 	  (let ((scl-data (vct-scale! (channel->vct) 2.0)))
 	    (if (not (vequal map-data scl-data))
 		(snd-display ";map and ptree->ramp (scl) cosine disagree: ~A ~A" map-data scl-data)))
 	  
 	  (scale-channel 0.5)
-	  (if (not (string-=? (display-edits ind 0 14 #f) "
+	  (if (not (string-=? (safe-display-edits ind 0 14 #f) "
  (scale 0 100) ; scale-channel 0.500 0 #f [14:11]:
    (at 0, cp->sounds[1][0:9, 0.500, [1]0.000 -> 0.091, loc: 0, pos: 0, scl: 0.500]) [buf: 100] 
    (at 10, cp->sounds[1][10:19, 0.500, [1]0.101 -> 0.192, loc: 0, pos: 10, scl: 0.500]) [buf: 100] 
@@ -5029,7 +5039,7 @@ EDITS: 5
    (at 90, cp->sounds[1][90:99, 0.500, [1]0.909 -> 1.000, loc: 0, pos: 90, scl: 0.500]) [buf: 100] 
    (at 100, end_mark)
 "))
-	      (snd-display ";multi-tree 5 + scl: ~A" (display-edits ind 0 14 #f)))
+	      (snd-display ";multi-tree 5 + scl: ~A" (safe-display-edits ind 0 14 #f)))
 	  (let ((scl-data (vct-scale! (channel->vct) 4.0)))
 	    (if (not (vequal map-data scl-data))
 		(snd-display ";map and ptree->ramp (scl twice) cosine disagree: ~A ~A" map-data scl-data)))
@@ -5042,7 +5052,7 @@ EDITS: 5
 	    (scale-channel 0.5 (* i 10) 10))
 	  (cosine-channel-via-ptree 10 80)
 	  (set! map-data (channel->vct))
-	  (if (not (string-=? (display-edits ind 0 13 #f) "
+	  (if (not (string-=? (safe-display-edits ind 0 13 #f) "
  (ptree[0] 10 80) ; ptree-channel [13:11]:
    (at 0, cp->sounds[1][0:9, 0.500, [1]0.000 -> 0.091]) [buf: 100] 
    (at 10, cp->sounds[1][10:19, 1.000, [1]0.101 -> 0.192, loc: 0, pos: 0, scl: 0.500]) [buf: 100] 
@@ -5056,7 +5066,7 @@ EDITS: 5
    (at 90, cp->sounds[1][90:99, 0.500, [1]0.909 -> 1.000]) [buf: 100] 
    (at 100, end_mark)
 "))
-	      (snd-display ";multi-tree 6: ~A" (display-edits ind 0 13 #f)))
+	      (snd-display ";multi-tree 6: ~A" (safe-display-edits ind 0 13 #f)))
 	  
 	  (revert-sound)
 	  (map-channel (lambda (y) 1.0) 0 100)
@@ -5076,7 +5086,7 @@ EDITS: 5
 	  (do ((i 0 (1+ i)))
 	      ((= i 10))
 	    (scale-channel 0.5 (* i 10) 10))
-	  (if (not (string-=? (display-edits ind 0 13 #f) "
+	  (if (not (string-=? (safe-display-edits ind 0 13 #f) "
  (scale 90 10) ; scale-channel 0.500 90 10 [13:13]:
    (at 0, cp->sounds[1][0:9, 0.500, [1]0.000 -> 0.091]) [buf: 100] 
    (at 10, cp->sounds[1][10:14, 0.500, [1]0.101 -> 0.141]) [buf: 100] 
@@ -5092,7 +5102,7 @@ EDITS: 5
    (at 90, cp->sounds[1][90:99, 0.500, [1]0.909 -> 1.000]) [buf: 100] 
    (at 100, end_mark)
 "))
-	      (snd-display ";multi-tree 7: ~A" (display-edits ind 0 13 #f)))
+	      (snd-display ";multi-tree 7: ~A" (safe-display-edits ind 0 13 #f)))
 	  (close-sound ind)))
       
       (let ((ind (new-sound "test.snd")))
@@ -5121,7 +5131,7 @@ EDITS: 5
 	    (vct-set! orig i (* (vct-ref orig i) .25)))
 	  (if (not (vvequal orig data))
 	      (snd-display ";p2 pos test data: ~A" data))
-	  (if (not (string-=? (display-edits ind 0 13 #f) "
+	  (if (not (string-=? (safe-display-edits ind 0 13 #f) "
  (ptree[1] 20 45) ; ptree-channel [13:12]:
    (at 0, cp->sounds[1][0:9, 1.000, loc: 0, pos: 0, scl: 0.750]) [buf: 100] 
    (at 10, cp->sounds[1][10:19, 1.000, loc: 0, pos: 10, scl: 0.750]) [buf: 100] 
@@ -5136,7 +5146,7 @@ EDITS: 5
    (at 90, cp->sounds[1][90:99, 1.000, loc: 0, pos: 90, scl: 0.750]) [buf: 100] 
    (at 100, end_mark)
 "))
-	      (snd-display ";p2 pos multi: ~A" (display-edits ind 0 13 #f)))
+	      (snd-display ";p2 pos multi: ~A" (safe-display-edits ind 0 13 #f)))
 	  (close-sound ind)))
       
       (let ((ind (new-sound "test.snd"))
@@ -5156,7 +5166,7 @@ EDITS: 5
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
 	  (scale-channel 0.5 (* i 10) 10))
-	(if (not (string-=? (display-edits ind 0 13 #f) "
+	(if (not (string-=? (safe-display-edits ind 0 13 #f) "
  (scale 90 10) ; scale-channel 0.500 90 10 [13:11]:
    (at 0, cp->sounds[1][0:9, 0.500, [4]0.000 -> 0.315, off: -0.032, scl: 0.032, loc: 0, pos: 0, scl: 1.000]) [buf: 100] 
    (at 10, cp->sounds[1][10:19, 0.500, [4]0.350 -> 0.665, off: -0.032, scl: 0.032, loc: 0, pos: 10, scl: 1.000]) [buf: 100] 
@@ -5170,7 +5180,7 @@ EDITS: 5
    (at 90, cp->sounds[1][90:99, 0.500, [4]3.151 -> 3.466, off: -0.032, scl: 0.032, loc: 0, pos: 90, scl: 1.000]) [buf: 100] 
    (at 100, end_mark)
 "))
-	    (snd-display ";multi-tree 9: ~A" (display-edits ind 0 13 #f)))
+	    (snd-display ";multi-tree 9: ~A" (safe-display-edits ind 0 13 #f)))
 	(let ((scl-data (vct-scale! (channel->vct) 2.0)))
 	  (if (not (vequal map-data scl-data))
 	      (snd-display ";map and (scl) ptree->xramp cosine disagree: ~A ~A" map-data scl-data)))
@@ -5182,7 +5192,7 @@ EDITS: 5
 	    ((= i 10))
 	  (scale-channel 0.5 (* i 10) 10))
 	(cosine-channel-via-ptree 0 100)
-	(if (not (string-=? (display-edits ind 0 13 #f) "
+	(if (not (string-=? (safe-display-edits ind 0 13 #f) "
  (ptree[0] 0 100) ; ptree-channel [13:11]:
    (at 0, cp->sounds[1][0:9, 1.000, [4]0.000 -> 0.315, off: -0.032, scl: 0.032, loc: 0, pos: 0, scl: 0.500]) [buf: 100] 
    (at 10, cp->sounds[1][10:19, 1.000, [4]0.350 -> 0.665, off: -0.032, scl: 0.032, loc: 0, pos: 10, scl: 0.500]) [buf: 100] 
@@ -5196,7 +5206,7 @@ EDITS: 5
    (at 90, cp->sounds[1][90:99, 1.000, [4]3.151 -> 3.466, off: -0.032, scl: 0.032, loc: 0, pos: 90, scl: 0.500]) [buf: 100] 
    (at 100, end_mark)
 "))
-	    (snd-display ";multi-tree 10: ~A" (display-edits ind 0 13 #f)))
+	    (snd-display ";multi-tree 10: ~A" (safe-display-edits ind 0 13 #f)))
 	(let ((scl-data (vct-scale! (channel->vct) 2.0)))
 	  (if (not (vequal map-data scl-data))
 	      (snd-display ";map and ptree->xramp (scl) cosine disagree: ~A ~A" map-data scl-data)))
@@ -5209,7 +5219,7 @@ EDITS: 5
 	  (scale-channel 0.5 (* i 10) 10))
 	(cosine-channel-via-ptree 10 80)
 	(set! map-data (channel->vct))
-	(if (not (string-=? (display-edits ind 0 13 #f) "
+	(if (not (string-=? (safe-display-edits ind 0 13 #f) "
  (ptree[0] 10 80) ; ptree-channel [13:11]:
    (at 0, cp->sounds[1][0:9, 0.500, [4]0.000 -> 0.315, off: -0.032, scl: 0.032]) [buf: 100] 
    (at 10, cp->sounds[1][10:19, 1.000, [4]0.350 -> 0.665, off: -0.032, scl: 0.032, loc: 0, pos: 0, scl: 0.500]) [buf: 100] 
@@ -5223,7 +5233,7 @@ EDITS: 5
    (at 90, cp->sounds[1][90:99, 0.500, [4]3.151 -> 3.466, off: -0.032, scl: 0.032]) [buf: 100] 
    (at 100, end_mark)
 "))
-	    (snd-display ";multi-tree 11: ~A" (display-edits ind 0 13 #f)))
+	    (snd-display ";multi-tree 11: ~A" (safe-display-edits ind 0 13 #f)))
 	
 	(revert-sound)
 	(map-channel (lambda (y) 1.0) 0 100)
@@ -5243,7 +5253,7 @@ EDITS: 5
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
 	  (scale-channel 0.5 (* i 10) 10))
-	(if (not (string-=? (display-edits ind 0 13 #f) "
+	(if (not (string-=? (safe-display-edits ind 0 13 #f) "
  (scale 90 10) ; scale-channel 0.500 90 10 [13:13]:
    (at 0, cp->sounds[1][0:9, 0.500, [4]0.000 -> 0.315, off: -0.032, scl: 0.032]) [buf: 100] 
    (at 10, cp->sounds[1][10:14, 0.500, [4]0.350 -> 0.490, off: -0.032, scl: 0.032]) [buf: 100] 
@@ -5259,7 +5269,7 @@ EDITS: 5
    (at 90, cp->sounds[1][90:99, 0.500, [4]3.151 -> 3.466, off: -0.032, scl: 0.032]) [buf: 100] 
    (at 100, end_mark)
 "))
-	    (snd-display ";multi-tree 12: ~A" (display-edits ind 0 13 #f)))
+	    (snd-display ";multi-tree 12: ~A" (safe-display-edits ind 0 13 #f)))
 	
 	(close-sound ind))
       
@@ -5271,40 +5281,40 @@ EDITS: 5
 	(ptree-channel (lambda (y) (* y 0.5)))
 	(if (not (vequal (channel->vct) (make-vct 11 0.5)))
 	    (snd-display ";ptree2 0: ~A" (channel->vct)))
-	(if (not (string-=? (display-edits ind 0 2) "
+	(if (not (string-=? (safe-display-edits ind 0 2) "
  (ptree[0] 0 11) ; ptree-channel [2:2]:
    (at 0, cp->sounds[1][0:10, 1.000, loc: 0, pos: 0, scl: 1.000, code: (lambda (y) (* y 0.5))]) [buf: 11] 
    (at 11, end_mark)
 "))
-	    (snd-display ";ptree2 3: ~A" (display-edits ind 0 2)))
+	    (snd-display ";ptree2 3: ~A" (safe-display-edits ind 0 2)))
 	(ptree-channel (lambda (y) (* y 1.5)))
 	(if (not (vequal (channel->vct) (make-vct 11 0.75)))
 	    (snd-display ";ptree2 1: ~A" (channel->vct)))
-	(if (not (string-=? (display-edits ind 0 3) "
+	(if (not (string-=? (safe-display-edits ind 0 3) "
  (ptree[1] 0 11) ; ptree-channel [3:2]:
    (at 0, cp->sounds[1][0:10, 1.000, loc2: 1, pos2: 0, scl2: 1.000, loc: 0, pos: 0, scl: 1.000, code: (lambda (y) (* y 0.5))]) [buf: 11] 
    (at 11, end_mark)
 "))
-	    (snd-display ";ptree2 4: ~A" (display-edits ind 0 3)))
+	    (snd-display ";ptree2 4: ~A" (safe-display-edits ind 0 3)))
 	(undo)
 	(scale-by (vct 1.5))
 	(if (not (vequal (channel->vct) (make-vct 11 0.75)))
 	    (snd-display ";ptree2 5: ~A" (channel->vct)))
-	(if (not (string-=? (display-edits ind 0 3) "
+	(if (not (string-=? (safe-display-edits ind 0 3) "
  (scale 0 11) ; scale-channel 1.500 0 #f [3:2]:
    (at 0, cp->sounds[1][0:10, 1.500, loc: 0, pos: 0, scl: 1.000, code: (lambda (y) (* y 0.5))]) [buf: 11] 
    (at 11, end_mark)
 "))
-	    (snd-display ";ptree2 6: ~A" (display-edits ind 0 3)))
+	    (snd-display ";ptree2 6: ~A" (safe-display-edits ind 0 3)))
 	(ptree-channel (lambda (y) (* y 0.1)))
 	(if (not (vequal (channel->vct) (make-vct 11 0.075)))
 	    (snd-display ";ptree2 7: ~A" (channel->vct)))
-	(if (not (string-=? (display-edits ind 0 4) "
+	(if (not (string-=? (safe-display-edits ind 0 4) "
  (ptree[1] 0 11) ; ptree-channel [4:2]:
    (at 0, cp->sounds[1][0:10, 1.000, loc2: 1, pos2: 0, scl2: 1.500, loc: 0, pos: 0, scl: 1.000, code: (lambda (y) (* y 0.5))]) [buf: 11] 
    (at 11, end_mark)
 "))
-	    (snd-display ";ptree2 8: ~A" (display-edits ind 0 4)))
+	    (snd-display ";ptree2 8: ~A" (safe-display-edits ind 0 4)))
 	(undo 3)
 	(scale-by '(0.5))
 	(ptree-channel (lambda (y) (* y 1.5)))
@@ -5313,25 +5323,25 @@ EDITS: 5
 	(scale-by 3.0)
 	(if (not (vequal (channel->vct) (make-vct 11 0.45)))
 	    (snd-display ";ptree2 9: ~A" (channel->vct)))
-	(if (not (string-=? (display-edits ind 0 6) "
+	(if (not (string-=? (safe-display-edits ind 0 6) "
  (scale 0 11) ; scale-channel 3.000 0 #f [6:2]:
    (at 0, cp->sounds[1][0:10, 3.000, loc2: 1, pos2: 0, scl2: 2.000, loc: 0, pos: 0, scl: 0.500, code: (lambda (y) (* y 1.5))]) [buf: 11] 
    (at 11, end_mark)
 "))
-	    (snd-display ";ptree2 10: ~A" (display-edits ind 0 6)))
+	    (snd-display ";ptree2 10: ~A" (safe-display-edits ind 0 6)))
 	(undo 2)
 	(ptree-channel (lambda (y) (* y 0.1)) 2 4)
 	(scale-by 3.0)
 	(if (not (vequal (channel->vct) (vct 4.500 4.500 0.450 0.450 0.450 0.450 4.500 4.500 4.500 4.500 4.500)))
 	    (snd-display ";ptree2 11: ~A" (channel->vct)))
-	(if (not (string-=? (display-edits ind 0 6) "
+	(if (not (string-=? (safe-display-edits ind 0 6) "
  (scale 0 11) ; scale-channel 3.000 0 #f [6:4]:
    (at 0, cp->sounds[1][0:1, 6.000, loc: 0, pos: 0, scl: 0.500, code: (lambda (y) (* y 1.5))]) [buf: 11] 
    (at 2, cp->sounds[1][2:5, 3.000, loc2: 1, pos2: 0, scl2: 2.000, loc: 0, pos: 2, scl: 0.500, code: (lambda (y) (* y 1.5))]) [buf: 11] 
    (at 6, cp->sounds[1][6:10, 6.000, loc: 0, pos: 6, scl: 0.500, code: (lambda (y) (* y 1.5))]) [buf: 11] 
    (at 11, end_mark)
 "))
-	    (snd-display ";ptree2 12: ~A" (display-edits ind 0 6)))
+	    (snd-display ";ptree2 12: ~A" (safe-display-edits ind 0 6)))
 	(close-sound ind))
       
       ;; ptree2-zero
@@ -5346,12 +5356,12 @@ EDITS: 5
 	(ptree-channel (lambda (y) (+ y 0.25)))
 	(if (not (vequal (channel->vct) (make-vct 11 0.75)))
 	    (snd-display ";ptree2-zero 1: ~A" (channel->vct)))
-	(if (not (string-=? (display-edits ind 0 4) (string-append "
+	(if (not (string-=? (safe-display-edits ind 0 4) (string-append "
  (ptree[1] 0 11) ; ptree-channel [4:2]:
    (at 0, cp->sounds[0][0:10, 1.000, loc2: 1, pos2: 0, scl2: 1.000, loc: 0, pos: 0, scl: 0.000, code: (lambda (y) (+ y 0.5))]) [file: " (getcwd) "/test.snd[0]]
    (at 11, end_mark)
 ")))
-	    (snd-display ";ptree2-zero 2: ~A" (display-edits ind 0 4)))
+	    (snd-display ";ptree2-zero 2: ~A" (safe-display-edits ind 0 4)))
 	(undo 3)
 	(scale-channel 0.0 2 4)
 	(ptree-channel (lambda (y) (+ y 0.5)))
@@ -5367,21 +5377,21 @@ EDITS: 5
 	(ptree-channel (lambda (y) (+ y .25)))
 	(if (not (vequal (channel->vct) (vct 0.250 0.300 0.350 0.400 0.450 0.500 0.550 0.600 0.650 0.700 0.750)))
 	    (snd-display ";ptree2-ramp 1: ~A" (channel->vct)))
-	(if (not (string-=? (display-edits ind 0 4) "
+	(if (not (string-=? (safe-display-edits ind 0 4) "
  (ptree[1] 0 11) ; ptree-channel [4:2]:
    (at 0, cp->sounds[1][0:10, 1.000, [1]-0.000 -> 1.000, loc2: 1, pos2: 0, scl2: 1.000, loc: 0, pos: 0, scl: 1.000, code: (lambda (y) (* y 0.5))]) [buf: 11] 
    (at 11, end_mark)
 "))
-	    (snd-display ";ptree2-ramp 2: ~A" (display-edits ind 0 4)))
+	    (snd-display ";ptree2-ramp 2: ~A" (safe-display-edits ind 0 4)))
 	(scale-by 0.5)
 	(if (not (vequal (channel->vct) (vct 0.125 0.150 0.175 0.200 0.225 0.250 0.275 0.300 0.325 0.350 0.375)))
 	    (snd-display ";ptree2-ramp 3: ~A" (channel->vct)))
-	(if (not (string-=? (display-edits ind 0 5) "
+	(if (not (string-=? (safe-display-edits ind 0 5) "
  (scale 0 11) ; scale-channel 0.500 0 #f [5:2]:
    (at 0, cp->sounds[1][0:10, 0.500, [1]-0.000 -> 1.000, loc2: 1, pos2: 0, scl2: 1.000, loc: 0, pos: 0, scl: 1.000, code: (lambda (y) (* y 0.5))]) [buf: 11] 
    (at 11, end_mark)
 "))
-	    (snd-display ";ptree2-ramp 4: ~A" (display-edits ind 0 5)))
+	    (snd-display ";ptree2-ramp 4: ~A" (safe-display-edits ind 0 5)))
 	
 	;; ptree+ramp3
 	(revert-sound)
@@ -5390,12 +5400,12 @@ EDITS: 5
 	(ramp-channel 0.0 1.0)
 	(ramp-channel 0.0 1.0)
 	(ptree-channel (lambda (y) (* y .5)))
-	(if (not (string-=? (display-edits ind 0 5 #f) "
+	(if (not (string-=? (safe-display-edits ind 0 5 #f) "
  (ptree[0] 0 11) ; ptree-channel [5:2]:
    (at 0, cp->sounds[1][0:10, 1.000, [1]-0.000 -> 1.000, [2]-0.000 -> 1.000, [3]-0.000 -> 1.000, loc: 0, pos: 0, scl: 1.000]) [buf: 11] 
    (at 11, end_mark)
 "))
-	    (snd-display ";ptree-ramp3: ~A" (display-edits ind 0 5 #f)))
+	    (snd-display ";ptree-ramp3: ~A" (safe-display-edits ind 0 5 #f)))
 	(undo 1)
 	(ptree-channel (lambda (y data forward)
 			 (declare (y real) (data vct) (forward boolean))
@@ -5403,22 +5413,22 @@ EDITS: 5
 		       0 (frames) ind 0 #f #t
 		       (lambda (pos dur)
 			 (vct 0.5)))
-	(if (not (string-=? (display-edits ind 0 5 #f) "
+	(if (not (string-=? (safe-display-edits ind 0 5 #f) "
  (ptree[0] 0 11) ; ptree-channel [5:2]:
    (at 0, cp->sounds[1][0:10, 1.000, [1]-0.000 -> 1.000, [2]-0.000 -> 1.000, [3]-0.000 -> 1.000, loc: 0, pos: 0, scl: 1.000]) [buf: 11] 
    (at 11, end_mark)
 "))
-	    (snd-display ";ptreec-ramp3: ~A" (display-edits ind 0 5 #f)))
+	    (snd-display ";ptreec-ramp3: ~A" (safe-display-edits ind 0 5 #f)))
 	(undo 4)
 	(xramp-channel 0.0 1.0 32.0)
 	(xramp-channel 0.0 1.0 32.0)
 	(ramp-channel 0.0 1.0)
-	(if (not (string-=? (display-edits ind 0 4) "
+	(if (not (string-=? (safe-display-edits ind 0 4) "
  (ramp 0 11) ; ramp-channel 0.000 1.000 0 #f [4:2]:
    (at 0, cp->sounds[1][0:10, 1.000, [1]-0.000 -> 1.000, [3]0.000 -> 3.466, [4]0.000 -> 3.466, off: -0.032, scl: 0.032, off2: -0.032, scl2: 0.032]) [buf: 11] 
    (at 11, end_mark)
 "))
-	    (snd-display ";ramp-xramp2: ~A" (display-edits ind 0 4)))
+	    (snd-display ";ramp-xramp2: ~A" (safe-display-edits ind 0 4)))
 	(close-sound ind))
       
       ;; ramp2
@@ -5427,62 +5437,62 @@ EDITS: 5
 	
 	(ramp-channel 0.0 1.0)
 	(ramp-channel 0.0 1.0)
-	(if (not (string-=? (display-edits ind 0 3) "
+	(if (not (string-=? (safe-display-edits ind 0 3) "
  (ramp 0 11) ; ramp-channel 0.000 1.000 0 #f [3:2]:
    (at 0, cp->sounds[1][0:10, 1.000, [1]-0.000 -> 1.000, [2]-0.000 -> 1.000]) [buf: 11] 
    (at 11, end_mark)
 "))
-	    (snd-display ";ramp2 0: ~A" (display-edits ind 0 3)))
+	    (snd-display ";ramp2 0: ~A" (safe-display-edits ind 0 3)))
 	(if (not (vequal (channel->vct) (vct 0.000 0.010 0.040 0.090 0.160 0.250 0.360 0.490 0.640 0.810 1.000)))
 	    (snd-display ";ramp2 (1): ~A" (channel->vct)))
 	(scale-channel 0.5)
-	(if (not (string-=? (display-edits ind 0 4) "
+	(if (not (string-=? (safe-display-edits ind 0 4) "
  (scale 0 11) ; scale-channel 0.500 0 #f [4:2]:
    (at 0, cp->sounds[1][0:10, 0.500, [1]-0.000 -> 1.000, [2]-0.000 -> 1.000]) [buf: 11] 
    (at 11, end_mark)
 "))
-	    (snd-display ";ramp2 1: ~A" (display-edits ind 0 4)))
+	    (snd-display ";ramp2 1: ~A" (safe-display-edits ind 0 4)))
 	(undo)
 	(scale-channel 0.5 0 5)
-	(if (not (string-=? (display-edits ind 0 4) "
+	(if (not (string-=? (safe-display-edits ind 0 4) "
  (scale 0 5) ; scale-channel 0.500 0 5 [4:3]:
    (at 0, cp->sounds[1][0:4, 0.500, [1]-0.000 -> 0.400, [2]-0.000 -> 0.400]) [buf: 11] 
    (at 5, cp->sounds[1][5:10, 1.000, [1]0.500 -> 1.000, [2]0.500 -> 1.000]) [buf: 11] 
    (at 11, end_mark)
 "))
-	    (snd-display ";ramp2 2: ~A" (display-edits ind 0 4)))
+	    (snd-display ";ramp2 2: ~A" (safe-display-edits ind 0 4)))
 	(if (not (vequal (channel->vct) (vct 0.000 0.005 0.020 0.045 0.080 0.250 0.360 0.490 0.640 0.810 1.000)))
 	    (snd-display ";ramp2 (2): ~A" (channel->vct)))
 	(undo)
 	(scale-channel 0.5 2 4)
-	(if (not (string-=? (display-edits ind 0 4) "
+	(if (not (string-=? (safe-display-edits ind 0 4) "
  (scale 2 4) ; scale-channel 0.500 2 4 [4:4]:
    (at 0, cp->sounds[1][0:1, 1.000, [1]-0.000 -> 0.100, [2]-0.000 -> 0.100]) [buf: 11] 
    (at 2, cp->sounds[1][2:5, 0.500, [1]0.200 -> 0.500, [2]0.200 -> 0.500]) [buf: 11] 
    (at 6, cp->sounds[1][6:10, 1.000, [1]0.600 -> 1.000, [2]0.600 -> 1.000]) [buf: 11] 
    (at 11, end_mark)
 "))
-	    (snd-display ";ramp2 3: ~A" (display-edits ind 0 4)))
+	    (snd-display ";ramp2 3: ~A" (safe-display-edits ind 0 4)))
 	(undo 2)
 	(ramp-channel 0.75 0.25)
-	(if (not (string-=? (display-edits ind 0 3) "
+	(if (not (string-=? (safe-display-edits ind 0 3) "
  (ramp 0 11) ; ramp-channel 0.750 0.250 0 #f [3:2]:
    (at 0, cp->sounds[1][0:10, 1.000, [1]-0.000 -> 1.000, [2]0.750 -> 0.250]) [buf: 11] 
    (at 11, end_mark)
 "))
-	    (snd-display ";ramp2 4: ~A" (display-edits ind 0 3)))
+	    (snd-display ";ramp2 4: ~A" (safe-display-edits ind 0 3)))
 	(undo)
 	(ramp-channel .2 .6 2 6)
-	(if (not (string-=? (display-edits ind 0 3) "
+	(if (not (string-=? (safe-display-edits ind 0 3) "
  (ramp 2 6) ; ramp-channel 0.200 0.600 2 6 [3:4]:
    (at 0, cp->sounds[1][0:1, 1.000, [1]-0.000 -> 0.100]) [buf: 11] 
    (at 2, cp->sounds[1][2:7, 1.000, [1]0.200 -> 0.700, [2]0.200 -> 0.600]) [buf: 11] 
    (at 8, cp->sounds[1][8:10, 1.000, [1]0.800 -> 1.000]) [buf: 11] 
    (at 11, end_mark)
 "))
-	    (snd-display ";ramp2 5: ~A" (display-edits ind 0 3)))
+	    (snd-display ";ramp2 5: ~A" (safe-display-edits ind 0 3)))
 	(scale-channel 0.5 0 5)
-	(if (not (string-=? (display-edits ind 0 4) "
+	(if (not (string-=? (safe-display-edits ind 0 4) "
  (scale 0 5) ; scale-channel 0.500 0 5 [4:5]:
    (at 0, cp->sounds[1][0:1, 0.500, [1]-0.000 -> 0.100]) [buf: 11] 
    (at 2, cp->sounds[1][2:4, 0.500, [1]0.200 -> 0.400, [2]0.200 -> 0.360]) [buf: 11] 
@@ -5490,10 +5500,10 @@ EDITS: 5
    (at 8, cp->sounds[1][8:10, 1.000, [1]0.800 -> 1.000]) [buf: 11] 
    (at 11, end_mark)
 "))
-	    (snd-display ";ramp2 6: ~A" (display-edits ind 0 4)))
+	    (snd-display ";ramp2 6: ~A" (safe-display-edits ind 0 4)))
 	(undo)
 	(set! (sample 4) .5)
-	(if (not (string-=? (display-edits ind 0 4) "
+	(if (not (string-=? (safe-display-edits ind 0 4) "
  (set 4 1) ; set-sample 4 0.5000 [4:6]:
    (at 0, cp->sounds[1][0:1, 1.000, [1]-0.000 -> 0.100]) [buf: 11] 
    (at 2, cp->sounds[1][2:3, 1.000, [1]0.200 -> 0.300, [2]0.200 -> 0.280]) [buf: 11] 
@@ -5502,7 +5512,7 @@ EDITS: 5
    (at 8, cp->sounds[1][8:10, 1.000, [1]0.800 -> 1.000]) [buf: 11] 
    (at 11, end_mark)
 "))
-	    (snd-display ";ramp2 7: ~A" (display-edits ind 0 4)))
+	    (snd-display ";ramp2 7: ~A" (safe-display-edits ind 0 4)))
 	(undo 3)
 	(close-sound ind))
       
@@ -5515,7 +5525,7 @@ EDITS: 5
 	  (scale-channel 0.5 (* i 10) 10))
 	(ramp-channel 0.0 1.0)
 	(ramp-channel 1.0 0.0)
-	(if (not (string-=? (display-edits ind 0 13) "
+	(if (not (string-=? (safe-display-edits ind 0 13) "
  (ramp 0 100) ; ramp-channel 1.000 0.000 0 #f [13:11]:
    (at 0, cp->sounds[1][0:9, 0.500, [1]0.000 -> 0.091, [2]1.000 -> 0.909]) [buf: 100] 
    (at 10, cp->sounds[1][10:19, 0.500, [1]0.101 -> 0.192, [2]0.899 -> 0.808]) [buf: 100] 
@@ -5529,12 +5539,12 @@ EDITS: 5
    (at 90, cp->sounds[1][90:99, 0.500, [1]0.909 -> 1.000, [2]0.091 -> -0.000]) [buf: 100] 
    (at 100, end_mark)
 "))
-	    (snd-display ";multi-ramp2 1: ~A" (display-edits ind 0 13)))
+	    (snd-display ";multi-ramp2 1: ~A" (safe-display-edits ind 0 13)))
 	(undo 12)
 	(ramp-channel 0.0 1.0 10 20)
 	(ramp-channel 0.0 1.0 50 10)
 	(ramp-channel 0.0 1.0 25 10)
-	(if (not (string-=? (display-edits ind 0 4) "
+	(if (not (string-=? (safe-display-edits ind 0 4) "
  (ramp 25 10) ; ramp-channel 0.000 1.000 25 10 [4:8]:
    (at 0, cp->sounds[1][0:9, 1.000]) [buf: 100] 
    (at 10, cp->sounds[1][10:24, 1.000, [1]-0.000 -> 0.737]) [buf: 100] 
@@ -5545,7 +5555,7 @@ EDITS: 5
    (at 60, cp->sounds[1][60:99, 1.000]) [buf: 100] 
    (at 100, end_mark)
 "))
-	    (snd-display ";multi-ramp2 2: ~A" (display-edits ind 0 4)))
+	    (snd-display ";multi-ramp2 2: ~A" (safe-display-edits ind 0 4)))
 	(close-sound ind))
       
       (let ((ind (new-sound "test.snd")))
@@ -5556,30 +5566,30 @@ EDITS: 5
 	 (lambda (func func-zero name)
 	   (func)
 	   (ramp-channel 0 1)
-	   (if (not (string-=? (display-edits ind 0 3 #f) "
+	   (if (not (string-=? (safe-display-edits ind 0 3 #f) "
  (ramp 0 11) ; ramp-channel 0.000 1.000 0 #f [3:2]:
    (at 0, cp->sounds[1][0:10, 1.000, [1]-0.000 -> 1.000, loc: 0, pos: 0, scl: 1.000]) [buf: 11] 
    (at 11, end_mark)
 "))
-	       (snd-display ";~A 1: ~A" name (display-edits ind 0 3 #f)))
+	       (snd-display ";~A 1: ~A" name (safe-display-edits ind 0 3 #f)))
 	   (if (not (vequal (channel->vct) (vct 0.000 0.050 0.100 0.150 0.200 0.250 0.300 0.350 0.400 0.450 0.500)))
 	       (snd-display ";~A 1: ~A" name (channel->vct)))
 	   (ramp-channel 0 1)
-	   (if (not (string-=? (display-edits ind 0 4 #f) "
+	   (if (not (string-=? (safe-display-edits ind 0 4 #f) "
  (ramp 0 11) ; ramp-channel 0.000 1.000 0 #f [4:2]:
    (at 0, cp->sounds[1][0:10, 1.000, [1]-0.000 -> 1.000, [2]-0.000 -> 1.000, loc: 0, pos: 0, scl: 1.000]) [buf: 11] 
    (at 11, end_mark)
 "))
-	       (snd-display ";~A 2: ~A" name (display-edits ind 0 4 #f)))
+	       (snd-display ";~A 2: ~A" name (safe-display-edits ind 0 4 #f)))
 	   (if (not (vequal (channel->vct) (vct 0.000 0.005 0.020 0.045 0.080 0.125 0.180 0.245 0.320 0.405 0.500)))
 	       (snd-display ";~A 2: ~A" name (channel->vct)))
 	   (ramp-channel 0 1)
-	   (if (not (string-=? (display-edits ind 0 5 #f) "
+	   (if (not (string-=? (safe-display-edits ind 0 5 #f) "
  (ramp 0 11) ; ramp-channel 0.000 1.000 0 #f [5:2]:
    (at 0, cp->sounds[1][0:10, 1.000, [1]-0.000 -> 1.000, [2]-0.000 -> 1.000, [3]-0.000 -> 1.000, loc: 0, pos: 0, scl: 1.000]) [buf: 11] 
    (at 11, end_mark)
 "))
-	       (snd-display ";~A 3: ~A" name (display-edits ind 0 5 #f)))
+	       (snd-display ";~A 3: ~A" name (safe-display-edits ind 0 5 #f)))
 	   (if (not (vequal (channel->vct) (vct 0.000 0.000 0.004 0.013 0.032 0.062 0.108 0.171 0.256 0.364 0.500)))
 	       (snd-display ";~A 3: ~A" name (channel->vct)))
 	   
@@ -5587,30 +5597,30 @@ EDITS: 5
 	   (scale-by 0.0)
 	   (func-zero)
 	   (ramp-channel 0 1)
-	   (if (not (string-=? (display-edits ind 0 4 #f) (string-append "
+	   (if (not (string-=? (safe-display-edits ind 0 4 #f) (string-append "
  (ramp 0 11) ; ramp-channel 0.000 1.000 0 #f [4:2]:
    (at 0, cp->sounds[0][0:10, 1.000, [1]-0.000 -> 1.000, loc: 0, pos: 0, scl: 0.000]) [file: " (getcwd) "/test.snd[0]]
    (at 11, end_mark)
 ")))
-	       (snd-display ";~A-zero 1: ~A" name (display-edits ind 0 4 #f)))
+	       (snd-display ";~A-zero 1: ~A" name (safe-display-edits ind 0 4 #f)))
 	   (if (not (vequal (channel->vct) (vct 0.000 0.050 0.100 0.150 0.200 0.250 0.300 0.350 0.400 0.450 0.500)))
 	       (snd-display ";~A-zero 1: ~A" name (channel->vct)))
 	   (ramp-channel 0 1)
-	   (if (not (string-=? (display-edits ind 0 5 #f) (string-append "
+	   (if (not (string-=? (safe-display-edits ind 0 5 #f) (string-append "
  (ramp 0 11) ; ramp-channel 0.000 1.000 0 #f [5:2]:
    (at 0, cp->sounds[0][0:10, 1.000, [1]-0.000 -> 1.000, [2]-0.000 -> 1.000, loc: 0, pos: 0, scl: 0.000]) [file: " (getcwd) "/test.snd[0]]
    (at 11, end_mark)
 ")))
-	       (snd-display ";~A-zero 2: ~A" name (display-edits ind 0 5 #f)))
+	       (snd-display ";~A-zero 2: ~A" name (safe-display-edits ind 0 5 #f)))
 	   (if (not (vequal (channel->vct) (vct 0.000 0.005 0.020 0.045 0.080 0.125 0.180 0.245 0.320 0.405 0.500)))
 	       (snd-display ";~A-zero 2: ~A" name (channel->vct)))
 	   (ramp-channel 0 1)
-	   (if (not (string-=? (display-edits ind 0 6 #f) (string-append "
+	   (if (not (string-=? (safe-display-edits ind 0 6 #f) (string-append "
  (ramp 0 11) ; ramp-channel 0.000 1.000 0 #f [6:2]:
    (at 0, cp->sounds[0][0:10, 1.000, [1]-0.000 -> 1.000, [2]-0.000 -> 1.000, [3]-0.000 -> 1.000, loc: 0, pos: 0, scl: 0.000]) [file: " (getcwd) "/test.snd[0]]
    (at 11, end_mark)
 ")))
-	       (snd-display ";~A-zero 3: ~A" name (display-edits ind 0 6 #f)))
+	       (snd-display ";~A-zero 3: ~A" name (safe-display-edits ind 0 6 #f)))
 	   (if (not (vequal (channel->vct) (vct 0.000 0.000 0.004 0.013 0.032 0.062 0.108 0.171 0.256 0.364 0.500)))
 	       (snd-display ";~A-zero 3: ~A" name (channel->vct)))
 	   (undo 5)
@@ -5689,64 +5699,64 @@ EDITS: 5
 	
 	(ramp-channel 0.0 1.0)
 	(xramp-channel 0.0 1.0 32.0)
-	(if (not (string-=? (display-edits ind 0 3) "
+	(if (not (string-=? (safe-display-edits ind 0 3) "
  (ramp 0 11) ; xramp-channel 0.000 1.000 32.000 0 #f [3:2]:
    (at 0, cp->sounds[1][0:10, 1.000, [1]-0.000 -> 1.000, [4]0.000 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 11, end_mark)
 "))
-	    (snd-display ";ramp-xramp 0: ~A" (display-edits ind 0 3)))
+	    (snd-display ";ramp-xramp 0: ~A" (safe-display-edits ind 0 3)))
 	(set! case1 (channel->vct))
 	(if (not (vequal case1 (vct 0.000 0.001 0.006 0.018 0.039 0.075 0.135 0.233 0.387 0.628 1.000)))
 	    (snd-display ";ramp-xramp (1): ~A" case1))
 	(scale-channel 0.5)
-	(if (not (string-=? (display-edits ind 0 4) "
+	(if (not (string-=? (safe-display-edits ind 0 4) "
  (scale 0 11) ; scale-channel 0.500 0 #f [4:2]:
    (at 0, cp->sounds[1][0:10, 0.500, [1]-0.000 -> 1.000, [4]0.000 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 11, end_mark)
 "))
-	    (snd-display ";ramp-xramp 1: ~A" (display-edits ind 0 4)))
+	    (snd-display ";ramp-xramp 1: ~A" (safe-display-edits ind 0 4)))
 	(undo)
 	(scale-channel 0.5 0 5)
-	(if (not (string-=? (display-edits ind 0 4) "
+	(if (not (string-=? (safe-display-edits ind 0 4) "
  (scale 0 5) ; scale-channel 0.500 0 5 [4:3]:
    (at 0, cp->sounds[1][0:4, 0.500, [1]-0.000 -> 0.400, [4]0.000 -> 1.386, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 5, cp->sounds[1][5:10, 1.000, [1]0.500 -> 1.000, [4]1.733 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 11, end_mark)
 "))
-	    (snd-display ";ramp-xramp 2: ~A" (display-edits ind 0 4)))
+	    (snd-display ";ramp-xramp 2: ~A" (safe-display-edits ind 0 4)))
 	(set! case2 (channel->vct))
 	(if (not (vequal case2 (vct 0.000 0.001 0.003 0.009 0.019 0.075 0.135 0.233 0.387 0.628 1.000)))
 	    (snd-display ";ramp-xramp (2): ~A" case2))
 	(undo)
 	(scale-channel 0.5 2 4)
-	(if (not (string-=? (display-edits ind 0 4) "
+	(if (not (string-=? (safe-display-edits ind 0 4) "
  (scale 2 4) ; scale-channel 0.500 2 4 [4:4]:
    (at 0, cp->sounds[1][0:1, 1.000, [1]-0.000 -> 0.100, [4]0.000 -> 0.347, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 2, cp->sounds[1][2:5, 0.500, [1]0.200 -> 0.500, [4]0.693 -> 1.733, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 6, cp->sounds[1][6:10, 1.000, [1]0.600 -> 1.000, [4]2.079 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 11, end_mark)
 "))
-	    (snd-display ";ramp-xramp 3: ~A" (display-edits ind 0 4)))
+	    (snd-display ";ramp-xramp 3: ~A" (safe-display-edits ind 0 4)))
 	(undo 2)
 	(xramp-channel 0.75 0.25 32.0)
-	(if (not (string-=? (display-edits ind 0 3) "
+	(if (not (string-=? (safe-display-edits ind 0 3) "
  (ramp 0 11) ; xramp-channel 0.750 0.250 32.000 0 #f [3:2]:
    (at 0, cp->sounds[1][0:10, 1.000, [1]-0.000 -> 1.000, [4]3.466 -> 0.000, off: 0.234, scl: 0.016]) [buf: 11] 
    (at 11, end_mark)
 "))
-	    (snd-display ";ramp-xramp 4: ~A" (display-edits ind 0 3)))
+	    (snd-display ";ramp-xramp 4: ~A" (safe-display-edits ind 0 3)))
 	(undo)
 	(xramp-channel .2 .6 3.0 2 6)
-	(if (not (string-=? (display-edits ind 0 3) "
+	(if (not (string-=? (safe-display-edits ind 0 3) "
  (ramp 2 6) ; xramp-channel 0.200 0.600 3.000 2 6 [3:4]:
    (at 0, cp->sounds[1][0:1, 1.000, [1]-0.000 -> 0.100]) [buf: 11] 
    (at 2, cp->sounds[1][2:7, 1.000, [1]0.200 -> 0.700, [4]-0.000 -> 1.099, off: -0.000, scl: 0.200]) [buf: 11] 
    (at 8, cp->sounds[1][8:10, 1.000, [1]0.800 -> 1.000]) [buf: 11] 
    (at 11, end_mark)
 "))
-	    (snd-display ";ramp-xramp 5: ~A" (display-edits ind 0 3)))
+	    (snd-display ";ramp-xramp 5: ~A" (safe-display-edits ind 0 3)))
 	(scale-channel 0.5 0 5)
-	(if (not (string-=? (display-edits ind 0 4) "
+	(if (not (string-=? (safe-display-edits ind 0 4) "
  (scale 0 5) ; scale-channel 0.500 0 5 [4:5]:
    (at 0, cp->sounds[1][0:1, 0.500, [1]-0.000 -> 0.100]) [buf: 11] 
    (at 2, cp->sounds[1][2:4, 0.500, [1]0.200 -> 0.400, [4]-0.000 -> 0.439, off: -0.000, scl: 0.200]) [buf: 11] 
@@ -5754,10 +5764,10 @@ EDITS: 5
    (at 8, cp->sounds[1][8:10, 1.000, [1]0.800 -> 1.000]) [buf: 11] 
    (at 11, end_mark)
 "))
-	    (snd-display ";ramp-xramp 6: ~A" (display-edits ind 0 4)))
+	    (snd-display ";ramp-xramp 6: ~A" (safe-display-edits ind 0 4)))
 	(undo)
 	(set! (sample 4) .5)
-	(if (not (string-=? (display-edits ind 0 4) "
+	(if (not (string-=? (safe-display-edits ind 0 4) "
  (set 4 1) ; set-sample 4 0.5000 [4:6]:
    (at 0, cp->sounds[1][0:1, 1.000, [1]-0.000 -> 0.100]) [buf: 11] 
    (at 2, cp->sounds[1][2:3, 1.000, [1]0.200 -> 0.300, [4]-0.000 -> 0.220, off: -0.000, scl: 0.200]) [buf: 11] 
@@ -5766,68 +5776,68 @@ EDITS: 5
    (at 8, cp->sounds[1][8:10, 1.000, [1]0.800 -> 1.000]) [buf: 11] 
    (at 11, end_mark)
 "))
-	    (snd-display ";ramp-xramp 7: ~A" (display-edits ind 0 4)))
+	    (snd-display ";ramp-xramp 7: ~A" (safe-display-edits ind 0 4)))
 	(revert-sound)
 	(map-chan (lambda (y) 1.0) 0 10)
 	
 	(xramp-channel 0.0 1.0 32.0)
 	(ramp-channel 0.0 1.0)
-	(if (not (string-=? (display-edits ind 0 3) "
+	(if (not (string-=? (safe-display-edits ind 0 3) "
  (ramp 0 11) ; ramp-channel 0.000 1.000 0 #f [3:2]:
    (at 0, cp->sounds[1][0:10, 1.000, [1]-0.000 -> 1.000, [4]0.000 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 11, end_mark)
 "))
-	    (snd-display ";xramp-ramp 0: ~A" (display-edits ind 0 3)))
+	    (snd-display ";xramp-ramp 0: ~A" (safe-display-edits ind 0 3)))
 	(if (not (vequal case1 (channel->vct)))
 	    (snd-display ";xramp-ramp (1): ~A" (channel->vct)))
 	(scale-channel 0.5)
-	(if (not (string-=? (display-edits ind 0 4) "
+	(if (not (string-=? (safe-display-edits ind 0 4) "
  (scale 0 11) ; scale-channel 0.500 0 #f [4:2]:
    (at 0, cp->sounds[1][0:10, 0.500, [1]-0.000 -> 1.000, [4]0.000 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 11, end_mark)
 "))
-	    (snd-display ";xramp-ramp 1: ~A" (display-edits ind 0 4)))
+	    (snd-display ";xramp-ramp 1: ~A" (safe-display-edits ind 0 4)))
 	(undo)
 	(scale-channel 0.5 0 5)
-	(if (not (string-=? (display-edits ind 0 4) "
+	(if (not (string-=? (safe-display-edits ind 0 4) "
  (scale 0 5) ; scale-channel 0.500 0 5 [4:3]:
    (at 0, cp->sounds[1][0:4, 0.500, [1]-0.000 -> 0.400, [4]0.000 -> 1.386, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 5, cp->sounds[1][5:10, 1.000, [1]0.500 -> 1.000, [4]1.733 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 11, end_mark)
 "))
-	    (snd-display ";xramp-ramp 2: ~A" (display-edits ind 0 4)))
+	    (snd-display ";xramp-ramp 2: ~A" (safe-display-edits ind 0 4)))
 	(if (not (vequal case2 (channel->vct)))
 	    (snd-display ";xramp-ramp (2): ~A" (channel->vct)))
 	(undo)
 	(scale-channel 0.5 2 4)
-	(if (not (string-=? (display-edits ind 0 4) "
+	(if (not (string-=? (safe-display-edits ind 0 4) "
  (scale 2 4) ; scale-channel 0.500 2 4 [4:4]:
    (at 0, cp->sounds[1][0:1, 1.000, [1]-0.000 -> 0.100, [4]0.000 -> 0.347, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 2, cp->sounds[1][2:5, 0.500, [1]0.200 -> 0.500, [4]0.693 -> 1.733, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 6, cp->sounds[1][6:10, 1.000, [1]0.600 -> 1.000, [4]2.079 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 11, end_mark)
 "))
-	    (snd-display ";xramp-ramp 3: ~A" (display-edits ind 0 4)))
+	    (snd-display ";xramp-ramp 3: ~A" (safe-display-edits ind 0 4)))
 	(undo 2)
 	(ramp-channel 0.75 0.25)
-	(if (not (string=? (display-edits ind 0 3) "
+	(if (not (string=? (safe-display-edits ind 0 3) "
  (ramp 0 11) ; ramp-channel 0.750 0.250 0 #f [3:2]:
    (at 0, cp->sounds[1][0:10, 1.000, [1]0.750 -> 0.250, [4]0.000 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 11, end_mark)
 "))
-	    (snd-display ";xramp-ramp 4: ~A" (display-edits ind 0 3)))
+	    (snd-display ";xramp-ramp 4: ~A" (safe-display-edits ind 0 3)))
 	(undo)
 	(ramp-channel .2 .6 2 6)
-	(if (not (string=? (display-edits ind 0 3) "
+	(if (not (string=? (safe-display-edits ind 0 3) "
  (ramp 2 6) ; ramp-channel 0.200 0.600 2 6 [3:4]:
    (at 0, cp->sounds[1][0:1, 1.000, [4]0.000 -> 0.347, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 2, cp->sounds[1][2:7, 1.000, [1]0.200 -> 0.600, [4]0.693 -> 2.426, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 8, cp->sounds[1][8:10, 1.000, [4]2.773 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 11, end_mark)
 "))
-	    (snd-display ";xramp-ramp 5: ~A" (display-edits ind 0 3)))
+	    (snd-display ";xramp-ramp 5: ~A" (safe-display-edits ind 0 3)))
 	(scale-channel 0.5 0 5)
-	(if (not (string=? (display-edits ind 0 4) "
+	(if (not (string=? (safe-display-edits ind 0 4) "
  (scale 0 5) ; scale-channel 0.500 0 5 [4:5]:
    (at 0, cp->sounds[1][0:1, 0.500, [4]0.000 -> 0.347, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 2, cp->sounds[1][2:4, 0.500, [1]0.200 -> 0.360, [4]0.693 -> 1.386, off: -0.032, scl: 0.032]) [buf: 11] 
@@ -5835,10 +5845,10 @@ EDITS: 5
    (at 8, cp->sounds[1][8:10, 1.000, [4]2.773 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 11, end_mark)
 "))
-	    (snd-display ";xramp-ramp 6: ~A" (display-edits ind 0 4)))
+	    (snd-display ";xramp-ramp 6: ~A" (safe-display-edits ind 0 4)))
 	(undo)
 	(set! (sample 4) .5)
-	(if (not (string=? (display-edits ind 0 4) "
+	(if (not (string=? (safe-display-edits ind 0 4) "
  (set 4 1) ; set-sample 4 0.5000 [4:6]:
    (at 0, cp->sounds[1][0:1, 1.000, [4]0.000 -> 0.347, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 2, cp->sounds[1][2:3, 1.000, [1]0.200 -> 0.280, [4]0.693 -> 1.040, off: -0.032, scl: 0.032]) [buf: 11] 
@@ -5847,7 +5857,7 @@ EDITS: 5
    (at 8, cp->sounds[1][8:10, 1.000, [4]2.773 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 11, end_mark)
 "))
-	    (snd-display ";xramp-ramp 7: ~A" (display-edits ind 0 4)))
+	    (snd-display ";xramp-ramp 7: ~A" (safe-display-edits ind 0 4)))
 	(close-sound ind))
       
       ;; ramp2+xramp
@@ -5858,64 +5868,64 @@ EDITS: 5
 	(xramp-channel 0.0 1.0 32.0)
 	(ramp-channel 0.0 1.0)
 	(ramp-channel 0.0 1.0)
-	(if (not (string-=? (display-edits ind 0 4) "
+	(if (not (string-=? (safe-display-edits ind 0 4) "
  (ramp 0 11) ; ramp-channel 0.000 1.000 0 #f [4:2]:
    (at 0, cp->sounds[1][0:10, 1.000, [1]-0.000 -> 1.000, [2]-0.000 -> 1.000, [4]0.000 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 11, end_mark)
 "))
-	    (snd-display ";ramp2+xramp 0: ~A" (display-edits ind 0 4)))
+	    (snd-display ";ramp2+xramp 0: ~A" (safe-display-edits ind 0 4)))
 	(set! case1 (channel->vct))
 	(if (not (vequal case1 (vct 0.000 0.000 0.001 0.005 0.015 0.038 0.081 0.163 0.310 0.565 1.000)))
 	    (snd-display ";ramp2+xramp (1): ~A" case1))
 	(scale-channel 0.5)
-	(if (not (string-=? (display-edits ind 0 5) "
+	(if (not (string-=? (safe-display-edits ind 0 5) "
  (scale 0 11) ; scale-channel 0.500 0 #f [5:2]:
    (at 0, cp->sounds[1][0:10, 0.500, [1]-0.000 -> 1.000, [2]-0.000 -> 1.000, [4]0.000 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 11, end_mark)
 "))
-	    (snd-display ";ramp2+xramp 1: ~A" (display-edits ind 0 5)))
+	    (snd-display ";ramp2+xramp 1: ~A" (safe-display-edits ind 0 5)))
 	(undo)
 	(scale-channel 0.5 0 5)
-	(if (not (string-=? (display-edits ind 0 5) "
+	(if (not (string-=? (safe-display-edits ind 0 5) "
  (scale 0 5) ; scale-channel 0.500 0 5 [5:3]:
    (at 0, cp->sounds[1][0:4, 0.500, [1]-0.000 -> 0.400, [2]-0.000 -> 0.400, [4]0.000 -> 1.386, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 5, cp->sounds[1][5:10, 1.000, [1]0.500 -> 1.000, [2]0.500 -> 1.000, [4]1.733 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 11, end_mark)
 "))
-	    (snd-display ";ramp2+xramp 2: ~A" (display-edits ind 0 5)))
+	    (snd-display ";ramp2+xramp 2: ~A" (safe-display-edits ind 0 5)))
 	(set! case2 (channel->vct))
 	(if (not (vequal case2 (vct 0.000 0.000 0.001 0.003 0.008 0.038 0.081 0.163 0.310 0.565 1.000)))
 	    (snd-display ";ramp2+xramp (2): ~A" case2))
 	(undo)
 	(scale-channel 0.5 2 4)
-	(if (not (string-=? (display-edits ind 0 5) "
+	(if (not (string-=? (safe-display-edits ind 0 5) "
  (scale 2 4) ; scale-channel 0.500 2 4 [5:4]:
    (at 0, cp->sounds[1][0:1, 1.000, [1]-0.000 -> 0.100, [2]-0.000 -> 0.100, [4]0.000 -> 0.347, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 2, cp->sounds[1][2:5, 0.500, [1]0.200 -> 0.500, [2]0.200 -> 0.500, [4]0.693 -> 1.733, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 6, cp->sounds[1][6:10, 1.000, [1]0.600 -> 1.000, [2]0.600 -> 1.000, [4]2.079 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 11, end_mark)
 "))
-	    (snd-display ";ramp2+xramp 3: ~A" (display-edits ind 0 5)))
+	    (snd-display ";ramp2+xramp 3: ~A" (safe-display-edits ind 0 5)))
 	(undo 2)
 	(ramp-channel 0.75 0.25)
-	(if (not (string-=? (display-edits ind 0 4) "
+	(if (not (string-=? (safe-display-edits ind 0 4) "
  (ramp 0 11) ; ramp-channel 0.750 0.250 0 #f [4:2]:
    (at 0, cp->sounds[1][0:10, 1.000, [1]-0.000 -> 1.000, [2]0.750 -> 0.250, [4]0.000 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 11, end_mark)
 "))
-	    (snd-display ";ramp2+xramp 4: ~A" (display-edits ind 0 4)))
+	    (snd-display ";ramp2+xramp 4: ~A" (safe-display-edits ind 0 4)))
 	(undo)
 	(ramp-channel .2 .6 2 6)
-	(if (not (string-=? (display-edits ind 0 4) "
+	(if (not (string-=? (safe-display-edits ind 0 4) "
  (ramp 2 6) ; ramp-channel 0.200 0.600 2 6 [4:4]:
    (at 0, cp->sounds[1][0:1, 1.000, [1]-0.000 -> 0.100, [4]0.000 -> 0.347, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 2, cp->sounds[1][2:7, 1.000, [1]0.200 -> 0.700, [2]0.200 -> 0.600, [4]0.693 -> 2.426, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 8, cp->sounds[1][8:10, 1.000, [1]0.800 -> 1.000, [4]2.773 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 11, end_mark)
 "))
-	    (snd-display ";ramp2+xramp 5: ~A" (display-edits ind 0 4)))
+	    (snd-display ";ramp2+xramp 5: ~A" (safe-display-edits ind 0 4)))
 	(scale-channel 0.5 0 5)
-	(if (not (string-=? (display-edits ind 0 5) "
+	(if (not (string-=? (safe-display-edits ind 0 5) "
  (scale 0 5) ; scale-channel 0.500 0 5 [5:5]:
    (at 0, cp->sounds[1][0:1, 0.500, [1]-0.000 -> 0.100, [4]0.000 -> 0.347, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 2, cp->sounds[1][2:4, 0.500, [1]0.200 -> 0.400, [2]0.200 -> 0.360, [4]0.693 -> 1.386, off: -0.032, scl: 0.032]) [buf: 11] 
@@ -5923,10 +5933,10 @@ EDITS: 5
    (at 8, cp->sounds[1][8:10, 1.000, [1]0.800 -> 1.000, [4]2.773 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 11, end_mark)
 "))
-	    (snd-display ";ramp2+xramp 6: ~A" (display-edits ind 0 5)))
+	    (snd-display ";ramp2+xramp 6: ~A" (safe-display-edits ind 0 5)))
 	(undo)
 	(set! (sample 4) .5)
-	(if (not (string-=? (display-edits ind 0 5) "
+	(if (not (string-=? (safe-display-edits ind 0 5) "
  (set 4 1) ; set-sample 4 0.5000 [5:6]:
    (at 0, cp->sounds[1][0:1, 1.000, [1]-0.000 -> 0.100, [4]0.000 -> 0.347, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 2, cp->sounds[1][2:3, 1.000, [1]0.200 -> 0.300, [2]0.200 -> 0.280, [4]0.693 -> 1.040, off: -0.032, scl: 0.032]) [buf: 11] 
@@ -5935,18 +5945,18 @@ EDITS: 5
    (at 8, cp->sounds[1][8:10, 1.000, [1]0.800 -> 1.000, [4]2.773 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 11, end_mark)
 "))
-	    (snd-display ";ramp2+xramp 7: ~A" (display-edits ind 0 5)))
+	    (snd-display ";ramp2+xramp 7: ~A" (safe-display-edits ind 0 5)))
 	(revert-sound)
 	(map-chan (lambda (y) 1.0) 0 10)
 	(ramp-channel 0.0 1.0)
 	(ramp-channel 0.0 1.0)
 	(xramp-channel 0.0 1.0 32.0)
-	(if (not (string-=? (display-edits ind 0 4) "
+	(if (not (string-=? (safe-display-edits ind 0 4) "
  (ramp 0 11) ; xramp-channel 0.000 1.000 32.000 0 #f [4:2]:
    (at 0, cp->sounds[1][0:10, 1.000, [1]-0.000 -> 1.000, [2]-0.000 -> 1.000, [4]0.000 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 11, end_mark)
 "))
-	    (snd-display ";xramp+ramp2 0: ~A" (display-edits ind 0 4)))
+	    (snd-display ";xramp+ramp2 0: ~A" (safe-display-edits ind 0 4)))
 	(if (not (vequal case1 (channel->vct)))
 	    (snd-display ";xramp+ramp2 (1): ~A" (channel->vct)))
 	
@@ -5982,7 +5992,7 @@ EDITS: 5
 	(xramp-channel 1.0 0.0 32.0)
 	(ramp-channel 0.0 1.0)
 	(ramp-channel 0.0 1.0)
-	(if (not (string-=? (display-edits ind 0 14) "
+	(if (not (string-=? (safe-display-edits ind 0 14) "
  (ramp 0 100) ; ramp-channel 0.000 1.000 0 #f [14:11]:
    (at 0, cp->sounds[1][0:9, 0.500, [1]0.000 -> 0.091, [2]0.000 -> 0.091, [4]3.466 -> 3.151, off: -0.032, scl: 0.032]) [buf: 100] 
    (at 10, cp->sounds[1][10:19, 0.500, [1]0.101 -> 0.192, [2]0.101 -> 0.192, [4]3.116 -> 2.801, off: -0.032, scl: 0.032]) [buf: 100] 
@@ -5996,7 +6006,7 @@ EDITS: 5
    (at 90, cp->sounds[1][90:99, 0.500, [1]0.909 -> 1.000, [2]0.909 -> 1.000, [4]0.315 -> -0.000, off: -0.032, scl: 0.032]) [buf: 100] 
    (at 100, end_mark)
 "))
-	    (snd-display ";multi-ramp2+xramp 1: ~A" (display-edits ind 0 14)))
+	    (snd-display ";multi-ramp2+xramp 1: ~A" (safe-display-edits ind 0 14)))
 	(if (not (vequal case3 (channel->vct)))
 	    (snd-display ";multi-ramp2+xramp: ~A" (channel->vct)))
 	(revert-sound)
@@ -6006,7 +6016,7 @@ EDITS: 5
 	(ramp-channel 0.0 1.0 10 20)
 	(ramp-channel 0.0 1.0 50 10)
 	(ramp-channel 0.0 1.0 25 10)
-	(if (not (string-=? (display-edits ind 0 5) "
+	(if (not (string-=? (safe-display-edits ind 0 5) "
  (ramp 25 10) ; ramp-channel 0.000 1.000 25 10 [5:8]:
    (at 0, cp->sounds[1][0:9, 1.000, [4]3.466 -> 3.151, off: -0.032, scl: 0.032]) [buf: 100] 
    (at 10, cp->sounds[1][10:24, 1.000, [1]-0.000 -> 0.737, [4]3.116 -> 2.626, off: -0.032, scl: 0.032]) [buf: 100] 
@@ -6017,7 +6027,7 @@ EDITS: 5
    (at 60, cp->sounds[1][60:99, 1.000, [4]1.365 -> 0.000, off: -0.032, scl: 0.032]) [buf: 100] 
    (at 100, end_mark)
 "))
-	    (snd-display ";multi-ramp2+xramp 2: ~A" (display-edits ind 0 5)))
+	    (snd-display ";multi-ramp2+xramp 2: ~A" (safe-display-edits ind 0 5)))
 	(close-sound ind))
       
       (let ((ind (new-sound "test.snd"))
@@ -6035,7 +6045,7 @@ EDITS: 5
 	  (scale-channel 0.5 (* i 10) 10))
 	(ramp-channel 0.0 1.0)
 	(xramp-channel 1.0 0.0 32.0)
-	(if (not (string-=? (display-edits ind 0 13) "
+	(if (not (string-=? (safe-display-edits ind 0 13) "
  (ramp 0 100) ; xramp-channel 1.000 0.000 32.000 0 #f [13:11]:
    (at 0, cp->sounds[1][0:9, 0.500, [1]0.000 -> 0.091, [4]3.466 -> 3.151, off: -0.032, scl: 0.032]) [buf: 100] 
    (at 10, cp->sounds[1][10:19, 0.500, [1]0.101 -> 0.192, [4]3.116 -> 2.801, off: -0.032, scl: 0.032]) [buf: 100] 
@@ -6049,14 +6059,14 @@ EDITS: 5
    (at 90, cp->sounds[1][90:99, 0.500, [1]0.909 -> 1.000, [4]0.315 -> -0.000, off: -0.032, scl: 0.032]) [buf: 100] 
    (at 100, end_mark)
 "))
-	    (snd-display ";multi-ramp-xramp 1: ~A" (display-edits ind 0 13)))
+	    (snd-display ";multi-ramp-xramp 1: ~A" (safe-display-edits ind 0 13)))
 	(if (not (vequal case3 (channel->vct)))
 	    (snd-display ";multi-ramp-xramp: ~A" (channel->vct)))
 	(undo 12)
 	(xramp-channel 0.0 1.0 3.0 10 20)
 	(xramp-channel 0.0 1.0 3.0 50 10)
 	(xramp-channel 0.0 1.0 3.0 25 10)
-	(if (not (string-=? (display-edits ind 0 4) "
+	(if (not (string-=? (safe-display-edits ind 0 4) "
  (ramp 25 10) ; xramp-channel 0.000 1.000 3.000 25 10 [4:8]:
    (at 0, cp->sounds[1][0:9, 1.000]) [buf: 100] 
    (at 10, cp->sounds[1][10:24, 1.000, [4]-0.000 -> 0.810, off: -0.500, scl: 0.500]) [buf: 100] 
@@ -6067,7 +6077,7 @@ EDITS: 5
    (at 60, cp->sounds[1][60:99, 1.000]) [buf: 100] 
    (at 100, end_mark)
 "))
-	    (snd-display ";multi-ramp-xramp 2: ~A" (display-edits ind 0 4)))
+	    (snd-display ";multi-ramp-xramp 2: ~A" (safe-display-edits ind 0 4)))
 	(revert-sound)
 	
 	(map-channel (lambda (y) 1.0) 0 100)
@@ -6077,7 +6087,7 @@ EDITS: 5
 	  (scale-channel 0.5 (* i 10) 10))
 	(xramp-channel 1.0 0.0 32.0)
 	(ramp-channel 0.0 1.0)
-	(if (not (string-=? (display-edits ind 0 13) "
+	(if (not (string-=? (safe-display-edits ind 0 13) "
  (ramp 0 100) ; ramp-channel 0.000 1.000 0 #f [13:11]:
    (at 0, cp->sounds[1][0:9, 0.500, [1]0.000 -> 0.091, [4]3.466 -> 3.151, off: -0.032, scl: 0.032]) [buf: 100] 
    (at 10, cp->sounds[1][10:19, 0.500, [1]0.101 -> 0.192, [4]3.116 -> 2.801, off: -0.032, scl: 0.032]) [buf: 100] 
@@ -6091,14 +6101,14 @@ EDITS: 5
    (at 90, cp->sounds[1][90:99, 0.500, [1]0.909 -> 1.000, [4]0.315 -> -0.000, off: -0.032, scl: 0.032]) [buf: 100] 
    (at 100, end_mark)
 "))
-	    (snd-display ";multi-xramp-ramp 1: ~A" (display-edits ind 0 13)))
+	    (snd-display ";multi-xramp-ramp 1: ~A" (safe-display-edits ind 0 13)))
 	(if (not (vequal case3 (channel->vct)))
 	    (snd-display ";case3 xramp-ramp: ~A" (channel->vct)))
 	(undo 12)
 	(ramp-channel 0.0 1.0 10 20)
 	(ramp-channel 0.0 1.0 50 10)
 	(ramp-channel 0.0 1.0 25 10)
-	(if (not (string-=? (display-edits ind 0 4) "
+	(if (not (string-=? (safe-display-edits ind 0 4) "
  (ramp 25 10) ; ramp-channel 0.000 1.000 25 10 [4:8]:
    (at 0, cp->sounds[1][0:9, 1.000]) [buf: 100] 
    (at 10, cp->sounds[1][10:24, 1.000, [1]-0.000 -> 0.737]) [buf: 100] 
@@ -6109,7 +6119,7 @@ EDITS: 5
    (at 60, cp->sounds[1][60:99, 1.000]) [buf: 100] 
    (at 100, end_mark)
 "))
-	    (snd-display ";multi-xramp-ramp 2: ~A" (display-edits ind 0 4)))
+	    (snd-display ";multi-xramp-ramp 2: ~A" (safe-display-edits ind 0 4)))
 	(close-sound ind))
       
       ;; xramp2
@@ -6118,62 +6128,62 @@ EDITS: 5
 	
 	(xramp-channel 0.0 1.0 2.0)
 	(xramp-channel 0.0 1.0 2.0)
-	(if (not (string=? (display-edits ind 0 3) "
+	(if (not (string=? (safe-display-edits ind 0 3) "
  (ramp 0 11) ; xramp-channel 0.000 1.000 2.000 0 #f [3:2]:
    (at 0, cp->sounds[1][0:10, 1.000, [3]0.000 -> 0.693, [4]0.000 -> 0.693, off: -1.000, scl: 1.000, off2: -1.000, scl2: 1.000]) [buf: 11] 
    (at 11, end_mark)
 "))
-	    (snd-display ";xramp2 0: ~A" (display-edits ind 0 3)))
+	    (snd-display ";xramp2 0: ~A" (safe-display-edits ind 0 3)))
 	(if (not (vequal (channel->vct) (vct 0.000 0.005 0.022 0.053 0.102 0.172 0.266 0.390 0.549 0.750 1.000)))
 	    (snd-display ";xramp2 (1): ~A" (channel->vct)))
 	(scale-channel 0.5)
-	(if (not (string=? (display-edits ind 0 4) "
+	(if (not (string=? (safe-display-edits ind 0 4) "
  (scale 0 11) ; scale-channel 0.500 0 #f [4:2]:
    (at 0, cp->sounds[1][0:10, 0.500, [3]0.000 -> 0.693, [4]0.000 -> 0.693, off: -1.000, scl: 1.000, off2: -1.000, scl2: 1.000]) [buf: 11] 
    (at 11, end_mark)
 "))
-	    (snd-display ";xramp2 1: ~A" (display-edits ind 0 4)))
+	    (snd-display ";xramp2 1: ~A" (safe-display-edits ind 0 4)))
 	(undo)
 	(scale-channel 0.5 0 5)
-	(if (not (string=? (display-edits ind 0 4) "
+	(if (not (string=? (safe-display-edits ind 0 4) "
  (scale 0 5) ; scale-channel 0.500 0 5 [4:3]:
    (at 0, cp->sounds[1][0:4, 0.500, [3]0.000 -> 0.277, [4]0.000 -> 0.277, off: -1.000, scl: 1.000, off2: -1.000, scl2: 1.000]) [buf: 11] 
    (at 5, cp->sounds[1][5:10, 1.000, [3]0.347 -> 0.693, [4]0.347 -> 0.693, off: -1.000, scl: 1.000, off2: -1.000, scl2: 1.000]) [buf: 11] 
    (at 11, end_mark)
 "))
-	    (snd-display ";xramp2 2: ~A" (display-edits ind 0 4)))
+	    (snd-display ";xramp2 2: ~A" (safe-display-edits ind 0 4)))
 	(if (not (vequal (channel->vct) (vct 0.000 0.003 0.011 0.027 0.051 0.172 0.266 0.390 0.549 0.750 1.000)))
 	    (snd-display ";xramp2 (2): ~A" (channel->vct)))
 	(undo)
 	(scale-channel 0.5 2 4)
-	(if (not (string=? (display-edits ind 0 4) "
+	(if (not (string=? (safe-display-edits ind 0 4) "
  (scale 2 4) ; scale-channel 0.500 2 4 [4:4]:
    (at 0, cp->sounds[1][0:1, 1.000, [3]0.000 -> 0.069, [4]0.000 -> 0.069, off: -1.000, scl: 1.000, off2: -1.000, scl2: 1.000]) [buf: 11] 
    (at 2, cp->sounds[1][2:5, 0.500, [3]0.139 -> 0.347, [4]0.139 -> 0.347, off: -1.000, scl: 1.000, off2: -1.000, scl2: 1.000]) [buf: 11] 
    (at 6, cp->sounds[1][6:10, 1.000, [3]0.416 -> 0.693, [4]0.416 -> 0.693, off: -1.000, scl: 1.000, off2: -1.000, scl2: 1.000]) [buf: 11] 
    (at 11, end_mark)
 "))
-	    (snd-display ";xramp2 3: ~A" (display-edits ind 0 4)))
+	    (snd-display ";xramp2 3: ~A" (safe-display-edits ind 0 4)))
 	(undo 2)
 	(xramp-channel 0.75 0.25 0.3)
-	(if (not (string-=? (display-edits ind 0 3) "
+	(if (not (string-=? (safe-display-edits ind 0 3) "
  (ramp 0 11) ; xramp-channel 0.750 0.250 0.300 0 #f [3:2]:
    (at 0, cp->sounds[1][0:10, 1.000, [3]-1.204 -> -0.000, [4]0.000 -> 0.693, off: -1.000, scl: 1.000, off2: 0.964, scl2: -0.714]) [buf: 11] 
    (at 11, end_mark)
 "))
-	    (snd-display ";xramp2 4: ~A" (display-edits ind 0 3)))
+	    (snd-display ";xramp2 4: ~A" (safe-display-edits ind 0 3)))
 	(undo)
 	(xramp-channel .2 .6 32.0 2 6)
-	(if (not (string=? (display-edits ind 0 3) "
+	(if (not (string=? (safe-display-edits ind 0 3) "
  (ramp 2 6) ; xramp-channel 0.200 0.600 32.000 2 6 [3:4]:
    (at 0, cp->sounds[1][0:1, 1.000, [4]0.000 -> 0.069, off: -1.000, scl: 1.000]) [buf: 11] 
    (at 2, cp->sounds[1][2:7, 1.000, [3]0.000 -> 3.466, [4]0.139 -> 0.485, off: -1.000, scl: 1.000, off2: 0.187, scl2: 0.013]) [buf: 11] 
    (at 8, cp->sounds[1][8:10, 1.000, [4]0.555 -> 0.693, off: -1.000, scl: 1.000]) [buf: 11] 
    (at 11, end_mark)
 "))
-	    (snd-display ";xramp2 5: ~A" (display-edits ind 0 3)))
+	    (snd-display ";xramp2 5: ~A" (safe-display-edits ind 0 3)))
 	(scale-channel 0.5 0 5)
-	(if (not (string=? (display-edits ind 0 4) "
+	(if (not (string=? (safe-display-edits ind 0 4) "
  (scale 0 5) ; scale-channel 0.500 0 5 [4:5]:
    (at 0, cp->sounds[1][0:1, 0.500, [4]0.000 -> 0.069, off: -1.000, scl: 1.000]) [buf: 11] 
    (at 2, cp->sounds[1][2:4, 0.500, [3]0.000 -> 1.386, [4]0.139 -> 0.277, off: -1.000, scl: 1.000, off2: 0.187, scl2: 0.013]) [buf: 11] 
@@ -6181,10 +6191,10 @@ EDITS: 5
    (at 8, cp->sounds[1][8:10, 1.000, [4]0.555 -> 0.693, off: -1.000, scl: 1.000]) [buf: 11] 
    (at 11, end_mark)
 "))
-	    (snd-display ";xramp2 6: ~A" (display-edits ind 0 4)))
+	    (snd-display ";xramp2 6: ~A" (safe-display-edits ind 0 4)))
 	(undo)
 	(set! (sample 4) .5)
-	(if (not (string=? (display-edits ind 0 4) "
+	(if (not (string=? (safe-display-edits ind 0 4) "
  (set 4 1) ; set-sample 4 0.5000 [4:6]:
    (at 0, cp->sounds[1][0:1, 1.000, [4]0.000 -> 0.069, off: -1.000, scl: 1.000]) [buf: 11] 
    (at 2, cp->sounds[1][2:3, 1.000, [3]0.000 -> 0.693, [4]0.139 -> 0.208, off: -1.000, scl: 1.000, off2: 0.187, scl2: 0.013]) [buf: 11] 
@@ -6193,7 +6203,7 @@ EDITS: 5
    (at 8, cp->sounds[1][8:10, 1.000, [4]0.555 -> 0.693, off: -1.000, scl: 1.000]) [buf: 11] 
    (at 11, end_mark)
 "))
-	    (snd-display ";xramp2 7: ~A" (display-edits ind 0 4)))
+	    (snd-display ";xramp2 7: ~A" (safe-display-edits ind 0 4)))
 	(undo 3)
 	(close-sound ind))
       
@@ -6206,7 +6216,7 @@ EDITS: 5
 	  (scale-channel 0.5 (* i 10) 10))
 	(xramp-channel 0.0 1.0 3.0)
 	(xramp-channel 1.0 0.0 0.3)
-	(if (not (string-=? (display-edits ind 0 13) "
+	(if (not (string-=? (safe-display-edits ind 0 13) "
  (ramp 0 100) ; xramp-channel 1.000 0.000 0.300 0 #f [13:11]:
    (at 0, cp->sounds[1][0:9, 0.500, [3]-1.204 -> -1.095, [4]-0.000 -> 0.100, off: -0.500, scl: 0.500, off2: 1.429, scl2: -1.429]) [buf: 100] 
    (at 10, cp->sounds[1][10:19, 0.500, [3]-1.082 -> -0.973, [4]0.111 -> 0.211, off: -0.500, scl: 0.500, off2: 1.429, scl2: -1.429]) [buf: 100] 
@@ -6220,7 +6230,7 @@ EDITS: 5
    (at 90, cp->sounds[1][90:99, 0.500, [3]-0.109 -> -0.000, [4]0.999 -> 1.099, off: -0.500, scl: 0.500, off2: 1.429, scl2: -1.429]) [buf: 100] 
    (at 100, end_mark)
 "))
-	    (snd-display ";multi-xramp2 1: ~A" (display-edits ind 0 13)))
+	    (snd-display ";multi-xramp2 1: ~A" (safe-display-edits ind 0 13)))
 	(close-sound ind))
       
       ;; ptree+ramp2
@@ -6230,30 +6240,30 @@ EDITS: 5
 	(ramp-channel 0.0 1.0)
 	(ramp-channel 0.0 1.0)
 	(ptree-channel (lambda (y) y))
-	(if (not (string-=? (display-edits ind 0 4 #f) "
+	(if (not (string-=? (safe-display-edits ind 0 4 #f) "
  (ptree[0] 0 11) ; ptree-channel [4:2]:
    (at 0, cp->sounds[1][0:10, 1.000, [1]-0.000 -> 1.000, [2]-0.000 -> 1.000, loc: 0, pos: 0, scl: 1.000]) [buf: 11] 
    (at 11, end_mark)
 "))
-	    (snd-display ";ptree-ramp2 0: ~A" (display-edits ind 0 4 #f)))
+	    (snd-display ";ptree-ramp2 0: ~A" (safe-display-edits ind 0 4 #f)))
 	(if (not (vequal (channel->vct) (vct 0.000 0.010 0.040 0.090 0.160 0.250 0.360 0.490 0.640 0.810 1.000)))
 	    (snd-display ";ptree-ramp2 (1): ~A" (channel->vct)))
 	(scale-channel 0.5)
-	(if (not (string-=? (display-edits ind 0 5 #f) "
+	(if (not (string-=? (safe-display-edits ind 0 5 #f) "
  (scale 0 11) ; scale-channel 0.500 0 #f [5:2]:
    (at 0, cp->sounds[1][0:10, 0.500, [1]-0.000 -> 1.000, [2]-0.000 -> 1.000, loc: 0, pos: 0, scl: 1.000]) [buf: 11] 
    (at 11, end_mark)
 "))
-	    (snd-display ";ptree-ramp2 1: ~A" (display-edits ind 0 5 #f)))
+	    (snd-display ";ptree-ramp2 1: ~A" (safe-display-edits ind 0 5 #f)))
 	(undo)
 	(scale-channel 0.5 0 5)
-	(if (not (string-=? (display-edits ind 0 5 #f) "
+	(if (not (string-=? (safe-display-edits ind 0 5 #f) "
  (scale 0 5) ; scale-channel 0.500 0 5 [5:3]:
    (at 0, cp->sounds[1][0:4, 0.500, [1]-0.000 -> 0.400, [2]-0.000 -> 0.400, loc: 0, pos: 0, scl: 1.000]) [buf: 11] 
    (at 5, cp->sounds[1][5:10, 1.000, [1]0.500 -> 1.000, [2]0.500 -> 1.000, loc: 0, pos: 5, scl: 1.000]) [buf: 11] 
    (at 11, end_mark)
 "))
-	    (snd-display ";ptree-ramp2 2: ~A" (display-edits ind 0 5 #f)))
+	    (snd-display ";ptree-ramp2 2: ~A" (safe-display-edits ind 0 5 #f)))
 	(if (not (vequal (channel->vct) (vct 0.000 0.005 0.020 0.045 0.080 0.250 0.360 0.490 0.640 0.810 1.000)))
 	    (snd-display ";ptree-ramp2 (2): ~A" (channel->vct)))
 	(undo 4)
@@ -6262,7 +6272,7 @@ EDITS: 5
 	(env-channel '(0 0 1 1 2 0))
 	(ramp-channel 0 1 2 3)
 	(ptree-channel (lambda (y) y))
-	(if (not (string-=? (display-edits ind 0 5 #f) "
+	(if (not (string-=? (safe-display-edits ind 0 5 #f) "
  (ptree[0] 0 11) ; ptree-channel [5:5]:
    (at 0, cp->sounds[1][0:1, 1.000, [1]-0.000 -> 0.200, loc: 0, pos: 0, scl: 0.500]) [buf: 11] 
    (at 2, cp->sounds[1][2:4, 1.000, [1]0.400 -> 0.800, [2]0.000 -> 1.000, loc: 0, pos: 2, scl: 0.500]) [buf: 11] 
@@ -6270,7 +6280,7 @@ EDITS: 5
    (at 6, cp->sounds[1][6:10, 1.000, [1]0.800 -> 0.000, loc: 0, pos: 6, scl: 0.500]) [buf: 11] 
    (at 11, end_mark)
 "))
-	    (snd-display ";ptree-ramp2 4: ~A" (display-edits ind 0 5 #f)))
+	    (snd-display ";ptree-ramp2 4: ~A" (safe-display-edits ind 0 5 #f)))
 	
 	(undo 4)
 	(ramp-channel 0.0 1.0)
@@ -6281,12 +6291,12 @@ EDITS: 5
 		       0 (frames) ind 0 #f #t
 		       (lambda (pos dur)
 			 (vct 0.5)))
-	(if (not (string-=? (display-edits ind 0 4 #f) "
+	(if (not (string-=? (safe-display-edits ind 0 4 #f) "
  (ptree[0] 0 11) ; ptree-channel [4:2]:
    (at 0, cp->sounds[1][0:10, 1.000, [1]-0.000 -> 1.000, [2]-0.000 -> 1.000, loc: 0, pos: 0, scl: 1.000]) [buf: 11] 
    (at 11, end_mark)
 "))
-	    (snd-display ";ptree-ramp2 5: ~A" (display-edits ind 0 4 #f)))
+	    (snd-display ";ptree-ramp2 5: ~A" (safe-display-edits ind 0 4 #f)))
 	(if (not (vequal (channel->vct) (vct 0.000 0.005 0.020 0.045 0.080 0.125 0.180 0.245 0.320 0.405 0.500)))
 	    (snd-display ";ptree+closure+ramp2: ~A" (channel->vct)))
 	
@@ -6302,7 +6312,7 @@ EDITS: 5
 	(ramp-channel 0.0 1.0)
 	(ramp-channel 1.0 0.0)
 	(ptree-channel (lambda (y) y))
-	(if (not (string-=? (display-edits ind 0 14 #f) "
+	(if (not (string-=? (safe-display-edits ind 0 14 #f) "
  (ptree[0] 0 100) ; ptree-channel [14:11]:
    (at 0, cp->sounds[1][0:9, 1.000, [1]0.000 -> 0.091, [2]1.000 -> 0.909, loc: 0, pos: 0, scl: 0.500]) [buf: 100] 
    (at 10, cp->sounds[1][10:19, 1.000, [1]0.101 -> 0.192, [2]0.899 -> 0.808, loc: 0, pos: 10, scl: 0.500]) [buf: 100] 
@@ -6316,7 +6326,7 @@ EDITS: 5
    (at 90, cp->sounds[1][90:99, 1.000, [1]0.909 -> 1.000, [2]0.091 -> -0.000, loc: 0, pos: 90, scl: 0.500]) [buf: 100] 
    (at 100, end_mark)
 "))
-	    (snd-display ";ptree multi-ramp2 1: ~A" (display-edits ind 0 14 #f)))
+	    (snd-display ";ptree multi-ramp2 1: ~A" (safe-display-edits ind 0 14 #f)))
 	(undo 12)
 	(close-sound ind))
       
@@ -6327,28 +6337,28 @@ EDITS: 5
 	(ramp-channel 0.0 1.0)
 	(ramp-channel 0.0 1.0)
 	(ptree-channel (lambda (y) (+ y .1)))
-	(if (not (string-=? (display-edits ind 0 5 #f) "
+	(if (not (string-=? (safe-display-edits ind 0 5 #f) "
  (ptree[0] 0 11) ; ptree-channel [5:2]:
    (at 0, cp->sounds[1][0:10, 1.000, [1]-0.000 -> 1.000, [2]-0.000 -> 1.000, [3]-0.000 -> 1.000, loc: 0, pos: 0, scl: 1.000]) [buf: 11] 
    (at 11, end_mark)
 "))
-	    (snd-display ";ptree-ramp3 0: ~A" (display-edits ind 0 5 #f)))
+	    (snd-display ";ptree-ramp3 0: ~A" (safe-display-edits ind 0 5 #f)))
 	(if (not (vequal (channel->vct) (vct 0.100 0.101 0.108 0.127 0.164 0.225 0.316 0.443 0.612 0.829 1.100)))
 	    (snd-display ";ptree-ramp3 1: ~A" (channel->vct)))
 	(scale-channel 0.5)
-	(if (not (string-=? (display-edits ind 0 6 #f) "
+	(if (not (string-=? (safe-display-edits ind 0 6 #f) "
  (scale 0 11) ; scale-channel 0.500 0 #f [6:2]:
    (at 0, cp->sounds[1][0:10, 0.500, [1]-0.000 -> 1.000, [2]-0.000 -> 1.000, [3]-0.000 -> 1.000, loc: 0, pos: 0, scl: 1.000]) [buf: 11] 
    (at 11, end_mark)
 "))
-	    (snd-display ";ptree-ramp3 2: ~A" (display-edits ind 0 6 #f)))
+	    (snd-display ";ptree-ramp3 2: ~A" (safe-display-edits ind 0 6 #f)))
 	
 	(undo 5)
 	(ramp-channel 0 1)
 	(ramp-channel 0 1 5 5)
 	(ramp-channel 0 1 7 3)
 	(ptree-channel (lambda (y) (+ y .1)))
-	(if (not (string-=? (display-edits ind 0 5 #f) "
+	(if (not (string-=? (safe-display-edits ind 0 5 #f) "
  (ptree[0] 0 11) ; ptree-channel [5:5]:
    (at 0, cp->sounds[1][0:4, 1.000, [1]-0.000 -> 0.400, loc: 0, pos: 0, scl: 1.000]) [buf: 11] 
    (at 5, cp->sounds[1][5:6, 1.000, [1]0.500 -> 0.600, [2]0.000 -> 0.250, loc: 0, pos: 5, scl: 1.000]) [buf: 11] 
@@ -6356,7 +6366,7 @@ EDITS: 5
    (at 10, cp->sounds[1][10:10, 1.000, [1]1.000 -> 1.000, loc: 0, pos: 10, scl: 1.000]) [buf: 11] 
    (at 11, end_mark)
 "))
-	    (snd-display ";ptree-ramp3 3: ~A" (display-edits ind 0 5 #f)))
+	    (snd-display ";ptree-ramp3 3: ~A" (safe-display-edits ind 0 5 #f)))
 	(if (not (vequal (channel->vct) (vct 0.100 0.200 0.300 0.400 0.500 0.100 0.250 0.100 0.400 1.000 1.100)))
 	    (snd-display ";ptree-ramp3 4: ~A" (channel->vct)))
 	(close-sound ind))
@@ -6368,62 +6378,62 @@ EDITS: 5
 	(ramp-channel 0.0 1.0)
 	(ramp-channel 0.0 1.0)
 	(ramp-channel 0.0 1.0)
-	(if (not (string-=? (display-edits ind 0 4) "
+	(if (not (string-=? (safe-display-edits ind 0 4) "
  (ramp 0 11) ; ramp-channel 0.000 1.000 0 #f [4:2]:
    (at 0, cp->sounds[1][0:10, 1.000, [1]-0.000 -> 1.000, [2]-0.000 -> 1.000, [3]-0.000 -> 1.000]) [buf: 11] 
    (at 11, end_mark)
 "))
-	    (snd-display ";ramp3 0: ~A" (display-edits ind 0 4)))
+	    (snd-display ";ramp3 0: ~A" (safe-display-edits ind 0 4)))
 	(if (not (vequal (channel->vct) (vct 0.000 0.001 0.008 0.027 0.064 0.125 0.216 0.343 0.512 0.729 1.000)))
 	    (snd-display ";ramp3 (1): ~A" (channel->vct)))
 	(scale-channel 0.5)
-	(if (not (string-=? (display-edits ind 0 5) "
+	(if (not (string-=? (safe-display-edits ind 0 5) "
  (scale 0 11) ; scale-channel 0.500 0 #f [5:2]:
    (at 0, cp->sounds[1][0:10, 0.500, [1]-0.000 -> 1.000, [2]-0.000 -> 1.000, [3]-0.000 -> 1.000]) [buf: 11] 
    (at 11, end_mark)
 "))
-	    (snd-display ";ramp3 1: ~A" (display-edits ind 0 5)))
+	    (snd-display ";ramp3 1: ~A" (safe-display-edits ind 0 5)))
 	(undo)
 	(scale-channel 0.5 0 5)
-	(if (not (string-=? (display-edits ind 0 5) "
+	(if (not (string-=? (safe-display-edits ind 0 5) "
  (scale 0 5) ; scale-channel 0.500 0 5 [5:3]:
    (at 0, cp->sounds[1][0:4, 0.500, [1]-0.000 -> 0.400, [2]-0.000 -> 0.400, [3]-0.000 -> 0.400]) [buf: 11] 
    (at 5, cp->sounds[1][5:10, 1.000, [1]0.500 -> 1.000, [2]0.500 -> 1.000, [3]0.500 -> 1.000]) [buf: 11] 
    (at 11, end_mark)
 "))
-	    (snd-display ";ramp3 2: ~A" (display-edits ind 0 5)))
+	    (snd-display ";ramp3 2: ~A" (safe-display-edits ind 0 5)))
 	(if (not (vequal (channel->vct) (vct 0.000 0.001 0.004 0.014 0.032 0.125 0.216 0.343 0.512 0.729 1.000)))
 	    (snd-display ";ramp3 (2): ~A" (channel->vct)))
 	(undo)
 	(scale-channel 0.5 2 4)
-	(if (not (string-=? (display-edits ind 0 5) "
+	(if (not (string-=? (safe-display-edits ind 0 5) "
  (scale 2 4) ; scale-channel 0.500 2 4 [5:4]:
    (at 0, cp->sounds[1][0:1, 1.000, [1]-0.000 -> 0.100, [2]-0.000 -> 0.100, [3]-0.000 -> 0.100]) [buf: 11] 
    (at 2, cp->sounds[1][2:5, 0.500, [1]0.200 -> 0.500, [2]0.200 -> 0.500, [3]0.200 -> 0.500]) [buf: 11] 
    (at 6, cp->sounds[1][6:10, 1.000, [1]0.600 -> 1.000, [2]0.600 -> 1.000, [3]0.600 -> 1.000]) [buf: 11] 
    (at 11, end_mark)
 "))
-	    (snd-display ";ramp3 3: ~A" (display-edits ind 0 5)))
+	    (snd-display ";ramp3 3: ~A" (safe-display-edits ind 0 5)))
 	(undo 2)
 	(ramp-channel 0.75 0.25)
-	(if (not (string-=? (display-edits ind 0 4) "
+	(if (not (string-=? (safe-display-edits ind 0 4) "
  (ramp 0 11) ; ramp-channel 0.750 0.250 0 #f [4:2]:
    (at 0, cp->sounds[1][0:10, 1.000, [1]-0.000 -> 1.000, [2]-0.000 -> 1.000, [3]0.750 -> 0.250]) [buf: 11] 
    (at 11, end_mark)
 "))
-	    (snd-display ";ramp3 4: ~A" (display-edits ind 0 4)))
+	    (snd-display ";ramp3 4: ~A" (safe-display-edits ind 0 4)))
 	(undo)
 	(ramp-channel .2 .6 2 6)
-	(if (not (string-=? (display-edits ind 0 4) "
+	(if (not (string-=? (safe-display-edits ind 0 4) "
  (ramp 2 6) ; ramp-channel 0.200 0.600 2 6 [4:4]:
    (at 0, cp->sounds[1][0:1, 1.000, [1]-0.000 -> 0.100, [2]-0.000 -> 0.100]) [buf: 11] 
    (at 2, cp->sounds[1][2:7, 1.000, [1]0.200 -> 0.700, [2]0.200 -> 0.700, [3]0.200 -> 0.600]) [buf: 11] 
    (at 8, cp->sounds[1][8:10, 1.000, [1]0.800 -> 1.000, [2]0.800 -> 1.000]) [buf: 11] 
    (at 11, end_mark)
 "))
-	    (snd-display ";ramp3 5: ~A" (display-edits ind 0 4)))
+	    (snd-display ";ramp3 5: ~A" (safe-display-edits ind 0 4)))
 	(scale-channel 0.5 0 5)
-	(if (not (string-=? (display-edits ind 0 5) "
+	(if (not (string-=? (safe-display-edits ind 0 5) "
  (scale 0 5) ; scale-channel 0.500 0 5 [5:5]:
    (at 0, cp->sounds[1][0:1, 0.500, [1]-0.000 -> 0.100, [2]-0.000 -> 0.100]) [buf: 11] 
    (at 2, cp->sounds[1][2:4, 0.500, [1]0.200 -> 0.400, [2]0.200 -> 0.400, [3]0.200 -> 0.360]) [buf: 11] 
@@ -6431,10 +6441,10 @@ EDITS: 5
    (at 8, cp->sounds[1][8:10, 1.000, [1]0.800 -> 1.000, [2]0.800 -> 1.000]) [buf: 11] 
    (at 11, end_mark)
 "))
-	    (snd-display ";ramp3 6: ~A" (display-edits ind 0 5)))
+	    (snd-display ";ramp3 6: ~A" (safe-display-edits ind 0 5)))
 	(undo)
 	(set! (sample 4) .5)
-	(if (not (string-=? (display-edits ind 0 5) "
+	(if (not (string-=? (safe-display-edits ind 0 5) "
  (set 4 1) ; set-sample 4 0.5000 [5:6]:
    (at 0, cp->sounds[1][0:1, 1.000, [1]-0.000 -> 0.100, [2]-0.000 -> 0.100]) [buf: 11] 
    (at 2, cp->sounds[1][2:3, 1.000, [1]0.200 -> 0.300, [2]0.200 -> 0.300, [3]0.200 -> 0.280]) [buf: 11] 
@@ -6443,7 +6453,7 @@ EDITS: 5
    (at 8, cp->sounds[1][8:10, 1.000, [1]0.800 -> 1.000, [2]0.800 -> 1.000]) [buf: 11] 
    (at 11, end_mark)
 "))
-	    (snd-display ";ramp3 7: ~A" (display-edits ind 0 5)))
+	    (snd-display ";ramp3 7: ~A" (safe-display-edits ind 0 5)))
 	(undo 3)
 	(close-sound ind))
       
@@ -6457,7 +6467,7 @@ EDITS: 5
 	(ramp-channel 0.0 1.0)
 	(ramp-channel 1.0 -0.5)
 	(ramp-channel -0.5 1.5)
-	(if (not (string=? (display-edits ind 0 14) "
+	(if (not (string=? (safe-display-edits ind 0 14) "
  (ramp 0 100) ; ramp-channel -0.500 1.500 0 #f [14:11]:
    (at 0, cp->sounds[1][0:9, 0.500, [1]0.000 -> 0.091, [2]1.000 -> 0.864, [3]-0.500 -> -0.318]) [buf: 100] 
    (at 10, cp->sounds[1][10:19, 0.500, [1]0.101 -> 0.192, [2]0.848 -> 0.712, [3]-0.298 -> -0.116]) [buf: 100] 
@@ -6471,13 +6481,13 @@ EDITS: 5
    (at 90, cp->sounds[1][90:99, 0.500, [1]0.909 -> 1.000, [2]-0.364 -> -0.500, [3]1.318 -> 1.500]) [buf: 100] 
    (at 100, end_mark)
 "))
-	    (snd-display ";multi-ramp3 1: ~A" (display-edits ind 0 14)))
+	    (snd-display ";multi-ramp3 1: ~A" (safe-display-edits ind 0 14)))
 	(undo 13)
 	(ramp-channel 0.0 1.0 10 30)
 	(ramp-channel 0.0 1.0 50 20)
 	(ramp-channel 0.0 1.0 20 15)
 	(ramp-channel 0.0 1.0 30 30)
-	(if (not (string-=? (display-edits ind 0 5) "
+	(if (not (string-=? (safe-display-edits ind 0 5) "
  (ramp 30 30) ; ramp-channel 0.000 1.000 30 30 [5:10]:
    (at 0, cp->sounds[1][0:9, 1.000]) [buf: 100] 
    (at 10, cp->sounds[1][10:19, 1.000, [1]0.000 -> 0.310]) [buf: 100] 
@@ -6490,7 +6500,7 @@ EDITS: 5
    (at 70, cp->sounds[1][70:99, 1.000]) [buf: 100] 
    (at 100, end_mark)
 "))
-	    (snd-display ";multi-ramp3 2: ~A" (display-edits ind 0 5)))
+	    (snd-display ";multi-ramp3 2: ~A" (safe-display-edits ind 0 5)))
 	
 	(let ((vals (channel->vct)))
 	  (undo 4)
@@ -6514,70 +6524,70 @@ EDITS: 5
 	;; ramp+xramp (now optimized)
 	(ramp-channel 0.0 1.0)
 	(xramp-channel 0.0 1.0 32.0)
-	(if (not (string-=? (display-edits ind 0 3) "
+	(if (not (string-=? (safe-display-edits ind 0 3) "
  (ramp 0 11) ; xramp-channel 0.000 1.000 32.000 0 #f [3:2]:
    (at 0, cp->sounds[1][0:10, 1.000, [1]-0.000 -> 1.000, [4]0.000 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 11, end_mark)
 "))
-	    (snd-display ";ramp+xramp: ~A" (display-edits ind 0 3)))
+	    (snd-display ";ramp+xramp: ~A" (safe-display-edits ind 0 3)))
 	(undo 2)
 	
 	;; xramp+xramp -- this one now optimized
 	(xramp-channel 0.0 1.0 0.32)
 	(xramp-channel 0.0 1.0 32.0)
-	(if (not (string=? (display-edits ind 0 3) "
+	(if (not (string=? (safe-display-edits ind 0 3) "
  (ramp 0 11) ; xramp-channel 0.000 1.000 32.000 0 #f [3:2]:
    (at 0, cp->sounds[1][0:10, 1.000, [3]0.000 -> 3.466, [4]0.000 -> -1.139, off: 1.471, scl: -1.471, off2: -0.032, scl2: 0.032]) [buf: 11] 
    (at 11, end_mark)
 "))
-	    (snd-display ";xramp+xramp: ~A" (display-edits ind 0 3)))
+	    (snd-display ";xramp+xramp: ~A" (safe-display-edits ind 0 3)))
 	(undo 2)
 	
 	;; xramp+xramp+xramp
 	(xramp-channel 0.0 1.0 0.32)
 	(xramp-channel 0.0 1.0 32.0)
 	(xramp-channel 0.0 1.0 32.0)
-	(if (not (string=? (display-edits ind 0 4) "
+	(if (not (string=? (safe-display-edits ind 0 4) "
  (set 0 11) ; env-channel-with-base '(0.000 0.000 1.000 1.000) 32.0000 0 #f [4:2]:
    (at 0, cp->sounds[2][0:10, 1.000]) [buf: 11] 
    (at 11, end_mark)
 "))
-	    (snd-display ";xramp+xramp+xramp: ~A" (display-edits ind 0 4)))
+	    (snd-display ";xramp+xramp+xramp: ~A" (safe-display-edits ind 0 4)))
 	(undo 3)
 	
 	;; xramp+xramp+ramp (now optimized)
 	(xramp-channel 0.0 1.0 0.32)
 	(xramp-channel 0.0 1.0 32.0)
 	(ramp-channel 0.0 1.0)
-	(if (not (string-=? (display-edits ind 0 4) "
+	(if (not (string-=? (safe-display-edits ind 0 4) "
  (ramp 0 11) ; ramp-channel 0.000 1.000 0 #f [4:2]:
    (at 0, cp->sounds[1][0:10, 1.000, [1]-0.000 -> 1.000, [3]0.000 -> 3.466, [4]0.000 -> -1.139, off: 1.471, scl: -1.471, off2: -0.032, scl2: 0.032]) [buf: 11] 
    (at 11, end_mark)
 "))
-	    (snd-display ";xramp+xramp+ramp: ~A" (display-edits ind 0 4)))
+	    (snd-display ";xramp+xramp+ramp: ~A" (safe-display-edits ind 0 4)))
 	(undo 3)
 	
 	;; xramp+ramp (now optimized)
 	(xramp-channel 0.0 1.0 32.0)
 	(ramp-channel 0.0 1.0)
-	(if (not (string-=? (display-edits ind 0 3) "
+	(if (not (string-=? (safe-display-edits ind 0 3) "
  (ramp 0 11) ; ramp-channel 0.000 1.000 0 #f [3:2]:
    (at 0, cp->sounds[1][0:10, 1.000, [1]-0.000 -> 1.000, [4]0.000 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 11, end_mark)
 "))
-	    (snd-display ";xramp+ramp: ~A" (display-edits ind 0 3)))
+	    (snd-display ";xramp+ramp: ~A" (safe-display-edits ind 0 3)))
 	(undo 2)
 	
 	;; ramp+ramp+xramp
 	(ramp-channel 0.0 1.0)
 	(ramp-channel 0.0 1.0)
 	(xramp-channel 0.0 1.0 32.0)
-	(if (not (string-=? (display-edits ind 0 4) "
+	(if (not (string-=? (safe-display-edits ind 0 4) "
  (ramp 0 11) ; xramp-channel 0.000 1.000 32.000 0 #f [4:2]:
    (at 0, cp->sounds[1][0:10, 1.000, [1]-0.000 -> 1.000, [2]-0.000 -> 1.000, [4]0.000 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 11, end_mark)
 "))
-	    (snd-display ";ramp+ramp+xramp: ~A" (display-edits ind 0 4)))
+	    (snd-display ";ramp+ramp+xramp: ~A" (safe-display-edits ind 0 4)))
 	(undo 3)
 	
 	;; ramp+ramp+ramp+ramp
@@ -6585,12 +6595,12 @@ EDITS: 5
 	(ramp-channel 0.0 1.0)
 	(ramp-channel 0.0 1.0)
 	(ramp-channel 0.0 1.0)
-	(if (not (string-=? (display-edits ind 0 5) "
+	(if (not (string-=? (safe-display-edits ind 0 5) "
  (ramp 0 11) ; ramp-channel 0.000 1.000 0 #f [5:2]:
    (at 0, cp->sounds[1][0:10, 1.000, [1]-0.000 -> 1.000, [2]-0.000 -> 1.000, [3]-0.000 -> 1.000, [4]-0.000 -> 1.000]) [buf: 11] 
    (at 11, end_mark)
 "))
-	    (snd-display ";ramp+ramp+ramp+ramp: ~A" (display-edits ind 0 5)))
+	    (snd-display ";ramp+ramp+ramp+ramp: ~A" (safe-display-edits ind 0 5)))
 	(undo 4)
 	
 	;; ramp+ramp+ramp+xramp
@@ -6598,47 +6608,47 @@ EDITS: 5
 	(ramp-channel 0.0 1.0)
 	(ramp-channel 0.0 1.0)
 	(xramp-channel 0.0 1.0 32.0)
-	(if (not (string-=? (display-edits ind 0 5) "
+	(if (not (string-=? (safe-display-edits ind 0 5) "
  (ramp 0 11) ; xramp-channel 0.000 1.000 32.000 0 #f [5:2]:
    (at 0, cp->sounds[1][0:10, 1.000, [1]-0.000 -> 1.000, [2]-0.000 -> 1.000, [3]-0.000 -> 1.000, [4]0.000 -> 3.466, off: -0.032, scl: 0.032]) [buf: 11] 
    (at 11, end_mark)
 "))
-	    (snd-display ";ramp+ramp+ramp+xramp: ~A" (display-edits ind 0 5)))
+	    (snd-display ";ramp+ramp+ramp+xramp: ~A" (safe-display-edits ind 0 5)))
 	(undo 4)
 	
 	;; ptree+ramp (now optimized)
 	(ptree-channel (lambda (y) y))
 	(ramp-channel 0.0 1.0)
-	(if (not (string-=? (display-edits ind 0 3) "
+	(if (not (string-=? (safe-display-edits ind 0 3) "
  (ramp 0 11) ; ramp-channel 0.000 1.000 0 #f [3:2]:
    (at 0, cp->sounds[1][0:10, 1.000, [1]-0.000 -> 1.000, loc: 0, pos: 0, scl: 1.000, code: (lambda (y) y)]) [buf: 11] 
    (at 11, end_mark)
 "))
-	    (snd-display ";ptree+ramp: ~A" (display-edits ind 0 3)))
+	    (snd-display ";ptree+ramp: ~A" (safe-display-edits ind 0 3)))
 	(undo 2)
 	
 	;; ramp+xramp+ptree (now optimized)
 	(ramp-channel 0.0 1.0)
 	(xramp-channel 0.0 1.0 32.0)
 	(ptree-channel (lambda (y) y))
-	(if (not (string-=? (display-edits ind 0 4) "
+	(if (not (string-=? (safe-display-edits ind 0 4) "
  (ptree[0] 0 11) ; ptree-channel [4:2]:
    (at 0, cp->sounds[1][0:10, 1.000, [1]-0.000 -> 1.000, [4]0.000 -> 3.466, off: -0.032, scl: 0.032, loc: 0, pos: 0, scl: 1.000, code: (lambda (y) y)]) [buf: 11] 
    (at 11, end_mark)
 "))
-	    (snd-display ";ramp+xramp+ptree: ~A" (display-edits ind 0 4)))
+	    (snd-display ";ramp+xramp+ptree: ~A" (safe-display-edits ind 0 4)))
 	(undo 3)
 	
 	;; xramp+ramp+ptree (now optimized)
 	(xramp-channel 0.0 1.0 32.0)
 	(ramp-channel 0.0 1.0)
 	(ptree-channel (lambda (y) y))
-	(if (not (string-=? (display-edits ind 0 4) "
+	(if (not (string-=? (safe-display-edits ind 0 4) "
  (ptree[0] 0 11) ; ptree-channel [4:2]:
    (at 0, cp->sounds[1][0:10, 1.000, [1]-0.000 -> 1.000, [4]0.000 -> 3.466, off: -0.032, scl: 0.032, loc: 0, pos: 0, scl: 1.000, code: (lambda (y) y)]) [buf: 11] 
    (at 11, end_mark)
 "))
-	    (snd-display ";xramp+ramp+ptree: ~A" (display-edits ind 0 4)))
+	    (snd-display ";xramp+ramp+ptree: ~A" (safe-display-edits ind 0 4)))
 	(undo 3)
 	
 	;; ramp3+ptree (now optimized)
@@ -6646,23 +6656,23 @@ EDITS: 5
 	(ramp-channel 0.0 1.0)
 	(ramp-channel 0.0 1.0)
 	(ptree-channel (lambda (y) y))
-	(if (not (string-=? (display-edits ind 0 5) "
+	(if (not (string-=? (safe-display-edits ind 0 5) "
  (ptree[0] 0 11) ; ptree-channel [5:2]:
    (at 0, cp->sounds[1][0:10, 1.000, [1]-0.000 -> 1.000, [2]-0.000 -> 1.000, [3]-0.000 -> 1.000, loc: 0, pos: 0, scl: 1.000, code: (lambda (y) y)]) [buf: 11] 
    (at 11, end_mark)
 "))
-	    (snd-display ";ramp3+ptree: ~A" (display-edits ind 0 5)))
+	    (snd-display ";ramp3+ptree: ~A" (safe-display-edits ind 0 5)))
 	(undo 4)
 	
 	;; ptree+ptree (now optimized)
 	(ptree-channel (lambda (y) y))
 	(ptree-channel (lambda (y) y))
-	(if (not (string=? (display-edits ind 0 3) "
+	(if (not (string=? (safe-display-edits ind 0 3) "
  (ptree[1] 0 11) ; ptree-channel [3:2]:
    (at 0, cp->sounds[1][0:10, 1.000, loc2: 1, pos2: 0, scl2: 1.000, loc: 0, pos: 0, scl: 1.000, code: (lambda (y) y)]) [buf: 11] 
    (at 11, end_mark)
 "))
-	    (snd-display ";ptree+ptree: ~A" (display-edits ind 0 3)))
+	    (snd-display ";ptree+ptree: ~A" (safe-display-edits ind 0 3)))
 	(undo 2)
 	(close-sound ind))
       
@@ -6673,31 +6683,31 @@ EDITS: 5
 	(ptree-channel (lambda (y) (* y 0.5)))
 	(ptree-channel (lambda (y) (* y 2.0)))
 	(ramp-channel 0 1)
-	(if (not (string-=? (display-edits ind 0 4 #f) "
+	(if (not (string-=? (safe-display-edits ind 0 4 #f) "
  (ramp 0 11) ; ramp-channel 0.000 1.000 0 #f [4:2]:
    (at 0, cp->sounds[1][0:10, 1.000, [1]-0.000 -> 1.000, loc2: 1, pos2: 0, scl2: 1.000, loc: 0, pos: 0, scl: 1.000]) [buf: 11] 
    (at 11, end_mark)
 "))
-	    (snd-display ";ramp ptree2: ~A" (display-edits ind 0 4 #f)))
+	    (snd-display ";ramp ptree2: ~A" (safe-display-edits ind 0 4 #f)))
 	(if (not (vequal (channel->vct) (vct 0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0)))
 	    (snd-display ";ramp ptree2: ~A" (channel->vct)))
 	(ramp-channel 0 1)
-	(if (not (string-=? (display-edits ind 0 5 #f) "
+	(if (not (string-=? (safe-display-edits ind 0 5 #f) "
  (ramp 0 11) ; ramp-channel 0.000 1.000 0 #f [5:2]:
    (at 0, cp->sounds[1][0:10, 1.000, [1]-0.000 -> 1.000, [2]-0.000 -> 1.000, loc2: 1, pos2: 0, scl2: 1.000, loc: 0, pos: 0, scl: 1.000]) [buf: 11] 
    (at 11, end_mark)
 "))
-	    (snd-display ";ramp2 ptree2: ~A" (display-edits ind 0 5 #f)))
+	    (snd-display ";ramp2 ptree2: ~A" (safe-display-edits ind 0 5 #f)))
 	(if (not (vequal (channel->vct) (vct 0.000 0.010 0.040 0.090 0.160 0.250 0.360 0.490 0.640 0.810 1.000)))
 	    (snd-display ";ramp2 ptree2: ~A" (channel->vct)))
 	(undo 2)
 	(xramp-channel 0 1 32)
-	(if (not (string=? (display-edits ind 0 4 #f) "
+	(if (not (string=? (safe-display-edits ind 0 4 #f) "
  (ramp 0 11) ; xramp-channel 0.000 1.000 32.000 0 #f [4:2]:
    (at 0, cp->sounds[1][0:10, 1.000, [4]0.000 -> 3.466, off: -0.032, scl: 0.032, loc2: 1, pos2: 0, scl2: 1.000, loc: 0, pos: 0, scl: 1.000]) [buf: 11] 
    (at 11, end_mark)
 "))
-	    (snd-display ";xramp ptree2: ~A" (display-edits ind 0 4 #f)))
+	    (snd-display ";xramp ptree2: ~A" (safe-display-edits ind 0 4 #f)))
 	(if (not (vequal (channel->vct) (vct 0.000 0.013 0.032 0.059 0.097 0.150 0.226 0.333 0.484 0.698 1.000)))
 	    (snd-display ";xramp ptree2: ~A" (channel->vct)))
 	
@@ -6707,31 +6717,31 @@ EDITS: 5
 	(ptree-channel (lambda (y) (+ y 0.5)))
 	(ptree-channel (lambda (y) (* y 2.0)))
 	(ramp-channel 0 1)
-	(if (not (string=? (display-edits ind 0 4 #f) (string-append "
+	(if (not (string=? (safe-display-edits ind 0 4 #f) (string-append "
  (ptree[1] 0 11) ; ptree-channel [4:2]:
    (at 0, cp->sounds[0][0:10, 1.000, loc2: 1, pos2: 0, scl2: 1.000, loc: 0, pos: 0, scl: 0.000]) [file: " (getcwd) "/test.snd[0]]
    (at 11, end_mark)
 ")))
-	    (snd-display ";ramp ptree2 zero: ~A" (display-edits ind 0 4 #f)))
+	    (snd-display ";ramp ptree2 zero: ~A" (safe-display-edits ind 0 4 #f)))
 	(if (not (vequal (channel->vct) (vct 0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0)))
 	    (snd-display ";ramp ptree2 zero: ~A" (channel->vct)))
 	(ramp-channel 0 1)
-	(if (not (string-=? (display-edits ind 0 5 #f) (string-append "
+	(if (not (string-=? (safe-display-edits ind 0 5 #f) (string-append "
  (ramp 0 11) ; ramp-channel 0.000 1.000 0 #f [5:2]:
    (at 0, cp->sounds[0][0:10, 1.000, [1]-0.000 -> 1.000, loc2: 1, pos2: 0, scl2: 1.000, loc: 0, pos: 0, scl: 0.000]) [file: " (getcwd) "/test.snd[0]]
    (at 11, end_mark)
 ")))
-	    (snd-display ";ramp2 ptree2 zero: ~A" (display-edits ind 0 5 #f)))
+	    (snd-display ";ramp2 ptree2 zero: ~A" (safe-display-edits ind 0 5 #f)))
 	(if (not (vequal (channel->vct) (vct 0.000 0.010 0.040 0.090 0.160 0.250 0.360 0.490 0.640 0.810 1.000)))
 	    (snd-display ";ramp2 ptree2 zero: ~A" (channel->vct)))
 	(undo 2)
 	(xramp-channel 0 1 32)
-	(if (not (string=? (display-edits ind 0 4 #f) (string-append "
+	(if (not (string=? (safe-display-edits ind 0 4 #f) (string-append "
  (ptree[1] 0 11) ; ptree-channel [4:2]:
    (at 0, cp->sounds[0][0:10, 1.000, loc2: 1, pos2: 0, scl2: 1.000, loc: 0, pos: 0, scl: 0.000]) [file: " (getcwd) "/test.snd[0]]
    (at 11, end_mark)
 ")))
-	    (snd-display ";xramp ptree2 zero: ~A" (display-edits ind 0 4 #f)))
+	    (snd-display ";xramp ptree2 zero: ~A" (safe-display-edits ind 0 4 #f)))
 	(if (not (vequal (channel->vct) (vct 0.000 0.013 0.032 0.059 0.097 0.150 0.226 0.333 0.484 0.698 1.000)))
 	    (snd-display ";xramp ptree2 zero: ~A" (channel->vct)))
 	
@@ -27853,7 +27863,7 @@ EDITS: 5
 			  (snd-display ";read ptree at ~A: ~A ~A ~A ~A (~A ~A ~A ~A): ~A" 
 				       i val0 val1 pval0 pval1
 				       reader0 reader1 preader0 preader1
-				       (display-edits cursnd curchn))
+				       (safe-display-edits cursnd curchn))
 			  (throw 'mus-error))))))))
       
       ((13) (let ((beg (random (- (frames cursnd curchn) 100))))
@@ -27920,7 +27930,7 @@ EDITS: 5
 				       (abs (- val0 val1))
 				       e i val0 val1
 				       reader0 reader1 e0 val00
-				       (display-edits cursnd curchn))
+				       (safe-display-edits cursnd curchn))
 			  (throw 'mus-error))))))))
       
       ;; env-channel
@@ -30903,7 +30913,7 @@ EDITS: 3
 	  (if (not (vequal (channel->vct 0 (frames ind-map) ind-map) (channel->vct 0 (frames ind-ptree) ind-ptree)))
 	      (snd-display ";ptree + .1 differs"))
 	  (if (and (> (optimization) 0)
-		   (not (string=? (display-edits ind-ptree) (string-append "
+		   (not (string=? (safe-display-edits ind-ptree) (string-append "
 EDITS: 3
 
  (begin) [0:2]:
@@ -30922,7 +30932,7 @@ EDITS: 3
    (at 0, cp->sounds[0][0:50827, 2.000, loc: 0, pos: 0, scl: 2.000, code: (lambda (y) (+ y 0.1))]) [file: " cwd "oboe.snd[0]]
    (at 50828, end_mark)
 "))))
-	      (snd-display ";ptree display edits: ~A" (display-edits ind-ptree)))
+	      (snd-display ";ptree display edits: ~A" (safe-display-edits ind-ptree)))
 	  (revert-sound ind-map)
 	  (revert-sound ind-ptree)
 	  
@@ -30935,7 +30945,7 @@ EDITS: 3
 	  (if (not (vequal (channel->vct 0 (frames ind-map) ind-map) (channel->vct 0 (frames ind-ptree) ind-ptree)))
 	      (snd-display ";ptree sin (2) differs"))
 	  (if (and (> (optimization) 0)
-		   (not (string=? (display-edits ind-ptree) (string-append "
+		   (not (string=? (safe-display-edits ind-ptree) (string-append "
 EDITS: 2
 
  (begin) [0:2]:
@@ -30950,7 +30960,7 @@ EDITS: 2
    (at 0, cp->sounds[0][0:50827, 1.000, loc2: 1, pos2: 0, scl2: 1.000, loc: 0, pos: 0, scl: 1.000, code: (lambda (y) (* 2.0 (sin y)))]) [file: " cwd "oboe.snd[0]]
    (at 50828, end_mark)
 "))))
-	      (snd-display ";ptree display: ~A" (display-edits ind-ptree)))
+	      (snd-display ";ptree display: ~A" (safe-display-edits ind-ptree)))
 	  
 	  (revert-sound ind-map)
 	  (revert-sound ind-ptree)
@@ -30983,7 +30993,7 @@ EDITS: 2
 	  (if (not (vequal (channel->vct 0 (frames ind-map) ind-map) (channel->vct 0 (frames ind-ptree) ind-ptree)))
 	      (snd-display ";ptree[1000] + .2 differs"))
 	  (if (and (> (optimization) 0)
-		   (not (string=? (display-edits ind-ptree) (string-append "
+		   (not (string=? (safe-display-edits ind-ptree) (string-append "
 EDITS: 3
 
  (begin) [0:2]:
@@ -31010,7 +31020,7 @@ EDITS: 3
    (at 1100, cp->sounds[0][1100:50827, 2.000]) [file: " cwd "oboe.snd[0]]
    (at 50828, end_mark)
 "))))
-	      (snd-display ";ptree[1000] display: ~A" (display-edits ind-ptree)))
+	      (snd-display ";ptree[1000] display: ~A" (safe-display-edits ind-ptree)))
 	  
 	  (env-channel '(0 0 1 1 2 0) 2000 1000 ind-map)
 	  (env-channel '(0 0 1 1 2 0) 2000 1000 ind-ptree)
@@ -31023,7 +31033,7 @@ EDITS: 3
 	  (if (not (vequal (channel->vct 0 (frames ind-map) ind-map) (channel->vct 0 (frames ind-ptree) ind-ptree)))
 	      (snd-display ";ptree[3200] + .2 differs"))
 	  (if (and (> (optimization) 0)
-		   (not (string-=? (display-edits ind-ptree) (string-append "
+		   (not (string-=? (safe-display-edits ind-ptree) (string-append "
 EDITS: 6
 
  (begin) [0:2]:
@@ -31088,7 +31098,7 @@ EDITS: 6
    (at 4100, cp->sounds[0][4100:50827, 2.000]) [file: " cwd "oboe.snd[0]]
    (at 50828, end_mark)
 "))))
-	      (snd-display ";ptree[3200] display: ~A" (display-edits ind-ptree)))
+	      (snd-display ";ptree[3200] display: ~A" (safe-display-edits ind-ptree)))
 	  (undo 1 ind-ptree)
 	  (let ((reader (make-sample-reader (1- (frames)) ind-ptree 0 -1)))
 	    (map-channel (lambda (y) (read-sample reader)) 0 (frames) ind-ptree))
@@ -32328,7 +32338,7 @@ EDITS: 1
 	(set! (sample 10) .1)
 	(save-sound ind)
 	(set! (sample 1) .1)
-	(let ((eds (display-edits ind)))
+	(let ((eds (safe-display-edits ind)))
 	  (if (file-exists? "t1.scm") (delete-file "t1.scm"))
 	  (save-state "t1.scm")
 	  (close-sound ind)
@@ -32340,7 +32350,7 @@ EDITS: 1
 	  (do ((i 3 (1+ i)))
 	      ((= i 6))
 	    (set! (sample i) (* i .1))
-	    (set! eds (display-edits ind))
+	    (set! eds (safe-display-edits ind))
 	    (if (file-exists? "t1.scm") (delete-file "t1.scm"))
 	    (save-state "t1.scm")
 	    (close-sound ind)
@@ -32368,8 +32378,8 @@ EDITS: 1
 	(set! (sample 1 ind 3) .4)
 	(set! (sample 1 ind1 0) -.1)
 	(set! (sample 1 ind1 1) -.2)
-	(let ((eds (display-edits ind))
-	      (eds1 (display-edits ind1)))
+	(let ((eds (safe-display-edits ind))
+	      (eds1 (safe-display-edits ind1)))
 	  (if (file-exists? "t1.scm") (delete-file "t1.scm"))
 	  (save-state "t1.scm")
 	  (close-sound ind)
@@ -40297,35 +40307,35 @@ EDITS: 1
 	      (set! t1 (time-it (map-channel (lambda (y) (* y 2)) 0 1000000 ind1)))
 	      (if (not (vequal (channel->vct 0 1000000 ind0) (channel->vct 0 1000000 ind1))) 
 		  (snd-display ";y * 2 run: ~A ~A" (channel->vct 0 1000000 ind0) (channel->vct 0 1000000 ind1)))
-	      (set! ts (cons (list "*2     " (hundred t0) (hundred t1) (inexact->exact (round (/ t0 t1)))) ts))
+	      (set! ts (cons (list "*2     " (hundred t0) (hundred t1) (inexact->exact (round (safe-divide t0 t1)))) ts))
 	      (set! (optimization) 0) 
 	      (set! t0 (time-it (map-channel (lambda (y) (- y 1.0)) 0 1000000 ind0)))
 	      (set! (optimization) max-optimization)
 	      (set! t1 (time-it (map-channel (lambda (y) (- y 1.0)) 0 1000000 ind1)))
 	      (if (not (vequal (channel->vct 0 1000000 ind0) (channel->vct 0 1000000 ind1))) 
 		  (snd-display ";y - 1 run: ~A ~A" (channel->vct 0 1000000 ind0) (channel->vct 0 1000000 ind1)))
-	      (set! ts (cons (list "-1     " (hundred t0) (hundred t1) (inexact->exact (round (/ t0 t1)))) ts))
+	      (set! ts (cons (list "-1     " (hundred t0) (hundred t1) (inexact->exact (round (safe-divide t0 t1)))) ts))
 	      (set! (optimization) 0) 
 	      (set! t0 (time-it (map-channel (lambda (y) (abs (sin y))) 0 1000000 ind0)))
 	      (set! (optimization) max-optimization) 
 	      (set! t1 (time-it (map-channel (lambda (y) (abs (sin y))) 0 1000000 ind1)))
 	      (if (not (vequal (channel->vct 0 1000000 ind0) (channel->vct 0 1000000 ind1))) 
 		  (snd-display ";abs sin run: ~A ~A" (channel->vct 0 1000000 ind0) (channel->vct 0 1000000 ind1)))
-	      (set! ts (cons (list "abs sin" (hundred t0) (hundred t1) (inexact->exact (round (/ t0 t1)))) ts))
+	      (set! ts (cons (list "abs sin" (hundred t0) (hundred t1) (inexact->exact (round (safe-divide t0 t1)))) ts))
 	      (set! (optimization) 0) 
 	      (set! t0 (time-it (map-channel (lambda (y) (let ((a (* y 2))) (if (> y 1.0) 1.0 y))) 0 1000000 ind0)))
 	      (set! (optimization) max-optimization) 
 	      (set! t1 (time-it (map-channel (lambda (y) (let ((a (* y 2))) (if (> y 1.0) 1.0 y))) 0 1000000 ind1)))
 	      (if (not (vequal (channel->vct 0 1000000 ind0) (channel->vct 0 1000000 ind1))) 
 		  (snd-display ";let y run: ~A ~A" (channel->vct 0 1000000 ind0) (channel->vct 0 1000000 ind1)))
-	      (set! ts (cons (list "let if " (hundred t0) (hundred t1) (inexact->exact (round (/ t0 t1)))) ts))
+	      (set! ts (cons (list "let if " (hundred t0) (hundred t1) (inexact->exact (round (safe-divide t0 t1)))) ts))
 	      (set! (optimization) 0) 
 	      (set! t0 (time-it (map-channel (let ((v (make-vct 3))) (lambda (y) (vct-set! v 1 .5) (* y (vct-ref v 1)))) 0 1000000 ind0)))
 	      (set! (optimization) max-optimization) 
 	      (set! t1 (time-it (map-channel (let ((v (make-vct 3))) (lambda (y) (vct-set! v 1 .5) (* y (vct-ref v 1)))) 0 1000000 ind1)))
 	      (if (not (vequal (channel->vct 0 1000000 ind0) (channel->vct 0 1000000 ind1))) 
 		  (snd-display ";let y run: ~A ~A" (channel->vct 0 1000000 ind0) (channel->vct 0 1000000 ind1)))
-	      (set! ts (cons (list "vct-ref" (hundred t0) (hundred t1) (inexact->exact (round (/ t0 t1)))) ts))
+	      (set! ts (cons (list "vct-ref" (hundred t0) (hundred t1) (inexact->exact (round (safe-divide t0 t1)))) ts))
 	      
 	      (set! (optimization) 0) 
 	      (set! t0 (time-it (let ((osc (make-oscil :frequency 440))
@@ -40337,7 +40347,7 @@ EDITS: 1
 				  (map-channel (lambda (y) (* (env e1) (oscil osc y))) 0 1000000 ind1))))
 	      (if (not (vequal (channel->vct 0 1000000 ind0) (channel->vct 0 1000000 ind1))) 
 		  (snd-display ";let y run: ~A ~A" (channel->vct 0 1000000 ind0) (channel->vct 0 1000000 ind1)))
-	      (set! ts (cons (list "osc+env" (hundred t0) (hundred t1) (inexact->exact (round (/ t0 t1)))) ts))
+	      (set! ts (cons (list "osc+env" (hundred t0) (hundred t1) (inexact->exact (round (safe-divide t0 t1)))) ts))
 	      
 	      (close-sound ind0)
 	      (close-sound ind1)
@@ -40380,7 +40390,7 @@ EDITS: 1
 	      (set! t0 (time-it (fm-violin-opt 0 5 440 .1)))
 	      (set! (optimization) max-optimization) 
 	      (set! t1 (time-it (fm-violin-opt 0 5 440 .1)))
-	      (set! ts (cons (list "fm vln " (hundred t0) (hundred t1) (inexact->exact (round (/ t0 t1)))) ts))
+	      (set! ts (cons (list "fm vln " (hundred t0) (hundred t1) (inexact->exact (round (safe-divide t0 t1)))) ts))
 	      
 	      (let ((ind (open-sound "1.snd"))
 		    (v0 #f)
@@ -40393,7 +40403,7 @@ EDITS: 1
 		(set! t1 (time-it (expsnd '(0 1 2 .4))))
 		(set! v1 (channel->vct 1000 100))
 		(if (not (vequal v0 v1)) (snd-display ";expsnd: opt: ~A ~A" v0 v1))
-		(set! ts (cons (list "expsnd " (hundred t0) (hundred t1) (inexact->exact (round (/ t0 t1)))) ts))
+		(set! ts (cons (list "expsnd " (hundred t0) (hundred t1) (inexact->exact (round (safe-divide t0 t1)))) ts))
 		(undo 1 ind)
 		(set! (optimization) 0) 
 		(set! t0 (time-it (jc-reverb 1.0 #f 1.0 #f)))
@@ -40403,7 +40413,7 @@ EDITS: 1
 		(set! t1 (time-it (jc-reverb 1.0 #f 1.0 #f)))
 		(set! v1 (channel->vct 1000 100))
 		(if (not (vequal v0 v1)) (snd-display ";jcrev: opt: ~A ~A" v0 v1))
-		(set! ts (cons (list "jcrev  " (hundred t0) (hundred t1) (inexact->exact (round (/ t0 t1)))) ts))
+		(set! ts (cons (list "jcrev  " (hundred t0) (hundred t1) (inexact->exact (round (safe-divide t0 t1)))) ts))
 		(close-sound ind))
 	      (snd-display "~{       ~A~%~}~%" ts))
 	    
@@ -55762,7 +55772,7 @@ EDITS: 1
 	      (check-error-tag 'no-such-region (lambda () (save-region 1234 "/bad/baddy.snd")))
 	      (make-region 0 100 ind 0)
 	      (check-error-tag 'cannot-save (lambda () (save-selection "/bad/baddy.snd")))
-	      (check-error-tag 'cannot-save (lambda () (save-region (car (regions)) "/bad/baddy.snd")))
+	      (check-error-tag 'cant-open-file (lambda () (save-region (car (regions)) "/bad/baddy.snd")))
 	      (check-error-tag 'no-such-track (lambda () (make-track-sample-reader 0 1234 0)))
 	      (check-error-tag 'no-such-track (lambda () (make-track-sample-reader 1234 0 0)))
 	      (check-error-tag 'no-such-mix (lambda () (make-mix-sample-reader 1234)))

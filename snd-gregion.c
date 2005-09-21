@@ -345,7 +345,7 @@ static void make_region_dialog(void)
   dismiss_button = gtk_button_new_from_stock(GTK_STOCK_QUIT);
   gtk_widget_set_name(dismiss_button, "quit_button");
 
-  delete_button = gtk_button_new_from_stock(GTK_STOCK_DELETE);
+  delete_button = gtk_button_new_from_stock(GTK_STOCK_REMOVE);
   gtk_widget_set_name(delete_button, "doit_button");
 
   gtk_box_pack_start(GTK_BOX(GTK_DIALOG(region_dialog)->action_area), dismiss_button, true, true, 4);
