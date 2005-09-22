@@ -2,7 +2,6 @@
 #include "snd-menu.h"
 
 /* PERHAPS: insert-region menus -> browser
- * PERHAPS: explode sf2 if sf2 being edited?
  * PERHAPS: key binding updates here too 
  */
 
@@ -148,7 +147,6 @@ void file_menu_update(void)
 
   set_sensitive(file_save_menu, edits_p);
   set_sensitive(file_revert_menu, edits_p);
-  /* TODO: check these settings in snd-test somehow */
 }
 
 void popup_menu_update(void)

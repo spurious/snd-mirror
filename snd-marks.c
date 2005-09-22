@@ -664,6 +664,7 @@ void free_mark_list(chan_info *cp, int ignore)
 	}
       FREE(cp->marks);
       cp->marks = NULL;
+      cp->marks_size = 0;
       FREE(cp->mark_ctr);
       cp->mark_ctr = NULL;
       FREE(cp->mark_size);
