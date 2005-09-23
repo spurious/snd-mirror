@@ -4478,6 +4478,15 @@ static XEN g_save_selection_dialog(XEN managed)
   return(XEN_WRAP_WIDGET(w));
 }
 
+static XEN g_save_region_dialog(XEN managed)
+{
+  widget_t w;
+  #define H_save_region_dialog "(" S_save_region_dialog "): start the Region Save-as dialog"
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(managed), managed, XEN_ONLY_ARG, S_save_region_dialog, "a boolean");
+  w = make_region_save_as_dialog(XEN_TO_C_BOOLEAN(managed));
+  return(XEN_WRAP_WIDGET(w));
+}
+
 static XEN g_save_sound_dialog(XEN managed)
 {
   widget_t w;
@@ -4740,6 +4749,7 @@ XEN_ARGIFY_1(g_insert_file_dialog_w, g_insert_file_dialog)
 XEN_ARGIFY_2(g_view_files_dialog_w, g_view_files_dialog)
 XEN_ARGIFY_1(g_edit_header_dialog_w, g_edit_header_dialog)
 XEN_ARGIFY_1(g_save_selection_dialog_w, g_save_selection_dialog)
+XEN_ARGIFY_1(g_save_region_dialog_w, g_save_region_dialog)
 XEN_ARGIFY_1(g_save_sound_dialog_w, g_save_sound_dialog)
 XEN_NARGIFY_2(g_info_dialog_w, g_info_dialog)
 XEN_NARGIFY_1(g_view_files_amp_w, g_view_files_amp)
@@ -4782,6 +4792,7 @@ XEN_NARGIFY_2(g_add_file_sorter_w, g_add_file_sorter)
 #define g_view_files_dialog_w g_view_files_dialog
 #define g_edit_header_dialog_w g_edit_header_dialog
 #define g_save_selection_dialog_w g_save_selection_dialog
+#define g_save_region_dialog_w g_save_region_dialog
 #define g_save_sound_dialog_w g_save_sound_dialog
 #define g_info_dialog_w g_info_dialog
 #define g_view_files_amp_w g_view_files_amp
@@ -4841,6 +4852,7 @@ void g_init_file(void)
   XEN_DEFINE_PROCEDURE(S_view_files_dialog,                g_view_files_dialog_w,                0, 2, 0, H_view_files_dialog);
   XEN_DEFINE_PROCEDURE(S_edit_header_dialog,               g_edit_header_dialog_w,               0, 1, 0, H_edit_header_dialog);
   XEN_DEFINE_PROCEDURE(S_save_selection_dialog,            g_save_selection_dialog_w,            0, 1, 0, H_save_selection_dialog);
+  XEN_DEFINE_PROCEDURE(S_save_region_dialog,               g_save_region_dialog_w,               0, 1, 0, H_save_region_dialog);
   XEN_DEFINE_PROCEDURE(S_save_sound_dialog,                g_save_sound_dialog_w,                0, 1, 0, H_save_sound_dialog);
   XEN_DEFINE_PROCEDURE(S_info_dialog,                      g_info_dialog_w,                      2, 0, 0, H_info_dialog);
   XEN_DEFINE_PROCEDURE(S_disk_kspace,                      g_disk_kspace_w,                      1, 0, 0, H_disk_kspace);

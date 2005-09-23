@@ -1621,7 +1621,7 @@ typedef struct {
   gulong filename_watcher_id;
 } save_as_dialog_info;
 
-static save_as_dialog_info *save_sound_as = NULL, *save_selection_as = NULL;
+static save_as_dialog_info *save_sound_as = NULL, *save_selection_as = NULL, *save_region_as = NULL;
 
 static save_as_dialog_info *new_save_as_dialog_info(save_dialog_t type)
 {
@@ -1892,22 +1892,44 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
     }
 
   redirect_snd_error_to(post_file_dialog_error, (void *)(sd->panel_data));
-  if (sd->type == SOUND_SAVE_AS)
+  switch (sd->type)
     {
+    case SOUND_SAVE_AS:
       if (saving)
 	io_err = save_edits_without_display(sp, tmpfile, type, format, srate, comment, AT_CURRENT_EDIT_POSITION);
       else io_err = save_channel_edits(sp->chans[chan], tmpfile, AT_CURRENT_EDIT_POSITION); /* protects if same name */
-    }
-  else
-    {
-      char *ofile;
-      if (file_exists) /* file won't exist if we're encoding, so this isn't as wasteful as it looks */
-	ofile = snd_tempnam();
-      else ofile = copy_string(tmpfile);
-      io_err = save_selection(ofile, type, format, srate, comment, (saving) ? SAVE_ALL_CHANS : chan);
-      if (io_err == IO_NO_ERROR)
-	io_err = move_file(ofile, fullname);
-      FREE(ofile);
+      break;
+    case SELECTION_SAVE_AS:
+      {
+	char *ofile;
+	if (file_exists) /* file won't exist if we're encoding, so this isn't as wasteful as it looks */
+	  ofile = snd_tempnam();
+	else ofile = copy_string(tmpfile);
+	io_err = save_selection(ofile, type, format, srate, comment, (saving) ? SAVE_ALL_CHANS : chan);
+	if (io_err == IO_NO_ERROR)
+	  io_err = move_file(ofile, fullname);
+	FREE(ofile);
+	break;
+      }
+    case REGION_SAVE_AS:
+      {
+	char *ofile;
+	if (region_ok(region_dialog_region()))
+	  {
+	    if (file_exists)
+	      ofile = snd_tempnam();
+	    else ofile = copy_string(tmpfile);
+	    io_err = save_region(region_dialog_region(), ofile, type, format, srate, comment);
+	    if (io_err == IO_NO_ERROR)
+	      io_err = move_file(ofile, fullname);
+	    FREE(ofile);
+	  }
+	break;
+      case MIX_SAVE_AS:
+      case TRACK_SAVE_AS:
+	snd_error("internal screw up");
+	break;
+      }
     }
   redirect_snd_error_to(NULL, NULL);
 
@@ -1924,7 +1946,7 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
 	{
 	  if (sd->type == SOUND_SAVE_AS)
 	    report_in_minibuffer(sp, "%s saved as %s", sp->short_filename, str);
-	  else report_in_minibuffer(sp, "selection saved as %s", str);
+	  else report_in_minibuffer(sp, "%s saved as %s", (sd->type == SELECTION_SAVE_AS) ? "selection" : "region", str);
 	}
       else
 	{
@@ -2026,13 +2048,21 @@ static void make_save_as_dialog(save_as_dialog_info *sd, char *sound_name, int h
   if (!(sd->dialog))
     {
       GtkWidget *fbox;
-      sd->dialog = snd_filer_new(file_string, true,
-				 NULL, /* handle delete later */
-				 (Callback_Func)save_as_ok_callback,
-				 (Callback_Func)save_as_cancel_callback,
-				 (Callback_Func)save_as_help_callback,
-				 (Callback_Func)save_as_extract_callback,
-				 (gpointer)sd); /* needs fixup below */
+      if (sd->type != REGION_SAVE_AS)
+	sd->dialog = snd_filer_new(file_string, true,
+				   NULL, /* handle delete later */
+				   (Callback_Func)save_as_ok_callback,
+				   (Callback_Func)save_as_cancel_callback,
+				   (Callback_Func)save_as_help_callback,
+				   (Callback_Func)save_as_extract_callback,
+				   (gpointer)sd); /* needs fixup below */
+      else sd->dialog = snd_filer_new(file_string, true,
+				      NULL, /* handle delete later */
+				      (Callback_Func)save_as_ok_callback,
+				      (Callback_Func)save_as_cancel_callback,
+				      (Callback_Func)save_as_help_callback,
+				      NULL, /* no extract here */
+				      (gpointer)sd); /* needs fixup below */
       fbox = gtk_vbox_new(false, 0);
 #if HAVE_GFCDN
       gtk_file_chooser_set_extra_widget(GTK_FILE_CHOOSER(sd->dialog), fbox);
@@ -2044,7 +2074,7 @@ static void make_save_as_dialog(save_as_dialog_info *sd, char *sound_name, int h
 
       gtk_widget_show(fbox);
       sd->panel_data = make_file_data_panel(fbox, "data-form", 
-					    WITH_EXTRACT_CHANNELS_FIELD, 
+					    (sd->type == REGION_SAVE_AS) ? WITHOUT_CHANNELS_FIELD : WITH_EXTRACT_CHANNELS_FIELD, 
 					    header_type, format_type, 
 					    WITHOUT_DATA_LOCATION_FIELD, 
 					    WITHOUT_SAMPLES_FIELD,
@@ -2053,9 +2083,22 @@ static void make_save_as_dialog(save_as_dialog_info *sd, char *sound_name, int h
 					    WITH_COMMENT_FIELD,
 					    WITH_WRITABLE_HEADERS);
       sd->panel_data->dialog = sd->dialog;
-      if (sd->type == SOUND_SAVE_AS)
-	set_dialog_widget(SOUND_SAVE_AS_DIALOG, sd->dialog);
-      else set_dialog_widget(SELECTION_SAVE_AS_DIALOG, sd->dialog);
+      switch (sd->type)
+	{
+	case SOUND_SAVE_AS:
+	  set_dialog_widget(SOUND_SAVE_AS_DIALOG, sd->dialog);
+	  break;
+	case SELECTION_SAVE_AS:
+	  set_dialog_widget(SELECTION_SAVE_AS_DIALOG, sd->dialog);
+	  break;
+	case REGION_SAVE_AS:
+	  set_dialog_widget(REGION_SAVE_AS_DIALOG, sd->dialog);
+	  break;
+	case MIX_SAVE_AS:
+	case TRACK_SAVE_AS:
+	  snd_error("internal screw up");
+	  break;
+	}
 #if HAVE_GFCDN
       {
 	filer_response_t *fr;
@@ -2137,6 +2180,31 @@ widget_t make_selection_save_as_dialog(bool managed)
   return(sd->dialog);
 }
 
+widget_t make_region_save_as_dialog(bool managed)
+{
+  save_as_dialog_info *sd;
+  char *comment = NULL;
+
+  if (!save_region_as)
+    save_region_as = new_save_as_dialog_info(REGION_SAVE_AS);
+  sd = save_region_as;
+
+  make_save_as_dialog(sd,
+		      _("current region"),
+		      default_output_header_type(ss),
+		      default_output_data_format(ss));
+  comment = region_description(region_dialog_region());
+  set_file_dialog_sound_attributes(sd->panel_data,
+				   sd->panel_data->current_type,
+				   sd->panel_data->current_format,
+				   region_srate(region_dialog_region()), 
+				   IGNORE_CHANS, IGNORE_DATA_LOCATION, IGNORE_SAMPLES, 
+				   comment);
+  if (managed) gtk_widget_show(sd->dialog);
+  if (comment) FREE(comment);
+  return(sd->dialog);
+}
+
 void save_file_dialog_state(FILE *fd)
 {
   if ((odat) && (GTK_WIDGET_VISIBLE(odat->dialog)))
@@ -2182,6 +2250,15 @@ void save_file_dialog_state(FILE *fd)
 #endif
 #if HAVE_RUBY
       fprintf(fd, "%s(true)\n", TO_PROC_NAME(S_save_selection_dialog));
+#endif
+    }
+  if ((save_region_as) && (GTK_WIDGET_VISIBLE(save_region_as->dialog)))
+    {
+#if HAVE_SCHEME
+      fprintf(fd, "(%s #t)\n", S_save_region_dialog);
+#endif
+#if HAVE_RUBY
+      fprintf(fd, "%s(true)\n", TO_PROC_NAME(S_save_region_dialog));
 #endif
     }
 }

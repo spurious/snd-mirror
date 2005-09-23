@@ -1,7 +1,6 @@
 #include "snd.h"
 
-/* PERHAPS: insert/mix/save-as buttons, also delete->remove and put it in the "edit...print" section
- * PERHAPS: amp/srate sliders as in mix panel
+/* PERHAPS: amp/srate sliders as in mix panel
  * PERHAPS: some way to group or list these to handle as motifs
  * PERHAPS: multiple region browsers?
  */
@@ -192,7 +191,7 @@ void delete_region_and_update_browser(int pos)
     }
 }
 
-static void region_delete_callback(Widget w, XtPointer context, XtPointer info) 
+static void region_unlist_callback(Widget w, XtPointer context, XtPointer info) 
 {
   if (current_region != -1)
     delete_region_and_update_browser(current_region);
@@ -201,6 +200,24 @@ static void region_delete_callback(Widget w, XtPointer context, XtPointer info)
 static void region_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   region_dialog_help();
+}
+
+static void region_insert_callback(Widget w, XtPointer context, XtPointer info) 
+{
+  if (current_region != -1)
+    paste_region(region_list_position_to_id(current_region), selected_channel());
+}
+
+static void region_mix_callback(Widget w, XtPointer context, XtPointer info) 
+{
+  if (current_region != -1)
+    add_region(region_list_position_to_id(current_region), selected_channel());
+}
+
+static void region_save_callback(Widget w, XtPointer context, XtPointer info) 
+{
+  if (current_region != -1)
+    make_region_save_as_dialog(true);
 }
 
 static void region_up_arrow_callback(Widget w, XtPointer context, XtPointer info) 
@@ -347,19 +364,19 @@ static void make_region_dialog(void)
   int n, i, id;
   Arg args[32];
   Widget formw, last_row, infosep, fr ,rw;
-  Widget prtb, editb, plw, panes, toppane, sep1 = NULL;
-  XmString xok, xdelete, xhelp, titlestr;
+  Widget prtb, editb, unlistb, plw, panes, toppane, mix_button, save_as_button, sep1 = NULL;
+  XmString xok, xinsert, xhelp, titlestr;
   regrow *r;
   chan_info *cp;
 
   xok = XmStringCreate(_("Dismiss"), XmFONTLIST_DEFAULT_TAG);
   xhelp = XmStringCreate(_("Help"), XmFONTLIST_DEFAULT_TAG);
-  xdelete = XmStringCreate(_("Unlist"), XmFONTLIST_DEFAULT_TAG);
+  xinsert = XmStringCreate(_("Insert"), XmFONTLIST_DEFAULT_TAG);
   titlestr = XmStringCreate(_("Regions"), XmFONTLIST_DEFAULT_TAG);
 
   n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
-  XtSetArg(args[n], XmNcancelLabelString, xdelete); n++;
+  XtSetArg(args[n], XmNcancelLabelString, xinsert); n++;
   XtSetArg(args[n], XmNhelpLabelString, xhelp); n++;
   XtSetArg(args[n], XmNokLabelString, xok); n++;
   XtSetArg(args[n], XmNautoUnmanage, false); n++;
@@ -369,12 +386,31 @@ static void make_region_dialog(void)
   XtSetArg(args[n], XmNtransient, false); n++;
   region_dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), _("Regions"), args, n);
 
-  XtAddCallback(region_dialog, XmNokCallback, region_ok_callback, NULL);
-  XtAddCallback(region_dialog, XmNcancelCallback, region_delete_callback, NULL);
-  XtAddCallback(region_dialog, XmNhelpCallback, region_help_callback, NULL);
+  n = 0;
+  if (!(ss->using_schemes)) 
+    {
+      XtSetArg(args[n], XmNbackground, ss->sgx->doit_again_button_color); n++;
+      XtSetArg(args[n], XmNarmColor, ss->sgx->pushed_button_color); n++;
+    }
+  mix_button = XtCreateManagedWidget(_("Mix"), xmPushButtonGadgetClass, region_dialog, args, n);
+
+  n = 0;
+  if (!(ss->using_schemes)) 
+    {
+      XtSetArg(args[n], XmNbackground, ss->sgx->reset_button_color); n++;
+      XtSetArg(args[n], XmNarmColor, ss->sgx->pushed_button_color); n++;
+    }
+  save_as_button = XtCreateManagedWidget(_("Save as"), xmPushButtonGadgetClass, region_dialog, args, n);
+
+  XtAddCallback(region_dialog,  XmNokCallback,       region_ok_callback,     NULL);
+  XtAddCallback(region_dialog,  XmNcancelCallback,   region_insert_callback, NULL);
+  XtAddCallback(region_dialog,  XmNhelpCallback,     region_help_callback,   NULL);
+  XtAddCallback(mix_button,     XmNactivateCallback, region_mix_callback,    NULL);
+  XtAddCallback(save_as_button, XmNactivateCallback, region_save_callback,   NULL);
+
   XmStringFree(xhelp);
   XmStringFree(xok);
-  XmStringFree(xdelete);
+  XmStringFree(xinsert);
   XmStringFree(titlestr);
 
   if (!(ss->using_schemes))
@@ -548,6 +584,15 @@ static void make_region_dialog(void)
   XtAddCallback(prtb, XmNactivateCallback, region_print_callback, NULL);
 
   n = 0;
+  if (!(ss->using_schemes)) 
+    {
+      XtSetArg(args[n], XmNbackground, ss->sgx->lighter_blue); n++;
+      XtSetArg(args[n], XmNarmColor, ss->sgx->red); n++;
+    }
+  unlistb = XtCreateManagedWidget(_("unlist"), xmPushButtonWidgetClass, rw, args, n);
+  XtAddCallback(unlistb, XmNactivateCallback, region_unlist_callback, NULL);
+
+  n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;}
   n = attach_all_sides(args, n);
   XtSetArg(args[n], XmNpaneMinimum, 150); n++;
@@ -633,6 +678,11 @@ static regrow *region_row(int n)
       return(region_rows[n]);
     }
   return(NULL);
+}
+
+int region_dialog_region(void)
+{
+  return(region_list_position_to_id(current_region));
 }
 
 static XEN g_view_regions_dialog(void) 

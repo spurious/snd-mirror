@@ -1832,7 +1832,7 @@ typedef struct {
   int selection_watcher_loc;
 } save_as_dialog_info;
 
-static save_as_dialog_info *save_sound_as = NULL, *save_selection_as = NULL;
+static save_as_dialog_info *save_sound_as = NULL, *save_selection_as = NULL, *save_region_as = NULL;
 
 static save_as_dialog_info *new_save_as_dialog_info(save_dialog_t type)
 {
@@ -2087,22 +2087,44 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
     }
 
   redirect_snd_error_to(post_file_dialog_error, (void *)(sd->panel_data));
-  if (sd->type == SOUND_SAVE_AS)
+  switch (sd->type)
     {
+    case SOUND_SAVE_AS:
       if (saving)
 	io_err = save_edits_without_display(sp, tmpfile, type, format, srate, comment, AT_CURRENT_EDIT_POSITION);
       else io_err = save_channel_edits(sp->chans[chan], tmpfile, AT_CURRENT_EDIT_POSITION); /* protects if same name */
-    }
-  else
-    {
-      char *ofile;
-      if (file_exists) /* file won't exist if we're encoding, so this isn't as wasteful as it looks */
-	ofile = snd_tempnam();
-      else ofile = copy_string(tmpfile);
-      io_err = save_selection(ofile, type, format, srate, comment, (saving) ? SAVE_ALL_CHANS : chan);
-      if (io_err == IO_NO_ERROR)
-	io_err = move_file(ofile, fullname);
-      FREE(ofile);
+      break;
+    case SELECTION_SAVE_AS:
+      {
+	char *ofile;
+	if (file_exists) /* file won't exist if we're encoding, so this isn't as wasteful as it looks */
+	  ofile = snd_tempnam();
+	else ofile = copy_string(tmpfile);
+	io_err = save_selection(ofile, type, format, srate, comment, (saving) ? SAVE_ALL_CHANS : chan);
+	if (io_err == IO_NO_ERROR)
+	  io_err = move_file(ofile, fullname);
+	FREE(ofile);
+	break;
+      }
+    case REGION_SAVE_AS:
+      {
+	char *ofile;
+	if (region_ok(region_dialog_region()))
+	  {
+	    if (file_exists)
+	      ofile = snd_tempnam();
+	    else ofile = copy_string(tmpfile);
+	    io_err = save_region(region_dialog_region(), ofile, type, format, srate, comment);
+	    if (io_err == IO_NO_ERROR)
+	      io_err = move_file(ofile, fullname);
+	    FREE(ofile);
+	  }
+	break;
+      case MIX_SAVE_AS:
+      case TRACK_SAVE_AS:
+	snd_error("internal screw up");
+	break;
+      }
     }
   redirect_snd_error_to(NULL, NULL);
 
@@ -2121,7 +2143,7 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
 	{
 	  if (sd->type == SOUND_SAVE_AS)
 	    report_in_minibuffer(sp, "%s saved as %s", sp->short_filename, str);
-	  else report_in_minibuffer(sp, "selection saved as %s", str);
+	  else report_in_minibuffer(sp, "%s saved as %s", (sd->type == SELECTION_SAVE_AS) ? "selection" : "region", str);
 	}
       else
 	{
@@ -2286,6 +2308,12 @@ static void make_save_as_dialog(save_as_dialog_info *sd, char *sound_name, int h
       mainform = XtVaCreateManagedWidget("filebuttons-mainform", xmFormWidgetClass, sd->dialog, NULL);
       add_play_and_just_sounds_buttons(sd->dialog, mainform, sd->fp, sd->dp);
 
+      /* TODO: chans-> region id choice, set by region browser (need watcher) */
+      /* TODO: if no region, need unsensitized save-as etc (similarly in rb? -- insert/mix too) */
+      /* TODO: if no browser selection, choose one */
+      /* TODO: gtk side of course */
+      /* TODO: check SELECTION->REGION_SAVE_AS in 1924 */
+
       n = 0;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNtopWidget, sd->fp->just_sounds_button); n++;
@@ -2293,7 +2321,7 @@ static void make_save_as_dialog(save_as_dialog_info *sd, char *sound_name, int h
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       sd->panel_data = make_file_data_panel(mainform, "data-form", args, n, 
-					    WITH_EXTRACT_CHANNELS_FIELD, 
+					    (sd->type == REGION_SAVE_AS) ? WITHOUT_CHANNELS_FIELD : WITH_EXTRACT_CHANNELS_FIELD, 
 					    header_type, format_type, 
 					    WITHOUT_DATA_LOCATION_FIELD, 
 					    WITHOUT_SAMPLES_FIELD,
@@ -2316,19 +2344,34 @@ static void make_save_as_dialog(save_as_dialog_info *sd, char *sound_name, int h
       XtAddCallback(sd->filename_widget, XmNvalueChangedCallback, save_as_file_exists_check, (XtPointer)(sd->dialog));
 
       /* this must come after the file data panel so that Motif puts it in the button box, not the main work area */
-      n = 0;
-      if (!(ss->using_schemes)) 
+      if (sd->type != REGION_SAVE_AS)
 	{
-	  XtSetArg(args[n], XmNbackground, ss->sgx->doit_again_button_color); n++;
-	  XtSetArg(args[n], XmNarmColor,   ss->sgx->pushed_button_color); n++;
+	  n = 0;
+	  if (!(ss->using_schemes)) 
+	    {
+	      XtSetArg(args[n], XmNbackground, ss->sgx->doit_again_button_color); n++;
+	      XtSetArg(args[n], XmNarmColor,   ss->sgx->pushed_button_color); n++;
+	    }
+	  extractB = XtCreateManagedWidget(_("Extract"), xmPushButtonGadgetClass, sd->dialog, args, n);
+	  XtAddCallback(extractB, XmNactivateCallback, save_as_extract_callback, (XtPointer)sd);
 	}
-      extractB = XtCreateManagedWidget(_("Extract"), xmPushButtonGadgetClass, sd->dialog, args, n);
-      XtAddCallback(extractB, XmNactivateCallback, save_as_extract_callback, (XtPointer)sd);
-
       XtManageChild(sd->dialog);
-      if (sd->type == SOUND_SAVE_AS)
-	set_dialog_widget(SOUND_SAVE_AS_DIALOG, sd->dialog);
-      else set_dialog_widget(SELECTION_SAVE_AS_DIALOG, sd->dialog);
+      switch (sd->type)
+	{
+	case SOUND_SAVE_AS:
+	  set_dialog_widget(SOUND_SAVE_AS_DIALOG, sd->dialog);
+	  break;
+	case SELECTION_SAVE_AS:
+	  set_dialog_widget(SELECTION_SAVE_AS_DIALOG, sd->dialog);
+	  break;
+	case REGION_SAVE_AS:
+	  set_dialog_widget(REGION_SAVE_AS_DIALOG, sd->dialog);
+	  break;
+	case MIX_SAVE_AS:
+	case TRACK_SAVE_AS:
+	  snd_error("internal screw up");
+	  break;
+	}
     }
   else
     {
@@ -2396,6 +2439,32 @@ widget_t make_selection_save_as_dialog(bool managed)
   return(sd->dialog);
 }
 
+widget_t make_region_save_as_dialog(bool managed)
+{
+  save_as_dialog_info *sd;
+  char *comment = NULL;
+
+  if (!save_region_as)
+    save_region_as = new_save_as_dialog_info(REGION_SAVE_AS);
+  sd = save_region_as;
+
+  make_save_as_dialog(sd,
+		      _("selected region"),
+		      default_output_header_type(ss),
+		      default_output_data_format(ss));
+  comment = region_description(region_dialog_region());
+  set_file_dialog_sound_attributes(sd->panel_data,
+				   sd->panel_data->current_type,
+				   sd->panel_data->current_format,
+				   region_srate(region_dialog_region()), 
+				   IGNORE_CHANS, IGNORE_DATA_LOCATION, IGNORE_SAMPLES, 
+				   comment);
+  if ((managed) && (!XtIsManaged(sd->dialog))) 
+    XtManageChild(sd->dialog);
+  if (comment) FREE(comment);
+  return(sd->dialog);
+}
+
 
 
 /* -------- save/restore for all these dialogs -------- */
@@ -2446,6 +2515,15 @@ void save_file_dialog_state(FILE *fd)
 #endif
 #if HAVE_RUBY
       fprintf(fd, "%s(true)\n", TO_PROC_NAME(S_save_selection_dialog));
+#endif
+    }
+  if ((save_region_as) && (XtIsManaged(save_region_as->dialog)))
+    {
+#if HAVE_SCHEME
+      fprintf(fd, "(%s #t)\n", S_save_region_dialog);
+#endif
+#if HAVE_RUBY
+      fprintf(fd, "%s(true)\n", TO_PROC_NAME(S_save_region_dialog));
 #endif
     }
 }

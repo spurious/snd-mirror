@@ -4430,6 +4430,7 @@ static XEN channel_get(XEN snd_n, XEN chn_n, cp_field_t fld, char *caller)
 	{
 	  ASSERT_CHANNEL(caller, snd_n, chn_n, 1);
 	  cp = get_cp(snd_n, chn_n, caller);
+	  if (!cp) return(XEN_FALSE); /* perhaps snd-error-hook cancelled the error? */
 	  switch(fld)
 	    {
 	    case CP_EDIT_CTR:                return(C_TO_XEN_INT(cp->edit_ctr));                               break;
@@ -4626,6 +4627,7 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, cp_field_t fld, char *calle
     }
   ASSERT_CHANNEL(caller, snd_n, chn_n, 2);
   cp = get_cp(snd_n, chn_n, caller);
+  if (!cp) return(XEN_FALSE);
   switch (fld)
     {
     case CP_EDIT_CTR:
@@ -6516,7 +6518,7 @@ to the info dialog if filename is omitted"
   XEN_ASSERT_TYPE((XEN_STRING_P(filename) || (XEN_FALSE_P(filename)) || (XEN_NOT_BOUND_P(filename))), filename, XEN_ARG_1, S_peaks, "a string or " PROC_FALSE);
   ASSERT_CHANNEL(S_peaks, snd_n, chn_n, 2);
   cp = get_cp(snd_n, chn_n, S_peaks);
-
+  if (!cp) return(XEN_FALSE);
   if (XEN_STRING_P(filename))
     {
       name = mus_expand_filename(XEN_TO_C_STRING(filename));
@@ -6604,6 +6606,7 @@ static XEN g_edits(XEN snd_n, XEN chn_n)
   int i;
   ASSERT_CHANNEL(S_edits, snd_n, chn_n, 1);
   cp = get_cp(snd_n, chn_n, S_edits);
+  if (!cp) return(XEN_FALSE);
   for (i = cp->edit_ctr + 1; i < cp->edit_size; i++)
     if (!(cp->edits[i])) break;
   return(XEN_LIST_2(C_TO_XEN_INT(cp->edit_ctr),
@@ -6616,6 +6619,7 @@ static XEN g_x_bounds(XEN snd_n, XEN chn_n)
   chan_info *cp;
   ASSERT_CHANNEL(S_x_bounds, snd_n, chn_n, 1);
   cp = get_cp(snd_n, chn_n, S_x_bounds);
+  if (!cp) return(XEN_FALSE);
   return(XEN_LIST_2(C_TO_XEN_DOUBLE(cp->axis->x0),
 		    C_TO_XEN_DOUBLE(cp->axis->x1)));
   /* wavogram settings depend on context -- no easy way to map back to user's notion of bounds */
@@ -6627,6 +6631,7 @@ static XEN g_set_x_bounds(XEN bounds, XEN snd_n, XEN chn_n)
   ASSERT_CHANNEL(S_setB S_x_bounds, snd_n, chn_n, 2);
   XEN_ASSERT_TYPE(XEN_LIST_P(bounds) && (XEN_LIST_LENGTH(bounds) == 2), bounds, XEN_ARG_1, S_setB S_x_bounds, "a list: (x0 x1)");
   cp = get_cp(snd_n, chn_n, S_setB S_x_bounds);
+  if (!cp) return(XEN_FALSE);
   if (cp->time_graph_type == GRAPH_ONCE) 
     {
       Float x0, x1;
@@ -6666,6 +6671,7 @@ static XEN g_set_y_bounds(XEN bounds, XEN snd_n, XEN chn_n)
   ASSERT_CHANNEL(S_setB S_y_bounds, snd_n, chn_n, 2);
   XEN_ASSERT_TYPE(XEN_LIST_P_WITH_LENGTH(bounds, len), bounds, XEN_ARG_1, S_setB S_y_bounds, "a list");
   cp = get_cp(snd_n, chn_n, S_setB S_y_bounds);
+  if (!cp) return(XEN_FALSE);
   if (len > 0)
     {
       y0 = XEN_CAR(bounds);
@@ -6723,6 +6729,7 @@ static XEN g_y_bounds(XEN snd_n, XEN chn_n)
   chan_info *cp;
   ASSERT_CHANNEL(S_y_bounds, snd_n, chn_n, 1);
   cp = get_cp(snd_n, chn_n, S_y_bounds);
+  if (!cp) return(XEN_FALSE);
   return(XEN_LIST_2(C_TO_XEN_DOUBLE(cp->axis->y0),
 		    C_TO_XEN_DOUBLE(cp->axis->y1)));
 }
@@ -6753,6 +6760,7 @@ If 'data' is a list of numbers, it is treated as an envelope."
 		  ldata, XEN_ARG_1, S_graph, "a vct or a list");
   ASSERT_CHANNEL(S_graph, snd_n, chn_n, 7);
   cp = get_cp(snd_n, chn_n, S_graph);
+  if (!cp) return(XEN_FALSE);
   ymin = 32768.0;
   ymax = -32768.0;
   if ((cp->sound_ctr == NOT_A_SOUND) || 

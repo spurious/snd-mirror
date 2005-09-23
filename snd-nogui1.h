@@ -129,6 +129,7 @@ void allocate_region_rows(int n);
 void reflect_regions_in_region_browser(void);
 void reflect_no_regions_in_region_browser(void);
 void reflect_region_graph_style(void);
+int region_dialog_region(void);
 
 
 /* -------- snd-xutils.c -------- */
@@ -250,6 +251,7 @@ void cleanup_new_file_watcher(void);
 widget_t make_open_file_dialog(bool read_only, bool managed);
 void set_open_file_play_button(bool val);
 widget_t make_selection_save_as_dialog(bool managed);
+widget_t make_region_save_as_dialog(bool managed);
 widget_t make_sound_save_as_dialog(bool managed);
 widget_t make_mix_file_dialog(bool managed);
 widget_t make_insert_file_dialog(bool managed);

@@ -207,7 +207,7 @@ char *file_to_string(const char *filename)
   return(content);
 }
 
-disk_space_t disk_space_p(snd_info *sp, off_t bytes, char *filename)
+disk_space_t disk_space_p(snd_info *sp, off_t bytes, const char *filename)
 {
   off_t kfree, kneeded;
   kfree = disk_kspace(filename);

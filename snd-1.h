@@ -1012,7 +1012,7 @@ bool delete_selection(cut_selection_regraph_t regraph);
 void move_selection(chan_info *cp, int x);
 void finish_selection_creation(void);
 int select_all(chan_info *cp);
-io_error_t save_selection(char *ofile, int type, int format, int srate, const char *comment, int chan);
+io_error_t save_selection(const char *ofile, int type, int format, int srate, const char *comment, int chan);
 bool selection_creation_in_progress(void);
 void cancel_selection_watch(void);
 void add_selection_or_region(int reg, chan_info *cp);
@@ -1043,6 +1043,7 @@ snd_fd *init_region_read (off_t beg, int n, int chan, read_direction_t direction
 void cleanup_region_temp_files(void);
 int snd_regions(void);
 void save_regions(FILE *fd);
+io_error_t save_region(int rg, const char *name, int type, int format, int srate, const char *comment);
 void region_edit(int reg);
 void clear_region_backpointer(snd_info *sp);
 void save_region_backpointer(snd_info *sp);
@@ -1050,7 +1051,7 @@ void sequester_deferred_regions(chan_info *cp, int edit_top);
 void g_init_regions(void);
 void for_each_region_chan(void (*func)(chan_info *, void *), void *userptr);
 off_t region_current_location(snd_fd *fd);
-
+char *region_description(int rg);
 
 
 /* -------- snd-env.c -------- */
@@ -1371,7 +1372,7 @@ char *filename_without_directory(const char *name);
 char *just_filename(char *name);
 bool directory_exists(char *name);
 char *file_to_string(const char *filename);
-disk_space_t disk_space_p(snd_info *sp, off_t bytes, char *filename);
+disk_space_t disk_space_p(snd_info *sp, off_t bytes, const char *filename);
 const char *short_data_format_name(int sndlib_format, const char *filename);
 char *prettyf(Float num, int tens);
 char *shorter_tempnam(const char *dir, const char *prefix);

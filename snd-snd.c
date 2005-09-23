@@ -3654,6 +3654,7 @@ static XEN g_amp_control(XEN snd_n, XEN chn_n)
       chan_info *cp;
       ASSERT_CHANNEL(S_amp_control, snd_n, chn_n, 1);
       cp = get_cp(snd_n, chn_n, S_amp_control);
+      if (!cp) return(XEN_FALSE);
       if (cp->amp_control)
 	return(C_TO_XEN_DOUBLE(cp->amp_control[0]));
     }
@@ -3668,6 +3669,7 @@ static XEN g_set_amp_control(XEN on, XEN snd_n, XEN chn_n)
       chan_info *cp;
       ASSERT_CHANNEL(S_amp_control, snd_n, chn_n, 2);
       cp = get_cp(snd_n, chn_n, S_amp_control);
+      if (!cp) return(XEN_FALSE);
       if (cp->amp_control == NULL)
 	cp->amp_control = (Float *)CALLOC(1, sizeof(Float));
       cp->amp_control[0] = (Float)XEN_TO_C_DOUBLE(on);
@@ -4251,6 +4253,7 @@ the envelopes are complete (they are the result of a background process), and th
   ASSERT_CHANNEL(S_peak_env_info, snd, chn, 1);
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(pos), pos, XEN_ARG_3, S_peak_env_info, "an integer");
   cp = get_cp(snd, chn, S_peak_env_info);
+  if (!cp) return(XEN_FALSE);
   cgx = cp->cgx;
   if ((!cgx) || (!(cp->amp_envs))) 
     return(XEN_EMPTY_LIST);
@@ -4305,6 +4308,7 @@ static XEN g_write_peak_env_info_file(XEN snd, XEN chn, XEN name)
   XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_2, S_write_peak_env_info_file, "a string");
   ASSERT_CHANNEL(S_write_peak_env_info_file, snd, chn, 1);
   cp = get_cp(snd, chn, S_write_peak_env_info_file);
+  if (!cp) return(XEN_FALSE);
   if ((cp->amp_envs == NULL) || (cp->amp_envs[0] == NULL))
     XEN_ERROR(NO_SUCH_ENVELOPE,
 	      XEN_LIST_3(C_TO_XEN_STRING(S_write_peak_env_info_file),
@@ -4412,6 +4416,7 @@ static XEN g_read_peak_env_info_file(XEN snd, XEN chn, XEN name)
   XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_3, S_read_peak_env_info_file, "a string");
   ASSERT_CHANNEL(S_read_peak_env_info_file, snd, chn, 1);
   cp = get_cp(snd, chn, S_read_peak_env_info_file);
+  if (!cp) return(XEN_FALSE);
   fullname = mus_expand_filename(XEN_TO_C_STRING(name));
   cp->amp_envs[0] = get_peak_env_info(fullname, &err);
   if (fullname) FREE(fullname);

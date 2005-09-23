@@ -498,6 +498,15 @@ region_state *region_report(void)
   return(rs);
 }
 
+char *region_description(int rg)
+{
+  region *r;
+  r = id_to_region(rg);
+  if (r)
+    return(mus_format("region data from %s (%s : %s)", r->name, r->start, r->end));
+  return(NULL);
+}
+
 void free_region_state (region_state *r)
 {
   if (r)
@@ -1083,6 +1092,84 @@ void save_region_backpointer(snd_info *sp)
     }
 }
 
+io_error_t save_region(int rg, const char *name, int type, int format, int srate, const char *comment)
+{
+  region *r;
+  off_t oloc, iloc, ioff, frames, cursamples;
+  int ofd, ifd, chans, i, comlen, err = 0;
+  mus_sample_t **bufs;
+  io_error_t io_err = IO_NO_ERROR;
+
+  r = id_to_region(rg);
+  if (r->use_temp_file == REGION_DEFERRED) 
+    deferred_region_to_temp_file(r);
+  comlen = snd_strlen(comment);
+  
+  io_err = snd_write_header(name, type, region_srate(rg), r->chans, 28, r->chans * r->frames, format, comment, comlen, NULL);
+
+  if (io_err == IO_NO_ERROR)
+    {
+      oloc = mus_header_data_location();
+      ofd = snd_reopen_write(name);
+      if (ofd != -1)
+	{
+	  mus_file_open_descriptors(ofd, name, format, 
+				    mus_bytes_per_sample(format), 
+				    oloc, r->chans, type);
+	  mus_file_set_data_clipped(ofd, data_clipped(ss));
+	  lseek(ofd, oloc, SEEK_SET);
+	  /* copy r->filename with possible header/data format changes */
+	  ifd = snd_open_read(r->filename);
+	  if (ifd != -1)
+	    {
+	      chans = mus_sound_chans(r->filename);
+	      frames = mus_sound_samples(r->filename) / chans;
+	      iloc = mus_sound_data_location(r->filename);
+	      mus_file_open_descriptors(ifd,
+					r->filename,
+					mus_sound_data_format(r->filename),
+					mus_sound_datum_size(r->filename),
+					iloc,
+					chans,
+					mus_sound_header_type(r->filename));
+	      lseek(ifd, iloc, SEEK_SET);
+	      bufs = (mus_sample_t **)CALLOC(chans, sizeof(mus_sample_t *));
+	      for (i = 0; i < chans; i++) bufs[i] = (mus_sample_t *)CALLOC(FILE_BUFFER_SIZE, sizeof(mus_sample_t));
+	      if (((frames * chans * mus_sound_datum_size(r->filename)) >> 10) > disk_kspace(name))
+		snd_warning(_("not enough space to save region? -- need " PRId64 " bytes"),
+			    frames * chans * mus_sound_datum_size(r->filename));
+	      err = 0;
+	      for (ioff = 0; ioff < frames; ioff += FILE_BUFFER_SIZE)
+		{
+		  if ((ioff + FILE_BUFFER_SIZE) < frames) 
+		    cursamples = FILE_BUFFER_SIZE; 
+		  else cursamples = (frames - ioff);
+		  mus_file_read(ifd, 0, cursamples - 1, chans, bufs);
+		  err = mus_file_write(ofd, 0, cursamples - 1, chans, bufs);
+		  if (err == -1) 
+		    {
+		      snd_warning("write error during %s", S_save_region);
+		      break;
+		    }
+		}
+	      err = mus_file_close(ifd);
+	      for (i = 0; i < chans; i++) FREE(bufs[i]);
+	      FREE(bufs);
+	      if (err != 0)
+		snd_warning("can't close %s input!", S_save_region);
+	      err = mus_file_close(ofd);
+	      if (err == 0)
+		alert_new_file();
+	      else snd_error("%s %d: %s %s", S_save_region, rg, r->filename, snd_io_strerror());
+	    }
+	  else snd_error("%s %d: %s %s", S_save_region, rg, r->filename, snd_io_strerror());
+	}
+      else snd_error("%s %d: %s %s", S_save_region, rg, name, snd_io_strerror());
+    }
+  else snd_error("%s %d: %s %s", S_save_region, rg, name, snd_io_strerror());
+  return(io_err);
+}
+
 
 #define XEN_REGION_P(Val) XEN_INTEGER_P(Val)
 #define XEN_REGION_IF_BOUND_P(Val) ((XEN_NOT_BOUND_P(Val)) || (XEN_INTEGER_P(Val)))
@@ -1147,6 +1234,7 @@ insert region data into snd's channel chn starting at start-samp"
   XEN_ASSERT_TYPE(XEN_REGION_IF_BOUND_P(reg_n), reg_n, XEN_ARG_2, S_insert_region, "a region id");
   ASSERT_CHANNEL(S_insert_region, snd_n, chn_n, 3);
   cp = get_cp(snd_n, chn_n, S_insert_region);
+  if (!cp) return(XEN_FALSE);
   rg = XEN_REGION_TO_C_INT(reg_n);
   if (!(region_ok(rg)))
     return(snd_no_such_region_error(S_insert_region, reg_n));
@@ -1402,11 +1490,6 @@ using data format (default depends on machine byte order), header type (" S_mus_
   XEN keys[4];
   int orig_arg[4] = {0, 0, 0, 0};
   int vals;
-  region *r;
-  off_t oloc, iloc, ioff, frames, cursamples;
-  int ofd, ifd, chans, i, comlen, err = 0;
-  mus_sample_t **bufs;
-  io_error_t io_err;
 
   keys[0] = kw_file;
   keys[1] = kw_header_type;
@@ -1441,85 +1524,8 @@ using data format (default depends on machine byte order), header type (" S_mus_
 	  else header_type = MUS_RAW;
 	}
     }
-  
-  r = id_to_region(rg); /* already checked above */
-  if (r->use_temp_file == REGION_DEFERRED) 
-    deferred_region_to_temp_file(r);
-  comlen = snd_strlen(com);
-  
-  io_err = snd_write_header(name, header_type, region_srate(rg), r->chans, 28, r->chans * r->frames, data_format, com, comlen, NULL);
-  if (io_err == IO_NO_ERROR)
-    {
-      oloc = mus_header_data_location();
-      ofd = snd_reopen_write(name);
-      if (ofd != -1)
-	{
-	  mus_file_open_descriptors(ofd, name, data_format, 
-				    mus_bytes_per_sample(data_format), 
-				    oloc, r->chans, header_type);
-	  mus_file_set_data_clipped(ofd, data_clipped(ss));
-	  lseek(ofd, oloc, SEEK_SET);
-	  /* copy r->filename with possible header/data format changes */
-	  ifd = snd_open_read(r->filename);
-	  if (ifd != -1)
-	    {
-	      chans = mus_sound_chans(r->filename);
-	      frames = mus_sound_samples(r->filename) / chans;
-	      iloc = mus_sound_data_location(r->filename);
-	      mus_file_open_descriptors(ifd,
-					r->filename,
-					mus_sound_data_format(r->filename),
-					mus_sound_datum_size(r->filename),
-					iloc,
-					chans,
-					mus_sound_header_type(r->filename));
-	      lseek(ifd, iloc, SEEK_SET);
-	      bufs = (mus_sample_t **)CALLOC(chans, sizeof(mus_sample_t *));
-	      for (i = 0; i < chans; i++) bufs[i] = (mus_sample_t *)CALLOC(FILE_BUFFER_SIZE, sizeof(mus_sample_t));
-	      if (((frames * chans * mus_sound_datum_size(r->filename)) >> 10) > disk_kspace(name))
-		snd_warning(_("not enough space to save region? -- need " PRId64 " bytes"),
-			    frames * chans * mus_sound_datum_size(r->filename));
-	      err = 0;
-	      for (ioff = 0; ioff < frames; ioff += FILE_BUFFER_SIZE)
-		{
-		  if ((ioff + FILE_BUFFER_SIZE) < frames) 
-		    cursamples = FILE_BUFFER_SIZE; 
-		  else cursamples = (frames - ioff);
-		  mus_file_read(ifd, 0, cursamples - 1, chans, bufs);
-		  err = mus_file_write(ofd, 0, cursamples - 1, chans, bufs);
-		  if (err == -1) 
-		    {
-		      snd_warning("write error during %s", S_save_region);
-		      break;
-		    }
-		}
-	      err = mus_file_close(ifd);
-	      for (i = 0; i < chans; i++) FREE(bufs[i]);
-	      FREE(bufs);
-	      if (err != 0)
-		snd_warning("can't close %s input!", S_save_region);
-	      err = mus_file_close(ofd);
-	      if (err == 0)
-		alert_new_file();
-	      else XEN_ERROR(CANT_CLOSE_FILE,
-			     XEN_LIST_3(C_TO_XEN_STRING(S_save_region),
-					C_TO_XEN_STRING(r->filename),
-					C_TO_XEN_STRING(snd_io_strerror())));
-	    }
-	  else XEN_ERROR(CANT_OPEN_FILE,
-			 XEN_LIST_3(C_TO_XEN_STRING(S_save_region),
-				    C_TO_XEN_STRING(r->filename),
-				    C_TO_XEN_STRING(snd_io_strerror())));
-	}
-      else XEN_ERROR(CANT_OPEN_FILE,
-		     XEN_LIST_3(C_TO_XEN_STRING(S_save_region),
-				C_TO_XEN_STRING(name),
-				C_TO_XEN_STRING(snd_io_strerror())));
-    }
-  else XEN_ERROR(CANT_OPEN_FILE,
-		 XEN_LIST_3(C_TO_XEN_STRING(S_save_region),
-			    C_TO_XEN_STRING(name),
-			    C_TO_XEN_STRING(snd_io_strerror())));
+  /* TODO: redirect snd_err/warning */
+  save_region(rg, name, header_type, data_format, region_srate(rg), com);
   if (name) FREE(name);
   return(args[orig_arg[0] - 1]); /* -> filename, parallel save-selection */
 }
@@ -1540,6 +1546,7 @@ mix region into snd's channel chn starting at chn-samp; return new mix id."
   if (!(region_ok(rg)))
     return(snd_no_such_region_error(S_mix_region, reg_n));
   cp = get_cp(snd_n, chn_n, S_mix_region);
+  if (!cp) return(XEN_FALSE);
   if (XEN_BOUND_P(chn_samp_n))
     samp = beg_to_sample(chn_samp_n, S_mix_region);
   else samp = CURSOR(cp);

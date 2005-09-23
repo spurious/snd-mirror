@@ -3280,6 +3280,7 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
   ASSERT_SAMPLE_TYPE(caller, s_dur, XEN_ARG_3);
   ASSERT_CHANNEL(caller, snd, chn, 5); 
   cp = get_cp(snd, chn, caller);
+  if (!cp) return(XEN_FALSE);
   pos = to_c_edit_position(cp, edpos, caller, 7);
   beg = beg_to_sample(s_beg, caller);
   if (beg > cp->samples[pos])
@@ -3655,6 +3656,7 @@ the current sample, the vct returned by 'init-func', and the current read direct
   ASSERT_SAMPLE_TYPE(S_ptree_channel, s_dur, XEN_ARG_3);
   ASSERT_CHANNEL(S_ptree_channel, snd, chn, 4); 
   cp = get_cp(snd, chn, S_ptree_channel);
+  if (!cp) return(XEN_FALSE);
   pos = to_c_edit_position(cp, edpos, S_ptree_channel, 6);
   if (pos > cp->edit_ctr)
     {
@@ -3838,6 +3840,7 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn,
   ASSERT_SAMPLE_TYPE(caller, s_dur, XEN_ARG_3);
   ASSERT_CHANNEL(caller, snd, chn, 4);
   cp = get_cp(snd, chn, caller);
+  if (!cp) return(XEN_FALSE);
   pos = to_c_edit_position(cp, edpos, caller, arg_pos);
   beg = beg_to_sample(s_beg, caller);
   if (beg > cp->samples[pos])
@@ -4025,6 +4028,7 @@ data from start-samp for samps in snd's channel chn"
   ASSERT_SAMPLE_TYPE(S_smooth_sound, num, XEN_ARG_2);
   ASSERT_CHANNEL(S_smooth_sound, snd_n, chn_n, 3);
   cp = get_cp(snd_n, chn_n, S_smooth_sound);
+  if (!cp) return(XEN_FALSE);
   start = beg_to_sample(beg, S_smooth_sound);
   samps = dur_to_samples(num, start, cp, cp->edit_ctr, 2, S_smooth_sound);
   cos_smooth(cp, start, samps, OVER_SOUND); 
@@ -4042,6 +4046,7 @@ smooth data from beg for dur in snd's channel chn"
   ASSERT_SAMPLE_TYPE(S_smooth_channel, dur, XEN_ARG_2);
   ASSERT_CHANNEL(S_smooth_channel, snd_n, chn_n, 3);
   cp = get_cp(snd_n, chn_n, S_smooth_channel);
+  if (!cp) return(XEN_FALSE);
   pos = to_c_edit_position(cp, edpos, S_smooth_channel, 5);
   start = beg_to_sample(beg, S_smooth_channel);
   num = dur_to_samples(dur, start, cp, pos, 2, S_smooth_channel);
@@ -4058,6 +4063,7 @@ static XEN g_smooth_selection(void)
   if (!(selection_is_active())) 
     return(snd_no_active_selection_error(S_smooth_selection));
   cp = get_cp(XEN_FALSE, XEN_FALSE, S_smooth_selection);
+  if (!cp) return(XEN_FALSE);
   cos_smooth(cp, 0, 0, OVER_SELECTION);
   return(XEN_TRUE);
 }
@@ -4068,6 +4074,7 @@ static XEN g_reverse_sound(XEN snd_n, XEN chn_n, XEN edpos)
   chan_info *cp;
   ASSERT_CHANNEL(S_reverse_sound, snd_n, chn_n, 1);
   cp = get_cp(snd_n, chn_n, S_reverse_sound);
+  if (!cp) return(XEN_FALSE);
   reverse_sound(cp, OVER_SOUND, edpos, 3);
   return(XEN_FALSE);
 }
@@ -4079,6 +4086,7 @@ static XEN g_reverse_selection(void)
   if (!(selection_is_active())) 
     return(snd_no_active_selection_error(S_reverse_selection));
   cp = get_cp(XEN_FALSE, XEN_FALSE, S_reverse_selection);
+  if (!cp) return(XEN_FALSE);
   reverse_sound(cp, OVER_SELECTION, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 0);
   return(XEN_FALSE);
 }
@@ -4095,6 +4103,7 @@ static XEN g_reverse_channel(XEN s_beg, XEN s_dur, XEN snd_n, XEN chn_n, XEN edp
   ASSERT_SAMPLE_TYPE(S_reverse_channel, s_dur, XEN_ARG_2);
   ASSERT_CHANNEL(S_reverse_channel, snd_n, chn_n, 3);
   cp = get_cp(snd_n, chn_n, S_reverse_channel);
+  if (!cp) return(XEN_FALSE);
   beg = beg_to_sample(s_beg, S_reverse_channel);
   pos = to_c_edit_position(cp, edpos, S_reverse_channel, 5);
   dur = dur_to_samples(s_dur, beg, cp, pos, 2, S_reverse_channel);
@@ -4124,6 +4133,7 @@ static XEN g_insert_silence(XEN beg, XEN num, XEN snd, XEN chn)
   XEN_ASSERT_TYPE(XEN_NUMBER_P(num), num, XEN_ARG_2, S_insert_silence, "a number");
   ASSERT_CHANNEL(S_insert_silence, snd, chn, 3);
   cp = get_cp(snd, chn, S_insert_silence);
+  if (!cp) return(XEN_FALSE);
   start = XEN_TO_C_OFF_T(beg);
   if (start < 0) XEN_ERROR(NO_SUCH_SAMPLE,
 			   XEN_LIST_2(C_TO_XEN_STRING(S_insert_silence),
@@ -4144,6 +4154,7 @@ static XEN g_pad_channel(XEN beg, XEN num, XEN snd, XEN chn, XEN edpos)
   XEN_ASSERT_TYPE(XEN_NUMBER_P(num), num, XEN_ARG_2, S_pad_channel, "a number");
   ASSERT_CHANNEL(S_pad_channel, snd, chn, 3);
   cp = get_cp(snd, chn, S_pad_channel);
+  if (!cp) return(XEN_FALSE);
   bg = beg_to_sample(beg, S_pad_channel);
   pos = to_c_edit_position(cp, edpos, S_pad_channel, 5);
   len = XEN_TO_C_OFF_T_OR_ELSE(num, cp->samples[pos] - bg);
@@ -4160,6 +4171,7 @@ swap the indicated channels"
   snd_info *sp = NULL;
   ASSERT_CHANNEL(S_swap_channels, snd0, chn0, 1);
   cp0 = get_cp(snd0, chn0, S_swap_channels);
+  if (!cp0) return(XEN_FALSE);
   if (!(cp0->editable)) return(XEN_FALSE);
   if (XEN_INTEGER_P(chn1))
     {
@@ -4298,6 +4310,7 @@ normalize snd to norms (following sync); norms can be a float or a vct/list of f
   Float *scls;
   ASSERT_CHANNEL(S_scale_to, snd_n, chn_n, 2);
   cp = get_cp(snd_n, chn_n, S_scale_to);
+  if (!cp) return(XEN_FALSE);
   scls = load_Floats(scalers, len, S_scale_to);
   happy = scale_to(cp->sound, cp, scls, len[0], OVER_SOUND);
   FREE(scls);
@@ -4317,6 +4330,7 @@ scale snd by scalers (following sync); scalers can be a float or a vct/list of f
   Float *scls;
   ASSERT_CHANNEL(S_scale_by, snd_n, chn_n, 2);
   cp = get_cp(snd_n, chn_n, S_scale_by);
+  if (!cp) return(XEN_FALSE);
   scls = load_Floats(scalers, len, S_scale_by);
   scale_by(cp, scls, len[0], OVER_SOUND);
   FREE(scls);
@@ -4372,6 +4386,7 @@ apply gen to snd's channel chn starting at beg for dur samples. overlap is the '
   XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(origin), origin, XEN_ARG_8, S_clm_channel, "a string");
   ASSERT_CHANNEL(S_clm_channel, snd_n, chn_n, 4);
   cp = get_cp(snd_n, chn_n, S_clm_channel);
+  if (!cp) return(XEN_FALSE);
   pos = to_c_edit_position(cp, edpos, S_clm_channel, XEN_ARG_6);
   beg = beg_to_sample(samp_n, S_clm_channel);
   dur = dur_to_samples(samps, beg, cp, pos, XEN_ARG_3, S_clm_channel);
@@ -4454,6 +4469,7 @@ either to the end of the sound or for samps samples, with segments interpolating
   ASSERT_SAMPLE_TYPE(S_env_sound, samps, XEN_ARG_3);
   ASSERT_CHANNEL(S_env_sound, snd_n, chn_n, 5);
   cp = get_cp(snd_n, chn_n, S_env_sound);
+  if (!cp) return(XEN_FALSE);
   pos = to_c_edit_position(cp, edpos, S_env_sound, 7);
   beg = beg_to_sample(samp_n, S_env_sound);
   dur = dur_to_samples(samps, beg, cp, pos, XEN_ARG_3, S_env_sound);
@@ -4474,6 +4490,7 @@ apply amplitude envelope to snd's channel chn starting at beg for dur samples."
   ASSERT_SAMPLE_TYPE(S_env_channel, samps, XEN_ARG_3);
   ASSERT_CHANNEL(S_env_channel, snd_n, chn_n, 4);
   cp = get_cp(snd_n, chn_n, S_env_channel);
+  if (!cp) return(XEN_FALSE);
   beg = beg_to_sample(samp_n, S_env_channel);
   pos = to_c_edit_position(cp, edpos, S_env_channel, 6);
   dur = dur_to_samples(samps, beg, cp, pos, 3, S_env_channel);
@@ -4501,6 +4518,7 @@ apply amplitude envelope to snd's channel chn starting at beg for dur samples."
   ASSERT_SAMPLE_TYPE(S_env_channel, samps, XEN_ARG_3);
   ASSERT_CHANNEL(S_env_channel, snd_n, chn_n, 4);
   cp = get_cp(snd_n, chn_n, S_env_channel);
+  if (!cp) return(XEN_FALSE);
   beg = beg_to_sample(samp_n, S_env_channel);
   pos = to_c_edit_position(cp, edpos, S_env_channel, 6);
   dur = dur_to_samples(samps, beg, cp, pos, 3, S_env_channel);
@@ -4529,6 +4547,7 @@ scale samples in the given sound/channel between beg and beg + num by a ramp goi
   ASSERT_SOUND(S_ramp_channel, snd, 5);
   samp = beg_to_sample(beg, S_ramp_channel);
   cp = get_cp(snd, chn, S_ramp_channel);
+  if (!cp) return(XEN_FALSE);
   pos = to_c_edit_position(cp, edpos, S_ramp_channel, 7);
   samps = dur_to_samples(num, samp, cp, pos, 4, S_ramp_channel);
   if (ramp_or_ptree_fragments_in_use(cp, samp, samps, pos, false)) /* false - not xramp */
@@ -4589,6 +4608,7 @@ scale samples in the given sound/channel between beg and beg + num by an exponen
   ASSERT_SOUND(S_xramp_channel, snd, 6);
   samp = beg_to_sample(beg, S_xramp_channel);
   cp = get_cp(snd, chn, S_xramp_channel);
+  if (!cp) return(XEN_FALSE);
   pos = to_c_edit_position(cp, edpos, S_xramp_channel, 8);
   samps = dur_to_samples(num, samp, cp, pos, 4, S_xramp_channel);
   ebase = XEN_TO_C_DOUBLE(base);
@@ -4849,6 +4869,7 @@ convolve file with snd's channel chn (or the currently sync'd channels); amp is 
   chan_info *cp;
   ASSERT_CHANNEL(S_convolve_with, snd_n, chn_n, 3);
   cp = get_cp(snd_n, chn_n, S_convolve_with);
+  if (!cp) return(XEN_FALSE);
   return(g_convolve_with_1(file, new_amp, cp, edpos, S_convolve_with));
 }
 
@@ -4911,6 +4932,7 @@ sampling-rate convert snd's channel chn by ratio, or following an envelope (a li
   ASSERT_SAMPLE_TYPE(S_src_channel, dur_n, XEN_ARG_3);
   ASSERT_CHANNEL(S_src_channel, snd_n, chn_n, 4);
   cp = get_cp(snd_n, chn_n, S_src_channel);
+  if (!cp) return(XEN_FALSE);
   beg = beg_to_sample(beg_n, S_src_channel);
   pos = to_c_edit_position(cp, edpos, S_src_channel, 6);
   dur = dur_to_samples(dur_n, beg, cp, pos, 3, S_src_channel);
@@ -4954,6 +4976,7 @@ static XEN g_src_1(XEN ratio_or_env, XEN base, XEN snd_n, XEN chn_n, XEN edpos, 
   chan_info *cp;
   ASSERT_CHANNEL(caller, snd_n, chn_n, 3);
   cp = get_cp(snd_n, chn_n, caller);
+  if (!cp) return(XEN_FALSE);
   if (XEN_NUMBER_P(ratio_or_env))
     src_env_or_num(cp, NULL, XEN_TO_C_DOUBLE(ratio_or_env), 
 		   true, NOT_FROM_ENVED, caller,
@@ -5029,6 +5052,7 @@ applies an FIR filter to snd's channel chn. 'env' is the frequency response enve
   if (XEN_INTEGER_P(order)) order_1 = XEN_TO_C_INT(order);
   ASSERT_CHANNEL(S_filter_channel, snd_n, chn_n, 5);
   cp = get_cp(snd_n, chn_n, S_filter_channel);
+  if (!cp) return(XEN_FALSE);
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(truncate), truncate, XEN_ARG_8, S_filter_channel, "boolean");
   if (XEN_BOOLEAN_P(truncate)) truncate_1 = XEN_TO_C_BOOLEAN(truncate);
   ASSERT_SAMPLE_TYPE(S_filter_channel, beg, XEN_ARG_3);
@@ -5064,6 +5088,7 @@ static XEN g_filter_1(XEN e, XEN order, XEN snd_n, XEN chn_n, XEN edpos, const c
   chan_info *cp;
   ASSERT_CHANNEL(caller, snd_n, chn_n, 3);
   cp = get_cp(snd_n, chn_n, caller);
+  if (!cp) return(XEN_FALSE);
   if (mus_xen_p(e))
     {
       char *error;

@@ -18455,6 +18455,7 @@ static XEN gxm_XpmGetErrorString(XEN err)
 static XEN gxm_XpmColorSymbol(XEN name, XEN value, XEN pixel)
 {
   XpmColorSymbol *r;
+  #define H_XpmColorSymbol "(XpmColorSymbol name val pix) -> new XpmColorSymbol struct"
   XEN_ASSERT_TYPE(XEN_STRING_P(name), name, 1, "XpmColorSymbol", "char*");
   XEN_ASSERT_TYPE(XEN_FALSE_P(value) || XEN_STRING_P(value), value, 2, "XpmColorSymbol", "char*");
   XEN_ASSERT_TYPE(XEN_Pixel_P(pixel), pixel, 3, "XpmColorSymbol", "Pixel");
@@ -18468,6 +18469,7 @@ static XEN gxm_XpmColorSymbol(XEN name, XEN value, XEN pixel)
 static XEN gxm_XpmImage(XEN width, XEN height, XEN cpp, XEN ncolors, XEN data)
 {
   XpmImage *r;
+  #define H_XpmImage "(XpmImage w h cpp n data) -> new XpmImage struct"
   XEN_ASSERT_TYPE(XEN_ULONG_P(width), width, 1, "XpmImage", "ulong");
   XEN_ASSERT_TYPE(XEN_ULONG_P(height), height, 2, "XpmImage", "ulong");
   XEN_ASSERT_TYPE(XEN_ULONG_P(cpp), cpp, 3, "XpmImage", "ulong");
@@ -18484,6 +18486,7 @@ static XEN gxm_XpmImage(XEN width, XEN height, XEN cpp, XEN ncolors, XEN data)
 
 static XEN gxm_XpmAttributes(void)
 {
+  #define H_XpmAttributes "(XpmAttributes) -> new XpmAttributes struct"
   return(WRAP_FOR_XEN_OBJ("XpmAttributes", 
 			  (XpmAttributes *)CALLOC(1, sizeof(XpmAttributes))));
 }
@@ -18684,6 +18687,7 @@ static XEN gxm_XRectangle(XEN x, XEN y, XEN width, XEN height)
 static XEN gxm_XSegment(XEN x1, XEN y1, XEN x2, XEN y2)
 {
   XSegment *r;
+#define H_XSegment "(XSegment x1 y1 x2 y2) -> new XSegment struct"
   XEN_ASSERT_TYPE(XEN_INTEGER_P(x1), x1, 1, "XSegment", "short");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(y1), y1, 2, "XSegment", "short");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(x2), x2, 3, "XSegment", "short");
@@ -18761,6 +18765,7 @@ static XEN gxm_set_x1(XEN ptr, XEN val)
 static XEN gxm_XPoint(XEN x, XEN y)
 {
   XPoint *r;
+  #define H_XPoint "(XPoint x y) -> new XPoint struct"
   XEN_ASSERT_TYPE(XEN_INTEGER_P(x), x, 1, "XPoint", "short");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(y), y, 2, "XPoint", "short");
   r = (XPoint *)CALLOC(1, sizeof(XPoint));
@@ -18774,6 +18779,7 @@ static XEN gxm_XPoint(XEN x, XEN y)
 static XEN gxm_XArc(XEN x, XEN y, XEN width, XEN height, XEN angle1, XEN angle2)
 {
   XArc *r;
+  #define H_XArc "(XArc x y w h ang1 ang2) -> new XArc struct"
   XEN_ASSERT_TYPE(XEN_INTEGER_P(x), x, 1, "XArc", "short");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(y), y, 2, "XArc", "short");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(width), width, 3, "XArc", "INT");
@@ -18823,6 +18829,7 @@ static XEN gxm_set_angle1(XEN ptr, XEN val)
 static XEN gxm_XColor(XEN pixel, XEN red, XEN green, XEN blue, XEN flags, XEN pad)
 {
   XColor *r;
+  #define H_XColor "(XColor pixel red green blue flags pad) -> new XColor struct"
   XEN_ASSERT_TYPE(XEN_ULONG_P(pixel) || XEN_NOT_BOUND_P(pixel), pixel, 1, "XColor", "ulong");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(red), red, 2, "XColor", "int");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(green), green, 3, "XColor", "int");
@@ -18925,6 +18932,7 @@ static XEN gxm_set_red(XEN ptr, XEN val)
 static XEN gxm_XWindowChanges(XEN x, XEN y, XEN width, XEN height, XEN border_width, XEN sibling, XEN stack_mode)
 {
   XWindowChanges *r;
+  #define H_XWindowChanges "(XWindowChanges x y w h border sib stack_mode) -> new XWindowChanges struct"
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(x), x, 1, "XWindowChanges", "int");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(y), y, 2, "XWindowChanges", "int");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(width), width, 3, "XWindowChanges", "int");
@@ -18947,6 +18955,7 @@ static XEN gxm_XSetWindowAttributes(XEN arglist)
 {
   int len;
   XSetWindowAttributes *r;
+  #define H_XSetWindowAttributes "(XSetWindowAttributes args) -> new XSetWindowAttributes struct (14 or more args!)"
   r = (XSetWindowAttributes *)CALLOC(1, sizeof(XSetWindowAttributes));
   len = XEN_LIST_LENGTH(arglist);
   if ((len > 0) && (XEN_Pixmap_P(XEN_LIST_REF(arglist, 0)))) r->background_pixmap = XEN_TO_C_Pixmap(XEN_LIST_REF(arglist, 0));
@@ -21409,6 +21418,7 @@ static XEN gxm_red_max(XEN ptr)
 static XEN gxm_XTextItem(XEN chars, XEN nchars, XEN delta, XEN font)
 {
   XTextItem *r;
+  #define H_XTextItem "(XTextItem chars len delta font) -> new XTextItem struct"
   XEN_ASSERT_TYPE(XEN_STRING_P(chars), chars, 1, "XTextItem", "char*");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(nchars), nchars, 2, "XTextItem", "int");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(delta), delta, 3, "XTextItem", "int");
@@ -27215,8 +27225,8 @@ static void define_procedures(void)
 static void define_structs(void)
 {
   #define XM_DEFINE_ACCESSOR(Name, Value, SetName, SetValue, A1, A2, A3, A4) \
-     XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_FIELD_PREFIX #Name XM_POSTFIX, Value, NULL, XM_FIELD_PREFIX #SetName XM_POSTFIX, SetValue, A1, A2, A3, A4)
-  #define XM_DEFINE_READER(Name, Value, A1, A2, A3) XEN_DEFINE_PROCEDURE(XM_FIELD_PREFIX #Name XM_POSTFIX, Value, A1, A2, A3, NULL)
+     XEN_DEFINE_PROCEDURE_WITH_SETTER(XM_FIELD_PREFIX #Name XM_POSTFIX, Value, #Name " field accessor", XM_FIELD_PREFIX #SetName XM_POSTFIX, SetValue, A1, A2, A3, A4)
+  #define XM_DEFINE_READER(Name, Value, A1, A2, A3) XEN_DEFINE_PROCEDURE(XM_FIELD_PREFIX #Name XM_POSTFIX, Value, A1, A2, A3, #Name " field reader")
 
   XM_DEFINE_ACCESSOR(pixel, gxm_pixel_w, set_pixel, gxm_set_pixel_w, 1, 0, 2, 0);
   XM_DEFINE_ACCESSOR(red, gxm_red_w, set_red, gxm_set_red_w, 1, 0, 2, 0);
@@ -27224,22 +27234,22 @@ static void define_structs(void)
   XM_DEFINE_ACCESSOR(blue, gxm_blue_w, set_blue, gxm_set_blue_w, 1, 0, 2, 0);
   XM_DEFINE_ACCESSOR(flags, gxm_flags_w, set_flags, gxm_set_flags_w, 1, 0, 2, 0);
   XM_DEFINE_ACCESSOR(pad, gxm_pad_w, set_pad, gxm_set_pad_w, 1, 0, 2, 0);
-  XM_DEFINE_PROCEDURE(XColor, gxm_XColor_w, 0, 6, 0, NULL);
+  XM_DEFINE_PROCEDURE(XColor, gxm_XColor_w, 0, 6, 0, H_XColor);
   XM_DEFINE_ACCESSOR(x, gxm_x_w, set_x, gxm_set_x_w, 1, 0, 2, 0);
   XM_DEFINE_ACCESSOR(y, gxm_y_w, set_y, gxm_set_y_w, 1, 0, 2, 0);
   XM_DEFINE_ACCESSOR(width, gxm_width_w, set_width, gxm_set_width_w, 1, 0, 2, 0);
   XM_DEFINE_ACCESSOR(height, gxm_height_w, set_height, gxm_set_height_w, 1, 0, 2, 0);
   XM_DEFINE_ACCESSOR(angle1, gxm_angle1_w, set_angle1, gxm_set_angle1_w, 1, 0, 2, 0);
   XM_DEFINE_ACCESSOR(angle2, gxm_angle2_w, set_angle2, gxm_set_angle2_w, 1, 0, 2, 0);
-  XM_DEFINE_PROCEDURE(XArc, gxm_XArc_w, 6, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XWindowChanges, gxm_XWindowChanges_w, 7, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XSetWindowAttributes, gxm_XSetWindowAttributes_w, 0, 0, 1, NULL);
-  XM_DEFINE_PROCEDURE(XPoint, gxm_XPoint_w, 2, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XArc, gxm_XArc_w, 6, 0, 0, H_XArc);
+  XM_DEFINE_PROCEDURE(XWindowChanges, gxm_XWindowChanges_w, 7, 0, 0, H_XWindowChanges);
+  XM_DEFINE_PROCEDURE(XSetWindowAttributes, gxm_XSetWindowAttributes_w, 0, 0, 1, H_XSetWindowAttributes);
+  XM_DEFINE_PROCEDURE(XPoint, gxm_XPoint_w, 2, 0, 0, H_XPoint);
   XM_DEFINE_ACCESSOR(x1, gxm_x1_w, set_x1, gxm_set_x1_w, 1, 0, 2, 0);
   XM_DEFINE_ACCESSOR(y1, gxm_y1_w, set_y1, gxm_set_y1_w, 1, 0, 2, 0);
   XM_DEFINE_ACCESSOR(x2, gxm_x2_w, set_x2, gxm_set_x2_w, 1, 0, 2, 0);
   XM_DEFINE_ACCESSOR(y2, gxm_y2_w, set_y2, gxm_set_y2_w, 1, 0, 2, 0);
-  XM_DEFINE_PROCEDURE(XSegment, gxm_XSegment_w, 4, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XSegment, gxm_XSegment_w, 4, 0, 0, H_XSegment);
   XM_DEFINE_PROCEDURE(XRectangle, gxm_XRectangle_w, 4, 0, 0, H_XRectangle);
   XM_DEFINE_ACCESSOR(dashes, gxm_dashes_w, set_dashes, gxm_set_dashes_w, 1, 0, 2, 0);
   XM_DEFINE_ACCESSOR(dash_offset, gxm_dash_offset_w, set_dash_offset, gxm_set_dash_offset_w, 1, 0, 2, 0);
@@ -27267,7 +27277,7 @@ static void define_structs(void)
   XM_DEFINE_ACCESSOR(delta, gxm_delta_w, set_delta, gxm_set_delta_w, 1, 0, 2, 0);
   XM_DEFINE_ACCESSOR(nchars, gxm_nchars_w, set_nchars, gxm_set_nchars_w, 1, 0, 2, 0);
   XM_DEFINE_ACCESSOR(chars, gxm_chars_w, set_chars, gxm_set_chars_w, 1, 0, 2, 0);
-  XM_DEFINE_PROCEDURE(XTextItem, gxm_XTextItem_w, 4, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XTextItem, gxm_XTextItem_w, 4, 0, 0, H_XTextItem);
   XM_DEFINE_ACCESSOR(name, gxm_name_w, set_name, gxm_set_name_w, 1, 0, 2, 0);
   XM_DEFINE_ACCESSOR(depth, gxm_depth_w, set_depth, gxm_set_depth_w, 1, 0, 2, 0);
   XM_DEFINE_ACCESSOR(visual, gxm_visual_w, set_visual, gxm_set_visual_w, 1, 0, 2, 0);
@@ -27453,14 +27463,14 @@ static void define_structs(void)
   XM_DEFINE_ACCESSOR(valuemask, gxm_valuemask_w, set_valuemask, gxm_set_valuemask_w, 1, 0, 2, 0);
   XM_DEFINE_ACCESSOR(ncolors, gxm_ncolors_w, set_ncolors, gxm_set_ncolors_w, 1, 0, 2, 0);
   XM_DEFINE_ACCESSOR(cpp, gxm_cpp_w, set_cpp, gxm_set_cpp_w, 1, 0, 2, 0);
-  XM_DEFINE_PROCEDURE(XpmImage, gxm_XpmImage_w, 5, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XpmImage, gxm_XpmImage_w, 5, 0, 0, H_XpmImage);
   XM_DEFINE_ACCESSOR(numsymbols, gxm_numsymbols_w, set_numsymbols, gxm_set_numsymbols_w, 1, 0, 2, 0);
   XM_DEFINE_ACCESSOR(colorsymbols, gxm_colorsymbols_w, set_colorsymbols, gxm_set_colorsymbols_w, 1, 0, 2, 0);
   XM_DEFINE_ACCESSOR(npixels, gxm_npixels_w, set_npixels, gxm_set_npixels_w, 1, 0, 2, 0);
   XM_DEFINE_ACCESSOR(y_hotspot, gxm_y_hotspot_w, set_y_hotspot, gxm_set_y_hotspot_w, 1, 0, 2, 0);
   XM_DEFINE_ACCESSOR(x_hotspot, gxm_x_hotspot_w, set_x_hotspot, gxm_set_x_hotspot_w, 1, 0, 2, 0);
-  XM_DEFINE_PROCEDURE(XpmColorSymbol, gxm_XpmColorSymbol_w, 3, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XpmAttributes, gxm_XpmAttributes_w, 0, 0, 0, NULL);
+  XM_DEFINE_PROCEDURE(XpmColorSymbol, gxm_XpmColorSymbol_w, 3, 0, 0, H_XpmColorSymbol);
+  XM_DEFINE_PROCEDURE(XpmAttributes, gxm_XpmAttributes_w, 0, 0, 0, H_XpmAttributes);
 #endif
 #endif
 

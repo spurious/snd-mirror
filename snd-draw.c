@@ -247,6 +247,7 @@ static XEN g_foreground_color(XEN snd, XEN chn, XEN ax)
   ASSERT_CHANNEL(S_foreground_color, snd, chn, 1);
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax), ax, XEN_ARG_3, S_foreground_color, "an integer");
   cp = get_cp(snd, chn, S_foreground_color);
+  if (!cp) return(XEN_FALSE);
   return(XEN_WRAP_PIXEL(get_foreground_color(get_ax(cp, 
 						    XEN_TO_C_INT_OR_ELSE(ax, CHAN_GC),
 						    S_foreground_color))));
@@ -259,6 +260,7 @@ static XEN g_set_foreground_color(XEN color, XEN snd, XEN chn, XEN ax)
   XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ARG_1, S_setB S_foreground_color, "a color");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax), ax, XEN_ARG_4, S_setB S_foreground_color, "an integer");
   cp = get_cp(snd, chn, S_setB S_foreground_color);
+  if (!cp) return(XEN_FALSE);
   set_foreground_color(get_ax(cp, 
 			      XEN_TO_C_INT_OR_ELSE(ax, CHAN_GC),
 			      S_setB S_foreground_color),
@@ -310,6 +312,7 @@ static XEN g_current_font(XEN snd, XEN chn, XEN ax_id)
   ASSERT_CHANNEL(S_current_font, snd, chn, 1);
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax_id), ax_id, XEN_ARG_3, S_current_font, "an integer");
   cp = get_cp(snd, chn, S_current_font);
+  if (!cp) return(XEN_FALSE);
   ax = get_ax(cp,
 	      XEN_TO_C_INT_OR_ELSE(ax_id, CHAN_GC),
 	      S_current_font);
@@ -379,6 +382,7 @@ return either a vct (if the graph has one trace), or a list of two vcts (the two
   chan_info *cp;
   ASSERT_CHANNEL(S_make_graph_data, snd, chn, 1);
   cp = get_cp(snd, chn, S_make_graph_data);
+  if (!cp) return(XEN_FALSE);
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(lo), lo, XEN_ARG_4, S_make_graph_data, "a number");
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(hi), hi, XEN_ARG_5, S_make_graph_data, "a number");
   return(make_graph_data(cp,
@@ -397,6 +401,7 @@ data in the recipient's graph between points low and high in the drawing mode gr
   vct *v0, *v1 = NULL;
   ASSERT_CHANNEL(S_graph_data, snd, chn, 2);
   cp = get_cp(snd, chn, S_graph_data);
+  if (!cp) return(XEN_FALSE);
   XEN_ASSERT_TYPE((XEN_LIST_P(data) && 
 		   (XEN_LIST_LENGTH(data) == 2) &&
 		   (VCT_P(XEN_CAR(data))) &&

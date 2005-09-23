@@ -96,6 +96,7 @@ void reflect_play_region_stop(int n) {}
 bool region_dialog_is_active(void) {return(false);}
 void allocate_region_rows(int n) {}
 void reflect_region_graph_style(void) {}
+int region_dialog_region(void) {return(-1);}
 void snd_completion_help(int matches, char **buffer) {}
 bool set_tiny_font(char *font) {if (ss->Tiny_Font) FREE(ss->Tiny_Font); ss->Tiny_Font = copy_string(font); return(false);}
 bool set_listener_font(char *font) {if (ss->Listener_Font) FREE(ss->Listener_Font); ss->Listener_Font = copy_string(font); return(false);}
@@ -184,6 +185,7 @@ void save_edit_header_dialog_state(FILE *fd) {}
 void cleanup_edit_header_watcher(void) {}
 void cleanup_new_file_watcher(void) {}
 widget_t make_selection_save_as_dialog(bool managed) {return(0);}
+widget_t make_region_save_as_dialog(bool managed) {return(0);}
 widget_t make_sound_save_as_dialog(bool managed) {return(0);}
 widget_t make_file_print_dialog(bool managed, bool direct_to_printer) {return(0);}
 void save_print_dialog_state(FILE *fd) {}

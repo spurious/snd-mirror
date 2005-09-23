@@ -413,18 +413,13 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+26-Sep:  save-region-dialog, more buttons.\n\
 15-Sep:  --enable-threads configure switch, and first use thereof (FIR filtering).\n\
 6-Sep:   snd-error is now (throw 'snd-error ...).\n\
 31-Aug:  mix|track-speed-style.\n\
          changed recorder-in|out-format -> recorder-in|out-data-format,\n\
                  recorder-out-type -> recorder-out-header-type\n\
 28-Aug:  snd 7.15.\n\
-18-Aug:  _sndlib.h and sndlib.h.in.\n\
-15-Aug:  in View:files, click of file name no longer opens that file.\n\
-         view-files-select-hook return type no longer matters, and args are: dialog file-name.\n\
-         optional dialog arg to view-files-sort (local set)\n\
-         -init startup switch to set init filename as arg.\n\
-         added snd-file.h\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",

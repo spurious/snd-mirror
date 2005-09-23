@@ -3890,6 +3890,7 @@ static XEN g_mixes(XEN snd, XEN chn)
 	{
 	  /* scan all mixes for any associated with this channel */
 	  cp = get_cp(snd, chn, S_mixes);
+	  if (!cp) return(XEN_FALSE);
 	  for (i = mix_infos_ctr - 1; i >= 0; i--)
 	    if ((mix_ok(i)) && (mix_infos[i]->cp == cp))
 	      res1 = XEN_CONS(C_TO_XEN_INT(i), res1);
@@ -4325,6 +4326,7 @@ track-id is the track value for each newly created mix."
     with_mixer = with_mix_tags(ss);
   else with_mixer = XEN_TO_C_BOOLEAN(tag);
   cp = get_cp(snd_n, chn_n, S_mix);
+  if (!cp) return(XEN_FALSE);
   beg = XEN_TO_C_OFF_T_OR_ELSE(chn_samp_n, CURSOR(cp));
   if (XEN_BOOLEAN_P(auto_delete)) delete_file = XEN_TO_C_BOOLEAN(auto_delete);
   if (XEN_INTEGER_P(track_id))
@@ -4638,6 +4640,7 @@ mix data (a vct) into snd's channel chn starting at beg; return the new mix id"
   v = TO_VCT(obj);
   len = v->length;
   cp = get_cp(snd, chn, S_mix_vct);
+  if (!cp) return(XEN_FALSE);
   if (!(editable_p(cp))) return(XEN_FALSE);
   bg = beg_to_sample(beg, S_mix_vct);
   if (XEN_NOT_BOUND_P(with_tag))

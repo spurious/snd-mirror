@@ -2179,6 +2179,7 @@ static XEN g_key(XEN kbd, XEN buckybits, XEN snd, XEN chn)
   XEN_ASSERT_TYPE(XEN_INTEGER_P(buckybits), buckybits, XEN_ARG_2, S_key, "an integer");
   ASSERT_CHANNEL(S_key, snd, chn, 3);
   cp = get_cp(snd, chn, S_key);
+  if (!cp) return(XEN_FALSE);
   k = XEN_TO_C_INT(kbd);
   s = XEN_TO_C_INT(buckybits);
   if ((k < MIN_KEY_CODE) || (k > MAX_KEY_CODE) ||
@@ -2323,6 +2324,7 @@ static XEN g_snd_simulate_keystroke(XEN snd, XEN chn, XEN key, XEN state)
   XEN_ASSERT_TYPE(XEN_INTEGER_P(state), state, XEN_ARG_4, S_snd_simulate_keystroke, "key state (int)");
   ASSERT_CHANNEL(S_snd_simulate_keystroke, snd, chn, 1);
   cp = get_cp(snd, chn, S_snd_simulate_keystroke);
+  if (!cp) return(XEN_FALSE);
   keyboard_command(cp, XEN_TO_C_INT(key), XEN_TO_C_INT(state));
   return(key);
 }

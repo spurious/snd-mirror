@@ -1814,6 +1814,7 @@ static XEN g_test_control_drag_mark(XEN snd, XEN chn, XEN mid)
   chan_info *cp;
   mark *m = NULL, *m1 = NULL;
   cp = get_cp(snd, chn, "test-C-mark");
+  if (!cp) return(XEN_FALSE);
   m = find_mark_from_id(XEN_TO_C_INT(mid), NULL, AT_CURRENT_EDIT_POSITION);
   if (m == NULL) 
     return(snd_no_such_mark_error("test-C-mark", mid));
@@ -1850,6 +1851,7 @@ static XEN g_restore_marks(XEN size, XEN snd, XEN chn, XEN marklist)
   if (sp == NULL) 
     return(snd_no_such_sound_error(S_restore_marks, snd));
   cp = get_cp(snd, chn, S_restore_marks);
+  if (!cp) return(XEN_FALSE);
   XEN_ASSERT_TYPE(XEN_INTEGER_P(size), size, XEN_ARG_1, S_restore_marks, "an integer");
   XEN_ASSERT_TYPE(XEN_LIST_P(marklist), marklist, XEN_ARG_4, S_restore_marks, "a list");
   if (cp->marks)
@@ -1858,6 +1860,15 @@ static XEN g_restore_marks(XEN size, XEN snd, XEN chn, XEN marklist)
       free_mark_list(cp, 0);
     }
   cp->marks_size = XEN_TO_C_INT(size);
+  if (cp->marks_size == 0) return(XEN_FALSE);
+  if (cp->marks_size < 0)
+    {
+      cp->marks_size = 0;
+      XEN_ERROR(CANNOT_SAVE,
+		XEN_LIST_3(C_TO_XEN_STRING(S_restore_marks),
+			   C_TO_XEN_STRING("restore ~A marks?"),
+			   size));
+    }
   cp->marks = (mark ***)CALLOC(cp->marks_size, sizeof(mark **));
   cp->mark_size = (int *)CALLOC(cp->marks_size, sizeof(int));
   cp->mark_ctr = (int *)CALLOC(cp->marks_size, sizeof(int));
@@ -2091,6 +2102,7 @@ find the mark in snd's channel chn at samp (if a number) or with the given name 
   XEN_ASSERT_TYPE((XEN_NUMBER_P(samp_n) || XEN_STRING_P(samp_n) || (XEN_FALSE_P(samp_n))), samp_n, XEN_ARG_1, S_find_mark, "a number or string or " PROC_FALSE);
   ASSERT_CHANNEL(S_find_mark, snd_n, chn_n, 2); 
   cp = get_cp(snd_n, chn_n, S_find_mark);
+  if (!cp) return(XEN_FALSE);
   if (cp->marks == NULL) 
     return(XEN_FALSE);
   pos = to_c_edit_position(cp, edpos, S_find_mark, 4);
@@ -2131,6 +2143,7 @@ static XEN g_add_mark(XEN samp_n, XEN snd_n, XEN chn_n)
   XEN_ASSERT_TYPE(XEN_OFF_T_P(samp_n) || XEN_NOT_BOUND_P(samp_n), samp_n, XEN_ARG_1, S_add_mark, "an integer");
   ASSERT_CHANNEL(S_add_mark, snd_n, chn_n, 2);
   cp = get_cp(snd_n, chn_n, S_add_mark);
+  if (!cp) return(XEN_FALSE);
   loc = XEN_TO_C_OFF_T_OR_ELSE(samp_n, 0);
   if ((loc < 0) || (loc >= CURRENT_SAMPLES(cp)))
     XEN_ERROR(NO_SUCH_SAMPLE,
@@ -2168,6 +2181,7 @@ static XEN g_delete_marks(XEN snd_n, XEN chn_n)
   chan_info *cp;
   ASSERT_CHANNEL(S_delete_marks, snd_n, chn_n, 1);
   cp = get_cp(snd_n, chn_n, S_delete_marks);
+  if (!cp) return(XEN_FALSE);
   delete_marks(cp);
   return(XEN_FALSE);
 }
@@ -2269,6 +2283,7 @@ mark list is: channel given: (id id ...), snd given: ((id id) (id id ...)), neit
 	if (XEN_INTEGER_P(chn_n))
 	  {
 	    cp = get_cp(snd_n, chn_n, S_marks);
+	    if (!cp) return(XEN_FALSE);
 	    if (XEN_INTEGER_P(pos_n)) 
 	      {
 		pos = XEN_TO_C_INT(pos_n); 

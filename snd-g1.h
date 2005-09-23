@@ -162,6 +162,7 @@ bool region_dialog_is_active(void);
 void reflect_regions_in_region_browser(void);
 void reflect_no_regions_in_region_browser(void);
 void reflect_region_graph_style(void);
+int region_dialog_region(void);
 void g_init_gxregion(void);
 
 
@@ -476,6 +477,7 @@ file_data *make_file_data_panel(GtkWidget *parent, char *name,
 				header_choice_t header_choice);
 widget_t make_sound_save_as_dialog(bool managed);
 widget_t make_selection_save_as_dialog(bool managed);
+widget_t make_region_save_as_dialog(bool managed);
 gboolean label_enter_callback(GtkWidget *w, GdkEventCrossing *ev, gpointer gp);
 gboolean label_leave_callback(GtkWidget *w, GdkEventCrossing *ev, gpointer gp);
 void make_new_file_dialog(void);

@@ -1079,6 +1079,7 @@ edhist (8)gsy (9)gzy (10)main (11)sx_adj (12)sy_adj (13)zx_adj (14)zy_adj (15)gs
   chan_info *cp;
   ASSERT_CHANNEL(S_channel_widgets, snd, chn, 1);
   cp = get_cp(snd, chn, S_channel_widgets);
+  if (!cp) return(XEN_FALSE);
   return(XEN_CONS(XEN_WRAP_WIDGET(channel_graph(cp)),
 	  XEN_CONS(XEN_WRAP_WIDGET(channel_w(cp)),
 	   XEN_CONS(XEN_WRAP_WIDGET(channel_f(cp)),

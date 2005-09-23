@@ -1653,7 +1653,7 @@
 (hey "#define XEN_TO_C_GdkFilterReturn(Arg) (GdkFilterReturn)XEN_TO_C_INT(Arg)~%")
 
 (hey "#define XEN_TO_C_String(Arg) ((XEN_STRING_P(Arg)) ? XEN_TO_C_STRING(Arg) : NULL)~%")
-(hey "#define C_TO_XEN_String(Arg) ((Arg != NULL) ? C_TO_XEN_STRING(Arg) : XEN_FALSE)~%")
+(hey "#define C_TO_XEN_String(Arg) ((Arg != NULL) ? C_TO_XEN_STRING((char *)Arg) : XEN_FALSE)~%")
 (hey "#define XEN_String_P(Arg) ((XEN_FALSE_P(Arg)) || (XEN_STRING_P(Arg)))~%")
 
 
@@ -2403,14 +2403,14 @@
 
 (hey "/* ---------------------------------------- structs ---------------------------------------- */~%~%")
 
-(hey "  #define XG_DEFINE_READER(Name, Value, A1, A2, A3, Help) XEN_DEFINE_PROCEDURE(XG_FIELD_PRE #Name XG_POST, Value, A1, A2, A3, Help)~%")
+(hey "  #define XG_DEFINE_READER(Name, Value, A1, A2, A3) XEN_DEFINE_PROCEDURE(XG_FIELD_PRE #Name XG_POST, Value, A1, A2, A3, #Name \" field reader\")~%")
 (hey "  #if HAVE_RUBY~%")
 (hey "    #define XG_DEFINE_ACCESSOR(Name, Value, SetValue, A1, A2, A3, A4) \\~%")
-(hey "      XEN_DEFINE_PROCEDURE_WITH_SETTER(XG_FIELD_PRE #Name XG_POST, Value, NULL, XG_FIELD_PRE \"set_\" #Name XG_POST, SetValue, A1, A2, A3, A4)~%")
+(hey "      XEN_DEFINE_PROCEDURE_WITH_SETTER(XG_FIELD_PRE #Name XG_POST, Value, #Name \" field accessor\", XG_FIELD_PRE \"set_\" #Name XG_POST, SetValue, A1, A2, A3, A4)~%")
 (hey "  #endif~%")
 (hey "  #if HAVE_SCHEME~%")
 (hey "    #define XG_DEFINE_ACCESSOR(Name, Value, SetValue, A1, A2, A3, A4) \\~%")
-(hey "      XEN_DEFINE_PROCEDURE_WITH_SETTER(XG_FIELD_PRE #Name XG_POST, Value, NULL, \"set! \" XG_FIELD_PRE #Name XG_POST, SetValue, A1, A2, A3, A4)~%")
+(hey "      XEN_DEFINE_PROCEDURE_WITH_SETTER(XG_FIELD_PRE #Name XG_POST, Value, #Name \" field accessor\", \"set! \" XG_FIELD_PRE #Name XG_POST, SetValue, A1, A2, A3, A4)~%")
 (hey "  #endif~%~%")
 
 (define (array->list type)
@@ -2881,9 +2881,13 @@
 (if (not (null? funcs-273)) (with-273 hey (lambda () (for-each defun (reverse funcs-273)))))
 
 (define (cast-out func)
-  (hey "  XG_DEFINE_PROCEDURE(~A, gxg_~A_w, 1, 0, 0, NULL);~%" (no-arg (car func)) (no-arg (car func))))
+  (hey "  XG_DEFINE_PROCEDURE(~A, gxg_~A_w, 1, 0, 0, \"(~A obj) casts obj to ~A\");~%" 
+       (no-arg (car func)) 
+       (no-arg (car func))
+       (no-arg (car func))
+       (no-arg (car func))))
 
-(hey "  XG_DEFINE_PROCEDURE(GPOINTER, gxg_GPOINTER_w, 1, 0, 0, NULL);~%")
+(hey "  XG_DEFINE_PROCEDURE(GPOINTER, gxg_GPOINTER_w, 1, 0, 0, \"(GPOINTER obj) casts obj to GPOINTER\");~%")
 
 (for-each cast-out (reverse casts))
 (if (not (null? casts-21)) (with-21 hey (lambda () (for-each cast-out (reverse casts-21)))))
@@ -2900,7 +2904,11 @@
 (hey "  XG_DEFINE_PROCEDURE(make-target-entry, gxg_make_target_entry_w, 1, 0, 0, H_make_target_entry);~%")
 
 (define (check-out func)
-  (hey "  XG_DEFINE_PROCEDURE(~A, gxg_~A_w, 1, 0, 0, NULL);~%" (no-arg (car func)) (no-arg (car func))))
+  (hey "  XG_DEFINE_PROCEDURE(~A, gxg_~A_w, 1, 0, 0, \"(~A obj) -> #t if obj is a ~A\");~%" 
+       (no-arg (car func)) 
+       (no-arg (car func))
+       (no-arg (car func))
+       (no-arg (car func))))
 
 (for-each check-out (reverse checks))
 (if (not (null? checks-21)) (with-21 hey (lambda () (for-each check-out (reverse checks-21)))))
@@ -2928,7 +2936,7 @@
 	     (begin
 	       (hey "#endif~%")
 	       (set! in-x11 #f))))
-     (hey "  XG_DEFINE_READER(~A, gxg_~A_w, 1, 0, 0, NULL);~%" field field))
+     (hey "  XG_DEFINE_READER(~A, gxg_~A_w, 1, 0, 0);~%" field field))
    struct-fields)
   (if in-x11
       (hey "#endif~%")))
@@ -2954,7 +2962,13 @@
 (for-each 
  (lambda (struct)
    (let* ((s (find-struct struct)))
-     (hey "  XG_DEFINE_PROCEDURE(~A, gxg_make_~A_w, 0, 0, ~D, NULL);~%" struct struct (if (> (length (cadr s)) 0) 1 0))))
+     (hey "  XG_DEFINE_PROCEDURE(~A, gxg_make_~A_w, 0, 0, ~D, \"(~A~A) -> a new ~A struct\");~%" 
+	  struct 
+	  struct 
+	  (if (> (length (cadr s)) 0) 1 0)
+	  struct
+	  (if (> (length (cadr s)) 0) " ..." "")
+	  struct)))
  (reverse make-structs))
 
 (hey "}~%~%")

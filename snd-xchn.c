@@ -1359,6 +1359,7 @@ static XEN g_channel_widgets(XEN snd, XEN chn)
   chan_info *cp;
   ASSERT_CHANNEL(S_channel_widgets, snd, chn, 1);
   cp = get_cp(snd, chn, S_channel_widgets);
+  if (!cp) return(XEN_FALSE);
   return(XEN_CONS(XEN_WRAP_WIDGET(channel_graph(cp)),
 	   XEN_CONS(XEN_WRAP_WIDGET(channel_w(cp)),
 	     XEN_CONS(XEN_WRAP_WIDGET(channel_f(cp)),

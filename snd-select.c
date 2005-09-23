@@ -726,7 +726,7 @@ void move_selection(chan_info *cp, int x)
   move_selection_1(cp, x);
 }
 
-io_error_t save_selection(char *ofile, int type, int format, int srate, const char *comment, int chan)
+io_error_t save_selection(const char *ofile, int type, int format, int srate, const char *comment, int chan)
 {
   /* type and format have already been checked */
   int ofd, comlen, bps;
@@ -918,6 +918,7 @@ static XEN g_insert_selection(XEN beg, XEN snd, XEN chn)
       ASSERT_CHANNEL(S_insert_selection, snd, chn, 2);
       XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(beg), beg, XEN_ARG_1, S_insert_selection, "a number");
       cp = get_cp(snd, chn, S_insert_selection);
+      if (!cp) return(XEN_FALSE);
       samp = beg_to_sample(beg, S_insert_selection);
       io_err = insert_selection(cp, samp);
       ASSERT_IO_ERROR(io_err, "insert_selection in g_insert_selection");
@@ -942,6 +943,7 @@ static XEN g_mix_selection(XEN beg, XEN snd, XEN chn)
       ASSERT_CHANNEL(S_mix_selection, snd, chn, 2);
       XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(beg), beg, XEN_ARG_1, S_mix_selection, "a number");
       cp = get_cp(snd, chn, S_mix_selection);
+      if (!cp) return(XEN_FALSE);
       obeg = beg_to_sample(beg, S_mix_selection);
       res = C_TO_XEN_INT(mix_selection(cp, obeg, &io_err));
       if (SERIOUS_IO_ERROR(io_err))
@@ -971,6 +973,7 @@ static XEN g_selection_position(XEN snd, XEN chn)
 	  chan_info *cp;
 	  ASSERT_CHANNEL(S_selection_position, snd, chn, 1);
 	  cp = get_cp(snd, chn, S_selection_position);
+	  if (!cp) return(XEN_FALSE);
 	  return(C_TO_XEN_OFF_T(selection_beg(cp)));
 	}
     }
@@ -1005,6 +1008,7 @@ static XEN g_set_selection_position(XEN pos, XEN snd, XEN chn)
   else 
     {
       cp = get_cp(snd, chn, S_setB S_selection_position);
+      if (!cp) return(XEN_FALSE);
       cp_set_selection_beg(cp, beg);
     }
   redraw_selection();
@@ -1025,6 +1029,7 @@ static XEN g_selection_frames(XEN snd, XEN chn)
 	  chan_info *cp;
 	  ASSERT_CHANNEL(S_selection_frames, snd, chn, 1);
 	  cp = get_cp(snd, chn, S_selection_frames);
+	  if (!cp) return(XEN_FALSE);
 	  return(C_TO_XEN_OFF_T(cp_selection_len(cp, NULL)));
 	}
     }
@@ -1061,6 +1066,7 @@ static XEN g_set_selection_frames(XEN samps, XEN snd, XEN chn)
     {
       ASSERT_CHANNEL(S_setB S_selection_frames, snd, chn, 2);
       cp = get_cp(snd, chn, S_setB S_selection_frames);
+      if (!cp) return(XEN_FALSE);
       cp_set_selection_len(cp, len);
     }
   redraw_selection();
@@ -1075,6 +1081,7 @@ static XEN g_selection_member(XEN snd, XEN chn)
   chan_info *cp;
   ASSERT_CHANNEL(S_selection_member, snd, chn, 1);
   cp = get_cp(snd, chn, S_selection_member);
+  if (!cp) return(XEN_FALSE);
   return(C_TO_XEN_BOOLEAN(selection_is_active_in_channel(cp)));
 }
 
@@ -1088,6 +1095,7 @@ static XEN g_set_selection_member(XEN on, XEN snd, XEN chn)
       chan_info *cp;
       ASSERT_CHANNEL(S_setB S_selection_member, snd, chn, 2);
       cp = get_cp(snd, chn, S_setB S_selection_member);
+      if (!cp) return(XEN_FALSE);
       if (XEN_TRUE_P(on))
 	{
 	  if (selection_is_active())
@@ -1113,6 +1121,7 @@ If sync is set, all chans are included.  The new region id is returned (if " S_s
   int id;
   ASSERT_CHANNEL(S_select_all, snd_n, chn_n, 1);
   cp = get_cp(snd_n, chn_n, S_select_all);
+  if (!cp) return(XEN_FALSE);
   id = select_all(cp);
   if (selection_creates_region(ss)) 
     return(C_TO_XEN_INT(id)); /* C_INT_TO_XEN_REGION to be consistent with-snd-region.c */
@@ -1214,6 +1223,7 @@ static XEN g_selection_maxamp(XEN snd, XEN chn)
   chan_info *cp;
   ASSERT_CHANNEL(S_selection_maxamp, snd, chn, 1);
   cp = get_cp(snd, chn, S_selection_maxamp);
+  if (!cp) return(XEN_FALSE);
   return(C_TO_XEN_DOUBLE(selection_maxamp(cp)));
 }
 
@@ -1223,6 +1233,7 @@ static XEN g_selection_maxamp_position(XEN snd, XEN chn)
   chan_info *cp;
   ASSERT_CHANNEL(S_selection_maxamp_position, snd, chn, 1);
   cp = get_cp(snd, chn, S_selection_maxamp_position);
+  if (!cp) return(XEN_FALSE);
   return(C_TO_XEN_OFF_T(selection_maxamp_position(cp)));
 }
 

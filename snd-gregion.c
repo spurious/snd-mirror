@@ -196,10 +196,28 @@ void delete_region_and_update_browser(int pos)
     }
 }
 
-static void region_delete_callback(GtkWidget *w, gpointer context)
+static void region_unlist_callback(GtkWidget *w, gpointer context)
 {
   if (current_region != -1)
     delete_region_and_update_browser(current_region);
+}
+
+static void region_insert_callback(GtkWidget *w, gpointer context)
+{
+  if (current_region != -1)
+    paste_region(region_list_position_to_id(current_region), selected_channel());
+}
+
+static void region_mix_callback(GtkWidget *w, gpointer context)
+{
+  if (current_region != -1)
+    add_region(region_list_position_to_id(current_region), selected_channel());
+}
+
+static void region_save_callback(GtkWidget *w, gpointer context)
+{
+  if (current_region != -1)
+    make_region_save_as_dialog(true);
 }
 
 static void region_help_callback(GtkWidget *w, gpointer context)
@@ -320,8 +338,8 @@ static regrow *make_regrow(GtkWidget *ww, GtkSignalFunc play_callback, GtkSignal
   return(r);
 }
 
-static GtkWidget *print_button, *edit_button;
-static GtkWidget *dismiss_button, *help_button, *delete_button;
+static GtkWidget *print_button, *edit_button, *unlist_button, *insert_button, *mix_button;
+static GtkWidget *dismiss_button, *help_button, *save_as_button;
 
 static void make_region_dialog(void)
 {
@@ -336,7 +354,7 @@ static void make_region_dialog(void)
   gtk_window_set_title(GTK_WINDOW(region_dialog), _("Regions"));
   sg_make_resizable(region_dialog);
   gtk_container_set_border_width(GTK_CONTAINER(region_dialog), 10);
-  gtk_window_resize(GTK_WINDOW(region_dialog), 400, 400);
+  gtk_window_resize(GTK_WINDOW(region_dialog), 400, 500);
   gtk_widget_realize(region_dialog);
 
   help_button = gtk_button_new_from_stock(GTK_STOCK_HELP);
@@ -345,21 +363,32 @@ static void make_region_dialog(void)
   dismiss_button = gtk_button_new_from_stock(GTK_STOCK_QUIT);
   gtk_widget_set_name(dismiss_button, "quit_button");
 
-  delete_button = gtk_button_new_from_stock(GTK_STOCK_REMOVE);
-  gtk_widget_set_name(delete_button, "doit_button");
+  insert_button = gtk_button_new_with_label(_("Insert"));
+  gtk_widget_set_name(insert_button, "doit_button");
+
+  mix_button = gtk_button_new_with_label(_("Mix"));
+  gtk_widget_set_name(mix_button, "doit_again_button");
+
+  save_as_button = gtk_button_new_with_label(_("Save as"));
+  gtk_widget_set_name(save_as_button, "reset_button");
 
   gtk_box_pack_start(GTK_BOX(GTK_DIALOG(region_dialog)->action_area), dismiss_button, true, true, 4);
-  gtk_box_pack_start(GTK_BOX(GTK_DIALOG(region_dialog)->action_area), delete_button, true, true, 4);
+  gtk_box_pack_start(GTK_BOX(GTK_DIALOG(region_dialog)->action_area), insert_button, true, true, 4);
+  gtk_box_pack_start(GTK_BOX(GTK_DIALOG(region_dialog)->action_area), mix_button, true, true, 4);
+  gtk_box_pack_start(GTK_BOX(GTK_DIALOG(region_dialog)->action_area), save_as_button, true, true, 4);
   gtk_box_pack_end(GTK_BOX(GTK_DIALOG(region_dialog)->action_area), help_button, true, true, 4);
 
-  SG_SIGNAL_CONNECT(delete_button, "clicked", region_delete_callback, NULL);
+  SG_SIGNAL_CONNECT(insert_button, "clicked", region_insert_callback, NULL);
+  SG_SIGNAL_CONNECT(mix_button, "clicked", region_mix_callback, NULL);
   SG_SIGNAL_CONNECT(help_button, "clicked", region_help_callback, NULL);
   SG_SIGNAL_CONNECT(dismiss_button, "clicked", region_ok_callback, NULL);
+  SG_SIGNAL_CONNECT(save_as_button, "clicked", region_save_callback, NULL);
 
-  gtk_widget_show(delete_button);
+  gtk_widget_show(insert_button);
+  gtk_widget_show(mix_button);
   gtk_widget_show(help_button);
   gtk_widget_show(dismiss_button);
-
+  gtk_widget_show(save_as_button);
 
   region_grf = gtk_vpaned_new();
   gtk_box_pack_start(GTK_BOX(GTK_DIALOG(region_dialog)->vbox), region_grf, true, true, 0);
@@ -468,6 +497,13 @@ static void make_region_dialog(void)
   gtk_widget_modify_bg(print_button, GTK_STATE_NORMAL, ss->sgx->lighter_blue);
   gtk_widget_modify_bg(print_button, GTK_STATE_ACTIVE, ss->sgx->red);
 
+  unlist_button = gtk_button_new_with_label(_("unlist"));
+  SG_SIGNAL_CONNECT(unlist_button, "clicked", region_unlist_callback, NULL);
+  gtk_box_pack_start(GTK_BOX(infobox), unlist_button, true, true, 2);
+  gtk_widget_show(unlist_button);
+  gtk_widget_modify_bg(unlist_button, GTK_STATE_NORMAL, ss->sgx->lighter_blue);
+  gtk_widget_modify_bg(unlist_button, GTK_STATE_ACTIVE, ss->sgx->red);
+
   gtk_widget_show(region_dialog);
 
   id = region_list_position_to_id(0);
@@ -476,7 +512,7 @@ static void make_region_dialog(void)
   current_region = 0;
   cp = rsp->chans[0];
 
-  gtk_paned_set_position(GTK_PANED(region_grf), 150);
+  gtk_paned_set_position(GTK_PANED(region_grf), 220);
   SG_SIGNAL_CONNECT(channel_graph(cp), "expose_event", region_resize_callback, cp);
   SG_SIGNAL_CONNECT(channel_graph(cp), "configure_event", region_expose_callback, cp);
 
@@ -540,6 +576,11 @@ static regrow *region_row(int n)
       return(region_rows[n]);
     }
   return(NULL);
+}
+
+int region_dialog_region(void)
+{
+  return(region_list_position_to_id(current_region));
 }
 
 static XEN g_view_regions_dialog(void) 
