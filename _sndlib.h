@@ -438,7 +438,7 @@ bool mus_file_probe(const char *arg);
 int mus_file_open_write(const char *arg);
 int mus_file_create(const char *arg);
 int mus_file_reopen_write(const char *arg);
-int mus_file_close(int fd);
+  int mus_file_close(int fd);
 off_t mus_file_seek_frame(int tfd, off_t frame);
 int mus_file_read(int fd, int beg, int end, int chans, mus_sample_t **bufs);
 int mus_file_read_chans(int fd, int beg, int end, int chans, mus_sample_t **bufs, mus_sample_t **cm);

@@ -1645,6 +1645,15 @@ static void save_as_selection_watcher(selection_watcher_reason_t reason, void *d
     }
 }
 
+void reflect_region_in_save_as_dialog(void)
+{
+  if ((save_region_as) &&
+      (save_region_as->dialog) &&
+      (GTK_WIDGET_VISIBLE(save_region_as->dialog)) &&
+      (region_ok(region_dialog_region())))
+    clear_dialog_error(save_region_as->panel_data);
+}
+
 static void save_as_undoit(save_as_dialog_info *sd)
 {
 #if HAVE_GFCDN
@@ -1728,8 +1737,16 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
       return;
     }
 
+  if ((sd->type == REGION_SAVE_AS) &&
+      (!(region_ok(region_dialog_region()))))
+    {
+      post_file_dialog_error(_("no region to save"), (void *)(sd->panel_data));
+      return;
+    }
+
   sp = any_selected_sound();
-  if (!sp)
+  if ((!sp) &&
+      (sd->type != REGION_SAVE_AS))
     {
       if (saving)
 	msg = _("nothing to save");
@@ -1766,17 +1783,21 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
       return;
     }
 
-  if (sd->type == SOUND_SAVE_AS)
+  switch (sd->type)
     {
+    case SOUND_SAVE_AS:
       clear_minibuffer(sp);
       if (!saving)
-      extractable_chans = sp->nchans;
-    }
-  else 
-    {
+	extractable_chans = sp->nchans;
+      break;
+    case SELECTION_SAVE_AS:
       if (!saving)
 	extractable_chans = selection_chans();
+      break;
+    default:
+      break;
     }
+
   if (!saving)
     {
       if ((chan > extractable_chans) ||
@@ -1925,8 +1946,7 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
 	    FREE(ofile);
 	  }
 	break;
-      case MIX_SAVE_AS:
-      case TRACK_SAVE_AS:
+      default:
 	snd_error("internal screw up");
 	break;
       }
@@ -2094,8 +2114,7 @@ static void make_save_as_dialog(save_as_dialog_info *sd, char *sound_name, int h
 	case REGION_SAVE_AS:
 	  set_dialog_widget(REGION_SAVE_AS_DIALOG, sd->dialog);
 	  break;
-	case MIX_SAVE_AS:
-	case TRACK_SAVE_AS:
+	default:
 	  snd_error("internal screw up");
 	  break;
 	}

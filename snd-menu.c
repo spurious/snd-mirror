@@ -1,9 +1,7 @@
 #include "snd.h"
 #include "snd-menu.h"
 
-/* PERHAPS: insert-region menus -> browser
- * PERHAPS: key binding updates here too 
- */
+/* PERHAPS: key binding updates here too */
 
 static bool find_any_edits(chan_info *cp, void *ignore)
 {

@@ -20,7 +20,20 @@ static snd_info *rsp = NULL;
 static int current_region = -1;
 static Widget reg_srtxt, reg_lentxt, reg_chntxt, reg_maxtxt;
 static Widget region_ww = NULL;
+static Widget mix_button = NULL, save_as_button = NULL, insert_button = NULL;
 static regrow *region_row(int n);
+
+static void set_current_region(int rg)
+{
+  bool reg_ok = false;
+  current_region = rg;
+  reflect_region_in_save_as_dialog();
+  if (rg >= 0)
+    reg_ok = region_ok(region_list_position_to_id(rg));
+  if (save_as_button) XtSetSensitive(save_as_button, reg_ok);
+  if (mix_button) XtSetSensitive(mix_button, reg_ok);
+  if (insert_button) XtSetSensitive(insert_button, reg_ok);
+}
 
 void reflect_regions_in_region_browser(void)
 {
@@ -139,7 +152,7 @@ void update_region_browser(bool grf_too)
   if (grf_too)
     {
       unhighlight_region();
-      current_region = 0;
+      set_current_region(0);
       highlight_region();
       goto_window(region_rows[0]->nm);
       cp = rsp->chans[0];
@@ -181,15 +194,16 @@ void delete_region_and_update_browser(int pos)
     {
       if (act != NO_REGIONS)
 	{
-	  current_region = 0;
+	  set_current_region(0);
 	  highlight_region();
 	  goto_window(region_rows[0]->nm);
 	}
-      else 
-	current_region = -1;
+      else set_current_region(-1);
       update_region_browser(1);
     }
 }
+
+/* PERHAPS: all these callbacks ideally should report errors and so on */
 
 static void region_unlist_callback(Widget w, XtPointer context, XtPointer info) 
 {
@@ -204,13 +218,15 @@ static void region_help_callback(Widget w, XtPointer context, XtPointer info)
 
 static void region_insert_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  if (current_region != -1)
+  if ((current_region != -1) &&
+      (selected_channel()))
     paste_region(region_list_position_to_id(current_region), selected_channel());
 }
 
 static void region_mix_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  if (current_region != -1)
+  if ((current_region != -1) &&
+      (selected_channel()))
     add_region(region_list_position_to_id(current_region), selected_channel());
 }
 
@@ -256,7 +272,7 @@ static void region_focus_callback(Widget w, XtPointer context, XtPointer info)
   regrow *r = (regrow *)context;
   unhighlight_region();
   if (region_list_position_to_id(r->pos) == INVALID_REGION) return; /* needed by auto-tester */
-  current_region = r->pos;
+  set_current_region(r->pos);
   cp = rsp->chans[0];
   cp->sound = rsp;
   cp->chan  = 0;
@@ -364,7 +380,7 @@ static void make_region_dialog(void)
   int n, i, id;
   Arg args[32];
   Widget formw, last_row, infosep, fr ,rw;
-  Widget prtb, editb, unlistb, plw, panes, toppane, mix_button, save_as_button, sep1 = NULL;
+  Widget prtb, editb, unlistb, plw, panes, toppane, sep1 = NULL;
   XmString xok, xinsert, xhelp, titlestr;
   regrow *r;
   chan_info *cp;
@@ -389,18 +405,18 @@ static void make_region_dialog(void)
   n = 0;
   if (!(ss->using_schemes)) 
     {
-      XtSetArg(args[n], XmNbackground, ss->sgx->doit_again_button_color); n++;
-      XtSetArg(args[n], XmNarmColor, ss->sgx->pushed_button_color); n++;
-    }
-  mix_button = XtCreateManagedWidget(_("Mix"), xmPushButtonGadgetClass, region_dialog, args, n);
-
-  n = 0;
-  if (!(ss->using_schemes)) 
-    {
       XtSetArg(args[n], XmNbackground, ss->sgx->reset_button_color); n++;
       XtSetArg(args[n], XmNarmColor, ss->sgx->pushed_button_color); n++;
     }
   save_as_button = XtCreateManagedWidget(_("Save as"), xmPushButtonGadgetClass, region_dialog, args, n);
+
+  n = 0;
+  if (!(ss->using_schemes)) 
+    {
+      XtSetArg(args[n], XmNbackground, ss->sgx->doit_again_button_color); n++;
+      XtSetArg(args[n], XmNarmColor, ss->sgx->pushed_button_color); n++;
+    }
+  mix_button = XtCreateManagedWidget(_("Mix"), xmPushButtonGadgetClass, region_dialog, args, n);
 
   XtAddCallback(region_dialog,  XmNokCallback,       region_ok_callback,     NULL);
   XtAddCallback(region_dialog,  XmNcancelCallback,   region_insert_callback, NULL);
@@ -422,6 +438,7 @@ static void make_region_dialog(void)
       XtVaSetValues(XmMessageBoxGetChild(region_dialog, XmDIALOG_CANCEL_BUTTON), XmNbackground, ss->sgx->doit_button_color, NULL);
       XtVaSetValues(XmMessageBoxGetChild(region_dialog, XmDIALOG_HELP_BUTTON), XmNbackground, ss->sgx->help_button_color, NULL);
     }
+  insert_button = XmMessageBoxGetChild(region_dialog, XmDIALOG_CANCEL_BUTTON);
 
   n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
@@ -604,7 +621,7 @@ static void make_region_dialog(void)
   id = region_list_position_to_id(0);
   rsp = make_simple_channel_display(region_srate(id), region_len(id), WITH_ARROWS, region_graph_style(ss), region_grf, WITHOUT_EVENTS);
   rsp->inuse = SOUND_REGION;
-  current_region = 0;
+  set_current_region(0);
   cp = rsp->chans[0];
   if (!(ss->using_schemes)) 
     {
@@ -638,7 +655,7 @@ void view_region_callback(Widget w, XtPointer context, XtPointer info)
   else raise_dialog(region_dialog);
   if (!XtIsManaged(region_dialog)) 
     {
-      current_region = 0; 
+      set_current_region(0); 
       XtManageChild(region_dialog);
     }
 }

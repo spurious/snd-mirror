@@ -14,7 +14,20 @@ static int region_rows_size = 0;
 static snd_info *rsp = NULL;
 static int current_region = -1;
 static GtkWidget *srate_text, *length_text, *chans_text, *maxamp_text;
+static GtkWidget *save_as_button = NULL, *insert_button = NULL, *mix_button = NULL;
 static regrow *region_row(int n);
+
+static void set_current_region(int rg)
+{
+  bool reg_ok = false;
+  current_region = rg;
+  reflect_region_in_save_as_dialog();
+  if (rg >= 0)
+    reg_ok = region_ok(region_list_position_to_id(rg));
+  if (save_as_button) gtk_widget_set_sensitive(save_as_button, reg_ok);
+  if (mix_button) gtk_widget_set_sensitive(mix_button, reg_ok);
+  if (insert_button) gtk_widget_set_sensitive(insert_button, reg_ok);
+}
 
 void reflect_regions_in_region_browser(void)
 {
@@ -130,7 +143,7 @@ void update_region_browser(bool grf_too)
     {
       chan_info *cp;
       unhighlight_region();
-      current_region = 0;
+      set_current_region(0);
       highlight_region();
       goto_window(region_rows[0]->nm);
       cp = rsp->chans[0];
@@ -186,12 +199,11 @@ void delete_region_and_update_browser(int pos)
     {
       if (act != NO_REGIONS)
 	{
-	  current_region = 0;
+	  set_current_region(0);
 	  highlight_region();
 	  goto_window(region_rows[0]->nm);
 	}
-      else 
-	current_region = -1;
+      else set_current_region(-1);
       update_region_browser(true);
     }
 }
@@ -204,13 +216,15 @@ static void region_unlist_callback(GtkWidget *w, gpointer context)
 
 static void region_insert_callback(GtkWidget *w, gpointer context)
 {
-  if (current_region != -1)
+  if ((current_region != -1) &&
+      (selected_channel()))
     paste_region(region_list_position_to_id(current_region), selected_channel());
 }
 
 static void region_mix_callback(GtkWidget *w, gpointer context)
 {
-  if (current_region != -1)
+  if ((current_region != -1) &&
+      (selected_channel()))
     add_region(region_list_position_to_id(current_region), selected_channel());
 }
 
@@ -263,7 +277,7 @@ static void region_focus_callback(GtkWidget *w, gpointer context) /* button clic
   regrow *r = (regrow *)context;
   unhighlight_region();
   if (region_list_position_to_id(r->pos) == INVALID_REGION) return; /* needed by auto-tester */
-  current_region = r->pos;
+  set_current_region(r->pos);
   cp = rsp->chans[0];
   cp->sound = rsp;
   cp->chan  = 0;
@@ -338,8 +352,8 @@ static regrow *make_regrow(GtkWidget *ww, GtkSignalFunc play_callback, GtkSignal
   return(r);
 }
 
-static GtkWidget *print_button, *edit_button, *unlist_button, *insert_button, *mix_button;
-static GtkWidget *dismiss_button, *help_button, *save_as_button;
+static GtkWidget *print_button, *edit_button, *unlist_button;
+static GtkWidget *dismiss_button, *help_button;
 
 static void make_region_dialog(void)
 {
@@ -509,7 +523,7 @@ static void make_region_dialog(void)
   id = region_list_position_to_id(0);
   rsp = make_simple_channel_display(region_srate(id), region_len(id), WITH_ARROWS, region_graph_style(ss), region_grf, WITHOUT_EVENTS);
   rsp->inuse = SOUND_REGION;
-  current_region = 0;
+  set_current_region(0);
   cp = rsp->chans[0];
 
   gtk_paned_set_position(GTK_PANED(region_grf), 220);
@@ -539,7 +553,7 @@ void view_region_callback(GtkWidget *w, gpointer context)
     {
       update_region_browser(true);
       raise_dialog(region_dialog);
-      current_region = 0;
+      set_current_region(0);
     }
 }
 

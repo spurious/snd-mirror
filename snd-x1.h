@@ -408,6 +408,7 @@ void reflect_just_sounds(void);
 void save_file_dialog_state(FILE *fd);
 widget_t post_it(const char *subject, const char *str);
 void save_post_it_dialog_state(FILE *fd);
+void reflect_region_in_save_as_dialog(void);
 
 
 /* -------- snd-xenv.c -------- */

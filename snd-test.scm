@@ -37,7 +37,7 @@
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
-;;; TODO: test save-region-dialog
+;;; TODO: test save-region-dialog and update browser tests (remove->unlist etc)
 
 (define original-save-dir (or (save-dir) "/zap/snd"))
 (define original-temp-dir (or (temp-dir) "/zap/tmp"))
@@ -45679,10 +45679,6 @@ EDITS: 1
 		    (XmToggleButtonSetState pl1 #t #t)
 		    (XmToggleButtonSetState pl1 #f #t)
 		    (click-button nm1)
-		    (click-button (XmMessageBoxGetChild regd XmDIALOG_CANCEL_BUTTON)) (force-event)		  
-		    (let ((name1 (cadr (XmStringGetLtoR (cadr (XtVaGetValues nm1 (list XmNlabelString 0))) XmFONTLIST_DEFAULT_TAG))))
-		      (if (string=? name1 name)
-			  (snd-display ";delete in region dialog: ~A?" name)))
 		    (click-button prtb) (force-event)
 		    (let* ((reglist (find-child regd "reglist"))
 			   (ww (find-child reglist "ww")))
@@ -45711,12 +45707,6 @@ EDITS: 1
 				 (delete-file "reg.snd")
 				 (close-sound snd))))
 			 new-snds)))
-		    (let ((regs (length (regions))))
-		      (do ((i 0 (1+ i)))
-			  ((> i regs))
-			(click-button (XmMessageBoxGetChild regd XmDIALOG_CANCEL_BUTTON)) (force-event))
-		      (if (not (null? (regions)))
-			  (snd-display ";click through regions: ~A" (regions))))
 		    (click-button (XmMessageBoxGetChild regd XmDIALOG_OK_BUTTON)) (force-event)		  
 		    (if (XtIsManaged regd)
 			(snd-display ";region dialog is still active?")))
@@ -54577,9 +54567,11 @@ EDITS: 1
 		     mus-sound-chans mus-sound-srate mus-sound-header-type mus-sound-data-format mus-sound-length
 		     mus-sound-type-specifier mus-header-type-name mus-data-format-name mus-sound-comment mus-sound-write-date
 		     mus-bytes-per-sample mus-sound-loop-info mus-audio-report mus-audio-sun-outputs
-		     mus-sound-maxamp mus-sound-maxamp-exists? mus-sound-open-input mus-sound-open-output
-		     mus-sound-reopen-output mus-sound-close-input mus-sound-close-output mus-sound-read mus-sound-write
-		     mus-sound-seek-frame mus-file-prescaler mus-file-data-clipped average average? make-average
+		     mus-sound-maxamp mus-sound-maxamp-exists? 
+		     ;mus-sound-open-input mus-sound-open-output
+		     ;mus-sound-reopen-output mus-sound-close-input mus-sound-close-output mus-sound-read mus-sound-write
+		     ;mus-sound-seek-frame 
+		     mus-file-prescaler mus-file-data-clipped average average? make-average
 		     mus-expand-filename make-sound-data sound-data-ref sound-data-set!  sound-data? sound-data-length
 		     sound-data-maxamp sound-data-chans sound-data->vct vct->sound-data all-pass all-pass? amplitude-modulate
 		     array->file array-interp mus-interpolate asymmetric-fm asymmetric-fm? sound-data->sound-data

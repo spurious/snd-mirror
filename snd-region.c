@@ -1479,6 +1479,14 @@ static void init_region_keywords(void)
   kw_file = XEN_MAKE_KEYWORD("file");
 }
 
+static void save_region_to_xen_error(const char *msg, void *data)
+{
+  redirect_snd_error_to(NULL, NULL);
+  XEN_ERROR(CANNOT_SAVE,
+	    XEN_LIST_2(C_TO_XEN_STRING(S_save_region),
+		       C_TO_XEN_STRING(msg)));
+}
+
 static XEN g_save_region (XEN n, XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7, XEN arg8)
 {
   #define H_save_region "(" S_save_region " region :file :header-type :data-format :comment): save region in file \
@@ -1524,8 +1532,9 @@ using data format (default depends on machine byte order), header type (" S_mus_
 	  else header_type = MUS_RAW;
 	}
     }
-  /* TODO: redirect snd_err/warning */
+  redirect_snd_error_to(save_region_to_xen_error, NULL);
   save_region(rg, name, header_type, data_format, region_srate(rg), com);
+  redirect_snd_error_to(NULL, NULL);
   if (name) FREE(name);
   return(args[orig_arg[0] - 1]); /* -> filename, parallel save-selection */
 }
