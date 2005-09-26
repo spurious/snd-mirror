@@ -12,16 +12,41 @@ static void completion_help_help_callback(Widget w, XtPointer context, XtPointer
   completion_dialog_help();
 }
 
+static void unpost_completion_from_modify(Widget w, XtPointer context, XtPointer info);
+static void unpost_completion_from_activate(Widget w, XtPointer context, XtPointer info);
+
+static void unpost_completion(Widget w)
+{
+  XtUnmanageChild(completion_help_dialog);
+  XtRemoveCallback(w, XmNmodifyVerifyCallback, unpost_completion_from_modify, NULL);
+  XtRemoveCallback(w, XmNactivateCallback, unpost_completion_from_activate, NULL);
+  ss->sgx->completion_requestor = NULL;    
+}
+
+static void unpost_completion_from_activate(Widget w, XtPointer context, XtPointer info)
+{
+  unpost_completion(w);
+}
+
+static void unpost_completion_from_modify(Widget w, XtPointer context, XtPointer info)
+{
+  XmTextVerifyCallbackStruct *cbs = (XmTextVerifyCallbackStruct *)info;
+  cbs->doit = true; 
+  unpost_completion(w);
+}
+
 static void completion_help_browse_callback(Widget w, XtPointer context, XtPointer info) 
 {
   int i, j, old_len, new_len;
   char *text = NULL, *old_text = NULL;
   XmListCallbackStruct *cbs = (XmListCallbackStruct *)info;
+  Widget requestor;
+  if (ss->sgx->completion_requestor == NULL) 
+    requestor = listener_text;
+  else requestor = ss->sgx->completion_requestor;
   /* choice = cbs->item_position - 1; */
   text = (char *)XmStringUnparse(cbs->item, NULL, XmCHARSET_TEXT, XmCHARSET_TEXT, NULL, 0, XmOUTPUT_ALL);
-  if ((ss->sgx->completion_requestor == NULL) || (ss->sgx->completion_requestor == listener_text))
-    old_text = XmTextGetString(listener_text);
-  else old_text = XmTextGetString(ss->sgx->completion_requestor);
+  old_text = XmTextGetString(requestor);
   old_len = snd_strlen(old_text);
   new_len = snd_strlen(text);
   for (i = old_len - 1, j = new_len - 1; j >= 0; j--)
@@ -35,27 +60,28 @@ static void completion_help_browse_callback(Widget w, XtPointer context, XtPoint
 	}
       else i--;
     }
-  if ((ss->sgx->completion_requestor == NULL) || (ss->sgx->completion_requestor == listener_text))
+  if (requestor == listener_text)
     append_listener_text(XmTextGetLastPosition(listener_text), 
 			 (char *)(text - 1 + old_len - i));
   else
     {
       /* try to append to who(m?)ever asked for completion help */
-      XmTextInsert(ss->sgx->completion_requestor, 
-		   XmTextGetLastPosition(ss->sgx->completion_requestor), 
+      XmTextInsert(requestor, 
+		   XmTextGetLastPosition(requestor), 
 		   (char *)(text - 1 + old_len - i));
     }
   if (text) XtFree(text);
   if (old_text) XtFree(old_text);
-  XtUnmanageChild(completion_help_dialog);
-  ss->sgx->completion_requestor = NULL;
+  unpost_completion(requestor);
 }
-
-/* TODO: get completion popup out of the line of fire! */
 
 static void help_completion_ok_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  ss->sgx->completion_requestor = NULL;
+  Widget requestor;
+  if (ss->sgx->completion_requestor == NULL) 
+    requestor = listener_text;
+  else requestor = ss->sgx->completion_requestor;
+  unpost_completion(requestor);
 }
 
 static void create_completion_help_dialog(char *title)
@@ -129,6 +155,15 @@ void snd_completion_help(int matches, char **buffer)
   for (i = 0; i < matches; i++) 
     XmStringFree(match[i]);
   FREE(match);
+
+  {
+    Widget requestor;
+    if (ss->sgx->completion_requestor == NULL) 
+      requestor = listener_text;
+    else requestor = ss->sgx->completion_requestor;
+    XtAddCallback(requestor, XmNmodifyVerifyCallback, unpost_completion_from_modify, NULL);
+    XtAddCallback(requestor, XmNactivateCallback, unpost_completion_from_activate, NULL);
+  }
 }
 
 

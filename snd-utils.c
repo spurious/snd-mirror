@@ -998,6 +998,7 @@ static char *mem_stats(int ub)
 }
 
 void dump_protection(FILE *Fp);
+void io_fds_in_use(int *open, int *closed, int *top);
 
 void mem_report(void)
 {
@@ -1074,6 +1075,11 @@ void mem_report(void)
 	    }
 	}
     }
+  {
+    int open = 0, closed = 0, top = 0;
+    io_fds_in_use(&open, &closed, &top);
+    fprintf(Fp, "ios: open: %d, closed: %d, top: %d\n", open, closed, top);
+  }
   for (i = 0; i < 512; i++)
     if (mus_file_fd_name(i))
       fprintf(Fp, "[%d]: %s\n", i, mus_file_fd_name(i));

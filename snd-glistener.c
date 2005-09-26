@@ -6,6 +6,8 @@ static GtkWidget *listener_text = NULL, *completion_list = NULL;
 static int printout_end;
 #define LISTENER_BUFFER gtk_text_view_get_buffer(GTK_TEXT_VIEW(listener_text))
 
+/* SOMEDAY: it appears that the gtk side's completion affects only the listener, and has no auto-unpost code */
+
 static void list_completions_callback(GtkTreeSelection *selection, gpointer *gp)
 {
   GtkTreeIter iter;

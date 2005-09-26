@@ -1132,11 +1132,11 @@ snd_info *make_sound_readable(const char *filename, bool post_close)
 					     DONT_DELETE_ME, cp->edit_ctr, i);
 	  if (post_close) 
 	    {
-	      if (mus_file_close(fd) != 0)
-		snd_error(_("can't close file %s: %s"), filename, snd_io_strerror());
 	      sd = cp->sounds[0]; 
 	      sd->open = FD_CLOSED; 
 	      io->fd = -1;
+	      if (mus_file_close(fd) != 0)
+		snd_error(_("can't close file %s: %s"), filename, snd_io_strerror());
 	    }
 	  /* this is not as crazy as it looks -- we've read in the first 64K (or whatever) samples,
 	   * and may need this file channel for other opens, so this file can be closed until reposition_file_state_buffers

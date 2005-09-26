@@ -111,8 +111,6 @@ void clear_minibuffer_error(snd_info *sp)
   XtManageChild(NAME_BOX(sp));
 }
 
-/* TODO: error box still seems to sit on bottom of name box */
-
 void display_minibuffer_error(snd_info *sp, const char *str) 
 {
   XmString s1;
@@ -149,7 +147,7 @@ void display_minibuffer_error(snd_info *sp, const char *str)
 		    NULL);
       XtVaSetValues(NAME_BOX(sp),
 		    XmNpaneMinimum, 20,
-		    XmNpaneMaximum, y + 14,
+		    XmNpaneMaximum, y + 24,
 		    NULL);
 
       if (!(sp->sgx->minibuffer_watcher))
@@ -1865,21 +1863,15 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNallowResize, true); n++; 
-
       ERROR_INFO_BOX(sp) = XtCreateWidget("error-box", xmRowColumnWidgetClass, NAME_BOX(sp), args, n);
 
       n = 0;
       if (need_colors) {XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;}
-      /* XtSetArg(args[n], XmNrecomputeSize, true); n++; */
-      /*
-      XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-      */
-      XtSetArg(args[n], XmNmarginHeight, 4); n++;
+      XtSetArg(args[n], XmNmarginHeight, 0); n++; 
       ERROR_INFO_FRAME(sp) = XtCreateManagedWidget("error-frame", xmFrameWidgetClass, ERROR_INFO_BOX(sp), args, n);
 
+      n = 0;
+      if (need_colors) {XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;}
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;
       ERROR_INFO(sp) = XtCreateManagedWidget("error-info", xmLabelWidgetClass, ERROR_INFO_FRAME(sp), args, n);
 

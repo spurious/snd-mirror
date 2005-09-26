@@ -1,4 +1,6 @@
 #include "snd.h"
+#include "sndlib-strings.h"
+#include "clm-strings.h"
 
 #if USE_MOTIF
   #include <X11/IntrinsicP.h>
@@ -489,9 +491,9 @@ In the listener, C-M-g deletes all text, and C-_ deletes back to the previous co
 }
 
 static char *sync_xrefs[4] = {
-  "sound sync field: {sync}",
-  "mark sync field: {mark-sync}, {mark-sync-max}, {mark-sync-color}, {syncd-marks}",
-  "mix sync (track) field: {mix-track}",
+  "sound sync field: {" S_sync "}",
+  "mark sync field: {" S_mark_sync "}, {" S_mark_sync_max "}, {mark-sync-color}, {" S_syncd_marks "}",
+  "mix sync (track) field: {" S_mix_track "}",
   NULL};
 
 void sync_help(void) 
@@ -513,7 +515,7 @@ static char *debug_xrefs[8] = {
   "Notelist debugging: {ws-backtrace}",
   "Break and trace points: {snd-break}",
   "Error handling",
-  "Print statement: {snd-print}",
+  "Print statement: {" S_snd_print "}",
   NULL};
 
 static char *debug_urls[8] = {
@@ -596,13 +598,13 @@ variable " S_transform_normalization " to " S_dont_normalize ".",
 
 static char *control_xrefs[9] = {
   "various control panel variables: {Control panel}",
-  "amplitude: {scale-by}",
-  "speed or srate: {src-sound}",
+  "amplitude: {" S_scale_by "}",
+  "speed or srate: {" S_src_sound "}",
   "expand: {granulate}",
-  "contrast: {contrast-enhancement}",
-  "filter: {filter-sound}",
-  "{apply-controls}",
-  "(controls->channel}",
+  "contrast: {" S_contrast_enhancement "}",
+  "filter: {" S_filter_sound "}",
+  "{" S_apply_controls "}",
+  "{" S_controls_to_channel "}",
   NULL};
 
 void controls_help(void) 
@@ -723,8 +725,8 @@ of the given track, just as a mix would be.",
 }
 
 static char *record_xrefs[4] = {
-  "recorder variables: {recorder-gain}, etc",
-  "low-level ADC input: {mus-audio-open-input}",
+  "recorder variables: {" S_recorder_gain "}, etc",
+  "low-level ADC input: {" S_mus_audio_open_input "}",
   "process incoming sound: rtio.scm",
   NULL};
 
@@ -774,10 +776,10 @@ click the 'digital input' button; otherwise you'll get a stuttering effect becau
 }
 
 static char *header_and_data_xrefs[10] = {
-  "data format discussion: {data-format}",
-  "data format constants: {mus-data-format-name}",
-  "header type discussion: {header-type}",
-  "header type constants: {mus-header-type-name}",
+  "data format discussion: {" S_data_format "}",
+  "data format constants: {" S_mus_data_format_name "}",
+  "header type discussion: {" S_header_type "}",
+  "header type constants: {" S_mus_header_type_name "}",
   "MPEG support: mpg in examp.scm",
   "OGG support: read-ogg in examp.scm",
   "Speex support: read-speex in examp.scm",
@@ -869,9 +871,9 @@ the gtk resource stuff in Snd.gtkrc.",
 }
 
 static char *key_xrefs[4] = {
-  "To change a key binding: {bind-key}",
-  "To undefine a key: {unbind-key}",
-  "Current key binding: {key-binding}",
+  "To change a key binding: {" S_bind_key "}",
+  "To undefine a key: {" S_unbind_key "}",
+  "Current key binding: {" S_key_binding "}",
   NULL};
 
 static void show_key_help(int key, int state, bool cx, char *help)
@@ -992,7 +994,7 @@ C-x C-w (extract and save the current channel as a file). Normally, if the new f
 not currently being edited in Snd, it is silently overwritten.  If you try to overwrite a file, and \
 that file has active edits in a different Snd window, you'll be asked for confirmation. \
 If you want Snd to ask before overwriting a file in any case, set the variable " S_ask_before_overwrite " to \
-#t) in your Snd initialization file.",
+#t in your Snd initialization file.",
 		      WITH_WORD_WRAP,
 		      snd_xrefs("Save"),
 		      snd_xref_urls("Save"));
@@ -1126,12 +1128,12 @@ in linear terms.",
 static char *color_dialog_xrefs[9] = {
   "colormap variable: {colormap}",
   "colormap constants: rgb.scm",
-  "colormap colors: {colormap-ref}",
-  "color dialog variables: {color-cutoff}, {color-inverted}, {color-scale}",
-  "specialize color dialog actions: {color-hook}",
-  "start the color dialog: {color-dialog}",
-  "add a new colormap: {add-colormap}",
-  "remove a colormap: {delete-colormap}",
+  "colormap colors: {" S_colormap_ref "}",
+  "color dialog variables: {" S_color_cutoff "}, {" S_color_inverted "}, {" S_color_scale "}",
+  "specialize color dialog actions: {" S_color_hook "}",
+  "start the color dialog: {" S_color_dialog "}",
+  "add a new colormap: {" S_add_colormap "}",
+  "remove a colormap: {" S_delete_colormap "}",
   NULL};
 
 void color_dialog_help(void)
@@ -1145,9 +1147,9 @@ and perhaps wavogram display. The cutoff scale refers to the minimum data value 
 }
 
 static char *orientation_dialog_xrefs[4] = {
-  "orientation variables: {spectro-x-scale}, {spectro-x-angle}, etc",
-  "start orientation dialog: {orientation-dialog}",
-  "specialize orientation dialog actions: {orientation-hook}",
+  "orientation variables: {" S_spectro_x_scale "}, {" S_spectro_x_angle "}, etc",
+  "start orientation dialog: {" S_orientation_dialog "}",
+  "specialize orientation dialog actions: {" S_orientation_hook "}",
   NULL};
 
 void orientation_dialog_help(void)
@@ -1181,10 +1183,10 @@ the file, the region is updated to reflect any edits you made.",
 }
 
 static char *raw_xrefs[7] = {
-  "specialize handing of raw sounds: {open-raw-sound-hook}",
-  "open a headerless sound: {open-raw-sound}",
-  "header type constants: {mus-header-type-name}",
-  "data format constants: {mus-data-format-name}",
+  "specialize handing of raw sounds: {" S_open_raw_sound_hook "}",
+  "open a headerless sound: {" S_open_raw_sound "}",
+  "header type constants: {" S_mus_header_type_name "}",
+  "data format constants: {" S_mus_data_format_name "}",
   "what are these data formats?",
   "what are these headers?",
   NULL};
@@ -1222,7 +1224,7 @@ To use the defaults, click the 'Reset' button.",
     }
 }
 
-/* TODO: completion popup should go away after choice, or maybe be embedded as pull down menu */
+/* PERHAPS completions embedded as pull down menu */
 /*    this could be handled locally like errors -- local pulldown menu (with continuations etc)
  */
 
@@ -1266,10 +1268,10 @@ than 'Save'.",
 
 static char *open_file_xrefs[7] = {
   "open file: {open-sound}",
-  "add to sound file extension list (for 'just-sounds'): {add-sound-file-extension}",
-  "specialize open: {open-hook}, {after-open-hook}, etc",
-  "start the file dialog: {open-file-dialog}",
-  "specialize file list: {just-sounds-hook}, {install-searcher} in snd-motif.scm",
+  "add to sound file extension list (for '" S_just_sounds "'): {" S_add_sound_file_extension "}",
+  "specialize open: {" S_open_hook "}, {" S_after_open_hook "}, etc",
+  "start the file dialog: {" S_open_file_dialog "}",
+  "specialize file list: {" S_just_sounds_hook "}, {install-searcher} in snd-motif.scm",
   "keep dialog active after opening: {keep-file-dialog-open-upon-ok} in snd-motif.scm",
   NULL};
 
@@ -1349,10 +1351,10 @@ mix amp env (if any) is drawn in blue.",
 /* TODO: shouldn't the Ruby xrefs be in Ruby syntax? (would this mess up the indexing?) */
 
 static char *new_file_xrefs[5] = {
-  "open a new sound: {new-sound}",
-  "specialize making a new sound: {new-sound-hook}",
-  "header type constants: {mus-header-type-name}",
-  "data format constants: {mus-data-format-name}",
+  "open a new sound: {" S_new_sound "}",
+  "specialize making a new sound: {" S_new_sound_hook "}",
+  "header type constants: {" S_mus_header_type_name "}",
+  "data format constants: {" S_mus_data_format_name "}",
   NULL};
 
 void new_file_dialog_help(void)
@@ -1371,13 +1373,13 @@ until you save the new sound.",
 }
 
 static char *edit_header_xrefs[11] = {
-  "change srate: {src-channel}",
-  "convert data to a new format: {save-sound-as}",
-  "interpret current data in new data format: {data-format}",
-  "convert header to a new type: {save-sound-as}",
-  "interpret current header differently: {header-type}",
+  "change srate: {" S_src_channel "}",
+  "convert data to a new format: {" S_save_sound_as "}",
+  "interpret current data in new data format: {" S_data_format "}",
+  "convert header to a new type: {" S_save_sound_as "}",
+  "interpret current header differently: {" S_header_type "}",
   "extract or combine chans: {mono->stereo}",
-  "change data location: {data-location}",
+  "change data location: {" S_data_location "}",
   "change number of samples: {frames}",
   "what are these data formats?",
   "what are these headers?",
@@ -1403,9 +1405,9 @@ or editing the header comments; anything else is obviously dangerous.",
 }
 
 static char *print_xrefs[4] = {
-  "default eps file name: {eps-file}",
-  "eps overall size: {eps-size}",
-  "eps margins: {eps-bottom-margin}, {eps-left-margin}",
+  "default eps file name: {" S_eps_file "}",
+  "eps overall size: {" S_eps_size "}",
+  "eps margins: {" S_eps_bottom_margin "}, {" S_eps_left_margin "}",
   NULL};
 
 void print_dialog_help(void)
@@ -1421,10 +1423,10 @@ but you can use Gimp or some such program to get a screenshot, and print that.",
 }
 
 static char *view_files_xrefs[6] = {
-  "place sound in view files list: {add-file-to-view-files-list}",
-  "place all sounds from a directory in view files list: {add-directory-to-view-files-list}",
-  "specialize view files selection: {view-files-select-hook}",
-  "the sort choice: {view-files-sort}",
+  "place sound in view files list: {" S_add_file_to_view_files_list "}",
+  "place all sounds from a directory in view files list: {" S_add_directory_to_view_files_list "}",
+  "specialize view files selection: {" S_view_files_select_hook "}",
+  "the sort choice: {" S_view_files_sort "}",
   NULL};
 
 void view_files_dialog_help(void)

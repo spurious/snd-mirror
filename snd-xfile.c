@@ -16,6 +16,7 @@
 /* TODO: pull-down list of recent files
  * TODO: new file: find some way to get around the hidden label bug (unmanage error text etc) -- see snd-xfind
  * PERHAPS: if user changes raw file with dialog up -- adding header for example, should we automatically open it? or reflect in panel?
+ *       same with info label in open dialog
  * PERHAPS: (alert_new_file): handle all directory update decisions through FAM (region/select/file/edits)
  * TODO: various file/directory lists: tie into fam/gamin -- add xen call?
  * TODO: what if running src, uses its check-event to open raw data -- where is control?
@@ -23,7 +24,6 @@
  * TODO: edit-properties dialog (extension of edit-header)
  * TODO: option:settings dialog (global vars)
  * PERHAPS: audio:settings for display, perhaps reset -- as opposed to using the recorder
- * TODO: check that xen-errors are redirected locally (save-as-hook etc)
  * TODO: in mix/insert: panel for mix at cursor/beginning/end/mark/sample (num)
  * TODO: add|delete-file-filter, file-filters tied to all file dialogs (panel of radio buttons where just sounds is now)
  *       the sorters could be handled similarly -- a panel of radio buttons with name chosen by default

@@ -37,7 +37,7 @@
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
-;;; TODO: test save-region-dialog and update browser tests (remove->unlist etc)
+;;; TODO: update browser tests (remove->unlist etc)
 
 (define original-save-dir (or (save-dir) "/zap/snd"))
 (define original-temp-dir (or (temp-dir) "/zap/tmp"))
@@ -45710,6 +45710,32 @@ EDITS: 1
 		    (click-button (XmMessageBoxGetChild regd XmDIALOG_OK_BUTTON)) (force-event)		  
 		    (if (XtIsManaged regd)
 			(snd-display ";region dialog is still active?")))
+
+		  ;; ---------------- region save-as dialog ----------------
+		  (let ((ind (open-sound "oboe.snd")))
+		    (if (file-exists? "test.snd") (delete-file "test.snd"))
+		    (let ((id (make-region 0 100)))
+		      (let ((regd (view-regions-dialog)))
+			(let ((wid (save-region-dialog)))
+			  (if (not (equal? wid (list-ref (dialog-widgets) 24)))
+			      (snd-display ";save-region-dialog -> ~A ~A" wid (list-ref (dialog-widgets) 24))))
+			(let* ((saved (list-ref (dialog-widgets) 24))
+			       (ok (XmFileSelectionBoxGetChild saved XmDIALOG_OK_BUTTON))
+			       (filetext (XmFileSelectionBoxGetChild saved XmDIALOG_TEXT))
+			       (types (find-child saved "header-type")) ; list
+			       (formats (find-child saved "data-format"))) ; list
+			  (XmListSelectPos types 1 #t)
+			  (XmListSelectPos formats 1 #t)
+			  (XmTextSetString filetext "test.snd")
+			  (click-button ok) (force-event)
+			  (if (not (file-exists? "test.snd"))
+			      (snd-display ";region test.snd not saved?"))
+			  (if (XtIsManaged saved)
+			      (begin
+				(snd-display ";after save, region dialog still active?")
+				(XtUnmanageChild saved)))
+			  (XtUnmanageChild regd)))))
+
 		  (c-g!)
 		  
 		  (let* ((ind (open-sound "oboe.snd"))
@@ -55572,7 +55598,7 @@ EDITS: 1
 	    (check-error-tag 'no-such-file (lambda () (set! (temp-dir) "/hiho")))
 	    (check-error-tag 'no-such-file (lambda () (set! (save-dir) "/hiho")))
 	    (check-error-tag 'out-of-range (lambda () (snd-transform 20 (make-vct 4))))
-	    (check-error-tag 'no-such-file (lambda () (close-sound-file 23 3)))
+	    (check-error-tag 'no-such-file (lambda () (close-sound-file 23213 3))) ; not 23!!
 	    (check-error-tag 'bad-header (lambda () (mus-sound-maxamp (string-append sf-dir "bad_chans.snd"))))
 	    (check-error-tag 'bad-header (lambda () (set! (mus-sound-maxamp (string-append sf-dir "bad_chans.snd")) '(0.0 0.0))))
 	    (check-error-tag 'no-such-sound (lambda () (restore-marks 123 123 123 '())))

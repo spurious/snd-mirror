@@ -1,9 +1,5 @@
 #include "snd.h"
 
-/* X side of file print */
-
-/* TODO error label and redirection */
-
 static GtkWidget *print_dialog = NULL;
 static GtkWidget *print_name = NULL;
 static GtkWidget *print_eps_or_lpr = NULL;

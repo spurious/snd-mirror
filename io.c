@@ -589,12 +589,23 @@ int mus_file_reopen_write(const char *arg)
   return(fd);
 }
 
+#if DEBUGGING
+  bool io_fd_in_use(int fd);
+#endif
+
 int mus_file_close(int fd)
 {
   io_fd *fdp;
   int close_result = 0;
   if ((io_fds == NULL) || (fd >= io_fd_size) || (fd < 0) || (io_fds[fd] == NULL)) return(MUS_FILE_DESCRIPTORS_NOT_INITIALIZED);
   fdp = io_fds[fd];
+#if DEBUGGING
+  if (io_fd_in_use(fd))
+    {
+      fprintf(stderr, "fd in use at close: %d for %s\n", fd, fdp->name);
+      abort();
+    }
+#endif
   if (fdp->name) {FREE(fdp->name); fdp->name = NULL;}
   FREE(fdp);
   io_fds[fd] = NULL;
