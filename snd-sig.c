@@ -1507,6 +1507,7 @@ static pfilter_direct_args_t *make_pfilter_direct_arg(chan_info *cp, int order, 
   arg->ofd = 0;
   arg->hdr = NULL;
   arg->new_origin = NULL;
+  arg->data = NULL;
   return(arg);
 }
 
@@ -2128,10 +2129,11 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, enved_prog
 		  sfs[i] = free_snd_fd(sfs[i]);
 		  if ((!errstr) && (args[i]->result))
 		    errstr = args[i]->result;
-		  FREE(args[i]);
 		}
-	      FREE(threads);
+	      for (i = 0; i < si->chans; i++)
+		FREE(args[i]);
 	      FREE(args);
+	      FREE(threads);
 	    }
 #endif
 	}

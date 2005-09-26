@@ -785,6 +785,13 @@ static void check_padding(void *p1, void *p2, int len, bool refill)
 {
   int i, j;
   char *ip2;
+  if (!p2)
+    {
+      fprintf(stderr, "history pointer null??");
+      describe_pointer(p1);
+      fprintf(stderr,")\n");
+      abort();
+    }
   ip2 = (char *)p2;
   for (i = 0; i < MEM_PAD_SIZE; i++) 
     if (ip2[i] != pad[i])

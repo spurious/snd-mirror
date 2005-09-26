@@ -194,7 +194,6 @@ static XtIntervalId auto_update_proc = 0;
 
 static void auto_update_check(XtPointer context, XtIntervalId *id)
 {
-  /* TODO: can this be replaced by FAM? */
   if (auto_update_interval(ss) > 0.0)
     {
       if ((!(play_in_progress())) && 
@@ -619,6 +618,74 @@ static Pixel get_color(Widget shell, char *rs_color, char *defined_color, char *
 	}
     }
   return(tmp_color.pixel);
+}
+
+static void save_a_color(FILE *Fp, Display *dpy, Colormap cmap, const char *rs_name, const char *def_name, Pixel pix, const char *ext_name)
+{
+  Status lookup_ok;
+  XColor default_color, ignore;
+  lookup_ok = XLookupColor(dpy, cmap, rs_name, &default_color, &ignore);
+  if (!lookup_ok) 
+    lookup_ok = XLookupColor(dpy, cmap, def_name, &default_color, &ignore);
+  if (lookup_ok)
+    {
+      XColor current_color;
+      current_color.flags = DoRed | DoGreen | DoBlue;
+      current_color.pixel = pix;
+      XQueryColor(dpy, cmap, &current_color);
+      if ((current_color.red != default_color.red) ||
+	  (current_color.green != default_color.green) ||
+	  (current_color.blue != default_color.blue))
+#if HAVE_SCHEME
+	fprintf(Fp, "(set! (%s) (%s %.3f %.3f %.3f))\n", 
+#endif
+#if HAVE_RUBY
+	fprintf(Fp, "set_%s(%s(%.3f, %.3f, %.3f))\n", 
+#endif
+		TO_PROC_NAME(ext_name), 
+		TO_PROC_NAME(S_make_color),
+		(float)current_color.red / 65535.0,
+		(float)current_color.green / 65535.0,
+		(float)current_color.blue / 65535.0);
+    }
+}
+
+void save_colors(FILE *Fp)
+{
+  Colormap cmap;
+  Display *dpy;
+  int scr;
+  sndres snd_rs;
+
+  dpy = XtDisplay(ss->sgx->mainshell);
+  scr = DefaultScreen(dpy);
+  cmap = DefaultColormap(dpy, scr);
+  XtGetApplicationResources(ss->sgx->mainshell, &snd_rs, resources, XtNumber(resources), NULL, 0);
+
+  save_a_color(Fp, dpy, cmap, snd_rs.basic_color, BASIC_COLOR, ss->sgx->basic_color, S_basic_color);
+  save_a_color(Fp, dpy, cmap, snd_rs.cursor_color, CURSOR_COLOR, ss->sgx->cursor_color, S_cursor_color);
+  save_a_color(Fp, dpy, cmap, snd_rs.data_color, DATA_COLOR, ss->sgx->data_color, S_data_color);
+  save_a_color(Fp, dpy, cmap, snd_rs.selected_data_color, SELECTED_DATA_COLOR, ss->sgx->selected_data_color, S_selected_data_color);
+  save_a_color(Fp, dpy, cmap, snd_rs.highlight_color, HIGHLIGHT_COLOR, ss->sgx->highlight_color, S_highlight_color);
+  save_a_color(Fp, dpy, cmap, snd_rs.position_color, POSITION_COLOR, ss->sgx->position_color, S_position_color);
+  save_a_color(Fp, dpy, cmap, snd_rs.zoom_color, ZOOM_COLOR, ss->sgx->zoom_color, S_zoom_color);
+  save_a_color(Fp, dpy, cmap, snd_rs.selection_color, SELECTION_COLOR, ss->sgx->selection_color, S_selection_color);
+  save_a_color(Fp, dpy, cmap, snd_rs.mix_color, MIX_COLOR, ss->sgx->mix_color, S_mix_color);
+  save_a_color(Fp, dpy, cmap, snd_rs.enved_waveform_color, ENVED_WAVEFORM_COLOR, ss->sgx->enved_waveform_color, S_enved_waveform_color);
+  save_a_color(Fp, dpy, cmap, snd_rs.filter_control_waveform_color, FILTER_CONTROL_WAVEFORM_COLOR, ss->sgx->filter_control_waveform_color, S_filter_control_waveform_color);
+  save_a_color(Fp, dpy, cmap, snd_rs.listener_color, LISTENER_COLOR, ss->sgx->listener_color, S_listener_color);
+  save_a_color(Fp, dpy, cmap, snd_rs.listener_text_color, LISTENER_TEXT_COLOR, ss->sgx->listener_text_color, S_listener_text_color);
+  save_a_color(Fp, dpy, cmap, snd_rs.graph_color, GRAPH_COLOR, ss->sgx->graph_color, S_graph_color);
+  save_a_color(Fp, dpy, cmap, snd_rs.selected_graph_color, SELECTED_GRAPH_COLOR, ss->sgx->selected_graph_color, S_selected_graph_color);
+  save_a_color(Fp, dpy, cmap, snd_rs.mark_color, MARK_COLOR, ss->sgx->mark_color, S_mark_color);
+  save_a_color(Fp, dpy, cmap, snd_rs.sash_color, SASH_COLOR, ss->sgx->sash_color, S_sash_color);
+  save_a_color(Fp, dpy, cmap, snd_rs.pushed_button_color, PUSHED_BUTTON_COLOR, ss->sgx->pushed_button_color, S_pushed_button_color);
+  save_a_color(Fp, dpy, cmap, snd_rs.text_focus_color, TEXT_FOCUS_COLOR, ss->sgx->text_focus_color, S_text_focus_color);
+  save_a_color(Fp, dpy, cmap, snd_rs.doit_button_color, DOIT_BUTTON_COLOR, ss->sgx->doit_button_color, S_doit_button_color);
+  save_a_color(Fp, dpy, cmap, snd_rs.doit_again_button_color, DOIT_AGAIN_BUTTON_COLOR, ss->sgx->doit_again_button_color, S_doit_again_button_color);
+  save_a_color(Fp, dpy, cmap, snd_rs.help_button_color, HELP_BUTTON_COLOR, ss->sgx->help_button_color, S_help_button_color);
+  save_a_color(Fp, dpy, cmap, snd_rs.quit_button_color, QUIT_BUTTON_COLOR, ss->sgx->quit_button_color, S_quit_button_color);
+  save_a_color(Fp, dpy, cmap, snd_rs.reset_button_color, RESET_BUTTON_COLOR, ss->sgx->reset_button_color, S_reset_button_color);
 }
 
 #ifdef SND_AS_WIDGET

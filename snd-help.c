@@ -1348,7 +1348,7 @@ mix amp env (if any) is drawn in blue.",
 		      snd_xref_urls("Track"));
 }
 
-/* TODO: shouldn't the Ruby xrefs be in Ruby syntax? (would this mess up the indexing?) */
+/* TODO: shouldn't the Ruby xrefs be in Ruby syntax? (would this mess up the indexing?) (word_wrap translates -- would need free) */
 
 static char *new_file_xrefs[5] = {
   "open a new sound: {" S_new_sound "}",

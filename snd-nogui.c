@@ -33,6 +33,7 @@ void set_grf_point(Locus xi, int j, Locus yi) {}
 void draw_grf_points(int dot_size, axis_context *ax, int j, axis_info *ap, Float y0, graph_style_t graph_style) {}
 void draw_both_grf_points(int dot_size, axis_context *ax, int j, graph_style_t graph_style) {}
 void mix_save_graph(mix_context *ms, int j) {}
+void save_colors(FILE *Fp) {}
 void erase_rectangle (chan_info *cp, axis_context *ax, int x0, int y0, int width, int height) {}
 void erase_and_draw_grf_points(mix_context *ms, chan_info *cp, int j) {}
 void erase_and_draw_both_grf_points(mix_context *ms, chan_info *cp, int j) {}

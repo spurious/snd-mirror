@@ -364,8 +364,6 @@ static void pcp_sl(FILE *fd, const char *name, Float val1, Float val2, int chan)
   {b_ok = true; fprintf(fd, "%s(set! (%s sfile %d) (list %f %f))\n", white_space, name, chan, val1, val2);}
 #endif
 
-/* TODO: save_options (and save_state) should save non-default colors */
-
 void save_options(FILE *fd)
 { /* for save options menu choice (.snd) -- mostly saving snd_state info */
 #if HAVE_STRFTIME
@@ -566,6 +564,7 @@ void save_options(FILE *fd)
   if (in_show_controls(ss) != DEFAULT_SHOW_CONTROLS) pss_ss(fd, S_show_controls, b2s(in_show_controls(ss)));
 
   save_recorder_state(fd);
+  save_colors(fd);
 
   fprintf(fd, _("%s end of snd options\n"), XEN_COMMENT_STRING);
   if (locale)

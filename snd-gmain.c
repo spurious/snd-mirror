@@ -291,6 +291,51 @@ static void setup_gcs(void)
   initialize_colormap();
 }
 
+static void save_a_color(FILE *Fp, const char *def_name, GdkColor *current_color, const char *ext_name)
+{
+  GdkColor default_color;
+  if (gdk_color_parse(def_name, &default_color))
+    {
+      if ((current_color->red != default_color.red) ||
+	  (current_color->green != default_color.green) ||
+	  (current_color->blue != default_color.blue))
+#if HAVE_SCHEME
+	fprintf(Fp, "(set! (%s) (%s %.3f %.3f %.3f))\n", 
+#endif
+#if HAVE_RUBY
+	fprintf(Fp, "set_%s(%s(%.3f, %.3f, %.3f))\n", 
+#endif
+		TO_PROC_NAME(ext_name), 
+		TO_PROC_NAME(S_make_color),
+		(float)current_color->red / 65535.0,
+		(float)current_color->green / 65535.0,
+		(float)current_color->blue / 65535.0);
+    }
+}
+
+void save_colors(FILE *Fp)
+{
+  save_a_color(Fp, BASIC_COLOR, ss->sgx->basic_color, S_basic_color);
+  save_a_color(Fp, CURSOR_COLOR, ss->sgx->cursor_color, S_cursor_color);
+  save_a_color(Fp, DATA_COLOR, ss->sgx->data_color, S_data_color);
+  save_a_color(Fp, SELECTED_DATA_COLOR, ss->sgx->selected_data_color, S_selected_data_color);
+  save_a_color(Fp, HIGHLIGHT_COLOR, ss->sgx->highlight_color, S_highlight_color);
+  save_a_color(Fp, POSITION_COLOR, ss->sgx->position_color, S_position_color);
+  save_a_color(Fp, ZOOM_COLOR, ss->sgx->zoom_color, S_zoom_color);
+  save_a_color(Fp, SELECTION_COLOR, ss->sgx->selection_color, S_selection_color);
+  save_a_color(Fp, MIX_COLOR, ss->sgx->mix_color, S_mix_color);
+  save_a_color(Fp, ENVED_WAVEFORM_COLOR, ss->sgx->enved_waveform_color, S_enved_waveform_color);
+  save_a_color(Fp, FILTER_CONTROL_WAVEFORM_COLOR, ss->sgx->filter_control_waveform_color, S_filter_control_waveform_color);
+  save_a_color(Fp, LISTENER_COLOR, ss->sgx->listener_color, S_listener_color);
+  save_a_color(Fp, LISTENER_TEXT_COLOR, ss->sgx->listener_text_color, S_listener_text_color);
+  save_a_color(Fp, GRAPH_COLOR, ss->sgx->graph_color, S_graph_color);
+  save_a_color(Fp, SELECTED_GRAPH_COLOR, ss->sgx->selected_graph_color, S_selected_graph_color);
+  save_a_color(Fp, MARK_COLOR, ss->sgx->mark_color, S_mark_color);
+  save_a_color(Fp, SASH_COLOR, ss->sgx->sash_color, S_sash_color);
+  save_a_color(Fp, PUSHED_BUTTON_COLOR, ss->sgx->pushed_button_color, S_pushed_button_color);
+  save_a_color(Fp, TEXT_FOCUS_COLOR, ss->sgx->text_focus_color, S_text_focus_color);
+}
+
 #if HAVE_EXTENSION_LANGUAGE
 static gboolean io_invoke(GIOChannel *source, GIOCondition condition, gpointer data)
 {
