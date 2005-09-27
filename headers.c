@@ -2169,6 +2169,7 @@ static int decode_nist_value (char *str, int base, int end)
   /* we'll deal only with integer fields (and well-behaved string fields) */
   int i, j;
   char value[MAX_FIELD_LENGTH];
+  memset((void *)value, 0, MAX_FIELD_LENGTH);
   i = base;
   while ((i < end) && (i < MAX_FIELD_LENGTH) && (str[i] != '-')) i++; /* look for -i or whatever */
   while ((i < end) && (i < MAX_FIELD_LENGTH) && (str[i] != ' ')) i++; /* look for space after it */
@@ -2189,6 +2190,8 @@ static int read_nist_header(const char *filename, int chan)
   off_t curbase;
   int k, hend, j, n, nm, samples, bytes, byte_format, idata_location = 0;
   type_specifier = mus_char_to_uninterpreted_int((unsigned char *)hdrbuf); /* the actual id is "NIST_1A" */
+  memset((void *)str, 0, MAX_FIELD_LENGTH);
+  memset((void *)name, 0, MAX_FIELD_LENGTH);
   for (k = 8; k < 16; k++) 
     str[k - 8] = hdrbuf[k];
   sscanf(str, "%d", &idata_location);       /* always "1024" */

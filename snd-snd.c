@@ -2356,6 +2356,7 @@ static XEN sound_set(XEN snd_n, XEN val, sp_field_t fld, char *caller)
       sp->speed_control_tones = XEN_TO_C_INT(val);
       if (sp->speed_control_tones <= 0) 
 	sp->speed_control_tones = DEFAULT_SPEED_CONTROL_TONES;
+      set_speed(sp, sp->speed_control); /* update label etc */
       break;
     case SP_SPEED_STYLE:
       sp->speed_control_style = (speed_style_t)XEN_TO_C_INT(val); /* range checked already */
@@ -2363,6 +2364,7 @@ static XEN sound_set(XEN snd_n, XEN val, sp_field_t fld, char *caller)
       if (sp->speed_control_style == SPEED_CONTROL_AS_RATIO)
 	snd_rationalize(sp->speed_control, &(sp->speed_control_numerator), &(sp->speed_control_denominator));
 #endif
+      set_speed(sp, sp->speed_control); /* update label etc */
       break;
     case SP_SRATE:
       if (!(IS_PLAYER(sp))) 

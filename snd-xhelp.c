@@ -491,54 +491,26 @@ static void create_help_monolog(void)
   set_dialog_widget(HELP_DIALOG, help_dialog);
 }
 
-static XFontStruct *help_font_struct = NULL;
-static XFontStruct *help_font(void)
-{
-  Widget parent;
-  XmRenderTable rs = NULL;
-  if (help_font_struct) return(help_font_struct);
-  parent = help_text;
-  while ((parent != NULL) && (rs == NULL))
-    {
-      XtVaGetValues(parent, XmNrenderTable, &rs, NULL);
-      parent = XtParent(parent);
-    }
-  if (rs)
-    {
-      XmRendition rend;
-      Arg args[2];
-      XtPointer font;
-      rend = XmRenderTableGetRendition(rs, XmFONTLIST_DEFAULT_TAG);
-      if (rend)
-	{
-	  XtSetArg(args[0], XmNfont, &font);
-	  XmRenditionRetrieve(rend, args, 1);
-	  if (font)
-	    {
-	      help_font_struct = (XFontStruct *)font;
-	      return((XFontStruct *)font);
-	    }
-	}
-    }
-  return(NULL);
-}
-
 int help_text_width(const char *txt, int start, int end)
 {
-  XFontStruct *font;
-  if (txt[start] != '\0')
+  if ((help_text) && (end > start))
     {
-      font = help_font();
-      if (font)
-	{
-	  int width = 0;
-	  width = XTextWidth(font, (char *)(txt + start), end - start);
-	  if (width > 0) return(width);
-	}
+      char *msg;
+      int i, j;
+      XmString s1;
+      Dimension text_wid = 0;
+      XmFontList fonts;
+      XtVaGetValues(help_text, XmNfontList, &fonts, NULL);
+      msg = (char *)CALLOC(end - start + 1, sizeof(char));
+      for (i = start, j = 0; i < end; i++, j++) msg[j] = txt[i];
+      s1 = XmStringCreate(msg, XmFONTLIST_DEFAULT_TAG);
+      text_wid = XmStringWidth(fonts, s1);
+      XmStringFree(s1);
+      FREE(msg);
+      return((int)text_wid);
     }
   return((end - start) * 8);
 }
-
 
 Widget snd_help(const char *subject, const char *helpstr, with_word_wrap_t with_wrap)
 {

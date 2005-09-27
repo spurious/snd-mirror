@@ -94,7 +94,7 @@
 ;(setlocale LC_ALL "de_DE")
 
 (define tests 1)
-(define keep-going #f)
+(define keep-going #t)
 (define all-args #f) ; huge arg testing
 (define with-big-file #t)
 
@@ -1979,12 +1979,15 @@
 		 (if (= audio-fd -1)
 		     (snd-display ";can't play ~A" file)
 		     (begin
-		       (do ((i 0 (+ i bufsize)))
-			   ((>= i frames))
-			 (mus-audio-write audio-fd data bufsize)
-			 (mus-sound-read sound-fd 0 (1- bufsize) chans data))
+		       (catch #t
+			      (lambda ()
+				(do ((i 0 (+ i bufsize)))
+				    ((>= i frames))
+				  (mus-audio-write audio-fd data bufsize)
+				  (mus-sound-read sound-fd 0 (1- bufsize) chans data)))
+			      (lambda args (snd-display ";play-sound-1: can play audio: ~A" args)))
 		       (mus-audio-close audio-fd)))))
-	     (lambda args "can't open audio"))
+	     (lambda args (snd-display ";play-sound-1: can't open audio: ~A" args)))
       (mus-sound-close-input sound-fd))))
 
 
@@ -24085,12 +24088,15 @@ EDITS: 5
 	  (.PortDescriptors descriptor))))
      (lambda ()
        (ladspa-activate descriptor handle)
-       (do ((i 0 (+ i block-size)))
-	   ((>= i len))
-	 (samples->vct i block-size #f #f in-block)
-	 (ladspa-run descriptor handle block-size)
-	 (vct->sound-data out-block data 0)
-	 (mus-audio-write audio-port data block-size)))
+       (catch #t
+	      (lambda ()
+		(do ((i 0 (+ i block-size)))
+		    ((>= i len))
+		  (samples->vct i block-size #f #f in-block)
+		  (ladspa-run descriptor handle block-size)
+		  (vct->sound-data out-block data 0)
+		  (mus-audio-write audio-port data block-size)))
+	      (lambda args (snd-display ";ladspa-it: ~A" args))))
      (lambda ()
        (ladspa-deactivate descriptor handle)
        (mus-audio-close audio-port)
@@ -42782,19 +42788,6 @@ EDITS: 1
 		(snd-kp-0 #xFFB0)
 		(snd-kp-1 #xFFB1))
 	    
-	    (define (all-help wid)
-	      (if (Widget? wid)
-		  (for-each-child
-		   wid
-		   (lambda (n)
-		     (let ((callable (XtHasCallbacks n XmNhelpCallback)))
-		       (if (= callable XtCallbackHasSome)
-			   (XtCallCallbacks n XmNhelpCallback
-					    (let ((hlp (XmAnyCallbackStruct)))
-					      (set! (.reason hlp) XmCR_HELP)
-					      (set! (.event hlp) (XEvent))
-					      hlp))))))))
-	    
 	    ;; force-event
 	    ;; key-event widget key state
 	    ;; click-event widget button state x y
@@ -42808,7 +42801,6 @@ EDITS: 1
 
 	    (reset-almost-all-hooks)
 	    (add-hook! bad-header-hook (lambda (n) #t))
-	    (for-each all-help (cdr (main-widgets)))
 	    (set! (time-graph-type) graph-once)
 	    (set! (transform-graph-type) graph-once)
 	    (XSynchronize (XtDisplay (cadr (main-widgets))) #t)
@@ -42842,9 +42834,6 @@ EDITS: 1
 		(add-hook! name-click-hook (lambda (n) #t))
 		(click-event name-button 1 0 1 1) (force-event)
 		(reset-hook! name-click-hook)
-		
-		(for-each all-help swids)
-		(for-each all-help (channel-widgets))
 		
 		(XtCallCallbacks minibuffer XmNfocusCallback (XmAnyCallbackStruct))
 		(XtCallCallbacks minibuffer XmNlosingFocusCallback (XmAnyCallbackStruct))
@@ -44121,8 +44110,8 @@ EDITS: 1
 		  (take-keyboard-focus fltord)
 		  (widget-string fltord "40")
 		  (key-event fltord snd-return-key 0) (force-event))
-		(click-button (list-ref swids 4) #t ControlMask)
-		(click-button (list-ref swids 4) #f 0)
+;		(click-button (list-ref swids 4) #t ControlMask) ; Play button
+;		(click-button (list-ref swids 4) #f 0)
 		(equalize-panes))
 	      (set! (show-controls ind) #f)
 	      (select-sound ind)
@@ -44155,9 +44144,9 @@ EDITS: 1
 			  (snd-display ";C-x C-s wrote wrong number of samples: ~A" (mus-sound-frames "fmv1.snd")))
 		      (key-event cwid2 (char->integer #\x) 4) (force-event)
 		      (key-event cwid2 (char->integer #\z) 0) (force-event)
-		      (let ((str (widget-text (list-ref (sound-widgets ind2) 3))))
-			(if (not (string=? str "no active selection"))
-			    (snd-display ";C-x z report-in-minibuffer: ~A?" str)))
+;		      (let ((str (widget-text (list-ref (sound-widgets ind2) 3))))
+;			(if (not (string=? str "no active selection"))
+;			    (snd-display ";C-x z report-in-minibuffer: ~A?" str)))
 		      (XtCallCallbacks (menu-option "Save options") XmNactivateCallback (snd-global-state))
 		      (if (file-exists? (string-append home-dir "/dot-snd"))
 			  (system (string-append "cp " home-dir "/dot-snd " home-dir "/.snd")))
@@ -44601,10 +44590,6 @@ EDITS: 1
 		    (click-button dismiss-button) (force-event)
 		    )
 		  ))
-	    
-	    (for-each (lambda (dialog)
-			(all-help dialog))
-		      (dialog-widgets))
 	    
 	    (XSynchronize (XtDisplay (cadr (main-widgets))) #f)
 	    

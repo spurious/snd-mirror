@@ -62,7 +62,6 @@ static void report_in_error_info(const char *msg, void *ignore)
   print_error = true;
   s1 = XmStringCreate((char *)msg, XmFONTLIST_DEFAULT_TAG);
   XtVaSetValues(error_info, XmNlabelString, s1, NULL);
-  XmStringFree(s1);
   if (!(XtIsManaged(error_info_box)))
     {
       Dimension text_wid = 0, dialog_wid = 0;
@@ -84,6 +83,7 @@ static void report_in_error_info(const char *msg, void *ignore)
       XtAddCallback(print_name, XmNvalueChangedCallback, watch_print, NULL);
       XtAddCallback(print_eps_or_lpr, XmNvalueChangedCallback, watch_print, NULL);
     }
+  XmStringFree(s1);
 }
 
 static printing_t printing = NOT_PRINTING;

@@ -1563,7 +1563,7 @@ void run_after_save_as_hook(snd_info *sp, const char *already_saved_as_name, boo
 static XEN before_save_as_hook;
 static bool before_save_as_hook_active = false;
 
-bool run_before_save_as_hook(snd_info *sp, const char *save_as_filename, bool selection, int srate, int type, int format, char *comment)
+bool run_before_save_as_hook(snd_info *sp, const char *save_as_filename, bool selection, int srate, int type, int format, const char *comment)
 {
   /* might be save-selection, as well as save-sound-as */
   if (before_save_as_hook_active) return(false);
@@ -3642,7 +3642,10 @@ static speed_style_t view_files_set_speed_style(widget_t dialog, speed_style_t s
   view_files_info *vdat;
   vdat = vf_dialog_to_info(dialog);
   if (vdat)
-    vdat->speed_style = speed_style;
+    {
+      vdat->speed_style = speed_style;
+      vf_set_speed(vdat, vdat->speed); /* update label etc */
+    }
   return(speed_style);
 }
 
@@ -4056,7 +4059,6 @@ static XEN g_view_files_speed_style(XEN dialog)
   return(C_TO_XEN_INT((int)(view_files_speed_style((widget_t)(XEN_UNWRAP_WIDGET(dialog))))));
 }
 
-/* PERHAPS: speed-style watcher to reflect set in label (in other cases also?) */
 static XEN g_view_files_set_speed_style(XEN dialog, XEN speed_style)
 {
   XEN_ASSERT_TYPE(XEN_WIDGET_P(dialog), dialog, XEN_ONLY_ARG, S_setB S_view_files_speed_style, "a view-files dialog widget"); 

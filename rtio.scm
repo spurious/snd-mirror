@@ -61,12 +61,16 @@
 		  our-srate our-chans our-short our-dac-buffer-size-in-bytes))
 	(data (make-sound-data our-chans our-dac-buffer-size-in-shorts))
 	(vobj (make-vct our-dac-buffer-size-in-shorts)))
-    (do ()
-	((c-g?))
-      (mus-audio-read in-port data our-dac-buffer-size-in-shorts)
-      ;; now process the sound...
-      (func data)
-      (mus-audio-write out-port data our-dac-buffer-size-in-shorts))
+    (catch #t ; try to make sure we close the audio ports upon an error
+	   (lambda ()
+	     (do ()
+		 ((c-g?))
+	       (mus-audio-read in-port data our-dac-buffer-size-in-shorts)
+	       ;; now process the sound...
+	       (func data)
+	       (mus-audio-write out-port data our-dac-buffer-size-in-shorts)))
+	   (lambda args
+	     (display (format #f ";in-out error: ~A" args))))
     (mus-audio-close in-port)
     (mus-audio-close out-port)))
 

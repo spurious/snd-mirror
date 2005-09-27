@@ -6506,7 +6506,7 @@ static void write_transform_peaks(FILE *fd, chan_info *ucp)
   if (si) si = free_sync_info(si);
 }
 
-static XEN g_peaks(XEN filename, XEN snd_n, XEN chn_n) /* SOMEDAY: "peaks" is a bad name */
+static XEN g_peaks(XEN filename, XEN snd_n, XEN chn_n)
 {
   #define H_peaks "(" S_peaks " (filename #f) (snd #f) (chn #f)): write current fft peaks data to filename, or \
 to the info dialog if filename is omitted"
