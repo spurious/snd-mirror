@@ -299,6 +299,7 @@ static void help_search_callback(Widget w, XtPointer context, XtPointer info)
 }
 
 static Widget help_next_button = NULL, help_previous_button = NULL;
+static XmRendition texts[2];
 
 static void create_help_monolog(void)
 {
@@ -307,7 +308,6 @@ static void create_help_monolog(void)
   int n;
   XmString titlestr, forward, dismiss;
   Widget holder, xref_label; /* documentation says this isn't needed, but it is */
-  XmRendition texts[2];
   Widget frame, label, inner_holder, sep, parent;
   XmRenderTable rs = NULL;
   titlestr = XmStringCreate(_("Help"), XmFONTLIST_DEFAULT_TAG);
@@ -394,8 +394,8 @@ static void create_help_monolog(void)
   rs = XmRenderTableCopy(XmRenderTableAddRenditions(rs, texts, 2, XmMERGE_NEW), NULL, 0);
   /*
    * valgrind says this data is used later
-  XmRenditionFree(texts[0]);
-  XmRenditionFree(texts[1]);
+   * XmRenditionFree(texts[0]);
+   * XmRenditionFree(texts[1]);
   */
 
   n = 0;
@@ -493,6 +493,8 @@ static void create_help_monolog(void)
 
 int help_text_width(const char *txt, int start, int end)
 {
+#if 0
+  /* this is full of problems... -- adding renditions below makes everything else flakey */
   if ((help_text) && (end > start))
     {
       char *msg;
@@ -509,6 +511,7 @@ int help_text_width(const char *txt, int start, int end)
       FREE(msg);
       return((int)text_wid);
     }
+#endif
   return((end - start) * 8);
 }
 
@@ -580,7 +583,7 @@ Widget snd_help_with_xrefs(const char *subject, const char *helpstr, with_word_w
   return(w);
 }
 
-void snd_help_append(char *text)
+void snd_help_append(const char *text)
 {
   if (help_text) XmTextInsert(help_text, XmTextGetLastPosition(help_text), text);
 }

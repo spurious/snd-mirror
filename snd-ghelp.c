@@ -359,7 +359,7 @@ GtkWidget *snd_help_with_xrefs(const char *subject, const char *helpstr, with_wo
   return(w);
 }
 
-void snd_help_append(char *text)
+void snd_help_append(const char *text)
 {
   if (help_text) sg_text_insert(help_text, text);
 }

@@ -16,7 +16,7 @@ void check_menu_labels(int key, int state, bool extended) {}
 int add_channel_window(snd_info *sound, int channel, int chan_y, int insertion, widget_t main, fw_button_t arrows, bool with_events) {return(0);}
 int snd_help(const char *subject, const char *help, with_word_wrap_t with_wrap) {fprintf(stdout, help); return(0);}
 int snd_help_with_xrefs(const char *subject, const char *helpstr, with_word_wrap_t with_wrap, char **xrefs, char **urls) {return(0);}
-void snd_help_append(char *text) {fprintf(stdout, text);}
+void snd_help_append(const char *text) {fprintf(stdout, text);}
 int help_text_width(const char *txt, int start, int end) {return(0);}
 widget_t post_it(const char *subject, const char *str) {fprintf(stdout, str); return(0);}
 void save_post_it_dialog_state(FILE *fd) {}

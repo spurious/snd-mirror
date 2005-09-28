@@ -411,11 +411,7 @@ file_info *make_file_info(const char *fullname, bool read_only, bool selected)
 	}
       else snd_error(_("%s does not seem to be a sound file?"), fullname); /* no known header */
     }
-  else
-    {
-      snd_error(_("can't find file %s: %s"), fullname, snd_io_strerror());
-      return(NULL);
-    }
+  else snd_error(_("can't find file %s: %s"), fullname, snd_io_strerror());
   return(hdr);
 }
 

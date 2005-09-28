@@ -157,6 +157,8 @@ typedef struct file_dialog_info {
   int file_dialog_read_only;
   GtkWidget *dialog, *dialog_frame, *dialog_info1, *dialog_info2, *dialog_vbox;
   dialog_play_info *dp;
+  fam_info *unsound_directory_watcher; /* doesn't exist, not a sound file, bogus header, etc */
+  char *unsound_dirname, *unsound_filename;
 } file_dialog_info;
 
 #if HAVE_GFCDN
@@ -596,6 +598,14 @@ static void clear_file_error_label(file_dialog_info *fd)
   gtk_widget_hide(fd->dialog_info2);
   gtk_widget_hide(fd->dp->play_button);
 #endif
+#if HAVE_FAM
+  if (fd->unsound_directory_watcher)
+    {
+      fd->unsound_directory_watcher = fam_unmonitor_file(fd->unsound_dirname, fd->unsound_directory_watcher);
+      if (fd->unsound_dirname) {FREE(fd->unsound_dirname); fd->unsound_dirname = NULL;}
+      if (fd->unsound_filename) {FREE(fd->unsound_filename); fd->unsound_filename = NULL;}
+    }
+#endif
 }
 
 #if HAVE_GFCDN
@@ -658,6 +668,43 @@ static void clear_error_if_open_changes(GtkWidget *dialog, void *data)
 #endif
 }
 
+#if HAVE_FAM
+static void unpost_unsound_error(struct fam_info *fp, FAMEvent *fe)
+{
+  file_dialog_info *fd;
+  switch (fe->code)
+    {
+    case FAMChanged:
+    case FAMCreated:
+      fd = (file_dialog_info *)(fp->data);
+      if ((fd) &&
+	  (fe->filename) &&
+	  (fd->unsound_filename) &&
+	  (strcmp(fe->filename, fd->unsound_filename) == 0))
+	clear_file_error_label(fd);
+      break;
+    default:
+      /* ignore the rest */
+      break;
+    }
+}
+
+static void start_unsound_watcher(file_dialog_info *fd, const char *filename)
+{
+  if (fd->unsound_directory_watcher)
+    {
+      fd->unsound_directory_watcher = fam_unmonitor_file(fd->unsound_dirname, fd->unsound_directory_watcher);
+      if (fd->unsound_dirname) FREE(fd->unsound_dirname);
+      if (fd->unsound_filename) FREE(fd->unsound_filename);
+    }
+  fd->unsound_filename = mus_expand_filename(filename);
+  fd->unsound_dirname = just_directory(fd->unsound_filename);
+  fd->unsound_directory_watcher = fam_monitor_directory(fd->unsound_dirname, (void *)fd, unpost_unsound_error);
+}
+#else
+static void start_unsound_watcher(file_dialog_info *fd, const char *filename) {}
+#endif
+
 static void file_open_dialog_ok(GtkWidget *w, gpointer data)
 {
   file_dialog_info *fd = (file_dialog_info *)data;
@@ -690,7 +737,10 @@ static void file_open_dialog_ok(GtkWidget *w, gpointer data)
 	  else
 	    {
 	      if (ss->open_requestor != FROM_RAW_DATA_DIALOG)
-		clear_error_if_open_changes(fd->dialog, (void *)fd);
+		{
+		  clear_error_if_open_changes(fd->dialog, (void *)fd);
+		  start_unsound_watcher(fd, filename);
+		}
 	    }
 	}
       else
@@ -795,7 +845,11 @@ static void file_mix_ok_callback(GtkWidget *w, gpointer context)
 	  if (err < 0) 
 	    {
 	      if (ss->open_requestor != FROM_RAW_DATA_DIALOG)
-		clear_error_if_open_changes(mdat->dialog, (void *)mdat);
+		{
+		  if (err == MIX_FILE_NO_FILE)
+		    start_unsound_watcher(mdat, filename);
+		  clear_error_if_open_changes(mdat->dialog, (void *)mdat);
+		}
 	    }
 	  else report_in_minibuffer(sp, _("%s mixed in at cursor"), filename);
 	}
@@ -873,7 +927,14 @@ static void file_insert_ok_callback(GtkWidget *w, gpointer context)
 	  if (!ok)
 	    {
 	      if (ss->open_requestor != FROM_RAW_DATA_DIALOG)
-		clear_error_if_open_changes(fd->dialog, (void *)fd);
+		{
+		  char *fullname;
+		  clear_error_if_open_changes(fd->dialog, (void *)fd);
+		  fullname = mus_expand_filename(filename);
+		  if (!(mus_file_probe(fullname)))
+		    start_unsound_watcher(fd, filename);
+		  FREE(fullname);
+		}
 	    }
 	  else report_in_minibuffer(sp, _("%s inserted at cursor"), filename);
 	}

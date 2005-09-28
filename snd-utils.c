@@ -168,6 +168,20 @@ char *just_filename(char *name)
   return(nodir);
 }
 
+char *just_directory(const char *name)
+{
+  int i, len, last_slash = 0;
+  char *dirname = NULL;
+  len = strlen(name);
+  dirname = (char *)CALLOC(len + 1, sizeof(char));
+  for (i = 0; i < len - 1; i++) 
+    if (name[i] == '/') 
+      last_slash = i + 1;
+  if (last_slash > 0)
+    strncpy(dirname, name, last_slash);
+  return(dirname);
+}
+
 bool directory_exists(char *name)
 {
   char temp;

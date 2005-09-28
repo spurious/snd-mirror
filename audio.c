@@ -2906,6 +2906,8 @@ static void oss_describe_audio_state_1(void)
 #endif
   
   if (sound_cards <= 0) mus_audio_initialize();
+  memset((void *)dsp_name, 0, LABEL_BUFFER_SIZE);
+  memset((void *)version, 0, LABEL_BUFFER_SIZE);
 
 #ifdef NEW_OSS
   fd = open(DAC_NAME, O_WRONLY, 0);

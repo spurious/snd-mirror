@@ -31,9 +31,8 @@
  * TODO: always show bg wave in vf
  * TODO: will need at least a reset button for the vf env, perhaps reset for entire vf
  * TODO: no need for vf update button -- what to replace it with in fam case?
- * TODO: dialog error handling in gprint + all in the rb/scm files
- * TODO: use threads for long multi-channel computations (src/reverb/ptree)
- *           -- include example of Guile multithread -- tmp123.scm (broken...)
+ * TODO: dialog error handling in the rb/scm files
+ * TODO: include example of Guile multithread -- tmp123.scm (broken...)
  */
 
 
@@ -165,7 +164,7 @@ static void default_file_search(Widget dialog, XmFileSelectionBoxCallbackStruct 
   if (strcmp(our_dir, fp->last_dir) != 0)
     {
       if (fp->directory_watcher)
-	fam_unmonitor_file(fp->last_dir, fp->directory_watcher); /* filename actually ignored */
+	fam_unmonitor_file(fp->last_dir, fp->directory_watcher); /* filename normally ignored */
       fp->directory_watcher = fam_monitor_directory(our_dir, (void *)fp, watch_current_directory_contents);
       fprintf(stderr,"monitoring %s\n", our_dir);
     }
@@ -433,6 +432,8 @@ typedef struct file_dialog_info {
   file_pattern_info *fp;
   dialog_play_info *dp;
   int open_file_watcher_loc;
+  fam_info *unsound_directory_watcher; /* doesn't exist, not a sound file, bogus header, etc */
+  char *unsound_dirname, *unsound_filename;
 } file_dialog_info;
 
 static void open_file_help_callback (Widget w, XtPointer context, XtPointer info) 
@@ -727,21 +728,34 @@ static void file_open_error(const char *error_msg, void *ufd)
     XtManageChild(fd->info_frame);
 }
 
+static void open_modify_callback(Widget w, XtPointer context, XtPointer info);
+
+static void unpost_open_modify_error(file_dialog_info *fd)
+{
+  Widget dialog_filename_text;
+  if (XtIsManaged(fd->info_frame))
+    XtUnmanageChild(fd->info_frame);
+  dialog_filename_text = XtNameToWidget(fd->dialog, "Text");
+  if (!dialog_filename_text) 
+    dialog_filename_text = XmFileSelectionBoxGetChild(fd->dialog, XmDIALOG_TEXT);
+  if (dialog_filename_text) 
+    XtRemoveCallback(dialog_filename_text, XmNmodifyVerifyCallback, open_modify_callback, (XtPointer)fd);
+#if HAVE_FAM
+  if (fd->unsound_directory_watcher)
+    {
+      fd->unsound_directory_watcher = fam_unmonitor_file(fd->unsound_dirname, fd->unsound_directory_watcher);
+      if (fd->unsound_dirname) {FREE(fd->unsound_dirname); fd->unsound_dirname = NULL;}
+      if (fd->unsound_filename) {FREE(fd->unsound_filename); fd->unsound_filename = NULL;}
+    }
+#endif
+}
+
 static void open_modify_callback(Widget w, XtPointer context, XtPointer info)
 {
   file_dialog_info *fd = (file_dialog_info *)context;
   XmTextVerifyCallbackStruct *cbs = (XmTextVerifyCallbackStruct *)info;
-  Widget dialog_filename_text;
   if (!(fd->fp->in_just_sounds_update)) /* auto trigger from just_sounds button -- unwanted! */
-    {
-      if (XtIsManaged(fd->info_frame))
-	XtUnmanageChild(fd->info_frame);
-      dialog_filename_text = XtNameToWidget(fd->dialog, "Text");
-      if (!dialog_filename_text) 
-	dialog_filename_text = XmFileSelectionBoxGetChild(fd->dialog, XmDIALOG_TEXT);
-      if (dialog_filename_text) 
-	XtRemoveCallback(dialog_filename_text, XmNmodifyVerifyCallback, open_modify_callback, context);
-    }
+    unpost_open_modify_error(fd);
   cbs->doit = true; /* fixup filename elsewhere -- returning false here makes the thing beep! */
 }
 
@@ -754,6 +768,43 @@ static void clear_error_if_open_changes(Widget dialog, void *data)
   if (dialog_filename_text) 
     XtAddCallback(dialog_filename_text, XmNmodifyVerifyCallback, open_modify_callback, (XtPointer)data);
 }
+
+#if HAVE_FAM
+static void unpost_unsound_error(struct fam_info *fp, FAMEvent *fe)
+{
+  file_dialog_info *fd;
+  switch (fe->code)
+    {
+    case FAMChanged:
+    case FAMCreated:
+      fd = (file_dialog_info *)(fp->data);
+      if ((fd) &&
+	  (fe->filename) &&
+	  (fd->unsound_filename) &&
+	  (strcmp(fe->filename, fd->unsound_filename) == 0))
+	unpost_open_modify_error(fd);
+      break;
+    default:
+      /* ignore the rest */
+      break;
+    }
+}
+
+static void start_unsound_watcher(file_dialog_info *fd, const char *filename)
+{
+  if (fd->unsound_directory_watcher)
+    {
+      fd->unsound_directory_watcher = fam_unmonitor_file(fd->unsound_dirname, fd->unsound_directory_watcher);
+      if (fd->unsound_dirname) FREE(fd->unsound_dirname);
+      if (fd->unsound_filename) FREE(fd->unsound_filename);
+    }
+  fd->unsound_filename = mus_expand_filename(filename);
+  fd->unsound_dirname = just_directory(fd->unsound_filename);
+  fd->unsound_directory_watcher = fam_monitor_directory(fd->unsound_dirname, (void *)fd, unpost_unsound_error);
+}
+#else
+static void start_unsound_watcher(file_dialog_info *fd, const char *filename) {}
+#endif
 
 static void file_open_ok_callback(Widget w, XtPointer context, XtPointer info) 
 {
@@ -787,8 +838,13 @@ static void file_open_ok_callback(Widget w, XtPointer context, XtPointer info)
 	  else
 	    {
 	      if (ss->open_requestor != FROM_RAW_DATA_DIALOG)
-		clear_error_if_open_changes(fd->dialog, (void *)fd);
-	      /* TODO: if no such file, fam here? */
+		{
+		  clear_error_if_open_changes(fd->dialog, (void *)fd);
+		  /* whatever the error was, I think it is correct here to unpost the error
+		   *   if the underlying file is either changed or created.
+		   */
+		  start_unsound_watcher(fd, filename);
+		}
 	    }
 	  if (filename) XtFree(filename);
 	}
@@ -887,12 +943,16 @@ static void file_mix_ok_callback(Widget w, XtPointer context, XtPointer info)
 	  ss->open_requestor_data = NULL;
 	  id_or_error = mix_complete_file_at_cursor(sp, filename, with_mix_tags(ss), 0);
 	  /* "id_or_error" here is either one of the mix id's or an error indication such as MIX_FILE_NO_MIX */
-	  /*    the possible error conditions have been checked alreay, or go through snd_error */
+	  /*    the possible error conditions have been checked already, or go through snd_error */
 	  redirect_snd_error_to(NULL, NULL);
 	  if (id_or_error < 0) /* actually -1 .. -3 */
 	    {
 	      if (ss->open_requestor != FROM_RAW_DATA_DIALOG)
-		clear_error_if_open_changes(fd->dialog, (void *)fd);
+		{
+		  clear_error_if_open_changes(fd->dialog, (void *)fd);
+		  if (id_or_error == MIX_FILE_NO_FILE)
+		    start_unsound_watcher(fd, filename);
+		}
 	    }
 	  else report_in_minibuffer(sp, _("%s mixed in at cursor"), filename);
 	  if (filename) XtFree(filename);
@@ -980,7 +1040,15 @@ static void file_insert_ok_callback(Widget w, XtPointer context, XtPointer info)
 	  if (!ok)
 	    {
 	      if (ss->open_requestor != FROM_RAW_DATA_DIALOG)
-		clear_error_if_open_changes(fd->dialog, (void *)fd);
+		{
+		  char *fullname;
+		  clear_error_if_open_changes(fd->dialog, (void *)fd);
+		  /* ideally insert_complete_file would return an indication of what the error was... */
+		  fullname = mus_expand_filename(filename);
+		  if (!(mus_file_probe(fullname)))
+		    start_unsound_watcher(fd, filename);
+		  FREE(fullname);
+		}
 	    }
 	  else report_in_minibuffer(sp, _("%s inserted at cursor"), filename);
 	  if (filename) XtFree(filename);

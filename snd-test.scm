@@ -42,6 +42,15 @@
 (define original-save-dir (or (save-dir) "/zap/snd"))
 (define original-temp-dir (or (temp-dir) "/zap/tmp"))
 
+;;; clear out old junk!
+(if (file-exists? original-save-dir) (system (format #f "rm ~A/snd_*" original-save-dir)))
+(if (file-exists? original-temp-dir) (system (format #f "rm ~A/snd_*" original-temp-dir)))
+(if (file-exists? "/tmp")
+    (begin ; -noinit possibly
+      (system "rm /tmp/snd_*")
+      (system "rm /tmp/file*.snd")))
+
+
 (define (snd-display . args)
   (let ((str (if (null? (cdr args))
 		 (car args)
@@ -45719,7 +45728,8 @@ EDITS: 1
 			      (begin
 				(snd-display ";after save, region dialog still active?")
 				(XtUnmanageChild saved)))
-			  (XtUnmanageChild regd)))))
+			  (XtUnmanageChild regd))))
+		    (close-sound ind))
 
 		  (c-g!)
 		  

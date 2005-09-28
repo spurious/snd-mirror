@@ -1370,6 +1370,7 @@ char *snd_open_strerror(void);
 char *string_to_colon(char *val);
 char *filename_without_directory(const char *name);
 char *just_filename(char *name);
+char *just_directory(const char *name);
 bool directory_exists(char *name);
 char *file_to_string(const char *filename);
 disk_space_t disk_space_p(snd_info *sp, off_t bytes, const char *filename);
