@@ -99,12 +99,12 @@ void allocate_region_rows(int n) {}
 void reflect_region_graph_style(void) {}
 int region_dialog_region(void) {return(-1);}
 void snd_completion_help(int matches, char **buffer) {}
-bool set_tiny_font(char *font) {if (ss->Tiny_Font) FREE(ss->Tiny_Font); ss->Tiny_Font = copy_string(font); return(false);}
-bool set_listener_font(char *font) {if (ss->Listener_Font) FREE(ss->Listener_Font); ss->Listener_Font = copy_string(font); return(false);}
-bool set_peaks_font(char *font) {if (ss->Peaks_Font) FREE(ss->Peaks_Font); ss->Peaks_Font = copy_string(font); return(false);}
-bool set_bold_peaks_font(char *font) {if (ss->Bold_Peaks_Font) FREE(ss->Bold_Peaks_Font); ss->Bold_Peaks_Font = copy_string(font); return(false);}
-bool set_axis_label_font(char *font) {if (ss->Axis_Label_Font) FREE(ss->Axis_Label_Font); ss->Axis_Label_Font = copy_string(font); return(false);}
-bool set_axis_numbers_font(char *font) {if (ss->Axis_Numbers_Font) FREE(ss->Axis_Numbers_Font); ss->Axis_Numbers_Font = copy_string(font); return(false);}
+bool set_tiny_font(const char *font) {if (ss->Tiny_Font) FREE(ss->Tiny_Font); ss->Tiny_Font = copy_string(font); return(false);}
+bool set_listener_font(const char *font) {if (ss->Listener_Font) FREE(ss->Listener_Font); ss->Listener_Font = copy_string(font); return(false);}
+bool set_peaks_font(const char *font) {if (ss->Peaks_Font) FREE(ss->Peaks_Font); ss->Peaks_Font = copy_string(font); return(false);}
+bool set_bold_peaks_font(const char *font) {if (ss->Bold_Peaks_Font) FREE(ss->Bold_Peaks_Font); ss->Bold_Peaks_Font = copy_string(font); return(false);}
+bool set_axis_label_font(const char *font) {if (ss->Axis_Label_Font) FREE(ss->Axis_Label_Font); ss->Axis_Label_Font = copy_string(font); return(false);}
+bool set_axis_numbers_font(const char *font) {if (ss->Axis_Numbers_Font) FREE(ss->Axis_Numbers_Font); ss->Axis_Numbers_Font = copy_string(font); return(false);}
 int label_width(const char *txt) {return(0);}
 int number_width(const char *num) {return(0);}
 int number_height(void) {return(0);}

@@ -259,12 +259,12 @@ void g_init_gxfind(void);
 
 /* -------- snd-gutils.c -------- */
 
-bool set_tiny_font(char *font);
-bool set_listener_font(char *font);
-bool set_peaks_font(char *font);
-bool set_bold_peaks_font(char *font);
-bool set_axis_label_font(char *font);
-bool set_axis_numbers_font(char *font);
+bool set_tiny_font(const char *font);
+bool set_listener_font(const char *font);
+bool set_peaks_font(const char *font);
+bool set_bold_peaks_font(const char *font);
+bool set_axis_label_font(const char *font);
+bool set_axis_numbers_font(const char *font);
 int label_width(const char *txt);
 int number_width(const char *num);
 int number_height(void);
@@ -313,10 +313,10 @@ int get_user_int_data(GObject *obj);
 
 char *sg_get_text(GtkWidget *w, int start, int end);
 void sg_set_cursor(GtkWidget *w, int position);
-void sg_text_insert(GtkWidget *w, char *text);
+void sg_text_insert(GtkWidget *w, const char *text);
 int sg_cursor_position(GtkWidget *w);
-void sg_list_append(GtkWidget *w, char *val);
-void sg_list_insert(GtkWidget *w, int row, char *val);
+void sg_list_append(GtkWidget *w, const char *val);
+void sg_list_insert(GtkWidget *w, int row, const char *val);
 void sg_list_select(GtkWidget *lst, int row);
 void sg_list_moveto(GtkWidget *lst, int row);
 

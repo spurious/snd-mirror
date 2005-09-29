@@ -615,6 +615,8 @@ void set_menu_label(widget_t w, const char *label);
 
 void g_init_menu(void);
 
+void start_preferences_menu(void); /* temporary location I hope */
+
 
 /* -------- snd-main.c -------- */
 

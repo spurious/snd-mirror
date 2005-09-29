@@ -12,7 +12,7 @@
 #endif
 #endif
 
-static XmRenderTable get_xm_font(XFontStruct *ignore, char *font, char *tag)
+static XmRenderTable get_xm_font(XFontStruct *ignore, const char *font, char *tag)
 {
   XmRendition tmp;
   XmRenderTable tabl;
@@ -28,7 +28,7 @@ static XmRenderTable get_xm_font(XFontStruct *ignore, char *font, char *tag)
   return(tabl);
 }
 
-bool set_tiny_font(char *font)
+bool set_tiny_font(const char *font)
 {
   XFontStruct *fs = NULL;
   state_context *sgx;
@@ -48,7 +48,7 @@ bool set_tiny_font(char *font)
   return(false);
 }
 
-bool set_listener_font(char *font)
+bool set_listener_font(const char *font)
 {
   XFontStruct *fs = NULL;
   fs = XLoadQueryFont(MAIN_DISPLAY(ss), font);
@@ -66,7 +66,7 @@ bool set_listener_font(char *font)
   return(false);
 }
 
-bool set_peaks_font(char *font)
+bool set_peaks_font(const char *font)
 {
   XFontStruct *fs = NULL;
   fs = XLoadQueryFont(MAIN_DISPLAY(ss), font);
@@ -83,7 +83,7 @@ bool set_peaks_font(char *font)
   return(false);
 }
 
-bool set_bold_peaks_font(char *font)
+bool set_bold_peaks_font(const char *font)
 {
   XFontStruct *fs = NULL;
   fs = XLoadQueryFont(MAIN_DISPLAY(ss), font);
@@ -100,7 +100,7 @@ bool set_bold_peaks_font(char *font)
   return(false);
 }
 
-bool set_axis_label_font(char *font)
+bool set_axis_label_font(const char *font)
 {
   XFontStruct *fs = NULL;
   fs = XLoadQueryFont(MAIN_DISPLAY(ss), font);
@@ -118,7 +118,7 @@ bool set_axis_label_font(char *font)
   return(false);
 }
 
-bool set_axis_numbers_font(char *font)
+bool set_axis_numbers_font(const char *font)
 {
   XFontStruct *fs = NULL;
   fs = XLoadQueryFont(MAIN_DISPLAY(ss), font);

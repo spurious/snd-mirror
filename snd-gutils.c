@@ -1,6 +1,6 @@
 #include "snd.h"
 
-bool set_tiny_font(char *font)
+bool set_tiny_font(const char *font)
 {
   PangoFontDescription *fs = NULL;
   state_context *sgx;
@@ -17,7 +17,7 @@ bool set_tiny_font(char *font)
   return(false);
 }
 
-bool set_listener_font(char *font)
+bool set_listener_font(const char *font)
 {
   PangoFontDescription *fs = NULL;
   fs = pango_font_description_from_string(font);
@@ -33,7 +33,7 @@ bool set_listener_font(char *font)
   return(false);
 }
 
-bool set_peaks_font(char *font)
+bool set_peaks_font(const char *font)
 {
   PangoFontDescription *fs = NULL;
   fs = pango_font_description_from_string(font);
@@ -48,7 +48,7 @@ bool set_peaks_font(char *font)
   return(false);
 }
 
-bool set_bold_peaks_font(char *font)
+bool set_bold_peaks_font(const char *font)
 {
   PangoFontDescription *fs = NULL;
   fs = pango_font_description_from_string(font);
@@ -63,7 +63,7 @@ bool set_bold_peaks_font(char *font)
   return(false);
 }
 
-bool set_axis_label_font(char *font)
+bool set_axis_label_font(const char *font)
 {
   PangoFontDescription *fs = NULL;
   fs = pango_font_description_from_string(font);
@@ -81,7 +81,7 @@ bool set_axis_label_font(char *font)
   return(false);
 }
 
-bool set_axis_numbers_font(char *font)
+bool set_axis_numbers_font(const char *font)
 {
   PangoFontDescription *fs = NULL;
   fs = pango_font_description_from_string(font);
@@ -518,7 +518,7 @@ void sg_text_delete(GtkWidget *w, int start, int end)
   gtk_text_buffer_delete(buf, &s, &e);
 }
 
-void sg_text_insert(GtkWidget *w, char *text)
+void sg_text_insert(GtkWidget *w, const char *text)
 {
   if (text)
     {
@@ -644,7 +644,7 @@ GtkWidget *sg_make_list(const char *title, GtkWidget *parent, widget_add_t paned
   return(list);
 }
 
-void sg_list_append(GtkWidget *lst, char *val)
+void sg_list_append(GtkWidget *lst, const char *val)
 {
   GtkTreeIter iter;
   GtkListStore *w;
@@ -653,7 +653,7 @@ void sg_list_append(GtkWidget *lst, char *val)
   gtk_list_store_set(w, &iter, 0, val, -1);
 }
 
-void sg_list_insert(GtkWidget *lst, int row, char *val)
+void sg_list_insert(GtkWidget *lst, int row, const char *val)
 {
   GtkTreeIter iter;
   GtkListStore *w;

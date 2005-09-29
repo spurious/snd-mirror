@@ -19,7 +19,7 @@ enum {m_menu,
           o_transform_menu,
           o_focus_style_menu, o_focus_cascade_menu,
             o_focus_right_menu, o_focus_left_menu, o_focus_middle_menu, o_focus_active_menu,
-          o_save_menu, o_save_state_menu,
+          o_save_menu, o_save_state_menu, o_sep_menu, o_preferences_menu,
         v_menu, v_cascade_menu,
           v_equalize_panes_menu, 
           v_graph_style_menu, v_graph_style_cascade_menu,
@@ -109,6 +109,8 @@ enum {m_menu,
 #define options_focus_active_menu (ss->sgx->mw[o_focus_active_menu])
 #define options_save_menu (ss->sgx->mw[o_save_menu])
 #define options_save_state_menu (ss->sgx->mw[o_save_state_menu])
+#define options_sep_menu (ss->sgx->mw[o_sep_menu])
+#define options_preferences_menu (ss->sgx->mw[o_preferences_menu])
 
 #define view_menu (ss->sgx->mw[v_menu])
 #define view_cascade_menu (ss->sgx->mw[v_cascade_menu])

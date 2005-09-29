@@ -522,7 +522,7 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
 	    listener_append_and_prompt(name_buf);
 	  if (!(listener_is_visible()))
 	    snd_error_without_redirection_or_hook(name_buf);
-	  /* we're in xen_error from the redirection point of view and we already check snd-error-hook */
+	  /* we're in xen_error from the redirection point of view and we already checked snd-error-hook */
 	}
     }
   snd_unprotect_at(port_gc_loc);
@@ -567,14 +567,29 @@ void snd_rb_raise(XEN tag, XEN throw_args)
 	  else msg = snd_strcat(msg, XEN_AS_STRING(XEN_CDR(throw_args)), &size);
 	}
     }
-  /* backtrace perhaps via xen_rb_report_error (via rescue) in xen.c? */
+
+  if (show_backtrace(ss)) 
+    {
+      XEN bt = rb_funcall(err, rb_intern("caller"), 0); 
+      if (XEN_VECTOR_P(bt) && XEN_VECTOR_LENGTH(bt) > 0) 
+	{
+	  long i; 
+	  msg = snd_strcat(msg, "\n", &size); 
+	  for (i = 0; i < XEN_VECTOR_LENGTH(bt); i++) 
+	    { 
+	      msg = snd_strcat(msg, XEN_TO_C_STRING(XEN_VECTOR_REF(bt, i)), &size); 
+	      msg = snd_strcat(msg, "\n", &size); 
+	    } 
+	} 
+    }
+  /* rb_raise(err, msg); */
 
   if (!(run_snd_error_hook(msg)))
     {
       if (ss->xen_error_handler)
 	call_xen_error_handler(msg);
-      else rb_raise(err, msg);
     }
+  rb_raise(err, msg);
 }
 #endif
 /* end HAVE_RUBY */

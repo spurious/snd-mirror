@@ -585,7 +585,7 @@ Widget snd_help_with_xrefs(const char *subject, const char *helpstr, with_word_w
 
 void snd_help_append(const char *text)
 {
-  if (help_text) XmTextInsert(help_text, XmTextGetLastPosition(help_text), text);
+  if (help_text) XmTextInsert(help_text, XmTextGetLastPosition(help_text), (char *)text);
 }
 
 void snd_help_back_to_top(void)

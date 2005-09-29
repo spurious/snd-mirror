@@ -473,3 +473,6 @@ void g_init_menu(void)
   XEN_DEFINE_PROCEDURE(S_remove_from_menu,  gl_remove_from_menu_w,  2, 0, 0, H_remove_from_menu);
   XEN_DEFINE_PROCEDURE(S_main_menu,         g_main_menu_w,          1, 0, 0, H_main_menu);
 }
+
+/* placeholder... */
+void start_preferences_menu(void) {}

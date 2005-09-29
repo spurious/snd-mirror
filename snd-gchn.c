@@ -1,5 +1,7 @@
 #include "snd.h"
 
+/* TODO: 2.8.4 adds buttons at fw?? */
+
 enum {
     W_main_window,
     W_edhist, 

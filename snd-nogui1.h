@@ -137,12 +137,12 @@ int region_dialog_region(void);
 /* -------- snd-xutils.c -------- */
 
 void goto_window(int text);
-bool set_tiny_font(char *font);
-bool set_listener_font(char *font);
-bool set_peaks_font(char *font);
-bool set_bold_peaks_font(char *font);
-bool set_axis_label_font(char *font);
-bool set_axis_numbers_font(char *font);
+bool set_tiny_font(const char *font);
+bool set_listener_font(const char *font);
+bool set_peaks_font(const char *font);
+bool set_bold_peaks_font(const char *font);
+bool set_axis_label_font(const char *font);
+bool set_axis_numbers_font(const char *font);
 int label_width(const char *txt);
 int number_width(const char *num);
 int number_height(void);
