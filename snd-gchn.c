@@ -1,7 +1,5 @@
 #include "snd.h"
 
-/* TODO: 2.8.4 adds buttons at fw?? */
-
 enum {
     W_main_window,
     W_edhist, 
@@ -18,9 +16,6 @@ enum {
 };
 
 enum {W_zy_adj, W_zx_adj, W_sy_adj, W_sx_adj, W_gzy_adj, W_gsy_adj, NUM_CHAN_ADJS};
-
-/* #define NUM_CHAN_WIDGETS 16 */
-/* #define NUM_CHAN_ADJS 6 */
 
 GtkWidget *channel_graph(chan_info *cp)      {return(cp->cgx->chan_widgets[W_graph]);}
 GtkWidget *channel_sx(chan_info *cp)         {return(cp->cgx->chan_widgets[W_sx]);}
@@ -792,7 +787,6 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Gtk
 	  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(cw[W_w]), true);
 	  SG_SIGNAL_CONNECT(cw[W_w], "button_press_event", w_toggle_callback, cp);
 	  SG_SIGNAL_CONNECT(cw[W_w], "toggled", w_toggle_click_callback, cp);
-
 	}
       else
 	{
@@ -868,7 +862,7 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Gtk
 	  cw[W_gzy] = NULL;
 	}
       if ((GTK_IS_VPANED(cw[W_main_window])) || (GTK_IS_HPANED(cw[W_main_window])))
-	gtk_paned_set_position(GTK_PANED(cw[W_main_window]), 1);
+	gtk_paned_set_position(GTK_PANED(cw[W_main_window]), 0);
       gtk_widget_show(cw[W_graph_window]);
 
     }

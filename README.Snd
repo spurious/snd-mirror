@@ -197,11 +197,11 @@ legalese).  Send bug reports or suggestions to bil@ccrma.stanford.edu.
 
 
 Authors:
+
 Bill Schottstaedt
-Michael Scholz: the German translation, all of the Ruby code, inf-snd.el, 
-                sndins, the Forth version of sndlib, and various instruments.
-Kjetil S. Matheussen: snd_conffile.scm, ladspa.scm, gui.scm, snd-hobbit.scm, 
-                eval-c.scm, rt-compiler.scm, oo.scm, and the Jack audio support.
+Michael Scholz
+Kjetil S. Matheussen
+
 Dave Phillips: the tutorial, new-effects.scm, and many other files.
 Fernando Lopez-Lezcano: the current ALSA support.
 Richard W.E. Furse: the original LADSPA support.
@@ -216,12 +216,9 @@ Steven Schultz: the BSD port.
 Ludger Brummer and Charles Nichols: the Mac-OSX port.
 Thomas Klausner: the NetBSD port.
 Plus many other contributions from
-  Dave Phillips, 
   Fernando Lopez-Lezcano, 
   Tom Roth,
-  Michael Scholz, 
   Fabio Furlanete,
-  Kjetil S. Matheussen,
   Rick Taube,
   Anders Vinjar.
 

@@ -286,7 +286,7 @@ static GtkWidget *snd_filer_new(char *title, bool saving,
 
   if (gdelete)
     {
-      /* this has to be separate (not handled as a "response" because the latter deletes the goddamn widget!! */
+      /* this has to be separate (not handled as a "response") because the latter deletes the goddamn widget!! */
       SG_SIGNAL_CONNECT(new_dialog, "delete_event", gdelete, fd);
     }
 
@@ -4012,26 +4012,6 @@ static gboolean vf_amp_press_callback(GtkWidget *w, GdkEventButton *ev, gpointer
 
 /* -------- amp-envs -------- */
 
-static void show_mix_background_wave(int mix_id, int chan)
-{
-#if 0
-  env_editor *e;
-  int pts;
-  bool two_sided = false;
-  e = spfs[chan];
-  if (e == NULL) return;
-  pts = prepare_mix_id_waveform(mix_id, e->axis, &two_sided);
-  if (pts > 0)
-    {
-      gdk_gc_set_foreground(ax->gc, ss->sgx->enved_waveform_color);
-      if (two_sided)
-	draw_both_grf_points(1, ax, pts, GRAPH_LINES);
-      else draw_grf_points(1, ax, pts, e->axis, ungrf_y(e->axis, 0.0), GRAPH_LINES);
-      gdk_gc_set_foreground(ax->gc, ss->sgx->black);
-    }
-#endif
-}
-
 static void vf_amp_env_resize(view_files_info *vdat, GtkWidget *w)
 {
   if (vdat->env_ax == NULL)
@@ -4048,9 +4028,6 @@ static void vf_amp_env_resize(view_files_info *vdat, GtkWidget *w)
   else clear_window(vdat->env_ax);
   vdat->spf->with_dots = true;
   env_editor_display_env(vdat->spf, vdat->amp_env, vdat->env_ax, NULL, 0, 0, widget_width(w), widget_height(w), NOT_PRINTING);
-  /*
-    show_mix_background_wave(mix_dialog_id, chan);
-  */
 }
 
 void vf_amp_env_redraw(GtkWidget *w, view_files_info *vdat)

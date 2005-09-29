@@ -28,11 +28,8 @@
  * TODO: add|delete-file-filter, file-filters tied to all file dialogs (panel of radio buttons where just sounds is now)
  *       the sorters could be handled similarly -- a panel of radio buttons with name chosen by default
  *       would need local versions of the sort_choice variable -- use default searcher for all choices
- * TODO: always show bg wave in vf
  * TODO: will need at least a reset button for the vf env, perhaps reset for entire vf
  * TODO: no need for vf update button -- what to replace it with in fam case?
- * TODO: dialog error handling in the rb/scm files
- * TODO: include example of Guile multithread -- tmp123.scm (broken...)
  */
 
 
@@ -4574,29 +4571,6 @@ static void vf_amp_drag_callback(Widget w, XtPointer context, XtPointer info)
 
 /* -------- amp-envs -------- */
 
-#if 0
-/* g_channel_amp_envs gets the data (snd-snd) */
-static void vf_show_background_wave(void)
-{
-  env_editor *e;
-  int pts;
-  bool two_sided = false;
-  e = spf;
-  if (e == NULL) return;
-  /*
-  pts = prepare_mix_id_waveform(mix_id, e->axis, &two_sided);
-  if (pts > 0)
-    {
-      XSetForeground(MAIN_DISPLAY(ss), ax->gc, ss->sgx->enved_waveform_color);
-      if (two_sided)
-	draw_both_grf_points(1, ax, pts, GRAPH_LINES);
-      else draw_grf_points(1, ax, pts, e->axis, ungrf_y(e->axis, 0.0), GRAPH_LINES);
-      XSetForeground(MAIN_DISPLAY(ss), ax->gc, ss->sgx->black);
-    }
-  */
-}
-#endif
-
 static void vf_amp_env_resize(Widget w, XtPointer context, XtPointer info) 
 {
   view_files_info *vdat = (view_files_info *)context;
@@ -4626,7 +4600,11 @@ static void vf_amp_env_resize(Widget w, XtPointer context, XtPointer info)
 			 0, 0,
 			 widget_width(w), widget_height(w), 
 			 NOT_PRINTING);
-  /* show_mix_background_wave(mix_dialog_id, chan); */
+  /* it might be nice to show the sound data in the background, but there are
+   *   complications involving multichannel and multiselection cases, also
+   *   how to get the "peak-func" and how to call g_channel_amp_envs.
+   * Too many problems...
+   */
 }
 
 void vf_amp_env_redraw(Widget w, view_files_info *vdat)
