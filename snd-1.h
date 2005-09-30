@@ -484,9 +484,6 @@ typedef struct snd_state {
   void *xen_error_data;
   void (*snd_print_handler)(const char *msg, void *data);
   void *snd_print_data;
-#if DEBUGGING
-  char *snd_error_caller, *xen_error_caller, *snd_print_caller, *snd_warning_caller;
-#endif
   ss_watcher **watchers;
   int watchers_size;
 } snd_state;
@@ -651,22 +648,14 @@ void snd_error_without_redirection_or_hook(const char *msg);
 void snd_error_without_format(const char *msg);
 void snd_warning_without_format(const char *msg);
 bool run_snd_error_hook(const char *msg);
-
 void g_init_errors(void);
 
 #ifdef SND_AS_WIDGET
   void set_error_display (void (*func)(const char *));
 #endif
-
-#if DEBUGGING
-#define redirect_snd_error_to(Handler, Data) redirect_snd_error_to_1(Handler, Data, __FUNCTION__)
-#define redirect_snd_warning_to(Handler, Data) redirect_snd_warning_to_1(Handler, Data, __FUNCTION__)
-void redirect_snd_error_to_1(void (*handler)(const char *error_msg, void *ufd), void *data, const char *caller);
-void redirect_snd_warning_to_1(void (*handler)(const char *warning_msg, void *ufd), void *data, const char *caller);
-#else
 void redirect_snd_error_to(void (*handler)(const char *error_msg, void *ufd), void *data);
 void redirect_snd_warning_to(void (*handler)(const char *warning_msg, void *ufd), void *data);
-#endif
+
 
 
 /* -------- snd-completion.c -------- */
@@ -918,21 +907,10 @@ bool transform_p(int type);
 
 /* -------- snd-xen.c -------- */
 
-#if DEBUGGING
-#define redirect_xen_error_to(Handler, Data) redirect_xen_error_to_1(Handler, Data, __FUNCTION__)
-#define redirect_snd_print_to(Handler, Data) redirect_snd_print_to_1(Handler, Data, __FUNCTION__)
-#define redirect_everything_to(Handler, Data) redirect_everything_to_1(Handler, Data, __FUNCTION__)
-#define redirect_errors_to(Handler, Data) redirect_errors_to_1(Handler, Data, __FUNCTION__)
-void redirect_xen_error_to_1(void (*handler)(const char *msg, void *ufd), void *data, const char *caller);
-void redirect_snd_print_to_1(void (*handler)(const char *msg, void *ufd), void *data, const char *caller);
-void redirect_errors_to_1(void (*handler)(const char *msg, void *ufd), void *data, const char *caller);
-void redirect_everything_to_1(void (*handler)(const char *msg, void *ufd), void *data, const char *caller);
-#else
 void redirect_xen_error_to(void (*handler)(const char *msg, void *ufd), void *data);
 void redirect_snd_print_to(void (*handler)(const char *msg, void *ufd), void *data);
 void redirect_errors_to(void (*handler)(const char *msg, void *ufd), void *data);
 void redirect_everything_to(void (*handler)(const char *msg, void *ufd), void *data);
-#endif
 XEN snd_catch_any(XEN_CATCH_BODY_TYPE body, void *body_data, const char *caller);
 XEN snd_throw(XEN key, XEN args);
 XEN snd_no_such_file_error(const char *caller, XEN filename);

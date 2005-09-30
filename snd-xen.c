@@ -153,68 +153,12 @@ void snd_unprotect_at(int loc)
 #endif  
 }
 
-
-#if HAVE_RUBY
-static char *scheme_to_ruby(const char *name)
-{
-  char *new_name = NULL;
-  int len, i, j, cap_loc = -1;
-  len = snd_strlen(name);
-  if (len > 0)
-    {
-      new_name = (char *)calloc(len + 8, sizeof(char));
-      for (i = 0, j = 0; i < len; i++)
-	{
-	  if (isalnum(name[i]))
-	    {
-	      if (cap_loc == -1) cap_loc = j;
-	      new_name[j++] = name[i];
-	    }
-	  else 
-	    {
-	      if (name[i] != '!')
-		{
-		  if (name[i] == '-')
-		    {
-		      if ((i < len - 1) && (name[i + 1] == '>'))
-			{
-			  new_name[j++] = '2';
-			  i++;
-			}
-		      else
-			{
-			  new_name[j++] = '_';
-			  if (cap_loc != -1)
-			    new_name[cap_loc] = (char)toupper((int)(new_name[cap_loc]));
-			}
-		    }
-		  else new_name[j++] = name[i];
-		}
-	      cap_loc = -1;
-	    }
-	}
-    }
-  return(new_name);
-}
-
-#endif
-
 /* -------- error handling -------- */
 
 static char *last_file_loaded = NULL;
 
-#if DEBUGGING
-void redirect_xen_error_to_1(void (*handler)(const char *msg, void *ufd), void *data, const char *caller) /* currently could be local */
-#else
 void redirect_xen_error_to(void (*handler)(const char *msg, void *ufd), void *data) /* currently could be local */
-#endif
 {
-#if DEBUGGING
-  if ((false) && (handler) && (ss->xen_error_handler))
-    fprintf(stderr,"%s: redirect over xen from %s\n", caller, ss->xen_error_caller);
-  if (ss->xen_error_caller) FREE(ss->xen_error_caller);
-  ss->xen_error_caller = copy_string(caller);
-#endif
   ss->xen_error_handler = handler;
   ss->xen_error_data = data;
 }
@@ -233,38 +177,12 @@ static void call_xen_error_handler(const char *msg)
   ss->xen_error_data = old_xen_error_data;
 }
 
-#if DEBUGGING
-void redirect_snd_print_to_1(void (*handler)(const char *msg, void *ufd), void *data, const char *caller)
-#else
 void redirect_snd_print_to(void (*handler)(const char *msg, void *ufd), void *data)
-#endif
 {
-#if DEBUGGING
-  if ((false) && (handler) && (ss->snd_print_handler))
-    fprintf(stderr,"%s: redirect over print from %s\n", caller, ss->snd_print_caller);
-  if (ss->snd_print_caller) FREE(ss->snd_print_caller);
-  ss->snd_print_caller = copy_string(caller);
-#endif
   ss->snd_print_handler = handler;
   ss->snd_print_data = data;
 }
 
-#if DEBUGGING
-void redirect_everything_to_1(void (*handler)(const char *msg, void *ufd), void *data, const char *caller)
-{
-  redirect_snd_error_to_1(handler, data, caller);
-  redirect_xen_error_to_1(handler, data, caller);
-  redirect_snd_warning_to_1(handler, data, caller);
-  redirect_snd_print_to_1(handler, data, caller);
-}
-
-void redirect_errors_to_1(void (*handler)(const char *msg, void *ufd), void *data, const char *caller)
-{
-  redirect_snd_error_to_1(handler, data, caller);
-  redirect_xen_error_to_1(handler, data, caller);
-  redirect_snd_warning_to_1(handler, data, caller);
-}
-#else
 void redirect_everything_to(void (*handler)(const char *msg, void *ufd), void *data)
 {
   redirect_snd_error_to(handler, data);
@@ -279,7 +197,6 @@ void redirect_errors_to(void (*handler)(const char *msg, void *ufd), void *data)
   redirect_xen_error_to(handler, data);
   redirect_snd_warning_to(handler, data);
 }
-#endif
 
 static char *gl_print(XEN result);
 
@@ -370,17 +287,7 @@ static XEN snd_format_if_needed(XEN args)
 	  errmsg = snd_strcat(errmsg, XEN_AS_STRING(XEN_LIST_REF(args, i)), &err_size);
 	}
     }
-#if HAVE_RUBY
-  {
-    char *temp;
-    temp = scheme_to_ruby(errmsg);
-    result = C_TO_XEN_STRING(temp);
-    if (temp) free(temp); /* calloc in xen.c */
-  }
-#endif
-#if HAVE_SCHEME
   result = C_TO_XEN_STRING(errmsg);
-#endif
   FREE(errmsg);
   return(xen_return_first(result, args));
 }
@@ -553,7 +460,7 @@ void snd_rb_raise(XEN tag, XEN throw_args)
       if (XEN_NOT_FALSE_P(XEN_CAR(throw_args)))
 	{
 	  snprintf(msg, 2048, "%s: %s", 
-		   xen_scheme_procedure_to_ruby(XEN_AS_STRING(XEN_CAR(throw_args))), 
+		   XEN_AS_STRING(XEN_CAR(throw_args)), 
 		   rb_id2name(tag));
 	  need_comma = true;
 	}

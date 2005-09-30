@@ -40,18 +40,8 @@ bool run_snd_error_hook(const char *msg)
 }
 
 
-#if DEBUGGING
-void redirect_snd_warning_to_1(void (*handler)(const char *warning_msg, void *ufd), void *data, const char *caller)
-#else
 void redirect_snd_warning_to(void (*handler)(const char *warning_msg, void *ufd), void *data)
-#endif
 {
-#if DEBUGGING
-  if ((false) && (handler) && (ss->snd_warning_handler))
-    fprintf(stderr,"%s: redirect over warn from %s\n", caller, ss->snd_warning_caller);
-  if (ss->snd_warning_caller) FREE(ss->snd_warning_caller);
-  ss->snd_warning_caller = copy_string(caller);
-#endif
   ss->snd_warning_handler = handler;
   ss->snd_warning_data = data;
 }
@@ -65,18 +55,8 @@ void set_error_display(void (*func)(const char *))
 }
 #endif
 
-#if DEBUGGING
-void redirect_snd_error_to_1(void (*handler)(const char *error_msg, void *ufd), void *data, const char *caller)
-#else
 void redirect_snd_error_to(void (*handler)(const char *error_msg, void *ufd), void *data)
-#endif
 {
-#if DEBUGGING
-  if ((false) && (handler) && (ss->snd_error_handler))
-    fprintf(stderr,"%s: redirect over snd error from %s\n", caller, ss->snd_error_caller);
-  if (ss->snd_error_caller) FREE(ss->snd_error_caller);
-  ss->snd_error_caller = copy_string(caller);
-#endif
   ss->snd_error_handler = handler;
   ss->snd_error_data = data;
 }
