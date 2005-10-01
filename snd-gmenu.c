@@ -136,7 +136,7 @@ static void options_focus_active_callback(GtkWidget *w, gpointer info, gpointer 
 static void options_save_state_callback(GtkWidget *w, gpointer info) {save_state_from_menu();}
 #endif
 
-static void options_preferences_callback(GtkWidget *w, gpointer info, gpointer Data) {start_preferences_menu();}
+static void options_preferences_callback(GtkWidget *w, gpointer info, gpointer Data) {start_preferences_dialog();}
 
 
 /* -------------------------------- HELP MENU -------------------------------- */
@@ -733,7 +733,6 @@ GtkWidget *add_menu(void)
   ml[o_preferences_menu] = _("Preferences");
   gtk_menu_shell_append(GTK_MENU_SHELL(options_cascade_menu), options_preferences_menu);
   gtk_widget_show(options_preferences_menu);
-  set_sensitive(options_preferences_menu, false);
   SG_SIGNAL_CONNECT(options_preferences_menu, "activate", options_preferences_callback, NULL);
 
 

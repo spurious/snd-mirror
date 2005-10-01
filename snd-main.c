@@ -614,32 +614,6 @@ void global_control_panel_state(void)
   FREE(buf);
 }
 
-static FILE *open_restart_file(char *name, bool append)
-{
-  FILE *fd;
-  char *str;
-  char *buf = NULL;
-  if (!name) return(NULL);
-  buf = (char *)CALLOC(256, sizeof(char));
-  str = name;
-  if (((*str) == '~') && (getenv("HOME") != NULL))
-    {
-      strcpy(buf, getenv("HOME"));
-      strcat(buf, ++str);
-      str = buf;
-    }
-  if (append)
-    fd = FOPEN(str, "a");
-  else fd = FOPEN(str, "w");
-  FREE(buf);
-  return(fd);
-}
-
-FILE *open_snd_init_file(void)
-{ /* needed also by keyboard macro saver */
-  return(open_restart_file(ss->init_file, true));
-}
-
 #if HAVE_SCHEME
 static void save_property_list(FILE *fd, XEN property_list, int chan)
 {
@@ -963,25 +937,34 @@ static void save_sound_state (snd_info *sp, void *ptr)
 static XEN after_save_state_hook;
 static XEN before_save_state_hook;
 
-void save_state(char *save_state_name)
+void save_state(const char *save_state_name)
 {
   FILE *save_fd;
-  char *locale = NULL;
+  char *locale = NULL, *fullname;
+  if (!save_state_name)
+    {
+      snd_error("no save state file name?");
+      return;
+    }
   bool append_new_state = false;
+  fullname = mus_expand_filename(save_state_name);
   if (XEN_HOOKED(before_save_state_hook))
     {
       XEN res = XEN_FALSE;
       res = run_or_hook(before_save_state_hook, 
-			XEN_LIST_1(C_TO_XEN_STRING(save_state_name)),
+			XEN_LIST_1(C_TO_XEN_STRING(fullname)),
 			S_before_save_state_hook);
       append_new_state = XEN_TO_C_BOOLEAN(res);
     }
-  save_fd = open_restart_file(save_state_name, append_new_state);
+  if (append_new_state)
+    save_fd = FOPEN(fullname, "a");
+  else save_fd = FOPEN(fullname, "w");
   if (save_fd == NULL)
     {
       snd_error(_("can't write %s: %s"), save_state_name, snd_io_strerror());
       return;
     }
+
 #if HAVE_SCHEME
   /* try to make sure all previously loaded files are now loaded */
   save_loaded_files_list(save_fd, save_state_name);

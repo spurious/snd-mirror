@@ -238,21 +238,25 @@ void revert_file_from_menu(void)
 
 void save_options_from_menu(void)
 {
+#if HAVE_EXTENSION_LANGUAGE
   FILE *fd;
-  fd = open_snd_init_file();
-  if (fd) 
+#if HAVE_GUILE
+  #define SND_PREFS "~/.snd_prefs_guile"
+#endif
+#if HAVE_RUBY
+  #define SND_PREFS "~/.snd_prefs_ruby"
+#endif
+  fd = FOPEN(SND_PREFS, "w");
+  if (!fd)
     {
-      save_options(fd);
-      snd_fclose(fd, ss->init_file);
-      if (any_selected_sound())
-	report_in_minibuffer(any_selected_sound(), _("saved options in %s"), ss->init_file);
+      snd_error(_("can't write %s: %s"), SND_PREFS, snd_io_strerror());
+      return;
     }
-  else
-    {
-      snd_error(_("save options in %s: %s"),
-		ss->init_file,
-		snd_io_strerror());
-    }
+  save_options(fd);
+  snd_fclose(fd, SND_PREFS);
+  if (any_selected_sound())
+    report_in_minibuffer(any_selected_sound(), _("saved options in %s"), SND_PREFS);
+#endif
 }
 
 static bool save_state_error_p = false;
@@ -473,6 +477,3 @@ void g_init_menu(void)
   XEN_DEFINE_PROCEDURE(S_remove_from_menu,  gl_remove_from_menu_w,  2, 0, 0, H_remove_from_menu);
   XEN_DEFINE_PROCEDURE(S_main_menu,         g_main_menu_w,          1, 0, 0, H_main_menu);
 }
-
-/* placeholder... */
-void start_preferences_menu(void) {}

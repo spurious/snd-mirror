@@ -3714,7 +3714,7 @@ void raw_data_dialog_to_file_info(const char *filename, char *title, char *info,
 }
 
 
-/* ---------------- POST-IT MONOLOG ---------------- */
+/* ---------------- INFO MONOLOG ---------------- */
 
 #define POST_IT_ROWS 12
 #define POST_IT_COLUMNS 56

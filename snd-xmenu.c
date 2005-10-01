@@ -133,7 +133,7 @@ static void options_focus_active_callback(Widget w, XtPointer info, XtPointer Da
 #if HAVE_EXTENSION_LANGUAGE
 static void options_save_state_callback(Widget w, XtPointer info, XtPointer context) {save_state_from_menu();}
 #endif
-static void options_preferences_callback(Widget w, XtPointer info, XtPointer context) {start_preferences_menu();}
+static void options_preferences_callback(Widget w, XtPointer info, XtPointer context) {start_preferences_dialog();}
 
 
 
@@ -579,7 +579,6 @@ Widget add_menu(void)
 
   options_preferences_menu = XtCreateManagedWidget(_("Preferences"), xmPushButtonWidgetClass, options_menu, main_args, main_n);
   XtAddCallback(options_preferences_menu, XmNactivateCallback, options_preferences_callback, NULL);
-  XtSetSensitive(options_preferences_menu, false);
 
 
   /* HELP MENU */

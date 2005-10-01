@@ -415,6 +415,7 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+3-Oct:   snd-g|xprefs.c, preferences-dialog function.\n\
 26-Sep:  save-region-dialog, more buttons.\n\
 15-Sep:  --enable-threads configure switch, and first use thereof (FIR filtering).\n\
 6-Sep:   snd-error is now (throw 'snd-error ...).\n\

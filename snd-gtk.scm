@@ -1026,7 +1026,7 @@ Reverb-feedback sets the scaler on the feedback.
     (gtk_window_set_default_size (GTK_WINDOW variables-dialog) -1 -1)
     (gtk_window_set_resizable (GTK_WINDOW variables-dialog) #t)
     (gtk_widget_realize variables-dialog)
-    (g_signal_connect_closure variables-dialog "delete_event" (lambda (w ev data) (gtk_widget_hide variables-dialog) #t) #f)
+    (g_signal_connect variables-dialog "delete_event" (lambda (w ev data) (gtk_widget_hide variables-dialog) #t) #f)
     (gtk_box_pack_start (GTK_BOX (.action_area (GTK_DIALOG variables-dialog))) dismiss-button #t #t 20)
     (g_signal_connect dismiss-button "clicked" (lambda (w data) (gtk_widget_hide variables-dialog)) #f)
     (gtk_widget_show dismiss-button)
@@ -1101,7 +1101,7 @@ Reverb-feedback sets the scaler on the feedback.
 (define (variable-display var widget)
 
   (define (force-update wid)
-    (gdk_window_invalidate_rect (GDK_WINDOW (.window (GTK_WIDGET wid))) #f #t)
+    (gdk_window_invalidate_rect (GDK_WINDOW (.window (GTK_WIDGET wid))) (list 'GdkRectangle_ 0) #t)
     (gdk_window_process_updates (GDK_WINDOW (.window (GTK_WIDGET wid))) #t))
 
   (define (widget? w) (and (list? w) (= (length w) 2) (eq? (car w) 'GtkWidget_)))
@@ -1129,7 +1129,7 @@ Reverb-feedback sets the scaler on the feedback.
 		  ;; "thermometer"
 		  (let ((y0 (cadr widget))
 			(y1 (caddr widget)))
-		    (display (max 0.0 (min 1.0 (/ (- var y0) (- y1 y0)))))
+;		    (display (max 0.0 (min 1.0 (/ (- var y0) (- y1 y0)))))
 		    ;; (define wid (make-variable-display "do-loop" "i*2" 'scale))
 		    (gtk_progress_bar_set_fraction 
 		     (GTK_PROGRESS_BAR (car widget))

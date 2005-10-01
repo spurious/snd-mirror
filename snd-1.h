@@ -609,10 +609,7 @@ char **help_name_to_xrefs(const char *name);
 
 void reflect_file_revert_in_label (snd_info *sp);
 void set_menu_label(widget_t w, const char *label);
-
 void g_init_menu(void);
-
-void start_preferences_menu(void); /* temporary location I hope */
 
 
 /* -------- snd-main.c -------- */
@@ -626,8 +623,7 @@ void close_save_sound_block(FILE *fd);
 bool snd_exit_cleanly(bool force_exit);
 void sound_not_current(snd_info *sp, void *dat);
 void set_init_filename(const char *filename);
-FILE *open_snd_init_file (void);
-void save_state (char *save_state_name);
+void save_state(const char *save_state_name);
 void global_control_panel_state(void);
 int handle_next_startup_arg(int auto_open_ctr, char **auto_open_file_names, bool with_title, int args);
 

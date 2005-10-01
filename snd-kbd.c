@@ -2198,17 +2198,9 @@ static XEN g_save_macros(XEN file)
   #define H_save_macros "(" S_save_macros " (file \"~/.snd\")): save keyboard macros file"
   FILE *fd = NULL;
   char *name;
-  XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(file), file, XEN_ONLY_ARG, S_save_macros, "a string");
-  if (XEN_STRING_P(file))
-    {
-      name = XEN_TO_C_STRING(file);
-      fd = FOPEN(name, "a");
-    }
-  else 
-    {
-      name = "init file";
-      fd = open_snd_init_file();
-    }
+  XEN_ASSERT_TYPE(XEN_STRING_P(file), file, XEN_ONLY_ARG, S_save_macros, "a string");
+  name = XEN_TO_C_STRING(file);
+  fd = FOPEN(name, "a");
   if (fd) 
     {
       save_macro_state(fd);
@@ -2334,7 +2326,7 @@ XEN_ARGIFY_3(g_key_binding_w, g_key_binding)
 XEN_ARGIFY_5(g_bind_key_w, g_bind_key)
 XEN_ARGIFY_3(g_unbind_key_w, g_unbind_key)
 XEN_ARGIFY_4(g_key_w, g_key)
-XEN_ARGIFY_1(g_save_macros_w, g_save_macros)
+XEN_NARGIFY_1(g_save_macros_w, g_save_macros)
 XEN_NARGIFY_0(g_control_g_x_w, g_control_g_x)
 XEN_ARGIFY_1(g_clear_minibuffer_w, g_clear_minibuffer)
 XEN_ARGIFY_3(g_report_in_minibuffer_w, g_report_in_minibuffer)
@@ -2371,7 +2363,7 @@ void g_init_kbd(void)
   XEN_DEFINE_PROCEDURE(S_bind_key,               g_bind_key_w,               3, 2, 0, H_bind_key);
   XEN_DEFINE_PROCEDURE(S_unbind_key,             g_unbind_key_w,             2, 1, 0, H_unbind_key);
   XEN_DEFINE_PROCEDURE(S_key,                    g_key_w,                    2, 2, 0, H_key);
-  XEN_DEFINE_PROCEDURE(S_save_macros,            g_save_macros_w,            0, 1, 0, H_save_macros);
+  XEN_DEFINE_PROCEDURE(S_save_macros,            g_save_macros_w,            1, 0, 0, H_save_macros);
   XEN_DEFINE_PROCEDURE(S_c_g_x,                  g_control_g_x_w,            0, 0, 0, H_control_g_x);  
   XEN_DEFINE_PROCEDURE(S_clear_minibuffer,       g_clear_minibuffer_w,       0, 1, 0, H_clear_minibuffer);
   XEN_DEFINE_PROCEDURE(S_report_in_minibuffer,   g_report_in_minibuffer_w,   1, 2, 0, H_report_in_minibuffer);

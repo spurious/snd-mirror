@@ -1,54 +1,62 @@
 ;;; Snd tests
 ;;;
-;;;  test 0: constants                          [413]
-;;;  test 1: defaults                           [983]
-;;;  test 2: headers                            [1183]
-;;;  test 3: variables                          [1487]
-;;;  test 4: sndlib                             [1951]
-;;;  test 5: simple overall checks              [3769]
-;;;  test 6: vcts                               [11139]
-;;;  test 7: colors                             [11449]
-;;;  test 8: clm                                [11951]
-;;;  test 9: mix                                [19410]
-;;;  test 10: marks                             [22468]
-;;;  test 11: dialogs                           [23171]
-;;;  test 12: extensions                        [23535]
-;;;  test 13: menus, edit lists, hooks, etc     [23954]
-;;;  test 14: all together now                  [25295]
-;;;  test 15: chan-local vars                   [26360]
-;;;  test 16: regularized funcs                 [27620]
-;;;  test 17: dialogs and graphics              [31986]
-;;;  test 18: enved                             [32061]
-;;;  test 19: save and restore                  [32081]
-;;;  test 20: transforms                        [33562]
-;;;  test 21: new stuff                         [35223]
-;;;  test 22: run                               [36099]
-;;;  test 23: with-sound                        [41600]
-;;;  test 24: user-interface                    [42604]
-;;;  test 25: X/Xt/Xm                           [45681]
-;;;  test 26: Gtk                               [50175]
-;;;  test 27: GL                                [54165]
-;;;  test 28: errors                            [54275]
-;;;  test all done                              [56365]
+;;;  test 0: constants                          [434]
+;;;  test 1: defaults                           [1004]
+;;;  test 2: headers                            [1204]
+;;;  test 3: variables                          [1508]
+;;;  test 4: sndlib                             [1972]
+;;;  test 5: simple overall checks              [3797]
+;;;  test 6: vcts                               [11167]
+;;;  test 7: colors                             [11477]
+;;;  test 8: clm                                [11979]
+;;;  test 9: mix                                [19438]
+;;;  test 10: marks                             [22510]
+;;;  test 11: dialogs                           [23213]
+;;;  test 12: extensions                        [23578]
+;;;  test 13: menus, edit lists, hooks, etc     [24006]
+;;;  test 14: all together now                  [25397]
+;;;  test 15: chan-local vars                   [26462]
+;;;  test 16: regularized funcs                 [27722]
+;;;  test 17: dialogs and graphics              [32088]
+;;;  test 18: enved                             [32163]
+;;;  test 19: save and restore                  [32183]
+;;;  test 20: transforms                        [33664]
+;;;  test 21: new stuff                         [35325]
+;;;  test 22: run                               [36201]
+;;;  test 23: with-sound                        [41702]
+;;;  test 24: user-interface                    [42709]
+;;;  test 25: X/Xt/Xm                           [45782]
+;;;  test 26: Gtk                               [50295]
+;;;  test 27: GL                                [54285]
+;;;  test 28: errors                            [54395]
+;;;  test all done                              [56490]
 ;;;
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 ;;; need all html example code in autotests
 ;;; need some way to check that graphs are actually drawn (region dialog, oscope etc) and sounds played correctly
 
-(use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
+;;; TODO: major coverage missing in view-files
+;;; TODO: click all help buttons to replace old (flakey) cases
 
-;;; TODO: update browser tests (remove->unlist etc)
+(use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
 (define original-save-dir (or (save-dir) "/zap/snd"))
 (define original-temp-dir (or (temp-dir) "/zap/tmp"))
 
 ;;; clear out old junk!
-(if (file-exists? original-save-dir) (system (format #f "rm ~A/snd_*" original-save-dir)))
-(if (file-exists? original-temp-dir) (system (format #f "rm ~A/snd_*" original-temp-dir)))
+(if (file-exists? original-save-dir) 
+    (system (format #f "rm ~A/snd_*" original-save-dir)))
+(if (file-exists? original-temp-dir) 
+    (system (format #f "rm ~A/snd_*" original-temp-dir)))
 (if (file-exists? "/tmp")
     (begin ; -noinit possibly
       (system "rm /tmp/snd_*")
-      (system "rm /tmp/file*.snd")))
+      (system "rm /tmp/*.snd")))
+(if (file-exists? "/var/tmp")
+    (begin ; -noinit possibly
+      (system "rm /var/tmp/snd_*")
+      (system "rm /var/tmp/*.snd")))
+(system "rm core*")
 
 
 (define (snd-display . args)
@@ -103,7 +111,7 @@
 ;(setlocale LC_ALL "de_DE")
 
 (define tests 1)
-(define keep-going #t)
+(define keep-going #f)
 (define all-args #f) ; huge arg testing
 (define with-big-file #t)
 
@@ -42419,7 +42427,8 @@ EDITS: 1
       (let ((o2 (optkey-4 1 3 4 5)))
 	(if (not (equal? o2 (list 1 3 4 5))) (snd-display ";optkey-4 3: ~A 2" o2)))
       
-      (if (and (provided? 'snd-motif) ; TODO: these are in snd-gtk I think -- add to test 23 somehow
+      (if (and (or (provided? 'snd-motif)
+		   (provided? 'snd-gtk))
 	       (defined? 'variable-display))
 	  (let ((wid1 (make-variable-display "do-loop" "i*1" 'text))
 		(wid2 (make-variable-display "do-loop" "i*2" 'scale '(-1.0 1.0)))
@@ -42430,7 +42439,9 @@ EDITS: 1
 	      (variable-display (variable-display (* (variable-display (sin (* (variable-display i wid1) .1)) wid3) .5) wid2) wid4))
 	    (let ((tag (catch #t (lambda () (set! (sample 0 (car wid3) 0) .5)) (lambda args (car args)))))
 	      (if (> (edit-position (car wid3) 0) 0) (snd-display ";edited variable graph? ~A ~A" tag (edit-position (car wid3) 0))))
-	    (XtUnmanageChild variables-dialog)))
+	    (if (provided? 'snd-motif)
+		(XtUnmanageChild variables-dialog)
+		(gtk_widget_hide variables-dialog))))
 
       (if (not (= *clm-srate* (default-output-srate))) (snd-display ";*clm-srate*: ~A ~A" *clm-srate* (default-output-srate)))
       (if (not (= *clm-channels* (default-output-chans))) (snd-display ";*clm-channels*: ~A ~A" *clm-channels* (default-output-channels)))
@@ -51004,8 +51015,8 @@ EDITS: 1
 	      (if _gboolean20 (snd-display ";WIDGET APP PAINTABLE"))
 	      (if _gboolean21 (snd-display ";WIDGET RECEIVES DEFAULT"))
 	      (if (not _gboolean22) (snd-display ";WIDGET DOUBLE BUFFERED"))
-	      (pango_attr_list_ref _PangoAttrList_)
-	      (pango_attr_list_unref _PangoAttrList_)
+;	      (pango_attr_list_ref _PangoAttrList_)
+;	      (pango_attr_list_unref _PangoAttrList_)
 	      (gtk_widget_ref _GtkWidget_)
 	      (gtk_widget_unref _GtkWidget_)
 	      (gtk_label_set_text _GtkLabel_ "another label")
@@ -53026,8 +53037,8 @@ EDITS: 1
 ;		    (gdk_pango_context_set_colormap _PangoContext_ (gdk_colormap_get_system))
 		    (pango_font_description_unset_fields _PangoFontDescription_ _PangoFontMask)
 		    (pango_layout_context_changed _PangoLayout_)
-		    (pango_layout_line_ref _PangoLayoutLine_)
-		    (pango_layout_line_unref _PangoLayoutLine_)
+;		    (pango_layout_line_ref _PangoLayoutLine_)
+;		    (pango_layout_line_unref _PangoLayoutLine_)
 		    (pango_font_description_merge _PangoFontDescription_ _PangoFontDescription_2 #f)
 		    (pango_font_description_merge_static _PangoFontDescription_ _PangoFontDescription_2 #f)
 		    (pango_attribute_destroy _PangoAttribute_4)
@@ -53542,8 +53553,10 @@ EDITS: 1
 	      gdk_keyval_is_upper gdk_keyval_name gdk_keyval_to_lower gdk_keyval_to_unicode gdk_keyval_to_upper
 	      gdk_line_style_get_type gdk_list_visuals gdk_modifier_type_get_type gdk_notify_startup_complete gdk_notify_type_get_type
 	      gdk_overlap_type_get_type gdk_pango_attr_embossed_new gdk_pango_attr_stipple_new gdk_pango_context_get gdk_pango_layout_get_clip_region
-	      gdk_pango_layout_line_get_clip_region gdk_pango_renderer_get_default gdk_pango_renderer_get_type gdk_pango_renderer_new gdk_pango_renderer_set_drawable
-	      gdk_pango_renderer_set_gc gdk_pango_renderer_set_override_color gdk_pango_renderer_set_stipple gdk_pixbuf_add_alpha gdk_pixbuf_alpha_mode_get_type
+	      gdk_pango_layout_line_get_clip_region gdk_pango_renderer_get_default 
+	      gdk_pango_renderer_get_type gdk_pango_renderer_new gdk_pango_renderer_set_drawable
+	      gdk_pango_renderer_set_gc gdk_pango_renderer_set_override_color 
+	      gdk_pango_renderer_set_stipple gdk_pixbuf_add_alpha gdk_pixbuf_alpha_mode_get_type
 	      gdk_pixbuf_animation_get_height gdk_pixbuf_animation_get_iter gdk_pixbuf_animation_get_static_image 
 	      gdk_pixbuf_animation_get_type gdk_pixbuf_animation_get_width
 	      gdk_pixbuf_animation_is_static_image gdk_pixbuf_animation_iter_advance gdk_pixbuf_animation_iter_get_delay_time 
@@ -53579,7 +53592,8 @@ EDITS: 1
 	      gdk_status_get_type gdk_subwindow_mode_get_type gdk_unicode_to_keyval gdk_visibility_state_get_type gdk_visual_get_best
 	      gdk_visual_get_best_depth gdk_visual_get_best_type gdk_visual_get_best_with_both gdk_visual_get_best_with_depth gdk_visual_get_best_with_type
 	      gdk_visual_get_system gdk_visual_get_type gdk_visual_type_get_type gdk_window_add_filter gdk_window_at_pointer
-	      gdk_window_attributes_type_get_type gdk_window_begin_move_drag gdk_window_begin_paint_rect gdk_window_begin_paint_region gdk_window_begin_resize_drag
+	      gdk_window_attributes_type_get_type gdk_window_begin_move_drag 
+	      gdk_window_begin_paint_rect gdk_window_begin_paint_region gdk_window_begin_resize_drag
 	      gdk_window_class_get_type gdk_window_clear gdk_window_clear_area gdk_window_clear_area_e gdk_window_configure_finished
 	      gdk_window_constrain_size gdk_window_deiconify gdk_window_destroy gdk_window_edge_get_type gdk_window_enable_synchronized_configure
 	      gdk_window_end_paint gdk_window_focus gdk_window_foreign_new gdk_window_freeze_updates gdk_window_get_children
@@ -53599,11 +53613,13 @@ EDITS: 1
 	      gdk_window_set_user_data gdk_window_shape_combine_mask gdk_window_shape_combine_region gdk_window_show gdk_window_show_unraised
 	      gdk_window_state_get_type gdk_window_stick gdk_window_thaw_updates gdk_window_type_get_type gdk_window_type_hint_get_type
 	      gdk_window_unmaximize gdk_window_unstick gdk_window_withdraw gdk_wm_decoration_get_type gdk_wm_function_get_type
-	      gtk_about_dialog_get_artists gtk_about_dialog_get_authors gtk_about_dialog_get_comments gtk_about_dialog_get_copyright gtk_about_dialog_get_documenters
+	      gtk_about_dialog_get_artists gtk_about_dialog_get_authors 
+	      gtk_about_dialog_get_comments gtk_about_dialog_get_copyright gtk_about_dialog_get_documenters
 	      gtk_about_dialog_get_license gtk_about_dialog_get_logo gtk_about_dialog_get_logo_icon_name gtk_about_dialog_get_name 
 	      gtk_about_dialog_get_translator_credits
 	      gtk_about_dialog_get_type gtk_about_dialog_get_version gtk_about_dialog_get_website gtk_about_dialog_get_website_label gtk_about_dialog_new
-	      gtk_about_dialog_set_artists gtk_about_dialog_set_authors gtk_about_dialog_set_comments gtk_about_dialog_set_copyright gtk_about_dialog_set_documenters
+	      gtk_about_dialog_set_artists gtk_about_dialog_set_authors gtk_about_dialog_set_comments 
+	      gtk_about_dialog_set_copyright gtk_about_dialog_set_documenters
 	      gtk_about_dialog_set_license gtk_about_dialog_set_logo gtk_about_dialog_set_logo_icon_name gtk_about_dialog_set_name 
 	      gtk_about_dialog_set_translator_credits
 	      gtk_about_dialog_set_version gtk_about_dialog_set_website gtk_about_dialog_set_website_label gtk_accel_group_activate gtk_accel_group_connect
@@ -53641,8 +53657,10 @@ EDITS: 1
 	      gtk_calendar_select_month gtk_calendar_set_display_options gtk_calendar_unmark_day gtk_cell_editable_editing_done
 	      gtk_cell_editable_get_type gtk_cell_editable_remove_widget gtk_cell_editable_start_editing gtk_cell_layout_add_attribute gtk_cell_layout_clear
 	      gtk_cell_layout_clear_attributes gtk_cell_layout_get_type gtk_cell_layout_pack_end gtk_cell_layout_pack_start gtk_cell_layout_reorder
-	      gtk_cell_layout_set_attributes gtk_cell_layout_set_cell_data_func gtk_cell_renderer_activate gtk_cell_renderer_combo_get_type gtk_cell_renderer_combo_new
-	      gtk_cell_renderer_get_fixed_size gtk_cell_renderer_get_size gtk_cell_renderer_get_type gtk_cell_renderer_pixbuf_get_type gtk_cell_renderer_pixbuf_new
+	      gtk_cell_layout_set_attributes gtk_cell_layout_set_cell_data_func 
+	      gtk_cell_renderer_activate gtk_cell_renderer_combo_get_type gtk_cell_renderer_combo_new
+	      gtk_cell_renderer_get_fixed_size gtk_cell_renderer_get_size gtk_cell_renderer_get_type 
+	      gtk_cell_renderer_pixbuf_get_type gtk_cell_renderer_pixbuf_new
 	      gtk_cell_renderer_progress_get_type gtk_cell_renderer_progress_new gtk_cell_renderer_render 
 	      gtk_cell_renderer_set_fixed_size gtk_cell_renderer_start_editing
 	      gtk_cell_renderer_text_get_type gtk_cell_renderer_text_new gtk_cell_renderer_text_set_fixed_height_from_font 
@@ -53650,11 +53668,13 @@ EDITS: 1
 	      gtk_cell_renderer_toggle_get_type gtk_cell_renderer_toggle_new gtk_cell_renderer_toggle_set_active 
 	      gtk_cell_renderer_toggle_set_radio gtk_cell_view_get_cell_renderers
 	      gtk_cell_view_get_displayed_row gtk_cell_view_get_size_of_row gtk_cell_view_get_type gtk_cell_view_new gtk_cell_view_new_with_markup
-	      gtk_cell_view_new_with_pixbuf gtk_cell_view_new_with_text gtk_cell_view_set_background_color gtk_cell_view_set_displayed_row gtk_cell_view_set_model
+	      gtk_cell_view_new_with_pixbuf gtk_cell_view_new_with_text 
+	      gtk_cell_view_set_background_color gtk_cell_view_set_displayed_row gtk_cell_view_set_model
 	      gtk_check_button_get_type gtk_check_button_new gtk_check_button_new_with_mnemonic gtk_check_menu_item_get_active
 	      gtk_check_menu_item_get_draw_as_radio gtk_check_menu_item_get_inconsistent gtk_check_menu_item_get_type 
 	      gtk_check_menu_item_new gtk_check_menu_item_new_with_mnemonic
-	      gtk_check_menu_item_set_active gtk_check_menu_item_set_draw_as_radio gtk_check_menu_item_set_inconsistent gtk_check_menu_item_toggled gtk_check_version
+	      gtk_check_menu_item_set_active gtk_check_menu_item_set_draw_as_radio 
+	      gtk_check_menu_item_set_inconsistent gtk_check_menu_item_toggled gtk_check_version
 	      gtk_clipboard_clear gtk_clipboard_get gtk_clipboard_get_display gtk_clipboard_get_for_display gtk_clipboard_get_owner
 	      gtk_clipboard_request_contents gtk_clipboard_request_image gtk_clipboard_request_targets gtk_clipboard_request_text gtk_clipboard_set_can_store
 	      gtk_clipboard_set_image gtk_clipboard_set_text gtk_clipboard_set_with_data gtk_clipboard_store gtk_clipboard_wait_for_contents
@@ -53691,12 +53711,14 @@ EDITS: 1
 	      gtk_drag_dest_find_target gtk_drag_dest_get_target_list gtk_drag_dest_set gtk_drag_dest_set_proxy gtk_drag_dest_set_target_list
 	      gtk_drag_dest_unset gtk_drag_finish gtk_drag_get_data gtk_drag_get_source_widget gtk_drag_highlight
 	      gtk_drag_set_icon_default gtk_drag_set_icon_pixbuf gtk_drag_set_icon_pixmap gtk_drag_set_icon_stock gtk_drag_set_icon_widget
-	      gtk_drag_source_add_image_targets gtk_drag_source_add_text_targets gtk_drag_source_add_uri_targets gtk_drag_source_get_target_list gtk_drag_source_set
+	      gtk_drag_source_add_image_targets gtk_drag_source_add_text_targets 
+	      gtk_drag_source_add_uri_targets gtk_drag_source_get_target_list gtk_drag_source_set
 	      gtk_drag_source_set_icon gtk_drag_source_set_icon_pixbuf gtk_drag_source_set_icon_stock gtk_drag_source_set_target_list gtk_drag_source_unset
 	      gtk_drag_unhighlight gtk_drawing_area_get_type gtk_drawing_area_new gtk_editable_copy_clipboard gtk_editable_cut_clipboard
 	      gtk_editable_delete_selection gtk_editable_delete_text gtk_editable_get_chars gtk_editable_get_editable gtk_editable_get_position
 	      gtk_editable_get_selection_bounds gtk_editable_get_type gtk_editable_insert_text gtk_editable_paste_clipboard gtk_editable_select_region
-	      gtk_editable_set_editable gtk_editable_set_position gtk_entry_completion_complete gtk_entry_completion_delete_action gtk_entry_completion_get_entry
+	      gtk_editable_set_editable gtk_editable_set_position gtk_entry_completion_complete 
+	      gtk_entry_completion_delete_action gtk_entry_completion_get_entry
 	      gtk_entry_completion_get_inline_completion gtk_entry_completion_get_minimum_key_length 
 	      gtk_entry_completion_get_model gtk_entry_completion_get_popup_completion gtk_entry_completion_get_text_column
 	      gtk_entry_completion_get_type gtk_entry_completion_insert_action_markup 
@@ -53726,7 +53748,8 @@ EDITS: 1
 	      gtk_file_chooser_get_type gtk_file_chooser_get_uri gtk_file_chooser_get_uris gtk_file_chooser_get_use_preview_label gtk_file_chooser_list_filters
 	      gtk_file_chooser_list_shortcut_folder_uris gtk_file_chooser_list_shortcut_folders 
 	      gtk_file_chooser_remove_filter gtk_file_chooser_remove_shortcut_folder gtk_file_chooser_remove_shortcut_folder_uri
-	      gtk_file_chooser_select_all gtk_file_chooser_select_filename gtk_file_chooser_select_uri gtk_file_chooser_set_action gtk_file_chooser_set_current_folder
+	      gtk_file_chooser_select_all gtk_file_chooser_select_filename gtk_file_chooser_select_uri 
+	      gtk_file_chooser_set_action gtk_file_chooser_set_current_folder
 	      gtk_file_chooser_set_current_folder_uri gtk_file_chooser_set_current_name gtk_file_chooser_set_extra_widget 
 	      gtk_file_chooser_set_filename gtk_file_chooser_set_filter
 	      gtk_file_chooser_set_local_only gtk_file_chooser_set_preview_widget 
@@ -53739,14 +53762,17 @@ EDITS: 1
 	      gtk_file_filter_get_type gtk_file_filter_new gtk_file_filter_set_name gtk_file_selection_complete gtk_file_selection_get_filename
 	      gtk_file_selection_get_select_multiple gtk_file_selection_get_selections 
 	      gtk_file_selection_get_type gtk_file_selection_hide_fileop_buttons gtk_file_selection_new
-	      gtk_file_selection_set_filename gtk_file_selection_set_select_multiple gtk_file_selection_show_fileop_buttons gtk_fixed_get_has_window gtk_fixed_get_type
+	      gtk_file_selection_set_filename gtk_file_selection_set_select_multiple 
+	      gtk_file_selection_show_fileop_buttons gtk_fixed_get_has_window gtk_fixed_get_type
 	      gtk_fixed_move gtk_fixed_new gtk_fixed_put gtk_fixed_set_has_window gtk_font_button_get_font_name
 	      gtk_font_button_get_show_size gtk_font_button_get_show_style gtk_font_button_get_title gtk_font_button_get_type gtk_font_button_get_use_font
 	      gtk_font_button_get_use_size gtk_font_button_new gtk_font_button_new_with_font gtk_font_button_set_font_name gtk_font_button_set_show_size
-	      gtk_font_button_set_show_style gtk_font_button_set_title gtk_font_button_set_use_font gtk_font_button_set_use_size gtk_font_selection_dialog_get_font_name
+	      gtk_font_button_set_show_style gtk_font_button_set_title gtk_font_button_set_use_font 
+	      gtk_font_button_set_use_size gtk_font_selection_dialog_get_font_name
 	      gtk_font_selection_dialog_get_preview_text gtk_font_selection_dialog_get_type 
 	      gtk_font_selection_dialog_new gtk_font_selection_dialog_set_font_name gtk_font_selection_dialog_set_preview_text
-	      gtk_font_selection_get_font_name gtk_font_selection_get_preview_text gtk_font_selection_get_type gtk_font_selection_new gtk_font_selection_set_font_name
+	      gtk_font_selection_get_font_name gtk_font_selection_get_preview_text 
+	      gtk_font_selection_get_type gtk_font_selection_new gtk_font_selection_set_font_name
 	      gtk_font_selection_set_preview_text gtk_frame_get_label gtk_frame_get_label_align gtk_frame_get_label_widget gtk_frame_get_shadow_type
 	      gtk_frame_get_type gtk_frame_new gtk_frame_set_label gtk_frame_set_label_align gtk_frame_set_label_widget
 	      gtk_frame_set_shadow_type gtk_gamma_curve_get_type gtk_gamma_curve_new gtk_gc_get gtk_gc_release
@@ -53764,22 +53790,30 @@ EDITS: 1
 	      gtk_icon_set_copy gtk_icon_set_get_sizes gtk_icon_set_get_type gtk_icon_set_new gtk_icon_set_new_from_pixbuf
 	      gtk_icon_set_ref gtk_icon_set_render_icon gtk_icon_set_unref gtk_icon_size_get_name gtk_icon_size_lookup
 	      gtk_icon_size_register gtk_icon_size_register_alias gtk_icon_source_copy gtk_icon_source_free gtk_icon_source_get_direction
-	      gtk_icon_source_get_direction_wildcarded gtk_icon_source_get_filename gtk_icon_source_get_icon_name gtk_icon_source_get_pixbuf gtk_icon_source_get_size
+	      gtk_icon_source_get_direction_wildcarded gtk_icon_source_get_filename 
+	      gtk_icon_source_get_icon_name gtk_icon_source_get_pixbuf gtk_icon_source_get_size
 	      gtk_icon_source_get_size_wildcarded gtk_icon_source_get_state gtk_icon_source_get_state_wildcarded gtk_icon_source_get_type gtk_icon_source_new
-	      gtk_icon_source_set_direction gtk_icon_source_set_direction_wildcarded gtk_icon_source_set_filename gtk_icon_source_set_pixbuf gtk_icon_source_set_size
+	      gtk_icon_source_set_direction gtk_icon_source_set_direction_wildcarded 
+	      gtk_icon_source_set_filename gtk_icon_source_set_pixbuf gtk_icon_source_set_size
 	      gtk_icon_source_set_size_wildcarded gtk_icon_source_set_state gtk_icon_source_set_state_wildcarded 
 	      gtk_icon_theme_add_builtin_icon gtk_icon_theme_append_search_path
-	      gtk_icon_theme_get_default gtk_icon_theme_get_example_icon_name gtk_icon_theme_get_for_screen gtk_icon_theme_get_icon_sizes gtk_icon_theme_get_search_path
+	      gtk_icon_theme_get_default gtk_icon_theme_get_example_icon_name 
+	      gtk_icon_theme_get_for_screen gtk_icon_theme_get_icon_sizes gtk_icon_theme_get_search_path
 	      gtk_icon_theme_get_type gtk_icon_theme_has_icon gtk_icon_theme_list_icons gtk_icon_theme_load_icon gtk_icon_theme_lookup_icon
 	      gtk_icon_theme_new gtk_icon_theme_prepend_search_path gtk_icon_theme_rescan_if_needed gtk_icon_theme_set_custom_theme gtk_icon_theme_set_screen
-	      gtk_icon_view_get_markup_column gtk_icon_view_get_model gtk_icon_view_get_orientation gtk_icon_view_get_path_at_pos gtk_icon_view_get_pixbuf_column
-	      gtk_icon_view_get_selected_items gtk_icon_view_get_selection_mode gtk_icon_view_get_text_column gtk_icon_view_get_type gtk_icon_view_item_activated
+	      gtk_icon_view_get_markup_column gtk_icon_view_get_model gtk_icon_view_get_orientation 
+	      gtk_icon_view_get_path_at_pos gtk_icon_view_get_pixbuf_column
+	      gtk_icon_view_get_selected_items gtk_icon_view_get_selection_mode 
+	      gtk_icon_view_get_text_column gtk_icon_view_get_type gtk_icon_view_item_activated
 	      gtk_icon_view_new gtk_icon_view_new_with_model gtk_icon_view_path_is_selected gtk_icon_view_select_all gtk_icon_view_select_path
-	      gtk_icon_view_selected_foreach gtk_icon_view_set_markup_column gtk_icon_view_set_model gtk_icon_view_set_orientation gtk_icon_view_set_pixbuf_column
+	      gtk_icon_view_selected_foreach gtk_icon_view_set_markup_column 
+	      gtk_icon_view_set_model gtk_icon_view_set_orientation gtk_icon_view_set_pixbuf_column
 	      gtk_icon_view_set_selection_mode gtk_icon_view_set_text_column gtk_icon_view_unselect_all gtk_icon_view_unselect_path gtk_identifier_get_type
-	      gtk_im_context_delete_surrounding gtk_im_context_filter_keypress gtk_im_context_focus_in gtk_im_context_focus_out gtk_im_context_get_preedit_string
+	      gtk_im_context_delete_surrounding gtk_im_context_filter_keypress 
+	      gtk_im_context_focus_in gtk_im_context_focus_out gtk_im_context_get_preedit_string
 	      gtk_im_context_get_surrounding gtk_im_context_get_type gtk_im_context_reset gtk_im_context_set_client_window gtk_im_context_set_cursor_location
-	      gtk_im_context_set_surrounding gtk_im_context_set_use_preedit gtk_im_context_simple_add_table gtk_im_context_simple_get_type gtk_im_context_simple_new
+	      gtk_im_context_set_surrounding gtk_im_context_set_use_preedit 
+	      gtk_im_context_simple_add_table gtk_im_context_simple_get_type gtk_im_context_simple_new
 	      gtk_im_multicontext_append_menuitems gtk_im_multicontext_get_type gtk_im_multicontext_new gtk_image_get_animation gtk_image_get_icon_set
 	      gtk_image_get_image gtk_image_get_pixbuf gtk_image_get_pixel_size gtk_image_get_pixmap gtk_image_get_stock
 	      gtk_image_get_storage_type gtk_image_get_type gtk_image_menu_item_get_image gtk_image_menu_item_get_type gtk_image_menu_item_new
@@ -53829,7 +53863,8 @@ EDITS: 1
 	      gtk_paint_tab gtk_paint_vline gtk_paned_add1 gtk_paned_add2 gtk_paned_get_child1
 	      gtk_paned_get_child2 gtk_paned_get_position gtk_paned_get_type gtk_paned_pack1 gtk_paned_pack2
 	      gtk_paned_set_position gtk_plug_construct gtk_plug_get_id gtk_plug_get_type gtk_plug_new
-	      gtk_progress_bar_get_ellipsize gtk_progress_bar_get_fraction gtk_progress_bar_get_orientation gtk_progress_bar_get_pulse_step gtk_progress_bar_get_text
+	      gtk_progress_bar_get_ellipsize gtk_progress_bar_get_fraction 
+	      gtk_progress_bar_get_orientation gtk_progress_bar_get_pulse_step gtk_progress_bar_get_text
 	      gtk_progress_bar_get_type gtk_progress_bar_new gtk_progress_bar_pulse gtk_progress_bar_set_ellipsize gtk_progress_bar_set_fraction
 	      gtk_progress_bar_set_orientation gtk_progress_bar_set_pulse_step gtk_progress_bar_set_text gtk_propagate_event gtk_radio_action_get_current_value
 	      gtk_radio_action_get_group gtk_radio_action_get_type gtk_radio_action_new gtk_radio_action_set_group gtk_radio_button_get_group
@@ -53841,7 +53876,8 @@ EDITS: 1
 	      gtk_radio_menu_item_new_with_mnemonic gtk_radio_menu_item_new_with_mnemonic_from_widget gtk_radio_menu_item_set_group
 	      gtk_radio_tool_button_get_group gtk_radio_tool_button_get_type gtk_radio_tool_button_new 
 	      gtk_radio_tool_button_new_from_stock gtk_radio_tool_button_new_from_widget
-	      gtk_radio_tool_button_new_with_stock_from_widget gtk_radio_tool_button_set_group gtk_range_get_adjustment gtk_range_get_inverted gtk_range_get_type
+	      gtk_radio_tool_button_new_with_stock_from_widget gtk_radio_tool_button_set_group 
+	      gtk_range_get_adjustment gtk_range_get_inverted gtk_range_get_type
 	      gtk_range_get_update_policy gtk_range_get_value gtk_range_set_adjustment gtk_range_set_increments gtk_range_set_inverted
 	      gtk_range_set_range gtk_range_set_update_policy gtk_range_set_value gtk_rc_add_default_file gtk_rc_get_default_files
 	      gtk_rc_get_im_module_file gtk_rc_get_im_module_path gtk_rc_get_module_dir gtk_rc_get_style gtk_rc_get_theme_dir
@@ -53861,14 +53897,16 @@ EDITS: 1
 	      gtk_selection_data_get_type gtk_selection_data_get_uris gtk_selection_data_set gtk_selection_data_set_pixbuf gtk_selection_data_set_text
 	      gtk_selection_data_set_uris gtk_selection_data_targets_include_image 
 	      gtk_selection_data_targets_include_text gtk_selection_owner_set gtk_selection_remove_all
-	      gtk_separator_get_type gtk_separator_menu_item_get_type gtk_separator_menu_item_new gtk_separator_tool_item_get_draw gtk_separator_tool_item_get_type
+	      gtk_separator_get_type gtk_separator_menu_item_get_type 
+	      gtk_separator_menu_item_new gtk_separator_tool_item_get_draw gtk_separator_tool_item_get_type
 	      gtk_separator_tool_item_new gtk_separator_tool_item_set_draw gtk_set_locale gtk_size_group_add_widget gtk_size_group_get_mode
 	      gtk_size_group_get_type gtk_size_group_new gtk_size_group_remove_widget gtk_size_group_set_mode gtk_socket_add_id
 	      gtk_socket_get_id gtk_socket_get_type gtk_socket_new gtk_spin_button_configure gtk_spin_button_get_adjustment
 	      gtk_spin_button_get_digits gtk_spin_button_get_increments gtk_spin_button_get_numeric gtk_spin_button_get_range gtk_spin_button_get_snap_to_ticks
 	      gtk_spin_button_get_type gtk_spin_button_get_update_policy gtk_spin_button_get_value gtk_spin_button_get_value_as_int gtk_spin_button_get_wrap
 	      gtk_spin_button_new gtk_spin_button_new_with_range gtk_spin_button_set_adjustment gtk_spin_button_set_digits gtk_spin_button_set_increments
-	      gtk_spin_button_set_numeric gtk_spin_button_set_range gtk_spin_button_set_snap_to_ticks gtk_spin_button_set_update_policy gtk_spin_button_set_value
+	      gtk_spin_button_set_numeric gtk_spin_button_set_range 
+	      gtk_spin_button_set_snap_to_ticks gtk_spin_button_set_update_policy gtk_spin_button_set_value
 	      gtk_spin_button_set_wrap gtk_spin_button_spin gtk_spin_button_update gtk_statusbar_get_context_id gtk_statusbar_get_has_resize_grip
 	      gtk_statusbar_get_type gtk_statusbar_new gtk_statusbar_pop gtk_statusbar_push gtk_statusbar_remove
 	      gtk_statusbar_set_has_resize_grip gtk_stock_add gtk_stock_add_static gtk_stock_item_copy gtk_stock_item_free
@@ -53890,16 +53928,19 @@ EDITS: 1
 	      gtk_text_buffer_get_iter_at_child_anchor gtk_text_buffer_get_iter_at_line
 	      gtk_text_buffer_get_iter_at_line_index gtk_text_buffer_get_iter_at_line_offset 
 	      gtk_text_buffer_get_iter_at_mark gtk_text_buffer_get_iter_at_offset gtk_text_buffer_get_line_count
-	      gtk_text_buffer_get_mark gtk_text_buffer_get_modified gtk_text_buffer_get_selection_bound gtk_text_buffer_get_selection_bounds gtk_text_buffer_get_slice
+	      gtk_text_buffer_get_mark gtk_text_buffer_get_modified 
+	      gtk_text_buffer_get_selection_bound gtk_text_buffer_get_selection_bounds gtk_text_buffer_get_slice
 	      gtk_text_buffer_get_start_iter gtk_text_buffer_get_tag_table gtk_text_buffer_get_text gtk_text_buffer_get_type gtk_text_buffer_insert
 	      gtk_text_buffer_insert_at_cursor gtk_text_buffer_insert_child_anchor gtk_text_buffer_insert_interactive 
 	      gtk_text_buffer_insert_interactive_at_cursor gtk_text_buffer_insert_pixbuf
 	      gtk_text_buffer_insert_range gtk_text_buffer_insert_range_interactive gtk_text_buffer_insert_with_tags 
 	      gtk_text_buffer_insert_with_tags_by_name gtk_text_buffer_move_mark
-	      gtk_text_buffer_move_mark_by_name gtk_text_buffer_new gtk_text_buffer_paste_clipboard gtk_text_buffer_place_cursor gtk_text_buffer_remove_all_tags
+	      gtk_text_buffer_move_mark_by_name gtk_text_buffer_new 
+	      gtk_text_buffer_paste_clipboard gtk_text_buffer_place_cursor gtk_text_buffer_remove_all_tags
 	      gtk_text_buffer_remove_selection_clipboard gtk_text_buffer_remove_tag 
 	      gtk_text_buffer_remove_tag_by_name gtk_text_buffer_select_range gtk_text_buffer_set_modified
-	      gtk_text_buffer_set_text gtk_text_child_anchor_get_deleted gtk_text_child_anchor_get_type gtk_text_child_anchor_get_widgets gtk_text_child_anchor_new
+	      gtk_text_buffer_set_text gtk_text_child_anchor_get_deleted 
+	      gtk_text_child_anchor_get_type gtk_text_child_anchor_get_widgets gtk_text_child_anchor_new
 	      gtk_text_iter_backward_char gtk_text_iter_backward_chars gtk_text_iter_backward_cursor_position 
 	      gtk_text_iter_backward_cursor_positions gtk_text_iter_backward_find_char
 	      gtk_text_iter_backward_line gtk_text_iter_backward_lines gtk_text_iter_backward_search 
@@ -53912,7 +53953,8 @@ EDITS: 1
 	      gtk_text_iter_forward_find_char gtk_text_iter_forward_line gtk_text_iter_forward_lines
 	      gtk_text_iter_forward_search gtk_text_iter_forward_sentence_end gtk_text_iter_forward_sentence_ends 
 	      gtk_text_iter_forward_to_end gtk_text_iter_forward_to_line_end
-	      gtk_text_iter_forward_to_tag_toggle gtk_text_iter_forward_word_end gtk_text_iter_forward_word_ends gtk_text_iter_free gtk_text_iter_get_attributes
+	      gtk_text_iter_forward_to_tag_toggle gtk_text_iter_forward_word_end 
+	      gtk_text_iter_forward_word_ends gtk_text_iter_free gtk_text_iter_get_attributes
 	      gtk_text_iter_get_buffer gtk_text_iter_get_bytes_in_line gtk_text_iter_get_char gtk_text_iter_get_chars_in_line gtk_text_iter_get_child_anchor
 	      gtk_text_iter_get_language gtk_text_iter_get_line gtk_text_iter_get_line_index gtk_text_iter_get_line_offset gtk_text_iter_get_marks
 	      gtk_text_iter_get_offset gtk_text_iter_get_pixbuf gtk_text_iter_get_slice gtk_text_iter_get_tags gtk_text_iter_get_text
@@ -53926,36 +53968,49 @@ EDITS: 1
 	      gtk_text_mark_get_left_gravity gtk_text_mark_get_name gtk_text_mark_get_type gtk_text_mark_get_visible gtk_text_mark_set_visible
 	      gtk_text_tag_event gtk_text_tag_get_priority gtk_text_tag_get_type gtk_text_tag_new gtk_text_tag_set_priority
 	      gtk_text_tag_table_add gtk_text_tag_table_foreach gtk_text_tag_table_get_size gtk_text_tag_table_get_type gtk_text_tag_table_lookup
-	      gtk_text_tag_table_new gtk_text_tag_table_remove gtk_text_view_add_child_at_anchor gtk_text_view_add_child_in_window gtk_text_view_backward_display_line
+	      gtk_text_tag_table_new gtk_text_tag_table_remove 
+	      gtk_text_view_add_child_at_anchor gtk_text_view_add_child_in_window gtk_text_view_backward_display_line
 	      gtk_text_view_backward_display_line_start gtk_text_view_buffer_to_window_coords 
 	      gtk_text_view_forward_display_line gtk_text_view_forward_display_line_end gtk_text_view_get_accepts_tab
 	      gtk_text_view_get_border_window_size gtk_text_view_get_buffer gtk_text_view_get_cursor_visible 
 	      gtk_text_view_get_default_attributes gtk_text_view_get_editable
-	      gtk_text_view_get_indent gtk_text_view_get_iter_at_location gtk_text_view_get_iter_location gtk_text_view_get_justification gtk_text_view_get_left_margin
+	      gtk_text_view_get_indent gtk_text_view_get_iter_at_location 
+	      gtk_text_view_get_iter_location gtk_text_view_get_justification gtk_text_view_get_left_margin
 	      gtk_text_view_get_line_at_y gtk_text_view_get_line_yrange gtk_text_view_get_overwrite 
 	      gtk_text_view_get_pixels_above_lines gtk_text_view_get_pixels_below_lines
 	      gtk_text_view_get_pixels_inside_wrap gtk_text_view_get_right_margin gtk_text_view_get_tabs gtk_text_view_get_type gtk_text_view_get_visible_rect
 	      gtk_text_view_get_window gtk_text_view_get_window_type gtk_text_view_get_wrap_mode gtk_text_view_move_child gtk_text_view_move_mark_onscreen
-	      gtk_text_view_move_visually gtk_text_view_new gtk_text_view_new_with_buffer gtk_text_view_place_cursor_onscreen gtk_text_view_scroll_mark_onscreen
-	      gtk_text_view_scroll_to_iter gtk_text_view_scroll_to_mark gtk_text_view_set_accepts_tab gtk_text_view_set_border_window_size gtk_text_view_set_buffer
-	      gtk_text_view_set_cursor_visible gtk_text_view_set_editable gtk_text_view_set_indent gtk_text_view_set_justification gtk_text_view_set_left_margin
+	      gtk_text_view_move_visually gtk_text_view_new gtk_text_view_new_with_buffer 
+	      gtk_text_view_place_cursor_onscreen gtk_text_view_scroll_mark_onscreen
+	      gtk_text_view_scroll_to_iter gtk_text_view_scroll_to_mark gtk_text_view_set_accepts_tab 
+	      gtk_text_view_set_border_window_size gtk_text_view_set_buffer
+	      gtk_text_view_set_cursor_visible gtk_text_view_set_editable 
+	      gtk_text_view_set_indent gtk_text_view_set_justification gtk_text_view_set_left_margin
 	      gtk_text_view_set_overwrite gtk_text_view_set_pixels_above_lines gtk_text_view_set_pixels_below_lines 
 	      gtk_text_view_set_pixels_inside_wrap gtk_text_view_set_right_margin
-	      gtk_text_view_set_tabs gtk_text_view_set_wrap_mode gtk_text_view_starts_display_line gtk_text_view_window_to_buffer_coords gtk_toggle_action_get_active
-	      gtk_toggle_action_get_draw_as_radio gtk_toggle_action_get_type gtk_toggle_action_new gtk_toggle_action_set_active gtk_toggle_action_set_draw_as_radio
+	      gtk_text_view_set_tabs gtk_text_view_set_wrap_mode gtk_text_view_starts_display_line 
+	      gtk_text_view_window_to_buffer_coords gtk_toggle_action_get_active
+	      gtk_toggle_action_get_draw_as_radio gtk_toggle_action_get_type gtk_toggle_action_new 
+	      gtk_toggle_action_set_active gtk_toggle_action_set_draw_as_radio
 	      gtk_toggle_action_toggled gtk_toggle_button_get_active gtk_toggle_button_get_inconsistent gtk_toggle_button_get_mode gtk_toggle_button_get_type
-	      gtk_toggle_button_new gtk_toggle_button_new_with_mnemonic gtk_toggle_button_set_active gtk_toggle_button_set_inconsistent gtk_toggle_button_set_mode
+	      gtk_toggle_button_new gtk_toggle_button_new_with_mnemonic 
+	      gtk_toggle_button_set_active gtk_toggle_button_set_inconsistent gtk_toggle_button_set_mode
 	      gtk_toggle_button_toggled gtk_toggle_tool_button_get_active gtk_toggle_tool_button_get_type 
 	      gtk_toggle_tool_button_new gtk_toggle_tool_button_new_from_stock
-	      gtk_toggle_tool_button_set_active gtk_tool_button_get_icon_widget gtk_tool_button_get_label gtk_tool_button_get_label_widget gtk_tool_button_get_stock_id
+	      gtk_toggle_tool_button_set_active gtk_tool_button_get_icon_widget gtk_tool_button_get_label 
+	      gtk_tool_button_get_label_widget gtk_tool_button_get_stock_id
 	      gtk_tool_button_get_type gtk_tool_button_get_use_underline gtk_tool_button_new gtk_tool_button_new_from_stock gtk_tool_button_set_icon_widget
-	      gtk_tool_button_set_label gtk_tool_button_set_label_widget gtk_tool_button_set_stock_id gtk_tool_button_set_use_underline gtk_tool_item_get_expand
-	      gtk_tool_item_get_homogeneous gtk_tool_item_get_icon_size gtk_tool_item_get_is_important gtk_tool_item_get_orientation gtk_tool_item_get_proxy_menu_item
+	      gtk_tool_button_set_label gtk_tool_button_set_label_widget 
+	      gtk_tool_button_set_stock_id gtk_tool_button_set_use_underline gtk_tool_item_get_expand
+	      gtk_tool_item_get_homogeneous gtk_tool_item_get_icon_size gtk_tool_item_get_is_important 
+	      gtk_tool_item_get_orientation gtk_tool_item_get_proxy_menu_item
 	      gtk_tool_item_get_relief_style gtk_tool_item_get_toolbar_style gtk_tool_item_get_type 
 	      gtk_tool_item_get_use_drag_window gtk_tool_item_get_visible_horizontal
 	      gtk_tool_item_get_visible_vertical gtk_tool_item_new gtk_tool_item_rebuild_menu gtk_tool_item_retrieve_proxy_menu_item gtk_tool_item_set_expand
-	      gtk_tool_item_set_homogeneous gtk_tool_item_set_is_important gtk_tool_item_set_proxy_menu_item gtk_tool_item_set_tooltip gtk_tool_item_set_use_drag_window
-	      gtk_tool_item_set_visible_horizontal gtk_tool_item_set_visible_vertical gtk_toolbar_get_drop_index gtk_toolbar_get_icon_size gtk_toolbar_get_item_index
+	      gtk_tool_item_set_homogeneous gtk_tool_item_set_is_important 
+	      gtk_tool_item_set_proxy_menu_item gtk_tool_item_set_tooltip gtk_tool_item_set_use_drag_window
+	      gtk_tool_item_set_visible_horizontal gtk_tool_item_set_visible_vertical 
+	      gtk_toolbar_get_drop_index gtk_toolbar_get_icon_size gtk_toolbar_get_item_index
 	      gtk_toolbar_get_n_items gtk_toolbar_get_nth_item gtk_toolbar_get_orientation gtk_toolbar_get_relief_style gtk_toolbar_get_show_arrow
 	      gtk_toolbar_get_style gtk_toolbar_get_tooltips gtk_toolbar_get_type gtk_toolbar_insert gtk_toolbar_new
 	      gtk_toolbar_set_orientation gtk_toolbar_set_show_arrow gtk_toolbar_set_style gtk_toolbar_set_tooltips gtk_toolbar_unset_style
@@ -53966,7 +54021,8 @@ EDITS: 1
 	      gtk_tree_get_row_drag_data gtk_tree_iter_copy gtk_tree_iter_free gtk_tree_iter_get_type gtk_tree_model_filter_clear_cache
 	      gtk_tree_model_filter_convert_child_iter_to_iter gtk_tree_model_filter_convert_child_path_to_path 
 	      gtk_tree_model_filter_convert_iter_to_child_iter gtk_tree_model_filter_convert_path_to_child_path gtk_tree_model_filter_get_model
-	      gtk_tree_model_filter_get_type gtk_tree_model_filter_new gtk_tree_model_filter_refilter gtk_tree_model_filter_set_visible_column gtk_tree_model_foreach
+	      gtk_tree_model_filter_get_type gtk_tree_model_filter_new 
+	      gtk_tree_model_filter_refilter gtk_tree_model_filter_set_visible_column gtk_tree_model_foreach
 	      gtk_tree_model_get_column_type gtk_tree_model_get_flags gtk_tree_model_get_iter gtk_tree_model_get_iter_first gtk_tree_model_get_iter_from_string
 	      gtk_tree_model_get_n_columns gtk_tree_model_get_path gtk_tree_model_get_string_from_iter gtk_tree_model_get_type gtk_tree_model_iter_children
 	      gtk_tree_model_iter_has_child gtk_tree_model_iter_n_children gtk_tree_model_iter_next gtk_tree_model_iter_nth_child gtk_tree_model_iter_parent
@@ -53979,7 +54035,8 @@ EDITS: 1
 	      gtk_tree_path_down gtk_tree_path_free gtk_tree_path_get_depth gtk_tree_path_get_indices gtk_tree_path_get_type
 	      gtk_tree_path_is_ancestor gtk_tree_path_is_descendant gtk_tree_path_new gtk_tree_path_new_first gtk_tree_path_new_from_string
 	      gtk_tree_path_next gtk_tree_path_prepend_index gtk_tree_path_prev gtk_tree_path_to_string gtk_tree_path_up
-	      gtk_tree_row_reference_deleted gtk_tree_row_reference_free gtk_tree_row_reference_get_path gtk_tree_row_reference_inserted gtk_tree_row_reference_new
+	      gtk_tree_row_reference_deleted gtk_tree_row_reference_free 
+	      gtk_tree_row_reference_get_path gtk_tree_row_reference_inserted gtk_tree_row_reference_new
 	      gtk_tree_row_reference_new_proxy gtk_tree_row_reference_reordered gtk_tree_row_reference_valid 
 	      gtk_tree_selection_count_selected_rows gtk_tree_selection_get_mode
 	      gtk_tree_selection_get_selected gtk_tree_selection_get_selected_rows gtk_tree_selection_get_tree_view 
@@ -54016,25 +54073,31 @@ EDITS: 1
 	      gtk_tree_view_column_set_sort_order gtk_tree_view_column_set_spacing
 	      gtk_tree_view_column_set_title gtk_tree_view_column_set_visible gtk_tree_view_column_set_widget 
 	      gtk_tree_view_columns_autosize gtk_tree_view_create_row_drag_icon
-	      gtk_tree_view_enable_model_drag_dest gtk_tree_view_enable_model_drag_source gtk_tree_view_expand_all gtk_tree_view_expand_row gtk_tree_view_expand_to_path
+	      gtk_tree_view_enable_model_drag_dest gtk_tree_view_enable_model_drag_source 
+	      gtk_tree_view_expand_all gtk_tree_view_expand_row gtk_tree_view_expand_to_path
 	      gtk_tree_view_get_background_area gtk_tree_view_get_bin_window gtk_tree_view_get_cell_area gtk_tree_view_get_column gtk_tree_view_get_columns
 	      gtk_tree_view_get_cursor gtk_tree_view_get_dest_row_at_pos gtk_tree_view_get_drag_dest_row gtk_tree_view_get_enable_search
 	      gtk_tree_view_get_expander_column
 	      gtk_tree_view_get_fixed_height_mode gtk_tree_view_get_hadjustment gtk_tree_view_get_headers_visible 
 	      gtk_tree_view_get_hover_expand gtk_tree_view_get_hover_selection
 	      gtk_tree_view_get_model gtk_tree_view_get_path_at_pos gtk_tree_view_get_reorderable gtk_tree_view_get_rules_hint gtk_tree_view_get_search_column
-	      gtk_tree_view_get_search_equal_func gtk_tree_view_get_selection gtk_tree_view_get_type gtk_tree_view_get_vadjustment gtk_tree_view_get_visible_rect
+	      gtk_tree_view_get_search_equal_func gtk_tree_view_get_selection gtk_tree_view_get_type 
+	      gtk_tree_view_get_vadjustment gtk_tree_view_get_visible_rect
 	      gtk_tree_view_insert_column gtk_tree_view_insert_column_with_attributes 
 	      gtk_tree_view_insert_column_with_data_func gtk_tree_view_map_expanded_rows gtk_tree_view_move_column_after
 	      gtk_tree_view_new gtk_tree_view_new_with_model gtk_tree_view_remove_column gtk_tree_view_row_activated gtk_tree_view_row_expanded
-	      gtk_tree_view_scroll_to_cell gtk_tree_view_scroll_to_point gtk_tree_view_set_column_drag_function gtk_tree_view_set_cursor gtk_tree_view_set_drag_dest_row
+	      gtk_tree_view_scroll_to_cell gtk_tree_view_scroll_to_point gtk_tree_view_set_column_drag_function 
+	      gtk_tree_view_set_cursor gtk_tree_view_set_drag_dest_row
 	      gtk_tree_view_set_enable_search gtk_tree_view_set_expander_column gtk_tree_view_set_fixed_height_mode 
 	      gtk_tree_view_set_hadjustment gtk_tree_view_set_headers_clickable
-	      gtk_tree_view_set_headers_visible gtk_tree_view_set_hover_expand gtk_tree_view_set_hover_selection gtk_tree_view_set_model gtk_tree_view_set_reorderable
+	      gtk_tree_view_set_headers_visible gtk_tree_view_set_hover_expand 
+	      gtk_tree_view_set_hover_selection gtk_tree_view_set_model gtk_tree_view_set_reorderable
 	      gtk_tree_view_set_row_separator_func gtk_tree_view_set_rules_hint gtk_tree_view_set_search_column 
 	      gtk_tree_view_set_search_equal_func gtk_tree_view_set_vadjustment
-	      gtk_tree_view_tree_to_widget_coords gtk_tree_view_unset_rows_drag_dest gtk_tree_view_unset_rows_drag_source gtk_tree_view_widget_to_tree_coords gtk_true
-	      gtk_ui_manager_add_ui gtk_ui_manager_add_ui_from_file gtk_ui_manager_add_ui_from_string gtk_ui_manager_ensure_update gtk_ui_manager_get_accel_group
+	      gtk_tree_view_tree_to_widget_coords gtk_tree_view_unset_rows_drag_dest 
+	      gtk_tree_view_unset_rows_drag_source gtk_tree_view_widget_to_tree_coords gtk_true
+	      gtk_ui_manager_add_ui gtk_ui_manager_add_ui_from_file gtk_ui_manager_add_ui_from_string 
+	      gtk_ui_manager_ensure_update gtk_ui_manager_get_accel_group
 	      gtk_ui_manager_get_action gtk_ui_manager_get_action_groups gtk_ui_manager_get_add_tearoffs gtk_ui_manager_get_type gtk_ui_manager_get_ui
 	      gtk_ui_manager_get_widget gtk_ui_manager_insert_action_group gtk_ui_manager_new gtk_ui_manager_new_merge_id gtk_ui_manager_remove_action_group
 	      gtk_ui_manager_remove_ui gtk_ui_manager_set_add_tearoffs gtk_vbox_get_type gtk_vbox_new gtk_vbutton_box_get_type
@@ -54046,7 +54109,8 @@ EDITS: 1
 	      gtk_widget_child_focus gtk_widget_child_notify gtk_widget_class_path gtk_widget_create_pango_context gtk_widget_create_pango_layout
 	      gtk_widget_destroy gtk_widget_destroyed gtk_widget_ensure_style gtk_widget_event gtk_widget_freeze_child_notify
 	      gtk_widget_get_accessible gtk_widget_get_ancestor gtk_widget_get_child_requisition gtk_widget_get_child_visible gtk_widget_get_clipboard
-	      gtk_widget_get_colormap gtk_widget_get_composite_name gtk_widget_get_default_colormap gtk_widget_get_default_direction gtk_widget_get_default_style
+	      gtk_widget_get_colormap gtk_widget_get_composite_name gtk_widget_get_default_colormap 
+	      gtk_widget_get_default_direction gtk_widget_get_default_style
 	      gtk_widget_get_default_visual gtk_widget_get_direction gtk_widget_get_display gtk_widget_get_events gtk_widget_get_extension_events
 	      gtk_widget_get_modifier_style gtk_widget_get_name gtk_widget_get_no_show_all gtk_widget_get_pango_context gtk_widget_get_parent
 	      gtk_widget_get_parent_window gtk_widget_get_pointer gtk_widget_get_root_window gtk_widget_get_screen gtk_widget_get_size_request
@@ -54075,7 +54139,8 @@ EDITS: 1
 	      gtk_window_is_active gtk_window_list_toplevels gtk_window_maximize gtk_window_mnemonic_activate gtk_window_move
 	      gtk_window_new gtk_window_parse_geometry gtk_window_present gtk_window_propagate_key_event gtk_window_remove_accel_group
 	      gtk_window_remove_embedded_xid gtk_window_remove_mnemonic gtk_window_reshow_with_initial_size gtk_window_resize gtk_window_set_accept_focus
-	      gtk_window_set_auto_startup_notification gtk_window_set_decorated gtk_window_set_default gtk_window_set_default_icon gtk_window_set_default_icon_list
+	      gtk_window_set_auto_startup_notification gtk_window_set_decorated gtk_window_set_default 
+	      gtk_window_set_default_icon gtk_window_set_default_icon_list
 	      gtk_window_set_default_icon_name gtk_window_set_default_size gtk_window_set_destroy_with_parent gtk_window_set_focus gtk_window_set_focus_on_map
 	      gtk_window_set_frame_dimensions gtk_window_set_geometry_hints gtk_window_set_gravity gtk_window_set_has_frame gtk_window_set_icon
 	      gtk_window_set_icon_list gtk_window_set_icon_name gtk_window_set_keep_above gtk_window_set_keep_below gtk_window_set_mnemonic_modifier
@@ -54085,7 +54150,8 @@ EDITS: 1
 	      pango_attr_font_desc_new pango_attr_foreground_new pango_attr_iterator_copy pango_attr_iterator_destroy pango_attr_iterator_get
 	      pango_attr_iterator_get_attrs pango_attr_iterator_get_font pango_attr_iterator_next pango_attr_iterator_range pango_attr_language_new
 	      pango_attr_letter_spacing_new pango_attr_list_change pango_attr_list_copy pango_attr_list_filter pango_attr_list_get_iterator
-	      pango_attr_list_get_type pango_attr_list_insert pango_attr_list_insert_before pango_attr_list_new pango_attr_list_ref
+	      pango_attr_list_get_type pango_attr_list_insert pango_attr_list_insert_before pango_attr_list_new 
+              ;pango_attr_list_ref
 	      pango_attr_list_splice pango_attr_list_unref pango_attr_rise_new pango_attr_scale_new pango_attr_shape_new
 	      pango_attr_size_new pango_attr_stretch_new pango_attr_strikethrough_color_new pango_attr_strikethrough_new pango_attr_style_new
 	      pango_attr_type_get_type pango_attr_type_register pango_attr_underline_color_new pango_attr_underline_new pango_attr_variant_new
@@ -54095,12 +54161,14 @@ EDITS: 1
 	      pango_context_load_font pango_context_load_fontset pango_context_set_base_dir pango_context_set_font_description pango_context_set_language
 	      pango_coverage_copy pango_coverage_get pango_coverage_level_get_type pango_coverage_max pango_coverage_new
 	      pango_coverage_ref pango_coverage_set pango_coverage_to_bytes pango_coverage_unref pango_direction_get_type
-	      pango_font_describe pango_font_description_better_match pango_font_description_copy pango_font_description_copy_static pango_font_description_equal
+	      pango_font_describe pango_font_description_better_match pango_font_description_copy 
+	      pango_font_description_copy_static pango_font_description_equal
 	      pango_font_description_free pango_font_description_from_string pango_font_description_get_family 
 	      pango_font_description_get_set_fields pango_font_description_get_size
 	      pango_font_description_get_stretch pango_font_description_get_style pango_font_description_get_type 
 	      pango_font_description_get_variant pango_font_description_get_weight
-	      pango_font_description_hash pango_font_description_merge pango_font_description_merge_static pango_font_description_new pango_font_description_set_family
+	      pango_font_description_hash pango_font_description_merge pango_font_description_merge_static 
+	      pango_font_description_new pango_font_description_set_family
 	      pango_font_description_set_family_static pango_font_description_set_size pango_font_description_set_stretch 
 	      pango_font_description_set_style pango_font_description_set_variant
 	      pango_font_description_set_weight pango_font_description_to_filename pango_font_description_to_string 
@@ -54113,21 +54181,26 @@ EDITS: 1
 	      pango_font_metrics_get_descent pango_font_metrics_get_strikethrough_position 
 	      pango_font_metrics_get_strikethrough_thickness pango_font_metrics_get_type pango_font_metrics_get_underline_position
 	      pango_font_metrics_get_underline_thickness pango_font_metrics_ref pango_font_metrics_unref pango_get_log_attrs pango_glyph_string_copy
-	      pango_glyph_string_extents pango_glyph_string_extents_range pango_glyph_string_free pango_glyph_string_get_logical_widths pango_glyph_string_get_type
+	      pango_glyph_string_extents pango_glyph_string_extents_range pango_glyph_string_free 
+	      pango_glyph_string_get_logical_widths pango_glyph_string_get_type
 	      pango_glyph_string_index_to_x pango_glyph_string_new pango_glyph_string_set_size pango_glyph_string_x_to_index pango_item_copy
 	      pango_item_free pango_item_new pango_item_split pango_itemize pango_language_get_type
 	      pango_language_matches pango_layout_context_changed pango_layout_copy pango_layout_get_alignment pango_layout_get_attributes
 	      pango_layout_get_auto_dir pango_layout_get_context pango_layout_get_cursor_pos pango_layout_get_extents pango_layout_get_indent
 	      pango_layout_get_iter pango_layout_get_justify pango_layout_get_line pango_layout_get_line_count pango_layout_get_lines
-	      pango_layout_get_log_attrs pango_layout_get_pixel_extents pango_layout_get_pixel_size pango_layout_get_single_paragraph_mode pango_layout_get_size
+	      pango_layout_get_log_attrs pango_layout_get_pixel_extents pango_layout_get_pixel_size 
+	      pango_layout_get_single_paragraph_mode pango_layout_get_size
 	      pango_layout_get_spacing pango_layout_get_tabs pango_layout_get_text pango_layout_get_type pango_layout_get_width
 	      pango_layout_get_wrap pango_layout_index_to_pos pango_layout_iter_at_last_line pango_layout_iter_free pango_layout_iter_get_baseline
 	      pango_layout_iter_get_char_extents pango_layout_iter_get_cluster_extents 
 	      pango_layout_iter_get_index pango_layout_iter_get_layout_extents pango_layout_iter_get_line
 	      pango_layout_iter_get_line_extents pango_layout_iter_get_line_yrange pango_layout_iter_get_run 
 	      pango_layout_iter_get_run_extents pango_layout_iter_next_char
-	      pango_layout_iter_next_cluster pango_layout_iter_next_line pango_layout_iter_next_run pango_layout_line_get_extents pango_layout_line_get_pixel_extents
-	      pango_layout_line_get_x_ranges pango_layout_line_index_to_x pango_layout_line_ref pango_layout_line_unref pango_layout_line_x_to_index
+	      pango_layout_iter_next_cluster pango_layout_iter_next_line pango_layout_iter_next_run 
+	      pango_layout_line_get_extents pango_layout_line_get_pixel_extents
+	      pango_layout_line_get_x_ranges pango_layout_line_index_to_x 
+;             pango_layout_line_ref pango_layout_line_unref 
+	      pango_layout_line_x_to_index
 	      pango_layout_move_cursor_visually pango_layout_new pango_layout_set_alignment pango_layout_set_attributes pango_layout_set_auto_dir
 	      pango_layout_set_font_description pango_layout_set_indent pango_layout_set_justify pango_layout_set_markup pango_layout_set_markup_with_accel
 	      pango_layout_set_single_paragraph_mode pango_layout_set_spacing pango_layout_set_tabs pango_layout_set_text pango_layout_set_width

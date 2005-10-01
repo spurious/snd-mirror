@@ -1034,59 +1034,95 @@ static void string_to_stderr_and_listener(const char *msg, void *ignore)
     }
 }
 
+static bool snd_load_init_file_1(const char *filename)
+{
+  char *expr, *fullname;
+  XEN result;
+  fullname = mus_expand_filename(filename);
+  if (mus_file_probe(fullname))
+    {
+#if HAVE_SCHEME
+      expr = mus_format("(load %s)", fullname);
+#endif
+#if HAVE_RUBY
+      expr = mus_format("load(%s)", fullname);
+#endif
+      result = snd_catch_any(eval_file_wrapper, (void *)fullname, expr);
+      FREE(expr);
+
+#if HAVE_RUBY
+      if (!(XEN_TRUE_P(result)))
+	{
+	  int loc;
+	  char *str;
+	  loc = snd_protect(result);
+	  str = gl_print(result);
+	  if (str)
+	    {
+	      expr = mus_format("%s: %s\n", filename, str);
+	      snd_error_without_format(expr);
+	      FREE(str);
+	      FREE(expr);
+	    }
+	  snd_unprotect_at(loc);
+	}
+#endif
+
+      return(true);
+    }
+  if (fullname) FREE(fullname);
+  return(false);
+}
+
 void snd_load_init_file(bool no_global, bool no_init)
 {
   /* look for ".snd" on the home directory; return true if an error occurred (to try to get that info to the user's attention) */
   /* called only in snd-g|xmain.c at initialization time */
-  int fd;
-  XEN result = XEN_TRUE;
-  char *str = NULL;
+
+  /* changed Oct-05 because the Scheme/Ruby/Forth choices are becoming a hassle --
+   *   now save-options has its own file ~/.snd_prefs_guile|ruby|forth which is loaded first, if present
+   *     then ~/.snd_guile|ruby|forth, if present
+   *     then ~/.snd for backwards compatibility
+   * snd_options does not write ~/.snd anymore, but overwrites the .snd_prefs_* file
+   * use set init files only change the ~/.snd choice
+   *
+   * there are parallel choices for the global configuration file: /etc/snd_guile|ruby|forth.conf
+   */
+#if HAVE_EXTENSION_LANGUAGE
+#if HAVE_GUILE
+  #define SND_EXT_CONF "/etc/snd_guile.conf"
+  #define SND_PREFS "~/.snd_prefs_guile"
+  #define SND_INIT "~/.snd_guile"
+#endif
+#if HAVE_RUBY
+  #define SND_EXT_CONF "/etc/snd_ruby.conf"
+  #define SND_PREFS "~/.snd_prefs_ruby"
+  #define SND_INIT "~/.snd_ruby"
+#endif
   #define SND_CONF "/etc/snd.conf"
   redirect_snd_print_to(string_to_stdout, NULL);
   redirect_errors_to(string_to_stderr_and_listener, NULL);
+
+  /* check for global configuration files (/etc/snd*) */
   if (!no_global)
     {
-      fd = OPEN(SND_CONF, O_RDONLY, 0);
-      if (fd != -1)
-	{
-	  snd_close(fd, SND_CONF);
-	  result = snd_catch_any(eval_file_wrapper, (void *)SND_CONF, "(load " SND_CONF ")");
-	}
+      snd_load_init_file_1(SND_EXT_CONF);
+      snd_load_init_file_1(SND_CONF);
     }
-  if ((ss->init_file) && (!no_init))
+
+  /* even if no init file, check for possible prefs dialog output */
+  snd_load_init_file_1(SND_PREFS);
+
+  /* now load old-style init file */
+  if (!no_init)
     {
-      str = mus_expand_filename(ss->init_file);
-      fd = OPEN(str, O_RDONLY, 0);
-      if (fd != -1) 
-	{
-	  char *expr;
-#if HAVE_RUBY	  
-	  expr = mus_format("load(%s)", ss->init_file);
-#endif
-#if HAVE_SCHEME
-	  expr = mus_format("(load %s)", ss->init_file);
-#endif
-	  snd_close(fd, str);
-	  result = snd_catch_any(eval_file_wrapper, (void *)str, expr);
-	  FREE(expr);
-	}
-      if (str) FREE(str);
+      snd_load_init_file_1(SND_INIT);
+      if (ss->init_file)
+	snd_load_init_file_1(ss->init_file);
     }
-#if HAVE_RUBY
-  if (!(XEN_TRUE_P(result)))
-    {
-      int loc;
-      loc = snd_protect(result);
-      str = gl_print(result);
-      if (str)
-	{
-	  snd_error_without_format(str);
-	  FREE(str);
-	}
-      snd_unprotect_at(loc);
-    }
-#endif
+
   redirect_everything_to(NULL, NULL);
+#endif
 }
 
 void snd_load_file(char *filename)
@@ -2066,6 +2102,13 @@ static XEN g_print_dialog(XEN managed, XEN direct_to_printer)
   return(XEN_WRAP_WIDGET(w));
 }
 
+static XEN g_preferences_dialog(void)
+{
+  #define H_preferences_dialog "(" S_preferences_dialog "): start the Options:Preferences dialog"
+  start_preferences_dialog();
+  return(XEN_FALSE);
+}
+
 
 
 #if (!USE_NO_GUI)
@@ -2929,6 +2972,7 @@ XEN_ARGIFY_1(g_color_dialog_w, g_color_dialog)
 XEN_ARGIFY_1(g_orientation_dialog_w, g_orientation_dialog)
 XEN_ARGIFY_1(g_transform_dialog_w, g_transform_dialog)
 XEN_ARGIFY_2(g_print_dialog_w, g_print_dialog)
+XEN_NARGIFY_0(g_preferences_dialog_w, g_preferences_dialog)
 XEN_NARGIFY_0(g_sounds_w, g_sounds)
 XEN_NARGIFY_0(g_abort_w, g_abort)
 XEN_NARGIFY_0(g_abortq_w, g_abortq)
@@ -3104,6 +3148,7 @@ XEN_NARGIFY_1(g_i0_w, g_i0)
 #define g_orientation_dialog_w g_orientation_dialog
 #define g_transform_dialog_w g_transform_dialog
 #define g_print_dialog_w g_print_dialog
+#define g_preferences_dialog_w g_preferences_dialog
 #define g_sounds_w g_sounds
 #define g_abort_w g_abort
 #define g_abortq_w g_abortq
@@ -3402,6 +3447,7 @@ void g_initialize_gh(void)
   XEN_DEFINE_PROCEDURE(S_orientation_dialog,    g_orientation_dialog_w,    0, 1, 0, H_orientation_dialog);
   XEN_DEFINE_PROCEDURE(S_transform_dialog,      g_transform_dialog_w,      0, 1, 0, H_transform_dialog);
   XEN_DEFINE_PROCEDURE(S_print_dialog,          g_print_dialog_w,          0, 2, 0, H_print_dialog);
+  XEN_DEFINE_PROCEDURE(S_preferences_dialog,    g_preferences_dialog_w,    0, 0, 0, H_preferences_dialog);
   XEN_DEFINE_PROCEDURE(S_sounds,                g_sounds_w,                0, 0, 0, H_sounds);
   XEN_DEFINE_PROCEDURE(S_abort,                 g_abort_w,                 0, 0, 0, H_abort);
   XEN_DEFINE_PROCEDURE(S_c_g,                   g_abortq_w,                0, 0, 0, H_abortQ);

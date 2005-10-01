@@ -2320,6 +2320,7 @@ int prepare_mix_id_waveform(int mix_id, axis_info *ap, bool *two_sided)
   double cur_srate;
   int pts;
   md = md_from_id(mix_id);
+  if (!md) return(0);
   scl = ap->y_axis_y0 - ap->y_axis_y1;
   old_lo = ap->losamp;
   old_hi = ap->hisamp;
@@ -2447,8 +2448,9 @@ void move_mix_tag(int mix_tag, int x)
 {
   /* from mouse tag drag in snd-chn.c only */
   mix_info *md;
-  mix_dragged = true;
   md = md_from_id(mix_tag);
+  if (!md) return;
+  mix_dragged = true;
   if (md->active_mix_state->track == 0)
     {
       if (md->save_needed)
@@ -2484,6 +2486,7 @@ void finish_moving_mix_tag(int mix_tag, int x)
       watch_mix_proc = 0;
     }
   md = md_from_id(mix_tag);
+  if (!md) return;
   cs = md->active_mix_state;
   mix_dragged = false;
   if (XEN_HOOKED(mix_release_hook))
@@ -2550,6 +2553,7 @@ int hit_mix(chan_info *cp, int x, int y)
     {
       mix_info *md;
       md = md_from_id(mx - 1);
+      if (!md) return(NO_MIX_TAG);
       if (md->active_mix_state->track == 0)
 	{
 	  md->save_needed = true;
@@ -2579,7 +2583,8 @@ void mix_dialog_start_drag(int mix_id)
   /* the "drag" here refers to the mix dialog amp or speed control (from drag callbacks) */
   mix_info *md;
   md = md_from_id(mix_id);
-  md->save_needed = true;
+  if (md)
+    md->save_needed = true;
 }
 
 /* for axis movement (as in mark drag off screen) */
@@ -3211,14 +3216,18 @@ static void play_mix(mix_info *md, off_t beg, bool from_gui)
 
 void mix_dialog_mix_play(int mix_id)
 {
-  play_mix(md_from_id(mix_id), 0, true);
+  mix_info *md;
+  md = md_from_id(mix_id);
+  if (md)
+    play_mix(md, 0, true);
 }
 
 static mix_state *cs_from_id(int n)
 {
   mix_info *md;
   md = md_from_id(n);
-  if (md) return(md->active_mix_state);
+  if (md) 
+    return(md->active_mix_state);
   return(NULL);
 }
 
@@ -3288,6 +3297,7 @@ void mix_dialog_set_mix_amp(int mix_id, int chan, Float val, bool dragging)
   int id;
   mix_info *md;
   md = md_from_id(mix_id);
+  if (!md) return;
   if ((md->save_needed) && (dragging))
     {
       wrap_mix_save_graph(md, S_setB S_mix_amp);
@@ -3439,6 +3449,7 @@ void mix_dialog_set_mix_speed(int mix_id, Float val, bool dragging)
   int id;
   mix_info *md;
   md = md_from_id(mix_id);
+  if (!md) return;
   if ((md->save_needed) && (dragging))
     {
       wrap_mix_save_graph(md, S_setB S_mix_speed);
@@ -3489,7 +3500,8 @@ int mix_dialog_mix_track(int mix_id)
 {
   mix_info *md;
   md = md_from_id(mix_id);
-  if (md) return(md->active_mix_state->track);
+  if (md) 
+    return(md->active_mix_state->track);
   return(0);
 }
 
@@ -3934,7 +3946,9 @@ speed_style_t mix_speed_style(int id)
 {
   mix_info *md; 
   md = md_from_id(id);
-  return(md->speed_style);
+  if (md)
+    return(md->speed_style);
+  return(SPEED_CONTROL_AS_FLOAT);
 }
 
 static XEN g_mix_speed_style(XEN n)
@@ -3952,7 +3966,8 @@ speed_style_t set_mix_speed_style(int id, speed_style_t choice, bool from_gui)
 {
   mix_info *md; 
   md = md_from_id(id);
-  md->speed_style = choice;
+  if (md)
+    md->speed_style = choice;
   if (!from_gui) 
     reflect_mix_or_track_change(id, ANY_TRACK_ID, false); /* currently can't happen (all calls are from mix dialog) */
   return(choice);
@@ -4067,14 +4082,17 @@ bool mix_dialog_mix_inverted(int id)
 {
   mix_info *md;
   md = md_from_id(id);
-  return(md->active_mix_state->inverted);
+  if (md)
+    return(md->active_mix_state->inverted);
+  return(false);
 }
 
 void mix_dialog_set_mix_inverted(int id, bool on)
 {
   mix_info *md;
   md = md_from_id(id);
-  set_mix_inverted(md, on, true);
+  if (md)
+    set_mix_inverted(md, on, true);
 }
 
 static bool delete_mix_1(int mix_id, bool redisplay)
@@ -4085,6 +4103,7 @@ static bool delete_mix_1(int mix_id, bool redisplay)
       mix_state *cs;
       int i;
       md = md_from_id(mix_id);
+      if (!md) return(false);
       cs = md->active_mix_state;
       for (i = 0; i < md->in_chans; i++)
 	cs->scalers[i] = 0.0;
@@ -7774,6 +7793,7 @@ void mix_dialog_track_play(int mix_id)
 {
   mix_info *md;
   md = md_from_id(mix_id);
+  if (!md) return;
   if (md->active_mix_state->track != 0)
     play_track(md->active_mix_state->track, -1, 0, true);
   else play_mix(md, 0, true);

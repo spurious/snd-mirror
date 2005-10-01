@@ -220,6 +220,10 @@ GSL_IEEE_MODE=double-precision,mask-underflow,mask-denormalized
 </pre>
 <p>For more complex initialization files, see snd_conffile.scm and edit123.scm.
 </p>
+<p>With the advent of the preferences dialog, and other complications, this initialization sequence
+has changed slightly.  The old files ~/.snd and /etc/snd.conf are still loaded, but now there
+are additional initialization possibilities: ~/.snd_prefs_guile|ruby, /etc/snd_guile|ruby.conf,
+~/.snd_guile|ruby. 
 <br>
 <table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndresources">Snd resources</a></h3></td></tr></table>
 

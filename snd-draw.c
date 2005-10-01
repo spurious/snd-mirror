@@ -475,7 +475,8 @@ static XEN g_dialog_widgets(void)
  (6 " S_open_file_dialog ") (7 " S_save_sound_dialog ") (8 " S_view_files_dialog ") (9 raw data dialog) (10 new file dialog) \
  (11 " S_mix_file_dialog ") (12 " S_edit_header_dialog ") (13 " S_find_dialog ") (14 " S_help_dialog ") (15 listener completion) \
  (16 " S_view_mixes_dialog ") (17 " S_print_dialog ") (18 " S_recorder_dialog ") (19 " S_view_regions_dialog ") \
- (20 " S_info_dialog ") (21 " S_view_tracks_dialog ") (22 " S_save_selection_dialog ") (23 " S_insert_file_dialog "))"
+ (20 " S_info_dialog ") (21 " S_view_tracks_dialog ") (22 " S_save_selection_dialog ") (23 " S_insert_file_dialog ") \
+ (24 " S_save_region_dialog ") (25 " S_preferences_dialog "))"
 
   check_dialog_widget_table();
   return(XEN_VECTOR_TO_LIST(dialog_widgets));

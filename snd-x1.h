@@ -483,11 +483,15 @@ void save_print_dialog_state(FILE *fd);
 
 /* -------- snd-xxen.c -------- */
 
-
 void recolor_button(widget_t w, void *ptr);
 void color_chan_components(color_t color, slider_choice_t which_component);
 void color_unselected_graphs(color_t color);
 void g_init_gxen(void);
+
+
+/* -------- snd-xprefs.c -------- */
+
+void start_preferences_dialog(void);
 
 #endif
 

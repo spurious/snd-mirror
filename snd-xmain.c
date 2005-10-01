@@ -632,6 +632,7 @@ static Pixel get_color(Widget shell, char *rs_color, char *defined_color, char *
 
 static void save_a_color(FILE *Fp, Display *dpy, Colormap cmap, const char *rs_name, const char *def_name, Pixel pix, const char *ext_name)
 {
+#if HAVE_EXTENSION_LANGUAGE
   Status lookup_ok;
   XColor default_color, ignore;
   lookup_ok = XLookupColor(dpy, cmap, rs_name, &default_color, &ignore);
@@ -658,6 +659,7 @@ static void save_a_color(FILE *Fp, Display *dpy, Colormap cmap, const char *rs_n
 		(float)current_color.green / 65535.0,
 		(float)current_color.blue / 65535.0);
     }
+#endif
 }
 
 void save_colors(FILE *Fp)

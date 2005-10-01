@@ -9174,6 +9174,10 @@ If the xm module is loaded, we could add our own info via:
 <tr><td colspan=2><code><a class=def name="orientationdialog">orientation-dialog</a> (<i>managed</i>)</code></td></tr>
 <tr><td></td><td>Create and (if <i>managed</i> which defaults to #t) activate the <a href="snd.html#orientationbrowser">Orientation</a> dialog. Return the dialog widget.</td></tr>
 
+<!-- preferences-dialog -->
+<tr><td colspan=2><code><a class=def name="preferencesdialog">preferences-dialog</a> ()</code></td></tr>
+<tr><td></td><td>Activate the Options:Preferences dialog.</td></tr>
+
 <!-- print-dialog -->
 <tr><td colspan=2><code><a class=def name="printdialog">print-dialog</a> (<i>managed direct-to-printer</i>)</code></td></tr>
 <tr><td></td><td>Create and (if <i>managed</i> which defaults to #t) activate the File:Print dialog. Return the dialog widget.</td></tr>
@@ -10182,7 +10186,7 @@ save listener contents in <i>filename</i>.
 <tr><td colspan=2>
 <code><a class=def name="savemacros">save-macros</a> (filename)</code></td></tr>
 <tr><td></td><td>
-save <a href="snd.html#kbdmacros">keyboard macros</a> in <i>filename</i> or in Snd's init file (~/.snd) if <i>filename</i> is omitted.
+save <a href="snd.html#kbdmacros">keyboard macros</a> in <i>filename</i>.
 </td></tr>
 
 <!-- save-state -->
@@ -10970,7 +10974,7 @@ The four "-widgets" procedures return lists of possibly useful widgets:
                      13:find_dialog 14:help_dialog 15:completion_dialog 16:view_mixes_dialog
                      17:print_dialog 18:recorder_dialog 19:view_regions_dialog, 20:info_dialog
                      21:view_tracks_dialog 22:selection_save_as_dialog, 23:insert_file_dialog,
-                     24: region_save_as_dialog)
+                     24:region_save_as_dialog, 25:preferences_dialog)
 </pre>
 <p>
 <i>dialog-widgets</i> entries are #f for any dialog that has not

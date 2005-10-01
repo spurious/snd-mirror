@@ -1,5 +1,6 @@
 Snd change log
 
+  3-Oct:     snd-g|xprefs.c, preferences-dialog function.
   26-Sep:    save-region-dialog, more buttons.
   15-Sep:    --enable-threads configure switch, and first use thereof (FIR filtering).
   6-Sep:     snd-error is now (throw 'snd-error ...).

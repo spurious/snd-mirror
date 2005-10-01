@@ -293,6 +293,7 @@ static void setup_gcs(void)
 
 static void save_a_color(FILE *Fp, const char *def_name, GdkColor *current_color, const char *ext_name)
 {
+#if HAVE_EXTENSION_LANGUAGE
   GdkColor default_color;
   if (gdk_color_parse(def_name, &default_color))
     {
@@ -311,6 +312,7 @@ static void save_a_color(FILE *Fp, const char *def_name, GdkColor *current_color
 		(float)current_color->green / 65535.0,
 		(float)current_color->blue / 65535.0);
     }
+#endif
 }
 
 void save_colors(FILE *Fp)

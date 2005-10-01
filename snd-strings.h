@@ -408,6 +408,7 @@
 #define S_position_color                "position-color"
 #define S_position_to_x                 "position->x"
 #define S_position_to_y                 "position->y"
+#define S_preferences_dialog            "preferences-dialog"
 #define S_previous_sample               "previous-sample"
 #define S_print_dialog                  "print-dialog"
 #define S_print_hook                    "print-hook"
