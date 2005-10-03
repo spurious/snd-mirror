@@ -249,7 +249,7 @@ typedef struct chan_info {
   bool have_mixes;
   off_t original_cursor, original_left_sample, original_window_size;   /* for cursor reset after cursor-moving play */
   with_hook_t hookable;
-  int selection_transform_size;
+  off_t selection_transform_size;
   bool squelch_update, previous_squelch_update, waiting_to_make_graph, in_as_one_edit;
   /* moved from global to channel-local 4-Aug-00 */
   Float spectro_x_scale, spectro_y_scale, spectro_z_scale, spectro_z_angle, spectro_x_angle, spectro_y_angle, spectro_cutoff, spectro_start;
@@ -259,7 +259,7 @@ typedef struct chan_info {
   int wavo_hop, wavo_trace, zero_pad, wavelet_type, max_transform_peaks, beats_per_measure;
   x_axis_style_t x_axis_style;
   show_axes_t show_axes;
-  int transform_size;
+  off_t transform_size;
   mus_fft_window_t fft_window;
   graph_type_t transform_graph_type, time_graph_type;
   bool show_transform_peaks, fft_log_frequency, fft_log_magnitude;
@@ -418,7 +418,8 @@ typedef struct snd_state {
   int Default_Output_Header_Type, Default_Output_Data_Format, Default_Output_Chans, Default_Output_Srate;
   int Spectro_Hop, Color_Map, Color_Map_Size, Wavelet_Type, Transform_Type, Optimization;
   Latus Dot_Size;
-  int Transform_Size, Zero_Pad, Wavo_Hop, Wavo_Trace;
+  int Zero_Pad, Wavo_Hop, Wavo_Trace;
+  off_t Transform_Size;
   mus_fft_window_t Fft_Window;
   graph_type_t Transform_Graph_Type, Time_Graph_Type;
   bool Ask_Before_Overwrite;
@@ -618,6 +619,7 @@ int add_ss_watcher(ss_watcher_t type, void (*watcher)(ss_watcher_reason_t reason
 /* bool remove_ss_watcher(int loc); */
 bool call_ss_watchers(ss_watcher_t type, ss_watcher_reason_t reason);
 void save_options(FILE *fd);
+char *save_options_in_prefs(void);
 void open_save_sound_block(snd_info *sp, FILE *fd, bool with_nth);
 void close_save_sound_block(FILE *fd);
 bool snd_exit_cleanly(bool force_exit);
@@ -1536,6 +1538,7 @@ void g_init_recorder(void);
 /* -------- snd.c -------- */
 
 void mus_error_to_snd(int type, char *msg);
+void snd_set_global_defaults(bool need_cleanup);
 #if SND_AS_WIDGET
   snd_state *snd_main(int argc, char **argv);
 #endif

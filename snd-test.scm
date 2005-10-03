@@ -81,7 +81,6 @@
 	    (set! home-dir "/Users/bill")
 	    (if (file-exists? "/users/b/bil/cl/oboe.snd")
 		(set! home-dir "/users/b/bil")))))
-(system (string-append "cp " home-dir "/.snd " home-dir "/dot-snd"))
 (define cwd (string-append (getcwd) "/"))
 
 (define sf-dir1 (string-append home-dir sf-dir "/"))
@@ -44168,8 +44167,6 @@ EDITS: 1
 ;			(if (not (string=? str "no active selection"))
 ;			    (snd-display ";C-x z report-in-minibuffer: ~A?" str)))
 		      (XtCallCallbacks (menu-option "Save options") XmNactivateCallback (snd-global-state))
-		      (if (file-exists? (string-append home-dir "/dot-snd"))
-			  (system (string-append "cp " home-dir "/dot-snd " home-dir "/.snd")))
 		      (XtCallCallbacks (menu-option "Select all") XmNactivateCallback (snd-global-state))
 		      (if (not (selection?))
 			  (snd-display ";Select all menu option failed?"))
@@ -56627,8 +56624,8 @@ EDITS: 1
 	 (file-exists? "oldopt.log"))
     (system "diff -w optimizer.log oldopt.log"))
 
-(if (file-exists? (string-append home-dir "/dot-snd"))
-    (system (string-append "cp " home-dir "/dot-snd " home-dir "/.snd")))
+(if (file-exists? (string-append home-dir "/.snd_prefs_guile"))
+    (delete-file (string-append home-dir "/.snd_prefs_guile")))
 
 (snd-print #\#)
 (snd-print #\t)
@@ -56691,6 +56688,8 @@ EDITS: 1
   (string-append sf-dir "wood.sds.snd")
   (string-append sf-dir "o2_dvi.wave.snd")
   (string-append sf-dir "nist-shortpack.wav.snd")
+  (string-append sf-dir "memlog")
+  (string-append sf-dir "bad_data_format.snd.snd")
 
 ))
 

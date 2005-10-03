@@ -184,6 +184,16 @@ void textfield_unfocus_callback(Widget w, XtPointer context, XtPointer info)
   XtVaSetValues(w, XmNcursorPositionVisible, false, NULL);
 }
 
+static void textfield_no_color_focus_callback(Widget w, XtPointer context, XtPointer info)
+{
+  XtVaSetValues(w, XmNcursorPositionVisible, true, NULL);
+}
+
+static void textfield_no_color_unfocus_callback(Widget w, XtPointer context, XtPointer info)
+{
+  XtVaSetValues(w, XmNcursorPositionVisible, false, NULL);
+}
+
 
 /* -------- specialized action procs -------- */
 
@@ -882,12 +892,22 @@ Widget make_textfield_widget(char *name, Widget parent, Arg *args, int n, text_c
   XtSetArg(args[n], XmNhighlightThickness, 1); n++;
   XtSetArg(args[n], XmNcursorPositionVisible, false); n++;
   df = XtCreateManagedWidget(name, xmTextFieldWidgetClass, parent, args, n);
-  XtAddCallback(df, XmNfocusCallback, textfield_focus_callback, NULL);
-  XtAddCallback(df, XmNlosingFocusCallback, textfield_unfocus_callback, NULL);
+  if ((activatable != NOT_ACTIVATABLE_OR_FOCUSED) &&
+      (activatable != ACTIVATABLE_BUT_NOT_FOCUSED))
+    {
+      XtAddCallback(df, XmNfocusCallback, textfield_focus_callback, NULL);
+      XtAddCallback(df, XmNlosingFocusCallback, textfield_unfocus_callback, NULL);
+    }
+  else
+    {
+      XtAddCallback(df, XmNfocusCallback, textfield_no_color_focus_callback, NULL);
+      XtAddCallback(df, XmNlosingFocusCallback, textfield_no_color_unfocus_callback, NULL);
+    }
   XtAddEventHandler(df, EnterWindowMask, false, mouse_enter_text_callback, NULL);
   XtAddEventHandler(df, LeaveWindowMask, false, mouse_leave_text_callback, NULL);
 
-  if (activatable == ACTIVATABLE)
+  if ((activatable == ACTIVATABLE) ||
+      (activatable == ACTIVATABLE_BUT_NOT_FOCUSED))
     {
       if (!transTable2) 
 	transTable2 = XtParseTranslationTable(TextTrans2);

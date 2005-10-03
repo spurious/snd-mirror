@@ -31,17 +31,19 @@ make
 ./snd -e "(add-hook! snd-error-hook (lambda (file) (exit)))" -ltitle
 ./snd -l snd-test
 
-foreach file (headers.c audio.c io.c sound.c clm.c xen.c vct.c sndlib2xen.c clm2xen.c snd-io.c snd-utils.c snd-listener.c snd-error.c snd-completion.c snd-menu.c snd-axis.c snd-data.c snd-fft.c snd-marks.c snd-file.c snd-edits.c snd-chn.c snd-dac.c snd-region.c snd-select.c snd-find.c snd-snd.c snd-help.c snd-main.c snd-print.c snd-trans.c snd-mix.c snd.c snd-env.c snd-xen.c snd-ladspa.c snd-rec.c snd-kbd.c snd-sig.c snd-draw.c snd-xutils.c snd-xhelp.c snd-xfind.c snd-xmenu.c snd-xdraw.c snd-xlistener.c snd-xchn.c snd-xsnd.c snd-xregion.c snd-xdrop.c snd-xmain.c snd-xmix.c snd-xrec.c snd-xenv.c snd-gxutils.c snd-gxcolormaps.c snd-xfft.c snd-xprint.c snd-xfile.c snd-xxen.c xm.c snd-run.c)
+foreach file (headers.c audio.c io.c sound.c clm.c xen.c vct.c sndlib2xen.c clm2xen.c snd-io.c snd-utils.c snd-listener.c snd-error.c snd-completion.c snd-menu.c snd-axis.c snd-data.c snd-fft.c snd-marks.c snd-file.c snd-edits.c snd-chn.c snd-dac.c snd-region.c snd-select.c snd-find.c snd-snd.c snd-help.c snd-main.c snd-print.c snd-trans.c snd-mix.c snd.c snd-env.c snd-xen.c snd-ladspa.c snd-rec.c snd-kbd.c snd-sig.c snd-draw.c snd-xutils.c snd-xhelp.c snd-xfind.c snd-xmenu.c snd-xdraw.c snd-xlistener.c snd-xchn.c snd-xsnd.c snd-xregion.c snd-xdrop.c snd-xmain.c snd-xmix.c snd-xrec.c snd-xenv.c snd-gxutils.c snd-gxcolormaps.c snd-xfft.c snd-xprint.c snd-xfile.c snd-xxen.c snd-xprefs.c xm.c snd-run.c)
   gcov --function-summaries $file >> hi
 end
 
-cat headers.c.gcov io.c.gcov sound.c.gcov clm.c.gcov xen.c.gcov vct.c.gcov sndlib2xen.c.gcov clm2xen.c.gcov snd-io.c.gcov snd-utils.c.gcov snd-listener.c.gcov snd-error.c.gcov snd-completion.c.gcov snd-menu.c.gcov snd-axis.c.gcov snd-data.c.gcov snd-fft.c.gcov snd-marks.c.gcov snd-file.c.gcov snd-edits.c.gcov snd-chn.c.gcov snd-dac.c.gcov snd-region.c.gcov snd-select.c.gcov snd-find.c.gcov snd-snd.c.gcov snd-help.c.gcov snd-main.c.gcov snd-print.c.gcov snd-trans.c.gcov snd-mix.c.gcov snd.c.gcov snd-env.c.gcov snd-xen.c.gcov snd-ladspa.c.gcov snd-rec.c.gcov snd-kbd.c.gcov snd-sig.c.gcov snd-draw.c.gcov snd-xutils.c.gcov snd-xhelp.c.gcov snd-xfind.c.gcov snd-xmenu.c.gcov snd-xdraw.c.gcov snd-xlistener.c.gcov snd-xchn.c.gcov snd-xsnd.c.gcov snd-xregion.c.gcov snd-xdrop.c.gcov snd-xmain.c.gcov snd-xmix.c.gcov snd-xrec.c.gcov snd-xenv.c.gcov snd-gxutils.c.gcov snd-gxcolormaps.c.gcov snd-xfft.c.gcov snd-xprint.c.gcov snd-xfile.c.gcov snd-xxen.c.gcov xm.c.gcov snd-run.c.gcov > gcall
+cat headers.c.gcov io.c.gcov sound.c.gcov clm.c.gcov xen.c.gcov vct.c.gcov sndlib2xen.c.gcov clm2xen.c.gcov snd-io.c.gcov snd-utils.c.gcov snd-listener.c.gcov snd-error.c.gcov snd-completion.c.gcov snd-menu.c.gcov snd-axis.c.gcov snd-data.c.gcov snd-fft.c.gcov snd-marks.c.gcov snd-file.c.gcov snd-edits.c.gcov snd-chn.c.gcov snd-dac.c.gcov snd-region.c.gcov snd-select.c.gcov snd-find.c.gcov snd-snd.c.gcov snd-help.c.gcov snd-main.c.gcov snd-print.c.gcov snd-trans.c.gcov snd-mix.c.gcov snd.c.gcov snd-env.c.gcov snd-xen.c.gcov snd-ladspa.c.gcov snd-rec.c.gcov snd-kbd.c.gcov snd-sig.c.gcov snd-draw.c.gcov snd-xutils.c.gcov snd-xhelp.c.gcov snd-xfind.c.gcov snd-xmenu.c.gcov snd-xdraw.c.gcov snd-xlistener.c.gcov snd-xchn.c.gcov snd-xsnd.c.gcov snd-xregion.c.gcov snd-xdrop.c.gcov snd-xmain.c.gcov snd-xmix.c.gcov snd-xrec.c.gcov snd-xenv.c.gcov snd-gxutils.c.gcov snd-gxcolormaps.c.gcov snd-xfft.c.gcov snd-xprint.c.gcov snd-xfile.c.gcov snd-xxen.c.gcov snd-xprefs.c.gcov xm.c.gcov snd-run.c.gcov > gcall
 
-fgrep -H -n '######' *.gcov > gpound
-rm *.c.gcov
+fgrep -H -n '#####:' *.gcov > gpound
+rm *.gcov
 rm *.bbg
 rm *.bb
 rm *.da
+rm *.gcno
+rm *.gcda
 
 gprof snd gmon.out > sndprof
 

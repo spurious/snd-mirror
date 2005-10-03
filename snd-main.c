@@ -365,7 +365,7 @@ static void pcp_sl(FILE *fd, const char *name, Float val1, Float val2, int chan)
 #endif
 
 void save_options(FILE *fd)
-{ /* for save options menu choice (.snd) -- mostly saving snd_state info */
+{
 #if HAVE_STRFTIME
   time_t ts;
   char time_buf[TIME_STR_SIZE];
@@ -1056,6 +1056,34 @@ void save_state(const char *save_state_name)
     run_hook(after_save_state_hook, 
 	     XEN_LIST_1(C_TO_XEN_STRING(save_state_name)),
 	     S_after_save_state_hook);
+}
+
+
+char *save_options_in_prefs(void)
+{
+#if HAVE_EXTENSION_LANGUAGE
+  FILE *fd;
+  char *fullname;
+#if HAVE_GUILE
+  #define SND_PREFS "~/.snd_prefs_guile"
+#endif
+#if HAVE_RUBY
+  #define SND_PREFS "~/.snd_prefs_ruby"
+#endif
+  fullname = mus_expand_filename(SND_PREFS);
+  fd = FOPEN(fullname, "w");
+  if (!fd)
+    {
+      snd_error(_("can't write %s: %s"), SND_PREFS, snd_io_strerror());
+      return(NULL);
+    }
+  save_options(fd);
+  snd_fclose(fd, SND_PREFS);
+  FREE(fullname);
+  return(SND_PREFS);
+#else
+  return(NULL);
+#endif
 }
 
 

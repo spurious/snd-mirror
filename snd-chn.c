@@ -1119,7 +1119,7 @@ static void display_selection_transform_size(chan_info *cp, axis_info *fap)
   y0 = fap->height + fap->y_offset + SELECTION_FFT_LABEL_OFFSET;
   x0 = fap->x_axis_x0 + 10;
   mus_snprintf(chn_id_str, LABEL_BUFFER_SIZE, 
-	       _("(len: " PRId64 "/%d)"), 
+	       _("(len: " PRId64 "/" PRId64 ")"), 
 	       selection_len(), 
 	       cp->selection_transform_size);
   draw_string(copy_context(cp), x0, y0, chn_id_str, strlen(chn_id_str));
@@ -4491,7 +4491,7 @@ static XEN channel_get(XEN snd_n, XEN chn_n, cp_field_t fld, char *caller)
 	    case CP_FFT_LOG_FREQUENCY:       return(C_TO_XEN_BOOLEAN(cp->fft_log_frequency));                  break;
 	    case CP_FFT_LOG_MAGNITUDE:       return(C_TO_XEN_BOOLEAN(cp->fft_log_magnitude));                  break;
 	    case CP_SPECTRO_HOP:             return(C_TO_XEN_INT(cp->spectro_hop));                            break;
-	    case CP_TRANSFORM_SIZE:          return(C_TO_XEN_INT(cp->transform_size));                         break;
+	    case CP_TRANSFORM_SIZE:          return(C_TO_XEN_OFF_T(cp->transform_size));                       break;
 	    case CP_TRANSFORM_GRAPH_TYPE:    return(C_TO_XEN_INT((int)(cp->transform_graph_type)));            break;
 	    case CP_FFT_WINDOW:              return(C_TO_XEN_INT((int)(cp->fft_window)));                      break;
 	    case CP_TRANSFORM_TYPE:          return(C_TO_XEN_INT(cp->transform_type));                         break;
@@ -4572,6 +4572,14 @@ static int g_imin(int mn, XEN val, int def)
 {
   int nval;
   nval = XEN_TO_C_INT_OR_ELSE(val, def);
+  if (nval >= mn) return(nval);
+  return(mn);
+}
+
+static int g_omin(off_t mn, XEN val, off_t def)
+{
+  off_t nval;
+  nval = xen_to_c_off_t_or_else(val, def);
   if (nval >= mn) return(nval);
   return(mn);
 }
@@ -4817,9 +4825,9 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, cp_field_t fld, char *calle
       return(C_TO_XEN_INT(cp->spectro_hop));
       break;
     case CP_TRANSFORM_SIZE:
-      cp->transform_size = g_imin(1, on, DEFAULT_TRANSFORM_SIZE); 
+      cp->transform_size = g_omin(1, on, DEFAULT_TRANSFORM_SIZE); 
       calculate_fft(cp);
-      return(C_TO_XEN_INT(cp->transform_size));
+      return(C_TO_XEN_OFF_T(cp->transform_size));
       break;
     case CP_TRANSFORM_GRAPH_TYPE: 
       cp->transform_graph_type = (graph_type_t)XEN_TO_C_INT(on); /* checked already */
@@ -5983,14 +5991,14 @@ static XEN g_transform_size(XEN snd, XEN chn)
   #define H_transform_size "(" S_transform_size " (snd #f) (chn #f)): current fft size (512)"
   if (XEN_BOUND_P(snd))
     return(channel_get(snd, chn, CP_TRANSFORM_SIZE, S_transform_size));
-  return(C_TO_XEN_INT(transform_size(ss)));
+  return(C_TO_XEN_OFF_T(transform_size(ss)));
 }
 
 static XEN g_set_transform_size(XEN val, XEN snd, XEN chn)
 {
   int len;
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ARG_1, S_setB S_transform_size, "an integer"); 
-  len = XEN_TO_C_INT(val);
+  XEN_ASSERT_TYPE(XEN_OFF_T_P(val), val, XEN_ARG_1, S_setB S_transform_size, "an integer"); 
+  len = XEN_TO_C_OFF_T(val);
   if (len <= 0)
     XEN_OUT_OF_RANGE_ERROR(S_setB S_transform_size, 1, val, "size ~A, but must be > 0");
   if (!(POWER_OF_2_P(len)))
@@ -5999,7 +6007,7 @@ static XEN g_set_transform_size(XEN val, XEN snd, XEN chn)
   if (XEN_BOUND_P(snd))
     return(channel_set(snd, chn, val, CP_TRANSFORM_SIZE, S_setB S_transform_size));
   set_transform_size(len);
-  return(C_TO_XEN_INT(transform_size(ss)));
+  return(C_TO_XEN_OFF_T(transform_size(ss)));
 }
 
 WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_transform_size_reversed, g_set_transform_size)

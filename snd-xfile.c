@@ -13,7 +13,10 @@
 */
 
 
-/* TODO: pull-down list of recent files
+/* TODO: pull-down list of recent files (Open Previous menu item under Files -> reversed list)
+ *       these should also appear in the completion lists associated with file name text widgets
+ *       (any such widget should keep a list of previous entries, adding it to the completions, and presenting as drop-down list)
+ *       (drop-down arrow only if such entries are available and not the same as current value)
  * TODO: new file: find some way to get around the hidden label bug (unmanage error text etc) -- see snd-xfind
  * PERHAPS: if user changes raw file with dialog up -- adding header for example, should we automatically open it? or reflect in panel?
  *       same with info label in open dialog
@@ -674,7 +677,9 @@ static file_dialog_info *make_file_dialog(bool read_only, char *title, char *sel
       add_completer_to_textfield(wtmp, add_completer_func(filename_completer));
       XtAddCallback(wtmp, XmNvalueChangedCallback, unpost_if_filter_changed, (XtPointer)fd);
       /* ideally we'd add a "sort" pulldown menu here, but I can't see any way to do it except to
-       *   grab the current Xm/FileSB.c code and start hacking.
+       *   grab the current Xm/FileSB.c code and start hacking.  (Adding an arrow button to the
+       *   text widget is trapped by the dialog maker, plaing a huge arrow in the button box
+       *   at the bottom of the dialog).
        */
     }
 

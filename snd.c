@@ -79,87 +79,26 @@ static void mus_print_to_snd(char *msg)
       }
 }
 
-#if HAVE_GSL
-#include <gsl/gsl_ieee_utils.h>
-#include <gsl/gsl_errno.h>
-/* default gsl error handler apparently aborts main program! */
-
-static void snd_gsl_error(const char *reason, const char *file, int line, int gsl_errno)
+void snd_set_global_defaults(bool need_cleanup)
 {
-  XEN_ERROR(SND_GSL_ERROR,
-	    XEN_LIST_3(C_TO_XEN_STRING("GSL"),
-		       C_TO_XEN_STRING("~A, ~A in ~A line ~A, gsl err: ~A"),
-		       XEN_LIST_5(C_TO_XEN_STRING(gsl_strerror(gsl_errno)),
-				  C_TO_XEN_STRING(reason),
-				  C_TO_XEN_STRING(file),
-				  C_TO_XEN_INT(line),
-				  C_TO_XEN_INT(gsl_errno))));
-}
-#endif
-
-#if SND_AS_WIDGET
-  snd_state *snd_main(int argc, char **argv)
-#else
-  #if HAVE_GUILE
-    static void snd_main(void *closure, int argc, char **argv)
-  #else
-    int main (int argc, char **argv)
-  #endif
-#endif
-{
-  int i;
-
-#if HAVE_GSL
-  /* if HAVE_GSL and the environment variable GSL_IEEE_MODE exists, use it */
-  /* GSL_IEEE_MODE=double-precision,mask-underflow,mask-denormalized */
-  if (getenv("GSL_IEEE_MODE") != NULL) 
-    gsl_ieee_env_setup();
-  gsl_set_error_handler(snd_gsl_error);
-#endif
-
-#if ENABLE_NLS && HAVE_GETTEXT && defined(LOCALEDIR)
-  /* both flags needed to avoid idiotic confusion on the Sun */
-  #if HAVE_SETLOCALE
-    setlocale (LC_ALL, "");
-  #endif
-  bindtextdomain (PACKAGE, LOCALEDIR);
-  textdomain (PACKAGE);
-  /*
-    (bindtextdomain "snd" "/usr/local/share/locale")
-    (textdomain "snd")
-    (define _ gettext)
-    (display (_ "no selection"))
-
-    but that is limited to Snd's messages
-  */
-#endif
-
-  ss = (snd_state *)CALLOC(1, sizeof(snd_state));
-  ss->startup_errors = NULL;
-  mus_sound_initialize(); /* has to precede version check (mus_audio_moniker needs to be setup in Alsa/Oss) */
-
-#if HAVE_RUBY
-  ruby_init();
-#endif
-
-  for (i = 1; i < argc; i++)
+  if (need_cleanup)
     {
-      if (strcmp(argv[i], "--version") == 0)
-	{
-	  fprintf(stdout, version_info());
-	  snd_exit(0);
-	}
-      else
-	if (strcmp(argv[i], "--help") == 0)
-	  {
-	    fprintf(stdout, _("Snd is a sound editor; see http://ccrma.stanford.edu/software/snd/."));
-	    fprintf(stdout, version_info());
-	    snd_exit(0);
-	  }
+      if (ss->Vu_Font) {FREE(ss->Vu_Font); ss->Vu_Font = NULL;}
+      if (ss->HTML_Program) {FREE(ss->HTML_Program); ss->HTML_Program = NULL;}
+      if (ss->HTML_Dir) {FREE(ss->HTML_Dir); ss->HTML_Dir = NULL;}
+      if (ss->Temp_Dir) {FREE(ss->Temp_Dir); ss->Temp_Dir = NULL;}
+      if (ss->Save_Dir) {FREE(ss->Save_Dir); ss->Save_Dir = NULL;}
+      if (ss->Ladspa_Dir) {FREE(ss->Ladspa_Dir); ss->Ladspa_Dir = NULL;}
+      if (ss->Save_State_File) {FREE(ss->Save_State_File); ss->Save_State_File = NULL;}
+      if (ss->Eps_File) {FREE(ss->Eps_File); ss->Eps_File = NULL;}
+      if (ss->Listener_Prompt) {FREE(ss->Listener_Prompt); ss->Listener_Prompt = NULL;}
+      
+      /* not sure about the next two... */
+      if ((cursor_style(ss) == CURSOR_PROC) && (XEN_PROCEDURE_P(ss->cursor_proc)))
+	snd_unprotect_at(ss->cursor_proc_loc);
+      if ((zoom_focus_style(ss) == ZOOM_FOCUS_PROC) && (XEN_PROCEDURE_P(ss->zoom_focus_proc)))
+	snd_unprotect_at(ss->zoom_focus_proc_loc);
     }
-
-  initialize_format_lists();
-
   ss->Transform_Size = DEFAULT_TRANSFORM_SIZE;
   ss->Minibuffer_History_Length = DEFAULT_MINIBUFFER_HISTORY_LENGTH;
   ss->Fft_Window = DEFAULT_FFT_WINDOW;
@@ -243,12 +182,6 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
   ss->Sound_Style = DEFAULT_SOUND_STYLE;
   ss->Audio_Input_Device = DEFAULT_AUDIO_INPUT_DEVICE;
   ss->Audio_Output_Device = DEFAULT_AUDIO_OUTPUT_DEVICE;
-#if DEBUGGING
-  ss->Trap_Segfault = false;
-#else
-  ss->Trap_Segfault = DEFAULT_TRAP_SEGFAULT;
-#endif
-  ss->jump_ok = false;
   ss->Optimization = DEFAULT_OPTIMIZATION;
   ss->Print_Length = DEFAULT_PRINT_LENGTH;
   ss->View_Files_Sort = DEFAULT_VIEW_FILES_SORT;
@@ -271,17 +204,11 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
   ss->Cursor_Location_Offset = DEFAULT_CURSOR_LOCATION_OFFSET;
   ss->Max_Regions = DEFAULT_MAX_REGIONS;
   ss->Max_Transform_Peaks = DEFAULT_MAX_TRANSFORM_PEAKS;
-  allocate_regions(max_regions(ss));
   ss->HTML_Dir = NULL;
   ss->HTML_Program = copy_string(DEFAULT_HTML_PROGRAM);
   ss->Log_Freq_Start = DEFAULT_LOG_FREQ_START;
   ss->Min_dB = DEFAULT_MIN_DB;
   ss->lin_dB = pow(10.0, DEFAULT_MIN_DB * 0.05);
-  ss->init_window_x = DEFAULT_INIT_WINDOW_X; 
-  ss->init_window_y = DEFAULT_INIT_WINDOW_Y; 
-  ss->init_window_width = DEFAULT_INIT_WINDOW_WIDTH; 
-  ss->init_window_height = DEFAULT_INIT_WINDOW_HEIGHT;
-  ss->click_time = 100;
 
   ss->Expand_Control_Min = DEFAULT_EXPAND_CONTROL_MIN;
   ss->Expand_Control_Max = DEFAULT_EXPAND_CONTROL_MAX;
@@ -313,7 +240,101 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
   ss->Show_Controls = DEFAULT_SHOW_CONTROLS;
   ss->Cursor_Follows_Play = DEFAULT_CURSOR_FOLLOWS_PLAY;
   ss->Just_Sounds = DEFAULT_JUST_SOUNDS;
+}
 
+#if HAVE_GSL
+#include <gsl/gsl_ieee_utils.h>
+#include <gsl/gsl_errno.h>
+/* default gsl error handler apparently aborts main program! */
+
+static void snd_gsl_error(const char *reason, const char *file, int line, int gsl_errno)
+{
+  XEN_ERROR(SND_GSL_ERROR,
+	    XEN_LIST_3(C_TO_XEN_STRING("GSL"),
+		       C_TO_XEN_STRING("~A, ~A in ~A line ~A, gsl err: ~A"),
+		       XEN_LIST_5(C_TO_XEN_STRING(gsl_strerror(gsl_errno)),
+				  C_TO_XEN_STRING(reason),
+				  C_TO_XEN_STRING(file),
+				  C_TO_XEN_INT(line),
+				  C_TO_XEN_INT(gsl_errno))));
+}
+#endif
+
+#if SND_AS_WIDGET
+  snd_state *snd_main(int argc, char **argv)
+#else
+  #if HAVE_GUILE
+    static void snd_main(void *closure, int argc, char **argv)
+  #else
+    int main (int argc, char **argv)
+  #endif
+#endif
+{
+  int i;
+
+#if HAVE_GSL
+  /* if HAVE_GSL and the environment variable GSL_IEEE_MODE exists, use it */
+  /* GSL_IEEE_MODE=double-precision,mask-underflow,mask-denormalized */
+  if (getenv("GSL_IEEE_MODE") != NULL) 
+    gsl_ieee_env_setup();
+  gsl_set_error_handler(snd_gsl_error);
+#endif
+
+#if ENABLE_NLS && HAVE_GETTEXT && defined(LOCALEDIR)
+  /* both flags needed to avoid idiotic confusion on the Sun */
+  #if HAVE_SETLOCALE
+    setlocale (LC_ALL, "");
+  #endif
+  bindtextdomain (PACKAGE, LOCALEDIR);
+  textdomain (PACKAGE);
+  /*
+    (bindtextdomain "snd" "/usr/local/share/locale")
+    (textdomain "snd")
+    (define _ gettext)
+    (display (_ "no selection"))
+
+    but that is limited to Snd's messages
+  */
+#endif
+
+  ss = (snd_state *)CALLOC(1, sizeof(snd_state));
+  ss->startup_errors = NULL;
+  mus_sound_initialize(); /* has to precede version check (mus_audio_moniker needs to be setup in Alsa/Oss) */
+
+#if HAVE_RUBY
+  ruby_init();
+#endif
+
+  for (i = 1; i < argc; i++)
+    {
+      if (strcmp(argv[i], "--version") == 0)
+	{
+	  fprintf(stdout, version_info());
+	  snd_exit(0);
+	}
+      else
+	if (strcmp(argv[i], "--help") == 0)
+	  {
+	    fprintf(stdout, _("Snd is a sound editor; see http://ccrma.stanford.edu/software/snd/."));
+	    fprintf(stdout, version_info());
+	    snd_exit(0);
+	  }
+    }
+
+  initialize_format_lists();
+  snd_set_global_defaults(false);
+#if DEBUGGING
+  ss->Trap_Segfault = false;
+#else
+  ss->Trap_Segfault = DEFAULT_TRAP_SEGFAULT;
+#endif
+  ss->jump_ok = false;
+  allocate_regions(max_regions(ss));
+  ss->init_window_x = DEFAULT_INIT_WINDOW_X; 
+  ss->init_window_y = DEFAULT_INIT_WINDOW_Y; 
+  ss->init_window_width = DEFAULT_INIT_WINDOW_WIDTH; 
+  ss->init_window_height = DEFAULT_INIT_WINDOW_HEIGHT;
+  ss->click_time = 100;
   init_sound_file_extensions();
 
   ss->max_sounds = 4;                 /* expands to accommodate any number of files */
@@ -344,10 +365,6 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
   g_initialize_gh();
   ss->search_proc = XEN_UNDEFINED;
   ss->search_expr = NULL;
-  /*
-  ss->view_files_sort_proc = XEN_UNDEFINED;
-  ss->view_files_sort_proc_name = copy_string(_("proc"));
-  */
   ss->search_tree = NULL;
   mus_error_set_handler(mus_error_to_snd);
   mus_print_set_handler(mus_print_to_snd);

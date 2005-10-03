@@ -223,7 +223,20 @@ GSL_IEEE_MODE=double-precision,mask-underflow,mask-denormalized
 <p>With the advent of the preferences dialog, and other complications, this initialization sequence
 has changed slightly.  The old files ~/.snd and /etc/snd.conf are still loaded, but now there
 are additional initialization possibilities: ~/.snd_prefs_guile|ruby, /etc/snd_guile|ruby.conf,
-~/.snd_guile|ruby. 
+~/.snd_guile|ruby (the notation "guile|ruby" means either "guile" or "ruby", so the file names
+spelled out completely are "/etc/snd_guile.conf" and "/etc/snd_ruby.conf"; which one is loaded
+obviously depends on which language you chose during configuration).  Currently, the save-options (preferences dialog) process writes to
+.snd_prefs_* which is loaded first, if it exists; then Snd looks for .snd_* (guile or ruby);
+then .snd.  If you're always using just one version of Snd, it's simplest to stick with
+.snd.  The actual load sequence is:
+</p>
+<pre>
+/etc/snd_guile|ruby.conf    (these two canceled by -noglob)
+/etc/snd.conf               
+~/.snd_prefs_guile|ruby     (the rest canceled by -noinit)
+~/.snd_guile|ruby
+~/.snd                      (changed by initFile resource, -init arg, SND_INIT_FILE_ENVRIONMENT_NAME, etc)
+</pre>
 <br>
 <table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndresources">Snd resources</a></h3></td></tr></table>
 

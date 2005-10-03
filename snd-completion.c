@@ -592,3 +592,5 @@ char *complete_listener_text(char *old_text, int end, bool *try_completion, char
   return(new_text);
 }
 
+
+/* TODO: list-based completions: drop-down menus for simple cases (srate, previous file names etc) */

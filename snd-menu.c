@@ -238,25 +238,13 @@ void revert_file_from_menu(void)
 
 void save_options_from_menu(void)
 {
-#if HAVE_EXTENSION_LANGUAGE
-  FILE *fd;
-#if HAVE_GUILE
-  #define SND_PREFS "~/.snd_prefs_guile"
-#endif
-#if HAVE_RUBY
-  #define SND_PREFS "~/.snd_prefs_ruby"
-#endif
-  fd = FOPEN(SND_PREFS, "w");
-  if (!fd)
+  char *filename;
+  filename = save_options_in_prefs();
+  if (filename)
     {
-      snd_error(_("can't write %s: %s"), SND_PREFS, snd_io_strerror());
-      return;
+      if (any_selected_sound())
+	report_in_minibuffer(any_selected_sound(), _("saved options in %s"), filename);
     }
-  save_options(fd);
-  snd_fclose(fd, SND_PREFS);
-  if (any_selected_sound())
-    report_in_minibuffer(any_selected_sound(), _("saved options in %s"), SND_PREFS);
-#endif
 }
 
 static bool save_state_error_p = false;
