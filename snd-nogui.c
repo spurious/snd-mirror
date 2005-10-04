@@ -8,6 +8,7 @@ void clear_minibuffer_error(snd_info *sp) {}
 void reflect_amp_control_bounds_change_in_recorder(void) {}
 void recorder_error(const char *msg) {}
 void snd_help_back_to_top(void) {}
+bool help_dialog_is_active(void) {return(false);}
 color_t get_in_between_color(color_t fg, color_t bg) {return(0);}
 void set_find_dialog_label(const char *str) {}
 void save_find_dialog_state(FILE *fd) {}

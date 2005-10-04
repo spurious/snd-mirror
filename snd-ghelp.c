@@ -375,3 +375,9 @@ void snd_help_back_to_top(void)
       gtk_text_view_scroll_to_iter(GTK_TEXT_VIEW(help_text), &pos, 0.0, true, 0.0, 0.0);
     }
 }
+
+bool help_dialog_is_active(void)
+{
+  return((help_dialog) &&
+	 (GTK_WIDGET_VISIBLE(help_dialog)));
+}

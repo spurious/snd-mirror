@@ -1351,6 +1351,7 @@ char *just_filename(char *name);
 char *just_directory(const char *name);
 bool directory_exists(char *name);
 char *file_to_string(const char *filename);
+char *vstr(const char *format, va_list ap);
 disk_space_t disk_space_p(snd_info *sp, off_t bytes, const char *filename);
 const char *short_data_format_name(int sndlib_format, const char *filename);
 char *prettyf(Float num, int tens);

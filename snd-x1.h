@@ -10,7 +10,7 @@ Widget snd_help_with_xrefs(const char *subject, const char *helpstr, with_word_w
 int help_text_width(const char *txt, int start, int end);
 void snd_help_append(const char *text);
 void snd_help_back_to_top(void);
-
+bool help_dialog_is_active(void);
 
 
 /* -------- snd-xdraw.c -------- */

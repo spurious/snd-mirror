@@ -466,30 +466,6 @@ void save_macro_state (FILE *fd)
     save_macro_1(named_macros[i], fd);
 }
 
-static char *vstr(const char *format, va_list ap) 
-{
-  char *buf;
-  int len;
-#if HAVE_VPRINTF
-  len = snd_strlen(format) + PRINT_BUFFER_SIZE;
-  buf = (char *)CALLOC(len, sizeof(char));
- #if HAVE_VSNPRINTF
-  vsnprintf(buf, len, format, ap);
- #else
-  vsprintf(buf, format, ap);
- #endif
-#else
-  len = snd_strlen(format) + PRINT_BUFFER_SIZE;
-  buf = (char *)CALLOC(len, sizeof(char));
- #if HAVE_SNPRINTF
-  snprintf(buf, len, "%s...[you need vprintf]", format);
- #else
-  sprintf(buf, "%s...[you need vprintf]", format);
- #endif
-#endif
-  return(buf);
-}
-
 void string_to_minibuffer(snd_info *sp, const char *buf)
 {
   if ((sp->minibuffer_on == MINI_PROMPT) || 

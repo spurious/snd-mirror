@@ -221,6 +221,30 @@ char *file_to_string(const char *filename)
   return(content);
 }
 
+char *vstr(const char *format, va_list ap)
+{
+  char *buf;
+  int len;
+#if HAVE_VPRINTF
+  len = snd_strlen(format) + PRINT_BUFFER_SIZE;
+  buf = (char *)CALLOC(len, sizeof(char));
+ #if HAVE_VSNPRINTF
+  vsnprintf(buf, len, format, ap);
+ #else
+  vsprintf(buf, format, ap);
+ #endif
+#else
+  len = snd_strlen(format) + PRINT_BUFFER_SIZE;
+  buf = (char *)CALLOC(len, sizeof(char));
+ #if HAVE_SNPRINTF
+  snprintf(buf, len, "%s...[you need vprintf]", format);
+ #else
+  sprintf(buf, "%s...[you need vprintf]", format);
+ #endif
+#endif
+  return(buf);
+}
+
 disk_space_t disk_space_p(snd_info *sp, off_t bytes, const char *filename)
 {
   off_t kfree, kneeded;
