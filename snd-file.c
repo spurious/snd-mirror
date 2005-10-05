@@ -914,6 +914,7 @@ snd_info *finish_opening_sound(snd_info *sp, bool selected)
 #endif
   if (sp) 
     {
+      add_srate_to_completion_list(SND_SRATE(sp));
       if ((selected) &&
 	  (sp->active) &&
 	  (sp->inuse == SOUND_NORMAL))

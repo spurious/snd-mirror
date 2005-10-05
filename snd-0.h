@@ -89,6 +89,14 @@
 #define STRFTIME_FORMAT "%a %d-%b-%Y %H:%M %Z"
 #endif
 
+#if HAVE_STRCASECMP
+  #define STRCMP(a, b) strcasecmp(a, b)
+  #define STRNCMP(a, b, c) strncasecmp(a, b, c)
+#else
+  #define STRCMP(a, b) strcmp(a, b)
+  #define STRNCMP(a, b, c) strncmp(a, b, c)
+#endif
+
 #define XOR(a, b) ((a) ^ (b))
 /* can't get used to this operator -- in the good old days, ^ meant exponentiation */
 

@@ -301,7 +301,9 @@ static int speed_to_scroll(Float minval, Float val, Float maxval)
 static int scroll_to_speed(snd_info *sp, int ival)
 {
   char speed_number_buffer[6];
-  sp->speed_control = speed_changed(exp((ival * (log(sp->speed_control_max) - log(sp->speed_control_min)) / (0.9 * SCROLLBAR_MAX)) + log(sp->speed_control_min)),
+  sp->speed_control = speed_changed(exp((ival * (log(sp->speed_control_max) - log(sp->speed_control_min)) / 
+					 (0.9 * SCROLLBAR_MAX)) + 
+					log(sp->speed_control_min)),
 				    speed_number_buffer,
 				    sp->speed_control_style,
 				    sp->speed_control_tones,
@@ -1800,7 +1802,7 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       XtSetArg(args[n], XmNresizeWidth, true); n++;
       XtSetArg(args[n], XmNmarginHeight, 1); n++;
       XtSetArg(args[n], XmNshadowThickness, 0); n++;
-      MINIBUFFER_TEXT(sp) = make_textfield_widget("snd-info", NAME_BOX(sp), args, n, ACTIVATABLE, add_completer_func(info_completer));
+      MINIBUFFER_TEXT(sp) = make_textfield_widget("snd-info", NAME_BOX(sp), args, n, ACTIVATABLE, add_completer_func(info_completer, (void *)sp));
       XtAddCallback(MINIBUFFER_TEXT(sp), XmNactivateCallback, minibuffer_click_callback, (XtPointer)sp);
 
       n = 0;
@@ -2476,7 +2478,7 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNrightWidget, FILTER_DB_BUTTON(sp)); n++;
       XtSetArg(args[n], XmNmarginHeight, CONTROLS_MARGIN); n++;
-      FILTER_COEFFS_TEXT(sp) = make_textfield_widget("filter-text", CONTROLS(sp), args, n, ACTIVATABLE, add_completer_func(filename_completer));
+      FILTER_COEFFS_TEXT(sp) = make_textfield_widget("filter-text", CONTROLS(sp), args, n, ACTIVATABLE, add_completer_func(filename_completer, NULL));
       XtAddCallback(FILTER_COEFFS_TEXT(sp), XmNactivateCallback, filter_activate_callback, (XtPointer)sp);
 
       /* FILTER GRAPH */

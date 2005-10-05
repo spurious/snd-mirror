@@ -120,7 +120,7 @@ static char *find_highlighted_text(XmString xs)
 }
 
 static Widget related_items = NULL;
-static char *help_completer(char *text) {return(NULL);}
+static char *help_completer(char *text, void *data) {return(NULL);} /* TODO: is this right? surely we want a real completion here! */
 
 static bool new_help(const char *pattern)
 {
@@ -428,7 +428,7 @@ static void create_help_monolog(void)
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNleftWidget, label); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-  help_search = make_textfield_widget("help-search", holder, args, n, ACTIVATABLE, add_completer_func(help_completer));
+  help_search = make_textfield_widget("help-search", holder, args, n, ACTIVATABLE, add_completer_func(help_completer, NULL));
   XtAddCallback(help_search, XmNactivateCallback, help_search_callback, NULL);
   
   n = 0;

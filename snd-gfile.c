@@ -315,7 +315,7 @@ static gboolean filer_key_press(GtkWidget *w, GdkEventKey *event, gpointer data)
 {
   if (event->keyval == GDK_Tab)
     {
-      gtk_entry_set_text(GTK_ENTRY(w), sound_filename_completer((char *)gtk_entry_get_text(GTK_ENTRY(w))));
+      gtk_entry_set_text(GTK_ENTRY(w), sound_filename_completer((char *)gtk_entry_get_text(GTK_ENTRY(w)), NULL));
       return(true);
     }
   return(false);
@@ -1137,7 +1137,7 @@ static gboolean data_panel_srate_key_press(GtkWidget *w, GdkEventKey *event, gpo
 {
   if (event->keyval == GDK_Tab)
     {
-      gtk_entry_set_text(GTK_ENTRY(w), srate_completer((char *)gtk_entry_get_text(GTK_ENTRY(w))));
+      gtk_entry_set_text(GTK_ENTRY(w), srate_completer((char *)gtk_entry_get_text(GTK_ENTRY(w)), NULL));
       return(true);
     }
   return(false);

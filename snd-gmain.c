@@ -519,7 +519,7 @@ static void notebook_switch_page(GtkNotebook *w, GtkNotebookPage *page_widget, g
 }
 
 #ifdef SND_AS_WIDGET
-GtkWidget *snd_as_widget(int argc, char **argv, GtkWidget *parent, void (*error_func)(const char *))
+GtkWidget *snd_as_widget(int argc, char **argv, GtkWidget *parent, void (*error_func)(const char *msg))
 {
 
 #else

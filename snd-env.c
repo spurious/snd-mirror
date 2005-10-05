@@ -1320,7 +1320,7 @@ env *enved_next_env(void)
   else return(NULL);
 }
 
-char *env_name_completer(char *text)
+char *env_name_completer(char *text, void *data)
 {
   int matches = 0;
   char *current_match = NULL;

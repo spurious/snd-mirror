@@ -664,7 +664,7 @@ static file_dialog_info *make_file_dialog(bool read_only, char *title, char *sel
     wtmp = XmFileSelectionBoxGetChild(fd->dialog, XmDIALOG_TEXT);
   if (wtmp) 
     {
-      add_completer_to_textfield(wtmp, add_completer_func(sound_filename_completer));
+      add_completer_to_textfield(wtmp, add_completer_func(sound_filename_completer, NULL));
       XtAddCallback(wtmp, XmNfocusCallback, focus_filename_text_callback, (XtPointer)fd);
       XtAddCallback(wtmp, XmNlosingFocusCallback, unfocus_filename_text_callback, (XtPointer)fd);
     }
@@ -674,7 +674,7 @@ static file_dialog_info *make_file_dialog(bool read_only, char *title, char *sel
     wtmp = XmFileSelectionBoxGetChild(fd->dialog, XmDIALOG_FILTER_TEXT);
   if (wtmp)
     {
-      add_completer_to_textfield(wtmp, add_completer_func(filename_completer));
+      add_completer_to_textfield(wtmp, add_completer_func(filename_completer, NULL));
       XtAddCallback(wtmp, XmNvalueChangedCallback, unpost_if_filter_changed, (XtPointer)fd);
       /* ideally we'd add a "sort" pulldown menu here, but I can't see any way to do it except to
        *   grab the current Xm/FileSB.c code and start hacking.  (Adding an arrow button to the
@@ -1654,7 +1654,7 @@ file_data *make_file_data_panel(Widget parent, char *name, Arg *in_args, int in_
   XtSetArg(args[n], XmNleftWidget, sep3); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
-  fdat->srate_text = make_textfield_widget("srate-text", form, args, n, NOT_ACTIVATABLE, add_completer_func(srate_completer));
+  fdat->srate_text = make_textfield_widget("srate-text", form, args, n, NOT_ACTIVATABLE, add_completer_func(srate_completer, NULL));
 
   if (with_chan != WITHOUT_CHANNELS_FIELD)
     {
@@ -2871,7 +2871,7 @@ void make_new_file_dialog(void)
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNleftWidget, name_label); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-      new_file_text = make_textfield_widget("newtext", form, args, n, ACTIVATABLE, add_completer_func(filename_completer));
+      new_file_text = make_textfield_widget("newtext", form, args, n, ACTIVATABLE, add_completer_func(filename_completer, NULL));
 
       n = 0;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
@@ -5237,7 +5237,7 @@ widget_t start_view_files_dialog_1(view_files_info *vdat, bool managed)
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNleftWidget, add_label); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-      vdat->add_text = make_textfield_widget("add-text", viewform, args, n, ACTIVATABLE, add_completer_func(filename_completer));
+      vdat->add_text = make_textfield_widget("add-text", viewform, args, n, ACTIVATABLE, add_completer_func(filename_completer, NULL));
       XtAddCallback(vdat->add_text, XmNactivateCallback, view_files_add_files, (XtPointer)vdat);
       
       /* SOMEDAY: file filters here also */

@@ -172,7 +172,7 @@ bool separator_char_p(char c)
 	 (c != '$'));
 }
 
-char *command_completer(char *original_text)
+char *command_completer(char *original_text, void *data)
 {
   int i, len, beg, matches = 0;
   char *text;
@@ -215,21 +215,32 @@ char *command_completer(char *original_text)
 
 /* ---------------- COMMAND/FILENAME COMPLETIONS ---------------- */
 
-typedef char *(*completer_func)(char *text);
+typedef char *(*completer_func)(char *text, void *data);
 static completer_func *completer_funcs = NULL;
+static void **completer_data = NULL;
 static int completer_funcs_size = 0;
 static int completer_funcs_end = 0;
 
-int add_completer_func(char *(*func)(char *))
+int add_completer_func(char *(*func)(char *text, void *context), void *data)
 {
   if (completer_funcs_size == completer_funcs_end)
     {
       completer_funcs_size += 8;
       if (completer_funcs == NULL)
-	completer_funcs = (completer_func *)CALLOC(completer_funcs_size, sizeof(completer_func));
-      else completer_funcs = (completer_func *)REALLOC(completer_funcs, completer_funcs_size * sizeof(completer_func));
+	{
+	  completer_funcs = (completer_func *)CALLOC(completer_funcs_size, sizeof(completer_func));
+	  completer_data = (void **)CALLOC(completer_funcs_size, sizeof(void *));
+	}
+      else 
+	{
+	  int i;
+	  completer_funcs = (completer_func *)REALLOC(completer_funcs, completer_funcs_size * sizeof(completer_func));
+	  completer_data = (void **)REALLOC(completer_data, completer_funcs_size * sizeof(void *));
+	  for (i = completer_funcs_end; i < completer_funcs_size; i++) completer_data[i] = NULL;
+	}
     }
   completer_funcs[completer_funcs_end] = func;
+  completer_data[completer_funcs_end] = data;
   completer_funcs_end++;
   return(completer_funcs_end - 1);
 }
@@ -279,7 +290,7 @@ char *complete_text(char *text, int func)
   possible_completions_ctr = 0;
   if ((func >= 0) && 
       (func < completer_funcs_end))
-    return((*completer_funcs[func])(text));
+    return((*completer_funcs[func])(text, completer_data[func]));
   else return(copy_string(text));
 }
 
@@ -295,25 +306,48 @@ void clear_possible_completions(void)
   possible_completions_ctr = 0;
 }
 
-char *srate_completer(char *text)
+static list_completer_info *srate_info = NULL;
+
+void add_srate_to_completion_list(int srate)
 {
-  set_completion_matches(1);
-  while ((text) && (*text == ' ')) text++;
-  if (strcmp(text, "4410") == 0) return(copy_string("44100"));
-  if (strcmp(text, "441") == 0) return(copy_string("44100"));
-  if (strcmp(text, "44") == 0) return(copy_string("44100"));
-  if (strcmp(text, "2205") == 0) return(copy_string("22050"));
-  if (strcmp(text, "220") == 0) return(copy_string("22050"));
-  if (strcmp(text, "22") == 0) return(copy_string("22050"));
-  if (strcmp(text, "2") == 0) return(copy_string("22050"));
-  if (strcmp(text, "4800") == 0) return(copy_string("48000"));
-  if (strcmp(text, "480") == 0) return(copy_string("48000"));
-  if (strcmp(text, "48") == 0) return(copy_string("48000"));
-  if (strcmp(text, "800") == 0) return(copy_string("8000"));
-  if (strcmp(text, "80") == 0) return(copy_string("8000"));
-  if (strcmp(text, "8") == 0) return(copy_string("8000"));
-  set_completion_matches(0);
-  return(copy_string(text));
+  char *str;
+  str = (char *)CALLOC(16, sizeof(char));
+  mus_snprintf(str, 16, "%d", srate);
+  if (srate_info == NULL)
+    {
+      int loc = 0;
+      srate_info = (list_completer_info *)CALLOC(1, sizeof(list_completer_info));
+      srate_info->exact_match = true;
+      srate_info->values_size = 16;
+      srate_info->values = (char **)CALLOC(srate_info->values_size, sizeof(char *));
+      if (srate != 44100) srate_info->values[loc++] = copy_string("44100");
+      if (srate != 22050) srate_info->values[loc++] = copy_string("22050");
+      if (srate != 8000) srate_info->values[loc++] = copy_string("8000");
+      if (srate != 48000) srate_info->values[loc++] = copy_string("48000");
+      srate_info->num_values = loc;
+    }
+  else
+    {
+      int i;
+      for (i = 0; i < srate_info->num_values; i++)
+	if (strcmp(srate_info->values[i], str) == 0)
+	  {
+	    FREE(str);
+	    return;
+	  }
+      if (srate_info->num_values >= srate_info->values_size)
+	{
+	  srate_info->values_size += 16;
+	  srate_info->values = (char **)REALLOC(srate_info->values, srate_info->values_size * sizeof(char *));
+	  for (i = srate_info->num_values; i < srate_info->values_size; i++) srate_info->values[i] = NULL;
+	}
+    }
+  srate_info->values[srate_info->num_values++] = str;
+}
+
+char *srate_completer(char *text, void * data)
+{
+  return(list_completer(text, (void *)srate_info));
 }
 
 #if HAVE_DIRENT_H
@@ -335,6 +369,7 @@ enum {ANY_FILE_TYPE, SOUND_FILE_TYPE};
 
 static char *filename_completer_1(char *text, int file_type)
 {
+  /* TODO: could data here carry the directory? */
 #if HAVE_OPENDIR
   /* assume text is a partial filename */
   /* get directory name, opendir, read files checking for match */
@@ -419,12 +454,12 @@ static char *filename_completer_1(char *text, int file_type)
   return(copy_string(text));
 }
 
-char *filename_completer(char *text)
+char *filename_completer(char *text, void *data)
 {
   return(filename_completer_1(text, ANY_FILE_TYPE));
 }
 
-char *sound_filename_completer(char *text)
+char *sound_filename_completer(char *text, void *data)
 {
   return(filename_completer_1(text, SOUND_FILE_TYPE));
 }
@@ -436,22 +471,21 @@ static bool use_sound_filename_completer(sp_filing_t filing)
 	 (filing == INSERT_FILING));   /* C-x C-i */
 }
 
-char *info_completer(char *text)
+char *info_completer(char *text, void *data)
 {
-  snd_info *sp = NULL;
-  sp = any_selected_sound();
+  snd_info *sp = (snd_info *)data;
   if (sp)
     {
       if (sp->searching) return(copy_string(text));      /* C-s or C-r so as above */
       if ((sp->marking) || (sp->finding_mark)) return(copy_string(text)); /* C-x C-m etc */
       if (sp->printing) return(copy_string(text));       /* C-x C-d so anything is possible */
-      if (sp->amping) return(env_name_completer(text));
-      if (use_sound_filename_completer(sp->filing)) return(sound_filename_completer(text));
-      if (sp->loading) return(filename_completer(text)); /* C-x C-l */
+      if (sp->amping) return(env_name_completer(text, NULL));
+      if (use_sound_filename_completer(sp->filing)) return(sound_filename_completer(text, NULL));
+      if (sp->loading) return(filename_completer(text, NULL)); /* C-x C-l */
       if (sp->macroing) 
 	{
 	  char *new_text;
-	  new_text = command_completer(text);
+	  new_text = command_completer(text, NULL);
 	  if (get_completion_matches() == 0)
 	    {
 	      int i, beg, parens, len;
@@ -470,7 +504,7 @@ char *info_completer(char *text)
 		{
 		  char *new_file;
 		  if (new_text) FREE(new_text);
-		  new_file = filename_completer((char *)(text + beg));
+		  new_file = filename_completer((char *)(text + beg), NULL);
 		  len = beg + 2 + snd_strlen(new_file);
 		  new_text = (char *)CALLOC(len, sizeof(char));
 		  strncpy(new_text, text, beg);
@@ -484,7 +518,7 @@ char *info_completer(char *text)
 	}
       return(copy_string(text));
     }
-  else return(command_completer(text));
+  else return(command_completer(text, NULL));
 }
 
 static int find_indentation(char *str, int loc)
@@ -572,7 +606,7 @@ char *complete_listener_text(char *old_text, int end, bool *try_completion, char
       if (old_text[i] == '\"')
 	{
 	  file_text = copy_string((char *)(old_text + i + 1));
-	  new_file = filename_completer(file_text);
+	  new_file = filename_completer(file_text, NULL);
 	  len = snd_strlen(new_file);
 	  if (len > 0)
 	    {
@@ -586,11 +620,54 @@ char *complete_listener_text(char *old_text, int end, bool *try_completion, char
 	}
       if (isspace((int)(old_text[i]))) break;
     }
-  if (new_text == NULL) new_text = command_completer(old_text);
+  if (new_text == NULL) new_text = command_completer(old_text, NULL);
   (*try_completion) = true;
   (*to_file_text) = file_text;
   return(new_text);
 }
 
-
-/* TODO: list-based completions: drop-down menus for simple cases (srate, previous file names etc) */
+char *list_completer(char *text, void *data)
+{
+  list_completer_info *info = (list_completer_info *)data;
+  int i, j = 0, len, matches = 0, current_match = -1;
+  char *trimmed_text;
+  set_completion_matches(0);
+  /* check for null text */
+  len = snd_strlen(text);
+  if (len == 0) return(copy_string(text));
+  /* strip away leading and trailing white space */
+  trimmed_text = (char *)CALLOC(len + 1, sizeof(char));
+  for (i = 0; i < len; i++)
+    if (!(isspace(text[i])))
+      trimmed_text[j++] = text[i];
+  if (j == 0)
+    {
+      FREE(trimmed_text);
+      return(copy_string(text));
+    }
+  /* check for match(es) against values */
+  if (info->exact_match)
+    {
+      for (i = 0; i < info->num_values; i++)
+	if (strncmp(info->values[i], trimmed_text, len) == 0)
+	  {
+	    matches++;
+	    current_match = i;
+	  }
+    }
+  else
+    {
+      for (i = 0; i < info->num_values; i++)
+	if (STRNCMP(info->values[i], trimmed_text, len) == 0)
+	  {
+	    matches++;
+	    current_match = i;
+	  }
+    }
+  /* PERHAPS: should we set up the match list here? */
+  FREE(trimmed_text);
+  if (matches != 1)
+    return(copy_string(text));
+  set_completion_matches(1);
+  return(copy_string(info->values[current_match]));
+}

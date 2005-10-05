@@ -31,6 +31,12 @@ static XEN name_reversed(XEN arg1, XEN arg2, XEN arg3) \
   XEN_ASSERT_TYPE(XEN_NUMBER_P(Beg) || XEN_FALSE_P(Beg) || XEN_NOT_BOUND_P(Beg), Beg, Offset, Origin, "a number or " PROC_FALSE)
 
 typedef struct {
+  char **values;
+  int num_values, values_size;
+  bool exact_match;
+} list_completer_info;
+
+typedef struct {
   int samps_per_bin, amp_env_size;
   mus_sample_t fmax, fmin;
   mus_sample_t *data_max, *data_min;
@@ -649,7 +655,7 @@ bool run_snd_error_hook(const char *msg);
 void g_init_errors(void);
 
 #ifdef SND_AS_WIDGET
-  void set_error_display (void (*func)(const char *));
+  void set_error_display(void (*func)(const char *msg));
 #endif
 void redirect_snd_error_to(void (*handler)(const char *error_msg, void *ufd), void *data);
 void redirect_snd_warning_to(void (*handler)(const char *warning_msg, void *ufd), void *data);
@@ -658,8 +664,8 @@ void redirect_snd_warning_to(void (*handler)(const char *warning_msg, void *ufd)
 
 /* -------- snd-completion.c -------- */
 
-char *command_completer(char *text);
-int add_completer_func(char *(*func)(char *));
+char *command_completer(char *text, void *data);
+int add_completer_func(char *(*func)(char *text, void *context), void *data);
 int get_completion_matches(void);
 void set_completion_matches(int matches);
 void set_save_completions(bool save);
@@ -667,12 +673,14 @@ void add_possible_completion(char *text);
 void display_completions(void);
 char *complete_text(char *text, int func);
 void clear_possible_completions(void);
-char *filename_completer(char *text);
-char *sound_filename_completer(char *text);
-char *srate_completer(char *text);
-char *info_completer(char *text);
+char *filename_completer(char *text, void *data);
+char *sound_filename_completer(char *text, void *data);
+char *srate_completer(char *text, void *data);
+char *list_completer(char *text, void *data);
+char *info_completer(char *text, void *data);
 char *complete_listener_text(char *old_text, int end, bool *try_completion, char **to_file_text);
 bool separator_char_p(char c);
+void add_srate_to_completion_list(int srate);
 
 
 /* -------- snd-print.c -------- */
@@ -1068,7 +1076,7 @@ env *enved_all_envs(int pos);
 void alert_envelope_editor(char *name, env *val);
 void enved_show_background_waveform(axis_info *ap, axis_info *gray_ap, bool apply_to_selection, bool show_fft, printing_t printing);
 void save_envelope_editor_state(FILE *fd);
-char *env_name_completer(char *text);
+char *env_name_completer(char *text, void *data);
 env *enved_next_env(void);
 env *string_to_env(char *str);
 void add_or_edit_symbol(char *name, env *val);

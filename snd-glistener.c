@@ -179,8 +179,8 @@ static void listener_completion(int end)
 	  clear_possible_completions();
 	  set_save_completions(true);
 	  if (file_text) 
-	    new_text = filename_completer(file_text); 
-	  else new_text = command_completer(old_text);
+	    new_text = filename_completer(file_text, NULL); 
+	  else new_text = command_completer(old_text, NULL);
 	  if (new_text) 
 	    {
 	      FREE(new_text); 

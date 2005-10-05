@@ -47,9 +47,9 @@ void redirect_snd_warning_to(void (*handler)(const char *warning_msg, void *ufd)
 }
 
 #ifdef SND_AS_WIDGET
-static void (*snd_error_display)(const char *);
+static void (*snd_error_display)(const char *msg);
 
-void set_error_display(void (*func)(const char *))
+void set_error_display(void (*func)(const char *msg))
 {
   snd_error_display = func;
 }

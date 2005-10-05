@@ -1230,14 +1230,6 @@ To use the defaults, click the 'Reset' button.",
  */
 
 /*  appears to be Name_completion in snd-xlistener, so triggered via XtAction TAB (different from Listener_completion)
-    add_completer:
-    snd-xfile.c:    add_completer_to_textfield(wtmp, add_completer_func(filename_completer));
-    snd-xfile.c:    add_completer_to_textfield(wtmp, add_completer_func(filename_completer));
-    snd-xfile.c:  fdat->srate_text = make_textfield_widget("srate-text", form, args, n, NOT_ACTIVATABLE, add_completer_func(srate_completer));
-    snd-xfile.c:      new_file_name = make_textfield_widget("newtext", form, args, n, ACTIVATABLE, add_completer_func(filename_completer));
-    snd-xhelp.c:  help_search = make_textfield_widget("help-search", holder, args, n, ACTIVATABLE, add_completer_func(help_completer));
-    snd-xsnd.c:      sw[W_info] = make_textfield_widget("snd-info", sw[W_name_form], args, n, ACTIVATABLE, add_completer_func(info_completer));
-    snd-xsnd.c:      sw[W_filter] = make_textfield_widget("filter-text", sw[W_amp_form], args, n, ACTIVATABLE, add_completer_func(filename_completer));
  */
 
 void completion_dialog_help(void)
@@ -1635,14 +1627,6 @@ static char *topic_urls[NUM_TOPICS] = {
   "grfsnd.html#sndresources", "grfsnd.html#sndswitches", "grfsnd.html#sndinitfile", "extsnd.html#extsndcontents",
   "extsnd.html#noisystory", "extsnd.html#movingwindows", "extsnd.html#colors", "sndscm.html#allrandomnumbers"
 };
-
-#if HAVE_STRCASECMP
-  #define STRCMP(a, b) strcasecmp(a, b)
-  #define STRNCMP(a, b, c) strncasecmp(a, b, c)
-#else
-  #define STRCMP(a, b) strcmp(a, b)
-  #define STRNCMP(a, b, c) strncmp(a, b, c)
-#endif
 
 static int min_strlen(const char *a, const char *b)
 {
