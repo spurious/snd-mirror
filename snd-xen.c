@@ -2290,15 +2290,6 @@ static XEN g_sash_color(void)
   return(XEN_WRAP_PIXEL(ss->sgx->sash_color));
 }
 
-static XEN g_set_data_color(XEN color) 
-{
-  XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, S_setB S_data_color, "a color"); 
-  color_data(XEN_UNWRAP_PIXEL(color));
-  ss->sgx->grid_color = get_in_between_color(ss->sgx->data_color, ss->sgx->graph_color);
-  for_each_chan(update_graph);
-  return(color);
-}
-
 static XEN g_set_help_button_color(XEN color) 
 {
   XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, S_setB S_help_button_color, "a color"); 
@@ -2369,6 +2360,15 @@ static XEN g_data_color(void)
 {
   #define H_data_color "(" S_data_color "): color used to draw unselected data"
   return(XEN_WRAP_PIXEL(ss->sgx->data_color));
+}
+
+static XEN g_set_data_color(XEN color) 
+{
+  XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, S_setB S_data_color, "a color"); 
+  color_data(XEN_UNWRAP_PIXEL(color));
+  ss->sgx->grid_color = get_in_between_color(ss->sgx->data_color, ss->sgx->graph_color);
+  for_each_chan(update_graph);
+  return(color);
 }
 
 static XEN g_set_selected_data_color(XEN color)
