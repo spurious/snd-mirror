@@ -956,6 +956,9 @@ bool listener_print_p(const char *msg);
 #if (!USE_NO_GUI)
   Float check_color_range(const char *caller, XEN val);
 #endif
+void set_basic_color(color_t color);
+void set_highlight_color(color_t color);
+void set_data_color(color_t color);
 Float string_to_Float(char *str, Float lo, const char *file_name);
 int string_to_int(char *str, int lo, const char *field_name);
 off_t string_to_off_t(char *str, off_t lo, const char *field_name);

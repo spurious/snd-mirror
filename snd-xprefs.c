@@ -18,13 +18,13 @@
 static Widget preferences_dialog = NULL;
 static bool prefs_helping = false;
 
-#define MID_POSITION 61
-#define COLOR_POSITION 75
+#define MID_POSITION 60
+#define COLOR_POSITION 74
 #define RED_POSITION 83
 #define GREEN_POSITION 91
 
 #define MID_SPACE 16
-#define INTER_TOPIC_SPACE 2
+#define INTER_TOPIC_SPACE 3
 #define INTER_VARIABLE_SPACE 2
 
 #define HELP_WAIT_TIME 500
@@ -32,12 +32,12 @@ static bool prefs_helping = false;
 #define POWER_INITIAL_WAIT_TIME 500
 #define ERROR_WAIT_TIME 1000
 
-#define STARTUP_WIDTH 940
+#define STARTUP_WIDTH 1000
 #define STARTUP_HEIGHT 600
 
 
 typedef struct prefs_info {
-  Widget label, text, arrow_up, arrow_down, arrow_right, error, toggle, scale, color, rscl, gscl, bscl, rtxt, gtxt, btxt, list_menu;
+  Widget label, text, arrow_up, arrow_down, arrow_right, error, toggle, scale, color, rscl, gscl, bscl, rtxt, gtxt, btxt, list_menu, radio_button;
   bool got_error;
   XtIntervalId help_id, power_id;
   const char *var_name;
@@ -60,11 +60,14 @@ typedef struct prefs_info {
 static void prefs_help(XtPointer context, XtIntervalId *id)
 {
   prefs_info *prf = (prefs_info *)context;
-  if (help_dialog_is_active())
-    snd_help(prf->var_name, 
-	     XEN_TO_C_STRING(XEN_OBJECT_HELP(C_STRING_TO_XEN_SYMBOL(prf->var_name))),
-	     WITH_WORD_WRAP);
-  else prefs_helping = false;
+  if (prf->var_name)
+    {
+      if (help_dialog_is_active())
+	snd_help(prf->var_name, 
+		 XEN_TO_C_STRING(XEN_OBJECT_HELP(C_STRING_TO_XEN_SYMBOL(prf->var_name))),
+		 WITH_WORD_WRAP);
+      else prefs_helping = false;
+    }
   prf->help_id = 0;
 }
 
@@ -94,6 +97,72 @@ static void mouse_leave_pref_callback(Widget w, XtPointer context, XEvent *event
     }
 }
 
+/* ---------------- row label widget ---------------- */
+
+static Widget make_row_label(const char *label, Widget box, Widget top_widget)
+{
+  Arg args[20];
+  int n;
+
+  n = 0;
+  XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;
+  XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
+  XtSetArg(args[n], XmNtopWidget, top_widget); n++;
+  XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
+  XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
+  XtSetArg(args[n], XmNrightAttachment, XmATTACH_POSITION); n++;
+  XtSetArg(args[n], XmNrightPosition, MID_POSITION); n++;
+  XtSetArg(args[n], XmNalignment, XmALIGNMENT_END); n++;
+  return(XtCreateManagedWidget(label, xmLabelWidgetClass, box, args, n));
+}
+
+/* ---------------- row separator widget ---------------- */
+
+static Widget make_row_middle_separator(Widget label, Widget box, Widget top_widget)
+{
+  Arg args[20];
+  int n;
+
+  n = 0;
+  XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;
+  XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
+  XtSetArg(args[n], XmNtopWidget, top_widget); n++;
+  XtSetArg(args[n], XmNbottomAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
+  XtSetArg(args[n], XmNbottomWidget, label); n++;
+  XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
+  XtSetArg(args[n], XmNleftWidget, label); n++;
+  XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
+  XtSetArg(args[n], XmNorientation, XmVERTICAL); n++;
+  XtSetArg(args[n], XmNwidth, MID_SPACE); n++;
+  XtSetArg(args[n], XmNseparatorType, XmSHADOW_ETCHED_OUT); n++;
+  return(XtCreateManagedWidget("sep", xmSeparatorWidgetClass, box, args, n));
+}
+
+/* ---------------- row toggle widget ---------------- */
+
+static Widget make_row_toggle(bool current_value, Widget left_widget, Widget box, Widget top_widget)
+{
+  Arg args[20];
+  int n;
+
+  n = 0;
+  XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;
+  XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
+  XtSetArg(args[n], XmNtopWidget, top_widget); n++;
+  XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
+  XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
+  XtSetArg(args[n], XmNleftWidget, left_widget); n++;
+  XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
+  XtSetArg(args[n], XmNset, (current_value) ? XmSET : XmUNSET); n++;
+  XtSetArg(args[n], XmNborderWidth, 0); n++;
+  XtSetArg(args[n], XmNborderColor, ss->sgx->white); n++;
+  XtSetArg(args[n], XmNmarginHeight, 0); n++;
+  XtSetArg(args[n], XmNindicatorOn, XmINDICATOR_FILL); n++;
+  XtSetArg(args[n], XmNindicatorSize, 14); n++;
+  return(XtCreateManagedWidget(" ", xmToggleButtonWidgetClass, box, args, n));
+}
+
+
 /* ---------------- bool row ---------------- */
 
 static void call_toggle_func(Widget w, XtPointer context, XtPointer info)
@@ -108,40 +177,58 @@ static prefs_info *prefs_row_with_toggle(const char *label, const char *varname,
 					 void (*toggle_func)(prefs_info *prf),
 					 void (*reflect_func)(prefs_info *prf))
 {
-  Arg args[20];
-  int n;
   prefs_info *prf = NULL;
   Widget sep;
   prf = (prefs_info *)CALLOC(1, sizeof(prefs_info));
   prf->var_name = varname;
   prf->reflect_func = reflect_func;
+  prf->toggle_func = toggle_func;
 
-  n = 0;
-  XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;
-  XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
-  XtSetArg(args[n], XmNtopWidget, top_widget); n++;
-  XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
-  XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
-  XtSetArg(args[n], XmNrightAttachment, XmATTACH_POSITION); n++;
-  XtSetArg(args[n], XmNrightPosition, MID_POSITION); n++;
-  XtSetArg(args[n], XmNalignment, XmALIGNMENT_END); n++;
-  prf->label = XtCreateManagedWidget(label, xmLabelWidgetClass, box, args, n);
+  prf->label = make_row_label(label, box, top_widget);
+  sep = make_row_middle_separator(prf->label, box, top_widget);
+  prf->toggle = make_row_toggle(current_value, sep, box, top_widget);
   
-  /* ideally we'd use one of the Motif Combo|Spin boxes, but they are all execrable */
-  n = 0;
-  XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;
-  XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
-  XtSetArg(args[n], XmNtopWidget, top_widget); n++;
-  XtSetArg(args[n], XmNbottomAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
-  XtSetArg(args[n], XmNbottomWidget, prf->label); n++;
-  XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
-  XtSetArg(args[n], XmNleftWidget, prf->label); n++;
-  XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
-  XtSetArg(args[n], XmNorientation, XmVERTICAL); n++;
-  XtSetArg(args[n], XmNwidth, MID_SPACE); n++;
-  XtSetArg(args[n], XmNseparatorType, XmSHADOW_ETCHED_OUT); n++;
-  sep = XtCreateManagedWidget("sep", xmSeparatorWidgetClass, box, args, n);
-  
+  XtAddCallback(prf->toggle, XmNvalueChangedCallback, call_toggle_func, (void *)prf);
+
+  XtAddEventHandler(prf->label, EnterWindowMask, false, mouse_enter_pref_callback, (void *)prf);
+  XtAddEventHandler(prf->toggle, EnterWindowMask, false, mouse_enter_pref_callback, (void *)prf);
+  XtAddEventHandler(prf->label, LeaveWindowMask, false, mouse_leave_pref_callback, (void *)prf);
+  XtAddEventHandler(prf->toggle, LeaveWindowMask, false, mouse_leave_pref_callback, (void *)prf);
+
+  return(prf);
+}
+
+
+/* ---------------- radio row ---------------- */
+
+static void call_radio_func(Widget w, XtPointer context, XtPointer info)
+{
+  prefs_info *prf = (prefs_info *)context;
+  if ((prf) && (prf->toggle_func))
+    {
+      prf->radio_button = w;
+      (*(prf->toggle_func))(prf);
+    }
+}
+
+static prefs_info *prefs_row_with_radio_box(const char *label, const char *varname, 
+					    const char **labels, int num_labels, int current_value,
+					    Widget box, Widget top_widget, 
+					    void (*toggle_func)(prefs_info *prf),
+					    void (*reflect_func)(prefs_info *prf))
+{
+  Arg args[20];
+  int i, n;
+  prefs_info *prf = NULL;
+  Widget sep;
+  prf = (prefs_info *)CALLOC(1, sizeof(prefs_info));
+  prf->var_name = varname;
+  prf->reflect_func = reflect_func;
+  prf->toggle_func = toggle_func;
+
+  prf->label = make_row_label(label, box, top_widget);
+  sep = make_row_middle_separator(prf->label, box, top_widget);
+
   n = 0;
   XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
@@ -150,22 +237,35 @@ static prefs_info *prefs_row_with_toggle(const char *label, const char *varname,
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNleftWidget, sep); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
-  XtSetArg(args[n], XmNset, (current_value) ? XmSET : XmUNSET); n++;
   XtSetArg(args[n], XmNborderWidth, 0); n++;
   XtSetArg(args[n], XmNborderColor, ss->sgx->white); n++;
   XtSetArg(args[n], XmNmarginHeight, 0); n++;
-  XtSetArg(args[n], XmNindicatorOn, XmINDICATOR_FILL); n++;
-  XtSetArg(args[n], XmNindicatorSize, 14); n++;
-  prf->toggle = XtCreateManagedWidget(" ", xmToggleButtonWidgetClass, box, args, n);
-  
-  /* no error possible -- right? */
-  
-  prf->toggle_func = toggle_func;
-  XtAddCallback(prf->toggle, XmNvalueChangedCallback, call_toggle_func, (void *)prf);
+  XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
+  XtSetArg(args[n], XmNspacing, 16); n++;
+  prf->toggle = XmCreateRadioBox(box, "radio-box", args, n);
+  XtManageChild(prf->toggle);
+
+  for (i = 0; i < num_labels; i++)
+    {
+      Widget button;
+
+      n = 0;
+      XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;
+      XtSetArg(args[n], XmNset, (i == current_value) ? XmSET : XmUNSET); n++;
+      XtSetArg(args[n], XmNborderWidth, 0); n++;
+      XtSetArg(args[n], XmNborderColor, ss->sgx->white); n++;
+      XtSetArg(args[n], XmNmarginHeight, 0); n++;
+      XtSetArg(args[n], XmNindicatorOn, XmINDICATOR_FILL); n++;
+      XtSetArg(args[n], XmNindicatorSize, 14); n++;
+      XtSetArg(args[n], XmNselectColor, ss->sgx->pushed_button_color); n++;
+      button = XtCreateManagedWidget(labels[i], xmToggleButtonWidgetClass, prf->toggle, args, n);
+
+      XtAddCallback(button, XmNvalueChangedCallback, call_radio_func, (XtPointer)prf);
+    }
 
   XtAddEventHandler(prf->label, EnterWindowMask, false, mouse_enter_pref_callback, (void *)prf);
-  XtAddEventHandler(prf->toggle, EnterWindowMask, false, mouse_enter_pref_callback, (void *)prf);
   XtAddEventHandler(prf->label, LeaveWindowMask, false, mouse_leave_pref_callback, (void *)prf);
+  XtAddEventHandler(prf->toggle, EnterWindowMask, false, mouse_enter_pref_callback, (void *)prf);
   XtAddEventHandler(prf->toggle, LeaveWindowMask, false, mouse_leave_pref_callback, (void *)prf);
 
   return(prf);
@@ -224,32 +324,9 @@ static prefs_info *prefs_row_with_scale(const char *label, const char *varname,
   prf->scale_max = max_val;
   prf->reflect_func = reflect_func;
 
-  n = 0;
-  XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;
-  XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
-  XtSetArg(args[n], XmNtopWidget, top_widget); n++;
-  XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
-  XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
-  XtSetArg(args[n], XmNrightAttachment, XmATTACH_POSITION); n++;
-  XtSetArg(args[n], XmNrightPosition, MID_POSITION); n++;
-  XtSetArg(args[n], XmNalignment, XmALIGNMENT_END); n++;
-  prf->label = XtCreateManagedWidget(label, xmLabelWidgetClass, box, args, n);
+  prf->label = make_row_label(label, box, top_widget);
+  sep = make_row_middle_separator(prf->label, box, top_widget);
   
-  n = 0;
-  XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;
-  XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
-  XtSetArg(args[n], XmNtopWidget, top_widget); n++;
-  XtSetArg(args[n], XmNbottomAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
-  XtSetArg(args[n], XmNbottomWidget, prf->label); n++;
-  XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
-  XtSetArg(args[n], XmNleftWidget, prf->label); n++;
-  XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
-  XtSetArg(args[n], XmNorientation, XmVERTICAL); n++;
-  XtSetArg(args[n], XmNwidth, MID_SPACE); n++;
-  XtSetArg(args[n], XmNseparatorType, XmSHADOW_ETCHED_OUT); n++;
-  sep = XtCreateManagedWidget("sep", xmSeparatorWidgetClass, box, args, n);
-  
-
   str = (char *)CALLOC(12, sizeof(char));
   mus_snprintf(str, 12, "%.3f", current_value);
   n = 0;
@@ -333,30 +410,8 @@ static prefs_info *prefs_row_with_text(const char *label, const char *varname, c
   prf->var_name = varname;
   prf->reflect_func = reflect_func;
 
-  n = 0;
-  XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;
-  XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
-  XtSetArg(args[n], XmNtopWidget, top_widget); n++;
-  XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
-  XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
-  XtSetArg(args[n], XmNrightAttachment, XmATTACH_POSITION); n++;
-  XtSetArg(args[n], XmNrightPosition, MID_POSITION); n++;
-  XtSetArg(args[n], XmNalignment, XmALIGNMENT_END); n++;
-  prf->label = XtCreateManagedWidget(label, xmLabelWidgetClass, box, args, n);
-  
-  n = 0;
-  XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;
-  XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
-  XtSetArg(args[n], XmNtopWidget, top_widget); n++;
-  XtSetArg(args[n], XmNbottomAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
-  XtSetArg(args[n], XmNbottomWidget, prf->label); n++;
-  XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
-  XtSetArg(args[n], XmNleftWidget, prf->label); n++;
-  XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
-  XtSetArg(args[n], XmNorientation, XmVERTICAL); n++;
-  XtSetArg(args[n], XmNwidth, MID_SPACE); n++;
-  XtSetArg(args[n], XmNseparatorType, XmSHADOW_ETCHED_OUT); n++;
-  sep = XtCreateManagedWidget("sep", xmSeparatorWidgetClass, box, args, n);
+  prf->label = make_row_label(label, box, top_widget);
+  sep = make_row_middle_separator(prf->label, box, top_widget);
   
   n = 0;
   XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;
@@ -386,6 +441,95 @@ static prefs_info *prefs_row_with_text(const char *label, const char *varname, c
   return(prf);
 }
 
+
+/* ---------------- two texts in a row ---------------- */
+
+static prefs_info *prefs_row_with_two_texts(const char *label, const char *varname,
+					    const char*label1, const char *text1, const char*label2, const char *text2, int cols,
+					    Widget box, Widget top_widget,
+					    void (*text_func)(prefs_info *prf),
+					    void (*reflect_func)(prefs_info *prf))
+{
+  Arg args[20];
+  int n;
+  prefs_info *prf = NULL;
+  Widget sep, lab1, lab2;
+  prf = (prefs_info *)CALLOC(1, sizeof(prefs_info));
+  prf->var_name = varname;
+  prf->reflect_func = reflect_func;
+
+  prf->label = make_row_label(label, box, top_widget);
+  sep = make_row_middle_separator(prf->label, box, top_widget);
+  
+  n = 0;
+  XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;
+  XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
+  XtSetArg(args[n], XmNtopWidget, top_widget); n++;
+  XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
+  XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
+  XtSetArg(args[n], XmNleftWidget, sep); n++;
+  XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
+  lab1 = XtCreateManagedWidget(label1, xmLabelWidgetClass, box, args, n);
+  
+  n = 0;
+  XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;
+  XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
+  XtSetArg(args[n], XmNtopWidget, top_widget); n++;
+  XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
+  XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
+  XtSetArg(args[n], XmNleftWidget, lab1); n++;
+  XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
+  XtSetArg(args[n], XmNcolumns, cols); n++;
+  XtSetArg(args[n], XmNvalue, text1); n++;
+  XtSetArg(args[n], XmNmarginHeight, 1); n++;
+  XtSetArg(args[n], XmNborderWidth, 0); n++;
+  XtSetArg(args[n], XmNborderColor, ss->sgx->white); n++;
+  XtSetArg(args[n], XmNbottomShadowColor, ss->sgx->white); n++;
+  XtSetArg(args[n], XmNshadowThickness, 0); n++;
+  XtSetArg(args[n], XmNtopShadowColor, ss->sgx->white); n++;
+  prf->text = make_textfield_widget("text", box, args, n, ACTIVATABLE_BUT_NOT_FOCUSED, NO_COMPLETER);
+  
+  n = 0;
+  XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;
+  XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
+  XtSetArg(args[n], XmNtopWidget, top_widget); n++;
+  XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
+  XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
+  XtSetArg(args[n], XmNleftWidget, prf->text); n++;
+  XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
+  lab2 = XtCreateManagedWidget(label2, xmLabelWidgetClass, box, args, n);
+  
+  n = 0;
+  XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;
+  XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
+  XtSetArg(args[n], XmNtopWidget, top_widget); n++;
+  XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
+  XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
+  XtSetArg(args[n], XmNleftWidget, lab2); n++;
+  XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
+  XtSetArg(args[n], XmNcolumns, cols); n++;
+  XtSetArg(args[n], XmNvalue, text2); n++;
+  XtSetArg(args[n], XmNmarginHeight, 1); n++;
+  XtSetArg(args[n], XmNborderWidth, 0); n++;
+  XtSetArg(args[n], XmNborderColor, ss->sgx->white); n++;
+  XtSetArg(args[n], XmNbottomShadowColor, ss->sgx->white); n++;
+  XtSetArg(args[n], XmNshadowThickness, 0); n++;
+  XtSetArg(args[n], XmNtopShadowColor, ss->sgx->white); n++;
+  prf->rtxt = make_textfield_widget("rtxt", box, args, n, ACTIVATABLE_BUT_NOT_FOCUSED, NO_COMPLETER);
+  
+  prf->text_func = text_func;
+  XtAddCallback(prf->text, XmNactivateCallback, call_text_func, (XtPointer)prf);
+  XtAddCallback(prf->rtxt, XmNactivateCallback, call_text_func, (XtPointer)prf);
+
+  XtAddEventHandler(prf->label, EnterWindowMask, false, mouse_enter_pref_callback, (void *)prf);
+  XtAddEventHandler(prf->text, EnterWindowMask, false, mouse_enter_pref_callback, (void *)prf);
+  XtAddEventHandler(prf->rtxt, EnterWindowMask, false, mouse_enter_pref_callback, (void *)prf);
+  XtAddEventHandler(prf->label, LeaveWindowMask, false, mouse_leave_pref_callback, (void *)prf);
+  XtAddEventHandler(prf->text, LeaveWindowMask, false, mouse_leave_pref_callback, (void *)prf);
+  XtAddEventHandler(prf->rtxt, LeaveWindowMask, false, mouse_leave_pref_callback, (void *)prf);
+
+  return(prf);
+}
 
 
 
@@ -480,31 +624,8 @@ static prefs_info *prefs_row_with_number(const char *label, const char *varname,
   prf->var_name = varname;
   prf->reflect_func = reflect_func;
 
-  n = 0;
-  XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;
-  XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
-  XtSetArg(args[n], XmNtopWidget, top_widget); n++;
-  XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
-  XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
-  XtSetArg(args[n], XmNrightAttachment, XmATTACH_POSITION); n++;
-  XtSetArg(args[n], XmNrightPosition, MID_POSITION); n++;
-  XtSetArg(args[n], XmNalignment, XmALIGNMENT_END); n++;
-  prf->label = XtCreateManagedWidget(label, xmLabelWidgetClass, box, args, n);
-  
-  /* ideally we'd use one of the Motif Combo|Spin boxes, but they are all execrable */
-  n = 0;
-  XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;
-  XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
-  XtSetArg(args[n], XmNtopWidget, top_widget); n++;
-  XtSetArg(args[n], XmNbottomAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
-  XtSetArg(args[n], XmNbottomWidget, prf->label); n++;
-  XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
-  XtSetArg(args[n], XmNleftWidget, prf->label); n++;
-  XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
-  XtSetArg(args[n], XmNorientation, XmVERTICAL); n++;
-  XtSetArg(args[n], XmNwidth, MID_SPACE); n++;
-  XtSetArg(args[n], XmNseparatorType, XmSHADOW_ETCHED_OUT); n++;
-  sep = XtCreateManagedWidget("sep", xmSeparatorWidgetClass, box, args, n);
+  prf->label = make_row_label(label, box, top_widget);
+  sep = make_row_middle_separator(prf->label, box, top_widget);
   
   n = 0;
   XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;
@@ -633,30 +754,8 @@ static prefs_info *prefs_row_with_completed_list(const char *label, const char *
   prf->var_name = varname;
   prf->reflect_func = reflect_func;
 
-  n = 0;
-  XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;
-  XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
-  XtSetArg(args[n], XmNtopWidget, top_widget); n++;
-  XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
-  XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
-  XtSetArg(args[n], XmNrightAttachment, XmATTACH_POSITION); n++;
-  XtSetArg(args[n], XmNrightPosition, MID_POSITION); n++;
-  XtSetArg(args[n], XmNalignment, XmALIGNMENT_END); n++;
-  prf->label = XtCreateManagedWidget(label, xmLabelWidgetClass, box, args, n);
-  
-  n = 0;
-  XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;
-  XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
-  XtSetArg(args[n], XmNtopWidget, top_widget); n++;
-  XtSetArg(args[n], XmNbottomAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
-  XtSetArg(args[n], XmNbottomWidget, prf->label); n++;
-  XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
-  XtSetArg(args[n], XmNleftWidget, prf->label); n++;
-  XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
-  XtSetArg(args[n], XmNorientation, XmVERTICAL); n++;
-  XtSetArg(args[n], XmNwidth, MID_SPACE); n++;
-  XtSetArg(args[n], XmNseparatorType, XmSHADOW_ETCHED_OUT); n++;
-  sep = XtCreateManagedWidget("sep", xmSeparatorWidgetClass, box, args, n);
+  prf->label = make_row_label(label, box, top_widget);
+  sep = make_row_middle_separator(prf->label, box, top_widget);  
   
   /* get text widget size */
   for (i = 0; i < num_values; i++)
@@ -915,30 +1014,8 @@ static prefs_info *prefs_color_selector_row(const char *label, const char *varna
   blue = tmp->pixel;
   FREE(tmp);
 
-  n = 0;
-  XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;
-  XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
-  XtSetArg(args[n], XmNtopWidget, top_widget); n++;
-  XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
-  XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
-  XtSetArg(args[n], XmNrightAttachment, XmATTACH_POSITION); n++;
-  XtSetArg(args[n], XmNrightPosition, MID_POSITION); n++;
-  XtSetArg(args[n], XmNalignment, XmALIGNMENT_END); n++;
-  prf->label = XtCreateManagedWidget(label, xmLabelWidgetClass, box, args, n);
-  
-  n = 0;
-  XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;
-  XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
-  XtSetArg(args[n], XmNtopWidget, top_widget); n++;
-  XtSetArg(args[n], XmNbottomAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
-  XtSetArg(args[n], XmNbottomWidget, prf->label); n++;
-  XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
-  XtSetArg(args[n], XmNleftWidget, prf->label); n++;
-  XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
-  XtSetArg(args[n], XmNorientation, XmVERTICAL); n++;
-  XtSetArg(args[n], XmNwidth, MID_SPACE); n++;
-  XtSetArg(args[n], XmNseparatorType, XmSHADOW_ETCHED_OUT); n++;
-  sep = XtCreateManagedWidget("sep", xmSeparatorWidgetClass, box, args, n);
+  prf->label = make_row_label(label, box, top_widget);
+  sep = make_row_middle_separator(prf->label, box, top_widget);    
 
   n = 0;
   XtSetArg(args[n], XmNbackground, current_pixel); n++;
@@ -1110,8 +1187,6 @@ static prefs_info *prefs_color_selector_row(const char *label, const char *varna
   return(prf);
 }
 
-  /* TODO: font selector row
-   */
 
 /* ---------------- topic separator ---------------- */
 
@@ -1123,7 +1198,7 @@ static Widget make_inter_topic_separator(Widget topics)
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
-  XtSetArg(args[n], XmNwidth, INTER_TOPIC_SPACE); n++;
+  XtSetArg(args[n], XmNheight, INTER_TOPIC_SPACE); n++;
   XtSetArg(args[n], XmNseparatorType, XmNO_LINE); n++;
   return(XtCreateManagedWidget("sep", xmSeparatorWidgetClass, topics, args, n));
 }
@@ -1141,7 +1216,7 @@ static Widget make_inter_variable_separator(Widget topics, Widget top_widget)
   XtSetArg(args[n], XmNtopWidget, top_widget); n++;
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
   XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
-  XtSetArg(args[n], XmNwidth, INTER_VARIABLE_SPACE); n++;
+  XtSetArg(args[n], XmNheight, INTER_VARIABLE_SPACE); n++;
   XtSetArg(args[n], XmNseparatorType, XmNO_LINE); n++;
   return(XtCreateManagedWidget("sep", xmSeparatorWidgetClass, topics, args, n));
 }
@@ -1213,6 +1288,72 @@ static void va_post_prefs_error(const char *msg, void *data, ...)
 }
 
 
+/* ---------------- start up size ---------------- */
+
+static void startup_width_erase_func(XtPointer context, XtIntervalId *id)
+{
+  prefs_info *prf = (prefs_info *)context;
+  char *str;
+  str = mus_format("%d", ss->init_window_width);
+  XmTextSetString(prf->text, str);
+  FREE(str);
+}
+
+static void startup_height_erase_func(XtPointer context, XtIntervalId *id)
+{
+  prefs_info *prf = (prefs_info *)context;
+  char *str;
+  str = mus_format("%d", ss->init_window_height);
+  XmTextSetString(prf->rtxt, str);
+  FREE(str);
+}
+
+static void startup_width_error(const char *msg, void *data)
+{
+  prefs_info *prf = (prefs_info *)data;
+  XmTextSetString(prf->text, "right");
+  XtAppAddTimeOut(MAIN_APP(ss),
+		  ERROR_WAIT_TIME,
+		  startup_width_erase_func,
+		  (XtPointer)prf);
+}
+
+static void startup_height_error(const char *msg, void *data)
+{
+  prefs_info *prf = (prefs_info *)data;
+  XmTextSetString(prf->rtxt, "right");
+  XtAppAddTimeOut(MAIN_APP(ss),
+		  ERROR_WAIT_TIME,
+		  startup_height_erase_func,
+		  (XtPointer)prf);
+}
+
+static void startup_size_text(prefs_info *prf)
+{
+  char *str;
+  str = XmTextGetString(prf->text);
+  if ((str) && (*str))
+    {
+      int width = 0;
+      redirect_errors_to(startup_width_error, (void *)prf);
+      width = string_to_int(str, 1, "startup width");
+      redirect_errors_to(NULL, NULL);
+      if (width > 0) ss->init_window_width = width;
+      XtFree(str);
+      str = XmTextGetString(prf->rtxt);
+      if ((str) && (*str))
+	{
+	  int height;
+	  redirect_errors_to(startup_height_error, (void *)prf);
+	  height = string_to_int(str, 1, "startup height");
+	  redirect_errors_to(NULL, NULL);
+	  if (height > 0) ss->init_window_height = height;
+	  XtFree(str);
+	}
+    }
+}
+
+
 /* ---------------- auto-resize ---------------- */
 
 static void resize_toggle(prefs_info *prf)
@@ -1235,6 +1376,26 @@ static void controls_toggle(prefs_info *prf)
 {
   ASSERT_WIDGET_TYPE(XmIsToggleButton(prf->toggle), prf->toggle);
   in_set_show_controls(ss, XmToggleButtonGetState(prf->toggle) == XmSET);
+}
+
+/* ---------------- basic-color ---------------- */
+
+static void basic_color_func(prefs_info *prf, float r, float g, float b)
+{
+  XColor *tmp;
+  tmp = rgb_to_color(r, g, b);
+  set_basic_color(tmp->pixel);
+  FREE(tmp);
+}
+
+/* ---------------- highlight-color ---------------- */
+
+static void highlight_color_func(prefs_info *prf, float r, float g, float b)
+{
+  XColor *tmp;
+  tmp = rgb_to_color(r, g, b);
+  set_highlight_color(tmp->pixel);
+  FREE(tmp);
 }
 
 /* ---------------- verbose-cursor ---------------- */
@@ -1306,6 +1467,19 @@ static void cursor_size_from_text(prefs_info *prf)
   else post_prefs_error("no size?", (void *)prf);
 }
 
+/* ---------------- cursor-style ---------------- */
+
+static const char *cursor_styles[2] = {"cross", "line"};
+
+static void cursor_style_choice(prefs_info *prf)
+{
+  if (XmToggleButtonGetState(prf->radio_button) == XmSET)
+    {
+      if (strcmp(XtName(prf->radio_button), "line") == 0)
+	in_set_cursor_style(CURSOR_LINE);
+      else in_set_cursor_style(CURSOR_CROSS);
+    }
+}
 
 
 /* ---------------- temp-dir ---------------- */
@@ -1441,9 +1615,40 @@ static void data_color_func(prefs_info *prf, float r, float g, float b)
 {
   XColor *tmp;
   tmp = rgb_to_color(r, g, b);
-  color_data(tmp->pixel);
+  set_data_color(tmp->pixel);
   FREE(tmp);
 }
+
+
+/* ---------------- axis-label-font ---------------- */
+
+static void axis_label_font_error_erase_func(XtPointer context, XtIntervalId *id)
+{
+  prefs_info *prf = (prefs_info *)context;
+  XmTextSetString(prf->text, axis_label_font(ss));
+}
+
+static void axis_label_font_text(prefs_info *prf)
+{
+  char *str;
+  ASSERT_WIDGET_TYPE(XmIsTextField(prf->text), prf->text);
+  str = XmTextFieldGetString(prf->text);
+  if ((!str) || (!(*str)))
+    {
+      XmTextSetString(prf->text, axis_label_font(ss));
+      return;
+    }
+  if (!(set_axis_label_font(str)))
+    {
+      XmTextSetString(prf->text, "can't find that font");
+      XtAppAddTimeOut(MAIN_APP(ss),
+		      ERROR_WAIT_TIME,
+		      axis_label_font_error_erase_func,
+		      (XtPointer)prf);
+    }
+  if (str) XtFree(str);
+}
+
 
 
 /* ---------------- fft-size ---------------- */
@@ -1717,6 +1922,96 @@ static void mark_color_func(prefs_info *prf, float r, float g, float b)
   FREE(tmp);
 }
 
+/* ---------------- mark-tag size ---------------- */
+
+static void mark_tag_width_erase_func(XtPointer context, XtIntervalId *id)
+{
+  prefs_info *prf = (prefs_info *)context;
+  char *str;
+  str = mus_format("%d", mark_tag_width(ss));
+  XmTextSetString(prf->text, str);
+  FREE(str);
+}
+
+static void mark_tag_height_erase_func(XtPointer context, XtIntervalId *id)
+{
+  prefs_info *prf = (prefs_info *)context;
+  char *str;
+  str = mus_format("%d", mark_tag_height(ss));
+  XmTextSetString(prf->rtxt, str);
+  FREE(str);
+}
+
+static void mark_tag_width_error(const char *msg, void *data)
+{
+  prefs_info *prf = (prefs_info *)data;
+  XmTextSetString(prf->text, "right");
+  XtAppAddTimeOut(MAIN_APP(ss),
+		  ERROR_WAIT_TIME,
+		  mark_tag_width_erase_func,
+		  (XtPointer)prf);
+}
+
+static void mark_tag_height_error(const char *msg, void *data)
+{
+  prefs_info *prf = (prefs_info *)data;
+  XmTextSetString(prf->rtxt, "right");
+  XtAppAddTimeOut(MAIN_APP(ss),
+		  ERROR_WAIT_TIME,
+		  mark_tag_height_erase_func,
+		  (XtPointer)prf);
+}
+
+static void mark_tag_size_text(prefs_info *prf)
+{
+  char *str;
+  str = XmTextGetString(prf->text);
+  if ((str) && (*str))
+    {
+      int width = 0;
+      redirect_errors_to(mark_tag_width_error, (void *)prf);
+      width = string_to_int(str, 1, "mark tag width");
+      redirect_errors_to(NULL, NULL);
+      if (width > 0) set_mark_tag_width(width);
+      XtFree(str);
+      str = XmTextGetString(prf->rtxt);
+      if ((str) && (*str))
+	{
+	  int height;
+	  redirect_errors_to(mark_tag_height_error, (void *)prf);
+	  height = string_to_int(str, 1, "mark tag height");
+	  redirect_errors_to(NULL, NULL);
+	  if (height > 0) set_mark_tag_height(height);
+	  XtFree(str);
+	}
+    }
+}
+
+
+/* ---------------- listener-prompt ---------------- */
+
+static void listener_prompt_text(prefs_info *prf)
+{
+  char *str;
+  ASSERT_WIDGET_TYPE(XmIsTextField(prf->text), prf->text);
+  str = XmTextFieldGetString(prf->text);
+  if (str)
+    {
+      if (listener_prompt(ss)) FREE(listener_prompt(ss));
+      set_listener_prompt(copy_string(str));
+      XtFree(str);
+    }
+}
+
+/* ---------------- show-backtrace ---------------- */
+
+static void show_backtrace_toggle(prefs_info *prf)
+{
+  ASSERT_WIDGET_TYPE(XmIsToggleButton(prf->toggle), prf->toggle);
+  set_show_backtrace(XmToggleButtonGetState(prf->toggle) == XmSET);
+}
+
+
 
 #define THIS_NEEDS_REFLECTION NULL
 
@@ -1802,7 +2097,6 @@ void start_preferences_dialog(void)
     XtVaSetValues(scroller,
 		  XmNworkWindow, topics, 
 		  NULL);
-
   }
 
   /* a table of contents at the start -- click to jump or perhaps a specialized popup menu for it or a pulldown menu */
@@ -1811,7 +2105,7 @@ void start_preferences_dialog(void)
 
   {
     Widget dpy_frame, dpy_box, dpy_label, file_label, cursor_label;
-    char *str;
+    char *str1, *str2;
 
     n = 0;
     XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;
@@ -1832,9 +2126,19 @@ void start_preferences_dialog(void)
     XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;
     dpy_label = XtCreateManagedWidget("overall behavior choices", xmLabelWidgetClass, dpy_box, args, n);
 
+    str1 = mus_format("%d", ss->init_window_width);
+    str2 = mus_format("%d", ss->init_window_height);
+    prf = prefs_row_with_two_texts("start up size:", S_window_width, 
+				   "width:", str1, "height:", str2, 6,
+				   dpy_box, dpy_label,
+				   startup_size_text, THIS_NEEDS_REFLECTION);
+    FREE(str2);
+    FREE(str1);
+
+    current_sep = make_inter_variable_separator(dpy_box, prf->label);
     prf = prefs_row_with_toggle("ask before overwriting anything (" S_ask_before_overwrite "):", S_ask_before_overwrite,
 				ask_before_overwrite(ss), 
-				dpy_box, dpy_label, 
+				dpy_box, current_sep,
 				overwrite_toggle, THIS_NEEDS_REFLECTION);
 
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
@@ -1851,7 +2155,28 @@ void start_preferences_dialog(void)
 
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
 
-    /* basic color, highlight */
+    n = 0;
+    XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
+    XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
+    XtSetArg(args[n], XmNtopWidget, current_sep); n++;
+    XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
+    XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
+    XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+    XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;
+    cursor_label = XtCreateManagedWidget("     overall colors", xmLabelWidgetClass, dpy_box, args, n);
+
+    current_sep = make_inter_variable_separator(dpy_box, cursor_label);
+    prf = prefs_color_selector_row("default widget color (" S_basic_color "):", S_basic_color, ss->sgx->basic_color,
+				   dpy_box, current_sep,
+				   basic_color_func, THIS_NEEDS_REFLECTION);
+
+    current_sep = make_inter_variable_separator(dpy_box, prf->rscl);
+    prf = prefs_color_selector_row("default highlight color (" S_highlight_color "):", S_highlight_color, ss->sgx->highlight_color,
+				   dpy_box, current_sep,
+				   highlight_color_func, THIS_NEEDS_REFLECTION);
+
+    current_sep = make_inter_variable_separator(dpy_box, prf->rscl);
+
 
     n = 0;
     XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
@@ -1878,6 +2203,12 @@ void start_preferences_dialog(void)
     FREE(str);
 
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
+    prf = prefs_row_with_radio_box("cursor shape (" S_cursor_style "):", S_cursor_style,
+				   cursor_styles, 2, cursor_style(ss),
+				   dpy_box, current_sep, 
+				   cursor_style_choice, THIS_NEEDS_REFLECTION);
+
+    current_sep = make_inter_variable_separator(dpy_box, prf->label);
 
 
     /* cursor follows play, size, style, color? */
@@ -1897,7 +2228,7 @@ void start_preferences_dialog(void)
     XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
     XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
     XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;
-    file_label = XtCreateManagedWidget("     file locations", xmLabelWidgetClass, dpy_box, args, n);
+    file_label = XtCreateManagedWidget("     file options", xmLabelWidgetClass, dpy_box, args, n);
 
     prf = prefs_row_with_text("directory for temporary files (" S_temp_dir "):", S_temp_dir, 
 			      temp_dir(ss), 
@@ -1914,12 +2245,35 @@ void start_preferences_dialog(void)
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
 #endif
 
+    /* new file defaults
+       raw file defaults
+    */
+
     /*
     ss->Graphs_Horizontal = DEFAULT_GRAPHS_HORIZONTAL;
     ss->Channel_Style = DEFAULT_CHANNEL_STYLE;
     ss->Sound_Style = DEFAULT_SOUND_STYLE;
     peaks envs?
-    mouse->focus?
+    mouse->focus? ->
+(add-hook! mouse-enter-listener-hook 
+  (lambda (widget) 
+    (focus-widget widget)))
+(add-hook! mouse-enter-graph-hook 
+  (lambda (snd chn) 
+    (if (sound? snd)
+	(let ((wids (catch 'no-such-channel
+	              (lambda () (channel-widgets snd chn))
+		      (lambda args #f))))
+          (if wids
+              (focus-widget (car wids)))))))
+
+(add-hook! mouse-enter-listener-hook 
+  (lambda (widget) 
+    (focus-widget widget)))
+
+
+  current-window-display
+  specialized popup 
 
     initial size
 
@@ -2007,9 +2361,15 @@ void start_preferences_dialog(void)
     XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;
     colgrf_label = XtCreateManagedWidget("      graph colors", xmLabelWidgetClass, grf_box, args, n);
     
-    prf = prefs_color_selector_row("data color (" S_data_color "):", S_data_color, ss->sgx->data_color,
+    prf = prefs_color_selector_row("unselected data (waveform) color (" S_data_color "):", S_data_color, ss->sgx->data_color,
 				   grf_box, colgrf_label,
 				   data_color_func, THIS_NEEDS_REFLECTION);
+
+    current_sep = make_inter_variable_separator(grf_box, prf->rscl);
+    prf = prefs_row_with_text("graph label font (" S_axis_label_font "):", S_axis_label_font, 
+			      axis_label_font(ss), 
+			      grf_box, current_sep,
+			      axis_label_font_text, THIS_NEEDS_REFLECTION);
 
 
     /*
@@ -2058,6 +2418,9 @@ void start_preferences_dialog(void)
 
     audio output device? or sound card?
     line cursor during play?
+
+    recorder stuff?
+    audio mixer settings?
   */
   }
 
@@ -2164,6 +2527,7 @@ void start_preferences_dialog(void)
   /* -------- marks, mixes, and regions -------- */
   {
     Widget mmr_frame, mmr_box, mmr_label;
+    char *str1, *str2;
 
     n = 0;
     XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;
@@ -2188,10 +2552,19 @@ void start_preferences_dialog(void)
 				   mmr_box, mmr_label,
 				   mark_color_func, THIS_NEEDS_REFLECTION);
 
+    current_sep = make_inter_variable_separator(mmr_box, prf->rscl);
+
+    str1 = mus_format("%d", mark_tag_width(ss));
+    str2 = mus_format("%d", mark_tag_height(ss));
+    prf = prefs_row_with_two_texts("mark tag size:", S_mark_tag_width, 
+				   "width:", str1, "height:", str2, 4,
+				   mmr_box, current_sep,
+				   mark_tag_size_text, THIS_NEEDS_REFLECTION);
+    FREE(str2);
+    FREE(str1);
+
     /*
     ss->Show_Marks = DEFAULT_SHOW_MARKS;
-    ss->Mark_Tag_Width = DEFAULT_MARK_TAG_WIDTH;
-    ss->Mark_Tag_Height = DEFAULT_MARK_TAG_HEIGHT;
     ss->With_Mix_Tags = DEFAULT_WITH_MIX_TAGS;
     ss->Show_Mix_Waveforms = DEFAULT_SHOW_MIX_WAVEFORMS;
     ss->Mix_Waveform_Height = DEFAULT_MIX_WAVEFORM_HEIGHT;
@@ -2228,24 +2601,45 @@ void start_preferences_dialog(void)
     XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
     XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
     XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;
-    prg_label = XtCreateManagedWidget("programming options", xmLabelWidgetClass, prg_box, args, n);
+    prg_label = XtCreateManagedWidget("listener options", xmLabelWidgetClass, prg_box, args, n);
 
+    prf = prefs_row_with_text("prompt (" S_listener_prompt "):", S_listener_prompt, 
+			      listener_prompt(ss), 
+			      prg_box, prg_label,
+			      listener_prompt_text, THIS_NEEDS_REFLECTION);
+
+    current_sep = make_inter_variable_separator(prg_box, prf->label);
+    prf = prefs_row_with_toggle("include backtrace in error report (" S_show_backtrace "):", S_show_backtrace,
+				show_backtrace(ss),
+				prg_box, current_sep,
+				show_backtrace_toggle, THIS_NEEDS_REFLECTION);
 
     /* omit those that are extlang related if no extlang */
 
     /*
-    extlang: ss->Listener_Prompt = copy_string(DEFAULT_LISTENER_PROMPT);
     guile: ss->Optimization = DEFAULT_OPTIMIZATION; 
     ss->Print_Length = DEFAULT_PRINT_LENGTH;
-    extlang: ss->Show_Backtrace = DEFAULT_SHOW_BACKTRACE;
     colors
     listener font
+
+    clm: ws.scm + any instruments
+
+    autosave
+    debugging aids
+
+    edit-menu
+    effects menu
+    extensions
+    nb.scm (buffer for it)
+
+    snd-motif: hidden-controls-dialog
+    disable-control-panel
+    smpte level and disk-space
     */
   }
   
   XtManageChild(preferences_dialog);
   set_dialog_widget(PREFERENCES_DIALOG, preferences_dialog);
-
 }
 
 /*

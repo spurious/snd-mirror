@@ -1110,12 +1110,12 @@ void snd_load_init_file(bool no_global, bool no_init)
       snd_load_init_file_1(SND_CONF);
     }
 
-  /* even if no init file, check for possible prefs dialog output */
-  snd_load_init_file_1(SND_PREFS);
-
-  /* now load old-style init file */
+  /* now load local init file(s) */
   if (!no_init)
     {
+      /* check for possible prefs dialog output */
+      snd_load_init_file_1(SND_PREFS);
+
       snd_load_init_file_1(SND_INIT);
       if (ss->init_file)
 	snd_load_init_file_1(ss->init_file);
@@ -2143,10 +2143,34 @@ static XEN g_cursor_color(void)
   return(XEN_WRAP_PIXEL(ss->sgx->cursor_color));
 }
 
+static void highlight_recolor_everything(widget_t w, void *ptr)
+{
+  /* TODO: does the gtk basic-color reset actually work correctly? */
+#if USE_MOTIF
+  Pixel curcol;
+  if (XtIsWidget(w))
+    {
+      XtVaGetValues(w, XmNbackground, &curcol, NULL);
+      if (curcol == (Pixel)ptr)
+	XmChangeColor(w, ss->sgx->highlight_color);
+    }
+#endif
+}
+
+void set_highlight_color(color_t color)
+{
+  color_t old_color;
+  old_color = ss->sgx->highlight_color;
+  ss->sgx->highlight_color = color; 
+#if USE_MOTIF
+  map_over_children(MAIN_SHELL(ss), highlight_recolor_everything, (void *)old_color);
+#endif
+}
+
 static XEN g_set_highlight_color (XEN color) 
 {
   XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, S_setB S_highlight_color, "a color"); 
-  ss->sgx->highlight_color = XEN_UNWRAP_PIXEL(color);
+  set_highlight_color(XEN_UNWRAP_PIXEL(color));
   return(color);
 }
 
@@ -2362,12 +2386,17 @@ static XEN g_data_color(void)
   return(XEN_WRAP_PIXEL(ss->sgx->data_color));
 }
 
+void set_data_color(color_t color)
+{
+  color_data(color);
+  ss->sgx->grid_color = get_in_between_color(ss->sgx->data_color, ss->sgx->graph_color);
+  for_each_chan(update_graph);
+}
+
 static XEN g_set_data_color(XEN color) 
 {
   XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, S_setB S_data_color, "a color"); 
-  color_data(XEN_UNWRAP_PIXEL(color));
-  ss->sgx->grid_color = get_in_between_color(ss->sgx->data_color, ss->sgx->graph_color);
-  for_each_chan(update_graph);
+  set_data_color(XEN_UNWRAP_PIXEL(color));
   return(color);
 }
 
@@ -2472,12 +2501,11 @@ static void recolor_everything(widget_t w, void *ptr)
 }
 
 
-static XEN g_set_basic_color(XEN color) 
+void set_basic_color(color_t color)
 {
   color_t old_color;
-  XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, S_setB S_basic_color, "a color"); 
   old_color = ss->sgx->basic_color;
-  ss->sgx->basic_color = XEN_UNWRAP_PIXEL(color); 
+  ss->sgx->basic_color = color; 
 #if USE_MOTIF
   map_over_children(MAIN_SHELL(ss), recolor_everything, (void *)old_color);
 #endif
@@ -2490,7 +2518,12 @@ static XEN g_set_basic_color(XEN color)
   make_recorder_icons_transparent_again(old_color, ss->sgx->basic_color);
   make_mixer_icons_transparent_again(old_color, ss->sgx->basic_color);
 #endif
+}
 
+static XEN g_set_basic_color(XEN color) 
+{
+  XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, S_setB S_basic_color, "a color"); 
+  set_basic_color(XEN_UNWRAP_PIXEL(color));
   return(color);
 }
 #endif

@@ -5578,4 +5578,6 @@
 (CFNC-285 "PangoLayoutLine* pango_layout_line_ref PangoLayoutLine* line")
 (CFNC-285 "gboolean pango_is_zero_width gunichar ch" 'const-return)
 
+
+;;; 2.8.6 ! GtkTextAttributes* gtk_text_attributes_ref         (GtkTextAttributes *values);
 !#
