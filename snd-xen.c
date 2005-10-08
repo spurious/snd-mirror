@@ -2400,14 +2400,19 @@ static XEN g_set_data_color(XEN color)
   return(color);
 }
 
-static XEN g_set_selected_data_color(XEN color)
+void set_selected_data_color(color_t color)
 {
   chan_info *cp;
-  XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, S_setB S_selected_data_color, "a color"); 
-  color_selected_data(XEN_UNWRAP_PIXEL(color));
+  color_selected_data(color);
   ss->sgx->selected_grid_color = get_in_between_color(ss->sgx->selected_data_color, ss->sgx->selected_graph_color);
   cp = selected_channel();
   if (cp) update_graph(cp);
+}
+
+static XEN g_set_selected_data_color(XEN color)
+{
+  XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, S_setB S_selected_data_color, "a color"); 
+  set_selected_data_color(XEN_UNWRAP_PIXEL(color));
   return(color);
 }
 
@@ -2417,12 +2422,17 @@ static XEN g_selected_data_color(void)
   return(XEN_WRAP_PIXEL(ss->sgx->selected_data_color));
 }
 
+void set_graph_color(color_t color)
+{
+  color_graph(color);
+  color_unselected_graphs(color);
+  ss->sgx->grid_color = get_in_between_color(ss->sgx->data_color, ss->sgx->graph_color);
+}
+
 static XEN g_set_graph_color(XEN color) 
 {
   XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, S_setB S_graph_color, "a color");
-  color_graph(XEN_UNWRAP_PIXEL(color));
-  color_unselected_graphs(XEN_UNWRAP_PIXEL(color));
-  ss->sgx->grid_color = get_in_between_color(ss->sgx->data_color, ss->sgx->graph_color);
+  set_graph_color(XEN_UNWRAP_PIXEL(color));
   return(color);
 }
 
@@ -2432,11 +2442,10 @@ static XEN g_graph_color(void)
   return(XEN_WRAP_PIXEL(ss->sgx->graph_color));
 }
 
-static XEN g_set_selected_graph_color(XEN color) 
+void set_selected_graph_color(color_t color)
 {
   chan_info *cp;
-  XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, S_setB S_selected_graph_color, "a color");
-  color_selected_graph(XEN_UNWRAP_PIXEL(color));
+  color_selected_graph(color);
   ss->sgx->selected_grid_color = get_in_between_color(ss->sgx->selected_data_color, ss->sgx->selected_graph_color);
   cp = selected_channel();
   if (cp) 
@@ -2447,6 +2456,12 @@ static XEN g_set_selected_graph_color(XEN color)
       gtk_widget_modify_bg(channel_graph(cp), GTK_STATE_NORMAL, ss->sgx->selected_graph_color);
 #endif
     }
+}
+
+static XEN g_set_selected_graph_color(XEN color) 
+{
+  XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, S_setB S_selected_graph_color, "a color");
+  set_selected_graph_color(XEN_UNWRAP_PIXEL(color));
   return(color);
 }
 
