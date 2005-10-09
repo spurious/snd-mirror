@@ -958,6 +958,8 @@ bool listener_print_p(const char *msg);
 #endif
 void set_basic_color(color_t color);
 void set_highlight_color(color_t color);
+void set_position_color(color_t color);
+void set_zoom_color(color_t color);
 void set_data_color(color_t color);
 void set_selected_data_color(color_t color);
 void set_graph_color(color_t color);
@@ -1433,6 +1435,7 @@ int set_mix_amp_env(int n, int chan, env *val);
 void g_init_mix(void);
 void clear_mix_tags(chan_info *cp);
 void clear_mix_y(chan_info *cp);
+void color_mixes(color_t color);
 void move_mix_tag(int mix_tag, int x);
 void finish_moving_mix_tag(int mix_tag, int x);
 int hit_mix(chan_info *cp, int x, int y);

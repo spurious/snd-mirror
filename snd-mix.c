@@ -4715,6 +4715,15 @@ static int set_existing_mix_color(mix_info *md, void *arg)
   return(0);
 }
 
+void color_mixes(color_t color)
+{
+  color_t pixel[1];
+  pixel[0] = color;
+  set_mix_color(color);
+  map_over_mixes(set_existing_mix_color, (void *)pixel);
+  for_each_normal_chan(update_graph);
+}
+
 static XEN g_set_mix_color (XEN arg1, XEN arg2)
 {
   XEN color; 
@@ -4729,14 +4738,7 @@ static XEN g_set_mix_color (XEN arg1, XEN arg2)
   XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, S_setB S_mix_color, "a color"); 
   if (XEN_INTEGER_P(mix_id))
     color_one_mix_from_id(XEN_TO_C_INT(mix_id), XEN_UNWRAP_PIXEL(color));
-  else 
-    {
-      color_t pixel[1];
-      pixel[0] = XEN_UNWRAP_PIXEL(color);
-      set_mix_color(pixel[0]);
-      map_over_mixes(set_existing_mix_color, (void *)pixel);
-    }
-  for_each_normal_chan(update_graph);
+  else color_mixes(XEN_UNWRAP_PIXEL(color));
   return(color);
 }
 

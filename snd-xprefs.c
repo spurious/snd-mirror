@@ -20,6 +20,10 @@ static bool prefs_helping = false;
 
 #define MID_POSITION 40
 #define COLOR_POSITION 50
+#define FIRST_COLOR_POSITION 6
+#define SECOND_COLOR_POSITION 30
+#define THIRD_COLOR_POSITION 55
+/* was 0 27 54 */
 #define HELP_POSITION 80
 
 #define MID_SPACE 16
@@ -31,8 +35,23 @@ static bool prefs_helping = false;
 #define POWER_INITIAL_WAIT_TIME 500
 #define ERROR_WAIT_TIME 1000
 
-#define STARTUP_WIDTH 910
+#define STARTUP_WIDTH 925
 #define STARTUP_HEIGHT 800
+
+/* TODO: XEN_HOOK_MEMBER_P, XEN_HOOK_ADD, and XEN_HOOK_REMOVE
+         XEN_FILE_LOADED_P
+ */
+
+#if HAVE_GUILE
+
+
+/*
+#define XEN_CLEAR_HOOK(Arg)           scm_reset_hook_x(Arg)
+#define XEN_HOOKED(a)                 (XEN_NOT_NULL_P(SCM_HOOK_PROCEDURES(a)))
+#define XEN_HOOK_PROCEDURES(a)        SCM_HOOK_PROCEDURES(a)
+*/
+
+#endif
 
 
 typedef struct prefs_info {
@@ -52,7 +71,36 @@ typedef struct prefs_info {
   void (*list_func)(struct prefs_info *prf, char *value);
   void (*color_func)(struct prefs_info *prf, float r, float g, float b);
   void (*reflect_func)(struct prefs_info *prf);
+  void (*save_func)(struct prefs_info *prf, FILE *fd);
 } prefs_info;
+
+static int prefs_size = 0, prefs_top = 0;
+static prefs_info **prefs = NULL;
+
+static void remember_pref(prefs_info *prf, 
+			  void (*reflect_func)(struct prefs_info *prf),
+			  void (*save_func)(struct prefs_info *prf, FILE *fd))
+{
+  if (prefs_size == 0)
+    {
+      prefs_size = 100;
+      prefs = (prefs_info **)CALLOC(prefs_size, sizeof(prefs_info *));
+    }
+  else
+    {
+      if (prefs_top >= prefs_size)
+	{
+	  int i;
+	  prefs_size += 100;
+	  prefs = (prefs_info **)REALLOC(prefs, prefs_size * sizeof(prefs_info *));
+	  for (i = prefs_top; i < prefs_size; i++) prefs[i] = NULL;
+	}
+    }
+  prf->reflect_func = reflect_func;
+  prf->save_func = save_func;
+  prefs[prefs_top++] = prf;
+}
+
 
 
 /* ---------------- help strings ---------------- */
@@ -225,14 +273,12 @@ static void call_toggle_func(Widget w, XtPointer context, XtPointer info)
 
 static prefs_info *prefs_row_with_toggle(const char *label, const char *varname, bool current_value,
 					 Widget box, Widget top_widget, 
-					 void (*toggle_func)(prefs_info *prf),
-					 void (*reflect_func)(prefs_info *prf))
+					 void (*toggle_func)(prefs_info *prf))
 {
   prefs_info *prf = NULL;
   Widget sep;
   prf = (prefs_info *)CALLOC(1, sizeof(prefs_info));
   prf->var_name = varname;
-  prf->reflect_func = reflect_func;
   prf->toggle_func = toggle_func;
 
   prf->label = make_row_label(label, box, top_widget);
@@ -264,8 +310,7 @@ static prefs_info *prefs_row_with_toggle_with_text(const char *label, const char
 						   const char *text_label, const char *text_value, int cols,
 						   Widget box, Widget top_widget, 
 						   void (*toggle_func)(prefs_info *prf),
-						   void (*text_func)(prefs_info *prf),
-						   void (*reflect_func)(prefs_info *prf))
+						   void (*text_func)(prefs_info *prf))
 {
   Arg args[20];
   int n;
@@ -273,7 +318,6 @@ static prefs_info *prefs_row_with_toggle_with_text(const char *label, const char
   Widget sep, sep1, lab1;
   prf = (prefs_info *)CALLOC(1, sizeof(prefs_info));
   prf->var_name = varname;
-  prf->reflect_func = reflect_func;
   prf->toggle_func = toggle_func;
   prf->text_func = text_func;
 
@@ -353,8 +397,7 @@ static void call_radio_func(Widget w, XtPointer context, XtPointer info)
 static prefs_info *prefs_row_with_radio_box(const char *label, const char *varname, 
 					    const char **labels, int num_labels, int current_value,
 					    Widget box, Widget top_widget, 
-					    void (*toggle_func)(prefs_info *prf),
-					    void (*reflect_func)(prefs_info *prf))
+					    void (*toggle_func)(prefs_info *prf))
 {
   Arg args[20];
   int i, n;
@@ -362,7 +405,6 @@ static prefs_info *prefs_row_with_radio_box(const char *label, const char *varna
   Widget sep;
   prf = (prefs_info *)CALLOC(1, sizeof(prefs_info));
   prf->var_name = varname;
-  prf->reflect_func = reflect_func;
   prf->toggle_func = toggle_func;
 
   prf->label = make_row_label(label, box, top_widget);
@@ -452,8 +494,7 @@ static prefs_info *prefs_row_with_scale(const char *label, const char *varname,
 					Float max_val, Float current_value,
 					Widget box, Widget top_widget, 
 					void (*scale_func)(prefs_info *prf),
-					void (*text_func)(prefs_info *prf),
-					void (*reflect_func)(prefs_info *prf))
+					void (*text_func)(prefs_info *prf))
 {
   Arg args[20];
   int n;
@@ -465,7 +506,6 @@ static prefs_info *prefs_row_with_scale(const char *label, const char *varname,
   prf = (prefs_info *)CALLOC(1, sizeof(prefs_info));
   prf->var_name = varname;
   prf->scale_max = max_val;
-  prf->reflect_func = reflect_func;
 
   prf->label = make_row_label(label, box, top_widget);
   sep = make_row_middle_separator(prf->label, box, top_widget);
@@ -537,8 +577,7 @@ static prefs_info *prefs_row_with_scale(const char *label, const char *varname,
 
 static prefs_info *prefs_row_with_text(const char *label, const char *varname, const char *value,
 				       Widget box, Widget top_widget,
-				       void (*text_func)(prefs_info *prf),
-				       void (*reflect_func)(prefs_info *prf))
+				       void (*text_func)(prefs_info *prf))
 {
   Arg args[20];
   int n;
@@ -546,7 +585,6 @@ static prefs_info *prefs_row_with_text(const char *label, const char *varname, c
   Widget sep;
   prf = (prefs_info *)CALLOC(1, sizeof(prefs_info));
   prf->var_name = varname;
-  prf->reflect_func = reflect_func;
 
   prf->label = make_row_label(label, box, top_widget);
   sep = make_row_middle_separator(prf->label, box, top_widget);
@@ -588,8 +626,7 @@ static prefs_info *prefs_row_with_text(const char *label, const char *varname, c
 static prefs_info *prefs_row_with_two_texts(const char *label, const char *varname,
 					    const char*label1, const char *text1, const char*label2, const char *text2, int cols,
 					    Widget box, Widget top_widget,
-					    void (*text_func)(prefs_info *prf),
-					    void (*reflect_func)(prefs_info *prf))
+					    void (*text_func)(prefs_info *prf))
 {
   Arg args[20];
   int n;
@@ -597,7 +634,6 @@ static prefs_info *prefs_row_with_two_texts(const char *label, const char *varna
   Widget sep, lab1, lab2;
   prf = (prefs_info *)CALLOC(1, sizeof(prefs_info));
   prf->var_name = varname;
-  prf->reflect_func = reflect_func;
 
   prf->label = make_row_label(label, box, top_widget);
   sep = make_row_middle_separator(prf->label, box, top_widget);
@@ -756,8 +792,7 @@ static void call_arrow_up_press(Widget w, XtPointer context, XtPointer info)
 static prefs_info *prefs_row_with_number(const char *label, const char *varname, const char *value, int cols,
 					 Widget box, Widget top_widget,
  					 void (*arrow_up_func)(prefs_info *prf), void (*arrow_down_func)(prefs_info *prf), 
-					 void (*text_func)(prefs_info *prf),
-					 void (*reflect_func)(prefs_info *prf))
+					 void (*text_func)(prefs_info *prf))
 {
   Arg args[20];
   int n;
@@ -765,7 +800,6 @@ static prefs_info *prefs_row_with_number(const char *label, const char *varname,
   Widget sep;
   prf = (prefs_info *)CALLOC(1, sizeof(prefs_info));
   prf->var_name = varname;
-  prf->reflect_func = reflect_func;
 
   prf->label = make_row_label(label, box, top_widget);
   sep = make_row_middle_separator(prf->label, box, top_widget);
@@ -889,8 +923,7 @@ static prefs_info *prefs_row_with_completed_list(const char *label, const char *
 						 Widget box, Widget top_widget,
 						 void (*text_func)(prefs_info *prf),
 						 char *(*completion_func)(char *text, void *context), void *completion_context,
-						 void (*list_func)(prefs_info *prf, char *value),
-						 void (*reflect_func)(prefs_info *prf))
+						 void (*list_func)(prefs_info *prf, char *value))
 {
   Arg args[20];
   int n, i, cols = 0;
@@ -898,7 +931,6 @@ static prefs_info *prefs_row_with_completed_list(const char *label, const char *
   Widget sep, sbar;
   prf = (prefs_info *)CALLOC(1, sizeof(prefs_info));
   prf->var_name = varname;
-  prf->reflect_func = reflect_func;
 
   prf->label = make_row_label(label, box, top_widget);
   sep = make_row_middle_separator(prf->label, box, top_widget);  
@@ -1137,8 +1169,7 @@ static void prefs_call_color_func_callback(Widget w, XtPointer context, XtPointe
 static prefs_info *prefs_color_selector_row(const char *label, const char *varname, 
 					    Pixel current_pixel,
 					    Widget box, Widget top_widget,
-					    void (*color_func)(prefs_info *prf, float r, float g, float b),
-					    void (*reflect_func)(prefs_info *prf))
+					    void (*color_func)(prefs_info *prf, float r, float g, float b))
 {
   Arg args[20];
   int n;
@@ -1151,7 +1182,6 @@ static prefs_info *prefs_color_selector_row(const char *label, const char *varna
 
   prf = (prefs_info *)CALLOC(1, sizeof(prefs_info));
   prf->var_name = varname;
-  prf->reflect_func = reflect_func;
   pixel_to_rgb(current_pixel, &r, &g, &b);
   tmp = rgb_to_color(1.0, 0.0, 0.0);
   red = tmp->pixel;
@@ -1259,9 +1289,17 @@ static prefs_info *prefs_color_selector_row(const char *label, const char *varna
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNtopWidget, prf->label); n++;
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
-  XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
+  if (FIRST_COLOR_POSITION == 0)
+    {
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
+    }
+  else
+    {
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_POSITION); n++;
+      XtSetArg(args[n], XmNleftPosition, FIRST_COLOR_POSITION); n++;
+    }
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_POSITION); n++;
-  XtSetArg(args[n], XmNrightPosition, 27); n++;
+  XtSetArg(args[n], XmNrightPosition, SECOND_COLOR_POSITION); n++;
   XtSetArg(args[n], XmNmarginHeight, 0); n++;
   XtSetArg(args[n], XmNborderWidth, 1); n++;
   XtSetArg(args[n], XmNborderColor, red); n++;
@@ -1280,7 +1318,7 @@ static prefs_info *prefs_color_selector_row(const char *label, const char *varna
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNleftWidget, prf->rscl); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_POSITION); n++;
-  XtSetArg(args[n], XmNrightPosition, 54); n++;
+  XtSetArg(args[n], XmNrightPosition, THIRD_COLOR_POSITION); n++;
   XtSetArg(args[n], XmNmarginHeight, 0); n++;
   XtSetArg(args[n], XmNborderWidth, 1); n++;
   XtSetArg(args[n], XmNborderColor, green); n++;
@@ -1401,14 +1439,37 @@ static void preferences_quit_callback(Widget w, XtPointer context, XtPointer inf
 static void preferences_reset_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_set_global_defaults(true); 
-  /* need complete redisplay, what about snd/chn stuff? also max-regions et al need check */
-  /* also what about reflection from elsewhere? */
-  /* also there's a distinction between reset to original startup state and reset to complete default state */
+#if 0
+  for (i = 0; i < prefs_top; i++)
+    {
+      prefs_info *prf;
+      prf = prefs[i];
+      if ((prf) &&
+	  (prf->reflect_func))
+	(*(prf->reflect_func))(prf);
+    }
+#endif
 }
 
 static void preferences_save_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  save_options_in_prefs(); /* returns filename, need redirect + msg */
+  char *prefs_filename, *fullname;
+  prefs_filename = save_options_in_prefs(); /* returns filename, need redirect + msg */
+#if 0
+  FILE *fd;
+  fd = FOPEN(fullname, "a");
+  fullname = mus_expand_filename(prefs_filename);
+  for (i = 0; i < prefs_top; i++)
+    {
+      prefs_info *prf;
+      prf = prefs[i];
+      if ((prf) &&
+	  (prf->save_func))
+	(*(prf->save_func))(prf, fd);
+    }
+  snd_fclose(fd, prefs_filename);
+  FREE(fullname);
+#endif
 }
 
 /* ---------------- errors ---------------- */
@@ -1571,6 +1632,26 @@ static void highlight_color_func(prefs_info *prf, float r, float g, float b)
   FREE(tmp);
 }
 
+/* ---------------- position-color ---------------- */
+
+static void position_color_func(prefs_info *prf, float r, float g, float b)
+{
+  XColor *tmp;
+  tmp = rgb_to_color(r, g, b);
+  set_position_color(tmp->pixel);
+  FREE(tmp);
+}
+
+/* ---------------- zoom-color ---------------- */
+
+static void zoom_color_func(prefs_info *prf, float r, float g, float b)
+{
+  XColor *tmp;
+  tmp = rgb_to_color(r, g, b);
+  set_zoom_color(tmp->pixel);
+  FREE(tmp);
+}
+
 /* ---------------- verbose-cursor ---------------- */
 
 static void verbose_cursor_toggle(prefs_info *prf)
@@ -1579,37 +1660,47 @@ static void verbose_cursor_toggle(prefs_info *prf)
   in_set_verbose_cursor(XmToggleButtonGetState(prf->toggle) == XmSET);
 }
 
+/* ---------------- cursor-follows-play ---------------- */
+
+static void cursor_follows_play_toggle(prefs_info *prf)
+{
+  ASSERT_WIDGET_TYPE(XmIsToggleButton(prf->toggle), prf->toggle);
+  in_set_cursor_follows_play(ss, (XmToggleButtonGetState(prf->toggle) == XmSET) ? FOLLOW_ALWAYS : DONT_FOLLOW);
+}
+
 /* ---------------- cursor-size ---------------- */
 
 #define MIN_CURSOR_SIZE 1
 #define MAX_CURSOR_SIZE 500
 
-static void cursor_size_up(prefs_info *prf)
+static void show_cursor_size(prefs_info *prf)
 {
-  int size;
   char *new_size;
-  ASSERT_WIDGET_TYPE(XmIsTextField(prf->text), prf->text);
-  size = cursor_size(ss) + 1;
-  if (size >= MAX_CURSOR_SIZE) XtSetSensitive(prf->arrow_up, false);
-  if (size > MIN_CURSOR_SIZE) XtSetSensitive(prf->arrow_down, true);
-  in_set_cursor_size(size);
   new_size = mus_format("%d", cursor_size(ss));
   XmTextSetString(prf->text, new_size);
   FREE(new_size);
 }
 
+static void cursor_size_up(prefs_info *prf)
+{
+  int size;
+  ASSERT_WIDGET_TYPE(XmIsTextField(prf->text), prf->text);
+  size = cursor_size(ss) + 1;
+  if (size >= MAX_CURSOR_SIZE) XtSetSensitive(prf->arrow_up, false);
+  if (size > MIN_CURSOR_SIZE) XtSetSensitive(prf->arrow_down, true);
+  in_set_cursor_size(size);
+  show_cursor_size(prf);
+}
+
 static void cursor_size_down(prefs_info *prf)
 {
   int size;
-  char *new_size;
   ASSERT_WIDGET_TYPE(XmIsTextField(prf->text), prf->text);
   size = cursor_size(ss) - 1;
   if (size <= MIN_CURSOR_SIZE) XtSetSensitive(prf->arrow_down, false);
   if (size < MAX_CURSOR_SIZE) XtSetSensitive(prf->arrow_up, true);
   in_set_cursor_size(size);
-  new_size = mus_format("%d", cursor_size(ss));
-  XmTextSetString(prf->text, new_size);
-  FREE(new_size);
+  show_cursor_size(prf);
 }
 
 static void cursor_size_from_text(prefs_info *prf)
@@ -1781,6 +1872,99 @@ static void html_program_text(prefs_info *prf)
   else set_html_program(copy_string(DEFAULT_HTML_PROGRAM));
 }
 
+/* ---------------- graph-style ---------------- */
+
+static const char *graph_styles[5] = {"line", "dot", "filled", "dot+line", "lollipop"};
+
+static void graph_style_choice(prefs_info *prf)
+{
+  if (XmToggleButtonGetState(prf->radio_button) == XmSET)
+    {
+      if (strcmp(XtName(prf->radio_button), "line") == 0)
+	in_set_graph_style(GRAPH_LINES);
+      else
+	{
+	  if (strcmp(XtName(prf->radio_button), "dot") == 0)
+	    in_set_graph_style(GRAPH_DOTS);
+	  else
+	    {
+	      if (strcmp(XtName(prf->radio_button), "filled") == 0)
+		in_set_graph_style(GRAPH_FILLED);
+	      else
+		{
+		  if (strcmp(XtName(prf->radio_button), "dot+line") == 0)
+		    in_set_graph_style(GRAPH_DOTS_AND_LINES);
+		  else in_set_graph_style(GRAPH_LOLLIPOPS);
+		}
+	    }
+	}
+    }
+}
+
+/* ---------------- dot-size ---------------- */
+
+#define MIN_DOT_SIZE 0
+#define MAX_DOT_SIZE 100
+
+static void show_dot_size(prefs_info *prf)
+{
+  char *new_size;
+  new_size = mus_format("%d", dot_size(ss));
+  XmTextSetString(prf->text, new_size);
+  FREE(new_size);
+}
+
+static void dot_size_up(prefs_info *prf)
+{
+  int size;
+  ASSERT_WIDGET_TYPE(XmIsTextField(prf->text), prf->text);
+  size = dot_size(ss) + 1;
+  if (size >= MAX_DOT_SIZE) XtSetSensitive(prf->arrow_up, false);
+  if (size > MIN_DOT_SIZE) XtSetSensitive(prf->arrow_down, true);
+  in_set_dot_size(size);
+  show_dot_size(prf);
+}
+
+static void dot_size_down(prefs_info *prf)
+{
+  int size;
+  ASSERT_WIDGET_TYPE(XmIsTextField(prf->text), prf->text);
+  size = dot_size(ss) - 1;
+  if (size <= MIN_DOT_SIZE) XtSetSensitive(prf->arrow_down, false);
+  if (size < MAX_DOT_SIZE) XtSetSensitive(prf->arrow_up, true);
+  in_set_dot_size(size);
+  show_dot_size(prf);
+}
+
+static void dot_size_from_text(prefs_info *prf)
+{
+  int size;
+  char *str;
+  ASSERT_WIDGET_TYPE(XmIsTextField(prf->text), prf->text);
+  str = XmTextFieldGetString(prf->text);
+  if ((str) && (*str))
+    {
+      prf->got_error = false;
+      redirect_errors_to(post_prefs_error, (void *)prf);
+      size = string_to_int(str, 0, "dot size"); 
+      redirect_errors_to(NULL, NULL);
+      XtFree(str);
+      if (!(prf->got_error))
+	{
+	  if (size >= MIN_DOT_SIZE)
+	    {
+	      if (size <= MAX_DOT_SIZE)
+		in_set_dot_size(size);
+	      else va_post_prefs_error("%s > %d?", (void *)prf, str, MAX_DOT_SIZE);
+	    }
+	  else va_post_prefs_error("%s < %d?", (void *)prf, str, MIN_DOT_SIZE);
+	}
+      else prf->got_error = false;
+    }
+  else post_prefs_error("no size?", (void *)prf);
+}
+
+
 /* ---------------- show-y-zero ---------------- */
 
 static void y_zero_toggle(prefs_info *prf)
@@ -1892,6 +2076,35 @@ static void axis_label_font_text(prefs_info *prf)
       XtAppAddTimeOut(MAIN_APP(ss),
 		      ERROR_WAIT_TIME,
 		      axis_label_font_error_erase_func,
+		      (XtPointer)prf);
+    }
+  if (str) XtFree(str);
+}
+
+/* ---------------- axis-numbers-font ---------------- */
+
+static void axis_numbers_font_error_erase_func(XtPointer context, XtIntervalId *id)
+{
+  prefs_info *prf = (prefs_info *)context;
+  XmTextSetString(prf->text, axis_numbers_font(ss));
+}
+
+static void axis_numbers_font_text(prefs_info *prf)
+{
+  char *str;
+  ASSERT_WIDGET_TYPE(XmIsTextField(prf->text), prf->text);
+  str = XmTextFieldGetString(prf->text);
+  if ((!str) || (!(*str)))
+    {
+      XmTextSetString(prf->text, axis_numbers_font(ss));
+      return;
+    }
+  if (!(set_axis_numbers_font(str)))
+    {
+      XmTextSetString(prf->text, "can't find that font");
+      XtAppAddTimeOut(MAIN_APP(ss),
+		      ERROR_WAIT_TIME,
+		      axis_numbers_font_error_erase_func,
 		      (XtPointer)prf);
     }
   if (str) XtFree(str);
@@ -2315,6 +2528,83 @@ static void mark_tag_size_text(prefs_info *prf)
     }
 }
 
+
+/* ---------------- mix-color (waveform) ---------------- */
+
+static void mix_color_func(prefs_info *prf, float r, float g, float b)
+{
+  XColor *tmp;
+  tmp = rgb_to_color(r, g, b);
+  color_mixes(tmp->pixel);
+  FREE(tmp);
+}
+
+/* ---------------- mix-tag size ---------------- */
+
+static void mix_tag_width_erase_func(XtPointer context, XtIntervalId *id)
+{
+  prefs_info *prf = (prefs_info *)context;
+  char *str;
+  str = mus_format("%d", mix_tag_width(ss));
+  XmTextSetString(prf->text, str);
+  FREE(str);
+}
+
+static void mix_tag_height_erase_func(XtPointer context, XtIntervalId *id)
+{
+  prefs_info *prf = (prefs_info *)context;
+  char *str;
+  str = mus_format("%d", mix_tag_height(ss));
+  XmTextSetString(prf->rtxt, str);
+  FREE(str);
+}
+
+static void mix_tag_width_error(const char *msg, void *data)
+{
+  prefs_info *prf = (prefs_info *)data;
+  XmTextSetString(prf->text, "right");
+  XtAppAddTimeOut(MAIN_APP(ss),
+		  ERROR_WAIT_TIME,
+		  mix_tag_width_erase_func,
+		  (XtPointer)prf);
+}
+
+static void mix_tag_height_error(const char *msg, void *data)
+{
+  prefs_info *prf = (prefs_info *)data;
+  XmTextSetString(prf->rtxt, "right");
+  XtAppAddTimeOut(MAIN_APP(ss),
+		  ERROR_WAIT_TIME,
+		  mix_tag_height_erase_func,
+		  (XtPointer)prf);
+}
+
+static void mix_tag_size_text(prefs_info *prf)
+{
+  char *str;
+  str = XmTextGetString(prf->text);
+  if ((str) && (*str))
+    {
+      int width = 0;
+      redirect_errors_to(mix_tag_width_error, (void *)prf);
+      width = string_to_int(str, 1, "mix tag width");
+      redirect_errors_to(NULL, NULL);
+      if (width > 0) set_mix_tag_width(width);
+      XtFree(str);
+      str = XmTextGetString(prf->rtxt);
+      if ((str) && (*str))
+	{
+	  int height;
+	  redirect_errors_to(mix_tag_height_error, (void *)prf);
+	  height = string_to_int(str, 1, "mix tag height");
+	  redirect_errors_to(NULL, NULL);
+	  if (height > 0) set_mix_tag_height(height);
+	  XtFree(str);
+	}
+    }
+}
+
+
 /* ---------------- optimization ---------------- */
 
 #define MAX_OPTIMIZATION 6
@@ -2373,6 +2663,7 @@ static void optimization_from_text(prefs_info *prf)
     }
 }
 
+#if HAVE_EXTENSION_LANGUAGE
 /* ---------------- listener-prompt ---------------- */
 
 static void listener_prompt_text(prefs_info *prf)
@@ -2396,9 +2687,56 @@ static void show_backtrace_toggle(prefs_info *prf)
   set_show_backtrace(XmToggleButtonGetState(prf->toggle) == XmSET);
 }
 
+/* ---------------- listener-color ---------------- */
 
+static void listener_color_func(prefs_info *prf, float r, float g, float b)
+{
+  XColor *tmp;
+  tmp = rgb_to_color(r, g, b);
+  color_listener(tmp->pixel);
+  FREE(tmp);
+}
 
-#define THIS_NEEDS_REFLECTION NULL
+/* ---------------- listener-text-color ---------------- */
+
+static void listener_text_color_func(prefs_info *prf, float r, float g, float b)
+{
+  XColor *tmp;
+  tmp = rgb_to_color(r, g, b);
+  color_listener_text(tmp->pixel);
+  FREE(tmp);
+}
+
+/* ---------------- listener-font ---------------- */
+
+static void listener_font_error_erase_func(XtPointer context, XtIntervalId *id)
+{
+  prefs_info *prf = (prefs_info *)context;
+  XmTextSetString(prf->text, listener_font(ss));
+}
+
+static void listener_font_text(prefs_info *prf)
+{
+  char *str;
+  ASSERT_WIDGET_TYPE(XmIsTextField(prf->text), prf->text);
+  str = XmTextFieldGetString(prf->text);
+  if ((!str) || (!(*str)))
+    {
+      XmTextSetString(prf->text, listener_font(ss));
+      return;
+    }
+  if (!(set_listener_font(str)))
+    {
+      XmTextSetString(prf->text, "can't find that font");
+      XtAppAddTimeOut(MAIN_APP(ss),
+		      ERROR_WAIT_TIME,
+		      listener_font_error_erase_func,
+		      (XtPointer)prf);
+    }
+  if (str) XtFree(str);
+}
+#endif
+
 
 
 /* ---------------- preferences dialog ---------------- */
@@ -2522,7 +2860,7 @@ void start_preferences_dialog(void)
     prf = prefs_row_with_two_texts("start up size", S_window_width, 
 				   "width:", str1, "height:", str2, 6,
 				   dpy_box, dpy_label,
-				   startup_size_text, THIS_NEEDS_REFLECTION);
+				   startup_size_text);
     FREE(str2);
     FREE(str1);
 
@@ -2530,25 +2868,25 @@ void start_preferences_dialog(void)
     prf = prefs_row_with_toggle("ask before overwriting anything", S_ask_before_overwrite,
 				ask_before_overwrite(ss), 
 				dpy_box, current_sep,
-				overwrite_toggle, THIS_NEEDS_REFLECTION);
+				overwrite_toggle);
 
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
     prf = prefs_row_with_toggle("include thumbnail graph in upper right corner", "make-current-window-display",
 				find_current_window_display(),
 				dpy_box, current_sep,
-				current_window_display_toggle, THIS_NEEDS_REFLECTION);
+				current_window_display_toggle);
 
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
     prf = prefs_row_with_toggle("resize main window as sounds open and close", S_auto_resize,
 				auto_resize(ss), 
 				dpy_box, current_sep, 
-				resize_toggle, THIS_NEEDS_REFLECTION);
+				resize_toggle);
 
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
     prf = prefs_row_with_toggle("show the control panel upon opening a sound", S_show_controls,
 				in_show_controls(ss), 
 				dpy_box, current_sep, 
-				controls_toggle, THIS_NEEDS_REFLECTION);
+				controls_toggle);
 
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
 
@@ -2563,14 +2901,24 @@ void start_preferences_dialog(void)
     cursor_label = XtCreateManagedWidget("  colors", xmLabelWidgetClass, dpy_box, args, n);
 
     current_sep = make_inter_variable_separator(dpy_box, cursor_label);
-    prf = prefs_color_selector_row("default widget color", S_basic_color, ss->sgx->basic_color,
+    prf = prefs_color_selector_row("main background color", S_basic_color, ss->sgx->basic_color,
 				   dpy_box, current_sep,
-				   basic_color_func, THIS_NEEDS_REFLECTION);
+				   basic_color_func);
 
     current_sep = make_inter_variable_separator(dpy_box, prf->rscl);
-    prf = prefs_color_selector_row("default highlight color", S_highlight_color, ss->sgx->highlight_color,
+    prf = prefs_color_selector_row("main highlight color", S_highlight_color, ss->sgx->highlight_color,
 				   dpy_box, current_sep,
-				   highlight_color_func, THIS_NEEDS_REFLECTION);
+				   highlight_color_func);
+
+    current_sep = make_inter_variable_separator(dpy_box, prf->rscl);
+    prf = prefs_color_selector_row("second highlight color", S_position_color, ss->sgx->position_color,
+				   dpy_box, current_sep,
+				   position_color_func);
+
+    current_sep = make_inter_variable_separator(dpy_box, prf->rscl);
+    prf = prefs_color_selector_row("third highlight color", S_zoom_color, ss->sgx->zoom_color,
+				   dpy_box, current_sep,
+				   zoom_color_func);
 
     current_sep = make_inter_variable_separator(dpy_box, prf->rscl);
 
@@ -2588,7 +2936,13 @@ void start_preferences_dialog(void)
     prf = prefs_row_with_toggle("report cursor location as it moves", S_verbose_cursor,
 				verbose_cursor(ss), 
 				dpy_box, cursor_label, 
-				verbose_cursor_toggle, THIS_NEEDS_REFLECTION);
+				verbose_cursor_toggle);
+
+    current_sep = make_inter_variable_separator(dpy_box, prf->label);
+    prf = prefs_row_with_toggle("track current location while playing", S_cursor_follows_play,
+				cursor_follows_play(ss), 
+				dpy_box, current_sep,
+				cursor_follows_play_toggle);
 
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
     
@@ -2596,31 +2950,23 @@ void start_preferences_dialog(void)
     prf = prefs_row_with_number("size", S_cursor_size,
 				str, 4, 
 				dpy_box, current_sep,
-				cursor_size_up, cursor_size_down, cursor_size_from_text, THIS_NEEDS_REFLECTION);
+				cursor_size_up, cursor_size_down, cursor_size_from_text);
     FREE(str);
     if (cursor_size(ss) <= 0) XtSetSensitive(prf->arrow_down, false);
 
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
-    prf = prefs_row_with_radio_box("cursor shape", S_cursor_style,
+    prf = prefs_row_with_radio_box("shape", S_cursor_style,
 				   cursor_styles, 2, cursor_style(ss),
 				   dpy_box, current_sep, 
-				   cursor_style_choice, THIS_NEEDS_REFLECTION);
+				   cursor_style_choice);
 
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
-    prf = prefs_color_selector_row("cursor color", S_cursor_color, ss->sgx->cursor_color,
+    prf = prefs_color_selector_row("color", S_cursor_color, ss->sgx->cursor_color,
 				   dpy_box, current_sep,
-				   cursor_color_func, THIS_NEEDS_REFLECTION);
+				   cursor_color_func);
 
     current_sep = make_inter_variable_separator(dpy_box, prf->rscl);
 
-
-    /*
-    ss->Cursor_Follows_Play = DEFAULT_CURSOR_FOLLOWS_PLAY;
-
-typedef enum {DONT_FOLLOW, FOLLOW_ALWAYS, FOLLOW_ONCE} tracking_cursor_t;
-
-    cursor as line during play? (check for other cursor stuff)
-    */
 
     n = 0;
     XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
@@ -2635,14 +2981,14 @@ typedef enum {DONT_FOLLOW, FOLLOW_ALWAYS, FOLLOW_ONCE} tracking_cursor_t;
     prf = prefs_row_with_text("directory for temporary files", S_temp_dir, 
 			      temp_dir(ss), 
 			      dpy_box, file_label,
-			      temp_dir_text, THIS_NEEDS_REFLECTION);
+			      temp_dir_text);
 
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
 #if HAVE_EXTENSION_LANGUAGE
     prf = prefs_row_with_text("directory for save-state files", S_save_dir, 
 			      save_dir(ss), 
 			      dpy_box, current_sep,
-			      save_dir_text, THIS_NEEDS_REFLECTION);
+			      save_dir_text);
 
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
 #endif
@@ -2650,14 +2996,14 @@ typedef enum {DONT_FOLLOW, FOLLOW_ALWAYS, FOLLOW_ONCE} tracking_cursor_t;
     prf = prefs_row_with_text("directory for ladspa plugins", S_ladspa_dir, 
 			      ladspa_dir(ss), 
 			      dpy_box, current_sep,
-			      ladspa_dir_text, THIS_NEEDS_REFLECTION);
+			      ladspa_dir_text);
 
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
 #endif
     prf = prefs_row_with_text("external program to read HTML files via snd-help", S_html_program,
 			      html_program(ss),
 			      dpy_box, current_sep,
-			      html_program_text, THIS_NEEDS_REFLECTION);
+			      html_program_text);
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
 
     /* new file defaults
@@ -2724,6 +3070,7 @@ typedef enum {DONT_FOLLOW, FOLLOW_ALWAYS, FOLLOW_ONCE} tracking_cursor_t;
   /* -------- graphs -------- */
   {
     Widget grf_frame, grf_box, grf_label, colgrf_label;
+    char *str;
 
     n = 0;
     XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;
@@ -2744,24 +3091,39 @@ typedef enum {DONT_FOLLOW, FOLLOW_ALWAYS, FOLLOW_ONCE} tracking_cursor_t;
     XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;
     grf_label = XtCreateManagedWidget("graph options", xmLabelWidgetClass, grf_box, args, n);
 
+    prf = prefs_row_with_radio_box("how to connect the dots", S_graph_style,
+				   graph_styles, 5, graph_style(ss),
+				   grf_box, grf_label,
+				   graph_style_choice);
+
+    current_sep = make_inter_variable_separator(grf_box, prf->label);
+    str = mus_format("%d", dot_size(ss));
+    prf = prefs_row_with_number("dot size", S_dot_size,
+				str, 4, 
+				grf_box, current_sep,
+				dot_size_up, dot_size_down, dot_size_from_text);
+    FREE(str);
+    if (dot_size(ss) <= 0) XtSetSensitive(prf->arrow_down, false);
+
+    current_sep = make_inter_variable_separator(grf_box, prf->label);
     prf = prefs_row_with_toggle("include y=0 line in sound graphs", S_show_y_zero,
 				show_y_zero(ss),
-				grf_box, grf_label,
-				y_zero_toggle, THIS_NEEDS_REFLECTION);
+				grf_box, current_sep,
+				y_zero_toggle);
 
     current_sep = make_inter_variable_separator(grf_box, prf->label);
     prf = prefs_row_with_toggle("include a grid in sound graphs", S_show_grid,
 				(show_grid(ss) == WITH_GRID),
 				grf_box, current_sep,
-				grid_toggle, THIS_NEEDS_REFLECTION);
+				grid_toggle);
 
     current_sep = make_inter_variable_separator(grf_box, prf->label);
     prf = prefs_row_with_scale("grid density", S_grid_density, 
 			       2.0, grid_density(ss),
 			       grf_box, current_sep,
-			       grid_density_scale_callback, grid_density_text_callback, THIS_NEEDS_REFLECTION);
+			       grid_density_scale_callback, grid_density_text_callback);
 
-    current_sep = make_inter_variable_separator(grf_box, prf->label);
+    current_sep = make_inter_variable_separator(grf_box, prf->label); 
 
     n = 0;
     XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
@@ -2775,39 +3137,49 @@ typedef enum {DONT_FOLLOW, FOLLOW_ALWAYS, FOLLOW_ONCE} tracking_cursor_t;
     
     prf = prefs_color_selector_row("unselected data (waveform) color", S_data_color, ss->sgx->data_color,
 				   grf_box, colgrf_label,
-				   data_color_func, THIS_NEEDS_REFLECTION);
+				   data_color_func);
 
     current_sep = make_inter_variable_separator(grf_box, prf->rscl);
     prf = prefs_color_selector_row("unselected graph (background) color", S_graph_color, ss->sgx->graph_color,
 				   grf_box, current_sep,
-				   graph_color_func, THIS_NEEDS_REFLECTION);
+				   graph_color_func);
 
     current_sep = make_inter_variable_separator(grf_box, prf->rscl);
     prf = prefs_color_selector_row("selected data (waveform) color", S_selected_data_color, ss->sgx->selected_data_color,
 				   grf_box, current_sep,
-				   selected_data_color_func, THIS_NEEDS_REFLECTION);
+				   selected_data_color_func);
 
     current_sep = make_inter_variable_separator(grf_box, prf->rscl);
     prf = prefs_color_selector_row("selected graph (background) color", S_selected_graph_color, ss->sgx->selected_graph_color,
 				   grf_box, current_sep,
-				   selected_graph_color_func, THIS_NEEDS_REFLECTION);
+				   selected_graph_color_func);
 
     current_sep = make_inter_variable_separator(grf_box, prf->rscl);
-    prf = prefs_row_with_text("graph label font", S_axis_label_font, 
-			      axis_label_font(ss), 
-			      grf_box, current_sep,
-			      axis_label_font_text, THIS_NEEDS_REFLECTION);
+    n = 0;
+    XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
+    XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
+    XtSetArg(args[n], XmNtopWidget, current_sep); n++;
+    XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
+    XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
+    XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+    XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;
+    colgrf_label = XtCreateManagedWidget("  graph fonts", xmLabelWidgetClass, grf_box, args, n);
 
+    prf = prefs_row_with_text("axis label font", S_axis_label_font, 
+			      axis_label_font(ss), 
+			      grf_box, colgrf_label,
+			      axis_label_font_text);
+
+    current_sep = make_inter_variable_separator(grf_box, prf->label);     
+    prf = prefs_row_with_text("axis number font", S_axis_numbers_font, 
+			      axis_numbers_font(ss), 
+			      grf_box, current_sep,
+			      axis_numbers_font_text);
 
     /*
     ss->X_Axis_Style = DEFAULT_X_AXIS_STYLE;typedef enum {X_AXIS_IN_SECONDS, X_AXIS_IN_SAMPLES, X_AXIS_AS_PERCENTAGE, X_AXIS_IN_BEATS, X_AXIS_IN_MEASURES} x_axis_style_t;
-    ss->Graph_Style = DEFAULT_GRAPH_STYLE; typedef enum {GRAPH_LINES, GRAPH_DOTS, GRAPH_FILLED, GRAPH_DOTS_AND_LINES, GRAPH_LOLLIPOPS} graph_style_t;
     ss->Show_Axes = DEFAULT_SHOW_AXES;typedef enum {SHOW_NO_AXES, SHOW_ALL_AXES, SHOW_X_AXIS, SHOW_ALL_AXES_UNLABELLED, SHOW_X_AXIS_UNLABELLED} show_axes_t;
-    ss->Dot_Size = DEFAULT_DOT_SIZE;
-    graph fonts
-    graph colors
-    cursor color?
-    
+    graph fonts (tiny?)
     */
   }
 
@@ -2881,7 +3253,7 @@ typedef enum {DONT_FOLLOW, FOLLOW_ALWAYS, FOLLOW_ONCE} tracking_cursor_t;
     prf = prefs_row_with_number("size", S_transform_size,
 				str, 12, 
 				fft_box, fft_label, 
-				fft_size_up, fft_size_down, fft_size_from_text, THIS_NEEDS_REFLECTION);
+				fft_size_up, fft_size_down, fft_size_from_text);
     FREE(str);
     if (transform_size(ss) <= 2) XtSetSensitive(prf->arrow_down, false);
 
@@ -2889,7 +3261,7 @@ typedef enum {DONT_FOLLOW, FOLLOW_ALWAYS, FOLLOW_ONCE} tracking_cursor_t;
     prf = prefs_row_with_radio_box("transform graph choice", S_transform_graph_type,
 				   transform_graph_types, 3, transform_graph_type(ss),
 				   fft_box, current_sep,
-				   transform_graph_type_choice, THIS_NEEDS_REFLECTION);
+				   transform_graph_type_choice);
 
     current_sep = make_inter_variable_separator(fft_box, prf->label);
     prf = prefs_row_with_completed_list("data window", S_fft_window, fft_windows[(int)fft_window(ss)],
@@ -2897,13 +3269,13 @@ typedef enum {DONT_FOLLOW, FOLLOW_ALWAYS, FOLLOW_ONCE} tracking_cursor_t;
 					fft_box, current_sep,
 					fft_window_from_text,
 					fft_window_completer, NULL,
-					fft_window_from_menu, THIS_NEEDS_REFLECTION);
+					fft_window_from_menu);
 
     current_sep = make_inter_variable_separator(fft_box, prf->label);
     prf = prefs_row_with_scale("data window family parameter", S_fft_window_beta, 
 			       1.0, fft_window_beta(ss),
 			       fft_box, current_sep,
-			       fft_window_beta_scale_callback, fft_window_beta_text_callback, THIS_NEEDS_REFLECTION);
+			       fft_window_beta_scale_callback, fft_window_beta_text_callback);
 
     current_sep = make_inter_variable_separator(fft_box, prf->label);
     str = mus_format("%d", max_transform_peaks(ss));
@@ -2911,7 +3283,7 @@ typedef enum {DONT_FOLLOW, FOLLOW_ALWAYS, FOLLOW_ONCE} tracking_cursor_t;
 					  show_transform_peaks(ss),
 					  "max peaks:", str, 5,
 					  fft_box, current_sep,
-					  transform_peaks_toggle, transform_peaks_text, THIS_NEEDS_REFLECTION);
+					  transform_peaks_toggle, transform_peaks_text);
     FREE(str);
 
     current_sep = make_inter_variable_separator(fft_box, prf->label);
@@ -2927,7 +3299,7 @@ typedef enum {DONT_FOLLOW, FOLLOW_ALWAYS, FOLLOW_ONCE} tracking_cursor_t;
 					  fft_box, current_sep,
 					  colormap_from_text,
 					  colormap_completer, NULL,
-					  colormap_from_menu, THIS_NEEDS_REFLECTION);
+					  colormap_from_menu);
       FREE(cmaps);
     }
     /* PERHAPS: a line with color-inverted and color-scaler and color-cutoff */
@@ -2938,29 +3310,28 @@ typedef enum {DONT_FOLLOW, FOLLOW_ALWAYS, FOLLOW_ONCE} tracking_cursor_t;
     prf = prefs_row_with_toggle("y axis as log magnitude (dB)", S_fft_log_magnitude,
 				fft_log_magnitude(ss),
 				fft_box, current_sep,
-				log_magnitude_toggle, THIS_NEEDS_REFLECTION);
+				log_magnitude_toggle);
 
     current_sep = make_inter_variable_separator(fft_box, prf->label);
     str = mus_format("%.3f", min_dB(ss));
     prf = prefs_row_with_text("minimum y-axis dB value", S_min_dB, str,
 			      fft_box, current_sep,
-			      min_dB_text, THIS_NEEDS_REFLECTION);
+			      min_dB_text);
     FREE(str);
 
     current_sep = make_inter_variable_separator(fft_box, prf->label);
     prf = prefs_row_with_toggle("x axis as log freq", S_fft_log_frequency,
 				fft_log_frequency(ss),
 				fft_box, current_sep,
-				log_frequency_toggle, THIS_NEEDS_REFLECTION);
+				log_frequency_toggle);
 
     current_sep = make_inter_variable_separator(fft_box, prf->label);
     prf = prefs_row_with_radio_box("normalization", S_transform_normalization,
 				   transform_normalizations, 4, transform_normalization(ss),
 				   fft_box, current_sep,
-				   transform_normalization_choice, THIS_NEEDS_REFLECTION);
+				   transform_normalization_choice);
 
     /*
-    ss->Wavelet_Type = DEFAULT_WAVELET_TYPE;
     ss->Transform_Type = DEFAULT_TRANSFORM_TYPE;
     peaks fonts
     ss->Sinc_Width = DEFAULT_SINC_WIDTH;
@@ -2996,9 +3367,9 @@ typedef enum {DONT_FOLLOW, FOLLOW_ALWAYS, FOLLOW_ONCE} tracking_cursor_t;
     XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;
     mmr_label = XtCreateManagedWidget("marks, mixes, and regions", xmLabelWidgetClass, mmr_box, args, n);
 
-    prf = prefs_color_selector_row("mark color", S_mark_color, ss->sgx->mark_color,
+    prf = prefs_color_selector_row("mark and mix tag color", S_mark_color, ss->sgx->mark_color,
 				   mmr_box, mmr_label,
-				   mark_color_func, THIS_NEEDS_REFLECTION);
+				   mark_color_func);
 
     current_sep = make_inter_variable_separator(mmr_box, prf->rscl);
 
@@ -3007,25 +3378,39 @@ typedef enum {DONT_FOLLOW, FOLLOW_ALWAYS, FOLLOW_ONCE} tracking_cursor_t;
     prf = prefs_row_with_two_texts("mark tag size", S_mark_tag_width, 
 				   "width:", str1, "height:", str2, 4,
 				   mmr_box, current_sep,
-				   mark_tag_size_text, THIS_NEEDS_REFLECTION);
+				   mark_tag_size_text);
     FREE(str2);
     FREE(str1);
 
+    current_sep = make_inter_variable_separator(mmr_box, prf->label);
+    str1 = mus_format("%d", mix_tag_width(ss));
+    str2 = mus_format("%d", mix_tag_height(ss));
+    prf = prefs_row_with_two_texts("mix tag size", S_mix_tag_width, 
+				   "width:", str1, "height:", str2, 4,
+				   mmr_box, current_sep,
+				   mix_tag_size_text);
+    FREE(str2);
+    FREE(str1);
+
+    current_sep = make_inter_variable_separator(mmr_box, prf->label);
+    prf = prefs_color_selector_row("mix waveform color", S_mix_color, ss->sgx->mix_color,
+				   mmr_box, current_sep,
+				   mix_color_func);
+
+    /* current_sep = make_inter_variable_separator(mmr_box, prf->rscl); */
+
+
     /*
-    ss->Show_Marks = DEFAULT_SHOW_MARKS;
     ss->With_Mix_Tags = DEFAULT_WITH_MIX_TAGS;
     ss->Show_Mix_Waveforms = DEFAULT_SHOW_MIX_WAVEFORMS;
     ss->Mix_Waveform_Height = DEFAULT_MIX_WAVEFORM_HEIGHT;
-    ss->Mix_Tag_Width = DEFAULT_MIX_TAG_WIDTH;
-    ss->Mix_Tag_Height = DEFAULT_MIX_TAG_HEIGHT;
     ss->Selection_Creates_Region = DEFAULT_SELECTION_CREATES_REGION;
-    colors
     marks menu?
     */
     
   }
   
-
+#if HAVE_EXTENSION_LANGUAGE
   current_sep = make_inter_topic_separator(topics);
 
   /* -------- programming -------- */
@@ -3057,7 +3442,7 @@ typedef enum {DONT_FOLLOW, FOLLOW_ALWAYS, FOLLOW_ONCE} tracking_cursor_t;
     prf = prefs_row_with_number("optimization level", S_optimization,
 				str, 3, 
 				prg_box, prg_label, 
-				optimization_up, optimization_down, optimization_from_text, THIS_NEEDS_REFLECTION);
+				optimization_up, optimization_down, optimization_from_text);
     FREE(str);
     if (optimization(ss) == 6) XtSetSensitive(prf->arrow_up, false);
     if (optimization(ss) == 0) XtSetSensitive(prf->arrow_down, false);
@@ -3069,24 +3454,33 @@ typedef enum {DONT_FOLLOW, FOLLOW_ALWAYS, FOLLOW_ONCE} tracking_cursor_t;
     prf = prefs_row_with_text("prompt", S_listener_prompt, 
 			      listener_prompt(ss), 
 			      prg_box, current_sep,
-			      listener_prompt_text, THIS_NEEDS_REFLECTION);
+			      listener_prompt_text);
 
     current_sep = make_inter_variable_separator(prg_box, prf->label);
     prf = prefs_row_with_toggle("include backtrace in error report", S_show_backtrace,
 				show_backtrace(ss),
 				prg_box, current_sep,
-				show_backtrace_toggle, THIS_NEEDS_REFLECTION);
+				show_backtrace_toggle);
+
     current_sep = make_inter_variable_separator(prg_box, prf->label);
+    prf = prefs_color_selector_row("background color", S_listener_color, ss->sgx->listener_color,
+				   prg_box, current_sep,
+				   listener_color_func);
 
+    current_sep = make_inter_variable_separator(prg_box, prf->rscl);
+    prf = prefs_color_selector_row("text color", S_listener_text_color, ss->sgx->listener_text_color,
+				   prg_box, current_sep,
+				   listener_text_color_func);
 
+    current_sep = make_inter_variable_separator(prg_box, prf->rscl);     
+    prf = prefs_row_with_text("font", S_listener_font, 
+			      listener_font(ss), 
+			      prg_box, current_sep,
+			      listener_font_text);
 
     /* omit those that are extlang related if no extlang */
 
     /*
-    ss->Print_Length = DEFAULT_PRINT_LENGTH;
-    colors
-    listener font
-
     clm: ws.scm + any instruments
 
     autosave
@@ -3102,7 +3496,8 @@ typedef enum {DONT_FOLLOW, FOLLOW_ALWAYS, FOLLOW_ONCE} tracking_cursor_t;
     smpte level and disk-space
     */
   }
-  
+#endif  
+
   XtManageChild(preferences_dialog);
   set_dialog_widget(PREFERENCES_DIALOG, preferences_dialog);
 }

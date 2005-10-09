@@ -2194,11 +2194,16 @@ static XEN g_mark_color(void)
   return(XEN_WRAP_PIXEL(ss->sgx->mark_color));
 }
 
+void set_zoom_color(color_t color)
+{
+  ss->sgx->zoom_color = color; 
+  color_chan_components(ss->sgx->zoom_color, COLOR_ZOOM);
+}
+
 static XEN g_set_zoom_color (XEN color) 
 {
   XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, S_setB S_zoom_color, "a color"); 
-  ss->sgx->zoom_color = XEN_UNWRAP_PIXEL(color); 
-  color_chan_components(ss->sgx->zoom_color, COLOR_ZOOM);
+  set_zoom_color(XEN_UNWRAP_PIXEL(color)); 
   return(color);
 }
 
@@ -2208,11 +2213,16 @@ static XEN g_zoom_color(void)
   return(XEN_WRAP_PIXEL(ss->sgx->zoom_color));
 }
 
+void set_position_color(color_t color)
+{
+  ss->sgx->position_color = color; 
+  color_chan_components(ss->sgx->position_color, COLOR_POSITION);
+}
+
 static XEN g_set_position_color (XEN color) 
 {
   XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, S_setB S_position_color, "a color"); 
-  ss->sgx->position_color = XEN_UNWRAP_PIXEL(color); 
-  color_chan_components(ss->sgx->position_color, COLOR_POSITION);
+  set_position_color(XEN_UNWRAP_PIXEL(color)); 
   return(color);
 }
 
