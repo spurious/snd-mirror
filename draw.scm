@@ -160,21 +160,24 @@ the y-zoom-slider controls the graph amp"
 
 (define inset-width .2)
 (define inset-height .25)
+(define current-window-display-is-running #f) ; a kludge for the preferences dialog
 
 (define (make-current-window-display)
 
   (define (update-current-window-location snd)
     ;; this is called before the actual update -- we need to clear the notion of edit-position to force a re-read
-    (do ((i 0 (1+ i)))
-	((= i (chans snd)))
-      (let ((vals (channel-property 'inset-envelope snd i)))
-	(if vals
-	    (list-set! vals 2 -2)))) ; set edit-position to impossible value
+    (if current-window-display-is-running
+	(do ((i 0 (1+ i)))
+	    ((= i (chans snd)))
+	  (let ((vals (channel-property 'inset-envelope snd i)))
+	    (if vals
+		(list-set! vals 2 -2))))) ; set edit-position to impossible value
     #f)
 
   (define (display-current-window-location snd chn)
     "display in upper right corner the overall current sound and where the current window fits in it"
-    (if (time-graph? snd chn)
+    (if (and current-window-display-is-running
+	     (time-graph? snd chn))
 	(let* ((axinf (axis-info snd chn))
 	       (grf-width (list-ref axinf 12))
 	       (width (inexact->exact (round (* inset-width grf-width))))
@@ -280,7 +283,8 @@ the y-zoom-slider controls the graph amp"
 		(if data1 (draw-lines data1 snd grf-chn)))))))
   
   (define (click-current-window-location snd chn button state x y axis)
-    (if (= axis time-graph)
+    (if (and current-window-display-is-running
+	     (= axis time-graph))
 	(let* ((axinf (axis-info snd chn))
 	       (grf-width (list-ref axinf 12))
 	       (width (inexact->exact (round (* inset-width grf-width))))
@@ -309,6 +313,7 @@ the y-zoom-slider controls the graph amp"
 	      #f))
 	#f))
   
+  (set! current-window-display-is-running #t)
   (add-hook! after-open-hook 
     (lambda (s)
       (do ((i 0 (1+ i)))

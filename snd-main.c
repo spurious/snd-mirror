@@ -941,12 +941,12 @@ void save_state(const char *save_state_name)
 {
   FILE *save_fd;
   char *locale = NULL, *fullname;
+  bool append_new_state = false;
   if (!save_state_name)
     {
       snd_error("no save state file name?");
       return;
     }
-  bool append_new_state = false;
   fullname = mus_expand_filename(save_state_name);
   if (XEN_HOOKED(before_save_state_hook))
     {

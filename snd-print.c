@@ -40,7 +40,9 @@ static char *previous_locale = NULL;
 
 static int start_ps_graph(char *output, char *title) 
 { 
+#if HAVE_STRFTIME
   time_t ts;
+#endif
   ps_fd = CREAT(output, 0666);
   if (ps_fd == -1) return(-1);
   if (!pbuf) pbuf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));

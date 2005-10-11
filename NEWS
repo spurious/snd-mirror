@@ -1,45 +1,32 @@
-Snd 7.15
+Snd 7.16
 
-removed yes-or-no? with associated dialog (and snd-g|xerror.c)
-        old Mac OS (8 or 9) support (old-mac-audio.c has the code), also MPW C
-          (this affects CLM as well)
+Marten Stromberg provided a PDF version of snd.html, but I can't decide
+  where it should go.
 
-added clear-minibuffer
-      optional as-error arg to report-in-minibuffer
-      sound-file-extensions as settable list
-      before-exit|close-hook
-      -init startup switch to set init filename as arg
-      netBSD audio support
+new dialog: first half (Motif version) of a preferences dialog (Options menu item).
 
-File:Mix dialog no longer exits upon "mix" (removed keep-mix-dialog-open-upon-ok from snd-motif.scm)
-File:Insert menu item and dialog added, also insert-file-dialog
-read/write support OGG, Speex, and Flac files (via File:Save as)
-read support for Mpeg and Midi
+added cycle speed style via click, mix|track-speed-style
+      analyze-ladspa as synonym for analyse-ladspa
+      save/insert/mix buttons in region browser
+      save-region-dialog
+      --enable-threads configure switch, and first use thereof (FIR filtering)
+      snd-g|xprefs.c, preferences-dialog function
 
-gtk version no longer defaults to happy button colors -- they clash with the fancy icons.
-  as long as I was changing colors, I changed to an "autumnal" theme for the Motif side.
+snd-error is now (throw 'snd-error ...)
 
-View:Files dialog completely recast:
-  removed current files list, added various ways to use the selected file(s) in the other list
-  previous-files-* -> view-files-* (sort, select-hook)
-  removed previous-files-sort-procedure
-  added sort-files-by-name|size|date|entry
-  added view-files-amp|speed|amp-env|speed-style|files|selected-files
-  click of file name no longer opens that file -- it just adds it to the selected files list for the dialog
-  view-files-select-hook return type no longer matters, and args are: dialog file-name
-  preload-directory -> add-directory-to-view-files-list
-  preload-file -> add-file-to-view-files-list
-  optional dialog arg to view-files-sort (local set)
+init file handling has become more complex: ~/.snd is still loaded if present,
+  as is /etc/snd.conf, but Snd also now looks for ~/.snd_guile|ruby, and
+  /etc/snd_guile|ruby.conf, and the preferences dialog and
+  Options:save options function write to ~/.snd_prefs_guile|ruby
+  (so that the user's init file is not changed by the preference mechanism).
+  This may seem unmotivated, but watch this space!
 
-added osx-10.4-snd at ccrma-ftp
+changed recorder-in|out-format -> recorder-in|out-data-format,
+        recorder-out-type -> recorder-out-header-type
+        save-macros now requires a filename (it won't write to ~/.snd unless you ask it to)
 
-_sndlib.h is now an internal header, whereas sndlib.h is intended for programs
-  that use sndlib -- this is an attempt to reduce name-space collisions by
-  sequestering configuration info.
 
-checked: OSX 10.4 (gtk/motif/guile/ruby), gtk 2.7.3|4|5, gtk 2.8.0|1|2, NetBSD 2.0, 
-  Solaris 10 (x86 audio is broken), sbcl 0.9.3
+Checked: gtk 2.8.3|4|5|6, FreeBSD 5.4, gsl 1.7, Ruby 1.8.3
 
-with much help from: Orm Finnendahl, Michael Edwards, Mike Scholz, Thomas Klausner, 
-  Kjetil Matheussen, Petter Reinholdtsen, Rob Komar, Christophe Rhodes
+With much help from: Anders Vinjar, Kjetil Matheussen, Mike Scholz, Marten Stromberg
 
