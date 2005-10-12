@@ -1120,7 +1120,9 @@ static mix_info *file_mix_samples(off_t beg, off_t num, char *mixfile, chan_info
     }
   if ((disk_space_p(sp, num * 4, ofile)) == DISK_SPACE_OK)
     csf = init_sample_read(beg, cp, READ_FORWARD);
-  if (csf == NULL) /* i.e. no space for temp, I guess */
+  ifd = snd_open_read(mixfile);
+  if ((csf == NULL) || /* i.e. no space for temp, I guess */
+      (ifd < 0))       /* maybe too many files open? */
     {
       free_file_info(ihdr);
       mus_file_close(ofd);
@@ -1129,7 +1131,6 @@ static mix_info *file_mix_samples(off_t beg, off_t num, char *mixfile, chan_info
       cp->edit_hook_checked = false;
       return(NULL);
     }
-  ifd = snd_open_read(mixfile);
   mus_file_open_descriptors(ifd, mixfile,
 			    ihdr->format,
 			    mus_bytes_per_sample(ihdr->format),
@@ -4698,6 +4699,8 @@ mix data (a vct) into snd's channel chn starting at beg; return the new mix id"
       newname = save_as_temp_file(&data, 1, len, SND_SRATE(cp->sound));
       if (newname)
 	{
+	  /* TODO: if file troubles, snd_error called here -- should we trap and go to xen_error?
+	   */
 	  mix_id = mix_file(bg, len, 1, &cp, newname, DELETE_ME, (char *)((edname == NULL) ? S_mix_vct : edname), with_mixer, track_num); /* ORIGIN? */
 	  FREE(newname);
 	}

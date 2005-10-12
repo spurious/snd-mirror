@@ -960,9 +960,16 @@ void *mem_calloc(int len, int size, const char *func, const char *file, int line
   if ((len <= 0) || ((len * size) > MAX_MALLOC) || (size <= 0))
     {
       fprintf(stderr, "%s:%s[%d] attempt to calloc %d bytes", func, file, line, len * size);
-      mem_report(); abort();
+      mem_report(); 
+      abort();
     }
   true_ptr = (char *)malloc(len * size + 2 * MEM_PAD_SIZE);
+  if (!true_ptr)
+    {
+      fprintf(stderr, "can't calloc %d bytes!!", len * size + 2 * MEM_PAD_SIZE);
+      mem_report();
+      abort();
+    }
   memset(true_ptr, 0, len * size + 2 * MEM_PAD_SIZE);
   ptr = (char *)(true_ptr + MEM_PAD_SIZE);
   if (ptr == NULL) {fprintf(stderr,"calloc->null"); abort();}
@@ -979,6 +986,12 @@ void *mem_malloc(int len, const char *func, const char *file, int line)
       mem_report(); abort();
     }
   true_ptr = (char *)malloc(len + 2 * MEM_PAD_SIZE);
+  if (!true_ptr)
+    {
+      fprintf(stderr, "can't malloc %d bytes!!", len + 2 * MEM_PAD_SIZE);
+      mem_report();
+      abort();
+    }
   ptr = (char *)(true_ptr + MEM_PAD_SIZE);
   if (ptr == NULL) {fprintf(stderr,"malloc->null"); abort();}
   remember_pointer((void *)ptr, (void *)true_ptr, len, func, file, line);
