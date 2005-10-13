@@ -1120,8 +1120,8 @@ static mix_info *file_mix_samples(off_t beg, off_t num, char *mixfile, chan_info
     }
   if ((disk_space_p(sp, num * 4, ofile)) == DISK_SPACE_OK)
     csf = init_sample_read(beg, cp, READ_FORWARD);
-  ifd = snd_open_read(mixfile);
-  if ((csf == NULL) || /* i.e. no space for temp, I guess */
+  if (csf) ifd = snd_open_read(mixfile);
+  if ((!csf) ||        /* i.e. no space for temp, I guess */
       (ifd < 0))       /* maybe too many files open? */
     {
       free_file_info(ihdr);

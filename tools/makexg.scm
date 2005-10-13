@@ -3114,4 +3114,3 @@
 ;   (if (not (member (car v) declared-types))
 ;       (display (format #f "~A " (car v)))))
 ; direct-types)
-

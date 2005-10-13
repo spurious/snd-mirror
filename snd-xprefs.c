@@ -1,8 +1,6 @@
 #include "snd.h"
 
 /* preferences dialog; layout design taken from webmail
- *
- * PERHAPS: add an html-style table of contents at top -- basically mimic a web-page
  */
 
 static Widget preferences_dialog = NULL;
@@ -13,7 +11,6 @@ static bool prefs_helping = false;
 #define FIRST_COLOR_POSITION 6
 #define SECOND_COLOR_POSITION 30
 #define THIRD_COLOR_POSITION 55
-/* was 0 27 54 */
 #define HELP_POSITION 80
 
 #define MID_SPACE 16
@@ -135,7 +132,7 @@ static void prefs_help(prefs_info *prf)
 {
   if (prf->var_name)
     snd_help(prf->var_name, 
-	     XEN_TO_C_STRING(XEN_OBJECT_HELP(C_STRING_TO_XEN_SYMBOL(prf->var_name))),
+	     XEN_TO_C_STRING(XEN_OBJECT_HELP(C_STRING_TO_XEN_SYMBOL((char *)(prf->var_name)))),
 	     WITH_WORD_WRAP);
 }
 
@@ -157,16 +154,10 @@ static void mouse_enter_pref_callback(Widget w, XtPointer context, XEvent *event
 {
   prefs_info *prf = (prefs_info *)context;
   if (prefs_helping)
-    {
-      prf->help_id = XtAppAddTimeOut(MAIN_APP(ss),
-				     HELP_WAIT_TIME,
-				     prefs_tooltip_help,
-				     (XtPointer)prf);
-#if DEBUGGING
-      if (prf->help_id == 0)
-	fprintf(stderr, "help time out id is 0??");
-#endif
-    }
+    prf->help_id = XtAppAddTimeOut(MAIN_APP(ss),
+				   HELP_WAIT_TIME,
+				   prefs_tooltip_help,
+				   (XtPointer)prf);
 }
 
 static void mouse_leave_pref_callback(Widget w, XtPointer context, XEvent *event, Boolean *flag)
@@ -178,6 +169,7 @@ static void mouse_leave_pref_callback(Widget w, XtPointer context, XEvent *event
       prf->help_id = 0;
     }
 }
+
 
 /* ---------------- row (main) label widget ---------------- */
 
@@ -1336,7 +1328,52 @@ static Widget make_inter_variable_separator(Widget topics, Widget top_widget)
   return(XtCreateManagedWidget("sep", xmSeparatorWidgetClass, topics, args, n));
 }
 
+/* ---------------- top-level contents label ---------------- */
 
+static Widget make_top_level_label(const char *label, Widget parent)
+{
+  int n;
+  Arg args[20];
+  n = 0;
+  XtSetArg(args[n], XmNbackground, ss->sgx->light_blue); n++;
+  XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
+  XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
+  XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
+  XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+  XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;
+  return(XtCreateManagedWidget(label, xmLabelWidgetClass, parent, args, n));
+}
+
+static Widget make_top_level_box(Widget topics)
+{
+  Widget frame;
+  int n;
+  Arg args[20];
+  n = 0;
+  XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;
+  XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
+  XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+  frame = XtCreateManagedWidget("pref-frame", xmFrameWidgetClass, topics, args, n);
+
+  n = 0;
+  XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;
+  return(XtCreateManagedWidget("pref-box", xmFormWidgetClass, frame, args, n));
+}
+
+static Widget make_inner_label(const char *label, Widget parent, Widget top_widget)
+{
+  int n;
+  Arg args[20];
+  n = 0;
+  XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
+  XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
+  XtSetArg(args[n], XmNtopWidget, top_widget); n++;
+  XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
+  XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
+  XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+  XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;
+  return(XtCreateManagedWidget(label, xmLabelWidgetClass, parent, args, n));
+}
 
 
 /* ---------------- base buttons ---------------- */
@@ -1888,7 +1925,6 @@ static void temp_dir_text(prefs_info *prf)
   if (str) XtFree(str);
 }
 
-#if HAVE_EXTENSION_LANGUAGE
 /* ---------------- save-dir ---------------- */
 
 static void save_dir_error_erase_func(XtPointer context, XtIntervalId *id)
@@ -1925,7 +1961,27 @@ static void save_dir_text(prefs_info *prf)
     }
   if (str) XtFree(str);
 }
-#endif
+
+/* ---------------- save-state-file ---------------- */
+
+static void reflect_save_state_file(prefs_info *prf)
+{
+  XmTextSetString(prf->text, save_state_file(ss));
+}
+
+static void save_state_file_text(prefs_info *prf)
+{
+  char *str, *file = NULL;
+  ASSERT_WIDGET_TYPE(XmIsTextField(prf->text), prf->text);
+  str = XmTextFieldGetString(prf->text);
+  if ((!str) || (!(*str))) 
+    file = DEFAULT_SAVE_STATE_FILE;
+  else file = str;
+  if (save_state_file(ss)) FREE(save_state_file(ss));
+  in_set_save_state_file(copy_string(file));
+  if (str) XtFree(str);
+}
+
 
 #if HAVE_LADSPA
 /* ---------------- ladspa-dir ---------------- */
@@ -2482,6 +2538,9 @@ static void dot_size_from_text(prefs_info *prf)
 /* (add-hook! after-open-hook (lambda (snd)...) */
 /* (set! (x-bounds) (list 0.0 (/ (frames) (srate)))) */
 
+/* this could be a function that if defined could also return bounds if arg is :bounds -> #t if full */
+/* then subsequent runs get the current bounds */
+
 
 static void reflect_initial_bounds(prefs_info *prf)
 {
@@ -2707,6 +2766,45 @@ static void x_axis_style_from_text(prefs_info *prf)
       FREE(trimmed_str);
     }
   else post_prefs_error("right", (void *)prf);
+}
+
+/* ---------------- smpte ---------------- */
+
+static bool include_smpte = false;
+
+static bool find_smpte(void)
+{
+#if HAVE_SCHEME
+  return((XEN_DEFINED_P("smpte-is-on")) &&
+	 (!(XEN_FALSE_P(XEN_EVAL_C_STRING("(smpte-is-on)"))))); /* "member" of hook-list -> a list if successful */
+#endif
+#if HAVE_RUBY
+  /* TODO: ruby side of smpte */
+#endif
+}
+
+static void reflect_smpte(prefs_info *prf) 
+{
+  XmToggleButtonSetState(prf->toggle, find_smpte(), false);
+}
+
+static void smpte_toggle(prefs_info *prf)
+{
+  ASSERT_WIDGET_TYPE(XmIsToggleButton(prf->toggle), prf->toggle);
+  include_smpte = (XmToggleButtonGetState(prf->toggle) == XmSET);
+}
+
+static void save_smpte(prefs_info *prf, FILE *fd)
+{
+  if (include_smpte)
+    {
+#if HAVE_SCHEME
+      fprintf(fd, "(if (not (provided? 'snd-motif.scm)) (load-from-path \"snd-motif.scm\"))\n");
+      fprintf(fd, "(show-smpte-label #t)\n");
+#endif
+#if HAVE_RUBY
+#endif
+    }
 }
 
 
@@ -3716,7 +3814,6 @@ static void optimization_from_text(prefs_info *prf)
 #endif
 
 
-#if HAVE_EXTENSION_LANGUAGE
 /* ---------------- listener-prompt ---------------- */
 
 static void reflect_listener_prompt(prefs_info *prf)
@@ -3819,7 +3916,7 @@ static void listener_font_text(prefs_info *prf)
     }
   if (str) XtFree(str);
 }
-#endif
+
 
 /* ---------------- help-button-color ---------------- */
 
@@ -4004,32 +4101,16 @@ void start_preferences_dialog(void)
 		  NULL);
   }
 
-  /* a table of contents at the start -- click to jump or perhaps a specialized popup menu for it or a pulldown menu */
+  /* PERHAPS: a table of contents at the start -- click to jump or perhaps a specialized popup menu for it or a pulldown menu */
 
   /* ---------------- overall behavior ---------------- */
 
   {
-    Widget dpy_frame, dpy_box, dpy_label, file_label, cursor_label;
+    Widget dpy_box, dpy_label, file_label, cursor_label;
     char *str1, *str2;
 
-    n = 0;
-    XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;
-    XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
-    XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-    dpy_frame = XtCreateManagedWidget("pref-dpy-frame", xmFrameWidgetClass, topics, args, n);
-
-    n = 0;
-    XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;
-    dpy_box = XtCreateManagedWidget("pref-dpy", xmFormWidgetClass, dpy_frame, args, n);
-
-    n = 0;
-    XtSetArg(args[n], XmNbackground, ss->sgx->light_blue); n++;
-    XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
-    XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
-    XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
-    XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-    XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;
-    dpy_label = XtCreateManagedWidget("overall behavior choices", xmLabelWidgetClass, dpy_box, args, n);
+    dpy_box = make_top_level_box(topics);
+    dpy_label = make_top_level_label("overall behavior choices", dpy_box);
 
 #if 0
     /* TODO: packages of presets */
@@ -4082,17 +4163,8 @@ void start_preferences_dialog(void)
     remember_pref(prf, reflect_show_controls, NULL);
 
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
-
-    n = 0;
-    XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
-    XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
-    XtSetArg(args[n], XmNtopWidget, current_sep); n++;
-    XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
-    XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
-    XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-    XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;
-    cursor_label = XtCreateManagedWidget("  colors", xmLabelWidgetClass, dpy_box, args, n);
-
+    cursor_label = make_inner_label("  colors", dpy_box, current_sep);
+    
     saved_basic_color = ss->sgx->basic_color;
     prf = prefs_color_selector_row("main background color", S_basic_color, ss->sgx->basic_color,
 				   dpy_box, cursor_label,
@@ -4121,16 +4193,7 @@ void start_preferences_dialog(void)
     remember_pref(prf, reflect_zoom_color, NULL);
 
     current_sep = make_inter_variable_separator(dpy_box, prf->rscl);
-
-    n = 0;
-    XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
-    XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
-    XtSetArg(args[n], XmNtopWidget, current_sep); n++;
-    XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
-    XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
-    XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-    XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;
-    cursor_label = XtCreateManagedWidget("  cursor options", xmLabelWidgetClass, dpy_box, args, n);
+    cursor_label = make_inner_label("  cursor options", dpy_box, current_sep);
 
     prf = prefs_row_with_toggle("report cursor location as it moves", S_verbose_cursor,
 				verbose_cursor(ss), 
@@ -4171,17 +4234,7 @@ void start_preferences_dialog(void)
     remember_pref(prf, reflect_cursor_color, NULL);
 
     current_sep = make_inter_variable_separator(dpy_box, prf->rscl);
-
-
-    n = 0;
-    XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
-    XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
-    XtSetArg(args[n], XmNtopWidget, current_sep); n++;
-    XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
-    XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
-    XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-    XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;
-    file_label = XtCreateManagedWidget("  file options", xmLabelWidgetClass, dpy_box, args, n);
+    file_label = make_inner_label("  file options", dpy_box, current_sep);
 
     prf = prefs_row_with_toggle("display only sound files in various file lists", S_just_sounds,
 				just_sounds(ss), 
@@ -4197,7 +4250,6 @@ void start_preferences_dialog(void)
     remember_pref(prf, reflect_temp_dir, NULL);
 
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
-#if HAVE_EXTENSION_LANGUAGE
     prf = prefs_row_with_text("directory for save-state files", S_save_dir, 
 			      save_dir(ss), 
 			      dpy_box, current_sep,
@@ -4205,7 +4257,13 @@ void start_preferences_dialog(void)
     remember_pref(prf, reflect_save_dir, NULL);
 
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
-#endif
+    prf = prefs_row_with_text("default save-state filename", S_save_state_file, 
+			      save_state_file(ss), 
+			      dpy_box, current_sep,
+			      save_state_file_text);
+    remember_pref(prf, reflect_save_state_file, NULL);
+
+    current_sep = make_inter_variable_separator(dpy_box, prf->label);
 #if HAVE_LADSPA
     prf = prefs_row_with_text("directory for ladspa plugins", S_ladspa_dir, 
 			      ladspa_dir(ss), 
@@ -4294,19 +4352,10 @@ void start_preferences_dialog(void)
   /*
     PERHAPS: pixmaps for backgrounds?
   */
-
-    n = 0;
-    XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
-    XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
-    XtSetArg(args[n], XmNtopWidget, current_sep); n++;
-    XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
-    XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
-    XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-    XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;
 #if HAVE_STATIC_XM
-    cursor_label = XtCreateManagedWidget("  extra menus", xmLabelWidgetClass, dpy_box, args, n);
+    cursor_label = make_inner_label("  extra menus", dpy_box, current_sep);
 #else
-    cursor_label = XtCreateManagedWidget("  extra menus (these will need the xm module)", xmLabelWidgetClass, dpy_box, args, n);
+    cursor_label = make_inner_label("  extra menus (these will need the xm module)", dpy_box, current_sep);
 #endif
 
     prf = prefs_row_with_toggle("context-sensitive popup menu", "add-selection-popup",
@@ -4350,27 +4399,11 @@ void start_preferences_dialog(void)
 
   /* -------- graphs -------- */
   {
-    Widget grf_frame, grf_box, grf_label, colgrf_label;
+    Widget grf_box, grf_label, colgrf_label;
     char *str;
 
-    n = 0;
-    XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;
-    XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
-    XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-    grf_frame = XtCreateManagedWidget("pref-dpy-frame", xmFrameWidgetClass, topics, args, n);
-
-    n = 0;
-    XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;
-    grf_box = XtCreateManagedWidget("pref-dpy", xmFormWidgetClass, grf_frame, args, n);
-
-    n = 0;
-    XtSetArg(args[n], XmNbackground, ss->sgx->light_blue); n++;
-    XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
-    XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
-    XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
-    XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-    XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;
-    grf_label = XtCreateManagedWidget("graph options", xmLabelWidgetClass, grf_box, args, n);
+    grf_box = make_top_level_box(topics);
+    grf_label = make_top_level_label("graph options", grf_box);
 
     prf = prefs_row_with_radio_box("how to connect the dots", S_graph_style,
 				   graph_styles, 5, graph_style(ss),
@@ -4448,18 +4481,16 @@ void start_preferences_dialog(void)
 					NULL, NULL,
 					x_axis_style_from_menu);
     remember_pref(prf, reflect_x_axis_style, NULL);
+
+    current_sep = make_inter_variable_separator(grf_box, prf->label);
+    prf = prefs_row_with_toggle("include smpte info", "show-smpte-label", /* TODO: does this trigger help? */
+				find_smpte(),
+				grf_box, current_sep,
+				smpte_toggle);
+    remember_pref(prf, reflect_smpte, save_smpte);
+
     current_sep = make_inter_variable_separator(grf_box, prf->label); 
-
-
-    n = 0;
-    XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
-    XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
-    XtSetArg(args[n], XmNtopWidget, current_sep); n++;
-    XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
-    XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
-    XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-    XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;
-    colgrf_label = XtCreateManagedWidget("  colors", xmLabelWidgetClass, grf_box, args, n);
+    colgrf_label = make_inner_label("  colors", grf_box, current_sep);
 
     saved_data_color = ss->sgx->data_color;    
     prf = prefs_color_selector_row("unselected data (waveform) color", S_data_color, ss->sgx->data_color,
@@ -4496,15 +4527,7 @@ void start_preferences_dialog(void)
     remember_pref(prf, reflect_selection_color, NULL);
 
     current_sep = make_inter_variable_separator(grf_box, prf->rscl);
-    n = 0;
-    XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
-    XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
-    XtSetArg(args[n], XmNtopWidget, current_sep); n++;
-    XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
-    XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
-    XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-    XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;
-    colgrf_label = XtCreateManagedWidget("  fonts", xmLabelWidgetClass, grf_box, args, n);
+    colgrf_label = make_inner_label("  fonts", grf_box, current_sep);
 
     prf = prefs_row_with_text("axis label font", S_axis_label_font, 
 			      axis_label_font(ss), 
@@ -4543,29 +4566,13 @@ void start_preferences_dialog(void)
 
   current_sep = make_inter_topic_separator(topics);
 
+#if 0    
   /* -------- audio -------- */
   {
-    Widget aud_frame, aud_box, aud_label;
+    Widget aud_box, aud_label;
 
-    n = 0;
-    XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;
-    XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
-    XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-    aud_frame = XtCreateManagedWidget("pref-aud-frame", xmFrameWidgetClass, topics, args, n);
-
-    n = 0;
-    XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;
-    aud_box = XtCreateManagedWidget("pref-aud", xmFormWidgetClass, aud_frame, args, n);
-
-    n = 0;
-    XtSetArg(args[n], XmNbackground, ss->sgx->light_blue); n++;
-    XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
-    XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
-    XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
-    XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-    XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;
-    aud_label = XtCreateManagedWidget("audio options", xmLabelWidgetClass, aud_box, args, n);
-
+    aud_box = make_top_level_box(topics);
+    aud_label = make_top_level_label("audio options", aud_box);
     
     /* TODO: dac size, dac-combines-channels, cursor offset, smart line cursor, recorder setting, audio mixer settings */
   /*
@@ -4581,31 +4588,15 @@ void start_preferences_dialog(void)
   }
 
   current_sep = make_inter_topic_separator(topics);
-
+#endif
 
   /* -------- transform -------- */
   {
-    Widget fft_frame, fft_box, fft_label;
+    Widget fft_box, fft_label;
     char *str;
 
-    n = 0;
-    XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;
-    XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
-    XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-    fft_frame = XtCreateManagedWidget("pref-fft-frame", xmFrameWidgetClass, topics, args, n);
-
-    n = 0;
-    XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;
-    fft_box = XtCreateManagedWidget("pref-fft", xmFormWidgetClass, fft_frame, args, n);
-
-    n = 0;
-    XtSetArg(args[n], XmNbackground, ss->sgx->light_blue); n++;
-    XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
-    XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
-    XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
-    XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-    XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;
-    fft_label = XtCreateManagedWidget("transform options", xmLabelWidgetClass, fft_box, args, n);
+    fft_box = make_top_level_box(topics);
+    fft_label = make_top_level_label("transform options", fft_box);
 
     str = mus_format(OFF_TD, transform_size(ss));
     prf = prefs_row_with_number("size", S_transform_size,
@@ -4719,27 +4710,11 @@ void start_preferences_dialog(void)
 
   /* -------- marks, mixes, and regions -------- */
   {
-    Widget mmr_frame, mmr_box, mmr_label;
+    Widget mmr_box, mmr_label;
     char *str1, *str2;
 
-    n = 0;
-    XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;
-    XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
-    XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-    mmr_frame = XtCreateManagedWidget("pref-mmr-frame", xmFrameWidgetClass, topics, args, n);
-
-    n = 0;
-    XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;
-    mmr_box = XtCreateManagedWidget("pref-mmr", xmFormWidgetClass, mmr_frame, args, n);
-
-    n = 0;
-    XtSetArg(args[n], XmNbackground, ss->sgx->light_blue); n++;
-    XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
-    XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
-    XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
-    XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-    XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;
-    mmr_label = XtCreateManagedWidget("marks, mixes, and regions", xmLabelWidgetClass, mmr_box, args, n);
+    mmr_box = make_top_level_box(topics);
+    mmr_label = make_top_level_label("marks and mixes", mmr_box);
 
     saved_mark_color = ss->sgx->mark_color;
     prf = prefs_color_selector_row("mark and mix tag color", S_mark_color, ss->sgx->mark_color,
@@ -4788,32 +4763,15 @@ void start_preferences_dialog(void)
     FREE(str);
   }
   
-#if HAVE_EXTENSION_LANGUAGE
   current_sep = make_inter_topic_separator(topics);
 
   /* -------- programming -------- */
   {
-    Widget prg_frame, prg_box, prg_label;
+    Widget prg_box, prg_label;
     char *str;
 
-    n = 0;
-    XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;
-    XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
-    XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-    prg_frame = XtCreateManagedWidget("pref-fft-frame", xmFrameWidgetClass, topics, args, n);
-
-    n = 0;
-    XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;
-    prg_box = XtCreateManagedWidget("pref-fft", xmFormWidgetClass, prg_frame, args, n);
-
-    n = 0;
-    XtSetArg(args[n], XmNbackground, ss->sgx->light_blue); n++;
-    XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
-    XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
-    XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
-    XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-    XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;
-    prg_label = XtCreateManagedWidget("listener options", xmLabelWidgetClass, prg_box, args, n);
+    prg_box = make_top_level_box(topics);
+    prg_label = make_top_level_label("listener options", prg_box);
 
 #if HAVE_SCHEME
     str = mus_format("%d", optimization(ss));
@@ -4871,36 +4829,28 @@ void start_preferences_dialog(void)
     debugging aids
     nb.scm (buffer for it)
     snd-motif: hidden-controls-dialog
+       (make-hidden-controls-dialog)
+
     disable-control-panel
-    smpte level and disk-space
+    disk-space
+
+    (if (not (hook-member show-disk-space after-open-hook))
+        (add-hook! after-open-hook show-disk-space)) -- but need a way to see it there 
+
+    delete and rename options in filer? (misc.scm)
+    unselect-all option
+    remember state for subsequent load (extensions?)
     */
   }
-#endif  
 
   current_sep = make_inter_topic_separator(topics);
 
   /* -------- silly stuff -------- */
   {
-    Widget silly_frame, silly_box, silly_label;
+    Widget silly_box, silly_label;
 
-    n = 0;
-    XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;
-    XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
-    XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-    silly_frame = XtCreateManagedWidget("pref-silly-frame", xmFrameWidgetClass, topics, args, n);
-
-    n = 0;
-    XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;
-    silly_box = XtCreateManagedWidget("pref-silly", xmFormWidgetClass, silly_frame, args, n);
-
-    n = 0;
-    XtSetArg(args[n], XmNbackground, ss->sgx->light_blue); n++;
-    XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
-    XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
-    XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
-    XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-    XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;
-    silly_label = XtCreateManagedWidget("silly stuff", xmLabelWidgetClass, silly_box, args, n);
+    silly_box = make_top_level_box(topics);
+    silly_label = make_top_level_label("silly stuff", silly_box);
 
     saved_help_button_color = ss->sgx->help_button_color;
     prf = prefs_color_selector_row("help button color", S_help_button_color, ss->sgx->help_button_color,
@@ -4954,11 +4904,12 @@ void start_preferences_dialog(void)
    cursor-location-offset
    cursor-update-interval
    graph-cursor?
-   save-state-file?
 
    icon box?
    fft-menu?
    mark pane?
 
    quick.html for topics
+
+   snd-test 
  */

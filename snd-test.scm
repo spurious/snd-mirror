@@ -51847,7 +51847,7 @@ EDITS: 1
 	      (if (not _gboolean4) (snd-display ";dialog not local"))
 	      (if _gboolean5 (snd-display ";dialog sel mult"))
 	      (if _gchar_5 (snd-display ";dialog filename: ~A" _gchar_5))
-	      (if (not (string=? _gchar_6 home-dir)) (snd-display ";dialog folder: ~A" _gchar_6))
+	      (if (or (not (string? _gchar_6)) (not (string=? _gchar_6 home-dir))) (snd-display ";dialog folder: ~A" _gchar_6))
 	      (if _gchar_7 (snd-display ";dialog uri: ~A" _gchar_7))
 	      (if (not (string=? _gchar_8 "file:///home/bil/cl")) (snd-display ";dialog folder uri: ~A" _gchar_8))
 	      (if (not _gboolean6) (snd-display ";dialog not active"))

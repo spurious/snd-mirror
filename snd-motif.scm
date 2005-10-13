@@ -1643,7 +1643,8 @@ Reverb-feedback sets the scaler on the feedback.
 	(remove-hook! after-graph-hook draw-smpte-label)
 	(update-time-graph #t #t))))
 
-
+(define (smpte-is-on) ; for prefs dialog
+  (member draw-smpte-label (hook->list after-graph-hook)))
 
 
 ;;; -------- with-level-meters, make-level-meter, display-level
