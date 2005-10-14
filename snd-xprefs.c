@@ -3749,6 +3749,38 @@ static void mix_waveform_height_text(prefs_info *prf)
 }
 
 
+/* ---------------- show-listener ---------------- */
+
+static bool include_listener = false;
+
+static void reflect_show_listener(prefs_info *prf) 
+{
+  include_listener = listener_is_visible();
+  XmToggleButtonSetState(prf->toggle, include_listener, false);
+}
+
+static void show_listener_toggle(prefs_info *prf)
+{
+  ASSERT_WIDGET_TYPE(XmIsToggleButton(prf->toggle), prf->toggle);
+  handle_listener(XmToggleButtonGetState(prf->toggle) == XmSET);
+  include_listener = true;
+}
+
+static void save_show_listener(prefs_info *prf, FILE *fd)
+{
+  if (include_listener)
+    {
+#if HAVE_SCHEME
+      /* show-listener is saved in save-state, but not save-options */
+      fprintf(fd, "(show-listener)\n");
+#endif
+#if HAVE_RUBY
+      fprintf(fd, "show_listener\n");
+#endif
+    }
+}
+
+
 #if HAVE_GUILE
 /* ---------------- optimization ---------------- */
 
@@ -4773,21 +4805,27 @@ void start_preferences_dialog(void)
     prg_box = make_top_level_box(topics);
     prg_label = make_top_level_label("listener options", prg_box);
 
+    include_listener = listener_is_visible();
+    prf = prefs_row_with_toggle("show listener at start up", S_show_listener,
+				include_listener,
+				prg_box, prg_label,
+				show_listener_toggle);
+    remember_pref(prf, reflect_show_listener, save_show_listener);
+
 #if HAVE_SCHEME
+    current_sep = make_inter_variable_separator(prg_box, prf->label);
     str = mus_format("%d", optimization(ss));
     prf = prefs_row_with_number("optimization level", S_optimization,
 				str, 3, 
-				prg_box, prg_label, 
+				prg_box, current_sep, 
 				optimization_up, optimization_down, optimization_from_text);
     remember_pref(prf, reflect_optimization, NULL);
     FREE(str);
     if (optimization(ss) == 6) XtSetSensitive(prf->arrow_up, false);
     if (optimization(ss) == 0) XtSetSensitive(prf->arrow_down, false);
-    current_sep = make_inter_variable_separator(prg_box, prf->label);
-#else
-    current_sep = prg_label;
 #endif
 
+    current_sep = make_inter_variable_separator(prg_box, prf->label);
     prf = prefs_row_with_text("prompt", S_listener_prompt, 
 			      listener_prompt(ss), 
 			      prg_box, current_sep,
@@ -4910,6 +4948,6 @@ void start_preferences_dialog(void)
    mark pane?
 
    quick.html for topics
-
+   toggle show-listener upon startup
    snd-test 
  */
