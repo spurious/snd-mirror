@@ -1898,6 +1898,8 @@ Reverb-feedback sets the scaler on the feedback.
 ;;;
 ;;; adds a label to the minibuffer area showing the current free space 
 
+(define showing-disk-space #f) ; for prefs dialog
+
 (define show-disk-space
   (let ((labelled-snds '()))
     (define (kmg num)
@@ -1930,6 +1932,7 @@ Reverb-feedback sets the scaler on the feedback.
 		       (name-form (XtParent minibuffer)) ; "snd-name-form"
 		       (space (kmg (disk-kspace (file-name snd))))
 		       (str (XmStringCreateLocalized space)))
+		  (set! showing-disk-space #t)
 		  (XtUnmanageChild minibuffer)
 		  (XtVaSetValues minibuffer (list XmNrightAttachment XmATTACH_NONE))
 		  (let ((new-label (XtCreateManagedWidget "space:" xmLabelWidgetClass name-form 

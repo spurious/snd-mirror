@@ -1340,6 +1340,7 @@ void save_view_files_dialogs(FILE *fd);
 widget_t start_view_files_dialog(bool managed, bool make_new);
 void view_files_unplay(void);
 void view_files_add_directory(widget_t dialog, const char *dirname);
+char *view_files_find_any_directory(void);
 
 void g_init_file(void);
 void initialize_format_lists(void);

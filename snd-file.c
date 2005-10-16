@@ -3915,6 +3915,28 @@ void view_files_remove_selected_files(widget_t w, view_files_info *vdat)
   view_files_display_list(vdat);
 }
 
+char *view_files_find_any_directory(void)
+{
+  /* find any active directory in any vf dialog */
+  if (view_files_info_size > 0)
+    {
+      int j;
+      for (j = 0; j < view_files_info_size; j++)
+	{
+	  view_files_info *vdat;
+	  vdat = view_files_infos[j];
+	  if ((vdat) && 
+	      (vdat->dirs))
+	    {
+	      int i;
+	      for (i = 0; i < vdat->dirs_size; i++)
+		if (vdat->dirs[i])
+		  return(vdat->dir_names[i]);
+	    }
+	}
+    }
+  return(NULL);
+}
 
 
 /* -------- extlang connections -------- */

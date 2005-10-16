@@ -606,12 +606,6 @@ or, in the fink case:
 GUILE_LIBS = -L/sw/lib -lguile -lm /sw/lib/libguile.a
 GUILE_CFLAGS = -I/sw/include/
 
-
-If the openmotif package forgot to include libXm.a, a version is
-at ccrma-ftp.  If the Mac loader complains that it it out of date,
-run ranlib: ranlib libXm.a (you may need to admin privileges to do this).
-
-
 If C-f (and other such commands) doesn't work, either try toggling
 the "w" button, or add the focus-widget related hooks from grfsnd.html
 to your initialization file:
@@ -625,6 +619,19 @@ to your initialization file:
 (add-hook! mouse-enter-text-hook
   (lambda (w)
     (focus-widget w)))
+
+If the openmotif package forgot to include libXm.a, a version is
+at ccrma-ftp.  If the Mac loader complains that it it out of date,
+run ranlib: ranlib libXm.a (you may need to admin privileges to do this).
+
+
+On my OSX 10.4 Mac, the configuration command I use is:
+
+./configure --with-motif-prefix=/usr/OpenMotif --with-static-xm
+
+So, I believe all the rest of these instructions are obsolete,
+but if the simple case above fails, they may help you get going.
+
 
 See also the cmdist archives for tips from Juan Pampin and others.
 
@@ -747,7 +754,7 @@ So, here's the detailed step-by-step method, thanks to Cris Ewing:
     couldn't get the build to work with nls enabled.  This is the
     configuration command that I used after following the instructions above:
     
-    $ ./configure CFLAGS=-I/sw/include LDFLAGS=-L/sw/lib -lmx -bind_at_load \
+    $ ./configure CFLAGS=-I/sw/include LDFLAGS="-L/sw/lib -lmx -bind_at_load" \
     GUILE_CONFIG_path=/sw/bin GUILE_CONFIG_name=guile-1.6-config \
     GUILE_name=guile-1.6 --disable-nls --with-guile --with-motif \
     --with-static-xm --with-motif-prefix=/sw

@@ -52126,7 +52126,7 @@ EDITS: 1
 		    (gtk_text_view_set_right_margin _GtkTextView_1 _gint)
 		    (gtk_text_view_set_indent _GtkTextView_1 _gint)
 		    (gtk_text_iter_forward_to_end _GtkTextIter_)
-		    (gtk_text_attributes_ref _GtkTextAttributes_)
+;		    (gtk_text_attributes_ref _GtkTextAttributes_)
 		    (gtk_text_attributes_unref _GtkTextAttributes_)
 		    (gtk_text_iter_set_offset _GtkTextIter_ _gint)
 		    (gtk_text_iter_set_line _GtkTextIter_ _gint)
@@ -53915,7 +53915,7 @@ EDITS: 1
 	      gtk_table_set_row_spacings gtk_target_list_add gtk_target_list_add_image_targets gtk_target_list_add_table gtk_target_list_add_text_targets
 	      gtk_target_list_add_uri_targets gtk_target_list_find gtk_target_list_new gtk_target_list_ref gtk_target_list_remove
 	      gtk_target_list_unref gtk_tearoff_menu_item_get_type gtk_tearoff_menu_item_new gtk_text_attributes_copy gtk_text_attributes_copy_values
-	      gtk_text_attributes_new gtk_text_attributes_ref gtk_text_attributes_unref gtk_text_buffer_add_selection_clipboard gtk_text_buffer_apply_tag
+	      gtk_text_attributes_new gtk_text_attributes_unref gtk_text_buffer_add_selection_clipboard gtk_text_buffer_apply_tag
 	      gtk_text_buffer_apply_tag_by_name gtk_text_buffer_backspace gtk_text_buffer_begin_user_action 
 	      gtk_text_buffer_copy_clipboard gtk_text_buffer_create_child_anchor
 	      gtk_text_buffer_create_mark gtk_text_buffer_create_tag gtk_text_buffer_cut_clipboard gtk_text_buffer_delete gtk_text_buffer_delete_interactive

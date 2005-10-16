@@ -2863,7 +2863,11 @@
 (CFNC "GtkTextAttributes* gtk_text_attributes_copy GtkTextAttributes* src")
 (CFNC "void gtk_text_attributes_copy_values GtkTextAttributes* src GtkTextAttributes* dest")
 (CFNC "void gtk_text_attributes_unref GtkTextAttributes* values")
-(CFNC "void gtk_text_attributes_ref GtkTextAttributes* values")
+
+;;;(CFNC "void gtk_text_attributes_ref GtkTextAttributes* values")
+;;; return type changed 2.8.6
+;;; TODO: add this: (CFNC-286 "GtkTextAttributes* gtk_text_attributes_ref GtkTextAttributes* values")
+
 (CCAST "GTK_TEXT_TAG_TABLE(obj)" "GtkTextTagTable*")
 (CCHK "GTK_IS_TEXT_TAG_TABLE(obj)" "GtkTextTagTable*")
 (CFNC "GType gtk_text_tag_table_get_type void")
@@ -5555,29 +5559,26 @@
 ;;; handle these when gtk changes in some ascertainable manner
 ;;; Pango 1.9.1 and 1.10
 
-(CINT-285 "PANGO_SCRIPT_NEW_TAI_LUE" "PangoScript")
-(CINT-285 "PANGO_SCRIPT_BUGINESE" "PangoScript")
-(CINT-285 "PANGO_SCRIPT_GLAGOLITIC" "PangoScript")
-(CINT-285 "PANGO_SCRIPT_TIFINAGH" "PangoScript")
-(CINT-285 "PANGO_SCRIPT_SYLOTI_NAGRI" "PangoScript")
-(CINT-285 "PANGO_SCRIPT_OLD_PERSIAN" "PangoScript")
-(CINT-285 "PANGO_SCRIPT_KHAROSHTHI" "PangoScript")
+(CINT-286 "PANGO_SCRIPT_NEW_TAI_LUE" "PangoScript")
+(CINT-286 "PANGO_SCRIPT_BUGINESE" "PangoScript")
+(CINT-286 "PANGO_SCRIPT_GLAGOLITIC" "PangoScript")
+(CINT-286 "PANGO_SCRIPT_TIFINAGH" "PangoScript")
+(CINT-286 "PANGO_SCRIPT_SYLOTI_NAGRI" "PangoScript")
+(CINT-286 "PANGO_SCRIPT_OLD_PERSIAN" "PangoScript")
+(CINT-286 "PANGO_SCRIPT_KHAROSHTHI" "PangoScript")
 
-(CLNG-285 "PANGO_TYPE_ITEM")
-(CLNG-285 "PANGO_TYPE_LAYOUT_LINE")
+(CLNG-286 "PANGO_TYPE_ITEM")
+(CLNG-286 "PANGO_TYPE_LAYOUT_LINE")
 
-(CFNC-285 "PangoAttrList* pango_attr_list_ref PangoAttrList* list")
-(CFNC-285 "void pango_cairo_context_set_hinting PangoContext* context gboolean hinting")
-(CFNC-285 "gboolean pango_cairo_context_get_hinting PangoContext* context")
-(CFNC-285 "void pango_cairo_context_set_font_options PangoContext* context cairo_font_options_t* options")
-(CFNC-285 "const cairo_font_options_t* pango_cairo_context_get_font_options PangoContext* context")
-(CFNC-285 "void pango_cairo_context_set_resolution PangoContext* context double dpi")
-(CFNC-285 "double pango_cairo_context_get_resolution PangoContext* context")
-(CFNC-285 "GType pango_item_get_type void")
-(CFNC-285 "GType pango_layout_line_get_type void")
-(CFNC-285 "PangoLayoutLine* pango_layout_line_ref PangoLayoutLine* line")
-(CFNC-285 "gboolean pango_is_zero_width gunichar ch" 'const-return)
-
-
-;;; 2.8.6 ! GtkTextAttributes* gtk_text_attributes_ref         (GtkTextAttributes *values);
+(CFNC-286 "PangoAttrList* pango_attr_list_ref PangoAttrList* list")
+(CFNC-286 "void pango_cairo_context_set_hinting PangoContext* context gboolean hinting")
+(CFNC-286 "gboolean pango_cairo_context_get_hinting PangoContext* context")
+(CFNC-286 "void pango_cairo_context_set_font_options PangoContext* context cairo_font_options_t* options")
+(CFNC-286 "const cairo_font_options_t* pango_cairo_context_get_font_options PangoContext* context")
+(CFNC-286 "void pango_cairo_context_set_resolution PangoContext* context double dpi")
+(CFNC-286 "double pango_cairo_context_get_resolution PangoContext* context")
+(CFNC-286 "GType pango_item_get_type void")
+(CFNC-286 "GType pango_layout_line_get_type void")
+(CFNC-286 "PangoLayoutLine* pango_layout_line_ref PangoLayoutLine* line")
+(CFNC-286 "gboolean pango_is_zero_width gunichar ch" 'const-return)
 !#

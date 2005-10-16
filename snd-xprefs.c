@@ -3,6 +3,93 @@
 /* preferences dialog; layout design taken from webmail
  */
 
+/* things left to do:
+
+   speed-control style/tones? SPEED_CONTROL_AS_FLOAT, SPEED_CONTROL_AS_RATIO, SPEED_CONTROL_AS_SEMITONE + number+arrows for semitones [in_set*]
+   snd-motif: hidden-controls-dialog (make-hidden-controls-dialog)
+
+   transform-graph? (lisp graph + energy or whatever) [time_graph_p and transform_graph_p in snd-chn] -- would need to be a hook func
+   add envs/sound file exts? -- would need display of existing exts
+   graph-cursor? [drawing area + x cursor setters]
+
+   start up in previous last state, or save sound state?
+   icon box?
+   fft-menu?
+   mark pane?
+   pixmaps for backgrounds?
+   colormap: a line with color-inverted and color-scaler and color-cutoff
+
+   ss->With_GL = DEFAULT_WITH_GL;
+
+   debugging aids [i.e. guile settings]
+    (use-modules (ice-9 debug) (ice-9 format) (ice-9 optargs) (ice-9 common-list) (ice-9 session))
+    (debug-set! stack 0)
+    (debug-enable 'debug 'backtrace)
+    (read-enable 'positions)
+    -> how to tell this stuff is already in place?
+       :(debug-options-interface) -> (show-file-name #t stack 0 debug backtrace depth 20 maxdepth 1000 frames 3 indent 10 width 79 procnames cheap)
+       : *features* includes 'debug-extensions [libguile debug.c]
+       :(defined? 'untrace-stack) -> #t [ice-9 debug.scm]
+
+   nb.scm (buffer for it)
+
+   disk-space (showing-disk-space var set in snd-motif.scm)
+      (if (not (hook-member show-disk-space after-open-hook))
+          (add-hook! after-open-hook show-disk-space))
+
+   File: delete and rename options (misc.scm) [toggles for this list -> need scan of menu to see if already in place]
+   Edit: unselect-all option -- deselect-all in misc.scm
+   remember state for subsequent load (extensions?)
+
+   quick.html for topics
+   snd-test 
+
+    audio section:
+    dac size, dac-combines-channels, cursor offset, smart line cursor, recorder setting, audio mixer settings
+    ss->Dac_Size = DEFAULT_DAC_SIZE;
+    ss->Dac_Combines_Channels = DEFAULT_DAC_COMBINES_CHANNELS;
+    cursor-location-offset
+    cursor-update-interval
+    recorder stuff?
+    -> buffer-size in-chans in-data-format in-device out-chans out-data-format out-header-type srate
+    audio mixer settings?
+    -> volume in some mode
+    audio output device? or sound card?
+
+    line cursor during play?
+
+    also initial bounds callbacks, help, and initial setting
+    various help cases
+    error redirection label (and save confirmation)
+    ruby side of smpte
+    mark menu independent
+    preset packages
+
+    raw file defaults, other clm stuff?
+    -> mus_header_raw_defaults [chans srate format in headers.c]
+
+    clm (with-sound) defaults -- these come from default_output* to some extent
+        [ws is in if *clm-srate* is defined]
+        [might need a list of available instruments for defined/initial list check]
+      include_with_sound + (editable) list of include instruments (pulldown?) 
+      ss->Sinc_Width = DEFAULT_SINC_WIDTH;
+      with-sound + ins? (check list?), extensions etc
+
+      (define *clm-srate* (default-output-srate))
+      (define *clm-file-name* "test.snd")
+      (define *clm-channels* (default-output-chans))
+      (define *clm-data-format* (default-output-data-format))
+      (define *clm-header-type* (default-output-header-type))
+      (define *clm-statistics* #f)
+      (define *clm-table-size* 512)
+      (define *clm-file-buffer-size* 65536)
+      (define *clm-clipped* #t) ; data-clipped as global?
+      (define *clm-delete-reverb* #f) ; should with-sound clean up reverb stream
+
+    peaks-envs
+*/
+
+
 static Widget preferences_dialog = NULL;
 static bool prefs_helping = false;
 
@@ -1504,7 +1591,7 @@ static void startup_height_erase_func(XtPointer context, XtIntervalId *id)
 static void startup_width_error(const char *msg, void *data)
 {
   prefs_info *prf = (prefs_info *)data;
-  XmTextSetString(prf->text, "right");
+  XmTextFieldSetString(prf->text, "right");
   XtAppAddTimeOut(MAIN_APP(ss),
 		  ERROR_WAIT_TIME,
 		  startup_width_erase_func,
@@ -1514,7 +1601,7 @@ static void startup_width_error(const char *msg, void *data)
 static void startup_height_error(const char *msg, void *data)
 {
   prefs_info *prf = (prefs_info *)data;
-  XmTextSetString(prf->rtxt, "right");
+  XmTextFieldSetString(prf->rtxt, "right");
   XtAppAddTimeOut(MAIN_APP(ss),
 		  ERROR_WAIT_TIME,
 		  startup_height_erase_func,
@@ -1524,7 +1611,7 @@ static void startup_height_error(const char *msg, void *data)
 static void startup_size_text(prefs_info *prf)
 {
   char *str;
-  str = XmTextGetString(prf->text);
+  str = XmTextFieldGetString(prf->text);
   if ((str) && (*str))
     {
       int width = 0;
@@ -1533,7 +1620,7 @@ static void startup_size_text(prefs_info *prf)
       redirect_errors_to(NULL, NULL);
       if (width > 0) ss->init_window_width = width;
       XtFree(str);
-      str = XmTextGetString(prf->rtxt);
+      str = XmTextFieldGetString(prf->rtxt);
       if ((str) && (*str))
 	{
 	  int height;
@@ -1616,6 +1703,40 @@ static void reflect_current_window_display(prefs_info *prf)
   XmToggleButtonSetState(prf->toggle, find_current_window_display(), false);
 }
 
+/* ---------------- focus-follows-mouse ---------------- */
+
+static bool focus_follows_mouse = false;
+
+static bool focus_is_following_mouse(void)
+{
+  return((XEN_DEFINED_P("focus-is-following-mouse")) &&
+	 (XEN_TRUE_P(XEN_NAME_AS_C_STRING_TO_VALUE("focus-is-following-mouse"))));
+}
+
+static void reflect_focus_follows_mouse(prefs_info *prf) 
+{
+  focus_follows_mouse = focus_is_following_mouse();
+  XmToggleButtonSetState(prf->toggle, focus_follows_mouse, false);
+}
+
+static void focus_follows_mouse_toggle(prefs_info *prf)
+{
+  ASSERT_WIDGET_TYPE(XmIsToggleButton(prf->toggle), prf->toggle);
+  focus_follows_mouse = (XmToggleButtonGetState(prf->toggle) == XmSET);
+}
+
+static void save_focus_follows_mouse(prefs_info *prf, FILE *fd) 
+{
+  if (focus_follows_mouse)
+    {
+#if HAVE_SCHEME
+      fprintf(fd, "(focus-follows-mouse)\n");
+#endif
+#if HAVE_RUBY
+      /* TODO: ruby side of focus-follows-mouse */
+#endif
+    }
+}
 
 /* ---------------- show-controls ---------------- */
 
@@ -1628,6 +1749,19 @@ static void controls_toggle(prefs_info *prf)
 {
   ASSERT_WIDGET_TYPE(XmIsToggleButton(prf->toggle), prf->toggle);
   in_set_show_controls(ss, XmToggleButtonGetState(prf->toggle) == XmSET);
+}
+
+/* ---------------- selection-creates-region ---------------- */
+
+static void reflect_selection_creates_region(prefs_info *prf) 
+{
+  XmToggleButtonSetState(prf->toggle, selection_creates_region(ss), false);
+}
+
+static void selection_creates_region_toggle(prefs_info *prf)
+{
+  ASSERT_WIDGET_TYPE(XmIsToggleButton(prf->toggle), prf->toggle);
+  set_selection_creates_region(XmToggleButtonGetState(prf->toggle) == XmSET);
 }
 
 /* ---------------- basic-color ---------------- */
@@ -1877,7 +2011,7 @@ static void just_sounds_toggle(prefs_info *prf)
 
 static void reflect_temp_dir(prefs_info *prf)
 {
-  XmTextSetString(prf->text, temp_dir(ss));
+  XmTextFieldSetString(prf->text, temp_dir(ss));
 }
 
 static bool local_access(char *dir)
@@ -1898,7 +2032,7 @@ static bool local_access(char *dir)
 static void temp_dir_error_erase_func(XtPointer context, XtIntervalId *id)
 {
   prefs_info *prf = (prefs_info *)context;
-  XmTextSetString(prf->text, temp_dir(ss));
+  XmTextFieldSetString(prf->text, temp_dir(ss));
 }
 
 static void temp_dir_text(prefs_info *prf)
@@ -1916,7 +2050,7 @@ static void temp_dir_text(prefs_info *prf)
     }
   else
     {
-      XmTextSetString(prf->text, "can't access that directory");
+      XmTextFieldSetString(prf->text, "can't access that directory");
       XtAppAddTimeOut(MAIN_APP(ss),
 		      ERROR_WAIT_TIME,
 		      temp_dir_error_erase_func,
@@ -1930,12 +2064,12 @@ static void temp_dir_text(prefs_info *prf)
 static void save_dir_error_erase_func(XtPointer context, XtIntervalId *id)
 {
   prefs_info *prf = (prefs_info *)context;
-  XmTextSetString(prf->text, save_dir(ss));
+  XmTextFieldSetString(prf->text, save_dir(ss));
 }
 
 static void reflect_save_dir(prefs_info *prf)
 {
-  XmTextSetString(prf->text, save_dir(ss));
+  XmTextFieldSetString(prf->text, save_dir(ss));
 }
 
 static void save_dir_text(prefs_info *prf)
@@ -1953,7 +2087,7 @@ static void save_dir_text(prefs_info *prf)
     }
   else
     {
-      XmTextSetString(prf->text, "can't access that directory");
+      XmTextFieldSetString(prf->text, "can't access that directory");
       XtAppAddTimeOut(MAIN_APP(ss),
 		      ERROR_WAIT_TIME,
 		      save_dir_error_erase_func,
@@ -1966,7 +2100,7 @@ static void save_dir_text(prefs_info *prf)
 
 static void reflect_save_state_file(prefs_info *prf)
 {
-  XmTextSetString(prf->text, save_state_file(ss));
+  XmTextFieldSetString(prf->text, save_state_file(ss));
 }
 
 static void save_state_file_text(prefs_info *prf)
@@ -1988,7 +2122,7 @@ static void save_state_file_text(prefs_info *prf)
 
 static void reflect_ladspa_dir(prefs_info *prf)
 {
-  XmTextSetString(prf->text, ladspa_dir(ss));
+  XmTextFieldSetString(prf->text, ladspa_dir(ss));
 }
 
 static void ladspa_dir_text(prefs_info *prf)
@@ -2006,11 +2140,51 @@ static void ladspa_dir_text(prefs_info *prf)
 }
 #endif
 
+
+/* ---------------- view-files directory ---------------- */
+
+static char *include_vf_directory = NULL;
+
+static void reflect_view_files_directory(prefs_info *prf)
+{
+  if (include_vf_directory) FREE(include_vf_directory);
+  include_vf_directory = copy_string(view_files_find_any_directory());
+  XmTextFieldSetString(prf->text, view_files_find_any_directory());
+}
+
+static void view_files_directory_text(prefs_info *prf)
+{
+  char *str;
+  ASSERT_WIDGET_TYPE(XmIsTextField(prf->text), prf->text);
+  str = XmTextFieldGetString(prf->text);
+  if (include_vf_directory) FREE(include_vf_directory);
+  include_vf_directory = copy_string(str); /* could be null to cancel */
+  if ((!str) || (!(*str)))
+    {
+      view_files_add_directory(NULL_WIDGET, (const char *)str);
+      XtFree(str);
+    }
+}
+
+static void save_view_files_directory(prefs_info *prf, FILE *fd)
+{
+  if (include_vf_directory)
+    {
+#if HAVE_SCHEME
+      fprintf(fd, "(%s %s)\n", S_add_directory_to_view_files_list, include_vf_directory);
+#endif
+#if HAVE_RUBY
+      fprintf(fd, "%s(%s)\n", TO_PROC_NAME(S_add_directory_to_view_files_list), include_vf_directory);
+#endif
+    }
+}
+
+
 /* ---------------- html-program ---------------- */
 
 static void reflect_html_program(prefs_info *prf)
 {
-  XmTextSetString(prf->text, html_program(ss));
+  XmTextFieldSetString(prf->text, html_program(ss));
 }
 
 static void html_program_text(prefs_info *prf)
@@ -2650,7 +2824,7 @@ static void grid_density_text_callback(prefs_info *prf)
 {
   char *str;
   ASSERT_WIDGET_TYPE(XmIsTextField(prf->text), prf->text);
-  str = XmTextGetString(prf->text);
+  str = XmTextFieldGetString(prf->text);
   if ((str) && (*str))
     {
       float value = 0.0;
@@ -2661,7 +2835,7 @@ static void grid_density_text_callback(prefs_info *prf)
 	  in_set_grid_density(value);
 	  XmScaleSetValue(prf->scale, (int)(100 * value / prf->scale_max));
 	}
-      else XmTextSetString(prf->text, "right");
+      else XmTextFieldSetString(prf->text, "right");
       XtFree(str);
     }
 }
@@ -2672,7 +2846,7 @@ static const char *show_axes_choices[5] = {"none", "X and Y", "just X", "X and Y
 
 static void reflect_show_axes(prefs_info *prf)
 {
-  XmTextSetString(prf->text, (char *)show_axes_choices[(int)show_axes(ss)]);
+  XmTextFieldSetString(prf->text, (char *)show_axes_choices[(int)show_axes(ss)]);
 }
 
 static void show_axes_from_menu(prefs_info *prf, char *value)
@@ -2723,7 +2897,7 @@ static const char *x_axis_styles[5] = {"seconds", "samples", "% of total", "beat
 
 static void reflect_x_axis_style(prefs_info *prf)
 {
-  XmTextSetString(prf->text, (char *)x_axis_styles[(int)x_axis_style(ss)]);
+  XmTextFieldSetString(prf->text, (char *)x_axis_styles[(int)x_axis_style(ss)]);
 }
 
 static void x_axis_style_from_menu(prefs_info *prf, char *value)
@@ -2910,12 +3084,12 @@ static void selection_color_func(prefs_info *prf, float r, float g, float b)
 static void axis_label_font_error_erase_func(XtPointer context, XtIntervalId *id)
 {
   prefs_info *prf = (prefs_info *)context;
-  XmTextSetString(prf->text, axis_label_font(ss));
+  XmTextFieldSetString(prf->text, axis_label_font(ss));
 }
 
 static void reflect_axis_label_font(prefs_info *prf)
 {
-  XmTextSetString(prf->text, axis_label_font(ss));
+  XmTextFieldSetString(prf->text, axis_label_font(ss));
 }
 
 static void axis_label_font_text(prefs_info *prf)
@@ -2925,12 +3099,12 @@ static void axis_label_font_text(prefs_info *prf)
   str = XmTextFieldGetString(prf->text);
   if ((!str) || (!(*str)))
     {
-      XmTextSetString(prf->text, axis_label_font(ss));
+      XmTextFieldSetString(prf->text, axis_label_font(ss));
       return;
     }
   if (!(set_axis_label_font(str)))
     {
-      XmTextSetString(prf->text, "can't find that font");
+      XmTextFieldSetString(prf->text, "can't find that font");
       XtAppAddTimeOut(MAIN_APP(ss),
 		      ERROR_WAIT_TIME,
 		      axis_label_font_error_erase_func,
@@ -2944,12 +3118,12 @@ static void axis_label_font_text(prefs_info *prf)
 static void axis_numbers_font_error_erase_func(XtPointer context, XtIntervalId *id)
 {
   prefs_info *prf = (prefs_info *)context;
-  XmTextSetString(prf->text, axis_numbers_font(ss));
+  XmTextFieldSetString(prf->text, axis_numbers_font(ss));
 }
 
 static void reflect_axis_numbers_font(prefs_info *prf)
 {
-  XmTextSetString(prf->text, axis_numbers_font(ss));
+  XmTextFieldSetString(prf->text, axis_numbers_font(ss));
 }
 
 static void axis_numbers_font_text(prefs_info *prf)
@@ -2959,12 +3133,12 @@ static void axis_numbers_font_text(prefs_info *prf)
   str = XmTextFieldGetString(prf->text);
   if ((!str) || (!(*str)))
     {
-      XmTextSetString(prf->text, axis_numbers_font(ss));
+      XmTextFieldSetString(prf->text, axis_numbers_font(ss));
       return;
     }
   if (!(set_axis_numbers_font(str)))
     {
-      XmTextSetString(prf->text, "can't find that font");
+      XmTextFieldSetString(prf->text, "can't find that font");
       XtAppAddTimeOut(MAIN_APP(ss),
 		      ERROR_WAIT_TIME,
 		      axis_numbers_font_error_erase_func,
@@ -2978,12 +3152,12 @@ static void axis_numbers_font_text(prefs_info *prf)
 static void peaks_font_error_erase_func(XtPointer context, XtIntervalId *id)
 {
   prefs_info *prf = (prefs_info *)context;
-  XmTextSetString(prf->text, peaks_font(ss));
+  XmTextFieldSetString(prf->text, peaks_font(ss));
 }
 
 static void reflect_peaks_font(prefs_info *prf)
 {
-  XmTextSetString(prf->text, peaks_font(ss));
+  XmTextFieldSetString(prf->text, peaks_font(ss));
 }
 
 static void peaks_font_text(prefs_info *prf)
@@ -2993,12 +3167,12 @@ static void peaks_font_text(prefs_info *prf)
   str = XmTextFieldGetString(prf->text);
   if ((!str) || (!(*str)))
     {
-      XmTextSetString(prf->text, peaks_font(ss));
+      XmTextFieldSetString(prf->text, peaks_font(ss));
       return;
     }
   if (!(set_peaks_font(str)))
     {
-      XmTextSetString(prf->text, "can't find that font");
+      XmTextFieldSetString(prf->text, "can't find that font");
       XtAppAddTimeOut(MAIN_APP(ss),
 		      ERROR_WAIT_TIME,
 		      peaks_font_error_erase_func,
@@ -3012,12 +3186,12 @@ static void peaks_font_text(prefs_info *prf)
 static void bold_peaks_font_error_erase_func(XtPointer context, XtIntervalId *id)
 {
   prefs_info *prf = (prefs_info *)context;
-  XmTextSetString(prf->text, bold_peaks_font(ss));
+  XmTextFieldSetString(prf->text, bold_peaks_font(ss));
 }
 
 static void reflect_bold_peaks_font(prefs_info *prf)
 {
-  XmTextSetString(prf->text, bold_peaks_font(ss));
+  XmTextFieldSetString(prf->text, bold_peaks_font(ss));
 }
 
 static void bold_peaks_font_text(prefs_info *prf)
@@ -3027,12 +3201,12 @@ static void bold_peaks_font_text(prefs_info *prf)
   str = XmTextFieldGetString(prf->text);
   if ((!str) || (!(*str)))
     {
-      XmTextSetString(prf->text, bold_peaks_font(ss));
+      XmTextFieldSetString(prf->text, bold_peaks_font(ss));
       return;
     }
   if (!(set_bold_peaks_font(str)))
     {
-      XmTextSetString(prf->text, "can't find that font");
+      XmTextFieldSetString(prf->text, "can't find that font");
       XtAppAddTimeOut(MAIN_APP(ss),
 		      ERROR_WAIT_TIME,
 		      bold_peaks_font_error_erase_func,
@@ -3046,12 +3220,12 @@ static void bold_peaks_font_text(prefs_info *prf)
 static void tiny_font_error_erase_func(XtPointer context, XtIntervalId *id)
 {
   prefs_info *prf = (prefs_info *)context;
-  XmTextSetString(prf->text, tiny_font(ss));
+  XmTextFieldSetString(prf->text, tiny_font(ss));
 }
 
 static void reflect_tiny_font(prefs_info *prf)
 {
-  XmTextSetString(prf->text, tiny_font(ss));
+  XmTextFieldSetString(prf->text, tiny_font(ss));
 }
 
 static void tiny_font_text(prefs_info *prf)
@@ -3061,12 +3235,12 @@ static void tiny_font_text(prefs_info *prf)
   str = XmTextFieldGetString(prf->text);
   if ((!str) || (!(*str)))
     {
-      XmTextSetString(prf->text, tiny_font(ss));
+      XmTextFieldSetString(prf->text, tiny_font(ss));
       return;
     }
   if (!(set_tiny_font(str)))
     {
-      XmTextSetString(prf->text, "can't find that font");
+      XmTextFieldSetString(prf->text, "can't find that font");
       XtAppAddTimeOut(MAIN_APP(ss),
 		      ERROR_WAIT_TIME,
 		      tiny_font_error_erase_func,
@@ -3086,7 +3260,7 @@ static void fft_size_to_text(prefs_info *prf)
 {
   char *new_size;
   new_size = mus_format(OFF_TD, transform_size(ss));
-  XmTextSetString(prf->text, new_size);
+  XmTextFieldSetString(prf->text, new_size);
   FREE(new_size);
 }
 
@@ -3192,7 +3366,7 @@ static list_completer_info *transform_type_completer_info = NULL;
 
 static void reflect_transform_type(prefs_info *prf)
 {
-  XmTextSetString(prf->text, (char *)transform_types[transform_type(ss)]);
+  XmTextFieldSetString(prf->text, (char *)transform_types[transform_type(ss)]);
 }
 
 static char *transform_type_completer(char *text, void *data)
@@ -3261,7 +3435,7 @@ static list_completer_info *fft_window_completer_info = NULL;
 
 static void reflect_fft_window(prefs_info *prf)
 {
-  XmTextSetString(prf->text, (char *)fft_windows[(int)fft_window(ss)]);
+  XmTextFieldSetString(prf->text, (char *)fft_windows[(int)fft_window(ss)]);
 }
 
 static char *fft_window_completer(char *text, void *data)
@@ -3339,7 +3513,7 @@ static void fft_window_beta_text_callback(prefs_info *prf)
 {
   char *str;
   ASSERT_WIDGET_TYPE(XmIsTextField(prf->text), prf->text);
-  str = XmTextGetString(prf->text);
+  str = XmTextFieldGetString(prf->text);
   if ((str) && (*str))
     {
       float value = 0.0;
@@ -3350,7 +3524,7 @@ static void fft_window_beta_text_callback(prefs_info *prf)
 	  in_set_fft_window_beta(value);
 	  XmScaleSetValue(prf->scale, (int)(100 * value / prf->scale_max));
 	}
-      else XmTextSetString(prf->text, "right");
+      else XmTextFieldSetString(prf->text, "right");
       XtFree(str);
     }
 }
@@ -3373,7 +3547,7 @@ static void transform_peaks_text(prefs_info *prf)
 {
   char *str;
   ASSERT_WIDGET_TYPE(XmIsTextField(prf->text), prf->text);
-  str = XmTextGetString(prf->text);
+  str = XmTextFieldGetString(prf->text);
   if ((str) && (*str))
     {
       int value = 0;
@@ -3485,12 +3659,13 @@ static void min_dB_text(prefs_info *prf)
 {
   char *str;
   ASSERT_WIDGET_TYPE(XmIsTextField(prf->text), prf->text);
-  str = XmTextGetString(prf->text);
+  str = XmTextFieldGetString(prf->text);
   if ((str) && (*str))
     {
       float value = 0.0;
       sscanf(str, "%f", &value);
       set_min_db(value); /* snd-chn.c -- redisplays */
+      XtFree(str);
     }
 }
 
@@ -3590,7 +3765,7 @@ static void mark_tag_height_erase_func(XtPointer context, XtIntervalId *id)
 static void mark_tag_width_error(const char *msg, void *data)
 {
   prefs_info *prf = (prefs_info *)data;
-  XmTextSetString(prf->text, "right");
+  XmTextFieldSetString(prf->text, "right");
   XtAppAddTimeOut(MAIN_APP(ss),
 		  ERROR_WAIT_TIME,
 		  mark_tag_width_erase_func,
@@ -3600,7 +3775,7 @@ static void mark_tag_width_error(const char *msg, void *data)
 static void mark_tag_height_error(const char *msg, void *data)
 {
   prefs_info *prf = (prefs_info *)data;
-  XmTextSetString(prf->rtxt, "right");
+  XmTextFieldSetString(prf->rtxt, "right");
   XtAppAddTimeOut(MAIN_APP(ss),
 		  ERROR_WAIT_TIME,
 		  mark_tag_height_erase_func,
@@ -3610,7 +3785,7 @@ static void mark_tag_height_error(const char *msg, void *data)
 static void mark_tag_size_text(prefs_info *prf)
 {
   char *str;
-  str = XmTextGetString(prf->text);
+  str = XmTextFieldGetString(prf->text);
   if ((str) && (*str))
     {
       int width = 0;
@@ -3619,7 +3794,7 @@ static void mark_tag_size_text(prefs_info *prf)
       redirect_errors_to(NULL, NULL);
       if (width > 0) set_mark_tag_width(width);
       XtFree(str);
-      str = XmTextGetString(prf->rtxt);
+      str = XmTextFieldGetString(prf->rtxt);
       if ((str) && (*str))
 	{
 	  int height;
@@ -3674,7 +3849,7 @@ static void mix_tag_height_erase_func(XtPointer context, XtIntervalId *id)
 static void mix_tag_width_error(const char *msg, void *data)
 {
   prefs_info *prf = (prefs_info *)data;
-  XmTextSetString(prf->text, "right");
+  XmTextFieldSetString(prf->text, "right");
   XtAppAddTimeOut(MAIN_APP(ss),
 		  ERROR_WAIT_TIME,
 		  mix_tag_width_erase_func,
@@ -3684,7 +3859,7 @@ static void mix_tag_width_error(const char *msg, void *data)
 static void mix_tag_height_error(const char *msg, void *data)
 {
   prefs_info *prf = (prefs_info *)data;
-  XmTextSetString(prf->rtxt, "right");
+  XmTextFieldSetString(prf->rtxt, "right");
   XtAppAddTimeOut(MAIN_APP(ss),
 		  ERROR_WAIT_TIME,
 		  mix_tag_height_erase_func,
@@ -3694,7 +3869,7 @@ static void mix_tag_height_error(const char *msg, void *data)
 static void mix_tag_size_text(prefs_info *prf)
 {
   char *str;
-  str = XmTextGetString(prf->text);
+  str = XmTextFieldGetString(prf->text);
   if ((str) && (*str))
     {
       int width = 0;
@@ -3703,7 +3878,7 @@ static void mix_tag_size_text(prefs_info *prf)
       redirect_errors_to(NULL, NULL);
       if (width > 0) set_mix_tag_width(width);
       XtFree(str);
-      str = XmTextGetString(prf->rtxt);
+      str = XmTextFieldGetString(prf->rtxt);
       if ((str) && (*str))
 	{
 	  int height;
@@ -3733,7 +3908,7 @@ static void mix_waveform_height_text(prefs_info *prf)
 {
   char *str;
   ASSERT_WIDGET_TYPE(XmIsTextField(prf->text), prf->text);
-  str = XmTextGetString(prf->text);
+  str = XmTextFieldGetString(prf->text);
   if ((str) && (*str))
     {
       int value = 0;
@@ -3920,12 +4095,12 @@ static void listener_text_color_func(prefs_info *prf, float r, float g, float b)
 static void listener_font_error_erase_func(XtPointer context, XtIntervalId *id)
 {
   prefs_info *prf = (prefs_info *)context;
-  XmTextSetString(prf->text, listener_font(ss));
+  XmTextFieldSetString(prf->text, listener_font(ss));
 }
 
 static void reflect_listener_font(prefs_info *prf)
 {
-  XmTextSetString(prf->text, listener_font(ss));
+  XmTextFieldSetString(prf->text, listener_font(ss));
 }
 
 static void listener_font_text(prefs_info *prf)
@@ -3935,12 +4110,12 @@ static void listener_font_text(prefs_info *prf)
   str = XmTextFieldGetString(prf->text);
   if ((!str) || (!(*str)))
     {
-      XmTextSetString(prf->text, listener_font(ss));
+      XmTextFieldSetString(prf->text, listener_font(ss));
       return;
     }
   if (!(set_listener_font(str)))
     {
-      XmTextSetString(prf->text, "can't find that font");
+      XmTextFieldSetString(prf->text, "can't find that font");
       XtAppAddTimeOut(MAIN_APP(ss),
 		      ERROR_WAIT_TIME,
 		      listener_font_error_erase_func,
@@ -4040,6 +4215,24 @@ static void doit_again_button_color_func(prefs_info *prf, float r, float g, floa
   FREE(tmp);
 }
 
+/* ---------------- pushed-button-color ---------------- */
+
+static Pixel saved_pushed_button_color;
+
+static void reflect_pushed_button_color(prefs_info *prf) 
+{
+  scale_set_color(prf, saved_pushed_button_color); 
+  ss->sgx->pushed_button_color = saved_pushed_button_color;
+}
+
+static void pushed_button_color_func(prefs_info *prf, float r, float g, float b)
+{
+  XColor *tmp;
+  tmp = rgb_to_color(r, g, b);
+  ss->sgx->pushed_button_color = tmp->pixel;
+  FREE(tmp);
+}
+
 
 
 
@@ -4133,13 +4326,13 @@ void start_preferences_dialog(void)
 		  NULL);
   }
 
-  /* PERHAPS: a table of contents at the start -- click to jump or perhaps a specialized popup menu for it or a pulldown menu */
-
   /* ---------------- overall behavior ---------------- */
 
   {
     Widget dpy_box, dpy_label, file_label, cursor_label;
     char *str1, *str2;
+
+    /* ---------------- overall behavior ----------------*/
 
     dpy_box = make_top_level_box(topics);
     dpy_label = make_top_level_label("overall behavior choices", dpy_box);
@@ -4188,6 +4381,14 @@ void start_preferences_dialog(void)
     remember_pref(prf, reflect_auto_resize, NULL);
 
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
+    focus_follows_mouse = focus_is_following_mouse();
+    prf = prefs_row_with_toggle("focus follows mouse", "focus-follows-mouse",
+				focus_follows_mouse,
+				dpy_box, current_sep,
+				focus_follows_mouse_toggle);
+    remember_pref(prf, reflect_focus_follows_mouse, save_focus_follows_mouse);
+
+    current_sep = make_inter_variable_separator(dpy_box, prf->label);
     prf = prefs_row_with_toggle("show the control panel upon opening a sound", S_show_controls,
 				in_show_controls(ss), 
 				dpy_box, current_sep, 
@@ -4195,77 +4396,16 @@ void start_preferences_dialog(void)
     remember_pref(prf, reflect_show_controls, NULL);
 
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
-    cursor_label = make_inner_label("  colors", dpy_box, current_sep);
-    
-    saved_basic_color = ss->sgx->basic_color;
-    prf = prefs_color_selector_row("main background color", S_basic_color, ss->sgx->basic_color,
-				   dpy_box, cursor_label,
-				   basic_color_func);
-    remember_pref(prf, reflect_basic_color, NULL);
-
-    current_sep = make_inter_variable_separator(dpy_box, prf->rscl);
-    saved_highlight_color = ss->sgx->highlight_color;
-    prf = prefs_color_selector_row("main highlight color", S_highlight_color, ss->sgx->highlight_color,
-				   dpy_box, current_sep,
-				   highlight_color_func);
-    remember_pref(prf, reflect_highlight_color, NULL);
-
-    current_sep = make_inter_variable_separator(dpy_box, prf->rscl);
-    saved_position_color = ss->sgx->position_color;
-    prf = prefs_color_selector_row("second highlight color", S_position_color, ss->sgx->position_color,
-				   dpy_box, current_sep,
-				   position_color_func);
-    remember_pref(prf, reflect_position_color, NULL);
-
-    current_sep = make_inter_variable_separator(dpy_box, prf->rscl);
-    saved_zoom_color = ss->sgx->zoom_color;
-    prf = prefs_color_selector_row("third highlight color", S_zoom_color, ss->sgx->zoom_color,
-				   dpy_box, current_sep,
-				   zoom_color_func);
-    remember_pref(prf, reflect_zoom_color, NULL);
-
-    current_sep = make_inter_variable_separator(dpy_box, prf->rscl);
-    cursor_label = make_inner_label("  cursor options", dpy_box, current_sep);
-
-    prf = prefs_row_with_toggle("report cursor location as it moves", S_verbose_cursor,
-				verbose_cursor(ss), 
-				dpy_box, cursor_label, 
-				verbose_cursor_toggle);
-    remember_pref(prf, reflect_verbose_cursor, NULL);
-
-    current_sep = make_inter_variable_separator(dpy_box, prf->label);
-    prf = prefs_row_with_toggle("track current location while playing", S_cursor_follows_play,
-				cursor_follows_play(ss), 
+    prf = prefs_row_with_toggle("selection creates an associated region", S_selection_creates_region,
+				selection_creates_region(ss),
 				dpy_box, current_sep,
-				cursor_follows_play_toggle);
-    remember_pref(prf, reflect_cursor_follows_play, NULL);
+				selection_creates_region_toggle);
+    remember_pref(prf, reflect_selection_creates_region, NULL);
+
+
+    /* ---------------- file options ---------------- */
 
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
-    
-    str = mus_format("%d", cursor_size(ss));
-    prf = prefs_row_with_number("size", S_cursor_size,
-				str, 4, 
-				dpy_box, current_sep,
-				cursor_size_up, cursor_size_down, cursor_size_from_text);
-    remember_pref(prf, reflect_cursor_size, NULL);
-    FREE(str);
-    if (cursor_size(ss) <= 0) XtSetSensitive(prf->arrow_down, false);
-
-    current_sep = make_inter_variable_separator(dpy_box, prf->label);
-    prf = prefs_row_with_radio_box("shape", S_cursor_style,
-				   cursor_styles, 2, cursor_style(ss),
-				   dpy_box, current_sep, 
-				   cursor_style_choice);
-    remember_pref(prf, reflect_cursor_style, NULL);
-
-    current_sep = make_inter_variable_separator(dpy_box, prf->label);
-    saved_cursor_color = ss->sgx->cursor_color;
-    prf = prefs_color_selector_row("color", S_cursor_color, ss->sgx->cursor_color,
-				   dpy_box, current_sep,
-				   cursor_color_func);
-    remember_pref(prf, reflect_cursor_color, NULL);
-
-    current_sep = make_inter_variable_separator(dpy_box, prf->rscl);
     file_label = make_inner_label("  file options", dpy_box, current_sep);
 
     prf = prefs_row_with_toggle("display only sound files in various file lists", S_just_sounds,
@@ -4295,24 +4435,22 @@ void start_preferences_dialog(void)
 			      save_state_file_text);
     remember_pref(prf, reflect_save_state_file, NULL);
 
-    current_sep = make_inter_variable_separator(dpy_box, prf->label);
 #if HAVE_LADSPA
+    current_sep = make_inter_variable_separator(dpy_box, prf->label);
     prf = prefs_row_with_text("directory for ladspa plugins", S_ladspa_dir, 
 			      ladspa_dir(ss), 
 			      dpy_box, current_sep,
 			      ladspa_dir_text);
     remember_pref(prf, reflect_ladspa_dir, NULL);
+#endif
 
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
-#endif
-#if 0
-    /* PERHAPS: vf dir? */
+    include_vf_directory = copy_string(view_files_find_any_directory());
     prf = prefs_row_with_text("directory for view-files dialog", S_add_directory_to_view_files_list,
-			      "",
+			      include_vf_directory,
 			      dpy_box, current_sep,
 			      view_files_directory_text);
-    remember_pref(prf, reflect_view_files_directory, NULL);
-#endif
+    remember_pref(prf, reflect_view_files_directory, save_view_files_directory);
 
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
     prf = prefs_row_with_text("external program to read HTML files via snd-help", S_html_program,
@@ -4355,35 +4493,8 @@ void start_preferences_dialog(void)
     reflect_output_format(output_data_format_prf);
 
 
-    /* TODO: raw file defaults, other clm stuff?
-     */
-    /* mus_header_raw_defaults
-       clm (with-sound) defaults -- these come from default_output* above to some extent
-    */
+  /* ---------------- extra menus ---------------- */
 
-    /* TODO: peaks-envs, mouse focus choice
-     */
-    /*
-(add-hook! mouse-enter-listener-hook 
-  (lambda (widget) 
-    (focus-widget widget)))
-(add-hook! mouse-enter-graph-hook 
-  (lambda (snd chn) 
-    (if (sound? snd)
-	(let ((wids (catch 'no-such-channel
-	              (lambda () (channel-widgets snd chn))
-		      (lambda args #f))))
-          (if wids
-              (focus-widget (car wids)))))))
-
-(add-hook! mouse-enter-listener-hook 
-  (lambda (widget) 
-    (focus-widget widget)))
-    */
-
-  /*
-    PERHAPS: pixmaps for backgrounds?
-  */
 #if HAVE_STATIC_XM
     cursor_label = make_inner_label("  extra menus", dpy_box, current_sep);
 #else
@@ -4425,6 +4536,80 @@ void start_preferences_dialog(void)
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
 
 #endif
+
+    /* ---------------- cursor options ---------------- */
+
+    cursor_label = make_inner_label("  cursor options", dpy_box, current_sep);
+
+    prf = prefs_row_with_toggle("report cursor location as it moves", S_verbose_cursor,
+				verbose_cursor(ss), 
+				dpy_box, cursor_label, 
+				verbose_cursor_toggle);
+    remember_pref(prf, reflect_verbose_cursor, NULL);
+
+    current_sep = make_inter_variable_separator(dpy_box, prf->label);
+    prf = prefs_row_with_toggle("track current location while playing", S_cursor_follows_play,
+				cursor_follows_play(ss), 
+				dpy_box, current_sep,
+				cursor_follows_play_toggle);
+    remember_pref(prf, reflect_cursor_follows_play, NULL);
+
+    current_sep = make_inter_variable_separator(dpy_box, prf->label);
+    
+    str = mus_format("%d", cursor_size(ss));
+    prf = prefs_row_with_number("size", S_cursor_size,
+				str, 4, 
+				dpy_box, current_sep,
+				cursor_size_up, cursor_size_down, cursor_size_from_text);
+    remember_pref(prf, reflect_cursor_size, NULL);
+    FREE(str);
+    if (cursor_size(ss) <= 0) XtSetSensitive(prf->arrow_down, false);
+
+    current_sep = make_inter_variable_separator(dpy_box, prf->label);
+    prf = prefs_row_with_radio_box("shape", S_cursor_style,
+				   cursor_styles, 2, cursor_style(ss),
+				   dpy_box, current_sep, 
+				   cursor_style_choice);
+    remember_pref(prf, reflect_cursor_style, NULL);
+
+    current_sep = make_inter_variable_separator(dpy_box, prf->label);
+    saved_cursor_color = ss->sgx->cursor_color;
+    prf = prefs_color_selector_row("color", S_cursor_color, ss->sgx->cursor_color,
+				   dpy_box, current_sep,
+				   cursor_color_func);
+    remember_pref(prf, reflect_cursor_color, NULL);
+
+    /* ---------------- (overall) colors ---------------- */
+
+    current_sep = make_inter_variable_separator(dpy_box, prf->rscl);
+    cursor_label = make_inner_label("  colors", dpy_box, current_sep);
+    
+    saved_basic_color = ss->sgx->basic_color;
+    prf = prefs_color_selector_row("main background color", S_basic_color, ss->sgx->basic_color,
+				   dpy_box, cursor_label,
+				   basic_color_func);
+    remember_pref(prf, reflect_basic_color, NULL);
+
+    current_sep = make_inter_variable_separator(dpy_box, prf->rscl);
+    saved_highlight_color = ss->sgx->highlight_color;
+    prf = prefs_color_selector_row("main highlight color", S_highlight_color, ss->sgx->highlight_color,
+				   dpy_box, current_sep,
+				   highlight_color_func);
+    remember_pref(prf, reflect_highlight_color, NULL);
+
+    current_sep = make_inter_variable_separator(dpy_box, prf->rscl);
+    saved_position_color = ss->sgx->position_color;
+    prf = prefs_color_selector_row("second highlight color", S_position_color, ss->sgx->position_color,
+				   dpy_box, current_sep,
+				   position_color_func);
+    remember_pref(prf, reflect_position_color, NULL);
+
+    current_sep = make_inter_variable_separator(dpy_box, prf->rscl);
+    saved_zoom_color = ss->sgx->zoom_color;
+    prf = prefs_color_selector_row("third highlight color", S_zoom_color, ss->sgx->zoom_color,
+				   dpy_box, current_sep,
+				   zoom_color_func);
+    remember_pref(prf, reflect_zoom_color, NULL);
   }
 
   current_sep = make_inter_topic_separator(topics);
@@ -4432,7 +4617,8 @@ void start_preferences_dialog(void)
   /* -------- graphs -------- */
   {
     Widget grf_box, grf_label, colgrf_label;
-    char *str;
+
+    /* ---------------- graph options ---------------- */
 
     grf_box = make_top_level_box(topics);
     grf_label = make_top_level_label("graph options", grf_box);
@@ -4521,6 +4707,8 @@ void start_preferences_dialog(void)
 				smpte_toggle);
     remember_pref(prf, reflect_smpte, save_smpte);
 
+    /* ---------------- (graph) colors ---------------- */
+
     current_sep = make_inter_variable_separator(grf_box, prf->label); 
     colgrf_label = make_inner_label("  colors", grf_box, current_sep);
 
@@ -4557,6 +4745,8 @@ void start_preferences_dialog(void)
 				   grf_box, current_sep,
 				   selection_color_func);
     remember_pref(prf, reflect_selection_color, NULL);
+
+    /* ---------------- (graph) fonts ---------------- */
 
     current_sep = make_inter_variable_separator(grf_box, prf->rscl);
     colgrf_label = make_inner_label("  fonts", grf_box, current_sep);
@@ -4606,17 +4796,6 @@ void start_preferences_dialog(void)
     aud_box = make_top_level_box(topics);
     aud_label = make_top_level_label("audio options", aud_box);
     
-    /* TODO: dac size, dac-combines-channels, cursor offset, smart line cursor, recorder setting, audio mixer settings */
-  /*
-    ss->Dac_Size = DEFAULT_DAC_SIZE;
-    ss->Dac_Combines_Channels = DEFAULT_DAC_COMBINES_CHANNELS;
-
-    audio output device? or sound card?
-    line cursor during play?
-
-    recorder stuff?
-    audio mixer settings?
-  */
   }
 
   current_sep = make_inter_topic_separator(topics);
@@ -4625,7 +4804,8 @@ void start_preferences_dialog(void)
   /* -------- transform -------- */
   {
     Widget fft_box, fft_label;
-    char *str;
+
+    /* ---------------- transform options ---------------- */
 
     fft_box = make_top_level_box(topics);
     fft_label = make_top_level_label("transform options", fft_box);
@@ -4698,7 +4878,6 @@ void start_preferences_dialog(void)
       remember_pref(prf, reflect_colormap, NULL);
       FREE(cmaps);
     }
-    /* PERHAPS: a line with color-inverted and color-scaler and color-cutoff */
 
     current_sep = make_inter_variable_separator(fft_box, prf->label);
     prf = prefs_row_with_toggle("y axis as log magnitude (dB)", S_fft_log_magnitude,
@@ -4728,14 +4907,6 @@ void start_preferences_dialog(void)
 				   fft_box, current_sep,
 				   transform_normalization_choice);
     remember_pref(prf, reflect_transform_normalization, NULL);
-
-    /* PERHAPS: sinc-width, with-gl */
-    /*
-    ss->Sinc_Width = DEFAULT_SINC_WIDTH;
-    ss->With_GL = DEFAULT_WITH_GL;
-
-    */
-    
   }
 
   current_sep = make_inter_topic_separator(topics);
@@ -4744,6 +4915,8 @@ void start_preferences_dialog(void)
   {
     Widget mmr_box, mmr_label;
     char *str1, *str2;
+
+    /* ---------------- marks and mixes ---------------- */
 
     mmr_box = make_top_level_box(topics);
     mmr_label = make_top_level_label("marks and mixes", mmr_box);
@@ -4800,7 +4973,8 @@ void start_preferences_dialog(void)
   /* -------- programming -------- */
   {
     Widget prg_box, prg_label;
-    char *str;
+
+    /* ---------------- listener options ---------------- */
 
     prg_box = make_top_level_box(topics);
     prg_label = make_top_level_label("listener options", prg_box);
@@ -4859,26 +5033,6 @@ void start_preferences_dialog(void)
 				   prg_box, current_sep,
 				   listener_text_color_func);
     remember_pref(prf, reflect_listener_text_color, NULL);
-
-
-    /* PERHAPS: with-sound + ins? (check list?), extensions etc */
-    /*
-    clm: ws.scm + any instruments
-    debugging aids
-    nb.scm (buffer for it)
-    snd-motif: hidden-controls-dialog
-       (make-hidden-controls-dialog)
-
-    disable-control-panel
-    disk-space
-
-    (if (not (hook-member show-disk-space after-open-hook))
-        (add-hook! after-open-hook show-disk-space)) -- but need a way to see it there 
-
-    delete and rename options in filer? (misc.scm)
-    unselect-all option
-    remember state for subsequent load (extensions?)
-    */
   }
 
   current_sep = make_inter_topic_separator(topics);
@@ -4886,6 +5040,8 @@ void start_preferences_dialog(void)
   /* -------- silly stuff -------- */
   {
     Widget silly_box, silly_label;
+
+    /* ---------------- silly options ---------------- */
 
     silly_box = make_top_level_box(topics);
     silly_label = make_top_level_label("silly stuff", silly_box);
@@ -4923,7 +5079,14 @@ void start_preferences_dialog(void)
 				   silly_box, current_sep,
 				   doit_again_button_color_func);
     remember_pref(prf, reflect_doit_again_button_color, NULL);
+
     current_sep = make_inter_variable_separator(silly_box, prf->rscl);
+    saved_pushed_button_color = ss->sgx->pushed_button_color;
+    prf = prefs_color_selector_row("pushed-button color", S_pushed_button_color, ss->sgx->pushed_button_color,
+				   silly_box, current_sep,
+				   pushed_button_color_func);
+    remember_pref(prf, reflect_pushed_button_color, NULL);
+
   }
 #if DEBUGGING
   fprintf(stderr, "top: %d\n", prefs_top);
@@ -4932,22 +5095,3 @@ void start_preferences_dialog(void)
   XtManageChild(preferences_dialog);
   set_dialog_widget(PREFERENCES_DIALOG, preferences_dialog);
 }
-
-
-/* speed-control style/tones?
-   transform-graph?
-   vf dir?
-   add envs/sound file exts? ins?
-
-   cursor-location-offset
-   cursor-update-interval
-   graph-cursor?
-
-   icon box?
-   fft-menu?
-   mark pane?
-
-   quick.html for topics
-   toggle show-listener upon startup
-   snd-test 
- */

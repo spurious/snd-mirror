@@ -175,16 +175,6 @@ Here's a more elaborate initialization file:
 (set! (<a class=quiet href="extsnd.html#selectedgraphcolor">selected-graph-color</a>) beige) ;selected graph background is beige
 (set! (<a class=quiet href="extsnd.html#selecteddatacolor">selected-data-color</a>) blue)   ;selected graph data is blue
 
-(add-hook! <a class=quiet href="extsnd.html#mouseentergraphhook">mouse-enter-graph-hook</a>  ;automatically focus on (activate) the widget under the mouse
-  (lambda (snd chn) 
-    (<a class=quiet href="extsnd.html#focuswidget">focus-widget</a> (car (<a class=quiet href="extsnd.html#channelwidgets">channel-widgets</a> snd chn)))))
-(add-hook! <a class=quiet href="extsnd.html#mouseenterlistenerhook">mouse-enter-listener-hook</a>
-  (lambda (widget) 
-    (<a class=quiet href="extsnd.html#focuswidget">focus-widget</a> widget)))
-(add-hook! <a class=quiet href="extsnd.html#mouseentertexthook">mouse-enter-text-hook</a> 
-  (lambda (w)
-    (<a class=quiet href="extsnd.html#focuswidget">focus-widget</a> w)))
-
 (set! (<a class=quiet href="extsnd.html#savedir">save-dir</a>) "/zap/snd")        ;save-state files are placed in /zap/snd
 (set! (<a class=quiet href="extsnd.html#tempdir">temp-dir</a>) "/zap/tmp")        ;temp files are placed in /zap/tmp
 (load "peak-env.scm")               ;large file peak env data is saved for faster 
@@ -197,6 +187,8 @@ Here's a more elaborate initialization file:
 (load "extensions.scm")
 
 (make-current-window-display)       ;display an overview of the current window in the upper right
+(focus-follows-mouse)               ;automatically focus on (activate) the widget under the mouse
+
 (if (provided? '<a class=quiet href="#sndmotiffeature">snd-motif</a>)          
     (load "popup.scm")              ;context-sensitive popup menus
     (if (provided? '<a class=quiet href="#sndgtkfeature">snd-gtk</a>)

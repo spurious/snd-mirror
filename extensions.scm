@@ -867,3 +867,26 @@ If 'check' is #f, the hooks are removed."
     (set! (edit-position orig-snd 0) old-ed0)
     (set! (edit-position orig-snd 1) old-ed1)
     (list chan1 chan2)))
+
+
+;;; -------- focus-follows-mouse
+
+(define focus-is-following-mouse #f) ; kludge for prefs dialog...
+(define (focus-follows-mouse)
+  (if (not focus-is-following-mouse)
+      (begin
+	(set! focus-is-following-mouse #t)
+	(add-hook! mouse-enter-graph-hook 
+		   (lambda (snd chn) 
+		     (if (sound? snd)
+			 (let ((wids (catch 'no-such-channel
+					    (lambda () (channel-widgets snd chn))
+					    (lambda args #f))))
+			   (if wids
+			       (focus-widget (car wids)))))))
+	(add-hook! mouse-enter-listener-hook 
+		   (lambda (widget) 
+		     (focus-widget widget)))
+	(add-hook! mouse-enter-text-hook
+		   (lambda (w)
+		     (focus-widget w))))))
