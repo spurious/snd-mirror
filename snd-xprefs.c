@@ -3366,7 +3366,7 @@ static list_completer_info *transform_type_completer_info = NULL;
 
 static void reflect_transform_type(prefs_info *prf)
 {
-  XmTextFieldSetString(prf->text, (char *)transform_types[transform_type(ss)]);
+  XmTextFieldSetString(prf->text, (char *)transform_types[mus_iclamp(0, transform_type(ss), NUM_TRANSFORM_TYPES - 1)]); 
 }
 
 static char *transform_type_completer(char *text, void *data)

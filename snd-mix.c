@@ -1075,7 +1075,7 @@ static mix_info *file_mix_samples(off_t beg, off_t num, char *mixfile, chan_info
   /* used for clip-region temp file incoming and C-q in snd-chn.c (i.e. mix in file) so sync not relevant */
   snd_fd *csf = NULL;
   snd_info *sp;
-  int ofd, ifd;
+  int ofd, ifd = -1;
   char *ofile, *new_origin = NULL;
   mus_sample_t **data;
   mus_sample_t *chandata;

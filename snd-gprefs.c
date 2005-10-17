@@ -30,6 +30,7 @@ typedef struct prefs_info {
   GtkWidget *label, *text, *arrow_up, *arrow_down, *arrow_right, *error, *toggle, *scale;
   GtkWidget *color, *rscl, *gscl, *bscl, *rtxt, *gtxt, *btxt, *list_menu, *radio_button, *helper;
   GtkObject *radj, *gadj, *badj;
+  GtkWidget **radio_buttons;
   bool got_error;
   guint help_id, power_id;
   const char *var_name;
@@ -107,9 +108,9 @@ static void float_to_textfield(GtkWidget *w, Float val)
   FREE(str);
 }
 
-static GtkWidget *find_radio_button(GtkWidget *parent, const char *name)
+static GtkWidget *find_radio_button(prefs_info *prf, int num)
 {
-  return(NULL); /* ** */
+  return(prf->radio_buttons[num]);
 }
 
 
@@ -166,7 +167,11 @@ static gboolean mouse_leave_pref_callback(GtkWidget *w, gpointer context)
 
 static GtkWidget *make_row_label(const char *label, GtkWidget *box, GtkWidget *top_widget)
 {
-  return(snd_gtk_label_new(label, ss->sgx->white));
+  GtkWidget *w;
+  w = snd_gtk_label_new(label, ss->sgx->white);
+  gtk_box_pack_start(GTK_BOX(box), w, false, false, 0);
+  gtk_widget_show(w);
+  return(w);
   /* needs to be attached on left to box, on right to mid position */
 }
 
@@ -174,7 +179,11 @@ static GtkWidget *make_row_label(const char *label, GtkWidget *box, GtkWidget *t
 
 static GtkWidget *make_row_inner_label(const char *label, GtkWidget *left_widget, GtkWidget *box, GtkWidget *top_widget)
 {
-  return(snd_gtk_label_new(label, ss->sgx->white));
+  GtkWidget *w;
+  w = snd_gtk_label_new(label, ss->sgx->white);
+  gtk_box_pack_start(GTK_BOX(box), w, false, false, 0);
+  gtk_widget_show(w);
+  return(w);
   /* needs to be attached on left to left_widget */
 }
 
@@ -182,7 +191,11 @@ static GtkWidget *make_row_inner_label(const char *label, GtkWidget *left_widget
 
 static GtkWidget *make_row_middle_separator(GtkWidget *label, GtkWidget *box, GtkWidget *top_widget)
 {
-  return(gtk_vseparator_new());
+  GtkWidget *w;
+  w = gtk_vseparator_new();
+  gtk_box_pack_start(GTK_BOX(box), w, false, false, 0);
+  gtk_widget_show(w);
+  return(w);
   /* needs to be white, with etched in line, next to label (left), width = MID_SPACE */
 }
 
@@ -190,7 +203,11 @@ static GtkWidget *make_row_middle_separator(GtkWidget *label, GtkWidget *box, Gt
 
 static GtkWidget *make_row_inner_separator(int width, GtkWidget *left_widget, GtkWidget *box, GtkWidget *top_widget)
 {
-  return(gtk_hseparator_new());
+  GtkWidget *w;
+  w = gtk_hseparator_new();
+  gtk_box_pack_start(GTK_BOX(box), w, false, false, 0);
+  gtk_widget_show(w);
+  return(w);
   /* white, no line, width = width, left_widget on left */
 }
 
@@ -198,16 +215,24 @@ static GtkWidget *make_row_inner_separator(int width, GtkWidget *left_widget, Gt
 
 static GtkWidget *make_row_help(const char *label, prefs_info *prf, GtkWidget *box, GtkWidget *top_widget, GtkWidget *left_widget)
 {
+  GtkWidget *w;
+  w = snd_gtk_label_new("NO HELP", ss->sgx->white); /* FIX */
   /* spacer to HELP_POSITION, then a pushbutton widget with no borders etc */
-  return(NULL);
+  gtk_box_pack_start(GTK_BOX(box), w, false, false, 0);
+  gtk_widget_show(w);
+  return(w);
 }
 
 /* ---------------- row toggle widget ---------------- */
 
 static GtkWidget *make_row_toggle(bool current_value, GtkWidget *left_widget, GtkWidget *box, GtkWidget *top_widget)
 {
+  GtkWidget *w;
   /* toggle button */
-  return(NULL);
+  w = snd_gtk_label_new("NO HELP", ss->sgx->white); /* FIX */
+  gtk_box_pack_start(GTK_BOX(box), w, false, false, 0);
+  gtk_widget_show(w);
+  return(w);
 }
 
 
@@ -250,8 +275,12 @@ static prefs_info *prefs_row_with_toggle(const char *label, const char *varname,
 
 static GtkWidget *make_row_text(const char *text_value, int cols, GtkWidget *left_widget, GtkWidget *box, GtkWidget *top_widget)
 {
-  /* entry */
-  return(NULL);
+  GtkWidget *w;
+  /* toggle button */
+  w = snd_gtk_label_new("NO HELP", ss->sgx->white); /* FIX */
+  gtk_box_pack_start(GTK_BOX(box), w, false, false, 0);
+  gtk_widget_show(w);
+  return(w);
 }
 
 static void call_text_func(GtkWidget *w, gpointer context) 
@@ -352,15 +381,33 @@ static prefs_info *prefs_row_with_radio_box(const char *label, const char *varna
 {
   int i, n;
   prefs_info *prf = NULL;
-  GtkWidget *sep;
+  GtkWidget *sep, *current_button;
+  GSList *group = NULL;
   prf = (prefs_info *)CALLOC(1, sizeof(prefs_info));
   prf->var_name = varname;
   prf->toggle_func = toggle_func;
 
   prf->label = make_row_label(label, box, top_widget);
   sep = make_row_middle_separator(prf->label, box, top_widget);
-  
-  /* radio box */
+
+  prf->toggle = gtk_hbox_new(false, 0);
+  gtk_box_pack_start(GTK_BOX(box), prf->toggle, false, false, 0);
+  gtk_widget_show(prf->toggle);
+
+  prf->radio_buttons = (GtkWidget **)CALLOC(num_labels, sizeof(GtkWidget *));
+
+  for (i = 0; i < num_labels; i++)
+    {
+      current_button = gtk_radio_button_new_with_label(group, labels[i]);
+      prf->radio_buttons[i] = current_button;
+      gtk_box_pack_start(GTK_BOX(prf->toggle), current_button, false, false, 0);
+      set_user_int_data(G_OBJECT(current_button), i);
+      gtk_widget_show(current_button);
+      SG_SIGNAL_CONNECT(current_button, "clicked", call_radio_func, (gpointer)prf);
+      
+      if (i == 0)
+	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(current_button));
+    }
 
   make_row_help(varname, prf, box, top_widget, prf->toggle);
 
@@ -847,9 +894,9 @@ static prefs_info *prefs_color_selector_row(const char *label, const char *varna
 
   GdkColor *tmp;
   float r = 0.0, g = 0.0, b = 0.0;
-#if 0
   prf = (prefs_info *)CALLOC(1, sizeof(prefs_info));
   prf->var_name = varname;
+#if 0
   pixel_to_rgb(current_pixel, &r, &g, &b);
   tmp = rgb_to_color(1.0, 0.0, 0.0);
   red = tmp->pixel;
@@ -901,7 +948,11 @@ static prefs_info *prefs_color_selector_row(const char *label, const char *varna
 
 static GtkWidget *make_inter_topic_separator(GtkWidget *topics)
 {
-  return(gtk_hseparator_new());
+  GtkWidget *w;
+  w = gtk_hseparator_new();
+  gtk_box_pack_start(GTK_BOX(topics), w, false, false, 0);
+  gtk_widget_show(w);
+  return(w);
   /* height = INTER_TOPIC_SPACE no line */
 }
 
@@ -909,7 +960,11 @@ static GtkWidget *make_inter_topic_separator(GtkWidget *topics)
 
 static GtkWidget *make_inter_variable_separator(GtkWidget *topics, GtkWidget *top_widget)
 {
-  return(gtk_hseparator_new());
+  GtkWidget *w;
+  w = gtk_hseparator_new();
+  gtk_box_pack_start(GTK_BOX(topics), w, false, false, 0);
+  gtk_widget_show(w);
+  return(w);
   /* height = INTER_VARIABLE_SPACE no line */
 }
 
@@ -917,18 +972,31 @@ static GtkWidget *make_inter_variable_separator(GtkWidget *topics, GtkWidget *to
 
 static GtkWidget *make_top_level_label(const char *label, GtkWidget *parent)
 {
-  return(snd_gtk_label_new(label, ss->sgx->light_blue));
+  GtkWidget *w;
+  w = snd_gtk_label_new(label, ss->sgx->light_blue);
+  gtk_box_pack_start(GTK_BOX(parent), w, false, false, 0);
+  gtk_widget_show(w);
+  return(w);
 }
 
 static GtkWidget *make_top_level_box(GtkWidget *topics)
 {
+  GtkWidget *w;
+  w = gtk_hbox_new(false, 0);
+  gtk_box_pack_start(GTK_BOX(topics), w, false, false, 0);
+  gtk_widget_show(w);
+  return(w);
   /* frame etc */
   return(NULL);
 }
 
 static GtkWidget *make_inner_label(const char *label, GtkWidget *parent, GtkWidget *top_widget)
 {
-  return(snd_gtk_label_new(label, ss->sgx->highlight_color));
+  GtkWidget *w;
+  w = snd_gtk_label_new(label, ss->sgx->highlight_color);
+  gtk_box_pack_start(GTK_BOX(parent), w, false, false, 0);
+  gtk_widget_show(w);
+  return(w);
 }
 
 
@@ -1422,7 +1490,7 @@ static void reflect_cursor_style(prefs_info *prf)
 {
   GtkWidget *w;
 #if 0
-  w = find_radio_button(prf->toggle, cursor_styles[cursor_style(ss)]);
+  w = find_radio_button(prf, cursor_style(ss));
   if (w)
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), XmSET);
   else fprintf(stderr, "can't find %s\n", cursor_styles[cursor_style(ss)]);
@@ -1684,7 +1752,7 @@ static void reflect_output_chans(prefs_info *prf)
   str = (char *)CALLOC(6, sizeof(char));
   mus_snprintf(str, 6, "%d", default_output_chans(ss));
 #if 0
-  w = find_radio_button(prf->toggle, str);
+  w = find_radio_button(prf, /* CHANS */ str);
   if (w)
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), XmSET);
   else fprintf(stderr, "can't find %s\n", str);
@@ -1706,7 +1774,7 @@ static void reflect_output_srate(prefs_info *prf)
   str = (char *)CALLOC(8, sizeof(char));
   mus_snprintf(str, 8, "%d", default_output_srate(ss));
 #if 0
-  w = find_radio_button(prf->toggle, str);
+  w = find_radio_button(prf, /* SRATE */ str);
   if (w)
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), XmSET);
   else fprintf(stderr, "can't find %s\n", str);
@@ -1781,7 +1849,7 @@ static void reflect_output_type(prefs_info *prf)
     case MUS_NIST: str = "nist"; break;
     }
 #if 0
-  w = find_radio_button(prf->toggle, str);
+  w = find_radio_button(prf, /* TYPE */ str);
   if (w)
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), XmSET);
   else fprintf(stderr, "can't find %s\n", str);
@@ -1807,7 +1875,7 @@ static void reflect_output_format(prefs_info *prf)
     case MUS_LDOUBLE: case MUS_BDOUBLE: str = "double"; break;
     }
 #if 0
-  w = find_radio_button(prf->toggle, str);
+  w = find_radio_button(prf, /* FORMAT */ str);
   if (w)
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), XmSET);
   else fprintf(stderr, "can't find %s\n", str);
@@ -2084,7 +2152,7 @@ static void reflect_graph_style(prefs_info *prf)
 {
   GtkWidget *w;
 #if 0
-  w = find_radio_button(prf->toggle, graph_styles[graph_style(ss)]);
+  w = find_radio_button(prf, graph_style(ss));
   if (w)
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), XmSET);
   else fprintf(stderr, "can't find %s\n", graph_styles[graph_style(ss)]);
@@ -2223,7 +2291,7 @@ static void reflect_channel_style(prefs_info *prf)
 {
   GtkWidget *w;
 #if 0
-  w = find_radio_button(prf->toggle, channel_styles[(int)channel_style(ss)]);
+  w = find_radio_button(prf, (int)channel_style(ss));
   if (w)
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), XmSET);
   else fprintf(stderr, "can't find %s\n", channel_styles[(int)channel_style(ss)]);
@@ -2811,7 +2879,7 @@ static void reflect_transform_graph_type(prefs_info *prf)
 {
   GtkWidget *w;
 #if 0
-  w = find_radio_button(prf->toggle, transform_graph_types[transform_graph_type(ss)]);
+  w = find_radio_button(prf, transform_graph_type(ss));
   if (w)
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), XmSET);
   else fprintf(stderr, "can't find %s\n", transform_graph_types[transform_graph_type(ss)]);
@@ -2853,7 +2921,7 @@ static list_completer_info *transform_type_completer_info = NULL;
 
 static void reflect_transform_type(prefs_info *prf)
 {
-  gtk_entry_set_text(GTK_ENTRY(prf->text), (char *)transform_types[transform_type(ss)]);
+  gtk_entry_set_text(GTK_ENTRY(prf->text), (char *)transform_types[mus_iclamp(0, transform_type(ss), NUM_TRANSFORM_TYPES - 1)]);
 }
 
 static char *transform_type_completer(char *text, void *data)
@@ -3173,7 +3241,7 @@ static void reflect_transform_normalization(prefs_info *prf)
 {
   GtkWidget *w;
 #if 0
-  w = find_radio_button(prf->toggle, transform_normalizations[transform_normalization(ss)]);
+  w = find_radio_button(prf, transform_normalization(ss));
   if (w)
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), XmSET);
   else fprintf(stderr, "can't find %s\n", transform_normalizations[transform_normalization(ss)]);
