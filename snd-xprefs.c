@@ -751,7 +751,7 @@ static prefs_info *prefs_row_with_text(const char *label, const char *varname, c
 /* ---------------- two texts in a row ---------------- */
 
 static prefs_info *prefs_row_with_two_texts(const char *label, const char *varname,
-					    const char*label1, const char *text1, const char*label2, const char *text2, int cols,
+					    const char *label1, const char *text1, const char *label2, const char *text2, int cols,
 					    Widget box, Widget top_widget,
 					    void (*text_func)(prefs_info *prf))
 {

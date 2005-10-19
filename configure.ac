@@ -860,6 +860,8 @@ else
 	# gtk 2.7.3
 	AC_CHECK_LIB(m, gtk_dialog_get_response_for_widget, [AC_DEFINE(HAVE_GTK_DIALOG_GET_RESPONSE_FOR_WIDGET)],  ,$GTK_LIBS)
 	# for snd-gfile (2.7.0)
+	AC_CHECK_LIB(m, gtk_entry_set_alignment, [AC_DEFINE(HAVE_GTK_ENTRY_SET_ALIGNMENT)], ,$GTK_LIBS)
+	# for snd-prefs/gfile (2.3.6)
 
         if test "$with_x11" = yes ; then
 	  AC_DEFINE(WITH_GTK_AND_X11)

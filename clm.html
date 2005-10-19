@@ -1939,8 +1939,8 @@ The greater the width, the slower the src generator runs.
 The <i>sr-change</i>
 argument is the amount to add to the current <i>srate</i> on a sample by sample
 basis (if it's 0.0 and the original make-src srate argument was also 0.0, you get a constant output because the generator is not moving at all).  Here's
-an instrument that provides time-varying sampling rate conversion (see also the
-<a href="#srctst">srctst</a> instrument below):</p>
+an instrument that provides time-varying sampling rate conversion:
+</p>
 
 <table border=2 bordercolor="tan" hspace=40 cellpadding=8 cellspacing=3><tr><td>
 <pre>
@@ -2415,57 +2415,24 @@ a CLM generator.
   (let* ((last-sample (<a class=quiet href="#sound-frames">sound-frames</a> file))
          (beg (floor (* *srate* onset)))
          (end (+ beg (floor (* *srate* duration))))
-         (s (<a class=quiet href="#make-src">make-src</a> :input file :srate src-ratio))
+	 (input (<a class=quiet href="#make-readin">make-readin</a> file))
+         (s (<a class=quiet href="#make-src">make-src</a> :srate src-ratio))
          (cs 0))
     (run
      (loop for i from beg below end do
        (declare (type :integer cs last-sample)
 		(type :float src-ratio))
-       (setf cs (<em class=red>mus-location</em> s))
        (if (&gt;= cs last-sample) (setf (<em class=red>mus-increment</em> s) (- src-ratio)))
        (if (&lt;= cs 0) (setf (<em class=red>mus-increment</em> s) src-ratio))
-       (<a class=quiet href="#outa">outa</a> i (<a class=quiet href="#src">src</a> s))))))
+       (<a class=quiet href="#outa">outa</a> i (<a class=quiet href="#src">src</a> s 0.0 #'(lambda (dir) 
+			      (incf cs dir)
+			      (setf (<em class=red>mus-increment</em> input) dir)
+			      (<a class=quiet href="#readin">readin</a> input))))))))
 
-;;; (with-sound () (backandforth 0 10 "pistol.snd" .5))
+;;; (with-sound () (backandforth 0 10 "pistol.snd" 2.0))
 </pre>
 </td></tr></table>
 
-<p>mus-location is useful in cases where you're doing some complicated
-processing on a file, and want to use envelopes, but for whatever reason can't
-easily say how long the output will be.  The envelopes can be defined in terms
-of the input file's length, then applied by watching mus-location:</p>
-
-<table border=2 bordercolor="tan" hspace=40 cellpadding=8 cellspacing=3><tr><td>
-<pre>
-(<a class=quiet href="#definstrument">definstrument</a> <A class=def NAME="srctst">srctst</a> (file beg srcenv in-file-start)
-  (let ((f (<a class=quiet href="#open-input">open-input</a> file :start (floor (* in-file-start (<a class=quiet href="#sound-srate">sound-srate</a> file))))))
-    (unwind-protect
-        (let* ((st (floor (* beg *srate*)))
-               (dur (<a class=quiet href="#sound-duration">sound-duration</a> file))
-               (samples (1- (<a class=quiet href="#sound-frames">sound-frames</a> file)))
-               (srcA (<a class=quiet href="#make-src">make-src</a> :input f :srate 0.0))
-               (env-val 0.0)
-               (pass 0)
-               (senv (<a class=quiet href="#make-env">make-env</a> :envelope srcenv :duration dur)))
-	  (setf env-val (<a class=quiet href="#env">env</a> senv))           ;get initial src value
-          (run
-           (loop for i from st do
-             (let ((pos (<em class=red>mus-location</em> srcA)))
-               (when (/= pass pos)            ;position in input has changed
-                 (let ((passes (- pos pass))) ;move env forward by same amount
-                   (setf pass pos)
-                   (dotimes (k passes) (setf env-val (<a class=quiet href="#env">env</a> senv)))))
-               (<a class=quiet href="#outa">outa</a> i (<a class=quiet href="#src">src</a> srcA env-val))
-               (if (&gt;= pass samples) (loop-finish))))))
-      (<a class=quiet href="#close-input">close-input</a> f))))
-</pre>
-</td></tr></table>
-
-<p>This instrument puts an envelope on the sampling rate, and defines
-the envelope to apply over the entire input file:</p>
-<pre>
-  (<a class=quiet href="#with-sound">with-sound</a> () (srctst  "oboe.snd" 0 '(0 1 1 .5 2 1) .1))
-</pre>
 <br>
 
 

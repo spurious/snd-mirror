@@ -6555,9 +6555,18 @@ static void describe_audio_state_1(void)
   int formats = 0, m;
   bool input_case = false;
   err = AudioHardwareGetPropertyInfo(kAudioHardwarePropertyDevices, &msize, NULL);
-  if (err != noErr) return;
+  if (err != noErr) 
+    {
+      mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, "get property info error: %s\n", osx_error(err));
+      pprint(audio_strbuf);
+      return;
+    }
   num_devices = msize / sizeof(AudioDeviceID);
-  if (num_devices <= 0) return;
+  if (num_devices <= 0) 
+    {
+      pprint("no audio devices found");
+      return;
+    }
   devices = (AudioDeviceID *)MALLOC(msize);
   size = sizeof(AudioDeviceID);
   err = AudioHardwareGetProperty(kAudioHardwarePropertyDefaultInputDevice, &size, &default_input);
