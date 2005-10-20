@@ -2363,50 +2363,49 @@ static void output_type_choice(prefs_info *prf)
 	    }
 	}
 
-  /* nist -> short or int (lb)
-     aiff -> short or int (b)
-     aifc -> any (b)
-     next -> any (b)
-     wave -> any (l)
-  */
-  switch (default_output_header_type(ss))
-    {
-    case MUS_NEXT: case MUS_AIFC:
-      switch (default_output_data_format(ss))
+      /* nist -> short or int (lb)
+	 aiff -> short or int (b)
+	 aifc -> any (b)
+	 next -> any (b)
+	 wave -> any (l)
+      */
+      switch (default_output_header_type(ss))
 	{
-	case MUS_LSHORT: set_default_output_data_format(MUS_BSHORT); break;
-	case MUS_LINT: set_default_output_data_format(MUS_BINT); break;
-	case MUS_LFLOAT: set_default_output_data_format(MUS_BFLOAT); break;
-	case MUS_LDOUBLE: set_default_output_data_format(MUS_BDOUBLE); break;
+	case MUS_NEXT: case MUS_AIFC:
+	  switch (default_output_data_format(ss))
+	    {
+	    case MUS_LSHORT: set_default_output_data_format(MUS_BSHORT); break;
+	    case MUS_LINT: set_default_output_data_format(MUS_BINT); break;
+	    case MUS_LFLOAT: set_default_output_data_format(MUS_BFLOAT); break;
+	    case MUS_LDOUBLE: set_default_output_data_format(MUS_BDOUBLE); break;
+	    }
+	  break;
+	case MUS_AIFF:
+	  switch (default_output_data_format(ss))
+	    {
+	    case MUS_LSHORT: set_default_output_data_format(MUS_BSHORT); break;
+	    case MUS_LINT: set_default_output_data_format(MUS_BINT); break;
+	    case MUS_LFLOAT: case MUS_LDOUBLE: case MUS_BFLOAT: case MUS_BDOUBLE: set_default_output_data_format(MUS_BINT); break;
+	    }
+	  break;
+	case MUS_NIST:
+	  switch (default_output_data_format(ss))
+	    {
+	    case MUS_LFLOAT: case MUS_LDOUBLE: set_default_output_data_format(MUS_LINT); break;
+	    case MUS_BFLOAT: case MUS_BDOUBLE: set_default_output_data_format(MUS_BINT); break;
+	    }
+	  break;
+	case MUS_RIFF:
+	  switch (default_output_data_format(ss))
+	    {
+	    case MUS_BSHORT: set_default_output_data_format(MUS_LSHORT); break;
+	    case MUS_BINT: set_default_output_data_format(MUS_LINT); break;
+	    case MUS_BFLOAT: set_default_output_data_format(MUS_LFLOAT); break;
+	    case MUS_BDOUBLE: set_default_output_data_format(MUS_LDOUBLE); break;
+	    }
+	  break;
 	}
-      break;
-    case MUS_AIFF:
-      switch (default_output_data_format(ss))
-	{
-	case MUS_LSHORT: set_default_output_data_format(MUS_BSHORT); break;
-	case MUS_LINT: set_default_output_data_format(MUS_BINT); break;
-	case MUS_LFLOAT: case MUS_LDOUBLE: case MUS_BFLOAT: case MUS_BDOUBLE: set_default_output_data_format(MUS_BINT); break;
-	}
-      break;
-    case MUS_NIST:
-      switch (default_output_data_format(ss))
-	{
-	case MUS_LFLOAT: case MUS_LDOUBLE: set_default_output_data_format(MUS_LINT); break;
-	case MUS_BFLOAT: case MUS_BDOUBLE: set_default_output_data_format(MUS_BINT); break;
-	}
-      break;
-    case MUS_RIFF:
-      switch (default_output_data_format(ss))
-	{
-	case MUS_BSHORT: set_default_output_data_format(MUS_LSHORT); break;
-	case MUS_BINT: set_default_output_data_format(MUS_LINT); break;
-	case MUS_BFLOAT: set_default_output_data_format(MUS_LFLOAT); break;
-	case MUS_BDOUBLE: set_default_output_data_format(MUS_LDOUBLE); break;
-	}
-      break;
-    }
-  reflect_output_format(output_data_format_prf);
-
+      reflect_output_format(output_data_format_prf);
     }
 }
 
@@ -2428,58 +2427,57 @@ static void output_format_choice(prefs_info *prf)
 	    }
 	}
 
-
-  switch (default_output_data_format(ss))
-    {
-    case MUS_LSHORT:
-      switch (default_output_header_type(ss))
+      switch (default_output_data_format(ss))
 	{
-	case MUS_AIFC: case MUS_AIFF: case MUS_NEXT: 
-	  set_default_output_data_format(MUS_BSHORT); 
+	case MUS_LSHORT:
+	  switch (default_output_header_type(ss))
+	    {
+	    case MUS_AIFC: case MUS_AIFF: case MUS_NEXT: 
+	      set_default_output_data_format(MUS_BSHORT); 
+	      break;
+	    }
+	  break;
+	  
+	case MUS_LINT:
+	  switch (default_output_header_type(ss))
+	    {
+	    case MUS_AIFC: case MUS_AIFF: case MUS_NEXT: 
+	      set_default_output_data_format(MUS_BINT); 
+	      break;
+	    }
+	  break;
+	case MUS_LFLOAT:
+	  switch (default_output_header_type(ss))
+	    {
+	    case MUS_AIFC: case MUS_NEXT: 
+	      set_default_output_data_format(MUS_BFLOAT); 
+	      break;
+	    case MUS_AIFF:
+	      set_default_output_header_type(MUS_AIFC);
+	      set_default_output_data_format(MUS_BFLOAT); 
+	      break;
+	    case MUS_NIST: 
+	      set_default_output_header_type(MUS_RIFF); 
+	      break;
+	    }
+	  break;
+	case MUS_LDOUBLE:
+	  switch (default_output_header_type(ss))
+	    {
+	    case MUS_AIFC: case MUS_NEXT: 
+	      set_default_output_data_format(MUS_BDOUBLE); 
+	      break;
+	    case MUS_AIFF:
+	      set_default_output_header_type(MUS_AIFC);
+	      set_default_output_data_format(MUS_BDOUBLE); 
+	      break;
+	    case MUS_NIST: 
+	      set_default_output_header_type(MUS_RIFF); 
+	      break;
+	    }
 	  break;
 	}
-      break;
-
-    case MUS_LINT:
-      switch (default_output_header_type(ss))
-	{
-	case MUS_AIFC: case MUS_AIFF: case MUS_NEXT: 
-	  set_default_output_data_format(MUS_BINT); 
-	  break;
-	}
-      break;
-    case MUS_LFLOAT:
-      switch (default_output_header_type(ss))
-	{
-	case MUS_AIFC: case MUS_NEXT: 
-	  set_default_output_data_format(MUS_BFLOAT); 
-	  break;
-	case MUS_AIFF:
-	  set_default_output_header_type(MUS_AIFC);
-	  set_default_output_data_format(MUS_BFLOAT); 
-	  break;
-	case MUS_NIST: 
-	  set_default_output_header_type(MUS_RIFF); 
-	  break;
-	}
-      break;
-    case MUS_LDOUBLE:
-      switch (default_output_header_type(ss))
-	{
-	case MUS_AIFC: case MUS_NEXT: 
-	  set_default_output_data_format(MUS_BDOUBLE); 
-	  break;
-	case MUS_AIFF:
-	  set_default_output_header_type(MUS_AIFC);
-	  set_default_output_data_format(MUS_BDOUBLE); 
-	  break;
-	case MUS_NIST: 
-	  set_default_output_header_type(MUS_RIFF); 
-	  break;
-	}
-      break;
-    }
-  reflect_output_type(output_header_type_prf);
+      reflect_output_type(output_header_type_prf);
     }
 }
 
