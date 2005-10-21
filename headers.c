@@ -917,6 +917,7 @@ static int read_aiff_header(const char *filename, int chan, int overall_offset)
       if ((chunksize == 0) && /* can be empty data chunk */
 	  (hdrbuf[0] == 0) && (hdrbuf[1] == 0) && (hdrbuf[2] == 0) && (hdrbuf[3] == 0))
 	break;
+      /* fprintf(stderr,"chunk: %c%c%c%c for %d\n", hdrbuf[0], hdrbuf[1], hdrbuf[2], hdrbuf[3], chunksize); */
       if (match_four_chars((unsigned char *)hdrbuf, I_COMM))
 	{
 	  int frames;

@@ -5315,7 +5315,7 @@ static Float file_sample(mus_any *ptr, off_t samp, int chan)
    * return Float at samp (frame) 
    */
   rdin *gen = (rdin *)ptr;
-  if ((samp < 0) || (samp > gen->file_end)) return(0.0);
+  if ((samp < 0) || (samp >= gen->file_end)) return(0.0);
   if ((samp > gen->data_end) || 
       (samp < gen->data_start))
     {
@@ -5346,7 +5346,20 @@ static Float file_sample(mus_any *ptr, off_t samp, int chan)
 		gen->ibufs[i] = (mus_sample_t *)clm_calloc(gen->file_buffer_size, sizeof(mus_sample_t), "input buffer");
 	    }
 	  mus_file_seek_frame(fd, gen->data_start);
-	  mus_file_read_chans(fd, 0, gen->file_buffer_size - 1, gen->chans, gen->ibufs, gen->ibufs);
+
+	  if ((gen->data_start + gen->file_buffer_size) >= gen->file_end)
+	    mus_file_read_chans(fd, 0, gen->file_end - gen->data_start - 1, gen->chans, gen->ibufs, gen->ibufs);
+	  else mus_file_read_chans(fd, 0, gen->file_buffer_size - 1, gen->chans, gen->ibufs, gen->ibufs);
+
+	  /* we have to check file_end here because chunked files can have trailing chunks containing
+	   *   comments or whatever.  io.c (mus_file_read_*) merely calls read, and translates bytes --
+	   *   if it gets fewer than requested, it zeros from the point where the incoming file data stopped,
+	   *   but that can be far beyond the actual end of the sample data!  It is at this level that
+	   *   we know how much data is actually supposed to be in the file. 
+	   *
+	   * Also, file_end is the number of frames, so we should not read samp # file_end (see above).
+	   */
+
 	  mus_sound_close_input(fd);
 	  if (gen->data_end > gen->file_end) gen->data_end = gen->file_end;
 	}

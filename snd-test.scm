@@ -3794,6 +3794,153 @@
       (delete-file "test.aif")
       (mus-sound-forget "test.aif")
 
+      (with-output-to-file "test.aif"
+	(lambda ()
+	  ;write AIFC with trailing chunks to try to confuse file->sample
+	  (display "FORM")
+	  (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\176) ; len
+	  (display "AIFCFVER")
+	  (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\004) ; version chunk size
+	  (write-char #\242) (write-char #\200) (write-char #\121) (write-char #\100) ; version  
+	  (display "COMM")
+	  (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\046) ; COMM chunk size
+	  (write-char #\000) (write-char #\001) ; 1 chan
+	  (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\002) ; frames
+	  (write-char #\000) (write-char #\020) ; bits
+	  (write-char #\100) (write-char #\016) (write-char #\254) (write-char #\104) (write-char #\000) 
+	  (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\000) ; srate as 80-bit float (sheesh)
+	  (display "NONE") ; compression
+	  (write-char #\016) ; pascal string len
+	  (display "not compressed")
+	  (write-char #\000)
+	  (display "SSND")
+	  (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\014) ; SSND chunk size
+	  (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\000) ; SSND data loc
+	  (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\000) ; block size?
+	  (write-char #\170) (write-char #\101) (write-char #\100) (write-char #\100) ; two samples
+	  (display "AUTH")
+	  (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\004) ; AUTH chunk size
+	  (display "bil")
+	  (write-char #\000)
+	  (display "ANNO")
+	  (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\004) ; AUTH chunk size
+	  (display "cat")
+	  (write-char #\000)
+	  (display "NAME")
+	  (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\004) ; AUTH chunk size
+	  (display "dog")
+	  (write-char #\000)
+	  ))
+        (let ((gen (make-file->sample "test.aif")))
+          (if (fneq (gen 0) 0.93948) (snd-display ";file->sample chunked 0: ~A" (gen 0)))
+          (if (fneq (gen 1) 0.50195) (snd-display ";file->sample chunked 1: ~A" (gen 1)))
+          (if (fneq (gen 2) 0.0) (snd-display ";file->sample chunked eof: ~A" (gen 2)))
+          (if (fneq (gen 3) 0.0) (snd-display ";file->sample chunked eof+1: ~A" (gen 3))))
+        (let ((file (open-sound "test.aif")))
+	  (if (not (= (frames file) 2)) (snd-display ";chunked frames: ~A" (frames file)))
+          (if (fneq (sample 0) 0.93948) (snd-display ";file chunked 0: ~A" (sample 0)))
+          (if (fneq (sample 1) 0.50195) (snd-display ";file chunked 1: ~A" (sample 1)))
+          (if (fneq (sample 2) 0.0) (snd-display ";file chunked eof: ~A" (sample 2)))
+          (if (fneq (sample 3) 0.0) (snd-display ";file chunked eof+1: ~A" (sample 3)))
+	  (close-sound file))
+        (if (not (= (mus-sound-frames "test.aif") 2)) (snd-display ";chunked mus-sound-frames: ~A" (mus-sound-frames "test.aif"))) 
+        (delete-file "test.aif")
+        (mus-sound-forget "test.aif")
+
+      (with-output-to-file "test.aif"
+	(lambda ()
+	  ;write AIFC with trailing chunks to try to confuse file->sample
+	  (display "FORM")
+	  (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\176) ; len
+	  (display "AIFCFVER")
+	  (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\004) ; version chunk size
+	  (write-char #\242) (write-char #\200) (write-char #\121) (write-char #\100) ; version  
+	  (display "SSND")
+	  (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\014) ; SSND chunk size
+	  (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\000) ; SSND data loc
+	  (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\000) ; block size?
+	  (write-char #\170) (write-char #\101) (write-char #\100) (write-char #\100) ; two samples
+	  (display "COMM")
+	  (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\046) ; COMM chunk size
+	  (write-char #\000) (write-char #\001) ; 1 chan
+	  (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\002) ; frames
+	  (write-char #\000) (write-char #\020) ; bits
+	  (write-char #\100) (write-char #\016) (write-char #\254) (write-char #\104) (write-char #\000) 
+	  (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\000) ; srate as 80-bit float (sheesh)
+	  (display "NONE") ; compression
+	  (write-char #\016) ; pascal string len
+	  (display "not compressed")
+	  (write-char #\000)
+	  (display "APPL")
+	  (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\h)
+	  (display "CLM ;Written Mon 02-Nov-98 01:44 CST by root at ockeghem (Linux/X86) using Allegro CL, clm of 20-Oct-98")
+	  (write-char #\000)
+	  ))
+        (let ((gen (make-file->sample "test.aif")))
+          (if (fneq (gen 0) 0.93948) (snd-display ";file->sample chunked 0: ~A" (gen 0)))
+          (if (fneq (gen 1) 0.50195) (snd-display ";file->sample chunked 1: ~A" (gen 1)))
+          (if (fneq (gen 2) 0.0) (snd-display ";file->sample chunked eof: ~A" (gen 2)))
+          (if (fneq (gen 3) 0.0) (snd-display ";file->sample chunked eof+1: ~A" (gen 3))))
+        (let ((file (open-sound "test.aif")))
+	  (if (not (= (frames file) 2)) (snd-display ";chunked frames: ~A" (frames file)))
+          (if (fneq (sample 0) 0.93948) (snd-display ";file chunked 0: ~A" (sample 0)))
+          (if (fneq (sample 1) 0.50195) (snd-display ";file chunked 1: ~A" (sample 1)))
+          (if (fneq (sample 2) 0.0) (snd-display ";file chunked eof: ~A" (sample 2)))
+          (if (fneq (sample 3) 0.0) (snd-display ";file chunked eof+1: ~A" (sample 3)))
+	  (if (or (not (string? (comment)))
+		  (not (string=? (comment) ";Written Mon 02-Nov-98 01:44 CST by root at ockeghem (Linux/X86) using Allegro CL, clm of 20-Oct-98")))
+	      (snd-display ";chunked appl comment: ~A" (comment)))
+	  (close-sound file))
+        (delete-file "test.aif")
+        (mus-sound-forget "test.aif")
+
+      (with-output-to-file "test.aif"
+	(lambda ()
+	  ;write AIFC with trailing chunks to try to confuse file->sample
+	  (display "FORM")
+	  (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\176) ; len
+	  (display "AIFCFVER")
+	  (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\004) ; version chunk size
+	  (write-char #\242) (write-char #\200) (write-char #\121) (write-char #\100) ; version  
+	  (display "SSND")
+	  (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\014) ; SSND chunk size
+	  (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\000) ; SSND data loc
+	  (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\000) ; block size?
+	  (write-char #\170) (write-char #\101) (write-char #\100) (write-char #\100) ; two samples (one frame)
+	  (display "COMM")
+	  (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\046) ; COMM chunk size
+	  (write-char #\000) (write-char #\002) ; 2 chans
+	  (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\001) ; frames
+	  (write-char #\000) (write-char #\020) ; bits
+	  (write-char #\100) (write-char #\016) (write-char #\254) (write-char #\104) (write-char #\000) 
+	  (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\000) ; srate as 80-bit float (sheesh)
+	  (display "NONE") ; compression
+	  (write-char #\016) ; pascal string len
+	  (display "not compressed")
+	  (write-char #\000)
+	  (display "APPL")
+	  (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\h)
+	  (display "CLM ;Written Mon 02-Nov-98 01:44 CST by root at ockeghem (Linux/X86) using Allegro CL, clm of 20-Oct-98")
+	  (write-char #\000)
+	  ))
+        (let ((gen (make-file->sample "test.aif")))
+          (if (fneq (gen 0 0) 0.93948) (snd-display ";file->sample chunked 0 0: ~A" (gen 0 0)))
+          (if (fneq (gen 0 1) 0.50195) (snd-display ";file->sample chunked 0 1: ~A" (gen 0 1)))
+          (if (fneq (gen 1 0) 0.0) (snd-display ";file->sample chunked eof(stereo): ~A" (gen 1 0)))
+          (if (fneq (gen 1 1) 0.0) (snd-display ";file->sample chunked eof+1 (stereo): ~A" (gen 1 1))))
+        (let ((file (open-sound "test.aif")))
+	  (if (not (= (frames file) 1)) (snd-display ";chunked frames (1): ~A" (frames file)))
+          (if (fneq (sample 0 file 0) 0.93948) (snd-display ";file chunked 0 0: ~A" (sample 0 file 0)))
+          (if (fneq (sample 0 file 1) 0.50195) (snd-display ";file chunked 0 1: ~A" (sample 0 file 1)))
+          (if (fneq (sample 1 file 0) 0.0) (snd-display ";file chunked eof (stereo): ~A" (sample 1 file 0)))
+          (if (fneq (sample 1 file 1) 0.0) (snd-display ";file chunked eof+1 (stereo): ~A" (sample 1 file 1)))
+	  (if (or (not (string? (comment)))
+		  (not (string=? (comment) ";Written Mon 02-Nov-98 01:44 CST by root at ockeghem (Linux/X86) using Allegro CL, clm of 20-Oct-98")))
+	      (snd-display ";chunked appl comment (stereo): ~A" (comment)))
+	  (close-sound file))
+        (delete-file "test.aif")
+        (mus-sound-forget "test.aif")
+
       (reset-hook! bad-header-hook)
       (reset-hook! open-raw-sound-hook)
       (if (not (null? (sounds))) (for-each close-sound (sounds)))

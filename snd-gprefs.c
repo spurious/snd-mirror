@@ -2,8 +2,8 @@
 
 static GtkWidget *preferences_dialog = NULL;
 
-#if DEBUGGING
-/* whole file on this switch until I can get it into shape */
+/* TODO: size groups and sep+width elsewhere
+ */
 
 static bool prefs_helping = false;
 
@@ -45,7 +45,6 @@ typedef struct prefs_info {
   void (*arrow_up_func)(struct prefs_info *prf);
   void (*arrow_down_func)(struct prefs_info *prf);
   void (*text_func)(struct prefs_info *prf);
-  void (*list_func)(struct prefs_info *prf, char *value);
   void (*color_func)(struct prefs_info *prf, float r, float g, float b);
   void (*reflect_func)(struct prefs_info *prf);
   void (*save_func)(struct prefs_info *prf, FILE *fd);
@@ -83,13 +82,15 @@ static void remember_pref(prefs_info *prf,
 
 static char *trim_string(const char *str)
 {
-  int i, len, j = 0;
+  int i = 0, len, j = 0, k, m;
   char *trimmed_str;
   len = strlen(str);
   trimmed_str = (char *)CALLOC(len + 1, sizeof(char));
-  for (i = 0; i < len; i++)
-    if (!(isspace(str[i])))
-      trimmed_str[j++] = str[i];
+  while ((i < len) && (isspace(str[i]))) i++;
+  k = len - 1;
+  while ((k > i) && (isspace(str[k]))) k--;
+  for (m = i; m <= k; m++)
+    trimmed_str[j++] = str[m];
   return(trimmed_str);
 }
 
@@ -166,13 +167,15 @@ static GtkSizeGroup *label_group;
 static GtkSizeGroup *help_group;
 static GtkSizeGroup *widgets_group;
 
+static GdkColor *rscl_color, *gscl_color, *bscl_color;
+
 #define PACK_1 true
 #define PACK_2 false
 
 
 /* ---------------- row (main) label widget ---------------- */
 
-static GtkWidget *make_row_label(const char *label, GtkWidget *box, GtkWidget *top_widget)
+static GtkWidget *make_row_label(const char *label, GtkWidget *box)
 {
   GtkWidget *w;
   w = gtk_label_new(label);
@@ -185,7 +188,7 @@ static GtkWidget *make_row_label(const char *label, GtkWidget *box, GtkWidget *t
 
 /* ---------------- row inner label widget ---------------- */
 
-static GtkWidget *make_row_inner_label(const char *label, GtkWidget *left_widget, GtkWidget *box, GtkWidget *top_widget)
+static GtkWidget *make_row_inner_label(const char *label, GtkWidget *box)
 {
   GtkWidget *w;
   ASSERT_WIDGET_TYPE(GTK_IS_HBOX(box), box);
@@ -197,7 +200,7 @@ static GtkWidget *make_row_inner_label(const char *label, GtkWidget *left_widget
 
 /* ---------------- row middle separator widget ---------------- */
 
-static GtkWidget *make_row_middle_separator(GtkWidget *label, GtkWidget *box, GtkWidget *top_widget)
+static GtkWidget *make_row_middle_separator(GtkWidget *box)
 {
   GtkWidget *w;
   ASSERT_WIDGET_TYPE(GTK_IS_HBOX(box), box);
@@ -209,7 +212,7 @@ static GtkWidget *make_row_middle_separator(GtkWidget *label, GtkWidget *box, Gt
 
 /* ---------------- row inner separator widget ---------------- */
 
-static GtkWidget *make_row_inner_separator(int width, GtkWidget *left_widget, GtkWidget *box, GtkWidget *top_widget)
+static GtkWidget *make_row_inner_separator(int width, GtkWidget *box)
 {
   GtkWidget *w;
   ASSERT_WIDGET_TYPE(GTK_IS_HBOX(box), box);
@@ -221,7 +224,7 @@ static GtkWidget *make_row_inner_separator(int width, GtkWidget *left_widget, Gt
 
 /* ---------------- row help widget ---------------- */
 
-static GtkWidget *make_row_help(const char *label, prefs_info *prf, GtkWidget *box, GtkWidget *top_widget, GtkWidget *left_widget)
+static GtkWidget *make_row_help(const char *label, prefs_info *prf, GtkWidget *box)
 {
   GtkWidget *w;
   w = gtk_label_new(label);
@@ -236,7 +239,7 @@ static GtkWidget *make_row_help(const char *label, prefs_info *prf, GtkWidget *b
 
 /* ---------------- row toggle widget ---------------- */
 
-static GtkWidget *make_row_toggle(bool current_value, GtkWidget *left_widget, GtkWidget *box, GtkWidget *top_widget)
+static GtkWidget *make_row_toggle(bool current_value, GtkWidget *box)
 {
   GtkWidget *w;
   ASSERT_WIDGET_TYPE(GTK_IS_HBOX(box), box);
@@ -258,7 +261,7 @@ static void call_toggle_func(GtkWidget *w, gpointer context)
 }
 
 static prefs_info *prefs_row_with_toggle(const char *label, const char *varname, bool current_value,
-					 GtkWidget *box, GtkWidget *top_widget, 
+					 GtkWidget *box,
 					 void (*toggle_func)(prefs_info *prf))
 {
   prefs_info *prf = NULL;
@@ -273,17 +276,15 @@ static prefs_info *prefs_row_with_toggle(const char *label, const char *varname,
   gtk_box_pack_start(GTK_BOX(box), row, false, false, 0);
   gtk_widget_show(row);
 
-  prf->label = make_row_label(label, row, top_widget);
+  prf->label = make_row_label(label, row);
   hb = gtk_hbox_new(false, 0);
   gtk_size_group_add_widget(widgets_group, hb);
   gtk_box_pack_start(GTK_BOX(row), hb, false, false, 0);
   gtk_widget_show(hb);
 
-  sep = make_row_middle_separator(prf->label, hb, top_widget);
-
-  prf->toggle = make_row_toggle(current_value, sep, hb, top_widget);
-
-  make_row_help(varname, prf, row, top_widget, prf->toggle);
+  sep = make_row_middle_separator(hb);
+  prf->toggle = make_row_toggle(current_value, hb);
+  make_row_help(varname, prf, row);
 
   SG_SIGNAL_CONNECT(prf->toggle, "toggled", call_toggle_func, (gpointer)prf);
 
@@ -298,7 +299,7 @@ static prefs_info *prefs_row_with_toggle(const char *label, const char *varname,
 
 /* ---------------- toggle with text ---------------- */
 
-static GtkWidget *make_row_text(const char *text_value, int cols, GtkWidget *left_widget, GtkWidget *box, GtkWidget *top_widget)
+static GtkWidget *make_row_text(const char *text_value, int cols, GtkWidget *box)
 {
   GtkWidget *w;
   ASSERT_WIDGET_TYPE(GTK_IS_HBOX(box), box);
@@ -310,18 +311,6 @@ static GtkWidget *make_row_text(const char *text_value, int cols, GtkWidget *lef
   if (cols > 0)
     gtk_entry_set_width_chars(GTK_ENTRY(w), cols);
   gtk_editable_set_editable(GTK_EDITABLE(w), true);
-#if 0
-  gtk_widget_modify_base(w, GTK_STATE_NORMAL, ss->sgx->white);
-  gtk_widget_modify_base(w, GTK_STATE_ACTIVE, ss->sgx->white);
-  gtk_widget_modify_base(w, GTK_STATE_INSENSITIVE, ss->sgx->white);
-  gtk_widget_modify_base(w, GTK_STATE_PRELIGHT, ss->sgx->white);
-  gtk_widget_modify_base(w, GTK_STATE_SELECTED, ss->sgx->white);
-  gtk_widget_modify_bg(w, GTK_STATE_NORMAL, ss->sgx->white);
-  gtk_widget_modify_bg(w, GTK_STATE_ACTIVE, ss->sgx->white);
-  gtk_widget_modify_bg(w, GTK_STATE_INSENSITIVE, ss->sgx->white);
-  gtk_widget_modify_bg(w, GTK_STATE_PRELIGHT, ss->sgx->white);
-  gtk_widget_modify_bg(w, GTK_STATE_SELECTED, ss->sgx->white);
-#endif
   gtk_box_pack_start(GTK_BOX(box), w, false, false, 0);
   gtk_widget_show(w);
   return(w);
@@ -336,29 +325,34 @@ static void call_text_func(GtkWidget *w, gpointer context)
 
 static prefs_info *prefs_row_with_toggle_with_text(const char *label, const char *varname, bool current_value,
 						   const char *text_label, const char *text_value, int cols,
-						   GtkWidget *box, GtkWidget *top_widget, 
+						   GtkWidget *box,
 						   void (*toggle_func)(prefs_info *prf),
 						   void (*text_func)(prefs_info *prf))
 {
   prefs_info *prf = NULL;
-  GtkWidget *sep, *sep1, *lab1, *hb;
+  GtkWidget *sep, *sep1, *lab1, *hb, *row;
 
   prf = (prefs_info *)CALLOC(1, sizeof(prefs_info));
   prf->var_name = varname;
   prf->toggle_func = toggle_func;
   prf->text_func = text_func;
 
-  prf->label = make_row_label(label, box, top_widget);
+  row = gtk_hbox_new(false, 0);
+  gtk_box_pack_start(GTK_BOX(box), row, false, false, 0);
+  gtk_widget_show(row);
+
+  prf->label = make_row_label(label, row);
   hb = gtk_hbox_new(false, 0);
-  gtk_box_pack_start(GTK_BOX(box), hb, false, false, 0);
+  gtk_size_group_add_widget(widgets_group, hb);
+  gtk_box_pack_start(GTK_BOX(row), hb, false, false, 0);
   gtk_widget_show(hb);
 
-  sep = make_row_middle_separator(prf->label, hb, top_widget);
-  prf->toggle = make_row_toggle(current_value, sep, hb, top_widget);
-  sep1 = make_row_inner_separator(16, prf->toggle, hb, top_widget);
-  lab1 = make_row_inner_label(text_label, sep1, hb, top_widget);
-  prf->text= make_row_text(text_value, cols, lab1, hb, top_widget);
-  make_row_help(varname, prf, box, top_widget, prf->text);
+  sep = make_row_middle_separator(hb);
+  prf->toggle = make_row_toggle(current_value, hb);
+  sep1 = make_row_inner_separator(16, hb);
+  lab1 = make_row_inner_label(text_label, hb);
+  prf->text= make_row_text(text_value, cols, hb);
+  make_row_help(varname, prf, row);
 
   SG_SIGNAL_CONNECT(prf->toggle, "toggled", call_toggle_func, (gpointer)prf);
   SG_SIGNAL_CONNECT(prf->text, "activate", call_text_func, (gpointer)prf);
@@ -378,29 +372,34 @@ static prefs_info *prefs_row_with_toggle_with_text(const char *label, const char
 
 static prefs_info *prefs_row_with_text_with_toggle(const char *label, const char *varname, bool current_value,
 						   const char *toggle_label, const char *text_value, int cols,
-						   GtkWidget *box, GtkWidget *top_widget, 
+						   GtkWidget *box,
 						   void (*toggle_func)(prefs_info *prf),
 						   void (*text_func)(prefs_info *prf))
 {
   prefs_info *prf = NULL;
-  GtkWidget *sep, *sep1, *lab1, *hb;
+  GtkWidget *sep, *sep1, *lab1, *hb, *row;
 
   prf = (prefs_info *)CALLOC(1, sizeof(prefs_info));
   prf->var_name = varname;
   prf->toggle_func = toggle_func;
   prf->text_func = text_func;
 
-  prf->label = make_row_label(label, box, top_widget);
+  row = gtk_hbox_new(false, 0);
+  gtk_box_pack_start(GTK_BOX(box), row, false, false, 0);
+  gtk_widget_show(row);
+
+  prf->label = make_row_label(label, row);
   hb = gtk_hbox_new(false, 0);
-  gtk_box_pack_start(GTK_BOX(box), hb, false, false, 0);
+  gtk_size_group_add_widget(widgets_group, hb);
+  gtk_box_pack_start(GTK_BOX(row), hb, false, false, 0);
   gtk_widget_show(hb);
 
-  sep = make_row_middle_separator(prf->label, hb, top_widget);
-  prf->text = make_row_text(text_value, cols, sep, hb, top_widget);
-  sep1 = make_row_inner_separator(8, prf->text, hb, top_widget);
-  lab1 = make_row_inner_label(toggle_label, sep1, hb, top_widget);
-  prf->toggle = make_row_toggle(current_value, lab1, hb, top_widget);  
-  make_row_help(varname, prf, box, top_widget, prf->text);
+  sep = make_row_middle_separator(hb);
+  prf->text = make_row_text(text_value, cols, hb);
+  sep1 = make_row_inner_separator(8, hb);
+  lab1 = make_row_inner_label(toggle_label, hb);
+  prf->toggle = make_row_toggle(current_value, hb);  
+  make_row_help(varname, prf, row);
   
   SG_SIGNAL_CONNECT(prf->toggle, "toggled", call_toggle_func, (gpointer)prf);
   SG_SIGNAL_CONNECT(prf->text, "activate", call_text_func, (gpointer)prf);
@@ -430,7 +429,7 @@ static void call_radio_func(GtkWidget *w, gpointer context)
 
 static prefs_info *prefs_row_with_radio_box(const char *label, const char *varname, 
 					    const char **labels, int num_labels, int current_value,
-					    GtkWidget *box, GtkWidget *top_widget, 
+					    GtkWidget *box,
 					    void (*toggle_func)(prefs_info *prf))
 {
   int i;
@@ -444,14 +443,14 @@ static prefs_info *prefs_row_with_radio_box(const char *label, const char *varna
   gtk_box_pack_start(GTK_BOX(box), row, false, false, 0);
   gtk_widget_show(row);
 
-  prf->label = make_row_label(label, row, top_widget);
+  prf->label = make_row_label(label, row);
 
   hb = gtk_hbox_new(false, 0);
   gtk_size_group_add_widget(widgets_group, hb);
   gtk_box_pack_start(GTK_BOX(row), hb, false, false, 0);
   gtk_widget_show(hb);
 
-  sep = make_row_middle_separator(prf->label, hb, top_widget);
+  sep = make_row_middle_separator(hb);
 
   prf->toggle = gtk_hbox_new(false, 0);
   gtk_box_pack_start(GTK_BOX(hb), prf->toggle, false, false, 0);
@@ -474,7 +473,7 @@ static prefs_info *prefs_row_with_radio_box(const char *label, const char *varna
   if (current_value != -1)
     set_toggle_button(prf->radio_buttons[current_value], true, false, NULL);
 
-  make_row_help(varname, prf, row, top_widget, prf->toggle);
+  make_row_help(varname, prf, row);
 
   SG_SIGNAL_CONNECT(prf->label, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
   SG_SIGNAL_CONNECT(prf->label, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
@@ -501,47 +500,57 @@ static void call_scale_text_func(GtkWidget *w, gpointer context)
     (*(prf->text_func))(prf);
 }
 
+static void prefs_scale_callback(GtkWidget *w, gpointer context)
+{
+  prefs_info *prf = (prefs_info *)context;
+  float_to_textfield(prf->text, GTK_ADJUSTMENT(prf->adj)->value * prf->scale_max);
+}
+
 static prefs_info *prefs_row_with_scale(const char *label, const char *varname, 
 					Float max_val, Float current_value,
-					GtkWidget *box, GtkWidget *top_widget, 
+					GtkWidget *box,
 					void (*scale_func)(prefs_info *prf),
 					void (*text_func)(prefs_info *prf))
 {
-  int i, n;
   prefs_info *prf = NULL;
-  GtkWidget *sep, *hb;
+  GtkWidget *sep, *hb, *row;
   char *str;
-
 
   prf = (prefs_info *)CALLOC(1, sizeof(prefs_info));
   prf->var_name = varname;
   prf->scale_max = max_val;
 
-  prf->label = make_row_label(label, box, top_widget);
+  row = gtk_hbox_new(false, 0);
+  gtk_box_pack_start(GTK_BOX(box), row, false, false, 0);
+  gtk_widget_show(row);
+
+  prf->label = make_row_label(label, row);
   hb = gtk_hbox_new(false, 0);
-  gtk_box_pack_start(GTK_BOX(box), hb, false, false, 0);
+  gtk_size_group_add_widget(widgets_group, hb);
+  gtk_box_pack_start(GTK_BOX(row), hb, false, false, 0);
   gtk_widget_show(hb);
 
-  sep = make_row_middle_separator(prf->label, hb, top_widget);
+  sep = make_row_middle_separator(hb);
   
   str = (char *)CALLOC(12, sizeof(char));
   mus_snprintf(str, 12, "%.3f", current_value);
-  prf->text = make_row_text(str, 6, sep, hb, top_widget);
+  prf->text = make_row_text(str, 6, hb);
   FREE(str);
 
-  prf->adj = gtk_adjustment_new(0.0, 0.0, 1.01, 0.001, 0.01, .01);
+  prf->adj = gtk_adjustment_new(current_value /max_val, 0.0, 1.01, 0.001, 0.01, .01);
   prf->scale = gtk_hscale_new(GTK_ADJUSTMENT(prf->adj));
-  gtk_box_pack_start(GTK_BOX(hb), prf->scale, false, false, 0);
+  gtk_box_pack_start(GTK_BOX(hb), prf->scale, true, true, 4);
   gtk_widget_show(prf->scale);
   gtk_range_set_update_policy(GTK_RANGE(GTK_SCALE(prf->scale)), GTK_UPDATE_CONTINUOUS);
   gtk_scale_set_draw_value(GTK_SCALE(prf->scale), false);
   
-  make_row_help(varname, prf, box, top_widget, prf->scale);
+  make_row_help(varname, prf, row);
 
   prf->scale_func = scale_func;
   prf->text_func = text_func;
 
   SG_SIGNAL_CONNECT(prf->scale, "value_changed", call_scale_func, (gpointer)prf);
+  SG_SIGNAL_CONNECT(prf->scale, "value_changed", prefs_scale_callback, (gpointer)prf);
   SG_SIGNAL_CONNECT(prf->text, "activate", call_scale_text_func, (gpointer)prf);
 
   SG_SIGNAL_CONNECT(prf->label, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
@@ -558,7 +567,7 @@ static prefs_info *prefs_row_with_scale(const char *label, const char *varname,
 /* ---------------- text row ---------------- */
 
 static prefs_info *prefs_row_with_text(const char *label, const char *varname, const char *value,
-				       GtkWidget *box, GtkWidget *top_widget,
+				       GtkWidget *box,
 				       void (*text_func)(prefs_info *prf))
 {
   prefs_info *prf = NULL;
@@ -572,16 +581,16 @@ static prefs_info *prefs_row_with_text(const char *label, const char *varname, c
   gtk_box_pack_start(GTK_BOX(box), row, false, false, 0);
   gtk_widget_show(row);
 
-  prf->label = make_row_label(label, row, top_widget);
+  prf->label = make_row_label(label, row);
   hb = gtk_hbox_new(false, 0);
   gtk_size_group_add_widget(widgets_group, hb);
   gtk_box_pack_start(GTK_BOX(row), hb, false, false, 0);
   gtk_widget_show(hb);
 
-  sep = make_row_middle_separator(prf->label, hb, top_widget);
-  prf->text = make_row_text(value, 0, sep, hb, top_widget);
+  sep = make_row_middle_separator(hb);
+  prf->text = make_row_text(value, 0, hb);
   
-  make_row_help(varname, prf, row, top_widget, prf->text);
+  make_row_help(varname, prf, row);
 
   prf->text_func = text_func;
 
@@ -600,7 +609,7 @@ static prefs_info *prefs_row_with_text(const char *label, const char *varname, c
 
 static prefs_info *prefs_row_with_two_texts(const char *label, const char *varname,
 					    const char *label1, const char *text1, const char *label2, const char *text2, int cols,
-					    GtkWidget *box, GtkWidget *top_widget,
+					    GtkWidget *box,
 					    void (*text_func)(prefs_info *prf))
 {
   prefs_info *prf = NULL;
@@ -613,19 +622,19 @@ static prefs_info *prefs_row_with_two_texts(const char *label, const char *varna
   gtk_box_pack_start(GTK_BOX(box), row, false, false, 0);
   gtk_widget_show(row);
 
-  prf->label = make_row_label(label, row, top_widget);
+  prf->label = make_row_label(label, row);
   hb = gtk_hbox_new(false, 0);
   gtk_size_group_add_widget(widgets_group, hb);
   gtk_box_pack_start(GTK_BOX(row), hb, false, false, 0);
   gtk_widget_show(hb);
 
-  sep = make_row_middle_separator(prf->label, hb, top_widget);
-  lab1 = make_row_inner_label(label1, sep, hb, top_widget);
-  prf->text = make_row_text(text1, cols, lab1, hb, top_widget);
-  lab2 = make_row_inner_label(label2, prf->text, hb, top_widget);  
-  prf->rtxt = make_row_text(text2, cols, lab2, hb, top_widget);
+  sep = make_row_middle_separator(hb);
+  lab1 = make_row_inner_label(label1, hb);
+  prf->text = make_row_text(text1, cols, hb);
+  lab2 = make_row_inner_label(label2, hb);  
+  prf->rtxt = make_row_text(text2, cols, hb);
 
-  make_row_help(varname, prf, row, top_widget, prf->rtxt);
+  make_row_help(varname, prf, row);
 
   prf->text_func = text_func;
 
@@ -725,11 +734,10 @@ static gboolean call_arrow_up_press(GtkWidget *w, GdkEventButton *ev, gpointer c
 }
 
 static prefs_info *prefs_row_with_number(const char *label, const char *varname, const char *value, int cols,
-					 GtkWidget *box, GtkWidget *top_widget,
+					 GtkWidget *box,
  					 void (*arrow_up_func)(prefs_info *prf), void (*arrow_down_func)(prefs_info *prf), 
 					 void (*text_func)(prefs_info *prf))
 {
-  int n;
   prefs_info *prf = NULL;
   GtkWidget *sep, *hb, *row, *ev_up, *ev_down;
 
@@ -740,15 +748,15 @@ static prefs_info *prefs_row_with_number(const char *label, const char *varname,
   gtk_box_pack_start(GTK_BOX(box), row, false, false, 0);
   gtk_widget_show(row);
 
-  prf->label = make_row_label(label, row, top_widget);
+  prf->label = make_row_label(label, row);
 
   hb = gtk_hbox_new(false, 0);
   gtk_size_group_add_widget(widgets_group, hb);
   gtk_box_pack_start(GTK_BOX(row), hb, false, false, 0);
   gtk_widget_show(hb);
 
-  sep = make_row_middle_separator(prf->label, hb, top_widget);
-  prf->text = make_row_text(value, cols, sep, hb, top_widget);
+  sep = make_row_middle_separator(hb);
+  prf->text = make_row_text(value, cols, hb);
   
   ev_down = gtk_event_box_new();
   gtk_box_pack_start(GTK_BOX(hb), ev_down, false, false, 0);
@@ -770,7 +778,7 @@ static prefs_info *prefs_row_with_number(const char *label, const char *varname,
   gtk_box_pack_end(GTK_BOX(hb), prf->error, true, false, 0);
   gtk_widget_show(prf->error);
 
-  make_row_help(varname, prf, row, top_widget, prf->error);
+  make_row_help(varname, prf, row);
 
   prf->text_func = text_func;
   prf->arrow_up_func = arrow_up_func;
@@ -801,75 +809,55 @@ static prefs_info *prefs_row_with_number(const char *label, const char *varname,
 
 /* ---------------- list row ---------------- */
 
-typedef struct {
-  prefs_info *prf;
-  char *value;
-} list_entry;
-
-static list_entry *make_list_entry(prefs_info *prf, char *value)
-{
-  list_entry *le;
-  le = (list_entry *)CALLOC(1, sizeof(list_entry));
-  le->prf = prf;
-  le->value = value;
-  return(le);
-}
-
-static void prefs_list_callback(GtkWidget *w, gpointer context)
-{
-  list_entry *le = (list_entry *)context;
-  if ((le) && (le->prf->list_func))
-    (*(le->prf->list_func))(le->prf, le->value);
-}
-
 static prefs_info *prefs_row_with_completed_list(const char *label, const char *varname, const char *value,
 						 const char **values, int num_values,
-						 GtkWidget *box, GtkWidget *top_widget,
+						 GtkWidget *box,
 						 void (*text_func)(prefs_info *prf),
-						 char *(*completion_func)(char *text, void *context), void *completion_context,
-						 void (*list_func)(prefs_info *prf, char *value))
+						 char *(*completion_func)(char *text, void *context), void *completion_context)
 {
-  int n, i, cols = 0;
+  int i;
   prefs_info *prf = NULL;
-  GtkWidget *sep, *sbar, *hb;
+  GtkWidget *sep, *hb, *row;
 
   prf = (prefs_info *)CALLOC(1, sizeof(prefs_info));
   prf->var_name = varname;
 
-  prf->label = make_row_label(label, box, top_widget);
+  row = gtk_hbox_new(false, 0);
+  gtk_box_pack_start(GTK_BOX(box), row, false, false, 0);
+  gtk_widget_show(row);
+
+  prf->label = make_row_label(label, row);
   hb = gtk_hbox_new(false, 0);
-  gtk_box_pack_start(GTK_BOX(box), hb, false, false, 0);
+  gtk_size_group_add_widget(widgets_group, hb);
+  gtk_box_pack_start(GTK_BOX(row), hb, false, false, 0);
   gtk_widget_show(hb);
 
-  sep = make_row_middle_separator(prf->label, hb, top_widget);  
+  sep = make_row_middle_separator(hb);  
   
-  /* get text widget size */
+  prf->text = gtk_combo_box_entry_new_text();
   for (i = 0; i < num_values; i++)
-    if (values[i])
-      {
-	int len;
-	len = strlen(values[i]);
-	if (len > cols) cols = len;
-      }
+    gtk_combo_box_append_text(GTK_COMBO_BOX(prf->text), values[i]);
+  gtk_entry_set_text(GTK_ENTRY(GTK_BIN(prf->text)->child), value);
+  gtk_box_pack_start(GTK_BOX(hb), prf->text, false, false, 4);
+  gtk_widget_show(prf->text);
 
-  /* text + menu */
+  prf->error = gtk_label_new("");
+  gtk_box_pack_end(GTK_BOX(hb), prf->error, true, false, 0);
+  gtk_widget_show(prf->error);
 
-  make_row_help(varname, prf, box, top_widget, prf->error);
+  make_row_help(varname, prf, row);
 
   prf->text_func = text_func;
-  prf->list_func = list_func;
-#if 0
-  SG_SIGNAL_CONNECT(prf->text, "activate", call_text_func, (gpointer)prf);
+
+  SG_SIGNAL_CONNECT(prf->text, "changed", call_text_func, (gpointer)prf);
 
   SG_SIGNAL_CONNECT(prf->label, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
   SG_SIGNAL_CONNECT(prf->text, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
-  SG_SIGNAL_CONNECT(prf->arrow_right, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
   SG_SIGNAL_CONNECT(prf->error, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
   SG_SIGNAL_CONNECT(prf->label, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
   SG_SIGNAL_CONNECT(prf->text, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
-  SG_SIGNAL_CONNECT(prf->arrow_right, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
   SG_SIGNAL_CONNECT(prf->error, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
-#endif
+
   return(prf);
 }
 
@@ -987,42 +975,29 @@ static void prefs_call_color_func_callback(GtkWidget *w, gpointer context)
 
 static prefs_info *prefs_color_selector_row(const char *label, const char *varname, 
 					    color_t current_pixel,
-					    GtkWidget *box, GtkWidget *top_widget,
+					    GtkWidget *box,
 					    void (*color_func)(prefs_info *prf, float r, float g, float b))
 {
-  int n;
   prefs_info *prf = NULL;
-  GtkWidget *sep, *sep1, *hb, *row;
-
-  GdkColor *tmp;
+  GtkWidget *sep, *sep1, *hb, *row, *row2, *sep2, *sep3;
   float r = 0.0, g = 0.0, b = 0.0;
 
   prf = (prefs_info *)CALLOC(1, sizeof(prefs_info));
   prf->var_name = varname;
-#if 0
   pixel_to_rgb(current_pixel, &r, &g, &b);
-  tmp = rgb_to_color(1.0, 0.0, 0.0);
-  red = tmp->pixel;
-  FREE(tmp);
-  tmp = rgb_to_color(0.0, 1.0, 0.0);
-  green = tmp->pixel;
-  FREE(tmp);
-  tmp = rgb_to_color(0.0, 0.0, 1.0);
-  blue = tmp->pixel;
-  FREE(tmp);
-#endif
 
+  /* first row */
   row = gtk_hbox_new(false, 0);
   gtk_box_pack_start(GTK_BOX(box), row, false, false, 0);
   gtk_widget_show(row);
 
-  prf->label = make_row_label(label, row, top_widget);
+  prf->label = make_row_label(label, row);
   hb = gtk_hbox_new(false, 0);
   gtk_size_group_add_widget(widgets_group, hb);
   gtk_box_pack_start(GTK_BOX(row), hb, false, false, 0);
   gtk_widget_show(hb);
 
-  sep = make_row_middle_separator(prf->label, hb, top_widget);    
+  sep = make_row_middle_separator(hb);    
 
   prf->color_texts = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
   prf->color = gtk_drawing_area_new();
@@ -1031,26 +1006,61 @@ static prefs_info *prefs_color_selector_row(const char *label, const char *varna
   gtk_widget_modify_bg(prf->color, GTK_STATE_NORMAL, current_pixel);
   gtk_widget_show(prf->color);
   
-  sep1 = make_row_inner_separator(8, prf->color, hb, top_widget);
+  sep1 = make_row_inner_separator(8, hb);
   
-  prf->rtxt = make_row_text(NULL, 6, sep1, hb, top_widget);
+  prf->rtxt = make_row_text(NULL, 6, hb);
   gtk_size_group_add_widget(prf->color_texts, prf->rtxt);
   float_to_textfield(prf->rtxt, r);
 
-  prf->gtxt = make_row_text(NULL, 6, prf->rtxt, hb, top_widget);
+  prf->gtxt = make_row_text(NULL, 6, hb);
   gtk_size_group_add_widget(prf->color_texts, prf->gtxt);
   float_to_textfield(prf->gtxt, g);
 
-  prf->btxt = make_row_text(NULL, 6, prf->gtxt, hb, top_widget);
+  prf->btxt = make_row_text(NULL, 6, hb);
   gtk_size_group_add_widget(prf->color_texts, prf->btxt);
   float_to_textfield(prf->btxt, b);
+  make_row_help(varname, prf, row);
 
+  /* second row */
 
+  row2 = gtk_hbox_new(false, 0);
+  gtk_box_pack_start(GTK_BOX(box), row2, false, false, 0);
+  gtk_widget_show(row2);
 
+  sep2 = make_row_inner_separator(20, row2);
 
-  make_row_help(varname, prf, row, top_widget, prf->btxt);
+  prf->radj = gtk_adjustment_new(r, 0.0, 1.01, 0.001, 0.01, .01);
+  prf->rscl = gtk_hscale_new(GTK_ADJUSTMENT(prf->radj));
+  gtk_box_pack_start(GTK_BOX(row2), prf->rscl, true, true, 4);
+  /* normal = slider, active = trough, selected unused */
+  gtk_widget_modify_bg(prf->rscl, GTK_STATE_NORMAL, rscl_color);
+  gtk_widget_modify_bg(prf->rscl, GTK_STATE_PRELIGHT, rscl_color);
+  gtk_widget_show(prf->rscl);
+  gtk_range_set_update_policy(GTK_RANGE(GTK_SCALE(prf->rscl)), GTK_UPDATE_CONTINUOUS);
+  gtk_scale_set_draw_value(GTK_SCALE(prf->rscl), false);
 
-#if 0
+  prf->gadj = gtk_adjustment_new(g, 0.0, 1.01, 0.001, 0.01, .01);
+  prf->gscl = gtk_hscale_new(GTK_ADJUSTMENT(prf->gadj));
+  gtk_box_pack_start(GTK_BOX(row2), prf->gscl, true, true, 4);
+  gtk_widget_modify_bg(prf->gscl, GTK_STATE_NORMAL, gscl_color);
+  gtk_widget_modify_bg(prf->gscl, GTK_STATE_PRELIGHT, gscl_color);
+  gtk_widget_show(prf->gscl);
+  gtk_range_set_update_policy(GTK_RANGE(GTK_SCALE(prf->gscl)), GTK_UPDATE_CONTINUOUS);
+  gtk_scale_set_draw_value(GTK_SCALE(prf->gscl), false);
+
+  prf->badj = gtk_adjustment_new(b, 0.0, 1.01, 0.001, 0.01, .01);
+  prf->bscl = gtk_hscale_new(GTK_ADJUSTMENT(prf->badj));
+  gtk_box_pack_start(GTK_BOX(row2), prf->bscl, true, true, 4);
+  gtk_widget_modify_bg(prf->bscl, GTK_STATE_NORMAL, bscl_color);
+  gtk_widget_modify_bg(prf->bscl, GTK_STATE_PRELIGHT, bscl_color);
+  gtk_widget_show(prf->bscl);
+  gtk_range_set_update_policy(GTK_RANGE(GTK_SCALE(prf->bscl)), GTK_UPDATE_CONTINUOUS);
+  gtk_scale_set_draw_value(GTK_SCALE(prf->bscl), false);
+
+  sep3 = gtk_hseparator_new();
+  gtk_box_pack_end(GTK_BOX(row2), sep3, false, false, 20);
+  gtk_widget_show(sep3);
+
   SG_SIGNAL_CONNECT(prf->rtxt, "activate", prefs_r_callback, (gpointer)prf);
   SG_SIGNAL_CONNECT(prf->gtxt, "activate", prefs_g_callback, (gpointer)prf);
   SG_SIGNAL_CONNECT(prf->btxt, "activate", prefs_b_callback, (gpointer)prf);
@@ -1058,6 +1068,10 @@ static prefs_info *prefs_color_selector_row(const char *label, const char *varna
   SG_SIGNAL_CONNECT(prf->radj, "value_changed", prefs_call_color_func_callback, (gpointer)prf);
   SG_SIGNAL_CONNECT(prf->gadj, "value_changed", prefs_call_color_func_callback, (gpointer)prf);
   SG_SIGNAL_CONNECT(prf->badj, "value_changed", prefs_call_color_func_callback, (gpointer)prf);
+
+  SG_SIGNAL_CONNECT(prf->radj, "value_changed", prefs_color_callback, (gpointer)prf);
+  SG_SIGNAL_CONNECT(prf->gadj, "value_changed", prefs_color_callback, (gpointer)prf);
+  SG_SIGNAL_CONNECT(prf->badj, "value_changed", prefs_color_callback, (gpointer)prf);
 
   SG_SIGNAL_CONNECT(prf->label, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
   SG_SIGNAL_CONNECT(prf->label, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
@@ -1075,7 +1089,7 @@ static prefs_info *prefs_color_selector_row(const char *label, const char *varna
   SG_SIGNAL_CONNECT(prf->btxt, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
   SG_SIGNAL_CONNECT(prf->bscl, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
   SG_SIGNAL_CONNECT(prf->bscl, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
-#endif
+
   prf->color_func = color_func;
 
   return(prf);
@@ -1097,7 +1111,7 @@ static GtkWidget *make_inter_topic_separator(GtkWidget *topics)
 
 /* ---------------- variable separator ---------------- */
 
-static GtkWidget *make_inter_variable_separator(GtkWidget *topics, GtkWidget *top_widget)
+static GtkWidget *make_inter_variable_separator(GtkWidget *topics)
 {
   GtkWidget *w;
   ASSERT_WIDGET_TYPE(GTK_IS_VBOX(topics), topics);
@@ -1451,17 +1465,15 @@ static void selection_creates_region_toggle(prefs_info *prf)
 
 static void scale_set_color(prefs_info *prf, color_t pixel)
 {
-#if 0
   float r = 0.0, g = 0.0, b = 0.0;
   pixel_to_rgb(pixel, &r, &g, &b);
   float_to_textfield(prf->rtxt, r);
-  XmScaleSetValue(prf->rscl, (int)(100 * r));
+  gtk_adjustment_set_value(GTK_ADJUSTMENT(prf->radj), r);
   float_to_textfield(prf->gtxt, g);
-  XmScaleSetValue(prf->gscl, (int)(100 * g));
+  gtk_adjustment_set_value(GTK_ADJUSTMENT(prf->gadj), g);
   float_to_textfield(prf->btxt, b);
-  XmScaleSetValue(prf->bscl, (int)(100 * b));
-  XtVaSetValues(prf->color, XmNbackground, pixel, NULL);
-#endif
+  gtk_adjustment_set_value(GTK_ADJUSTMENT(prf->badj), b);
+  gtk_widget_modify_bg(prf->color, GTK_STATE_NORMAL, pixel);
 }
 
 static color_t saved_basic_color;
@@ -1474,10 +1486,7 @@ static void reflect_basic_color(prefs_info *prf)
 
 static void basic_color_func(prefs_info *prf, float r, float g, float b)
 {
-  GdkColor *tmp;
-  tmp = rgb_to_color(r, g, b);
-  set_basic_color(tmp);
-  FREE(tmp);
+  set_basic_color(rgb_to_color(r, g, b));
 }
 
 /* ---------------- highlight-color ---------------- */
@@ -1492,10 +1501,7 @@ static void reflect_highlight_color(prefs_info *prf)
 
 static void highlight_color_func(prefs_info *prf, float r, float g, float b)
 {
-  GdkColor *tmp;
-  tmp = rgb_to_color(r, g, b);
-  set_highlight_color(tmp);
-  FREE(tmp);
+  set_highlight_color(rgb_to_color(r, g, b));
 }
 
 /* ---------------- position-color ---------------- */
@@ -1510,10 +1516,7 @@ static void reflect_position_color(prefs_info *prf)
 
 static void position_color_func(prefs_info *prf, float r, float g, float b)
 {
-  GdkColor *tmp;
-  tmp = rgb_to_color(r, g, b);
-  set_position_color(tmp);
-  FREE(tmp);
+  set_position_color(rgb_to_color(r, g, b));
 }
 
 /* ---------------- zoom-color ---------------- */
@@ -1528,10 +1531,7 @@ static void reflect_zoom_color(prefs_info *prf)
 
 static void zoom_color_func(prefs_info *prf, float r, float g, float b)
 {
-  GdkColor *tmp;
-  tmp = rgb_to_color(r, g, b);
-  set_zoom_color(tmp);
-  FREE(tmp);
+  set_zoom_color(rgb_to_color(r, g, b));
 }
 
 /* ---------------- verbose-cursor ---------------- */
@@ -1628,33 +1628,28 @@ static const char *cursor_styles[2] = {"cross", "line"};
 
 static void reflect_cursor_style(prefs_info *prf)
 {
-  GtkWidget *w;
-#if 0
-  w = find_radio_button(prf, cursor_style(ss));
-  if (w)
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), XmSET);
-  else fprintf(stderr, "can't find %s\n", cursor_styles[cursor_style(ss)]);
-  if ((prf->radio_button) &&
-      (XmIsToggleButton(prf->radio_button)) &&
-      (w != prf->radio_button))
+  int which = -1;
+  if (cursor_style(ss) == CURSOR_CROSS)
+    which = 0;
+  else 
     {
-      /* motif docs are incorrect -- the set above does not unset the currently set radio button */
-      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(prf->radio_button), XmUNSET);
-      prf->radio_button = w;
+      if (cursor_style(ss) == CURSOR_LINE)
+	which = 1;
     }
-#endif
+  if (which != -1)
+    set_toggle_button(prf->radio_buttons[which], true, false, NULL);
 }
 
 static void cursor_style_choice(prefs_info *prf)
 {
-#if 0
   if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prf->radio_button)))
     {
-      if (strcmp(XtName(prf->radio_button), "line") == 0)
+      int which;
+      which = get_user_int_data(G_OBJECT(prf->radio_button));
+      if (which == 1)
 	in_set_cursor_style(CURSOR_LINE);
       else in_set_cursor_style(CURSOR_CROSS);
     }
-#endif
 }
 
 /* ---------------- cursor-color ---------------- */
@@ -1669,11 +1664,8 @@ static void reflect_cursor_color(prefs_info *prf)
 
 static void cursor_color_func(prefs_info *prf, float r, float g, float b)
 {
-  GdkColor *tmp;
-  tmp = rgb_to_color(r, g, b);
-  color_cursor(tmp);
+  color_cursor(rgb_to_color(r, g, b));
   for_each_chan(update_graph);
-  FREE(tmp);
 }
 
 
@@ -2199,48 +2191,13 @@ static const char *graph_styles[5] = {"line", "dot", "filled", "dot+line", "loll
 
 static void reflect_graph_style(prefs_info *prf)
 {
-  GtkWidget *w;
-#if 0
-  w = find_radio_button(prf, graph_style(ss));
-  if (w)
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), XmSET);
-  else fprintf(stderr, "can't find %s\n", graph_styles[graph_style(ss)]);
-  if ((prf->radio_button) &&
-      (XmIsToggleButton(prf->radio_button)) &&
-      (w != prf->radio_button))
-    {
-      /* motif docs are incorrect -- the set above does not unset the currently set radio button */
-      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(prf->radio_button), XmUNSET);
-      prf->radio_button = w;
-    }
-#endif
+  set_toggle_button(prf->radio_buttons[(int)graph_style(ss)], true, false, NULL);
 }
 
 static void graph_style_choice(prefs_info *prf)
 {
-#if 0
   if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prf->radio_button)))
-    {
-      if (strcmp(XtName(prf->radio_button), "line") == 0)
-	in_set_graph_style(GRAPH_LINES);
-      else
-	{
-	  if (strcmp(XtName(prf->radio_button), "dot") == 0)
-	    in_set_graph_style(GRAPH_DOTS);
-	  else
-	    {
-	      if (strcmp(XtName(prf->radio_button), "filled") == 0)
-		in_set_graph_style(GRAPH_FILLED);
-	      else
-		{
-		  if (strcmp(XtName(prf->radio_button), "dot+line") == 0)
-		    in_set_graph_style(GRAPH_DOTS_AND_LINES);
-		  else in_set_graph_style(GRAPH_LOLLIPOPS);
-		}
-	    }
-	}
-    }
-#endif
+    in_set_graph_style((graph_style_t)get_user_int_data(G_OBJECT(prf->radio_button)));
 }
 
 /* ---------------- dot-size ---------------- */
@@ -2338,37 +2295,13 @@ static const char *channel_styles[3] = {"separate", "combined", "superimposed"};
 
 static void reflect_channel_style(prefs_info *prf)
 {
-  GtkWidget *w;
-#if 0
-  w = find_radio_button(prf, (int)channel_style(ss));
-  if (w)
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), XmSET);
-  else fprintf(stderr, "can't find %s\n", channel_styles[(int)channel_style(ss)]);
-  if ((prf->radio_button) &&
-      (XmIsToggleButton(prf->radio_button)) &&
-      (w != prf->radio_button))
-    {
-      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(prf->radio_button), XmUNSET);
-      prf->radio_button = w;
-    }
-#endif
+  set_toggle_button(prf->radio_buttons[(int)channel_style(ss)], true, false, NULL);
 }
 
 static void channel_style_choice(prefs_info *prf)
 {
-#if 0
   if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prf->radio_button)))
-    {
-      if (strcmp(XtName(prf->radio_button), "separate") == 0)
-	in_set_channel_style(CHANNELS_SEPARATE);
-      else
-	{
-	  if (strcmp(XtName(prf->radio_button), "combined") == 0)
-	    in_set_channel_style(CHANNELS_COMBINED);
-	  else in_set_channel_style(CHANNELS_SUPERIMPOSED);
-	}
-    }
-#endif
+    in_set_channel_style((channel_style_t)get_user_int_data(G_OBJECT(prf->radio_button)));
 }
 
 /* ---------------- graphs-horizontal ---------------- */
@@ -2411,19 +2344,13 @@ static void grid_toggle(prefs_info *prf)
 
 static void reflect_grid_density(prefs_info *prf)
 {
-#if 0
-  XmScaleSetValue(prf->scale, (int)(100 * grid_density(ss) / prf->scale_max));
-#endif
+  gtk_adjustment_set_value(GTK_ADJUSTMENT(prf->adj), grid_density(ss) / prf->scale_max);
   float_to_textfield(prf->text, grid_density(ss));
 }
 
 static void grid_density_scale_callback(prefs_info *prf)
 {
-  int val = 0;
-#if 0
-  XmScaleGetValue(prf->scale, &val);
-#endif
-  in_set_grid_density(val * prf->scale_max / 100.0);
+  in_set_grid_density(GTK_ADJUSTMENT(prf->adj)->value * prf->scale_max);
 }
 
 static void grid_density_text_callback(prefs_info *prf)
@@ -2438,9 +2365,7 @@ static void grid_density_text_callback(prefs_info *prf)
 	  (value <= prf->scale_max))
 	{
 	  in_set_grid_density(value);
-#if 0
-	  XmScaleSetValue(prf->scale, (int)(100 * value / prf->scale_max));
-#endif
+	  gtk_adjustment_set_value(GTK_ADJUSTMENT(prf->adj), value / prf->scale_max);
 	}
       else gtk_entry_set_text(GTK_ENTRY(prf->text), "right");
 
@@ -2453,31 +2378,18 @@ static const char *show_axes_choices[5] = {"none", "X and Y", "just X", "X and Y
 
 static void reflect_show_axes(prefs_info *prf)
 {
-  gtk_entry_set_text(GTK_ENTRY(prf->text), (char *)show_axes_choices[(int)show_axes(ss)]);
-}
-
-static void show_axes_from_menu(prefs_info *prf, char *value)
-{
-  int i;
-  for (i = 0; i < 5; i++)
-    if (strcmp(value, show_axes_choices[i]) == 0)
-      {
-	in_set_show_axes((show_axes_t)i);
-	gtk_entry_set_text(GTK_ENTRY(prf->text), value);
-	return;
-      }
+  gtk_entry_set_text(GTK_ENTRY(GTK_BIN(prf->text)->child), (char *)show_axes_choices[(int)show_axes(ss)]);
 }
 
 static void show_axes_from_text(prefs_info *prf)
 {
   int i;
   char *str;
-  str = (char *)gtk_entry_get_text(GTK_ENTRY(prf->text));
+  str = (char *)gtk_entry_get_text(GTK_ENTRY(GTK_BIN(prf->text)->child));
   if ((str) && (*str))
     {
       char *trimmed_str;
       trimmed_str = trim_string(str);
-
       if (snd_strlen(trimmed_str) > 0)
 	{
 	  int curpos = -1;
@@ -2503,26 +2415,14 @@ static const char *x_axis_styles[5] = {"seconds", "samples", "% of total", "beat
 
 static void reflect_x_axis_style(prefs_info *prf)
 {
-  gtk_entry_set_text(GTK_ENTRY(prf->text), (char *)x_axis_styles[(int)x_axis_style(ss)]);
-}
-
-static void x_axis_style_from_menu(prefs_info *prf, char *value)
-{
-  int i;
-  for (i = 0; i < 5; i++)
-    if (strcmp(value, x_axis_styles[i]) == 0)
-      {
-	in_set_x_axis_style((x_axis_style_t)i);
-	gtk_entry_set_text(GTK_ENTRY(prf->text), value);
-	return;
-      }
+  gtk_entry_set_text(GTK_ENTRY(GTK_BIN(prf->text)->child), (char *)x_axis_styles[(int)x_axis_style(ss)]);
 }
 
 static void x_axis_style_from_text(prefs_info *prf)
 {
   int i;
   char *str;
-  str = (char *)gtk_entry_get_text(GTK_ENTRY(prf->text));
+  str = (char *)gtk_entry_get_text(GTK_ENTRY(GTK_BIN(prf->text)->child));
   if ((str) && (*str))
     {
       char *trimmed_str;
@@ -2598,10 +2498,7 @@ static void reflect_data_color(prefs_info *prf)
 
 static void data_color_func(prefs_info *prf, float r, float g, float b)
 {
-  GdkColor *tmp;
-  tmp = rgb_to_color(r, g, b);
-  set_data_color(tmp);
-  FREE(tmp);
+  set_data_color(rgb_to_color(r, g, b));
 }
 
 /* ---------------- graph-color ---------------- */
@@ -2616,10 +2513,7 @@ static void reflect_graph_color(prefs_info *prf)
 
 static void graph_color_func(prefs_info *prf, float r, float g, float b)
 {
-  GdkColor *tmp;
-  tmp = rgb_to_color(r, g, b);
-  set_graph_color(tmp);
-  FREE(tmp);
+  set_graph_color(rgb_to_color(r, g, b));
 }
 
 /* ---------------- selected-data-color ---------------- */
@@ -2634,10 +2528,7 @@ static void reflect_selected_data_color(prefs_info *prf)
 
 static void selected_data_color_func(prefs_info *prf, float r, float g, float b)
 {
-  GdkColor *tmp;
-  tmp = rgb_to_color(r, g, b);
-  set_selected_data_color(tmp);
-  FREE(tmp);
+  set_selected_data_color(rgb_to_color(r, g, b));
 }
 
 /* ---------------- selected-graph-color ---------------- */
@@ -2652,10 +2543,7 @@ static void reflect_selected_graph_color(prefs_info *prf)
 
 static void selected_graph_color_func(prefs_info *prf, float r, float g, float b)
 {
-  GdkColor *tmp;
-  tmp = rgb_to_color(r, g, b);
-  set_selected_graph_color(tmp);
-  FREE(tmp);
+  set_selected_graph_color(rgb_to_color(r, g, b));
 }
 
 /* ---------------- selection-color ---------------- */
@@ -2676,10 +2564,7 @@ static void reflect_selection_color(prefs_info *prf)
 
 static void selection_color_func(prefs_info *prf, float r, float g, float b)
 {
-  GdkColor *tmp;
-  tmp = rgb_to_color(r, g, b);
-  set_selection_color(tmp);
-  FREE(tmp);
+  set_selection_color(rgb_to_color(r, g, b));
 }
 
 
@@ -2926,37 +2811,13 @@ static const char *transform_graph_types[3] = {"normal", "sonogram", "spectrogra
 
 static void reflect_transform_graph_type(prefs_info *prf)
 {
-  GtkWidget *w;
-#if 0
-  w = find_radio_button(prf, transform_graph_type(ss));
-  if (w)
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), XmSET);
-  else fprintf(stderr, "can't find %s\n", transform_graph_types[transform_graph_type(ss)]);
-  if ((prf->radio_button) &&
-      (XmIsToggleButton(prf->radio_button)) &&
-      (w != prf->radio_button))
-    {
-      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(prf->radio_button), XmUNSET);
-      prf->radio_button = w;
-    }
-#endif
+  set_toggle_button(prf->radio_buttons[(int)transform_graph_type(ss)], true, false, NULL);  
 }
 
 static void transform_graph_type_choice(prefs_info *prf)
 {
-#if 0
   if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prf->radio_button)))
-    {
-      if (strcmp(XtName(prf->radio_button), "sonogram") == 0)
-	in_set_transform_graph_type(GRAPH_AS_SONOGRAM);
-      else
-	{
-	  if (strcmp(XtName(prf->radio_button), "spectrogram") == 0)
-	    in_set_transform_graph_type(GRAPH_AS_SPECTROGRAM);
-	  else in_set_transform_graph_type(GRAPH_ONCE);
-	}
-    }
-#endif
+    in_set_transform_graph_type((graph_type_t)get_user_int_data(G_OBJECT(prf->radio_button)));
 }
 
 
@@ -2970,7 +2831,8 @@ static list_completer_info *transform_type_completer_info = NULL;
 
 static void reflect_transform_type(prefs_info *prf)
 {
-  gtk_entry_set_text(GTK_ENTRY(prf->text), (char *)transform_types[mus_iclamp(0, transform_type(ss), NUM_TRANSFORM_TYPES - 1)]);
+  gtk_entry_set_text(GTK_ENTRY(GTK_BIN(prf->text)->child), 
+		     (char *)transform_types[mus_iclamp(0, transform_type(ss), NUM_TRANSFORM_TYPES - 1)]);
 }
 
 static char *transform_type_completer(char *text, void *data)
@@ -2986,23 +2848,11 @@ static char *transform_type_completer(char *text, void *data)
   return(list_completer(text, (void *)transform_type_completer_info));
 }
 
-static void transform_type_from_menu(prefs_info *prf, char *value)
-{
-  int i;
-  for (i = 0; i < NUM_TRANSFORM_TYPES; i++)
-    if (strcmp(value, transform_types[i]) == 0)
-      {
-	in_set_transform_type(i);
-	gtk_entry_set_text(GTK_ENTRY(prf->text), value);
-	return;
-      }
-}
-
 static void transform_type_from_text(prefs_info *prf)
 {
   int i;
   char *str;
-  str = (char *)gtk_entry_get_text(GTK_ENTRY(prf->text));
+  str = (char *)gtk_entry_get_text(GTK_ENTRY(GTK_BIN(prf->text)->child));
   if ((str) && (*str))
     {
       char *trimmed_str;
@@ -3038,7 +2888,8 @@ static list_completer_info *fft_window_completer_info = NULL;
 
 static void reflect_fft_window(prefs_info *prf)
 {
-  gtk_entry_set_text(GTK_ENTRY(prf->text), (char *)fft_windows[(int)fft_window(ss)]);
+  gtk_entry_set_text(GTK_ENTRY(GTK_BIN(prf->text)->child), 
+		     (char *)fft_windows[(int)fft_window(ss)]);
 }
 
 static char *fft_window_completer(char *text, void *data)
@@ -3054,23 +2905,11 @@ static char *fft_window_completer(char *text, void *data)
   return(list_completer(text, (void *)fft_window_completer_info));
 }
 
-static void fft_window_from_menu(prefs_info *prf, char *value)
-{
-  int i;
-  for (i = 0; i < NUM_FFT_WINDOWS; i++)
-    if (strcmp(value, fft_windows[i]) == 0)
-      {
-	in_set_fft_window((mus_fft_window_t)i);
-	gtk_entry_set_text(GTK_ENTRY(prf->text), value);
-	return;
-      }
-}
-
 static void fft_window_from_text(prefs_info *prf)
 {
   int i;
   char *str;
-  str = (char *)gtk_entry_get_text(GTK_ENTRY(prf->text));
+  str = (char *)gtk_entry_get_text(GTK_ENTRY(GTK_BIN(prf->text)->child));
   if ((str) && (*str))
     {
       char *trimmed_str;
@@ -3099,19 +2938,13 @@ static void fft_window_from_text(prefs_info *prf)
 
 static void reflect_fft_window_beta(prefs_info *prf)
 {
-#if 0
-  XmScaleSetValue(prf->scale, (int)(100 * fft_window_beta(ss) / prf->scale_max));
-#endif
+  gtk_adjustment_set_value(GTK_ADJUSTMENT(prf->adj), fft_window_beta(ss) / prf->scale_max);
   float_to_textfield(prf->text, fft_window_beta(ss));
 }
 
 static void fft_window_beta_scale_callback(prefs_info *prf)
 {
-  int val = 0;
-#if 0
-  XmScaleGetValue(prf->scale, &val);
-#endif
-  in_set_fft_window_beta(val * prf->scale_max / 100.0);
+  in_set_fft_window_beta(GTK_ADJUSTMENT(prf->adj)->value * prf->scale_max);
 }
 
 static void fft_window_beta_text_callback(prefs_info *prf)
@@ -3126,9 +2959,7 @@ static void fft_window_beta_text_callback(prefs_info *prf)
 	  (value <= prf->scale_max))
 	{
 	  in_set_fft_window_beta(value);
-#if 0
-	  XmScaleSetValue(prf->scale, (int)(100 * value / prf->scale_max));
-#endif
+	  gtk_adjustment_set_value(GTK_ADJUSTMENT(prf->adj), value / prf->scale_max);
 	}
       else gtk_entry_set_text(GTK_ENTRY(prf->text), "right");
 
@@ -3191,14 +3022,15 @@ static char *colormap_completer(char *text, void *data)
 
 static void reflect_colormap(prefs_info *prf)
 {
-  gtk_entry_set_text(GTK_ENTRY(prf->text), colormap_name(color_map(ss)));
+  gtk_entry_set_text(GTK_ENTRY(GTK_BIN(prf->text)->child), 
+		     colormap_name(color_map(ss)));
 }
 
 static void colormap_from_text(prefs_info *prf)
 {
   int i;
   char *str;
-  str = (char *)gtk_entry_get_text(GTK_ENTRY(prf->text));
+  str = (char *)gtk_entry_get_text(GTK_ENTRY(GTK_BIN(prf->text)->child));
   if ((str) && (*str))
     {
       char *trimmed_str;
@@ -3222,19 +3054,6 @@ static void colormap_from_text(prefs_info *prf)
       FREE(trimmed_str);
     }
   else post_prefs_error("no colormap?", (void *)prf);
-}
-
-static void colormap_from_menu(prefs_info *prf, char *value)
-{
-  int i, len;
-  len = num_colormaps();
-  for (i = 0; i < len; i++)
-    if (strcmp(value, colormap_name(i)) == 0)
-      {
-	in_set_color_map(i);
-	gtk_entry_set_text(GTK_ENTRY(prf->text), value);
-	return;
-      }
 }
 
 
@@ -3288,42 +3107,13 @@ static const char *transform_normalizations[4] = {"none", "by channel", "by soun
 
 static void reflect_transform_normalization(prefs_info *prf)
 {
-  GtkWidget *w;
-#if 0
-  w = find_radio_button(prf, transform_normalization(ss));
-  if (w)
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), XmSET);
-  else fprintf(stderr, "can't find %s\n", transform_normalizations[transform_normalization(ss)]);
-  if ((prf->radio_button) &&
-      (XmIsToggleButton(prf->radio_button)) &&
-      (w != prf->radio_button))
-    {
-      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(prf->radio_button), XmUNSET);
-      prf->radio_button = w;
-    }
-#endif
+  set_toggle_button(prf->radio_buttons[(int)transform_normalization(ss)], true, false, NULL);
 }
 
 static void transform_normalization_choice(prefs_info *prf)
 {
-#if 0
   if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prf->radio_button)))
-    {
-      if (strcmp(XtName(prf->radio_button), "none") == 0)
-	in_set_transform_normalization(DONT_NORMALIZE);
-      else
-	{
-	  if (strcmp(XtName(prf->radio_button), "by channel") == 0)
-	    in_set_transform_normalization(NORMALIZE_BY_CHANNEL);
-	  else
-	    {
-	      if (strcmp(XtName(prf->radio_button), "by sound") == 0)
-		in_set_transform_normalization(NORMALIZE_BY_SOUND);
-	      else in_set_transform_normalization(NORMALIZE_GLOBALLY);
-	    }
-	}
-    }
-#endif
+    in_set_transform_normalization((fft_normalize_t)get_user_int_data(G_OBJECT(prf->radio_button)));
 }
 
 
@@ -3339,10 +3129,7 @@ static void reflect_mark_color(prefs_info *prf)
 
 static void mark_color_func(prefs_info *prf, float r, float g, float b)
 {
-  GdkColor *tmp;
-  tmp = rgb_to_color(r, g, b);
-  color_marks(tmp);
-  FREE(tmp);
+  color_marks(rgb_to_color(r, g, b));
 }
 
 /* ---------------- mark-tag size ---------------- */
@@ -3425,10 +3212,7 @@ static void reflect_mix_color(prefs_info *prf)
 
 static void mix_color_func(prefs_info *prf, float r, float g, float b)
 {
-  GdkColor *tmp;
-  tmp = rgb_to_color(r, g, b);
-  color_mixes(tmp);
-  FREE(tmp);
+  color_mixes(rgb_to_color(r, g, b));
 }
 
 /* ---------------- mix-tag size ---------------- */
@@ -3665,10 +3449,7 @@ static void reflect_listener_color(prefs_info *prf)
 
 static void listener_color_func(prefs_info *prf, float r, float g, float b)
 {
-  GdkColor *tmp;
-  tmp = rgb_to_color(r, g, b);
-  color_listener(tmp);
-  FREE(tmp);
+  color_listener(rgb_to_color(r, g, b));
 }
 
 /* ---------------- listener-text-color ---------------- */
@@ -3683,10 +3464,7 @@ static void reflect_listener_text_color(prefs_info *prf)
 
 static void listener_text_color_func(prefs_info *prf, float r, float g, float b)
 {
-  GdkColor *tmp;
-  tmp = rgb_to_color(r, g, b);
-  color_listener_text(tmp);
-  FREE(tmp);
+  color_listener_text(rgb_to_color(r, g, b));
 }
 
 /* ---------------- listener-font ---------------- */
@@ -3722,116 +3500,6 @@ static void listener_font_text(prefs_info *prf)
     }
 
 }
-
-
-/* ---------------- help-button-color ---------------- */
-
-static color_t saved_help_button_color;
-
-static void reflect_help_button_color(prefs_info *prf) 
-{
-  scale_set_color(prf, saved_help_button_color); 
-  ss->sgx->help_button_color = saved_help_button_color;
-}
-
-static void help_button_color_func(prefs_info *prf, float r, float g, float b)
-{
-  GdkColor *tmp;
-  tmp = rgb_to_color(r, g, b);
-  ss->sgx->help_button_color = tmp;
-  FREE(tmp);
-}
-
-/* ---------------- quit-button-color ---------------- */
-
-static color_t saved_quit_button_color;
-
-static void reflect_quit_button_color(prefs_info *prf) 
-{
-  scale_set_color(prf, saved_quit_button_color); 
-  ss->sgx->quit_button_color = saved_quit_button_color;
-}
-
-static void quit_button_color_func(prefs_info *prf, float r, float g, float b)
-{
-  GdkColor *tmp;
-  tmp = rgb_to_color(r, g, b);
-  ss->sgx->quit_button_color = tmp;
-  FREE(tmp);
-}
-
-/* ---------------- reset-button-color ---------------- */
-
-static color_t saved_reset_button_color;
-
-static void reflect_reset_button_color(prefs_info *prf) 
-{
-  scale_set_color(prf, saved_reset_button_color); 
-  ss->sgx->reset_button_color = saved_reset_button_color;
-}
-
-static void reset_button_color_func(prefs_info *prf, float r, float g, float b)
-{
-  GdkColor *tmp;
-  tmp = rgb_to_color(r, g, b);
-  ss->sgx->reset_button_color = tmp;
-  FREE(tmp);
-}
-
-/* ---------------- doit-button-color ---------------- */
-
-static color_t saved_doit_button_color;
-
-static void reflect_doit_button_color(prefs_info *prf) 
-{
-  scale_set_color(prf, saved_doit_button_color); 
-  ss->sgx->doit_button_color = saved_doit_button_color;
-}
-
-static void doit_button_color_func(prefs_info *prf, float r, float g, float b)
-{
-  GdkColor *tmp;
-  tmp = rgb_to_color(r, g, b);
-  ss->sgx->doit_button_color = tmp;
-  FREE(tmp);
-}
-
-/* ---------------- doit-again-button-color ---------------- */
-
-static color_t saved_doit_again_button_color;
-
-static void reflect_doit_again_button_color(prefs_info *prf) 
-{
-  scale_set_color(prf, saved_doit_again_button_color); 
-  ss->sgx->doit_again_button_color = saved_doit_again_button_color;
-}
-
-static void doit_again_button_color_func(prefs_info *prf, float r, float g, float b)
-{
-  GdkColor *tmp;
-  tmp = rgb_to_color(r, g, b);
-  ss->sgx->doit_again_button_color = tmp;
-  FREE(tmp);
-}
-
-/* ---------------- pushed-button-color ---------------- */
-
-static color_t saved_pushed_button_color;
-
-static void reflect_pushed_button_color(prefs_info *prf) 
-{
-  scale_set_color(prf, saved_pushed_button_color); 
-  ss->sgx->pushed_button_color = saved_pushed_button_color;
-}
-
-static void pushed_button_color_func(prefs_info *prf, float r, float g, float b)
-{
-  GdkColor *tmp;
-  tmp = rgb_to_color(r, g, b);
-  ss->sgx->pushed_button_color = tmp;
-  FREE(tmp);
-}
-
 
 
 
@@ -3894,10 +3562,13 @@ void start_preferences_dialog(void)
   gtk_widget_show(topics);
   gtk_widget_show(scroller);
 
-
   label_group = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
   widgets_group = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
   help_group = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
+
+  rscl_color = rgb_to_color(1.0, 0.5, 0.5);
+  gscl_color = rgb_to_color(0.5, 0.9, 0.5);
+  bscl_color = rgb_to_color(0.7, 0.8, 0.9);
 
 
   /* ---------------- overall behavior ---------------- */
@@ -3915,10 +3586,10 @@ void start_preferences_dialog(void)
     /* TODO: packages of presets */
     prf = prefs_row_with_radio_box("preset customization packages", "customization",
 				   customization_choices, 4, "none",
-				   dpy_box, dpy_label,
+				   dpy_box,
 				   customization_choice);
     remember_pref(prf, reflect_customization_choice, NULL);
-    current_sep = make_inter_variable_separator(dpy_box, prf->label);
+    current_sep = make_inter_variable_separator(dpy_box);
 #else
     current_sep = dpy_label;
 #endif
@@ -3927,141 +3598,141 @@ void start_preferences_dialog(void)
     str2 = mus_format("%d", ss->init_window_height);
     prf = prefs_row_with_two_texts("start up size", S_window_width, 
 				   "width:", str1, "height:", str2, 6,
-				   dpy_box, current_sep,
+				   dpy_box,
 				   startup_size_text);
     remember_pref(prf, NULL, NULL); /* this is not reflected, and is saved via window-width|height */
     FREE(str2);
     FREE(str1);
 
-    current_sep = make_inter_variable_separator(dpy_box, prf->label);
+    current_sep = make_inter_variable_separator(dpy_box);
     prf = prefs_row_with_toggle("ask before overwriting anything", S_ask_before_overwrite,
 				ask_before_overwrite(ss), 
-				dpy_box, current_sep,
+				dpy_box,
 				overwrite_toggle);
     remember_pref(prf, reflect_ask_before_overwrite, NULL);
 
-    current_sep = make_inter_variable_separator(dpy_box, prf->label);
+    current_sep = make_inter_variable_separator(dpy_box);
     prf = prefs_row_with_toggle("include thumbnail graph in upper right corner", "make-current-window-display",
 				find_current_window_display(),
-				dpy_box, current_sep,
+				dpy_box,
 				current_window_display_toggle);
     remember_pref(prf, reflect_current_window_display, save_current_window_display);
 
-    current_sep = make_inter_variable_separator(dpy_box, prf->label);
+    current_sep = make_inter_variable_separator(dpy_box);
     prf = prefs_row_with_toggle("resize main window as sounds open and close", S_auto_resize,
 				auto_resize(ss), 
-				dpy_box, current_sep, 
+				dpy_box, 
 				resize_toggle);
     remember_pref(prf, reflect_auto_resize, NULL);
 
-    current_sep = make_inter_variable_separator(dpy_box, prf->label);
+    current_sep = make_inter_variable_separator(dpy_box);
     focus_follows_mouse = focus_is_following_mouse();
     prf = prefs_row_with_toggle("focus follows mouse", "focus-follows-mouse",
 				focus_follows_mouse,
-				dpy_box, current_sep,
+				dpy_box,
 				focus_follows_mouse_toggle);
     remember_pref(prf, reflect_focus_follows_mouse, save_focus_follows_mouse);
 
-    current_sep = make_inter_variable_separator(dpy_box, prf->label);
+    current_sep = make_inter_variable_separator(dpy_box);
     prf = prefs_row_with_toggle("show the control panel upon opening a sound", S_show_controls,
 				in_show_controls(ss), 
-				dpy_box, current_sep, 
+				dpy_box, 
 				controls_toggle);
     remember_pref(prf, reflect_show_controls, NULL);
 
-    current_sep = make_inter_variable_separator(dpy_box, prf->label);
+    current_sep = make_inter_variable_separator(dpy_box);
     prf = prefs_row_with_toggle("selection creates an associated region", S_selection_creates_region,
 				selection_creates_region(ss),
-				dpy_box, current_sep,
+				dpy_box,
 				selection_creates_region_toggle);
     remember_pref(prf, reflect_selection_creates_region, NULL);
 
 
     /* ---------------- file options ---------------- */
 
-    current_sep = make_inter_variable_separator(dpy_box, prf->label);
+    current_sep = make_inter_variable_separator(dpy_box);
     file_label = make_inner_label("  file options", dpy_box, current_sep);
 
     prf = prefs_row_with_toggle("display only sound files in various file lists", S_just_sounds,
 				just_sounds(ss), 
-				dpy_box, file_label, 
+				dpy_box,
 				just_sounds_toggle);
     remember_pref(prf, prefs_reflect_just_sounds, NULL);
 
-    current_sep = make_inter_variable_separator(dpy_box, prf->label);
+    current_sep = make_inter_variable_separator(dpy_box);
     prf = prefs_row_with_text("directory for temporary files", S_temp_dir, 
 			      temp_dir(ss), 
-			      dpy_box, current_sep,
+			      dpy_box,
 			      temp_dir_text);
     remember_pref(prf, reflect_temp_dir, NULL);
 
-    current_sep = make_inter_variable_separator(dpy_box, prf->label);
+    current_sep = make_inter_variable_separator(dpy_box);
     prf = prefs_row_with_text("directory for save-state files", S_save_dir, 
 			      save_dir(ss), 
-			      dpy_box, current_sep,
+			      dpy_box,
 			      save_dir_text);
     remember_pref(prf, reflect_save_dir, NULL);
 
-    current_sep = make_inter_variable_separator(dpy_box, prf->label);
+    current_sep = make_inter_variable_separator(dpy_box);
     prf = prefs_row_with_text("default save-state filename", S_save_state_file, 
 			      save_state_file(ss), 
-			      dpy_box, current_sep,
+			      dpy_box,
 			      save_state_file_text);
     remember_pref(prf, reflect_save_state_file, NULL);
 
 #if HAVE_LADSPA
-    current_sep = make_inter_variable_separator(dpy_box, prf->label);
+    current_sep = make_inter_variable_separator(dpy_box);
     prf = prefs_row_with_text("directory for ladspa plugins", S_ladspa_dir, 
 			      ladspa_dir(ss), 
-			      dpy_box, current_sep,
+			      dpy_box,
 			      ladspa_dir_text);
     remember_pref(prf, reflect_ladspa_dir, NULL);
 #endif
 
-    current_sep = make_inter_variable_separator(dpy_box, prf->label);
+    current_sep = make_inter_variable_separator(dpy_box);
     include_vf_directory = copy_string(view_files_find_any_directory());
     prf = prefs_row_with_text("directory for view-files dialog", S_add_directory_to_view_files_list,
 			      include_vf_directory,
-			      dpy_box, current_sep,
+			      dpy_box,
 			      view_files_directory_text);
     remember_pref(prf, reflect_view_files_directory, save_view_files_directory);
 
-    current_sep = make_inter_variable_separator(dpy_box, prf->label);
+    current_sep = make_inter_variable_separator(dpy_box);
     prf = prefs_row_with_text("external program to read HTML files via snd-help", S_html_program,
 			      html_program(ss),
-			      dpy_box, current_sep,
+			      dpy_box,
 			      html_program_text);
     remember_pref(prf, reflect_html_program, NULL);
-    current_sep = make_inter_variable_separator(dpy_box, prf->label);
+    current_sep = make_inter_variable_separator(dpy_box);
 
     prf = prefs_row_with_radio_box("default new sound attributes: chans", S_default_output_chans,
 				   output_chan_choices, 4, -1,
-				   dpy_box, current_sep,
+				   dpy_box,
 				   output_chans_choice);
     reflect_output_chans(prf);
     remember_pref(prf, reflect_output_chans, NULL);
 
     prf = prefs_row_with_radio_box("srate", S_default_output_srate,
 				   output_srate_choices, 4, -1,
-				   dpy_box, prf->label,
+				   dpy_box,
 				   output_srate_choice);
     reflect_output_srate(prf);
     remember_pref(prf, reflect_output_srate, NULL);
 
     prf = prefs_row_with_radio_box("header type", S_default_output_header_type,
 				   output_type_choices, 5, -1,
-				   dpy_box, prf->label,
+				   dpy_box,
 				   output_type_choice);
     output_header_type_prf = prf;
     remember_pref(prf, reflect_output_type, NULL);
 
     prf = prefs_row_with_radio_box("data format", S_default_output_data_format,
 				   output_format_choices, 4, -1,
-				   dpy_box, prf->label,
+				   dpy_box,
 				   output_format_choice);
     output_data_format_prf = prf;
     remember_pref(prf, reflect_output_format, NULL);
-    current_sep = make_inter_variable_separator(dpy_box, prf->label);
+    current_sep = make_inter_variable_separator(dpy_box);
 
     reflect_output_type(output_header_type_prf);
     reflect_output_format(output_data_format_prf);
@@ -4077,25 +3748,25 @@ void start_preferences_dialog(void)
 
     prf = prefs_row_with_toggle("context-sensitive popup menu", "add-selection-popup",
 				find_context_sensitive_popup(),
-				dpy_box, cursor_label, 
+				dpy_box,
 				context_sensitive_popup_toggle);
     remember_pref(prf, reflect_context_sensitive_popup, save_context_sensitive_popup);
-    current_sep = make_inter_variable_separator(dpy_box, prf->label);
+    current_sep = make_inter_variable_separator(dpy_box);
 
     prf = prefs_row_with_toggle("effects menu", "new-effects.scm", /* TODO: help index for effects? */
 				find_effects_menu(),
-				dpy_box, current_sep, 
+				dpy_box, 
 				effects_menu_toggle);
     remember_pref(prf, reflect_effects_menu, save_effects_menu);
-    current_sep = make_inter_variable_separator(dpy_box, prf->label);
+    current_sep = make_inter_variable_separator(dpy_box);
 
 #if HAVE_GUILE
     prf = prefs_row_with_toggle("edit menu additions", "edit-menu.scm", /* TODO help index */
 				find_edit_menu(),
-				dpy_box, current_sep, 
+				dpy_box, 
 				edit_menu_toggle);
     remember_pref(prf, reflect_edit_menu, save_edit_menu);
-    current_sep = make_inter_variable_separator(dpy_box, prf->label);
+    current_sep = make_inter_variable_separator(dpy_box);
 #endif
 
 #if 0
@@ -4104,10 +3775,10 @@ void start_preferences_dialog(void)
     /* currently forces effects menu to load (add-sliders code) */
     prf = prefs_row_with_toggle("marks menu", "marks-menu.scm",
 				find_marks_menu(),
-				dpy_box, current_sep, 
+				dpy_box, 
 				marks_menu_toggle);
     remember_pref(prf, reflect_marks_menu, save_marks_menu);
-    current_sep = make_inter_variable_separator(dpy_box, prf->label);
+    current_sep = make_inter_variable_separator(dpy_box);
 
 #endif
 
@@ -4117,70 +3788,70 @@ void start_preferences_dialog(void)
 
     prf = prefs_row_with_toggle("report cursor location as it moves", S_verbose_cursor,
 				verbose_cursor(ss), 
-				dpy_box, cursor_label, 
+				dpy_box,
 				verbose_cursor_toggle);
     remember_pref(prf, reflect_verbose_cursor, NULL);
 
-    current_sep = make_inter_variable_separator(dpy_box, prf->label);
+    current_sep = make_inter_variable_separator(dpy_box);
     prf = prefs_row_with_toggle("track current location while playing", S_cursor_follows_play,
 				cursor_follows_play(ss), 
-				dpy_box, current_sep,
+				dpy_box,
 				cursor_follows_play_toggle);
     remember_pref(prf, reflect_cursor_follows_play, NULL);
 
-    current_sep = make_inter_variable_separator(dpy_box, prf->label);
+    current_sep = make_inter_variable_separator(dpy_box);
     str = mus_format("%d", cursor_size(ss));
     prf = prefs_row_with_number("size", S_cursor_size,
 				str, 4, 
-				dpy_box, current_sep,
+				dpy_box,
 				cursor_size_up, cursor_size_down, cursor_size_from_text);
     remember_pref(prf, reflect_cursor_size, NULL);
     FREE(str);
     if (cursor_size(ss) <= 0) gtk_widget_set_sensitive(prf->arrow_down, false);
 
-    current_sep = make_inter_variable_separator(dpy_box, prf->label);
+    current_sep = make_inter_variable_separator(dpy_box);
     prf = prefs_row_with_radio_box("shape", S_cursor_style,
 				   cursor_styles, 2, cursor_style(ss),
-				   dpy_box, current_sep, 
+				   dpy_box, 
 				   cursor_style_choice);
     remember_pref(prf, reflect_cursor_style, NULL);
 
-    current_sep = make_inter_variable_separator(dpy_box, prf->label);
+    current_sep = make_inter_variable_separator(dpy_box);
     saved_cursor_color = ss->sgx->cursor_color;
     prf = prefs_color_selector_row("color", S_cursor_color, ss->sgx->cursor_color,
-				   dpy_box, current_sep,
+				   dpy_box,
 				   cursor_color_func);
     remember_pref(prf, reflect_cursor_color, NULL);
 
     /* ---------------- (overall) colors ---------------- */
 
-    current_sep = make_inter_variable_separator(dpy_box, prf->rscl);
+    current_sep = make_inter_variable_separator(dpy_box);
     cursor_label = make_inner_label("  colors", dpy_box, current_sep);
     
     saved_basic_color = ss->sgx->basic_color;
     prf = prefs_color_selector_row("main background color", S_basic_color, ss->sgx->basic_color,
-				   dpy_box, cursor_label,
+				   dpy_box,
 				   basic_color_func);
     remember_pref(prf, reflect_basic_color, NULL);
 
-    current_sep = make_inter_variable_separator(dpy_box, prf->rscl);
+    current_sep = make_inter_variable_separator(dpy_box);
     saved_highlight_color = ss->sgx->highlight_color;
     prf = prefs_color_selector_row("main highlight color", S_highlight_color, ss->sgx->highlight_color,
-				   dpy_box, current_sep,
+				   dpy_box,
 				   highlight_color_func);
     remember_pref(prf, reflect_highlight_color, NULL);
 
-    current_sep = make_inter_variable_separator(dpy_box, prf->rscl);
+    current_sep = make_inter_variable_separator(dpy_box);
     saved_position_color = ss->sgx->position_color;
     prf = prefs_color_selector_row("second highlight color", S_position_color, ss->sgx->position_color,
-				   dpy_box, current_sep,
+				   dpy_box,
 				   position_color_func);
     remember_pref(prf, reflect_position_color, NULL);
 
-    current_sep = make_inter_variable_separator(dpy_box, prf->rscl);
+    current_sep = make_inter_variable_separator(dpy_box);
     saved_zoom_color = ss->sgx->zoom_color;
     prf = prefs_color_selector_row("third highlight color", S_zoom_color, ss->sgx->zoom_color,
-				   dpy_box, current_sep,
+				   dpy_box,
 				   zoom_color_func);
     remember_pref(prf, reflect_zoom_color, NULL);
   }
@@ -4198,167 +3869,161 @@ void start_preferences_dialog(void)
 
     prf = prefs_row_with_radio_box("how to connect the dots", S_graph_style,
 				   graph_styles, 5, graph_style(ss),
-				   grf_box, grf_label,
+				   grf_box,
 				   graph_style_choice);
     remember_pref(prf, reflect_graph_style, NULL);
 
-    current_sep = make_inter_variable_separator(grf_box, prf->label);
+    current_sep = make_inter_variable_separator(grf_box);
     str = mus_format("%d", dot_size(ss));
     prf = prefs_row_with_number("dot size", S_dot_size,
 				str, 4, 
-				grf_box, current_sep,
+				grf_box,
 				dot_size_up, dot_size_down, dot_size_from_text);
     remember_pref(prf, reflect_dot_size, NULL);
     FREE(str);
     if (dot_size(ss) <= 0) gtk_widget_set_sensitive(prf->arrow_down, false);
 
-  }
-#if 0
-    /* ---------------------------------------- top level ---------------------------------------- */
-
-    current_sep = make_inter_variable_separator(grf_box, prf->label);
+    current_sep = make_inter_variable_separator(grf_box);
     prf = prefs_row_with_text_with_toggle("initial graph x bounds", S_x_bounds, false, /* TODO: how to find this?? */
 					  "show full duration", "0.0 : 0.1", 12,
-					  grf_box, current_sep,
+					  grf_box,
 					  initial_bounds_toggle,
 					  initial_bounds_text);
     remember_pref(prf, reflect_initial_bounds, save_initial_bounds);
 
-    current_sep = make_inter_variable_separator(grf_box, prf->label);
+    current_sep = make_inter_variable_separator(grf_box);
     prf = prefs_row_with_radio_box("how to layout multichannel graphs", S_channel_style,
 				   channel_styles, 3, channel_style(ss),
-				   grf_box, current_sep,
+				   grf_box,
 				   channel_style_choice);
     remember_pref(prf, reflect_channel_style, NULL);
 
-    current_sep = make_inter_variable_separator(grf_box, prf->label);
+    current_sep = make_inter_variable_separator(grf_box);
     prf = prefs_row_with_toggle("layout wave and fft graphs horizontally", S_graphs_horizontal,
 				graphs_horizontal(ss),
-				grf_box, current_sep,
+				grf_box,
 				graphs_horizontal_toggle);
     remember_pref(prf, reflect_graphs_horizontal, NULL);
 
-    current_sep = make_inter_variable_separator(grf_box, prf->label);
+    current_sep = make_inter_variable_separator(grf_box);
     prf = prefs_row_with_toggle("include y=0 line in sound graphs", S_show_y_zero,
 				show_y_zero(ss),
-				grf_box, current_sep,
+				grf_box,
 				y_zero_toggle);
     remember_pref(prf, reflect_show_y_zero, NULL);
 
-    current_sep = make_inter_variable_separator(grf_box, prf->label);
+    current_sep = make_inter_variable_separator(grf_box);
     prf = prefs_row_with_toggle("include a grid in sound graphs", S_show_grid,
 				(show_grid(ss) == WITH_GRID),
-				grf_box, current_sep,
+				grf_box,
 				grid_toggle);
     remember_pref(prf, reflect_show_grid, NULL);
 
-    current_sep = make_inter_variable_separator(grf_box, prf->label);
+    current_sep = make_inter_variable_separator(grf_box);
     prf = prefs_row_with_scale("grid density", S_grid_density, 
 			       2.0, grid_density(ss),
-			       grf_box, current_sep,
+			       grf_box,
 			       grid_density_scale_callback, grid_density_text_callback);
     remember_pref(prf, reflect_grid_density, NULL);
 
-    current_sep = make_inter_variable_separator(grf_box, prf->label);
+    current_sep = make_inter_variable_separator(grf_box);
     prf = prefs_row_with_completed_list("what axes to display", S_show_axes, show_axes_choices[(int)show_axes(ss)],
 					show_axes_choices, 5,
-					grf_box, current_sep,
+					grf_box,
 					show_axes_from_text,
-					NULL, NULL,
-					show_axes_from_menu);
+					NULL, NULL);
     remember_pref(prf, reflect_show_axes, NULL);
 
-    current_sep = make_inter_variable_separator(grf_box, prf->label);
+    current_sep = make_inter_variable_separator(grf_box);
     prf = prefs_row_with_completed_list("time division", S_x_axis_style, x_axis_styles[(int)x_axis_style(ss)],
 					x_axis_styles, 5,
-					grf_box, current_sep,
+					grf_box,
 					x_axis_style_from_text,
-					NULL, NULL,
-					x_axis_style_from_menu);
+					NULL, NULL);
     remember_pref(prf, reflect_x_axis_style, NULL);
 
-    current_sep = make_inter_variable_separator(grf_box, prf->label);
+    current_sep = make_inter_variable_separator(grf_box);
     prf = prefs_row_with_toggle("include smpte info", "show-smpte-label", /* TODO: does this trigger help? */
 				find_smpte(),
-				grf_box, current_sep,
+				grf_box,
 				smpte_toggle);
     remember_pref(prf, reflect_smpte, save_smpte);
 
     /* ---------------- (graph) colors ---------------- */
 
-    current_sep = make_inter_variable_separator(grf_box, prf->label); 
+    current_sep = make_inter_variable_separator(grf_box); 
     colgrf_label = make_inner_label("  colors", grf_box, current_sep);
 
     saved_data_color = ss->sgx->data_color;    
     prf = prefs_color_selector_row("unselected data (waveform) color", S_data_color, ss->sgx->data_color,
-				   grf_box, colgrf_label,
+				   grf_box, 
 				   data_color_func);
     remember_pref(prf, reflect_data_color, NULL);
 
-    current_sep = make_inter_variable_separator(grf_box, prf->rscl);
+    current_sep = make_inter_variable_separator(grf_box);
     saved_graph_color = ss->sgx->graph_color;
     prf = prefs_color_selector_row("unselected graph (background) color", S_graph_color, ss->sgx->graph_color,
-				   grf_box, current_sep,
+				   grf_box,
 				   graph_color_func);
     remember_pref(prf, reflect_graph_color, NULL);
 
-    current_sep = make_inter_variable_separator(grf_box, prf->rscl);
+    current_sep = make_inter_variable_separator(grf_box);
     saved_selected_data_color = ss->sgx->selected_data_color;
     prf = prefs_color_selector_row("selected channel data (waveform) color", S_selected_data_color, ss->sgx->selected_data_color,
-				   grf_box, current_sep,
+				   grf_box,
 				   selected_data_color_func);
     remember_pref(prf, reflect_selected_data_color, NULL);
 
-    current_sep = make_inter_variable_separator(grf_box, prf->rscl);
+    current_sep = make_inter_variable_separator(grf_box);
     saved_selected_graph_color = ss->sgx->selected_graph_color;
     prf = prefs_color_selector_row("selected channel graph (background) color", S_selected_graph_color, ss->sgx->selected_graph_color,
-				   grf_box, current_sep,
+				   grf_box,
 				   selected_graph_color_func);
     remember_pref(prf, reflect_selected_graph_color, NULL);
 
-    current_sep = make_inter_variable_separator(grf_box, prf->rscl);
+    current_sep = make_inter_variable_separator(grf_box);
     saved_selection_color = ss->sgx->selection_color;
     prf = prefs_color_selector_row("selection color", S_selection_color, ss->sgx->selection_color,
-				   grf_box, current_sep,
+				   grf_box,
 				   selection_color_func);
     remember_pref(prf, reflect_selection_color, NULL);
 
     /* ---------------- (graph) fonts ---------------- */
 
-    current_sep = make_inter_variable_separator(grf_box, prf->rscl);
+    current_sep = make_inter_variable_separator(grf_box);
     colgrf_label = make_inner_label("  fonts", grf_box, current_sep);
 
     prf = prefs_row_with_text("axis label font", S_axis_label_font, 
 			      axis_label_font(ss), 
-			      grf_box, colgrf_label,
+			      grf_box, 
 			      axis_label_font_text);
     remember_pref(prf, reflect_axis_label_font, NULL);
 
-    current_sep = make_inter_variable_separator(grf_box, prf->label);     
+    current_sep = make_inter_variable_separator(grf_box);     
     prf = prefs_row_with_text("axis number font", S_axis_numbers_font, 
 			      axis_numbers_font(ss), 
-			      grf_box, current_sep,
+			      grf_box,
 			      axis_numbers_font_text);
     remember_pref(prf, reflect_axis_numbers_font, NULL);
 
-    current_sep = make_inter_variable_separator(grf_box, prf->label);     
+    current_sep = make_inter_variable_separator(grf_box);     
     prf = prefs_row_with_text("fft peaks font", S_peaks_font, 
 			      peaks_font(ss), 
-			      grf_box, current_sep,
+			      grf_box,
 			      peaks_font_text);
     remember_pref(prf, reflect_peaks_font, NULL);
 
-    current_sep = make_inter_variable_separator(grf_box, prf->label);     
+    current_sep = make_inter_variable_separator(grf_box);     
     prf = prefs_row_with_text("fft peaks bold font (for main peaks)", S_bold_peaks_font, 
 			      bold_peaks_font(ss), 
-			      grf_box, current_sep,
+			      grf_box,
 			      bold_peaks_font_text);
     remember_pref(prf, reflect_bold_peaks_font, NULL);
 
-    current_sep = make_inter_variable_separator(grf_box, prf->label);     
+    current_sep = make_inter_variable_separator(grf_box);     
     prf = prefs_row_with_text("tiny font (for various annotations)", S_peaks_font, 
 			      tiny_font(ss), 
-			      grf_box, current_sep,
+			      grf_box,
 			      tiny_font_text);
     remember_pref(prf, reflect_tiny_font, NULL);
   }
@@ -4390,55 +4055,53 @@ void start_preferences_dialog(void)
     str = mus_format(OFF_TD, transform_size(ss));
     prf = prefs_row_with_number("size", S_transform_size,
 				str, 12, 
-				fft_box, fft_label, 
+				fft_box,
 				fft_size_up, fft_size_down, fft_size_from_text);
     remember_pref(prf, reflect_fft_size, NULL);
     FREE(str);
     if (transform_size(ss) <= 2) gtk_widget_set_sensitive(prf->arrow_down, false);
 
-    current_sep = make_inter_variable_separator(fft_box, prf->label);
+    current_sep = make_inter_variable_separator(fft_box);
     prf = prefs_row_with_radio_box("transform graph choice", S_transform_graph_type,
 				   transform_graph_types, 3, transform_graph_type(ss),
-				   fft_box, current_sep,
+				   fft_box,
 				   transform_graph_type_choice);
     remember_pref(prf, reflect_transform_graph_type, NULL);
 
-    current_sep = make_inter_variable_separator(fft_box, prf->label);
+    current_sep = make_inter_variable_separator(fft_box);
     prf = prefs_row_with_completed_list("transform", S_transform_type, transform_types[transform_type(ss)],
 					transform_types, NUM_TRANSFORM_TYPES,
-					fft_box, current_sep,
+					fft_box,
 					transform_type_from_text,
-					transform_type_completer, NULL,
-					transform_type_from_menu);
+					transform_type_completer, NULL);
     remember_pref(prf, reflect_transform_type, NULL);
 
-    current_sep = make_inter_variable_separator(fft_box, prf->label);
+    current_sep = make_inter_variable_separator(fft_box);
     prf = prefs_row_with_completed_list("data window", S_fft_window, fft_windows[(int)fft_window(ss)],
 					fft_windows, NUM_FFT_WINDOWS,
-					fft_box, current_sep,
+					fft_box,
 					fft_window_from_text,
-					fft_window_completer, NULL,
-					fft_window_from_menu);
+					fft_window_completer, NULL);
     remember_pref(prf, reflect_fft_window, NULL);
 
-    current_sep = make_inter_variable_separator(fft_box, prf->label);
+    current_sep = make_inter_variable_separator(fft_box);
     prf = prefs_row_with_scale("data window family parameter", S_fft_window_beta, 
 			       1.0, fft_window_beta(ss),
-			       fft_box, current_sep,
+			       fft_box,
 			       fft_window_beta_scale_callback, fft_window_beta_text_callback);
     remember_pref(prf, reflect_fft_window_beta, NULL);
 
-    current_sep = make_inter_variable_separator(fft_box, prf->label);
+    current_sep = make_inter_variable_separator(fft_box);
     str = mus_format("%d", max_transform_peaks(ss));
     prf = prefs_row_with_toggle_with_text("show fft peak data", S_show_transform_peaks,
 					  show_transform_peaks(ss),
 					  "max peaks:", str, 5,
-					  fft_box, current_sep,
+					  fft_box,
 					  transform_peaks_toggle, transform_peaks_text);
     remember_pref(prf, reflect_show_transform_peaks, NULL);
     FREE(str);
 
-    current_sep = make_inter_variable_separator(fft_box, prf->label);
+    current_sep = make_inter_variable_separator(fft_box);
     {
       const char **cmaps;
       int i, len;
@@ -4448,40 +4111,39 @@ void start_preferences_dialog(void)
 	cmaps[i] = (const char *)colormap_name(i);
       prf = prefs_row_with_completed_list("sonogram colormap", S_colormap, cmaps[color_map(ss)],
 					  cmaps, len,
-					  fft_box, current_sep,
+					  fft_box,
 					  colormap_from_text,
-					  colormap_completer, NULL,
-					  colormap_from_menu);
+					  colormap_completer, NULL);
       remember_pref(prf, reflect_colormap, NULL);
       FREE(cmaps);
     }
 
-    current_sep = make_inter_variable_separator(fft_box, prf->label);
+    current_sep = make_inter_variable_separator(fft_box);
     prf = prefs_row_with_toggle("y axis as log magnitude (dB)", S_fft_log_magnitude,
 				fft_log_magnitude(ss),
-				fft_box, current_sep,
+				fft_box,
 				log_magnitude_toggle);
     remember_pref(prf, reflect_fft_log_magnitude, NULL);
 
-    current_sep = make_inter_variable_separator(fft_box, prf->label);
+    current_sep = make_inter_variable_separator(fft_box);
     str = mus_format("%.3f", min_dB(ss));
     prf = prefs_row_with_text("minimum y-axis dB value", S_min_dB, str,
-			      fft_box, current_sep,
+			      fft_box,
 			      min_dB_text);
     remember_pref(prf, reflect_min_dB, NULL);
     FREE(str);
 
-    current_sep = make_inter_variable_separator(fft_box, prf->label);
+    current_sep = make_inter_variable_separator(fft_box);
     prf = prefs_row_with_toggle("x axis as log freq", S_fft_log_frequency,
 				fft_log_frequency(ss),
-				fft_box, current_sep,
+				fft_box,
 				log_frequency_toggle);
     remember_pref(prf, reflect_fft_log_frequency, NULL);
 
-    current_sep = make_inter_variable_separator(fft_box, prf->label);
+    current_sep = make_inter_variable_separator(fft_box);
     prf = prefs_row_with_radio_box("normalization", S_transform_normalization,
 				   transform_normalizations, 4, transform_normalization(ss),
-				   fft_box, current_sep,
+				   fft_box,
 				   transform_normalization_choice);
     remember_pref(prf, reflect_transform_normalization, NULL);
   }
@@ -4500,46 +4162,46 @@ void start_preferences_dialog(void)
 
     saved_mark_color = ss->sgx->mark_color;
     prf = prefs_color_selector_row("mark and mix tag color", S_mark_color, ss->sgx->mark_color,
-				   mmr_box, mmr_label,
+				   mmr_box,
 				   mark_color_func);
     remember_pref(prf, reflect_mark_color, NULL);
 
-    current_sep = make_inter_variable_separator(mmr_box, prf->rscl);
+    current_sep = make_inter_variable_separator(mmr_box);
 
     str1 = mus_format("%d", mark_tag_width(ss));
     str2 = mus_format("%d", mark_tag_height(ss));
     prf = prefs_row_with_two_texts("mark tag size", S_mark_tag_width, 
 				   "width:", str1, "height:", str2, 4,
-				   mmr_box, current_sep,
+				   mmr_box,
 				   mark_tag_size_text);
     remember_pref(prf, reflect_mark_tag_size, NULL);
     FREE(str2);
     FREE(str1);
 
-    current_sep = make_inter_variable_separator(mmr_box, prf->label);
+    current_sep = make_inter_variable_separator(mmr_box);
     str1 = mus_format("%d", mix_tag_width(ss));
     str2 = mus_format("%d", mix_tag_height(ss));
     prf = prefs_row_with_two_texts("mix tag size", S_mix_tag_width, 
 				   "width:", str1, "height:", str2, 4,
-				   mmr_box, current_sep,
+				   mmr_box,
 				   mix_tag_size_text);
     remember_pref(prf, reflect_mix_tag_size, NULL);
     FREE(str2);
     FREE(str1);
 
-    current_sep = make_inter_variable_separator(mmr_box, prf->label);
+    current_sep = make_inter_variable_separator(mmr_box);
     saved_mix_color = ss->sgx->mix_color;
     prf = prefs_color_selector_row("mix waveform color", S_mix_color, ss->sgx->mix_color,
-				   mmr_box, current_sep,
+				   mmr_box,
 				   mix_color_func);
     remember_pref(prf, reflect_mix_color, NULL);
 
-    current_sep = make_inter_variable_separator(mmr_box, prf->rscl);
+    current_sep = make_inter_variable_separator(mmr_box);
     str = mus_format("%d", mix_waveform_height(ss));
     prf = prefs_row_with_toggle_with_text("show mix waveforms (attached to the mix tag)", S_show_mix_waveforms,
 					  show_mix_waveforms(ss),
 					  "max waveform height:", str, 5,
-					  mmr_box, current_sep,
+					  mmr_box,
 					  show_mix_waveforms_toggle, mix_waveform_height_text);
     remember_pref(prf, reflect_show_mix_waveforms, NULL);
     FREE(str);
@@ -4559,16 +4221,16 @@ void start_preferences_dialog(void)
     include_listener = listener_is_visible();
     prf = prefs_row_with_toggle("show listener at start up", S_show_listener,
 				include_listener,
-				prg_box, prg_label,
+				prg_box,
 				show_listener_toggle);
     remember_pref(prf, reflect_show_listener, save_show_listener);
 
 #if HAVE_SCHEME
-    current_sep = make_inter_variable_separator(prg_box, prf->label);
+    current_sep = make_inter_variable_separator(prg_box);
     str = mus_format("%d", optimization(ss));
     prf = prefs_row_with_number("optimization level", S_optimization,
 				str, 3, 
-				prg_box, current_sep, 
+				prg_box,
 				optimization_up, optimization_down, optimization_from_text);
     remember_pref(prf, reflect_optimization, NULL);
     FREE(str);
@@ -4576,105 +4238,41 @@ void start_preferences_dialog(void)
     if (optimization(ss) == 0) gtk_widget_set_sensitive(prf->arrow_down, false);
 #endif
 
-    current_sep = make_inter_variable_separator(prg_box, prf->label);
+    current_sep = make_inter_variable_separator(prg_box);
     prf = prefs_row_with_text("prompt", S_listener_prompt, 
 			      listener_prompt(ss), 
-			      prg_box, current_sep,
+			      prg_box,
 			      listener_prompt_text);
     remember_pref(prf, reflect_listener_prompt, NULL);
 
-    current_sep = make_inter_variable_separator(prg_box, prf->label);
+    current_sep = make_inter_variable_separator(prg_box);
     prf = prefs_row_with_toggle("include backtrace in error report", S_show_backtrace,
 				show_backtrace(ss),
-				prg_box, current_sep,
+				prg_box,
 				show_backtrace_toggle);
     remember_pref(prf, reflect_show_backtrace, NULL);
 
-    current_sep = make_inter_variable_separator(prg_box, prf->label);
+    current_sep = make_inter_variable_separator(prg_box);
     prf = prefs_row_with_text("font", S_listener_font, 
 			      listener_font(ss), 
-			      prg_box, current_sep,
+			      prg_box,
 			      listener_font_text);
     remember_pref(prf, reflect_listener_font, NULL);
 
-    current_sep = make_inter_variable_separator(prg_box, prf->label);
+    current_sep = make_inter_variable_separator(prg_box);
     saved_listener_color = ss->sgx->listener_color;
     prf = prefs_color_selector_row("background color", S_listener_color, ss->sgx->listener_color,
-				   prg_box, current_sep,
+				   prg_box,
 				   listener_color_func);
     remember_pref(prf, reflect_listener_color, NULL);
 
-    current_sep = make_inter_variable_separator(prg_box, prf->rscl);
+    current_sep = make_inter_variable_separator(prg_box);
     saved_listener_text_color = ss->sgx->listener_text_color;
     prf = prefs_color_selector_row("text color", S_listener_text_color, ss->sgx->listener_text_color,
-				   prg_box, current_sep,
+				   prg_box,
 				   listener_text_color_func);
     remember_pref(prf, reflect_listener_text_color, NULL);
   }
-
-  current_sep = make_inter_topic_separator(topics);
-
-  /* -------- silly stuff -------- */
-  {
-    GtkWidget *silly_box, *silly_label;
-
-    /* ---------------- silly options ---------------- */
-
-    silly_box = make_top_level_box(topics);
-    silly_label = make_top_level_label("silly stuff", silly_box);
-
-    saved_help_button_color = ss->sgx->help_button_color;
-    prf = prefs_color_selector_row("help button color", S_help_button_color, ss->sgx->help_button_color,
-				   silly_box, silly_label,
-				   help_button_color_func);
-    remember_pref(prf, reflect_help_button_color, NULL);
-    current_sep = make_inter_variable_separator(silly_box, prf->rscl);
-
-    saved_reset_button_color = ss->sgx->reset_button_color;
-    prf = prefs_color_selector_row("reset button color", S_reset_button_color, ss->sgx->reset_button_color,
-				   silly_box, current_sep,
-				   reset_button_color_func);
-    remember_pref(prf, reflect_reset_button_color, NULL);
-    current_sep = make_inter_variable_separator(silly_box, prf->rscl);
-
-    saved_quit_button_color = ss->sgx->quit_button_color;
-    prf = prefs_color_selector_row("quit button color", S_quit_button_color, ss->sgx->quit_button_color,
-				   silly_box, current_sep,
-				   quit_button_color_func);
-    remember_pref(prf, reflect_quit_button_color, NULL);
-    current_sep = make_inter_variable_separator(silly_box, prf->rscl);
-
-    saved_doit_button_color = ss->sgx->doit_button_color;
-    prf = prefs_color_selector_row("doit button color", S_doit_button_color, ss->sgx->doit_button_color,
-				   silly_box, current_sep,
-				   doit_button_color_func);
-    remember_pref(prf, reflect_doit_button_color, NULL);
-    current_sep = make_inter_variable_separator(silly_box, prf->rscl);
-
-    saved_doit_again_button_color = ss->sgx->doit_again_button_color;
-    prf = prefs_color_selector_row("doit-again button color", S_doit_again_button_color, ss->sgx->doit_again_button_color,
-				   silly_box, current_sep,
-				   doit_again_button_color_func);
-    remember_pref(prf, reflect_doit_again_button_color, NULL);
-
-    current_sep = make_inter_variable_separator(silly_box, prf->rscl);
-    saved_pushed_button_color = ss->sgx->pushed_button_color;
-    prf = prefs_color_selector_row("pushed-button color", S_pushed_button_color, ss->sgx->pushed_button_color,
-				   silly_box, current_sep,
-				   pushed_button_color_func);
-    remember_pref(prf, reflect_pushed_button_color, NULL);
-
-  }
-#endif
-  /* top level */
-
   set_dialog_widget(PREFERENCES_DIALOG, preferences_dialog);
   gtk_widget_show(preferences_dialog);
 }
-#else
-
-void start_preferences_dialog(void)
-{
-}
-
-#endif

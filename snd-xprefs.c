@@ -5,6 +5,9 @@
 
 /* things left to do:
 
+   remember gtk case! (user might switch to gtk, use same prefs file)
+   why not use red/green (add blue) in sgx?
+
    speed-control style/tones? SPEED_CONTROL_AS_FLOAT, SPEED_CONTROL_AS_RATIO, SPEED_CONTROL_AS_SEMITONE + number+arrows for semitones [in_set*]
    snd-motif: hidden-controls-dialog (make-hidden-controls-dialog)
 
@@ -164,13 +167,15 @@ static void remember_pref(prefs_info *prf,
 
 static char *trim_string(const char *str)
 {
-  int i, len, j = 0;
+  int i = 0, len, j = 0, k, m;
   char *trimmed_str;
   len = strlen(str);
   trimmed_str = (char *)CALLOC(len + 1, sizeof(char));
-  for (i = 0; i < len; i++)
-    if (!(isspace(str[i])))
-      trimmed_str[j++] = str[i];
+  while ((i < len) && (isspace(str[i]))) i++;
+  k = len - 1;
+  while ((k > i) && (isspace(str[k]))) k--;
+  for (m = i; m <= k; m++)
+    trimmed_str[j++] = str[m];
   return(trimmed_str);
 }
 
