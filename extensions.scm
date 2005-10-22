@@ -890,3 +890,29 @@ If 'check' is #f, the hooks are removed."
 	(add-hook! mouse-enter-text-hook
 		   (lambda (w)
 		     (focus-widget w))))))
+
+
+;;; -------- initial bounds 
+
+(define prefs-show-full-duration #f) ; prefs dialog
+(define prefs-initial-beg 0.0)
+(define prefs-initial-dur 0.1)
+
+(define (prefs-initial-bounds snd chn dur)
+  (list prefs-initial-beg
+	(if prefs-show-full-duration
+	    dur
+	    (min prefs-initial-dur dur))))
+(define (prefs-activate-initial-bounds beg dur full)
+  (set! prefs-initial-beg beg)
+  (set! prefs-initial-dur dur)
+  (set! prefs-show-full-duration full)
+  (add-hook! initial-graph-hook prefs-initial-bounds))
+(define (prefs-deactivate-initial-bounds)
+  (set! prefs-initial-beg 0.0)
+  (set! prefs-initial-dur 0.1)
+  (set! prefs-show-full-duration #f)
+  (remove-hook! initial-graph-hook prefs-initial-bounds))
+
+
+

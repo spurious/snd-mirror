@@ -4,10 +4,7 @@
  */
 
 /* things left to do:
-
-   remember gtk case! (user might switch to gtk, use same prefs file)
-   why not use red/green (add blue) in sgx?
-
+   
    speed-control style/tones? SPEED_CONTROL_AS_FLOAT, SPEED_CONTROL_AS_RATIO, SPEED_CONTROL_AS_SEMITONE + number+arrows for semitones [in_set*]
    snd-motif: hidden-controls-dialog (make-hidden-controls-dialog)
 
@@ -61,7 +58,6 @@
 
     line cursor during play?
 
-    also initial bounds callbacks, help, and initial setting
     various help cases
     error redirection label (and save confirmation)
     ruby side of smpte
@@ -223,9 +219,22 @@ static Widget find_radio_button(Widget parent, const char *name)
 static void prefs_help(prefs_info *prf)
 {
   if (prf->var_name)
-    snd_help(prf->var_name, 
-	     XEN_TO_C_STRING(XEN_OBJECT_HELP(C_STRING_TO_XEN_SYMBOL((char *)(prf->var_name)))),
-	     WITH_WORD_WRAP);
+    {
+      XEN sym;
+      sym = C_STRING_TO_XEN_SYMBOL((char *)(prf->var_name));
+      if (XEN_SYMBOL_P(sym))
+	{
+	  XEN obj;
+	  obj = XEN_OBJECT_HELP(sym);
+	  if (XEN_STRING_P(obj))
+	    {
+	      prefs_helping = true;
+	      snd_help(prf->var_name, 
+		       XEN_TO_C_STRING(obj),
+		       WITH_WORD_WRAP);
+	    }
+	}
+    }
 }
 
 static void prefs_help_click_callback(Widget w, XtPointer context, XtPointer info)
@@ -425,7 +434,7 @@ static prefs_info *prefs_row_with_toggle(const char *label, const char *varname,
 					 void (*toggle_func)(prefs_info *prf))
 {
   prefs_info *prf = NULL;
-  Widget sep;
+  Widget sep, help;
   prf = (prefs_info *)CALLOC(1, sizeof(prefs_info));
   prf->var_name = varname;
   prf->toggle_func = toggle_func;
@@ -433,14 +442,16 @@ static prefs_info *prefs_row_with_toggle(const char *label, const char *varname,
   prf->label = make_row_label(label, box, top_widget);
   sep = make_row_middle_separator(prf->label, box, top_widget);
   prf->toggle = make_row_toggle(current_value, sep, box, top_widget);
-  make_row_help(varname, prf, box, top_widget, prf->toggle);
+  help = make_row_help(varname, prf, box, top_widget, prf->toggle);
   
   XtAddCallback(prf->toggle, XmNvalueChangedCallback, call_toggle_func, (void *)prf);
 
   XtAddEventHandler(prf->label, EnterWindowMask, false, mouse_enter_pref_callback, (void *)prf);
   XtAddEventHandler(prf->toggle, EnterWindowMask, false, mouse_enter_pref_callback, (void *)prf);
+  XtAddEventHandler(help, EnterWindowMask, false, mouse_enter_pref_callback, (void *)prf);
   XtAddEventHandler(prf->label, LeaveWindowMask, false, mouse_leave_pref_callback, (void *)prf);
   XtAddEventHandler(prf->toggle, LeaveWindowMask, false, mouse_leave_pref_callback, (void *)prf);
+  XtAddEventHandler(help, LeaveWindowMask, false, mouse_leave_pref_callback, (void *)prf);
 
   return(prf);
 }
@@ -497,7 +508,7 @@ static prefs_info *prefs_row_with_toggle_with_text(const char *label, const char
 						   void (*text_func)(prefs_info *prf))
 {
   prefs_info *prf = NULL;
-  Widget sep, sep1, lab1;
+  Widget sep, sep1, lab1, help;
   prf = (prefs_info *)CALLOC(1, sizeof(prefs_info));
   prf->var_name = varname;
   prf->toggle_func = toggle_func;
@@ -508,8 +519,8 @@ static prefs_info *prefs_row_with_toggle_with_text(const char *label, const char
   prf->toggle = make_row_toggle(current_value, sep, box, top_widget);
   sep1 = make_row_inner_separator(16, prf->toggle, box, top_widget);
   lab1 = make_row_inner_label(text_label, sep1, box, top_widget);
-  prf->text= make_row_text(text_value, cols, lab1, box, top_widget);
-  make_row_help(varname, prf, box, top_widget, prf->text);
+  prf->text = make_row_text(text_value, cols, lab1, box, top_widget);
+  help = make_row_help(varname, prf, box, top_widget, prf->text);
   
   XtAddCallback(prf->toggle, XmNvalueChangedCallback, call_toggle_func, (void *)prf);
   XtAddCallback(prf->text, XmNactivateCallback, call_text_func, (void *)prf);
@@ -517,9 +528,13 @@ static prefs_info *prefs_row_with_toggle_with_text(const char *label, const char
   XtAddEventHandler(prf->label, EnterWindowMask, false, mouse_enter_pref_callback, (void *)prf);
   XtAddEventHandler(prf->toggle, EnterWindowMask, false, mouse_enter_pref_callback, (void *)prf);
   XtAddEventHandler(prf->text, EnterWindowMask, false, mouse_enter_pref_callback, (void *)prf);
+  XtAddEventHandler(lab1, EnterWindowMask, false, mouse_enter_pref_callback, (void *)prf);
+  XtAddEventHandler(help, EnterWindowMask, false, mouse_enter_pref_callback, (void *)prf);
   XtAddEventHandler(prf->label, LeaveWindowMask, false, mouse_leave_pref_callback, (void *)prf);
   XtAddEventHandler(prf->toggle, LeaveWindowMask, false, mouse_leave_pref_callback, (void *)prf);
   XtAddEventHandler(prf->text, LeaveWindowMask, false, mouse_leave_pref_callback, (void *)prf);
+  XtAddEventHandler(help, LeaveWindowMask, false, mouse_leave_pref_callback, (void *)prf);
+  XtAddEventHandler(lab1, LeaveWindowMask, false, mouse_leave_pref_callback, (void *)prf);
 
   return(prf);
 }
@@ -534,7 +549,7 @@ static prefs_info *prefs_row_with_text_with_toggle(const char *label, const char
 						   void (*text_func)(prefs_info *prf))
 {
   prefs_info *prf = NULL;
-  Widget sep, sep1, lab1;
+  Widget sep, sep1, lab1, help;
   prf = (prefs_info *)CALLOC(1, sizeof(prefs_info));
   prf->var_name = varname;
   prf->toggle_func = toggle_func;
@@ -546,7 +561,7 @@ static prefs_info *prefs_row_with_text_with_toggle(const char *label, const char
   sep1 = make_row_inner_separator(8, prf->text, box, top_widget);
   lab1 = make_row_inner_label(toggle_label, sep1, box, top_widget);
   prf->toggle = make_row_toggle(current_value, lab1, box, top_widget);  
-  make_row_help(varname, prf, box, top_widget, prf->text);
+  help = make_row_help(varname, prf, box, top_widget, prf->text);
   
   XtAddCallback(prf->toggle, XmNvalueChangedCallback, call_toggle_func, (void *)prf);
   XtAddCallback(prf->text, XmNactivateCallback, call_text_func, (void *)prf);
@@ -554,9 +569,13 @@ static prefs_info *prefs_row_with_text_with_toggle(const char *label, const char
   XtAddEventHandler(prf->label, EnterWindowMask, false, mouse_enter_pref_callback, (void *)prf);
   XtAddEventHandler(prf->toggle, EnterWindowMask, false, mouse_enter_pref_callback, (void *)prf);
   XtAddEventHandler(prf->text, EnterWindowMask, false, mouse_enter_pref_callback, (void *)prf);
+  XtAddEventHandler(help, EnterWindowMask, false, mouse_enter_pref_callback, (void *)prf);
+  XtAddEventHandler(lab1, EnterWindowMask, false, mouse_enter_pref_callback, (void *)prf);
   XtAddEventHandler(prf->label, LeaveWindowMask, false, mouse_leave_pref_callback, (void *)prf);
   XtAddEventHandler(prf->toggle, LeaveWindowMask, false, mouse_leave_pref_callback, (void *)prf);
   XtAddEventHandler(prf->text, LeaveWindowMask, false, mouse_leave_pref_callback, (void *)prf);
+  XtAddEventHandler(help, LeaveWindowMask, false, mouse_leave_pref_callback, (void *)prf);
+  XtAddEventHandler(lab1, LeaveWindowMask, false, mouse_leave_pref_callback, (void *)prf);
 
   return(prf);
 }
@@ -582,7 +601,7 @@ static prefs_info *prefs_row_with_radio_box(const char *label, const char *varna
   Arg args[20];
   int i, n;
   prefs_info *prf = NULL;
-  Widget sep;
+  Widget sep, help;
   prf = (prefs_info *)CALLOC(1, sizeof(prefs_info));
   prf->var_name = varname;
   prf->toggle_func = toggle_func;
@@ -624,12 +643,14 @@ static prefs_info *prefs_row_with_radio_box(const char *label, const char *varna
       XtAddCallback(button, XmNvalueChangedCallback, call_radio_func, (XtPointer)prf);
     }
 
-  make_row_help(varname, prf, box, top_widget, prf->toggle);
+  help = make_row_help(varname, prf, box, top_widget, prf->toggle);
 
   XtAddEventHandler(prf->label, EnterWindowMask, false, mouse_enter_pref_callback, (void *)prf);
   XtAddEventHandler(prf->label, LeaveWindowMask, false, mouse_leave_pref_callback, (void *)prf);
   XtAddEventHandler(prf->toggle, EnterWindowMask, false, mouse_enter_pref_callback, (void *)prf);
   XtAddEventHandler(prf->toggle, LeaveWindowMask, false, mouse_leave_pref_callback, (void *)prf);
+  XtAddEventHandler(help, EnterWindowMask, false, mouse_enter_pref_callback, (void *)prf);
+  XtAddEventHandler(help, LeaveWindowMask, false, mouse_leave_pref_callback, (void *)prf);
 
   return(prf);
 }
@@ -667,7 +688,7 @@ static prefs_info *prefs_row_with_scale(const char *label, const char *varname,
   Arg args[20];
   int n;
   prefs_info *prf = NULL;
-  Widget sep;
+  Widget sep, help;
   XtCallbackList n1, n2;
   char *str;
 
@@ -702,7 +723,7 @@ static prefs_info *prefs_row_with_scale(const char *label, const char *varname,
   XtSetArg(args[n], XmNvalueChangedCallback, n2 = make_callback_list(prefs_scale_callback, (XtPointer)prf)); n++;
   prf->scale = XtCreateManagedWidget("", xmScaleWidgetClass, box, args, n);
   
-  make_row_help(varname, prf, box, top_widget, prf->scale);
+  help = make_row_help(varname, prf, box, top_widget, prf->scale);
 
   prf->scale_func = scale_func;
   prf->text_func = text_func;
@@ -713,9 +734,11 @@ static prefs_info *prefs_row_with_scale(const char *label, const char *varname,
   XtAddEventHandler(prf->label, EnterWindowMask, false, mouse_enter_pref_callback, (void *)prf);
   XtAddEventHandler(prf->scale, EnterWindowMask, false, mouse_enter_pref_callback, (void *)prf);
   XtAddEventHandler(prf->text, EnterWindowMask, false, mouse_enter_pref_callback, (void *)prf);
+  XtAddEventHandler(help, EnterWindowMask, false, mouse_enter_pref_callback, (void *)prf);
   XtAddEventHandler(prf->label, LeaveWindowMask, false, mouse_leave_pref_callback, (void *)prf);
   XtAddEventHandler(prf->scale, LeaveWindowMask, false, mouse_leave_pref_callback, (void *)prf);
   XtAddEventHandler(prf->text, LeaveWindowMask, false, mouse_leave_pref_callback, (void *)prf);
+  XtAddEventHandler(help, LeaveWindowMask, false, mouse_leave_pref_callback, (void *)prf);
 
   FREE(n1);
   FREE(n2);
@@ -731,7 +754,7 @@ static prefs_info *prefs_row_with_text(const char *label, const char *varname, c
 				       void (*text_func)(prefs_info *prf))
 {
   prefs_info *prf = NULL;
-  Widget sep;
+  Widget sep, help;
   prf = (prefs_info *)CALLOC(1, sizeof(prefs_info));
   prf->var_name = varname;
 
@@ -739,15 +762,17 @@ static prefs_info *prefs_row_with_text(const char *label, const char *varname, c
   sep = make_row_middle_separator(prf->label, box, top_widget);
   prf->text = make_row_text(value, 0, sep, box, top_widget);
   
-  make_row_help(varname, prf, box, top_widget, prf->text);
+  help = make_row_help(varname, prf, box, top_widget, prf->text);
 
   prf->text_func = text_func;
   XtAddCallback(prf->text, XmNactivateCallback, call_text_func, (XtPointer)prf);
 
   XtAddEventHandler(prf->label, EnterWindowMask, false, mouse_enter_pref_callback, (void *)prf);
   XtAddEventHandler(prf->text, EnterWindowMask, false, mouse_enter_pref_callback, (void *)prf);
+  XtAddEventHandler(help, EnterWindowMask, false, mouse_enter_pref_callback, (void *)prf);
   XtAddEventHandler(prf->label, LeaveWindowMask, false, mouse_leave_pref_callback, (void *)prf);
   XtAddEventHandler(prf->text, LeaveWindowMask, false, mouse_leave_pref_callback, (void *)prf);
+  XtAddEventHandler(help, LeaveWindowMask, false, mouse_leave_pref_callback, (void *)prf);
 
   return(prf);
 }
@@ -761,7 +786,7 @@ static prefs_info *prefs_row_with_two_texts(const char *label, const char *varna
 					    void (*text_func)(prefs_info *prf))
 {
   prefs_info *prf = NULL;
-  Widget sep, lab1, lab2;
+  Widget sep, lab1, lab2, help;
   prf = (prefs_info *)CALLOC(1, sizeof(prefs_info));
   prf->var_name = varname;
 
@@ -771,7 +796,7 @@ static prefs_info *prefs_row_with_two_texts(const char *label, const char *varna
   prf->text = make_row_text(text1, cols, lab1, box, top_widget);
   lab2 = make_row_inner_label(label2, prf->text, box, top_widget);  
   prf->rtxt = make_row_text(text2, cols, lab2, box, top_widget);
-  make_row_help(varname, prf, box, top_widget, prf->rtxt);
+  help = make_row_help(varname, prf, box, top_widget, prf->rtxt);
 
   prf->text_func = text_func;
   XtAddCallback(prf->text, XmNactivateCallback, call_text_func, (XtPointer)prf);
@@ -780,9 +805,15 @@ static prefs_info *prefs_row_with_two_texts(const char *label, const char *varna
   XtAddEventHandler(prf->label, EnterWindowMask, false, mouse_enter_pref_callback, (void *)prf);
   XtAddEventHandler(prf->text, EnterWindowMask, false, mouse_enter_pref_callback, (void *)prf);
   XtAddEventHandler(prf->rtxt, EnterWindowMask, false, mouse_enter_pref_callback, (void *)prf);
+  XtAddEventHandler(help, EnterWindowMask, false, mouse_enter_pref_callback, (void *)prf);
+  XtAddEventHandler(lab1, EnterWindowMask, false, mouse_enter_pref_callback, (void *)prf);
+  XtAddEventHandler(lab2, EnterWindowMask, false, mouse_enter_pref_callback, (void *)prf);
   XtAddEventHandler(prf->label, LeaveWindowMask, false, mouse_leave_pref_callback, (void *)prf);
   XtAddEventHandler(prf->text, LeaveWindowMask, false, mouse_leave_pref_callback, (void *)prf);
   XtAddEventHandler(prf->rtxt, LeaveWindowMask, false, mouse_leave_pref_callback, (void *)prf);
+  XtAddEventHandler(help, LeaveWindowMask, false, mouse_leave_pref_callback, (void *)prf);
+  XtAddEventHandler(lab1, LeaveWindowMask, false, mouse_leave_pref_callback, (void *)prf);
+  XtAddEventHandler(lab2, LeaveWindowMask, false, mouse_leave_pref_callback, (void *)prf);
 
   return(prf);
 }
@@ -872,7 +903,7 @@ static prefs_info *prefs_row_with_number(const char *label, const char *varname,
   Arg args[20];
   int n;
   prefs_info *prf = NULL;
-  Widget sep;
+  Widget sep, help;
   prf = (prefs_info *)CALLOC(1, sizeof(prefs_info));
   prf->var_name = varname;
 
@@ -915,7 +946,7 @@ static prefs_info *prefs_row_with_number(const char *label, const char *varname,
   XtSetArg(args[n], XmNalignment, XmALIGNMENT_END); n++;
   prf->error = XtCreateManagedWidget("", xmLabelWidgetClass, box, args, n);
   
-  make_row_help(varname, prf, box, top_widget, prf->error);
+  help = make_row_help(varname, prf, box, top_widget, prf->error);
 
   prf->text_func = text_func;
   prf->arrow_up_func = arrow_up_func;
@@ -933,11 +964,13 @@ static prefs_info *prefs_row_with_number(const char *label, const char *varname,
   XtAddEventHandler(prf->arrow_up, EnterWindowMask, false, mouse_enter_pref_callback, (void *)prf);
   XtAddEventHandler(prf->arrow_down, EnterWindowMask, false, mouse_enter_pref_callback, (void *)prf);
   XtAddEventHandler(prf->error, EnterWindowMask, false, mouse_enter_pref_callback, (void *)prf);
+  XtAddEventHandler(help, EnterWindowMask, false, mouse_enter_pref_callback, (void *)prf);
   XtAddEventHandler(prf->label, LeaveWindowMask, false, mouse_leave_pref_callback, (void *)prf);
   XtAddEventHandler(prf->text, LeaveWindowMask, false, mouse_leave_pref_callback, (void *)prf);
   XtAddEventHandler(prf->arrow_up, LeaveWindowMask, false, mouse_leave_pref_callback, (void *)prf);
   XtAddEventHandler(prf->arrow_down, LeaveWindowMask, false, mouse_leave_pref_callback, (void *)prf);
   XtAddEventHandler(prf->error, LeaveWindowMask, false, mouse_leave_pref_callback, (void *)prf);
+  XtAddEventHandler(help, LeaveWindowMask, false, mouse_leave_pref_callback, (void *)prf);
 
   return(prf);
 }
@@ -989,7 +1022,7 @@ static prefs_info *prefs_row_with_completed_list(const char *label, const char *
   Arg args[20];
   int n, i, cols = 0;
   prefs_info *prf = NULL;
-  Widget sep, sbar;
+  Widget sep, sbar, help;
   prf = (prefs_info *)CALLOC(1, sizeof(prefs_info));
   prf->var_name = varname;
 
@@ -1083,7 +1116,7 @@ static prefs_info *prefs_row_with_completed_list(const char *label, const char *
   XtSetArg(args[n], XmNalignment, XmALIGNMENT_END); n++;
   prf->error = XtCreateManagedWidget("", xmLabelWidgetClass, box, args, n);
 
-  make_row_help(varname, prf, box, top_widget, prf->error);
+  help = make_row_help(varname, prf, box, top_widget, prf->error);
 
   prf->text_func = text_func;
   XtAddCallback(prf->text, XmNactivateCallback, call_text_func, (XtPointer)prf);
@@ -1094,10 +1127,12 @@ static prefs_info *prefs_row_with_completed_list(const char *label, const char *
   XtAddEventHandler(prf->text, EnterWindowMask, false, mouse_enter_pref_callback, (void *)prf);
   XtAddEventHandler(prf->arrow_right, EnterWindowMask, false, mouse_enter_pref_callback, (void *)prf);
   XtAddEventHandler(prf->error, EnterWindowMask, false, mouse_enter_pref_callback, (void *)prf);
+  XtAddEventHandler(help, EnterWindowMask, false, mouse_enter_pref_callback, (void *)prf);
   XtAddEventHandler(prf->label, LeaveWindowMask, false, mouse_leave_pref_callback, (void *)prf);
   XtAddEventHandler(prf->text, LeaveWindowMask, false, mouse_leave_pref_callback, (void *)prf);
   XtAddEventHandler(prf->arrow_right, LeaveWindowMask, false, mouse_leave_pref_callback, (void *)prf);
   XtAddEventHandler(prf->error, LeaveWindowMask, false, mouse_leave_pref_callback, (void *)prf);
+  XtAddEventHandler(help, LeaveWindowMask, false, mouse_leave_pref_callback, (void *)prf);
 
   return(prf);
 }
@@ -1229,6 +1264,8 @@ static void prefs_call_color_func_callback(Widget w, XtPointer context, XtPointe
     }
 }
 
+static Pixel red, green, blue;
+
 static prefs_info *prefs_color_selector_row(const char *label, const char *varname, 
 					    Pixel current_pixel,
 					    Widget box, Widget top_widget,
@@ -1237,24 +1274,13 @@ static prefs_info *prefs_color_selector_row(const char *label, const char *varna
   Arg args[20];
   int n;
   prefs_info *prf = NULL;
-  Widget sep, sep1, frame;
+  Widget sep, sep1, frame, help;
   XtCallbackList n1;
-  Pixel red, green, blue;
-  XColor *tmp;
   float r = 0.0, g = 0.0, b = 0.0;
 
   prf = (prefs_info *)CALLOC(1, sizeof(prefs_info));
   prf->var_name = varname;
   pixel_to_rgb(current_pixel, &r, &g, &b);
-  tmp = rgb_to_color(1.0, 0.0, 0.0);
-  red = tmp->pixel;
-  FREE(tmp);
-  tmp = rgb_to_color(0.0, 1.0, 0.0);
-  green = tmp->pixel;
-  FREE(tmp);
-  tmp = rgb_to_color(0.0, 0.0, 1.0);
-  blue = tmp->pixel;
-  FREE(tmp);
 
   prf->label = make_row_label(label, box, top_widget);
   sep = make_row_middle_separator(prf->label, box, top_widget);    
@@ -1287,7 +1313,7 @@ static prefs_info *prefs_color_selector_row(const char *label, const char *varna
   prf->btxt = make_row_text(NULL, 6, prf->gtxt, box, top_widget);
   float_to_textfield(prf->btxt, b);
 
-  make_row_help(varname, prf, box, top_widget, prf->btxt);
+  help = make_row_help(varname, prf, box, top_widget, prf->btxt);
 
   /* 2nd row = 3 scales */
   n1 = make_callback_list(prefs_color_callback, (XtPointer)prf);
@@ -1380,6 +1406,8 @@ static prefs_info *prefs_color_selector_row(const char *label, const char *varna
   XtAddEventHandler(prf->btxt, LeaveWindowMask, false, mouse_leave_pref_callback, (void *)prf);
   XtAddEventHandler(prf->bscl, EnterWindowMask, false, mouse_enter_pref_callback, (void *)prf);
   XtAddEventHandler(prf->bscl, LeaveWindowMask, false, mouse_leave_pref_callback, (void *)prf);
+  XtAddEventHandler(help, EnterWindowMask, false, mouse_enter_pref_callback, (void *)prf);
+  XtAddEventHandler(help, LeaveWindowMask, false, mouse_leave_pref_callback, (void *)prf);
 
   prf->color_func = color_func;
   FREE(n1);
@@ -1470,10 +1498,14 @@ static Widget make_inner_label(const char *label, Widget parent, Widget top_widg
 
 /* ---------------- base buttons ---------------- */
 
+static void wm_delete_callback (Widget w, XtPointer context, XtPointer info) 
+{
+  prefs_helping = false;
+}
+
 static void preferences_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   prefs_helping = true;
-
   snd_help("preferences",
 	   "This dialog is under construction.  It sets various global variables, 'Save' then writes the new values \
 to ~/.snd_prefs_guile|ruby so that they take effect the next time you start Snd.  'Reset' resets all variables to \
@@ -1485,6 +1517,7 @@ You can also request help on a given topic by clicking the variable name on the 
 
 static void preferences_quit_callback(Widget w, XtPointer context, XtPointer info) 
 {
+  prefs_helping = false;
   if (XmGetFocusWidget(preferences_dialog) == XmMessageBoxGetChild(preferences_dialog, XmDIALOG_OK_BUTTON))
     XtUnmanageChild(preferences_dialog);
 }
@@ -1735,6 +1768,7 @@ static void save_focus_follows_mouse(prefs_info *prf, FILE *fd)
   if (focus_follows_mouse)
     {
 #if HAVE_SCHEME
+      fprintf(fd, "(if (not (provided? 'snd-extensions.scm)) (load-from-path \"extensions.scm\"))\n");
       fprintf(fd, "(focus-follows-mouse)\n");
 #endif
 #if HAVE_RUBY
@@ -2497,7 +2531,7 @@ static void save_context_sensitive_popup(prefs_info *prf, FILE *fd)
   if (include_context_sensitive_popup)
     {
 #if HAVE_SCHEME
-      fprintf(fd, "(if (not (provided? 'snd-popup.scm)) (load-from-path \"popup.scm\"))\n");
+      fprintf(fd, "(if (provided? 'snd-motif)\n    (if (not (provided? 'snd-popup.scm))\n        (load-from-path \"popup.scm\"))\n    (if (not (provided? 'snd-gtk-popup.scm))\n	(load-from-path \"gtk-popup.scm\")))\n");
 #endif
 #if HAVE_RUBY
       fprintf(fd, "require \"popup\"\n");
@@ -2514,7 +2548,7 @@ static void context_sensitive_popup_toggle(prefs_info *prf)
 static bool find_context_sensitive_popup(void)
 {
 #if HAVE_SCHEME
-  return(XEN_DEFINED_P("fft-popup-menu"));
+  return(XEN_DEFINED_P("edhist-help-edits")); /* defined in both cases */
 #endif
 #if HAVE_RUBY
   /* XEN_DEFINED_P always returns false in Xen/Ruby? */
@@ -2537,7 +2571,7 @@ static void save_effects_menu(prefs_info *prf, FILE *fd)
   if (include_effects_menu)
     {
 #if HAVE_SCHEME
-      fprintf(fd, "(if (not (provided? 'snd-new-effects.scm)) (load-from-path \"new-effects.scm\"))\n");
+      fprintf(fd, "(if (provided? 'snd-motif)\n    (if (not (provided? 'snd-new-effects.scm))\n        (load-from-path \"new-effects.scm\"))\n    (if (not (provided? 'snd-gtk-effects.scm))\n	(load-from-path \"gtk-effects.scm\")))\n");
 #endif
 #if HAVE_RUBY
       fprintf(fd, "require \"effects\"\n");
@@ -2574,7 +2608,7 @@ static bool include_edit_menu = false;
 static void save_edit_menu(prefs_info *prf, FILE *fd)
 {
   if (include_edit_menu)
-    fprintf(fd, "(if (not (provided? 'snd-edit-menu.scm)) (load-from-path \"edit-menu.scm\"))\n");
+    fprintf(fd, "(if (not (provided? 'snd-edit-menu.scm)) (load-from-path \"edit-menu.scm\"))\n"); /* ok for either case */
 }
 
 static void edit_menu_toggle(prefs_info *prf)
@@ -2711,25 +2745,81 @@ static void dot_size_from_text(prefs_info *prf)
 
 /* ---------------- initial bounds ---------------- */
 
-/* TODO: initial bounds callbacks */
-/* (add-hook! after-open-hook (lambda (snd)...) */
-/* (set! (x-bounds) (list 0.0 (/ (frames) (srate)))) */
+static bool use_full_duration(void)
+{
+#if HAVE_SCHEME
+  return((XEN_DEFINED_P("prefs-show-full-duration")) &&
+	 (XEN_TRUE_P(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-show-full-duration"))));
+#endif
+#if HAVE_RUBY
+  /* TODO: ruby side of initial bounds */
+  return(false);
+#endif
+}
 
-/* this could be a function that if defined could also return bounds if arg is :bounds -> #t if full */
-/* then subsequent runs get the current bounds */
-
+static char *initial_bounds_to_string(void)
+{
+#if HAVE_SCHEME
+  if (XEN_DEFINED_P("prefs-initial-beg"))
+    return(mus_format("%.2f : %.2f", 
+		      XEN_TO_C_DOUBLE(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-initial-beg")),
+		      XEN_TO_C_DOUBLE(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-initial-dur"))));
+#endif
+  return(copy_string("0.0 : 0.1"));
+}
 
 static void reflect_initial_bounds(prefs_info *prf)
 {
+  /* text has beg : dur, toggle true if full dur */
+  char *str;
+  str = initial_bounds_to_string();
+  XmTextFieldSetString(prf->text, str);
+  FREE(str);
+  XmToggleButtonSetState(prf->toggle, use_full_duration(), false);
 }
+
 static void save_initial_bounds(prefs_info *prf, FILE *fd)
 {
+  if ((use_full_duration()) ||
+      (!(snd_feq(XEN_TO_C_DOUBLE(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-initial-beg")), 0.0))) ||
+      (!(snd_feq(XEN_TO_C_DOUBLE(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-initial-dur")), 0.1))))
+    {
+#if HAVE_SCHEME
+      fprintf(fd, "(if (not (provided? 'snd-extensions.scm)) (load-from-path \"extensions.scm\"))\n");
+      fprintf(fd, "(prefs-activate-initial-bounds %.2f %.2f %s)\n",
+	      XEN_TO_C_DOUBLE(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-initial-beg")),
+	      XEN_TO_C_DOUBLE(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-initial-dur")),
+	      (XEN_TRUE_P(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-show-full-duration"))) ? "#t" : "#f");
+#endif
+    }
 }
+
 static void initial_bounds_toggle(prefs_info *prf)
 {
+  bool use_full_duration = false;
+  ASSERT_WIDGET_TYPE(XmIsToggleButton(prf->toggle), prf->toggle);
+  use_full_duration = (XmToggleButtonGetState(prf->toggle) == XmSET);
+#if HAVE_SCHEME
+  if (!(XEN_DEFINED_P("prefs-initial-beg")))
+    XEN_LOAD_FILE_WITH_PATH("extensions.scm");
+  XEN_VARIABLE_SET(XEN_NAME_AS_C_STRING_TO_VARIABLE("prefs-show-full-duration"), C_TO_XEN_BOOLEAN(use_full_duration));
+#endif
 }
+
 static void initial_bounds_text(prefs_info *prf)
 {
+  float beg = 0.0, dur = 0.1;
+  char *str;
+  str = XmTextFieldGetString(prf->text);
+  sscanf(str, "%f : %f", &beg, &dur);
+  fprintf(stderr, "beg: %f, dur: %f\n", beg, dur);
+#if HAVE_SCHEME
+  if (!(XEN_DEFINED_P("prefs-initial-beg")))
+    XEN_LOAD_FILE_WITH_PATH("extensions.scm");
+  XEN_VARIABLE_SET(XEN_NAME_AS_C_STRING_TO_VARIABLE("prefs-initial-beg"), C_TO_XEN_DOUBLE(beg));
+  XEN_VARIABLE_SET(XEN_NAME_AS_C_STRING_TO_VARIABLE("prefs-initial-dur"), C_TO_XEN_DOUBLE(dur));
+#endif
+  XtFree(str);
 }
 
 
@@ -2976,7 +3066,7 @@ static void save_smpte(prefs_info *prf, FILE *fd)
   if (include_smpte)
     {
 #if HAVE_SCHEME
-      fprintf(fd, "(if (not (provided? 'snd-motif.scm)) (load-from-path \"snd-motif.scm\"))\n");
+      fprintf(fd, "(if (provided? 'snd-motif)\n    (if (not (provided? 'snd-snd-motif.scm))\n        (load-from-path \"snd-motif.scm\"))\n    (if (not (provided? 'snd-snd-gtk.scm))\n        (load-from-path \"snd-gtk.scm\")))\n");
       fprintf(fd, "(show-smpte-label #t)\n");
 #endif
 #if HAVE_RUBY
@@ -4329,6 +4419,19 @@ void start_preferences_dialog(void)
 		  NULL);
   }
 
+  {
+      XColor *tmp;
+      tmp = rgb_to_color(1.0, 0.0, 0.0);
+      red = tmp->pixel;
+      FREE(tmp);
+      tmp = rgb_to_color(0.0, 1.0, 0.0);
+      green = tmp->pixel;
+      FREE(tmp);
+      tmp = rgb_to_color(0.0, 0.0, 1.0);
+      blue = tmp->pixel;
+      FREE(tmp);
+  }
+
   /* ---------------- overall behavior ---------------- */
 
   {
@@ -4643,11 +4746,13 @@ void start_preferences_dialog(void)
     if (dot_size(ss) <= 0) XtSetSensitive(prf->arrow_down, false);
 
     current_sep = make_inter_variable_separator(grf_box, prf->label);
-    prf = prefs_row_with_text_with_toggle("initial graph x bounds", S_x_bounds, false, /* TODO: how to find this?? */
-					  "show full duration", "0.0 : 0.1", 12,
+    str = initial_bounds_to_string();
+    prf = prefs_row_with_text_with_toggle("initial graph x bounds", S_initial_graph_hook, use_full_duration(),
+					  "show full duration", str, 16,
 					  grf_box, current_sep,
 					  initial_bounds_toggle,
 					  initial_bounds_text);
+    FREE(str);
     remember_pref(prf, reflect_initial_bounds, save_initial_bounds);
 
     current_sep = make_inter_variable_separator(grf_box, prf->label);
@@ -5094,6 +5199,12 @@ void start_preferences_dialog(void)
 #if DEBUGGING
   fprintf(stderr, "top: %d\n", prefs_top);
 #endif
+
+  {
+    Atom wm_delete_window;
+    wm_delete_window = XmInternAtom(MAIN_DISPLAY(ss), "WM_DELETE_WINDOW", false);
+    XmAddWMProtocolCallback(XtParent(preferences_dialog), wm_delete_window, wm_delete_callback, NULL);
+  }
 
   XtManageChild(preferences_dialog);
   set_dialog_widget(PREFERENCES_DIALOG, preferences_dialog);

@@ -12,11 +12,12 @@
  */
 
 #define XEN_MAJOR_VERSION 1
-#define XEN_MINOR_VERSION 38
-#define XEN_VERSION "1.38"
+#define XEN_MINOR_VERSION 39
+#define XEN_VERSION "1.39"
 
 /* HISTORY:
  *
+ *  24-Oct-05: XEN_LOAD_FILE_WITH_PATH.
  *  16-Sep-05: removed some debugging extras that caused confusion on 64-bit machines.
  *  12-Aug-05: include guile setter procedure names for better error reporting.
  *  14-Jun-05: XEN_DEFINE (XEN value, not assumed to be int as in XEN_DEFINE_CONSTANT).
@@ -637,7 +638,13 @@
 
 #define XEN_YES_WE_HAVE(Feature)      scm_add_feature(Feature)
 #define XEN_PROTECT_FROM_GC(Obj)      scm_permanent_object(Obj)
-#define XEN_LOAD_FILE(File)           scm_primitive_load(C_TO_XEN_STRING(File))
+#if HAVE_SCM_C_PRIMITIVE_LOAD
+  #define XEN_LOAD_FILE(File)           scm_c_primitive_load(File)
+  #define XEN_LOAD_FILE_WITH_PATH(File) scm_c_primitive_load_path(File)
+#else
+  #define XEN_LOAD_FILE(File)           scm_primitive_load(C_TO_XEN_STRING(File))
+  #define XEN_LOAD_FILE_WITH_PATH(File) scm_primitive_load_path(C_TO_XEN_STRING(File))
+#endif
 
 #define XEN_PUTS(Str, Port)           scm_puts(Str, Port)
 #define XEN_DISPLAY(Val, Port)        scm_display(Val, Port)
@@ -821,6 +828,7 @@ char *xen_guile_to_c_string_with_eventual_free(XEN str);
 #define XEN_EVAL_C_STRING(Arg)          xen_rb_eval_string_with_error(Arg)
 #define XEN_TO_STRING(Obj)              xen_rb_obj_as_string(Obj)
 #define XEN_LOAD_FILE(a)                xen_rb_load_file_with_error(C_TO_XEN_STRING(a))
+#define XEN_LOAD_FILE_WITH_PATH(a)      xen_rb_load_file_with_error(C_TO_XEN_STRING(a))
 
 /* ---- hooks ---- */
 #define XEN_HOOK_P(Arg)                 (xen_rb_is_hook_p(Arg) || XEN_PROCEDURE_P(Arg))
@@ -1288,6 +1296,7 @@ bool xen_rb_arity_ok(int rargs, int args);
 #define XEN_DOCUMENTATION_SYMBOL 0
 #define XEN_PROTECT_FROM_GC(a) 0
 #define XEN_LOAD_FILE(a) 0
+#define XEN_LOAD_FILE_WITH_PATH(a) 0
 #define XEN_ERROR_TYPE(Typ) XEN_FALSE
 #define XEN_ERROR(Type, Info) fprintf(stderr, "error")
 #define XEN_THROW(Type, Info) fprintf(stderr, "error")

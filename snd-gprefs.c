@@ -2,23 +2,7 @@
 
 static GtkWidget *preferences_dialog = NULL;
 
-/* TODO: size groups and sep+width elsewhere
- */
-
 static bool prefs_helping = false;
-
-#define MID_POSITION 4
-#define COLOR_POSITION 5
-#define FIRST_COLOR_POSITION 1
-#define SECOND_COLOR_POSITION 4
-#define THIRD_COLOR_POSITION 7
-#define HELP_POSITION 8
-#define LAST_POSITION 10
-#define ENTRY_COLUMNS 10
-
-#define MID_SPACE 16
-#define INTER_TOPIC_SPACE 3
-#define INTER_VARIABLE_SPACE 2
 
 #define HELP_WAIT_TIME ((guint32)500)
 #define POWER_WAIT_TIME ((guint32)100)
@@ -119,9 +103,22 @@ static void float_to_textfield(GtkWidget *w, Float val)
 static void prefs_help(prefs_info *prf)
 {
   if (prf->var_name)
-    snd_help(prf->var_name, 
-	     XEN_TO_C_STRING(XEN_OBJECT_HELP(C_STRING_TO_XEN_SYMBOL((char *)(prf->var_name)))),
-	     WITH_WORD_WRAP);
+    {
+      XEN sym;
+      sym = C_STRING_TO_XEN_SYMBOL((char *)(prf->var_name));
+      if (XEN_SYMBOL_P(sym))
+	{
+	  XEN obj;
+	  obj = XEN_OBJECT_HELP(sym);
+	  if (XEN_STRING_P(obj))
+	    {
+	      prefs_helping = true;
+	      snd_help(prf->var_name, 
+		       XEN_TO_C_STRING(obj),
+		       WITH_WORD_WRAP);
+	    }
+	}
+    }
 }
 
 static gboolean prefs_help_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer context)
@@ -140,18 +137,18 @@ static gboolean prefs_tooltip_help(gpointer context)
   return(false);
 }
 
-static gboolean mouse_enter_pref_callback(GtkWidget *w, gpointer context)
+static gboolean mouse_enter_pref_callback(GtkWidget *w, GdkEventCrossing *ev, gpointer context)
 {
   prefs_info *prf = (prefs_info *)context;
   if (prefs_helping)
     prf->help_id = g_timeout_add_full(0,
 				      HELP_WAIT_TIME,
 				      prefs_tooltip_help,
-				      (gpointer)prf, NULL);
+				      context, NULL);
   return(false);
 }
 
-static gboolean mouse_leave_pref_callback(GtkWidget *w, gpointer context)
+static gboolean mouse_leave_pref_callback(GtkWidget *w, GdkEventCrossing *ev, gpointer context)
 {
   prefs_info *prf = (prefs_info *)context;
   if (prf->help_id != 0)
@@ -177,13 +174,18 @@ static GdkColor *rscl_color, *gscl_color, *bscl_color;
 
 static GtkWidget *make_row_label(const char *label, GtkWidget *box)
 {
-  GtkWidget *w;
+  GtkWidget *w, *ev;
+
+  ev = gtk_event_box_new();
+  gtk_box_pack_start(GTK_BOX(box), ev, PACK_1, PACK_2, 0);
+  gtk_widget_show(ev);
+
   w = gtk_label_new(label);
   gtk_misc_set_alignment(GTK_MISC(w), 1.0, 0.0);
   gtk_size_group_add_widget(label_group, w);
-  gtk_box_pack_start(GTK_BOX(box), w, PACK_1, PACK_2, 0);
+  gtk_container_add(GTK_CONTAINER(ev), w);
   gtk_widget_show(w);
-  return(w);
+  return(ev);
 }
 
 /* ---------------- row inner label widget ---------------- */
@@ -226,15 +228,20 @@ static GtkWidget *make_row_inner_separator(int width, GtkWidget *box)
 
 static GtkWidget *make_row_help(const char *label, prefs_info *prf, GtkWidget *box)
 {
-  GtkWidget *w;
+  GtkWidget *w, *ev;
+
+  ev = gtk_event_box_new();
+  gtk_box_pack_end(GTK_BOX(box), ev, PACK_1, PACK_2, 0);
+  gtk_widget_show(ev);
+
   w = gtk_label_new(label);
   gtk_misc_set_alignment(GTK_MISC(w), 1.0, 0.0);
-  gtk_box_pack_end(GTK_BOX(box), w, PACK_1, PACK_2, 0);
+  gtk_container_add(GTK_CONTAINER(ev), w);
   gtk_size_group_add_widget(help_group, w);
 
   gtk_widget_show(w);
-  SG_SIGNAL_CONNECT(w, "button_press_event", prefs_help_click_callback, (gpointer)prf);
-  return(w);
+  SG_SIGNAL_CONNECT(ev, "button_press_event", prefs_help_click_callback, (gpointer)prf);
+  return(ev);
 }
 
 /* ---------------- row toggle widget ---------------- */
@@ -265,7 +272,7 @@ static prefs_info *prefs_row_with_toggle(const char *label, const char *varname,
 					 void (*toggle_func)(prefs_info *prf))
 {
   prefs_info *prf = NULL;
-  GtkWidget *sep, *hb, *row;
+  GtkWidget *sep, *hb, *row, *help;
 
   ASSERT_WIDGET_TYPE(GTK_IS_VBOX(box), box);
   prf = (prefs_info *)CALLOC(1, sizeof(prefs_info));
@@ -284,14 +291,16 @@ static prefs_info *prefs_row_with_toggle(const char *label, const char *varname,
 
   sep = make_row_middle_separator(hb);
   prf->toggle = make_row_toggle(current_value, hb);
-  make_row_help(varname, prf, row);
+  help = make_row_help(varname, prf, row);
 
   SG_SIGNAL_CONNECT(prf->toggle, "toggled", call_toggle_func, (gpointer)prf);
 
   SG_SIGNAL_CONNECT(prf->label, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
   SG_SIGNAL_CONNECT(prf->toggle, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
+  SG_SIGNAL_CONNECT(help, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
   SG_SIGNAL_CONNECT(prf->label, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
   SG_SIGNAL_CONNECT(prf->toggle, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
+  SG_SIGNAL_CONNECT(help, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
 
   return(prf);
 }
@@ -330,7 +339,7 @@ static prefs_info *prefs_row_with_toggle_with_text(const char *label, const char
 						   void (*text_func)(prefs_info *prf))
 {
   prefs_info *prf = NULL;
-  GtkWidget *sep, *sep1, *lab1, *hb, *row;
+  GtkWidget *sep, *sep1, *lab1, *hb, *row, *help;
 
   prf = (prefs_info *)CALLOC(1, sizeof(prefs_info));
   prf->var_name = varname;
@@ -352,7 +361,7 @@ static prefs_info *prefs_row_with_toggle_with_text(const char *label, const char
   sep1 = make_row_inner_separator(16, hb);
   lab1 = make_row_inner_label(text_label, hb);
   prf->text= make_row_text(text_value, cols, hb);
-  make_row_help(varname, prf, row);
+  help = make_row_help(varname, prf, row);
 
   SG_SIGNAL_CONNECT(prf->toggle, "toggled", call_toggle_func, (gpointer)prf);
   SG_SIGNAL_CONNECT(prf->text, "activate", call_text_func, (gpointer)prf);
@@ -360,9 +369,13 @@ static prefs_info *prefs_row_with_toggle_with_text(const char *label, const char
   SG_SIGNAL_CONNECT(prf->label, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
   SG_SIGNAL_CONNECT(prf->toggle, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
   SG_SIGNAL_CONNECT(prf->text, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
+  SG_SIGNAL_CONNECT(help, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
+  SG_SIGNAL_CONNECT(lab1, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
   SG_SIGNAL_CONNECT(prf->label, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
   SG_SIGNAL_CONNECT(prf->toggle, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
   SG_SIGNAL_CONNECT(prf->text, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
+  SG_SIGNAL_CONNECT(help, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
+  SG_SIGNAL_CONNECT(lab1, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
 
   return(prf);
 }
@@ -377,7 +390,7 @@ static prefs_info *prefs_row_with_text_with_toggle(const char *label, const char
 						   void (*text_func)(prefs_info *prf))
 {
   prefs_info *prf = NULL;
-  GtkWidget *sep, *sep1, *lab1, *hb, *row;
+  GtkWidget *sep, *sep1, *lab1, *hb, *row, *help;
 
   prf = (prefs_info *)CALLOC(1, sizeof(prefs_info));
   prf->var_name = varname;
@@ -399,7 +412,7 @@ static prefs_info *prefs_row_with_text_with_toggle(const char *label, const char
   sep1 = make_row_inner_separator(8, hb);
   lab1 = make_row_inner_label(toggle_label, hb);
   prf->toggle = make_row_toggle(current_value, hb);  
-  make_row_help(varname, prf, row);
+  help = make_row_help(varname, prf, row);
   
   SG_SIGNAL_CONNECT(prf->toggle, "toggled", call_toggle_func, (gpointer)prf);
   SG_SIGNAL_CONNECT(prf->text, "activate", call_text_func, (gpointer)prf);
@@ -407,9 +420,13 @@ static prefs_info *prefs_row_with_text_with_toggle(const char *label, const char
   SG_SIGNAL_CONNECT(prf->label, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
   SG_SIGNAL_CONNECT(prf->toggle, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
   SG_SIGNAL_CONNECT(prf->text, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
+  SG_SIGNAL_CONNECT(help, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
+  SG_SIGNAL_CONNECT(lab1, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
   SG_SIGNAL_CONNECT(prf->label, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
   SG_SIGNAL_CONNECT(prf->toggle, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
   SG_SIGNAL_CONNECT(prf->text, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
+  SG_SIGNAL_CONNECT(help, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
+  SG_SIGNAL_CONNECT(lab1, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
 
   return(prf);
 }
@@ -434,7 +451,7 @@ static prefs_info *prefs_row_with_radio_box(const char *label, const char *varna
 {
   int i;
   prefs_info *prf = NULL;
-  GtkWidget *sep, *current_button, *hb, *row;
+  GtkWidget *sep, *current_button, *hb, *row, *help;
   prf = (prefs_info *)CALLOC(1, sizeof(prefs_info));
   prf->var_name = varname;
   prf->toggle_func = toggle_func;
@@ -473,12 +490,14 @@ static prefs_info *prefs_row_with_radio_box(const char *label, const char *varna
   if (current_value != -1)
     set_toggle_button(prf->radio_buttons[current_value], true, false, NULL);
 
-  make_row_help(varname, prf, row);
+  help = make_row_help(varname, prf, row);
 
   SG_SIGNAL_CONNECT(prf->label, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
   SG_SIGNAL_CONNECT(prf->label, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
   SG_SIGNAL_CONNECT(prf->toggle, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
   SG_SIGNAL_CONNECT(prf->toggle, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
+  SG_SIGNAL_CONNECT(help, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
+  SG_SIGNAL_CONNECT(help, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
 
   return(prf);
 }
@@ -513,7 +532,7 @@ static prefs_info *prefs_row_with_scale(const char *label, const char *varname,
 					void (*text_func)(prefs_info *prf))
 {
   prefs_info *prf = NULL;
-  GtkWidget *sep, *hb, *row;
+  GtkWidget *sep, *hb, *row, *help;
   char *str;
 
   prf = (prefs_info *)CALLOC(1, sizeof(prefs_info));
@@ -544,7 +563,7 @@ static prefs_info *prefs_row_with_scale(const char *label, const char *varname,
   gtk_range_set_update_policy(GTK_RANGE(GTK_SCALE(prf->scale)), GTK_UPDATE_CONTINUOUS);
   gtk_scale_set_draw_value(GTK_SCALE(prf->scale), false);
   
-  make_row_help(varname, prf, row);
+  help = make_row_help(varname, prf, row);
 
   prf->scale_func = scale_func;
   prf->text_func = text_func;
@@ -556,9 +575,11 @@ static prefs_info *prefs_row_with_scale(const char *label, const char *varname,
   SG_SIGNAL_CONNECT(prf->label, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
   SG_SIGNAL_CONNECT(prf->scale, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
   SG_SIGNAL_CONNECT(prf->text, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
+  SG_SIGNAL_CONNECT(help, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
   SG_SIGNAL_CONNECT(prf->label, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
   SG_SIGNAL_CONNECT(prf->scale, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
   SG_SIGNAL_CONNECT(prf->text, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
+  SG_SIGNAL_CONNECT(help, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
 
   return(prf);
 }
@@ -571,7 +592,7 @@ static prefs_info *prefs_row_with_text(const char *label, const char *varname, c
 				       void (*text_func)(prefs_info *prf))
 {
   prefs_info *prf = NULL;
-  GtkWidget *sep, *hb, *row;
+  GtkWidget *sep, *hb, *row, *help;
 
   ASSERT_WIDGET_TYPE(GTK_IS_VBOX(box), box);
   prf = (prefs_info *)CALLOC(1, sizeof(prefs_info));
@@ -590,7 +611,7 @@ static prefs_info *prefs_row_with_text(const char *label, const char *varname, c
   sep = make_row_middle_separator(hb);
   prf->text = make_row_text(value, 0, hb);
   
-  make_row_help(varname, prf, row);
+  help = make_row_help(varname, prf, row);
 
   prf->text_func = text_func;
 
@@ -598,8 +619,10 @@ static prefs_info *prefs_row_with_text(const char *label, const char *varname, c
 
   SG_SIGNAL_CONNECT(prf->label, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
   SG_SIGNAL_CONNECT(prf->text, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
+  SG_SIGNAL_CONNECT(help, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
   SG_SIGNAL_CONNECT(prf->label, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
   SG_SIGNAL_CONNECT(prf->text, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
+  SG_SIGNAL_CONNECT(help, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
 
   return(prf);
 }
@@ -613,7 +636,7 @@ static prefs_info *prefs_row_with_two_texts(const char *label, const char *varna
 					    void (*text_func)(prefs_info *prf))
 {
   prefs_info *prf = NULL;
-  GtkWidget *sep, *lab1, *lab2, *hb, *row;
+  GtkWidget *sep, *lab1, *lab2, *hb, *row, *help;
   ASSERT_WIDGET_TYPE(GTK_IS_VBOX(box), box);
   prf = (prefs_info *)CALLOC(1, sizeof(prefs_info));
   prf->var_name = varname;
@@ -634,7 +657,7 @@ static prefs_info *prefs_row_with_two_texts(const char *label, const char *varna
   lab2 = make_row_inner_label(label2, hb);  
   prf->rtxt = make_row_text(text2, cols, hb);
 
-  make_row_help(varname, prf, row);
+  help = make_row_help(varname, prf, row);
 
   prf->text_func = text_func;
 
@@ -644,9 +667,15 @@ static prefs_info *prefs_row_with_two_texts(const char *label, const char *varna
   SG_SIGNAL_CONNECT(prf->label, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
   SG_SIGNAL_CONNECT(prf->text, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
   SG_SIGNAL_CONNECT(prf->rtxt, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
+  SG_SIGNAL_CONNECT(help, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
+  SG_SIGNAL_CONNECT(lab1, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
+  SG_SIGNAL_CONNECT(lab2, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
   SG_SIGNAL_CONNECT(prf->label, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
   SG_SIGNAL_CONNECT(prf->text, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
   SG_SIGNAL_CONNECT(prf->rtxt, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
+  SG_SIGNAL_CONNECT(help, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
+  SG_SIGNAL_CONNECT(lab1, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
+  SG_SIGNAL_CONNECT(lab2, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
 
   return(prf);
 }
@@ -739,7 +768,7 @@ static prefs_info *prefs_row_with_number(const char *label, const char *varname,
 					 void (*text_func)(prefs_info *prf))
 {
   prefs_info *prf = NULL;
-  GtkWidget *sep, *hb, *row, *ev_up, *ev_down;
+  GtkWidget *sep, *hb, *row, *ev_up, *ev_down, *help;
 
   prf = (prefs_info *)CALLOC(1, sizeof(prefs_info));
   prf->var_name = varname;
@@ -778,7 +807,7 @@ static prefs_info *prefs_row_with_number(const char *label, const char *varname,
   gtk_box_pack_end(GTK_BOX(hb), prf->error, true, false, 0);
   gtk_widget_show(prf->error);
 
-  make_row_help(varname, prf, row);
+  help = make_row_help(varname, prf, row);
 
   prf->text_func = text_func;
   prf->arrow_up_func = arrow_up_func;
@@ -795,10 +824,12 @@ static prefs_info *prefs_row_with_number(const char *label, const char *varname,
   SG_SIGNAL_CONNECT(prf->text, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
   SG_SIGNAL_CONNECT(ev_up, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
   SG_SIGNAL_CONNECT(ev_down, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
+  SG_SIGNAL_CONNECT(help, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
   SG_SIGNAL_CONNECT(prf->label, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
   SG_SIGNAL_CONNECT(prf->text, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
   SG_SIGNAL_CONNECT(ev_up, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
   SG_SIGNAL_CONNECT(ev_down, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
+  SG_SIGNAL_CONNECT(help, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
 
   SG_SIGNAL_CONNECT(prf->error, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
   SG_SIGNAL_CONNECT(prf->error, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
@@ -817,7 +848,7 @@ static prefs_info *prefs_row_with_completed_list(const char *label, const char *
 {
   int i;
   prefs_info *prf = NULL;
-  GtkWidget *sep, *hb, *row;
+  GtkWidget *sep, *hb, *row, *help;
 
   prf = (prefs_info *)CALLOC(1, sizeof(prefs_info));
   prf->var_name = varname;
@@ -845,7 +876,7 @@ static prefs_info *prefs_row_with_completed_list(const char *label, const char *
   gtk_box_pack_end(GTK_BOX(hb), prf->error, true, false, 0);
   gtk_widget_show(prf->error);
 
-  make_row_help(varname, prf, row);
+  help = make_row_help(varname, prf, row);
 
   prf->text_func = text_func;
 
@@ -854,9 +885,11 @@ static prefs_info *prefs_row_with_completed_list(const char *label, const char *
   SG_SIGNAL_CONNECT(prf->label, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
   SG_SIGNAL_CONNECT(prf->text, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
   SG_SIGNAL_CONNECT(prf->error, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
+  SG_SIGNAL_CONNECT(help, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
   SG_SIGNAL_CONNECT(prf->label, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
   SG_SIGNAL_CONNECT(prf->text, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
   SG_SIGNAL_CONNECT(prf->error, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
+  SG_SIGNAL_CONNECT(help, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
 
   return(prf);
 }
@@ -979,7 +1012,7 @@ static prefs_info *prefs_color_selector_row(const char *label, const char *varna
 					    void (*color_func)(prefs_info *prf, float r, float g, float b))
 {
   prefs_info *prf = NULL;
-  GtkWidget *sep, *sep1, *hb, *row, *row2, *sep2, *sep3;
+  GtkWidget *sep, *sep1, *hb, *row, *row2, *sep2, *sep3, *help;
   float r = 0.0, g = 0.0, b = 0.0;
 
   prf = (prefs_info *)CALLOC(1, sizeof(prefs_info));
@@ -1019,7 +1052,7 @@ static prefs_info *prefs_color_selector_row(const char *label, const char *varna
   prf->btxt = make_row_text(NULL, 6, hb);
   gtk_size_group_add_widget(prf->color_texts, prf->btxt);
   float_to_textfield(prf->btxt, b);
-  make_row_help(varname, prf, row);
+  help = make_row_help(varname, prf, row);
 
   /* second row */
 
@@ -1089,6 +1122,8 @@ static prefs_info *prefs_color_selector_row(const char *label, const char *varna
   SG_SIGNAL_CONNECT(prf->btxt, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
   SG_SIGNAL_CONNECT(prf->bscl, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
   SG_SIGNAL_CONNECT(prf->bscl, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
+  SG_SIGNAL_CONNECT(help, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
+  SG_SIGNAL_CONNECT(help, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
 
   prf->color_func = color_func;
 
@@ -1162,19 +1197,20 @@ static GtkWidget *make_inner_label(const char *label, GtkWidget *parent, GtkWidg
 
 static gint preferences_delete_callback(GtkWidget *w, GdkEvent *event, gpointer context)
 {
+  prefs_helping = false;
   gtk_widget_hide(preferences_dialog);
   return(true);
 }
 
 static void preferences_dismiss_callback(GtkWidget *w, gpointer context) 
 {
+  prefs_helping = false;
   gtk_widget_hide(preferences_dialog);
 }
 
 static void preferences_help_callback(GtkWidget *w, gpointer context) 
 {
   prefs_helping = true;
-
   snd_help("preferences",
 	   "This dialog is under construction.  It sets various global variables, 'Save' then writes the new values \
 to ~/.snd_prefs_guile|ruby so that they take effect the next time you start Snd.  'Reset' resets all variables to \
@@ -1429,6 +1465,7 @@ static void save_focus_follows_mouse(prefs_info *prf, FILE *fd)
   if (focus_follows_mouse)
     {
 #if HAVE_SCHEME
+      fprintf(fd, "(if (not (provided? 'snd-extensions.scm)) (load-from-path \"extensions.scm\"))\n");
       fprintf(fd, "(focus-follows-mouse)\n");
 #endif
 #if HAVE_RUBY
@@ -2090,7 +2127,7 @@ static void save_context_sensitive_popup(prefs_info *prf, FILE *fd)
   if (include_context_sensitive_popup)
     {
 #if HAVE_SCHEME
-      fprintf(fd, "(if (not (provided? 'snd-popup.scm)) (load-from-path \"popup.scm\"))\n");
+      fprintf(fd, "(if (provided? 'snd-motif)\n    (if (not (provided? 'snd-popup.scm))\n        (load-from-path \"popup.scm\"))\n    (if (not (provided? 'snd-gtk-popup.scm))\n	(load-from-path \"gtk-popup.scm\")))\n");
 #endif
 #if HAVE_RUBY
       fprintf(fd, "require \"popup\"\n");
@@ -2106,7 +2143,7 @@ static void context_sensitive_popup_toggle(prefs_info *prf)
 static bool find_context_sensitive_popup(void)
 {
 #if HAVE_SCHEME
-  return(XEN_DEFINED_P("fft-popup-menu"));
+  return(XEN_DEFINED_P("edhist-help-edits")); /* defined in both cases */
 #endif
 #if HAVE_RUBY
   /* XEN_DEFINED_P always returns false in Xen/Ruby? */
@@ -2129,7 +2166,7 @@ static void save_effects_menu(prefs_info *prf, FILE *fd)
   if (include_effects_menu)
     {
 #if HAVE_SCHEME
-      fprintf(fd, "(if (not (provided? 'snd-new-effects.scm)) (load-from-path \"new-effects.scm\"))\n");
+      fprintf(fd, "(if (provided? 'snd-motif)\n    (if (not (provided? 'snd-new-effects.scm))\n        (load-from-path \"new-effects.scm\"))\n    (if (not (provided? 'snd-gtk-effects.scm))\n	(load-from-path \"gtk-effects.scm\")))\n");
 #endif
 #if HAVE_RUBY
       fprintf(fd, "require \"effects\"\n");
@@ -2267,25 +2304,79 @@ static void dot_size_from_text(prefs_info *prf)
 
 /* ---------------- initial bounds ---------------- */
 
-/* TODO: initial bounds callbacks */
-/* (add-hook! after-open-hook (lambda (snd)...) */
-/* (set! (x-bounds) (list 0.0 (/ (frames) (srate)))) */
+static bool use_full_duration(void)
+{
+#if HAVE_SCHEME
+  return((XEN_DEFINED_P("prefs-show-full-duration")) &&
+	 (XEN_TRUE_P(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-show-full-duration"))));
+#endif
+#if HAVE_RUBY
+  /* TODO: ruby/gtk side of initial bounds */
+  return(false);
+#endif
+}
 
-/* this could be a function that if defined could also return bounds if arg is :bounds -> #t if full */
-/* then subsequent runs get the current bounds */
-
+static char *initial_bounds_to_string(void)
+{
+#if HAVE_SCHEME
+  if (XEN_DEFINED_P("prefs-initial-beg"))
+    return(mus_format("%.2f : %.2f", 
+		      XEN_TO_C_DOUBLE(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-initial-beg")),
+		      XEN_TO_C_DOUBLE(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-initial-dur"))));
+#endif
+  return(copy_string("0.0 : 0.1"));
+}
 
 static void reflect_initial_bounds(prefs_info *prf)
 {
+  /* text has beg : dur, toggle true if full dur */
+  char *str;
+  str = initial_bounds_to_string();
+  gtk_entry_set_text(GTK_ENTRY(prf->text), str);
+  FREE(str);
+  set_toggle_button(prf->toggle, use_full_duration(), false, NULL);
 }
+
 static void save_initial_bounds(prefs_info *prf, FILE *fd)
 {
+  if ((use_full_duration()) ||
+      (!(snd_feq(XEN_TO_C_DOUBLE(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-initial-beg")), 0.0))) ||
+      (!(snd_feq(XEN_TO_C_DOUBLE(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-initial-dur")), 0.1))))
+    {
+#if HAVE_SCHEME
+      fprintf(fd, "(if (not (provided? 'snd-extensions.scm)) (load-from-path \"extensions.scm\"))\n");
+      fprintf(fd, "(prefs-activate-initial-bounds %.2f %.2f %s)\n",
+	      XEN_TO_C_DOUBLE(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-initial-beg")),
+	      XEN_TO_C_DOUBLE(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-initial-dur")),
+	      (XEN_TRUE_P(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-show-full-duration"))) ? "#t" : "#f");
+#endif
+    }
 }
+
 static void initial_bounds_toggle(prefs_info *prf)
 {
+  bool use_full_duration = false;
+  use_full_duration = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prf->toggle));
+#if HAVE_SCHEME
+  if (!(XEN_DEFINED_P("prefs-initial-beg")))
+    XEN_LOAD_FILE_WITH_PATH("extensions.scm");
+  XEN_VARIABLE_SET(XEN_NAME_AS_C_STRING_TO_VARIABLE("prefs-show-full-duration"), C_TO_XEN_BOOLEAN(use_full_duration));
+#endif
 }
+
 static void initial_bounds_text(prefs_info *prf)
 {
+  float beg = 0.0, dur = 0.1;
+  char *str;
+  str = (char *)gtk_entry_get_text(GTK_ENTRY(prf->text));
+  sscanf(str, "%f : %f", &beg, &dur);
+  fprintf(stderr, "beg: %f, dur: %f\n", beg, dur);
+#if HAVE_SCHEME
+  if (!(XEN_DEFINED_P("prefs-initial-beg")))
+    XEN_LOAD_FILE_WITH_PATH("extensions.scm");
+  XEN_VARIABLE_SET(XEN_NAME_AS_C_STRING_TO_VARIABLE("prefs-initial-beg"), C_TO_XEN_DOUBLE(beg));
+  XEN_VARIABLE_SET(XEN_NAME_AS_C_STRING_TO_VARIABLE("prefs-initial-dur"), C_TO_XEN_DOUBLE(dur));
+#endif
 }
 
 
@@ -2477,7 +2568,7 @@ static void save_smpte(prefs_info *prf, FILE *fd)
   if (include_smpte)
     {
 #if HAVE_SCHEME
-      fprintf(fd, "(if (not (provided? 'snd-motif.scm)) (load-from-path \"snd-motif.scm\"))\n");
+      fprintf(fd, "(if (provided? 'snd-motif)\n    (if (not (provided? 'snd-snd-motif.scm))\n        (load-from-path \"snd-motif.scm\"))\n    (if (not (provided? 'snd-snd-gtk.scm))\n        (load-from-path \"snd-gtk.scm\")))\n");
       fprintf(fd, "(show-smpte-label #t)\n");
 #endif
 #if HAVE_RUBY
@@ -3627,7 +3718,7 @@ void start_preferences_dialog(void)
 
     current_sep = make_inter_variable_separator(dpy_box);
     focus_follows_mouse = focus_is_following_mouse();
-    prf = prefs_row_with_toggle("focus follows mouse", "focus-follows-mouse",
+    prf = prefs_row_with_toggle("focus follows mouse", NULL,
 				focus_follows_mouse,
 				dpy_box,
 				focus_follows_mouse_toggle);
@@ -3884,11 +3975,13 @@ void start_preferences_dialog(void)
     if (dot_size(ss) <= 0) gtk_widget_set_sensitive(prf->arrow_down, false);
 
     current_sep = make_inter_variable_separator(grf_box);
-    prf = prefs_row_with_text_with_toggle("initial graph x bounds", S_x_bounds, false, /* TODO: how to find this?? */
-					  "show full duration", "0.0 : 0.1", 12,
-					  grf_box,
+    str = initial_bounds_to_string();
+    prf = prefs_row_with_text_with_toggle("initial graph x bounds", S_initial_graph_hook, use_full_duration(),
+					  "show full duration", str, 16,
+					  grf_box, 
 					  initial_bounds_toggle,
 					  initial_bounds_text);
+    FREE(str);
     remember_pref(prf, reflect_initial_bounds, save_initial_bounds);
 
     current_sep = make_inter_variable_separator(grf_box);

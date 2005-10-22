@@ -474,8 +474,8 @@ GtkWidget *fire_up_transform_dialog(bool managed)
 
       outer_table = gtk_table_new(6, 3, false);
       gtk_container_add(GTK_CONTAINER(GTK_DIALOG(transform_dialog)->vbox), outer_table);
-      gtk_table_set_row_spacings(GTK_TABLE(outer_table), 4);
-      gtk_table_set_col_spacings(GTK_TABLE(outer_table), 4);
+      gtk_table_set_row_spacings(GTK_TABLE(outer_table), 16);
+      gtk_table_set_col_spacings(GTK_TABLE(outer_table), 16);
 
       /* now 6 boxes within the main box:
 	 type (list)    |  size (list)        |  display (button column)
