@@ -2311,6 +2311,7 @@ and its value is returned."
       (snd_strlen(str) == 0) ||
       (strcmp(str, PROC_FALSE) == 0)) /* Ruby returns "false" here */
     {
+      if (!subject) return(XEN_FALSE);
       str = snd_finder(subject, false);
       need_free = true;
     }

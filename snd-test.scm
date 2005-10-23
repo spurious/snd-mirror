@@ -23497,6 +23497,22 @@ EDITS: 5
 	(if (or (not (number? hamming-window))
 		(not (= hamming-window old-val)))
 	    (snd-display ";snd-help clobbered out-of-module variable: ~A ~A" old-value hamming-window)))
+      (let ((val (snd-help (list "hi" "ho") #f)))
+	(if val (snd-display ";snd-help list: ~A" val)))
+      (let ((val (snd-help 123.123 #f)))
+	(if val (snd-display ";snd-help num: ~A" val)))
+      (let ((vals (snd-urls)))
+	(do ((i 0 (1+ i)))
+	    ((= i 25)) ; need to cycle the 8's
+	  (if (defined? (string->symbol (car (list-ref vals i))))
+	      (snd-help (car (list-ref vals i)) #f)))
+	(if with-gui
+	    (begin
+	      (do ((i 0 (1+ i)))
+		  ((= i 25)) ; need to cycle the 8's
+		(if (defined? (string->symbol (car (list-ref vals i))))
+		    (help-dialog (car (list-ref vals i)) (snd-help (car (list-ref vals i)) #f))))
+	      (hide-widget (help-dialog "hi" "ho")))))
       
       (set! (show-indices) #t)
       (let ((ind (open-sound "oboe.snd")))

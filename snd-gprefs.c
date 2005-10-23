@@ -172,7 +172,7 @@ static GdkColor *rscl_color, *gscl_color, *bscl_color;
 
 /* ---------------- row (main) label widget ---------------- */
 
-static GtkWidget *make_row_label(const char *label, GtkWidget *box)
+static GtkWidget *make_row_label(prefs_info *prf, const char *label, GtkWidget *box)
 {
   GtkWidget *w, *ev;
 
@@ -185,18 +185,31 @@ static GtkWidget *make_row_label(const char *label, GtkWidget *box)
   gtk_size_group_add_widget(label_group, w);
   gtk_container_add(GTK_CONTAINER(ev), w);
   gtk_widget_show(w);
-  return(ev);
+
+  SG_SIGNAL_CONNECT(ev, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
+  SG_SIGNAL_CONNECT(ev, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
+
+  return(w);
 }
 
 /* ---------------- row inner label widget ---------------- */
 
-static GtkWidget *make_row_inner_label(const char *label, GtkWidget *box)
+static GtkWidget *make_row_inner_label(prefs_info *prf, const char *label, GtkWidget *box)
 {
-  GtkWidget *w;
+  GtkWidget *w, *ev;
   ASSERT_WIDGET_TYPE(GTK_IS_HBOX(box), box);
+
+  ev = gtk_event_box_new();
+  gtk_box_pack_start(GTK_BOX(box), ev, false, false, 4);
+  gtk_widget_show(ev);
+
   w = gtk_label_new(label);
-  gtk_box_pack_start(GTK_BOX(box), w, false, false, 0);
+  gtk_container_add(GTK_CONTAINER(ev), w);
   gtk_widget_show(w);
+
+  SG_SIGNAL_CONNECT(ev, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
+  SG_SIGNAL_CONNECT(ev, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
+
   return(w);
 }
 
@@ -226,7 +239,7 @@ static GtkWidget *make_row_inner_separator(int width, GtkWidget *box)
 
 /* ---------------- row help widget ---------------- */
 
-static GtkWidget *make_row_help(const char *label, prefs_info *prf, GtkWidget *box)
+static GtkWidget *make_row_help(prefs_info *prf, const char *label, GtkWidget *box)
 {
   GtkWidget *w, *ev;
 
@@ -240,13 +253,17 @@ static GtkWidget *make_row_help(const char *label, prefs_info *prf, GtkWidget *b
   gtk_size_group_add_widget(help_group, w);
 
   gtk_widget_show(w);
+
   SG_SIGNAL_CONNECT(ev, "button_press_event", prefs_help_click_callback, (gpointer)prf);
-  return(ev);
+  SG_SIGNAL_CONNECT(ev, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
+  SG_SIGNAL_CONNECT(ev, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
+
+  return(w);
 }
 
 /* ---------------- row toggle widget ---------------- */
 
-static GtkWidget *make_row_toggle(bool current_value, GtkWidget *box)
+static GtkWidget *make_row_toggle(prefs_info *prf, bool current_value, GtkWidget *box)
 {
   GtkWidget *w;
   ASSERT_WIDGET_TYPE(GTK_IS_HBOX(box), box);
@@ -254,6 +271,10 @@ static GtkWidget *make_row_toggle(bool current_value, GtkWidget *box)
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), current_value);
   gtk_box_pack_start(GTK_BOX(box), w, false, false, 0); /* was 10 */
   gtk_widget_show(w);
+
+  SG_SIGNAL_CONNECT(w, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
+  SG_SIGNAL_CONNECT(w, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
+
   return(w);
 }
 
@@ -283,24 +304,17 @@ static prefs_info *prefs_row_with_toggle(const char *label, const char *varname,
   gtk_box_pack_start(GTK_BOX(box), row, false, false, 0);
   gtk_widget_show(row);
 
-  prf->label = make_row_label(label, row);
+  prf->label = make_row_label(prf, label, row);
   hb = gtk_hbox_new(false, 0);
   gtk_size_group_add_widget(widgets_group, hb);
   gtk_box_pack_start(GTK_BOX(row), hb, false, false, 0);
   gtk_widget_show(hb);
 
   sep = make_row_middle_separator(hb);
-  prf->toggle = make_row_toggle(current_value, hb);
-  help = make_row_help(varname, prf, row);
+  prf->toggle = make_row_toggle(prf, current_value, hb);
+  help = make_row_help(prf, varname, row);
 
   SG_SIGNAL_CONNECT(prf->toggle, "toggled", call_toggle_func, (gpointer)prf);
-
-  SG_SIGNAL_CONNECT(prf->label, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
-  SG_SIGNAL_CONNECT(prf->toggle, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
-  SG_SIGNAL_CONNECT(help, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
-  SG_SIGNAL_CONNECT(prf->label, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
-  SG_SIGNAL_CONNECT(prf->toggle, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
-  SG_SIGNAL_CONNECT(help, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
 
   return(prf);
 }
@@ -308,7 +322,7 @@ static prefs_info *prefs_row_with_toggle(const char *label, const char *varname,
 
 /* ---------------- toggle with text ---------------- */
 
-static GtkWidget *make_row_text(const char *text_value, int cols, GtkWidget *box)
+static GtkWidget *make_row_text(prefs_info *prf, const char *text_value, int cols, GtkWidget *box)
 {
   GtkWidget *w;
   ASSERT_WIDGET_TYPE(GTK_IS_HBOX(box), box);
@@ -322,6 +336,10 @@ static GtkWidget *make_row_text(const char *text_value, int cols, GtkWidget *box
   gtk_editable_set_editable(GTK_EDITABLE(w), true);
   gtk_box_pack_start(GTK_BOX(box), w, false, false, 0);
   gtk_widget_show(w);
+
+  SG_SIGNAL_CONNECT(w, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
+  SG_SIGNAL_CONNECT(w, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
+
   return(w);
 }
 
@@ -350,32 +368,21 @@ static prefs_info *prefs_row_with_toggle_with_text(const char *label, const char
   gtk_box_pack_start(GTK_BOX(box), row, false, false, 0);
   gtk_widget_show(row);
 
-  prf->label = make_row_label(label, row);
+  prf->label = make_row_label(prf, label, row);
   hb = gtk_hbox_new(false, 0);
   gtk_size_group_add_widget(widgets_group, hb);
   gtk_box_pack_start(GTK_BOX(row), hb, false, false, 0);
   gtk_widget_show(hb);
 
   sep = make_row_middle_separator(hb);
-  prf->toggle = make_row_toggle(current_value, hb);
+  prf->toggle = make_row_toggle(prf, current_value, hb);
   sep1 = make_row_inner_separator(16, hb);
-  lab1 = make_row_inner_label(text_label, hb);
-  prf->text= make_row_text(text_value, cols, hb);
-  help = make_row_help(varname, prf, row);
+  lab1 = make_row_inner_label(prf, text_label, hb);
+  prf->text= make_row_text(prf, text_value, cols, hb);
+  help = make_row_help(prf, varname, row);
 
   SG_SIGNAL_CONNECT(prf->toggle, "toggled", call_toggle_func, (gpointer)prf);
   SG_SIGNAL_CONNECT(prf->text, "activate", call_text_func, (gpointer)prf);
-
-  SG_SIGNAL_CONNECT(prf->label, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
-  SG_SIGNAL_CONNECT(prf->toggle, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
-  SG_SIGNAL_CONNECT(prf->text, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
-  SG_SIGNAL_CONNECT(help, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
-  SG_SIGNAL_CONNECT(lab1, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
-  SG_SIGNAL_CONNECT(prf->label, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
-  SG_SIGNAL_CONNECT(prf->toggle, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
-  SG_SIGNAL_CONNECT(prf->text, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
-  SG_SIGNAL_CONNECT(help, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
-  SG_SIGNAL_CONNECT(lab1, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
 
   return(prf);
 }
@@ -401,32 +408,21 @@ static prefs_info *prefs_row_with_text_with_toggle(const char *label, const char
   gtk_box_pack_start(GTK_BOX(box), row, false, false, 0);
   gtk_widget_show(row);
 
-  prf->label = make_row_label(label, row);
+  prf->label = make_row_label(prf, label, row);
   hb = gtk_hbox_new(false, 0);
   gtk_size_group_add_widget(widgets_group, hb);
   gtk_box_pack_start(GTK_BOX(row), hb, false, false, 0);
   gtk_widget_show(hb);
 
   sep = make_row_middle_separator(hb);
-  prf->text = make_row_text(text_value, cols, hb);
+  prf->text = make_row_text(prf, text_value, cols, hb);
   sep1 = make_row_inner_separator(8, hb);
-  lab1 = make_row_inner_label(toggle_label, hb);
-  prf->toggle = make_row_toggle(current_value, hb);  
-  help = make_row_help(varname, prf, row);
+  lab1 = make_row_inner_label(prf, toggle_label, hb);
+  prf->toggle = make_row_toggle(prf, current_value, hb);  
+  help = make_row_help(prf, varname, row);
   
   SG_SIGNAL_CONNECT(prf->toggle, "toggled", call_toggle_func, (gpointer)prf);
   SG_SIGNAL_CONNECT(prf->text, "activate", call_text_func, (gpointer)prf);
-
-  SG_SIGNAL_CONNECT(prf->label, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
-  SG_SIGNAL_CONNECT(prf->toggle, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
-  SG_SIGNAL_CONNECT(prf->text, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
-  SG_SIGNAL_CONNECT(help, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
-  SG_SIGNAL_CONNECT(lab1, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
-  SG_SIGNAL_CONNECT(prf->label, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
-  SG_SIGNAL_CONNECT(prf->toggle, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
-  SG_SIGNAL_CONNECT(prf->text, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
-  SG_SIGNAL_CONNECT(help, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
-  SG_SIGNAL_CONNECT(lab1, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
 
   return(prf);
 }
@@ -460,7 +456,7 @@ static prefs_info *prefs_row_with_radio_box(const char *label, const char *varna
   gtk_box_pack_start(GTK_BOX(box), row, false, false, 0);
   gtk_widget_show(row);
 
-  prf->label = make_row_label(label, row);
+  prf->label = make_row_label(prf, label, row);
 
   hb = gtk_hbox_new(false, 0);
   gtk_size_group_add_widget(widgets_group, hb);
@@ -485,19 +481,14 @@ static prefs_info *prefs_row_with_radio_box(const char *label, const char *varna
       set_user_int_data(G_OBJECT(current_button), i);
       gtk_widget_show(current_button);
       SG_SIGNAL_CONNECT(current_button, "clicked", call_radio_func, (gpointer)prf);
+      SG_SIGNAL_CONNECT(current_button, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
+      SG_SIGNAL_CONNECT(current_button, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
     }
 
   if (current_value != -1)
     set_toggle_button(prf->radio_buttons[current_value], true, false, NULL);
 
-  help = make_row_help(varname, prf, row);
-
-  SG_SIGNAL_CONNECT(prf->label, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
-  SG_SIGNAL_CONNECT(prf->label, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
-  SG_SIGNAL_CONNECT(prf->toggle, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
-  SG_SIGNAL_CONNECT(prf->toggle, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
-  SG_SIGNAL_CONNECT(help, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
-  SG_SIGNAL_CONNECT(help, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
+  help = make_row_help(prf, varname, row);
 
   return(prf);
 }
@@ -543,7 +534,7 @@ static prefs_info *prefs_row_with_scale(const char *label, const char *varname,
   gtk_box_pack_start(GTK_BOX(box), row, false, false, 0);
   gtk_widget_show(row);
 
-  prf->label = make_row_label(label, row);
+  prf->label = make_row_label(prf, label, row);
   hb = gtk_hbox_new(false, 0);
   gtk_size_group_add_widget(widgets_group, hb);
   gtk_box_pack_start(GTK_BOX(row), hb, false, false, 0);
@@ -553,7 +544,7 @@ static prefs_info *prefs_row_with_scale(const char *label, const char *varname,
   
   str = (char *)CALLOC(12, sizeof(char));
   mus_snprintf(str, 12, "%.3f", current_value);
-  prf->text = make_row_text(str, 6, hb);
+  prf->text = make_row_text(prf, str, 6, hb);
   FREE(str);
 
   prf->adj = gtk_adjustment_new(current_value /max_val, 0.0, 1.01, 0.001, 0.01, .01);
@@ -563,7 +554,7 @@ static prefs_info *prefs_row_with_scale(const char *label, const char *varname,
   gtk_range_set_update_policy(GTK_RANGE(GTK_SCALE(prf->scale)), GTK_UPDATE_CONTINUOUS);
   gtk_scale_set_draw_value(GTK_SCALE(prf->scale), false);
   
-  help = make_row_help(varname, prf, row);
+  help = make_row_help(prf, varname, row);
 
   prf->scale_func = scale_func;
   prf->text_func = text_func;
@@ -572,14 +563,8 @@ static prefs_info *prefs_row_with_scale(const char *label, const char *varname,
   SG_SIGNAL_CONNECT(prf->scale, "value_changed", prefs_scale_callback, (gpointer)prf);
   SG_SIGNAL_CONNECT(prf->text, "activate", call_scale_text_func, (gpointer)prf);
 
-  SG_SIGNAL_CONNECT(prf->label, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
   SG_SIGNAL_CONNECT(prf->scale, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
-  SG_SIGNAL_CONNECT(prf->text, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
-  SG_SIGNAL_CONNECT(help, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
-  SG_SIGNAL_CONNECT(prf->label, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
   SG_SIGNAL_CONNECT(prf->scale, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
-  SG_SIGNAL_CONNECT(prf->text, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
-  SG_SIGNAL_CONNECT(help, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
 
   return(prf);
 }
@@ -602,27 +587,18 @@ static prefs_info *prefs_row_with_text(const char *label, const char *varname, c
   gtk_box_pack_start(GTK_BOX(box), row, false, false, 0);
   gtk_widget_show(row);
 
-  prf->label = make_row_label(label, row);
+  prf->label = make_row_label(prf, label, row);
   hb = gtk_hbox_new(false, 0);
   gtk_size_group_add_widget(widgets_group, hb);
   gtk_box_pack_start(GTK_BOX(row), hb, false, false, 0);
   gtk_widget_show(hb);
 
   sep = make_row_middle_separator(hb);
-  prf->text = make_row_text(value, 0, hb);
-  
-  help = make_row_help(varname, prf, row);
+  prf->text = make_row_text(prf, value, 0, hb);
+  help = make_row_help(prf, varname, row);
 
   prf->text_func = text_func;
-
   SG_SIGNAL_CONNECT(prf->text, "activate", call_text_func, (gpointer)prf);
-
-  SG_SIGNAL_CONNECT(prf->label, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
-  SG_SIGNAL_CONNECT(prf->text, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
-  SG_SIGNAL_CONNECT(help, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
-  SG_SIGNAL_CONNECT(prf->label, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
-  SG_SIGNAL_CONNECT(prf->text, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
-  SG_SIGNAL_CONNECT(help, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
 
   return(prf);
 }
@@ -645,37 +621,23 @@ static prefs_info *prefs_row_with_two_texts(const char *label, const char *varna
   gtk_box_pack_start(GTK_BOX(box), row, false, false, 0);
   gtk_widget_show(row);
 
-  prf->label = make_row_label(label, row);
+  prf->label = make_row_label(prf, label, row);
   hb = gtk_hbox_new(false, 0);
   gtk_size_group_add_widget(widgets_group, hb);
   gtk_box_pack_start(GTK_BOX(row), hb, false, false, 0);
   gtk_widget_show(hb);
 
   sep = make_row_middle_separator(hb);
-  lab1 = make_row_inner_label(label1, hb);
-  prf->text = make_row_text(text1, cols, hb);
-  lab2 = make_row_inner_label(label2, hb);  
-  prf->rtxt = make_row_text(text2, cols, hb);
-
-  help = make_row_help(varname, prf, row);
+  lab1 = make_row_inner_label(prf, label1, hb);
+  prf->text = make_row_text(prf, text1, cols, hb);
+  lab2 = make_row_inner_label(prf, label2, hb);  
+  prf->rtxt = make_row_text(prf, text2, cols, hb);
+  help = make_row_help(prf, varname, row);
 
   prf->text_func = text_func;
 
   SG_SIGNAL_CONNECT(prf->text, "activate", call_text_func, (gpointer)prf);
   SG_SIGNAL_CONNECT(prf->rtxt, "activate", call_text_func, (gpointer)prf);
-
-  SG_SIGNAL_CONNECT(prf->label, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
-  SG_SIGNAL_CONNECT(prf->text, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
-  SG_SIGNAL_CONNECT(prf->rtxt, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
-  SG_SIGNAL_CONNECT(help, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
-  SG_SIGNAL_CONNECT(lab1, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
-  SG_SIGNAL_CONNECT(lab2, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
-  SG_SIGNAL_CONNECT(prf->label, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
-  SG_SIGNAL_CONNECT(prf->text, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
-  SG_SIGNAL_CONNECT(prf->rtxt, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
-  SG_SIGNAL_CONNECT(help, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
-  SG_SIGNAL_CONNECT(lab1, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
-  SG_SIGNAL_CONNECT(lab2, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
 
   return(prf);
 }
@@ -777,7 +739,7 @@ static prefs_info *prefs_row_with_number(const char *label, const char *varname,
   gtk_box_pack_start(GTK_BOX(box), row, false, false, 0);
   gtk_widget_show(row);
 
-  prf->label = make_row_label(label, row);
+  prf->label = make_row_label(prf, label, row);
 
   hb = gtk_hbox_new(false, 0);
   gtk_size_group_add_widget(widgets_group, hb);
@@ -785,7 +747,7 @@ static prefs_info *prefs_row_with_number(const char *label, const char *varname,
   gtk_widget_show(hb);
 
   sep = make_row_middle_separator(hb);
-  prf->text = make_row_text(value, cols, hb);
+  prf->text = make_row_text(prf, value, cols, hb);
   
   ev_down = gtk_event_box_new();
   gtk_box_pack_start(GTK_BOX(hb), ev_down, false, false, 0);
@@ -807,7 +769,7 @@ static prefs_info *prefs_row_with_number(const char *label, const char *varname,
   gtk_box_pack_end(GTK_BOX(hb), prf->error, true, false, 0);
   gtk_widget_show(prf->error);
 
-  help = make_row_help(varname, prf, row);
+  help = make_row_help(prf, varname, row);
 
   prf->text_func = text_func;
   prf->arrow_up_func = arrow_up_func;
@@ -820,17 +782,10 @@ static prefs_info *prefs_row_with_number(const char *label, const char *varname,
 
   SG_SIGNAL_CONNECT(prf->text, "activate", call_text_func, (gpointer)prf);
 
-  SG_SIGNAL_CONNECT(prf->label, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
-  SG_SIGNAL_CONNECT(prf->text, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
   SG_SIGNAL_CONNECT(ev_up, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
   SG_SIGNAL_CONNECT(ev_down, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
-  SG_SIGNAL_CONNECT(help, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
-  SG_SIGNAL_CONNECT(prf->label, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
-  SG_SIGNAL_CONNECT(prf->text, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
   SG_SIGNAL_CONNECT(ev_up, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
   SG_SIGNAL_CONNECT(ev_down, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
-  SG_SIGNAL_CONNECT(help, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
-
   SG_SIGNAL_CONNECT(prf->error, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
   SG_SIGNAL_CONNECT(prf->error, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
 
@@ -857,7 +812,7 @@ static prefs_info *prefs_row_with_completed_list(const char *label, const char *
   gtk_box_pack_start(GTK_BOX(box), row, false, false, 0);
   gtk_widget_show(row);
 
-  prf->label = make_row_label(label, row);
+  prf->label = make_row_label(prf, label, row);
   hb = gtk_hbox_new(false, 0);
   gtk_size_group_add_widget(widgets_group, hb);
   gtk_box_pack_start(GTK_BOX(row), hb, false, false, 0);
@@ -876,20 +831,15 @@ static prefs_info *prefs_row_with_completed_list(const char *label, const char *
   gtk_box_pack_end(GTK_BOX(hb), prf->error, true, false, 0);
   gtk_widget_show(prf->error);
 
-  help = make_row_help(varname, prf, row);
+  help = make_row_help(prf, varname, row);
 
   prf->text_func = text_func;
-
   SG_SIGNAL_CONNECT(prf->text, "changed", call_text_func, (gpointer)prf);
 
-  SG_SIGNAL_CONNECT(prf->label, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
   SG_SIGNAL_CONNECT(prf->text, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
   SG_SIGNAL_CONNECT(prf->error, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
-  SG_SIGNAL_CONNECT(help, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
-  SG_SIGNAL_CONNECT(prf->label, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
   SG_SIGNAL_CONNECT(prf->text, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
   SG_SIGNAL_CONNECT(prf->error, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
-  SG_SIGNAL_CONNECT(help, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
 
   return(prf);
 }
@@ -1024,7 +974,7 @@ static prefs_info *prefs_color_selector_row(const char *label, const char *varna
   gtk_box_pack_start(GTK_BOX(box), row, false, false, 0);
   gtk_widget_show(row);
 
-  prf->label = make_row_label(label, row);
+  prf->label = make_row_label(prf, label, row);
   hb = gtk_hbox_new(false, 0);
   gtk_size_group_add_widget(widgets_group, hb);
   gtk_box_pack_start(GTK_BOX(row), hb, false, false, 0);
@@ -1034,6 +984,7 @@ static prefs_info *prefs_color_selector_row(const char *label, const char *varna
 
   prf->color_texts = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
   prf->color = gtk_drawing_area_new();
+  gtk_widget_set_events(prf->color, GDK_ENTER_NOTIFY_MASK | GDK_LEAVE_NOTIFY_MASK);
   gtk_box_pack_start(GTK_BOX(hb), prf->color, false, false, 4);
   gtk_size_group_add_widget(prf->color_texts, prf->color);
   gtk_widget_modify_bg(prf->color, GTK_STATE_NORMAL, current_pixel);
@@ -1041,18 +992,18 @@ static prefs_info *prefs_color_selector_row(const char *label, const char *varna
   
   sep1 = make_row_inner_separator(8, hb);
   
-  prf->rtxt = make_row_text(NULL, 6, hb);
+  prf->rtxt = make_row_text(prf, NULL, 6, hb);
   gtk_size_group_add_widget(prf->color_texts, prf->rtxt);
   float_to_textfield(prf->rtxt, r);
 
-  prf->gtxt = make_row_text(NULL, 6, hb);
+  prf->gtxt = make_row_text(prf, NULL, 6, hb);
   gtk_size_group_add_widget(prf->color_texts, prf->gtxt);
   float_to_textfield(prf->gtxt, g);
 
-  prf->btxt = make_row_text(NULL, 6, hb);
+  prf->btxt = make_row_text(prf, NULL, 6, hb);
   gtk_size_group_add_widget(prf->color_texts, prf->btxt);
   float_to_textfield(prf->btxt, b);
-  help = make_row_help(varname, prf, row);
+  help = make_row_help(prf, varname, row);
 
   /* second row */
 
@@ -1106,24 +1057,14 @@ static prefs_info *prefs_color_selector_row(const char *label, const char *varna
   SG_SIGNAL_CONNECT(prf->gadj, "value_changed", prefs_color_callback, (gpointer)prf);
   SG_SIGNAL_CONNECT(prf->badj, "value_changed", prefs_color_callback, (gpointer)prf);
 
-  SG_SIGNAL_CONNECT(prf->label, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
-  SG_SIGNAL_CONNECT(prf->label, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
   SG_SIGNAL_CONNECT(prf->color, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
   SG_SIGNAL_CONNECT(prf->color, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
-  SG_SIGNAL_CONNECT(prf->rtxt, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
-  SG_SIGNAL_CONNECT(prf->rtxt, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
   SG_SIGNAL_CONNECT(prf->rscl, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
   SG_SIGNAL_CONNECT(prf->rscl, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
-  SG_SIGNAL_CONNECT(prf->gtxt, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
-  SG_SIGNAL_CONNECT(prf->gtxt, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
   SG_SIGNAL_CONNECT(prf->gscl, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
   SG_SIGNAL_CONNECT(prf->gscl, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
-  SG_SIGNAL_CONNECT(prf->btxt, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
-  SG_SIGNAL_CONNECT(prf->btxt, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
   SG_SIGNAL_CONNECT(prf->bscl, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
   SG_SIGNAL_CONNECT(prf->bscl, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
-  SG_SIGNAL_CONNECT(help, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
-  SG_SIGNAL_CONNECT(help, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
 
   prf->color_func = color_func;
 
@@ -1497,6 +1438,21 @@ static void selection_creates_region_toggle(prefs_info *prf)
 {
   set_selection_creates_region(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prf->toggle)));
 }
+
+static void max_regions_text(prefs_info *prf)
+{
+  char *str;
+  str = (char *)gtk_entry_get_text(GTK_ENTRY(prf->text));
+  if ((str) && (*str))
+    {
+      int value = 0;
+      sscanf(str, "%d", &value);
+      if (value >= 0)
+	in_set_max_regions(value);
+      else int_to_textfield(prf->text, max_regions(ss));
+    }
+}
+
 
 /* ---------------- basic-color ---------------- */
 
@@ -3053,7 +3009,6 @@ static void fft_window_beta_text_callback(prefs_info *prf)
 	  gtk_adjustment_set_value(GTK_ADJUSTMENT(prf->adj), value / prf->scale_max);
 	}
       else gtk_entry_set_text(GTK_ENTRY(prf->text), "right");
-
     }
 }
 
@@ -3070,7 +3025,7 @@ static void transform_peaks_toggle(prefs_info *prf)
   in_set_show_transform_peaks(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prf->toggle)));
 }
 
-static void transform_peaks_text(prefs_info *prf)
+static void max_peaks_text(prefs_info *prf)
 {
   char *str;
   str = (char *)gtk_entry_get_text(GTK_ENTRY(prf->text));
@@ -3080,11 +3035,7 @@ static void transform_peaks_text(prefs_info *prf)
       sscanf(str, "%d", &value);
       if (value >= 0)
 	in_set_max_transform_peaks(value);
-      else
-	{
-
-	  int_to_textfield(prf->text, max_transform_peaks(ss));
-	}
+      else int_to_textfield(prf->text, max_transform_peaks(ss));
     }
 }
 
@@ -3732,11 +3683,14 @@ void start_preferences_dialog(void)
     remember_pref(prf, reflect_show_controls, NULL);
 
     current_sep = make_inter_variable_separator(dpy_box);
-    prf = prefs_row_with_toggle("selection creates an associated region", S_selection_creates_region,
-				selection_creates_region(ss),
-				dpy_box,
-				selection_creates_region_toggle);
+    str = mus_format("%d", max_regions(ss));
+    prf = prefs_row_with_toggle_with_text("selection creates an associated region", S_selection_creates_region,
+					  selection_creates_region(ss),
+					  "max regions:", str, 5,
+					  dpy_box,
+					  selection_creates_region_toggle, max_regions_text);
     remember_pref(prf, reflect_selection_creates_region, NULL);
+    FREE(str);
 
 
     /* ---------------- file options ---------------- */
@@ -4190,7 +4144,7 @@ void start_preferences_dialog(void)
 					  show_transform_peaks(ss),
 					  "max peaks:", str, 5,
 					  fft_box,
-					  transform_peaks_toggle, transform_peaks_text);
+					  transform_peaks_toggle, max_peaks_text);
     remember_pref(prf, reflect_show_transform_peaks, NULL);
     FREE(str);
 

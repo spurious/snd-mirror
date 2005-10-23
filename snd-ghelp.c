@@ -110,7 +110,7 @@ static void add_pattern_to_help_history(const char *pattern)
   if (!help_needed) return;
   if (help_history_size == 0)
     {
-      help_history_size = 16;
+      help_history_size = 16; /* not 8! -- need room for cycle below */
       help_history = (char **)CALLOC(help_history_size, sizeof(char *));
     }
   else
