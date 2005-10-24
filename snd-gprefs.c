@@ -3479,6 +3479,25 @@ static void show_backtrace_toggle(prefs_info *prf)
   set_show_backtrace(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prf->toggle)));
 }
 
+/* ---------------- print-length ---------------- */
+
+static void reflect_print_length(prefs_info *prf)
+{
+  int_to_textfield(prf->text, print_length(ss));
+}
+
+static void print_length_text(prefs_info *prf)
+{
+  char *str;
+  str = (char *)gtk_entry_get_text(GTK_ENTRY(prf->text));
+  if ((str) && (*str))
+    {
+      int value = 0;
+      sscanf(str, "%d", &value);
+      set_print_length(value);
+    }
+}
+
 /* ---------------- listener-color ---------------- */
 
 static color_t saved_listener_color;
@@ -4298,6 +4317,14 @@ void start_preferences_dialog(void)
 				prg_box,
 				show_backtrace_toggle);
     remember_pref(prf, reflect_show_backtrace, NULL);
+
+    current_sep = make_inter_variable_separator(prg_box);
+    str = mus_format("%d", print_length(ss));
+    prf = prefs_row_with_text("number of vector elements to display", S_print_length, str,
+			      prg_box,
+			      print_length_text);
+    remember_pref(prf, reflect_print_length, NULL);
+    FREE(str);
 
     current_sep = make_inter_variable_separator(prg_box);
     prf = prefs_row_with_text("font", S_listener_font, 

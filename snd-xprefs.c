@@ -6,7 +6,16 @@
 /* things left to do:
 
    use peak envs (need dir)
-   remember state for subsequent load (extensions?)
+     (if (not (provided? 'snd-peak-env.scm)) (load "/home/bil/cl/peak-env.scm"))
+     (define save-peak-env-info #t)
+     (define save-peak-env-info-directory "~/peaks")
+     ;need a way to turn it off in peak-env.scm, and rb support
+
+   remember state for subsequent load (extensions.scm)
+     (remember-sound-state)
+     ;also needs turn-off code
+
+   what about font-names as gtk/motif safe? -- save state funcs would need to be smarter
    
    speed-control style/tones? SPEED_CONTROL_AS_FLOAT, SPEED_CONTROL_AS_RATIO, SPEED_CONTROL_AS_SEMITONE + number+arrows for semitones [in_set*]
    snd-motif: hidden-controls-dialog (make-hidden-controls-dialog)
@@ -23,7 +32,9 @@
 
    ss->With_GL = DEFAULT_WITH_GL;
 
-   debugging aids [i.e. guile settings]
+   various additional key bindings? move-one-pixel zoom-one-pixel [how to specify fancy keys?]
+
+   debugging aids [i.e. guile settings and debug.scm]
     (use-modules (ice-9 debug) (ice-9 format) (ice-9 optargs) (ice-9 common-list) (ice-9 session))
     (debug-set! stack 0)
     (debug-enable 'debug 'backtrace)
@@ -4107,6 +4118,27 @@ static void show_backtrace_toggle(prefs_info *prf)
   set_show_backtrace(XmToggleButtonGetState(prf->toggle) == XmSET);
 }
 
+/* ---------------- print-length ---------------- */
+
+static void reflect_print_length(prefs_info *prf)
+{
+  int_to_textfield(prf->text, print_length(ss));
+}
+
+static void print_length_text(prefs_info *prf)
+{
+  char *str;
+  ASSERT_WIDGET_TYPE(XmIsTextField(prf->text), prf->text);
+  str = XmTextFieldGetString(prf->text);
+  if ((str) && (*str))
+    {
+      int value = 0;
+      sscanf(str, "%d", &value);
+      set_print_length(value); /* TODO: shouldn't this be reflected in ws.scm *clm-array-print-length*? */
+      XtFree(str);
+    }
+}
+
 /* ---------------- listener-color ---------------- */
 
 static Pixel saved_listener_color;
@@ -5082,6 +5114,14 @@ void start_preferences_dialog(void)
 				prg_box, current_sep,
 				show_backtrace_toggle);
     remember_pref(prf, reflect_show_backtrace, NULL);
+
+    current_sep = make_inter_variable_separator(prg_box, prf->label);
+    str = mus_format("%d", print_length(ss));
+    prf = prefs_row_with_text("number of vector elements to display", S_print_length, str,
+			      prg_box, current_sep,
+			      print_length_text);
+    remember_pref(prf, reflect_print_length, NULL);
+    FREE(str);
 
     current_sep = make_inter_variable_separator(prg_box, prf->label);
     prf = prefs_row_with_text("font", S_listener_font, 
