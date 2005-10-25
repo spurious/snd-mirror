@@ -1432,6 +1432,7 @@ static void controls_toggle(prefs_info *prf)
 static void reflect_selection_creates_region(prefs_info *prf) 
 {
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(prf->toggle), selection_creates_region(ss));
+  int_to_textfield(prf->text, max_regions(ss));
 }
 
 static void selection_creates_region_toggle(prefs_info *prf)
@@ -3367,8 +3368,7 @@ static void reflect_show_listener(prefs_info *prf)
 
 static void show_listener_toggle(prefs_info *prf)
 {
-  handle_listener(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prf->toggle)));
-  include_listener = true;
+  include_listener = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prf->toggle));
 }
 
 static void save_show_listener(prefs_info *prf, FILE *fd)

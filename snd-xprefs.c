@@ -17,7 +17,6 @@
 
    what about font-names as gtk/motif safe? -- save state funcs would need to be smarter
    
-   speed-control style/tones? SPEED_CONTROL_AS_FLOAT, SPEED_CONTROL_AS_RATIO, SPEED_CONTROL_AS_SEMITONE + number+arrows for semitones [in_set*]
    snd-motif: hidden-controls-dialog (make-hidden-controls-dialog)
 
    transform-graph? (lisp graph + energy or whatever) [time_graph_p and transform_graph_p in snd-chn] -- would need to be a hook func
@@ -77,24 +76,14 @@
     raw file defaults, other clm stuff?
     -> mus_header_raw_defaults [chans srate format in headers.c]
 
+    (clm gtk side)
+    (arrow and error gtk side)
+
     clm (with-sound) defaults -- these come from default_output* to some extent
-        [ws is in if *clm-srate* is defined]
-        [might need a list of available instruments for defined/initial list check]
-      include_with_sound + (editable) list of include instruments (pulldown?) 
-      ss->Sinc_Width = DEFAULT_SINC_WIDTH;
-      with-sound + ins? (check list?), extensions etc
-
-      (define *clm-srate* (default-output-srate))
-      (define *clm-file-name* "test.snd")
-      (define *clm-channels* (default-output-chans))
-      (define *clm-data-format* (default-output-data-format))
-      (define *clm-header-type* (default-output-header-type))
-      (define *clm-statistics* #f)
-      (define *clm-table-size* 512)
-      (define *clm-file-buffer-size* 65536)
-      (define *clm-clipped* #t) ; data-clipped as global?
-      (define *clm-delete-reverb* #f) ; should with-sound clean up reverb stream
-
+      clm ins, prc ins, v+jcrev+nrev, birds
+      clm table size, file buffer size, default srate?
+      auto-update??
+   
 */
 
 
@@ -300,8 +289,8 @@ static Widget make_row_label(prefs_info *prf, const char *label, Widget box, Wid
   XtSetArg(args[n], XmNalignment, XmALIGNMENT_END); n++;
   w = XtCreateManagedWidget(label, xmLabelWidgetClass, box, args, n);
 
-  XtAddEventHandler(w, EnterWindowMask, false, mouse_enter_pref_callback, (void *)prf);
-  XtAddEventHandler(w, LeaveWindowMask, false, mouse_leave_pref_callback, (void *)prf);
+  XtAddEventHandler(w, EnterWindowMask, false, mouse_enter_pref_callback, (XtPointer)prf);
+  XtAddEventHandler(w, LeaveWindowMask, false, mouse_leave_pref_callback, (XtPointer)prf);
 
   return(w);
 }
@@ -324,8 +313,8 @@ static Widget make_row_inner_label(prefs_info *prf, const char *label, Widget le
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
   w = XtCreateManagedWidget(label, xmLabelWidgetClass, box, args, n);
 
-  XtAddEventHandler(w, EnterWindowMask, false, mouse_enter_pref_callback, (void *)prf);
-  XtAddEventHandler(w, LeaveWindowMask, false, mouse_leave_pref_callback, (void *)prf);
+  XtAddEventHandler(w, EnterWindowMask, false, mouse_enter_pref_callback, (XtPointer)prf);
+  XtAddEventHandler(w, LeaveWindowMask, false, mouse_leave_pref_callback, (XtPointer)prf);
 
   return(w);
 }
@@ -415,10 +404,34 @@ static Widget make_row_help(prefs_info *prf, const char *label, Widget box, Widg
 
   XtAddCallback(helper, XmNactivateCallback, prefs_help_click_callback, (XtPointer)prf);
 
-  XtAddEventHandler(helper, EnterWindowMask, false, mouse_enter_pref_callback, (void *)prf);
-  XtAddEventHandler(helper, LeaveWindowMask, false, mouse_leave_pref_callback, (void *)prf);
+  XtAddEventHandler(helper, EnterWindowMask, false, mouse_enter_pref_callback, (XtPointer)prf);
+  XtAddEventHandler(helper, LeaveWindowMask, false, mouse_leave_pref_callback, (XtPointer)prf);
 
   return(helper);
+}
+
+static Widget make_row_error(prefs_info *prf, Widget box, Widget left_widget, Widget top_widget)
+{
+  Arg args[20];
+  int n;
+  Widget w;
+
+  n = 0;
+  XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;
+  XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
+  XtSetArg(args[n], XmNtopWidget, top_widget); n++;
+  XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
+  XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
+  XtSetArg(args[n], XmNleftWidget, left_widget); n++;
+  XtSetArg(args[n], XmNrightAttachment, XmATTACH_POSITION); n++;
+  XtSetArg(args[n], XmNrightPosition, HELP_POSITION); n++;
+  XtSetArg(args[n], XmNalignment, XmALIGNMENT_END); n++;
+  w = XtCreateManagedWidget("", xmLabelWidgetClass, box, args, n);
+
+  XtAddEventHandler(w, EnterWindowMask, false, mouse_enter_pref_callback, (XtPointer)prf);
+  XtAddEventHandler(w, LeaveWindowMask, false, mouse_leave_pref_callback, (XtPointer)prf);
+
+  return(w);
 }
 
 /* ---------------- row toggle widget ---------------- */
@@ -445,12 +458,128 @@ static Widget make_row_toggle(prefs_info *prf, bool current_value, Widget left_w
   XtSetArg(args[n], XmNindicatorSize, 14); n++;
   w = XtCreateManagedWidget(" ", xmToggleButtonWidgetClass, box, args, n);
 
-  XtAddEventHandler(w, EnterWindowMask, false, mouse_enter_pref_callback, (void *)prf);
-  XtAddEventHandler(w, LeaveWindowMask, false, mouse_leave_pref_callback, (void *)prf);
+  XtAddEventHandler(w, EnterWindowMask, false, mouse_enter_pref_callback, (XtPointer)prf);
+  XtAddEventHandler(w, LeaveWindowMask, false, mouse_leave_pref_callback, (XtPointer)prf);
 
   return(w);
 }
 
+
+/* ---------------- row arrows ---------------- */
+
+static void remove_arrow_func(Widget w, XtPointer context, XtPointer info)
+{
+  prefs_info *prf = (prefs_info *)context;
+  if (prf->power_id != 0)
+    {
+      XtRemoveTimeOut(prf->power_id);
+      prf->power_id = 0;
+    }
+}
+
+static void arrow_func_up(XtPointer context, XtIntervalId *id)
+{
+  prefs_info *prf = (prefs_info *)context;
+  if (XtIsSensitive(prf->arrow_up))
+    {
+      if ((prf) && (prf->arrow_up_func))
+	{
+	  (*(prf->arrow_up_func))(prf);
+	  prf->power_id = XtAppAddTimeOut(MAIN_APP(ss),
+					  POWER_WAIT_TIME,
+					  arrow_func_up,
+					  (XtPointer)prf);
+	}
+      else prf->power_id = 0;
+    }
+}
+
+static void arrow_func_down(XtPointer context, XtIntervalId *id)
+{
+  prefs_info *prf = (prefs_info *)context;
+  if (XtIsSensitive(prf->arrow_down))
+    {
+      if ((prf) && (prf->arrow_down_func))
+	{
+	  (*(prf->arrow_down_func))(prf);
+	  prf->power_id = XtAppAddTimeOut(MAIN_APP(ss),
+					  POWER_WAIT_TIME,
+					  arrow_func_down,
+					  (XtPointer)prf);
+	}
+      else prf->power_id = 0;
+    }
+}
+
+static void call_arrow_down_press(Widget w, XtPointer context, XtPointer info) 
+{
+  prefs_info *prf = (prefs_info *)context;
+  if ((prf) && (prf->arrow_down_func))
+    {
+      (*(prf->arrow_down_func))(prf);
+      if (XtIsSensitive(w))
+	prf->power_id = XtAppAddTimeOut(MAIN_APP(ss),
+					POWER_INITIAL_WAIT_TIME,
+					arrow_func_down,
+					(XtPointer)prf);
+      else prf->power_id = 0;
+    }
+}
+
+static void call_arrow_up_press(Widget w, XtPointer context, XtPointer info) 
+{
+  prefs_info *prf = (prefs_info *)context;
+  if ((prf) && (prf->arrow_up_func))
+    {
+      (*(prf->arrow_up_func))(prf);
+      if (XtIsSensitive(w))
+	prf->power_id = XtAppAddTimeOut(MAIN_APP(ss),
+					POWER_INITIAL_WAIT_TIME,
+					arrow_func_up,
+					(XtPointer)prf);
+      else prf->power_id = 0;
+    }
+}
+
+static Widget make_row_arrows(prefs_info *prf, Widget box, Widget left_widget, Widget top_widget)
+{
+  Arg args[20];
+  int n;
+
+  n = 0;
+  XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;
+  XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
+  XtSetArg(args[n], XmNtopWidget, top_widget); n++;
+  XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
+  XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
+  XtSetArg(args[n], XmNleftWidget, left_widget); n++;
+  XtSetArg(args[n], XmNarrowDirection, XmARROW_DOWN); n++;
+  XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
+  prf->arrow_down = XtCreateManagedWidget("arrow-down", xmArrowButtonWidgetClass, box, args, n);
+  
+  n = 0;
+  XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;
+  XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
+  XtSetArg(args[n], XmNtopWidget, top_widget); n++;
+  XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
+  XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
+  XtSetArg(args[n], XmNleftWidget, prf->arrow_down); n++;
+  XtSetArg(args[n], XmNarrowDirection, XmARROW_UP); n++;
+  XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
+  prf->arrow_up = XtCreateManagedWidget("arrow-up", xmArrowButtonWidgetClass, box, args, n);
+  
+  XtAddEventHandler(prf->arrow_up, EnterWindowMask, false, mouse_enter_pref_callback, (XtPointer)prf);
+  XtAddEventHandler(prf->arrow_down, EnterWindowMask, false, mouse_enter_pref_callback, (XtPointer)prf);
+  XtAddEventHandler(prf->arrow_up, LeaveWindowMask, false, mouse_leave_pref_callback, (XtPointer)prf);
+  XtAddEventHandler(prf->arrow_down, LeaveWindowMask, false, mouse_leave_pref_callback, (XtPointer)prf);
+
+  XtAddCallback(prf->arrow_down, XmNarmCallback, call_arrow_down_press, (XtPointer)prf);
+  XtAddCallback(prf->arrow_down, XmNdisarmCallback, remove_arrow_func, (XtPointer)prf);
+  XtAddCallback(prf->arrow_up, XmNarmCallback, call_arrow_up_press, (XtPointer)prf);
+  XtAddCallback(prf->arrow_up, XmNdisarmCallback, remove_arrow_func, (XtPointer)prf);
+
+  return(prf->arrow_up);
+}
 
 /* ---------------- bool row ---------------- */
 
@@ -476,7 +605,7 @@ static prefs_info *prefs_row_with_toggle(const char *label, const char *varname,
   prf->toggle = make_row_toggle(prf, current_value, sep, box, top_widget);
   help = make_row_help(prf, varname, box, top_widget, prf->toggle);
   
-  XtAddCallback(prf->toggle, XmNvalueChangedCallback, call_toggle_func, (void *)prf);
+  XtAddCallback(prf->toggle, XmNvalueChangedCallback, call_toggle_func, (XtPointer)prf);
   return(prf);
 }
 
@@ -518,8 +647,8 @@ static Widget make_row_text(prefs_info *prf, const char *text_value, int cols, W
   XtSetArg(args[n], XmNtopShadowColor, ss->sgx->white); n++;
   w = make_textfield_widget("text", box, args, n, ACTIVATABLE_BUT_NOT_FOCUSED, NO_COMPLETER);
 
-  XtAddEventHandler(w, EnterWindowMask, false, mouse_enter_pref_callback, (void *)prf);
-  XtAddEventHandler(w, LeaveWindowMask, false, mouse_leave_pref_callback, (void *)prf);
+  XtAddEventHandler(w, EnterWindowMask, false, mouse_enter_pref_callback, (XtPointer)prf);
+  XtAddEventHandler(w, LeaveWindowMask, false, mouse_leave_pref_callback, (XtPointer)prf);
 
   return(w);
 }
@@ -552,8 +681,8 @@ static prefs_info *prefs_row_with_toggle_with_text(const char *label, const char
   prf->text = make_row_text(prf, text_value, cols, lab1, box, top_widget);
   help = make_row_help(prf, varname, box, top_widget, prf->text);
   
-  XtAddCallback(prf->toggle, XmNvalueChangedCallback, call_toggle_func, (void *)prf);
-  XtAddCallback(prf->text, XmNactivateCallback, call_text_func, (void *)prf);
+  XtAddCallback(prf->toggle, XmNvalueChangedCallback, call_toggle_func, (XtPointer)prf);
+  XtAddCallback(prf->text, XmNactivateCallback, call_text_func, (XtPointer)prf);
 
   return(prf);
 }
@@ -582,8 +711,8 @@ static prefs_info *prefs_row_with_text_with_toggle(const char *label, const char
   prf->toggle = make_row_toggle(prf, current_value, lab1, box, top_widget);  
   help = make_row_help(prf, varname, box, top_widget, prf->text);
   
-  XtAddCallback(prf->toggle, XmNvalueChangedCallback, call_toggle_func, (void *)prf);
-  XtAddCallback(prf->text, XmNactivateCallback, call_text_func, (void *)prf);
+  XtAddCallback(prf->toggle, XmNvalueChangedCallback, call_toggle_func, (XtPointer)prf);
+  XtAddCallback(prf->text, XmNactivateCallback, call_text_func, (XtPointer)prf);
 
   return(prf);
 }
@@ -601,21 +730,13 @@ static void call_radio_func(Widget w, XtPointer context, XtPointer info)
     }
 }
 
-static prefs_info *prefs_row_with_radio_box(const char *label, const char *varname, 
-					    const char **labels, int num_labels, int current_value,
-					    Widget box, Widget top_widget, 
-					    void (*toggle_func)(prefs_info *prf))
+static Widget make_row_radio_box(prefs_info *prf,
+				 const char **labels, int num_labels, int current_value,
+				 Widget box, Widget left_widget, Widget top_widget)
 {
   Arg args[20];
   int i, n;
-  prefs_info *prf = NULL;
-  Widget sep, help;
-  prf = (prefs_info *)CALLOC(1, sizeof(prefs_info));
-  prf->var_name = varname;
-  prf->toggle_func = toggle_func;
-
-  prf->label = make_row_label(prf, label, box, top_widget);
-  sep = make_row_middle_separator(prf->label, box, top_widget);
+  Widget w;
 
   n = 0;
   XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;
@@ -623,15 +744,15 @@ static prefs_info *prefs_row_with_radio_box(const char *label, const char *varna
   XtSetArg(args[n], XmNtopWidget, top_widget); n++;
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
-  XtSetArg(args[n], XmNleftWidget, sep); n++;
+  XtSetArg(args[n], XmNleftWidget, left_widget); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
   XtSetArg(args[n], XmNborderWidth, 0); n++;
   XtSetArg(args[n], XmNborderColor, ss->sgx->white); n++;
   XtSetArg(args[n], XmNmarginHeight, 0); n++;
   XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
   XtSetArg(args[n], XmNpacking, XmPACK_TIGHT); n++;
-  prf->toggle = XmCreateRadioBox(box, "radio-box", args, n);
-  XtManageChild(prf->toggle);
+  w = XmCreateRadioBox(box, "radio-box", args, n);
+  XtManageChild(w);
 
   for (i = 0; i < num_labels; i++)
     {
@@ -646,14 +767,58 @@ static prefs_info *prefs_row_with_radio_box(const char *label, const char *varna
       XtSetArg(args[n], XmNindicatorOn, XmINDICATOR_FILL); n++;
       XtSetArg(args[n], XmNindicatorSize, 14); n++;
       XtSetArg(args[n], XmNselectColor, ss->sgx->green); n++;
-      button = XtCreateManagedWidget(labels[i], xmToggleButtonWidgetClass, prf->toggle, args, n);
+      button = XtCreateManagedWidget(labels[i], xmToggleButtonWidgetClass, w, args, n);
 
       XtAddCallback(button, XmNvalueChangedCallback, call_radio_func, (XtPointer)prf);
-      XtAddEventHandler(button, EnterWindowMask, false, mouse_enter_pref_callback, (void *)prf);
-      XtAddEventHandler(button, LeaveWindowMask, false, mouse_leave_pref_callback, (void *)prf);
+      XtAddEventHandler(button, EnterWindowMask, false, mouse_enter_pref_callback, (XtPointer)prf);
+      XtAddEventHandler(button, LeaveWindowMask, false, mouse_leave_pref_callback, (XtPointer)prf);
     }
+  return(w);
+}
 
+static prefs_info *prefs_row_with_radio_box(const char *label, const char *varname, 
+					    const char **labels, int num_labels, int current_value,
+					    Widget box, Widget top_widget, 
+					    void (*toggle_func)(prefs_info *prf))
+{
+  prefs_info *prf = NULL;
+  Widget sep, help;
+  prf = (prefs_info *)CALLOC(1, sizeof(prefs_info));
+  prf->var_name = varname;
+  prf->toggle_func = toggle_func;
+  prf->label = make_row_label(prf, label, box, top_widget);
+  sep = make_row_middle_separator(prf->label, box, top_widget);
+  prf->toggle = make_row_radio_box(prf, labels, num_labels, current_value, box, sep, top_widget);
   help = make_row_help(prf, varname, box, top_widget, prf->toggle);
+  return(prf);
+}
+
+/* ---------------- radio box + number ---------------- */
+
+static prefs_info *prefs_row_with_radio_box_and_number(const char *label, const char *varname, 
+						       const char **labels, int num_labels, int current_value,
+						       int number, const char *text_value, int text_cols,
+						       Widget box, Widget top_widget, 
+						       void (*toggle_func)(prefs_info *prf),
+						       void (*arrow_up_func)(prefs_info *prf), void (*arrow_down_func)(prefs_info *prf), 
+						       void (*text_func)(prefs_info *prf))
+{
+  prefs_info *prf = NULL;
+  Widget sep, help;
+  prf = (prefs_info *)CALLOC(1, sizeof(prefs_info));
+  prf->var_name = varname;
+  prf->toggle_func = toggle_func;
+  prf->text_func = text_func;
+  prf->arrow_up_func = arrow_up_func;
+  prf->arrow_down_func = arrow_down_func;
+  prf->label = make_row_label(prf, label, box, top_widget);
+  sep = make_row_middle_separator(prf->label, box, top_widget);
+  prf->toggle = make_row_radio_box(prf, labels, num_labels, current_value, box, sep, top_widget);
+  prf->text = make_row_text(prf, text_value, text_cols, prf->toggle, box, top_widget);
+  prf->arrow_up = make_row_arrows(prf, box, prf->text, top_widget);
+  help = make_row_help(prf, varname, box, top_widget, prf->arrow_up);
+
+  XtAddCallback(prf->text, XmNactivateCallback, call_text_func, (XtPointer)prf);
   return(prf);
 }
 
@@ -733,8 +898,8 @@ static prefs_info *prefs_row_with_scale(const char *label, const char *varname,
   XtAddCallback(prf->scale, XmNvalueChangedCallback, call_scale_func, (XtPointer)prf);
   XtAddCallback(prf->text, XmNactivateCallback, call_scale_text_func, (XtPointer)prf);
 
-  XtAddEventHandler(prf->scale, EnterWindowMask, false, mouse_enter_pref_callback, (void *)prf);
-  XtAddEventHandler(prf->scale, LeaveWindowMask, false, mouse_leave_pref_callback, (void *)prf);
+  XtAddEventHandler(prf->scale, EnterWindowMask, false, mouse_enter_pref_callback, (XtPointer)prf);
+  XtAddEventHandler(prf->scale, LeaveWindowMask, false, mouse_leave_pref_callback, (XtPointer)prf);
 
   FREE(n1);
   FREE(n2);
@@ -796,87 +961,11 @@ static prefs_info *prefs_row_with_two_texts(const char *label, const char *varna
 
 /* ---------------- number row ---------------- */
 
-static void remove_arrow_func(Widget w, XtPointer context, XtPointer info)
-{
-  prefs_info *prf = (prefs_info *)context;
-  if (prf->power_id != 0)
-    {
-      XtRemoveTimeOut(prf->power_id);
-      prf->power_id = 0;
-    }
-}
-
-static void arrow_func_up(XtPointer context, XtIntervalId *id)
-{
-  prefs_info *prf = (prefs_info *)context;
-  if (XtIsSensitive(prf->arrow_up))
-    {
-      if ((prf) && (prf->arrow_up_func))
-	{
-	  (*(prf->arrow_up_func))(prf);
-	  prf->power_id = XtAppAddTimeOut(MAIN_APP(ss),
-					  POWER_WAIT_TIME,
-					  arrow_func_up,
-					  (XtPointer)prf);
-	}
-      else prf->power_id = 0;
-    }
-}
-
-static void arrow_func_down(XtPointer context, XtIntervalId *id)
-{
-  prefs_info *prf = (prefs_info *)context;
-  if (XtIsSensitive(prf->arrow_down))
-    {
-      if ((prf) && (prf->arrow_down_func))
-	{
-	  (*(prf->arrow_down_func))(prf);
-	  prf->power_id = XtAppAddTimeOut(MAIN_APP(ss),
-					  POWER_WAIT_TIME,
-					  arrow_func_down,
-					  (XtPointer)prf);
-	}
-      else prf->power_id = 0;
-    }
-}
-
-static void call_arrow_down_press(Widget w, XtPointer context, XtPointer info) 
-{
-  prefs_info *prf = (prefs_info *)context;
-  if ((prf) && (prf->arrow_down_func))
-    {
-      (*(prf->arrow_down_func))(prf);
-      if (XtIsSensitive(w))
-	prf->power_id = XtAppAddTimeOut(MAIN_APP(ss),
-					POWER_INITIAL_WAIT_TIME,
-					arrow_func_down,
-					(XtPointer)prf);
-      else prf->power_id = 0;
-    }
-}
-
-static void call_arrow_up_press(Widget w, XtPointer context, XtPointer info) 
-{
-  prefs_info *prf = (prefs_info *)context;
-  if ((prf) && (prf->arrow_up_func))
-    {
-      (*(prf->arrow_up_func))(prf);
-      if (XtIsSensitive(w))
-	prf->power_id = XtAppAddTimeOut(MAIN_APP(ss),
-					POWER_INITIAL_WAIT_TIME,
-					arrow_func_up,
-					(XtPointer)prf);
-      else prf->power_id = 0;
-    }
-}
-
 static prefs_info *prefs_row_with_number(const char *label, const char *varname, const char *value, int cols,
 					 Widget box, Widget top_widget,
  					 void (*arrow_up_func)(prefs_info *prf), void (*arrow_down_func)(prefs_info *prf), 
 					 void (*text_func)(prefs_info *prf))
 {
-  Arg args[20];
-  int n;
   prefs_info *prf = NULL;
   Widget sep, help;
   prf = (prefs_info *)CALLOC(1, sizeof(prefs_info));
@@ -885,59 +974,15 @@ static prefs_info *prefs_row_with_number(const char *label, const char *varname,
   prf->label = make_row_label(prf, label, box, top_widget);
   sep = make_row_middle_separator(prf->label, box, top_widget);
   prf->text = make_row_text(prf, value, cols, sep, box, top_widget);
-  
-  n = 0;
-  XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;
-  XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
-  XtSetArg(args[n], XmNtopWidget, top_widget); n++;
-  XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
-  XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
-  XtSetArg(args[n], XmNleftWidget, prf->text); n++;
-  XtSetArg(args[n], XmNarrowDirection, XmARROW_DOWN); n++;
-  XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
-  prf->arrow_down = XtCreateManagedWidget("arrow-down", xmArrowButtonWidgetClass, box, args, n);
-  
-  n = 0;
-  XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;
-  XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
-  XtSetArg(args[n], XmNtopWidget, top_widget); n++;
-  XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
-  XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
-  XtSetArg(args[n], XmNleftWidget, prf->arrow_down); n++;
-  XtSetArg(args[n], XmNarrowDirection, XmARROW_UP); n++;
-  XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
-  prf->arrow_up = XtCreateManagedWidget("arrow-up", xmArrowButtonWidgetClass, box, args, n);
-  
-  n = 0;
-  XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;
-  XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
-  XtSetArg(args[n], XmNtopWidget, top_widget); n++;
-  XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
-  XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
-  XtSetArg(args[n], XmNleftWidget, prf->arrow_up); n++;
-  XtSetArg(args[n], XmNrightAttachment, XmATTACH_POSITION); n++;
-  XtSetArg(args[n], XmNrightPosition, HELP_POSITION); n++;
-  XtSetArg(args[n], XmNalignment, XmALIGNMENT_END); n++;
-  prf->error = XtCreateManagedWidget("", xmLabelWidgetClass, box, args, n);
-  
+  prf->arrow_up = make_row_arrows(prf, box, prf->text, top_widget);
+  prf->error = make_row_error(prf, box, prf->arrow_up, top_widget);
   help = make_row_help(prf, varname, box, top_widget, prf->error);
 
   prf->text_func = text_func;
   prf->arrow_up_func = arrow_up_func;
   prf->arrow_down_func = arrow_down_func;
 
-  XtAddCallback(prf->arrow_down, XmNarmCallback, call_arrow_down_press, (XtPointer)prf);
-  XtAddCallback(prf->arrow_down, XmNdisarmCallback, remove_arrow_func, (XtPointer)prf);
-  XtAddCallback(prf->arrow_up, XmNarmCallback, call_arrow_up_press, (XtPointer)prf);
-  XtAddCallback(prf->arrow_up, XmNdisarmCallback, remove_arrow_func, (XtPointer)prf);
   XtAddCallback(prf->text, XmNactivateCallback, call_text_func, (XtPointer)prf);
-
-  XtAddEventHandler(prf->arrow_up, EnterWindowMask, false, mouse_enter_pref_callback, (void *)prf);
-  XtAddEventHandler(prf->arrow_down, EnterWindowMask, false, mouse_enter_pref_callback, (void *)prf);
-  XtAddEventHandler(prf->error, EnterWindowMask, false, mouse_enter_pref_callback, (void *)prf);
-  XtAddEventHandler(prf->arrow_up, LeaveWindowMask, false, mouse_leave_pref_callback, (void *)prf);
-  XtAddEventHandler(prf->arrow_down, LeaveWindowMask, false, mouse_leave_pref_callback, (void *)prf);
-  XtAddEventHandler(prf->error, LeaveWindowMask, false, mouse_leave_pref_callback, (void *)prf);
 
   return(prf);
 }
@@ -1071,30 +1116,17 @@ static prefs_info *prefs_row_with_completed_list(const char *label, const char *
 	XtAddCallback(tmp, XmNactivateCallback, prefs_list_callback, make_list_entry(prf, (char *)values[i]));
       }
 
-  n = 0;
-  XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;
-  XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
-  XtSetArg(args[n], XmNtopWidget, top_widget); n++;
-  XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
-  XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
-  XtSetArg(args[n], XmNleftWidget, prf->arrow_right); n++;
-  XtSetArg(args[n], XmNrightAttachment, XmATTACH_POSITION); n++;
-  XtSetArg(args[n], XmNrightPosition, HELP_POSITION); n++;
-  XtSetArg(args[n], XmNalignment, XmALIGNMENT_END); n++;
-  prf->error = XtCreateManagedWidget("", xmLabelWidgetClass, box, args, n);
-
+  prf->error = make_row_error(prf, box, prf->arrow_right, top_widget);
   help = make_row_help(prf, varname, box, top_widget, prf->error);
   prf->text_func = text_func;
   XtAddCallback(prf->text, XmNactivateCallback, call_text_func, (XtPointer)prf);
 
   prf->list_func = list_func;
 
-  XtAddEventHandler(prf->text, EnterWindowMask, false, mouse_enter_pref_callback, (void *)prf);
-  XtAddEventHandler(prf->arrow_right, EnterWindowMask, false, mouse_enter_pref_callback, (void *)prf);
-  XtAddEventHandler(prf->error, EnterWindowMask, false, mouse_enter_pref_callback, (void *)prf);
-  XtAddEventHandler(prf->text, LeaveWindowMask, false, mouse_leave_pref_callback, (void *)prf);
-  XtAddEventHandler(prf->arrow_right, LeaveWindowMask, false, mouse_leave_pref_callback, (void *)prf);
-  XtAddEventHandler(prf->error, LeaveWindowMask, false, mouse_leave_pref_callback, (void *)prf);
+  XtAddEventHandler(prf->text, EnterWindowMask, false, mouse_enter_pref_callback, (XtPointer)prf);
+  XtAddEventHandler(prf->arrow_right, EnterWindowMask, false, mouse_enter_pref_callback, (XtPointer)prf);
+  XtAddEventHandler(prf->text, LeaveWindowMask, false, mouse_leave_pref_callback, (XtPointer)prf);
+  XtAddEventHandler(prf->arrow_right, LeaveWindowMask, false, mouse_leave_pref_callback, (XtPointer)prf);
 
   return(prf);
 }
@@ -1352,14 +1384,14 @@ static prefs_info *prefs_color_selector_row(const char *label, const char *varna
   XtAddCallback(prf->gscl, XmNvalueChangedCallback, prefs_call_color_func_callback, (XtPointer)prf);
   XtAddCallback(prf->bscl, XmNvalueChangedCallback, prefs_call_color_func_callback, (XtPointer)prf);
 
-  XtAddEventHandler(prf->color, EnterWindowMask, false, mouse_enter_pref_callback, (void *)prf);
-  XtAddEventHandler(prf->color, LeaveWindowMask, false, mouse_leave_pref_callback, (void *)prf);
-  XtAddEventHandler(prf->rscl, EnterWindowMask, false, mouse_enter_pref_callback, (void *)prf);
-  XtAddEventHandler(prf->rscl, LeaveWindowMask, false, mouse_leave_pref_callback, (void *)prf);
-  XtAddEventHandler(prf->gscl, EnterWindowMask, false, mouse_enter_pref_callback, (void *)prf);
-  XtAddEventHandler(prf->gscl, LeaveWindowMask, false, mouse_leave_pref_callback, (void *)prf);
-  XtAddEventHandler(prf->bscl, EnterWindowMask, false, mouse_enter_pref_callback, (void *)prf);
-  XtAddEventHandler(prf->bscl, LeaveWindowMask, false, mouse_leave_pref_callback, (void *)prf);
+  XtAddEventHandler(prf->color, EnterWindowMask, false, mouse_enter_pref_callback, (XtPointer)prf);
+  XtAddEventHandler(prf->color, LeaveWindowMask, false, mouse_leave_pref_callback, (XtPointer)prf);
+  XtAddEventHandler(prf->rscl, EnterWindowMask, false, mouse_enter_pref_callback, (XtPointer)prf);
+  XtAddEventHandler(prf->rscl, LeaveWindowMask, false, mouse_leave_pref_callback, (XtPointer)prf);
+  XtAddEventHandler(prf->gscl, EnterWindowMask, false, mouse_enter_pref_callback, (XtPointer)prf);
+  XtAddEventHandler(prf->gscl, LeaveWindowMask, false, mouse_leave_pref_callback, (XtPointer)prf);
+  XtAddEventHandler(prf->bscl, EnterWindowMask, false, mouse_enter_pref_callback, (XtPointer)prf);
+  XtAddEventHandler(prf->bscl, LeaveWindowMask, false, mouse_leave_pref_callback, (XtPointer)prf);
 
   prf->color_func = color_func;
   FREE(n1);
@@ -1539,7 +1571,7 @@ static void post_prefs_error(const char *msg, void *data)
   ASSERT_WIDGET_TYPE(XmIsLabel(prf->error), prf->error);
   prf->got_error = true;
   set_label(prf->error, msg);
-  XtAddCallback(prf->text, XmNvalueChangedCallback, clear_prefs_error, (void *)prf);
+  XtAddCallback(prf->text, XmNvalueChangedCallback, clear_prefs_error, (XtPointer)prf);
 }
 
 static void va_post_prefs_error(const char *msg, void *data, ...)
@@ -1747,6 +1779,7 @@ static void controls_toggle(prefs_info *prf)
 static void reflect_selection_creates_region(prefs_info *prf) 
 {
   XmToggleButtonSetState(prf->toggle, selection_creates_region(ss), false);
+  int_to_textfield(prf->text, max_regions(ss));
 }
 
 static void selection_creates_region_toggle(prefs_info *prf)
@@ -1766,11 +1799,8 @@ static void max_regions_text(prefs_info *prf)
       sscanf(str, "%d", &value);
       if (value >= 0)
 	in_set_max_regions(value);
-      else
-	{
-	  XtFree(str);
-	  int_to_textfield(prf->text, max_regions(ss));
-	}
+      else int_to_textfield(prf->text, max_regions(ss));
+      XtFree(str);
     }
 }
 
@@ -1949,7 +1979,7 @@ static void cursor_size_from_text(prefs_info *prf)
 	}
       else prf->got_error = false;
     }
-  else post_prefs_error("no size?", (void *)prf);
+  else post_prefs_error("no size?", (XtPointer)prf);
 }
 
 /* ---------------- cursor-style ---------------- */
@@ -2710,7 +2740,7 @@ static void dot_size_from_text(prefs_info *prf)
 	}
       else prf->got_error = false;
     }
-  else post_prefs_error("no size?", (void *)prf);
+  else post_prefs_error("no size?", (XtPointer)prf);
 }
 
 
@@ -2947,12 +2977,12 @@ static void show_axes_from_text(prefs_info *prf)
 	      }
 	  if (curpos >= 0)
 	    in_set_show_axes((show_axes_t)curpos);
-	  else post_prefs_error("what?", (void *)prf);
+	  else post_prefs_error("what?", (XtPointer)prf);
 	}
-      else post_prefs_error("right", (void *)prf);
+      else post_prefs_error("right", (XtPointer)prf);
       FREE(trimmed_str);
     }
-  else post_prefs_error("right", (void *)prf);
+  else post_prefs_error("right", (XtPointer)prf);
 }
 
 /* ---------------- x-axis-style ---------------- */
@@ -2998,12 +3028,12 @@ static void x_axis_style_from_text(prefs_info *prf)
 	      }
 	  if (curpos >= 0)
 	    in_set_x_axis_style((x_axis_style_t)curpos);
-	  else post_prefs_error("what?", (void *)prf);
+	  else post_prefs_error("what?", (XtPointer)prf);
 	}
-      else post_prefs_error("right", (void *)prf);
+      else post_prefs_error("right", (XtPointer)prf);
       FREE(trimmed_str);
     }
-  else post_prefs_error("right", (void *)prf);
+  else post_prefs_error("right", (XtPointer)prf);
 }
 
 /* ---------------- smpte ---------------- */
@@ -3378,7 +3408,7 @@ static void fft_size_from_text(prefs_info *prf)
 		in_set_transform_size(size);
 	      else va_post_prefs_error("%s > %d?", (void *)prf, str, MAX_TRANSFORM_SIZE);
 	    }
-	  else post_prefs_error("size must be a power of 2", (void *)prf);
+	  else post_prefs_error("size must be a power of 2", (XtPointer)prf);
 	}
       else prf->got_error = false;
     }
@@ -3480,12 +3510,12 @@ static void transform_type_from_text(prefs_info *prf)
 	      }
 	  if (curpos >= 0)
 	    in_set_transform_type(curpos);
-	  else post_prefs_error("unknown tranform", (void *)prf);
+	  else post_prefs_error("unknown tranform", (XtPointer)prf);
 	}
-      else post_prefs_error("no transform?", (void *)prf);
+      else post_prefs_error("no transform?", (XtPointer)prf);
       FREE(trimmed_str);
     }
-  else post_prefs_error("no transform?", (void *)prf);
+  else post_prefs_error("no transform?", (XtPointer)prf);
 }
 
 
@@ -3549,12 +3579,12 @@ static void fft_window_from_text(prefs_info *prf)
 	      }
 	  if (curpos >= 0)
 	    in_set_fft_window((mus_fft_window_t)curpos);
-	  else post_prefs_error("unknown window", (void *)prf);
+	  else post_prefs_error("unknown window", (XtPointer)prf);
 	}
-      else post_prefs_error("no window?", (void *)prf);
+      else post_prefs_error("no window?", (XtPointer)prf);
       FREE(trimmed_str);
     }
-  else post_prefs_error("no window?", (void *)prf);
+  else post_prefs_error("no window?", (XtPointer)prf);
 }
 
 /* ---------------- fft-window-beta ---------------- */
@@ -3618,11 +3648,8 @@ static void max_peaks_text(prefs_info *prf)
       sscanf(str, "%d", &value);
       if (value >= 0)
 	in_set_max_transform_peaks(value);
-      else
-	{
-	  XtFree(str);
-	  int_to_textfield(prf->text, max_transform_peaks(ss));
-	}
+      else int_to_textfield(prf->text, max_transform_peaks(ss));
+      XtFree(str);
     }
 }
 
@@ -3677,12 +3704,12 @@ static void colormap_from_text(prefs_info *prf)
 	      }
 	  if (curpos >= 0)
 	    in_set_color_map(curpos);
-	  else post_prefs_error("unknown colormap", (void *)prf);
+	  else post_prefs_error("unknown colormap", (XtPointer)prf);
 	}
-      else post_prefs_error("no colormap?", (void *)prf);
+      else post_prefs_error("no colormap?", (XtPointer)prf);
       FREE(trimmed_str);
     }
-  else post_prefs_error("no colormap?", (void *)prf);
+  else post_prefs_error("no colormap?", (XtPointer)prf);
 }
 
 static void colormap_from_menu(prefs_info *prf, char *value)
@@ -3979,12 +4006,201 @@ static void mix_waveform_height_text(prefs_info *prf)
       sscanf(str, "%d", &value);
       if (value >= 0)
 	in_set_mix_waveform_height(value);
+      else int_to_textfield(prf->text, mix_waveform_height(ss));
+      XtFree(str);
+    }
+}
+
+
+/* ---------------- include with-sound ---------------- */
+
+static bool include_with_sound = false;
+static char *include_clm_file_name = NULL;
+
+static bool with_sound_is_loaded(void)
+{
+#if HAVE_SCHEME
+  return(XEN_DEFINED_P("with-sound"));
+#endif
+#if HAVE_RUBY
+  /* TODO: ruby side of with_sound_is_loaded (etc) */
+#endif
+  return(false);
+}
+
+static void reflect_with_sound(prefs_info *prf) 
+{
+  include_with_sound = with_sound_is_loaded();
+  XmToggleButtonSetState(prf->toggle, include_with_sound, false);
+}
+
+static void with_sound_toggle(prefs_info *prf)
+{
+  ASSERT_WIDGET_TYPE(XmIsToggleButton(prf->toggle), prf->toggle);
+  include_with_sound = (XmToggleButtonGetState(prf->toggle) == XmSET);
+}
+
+static void save_with_sound(prefs_info *prf, FILE *fd)
+{
+  if (include_with_sound)
+    {
+#if HAVE_SCHEME
+      fprintf(fd, "(if (not (provided? 'snd-ws.scm)) (load-from-path \"ws.scm\"))\n");
+      if (include_clm_file_name)
+	fprintf(fd, "(set! *clm-file-name* %s)\n", include_clm_file_name);
+#endif
+#if HAVE_RUBY
+#endif
+    }
+}
+
+/* ---------------- speed control ---------------- */
+
+#define NUM_SPEED_CONTROL_CHOICES 3
+#define MIN_SPEED_CONTROL_SEMITONES 1
+
+static const char *speed_control_styles[NUM_SPEED_CONTROL_CHOICES] = {"float", "ratio", "semitones:"};
+
+static void show_speed_control_semitones(prefs_info *prf)
+{
+  int_to_textfield(prf->text, speed_control_tones(ss));
+  XtSetSensitive(prf->arrow_down, (speed_control_tones(ss) > MIN_SPEED_CONTROL_SEMITONES));
+}
+
+static void speed_control_up(prefs_info *prf)
+{
+  ASSERT_WIDGET_TYPE(XmIsTextField(prf->text), prf->text);
+  in_set_speed_control_tones(ss, speed_control_tones(ss) + 1);
+  show_speed_control_semitones(prf);
+}
+
+static void speed_control_down(prefs_info *prf)
+{
+  ASSERT_WIDGET_TYPE(XmIsTextField(prf->text), prf->text);
+  in_set_speed_control_tones(ss, speed_control_tones(ss) - 1);
+  show_speed_control_semitones(prf);
+}
+
+static void speed_control_text(prefs_info *prf)
+{
+  int tones;
+  char *str;
+  ASSERT_WIDGET_TYPE(XmIsTextField(prf->text), prf->text);
+  str = XmTextFieldGetString(prf->text);
+  if ((str) && (*str))
+    {
+      prf->got_error = false;
+      redirect_errors_to(post_prefs_error, (void *)prf);
+      tones = string_to_int(str, MIN_SPEED_CONTROL_SEMITONES, "semitones");
+      redirect_errors_to(NULL, NULL);
+      XtFree(str);
+      if (!(prf->got_error))
+	{
+	  in_set_speed_control_tones(ss, tones);
+	  XtSetSensitive(prf->arrow_down, (speed_control_tones(ss) > MIN_SPEED_CONTROL_SEMITONES));
+	}
+      else prf->got_error = false;
+    }
+}
+
+static void reflect_speed_control(prefs_info *prf)
+{
+  Widget w;
+  show_speed_control_semitones(prf);
+  w = find_radio_button(prf->toggle, speed_control_styles[(int)speed_control_style(ss)]);
+  if (w)
+    XmToggleButtonSetState(w, XmSET, false);
+  else fprintf(stderr, "can't find %s\n", speed_control_styles[(int)speed_control_style(ss)]);
+  if ((prf->radio_button) &&
+      (XmIsToggleButton(prf->radio_button)) &&
+      (w != prf->radio_button))
+    {
+      XmToggleButtonSetState(prf->radio_button, XmUNSET, false);
+      prf->radio_button = w;
+    }
+}
+
+static void speed_control_choice(prefs_info *prf)
+{
+  if (XmToggleButtonGetState(prf->radio_button) == XmSET)
+    {
+      if (strcmp(XtName(prf->radio_button), "float") == 0)
+	in_set_speed_control_style(ss, SPEED_CONTROL_AS_FLOAT);
       else
 	{
-	  XtFree(str);
-	  int_to_textfield(prf->text, mix_waveform_height(ss));
+	  if (strcmp(XtName(prf->radio_button), "ratio") == 0)
+	    in_set_speed_control_style(ss, SPEED_CONTROL_AS_RATIO);
+	  else in_set_speed_control_style(ss, SPEED_CONTROL_AS_SEMITONE);
 	}
     }
+}
+
+/* ---------------- sinc width ---------------- */
+
+static void sinc_width_text(prefs_info *prf)
+{
+  char *str;
+  ASSERT_WIDGET_TYPE(XmIsTextField(prf->text), prf->text);
+  str = XmTextFieldGetString(prf->text);
+  if ((str) && (*str))
+    {
+      int value = 0;
+      sscanf(str, "%d", &value);
+      if (value >= 0)
+	set_sinc_width(value);
+      else int_to_textfield(prf->text, sinc_width(ss));
+      XtFree(str);
+    }
+}
+
+static void reflect_sinc_width(prefs_info *prf)
+{
+  int_to_textfield(prf->text, sinc_width(ss));
+}
+
+
+/* ---------------- clm file name ---------------- */
+
+static char *clm_file_name(void)
+{
+#if HAVE_SCHEME
+  if (XEN_DEFINED_P("*clm-file-name*"))
+    return(XEN_TO_C_STRING(XEN_NAME_AS_C_STRING_TO_VALUE("*clm-file-name*")));
+#endif
+#if HAVE_RUBY
+  /* TODO: ruby side of clm_file_name etc */
+#endif
+  return(NULL);
+}
+
+static void set_clm_file_name(const char *str)
+{
+#if HAVE_SCHEME
+  if (XEN_DEFINED_P("*clm-file-name*"))
+    XEN_VARIABLE_SET(XEN_NAME_AS_C_STRING_TO_VARIABLE("*clm-file-name*"), C_TO_XEN_STRING(str));
+#endif
+#if HAVE_RUBY
+#endif
+}
+
+static void clm_file_name_text(prefs_info *prf)
+{
+  char *str;
+  ASSERT_WIDGET_TYPE(XmIsTextField(prf->text), prf->text);
+  str = XmTextFieldGetString(prf->text);
+  if ((str) && (*str))
+    {
+      include_with_sound = true;
+      if (include_clm_file_name) FREE(include_clm_file_name); /* save is done after we're sure with-sound is loaded */
+      include_clm_file_name = copy_string(str);
+      set_clm_file_name(str);
+      XtFree(str);
+    }
+}
+
+static void reflect_clm_file_name(prefs_info *prf)
+{
+  XmTextFieldSetString(prf->text, clm_file_name());
 }
 
 
@@ -4001,8 +4217,7 @@ static void reflect_show_listener(prefs_info *prf)
 static void show_listener_toggle(prefs_info *prf)
 {
   ASSERT_WIDGET_TYPE(XmIsToggleButton(prf->toggle), prf->toggle);
-  handle_listener(XmToggleButtonGetState(prf->toggle) == XmSET);
-  include_listener = true;
+  include_listener = (XmToggleButtonGetState(prf->toggle) == XmSET);
 }
 
 static void save_show_listener(prefs_info *prf, FILE *fd)
@@ -5071,6 +5286,49 @@ void start_preferences_dialog(void)
   }
   
   current_sep = make_inter_topic_separator(topics);
+
+  /* -------- clm -------- */
+  {
+    Widget clm_box, clm_label;
+
+    /* ---------------- clm options ---------------- */
+
+    clm_box = make_top_level_box(topics);
+    clm_label = make_top_level_label("clm", clm_box);
+
+    include_with_sound = with_sound_is_loaded();
+    prf = prefs_row_with_toggle("include with-sound", "with-sound",
+				include_with_sound,
+				clm_box, clm_label,
+				with_sound_toggle);
+    remember_pref(prf, reflect_with_sound, save_with_sound);
+
+    current_sep = make_inter_variable_separator(clm_box, prf->label);
+    str = mus_format("%d", speed_control_tones(ss));
+    prf = prefs_row_with_radio_box_and_number("speed control choice", S_speed_control_style,
+					      speed_control_styles, 3, (int)speed_control_style(ss),
+					      speed_control_tones(ss), str, 6,
+					      clm_box, current_sep,
+					      speed_control_choice, speed_control_up, speed_control_down, speed_control_text);
+    XtSetSensitive(prf->arrow_down, (speed_control_tones(ss) > MIN_SPEED_CONTROL_SEMITONES));
+    remember_pref(prf, reflect_speed_control, NULL);
+    FREE(str);
+
+    current_sep = make_inter_variable_separator(clm_box, prf->label);
+    str = mus_format("%d", sinc_width(ss));
+    prf = prefs_row_with_text("sinc interpolation width in srate converter", S_sinc_width, str,
+			      clm_box, current_sep,
+			      sinc_width_text);
+    remember_pref(prf, reflect_sinc_width, NULL);
+    FREE(str);
+
+    current_sep = make_inter_variable_separator(clm_box, prf->label);
+    prf = prefs_row_with_text("with-sound default output file name", "*clm-file-name*", clm_file_name(),
+			      clm_box, current_sep,
+			      clm_file_name_text);
+    remember_pref(prf, reflect_clm_file_name, NULL);
+
+  }
 
   /* -------- programming -------- */
   {

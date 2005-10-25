@@ -176,7 +176,7 @@ returning you to the true top-level."
 (define *clm-file-buffer-size* 65536)
 (define *clm-locsig-type* mus-interp-linear)
 (define *clm-clipped* #t)
-(define *clm-array-print-length* 8)
+(define *clm-array-print-length* (print-length))
 (define *clm-player* #f) ; default is play-and-wait (takes index of newly created sound, not the sound's file name)
 
 (define *to-snd* #t)
