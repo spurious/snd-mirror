@@ -5330,6 +5330,8 @@ void start_preferences_dialog(void)
 
   }
 
+  current_sep = make_inter_topic_separator(topics);
+
   /* -------- programming -------- */
   {
     Widget prg_box, prg_label;

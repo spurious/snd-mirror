@@ -278,6 +278,141 @@ static GtkWidget *make_row_toggle(prefs_info *prf, bool current_value, GtkWidget
   return(w);
 }
 
+/* ---------------- error widget ---------------- */
+
+static GtkWidget *make_row_error(prefs_info *prf, GtkWidget *box)
+{
+  GtkWidget *w;
+  ASSERT_WIDGET_TYPE(GTK_IS_HBOX(box), box);
+
+  w = gtk_label_new("");
+  gtk_box_pack_end(GTK_BOX(box), w, true, false, 0);
+  gtk_widget_show(w);
+
+  SG_SIGNAL_CONNECT(w, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
+  SG_SIGNAL_CONNECT(w, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
+  
+  return(w);
+}
+
+/* ---------------- row arrows ---------------- */
+
+static gboolean remove_arrow_func(GtkWidget *w, GdkEventButton *ev, gpointer context)
+{
+  prefs_info *prf = (prefs_info *)context;
+  if (prf->power_id != 0)
+    {
+      g_source_remove(prf->power_id);
+      prf->power_id = 0;
+    }
+  return(false);
+}
+
+static gint arrow_func_up(gpointer context)
+{
+  prefs_info *prf = (prefs_info *)context;
+  if (GTK_WIDGET_IS_SENSITIVE(prf->arrow_up))
+    {
+      if ((prf) && (prf->arrow_up_func))
+	{
+	  (*(prf->arrow_up_func))(prf);
+	  prf->power_id = g_timeout_add_full(0,
+					     POWER_WAIT_TIME,
+					     arrow_func_up,
+					     (gpointer)prf, NULL);
+	}
+      else prf->power_id = 0;
+    }
+  return(0);
+}
+
+static gint arrow_func_down(gpointer context)
+{
+  prefs_info *prf = (prefs_info *)context;
+  if (GTK_WIDGET_IS_SENSITIVE(prf->arrow_down))
+    {
+      if ((prf) && (prf->arrow_down_func))
+	{
+	  (*(prf->arrow_down_func))(prf);
+	  prf->power_id = g_timeout_add_full(0,
+					     POWER_WAIT_TIME,
+					     arrow_func_down,
+					     (gpointer)prf, NULL);
+	}
+      else prf->power_id = 0;
+    }
+  return(0);
+}
+
+static gboolean call_arrow_down_press(GtkWidget *w, GdkEventButton *ev, gpointer context)
+{
+  prefs_info *prf = (prefs_info *)context;
+  if ((prf) && (prf->arrow_down_func))
+    {
+      (*(prf->arrow_down_func))(prf);
+      if (GTK_WIDGET_IS_SENSITIVE(w))
+	prf->power_id = g_timeout_add_full(0,
+					   POWER_INITIAL_WAIT_TIME,
+					   arrow_func_down,
+					   (gpointer)prf, NULL);
+      else prf->power_id = 0;
+    }
+  return(false);
+}
+
+static gboolean call_arrow_up_press(GtkWidget *w, GdkEventButton *ev, gpointer context) 
+{
+  prefs_info *prf = (prefs_info *)context;
+  if ((prf) && (prf->arrow_up_func))
+    {
+      (*(prf->arrow_up_func))(prf);
+      if (GTK_WIDGET_IS_SENSITIVE(w))
+	prf->power_id = g_timeout_add_full(0,
+					   POWER_INITIAL_WAIT_TIME,
+					   arrow_func_up,
+					   (gpointer)prf, NULL);
+      else prf->power_id = 0;
+    }
+  return(false);
+}
+
+static GtkWidget *make_row_arrows(prefs_info *prf, GtkWidget *box)
+{
+  GtkWidget *ev_up, *ev_down, *up, *down;
+
+  ev_down = gtk_event_box_new();
+  gtk_box_pack_start(GTK_BOX(box), ev_down, false, false, 0);
+  gtk_widget_show(ev_down);
+
+  down = gtk_arrow_new(GTK_ARROW_DOWN, GTK_SHADOW_ETCHED_OUT);
+  gtk_container_add(GTK_CONTAINER(ev_down), down);
+  gtk_widget_show(down);
+
+  ev_up = gtk_event_box_new();
+  gtk_box_pack_start(GTK_BOX(box), ev_up, false, false, 0);
+  gtk_widget_show(ev_up);
+
+  up = gtk_arrow_new(GTK_ARROW_UP, GTK_SHADOW_ETCHED_OUT);
+  gtk_container_add(GTK_CONTAINER(ev_up), up);
+  gtk_widget_show(up);
+
+  prf->arrow_up = up;
+  prf->arrow_down = down;
+
+  SG_SIGNAL_CONNECT(ev_down, "button_press_event", call_arrow_down_press, (gpointer)prf);
+  SG_SIGNAL_CONNECT(ev_down, "button_release_event", remove_arrow_func, (gpointer)prf);
+  SG_SIGNAL_CONNECT(ev_up, "button_press_event", call_arrow_up_press, (gpointer)prf);
+  SG_SIGNAL_CONNECT(ev_up, "button_release_event", remove_arrow_func, (gpointer)prf);
+
+  SG_SIGNAL_CONNECT(ev_up, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
+  SG_SIGNAL_CONNECT(ev_down, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
+  SG_SIGNAL_CONNECT(ev_up, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
+  SG_SIGNAL_CONNECT(ev_down, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
+
+  return(up);
+}
+
+
 
 /* ---------------- bool row ---------------- */
 
@@ -440,14 +575,47 @@ static void call_radio_func(GtkWidget *w, gpointer context)
     }
 }
 
+static GtkWidget *make_row_radio_box(prefs_info *prf,
+				     const char **labels, int num_labels, int current_value,
+				     GtkWidget *box)
+{
+  GtkWidget *w, *current_button;
+  int i;
+
+  w = gtk_hbox_new(false, 0);
+  gtk_box_pack_start(GTK_BOX(box), w, false, false, 0);
+  gtk_widget_show(w);
+
+  prf->radio_buttons = (GtkWidget **)CALLOC(num_labels, sizeof(GtkWidget *));
+
+  for (i = 0; i < num_labels; i++)
+    {
+      if (i == 0)
+	current_button = gtk_radio_button_new_with_label(NULL, labels[i]);
+      else current_button = gtk_radio_button_new_with_label(gtk_radio_button_get_group(GTK_RADIO_BUTTON(prf->radio_buttons[0])), labels[i]);
+      prf->radio_buttons[i] = current_button;
+      gtk_box_pack_start(GTK_BOX(w), current_button, false, false, 0);
+      set_user_int_data(G_OBJECT(current_button), i);
+      gtk_widget_show(current_button);
+      SG_SIGNAL_CONNECT(current_button, "clicked", call_radio_func, (gpointer)prf);
+      SG_SIGNAL_CONNECT(current_button, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
+      SG_SIGNAL_CONNECT(current_button, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
+    }
+
+  if (current_value != -1)
+    set_toggle_button(prf->radio_buttons[current_value], true, false, (void *)prf);
+
+  return(w);
+}
+  
+
 static prefs_info *prefs_row_with_radio_box(const char *label, const char *varname, 
 					    const char **labels, int num_labels, int current_value,
 					    GtkWidget *box,
 					    void (*toggle_func)(prefs_info *prf))
 {
-  int i;
   prefs_info *prf = NULL;
-  GtkWidget *sep, *current_button, *hb, *row, *help;
+  GtkWidget *sep, *hb, *row, *help;
   prf = (prefs_info *)CALLOC(1, sizeof(prefs_info));
   prf->var_name = varname;
   prf->toggle_func = toggle_func;
@@ -464,34 +632,50 @@ static prefs_info *prefs_row_with_radio_box(const char *label, const char *varna
   gtk_widget_show(hb);
 
   sep = make_row_middle_separator(hb);
-
-  prf->toggle = gtk_hbox_new(false, 0);
-  gtk_box_pack_start(GTK_BOX(hb), prf->toggle, false, false, 0);
-  gtk_widget_show(prf->toggle);
-
-  prf->radio_buttons = (GtkWidget **)CALLOC(num_labels, sizeof(GtkWidget *));
-
-  for (i = 0; i < num_labels; i++)
-    {
-      if (i == 0)
-	current_button = gtk_radio_button_new_with_label(NULL, labels[i]);
-      else current_button = gtk_radio_button_new_with_label(gtk_radio_button_get_group(GTK_RADIO_BUTTON(prf->radio_buttons[0])), labels[i]);
-      prf->radio_buttons[i] = current_button;
-      gtk_box_pack_start(GTK_BOX(prf->toggle), current_button, false, false, 0);
-      set_user_int_data(G_OBJECT(current_button), i);
-      gtk_widget_show(current_button);
-      SG_SIGNAL_CONNECT(current_button, "clicked", call_radio_func, (gpointer)prf);
-      SG_SIGNAL_CONNECT(current_button, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
-      SG_SIGNAL_CONNECT(current_button, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
-    }
-
-  if (current_value != -1)
-    set_toggle_button(prf->radio_buttons[current_value], true, false, NULL);
-
+  prf->toggle = make_row_radio_box(prf, labels, num_labels, current_value, hb);
   help = make_row_help(prf, varname, row);
 
   return(prf);
 }
+
+static prefs_info *prefs_row_with_radio_box_and_number(const char *label, const char *varname, 
+						       const char **labels, int num_labels, int current_value,
+						       int number, const char *text_value, int text_cols,
+						       GtkWidget *box,
+						       void (*toggle_func)(prefs_info *prf),
+						       void (*arrow_up_func)(prefs_info *prf), void (*arrow_down_func)(prefs_info *prf), 
+						       void (*text_func)(prefs_info *prf))
+{
+  prefs_info *prf = NULL;
+  GtkWidget *sep, *help, *row, *hb;
+  prf = (prefs_info *)CALLOC(1, sizeof(prefs_info));
+  prf->var_name = varname;
+  prf->toggle_func = toggle_func;
+  prf->text_func = text_func;
+  prf->arrow_up_func = arrow_up_func;
+  prf->arrow_down_func = arrow_down_func;
+
+  row = gtk_hbox_new(false, 0);
+  gtk_box_pack_start(GTK_BOX(box), row, false, false, 0);
+  gtk_widget_show(row);
+
+  prf->label = make_row_label(prf, label, row);
+
+  hb = gtk_hbox_new(false, 0);
+  gtk_size_group_add_widget(widgets_group, hb);
+  gtk_box_pack_start(GTK_BOX(row), hb, false, false, 0);
+  gtk_widget_show(hb);
+
+  sep = make_row_middle_separator(hb);
+  prf->toggle = make_row_radio_box(prf, labels, num_labels, current_value, hb);
+  prf->text = make_row_text(prf, text_value, text_cols, hb);
+  prf->arrow_up = make_row_arrows(prf, hb);
+  help = make_row_help(prf, varname, row);
+
+  SG_SIGNAL_CONNECT(prf->text, "activate", call_text_func, (gpointer)prf);
+  return(prf);
+}
+
 
 
 /* ---------------- scale row ---------------- */
@@ -642,87 +826,7 @@ static prefs_info *prefs_row_with_two_texts(const char *label, const char *varna
   return(prf);
 }
 
-
 /* ---------------- number row ---------------- */
-
-static gboolean remove_arrow_func(GtkWidget *w, GdkEventButton *ev, gpointer context)
-{
-  prefs_info *prf = (prefs_info *)context;
-  if (prf->power_id != 0)
-    {
-      g_source_remove(prf->power_id);
-      prf->power_id = 0;
-    }
-  return(false);
-}
-
-static gint arrow_func_up(gpointer context)
-{
-  prefs_info *prf = (prefs_info *)context;
-  if (GTK_WIDGET_IS_SENSITIVE(prf->arrow_up))
-    {
-      if ((prf) && (prf->arrow_up_func))
-	{
-	  (*(prf->arrow_up_func))(prf);
-	  prf->power_id = g_timeout_add_full(0,
-					     POWER_WAIT_TIME,
-					     arrow_func_up,
-					     (gpointer)prf, NULL);
-	}
-      else prf->power_id = 0;
-    }
-  return(0);
-}
-
-static gint arrow_func_down(gpointer context)
-{
-  prefs_info *prf = (prefs_info *)context;
-  if (GTK_WIDGET_IS_SENSITIVE(prf->arrow_down))
-    {
-      if ((prf) && (prf->arrow_down_func))
-	{
-	  (*(prf->arrow_down_func))(prf);
-	  prf->power_id = g_timeout_add_full(0,
-					     POWER_WAIT_TIME,
-					     arrow_func_down,
-					     (gpointer)prf, NULL);
-	}
-      else prf->power_id = 0;
-    }
-  return(0);
-}
-
-static gboolean call_arrow_down_press(GtkWidget *w, GdkEventButton *ev, gpointer context)
-{
-  prefs_info *prf = (prefs_info *)context;
-  if ((prf) && (prf->arrow_down_func))
-    {
-      (*(prf->arrow_down_func))(prf);
-      if (GTK_WIDGET_IS_SENSITIVE(w))
-	prf->power_id = g_timeout_add_full(0,
-					   POWER_INITIAL_WAIT_TIME,
-					   arrow_func_down,
-					   (gpointer)prf, NULL);
-      else prf->power_id = 0;
-    }
-  return(false);
-}
-
-static gboolean call_arrow_up_press(GtkWidget *w, GdkEventButton *ev, gpointer context) 
-{
-  prefs_info *prf = (prefs_info *)context;
-  if ((prf) && (prf->arrow_up_func))
-    {
-      (*(prf->arrow_up_func))(prf);
-      if (GTK_WIDGET_IS_SENSITIVE(w))
-	prf->power_id = g_timeout_add_full(0,
-					   POWER_INITIAL_WAIT_TIME,
-					   arrow_func_up,
-					   (gpointer)prf, NULL);
-      else prf->power_id = 0;
-    }
-  return(false);
-}
 
 static prefs_info *prefs_row_with_number(const char *label, const char *varname, const char *value, int cols,
 					 GtkWidget *box,
@@ -730,7 +834,7 @@ static prefs_info *prefs_row_with_number(const char *label, const char *varname,
 					 void (*text_func)(prefs_info *prf))
 {
   prefs_info *prf = NULL;
-  GtkWidget *sep, *hb, *row, *ev_up, *ev_down, *help;
+  GtkWidget *sep, *hb, *row, *help;
 
   prf = (prefs_info *)CALLOC(1, sizeof(prefs_info));
   prf->var_name = varname;
@@ -748,47 +852,15 @@ static prefs_info *prefs_row_with_number(const char *label, const char *varname,
 
   sep = make_row_middle_separator(hb);
   prf->text = make_row_text(prf, value, cols, hb);
-  
-  ev_down = gtk_event_box_new();
-  gtk_box_pack_start(GTK_BOX(hb), ev_down, false, false, 0);
-  gtk_widget_show(ev_down);
-
-  prf->arrow_down = gtk_arrow_new(GTK_ARROW_DOWN, GTK_SHADOW_ETCHED_OUT);
-  gtk_container_add(GTK_CONTAINER(ev_down), prf->arrow_down);
-  gtk_widget_show(prf->arrow_down);
-
-  ev_up = gtk_event_box_new();
-  gtk_box_pack_start(GTK_BOX(hb), ev_up, false, false, 0);
-  gtk_widget_show(ev_up);
-
-  prf->arrow_up = gtk_arrow_new(GTK_ARROW_UP, GTK_SHADOW_ETCHED_OUT);
-  gtk_container_add(GTK_CONTAINER(ev_up), prf->arrow_up);
-  gtk_widget_show(prf->arrow_up);
-
-  prf->error = gtk_label_new("");
-  gtk_box_pack_end(GTK_BOX(hb), prf->error, true, false, 0);
-  gtk_widget_show(prf->error);
-
+  prf->arrow_up = make_row_arrows(prf, hb);
+  prf->error = make_row_error(prf, hb);
   help = make_row_help(prf, varname, row);
 
   prf->text_func = text_func;
   prf->arrow_up_func = arrow_up_func;
   prf->arrow_down_func = arrow_down_func;
 
-  SG_SIGNAL_CONNECT(ev_down, "button_press_event", call_arrow_down_press, (gpointer)prf);
-  SG_SIGNAL_CONNECT(ev_down, "button_release_event", remove_arrow_func, (gpointer)prf);
-  SG_SIGNAL_CONNECT(ev_up, "button_press_event", call_arrow_up_press, (gpointer)prf);
-  SG_SIGNAL_CONNECT(ev_up, "button_release_event", remove_arrow_func, (gpointer)prf);
-
   SG_SIGNAL_CONNECT(prf->text, "activate", call_text_func, (gpointer)prf);
-
-  SG_SIGNAL_CONNECT(ev_up, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
-  SG_SIGNAL_CONNECT(ev_down, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
-  SG_SIGNAL_CONNECT(ev_up, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
-  SG_SIGNAL_CONNECT(ev_down, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
-  SG_SIGNAL_CONNECT(prf->error, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
-  SG_SIGNAL_CONNECT(prf->error, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
-
   return(prf);
 }
 
@@ -827,20 +899,14 @@ static prefs_info *prefs_row_with_completed_list(const char *label, const char *
   gtk_box_pack_start(GTK_BOX(hb), prf->text, false, false, 4);
   gtk_widget_show(prf->text);
 
-  prf->error = gtk_label_new("");
-  gtk_box_pack_end(GTK_BOX(hb), prf->error, true, false, 0);
-  gtk_widget_show(prf->error);
-
+  prf->error = make_row_error(prf, hb);
   help = make_row_help(prf, varname, row);
 
   prf->text_func = text_func;
   SG_SIGNAL_CONNECT(prf->text, "changed", call_text_func, (gpointer)prf);
 
   SG_SIGNAL_CONNECT(prf->text, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
-  SG_SIGNAL_CONNECT(prf->error, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
   SG_SIGNAL_CONNECT(prf->text, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
-  SG_SIGNAL_CONNECT(prf->error, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
-
   return(prf);
 }
 
@@ -1317,7 +1383,7 @@ static void startup_size_text(prefs_info *prf)
 
 static void reflect_auto_resize(prefs_info *prf) 
 {
-  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(prf->toggle), auto_resize(ss));
+  set_toggle_button(prf->toggle, auto_resize(ss), false, (void *)prf);
 }
 
 static void resize_toggle(prefs_info *prf)
@@ -1329,7 +1395,7 @@ static void resize_toggle(prefs_info *prf)
 
 static void reflect_ask_before_overwrite(prefs_info *prf) 
 {
-  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(prf->toggle), ask_before_overwrite(ss));
+  set_toggle_button(prf->toggle, ask_before_overwrite(ss), false, (void *)prf);
 }
 
 static void overwrite_toggle(prefs_info *prf)
@@ -1377,7 +1443,7 @@ static bool find_current_window_display(void)
 
 static void reflect_current_window_display(prefs_info *prf) 
 {
-  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(prf->toggle), find_current_window_display());
+  set_toggle_button(prf->toggle, find_current_window_display(), false, (void *)prf);
 }
 
 /* ---------------- focus-follows-mouse ---------------- */
@@ -1393,7 +1459,7 @@ static bool focus_is_following_mouse(void)
 static void reflect_focus_follows_mouse(prefs_info *prf) 
 {
   focus_follows_mouse = focus_is_following_mouse();
-  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(prf->toggle), focus_follows_mouse);
+  set_toggle_button(prf->toggle, focus_follows_mouse, false, (void *)prf);
 }
 
 static void focus_follows_mouse_toggle(prefs_info *prf)
@@ -1419,7 +1485,7 @@ static void save_focus_follows_mouse(prefs_info *prf, FILE *fd)
 
 static void reflect_show_controls(prefs_info *prf) 
 {
-  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(prf->toggle), in_show_controls(ss));
+  set_toggle_button(prf->toggle, in_show_controls(ss), false, (void *)prf);
 }
 
 static void controls_toggle(prefs_info *prf)
@@ -1431,7 +1497,7 @@ static void controls_toggle(prefs_info *prf)
 
 static void reflect_selection_creates_region(prefs_info *prf) 
 {
-  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(prf->toggle), selection_creates_region(ss));
+  set_toggle_button(prf->toggle, selection_creates_region(ss), false, (void *)prf);
   int_to_textfield(prf->text, max_regions(ss));
 }
 
@@ -1532,7 +1598,7 @@ static void zoom_color_func(prefs_info *prf, float r, float g, float b)
 
 static void reflect_verbose_cursor(prefs_info *prf) 
 {
-  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(prf->toggle), verbose_cursor(ss));
+  set_toggle_button(prf->toggle, verbose_cursor(ss), false, (void *)prf);
 }
 
 static void verbose_cursor_toggle(prefs_info *prf)
@@ -1544,7 +1610,7 @@ static void verbose_cursor_toggle(prefs_info *prf)
 
 static void reflect_cursor_follows_play(prefs_info *prf) 
 {
-  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(prf->toggle), cursor_follows_play(ss));
+  set_toggle_button(prf->toggle, cursor_follows_play(ss), false, (void *)prf);
 }
 
 static void cursor_follows_play_toggle(prefs_info *prf)
@@ -1631,7 +1697,7 @@ static void reflect_cursor_style(prefs_info *prf)
 	which = 1;
     }
   if (which != -1)
-    set_toggle_button(prf->radio_buttons[which], true, false, NULL);
+    set_toggle_button(prf->radio_buttons[which], true, false, (void *)prf);
 }
 
 static void cursor_style_choice(prefs_info *prf)
@@ -1667,7 +1733,7 @@ static void cursor_color_func(prefs_info *prf, float r, float g, float b)
 
 static void prefs_reflect_just_sounds(prefs_info *prf) 
 {
-  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(prf->toggle), just_sounds(ss));
+  set_toggle_button(prf->toggle, just_sounds(ss), false, (void *)prf);
 }
 
 static void just_sounds_toggle(prefs_info *prf)
@@ -1885,7 +1951,7 @@ static void reflect_output_chans(prefs_info *prf)
     case 8: which = 3; break;
     }
   if (which != -1)
-    set_toggle_button(prf->radio_buttons[which], true, false, NULL);
+    set_toggle_button(prf->radio_buttons[which], true, false, (void *)prf);
 }
 
 static void reflect_output_srate(prefs_info *prf)
@@ -1897,7 +1963,7 @@ static void reflect_output_srate(prefs_info *prf)
   if (sr == 44100) which = 2; else
   if (sr == 48000) which = 3;
   if (which != -1)
-    set_toggle_button(prf->radio_buttons[which], true, false, NULL);
+    set_toggle_button(prf->radio_buttons[which], true, false, (void *)prf);
 }
 
 static void output_chans_choice(prefs_info *prf)
@@ -1938,7 +2004,7 @@ static void reflect_output_type(prefs_info *prf)
     case MUS_NIST: which = 3; break;
     }
   if (which != -1)
-    set_toggle_button(prf->radio_buttons[which], true, false, NULL);
+    set_toggle_button(prf->radio_buttons[which], true, false, (void *)prf);
 }
 
 static void reflect_output_format(prefs_info *prf)
@@ -1952,7 +2018,7 @@ static void reflect_output_format(prefs_info *prf)
     case MUS_LDOUBLE: case MUS_BDOUBLE: which = 3; break;
     }
   if (which != -1)
-    set_toggle_button(prf->radio_buttons[which], true, false, NULL);
+    set_toggle_button(prf->radio_buttons[which], true, false, (void *)prf);
 }
 
 static prefs_info *output_data_format_prf = NULL, *output_header_type_prf = NULL;
@@ -2111,7 +2177,7 @@ static bool find_context_sensitive_popup(void)
 
 static void reflect_context_sensitive_popup(prefs_info *prf) 
 {
-  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(prf->toggle), find_context_sensitive_popup());
+  set_toggle_button(prf->toggle, find_context_sensitive_popup(), false, (void *)prf);
 }
 
 /* ---------------- effects menu ---------------- */
@@ -2148,7 +2214,7 @@ static bool find_effects_menu(void)
 
 static void reflect_effects_menu(prefs_info *prf) 
 {
-  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(prf->toggle), find_effects_menu());
+  set_toggle_button(prf->toggle, find_effects_menu(), false, (void *)prf);
 }
 
 #if HAVE_GUILE
@@ -2174,7 +2240,7 @@ static bool find_edit_menu(void)
 
 static void reflect_edit_menu(prefs_info *prf) 
 {
-  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(prf->toggle), find_edit_menu());
+  set_toggle_button(prf->toggle, find_edit_menu(), false, (void *)prf);
 }
 #endif
 
@@ -2185,7 +2251,7 @@ static const char *graph_styles[5] = {"line", "dot", "filled", "dot+line", "loll
 
 static void reflect_graph_style(prefs_info *prf)
 {
-  set_toggle_button(prf->radio_buttons[(int)graph_style(ss)], true, false, NULL);
+  set_toggle_button(prf->radio_buttons[(int)graph_style(ss)], true, false, (void *)prf);
 }
 
 static void graph_style_choice(prefs_info *prf)
@@ -2291,7 +2357,7 @@ static void reflect_initial_bounds(prefs_info *prf)
   str = initial_bounds_to_string();
   gtk_entry_set_text(GTK_ENTRY(prf->text), str);
   FREE(str);
-  set_toggle_button(prf->toggle, use_full_duration(), false, NULL);
+  set_toggle_button(prf->toggle, use_full_duration(), false, (void *)prf);
 }
 
 static void save_initial_bounds(prefs_info *prf, FILE *fd)
@@ -2343,7 +2409,7 @@ static const char *channel_styles[3] = {"separate", "combined", "superimposed"};
 
 static void reflect_channel_style(prefs_info *prf)
 {
-  set_toggle_button(prf->radio_buttons[(int)channel_style(ss)], true, false, NULL);
+  set_toggle_button(prf->radio_buttons[(int)channel_style(ss)], true, false, (void *)prf);
 }
 
 static void channel_style_choice(prefs_info *prf)
@@ -2356,7 +2422,7 @@ static void channel_style_choice(prefs_info *prf)
 
 static void reflect_graphs_horizontal(prefs_info *prf) 
 {
-  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(prf->toggle), graphs_horizontal(ss));
+  set_toggle_button(prf->toggle, graphs_horizontal(ss), false, (void *)prf);
 }
 
 static void graphs_horizontal_toggle(prefs_info *prf)
@@ -2368,7 +2434,7 @@ static void graphs_horizontal_toggle(prefs_info *prf)
 
 static void reflect_show_y_zero(prefs_info *prf) 
 {
-  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(prf->toggle), show_y_zero(ss));
+  set_toggle_button(prf->toggle, show_y_zero(ss), false, (void *)prf);
 }
 
 static void y_zero_toggle(prefs_info *prf)
@@ -2380,7 +2446,7 @@ static void y_zero_toggle(prefs_info *prf)
 
 static void reflect_show_grid(prefs_info *prf) 
 {
-  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(prf->toggle), show_grid(ss));
+  set_toggle_button(prf->toggle, show_grid(ss), false, (void *)prf);
 }
 
 static void grid_toggle(prefs_info *prf)
@@ -2512,7 +2578,7 @@ static bool find_smpte(void)
 
 static void reflect_smpte(prefs_info *prf) 
 {
-  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(prf->toggle), find_smpte());
+  set_toggle_button(prf->toggle, find_smpte(), false, (void *)prf);
 }
 
 static void smpte_toggle(prefs_info *prf)
@@ -2859,7 +2925,7 @@ static const char *transform_graph_types[3] = {"normal", "sonogram", "spectrogra
 
 static void reflect_transform_graph_type(prefs_info *prf)
 {
-  set_toggle_button(prf->radio_buttons[(int)transform_graph_type(ss)], true, false, NULL);  
+  set_toggle_button(prf->radio_buttons[(int)transform_graph_type(ss)], true, false, (void *)prf);  
 }
 
 static void transform_graph_type_choice(prefs_info *prf)
@@ -3018,7 +3084,7 @@ static void fft_window_beta_text_callback(prefs_info *prf)
 
 static void reflect_show_transform_peaks(prefs_info *prf) 
 {
-  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(prf->toggle), show_transform_peaks(ss));
+  set_toggle_button(prf->toggle, show_transform_peaks(ss), false, (void *)prf);
 }
 
 static void transform_peaks_toggle(prefs_info *prf)
@@ -3104,7 +3170,7 @@ static void colormap_from_text(prefs_info *prf)
 
 static void reflect_fft_log_magnitude(prefs_info *prf) 
 {
-  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(prf->toggle), fft_log_magnitude(ss));
+  set_toggle_button(prf->toggle, fft_log_magnitude(ss), false, (void *)prf);
 }
 
 static void log_magnitude_toggle(prefs_info *prf)
@@ -3136,7 +3202,7 @@ static void min_dB_text(prefs_info *prf)
 
 static void reflect_fft_log_frequency(prefs_info *prf) 
 {
-  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(prf->toggle), fft_log_frequency(ss));
+  set_toggle_button(prf->toggle, fft_log_frequency(ss), false, (void *)prf);
 }
 
 static void log_frequency_toggle(prefs_info *prf)
@@ -3150,7 +3216,7 @@ static const char *transform_normalizations[4] = {"none", "by channel", "by soun
 
 static void reflect_transform_normalization(prefs_info *prf)
 {
-  set_toggle_button(prf->radio_buttons[(int)transform_normalization(ss)], true, false, NULL);
+  set_toggle_button(prf->radio_buttons[(int)transform_normalization(ss)], true, false, (void *)prf);
 }
 
 static void transform_normalization_choice(prefs_info *prf)
@@ -3329,7 +3395,7 @@ static void mix_tag_size_text(prefs_info *prf)
 
 static void reflect_show_mix_waveforms(prefs_info *prf) 
 {
-  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(prf->toggle), show_mix_waveforms(ss));
+  set_toggle_button(prf->toggle, show_mix_waveforms(ss), false, (void *)prf);
 }
 
 static void show_mix_waveforms_toggle(prefs_info *prf)
@@ -3355,6 +3421,167 @@ static void mix_waveform_height_text(prefs_info *prf)
     }
 }
 
+/* ---------------- include with-sound ---------------- */
+
+static bool include_with_sound = false;
+static char *include_clm_file_name = NULL;
+
+static bool with_sound_is_loaded(void)
+{
+#if HAVE_SCHEME
+  return(XEN_DEFINED_P("with-sound"));
+#endif
+#if HAVE_RUBY
+  /* TODO: ruby side of with_sound_is_loaded (etc) */
+#endif
+  return(false);
+}
+
+static void reflect_with_sound(prefs_info *prf) 
+{
+  include_with_sound = with_sound_is_loaded();
+  set_toggle_button(prf->toggle, include_with_sound, false, (void *)prf);
+}
+
+static void with_sound_toggle(prefs_info *prf)
+{
+  include_with_sound = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prf->toggle));
+}
+
+static void save_with_sound(prefs_info *prf, FILE *fd)
+{
+  if (include_with_sound)
+    {
+#if HAVE_SCHEME
+      fprintf(fd, "(if (not (provided? 'snd-ws.scm)) (load-from-path \"ws.scm\"))\n");
+      if (include_clm_file_name)
+	fprintf(fd, "(set! *clm-file-name* %s)\n", include_clm_file_name);
+#endif
+#if HAVE_RUBY
+#endif
+    }
+}
+
+/* ---------------- speed control ---------------- */
+
+#define NUM_SPEED_CONTROL_CHOICES 3
+#define MIN_SPEED_CONTROL_SEMITONES 1
+
+static const char *speed_control_styles[NUM_SPEED_CONTROL_CHOICES] = {"float", "ratio", "semitones:"};
+
+static void show_speed_control_semitones(prefs_info *prf)
+{
+  int_to_textfield(prf->text, speed_control_tones(ss));
+  set_sensitive(prf->arrow_down, (speed_control_tones(ss) > MIN_SPEED_CONTROL_SEMITONES));
+}
+
+static void speed_control_up(prefs_info *prf)
+{
+  in_set_speed_control_tones(ss, speed_control_tones(ss) + 1);
+  show_speed_control_semitones(prf);
+}
+
+static void speed_control_down(prefs_info *prf)
+{
+  in_set_speed_control_tones(ss, speed_control_tones(ss) - 1);
+  show_speed_control_semitones(prf);
+}
+
+static void speed_control_text(prefs_info *prf)
+{
+  int tones;
+  char *str;
+  str = (char *)gtk_entry_get_text(GTK_ENTRY(prf->text));
+  if ((str) && (*str))
+    {
+      prf->got_error = false;
+      redirect_errors_to(post_prefs_error, (void *)prf);
+      tones = string_to_int(str, MIN_SPEED_CONTROL_SEMITONES, "semitones");
+      redirect_errors_to(NULL, NULL);
+      if (!(prf->got_error))
+	{
+	  in_set_speed_control_tones(ss, tones);
+	  set_sensitive(prf->arrow_down, (speed_control_tones(ss) > MIN_SPEED_CONTROL_SEMITONES));
+	}
+      else prf->got_error = false;
+    }
+}
+
+static void reflect_speed_control(prefs_info *prf)
+{
+  set_toggle_button(prf->radio_buttons[(int)speed_control_style(ss)], true, false, (void *)prf);
+}
+
+static void speed_control_choice(prefs_info *prf)
+{
+  if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prf->radio_button)))
+    in_set_speed_control_style(ss, (speed_style_t)get_user_int_data(G_OBJECT(prf->radio_button)));
+}
+
+/* ---------------- sinc width ---------------- */
+
+static void sinc_width_text(prefs_info *prf)
+{
+  char *str;
+  str = (char *)gtk_entry_get_text(GTK_ENTRY(prf->text));
+  if ((str) && (*str))
+    {
+      int value = 0;
+      sscanf(str, "%d", &value);
+      if (value >= 0)
+	set_sinc_width(value);
+      else int_to_textfield(prf->text, sinc_width(ss));
+    }
+}
+
+static void reflect_sinc_width(prefs_info *prf)
+{
+  int_to_textfield(prf->text, sinc_width(ss));
+}
+
+
+/* ---------------- clm file name ---------------- */
+
+static char *clm_file_name(void)
+{
+#if HAVE_SCHEME
+  if (XEN_DEFINED_P("*clm-file-name*"))
+    return(XEN_TO_C_STRING(XEN_NAME_AS_C_STRING_TO_VALUE("*clm-file-name*")));
+#endif
+#if HAVE_RUBY
+  /* TODO: ruby side of clm_file_name etc */
+#endif
+  return(NULL);
+}
+
+static void set_clm_file_name(const char *str)
+{
+#if HAVE_SCHEME
+  if (XEN_DEFINED_P("*clm-file-name*"))
+    XEN_VARIABLE_SET(XEN_NAME_AS_C_STRING_TO_VARIABLE("*clm-file-name*"), C_TO_XEN_STRING(str));
+#endif
+#if HAVE_RUBY
+#endif
+}
+
+static void clm_file_name_text(prefs_info *prf)
+{
+  char *str;
+  str = (char *)gtk_entry_get_text(GTK_ENTRY(prf->text));
+  if ((str) && (*str))
+    {
+      include_with_sound = true;
+      if (include_clm_file_name) FREE(include_clm_file_name); /* save is done after we're sure with-sound is loaded */
+      include_clm_file_name = copy_string(str);
+      set_clm_file_name(str);
+    }
+}
+
+static void reflect_clm_file_name(prefs_info *prf)
+{
+  gtk_entry_set_text(GTK_ENTRY(prf->text), clm_file_name());
+}
+
 
 /* ---------------- show-listener ---------------- */
 
@@ -3363,7 +3590,7 @@ static bool include_listener = false;
 static void reflect_show_listener(prefs_info *prf) 
 {
   include_listener = listener_is_visible();
-  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(prf->toggle), include_listener);
+  set_toggle_button(prf->toggle, include_listener, false, (void *)prf);
 }
 
 static void show_listener_toggle(prefs_info *prf)
@@ -3471,7 +3698,7 @@ static void listener_prompt_text(prefs_info *prf)
 
 static void reflect_show_backtrace(prefs_info *prf) 
 {
-  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(prf->toggle), show_backtrace(ss));
+  set_toggle_button(prf->toggle, show_backtrace(ss), false, (void *)prf);
 }
 
 static void show_backtrace_toggle(prefs_info *prf)
@@ -4273,6 +4500,51 @@ void start_preferences_dialog(void)
     FREE(str);
   }
   
+
+  current_sep = make_inter_topic_separator(topics);
+
+  /* -------- clm -------- */
+  {
+    GtkWidget *clm_box, *clm_label;
+
+    /* ---------------- clm options ---------------- */
+
+    clm_box = make_top_level_box(topics);
+    clm_label = make_top_level_label("clm", clm_box);
+
+    include_with_sound = with_sound_is_loaded();
+    prf = prefs_row_with_toggle("include with-sound", "with-sound",
+				include_with_sound,
+				clm_box,
+				with_sound_toggle);
+    remember_pref(prf, reflect_with_sound, save_with_sound);
+
+    current_sep = make_inter_variable_separator(clm_box);
+    str = mus_format("%d", speed_control_tones(ss));
+    prf = prefs_row_with_radio_box_and_number("speed control choice", S_speed_control_style,
+					      speed_control_styles, 3, (int)speed_control_style(ss),
+					      speed_control_tones(ss), str, 6,
+					      clm_box,
+					      speed_control_choice, speed_control_up, speed_control_down, speed_control_text);
+    remember_pref(prf, reflect_speed_control, NULL);
+    FREE(str);
+
+    current_sep = make_inter_variable_separator(clm_box);
+    str = mus_format("%d", sinc_width(ss));
+    prf = prefs_row_with_text("sinc interpolation width in srate converter", S_sinc_width, str,
+			      clm_box,
+			      sinc_width_text);
+    remember_pref(prf, reflect_sinc_width, NULL);
+    FREE(str);
+
+    current_sep = make_inter_variable_separator(clm_box);
+    prf = prefs_row_with_text("with-sound default output file name", "*clm-file-name*", clm_file_name(),
+			      clm_box,
+			      clm_file_name_text);
+    remember_pref(prf, reflect_clm_file_name, NULL);
+
+  }
+
   current_sep = make_inter_topic_separator(topics);
 
   /* -------- programming -------- */
