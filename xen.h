@@ -1294,6 +1294,7 @@ bool xen_rb_arity_ok(int rargs, int args);
 #define XEN_MAKE_KEYWORD(Arg) 0
 #define XEN_YES_WE_HAVE(Feature)
 #define XEN_DOCUMENTATION_SYMBOL 0
+#define XEN_OBJECT_HELP(Name) 0
 #define XEN_PROTECT_FROM_GC(a) 0
 #define XEN_LOAD_FILE(a) 0
 #define XEN_LOAD_FILE_WITH_PATH(a) 0

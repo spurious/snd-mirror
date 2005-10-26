@@ -867,6 +867,7 @@ static prefs_info *prefs_row_with_number(const char *label, const char *varname,
 
 /* ---------------- list row ---------------- */
 
+#if HAVE_GTK_COMBO_BOX_ENTRY_NEW_TEXT
 static prefs_info *prefs_row_with_completed_list(const char *label, const char *varname, const char *value,
 						 const char **values, int num_values,
 						 GtkWidget *box,
@@ -909,7 +910,7 @@ static prefs_info *prefs_row_with_completed_list(const char *label, const char *
   SG_SIGNAL_CONNECT(prf->text, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
   return(prf);
 }
-
+#endif
 
 /* ---------------- color selector row(s) ---------------- */
 
@@ -2574,6 +2575,7 @@ static bool find_smpte(void)
 #if HAVE_RUBY
   /* TODO: ruby side of smpte */
 #endif
+  return(false);
 }
 
 static void reflect_smpte(prefs_info *prf) 
@@ -4219,6 +4221,7 @@ void start_preferences_dialog(void)
 			       grid_density_scale_callback, grid_density_text_callback);
     remember_pref(prf, reflect_grid_density, NULL);
 
+#if HAVE_GTK_COMBO_BOX_ENTRY_NEW_TEXT
     current_sep = make_inter_variable_separator(grf_box);
     prf = prefs_row_with_completed_list("what axes to display", S_show_axes, show_axes_choices[(int)show_axes(ss)],
 					show_axes_choices, 5,
@@ -4234,6 +4237,7 @@ void start_preferences_dialog(void)
 					x_axis_style_from_text,
 					NULL, NULL);
     remember_pref(prf, reflect_x_axis_style, NULL);
+#endif
 
     current_sep = make_inter_variable_separator(grf_box);
     prf = prefs_row_with_toggle("include smpte info", "show-smpte-label", /* TODO: does this trigger help? */
@@ -4361,6 +4365,7 @@ void start_preferences_dialog(void)
 				   transform_graph_type_choice);
     remember_pref(prf, reflect_transform_graph_type, NULL);
 
+#if HAVE_GTK_COMBO_BOX_ENTRY_NEW_TEXT
     current_sep = make_inter_variable_separator(fft_box);
     prf = prefs_row_with_completed_list("transform", S_transform_type, transform_types[transform_type(ss)],
 					transform_types, NUM_TRANSFORM_TYPES,
@@ -4376,6 +4381,7 @@ void start_preferences_dialog(void)
 					fft_window_from_text,
 					fft_window_completer, NULL);
     remember_pref(prf, reflect_fft_window, NULL);
+#endif
 
     current_sep = make_inter_variable_separator(fft_box);
     prf = prefs_row_with_scale("data window family parameter", S_fft_window_beta, 
@@ -4394,6 +4400,7 @@ void start_preferences_dialog(void)
     remember_pref(prf, reflect_show_transform_peaks, NULL);
     FREE(str);
 
+#if HAVE_GTK_COMBO_BOX_ENTRY_NEW_TEXT
     current_sep = make_inter_variable_separator(fft_box);
     {
       const char **cmaps;
@@ -4410,6 +4417,7 @@ void start_preferences_dialog(void)
       remember_pref(prf, reflect_colormap, NULL);
       FREE(cmaps);
     }
+#endif
 
     current_sep = make_inter_variable_separator(fft_box);
     prf = prefs_row_with_toggle("y axis as log magnitude (dB)", S_fft_log_magnitude,

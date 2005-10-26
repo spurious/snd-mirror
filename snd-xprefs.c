@@ -15,21 +15,15 @@
      (remember-sound-state)
      ;also needs turn-off code
 
-   what about font-names as gtk/motif safe? -- save state funcs would need to be smarter
-   
    snd-motif: hidden-controls-dialog (make-hidden-controls-dialog)
 
-   transform-graph? (lisp graph + energy or whatever) [time_graph_p and transform_graph_p in snd-chn] -- would need to be a hook func
-   add envs/sound file exts? -- would need display of existing exts
+   add sound file exts? -- would need display of existing exts
    graph-cursor? [drawing area + x cursor setters]
 
    icon box?
    fft-menu?
    mark pane?
-   pixmaps for backgrounds?
    colormap: a line with color-inverted and color-scaler and color-cutoff
-
-   ss->With_GL = DEFAULT_WITH_GL;
 
    various additional key bindings? move-one-pixel zoom-one-pixel [how to specify fancy keys?]
 
@@ -73,16 +67,11 @@
     mark menu independent
     preset packages
 
-    raw file defaults, other clm stuff?
+    raw file defaults
     -> mus_header_raw_defaults [chans srate format in headers.c]
 
-    (clm gtk side)
-    (arrow and error gtk side)
-
-    clm (with-sound) defaults -- these come from default_output* to some extent
       clm ins, prc ins, v+jcrev+nrev, birds
       clm table size, file buffer size, default srate?
-      auto-update??
    
 */
 
@@ -3049,6 +3038,7 @@ static bool find_smpte(void)
 #if HAVE_RUBY
   /* TODO: ruby side of smpte */
 #endif
+  return(false);
 }
 
 static void reflect_smpte(prefs_info *prf) 
