@@ -415,14 +415,10 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
+27-Oct:  effects-utils.scm to make various added menus independent.\n\
+12-Oct.  snd 7.16.\n\
 3-Oct:   snd-g|xprefs.c, preferences-dialog function.\n\
 26-Sep:  save-region-dialog, more buttons.\n\
-15-Sep:  --enable-threads configure switch, and first use thereof (FIR filtering).\n\
-6-Sep:   snd-error is now (throw 'snd-error ...).\n\
-31-Aug:  mix|track-speed-style.\n\
-         changed recorder-in|out-format -> recorder-in|out-data-format,\n\
-                 recorder-out-type -> recorder-out-header-type\n\
-28-Aug:  snd 7.15.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",

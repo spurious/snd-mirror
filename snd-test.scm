@@ -24175,6 +24175,7 @@ EDITS: 5
 
 ;;; ---------------- test 13: menus, edit lists, hooks, etc ----------------
 
+(if (and (provided? 'snd-motif) (provided? 'xm)) (if (not (provided? 'snd-effects-utils.scm)) (load "effects-utils.scm")))
 (if (and (provided? 'snd-motif) (provided? 'xm)) (if (not (provided? 'snd-new-effects.scm)) (load "new-effects.scm")))
 (if (and (provided? 'snd-gtk) (provided? 'xg)) (if (not (provided? 'snd-gtk-effects.scm)) (load "gtk-effects.scm")))
       

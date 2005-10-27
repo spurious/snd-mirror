@@ -453,13 +453,14 @@ Box: (install-searcher (lambda (file) (= (mus-sound-srate file) 44100)))"
 
 ;;; -------- bring possibly-obscured dialog to top
 
-(define (raise-dialog w)
-  (if (and (Widget? w) 
-	   (XtIsManaged w))
-      (let ((parent (XtParent w)))
-	(if (and (Widget? parent)
-		 (XtIsSubclass parent xmDialogShellWidgetClass))
-	    (XtPopup parent XtGrabNone)))))
+(if (not (defined? 'raise-dialog))
+    (define (raise-dialog w)
+      (if (and (Widget? w) 
+	       (XtIsManaged w))
+	  (let ((parent (XtParent w)))
+	    (if (and (Widget? parent)
+		     (XtIsSubclass parent xmDialogShellWidgetClass))
+		(XtPopup parent XtGrabNone))))))
 
 
 

@@ -2,37 +2,12 @@
 (provide 'snd-mix-menu.scm)
 
 (if (not (provided? 'snd-mix.scm)) (load-from-path "mix.scm"))
+(if (not (defined? 'add-sliders)) (load-from-path "effects-utils.scm"))
 
 (define mix-list '()) ; menu labels are updated to show current default settings
 
 (define mix-menu (add-to-main-menu "Mix/Track" (lambda ()
-						   (define (update-label mix)
-						     (if (not (null? mix))
-							 (begin
-							   ((car mix))
-							   (update-label (cdr mix)))))
-						   (update-label mix-list))))
-(define (all-chans)
-  (let ((sndlist '())
-	(chnlist '()))
-    (for-each (lambda (snd)
-		(do ((i (1- (channels snd)) (1- i)))
-		    ((< i 0))
-		  (set! sndlist (cons snd sndlist))
-		  (set! chnlist (cons i chnlist))))
-	      (sounds))
-    (list sndlist chnlist)))
-
-(define map-chan-with-sync
-  (lambda (func origin)
-    (let ((snc (sync)))
-      (if (> snc 0)
-	  (apply map
-		 (lambda (snd chn)
-		   (if (= (sync snd) snc)
-		       (map-channel (func) 0 #f snd chn #f origin)))
-		 (all-chans))
-	  (map-channel (func) 0 #f #f #f #f origin)))))
+						 (update-label mix-list))))
 
 ;;; ------ Delete mix
 ;;;

@@ -1,7 +1,7 @@
 (use-modules (ice-9 format))
 (provide 'snd-marks-menu.scm)
 
-(if (not (defined? 'add-sliders)) (load-from-path "new-effects.scm"))
+(if (not (defined? 'add-sliders)) (load-from-path "effects-utils.scm"))
 (if (not (defined? 'mark-sync-color)) (load-from-path "snd-motif.scm"))
 (if (not (defined? 'mark-loops)) (load-from-path "examp.scm"))
 (if (not (defined? 'play-between-marks)) (load-from-path "marks.scm"))
@@ -10,34 +10,7 @@
 (define marks-list '()) ; menu labels are updated to show current default settings
 
 (define marks-menu (add-to-main-menu "Marks" (lambda ()
-						   (define (update-label marks)
-						     (if (not (null? marks))
-							 (begin
-							   ((car marks))
-							   (update-label (cdr marks)))))
-						   (update-label marks-list))))
-(define (all-chans)
-  (let ((sndlist '())
-	(chnlist '()))
-    (for-each (lambda (snd)
-		(do ((i (1- (channels snd)) (1- i)))
-		    ((< i 0))
-		  (set! sndlist (cons snd sndlist))
-		  (set! chnlist (cons i chnlist))))
-	      (sounds))
-    (list sndlist chnlist)))
-
-(define map-chan-with-sync
-  (lambda (func origin)
-    (let ((snc (sync)))
-      (if (> snc 0)
-	  (apply map
-		 (lambda (snd chn)
-		   (if (= (sync snd) snc)
-		       (map-channel (func) 0 #f snd chn #f origin)))
-		 (all-chans))
-	  (map-channel (func) 0 #f #f #f #f origin)))))
-
+					       (update-label marks-list))))
 (define (find-two-marks)
   (let* ((snd (selected-sound))
 	 (chn (selected-channel))

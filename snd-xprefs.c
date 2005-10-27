@@ -5,49 +5,24 @@
 
 /* things left to do:
 
-   use peak envs (need dir)
-     (if (not (provided? 'snd-peak-env.scm)) (load "/home/bil/cl/peak-env.scm"))
-     (define save-peak-env-info #t)
-     (define save-peak-env-info-directory "~/peaks")
-     ;need a way to turn it off in peak-env.scm, and rb support
+   what about unsaved changes -- should we warn upon exit?
+    line cursor during play?
+    save confirmation
+    preset packages
+   snd-test somehow
 
    remember state for subsequent load (extensions.scm)
-     (remember-sound-state)
-     ;also needs turn-off code
+     (remember-sound-state) ;also needs turn-off code
 
    snd-motif: hidden-controls-dialog (make-hidden-controls-dialog)
-
+              sync'd zoom slider, separate amp controls
    add sound file exts? -- would need display of existing exts
-   graph-cursor? [drawing area + x cursor setters]
-
-   icon box?
-   fft-menu?
+   graph-cursor? [drawing area + x cursor setters] [arrow, cross, beam, circle]
    mark pane?
    colormap: a line with color-inverted and color-scaler and color-cutoff
-
+   check out gui.scm et al 
    various additional key bindings? move-one-pixel zoom-one-pixel [how to specify fancy keys?]
-
-   debugging aids [i.e. guile settings and debug.scm]
-    (use-modules (ice-9 debug) (ice-9 format) (ice-9 optargs) (ice-9 common-list) (ice-9 session))
-    (debug-set! stack 0)
-    (debug-enable 'debug 'backtrace)
-    (read-enable 'positions)
-    -> how to tell this stuff is already in place?
-       :(debug-options-interface) -> (show-file-name #t stack 0 debug backtrace depth 20 maxdepth 1000 frames 3 indent 10 width 79 procnames cheap)
-       : *features* includes 'debug-extensions [libguile debug.c]
-       :(defined? 'untrace-stack) -> #t [ice-9 debug.scm]
-
    nb.scm (buffer for it)
-
-   disk-space (showing-disk-space var set in snd-motif.scm)
-      (if (not (hook-member show-disk-space after-open-hook))
-          (add-hook! after-open-hook show-disk-space))
-
-   File: delete and rename options (misc.scm) [toggles for this list -> need scan of menu to see if already in place]
-   Edit: unselect-all option -- deselect-all in misc.scm
-
-   quick.html for topics
-   snd-test 
 
     audio section:
     dac size, dac-combines-channels, cursor offset, smart line cursor, recorder setting, audio mixer settings
@@ -55,24 +30,15 @@
     ss->Dac_Combines_Channels = DEFAULT_DAC_COMBINES_CHANNELS;
     cursor-location-offset
     cursor-update-interval
-    recorder stuff?
-    -> buffer-size in-chans in-data-format in-device out-chans out-data-format out-header-type srate
-    audio mixer settings?
-    -> volume in some mode
+    recorder stuff? -> buffer-size in-chans in-data-format in-device out-chans out-data-format out-header-type srate
+    audio mixer settings? -> volume in some mode
     audio output device? or sound card?
-
-    line cursor during play?
-
-    save confirmation
-    mark menu independent
-    preset packages
 
     raw file defaults
     -> mus_header_raw_defaults [chans srate format in headers.c]
 
       clm ins, prc ins, v+jcrev+nrev, birds
       clm table size, file buffer size, default srate?
-   
 */
 
 
@@ -100,7 +66,7 @@ static bool prefs_helping = false;
 
 typedef struct prefs_info {
   Widget label, text, arrow_up, arrow_down, arrow_right, error, toggle, scale;
-  Widget color, rscl, gscl, bscl, rtxt, gtxt, btxt, list_menu, radio_button, helper;
+  Widget color, rscl, gscl, bscl, rtxt, gtxt, btxt, list_menu, radio_button;
   bool got_error;
   XtIntervalId help_id, power_id;
   const char *var_name;
@@ -1763,6 +1729,82 @@ static void controls_toggle(prefs_info *prf)
   in_set_show_controls(ss, XmToggleButtonGetState(prf->toggle) == XmSET);
 }
 
+/* ---------------- peak-envs ---------------- */
+
+/*
+  ruby: this is in env.rb
+  also gtk
+*/
+
+static bool include_peak_envs = false;
+static char *include_peak_env_directory = NULL;
+
+static bool find_peak_envs(void)
+{
+#if HAVE_GUILE
+  return((XEN_DEFINED_P("save-peak-env-info?")) &&
+	 XEN_TO_C_BOOLEAN(XEN_NAME_AS_C_STRING_TO_VALUE("save-peak-env-info?")));
+#endif
+#if HAVE_RUBY
+  return(XEN_DEFINED_P("install_save_peak_env");
+#endif
+}
+
+static char *peak_env_directory(void)
+{
+  if (include_peak_env_directory)
+    return(include_peak_env_directory);
+#if HAVE_GUILE
+  if (XEN_DEFINED_P("save-peak-env-info-directory"))
+    return(XEN_TO_C_STRING(XEN_NAME_AS_C_STRING_TO_VALUE("save-peak-env-info-directory")));
+#endif
+#if HAVE_RUBY
+  /* TODO: ruby side of peak env dir */
+#endif
+  return(NULL);
+}
+
+static void reflect_peak_envs(prefs_info *prf) 
+{
+  if (include_peak_env_directory) FREE(include_peak_env_directory);
+  include_peak_env_directory = copy_string(peak_env_directory());
+  include_peak_envs = find_peak_envs();
+  XmToggleButtonSetState(prf->toggle, include_peak_envs, false);
+  XmTextFieldSetString(prf->text, include_peak_env_directory);
+}
+
+static void peak_envs_toggle(prefs_info *prf)
+{
+  ASSERT_WIDGET_TYPE(XmIsToggleButton(prf->toggle), prf->toggle);
+  include_peak_envs = (XmToggleButtonGetState(prf->toggle) == XmSET);
+}
+
+static void peak_envs_text(prefs_info *prf)
+{
+  char *str;
+  ASSERT_WIDGET_TYPE(XmIsTextField(prf->text), prf->text);
+  str = XmTextFieldGetString(prf->text);
+  if ((str) && (*str))
+    {
+      if (include_peak_env_directory) FREE(include_peak_env_directory);
+      include_peak_env_directory = copy_string(str);
+      XtFree(str);
+    }
+}
+
+static void save_peak_envs(prefs_info *prf, FILE *fd)
+{
+  if (include_peak_envs)
+    {
+#if HAVE_GUILE
+      fprintf(fd, "(if (not (provided? 'snd-peak-env.scm)) (load-from-path \"peak-env.scm\"))\n");
+      if (include_peak_env_directory)
+	fprintf(fd, "(set! save-peak-env-info-directory \"%s\")\n", include_peak_env_directory);
+#endif
+    }
+}
+
+
 /* ---------------- selection-creates-region, max-regions ---------------- */
 
 static void reflect_selection_creates_region(prefs_info *prf) 
@@ -2615,6 +2657,58 @@ static bool find_edit_menu(void)
 static void reflect_edit_menu(prefs_info *prf) 
 {
   XmToggleButtonSetState(prf->toggle, find_edit_menu(), false);
+}
+
+/* ---------------- marks menu ---------------- */
+
+static bool include_marks_menu = false;
+
+static void save_marks_menu(prefs_info *prf, FILE *fd)
+{
+  if (include_marks_menu)
+    fprintf(fd, "(if (not (provided? 'snd-marks-menu.scm)) (load-from-path \"marks-menu.scm\"))\n");
+}
+
+static void marks_menu_toggle(prefs_info *prf)
+{
+  ASSERT_WIDGET_TYPE(XmIsToggleButton(prf->toggle), prf->toggle);
+  include_marks_menu = (XmToggleButtonGetState(prf->toggle) == XmSET);
+}
+
+static bool find_marks_menu(void)
+{
+  return(XEN_DEFINED_P("marks-menu"));
+}
+
+static void reflect_marks_menu(prefs_info *prf) 
+{
+  XmToggleButtonSetState(prf->toggle, find_marks_menu(), false);
+}
+
+/* ---------------- mix menu ---------------- */
+
+static bool include_mix_menu = false;
+
+static void save_mix_menu(prefs_info *prf, FILE *fd)
+{
+  if (include_mix_menu)
+    fprintf(fd, "(if (not (provided? 'snd-mix-menu.scm)) (load-from-path \"mix-menu.scm\"))\n");
+}
+
+static void mix_menu_toggle(prefs_info *prf)
+{
+  ASSERT_WIDGET_TYPE(XmIsToggleButton(prf->toggle), prf->toggle);
+  include_mix_menu = (XmToggleButtonGetState(prf->toggle) == XmSET);
+}
+
+static bool find_mix_menu(void)
+{
+  return(XEN_DEFINED_P("mix-menu"));
+}
+
+static void reflect_mix_menu(prefs_info *prf) 
+{
+  XmToggleButtonSetState(prf->toggle, find_mix_menu(), false);
 }
 #endif
 
@@ -4323,6 +4417,43 @@ static void show_backtrace_toggle(prefs_info *prf)
   set_show_backtrace(XmToggleButtonGetState(prf->toggle) == XmSET);
 }
 
+#if HAVE_GUILE
+/* ---------------- debugging aids ---------------- */
+
+static bool include_debugging_aids = false;
+
+static bool find_debugging_aids(void)
+{
+  return((XEN_DEFINED_P("snd-break")) && 
+	 (XEN_DEFINED_P("untrace-stack")));
+}
+
+static void reflect_debugging_aids(prefs_info *prf) 
+{
+  XmToggleButtonSetState(prf->toggle, find_debugging_aids(), false);
+}
+
+static void debugging_aids_toggle(prefs_info *prf)
+{
+  include_debugging_aids = (XmToggleButtonGetState(prf->toggle) == XmSET);
+}
+
+static void save_debugging_aids(prefs_info *prf, FILE *fd)
+{
+  if (include_debugging_aids)
+    {
+      fprintf(fd, "(use-modules (ice-9 debug) (ice-9 session))\n");
+#if HAVE_SCM_OBJECT_TO_STRING
+      /* 1.6 or later -- not sure 1.4 etc can handle these things */
+      fprintf(fd, "(debug-set! stack 0)\n");
+      fprintf(fd, "(debug-enable 'debug 'backtrace)\n");
+      fprintf(fd, "(read-enable 'positions)\n");
+#endif
+      fprintf(fd, "(if (not (provided? 'snd-debug.scm)) (load-from-path \"debug.scm\"))\n");
+    }
+}
+#endif
+
 /* ---------------- print-length ---------------- */
 
 static void reflect_print_length(prefs_info *prf)
@@ -4699,6 +4830,16 @@ void start_preferences_dialog(void)
     remember_pref(prf, reflect_show_controls, NULL);
 
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
+    include_peak_env_directory = copy_string(peak_env_directory());
+    include_peak_envs = find_peak_envs();
+    prf = prefs_row_with_toggle_with_text("use peak envs to speed up initial display", "save-peak-env-info",
+					  include_peak_envs,
+					  "directory:", include_peak_env_directory, 25,
+					  dpy_box, current_sep,
+					  peak_envs_toggle, peak_envs_text);
+    remember_pref(prf, reflect_peak_envs, save_peak_envs);
+
+    current_sep = make_inter_variable_separator(dpy_box, prf->label);
     str = mus_format("%d", max_regions(ss));
     prf = prefs_row_with_toggle_with_text("selection creates an associated region", S_selection_creates_region,
 					  selection_creates_region(ss),
@@ -4818,29 +4959,30 @@ void start_preferences_dialog(void)
 				dpy_box, current_sep, 
 				effects_menu_toggle);
     remember_pref(prf, reflect_effects_menu, save_effects_menu);
-    current_sep = make_inter_variable_separator(dpy_box, prf->label);
 
 #if HAVE_GUILE
+    current_sep = make_inter_variable_separator(dpy_box, prf->label);
     prf = prefs_row_with_toggle("edit menu additions", "edit-menu.scm", /* TODO help index */
 				find_edit_menu(),
 				dpy_box, current_sep, 
 				edit_menu_toggle);
     remember_pref(prf, reflect_edit_menu, save_edit_menu);
+
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
-#endif
-
-#if 0
-    /* TODO: untangle marks-menu */
-
-    /* currently forces effects menu to load (add-sliders code) */
     prf = prefs_row_with_toggle("marks menu", "marks-menu.scm",
 				find_marks_menu(),
 				dpy_box, current_sep, 
 				marks_menu_toggle);
     remember_pref(prf, reflect_marks_menu, save_marks_menu);
-    current_sep = make_inter_variable_separator(dpy_box, prf->label);
 
+    current_sep = make_inter_variable_separator(dpy_box, prf->label);
+    prf = prefs_row_with_toggle("mix/track menu", "mix-menu.scm",
+				find_mix_menu(),
+				dpy_box, current_sep, 
+				mix_menu_toggle);
+    remember_pref(prf, reflect_mix_menu, save_mix_menu);
 #endif
+    current_sep = make_inter_variable_separator(dpy_box, prf->label);
 
     /* ---------------- cursor options ---------------- */
 
@@ -5364,6 +5506,16 @@ void start_preferences_dialog(void)
 				prg_box, current_sep,
 				show_backtrace_toggle);
     remember_pref(prf, reflect_show_backtrace, NULL);
+
+#if HAVE_SCHEME
+    current_sep = make_inter_variable_separator(prg_box, prf->label);
+    prf = prefs_row_with_toggle("include debugging aids", "snd-break",
+				find_debugging_aids(),
+				prg_box, current_sep,
+				debugging_aids_toggle);
+    remember_pref(prf, reflect_debugging_aids, save_debugging_aids);
+    include_debugging_aids = find_debugging_aids();
+#endif
 
     current_sep = make_inter_variable_separator(prg_box, prf->label);
     str = mus_format("%d", print_length(ss));

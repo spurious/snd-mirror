@@ -1,5 +1,7 @@
 Snd change log
 
+  27-Oct:    effects-utils.scm to make various added menus independent.
+  12-Oct.    snd 7.16.
   3-Oct:     snd-g|xprefs.c, preferences-dialog function.
   26-Sep:    save-region-dialog, more buttons.
   15-Sep:    --enable-threads configure switch, and first use thereof (FIR filtering).

@@ -2,21 +2,10 @@
 ;;;
 ;;; these used to be in the effects menu
 
-
 (use-modules (ice-9 format))
 (provide 'snd-edit-menu.scm)
 
-(if (not (defined? 'all-chans))
-    (define (all-chans)
-      (let ((sndlist '())
-	    (chnlist '()))
-	(for-each (lambda (snd)
-		    (do ((i (1- (channels snd)) (1- i)))
-			((< i 0))
-		      (set! sndlist (cons snd sndlist))
-		      (set! chnlist (cons i chnlist))))
-		  (sounds))
-	(list sndlist chnlist))))
+(if (not (provided? 'snd-effects-utils.scm)) (load-from-path "effects-utils.scm"))
 
 (define edit-menu 1)
 
@@ -156,14 +145,6 @@
     (let* ((edit-cascade (list-ref (menu-widgets) 2))
 	   (edit-menu (cadr (XtGetValues edit-cascade (list XmNsubMenuId 0)))))
 
-      (define (for-each-child w func)
-	(func w)
-	(if (XtIsComposite w)
-	    (for-each 
-	     (lambda (n)
-	       (for-each-child n func))
-	     (cadr (XtGetValues w (list XmNchildren 0) 1)))))
-      
       (XtAddCallback edit-cascade XmNcascadingCallback 
 	(lambda (w c i)
 	  (for-each-child 

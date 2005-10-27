@@ -1,7 +1,7 @@
 (use-modules (ice-9 common-list) (ice-9 format))
 (provide 'snd-peak-env.scm)
 
-(define save-peak-env-info #t)
+(define save-peak-env-info? #t)
 (define save-peak-env-info-directory "~/peaks")
 
 ;; intended as a close-hook function
@@ -56,7 +56,7 @@
     (add-hook! initial-graph-hook restore-peak-env-info-upon-open)
     (add-hook! update-hook
 	       (lambda (snd)
-		 (if save-peak-env-info
+		 (if save-peak-env-info?
 		     (do ((i 0 (1+ i)))
 			 ((= i (chans snd)))
 		       (let ((peak-file (mus-expand-filename (peak-env-info-file-name snd i))))
@@ -64,7 +64,7 @@
 			     (delete-file peak-file)))))))
 
     (lambda (snd)
-      (if (and save-peak-env-info
+      (if (and save-peak-env-info?
 	       (not (null? (peak-env-info snd 0 0))))
 	  (let ((saved #f))
 	    (do ((i 0 (1+ i)))

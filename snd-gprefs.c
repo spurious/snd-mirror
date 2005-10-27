@@ -1465,7 +1465,7 @@ static void reflect_focus_follows_mouse(prefs_info *prf)
 
 static void focus_follows_mouse_toggle(prefs_info *prf)
 {
-  focus_follows_mouse = (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prf->toggle)));
+  focus_follows_mouse = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prf->toggle));
 }
 
 static void save_focus_follows_mouse(prefs_info *prf, FILE *fd) 
@@ -1493,6 +1493,74 @@ static void controls_toggle(prefs_info *prf)
 {
   in_set_show_controls(ss, gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prf->toggle)));
 }
+
+/* ---------------- peak-envs ---------------- */
+
+static bool include_peak_envs = false;
+static char *include_peak_env_directory = NULL;
+
+static bool find_peak_envs(void)
+{
+#if HAVE_GUILE
+  return((XEN_DEFINED_P("save-peak-env-info?")) &&
+	 XEN_TO_C_BOOLEAN(XEN_NAME_AS_C_STRING_TO_VALUE("save-peak-env-info?")));
+#endif
+#if HAVE_RUBY
+  return(XEN_DEFINED_P("install_save_peak_env");
+#endif
+}
+
+static char *peak_env_directory(void)
+{
+  if (include_peak_env_directory)
+    return(include_peak_env_directory);
+#if HAVE_GUILE
+  if (XEN_DEFINED_P("save-peak-env-info-directory"))
+    return(XEN_TO_C_STRING(XEN_NAME_AS_C_STRING_TO_VALUE("save-peak-env-info-directory")));
+#endif
+#if HAVE_RUBY
+  /* TODO: ruby side of peak env dir */
+#endif
+  return(NULL);
+}
+
+static void reflect_peak_envs(prefs_info *prf) 
+{
+  if (include_peak_env_directory) FREE(include_peak_env_directory);
+  include_peak_env_directory = copy_string(peak_env_directory());
+  include_peak_envs = find_peak_envs();
+  set_toggle_button(prf->toggle, include_peak_envs, false, (void *)prf);
+  gtk_entry_set_text(GTK_ENTRY(prf->text), include_peak_env_directory);
+}
+
+static void peak_envs_toggle(prefs_info *prf)
+{
+  include_peak_envs = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prf->toggle));
+}
+
+static void peak_envs_text(prefs_info *prf)
+{
+  char *str;
+  str = (char *)gtk_entry_get_text(GTK_ENTRY(prf->text));
+  if ((str) && (*str))
+    {
+      if (include_peak_env_directory) FREE(include_peak_env_directory);
+      include_peak_env_directory = copy_string(str);
+    }
+}
+
+static void save_peak_envs(prefs_info *prf, FILE *fd)
+{
+  if (include_peak_envs)
+    {
+#if HAVE_GUILE
+      fprintf(fd, "(if (not (provided? 'snd-peak-env.scm)) (load-from-path \"peak-env.scm\"))\n");
+      if (include_peak_env_directory)
+	fprintf(fd, "(set! save-peak-env-info-directory \"%s\")\n", include_peak_env_directory);
+#endif
+    }
+}
+
 
 /* ---------------- selection-creates-region ---------------- */
 
@@ -2242,6 +2310,56 @@ static bool find_edit_menu(void)
 static void reflect_edit_menu(prefs_info *prf) 
 {
   set_toggle_button(prf->toggle, find_edit_menu(), false, (void *)prf);
+}
+
+/* ---------------- marks menu ---------------- */
+
+static bool include_marks_menu = false;
+
+static void save_marks_menu(prefs_info *prf, FILE *fd)
+{
+  if (include_marks_menu)
+    fprintf(fd, "(if (not (provided? 'snd-marks-menu.scm)) (load-from-path \"marks-menu.scm\"))\n");
+}
+
+static void marks_menu_toggle(prefs_info *prf)
+{
+  include_marks_menu = (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prf->toggle)));
+}
+
+static bool find_marks_menu(void)
+{
+  return(XEN_DEFINED_P("marks-menu"));
+}
+
+static void reflect_marks_menu(prefs_info *prf) 
+{
+  set_toggle_button(prf->toggle, find_marks_menu(), false, (void *)prf);
+}
+
+/* ---------------- mix menu ---------------- */
+
+static bool include_mix_menu = false;
+
+static void save_mix_menu(prefs_info *prf, FILE *fd)
+{
+  if (include_mix_menu)
+    fprintf(fd, "(if (not (provided? 'snd-mix-menu.scm)) (load-from-path \"mix-menu.scm\"))\n");
+}
+
+static void mix_menu_toggle(prefs_info *prf)
+{
+  include_mix_menu = (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prf->toggle)));
+}
+
+static bool find_mix_menu(void)
+{
+  return(XEN_DEFINED_P("mix-menu"));
+}
+
+static void reflect_mix_menu(prefs_info *prf) 
+{
+  set_toggle_button(prf->toggle, find_mix_menu(), false, (void *)prf);
 }
 #endif
 
@@ -3708,6 +3826,43 @@ static void show_backtrace_toggle(prefs_info *prf)
   set_show_backtrace(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prf->toggle)));
 }
 
+#if HAVE_SCHEME
+/* ---------------- debugging aids ---------------- */
+
+static bool include_debugging_aids = false;
+
+static bool find_debugging_aids(void)
+{
+  return((XEN_DEFINED_P("snd-break")) && 
+	 (XEN_DEFINED_P("untrace-stack")));
+}
+
+static void reflect_debugging_aids(prefs_info *prf) 
+{
+  set_toggle_button(prf->toggle, find_debugging_aids(), false, (void *)prf);
+}
+
+static void debugging_aids_toggle(prefs_info *prf)
+{
+  include_debugging_aids = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prf->toggle));
+}
+
+static void save_debugging_aids(prefs_info *prf, FILE *fd)
+{
+  if (include_debugging_aids)
+    {
+      fprintf(fd, "(use-modules (ice-9 debug) (ice-9 session))\n");
+#if HAVE_SCM_OBJECT_TO_STRING
+      /* 1.6 or later -- not sure 1.4 etc can handle these things */
+      fprintf(fd, "(debug-set! stack 0)\n");
+      fprintf(fd, "(debug-enable 'debug 'backtrace)\n");
+      fprintf(fd, "(read-enable 'positions)\n");
+#endif
+      fprintf(fd, "(if (not (provided? 'snd-debug.scm)) (load-from-path \"debug.scm\"))\n");
+    }
+}
+#endif
+
 /* ---------------- print-length ---------------- */
 
 static void reflect_print_length(prefs_info *prf)
@@ -3931,6 +4086,16 @@ void start_preferences_dialog(void)
     remember_pref(prf, reflect_show_controls, NULL);
 
     current_sep = make_inter_variable_separator(dpy_box);
+    include_peak_env_directory = copy_string(peak_env_directory());
+    include_peak_envs = find_peak_envs();
+    prf = prefs_row_with_toggle_with_text("use peak envs to speed up initial display", "save-peak-env-info",
+					  include_peak_envs,
+					  "directory:", include_peak_env_directory, 25,
+					  dpy_box,
+					  peak_envs_toggle, peak_envs_text);
+    remember_pref(prf, reflect_peak_envs, save_peak_envs);
+
+    current_sep = make_inter_variable_separator(dpy_box);
     str = mus_format("%d", max_regions(ss));
     prf = prefs_row_with_toggle_with_text("selection creates an associated region", S_selection_creates_region,
 					  selection_creates_region(ss),
@@ -4051,29 +4216,31 @@ void start_preferences_dialog(void)
 				dpy_box, 
 				effects_menu_toggle);
     remember_pref(prf, reflect_effects_menu, save_effects_menu);
-    current_sep = make_inter_variable_separator(dpy_box);
 
 #if HAVE_GUILE
+    current_sep = make_inter_variable_separator(dpy_box);
     prf = prefs_row_with_toggle("edit menu additions", "edit-menu.scm", /* TODO help index */
 				find_edit_menu(),
 				dpy_box, 
 				edit_menu_toggle);
     remember_pref(prf, reflect_edit_menu, save_edit_menu);
+
     current_sep = make_inter_variable_separator(dpy_box);
-#endif
-
-#if 0
-    /* TODO: untangle marks-menu */
-
-    /* currently forces effects menu to load (add-sliders code) */
     prf = prefs_row_with_toggle("marks menu", "marks-menu.scm",
 				find_marks_menu(),
-				dpy_box, 
+				dpy_box,
 				marks_menu_toggle);
     remember_pref(prf, reflect_marks_menu, save_marks_menu);
+
+    current_sep = make_inter_variable_separator(dpy_box);
+    prf = prefs_row_with_toggle("mix/track menu", "mix-menu.scm",
+				find_mix_menu(),
+				dpy_box,
+				mix_menu_toggle);
+    remember_pref(prf, reflect_mix_menu, save_mix_menu);
+#endif
     current_sep = make_inter_variable_separator(dpy_box);
 
-#endif
 
     /* ---------------- cursor options ---------------- */
 
@@ -4597,6 +4764,16 @@ void start_preferences_dialog(void)
 				prg_box,
 				show_backtrace_toggle);
     remember_pref(prf, reflect_show_backtrace, NULL);
+
+#if HAVE_SCHEME
+    current_sep = make_inter_variable_separator(prg_box);
+    prf = prefs_row_with_toggle("include debugging aids", "snd-break",
+				find_debugging_aids(),
+				prg_box,
+				debugging_aids_toggle);
+    remember_pref(prf, reflect_debugging_aids, save_debugging_aids);
+    include_debugging_aids = find_debugging_aids();
+#endif
 
     current_sep = make_inter_variable_separator(prg_box);
     str = mus_format("%d", print_length(ss));

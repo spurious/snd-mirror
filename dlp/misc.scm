@@ -27,6 +27,7 @@
 (if (and (provided? 'snd-gtk) (not (provided? 'snd-ladspa-help.scm))) (load-from-path "ladspa-help.scm"))
 (if (not (provided? 'snd-fft-menu.scm)) (load-from-path "fft-menu.scm"))
 (if (not (provided? 'snd-edit123.scm)) (load-from-path "edit123.scm"))
+(if (not (provided? 'snd-effects-utils.scm)) (load-from-path "effects-utils.scm"))
 
 (title-with-date)
 (keep-file-dialog-open-upon-ok)

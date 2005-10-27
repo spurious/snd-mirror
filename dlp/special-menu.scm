@@ -1,69 +1,22 @@
 (use-modules (ice-9 format))
 (provide 'snd-special-menu.scm)
 
+(if (not (defined? 'add-sliders)) (load-from-path "effects-utils.scm"))
 (if (not (provided? 'snd-edit-menu.scm)) (load-from-path "edit-menu.scm"))
 
 (define special-list '()) ; menu labels are updated to show current default settings
 
 (define special-menu (add-to-main-menu "Special" (lambda ()
-						   (define (update-label special)
-						     (if (not (null? special))
-							 (begin
-							   ((car special))
-							   (update-label (cdr special)))))
 						   (update-label special-list))))
-(define (all-chans)
-  (let ((sndlist '())
-	(chnlist '()))
-    (for-each (lambda (snd)
-		(do ((i (1- (channels snd)) (1- i)))
-		    ((< i 0))
-		  (set! sndlist (cons snd sndlist))
-		  (set! chnlist (cons i chnlist))))
-	      (sounds))
-    (list sndlist chnlist)))
 
-(define map-chan-with-sync
-  (lambda (func origin)
-    (let ((snc (sync)))
-      (if (> snc 0)
-	  (apply map
-		 (lambda (snd chn)
-		   (if (= (sync snd) snc)
-		       (map-channel (func) 0 #f snd chn #f origin)))
-		 (all-chans))
-	  (map-channel (func) 0 #f #f #f #f origin)))))
-
-
-;;; replacement for change-menu-label
-(define (change-label widget new-label)
-  (if (provided? 'xg)
-      (gtk_label_set_text (GTK_LABEL (gtk_bin_get_child (GTK_BIN widget))) new-label)
-      (if (provided? 'xm)
-         (let ((str (XmStringCreateLocalized new-label)))
-           (XtSetValues widget (list XmNlabelString str))
-           (XmStringFree str)))))
-
-
-;;; -------- Insert/append file
+;;; -------- Append file
 ;;;
-
-;;; this is now built-in (27-Jul-05)
-#!
-(add-to-menu special-menu "Insert file"
-  (lambda ()
-    (select-file
-      (lambda (filename)
-        (insert-sound filename))
-      "Insert file" "." "*" "File will be inserted at cursor location.")))
-!#
 
 (add-to-menu edit-menu "Append file"
   (lambda ()
     (select-file
      (lambda (filename)
         (insert-sound filename (frames))))))
-
 
 (add-to-menu special-menu #f #f)
 

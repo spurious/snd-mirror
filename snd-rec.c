@@ -6,7 +6,7 @@
 #include "snd-rec.h"
 #include "sndlib-strings.h"
 
-#define DEFAULT_RECORDER_FILE NULL
+#define DEFAULT_RECORDER_FILE "test.snd"
 #define DEFAULT_RECORDER_AUTOLOAD false
 #define DEFAULT_RECORDER_TRIGGER 0.0
 #define DEFAULT_RECORDER_MAX_DURATION 1000000.0
@@ -362,7 +362,7 @@ static void init_recorder(void)
   rp->srate = DEFAULT_RECORDER_SRATE;
   rp->trigger = DEFAULT_RECORDER_TRIGGER;
   rp->max_duration = DEFAULT_RECORDER_MAX_DURATION;
-  if (DEFAULT_RECORDER_FILE != (char *)NULL) rp->output_file = copy_string(DEFAULT_RECORDER_FILE); else rp->output_file = NULL;
+  rp->output_file = copy_string(DEFAULT_RECORDER_FILE);
   in_device = MUS_AUDIO_DEFAULT;
   rp->triggering = false;
   rp->triggered = true;
@@ -439,7 +439,9 @@ void save_recorder_state(FILE *fd)
 	    mus_data_format_to_string(rp->in_format));
   if (in_device != MUS_AUDIO_DEFAULT) fprintf(fd, "(set! (%s) %d)\n", S_recorder_in_device, in_device);
   if (rp->srate != DEFAULT_RECORDER_SRATE) fprintf(fd, "(set! (%s) %d)\n", S_recorder_srate, rp->srate);
-  if (rp->output_file != NULL) fprintf(fd, "(set! (%s) \"%s\")\n", S_recorder_file, rp->output_file);
+  if ((rp->output_file) &&
+      (strcmp(rp->output_file, DEFAULT_RECORDER_FILE) != 0))
+    fprintf(fd, "(set! (%s) \"%s\")\n", S_recorder_file, rp->output_file);
   if (fneq(rp->trigger, DEFAULT_RECORDER_TRIGGER)) fprintf(fd, "(set! (%s) %.4f)\n", S_recorder_trigger, rp->trigger);
   if (fneq(rp->max_duration, DEFAULT_RECORDER_MAX_DURATION)) fprintf(fd, "(set! (%s) %.4f)\n", S_recorder_max_duration, rp->max_duration);
 #endif

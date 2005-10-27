@@ -1,5 +1,7 @@
 (use-modules (ice-9 format) (ice-9 optargs))
 
+(if (not (defined? 'add-sliders)) (load-from-path "effects-utils.scm"))
+
 (provide 'snd-fft-menu.scm)
 
 (define fft-list '()) ; menu labels are updated to show current default settings

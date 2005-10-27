@@ -1142,7 +1142,7 @@ static void make_file_info_pane(recorder_info *rp, Widget file_pane, int ndevs)
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNleftWidget, file_label); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-  if (snd_strlen(rp->output_file) > 0) {XtSetArg(args[n], XmNvalue, rp->output_file); n++;}
+  if (rp->output_file) {XtSetArg(args[n], XmNvalue, rp->output_file); n++;}
   file_text = make_textfield_widget("text", ff_form, args, n, NOT_ACTIVATABLE, NO_COMPLETER);
 
   n = 0;

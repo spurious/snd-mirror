@@ -835,6 +835,8 @@ static void make_file_info_pane(recorder_info *rp, GtkWidget *file_pane, int nde
   gtk_widget_show(file_label);
 
   file_text = snd_entry_new(filebox, WITH_WHITE_BACKGROUND);
+  if (rp->output_file)
+    gtk_entry_set_text(GTK_ENTRY(file_text), rp->output_file);
 
   ff_sep3 = gtk_hseparator_new();
   gtk_box_pack_start(GTK_BOX(left_form), ff_sep3, false, false, 8);
