@@ -2,7 +2,9 @@
 
 static GtkWidget *preferences_dialog = NULL;
 
-static bool prefs_helping = false;
+static bool prefs_helping = false, prefs_unsaved = false;
+static char *prefs_saved_filename = NULL;
+static char *prefs_time = NULL;
 
 #define HELP_WAIT_TIME ((guint32)500)
 #define POWER_WAIT_TIME ((guint32)100)
@@ -96,6 +98,23 @@ static void float_to_textfield(GtkWidget *w, Float val)
   FREE(str);
 }
 
+static void float_1_to_textfield(GtkWidget *w, Float val)
+{
+  char *str;
+  str = (char *)CALLOC(12, sizeof(char));
+  mus_snprintf(str, 12, "%.1f", val);
+  gtk_entry_set_text(GTK_ENTRY(w), str);
+  FREE(str);
+}
+
+static void sg_entry_set_text(GtkEntry* entry, const char *text)
+{
+  /* god I hate gtk! */
+  if (text)
+    gtk_entry_set_text(entry, (gchar *)text);
+  else gtk_entry_set_text(entry, " ");
+}
+
 
 
 /* ---------------- help strings ---------------- */
@@ -157,6 +176,31 @@ static gboolean mouse_leave_pref_callback(GtkWidget *w, GdkEventCrossing *ev, gp
       prf->help_id = 0;
     }
   return(false);
+}
+
+static bool prefs_dialog_error_is_posted = false;
+
+static void post_prefs_dialog_error(const char *message, void *data)
+{
+  gtk_window_set_title(GTK_WINDOW(preferences_dialog), (char *)message);
+  prefs_dialog_error_is_posted = (message != NULL);
+}
+
+static void clear_prefs_dialog_error(void)
+{
+  if (prefs_dialog_error_is_posted)
+    {
+      prefs_dialog_error_is_posted = false;
+      post_prefs_dialog_error(NULL, NULL);
+    }
+}
+
+static void prefs_set_dialog_title(const char *filename);
+static void prefs_change_callback(GtkWidget *w, gpointer context)
+{
+  prefs_unsaved = true;
+  prefs_set_dialog_title(NULL);
+  clear_prefs_dialog_error();
 }
 
 
@@ -274,6 +318,7 @@ static GtkWidget *make_row_toggle(prefs_info *prf, bool current_value, GtkWidget
 
   SG_SIGNAL_CONNECT(w, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
   SG_SIGNAL_CONNECT(w, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
+  SG_SIGNAL_CONNECT(w, "toggled", prefs_change_callback, NULL);
 
   return(w);
 }
@@ -409,9 +454,11 @@ static GtkWidget *make_row_arrows(prefs_info *prf, GtkWidget *box)
   SG_SIGNAL_CONNECT(ev_up, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
   SG_SIGNAL_CONNECT(ev_down, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
 
+  SG_SIGNAL_CONNECT(ev_down, "button_press_event", prefs_change_callback, NULL);
+  SG_SIGNAL_CONNECT(ev_up, "button_press_event", prefs_change_callback, NULL);
+
   return(up);
 }
-
 
 
 /* ---------------- bool row ---------------- */
@@ -464,7 +511,7 @@ static GtkWidget *make_row_text(prefs_info *prf, const char *text_value, int col
 
   w = gtk_entry_new();
   gtk_entry_set_has_frame(GTK_ENTRY(w), true);
-  if (text_value) gtk_entry_set_text(GTK_ENTRY(w), text_value);
+  if (text_value) sg_entry_set_text(GTK_ENTRY(w), text_value);
   gtk_entry_set_has_frame(GTK_ENTRY(w), false);
   if (cols > 0)
     gtk_entry_set_width_chars(GTK_ENTRY(w), cols);
@@ -474,6 +521,7 @@ static GtkWidget *make_row_text(prefs_info *prf, const char *text_value, int col
 
   SG_SIGNAL_CONNECT(w, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
   SG_SIGNAL_CONNECT(w, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
+  SG_SIGNAL_CONNECT(w, "activate", prefs_change_callback, NULL);
 
   return(w);
 }
@@ -521,6 +569,47 @@ static prefs_info *prefs_row_with_toggle_with_text(const char *label, const char
 
   return(prf);
 }
+
+static prefs_info *prefs_row_with_toggle_with_two_texts(const char *label, const char *varname, bool current_value,
+							const char *label1, const char *text1, 
+							const char *label2, const char *text2, int cols,
+							GtkWidget *box,
+							void (*toggle_func)(prefs_info *prf),
+							void (*text_func)(prefs_info *prf))
+{
+  prefs_info *prf = NULL;
+  GtkWidget *sep, *sep1, *lab1, *lab2, *hb, *row, *help;
+  prf = (prefs_info *)CALLOC(1, sizeof(prefs_info));
+  prf->var_name = varname;
+  prf->toggle_func = toggle_func;
+  prf->text_func = text_func;
+
+  row = gtk_hbox_new(false, 0);
+  gtk_box_pack_start(GTK_BOX(box), row, false, false, 0);
+  gtk_widget_show(row);
+
+  prf->label = make_row_label(prf, label, row);
+  hb = gtk_hbox_new(false, 0);
+  gtk_size_group_add_widget(widgets_group, hb);
+  gtk_box_pack_start(GTK_BOX(row), hb, false, false, 0);
+  gtk_widget_show(hb);
+
+  sep = make_row_middle_separator(hb);
+  prf->toggle = make_row_toggle(prf, current_value, hb);
+  sep1 = make_row_inner_separator(16, hb);
+  lab1 = make_row_inner_label(prf, label1, hb);
+  prf->text= make_row_text(prf, text1, cols, hb);
+  lab2 = make_row_inner_label(prf, label2, hb);
+  prf->rtxt= make_row_text(prf, text2, cols, hb);
+  help = make_row_help(prf, varname, row);
+
+  SG_SIGNAL_CONNECT(prf->toggle, "toggled", call_toggle_func, (gpointer)prf);
+  SG_SIGNAL_CONNECT(prf->text, "activate", call_text_func, (gpointer)prf);
+  SG_SIGNAL_CONNECT(prf->rtxt, "activate", call_text_func, (gpointer)prf);
+
+  return(prf);
+}
+
 
 
 /* ---------------- text with toggle ---------------- */
@@ -598,6 +687,7 @@ static GtkWidget *make_row_radio_box(prefs_info *prf,
       set_user_int_data(G_OBJECT(current_button), i);
       gtk_widget_show(current_button);
       SG_SIGNAL_CONNECT(current_button, "clicked", call_radio_func, (gpointer)prf);
+      SG_SIGNAL_CONNECT(current_button, "clicked", prefs_change_callback, NULL);
       SG_SIGNAL_CONNECT(current_button, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
       SG_SIGNAL_CONNECT(current_button, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
     }
@@ -673,6 +763,7 @@ static prefs_info *prefs_row_with_radio_box_and_number(const char *label, const 
   help = make_row_help(prf, varname, row);
 
   SG_SIGNAL_CONNECT(prf->text, "activate", call_text_func, (gpointer)prf);
+
   return(prf);
 }
 
@@ -744,6 +835,7 @@ static prefs_info *prefs_row_with_scale(const char *label, const char *varname,
   prf->text_func = text_func;
 
   SG_SIGNAL_CONNECT(prf->scale, "value_changed", call_scale_func, (gpointer)prf);
+  SG_SIGNAL_CONNECT(prf->scale, "value_changed", prefs_change_callback, NULL);
   SG_SIGNAL_CONNECT(prf->scale, "value_changed", prefs_scale_callback, (gpointer)prf);
   SG_SIGNAL_CONNECT(prf->text, "activate", call_scale_text_func, (gpointer)prf);
 
@@ -896,7 +988,7 @@ static prefs_info *prefs_row_with_completed_list(const char *label, const char *
   prf->text = gtk_combo_box_entry_new_text();
   for (i = 0; i < num_values; i++)
     gtk_combo_box_append_text(GTK_COMBO_BOX(prf->text), values[i]);
-  gtk_entry_set_text(GTK_ENTRY(GTK_BIN(prf->text)->child), value);
+  sg_entry_set_text(GTK_ENTRY(GTK_BIN(prf->text)->child), value);
   gtk_box_pack_start(GTK_BOX(hb), prf->text, false, false, 4);
   gtk_widget_show(prf->text);
 
@@ -905,6 +997,7 @@ static prefs_info *prefs_row_with_completed_list(const char *label, const char *
 
   prf->text_func = text_func;
   SG_SIGNAL_CONNECT(prf->text, "changed", call_text_func, (gpointer)prf);
+  SG_SIGNAL_CONNECT(prf->text, "changed", prefs_change_callback, NULL);
 
   SG_SIGNAL_CONNECT(prf->text, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
   SG_SIGNAL_CONNECT(prf->text, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
@@ -972,7 +1065,7 @@ static void prefs_r_callback(GtkWidget *w, gpointer context)
       gtk_adjustment_set_value(GTK_ADJUSTMENT(prf->radj), r);
       reflect_color(prf);
     }
-  else gtk_entry_set_text(GTK_ENTRY(w), "err");
+  else sg_entry_set_text(GTK_ENTRY(w), "err");
 
 }
 
@@ -989,7 +1082,7 @@ static void prefs_g_callback(GtkWidget *w, gpointer context)
       gtk_adjustment_set_value(GTK_ADJUSTMENT(prf->gadj), r);
       reflect_color(prf);
     }
-  else gtk_entry_set_text(GTK_ENTRY(w), "err");
+  else sg_entry_set_text(GTK_ENTRY(w), "err");
 
 }
 
@@ -1006,7 +1099,7 @@ static void prefs_b_callback(GtkWidget *w, gpointer context)
       gtk_adjustment_set_value(GTK_ADJUSTMENT(prf->badj), r);
       reflect_color(prf);
     }
-  else gtk_entry_set_text(GTK_ENTRY(w), "err");
+  else sg_entry_set_text(GTK_ENTRY(w), "err");
 
 }
 
@@ -1120,6 +1213,10 @@ static prefs_info *prefs_color_selector_row(const char *label, const char *varna
   SG_SIGNAL_CONNECT(prf->gadj, "value_changed", prefs_call_color_func_callback, (gpointer)prf);
   SG_SIGNAL_CONNECT(prf->badj, "value_changed", prefs_call_color_func_callback, (gpointer)prf);
 
+  SG_SIGNAL_CONNECT(prf->radj, "value_changed", prefs_change_callback, NULL);
+  SG_SIGNAL_CONNECT(prf->gadj, "value_changed", prefs_change_callback, NULL);
+  SG_SIGNAL_CONNECT(prf->badj, "value_changed", prefs_change_callback, NULL);
+
   SG_SIGNAL_CONNECT(prf->radj, "value_changed", prefs_color_callback, (gpointer)prf);
   SG_SIGNAL_CONNECT(prf->gadj, "value_changed", prefs_color_callback, (gpointer)prf);
   SG_SIGNAL_CONNECT(prf->badj, "value_changed", prefs_color_callback, (gpointer)prf);
@@ -1206,6 +1303,7 @@ static GtkWidget *make_inner_label(const char *label, GtkWidget *parent, GtkWidg
 static gint preferences_delete_callback(GtkWidget *w, GdkEvent *event, gpointer context)
 {
   prefs_helping = false;
+  clear_prefs_dialog_error();
   gtk_widget_hide(preferences_dialog);
   return(true);
 }
@@ -1213,6 +1311,7 @@ static gint preferences_delete_callback(GtkWidget *w, GdkEvent *event, gpointer 
 static void preferences_dismiss_callback(GtkWidget *w, gpointer context) 
 {
   prefs_helping = false;
+  clear_prefs_dialog_error();
   gtk_widget_hide(preferences_dialog);
 }
 
@@ -1241,10 +1340,53 @@ static void reflect_prefs(void)
     }
 }
 
+static void prefs_set_dialog_title(const char *filename)
+{
+  char *str;
+  if (filename)
+    {
+      if (prefs_saved_filename) FREE(prefs_saved_filename);
+      prefs_saved_filename = copy_string(filename);
+    }
+  if (prefs_saved_filename)
+    {
+      if (prefs_time)
+	str = mus_format("Preferences%s (%s: saved in %s)\n",
+			 (prefs_unsaved) ? "*" : "",
+			 prefs_time,
+			 prefs_saved_filename);
+      else str = mus_format("Preferences%s (saved in %s)\n",
+			    (prefs_unsaved) ? "*" : "",
+			    prefs_saved_filename);
+    }
+  else str = mus_format("Preferences%s",
+			(prefs_unsaved) ? "*" : "");
+  gtk_window_set_title(GTK_WINDOW(preferences_dialog), str);
+  FREE(str);
+}
+
 static void preferences_reset_callback(GtkWidget *w, gpointer context) 
 {
+  clear_prefs_dialog_error();
   snd_set_global_defaults(true); 
   reflect_prefs();
+  prefs_unsaved = false;
+  if (prefs_saved_filename) 
+    {
+      char *fullname;
+      fullname = mus_expand_filename(prefs_saved_filename);
+      if (mus_file_probe(fullname))
+	snd_remove(fullname, IGNORE_CACHE);
+      FREE(prefs_saved_filename);
+      FREE(fullname);
+      prefs_saved_filename = NULL;
+      if (prefs_time)
+	{
+	  FREE(prefs_time);
+	  prefs_time = NULL;
+	}
+    }
+  prefs_set_dialog_title(NULL);
 }
 
 static void save_prefs(const char *filename)
@@ -1269,12 +1411,28 @@ static void save_prefs(const char *filename)
     }
   else snd_error("can't save preferences: %s %s", filename, snd_io_strerror());
   FREE(fullname);
+#if HAVE_STRFTIME
+  {
+    time_t ts;
+    time(&ts);
+    if (!prefs_time) prefs_time = (char *)CALLOC(TIME_STR_SIZE, sizeof(char));
+    strftime(prefs_time, TIME_STR_SIZE, "%H:%M", localtime(&ts));
+  }
+#endif
+  prefs_unsaved = false;
+  prefs_set_dialog_title(filename);
 }
 
 static void preferences_save_callback(GtkWidget *w, gpointer context) 
 {
-  save_prefs(save_options_in_prefs()); /* TODO: redirect (for save_options) + msg -- need a global error site */
+  clear_prefs_dialog_error();
+  redirect_snd_error_to(post_prefs_dialog_error, NULL);
+  redirect_snd_warning_to(post_prefs_dialog_error, NULL);
+  save_prefs(save_options_in_prefs());
+  redirect_snd_error_to(NULL, NULL);
+  redirect_snd_warning_to(NULL, NULL);
 }
+
 
 
 /* ---------------- errors ---------------- */
@@ -1338,7 +1496,7 @@ static gint startup_height_erase_func(gpointer context)
 static void startup_width_error(const char *msg, void *data)
 {
   prefs_info *prf = (prefs_info *)data;
-  gtk_entry_set_text(GTK_ENTRY(prf->text), "right");
+  sg_entry_set_text(GTK_ENTRY(prf->text), "right");
   g_timeout_add_full(0,
 		     ERROR_WAIT_TIME,
 		     startup_width_erase_func,
@@ -1348,7 +1506,7 @@ static void startup_width_error(const char *msg, void *data)
 static void startup_height_error(const char *msg, void *data)
 {
   prefs_info *prf = (prefs_info *)data;
-  gtk_entry_set_text(GTK_ENTRY(prf->rtxt), "right");
+  sg_entry_set_text(GTK_ENTRY(prf->rtxt), "right");
   g_timeout_add_full(0,
 		     ERROR_WAIT_TIME,
 		     startup_height_erase_func,
@@ -1526,11 +1684,11 @@ static char *peak_env_directory(void)
 
 static void reflect_peak_envs(prefs_info *prf) 
 {
-  if (include_peak_env_directory) FREE(include_peak_env_directory);
+  if (include_peak_env_directory) {FREE(include_peak_env_directory); include_peak_env_directory = NULL;}
   include_peak_env_directory = copy_string(peak_env_directory());
   include_peak_envs = find_peak_envs();
   set_toggle_button(prf->toggle, include_peak_envs, false, (void *)prf);
-  gtk_entry_set_text(GTK_ENTRY(prf->text), include_peak_env_directory);
+  sg_entry_set_text(GTK_ENTRY(prf->text), include_peak_env_directory);
 }
 
 static void peak_envs_toggle(prefs_info *prf)
@@ -1544,7 +1702,7 @@ static void peak_envs_text(prefs_info *prf)
   str = (char *)gtk_entry_get_text(GTK_ENTRY(prf->text));
   if ((str) && (*str))
     {
-      if (include_peak_env_directory) FREE(include_peak_env_directory);
+      if (include_peak_env_directory) {FREE(include_peak_env_directory); include_peak_env_directory = NULL;}
       include_peak_env_directory = copy_string(str);
     }
 }
@@ -1680,12 +1838,35 @@ static void verbose_cursor_toggle(prefs_info *prf)
 static void reflect_cursor_follows_play(prefs_info *prf) 
 {
   set_toggle_button(prf->toggle, cursor_follows_play(ss), false, (void *)prf);
+  int_to_textfield(prf->rtxt, cursor_location_offset(ss));
+  float_to_textfield(prf->text, cursor_update_interval(ss));
 }
 
 static void cursor_follows_play_toggle(prefs_info *prf)
 {
   in_set_cursor_follows_play(ss, (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prf->toggle))) ? FOLLOW_ALWAYS : DONT_FOLLOW);
 }
+
+static void cursor_location_text(prefs_info *prf)
+{
+  char *str;
+  str = (char *)gtk_entry_get_text(GTK_ENTRY(prf->text));
+  if ((str) && (*str))
+    {
+      Float interval = DEFAULT_CURSOR_UPDATE_INTERVAL;
+      sscanf(str, "%f", &interval);
+      if (interval >= 0.0)
+	set_cursor_update_interval(interval);
+      str = (char *)gtk_entry_get_text(GTK_ENTRY(prf->rtxt));
+      if ((str) && (*str))
+	{
+	  int loc = DEFAULT_CURSOR_LOCATION_OFFSET;
+	  sscanf(str, "%d", &loc);
+	  set_cursor_location_offset(loc);
+	}
+    }
+}
+
 
 /* ---------------- cursor-size ---------------- */
 
@@ -1815,7 +1996,8 @@ static void just_sounds_toggle(prefs_info *prf)
 
 static void reflect_temp_dir(prefs_info *prf)
 {
-  gtk_entry_set_text(GTK_ENTRY(prf->text), temp_dir(ss));
+  ASSERT_WIDGET_TYPE(GTK_IS_ENTRY(prf->text), prf->text);
+  sg_entry_set_text(GTK_ENTRY(prf->text), temp_dir(ss));
 }
 
 static bool local_access(char *dir)
@@ -1836,7 +2018,7 @@ static bool local_access(char *dir)
 static gint temp_dir_error_erase_func(gpointer context)
 {
   prefs_info *prf = (prefs_info *)context;
-  gtk_entry_set_text(GTK_ENTRY(prf->text), temp_dir(ss));
+  sg_entry_set_text(GTK_ENTRY(prf->text), temp_dir(ss));
   return(0);
 }
 
@@ -1854,7 +2036,7 @@ static void temp_dir_text(prefs_info *prf)
     }
   else
     {
-      gtk_entry_set_text(GTK_ENTRY(prf->text), "can't access that directory");
+      sg_entry_set_text(GTK_ENTRY(prf->text), "can't access that directory");
       g_timeout_add_full(0,
 		      ERROR_WAIT_TIME,
 		      temp_dir_error_erase_func,
@@ -1868,13 +2050,13 @@ static void temp_dir_text(prefs_info *prf)
 static gint save_dir_error_erase_func(gpointer context)
 {
   prefs_info *prf = (prefs_info *)context;
-  gtk_entry_set_text(GTK_ENTRY(prf->text), save_dir(ss));
+  sg_entry_set_text(GTK_ENTRY(prf->text), save_dir(ss));
   return(0);
 }
 
 static void reflect_save_dir(prefs_info *prf)
 {
-  gtk_entry_set_text(GTK_ENTRY(prf->text), save_dir(ss));
+  sg_entry_set_text(GTK_ENTRY(prf->text), save_dir(ss));
 }
 
 static void save_dir_text(prefs_info *prf)
@@ -1891,7 +2073,7 @@ static void save_dir_text(prefs_info *prf)
     }
   else
     {
-      gtk_entry_set_text(GTK_ENTRY(prf->text), "can't access that directory");
+      sg_entry_set_text(GTK_ENTRY(prf->text), "can't access that directory");
       g_timeout_add_full(0,
 		      ERROR_WAIT_TIME,
 		      save_dir_error_erase_func,
@@ -1904,7 +2086,7 @@ static void save_dir_text(prefs_info *prf)
 
 static void reflect_save_state_file(prefs_info *prf)
 {
-  gtk_entry_set_text(GTK_ENTRY(prf->text), save_state_file(ss));
+  sg_entry_set_text(GTK_ENTRY(prf->text), save_state_file(ss));
 }
 
 static void save_state_file_text(prefs_info *prf)
@@ -1925,7 +2107,7 @@ static void save_state_file_text(prefs_info *prf)
 
 static void reflect_ladspa_dir(prefs_info *prf)
 {
-  gtk_entry_set_text(GTK_ENTRY(prf->text), ladspa_dir(ss));
+  sg_entry_set_text(GTK_ENTRY(prf->text), ladspa_dir(ss));
 }
 
 static void ladspa_dir_text(prefs_info *prf)
@@ -1951,7 +2133,7 @@ static void reflect_view_files_directory(prefs_info *prf)
 {
   if (include_vf_directory) FREE(include_vf_directory);
   include_vf_directory = copy_string(view_files_find_any_directory());
-  gtk_entry_set_text(GTK_ENTRY(prf->text), view_files_find_any_directory());
+  sg_entry_set_text(GTK_ENTRY(prf->text), view_files_find_any_directory());
 }
 
 static void view_files_directory_text(prefs_info *prf)
@@ -1985,7 +2167,7 @@ static void save_view_files_directory(prefs_info *prf, FILE *fd)
 
 static void reflect_html_program(prefs_info *prf)
 {
-  gtk_entry_set_text(GTK_ENTRY(prf->text), html_program(ss));
+  sg_entry_set_text(GTK_ENTRY(prf->text), html_program(ss));
 }
 
 static void html_program_text(prefs_info *prf)
@@ -2474,7 +2656,7 @@ static void reflect_initial_bounds(prefs_info *prf)
   /* text has beg : dur, toggle true if full dur */
   char *str;
   str = initial_bounds_to_string();
-  gtk_entry_set_text(GTK_ENTRY(prf->text), str);
+  sg_entry_set_text(GTK_ENTRY(prf->text), str);
   FREE(str);
   set_toggle_button(prf->toggle, use_full_duration(), false, (void *)prf);
 }
@@ -2600,7 +2782,7 @@ static void grid_density_text_callback(prefs_info *prf)
 	  in_set_grid_density(value);
 	  gtk_adjustment_set_value(GTK_ADJUSTMENT(prf->adj), value / prf->scale_max);
 	}
-      else gtk_entry_set_text(GTK_ENTRY(prf->text), "right");
+      else sg_entry_set_text(GTK_ENTRY(prf->text), "right");
 
     }
 }
@@ -2611,7 +2793,7 @@ static const char *show_axes_choices[5] = {"none", "X and Y", "just X", "X and Y
 
 static void reflect_show_axes(prefs_info *prf)
 {
-  gtk_entry_set_text(GTK_ENTRY(GTK_BIN(prf->text)->child), (char *)show_axes_choices[(int)show_axes(ss)]);
+  sg_entry_set_text(GTK_ENTRY(GTK_BIN(prf->text)->child), (char *)show_axes_choices[(int)show_axes(ss)]);
 }
 
 static void show_axes_from_text(prefs_info *prf)
@@ -2648,7 +2830,7 @@ static const char *x_axis_styles[5] = {"seconds", "samples", "% of total", "beat
 
 static void reflect_x_axis_style(prefs_info *prf)
 {
-  gtk_entry_set_text(GTK_ENTRY(GTK_BIN(prf->text)->child), (char *)x_axis_styles[(int)x_axis_style(ss)]);
+  sg_entry_set_text(GTK_ENTRY(GTK_BIN(prf->text)->child), (char *)x_axis_styles[(int)x_axis_style(ss)]);
 }
 
 static void x_axis_style_from_text(prefs_info *prf)
@@ -2807,13 +2989,13 @@ static void selection_color_func(prefs_info *prf, float r, float g, float b)
 static gint axis_label_font_error_erase_func(gpointer context)
 {
   prefs_info *prf = (prefs_info *)context;
-  gtk_entry_set_text(GTK_ENTRY(prf->text), axis_label_font(ss));
+  sg_entry_set_text(GTK_ENTRY(prf->text), axis_label_font(ss));
   return(0);
 }
 
 static void reflect_axis_label_font(prefs_info *prf)
 {
-  gtk_entry_set_text(GTK_ENTRY(prf->text), axis_label_font(ss));
+  sg_entry_set_text(GTK_ENTRY(prf->text), axis_label_font(ss));
 }
 
 static void axis_label_font_text(prefs_info *prf)
@@ -2822,12 +3004,12 @@ static void axis_label_font_text(prefs_info *prf)
   str = (char *)gtk_entry_get_text(GTK_ENTRY(prf->text));
   if ((!str) || (!(*str)))
     {
-      gtk_entry_set_text(GTK_ENTRY(prf->text), axis_label_font(ss));
+      sg_entry_set_text(GTK_ENTRY(prf->text), axis_label_font(ss));
       return;
     }
   if (!(set_axis_label_font(str)))
     {
-      gtk_entry_set_text(GTK_ENTRY(prf->text), "can't find that font");
+      sg_entry_set_text(GTK_ENTRY(prf->text), "can't find that font");
       g_timeout_add_full(0,
 		      ERROR_WAIT_TIME,
 		      axis_label_font_error_erase_func,
@@ -2841,13 +3023,13 @@ static void axis_label_font_text(prefs_info *prf)
 static gint axis_numbers_font_error_erase_func(gpointer context)
 {
   prefs_info *prf = (prefs_info *)context;
-  gtk_entry_set_text(GTK_ENTRY(prf->text), axis_numbers_font(ss));
+  sg_entry_set_text(GTK_ENTRY(prf->text), axis_numbers_font(ss));
   return(0);
 }
 
 static void reflect_axis_numbers_font(prefs_info *prf)
 {
-  gtk_entry_set_text(GTK_ENTRY(prf->text), axis_numbers_font(ss));
+  sg_entry_set_text(GTK_ENTRY(prf->text), axis_numbers_font(ss));
 }
 
 static void axis_numbers_font_text(prefs_info *prf)
@@ -2856,12 +3038,12 @@ static void axis_numbers_font_text(prefs_info *prf)
   str = (char *)gtk_entry_get_text(GTK_ENTRY(prf->text));
   if ((!str) || (!(*str)))
     {
-      gtk_entry_set_text(GTK_ENTRY(prf->text), axis_numbers_font(ss));
+      sg_entry_set_text(GTK_ENTRY(prf->text), axis_numbers_font(ss));
       return;
     }
   if (!(set_axis_numbers_font(str)))
     {
-      gtk_entry_set_text(GTK_ENTRY(prf->text), "can't find that font");
+      sg_entry_set_text(GTK_ENTRY(prf->text), "can't find that font");
       g_timeout_add_full(0,
 		      ERROR_WAIT_TIME,
 		      axis_numbers_font_error_erase_func,
@@ -2875,13 +3057,13 @@ static void axis_numbers_font_text(prefs_info *prf)
 static gint peaks_font_error_erase_func(gpointer context)
 {
   prefs_info *prf = (prefs_info *)context;
-  gtk_entry_set_text(GTK_ENTRY(prf->text), peaks_font(ss));
+  sg_entry_set_text(GTK_ENTRY(prf->text), peaks_font(ss));
   return(0);
 }
 
 static void reflect_peaks_font(prefs_info *prf)
 {
-  gtk_entry_set_text(GTK_ENTRY(prf->text), peaks_font(ss));
+  sg_entry_set_text(GTK_ENTRY(prf->text), peaks_font(ss));
 }
 
 static void peaks_font_text(prefs_info *prf)
@@ -2890,12 +3072,12 @@ static void peaks_font_text(prefs_info *prf)
   str = (char *)gtk_entry_get_text(GTK_ENTRY(prf->text));
   if ((!str) || (!(*str)))
     {
-      gtk_entry_set_text(GTK_ENTRY(prf->text), peaks_font(ss));
+      sg_entry_set_text(GTK_ENTRY(prf->text), peaks_font(ss));
       return;
     }
   if (!(set_peaks_font(str)))
     {
-      gtk_entry_set_text(GTK_ENTRY(prf->text), "can't find that font");
+      sg_entry_set_text(GTK_ENTRY(prf->text), "can't find that font");
       g_timeout_add_full(0,
 		      ERROR_WAIT_TIME,
 		      peaks_font_error_erase_func,
@@ -2909,13 +3091,13 @@ static void peaks_font_text(prefs_info *prf)
 static gint bold_peaks_font_error_erase_func(gpointer context)
 {
   prefs_info *prf = (prefs_info *)context;
-  gtk_entry_set_text(GTK_ENTRY(prf->text), bold_peaks_font(ss));
+  sg_entry_set_text(GTK_ENTRY(prf->text), bold_peaks_font(ss));
   return(0);
 }
 
 static void reflect_bold_peaks_font(prefs_info *prf)
 {
-  gtk_entry_set_text(GTK_ENTRY(prf->text), bold_peaks_font(ss));
+  sg_entry_set_text(GTK_ENTRY(prf->text), bold_peaks_font(ss));
 }
 
 static void bold_peaks_font_text(prefs_info *prf)
@@ -2924,12 +3106,12 @@ static void bold_peaks_font_text(prefs_info *prf)
   str = (char *)gtk_entry_get_text(GTK_ENTRY(prf->text));
   if ((!str) || (!(*str)))
     {
-      gtk_entry_set_text(GTK_ENTRY(prf->text), bold_peaks_font(ss));
+      sg_entry_set_text(GTK_ENTRY(prf->text), bold_peaks_font(ss));
       return;
     }
   if (!(set_bold_peaks_font(str)))
     {
-      gtk_entry_set_text(GTK_ENTRY(prf->text), "can't find that font");
+      sg_entry_set_text(GTK_ENTRY(prf->text), "can't find that font");
       g_timeout_add_full(0,
 		      ERROR_WAIT_TIME,
 		      bold_peaks_font_error_erase_func,
@@ -2942,13 +3124,13 @@ static void bold_peaks_font_text(prefs_info *prf)
 static gint tiny_font_error_erase_func(gpointer context)
 {
   prefs_info *prf = (prefs_info *)context;
-  gtk_entry_set_text(GTK_ENTRY(prf->text), tiny_font(ss));
+  sg_entry_set_text(GTK_ENTRY(prf->text), tiny_font(ss));
   return(0);
 }
 
 static void reflect_tiny_font(prefs_info *prf)
 {
-  gtk_entry_set_text(GTK_ENTRY(prf->text), tiny_font(ss));
+  sg_entry_set_text(GTK_ENTRY(prf->text), tiny_font(ss));
 }
 
 static void tiny_font_text(prefs_info *prf)
@@ -2957,12 +3139,12 @@ static void tiny_font_text(prefs_info *prf)
   str = (char *)gtk_entry_get_text(GTK_ENTRY(prf->text));
   if ((!str) || (!(*str)))
     {
-      gtk_entry_set_text(GTK_ENTRY(prf->text), tiny_font(ss));
+      sg_entry_set_text(GTK_ENTRY(prf->text), tiny_font(ss));
       return;
     }
   if (!(set_tiny_font(str)))
     {
-      gtk_entry_set_text(GTK_ENTRY(prf->text), "can't find that font");
+      sg_entry_set_text(GTK_ENTRY(prf->text), "can't find that font");
       g_timeout_add_full(0,
 		      ERROR_WAIT_TIME,
 		      tiny_font_error_erase_func,
@@ -2982,7 +3164,7 @@ static void fft_size_to_text(prefs_info *prf)
 {
   char *new_size;
   new_size = mus_format(OFF_TD, transform_size(ss));
-  gtk_entry_set_text(GTK_ENTRY(prf->text), new_size);
+  sg_entry_set_text(GTK_ENTRY(prf->text), new_size);
   FREE(new_size);
 }
 
@@ -3065,7 +3247,7 @@ static list_completer_info *transform_type_completer_info = NULL;
 
 static void reflect_transform_type(prefs_info *prf)
 {
-  gtk_entry_set_text(GTK_ENTRY(GTK_BIN(prf->text)->child), 
+  sg_entry_set_text(GTK_ENTRY(GTK_BIN(prf->text)->child), 
 		     (char *)transform_types[mus_iclamp(0, transform_type(ss), NUM_TRANSFORM_TYPES - 1)]);
 }
 
@@ -3122,7 +3304,7 @@ static list_completer_info *fft_window_completer_info = NULL;
 
 static void reflect_fft_window(prefs_info *prf)
 {
-  gtk_entry_set_text(GTK_ENTRY(GTK_BIN(prf->text)->child), 
+  sg_entry_set_text(GTK_ENTRY(GTK_BIN(prf->text)->child), 
 		     (char *)fft_windows[(int)fft_window(ss)]);
 }
 
@@ -3195,7 +3377,7 @@ static void fft_window_beta_text_callback(prefs_info *prf)
 	  in_set_fft_window_beta(value);
 	  gtk_adjustment_set_value(GTK_ADJUSTMENT(prf->adj), value / prf->scale_max);
 	}
-      else gtk_entry_set_text(GTK_ENTRY(prf->text), "right");
+      else sg_entry_set_text(GTK_ENTRY(prf->text), "right");
     }
 }
 
@@ -3251,7 +3433,7 @@ static char *colormap_completer(char *text, void *data)
 
 static void reflect_colormap(prefs_info *prf)
 {
-  gtk_entry_set_text(GTK_ENTRY(GTK_BIN(prf->text)->child), 
+  sg_entry_set_text(GTK_ENTRY(GTK_BIN(prf->text)->child), 
 		     colormap_name(color_map(ss)));
 }
 
@@ -3302,7 +3484,7 @@ static void log_magnitude_toggle(prefs_info *prf)
 
 static void reflect_min_dB(prefs_info *prf)
 {
-  float_to_textfield(prf->text, min_dB(ss));
+  float_1_to_textfield(prf->text, min_dB(ss));
 }
 
 static void min_dB_text(prefs_info *prf)
@@ -3386,7 +3568,7 @@ static gint mark_tag_height_erase_func(gpointer context)
 static void mark_tag_width_error(const char *msg, void *data)
 {
   prefs_info *prf = (prefs_info *)data;
-  gtk_entry_set_text(GTK_ENTRY(prf->text), "right");
+  sg_entry_set_text(GTK_ENTRY(prf->text), "right");
   g_timeout_add_full(0,
 		  ERROR_WAIT_TIME,
 		  mark_tag_width_erase_func,
@@ -3396,7 +3578,7 @@ static void mark_tag_width_error(const char *msg, void *data)
 static void mark_tag_height_error(const char *msg, void *data)
 {
   prefs_info *prf = (prefs_info *)data;
-  gtk_entry_set_text(GTK_ENTRY(prf->rtxt), "right");
+  sg_entry_set_text(GTK_ENTRY(prf->rtxt), "right");
   g_timeout_add_full(0,
 		  ERROR_WAIT_TIME,
 		  mark_tag_height_erase_func,
@@ -3469,7 +3651,7 @@ static gint mix_tag_height_erase_func(gpointer context)
 static void mix_tag_width_error(const char *msg, void *data)
 {
   prefs_info *prf = (prefs_info *)data;
-  gtk_entry_set_text(GTK_ENTRY(prf->text), "right");
+  sg_entry_set_text(GTK_ENTRY(prf->text), "right");
   g_timeout_add_full(0,
 		  ERROR_WAIT_TIME,
 		  mix_tag_width_erase_func,
@@ -3479,7 +3661,7 @@ static void mix_tag_width_error(const char *msg, void *data)
 static void mix_tag_height_error(const char *msg, void *data)
 {
   prefs_info *prf = (prefs_info *)data;
-  gtk_entry_set_text(GTK_ENTRY(prf->rtxt), "right");
+  sg_entry_set_text(GTK_ENTRY(prf->rtxt), "right");
   g_timeout_add_full(0,
 		  ERROR_WAIT_TIME,
 		  mix_tag_height_erase_func,
@@ -3699,7 +3881,7 @@ static void clm_file_name_text(prefs_info *prf)
 
 static void reflect_clm_file_name(prefs_info *prf)
 {
-  gtk_entry_set_text(GTK_ENTRY(prf->text), clm_file_name());
+  sg_entry_set_text(GTK_ENTRY(prf->text), clm_file_name());
 }
 
 
@@ -3799,7 +3981,7 @@ static void optimization_from_text(prefs_info *prf)
 
 static void reflect_listener_prompt(prefs_info *prf)
 {
-  gtk_entry_set_text(GTK_ENTRY(prf->text), listener_prompt(ss));
+  sg_entry_set_text(GTK_ENTRY(prf->text), listener_prompt(ss));
 }
 
 static void listener_prompt_text(prefs_info *prf)
@@ -3917,13 +4099,13 @@ static void listener_text_color_func(prefs_info *prf, float r, float g, float b)
 static gint listener_font_error_erase_func(gpointer context)
 {
   prefs_info *prf = (prefs_info *)context;
-  gtk_entry_set_text(GTK_ENTRY(prf->text), listener_font(ss));
+  sg_entry_set_text(GTK_ENTRY(prf->text), listener_font(ss));
   return(0);
 }
 
 static void reflect_listener_font(prefs_info *prf)
 {
-  gtk_entry_set_text(GTK_ENTRY(prf->text), listener_font(ss));
+  sg_entry_set_text(GTK_ENTRY(prf->text), listener_font(ss));
 }
 
 static void listener_font_text(prefs_info *prf)
@@ -3932,12 +4114,12 @@ static void listener_font_text(prefs_info *prf)
   str = (char *)gtk_entry_get_text(GTK_ENTRY(prf->text));
   if ((!str) || (!(*str)))
     {
-      gtk_entry_set_text(GTK_ENTRY(prf->text), listener_font(ss));
+      sg_entry_set_text(GTK_ENTRY(prf->text), listener_font(ss));
       return;
     }
   if (!(set_listener_font(str)))
     {
-      gtk_entry_set_text(GTK_ENTRY(prf->text), "can't find that font");
+      sg_entry_set_text(GTK_ENTRY(prf->text), "can't find that font");
       g_timeout_add_full(0,
 		      ERROR_WAIT_TIME,
 		      listener_font_error_erase_func,
@@ -4088,7 +4270,7 @@ void start_preferences_dialog(void)
     current_sep = make_inter_variable_separator(dpy_box);
     include_peak_env_directory = copy_string(peak_env_directory());
     include_peak_envs = find_peak_envs();
-    prf = prefs_row_with_toggle_with_text("use peak envs to speed up initial display", "save-peak-env-info",
+    prf = prefs_row_with_toggle_with_text("save peak envs to speed up initial display", "save-peak-env-info",
 					  include_peak_envs,
 					  "directory:", include_peak_env_directory, 25,
 					  dpy_box,
@@ -4253,11 +4435,21 @@ void start_preferences_dialog(void)
     remember_pref(prf, reflect_verbose_cursor, NULL);
 
     current_sep = make_inter_variable_separator(dpy_box);
-    prf = prefs_row_with_toggle("track current location while playing", S_cursor_follows_play,
-				cursor_follows_play(ss), 
-				dpy_box,
-				cursor_follows_play_toggle);
-    remember_pref(prf, reflect_cursor_follows_play, NULL);
+    {
+      char *str1;
+      str = mus_format("%.2f", cursor_update_interval(ss));
+      str1 = mus_format("%d", cursor_location_offset(ss));
+      prf = prefs_row_with_toggle_with_two_texts("track current location while playing", S_cursor_follows_play,
+						 cursor_follows_play(ss), 
+						 "update:", str,
+						 "offset:", str1, 8, 
+						 dpy_box,
+						 cursor_follows_play_toggle,
+						 cursor_location_text);
+      remember_pref(prf, reflect_cursor_follows_play, NULL);
+      FREE(str);
+      FREE(str1);
+    }
 
     current_sep = make_inter_variable_separator(dpy_box);
     str = mus_format("%d", cursor_size(ss));
@@ -4594,7 +4786,7 @@ void start_preferences_dialog(void)
     remember_pref(prf, reflect_fft_log_magnitude, NULL);
 
     current_sep = make_inter_variable_separator(fft_box);
-    str = mus_format("%.3f", min_dB(ss));
+    str = mus_format("%.1f", min_dB(ss));
     prf = prefs_row_with_text("minimum y-axis dB value", S_min_dB, str,
 			      fft_box,
 			      min_dB_text);
@@ -4806,4 +4998,6 @@ void start_preferences_dialog(void)
   }
   set_dialog_widget(PREFERENCES_DIALOG, preferences_dialog);
   gtk_widget_show(preferences_dialog);
+  prefs_unsaved = false;
+  prefs_set_dialog_title(NULL);
 }

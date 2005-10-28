@@ -5,11 +5,9 @@
 
 /* things left to do:
 
-   what about unsaved changes -- should we warn upon exit?
     line cursor during play?
-    save confirmation
     preset packages
-   snd-test somehow
+    snd-test somehow
 
    remember state for subsequent load (extensions.scm)
      (remember-sound-state) ;also needs turn-off code
@@ -24,12 +22,9 @@
    various additional key bindings? move-one-pixel zoom-one-pixel [how to specify fancy keys?]
    nb.scm (buffer for it)
 
-    audio section:
-    dac size, dac-combines-channels, cursor offset, smart line cursor, recorder setting, audio mixer settings
-    ss->Dac_Size = DEFAULT_DAC_SIZE;
+    audio section: (gtk side too)
+    dac-combines-channels, cursor offset, smart line cursor, recorder setting, audio mixer settings
     ss->Dac_Combines_Channels = DEFAULT_DAC_COMBINES_CHANNELS;
-    cursor-location-offset
-    cursor-update-interval
     recorder stuff? -> buffer-size in-chans in-data-format in-device out-chans out-data-format out-header-type srate
     audio mixer settings? -> volume in some mode
     audio output device? or sound card?
@@ -43,7 +38,9 @@
 
 
 static Widget preferences_dialog = NULL;
-static bool prefs_helping = false;
+static bool prefs_helping = false, prefs_unsaved = false;
+static char *prefs_saved_filename = NULL;
+static char *prefs_time = NULL;
 
 #define MID_POSITION 40
 #define COLOR_POSITION 50
@@ -148,6 +145,17 @@ static void float_to_textfield(Widget w, Float val)
   FREE(str);
 }
 
+static void float_1_to_textfield(Widget w, Float val)
+{
+  char *str;
+  ASSERT_WIDGET_TYPE(XmIsTextField(w), w);
+  str = (char *)CALLOC(12, sizeof(char));
+  mus_snprintf(str, 12, "%.1f", val);
+  XmTextFieldSetString(w, str);
+  FREE(str);
+}
+
+
 #include <X11/IntrinsicP.h>
 
 static Widget find_radio_button(Widget parent, const char *name)
@@ -223,6 +231,37 @@ static void mouse_leave_pref_callback(Widget w, XtPointer context, XEvent *event
       prf->help_id = 0;
     }
 }
+
+static bool prefs_dialog_error_is_posted = false;
+
+static void post_prefs_dialog_error(const char *message, void *data)
+{
+  XmString title;
+  title = XmStringCreate((char *)message, XmFONTLIST_DEFAULT_TAG);
+  XtVaSetValues(preferences_dialog, 
+		XmNmessageString, title, 
+		NULL);
+  XmStringFree(title);
+  prefs_dialog_error_is_posted = (message != NULL);
+}
+
+static void clear_prefs_dialog_error(void)
+{
+  if (prefs_dialog_error_is_posted)
+    {
+      prefs_dialog_error_is_posted = false;
+      post_prefs_dialog_error(NULL, NULL);
+    }
+}
+
+static void prefs_set_dialog_title(const char *filename);
+static void prefs_change_callback(Widget w, XtPointer context, XtPointer info)
+{
+  prefs_unsaved = true;
+  prefs_set_dialog_title(NULL);
+  clear_prefs_dialog_error();
+}
+
 
 
 /* ---------------- row (main) label widget ---------------- */
@@ -415,6 +454,7 @@ static Widget make_row_toggle(prefs_info *prf, bool current_value, Widget left_w
 
   XtAddEventHandler(w, EnterWindowMask, false, mouse_enter_pref_callback, (XtPointer)prf);
   XtAddEventHandler(w, LeaveWindowMask, false, mouse_leave_pref_callback, (XtPointer)prf);
+  XtAddCallback(w, XmNvalueChangedCallback, prefs_change_callback, NULL);
 
   return(w);
 }
@@ -533,6 +573,9 @@ static Widget make_row_arrows(prefs_info *prf, Widget box, Widget left_widget, W
   XtAddCallback(prf->arrow_up, XmNarmCallback, call_arrow_up_press, (XtPointer)prf);
   XtAddCallback(prf->arrow_up, XmNdisarmCallback, remove_arrow_func, (XtPointer)prf);
 
+  XtAddCallback(prf->arrow_up, XmNactivateCallback, prefs_change_callback, NULL);
+  XtAddCallback(prf->arrow_down, XmNactivateCallback, prefs_change_callback, NULL);
+
   return(prf->arrow_up);
 }
 
@@ -605,6 +648,8 @@ static Widget make_row_text(prefs_info *prf, const char *text_value, int cols, W
   XtAddEventHandler(w, EnterWindowMask, false, mouse_enter_pref_callback, (XtPointer)prf);
   XtAddEventHandler(w, LeaveWindowMask, false, mouse_leave_pref_callback, (XtPointer)prf);
 
+  XtAddCallback(w, XmNactivateCallback, prefs_change_callback, NULL);
+
   return(w);
 }
 
@@ -638,6 +683,37 @@ static prefs_info *prefs_row_with_toggle_with_text(const char *label, const char
   
   XtAddCallback(prf->toggle, XmNvalueChangedCallback, call_toggle_func, (XtPointer)prf);
   XtAddCallback(prf->text, XmNactivateCallback, call_text_func, (XtPointer)prf);
+
+  return(prf);
+}
+
+static prefs_info *prefs_row_with_toggle_with_two_texts(const char *label, const char *varname, bool current_value,
+							const char *label1, const char *text1, 
+							const char *label2, const char *text2, int cols,
+							Widget box, Widget top_widget,
+							void (*toggle_func)(prefs_info *prf),
+							void (*text_func)(prefs_info *prf))
+{
+  prefs_info *prf = NULL;
+  Widget sep, lab1, lab2, help, sep1;
+  prf = (prefs_info *)CALLOC(1, sizeof(prefs_info));
+  prf->var_name = varname;
+  prf->toggle_func = toggle_func;
+  prf->text_func = text_func;
+
+  prf->label = make_row_label(prf, label, box, top_widget);
+  sep = make_row_middle_separator(prf->label, box, top_widget);
+  prf->toggle = make_row_toggle(prf, current_value, sep, box, top_widget);
+  sep1 = make_row_inner_separator(16, prf->toggle, box, top_widget);
+  lab1 = make_row_inner_label(prf, label1, sep1, box, top_widget);
+  prf->text = make_row_text(prf, text1, cols, lab1, box, top_widget);
+  lab2 = make_row_inner_label(prf, label2, prf->text, box, top_widget);  
+  prf->rtxt = make_row_text(prf, text2, cols, lab2, box, top_widget);
+  help = make_row_help(prf, varname, box, top_widget, prf->rtxt);
+
+  XtAddCallback(prf->toggle, XmNvalueChangedCallback, call_toggle_func, (XtPointer)prf);
+  XtAddCallback(prf->text, XmNactivateCallback, call_text_func, (XtPointer)prf);
+  XtAddCallback(prf->rtxt, XmNactivateCallback, call_text_func, (XtPointer)prf);
 
   return(prf);
 }
@@ -725,6 +801,7 @@ static Widget make_row_radio_box(prefs_info *prf,
       button = XtCreateManagedWidget(labels[i], xmToggleButtonWidgetClass, w, args, n);
 
       XtAddCallback(button, XmNvalueChangedCallback, call_radio_func, (XtPointer)prf);
+      XtAddCallback(button, XmNvalueChangedCallback, prefs_change_callback, NULL);
       XtAddEventHandler(button, EnterWindowMask, false, mouse_enter_pref_callback, (XtPointer)prf);
       XtAddEventHandler(button, LeaveWindowMask, false, mouse_leave_pref_callback, (XtPointer)prf);
     }
@@ -852,6 +929,7 @@ static prefs_info *prefs_row_with_scale(const char *label, const char *varname,
 
   XtAddCallback(prf->scale, XmNvalueChangedCallback, call_scale_func, (XtPointer)prf);
   XtAddCallback(prf->text, XmNactivateCallback, call_scale_text_func, (XtPointer)prf);
+  XtAddCallback(prf->scale, XmNvalueChangedCallback, prefs_change_callback, NULL);
 
   XtAddEventHandler(prf->scale, EnterWindowMask, false, mouse_enter_pref_callback, (XtPointer)prf);
   XtAddEventHandler(prf->scale, LeaveWindowMask, false, mouse_leave_pref_callback, (XtPointer)prf);
@@ -1069,12 +1147,15 @@ static prefs_info *prefs_row_with_completed_list(const char *label, const char *
 	Widget tmp;
 	tmp = XtCreateManagedWidget(values[i],  xmPushButtonWidgetClass, prf->list_menu, args, n);
 	XtAddCallback(tmp, XmNactivateCallback, prefs_list_callback, make_list_entry(prf, (char *)values[i]));
+	XtAddCallback(tmp, XmNactivateCallback, prefs_change_callback, NULL);
       }
 
   prf->error = make_row_error(prf, box, prf->arrow_right, top_widget);
   help = make_row_help(prf, varname, box, top_widget, prf->error);
   prf->text_func = text_func;
   XtAddCallback(prf->text, XmNactivateCallback, call_text_func, (XtPointer)prf);
+  XtAddCallback(prf->text, XmNactivateCallback, prefs_change_callback, NULL);
+  XtAddCallback(prf->arrow_right, XmNactivateCallback, prefs_change_callback, NULL);
 
   prf->list_func = list_func;
 
@@ -1339,6 +1420,10 @@ static prefs_info *prefs_color_selector_row(const char *label, const char *varna
   XtAddCallback(prf->gscl, XmNvalueChangedCallback, prefs_call_color_func_callback, (XtPointer)prf);
   XtAddCallback(prf->bscl, XmNvalueChangedCallback, prefs_call_color_func_callback, (XtPointer)prf);
 
+  XtAddCallback(prf->rscl, XmNvalueChangedCallback, prefs_change_callback, NULL);
+  XtAddCallback(prf->gscl, XmNvalueChangedCallback, prefs_change_callback, NULL);
+  XtAddCallback(prf->bscl, XmNvalueChangedCallback, prefs_change_callback, NULL);
+
   XtAddEventHandler(prf->color, EnterWindowMask, false, mouse_enter_pref_callback, (XtPointer)prf);
   XtAddEventHandler(prf->color, LeaveWindowMask, false, mouse_leave_pref_callback, (XtPointer)prf);
   XtAddEventHandler(prf->rscl, EnterWindowMask, false, mouse_enter_pref_callback, (XtPointer)prf);
@@ -1439,6 +1524,7 @@ static Widget make_inner_label(const char *label, Widget parent, Widget top_widg
 
 static void wm_delete_callback (Widget w, XtPointer context, XtPointer info) 
 {
+  clear_prefs_dialog_error();
   prefs_helping = false;
 }
 
@@ -1457,6 +1543,7 @@ You can also request help on a given topic by clicking the variable name on the 
 static void preferences_quit_callback(Widget w, XtPointer context, XtPointer info) 
 {
   prefs_helping = false;
+  clear_prefs_dialog_error();
   if (XmGetFocusWidget(preferences_dialog) == XmMessageBoxGetChild(preferences_dialog, XmDIALOG_OK_BUTTON))
     XtUnmanageChild(preferences_dialog);
 }
@@ -1474,10 +1561,58 @@ static void reflect_prefs(void)
     }
 }
 
+static void prefs_set_dialog_title(const char *filename)
+{
+  XmString title;
+  char *str;
+  if (filename)
+    {
+      if (prefs_saved_filename) FREE(prefs_saved_filename);
+      prefs_saved_filename = copy_string(filename);
+    }
+  if (prefs_saved_filename)
+    {
+      if (prefs_time)
+	str = mus_format("Preferences%s (%s: saved in %s)\n",
+			 (prefs_unsaved) ? "*" : "",
+			 prefs_time,
+			 prefs_saved_filename);
+      else str = mus_format("Preferences%s (saved in %s)\n",
+			    (prefs_unsaved) ? "*" : "",
+			    prefs_saved_filename);
+    }
+  else str = mus_format("Preferences%s",
+			(prefs_unsaved) ? "*" : "");
+  title = XmStringCreate(str, XmFONTLIST_DEFAULT_TAG);
+  FREE(str);
+  XtVaSetValues(preferences_dialog, 
+		XmNdialogTitle, title, 
+		NULL);
+  XmStringFree(title);
+}
+
 static void preferences_reset_callback(Widget w, XtPointer context, XtPointer info) 
 {
+  clear_prefs_dialog_error();
   snd_set_global_defaults(true); 
   reflect_prefs();
+  prefs_unsaved = false;
+  if (prefs_saved_filename) 
+    {
+      char *fullname;
+      fullname = mus_expand_filename(prefs_saved_filename);
+      if (mus_file_probe(fullname))
+	snd_remove(fullname, IGNORE_CACHE);
+      FREE(prefs_saved_filename);
+      FREE(fullname);
+      prefs_saved_filename = NULL;
+      if (prefs_time)
+	{
+	  FREE(prefs_time);
+	  prefs_time = NULL;
+	}
+    }
+  prefs_set_dialog_title(NULL);
 }
 
 static void save_prefs(const char *filename)
@@ -1502,11 +1637,26 @@ static void save_prefs(const char *filename)
     }
   else snd_error("can't save preferences: %s %s", filename, snd_io_strerror());
   FREE(fullname);
+#if HAVE_STRFTIME
+  {
+    time_t ts;
+    time(&ts);
+    if (!prefs_time) prefs_time = (char *)CALLOC(TIME_STR_SIZE, sizeof(char));
+    strftime(prefs_time, TIME_STR_SIZE, "%H:%M", localtime(&ts));
+  }
+#endif
+  prefs_unsaved = false;
+  prefs_set_dialog_title(filename);
 }
 
 static void preferences_save_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  save_prefs(save_options_in_prefs()); /* TODO: redirect (for save_options) + msg -- need a global error site */
+  clear_prefs_dialog_error();
+  redirect_snd_error_to(post_prefs_dialog_error, NULL);
+  redirect_snd_warning_to(post_prefs_dialog_error, NULL);
+  save_prefs(save_options_in_prefs());
+  redirect_snd_error_to(NULL, NULL);
+  redirect_snd_warning_to(NULL, NULL);
 }
 
 
@@ -1766,7 +1916,7 @@ static char *peak_env_directory(void)
 
 static void reflect_peak_envs(prefs_info *prf) 
 {
-  if (include_peak_env_directory) FREE(include_peak_env_directory);
+  if (include_peak_env_directory) {FREE(include_peak_env_directory); include_peak_env_directory = NULL;}
   include_peak_env_directory = copy_string(peak_env_directory());
   include_peak_envs = find_peak_envs();
   XmToggleButtonSetState(prf->toggle, include_peak_envs, false);
@@ -1786,7 +1936,7 @@ static void peak_envs_text(prefs_info *prf)
   str = XmTextFieldGetString(prf->text);
   if ((str) && (*str))
     {
-      if (include_peak_env_directory) FREE(include_peak_env_directory);
+      if (include_peak_env_directory) {FREE(include_peak_env_directory); include_peak_env_directory = NULL;}
       include_peak_env_directory = copy_string(str);
       XtFree(str);
     }
@@ -1938,6 +2088,8 @@ static void verbose_cursor_toggle(prefs_info *prf)
 static void reflect_cursor_follows_play(prefs_info *prf) 
 {
   XmToggleButtonSetState(prf->toggle, cursor_follows_play(ss), false);
+  int_to_textfield(prf->rtxt, cursor_location_offset(ss));
+  float_to_textfield(prf->text, cursor_update_interval(ss));
 }
 
 static void cursor_follows_play_toggle(prefs_info *prf)
@@ -1945,6 +2097,29 @@ static void cursor_follows_play_toggle(prefs_info *prf)
   ASSERT_WIDGET_TYPE(XmIsToggleButton(prf->toggle), prf->toggle);
   in_set_cursor_follows_play(ss, (XmToggleButtonGetState(prf->toggle) == XmSET) ? FOLLOW_ALWAYS : DONT_FOLLOW);
 }
+
+static void cursor_location_text(prefs_info *prf)
+{
+  char *str;
+  str = XmTextFieldGetString(prf->text);
+  if ((str) && (*str))
+    {
+      Float interval = DEFAULT_CURSOR_UPDATE_INTERVAL;
+      sscanf(str, "%f", &interval);
+      if (interval >= 0.0)
+	set_cursor_update_interval(interval);
+      XtFree(str);
+      str = XmTextFieldGetString(prf->rtxt);
+      if ((str) && (*str))
+	{
+	  int loc = DEFAULT_CURSOR_LOCATION_OFFSET;
+	  sscanf(str, "%d", &loc);
+	  set_cursor_location_offset(loc);
+	  XtFree(str);
+	}
+    }
+}
+
 
 /* ---------------- cursor-size ---------------- */
 
@@ -3827,7 +4002,7 @@ static void log_magnitude_toggle(prefs_info *prf)
 
 static void reflect_min_dB(prefs_info *prf)
 {
-  float_to_textfield(prf->text, min_dB(ss));
+  float_1_to_textfield(prf->text, min_dB(ss));
 }
 
 static void min_dB_text(prefs_info *prf)
@@ -4546,6 +4721,30 @@ static void listener_font_text(prefs_info *prf)
 }
 
 
+/* ---------------- dac-size ---------------- */
+
+static void reflect_dac_size(prefs_info *prf) 
+{
+  int_to_textfield(prf->text, dac_size(ss));
+}
+
+static void dac_size_text(prefs_info *prf)
+{
+  char *str;
+  ASSERT_WIDGET_TYPE(XmIsTextField(prf->text), prf->text);
+  str = XmTextFieldGetString(prf->text);
+  if ((str) && (*str))
+    {
+      int value = 0;
+      sscanf(str, "%d", &value);
+      if (value > 0)
+	set_dac_size(value);
+      else int_to_textfield(prf->text, dac_size(ss));
+      XtFree(str);
+    }
+}
+
+
 /* ---------------- help-button-color ---------------- */
 
 static Pixel saved_help_button_color;
@@ -4832,7 +5031,7 @@ void start_preferences_dialog(void)
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
     include_peak_env_directory = copy_string(peak_env_directory());
     include_peak_envs = find_peak_envs();
-    prf = prefs_row_with_toggle_with_text("use peak envs to speed up initial display", "save-peak-env-info",
+    prf = prefs_row_with_toggle_with_text("save peak envs to speed up initial display", "save-peak-env-info",
 					  include_peak_envs,
 					  "directory:", include_peak_env_directory, 25,
 					  dpy_box, current_sep,
@@ -4995,11 +5194,21 @@ void start_preferences_dialog(void)
     remember_pref(prf, reflect_verbose_cursor, NULL);
 
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
-    prf = prefs_row_with_toggle("track current location while playing", S_cursor_follows_play,
-				cursor_follows_play(ss), 
-				dpy_box, current_sep,
-				cursor_follows_play_toggle);
-    remember_pref(prf, reflect_cursor_follows_play, NULL);
+    {
+      char *str1;
+      str = mus_format("%.2f", cursor_update_interval(ss));
+      str1 = mus_format("%d", cursor_location_offset(ss));
+      prf = prefs_row_with_toggle_with_two_texts("track current location while playing", S_cursor_follows_play,
+						 cursor_follows_play(ss), 
+						 "update:", str,
+						 "offset:", str1, 8, 
+						 dpy_box, current_sep,
+						 cursor_follows_play_toggle,
+						 cursor_location_text);
+      remember_pref(prf, reflect_cursor_follows_play, NULL);
+      FREE(str);
+      FREE(str1);
+    }
 
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
     
@@ -5336,7 +5545,7 @@ void start_preferences_dialog(void)
     remember_pref(prf, reflect_fft_log_magnitude, NULL);
 
     current_sep = make_inter_variable_separator(fft_box, prf->label);
-    str = mus_format("%.3f", min_dB(ss));
+    str = mus_format("%.1f", min_dB(ss));
     prf = prefs_row_with_text("minimum y-axis dB value", S_min_dB, str,
 			      fft_box, current_sep,
 			      min_dB_text);
@@ -5545,6 +5754,37 @@ void start_preferences_dialog(void)
 				   prg_box, current_sep,
 				   listener_text_color_func);
     remember_pref(prf, reflect_listener_text_color, NULL);
+  }
+
+  current_sep = make_inter_topic_separator(topics);
+
+  /* -------- audio -------- */
+  {
+    Widget aud_box, aud_label;
+
+    /* ---------------- audio options ---------------- */
+
+    aud_box = make_top_level_box(topics);
+    aud_label = make_top_level_label("audio options", aud_box);
+
+    str = mus_format("%d", dac_size(ss));
+    prf = prefs_row_with_text("dac buffer size", S_dac_size, 
+			      str,
+			      aud_box, aud_label,
+			      dac_size_text);
+    remember_pref(prf, reflect_dac_size, NULL);
+    FREE(str);
+
+    current_sep = make_inter_variable_separator(aud_box, prf->label);
+
+    /*
+    audio section:
+    dac-combines-channels, smart line cursor, recorder setting, audio mixer settings
+    ss->Dac_Combines_Channels = DEFAULT_DAC_COMBINES_CHANNELS;
+    recorder stuff? -> buffer-size in-chans in-data-format in-device out-chans out-data-format out-header-type srate
+    audio mixer settings? -> volume in some mode
+    audio output device? or sound card?
+    */
   }
 
   current_sep = make_inter_topic_separator(topics);
