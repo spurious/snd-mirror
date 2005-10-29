@@ -22,10 +22,10 @@
    various additional key bindings? move-one-pixel zoom-one-pixel [how to specify fancy keys?]
    nb.scm (buffer for it)
 
-    audio section: (gtk side too)
-    dac-combines-channels, cursor offset, smart line cursor, recorder setting, audio mixer settings
+    audio section:
+    smart line cursor
     ss->Dac_Combines_Channels = DEFAULT_DAC_COMBINES_CHANNELS;
-    recorder stuff? -> buffer-size in-chans in-data-format in-device out-chans out-data-format out-header-type srate
+    recorder stuff? -> in-chans in-data-format in-device
     audio mixer settings? -> volume in some mode
     audio output device? or sound card?
 
@@ -4744,6 +4744,348 @@ static void dac_size_text(prefs_info *prf)
     }
 }
 
+/* ---------------- recorder file name ---------------- */
+
+static void recorder_filename_text(prefs_info *prf)
+{
+  char *str;
+  ASSERT_WIDGET_TYPE(XmIsTextField(prf->text), prf->text);
+  str = XmTextFieldGetString(prf->text);
+  if ((str) && (*str))
+    {
+      rec_set_filename(str);
+      XtFree(str);
+    }
+}
+
+static void reflect_recorder_filename(prefs_info *prf)
+{
+  XmTextFieldSetString(prf->text, rec_filename());
+}
+
+/* ---------------- recorder-autoload ---------------- */
+
+static void reflect_recorder_autoload(prefs_info *prf) 
+{
+  XmToggleButtonSetState(prf->toggle, rec_autoload(), false);
+}
+
+static void recorder_autoload_toggle(prefs_info *prf)
+{
+  ASSERT_WIDGET_TYPE(XmIsToggleButton(prf->toggle), prf->toggle);
+  rec_set_autoload(XmToggleButtonGetState(prf->toggle) == XmSET);
+}
+
+/* ---------------- recorder-buffer-size ---------------- */
+
+static void reflect_recorder_buffer_size(prefs_info *prf) 
+{
+  int_to_textfield(prf->text, rec_buffer_size());
+}
+
+static void recorder_buffer_size_text(prefs_info *prf)
+{
+  char *str;
+  ASSERT_WIDGET_TYPE(XmIsTextField(prf->text), prf->text);
+  str = XmTextFieldGetString(prf->text);
+  if ((str) && (*str))
+    {
+      int value = 0;
+      sscanf(str, "%d", &value);
+      if (value > 0)
+	rec_set_buffer_size(value);
+      else int_to_textfield(prf->text, rec_buffer_size());
+      XtFree(str);
+    }
+}
+
+/* ---------------- recorder-out-chans etc ---------------- */
+
+static const char *recorder_out_chans_choices[4] = {"1", "2", "4", "8"};
+static const char *recorder_srate_choices[5] = {"8000", "22050", "44100", "48000", "96000"};
+
+static void reflect_recorder_out_chans(prefs_info *prf)
+{
+  char *str;
+  Widget w;
+  str = (char *)CALLOC(6, sizeof(char));
+  mus_snprintf(str, 6, "%d", rec_output_chans());
+  w = find_radio_button(prf->toggle, str);
+  if (w)
+    XmToggleButtonSetState(w, XmSET, false);
+  else fprintf(stderr, "can't find %s\n", str);
+  FREE(str);
+  if ((prf->radio_button) &&
+      (XmIsToggleButton(prf->radio_button)) &&
+      (w != prf->radio_button))
+    {
+      XmToggleButtonSetState(prf->radio_button, XmUNSET, false);
+      prf->radio_button = w;
+    }
+}
+
+static void reflect_recorder_srate(prefs_info *prf)
+{
+  char *str;
+  Widget w;
+  str = (char *)CALLOC(8, sizeof(char));
+  mus_snprintf(str, 8, "%d", rec_srate());
+  w = find_radio_button(prf->toggle, str);
+  if (w)
+    XmToggleButtonSetState(w, XmSET, false);
+  else fprintf(stderr, "can't find %s\n", str);
+  FREE(str);
+  if ((prf->radio_button) &&
+      (XmIsToggleButton(prf->radio_button)) &&
+      (w != prf->radio_button))
+    {
+      XmToggleButtonSetState(prf->radio_button, XmUNSET, false);
+      prf->radio_button = w;
+    }
+}
+
+static void recorder_out_chans_choice(prefs_info *prf)
+{
+  if (XmToggleButtonGetState(prf->radio_button) == XmSET)
+    {
+      if (strcmp(XtName(prf->radio_button), "1") == 0)
+	rec_set_output_chans(1);
+      else
+	{
+	  if (strcmp(XtName(prf->radio_button), "2") == 0)
+	    rec_set_output_chans(2);
+	  else
+	    {
+	      if (strcmp(XtName(prf->radio_button), "4") == 0)
+		rec_set_output_chans(4);
+	      else rec_set_output_chans(8);
+	    }
+	}
+    }
+}
+
+static void recorder_srate_choice(prefs_info *prf)
+{
+  if (XmToggleButtonGetState(prf->radio_button) == XmSET)
+    {
+      if (strcmp(XtName(prf->radio_button), "8000") == 0)
+	rec_set_srate(8000);
+      else
+	{
+	  if (strcmp(XtName(prf->radio_button), "22050") == 0)
+	    rec_set_srate(22050);
+	  else
+	    {
+	      if (strcmp(XtName(prf->radio_button), "44100") == 0)
+		rec_set_srate(44100);
+	      else
+		{
+		  if (strcmp(XtName(prf->radio_button), "48000") == 0)
+		    rec_set_srate(48000);
+		  else rec_set_srate(96000);
+		}
+	    }
+	}
+    }
+}
+
+static const char *recorder_out_type_choices[5] = {"aifc", "wave", "next/sun", "nist", "aiff"};
+static const char *recorder_out_format_choices[4] = {"short", "int", "float", "double"};
+
+static void reflect_recorder_out_type(prefs_info *prf)
+{
+  char *str = "not a choice";
+  Widget w;
+  switch (rec_output_header_type())
+    {
+    case MUS_AIFC: str = "aifc"; break;
+    case MUS_AIFF: str = "aiff"; break;
+    case MUS_RIFF: str = "wave"; break;
+    case MUS_NEXT: str = "next/sun"; break;
+    case MUS_NIST: str = "nist"; break;
+    }
+  w = find_radio_button(prf->toggle, str);
+  if (w)
+    XmToggleButtonSetState(w, XmSET, false);
+  else fprintf(stderr, "can't find %s\n", str);
+  if ((prf->radio_button) &&
+      (XmIsToggleButton(prf->radio_button)) &&
+      (w != prf->radio_button))
+    {
+      XmToggleButtonSetState(prf->radio_button, XmUNSET, false);
+      prf->radio_button = w;
+    }
+}
+
+static void reflect_recorder_out_format(prefs_info *prf)
+{
+  char *str = "not a choice";
+  Widget w;
+  switch (rec_output_data_format())
+    {
+    case MUS_LINT: case MUS_BINT: str = "int"; break;
+    case MUS_LSHORT: case MUS_BSHORT: str = "short"; break;
+    case MUS_LFLOAT: case MUS_BFLOAT: str = "float"; break;
+    case MUS_LDOUBLE: case MUS_BDOUBLE: str = "double"; break;
+    }
+  w = find_radio_button(prf->toggle, str);
+  if (w)
+    XmToggleButtonSetState(w, XmSET, false);
+  else fprintf(stderr, "can't find %s\n", str);
+  if ((prf->radio_button) &&
+      (XmIsToggleButton(prf->radio_button)) &&
+      (w != prf->radio_button))
+    {
+      XmToggleButtonSetState(prf->radio_button, XmUNSET, false);
+      prf->radio_button = w;
+    }
+}
+
+static prefs_info *recorder_out_data_format_prf = NULL, *recorder_out_header_type_prf = NULL;
+
+static void recorder_out_type_choice(prefs_info *prf)
+{
+  if (XmToggleButtonGetState(prf->radio_button) == XmSET)
+    {
+      if (strcmp(XtName(prf->radio_button), "aifc") == 0)
+	rec_set_output_header_type(MUS_AIFC);
+      else
+	{
+	  if (strcmp(XtName(prf->radio_button), "wave") == 0)
+	    rec_set_output_header_type(MUS_RIFF);
+	  else
+	    {
+	      if (strcmp(XtName(prf->radio_button), "next/sun") == 0)
+		rec_set_output_header_type(MUS_NEXT);
+	      else 
+		{
+		  if (strcmp(XtName(prf->radio_button), "nist") == 0)
+		    rec_set_output_header_type(MUS_NIST);
+		  else rec_set_output_header_type(MUS_AIFF);
+		}
+	    }
+	}
+
+      /* nist -> short or int (lb)
+	 aiff -> short or int (b)
+	 aifc -> any (b)
+	 next -> any (b)
+	 wave -> any (l)
+      */
+      switch (rec_output_header_type())
+	{
+	case MUS_NEXT: case MUS_AIFC:
+	  switch (rec_output_data_format())
+	    {
+	    case MUS_LSHORT: rec_set_output_data_format(MUS_BSHORT); break;
+	    case MUS_LINT: rec_set_output_data_format(MUS_BINT); break;
+	    case MUS_LFLOAT: rec_set_output_data_format(MUS_BFLOAT); break;
+	    case MUS_LDOUBLE: rec_set_output_data_format(MUS_BDOUBLE); break;
+	    }
+	  break;
+	case MUS_AIFF:
+	  switch (rec_output_data_format())
+	    {
+	    case MUS_LSHORT: rec_set_output_data_format(MUS_BSHORT); break;
+	    case MUS_LINT: rec_set_output_data_format(MUS_BINT); break;
+	    case MUS_LFLOAT: case MUS_LDOUBLE: case MUS_BFLOAT: case MUS_BDOUBLE: rec_set_output_data_format(MUS_BINT); break;
+	    }
+	  break;
+	case MUS_NIST:
+	  switch (rec_output_data_format())
+	    {
+	    case MUS_LFLOAT: case MUS_LDOUBLE: rec_set_output_data_format(MUS_LINT); break;
+	    case MUS_BFLOAT: case MUS_BDOUBLE: rec_set_output_data_format(MUS_BINT); break;
+	    }
+	  break;
+	case MUS_RIFF:
+	  switch (rec_output_data_format())
+	    {
+	    case MUS_BSHORT: rec_set_output_data_format(MUS_LSHORT); break;
+	    case MUS_BINT: rec_set_output_data_format(MUS_LINT); break;
+	    case MUS_BFLOAT: rec_set_output_data_format(MUS_LFLOAT); break;
+	    case MUS_BDOUBLE: rec_set_output_data_format(MUS_LDOUBLE); break;
+	    }
+	  break;
+	}
+      reflect_recorder_out_format(recorder_out_data_format_prf);
+    }
+}
+
+static void recorder_out_format_choice(prefs_info *prf)
+{
+  if (XmToggleButtonGetState(prf->radio_button) == XmSET)
+    {
+      if (strcmp(XtName(prf->radio_button), "short") == 0)
+	rec_set_output_data_format(MUS_LSHORT);
+      else
+	{
+	  if (strcmp(XtName(prf->radio_button), "int") == 0)
+	    rec_set_output_data_format(MUS_LINT);
+	  else
+	    {
+	      if (strcmp(XtName(prf->radio_button), "float") == 0)
+		rec_set_output_data_format(MUS_LFLOAT);
+	      else rec_set_output_data_format(MUS_LDOUBLE);
+	    }
+	}
+
+      switch (rec_output_data_format())
+	{
+	case MUS_LSHORT:
+	  switch (rec_output_header_type())
+	    {
+	    case MUS_AIFC: case MUS_AIFF: case MUS_NEXT: 
+	      rec_set_output_data_format(MUS_BSHORT); 
+	      break;
+	    }
+	  break;
+	  
+	case MUS_LINT:
+	  switch (rec_output_header_type())
+	    {
+	    case MUS_AIFC: case MUS_AIFF: case MUS_NEXT: 
+	      rec_set_output_data_format(MUS_BINT); 
+	      break;
+	    }
+	  break;
+	case MUS_LFLOAT:
+	  switch (rec_output_header_type())
+	    {
+	    case MUS_AIFC: case MUS_NEXT: 
+	      rec_set_output_data_format(MUS_BFLOAT); 
+	      break;
+	    case MUS_AIFF:
+	      rec_set_output_header_type(MUS_AIFC);
+	      rec_set_output_data_format(MUS_BFLOAT); 
+	      break;
+	    case MUS_NIST: 
+	      rec_set_output_header_type(MUS_RIFF); 
+	      break;
+	    }
+	  break;
+	case MUS_LDOUBLE:
+	  switch (rec_output_header_type())
+	    {
+	    case MUS_AIFC: case MUS_NEXT: 
+	      rec_set_output_data_format(MUS_BDOUBLE); 
+	      break;
+	    case MUS_AIFF:
+	      rec_set_output_header_type(MUS_AIFC);
+	      rec_set_output_data_format(MUS_BDOUBLE); 
+	      break;
+	    case MUS_NIST: 
+	      rec_set_output_header_type(MUS_RIFF); 
+	      break;
+	    }
+	  break;
+	}
+      reflect_recorder_out_type(output_header_type_prf);
+    }
+}
+
+
+
 
 /* ---------------- help-button-color ---------------- */
 
@@ -5132,10 +5474,10 @@ void start_preferences_dialog(void)
 				   output_format_choice);
     output_data_format_prf = prf;
     remember_pref(prf, reflect_output_format, NULL);
-    current_sep = make_inter_variable_separator(dpy_box, prf->label);
-
     reflect_output_type(output_header_type_prf);
     reflect_output_format(output_data_format_prf);
+
+    current_sep = make_inter_variable_separator(dpy_box, prf->label);
 
 
   /* ---------------- extra menus ---------------- */
@@ -5760,7 +6102,7 @@ void start_preferences_dialog(void)
 
   /* -------- audio -------- */
   {
-    Widget aud_box, aud_label;
+    Widget aud_box, aud_label, recorder_label;
 
     /* ---------------- audio options ---------------- */
 
@@ -5776,15 +6118,59 @@ void start_preferences_dialog(void)
     FREE(str);
 
     current_sep = make_inter_variable_separator(aud_box, prf->label);
+    recorder_label = make_inner_label("  recorder options", aud_box, current_sep);
 
-    /*
-    audio section:
-    dac-combines-channels, smart line cursor, recorder setting, audio mixer settings
-    ss->Dac_Combines_Channels = DEFAULT_DAC_COMBINES_CHANNELS;
-    recorder stuff? -> buffer-size in-chans in-data-format in-device out-chans out-data-format out-header-type srate
-    audio mixer settings? -> volume in some mode
-    audio output device? or sound card?
-    */
+    prf = prefs_row_with_text("recorder output file name", S_recorder_file, rec_filename(),
+			      aud_box, recorder_label,
+			      recorder_filename_text);
+    remember_pref(prf, reflect_recorder_filename, NULL);
+    current_sep = make_inter_variable_separator(aud_box, prf->label);
+
+    prf = prefs_row_with_toggle("automatically open the recorded sound", S_recorder_autoload,
+				rec_autoload(),
+				aud_box, current_sep,
+				recorder_autoload_toggle);
+    remember_pref(prf, reflect_recorder_autoload, NULL);
+    current_sep = make_inter_variable_separator(aud_box, prf->label);
+
+    str = mus_format("%d", rec_buffer_size());
+    prf = prefs_row_with_text("input buffer size", S_recorder_buffer_size, 
+			      str,
+			      aud_box, current_sep,
+			      recorder_buffer_size_text);
+    remember_pref(prf, reflect_recorder_buffer_size, NULL);
+    FREE(str);
+    current_sep = make_inter_variable_separator(aud_box, prf->label);
+
+    prf = prefs_row_with_radio_box("default recorder output sound attributes: chans", S_recorder_out_chans,
+				   recorder_out_chans_choices, 4, -1,
+				   aud_box, current_sep,
+				   recorder_out_chans_choice);
+    reflect_recorder_out_chans(prf);
+    remember_pref(prf, reflect_recorder_out_chans, NULL);
+
+    prf = prefs_row_with_radio_box("srate", S_recorder_srate,
+				   recorder_srate_choices, 5, -1,
+				   aud_box, prf->label,
+				   recorder_srate_choice);
+    reflect_recorder_srate(prf);
+    remember_pref(prf, reflect_recorder_srate, NULL);
+
+    prf = prefs_row_with_radio_box("header type", S_recorder_out_header_type,
+				   recorder_out_type_choices, 5, -1,
+				   aud_box, prf->label,
+				   recorder_out_type_choice);
+    recorder_out_header_type_prf = prf;
+    remember_pref(prf, reflect_recorder_out_type, NULL);
+
+    prf = prefs_row_with_radio_box("data format", S_recorder_out_data_format,
+				   recorder_out_format_choices, 4, -1,
+				   aud_box, prf->label,
+				   recorder_out_format_choice);
+    recorder_out_data_format_prf = prf;
+    remember_pref(prf, reflect_recorder_out_format, NULL);
+    reflect_recorder_out_type(recorder_out_header_type_prf);
+    reflect_recorder_out_format(recorder_out_data_format_prf);
   }
 
   current_sep = make_inter_topic_separator(topics);

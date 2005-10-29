@@ -583,7 +583,7 @@ static mus_sample_t output_vu_maxes[MAX_OUT_CHANS];      /* VU label values on o
 #endif
 static int duration_label_update_frames;                 /* frames between updates of the duration label */
 
-void set_record_size (int new_size)
+void set_record_size(int new_size)
 {
   lock_recording_audio();
   if (new_size > rp->buffer_size)
@@ -1559,25 +1559,44 @@ void set_read_in_progress (void)
     recorder_reader = BACKGROUND_ADD(run_adc, NULL);
 }
 
-static XEN g_recorder_autoload(void) 
+/* -------- prefs dialog hooks into the recorder and extlang hooks -------- */
+
+bool rec_autoload(void)
 {
-  init_recorder(); 
-  return(C_TO_XEN_BOOLEAN(rp->autoload));
+  init_recorder();
+  return(rp->autoload);
 }
+
+bool rec_set_autoload(bool val)
+{
+  init_recorder();
+  set_recorder_autoload(rp, val);
+  return(rp->autoload);
+}
+
+static XEN g_recorder_autoload(void) {return(C_TO_XEN_BOOLEAN(rec_autoload()));}
 static XEN g_set_recorder_autoload(XEN val) 
 {
   #define H_recorder_autoload "(" S_recorder_autoload "): #t if newly recorded sound should be loaded into Snd automatically"
   XEN_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, XEN_ONLY_ARG, S_setB S_recorder_autoload, "a boolean");
-  init_recorder(); 
-  set_recorder_autoload(rp, XEN_TO_C_BOOLEAN(val));
-  return(C_TO_XEN_BOOLEAN(rp->autoload));
+  return(C_TO_XEN_BOOLEAN(rec_set_autoload(XEN_TO_C_BOOLEAN(val))));
 }
 
-static XEN g_recorder_buffer_size(void) 
+
+int rec_buffer_size(void)
 {
   init_recorder(); 
-  return(C_TO_XEN_INT(rp->buffer_size));
+  return(rp->buffer_size);
 }
+
+int rec_set_buffer_size(int size)
+{
+  init_recorder(); 
+  rp->buffer_size = size;
+  return(rp->buffer_size);
+}
+
+static XEN g_recorder_buffer_size(void) {return(C_TO_XEN_INT(rec_buffer_size()));}
 static XEN g_set_recorder_buffer_size(XEN val) 
 {
   int size;
@@ -1586,31 +1605,37 @@ static XEN g_set_recorder_buffer_size(XEN val)
   size = XEN_TO_C_INT(val);
   if (size <= 0)
     XEN_OUT_OF_RANGE_ERROR(S_setB S_recorder_buffer_size, 1, val, "size ~A <= 0?");
-  init_recorder(); 
-  rp->buffer_size = size;
-  return(val);
+  return(C_TO_XEN_INT(rec_set_buffer_size(size)));
 }
 
-static XEN g_recorder_file(void) 
+
+char *rec_filename(void)
 {
-  init_recorder(); 
-  return(C_TO_XEN_STRING(rp->output_file));
+  init_recorder();
+  return(rp->output_file);
 }
+
+char *rec_set_filename(const char *filename)
+{
+  init_recorder();
+  if (rp->output_file) FREE(rp->output_file);
+  if (filename)
+    rp->output_file = copy_string(filename);
+  else rp->output_file = NULL;
+  return(rp->output_file);
+}
+
+static XEN g_recorder_file(void) {return(C_TO_XEN_STRING(rec_filename()));}
 static XEN g_set_recorder_file(XEN val) 
 {
   #define H_recorder_file "(" S_recorder_file "): default recorder file name"
   XEN_ASSERT_TYPE(XEN_STRING_P(val) || XEN_FALSE_P(val), val, XEN_ONLY_ARG, S_setB S_recorder_file, "a string"); 
-  init_recorder(); 
-  if (rp->output_file) FREE(rp->output_file);
   if (XEN_FALSE_P(val))
-    {
-      if (DEFAULT_RECORDER_FILE != (char *)NULL)
-	rp->output_file = copy_string(DEFAULT_RECORDER_FILE);
-      else rp->output_file = NULL;
-    }
-  else rp->output_file = copy_string(XEN_TO_C_STRING(val));
+    rec_set_filename(DEFAULT_RECORDER_FILE);
+  else rec_set_filename(XEN_TO_C_STRING(val));
   return(C_TO_XEN_STRING(rp->output_file));
 }
+
 
 static XEN g_recorder_in_data_format(void) 
 {
@@ -1640,20 +1665,28 @@ static XEN g_set_recorder_in_device(XEN val)
   return(C_TO_XEN_INT(in_device));
 }
 
-static XEN g_recorder_out_chans(void) 
+int rec_output_chans(void)
 {
   init_recorder(); 
-  return(C_TO_XEN_INT(rp->out_chans));
+  return(rp->out_chans);
 }
+
+int rec_set_output_chans(int chans)
+{
+  init_recorder(); 
+  rp->out_chans = chans;
+  return(chans);
+}
+
+static XEN g_recorder_out_chans(void) {return(C_TO_XEN_INT(rec_output_chans()));}
 static XEN g_set_recorder_out_chans(XEN val) 
 {
   int num;
   #define H_recorder_out_chans "(" S_recorder_out_chans "): default recorder output channels (1 or 2 usually)"
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_recorder_out_chans, "an integer"); 
-  init_recorder(); 
   num = XEN_TO_C_INT(val);
   if (num >= 0)
-    rp->out_chans = num;
+    rec_set_output_chans(num);
   else XEN_OUT_OF_RANGE_ERROR(S_setB S_recorder_out_chans, XEN_ONLY_ARG, val, "must be >= 0");
   return(C_TO_XEN_INT(rp->out_chans));
 }
@@ -1676,54 +1709,77 @@ static XEN g_set_recorder_in_chans(XEN val)
   return(C_TO_XEN_INT(rp->in_chans));
 }
 
-static XEN g_recorder_out_data_format(void) 
+int rec_output_data_format(void)
 {
   init_recorder(); 
-  return(C_TO_XEN_INT(rp->output_data_format));
+  return(rp->output_data_format);
 }
+
+int rec_set_output_data_format(int f)
+{
+  init_recorder(); 
+  rp->output_data_format = f;
+  return(f);
+}
+
+static XEN g_recorder_out_data_format(void) {return(C_TO_XEN_INT(rec_output_data_format()));}
 static XEN g_set_recorder_out_data_format(XEN val) 
 {
   int df;
   #define H_recorder_out_data_format "(" S_recorder_out_data_format "): recorder output data format"
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_recorder_out_data_format, "a data format"); 
-  init_recorder(); 
   df = XEN_TO_C_INT(val);
   if (MUS_DATA_FORMAT_OK(df))
-    rp->output_data_format = df;
+    rec_set_output_data_format(df);
   else XEN_OUT_OF_RANGE_ERROR(S_setB S_recorder_out_data_format, XEN_ONLY_ARG, val, "a data format");
   return(C_TO_XEN_INT(rp->output_data_format));
 }
 
-static XEN g_recorder_out_header_type(void) 
+int rec_output_header_type(void)
 {
   init_recorder(); 
-  return(C_TO_XEN_INT(rp->output_header_type));
+  return(rp->output_header_type);
 }
+
+int rec_set_output_header_type(int h)
+{
+  init_recorder(); 
+  rp->output_header_type = h;
+  return(h);
+}
+
+static XEN g_recorder_out_header_type(void) {return(C_TO_XEN_INT(rec_output_header_type()));}
 static XEN g_set_recorder_out_header_type(XEN val) 
 {
   int ht;
   #define H_recorder_out_header_type "(" S_recorder_out_header_type "): recorder output header type"
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_recorder_out_header_type, "a header type");
-  init_recorder(); 
   ht = XEN_TO_C_INT(val);
   if (MUS_HEADER_TYPE_OK(ht))
-    rp->output_header_type = ht;
+    rec_set_output_header_type(ht);
   else XEN_OUT_OF_RANGE_ERROR(S_setB S_recorder_out_header_type, XEN_ONLY_ARG, val, "a header type");
   return(C_TO_XEN_INT(rp->output_header_type));
 }
 
-static XEN g_recorder_srate(void) 
+int rec_srate(void)
 {
   init_recorder(); 
-  return(C_TO_XEN_INT(rp->srate));
+  return(rp->srate);
 }
+
+int rec_set_srate(int s)
+{
+  init_recorder();
+  set_recorder_srate(rp, s);
+  return(rp->srate);
+}
+
+static XEN g_recorder_srate(void) {return(C_TO_XEN_INT(rec_srate()));}
 static XEN g_set_recorder_srate(XEN val) 
 {
   #define H_recorder_srate "(" S_recorder_srate "): default recorder sampling rate"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_setB S_recorder_srate, "a number"); 
-  init_recorder();
-  set_recorder_srate(rp, XEN_TO_C_INT_OR_ELSE(val, 0));
-  return(C_TO_XEN_INT(rp->srate));
+  return(C_TO_XEN_INT(rec_set_srate(XEN_TO_C_INT_OR_ELSE(val, 0))));
 }
 
 static XEN g_recorder_trigger(void) 

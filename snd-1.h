@@ -1552,6 +1552,20 @@ int snd_translate(const char *oldname, const char *newname, int type);
 bool record_in_progress(void);
 void save_recorder_state(FILE *fd);
 void g_init_recorder(void);
+bool rec_autoload(void);
+bool rec_set_autoload(bool val);
+int rec_buffer_size(void);
+int rec_set_buffer_size(int size);
+char *rec_filename(void);
+char *rec_set_filename(const char *filename);
+int rec_output_chans(void);
+int rec_set_output_chans(int chans);
+int rec_output_data_format(void);
+int rec_set_output_data_format(int f);
+int rec_output_header_type(void);
+int rec_set_output_header_type(int h);
+int rec_srate(void);
+int rec_set_srate(int s);
 
 
 /* -------- snd.c -------- */

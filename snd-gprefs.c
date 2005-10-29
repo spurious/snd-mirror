@@ -1287,7 +1287,7 @@ static GtkWidget *make_top_level_box(GtkWidget *topics)
   return(w);
 }
 
-static GtkWidget *make_inner_label(const char *label, GtkWidget *parent, GtkWidget *top_widget)
+static GtkWidget *make_inner_label(const char *label, GtkWidget *parent)
 {
   GtkWidget *w;
   ASSERT_WIDGET_TYPE(GTK_IS_VBOX(parent), parent);
@@ -4128,6 +4128,279 @@ static void listener_font_text(prefs_info *prf)
 
 }
 
+/* ---------------- dac-size ---------------- */
+
+static void reflect_dac_size(prefs_info *prf) 
+{
+  int_to_textfield(prf->text, dac_size(ss));
+}
+
+static void dac_size_text(prefs_info *prf)
+{
+  char *str;
+  str = (char *)gtk_entry_get_text(GTK_ENTRY(prf->text));
+  if ((str) && (*str))
+    {
+      int value = 0;
+      sscanf(str, "%d", &value);
+      if (value > 0)
+	set_dac_size(value);
+      else int_to_textfield(prf->text, dac_size(ss));
+    }
+}
+
+/* ---------------- recorder file name ---------------- */
+
+static void recorder_filename_text(prefs_info *prf)
+{
+  char *str;
+  str = (char *)gtk_entry_get_text(GTK_ENTRY(prf->text));
+  if ((str) && (*str))
+    rec_set_filename(str);
+}
+
+static void reflect_recorder_filename(prefs_info *prf)
+{
+  sg_entry_set_text(GTK_ENTRY(prf->text), rec_filename());
+}
+
+/* ---------------- recorder-autoload ---------------- */
+
+static void reflect_recorder_autoload(prefs_info *prf) 
+{
+  set_toggle_button(prf->toggle, rec_autoload(), false, (void *)prf);
+}
+
+static void recorder_autoload_toggle(prefs_info *prf)
+{
+  rec_set_autoload(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prf->toggle)));
+}
+
+/* ---------------- recorder-buffer-size ---------------- */
+
+static void reflect_recorder_buffer_size(prefs_info *prf) 
+{
+  int_to_textfield(prf->text, rec_buffer_size());
+}
+
+static void recorder_buffer_size_text(prefs_info *prf)
+{
+  char *str;
+  str = (char *)gtk_entry_get_text(GTK_ENTRY(prf->text));
+  if ((str) && (*str))
+    {
+      int value = 0;
+      sscanf(str, "%d", &value);
+      if (value > 0)
+	rec_set_buffer_size(value);
+      else int_to_textfield(prf->text, rec_buffer_size());
+    }
+}
+
+/* ---------------- recorder-out-chans etc ---------------- */
+
+static const char *recorder_out_chans_choices[4] = {"1", "2", "4", "8"};
+static const char *recorder_srate_choices[5] = {"8000", "22050", "44100", "48000", "96000"};
+
+static void reflect_recorder_out_chans(prefs_info *prf)
+{
+  int which = -1;
+  switch (rec_output_chans())
+    {
+    case 1: which = 0; break;
+    case 2: which = 1; break;
+    case 4: which = 2; break;
+    case 8: which = 3; break;
+    }
+  if (which != -1)
+    set_toggle_button(prf->radio_buttons[which], true, false, (void *)prf);
+}
+
+static void reflect_recorder_srate(prefs_info *prf)
+{
+  int which = -1, sr;
+  sr = rec_srate();
+  if (sr == 8000) which = 0; else
+  if (sr == 22050) which = 1; else
+  if (sr == 44100) which = 2; else
+  if (sr == 48000) which = 3; else
+  if (sr == 96000) which = 4;
+  if (which != -1)
+    set_toggle_button(prf->radio_buttons[which], true, false, (void *)prf);
+}
+
+static void recorder_out_chans_choice(prefs_info *prf)
+{
+  if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prf->radio_button)))
+    {
+      int which;
+      which = get_user_int_data(G_OBJECT(prf->radio_button));
+      rec_set_output_chans(output_chans[which]);
+    }
+}
+
+static void recorder_srate_choice(prefs_info *prf)
+{
+  if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prf->radio_button)))
+    {
+      int which;
+      which = get_user_int_data(G_OBJECT(prf->radio_button));
+      rec_set_srate(output_srates[which]);
+    }
+}
+
+static const char *recorder_out_type_choices[5] = {"aifc", "wave", "next/sun", "nist", "aiff"};
+static int recorder_types[5] = {MUS_AIFC, MUS_RIFF, MUS_NEXT, MUS_NIST, MUS_AIFF};
+
+static const char *recorder_out_format_choices[4] = {"short", "int", "float", "double"};
+static int recorder_formats[4] = {MUS_LSHORT, MUS_LINT, MUS_LFLOAT, MUS_LDOUBLE};
+
+static void reflect_recorder_out_type(prefs_info *prf)
+{
+  int which = -1;
+  switch (rec_output_header_type())
+    {
+    case MUS_AIFC: which = 0; break;
+    case MUS_AIFF: which = 4; break;
+    case MUS_RIFF: which = 1; break;
+    case MUS_NEXT: which = 2; break;
+    case MUS_NIST: which = 3; break;
+    }
+  if (which != -1)
+    set_toggle_button(prf->radio_buttons[which], true, false, (void *)prf);
+}
+
+static void reflect_recorder_out_format(prefs_info *prf)
+{
+  int which = -1;
+  switch (rec_output_data_format())
+    {
+    case MUS_LINT: case MUS_BINT: which = 1; break;
+    case MUS_LSHORT: case MUS_BSHORT: which = 0; break;
+    case MUS_LFLOAT: case MUS_BFLOAT: which = 2; break;
+    case MUS_LDOUBLE: case MUS_BDOUBLE: which = 3; break;
+    }
+  if (which != -1)
+    set_toggle_button(prf->radio_buttons[which], true, false, (void *)prf);
+}
+
+static prefs_info *recorder_out_data_format_prf = NULL, *recorder_out_header_type_prf = NULL;
+
+static void recorder_out_type_choice(prefs_info *prf)
+{
+  int which = -1;
+  if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prf->radio_button)))
+    {
+      which = get_user_int_data(G_OBJECT(prf->radio_button));
+      rec_set_output_header_type(recorder_types[which]);
+
+      /* nist -> short or int (lb)
+	 aiff -> short or int (b)
+	 aifc -> any (b)
+	 next -> any (b)
+	 wave -> any (l)
+      */
+      switch (rec_output_header_type())
+	{
+	case MUS_NEXT: case MUS_AIFC:
+	  switch (rec_output_data_format())
+	    {
+	    case MUS_LSHORT: rec_set_output_data_format(MUS_BSHORT); break;
+	    case MUS_LINT: rec_set_output_data_format(MUS_BINT); break;
+	    case MUS_LFLOAT: rec_set_output_data_format(MUS_BFLOAT); break;
+	    case MUS_LDOUBLE: rec_set_output_data_format(MUS_BDOUBLE); break;
+	    }
+	  break;
+	case MUS_AIFF:
+	  switch (rec_output_data_format())
+	    {
+	    case MUS_LSHORT: rec_set_output_data_format(MUS_BSHORT); break;
+	    case MUS_LINT: rec_set_output_data_format(MUS_BINT); break;
+	    case MUS_LFLOAT: case MUS_LDOUBLE: case MUS_BFLOAT: case MUS_BDOUBLE: rec_set_output_data_format(MUS_BINT); break;
+	    }
+	  break;
+	case MUS_NIST:
+	  switch (rec_output_data_format())
+	    {
+	    case MUS_LFLOAT: case MUS_LDOUBLE: rec_set_output_data_format(MUS_LINT); break;
+	    case MUS_BFLOAT: case MUS_BDOUBLE: rec_set_output_data_format(MUS_BINT); break;
+	    }
+	  break;
+	case MUS_RIFF:
+	  switch (rec_output_data_format())
+	    {
+	    case MUS_BSHORT: rec_set_output_data_format(MUS_LSHORT); break;
+	    case MUS_BINT: rec_set_output_data_format(MUS_LINT); break;
+	    case MUS_BFLOAT: rec_set_output_data_format(MUS_LFLOAT); break;
+	    case MUS_BDOUBLE: rec_set_output_data_format(MUS_LDOUBLE); break;
+	    }
+	  break;
+	}
+      reflect_recorder_out_format(recorder_out_data_format_prf);
+    }
+}
+
+static void recorder_out_format_choice(prefs_info *prf)
+{
+  if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prf->radio_button)))
+    {
+      int which = -1;
+      which = get_user_int_data(G_OBJECT(prf->radio_button));
+      rec_set_output_data_format(recorder_formats[which]);
+      switch (rec_output_data_format())
+	{
+	case MUS_LSHORT:
+	  switch (rec_output_header_type())
+	    {
+	    case MUS_AIFC: case MUS_AIFF: case MUS_NEXT: 
+	      rec_set_output_data_format(MUS_BSHORT); 
+	      break;
+	    }
+	  break;
+	  
+	case MUS_LINT:
+	  switch (rec_output_header_type())
+	    {
+	    case MUS_AIFC: case MUS_AIFF: case MUS_NEXT: 
+	      rec_set_output_data_format(MUS_BINT); 
+	      break;
+	    }
+	  break;
+	case MUS_LFLOAT:
+	  switch (rec_output_header_type())
+	    {
+	    case MUS_AIFC: case MUS_NEXT: 
+	      rec_set_output_data_format(MUS_BFLOAT); 
+	      break;
+	    case MUS_AIFF:
+	      rec_set_output_header_type(MUS_AIFC);
+	      rec_set_output_data_format(MUS_BFLOAT); 
+	      break;
+	    case MUS_NIST: 
+	      rec_set_output_header_type(MUS_RIFF); 
+	      break;
+	    }
+	  break;
+	case MUS_LDOUBLE:
+	  switch (rec_output_header_type())
+	    {
+	    case MUS_AIFC: case MUS_NEXT: 
+	      rec_set_output_data_format(MUS_BDOUBLE); 
+	      break;
+	    case MUS_AIFF:
+	      rec_set_output_header_type(MUS_AIFC);
+	      rec_set_output_data_format(MUS_BDOUBLE); 
+	      break;
+	    case MUS_NIST: 
+	      rec_set_output_header_type(MUS_RIFF); 
+	      break;
+	    }
+	  break;
+	}
+      reflect_recorder_out_type(output_header_type_prf);
+    }
+}
+
 
 
 /* ---------------- preferences dialog ---------------- */
@@ -4291,7 +4564,7 @@ void start_preferences_dialog(void)
     /* ---------------- file options ---------------- */
 
     current_sep = make_inter_variable_separator(dpy_box);
-    file_label = make_inner_label("  file options", dpy_box, current_sep);
+    file_label = make_inner_label("  file options", dpy_box);
 
     prf = prefs_row_with_toggle("display only sound files in various file lists", S_just_sounds,
 				just_sounds(ss), 
@@ -4381,9 +4654,9 @@ void start_preferences_dialog(void)
   /* ---------------- extra menus ---------------- */
 
 #if HAVE_STATIC_XM
-    cursor_label = make_inner_label("  extra menus", dpy_box, current_sep);
+    cursor_label = make_inner_label("  extra menus", dpy_box);
 #else
-    cursor_label = make_inner_label("  extra menus (these will need the xm module)", dpy_box, current_sep);
+    cursor_label = make_inner_label("  extra menus (these will need the xm module)", dpy_box);
 #endif
 
     prf = prefs_row_with_toggle("context-sensitive popup menu", "add-selection-popup",
@@ -4426,7 +4699,7 @@ void start_preferences_dialog(void)
 
     /* ---------------- cursor options ---------------- */
 
-    cursor_label = make_inner_label("  cursor options", dpy_box, current_sep);
+    cursor_label = make_inner_label("  cursor options", dpy_box);
 
     prf = prefs_row_with_toggle("report cursor location as it moves", S_verbose_cursor,
 				verbose_cursor(ss), 
@@ -4478,7 +4751,7 @@ void start_preferences_dialog(void)
     /* ---------------- (overall) colors ---------------- */
 
     current_sep = make_inter_variable_separator(dpy_box);
-    cursor_label = make_inner_label("  colors", dpy_box, current_sep);
+    cursor_label = make_inner_label("  colors", dpy_box);
     
     saved_basic_color = ss->sgx->basic_color;
     prf = prefs_color_selector_row("main background color", S_basic_color, ss->sgx->basic_color,
@@ -4608,7 +4881,7 @@ void start_preferences_dialog(void)
     /* ---------------- (graph) colors ---------------- */
 
     current_sep = make_inter_variable_separator(grf_box); 
-    colgrf_label = make_inner_label("  colors", grf_box, current_sep);
+    colgrf_label = make_inner_label("  colors", grf_box);
 
     saved_data_color = ss->sgx->data_color;    
     prf = prefs_color_selector_row("unselected data (waveform) color", S_data_color, ss->sgx->data_color,
@@ -4647,7 +4920,7 @@ void start_preferences_dialog(void)
     /* ---------------- (graph) fonts ---------------- */
 
     current_sep = make_inter_variable_separator(grf_box);
-    colgrf_label = make_inner_label("  fonts", grf_box, current_sep);
+    colgrf_label = make_inner_label("  fonts", grf_box);
 
     prf = prefs_row_with_text("axis label font", S_axis_label_font, 
 			      axis_label_font(ss), 
@@ -4996,6 +5269,81 @@ void start_preferences_dialog(void)
 				   listener_text_color_func);
     remember_pref(prf, reflect_listener_text_color, NULL);
   }
+
+  /* -------- audio -------- */
+  {
+    GtkWidget *aud_box, *aud_label;
+
+    /* ---------------- audio options ---------------- */
+
+    aud_box = make_top_level_box(topics);
+    aud_label = make_top_level_label("audio options", aud_box);
+
+    str = mus_format("%d", dac_size(ss));
+    prf = prefs_row_with_text("dac buffer size", S_dac_size, 
+			      str,
+			      aud_box,
+			      dac_size_text);
+    remember_pref(prf, reflect_dac_size, NULL);
+    FREE(str);
+
+    current_sep = make_inter_variable_separator(aud_box);
+    make_inner_label("  recorder options", aud_box);
+
+    prf = prefs_row_with_text("recorder output file name", S_recorder_file, rec_filename(),
+			      aud_box, 
+			      recorder_filename_text);
+    remember_pref(prf, reflect_recorder_filename, NULL);
+    current_sep = make_inter_variable_separator(aud_box);
+
+    prf = prefs_row_with_toggle("automatically open the recorded sound", S_recorder_autoload,
+				rec_autoload(),
+				aud_box, 
+				recorder_autoload_toggle);
+    remember_pref(prf, reflect_recorder_autoload, NULL);
+    current_sep = make_inter_variable_separator(aud_box);
+
+    str = mus_format("%d", rec_buffer_size());
+    prf = prefs_row_with_text("input buffer size", S_recorder_buffer_size, 
+			      str,
+			      aud_box,
+			      recorder_buffer_size_text);
+    remember_pref(prf, reflect_recorder_buffer_size, NULL);
+    FREE(str);
+    current_sep = make_inter_variable_separator(aud_box);
+
+    prf = prefs_row_with_radio_box("default recorder output sound attributes: chans", S_recorder_out_chans,
+				   recorder_out_chans_choices, 4, -1,
+				   aud_box,
+				   recorder_out_chans_choice);
+    reflect_recorder_out_chans(prf);
+    remember_pref(prf, reflect_recorder_out_chans, NULL);
+
+    prf = prefs_row_with_radio_box("srate", S_recorder_srate,
+				   recorder_srate_choices, 5, -1,
+				   aud_box,
+				   recorder_srate_choice);
+    reflect_recorder_srate(prf);
+    remember_pref(prf, reflect_recorder_srate, NULL);
+
+    prf = prefs_row_with_radio_box("header type", S_recorder_out_header_type,
+				   recorder_out_type_choices, 5, -1,
+				   aud_box,
+				   recorder_out_type_choice);
+    recorder_out_header_type_prf = prf;
+    remember_pref(prf, reflect_recorder_out_type, NULL);
+
+    prf = prefs_row_with_radio_box("data format", S_recorder_out_data_format,
+				   recorder_out_format_choices, 4, -1,
+				   aud_box,
+				   recorder_out_format_choice);
+    recorder_out_data_format_prf = prf;
+    remember_pref(prf, reflect_recorder_out_format, NULL);
+    reflect_recorder_out_type(recorder_out_header_type_prf);
+    reflect_recorder_out_format(recorder_out_data_format_prf);
+
+  }
+
   set_dialog_widget(PREFERENCES_DIALOG, preferences_dialog);
   gtk_widget_show(preferences_dialog);
   prefs_unsaved = false;
