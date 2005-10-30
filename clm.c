@@ -3806,12 +3806,48 @@ static off_t filter_length(mus_any *ptr) {return(((flt *)ptr)->order);}
 static Float *filter_xcoeffs(mus_any *ptr) {return(((flt *)ptr)->x);}
 static Float *filter_ycoeffs(mus_any *ptr) {return(((flt *)ptr)->y);}
 
+Float *mus_filter_set_xcoeffs(mus_any *ptr, Float *new_data)
+{
+  /* needed by Snd if filter order increased during play */
+  flt *gen = (flt *)ptr;
+  Float *old_data;
+  old_data = gen->x;
+  gen->x = new_data;
+  return(old_data);
+}
+
+Float *mus_filter_set_ycoeffs(mus_any *ptr, Float *new_data)
+{
+  flt *gen = (flt *)ptr;
+  Float *old_data;
+  old_data = gen->y;
+  gen->y = new_data;
+  return(old_data);
+}
+
 static off_t set_filter_length(mus_any *ptr, off_t val) 
 {
   flt *gen = (flt *)ptr;
   if ((val > 0) && (val <= gen->allocated_size))
     gen->order = (int)val;
   return((off_t)(gen->order));
+}
+
+int mus_filter_set_order(mus_any *ptr, int order)
+{
+  flt *gen = (flt *)ptr;
+  int old_order;
+  if ((order > gen->allocated_size) &&
+      (!(gen->state_allocated)))
+    return(-1);
+  old_order = gen->order;
+  gen->order = order;
+  if (order > gen->allocated_size)
+    {
+      gen->allocated_size = order;
+      gen->state = (Float *)REALLOC(gen->state, order * sizeof(Float));
+    }
+  return(old_order);
 }
 
 static Float filter_xcoeff(mus_any *ptr, int index) 
@@ -4024,7 +4060,7 @@ static mus_any *make_filter(mus_any_class *cls, const char *name, int order, Flo
 	gen->state = state;
       else 
 	{
-	  gen->state = (Float *)clm_calloc(order, sizeof(Float), "filter coeff space");
+	  gen->state = (Float *)clm_calloc(order, sizeof(Float), "filter state space");
 	  gen->state_allocated = true;
 	}
       gen->core = cls;

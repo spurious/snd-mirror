@@ -26,6 +26,7 @@ typedef struct dac_info {
   int audio_chan;      /* where channel's output is going (wrap-around if not enough audio output channels) */
   int slot;
   Float *a;            /* filter coeffs */
+  int a_size;          /* user can change filter order while playing (sigh...) */
   snd_fd *chn_fd;      /* sample reader */
   spd_info *spd;
   mus_any *flt;
@@ -50,6 +51,7 @@ typedef struct dac_info {
 static mus_any *make_flt(dac_info *dp, int order, Float *env)
 {
   if (order <= 0) return(NULL);
+  dp->a_size = order;
   dp->a = (Float *)CALLOC(order, sizeof(Float));
   if (env) mus_make_fir_coeffs(order, env, dp->a);
   return(mus_make_fir_filter(order, dp->a, NULL));
@@ -348,6 +350,7 @@ static dac_info *make_dac_info(chan_info *cp, snd_info *sp, snd_fd *fd, int out_
   dp->stop_procedure = XEN_FALSE;
   dp->region = -1;
   dp->a = NULL;
+  dp->a_size = 0;
   dp->audio_chan = out_chan;
   dp->never_sped = true;
   if (sp)
@@ -405,7 +408,7 @@ static void free_dac_info(dac_info *dp, play_stop_t reason)
       snd_unprotect_at(dp->stop_procedure_gc_loc);
       dp->stop_procedure = XEN_FALSE;
     }
-  if (dp->a) {FREE(dp->a); dp->a = NULL;}
+  if (dp->a) {FREE(dp->a); dp->a = NULL; dp->a_size = 0;}
   dp->chn_fd = free_snd_fd(dp->chn_fd);
   if (dp->spd) free_expand(dp->spd);
   if (dp->src) free_src(dp->src);
@@ -1202,7 +1205,6 @@ static int fill_dac_buffers(int write_ok)
   Float amp, incr, sr, sincr, ind, indincr, ex, exincr, rev, revincr, fval;
   dac_info *dp;
   snd_info *sp;
-  Float *data = NULL;
   mus_sample_t *buf;
 #if (HAVE_OSS || HAVE_ALSA)
   mus_sample_t **dev_bufs;
@@ -1311,10 +1313,20 @@ static int fill_dac_buffers(int write_ok)
 		  revincr = (sp->reverb_control_scale - rev) / (Float)(frames);
 		  if ((dp->filtering) && (sp->filter_control_changed))
 		    {
+		      Float *data = NULL;
 		      data = sample_linear_env(sp->filter_control_envelope, sp->filter_control_order);
 		      if (data)
 			{
-			  mus_make_fir_coeffs(sp->filter_control_order, data, dp->a); /* since dp->a is used directly, this might work */
+			  if (sp->filter_control_order > dp->a_size) /* need more room in dp->a == flt->xcoeffs and flt->state */
+			    {
+			      FREE(dp->a);
+			      dp->a_size = sp->filter_control_order;
+			      dp->a = (Float *)CALLOC(dp->a_size, sizeof(Float));
+			    }
+			  mus_make_fir_coeffs(sp->filter_control_order, data, dp->a);      /* fill dp->a with new coeffs */
+			  mus_filter_set_xcoeffs(dp->flt, dp->a);                          /* tell gen about them */
+			  if (mus_filter_set_order(dp->flt, sp->filter_control_order) < 0) /* fixup gen's order (and internal state array) */
+			    snd_warning("trouble in filter (order not changed?)");
 			  FREE(data);
 			}
 		      sp->filter_control_changed = false;

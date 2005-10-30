@@ -5,7 +5,7 @@
 
 /* things left to do:
 
-    line cursor during play?
+    line cursor during play? or smart line cursor
     preset packages
     snd-test somehow
 
@@ -20,17 +20,11 @@
    colormap: a line with color-inverted and color-scaler and color-cutoff
    check out gui.scm et al 
    various additional key bindings? move-one-pixel zoom-one-pixel [how to specify fancy keys?]
-   nb.scm (buffer for it)
+   nb.scm ("activate popup help in View:files dialog")
 
-    audio section:
-    smart line cursor
-    ss->Dac_Combines_Channels = DEFAULT_DAC_COMBINES_CHANNELS;
-    recorder stuff? -> in-chans in-data-format in-device
     audio mixer settings? -> volume in some mode
-    audio output device? or sound card?
-
-    raw file defaults
-    -> mus_header_raw_defaults [chans srate format in headers.c]
+    raw file defaults -> mus_header_raw_defaults [chans srate format in headers.c]
+      but there's no direct access from extlang!
 
       clm ins, prc ins, v+jcrev+nrev, birds
       clm table size, file buffer size, default srate?
@@ -158,7 +152,7 @@ static void float_1_to_textfield(Widget w, Float val)
 
 #include <X11/IntrinsicP.h>
 
-static Widget find_radio_button(Widget parent, const char *name)
+static Widget find_radio_button(Widget parent, const char *name, int *which)
 {
   unsigned int i;
   CompositeWidget cw = (CompositeWidget)parent;
@@ -168,11 +162,38 @@ static Widget find_radio_button(Widget parent, const char *name)
       child = cw->composite.children[i];
       if ((child) &&
 	  (strcmp(XtName(child), name) == 0))
-	return(child);
+	{
+	  (*which) = i;
+	  return(child);
+	}
     }
   return(NULL);
 }
 
+static void handle_radio_button(prefs_info *prf, const char *value)
+{
+  Widget w;
+  int which = -1;
+  w = find_radio_button(prf->toggle, value, &which);
+  if (w)
+    XmToggleButtonSetState(w, XmSET, false);
+  else fprintf(stderr, "can't find %s\n", value);
+  if ((prf->radio_button) &&
+      (XmIsToggleButton(prf->radio_button)) &&
+      (w != prf->radio_button))
+    {
+      /* motif docs are incorrect -- the set above does not unset the currently set radio button */
+      XmToggleButtonSetState(prf->radio_button, XmUNSET, false);
+      prf->radio_button = w;
+    }
+}
+
+static int which_radio_button(prefs_info *prf)
+{
+  int which = -1;
+  find_radio_button(prf->toggle, XtName(prf->radio_button), &which);
+  return(which);
+}
 
 
 /* ---------------- help strings ---------------- */
@@ -1690,17 +1711,6 @@ static void va_post_prefs_error(const char *msg, void *data, ...)
   FREE(buf);
 }
 
-#if 0
-/* ---------------- customization choice ---------------- */
-
-    prf = prefs_row_with_radio_box("preset customization packages", "customization",
-				   customization_choices, 4, "none",
-				   dpy_box, dpy_label,
-				   customization_choice);
-    remember_pref(prf, reflect_customization_choice, NULL);
-#endif
-
-
 /* ---------------- start up size ---------------- */
 
 static void startup_width_erase_func(XtPointer context, XtIntervalId *id)
@@ -1896,7 +1906,7 @@ static bool find_peak_envs(void)
 	 XEN_TO_C_BOOLEAN(XEN_NAME_AS_C_STRING_TO_VALUE("save-peak-env-info?")));
 #endif
 #if HAVE_RUBY
-  return(XEN_DEFINED_P("install_save_peak_env");
+  return(XEN_DEFINED_P("install_save_peak_env"));
 #endif
 }
 
@@ -2104,7 +2114,7 @@ static void cursor_location_text(prefs_info *prf)
   str = XmTextFieldGetString(prf->text);
   if ((str) && (*str))
     {
-      Float interval = DEFAULT_CURSOR_UPDATE_INTERVAL;
+      float interval = DEFAULT_CURSOR_UPDATE_INTERVAL;
       sscanf(str, "%f", &interval);
       if (interval >= 0.0)
 	set_cursor_update_interval(interval);
@@ -2191,32 +2201,17 @@ static void cursor_size_from_text(prefs_info *prf)
 /* ---------------- cursor-style ---------------- */
 
 static const char *cursor_styles[2] = {"cross", "line"};
+static cursor_style_t cursor_styles_i[2] = {CURSOR_CROSS, CURSOR_LINE};
 
 static void reflect_cursor_style(prefs_info *prf)
 {
-  Widget w;
-  w = find_radio_button(prf->toggle, cursor_styles[cursor_style(ss)]);
-  if (w)
-    XmToggleButtonSetState(w, XmSET, false);
-  else fprintf(stderr, "can't find %s\n", cursor_styles[cursor_style(ss)]);
-  if ((prf->radio_button) &&
-      (XmIsToggleButton(prf->radio_button)) &&
-      (w != prf->radio_button))
-    {
-      /* motif docs are incorrect -- the set above does not unset the currently set radio button */
-      XmToggleButtonSetState(prf->radio_button, XmUNSET, false);
-      prf->radio_button = w;
-    }
+  handle_radio_button(prf, cursor_styles[cursor_style(ss)]);
 }
 
 static void cursor_style_choice(prefs_info *prf)
 {
   if (XmToggleButtonGetState(prf->radio_button) == XmSET)
-    {
-      if (strcmp(XtName(prf->radio_button), "line") == 0)
-	in_set_cursor_style(CURSOR_LINE);
-      else in_set_cursor_style(CURSOR_CROSS);
-    }
+    in_set_cursor_style(cursor_styles_i[which_radio_button(prf)]);
 }
 
 /* ---------------- cursor-color ---------------- */
@@ -2450,138 +2445,125 @@ static void html_program_text(prefs_info *prf)
 /* ---------------- default-output-chans etc ---------------- */
 
 static const char *output_chan_choices[4] = {"1", "2", "4", "8"};
+static int output_chan_choices_i[4] = {1, 2, 4, 8};
 static const char *output_srate_choices[4] = {"8000", "22050", "44100", "48000"};
+static int output_srate_choices_i[4] = {8000, 22050, 44100, 48000};
 
 static void reflect_output_chans(prefs_info *prf)
 {
   char *str;
-  Widget w;
   str = (char *)CALLOC(6, sizeof(char));
   mus_snprintf(str, 6, "%d", default_output_chans(ss));
-  w = find_radio_button(prf->toggle, str);
-  if (w)
-    XmToggleButtonSetState(w, XmSET, false);
-  else fprintf(stderr, "can't find %s\n", str);
+  handle_radio_button(prf, str);
   FREE(str);
-  if ((prf->radio_button) &&
-      (XmIsToggleButton(prf->radio_button)) &&
-      (w != prf->radio_button))
-    {
-      XmToggleButtonSetState(prf->radio_button, XmUNSET, false);
-      prf->radio_button = w;
-    }
 }
 
 static void reflect_output_srate(prefs_info *prf)
 {
   char *str;
-  Widget w;
   str = (char *)CALLOC(8, sizeof(char));
   mus_snprintf(str, 8, "%d", default_output_srate(ss));
-  w = find_radio_button(prf->toggle, str);
-  if (w)
-    XmToggleButtonSetState(w, XmSET, false);
-  else fprintf(stderr, "can't find %s\n", str);
+  handle_radio_button(prf, str);
   FREE(str);
-  if ((prf->radio_button) &&
-      (XmIsToggleButton(prf->radio_button)) &&
-      (w != prf->radio_button))
-    {
-      XmToggleButtonSetState(prf->radio_button, XmUNSET, false);
-      prf->radio_button = w;
-    }
 }
 
 static void output_chans_choice(prefs_info *prf)
 {
   if (XmToggleButtonGetState(prf->radio_button) == XmSET)
-    {
-      if (strcmp(XtName(prf->radio_button), "1") == 0)
-	set_default_output_chans(1);
-      else
-	{
-	  if (strcmp(XtName(prf->radio_button), "2") == 0)
-	    set_default_output_chans(2);
-	  else
-	    {
-	      if (strcmp(XtName(prf->radio_button), "4") == 0)
-		set_default_output_chans(4);
-	      else set_default_output_chans(8);
-	    }
-	}
-    }
+    set_default_output_chans(output_chan_choices_i[which_radio_button(prf)]);
 }
 
 static void output_srate_choice(prefs_info *prf)
 {
   if (XmToggleButtonGetState(prf->radio_button) == XmSET)
-    {
-      if (strcmp(XtName(prf->radio_button), "8000") == 0)
-	set_default_output_srate(8000);
-      else
-	{
-	  if (strcmp(XtName(prf->radio_button), "22050") == 0)
-	    set_default_output_srate(22050);
-	  else
-	    {
-	      if (strcmp(XtName(prf->radio_button), "44100") == 0)
-		set_default_output_srate(44100);
-	      else set_default_output_srate(48000);
-	    }
-	}
-    }
+    set_default_output_srate(output_srate_choices_i[which_radio_button(prf)]);
 }
 
 static const char *output_type_choices[5] = {"aifc", "wave", "next/sun", "nist", "aiff"};
+static int output_type_choices_i[5] = {MUS_AIFC, MUS_RIFF, MUS_NEXT, MUS_NIST, MUS_AIFF};
 static const char *output_format_choices[4] = {"short", "int", "float", "double"};
+static int output_format_choices_i[4] = {MUS_LSHORT, MUS_LINT, MUS_LFLOAT, MUS_LDOUBLE};
+
+static char *header_type_to_string(int type)
+{
+  switch (type)
+    {
+    case MUS_AIFC: return("aifc");     break;
+    case MUS_AIFF: return("aiff");     break;
+    case MUS_RIFF: return("wave");     break;
+    case MUS_NEXT: return("next/sun"); break;
+    case MUS_NIST: return("nist");     break;
+    }
+  return("aifc");
+}
+
+static char *data_format_to_string(int frm)
+{
+  switch (frm)
+    {
+    case MUS_LINT: case MUS_BINT:       return("int");    break;
+    case MUS_LSHORT: case MUS_BSHORT:   return("short");  break;
+    case MUS_LFLOAT: case MUS_BFLOAT:   return("float");  break;
+    case MUS_LDOUBLE: case MUS_BDOUBLE: return("double"); break;
+    }
+  return("short");
+}
 
 static void reflect_output_type(prefs_info *prf)
 {
-  char *str = "not a choice";
-  Widget w;
-  switch (default_output_header_type(ss))
-    {
-    case MUS_AIFC: str = "aifc"; break;
-    case MUS_AIFF: str = "aiff"; break;
-    case MUS_RIFF: str = "wave"; break;
-    case MUS_NEXT: str = "next/sun"; break;
-    case MUS_NIST: str = "nist"; break;
-    }
-  w = find_radio_button(prf->toggle, str);
-  if (w)
-    XmToggleButtonSetState(w, XmSET, false);
-  else fprintf(stderr, "can't find %s\n", str);
-  if ((prf->radio_button) &&
-      (XmIsToggleButton(prf->radio_button)) &&
-      (w != prf->radio_button))
-    {
-      XmToggleButtonSetState(prf->radio_button, XmUNSET, false);
-      prf->radio_button = w;
-    }
+  handle_radio_button(prf, header_type_to_string(default_output_header_type(ss)));
 }
 
 static void reflect_output_format(prefs_info *prf)
 {
-  char *str = "not a choice";
-  Widget w;
-  switch (default_output_data_format(ss))
+  handle_radio_button(prf, data_format_to_string(default_output_data_format(ss)));
+}
+
+static int header_to_data(int ht, int frm)
+{
+  /* nist -> short or int (lb)
+     aiff -> short or int (b)
+     aifc -> any (b)
+     next -> any (b)
+     wave -> any (l)
+  */
+  switch (ht)
     {
-    case MUS_LINT: case MUS_BINT: str = "int"; break;
-    case MUS_LSHORT: case MUS_BSHORT: str = "short"; break;
-    case MUS_LFLOAT: case MUS_BFLOAT: str = "float"; break;
-    case MUS_LDOUBLE: case MUS_BDOUBLE: str = "double"; break;
+    case MUS_NEXT: case MUS_AIFC:
+      switch (frm)
+	{
+	case MUS_LSHORT: return(MUS_BSHORT); break;
+	case MUS_LINT: return(MUS_BINT); break;
+	case MUS_LFLOAT: return(MUS_BFLOAT); break;
+	case MUS_LDOUBLE: return(MUS_BDOUBLE); break;
+	}
+      break;
+    case MUS_AIFF:
+      switch (frm)
+	{
+	case MUS_LSHORT: return(MUS_BSHORT); break;
+	case MUS_LINT: return(MUS_BINT); break;
+	case MUS_LFLOAT: case MUS_LDOUBLE: case MUS_BFLOAT: case MUS_BDOUBLE: return(MUS_BINT); break;
+	}
+      break;
+    case MUS_NIST:
+      switch (frm)
+	{
+	case MUS_LFLOAT: case MUS_LDOUBLE: return(MUS_LINT); break;
+	case MUS_BFLOAT: case MUS_BDOUBLE: return(MUS_BINT); break;
+	}
+      break;
+    case MUS_RIFF:
+      switch (frm)
+	{
+	case MUS_BSHORT: return(MUS_LSHORT); break;
+	case MUS_BINT: return(MUS_LINT); break;
+	case MUS_BFLOAT: return(MUS_LFLOAT); break;
+	case MUS_BDOUBLE: return(MUS_LDOUBLE); break;
+	}
+      break;
     }
-  w = find_radio_button(prf->toggle, str);
-  if (w)
-    XmToggleButtonSetState(w, XmSET, false);
-  else fprintf(stderr, "can't find %s\n", str);
-  if ((prf->radio_button) &&
-      (XmIsToggleButton(prf->radio_button)) &&
-      (w != prf->radio_button))
-    {
-      XmToggleButtonSetState(prf->radio_button, XmUNSET, false);
-      prf->radio_button = w;
-    }
+  return(frm);
 }
 
 static prefs_info *output_data_format_prf = NULL, *output_header_type_prf = NULL;
@@ -2590,67 +2572,8 @@ static void output_type_choice(prefs_info *prf)
 {
   if (XmToggleButtonGetState(prf->radio_button) == XmSET)
     {
-      if (strcmp(XtName(prf->radio_button), "aifc") == 0)
-	set_default_output_header_type(MUS_AIFC);
-      else
-	{
-	  if (strcmp(XtName(prf->radio_button), "wave") == 0)
-	    set_default_output_header_type(MUS_RIFF);
-	  else
-	    {
-	      if (strcmp(XtName(prf->radio_button), "next/sun") == 0)
-		set_default_output_header_type(MUS_NEXT);
-	      else 
-		{
-		  if (strcmp(XtName(prf->radio_button), "nist") == 0)
-		    set_default_output_header_type(MUS_NIST);
-		  else set_default_output_header_type(MUS_AIFF);
-		}
-	    }
-	}
-
-      /* nist -> short or int (lb)
-	 aiff -> short or int (b)
-	 aifc -> any (b)
-	 next -> any (b)
-	 wave -> any (l)
-      */
-      switch (default_output_header_type(ss))
-	{
-	case MUS_NEXT: case MUS_AIFC:
-	  switch (default_output_data_format(ss))
-	    {
-	    case MUS_LSHORT: set_default_output_data_format(MUS_BSHORT); break;
-	    case MUS_LINT: set_default_output_data_format(MUS_BINT); break;
-	    case MUS_LFLOAT: set_default_output_data_format(MUS_BFLOAT); break;
-	    case MUS_LDOUBLE: set_default_output_data_format(MUS_BDOUBLE); break;
-	    }
-	  break;
-	case MUS_AIFF:
-	  switch (default_output_data_format(ss))
-	    {
-	    case MUS_LSHORT: set_default_output_data_format(MUS_BSHORT); break;
-	    case MUS_LINT: set_default_output_data_format(MUS_BINT); break;
-	    case MUS_LFLOAT: case MUS_LDOUBLE: case MUS_BFLOAT: case MUS_BDOUBLE: set_default_output_data_format(MUS_BINT); break;
-	    }
-	  break;
-	case MUS_NIST:
-	  switch (default_output_data_format(ss))
-	    {
-	    case MUS_LFLOAT: case MUS_LDOUBLE: set_default_output_data_format(MUS_LINT); break;
-	    case MUS_BFLOAT: case MUS_BDOUBLE: set_default_output_data_format(MUS_BINT); break;
-	    }
-	  break;
-	case MUS_RIFF:
-	  switch (default_output_data_format(ss))
-	    {
-	    case MUS_BSHORT: set_default_output_data_format(MUS_LSHORT); break;
-	    case MUS_BINT: set_default_output_data_format(MUS_LINT); break;
-	    case MUS_BFLOAT: set_default_output_data_format(MUS_LFLOAT); break;
-	    case MUS_BDOUBLE: set_default_output_data_format(MUS_LDOUBLE); break;
-	    }
-	  break;
-	}
+      set_default_output_header_type(output_type_choices_i[which_radio_button(prf)]);
+      set_default_output_data_format(header_to_data(default_output_header_type(ss), default_output_data_format(ss)));
       reflect_output_format(output_data_format_prf);
     }
 }
@@ -2659,19 +2582,7 @@ static void output_format_choice(prefs_info *prf)
 {
   if (XmToggleButtonGetState(prf->radio_button) == XmSET)
     {
-      if (strcmp(XtName(prf->radio_button), "short") == 0)
-	set_default_output_data_format(MUS_LSHORT);
-      else
-	{
-	  if (strcmp(XtName(prf->radio_button), "int") == 0)
-	    set_default_output_data_format(MUS_LINT);
-	  else
-	    {
-	      if (strcmp(XtName(prf->radio_button), "float") == 0)
-		set_default_output_data_format(MUS_LFLOAT);
-	      else set_default_output_data_format(MUS_LDOUBLE);
-	    }
-	}
+      set_default_output_data_format(output_format_choices_i[which_radio_button(prf)]);
 
       switch (default_output_data_format(ss))
 	{
@@ -2891,47 +2802,17 @@ static void reflect_mix_menu(prefs_info *prf)
 /* ---------------- graph-style ---------------- */
 
 static const char *graph_styles[5] = {"line", "dot", "filled", "dot+line", "lollipop"};
+static graph_style_t graph_styles_i[5] = {GRAPH_LINES, GRAPH_DOTS, GRAPH_FILLED, GRAPH_DOTS_AND_LINES, GRAPH_LOLLIPOPS};
 
 static void reflect_graph_style(prefs_info *prf)
 {
-  Widget w;
-  w = find_radio_button(prf->toggle, graph_styles[graph_style(ss)]);
-  if (w)
-    XmToggleButtonSetState(w, XmSET, false);
-  else fprintf(stderr, "can't find %s\n", graph_styles[graph_style(ss)]);
-  if ((prf->radio_button) &&
-      (XmIsToggleButton(prf->radio_button)) &&
-      (w != prf->radio_button))
-    {
-      /* motif docs are incorrect -- the set above does not unset the currently set radio button */
-      XmToggleButtonSetState(prf->radio_button, XmUNSET, false);
-      prf->radio_button = w;
-    }
+  handle_radio_button(prf, graph_styles[graph_style(ss)]);
 }
 
 static void graph_style_choice(prefs_info *prf)
 {
   if (XmToggleButtonGetState(prf->radio_button) == XmSET)
-    {
-      if (strcmp(XtName(prf->radio_button), "line") == 0)
-	in_set_graph_style(GRAPH_LINES);
-      else
-	{
-	  if (strcmp(XtName(prf->radio_button), "dot") == 0)
-	    in_set_graph_style(GRAPH_DOTS);
-	  else
-	    {
-	      if (strcmp(XtName(prf->radio_button), "filled") == 0)
-		in_set_graph_style(GRAPH_FILLED);
-	      else
-		{
-		  if (strcmp(XtName(prf->radio_button), "dot+line") == 0)
-		    in_set_graph_style(GRAPH_DOTS_AND_LINES);
-		  else in_set_graph_style(GRAPH_LOLLIPOPS);
-		}
-	    }
-	}
-    }
+    in_set_graph_style(graph_styles_i[which_radio_button(prf)]);
 }
 
 /* ---------------- dot-size ---------------- */
@@ -3085,36 +2966,17 @@ static void initial_bounds_text(prefs_info *prf)
 /* ---------------- channel-style ---------------- */
 
 static const char *channel_styles[3] = {"separate", "combined", "superimposed"};
+static channel_style_t channel_styles_i[3] = {CHANNELS_SEPARATE, CHANNELS_COMBINED, CHANNELS_SUPERIMPOSED};
 
 static void reflect_channel_style(prefs_info *prf)
 {
-  Widget w;
-  w = find_radio_button(prf->toggle, channel_styles[(int)channel_style(ss)]);
-  if (w)
-    XmToggleButtonSetState(w, XmSET, false);
-  else fprintf(stderr, "can't find %s\n", channel_styles[(int)channel_style(ss)]);
-  if ((prf->radio_button) &&
-      (XmIsToggleButton(prf->radio_button)) &&
-      (w != prf->radio_button))
-    {
-      XmToggleButtonSetState(prf->radio_button, XmUNSET, false);
-      prf->radio_button = w;
-    }
+  handle_radio_button(prf, channel_styles[(int)channel_style(ss)]);
 }
 
 static void channel_style_choice(prefs_info *prf)
 {
   if (XmToggleButtonGetState(prf->radio_button) == XmSET)
-    {
-      if (strcmp(XtName(prf->radio_button), "separate") == 0)
-	in_set_channel_style(CHANNELS_SEPARATE);
-      else
-	{
-	  if (strcmp(XtName(prf->radio_button), "combined") == 0)
-	    in_set_channel_style(CHANNELS_COMBINED);
-	  else in_set_channel_style(CHANNELS_SUPERIMPOSED);
-	}
-    }
+    in_set_channel_style(channel_styles_i[which_radio_button(prf)]);
 }
 
 /* ---------------- graphs-horizontal ---------------- */
@@ -3676,36 +3538,17 @@ static void fft_size_from_text(prefs_info *prf)
 /* ---------------- transform-graph-type ---------------- */
 
 static const char *transform_graph_types[3] = {"normal", "sonogram", "spectrogram"};
+static graph_type_t transform_graph_types_i[3] = {GRAPH_ONCE, GRAPH_AS_SONOGRAM, GRAPH_AS_SPECTROGRAM};
 
 static void reflect_transform_graph_type(prefs_info *prf)
 {
-  Widget w;
-  w = find_radio_button(prf->toggle, transform_graph_types[transform_graph_type(ss)]);
-  if (w)
-    XmToggleButtonSetState(w, XmSET, false);
-  else fprintf(stderr, "can't find %s\n", transform_graph_types[transform_graph_type(ss)]);
-  if ((prf->radio_button) &&
-      (XmIsToggleButton(prf->radio_button)) &&
-      (w != prf->radio_button))
-    {
-      XmToggleButtonSetState(prf->radio_button, XmUNSET, false);
-      prf->radio_button = w;
-    }
+  handle_radio_button(prf, transform_graph_types[transform_graph_type(ss)]);
 }
 
 static void transform_graph_type_choice(prefs_info *prf)
 {
   if (XmToggleButtonGetState(prf->radio_button) == XmSET)
-    {
-      if (strcmp(XtName(prf->radio_button), "sonogram") == 0)
-	in_set_transform_graph_type(GRAPH_AS_SONOGRAM);
-      else
-	{
-	  if (strcmp(XtName(prf->radio_button), "spectrogram") == 0)
-	    in_set_transform_graph_type(GRAPH_AS_SPECTROGRAM);
-	  else in_set_transform_graph_type(GRAPH_ONCE);
-	}
-    }
+    in_set_transform_graph_type(transform_graph_types_i[which_radio_button(prf)]);
 }
 
 
@@ -4036,41 +3879,17 @@ static void log_frequency_toggle(prefs_info *prf)
 /* ---------------- transform-normalization ---------------- */
 
 static const char *transform_normalizations[4] = {"none", "by channel", "by sound", "global"};
+static fft_normalize_t transform_normalizations_i[4] = {DONT_NORMALIZE, NORMALIZE_BY_CHANNEL, NORMALIZE_BY_SOUND, NORMALIZE_GLOBALLY};
 
 static void reflect_transform_normalization(prefs_info *prf)
 {
-  Widget w;
-  w = find_radio_button(prf->toggle, transform_normalizations[transform_normalization(ss)]);
-  if (w)
-    XmToggleButtonSetState(w, XmSET, false);
-  else fprintf(stderr, "can't find %s\n", transform_normalizations[transform_normalization(ss)]);
-  if ((prf->radio_button) &&
-      (XmIsToggleButton(prf->radio_button)) &&
-      (w != prf->radio_button))
-    {
-      XmToggleButtonSetState(prf->radio_button, XmUNSET, false);
-      prf->radio_button = w;
-    }
+  handle_radio_button(prf, transform_normalizations[transform_normalization(ss)]);
 }
 
 static void transform_normalization_choice(prefs_info *prf)
 {
   if (XmToggleButtonGetState(prf->radio_button) == XmSET)
-    {
-      if (strcmp(XtName(prf->radio_button), "none") == 0)
-	in_set_transform_normalization(DONT_NORMALIZE);
-      else
-	{
-	  if (strcmp(XtName(prf->radio_button), "by channel") == 0)
-	    in_set_transform_normalization(NORMALIZE_BY_CHANNEL);
-	  else
-	    {
-	      if (strcmp(XtName(prf->radio_button), "by sound") == 0)
-		in_set_transform_normalization(NORMALIZE_BY_SOUND);
-	      else in_set_transform_normalization(NORMALIZE_GLOBALLY);
-	    }
-	}
-    }
+    in_set_transform_normalization(transform_normalizations_i[which_radio_button(prf)]);
 }
 
 
@@ -4319,6 +4138,7 @@ static void save_with_sound(prefs_info *prf, FILE *fd)
 #define MIN_SPEED_CONTROL_SEMITONES 1
 
 static const char *speed_control_styles[NUM_SPEED_CONTROL_CHOICES] = {"float", "ratio", "semitones:"};
+static speed_style_t speed_control_styles_i[3] = {SPEED_CONTROL_AS_FLOAT, SPEED_CONTROL_AS_RATIO, SPEED_CONTROL_AS_SEMITONE};
 
 static void show_speed_control_semitones(prefs_info *prf)
 {
@@ -4364,34 +4184,14 @@ static void speed_control_text(prefs_info *prf)
 
 static void reflect_speed_control(prefs_info *prf)
 {
-  Widget w;
   show_speed_control_semitones(prf);
-  w = find_radio_button(prf->toggle, speed_control_styles[(int)speed_control_style(ss)]);
-  if (w)
-    XmToggleButtonSetState(w, XmSET, false);
-  else fprintf(stderr, "can't find %s\n", speed_control_styles[(int)speed_control_style(ss)]);
-  if ((prf->radio_button) &&
-      (XmIsToggleButton(prf->radio_button)) &&
-      (w != prf->radio_button))
-    {
-      XmToggleButtonSetState(prf->radio_button, XmUNSET, false);
-      prf->radio_button = w;
-    }
+  handle_radio_button(prf, speed_control_styles[(int)speed_control_style(ss)]);
 }
 
 static void speed_control_choice(prefs_info *prf)
 {
   if (XmToggleButtonGetState(prf->radio_button) == XmSET)
-    {
-      if (strcmp(XtName(prf->radio_button), "float") == 0)
-	in_set_speed_control_style(ss, SPEED_CONTROL_AS_FLOAT);
-      else
-	{
-	  if (strcmp(XtName(prf->radio_button), "ratio") == 0)
-	    in_set_speed_control_style(ss, SPEED_CONTROL_AS_RATIO);
-	  else in_set_speed_control_style(ss, SPEED_CONTROL_AS_SEMITONE);
-	}
-    }
+    in_set_speed_control_style(ss, speed_control_styles_i[which_radio_button(prf)]);
 }
 
 /* ---------------- sinc width ---------------- */
@@ -4744,6 +4544,20 @@ static void dac_size_text(prefs_info *prf)
     }
 }
 
+/* ---------------- dac-combines-channels ---------------- */
+
+static void reflect_dac_combines_channels(prefs_info *prf) 
+{
+  XmToggleButtonSetState(prf->toggle, dac_combines_channels(ss), false);
+}
+
+static void dac_combines_channels_toggle(prefs_info *prf)
+{
+  ASSERT_WIDGET_TYPE(XmIsToggleButton(prf->toggle), prf->toggle);
+  set_dac_combines_channels(XmToggleButtonGetState(prf->toggle) == XmSET);
+}
+
+
 /* ---------------- recorder file name ---------------- */
 
 static void recorder_filename_text(prefs_info *prf)
@@ -4802,143 +4616,53 @@ static void recorder_buffer_size_text(prefs_info *prf)
 /* ---------------- recorder-out-chans etc ---------------- */
 
 static const char *recorder_out_chans_choices[4] = {"1", "2", "4", "8"};
+static int recorder_out_chans_choices_i[4] = {1, 2, 4, 8};
 static const char *recorder_srate_choices[5] = {"8000", "22050", "44100", "48000", "96000"};
+static int recorder_srate_choices_i[5] = {8000, 22050, 44100, 48000, 96000};
 
 static void reflect_recorder_out_chans(prefs_info *prf)
 {
   char *str;
-  Widget w;
   str = (char *)CALLOC(6, sizeof(char));
   mus_snprintf(str, 6, "%d", rec_output_chans());
-  w = find_radio_button(prf->toggle, str);
-  if (w)
-    XmToggleButtonSetState(w, XmSET, false);
-  else fprintf(stderr, "can't find %s\n", str);
+  handle_radio_button(prf, str);
   FREE(str);
-  if ((prf->radio_button) &&
-      (XmIsToggleButton(prf->radio_button)) &&
-      (w != prf->radio_button))
-    {
-      XmToggleButtonSetState(prf->radio_button, XmUNSET, false);
-      prf->radio_button = w;
-    }
 }
 
 static void reflect_recorder_srate(prefs_info *prf)
 {
   char *str;
-  Widget w;
   str = (char *)CALLOC(8, sizeof(char));
   mus_snprintf(str, 8, "%d", rec_srate());
-  w = find_radio_button(prf->toggle, str);
-  if (w)
-    XmToggleButtonSetState(w, XmSET, false);
-  else fprintf(stderr, "can't find %s\n", str);
+  handle_radio_button(prf, str);
   FREE(str);
-  if ((prf->radio_button) &&
-      (XmIsToggleButton(prf->radio_button)) &&
-      (w != prf->radio_button))
-    {
-      XmToggleButtonSetState(prf->radio_button, XmUNSET, false);
-      prf->radio_button = w;
-    }
 }
 
 static void recorder_out_chans_choice(prefs_info *prf)
 {
   if (XmToggleButtonGetState(prf->radio_button) == XmSET)
-    {
-      if (strcmp(XtName(prf->radio_button), "1") == 0)
-	rec_set_output_chans(1);
-      else
-	{
-	  if (strcmp(XtName(prf->radio_button), "2") == 0)
-	    rec_set_output_chans(2);
-	  else
-	    {
-	      if (strcmp(XtName(prf->radio_button), "4") == 0)
-		rec_set_output_chans(4);
-	      else rec_set_output_chans(8);
-	    }
-	}
-    }
+    rec_set_output_chans(recorder_out_chans_choices_i[which_radio_button(prf)]);
 }
 
 static void recorder_srate_choice(prefs_info *prf)
 {
   if (XmToggleButtonGetState(prf->radio_button) == XmSET)
-    {
-      if (strcmp(XtName(prf->radio_button), "8000") == 0)
-	rec_set_srate(8000);
-      else
-	{
-	  if (strcmp(XtName(prf->radio_button), "22050") == 0)
-	    rec_set_srate(22050);
-	  else
-	    {
-	      if (strcmp(XtName(prf->radio_button), "44100") == 0)
-		rec_set_srate(44100);
-	      else
-		{
-		  if (strcmp(XtName(prf->radio_button), "48000") == 0)
-		    rec_set_srate(48000);
-		  else rec_set_srate(96000);
-		}
-	    }
-	}
-    }
+    rec_set_srate(recorder_srate_choices_i[which_radio_button(prf)]);
 }
 
 static const char *recorder_out_type_choices[5] = {"aifc", "wave", "next/sun", "nist", "aiff"};
+static int recorder_out_type_choices_i[5] = {MUS_AIFC, MUS_RIFF, MUS_NEXT, MUS_NIST, MUS_AIFF};
 static const char *recorder_out_format_choices[4] = {"short", "int", "float", "double"};
+static int recorder_out_format_choices_i[4] = {MUS_LSHORT, MUS_LINT, MUS_LFLOAT, MUS_LDOUBLE};
 
 static void reflect_recorder_out_type(prefs_info *prf)
 {
-  char *str = "not a choice";
-  Widget w;
-  switch (rec_output_header_type())
-    {
-    case MUS_AIFC: str = "aifc"; break;
-    case MUS_AIFF: str = "aiff"; break;
-    case MUS_RIFF: str = "wave"; break;
-    case MUS_NEXT: str = "next/sun"; break;
-    case MUS_NIST: str = "nist"; break;
-    }
-  w = find_radio_button(prf->toggle, str);
-  if (w)
-    XmToggleButtonSetState(w, XmSET, false);
-  else fprintf(stderr, "can't find %s\n", str);
-  if ((prf->radio_button) &&
-      (XmIsToggleButton(prf->radio_button)) &&
-      (w != prf->radio_button))
-    {
-      XmToggleButtonSetState(prf->radio_button, XmUNSET, false);
-      prf->radio_button = w;
-    }
+  handle_radio_button(prf, header_type_to_string(rec_output_header_type()));
 }
 
 static void reflect_recorder_out_format(prefs_info *prf)
 {
-  char *str = "not a choice";
-  Widget w;
-  switch (rec_output_data_format())
-    {
-    case MUS_LINT: case MUS_BINT: str = "int"; break;
-    case MUS_LSHORT: case MUS_BSHORT: str = "short"; break;
-    case MUS_LFLOAT: case MUS_BFLOAT: str = "float"; break;
-    case MUS_LDOUBLE: case MUS_BDOUBLE: str = "double"; break;
-    }
-  w = find_radio_button(prf->toggle, str);
-  if (w)
-    XmToggleButtonSetState(w, XmSET, false);
-  else fprintf(stderr, "can't find %s\n", str);
-  if ((prf->radio_button) &&
-      (XmIsToggleButton(prf->radio_button)) &&
-      (w != prf->radio_button))
-    {
-      XmToggleButtonSetState(prf->radio_button, XmUNSET, false);
-      prf->radio_button = w;
-    }
+  handle_radio_button(prf, data_format_to_string(rec_output_data_format()));
 }
 
 static prefs_info *recorder_out_data_format_prf = NULL, *recorder_out_header_type_prf = NULL;
@@ -4947,67 +4671,8 @@ static void recorder_out_type_choice(prefs_info *prf)
 {
   if (XmToggleButtonGetState(prf->radio_button) == XmSET)
     {
-      if (strcmp(XtName(prf->radio_button), "aifc") == 0)
-	rec_set_output_header_type(MUS_AIFC);
-      else
-	{
-	  if (strcmp(XtName(prf->radio_button), "wave") == 0)
-	    rec_set_output_header_type(MUS_RIFF);
-	  else
-	    {
-	      if (strcmp(XtName(prf->radio_button), "next/sun") == 0)
-		rec_set_output_header_type(MUS_NEXT);
-	      else 
-		{
-		  if (strcmp(XtName(prf->radio_button), "nist") == 0)
-		    rec_set_output_header_type(MUS_NIST);
-		  else rec_set_output_header_type(MUS_AIFF);
-		}
-	    }
-	}
-
-      /* nist -> short or int (lb)
-	 aiff -> short or int (b)
-	 aifc -> any (b)
-	 next -> any (b)
-	 wave -> any (l)
-      */
-      switch (rec_output_header_type())
-	{
-	case MUS_NEXT: case MUS_AIFC:
-	  switch (rec_output_data_format())
-	    {
-	    case MUS_LSHORT: rec_set_output_data_format(MUS_BSHORT); break;
-	    case MUS_LINT: rec_set_output_data_format(MUS_BINT); break;
-	    case MUS_LFLOAT: rec_set_output_data_format(MUS_BFLOAT); break;
-	    case MUS_LDOUBLE: rec_set_output_data_format(MUS_BDOUBLE); break;
-	    }
-	  break;
-	case MUS_AIFF:
-	  switch (rec_output_data_format())
-	    {
-	    case MUS_LSHORT: rec_set_output_data_format(MUS_BSHORT); break;
-	    case MUS_LINT: rec_set_output_data_format(MUS_BINT); break;
-	    case MUS_LFLOAT: case MUS_LDOUBLE: case MUS_BFLOAT: case MUS_BDOUBLE: rec_set_output_data_format(MUS_BINT); break;
-	    }
-	  break;
-	case MUS_NIST:
-	  switch (rec_output_data_format())
-	    {
-	    case MUS_LFLOAT: case MUS_LDOUBLE: rec_set_output_data_format(MUS_LINT); break;
-	    case MUS_BFLOAT: case MUS_BDOUBLE: rec_set_output_data_format(MUS_BINT); break;
-	    }
-	  break;
-	case MUS_RIFF:
-	  switch (rec_output_data_format())
-	    {
-	    case MUS_BSHORT: rec_set_output_data_format(MUS_LSHORT); break;
-	    case MUS_BINT: rec_set_output_data_format(MUS_LINT); break;
-	    case MUS_BFLOAT: rec_set_output_data_format(MUS_LFLOAT); break;
-	    case MUS_BDOUBLE: rec_set_output_data_format(MUS_LDOUBLE); break;
-	    }
-	  break;
-	}
+      rec_set_output_header_type(recorder_out_type_choices_i[which_radio_button(prf)]);
+      rec_set_output_data_format(header_to_data(rec_output_header_type(), rec_output_data_format()));
       reflect_recorder_out_format(recorder_out_data_format_prf);
     }
 }
@@ -5016,20 +4681,7 @@ static void recorder_out_format_choice(prefs_info *prf)
 {
   if (XmToggleButtonGetState(prf->radio_button) == XmSET)
     {
-      if (strcmp(XtName(prf->radio_button), "short") == 0)
-	rec_set_output_data_format(MUS_LSHORT);
-      else
-	{
-	  if (strcmp(XtName(prf->radio_button), "int") == 0)
-	    rec_set_output_data_format(MUS_LINT);
-	  else
-	    {
-	      if (strcmp(XtName(prf->radio_button), "float") == 0)
-		rec_set_output_data_format(MUS_LFLOAT);
-	      else rec_set_output_data_format(MUS_LDOUBLE);
-	    }
-	}
-
+      rec_set_output_data_format(recorder_out_format_choices_i[which_radio_button(prf)]);
       switch (rec_output_data_format())
 	{
 	case MUS_LSHORT:
@@ -6116,6 +5768,13 @@ void start_preferences_dialog(void)
 			      dac_size_text);
     remember_pref(prf, reflect_dac_size, NULL);
     FREE(str);
+
+    current_sep = make_inter_variable_separator(aud_box, prf->label);
+    prf = prefs_row_with_toggle("fold in otherwise unplayable channels", S_dac_combines_channels,
+				dac_combines_channels(ss),
+				aud_box, current_sep,
+				dac_combines_channels_toggle);
+    remember_pref(prf, reflect_dac_combines_channels, NULL);
 
     current_sep = make_inter_variable_separator(aud_box, prf->label);
     recorder_label = make_inner_label("  recorder options", aud_box, current_sep);

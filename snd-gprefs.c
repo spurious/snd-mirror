@@ -1664,7 +1664,7 @@ static bool find_peak_envs(void)
 	 XEN_TO_C_BOOLEAN(XEN_NAME_AS_C_STRING_TO_VALUE("save-peak-env-info?")));
 #endif
 #if HAVE_RUBY
-  return(XEN_DEFINED_P("install_save_peak_env");
+  return(XEN_DEFINED_P("install_save_peak_env"));
 #endif
 }
 
@@ -1853,7 +1853,7 @@ static void cursor_location_text(prefs_info *prf)
   str = (char *)gtk_entry_get_text(GTK_ENTRY(prf->text));
   if ((str) && (*str))
     {
-      Float interval = DEFAULT_CURSOR_UPDATE_INTERVAL;
+      float interval = DEFAULT_CURSOR_UPDATE_INTERVAL;
       sscanf(str, "%f", &interval);
       if (interval >= 0.0)
 	set_cursor_update_interval(interval);
@@ -1935,6 +1935,7 @@ static void cursor_size_from_text(prefs_info *prf)
 /* ---------------- cursor-style ---------------- */
 
 static const char *cursor_styles[2] = {"cross", "line"};
+static cursor_style_t cursor_styles_i[2] = {CURSOR_CROSS, CURSOR_LINE};
 
 static void reflect_cursor_style(prefs_info *prf)
 {
@@ -1953,13 +1954,7 @@ static void reflect_cursor_style(prefs_info *prf)
 static void cursor_style_choice(prefs_info *prf)
 {
   if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prf->radio_button)))
-    {
-      int which;
-      which = get_user_int_data(G_OBJECT(prf->radio_button));
-      if (which == 1)
-	in_set_cursor_style(CURSOR_LINE);
-      else in_set_cursor_style(CURSOR_CROSS);
-    }
+    in_set_cursor_style(cursor_styles_i[get_user_int_data(G_OBJECT(prf->radio_button))]);
 }
 
 /* ---------------- cursor-color ---------------- */
@@ -2272,58 +2267,61 @@ static void reflect_output_format(prefs_info *prf)
     set_toggle_button(prf->radio_buttons[which], true, false, (void *)prf);
 }
 
+static int header_to_data(int ht, int frm)
+{
+  /* nist -> short or int (lb)
+     aiff -> short or int (b)
+     aifc -> any (b)
+     next -> any (b)
+     wave -> any (l)
+  */
+  switch (ht)
+    {
+    case MUS_NEXT: case MUS_AIFC:
+      switch (frm)
+	{
+	case MUS_LSHORT: return(MUS_BSHORT); break;
+	case MUS_LINT: return(MUS_BINT); break;
+	case MUS_LFLOAT: return(MUS_BFLOAT); break;
+	case MUS_LDOUBLE: return(MUS_BDOUBLE); break;
+	}
+      break;
+    case MUS_AIFF:
+      switch (frm)
+	{
+	case MUS_LSHORT: return(MUS_BSHORT); break;
+	case MUS_LINT: return(MUS_BINT); break;
+	case MUS_LFLOAT: case MUS_LDOUBLE: case MUS_BFLOAT: case MUS_BDOUBLE: return(MUS_BINT); break;
+	}
+      break;
+    case MUS_NIST:
+      switch (frm)
+	{
+	case MUS_LFLOAT: case MUS_LDOUBLE: return(MUS_LINT); break;
+	case MUS_BFLOAT: case MUS_BDOUBLE: return(MUS_BINT); break;
+	}
+      break;
+    case MUS_RIFF:
+      switch (frm)
+	{
+	case MUS_BSHORT: return(MUS_LSHORT); break;
+	case MUS_BINT: return(MUS_LINT); break;
+	case MUS_BFLOAT: return(MUS_LFLOAT); break;
+	case MUS_BDOUBLE: return(MUS_LDOUBLE); break;
+	}
+      break;
+    }
+  return(frm);
+}
+
 static prefs_info *output_data_format_prf = NULL, *output_header_type_prf = NULL;
 
 static void output_type_choice(prefs_info *prf)
 {
-  int which = -1;
   if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prf->radio_button)))
     {
-      which = get_user_int_data(G_OBJECT(prf->radio_button));
-      set_default_output_header_type(output_types[which]);
-
-      /* nist -> short or int (lb)
-	 aiff -> short or int (b)
-	 aifc -> any (b)
-	 next -> any (b)
-	 wave -> any (l)
-      */
-      switch (default_output_header_type(ss))
-	{
-	case MUS_NEXT: case MUS_AIFC:
-	  switch (default_output_data_format(ss))
-	    {
-	    case MUS_LSHORT: set_default_output_data_format(MUS_BSHORT); break;
-	    case MUS_LINT: set_default_output_data_format(MUS_BINT); break;
-	    case MUS_LFLOAT: set_default_output_data_format(MUS_BFLOAT); break;
-	    case MUS_LDOUBLE: set_default_output_data_format(MUS_BDOUBLE); break;
-	    }
-	  break;
-	case MUS_AIFF:
-	  switch (default_output_data_format(ss))
-	    {
-	    case MUS_LSHORT: set_default_output_data_format(MUS_BSHORT); break;
-	    case MUS_LINT: set_default_output_data_format(MUS_BINT); break;
-	    case MUS_LFLOAT: case MUS_LDOUBLE: case MUS_BFLOAT: case MUS_BDOUBLE: set_default_output_data_format(MUS_BINT); break;
-	    }
-	  break;
-	case MUS_NIST:
-	  switch (default_output_data_format(ss))
-	    {
-	    case MUS_LFLOAT: case MUS_LDOUBLE: set_default_output_data_format(MUS_LINT); break;
-	    case MUS_BFLOAT: case MUS_BDOUBLE: set_default_output_data_format(MUS_BINT); break;
-	    }
-	  break;
-	case MUS_RIFF:
-	  switch (default_output_data_format(ss))
-	    {
-	    case MUS_BSHORT: set_default_output_data_format(MUS_LSHORT); break;
-	    case MUS_BINT: set_default_output_data_format(MUS_LINT); break;
-	    case MUS_BFLOAT: set_default_output_data_format(MUS_LFLOAT); break;
-	    case MUS_BDOUBLE: set_default_output_data_format(MUS_LDOUBLE); break;
-	    }
-	  break;
-	}
+      set_default_output_header_type(output_types[get_user_int_data(G_OBJECT(prf->radio_button))]);
+      set_default_output_data_format(header_to_data(default_output_header_type(ss), default_output_data_format(ss)));
       reflect_output_format(output_data_format_prf);
     }
 }
@@ -4149,6 +4147,18 @@ static void dac_size_text(prefs_info *prf)
     }
 }
 
+/* ---------------- dac-combines-channels ---------------- */
+
+static void reflect_dac_combines_channels(prefs_info *prf) 
+{
+  set_toggle_button(prf->toggle, dac_combines_channels(ss), false, (void *)prf);
+}
+
+static void dac_combines_channels_toggle(prefs_info *prf)
+{
+  set_dac_combines_channels(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prf->toggle)));
+}
+
 /* ---------------- recorder file name ---------------- */
 
 static void recorder_filename_text(prefs_info *prf)
@@ -4288,54 +4298,10 @@ static prefs_info *recorder_out_data_format_prf = NULL, *recorder_out_header_typ
 
 static void recorder_out_type_choice(prefs_info *prf)
 {
-  int which = -1;
   if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prf->radio_button)))
     {
-      which = get_user_int_data(G_OBJECT(prf->radio_button));
-      rec_set_output_header_type(recorder_types[which]);
-
-      /* nist -> short or int (lb)
-	 aiff -> short or int (b)
-	 aifc -> any (b)
-	 next -> any (b)
-	 wave -> any (l)
-      */
-      switch (rec_output_header_type())
-	{
-	case MUS_NEXT: case MUS_AIFC:
-	  switch (rec_output_data_format())
-	    {
-	    case MUS_LSHORT: rec_set_output_data_format(MUS_BSHORT); break;
-	    case MUS_LINT: rec_set_output_data_format(MUS_BINT); break;
-	    case MUS_LFLOAT: rec_set_output_data_format(MUS_BFLOAT); break;
-	    case MUS_LDOUBLE: rec_set_output_data_format(MUS_BDOUBLE); break;
-	    }
-	  break;
-	case MUS_AIFF:
-	  switch (rec_output_data_format())
-	    {
-	    case MUS_LSHORT: rec_set_output_data_format(MUS_BSHORT); break;
-	    case MUS_LINT: rec_set_output_data_format(MUS_BINT); break;
-	    case MUS_LFLOAT: case MUS_LDOUBLE: case MUS_BFLOAT: case MUS_BDOUBLE: rec_set_output_data_format(MUS_BINT); break;
-	    }
-	  break;
-	case MUS_NIST:
-	  switch (rec_output_data_format())
-	    {
-	    case MUS_LFLOAT: case MUS_LDOUBLE: rec_set_output_data_format(MUS_LINT); break;
-	    case MUS_BFLOAT: case MUS_BDOUBLE: rec_set_output_data_format(MUS_BINT); break;
-	    }
-	  break;
-	case MUS_RIFF:
-	  switch (rec_output_data_format())
-	    {
-	    case MUS_BSHORT: rec_set_output_data_format(MUS_LSHORT); break;
-	    case MUS_BINT: rec_set_output_data_format(MUS_LINT); break;
-	    case MUS_BFLOAT: rec_set_output_data_format(MUS_LFLOAT); break;
-	    case MUS_BDOUBLE: rec_set_output_data_format(MUS_LDOUBLE); break;
-	    }
-	  break;
-	}
+      rec_set_output_header_type(recorder_types[get_user_int_data(G_OBJECT(prf->radio_button))]);
+      rec_set_output_data_format(header_to_data(rec_output_header_type(), rec_output_data_format()));
       reflect_recorder_out_format(recorder_out_data_format_prf);
     }
 }
@@ -5286,6 +5252,13 @@ void start_preferences_dialog(void)
 			      dac_size_text);
     remember_pref(prf, reflect_dac_size, NULL);
     FREE(str);
+
+    current_sep = make_inter_variable_separator(aud_box);
+    prf = prefs_row_with_toggle("fold in otherwise unplayable channels", S_dac_combines_channels,
+				dac_combines_channels(ss),
+				aud_box,
+				dac_combines_channels_toggle);
+    remember_pref(prf, reflect_dac_combines_channels, NULL);
 
     current_sep = make_inter_variable_separator(aud_box);
     make_inner_label("  recorder options", aud_box);

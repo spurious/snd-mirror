@@ -2,10 +2,11 @@
 #define CLM_H
 
 #define MUS_VERSION 3
-#define MUS_REVISION 18
-#define MUS_DATE "1-May-05"
+#define MUS_REVISION 19
+#define MUS_DATE "1-Nov-05"
 
 /*
+ * 1-Nov:      mus_filter_set_x|ycoeffs (needed by Snd).
  * 1-May:      mus-scaler|feedback ok with delay and average.
  * 18-Apr:     mus_set_environ.
  * 11-Apr:     mus_mixer|frame_offset, mus_frame_scale (for higher level generic functions).
@@ -460,6 +461,9 @@ Float mus_xcoeff(mus_any *ptr, int index);
 Float mus_set_xcoeff(mus_any *ptr, int index, Float val);
 Float mus_ycoeff(mus_any *ptr, int index);
 Float mus_set_ycoeff(mus_any *ptr, int index, Float val);
+Float *mus_filter_set_xcoeffs(mus_any *ptr, Float *new_data);
+Float *mus_filter_set_ycoeffs(mus_any *ptr, Float *new_data);
+int mus_filter_set_order(mus_any *ptr, int order);
 #define mus_order(Gen) mus_length(Gen)
 
 Float mus_wave_train(mus_any *gen, Float fm);

@@ -1189,7 +1189,7 @@ static void filter_order_callback(GtkWidget *w, gpointer data)
   if (order & 1) order++;
   if (order <= 0) order = 2;
   sp->filter_control_order = order;
-  set_filter_order_1(sp, sp->filter_control_order, false);
+  set_filter_order_1(sp, order, false);
 }
 
 static void filter_activate_callback(GtkWidget *w, gpointer context)
