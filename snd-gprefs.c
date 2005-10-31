@@ -1,4 +1,5 @@
 #include "snd.h"
+#include "sndlib-strings.h"
 
 static GtkWidget *preferences_dialog = NULL;
 
@@ -78,6 +79,31 @@ static char *trim_string(const char *str)
   for (m = i; m <= k; m++)
     trimmed_str[j++] = str[m];
   return(trimmed_str);
+}
+
+static char *raw_data_format_to_string(int format)
+{
+  /* the "mus-" prefix carries no information in this context, so strip it off */
+  char *name;
+  name = mus_data_format_to_string(format);
+  if (name)
+    {
+      char *rtn;
+      int i, j, len;
+      len = strlen(name);
+      rtn = (char *)CALLOC(len, sizeof(char));
+      for (i = 0, j = 4; j < len; i++, j++)
+	{
+	  if (name[j] == '-')
+	    {
+	      rtn[i] = 'u';
+	      return(rtn);
+	    }
+	  else rtn[i] = name[j];
+	}
+      return(rtn);
+    }
+  return(copy_string("unknown"));
 }
 
 static void int_to_textfield(GtkWidget *w, int val)
@@ -960,11 +986,11 @@ static prefs_info *prefs_row_with_number(const char *label, const char *varname,
 /* ---------------- list row ---------------- */
 
 #if HAVE_GTK_COMBO_BOX_ENTRY_NEW_TEXT
-static prefs_info *prefs_row_with_completed_list(const char *label, const char *varname, const char *value,
-						 const char **values, int num_values,
-						 GtkWidget *box,
-						 void (*text_func)(prefs_info *prf),
-						 char *(*completion_func)(char *text, void *context), void *completion_context)
+static prefs_info *prefs_row_with_list(const char *label, const char *varname, const char *value,
+				       const char **values, int num_values,
+				       GtkWidget *box,
+				       void (*text_func)(prefs_info *prf),
+				       char *(*completion_func)(char *text, void *context), void *completion_context)
 {
   int i;
   prefs_info *prf = NULL;
@@ -2388,6 +2414,107 @@ static void output_format_choice(prefs_info *prf)
     }
 }
 
+
+/* ---------------- raw sound defaults ---------------- */
+
+static void reflect_raw_chans(prefs_info *prf)
+{
+  int srate = 0, chans = 0, format = 0;
+  mus_header_raw_defaults(&srate, &chans, &format);
+  int_to_textfield(prf->text, chans);
+}
+
+static void raw_chans_choice(prefs_info *prf)
+{
+  char *str;
+  str = (char *)gtk_entry_get_text(GTK_ENTRY(prf->text));
+  if ((!str) || (!(*str)))
+    {
+      int srate = 0, chans = 0, format = 0;
+      mus_header_raw_defaults(&srate, &chans, &format);
+      sscanf(str, "%d", &chans);
+      if (chans > 0)
+	mus_header_set_raw_defaults(srate, chans, format);
+      else reflect_raw_chans(prf);
+    }
+}
+
+static void reflect_raw_srate(prefs_info *prf)
+{
+  int srate = 0, chans = 0, format = 0;
+  mus_header_raw_defaults(&srate, &chans, &format);
+  int_to_textfield(prf->text, srate);
+}
+
+static void raw_srate_choice(prefs_info *prf)
+{
+  char *str;
+  str = (char *)gtk_entry_get_text(GTK_ENTRY(prf->text));
+  if ((!str) || (!(*str)))
+    {
+      int srate = 0, chans = 0, format = 0;
+      mus_header_raw_defaults(&srate, &chans, &format);
+      sscanf(str, "%d", &srate);
+      if (srate > 0)
+	mus_header_set_raw_defaults(srate, chans, format);
+      else reflect_raw_srate(prf);
+    }
+}
+
+static void reflect_raw_data_format(prefs_info *prf)
+{
+  int srate = 0, chans = 0, format = 0;
+  char *str;
+  mus_header_raw_defaults(&srate, &chans, &format);
+  str = raw_data_format_to_string(format);
+  sg_entry_set_text(GTK_ENTRY(prf->text), str);
+  FREE(str);
+}
+
+static void save_raw_defaults(prefs_info *prf, FILE *fd)
+{
+  int srate = 0, chans = 0, format = 0;
+  mus_header_raw_defaults(&srate, &chans, &format);
+  if ((chans != 2) ||
+      (srate != 44100) ||
+      (format != MUS_BSHORT))
+    {
+#if HAVE_SCHEME
+      fprintf(fd, "(set! (mus-header-raw-defaults) (list %d %d %s))\n",
+	      srate,
+	      chans,
+	      mus_data_format_to_string(format));
+#endif
+#if HAVE_RUBY
+      /* TODO: test raw defaults save (esp ruby) */
+      fprintf(fd, "set_mus_header_raw_defaults([%d, %d, %s])\n",
+	      srate,
+	      chans,
+	      mus_data_format_to_string(format));
+#endif
+    }
+}
+
+static char **raw_data_format_choices = NULL;
+#define NUM_RAW_DATA_FORMATS MUS_LAST_DATA_FORMAT
+
+static void raw_data_format_from_text(prefs_info *prf)
+{
+  char *str;
+  str = (char *)gtk_entry_get_text(GTK_ENTRY(prf->text));
+  if ((!str) || (!(*str)))
+    {
+      int i, srate = 0, chans = 0, format = 0;
+      mus_header_raw_defaults(&srate, &chans, &format);
+      for (i = 0; i < NUM_RAW_DATA_FORMATS; i++)
+	if (strcasecmp(raw_data_format_choices[i], str) == 0)
+	  {
+	    mus_header_set_raw_defaults(srate, chans, i + 1); /* skipping MUS_UNKNOWN = 0 */
+	    return;
+	  }
+    }
+  reflect_raw_data_format(prf);
+}
 
 
 /* ---------------- context sensitive popup ---------------- */
@@ -4611,10 +4738,38 @@ void start_preferences_dialog(void)
 				   output_format_choice);
     output_data_format_prf = prf;
     remember_pref(prf, reflect_output_format, NULL);
-    current_sep = make_inter_variable_separator(dpy_box);
-
     reflect_output_type(output_header_type_prf);
     reflect_output_format(output_data_format_prf);
+
+    current_sep = make_inter_variable_separator(dpy_box);
+    {
+      int i, srate = 0, chans = 0, format = 0;
+      mus_header_raw_defaults(&srate, &chans, &format);
+      str = mus_format("%d", chans);
+      str1 = mus_format("%d", srate);
+      raw_data_format_choices = (char **)CALLOC(NUM_RAW_DATA_FORMATS, sizeof(char *));
+      for (i = 1; i <= NUM_RAW_DATA_FORMATS; i++)
+	raw_data_format_choices[i - 1] = raw_data_format_to_string(i); /* skip MUS_UNKNOWN */
+      prf = prefs_row_with_text("default raw sound attributes: chans", S_mus_header_raw_defaults, str,
+				dpy_box, 
+				raw_chans_choice);
+      remember_pref(prf, reflect_raw_chans, save_raw_defaults);
+
+      prf = prefs_row_with_text("srate", S_mus_header_raw_defaults, str1,
+				dpy_box, 
+				raw_srate_choice);
+      remember_pref(prf, reflect_raw_srate, NULL);
+
+      prf = prefs_row_with_list("data format", S_mus_header_raw_defaults, raw_data_format_choices[format - 1],
+				(const char **)raw_data_format_choices, NUM_RAW_DATA_FORMATS,
+				dpy_box, 
+				raw_data_format_from_text,
+				NULL, NULL);
+      remember_pref(prf, reflect_raw_data_format, NULL);
+      FREE(str);
+      FREE(str1);
+    }
+    current_sep = make_inter_variable_separator(dpy_box);
 
 
   /* ---------------- extra menus ---------------- */
@@ -4821,19 +4976,19 @@ void start_preferences_dialog(void)
 
 #if HAVE_GTK_COMBO_BOX_ENTRY_NEW_TEXT
     current_sep = make_inter_variable_separator(grf_box);
-    prf = prefs_row_with_completed_list("what axes to display", S_show_axes, show_axes_choices[(int)show_axes(ss)],
-					show_axes_choices, 5,
-					grf_box,
-					show_axes_from_text,
-					NULL, NULL);
+    prf = prefs_row_with_list("what axes to display", S_show_axes, show_axes_choices[(int)show_axes(ss)],
+			      show_axes_choices, 5,
+			      grf_box,
+			      show_axes_from_text,
+			      NULL, NULL);
     remember_pref(prf, reflect_show_axes, NULL);
 
     current_sep = make_inter_variable_separator(grf_box);
-    prf = prefs_row_with_completed_list("time division", S_x_axis_style, x_axis_styles[(int)x_axis_style(ss)],
-					x_axis_styles, 5,
-					grf_box,
-					x_axis_style_from_text,
-					NULL, NULL);
+    prf = prefs_row_with_list("time division", S_x_axis_style, x_axis_styles[(int)x_axis_style(ss)],
+			      x_axis_styles, 5,
+			      grf_box,
+			      x_axis_style_from_text,
+			      NULL, NULL);
     remember_pref(prf, reflect_x_axis_style, NULL);
 #endif
 
@@ -4965,19 +5120,19 @@ void start_preferences_dialog(void)
 
 #if HAVE_GTK_COMBO_BOX_ENTRY_NEW_TEXT
     current_sep = make_inter_variable_separator(fft_box);
-    prf = prefs_row_with_completed_list("transform", S_transform_type, transform_types[transform_type(ss)],
-					transform_types, NUM_TRANSFORM_TYPES,
-					fft_box,
-					transform_type_from_text,
-					transform_type_completer, NULL);
+    prf = prefs_row_with_list("transform", S_transform_type, transform_types[transform_type(ss)],
+			      transform_types, NUM_TRANSFORM_TYPES,
+			      fft_box,
+			      transform_type_from_text,
+			      transform_type_completer, NULL);
     remember_pref(prf, reflect_transform_type, NULL);
 
     current_sep = make_inter_variable_separator(fft_box);
-    prf = prefs_row_with_completed_list("data window", S_fft_window, fft_windows[(int)fft_window(ss)],
-					fft_windows, NUM_FFT_WINDOWS,
-					fft_box,
-					fft_window_from_text,
-					fft_window_completer, NULL);
+    prf = prefs_row_with_list("data window", S_fft_window, fft_windows[(int)fft_window(ss)],
+			      fft_windows, NUM_FFT_WINDOWS,
+			      fft_box,
+			      fft_window_from_text,
+			      fft_window_completer, NULL);
     remember_pref(prf, reflect_fft_window, NULL);
 #endif
 
@@ -5007,11 +5162,11 @@ void start_preferences_dialog(void)
       cmaps = (const char **)CALLOC(len, sizeof(const char *));
       for (i = 0; i < len; i++)
 	cmaps[i] = (const char *)colormap_name(i);
-      prf = prefs_row_with_completed_list("sonogram colormap", S_colormap, cmaps[color_map(ss)],
-					  cmaps, len,
-					  fft_box,
-					  colormap_from_text,
-					  colormap_completer, NULL);
+      prf = prefs_row_with_list("sonogram colormap", S_colormap, cmaps[color_map(ss)],
+				cmaps, len,
+				fft_box,
+				colormap_from_text,
+				colormap_completer, NULL);
       remember_pref(prf, reflect_colormap, NULL);
       FREE(cmaps);
     }

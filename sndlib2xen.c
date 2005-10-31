@@ -231,6 +231,28 @@ static XEN g_mus_sound_write_date(XEN filename)
   return(C_TO_XEN_ULONG((unsigned long)mus_sound_write_date(local_mus_expand_filename(XEN_TO_C_STRING(filename)))));
 }
 
+static XEN g_mus_header_raw_defaults(void)
+{
+  #define H_mus_header_raw_defaults "(" S_mus_header_raw_defaults "): returns list '(srate chans format) of current raw sound default attributes"
+  int srate, chans, data_format;
+  mus_header_raw_defaults(&srate, &chans, &data_format);
+  return(XEN_LIST_3(C_TO_XEN_INT(srate),
+		    C_TO_XEN_INT(chans),
+		    C_TO_XEN_INT(data_format)));
+}
+
+static XEN g_mus_header_set_raw_defaults(XEN lst)
+{
+  XEN_ASSERT_TYPE((XEN_LIST_P(lst)) && (XEN_LIST_LENGTH(lst) == 3), lst, XEN_ONLY_ARG, S_mus_header_raw_defaults, "a list: '(srate chans data-format)");
+  XEN_ASSERT_TYPE(XEN_CAR(lst), XEN_CAR(lst), XEN_ARG_1, S_mus_header_raw_defaults, "an integer = srate");
+  XEN_ASSERT_TYPE(XEN_CADR(lst), XEN_CADR(lst), XEN_ARG_2, S_mus_header_raw_defaults, "an integer = chans");
+  XEN_ASSERT_TYPE(XEN_CADDR(lst), XEN_CADDR(lst), XEN_ARG_3, S_mus_header_raw_defaults, "an integer = data-format");
+  mus_header_set_raw_defaults(XEN_TO_C_INT(XEN_CAR(lst)),
+			      XEN_TO_C_INT(XEN_CADR(lst)),
+			      XEN_TO_C_INT(XEN_CADDR(lst)));
+  return(lst);
+}
+
 static XEN g_mus_header_type_name(XEN type) 
 {
   #define H_mus_header_type_name "(" S_mus_header_type_name " type): header type (e.g. " S_mus_aiff ") as a string"
@@ -1346,6 +1368,8 @@ XEN_NARGIFY_0(g_mus_file_data_clipped_w, g_mus_file_data_clipped)
 XEN_NARGIFY_1(g_mus_file_set_data_clipped_w, g_mus_file_set_data_clipped)
 XEN_NARGIFY_1(g_mus_file_prescaler_w, g_mus_file_prescaler)
 XEN_NARGIFY_2(g_mus_file_set_prescaler_w, g_mus_file_set_prescaler)
+XEN_NARGIFY_0(g_mus_header_raw_defaults_w, g_mus_header_raw_defaults)
+XEN_NARGIFY_1(g_mus_header_set_raw_defaults_w, g_mus_header_set_raw_defaults)
 XEN_NARGIFY_1(g_mus_expand_filename_w, g_mus_expand_filename)
 XEN_NARGIFY_3(g_mus_audio_write_w, g_mus_audio_write)
 XEN_NARGIFY_3(g_mus_audio_read_w, g_mus_audio_read)
@@ -1419,6 +1443,8 @@ XEN_NARGIFY_5(g_file_to_array_w, g_file_to_array)
 #define g_mus_file_set_data_clipped_w g_mus_file_set_data_clipped
 #define g_mus_file_prescaler_w g_mus_file_prescaler
 #define g_mus_file_set_prescaler_w g_mus_file_set_prescaler
+#define g_mus_header_raw_defaults_w g_mus_header_raw_defaults
+#define g_mus_header_set_raw_defaults_w g_mus_header_set_raw_defaults
 #define g_mus_expand_filename_w g_mus_expand_filename
 #define g_mus_audio_write_w g_mus_audio_write
 #define g_mus_audio_read_w g_mus_audio_read
@@ -1709,6 +1735,9 @@ void mus_sndlib_xen_initialize(void)
   XEN_DEFINE_PROCEDURE(S_array_to_file,            g_array_to_file_w,              5, 0, 0, H_array_to_file);
   XEN_DEFINE_PROCEDURE(S_file_to_array,            g_file_to_array_w,              5, 0, 0, H_file_to_array);
 
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_header_raw_defaults, g_mus_header_raw_defaults_w, H_mus_header_raw_defaults,
+				   S_setB S_mus_header_raw_defaults, g_mus_header_set_raw_defaults_w, 0, 0, 1, 0);
+
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_file_prescaler, g_mus_file_prescaler_w, H_mus_file_prescaler,
 				   S_setB S_mus_file_prescaler, g_mus_file_set_prescaler_w, 1, 0, 2, 0);
 
@@ -1814,6 +1843,7 @@ void mus_sndlib_xen_initialize(void)
 	       S_mus_expand_filename,
 	       S_mus_file_data_clipped,
 	       S_mus_file_prescaler,
+	       S_mus_header_raw_defaults,
 	       S_mus_header_type_name,
 	       S_mus_header_type_to_string,
 	       S_mus_ircam,

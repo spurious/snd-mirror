@@ -75,6 +75,7 @@
 #define S_mus_expand_filename           "mus-expand-filename"
 #define S_mus_file_data_clipped         "mus-file-data-clipped"
 #define S_mus_file_prescaler            "mus-file-prescaler"
+#define S_mus_header_raw_defaults       "mus-header-raw-defaults"
 #define S_mus_header_type_name          "mus-header-type-name"
 #define S_mus_header_type_to_string     "mus-header-type->string"
 #define S_mus_ircam                     "mus-ircam"

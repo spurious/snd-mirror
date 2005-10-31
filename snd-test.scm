@@ -2137,6 +2137,29 @@
 	  (if (not (mus-sound-maxamp-exists? "oboe.snd")) 
 	      (snd-display ";oboe: mus-sound-maxamp-exists after maxamp: ~A" (mus-sound-maxamp-exists? "oboe.snd")))
 ;	  (mus-audio-set-oss-buffers 4 12)
+
+	  (let ((vals (mus-header-raw-defaults)))
+	    (if (or (not (list? vals))
+		    (not (= (length vals) 3)))
+		(snd-display ";mus-header-raw-defaults: ~A" vals)
+		(let ((sr (car vals))
+		      (chns (cadr vals))
+		      (frm (caddr vals)))
+		  (if (not (= sr 44100)) (snd-display ";mus-header-raw-defaults srate: ~A" sr))
+		  (if (not (= chns 2)) (snd-display ";mus-header-raw-defaults chns: ~A" chns))
+		  (if (not (= frm mus-bshort)) (snd-display ";mus-header-raw-defaults format: ~A: ~A" frm (mus-data-format-name frm))))))
+	  (set! (mus-header-raw-defaults) (list 12345 3 mus-bdouble-unscaled))
+	  (let ((vals (mus-header-raw-defaults)))
+	    (if (or (not (list? vals))
+		    (not (= (length vals) 3)))
+		(snd-display ";set mus-header-raw-defaults: ~A" vals)
+		(let ((sr (car vals))
+		      (chns (cadr vals))
+		      (frm (caddr vals)))
+		  (if (not (= sr 12345)) (snd-display ";set mus-header-raw-defaults srate: ~A" sr))
+		  (if (not (= chns 3)) (snd-display ";set mus-header-raw-defaults chns: ~A" chns))
+		  (if (not (= frm mus-bdouble-unscaled)) (snd-display ";set mus-header-raw-defaults format: ~A: ~A" frm (mus-data-format-name frm))))))
+	  (set! (mus-header-raw-defaults) (list 44100 2 mus-bshort))
 	  
 	  (let ((str (strftime "%d-%b %H:%M %Z" (localtime (mus-sound-write-date "oboe.snd")))))
 	    (if (not (string=? str "10-Jul 10:20 PDT"))
@@ -54826,7 +54849,7 @@ EDITS: 1
 		     ;mus-sound-open-input mus-sound-open-output
 		     ;mus-sound-reopen-output mus-sound-close-input mus-sound-close-output mus-sound-read mus-sound-write
 		     ;mus-sound-seek-frame 
-		     mus-file-prescaler mus-file-data-clipped average average? make-average
+		     mus-file-prescaler mus-file-data-clipped mus-header-raw-defaults average average? make-average
 		     mus-expand-filename make-sound-data sound-data-ref sound-data-set!  sound-data? sound-data-length
 		     sound-data-maxamp sound-data-chans sound-data->vct vct->sound-data all-pass all-pass? amplitude-modulate
 		     array->file array-interp mus-interpolate asymmetric-fm asymmetric-fm? sound-data->sound-data
@@ -54962,7 +54985,7 @@ EDITS: 1
 			 (if (defined? 'window-property) window-property widget-size)
 
 			 mixer-ref frame-ref locsig-ref locsig-reverb-ref
-			 mus-file-prescaler mus-file-data-clipped
+			 mus-file-prescaler mus-file-data-clipped mus-header-raw-defaults
 			 ))
       
       (define make-procs (list
@@ -56151,6 +56174,8 @@ EDITS: 1
 	    (check-error-tag 'out-of-range (lambda () (partials->polynomial '(1 1) 3)))
 	    (check-error-tag 'out-of-range (lambda () (make-polyshape 440.0 :partials '(1 1) :kind -1)))
 	    (check-error-tag 'out-of-range (lambda () (make-polyshape 440.0 :partials '(1 1) :kind 3)))
+	    (check-error-tag 'wrong-type-arg (lambda () (set! (mus-header-raw-defaults) 1234)))
+	    (check-error-tag 'wrong-type-arg (lambda () (set! (mus-header-raw-defaults) (list 44100 2.123 "hi"))))
 	    ))
 
 	    (if (provided? 'snd-motif)

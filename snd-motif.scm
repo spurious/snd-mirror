@@ -1247,7 +1247,7 @@ Reverb-feedback sets the scaler on the feedback.
 		(if (XmIsTextField n)
 		    (begin
 		      (XtSetValues n (list XmNvalue (number->string (mark-sample (car new-marks)))
-					    XmNuserData (car new-marks)))
+					   XmNuserData (car new-marks)))
 		      (XtManageChild n)
 		      (set! new-marks (cdr new-marks)))))
 	      (cadr (XtGetValues lst (list XmNchildren 0) 1)))))))

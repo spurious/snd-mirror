@@ -97,7 +97,6 @@ make
 echo ' '
 echo ' '
 ./snd --version
-make xm
 
 echo ' -------------------------------- with-no-gui/ladspa -------------------------------- '
 make allclean

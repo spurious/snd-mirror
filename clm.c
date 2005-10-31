@@ -3827,6 +3827,7 @@ Float *mus_filter_set_ycoeffs(mus_any *ptr, Float *new_data)
 
 static off_t set_filter_length(mus_any *ptr, off_t val) 
 {
+  /* just resets order if order < allocated size */
   flt *gen = (flt *)ptr;
   if ((val > 0) && (val <= gen->allocated_size))
     gen->order = (int)val;
@@ -3835,6 +3836,8 @@ static off_t set_filter_length(mus_any *ptr, off_t val)
 
 int mus_filter_set_order(mus_any *ptr, int order)
 {
+  /* resets order and fixes state array if needed (coeffs arrays should be handled separately by set_x|ycoeffs above) */
+  /*   returns either old order or -1 if state array can't be reallocated */
   flt *gen = (flt *)ptr;
   int old_order;
   if ((order > gen->allocated_size) &&
@@ -3844,8 +3847,11 @@ int mus_filter_set_order(mus_any *ptr, int order)
   gen->order = order;
   if (order > gen->allocated_size)
     {
+      int i;
       gen->allocated_size = order;
       gen->state = (Float *)REALLOC(gen->state, order * sizeof(Float));
+      for (i = old_order; i < order; i++)
+	gen->state[i] = 0.0; /* try to minimize click */
     }
   return(old_order);
 }
