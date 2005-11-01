@@ -1,42 +1,41 @@
 ;;; Snd tests
 ;;;
-;;;  test 0: constants                          [434]
-;;;  test 1: defaults                           [1004]
-;;;  test 2: headers                            [1204]
-;;;  test 3: variables                          [1508]
-;;;  test 4: sndlib                             [1972]
-;;;  test 5: simple overall checks              [3797]
-;;;  test 6: vcts                               [11167]
-;;;  test 7: colors                             [11477]
-;;;  test 8: clm                                [11979]
-;;;  test 9: mix                                [19438]
-;;;  test 10: marks                             [22510]
-;;;  test 11: dialogs                           [23213]
-;;;  test 12: extensions                        [23578]
-;;;  test 13: menus, edit lists, hooks, etc     [24006]
-;;;  test 14: all together now                  [25397]
-;;;  test 15: chan-local vars                   [26462]
-;;;  test 16: regularized funcs                 [27722]
-;;;  test 17: dialogs and graphics              [32088]
-;;;  test 18: enved                             [32163]
-;;;  test 19: save and restore                  [32183]
-;;;  test 20: transforms                        [33664]
-;;;  test 21: new stuff                         [35325]
-;;;  test 22: run                               [36201]
-;;;  test 23: with-sound                        [41702]
-;;;  test 24: user-interface                    [42709]
-;;;  test 25: X/Xt/Xm                           [45782]
-;;;  test 26: Gtk                               [50295]
-;;;  test 27: GL                                [54285]
-;;;  test 28: errors                            [54395]
-;;;  test all done                              [56490]
+;;;  test 0: constants                          [440]
+;;;  test 1: defaults                           [1010]
+;;;  test 2: headers                            [1210]
+;;;  test 3: variables                          [1514]
+;;;  test 4: sndlib                             [1978]
+;;;  test 5: simple overall checks              [3973]
+;;;  test 6: vcts                               [11343]
+;;;  test 7: colors                             [11653]
+;;;  test 8: clm                                [12155]
+;;;  test 9: mix                                [19614]
+;;;  test 10: marks                             [22686]
+;;;  test 11: dialogs                           [23389]
+;;;  test 12: extensions                        [23770]
+;;;  test 13: menus, edit lists, hooks, etc     [24198]
+;;;  test 14: all together now                  [25590]
+;;;  test 15: chan-local vars                   [26655]
+;;;  test 16: regularized funcs                 [27915]
+;;;  test 17: dialogs and graphics              [32281]
+;;;  test 18: enved                             [32356]
+;;;  test 19: save and restore                  [32376]
+;;;  test 20: transforms                        [33857]
+;;;  test 21: new stuff                         [35518]
+;;;  test 22: run                               [36394]
+;;;  test 23: with-sound                        [41895]
+;;;  test 24: user-interface                    [42902]
+;;;  test 25: X/Xt/Xm                           [45993]
+;;;  test 26: Gtk                               [50506]
+;;;  test 27: GL                                [54558]
+;;;  test 28: errors                            [54668]
+;;;  test all done                              [56765]
 ;;;
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 ;;; need all html example code in autotests
 ;;; need some way to check that graphs are actually drawn (region dialog, oscope etc) and sounds played correctly
 
-;;; TODO: major coverage missing in view-files
-;;; TODO: click all help buttons to replace old (flakey) cases
+;;; TODO: major coverage missing in view-files and prefs
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
@@ -45963,6 +45962,26 @@ EDITS: 1
 		    (close-sound ind))
 		  
 		  ))))
+
+      (for-each
+       (lambda (dialog)
+	 (if dialog
+	     (begin
+	       (if (Widget? dialog)
+		   (begin
+		     (if (not (XtIsManaged dialog))
+			 (XtManageChild dialog))
+		     (XtCallCallbacks dialog XmNhelpCallback #f))
+		   (if (Widget? (car dialog))
+		       (for-each
+			(lambda (dw)
+			  (if (not (XtIsManaged dw))
+			      (XtManageChild dw))
+			  (XtCallCallbacks dw XmNhelpCallback #f))
+			dialog))))))
+       (dialog-widgets))
+      (dismiss-all-dialogs)
+
       (reset-hook! snd-error-hook)
       (run-hook after-test-hook 24)
       ))
@@ -49185,7 +49204,7 @@ EDITS: 1
 	      (let ((val (XmConvertUnits (cadr (main-widgets)) XmHORIZONTAL XmCENTIMETERS 7 XmMILLIMETERS)))
 		(if (not (= val 70)) (snd-display ";XmConvertUnits cm->mm ~A" val)))
 	      (let ((val (XmConvertUnits (cadr (main-widgets)) XmHORIZONTAL XmCENTIMETERS 7 XmPIXELS)))
-		(if (not (= val 278)) (snd-display ";XmConvertUnits cm->pix ~A" val)))
+		(if (and (not (= val 278)) (not (= val 273))) (snd-display ";XmConvertUnits cm->pix ~A" val)))
 	      (XmVaCreateSimpleRadioBox (caddr (main-widgets)) "hiho" 0 (lambda (w c i) #f) '())
 	      (XmVaCreateSimpleCheckBox (caddr (main-widgets)) "hiho" (lambda (w c i) #f) '())
 	      (XmVaCreateSimplePulldownMenu (caddr (main-widgets)) "hiho" 0 (lambda (w c i) #f) '())
@@ -49196,7 +49215,7 @@ EDITS: 1
 					  (XKeycodeToKeysym dpy (list 'KeyCode XK_b) 0)
 					  0  (lambda (w c i) #f) '())
 	      
-	      (if (XmIsMotifWMRunning (cadr (main-widgets))) (snd-display ";not XmIsMotifWMRunning?"))
+	      (if (not (XmIsMotifWMRunning (cadr (main-widgets)))) (snd-display ";not XmIsMotifWMRunning?"))
 	      (install-searcher (lambda (file) (= (mus-sound-srate file) 44100)))
 	      (zync)
 	      (make-hidden-controls-dialog)

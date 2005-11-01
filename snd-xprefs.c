@@ -1164,9 +1164,6 @@ static prefs_info *prefs_row_with_list(const char *label, const char *varname, c
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
   prf->arrow_right = XtCreateManagedWidget(">", xmCascadeButtonWidgetClass, sbar, args, n);
 
-  /* SOMEDAY: figure out how to get a pixmap of an arrow in this damned widget */
-  /* SOMEDAY: center the pulldown menu on the text widget and on the current position */
-      
   n = 0;
   XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;
   for (i = 0; i < num_values; i++)
@@ -1879,6 +1876,15 @@ static void save_focus_follows_mouse(prefs_info *prf, FILE *fd)
 #endif
 #if HAVE_RUBY
       /* TODO: ruby side of focus-follows-mouse */
+      /* examp.rb:
+  # pointer focus within Snd
+  # 
+  # $mouse_enter_graph_hook.add_hook!("focus") do |snd, chn|
+  #   focus_widget(channel_widgets(snd, chn)[0])
+  # end
+  # $mouse_enter_listener_hook.add_hook!("focus") do |widget| focus_widget(widget) end
+  # $mouse_enter_text_hook.add_hook!("focus") do |widget| focus_widget(widget) end
+      */
 #endif
     }
 }
@@ -1926,7 +1932,7 @@ static char *peak_env_directory(void)
     return(XEN_TO_C_STRING(XEN_NAME_AS_C_STRING_TO_VALUE("save-peak-env-info-directory")));
 #endif
 #if HAVE_RUBY
-  /* TODO: ruby side of peak env dir */
+  /* TODO: ruby side of peak env dir -- env.rb */
 #endif
   return(NULL);
 }
@@ -2379,7 +2385,7 @@ static void ladspa_dir_text(prefs_info *prf)
   ASSERT_WIDGET_TYPE(XmIsTextField(prf->text), prf->text);
   str = XmTextFieldGetString(prf->text);
   if (ladspa_dir(ss)) FREE(ladspa_dir(ss));
-  if ((!str) || (!(*str)))
+  if (str)
     {
       set_ladspa_dir(copy_string(str));
       XtFree(str);
@@ -2407,7 +2413,7 @@ static void view_files_directory_text(prefs_info *prf)
   str = XmTextFieldGetString(prf->text);
   if (include_vf_directory) FREE(include_vf_directory);
   include_vf_directory = copy_string(str); /* could be null to cancel */
-  if ((!str) || (!(*str)))
+  if (str)
     {
       view_files_add_directory(NULL_WIDGET, (const char *)str);
       XtFree(str);
@@ -2441,7 +2447,7 @@ static void html_program_text(prefs_info *prf)
   ASSERT_WIDGET_TYPE(XmIsTextField(prf->text), prf->text);
   str = XmTextFieldGetString(prf->text);
   if (html_program(ss)) FREE(html_program(ss));
-  if ((!str) || (!(*str)))
+  if (str)
     {
       set_html_program(copy_string(str));
       XtFree(str);
@@ -2659,7 +2665,7 @@ static void raw_chans_choice(prefs_info *prf)
   char *str;
   ASSERT_WIDGET_TYPE(XmIsTextField(prf->text), prf->text);
   str = XmTextFieldGetString(prf->text);
-  if ((!str) || (!(*str)))
+  if (str)
     {
       int srate = 0, chans = 0, format = 0;
       mus_header_raw_defaults(&srate, &chans, &format);
@@ -2683,7 +2689,7 @@ static void raw_srate_choice(prefs_info *prf)
   char *str;
   ASSERT_WIDGET_TYPE(XmIsTextField(prf->text), prf->text);
   str = XmTextFieldGetString(prf->text);
-  if ((!str) || (!(*str)))
+  if (str)
     {
       int srate = 0, chans = 0, format = 0;
       mus_header_raw_defaults(&srate, &chans, &format);
@@ -2705,31 +2711,6 @@ static void reflect_raw_data_format(prefs_info *prf)
   FREE(str);
 }
 
-static void save_raw_defaults(prefs_info *prf, FILE *fd)
-{
-  /* PERHAPS: move raw defaults save to main case */
-  int srate = 0, chans = 0, format = 0;
-  mus_header_raw_defaults(&srate, &chans, &format);
-  if ((chans != 2) ||
-      (srate != 44100) ||
-      (format != MUS_BSHORT))
-    {
-#if HAVE_SCHEME
-      fprintf(fd, "(set! (mus-header-raw-defaults) (list %d %d %s))\n",
-	      srate,
-	      chans,
-	      mus_data_format_to_string(format));
-#endif
-#if HAVE_RUBY
-      /* TODO: test raw defaults save (esp ruby) */
-      fprintf(fd, "set_mus_header_raw_defaults([%d, %d, %s])\n",
-	      srate,
-	      chans,
-	      mus_data_format_to_string(format));
-#endif
-    }
-}
-
 static char **raw_data_format_choices = NULL;
 #define NUM_RAW_DATA_FORMATS MUS_LAST_DATA_FORMAT
 
@@ -2738,7 +2719,7 @@ static void raw_data_format_from_text(prefs_info *prf)
   char *str;
   ASSERT_WIDGET_TYPE(XmIsTextField(prf->text), prf->text);
   str = XmTextFieldGetString(prf->text);
-  if ((!str) || (!(*str)))
+  if (str)
     {
       int i, srate = 0, chans = 0, format = 0;
       mus_header_raw_defaults(&srate, &chans, &format);
@@ -3020,7 +3001,7 @@ static bool use_full_duration(void)
 	 (XEN_TRUE_P(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-show-full-duration"))));
 #endif
 #if HAVE_RUBY
-  /* TODO: ruby side of initial bounds */
+  /* TODO: ruby side of initial bounds -- see snd-test.rb for brief example */
   return(false);
 #endif
 }
@@ -3048,18 +3029,19 @@ static void reflect_initial_bounds(prefs_info *prf)
 
 static void save_initial_bounds(prefs_info *prf, FILE *fd)
 {
+#if HAVE_SCHEME
   if ((use_full_duration()) ||
       (!(snd_feq(XEN_TO_C_DOUBLE(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-initial-beg")), 0.0))) ||
       (!(snd_feq(XEN_TO_C_DOUBLE(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-initial-dur")), 0.1))))
     {
-#if HAVE_SCHEME
       fprintf(fd, "(if (not (provided? 'snd-extensions.scm)) (load-from-path \"extensions.scm\"))\n");
       fprintf(fd, "(prefs-activate-initial-bounds %.2f %.2f %s)\n",
 	      XEN_TO_C_DOUBLE(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-initial-beg")),
 	      XEN_TO_C_DOUBLE(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-initial-dur")),
 	      (XEN_TRUE_P(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-show-full-duration"))) ? "#t" : "#f");
-#endif
     }
+#endif
+  /* TODO: ruby side of initial bounds */
 }
 
 static void initial_bounds_toggle(prefs_info *prf)
@@ -4231,7 +4213,7 @@ static bool with_sound_is_loaded(void)
   return(XEN_DEFINED_P("with-sound"));
 #endif
 #if HAVE_RUBY
-  /* TODO: ruby side of with_sound_is_loaded (etc) */
+  /* TODO: ruby side of with_sound_is_loaded (etc) -- ws.rb */
 #endif
   return(false);
 }
@@ -4361,7 +4343,7 @@ static char *clm_file_name(void)
     return(XEN_TO_C_STRING(XEN_NAME_AS_C_STRING_TO_VALUE("*clm-file-name*")));
 #endif
 #if HAVE_RUBY
-  /* TODO: ruby side of clm_file_name etc */
+  /* TODO: ruby side of clm_file_name etc -- $clm_file_name ws.rb */
 #endif
   return(NULL);
 }
@@ -5158,18 +5140,7 @@ void start_preferences_dialog(void)
     dpy_box = make_top_level_box(topics);
     dpy_label = make_top_level_label("overall behavior choices", dpy_box);
 
-#if 0
-    /* TODO: packages of presets */
-    prf = prefs_row_with_radio_box("preset customization packages", "customization",
-				   customization_choices, 4, "none",
-				   dpy_box, dpy_label,
-				   customization_choice);
-    remember_pref(prf, reflect_customization_choice, NULL);
-    current_sep = make_inter_variable_separator(dpy_box, prf->label);
-#else
     current_sep = dpy_label;
-#endif
-
     str1 = mus_format("%d", ss->init_window_width);
     str2 = mus_format("%d", ss->init_window_height);
     prf = prefs_row_with_two_texts("start up size", S_window_width, 
@@ -5335,7 +5306,7 @@ void start_preferences_dialog(void)
       prf = prefs_row_with_text("default raw sound attributes: chans", S_mus_header_raw_defaults, str,
 				dpy_box, current_sep,
 				raw_chans_choice);
-      remember_pref(prf, reflect_raw_chans, save_raw_defaults);
+      remember_pref(prf, reflect_raw_chans, NULL);
 
       prf = prefs_row_with_text("srate", S_mus_header_raw_defaults, str1,
 				dpy_box, prf->label,
@@ -5377,7 +5348,7 @@ void start_preferences_dialog(void)
 
 #if HAVE_GUILE
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
-    prf = prefs_row_with_toggle("edit menu additions", "edit-menu.scm", /* TODO help index */
+    prf = prefs_row_with_toggle("edit menu additions", "edit-menu.scm", /* TODO help index for all menus etc */
 				find_edit_menu(),
 				dpy_box, current_sep, 
 				edit_menu_toggle);

@@ -566,6 +566,32 @@ void save_options(FILE *fd)
   save_recorder_state(fd);
   save_colors(fd);
 
+  if (fneq(mus_srate(), MUS_DEFAULT_SAMPLING_RATE)) pss_sf(fd, S_mus_srate, mus_srate());
+  if (mus_file_buffer_size() != MUS_DEFAULT_FILE_BUFFER_SIZE) pss_sd(fd, S_mus_file_buffer_size, mus_file_buffer_size());
+  if (mus_array_print_length() != MUS_DEFAULT_ARRAY_PRINT_LENGTH) pss_sd(fd, S_mus_array_print_length, mus_array_print_length());
+  if (clm_table_size_c() != MUS_DEFAULT_CLM_TABLE_SIZE) pss_sd(fd, S_clm_table_size, clm_table_size_c());
+  {
+    int srate = 0, chans = 0, format = 0;
+    mus_header_raw_defaults(&srate, &chans, &format);
+    if ((chans != 2) ||
+	(srate != 44100) ||
+	(format != MUS_BSHORT))
+      {
+#if HAVE_SCHEME
+	fprintf(fd, "(set! (mus-header-raw-defaults) (list %d %d %s))\n",
+		srate,
+		chans,
+		mus_data_format_to_string(format));
+#endif
+#if HAVE_RUBY
+	fprintf(fd, "set_mus_header_raw_defaults([%d, %d, %s])\n",
+		srate,
+		chans,
+		mus_data_format_to_string(format));
+#endif
+      }
+  }
+  
   fprintf(fd, _("%s end of snd options\n"), XEN_COMMENT_STRING);
   if (locale)
     {
@@ -1038,11 +1064,6 @@ void save_state(const char *save_state_name)
    *   its current form, is a major undertaking (although this can be done for simple vars); additionally, 
    *   what if the user has changed these before restoring -- should the old forms be restored?
    */
-  
-  if (fneq(mus_srate(), MUS_DEFAULT_SAMPLING_RATE)) pss_sf(save_fd, S_mus_srate, mus_srate());
-  if (mus_file_buffer_size() != MUS_DEFAULT_FILE_BUFFER_SIZE) pss_sd(save_fd, S_mus_file_buffer_size, mus_file_buffer_size());
-  if (mus_array_print_length() != MUS_DEFAULT_ARRAY_PRINT_LENGTH) pss_sd(save_fd, S_mus_array_print_length, mus_array_print_length());
-  if (clm_table_size_c() != MUS_DEFAULT_CLM_TABLE_SIZE) pss_sd(save_fd, S_clm_table_size, clm_table_size_c());
   
   if (locale)
     {

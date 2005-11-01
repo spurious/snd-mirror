@@ -2134,11 +2134,8 @@ static void ladspa_dir_text(prefs_info *prf)
   char *str;
   str = (char *)gtk_entry_get_text(GTK_ENTRY(prf->text));
   if (ladspa_dir(ss)) FREE(ladspa_dir(ss));
-  if ((!str) || (!(*str)))
-    {
-      set_ladspa_dir(copy_string(str));
-
-    }
+  if (str)
+    set_ladspa_dir(copy_string(str));
   else set_ladspa_dir(copy_string(DEFAULT_LADSPA_DIR));
 }
 #endif
@@ -2161,11 +2158,8 @@ static void view_files_directory_text(prefs_info *prf)
   str = (char *)gtk_entry_get_text(GTK_ENTRY(prf->text));
   if (include_vf_directory) FREE(include_vf_directory);
   include_vf_directory = copy_string(str); /* could be null to cancel */
-  if ((!str) || (!(*str)))
-    {
-      view_files_add_directory(NULL_WIDGET, (const char *)str);
-
-    }
+  if (str)
+    view_files_add_directory(NULL_WIDGET, (const char *)str);
 }
 
 static void save_view_files_directory(prefs_info *prf, FILE *fd)
@@ -2194,11 +2188,8 @@ static void html_program_text(prefs_info *prf)
   char *str;
   str = (char *)gtk_entry_get_text(GTK_ENTRY(prf->text));
   if (html_program(ss)) FREE(html_program(ss));
-  if ((!str) || (!(*str)))
-    {
-      set_html_program(copy_string(str));
-
-    }
+  if (str)
+    set_html_program(copy_string(str));
   else set_html_program(copy_string(DEFAULT_HTML_PROGRAM));
 }
 
@@ -2426,7 +2417,7 @@ static void raw_chans_choice(prefs_info *prf)
 {
   char *str;
   str = (char *)gtk_entry_get_text(GTK_ENTRY(prf->text));
-  if ((!str) || (!(*str)))
+  if (str)
     {
       int srate = 0, chans = 0, format = 0;
       mus_header_raw_defaults(&srate, &chans, &format);
@@ -2448,7 +2439,7 @@ static void raw_srate_choice(prefs_info *prf)
 {
   char *str;
   str = (char *)gtk_entry_get_text(GTK_ENTRY(prf->text));
-  if ((!str) || (!(*str)))
+  if (str)
     {
       int srate = 0, chans = 0, format = 0;
       mus_header_raw_defaults(&srate, &chans, &format);
@@ -2469,29 +2460,6 @@ static void reflect_raw_data_format(prefs_info *prf)
   FREE(str);
 }
 
-static void save_raw_defaults(prefs_info *prf, FILE *fd)
-{
-  int srate = 0, chans = 0, format = 0;
-  mus_header_raw_defaults(&srate, &chans, &format);
-  if ((chans != 2) ||
-      (srate != 44100) ||
-      (format != MUS_BSHORT))
-    {
-#if HAVE_SCHEME
-      fprintf(fd, "(set! (mus-header-raw-defaults) (list %d %d %s))\n",
-	      srate,
-	      chans,
-	      mus_data_format_to_string(format));
-#endif
-#if HAVE_RUBY
-      fprintf(fd, "set_mus_header_raw_defaults([%d, %d, %s])\n",
-	      srate,
-	      chans,
-	      mus_data_format_to_string(format));
-#endif
-    }
-}
-
 static char **raw_data_format_choices = NULL;
 #define NUM_RAW_DATA_FORMATS MUS_LAST_DATA_FORMAT
 
@@ -2499,7 +2467,7 @@ static void raw_data_format_from_text(prefs_info *prf)
 {
   char *str;
   str = (char *)gtk_entry_get_text(GTK_ENTRY(prf->text));
-  if ((!str) || (!(*str)))
+  if (str)
     {
       int i, srate = 0, chans = 0, format = 0;
       mus_header_raw_defaults(&srate, &chans, &format);
@@ -2784,18 +2752,18 @@ static void reflect_initial_bounds(prefs_info *prf)
 
 static void save_initial_bounds(prefs_info *prf, FILE *fd)
 {
+#if HAVE_SCHEME
   if ((use_full_duration()) ||
       (!(snd_feq(XEN_TO_C_DOUBLE(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-initial-beg")), 0.0))) ||
       (!(snd_feq(XEN_TO_C_DOUBLE(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-initial-dur")), 0.1))))
     {
-#if HAVE_SCHEME
       fprintf(fd, "(if (not (provided? 'snd-extensions.scm)) (load-from-path \"extensions.scm\"))\n");
       fprintf(fd, "(prefs-activate-initial-bounds %.2f %.2f %s)\n",
 	      XEN_TO_C_DOUBLE(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-initial-beg")),
 	      XEN_TO_C_DOUBLE(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-initial-dur")),
 	      (XEN_TRUE_P(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-show-full-duration"))) ? "#t" : "#f");
-#endif
     }
+#endif
 }
 
 static void initial_bounds_toggle(prefs_info *prf)
@@ -4796,7 +4764,7 @@ void start_preferences_dialog(void)
       prf = prefs_row_with_text("default raw sound attributes: chans", S_mus_header_raw_defaults, str,
 				dpy_box, 
 				raw_chans_choice);
-      remember_pref(prf, reflect_raw_chans, save_raw_defaults);
+      remember_pref(prf, reflect_raw_chans, NULL);
 
       prf = prefs_row_with_text("srate", S_mus_header_raw_defaults, str1,
 				dpy_box, 

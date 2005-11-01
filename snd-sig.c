@@ -2069,7 +2069,7 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, enved_prog
 	  pfilter_direct_args_t **args = NULL;
 	  void *retval;
 	  if (si->chans > 1) 
-	    /* PERHAPS: add a search here of underlying readers for any xen calls (and bypass threads if any) */
+	    /* PERHAPS: add a search here of underlying readers for any xen calls (and bypass threads if any) -- ptree_fragments_in_use(cp, beg, dur, pos)? */
 	    {
 	      threads = (pthread_t *)CALLOC(si->chans, sizeof(pthread_t));
 	      args = (pfilter_direct_args_t **)CALLOC(si->chans, sizeof(pfilter_direct_args_t *));
