@@ -49,10 +49,19 @@ static char x_string[2] = {'x','\0'};
 #endif
 }
 
+static void set_volume(mus_sample_t **buf, int chans, int length, double volume)
+{ 
+  int n, ch; 
+  for (ch = 0; ch < chans; ch++) 
+    for (n = 0; n < length; n++) 
+      buf[ch][n] *= volume; 
+}
+
 /* special case multicard quad code split out for clarity (it could be folded into the main branches) */
 
 /* 22-Nov-00: moved alsa support to separate block */
 /* 8-Apr-04:  added start/end (seconds-based) args */
+/* 2-Nov-05:  added -volume arg */
 
 static int main_not_alsa(int argc, char *argv[])
 {
@@ -60,14 +69,13 @@ static int main_not_alsa(int argc, char *argv[])
   off_t frames, m;
   mus_sample_t **bufs;
   OutSample *obuf;
-  float val[1];
-  int use_multi_card_code = 0;
+  int use_multi_card_code = 0, use_volume = 0;
   int afd0, afd1, buffer_size = BUFFER_SIZE, curframes, sample_size, out_chans, outbytes;
   mus_sample_t **qbufs;
   short *obuf0, *obuf1;
   char *name = NULL;
   off_t start = 0, end = 0;
-  double begin_time = 0.0, end_time = 0.0;
+  double begin_time = 0.0, end_time = 0.0, volume = 1.0;
 
   for (i = 1; i < argc; i++)
     {
@@ -104,11 +112,19 @@ static int main_not_alsa(int argc, char *argv[])
 			  end_time = atof(argv[i + 1]);
 			  i++;
 			}
-		      else name = argv[i];
-		    }}}}}
+		      else 
+			{ 
+			  if (strcmp(argv[i], "-volume") == 0)
+			    { 
+			      volume = atof(argv[i + 1]);
+			      use_volume = 1;
+			      i++; 
+			    } 
+			  else name = argv[i];
+			}}}}}}
   if (name == NULL) 
     {
-      printf("usage: sndplay file [-start 1.0] [-end 1.0] [-bufsize 256] [-buffers 2x12] [-describe]\n"); 
+      printf("usage: sndplay file [-start 1.0] [-end 1.0] [-bufsize %d] [-buffers 2x12] [-volume 1.0] [-describe]\n", BUFFER_SIZE); 
       exit(0);
     }
 
@@ -137,6 +153,7 @@ static int main_not_alsa(int argc, char *argv[])
       chans = mus_sound_chans(name);
       if (chans > 2)
 	{
+	  float val[8];
 	  mus_audio_mixer_read(MUS_AUDIO_DEFAULT, MUS_AUDIO_CHANNEL, 0, val);
 	  if (val[0] < chans)
 	    {
@@ -175,7 +192,9 @@ static int main_not_alsa(int argc, char *argv[])
 	      else curframes = frames - m;
 	      mus_file_read(fd, 0, curframes - 1, chans, bufs); 
 	      /* some systems are happier if we read the file before opening the dac */
-	      /* at this point the data is in separate arrays of ints */
+	      /* at this point the data is in separate arrays of mus_sample_t's */
+	      if (use_volume) 
+		set_volume(bufs, chans, curframes, volume); 
 	      if (chans == 1)
 		{
 		  for (k = 0; k < curframes; k++) 
@@ -246,7 +265,8 @@ static int main_not_alsa(int argc, char *argv[])
 		curframes = buffer_size;
 	      else curframes = frames - m;
 	      mus_file_read(fd, 0, curframes - 1, chans, qbufs); 
-	      val[0] = 1.0;
+	      if (use_volume) 
+		set_volume(qbufs, chans, curframes, volume); 
 	      for (k = 0, n = 0; k < buffer_size; k++, n += 2) 
 		{
 		  obuf0[n] = MUS_SAMPLE_TO_SHORT(qbufs[0][k]); 
@@ -310,7 +330,8 @@ static int main_alsa(int argc, char *argv[])
   int max_chans[MAX_SLOTS];
   int alloc_chans;
   off_t start = 0, end = 0;
-  double begin_time = 0.0, end_time = 0.0;
+  double begin_time = 0.0, end_time = 0.0, volume = 1.0;
+  int use_volume = 0;
 
   /* -describe => call mus_audio_describe and exit
    * -buffers axb => set OSS fragment numbers 
@@ -343,8 +364,16 @@ static int main_alsa(int argc, char *argv[])
 		      end_time = atof(argv[i + 1]);
 		      i++;
 		    }
-		  else name = argv[i];
-		}}}}
+		  else
+		    {
+		      if (strcmp(argv[i], "-volume") == 0)
+			{ 
+			  volume = atof(argv[i + 1]);
+			  use_volume = 1;
+			  i++; 
+			} 
+		      else name = argv[i];
+		    }}}}}
   afd0 = -1;
   afd1 = -1;
   if (!(MUS_HEADER_TYPE_OK(mus_sound_header_type(name))))
@@ -520,6 +549,8 @@ static int main_alsa(int argc, char *argv[])
 		}
 	    }
 	  mus_file_read(fd, 0, curframes - 1, chans, read_bufs); 
+	  if (use_volume) 
+	    set_volume(read_bufs, chans, curframes, volume); 
 	  /* some systems are happier if we read the file before opening the dac */
 	  /* at this point the data is in separate arrays of mus_sample_t */
 	  for (d = 0; d < allocated; d++)
@@ -567,7 +598,7 @@ int main(int argc, char *argv[])
 {
   if (argc == 1) 
     {
-      printf("usage: sndplay file\n"); 
+      printf("usage: sndplay file [-start 1.0] [-end 1.0] [-bufsize %d] [-buffers 2x12] [-volume 1.0] [-describe]\n", BUFFER_SIZE); 
       exit(0);
     }
   mus_sound_initialize();

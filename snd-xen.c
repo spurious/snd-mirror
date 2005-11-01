@@ -2145,7 +2145,7 @@ static XEN g_cursor_color(void)
 
 static void highlight_recolor_everything(widget_t w, void *ptr)
 {
-  /* TODO: does the gtk basic-color reset actually work correctly? */
+  /* TODO: gtk highlight-color reset (basic-color works, so copy that code) */
 #if USE_MOTIF
   Pixel curcol;
   if (XtIsWidget(w))

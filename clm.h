@@ -6,7 +6,7 @@
 #define MUS_DATE "1-Nov-05"
 
 /*
- * 1-Nov:      mus_filter_set_x|ycoeffs (needed by Snd).
+ * 1-Nov:      mus_filter_set_x|ycoeffs, mus_filter_set_order (needed by Snd).
  * 1-May:      mus-scaler|feedback ok with delay and average.
  * 18-Apr:     mus_set_environ.
  * 11-Apr:     mus_mixer|frame_offset, mus_frame_scale (for higher level generic functions).

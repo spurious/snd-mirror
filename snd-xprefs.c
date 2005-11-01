@@ -4,25 +4,12 @@
 /* preferences dialog; layout design taken from webmail
  */
 
-/* things left to do:
-
-   line cursor during play? or smart line cursor
-   preset packages
-   snd-test somehow
-   remember state for subsequent load (extensions.scm)
-     (remember-sound-state) ;also needs turn-off code
-   snd-motif: hidden-controls-dialog (make-hidden-controls-dialog)
-              sync'd zoom slider, separate amp controls
-   add sound file exts? -- would need display of existing exts
-   graph-cursor? [drawing area + x cursor setters] [arrow, cross, beam, circle]
-   mark pane?
-   colormap: a line with color-inverted and color-scaler and color-cutoff
-   check out gui.scm et al 
-   various additional key bindings? move-one-pixel zoom-one-pixel [how to specify fancy keys?]
-   nb.scm ("activate popup help in View:files dialog")
-   audio mixer settings? -> volume in some mode
-   clm ins, prc ins, v+jcrev+nrev, birds
-   clm table size, file buffer size
+/* TODO: preset packages: dlp, km: check out gui.scm et al, keybinding sets
+   TODO: snd-test somehow
+   TODO: remember state for subsequent load (extensions.scm) (remember-sound-state) ;also needs turn-off code
+   TODO: various additional key bindings? move-one-pixel zoom-one-pixel [how to specify fancy keys?]
+   TODO: audio mixer settings? -> volume in some mode (snd6.scm has OSS version)
+   TODO: g|xprefs split
 */
 
 
@@ -1573,7 +1560,7 @@ static void preferences_help_callback(Widget w, XtPointer context, XtPointer inf
 {
   prefs_helping = true;
   snd_help("preferences",
-	   "This dialog is under construction.  It sets various global variables, 'Save' then writes the new values \
+	   "This dialog sets various global variables. 'Save' then writes the new values \
 to ~/.snd_prefs_guile|ruby so that they take effect the next time you start Snd.  'Reset' resets all variables to \
 their default (initial) values. 'Help' starts this dialog, and as long as it is active, it will post helpful \
 information if the mouse lingers over some variable -- sort of a tooltip that stays out of your way. \
@@ -4235,6 +4222,8 @@ static void mix_waveform_height_text(prefs_info *prf)
 
 static bool include_with_sound = false;
 static char *include_clm_file_name = NULL;
+static int include_clm_file_buffer_size = 65536;
+static int include_clm_table_size = 512;
 
 static bool with_sound_is_loaded(void)
 {
@@ -4267,6 +4256,10 @@ static void save_with_sound(prefs_info *prf, FILE *fd)
       fprintf(fd, "(if (not (provided? 'snd-ws.scm)) (load-from-path \"ws.scm\"))\n");
       if (include_clm_file_name)
 	fprintf(fd, "(set! *clm-file-name* %s)\n", include_clm_file_name);
+      if (include_clm_file_buffer_size != 65536)
+	fprintf(fd, "(set! *clm-file-buffer-size* %d)\n", include_clm_file_buffer_size);
+      if (include_clm_table_size != 512)
+	fprintf(fd, "(set! *clm-table-size* %d)\n", include_clm_table_size);
 #endif
 #if HAVE_RUBY
 #endif
@@ -4401,6 +4394,66 @@ static void clm_file_name_text(prefs_info *prf)
 static void reflect_clm_file_name(prefs_info *prf)
 {
   XmTextFieldSetString(prf->text, clm_file_name());
+}
+
+/* ---------------- clm sizes ---------------- */
+
+static int clm_table_size(void)
+{
+#if HAVE_SCHEME
+  if (XEN_DEFINED_P("*clm-table-size*"))
+    return(XEN_TO_C_INT(XEN_NAME_AS_C_STRING_TO_VALUE("*clm-table-size*")));
+#endif
+#if HAVE_RUBY
+#endif
+  return(512);
+}
+
+static int clm_file_buffer_size(void)
+{
+#if HAVE_SCHEME
+  if (XEN_DEFINED_P("*clm-file-buffer-size*"))
+    return(XEN_TO_C_INT(XEN_NAME_AS_C_STRING_TO_VALUE("*clm-file-buffer-size*")));
+#endif
+#if HAVE_RUBY
+#endif
+  return(65536);
+}
+
+static void reflect_clm_sizes(prefs_info *prf)
+{
+  include_clm_table_size = clm_table_size();
+  int_to_textfield(prf->text, include_clm_table_size);
+  include_clm_file_buffer_size = clm_file_buffer_size();
+  int_to_textfield(prf->rtxt, include_clm_file_buffer_size);
+}
+
+static void clm_sizes_text(prefs_info *prf)
+{
+  char *str;
+  ASSERT_WIDGET_TYPE(XmIsTextField(prf->text), prf->text);
+  str = XmTextFieldGetString(prf->text);
+  if ((str) && (*str))
+    {
+      int size = 0;
+      include_with_sound = true;
+      sscanf(str, "%d", &size);
+      if (size > 0)
+	include_clm_table_size = size;
+      else int_to_textfield(prf->text, include_clm_table_size);
+      XtFree(str);
+    }
+  str = XmTextFieldGetString(prf->rtxt);
+  if ((str) && (*str))
+    {
+      int size = 0;
+      include_with_sound = true;
+      sscanf(str, "%d", &size);
+      if (size > 0)
+	include_clm_file_buffer_size = size;
+      else int_to_textfield(prf->rtxt, include_clm_file_buffer_size);
+      XtFree(str);
+    }
 }
 
 
@@ -5831,6 +5884,14 @@ void start_preferences_dialog(void)
 			      clm_box, current_sep,
 			      clm_file_name_text);
     remember_pref(prf, reflect_clm_file_name, NULL);
+
+    current_sep = make_inter_variable_separator(clm_box, prf->label);
+    prf = prefs_row_with_two_texts("sizes", "*clm-table-size*",
+				   "wave table:", NULL, "file buffer:", NULL, 8,
+				   clm_box, current_sep,
+				   clm_sizes_text);
+    reflect_clm_sizes(prf);
+    remember_pref(prf, reflect_clm_sizes, NULL);
 
   }
 

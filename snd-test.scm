@@ -3326,7 +3326,7 @@
 			(let ((res (find-channel (lambda (y) (not (= y 0.0))))))
 			  (if (or (not res)
 				  (> (cadr res) 100))
-			      (snd-display "bigger find not 0.0: ~A" res)))
+			      (snd-display ";bigger find not 0.0: ~A" res)))
 			(let ((old-select (selection-creates-region)))
 			  (set! (selection-creates-region) #f)
 			  (select-all ind)

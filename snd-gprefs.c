@@ -1345,7 +1345,7 @@ static void preferences_help_callback(GtkWidget *w, gpointer context)
 {
   prefs_helping = true;
   snd_help("preferences",
-	   "This dialog is under construction.  It sets various global variables, 'Save' then writes the new values \
+	   "This dialog sets various global variables. 'Save' then writes the new values \
 to ~/.snd_prefs_guile|ruby so that they take effect the next time you start Snd.  'Reset' resets all variables to \
 their default (initial) values. 'Help' starts this dialog, and as long as it is active, it will post helpful \
 information if the mouse lingers over some variable -- sort of a tooltip that stays out of your way. \
@@ -1661,7 +1661,6 @@ static void save_focus_follows_mouse(prefs_info *prf, FILE *fd)
       fprintf(fd, "(focus-follows-mouse)\n");
 #endif
 #if HAVE_RUBY
-      /* TODO: ruby side of focus-follows-mouse */
 #endif
     }
 }
@@ -1703,7 +1702,6 @@ static char *peak_env_directory(void)
     return(XEN_TO_C_STRING(XEN_NAME_AS_C_STRING_TO_VALUE("save-peak-env-info-directory")));
 #endif
 #if HAVE_RUBY
-  /* TODO: ruby side of peak env dir */
 #endif
   return(NULL);
 }
@@ -2486,7 +2484,6 @@ static void save_raw_defaults(prefs_info *prf, FILE *fd)
 	      mus_data_format_to_string(format));
 #endif
 #if HAVE_RUBY
-      /* TODO: test raw defaults save (esp ruby) */
       fprintf(fd, "set_mus_header_raw_defaults([%d, %d, %s])\n",
 	      srate,
 	      chans,
@@ -2760,7 +2757,6 @@ static bool use_full_duration(void)
 	 (XEN_TRUE_P(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-show-full-duration"))));
 #endif
 #if HAVE_RUBY
-  /* TODO: ruby/gtk side of initial bounds */
   return(false);
 #endif
 }
@@ -2998,7 +2994,6 @@ static bool find_smpte(void)
 	 (!(XEN_FALSE_P(XEN_EVAL_C_STRING("(smpte-is-on)"))))); /* "member" of hook-list -> a list if successful */
 #endif
 #if HAVE_RUBY
-  /* TODO: ruby side of smpte */
 #endif
   return(false);
 }
@@ -3852,6 +3847,8 @@ static void mix_waveform_height_text(prefs_info *prf)
 
 static bool include_with_sound = false;
 static char *include_clm_file_name = NULL;
+static int include_clm_file_buffer_size = 65536;
+static int include_clm_table_size = 512;
 
 static bool with_sound_is_loaded(void)
 {
@@ -3859,7 +3856,6 @@ static bool with_sound_is_loaded(void)
   return(XEN_DEFINED_P("with-sound"));
 #endif
 #if HAVE_RUBY
-  /* TODO: ruby side of with_sound_is_loaded (etc) */
 #endif
   return(false);
 }
@@ -3883,6 +3879,10 @@ static void save_with_sound(prefs_info *prf, FILE *fd)
       fprintf(fd, "(if (not (provided? 'snd-ws.scm)) (load-from-path \"ws.scm\"))\n");
       if (include_clm_file_name)
 	fprintf(fd, "(set! *clm-file-name* %s)\n", include_clm_file_name);
+      if (include_clm_file_buffer_size != 65536)
+	fprintf(fd, "(set! *clm-file-buffer-size* %d)\n", include_clm_file_buffer_size);
+      if (include_clm_table_size != 512)
+	fprintf(fd, "(set! *clm-table-size* %d)\n", include_clm_table_size);
 #endif
 #if HAVE_RUBY
 #endif
@@ -3976,7 +3976,6 @@ static char *clm_file_name(void)
     return(XEN_TO_C_STRING(XEN_NAME_AS_C_STRING_TO_VALUE("*clm-file-name*")));
 #endif
 #if HAVE_RUBY
-  /* TODO: ruby side of clm_file_name etc */
 #endif
   return(NULL);
 }
@@ -4009,6 +4008,62 @@ static void reflect_clm_file_name(prefs_info *prf)
   sg_entry_set_text(GTK_ENTRY(prf->text), clm_file_name());
 }
 
+/* ---------------- clm sizes ---------------- */
+
+static int clm_table_size(void)
+{
+#if HAVE_SCHEME
+  if (XEN_DEFINED_P("*clm-table-size*"))
+    return(XEN_TO_C_INT(XEN_NAME_AS_C_STRING_TO_VALUE("*clm-table-size*")));
+#endif
+#if HAVE_RUBY
+#endif
+  return(512);
+}
+
+static int clm_file_buffer_size(void)
+{
+#if HAVE_SCHEME
+  if (XEN_DEFINED_P("*clm-file-buffer-size*"))
+    return(XEN_TO_C_INT(XEN_NAME_AS_C_STRING_TO_VALUE("*clm-file-buffer-size*")));
+#endif
+#if HAVE_RUBY
+#endif
+  return(65536);
+}
+
+static void reflect_clm_sizes(prefs_info *prf)
+{
+  include_clm_table_size = clm_table_size();
+  int_to_textfield(prf->text, include_clm_table_size);
+  include_clm_file_buffer_size = clm_file_buffer_size();
+  int_to_textfield(prf->rtxt, include_clm_file_buffer_size);
+}
+
+static void clm_sizes_text(prefs_info *prf)
+{
+  char *str;
+  str = (char *)gtk_entry_get_text(GTK_ENTRY(prf->text));
+  if (str)
+    {
+      int size = 0;
+      include_with_sound = true;
+      sscanf(str, "%d", &size);
+      if (size > 0)
+	include_clm_table_size = size;
+      else int_to_textfield(prf->text, include_clm_table_size);
+    }
+  str = (char *)gtk_entry_get_text(GTK_ENTRY(prf->rtxt));
+  if ((str) && (*str))
+    {
+      int size = 0;
+      include_with_sound = true;
+      sscanf(str, "%d", &size);
+      if (size > 0)
+	include_clm_file_buffer_size = size;
+      else int_to_textfield(prf->rtxt, include_clm_file_buffer_size);
+    }
+}
 
 /* ---------------- show-listener ---------------- */
 
@@ -4575,18 +4630,6 @@ void start_preferences_dialog(void)
     dpy_box = make_top_level_box(topics);
     dpy_label = make_top_level_label("overall behavior choices", dpy_box);
 
-#if 0
-    /* TODO: packages of presets */
-    prf = prefs_row_with_radio_box("preset customization packages", "customization",
-				   customization_choices, 4, "none",
-				   dpy_box,
-				   customization_choice);
-    remember_pref(prf, reflect_customization_choice, NULL);
-    current_sep = make_inter_variable_separator(dpy_box);
-#else
-    current_sep = dpy_label;
-#endif
-
     str1 = mus_format("%d", ss->init_window_width);
     str2 = mus_format("%d", ss->init_window_height);
     prf = prefs_row_with_two_texts("start up size", S_window_width, 
@@ -4787,7 +4830,7 @@ void start_preferences_dialog(void)
     remember_pref(prf, reflect_context_sensitive_popup, save_context_sensitive_popup);
     current_sep = make_inter_variable_separator(dpy_box);
 
-    prf = prefs_row_with_toggle("effects menu", "new-effects.scm", /* TODO: help index for effects? */
+    prf = prefs_row_with_toggle("effects menu", "new-effects.scm",
 				find_effects_menu(),
 				dpy_box, 
 				effects_menu_toggle);
@@ -4795,7 +4838,7 @@ void start_preferences_dialog(void)
 
 #if HAVE_GUILE
     current_sep = make_inter_variable_separator(dpy_box);
-    prf = prefs_row_with_toggle("edit menu additions", "edit-menu.scm", /* TODO help index */
+    prf = prefs_row_with_toggle("edit menu additions", "edit-menu.scm",
 				find_edit_menu(),
 				dpy_box, 
 				edit_menu_toggle);
@@ -4993,7 +5036,7 @@ void start_preferences_dialog(void)
 #endif
 
     current_sep = make_inter_variable_separator(grf_box);
-    prf = prefs_row_with_toggle("include smpte info", "show-smpte-label", /* TODO: does this trigger help? */
+    prf = prefs_row_with_toggle("include smpte info", "show-smpte-label",
 				find_smpte(),
 				grf_box,
 				smpte_toggle);
@@ -5304,6 +5347,13 @@ void start_preferences_dialog(void)
 			      clm_file_name_text);
     remember_pref(prf, reflect_clm_file_name, NULL);
 
+    current_sep = make_inter_variable_separator(clm_box);
+    prf = prefs_row_with_two_texts("sizes", "*clm-table-size*",
+				   "wave table:", NULL, "file buffer:", NULL, 8,
+				   clm_box,
+				   clm_sizes_text);
+    reflect_clm_sizes(prf);
+    remember_pref(prf, reflect_clm_sizes, NULL);
   }
 
   current_sep = make_inter_topic_separator(topics);

@@ -25,7 +25,6 @@
  * TODO: what if running src, uses its check-event to open raw data -- where is control?
  *       or similarly, stops at "ok", starts src, clicks ok?
  * TODO: edit-properties dialog (extension of edit-header)
- * TODO: option:settings dialog (global vars)
  * PERHAPS: audio:settings for display, perhaps reset -- as opposed to using the recorder
  * TODO: in mix/insert: panel for mix at cursor/beginning/end/mark/sample (num)
  * TODO: add|delete-file-filter, file-filters tied to all file dialogs (panel of radio buttons where just sounds is now)
