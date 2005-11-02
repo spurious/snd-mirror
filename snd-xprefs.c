@@ -10,6 +10,7 @@
    TODO: various additional key bindings? move-one-pixel zoom-one-pixel [how to specify fancy keys?]
    TODO: audio mixer settings? -> volume in some mode (snd6.scm has OSS version)
    TODO: g|xprefs split
+   SOMEDAY: completions and more verbose error msgs
 */
 
 
@@ -1850,8 +1851,13 @@ static bool focus_follows_mouse = false;
 
 static bool focus_is_following_mouse(void)
 {
+#if HAVE_SCHEME
   return((XEN_DEFINED_P("focus-is-following-mouse")) &&
 	 (XEN_TRUE_P(XEN_NAME_AS_C_STRING_TO_VALUE("focus-is-following-mouse"))));
+#endif
+#if HAVE_RUBY
+  return(false); /* TODO: in ruby, how to tell that focus is set up? */
+#endif
 }
 
 static void reflect_focus_follows_mouse(prefs_info *prf) 
@@ -1875,16 +1881,11 @@ static void save_focus_follows_mouse(prefs_info *prf, FILE *fd)
       fprintf(fd, "(focus-follows-mouse)\n");
 #endif
 #if HAVE_RUBY
-      /* TODO: ruby side of focus-follows-mouse */
-      /* examp.rb:
-  # pointer focus within Snd
-  # 
-  # $mouse_enter_graph_hook.add_hook!("focus") do |snd, chn|
-  #   focus_widget(channel_widgets(snd, chn)[0])
-  # end
-  # $mouse_enter_listener_hook.add_hook!("focus") do |widget| focus_widget(widget) end
-  # $mouse_enter_text_hook.add_hook!("focus") do |widget| focus_widget(widget) end
-      */
+      fprintf(fd, "$mouse_enter_graph_hook.add_hook!(\"focus\") do |snd, chn|\n");
+      fprintf(fd, "  focus_widget(channel_widgets(snd, chn)[0])\n");
+      fprintf(fd, "end\n");
+      fprintf(fd, "$mouse_enter_listener_hook.add_hook!(\"focus\") do |widget| focus_widget(widget) end\n");
+      fprintf(fd, "$mouse_enter_text_hook.add_hook!(\"focus\") do |widget| focus_widget(widget) end\n");
 #endif
     }
 }
@@ -1906,7 +1907,6 @@ static void controls_toggle(prefs_info *prf)
 
 /*
   ruby: this is in env.rb
-  also gtk
 */
 
 static bool include_peak_envs = false;
@@ -1919,7 +1919,7 @@ static bool find_peak_envs(void)
 	 XEN_TO_C_BOOLEAN(XEN_NAME_AS_C_STRING_TO_VALUE("save-peak-env-info?")));
 #endif
 #if HAVE_RUBY
-  return(XEN_DEFINED_P("install_save_peak_env"));
+  return(strcmp(XEN_AS_STRING(XEN_EVAL_C_STRING("defined? install_save_peak_env")), "method") == 0);
 #endif
 }
 
@@ -4213,7 +4213,7 @@ static bool with_sound_is_loaded(void)
   return(XEN_DEFINED_P("with-sound"));
 #endif
 #if HAVE_RUBY
-  /* TODO: ruby side of with_sound_is_loaded (etc) -- ws.rb */
+  return(strcmp(XEN_AS_STRING(XEN_EVAL_C_STRING("defined? with_sound")), "method") == 0);
 #endif
   return(false);
 }
@@ -4244,6 +4244,13 @@ static void save_with_sound(prefs_info *prf, FILE *fd)
 	fprintf(fd, "(set! *clm-table-size* %d)\n", include_clm_table_size);
 #endif
 #if HAVE_RUBY
+      fprintf(fd, "require \"ws\"\n");
+      if (include_clm_file_name)
+	fprintf(fd, "$clm_file_name = \"%s\"\n", include_clm_file_name);
+      if (include_clm_file_buffer_size != 65536)
+	fprintf(fd, "$clm_file_buffer_size = %d\n", include_clm_file_buffer_size);
+      if (include_clm_table_size != 512)
+	fprintf(fd, "$clm_table_size = %d\n", include_clm_table_size);
 #endif
     }
 }
@@ -4621,7 +4628,9 @@ static void print_length_text(prefs_info *prf)
     {
       int value = 0;
       sscanf(str, "%d", &value);
-      set_print_length(value); /* TODO: shouldn't this be reflected in ws.scm *clm-array-print-length*? */
+      set_print_length(value);
+      set_vct_print_length(value);
+      /* the clm array print length variable will be taken care of when ww.scm is loaded in the new context */
       XtFree(str);
     }
 }

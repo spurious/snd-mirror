@@ -2145,7 +2145,6 @@ static XEN g_cursor_color(void)
 
 static void highlight_recolor_everything(widget_t w, void *ptr)
 {
-  /* TODO: gtk highlight-color reset (basic-color works, so copy that code) */
 #if USE_MOTIF
   Pixel curcol;
   if (XtIsWidget(w))
@@ -2155,6 +2154,9 @@ static void highlight_recolor_everything(widget_t w, void *ptr)
 	XmChangeColor(w, ss->sgx->highlight_color);
     }
 #endif
+  /* to handle the gtk side correctly here, we'd need a list of widgets to modify --
+   *    currently basic-color hits every background, so the whole thing is messed up.
+   */
 }
 
 void set_highlight_color(color_t color)

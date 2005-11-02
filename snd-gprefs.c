@@ -1550,7 +1550,6 @@ static void startup_size_text(prefs_info *prf)
       width = string_to_int(str, 1, "startup width");
       redirect_errors_to(NULL, NULL);
       if (width > 0) ss->init_window_width = width;
-
       str = (char *)gtk_entry_get_text(GTK_ENTRY(prf->rtxt));
       if ((str) && (*str))
 	{
@@ -1559,7 +1558,6 @@ static void startup_size_text(prefs_info *prf)
 	  height = string_to_int(str, 1, "startup height");
 	  redirect_errors_to(NULL, NULL);
 	  if (height > 0) ss->init_window_height = height;
-
 	}
     }
 }
@@ -1637,8 +1635,11 @@ static bool focus_follows_mouse = false;
 
 static bool focus_is_following_mouse(void)
 {
+#if HAVE_SCHEME
   return((XEN_DEFINED_P("focus-is-following-mouse")) &&
 	 (XEN_TRUE_P(XEN_NAME_AS_C_STRING_TO_VALUE("focus-is-following-mouse"))));
+#endif
+  return(false);
 }
 
 static void reflect_focus_follows_mouse(prefs_info *prf) 
@@ -1661,6 +1662,11 @@ static void save_focus_follows_mouse(prefs_info *prf, FILE *fd)
       fprintf(fd, "(focus-follows-mouse)\n");
 #endif
 #if HAVE_RUBY
+      fprintf(fd, "$mouse_enter_graph_hook.add_hook!(\"focus\") do |snd, chn|\n");
+      fprintf(fd, "  focus_widget(channel_widgets(snd, chn)[0])\n");
+      fprintf(fd, "end\n");
+      fprintf(fd, "$mouse_enter_listener_hook.add_hook!(\"focus\") do |widget| focus_widget(widget) end\n");
+      fprintf(fd, "$mouse_enter_text_hook.add_hook!(\"focus\") do |widget| focus_widget(widget) end\n");
 #endif
     }
 }
@@ -1689,7 +1695,7 @@ static bool find_peak_envs(void)
 	 XEN_TO_C_BOOLEAN(XEN_NAME_AS_C_STRING_TO_VALUE("save-peak-env-info?")));
 #endif
 #if HAVE_RUBY
-  return(XEN_DEFINED_P("install_save_peak_env"));
+  return(strcmp(XEN_AS_STRING(XEN_EVAL_C_STRING("defined? install_save_peak_env")), "method") == 0);
 #endif
 }
 
@@ -1940,7 +1946,6 @@ static void cursor_size_from_text(prefs_info *prf)
       redirect_errors_to(post_prefs_error, (void *)prf);
       size = string_to_int(str, 0, "cursor size"); 
       redirect_errors_to(NULL, NULL);
-
       if (!(prf->got_error))
 	{
 	  if (size >= MIN_CURSOR_SIZE)
@@ -2699,7 +2704,6 @@ static void dot_size_from_text(prefs_info *prf)
       redirect_errors_to(post_prefs_error, (void *)prf);
       size = string_to_int(str, 0, "dot size"); 
       redirect_errors_to(NULL, NULL);
-
       if (!(prf->got_error))
 	{
 	  if (size >= MIN_DOT_SIZE)
@@ -2931,7 +2935,6 @@ static void x_axis_style_from_text(prefs_info *prf)
     {
       char *trimmed_str;
       trimmed_str = trim_string(str);
-
       if (snd_strlen(trimmed_str) > 0)
 	{
 	  int curpos = -1;
@@ -3294,7 +3297,6 @@ static void fft_size_from_text(prefs_info *prf)
       redirect_errors_to(post_prefs_error, (void *)prf);
       size = string_to_off_t(str, MIN_TRANSFORM_SIZE, "size"); 
       redirect_errors_to(NULL, NULL);
-
       if (!(prf->got_error))
 	{
 	  if (POWER_OF_2_P(size))
@@ -3361,7 +3363,6 @@ static void transform_type_from_text(prefs_info *prf)
     {
       char *trimmed_str;
       trimmed_str = trim_string(str);
-
       if (snd_strlen(trimmed_str) > 0)
 	{
 	  int curpos = -1;
@@ -3418,7 +3419,6 @@ static void fft_window_from_text(prefs_info *prf)
     {
       char *trimmed_str;
       trimmed_str = trim_string(str);
-
       if (snd_strlen(trimmed_str) > 0)
 	{
 	  int curpos = -1;
@@ -3534,7 +3534,6 @@ static void colormap_from_text(prefs_info *prf)
     {
       char *trimmed_str;
       trimmed_str = trim_string(str);
-
       if (snd_strlen(trimmed_str) > 0)
 	{
 	  int len, curpos = -1;
@@ -3658,8 +3657,8 @@ static void mark_tag_width_error(const char *msg, void *data)
   prefs_info *prf = (prefs_info *)data;
   sg_entry_set_text(GTK_ENTRY(prf->text), "right");
   g_timeout_add_full(0,
-		  ERROR_WAIT_TIME,
-		  mark_tag_width_erase_func,
+		     ERROR_WAIT_TIME,
+		     mark_tag_width_erase_func,
 		     (gpointer)prf, NULL);
 }
 
@@ -3668,8 +3667,8 @@ static void mark_tag_height_error(const char *msg, void *data)
   prefs_info *prf = (prefs_info *)data;
   sg_entry_set_text(GTK_ENTRY(prf->rtxt), "right");
   g_timeout_add_full(0,
-		  ERROR_WAIT_TIME,
-		  mark_tag_height_erase_func,
+		     ERROR_WAIT_TIME,
+		     mark_tag_height_erase_func,
 		     (gpointer)prf, NULL);
 }
 
@@ -3684,7 +3683,6 @@ static void mark_tag_size_text(prefs_info *prf)
       width = string_to_int(str, 1, "mark tag width");
       redirect_errors_to(NULL, NULL);
       if (width > 0) set_mark_tag_width(width);
-
       str = (char *)gtk_entry_get_text(GTK_ENTRY(prf->rtxt));
       if ((str) && (*str))
 	{
@@ -3693,7 +3691,6 @@ static void mark_tag_size_text(prefs_info *prf)
 	  height = string_to_int(str, 1, "mark tag height");
 	  redirect_errors_to(NULL, NULL);
 	  if (height > 0) set_mark_tag_height(height);
-
 	}
     }
 }
@@ -3767,7 +3764,6 @@ static void mix_tag_size_text(prefs_info *prf)
       width = string_to_int(str, 1, "mix tag width");
       redirect_errors_to(NULL, NULL);
       if (width > 0) set_mix_tag_width(width);
-
       str = (char *)gtk_entry_get_text(GTK_ENTRY(prf->rtxt));
       if ((str) && (*str))
 	{
@@ -3776,7 +3772,6 @@ static void mix_tag_size_text(prefs_info *prf)
 	  height = string_to_int(str, 1, "mix tag height");
 	  redirect_errors_to(NULL, NULL);
 	  if (height > 0) set_mix_tag_height(height);
-
 	}
     }
 }
@@ -3803,11 +3798,7 @@ static void mix_waveform_height_text(prefs_info *prf)
       sscanf(str, "%d", &value);
       if (value >= 0)
 	in_set_mix_waveform_height(value);
-      else
-	{
-
-	  int_to_textfield(prf->text, mix_waveform_height(ss));
-	}
+      else int_to_textfield(prf->text, mix_waveform_height(ss));
     }
 }
 
@@ -3824,6 +3815,7 @@ static bool with_sound_is_loaded(void)
   return(XEN_DEFINED_P("with-sound"));
 #endif
 #if HAVE_RUBY
+  return(strcmp(XEN_AS_STRING(XEN_EVAL_C_STRING("defined? with_sound")), "method") == 0);
 #endif
   return(false);
 }
@@ -3853,6 +3845,15 @@ static void save_with_sound(prefs_info *prf, FILE *fd)
 	fprintf(fd, "(set! *clm-table-size* %d)\n", include_clm_table_size);
 #endif
 #if HAVE_RUBY
+#if HAVE_RUBY
+      fprintf(fd, "require \"ws\"\n");
+      if (include_clm_file_name)
+	fprintf(fd, "$clm_file_name = \"%s\"\n", include_clm_file_name);
+      if (include_clm_file_buffer_size != 65536)
+	fprintf(fd, "$clm_file_buffer_size = %d\n", include_clm_file_buffer_size);
+      if (include_clm_table_size != 512)
+	fprintf(fd, "$clm_table_size = %d\n", include_clm_table_size);
+#endif
 #endif
     }
 }
@@ -4112,7 +4113,6 @@ static void optimization_from_text(prefs_info *prf)
       redirect_errors_to(post_prefs_error, (void *)prf);
       opt = string_to_int(str, MIN_OPTIMIZATION, "optimization"); 
       redirect_errors_to(NULL, NULL);
-
       if (!(prf->got_error))
 	{
 	  if (opt <= MAX_OPTIMIZATION)

@@ -146,7 +146,7 @@ name of this optional global initialization file is "/etc/snd.conf". It
 is read before your local file; both can, of course, be
 absent.  To override reading the global init file when Snd is invoked, include the switch -noglob.
 To override the local init file, use -noinit.  
-Here's a more elaborate initialization file:
+Here's a more elaborate initialization file (~/.snd_guile):
 </p>
 
 <table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
@@ -201,6 +201,36 @@ Here's a more elaborate initialization file:
 
 (set! (<a class=quiet href="extsnd.html#optimization">optimization</a>) 6)              ;turn on full optimization (live dangerously...)
 (set! (<a class=quiet href="extsnd.html#selectioncreatesregion">selection-creates-region</a>) #f) ;turn off automatic region creation
+</pre></td></tr></table>
+
+<p>A similar Ruby initialization file (~/.snd_ruby):
+</p>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
+require "draw"
+require "popup"
+
+set_window_width 800
+set_window_height 500
+
+set_listener_font "9x15"
+set_axis_numbers_font "9x15"
+
+set_show_mix_waveforms true
+set_trap_segfault false
+set_listener_prompt ":"
+show_listener
+
+beige = make_color 0.96, 0.96, 0.86
+blue = make_color 0, 0, 1
+set_selected_graph_color beige
+set_selected_data_color blue
+make_current_window_display
+
+$mouse_enter_graph_hook.add_hook!("focus") do |snd, chn|
+  focus_widget(channel_widgets(snd, chn)[0])
+end
+$mouse_enter_listener_hook.add_hook!("focus") do |widget| focus_widget(widget) end
+$mouse_enter_text_hook.add_hook!("focus") do |widget| focus_widget(widget) end
 </pre></td></tr></table>
 
 <p>
@@ -1735,27 +1765,8 @@ Keywords, CLM generic functions, and optional arguments work as in Scheme:
 &gt;<em class=typing>osc.frequency</em>
 <em class=listener>440.0</em>
 </pre>
-<p>Lists (from the Scheme point of view) are arrays (vectors) in Ruby, and various
-built-in Scheme functions such as car aren't predefined, so to set up the focusing
-hooks as described in <a href="extsnd.html#mouseentergraphhook">mouse-enter-graph-hook</a>
-we need to do something along these lines:
-</p>
-<pre>
-def car(v)
-  v[0]
-end
-
-$mouse_enter_graph_hook = Proc.new {|snd, chn| 
-			            if sound? snd then
-			               focus_widget car channel_widgets snd, chn
-                                    end 
-                                   }
-
-$mouse_enter_listener_hook = Proc.new { |widget| 
-                                        focus_widget widget 
-                                      }
-</pre>
-<p>Here's one more example, a translation of display-energy in draw.scm:
+<p>Lists (from the Scheme point of view) are arrays (vectors) in Ruby.
+Here's one more example, a translation of display-energy in draw.scm:
 </p>
 
 <table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
