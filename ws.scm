@@ -178,6 +178,7 @@ returning you to the true top-level."
 (define *clm-clipped* #t)
 (define *clm-array-print-length* (print-length))
 (define *clm-player* #f) ; default is play-and-wait (takes index of newly created sound, not the sound's file name)
+(define *clm-notehook* #f)
 
 (define *to-snd* #t)
 
@@ -189,7 +190,29 @@ returning you to the true top-level."
   "(times->samples beg dur) converts beg and (+ beg dur) to samples, returning both in a list"
   (list (seconds->samples beg) (seconds->samples (+ beg dur))))
 
-(if (not (defined? 'definstrument)) (define definstrument define*))
+;(define definstrument define*) -- old form 2-Nov-05
+
+(defmacro definstrument (args . body)
+  (let* ((name (car args))
+	 (targs (cdr args))
+	 (utargs (let ((arg-names '()))
+		   (for-each
+		    (lambda (a)
+		      (if (not (keyword? a))
+			  (if (symbol? a)
+			      (set! arg-names (cons a arg-names))
+			      (set! arg-names (cons (car a) arg-names)))))
+		    targs)
+		   (reverse arg-names))))
+  `(define* (,name ,@targs)
+     (if *clm-notehook*
+	 (*clm-notehook* (symbol->string ',name) ,@utargs))
+     ((lambda () ; for inner defines, if any
+	,@body)))))
+
+#!
+(with-sound (:notehook (lambda args (display args))) (fm-violin 0 1 440 .1))
+!#
 
 (define* (with-sound-helper thunk 
 			    #:key (srate *clm-srate*) 
@@ -209,11 +232,13 @@ returning you to the true top-level."
 				  (play *clm-play*)
 				  (to-snd *to-snd*)
 				  (clipped 'unset)
+				  (notehook *clm-notehook*)
 				  (scaled-by #f))
   (let ((old-srate (mus-srate))
 	(old-*output* *output*)
 	(old-*reverb* *reverb*)
 	(in-debugger #f)
+	(old-notehook *clm-notehook*)
 	(old-verbose *clm-verbose*)
 	(old-auto-update-interval (auto-update-interval))
 	(output-1 output)) ; protect during nesting
@@ -221,6 +246,7 @@ returning you to the true top-level."
 
      (lambda () 
        (set! *clm-verbose* verbose)
+       (set! *clm-notehook* notehook)
        (set! (clm-table-size) *clm-table-size*)
        (set! (mus-file-buffer-size) *clm-file-buffer-size*)
        (set! (locsig-type) *clm-locsig-type*)
@@ -345,6 +371,7 @@ returning you to the true top-level."
 
      (lambda () 
        (set! *clm-verbose* old-verbose)
+       (set! *clm-notehook* old-notehook)
        (set! (auto-update-interval) old-auto-update-interval)
        (if (not in-debugger)
 	   (begin

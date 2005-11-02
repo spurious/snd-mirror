@@ -48,7 +48,7 @@
 (define sliderback "lightsteelblue")
 (define background "lightsteelblue1")
 
-(define definstrument define*)
+(if (not (defined? 'definstrument)) (define definstrument define*))
 ;(define (seconds->samples secs) (inexact->exact (round (* secs (mus-srate)))))
 
 ;; called by XtAppAddWorkProc

@@ -2094,12 +2094,11 @@ a sort of play list: (region-play-list (list (list 0.0 0) (list 0.5 1) (list 1.0
 
 ;;; -------- chain-dsps
 
-(if (not (defined? 'definstrument)) (define definstrument define*))
-
-(definstrument (chain-dsps beg dur #:rest dsps)
+(define* (chain-dsps beg dur #:rest dsps)
   ;; I assume the dsps are already made, 
   ;;          the envs are present as break-point lists
   ;;          the calls are ordered out->in (or last first)
+  ;; this should use definstrument, not define*, but it's defined in ws.scm which I don't want to require here
   (let* ((dsp-chain (apply vector (reverse (map (lambda (gen)
 						 (if (list? gen)
 						     (make-env gen :duration dur)

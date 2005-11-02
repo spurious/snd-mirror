@@ -298,6 +298,7 @@ int main(int argc, char **argv)
   add_file("snd-gfile.c");
   add_file("snd-gxen.c");
   add_file("snd-gprefs.c");
+  add_file("snd-prefs.c");
   add_file("snd-nogui.c");
   add_file("xen.c");
   add_file("xm.c");

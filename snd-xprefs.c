@@ -9,7 +9,7 @@
    TODO: remember state for subsequent load (extensions.scm) (remember-sound-state) ;also needs turn-off code
    TODO: various additional key bindings? move-one-pixel zoom-one-pixel [how to specify fancy keys?]
    TODO: audio mixer settings? -> volume in some mode (snd6.scm has OSS version)
-   TODO: g|xprefs split
+   PERHAPS: g|xprefs split -> snd-prefs (not sure how far to carry this)
    SOMEDAY: completions and more verbose error msgs
 */
 
@@ -58,74 +58,12 @@ typedef struct prefs_info {
   void (*save_func)(struct prefs_info *prf, FILE *fd);
 } prefs_info;
 
-static int prefs_size = 0, prefs_top = 0;
-static prefs_info **prefs = NULL;
 
-static void remember_pref(prefs_info *prf, 
-			  void (*reflect_func)(struct prefs_info *prf),
-			  void (*save_func)(struct prefs_info *prf, FILE *fd))
-{
-  if (prefs_size == 0)
-    {
-      prefs_size = 100;
-      prefs = (prefs_info **)CALLOC(prefs_size, sizeof(prefs_info *));
-    }
-  else
-    {
-      if (prefs_top >= prefs_size)
-	{
-	  int i;
-	  prefs_size += 100;
-	  prefs = (prefs_info **)REALLOC(prefs, prefs_size * sizeof(prefs_info *));
-	  for (i = prefs_top; i < prefs_size; i++) prefs[i] = NULL;
-	}
-    }
-  prf->reflect_func = reflect_func;
-  prf->save_func = save_func;
-  prefs[prefs_top++] = prf;
-}
+static void prefs_set_dialog_title(const char *filename);
+#include "snd-prefs.c"
 
 
 /* ---------------- utilities ---------------- */
-
-static char *trim_string(const char *str)
-{
-  int i = 0, len, j = 0, k, m;
-  char *trimmed_str;
-  len = strlen(str);
-  trimmed_str = (char *)CALLOC(len + 1, sizeof(char));
-  while ((i < len) && (isspace(str[i]))) i++;
-  k = len - 1;
-  while ((k > i) && (isspace(str[k]))) k--;
-  for (m = i; m <= k; m++)
-    trimmed_str[j++] = str[m];
-  return(trimmed_str);
-}
-
-static char *raw_data_format_to_string(int format)
-{
-  /* the "mus-" prefix carries no information in this context, so strip it off */
-  char *name;
-  name = mus_data_format_to_string(format);
-  if (name)
-    {
-      char *rtn;
-      int i, j, len;
-      len = strlen(name);
-      rtn = (char *)CALLOC(len, sizeof(char));
-      for (i = 0, j = 4; j < len; i++, j++)
-	{
-	  if (name[j] == '-')
-	    {
-	      rtn[i] = 'u';
-	      return(rtn);
-	    }
-	  else rtn[i] = name[j];
-	}
-      return(rtn);
-    }
-  return(copy_string("unknown"));
-}
 
 static void int_to_textfield(Widget w, int val)
 {
@@ -206,27 +144,6 @@ static int which_radio_button(prefs_info *prf)
 
 /* ---------------- help strings ---------------- */
 
-static void prefs_help(prefs_info *prf)
-{
-  if (prf->var_name)
-    {
-      XEN sym;
-      sym = C_STRING_TO_XEN_SYMBOL((char *)(prf->var_name));
-      if (XEN_SYMBOL_P(sym))
-	{
-	  XEN obj;
-	  obj = XEN_OBJECT_HELP(sym);
-	  if (XEN_STRING_P(obj))
-	    {
-	      prefs_helping = true;
-	      snd_help(prf->var_name, 
-		       XEN_TO_C_STRING(obj),
-		       WITH_WORD_WRAP);
-	    }
-	}
-    }
-}
-
 static void prefs_help_click_callback(Widget w, XtPointer context, XtPointer info)
 {
   prefs_help((prefs_info *)context);
@@ -283,7 +200,6 @@ static void clear_prefs_dialog_error(void)
     }
 }
 
-static void prefs_set_dialog_title(const char *filename);
 static void prefs_change_callback(Widget w, XtPointer context, XtPointer info)
 {
   prefs_unsaved = true;
@@ -1574,19 +1490,6 @@ static void preferences_quit_callback(Widget w, XtPointer context, XtPointer inf
     XtUnmanageChild(preferences_dialog);
 }
 
-static void reflect_prefs(void)
-{
-  int i;
-  for (i = 0; i < prefs_top; i++)
-    {
-      prefs_info *prf;
-      prf = prefs[i];
-      if ((prf) &&
-	  (prf->reflect_func))
-	(*(prf->reflect_func))(prf);
-    }
-}
-
 static void prefs_set_dialog_title(const char *filename)
 {
   XmString title;
@@ -1639,40 +1542,6 @@ static void preferences_reset_callback(Widget w, XtPointer context, XtPointer in
 	}
     }
   prefs_set_dialog_title(NULL);
-}
-
-static void save_prefs(const char *filename)
-{
-  int i;
-  char *fullname;
-  FILE *fd;
-  if (!filename) return; /* error earlier */
-  fullname = mus_expand_filename(filename);
-  fd = FOPEN(fullname, "a");
-  if (fd)
-    {
-      for (i = 0; i < prefs_top; i++)
-	{
-	  prefs_info *prf;
-	  prf = prefs[i];
-	  if ((prf) &&
-	      (prf->save_func))
-	    (*(prf->save_func))(prf, fd);
-	}
-      snd_fclose(fd, filename);
-    }
-  else snd_error("can't save preferences: %s %s", filename, snd_io_strerror());
-  FREE(fullname);
-#if HAVE_STRFTIME
-  {
-    time_t ts;
-    time(&ts);
-    if (!prefs_time) prefs_time = (char *)CALLOC(TIME_STR_SIZE, sizeof(char));
-    strftime(prefs_time, TIME_STR_SIZE, "%H:%M", localtime(&ts));
-  }
-#endif
-  prefs_unsaved = false;
-  prefs_set_dialog_title(filename);
 }
 
 static void preferences_save_callback(Widget w, XtPointer context, XtPointer info) 
@@ -1856,7 +1725,7 @@ static bool focus_is_following_mouse(void)
 	 (XEN_TRUE_P(XEN_NAME_AS_C_STRING_TO_VALUE("focus-is-following-mouse"))));
 #endif
 #if HAVE_RUBY
-  return(false); /* TODO: in ruby, how to tell that focus is set up? */
+  return(strcmp(XEN_AS_STRING(XEN_EVAL_C_STRING("defined? $focus_is_following_mouse")), "global-variable") == 0);
 #endif
 }
 
@@ -1881,6 +1750,7 @@ static void save_focus_follows_mouse(prefs_info *prf, FILE *fd)
       fprintf(fd, "(focus-follows-mouse)\n");
 #endif
 #if HAVE_RUBY
+      fprintf(fd, "$focus_is_following_mouse = true\n");
       fprintf(fd, "$mouse_enter_graph_hook.add_hook!(\"focus\") do |snd, chn|\n");
       fprintf(fd, "  focus_widget(channel_widgets(snd, chn)[0])\n");
       fprintf(fd, "end\n");
@@ -3031,8 +2901,9 @@ static void save_initial_bounds(prefs_info *prf, FILE *fd)
 {
 #if HAVE_SCHEME
   if ((use_full_duration()) ||
-      (!(snd_feq(XEN_TO_C_DOUBLE(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-initial-beg")), 0.0))) ||
-      (!(snd_feq(XEN_TO_C_DOUBLE(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-initial-dur")), 0.1))))
+      ((XEN_DEFINED_P("prefs-initial-beg")) &&
+       ((!(snd_feq(XEN_TO_C_DOUBLE(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-initial-beg")), 0.0))) ||
+	(!(snd_feq(XEN_TO_C_DOUBLE(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-initial-dur")), 0.1))))))
     {
       fprintf(fd, "(if (not (provided? 'snd-extensions.scm)) (load-from-path \"extensions.scm\"))\n");
       fprintf(fd, "(prefs-activate-initial-bounds %.2f %.2f %s)\n",
