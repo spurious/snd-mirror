@@ -42667,6 +42667,16 @@ EDITS: 1
 	      (if (file-exists? "test.rev") (snd-display ";perhaps reverb not deleted in ws?"))
 	      (close-sound ind))))
       
+      (let ((val 0))
+	(set! *clm-notehook* (lambda args (set! val 1)))
+	(with-sound () (fm-violin 0 .1 440 .1))
+	(if (not (= val 1)) (snd-display ";*clm-notehook*: ~A ~A" val *clm-notehook*))
+	(with-sound (:notehook (lambda args (set! val 2))) (fm-violin 0 .1 440 .1))
+	(if (not (= val 2)) (snd-display ";:notehook: ~A" val))
+	(with-sound () (fm-violin 0 .1 440 .1))
+	(if (not (= val 1)) (snd-display ";*clm-notehook* (1): ~A ~A" val *clm-notehook*))
+	(set! *clm-notehook* #f))
+
       (set! *clm-channels* 1)
       (set! *clm-srate* 22050)
       (set! *clm-file-name* "test.snd")

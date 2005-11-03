@@ -1,5 +1,6 @@
 Snd change log
 
+  3-Nov:     ws.scm definstrument macro changed to support :notehook arg in with-sound.
   27-Oct:    effects-utils.scm to make various added menus independent.
   12-Oct.    snd 7.16.
   3-Oct:     snd-g|xprefs.c, preferences-dialog function.

@@ -585,19 +585,27 @@ of the Installer directories, the second (in 10.4) is on the first
 install disk under System/Installation/Packages/X11User.pkg or some 
 such name.  These give you the X11 server and its header files.
 
-If you want to use Motif (recommended), get and install the openmotif
-package.  I think you'll need to include the --with-static-motif
-switch in the configuration process, and perhaps --with-motif-prefix=
-/usr/OpenMotif (or wherever libXm got written by the installer).
+There are several ways to go from here; the simplest is probably
+to use Darwin Ports as outlined by Hans Fugal:
+
+  I installed openmotif and gsl with Darwin Ports: 
+
+  sudo port install openmotif 
+  sudo port install gsl 
+
+  Then I did the regular: 
+
+  ./configure --with-motif --with-ruby 
+  make 
+  sudo make install 
+  open-x11 /usr/local/bin/snd 
+
+
 If you get some complaint about identifiers that look like they come
 from libSM or libICE, add -lICE -lSM to the end of the library
 list in the makefile.
 
-If you want to use Gtk, the Snd configure process is confused by the 
-lack of pkg-config -- I've forgotten how to deal with this -- maybe
-let some auto-installed like DarwinPorts handle it for you.
-
-And you'll probably need to add some things to the GUILE library list:
+You might also need to fixup the guile portion of the makefile:
 
 GUILE_LIBS = -L/usr/local/lib -lguile -lm -lguile-ltdl -ldl
 
@@ -605,6 +613,7 @@ or, in the fink case:
 
 GUILE_LIBS = -L/sw/lib -lguile -lm /sw/lib/libguile.a
 GUILE_CFLAGS = -I/sw/include/
+
 
 If C-f (and other such commands) doesn't work, either try toggling
 the "w" button, or add the focus-widget related hooks from grfsnd.html
@@ -619,6 +628,7 @@ to your initialization file:
 (add-hook! mouse-enter-text-hook
   (lambda (w)
     (focus-widget w)))
+
 
 If the openmotif package forgot to include libXm.a, a version is
 at ccrma-ftp.  If the Mac loader complains that it it out of date,
@@ -653,7 +663,8 @@ Here's some info from Josh Mattoon:
     linker also suggested the bind_at_load (though I'm not totally sure
     what that means)."
 
-Adam Tinsdale had better luck with this:
+
+(fftw is optional in Snd).  Adam Tinsdale had better luck with this:
 
     CFLAGS=-I/sw/include LDFLAGS="-L/sw/lib -lmx -bind_at_load" ./configure  \
       --with-motif --with-guile --without-fftw --with-static-xm
@@ -666,9 +677,6 @@ try:
 GUILE_CONFIG_path=/sw/bin GUILE_CONFIG_name=guile-1.6-config GUILE_name=guile-1.6 \
 --disable-nls --with-guile --with-motif --with-motif-prefix=/sw
 
-
-(Just a note that fftw is optional -- if it is omitted, Snd will
-fallback on its own (slower) version of the fft).
 
 The ccrma-ftp images osx-10.2-snd and osx-10.3-snd need only guile 1.6.4;
   everything else (well, leaving aside -lm) is loaded statically.  The guile
@@ -684,6 +692,7 @@ library as well (motifzone has this in the package "darwin-extras");
 you need to add -llanginfo to the makefile (but -lXm will work in this
 case).  If you use libXm.a from ccrma-ftp, you'll need to go to
 config.h and set the macro HAVE_XmToolTipGetLabel to 0.
+
 
 The dac-size variable seems to matter a lot in OSX.  If you're
 getting distorted playback, try various powers of 2.  It defaults

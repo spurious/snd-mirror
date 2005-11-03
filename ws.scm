@@ -210,9 +210,7 @@ returning you to the true top-level."
      ((lambda () ; for inner defines, if any
 	,@body)))))
 
-#!
-(with-sound (:notehook (lambda args (display args))) (fm-violin 0 1 440 .1))
-!#
+;;; (with-sound (:notehook (lambda args (display args))) (fm-violin 0 1 440 .1))
 
 (define* (with-sound-helper thunk 
 			    #:key (srate *clm-srate*) 
