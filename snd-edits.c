@@ -7115,7 +7115,13 @@ io_error_t save_edits_without_display(snd_info *sp, char *new_name, int type, in
 	  return(err);
 	}
     }
-  err = snd_make_file(new_name, sp->nchans, hdr, sf, frames);
+  {
+    bool old_check;
+    old_check = ss->checking_explicitly;
+    ss->checking_explicitly = true;
+    err = snd_make_file(new_name, sp->nchans, hdr, sf, frames);
+    ss->checking_explicitly = old_check;
+  }
 
   for (i = 0; i < sp->nchans; i++) 
     free_snd_fd(sf[i]);

@@ -179,6 +179,7 @@ returning you to the true top-level."
 (define *clm-array-print-length* (print-length))
 (define *clm-player* #f) ; default is play-and-wait (takes index of newly created sound, not the sound's file name)
 (define *clm-notehook* #f)
+(define *clm-with-sound-depth* 0) ; for CM, not otherwise used
 
 (define *to-snd* #t)
 

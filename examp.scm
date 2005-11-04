@@ -286,55 +286,6 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
 ;(add-hook! close-hook close-buffer)
 
 
-;;; -------- Reopen Menu --------
-;;; 
-;;; a similar idea, here presenting the last-closed sounds
-;;; this can be used in conjunction with remember-sound-state in extensions.scm
-
-;(define reopen-menu (add-to-main-menu "Reopen"))
-(define reopen-names '())
-
-(define (add-to-reopen-menu snd)
-  "(add-to-reopen-menu snd) adds snd to the Reopen menu (use with close-hook)"
-  (let ((brief-name (short-file-name snd))
-	(long-name (file-name snd))
-	(reopen-max-length 8)) ; sets max length of menu
-    (if (not (member brief-name reopen-names))
-	(begin
-	  (add-to-menu reopen-menu 
-		       brief-name
-		       (lambda () 
-			 (remove-from-menu reopen-menu brief-name)
-			 (open-sound long-name))
-		       0) ; add to top
-	  (set! reopen-names (append reopen-names (list brief-name)))
-	  (if (> (length reopen-names) reopen-max-length)
-	      (let ((goner (car reopen-names)))
-		(set! reopen-names (cdr reopen-names))
-		(remove-from-menu reopen-menu goner)))))))
-
-(define (check-reopen-menu filename)
-  "(check-reopen-menu filename) removes filename from the Reopen menu list (use with open-hook)"
-  (define (just-filename name)
-    (let ((last-slash -1)
-	  (len (string-length name)))
-      (do ((i 0 (1+ i)))
-	  ((= i len) (substring name (1+ last-slash)))
-	(if (char=? (string-ref name i) #\/)
-	    (set! last-slash i)))))
-  (let ((brief-name (just-filename filename)))
-    (if (member brief-name reopen-names)
-	(set! reopen-names (remove-if (lambda (n) 
-					(let ((val (string=? n brief-name)))
-					  (if val (remove-from-menu reopen-menu brief-name))
-					  val))
-				      reopen-names))))
-  #f)
-
-;(add-hook! close-hook add-to-reopen-menu)
-;(add-hook! open-hook check-reopen-menu)
-
-
 
 ;;; -------- set transform-size based on current time domain window size
 ;;;

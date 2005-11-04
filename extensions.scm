@@ -345,6 +345,8 @@ to end of channel, beg defaults to 0, snd defaults to the currently selected sou
 ;;;    that asks the user for confirmation before closing a sound if there are unsaved
 ;;;    edits on that sound.  if 'on' is #f, remove those hooks.
 
+(define checking-for-unsaved-edits #f) ; for prefs
+
 (define* (check-for-unsaved-edits #:optional (check #t))
   "(check-for-unsaved-edits #:optional (check #t)) -> sets up hooks to check for and ask about unsaved edits when a sound is closed.
 If 'check' is #f, the hooks are removed."
@@ -397,6 +399,7 @@ If 'check' is #f, the hooks are removed."
     (define (unsaved-edits-at-exit?) (not (ignore-unsaved-edits-at-exit?)))
     (define (unsaved-edits-at-close? snd) (not (ignore-unsaved-edits-at-close? snd #f)))
     
+    (set! checking-for-unsaved-edits check)
     (if check
 	(begin
 	  (if (not (member unsaved-edits-at-exit? (hook->list before-exit-hook)))
@@ -915,4 +918,51 @@ If 'check' is #f, the hooks are removed."
   (remove-hook! initial-graph-hook prefs-initial-bounds))
 
 
+;;; -------- reopen menu
+
+(define including-reopen-menu #f) ; for prefs
+
+(define (with-reopen-menu)
+  (if (not including-reopen-menu)
+      (let ((reopen-menu (add-to-main-menu "Reopen"))
+	    (reopen-names '()))
+
+	(define (add-to-reopen-menu snd)
+	  (let ((brief-name (short-file-name snd))
+		(long-name (file-name snd))
+		(reopen-max-length 16)) ; sets max length of menu
+	    (if (not (member brief-name reopen-names))
+		(begin
+		  (add-to-menu reopen-menu 
+			       brief-name
+			       (lambda () 
+				 (remove-from-menu reopen-menu brief-name)
+				 (open-sound long-name))
+			       0) ; add to top
+		  (set! reopen-names (append reopen-names (list brief-name)))
+		  (if (> (length reopen-names) reopen-max-length)
+		      (let ((goner (car reopen-names)))
+			(set! reopen-names (cdr reopen-names))
+			(remove-from-menu reopen-menu goner)))))))
+	
+	(define (check-reopen-menu filename)
+	  (define (just-filename name)
+	    (let ((last-slash -1)
+		  (len (string-length name)))
+	      (do ((i 0 (1+ i)))
+		  ((= i len) (substring name (1+ last-slash)))
+		(if (char=? (string-ref name i) #\/)
+		    (set! last-slash i)))))
+	  (let ((brief-name (just-filename filename)))
+	    (if (member brief-name reopen-names)
+		(set! reopen-names (remove-if (lambda (n) 
+						(let ((val (string=? n brief-name)))
+						  (if val (remove-from-menu reopen-menu brief-name))
+						  val))
+					      reopen-names))))
+	  #f)
+	
+	(set! including-reopen-menu #t)
+	(add-hook! close-hook add-to-reopen-menu)
+	(add-hook! open-hook check-reopen-menu))))
 

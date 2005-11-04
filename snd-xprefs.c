@@ -10,7 +10,10 @@
    TODO: various additional key bindings? move-one-pixel zoom-one-pixel [how to specify fancy keys?]
    TODO: audio mixer settings? -> volume in some mode (snd6.scm has OSS version)
    PERHAPS: g|xprefs split -> snd-prefs (not sure how far to carry this)
-   SOMEDAY: completions and more verbose error msgs
+   SOMEDAY: completions and more verbose error msgs (and help in a few cases like "new-effects.scm")
+
+   PERHAPS: reopen menu [extensions.scm, examp.rb] [including-reopen-menu, with-reopen-menu]
+   PERHAPS: hidden controls dialog [snd-motif.scm, no rb?]
 */
 
 
@@ -1670,6 +1673,49 @@ static void overwrite_toggle(prefs_info *prf)
   set_ask_before_overwrite(XmToggleButtonGetState(prf->toggle) == XmSET);
 }
 
+/* ---------------- check-for-unsaved-edits ---------------- */
+
+/* TODO: ruby side of check-for-unsaved-edits (extensions.rb) */
+
+static bool include_unsaved_edits = false;
+
+static bool unsaved_edits(void)
+{
+#if HAVE_SCHEME
+  return((XEN_DEFINED_P("checking-for-unsaved-edits")) &&
+	 (XEN_TRUE_P(XEN_NAME_AS_C_STRING_TO_VALUE("checking-for-unsaved-edits"))));
+#endif
+#if HAVE_RUBY
+#endif
+  return(false);
+}
+
+static void reflect_unsaved_edits(prefs_info *prf) 
+{
+  include_unsaved_edits = unsaved_edits();
+  XmToggleButtonSetState(prf->toggle, include_unsaved_edits, false);
+}
+
+static void unsaved_edits_toggle(prefs_info *prf)
+{
+  ASSERT_WIDGET_TYPE(XmIsToggleButton(prf->toggle), prf->toggle);
+  include_unsaved_edits = (XmToggleButtonGetState(prf->toggle) == XmSET);
+}
+
+static void save_unsaved_edits(prefs_info *prf, FILE *fd)
+{
+  if (include_unsaved_edits)
+    {
+#if HAVE_SCHEME
+      fprintf(fd, "(if (not (provided? 'snd-extensions.scm)) (load-from-path \"extensions.scm\"))\n");
+      fprintf(fd, "(check-for-unsaved-edits #t)\n");
+#endif
+#if HAVE_RUBY
+#endif
+    }
+}
+
+
 /* ---------------- current-window-display ---------------- */
 
 static bool include_current_window_display = false;
@@ -1802,7 +1848,10 @@ static char *peak_env_directory(void)
     return(XEN_TO_C_STRING(XEN_NAME_AS_C_STRING_TO_VALUE("save-peak-env-info-directory")));
 #endif
 #if HAVE_RUBY
-  /* TODO: ruby side of peak env dir -- env.rb */
+  /* TODO: ruby side of peak env dir -- env.rb -- how to get current dir */
+  /* require "env" */
+  /* install_save_peak_env(directory) */
+  /* $update_hook.member?("peak-env") */
 #endif
   return(NULL);
 }
@@ -2871,7 +2920,11 @@ static bool use_full_duration(void)
 	 (XEN_TRUE_P(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-show-full-duration"))));
 #endif
 #if HAVE_RUBY
-  /* TODO: ruby side of initial bounds -- see snd-test.rb for brief example */
+  /* TODO: ruby side of initial bounds */
+  /*   $initial_graph_hook.add_hook!("snd-test") do |snd, chn, dur|
+   *     [beg, dur, -1.0, 1.0, "a label", -4.0, 4.0]
+   *   end
+  */
   return(false);
 #endif
 }
@@ -5039,6 +5092,13 @@ void start_preferences_dialog(void)
     remember_pref(prf, reflect_ask_before_overwrite, NULL);
 
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
+    prf = prefs_row_with_toggle("ask about unsaved edits before exiting", "check-for-unsaved-edits",
+				unsaved_edits(), 
+				dpy_box, current_sep,
+				unsaved_edits_toggle);
+    remember_pref(prf, reflect_unsaved_edits, save_unsaved_edits);
+
+    current_sep = make_inter_variable_separator(dpy_box, prf->label);
     prf = prefs_row_with_toggle("include thumbnail graph in upper right corner", "make-current-window-display",
 				find_current_window_display(),
 				dpy_box, current_sep,
@@ -5220,7 +5280,7 @@ void start_preferences_dialog(void)
     remember_pref(prf, reflect_context_sensitive_popup, save_context_sensitive_popup);
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
 
-    prf = prefs_row_with_toggle("effects menu", "new-effects.scm", /* TODO: help index for effects? */
+    prf = prefs_row_with_toggle("effects menu", "new-effects.scm",
 				find_effects_menu(),
 				dpy_box, current_sep, 
 				effects_menu_toggle);
@@ -5228,7 +5288,7 @@ void start_preferences_dialog(void)
 
 #if HAVE_GUILE
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
-    prf = prefs_row_with_toggle("edit menu additions", "edit-menu.scm", /* TODO help index for all menus etc */
+    prf = prefs_row_with_toggle("edit menu additions", "edit-menu.scm",
 				find_edit_menu(),
 				dpy_box, current_sep, 
 				edit_menu_toggle);
@@ -5426,7 +5486,7 @@ void start_preferences_dialog(void)
     remember_pref(prf, reflect_x_axis_style, NULL);
 
     current_sep = make_inter_variable_separator(grf_box, prf->label);
-    prf = prefs_row_with_toggle("include smpte info", "show-smpte-label", /* TODO: does this trigger help? */
+    prf = prefs_row_with_toggle("include smpte info", "show-smpte-label",
 				find_smpte(),
 				grf_box, current_sep,
 				smpte_toggle);

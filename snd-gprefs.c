@@ -1444,6 +1444,45 @@ static void overwrite_toggle(prefs_info *prf)
   set_ask_before_overwrite(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prf->toggle)));
 }
 
+/* ---------------- check-for-unsaved-edits ---------------- */
+
+static bool include_unsaved_edits = false;
+
+static bool unsaved_edits(void)
+{
+#if HAVE_SCHEME
+  return((XEN_DEFINED_P("checking-for-unsaved-edits")) &&
+	 (XEN_TRUE_P(XEN_NAME_AS_C_STRING_TO_VALUE("checking-for-unsaved-edits"))));
+#endif
+#if HAVE_RUBY
+#endif
+  return(false);
+}
+
+static void reflect_unsaved_edits(prefs_info *prf) 
+{
+  include_unsaved_edits = unsaved_edits();
+  set_toggle_button(prf->toggle, include_unsaved_edits, false, (void *)prf);
+}
+
+static void unsaved_edits_toggle(prefs_info *prf)
+{
+  include_unsaved_edits = (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prf->toggle)));
+}
+
+static void save_unsaved_edits(prefs_info *prf, FILE *fd)
+{
+  if (include_unsaved_edits)
+    {
+#if HAVE_SCHEME
+      fprintf(fd, "(if (not (provided? 'snd-extensions.scm)) (load-from-path \"extensions.scm\"))\n");
+      fprintf(fd, "(check-for-unsaved-edits #t)\n");
+#endif
+#if HAVE_RUBY
+#endif
+    }
+}
+
 /* ---------------- current-window-display ---------------- */
 
 static bool include_current_window_display = false;
@@ -4476,6 +4515,13 @@ void start_preferences_dialog(void)
 				dpy_box,
 				overwrite_toggle);
     remember_pref(prf, reflect_ask_before_overwrite, NULL);
+
+    current_sep = make_inter_variable_separator(dpy_box);
+    prf = prefs_row_with_toggle("ask about unsaved edits before exiting", "check-for-unsaved-edits",
+				unsaved_edits(), 
+				dpy_box,
+				unsaved_edits_toggle);
+    remember_pref(prf, reflect_unsaved_edits, save_unsaved_edits);
 
     current_sep = make_inter_variable_separator(dpy_box);
     prf = prefs_row_with_toggle("include thumbnail graph in upper right corner", "make-current-window-display",

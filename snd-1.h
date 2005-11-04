@@ -1326,10 +1326,7 @@ void snd_close_file(snd_info *sp);
 snd_info *make_sound_readable(const char *filename, bool post_close);
 snd_info *snd_update(snd_info *sp);
 snd_info *snd_update_within_xen(snd_info *sp, const char *caller);
-
-int snd_encode(int type, const char *input_filename, const char *output_filename);
 int snd_decode(int type, const char *input_filename, const char *output_filename);
-
 void set_fallback_srate(int sr);
 void set_fallback_chans(int ch);
 void set_fallback_format(int fr);

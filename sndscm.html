@@ -1244,7 +1244,6 @@ I'm slowly dividing out related groups of procedures to separate files.
 <small>
   <ul>
     <li>XEmacs-like Buffers menu
-    <li>Reopen menu
     <li>make dot size dependent on number of samples being displayed
     <li>flash selected data red and green
     <li>add date and time to title bar
@@ -1454,10 +1453,6 @@ to:
 (add-hook! <a class=quiet href="extsnd.html#openhook">open-hook</a> open-buffer)
 (add-hook! <a class=quiet href="extsnd.html#closehook">close-hook</a> close-buffer)
 </pre>
-
-<p>A similar menu is the "reopen menu"; it presents a list of previously
-closed (and not subsequently re-opened) files in reverse order of closing.
-</p>
 
 <pre>
   <em class=emdef>snd-out</em>
@@ -1823,6 +1818,7 @@ convenient if they were in one file.
 
   <a class=def name="exunsavededits">check-for-unsaved-edits</a> #:optional (check #t)
   <a class=def name="exremembersoundstate">remember-sound-state</a>
+  <a class=def name="exwithreopenmenu">with-reopen-menu</a>
 
   <a class=def name="mixchannel">mix-channel</a> filedat #:optional beg dur snd chn edpos
   <a class=def name="insertchannel">insert-channel</a> filedat #:optional beg dur snd chn edpos
@@ -1964,6 +1960,9 @@ those hooks.
 </p>
 <p><b>remember-sound-state</b> saves most of a sound's display state when it is closed,
 and if that same sound is subsquently re-opened, restores the previous state.
+Along the same lines is the Reopen menu, created by <b>with-reopen-menu</b>;
+it presents a list of previously
+closed (and not subsequently re-opened) files in reverse order of closing.
 </p>
 
 <p><b>mix-channel</b> is a regularized version of the file mixing functions (<a class=quiet href="extsnd.html#mix">mix</a> and mix-sound).
