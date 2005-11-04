@@ -5,7 +5,6 @@
  */
 
 /* TODO: preset packages: dlp, km: check out gui.scm et al, keybinding sets
-   TODO: snd-test somehow
    TODO: remember state for subsequent load (extensions.scm) (remember-sound-state) ;also needs turn-off code
    TODO: various additional key bindings? move-one-pixel zoom-one-pixel [how to specify fancy keys?]
    TODO: audio mixer settings? -> volume in some mode (snd6.scm has OSS version)
@@ -4961,7 +4960,7 @@ static void pushed_button_color_func(prefs_info *prf, float r, float g, float b)
 
 /* ---------------- preferences dialog ---------------- */
 
-void start_preferences_dialog(void)
+widget_t start_preferences_dialog(void)
 {
   Arg args[20];
   int n;
@@ -4975,7 +4974,7 @@ void start_preferences_dialog(void)
       if (!(XtIsManaged(preferences_dialog)))
 	XtManageChild(preferences_dialog);
       else raise_dialog(preferences_dialog);
-      return;
+      return(preferences_dialog);
     }
 
   /* -------- base buttons -------- */
@@ -6038,4 +6037,5 @@ void start_preferences_dialog(void)
 
   XtManageChild(preferences_dialog);
   set_dialog_widget(PREFERENCES_DIALOG, preferences_dialog);
+  return(preferences_dialog);
 }

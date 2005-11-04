@@ -35,7 +35,7 @@
 ;;; need all html example code in autotests
 ;;; need some way to check that graphs are actually drawn (region dialog, oscope etc) and sounds played correctly
 
-;;; TODO: major coverage missing in view-files and prefs
+;;; TODO: major coverage missing in view-files
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
@@ -45850,6 +45850,49 @@ EDITS: 1
 			  ))
 		    (set! (with-background-processes) old-val))
 		  
+		  ;; ---------------- preferences dialog ----------------
+		  (let* ((prefs (preferences-dialog))
+			 (save-button (XmMessageBoxGetChild prefs XmDIALOG_CANCEL_BUTTON))
+			 (help-button (XmMessageBoxGetChild prefs XmDIALOG_HELP_BUTTON))
+			 (dismiss-button (XmMessageBoxGetChild prefs XmDIALOG_OK_BUTTON))
+			 (reset-button (find-child prefs "Reset"))
+			 (topics (find-child prefs "pref-scroller"))
+			 (old-width (window-width))
+			 (old-height (window-height)))
+		    
+		    (for-each-child topics
+				    (lambda (w)
+				      (focus-widget w)
+				      (take-keyboard-focus w)
+				      (if (or (XmIsText w)
+					      (XmIsTextField w))
+					  (begin
+					    (XmTextFieldSetString w "1")
+					    (key-event w snd-return-key 0)
+					    (force-event))
+					  (if (XmIsToggleButton w)
+					      (XmToggleButtonSetValue w XmSET #t)
+					      (if (or (XmIsPushButton w)
+						      (XmIsArrowButton w))
+						  (if (XtIsSensitive w)
+						      (click-button w #t 0))
+						  (if (XmIsScale w)
+						      (move-scale w 50)))))))
+		    
+		    (XtCallCallbacks save-button XmNactivateCallback #f)
+		    (if (not (file-exists? "/home/bil/.snd_prefs_guile"))
+			(snd-display ";prefs not saved?"))
+		    (XtCallCallbacks reset-button XmNactivateCallback #f)
+		    (if (file-exists? "/home/bil/.snd_prefs_guile")
+			(snd-display ";prefs not deleted?"))
+		    (XtCallCallbacks help-button XmNactivateCallback #f)
+		    (XtUnmanageChild prefs)
+		    (if (Widget? (list-ref (dialog-widgets) 14))
+			(XtUnmanageChild (list-ref (dialog-widgets) 14)))
+		    
+		    (set! (window-width) old-width)
+		    (set! (window-height) old-height))
+
 		  ;; ---------------- region dialog ----------------
 		  (let ((ind (open-sound "4.aiff")))
 		    (do ((i 0 (1+ i)))

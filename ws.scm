@@ -193,6 +193,8 @@ returning you to the true top-level."
 
 ;(define definstrument define*) -- old form 2-Nov-05
 
+(define *definstrument-hook* #f) ; for CM
+
 (defmacro definstrument (args . body)
   (let* ((name (car args))
 	 (targs (cdr args))
@@ -205,11 +207,16 @@ returning you to the true top-level."
 			      (set! arg-names (cons (car a) arg-names)))))
 		    targs)
 		   (reverse arg-names))))
-  `(define* (,name ,@targs)
-     (if *clm-notehook*
-	 (*clm-notehook* (symbol->string ',name) ,@utargs))
-     ((lambda () ; for inner defines, if any
-	,@body)))))
+  `(begin 
+     (define* (,name ,@targs)
+       (if *clm-notehook*
+	   (*clm-notehook* (symbol->string ',name) ,@utargs))
+       ((lambda () ; for inner defines, if any
+	  ,@body)))
+     ,@(if *definstrument-hook*
+           (list (*definstrument-hook* name targs))
+           (list)))))
+
 
 ;;; (with-sound (:notehook (lambda args (display args))) (fm-violin 0 1 440 .1))
 

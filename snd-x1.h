@@ -491,7 +491,7 @@ void g_init_gxen(void);
 
 /* -------- snd-xprefs.c -------- */
 
-void start_preferences_dialog(void);
+widget_t start_preferences_dialog(void);
 
 #endif
 

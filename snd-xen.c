@@ -2104,9 +2104,10 @@ static XEN g_print_dialog(XEN managed, XEN direct_to_printer)
 
 static XEN g_preferences_dialog(void)
 {
+  widget_t w;
   #define H_preferences_dialog "(" S_preferences_dialog "): start the Options:Preferences dialog"
-  start_preferences_dialog();
-  return(XEN_FALSE);
+  w = start_preferences_dialog();
+  return(XEN_WRAP_WIDGET(w));
 }
 
 

@@ -4423,7 +4423,7 @@ static void recorder_out_format_choice(prefs_info *prf)
 /* ---------------- preferences dialog ---------------- */
 
 
-void start_preferences_dialog(void)
+widget_t start_preferences_dialog(void)
 {
   GtkWidget *saveB, *resetB, *helpB, *dismissB, *topics, *scroller, *current_sep;
   prefs_info *prf;
@@ -4432,7 +4432,7 @@ void start_preferences_dialog(void)
   if (preferences_dialog)
     {
       gtk_widget_show(preferences_dialog);
-      return;
+      return(preferences_dialog);
     }
 
   preferences_dialog = snd_gtk_dialog_new();
@@ -5404,4 +5404,5 @@ void start_preferences_dialog(void)
   gtk_widget_show(preferences_dialog);
   prefs_unsaved = false;
   prefs_set_dialog_title(NULL);
+  return(preferences_dialog);
 }

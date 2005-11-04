@@ -415,7 +415,7 @@ void about_snd_help(void)
 	    info,
 	    "\nRecent changes include:\n\
 \n\
-3-Nov:   ws.scm definstrument macro changed to support :notehook arg in with-sound.\n\
+3-Nov:   ws.scm definstrument macro changed to support :notehook arg in with-sound, and *definstrument-hook* for CM.\n\
 27-Oct:  effects-utils.scm to make various added menus independent.\n\
 12-Oct.  snd 7.16.\n\
 3-Oct:   snd-g|xprefs.c, preferences-dialog function.\n\
