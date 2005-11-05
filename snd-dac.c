@@ -1317,16 +1317,28 @@ static int fill_dac_buffers(int write_ok)
 		      data = sample_linear_env(sp->filter_control_envelope, sp->filter_control_order);
 		      if (data)
 			{
-			  if (sp->filter_control_order > dp->a_size) /* need more room in dp->a == flt->xcoeffs and flt->state */
+			  /* check all chans in sp before clearing filter_order_changed flag */
+			  int j;
+			  for (j = i; j <= max_active_slot; j++)
 			    {
-			      FREE(dp->a);
-			      dp->a_size = sp->filter_control_order;
-			      dp->a = (Float *)CALLOC(dp->a_size, sizeof(Float));
+			      dac_info *ndp;
+			      ndp = play_list[j];
+			      if ((ndp) && 
+				  (ndp->sp == sp) && 
+				  (ndp->filtering))
+				{
+				  if (sp->filter_control_order > ndp->a_size) /* need more room in dp->a == flt->xcoeffs and flt->state */
+				    {
+				      FREE(ndp->a);
+				      ndp->a_size = sp->filter_control_order;
+				      ndp->a = (Float *)CALLOC(ndp->a_size, sizeof(Float));
+				    }
+				  mus_make_fir_coeffs(sp->filter_control_order, data, ndp->a);      /* fill dp->a with new coeffs */
+				  mus_filter_set_xcoeffs(ndp->flt, ndp->a);                         /* tell gen about them */
+				  if (mus_filter_set_order(ndp->flt, sp->filter_control_order) < 0) /* fixup gen's order (and internal state array) */
+				    snd_warning("trouble in filter (order not changed?)");
+				}
 			    }
-			  mus_make_fir_coeffs(sp->filter_control_order, data, dp->a);      /* fill dp->a with new coeffs */
-			  mus_filter_set_xcoeffs(dp->flt, dp->a);                          /* tell gen about them */
-			  if (mus_filter_set_order(dp->flt, sp->filter_control_order) < 0) /* fixup gen's order (and internal state array) */
-			    snd_warning("trouble in filter (order not changed?)");
 			  FREE(data);
 			}
 		      sp->filter_control_changed = false;

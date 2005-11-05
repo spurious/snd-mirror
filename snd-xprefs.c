@@ -8,7 +8,7 @@
    TODO: remember state for subsequent load (extensions.scm) (remember-sound-state) ;also needs turn-off code
    TODO: various additional key bindings? move-one-pixel zoom-one-pixel [how to specify fancy keys?]
    TODO: audio mixer settings? -> volume in some mode (snd6.scm has OSS version)
-   PERHAPS: g|xprefs split -> snd-prefs (not sure how far to carry this)
+   PERHAPS: g|xprefs split -> snd-prefs (can't decide how far to carry this)
    SOMEDAY: completions and more verbose error msgs (and help in a few cases like "new-effects.scm")
 */
 
@@ -1652,7 +1652,6 @@ static void reflect_auto_resize(prefs_info *prf)
 
 static void resize_toggle(prefs_info *prf)
 {
-  ASSERT_WIDGET_TYPE(XmIsToggleButton(prf->toggle), prf->toggle);
   set_auto_resize(XmToggleButtonGetState(prf->toggle) == XmSET);
 }
 
@@ -1665,13 +1664,12 @@ static void reflect_ask_before_overwrite(prefs_info *prf)
 
 static void overwrite_toggle(prefs_info *prf)
 {
-  ASSERT_WIDGET_TYPE(XmIsToggleButton(prf->toggle), prf->toggle);
   set_ask_before_overwrite(XmToggleButtonGetState(prf->toggle) == XmSET);
 }
 
 /* ---------------- check-for-unsaved-edits ---------------- */
 
-/* TODO: ruby side of check-for-unsaved-edits (extensions.rb) */
+/* TODO: ruby side of find check-for-unsaved-edits (extensions.rb) */
 
 static bool include_unsaved_edits = false;
 
@@ -1682,8 +1680,8 @@ static bool unsaved_edits(void)
 	 (XEN_TRUE_P(XEN_NAME_AS_C_STRING_TO_VALUE("checking-for-unsaved-edits"))));
 #endif
 #if HAVE_RUBY
-#endif
   return(false);
+#endif
 }
 
 static void reflect_unsaved_edits(prefs_info *prf) 
@@ -1694,7 +1692,6 @@ static void reflect_unsaved_edits(prefs_info *prf)
 
 static void unsaved_edits_toggle(prefs_info *prf)
 {
-  ASSERT_WIDGET_TYPE(XmIsToggleButton(prf->toggle), prf->toggle);
   include_unsaved_edits = (XmToggleButtonGetState(prf->toggle) == XmSET);
 }
 
@@ -1707,6 +1704,8 @@ static void save_unsaved_edits(prefs_info *prf, FILE *fd)
       fprintf(fd, "(check-for-unsaved-edits #t)\n");
 #endif
 #if HAVE_RUBY
+      fprintf(fd, "require \"extensions\"\n");
+      fprintf(fd, "check_for_unsaved_edits(true)\n");
 #endif
     }
 }
@@ -1733,16 +1732,13 @@ static void save_current_window_display(prefs_info *prf, FILE *fd)
 
 static void current_window_display_toggle(prefs_info *prf)
 {
-  ASSERT_WIDGET_TYPE(XmIsToggleButton(prf->toggle), prf->toggle);
   include_current_window_display = (XmToggleButtonGetState(prf->toggle) == XmSET);
 }
 
 static bool find_current_window_display(void)
 {
 #if HAVE_SCHEME
-  /* there's no clean way to look for the functions on the hook lists, so I'll kludge up
-   *   some variable...
-   */
+  /* there's no clean way to look for the functions on the hook lists, so I'll kludge up some variable... */
   return((XEN_DEFINED_P("current-window-display-is-running")) &&
 	 (XEN_TRUE_P(XEN_NAME_AS_C_STRING_TO_VALUE("current-window-display-is-running"))));
 #endif
@@ -1779,7 +1775,6 @@ static void reflect_focus_follows_mouse(prefs_info *prf)
 
 static void focus_follows_mouse_toggle(prefs_info *prf)
 {
-  ASSERT_WIDGET_TYPE(XmIsToggleButton(prf->toggle), prf->toggle);
   focus_follows_mouse = (XmToggleButtonGetState(prf->toggle) == XmSET);
 }
 
@@ -1811,7 +1806,6 @@ static void reflect_show_controls(prefs_info *prf)
 
 static void controls_toggle(prefs_info *prf)
 {
-  ASSERT_WIDGET_TYPE(XmIsToggleButton(prf->toggle), prf->toggle);
   in_set_show_controls(ss, XmToggleButtonGetState(prf->toggle) == XmSET);
 }
 
@@ -1863,7 +1857,6 @@ static void reflect_peak_envs(prefs_info *prf)
 
 static void peak_envs_toggle(prefs_info *prf)
 {
-  ASSERT_WIDGET_TYPE(XmIsToggleButton(prf->toggle), prf->toggle);
   include_peak_envs = (XmToggleButtonGetState(prf->toggle) == XmSET);
 }
 
@@ -1903,7 +1896,6 @@ static void reflect_selection_creates_region(prefs_info *prf)
 
 static void selection_creates_region_toggle(prefs_info *prf)
 {
-  ASSERT_WIDGET_TYPE(XmIsToggleButton(prf->toggle), prf->toggle);
   set_selection_creates_region(XmToggleButtonGetState(prf->toggle) == XmSET);
 }
 
@@ -2017,7 +2009,6 @@ static void reflect_verbose_cursor(prefs_info *prf)
 
 static void verbose_cursor_toggle(prefs_info *prf)
 {
-  ASSERT_WIDGET_TYPE(XmIsToggleButton(prf->toggle), prf->toggle);
   in_set_verbose_cursor(XmToggleButtonGetState(prf->toggle) == XmSET);
 }
 
@@ -2032,7 +2023,6 @@ static void reflect_cursor_follows_play(prefs_info *prf)
 
 static void cursor_follows_play_toggle(prefs_info *prf)
 {
-  ASSERT_WIDGET_TYPE(XmIsToggleButton(prf->toggle), prf->toggle);
   in_set_cursor_follows_play(ss, (XmToggleButtonGetState(prf->toggle) == XmSET) ? FOLLOW_ALWAYS : DONT_FOLLOW);
 }
 
@@ -2171,7 +2161,6 @@ static void prefs_reflect_just_sounds(prefs_info *prf)
 
 static void just_sounds_toggle(prefs_info *prf)
 {
-  ASSERT_WIDGET_TYPE(XmIsToggleButton(prf->toggle), prf->toggle);
   set_just_sounds(XmToggleButtonGetState(prf->toggle) == XmSET);
 }
 
@@ -2683,7 +2672,6 @@ static void save_context_sensitive_popup(prefs_info *prf, FILE *fd)
 
 static void context_sensitive_popup_toggle(prefs_info *prf)
 {
-  ASSERT_WIDGET_TYPE(XmIsToggleButton(prf->toggle), prf->toggle);
   include_context_sensitive_popup = (XmToggleButtonGetState(prf->toggle) == XmSET);
 }
 
@@ -2723,7 +2711,6 @@ static void save_effects_menu(prefs_info *prf, FILE *fd)
 
 static void effects_menu_toggle(prefs_info *prf)
 {
-  ASSERT_WIDGET_TYPE(XmIsToggleButton(prf->toggle), prf->toggle);
   include_effects_menu = (XmToggleButtonGetState(prf->toggle) == XmSET);
 }
 
@@ -2755,7 +2742,6 @@ static void save_edit_menu(prefs_info *prf, FILE *fd)
 
 static void edit_menu_toggle(prefs_info *prf)
 {
-  ASSERT_WIDGET_TYPE(XmIsToggleButton(prf->toggle), prf->toggle);
   include_edit_menu = (XmToggleButtonGetState(prf->toggle) == XmSET);
 }
 
@@ -2781,7 +2767,6 @@ static void save_marks_menu(prefs_info *prf, FILE *fd)
 
 static void marks_menu_toggle(prefs_info *prf)
 {
-  ASSERT_WIDGET_TYPE(XmIsToggleButton(prf->toggle), prf->toggle);
   include_marks_menu = (XmToggleButtonGetState(prf->toggle) == XmSET);
 }
 
@@ -2807,7 +2792,6 @@ static void save_mix_menu(prefs_info *prf, FILE *fd)
 
 static void mix_menu_toggle(prefs_info *prf)
 {
-  ASSERT_WIDGET_TYPE(XmIsToggleButton(prf->toggle), prf->toggle);
   include_mix_menu = (XmToggleButtonGetState(prf->toggle) == XmSET);
 }
 
@@ -2848,7 +2832,6 @@ static void save_reopen_menu(prefs_info *prf, FILE *fd)
 
 static void reopen_menu_toggle(prefs_info *prf)
 {
-  ASSERT_WIDGET_TYPE(XmIsToggleButton(prf->toggle), prf->toggle);
   include_reopen_menu = (XmToggleButtonGetState(prf->toggle) == XmSET);
 }
 
@@ -3013,7 +2996,6 @@ static void save_initial_bounds(prefs_info *prf, FILE *fd)
 static void initial_bounds_toggle(prefs_info *prf)
 {
   bool use_full_duration = false;
-  ASSERT_WIDGET_TYPE(XmIsToggleButton(prf->toggle), prf->toggle);
   use_full_duration = (XmToggleButtonGetState(prf->toggle) == XmSET);
 #if HAVE_SCHEME
   if (!(XEN_DEFINED_P("prefs-initial-beg")))
@@ -3064,7 +3046,6 @@ static void reflect_graphs_horizontal(prefs_info *prf)
 
 static void graphs_horizontal_toggle(prefs_info *prf)
 {
-  ASSERT_WIDGET_TYPE(XmIsToggleButton(prf->toggle), prf->toggle);
   in_set_graphs_horizontal(XmToggleButtonGetState(prf->toggle) == XmSET);
 }
 
@@ -3077,7 +3058,6 @@ static void reflect_show_y_zero(prefs_info *prf)
 
 static void y_zero_toggle(prefs_info *prf)
 {
-  ASSERT_WIDGET_TYPE(XmIsToggleButton(prf->toggle), prf->toggle);
   in_set_show_y_zero(XmToggleButtonGetState(prf->toggle) == XmSET);
 }
 
@@ -3090,7 +3070,6 @@ static void reflect_show_grid(prefs_info *prf)
 
 static void grid_toggle(prefs_info *prf)
 {
-  ASSERT_WIDGET_TYPE(XmIsToggleButton(prf->toggle), prf->toggle);
   in_set_show_grid((XmToggleButtonGetState(prf->toggle) == XmSET) ? WITH_GRID : NO_GRID);
 }
 
@@ -3255,7 +3234,6 @@ static void reflect_smpte(prefs_info *prf)
 
 static void smpte_toggle(prefs_info *prf)
 {
-  ASSERT_WIDGET_TYPE(XmIsToggleButton(prf->toggle), prf->toggle);
   include_smpte = (XmToggleButtonGetState(prf->toggle) == XmSET);
 }
 

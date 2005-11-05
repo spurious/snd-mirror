@@ -13,11 +13,7 @@
 */
 
 
-/* TODO: pull-down list of recent files (Open Previous menu item under Files -> reversed list)
- *       these should also appear in the completion lists associated with file name text widgets
- *       (any such widget should keep a list of previous entries, adding it to the completions, and presenting as drop-down list)
- *       (drop-down arrow only if such entries are available and not the same as current value)
- * TODO: new file: find some way to get around the hidden label bug (unmanage error text etc) -- see snd-xfind
+/* TODO: new file: find some way to get around the hidden label bug (unmanage error text etc) -- see snd-xfind
  *         what about using XmNmessageString in these cases?
  * PERHAPS: if user changes raw file with dialog up -- adding header for example, should we automatically open it? or reflect in panel?
  *       same with info label in open dialog

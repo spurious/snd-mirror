@@ -369,7 +369,6 @@ enum {ANY_FILE_TYPE, SOUND_FILE_TYPE};
 
 static char *filename_completer_1(char *text, int file_type)
 {
-  /* TODO: could data here carry the directory? */
 #if HAVE_OPENDIR
   /* assume text is a partial filename */
   /* get directory name, opendir, read files checking for match */

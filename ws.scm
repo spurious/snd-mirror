@@ -124,7 +124,7 @@ returning you to the true top-level."
 	       (if (frame-procedure? fr) ; perhaps better here would be (procedure-property 'definstrument) or some such test
 		   (let ((source (frame-source fr)))
 		     (if (memoized? source)
-			 (ok (unmemoize source))
+			 (ok ((if (defined? 'unmemoize) unmemoize unmemoize-expr source)))
 			 (ok source)))))))))
       #f))
   

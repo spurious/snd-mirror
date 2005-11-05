@@ -1455,8 +1455,8 @@ static bool unsaved_edits(void)
 	 (XEN_TRUE_P(XEN_NAME_AS_C_STRING_TO_VALUE("checking-for-unsaved-edits"))));
 #endif
 #if HAVE_RUBY
-#endif
   return(false);
+#endif
 }
 
 static void reflect_unsaved_edits(prefs_info *prf) 
@@ -1479,7 +1479,9 @@ static void save_unsaved_edits(prefs_info *prf, FILE *fd)
       fprintf(fd, "(check-for-unsaved-edits #t)\n");
 #endif
 #if HAVE_RUBY
-#endif
+      fprintf(fd, "require \"extensions\"\n");
+      fprintf(fd, "check_for_unsaved_edits(true)\n");
+#Endif
     }
 }
 
