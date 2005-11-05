@@ -10,9 +10,6 @@
    TODO: audio mixer settings? -> volume in some mode (snd6.scm has OSS version)
    PERHAPS: g|xprefs split -> snd-prefs (not sure how far to carry this)
    SOMEDAY: completions and more verbose error msgs (and help in a few cases like "new-effects.scm")
-
-   PERHAPS: reopen menu [extensions.scm, examp.rb] [including-reopen-menu, with-reopen-menu]
-   PERHAPS: hidden controls dialog [snd-motif.scm, no rb?]
 */
 
 
@@ -1829,7 +1826,7 @@ static char *include_peak_env_directory = NULL;
 
 static bool find_peak_envs(void)
 {
-#if HAVE_GUILE
+#if HAVE_SCHEME
   return((XEN_DEFINED_P("save-peak-env-info?")) &&
 	 XEN_TO_C_BOOLEAN(XEN_NAME_AS_C_STRING_TO_VALUE("save-peak-env-info?")));
 #endif
@@ -1842,7 +1839,7 @@ static char *peak_env_directory(void)
 {
   if (include_peak_env_directory)
     return(include_peak_env_directory);
-#if HAVE_GUILE
+#if HAVE_SCHEME
   if (XEN_DEFINED_P("save-peak-env-info-directory"))
     return(XEN_TO_C_STRING(XEN_NAME_AS_C_STRING_TO_VALUE("save-peak-env-info-directory")));
 #endif
@@ -1887,7 +1884,7 @@ static void save_peak_envs(prefs_info *prf, FILE *fd)
 {
   if (include_peak_envs)
     {
-#if HAVE_GUILE
+#if HAVE_SCHEME
       fprintf(fd, "(if (not (provided? 'snd-peak-env.scm)) (load-from-path \"peak-env.scm\"))\n");
       if (include_peak_env_directory)
 	fprintf(fd, "(set! save-peak-env-info-directory \"%s\")\n", include_peak_env_directory);
@@ -2745,7 +2742,7 @@ static void reflect_effects_menu(prefs_info *prf)
   XmToggleButtonSetState(prf->toggle, find_effects_menu(), false);
 }
 
-#if HAVE_GUILE
+#if HAVE_SCHEME
 /* ---------------- edit menu ---------------- */
 
 static bool include_edit_menu = false;
@@ -2824,6 +2821,52 @@ static void reflect_mix_menu(prefs_info *prf)
   XmToggleButtonSetState(prf->toggle, find_mix_menu(), false);
 }
 #endif
+
+/* ---------------- reopen menu ---------------- */
+
+static bool include_reopen_menu = false;
+
+static void save_reopen_menu(prefs_info *prf, FILE *fd)
+{
+  if (include_reopen_menu)
+    {
+#if HAVE_SCHEME
+      fprintf(fd, "(if (provided? 'snd-extensions) (load-from-path \"extensions.scm\"))\n");
+      fprintf(fd, "(with-reopen-menu)\n");
+#endif
+#if HAVE_RUBY
+      fprintf(fd, "require \"examp\"\n");
+      fprintf(fd, "$close_hook.add_hook!(\"reopen\") do |snd|\n");
+      fprintf(fd, "  add_to_reopen_menu(snd)\n");
+      fprintf(fd, "end\n");
+      fprintf(fd, "$open_hook.add_hook!(\"reopen\") do |file|\n");
+      fprintf(fd, "  check_reopen_menu(file)\n");
+      fprintf(fd, "end\n");
+#endif
+    }
+}
+
+static void reopen_menu_toggle(prefs_info *prf)
+{
+  ASSERT_WIDGET_TYPE(XmIsToggleButton(prf->toggle), prf->toggle);
+  include_reopen_menu = (XmToggleButtonGetState(prf->toggle) == XmSET);
+}
+
+static bool find_reopen_menu(void)
+{
+#if HAVE_SCHEME
+  return((XEN_DEFINED_P("including-reopen-menu")) &&
+	 XEN_TO_C_BOOLEAN(XEN_NAME_AS_C_STRING_TO_VALUE("including-reopen-menu")));
+#endif
+#if HAVE_RUBY
+  return(false); /* SOMEDAY: how to find reopen menu on ruby hook list? */
+#endif
+}
+
+static void reflect_reopen_menu(prefs_info *prf) 
+{
+  XmToggleButtonSetState(prf->toggle, find_reopen_menu(), false);
+}
 
 
 /* ---------------- graph-style ---------------- */
@@ -3832,7 +3875,8 @@ static void colormap_from_text(prefs_info *prf)
 	  int len, curpos = -1;
 	  len = num_colormaps();
 	  for (i = 0; i < len; i++)
-	    if (STRCMP(trimmed_str, colormap_name(i)) == 0)
+	    if ((colormap_name(i)) &&
+		(STRCMP(trimmed_str, colormap_name(i)) == 0))
 	      {
 		curpos = i;
 		break;
@@ -3852,7 +3896,8 @@ static void colormap_from_menu(prefs_info *prf, char *value)
   int i, len;
   len = num_colormaps();
   for (i = 0; i < len; i++)
-    if (strcmp(value, colormap_name(i)) == 0)
+    if ((colormap_name(i)) &&
+	(strcmp(value, colormap_name(i)) == 0))
       {
 	in_set_color_map(i);
 	XmTextFieldSetString(prf->text, value);
@@ -4239,6 +4284,40 @@ static void speed_control_choice(prefs_info *prf)
   if (XmToggleButtonGetState(prf->radio_button) == XmSET)
     in_set_speed_control_style(ss, speed_control_styles_i[which_radio_button(prf)]);
 }
+
+#if HAVE_SCHEME
+/* ---------------- hidden controls dialog ---------------- */
+
+static bool include_hidden_controls = false;
+
+static void save_hidden_controls(prefs_info *prf, FILE *fd)
+{
+  if (include_hidden_controls)
+    {
+      fprintf(fd, "(if (not (provided? 'snd-snd-motif.scm)) (load-from-path \"snd-motif.scm\"))\n");
+      fprintf(fd, "(make-hidden-controls-dialog)\n");
+    }
+}
+
+static void hidden_controls_toggle(prefs_info *prf)
+{
+  ASSERT_WIDGET_TYPE(XmIsToggleButton(prf->toggle), prf->toggle);
+  include_hidden_controls = (XmToggleButtonGetState(prf->toggle) == XmSET);
+}
+
+static bool find_hidden_controls(void)
+{
+  return((XEN_DEFINED_P("hidden-controls-dialog")) &&
+	 (XEN_NOT_FALSE_P(XEN_NAME_AS_C_STRING_TO_VALUE("hidden-controls-dialog"))));
+}
+
+static void reflect_hidden_controls(prefs_info *prf) 
+{
+  ASSERT_WIDGET_TYPE(XmIsToggleButton(prf->toggle), prf->toggle);
+  XmToggleButtonSetState(prf->toggle, find_hidden_controls(), false);
+}
+#endif
+
 
 /* ---------------- sinc width ---------------- */
 
@@ -5285,7 +5364,7 @@ widget_t start_preferences_dialog(void)
 				effects_menu_toggle);
     remember_pref(prf, reflect_effects_menu, save_effects_menu);
 
-#if HAVE_GUILE
+#if HAVE_SCHEME
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
     prf = prefs_row_with_toggle("edit menu additions", "edit-menu.scm",
 				find_edit_menu(),
@@ -5307,6 +5386,14 @@ widget_t start_preferences_dialog(void)
 				mix_menu_toggle);
     remember_pref(prf, reflect_mix_menu, save_mix_menu);
 #endif
+
+    current_sep = make_inter_variable_separator(dpy_box, prf->label);
+    prf = prefs_row_with_toggle("reopen menu", "with-reopen-menu",
+				find_reopen_menu(),
+				dpy_box, current_sep, 
+				reopen_menu_toggle);
+    remember_pref(prf, reflect_reopen_menu, save_reopen_menu);
+
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
 
     /* ---------------- cursor options ---------------- */
@@ -5781,6 +5868,15 @@ widget_t start_preferences_dialog(void)
     remember_pref(prf, reflect_speed_control, NULL);
     FREE(str);
 
+#if HAVE_SCHEME
+    current_sep = make_inter_variable_separator(clm_box, prf->label);
+    prf = prefs_row_with_toggle("include hidden controls dialog", "hidden-controls-dialog",
+				find_hidden_controls(),
+				clm_box, current_sep, 
+				hidden_controls_toggle);
+    remember_pref(prf, reflect_hidden_controls, save_hidden_controls);
+#endif
+
     current_sep = make_inter_variable_separator(clm_box, prf->label);
     str = mus_format("%d", sinc_width(ss));
     prf = prefs_row_with_text("sinc interpolation width in srate converter", S_sinc_width, str,
@@ -5823,7 +5919,7 @@ widget_t start_preferences_dialog(void)
 				show_listener_toggle);
     remember_pref(prf, reflect_show_listener, save_show_listener);
 
-#if HAVE_SCHEME
+#if HAVE_GUILE
     current_sep = make_inter_variable_separator(prg_box, prf->label);
     str = mus_format("%d", optimization(ss));
     prf = prefs_row_with_number("optimization level", S_optimization,
@@ -5850,7 +5946,7 @@ widget_t start_preferences_dialog(void)
 				show_backtrace_toggle);
     remember_pref(prf, reflect_show_backtrace, NULL);
 
-#if HAVE_SCHEME
+#if HAVE_GUILE
     current_sep = make_inter_variable_separator(prg_box, prf->label);
     prf = prefs_row_with_toggle("include debugging aids", "snd-break",
 				find_debugging_aids(),

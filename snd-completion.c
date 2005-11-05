@@ -649,7 +649,8 @@ char *list_completer(char *text, void *data)
   if (info->exact_match)
     {
       for (i = 0; i < info->num_values; i++)
-	if (strncmp(info->values[i], trimmed_text, len) == 0)
+	if ((info->values[i]) &&
+	    (strncmp(info->values[i], trimmed_text, len) == 0))
 	  {
 	    matches++;
 	    current_match = i;
@@ -658,7 +659,8 @@ char *list_completer(char *text, void *data)
   else
     {
       for (i = 0; i < info->num_values; i++)
-	if (STRNCMP(info->values[i], trimmed_text, len) == 0)
+	if ((info->values[i]) &&
+	    (STRNCMP(info->values[i], trimmed_text, len) == 0))
 	  {
 	    matches++;
 	    current_match = i;

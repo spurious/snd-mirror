@@ -42957,11 +42957,11 @@ EDITS: 1
   (if cleared 
       (set! (widget-text widget) text)
       (begin
-  (do ((i 0 (1+ i)))
-      ((= i (string-length text)))
-    (let ((ch (string-ref text i)))
-      (key-event widget (char->integer ch) (shifted? ch)))
-    (force-event)))))
+	(do ((i 0 (1+ i)))
+	    ((= i (string-length text)))
+	  (let ((ch (string-ref text i)))
+	    (key-event widget (char->integer ch) (shifted? ch)))
+	  (XtCallCallbacks widget XmNactivateCallback #f)))))
 
 (set! (max-regions) 16)
 (define mxa 32)
@@ -45375,7 +45375,7 @@ EDITS: 1
 		      (reset-hook! mouse-enter-label-hook)
 		      (reset-hook! mouse-leave-label-hook)
 		      (if (XtIsManaged filed)
-			  (snd-display ";why is view files active?")))
+			  (XtUnmanageChild filed)))
 		    (close-sound ind1)
 		    (close-sound ind2))
 		  
@@ -45868,8 +45868,7 @@ EDITS: 1
 					      (XmIsTextField w))
 					  (begin
 					    (XmTextFieldSetString w "1")
-					    (key-event w snd-return-key 0)
-					    (force-event))
+					    (XtCallCallbacks w XmNactivateCallback #f))
 					  (if (XmIsToggleButton w)
 					      (XmToggleButtonSetValue w XmSET #t)
 					      (if (or (XmIsPushButton w)
