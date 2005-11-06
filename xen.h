@@ -12,11 +12,12 @@
  */
 
 #define XEN_MAJOR_VERSION 1
-#define XEN_MINOR_VERSION 39
-#define XEN_VERSION "1.39"
+#define XEN_MINOR_VERSION 40
+#define XEN_VERSION "1.40"
 
 /* HISTORY:
  *
+ *  7-Nov-05:  xen_rb_defined_p (Mike Scholz).
  *  24-Oct-05: XEN_LOAD_FILE_WITH_PATH.
  *  16-Sep-05: removed some debugging extras that caused confusion on 64-bit machines.
  *  12-Aug-05: include guile setter procedure names for better error reporting.

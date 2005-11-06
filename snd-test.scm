@@ -2415,7 +2415,7 @@
 			     (set! maxdiff diff)
 			     (set! maxpos i)))))
 		   (if (> maxdiff allowed-diff)
-		       (snd-display ";~A: ~A at ~A (~A ~A)" (mus-data-format-name type) maxdiff maxpos (vct-ref v maxpos) (vct-ref v1 maxpos)))
+		       (snd-display ";[line 2418] ~A: ~A at ~A (~A ~A)" (mus-data-format-name type) maxdiff maxpos (vct-ref v maxpos) (vct-ref v1 maxpos)))
 		   (close-sound ind))))
 	     (list mus-bshort   mus-lshort   mus-mulaw   mus-alaw   mus-byte  
 		   mus-lfloat   mus-bint     mus-lint    mus-b24int mus-l24int
@@ -9298,7 +9298,7 @@ EDITS: 5
 	    (if (not (= (sync nind) 123)) (snd-display ";update-sound sync: ~A" (sync nind)))
 	    (let ((nsamps (samples->vct 5000 10)))
 	      (if (not (vequal samps (vct-scale! nsamps 0.5)))
-		  (snd-display ";udpate-sound amps: ~A ~A?" samps nsamps)))
+		  (snd-display ";update-sound amps: ~A ~A?" samps nsamps)))
 	    (if (or (not (number? s-in)) (not (= ind s-in))) (snd-display ";update-hook init: ~A ~A" ind s-in))
 	    (if (or (not (number? s-out)) (not (= nind s-in))) (snd-display ";update-hook done: ~A ~A" nind s-out)))
 	  (reset-hook! update-hook)

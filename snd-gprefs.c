@@ -3755,7 +3755,7 @@ static void save_with_sound(prefs_info *prf, FILE *fd)
 #if HAVE_SCHEME
       fprintf(fd, "(if (not (provided? 'snd-ws.scm)) (load-from-path \"ws.scm\"))\n");
       if (include_clm_file_name)
-	fprintf(fd, "(set! *clm-file-name* %s)\n", include_clm_file_name);
+	fprintf(fd, "(set! *clm-file-name* \"%s\")\n", include_clm_file_name);
       if (include_clm_file_buffer_size != 65536)
 	fprintf(fd, "(set! *clm-file-buffer-size* %d)\n", include_clm_file_buffer_size);
       if (include_clm_table_size != 512)

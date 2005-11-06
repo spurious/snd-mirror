@@ -328,7 +328,7 @@ void save_print_dialog_state(FILE *fd);
 
 /* -------- snd-xprefs.c -------- */
 
-void start_preferences_dialog(void);
+widget_t start_preferences_dialog(void);
 
 #endif
 

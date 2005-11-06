@@ -271,7 +271,7 @@ void vf_set_amp(view_files_info *vdat, Float val) {}
 void vf_set_speed(view_files_info *vdat, Float val) {}
 void vf_amp_env_redraw(widget_t w, view_files_info *vdat) {}
 void ensure_scrolled_window_row_visible(widget_t list, int pos, int num_rows) {}
-void start_preferences_dialog(void) {}
+widget_t start_preferences_dialog(void) {return(NULL_WIDGET);}
 
 void auto_update_restart(void) {}
 

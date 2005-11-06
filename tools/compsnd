@@ -10,6 +10,9 @@ fgrep accomoda *.scm
 fgrep -e " #(" *.scm
 fgrep -e "the the " *.c
 fgrep -e "the the " *.html
+fgrep udpate *.c
+fgrep udpate *.html
+fgrep udpate *.scm
 va.scm
 tools/check-gtk.scm
 
