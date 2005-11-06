@@ -4875,7 +4875,9 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, cp_field_t fld, char *calle
       return(C_TO_XEN_INT((int)(cp->x_axis_style)));
       break;
     case CP_DOT_SIZE:
-      cp->dot_size = g_imin(0, on, DEFAULT_DOT_SIZE); 
+      cp->dot_size = mus_iclamp(MIN_DOT_SIZE, 
+				XEN_TO_C_INT_OR_ELSE(on, DEFAULT_DOT_SIZE), 
+				MAX_DOT_SIZE); /* size > 17000 -> X segfault! */
       update_graph(cp);
       return(C_TO_XEN_INT(cp->dot_size));
       break;
@@ -6272,7 +6274,9 @@ static XEN g_set_dot_size(XEN size, XEN snd, XEN chn)
   XEN_ASSERT_TYPE(XEN_NUMBER_P(size), size, XEN_ARG_1, S_setB S_dot_size, "a number"); 
   if (XEN_BOUND_P(snd))
     return(channel_set(snd, chn, size, CP_DOT_SIZE, S_setB S_dot_size));
-  set_dot_size(XEN_TO_C_INT_OR_ELSE(size, DEFAULT_DOT_SIZE));
+  set_dot_size(mus_iclamp(MIN_DOT_SIZE, 
+			  XEN_TO_C_INT_OR_ELSE(size, DEFAULT_DOT_SIZE), 
+			  MAX_DOT_SIZE));
   return(C_TO_XEN_INT(dot_size(ss)));
 }
 

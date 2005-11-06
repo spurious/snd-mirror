@@ -871,6 +871,7 @@ char *xen_guile_to_c_string_with_eventual_free(XEN str);
     rb_define_variable(xen_scheme_global_variable_to_ruby(Name), (VALUE *)(&Var)); \
   }
 #define XEN_DEFINE(Name, Value) rb_define_global_const(xen_scheme_constant_to_ruby(Name), Value)
+#define XEN_DEFINED_P(Name)             xen_rb_defined_p(Name)
 
 #define XEN_WRAP_C_POINTER(a)           Data_Wrap_Struct(rb_cData, 0, 0, (void *)a)
 #define XEN_UNWRAP_C_POINTER(a)         DATA_PTR(a)
@@ -1119,6 +1120,7 @@ XEN xen_rb_cons2(XEN arg1, XEN arg2, XEN arg3);
 char *xen_scheme_constant_to_ruby(const char *name);
 char *xen_scheme_procedure_to_ruby(const char *name);
 char *xen_scheme_global_variable_to_ruby(const char *name);
+bool xen_rb_defined_p(const char *name);
 void xen_rb_raise(XEN type, XEN info);
 XEN xen_rb_obj_as_string(XEN obj);
 XEN xen_rb_eval_string_with_error(char *str);

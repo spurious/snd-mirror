@@ -2,7 +2,7 @@
 
 # Translator: Michael Scholz <scholz-micha@gmx.de>
 # Created: Fri Apr 22 23:36:39 CEST 2005
-# Last: Wed May 18 18:57:47 CEST 2005
+# Changed: Sat Sep 24 17:25:24 CEST 2005
 
 # Commentary:
 #
@@ -205,7 +205,7 @@ def vector_synthesis(files, read_even_when_not_playing, &driver)
     current_file = 0
     reading = true
     if (out_port = mus_audio_open_output(Mus_audio_default, sr, chns, Mus_lshort, bufsize * 2)) < 0
-      snd_error("can\'t open audio port! %s", out_port)
+      Snd.raise(:snd_error, "can\'t open audio port! %s", out_port)
     else
       pframes = Array.new(files_len) do |i| mus_sound_frames(files[i]) end
       Snd.catch(:all, lambda do |arg| Snd.display("%s: error %s", get_func_name, arg) end) do

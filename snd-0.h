@@ -563,6 +563,8 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_SAVE_AS_DIALOG, F
 #define dot_size(ss) ss->Dot_Size
 #define in_set_dot_size(a) ss->Dot_Size = a
 #define DEFAULT_DOT_SIZE 1
+#define MIN_DOT_SIZE 0
+#define MAX_DOT_SIZE 100
 
 #define grid_density(ss) ss->Grid_Density
 #define in_set_grid_density(a) ss->Grid_Density = a

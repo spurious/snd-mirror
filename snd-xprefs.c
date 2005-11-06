@@ -7,7 +7,7 @@
 /* TODO: preset packages: dlp, km: check out gui.scm et al, keybinding sets
    TODO: remember state for subsequent load (extensions.scm) (remember-sound-state) ;also needs turn-off code
    TODO: various additional key bindings? move-one-pixel zoom-one-pixel [how to specify fancy keys?]
-   TODO: audio mixer settings? -> volume in some mode (snd6.scm has OSS version)
+   TODO: audio mixer settings? -> volume in some mode (snd6.scm has OSS version) -- also need instant off code
    PERHAPS: g|xprefs split -> snd-prefs (can't decide how far to carry this)
    SOMEDAY: completions and more verbose error msgs (and help in a few cases like "new-effects.scm")
 */
@@ -1675,13 +1675,8 @@ static bool include_unsaved_edits = false;
 
 static bool unsaved_edits(void)
 {
-#if HAVE_SCHEME
   return((XEN_DEFINED_P("checking-for-unsaved-edits")) &&
 	 (XEN_TRUE_P(XEN_NAME_AS_C_STRING_TO_VALUE("checking-for-unsaved-edits"))));
-#endif
-#if HAVE_RUBY
-  return(false);
-#endif
 }
 
 static void reflect_unsaved_edits(prefs_info *prf) 
@@ -1737,14 +1732,9 @@ static void current_window_display_toggle(prefs_info *prf)
 
 static bool find_current_window_display(void)
 {
-#if HAVE_SCHEME
   /* there's no clean way to look for the functions on the hook lists, so I'll kludge up some variable... */
   return((XEN_DEFINED_P("current-window-display-is-running")) &&
 	 (XEN_TRUE_P(XEN_NAME_AS_C_STRING_TO_VALUE("current-window-display-is-running"))));
-#endif
-#if HAVE_RUBY
-  return(strcmp(XEN_AS_STRING(XEN_EVAL_C_STRING("defined? Current_window")), "constant") == 0);
-#endif
 }
 
 static void reflect_current_window_display(prefs_info *prf) 
@@ -1758,13 +1748,8 @@ static bool focus_follows_mouse = false;
 
 static bool focus_is_following_mouse(void)
 {
-#if HAVE_SCHEME
   return((XEN_DEFINED_P("focus-is-following-mouse")) &&
 	 (XEN_TRUE_P(XEN_NAME_AS_C_STRING_TO_VALUE("focus-is-following-mouse"))));
-#endif
-#if HAVE_RUBY
-  return(strcmp(XEN_AS_STRING(XEN_EVAL_C_STRING("defined? $focus_is_following_mouse")), "global-variable") == 0);
-#endif
 }
 
 static void reflect_focus_follows_mouse(prefs_info *prf) 
@@ -1787,12 +1772,8 @@ static void save_focus_follows_mouse(prefs_info *prf, FILE *fd)
       fprintf(fd, "(focus-follows-mouse)\n");
 #endif
 #if HAVE_RUBY
-      fprintf(fd, "$focus_is_following_mouse = true\n");
-      fprintf(fd, "$mouse_enter_graph_hook.add_hook!(\"focus\") do |snd, chn|\n");
-      fprintf(fd, "  focus_widget(channel_widgets(snd, chn)[0])\n");
-      fprintf(fd, "end\n");
-      fprintf(fd, "$mouse_enter_listener_hook.add_hook!(\"focus\") do |widget| focus_widget(widget) end\n");
-      fprintf(fd, "$mouse_enter_text_hook.add_hook!(\"focus\") do |widget| focus_widget(widget) end\n");
+      fprintf(fd, "require \"extensions\"\n");
+      fprintf(fd, "focus_follows_mouse\n");
 #endif
     }
 }
@@ -1820,29 +1801,16 @@ static char *include_peak_env_directory = NULL;
 
 static bool find_peak_envs(void)
 {
-#if HAVE_SCHEME
   return((XEN_DEFINED_P("save-peak-env-info?")) &&
 	 XEN_TO_C_BOOLEAN(XEN_NAME_AS_C_STRING_TO_VALUE("save-peak-env-info?")));
-#endif
-#if HAVE_RUBY
-  return(strcmp(XEN_AS_STRING(XEN_EVAL_C_STRING("defined? install_save_peak_env")), "method") == 0);
-#endif
 }
 
 static char *peak_env_directory(void)
 {
   if (include_peak_env_directory)
     return(include_peak_env_directory);
-#if HAVE_SCHEME
   if (XEN_DEFINED_P("save-peak-env-info-directory"))
     return(XEN_TO_C_STRING(XEN_NAME_AS_C_STRING_TO_VALUE("save-peak-env-info-directory")));
-#endif
-#if HAVE_RUBY
-  /* TODO: ruby side of peak env dir -- env.rb -- how to get current dir */
-  /* require "env" */
-  /* install_save_peak_env(directory) */
-  /* $update_hook.member?("peak-env") */
-#endif
   return(NULL);
 }
 
@@ -1881,6 +1849,11 @@ static void save_peak_envs(prefs_info *prf, FILE *fd)
       fprintf(fd, "(if (not (provided? 'snd-peak-env.scm)) (load-from-path \"peak-env.scm\"))\n");
       if (include_peak_env_directory)
 	fprintf(fd, "(set! save-peak-env-info-directory \"%s\")\n", include_peak_env_directory);
+#endif
+#if HAVE_RUBY
+      fprintf(fd, "require \"env\"\n");
+      if (include_peak_env_directory)
+ 	fprintf(fd, "$save_peak_env_info_directory = \"%s\"\n", include_peak_env_directory);
 #endif
     }
 }
@@ -2329,10 +2302,10 @@ static void save_view_files_directory(prefs_info *prf, FILE *fd)
   if (include_vf_directory)
     {
 #if HAVE_SCHEME
-      fprintf(fd, "(%s %s)\n", S_add_directory_to_view_files_list, include_vf_directory);
+      fprintf(fd, "(%s \"%s\")\n", S_add_directory_to_view_files_list, include_vf_directory);
 #endif
 #if HAVE_RUBY
-      fprintf(fd, "%s(%s)\n", TO_PROC_NAME(S_add_directory_to_view_files_list), include_vf_directory);
+      fprintf(fd, "%s(\"%s\")\n", TO_PROC_NAME(S_add_directory_to_view_files_list), include_vf_directory);
 #endif
     }
 }
@@ -2681,9 +2654,7 @@ static bool find_context_sensitive_popup(void)
   return(XEN_DEFINED_P("edhist-help-edits")); /* defined in both cases */
 #endif
 #if HAVE_RUBY
-  /* XEN_DEFINED_P always returns false in Xen/Ruby? */
-  return(strcmp(XEN_AS_STRING(XEN_EVAL_C_STRING("defined? Snd_popup_menu")), "constant") == 0);
-  /* it returns "nil" in the undefined case */
+  return(XEN_DEFINED_P("Snd_popup_menu"));
 #endif
 }
 
@@ -2720,7 +2691,7 @@ static bool find_effects_menu(void)
   return(XEN_DEFINED_P("effects-menu"));
 #endif
 #if HAVE_RUBY
-  return(strcmp(XEN_AS_STRING(XEN_EVAL_C_STRING("defined? Effects")), "constant") == 0);
+  return(XEN_DEFINED_P("Effects"));
 #endif
 }
 
@@ -2819,13 +2790,8 @@ static void save_reopen_menu(prefs_info *prf, FILE *fd)
       fprintf(fd, "(with-reopen-menu)\n");
 #endif
 #if HAVE_RUBY
-      fprintf(fd, "require \"examp\"\n");
-      fprintf(fd, "$close_hook.add_hook!(\"reopen\") do |snd|\n");
-      fprintf(fd, "  add_to_reopen_menu(snd)\n");
-      fprintf(fd, "end\n");
-      fprintf(fd, "$open_hook.add_hook!(\"reopen\") do |file|\n");
-      fprintf(fd, "  check_reopen_menu(file)\n");
-      fprintf(fd, "end\n");
+      fprintf(fd, "require \"extensions\"\n");
+      fprintf(fd, "with_reopen_menu\n");
 #endif
     }
 }
@@ -2837,13 +2803,8 @@ static void reopen_menu_toggle(prefs_info *prf)
 
 static bool find_reopen_menu(void)
 {
-#if HAVE_SCHEME
   return((XEN_DEFINED_P("including-reopen-menu")) &&
 	 XEN_TO_C_BOOLEAN(XEN_NAME_AS_C_STRING_TO_VALUE("including-reopen-menu")));
-#endif
-#if HAVE_RUBY
-  return(false); /* SOMEDAY: how to find reopen menu on ruby hook list? */
-#endif
 }
 
 static void reflect_reopen_menu(prefs_info *prf) 
@@ -2869,9 +2830,6 @@ static void graph_style_choice(prefs_info *prf)
 }
 
 /* ---------------- dot-size ---------------- */
-
-#define MIN_DOT_SIZE 0
-#define MAX_DOT_SIZE 100
 
 static void show_dot_size(prefs_info *prf)
 {
@@ -2940,28 +2898,16 @@ static void dot_size_from_text(prefs_info *prf)
 
 static bool use_full_duration(void)
 {
-#if HAVE_SCHEME
   return((XEN_DEFINED_P("prefs-show-full-duration")) &&
 	 (XEN_TRUE_P(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-show-full-duration"))));
-#endif
-#if HAVE_RUBY
-  /* TODO: ruby side of initial bounds */
-  /*   $initial_graph_hook.add_hook!("snd-test") do |snd, chn, dur|
-   *     [beg, dur, -1.0, 1.0, "a label", -4.0, 4.0]
-   *   end
-  */
-  return(false);
-#endif
 }
 
 static char *initial_bounds_to_string(void)
 {
-#if HAVE_SCHEME
   if (XEN_DEFINED_P("prefs-initial-beg"))
     return(mus_format("%.2f : %.2f", 
 		      XEN_TO_C_DOUBLE(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-initial-beg")),
 		      XEN_TO_C_DOUBLE(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-initial-dur"))));
-#endif
   return(copy_string("0.0 : 0.1"));
 }
 
@@ -2977,20 +2923,27 @@ static void reflect_initial_bounds(prefs_info *prf)
 
 static void save_initial_bounds(prefs_info *prf, FILE *fd)
 {
-#if HAVE_SCHEME
   if ((use_full_duration()) ||
       ((XEN_DEFINED_P("prefs-initial-beg")) &&
        ((!(snd_feq(XEN_TO_C_DOUBLE(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-initial-beg")), 0.0))) ||
 	(!(snd_feq(XEN_TO_C_DOUBLE(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-initial-dur")), 0.1))))))
     {
+#if HAVE_SCHEME
       fprintf(fd, "(if (not (provided? 'snd-extensions.scm)) (load-from-path \"extensions.scm\"))\n");
       fprintf(fd, "(prefs-activate-initial-bounds %.2f %.2f %s)\n",
 	      XEN_TO_C_DOUBLE(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-initial-beg")),
 	      XEN_TO_C_DOUBLE(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-initial-dur")),
-	      (XEN_TRUE_P(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-show-full-duration"))) ? "#t" : "#f");
-    }
+	      (XEN_TRUE_P(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-show-full-duration"))) ? PROC_TRUE : PROC_FALSE);
 #endif
-  /* TODO: ruby side of initial bounds */
+#if HAVE_RUBY
+      fprintf(fd, "require \"extensions\"\n");
+      fprintf(fd, "prefs_activate_initial_bounds(%.2f, %.2f, %s)\n",
+  	      XEN_TO_C_DOUBLE(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-initial-beg")),
+  	      XEN_TO_C_DOUBLE(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-initial-dur")),
+ 	      (XEN_TRUE_P(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-show-full-duration"))) ? PROC_TRUE : PROC_FALSE);
+#endif
+      /* code repeated to make emacs' paren matcher happy */
+    }
 }
 
 static void initial_bounds_toggle(prefs_info *prf)
@@ -3001,6 +2954,11 @@ static void initial_bounds_toggle(prefs_info *prf)
   if (!(XEN_DEFINED_P("prefs-initial-beg")))
     XEN_LOAD_FILE_WITH_PATH("extensions.scm");
   XEN_VARIABLE_SET(XEN_NAME_AS_C_STRING_TO_VARIABLE("prefs-show-full-duration"), C_TO_XEN_BOOLEAN(use_full_duration));
+#endif
+#if HAVE_RUBY
+  if (!(XEN_DEFINED_P("prefs-initial-beg")))
+    XEN_LOAD_FILE_WITH_PATH("extensions.rb");
+  XEN_VARIABLE_SET("prefs-show-full-duration", C_TO_XEN_BOOLEAN(use_full_duration));
 #endif
 }
 
@@ -3016,6 +2974,12 @@ static void initial_bounds_text(prefs_info *prf)
     XEN_LOAD_FILE_WITH_PATH("extensions.scm");
   XEN_VARIABLE_SET(XEN_NAME_AS_C_STRING_TO_VARIABLE("prefs-initial-beg"), C_TO_XEN_DOUBLE(beg));
   XEN_VARIABLE_SET(XEN_NAME_AS_C_STRING_TO_VARIABLE("prefs-initial-dur"), C_TO_XEN_DOUBLE(dur));
+#endif
+#if HAVE_RUBY
+  if (!(XEN_DEFINED_P("prefs-initial-beg")))
+    XEN_LOAD_FILE_WITH_PATH("extensions.rb");
+  XEN_VARIABLE_SET("prefs-initial-beg", C_TO_XEN_DOUBLE(beg));
+  XEN_VARIABLE_SET("prefs-initial-dur", C_TO_XEN_DOUBLE(dur));
 #endif
   XtFree(str);
 }
@@ -3217,14 +3181,8 @@ static bool include_smpte = false;
 
 static bool find_smpte(void)
 {
-#if HAVE_SCHEME
   return((XEN_DEFINED_P("smpte-is-on")) &&
 	 (!(XEN_FALSE_P(XEN_EVAL_C_STRING("(smpte-is-on)"))))); /* "member" of hook-list -> a list if successful */
-#endif
-#if HAVE_RUBY
-  /* TODO: ruby side of smpte */
-#endif
-  return(false);
 }
 
 static void reflect_smpte(prefs_info *prf) 
@@ -3246,6 +3204,8 @@ static void save_smpte(prefs_info *prf, FILE *fd)
       fprintf(fd, "(show-smpte-label #t)\n");
 #endif
 #if HAVE_RUBY
+      fprintf(fd, "require \"snd-xm\"\n");
+      fprintf(fd, "show_smpte_label(true)\n");
 #endif
     }
 }
@@ -4155,13 +4115,7 @@ static int include_clm_table_size = 512;
 
 static bool with_sound_is_loaded(void)
 {
-#if HAVE_SCHEME
   return(XEN_DEFINED_P("with-sound"));
-#endif
-#if HAVE_RUBY
-  return(strcmp(XEN_AS_STRING(XEN_EVAL_C_STRING("defined? with_sound")), "method") == 0);
-#endif
-  return(false);
 }
 
 static void reflect_with_sound(prefs_info *prf) 
@@ -4172,7 +4126,6 @@ static void reflect_with_sound(prefs_info *prf)
 
 static void with_sound_toggle(prefs_info *prf)
 {
-  ASSERT_WIDGET_TYPE(XmIsToggleButton(prf->toggle), prf->toggle);
   include_with_sound = (XmToggleButtonGetState(prf->toggle) == XmSET);
 }
 
@@ -4330,7 +4283,8 @@ static char *clm_file_name(void)
     return(XEN_TO_C_STRING(XEN_NAME_AS_C_STRING_TO_VALUE("*clm-file-name*")));
 #endif
 #if HAVE_RUBY
-  /* TODO: ruby side of clm_file_name etc -- $clm_file_name ws.rb */
+  if (XEN_DEFINED_P("clm-file-name"))
+    return(XEN_TO_C_STRING(XEN_NAME_AS_C_STRING_TO_VALUE("clm-file-name")));
 #endif
   return(NULL);
 }
@@ -4342,6 +4296,8 @@ static void set_clm_file_name(const char *str)
     XEN_VARIABLE_SET(XEN_NAME_AS_C_STRING_TO_VARIABLE("*clm-file-name*"), C_TO_XEN_STRING(str));
 #endif
 #if HAVE_RUBY
+  if (XEN_DEFINED_P("clm-file-name"))
+    XEN_VARIABLE_SET("clm-file-name", C_TO_XEN_STRING(str));
 #endif
 }
 
@@ -4374,6 +4330,8 @@ static int clm_table_size(void)
     return(XEN_TO_C_INT(XEN_NAME_AS_C_STRING_TO_VALUE("*clm-table-size*")));
 #endif
 #if HAVE_RUBY
+  if (XEN_DEFINED_P("clm-table-size"))
+    return(XEN_TO_C_INT(XEN_NAME_AS_C_STRING_TO_VALUE("clm-table-size")));
 #endif
   return(512);
 }
@@ -4385,6 +4343,8 @@ static int clm_file_buffer_size(void)
     return(XEN_TO_C_INT(XEN_NAME_AS_C_STRING_TO_VALUE("*clm-file-buffer-size*")));
 #endif
 #if HAVE_RUBY
+  if (XEN_DEFINED_P("clm-file-buffer-size"))
+    return(XEN_TO_C_INT(XEN_NAME_AS_C_STRING_TO_VALUE("clm-file-buffer-size")));
 #endif
   return(65536);
 }

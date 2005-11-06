@@ -2,7 +2,7 @@
 
 # Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Wed Feb 25 05:31:02 CET 2004
-# Last: Thu May 19 18:28:30 CEST 2005
+# Changed: Sun Nov 06 01:57:14 CET 2005
 
 # Commentary:
 #
@@ -160,6 +160,15 @@ provided? :snd_gtk   and (not provided? :xg) and require "libxg.so"
 unless provided? :xm or provided? :xg
   Snd.raise(:runtime_error, __FILE__, "file requires --with-motif or --with-gtk \
 and module libxm.so or libxg.so, or --with-static-xm")
+end
+
+# will be translated later
+def smpte_is_on                 # for prefs
+  false
+end
+
+def show_smpte_label(on_or_off = false)
+  nil
 end
 
 #

@@ -1,7 +1,8 @@
 # env.rb -- snd-7/env.scm
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
-# Last: Fri Aug 19 14:58:57 CEST 2005
+# Created: Sat Sep 20 23:24:17 CEST 2003
+# Changed: Sun Nov 06 01:21:40 CET 2005
 
 # Commentary:
 #
@@ -691,6 +692,9 @@ with_sound(:channels, 1, :play, 1) do
 end
 =end
 
+$save_peak_env_info_p = true
+$save_peak_env_info_directory = "~/peaks"
+
 class Peak_env
   Peak = Struct.new("Peak", :name, :format, :chans)
   
@@ -716,7 +720,7 @@ class Peak_env
 
   # intended as a $close_hook function
   def save_info_at_close(snd)
-    if peak_env_info(snd, 0, 0)
+    if $save_peak_env_info_p and peak_env_info(snd, 0, 0)
       saved = false
       channels(snd).times do |chn|
         peak_file = mus_expand_filename(info_file_name(snd, chn))
@@ -752,9 +756,11 @@ def install_save_peak_env(dir = ENV["HOME"] + "/.peaks")
   peak_env = Peak_env.new(dir)
   hook_name = "peak-env"
   $update_hook.add_hook!(hook_name) do |snd|
-    channels(snd).times do |chn|
-      peak_file = mus_expand_filename(peak_env.info_file_name(snd, chn))
-      File.exists?(peak_file) and File.unlink(peak_file)
+    if $save_peak_env_info_p
+      channels(snd).times do |chn|
+        peak_file = mus_expand_filename(peak_env.info_file_name(snd, chn))
+        File.exists?(peak_file) and File.unlink(peak_file)
+      end
     end
   end
   $after_open_hook.add_hook!(hook_name) do |snd|

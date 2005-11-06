@@ -2,7 +2,7 @@
 
 # Translator: Michael Scholz <scholz-micha@gmx.de>
 # Created: Tue Apr 05 00:17:04 CEST 2005
-# Last: Tue May 31 04:41:01 CEST 2005
+# Changed: Sun Nov 06 01:02:45 CET 2005
 
 # Commentary:
 #
@@ -173,6 +173,8 @@ displays time domain graph using current colormap (just an example of colormap-r
 
   # inset overall waveform; if click, move to that location
 
+  $current_window_display_is_running = false # for prefs
+  
   class Current_window
     def initialize
       @inset_width = 0.2
@@ -181,16 +183,18 @@ displays time domain graph using current colormap (just an example of colormap-r
     attr_reader :inset_width, :inset_heigth
 
     def update_location(snd)
-      channels(snd).times do |chn|
-        if vals = channel_property(:inset_envelope, snd, chn)
-          vals[2] = -2
+      if $current_window_display_is_running
+        channels(snd).times do |chn|
+          if vals = channel_property(:inset_envelope, snd, chn)
+            vals[2] = -2
+          end
         end
       end
       false
     end
 
     def display_location(snd, chn)
-      if time_graph?(snd, chn)
+      if $current_window_display_is_running and time_graph?(snd, chn)
         axinf = axis_info(snd, chn)
         grf_width = axinf[12]
         width = (Float(@inset_width) * grf_width).round
@@ -295,7 +299,7 @@ displays time domain graph using current colormap (just an example of colormap-r
     end
 
     def click_location(snd, chn, button, state, x, y, axis)
-      if axis == Time_graph
+      if $current_window_display_is_running and (axis == Time_graph)
         axinf = axis_info(snd, chn)
         grf_width = axinf[12]
         width = (Float(@inset_width) * grf_width).round
@@ -327,6 +331,7 @@ displays time domain graph using current colormap (just an example of colormap-r
   end
 
   def make_current_window_display
+    $current_window_display_is_running = true
     hook_name = format("%s", Current_window)
     unless $after_graph_hook.member?(hook_name)
       cw = Current_window.new

@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Tue Mar 18 00:18:35 CET 2003
-# Last: Thu May 19 18:30:45 CEST 2005
+# Changed: Sat Oct 22 01:34:35 CEST 2005
 
 # Commentary:
 #
@@ -1008,7 +1008,7 @@ xe.help                             # this help
     if @px0 == @px1
       @x0
     else
-      [@x1, [@x0, @x0 + (@x1 - @x0) * ((x - @px0) / (@px1.to_f - @px0))].max].min
+      [@x1, [@x0, @x0 + ((@x1 - @x0) * ((x - @px0) / (@px1.to_f - @px0)))].max].min
     end
   end
   
@@ -1016,7 +1016,7 @@ xe.help                             # this help
     if @py0 == @py1
       @y1
     else
-      [@y1, [@y0, @y0 + (@y1 - @y0) * ((@py0 - y) / (@py0.to_f - @py1))].max].min
+      [@y1, [@y0, @y0 + ((@y1 - @y0) * ((@py0 - y) / (@py0.to_f - @py1)))].max].min
     end
   end
 
@@ -1024,7 +1024,7 @@ xe.help                             # this help
     if @px0 == @px1
       @px0
     else
-      [@px1, [@px0, (@px0 + (@px1 - @px0) * (x - @x0) / (@x1 - @x0)).round].max].min
+      [@px1, [@px0, (@px0 + ((@px1 - @px0) * ((x - @x0) / (@x1.to_f - @x0)))).round].max].min
     end
   end
 
@@ -1032,7 +1032,7 @@ xe.help                             # this help
     if @py0 == @py1
       @py0
     else
-      [@py0, [@py1, (@py1 + (@py0 - @py1) * (y - @y1) / (@y0 - @y1)).round].max].min
+      [@py0, [@py1, (@py1 + ((@py0 - @py1) * ((y - @y1) / (@y0.to_f - @y1)))).round].max].min
     end
   end
 end if provided? :xm or provided? :xg

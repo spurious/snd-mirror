@@ -2,7 +2,7 @@
 
 # Translator: Michael Scholz <scholz-micha@gmx.de>
 # Created: Tue Feb 22 13:40:33 CET 2005
-# Last: Mon May 23 02:30:05 CEST 2005
+# Changed: Thu Sep 29 14:02:34 CEST 2005
 
 # Commentary:
 #
@@ -335,7 +335,6 @@ removes the key-value pair in the given mix's property list")
 =begin  
   $close_hook.add_hook!("remove-mix-properties") do |snd|
     $all_mix_properties.each do |id| (not mix?(id)) and remove_mix_properties(id) end
-    false
   end
 =end
 
@@ -543,7 +542,6 @@ removes the key-value pair in the given track's property list")
 =begin  
   $close_hook.add_hook!("remove-track-properties") do |snd|
     $all_track_properties.each do |id| (not track?(id)) and remove_track_properties(id) end
-    false
   end
 =end
 
@@ -597,8 +595,10 @@ include Mix
 # === MIXER.SCM ===
 # 
 require "matrix"
+
 class Matrix
   with_silence do
+    # local variable rows renamed to rs
     def Matrix.diagonal(*values)
       size = values.size
       rs = (0...size).collect do |j|
@@ -608,6 +608,8 @@ class Matrix
       end
       rows(rs, false)
     end
+    # private :init_rows doesn't work any longer
+    public :init_rows
   end
 end
 

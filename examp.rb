@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Wed Sep 04 18:34:00 CEST 2002
-# Last: Sat Aug 20 01:26:09 CEST 2005
+# Changed: Sat Nov 05 18:19:11 CET 2005
 
 # Commentary:
 #
@@ -29,7 +29,7 @@
 # func?(obj)
 # mus?(obj)
 # get_func_name(n)
-# assert_type(condition, value, pos, msg)
+# assert_type(condition, obj, pos, msg)
 # identity(arg)
 # ignore(*rest)
 # enum(*names)
@@ -227,8 +227,8 @@
 # $emacs_eval_hook.call(line)
 # run_emacs_eval_hook(line)
 # 
-# module Snd_eval
-#  count_level(line)
+# class Snd_eval
+#  Snd_eval.count_level(line)
 #
 # class Snd_prompt
 #  initialize(level)
@@ -260,28 +260,29 @@
 # car(v), cadr(v), caddr(v), cdr(v)
 # warning(*args), die(*args), error(*args)
 # clm_message(*args), message(*args), debug(*args), debug_trace(*args)
-# 
-# Snd.add_sound_path(path)
-# Snd.open_from_path(fname)
-# Snd.find_from_path(fname)
-# Snd.fullname(fname)
-# Snd.load_path
-# Snd.message(*args)
-# Snd.display(*args)
-# Snd.warning(*args)
-# Snd.die(*args)
-# Snd.error(*args)
-# Snd.debug(*args)
-# Snd.debug_trace(*args)
-# Snd.sounds
-# Snd.regions
-# Snd.tracks
-# Snd.marks(snd, chn)
-# Snd.snd(snd)
-# Snd.chn(chn)
-# Snd.catch(tag, retval)
-# Snd.throw(tag, *rest)
-# Snd.raise(tag, *rest)
+#
+# class Snd
+#  Snd.add_sound_path(path)
+#  Snd.open_from_path(fname)
+#  Snd.find_from_path(fname)
+#  Snd.fullname(fname)
+#  Snd.load_path
+#  Snd.message(*args)
+#  Snd.display(*args)
+#  Snd.warning(*args)
+#  Snd.die(*args)
+#  Snd.error(*args)
+#  Snd.debug(*args)
+#  Snd.debug_trace(*args)
+#  Snd.sounds
+#  Snd.regions
+#  Snd.tracks
+#  Snd.marks(snd, chn)
+#  Snd.snd(snd)
+#  Snd.chn(chn)
+#  Snd.catch(tag, retval)
+#  Snd.throw(tag, *rest)
+#  Snd.raise(tag, *rest)
 #
 # snd_catch(tag, retval)
 # snd_throw(tag, *rest)
@@ -307,11 +308,6 @@
 #  fft_peak(snd, chn, scale)
 #  finfo(file)
 #  correlate(snd, chn, y0, y1)
-#
-#  open_buffer(file)
-#  close_buffer(snd)
-#  add_to_reopen_menu(snd)
-#  check_reopen_menu(file)
 #
 #  zoom_spectrum(snd, chn, y0, y1)
 #  zoom_fft(snd, chn, y0, y1)
@@ -550,9 +546,9 @@ def get_func_name(n = 1)
   end
 end
 
-def assert_type(condition, value, pos, msg)
+def assert_type(condition, obj, pos, msg)
   condition or raise(TypeError, format("%s: wrong type arg %d, %s, wanted %s",
-                                       get_func_name(2), pos, value.inspect, msg))
+                                       get_func_name(2), pos, obj.inspect, msg))
 end
 
 def identity(arg)
@@ -573,6 +569,9 @@ if provided? :snd
   alias preload_directory               add_directory_to_view_files_list
   alias preload_file                    add_file_to_view_files_list
   alias $previous_files_select_hook     $view_files_select_hook
+  alias recorder_in_format              recorder_in_data_format
+  alias recorder_out_format             recorder_out_data_format
+  alias recorder_out_type               recorder_out_header_type
 end
 
 # enum("foo", :bar, "FOO_BAR")
@@ -616,16 +615,14 @@ class Object
   alias old_Float Float
   alias Float new_Float
 
-  # snd_func(:cursor_size) <=> cursor_size
   def snd_func(name, *rest, &body)
     assert_type(func?(name), name, 0, "a string or a symbol")
-    self.send(name.to_s.intern, *rest, &body)
+    send(name.to_s, *rest, &body)
   end
   
-  # set_snd_func(:cursor_size, value) <=> set_cursor_size(value)
   def set_snd_func(name, val, *rest, &body)
     assert_type(func?(name), name, 0, "a string or a symbol")
-    self.send(format("set_%s", name.to_s).intern, val, *rest, &body)
+    send(format("set_%s", name.to_s), val, *rest, &body)
   end
 
 # snd_apropos(str_or_sym)
@@ -1044,7 +1041,7 @@ a: 2
       when Symbol, String
         if body and self.methods.member?(func.to_s)
           # map, each, ...
-          self.snd_func(func, *rest, &body)
+          self.send(func, *rest, &body)
         else
           receiver = self.compact.first
           if receiver and receiver.methods.member?(func.to_s)
@@ -1052,21 +1049,21 @@ a: 2
             case func.to_sym
             when :+, :-, :*
               res = receiver
-              self[1..-1].compact.map do |item| res = res.snd_func(func, *rest + [item]) end
+              self[1..-1].compact.map do |item| res = res.send(func, *rest + [item]) end
               res
             else
               len = rest.length + ((array?(receiver) and receiver.length) or 1)
               if receiver.method(func).arity.abs == len
                 # remove_file (String(WS) in ws.rb)
-                self.map do |item| snd_func(func, *rest + [item]) end
+                self.map do |item| send(func, *rest + [item]) end
               else
                 # length, max, min, ...
-                self.map do |item| item.snd_func(func, *rest) end
+                self.map do |item| item.send(func, *rest) end
               end
             end
           else
             # functions
-            self.map do |item| snd_func(func, *rest + [item]) end
+            self.map do |item| send(func, *rest + [item]) end
           end
         end
       end
@@ -2016,32 +2013,35 @@ One example is install_eval_hooks(file, retval, input, hook, &reset_cursor) in e
 # inf-snd.el calls this function each time a line was sent to the
 # emacs buffer.
 def run_emacs_eval_hook(line)
-  if $emacs_eval_hook.member?("(emacs)")
-    $emacs_eval_hook.call(line)
-  else
+  if $emacs_eval_hook.empty?
     # without emacs-eval-hook only single line eval
-    file = "(emacs)"
+    file = "(emacs-eval-hook)"
+    set_snd_input(:emacs)
     begin
       Snd.display(eval(line, TOPLEVEL_BINDING, file, 1).inspect)
     rescue Interrupt, ScriptError, StandardError
       Snd.display(verbose_message_string(true, "# ", file))
     end
+    set_snd_input(:snd)
+    nil
+  else
+    $emacs_eval_hook.call(line)
   end
 end
 
 class Snd_eval
   class << Snd_eval
-    Open_token = %w(class module def do while until if unless case begin for)
-    Close_token = %w(end)
+    Open_token = %w(class module def do { while until if unless case begin for)
+    Close_token = %w(end })
 
     def count_level(line)
       eval_level = 0
-      # skip strings which may contain reserved words
-      line.gsub(/["({]+.+["})]+/, "").split(/\b/).each do |s|
+      # skip strings and symbols which may contain reserved words
+      line.gsub(/(:\w+|".+")/, "").split(/\b/).each do |s|
         case s
-        when /\{/, /\(/, /\[/, *Open_token
+        when *Open_token
           eval_level += 1
-        when /\}/, /\)/, /\]/, *Close_token
+        when *Close_token
           eval_level -= 1
         end
       end
@@ -2109,7 +2109,10 @@ end
 
 # installs the emacs-eval-hook
 def start_emacs_eval(name = "(emacs)")
-  install_eval_hooks(name, nil, :emacs, $emacs_eval_hook)
+  install_eval_hooks(name, nil, :emacs, $emacs_eval_hook) do
+    $stdout.print(listener_prompt)
+    $stdout.flush
+  end
 end
 
 # installs the read-hook
@@ -2409,6 +2412,7 @@ class Snd
     if provided? :snd
       def add_sound_path(path)
         Snd_path.push(path)
+        add_directory_to_view_files_list(path)
       end
       
       def open_from_path(fname)
@@ -2603,10 +2607,16 @@ Snd_error_tags = [
   :no_such_sound,
   :gsl_error,
   :no_such_colormap,
-  :cant_close_file,
+  :cant_open_file,
   :cant_close_file,
   :cant_delete_file,
   :cant_update_file,
+  # snd-error.c
+  :snd_error,
+  # snd-run.c/xen.c
+  :wrong_number_of_args,
+  # snd-snd.c
+  :cannot_apply_controls,
   # sndlib2xen.h
   :no_such_channel,
   :no_such_file,
@@ -2616,15 +2626,11 @@ Snd_error_tags = [
   :bad_header,
   # xen.h
   :out_of_range,                # RangeError
-  :wrong_type_arg,              # TypeError
-  # xen.c
-  :wrong_number_of_args,        # ArgumentError would be correct
-  # snd-snd.c
-  :cannot_apply_controls]
+  :wrong_type_arg]              # TypeError
 
 def rb_error_to_mus_tag
   # to_s and string error-names intended here
-  # otherwise e.g. NameError goes to StandardError case!
+  # otherwise e.g. NameError goes to case StandardError!
   case $!.class.to_s
     # case 1
     # No_such_file: file->array /baddy/hiho No such file or directory
@@ -2633,7 +2639,7 @@ def rb_error_to_mus_tag
     # case 3 (mus_error)
     # mus_ycoeff__invalid_index_123__order___3?: Mus_error
   when "StandardError"
-    err = $!.message.downcase.split(/:/).map do |e| e.strip.chomp("\n>") end
+    err = $!.message.split(/\n/).first.downcase.split(/:/).map do |e| e.strip.chomp(">") end
     Snd_error_tags.detect do |tag| err.member?(tag.to_s) end or :standard_error
   when "RangeError"
     :out_of_range
@@ -3002,7 +3008,7 @@ $lisp_graph_hook.add_hook!(\"display-energy\", &method(:display_energy).to_proc)
     y_max = y_zoom_slider(snd, chn)
     if data and ls and rs
       vct_multiply!(data, data)
-      graph(data, "energy", ls / sr, rs / sr, 0.0, y_max * y_max, snd, chn, false)
+      graph(data, "energy", ls / sr, rs / sr, 0.0, y_max * y_max, snd, chn)
     end
   end
 
@@ -3104,111 +3110,6 @@ end")
     else
       report_in_minibuffer("correlate wants stereo input")
     end
-  end
-
-  # Buffers Menu
-  #
-  # patterned after the XEmacs Buffers menu
-  # see effects.rb for a much fancier example
-
-  $buffer_names = [] unless defined? $buffer_names
-  $buffer_menu = nil unless defined? $buffer_menu
-
-  add_help(:open_buffer,
-           "open_buffer(filename) adds a menu item that will select filename (use with $open_hook)
-$open_hook.add_hook!(\"buffers\") do |file|
-  open_buffer(file)
-end")
-  def open_buffer(file)
-    $buffer_menu ||= add_to_main_menu("Buffers", lambda do | | end)
-    add_to_menu($buffer_menu, file, lambda do | | select_sound(find_sound(file)) end)
-    $buffer_names.push(file)
-    if provided? "snd-xm.rb"
-      if provided? :xm
-        set_label_sensitive(menu_widgets[0], "Buffers", true)
-      else
-        set_sensitive(main_menu($buffer_menu), true)
-      end
-    end
-    false
-  end
-
-  add_help(:close_buffer,
-           "close_buffer(snd) removes the menu item associated with snd (use with $close_hook)
-$close_hook.add_hook!(\"buffers\") do |snd|
-  close_buffer(snd)
-end")
-  def close_buffer(snd)
-    remove_from_menu($buffer_menu, file_name(snd))
-    $buffer_names.delete(file_name(snd))
-    if provided? "snd-xm.rb" and $buffer_menu
-      if provided? :xm
-        set_label_sensitive(menu_widgets[0], "Buffers", !$buffer_names.empty?)
-      else
-        set_sensitive(main_menu($buffer_menu), !$buffer_names.empty?)
-      end
-    end
-  end
-
-  # Reopen Menu
-  #
-  # a similar idea, here presenting the last-closed sounds
-  # this can be used in conjunction with remember-sound-state in extensions.scm
-
-  $reopen_names = [] unless defined? $reopen_names
-  $reopen_menu = nil unless defined? $reopen_menu
-
-  add_help(:add_to_reopen_menu,
-           "add_to_reopen_menu(snd) adds snd to the Reopen menu (use with $close_hook)
-$close_hook.add_hook!(\"reopen\") do |snd|
-  add_to_reopen_menu(snd)
-end")
-  def add_to_reopen_menu(snd)
-    $reopen_menu ||= add_to_main_menu("Reopen", lambda do | | end)
-    brief_name = short_file_name(snd)
-    long_name = file_name(snd)
-    unless($reopen_names.member?(brief_name))
-      add_to_menu($reopen_menu, brief_name,
-                  lambda do | |
-                    remove_from_menu($reopen_menu, brief_name)
-                    if File.exists?(long_name)
-                      open_sound(long_name)
-                    end
-                  end, 0)
-      $reopen_names.push(brief_name)
-      if $reopen_names.length > 8
-        remove_from_menu($reopen_menu, $reopen_names.shift)
-      end
-      if provided? "snd-xm.rb"
-        if provided? :xm
-          set_label_sensitive(menu_widgets[0], "Reopen", true)
-        else
-          set_sensitive(main_menu($reopen_menu), true)
-        end
-      end
-    end
-  end
-
-  add_help(:check_reopen_menu,
-           "check_reopen_menu(filename) \
-removes filename from the Reopen menu list (use with $open_hook)
-$open_hook.add_hook!(\"reopen\") do |file|
-  check_reopen_menu(file)
-end")
-  def check_reopen_menu(file)
-    brief_name = File.basename(file)
-    if $reopen_names.member?(brief_name)
-      remove_from_menu($reopen_menu, brief_name)
-      $reopen_names.delete(brief_name)
-    end
-    if provided? "snd-xm.rb" and $reopen_menu
-      if provided? :xm
-        set_label_sensitive(menu_widgets[0], "Reopen", !$reopen_names.empty?)
-      else
-        set_sensitive(main_menu($reopen_menu), !$reopen_names.empty?)
-      end
-    end
-    false
   end
 
   # set transform-size based on current time domain window size

@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Sat Jan 03 17:30:23 CET 2004
-# Last: Fri Aug 12 18:07:53 CEST 2005
+# Changed: Sun Nov 06 04:20:47 CET 2005
 
 # Commentary:
 # 
@@ -131,6 +131,12 @@
 #  mono2stereo(new_name, snd1, chn1, snd2, chn2)
 #  mono_files2stereo(new_name, chan1_name, chan2_name)
 #  stereo2mono(orig_snd, chan1_name, chan2_name)
+#
+#  focus_follow_mouse()
+#  prefs_activate_initial_bounds(beg, dur, full)
+#  prefs_deactivate_initial_bounds
+#  with_reopen_menu
+#  with_buffers_menu
 
 # Comments are mostly taken from extensions.scm.
 
@@ -352,7 +358,7 @@ writes sound data as (multichannel) file (for external program)")
       save_sound_as(data.first, selected_sound, type, format, :edit_position, edpos)
       data
     else
-      snd_error("re-implemented sound-to-temp doesn't handle sync bit correctly yet.")
+      Snd.raise(:snd_error, "re-implemented sound-to-temp doesn't handle sync bit correctly yet.")
     end
   end
 
@@ -381,7 +387,7 @@ writes sound data as mono files (for external program)")
         outname
       end
     else
-      snd_error("re-implemented sound-to-temps doesn't handle sync bit correctly yet.")
+      Snd.raise(:snd_error, "re-implemented sound-to-temps doesn't handle sync bit correctly yet.")
     end
   end
 
@@ -991,14 +997,14 @@ sets 'key-val' pair in the given sound's property list and returns 'val'.")
       if file_write_date(snd_name) == sound_property(:current_file_time, snd)
         @sound_funcs.each do |prop|
           if (val = sound_property(prop, snd))
-            set_snd_func(prop, val, snd)
+            Kernel.set_snd_func(prop, val, snd)
           end
         end
         channels(snd).times do |chn|
           set_squelch_update(true, snd, chn)
           @channel_funcs.each do |prop|
             if (val = channel_property(prop, snd, chn))
-              set_snd_func(prop, val, snd, chn)
+              Kernel.set_snd_func(prop, val, snd, chn)
             end
           end
           set_squelch_update(false, snd, chn)
@@ -1338,7 +1344,7 @@ snd defaults to the currently selected sound.")
 
   bind_key(?x, 0, lambda do
              if selection?
-               prompt_in_minibuffer("selection eval:", method(:eval_over_selection).to_proc)
+               prompt_in_minibuffer("selection eval:", &method(:eval_over_selection).to_proc)
              else
                report_in_minibuffer("no selection")
              end
@@ -1355,54 +1361,52 @@ snd defaults to the currently selected sound.")
                            else
                              action_if_no.call(snd)
                            end
-                         end, snd, true)
+                         end,
+                         snd,
+                         true)
   end
 
   # check_for_unsaved_edits(check)
+
+  $checking_for_unsaved_edits = false # for prefs
+  
   add_help(:check_for_unsaved_edits,
-           "check_for_unsaved_edits([check=true]) \
--> sets up hooks to check for and ask about unsaved edits when a sound is closed.
-If 'check' is false, the hooks are removed.")
+           "check_for_unsaved_edits([check=true])  \
+sets up hooks to check for and ask about unsaved edits when a sound is closed.
+If CHECK is false, the hooks are removed.")
   def check_for_unsaved_edits(check = true)
     ignore_unsaved_edits_at_close_p = lambda do |snd, exiting|
       flag = true
       channels(snd).times do |chn|
-        Snd.display("check %s[%d] ", file_name(snd), chn)
         eds = edits(snd, chn)
-        Snd.display("%s edits ", eds.car)
         if eds.car > 0
-          yes_or_no?(format("%s has %d unsaved edit(s) in channel %d.  Close anyway?",
-                            short_file_name(snd), eds[0], chn),
-                     lambda do |snd|
-                       revert_sound(snd)
-                       exiting and exit(0)
-                     end,
-                     lambda do |snd| false end, snd)
-          Snd.display("return false ")
+          yes_or_no?(format("%s[%d] has unsaved edits.  Close anyway? ", short_file_name(snd), chn),
+                     lambda do |snd| revert_sound(snd); (exiting and exit(0)) end,
+                     lambda do |snd| false end,
+                     snd)
           flag = false
         end
       end
       flag
     end
-    ignore_unsaved_edits_at_exit_p = lambda do
-      Snd.sounds.each do |snd|
-        ignore_unsaved_edits_at_close_p.call(snd, true)
+    unsaved_edits_at_close_name = "unsaved-edits-at-close?"
+    unsaved_edits_at_exit_name = "unsaved-edits-at-exit?"
+    if $checking_for_unsaved_edits = check
+      unless $before_close_hook.member?(unsaved_edits_at_close_name)
+        $before_close_hook.add_hook!(unsaved_edits_at_close_name) do |snd|
+          (not ignore_unsaved_edits_at_close_p.call(snd, false))
+        end
       end
-    end
-    unsaved_edits_at_exit_p = lambda do !ignore_unsaved_edits_at_exit_p.call end
-    unsaved_edits_at_close_p = lambda do |snd|
-      ignore_unsaved_edits_at_close_p.call(snd, false)
-    end
-    if check
-      unless $before_close_hook.member?("unsaved-edits-at-close?")
-        $before_close_hook.add_hook!("unsaved-edits-at-close?", &unsaved_edits_at_close_p)
-      end
-      unless $before_exit_hook.member?("unsaved-edits-at-exit?")
-        $before_exit_hook.add_hook!("unsaved-edits-at-exit?", &unsaved_edits_at_exit_p)
+      unless $before_exit_hook.member?(unsaved_edits_at_exit_name)
+        $before_exit_hook.add_hook!(unsaved_edits_at_exit_name) do | |
+          Snd.sounds.map do |snd| ignore_unsaved_edits_at_close_p.call(snd, true) end.detect do |f|
+            f.kind_of?(FalseClass)
+          end
+        end
       end
     else
-      $before_close_hook.remove_hook!("unsaved-edits-at-close?")
-      $before_exit_hook.remove_hook!("unsaved-edits-at-exit?")
+      $before_close_hook.remove_hook!(unsaved_edits_at_close_name)
+      $before_exit_hook.remove_hook!(unsaved_edits_at_exit_name)
     end
   end
   
@@ -1434,12 +1438,12 @@ and if it is subsquently re-opened, restores that state")
       if array?(state = states[file_name(snd)]) and (not state.empty?)
         if file_write_date(file_name(snd)) == state[0]
           sound_funcs.zip(state[1]) do |f, val|
-            set_snd_func(f, val, snd)
+            Kernel.set_snd_func(f, val, snd)
           end
           channels(snd).times do |chn|
             set_squelch_update(true, snd, chn)
             channel_funcs.zip(state[2][chn]) do |f, val|
-              set_snd_func(f, val, snd, chn)
+              Kernel.set_snd_func(f, val, snd, chn)
             end
             set_squelch_update(false, snd, chn)
           end
@@ -1836,6 +1840,156 @@ applies contrast enhancement to the sound" )
     [chan1, chan2]
   end
   # stereo2mono(0, "hi1.snd", "hi2.snd")
+
+  # 
+  # === PREFERENCES-DIALOG ===
+  # 
+  # focus-follows-mouse
+
+  $focus_is_following_mouse = false # for prefs
+  
+  def focus_follows_mouse
+    unless $focus_is_following_mouse
+      $focus_is_following_mouse = true
+      hook_name ="prefs-focus-follows-play" 
+      $mouse_enter_graph_hook.add_hook!(hook_name) do |snd, chn|
+        if sound? snd
+          if wids = Snd.catch(:no_such_channel, false) do channel_widgets(snd, chn) end.car
+            focus_widget(wids.car)
+          end
+        end
+      end
+      $mouse_enter_listener_hook.add_hook!(hook_name) do |widget|
+        focus_widget(widget)
+      end
+      $mouse_enter_text_hook.add_hook!(hook_name) do |widget|
+        focus_widget(widget)
+      end
+    end
+  end
+
+  # initial bounds
+
+  $prefs_show_full_duration = false # for prefs
+  $prefs_initial_beg = 0.0
+  $prefs_initial_dur = 0.1
+  Prefs_initial_bounds_hook_name = "prefs-initial-bounds"
+
+  def prefs_activate_initial_bounds(beg, dur, full)
+    $prefs_initial_beg = beg
+    $prefs_initial_dur = dur
+    $prefs_show_full_duration = full
+    $initial_graph_hook.add_hook!(Prefs_initial_bounds_hook_name) do |snd, chn, dur|
+      [$prefs_initial_beg, $prefs_show_full_duration ? dur : [$prefs_initial_dur, dur].min]
+    end
+  end
+
+  def prefs_deactivate_initial_bounds
+    $prefs_initial_beg = 0.0
+    $prefs_initial_dur = 0.1
+    $prefs_show_full_duration = false
+    $initial_graph_hook.remove_hook!(Prefs_initial_bounds_hook_name)
+  end
+
+  # reopen menu
+
+  $including_reopen_menu = false # for prefs
+
+  def with_reopen_menu
+    unless $including_reopen_menu
+      menu = Reopen_menu.new("Reopen")
+      $including_reopen_menu = true
+      $close_hook.add_hook!("prefs-add-to-reopen-menu") do |snd| menu.add_to_reopen_menu(snd) end
+      $open_hook.add_hook!("prefs-check-reopen-menu") do |file| menu.check_reopen_menu(file) end
+    end
+  end
+
+  class Reopen_menu
+    def initialize(name)
+      @menu_name = name
+      @reopen_menu = add_to_main_menu(name, lambda do | | end)
+      @reopen_names = []
+      @reopen_max_length = 16
+      @reopen_empty = "empty"
+    end
+
+    def add_to_reopen_menu(snd)
+      brief_name = short_file_name(snd)
+      long_name = file_name(snd)
+      unless(@reopen_names.member?(brief_name))
+        if @reopen_names.empty?
+          remove_from_menu(@reopen_menu, @reopen_empty)
+        end
+        add_to_menu(@reopen_menu,
+                    brief_name,
+                    lambda do | |
+                      remove_from_menu(@reopen_menu, brief_name)
+                      if File.exists?(long_name) then open_sound(long_name) end
+                    end,
+                    0)
+        @reopen_names.push(brief_name)
+        if @reopen_names.length > @reopen_max_length
+          remove_from_menu(@reopen_menu, @reopen_names.shift)
+        end
+      end
+      false
+    end
+
+    def check_reopen_menu(file)
+      brief_name = File.basename(file)
+      if @reopen_names.member?(brief_name)
+        remove_from_menu(@reopen_menu, brief_name)
+        @reopen_names.delete(brief_name)
+      end
+      if @reopen_names.empty?
+        add_to_menu(@reopen_menu, @reopen_empty, lambda do | | end)
+      end
+      false
+    end
+  end
+
+  # buffers menu
+
+  $include_buffers_menu = false # for prefs
+
+  def with_buffers_menu
+    unless $include_buffers_menu
+      menu = Buffers_menu.new("Buffers")
+      $include_buffers_menu = true
+      $open_hook.add_hook!("prefs-open-buffer") do |file| menu.open_buffer(file) end
+      $close_hook.add_hook!("prefs-close-buffer") do |file| menu.close_buffer(file) end
+    end
+  end
+  
+  class Buffers_menu
+    def initialize(name)
+      @menu_name = name
+      @buffer_menu = add_to_main_menu(name, lambda do | | end)
+      @buffer_names = []
+      @buffer_empty = "empty"
+    end
+
+    def open_buffer(file)
+      if @buffer_names.empty?
+        remove_from_menu(@buffer_menu, @buffer_empty)
+      end
+      add_to_menu(@buffer_menu,
+                  file,
+                  lambda do | |
+                    if sound?(ind = find_sound(file)) then select_sound(ind) end
+                  end)
+      @buffer_names.push(file)
+      false
+    end
+
+    def close_buffer(snd)
+      remove_from_menu(@buffer_menu, file_name(snd))
+      @buffer_names.delete(file_name(snd))
+      if @buffer_names.empty?
+        add_to_menu(@buffer_menu, @buffer_empty, lambda do | | end)
+      end
+    end
+  end
 end
 
 include Extensions

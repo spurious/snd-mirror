@@ -507,6 +507,25 @@ char *xen_scheme_global_variable_to_ruby(const char *name)
   return(new_name);
 }
 
+/* looks for global variables and constants (functions too?) */
+bool xen_rb_defined_p(const char *name)
+{
+  char *var_name = scheme_to_ruby(name);
+  char buf[128];
+
+  if (var_name[0] == '$')
+    sprintf(buf, "defined? %s", var_name);
+  else sprintf(buf, "defined? $%s", var_name);
+
+  if (XEN_EVAL_C_STRING(buf) != Qnil)
+    return(true);
+  else
+    {
+      var_name[0] = toupper(var_name[0]);
+      return(rb_const_defined(rb_cObject, rb_intern(var_name)));
+    }
+}
+
 char *xen_version(void)
 {
   char *buf;

@@ -2,7 +2,7 @@
 
 # Translator: Michael Scholz <scholz-micha@gmx.de>
 # Created: Wed Mar 23 02:08:47 CET 2005
-# Last: Fri May 27 21:28:04 CEST 2005
+# Changed: Sat Sep 24 17:17:37 CEST 2005
 
 # Commentary:
 #
@@ -382,7 +382,7 @@ defines the current selection to lie between the marks given")
     m1sc = mark_home(m1)
     m2sc = mark_home(m2)
     if m1sc != m2sc
-      snd_error("define_selection_via_marks assumes the marks are in the same channel")
+      Snd.raise(:snd_error, "define_selection_via_marks assumes the marks are in the same channel")
     else
       beg = [mark_sample(m1), mark_sample(m2)].min
       fin = [mark_sample(m1), mark_sample(m2)].max
@@ -507,7 +507,6 @@ removes the key-value pair in the given mark's property list")
 =begin  
   $close_hook.add_hook!("remove-mark-properties") do |snd|
     $all_mark_properties.each do |id| (not mark?(id)) and remove_mark_properties(id) end
-    false
   end
 =end
 
