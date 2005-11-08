@@ -396,24 +396,20 @@ sync_info *selection_sync(void)
   return(si);
 }
 
-static int mix_selection(chan_info *cp, off_t beg, io_error_t *err)
+static int mix_selection(chan_info *cp, sync_info *si_out, off_t beg, io_error_t *err)
 {
   char *tempfile = NULL, *origin = NULL;
   int id = INVALID_MIX_ID;
   io_error_t io_err = IO_NO_ERROR;
-  if (!(editable_p(cp))) return(id);
   tempfile = snd_tempnam();
   io_err = save_selection(tempfile, MUS_NEXT, MUS_OUT_FORMAT, SND_SRATE(cp->sound), NULL, SAVE_ALL_CHANS);
   if (io_err == IO_NO_ERROR)
     {
-      sync_info *si_out;
-      si_out = sync_to_chan(cp);
       origin = mus_format("%s" PROC_OPEN OFF_TD, TO_PROC_NAME(S_mix_selection), beg);
       id = mix_file(beg, selection_len(), si_out->chans, si_out->cps, tempfile, 
 		    (si_out->chans > 1) ? MULTICHANNEL_DELETION : DELETE_ME, 
 		    origin, with_mix_tags(ss), 0);
       FREE(origin);
-      free_sync_info(si_out);	      
     }
   if (tempfile) FREE(tempfile);
   cp->edit_hook_checked = false;
@@ -426,38 +422,42 @@ void add_selection_or_region(int reg, chan_info *cp)
   /* in all cases, this has a local sound to report in (kbd, xmenu) */
   if (cp) 
     {
-      io_error_t io_err = IO_NO_ERROR;
-      bool got_selection;
-      got_selection = ((reg == 0) && (selection_is_active()));
-      if (got_selection)
-	mix_selection(cp, CURSOR(cp), &io_err);
-      else io_err = add_region(reg, cp);
-      if (io_err != IO_NO_ERROR)
-	report_in_minibuffer(cp->sound, "can't mix %s: %s",
-			     (got_selection) ? "selection" : "region",
-			     io_error_name(io_err));
+      if (editable_p(cp))
+	{
+	  io_error_t io_err = IO_NO_ERROR;
+	  bool got_selection;
+	  got_selection = ((reg == 0) && (selection_is_active()));
+	  if (got_selection)
+	    {
+	      sync_info *si_out;
+	      si_out = sync_to_chan(cp);
+	      mix_selection(cp, si_out, CURSOR(cp), &io_err);
+	      free_sync_info(si_out);
+	    }
+	  else io_err = add_region(reg, cp);
+	  if (io_err != IO_NO_ERROR)
+	    report_in_minibuffer(cp->sound, "can't mix %s: %s",
+				 (got_selection) ? "selection" : "region",
+				 io_error_name(io_err));
+	}
     }
   else snd_error_without_format("no channel to mix into?");
 }
 
-static io_error_t insert_selection(chan_info *cp, off_t beg)
+static io_error_t insert_selection(chan_info *cp, sync_info *si_out, off_t beg)
 {
   char *tempfile = NULL, *origin = NULL;
   int i, out_format = MUS_OUT_FORMAT;
   io_error_t io_err = IO_NO_ERROR;
-  if (!(editable_p(cp))) return(IO_EDIT_HOOK_CANCELLATION);
   if (mus_header_writable(MUS_NEXT, cp->sound->hdr->format))
     out_format = cp->sound->hdr->format;
   tempfile = snd_tempnam();
   io_err = save_selection(tempfile, MUS_NEXT, out_format, SND_SRATE(cp->sound), NULL, SAVE_ALL_CHANS);
   if (io_err == IO_NO_ERROR)
     {
-      sync_info *si_out, *si_in;
-      si_out = sync_to_chan(cp);
+      sync_info *si_in;
       si_in = selection_sync();
-      if (si_in == NULL) /* C-g just after save? */
-	free_sync_info(si_out);
-      else
+      if (si_in)
 	{
 	  if (si_in->chans > 1) 
 	    remember_temp(tempfile, si_in->chans);
@@ -477,15 +477,8 @@ static io_error_t insert_selection(chan_info *cp, off_t beg)
 	      FREE(origin);
 	    }
 	  free_sync_info(si_in);
-	  free_sync_info(si_out);
 	}
     }
-#if DEBUGGING
-  else 
-    {
-      ASSERT_IO_ERROR(io_err, "save_selection in insert_selection");
-    }
-#endif
   if (tempfile) FREE(tempfile);
   cp->edit_hook_checked = false;
   return(io_err);
@@ -499,7 +492,12 @@ void insert_selection_or_region(int reg, chan_info *cp)
       bool got_selection;
       got_selection = ((reg == 0) && (selection_is_active()));
       if (got_selection)
-	err = insert_selection(cp, CURSOR(cp));
+	{
+	  sync_info *si_out;
+	  si_out = sync_to_chan(cp);
+	  err = insert_selection(cp, si_out, CURSOR(cp));
+	  free_sync_info(si_out);
+	}
       else err = paste_region(reg, cp);
       if (err != IO_NO_ERROR)
 	report_in_minibuffer(cp->sound, "can't insert %s: %s",
@@ -915,12 +913,17 @@ static XEN g_insert_selection(XEN beg, XEN snd, XEN chn)
       chan_info *cp;
       off_t samp;
       io_error_t io_err = IO_NO_ERROR;
+      sync_info *si_out;
       ASSERT_CHANNEL(S_insert_selection, snd, chn, 2);
       XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(beg), beg, XEN_ARG_1, S_insert_selection, "a number");
       cp = get_cp(snd, chn, S_insert_selection);
-      if (!cp) return(XEN_FALSE);
+      if ((!cp) || (!(editable_p(cp)))) return(XEN_FALSE);
       samp = beg_to_sample(beg, S_insert_selection);
-      io_err = insert_selection(cp, samp);
+      if (XEN_NUMBER_P(chn))
+	si_out = make_simple_sync(cp, samp); /* ignore sync */
+      else si_out = sync_to_chan(cp);
+      io_err = insert_selection(cp, si_out, samp);
+      free_sync_info(si_out);
       ASSERT_IO_ERROR(io_err, "insert_selection in g_insert_selection");
       if (SERIOUS_IO_ERROR(io_err))
 	XEN_ERROR(MUS_MISC_ERROR,
@@ -940,12 +943,17 @@ static XEN g_mix_selection(XEN beg, XEN snd, XEN chn)
       off_t obeg;
       io_error_t io_err = IO_NO_ERROR;
       XEN res;
+      sync_info *si_out;
       ASSERT_CHANNEL(S_mix_selection, snd, chn, 2);
       XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(beg), beg, XEN_ARG_1, S_mix_selection, "a number");
       cp = get_cp(snd, chn, S_mix_selection);
-      if (!cp) return(XEN_FALSE);
+      if ((!cp) || (!(editable_p(cp)))) return(XEN_FALSE);
       obeg = beg_to_sample(beg, S_mix_selection);
-      res = C_TO_XEN_INT(mix_selection(cp, obeg, &io_err));
+      if (XEN_NUMBER_P(chn))
+	si_out = make_simple_sync(cp, obeg); /* ignore sync */
+      else si_out = sync_to_chan(cp);
+      res = C_TO_XEN_INT(mix_selection(cp, si_out, obeg, &io_err));
+      free_sync_info(si_out);
       if (SERIOUS_IO_ERROR(io_err))
 	XEN_ERROR(MUS_MISC_ERROR,
 		  XEN_LIST_2(C_TO_XEN_STRING(S_mix_selection),

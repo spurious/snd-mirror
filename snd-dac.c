@@ -665,6 +665,15 @@ static void stop_playing_sound_with_toggle(snd_info *sp, dac_toggle_t toggle, wi
   /* this needs to scan all current play_list members and remove any that are referring
    * to sp, even indirectly (as through the current selection)
    */
+
+  /* if reason = PLAY_STOP_CALLED, PLAY_C_T, or PLAY_C_G, we need to slam the output volumes to 0.0 (so the
+   *    draining output is not played), then once we're sure output has stopped, put them back where they were.
+   *    But, this action is sound-driver (OS) specific -- perhaps just hit MUS_AUDIO_AMP and hope?
+   *    How to tell that on-card buffers are finally empty?  Wait 1 or 2 seconds?
+   *
+   * an added annoyance -- to get current amps, we have to make separate read call for each chan!
+   */
+
   if ((sp) && (play_list))
     {
       int i;
@@ -2380,8 +2389,6 @@ and waiting for the play to complete before returning.  'start' can also be a fi
 
   return(g_play_1(samp_n, snd_n, chn_n, false, TO_C_BOOLEAN_OR_FALSE(syncd), end_n, edpos, S_play_and_wait, 6, stop_proc, out_chan));
 }
-
-/* TODO: make sure stop-playing actually stops the dac at all levels */
 
 static XEN g_stop_playing(XEN snd_n)
 {

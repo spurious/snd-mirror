@@ -1062,7 +1062,7 @@ void syncb(snd_info *sp, int on)
   if (!(IS_PLAYER(sp)))
     {
       set_sync_color(sp);
-      XmToggleButtonSetState(SYNC_BUTTON(sp), (Boolean)on, false);
+      XmToggleButtonSetState(SYNC_BUTTON(sp), (on != 0), false);
     }
 }
 
@@ -1082,10 +1082,10 @@ static void sync_button_callback(Widget w, XtPointer context, XtPointer info)
       else sp->sync = 2;
     else sp->sync = 1;
   else sp->sync = 0;
+  set_sync_color(sp);
   if (sp->sync != 0) 
     {
       chan_info *cp;
-      set_sync_color(sp);
       cp = sp->lacp;
       if (cp == NULL) cp = any_selected_channel(sp);
       goto_graph(cp);

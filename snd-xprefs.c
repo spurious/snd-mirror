@@ -5,11 +5,26 @@
  */
 
 /* TODO: preset packages: dlp, km: check out gui.scm et al, keybinding sets
+           should we actually load these packages and reflect all settings? -- no easy way to "unload" them.
    TODO: remember state for subsequent load (extensions.scm) (remember-sound-state) ;also needs turn-off code
-   TODO: various additional key bindings? move-one-pixel zoom-one-pixel [how to specify fancy keys?]
-   TODO: audio mixer settings? -> volume in some mode (snd6.scm has OSS version) -- also need instant off code
    PERHAPS: g|xprefs split -> snd-prefs (can't decide how far to carry this)
    SOMEDAY: completions and more verbose error msgs (and help in a few cases like "new-effects.scm")
+
+   can't decide:
+       icon boxes (dlp new-icons etc)
+       C-x b (examp.scm)
+       nb.scm
+       oscope.scm
+       zync (snd-motif)
+       add-mark-pane (snd-motif)
+       sound file extensions (text + some display of current set)
+       various additional key bindings? move-one-pixel zoom-one-pixel - how to specify fancy keys?
+       option to always sync chans locally if multichannel
+
+   abandoned:
+       audio mixer settings? -> volume in some mode (snd6.scm has OSS version)
+           "startup dac volume" -- but this will be confusing since we don't notice mute settings etc
+       clm instruments? -- surely user should learn about the listener...
 */
 
 
@@ -121,14 +136,14 @@ static void handle_radio_button(prefs_info *prf, const char *value)
   int which = -1;
   w = find_radio_button(prf->toggle, value, &which);
   if (w)
-    XmToggleButtonSetState(w, XmSET, false);
+    XmToggleButtonSetState(w, true, false);
   else fprintf(stderr, "can't find %s\n", value);
   if ((prf->radio_button) &&
       (XmIsToggleButton(prf->radio_button)) &&
       (w != prf->radio_button))
     {
       /* motif docs are incorrect -- the set above does not unset the currently set radio button */
-      XmToggleButtonSetState(prf->radio_button, XmUNSET, false);
+      XmToggleButtonSetState(prf->radio_button, false, false);
       prf->radio_button = w;
     }
 }
@@ -1668,8 +1683,6 @@ static void overwrite_toggle(prefs_info *prf)
 }
 
 /* ---------------- check-for-unsaved-edits ---------------- */
-
-/* TODO: ruby side of find check-for-unsaved-edits (extensions.rb) */
 
 static bool include_unsaved_edits = false;
 
@@ -5596,19 +5609,6 @@ widget_t start_preferences_dialog(void)
   }
 
   current_sep = make_inter_topic_separator(topics);
-
-#if 0    
-  /* -------- audio -------- */
-  {
-    Widget aud_box, aud_label;
-
-    aud_box = make_top_level_box(topics);
-    aud_label = make_top_level_label("audio options", aud_box);
-    
-  }
-
-  current_sep = make_inter_topic_separator(topics);
-#endif
 
   /* -------- transform -------- */
   {

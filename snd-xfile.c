@@ -20,6 +20,7 @@
  * PERHAPS: (alert_new_file): handle all directory update decisions through FAM (region/select/file/edits)
  * TODO: various file/directory lists: tie into fam/gamin -- add xen call?
  * TODO: what if running src, uses its check-event to open raw data -- where is control?
+ *          -> src is interrupted apparently and file open completes
  *       or similarly, stops at "ok", starts src, clicks ok?
  * TODO: edit-properties dialog (extension of edit-header)
  * PERHAPS: audio:settings for display, perhaps reset -- as opposed to using the recorder

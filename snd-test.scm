@@ -307,7 +307,7 @@
 ;(define rs (lambda (n) (< (my-random 1.0) n)))
 (define rs (lambda (n) #t))
 
-(define have-log-0 (or (string=? (version) "1.7.0") (string=? (version) "1.7.1")))
+(define have-log-0 (or (string=? (version) "1.7.0") (string=? (version) "1.7.1") (string=? (version) "1.7.2")))
 (define (log0) (if have-log-0 (log 0) 0.0))
 
 (if (not (defined? 'nan)) (define (nan) 0.0))
@@ -22640,6 +22640,40 @@ EDITS: 5
 	  (list (lambda () (ptree-channel (lambda (y) (* y 2)) 2000 100)) 1000 #f 'ptree2000)))
 	
 	(close-sound ind))
+
+      (let ((ind (open-sound "4.aiff"))
+	    (selind (open-sound "oboe.snd")))
+	(make-selection 100 500 selind 0)
+	(mix-selection 500 ind 2)
+	(if (not (= (edit-position ind 0) 0)) (snd-display ";mix-selection 0->2 0: ~A" (edit-position ind 0)))
+	(if (not (= (edit-position ind 1) 0)) (snd-display ";mix-selection 0->2 1: ~A" (edit-position ind 1)))
+	(if (not (= (edit-position ind 2) 1)) (snd-display ";mix-selection 0->2 2: ~A" (edit-position ind 2)))
+	(if (not (= (edit-position ind 3) 0)) (snd-display ";mix-selection 0->2 3: ~A" (edit-position ind 3)))
+	(revert-sound ind)
+	(set! (sync ind) 1234)
+	(mix-selection 500 ind 1)
+	(if (not (= (edit-position ind 0) 0)) (snd-display ";mix-selection 1->2 0: ~A" (edit-position ind 0)))
+	(if (not (= (edit-position ind 1) 1)) (snd-display ";mix-selection 1->2 1: ~A" (edit-position ind 1)))
+	(if (not (= (edit-position ind 2) 0)) (snd-display ";mix-selection 1->2 2: ~A" (edit-position ind 2)))
+	(if (not (= (edit-position ind 3) 0)) (snd-display ";mix-selection 1->2 3: ~A" (edit-position ind 3)))
+	(revert-sound ind)
+	(set! (sync ind) 0)
+	(insert-selection 500 ind 2)
+	(if (not (= (edit-position ind 0) 0)) (snd-display ";insert-selection 0->2 0: ~A" (edit-position ind 0)))
+	(if (not (= (edit-position ind 1) 0)) (snd-display ";insert-selection 0->2 1: ~A" (edit-position ind 1)))
+	(if (not (= (edit-position ind 2) 1)) (snd-display ";insert-selection 0->2 2: ~A" (edit-position ind 2)))
+	(if (not (= (edit-position ind 3) 0)) (snd-display ";insert-selection 0->2 3: ~A" (edit-position ind 3)))
+	(revert-sound ind)
+	(set! (sync ind) 1234)
+	(insert-selection 500 ind 1)
+	(if (not (= (edit-position ind 0) 0)) (snd-display ";insert-selection 1->2 0: ~A" (edit-position ind 0)))
+	(if (not (= (edit-position ind 1) 1)) (snd-display ";insert-selection 1->2 1: ~A" (edit-position ind 1)))
+	(if (not (= (edit-position ind 2) 0)) (snd-display ";insert-selection 1->2 2: ~A" (edit-position ind 2)))
+	(if (not (= (edit-position ind 3) 0)) (snd-display ";insert-selection 1->2 3: ~A" (edit-position ind 3)))
+	(revert-sound ind)
+	(set! (sync ind) 0)
+	(close-sound ind)
+	(close-sound selind))
       
       (run-hook after-test-hook 9)
       ))
@@ -54813,6 +54847,12 @@ EDITS: 1
     (system "mv memlog memlog.27")) ; save pre-error version
 ;;; regions exist here (etc) so it's not a cleaned-out state
 
+(defmacro simple-time (a) 
+  `(let ((start (get-internal-real-time))) 
+   ,a 
+   (/ (- (get-internal-real-time) start) 100.0)))
+
+
 (define (check-error-tag expected-tag thunk)
   (let ((tag
 	 (catch #t 
@@ -56801,6 +56841,29 @@ EDITS: 1
 
 	    (trace traced)
 	    (snd-trace (if #t (traced 12)))
+
+	    ;; these redefine several basic names ("tap"), so they're not in test 23
+	    (if all-args
+		(begin
+		  (set! (optimization) 6)
+		  (set! *clm-table-size* 512)
+		  (set! *clm-file-buffer-size* (* 1024 1024))
+		  (if (and (file-exists? "away.scm")
+			   (file-exists? "away.frb")
+			   have-log-0) ; 1.6.n dies at #o2247166 with an uncatchable fatal (exit) error!!!
+		      (begin
+			(let ((val (simple-time (load "away.scm"))))
+			  (snd-display ";away: ~A" val))
+			(for-each close-sound (sounds))
+			(if (file-exists? "a.snd") (delete-file "a.snd"))
+			(if (file-exists? "ar.snd") (delete-file "ar.snd"))))
+		  (if (file-exists? "colony5.scm")
+		      (begin
+			(let ((val (simple-time (load "colony5.scm"))))
+			  (snd-display ";colony 5: ~A" val))
+			(for-each close-sound (sounds))
+			(if (file-exists? "col5.snd") (delete-file "col5.snd"))
+			(if (file-exists? "reverb.snd") (delete-file "reverb.snd"))))))
 
 	    (run-hook after-test-hook 28)
 	    ))

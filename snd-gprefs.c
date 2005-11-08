@@ -5062,19 +5062,6 @@ widget_t start_preferences_dialog(void)
 
   current_sep = make_inter_topic_separator(topics);
 
-#if 0    
-  /* -------- audio -------- */
-  {
-    GtkWidget *aud_box, *aud_label;
-
-    aud_box = make_top_level_box(topics);
-    aud_label = make_top_level_label("audio options", aud_box);
-    
-  }
-
-  current_sep = make_inter_topic_separator(topics);
-#endif
-
   /* -------- transform -------- */
   {
     GtkWidget *fft_box, *fft_label;

@@ -9725,7 +9725,7 @@ Or, more useful perhaps, have C-c set the cursor at a particular sample:
 </pre></td></tr></table></td></tr>
 
 <tr><td></td><td>
-The key codes can usually be found in the X header file X11R6/include/X11/keysymdef.h
+The key codes can usually be found in the X header file X11R6/include/X11/keysymdef.h.
 The End key if #xff57, so we could bind it to cause the full sound to be displayed:
 <pre>
   (<em class=red>bind-key</em> #xff57 0 (lambda () "view full sound" (set! (<a class=quiet href="#xbounds">x-bounds</a>) (list 0.0 (/ (<a class=quiet href="#frames">frames</a>) (<a class=quiet href="#srate">srate</a>))))))
