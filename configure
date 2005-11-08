@@ -2904,6 +2904,10 @@ cat >>confdefs.h <<_ACEOF
 #define CONFIGURE_ARGS "$INVOKED_ARGS"
 _ACEOF
 
+cat >>confdefs.h <<_ACEOF
+#define SND_HOST "$host"
+_ACEOF
+
 
 #--------------------------------------------------------------------------------
 # configuration options

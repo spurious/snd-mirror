@@ -90,6 +90,7 @@
 #undef VERSION
 #undef CONFIGURE_PROG
 #undef CONFIGURE_ARGS
+#undef SND_HOST
 
 #undef MUS_LINUX
 #undef MUS_SGI

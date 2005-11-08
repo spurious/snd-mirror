@@ -388,7 +388,9 @@ char *version_info(void)
 	  "\n    Libc: ", gnu_get_libc_version(), ".", 
                           gnu_get_libc_release(),
 #endif
-	  "\n", 
+#ifdef SND_HOST
+	  "\n    host: ", SND_HOST,
+#endif
 #ifdef CONFIGURE_PROG
 	  "\n    configured via: ", CONFIGURE_PROG, " ", CONFIGURE_ARGS,
 	  "\n",
@@ -412,8 +414,8 @@ void about_snd_help(void)
 #endif
   info = version_info();
   main_snd_help("Snd is a sound editor.",
-	    info,
-	    "\nRecent changes include:\n\
+		info,
+		"\nRecent changes include:\n\
 \n\
 3-Nov:   ws.scm definstrument macro changed to support :notehook arg in with-sound, and *definstrument-hook* for CM.\n\
 27-Oct:  effects-utils.scm to make various added menus independent.\n\
@@ -2407,7 +2409,9 @@ static XEN g_snd_urls(void)
   int i;
   if (help_names)
     for (i = 0; i < HELP_NAMES_SIZE; i++)
-      lst = XEN_CONS(XEN_CONS(C_TO_XEN_STRING(help_names[i]), C_TO_XEN_STRING(help_urls[i])), lst);
+      lst = XEN_CONS(XEN_CONS(C_TO_XEN_STRING(help_names[i]), 
+			      C_TO_XEN_STRING(help_urls[i])), 
+		     lst);
   return(lst);
 }
 

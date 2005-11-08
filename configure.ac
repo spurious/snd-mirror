@@ -25,6 +25,7 @@ AC_SUBST(VERSION)
 
 AC_DEFINE_UNQUOTED(CONFIGURE_PROG, "$INVOKED_PROG")
 AC_DEFINE_UNQUOTED(CONFIGURE_ARGS, "$INVOKED_ARGS")
+AC_DEFINE_UNQUOTED(SND_HOST, "$host")
 
 #--------------------------------------------------------------------------------
 # configuration options
