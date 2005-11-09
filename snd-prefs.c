@@ -153,6 +153,120 @@ static void prefs_help(prefs_info *prf)
     }
 }
 
+static bool local_access(char *dir)
+{
+  int err;
+  char *temp;
+  temp = shorter_tempnam(dir, "snd_");
+  err = mus_file_create(temp);
+  if (err != -1)
+    {
+      snd_close(err, temp);
+      snd_remove(temp, IGNORE_CACHE);
+    }
+  FREE(temp);
+  return(err != -1);
+}
+
+static int header_to_data(int ht, int frm)
+{
+  /* nist -> short or int (lb)
+     aiff -> short or int (b)
+     aifc -> any (b)
+     next -> any (b)
+     wave -> any (l)
+  */
+  switch (ht)
+    {
+    case MUS_NEXT: case MUS_AIFC:
+      switch (frm)
+	{
+	case MUS_LSHORT: return(MUS_BSHORT); break;
+	case MUS_LINT: return(MUS_BINT); break;
+	case MUS_LFLOAT: return(MUS_BFLOAT); break;
+	case MUS_LDOUBLE: return(MUS_BDOUBLE); break;
+	}
+      break;
+    case MUS_AIFF:
+      switch (frm)
+	{
+	case MUS_LSHORT: return(MUS_BSHORT); break;
+	case MUS_LINT: return(MUS_BINT); break;
+	case MUS_LFLOAT: case MUS_LDOUBLE: case MUS_BFLOAT: case MUS_BDOUBLE: return(MUS_BINT); break;
+	}
+      break;
+    case MUS_NIST:
+      switch (frm)
+	{
+	case MUS_LFLOAT: case MUS_LDOUBLE: return(MUS_LINT); break;
+	case MUS_BFLOAT: case MUS_BDOUBLE: return(MUS_BINT); break;
+	}
+      break;
+    case MUS_RIFF:
+      switch (frm)
+	{
+	case MUS_BSHORT: return(MUS_LSHORT); break;
+	case MUS_BINT: return(MUS_LINT); break;
+	case MUS_BFLOAT: return(MUS_LFLOAT); break;
+	case MUS_BDOUBLE: return(MUS_LDOUBLE); break;
+	}
+      break;
+    }
+  return(frm);
+}
+
+static char *clm_file_name(void)
+{
+#if HAVE_SCHEME
+  if (XEN_DEFINED_P("*clm-file-name*"))
+    return(XEN_TO_C_STRING(XEN_NAME_AS_C_STRING_TO_VALUE("*clm-file-name*")));
+#endif
+#if HAVE_RUBY
+  if (XEN_DEFINED_P("clm-file-name"))
+    return(XEN_TO_C_STRING(XEN_NAME_AS_C_STRING_TO_VALUE("clm-file-name")));
+#endif
+  return(NULL);
+}
+
+static void set_clm_file_name(const char *str)
+{
+#if HAVE_SCHEME
+  if (XEN_DEFINED_P("*clm-file-name*"))
+    XEN_VARIABLE_SET(XEN_NAME_AS_C_STRING_TO_VARIABLE("*clm-file-name*"), C_TO_XEN_STRING(str));
+#endif
+#if HAVE_RUBY
+  if (XEN_DEFINED_P("clm-file-name"))
+    XEN_VARIABLE_SET("clm-file-name", C_TO_XEN_STRING(str));
+#endif
+}
+
+static int clm_table_size(void)
+{
+#if HAVE_SCHEME
+  if (XEN_DEFINED_P("*clm-table-size*"))
+    return(XEN_TO_C_INT(XEN_NAME_AS_C_STRING_TO_VALUE("*clm-table-size*")));
+#endif
+#if HAVE_RUBY
+  if (XEN_DEFINED_P("clm-table-size"))
+    return(XEN_TO_C_INT(XEN_NAME_AS_C_STRING_TO_VALUE("clm-table-size")));
+#endif
+  return(512);
+}
+
+static int clm_file_buffer_size(void)
+{
+#if HAVE_SCHEME
+  if (XEN_DEFINED_P("*clm-file-buffer-size*"))
+    return(XEN_TO_C_INT(XEN_NAME_AS_C_STRING_TO_VALUE("*clm-file-buffer-size*")));
+#endif
+#if HAVE_RUBY
+  if (XEN_DEFINED_P("clm-file-buffer-size"))
+    return(XEN_TO_C_INT(XEN_NAME_AS_C_STRING_TO_VALUE("clm-file-buffer-size")));
+#endif
+  return(65536);
+}
+
+
 /* ---------------- various extra help strings ---------------- */
 
 static void unsaved_edits_help(prefs_info *prf)
@@ -449,11 +563,23 @@ static void save_show_listener_1(prefs_info *prf, FILE *fd)
 
 /* ---------------- find functions ---------------- */
 
+static bool unsaved_edits(void)
+{
+  return((XEN_DEFINED_P("checking-for-unsaved-edits")) &&
+	 (XEN_TRUE_P(XEN_NAME_AS_C_STRING_TO_VALUE("checking-for-unsaved-edits"))));
+}
+
 static bool find_current_window_display(void)
 {
   /* there's no clean way to look for the functions on the hook lists, so I'll kludge up some variable... */
   return((XEN_DEFINED_P("current-window-display-is-running")) &&
 	 (XEN_TRUE_P(XEN_NAME_AS_C_STRING_TO_VALUE("current-window-display-is-running"))));
+}
+
+static bool focus_is_following_mouse(void)
+{
+  return((XEN_DEFINED_P("focus-is-following-mouse")) &&
+	 (XEN_TRUE_P(XEN_NAME_AS_C_STRING_TO_VALUE("focus-is-following-mouse"))));
 }
 
 static bool find_peak_envs(void)

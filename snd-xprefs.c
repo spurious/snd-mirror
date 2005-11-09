@@ -9,15 +9,13 @@
            dlp: load misc.scm
            ksm: load snd_conffile.scm?
    TODO: remember state for subsequent load (extensions.scm) (remember-sound-state) ;also needs turn-off code
-   PERHAPS: g|xprefs split -> snd-prefs (can't decide how far to carry this)
    SOMEDAY: completions and more verbose error msgs
 
    can't decide:
        icon boxes (dlp new-icons etc)
        C-x b (examp.scm)
        nb.scm
-       oscope.scm
-       zync (snd-motif)
+       oscope.scm -- would need menu trigger (currently just starts immediately)
        add-mark-pane (snd-motif)
        sound file extensions (text + some display of current set)
        various additional key bindings? move-one-pixel zoom-one-pixel - how to specify fancy keys?
@@ -1687,12 +1685,6 @@ static void overwrite_toggle(prefs_info *prf)
 
 static bool include_unsaved_edits = false;
 
-static bool unsaved_edits(void)
-{
-  return((XEN_DEFINED_P("checking-for-unsaved-edits")) &&
-	 (XEN_TRUE_P(XEN_NAME_AS_C_STRING_TO_VALUE("checking-for-unsaved-edits"))));
-}
-
 static void reflect_unsaved_edits(prefs_info *prf) 
 {
   include_unsaved_edits = unsaved_edits();
@@ -1732,12 +1724,6 @@ static void reflect_current_window_display(prefs_info *prf)
 /* ---------------- focus-follows-mouse ---------------- */
 
 static bool focus_follows_mouse = false;
-
-static bool focus_is_following_mouse(void)
-{
-  return((XEN_DEFINED_P("focus-is-following-mouse")) &&
-	 (XEN_TRUE_P(XEN_NAME_AS_C_STRING_TO_VALUE("focus-is-following-mouse"))));
-}
 
 static void reflect_focus_follows_mouse(prefs_info *prf) 
 {
@@ -2104,21 +2090,6 @@ static void reflect_temp_dir(prefs_info *prf)
   XmTextFieldSetString(prf->text, temp_dir(ss));
 }
 
-static bool local_access(char *dir)
-{
-  int err;
-  char *temp;
-  temp = shorter_tempnam(dir, "snd_");
-  err = mus_file_create(temp);
-  if (err != -1)
-    {
-      snd_close(err, temp);
-      snd_remove(temp, IGNORE_CACHE);
-    }
-  FREE(temp);
-  return(err != -1);
-}
-
 static void temp_dir_error_erase_func(XtPointer context, XtIntervalId *id)
 {
   prefs_info *prf = (prefs_info *)context;
@@ -2358,53 +2329,6 @@ static void reflect_output_type(prefs_info *prf)
 static void reflect_output_format(prefs_info *prf)
 {
   handle_radio_button(prf, data_format_to_string(default_output_data_format(ss)));
-}
-
-static int header_to_data(int ht, int frm)
-{
-  /* nist -> short or int (lb)
-     aiff -> short or int (b)
-     aifc -> any (b)
-     next -> any (b)
-     wave -> any (l)
-  */
-  switch (ht)
-    {
-    case MUS_NEXT: case MUS_AIFC:
-      switch (frm)
-	{
-	case MUS_LSHORT: return(MUS_BSHORT); break;
-	case MUS_LINT: return(MUS_BINT); break;
-	case MUS_LFLOAT: return(MUS_BFLOAT); break;
-	case MUS_LDOUBLE: return(MUS_BDOUBLE); break;
-	}
-      break;
-    case MUS_AIFF:
-      switch (frm)
-	{
-	case MUS_LSHORT: return(MUS_BSHORT); break;
-	case MUS_LINT: return(MUS_BINT); break;
-	case MUS_LFLOAT: case MUS_LDOUBLE: case MUS_BFLOAT: case MUS_BDOUBLE: return(MUS_BINT); break;
-	}
-      break;
-    case MUS_NIST:
-      switch (frm)
-	{
-	case MUS_LFLOAT: case MUS_LDOUBLE: return(MUS_LINT); break;
-	case MUS_BFLOAT: case MUS_BDOUBLE: return(MUS_BINT); break;
-	}
-      break;
-    case MUS_RIFF:
-      switch (frm)
-	{
-	case MUS_BSHORT: return(MUS_LSHORT); break;
-	case MUS_BINT: return(MUS_LINT); break;
-	case MUS_BFLOAT: return(MUS_LFLOAT); break;
-	case MUS_BDOUBLE: return(MUS_LDOUBLE); break;
-	}
-      break;
-    }
-  return(frm);
 }
 
 static prefs_info *output_data_format_prf = NULL, *output_header_type_prf = NULL;
@@ -4098,31 +4022,6 @@ static void reflect_sinc_width(prefs_info *prf)
 
 /* ---------------- clm file name ---------------- */
 
-static char *clm_file_name(void)
-{
-#if HAVE_SCHEME
-  if (XEN_DEFINED_P("*clm-file-name*"))
-    return(XEN_TO_C_STRING(XEN_NAME_AS_C_STRING_TO_VALUE("*clm-file-name*")));
-#endif
-#if HAVE_RUBY
-  if (XEN_DEFINED_P("clm-file-name"))
-    return(XEN_TO_C_STRING(XEN_NAME_AS_C_STRING_TO_VALUE("clm-file-name")));
-#endif
-  return(NULL);
-}
-
-static void set_clm_file_name(const char *str)
-{
-#if HAVE_SCHEME
-  if (XEN_DEFINED_P("*clm-file-name*"))
-    XEN_VARIABLE_SET(XEN_NAME_AS_C_STRING_TO_VARIABLE("*clm-file-name*"), C_TO_XEN_STRING(str));
-#endif
-#if HAVE_RUBY
-  if (XEN_DEFINED_P("clm-file-name"))
-    XEN_VARIABLE_SET("clm-file-name", C_TO_XEN_STRING(str));
-#endif
-}
-
 static void clm_file_name_text(prefs_info *prf)
 {
   char *str;
@@ -4144,32 +4043,6 @@ static void reflect_clm_file_name(prefs_info *prf)
 }
 
 /* ---------------- clm sizes ---------------- */
-
-static int clm_table_size(void)
-{
-#if HAVE_SCHEME
-  if (XEN_DEFINED_P("*clm-table-size*"))
-    return(XEN_TO_C_INT(XEN_NAME_AS_C_STRING_TO_VALUE("*clm-table-size*")));
-#endif
-#if HAVE_RUBY
-  if (XEN_DEFINED_P("clm-table-size"))
-    return(XEN_TO_C_INT(XEN_NAME_AS_C_STRING_TO_VALUE("clm-table-size")));
-#endif
-  return(512);
-}
-
-static int clm_file_buffer_size(void)
-{
-#if HAVE_SCHEME
-  if (XEN_DEFINED_P("*clm-file-buffer-size*"))
-    return(XEN_TO_C_INT(XEN_NAME_AS_C_STRING_TO_VALUE("*clm-file-buffer-size*")));
-#endif
-#if HAVE_RUBY
-  if (XEN_DEFINED_P("clm-file-buffer-size"))
-    return(XEN_TO_C_INT(XEN_NAME_AS_C_STRING_TO_VALUE("clm-file-buffer-size")));
-#endif
-  return(65536);
-}
 
 static void reflect_clm_sizes(prefs_info *prf)
 {
