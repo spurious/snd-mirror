@@ -35,6 +35,7 @@ typedef struct prefs_info {
   void (*color_func)(struct prefs_info *prf, float r, float g, float b);
   void (*reflect_func)(struct prefs_info *prf);
   void (*save_func)(struct prefs_info *prf, FILE *fd);
+  void (*help_func)(struct prefs_info *prf);
 } prefs_info;
 
 
@@ -1467,17 +1468,7 @@ static void unsaved_edits_toggle(prefs_info *prf)
 
 static void save_unsaved_edits(prefs_info *prf, FILE *fd)
 {
-  if (include_unsaved_edits)
-    {
-#if HAVE_SCHEME
-      fprintf(fd, "(if (not (provided? 'snd-extensions.scm)) (load-from-path \"extensions.scm\"))\n");
-      fprintf(fd, "(check-for-unsaved-edits #t)\n");
-#endif
-#if HAVE_RUBY
-      fprintf(fd, "require \"extensions\"\n");
-      fprintf(fd, "check_for_unsaved_edits(true)\n");
-#endif
-    }
+  if (include_unsaved_edits) save_unsaved_edits_1(prf, fd);
 }
 
 /* ---------------- current-window-display ---------------- */
@@ -1486,31 +1477,12 @@ static bool include_current_window_display = false;
 
 static void save_current_window_display(prefs_info *prf, FILE *fd)
 {
-  if (include_current_window_display)
-    {
-#if HAVE_SCHEME
-      fprintf(fd, "(if (not (provided? 'snd-draw.scm)) (load-from-path \"draw.scm\"))\n");
-      fprintf(fd, "(make-current-window-display)\n");
-#endif
-#if HAVE_RUBY
-      fprintf(fd, "require \"draw\"\n");
-      fprintf(fd, "make_current_window_display\n");
-#endif
-    }
+  if (include_current_window_display) save_current_window_display_1(prf, fd);
 }
 
 static void current_window_display_toggle(prefs_info *prf)
 {
   include_current_window_display = (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prf->toggle)));
-}
-
-static bool find_current_window_display(void)
-{
-  /* there's no clean way to look for the functions on the hook lists, so I'll kludge up
-   *   some variable...
-   */
-  return((XEN_DEFINED_P("current-window-display-is-running")) &&
-	 (XEN_TRUE_P(XEN_NAME_AS_C_STRING_TO_VALUE("current-window-display-is-running"))));
 }
 
 static void reflect_current_window_display(prefs_info *prf) 
@@ -1541,17 +1513,7 @@ static void focus_follows_mouse_toggle(prefs_info *prf)
 
 static void save_focus_follows_mouse(prefs_info *prf, FILE *fd) 
 {
-  if (focus_follows_mouse)
-    {
-#if HAVE_SCHEME
-      fprintf(fd, "(if (not (provided? 'snd-extensions.scm)) (load-from-path \"extensions.scm\"))\n");
-      fprintf(fd, "(focus-follows-mouse)\n");
-#endif
-#if HAVE_RUBY
-      fprintf(fd, "require \"extensions\"\n");
-      fprintf(fd, "focus_follows_mouse\n");
-#endif
-    }
+  if (focus_follows_mouse) save_focus_follows_mouse_1(prf, fd);
 }
 
 /* ---------------- show-controls ---------------- */
@@ -1570,12 +1532,6 @@ static void controls_toggle(prefs_info *prf)
 
 static bool include_peak_envs = false;
 static char *include_peak_env_directory = NULL;
-
-static bool find_peak_envs(void)
-{
-  return((XEN_DEFINED_P("save-peak-env-info?")) &&
-	 XEN_TO_C_BOOLEAN(XEN_NAME_AS_C_STRING_TO_VALUE("save-peak-env-info?")));
-}
 
 static char *peak_env_directory(void)
 {
@@ -1613,19 +1569,7 @@ static void peak_envs_text(prefs_info *prf)
 
 static void save_peak_envs(prefs_info *prf, FILE *fd)
 {
-  if (include_peak_envs)
-    {
-#if HAVE_SCHEME
-      fprintf(fd, "(if (not (provided? 'snd-peak-env.scm)) (load-from-path \"peak-env.scm\"))\n");
-      if (include_peak_env_directory)
-	fprintf(fd, "(set! save-peak-env-info-directory \"%s\")\n", include_peak_env_directory);
-#endif
-#if HAVE_RUBY
-      fprintf(fd, "require \"env\"\n");
-      if (include_peak_env_directory)
- 	fprintf(fd, "$save_peak_env_info_directory = \"%s\"\n", include_peak_env_directory);
-#endif
-    }
+  if (include_peak_envs) save_peak_envs_1(prf, fd, include_peak_env_directory);
 }
 
 
@@ -2048,15 +1992,7 @@ static void view_files_directory_text(prefs_info *prf)
 
 static void save_view_files_directory(prefs_info *prf, FILE *fd)
 {
-  if (include_vf_directory)
-    {
-#if HAVE_SCHEME
-      fprintf(fd, "(%s \"%s\")\n", S_add_directory_to_view_files_list, include_vf_directory);
-#endif
-#if HAVE_RUBY
-      fprintf(fd, "%s(\"%s\")\n", TO_PROC_NAME(S_add_directory_to_view_files_list), include_vf_directory);
-#endif
-    }
+  if (include_vf_directory) save_view_files_directory_1(prf, fd, include_vf_directory);
 }
 
 
@@ -2340,7 +2276,7 @@ static void reflect_raw_data_format(prefs_info *prf)
   char *str;
   mus_header_raw_defaults(&srate, &chans, &format);
   str = raw_data_format_to_string(format);
-  sg_entry_set_text(GTK_ENTRY(prf->text), str);
+  sg_entry_set_text(GTK_ENTRY(GTK_BIN(prf->text)->child), str);
   FREE(str);
 }
 
@@ -2350,7 +2286,7 @@ static char **raw_data_format_choices = NULL;
 static void raw_data_format_from_text(prefs_info *prf)
 {
   char *str;
-  str = (char *)gtk_entry_get_text(GTK_ENTRY(prf->text));
+  str = (char *)gtk_entry_get_text(GTK_ENTRY(GTK_BIN(prf->text)->child));
   if (str)
     {
       int i, srate = 0, chans = 0, format = 0;
@@ -2372,30 +2308,12 @@ static bool include_context_sensitive_popup = false;
 
 static void save_context_sensitive_popup(prefs_info *prf, FILE *fd)
 {
-  if (include_context_sensitive_popup)
-    {
-#if HAVE_SCHEME
-      fprintf(fd, "(if (provided? 'snd-motif)\n    (if (not (provided? 'snd-popup.scm))\n        (load-from-path \"popup.scm\"))\n    (if (not (provided? 'snd-gtk-popup.scm))\n	(load-from-path \"gtk-popup.scm\")))\n");
-#endif
-#if HAVE_RUBY
-      fprintf(fd, "require \"popup\"\n");
-#endif
-    }
+  if (include_context_sensitive_popup) save_context_sensitive_popup_1(prf, fd);
 }
 
 static void context_sensitive_popup_toggle(prefs_info *prf)
 {
   include_context_sensitive_popup = (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prf->toggle)));
-}
-
-static bool find_context_sensitive_popup(void)
-{
-#if HAVE_SCHEME
-  return(XEN_DEFINED_P("edhist-help-edits")); /* defined in both cases */
-#endif
-#if HAVE_RUBY
-  return(XEN_DEFINED_P("Snd_popup_menu"));
-#endif
 }
 
 static void reflect_context_sensitive_popup(prefs_info *prf) 
@@ -2409,30 +2327,12 @@ static bool include_effects_menu = false;
 
 static void save_effects_menu(prefs_info *prf, FILE *fd)
 {
-  if (include_effects_menu)
-    {
-#if HAVE_SCHEME
-      fprintf(fd, "(if (provided? 'snd-motif)\n    (if (not (provided? 'snd-new-effects.scm))\n        (load-from-path \"new-effects.scm\"))\n    (if (not (provided? 'snd-gtk-effects.scm))\n	(load-from-path \"gtk-effects.scm\")))\n");
-#endif
-#if HAVE_RUBY
-      fprintf(fd, "require \"effects\"\n");
-#endif
-    }
+  if (include_effects_menu) save_effects_menu_1(prf, fd);
 }
 
 static void effects_menu_toggle(prefs_info *prf)
 {
   include_effects_menu = (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prf->toggle)));
-}
-
-static bool find_effects_menu(void)
-{
-#if HAVE_SCHEME
-  return(XEN_DEFINED_P("effects-menu"));
-#endif
-#if HAVE_RUBY
-  return(XEN_DEFINED_P("Effects"));
-#endif
 }
 
 static void reflect_effects_menu(prefs_info *prf) 
@@ -2456,11 +2356,6 @@ static void edit_menu_toggle(prefs_info *prf)
   include_edit_menu = (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prf->toggle)));
 }
 
-static bool find_edit_menu(void)
-{
-  return(XEN_DEFINED_P("make-stereofile")); /* a kludge... currently this is only defined in edit-menu.scm */
-}
-
 static void reflect_edit_menu(prefs_info *prf) 
 {
   set_toggle_button(prf->toggle, find_edit_menu(), false, (void *)prf);
@@ -2479,11 +2374,6 @@ static void save_marks_menu(prefs_info *prf, FILE *fd)
 static void marks_menu_toggle(prefs_info *prf)
 {
   include_marks_menu = (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prf->toggle)));
-}
-
-static bool find_marks_menu(void)
-{
-  return(XEN_DEFINED_P("marks-menu"));
 }
 
 static void reflect_marks_menu(prefs_info *prf) 
@@ -2506,11 +2396,6 @@ static void mix_menu_toggle(prefs_info *prf)
   include_mix_menu = (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prf->toggle)));
 }
 
-static bool find_mix_menu(void)
-{
-  return(XEN_DEFINED_P("mix-menu"));
-}
-
 static void reflect_mix_menu(prefs_info *prf) 
 {
   set_toggle_button(prf->toggle, find_mix_menu(), false, (void *)prf);
@@ -2523,28 +2408,12 @@ static bool include_reopen_menu = false;
 
 static void save_reopen_menu(prefs_info *prf, FILE *fd)
 {
-  if (include_reopen_menu)
-    {
-#if HAVE_SCHEME
-      fprintf(fd, "(if (provided? 'snd-extensions) (load-from-path \"extensions.scm\"))\n");
-      fprintf(fd, "(with-reopen-menu)\n");
-#endif
-#if HAVE_RUBY
-      fprintf(fd, "require \"extensions\"\n");
-      fprintf(fd, "with_reopen_menu\n");
-#endif
-    }
+  if (include_reopen_menu) save_reopen_menu_1(prf, fd);
 }
 
 static void reopen_menu_toggle(prefs_info *prf)
 {
   include_reopen_menu = (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prf->toggle)));
-}
-
-static bool find_reopen_menu(void)
-{
-  return((XEN_DEFINED_P("including-reopen-menu")) &&
-	 XEN_TO_C_BOOLEAN(XEN_NAME_AS_C_STRING_TO_VALUE("including-reopen-menu")));
 }
 
 static void reflect_reopen_menu(prefs_info *prf) 
@@ -2634,21 +2503,6 @@ static void dot_size_from_text(prefs_info *prf)
 
 /* ---------------- initial bounds ---------------- */
 
-static bool use_full_duration(void)
-{
-  return((XEN_DEFINED_P("prefs-show-full-duration")) &&
-	 (XEN_TRUE_P(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-show-full-duration"))));
-}
-
-static char *initial_bounds_to_string(void)
-{
-  if (XEN_DEFINED_P("prefs-initial-beg"))
-    return(mus_format("%.2f : %.2f", 
-		      XEN_TO_C_DOUBLE(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-initial-beg")),
-		      XEN_TO_C_DOUBLE(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-initial-dur"))));
-  return(copy_string("0.0 : 0.1"));
-}
-
 static void reflect_initial_bounds(prefs_info *prf)
 {
   /* text has beg : dur, toggle true if full dur */
@@ -2657,31 +2511,6 @@ static void reflect_initial_bounds(prefs_info *prf)
   sg_entry_set_text(GTK_ENTRY(prf->text), str);
   FREE(str);
   set_toggle_button(prf->toggle, use_full_duration(), false, (void *)prf);
-}
-
-static void save_initial_bounds(prefs_info *prf, FILE *fd)
-{
-  if ((use_full_duration()) ||
-      ((XEN_DEFINED_P("prefs-initial-beg")) &&
-       ((!(snd_feq(XEN_TO_C_DOUBLE(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-initial-beg")), 0.0))) ||
-	(!(snd_feq(XEN_TO_C_DOUBLE(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-initial-dur")), 0.1))))))
-    {
-#if HAVE_SCHEME
-      fprintf(fd, "(if (not (provided? 'snd-extensions.scm)) (load-from-path \"extensions.scm\"))\n");
-      fprintf(fd, "(prefs-activate-initial-bounds %.2f %.2f %s)\n",
-  	      XEN_TO_C_DOUBLE(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-initial-beg")),
-  	      XEN_TO_C_DOUBLE(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-initial-dur")),
- 	      (XEN_TRUE_P(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-show-full-duration"))) ? PROC_TRUE : PROC_FALSE);
-#endif
-#if HAVE_RUBY
-      fprintf(fd, "require \"extensions\"\n");
-      fprintf(fd, "prefs_activate_initial_bounds(%.2f, %.2f, %s)\n",
-  	      XEN_TO_C_DOUBLE(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-initial-beg")),
-  	      XEN_TO_C_DOUBLE(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-initial-dur")),
- 	      (XEN_TRUE_P(XEN_NAME_AS_C_STRING_TO_VALUE("prefs-show-full-duration"))) ? PROC_TRUE : PROC_FALSE);
-#endif
-      /* code repeated here to make emacs' paren-matcher happy */
-     }
 }
 
 static void initial_bounds_toggle(prefs_info *prf)
@@ -2883,12 +2712,6 @@ static void x_axis_style_from_text(prefs_info *prf)
 
 static bool include_smpte = false;
 
-static bool find_smpte(void)
-{
-  return((XEN_DEFINED_P("smpte-is-on")) &&
-	 (!(XEN_FALSE_P(XEN_EVAL_C_STRING("(smpte-is-on)"))))); /* "member" of hook-list -> a list if successful */
-}
-
 static void reflect_smpte(prefs_info *prf) 
 {
   set_toggle_button(prf->toggle, find_smpte(), false, (void *)prf);
@@ -2901,17 +2724,7 @@ static void smpte_toggle(prefs_info *prf)
 
 static void save_smpte(prefs_info *prf, FILE *fd)
 {
-  if (include_smpte)
-    {
-#if HAVE_SCHEME
-      fprintf(fd, "(if (provided? 'snd-motif)\n    (if (not (provided? 'snd-snd-motif.scm))\n        (load-from-path \"snd-motif.scm\"))\n    (if (not (provided? 'snd-snd-gtk.scm))\n        (load-from-path \"snd-gtk.scm\")))\n");
-      fprintf(fd, "(show-smpte-label #t)\n");
-#endif
-#if HAVE_RUBY
-      fprintf(fd, "require \"snd-xm\"\n");
-      fprintf(fd, "show_smpte_label(true)\n");
-#endif
-    }
+  if (include_smpte) save_smpte_1(prf, fd);
 }
 
 
@@ -3848,12 +3661,6 @@ static void hidden_controls_toggle(prefs_info *prf)
   include_hidden_controls = (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prf->toggle)));
 }
 
-static bool find_hidden_controls(void)
-{
-  return((XEN_DEFINED_P("hidden-controls-dialog")) &&
-	 (XEN_NOT_FALSE_P(XEN_NAME_AS_C_STRING_TO_VALUE("hidden-controls-dialog"))));
-}
-
 static void reflect_hidden_controls(prefs_info *prf) 
 {
   set_toggle_button(prf->toggle, find_hidden_controls(), false, (void *)prf);
@@ -4005,16 +3812,7 @@ static void show_listener_toggle(prefs_info *prf)
 
 static void save_show_listener(prefs_info *prf, FILE *fd)
 {
-  if (include_listener)
-    {
-#if HAVE_SCHEME
-      /* show-listener is saved in save-state, but not save-options */
-      fprintf(fd, "(show-listener)\n");
-#endif
-#if HAVE_RUBY
-      fprintf(fd, "show_listener\n");
-#endif
-    }
+  if (include_listener) save_show_listener_1(prf, fd);
 }
 
 
@@ -4114,12 +3912,6 @@ static void show_backtrace_toggle(prefs_info *prf)
 /* ---------------- debugging aids ---------------- */
 
 static bool include_debugging_aids = false;
-
-static bool find_debugging_aids(void)
-{
-  return((XEN_DEFINED_P("snd-break")) && 
-	 (XEN_DEFINED_P("untrace-stack")));
-}
 
 static void reflect_debugging_aids(prefs_info *prf) 
 {
@@ -4575,6 +4367,7 @@ widget_t start_preferences_dialog(void)
 				dpy_box,
 				unsaved_edits_toggle);
     remember_pref(prf, reflect_unsaved_edits, save_unsaved_edits);
+    prf->help_func = unsaved_edits_help;
 
     current_sep = make_inter_variable_separator(dpy_box);
     prf = prefs_row_with_toggle("include thumbnail graph in upper right corner", "make-current-window-display",
@@ -4582,6 +4375,7 @@ widget_t start_preferences_dialog(void)
 				dpy_box,
 				current_window_display_toggle);
     remember_pref(prf, reflect_current_window_display, save_current_window_display);
+    prf->help_func = current_window_help;
 
     current_sep = make_inter_variable_separator(dpy_box);
     prf = prefs_row_with_toggle("resize main window as sounds open and close", S_auto_resize,
@@ -4597,6 +4391,7 @@ widget_t start_preferences_dialog(void)
 				dpy_box,
 				focus_follows_mouse_toggle);
     remember_pref(prf, reflect_focus_follows_mouse, save_focus_follows_mouse);
+    prf->help_func = mouse_focus_help;
 
     current_sep = make_inter_variable_separator(dpy_box);
     prf = prefs_row_with_toggle("show the control panel upon opening a sound", S_show_controls,
@@ -4614,6 +4409,7 @@ widget_t start_preferences_dialog(void)
 					  dpy_box,
 					  peak_envs_toggle, peak_envs_text);
     remember_pref(prf, reflect_peak_envs, save_peak_envs);
+    prf->help_func = peak_env_help;
 
     current_sep = make_inter_variable_separator(dpy_box);
     str = mus_format("%d", max_regions(ss));
@@ -4759,13 +4555,15 @@ widget_t start_preferences_dialog(void)
 				dpy_box,
 				context_sensitive_popup_toggle);
     remember_pref(prf, reflect_context_sensitive_popup, save_context_sensitive_popup);
-    current_sep = make_inter_variable_separator(dpy_box);
+    prf->help_func = context_sensitive_popup_help;
 
+    current_sep = make_inter_variable_separator(dpy_box);
     prf = prefs_row_with_toggle("effects menu", "new-effects.scm",
 				find_effects_menu(),
 				dpy_box, 
 				effects_menu_toggle);
     remember_pref(prf, reflect_effects_menu, save_effects_menu);
+    prf->help_func = effects_menu_help;
 
 #if HAVE_SCHEME
     current_sep = make_inter_variable_separator(dpy_box);
@@ -4774,6 +4572,7 @@ widget_t start_preferences_dialog(void)
 				dpy_box, 
 				edit_menu_toggle);
     remember_pref(prf, reflect_edit_menu, save_edit_menu);
+    prf->help_func = edit_menu_help;
 
     current_sep = make_inter_variable_separator(dpy_box);
     prf = prefs_row_with_toggle("marks menu", "marks-menu.scm",
@@ -4781,6 +4580,7 @@ widget_t start_preferences_dialog(void)
 				dpy_box,
 				marks_menu_toggle);
     remember_pref(prf, reflect_marks_menu, save_marks_menu);
+    prf->help_func = marks_menu_help;
 
     current_sep = make_inter_variable_separator(dpy_box);
     prf = prefs_row_with_toggle("mix/track menu", "mix-menu.scm",
@@ -4788,6 +4588,7 @@ widget_t start_preferences_dialog(void)
 				dpy_box,
 				mix_menu_toggle);
     remember_pref(prf, reflect_mix_menu, save_mix_menu);
+    prf->help_func = mix_menu_help;
 #endif
 
     current_sep = make_inter_variable_separator(dpy_box);
@@ -4796,6 +4597,7 @@ widget_t start_preferences_dialog(void)
 				dpy_box,
 				reopen_menu_toggle);
     remember_pref(prf, reflect_reopen_menu, save_reopen_menu);
+    prf->help_func = reopen_menu_help;
 
     current_sep = make_inter_variable_separator(dpy_box);
 
@@ -4920,6 +4722,7 @@ widget_t start_preferences_dialog(void)
 					  initial_bounds_text);
     FREE(str);
     remember_pref(prf, reflect_initial_bounds, save_initial_bounds);
+    prf->help_func = initial_bounds_help;
 
     current_sep = make_inter_variable_separator(grf_box);
     prf = prefs_row_with_radio_box("how to layout multichannel graphs", S_channel_style,
@@ -5248,6 +5051,7 @@ widget_t start_preferences_dialog(void)
 				clm_box,
 				with_sound_toggle);
     remember_pref(prf, reflect_with_sound, save_with_sound);
+    prf->help_func = with_sound_help;
 
     current_sep = make_inter_variable_separator(clm_box);
     str = mus_format("%d", speed_control_tones(ss));
@@ -5266,6 +5070,7 @@ widget_t start_preferences_dialog(void)
 				clm_box,
 				hidden_controls_toggle);
     remember_pref(prf, reflect_hidden_controls, save_hidden_controls);
+    prf->help_func = hidden_controls_help;
 #endif
 
     current_sep = make_inter_variable_separator(clm_box);
@@ -5281,6 +5086,7 @@ widget_t start_preferences_dialog(void)
 			      clm_box,
 			      clm_file_name_text);
     remember_pref(prf, reflect_clm_file_name, NULL);
+    prf->help_func = clm_file_name_help;
 
     current_sep = make_inter_variable_separator(clm_box);
     prf = prefs_row_with_two_texts("sizes", "*clm-table-size*",
@@ -5289,6 +5095,7 @@ widget_t start_preferences_dialog(void)
 				   clm_sizes_text);
     reflect_clm_sizes(prf);
     remember_pref(prf, reflect_clm_sizes, NULL);
+    prf->help_func = clm_table_size_help;
   }
 
   current_sep = make_inter_topic_separator(topics);

@@ -18,79 +18,80 @@ To build Snd, get the sources from
 
 The configure program has several Snd-related arguments:
 
-   --with-motif          use Motif (the default)
-     --with-static-motif same, but load Motif statically (for RPM)
-     --with-motif-prefix set Motif location (will append lib and include)
+   --with-motif              use Motif (the default)
+     --with-static-motif     same, but load Motif statically (for RPM)
+     --with-motif-prefix     set Motif location (will append lib and include)
 
-   --with-gtk            use Gtk+
-     --with-builtin-gtkrc  include built-in gtkrc fallbacks (default=yes)
+   --with-gtk                use Gtk+
+     --with-builtin-gtkrc    include built-in gtkrc fallbacks (default=yes)
 
-   --with-no-gui         make Snd without any graphics support
+   --with-no-gui             make Snd without any graphics support
 
-   --with-alsa           use ALSA if possible (default is OSS in Linux)
-     --with-static-alsa  use ALSA statically loaded (for RPM generation)
+   --with-alsa               use ALSA if possible (default is OSS in Linux)
+     --with-static-alsa      use ALSA statically loaded (for RPM generation)
 
-   --with-esd            use the enlightened sound daemon, if possible
+   --with-esd                use the enlightened sound daemon, if possible
 
-   --with-jack           use the Jack library (can be used in conjunction
-                           with --with-alsa)
+   --with-jack               use the Jack library (can be used in conjunction
+                               with --with-alsa)
 
-   --with-doubles        use doubles throughout (default is floats)
+   --with-doubles            use doubles throughout (default is floats)
 
-   --with-float-samples  represent samples internally as floats (default: ints)
-   --with-sample-width=N use N bits of samples (default: 24). N = 32 or so is 
-                           not recommended because it does not leave you any 
-                           "head room" during mixes. N < 16 isn't supported.
+   --with-float-samples      represent samples internally as floats (default: ints)
+   --with-sample-width=N     use N bits of samples (default: 24). N = 32 or so is 
+                               not recommended because it does not leave you any 
+                               "head room" during mixes. N < 16 isn't supported.
 
-   --with-gl             include support for OpenGL (default: no)
-     --with-just-gl      same but omit Guile bindings in gl.c (default: no)
-                           The gl module is only useful if you want to write
-                           Scheme code to add your own OpenGL graphics to Snd.
-                           --with-just-gl will give you the GL spectrograms
-                           without any extras.
+   --with-gl                 include support for OpenGL (default: no)
+     --with-just-gl          same but omit Guile bindings in gl.c (default: no)
+                               The gl module is only useful if you want to write
+                               Scheme code to add your own OpenGL graphics to Snd.
+                               --with-just-gl will give you the GL spectrograms
+                               without any extras.
 
-   --with-ladspa         include LADSPA plugin support (default: yes in Linux)
+   --with-ladspa             include LADSPA plugin support (default: yes in Linux)
 
-   --with-static-xm      include the xm module (rather than loading it dynamically)
-			   this option affects xm.c for Motif, xg.c for Gtk.
-                           You'll need this (or need to make xm and load xm.so
-                           at runtime) if you want to use Dave Phillips'
-                           extensions described in the tutorial.
+   --with-static-xm          include the xm module (rather than loading it dynamically)
+			       this option affects xm.c for Motif, xg.c for Gtk.
+                               You'll need this (or need to make xm and load xm.so
+                               at runtime) if you want to use Dave Phillips'
+                               extensions described in the tutorial.
          
-   --with-static-gsl     try to load GSL statically
-                           GSL is loaded in any case, if it is available, and the
-			   ISO C99 complex trig support is not available.
-                           This affects only the Dolph-Chebyshev window.  FFT's 
-                           are currently handled by FFTW, if it is available, otherwise
-                           by built-in code.
+   --with-static-gsl         try to load GSL statically
+                               GSL is loaded in any case, if it is available, and the
+			       ISO C99 complex trig support is not available.
+                               This affects only the Dolph-Chebyshev window.  FFT's 
+                               are currently handled by FFTW, if it is available, otherwise
+                               by built-in code.
 
-   --with-snd-as-widget  make Snd a loadable widget, not a standalone program
+   --with-snd-as-widget      make Snd a loadable widget, not a standalone program
 
-   --with-ruby           use Ruby as the extension language
-     --with-ruby-prefix  set location of Ruby
+   --with-ruby               use Ruby as the extension language
+     --with-ruby-prefix      set location of Ruby
 
-   --with-guile          use Guile, not Ruby (the default); the path to guile-config
-                           can be set via GUILE_CONFIG_path (see examples below).
+   --with-guile              use Guile, not Ruby (the default); the path to guile-config
+                               can be set via GUILE_CONFIG_path (see examples below).
 
-			 To build Snd without any extension language, use
-			 --without-ruby --without-guile
-     --with-hobbit       include hobbit-style function arity checking
+			     To build Snd without any extension language, use
+			     --without-ruby --without-guile
 
-   --with-temp-dir       directory to use for temp files (default: ".")
-   --with-save-dir       directory to use for saved-state files (default: ".")
-   --with-doc-dir        directory to search for documentation
+     --with-hobbit           include hobbit-style function arity checking
 
-   --with-shared-sndlib  try to use libsndlib.so (default: no).  The path to
-                           sndlib-config can be specified via SNDLIB_CONFIG_path.
-			   Normally, sndlib is built into Snd at compile time.
-     --with-midi         include sndlib midi module (default: no)
+   --with-temp-dir           directory to use for temp files (default: ".")
+   --with-save-dir           directory to use for saved-state files (default: ".")
+   --with-doc-dir            directory to search for documentation
 
-   --disable-nls         the gettext (internationalization) support is on
-                           by default; this turns it off.
+   --with-shared-sndlib      try to use libsndlib.so (default: no).  The path to
+                               sndlib-config can be specified via SNDLIB_CONFIG_path.
+			       Normally, sndlib is built into Snd at compile time.
+     --with-midi             include sndlib midi module (default: no)
+
+   --disable-nls             the gettext (internationalization) support is on
+                               by default; this turns it off.
 
    --without-gsl, --without-fftw 
-                         these turn off the default inclusion of FFTW and the
-                         possible inclusion of GSL.
+                             these turn off the default inclusion of FFTW and the
+                               possible inclusion of GSL.
 
 If the configure/make process fails, please send me
 (bil@ccrma.stanford.edu) the files config.h, config.log, and makefile,
@@ -140,7 +141,7 @@ sets the transform size to 4096, and
 
   (scale-by 2.0)
 
-scales the current sound's volume by 2.0 -- the syntax is Scheme,
+scales the current sound's volume by 2.0.  The syntax is Scheme,
 a variant of Lisp; see the urls below for some Scheme tutorials.
 The details of Snd customization are discussed in extsnd.html
 and grfsnd.html.
@@ -279,7 +280,7 @@ Snd:
   ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-7.tar.gz
   http://ccrma.stanford.edu/software/snd/
   http://sourceforge.net/projects/snd/
-
+  http://www.notam02.no/arkiv/doc/snd-rt/
   http://linux.oreillynet.com/pub/a/linux/2001/10/05/snd_partone.html
   http://linux.oreillynet.com/pub/a/linux/2001/10/18/snd_parttwo.html
   http://www.saunalahti.fi/~mjkoskin/

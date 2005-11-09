@@ -2255,7 +2255,7 @@ and its value is returned."
 		value = XEN_VARIABLE_REF(lookup);
 	    }
 #endif
-	  help_text = XEN_OBJECT_HELP(value);         /* (object-property ...) */	      
+	  help_text = XEN_OBJECT_HELP(value);         /* (object-property ...) */
 	  if ((XEN_FALSE_P(help_text)) &&
 	      (XEN_PROCEDURE_P(value)))
 	    {
