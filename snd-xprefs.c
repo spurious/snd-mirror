@@ -8,18 +8,22 @@
            should we actually load these packages and reflect all settings? -- no easy way to "unload" them.
            dlp: load misc.scm
            ksm: load snd_conffile.scm?
-   TODO: remember state for subsequent load (extensions.scm) (remember-sound-state) ;also needs turn-off code
-   SOMEDAY: completions and more verbose error msgs
+   TODO: remember state for subsequent load (extensions.scm) (remember-sound-state) remember_sound_state()
+           reflect: remembering-sound-state (need ruby side)
+           but there's also remember_all_sound_properties -- perhaps toggle if ruby, or def file arg
+	     remember_all_sound_properties(props_file)
+           this could be implemented in scheme via the db stuff in nb.scm
+   SOMEDAY: completions and more verbose error msgs [and sscanf->string_to_* for better checks]
+   TODO: ruby help is broken
 
    can't decide:
-       icon boxes (dlp new-icons etc)
-       C-x b (examp.scm)
-       nb.scm
-       oscope.scm -- would need menu trigger (currently just starts immediately)
+       icon boxes (dlp new-icons etc) [scheme: new-icons.scm + new-buttons.scm] ("icon box" in extra menus?)
+         reflect: defined? add-useful-items
        add-mark-pane (snd-motif)
+         reflect: including-mark-pane (ruby gtk?)
        sound file extensions (text + some display of current set)
        various additional key bindings? move-one-pixel zoom-one-pixel - how to specify fancy keys?
-       option to always sync chans locally if multichannel
+       option to always sync chans locally if multichannel (sync channels?)
 
    abandoned:
        audio mixer settings? -> volume in some mode (snd6.scm has OSS version)

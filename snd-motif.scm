@@ -1134,6 +1134,8 @@ Reverb-feedback sets the scaler on the feedback.
 ;;;   these can be edited to move the mark, or deleted to delete the mark
 ;;;   can't use channel-property here because the widget lists are permanent (just unmanaged)
 
+(define including-mark-pane #f) ; for prefs
+
 (define (add-mark-pane)
 
   (define (find-mark-list snd chn dats)
@@ -1267,6 +1269,7 @@ Reverb-feedback sets the scaler on the feedback.
       (add-hook! (after-edit-hook snd i) (lambda () (if (Widget? (mark-list snd i)) (make-mark-list snd i))))
       (add-hook! (undo-hook snd i) (lambda () (if (Widget? (mark-list snd i)) (make-mark-list snd i))))))
 
+  (set! inclulding-mark-pane #t)
   (add-hook! mark-hook remark)
   (add-hook! close-hook unremark)
   (add-hook! after-open-hook open-remarks)

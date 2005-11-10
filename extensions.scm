@@ -413,6 +413,8 @@ If 'check' is #f, the hooks are removed."
 
 ;;; -------- remember-sound-state
 
+(define remembering-sound-state #f) ; for prefs
+
 (define (remember-sound-state)
   "(remember-sound-state) remembers the state of a sound when it is closed, and if it is subsquently re-opened, restores that state"
   (let ((states '())
@@ -497,6 +499,7 @@ If 'check' is #f, the hooks are removed."
 					 (format fd "~%~%;;; from remember-sound-state in extensions.scm~%")
 					 (format fd "(define -saved-remember-sound-states-states- '~A)~%" states)
 					 (close fd))))
+    (set! remembering-sound-state #t)
     'remembering!))
 
 

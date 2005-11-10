@@ -6857,6 +6857,9 @@ int mus_audio_open_output(int dev, int srate, int chans, int format, int size)
       device_desc.mBytesPerFrame = chans * 4;
       sizeof_format = sizeof(AudioStreamBasicDescription);
       err = AudioDeviceSetProperty(device, 0, 0, false, kAudioDevicePropertyStreamFormat, sizeof_format, &device_desc);
+
+      /* TODO: this error is bogus in some cases -- other audio systems just ignore it */
+
       if (err != noErr)
 	{
 	  /* it must have failed for some reason -- look for closest match available */

@@ -128,6 +128,7 @@ static void prefs_help(prefs_info *prf)
 	    {
 	      XEN obj;
 	      obj = XEN_OBJECT_HELP(sym);
+#if HAVE_SCHEME
 	      if (XEN_FALSE_P(obj))
 		{
 		  XEN lookup;
@@ -141,6 +142,7 @@ static void prefs_help(prefs_info *prf)
 			  if (XEN_FALSE_P(obj))
 			    obj = XEN_PROCEDURE_SOURCE_HELP(sym);
 			}}}
+#endif
 	      if (XEN_STRING_P(obj))
 		{
 		  prefs_helping = true;
