@@ -41,6 +41,7 @@
   <li><a href="#sndinitfile">The initialization file</a>
   <li><a href="#sndresources">Snd resources</a>
   <li><a href="#sndconfigurationswitches">Configuration choices</a>
+  <li><a href="#sndenvvars">Environment variables</a>
   </ul>
 <li><a href="#snddynamic">Runtime modules and external programs</a>
   <ul>
@@ -579,10 +580,23 @@ In Ruby, the equivalent is:
 <pre>
   if provided? :snd-gtk ...
 </pre>
-
-
 <br>
 
+<table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndenvvars">Environment variables</a></h3></td></tr></table>
+
+<p>There are several environment variables specific to Snd:
+</p>
+<table>
+<tr><td width=300>SND_PATH</td><td>Snd source load path list (a colon separated directory list)</td></tr>
+<tr><td>SND_INIT_FILE_ENVIRONMENT_NAME</td><td>init file name</td></tr>
+<tr><td>LADSPA_PATH</td><td>Ladspa modules directory</td></tr>
+<tr><td>SNDLIB_ALSA_PLAYBACK_DEVICE</td><td>name of playback device (Alsa only)</td></tr>
+<tr><td>SNDLIB_ALSA_CAPTURE_DEVICE</td><td>name of capture device (Alsa only)</td></tr>
+<tr><td>SNDLIB_ALSA_DEVICE</td><td>name of the playback and capture device (Alsa only)</td></tr>
+<tr><td>AUDIODEV</td><td>audio device name (Sun and related drivers)</td></tr>
+</table>
+
+<br>
 <table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2><A NAME="snddynamic">Runtime modules and external programs</a></h2></td></tr></table>
 
 <!-- INDEX emacssnd:Emacs and Snd -->

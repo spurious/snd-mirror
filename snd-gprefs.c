@@ -6,6 +6,7 @@ static GtkWidget *preferences_dialog = NULL;
 static bool prefs_helping = false, prefs_unsaved = false;
 static char *prefs_saved_filename = NULL;
 static char *prefs_time = NULL;
+static char *include_load_path = NULL;
 
 #define HELP_WAIT_TIME ((guint32)500)
 #define POWER_WAIT_TIME ((guint32)100)
@@ -1323,7 +1324,7 @@ static void preferences_save_callback(GtkWidget *w, gpointer context)
   clear_prefs_dialog_error();
   redirect_snd_error_to(post_prefs_dialog_error, NULL);
   redirect_snd_warning_to(post_prefs_dialog_error, NULL);
-  save_prefs(save_options_in_prefs());
+  save_prefs(save_options_in_prefs(), include_load_path);
   redirect_snd_error_to(NULL, NULL);
   redirect_snd_warning_to(NULL, NULL);
 }
@@ -1811,6 +1812,44 @@ static void cursor_color_func(prefs_info *prf, float r, float g, float b)
 {
   color_cursor(rgb_to_color(r, g, b));
   for_each_chan(update_graph);
+}
+
+
+/* ---------------- load path ---------------- */
+
+static void reflect_load_path(prefs_info *prf)
+{
+  char *str;
+  str = find_sources();
+  sg_entry_set_text(GTK_ENTRY(prf->text), str);
+  if (str) FREE(str);
+}
+
+static void load_path_text(prefs_info *prf)
+{
+  char *str;
+  str = (char *)gtk_entry_get_text(GTK_ENTRY(prf->text));
+  if ((!str) || (!(*str)))
+    return;
+  if (local_access(str))
+    {
+      if (include_load_path) FREE(include_load_path);
+      include_load_path = copy_string(str);
+#if HAVE_RUBY
+      {
+	extern VALUE rb_load_path;
+	rb_ary_unshift(rb_load_path, rb_str_new2(str));
+      }
+#endif
+#if HAVE_GUILE
+      {
+	char *buf;
+	buf = mus_format("(set! %%load-path (cons \"%s\" %%load-path))", str);
+	XEN_EVAL_C_STRING(buf);
+	FREE(buf);
+      }
+#endif
+    }
 }
 
 
@@ -4301,6 +4340,16 @@ widget_t start_preferences_dialog(void)
     current_sep = make_inter_variable_separator(dpy_box);
     file_label = make_inner_label("  file options", dpy_box);
 
+    str = find_sources();
+    prf = prefs_row_with_text("directory containing Snd's " LANG_NAME " files", "load path", 
+			      str,
+			      dpy_box,
+			      load_path_text);
+    remember_pref(prf, reflect_load_path, NULL);
+    prf->help_func = load_path_help;
+    if (str) FREE(str);
+
+    current_sep = make_inter_variable_separator(dpy_box);
     prf = prefs_row_with_toggle("display only sound files in various file lists", S_just_sounds,
 				just_sounds(ss), 
 				dpy_box,

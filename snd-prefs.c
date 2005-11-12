@@ -1,5 +1,12 @@
 /* this file included as text in snd-g|xprefs.c */
 
+#if HAVE_SCHEME
+  #define LANG_NAME "scheme"
+#endif
+#if HAVE_RUBY
+  #define LANG_NAME "ruby"
+#endif
+
 static int prefs_size = 0, prefs_top = 0;
 static prefs_info **prefs = NULL;
 
@@ -41,7 +48,7 @@ static void reflect_prefs(void)
     }
 }
 
-static void save_prefs(const char *filename)
+static void save_prefs(const char *filename, char *load_path_name)
 {
   int i;
   char *fullname;
@@ -51,6 +58,15 @@ static void save_prefs(const char *filename)
   fd = FOPEN(fullname, "a");
   if (fd)
     {
+      if (load_path_name)
+	{
+#if HAVE_GUILE
+	  fprintf(fd, "(set! %%load-path (cons \"%s\" %%load-path))\n", load_path_name);
+#endif
+#if HAVE_RUBY
+	  fprintf(fd, "$:.push(\"%s\")\n", load_path_name);
+#endif
+	}
       for (i = 0; i < prefs_top; i++)
 	{
 	  prefs_info *prf;
@@ -273,6 +289,19 @@ static int clm_file_buffer_size(void)
 
 
 /* ---------------- various extra help strings ---------------- */
+
+static void load_path_help(prefs_info *prf)
+{
+  snd_help("load paths",
+	   "Much of Snd's functionality is loaded as needed from the Scheme or Ruby \
+files found in the Snd tarball.  You can run Snd without \
+these files, but there's no reason to!  Just add the directory containing \
+them to the \"load-path\".  For example, if the Snd build directory was \"/home/bil/snd\", \
+add that string to the load paths given here.  Guile and Ruby search these \
+directories for any *.scm or *.rb files that they can't \
+find elsewhere.",
+	   WITH_WORD_WRAP);
+}
 
 static void unsaved_edits_help(prefs_info *prf)
 {
@@ -576,6 +605,36 @@ static void save_show_listener_1(prefs_info *prf, FILE *fd)
 
 
 /* ---------------- find functions ---------------- */
+
+static char *find_sources(void) /* returns full filename if found else null */
+{
+  XEN file;
+#if HAVE_GUILE
+  #define BASE_FILE "extensions.scm"
+  file = scm_sys_search_load_path(C_TO_XEN_STRING(BASE_FILE));
+#endif
+#if HAVE_RUBY
+  #define BASE_FILE "extensions.rb"
+  file = rb_find_file(C_TO_XEN_STRING(BASE_FILE));
+#endif  
+  if (XEN_STRING_P(file))
+    {
+      char *str;
+      int len, exts_len;
+#if HAVE_GUILE
+      str = copy_string(XEN_TO_C_STRING(file));
+#endif
+#if HAVE_RUBY
+      str = mus_expand_filename(XEN_TO_C_STRING(file));
+#endif
+      len = snd_strlen(str);
+      exts_len = strlen(BASE_FILE);
+      if (len > exts_len)
+	str[len - exts_len - 1] = '\0';
+      return(str);
+    }
+  return(NULL);
+}
 
 static bool unsaved_edits(void)
 {

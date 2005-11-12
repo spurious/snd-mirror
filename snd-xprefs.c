@@ -8,23 +8,14 @@
            should we actually load these packages and reflect all settings? -- no easy way to "unload" them.
            dlp: load misc.scm
            ksm: load snd_conffile.scm?
+
    TODO: remember state for subsequent load (extensions.scm) (remember-sound-state) remember_sound_state()
            reflect: remembering-sound-state (need ruby side)
            but there's also remember_all_sound_properties -- perhaps toggle if ruby, or def file arg
 	     remember_all_sound_properties(props_file)
            this could be implemented in scheme via the db stuff in nb.scm
+
    SOMEDAY: completions and more verbose error msgs [and sscanf->string_to_* for better checks]
-
-   TODO: how to make sure load path is ok?
-
-	   add a row (scrolled text field): Snd's scheme|ruby directories
-  	     if files not findable, add a warning (red) that this needs to be set + help
-	     else check local dir, then PATH?, then try locate
-
-	   this could also be a Help menu item that's displayed only if there's a problem
-
-	   help in help|prefs
-	   CVS collapse
 
    can't decide:
        emacs setup
@@ -48,6 +39,7 @@ static Widget preferences_dialog = NULL;
 static bool prefs_helping = false, prefs_unsaved = false;
 static char *prefs_saved_filename = NULL;
 static char *prefs_time = NULL;
+static char *include_load_path = NULL;
 
 #define MID_POSITION 40
 #define COLOR_POSITION 50
@@ -937,6 +929,16 @@ static prefs_info *prefs_row_with_text(const char *label, const char *varname, c
   return(prf);
 }
 
+static void red_text(prefs_info *prf)
+{
+  XtVaSetValues(prf->label, XmNforeground, ss->sgx->red, NULL);
+}
+
+static void black_text(prefs_info *prf)
+{
+  XtVaSetValues(prf->label, XmNforeground, ss->sgx->black, NULL);
+}
+
 
 /* ---------------- two texts in a row ---------------- */
 
@@ -1579,7 +1581,7 @@ static void preferences_save_callback(Widget w, XtPointer context, XtPointer inf
   clear_prefs_dialog_error();
   redirect_snd_error_to(post_prefs_dialog_error, NULL);
   redirect_snd_warning_to(post_prefs_dialog_error, NULL);
-  save_prefs(save_options_in_prefs());
+  save_prefs(save_options_in_prefs(), include_load_path);
   redirect_snd_error_to(NULL, NULL);
   redirect_snd_warning_to(NULL, NULL);
 }
@@ -2084,6 +2086,51 @@ static void cursor_color_func(prefs_info *prf, float r, float g, float b)
   color_cursor(tmp->pixel);
   for_each_chan(update_graph);
   FREE(tmp);
+}
+
+/* ---------------- load path ---------------- */
+
+static void reflect_load_path(prefs_info *prf)
+{
+  char *str;
+  str = find_sources();
+  XmTextFieldSetString(prf->text, str);
+  if (str) 
+    {
+      black_text(prf);
+      FREE(str);
+    }
+  else red_text(prf);
+}
+
+static void load_path_text(prefs_info *prf)
+{
+  char *str;
+  ASSERT_WIDGET_TYPE(XmIsTextField(prf->text), prf->text);
+  str = XmTextFieldGetString(prf->text);
+  if ((!str) || (!(*str)))
+    return;
+  if (local_access(str))
+    {
+      black_text(prf);
+      if (include_load_path) FREE(include_load_path);
+      include_load_path = copy_string(str);
+#if HAVE_RUBY
+      {
+	extern VALUE rb_load_path;
+	rb_ary_unshift(rb_load_path, rb_str_new2(str));
+      }
+#endif
+#if HAVE_GUILE
+      {
+	char *buf;
+	buf = mus_format("(set! %%load-path (cons \"%s\" %%load-path))", str);
+	XEN_EVAL_C_STRING(buf);
+	FREE(buf);
+      }
+#endif
+    }
+  if (str) XtFree(str);
 }
 
 
@@ -4869,9 +4916,21 @@ widget_t start_preferences_dialog(void)
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
     file_label = make_inner_label("  file options", dpy_box, current_sep);
 
+    str = find_sources();
+    prf = prefs_row_with_text("directory containing Snd's " LANG_NAME " files", "load path", 
+			      str,
+			      dpy_box, file_label,
+			      load_path_text);
+    remember_pref(prf, reflect_load_path, NULL);
+    prf->help_func = load_path_help;
+    if (str) 
+      FREE(str);
+    else red_text(prf);
+
+    current_sep = make_inter_variable_separator(dpy_box, prf->label);
     prf = prefs_row_with_toggle("display only sound files in various file lists", S_just_sounds,
 				just_sounds(ss), 
-				dpy_box, file_label, 
+				dpy_box, current_sep, 
 				just_sounds_toggle);
     remember_pref(prf, prefs_reflect_just_sounds, NULL);
 

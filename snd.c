@@ -121,7 +121,7 @@ static void initialize_load_path(void)
 	  extern VALUE rb_load_path;
 	  rb_ary_unshift(rb_load_path, rb_str_new2(dirnames[i]));
 #endif
-#if HAVE_SCHEME
+#if HAVE_GUILE
 	  char *buf;
 	  buf = mus_format("(set! %%load-path (cons \"%s\" %%load-path))", dirnames[i]);
 	  XEN_EVAL_C_STRING(buf);
