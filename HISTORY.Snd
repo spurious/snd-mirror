@@ -1,5 +1,7 @@
 Snd change log
 
+  12-Nov:    all dlp directory files moved to main directory (to simplify load-path handling).
+             SND_PATH environment variable (optional load path directory list).
   3-Nov:     ws.scm definstrument macro changed to support :notehook arg in with-sound and *definstrument-hook* for CM.
   27-Oct:    effects-utils.scm to make various added menus independent.
   12-Oct.    snd 7.16.

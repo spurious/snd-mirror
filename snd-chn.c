@@ -6392,7 +6392,7 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_beats_per_measure_reversed, g_set_beats
 
 static XEN g_show_axes(XEN snd, XEN chn)
 {
-  #define H_show_axes "(" S_show_axes "(snd #f) (chn #f)) \
+  #define H_show_axes "(" S_show_axes " (snd #f) (chn #f)) \
 If " S_show_all_axes ", display x and y axes; if " S_show_x_axis ", just one axis (the x axis) is displayed. \
 The other choices are " S_show_no_axes ", " S_show_all_axes_unlabelled ", and " S_show_x_axis_unlabelled "."
 

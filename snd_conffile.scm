@@ -1882,24 +1882,24 @@ Does not work.
 
 ;; Dave Phillips fft-menu.
 (if (not (provided? 'snd-fft-menu.scm))
-    (load-from-path "dlp/fft-menu.scm"))
+    (load-from-path "fft-menu.scm"))
 
 ;; Dave Phillips panic-menu
 (if (not (provided? 'snd-panic.scm))
-    (load-from-path "dlp/panic.scm"))
+    (load-from-path "panic.scm"))
 
 ;; Dave Phillips special-menu
 ;;(if (not (provided? 'snd-special-menu.scm))
-;;    (load-from-path "dlp/special-menu.scm"))
+;;    (load-from-path "special-menu.scm"))
 
 
-;; (load-from-path "dlp/plugins-menu.scm")
+;; (load-from-path "plugins-menu.scm")
 
 
 ;; All of Dave Phillips nice things.
 ;; Uncomment to try. (Most of it is already present)
 ;;(if (not (defined? 'change-selection-popup-color))
-;;  (load-from-path "dlp/misc.scm"))
+;;  (load-from-path "misc.scm"))
 
 
 (add-hook! after-save-as-hook

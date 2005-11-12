@@ -409,6 +409,7 @@ I normally work in the listener, leave the menus
 untouched, and use the mouse to scan
 through the current sound data.
 </p>
+
 <p>The rest of this document describes the user interface; extsnd.html
 presents the programming interface; grfsnd.html describes Snd's connection
 to various other programs and X; sndscm.html has brief descriptions of
@@ -418,6 +419,23 @@ but it is aimed more at the Common Lisp version of that code than at Snd;
 sndlib.html describes the underlying sound IO library; libxm.html
 describes the user-interface extension library.
 </p>
+
+<p>
+Some of Snd's Scheme or Ruby files depend
+on other such files.  If you run Snd in some directory other than its
+build directory, you need to tell it where those files are. In Scheme,
+the list of directories to search is called %load-path.  So, for example, if 
+you put all the sources in /home/bil/cl, add this line to your
+~/.snd_guile file:
+<pre>
+  (set! %load-path (cons "/home/bil/cl" %load-path))
+</pre>
+Or in Ruby (~/.snd_ruby):
+<pre>
+  $:.push("/home/bil/cl")
+</pre>
+</p>
+
 <p>
 Dave Phillips has written a 
 <a href="tutorial/1_intro_and_build_snd.html">tutorial</a> for Snd;

@@ -796,7 +796,7 @@ Reverb-feedback sets the scaler on the feedback.
 
 ;;; if you have a nice background pixmap, you can map it over all of Snd with:
 #!
-(load-from-path "dlp/new-backgrounds.scm")
+(load-from-path "new-backgrounds.scm")
 (define wd (make-pixmap (cadr (main-widgets)) wood))
 
 (define (paint-all widget)
@@ -1269,7 +1269,7 @@ Reverb-feedback sets the scaler on the feedback.
       (add-hook! (after-edit-hook snd i) (lambda () (if (Widget? (mark-list snd i)) (make-mark-list snd i))))
       (add-hook! (undo-hook snd i) (lambda () (if (Widget? (mark-list snd i)) (make-mark-list snd i))))))
 
-  (set! inclulding-mark-pane #t)
+  (set! including-mark-pane #t)
   (add-hook! mark-hook remark)
   (add-hook! close-hook unremark)
   (add-hook! after-open-hook open-remarks)

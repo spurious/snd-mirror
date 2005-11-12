@@ -998,7 +998,7 @@ void g_init_data(void)
 {
   #define H_select_sound_hook S_select_sound_hook " (snd): called whenever a sound is selected."
 
-  #define H_select_channel_hook S_select_channel_hook "(snd chn): called whenever a channel is selected. \
+  #define H_select_channel_hook S_select_channel_hook " (snd chn): called whenever a channel is selected. \
 Its arguments are the sound index and the channel number."
 
   select_sound_hook = XEN_DEFINE_HOOK(S_select_sound_hook, 1, H_select_sound_hook);       /* arg = sound index */

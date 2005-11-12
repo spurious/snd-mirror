@@ -259,6 +259,12 @@ then .snd.  If you're always using just one version of Snd, it's simplest to sti
 ~/.snd_guile|ruby
 ~/.snd                      (changed by initFile resource, -init arg, SND_INIT_FILE_ENVRIONMENT_NAME, etc)
 </pre>
+
+<p>
+Normally, the initialization file also adds the Snd sources directory to the load path (see README.Snd or
+the introduction to Snd.html).  For more temporary situations, you can use the environment variable SND_PATH.
+It is a colon-separated list of directories that will be added to the load path when Snd starts.
+</p>
 <br>
 <table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndresources">Snd resources</a></h3></td></tr></table>
 

@@ -1,7 +1,6 @@
 #!/bin/csh -f
 
 set snddir = /usr/ccrma/lisp/src/snd
-set snddlp = /usr/ccrma/lisp/src/snd/dlp
 set sndtools = /usr/ccrma/lisp/src/snd/tools
 set curdir = $cwd
 set curtools = $cwd/tools
@@ -15,16 +14,6 @@ foreach file (*.h *.c *.cl *.el *.html makefile.* make.* *.gtkrc *.in *.scm *.li
     diff -bcw $curdir/$file $snddir/$file >> $curdir/hi
     find $curdir/$file -newer $snddir/$file -exec echo ' updating ' $file \;
     find $curdir/$file -newer $snddir/$file -exec cp $curdir/$file $snddir \;
-  endif
-end
-
-chdir snddlp
-foreach file (*.h *.c *.cl *.el *.html makefile.* make.* *.gtkrc *.in *.scm *.lisp snd.spec old-snd.spec *.Snd Snd.ad snd.1 configure.ac *.rb *.m4 config.guess config.sub)
-  if (-e $curdir/dlp/$file) then
-    diff -bcw $curdir/dlp/$file $snddlp/$file >> $curdir/hi
-    find $curdir/dlp/$file -newer $snddlp/$file -exec echo ' updating ' dlp/$file \;
-    find $curdir/dlp/$file -newer $snddlp/$file -exec cp $curdir/dlp/$file $snddlp \;
-    find $curdir/$file -newer $snddlp/$file -exec echo ' out of date? ' dlp/$file \;
   endif
 end
 

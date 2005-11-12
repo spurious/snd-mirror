@@ -46,7 +46,7 @@
 <tr><td><a href="#clminsdoc">clm-ins.scm, clm-ins.rb, clm23.scm</a></td><td>more CLM instruments</td></tr>
 <tr><td><a href="#debugdoc">debug.scm</a></td>                         <td>debugging aids</td></tr>
 <tr><td><a href="#dlocsigdoc">dlocsig.rb</a></td>                      <td>moving sounds (Michael Scholz)</td></tr>
-<tr><td><a href="#dlpdoc">dlp</a></td>                                 <td>tutorial directories from Dave Phillips</td></tr>
+<tr><td><a href="#dlpdoc">additional menus, etc</a></td>               <td>GUI improvements from Dave Phillips</td></tr>
 <tr><td><a href="#drawdoc">draw.scm, draw.rb</a></td>                  <td>graphics additions</td></tr>
 <tr><td><a href="#dspdoc">dsp.scm, dsp.rb</a></td>                     <td>various DSP-related procedures</td></tr>
 <tr><td><a href="#editmenudoc">edit-menu.scm</a></td>                  <td>Edit menu additions</td></tr>
@@ -446,9 +446,9 @@ dlocsig in CLM.  Fernando's documentation can be found in the CLM tarball
 </p>
 <br>
 
-<A NAME="dlpdoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>dlp directory entries</h2></td></tr></table>
+<A NAME="dlpdoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>additional menus, etc</h2></td></tr></table>
 
-<p>The dlp directory contains a variety of useful additions written by Dave Phillips.  These
+<p>There is a set of Scheme files with many useful additions written by Dave Phillips.  These
 include:
 </p>
 <pre>
@@ -462,14 +462,13 @@ include:
   <em class=emdef>new-backgrounds.scm</em>    background choices (granite Snd!)
   <em class=emdef>marks-menu.scm</em>         the Marks menu
   <em class=emdef>new-buttons.scm</em>        sets the icon box actions
-  <em class=emdef>README</em>                 loading info
 </pre>
 <p>For a full discussion, with pictures, see Dave's tutorial (in the tutorial directory).
 Here's a brief description of each of the files:
 </p>
 
 <p>
-misc.scm loads up all the auxiliary files needed by the rest of the dlp files,
+misc.scm loads up all the auxiliary files needed by the rest of these files,
 adds a bunch of sound file extensions, and sets up numerous interface customizations.
 It also defines <b>paint-all-widgets</b> which makes sure all the widget backgrounds
 reflect the current background choice (metal, granite, wood, etc); <b>add-delete-option</b>

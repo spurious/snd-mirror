@@ -417,6 +417,8 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+12-Nov:  all dlp directory files moved to main directory (to simplify load-path handling).\n\
+         SND_PATH environment variable (optional load path directory list).\n\
 3-Nov:   ws.scm definstrument macro changed to support :notehook arg in with-sound, and *definstrument-hook* for CM.\n\
 27-Oct:  effects-utils.scm to make various added menus independent.\n\
 12-Oct.  snd 7.16.\n\
@@ -2033,36 +2035,43 @@ char* word_wrap(const char *text, int widget_len)
 		      }
 		    else 
 		      {
-			if ((move_paren) && (text[i] == ' '))
+			if ((move_paren) && (text[i] == ')'))
 			  {
+			    /* no args: use () */
 			    new_text[j++] = '(';
+			    new_text[j++] = ')';
 			    move_paren = false;
-			    in_paren = 1;
+			    in_paren = 0;
 			  }
 			else
 			  {
-			    if (in_paren > 0)
+			    if ((move_paren) && (text[i] == ' '))
 			      {
-				if ((in_paren == 1) && (text[i] == ' '))
-				  {
-				    new_text[j++] = ',';
-				    new_text[j++] = ' ';
-				  }
-				else
-				  {
-				    if (text[i] == ')')
-				      in_paren--;
-				    else 
-				      if (text[i] == '(')
-					in_paren++;
-				    new_text[j++] = text[i];					
-				  }
+				new_text[j++] = '(';
+				move_paren = false;
+				in_paren = 1;
 			      }
-			    else new_text[j++] = text[i];
-			  }
-		      }
-		  }
-	      }
+			    else
+			      {
+				if (in_paren > 0)
+				  {
+				    if ((in_paren == 1) && (text[i] == ' '))
+				      {
+					new_text[j++] = ',';
+					new_text[j++] = ' ';
+				      }
+				    else
+				      {
+					if (text[i] == ')')
+					  in_paren--;
+					else 
+					  if (text[i] == '(')
+					    in_paren++;
+					new_text[j++] = text[i];					
+				      }
+				  }
+				else new_text[j++] = text[i];
+			      }}}}}
 #endif
 	  }
       }

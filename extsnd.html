@@ -154,7 +154,7 @@ Extensions to Snd can be found in:
 <tr><td><a href="sndscm.html#clminsdoc">clm-ins.scm, clm-ins.rb, clm23.scm</a></td><td>various CLM instruments translated to Snd</td></tr>
 <tr><td><a href="sndscm.html#debugdoc">debug.scm</a></td>            <td>debugging aids</td></tr>
 <tr><td><a href="sndscm.html#dlocsigdoc">dlocsig.rb</a></td>         <td>CLM's dlocsig in Ruby (Michael Scholz)</td></tr>
-<tr><td><a href="sndscm.html#dlpdoc">dlp directory entries</a></td>  <td>various contributions from Dave Phillips</td></tr>
+<tr><td><a href="sndscm.html#dlpdoc">additional menus, etc</a></td>  <td>various contributions from Dave Phillips</td></tr>
 <tr><td><a href="sndscm.html#drawdoc">draw.scm</a></td>              <td>graphics additions</td></tr>
 <tr><td><a href="sndscm.html#dspdoc">dsp.scm, dsp.rb</a></td>        <td>various DSP-related procedures</td></tr>
 <tr><td><a href="sndscm.html#editmenudoc">edit-menu.scm</a></td>     <td>Edit menu additions</td></tr>
@@ -3252,7 +3252,7 @@ show mark properties upon click: <a href="sndscm.html#markclickinfo">mark-click-
 <br>
 </td></tr></TABLE>
 
-<p>Other examples can be found in Dave Phillips' dlp/marks-menu.scm, snd-motif.scm (<i>add-mark-pane</i>),<br>
+<p>Other examples can be found in Dave Phillips' marks-menu.scm, snd-motif.scm (<i>add-mark-pane</i>),<br>
 edit-menu.scm (trim from mark, etc), examp.scm (move window to correspond to mark, looping).
 </p>
 <br>
@@ -3477,7 +3477,7 @@ pan mix region: <a href="sndscm.html#panmixregion">pan-mix-region</a><br>
 pan mix vct: <a href="sndscm.html#panmixvct">pan-mix-vct</a><br>
 the mix dialog: <a href="snd.html#mixdialog">Mix Dialog</a><br>
 use pan-mix in File:Mix dialog: <a href="sndscm.html#usepanmixinmixmenu">use-pan-mix-in-mix-menu</a><br>
-mix menu: see dlp/mix-menu.scm<br>
+mix menu: see mix-menu.scm<br>
 cross-fade in frequency: <i>cross-fade</i> and <i>dissolve-fade</i> in <a href="sndscm.html#fadedoc">fade.scm</a><br>
 zipper cross-fade: <a href="sndscm.html#zipdoc">zipper.scm</a><br>
 snap mix to beat after drag: <a href="sndscm.html#snapmixtobeat">snap-mix-to-beat</a><br>
@@ -3664,7 +3664,7 @@ maxamp of track data: <a href="sndscm.html#trackmaxamp">track-maxamp</a><br>
 track property list: <a href="sndscm.html#trackproperty">track-property</a><br>
 reverse track: <a href="sndscm.html#reversetrack">reverse-track</a><br>
 the track dialog: <a href="snd.html#mixdialog">The Mix Dialog</a><br>
-various other dialogs for track operations: dlp/mix-menu.scm and dlp/track-colors.scm<br>
+various other dialogs for track operations: mix-menu.scm and track-colors.scm<br>
 <br>
 </small></blockquote>
 </td></tr></TABLE>
@@ -4737,7 +4737,7 @@ or (an alternative that sets the underlying database entry, rather than the curr
 </td></tr>
 <tr><td></td><td>
 If you set any of these fields, the sound's index may change (there can be an embedded <a class=quiet href="#updatesound">update-sound</a>).
-To deal with MPEG, OGG, Flac, or Speex files, see examp.scm (<a class=quiet href="sndscm.html#exmpg">mpg</a>) or dlp/misc.scm (mpg123 and ogg123).
+To deal with MPEG, OGG, Flac, or Speex files, see examp.scm (<a class=quiet href="sndscm.html#exmpg">mpg</a>) or misc.scm (mpg123 and ogg123).
 Octave/WaveLab ASCII files can be translated by read-ascii (examp.scm).
 <br><br>
 To turn a data-format number into a string, use <a href="#musdataformatname">mus-data-format-name</a>. To get
@@ -5297,7 +5297,7 @@ in the latter case, when you open the file with the unsupported header,
 Snd will throw up its hands and say "maybe it's a raw (headerless)
 sound"; it will then look at open-raw-sound-hook before trying
 other fallbacks (such as the Raw File Dialog).
-See examp.scm or dlp/misc.scm (MPEG, OGG, etc).
+See examp.scm or misc.scm (MPEG, OGG, etc).
 
 </td></tr>
 <tr><td colspan=2></td></tr>
@@ -10883,12 +10883,12 @@ colors in the file dialogs: install-searcher-with-colors in snd-motif.scm<br>
 color-dialog: <a href="#colordialog">color-dialog</a><br>
 colored samples: <a href="sndscm.html#drawdoc">display-colored-samples</a> and others in draw.scm<br>
 colored edits: <a href="sndscm.html#drawdoc">display-previous-edits</a> in draw.scm<br>
-colored tracks: dlp/track-colors.scm in the tutorial<br>
+colored tracks: track-colors.scm in the tutorial<br>
 colored marks: mark-sync-color in snd-motif.scm<br>
 colors in rxvt: red-text et al in examp.scm<br>
 flashing colors: flash-selected-data in examp.scm<br>
 openGL: snd-gl.scm, <a href="grfsnd.html#sndandgl">Snd and OpenGL</a><br>
-fancy widget backgrounds: dlp/new-backgrounds.scm in the tutorial<br>
+fancy widget backgrounds: new-backgrounds.scm in the tutorial<br>
 root window color: set-root-window-color in snd-motif.scm<br>
 color hook: <a href="#colorhook">color-hook</a><br>
 Snd graphics contexts: <a href="#sndgcs">snd-gcs</a><br>

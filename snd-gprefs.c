@@ -4260,7 +4260,7 @@ widget_t start_preferences_dialog(void)
 
     current_sep = make_inter_variable_separator(dpy_box);
     focus_follows_mouse = focus_is_following_mouse();
-    prf = prefs_row_with_toggle("focus follows mouse", NULL,
+    prf = prefs_row_with_toggle("focus follows mouse", "focus-follows-mouse",
 				focus_follows_mouse,
 				dpy_box,
 				focus_follows_mouse_toggle);
@@ -4657,6 +4657,7 @@ widget_t start_preferences_dialog(void)
 				grf_box,
 				smpte_toggle);
     remember_pref(prf, reflect_smpte, save_smpte);
+    prf->help_func = smpte_label_help;
 
     /* ---------------- (graph) colors ---------------- */
 

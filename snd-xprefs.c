@@ -14,14 +14,26 @@
 	     remember_all_sound_properties(props_file)
            this could be implemented in scheme via the db stuff in nb.scm
    SOMEDAY: completions and more verbose error msgs [and sscanf->string_to_* for better checks]
-   TODO: ruby help is broken
+
+   TODO: how to make sure load path is ok?
+
+	   add a row (scrolled text field): Snd's scheme|ruby directories
+  	     if files not findable, add a warning (red) that this needs to be set + help
+	     else check local dir, then PATH?, then try locate
+
+	   this could also be a Help menu item that's displayed only if there's a problem
+
+	   help in help|prefs
+	   CVS collapse
 
    can't decide:
+       emacs setup
        icon boxes (dlp new-icons etc) [scheme: new-icons.scm + new-buttons.scm] ("icon box" in extra menus?)
          reflect: defined? add-useful-items
        add-mark-pane (snd-motif)
-         reflect: including-mark-pane (ruby gtk?)
+         reflect: including-mark-pane (ruby gtk? nope)
        sound file extensions (text + some display of current set)
+         will need same gui for load path, perhaps for vf dirs: drop down scrolled list?
        various additional key bindings? move-one-pixel zoom-one-pixel - how to specify fancy keys?
        option to always sync chans locally if multichannel (sync channels?)
 
@@ -1501,6 +1513,7 @@ You can also request help on a given topic by clicking the variable name on the 
 
 static void preferences_quit_callback(Widget w, XtPointer context, XtPointer info) 
 {
+  /* PERHAPS: if helping, should we unmanage the help dialog as well? */
   prefs_helping = false;
   clear_prefs_dialog_error();
   if (XmGetFocusWidget(preferences_dialog) == XmMessageBoxGetChild(preferences_dialog, XmDIALOG_OK_BUTTON))
@@ -5210,6 +5223,7 @@ widget_t start_preferences_dialog(void)
 				grf_box, current_sep,
 				smpte_toggle);
     remember_pref(prf, reflect_smpte, save_smpte);
+    prf->help_func = smpte_label_help;
 
     /* ---------------- (graph) colors ---------------- */
 

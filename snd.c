@@ -79,6 +79,60 @@ static void mus_print_to_snd(char *msg)
       }
 }
 
+static void initialize_load_path(void)
+{
+  /* look for SND_PATH env var, add dirs to %load-path or load_path */
+  char *path;
+  path = getenv("SND_PATH");
+  if (path)
+    {
+      /* colon-separated list of directory names, pushed on load-path in reverse order (hopefully = search order) */
+      int i, len, dirs = 1, curdir = 0, start = 0;
+      char **dirnames;
+      len = strlen(path);
+      for (i = 0; i < len; i++)
+	if (path[i] == ':')
+	  dirs++;
+      dirnames = (char **)CALLOC(dirs, sizeof(char *));
+      for (i = 0; i < len; i++)
+	{
+	  if ((path[i] == ':') ||
+	      (i == len - 1))
+	    {
+	      if (i > start)
+		{
+		  int j, lim;
+		  char *tmp;
+		  if (i == (len - 1))
+		    lim = i + 1;
+		  else lim = i;
+		  tmp = (char *)CALLOC(lim - start + 1, sizeof(char));
+		  for (j = start; j < lim; j++)
+		    tmp[j - start] = path[j];
+		  dirnames[curdir++] = mus_expand_filename(tmp);
+		  start = i + 1;
+		  FREE(tmp);
+		}
+	    }
+	}
+      for (i = curdir - 1; i >= 0; i--)
+	{
+#if HAVE_RUBY
+	  extern VALUE rb_load_path;
+	  rb_ary_unshift(rb_load_path, rb_str_new2(dirnames[i]));
+#endif
+#if HAVE_SCHEME
+	  char *buf;
+	  buf = mus_format("(set! %%load-path (cons \"%s\" %%load-path))", dirnames[i]);
+	  XEN_EVAL_C_STRING(buf);
+	  FREE(buf);
+#endif
+	  FREE(dirnames[i]);
+	}
+      FREE(dirnames);
+    }
+}
+
 void snd_set_global_defaults(bool need_cleanup)
 {
   if (need_cleanup)
@@ -368,6 +422,8 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
   ss->search_tree = NULL;
   mus_error_set_handler(mus_error_to_snd);
   mus_print_set_handler(mus_print_to_snd);
+
+  initialize_load_path();
 
 #ifdef SND_AS_WIDGET
   return(ss);

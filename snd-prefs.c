@@ -119,11 +119,14 @@ static void prefs_help(prefs_info *prf)
   if (prf->var_name)
     {
       if (prf->help_func)
-	(*(prf->help_func))(prf);
+	{
+	  prefs_helping = true;
+	  (*(prf->help_func))(prf);
+	}
       else
 	{
 	  XEN sym;
-	  sym = C_STRING_TO_XEN_SYMBOL((char *)(prf->var_name));
+	  sym = C_STRING_TO_XEN_SYMBOL(TO_PROC_NAME((char *)(prf->var_name)));
 	  if (XEN_SYMBOL_P(sym))
 	    {
 	      XEN obj;
@@ -403,6 +406,15 @@ static void clm_table_size_help(prefs_info *prf)
 	   "This option sets the default clm table size and file buffer size.",
 	   WITH_WORD_WRAP);
 }
+
+static void smpte_label_help(prefs_info *prf)
+{
+  /* needed by Ruby */
+  snd_help(prf->var_name,
+	   "This option adds a label to the time domain graph showing the current SMPTE frame of the leftmost sample.",
+	   WITH_WORD_WRAP);
+}
+
 
 
 /* ---------------- save functions ---------------- */
