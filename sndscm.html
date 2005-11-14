@@ -1801,6 +1801,7 @@ convenient if they were in one file.
   <a class=def name="exchannelproperty">channel-property</a> key snd chn
   <a class=def name="exsoundproperty">sound-property</a> key snd
   <a class=def name="channelsync">channel-sync</a> snd chn
+  <a class=def name="setglobalsync">set-global-sync</a> choice
 
   <a class=def name="exmakeselection">make-selection</a> beg end snd chn
   <a class=def name="exdeleteselectionandsmooth">delete-selection-and-smooth</a>
@@ -1857,6 +1858,10 @@ These properties are normally saved when Snd's state is saved (via <a href="exts
 or the Options:Save session menu).  To omit a given property at that time, add its name (a symbol) to
 the property 'save-state-ignore (a list of symbols); see 'inset-envelope in extensions.scm.
 <b>channel-sync</b> uses the channel-properties list to implement a channel-local sync field.
+</p>
+<p>
+<b>set-global-sync</b> sets up a hook function that syncs all of a sound's channels (<i>choice</i> == 2),
+or all channels (across all sounds) (<i>choice</i> == 1).  <i>choice</i> == 0 turns off the syncing.
 </p>
 
 <p><b>selection-members</b> returns a list of lists of (snd chn) indicating the channels participating in the current selection.

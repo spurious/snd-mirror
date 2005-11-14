@@ -46,9 +46,9 @@ bool snd_exit_cleanly(bool force_exit)
   return(true);
 }
 
+#if (!HAVE_FAM)
 void sound_not_current(snd_info *sp, void *ignore)
 {
-  /* TODO: handle this with FAM -- called in snd-edits/g|xmain (why auto_update? perhaps remove auto-update-interval!) */
   /* check for change in update status */
   bool needs_update;
   needs_update = (file_write_date(sp->filename) != sp->write_date);
@@ -60,6 +60,7 @@ void sound_not_current(snd_info *sp, void *ignore)
       else snd_file_bomb_icon(sp, needs_update);
     }
 }
+#endif
 
 
 /* -------- ss watcher lists -------- */

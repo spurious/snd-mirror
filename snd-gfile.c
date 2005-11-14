@@ -28,7 +28,6 @@
  * TODO: FileSelection (+chooser if entry): cancel info in mix/open if filename in textfield doesn't match selected file 
  *       FileSelection (+chooser if entry): update info as file name is typed, as in write-protected case 
  * TODO: FileChooser: add entry for filename in Open case (with completion)
- * PERHAPS: instant play stop upon c-g via mixer amp controls (then reset when the thing has actually closed)--mute control?
  */
 
 

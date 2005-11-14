@@ -6987,7 +6987,7 @@ io_error_t save_edits_and_update_display(snd_info *sp)
 	  int j;
 	  for (j = 0; j < i; j++) free_snd_fd(sf[j]);
 	  FREE(sf);
-	  return(IO_BAD_CHANNEL); /* TODO: not really right -- get this from init_sample_read */
+	  return(IO_BAD_CHANNEL);
 	}
       if (samples < CURRENT_SAMPLES(sp->chans[i]))
 	samples = CURRENT_SAMPLES(sp->chans[i]);
@@ -7064,9 +7064,10 @@ io_error_t save_edits_and_update_display(snd_info *sp)
       FREE(ofile); 
       ofile = NULL;
     }
-  /* TODO: if fam, do we need this? */
+#if (!HAVE_FAM)
   if (auto_update(ss)) 
     for_each_sound(sound_not_current, NULL);
+#endif
   return(IO_NO_ERROR);
 }
 

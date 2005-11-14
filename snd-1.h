@@ -629,7 +629,9 @@ char *save_options_in_prefs(void);
 void open_save_sound_block(snd_info *sp, FILE *fd, bool with_nth);
 void close_save_sound_block(FILE *fd);
 bool snd_exit_cleanly(bool force_exit);
-void sound_not_current(snd_info *sp, void *dat);
+#if (!HAVE_FAM)
+  void sound_not_current(snd_info *sp, void *ignore);
+#endif
 void set_init_filename(const char *filename);
 void save_state(const char *save_state_name);
 void global_control_panel_state(void);

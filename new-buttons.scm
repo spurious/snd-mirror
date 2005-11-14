@@ -1,7 +1,8 @@
 (provide 'snd-new-buttons.scm)
 
-(if (not (provided? 'snd-snd7.scm)) (load-from-path "snd7.scm")) ; backward-mix
-(if (not (provided? 'snd-play.scm)) (load-from-path "play.scm")) ; play-until-c-g
+(if (not (provided? 'snd-snd7.scm)) (load-from-path "snd7.scm"))           ; backward-mix
+(if (not (provided? 'snd-play.scm)) (load-from-path "play.scm"))           ; play-until-c-g
+(if (not (provided? 'snd-snd-motif.scm)) (load-from-path "snd-motif.scm")) ; add-main-pane
 (if (not (provided? 'snd-new-icons.scm)) (load-from-path "new-icons.scm"))
 
 (define (add-listener-pane name type args)

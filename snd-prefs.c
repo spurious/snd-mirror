@@ -391,6 +391,15 @@ static void mix_menu_help(prefs_info *prf)
 snap mix to beat, delete, play, reverse, save, and transpose track, set track amplitude, speed, and tempo, etc.",
 	   WITH_WORD_WRAP);
 }
+
+#if USE_MOTIF
+static void icon_box_help(prefs_info *prf)
+{
+  snd_help(prf->var_name,
+	   "This option adds a top-level box full of various handy icons.",
+	   WITH_WORD_WRAP);
+}
+#endif
 #endif
 
 static void reopen_menu_help(prefs_info *prf)
@@ -725,6 +734,13 @@ static bool find_mix_menu(void)
 {
   return(XEN_DEFINED_P("mix-menu"));
 }
+
+#if USE_MOTIF
+static bool find_icon_box(void)
+{
+  return(XEN_DEFINED_P("add-useful-icons"));
+}
+#endif
 #endif
 
 static bool find_reopen_menu(void)

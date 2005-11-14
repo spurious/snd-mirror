@@ -174,6 +174,7 @@ static GtkWidget *make_row_label(prefs_info *prf, const char *label, GtkWidget *
   gtk_container_add(GTK_CONTAINER(ev), w);
   gtk_widget_show(w);
 
+  SG_SIGNAL_CONNECT(ev, "button_press_event", prefs_help_click_callback, (gpointer)prf);
   SG_SIGNAL_CONNECT(ev, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
   SG_SIGNAL_CONNECT(ev, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
 
@@ -195,6 +196,7 @@ static GtkWidget *make_row_inner_label(prefs_info *prf, const char *label, GtkWi
   gtk_container_add(GTK_CONTAINER(ev), w);
   gtk_widget_show(w);
 
+  SG_SIGNAL_CONNECT(ev, "button_press_event", prefs_help_click_callback, (gpointer)prf);
   SG_SIGNAL_CONNECT(ev, "enter_notify_event", mouse_enter_pref_callback, (gpointer)prf);
   SG_SIGNAL_CONNECT(ev, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
 
@@ -1570,8 +1572,8 @@ static int global_sync_choice = 0;
 static void reflect_sync_choice(prefs_info *prf)
 {
   global_sync_choice = find_sync_choice();
-  set_toggle_button(prf->toggle, global_sync_choice == 1, false, (void *)prf);
-  set_toggle_button(prf->toggle2, global_sync_choice == 2, false, (void *)prf);
+  set_toggle_button(prf->toggle, global_sync_choice == 2, false, (void *)prf);
+  set_toggle_button(prf->toggle2, global_sync_choice == 1, false, (void *)prf);
 }
 
 static void save_sync_choice(prefs_info *prf, FILE *fd)
@@ -1583,7 +1585,7 @@ static void save_sync_choice(prefs_info *prf, FILE *fd)
 static void sync1_choice(prefs_info *prf)
 {
   if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prf->toggle)))
-    global_sync_choice = 1;
+    global_sync_choice = 2;
   else global_sync_choice = 0;
   set_toggle_button(prf->toggle2, false, false, (void *)prf);
 }
@@ -1591,7 +1593,7 @@ static void sync1_choice(prefs_info *prf)
 static void sync2_choice(prefs_info *prf)
 {
   if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prf->toggle2)))
-    global_sync_choice = 2;
+    global_sync_choice = 1;
   else global_sync_choice = 0;
   set_toggle_button(prf->toggle, false, false, (void *)prf);
 }

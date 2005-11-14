@@ -18,10 +18,7 @@
 	   "remember sound state", "within one run of Snd", "across runs"
 
    SOMEDAY: completions and more verbose error msgs [and sscanf->string_to_* for better checks]
-
-   TODO: icon boxes (dlp new-icons etc) [scheme: new-icons.scm + new-buttons.scm -- new-buttons loads new-icons] ("icon box" in extra menus?)
-           reflect: defined? add-useful-items, "box of handy icons"
-
+   SOMEDAY: gtk side of icon box
    TODO: ruby extensions.rb side of set_global_sync
 
    abandoned:
@@ -204,6 +201,11 @@ static void mouse_leave_pref_callback(Widget w, XtPointer context, XEvent *event
     }
 }
 
+static void mouse_help_click_callback(Widget w, XtPointer context, XEvent *event, Boolean *flag)
+{
+  prefs_help((prefs_info *)context);
+}
+
 static bool prefs_dialog_error_is_posted = false;
 
 static void post_prefs_dialog_error(const char *message, void *data)
@@ -256,6 +258,7 @@ static Widget make_row_label(prefs_info *prf, const char *label, Widget box, Wid
 
   XtAddEventHandler(w, EnterWindowMask, false, mouse_enter_pref_callback, (XtPointer)prf);
   XtAddEventHandler(w, LeaveWindowMask, false, mouse_leave_pref_callback, (XtPointer)prf);
+  XtAddEventHandler(w, ButtonPressMask, false, mouse_help_click_callback, (XtPointer)prf);
 
   return(w);
 }
@@ -280,6 +283,7 @@ static Widget make_row_inner_label(prefs_info *prf, const char *label, Widget le
 
   XtAddEventHandler(w, EnterWindowMask, false, mouse_enter_pref_callback, (XtPointer)prf);
   XtAddEventHandler(w, LeaveWindowMask, false, mouse_leave_pref_callback, (XtPointer)prf);
+  XtAddEventHandler(w, ButtonPressMask, false, mouse_help_click_callback, (XtPointer)prf);
 
   return(w);
 }
@@ -395,6 +399,7 @@ static Widget make_row_error(prefs_info *prf, Widget box, Widget left_widget, Wi
 
   XtAddEventHandler(w, EnterWindowMask, false, mouse_enter_pref_callback, (XtPointer)prf);
   XtAddEventHandler(w, LeaveWindowMask, false, mouse_leave_pref_callback, (XtPointer)prf);
+  XtAddEventHandler(w, ButtonPressMask, false, mouse_help_click_callback, (XtPointer)prf);
 
   return(w);
 }
@@ -1800,8 +1805,8 @@ static int global_sync_choice = 0;
 static void reflect_sync_choice(prefs_info *prf)
 {
   global_sync_choice = find_sync_choice();
-  XmToggleButtonSetState(prf->toggle, global_sync_choice == 1, false);
-  XmToggleButtonSetState(prf->toggle2, global_sync_choice == 2, false);
+  XmToggleButtonSetState(prf->toggle, global_sync_choice == 2, false);
+  XmToggleButtonSetState(prf->toggle2, global_sync_choice == 1, false);
 }
 
 static void save_sync_choice(prefs_info *prf, FILE *fd)
@@ -1813,7 +1818,7 @@ static void save_sync_choice(prefs_info *prf, FILE *fd)
 static void sync1_choice(prefs_info *prf)
 {
   if (XmToggleButtonGetState(prf->toggle) == XmSET)
-    global_sync_choice = 1;
+    global_sync_choice = 2;
   else global_sync_choice = 0;
   XmToggleButtonSetState(prf->toggle2, false, false);    
 }
@@ -1821,7 +1826,7 @@ static void sync1_choice(prefs_info *prf)
 static void sync2_choice(prefs_info *prf)
 {
   if (XmToggleButtonGetState(prf->toggle2) == XmSET)
-    global_sync_choice = 2;
+    global_sync_choice = 1;
   else global_sync_choice = 0;
   XmToggleButtonSetState(prf->toggle, false, false);    
 }
@@ -2725,6 +2730,26 @@ static void mix_menu_toggle(prefs_info *prf)
 static void reflect_mix_menu(prefs_info *prf) 
 {
   XmToggleButtonSetState(prf->toggle, find_mix_menu(), false);
+}
+
+/* ---------------- icon box ---------------- */
+
+static bool include_icon_box = false;
+
+static void save_icon_box(prefs_info *prf, FILE *fd)
+{
+  if (include_icon_box)
+    fprintf(fd, "(if (not (provided? 'snd-new-buttons.scm)) (load-from-path \"new-buttons.scm\"))\n");
+}
+
+static void icon_box_toggle(prefs_info *prf)
+{
+  include_icon_box = (XmToggleButtonGetState(prf->toggle) == XmSET);
+}
+
+static void reflect_icon_box(prefs_info *prf) 
+{
+  XmToggleButtonSetState(prf->toggle, find_icon_box(), false);
 }
 #endif
 
@@ -5160,6 +5185,14 @@ widget_t start_preferences_dialog(void)
 				mix_menu_toggle);
     remember_pref(prf, reflect_mix_menu, save_mix_menu);
     prf->help_func = mix_menu_help;
+
+    current_sep = make_inter_variable_separator(dpy_box, prf->label);
+    prf = prefs_row_with_toggle("box of handy icons", "new-buttons.scm",
+				find_icon_box(),
+				dpy_box, current_sep, 
+				icon_box_toggle);
+    remember_pref(prf, reflect_icon_box, save_icon_box);
+    prf->help_func = icon_box_help;
 #endif
 
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
