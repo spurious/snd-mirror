@@ -1308,7 +1308,7 @@ int mix_complete_file(snd_info *sp, off_t beg, char *fullname, bool with_tag, fi
   /* returns -1 if with_tag is false, -2 if no such file */
   chan_info *cp;
   chan_info **cps = NULL;
-  int i, chans, id = MIX_FILE_NO_MIX, old_sync = 0, new_sync = 1;
+  int chans, id = MIX_FILE_NO_MIX, old_sync;
   off_t len;
   sync_info *si = NULL;
   len = mus_sound_frames(fullname);
@@ -1318,17 +1318,8 @@ int mix_complete_file(snd_info *sp, off_t beg, char *fullname, bool with_tag, fi
   old_sync = sp->sync;
   if ((old_sync == 0) && (all_chans))
     {
-      for (i = 0; i < ss->max_sounds; i++)
-	{
-	  snd_info *nsp;
-	  nsp = ss->sounds[i];
-	  if ((nsp) && (nsp->inuse == SOUND_NORMAL))
-	    {
-	      if (nsp->sync >= new_sync)
-		new_sync = nsp->sync + 1;
-	    }
-	}
-      sp->sync = new_sync;
+      sp->sync = ss->sound_sync_max + 1;
+      ss->sound_sync_max++;
     }
   if (sp->sync != 0)
     {

@@ -1585,13 +1585,6 @@ static apply_state *free_apply_state(apply_state *ap)
 
 #define APPLY_TICKS 4
 
-static void max_sync(snd_info *sp, void *val)
-{
-  int *maxsync = (int *)val;
-  if (sp->sync > maxsync[0])
-    maxsync[0] = sp->sync;
-}
-
 static int apply_tick = 0;
 static bool apply_reporting = false;
 static off_t apply_dur = 0, orig_dur, apply_beg = 0;
@@ -1625,10 +1618,8 @@ static bool apply_controls(apply_state *ap)
       /* get unused sync val */
       if (ss->apply_choice == APPLY_TO_SOUND)
 	{
-	  int maxsync[1];
-	  maxsync[0] = 0;
-	  for_each_sound(max_sync, (void *)maxsync);
-	  sp->sync = maxsync[0] + 1;
+	  sp->sync = ss->sound_sync_max + 1;
+	  ss->sound_sync_max++;
 	}
       else sp->sync = 0;
       /* check for local amp_control vals */
@@ -1636,7 +1627,11 @@ static bool apply_controls(apply_state *ap)
 	cp = sp->chans[0];
       else cp = sp->chans[sp->selected_channel];
       si = sync_to_chan(cp);
-      if (si == NULL) return(false);
+      if (si == NULL)
+	{
+	  sp->sync = old_sync;
+	  return(false);
+	}
       scalers = (Float *)CALLOC(si->chans, sizeof(Float));
       for (i = 0; i < si->chans; i++)
 	{
@@ -2887,6 +2882,11 @@ static XEN g_set_sync(XEN on, XEN snd_n)
 
 WITH_REVERSED_BOOLEAN_ARGS(g_set_sync_reversed, g_set_sync)
 
+static XEN g_sync_max(void) 
+{
+  #define H_sync_max "(" S_sync_max "): max sound sync value seen so far"
+  return(C_TO_XEN_INT(ss->sound_sync_max));
+}
 
 static XEN g_sound_properties(XEN snd_n) 
 {
@@ -5008,6 +5008,7 @@ XEN_ARGIFY_1(g_show_controls_w, g_show_controls)
 XEN_ARGIFY_2(g_set_show_controls_w, g_set_show_controls)
 XEN_ARGIFY_1(g_sync_w, g_sync)
 XEN_ARGIFY_2(g_set_sync_w, g_set_sync)
+XEN_NARGIFY_0(g_sync_max_w, g_sync_max)
 XEN_ARGIFY_1(g_sound_properties_w, g_sound_properties)
 XEN_ARGIFY_2(g_set_sound_properties_w, g_set_sound_properties)
 XEN_ARGIFY_1(g_channel_style_w, g_channel_style)
@@ -5131,6 +5132,7 @@ XEN_ARGIFY_1(g_equalize_panes_w, g_equalize_panes)
 #define g_set_show_controls_w g_set_show_controls
 #define g_sync_w g_sync
 #define g_set_sync_w g_set_sync
+#define g_sync_max_w g_sync_max
 #define g_sound_properties_w g_sound_properties
 #define g_set_sound_properties_w g_set_sound_properties
 #define g_channel_style_w g_channel_style
@@ -5285,6 +5287,7 @@ If it returns #t, the usual informative minibuffer babbling is squelched."
 
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_sync, g_sync_w, H_sync,
 					    S_setB S_sync, g_set_sync_w, g_set_sync_reversed, 0, 1, 1, 1);
+  XEN_DEFINE_PROCEDURE(S_sync_max, g_sync_max_w, 0, 0, 0, H_sync_max);
   
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_sound_properties, g_sound_properties_w, H_sound_properties,
 					    S_setB S_sound_properties, g_set_sound_properties_w, g_set_sound_properties_reversed, 0, 1, 1, 1);

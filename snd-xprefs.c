@@ -6,31 +6,33 @@
 
 /* TODO: preset packages: dlp, km: check out gui.scm et al, keybinding sets
            should we actually load these packages and reflect all settings? -- no easy way to "unload" them.
-           dlp: load misc.scm
-           ksm: load snd_conffile.scm?
+           dlp: load misc.scm "include Dave's tutorial package"
+           ksm: load snd_conffile.scm? "include Kjetil's real time package"
+         are these two compatible?
 
    TODO: remember state for subsequent load (extensions.scm) (remember-sound-state) remember_sound_state()
            reflect: remembering-sound-state (need ruby side)
            but there's also remember_all_sound_properties -- perhaps toggle if ruby, or def file arg
 	     remember_all_sound_properties(props_file)
            this could be implemented in scheme via the db stuff in nb.scm
+	   "remember sound state", "within one run of Snd", "across runs"
 
    SOMEDAY: completions and more verbose error msgs [and sscanf->string_to_* for better checks]
 
-   can't decide:
-       emacs setup
-       icon boxes (dlp new-icons etc) [scheme: new-icons.scm + new-buttons.scm] ("icon box" in extra menus?)
-         reflect: defined? add-useful-items
-       add-mark-pane (snd-motif)
-         reflect: including-mark-pane (ruby gtk? nope)
-       sound file extensions (text + some display of current set)
-         will need same gui for load path, perhaps for vf dirs: drop down scrolled list?
-       various additional key bindings? move-one-pixel zoom-one-pixel - how to specify fancy keys?
-       option to always sync chans locally if multichannel (sync channels?)
+   TODO: icon boxes (dlp new-icons etc) [scheme: new-icons.scm + new-buttons.scm -- new-buttons loads new-icons] ("icon box" in extra menus?)
+           reflect: defined? add-useful-items, "box of handy icons"
+
+   TODO: ruby extensions.rb side of set_global_sync
 
    abandoned:
+       emacs setup
+         how to tie into emacs?
+       sound file extensions (text + some display of current set)
+         will need same gui for load path, perhaps for vf dirs: drop down scrolled list?
+       various additional key bindings? 
+         move-one-pixel zoom-one-pixel - how to specify fancy keys?
        audio mixer settings? -> volume in some mode (snd6.scm has OSS version)
-           "startup dac volume" -- but this will be confusing since we don't notice mute settings etc
+         "startup dac volume" -- but this will be confusing since we don't notice mute settings etc
        clm instruments? -- surely user should learn about the listener...
 */
 
@@ -61,7 +63,7 @@ static char *include_load_path = NULL;
 #define STARTUP_HEIGHT 800
 
 typedef struct prefs_info {
-  Widget label, text, arrow_up, arrow_down, arrow_right, error, toggle, scale;
+  Widget label, text, arrow_up, arrow_down, arrow_right, error, toggle, scale, toggle2;
   Widget color, rscl, gscl, bscl, rtxt, gtxt, btxt, list_menu, radio_button;
   bool got_error;
   XtIntervalId help_id, power_id;
@@ -70,6 +72,7 @@ typedef struct prefs_info {
   int num_values;
   Float scale_max;
   void (*toggle_func)(struct prefs_info *prf);
+  void (*toggle2_func)(struct prefs_info *prf);
   void (*scale_func)(struct prefs_info *prf);
   void (*arrow_up_func)(struct prefs_info *prf);
   void (*arrow_down_func)(struct prefs_info *prf);
@@ -398,7 +401,7 @@ static Widget make_row_error(prefs_info *prf, Widget box, Widget left_widget, Wi
 
 /* ---------------- row toggle widget ---------------- */
 
-static Widget make_row_toggle(prefs_info *prf, bool current_value, Widget left_widget, Widget box, Widget top_widget)
+static Widget make_row_toggle_with_label(prefs_info *prf, bool current_value, Widget left_widget, Widget box, Widget top_widget, const char *label)
 {
   Widget w;
   Arg args[20];
@@ -418,7 +421,7 @@ static Widget make_row_toggle(prefs_info *prf, bool current_value, Widget left_w
   XtSetArg(args[n], XmNmarginHeight, 0); n++;
   XtSetArg(args[n], XmNindicatorOn, XmINDICATOR_FILL); n++;
   XtSetArg(args[n], XmNindicatorSize, 14); n++;
-  w = XtCreateManagedWidget(" ", xmToggleButtonWidgetClass, box, args, n);
+  w = XtCreateManagedWidget(label, xmToggleButtonWidgetClass, box, args, n);
 
   XtAddEventHandler(w, EnterWindowMask, false, mouse_enter_pref_callback, (XtPointer)prf);
   XtAddEventHandler(w, LeaveWindowMask, false, mouse_leave_pref_callback, (XtPointer)prf);
@@ -426,6 +429,13 @@ static Widget make_row_toggle(prefs_info *prf, bool current_value, Widget left_w
 
   return(w);
 }
+
+
+static Widget make_row_toggle(prefs_info *prf, bool current_value, Widget left_widget, Widget box, Widget top_widget)
+{
+  return(make_row_toggle_with_label(prf, current_value, left_widget, box, top_widget, " "));
+}
+
 
 
 /* ---------------- row arrows ---------------- */
@@ -572,6 +582,42 @@ static prefs_info *prefs_row_with_toggle(const char *label, const char *varname,
   help = make_row_help(prf, varname, box, top_widget, prf->toggle);
   
   XtAddCallback(prf->toggle, XmNvalueChangedCallback, call_toggle_func, (XtPointer)prf);
+  return(prf);
+}
+
+
+/* ---------------- two toggles ---------------- */
+
+static void call_toggle2_func(Widget w, XtPointer context, XtPointer info)
+{
+  prefs_info *prf = (prefs_info *)context;
+  if ((prf) && (prf->toggle2_func))
+    (*(prf->toggle2_func))(prf);
+}
+
+static prefs_info *prefs_row_with_two_toggles(const char *label, const char *varname, 
+					      const char *label1, bool value1,
+					      const char *label2, bool value2,
+					      Widget box, Widget top_widget, 
+					      void (*toggle_func)(prefs_info *prf),
+					      void (*toggle2_func)(prefs_info *prf))
+{
+  prefs_info *prf = NULL;
+  Widget sep, help, sep1;
+  prf = (prefs_info *)CALLOC(1, sizeof(prefs_info));
+  prf->var_name = varname;
+  prf->toggle_func = toggle_func;
+  prf->toggle2_func = toggle2_func;
+
+  prf->label = make_row_label(prf, label, box, top_widget);
+  sep = make_row_middle_separator(prf->label, box, top_widget);
+  prf->toggle = make_row_toggle_with_label(prf, value1, sep, box, top_widget, label1);
+  sep1 = make_row_inner_separator(20, prf->toggle, box, top_widget);
+  prf->toggle2 = make_row_toggle_with_label(prf, value2, sep1, box, top_widget, label2);
+  help = make_row_help(prf, varname, box, top_widget, prf->toggle2);
+  
+  XtAddCallback(prf->toggle, XmNvalueChangedCallback, call_toggle_func, (XtPointer)prf);
+  XtAddCallback(prf->toggle2, XmNvalueChangedCallback, call_toggle2_func, (XtPointer)prf);
   return(prf);
 }
 
@@ -1019,19 +1065,6 @@ static void prefs_list_callback(Widget w, XtPointer context, XtPointer info)
   if ((le) && (le->prf->list_func))
     (*(le->prf->list_func))(le->prf, le->value);
 }
-
-#if 0
-static void add_item_to_list_menu(prefs_info *prf, char *item)
-{
-  Widget tmp;
-  int n;
-  Arg args[20];
-  n = 0;
-  XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;
-  tmp = XtCreateManagedWidget(item,  xmPushButtonWidgetClass, prf->list_menu, args, n);
-  XtAddCallback(tmp, XmNactivateCallback, prefs_list_callback, make_list_entry(prf, item));
-}
-#endif
 
 static prefs_info *prefs_row_with_list(const char *label, const char *varname, const char *value,
 				       const char **values, int num_values,
@@ -1760,6 +1793,40 @@ static void save_focus_follows_mouse(prefs_info *prf, FILE *fd)
   if (focus_follows_mouse) save_focus_follows_mouse_1(prf, fd);
 }
 
+/* ---------------- sync choice ---------------- */
+
+static int global_sync_choice = 0;
+
+static void reflect_sync_choice(prefs_info *prf)
+{
+  global_sync_choice = find_sync_choice();
+  XmToggleButtonSetState(prf->toggle, global_sync_choice == 1, false);
+  XmToggleButtonSetState(prf->toggle2, global_sync_choice == 2, false);
+}
+
+static void save_sync_choice(prefs_info *prf, FILE *fd)
+{
+  if (global_sync_choice != 0)
+    save_sync_choice_1(prf, fd, global_sync_choice);
+}
+
+static void sync1_choice(prefs_info *prf)
+{
+  if (XmToggleButtonGetState(prf->toggle) == XmSET)
+    global_sync_choice = 1;
+  else global_sync_choice = 0;
+  XmToggleButtonSetState(prf->toggle2, false, false);    
+}
+
+static void sync2_choice(prefs_info *prf)
+{
+  if (XmToggleButtonGetState(prf->toggle2) == XmSET)
+    global_sync_choice = 2;
+  else global_sync_choice = 0;
+  XmToggleButtonSetState(prf->toggle, false, false);    
+}
+
+
 /* ---------------- show-controls ---------------- */
 
 static void reflect_show_controls(prefs_info *prf) 
@@ -1773,10 +1840,6 @@ static void controls_toggle(prefs_info *prf)
 }
 
 /* ---------------- peak-envs ---------------- */
-
-/*
-  ruby: this is in env.rb
-*/
 
 static bool include_peak_envs = false;
 static char *include_peak_env_directory = NULL;
@@ -4882,6 +4945,15 @@ widget_t start_preferences_dialog(void)
 				focus_follows_mouse_toggle);
     remember_pref(prf, reflect_focus_follows_mouse, save_focus_follows_mouse);
     prf->help_func = mouse_focus_help;
+
+    current_sep = make_inter_variable_separator(dpy_box, prf->label);
+    prf = prefs_row_with_two_toggles("operate on all channels together", S_sync,
+				     "within each sound", find_sync_choice() == 1,
+				     "across all sounds", find_sync_choice() == 2,
+				     dpy_box, current_sep, 
+				     sync1_choice, sync2_choice);
+    remember_pref(prf, reflect_sync_choice, save_sync_choice);
+    prf->help_func = sync_choice_help;
 
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
     prf = prefs_row_with_toggle("show the control panel upon opening a sound", S_show_controls,

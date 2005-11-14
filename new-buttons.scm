@@ -2,6 +2,7 @@
 
 (if (not (provided? 'snd-snd7.scm)) (load-from-path "snd7.scm")) ; backward-mix
 (if (not (provided? 'snd-play.scm)) (load-from-path "play.scm")) ; play-until-c-g
+(if (not (provided? 'snd-new-icons.scm)) (load-from-path "new-icons.scm"))
 
 (define (add-listener-pane name type args)
   (let* ((listener (find-child (cadr (main-widgets)) "lisp-listener"))
@@ -21,7 +22,7 @@
                                                      XmNtopAttachment    XmATTACH_FORM)
                                                args))))
       (XtVaSetValues listener-scroll (list XmNtopAttachment XmATTACH_WIDGET
-                                            XmNtopWidget     top-widget))
+                                           XmNtopWidget     top-widget))
       (XtManageChild listener-scroll)
       top-widget)))
 
@@ -48,7 +49,7 @@
 ;;;
 
 (define (add-useful-icons)
-(let* ((toolscroll (add-main-pane "toolscroll" xmScrolledWindowWidgetClass
+  (let* ((toolscroll (add-main-pane "toolscroll" xmScrolledWindowWidgetClass
                        (list XmNscrollingPolicy XmAUTOMATIC
                              XmNscrollBarDisplayPolicy XmSTATIC
                              XmNpaneMinimum (+ 48 26) ; leave room for scrollers
@@ -57,7 +58,6 @@
          (tools (XtCreateManagedWidget "tools" xmRowColumnWidgetClass toolscroll
                   (list XmNbackground (black-pixel)
                         XmNorientation XmHORIZONTAL))))
-    (load-from-path "new-icons.scm")
     (let ((play-pixmap (make-pixmap tools icon-full-go))
           (stop-pixmap (make-pixmap tools icon-full-stop))
           (play-forward-pixmap (make-pixmap tools icon-play-direction-forward))
@@ -241,5 +241,6 @@
 		 "Quit Snd")
 
            )))))
+
 (add-useful-icons)
 

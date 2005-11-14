@@ -628,6 +628,7 @@
 #define S_stop_playing_selection_hook   "stop-playing-selection-hook"
 #define S_swap_channels                 "swap-channels"
 #define S_sync                          "sync"
+#define S_sync_max                      "sync-max"
 #define S_syncd_marks                   "syncd-marks"
 #define S_temp_dir                      "temp-dir"
 #define S_tempo_control_bounds          "tempo-control-bounds"

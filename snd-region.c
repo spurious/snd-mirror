@@ -1401,7 +1401,7 @@ static XEN g_make_region(XEN beg, XEN end, XEN snd_n, XEN chn_n)
   #define H_make_region "(" S_make_region " (beg) (end) (snd #f) (chn #f)): make a new region between beg and end in snd, returning its id. \
 If chn is #t, all chans are included, taking the snd sync field into account if it's not 0.  If no args are passed, the current \
 selection is used."
-  int id = INVALID_REGION, new_sync, old_sync, i;
+  int id = INVALID_REGION, old_sync, i;
   if (max_regions(ss) <= 0) return(XEN_FALSE);
   if (XEN_NOT_BOUND_P(beg))
     id = make_region_from_selection();
@@ -1426,11 +1426,8 @@ selection is used."
 	      if (sp->sync == 0)
 		{
 		  /* set up temp sync for snd_sync */
-		  new_sync = 1;
-		  for (i = 0; i < ss->max_sounds; i++)
-		    if ((ss->sounds[i]) && (new_sync <= ss->sounds[i]->sync))
-		      new_sync = ss->sounds[i]->sync + 1;
-		  sp->sync = new_sync;
+		  sp->sync = ss->sound_sync_max + 1;
+		  ss->sound_sync_max++;
 		}
 	      si = snd_sync(sp->sync);
 	      sp->sync = old_sync;

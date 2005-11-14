@@ -166,7 +166,7 @@ void toggle_direction_arrow(snd_info *sp, bool state) {}
 void filter_env_changed(snd_info *sp, env *e) {}
 void set_play_button(snd_info *sp, bool val) {}
 void play_button_pause(bool pausing) {}
-void syncb(snd_info *sp, int on) {sp->sync = on;}
+void syncb(snd_info *sp, int on) {sp->sync = on; if (on > ss->sound_sync_max) ss->sound_sync_max = on;}
 void snd_file_lock_icon(snd_info *sp, bool on) {}
 void snd_file_bomb_icon(snd_info *sp, bool on) {}
 void x_bomb(snd_info *sp, bool on) {}

@@ -329,6 +329,16 @@ taking some action in it.",
 	   WITH_WORD_WRAP);
 }
 
+static void sync_choice_help(prefs_info *prf)
+{
+  snd_help(prf->var_name,
+	   "Many operations can operate on all channels at once, or only on the currently selected \
+channel.  If either of these buttons is selected, such operations operate either on all channels \
+within each sound (but not across sounds), or on all current channels at once.  The default is \
+to operate only on the selected channel (neither button selected).",
+	   WITH_WORD_WRAP);
+}
+
 static void peak_env_help(prefs_info *prf)
 {
   snd_help(prf->var_name,
@@ -481,6 +491,18 @@ static void save_focus_follows_mouse_1(prefs_info *prf, FILE *fd)
 #if HAVE_RUBY
   fprintf(fd, "require \"extensions\"\n");
   fprintf(fd, "focus_follows_mouse\n");
+#endif
+}
+
+static void save_sync_choice_1(prefs_info *prf, FILE *fd, int choice)
+{
+#if HAVE_SCHEME
+  fprintf(fd, "(if (not (provided? 'snd-extensions.scm)) (load-from-path \"extensions.scm\"))\n");
+  fprintf(fd, "(set-global-sync %d)\n", choice);
+#endif
+#if HAVE_RUBY
+  fprintf(fd, "require \"extensions\"\n");
+  fprintf(fd, "set_global_sync(%d)\n", choice);
 #endif
 }
 
@@ -653,6 +675,13 @@ static bool focus_is_following_mouse(void)
 {
   return((XEN_DEFINED_P("focus-is-following-mouse")) &&
 	 (XEN_TRUE_P(XEN_NAME_AS_C_STRING_TO_VALUE("focus-is-following-mouse"))));
+}
+
+static int find_sync_choice(void)
+{
+  if (XEN_DEFINED_P("global-sync-choice"))
+    return(XEN_TO_C_INT(XEN_NAME_AS_C_STRING_TO_VALUE("global-sync-choice")));
+  return(0);
 }
 
 static bool find_peak_envs(void)

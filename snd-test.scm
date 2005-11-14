@@ -7738,6 +7738,7 @@ EDITS: 5
 	      (if (not (= (channel-style index) channels-separate)) (snd-display ";channel-style[0]->~D: ~A?" channels-separate (channel-style index)))))
 	(set! (sync index) 32)
 	(if (not (= (sync index) 32)) (snd-display ";sync->32: ~A?" (sync index)))
+	(if (not (>= (sync-max) 32)) (snd-display ";sync-max 32: ~A" (sync-max)))
 	(set! (sync index) 0)
 	(set! (channel-sync index 0) 12)
 	(if (not (= (channel-sync index 0) 12)) (snd-display ";sync-chn->12: ~A?" (channel-sync index 0)))
@@ -54943,7 +54944,7 @@ EDITS: 1
 		     spectro-x-angle spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle spectro-z-scale
 		     speed-control speed-control-style speed-control-tones squelch-update srate src-sound src-selection
 		     ;start-playing 
-		     start-progress-report stop-player stop-playing swap-channels syncd-marks sync sound-properties temp-dir
+		     start-progress-report stop-player stop-playing swap-channels syncd-marks sync sync-max sound-properties temp-dir
 		     text-focus-color tiny-font track-sample-reader?  region-sample-reader? transform-dialog transform-sample
 		     transform->vct transform-frames transform-type trap-segfault optimization unbind-key undo
 		     update-transform-graph update-time-graph update-lisp-graph update-sound run-safety clm-table-size

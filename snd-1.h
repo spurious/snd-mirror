@@ -398,7 +398,7 @@ typedef struct snd_state {
   state_context *sgx;
   int position_slider_width, zoom_slider_width, toggle_size, channel_sash_indent, sash_size, channel_sash_size, sash_indent;
   char *init_file;
-  int max_sounds;
+  int max_sounds, sound_sync_max;
   char *translated_filename;
   print_choice_t print_choice;
   snd_apply_t apply_choice;

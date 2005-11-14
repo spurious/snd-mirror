@@ -969,3 +969,20 @@ If 'check' is #f, the hooks are removed."
 	(add-hook! close-hook add-to-reopen-menu)
 	(add-hook! open-hook check-reopen-menu))))
 
+
+;;; -------- global-sync (for prefs dialog)
+
+(define global-sync-choice 0) ; global var so that we can reflect the current setting in prefs dialog
+
+(define (global-sync-func snd)
+  (if (= global-sync-choice 1)
+      (set! (sync snd) 1)
+      (if (= global-sync-choice 2)
+	  (set! (sync snd) (1+ (sync-max))))))
+
+(define (set-global-sync choice)
+  (set! global-sync-choice choice)
+  (if (and (not (= choice 0))
+	   (not (member global-sync-func (hook->list after-open-hook))))
+      (add-hook! after-open-hook global-sync-func)))
+

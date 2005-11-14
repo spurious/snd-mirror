@@ -445,10 +445,11 @@ static void set_sync_color(snd_info *sp)
 void syncb(snd_info *sp, int on)
 {
   sp->sync = on;
+  if (on > ss->sound_sync_max) ss->sound_sync_max = on;
   if (!(IS_PLAYER(sp)))
     {
       set_sync_color(sp);
-      set_toggle_button(SYNC_BUTTON(sp), (bool)on, false, (void *)sp);
+      set_toggle_button(SYNC_BUTTON(sp), (on != 0), false, (void *)sp);
     }
 }
 
@@ -478,6 +479,7 @@ static void sync_button_click(GtkWidget *w, gpointer data)
   if (sp->sync != 0) 
     {
       chan_info *cp;
+      if (sp->sync > ss->sound_sync_max) ss->sound_sync_max = sp->sync;
       cp = sp->lacp;
       if (cp == NULL) cp = any_selected_channel(sp);
       goto_graph(cp);

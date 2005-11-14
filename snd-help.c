@@ -417,13 +417,12 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+15-Nov:  sync-max.\n\
 12-Nov:  all dlp directory files moved to main directory (to simplify load-path handling).\n\
          SND_PATH environment variable (optional load path directory list).\n\
 3-Nov:   ws.scm definstrument macro changed to support :notehook arg in with-sound, and *definstrument-hook* for CM.\n\
 27-Oct:  effects-utils.scm to make various added menus independent.\n\
 12-Oct.  snd 7.16.\n\
-3-Oct:   snd-g|xprefs.c, preferences-dialog function.\n\
-26-Sep:  save-region-dialog, more buttons.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",
