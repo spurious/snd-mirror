@@ -4,24 +4,15 @@
 /* preferences dialog; layout design taken from webmail
  */
 
-/* TODO: preset packages: dlp, km: check out gui.scm et al, keybinding sets
-           should we actually load these packages and reflect all settings? -- no easy way to "unload" them.
-           dlp: load misc.scm "include Dave's tutorial package"
-           ksm: load snd_conffile.scm? "include Kjetil's real time package"
-         are these two compatible?
-
-   TODO: remember state for subsequent load (extensions.scm) (remember-sound-state) remember_sound_state()
-           reflect: remembering-sound-state (need ruby side)
-           but there's also remember_all_sound_properties -- perhaps toggle if ruby, or def file arg
-	     remember_all_sound_properties(props_file)
-           this could be implemented in scheme via the db stuff in nb.scm
-	   "remember sound state", "within one run of Snd", "across runs"
-
+/* TODO: keybinding sets (to mimic other editors)
    SOMEDAY: completions and more verbose error msgs [and sscanf->string_to_* for better checks]
-   SOMEDAY: gtk side of icon box
+   SOMEDAY: gtk side of icon box (are there others?)
    TODO: ruby extensions.rb side of set_global_sync
+   TODO: ruby side of remembering-sound-state, scheme side of across runs, both need across connection in save/find
+           state filename: ~/.snd-properties.db
 
    abandoned:
+       preset packages: dlp, ksm
        emacs setup
          how to tie into emacs?
        sound file extensions (text + some display of current set)
@@ -1831,6 +1822,36 @@ static void sync2_choice(prefs_info *prf)
   XmToggleButtonSetState(prf->toggle, false, false);    
 }
 
+/* ---------------- remember sound state ---------------- */
+
+static int global_remember_sound_state_choice = 0; /* 0=none, 1=local, 2=global+not local, 3=local+global */
+
+static void reflect_remember_sound_state_choice(prefs_info *prf)
+{
+  global_remember_sound_state_choice = find_remember_sound_state_choice();
+  XmToggleButtonSetState(prf->toggle, global_remember_sound_state_choice & 1, false);
+  XmToggleButtonSetState(prf->toggle2, global_remember_sound_state_choice & 2, false);
+}
+
+static void save_remember_sound_state_choice(prefs_info *prf, FILE *fd)
+{
+  if (global_remember_sound_state_choice != 0)
+    save_remember_sound_state_choice_1(prf, fd, global_remember_sound_state_choice);
+}
+
+static void remember_sound_state_1_choice(prefs_info *prf)
+{
+  if (XmToggleButtonGetState(prf->toggle) == XmSET)
+    global_remember_sound_state_choice |= 1;
+  else global_remember_sound_state_choice &= 2;
+}
+
+static void remember_sound_state_2_choice(prefs_info *prf)
+{
+  if (XmToggleButtonGetState(prf->toggle2) == XmSET)
+    global_remember_sound_state_choice |= 2;
+  else global_remember_sound_state_choice &= 1;
+}
 
 /* ---------------- show-controls ---------------- */
 
@@ -4979,6 +5000,15 @@ widget_t start_preferences_dialog(void)
 				     sync1_choice, sync2_choice);
     remember_pref(prf, reflect_sync_choice, save_sync_choice);
     prf->help_func = sync_choice_help;
+
+    current_sep = make_inter_variable_separator(dpy_box, prf->label);
+    prf = prefs_row_with_two_toggles("restore a sound's state if reopened later", "remember-sound-state",
+				     "within one run", find_remember_sound_state_choice() & 1,
+				     "across runs", find_remember_sound_state_choice() & 2,
+				     dpy_box, current_sep, 
+				     remember_sound_state_1_choice, remember_sound_state_2_choice);
+    remember_pref(prf, reflect_remember_sound_state_choice, save_remember_sound_state_choice);
+    prf->help_func = remember_sound_state_choice_help;
 
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
     prf = prefs_row_with_toggle("show the control panel upon opening a sound", S_show_controls,

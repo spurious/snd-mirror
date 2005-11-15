@@ -1599,6 +1599,38 @@ static void sync2_choice(prefs_info *prf)
 }
 
 
+/* ---------------- remember sound state ---------------- */
+
+static int global_remember_sound_state_choice = 0; /* 0=none, 1=local, 2=global+not local, 3=local+global */
+
+static void reflect_remember_sound_state_choice(prefs_info *prf)
+{
+  global_remember_sound_state_choice = find_remember_sound_state_choice();
+  set_toggle_button(prf->toggle, global_remember_sound_state_choice & 1, false, (void *)prf);
+  set_toggle_button(prf->toggle2, global_remember_sound_state_choice & 2, false, (void *)prf);
+}
+
+static void save_remember_sound_state_choice(prefs_info *prf, FILE *fd)
+{
+  if (global_remember_sound_state_choice != 0)
+    save_remember_sound_state_choice_1(prf, fd, global_remember_sound_state_choice);
+}
+
+static void remember_sound_state_1_choice(prefs_info *prf)
+{
+  if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prf->toggle)))
+    global_remember_sound_state_choice |= 1;
+  else global_remember_sound_state_choice &= 2;
+}
+
+static void remember_sound_state_2_choice(prefs_info *prf)
+{
+  if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prf->toggle2)))
+    global_remember_sound_state_choice |= 2;
+  else global_remember_sound_state_choice &= 1;
+}
+
+
 /* ---------------- show-controls ---------------- */
 
 static void reflect_show_controls(prefs_info *prf) 
@@ -4408,6 +4440,15 @@ widget_t start_preferences_dialog(void)
 				     sync1_choice, sync2_choice);
     remember_pref(prf, reflect_sync_choice, save_sync_choice);
     prf->help_func = sync_choice_help;
+
+    current_sep = make_inter_variable_separator(dpy_box);
+    prf = prefs_row_with_two_toggles("restore a sound's state if reopened later", "remember-sound-state",
+				     "within one run", find_remember_sound_state_choice() & 1,
+				     "across runs", find_remember_sound_state_choice() & 2,
+				     dpy_box,
+				     remember_sound_state_1_choice, remember_sound_state_2_choice);
+    remember_pref(prf, reflect_remember_sound_state_choice, save_remember_sound_state_choice);
+    prf->help_func = remember_sound_state_choice_help;
 
     current_sep = make_inter_variable_separator(dpy_box);
     prf = prefs_row_with_toggle("show the control panel upon opening a sound", S_show_controls,

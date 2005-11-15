@@ -1385,7 +1385,7 @@ void xen_gc_mark(XEN val);
   #define XEN_TO_C_DOUBLE_WITH_CALLER(a, b) XEN_TO_C_DOUBLE(a)
   #define XEN_NUMBER_OR_BOOLEAN_IF_BOUND_P(Arg)  ((XEN_BOOLEAN_P(Arg))     || (XEN_NOT_BOUND_P(Arg)) || (XEN_NUMBER_P(Arg)))
   #define XEN_NUMBER_OR_BOOLEAN_P(Arg)           ((XEN_BOOLEAN_P(Arg))     || (XEN_NUMBER_P(Arg)))
-  #define XEN_ULONG_IF_BOUND_P(Arg)              ((XEN_NOT_BOUND_P(Arg)) || (XEN_ULONG_P(Arg)))
+  #define XEN_ULONG_IF_BOUND_P(Arg)              ((XEN_NOT_BOUND_P(Arg))   || (XEN_ULONG_P(Arg)))
 
   #if HAVE_GUILE
     #if HAVE_SCM_IS_SIMPLE_VECTOR

@@ -6,6 +6,9 @@
 #if HAVE_RUBY
   #define LANG_NAME "ruby"
 #endif
+#ifndef LANG_NAME
+  #define LANG_NAME "source"
+#endif
 
 static int prefs_size = 0, prefs_top = 0;
 static prefs_info **prefs = NULL;
@@ -335,7 +338,15 @@ static void sync_choice_help(prefs_info *prf)
 	   "Many operations can operate on all channels at once, or only on the currently selected \
 channel.  If either of these buttons is selected, such operations operate either on all channels \
 within each sound (but not across sounds), or on all current channels at once.  The default is \
-to operate only on the selected channel (neither button selected).",
+to operate only on the selected channel (neither button selected). Not fully implemented yet.",
+	   WITH_WORD_WRAP);
+}
+
+static void remember_sound_state_choice_help(prefs_info *prf)
+{
+  snd_help(prf->var_name,
+	   "This option causes Snd to save most of a sound's display state when it is closed, \
+and if that same sound is later re-opened, Snd restores the previous state. Not fully implemented yet.",
 	   WITH_WORD_WRAP);
 }
 
@@ -396,7 +407,7 @@ snap mix to beat, delete, play, reverse, save, and transpose track, set track am
 static void icon_box_help(prefs_info *prf)
 {
   snd_help(prf->var_name,
-	   "This option adds a top-level box full of various handy icons.",
+	   "This option adds a top-level box full of various handy icons.  Not implemented in Gtk yet.",
 	   WITH_WORD_WRAP);
 }
 #endif
@@ -512,6 +523,20 @@ static void save_sync_choice_1(prefs_info *prf, FILE *fd, int choice)
 #if HAVE_RUBY
   fprintf(fd, "require \"extensions\"\n");
   fprintf(fd, "set_global_sync(%d)\n", choice);
+#endif
+}
+
+static void save_remember_sound_state_choice_1(prefs_info *prf, FILE *fd, int choice)
+{
+#if HAVE_SCHEME
+  fprintf(fd, "(if (not (provided? 'snd-extensions.scm)) (load-from-path \"extensions.scm\"))\n");
+  fprintf(fd, "(remember-sound-state)\n");
+#endif
+#if HAVE_RUBY
+  fprintf(fd, "require \"extensions\"\n");
+  if (choice & 2)
+    fprintf(fd, "remember_all_sound_properties\n");
+  else fprintf(fd, "remember_sound_state\n");
 #endif
 }
 
@@ -647,7 +672,10 @@ static char *find_sources(void) /* returns full filename if found else null */
 #if HAVE_RUBY
   #define BASE_FILE "extensions.rb"
   file = rb_find_file(C_TO_XEN_STRING(BASE_FILE));
-#endif  
+#endif
+#ifndef BASE_FILE
+  #define BASE_FILE "extensions.scm"
+#endif
   if (XEN_STRING_P(file))
     {
       char *str;
@@ -690,6 +718,13 @@ static int find_sync_choice(void)
 {
   if (XEN_DEFINED_P("global-sync-choice"))
     return(XEN_TO_C_INT(XEN_NAME_AS_C_STRING_TO_VALUE("global-sync-choice")));
+  return(0);
+}
+
+static int find_remember_sound_state_choice(void)
+{
+  if (XEN_DEFINED_P("remembering-sound-state"))
+    return(XEN_TO_C_INT(XEN_NAME_AS_C_STRING_TO_VALUE("remembering-sound-state")));
   return(0);
 }
 
