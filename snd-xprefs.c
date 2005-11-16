@@ -5,11 +5,12 @@
  */
 
 /* TODO: keybinding sets (to mimic other editors)
-   SOMEDAY: completions and more verbose error msgs [and sscanf->string_to_* for better checks]
+   SOMEDAY: completions and more verbose error msgs [and sscanf->string_to_* for better checks (21)]
    SOMEDAY: gtk side of icon box (are there others?)
    TODO: ruby extensions.rb side of set_global_sync
    TODO: ruby side of remembering-sound-state, scheme side of across runs, both need across connection in save/find
-           state filename: ~/.snd-properties.db
+           state filename: ~/.snd-properties.db (scheme assumes saved state file)
+	   scm: add save data to close hook, add load data (if not loaded) to open hook?
 
    abandoned:
        preset packages: dlp, ksm

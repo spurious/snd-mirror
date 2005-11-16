@@ -2,7 +2,7 @@
 
 (if (not (provided? 'snd-snd7.scm)) (load-from-path "snd7.scm"))           ; backward-mix
 (if (not (provided? 'snd-play.scm)) (load-from-path "play.scm"))           ; play-until-c-g
-(if (not (provided? 'snd-snd-motif.scm)) (load-from-path "snd-motif.scm")) ; add-main-pane
+(if (not (provided? 'snd-snd-motif.scm)) (load-from-path "snd-motif.scm")) ; add-main-pane, add-tooltip (etc)
 (if (not (provided? 'snd-new-icons.scm)) (load-from-path "new-icons.scm"))
 
 (define (add-listener-pane name type args)
@@ -76,7 +76,13 @@
          (XtAddCallback button XmNactivateCallback (car callback-and-tooltip))
          (if (string? (cadr callback-and-tooltip))
              (add-tooltip button (cadr callback-and-tooltip)))))
-     (list icon-open-file icon-close-file icon-save-as icon-open-mix-file icon-rec-pane icon-env-edit icon-regions-browser icon-mix-pane icon-undo-it icon-redo-it icon-full-go icon-play-direction-forward icon-loop-play icon-start-of-file icon-start-of-window icon-back-one-window icon-back-one-sample icon-mid-window icon-forward-one-sample icon-forward-one-window icon-end-of-window icon-end-of-file icon-last-mix-point icon-next-mix-point icon-zooming-in icon-zooming-out icon-exit-it)
+
+     (list icon-open-file icon-close-file icon-save-as icon-open-mix-file icon-rec-pane icon-env-edit 
+	   icon-regions-browser icon-mix-pane icon-undo-it icon-redo-it icon-full-go icon-play-direction-forward 
+	   icon-loop-play icon-start-of-file icon-start-of-window icon-back-one-window icon-back-one-sample 
+	   icon-mid-window icon-forward-one-sample icon-forward-one-window icon-end-of-window icon-end-of-file 
+	   icon-last-mix-point icon-next-mix-point icon-zooming-in icon-zooming-out icon-exit-it)
+
      (list
            (list (lambda (w c i) 
 		   (open-file-dialog))

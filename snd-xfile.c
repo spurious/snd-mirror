@@ -24,11 +24,9 @@
  *       or similarly, stops at "ok", starts src, clicks ok?
  * TODO: edit-properties dialog (extension of edit-header)
  * PERHAPS: audio:settings for display, perhaps reset -- as opposed to using the recorder
- * TODO: in mix/insert: panel for mix at cursor/beginning/end/mark/sample (num)
  * TODO: add|delete-file-filter, file-filters tied to all file dialogs (panel of radio buttons where just sounds is now)
  *       the sorters could be handled similarly -- a panel of radio buttons with name chosen by default
  *       would need local versions of the sort_choice variable -- use default searcher for all choices
- * TODO: will need at least a reset button for the vf env, perhaps reset for entire vf
  * TODO: no need for vf update button -- what to replace it with in fam case?
  */
 
@@ -4611,7 +4609,7 @@ static void vf_amp_env_resize(Widget w, XtPointer context, XtPointer info)
    */
 }
 
-void vf_amp_env_redraw(Widget w, view_files_info *vdat)
+static void vf_amp_env_redraw(Widget w, view_files_info *vdat)
 {
   vf_amp_env_resize(w, (void *)vdat, NULL);
 }
@@ -4663,6 +4661,16 @@ static void vf_drawer_button_release(Widget w, XtPointer context, XEvent *event,
   vf_amp_env_resize(w, context, NULL);
 }
 
+void vf_set_amp_env(view_files_info *vdat, env *new_e)
+{
+  if (!vdat) return;
+  if (vdat->amp_env) free_env(vdat->amp_env);
+  vdat->amp_env = copy_env(new_e);
+  if ((vdat->dialog) &&
+      (widget_is_active(vdat->dialog)))
+    vf_amp_env_redraw(vdat->env_drawer, vdat);
+}
+
 static void blue_textfield_unfocus_callback(Widget w, XtPointer context, XtPointer info)
 {
   if (!(ss->using_schemes)) 
@@ -4696,6 +4704,14 @@ void vf_reflect_sort_choice_in_menu(view_files_info *vdat)
       set_sensitive(vdat->sort_items[i], vdat->sorter != (SORT_BY_PROC + i));
 }
 
+static void view_files_reset_callback(Widget w, XtPointer context, XtPointer info) 
+{
+  view_files_info *vdat = (view_files_info *)context;
+  vf_set_amp(vdat, 1.0);
+  vf_set_speed(vdat, 1.0);
+  vf_set_amp_env(vdat, default_env(1.0, 1.0));
+}
+
 widget_t start_view_files_dialog_1(view_files_info *vdat, bool managed)
 {
   if (!(vdat->dialog))
@@ -4703,7 +4719,7 @@ widget_t start_view_files_dialog_1(view_files_info *vdat, bool managed)
       int i, n;
       Arg args[20];
       XmString xdismiss, xhelp, titlestr, new_viewer_str, s1, bstr;
-      Widget mainform, viewform, leftform;
+      Widget mainform, viewform, leftform, reset_button;
       Widget left_title_sep, add_label, sep1, sep2, sep3, sep4, sep5, sep6, sep7, sort_cascade_menu;
       Widget plw, rlw, sbar;
       XtCallbackList n1, n2, n3, n4;
@@ -4731,7 +4747,17 @@ widget_t start_view_files_dialog_1(view_files_info *vdat, bool managed)
       XtAddCallback(vdat->dialog, XmNokCallback,     view_files_dismiss_callback,    (XtPointer)vdat);
       XtAddCallback(vdat->dialog, XmNcancelCallback, view_files_new_viewer_callback, (XtPointer)vdat);
 
+      n = 0;
+      if (!(ss->using_schemes)) 
+	{
+	  XtSetArg(args[n], XmNbackground, ss->sgx->reset_button_color); n++;
+	  XtSetArg(args[n], XmNarmColor, ss->sgx->pushed_button_color); n++;
+	}
+      reset_button = XtCreateManagedWidget(_("Reset"), xmPushButtonGadgetClass, vdat->dialog, args, n);
+      XtAddCallback(reset_button, XmNactivateCallback, view_files_reset_callback, (XtPointer)vdat);
+
       XmStringFree(xhelp);
+
       XmStringFree(xdismiss);
       XmStringFree(titlestr);
       XmStringFree(new_viewer_str);
@@ -4740,10 +4766,10 @@ widget_t start_view_files_dialog_1(view_files_info *vdat, bool managed)
 	{
 	  XtVaSetValues(XmMessageBoxGetChild(vdat->dialog, XmDIALOG_OK_BUTTON),     XmNarmColor,   ss->sgx->pushed_button_color, NULL);
 	  XtVaSetValues(XmMessageBoxGetChild(vdat->dialog, XmDIALOG_HELP_BUTTON),   XmNarmColor,   ss->sgx->pushed_button_color, NULL);
-	  XtVaSetValues(XmMessageBoxGetChild(vdat->dialog, XmDIALOG_CANCEL_BUTTON), XmNarmColor,   ss->sgx->reset_button_color,  NULL);
+	  XtVaSetValues(XmMessageBoxGetChild(vdat->dialog, XmDIALOG_CANCEL_BUTTON), XmNarmColor,   ss->sgx->pushed_button_color,  NULL);
 	  XtVaSetValues(XmMessageBoxGetChild(vdat->dialog, XmDIALOG_OK_BUTTON),     XmNbackground, ss->sgx->quit_button_color,   NULL);
 	  XtVaSetValues(XmMessageBoxGetChild(vdat->dialog, XmDIALOG_HELP_BUTTON),   XmNbackground, ss->sgx->help_button_color,   NULL);
-	  XtVaSetValues(XmMessageBoxGetChild(vdat->dialog, XmDIALOG_CANCEL_BUTTON), XmNbackground, ss->sgx->reset_button_color,  NULL);
+	  XtVaSetValues(XmMessageBoxGetChild(vdat->dialog, XmDIALOG_CANCEL_BUTTON), XmNbackground, ss->sgx->doit_button_color,  NULL);
 	}
 
       n = 0;

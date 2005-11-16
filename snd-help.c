@@ -1281,8 +1281,9 @@ If you click the 'Sound Files Only' button, only those files in the current dire
 void mix_file_dialog_help(void)
 {
   snd_help_with_xrefs("Mix File",
-"The file will be mixed (added into) at the cursor in the selected sound. If you click the 'Sound Files Only' button, \
-only those files in the current directory that look vaguely like sound files will be displayed.",
+"The file will be mixed (added into the selected sound) at the cursor. If you click the 'Sound Files Only' button, \
+only those files in the current directory that look vaguely like sound files will be displayed.  For more control \
+of the initial mix, use the View:Files dialog.  To edit the mix, use the View:Mixes dialog.",
 		      WITH_WORD_WRAP,
 		      snd_xrefs("Mix"),
 		      snd_xref_urls("Mix"));
@@ -1291,8 +1292,9 @@ only those files in the current directory that look vaguely like sound files wil
 void insert_file_dialog_help(void)
 {
   snd_help_with_xrefs("Insert File",
-"The file will be inserted (pasted in) at the cursor in the selected sound. If you click the 'Sound Files Only' button, \
-only those files in the current directory that look vaguely like sound files will be displayed.",
+"The file will be inserted (pasted into the selected file) at the cursor. If you click the 'Sound Files Only' button, \
+only those files in the current directory that look vaguely like sound files will be displayed.  For more control \
+of the insertion, use the View:Files dialog.",
 		      WITH_WORD_WRAP,
 		      snd_xrefs("Insert"),
 		      snd_xref_urls("Insert"));

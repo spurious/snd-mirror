@@ -4029,9 +4029,14 @@ static void vf_amp_env_resize(view_files_info *vdat, GtkWidget *w)
   env_editor_display_env(vdat->spf, vdat->amp_env, vdat->env_ax, NULL, 0, 0, widget_width(w), widget_height(w), NOT_PRINTING);
 }
 
-void vf_amp_env_redraw(GtkWidget *w, view_files_info *vdat)
+void vf_set_amp_env(view_files_info *vdat, env *new_e)
 {
-  vf_amp_env_resize(vdat, w);
+  if (!vdat) return;
+  if (vdat->amp_env) free_env(vdat->amp_env);
+  vdat->amp_env = copy_env(new_e);
+  if ((vdat->dialog) &&
+      (widget_is_active(vdat->dialog)))
+    vf_amp_env_resize(vdat, vdat->env_drawer);
 }
 
 static gboolean vf_drawer_button_press(GtkWidget *w, GdkEventButton *ev, gpointer data)
@@ -4100,27 +4105,13 @@ void vf_reflect_sort_choice_in_menu(view_files_info *vdat)
       set_sensitive(vdat->sort_items[i], vdat->sorter != (SORT_BY_PROC + i));
 }
 
-#if 0
-static void paint_it_blue(widget_t frame)
+static void view_files_reset_callback(GtkWidget *w, gpointer context) 
 {
-  GList *children, *l;
-  children = gtk_container_get_children(GTK_CONTAINER(frame));
-  for (l = children; l; l = l->next)
-    {
-      GtkWidget *widget;
-      widget = GTK_WIDGET(l->data);
-      if (GTK_IS_CONTAINER(widget))
-	paint_it_blue(widget);
-      else
-	{
-	  fprintf(stderr,"change %p\n", widget);
-	  gtk_widget_modify_bg(widget, GTK_STATE_NORMAL, ss->sgx->lighter_blue);
-	  gtk_widget_modify_base(widget, GTK_STATE_NORMAL, ss->sgx->lighter_blue);
-	}
-    }
-  g_list_free(children);
+  view_files_info *vdat = (view_files_info *)context;
+  vf_set_amp(vdat, 1.0);
+  vf_set_speed(vdat, 1.0);
+  vf_set_amp_env(vdat, default_env(1.0, 1.0));
 }
-#endif
 
 GtkWidget *start_view_files_dialog_1(view_files_info *vdat, bool managed)
 {
@@ -4129,7 +4120,7 @@ GtkWidget *start_view_files_dialog_1(view_files_info *vdat, bool managed)
       int i;
       GtkWidget *sep1, *cww, *rlw, *tophbox, *plw, *bbox, *add_label, *addbox;
       GtkWidget *sbar, *sitem, *newB;
-      GtkWidget *mainform, *leftform, *fileform, *helpB, *dismissB;
+      GtkWidget *mainform, *leftform, *fileform, *helpB, *dismissB, *resetB;
 
       vdat->dialog = snd_gtk_dialog_new();
       gtk_window_set_title(GTK_WINDOW(vdat->dialog), _("Files"));
@@ -4147,7 +4138,11 @@ GtkWidget *start_view_files_dialog_1(view_files_info *vdat, bool managed)
       dismissB = gtk_button_new_from_stock(GTK_STOCK_QUIT);
       gtk_widget_set_name(dismissB, "quit_button");
 
+      resetB = gtk_button_new_with_label(_("Reset"));
+      gtk_widget_set_name(resetB, "reset_button");
+
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(vdat->dialog)->action_area), dismissB, true, true, 10);
+      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(vdat->dialog)->action_area), resetB, true, true, 10);
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(vdat->dialog)->action_area), newB, true, true, 10);
       gtk_box_pack_end(GTK_BOX(GTK_DIALOG(vdat->dialog)->action_area), helpB, true, true, 10);
 
@@ -4155,10 +4150,12 @@ GtkWidget *start_view_files_dialog_1(view_files_info *vdat, bool managed)
       SG_SIGNAL_CONNECT(dismissB, "clicked", view_files_dismiss_callback, (gpointer)vdat);
       SG_SIGNAL_CONNECT(newB, "clicked", view_files_new_viewer_callback, (gpointer)vdat);
       SG_SIGNAL_CONNECT(helpB, "clicked", view_files_help_callback, (gpointer)vdat);
+      SG_SIGNAL_CONNECT(resetB, "clicked", view_files_reset_callback, (gpointer)vdat);
 
       gtk_widget_show(dismissB);
       gtk_widget_show(newB);
       gtk_widget_show(helpB);
+      gtk_widget_show(resetB);
 
       mainform = gtk_hpaned_new();
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(vdat->dialog)->vbox), mainform, true, true, 0);

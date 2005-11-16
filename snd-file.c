@@ -3655,19 +3655,9 @@ static env *view_files_amp_env(widget_t dialog)
   return(NULL);
 }
 
-static env *view_files_set_amp_env(widget_t dialog, env *new_e)
+static void view_files_set_amp_env(widget_t dialog, env *new_e)
 {
-  view_files_info *vdat;
-  vdat = vf_dialog_to_info(dialog);
-  if (vdat)
-    {
-      if (vdat->amp_env) free_env(vdat->amp_env);
-      vdat->amp_env = copy_env(new_e);
-      if ((vdat->dialog) &&
-	  (widget_is_active(vdat->dialog)))
-	vf_amp_env_redraw(vdat->env_drawer, vdat);
-    }
-  return(new_e);
+  vf_set_amp_env(vf_dialog_to_info(dialog), new_e);
 }
 
 static int view_files_local_sort(widget_t dialog)
