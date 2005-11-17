@@ -26567,6 +26567,8 @@ EDITS: 5
 		(fneq val1 -0.8804))
 	    (snd-display ";mus-random repeated: ~A ~A?" val val1)))
       (reset-hook! after-open-hook)
+      (reset-hook! close-hook)
+      (reset-hook! open-hook)
       (run-hook after-test-hook 14)
       )
     )

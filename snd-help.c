@@ -417,6 +417,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+18-Nov:  moved snd-apropos to snd7.scm.\n\
 15-Nov:  sync-max.\n\
 12-Nov:  all dlp directory files moved to main directory (to simplify load-path handling).\n\
          SND_PATH environment variable (optional load path directory list).\n\

@@ -123,16 +123,6 @@ Version info:
 ----------------------------------------------------------------
 
 The customization/extension languages are either Guile or Ruby.
-Guile is available in the Gnu distributions:
-
-  ftp://ftp.gnu.org/gnu/guile/guile-1.6.4.tar.gz
-
-To include guile in Snd, either use the configure script (which should
-be able to find the guile library automatically), or go to the
-relevant makefile, set the CFLAGS variable to include 'guile-config
-compile', and set the LIBS variable to include 'guile-config link'.
-Only guile 1.3.4 or later is supported.
-
 
 Much of Snd's functionality is loaded as needed from the Scheme or Ruby
 files found in the tarball (*.scm and *.rb).  You can run Snd without 
@@ -145,7 +135,7 @@ those files to the "load-path".  In Scheme,
 to find a file to load.  Here I've added "/home/bil/cl" so that Snd
 can find its sources no matter what directory I run it in.  If you 
 create a file named ~/.snd_guile and put such a line in it, you'll
-never have to think about it again.
+never have to think about it again.  
 
 In Ruby, you can use the RUBYLIB (or SND_PATH) environment variable,
 or add the directory to the $LOAD_PATH variable (also known as "$:"):
@@ -155,17 +145,6 @@ or add the directory to the $LOAD_PATH variable (also known as "$:"):
 or perhaps better:
 
   $:.push("/home/bil/cl")
-
-
-There are RPM packages of Snd available at the ccrma-ftp site
-mentioned above: snd-*.i386.rpm and snd-*.src.rpm.  
-See also http://ccrma.stanford.edu/planetccrma/software/.
-
-
-Included with Snd are four command-line programs that might
-be of interest: sndplay, sndrecord, sndinfo, and audinfo:
-
-  make sndplay
 
 
 ----------------------------------------------------------------
@@ -195,6 +174,12 @@ When prompted for a password for anonymous, press the Enter key.
 After that, you go to your local cvs-snd directory and
 
        cvs update 
+
+
+Included with Snd are four command-line programs that might
+be of interest: sndplay, sndrecord, sndinfo, and audinfo:
+
+  make sndplay
 
 
 ----------------------------------------------------------------
@@ -233,7 +218,7 @@ Plus many other contributions from
 
 In terms of number of lines, the languages used in Snd/Sndlib are:
 C, Scheme, Ruby, Forth, m4, Common Lisp, Emacs Lisp, javascript,
-expect, and postscript.
+expect, and postscript (altogether more than 500,000 lines).
 
 
 To get the German version at run-time, (setlocale LC_ALL "de_DE").

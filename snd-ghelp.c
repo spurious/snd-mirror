@@ -44,7 +44,7 @@ static int old_help_text_width = 0;
 static gboolean help_expose_callback(GtkWidget *w, GdkEventExpose *ev, gpointer data)
 {
   int curwid;
-  curwid = widget_width(help_dialog); /* was h elp_text, but I'm getting shivering in expose events */
+  curwid = widget_width(help_dialog); /* was help_text, but I'm getting shivering in expose events */
   if (old_help_text_width == 0)
     old_help_text_width = curwid;
   else

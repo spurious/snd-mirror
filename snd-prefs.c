@@ -530,7 +530,7 @@ static void save_remember_sound_state_choice_1(prefs_info *prf, FILE *fd, int ch
 {
 #if HAVE_SCHEME
   fprintf(fd, "(if (not (provided? 'snd-extensions.scm)) (load-from-path \"extensions.scm\"))\n");
-  fprintf(fd, "(remember-sound-state)\n");
+  fprintf(fd, "(remember-sound-state %d)\n", choice);
 #endif
 #if HAVE_RUBY
   fprintf(fd, "require \"extensions\"\n");

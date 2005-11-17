@@ -379,7 +379,6 @@ If 'check' is #f, the hooks are removed."
 					   ""))
 			       (lambda (snd)
 				 (revert-sound ind)
-;				 (close-sound ind)
 				 (if exiting (exit)))
 			       (lambda (snd)
 				 #f)
@@ -414,39 +413,10 @@ If 'check' is #f, the hooks are removed."
 ;;; -------- remember-sound-state
 
 (define remembering-sound-state 0) ; for prefs
+(define remember-sound-filename ".snd-remember-sound") ; should this be in the home directory?
 
-(define (remember-sound-state)
+(define* (remember-sound-state #:optional (choice 3))
   "(remember-sound-state) remembers the state of a sound when it is closed, and if it is subsquently re-opened, restores that state"
-
-  (define (print-readably fd field depth first)
-    (if (not first) (format fd " "))
-    (if (string? field)
-	(format fd "~S" field)
-	(if (number? field)
-	    (if (and (exact? field)
-		     (rational? field)) ; get these out of our way before float stuff
-		(format fd "~A" field)
-		(format fd "~,4F" field))
-	    (if (procedure? field)
-		(format fd "~A" (procedure-source field))
-		(if (list? field)
-		    (begin
-		      (if (or (= depth 1)
-			      (> (length field) 12))
-			  (begin
-			    (format fd "~%")
-			    (do ((i 0 (1+ i)))
-				((= i depth))
-			      (format fd "  "))))
-		      (format fd "(")
-		      (let ((fst #t))
-			(for-each 
-			 (lambda (val)
-			   (print-readably fd val (1+ depth) fst)
-			   (set! fst #f))
-			 field))
-		      (format fd ")"))
-		    (format fd "~A" field))))))
 
   (let ((states '())
 	(sound-funcs (list sync cursor-follows-play selected-channel show-controls read-only
@@ -458,6 +428,7 @@ If 'check' is #f, the hooks are removed."
 			   reverb-control-decay reverb-control-feedback reverb-control-length reverb-control-length-bounds
 			   reverb-control-lowpass reverb-control-scale reverb-control-scale-bounds
 			   speed-control speed-control-bounds speed-control-style speed-control-tones))
+
 	(channel-funcs (list time-graph? transform-graph? lisp-graph? x-bounds y-bounds cursor cursor-size
 			     cursor-style show-marks show-y-zero show-grid wavo-hop wavo-trace max-transform-peaks
 			     show-transform-peaks fft-log-frequency fft-log-magnitude verbose-cursor zero-pad
@@ -465,6 +436,37 @@ If 'check' is #f, the hooks are removed."
 			     transform-type transform-normalization time-graph-style show-mix-waveforms dot-size
 			     x-axis-style show-axes graphs-horizontal lisp-graph-style transform-graph-style
 			     grid-density)))
+
+    (define (print-readably fd field depth first)
+      (if (not first) (format fd " "))
+      (if (string? field)
+	  (format fd "~S" field)
+	  (if (number? field)
+	      (if (and (exact? field)
+		       (rational? field)) ; get these out of our way before float stuff
+		  (format fd "~A" field)
+		  (format fd "~,4F" field))
+	      (if (procedure? field)
+		  (format fd "~A" (procedure-source field))
+		  (if (list? field)
+		      (begin
+			(if (or (= depth 1)
+				(> (length field) 12))
+			    (begin
+			      (format fd "~%")
+			      (do ((i 0 (1+ i)))
+				  ((= i depth))
+				(format fd "  "))))
+			(format fd "(")
+			(let ((fst #t))
+			  (for-each 
+			   (lambda (val)
+			     (print-readably fd val (1+ depth) fst)
+			     (set! fst #f))
+			   field))
+			(format fd ")"))
+		      (format fd "~A" field))))))
+
     (define saved-state
       (make-procedure-with-setter
        (lambda (snd)
@@ -478,70 +480,96 @@ If 'check' is #f, the hooks are removed."
 			       (string=? (car n) (file-name snd)))
 			     states))))))
 
-    (add-hook! close-hook (lambda (snd)
-			    ;; save current state
-			    (set! (saved-state snd)
-				  (list (file-name snd)
-					(file-write-date (file-name snd))
-					(map (lambda (f) 
-					       (f snd)) 
-					     sound-funcs)
-					(map (lambda (sc)
-					       (map (lambda (f)
-						      (f (car sc) (cadr sc)))
-						    channel-funcs))
-					     (let ((scs '()))
-					       (do ((i 0 (1+ i)))
-						   ((= i (chans snd)))
-						 (set! scs (cons (list snd i) scs)))
-					       (reverse scs)))))
-			    #f))
-    (add-hook! after-open-hook (lambda (snd)
-				 ;; restore previous state, if any
-				 (let ((state (saved-state snd))) ; removes old state from current list
-				   (if state
-				       (if (and (= (file-write-date (file-name snd)) (cadr state))
-						(= (chans snd) (length (cadddr state))))
-					   ;; otherwise all bets are off (anything could have changed)
-					   ;; we need the chans check because auto-test files seem to have confused write dates
-					   (begin
-					     (for-each (lambda (f val)
-							 (set! (f snd) val))
-						       sound-funcs
-						       (caddr state))
-					     (do ((chn 0 (1+ chn)))
-						 ((= chn (chans snd)))
-					       (dynamic-wind
-						   (lambda () (set! (squelch-update snd chn) #t))
-						   (lambda ()
-						     (for-each (lambda (f val)
-								 (if (and (list? val)
-									  (not (null? val))
-									  (eq? (car val) 'lambda))
-								     (set! (f snd chn) (eval val (interaction-environment)))
-								     ;; not sure this is the right eval environment, but it appears to work
-								     (set! (f snd chn) val)))
-							       channel-funcs
-							       (list-ref (cadddr state) chn)))
-						   (lambda () (set! (squelch-update snd chn) #f)))
-					       (if (time-graph? snd chn) (update-time-graph snd chn))
-					       (if (transform-graph? snd chn) (update-transform-graph snd chn))
-					       )))))))
-    ;; next hooks save the current states info in the saved state file
-    (add-hook! open-hook (lambda (filename)
-			   (if (and (null? states)
-				    (defined? '-saved-remember-sound-states-states-))
-			       (set! states -saved-remember-sound-states-states-))
-			   #f))
-    (add-hook! after-save-state-hook (lambda (filename)
-				       (if (not (null? states))
-					   (let ((fd (open filename (logior O_RDWR O_APPEND))))
-					     (format fd "~%~%;;; from remember-sound-state in extensions.scm~%")
-					     (format fd "(define -saved-remember-sound-states-states-~%  '")
-					     (print-readably fd states 0 #t)
-					     (format fd ")~%")
-					     (close fd)))))
-    (set! remembering-sound-state 1)
+    (define (remember-sound-at-close snd)
+      ;; save current state in list (name write-date (snd props) (chan props))
+      (set! (saved-state snd)
+	    (list (file-name snd)
+		  (file-write-date (file-name snd))
+		  (map (lambda (f) 
+			 (f snd)) 
+		       sound-funcs)
+		  (map (lambda (sc)
+			 (map (lambda (f)
+				(f (car sc) (cadr sc)))
+			      channel-funcs))
+		       (let ((scs '()))
+			 (do ((i 0 (1+ i)))
+			     ((= i (chans snd)))
+			   (set! scs (cons (list snd i) scs)))
+			 (reverse scs)))))
+      #f)
+
+    (define (remember-sound-at-open snd)
+      ;; restore previous state, if any
+      (let ((state (saved-state snd))) ; removes old state from current list
+	(if (and state
+		 (= (file-write-date (file-name snd)) (cadr state))
+		 (= (chans snd) (length (cadddr state)))
+		 (not (= choice 2)))
+	    ;; we need the chans check because auto-test files seem to have confused write dates
+	    (begin
+	      (for-each (lambda (f val)
+			  (set! (f snd) val))
+			sound-funcs
+			(caddr state))
+	      (do ((chn 0 (1+ chn)))
+		  ((= chn (chans snd)))
+		(dynamic-wind
+		    (lambda () (set! (squelch-update snd chn) #t))
+		    (lambda ()
+		      (for-each (lambda (f val)
+				  (if (and (list? val)
+					   (not (null? val))
+					   (eq? (car val) 'lambda))
+				      (set! (f snd chn) (eval val (interaction-environment)))
+				      ;; not sure this is the right eval environment, but it appears to work
+				      (set! (f snd chn) val)))
+				channel-funcs
+				(list-ref (cadddr state) chn)))
+		    (lambda () (set! (squelch-update snd chn) #f)))
+		(if (time-graph? snd chn) (update-time-graph snd chn))
+		(if (transform-graph? snd chn) (update-transform-graph snd chn)))))))
+
+    (define (remember-sound-at-start filename)
+      (if (and (null? states)
+	       (file-exists? remember-sound-filename))
+	  (begin
+	    (load remember-sound-filename)
+	    (set! states -saved-remember-sound-states-states-)))
+      #f)
+
+    (define (remember-sound-at-exit)
+      (if (not (null? states))
+	  (call-with-output-file remember-sound-filename
+	    (lambda (fd)
+	      (format fd "~%~%;;; from remember-sound-state in extensions.scm~%")
+	      (format fd "(define -saved-remember-sound-states-states-~%  '")
+	      (print-readably fd states 0 #t)
+	      (format fd ")~%"))))
+      #f)
+      
+    (if (or (= choice 0)  ; no remembering
+	    (= choice 1)) ; just within-run remembering
+	(begin
+	  (if (= choice 0)
+	      (begin
+		(remove-hook! close-hook remember-sound-at-close)
+		(remove-hook! after-open-hook remember-sound-at-open)))
+	  (remove-hook! open-hook remember-sound-at-start)
+	  (remove-hook! before-exit-hook remember-sound-at-exit)
+	  (if (file-exists? remember-sound-filename)
+	      (delele-file remember-sound-filename))))
+
+    (if (not (= choice 0))
+	(begin
+	  (add-hook! close-hook remember-sound-at-close)
+	  (add-hook! after-open-hook remember-sound-at-open)
+	  (if (not (= choice 1))
+	      (begin
+		(add-hook! open-hook remember-sound-at-start)
+		(add-hook! before-exit-hook remember-sound-at-exit)))))
+
+    (set! remembering-sound-state choice)
     'remembering!))
 
 

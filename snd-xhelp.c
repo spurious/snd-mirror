@@ -120,7 +120,11 @@ static char *find_highlighted_text(XmString xs)
 }
 
 static Widget related_items = NULL;
-static char *help_completer(char *text, void *data) {return(NULL);} /* TODO: is this right? surely we want a real completion here! */
+static char *help_completer(char *text, void *data) 
+{
+  return(command_completer(text, data));
+  /* might want to look at help topics too */
+} 
 
 static bool new_help(const char *pattern)
 {
@@ -585,7 +589,10 @@ Widget snd_help_with_xrefs(const char *subject, const char *helpstr, with_word_w
 
 void snd_help_append(const char *text)
 {
-  if (help_text) XmTextInsert(help_text, XmTextGetLastPosition(help_text), (char *)text);
+  if (help_text) 
+    XmTextInsert(help_text,
+		 XmTextGetLastPosition(help_text), 
+		 (char *)text);
 }
 
 void snd_help_back_to_top(void)

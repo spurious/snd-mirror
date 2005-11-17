@@ -357,3 +357,9 @@
 (if (not (defined? 'recorder-in-format)) (define recorder-in-format recorder-in-data-format))
 (if (not (defined? 'recorder-out-format)) (define recorder-out-format recorder-out-data-format))
 (if (not (defined? 'recorder-out-type)) (define recorder-out-type recorder-out-header-type))
+
+(define (snd-apropos val)
+  (with-output-to-string
+    (lambda ()
+      (apropos (if (string? val) val (object->string val))))))
+

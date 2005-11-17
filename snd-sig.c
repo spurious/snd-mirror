@@ -1733,8 +1733,6 @@ static void *pfilter_direct_finish(void *context)
   if (arg->new_origin) FREE(arg->new_origin);
   update_graph(arg->cp); 
   arg->cp->edit_hook_checked = false;
-  FREE(arg->data[0]);
-  FREE(arg->data);
   return(NULL);
 }
 #endif
@@ -2124,14 +2122,19 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, enved_prog
 		    snd_warning("join thread %d failed: %d\n", i, retcode);
 		}
 	      for (i = 0; i < si->chans; i++)
+		pfilter_direct_finish((void *)(args[i]));
+	      for (i = 0; i < si->chans; i++)
 		{
-		  pfilter_direct_finish((void *)(args[i]));
 		  sfs[i] = free_snd_fd(sfs[i]);
 		  if ((!errstr) && (args[i]->result))
 		    errstr = args[i]->result;
 		}
 	      for (i = 0; i < si->chans; i++)
-		FREE(args[i]);
+		{
+		  FREE(args[i]->data[0]);
+		  FREE(args[i]->data);
+		  FREE(args[i]);
+		}
 	      FREE(args);
 	      FREE(threads);
 	    }

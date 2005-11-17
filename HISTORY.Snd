@@ -1,5 +1,6 @@
 Snd change log
 
+  18-Nov:    moved snd-apropos to snd7.scm.
   15-Nov:    sync-max.
   12-Nov:    all dlp directory files moved to main directory (to simplify load-path handling).
              SND_PATH environment variable (optional load path directory list).

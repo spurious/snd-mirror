@@ -3658,10 +3658,6 @@ that name is presented in the New File dialog."
 
 #if HAVE_GUILE
   XEN_EVAL_C_STRING("(define (clm-print . args) (snd-print (apply format #f args)))");
-  XEN_EVAL_C_STRING("(define (" S_snd_apropos " val)\
-                       (with-output-to-string\
-                         (lambda ()\
-                           (apropos (if (string? val) val (object->string val))))))");
   XEN_EVAL_C_STRING("(read-set! keywords 'prefix)");
   XEN_EVAL_C_STRING("(print-enable 'source)");
   XEN_EVAL_C_STRING("(defmacro declare args #f)");     /* for optimizer */

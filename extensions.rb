@@ -884,7 +884,11 @@ sets 'key-val' pair in the given sound's property list and returns 'val'.")
   # remember_all_sound_properties() in ~/.snd-ruby.rb installs the hooks
   # default database is ~/.snd-properties.db
   # default tmp_snd_p is false (discarding `.*0000_00.snd' and `.*.rev.*' filenames)
+
+  $remembering_sound_state = 0 # for prefs
+
   def remember_all_sound_properties(database = ENV['HOME'] + "/.snd-properties", tmp_snd_p = false)
+    remembering_sound_state = 3
     rsp = Remember_sound_properties.new(database)
     unless $after_open_hook.member?("save-property-hook")
       $after_open_hook.add_hook!("save-property-hook") do |snd|
@@ -1416,6 +1420,7 @@ remembers the state of a sound when it is closed, \
 and if it is subsquently re-opened, restores that state")
   def remember_sound_state
     # states = {file_name => [date, sound_funcs, channel_funcs], ...}
+    remembering_sound_state = 1
     states = {}
     sound_funcs = [:sync, :cursor_follows_play]
     channel_funcs = [:time_graph?, :transform_graph?, :lisp_graph?, :x_bounds, :y_bounds,

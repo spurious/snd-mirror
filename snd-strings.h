@@ -563,7 +563,6 @@
 #define S_smooth_channel                "smooth-channel"
 #define S_smooth_selection              "smooth-selection"
 #define S_smooth_sound                  "smooth-sound"
-#define S_snd_apropos                   "snd-apropos"
 #define S_snd_error                     "snd-error"
 #define S_snd_error_hook                "snd-error-hook"
 #define S_snd_gcs                       "snd-gcs"
