@@ -8,6 +8,7 @@
    SOMEDAY: completions and more verbose error msgs [and sscanf->string_to_* for better checks (21)]
    SOMEDAY: gtk side of icon box (are there others?)
    TODO: ruby extensions.rb side of set_global_sync
+   TODO: mark_pane (motif side -- gtk not written)
 
    abandoned:
        preset packages: dlp, ksm
@@ -4028,6 +4029,27 @@ static void mix_waveform_height_text(prefs_info *prf)
     }
 }
 
+/* ---------------- mark-pane ---------------- */
+
+static bool include_mark_pane = false;
+
+static void reflect_mark_pane(prefs_info *prf) 
+{
+  include_mark_pane = find_mark_pane();
+  XmToggleButtonSetState(prf->toggle, include_mark_pane, false);
+}
+
+static void mark_pane_toggle(prefs_info *prf)
+{
+  include_mark_pane = (XmToggleButtonGetState(prf->toggle) == XmSET);
+}
+
+static void save_mark_pane(prefs_info *prf, FILE *fd)
+{
+  if (include_mark_pane)
+    save_mark_pane_1(prf, fd);
+}
+
 
 /* ---------------- include with-sound ---------------- */
 
@@ -5663,6 +5685,14 @@ widget_t start_preferences_dialog(void)
 					  show_mix_waveforms_toggle, mix_waveform_height_text);
     remember_pref(prf, reflect_show_mix_waveforms, NULL);
     FREE(str);
+
+    current_sep = make_inter_variable_separator(mmr_box, prf->label);
+    prf = prefs_row_with_toggle("include mark pane", "mark-pane",
+				find_mark_pane(),
+				mmr_box, current_sep,
+				mark_pane_toggle);
+    remember_pref(prf, reflect_mark_pane, save_mark_pane);
+    prf->help_func = mark_pane_help;
   }
   
   current_sep = make_inter_topic_separator(topics);

@@ -2,7 +2,7 @@
 
 # Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Wed Feb 25 05:31:02 CET 2004
-# Changed: Sun Nov 06 01:57:14 CET 2005
+# Changed: Fri Nov 18 00:14:49 CET 2005
 
 # Commentary:
 #
@@ -44,6 +44,14 @@
 #  add_main_pane(name, type, *args)
 #  show_disk_space(snd)
 #
+#  class Smpte_draw_label
+#   initialize
+#   smpte_label(smap, sr)
+#   draw_smpte_label(snd, chn)
+#
+#  show_smpte_label(on_or_off = true)
+#  smpte_is_on
+#  
 #  class Level_meter
 #   initialize(parent, width, height, args, resizable)
 #   inspect
@@ -93,6 +101,14 @@
 # >  add_sound_pane(snd, name, type, *args)
 # >  add_channel_pane(snd, chn, name, type, *args)
 # >  menu_option(name)
+# >  set_main_color_of_widget(w)
+# >
+# >  add_mark_pane
+# >
+# >  class Mark_pane
+# >    initialize
+# >    make_list(snd, chn)
+# >    deactivate_channel(snd, chn)
 # >
 # >  class Variable_display
 # >    initialize(page_name, variable_name)
@@ -160,15 +176,6 @@ provided? :snd_gtk   and (not provided? :xg) and require "libxg.so"
 unless provided? :xm or provided? :xg
   Snd.raise(:runtime_error, __FILE__, "file requires --with-motif or --with-gtk \
 and module libxm.so or libxg.so, or --with-static-xm")
-end
-
-# will be translated later
-def smpte_is_on                 # for prefs
-  false
-end
-
-def show_smpte_label(on_or_off = false)
-  nil
 end
 
 #
@@ -420,6 +427,129 @@ returns a widget named 'name', if one can be found in the widget hierarchy benea
       end
     end
   end
+
+  # 
+  # show_smpte_label
+  #
+  
+  $smpte_frames_per_second = 24.0
+  Smpte_draw_label_hook_name = "draw-smpte-label"
+
+  class Smpte_draw_label
+    if provided? :xm
+      # MOTIF part
+      def initialize
+        @fs = RXLoadQueryFont(RXtDisplay(main_widgets.cadr), axis_numbers_font)
+        @width = 8 + RXTextWidth(@fs, "00:00:00:00", 11)
+        @height = 8 + RXTextExtents(@fs, "0", 1).caddr
+      end
+
+      def set_font(snd, chn)
+        dpy = RXtDisplay(main_widgets.cadr)
+        RXSetFont(dpy, ((selected_channel(snd) == chn) ? snd_gcs.cadr : snd_gcs.car), Rfid(@fs))
+      end
+      
+    elsif provided? :xg
+      # GTK part
+      def initialize
+        @smpte_font_wh = false
+        @smpte_font_name = ""
+        @fs = Rpango_font_description_from_string(axis_numbers_font)
+        wh = get_text_width_and_height("00:00:00:00")
+        @width = 8 + wh.car
+        @height = 8 + wh.cadr
+      end
+
+      def set_font(snd, chn)
+        set_current_font(@fs.cadr, snd, chn)
+      end
+
+      def get_text_width_and_height(text)
+        if (not @smpte_font_wh) or @smpte_font_name != axis_numbers_font
+          ctx = Rgdk_pango_context_get()
+          layout = Rpango_layout_new(ctx)
+          @smpte_font_name = axis_numbers_font
+          if layout
+            Rpango_layout_set_font_description(layout, @fs)
+            Rpango_layout_set_text(layout, text, -1)
+            @smpte_font_wh = Rpango_layout_get_pixel_size(layout, false)
+            Rg_object_unref(RGPOINTER(layout))
+            Rg_object_unref(RGPOINTER(ctx))
+            @smpte_font_wh
+          else
+            false
+          end
+        else
+          @smpte_font_wh
+        end
+      end
+      private :get_text_width_and_height
+    else
+      def initialize
+        Snd.raise(:ruby_error, "module xm or xg needed by %s!", self.class)
+      end
+
+      def set_font(snd, chn)
+        nil
+      end
+    end
+    private :set_font
+
+    def smpte_label(samp, sr)
+      seconds = samp / sr.to_f
+      frames = seconds * $smpte_frames_per_second
+      minutes = (seconds / 60.0).to_i
+      hours = (minutes / 60.0).to_i
+      format("%02d:%02d:%02d:%02d",
+             hours,
+             minutes - hours * 60,
+             (seconds - minutes * 60).to_i,
+             (frames - seconds.to_i * $smpte_frames_per_second).to_i)
+    end
+
+    def draw_smpte_label(snd, chn)
+      axinf = axis_info(snd, chn)
+      x = axinf[10]
+      y = axinf[13]
+      grf_width = axinf[12] - x
+      grf_heigth = axinf[11] - y
+      if grf_heigth > 2 * @height and grf_width > 1.5 * @width and time_graph?(snd, chn)
+        smpte = self.smpte_label(axinf.car, srate(snd))
+        samp = axinf.car
+        fill_rectangle(x, y, @width, 2, snd, chn)
+        fill_rectangle(x, y + @height, @width, 2, snd, chn)
+        fill_rectangle(x, y, 2, @height, snd, chn)
+        fill_rectangle(x + @width - 2, y, 2, @height, snd, chn)
+        set_font(snd, chn)
+        draw_string(smpte, x + 4, y + 4, snd, chn)
+      end
+    end
+  end
+
+  add_help(:show_smpte_label,
+           "show_smpte_label(on_or_off=false)  \
+turns on/off a label in the time-domain graph showing the current smpte frame \
+of the leftmost sample")
+  def show_smpte_label(on_or_off = true)
+    if on_or_off
+      unless $after_graph_hook.member?(Smpte_draw_label_hook_name)
+        smpte = Smpte_draw_label.new
+        $after_graph_hook.add_hook!(Smpte_draw_label_hook_name) do |snd, chn|
+          smpte.draw_smpte_label(snd, chn)
+        end
+        update_time_graph(true, true)
+      end
+      true
+    else
+      $after_graph_hook.remove_hook!(Smpte_draw_label_hook_name)
+      update_time_graph(true, true)
+      false
+    end
+  end
+    
+  def smpte_is_on                 # for prefs
+    $after_graph_hook.member?(Smpte_draw_label_hook_name)
+  end
 end
 
 #
@@ -551,6 +681,9 @@ module Snd_Gtk
   end
   # $after_open_hook.add_hook!("disk-space", &method(:show_disk_space).to_proc)
 
+  # 
+  # level meter
+  # 
   # with-level-meters, make-level-meter, display-level
   
   class Level_meter
@@ -854,7 +987,7 @@ module Snd_Gtk
       if @clear_cb
         @clear_button = Rgtk_button_new_with_label(@clear)
         Rgtk_widget_set_name(@clear_button, "clear_button")
-        # doit_again_button_color()
+        # doit_again_button_color
         Rgtk_rc_parse_string(%Q{
 style "clear" = "default_button"
 {
@@ -1182,6 +1315,185 @@ adds a label to the minibuffer area showing the current free space (for use with
       Snd.raise(:no_such_menu, name)
     end
   end
+
+  add_help(:set_main_color_of_widget,
+           "set_main_color_of_widget(widget)  sets the background color of WIDGET")
+  def set_main_color_of_widget(w)
+    each_child(w) do |n|
+      if RXtIsWidget(n)
+        if RXmIsScrollBar(n)
+          RXmChangeColor(n, position_color)
+        else
+          RXmChangeColor(n, basic_color)
+        end
+      end
+    end
+  end
+
+  #
+  # add_mark_pane
+  #
+  # Adds a pane to each channel giving the current mark locations
+  # (sample values).  These can be edited to move the mark, or deleted
+  # to delete the mark.  Can't use channel-property here because the
+  # widget lists are permanent (just unmanaged)
+
+  $including_mark_pane = false    # for prefs
+  
+  def add_mark_pane
+    mark_pane = Mark_pane.new
+    $mark_hook.add_hook!("remark") do |id, snd, chn, reason|
+      mark_pane.make_list(snd, chn)
+    end
+    $close_hook.add_hook!("unremark") do |snd|
+      chans(snd).times do |chn|
+        mark_pane.deactivate_channel(snd, chn)
+      end
+    end
+    $after_open_hook.add_hook!("open-remarks") do |snd|
+      chans(snd).times do |chn|
+        after_edit_hook(snd, chn).add_hook!("open-remarks") do | |
+          if RWidget?(mark_pane.list(snd, chn))
+            mark_pane.make_list(snd, chn)
+          end
+        end
+        undo_hook(snd, chn).add_hook!("open-remarks") do | |
+          if RWidget?(mark_pane.list(snd, chn))
+            mark_pane.make_list(snd, chn)
+          end
+        end
+      end
+    end
+    $update_hook.add_hook!("") do |snd|
+      lambda do |update_snd|
+        chans(update_snd).times do |chn|
+          mark_pane.make_list(update_snd, chn)
+        end
+      end
+    end
+    $including_mark_pane = true
+  end
+  
+  class Mark_pane
+    def initialize
+      @mark_list_lengths = []
+      @mark_lists = []
+    end
+
+    def make_list(snd, chn)
+      deactivate_channel(snd, chn)
+      unless RWidget?(list(snd, chn))
+        mark_box = add_channel_pane(snd, chn, "mark-box", RxmFormWidgetClass,
+                                    [RXmNbackground, basic_color,
+                                     RXmNorientation, RXmVERTICAL,
+                                     RXmNpaneMinimum, 100,
+                                     RXmNbottomAttachment, RXmATTACH_FORM])
+        mark_label = RXtCreateManagedWidget("Marks", RxmLabelWidgetClass, mark_box,
+                                            [RXmNbackground, highlight_color,
+                                             RXmNleftAttachment, RXmATTACH_FORM,
+                                             RXmNrightAttachment, RXmATTACH_FORM,
+                                             RXmNalignment, RXmALIGNMENT_CENTER,
+                                             RXmNtopAttachment, RXmATTACH_FORM])
+        mark_scr = RXtCreateManagedWidget("mark-scr", RxmScrolledWindowWidgetClass, mark_box,
+                                          [RXmNbackground, basic_color,
+                                           RXmNscrollingPolicy, RXmAUTOMATIC,
+                                           RXmNscrollBarDisplayPolicy, RXmSTATIC,
+                                           RXmNleftAttachment, RXmATTACH_FORM,
+                                           RXmNrightAttachment, RXmATTACH_FORM,
+                                           RXmNtopAttachment, RXmATTACH_WIDGET,
+                                           RXmNtopWidget, mark_label,
+                                           RXmNbottomAttachment, RXmATTACH_FORM])
+        mlist = RXtCreateManagedWidget("mark-list", RxmRowColumnWidgetClass, mark_scr,
+                                       [RXmNorientation, RXmVERTICAL,
+                                        RXmNtopAttachment, RXmATTACH_FORM,
+                                        RXmNbottomAttachment, RXmATTACH_FORM,
+                                        RXmNspacing, 0])
+        set_main_color_of_widget(mark_scr)
+        RXtSetValues(mark_box, [RXmNpaneMinimum, 1])
+        set_list(snd, chn, mlist)
+      end
+      lst = list(snd, chn)
+      if (new_marks = Snd.marks(snd, chn)).length > (current_list_length = length(snd, chn))
+        current_list_length.upto(new_marks.length) do
+          tf = RXtCreateWidget("field", RxmTextFieldWidgetClass, lst,
+                               [RXmNbackground, basic_color])
+          RXtAddCallback(tf, RXmNfocusCallback,
+                         lambda do |w, c, i|
+                           RXtSetValues(w, [RXmNbackground, text_focus_color])
+                         end)
+          RXtAddCallback(tf, RXmNlosingFocusCallback,
+                         lambda do |w, c, i|
+                           RXtSetValues(w, [RXmNbackground, basic_color])
+                         end)
+          RXtAddCallback(tf, RXmNactivateCallback,
+                         lambda do |w, c, i|
+                           id = RXtGetValues(w, [RXmNuserData, 0]).cadr
+                           txt = RXtGetValues(w, [RXmNvalue, 0]).cadr
+                           if string?(txt) and txt.length > 0
+                             set_mark_sample(id, txt.to_i)
+                           else
+                             delete_mark(id)
+                           end
+                           RXtSetValues(w, [RXmNbackground, basic_color])
+                         end)
+          RXtAddEventHandler(tf, REnterWindowMask, false,
+                             lambda do |w, c, i, f| $mouse_enter_text_hook.call(w) end)
+          RXtAddEventHandler(tf, RLeaveWindowMask, false,
+                             lambda do |w, c, i, f| $mouse_leave_text_hook.call(w) end)
+        end
+      end
+      set_length(snd, chn, new_marks.length)
+      RXtGetValues(lst, [RXmNchildren, 0], 1).cadr.each do |n|
+        break if new_marks.empty?
+        if RXmIsTextField(n)
+          mk = new_marks.shift
+          RXtSetValues(n, [RXmNvalue, mark_sample(mk).to_s,
+                           RXmNuserData, mk])
+          RXtManageChild(n)
+        end
+      end
+      false
+    end
+
+    def deactivate_channel(snd, chn)
+      if (current_length = length(snd, chn)) > 0 and RWidget?(list(snd, chn))
+        RXtGetValues(list(snd, chn), [RXmNchildren, 0], 1).cadr.each do |n|
+          RXtUnmanageChild(n)
+        end
+      end
+    end
+
+    private
+    def find(snd, chn, dats)
+      if val = dats.detect do |dat| snd == dat.car and chn == dat.cadr end
+        val.caddr
+      else
+        false
+      end
+    end
+
+    def length(snd, chn)
+      find(snd, chn, @mark_list_lengths) or 0
+    end
+
+    def set_length(snd, chn, len)
+      @mark_list_lengths.delete_if do |dat| snd == dat.car and chn == dat.cadr end
+      @mark_list_lengths.push([snd, chn, len])
+    end
+
+    def list(snd, chn)
+      find(snd, chn, @mark_lists)
+    end
+
+    def set_list(snd, chn, wid)
+      @mark_lists.push([snd, chn, wid])
+    end
+  end
+  
+  # 
+  # level meter
+  # 
+  # with-level-meters, make-level-meter, display-level
 
   class Level_meter
     def initialize(parent, width, height, args, resizable = true)
@@ -2038,7 +2350,7 @@ make_snd_menu("Effects") do
     entry(Modulated_echo, "Modulated echo")
   end
   separator
-  entry("Octave-down") do down_oct() end
+  entry("Octave-down") do down_oct end
   entry("Remove DC") do
     lastx = lasty = 0.0
     map_chan(lambda do |inval|
@@ -2047,7 +2359,7 @@ make_snd_menu("Effects") do
                lasty
              end)
   end
-  entry("Spiker") do spike() end
+  entry("Spiker") do spike end
 end
 =end
 

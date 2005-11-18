@@ -468,11 +468,18 @@ static void clm_table_size_help(prefs_info *prf)
 
 static void smpte_label_help(prefs_info *prf)
 {
-  /* needed by Ruby */
   snd_help(prf->var_name,
 	   "This option adds a label to the time domain graph showing the current SMPTE frame of the leftmost sample.",
 	   WITH_WORD_WRAP);
 }
+
+static void mark_pane_help(prefs_info *prf)
+{
+  snd_help(prf->var_name,
+	   "This options adds a pane to each channel window containing information about that channel's marks.",
+	   WITH_WORD_WRAP);
+}
+
 
 
 
@@ -648,6 +655,18 @@ static void save_smpte_1(prefs_info *prf, FILE *fd)
 #endif
 }
 
+static void save_mark_pane_1(prefs_info *prf, FILE *fd)
+{
+#if HAVE_SCHEME
+  fprintf(fd, "(if (provided? 'snd-motif)\n    (if (not (provided? 'snd-snd-motif.scm))\n        (load-from-path \"snd-motif.scm\"))\n    (if (not (provided? 'snd-snd-gtk.scm))\n        (load-from-path \"snd-gtk.scm\")))\n");
+  fprintf(fd, "(add-mark-pane)\n");
+#endif
+#if HAVE_RUBY
+  fprintf(fd, "require \"snd-xm\"\n");
+  fprintf(fd, "add_mark_pane\n");
+#endif
+}
+
 static void save_show_listener_1(prefs_info *prf, FILE *fd)
 {
 #if HAVE_SCHEME
@@ -797,6 +816,12 @@ static bool find_hidden_controls(void)
 	 (XEN_NOT_FALSE_P(XEN_NAME_AS_C_STRING_TO_VALUE("hidden-controls-dialog"))));
 }
 #endif
+
+static bool find_mark_pane(void)
+{
+  return((XEN_DEFINED_P("including-mark-pane")) &&
+	 XEN_TO_C_BOOLEAN(XEN_NAME_AS_C_STRING_TO_VALUE("including-mark-pane")));
+}
 
 #if HAVE_GUILE
 static bool find_debugging_aids(void)

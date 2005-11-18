@@ -336,8 +336,11 @@ static XEN g_set_current_font(XEN id, XEN snd, XEN chn, XEN ax_id)
   ASSERT_CHANNEL(S_setB S_current_font, snd, chn, 2);
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax_id), ax_id, XEN_ARG_4, S_setB S_current_font, "an integer");
   ax = TO_C_AXIS_CONTEXT(snd, chn, ax_id, S_setB S_current_font);
-  XEN_ASSERT_TYPE(XEN_WRAPPED_C_POINTER_P(id), id, XEN_ARG_1, S_setB S_current_font, "a wrapped object");
-  ax->current_font = (PangoFontDescription *)XEN_UNWRAP_C_POINTER(id);
+  XEN_ASSERT_TYPE(XEN_WRAPPED_C_POINTER_P(id) || XEN_ULONG_P(id), id, XEN_ARG_1, S_setB S_current_font, "a wrapped object"); 
+  if (XEN_WRAPPED_C_POINTER_P(id)) 
+    ax->current_font = (PangoFontDescription *)XEN_UNWRAP_C_POINTER(id); 
+  else 
+    ax->current_font = (PangoFontDescription *)XEN_TO_C_ULONG(id); 
   return(id);
 }
 
