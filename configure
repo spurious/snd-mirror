@@ -5889,10 +5889,17 @@ _ACEOF
 _ACEOF
 
 		 if test "$with_float_samples" = yes ; then
-                   cat >>confdefs.h <<\_ACEOF
+		    if test "$with_doubles" = yes ; then
+                      cat >>confdefs.h <<\_ACEOF
+#define MUS_OUT_FORMAT MUS_BDOUBLE
+_ACEOF
+
+                    else
+                      cat >>confdefs.h <<\_ACEOF
 #define MUS_OUT_FORMAT MUS_BFLOAT
 _ACEOF
 
+                    fi
                   else
                    cat >>confdefs.h <<\_ACEOF
 #define MUS_OUT_FORMAT MUS_BINT
@@ -5910,10 +5917,17 @@ _ACEOF
 _ACEOF
 
 		 if test "$with_float_samples" = yes ; then
-                   cat >>confdefs.h <<\_ACEOF
+		    if test "$with_doubles" = yes ; then
+                      cat >>confdefs.h <<\_ACEOF
+#define MUS_OUT_FORMAT MUS_LDOUBLE
+_ACEOF
+
+                    else
+                      cat >>confdefs.h <<\_ACEOF
 #define MUS_OUT_FORMAT MUS_LFLOAT
 _ACEOF
 
+                    fi
                   else
                    cat >>confdefs.h <<\_ACEOF
 #define MUS_OUT_FORMAT MUS_LINT

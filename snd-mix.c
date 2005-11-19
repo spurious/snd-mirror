@@ -971,7 +971,7 @@ static char *save_as_temp_file(mus_sample_t **raw_data, int chans, int len, int 
   int format, ofd;
   io_error_t err;
   disk_space_t no_space;
-  format = MUS_OUT_FORMAT;
+  format = MUS_OUT_FORMAT; /* can be double! */
   newname = shorter_tempnam(temp_dir(ss), "snd_mix_");
                       /* we're writing our own private version of this thing, so we can use our own formats */
   err = snd_write_header(newname, MUS_NEXT, nominal_srate, chans, 28, len * chans, format, NULL, 0, NULL);
@@ -982,10 +982,10 @@ static char *save_as_temp_file(mus_sample_t **raw_data, int chans, int len, int 
       return(NULL);
     }
   ofd = snd_reopen_write(newname);
-  mus_file_open_descriptors(ofd, newname, format, 4, 28, chans, MUS_NEXT);
+  mus_file_open_descriptors(ofd, newname, format, mus_bytes_per_sample(format), 28, chans, MUS_NEXT);
   /* mus_file_set_data_clipped(ofd, data_clipped(ss)); */
   lseek(ofd, 28, SEEK_SET);
-  no_space = disk_space_p(any_selected_sound(), len * chans * 4, newname);
+  no_space = disk_space_p(any_selected_sound(), len * chans * mus_bytes_per_sample(format), newname);
   if (no_space == DISK_SPACE_OK)
     mus_file_write(ofd, 0, len - 1, chans, raw_data);
   if (mus_file_close(ofd) != 0)

@@ -98,21 +98,20 @@
   #define MUS_SAMPLE_MIN ((mus_sample_t)((MUS_SAMPLE_BITS < 32) ? (-(MUS_FLOAT_TO_FIX)) : -0x7fffffff))
   #define mus_sample_abs(Sample) abs(Sample)
 #else
-  /* this could use Float throughout and reflect the Float = double choice elsewhere */
-  #define mus_sample_t float
+  #define mus_sample_t Float
   #ifndef MUS_SAMPLE_BITS
     #define MUS_SAMPLE_BITS 24
   #endif
   #define MUS_SAMPLE_0 0.0
-  #define MUS_BYTE_TO_SAMPLE(n) ((mus_sample_t)((float)(n) / (float)(1 << 7)))
-  #define MUS_SHORT_TO_SAMPLE(n) ((mus_sample_t)((float)(n) / (float)(1 << 15)))
-  #define MUS_INT_TO_SAMPLE(n) ((mus_sample_t)((float)(n) / (float)(1 << (MUS_SAMPLE_BITS - 1))))
-  #define MUS_INT24_TO_SAMPLE(n) ((mus_sample_t)((float)(n) / (float)(1 << 23)))
+  #define MUS_BYTE_TO_SAMPLE(n) ((mus_sample_t)((Float)(n) / (Float)(1 << 7)))
+  #define MUS_SHORT_TO_SAMPLE(n) ((mus_sample_t)((Float)(n) / (Float)(1 << 15)))
+  #define MUS_INT_TO_SAMPLE(n) ((mus_sample_t)((Float)(n) / (Float)(1 << (MUS_SAMPLE_BITS - 1))))
+  #define MUS_INT24_TO_SAMPLE(n) ((mus_sample_t)((Float)(n) / (Float)(1 << 23)))
   #define MUS_FLOAT_TO_FIX 1.0
   #define MUS_FIX_TO_FLOAT 1.0
   #define MUS_FLOAT_TO_SAMPLE(n) ((mus_sample_t)(n))
   #define MUS_DOUBLE_TO_SAMPLE(n) ((mus_sample_t)(n))
-  #define MUS_SAMPLE_TO_FLOAT(n) ((float)(n))
+  #define MUS_SAMPLE_TO_FLOAT(n) ((Float)(n))
   #define MUS_SAMPLE_TO_DOUBLE(n) ((double)(n))
   #define MUS_SAMPLE_TO_INT(n) ((int)((n) * (1 << (MUS_SAMPLE_BITS - 1))))
   #define MUS_SAMPLE_TO_INT24(n) ((int)((n) * (1 << 23)))
@@ -162,21 +161,6 @@ enum {MUS_UNKNOWN, MUS_BSHORT, MUS_MULAW, MUS_BYTE, MUS_BFLOAT, MUS_BINT, MUS_AL
     #define MUS_COMPATIBLE_FORMAT MUS_BSHORT
   #endif
 #endif
-
-#if MUS_LITTLE_ENDIAN
-  #if SNDLIB_USE_FLOATS
-    #define MUS_OUT_FORMAT MUS_LFLOAT
-  #else
-    #define MUS_OUT_FORMAT MUS_LINT
-  #endif
-#else
-  #if SNDLIB_USE_FLOATS
-    #define MUS_OUT_FORMAT MUS_BFLOAT
-  #else
-    #define MUS_OUT_FORMAT MUS_BINT
-  #endif
-#endif
-
 
 #define MUS_NIST_SHORTPACK 2
 #define MUS_AIFF_IMA_ADPCM 99

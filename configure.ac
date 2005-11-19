@@ -211,7 +211,11 @@ AC_C_BIGENDIAN( [AC_DEFINE(MUS_LITTLE_ENDIAN, 0)
 		 AC_DEFINE(WORDS_BIGENDIAN)
 		 AC_DEFINE(MUS_COMPATIBLE_FORMAT, MUS_BSHORT)
 		 if test "$with_float_samples" = yes ; then
-                   AC_DEFINE(MUS_OUT_FORMAT, MUS_BFLOAT)
+		    if test "$with_doubles" = yes ; then
+                      AC_DEFINE(MUS_OUT_FORMAT, MUS_BDOUBLE)
+                    else
+                      AC_DEFINE(MUS_OUT_FORMAT, MUS_BFLOAT)
+                    fi
                   else
                    AC_DEFINE(MUS_OUT_FORMAT, MUS_BINT)
  		 fi
@@ -219,7 +223,11 @@ AC_C_BIGENDIAN( [AC_DEFINE(MUS_LITTLE_ENDIAN, 0)
 		[AC_DEFINE(MUS_LITTLE_ENDIAN, 1)
     	         AC_DEFINE(MUS_COMPATIBLE_FORMAT, MUS_LSHORT)
 		 if test "$with_float_samples" = yes ; then
-                   AC_DEFINE(MUS_OUT_FORMAT, MUS_LFLOAT)
+		    if test "$with_doubles" = yes ; then
+                      AC_DEFINE(MUS_OUT_FORMAT, MUS_LDOUBLE)
+                    else
+                      AC_DEFINE(MUS_OUT_FORMAT, MUS_LFLOAT)
+                    fi
                   else
                    AC_DEFINE(MUS_OUT_FORMAT, MUS_LINT)
  		 fi

@@ -1022,11 +1022,11 @@ char *mus_array_to_file_with_error(const char *filename, mus_sample_t *ddata, in
 				  28, channels, MUS_NEXT);
   if (err != MUS_ERROR)
     {
-      err = mus_header_write_next_header(fd, srate, channels, 28, len * sizeof(mus_sample_t), MUS_OUT_FORMAT, NULL, 0);
+      err = mus_header_write_next_header(fd, srate, channels, 28, len /* out chans = 1?? */, MUS_OUT_FORMAT, NULL, 0);
       if (err != MUS_ERROR)
 	{
 	  bufs[0] = ddata;
-	  err = mus_file_write(fd, 0, len - 1, 1, bufs);
+	  err = mus_file_write(fd, 0, len - 1, 1, bufs); /* 1 = chans?? */
 	}
     }
   mus_file_close(fd);

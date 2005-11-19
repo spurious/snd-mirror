@@ -417,6 +417,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+21-Nov:  if --with-float-samples and --with-doubles, the internal sample data type is double.\n\
 18-Nov:  moved snd-apropos to snd7.scm.\n\
 15-Nov:  sync-max.\n\
 12-Nov:  all dlp directory files moved to main directory (to simplify load-path handling).\n\

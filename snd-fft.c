@@ -1679,8 +1679,8 @@ void c_convolve(char *fname, Float amp, int filec, off_t filehdr, int filterc, o
 	  for (i = 0; i < filtersize; i++) 
 	    rl1[i] = MUS_SAMPLE_TO_FLOAT(fbuffer[filter_chan][i]);
 	  progress_report(gsp, "convolve", ip + 1, total_chans, .1, from_enved);
-	  mus_header_write_next_header(tempfile, 22050, 1, 28, data_size * 4, MUS_BINT, NULL, 0);
-	  mus_file_open_descriptors(tempfile, fname, MUS_BINT, 4, 28, 1, MUS_NEXT);
+	  mus_header_write_next_header(tempfile, 22050, 1, 28, data_size * mus_bytes_per_sample(MUS_OUT_FORMAT), MUS_OUT_FORMAT, NULL, 0);
+	  mus_file_open_descriptors(tempfile, fname, MUS_OUT_FORMAT, mus_bytes_per_sample(MUS_OUT_FORMAT), 28, 1, MUS_NEXT);
 	  /* get the convolution data */
 	  mus_file_read_any(filec, 0, 1, data_size, pbuffer, pbuffer);
 	  for (i = 0; i < data_size; i++) rl0[i] = MUS_SAMPLE_TO_FLOAT(pbuf[i]);

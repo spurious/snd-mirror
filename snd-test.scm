@@ -819,7 +819,8 @@
       (if (not (equal? (recorder-buffer-size)  4096 )) 
 	  (snd-display ";recorder-buffer-size set def: ~A" (recorder-buffer-size)))
       (set! (recorder-file) (recorder-file))
-      (if (not (equal? (recorder-file)  #f )) 
+      (if (or (not (string? (recorder-file)))
+	      (not (string=? (recorder-file) "test.snd")))
 	  (snd-display ";recorder-file set def: ~A" (recorder-file)))
       (set! (recorder-max-duration) (recorder-max-duration))
       (if (fneq (recorder-max-duration)  1000000.0)
@@ -1129,7 +1130,7 @@
 	'read-only (without-errors (read-only)) 'no-such-sound
 	'recorder-autoload (recorder-autoload) #f
 	'recorder-buffer-size (recorder-buffer-size) 4096 
-	'recorder-file (recorder-file) #f 
+	'recorder-file (recorder-file) "test.snd"
 	'recorder-max-duration (recorder-max-duration) 1000000.0
 	'recorder-out-chans (recorder-out-chans) 2 
 	'recorder-in-chans (recorder-in-chans) 0

@@ -448,6 +448,10 @@ int mus_file_open_descriptors(int tfd, const char *name, int format, int size /*
   fd = io_fds[tfd];
   fd->data_format = format;
   fd->bytes_per_sample = size;
+#if DEBUGGING
+  if (size != mus_bytes_per_sample(format))
+    fprintf(stderr, "format trouble in mus_file_open_descriptors: %d != %d\n", size, mus_bytes_per_sample(format));
+#endif
   fd->data_location = location;
   fd->data_clipped = file_data_clipped_default;
   fd->prescaler = file_prescaler_default;

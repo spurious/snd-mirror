@@ -8,7 +8,6 @@
    SOMEDAY: completions and more verbose error msgs [and sscanf->string_to_* for better checks (21)]
    SOMEDAY: gtk side of icon box (are there others?)
    TODO: ruby extensions.rb side of set_global_sync
-   TODO: mark_pane (motif side -- gtk not written)
 
    abandoned:
        preset packages: dlp, ksm
