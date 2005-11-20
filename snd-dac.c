@@ -848,7 +848,7 @@ static void start_dac(int srate, int channels, play_process_t background, Float 
       snd_dacp = (dac_state *)CALLOC(1, sizeof(dac_state));
       snd_dacp->slice = 0;
       snd_dacp->srate = srate;
-      snd_dacp->out_format = MUS_COMPATIBLE_FORMAT;
+      snd_dacp->out_format = MUS_AUDIO_COMPATIBLE_FORMAT;
       if (snd_dacp->srate <= 0) snd_dacp->srate = 44100;
       snd_dacp->channels = channels;
       if (dac_size(ss) > 0)
@@ -1993,7 +1993,7 @@ static bool start_audio_output_1 (void)
 	}
     }
   for (i = 0; i < MAX_DEVICES; i++) dev_fd[i] = -1;
-  snd_dacp->out_format = MUS_COMPATIBLE_FORMAT;
+  snd_dacp->out_format = MUS_AUDIO_COMPATIBLE_FORMAT;
 
 #ifdef SUN
   /* can audio hardware handle this data format? */
@@ -2001,7 +2001,7 @@ static bool start_audio_output_1 (void)
   {
     bool happy = false;
     for (i = 1; i <= (int)(val[0]); i++)
-      if ((int)(val[i]) == MUS_COMPATIBLE_FORMAT)
+      if ((int)(val[i]) == MUS_AUDIO_COMPATIBLE_FORMAT)
 	{
 	  happy = true;
 	  break;
@@ -2183,7 +2183,7 @@ void initialize_apply(snd_info *sp, int chans, off_t beg, off_t dur)
   snd_dacp = (dac_state *)CALLOC(1, sizeof(dac_state));
   snd_dacp->slice = 0;
   snd_dacp->srate = SND_SRATE(sp);
-  snd_dacp->out_format = MUS_COMPATIBLE_FORMAT;
+  snd_dacp->out_format = MUS_AUDIO_COMPATIBLE_FORMAT;
   if (snd_dacp->srate <= 0) snd_dacp->srate = 44100;
   snd_dacp->channels = chans;
   snd_dacp->frames = 8192;

@@ -655,9 +655,8 @@ void add_channel_data(char *filename, chan_info *cp, channel_graph_t graphed)
       if (fd != -1)
 	{
 	  snd_io *io;
-	  mus_file_open_descriptors(fd,
+	  snd_file_open_descriptors(fd,
 				    filename, chdr->format,
-				    mus_bytes_per_sample(chdr->format),
 				    chdr->data_location,
 				    chdr->chans,
 				    chdr->type);

@@ -834,9 +834,7 @@ io_error_t save_selection(const char *ofile, int type, int format, int srate, co
       ends[0] = selection_end(si->cps[chan]);
       sfs[0] = init_sample_read(selection_beg(si->cps[chan]), si->cps[chan], READ_FORWARD);
     }
-  mus_file_open_descriptors(ofd, ofile, format, 
-			    mus_bytes_per_sample(format), 
-			    oloc, chans, type);
+  snd_file_open_descriptors(ofd, ofile, format, oloc, chans, type);
   mus_file_set_data_clipped(ofd, data_clipped(ss));
   lseek(ofd, oloc, SEEK_SET);
   data = (mus_sample_t **)CALLOC(chans, sizeof(mus_sample_t *));

@@ -5501,10 +5501,9 @@ bool file_insert_samples(off_t beg, off_t num, char *inserted_file, chan_info *c
     {
       int fd;
       fd = snd_open_read(inserted_file);
-      mus_file_open_descriptors(fd,
+      snd_file_open_descriptors(fd,
 				inserted_file,
 				hdr->format,
-				mus_bytes_per_sample(hdr->format),
 				hdr->data_location,
 				hdr->chans,
 				hdr->type);
@@ -5785,10 +5784,9 @@ bool file_mix_change_samples(off_t beg, off_t num, char *tempfile, chan_info *cp
       if (new_len > prev_len) reflect_sample_change_in_axis(cp);
       if (lock == LOCK_MIXES) lock_affected_mixes(cp, beg, beg + num);
       fd = snd_open_read(tempfile);
-      mus_file_open_descriptors(fd,
+      snd_file_open_descriptors(fd,
 				tempfile,
 				hdr->format,
-				mus_bytes_per_sample(hdr->format),
 				hdr->data_location,
 				hdr->chans,
 				hdr->type);
@@ -5839,10 +5837,9 @@ bool file_override_samples(off_t num, char *tempfile, chan_info *cp, int chan, f
 	  return(false);
 	}
       fd = snd_open_read(tempfile);
-      mus_file_open_descriptors(fd,
+      snd_file_open_descriptors(fd,
 				tempfile,
 				hdr->format,
-				mus_bytes_per_sample(hdr->format),
 				hdr->data_location,
 				hdr->chans,
 				hdr->type);
@@ -6874,10 +6871,9 @@ void copy_then_swap_channels(chan_info *cp0, chan_info *cp1, int pos0, int pos1)
   name = cp0->sound->filename;
   hdr0 = copy_header(name, cp0->sound->hdr);
   fd = snd_open_read(name);
-  mus_file_open_descriptors(fd,
+  snd_file_open_descriptors(fd,
 			    name,
 			    hdr0->format,
-			    mus_bytes_per_sample(hdr0->format),
 			    hdr0->data_location,
 			    hdr0->chans,
 			    hdr0->type);
@@ -6887,10 +6883,9 @@ void copy_then_swap_channels(chan_info *cp0, chan_info *cp1, int pos0, int pos1)
   name = cp1->sound->filename;
   hdr1 = copy_header(name, cp1->sound->hdr);
   fd = snd_open_read(name);
-  mus_file_open_descriptors(fd,
+  snd_file_open_descriptors(fd,
 			    name,
 			    hdr1->format,
-			    mus_bytes_per_sample(hdr1->format),
 			    hdr1->data_location,
 			    hdr1->chans,
 			    hdr1->type);

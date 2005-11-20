@@ -10,7 +10,7 @@
 #define DEFAULT_RECORDER_AUTOLOAD false
 #define DEFAULT_RECORDER_TRIGGER 0.0
 #define DEFAULT_RECORDER_MAX_DURATION 1000000.0
-#define DEFAULT_RECORDER_OUT_DATA_FORMAT MUS_COMPATIBLE_FORMAT
+#define DEFAULT_RECORDER_OUT_DATA_FORMAT MUS_AUDIO_COMPATIBLE_FORMAT
 
 #if MUS_LINUX || __bsdi__
   #define DEFAULT_RECORDER_OUT_HEADER_TYPE MUS_RIFF
@@ -26,7 +26,7 @@
   #define DEFAULT_RECORDER_IN_DATA_FORMAT MUS_MULAW
   #define DEFAULT_RECORDER_SRATE 8000
 #else
-  #define DEFAULT_RECORDER_IN_DATA_FORMAT MUS_COMPATIBLE_FORMAT
+  #define DEFAULT_RECORDER_IN_DATA_FORMAT MUS_AUDIO_COMPATIBLE_FORMAT
   #if MUS_MAC_OSX
     #define DEFAULT_RECORDER_BUFFER_SIZE 1024
     #define DEFAULT_RECORDER_SRATE 44100
@@ -1458,10 +1458,9 @@ void recorder_start_output_file(const char *comment)
 
   if (rp->output_header_type != MUS_RAW) mus_header_read(rp->output_file);
   rp->output_file_descriptor = snd_reopen_write(rp->output_file);
-  mus_file_open_descriptors(rp->output_file_descriptor, 
+  snd_file_open_descriptors(rp->output_file_descriptor, 
 			    rp->output_file,
 			    rp->output_data_format, 
-			    mus_bytes_per_sample(rp->output_data_format), 
 			    oloc,
 			    rp->out_chans,
 			    rp->output_header_type);

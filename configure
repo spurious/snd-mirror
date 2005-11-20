@@ -5885,7 +5885,7 @@ _ACEOF
 _ACEOF
 
 		 cat >>confdefs.h <<\_ACEOF
-#define MUS_COMPATIBLE_FORMAT MUS_BSHORT
+#define MUS_AUDIO_COMPATIBLE_FORMAT MUS_BSHORT
 _ACEOF
 
 		 if test "$with_float_samples" = yes ; then
@@ -5913,7 +5913,7 @@ _ACEOF
 _ACEOF
 
     	         cat >>confdefs.h <<\_ACEOF
-#define MUS_COMPATIBLE_FORMAT MUS_LSHORT
+#define MUS_AUDIO_COMPATIBLE_FORMAT MUS_LSHORT
 _ACEOF
 
 		 if test "$with_float_samples" = yes ; then

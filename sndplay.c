@@ -170,7 +170,7 @@ static int main_not_alsa(int argc, char *argv[])
       out_chans = chans;
       srate = mus_sound_srate(name);
       frames = mus_sound_frames(name);
-      sample_size = mus_bytes_per_sample(MUS_COMPATIBLE_FORMAT);
+      sample_size = mus_bytes_per_sample(MUS_AUDIO_COMPATIBLE_FORMAT);
       start = (off_t)(begin_time * srate);
       if (start > 0)
 	mus_file_seek_frame(fd, start);
@@ -222,9 +222,9 @@ static int main_not_alsa(int argc, char *argv[])
 	      if (afd == -1)
 		{
 #if defined(MUS_LINUX) && defined(PPC)
-		  afd = mus_audio_open_output(MUS_AUDIO_DEFAULT, srate, chans, MUS_COMPATIBLE_FORMAT, 0);
+		  afd = mus_audio_open_output(MUS_AUDIO_DEFAULT, srate, chans, MUS_AUDIO_COMPATIBLE_FORMAT, 0);
 #else
-		  afd = mus_audio_open_output(MUS_AUDIO_DEFAULT, srate, out_chans, MUS_COMPATIBLE_FORMAT, outbytes);
+		  afd = mus_audio_open_output(MUS_AUDIO_DEFAULT, srate, out_chans, MUS_AUDIO_COMPATIBLE_FORMAT, outbytes);
 #endif
 		  if (afd == -1) break;
 		}
@@ -276,8 +276,8 @@ static int main_not_alsa(int argc, char *argv[])
 		}
 	      if (afd0 == -1)
 		{
-		  afd0 = mus_audio_open_output(MUS_AUDIO_PACK_SYSTEM(0) | MUS_AUDIO_DEFAULT, srate, 2, MUS_COMPATIBLE_FORMAT, outbytes);
-		  afd1 = mus_audio_open_output(MUS_AUDIO_PACK_SYSTEM(1) | MUS_AUDIO_DEFAULT, srate, 2, MUS_COMPATIBLE_FORMAT, outbytes);
+		  afd0 = mus_audio_open_output(MUS_AUDIO_PACK_SYSTEM(0) | MUS_AUDIO_DEFAULT, srate, 2, MUS_AUDIO_COMPATIBLE_FORMAT, outbytes);
+		  afd1 = mus_audio_open_output(MUS_AUDIO_PACK_SYSTEM(1) | MUS_AUDIO_DEFAULT, srate, 2, MUS_AUDIO_COMPATIBLE_FORMAT, outbytes);
 		  if ((afd0 == -1) || (afd1 == -1)) break;
 		}
 	      mus_audio_write(afd0, (char *)obuf0, outbytes);

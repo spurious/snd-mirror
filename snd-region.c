@@ -391,10 +391,9 @@ static void make_region_readable(region *r)
 	  snd_io *io;
 	  int fd;
 	  fd = snd_open_read(r->filename);
-	  mus_file_open_descriptors(fd,
+	  snd_file_open_descriptors(fd,
 				    r->filename,
 				    hdr->format,
-				    mus_bytes_per_sample(hdr->format),
 				    hdr->data_location,
 				    hdr->chans,
 				    hdr->type);
@@ -1113,9 +1112,7 @@ io_error_t save_region(int rg, const char *name, int type, int format, int srate
       ofd = snd_reopen_write(name);
       if (ofd != -1)
 	{
-	  mus_file_open_descriptors(ofd, name, format, 
-				    mus_bytes_per_sample(format), 
-				    oloc, r->chans, type);
+	  snd_file_open_descriptors(ofd, name, format, oloc, r->chans, type);
 	  mus_file_set_data_clipped(ofd, data_clipped(ss));
 	  lseek(ofd, oloc, SEEK_SET);
 	  /* copy r->filename with possible header/data format changes */
@@ -1125,10 +1122,9 @@ io_error_t save_region(int rg, const char *name, int type, int format, int srate
 	      chans = mus_sound_chans(r->filename);
 	      frames = mus_sound_samples(r->filename) / chans;
 	      iloc = mus_sound_data_location(r->filename);
-	      mus_file_open_descriptors(ifd,
+	      snd_file_open_descriptors(ifd,
 					r->filename,
 					mus_sound_data_format(r->filename),
-					mus_sound_datum_size(r->filename),
 					iloc,
 					chans,
 					mus_sound_header_type(r->filename));

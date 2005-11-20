@@ -308,10 +308,9 @@ static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp, XE
 		  file_info *hdr;
 		  int fltfd;
 		  hdr = sp->hdr;
-		  mus_file_open_descriptors(scfd,
+		  snd_file_open_descriptors(scfd,
 					    saved_chan_file,
 					    hdr->format,
-					    mus_bytes_per_sample(hdr->format),
 					    hdr->data_location,
 					    1, hdr->type); /* ??? */
 		  fltfd = mus_file_open_read(filename);
@@ -325,10 +324,9 @@ static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp, XE
 		    }
 		  else
 		    {
-		      mus_file_open_descriptors(fltfd,
+		      snd_file_open_descriptors(fltfd,
 						filename,
 						dataformat,
-						mus_bytes_per_sample(dataformat),
 						dataloc,
 						filter_chans,
 						mus_sound_header_type(filename));

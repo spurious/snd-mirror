@@ -26828,6 +26828,7 @@ EDITS: 5
 	    (let ((m2 (add-mark 1000 obi 0))
 		  (m3 (add-mark 2000 obi 0)))
 	      (if (not (equal? (marks obi 0) (list m2 m3))) (snd-display ";add-mark: ~A ~A?" (marks obi 0) (list m2 m3)))
+	      (set! (left-sample obi 0) 950)
 	      (eval-between-marks (lambda (val) (* 2.0 val)))
 	      (let ((msamp100 (sample 1100 obi 0)))
 		(if (fneq (* 2.0 nsamp100) msamp100) (snd-display ";eval-between-marks: ~A ~A?" nsamp100 msamp100))

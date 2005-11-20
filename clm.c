@@ -5851,17 +5851,8 @@ static mus_any *mus_make_sample_to_file_with_comment_1(const char *filename, int
   else
     {
       if (reopen)
-	fd = mus_sound_reopen_output(filename, 
-				     out_chans, 
-				     out_format, 
-				     out_type, 
-				     mus_sound_data_location(filename));
-      else fd = mus_sound_open_output(filename, 
-				      (int)sampling_rate, 
-				      out_chans, 
-				      out_format, 
-				      out_type, 
-				      comment);
+	fd = mus_sound_reopen_output(filename, out_chans, out_format, out_type, mus_sound_data_location(filename));
+      else fd = mus_sound_open_output(filename, (int)sampling_rate, out_chans, out_format, out_type, comment);
       if (fd == -1)
 	mus_error(MUS_CANT_OPEN_FILE, 
 		  "open(%s) -> %s", 

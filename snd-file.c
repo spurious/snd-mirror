@@ -1115,10 +1115,9 @@ snd_info *make_sound_readable(const char *filename, bool post_close)
       if (fd != -1)
 	{
 	  snd_io *io;
-	  mus_file_open_descriptors(fd,
+	  snd_file_open_descriptors(fd,
 				    filename,
 				    hdr->format,
-				    mus_sound_datum_size(filename),
 				    hdr->data_location,
 				    hdr->chans,
 				    hdr->type);

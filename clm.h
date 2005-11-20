@@ -656,13 +656,9 @@ struct mus_xen *_mus_wrap_one_vct(mus_any *ge);
 struct mus_xen *_mus_wrap_one_vct_wrapped(mus_any *ge);
 /* end internal stuff */
 
-#if CLM_DISABLE_DEPRECATED
-  #define mus_clear_filter_state(Gen) mus_reset(Gen)
-  #define mus_restart_env(Gen) mus_reset(Gen)
-#endif
-
 #if 0
-/* these are the old names */
+#define mus_clear_filter_state(Gen) mus_reset(Gen)
+#define mus_restart_env(Gen) mus_reset(Gen)
 #define mus_radians2hz(Radians) mus_radians_to_hz(Radians)
 #define mus_hz2radians(Hz) mus_hz_to_radians(Hz)
 #define mus_degrees2radians(Degrees) mus_degrees_to_radians(Degrees)

@@ -9415,8 +9415,8 @@ int mus_audio_compatible_format(int dev)
       for (i = 0; i <= (int)(val[0]); i++) ival[i] = (int)(val[i]);
       /*               ^ this cast is vital!  Memory clobbered otherwise in LinuxPPC */
       for (i = 1; i <= ival[0]; i++)
-	if (ival[i] == MUS_COMPATIBLE_FORMAT) 
-	  return(MUS_COMPATIBLE_FORMAT);
+	if (ival[i] == MUS_AUDIO_COMPATIBLE_FORMAT) 
+	  return(MUS_AUDIO_COMPATIBLE_FORMAT);
       for (i = 1; i <= ival[0]; i++) 
 	if ((ival[i] == MUS_BINT) || (ival[i] == MUS_LINT) ||
 	    (ival[i] == MUS_BFLOAT) || (ival[i] == MUS_LFLOAT) ||
@@ -9429,7 +9429,7 @@ int mus_audio_compatible_format(int dev)
       return(ival[1]);
     }
 #endif
-  return(MUS_COMPATIBLE_FORMAT);
+  return(MUS_AUDIO_COMPATIBLE_FORMAT);
 }
 
 

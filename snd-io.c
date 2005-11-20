@@ -208,10 +208,9 @@ static void reposition_file_buffers(snd_data *sd, off_t index)
 	}
       hdr = sd->hdr;
       /* these need to flush active data before hidden close and fixup the io indices */
-      mus_file_open_descriptors(fd,
+      snd_file_open_descriptors(fd,
 				sd->filename,
 				hdr->format,
-				mus_bytes_per_sample(hdr->format),
 				hdr->data_location,
 				hdr->chans,
 				hdr->type);
@@ -501,6 +500,11 @@ io_error_t sndlib_error_to_snd(int sndlib_err)
   return(IO_UNKNOWN_SNDLIB_ERROR);
 }
 
+int snd_file_open_descriptors(int fd, const char *name, int format, off_t location, int chans, int type)
+{
+  return(mus_file_open_descriptors(fd, name, format, mus_bytes_per_sample(format), location, chans, type));
+}
+
 io_error_t snd_write_header(const char *name, int type, int srate, int chans, off_t loc, 
 			    off_t samples, int format, const char *comment, int len, int *loops)
 {
@@ -657,10 +661,9 @@ snd_data *copy_snd_data(snd_data *sd, off_t beg, int bufsize)
   fd = snd_open_read(sd->filename);
   if (fd == -1) 
     return(NULL);
-  mus_file_open_descriptors(fd,
+  snd_file_open_descriptors(fd,
 			    sd->filename,
 			    hdr->format,
-			    mus_bytes_per_sample(hdr->format),
 			    hdr->data_location,
 			    hdr->chans,
 			    hdr->type);
@@ -808,10 +811,9 @@ int open_temp_file(const char *ofile, int chans, file_info *hdr, io_error_t *err
       return(-1);
     }
   hdr->data_location = mus_header_data_location(); /* header might have changed size (aiff extras) */
-  sl_err = mus_file_open_descriptors(ofd,
+  sl_err = snd_file_open_descriptors(ofd,
 				     ofile,
 				     hdr->format,
-				     mus_bytes_per_sample(hdr->format),
 				     hdr->data_location,
 				     chans,
 				     hdr->type);

@@ -982,7 +982,7 @@ static char *save_as_temp_file(mus_sample_t **raw_data, int chans, int len, int 
       return(NULL);
     }
   ofd = snd_reopen_write(newname);
-  mus_file_open_descriptors(ofd, newname, format, mus_bytes_per_sample(format), 28, chans, MUS_NEXT);
+  snd_file_open_descriptors(ofd, newname, format, 28, chans, MUS_NEXT);
   /* mus_file_set_data_clipped(ofd, data_clipped(ss)); */
   lseek(ofd, 28, SEEK_SET);
   no_space = disk_space_p(any_selected_sound(), len * chans * mus_bytes_per_sample(format), newname);
@@ -1131,9 +1131,8 @@ static mix_info *file_mix_samples(off_t beg, off_t num, char *mixfile, chan_info
       cp->edit_hook_checked = false;
       return(NULL);
     }
-  mus_file_open_descriptors(ifd, mixfile,
+  snd_file_open_descriptors(ifd, mixfile,
 			    ihdr->format,
-			    mus_bytes_per_sample(ihdr->format),
 			    ihdr->data_location,
 			    ihdr->chans,
 			    ihdr->type);

@@ -541,6 +541,7 @@ int snd_reopen_write(const char *arg);
 io_error_t snd_write_header(const char *name, int type, int srate, int chans, off_t loc, off_t samples, 
 			    int format, const char *comment, int len, int *loops);
 io_error_t sndlib_error_to_snd(int sndlib_err);
+int snd_file_open_descriptors(int tfd, const char *name, int format, off_t location, int chans, int type);
 snd_io *make_file_state(int fd, file_info *hdr, int chan, off_t beg, int suggested_bufsize);
 void file_buffers_forward(off_t ind0, off_t ind1, off_t indx, snd_fd *sf, snd_data *cur_snd);
 void file_buffers_back(off_t ind0, off_t ind1, off_t indx, snd_fd *sf, snd_data *cur_snd);
