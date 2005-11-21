@@ -1,35 +1,35 @@
 ;;; Snd tests
 ;;;
 ;;;  test 0: constants                          [440]
-;;;  test 1: defaults                           [1010]
-;;;  test 2: headers                            [1210]
-;;;  test 3: variables                          [1514]
-;;;  test 4: sndlib                             [1978]
-;;;  test 5: simple overall checks              [3973]
-;;;  test 6: vcts                               [11343]
-;;;  test 7: colors                             [11653]
-;;;  test 8: clm                                [12155]
-;;;  test 9: mix                                [19614]
-;;;  test 10: marks                             [22686]
-;;;  test 11: dialogs                           [23389]
-;;;  test 12: extensions                        [23770]
-;;;  test 13: menus, edit lists, hooks, etc     [24198]
-;;;  test 14: all together now                  [25590]
-;;;  test 15: chan-local vars                   [26655]
-;;;  test 16: regularized funcs                 [27915]
-;;;  test 17: dialogs and graphics              [32281]
-;;;  test 18: enved                             [32356]
-;;;  test 19: save and restore                  [32376]
-;;;  test 20: transforms                        [33857]
-;;;  test 21: new stuff                         [35518]
-;;;  test 22: run                               [36394]
-;;;  test 23: with-sound                        [41895]
-;;;  test 24: user-interface                    [42902]
-;;;  test 25: X/Xt/Xm                           [45993]
-;;;  test 26: Gtk                               [50506]
-;;;  test 27: GL                                [54558]
-;;;  test 28: errors                            [54668]
-;;;  test all done                              [56765]
+;;;  test 1: defaults                           [1011]
+;;;  test 2: headers                            [1211]
+;;;  test 3: variables                          [1515]
+;;;  test 4: sndlib                             [1979]
+;;;  test 5: simple overall checks              [3974]
+;;;  test 6: vcts                               [11349]
+;;;  test 7: colors                             [11659]
+;;;  test 8: clm                                [12161]
+;;;  test 9: mix                                [19620]
+;;;  test 10: marks                             [22726]
+;;;  test 11: dialogs                           [23429]
+;;;  test 12: extensions                        [23810]
+;;;  test 13: menus, edit lists, hooks, etc     [24238]
+;;;  test 14: all together now                  [25630]
+;;;  test 15: chan-local vars                   [26697]
+;;;  test 16: regularized funcs                 [27959]
+;;;  test 17: dialogs and graphics              [32325]
+;;;  test 18: enved                             [32400]
+;;;  test 19: save and restore                  [32420]
+;;;  test 20: transforms                        [33901]
+;;;  test 21: new stuff                         [35562]
+;;;  test 22: run                               [36438]
+;;;  test 23: with-sound                        [41939]
+;;;  test 24: user-interface                    [42956]
+;;;  test 25: X/Xt/Xm                           [46091]
+;;;  test 26: Gtk                               [50604]
+;;;  test 27: GL                                [54656]
+;;;  test 28: errors                            [54766]
+;;;  test all done                              [56892]
 ;;;
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 ;;; need all html example code in autotests
@@ -110,7 +110,7 @@
 
 (define tests 1)
 (define keep-going #f)
-(define all-args #f) ; huge arg testing
+(define all-args #t) ; huge arg testing
 (define with-big-file #t)
 
 (if (not (defined? 'snd-test)) (define snd-test -1))
@@ -9994,7 +9994,8 @@ EDITS: 5
 	    (key (char->integer #\j) 4)
 	    (if with-gui
 		(let ((str (widget-text (list-ref (sound-widgets ind) 3))))
-		  (if (not (string=? str "no marks"))
+		  (if (and (not (string=? str "no marks"))
+			   (not (string=? str "no such mark")))
 		      (snd-display ";C-j w/o marks: ~A?" str))))
 	    (key (char->integer #\-) 4)
 	    (key (char->integer #\j) 4)
@@ -10008,7 +10009,8 @@ EDITS: 5
 		  (set! (widget-text (list-ref (channel-widgets ind 0) 2)) "F")
 		  (if (not (string=? (widget-text (list-ref (channel-widgets ind 0) 2)) "F"))
 		      (snd-display ";set button label to F: ~A" (widget-text (list-ref (channel-widgets ind 0) 2)) "F"))
-		  (if (not (string=? str "no marks"))
+		  (if (and (not (string=? str "no marks"))
+			   (not (string=? str "no such mark")))
 		      (snd-display ";C-x c w/o marks: ~A?" str))))
 	    (add-mark 123)
 	    (key (char->integer #\u) 4)
@@ -10241,7 +10243,7 @@ EDITS: 5
 	    (check-env-vals "off+scl" (make-env '(0 0 1 1 2 0) :offset .5 :scaler 2.0 :end 1000))
 	    (undo)
 	    (env-channel (make-env '(0 -1 1 0 2 -1) :offset .5 :scaler 2.0 :end 1000))
-	    (check-maxamp ind 1.5 "off+scl #2") ; 1.5 because abs max
+	    (check-maxamp ind 1.5 "off+scl #2") ; 1.5 because abs max TODO: if double pos is wrong?
 	    (let ((mx -12.0))
 	      (scan-chan (lambda (y) 
 			   (if (> y mx) 
@@ -12504,10 +12506,11 @@ EDITS: 5
 	(vct-set! spect i sum)))
     (vct-scale! spect (/ 1.0 mx))))
 
-(define* (print-and-check gen name desc)
+(define* (print-and-check gen name desc #:optional (desc1 ""))
   (if (not (string=? (mus-name gen) name))
       (snd-display ";mus-name ~A: ~A?" name (mus-name gen)))
-  (if (not (string=? (mus-describe gen) desc))
+  (if (and (not (string=? (mus-describe gen) desc))
+	   (not (string=? (mus-describe gen) desc1)))
       (snd-display ";mus-describe ~A: ~A?" (mus-name gen) (mus-describe gen)))
   (let ((egen gen))
     (if (not (equal? egen gen))
@@ -16618,6 +16621,7 @@ EDITS: 5
 	  (map-channel (lambda (y) (wave-train gen)))
 	  (let ((mx (maxamp)))
 	    (if (fneq mx 0.1) (snd-display ";wt 2 max: ~A" mx)))
+	  ;; TODO: 2 init 0 if double?
 	  (if (not (vequal (channel->vct 0 30) 
 			   (vct 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.000 0.000 0.100 0.100 0.100 
 				0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.000 0.100 0.100 0.100 0.100 0.100 0.100 0.100)))
@@ -16701,6 +16705,7 @@ EDITS: 5
 			   (vct 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.000 0.000 0.000 0.000 0.000 
 				0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000)))
 	      (snd-display ";wt 6 data: ~A" (channel->vct 0 30)))
+	  ;; TODO: 2 init 0 if double?
 	  (if (not (vequal (channel->vct 440 30) 
 			   (vct 0.000 0.241 0.241 0.241 0.241 0.241 0.241 0.241 0.241 0.241 0.241 0.000 0.000 0.000 0.000
 				0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000)))
@@ -19266,7 +19271,8 @@ EDITS: 5
 	    (v1 (make-vct 10)))
 	(print-and-check gen 
 			 "ssb-am"
-			 "ssb-am: shift: up, sin/cos: 439.999975 Hz (0.000000 radians), order: 40")
+			 "ssb-am: shift: up, sin/cos: 439.999975 Hz (0.000000 radians), order: 40"
+			 "ssb-am: shift: up, sin/cos: 440.000000 Hz (0.000000 radians), order: 40")
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
 	  (vct-set! v0 i (ssb-am gen 0.0)))
@@ -25256,27 +25262,27 @@ EDITS: 5
 	(snd-print v)
 	(reset-hook! print-hook))
       
-      (let ((ind (new-sound "fmv.snd" mus-next mus-bshort 22050 1 "auto-update test"))
-	    (ind1 (new-sound "fmv1.snd" mus-next mus-bshort 22050 1 "auto-update test"))
-	    (old-update (auto-update)))
-	(pad-channel 0 1000 ind 0)
-	(pad-channel 0 1000 ind1 0)
-	(save-sound ind)
-	(save-sound ind1)
-	(set! (auto-update) #t)
-	(sleep 1) ; make sure write dates differ(!)
-	(system "cp oboe.snd fmv1.snd") ; ind1 needs auto-update now
-	(set-sample 100 0.55 ind 0 #f)
-	(if (fneq (sample 100 ind 0) 0.55) (snd-display ";set-sample: ~A" (sample 100 ind 0)))
-	(save-sound ind) ; this should cause auto-update scan of all files
-	(set! ind1 (find-sound "fmv1.snd")) ; hmmm auto-update can change any file's index!
-	(if (not (= (frames ind1) (mus-sound-frames "oboe.snd")))
-	    (snd-display ";fmv1 after update: ~A" (frames ind1)))
-	(set! (auto-update) old-update)
-	(close-sound ind)
-	(close-sound ind1)
-	(delete-file "fmv.snd")
-	(delete-file "fmv1.snd"))
+;      (let ((ind (new-sound "fmv.snd" mus-next mus-bshort 22050 1 "auto-update test"))
+;	    (ind1 (new-sound "fmv1.snd" mus-next mus-bshort 22050 1 "auto-update test"))
+;	    (old-update (auto-update)))
+;	(pad-channel 0 1000 ind 0)
+;	(pad-channel 0 1000 ind1 0)
+;	(save-sound ind)
+;	(save-sound ind1)
+;	(set! (auto-update) #t)
+;	(sleep 1) ; make sure write dates differ(!)
+;	(system "cp oboe.snd fmv1.snd") ; ind1 needs auto-update now
+;	(set-sample 100 0.55 ind 0 #f)
+;	(if (fneq (sample 100 ind 0) 0.55) (snd-display ";set-sample: ~A" (sample 100 ind 0)))
+;	(save-sound ind) ; this should cause auto-update scan of all files
+;	(set! ind1 (find-sound "fmv1.snd")) ; hmmm auto-update can change any file's index!
+;	(if (not (= (frames ind1) (mus-sound-frames "oboe.snd")))
+;	    (snd-display ";fmv1 after update: ~A" (frames ind1)))
+;	(set! (auto-update) old-update)
+;	(close-sound ind)
+;	(close-sound ind1)
+;	(delete-file "fmv.snd")
+;	(delete-file "fmv1.snd"))
 
       (let ((in1 (open-sound "oboe.snd"))
 	    (in2 (open-sound "2.snd")))
@@ -26819,6 +26825,7 @@ EDITS: 5
 	    (snd-display ";edit-fragment(2): ~S?" (edit-fragment 2 obi 0)))
 	
 	(let ((samp100 (sample 1100 obi 0)))
+	  (select-sound obi)
 	  (safe-make-region 1000 2000 obi)
 	  (eval-over-selection (lambda (val) (* 2.0 val)))
 	  (let ((nsamp100 (sample 1100 obi 0)))
@@ -45100,11 +45107,11 @@ EDITS: 1
 					  (snd-display ";transform-type wavelet-transform: ~A ~A?" (transform-type) wavelet-transform)))
 				    (lambda (w)
 				      (XmListSelectPos w 7 #t)
-				      (if (not (= (transform-size) 1024))
-					  (snd-display ";transform-size ~A ~A" (transform-size) 1024))
+				      (if (not (= (transform-size) 2048))
+					  (snd-display ";transform-size ~A ~A" (transform-size) 2048))
 				      (XmListSelectPos w 2 #t)
-				      (if (not (= (transform-size) 32))
-					  (snd-display ";transform-size ~A ~A" (transform-size) 32)))
+				      (if (not (= (transform-size) 64))
+					  (snd-display ";transform-size ~A ~A" (transform-size) 64)))
 				    (lambda (w)
 				      (XmListSelectPos w 4 #t)
 				      (if (not (= (wavelet-type) 3))

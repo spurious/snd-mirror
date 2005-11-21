@@ -469,7 +469,7 @@ the searching mechanisms are disabled.",
 		      snd_xref_urls("Search"));
 }
 
-/* TODO: key command help lists omitted if rebound */
+/* SOMEDAY: key command help lists omitted if rebound */
 
 void undo_help(void) 
 {

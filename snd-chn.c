@@ -4781,7 +4781,7 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, cp_field_t fld, char *calle
       return(C_TO_XEN_INT(cp->wavo_hop));
       break;
     case CP_WAVO_TRACE:
-      cp->wavo_trace = g_imin(1, on, DEFAULT_WAVO_TRACE); 
+      cp->wavo_trace = mus_iclamp(1, g_imin(1, on, DEFAULT_WAVO_TRACE), POINT_BUFFER_SIZE);
       update_graph(cp); 
       return(C_TO_XEN_INT(cp->wavo_trace));
       break;
@@ -5981,7 +5981,7 @@ static XEN g_set_wavo_trace(XEN val, XEN snd, XEN chn)
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_1, S_setB S_wavo_trace, "a number"); 
   if (XEN_BOUND_P(snd))
     return(channel_set(snd, chn, val, CP_WAVO_TRACE, S_setB S_wavo_trace));
-  set_wavo_trace(XEN_TO_C_INT_OR_ELSE(val, 0));
+  set_wavo_trace(mus_iclamp(1, XEN_TO_C_INT_OR_ELSE(val, DEFAULT_WAVO_TRACE), POINT_BUFFER_SIZE));
   return(C_TO_XEN_INT(wavo_trace(ss)));
 }
 

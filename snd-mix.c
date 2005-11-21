@@ -1118,7 +1118,7 @@ static mix_info *file_mix_samples(off_t beg, off_t num, char *mixfile, chan_info
 		snd_open_strerror()); 
       return(NULL);
     }
-  if ((disk_space_p(sp, num * 4, ofile)) == DISK_SPACE_OK)
+  if ((disk_space_p(sp, num * mus_bytes_per_sample(ohdr->format), ofile)) == DISK_SPACE_OK)
     csf = init_sample_read(beg, cp, READ_FORWARD);
   if (csf) ifd = snd_open_read(mixfile);
   if ((!csf) ||        /* i.e. no space for temp, I guess */
@@ -1523,7 +1523,7 @@ static void remix_file(mix_info *md, const char *origin, bool redisplay)
 		    snd_open_strerror());
 	  return;
 	}
-      no_space = disk_space_p(cursp, num * 4, ofile);
+      no_space = disk_space_p(cursp, num * mus_bytes_per_sample(ohdr->format), ofile);
       if (no_space != DISK_SPACE_OK)
 	{
 	  close_temp_file(ofile, ofd, ohdr->type, 0);
@@ -4656,9 +4656,13 @@ mix data (a vct) into snd's channel chn starting at beg; return the new mix id"
   if (XEN_NOT_BOUND_P(with_tag))
     with_mixer = with_mix_tags(ss);
   else with_mixer = XEN_TO_C_BOOLEAN(with_tag);
+#if SNDLIB_USE_FLOATS
+  data = v->data;
+#else
   data = (mus_sample_t *)CALLOC(len, sizeof(mus_sample_t));
   for (i = 0; i < len; i++)
     data[i] = MUS_FLOAT_TO_SAMPLE(v->data[i]);
+#endif
   if (XEN_STRING_P(origin))
     edname = XEN_TO_C_STRING(origin);
   if ((len < MAX_BUFFER_SIZE) && (!with_mixer))
@@ -4689,14 +4693,15 @@ mix data (a vct) into snd's channel chn starting at beg; return the new mix id"
       newname = save_as_temp_file(&data, 1, len, SND_SRATE(cp->sound));
       if (newname)
 	{
-	  /* TODO: if file troubles, snd_error called here -- should we trap and go to xen_error?
-	   */
+	  /* if (temp) file troubles, snd_error called here -- surely no need for wrapper */
 	  mix_id = mix_file(bg, len, 1, &cp, newname, DELETE_ME, (char *)((edname == NULL) ? S_mix_vct : edname), with_mixer, track_num); /* ORIGIN? */
 	  FREE(newname);
 	}
     }
   update_graph(cp);
+#if (!SNDLIB_USE_FLOATS)
   FREE(data);
+#endif
   cp->edit_hook_checked = false;
   return(xen_return_first(C_TO_XEN_INT(mix_id), obj, origin));
 }

@@ -1,33 +1,34 @@
-Snd 7.16
+Snd 7.17
 
-Marten Stromberg provided a PDF version of snd.html, but I can't decide
-  where it should go.
+Mike made many improvements in the ruby support
 
-new dialog: first half (Motif version) of a preferences dialog (Options menu item).
+Kjetil added a -volume argument to sndplay
 
-added cycle speed style via click, mix|track-speed-style
-      analyze-ladspa as synonym for analyse-ladspa
-      save/insert/mix buttons in region browser
-      save-region-dialog
-      --enable-threads configure switch, and first use thereof (FIR filtering)
-      snd-g|xprefs.c, preferences-dialog function
+all dlp directory files moved to main directory (to simplify load-path handling)
 
-snd-error is now (throw 'snd-error ...)
+added: *clm-notehook* and *definstrument-hook* added to Guile version of with-sound (thanks to Rick)
+       the rest of the preferences dialog
+       mus-header-raw-defaults
+       sync-max
+       SND_PATH environment variable (optional load path directory list)
 
-init file handling has become more complex: ~/.snd is still loaded if present,
-  as is /etc/snd.conf, but Snd also now looks for ~/.snd_guile|ruby, and
-  /etc/snd_guile|ruby.conf, and the preferences dialog and
-  Options:save options function write to ~/.snd_prefs_guile|ruby
-  (so that the user's init file is not changed by the preference mechanism).
-  This may seem unmotivated, but watch this space!
+if --with-float-samples and --with-doubles, the internal sample data type is double.
+  (this also affects CLM)
 
-changed recorder-in|out-format -> recorder-in|out-data-format,
-        recorder-out-type -> recorder-out-header-type
-        save-macros now requires a filename (it won't write to ~/.snd unless you ask it to)
+moved snd-apropos to snd7.scm.
 
-(Snd has just reached the 500,000 line mark)
+clm: fixed various instruments that were using mus-location with src:
+         backandforth.ins, scratch in ug1.ins, granular.ins, various test ins.
+     added optional srate envelope arg to fullmix.
+     Rick added clm.asd.
+     Fernando updated dlocsig and friends.
 
-Checked: gtk 2.8.3|4|5|6, FreeBSD 5.4, gsl 1.7, Ruby 1.8.3
+cmn: *dynamics-minimum-vertical-separation* added by Anders.
+     Anders also added support for dy0 and dy1 messages in wedge.lisp.
+     Rick added cmn.asd.
+     *dot-vertical-spacing*
 
-With much help from: Anders Vinjar, Kjetil Matheussen, Mike Scholz, Marten Stromberg
+checked: ACL 8.0, openmcl 1.0, cmucl 19c, clisp 2.35 (cmn), gtk 2.8.7
 
+with much help from Mike, R Mattes, Rick, Anders, J Reyes, Kjetil, T Blechmann
+   	J Rundall, H Fugal, Fernando, J Sandgren, M Klingbeil

@@ -1046,6 +1046,9 @@ int mus_array_to_file(const char *filename, mus_sample_t *ddata, int len, int sr
 
 int mus_file_to_float_array(const char *filename, int chan, off_t start, int samples, Float *array)
 {
+#if SNDLIB_USE_FLOATS
+  return(mus_file_to_array(filename, chan, start, samples, array));
+#else
   mus_sample_t *idata;
   int i, len;
   idata = (mus_sample_t *)CALLOC(samples, sizeof(mus_sample_t));
@@ -1055,18 +1058,23 @@ int mus_file_to_float_array(const char *filename, int chan, off_t start, int sam
       array[i] = MUS_SAMPLE_TO_FLOAT(idata[i]);
   FREE(idata);
   return(len);
+#endif
 }
 
 int mus_float_array_to_file(const char *filename, Float *ddata, int len, int srate, int channels)
 {
+  char *errmsg;
+#if SNDLIB_USE_FLOATS
+  errmsg = mus_array_to_file_with_error(filename, ddata, len, srate, channels);
+#else
   mus_sample_t *idata;
   int i;
-  char *errmsg;
   idata = (mus_sample_t *)CALLOC(len, sizeof(mus_sample_t));
   for (i = 0; i < len; i++) 
     idata[i] = MUS_FLOAT_TO_SAMPLE(ddata[i]);
   errmsg = mus_array_to_file_with_error(filename, idata, len, srate, channels);
   FREE(idata);
+#endif
   if (errmsg)
     return(mus_error(MUS_CANT_OPEN_FILE, errmsg));
   return(MUS_NO_ERROR);

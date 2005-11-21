@@ -846,7 +846,7 @@ static Float mus_array_bezier_interp(Float *wave, Float x, int size)
   ay = y3 - y0 - cy - by;
   return(y0 + p * (cy + (p * (by + (p * ay)))));
 }
-
+/* TODO: does double -> different rounding mode? */
 Float mus_interpolate(mus_interp_t type, Float x, Float *table, int table_size, Float y)
 {
   switch (type)

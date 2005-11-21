@@ -4933,7 +4933,7 @@ static XEN g_vct2soundfile(XEN g_fd, XEN obj, XEN g_nums)
       vals = (float *)MALLOC(nums * sizeof(float));
       for (i = 0; i < nums; i++)
 	vals[i] = (float)(v->data[i]);
-      write(fd, (char *)vals, nums * 4);
+      write(fd, (char *)vals, nums * sizeof(float));
       FREE(vals);
     }
   return(xen_return_first(C_TO_XEN_INT(nums >> 2), obj));
