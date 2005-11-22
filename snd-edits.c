@@ -4553,8 +4553,6 @@ static char *edit_list_data_to_temp_file(chan_info *cp, ed_list *ed, file_delete
   return(ofile);
 }
 
-/* TODO: combine save-state and edit-list->function code somehow */
-
 void edit_history_to_file(FILE *fd, chan_info *cp)
 {
   /* write edit list as a guile|ruby program to fd (open for writing) for subsequent load */
@@ -4846,9 +4844,9 @@ static char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
 			durstr = copy_string("#f");
 		      else durstr = mus_format(OFF_TD, ed->len);
 		      function = mus_format("%s (%s %s " OFF_TD " %s snd chn)",
-					     function, S_ptree_channel,
-					     XEN_AS_STRING(ptree_code(cp->ptrees[ed->ptree_location])),
-					     ed->beg, durstr);
+					    function, S_ptree_channel,
+					    XEN_AS_STRING(ptree_code(cp->ptrees[ed->ptree_location])),
+					    ed->beg, durstr);
 		      FREE(durstr);
 		    }
 		  break;

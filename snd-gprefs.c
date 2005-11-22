@@ -76,7 +76,6 @@ static void float_1_to_textfield(GtkWidget *w, Float val)
 
 static void sg_entry_set_text(GtkEntry* entry, const char *text)
 {
-  /* god I hate gtk! */
   if (text)
     gtk_entry_set_text(entry, (gchar *)text);
   else gtk_entry_set_text(entry, " ");
@@ -1442,7 +1441,7 @@ static gint startup_height_erase_func(gpointer context)
 static void startup_width_error(const char *msg, void *data)
 {
   prefs_info *prf = (prefs_info *)data;
-  sg_entry_set_text(GTK_ENTRY(prf->text), "right");
+  sg_entry_set_text(GTK_ENTRY(prf->text), "must be > 0");
   g_timeout_add_full(0,
 		     ERROR_WAIT_TIME,
 		     startup_width_erase_func,
@@ -1452,7 +1451,7 @@ static void startup_width_error(const char *msg, void *data)
 static void startup_height_error(const char *msg, void *data)
 {
   prefs_info *prf = (prefs_info *)data;
-  sg_entry_set_text(GTK_ENTRY(prf->rtxt), "right");
+  sg_entry_set_text(GTK_ENTRY(prf->rtxt), "must be > 0");
   g_timeout_add_full(0,
 		     ERROR_WAIT_TIME,
 		     startup_height_erase_func,
@@ -2719,7 +2718,7 @@ static void grid_density_text_callback(prefs_info *prf)
 	  in_set_grid_density(value);
 	  gtk_adjustment_set_value(GTK_ADJUSTMENT(prf->adj), value / prf->scale_max);
 	}
-      else sg_entry_set_text(GTK_ENTRY(prf->text), "right");
+      else sg_entry_set_text(GTK_ENTRY(prf->text), "must be >= 0.0");
 
     }
 }
@@ -2753,12 +2752,12 @@ static void show_axes_from_text(prefs_info *prf)
 	      }
 	  if (curpos >= 0)
 	    in_set_show_axes((show_axes_t)curpos);
-	  else post_prefs_error("what?", (void *)prf);
+	  else post_prefs_error("unknown axis choice", (void *)prf);
 	}
-      else post_prefs_error("right", (void *)prf);
+      else post_prefs_error("need an axis choice", (void *)prf);
       FREE(trimmed_str);
     }
-  else post_prefs_error("right", (void *)prf);
+  else post_prefs_error("need an axis choice", (void *)prf);
 }
 
 /* ---------------- x-axis-style ---------------- */
@@ -2790,12 +2789,12 @@ static void x_axis_style_from_text(prefs_info *prf)
 	      }
 	  if (curpos >= 0)
 	    in_set_x_axis_style((x_axis_style_t)curpos);
-	  else post_prefs_error("what?", (void *)prf);
+	  else post_prefs_error("unknown axis style", (void *)prf);
 	}
-      else post_prefs_error("right", (void *)prf);
+      else post_prefs_error("need an axis style", (void *)prf);
       FREE(trimmed_str);
     }
-  else post_prefs_error("right", (void *)prf);
+  else post_prefs_error("need an axis style", (void *)prf);
 }
 
 /* ---------------- smpte ---------------- */
@@ -3290,7 +3289,7 @@ static void fft_window_beta_text_callback(prefs_info *prf)
 	  in_set_fft_window_beta(value);
 	  gtk_adjustment_set_value(GTK_ADJUSTMENT(prf->adj), value / prf->scale_max);
 	}
-      else sg_entry_set_text(GTK_ENTRY(prf->text), "right");
+      else sg_entry_set_text(GTK_ENTRY(prf->text), "must be >= 0.0");
     }
 }
 
@@ -3481,7 +3480,7 @@ static gint mark_tag_height_erase_func(gpointer context)
 static void mark_tag_width_error(const char *msg, void *data)
 {
   prefs_info *prf = (prefs_info *)data;
-  sg_entry_set_text(GTK_ENTRY(prf->text), "right");
+  sg_entry_set_text(GTK_ENTRY(prf->text), "must be > 0");
   g_timeout_add_full(0,
 		     ERROR_WAIT_TIME,
 		     mark_tag_width_erase_func,
@@ -3491,7 +3490,7 @@ static void mark_tag_width_error(const char *msg, void *data)
 static void mark_tag_height_error(const char *msg, void *data)
 {
   prefs_info *prf = (prefs_info *)data;
-  sg_entry_set_text(GTK_ENTRY(prf->rtxt), "right");
+  sg_entry_set_text(GTK_ENTRY(prf->rtxt), "must be > 0");
   g_timeout_add_full(0,
 		     ERROR_WAIT_TIME,
 		     mark_tag_height_erase_func,
@@ -3562,7 +3561,7 @@ static gint mix_tag_height_erase_func(gpointer context)
 static void mix_tag_width_error(const char *msg, void *data)
 {
   prefs_info *prf = (prefs_info *)data;
-  sg_entry_set_text(GTK_ENTRY(prf->text), "right");
+  sg_entry_set_text(GTK_ENTRY(prf->text), "must be > 0");
   g_timeout_add_full(0,
 		  ERROR_WAIT_TIME,
 		  mix_tag_width_erase_func,
@@ -3572,7 +3571,7 @@ static void mix_tag_width_error(const char *msg, void *data)
 static void mix_tag_height_error(const char *msg, void *data)
 {
   prefs_info *prf = (prefs_info *)data;
-  sg_entry_set_text(GTK_ENTRY(prf->rtxt), "right");
+  sg_entry_set_text(GTK_ENTRY(prf->rtxt), "must be > 0");
   g_timeout_add_full(0,
 		  ERROR_WAIT_TIME,
 		  mix_tag_height_erase_func,

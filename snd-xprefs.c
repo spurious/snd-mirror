@@ -5,7 +5,7 @@
  */
 
 /* TODO: keybinding sets (to mimic other editors)
-   SOMEDAY: completions and more verbose error msgs [and sscanf->string_to_* for better checks (21)]
+   SOMEDAY: completions and sscanf->string_to_* for better checks (xmnmessage?)
    SOMEDAY: gtk side of icon box (are there others?)
    TODO: ruby extensions.rb side of set_global_sync
 
@@ -1661,7 +1661,7 @@ static void startup_height_erase_func(XtPointer context, XtIntervalId *id)
 static void startup_width_error(const char *msg, void *data)
 {
   prefs_info *prf = (prefs_info *)data;
-  XmTextFieldSetString(prf->text, "right");
+  XmTextFieldSetString(prf->text, "must be > 0");
   XtAppAddTimeOut(MAIN_APP(ss),
 		  ERROR_WAIT_TIME,
 		  startup_width_erase_func,
@@ -1671,7 +1671,7 @@ static void startup_width_error(const char *msg, void *data)
 static void startup_height_error(const char *msg, void *data)
 {
   prefs_info *prf = (prefs_info *)data;
-  XmTextFieldSetString(prf->rtxt, "right");
+  XmTextFieldSetString(prf->rtxt, "must be > 0");
   XtAppAddTimeOut(MAIN_APP(ss),
 		  ERROR_WAIT_TIME,
 		  startup_height_erase_func,
@@ -3007,7 +3007,7 @@ static void grid_density_text_callback(prefs_info *prf)
 	  in_set_grid_density(value);
 	  XmScaleSetValue(prf->scale, (int)(100 * value / prf->scale_max));
 	}
-      else XmTextFieldSetString(prf->text, "right");
+      else XmTextFieldSetString(prf->text, "must be >= 0.0");
       XtFree(str);
     }
 }
@@ -3055,12 +3055,12 @@ static void show_axes_from_text(prefs_info *prf)
 	      }
 	  if (curpos >= 0)
 	    in_set_show_axes((show_axes_t)curpos);
-	  else post_prefs_error("what?", (XtPointer)prf);
+	  else post_prefs_error("unknown axis choice", (XtPointer)prf);
 	}
-      else post_prefs_error("right", (XtPointer)prf);
+      else post_prefs_error("need an axis choice", (XtPointer)prf);
       FREE(trimmed_str);
     }
-  else post_prefs_error("right", (XtPointer)prf);
+  else post_prefs_error("need an axis choice", (XtPointer)prf);
 }
 
 /* ---------------- x-axis-style ---------------- */
@@ -3106,12 +3106,12 @@ static void x_axis_style_from_text(prefs_info *prf)
 	      }
 	  if (curpos >= 0)
 	    in_set_x_axis_style((x_axis_style_t)curpos);
-	  else post_prefs_error("what?", (XtPointer)prf);
+	  else post_prefs_error("unknown axis style", (XtPointer)prf);
 	}
-      else post_prefs_error("right", (XtPointer)prf);
+      else post_prefs_error("need an axis style", (XtPointer)prf);
       FREE(trimmed_str);
     }
-  else post_prefs_error("right", (XtPointer)prf);
+  else post_prefs_error("need an axis style", (XtPointer)prf);
 }
 
 /* ---------------- smpte ---------------- */
@@ -3657,7 +3657,7 @@ static void fft_window_beta_text_callback(prefs_info *prf)
 	  in_set_fft_window_beta(value);
 	  XmScaleSetValue(prf->scale, (int)(100 * value / prf->scale_max));
 	}
-      else XmTextFieldSetString(prf->text, "right");
+      else XmTextFieldSetString(prf->text, "must be >= 0.0");
       XtFree(str);
     }
 }
@@ -3873,7 +3873,7 @@ static void mark_tag_height_erase_func(XtPointer context, XtIntervalId *id)
 static void mark_tag_width_error(const char *msg, void *data)
 {
   prefs_info *prf = (prefs_info *)data;
-  XmTextFieldSetString(prf->text, "right");
+  XmTextFieldSetString(prf->text, "must be > 0");
   XtAppAddTimeOut(MAIN_APP(ss),
 		  ERROR_WAIT_TIME,
 		  mark_tag_width_erase_func,
@@ -3883,7 +3883,7 @@ static void mark_tag_width_error(const char *msg, void *data)
 static void mark_tag_height_error(const char *msg, void *data)
 {
   prefs_info *prf = (prefs_info *)data;
-  XmTextFieldSetString(prf->rtxt, "right");
+  XmTextFieldSetString(prf->rtxt, "must be > 0");
   XtAppAddTimeOut(MAIN_APP(ss),
 		  ERROR_WAIT_TIME,
 		  mark_tag_height_erase_func,
@@ -3957,7 +3957,7 @@ static void mix_tag_height_erase_func(XtPointer context, XtIntervalId *id)
 static void mix_tag_width_error(const char *msg, void *data)
 {
   prefs_info *prf = (prefs_info *)data;
-  XmTextFieldSetString(prf->text, "right");
+  XmTextFieldSetString(prf->text, "must be > 0");
   XtAppAddTimeOut(MAIN_APP(ss),
 		  ERROR_WAIT_TIME,
 		  mix_tag_width_erase_func,
@@ -3967,7 +3967,7 @@ static void mix_tag_width_error(const char *msg, void *data)
 static void mix_tag_height_error(const char *msg, void *data)
 {
   prefs_info *prf = (prefs_info *)data;
-  XmTextFieldSetString(prf->rtxt, "right");
+  XmTextFieldSetString(prf->rtxt, "must be > 0");
   XtAppAddTimeOut(MAIN_APP(ss),
 		  ERROR_WAIT_TIME,
 		  mix_tag_height_erase_func,

@@ -473,13 +473,14 @@ static void smpte_label_help(prefs_info *prf)
 	   WITH_WORD_WRAP);
 }
 
+#if USE_MOTIF
 static void mark_pane_help(prefs_info *prf)
 {
   snd_help(prf->var_name,
 	   "This options adds a pane to each channel window containing information about that channel's marks.",
 	   WITH_WORD_WRAP);
 }
-
+#endif
 
 
 
@@ -655,6 +656,7 @@ static void save_smpte_1(prefs_info *prf, FILE *fd)
 #endif
 }
 
+#if USE_MOTIF
 static void save_mark_pane_1(prefs_info *prf, FILE *fd)
 {
 #if HAVE_SCHEME
@@ -666,6 +668,7 @@ static void save_mark_pane_1(prefs_info *prf, FILE *fd)
   fprintf(fd, "add_mark_pane\n");
 #endif
 }
+#endif
 
 static void save_show_listener_1(prefs_info *prf, FILE *fd)
 {
@@ -817,11 +820,13 @@ static bool find_hidden_controls(void)
 }
 #endif
 
+#if USE_MOTIF
 static bool find_mark_pane(void)
 {
   return((XEN_DEFINED_P("including-mark-pane")) &&
 	 XEN_TO_C_BOOLEAN(XEN_NAME_AS_C_STRING_TO_VALUE("including-mark-pane")));
 }
+#endif
 
 #if HAVE_GUILE
 static bool find_debugging_aids(void)

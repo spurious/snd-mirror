@@ -745,7 +745,7 @@ io_error_t save_selection(const char *ofile, int type, int format, int srate, co
   if (chan == SAVE_ALL_CHANS)
     chans = si->chans;
   else chans = 1;
-  io_err = snd_write_header(ofile, type, srate, chans, 28, chans * dur, format, comment, comlen, NULL);
+  io_err = snd_write_header(ofile, type, srate, chans, chans * dur, format, comment, comlen, NULL);
   ASSERT_IO_ERROR(io_err, "snd_write_header in save_selection");
   if (io_err != IO_NO_ERROR)
     {

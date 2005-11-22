@@ -1431,16 +1431,11 @@ static Cessate read_adc(void)
 
 void recorder_start_output_file(const char *comment)
 {
-  int comlen, i;
+  int i;
   io_error_t err;
   off_t oloc = 0;
   char *msg;
-#if DEBUGGING
-  if (comment == NULL) comment = copy_string("recorder start output file (snd-rec.c)");
-#endif
-  comlen = (int)(snd_strlen(comment) + 3) / 4;
-  comlen *= 4;
-  err = snd_write_header(rp->output_file, rp->output_header_type, rp->srate, rp->out_chans, 28 + comlen, 0,
+  err = snd_write_header(rp->output_file, rp->output_header_type, rp->srate, rp->out_chans, 0 /* samples */,
 			 rp->output_data_format, comment, snd_strlen(comment), NULL);
   if (err != IO_NO_ERROR)
     {

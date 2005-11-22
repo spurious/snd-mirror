@@ -1103,9 +1103,7 @@ io_error_t save_region(int rg, const char *name, int type, int format, int srate
   if (r->use_temp_file == REGION_DEFERRED) 
     deferred_region_to_temp_file(r);
   comlen = snd_strlen(comment);
-  
-  io_err = snd_write_header(name, type, region_srate(rg), r->chans, 28, r->chans * r->frames, format, comment, comlen, NULL);
-
+  io_err = snd_write_header(name, type, region_srate(rg), r->chans, r->chans * r->frames, format, comment, comlen, NULL);
   if (io_err == IO_NO_ERROR)
     {
       oloc = mus_header_data_location();

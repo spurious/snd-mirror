@@ -538,7 +538,7 @@ io_error_t move_file(const char *oldfile, const char *newfile);
 
 int snd_open_read(const char *arg);
 int snd_reopen_write(const char *arg);
-io_error_t snd_write_header(const char *name, int type, int srate, int chans, off_t loc, off_t samples, 
+io_error_t snd_write_header(const char *name, int type, int srate, int chans, off_t samples, 
 			    int format, const char *comment, int len, int *loops);
 io_error_t sndlib_error_to_snd(int sndlib_err);
 int snd_file_open_descriptors(int tfd, const char *name, int format, off_t location, int chans, int type);

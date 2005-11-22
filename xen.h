@@ -2,7 +2,6 @@
 #define XEN_H
 
 /* SOMEDAY: we're using flags (config.h) like HAVE_COMPLEX_TRIG and defining HAVE_RATIOS -- bad names */
-/* TODO: check out the 64-bit int/long ambiguities in Guile 1.7 */
 
 /* macros for extension language support 
  *

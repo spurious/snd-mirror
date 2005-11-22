@@ -10,10 +10,8 @@ snd_info *snd_new_file(char *newname, int header_type, int data_format, int srat
   if (mus_header_writable(header_type, data_format))
     {
       io_error_t err;
-      err = snd_write_header(newname, header_type, srate, chans, 0, /* 0 is loc? */
-			     samples * chans, /* total samples apparently */
-			     data_format, new_comment, 
-			     snd_strlen(new_comment), NULL);
+      err = snd_write_header(newname, header_type, srate, chans, samples * chans, /* total samples */
+			     data_format, new_comment, snd_strlen(new_comment), NULL);
       if (err != IO_NO_ERROR)
 	snd_error(_("%s %s: %s"), 
 		  io_error_name(err),
@@ -3591,7 +3589,7 @@ The 'size' argument sets the number of samples (zeros) in the newly created soun
   else str = snd_tempnam();
 
   mus_sound_forget(str);
-  err = snd_write_header(str, ht, sr, ch, 0, len * ch, df, com, snd_strlen(com), NULL);
+  err = snd_write_header(str, ht, sr, ch, len * ch, df, com, snd_strlen(com), NULL);
   if (err == -1)
     {
       if (str) {FREE(str); str = NULL;}

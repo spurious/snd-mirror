@@ -5072,6 +5072,7 @@ mus_header_write_hook_t *mus_header_write_set_hook(mus_header_write_hook_t *new_
 
 int mus_header_write(const char *name, int type, int in_srate, int in_chans, off_t loc, off_t size_in_samples, int format, const char *comment, int len)
 {
+  /* the "loc" arg is a mistake -- just always set it to 0 */
   int chan, err = MUS_NO_ERROR;
   off_t siz;
   chan = mus_file_create(name);

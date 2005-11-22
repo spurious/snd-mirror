@@ -619,15 +619,8 @@ If C-f (and other such commands) doesn't work, either try toggling
 the "w" button, or add the focus-widget related hooks from grfsnd.html
 to your initialization file:
 
-(add-hook! mouse-enter-graph-hook 
-  (lambda (snd chn) 
-    (focus-widget (car (channel-widgets snd chn)))))
-(add-hook! mouse-enter-listener-hook 
-  (lambda (widget) 
-    (focus-widget widget)))
-(add-hook! mouse-enter-text-hook
-  (lambda (w)
-    (focus-widget w)))
+(if (not (provided? 'snd-extensions.scm)) (load-from-path "extensions.scm"))
+(focus-follows-mouse)
 
 
 If the openmotif package forgot to include libXm.a, a version is
@@ -678,7 +671,7 @@ GUILE_CONFIG_path=/sw/bin GUILE_CONFIG_name=guile-1.6-config GUILE_name=guile-1.
 --disable-nls --with-guile --with-motif --with-motif-prefix=/sw
 
 
-The ccrma-ftp images osx-10.2-snd and osx-10.3-snd need only guile 1.6.4;
+The ccrma-ftp images osx-10.2-snd to osx-10.4-snd need only guile 1.6.4;
   everything else (well, leaving aside -lm) is loaded statically.  The guile
   libraries are loaded statically, but guile needs its "boot" files in
   its ice-9 directory whenever it starts, so you need it installed.  Set

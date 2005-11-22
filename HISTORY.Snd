@@ -1,5 +1,8 @@
 Snd change log
 
+
+2006 ----------------------------------------------------------------
+
   21-Nov:    if --with-float-samples and --with-doubles, the internal sample data type is double.
   18-Nov:    moved snd-apropos to snd7.scm.
   15-Nov:    sync-max.

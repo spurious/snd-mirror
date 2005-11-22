@@ -35,8 +35,6 @@
 ;;; need all html example code in autotests
 ;;; need some way to check that graphs are actually drawn (region dialog, oscope etc) and sounds played correctly
 
-;;; TODO: major coverage missing in view-files
-
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
 (define original-save-dir (or (save-dir) "/zap/snd"))
@@ -110,7 +108,7 @@
 
 (define tests 1)
 (define keep-going #f)
-(define all-args #t) ; huge arg testing
+(define all-args #f) ; huge arg testing
 (define with-big-file #t)
 
 (if (not (defined? 'snd-test)) (define snd-test -1))
@@ -2416,7 +2414,11 @@
 			     (set! maxdiff diff)
 			     (set! maxpos i)))))
 		   (if (> maxdiff allowed-diff)
-		       (snd-display ";[line 2418] ~A: ~A at ~A (~A ~A)" (mus-data-format-name type) maxdiff maxpos (vct-ref v maxpos) (vct-ref v1 maxpos)))
+		       (snd-display ";[line 2418] ~A: ~A at ~A (~A ~A)" 
+				    (mus-data-format-name type) 
+				    maxdiff maxpos 
+				    (vct-ref v maxpos) (vct-ref v1 maxpos)))
+		   ;; on 64-bit machines, Guile's random currently returns garbage, so ignore this test
 		   (close-sound ind))))
 	     (list mus-bshort   mus-lshort   mus-mulaw   mus-alaw   mus-byte  
 		   mus-lfloat   mus-bint     mus-lint    mus-b24int mus-l24int
@@ -3011,22 +3013,28 @@
 			  (snd-display ";mus-sound-seek-frame(100): ~A ~A (~A ~A ~A)?" 
 				       pos (frame->byte "fmv5.snd" 100) chans (mus-header-type-name (cadr df-ht)) (mus-data-format-name (car df-ht)))))
 		    (mus-sound-close-input fd)
-		    (catch #t
-			   (lambda ()
-			     (run
-			      (lambda ()
-				(do ((k 0 (1+ k)))
-				    ((= k chans))
-				  (do ((i 0 (1+ i)))
-				      ((= i samps))
-				    (if (fneq (sound-data-ref sdata k i) (sound-data-ref ndata k i))
-					(throw 'read-write-error)))))))
+		    (let ((v0 0.0)
+			  (v1 0.0))
+		      (catch #t
+			     (lambda ()
+			       (run
+				(lambda ()
+				  (do ((k 0 (1+ k)))
+				      ((= k chans))
+				    (do ((i 0 (1+ i)))
+					((= i samps))
+				      (if (fneq (sound-data-ref sdata k i) (sound-data-ref ndata k i))
+					  (begin
+					    (set! v0 (sound-data-ref sdata k i))
+					    (set! v1 (sound-data-ref ndata k i))
+					    (throw 'read-write-error))))))))
 			   (lambda args 
 			     (begin 
-			       (snd-display ";read-write trouble: ~A ~A"
+			       (snd-display ";read-write trouble: ~A ~A (~A != ~A)"
 					    (mus-data-format-name (car df-ht))
-					    (mus-header-type-name (cadr df-ht)))
-			       (car args)))))))
+					    (mus-header-type-name (cadr df-ht))
+					    v0 v1)
+			       (car args))))))))
 	      (list (list mus-bshort mus-next)
 		    (list mus-bfloat mus-aifc)
 		    (list mus-lshort mus-aifc)
