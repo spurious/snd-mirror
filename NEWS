@@ -22,6 +22,7 @@ clm: fixed various instruments that were using mus-location with src:
      added optional srate envelope arg to fullmix.
      Rick added clm.asd.
      Fernando updated dlocsig and friends.
+     *clm-tempfile-data-format* and *clm-tempfile-header-type*.
 
 cmn: *dynamics-minimum-vertical-separation* added by Anders.
      Anders also added support for dy0 and dy1 messages in wedge.lisp.

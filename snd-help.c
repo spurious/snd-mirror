@@ -73,23 +73,20 @@ static char *sndlib_consistency_check(void)
 {
 #if SNDLIB_USE_FLOATS
   if (mus_sample_bits() > 0) 
-    return(" Snd built expecting float samples, but sndlib uses int!"); 
+    return(mus_format(" Snd built expecting %s samples, but sndlib uses int!", 
+		      (sizeof(mus_sample_t) == sizeof(float)) ? "float" : "double")); 
+  /* SOMEDAY: need to check for float != double here */
 #else
-  char *buf;
   if (mus_sample_bits() == 0)
-    return(" Snd built expecting int samples, but sndlib uses float!"); 
+    return(mus_format(" Snd built expecting int samples, but sndlib uses %s!", 
+		      (sizeof(mus_sample_t) == sizeof(float)) ? "float" : "double")); 
   else
     if (mus_sample_bits() != MUS_SAMPLE_BITS)
-      {
-	buf = (char *)CALLOC(LABEL_BUFFER_SIZE, sizeof(char)); /* memory leak here is the least of our worries... */
-	mus_snprintf(buf, LABEL_BUFFER_SIZE, " Snd expects %d bit int samples, but sndlib uses %d bits!",
-		     MUS_SAMPLE_BITS,
-		     mus_sample_bits());
-	if (snd_itoa_ctr < snd_itoa_size) snd_itoa_strs[snd_itoa_ctr++] = buf;
-	return(buf);
-      }
-#endif  
-  return("");
+      return(mus_format(" Snd expects %d bit int samples, but sndlib uses %d bits!",
+			MUS_SAMPLE_BITS,
+			mus_sample_bits()));
+#endif
+  return(NULL);
 }
 
 static char* vstrcat(char *arg1, ...)
@@ -250,9 +247,10 @@ static char *glx_version(void)
 
 char *version_info(void)
 {
-  char *result, *xversion = NULL;
+  char *result, *xversion = NULL, *consistent = NULL;
   snd_itoa_ctr = 0;
   xversion = xen_version();
+  consistent = sndlib_consistency_check();
   result = vstrcat(
 	  _("This is Snd version "),
 	  SND_VERSION,
@@ -264,15 +262,15 @@ char *version_info(void)
                            snd_itoa(SNDLIB_REVISION), 
                            " (", SNDLIB_DATE,
 #if SNDLIB_USE_FLOATS
-	  _(", float samples"),
+	  ", ", (sizeof(mus_sample_t) == sizeof(float)) ? "float" : "double", " samples",
 #else
 	  ", int", snd_itoa(MUS_SAMPLE_BITS), _(" samples"),
 #endif
 #if WITH_MODULES
 	  _(", with modules"),
 #endif
-	  ")", 
-	  sndlib_consistency_check(),
+	  ")",
+	  (consistent) ? consistent : "",
 	  "\n    CLM ", snd_itoa(MUS_VERSION), ".", 
 	                snd_itoa(MUS_REVISION), " (", 
                         MUS_DATE, ")",
@@ -398,6 +396,7 @@ char *version_info(void)
 	  NULL);
   free_snd_itoa();
   if (xversion) free(xversion); /* calloc in xen.c */
+  if (consistent) FREE(consistent);
   return(result);
 }
 
@@ -417,14 +416,13 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+28-Nov:  snd 7.17.\n\
 21-Nov:  if --with-float-samples and --with-doubles, the internal sample data type is double.\n\
 18-Nov:  moved snd-apropos to snd7.scm.\n\
 15-Nov:  sync-max.\n\
 12-Nov:  all dlp directory files moved to main directory (to simplify load-path handling).\n\
          SND_PATH environment variable (optional load path directory list).\n\
 3-Nov:   ws.scm definstrument macro changed to support :notehook arg in with-sound, and *definstrument-hook* for CM.\n\
-27-Oct:  effects-utils.scm to make various added menus independent.\n\
-12-Oct.  snd 7.16.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",

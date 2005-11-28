@@ -229,7 +229,6 @@ static void make_edit_find_dialog(bool managed)
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;}
       find_error_label = XtCreateManagedWidget("", xmLabelWidgetClass, find_error_frame, args, n);
-
       
       if (!(ss->using_schemes)) 
 	{
@@ -321,7 +320,7 @@ static XEN g_find_dialog_widgets(void)
   	       XEN_CONS(XEN_WRAP_WIDGET(findnextB),
 		 XEN_CONS(XEN_WRAP_WIDGET(XmMessageBoxGetChild(edit_find_dialog, XmDIALOG_CANCEL_BUTTON)), /* find previous */
 		   XEN_CONS(XEN_WRAP_WIDGET(XmMessageBoxGetChild(edit_find_dialog, XmDIALOG_OK_BUTTON)),   /* cancel */
-			XEN_EMPTY_LIST))))));
+		     XEN_EMPTY_LIST))))));
   return(XEN_EMPTY_LIST);
 }
 

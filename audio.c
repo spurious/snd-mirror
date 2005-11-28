@@ -2893,7 +2893,7 @@ static void oss_describe_audio_state_1(void)
   /* it is explicitly released under the GPL, so I think I can use it here without elaborate disguises */
   int fd;
   int status = 0, level, i, recsrc, devmask, recmask, stereodevs, caps;
-  int numdevs, rate, channels, bits, blocksize, formats, deffmt, min_rate, max_rate;
+  int numdevs = 0, rate = 0, channels = 0, bits = 0, blocksize = 0, formats = 0, deffmt = 0, min_rate = 0, max_rate = 0;
   struct synth_info sinfo;
   struct midi_info minfo;
   const char *sound_device_names[] = SOUND_DEVICE_LABELS;

@@ -3534,18 +3534,19 @@ static void view_files_dismiss_callback(GtkWidget *w, gpointer context)
   gtk_widget_hide(vdat->dialog);
 }
 
-static void view_files_clear_callback(GtkWidget *w, gpointer context) 
-{
-  view_files_info *vdat = (view_files_info *)context;
-  view_files_clear_list(vdat);
-  view_files_display_list(vdat);
-}
-
 static void view_files_new_viewer_callback(GtkWidget *w, gpointer context) 
 {
   view_files_info *vdat;
   vdat = new_view_files_dialog();
   start_view_files_dialog_1(vdat, true);
+}
+
+#if (!HAVE_FAM)
+static void view_files_clear_callback(GtkWidget *w, gpointer context) 
+{
+  view_files_info *vdat = (view_files_info *)context;
+  view_files_clear_list(vdat);
+  view_files_display_list(vdat);
 }
 
 static void view_files_update_callback(GtkWidget *w, gpointer context) 
@@ -3555,6 +3556,7 @@ static void view_files_update_callback(GtkWidget *w, gpointer context)
   view_files_update_list(vdat);
   view_files_display_list(vdat);
 }
+#endif
 
 static void sort_vf(view_files_info *vdat, int sort_choice)
 {
@@ -4118,7 +4120,10 @@ GtkWidget *start_view_files_dialog_1(view_files_info *vdat, bool managed)
   if (!(vdat->dialog))
     {
       int i;
-      GtkWidget *sep1, *cww, *rlw, *tophbox, *plw, *bbox, *add_label, *addbox;
+      GtkWidget *sep1, *cww, *rlw, *tophbox, *plw, *add_label, *addbox;
+#if (!HAVE_FAM)
+      GtkWidget *bbox;
+#endif
       GtkWidget *sbar, *sitem, *newB;
       GtkWidget *mainform, *leftform, *fileform, *helpB, *dismissB, *resetB;
 
@@ -4267,6 +4272,7 @@ GtkWidget *start_view_files_dialog_1(view_files_info *vdat, bool managed)
       gtk_widget_show(cww);
       add_drop(vdat->file_list, view_files_drop_watcher, (void *)vdat);
 
+#if (!HAVE_FAM)
       bbox = gtk_hbox_new(false, 0);
       gtk_box_pack_start(GTK_BOX(fileform), bbox, false, false, 0);
       gtk_widget_show(bbox);
@@ -4285,6 +4291,7 @@ GtkWidget *start_view_files_dialog_1(view_files_info *vdat, bool managed)
 
       gtk_widget_show(vdat->updateB);
       gtk_widget_show(vdat->clearB);
+#endif
 
       addbox = gtk_hbox_new(false, 0);
       gtk_box_pack_end(GTK_BOX(fileform), addbox, false, false, 0);

@@ -810,6 +810,7 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_SAVE_AS_DIALOG, F
 #define zero_pad(ss) ss->Zero_Pad
 #define in_set_zero_pad(a) ss->Zero_Pad = a
 #define DEFAULT_ZERO_PAD 0
+#define MAX_ZERO_PAD 1000
 
 #define show_transform_peaks(ss) ss->Show_Transform_Peaks
 #define in_set_show_transform_peaks(a) ss->Show_Transform_Peaks = a

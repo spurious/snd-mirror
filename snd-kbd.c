@@ -1279,7 +1279,16 @@ static bool stop_selecting(int keysym, int state)
 	 (keysym == snd_K_Y) || (keysym == snd_K_y));
 }
 
-static char *key_to_name(int keysym) {if (keysym) return(KEY_TO_NAME(keysym)); else return("NUL");}
+static char *key_to_name(int keysym) 
+{
+  if (keysym) 
+    {
+      char *str;
+      str = KEY_TO_NAME(keysym);
+      if (str) return(str);
+    }
+  return("NUL");
+}
 
 static int number_ctr = 0;
 static bool dot_seen = false;

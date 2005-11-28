@@ -22,12 +22,10 @@
  * TODO: what if running src, uses its check-event to open raw data -- where is control?
  *          -> src is interrupted apparently and file open completes
  *       or similarly, stops at "ok", starts src, clicks ok?
- * TODO: edit-properties dialog (extension of edit-header)
  * PERHAPS: audio:settings for display, perhaps reset -- as opposed to using the recorder
  * TODO: add|delete-file-filter, file-filters tied to all file dialogs (panel of radio buttons where just sounds is now)
  *       the sorters could be handled similarly -- a panel of radio buttons with name chosen by default
  *       would need local versions of the sort_choice variable -- use default searcher for all choices
- * TODO: no need for vf update button -- what to replace it with in fam case?
  */
 
 
@@ -473,7 +471,7 @@ static void post_sound_info(Widget info1, Widget info2, const char *filename, bo
 #if HAVE_STRFTIME
   strftime(timestr, 64, ", %d-%b-%Y", localtime(&date));
 #else
-  sprintf(timestr, "");
+  sprintf(timestr, " ");
 #endif
   mus_snprintf(buf, LABEL_BUFFER_SIZE, "%s, %s%s",
 	       mus_header_type_name(mus_sound_header_type(filename)),
@@ -3336,7 +3334,6 @@ Widget edit_header(snd_info *sp)
 
 void save_edit_header_dialog_state(FILE *fd)
 {
-  /* save one of them anyway... */
   int i;
   for (i = 0; i < edhead_info_size; i++)
     if (edhead_infos[i])
@@ -4076,13 +4073,6 @@ static void view_files_dismiss_callback(Widget w, XtPointer context, XtPointer i
     XtUnmanageChild(vdat->dialog);
 }
 
-static void view_files_clear_callback(Widget w, XtPointer context, XtPointer info) 
-{
-  view_files_info *vdat = (view_files_info *)context;
-  view_files_clear_list(vdat);
-  view_files_display_list(vdat);
-}
-
 static void view_files_new_viewer_callback(Widget w, XtPointer context, XtPointer info) 
 {
   view_files_info *vdat = (view_files_info *)context;
@@ -4100,6 +4090,14 @@ static void view_files_new_viewer_callback(Widget w, XtPointer context, XtPointe
 
 }
 
+#if (!HAVE_FAM)
+static void view_files_clear_callback(Widget w, XtPointer context, XtPointer info) 
+{
+  view_files_info *vdat = (view_files_info *)context;
+  view_files_clear_list(vdat);
+  view_files_display_list(vdat);
+}
+
 static void view_files_update_callback(Widget w, XtPointer context, XtPointer info) 
 {
   view_files_info *vdat = (view_files_info *)context;
@@ -4107,6 +4105,7 @@ static void view_files_update_callback(Widget w, XtPointer context, XtPointer in
   view_files_update_list(vdat);
   view_files_display_list(vdat);
 }
+#endif
 
 static void sort_vf(view_files_info *vdat, int sort_choice)
 {
@@ -4720,7 +4719,10 @@ widget_t start_view_files_dialog_1(view_files_info *vdat, bool managed)
       Arg args[20];
       XmString xdismiss, xhelp, titlestr, new_viewer_str, s1, bstr;
       Widget mainform, viewform, leftform, reset_button;
-      Widget left_title_sep, add_label, sep1, sep2, sep3, sep4, sep5, sep6, sep7, sort_cascade_menu;
+      Widget left_title_sep, add_label, sep1, sep3, sep4, sep5, sep6, sep7, sort_cascade_menu;
+#if (!HAVE_FAM)
+      Widget sep2;
+#endif
       Widget plw, rlw, sbar;
       XtCallbackList n1, n2, n3, n4;
       Widget amp_label, speed_label, env_frame;
@@ -5264,7 +5266,7 @@ widget_t start_view_files_dialog_1(view_files_info *vdat, bool managed)
       XtAddCallback(vdat->add_text, XmNactivateCallback, view_files_add_files, (XtPointer)vdat);
       
       /* SOMEDAY: file filters here also */
-
+#if (!HAVE_FAM)
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
@@ -5307,19 +5309,22 @@ widget_t start_view_files_dialog_1(view_files_info *vdat, bool managed)
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       vdat->clearB = XtCreateManagedWidget(_("Clear"), xmPushButtonGadgetClass, viewform, args, n);
       XtAddCallback(vdat->clearB, XmNactivateCallback, view_files_clear_callback, (XtPointer)vdat);
-
+#endif
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_WIDGET); n++;
+#if (!HAVE_FAM)
       XtSetArg(args[n], XmNbottomWidget, vdat->updateB); n++;
+#else
+      XtSetArg(args[n], XmNbottomWidget, vdat->add_text); n++;
+#endif
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
       XtSetArg(args[n], XmNseparatorType, XmNO_LINE); n++;
       XtSetArg(args[n], XmNheight, 4); n++;
       sep3 = XtCreateManagedWidget("sep3", xmSeparatorWidgetClass, viewform, args, n);
-
 
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;}
@@ -5411,10 +5416,10 @@ widget_t start_view_files_dialog_1(view_files_info *vdat, bool managed)
 
       if (managed) view_files_display_list(vdat);
 
-      XtAddCallback(vdat->by_name,     XmNactivateCallback, sort_view_files_by_name,        (XtPointer)vdat);
-      XtAddCallback(vdat->by_date,     XmNactivateCallback, sort_view_files_by_date,        (XtPointer)vdat);
-      XtAddCallback(vdat->by_size,     XmNactivateCallback, sort_view_files_by_size,        (XtPointer)vdat);
-      XtAddCallback(vdat->by_entry,    XmNactivateCallback, sort_view_files_by_entry_order, (XtPointer)vdat);
+      XtAddCallback(vdat->by_name,  XmNactivateCallback, sort_view_files_by_name,        (XtPointer)vdat);
+      XtAddCallback(vdat->by_date,  XmNactivateCallback, sort_view_files_by_date,        (XtPointer)vdat);
+      XtAddCallback(vdat->by_size,  XmNactivateCallback, sort_view_files_by_size,        (XtPointer)vdat);
+      XtAddCallback(vdat->by_entry, XmNactivateCallback, sort_view_files_by_entry_order, (XtPointer)vdat);
       {
 	int i;
 	for (i = 0; i < vdat->sort_items_size; i++)
@@ -5446,8 +5451,9 @@ widget_t start_view_files_dialog_1(view_files_info *vdat, bool managed)
 
       vf_mix_insert_buttons_set_sensitive(vdat, false);
       vf_open_remove_buttons_set_sensitive(vdat, false); /* need selection */
+#if (!HAVE_FAM)
       vf_clear_button_set_sensitive(vdat, vdat->end > 0);
-
+#endif
     }
   else
     {
@@ -5462,8 +5468,10 @@ widget_t start_view_files_dialog_1(view_files_info *vdat, bool managed)
   if (managed)
     {
       vf_amp_env_resize(vdat->env_drawer, (XtPointer)vdat, NULL);
-      view_files_reflect_sort_items();      
+      view_files_reflect_sort_items();
+#if (!HAVE_FAM)
       vf_clear_button_set_sensitive(vdat, vdat->end >= 0);
+#endif
     }
   return(vdat->dialog);
 }

@@ -50,8 +50,10 @@ typedef struct {
   widget_t mixB; 
   widget_t removeB; 
   widget_t insertB; 
-  widget_t clearB; 
+#if (!HAVE_FAM)
+  widget_t clearB;
   widget_t updateB;
+#endif
   widget_t at_cursor_button; 
   widget_t at_end_button; 
   widget_t at_beginning_button; 
@@ -122,7 +124,9 @@ void add_file_to_view_files_list(view_files_info *vdat, const char *filename, co
 view_files_info *vf_dialog_to_info(widget_t dialog);
 void vf_mix_insert_buttons_set_sensitive(view_files_info *vdat, bool sensitive);
 void vf_open_remove_buttons_set_sensitive(view_files_info *vdat, bool sensitive);
-void vf_clear_button_set_sensitive(view_files_info *vdat, bool sensitive);
+#if (!HAVE_FAM)
+  void vf_clear_button_set_sensitive(view_files_info *vdat, bool sensitive);
+#endif
 void view_files_reflect_sort_items(void);
 int vf_mix(view_files_info *vdat);
 bool vf_insert(view_files_info *vdat);

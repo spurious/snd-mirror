@@ -1209,7 +1209,7 @@ void sp_name_click(snd_info *sp)
 		   STRFTIME_FORMAT,
 		   localtime(&(sp->write_date)));
 #else
-	  sprintf(timebuf, "");
+	  sprintf(timebuf, " ");
 #endif
 	  report_in_minibuffer(sp, "%d, %d chan%s, %.3f sec%s, %s: %s, %s%s%s%s",
 			       hdr->srate,

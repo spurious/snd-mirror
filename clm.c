@@ -6858,12 +6858,17 @@ mus_any *mus_make_granulate(Float (*input)(void *arg, int direction),
   if (max_size > outlen) outlen = max_size;
   if (expansion <= 0.0)
     {
-      mus_error(MUS_ARG_OUT_OF_RANGE, S_make_granulate " expansion arg invalid: %f", expansion);
+      mus_error(MUS_ARG_OUT_OF_RANGE, S_make_granulate " expansion must be > 0.0: %f", expansion);
       return(NULL);
     }
   if (outlen <= 0) 
     {
       mus_error(MUS_NO_LENGTH, S_make_granulate " size is %d (hop: %f, segment-length: %f)?", outlen, hop, length);
+      return(NULL);
+    }
+  if ((hop * sampling_rate) < expansion)
+    {
+      mus_error(MUS_ARG_OUT_OF_RANGE, S_make_granulate " expansion (%f) must be < hop * srate (%f)", expansion, hop * sampling_rate);
       return(NULL);
     }
   spd = (grn_info *)clm_calloc(1, sizeof(grn_info), S_make_granulate);

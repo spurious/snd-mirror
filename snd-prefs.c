@@ -693,7 +693,11 @@ static char *find_sources(void) /* returns full filename if found else null */
 #endif
 #if HAVE_RUBY
   #define BASE_FILE "extensions.rb"
+#if RB_FIND_FILE_TAKES_VALUE
   file = rb_find_file(C_TO_XEN_STRING(BASE_FILE));
+#else
+  file = C_TO_XEN_STRING(rb_find_file(BASE_FILE));
+#endif
 #endif
 #ifndef BASE_FILE
   #define BASE_FILE "extensions.scm"

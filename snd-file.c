@@ -2615,11 +2615,13 @@ void vf_open_remove_buttons_set_sensitive(view_files_info *vdat, bool sensitive)
     }
 }
 
+#if (!HAVE_FAM)
 void vf_clear_button_set_sensitive(view_files_info *vdat, bool sensitive)
 {
   if (vdat->clearB)
     set_sensitive(vdat->clearB, sensitive);
 }
+#endif
 
 static void view_files_clear_selected_files(view_files_info *vdat)
 {
@@ -2996,9 +2998,11 @@ void add_file_to_view_files_list(view_files_info *vdat, const char *filename, co
       return;
     }
   vf_add_file(vdat, filename, fullname);
+#if (!HAVE_FAM)
   if ((vdat->dialog) && 
       (widget_is_active(vdat->dialog)))
     vf_clear_button_set_sensitive(vdat, true);
+#endif
 }
 
 static void view_files_unmonitor_directories(view_files_info *vdat)
@@ -3374,7 +3378,9 @@ void view_files_clear_list(view_files_info *vdat)
 	  }
       vdat->end = -1;
       vdat->curtime = 0;
+#if (!HAVE_FAM)
       vf_clear_button_set_sensitive(vdat, false);
+#endif
       vdat->currently_selected_files = 0;
     }
 }
@@ -3415,7 +3421,9 @@ void view_files_update_list(view_files_info *vdat)
 	    j++;
 	  }
       vdat->end = j - 1;
+#if (!HAVE_FAM)
       vf_clear_button_set_sensitive(vdat, vdat->end >= 0);
+#endif
     }
   if (old_names)
     {

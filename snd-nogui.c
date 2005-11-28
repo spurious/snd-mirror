@@ -270,6 +270,7 @@ void vf_reflect_sort_choice_in_menu(view_files_info *vdat) {}
 void vf_set_amp(view_files_info *vdat, Float val) {}
 void vf_set_speed(view_files_info *vdat, Float val) {}
 void vf_amp_env_redraw(widget_t w, view_files_info *vdat) {}
+void vf_set_amp_env(view_files_info *vdat, env *new_e) {}
 void ensure_scrolled_window_row_visible(widget_t list, int pos, int num_rows) {}
 widget_t start_preferences_dialog(void) {return(NULL_WIDGET);}
 

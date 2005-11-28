@@ -1120,6 +1120,17 @@ AC_ARG_WITH(ruby,
                  AC_MSG_RESULT(no)
                 )
 
+	      CFLAGS="$CFLAGS -Werror"
+    	      AC_MSG_CHECKING([that rb_find_file deals in char*])
+              AC_COMPILE_IFELSE(
+                [AC_LANG_PROGRAM([#include <ruby.h>],
+                                 [char *file; file = rb_find_file("hiho")])], 
+                [AC_MSG_RESULT(yes)
+                ],
+		[AC_DEFINE(RB_FIND_FILE_TAKES_VALUE)
+                 AC_MSG_RESULT(no)
+		])
+
               LIBS="$OLD_LIBS"
               CFLAGS="$OLD_CFLAGS"
               LOCAL_LANGUAGE="Ruby"

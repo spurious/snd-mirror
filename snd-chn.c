@@ -4790,7 +4790,7 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, cp_field_t fld, char *calle
       return(C_TO_XEN_INT(cp->max_transform_peaks));
       break;
     case CP_ZERO_PAD:
-      cp->zero_pad = g_imin(0, on, DEFAULT_ZERO_PAD); 
+      cp->zero_pad = mus_iclamp(0, g_imin(0, on, DEFAULT_ZERO_PAD), MAX_ZERO_PAD); 
       update_graph(cp);
       return(C_TO_XEN_INT(cp->zero_pad));
       break;
@@ -5805,7 +5805,7 @@ static XEN g_set_zero_pad(XEN val, XEN snd, XEN chn)
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_1, S_setB S_zero_pad, "a number"); 
   if (XEN_BOUND_P(snd))
     return(channel_set(snd, chn, val, CP_ZERO_PAD, S_setB S_zero_pad));
-  set_zero_pad(g_imin(0, val, DEFAULT_ZERO_PAD));
+  set_zero_pad(mus_iclamp(0, g_imin(0, val, DEFAULT_ZERO_PAD), MAX_ZERO_PAD));
   return(C_TO_XEN_INT(zero_pad(ss)));
 }
 
