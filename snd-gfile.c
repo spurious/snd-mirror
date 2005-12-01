@@ -154,11 +154,58 @@ static void post_sound_info(GtkWidget *info1, GtkWidget *info2, const char *file
 
 typedef struct file_dialog_info {
   int file_dialog_read_only;
-  GtkWidget *dialog, *dialog_frame, *dialog_info1, *dialog_info2, *dialog_vbox;
+  GtkWidget *dialog, *frame, *info1, *info2, *vbox;
   dialog_play_info *dp;
   fam_info *unsound_directory_watcher; /* doesn't exist, not a sound file, bogus header, etc */
   char *unsound_dirname, *unsound_filename;
+  fam_info *info_filename_watcher;     /* watch for change in selected file and repost info */
+  char *info_filename;
 } file_dialog_info;
+
+static void unpost_file_info(file_dialog_info *fd)
+{
+  CHANGE_INFO(fd->info1,"");
+  CHANGE_INFO(fd->info2,"");
+#if HAVE_FAM
+  if (fd->info_filename_watcher)
+    {
+      fd->info_filename_watcher = fam_unmonitor_file(fd->info_filename, fd->info_filename_watcher);
+      if (fd->info_filename) {FREE(fd->info_filename); fd->info_filename = NULL;}
+    }
+#endif
+}
+
+#if HAVE_FAM
+static void repost_sound_info(file_dialog_info *fd)
+{
+  if ((mus_file_probe(fd->info_filename)) &&
+      (plausible_sound_file_p(fd->info_filename)))
+    {
+      post_sound_info(fd->info1, fd->info2, fd->info_filename, true);
+    }
+  else
+    {
+      unpost_file_info(fd);
+    }
+}
+
+static void watch_info_file(struct fam_info *fp, FAMEvent *fe)
+{
+  switch (fe->code)
+    {
+    case FAMChanged:
+    case FAMDeleted:
+    case FAMCreated:
+    case FAMMoved:
+      repost_sound_info((file_dialog_info *)(fp->data));
+      break;
+
+    default:
+      /* ignore the rest */
+      break;
+    }
+}
+#endif
 
 #if HAVE_GFCDN
 
@@ -409,24 +456,25 @@ static void dialog_select_callback(GtkTreeSelection *selection, gpointer context
       (!(directory_p(filename))) &&
       (plausible_sound_file_p(filename)))
     {
-      post_sound_info(fd->dialog_info1, fd->dialog_info2, filename, true);
-      gtk_widget_show(fd->dialog_frame);
-      gtk_widget_show(fd->dialog_vbox);
-      gtk_widget_show(fd->dialog_info1);
-      gtk_widget_show(fd->dialog_info2);
+      post_sound_info(fd->info1, fd->info2, filename, true);
+      gtk_widget_show(fd->frame);
+      gtk_widget_show(fd->vbox);
+      gtk_widget_show(fd->info1);
+      gtk_widget_show(fd->info2);
       gtk_widget_show(fd->dp->play_button);
+#if HAVE_FAM
+      if (fd->info_filename_watcher)
+	{
+	  fd->info_filename_watcher = fam_unmonitor_file(fd->info_filename, fd->info_filename_watcher);
+	  if (fd->info_filename) {FREE(fd->info_filename); fd->info_filename = NULL;}
+	}
+      fd->info_filename = copy_string(filename);
+      fd->info_filename_watcher = fam_monitor_file(fd->info_filename, (void *)fd, watch_info_file);
+#endif
     }
   else
     {
-      CHANGE_INFO(fd->dialog_info1,"");
-      CHANGE_INFO(fd->dialog_info2,"");
-#if 0
-      gtk_widget_hide(fd->dialog_frame);
-      gtk_widget_hide(fd->dialog_vbox);
-      gtk_widget_hide(fd->dialog_info1);
-      gtk_widget_hide(fd->dialog_info2);
-      gtk_widget_hide(fd->dp->play_button);
-#endif
+      unpost_file_info(fd);
     }
 #if (!HAVE_GFCDN)
   if (filename) FREE(filename);
@@ -452,26 +500,26 @@ static file_dialog_info *make_file_dialog(int read_only, char *title, snd_dialog
   center_info = gtk_hbox_new(true, 10);
   gtk_widget_show(center_info);
 
-  fd->dialog_frame = gtk_frame_new(NULL);
-  gtk_frame_set_shadow_type(GTK_FRAME(fd->dialog_frame), GTK_SHADOW_ETCHED_IN);
-  gtk_container_set_border_width(GTK_CONTAINER(fd->dialog_frame), 1);
-  gtk_widget_modify_bg(fd->dialog_frame, GTK_STATE_NORMAL, ss->sgx->black);
-  gtk_widget_show(fd->dialog_frame);
-  gtk_box_pack_start(GTK_BOX(center_info), fd->dialog_frame, false, false, 10 + INFO_MARGIN);
+  fd->frame = gtk_frame_new(NULL);
+  gtk_frame_set_shadow_type(GTK_FRAME(fd->frame), GTK_SHADOW_ETCHED_IN);
+  gtk_container_set_border_width(GTK_CONTAINER(fd->frame), 1);
+  gtk_widget_modify_bg(fd->frame, GTK_STATE_NORMAL, ss->sgx->black);
+  gtk_widget_show(fd->frame);
+  gtk_box_pack_start(GTK_BOX(center_info), fd->frame, false, false, 10 + INFO_MARGIN);
 
   gtk_file_chooser_set_extra_widget(GTK_FILE_CHOOSER(fd->dialog), center_info);
 
-  fd->dialog_vbox = gtk_vbox_new(false, 0);
-  gtk_container_add(GTK_CONTAINER(fd->dialog_frame), fd->dialog_vbox);
+  fd->vbox = gtk_vbox_new(false, 0);
+  gtk_container_add(GTK_CONTAINER(fd->frame), fd->vbox);
 
-  fd->dialog_info1 = NEW_INFO();
-  gtk_box_pack_start(GTK_BOX(fd->dialog_vbox), fd->dialog_info1, false, true, INFO_MARGIN);
+  fd->info1 = NEW_INFO();
+  gtk_box_pack_start(GTK_BOX(fd->vbox), fd->info1, false, true, INFO_MARGIN);
 
-  fd->dialog_info2 = NEW_INFO();
-  gtk_box_pack_start(GTK_BOX(fd->dialog_vbox), fd->dialog_info2, false, true, INFO_MARGIN);
+  fd->info2 = NEW_INFO();
+  gtk_box_pack_start(GTK_BOX(fd->vbox), fd->info2, false, true, INFO_MARGIN);
 
   fd->dp->play_button = gtk_check_button_new_with_label(_("play selected sound"));
-  gtk_box_pack_start(GTK_BOX(fd->dialog_vbox), fd->dp->play_button, false, true, 2);
+  gtk_box_pack_start(GTK_BOX(fd->vbox), fd->dp->play_button, false, true, 2);
   SG_SIGNAL_CONNECT(fd->dp->play_button, "toggled", play_selected_callback, fd->dp);
   SG_SIGNAL_CONNECT(fd->dialog, "selection-changed", update_info_callback, fd);
 
@@ -493,15 +541,15 @@ static file_dialog_info *make_file_dialog(int read_only, char *title, snd_dialog
 
   set_dialog_widget(which_dialog, fd->dialog);
 
-  CHANGE_INFO(fd->dialog_info1,"");
-  CHANGE_INFO(fd->dialog_info2,"");
-  /* SET_INFO_SIZE(fd->dialog_info1,9);
-   * SET_INFO_SIZE(fd->dialog_info2,9);
+  CHANGE_INFO(fd->info1,"");
+  CHANGE_INFO(fd->info2,"");
+  /* SET_INFO_SIZE(fd->info1,9);
+   * SET_INFO_SIZE(fd->info2,9);
    */
-  gtk_widget_show(fd->dialog_frame);
-  gtk_widget_show(fd->dialog_vbox);
-  gtk_widget_show(fd->dialog_info1);
-  gtk_widget_show(fd->dialog_info2);
+  gtk_widget_show(fd->frame);
+  gtk_widget_show(fd->vbox);
+  gtk_widget_show(fd->info1);
+  gtk_widget_show(fd->info2);
   gtk_widget_show(fd->dp->play_button);
 
   return(fd);
@@ -527,42 +575,42 @@ static file_dialog_info *make_file_dialog(int read_only, char *title, snd_dialog
   gtk_box_pack_start(GTK_BOX(GTK_FILE_SELECTION(fd->dialog)->main_vbox), center_info, true, true, 0);
   gtk_widget_show(center_info);
 
-  fd->dialog_frame = gtk_frame_new(NULL);
-  gtk_frame_set_shadow_type(GTK_FRAME(fd->dialog_frame), GTK_SHADOW_ETCHED_IN);
-  gtk_container_set_border_width(GTK_CONTAINER(fd->dialog_frame), 1);
-  gtk_widget_modify_bg(fd->dialog_frame, GTK_STATE_NORMAL, ss->sgx->black);
-  gtk_widget_show(fd->dialog_frame);
-  gtk_box_pack_start(GTK_BOX(center_info), fd->dialog_frame, false, false, 10 + INFO_MARGIN);
+  fd->frame = gtk_frame_new(NULL);
+  gtk_frame_set_shadow_type(GTK_FRAME(fd->frame), GTK_SHADOW_ETCHED_IN);
+  gtk_container_set_border_width(GTK_CONTAINER(fd->frame), 1);
+  gtk_widget_modify_bg(fd->frame, GTK_STATE_NORMAL, ss->sgx->black);
+  gtk_widget_show(fd->frame);
+  gtk_box_pack_start(GTK_BOX(center_info), fd->frame, false, false, 10 + INFO_MARGIN);
 
-  fd->dialog_vbox = gtk_vbox_new(false, 0);
-  gtk_container_add(GTK_CONTAINER(fd->dialog_frame), fd->dialog_vbox);
+  fd->vbox = gtk_vbox_new(false, 0);
+  gtk_container_add(GTK_CONTAINER(fd->frame), fd->vbox);
 
-  fd->dialog_info1 = NEW_INFO();
-  gtk_box_pack_start(GTK_BOX(fd->dialog_vbox), fd->dialog_info1, true, true, INFO_MARGIN);
+  fd->info1 = NEW_INFO();
+  gtk_box_pack_start(GTK_BOX(fd->vbox), fd->info1, true, true, INFO_MARGIN);
 	
-  fd->dialog_info2 = NEW_INFO();
-  gtk_box_pack_start(GTK_BOX(fd->dialog_vbox), fd->dialog_info2, true, true, INFO_MARGIN);
+  fd->info2 = NEW_INFO();
+  gtk_box_pack_start(GTK_BOX(fd->vbox), fd->info2, true, true, INFO_MARGIN);
 
   /* I think double-click is "row_activated" and single-click is "changed" */
   /*   but the double click automatically calls the ok-button, and apparently the "changed" code as well? */
   SG_SIGNAL_CONNECT(gtk_tree_view_get_selection(GTK_TREE_VIEW(GTK_FILE_SELECTION(fd->dialog)->file_list)), "changed", dialog_select_callback, fd);
 
   fd->dp->play_button = gtk_check_button_new_with_label(_("play selected sound"));
-  gtk_box_pack_start(GTK_BOX(fd->dialog_vbox), fd->dp->play_button, true, true, 2);
+  gtk_box_pack_start(GTK_BOX(fd->vbox), fd->dp->play_button, true, true, 2);
   SG_SIGNAL_CONNECT(fd->dp->play_button, "toggled", play_selected_callback, fd->dp);
   set_dialog_widget(which_dialog, fd->dialog);
 
-  CHANGE_INFO(fd->dialog_info1,"");
-  CHANGE_INFO(fd->dialog_info2,"");
+  CHANGE_INFO(fd->info1,"");
+  CHANGE_INFO(fd->info2,"");
   /*
-   * SET_INFO_SIZE(fd->dialog_info1,9);
-   * SET_INFO_SIZE(fd->dialog_info2,9);
+   * SET_INFO_SIZE(fd->info1,9);
+   * SET_INFO_SIZE(fd->info2,9);
    */
 
-  gtk_widget_show(fd->dialog_frame);
-  gtk_widget_show(fd->dialog_vbox);
-  gtk_widget_show(fd->dialog_info1);
-  gtk_widget_show(fd->dialog_info2);
+  gtk_widget_show(fd->frame);
+  gtk_widget_show(fd->vbox);
+  gtk_widget_show(fd->info1);
+  gtk_widget_show(fd->info2);
   gtk_widget_show(fd->dp->play_button);
 
   return(fd);
@@ -574,29 +622,22 @@ static void file_open_error(const char *error_msg, void *ufd)
 {
   /* called from snd_error, redirecting error handling to the dialog */
   file_dialog_info *fd = (file_dialog_info *)ufd;
-  CHANGE_INFO(fd->dialog_info1, error_msg);
-  SET_INFO_SIZE(fd->dialog_info1, strlen(error_msg));
-  gtk_widget_show(fd->dialog_frame);
-  gtk_widget_show(fd->dialog_vbox);
-  gtk_widget_show(fd->dialog_info1);
+  CHANGE_INFO(fd->info1, error_msg);
+  SET_INFO_SIZE(fd->info1, strlen(error_msg));
+  gtk_widget_show(fd->frame);
+  gtk_widget_show(fd->vbox);
+  gtk_widget_show(fd->info1);
 #if 0
-  gtk_widget_hide(fd->dialog_info2);
+  gtk_widget_hide(fd->info2);
   gtk_widget_hide(fd->dp->play_button);
 #else
-  CHANGE_INFO(fd->dialog_info2, "");
+  CHANGE_INFO(fd->info2, "");
 #endif
 }
 
 static void clear_file_error_label(file_dialog_info *fd)
 {
-  CHANGE_INFO(fd->dialog_info1, "");
-#if 0
-  gtk_widget_hide(fd->dialog_frame);
-  gtk_widget_hide(fd->dialog_vbox);
-  gtk_widget_hide(fd->dialog_info1);
-  gtk_widget_hide(fd->dialog_info2);
-  gtk_widget_hide(fd->dp->play_button);
-#endif
+  CHANGE_INFO(fd->info1, "");
 #if HAVE_FAM
   if (fd->unsound_directory_watcher)
     {

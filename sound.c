@@ -218,8 +218,9 @@ int mus_sound_initialize(void)
 int mus_sample_bits(void)
 {
   /* this to check for inconsistent loads */
+  /* changed 1-Dec-05 to return -sizeof(Float) in float cases */
 #if SNDLIB_USE_FLOATS
-  return(0);
+  return(-sizeof(Float));
 #else
   return(MUS_SAMPLE_BITS);
 #endif

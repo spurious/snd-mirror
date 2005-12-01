@@ -13,10 +13,7 @@
 */
 
 
-/* TODO: new file: find some way to get around the hidden label bug (unmanage error text etc) -- see snd-xfind
- *         what about using XmNmessageString in these cases?
- * PERHAPS: if user changes raw file with dialog up -- adding header for example, should we automatically open it? or reflect in panel?
- *       same with info label in open dialog
+/* PERHAPS: if user changes raw file with dialog up -- adding header for example, should we automatically open it? or reflect in panel?
  * PERHAPS: (alert_new_file): handle all directory update decisions through FAM (region/select/file/edits)
  * TODO: various file/directory lists: tie into fam/gamin -- add xen call?
  * TODO: what if running src, uses its check-event to open raw data -- where is control?
@@ -421,12 +418,14 @@ static void add_play_and_just_sounds_buttons(Widget dialog, Widget parent, file_
 typedef struct file_dialog_info {
   bool file_dialog_read_only;
   Widget dialog;
-  Widget info_frame, info1, info2; /* labels giving info on selected file, or an error message */
+  Widget info_frame, info1, info2;     /* labels giving info on selected file, or an error message */
   file_pattern_info *fp;
   dialog_play_info *dp;
-  int open_file_watcher_loc;
-  fam_info *unsound_directory_watcher; /* doesn't exist, not a sound file, bogus header, etc */
+  int open_file_watcher_loc;           /* write-only currently (the watcher is permanent) */
+  fam_info *unsound_directory_watcher; /* started if file doesn't exist, not a sound file, bogus header, etc (clears error msg if problem changed) */
   char *unsound_dirname, *unsound_filename;
+  fam_info *info_filename_watcher;     /* watch for change in selected file and repost info */
+  char *info_filename;
 } file_dialog_info;
 
 static void open_file_help_callback (Widget w, XtPointer context, XtPointer info) 
@@ -483,6 +482,40 @@ static void post_sound_info(Widget info1, Widget info2, const char *filename, bo
   FREE(buf);
 }
 
+#if HAVE_FAM
+static void unpost_file_info(file_dialog_info *fd);
+
+static void repost_sound_info(file_dialog_info *fd)
+{
+  if ((mus_file_probe(fd->info_filename)) &&
+      (plausible_sound_file_p(fd->info_filename)))
+    {
+      post_sound_info(fd->info1, fd->info2, fd->info_filename, true);
+    }
+  else
+    {
+      unpost_file_info(fd);
+    }
+}
+
+static void watch_info_file(struct fam_info *fp, FAMEvent *fe)
+{
+  switch (fe->code)
+    {
+    case FAMChanged:
+    case FAMDeleted:
+    case FAMCreated:
+    case FAMMoved:
+      repost_sound_info((file_dialog_info *)(fp->data));
+      break;
+
+    default:
+      /* ignore the rest */
+      break;
+    }
+}
+#endif
+
 static void post_file_info(file_dialog_info *fd, const char *filename)
 {
   XtManageChild(fd->dp->play_button);
@@ -493,6 +526,15 @@ static void post_file_info(file_dialog_info *fd, const char *filename)
     XtManageChild(fd->info2);
   if (!(XtIsManaged(fd->info_frame)))
     XtManageChild(fd->info_frame);
+#if HAVE_FAM
+  if (fd->info_filename_watcher)
+    {
+      fd->info_filename_watcher = fam_unmonitor_file(fd->info_filename, fd->info_filename_watcher);
+      if (fd->info_filename) {FREE(fd->info_filename); fd->info_filename = NULL;}
+    }
+  fd->info_filename = copy_string(filename);
+  fd->info_filename_watcher = fam_monitor_file(fd->info_filename, (void *)fd, watch_info_file);
+#endif
 }
 
 static void unpost_file_info(file_dialog_info *fd)
@@ -501,6 +543,13 @@ static void unpost_file_info(file_dialog_info *fd)
     XtUnmanageChild(fd->dp->play_button);
   if (XtIsManaged(fd->info_frame))
     XtUnmanageChild(fd->info_frame);
+#if HAVE_FAM
+  if (fd->info_filename_watcher)
+    {
+      fd->info_filename_watcher = fam_unmonitor_file(fd->info_filename, fd->info_filename_watcher);
+      if (fd->info_filename) {FREE(fd->info_filename); fd->info_filename = NULL;}
+    }
+#endif
 }
 
 static void file_dialog_select_callback(Widget w, XtPointer context, XtPointer info)

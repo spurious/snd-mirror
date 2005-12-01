@@ -2092,6 +2092,7 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, enved_prog
 						    gen, a);
 		  if (!(pfilter_direct_init((void *)(args[i]))))
 		    break;
+		  /* threads[i] perhaps not fully freed? (according to valgrind) */
 		  retcode = pthread_create(&(threads[i]), NULL, pfilter_direct_run, (void *)(args[i]));
 		  if (retcode != 0)
 		    snd_warning("create thread %d failed: %d\n", i, retcode);

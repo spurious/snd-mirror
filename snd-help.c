@@ -71,20 +71,27 @@ static void free_snd_itoa(void)
 
 static char *sndlib_consistency_check(void)
 {
+  int bits;
+  bits = mus_sample_bits();
 #if SNDLIB_USE_FLOATS
-  if (mus_sample_bits() > 0) 
-    return(mus_format(" Snd built expecting %s samples, but sndlib uses int!", 
-		      (sizeof(mus_sample_t) == sizeof(float)) ? "float" : "double")); 
-  /* SOMEDAY: need to check for float != double here */
+  if (bits > 0) 
+    return(mus_format(" Snd built expecting %s samples, but sndlib uses int%d!", 
+		      (sizeof(mus_sample_t) == sizeof(float)) ? "float" : "double",
+		      bits));
+  bits = -bits;
+  if (bits != sizeof(mus_sample_t))
+    return(mus_format(" Snd built expecting %s samples, but sndlib uses %s!",
+		      (sizeof(mus_sample_t) == sizeof(float)) ? "float" : "double",
+		      (bits == sizeof(float)) ? "float" : "double"));
 #else
-  if (mus_sample_bits() == 0)
-    return(mus_format(" Snd built expecting int samples, but sndlib uses %s!", 
-		      (sizeof(mus_sample_t) == sizeof(float)) ? "float" : "double")); 
-  else
-    if (mus_sample_bits() != MUS_SAMPLE_BITS)
-      return(mus_format(" Snd expects %d bit int samples, but sndlib uses %d bits!",
-			MUS_SAMPLE_BITS,
-			mus_sample_bits()));
+  if (bits < 0)
+    return(mus_format(" Snd built expecting int%d samples, but sndlib uses %s!",
+		      MUS_SAMPLE_BITS,
+		      (bits == (-sizeof(float))) ? "float" : "double")); 
+  if (bits != MUS_SAMPLE_BITS)
+    return(mus_format(" Snd expects int%d samples, but sndlib uses int%d!",
+		      MUS_SAMPLE_BITS,
+		      bits));
 #endif
   return(NULL);
 }
