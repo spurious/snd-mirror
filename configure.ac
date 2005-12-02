@@ -130,7 +130,11 @@ AC_ARG_WITH(float-samples,
 	[  --with-float-samples	  use floats as the internal sample respresentation],
   	[if test "$with_float_samples" = yes ; then
 	    AC_DEFINE(SNDLIB_USE_FLOATS, 1)
-            LOCAL_SNDLIB_BITS="0"
+	    if test "$with_doubles" = yes ; then
+              LOCAL_SNDLIB_BITS="8"
+            else
+              LOCAL_SNDLIB_BITS="4"
+            fi
          else
 	    AC_DEFINE(SNDLIB_USE_FLOATS, 0)
 	 fi],

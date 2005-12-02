@@ -3169,7 +3169,11 @@ if test "${with_float_samples+set}" = set; then
 #define SNDLIB_USE_FLOATS 1
 _ACEOF
 
-            LOCAL_SNDLIB_BITS="0"
+	    if test "$with_doubles" = yes ; then
+              LOCAL_SNDLIB_BITS="8"
+            else
+              LOCAL_SNDLIB_BITS="4"
+            fi
          else
 	    cat >>confdefs.h <<\_ACEOF
 #define SNDLIB_USE_FLOATS 0

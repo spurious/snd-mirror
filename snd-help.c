@@ -69,30 +69,35 @@ static void free_snd_itoa(void)
   snd_itoa_ctr = 0;
 }
 
+static char *format_to_name(int bits)
+{
+  if (bits == 4)
+    return(copy_string("float"));
+  if (bits == 8)
+    return(copy_string("double"));
+  return(mus_format("int%d", bits));
+}
+
 static char *sndlib_consistency_check(void)
 {
-  int bits;
-  bits = mus_sample_bits();
+  /* sizeof is not usable in this context, unfortunately; bits/bytes jumbled together here */
+  int sndlib_bits, snd_bits;
+  sndlib_bits = mus_sample_bits();
 #if SNDLIB_USE_FLOATS
-  if (bits > 0) 
-    return(mus_format(" Snd built expecting %s samples, but sndlib uses int%d!", 
-		      (sizeof(mus_sample_t) == sizeof(float)) ? "float" : "double",
-		      bits));
-  bits = -bits;
-  if (bits != sizeof(mus_sample_t))
-    return(mus_format(" Snd built expecting %s samples, but sndlib uses %s!",
-		      (sizeof(mus_sample_t) == sizeof(float)) ? "float" : "double",
-		      (bits == sizeof(float)) ? "float" : "double"));
+  snd_bits = mus_bytes_per_sample(MUS_OUT_FORMAT);
 #else
-  if (bits < 0)
-    return(mus_format(" Snd built expecting int%d samples, but sndlib uses %s!",
-		      MUS_SAMPLE_BITS,
-		      (bits == (-sizeof(float))) ? "float" : "double")); 
-  if (bits != MUS_SAMPLE_BITS)
-    return(mus_format(" Snd expects int%d samples, but sndlib uses int%d!",
-		      MUS_SAMPLE_BITS,
-		      bits));
+  snd_bits = MUS_SAMPLE_BITS;
 #endif
+  if (snd_bits != sndlib_bits)
+    {
+      char *snd_name, *sndlib_name, *val;
+      snd_name = format_to_name(snd_bits);
+      sndlib_name = format_to_name(sndlib_bits);
+      val = mus_format(" Snd expects %s samples, but sndlib uses %s!", snd_name, sndlib_name);
+      FREE(snd_name);
+      FREE(sndlib_name);
+      return(val);
+    }
   return(NULL);
 }
 

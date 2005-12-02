@@ -46087,7 +46087,8 @@ EDITS: 1
 		  
 		  ))))
 
-      (if (provided? 'snd-motif)
+      (if (and (provided? 'snd-motif)
+	       (provided? 'xm))
 	  (begin
 	    (for-each
 	     (lambda (dialog)

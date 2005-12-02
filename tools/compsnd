@@ -494,6 +494,13 @@ sndinfo test.snd
 
 echo ' '
 echo ' '
+make allclean
+./configure --with-shared-sndlib
+make
+./snd --version
+
+echo ' '
+echo ' '
 echo ' -------------------------------- no-gui test -------------------------------- '
 make allclean
 rm -f snd
