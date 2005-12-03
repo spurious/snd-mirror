@@ -35,8 +35,6 @@ A Qt version of Snd?  An OSX-native version?  (These
     Qt requires C++, I think, and Cocoa may require Objective-C -- 
     major drawbacks).
 
-A closer tie-in to CM.
-
 ocaml as the extension language.
 
 Forth as the extension language (not currently supported by Forth, I think).
@@ -62,3 +60,7 @@ Should the Scheme/Ruby files be gettext-ized?  Here's a Guile example:
     (newline)
     (format #t (_ "This program is running as process number ~D.") (getpid))
     (newline)
+
+Key bindings to mimic other editors.
+
+

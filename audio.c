@@ -7607,7 +7607,7 @@ void describe_audio_state_1(void)
 #  define MUS_COMP_FLOAT MUS_BFLOAT
 #endif
 
-#define SRC_QUALITY SRC_SINC_MEDIUM_QUALITY
+#define SRC_QUALITY SRC_SINC_BEST_QUALITY
  
 /*************/
 /* Jack Part */
@@ -7853,7 +7853,7 @@ static int sndjack_buffersizecallback(jack_nframes_t nframes, void *arg){
 
 static int sndjack_getnumoutchannels(void){
   int lokke=0;
-  const char **ports=jack_get_ports(sndjack_client,"alsa_pcm:playback_*","",0);
+  const char **ports=jack_get_ports(sndjack_client,NULL,NULL,JackPortIsPhysical|JackPortIsInput);
   while(ports!=NULL && ports[lokke]!=NULL){
     lokke++;
   }
@@ -7863,7 +7863,7 @@ static int sndjack_getnumoutchannels(void){
 
 static int sndjack_getnuminchannels(void){
   int lokke=0;
-  const char **ports=jack_get_ports(sndjack_client,"alsa_pcm:capture_*","",0);
+  const char **ports=jack_get_ports(sndjack_client,NULL,NULL,JackPortIsPhysical|JackPortIsOutput);
   while(ports!=NULL && ports[lokke]!=NULL){
     lokke++;
   }
@@ -7957,42 +7957,45 @@ static int sndjack_init(void){
     goto failed_activate;
   }
 
-  for(ch=0;ch<numch;ch++){
-    char temp[500];
-    sprintf(temp,"alsa_pcm:playback_%d",ch+1);
-    if (
-	jack_connect(
-		     sndjack_client,
-		     jack_port_name(sndjack_channels[ch].port),
-		     strdup(temp)
-		     )
-	)
-      {
-	printf ("Warning. Cannot connect jack output port %d: \"%s\".\n",ch,temp);
-      }
+  {
+    const char **outportnames=jack_get_ports(sndjack_client,NULL,NULL,JackPortIsPhysical|JackPortIsInput);
+    for(ch=0;outportnames && outportnames[ch]!=NULL && ch<numch;ch++){
+      char temp[500];
+      if (
+	  jack_connect(
+		       sndjack_client,
+		       jack_port_name(sndjack_channels[ch].port),
+		       outportnames[ch]
+		       )
+	  )
+	{
+	  printf ("Warning. Cannot connect jack output port %d: \"%s\".\n",ch,outportnames[ch]);
+	}
+    }
   }
 
-  for(ch=0;ch<numch_read;ch++){
+  {    
+    const char **inportnames=jack_get_ports(sndjack_client,NULL,NULL,JackPortIsPhysical|JackPortIsOutput);
+    for(ch=0;inportnames && inportnames[ch]!=NULL && ch<numch;ch++){
     char temp[500];
-    sprintf(temp,"alsa_pcm:capture_%d",ch+1);
     if (
 	jack_connect(
 		     sndjack_client,
-		     strdup(temp),
+		     inportnames[ch],
 		     jack_port_name(sndjack_read_channels[ch].port)
 		     )
 	)
       {
-	printf ("Warning. Cannot connect jack input port %d: \"%s\".\n",ch,temp);
+	printf ("Warning. Cannot connect jack input port %d: \"%s\".\n",ch,inportnames[ch]);
       }
+    }
   }
-
   return 0;
-
+  
  failed_connect:
  failed_activate:
   jack_deactivate(sndjack_client);
-
+  
  failed_register:
   jack_client_close(sndjack_client);
   sndjack_client=NULL;
