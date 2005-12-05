@@ -1342,6 +1342,56 @@ selected sound: (map-channel (cross-synthesis 1 .5 128 6.0))"
        (vct->channel out-data 0 (max len outlen) snd chn #f 
 		     (format #f "voiced->unvoiced ~A ~A ~A ~A" amp fftsize r tempo))))))
 
+;;; very similar but use sum-of-cosines (glottal pulse train?) instead of white noise
+(define* (pulse-voice cosines #:optional (freq 440.0) (amp 1.0) (fftsize 256) (r 2.0) snd chn)
+  "(pulse-voice cosines #:optional (freq 440) (amp 1.0) (fftsize 256) (r 2.0) snd chn) uses sum-of-cosines to manipulate speech sounds"
+  (let* ((freq-inc (/ fftsize 2))
+	 (fdr (make-vct fftsize))
+	 (fdi (make-vct fftsize))
+	 (spectr (make-vct freq-inc))
+	 (pulse (make-sum-of-cosines cosines freq))
+	 (inctr 0)
+	 (ctr freq-inc)
+	 (radius (- 1.0 (/ r fftsize)))
+	 (bin (/ (srate snd) fftsize))
+	 (len (frames snd chn))
+	 (out-data (make-vct len))
+	 (formants (make-vector freq-inc))
+	 (old-peak-amp 0.0)
+	 (new-peak-amp 0.0))
+    (do ((i 0 (1+ i)))
+	((= i freq-inc))
+      (vector-set! formants i (make-formant radius (* i bin))))
+    (call-with-current-continuation ; setup non-local exit (for C-g interrupt)
+     (lambda (break)
+       (do ((k 0 (1+ k)))
+	   ((= k len))
+	 (let ((outval 0.0))
+	   (if (= ctr freq-inc)
+	       (begin
+		 (if (c-g?) (break "interrupted"))
+		 (set! fdr (channel->vct inctr fftsize snd chn))
+		 (let ((pk (vct-peak fdr)))
+		   (if (> pk old-peak-amp) (set! old-peak-amp pk)))
+		 (spectrum fdr fdi #f 2)
+		 (set! inctr (+ freq-inc inctr))
+		 (vct-subtract! fdr spectr)
+		 (vct-scale! fdr (/ 1.0 freq-inc))
+		 (set! ctr 0)))
+	   (set! ctr (+ ctr 1))
+	   (vct-add! spectr fdr)
+	   (set! outval (formant-bank spectr formants (sum-of-cosines pulse)))
+	   (if (> (abs outval) new-peak-amp) (set! new-peak-amp (abs outval)))
+	   (vct-set! out-data k outval)))
+       (vct-scale! out-data (* amp (/ old-peak-amp new-peak-amp)))
+       (vct->channel out-data 0 (max len len) snd chn)))))
+
+;;; (pulse-voice 80 20.0 1.0 1024 0.01)
+;;; (pulse-voice 80 120.0 1.0 1024 0.2)
+;;; (pulse-voice 30 240.0 1.0 1024 0.1)
+;;; (pulse-voice 30 240.0 1.0 2048)
+;;; (pulse-voice 6 1000.0 1.0 512)
+
 
 ;;; -------- convolution example
 
@@ -1428,30 +1478,27 @@ selected sound: (map-channel (cross-synthesis 1 .5 128 6.0))"
 ;;; make-sound-interp sets up a sound reader that reads a channel at an arbitary location,
 ;;;   interpolating between samples if necessary, the corresponding "generator" is sound-interp
 
-(define make-sound-interp 
-  (lambda (start . rest)
-    "(make-sound-interp start #:optional snd chn) -> an interpolating reader for snd's channel chn"
-    (let* ((snd (if (> (length rest) 0) (car rest) #f))
-	   (chn (if (> (length rest) 1) (cadr rest) #f))
-	   (bufsize 2048)
-	   (buf4size 128)
-	   (data (channel->vct start bufsize snd chn))
-	   (curbeg start)
-	   (curend (+ start bufsize)))
-      (lambda (loc)
-	(if (< loc curbeg)
-	    (begin
-	      ;; get previous buffer
-	      (set! curbeg (+ buf4size (- loc bufsize)))
-	      (set! curend (+ curbeg bufsize))
-	      (set! data (channel->vct curbeg bufsize snd chn)))
-	    (if (> loc curend)
-		(begin
-		  ;; get next buffer
-		  (set! curbeg (- loc buf4size))
-		  (set! curend (+ curbeg bufsize))
-		  (set! data (channel->vct curbeg bufsize snd chn)))))
-	(array-interp data (- loc curbeg) bufsize)))))
+(define* (make-sound-interp start #:optional snd chn)
+  "(make-sound-interp start #:optional snd chn) -> an interpolating reader for snd's channel chn"
+  (let* ((bufsize 2048)
+	 (buf4size 128)
+	 (data (channel->vct start bufsize snd chn))
+	 (curbeg start)
+	 (curend (+ start bufsize)))
+    (lambda (loc)
+      (if (< loc curbeg)
+	  (begin
+	    ;; get previous buffer
+	    (set! curbeg (max 0 (+ buf4size (- loc bufsize))))
+	    (set! curend (+ curbeg bufsize))
+	    (set! data (channel->vct curbeg bufsize snd chn)))
+	  (if (> loc curend)
+	      (begin
+		;; get next buffer
+		(set! curbeg (max 0 (- loc buf4size)))
+		(set! curend (+ curbeg bufsize))
+		(set! data (channel->vct curbeg bufsize snd chn)))))
+      (array-interp data (- loc curbeg) bufsize))))
 
 (define sound-interp ;make it look like a clm generator
   (lambda (func loc) 
@@ -1469,6 +1516,14 @@ selected sound: (map-channel (cross-synthesis 1 .5 128 6.0))"
 		     (sound-interp reader (* len (+ 0.5 (* 0.5 (oscil osc))))))))))
 
 ;;; (test-interp 0.5)
+
+(define (sound-via-sound snd1 snd2) ; "sound composition"??
+  (let* ((intrp (make-sound-interp 0 snd1 0))
+	 (len (1- (frames snd1 0)))
+	 (rd (make-sample-reader 0 snd2 0))
+	 (mx (maxamp snd2 0)))
+      (map-channel (lambda (val) 
+		     (sound-interp intrp (inexact->exact (floor (* len (* 0.5 (+ 1.0 (/ (read-sample rd) mx)))))))))))
 !#
 
 ;; env-sound-interp takes an envelope that goes between 0 and 1 (y-axis), and a time-scaler

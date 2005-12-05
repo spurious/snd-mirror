@@ -1286,7 +1286,7 @@ I'm slowly dividing out related groups of procedures to separate files.
     <li>shift pitch keeping duration constant (src+granulate)
     <li>tempo change via envelope (<a class=quiet href="clm.html#granulate">granulate</a>)
     <li>cross-synthesis (using a formant bank)
-    <li>voiced-&gt;unvoiced (formants)
+    <li>voiced-&gt;unvoiced and pulse-voice (formants)
     <li>convolution (<a class=quiet href="clm.html#convolve">convolve</a>)
     <li>"vector synthesis"
     <li>chain-dsps
@@ -1646,8 +1646,8 @@ Cross fade in frequency domain: <a href="#fadedoc">fade.scm</a><br>
 to lengthen or shorten a sound without changing its pitch.  The same idea is used in the effects menu.
 <b>expsnd</b> is the same but the
 change follows an envelope.  In <b>cross-synthesis</b>, <i>cross-snd</i> is the index
-of the sound that controls the spectra, not the affected sound.  <b>voiced-&gt;unvoiced</b>
-is essentially the same idea, but drives the synthesis with white noise.
+of the sound that controls the spectra, not the affected sound.  <b>voiced-&gt;unvoiced</b> and <b>pulse-voice</b>
+are essentially the same idea, but the former drives the synthesis with white noise, and the latter with a sum-of-cosines pulse train.
 <b>cnvtest</b> demonstrates convolution.
 Here are some sample calls:
 </p>

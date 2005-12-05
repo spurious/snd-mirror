@@ -26994,6 +26994,13 @@ EDITS: 5
 					       0.979 1.000 0.981 0.923 0.831 0.712 0.576 0.434 0.298 0.177)))
 	      (snd-display ";sound-interp: ~A ~A" (channel->vct))))
 	(undo)
+
+	(let ((osc (make-oscil :frequency 0.5 :initial-phase (+ pi (/ pi 2))))
+	      (reader (make-sound-interp 0 ind 0))
+	      (len (1- (frames ind 0))))
+	  (map-channel (lambda (val) 
+			 (sound-interp reader (* len (+ 0.5 (* 0.5 (oscil osc))))))))
+
 	(env-sound-interp '(0 0 1 1))
 	(if (not (vequal (channel->vct) (vct 0.000 0.053 0.105 0.158 0.211 0.263 0.316 0.368 0.421 0.474 
 					     0.526 0.579 0.632 0.684 0.737 0.789 0.842 0.895 0.947 1.000)))
