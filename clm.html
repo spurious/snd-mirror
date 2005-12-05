@@ -1005,10 +1005,11 @@ One popular kind of vibrato is:
   <a class=def name="sum-of-cosines?">sum-of-cosines?</a> <i>cs</i>
 </pre>
 <p><b>sum-of-cosines</b> produces a band-limited pulse train containing
-<i>cosines</i> cosines.
-See also legendre-summation and friends in dsp.scm. "Trigonometric Delights" by Eli Maor has
-a derivation of a very similar formula (producing a sum of sines) and a neat
-geometric explanation.  For a derivation of the formula, see "Fourier
+<i>cosines</i> cosines.  I think this was originally viewed as a way to get a speech-oriented
+pulse train that would then be passed through formant filters.  There are many similar formulas:
+see also legendre-summation and friends in dsp.scm. "Trigonometric Delights" by Eli Maor has
+a derivation of a sum-of-sines formula and a neat
+geometric explanation.  For a derivation of the sum-of-cosines formula, see "Fourier
 Analysis" by Stein and Shakarchi.
 </p>
 <table border align=left hspace=40 cellpadding=4>
@@ -1051,6 +1052,30 @@ work when it doesn't matter.
 </pre>
 </td></tr></table>
 
+<p>Almost identical is the following (scheme) <A NAME="sinc-train">sinc-train</A> generator:
+</p>
+<table border=2 bordercolor="tan" hspace=40 cellpadding=8 cellspacing=3><tr><td>
+<pre>
+(define* (make-sinc-train #:optional (frequency 440.0) (width #f))
+  (let ((range (or width (* pi (- (* 2 (inexact->exact (floor (/ (mus-srate) (* 2.2 frequency))))) 1)))))
+    ;; 2.2 leaves a bit of space before srate/2, (* 3 pi) is the minimum width, normally
+    (list (- (* range 0.5))
+	  range
+	  (/ (* range frequency) (mus-srate)))))
+	
+(define* (sinc-train gen #:optional (fm 0.0))
+  (let* ((ang (car gen))
+	 (range (cadr gen))
+	 (top (* 0.5 range))
+	 (frq (caddr gen))
+	 (val (if (= ang 0.0) 1.0 (/ (sin ang) ang)))
+	 (new-ang (+ ang frq fm)))
+    (if (> new-ang top)
+	(list-set! gen 0 (- new-ang range))
+	(list-set! gen 0 new-ang))
+    val))
+</pre>
+</td></tr></table>
 <br>
 
 
@@ -2977,6 +3002,16 @@ a simple instrument such as:</p>
 	   (* .5 (+ (g0) (g1))))))
 </pre>
 </td></tr></table>
+
+<p>A similar (slightly simpler) effect (in Snd/Scheme) is:
+</p>
+<table border=2 bordercolor="tan" hspace=40 cellpadding=8 cellspacing=3><tr><td>
+<pre>
+(let ((mx (maxamp))) (map-channel (lambda (y) (* mx (sin (/ (* pi y) mx))))))
+</pre>
+</td></tr></table>
+<p>This modulates the sound but keeps the output maxamp the same as the input.
+</p>
 <br>
 
 

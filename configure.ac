@@ -36,6 +36,7 @@ AC_DEFINE_UNQUOTED(SND_HOST, "$host")
 #   --with-jack           use Jack
 #   --with-static-alsa    use ALSA statically loaded (for RPM generation)
 #   --with-snd-as-widget  make Snd a loadable widget, not a standalone program
+#   --with-snd-as-pd-external  make Snd a loadable pd external, not a standalone program
 #   --with-doubles        use doubles throughout (default is floats)
 #   --with-float-samples  represent samples internally as floats 
 #   --enable-snd-debug    include Snd internal debugging stuff
@@ -174,8 +175,22 @@ AC_ARG_WITH(doc-dir,
 AC_ARG_WITH(snd-as-widget,
 	[  --with-snd-as-widget	  make Snd a loadable widget, not a standalone program],
   	if test "$with_snd_as_widget" = yes ; then
-	    AC_DEFINE(SND_AS_WIDGET)
-	    MAKE_TARGET=widget
+	   AC_DEFINE(SND_AS_WIDGET)
+	   MAKE_TARGET=widget
+	fi)
+
+AC_ARG_WITH(snd-as-pd-external,
+	[  --with-snd-as-pd-external	  make Snd a loadable pd external, not a standalone program],
+  	if test "$with_snd_as_pd_external" = yes ; then
+	   if test "$with_motif" = yes || test "$with_gtk" = yes ; then
+	      AC_MSG_ERROR(When making snd as a pd external, motif or gtk can not be used.)
+	   fi
+	   if test "$with_ruby" = yes ; then
+	      AC_MSG_ERROR(When making snd as a pd external, ruby can not be used as extension language.)
+	   fi
+	   [with_jack=yes]
+	   AC_DEFINE(SND_AS_PD_EXTERNAL)
+	   MAKE_TARGET=external
 	fi)
 
 
@@ -444,7 +459,7 @@ if test "$with_motif" = no && test "$with_gtk" = no ; then
   with_no_gui=yes
 fi
 
-if test "$no_x" = yes || test "$with_no_gui" = yes ; then
+if test "$no_x" = yes || test "$with_no_gui" = yes || test "$with_snd_as_pd_external"; then
 
   AC_DEFINE(USE_NO_GUI)
   XLIBS=""
@@ -1168,7 +1183,7 @@ fi
 GUILE_LIB_path=""
 XM_LIBS=""
 
-if test "$with_guile" = no ; then
+if test "$with_guile" = no && test "$with_snd_as_pd_external" = no; then
   AC_DEFINE(HAVE_GUILE,0)
   AC_DEFINE(HAVE_EXTENSION_LANGUAGE,0)
 else
@@ -1226,6 +1241,9 @@ if test $GUILE_CONFIG_works = yes; then
         # the -pthread business confuses ld
         new_libs=`echo " $XM_LIBS " | sed -e 's/-pthread //'`
         LD_XM_LIBS="$new_libs"
+      fi
+      if test "$with_snd_as_pd_external" && test "`${GUILE_CONFIG_path}${GUILE_name} -c '(display (string>=? (version) "1.7.2"))'`" != "#t"; then
+	 AC_MSG_ERROR(Snd needs guile V1.7.2 or newer to work as a pd external)
       fi
     fi
 

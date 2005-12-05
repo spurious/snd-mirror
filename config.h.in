@@ -139,6 +139,7 @@
 #undef SND_CONFIG_GET_ID_ARGS
 #undef TRAP_SEGFAULT
 #undef SND_AS_WIDGET
+#undef SND_AS_PD_EXTERNAL
 #undef Float
 #undef SNDLIB_USE_FLOATS
 #undef DEBUGGING

@@ -465,7 +465,7 @@
 	      (lambda args #f))))
 
 (define (marks->string sndf)
-  (let ((str (format #f "(if (not (provided? 'snd-marks.scm)) (load \"marks.scm\"))~%(let ((m #f))~%"))
+  (let ((str (format #f "(if (not (provided? 'snd-marks.scm)) (load-from-path \"marks.scm\"))~%(let ((m #f))~%"))
 	(chan 0))
     (for-each
      (lambda (chan-marks)

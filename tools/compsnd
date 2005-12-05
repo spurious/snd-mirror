@@ -495,7 +495,7 @@ sndinfo test.snd
 echo ' '
 echo ' '
 make allclean
-./configure --with-shared-sndlib
+./configure --quiet --with-shared-sndlib
 make
 ./snd --version
 
@@ -606,4 +606,6 @@ make
 ./snd --version
 make allclean
 
-
+./configure --quiet --with-snd-as-pd-external
+make
+make allclean

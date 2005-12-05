@@ -2,7 +2,7 @@
 
 (provide 'snd-piano.scm)
 (if (not (provided? 'snd-ws.scm)) (load-from-path "ws.scm"))
-(if (not (provided? 'snd-env.scm)) (load "env.scm"))
+(if (not (provided? 'snd-env.scm)) (load-from-path "env.scm"))
 
 (define number-of-stiffness-allpasses 8)
 (define longitudinal-mode-cutoff-keynum 29)

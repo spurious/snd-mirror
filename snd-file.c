@@ -4525,7 +4525,7 @@ static XEN g_info_dialog(XEN subject, XEN msg)
 }
 
 
-/* TODO: implement add|delete|-|file-|filters|sorters 
+/* TODO: implement add|delete-file-filters|sorters 
  *         view-files[|open|mix|insert?]-file-filter (default: just-sounds)
  *         similarly for *-sort, except that vf case is already done
  */
@@ -4947,12 +4947,12 @@ files list of the View Files dialog.  If it returns #t, the default action, open
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_file_filters, g_file_filters_w, H_file_filters,
 				   S_setB S_file_filters, g_set_file_filters_w,  0, 0, 1, 0);
-  XEN_DEFINE_PROCEDURE(S_add_file_filter, g_add_file_filter_w, 2, 0, 0, H_add_file_filter);
-  XEN_DEFINE_PROCEDURE(S_delete_file_filter, g_delete_file_filter_w, 1, 0, 0, H_delete_file_filter);
+  XEN_DEFINE_PROCEDURE(S_add_file_filter,    g_add_file_filter_w,                2, 0, 0, H_add_file_filter);
+  XEN_DEFINE_PROCEDURE(S_delete_file_filter, g_delete_file_filter_w,             1, 0, 0, H_delete_file_filter);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_file_sorters, g_file_sorters_w, H_file_sorters,
 				   S_setB S_file_sorters, g_set_file_sorters_w,  0, 0, 1, 0);
-  XEN_DEFINE_PROCEDURE(S_add_file_sorter, g_add_file_sorter_w, 2, 0, 0, H_add_file_sorter);
-  XEN_DEFINE_PROCEDURE(S_delete_file_sorter, g_delete_file_sorter_w, 1, 0, 0, H_delete_file_sorter);
+  XEN_DEFINE_PROCEDURE(S_add_file_sorter,    g_add_file_sorter_w,                2, 0, 0, H_add_file_sorter);
+  XEN_DEFINE_PROCEDURE(S_delete_file_sorter, g_delete_file_sorter_w,             1, 0, 0, H_delete_file_sorter);
 
 }

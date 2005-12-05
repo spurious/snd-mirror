@@ -1575,6 +1575,9 @@ void snd_set_global_defaults(bool need_cleanup);
 #if SND_AS_WIDGET
   snd_state *snd_main(int argc, char **argv);
 #endif
+#ifdef SND_AS_PD_EXTERNAL
+  int snd_pd_main(void);
+#endif
 void g_init_base(void);
 
 

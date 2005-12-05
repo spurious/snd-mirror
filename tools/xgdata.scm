@@ -5557,28 +5557,30 @@
 
 #!
 ;;; handle these when gtk changes in some ascertainable manner
-;;; Pango 1.9.1 and 1.10
+;;; Pango 1.9.1 to 1.11
 
-(CINT-286 "PANGO_SCRIPT_NEW_TAI_LUE" "PangoScript")
-(CINT-286 "PANGO_SCRIPT_BUGINESE" "PangoScript")
-(CINT-286 "PANGO_SCRIPT_GLAGOLITIC" "PangoScript")
-(CINT-286 "PANGO_SCRIPT_TIFINAGH" "PangoScript")
-(CINT-286 "PANGO_SCRIPT_SYLOTI_NAGRI" "PangoScript")
-(CINT-286 "PANGO_SCRIPT_OLD_PERSIAN" "PangoScript")
-(CINT-286 "PANGO_SCRIPT_KHAROSHTHI" "PangoScript")
+(CINT-290 "PANGO_SCRIPT_NEW_TAI_LUE" "PangoScript")
+(CINT-290 "PANGO_SCRIPT_BUGINESE" "PangoScript")
+(CINT-290 "PANGO_SCRIPT_GLAGOLITIC" "PangoScript")
+(CINT-290 "PANGO_SCRIPT_TIFINAGH" "PangoScript")
+(CINT-290 "PANGO_SCRIPT_SYLOTI_NAGRI" "PangoScript")
+(CINT-290 "PANGO_SCRIPT_OLD_PERSIAN" "PangoScript")
+(CINT-290 "PANGO_SCRIPT_KHAROSHTHI" "PangoScript")
 
-(CLNG-286 "PANGO_TYPE_ITEM")
-(CLNG-286 "PANGO_TYPE_LAYOUT_LINE")
+(CLNG-290 "PANGO_TYPE_ITEM")
+(CLNG-290 "PANGO_TYPE_LAYOUT_LINE")
 
-(CFNC-286 "PangoAttrList* pango_attr_list_ref PangoAttrList* list")
-(CFNC-286 "void pango_cairo_context_set_hinting PangoContext* context gboolean hinting")
-(CFNC-286 "gboolean pango_cairo_context_get_hinting PangoContext* context")
-(CFNC-286 "void pango_cairo_context_set_font_options PangoContext* context cairo_font_options_t* options")
-(CFNC-286 "const cairo_font_options_t* pango_cairo_context_get_font_options PangoContext* context")
-(CFNC-286 "void pango_cairo_context_set_resolution PangoContext* context double dpi")
-(CFNC-286 "double pango_cairo_context_get_resolution PangoContext* context")
-(CFNC-286 "GType pango_item_get_type void")
-(CFNC-286 "GType pango_layout_line_get_type void")
-(CFNC-286 "PangoLayoutLine* pango_layout_line_ref PangoLayoutLine* line")
-(CFNC-286 "gboolean pango_is_zero_width gunichar ch" 'const-return)
+(CFNC-290 "PangoAttrList* pango_attr_list_ref PangoAttrList* list")
+(CFNC-290 "void pango_cairo_context_set_hinting PangoContext* context gboolean hinting")
+(CFNC-290 "gboolean pango_cairo_context_get_hinting PangoContext* context")
+(CFNC-290 "void pango_cairo_context_set_font_options PangoContext* context cairo_font_options_t* options")
+(CFNC-290 "const cairo_font_options_t* pango_cairo_context_get_font_options PangoContext* context")
+(CFNC-290 "void pango_cairo_context_set_resolution PangoContext* context double dpi")
+(CFNC-290 "double pango_cairo_context_get_resolution PangoContext* context")
+(CFNC-290 "GType pango_item_get_type void")
+(CFNC-290 "GType pango_layout_line_get_type void")
+(CFNC-290 "PangoLayoutLine* pango_layout_line_ref PangoLayoutLine* line")
+(CFNC-290 "gboolean pango_is_zero_width gunichar ch" 'const-return)
+
+(CFNC-290 "void pango_layout_index_to_line_x PangoLayout* layout int index_ gboolean trailing int* [line] int* [x_pos]")
 !#

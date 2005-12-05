@@ -54,6 +54,7 @@
 ;;; ring-modulate-channel (ring-mod as virtual op)
 ;;; scramble-channels -- reorder chans
 ;;; scramble-channel -- randomly reorder segments within a sound
+;;; reverse-by-blocks and reverse-within-blocks -- reorder or reverse blocks within a channel
 
 (use-modules (ice-9 debug))
 (use-modules (ice-9 format))
@@ -2188,7 +2189,7 @@ a sort of play list: (region-play-list (list (list 0.0 0) (list 0.5 1) (list 1.0
 ;;; amplitude-modulate-channel could be (lambda (y data forward) (* y 0.5 (+ 1.0 (sin angle))) etc ...)
 
 
-;;; re-order channels 
+;;; -------- re-order channels 
 
 (define (scramble-channels . new-order)
   ;; (scramble-channels 3 2 0 1)
@@ -2276,3 +2277,47 @@ a sort of play list: (region-play-list (list (list 0.0 0) (list 0.5 1) (list 1.0
        (set! (max-regions) old-max)))))
     
     
+;; -------- reorder blocks within channel
+
+(define* (reverse-by-blocks block-len #:optional snd chn)
+  "(reverse-by-blocks block-len #:optional snd chn): divide sound into block-len blocks, recombine blocks in reverse order"
+  (let* ((len (frames snd chn))
+	 (num-blocks (inexact->exact (floor (/ len (* (srate snd) block-len))))))
+    (if (> num-blocks 1)
+	(let* ((actual-block-len (inexact->exact (ceiling (/ len num-blocks))))
+	       (rd (make-sample-reader (- len actual-block-len) snd chn))
+	       (beg 0)
+	       (ctr 1))
+	  (map-channel
+            (lambda (y)
+	      (let ((val (read-sample rd)))
+		(if (< beg 10) ; ramp start and end to avoid clicks (might want to mix with next section)
+		    (set! val (* val beg .1))
+		    (if (> beg (- actual-block-len 10))
+			(set! val (* val (- actual-block-len beg) .1))))
+		(set! beg (1+ beg))
+		(if (= beg actual-block-len)
+		    (begin
+		      (set! ctr (1+ ctr))
+		      (set! beg 0)
+		      (set! rd (make-sample-reader (max 0 (- len (* ctr actual-block-len))) snd chn))))
+		val))
+	    0 #f snd chn #f (format #f "reverse-by-blocks ~A" block-len))))))
+
+(define* (reverse-within-blocks block-len #:optional snd chn)
+  "(reverse-within-blocks block-len #:optional snd chn): divide sound into blocks, recombine in order, but each block internally reversed"
+  (let* ((len (frames snd chn))
+	 (num-blocks (inexact->exact (floor (/ len (* (srate snd) block-len))))))
+    (if (> num-blocks 1)
+	(let* ((actual-block-len (inexact->exact (ceiling (/ len num-blocks))))
+	       (no-clicks-env (list 0.0 0.0  .01 1.0  .99 1.0  1.0 0.0)))
+	  (as-one-edit
+	   (lambda ()
+	     (do ((beg 0 (+ beg actual-block-len)))
+		 ((>= beg len))
+	       (reverse-channel beg actual-block-len snd chn)
+	       (env-channel no-clicks-env beg actual-block-len snd chn)))
+	   (format #f "reverse-within-blocks ~A" block-len)))
+	(reverse-channel 0 #f snd chn))))
+
+  

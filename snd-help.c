@@ -428,6 +428,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+5-Dec:   snd_pd_external.c and other changes for Pd, thanks to Kjetil.\n\
 28-Nov:  snd 7.17.\n\
 21-Nov:  if --with-float-samples and --with-doubles, the internal sample data type is double.\n\
 18-Nov:  moved snd-apropos to snd7.scm.\n\

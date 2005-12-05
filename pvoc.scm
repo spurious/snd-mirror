@@ -2,7 +2,7 @@
 
 (use-modules (ice-9 optargs))
 (provide 'snd-pvoc.scm)
-(if (not (provided? 'snd-snd7.scm)) (load "snd7.scm"))
+(if (not (provided? 'snd-snd7.scm)) (load-from-path "snd7.scm"))
 
 (define* (make-pvocoder fftsize overlap interp #:optional analyze edit synthesize)
   "(make-pvocoder fftsize overlap interp #:optional analyze edit synthesize) makes a new (Scheme-based, not CLM) phase-vocoder generator"

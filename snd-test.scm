@@ -12177,9 +12177,6 @@ EDITS: 5
 (if (not (provided? 'snd-mixer.scm)) (load "mixer.scm"))
 (if (not (provided? 'snd-poly.scm)) (load "poly.scm"))
 
-
-
-
 (define (poly-roots-tests)
   (letrec ((ceql (lambda (a b)
 		   (if (null? a)
@@ -33583,6 +33580,8 @@ EDITS: 1
 	      (lambda () (smooth-channel-via-ptree))
 	      (lambda () (ring-modulate-channel 300))
 	      (lambda () (filtered-env '(0 0 1 1 2 0)))
+	      (lambda () (reverse-by-blocks .1))
+	      (lambda () (reverse-within-blocks .1))
 	      
 	      ;; extensions.scm
 	      (lambda () (mix-channel "1a.snd" 1200))
@@ -33655,6 +33654,8 @@ EDITS: 1
 	      "(lambda (snd chn) (smooth-channel-via-ptree 0 #f snd chn))"
 	      "(lambda (snd chn) (ring-modulate-channel 300 0 #f snd chn))"
 	      "(lambda (snd chn) (filtered-env (quote (0 0 1 1 2 0)) snd chn))"
+	      "(lambda (snd chn) (reverse-by-blocks 0.1 snd chn))"
+	      "(lambda (snd chn) (reverse-within-blocks 0.1 snd chn))"
 	      
 	      "(lambda (snd chn) (mix-channel \"1a.snd\" 1200 #f snd chn))"
 	      "(lambda (snd chn) (insert-channel \"1a.snd\" 1200 #f snd chn))"
@@ -41982,6 +41983,25 @@ EDITS: 1
 (set! (optimization) max-optimization)
 (dismiss-all-dialogs)
 
+(define* (make-sinc-train #:optional (frequency 440.0) (width #f))
+  (let ((range (or width (* pi (- (* 2 (inexact->exact (floor (/ (mus-srate) (* 2.2 frequency))))) 1)))))
+    ;; 2.2 leaves a bit of space before srate/2, (* 3 pi) is the minimum width, normally
+    (list (- (* range 0.5))
+	  range
+	  (/ (* range frequency) (mus-srate)))))
+	
+(define* (sinc-train gen #:optional (fm 0.0))
+  (let* ((ang (car gen))
+	 (range (cadr gen))
+	 (top (* 0.5 range))
+	 (frq (caddr gen))
+	 (val (if (= ang 0.0) 1.0 (/ (sin ang) ang)))
+	 (new-ang (+ ang frq fm)))
+    (if (> new-ang top)
+	(list-set! gen 0 (- new-ang range))
+	(list-set! gen 0 new-ang))
+    val))
+
 (define (make-cndf n freq)
   (let ((amps (make-vct (1- n) 0.0))
 	(oscs (make-vector (1- n) #f))
@@ -42968,6 +42988,18 @@ EDITS: 1
 	(if (> (abs (- (frames) 24602)) 100) (snd-display ";step-src frames: ~A (~A)" (frames) (edits)))
 	(close-sound ind))
       
+      (let ((file (with-sound ()
+		    (let ((gen (make-sinc-train 440.0 (* 9 pi))))
+		      (do ((i 0 (1+ i)))
+			  ((= i 1102))
+			(outa i (sinc-train gen) *output*))))))
+	(let ((ind (find-sound file)))
+	  (if (not (sound? ind))
+	      (snd-display ";with-sound let -> ~A (~A)?" ind file)
+	      (let ((mx (maxamp ind)))
+		(if (fneq mx 1.0) (snd-display ";with-sound sinc-train max: ~A" mx))
+		(close-sound ind)))))
+
       (if (not (null? (sounds))) (for-each close-sound (sounds)))
       
       (run-hook after-test-hook 23)

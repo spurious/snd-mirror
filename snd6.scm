@@ -87,7 +87,7 @@
 	 (fixup-loc (inexact->exact (floor (/ (* loc datum-bytes) (* 2 chans))))))
     (mus-sound-seek-frame fd loc)))
 
-(if (not (defined? 'mix-property)) (load "mix.scm"))
+(if (not (provided? 'snd-mix.scm)) (load-from-path "mix.scm"))
 
 (if (defined? 'sync-multichannel-mixes)
     (define mix-panel-applies-to-track sync-multichannel-mixes))

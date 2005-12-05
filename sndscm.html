@@ -752,6 +752,7 @@ Three other similar functions are <b>sum-of-n-sines</b>,
 <b>sum-of-n-odd-sines</b>, and <b>sum-of-n-odd-cosines</b>.
 <A class=def NAME="kosinesummation">kosine-summation</A> is a variation on <b>cosine-summation</b>; it includes
 a sort of "FM index" parameter (named "k", hence the generator name) to vary the harmonic content at run-time.
+There is also a <a href="clm.html#sinc-train>sinc-train</a> generator in clm.html.
 </p>
 
 <p><A class=def NAME="brightenslightly1">brighten-slightly</A> is a slight simplification of contrast-enhancement.
@@ -1309,6 +1310,7 @@ I'm slowly dividing out related groups of procedures to separate files.
     <li>ring-modulate-channel -- ring-modulation as virtual op
     <li>scramble-channels -- reorder chans
     <li>scramble-channel -- randomly reorder segments of sound
+    <li>reverse-by-blocks and reverse-within-blocks -- reorder or reverse blocks within a channel
   </ul>
 </small>
 </ul>
@@ -1784,10 +1786,15 @@ place where the given pitch is predominate.
 <p>The first is <a href="extsnd.html#smoothchannel">smooth-channel</a> as a virtual op,
 and the second applies ring-modulation (multiplication by a sine wave, similar to 
 Craig Sapp's ring-modulate.ins in CLM), also as a virtual op.
+</p>
+<p>
 <b>scramble-channels</b> uses <a href="extsnd.html#swapchannels">swap-channels</a>
 to return the current sound with the channels reordered arbitrarily.
 <b>scramble-channel</b>searches for silences, sets up a list of segments based on
-those silences, and randomly re-orders the segments.
+those silences, and randomly re-orders the segments.  Similar to these are
+<A NAME="reversebyblocks"></a><b>reverse-by-blocks</b> and <b>reverse-within-blocks</b>, both of which work best with
+speech. <b>reverse-by-blocks</b> divides a sound into blocks, then recombines those blocks in reverse order.
+<b>reverse-within-blocks</b> divides a sound into blocks, then recombines them in order, but with each block internally reversed.
 </p>
 <br>
 

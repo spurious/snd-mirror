@@ -362,8 +362,7 @@ repetition to be in reverse."
 
 ;;; -------- power-env 
 
-(if (not (provided? 'def-clm-struct))
-    (load "ws.scm"))
+(if (not (provided? 'snd-ws.scm)) (load-from-path "ws.scm"))
 
 (def-clm-struct penv envs total-envs current-env current-pass)
 
