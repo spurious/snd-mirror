@@ -606,6 +606,6 @@ make
 ./snd --version
 make allclean
 
-./configure --quiet --with-snd-as-pd-external
+./configure --quiet --with-snd-as-pd-external --with-no-gui GUILE_CONFIG_path=/home/bil/test/bin
 make
 make allclean
