@@ -133,6 +133,8 @@ struct dispatch{
     int inlet_num;
     int outlet_num;
     t_class **class;
+    t_snd_pd_workaround *x2;
+    SCM func;
   }data;
   union{
     t_float val;
@@ -190,7 +192,7 @@ static SCM snd0_eval_do(void){
  *****************************************************************************************************
  *****************************************************************************************************/
 
-void pd0_das_dispatcher(void *something){
+static void pd0_das_dispatcher(void *something){
   jack_ringbuffer_t *rb=rb_snd_to_pd;
   struct dispatch d;
 
@@ -206,13 +208,19 @@ void pd0_das_dispatcher(void *something){
 
 static void snd0_send_message(struct dispatch *d){
   jack_ringbuffer_t *rb=rb_snd_to_pd;
-  if(jack_ringbuffer_write (rb, (char*)d, sizeof(struct dispatch)) < sizeof(struct dispatch)){
+  size_t bytes;
+ tryagain:
+  if(jack_ringbuffer_write_space(rb)<sizeof(struct dispatch)){
     scm_gc();
-  }else{
-    while(jack_ringbuffer_write (rb, (char*)d, sizeof(struct dispatch)) < sizeof(struct dispatch)){
-      post("Error. Ringbuffer full. Could not send message to PD. Trying again in one second.");
+    while(jack_ringbuffer_write_space(rb)<sizeof(struct dispatch)){
+      post("Warning. Ringbuffer full. Could not send message to PD. Trying again in one second.");
       sleep(1);
     }
+  }
+  if((bytes=jack_ringbuffer_write (rb, (char*)d, sizeof(struct dispatch))) < sizeof(struct dispatch)){
+    if(bytes>0)
+      post("Catastrophe snd0_send_message!!! (please report this to k.s.matheussen@notam02.uio.no");
+    goto tryagain;
   }
 }
 
@@ -240,12 +248,20 @@ static void snd0_das_dispatcher(void){
 
 static void pd0_send_message(struct dispatch *d){
   jack_ringbuffer_t *rb=rb_pd_to_snd;
+  size_t bytes;
 
-  if(jack_ringbuffer_write (rb, (char*)d, sizeof(struct dispatch)) < sizeof(struct dispatch))
+  if(jack_ringbuffer_write_space(rb)<sizeof(struct dispatch)){
     post("Error. Ringbuffer full. Could not send message to SND.");
-  else{
-    pthread_cond_broadcast(&thread_cond);
+    goto end;
   }
+
+  if( (bytes=jack_ringbuffer_write (rb, (char*)d, sizeof(struct dispatch))) < sizeof(struct dispatch)){
+    if(bytes>0)
+      post("Catastrophe pd0_send_message!!! (please report this to k.s.matheussen@notam02.uio.no");
+  }
+
+ end:
+  pthread_cond_broadcast(&thread_cond);
 
 }
 
@@ -293,7 +309,7 @@ static void snd0_anything_do(struct dispatch *d){
 
   if(index>=0){
     // Inlet
-    scm_call_4(pd_backtrace_run3,d->x->inlet_func,MAKE_INTEGER(index),scm_string_to_symbol(MAKE_STRING(s->s_name)),applyarg);
+    scm_call_3(d->x->inlet_func,MAKE_INTEGER(index),scm_string_to_symbol(MAKE_STRING(s->s_name)),applyarg);
   }else{
     // Binding
     if(s!=&s_float && s!=&s_list && s!=&s_symbol){
@@ -301,7 +317,7 @@ static void snd0_anything_do(struct dispatch *d){
     }
     if(s!=&s_list && GET_INTEGER(scm_length(applyarg))==1)
       applyarg=SCM_CAR(applyarg);
-    scm_call_2(pd_backtrace_run1,d->data2.func,applyarg);
+    scm_call_1(d->data2.func,applyarg);
   }
 }
 
@@ -313,10 +329,13 @@ static void pd0_anything_do(t_snd_pd *x,int index,SCM func,t_symbol *s, t_int ar
     return;
   }
 
-  // Yes, it can be done in three steps. (as long as pd is singlethreaded at least, but I think it is....)
+  // Yes, it can be done in many steps. (as long as pd is singlethreaded at least, but I think it is....)
   jack_ringbuffer_write(rb_anything,(char *)&s,sizeof(t_symbol*));
   jack_ringbuffer_write(rb_anything,(char *)&argc,sizeof(t_int));
-  jack_ringbuffer_write(rb_anything,(char *)argv,sizeof(t_atom)*argc);
+
+  for(lokke=argc-1;lokke>=0;lokke--){
+    jack_ringbuffer_write(rb_anything,(char *)&argv[lokke],sizeof(t_atom));
+  }
 
   {
     struct dispatch d;
@@ -331,7 +350,7 @@ static void pd0_anything_do(t_snd_pd *x,int index,SCM func,t_symbol *s, t_int ar
 
 // Handles inlet>0 and bindings
 static void pd0_anything(t_snd_pd_workaround *x2,t_symbol *s, t_int argc, t_atom* argv){
-  if(x2->x->isworking==false){
+  if(x2->x!=NULL && x2->x->isworking==false){
     post("Object not functional. No scheme file was loaded.");
     return;
   }
@@ -391,22 +410,116 @@ static SCM snd0_get_num_outlets(SCM instance){
  *****************************************************************************************************
  *****************************************************************************************************/
 
-static SCM snd0_bind(SCM symname,SCM func){
+static volatile int snd_pd_is_binding=0;
+static t_snd_pd_workaround *snd_pd_bind_x2;
+
+static void pd0_bind(struct dispatch *d){
   t_snd_pd_workaround *x2;
   x2=(t_snd_pd_workaround*)pd_new(snd_pd_workaroundclass);
+  x2->x=NULL;
   x2->index=-1;
-  x2->func=func;
-  scm_protect_object(x2->func);
-  pd_bind((t_pd *)x2, MAKE_SYM(symname));
-  return MAKE_POINTER(x2);
+  x2->func=d->data.func;
+  pd_bind((t_pd*)x2, d->data2.symbol);
+
+  snd_pd_bind_x2=x2;
+  snd_pd_is_binding=2;
 }
+
+static SCM snd0_bind(SCM symname,SCM func){
+  struct dispatch d;
+  SCM ret;
+
+  scm_protect_object(func);
+
+  //post("Trying to bind %s",SCM_SYMBOL_CHARS(symname));
+
+  if(snd_pd_is_binding!=0){
+    int num_retries=0;
+    scm_gc();
+    while(snd_pd_is_binding!=0){
+      num_retries++;
+      if(num_retries>(1000000/50)*5){
+	post("snd0_unbind: Waited 5 seconds for pd. Something is probably wrong. Could not unbind.");
+	RU_;
+      }
+      usleep(50);
+    }
+  }
+  snd_pd_is_binding=1;
+
+  d.func=pd0_bind;
+  d.data.func=func;
+  d.data2.symbol=MAKE_SYM(symname);
+  snd0_send_message(&d);
+
+  if(snd_pd_is_binding!=2){
+    int num_retries=0;
+    scm_gc();
+    while(snd_pd_is_binding!=2){
+      num_retries++;
+      if(num_retries>(1000000/50)*5){
+	post("snd0_unbind: Waited 5 seconds for pd. Something is probably wrong. Could not unbind.");
+	RU_;
+      }
+      usleep(50);
+    }
+  }
+  ret=MAKE_POINTER(snd_pd_bind_x2);
+
+  snd_pd_is_binding=0;
+
+  return ret;
+}
+
+static void pd0_unbind(struct dispatch *d){
+  pd_unbind((t_pd *)d->data.x2,d->data2.symbol);
+  pd_free((t_pd*)d->data.x2);
+  snd_pd_is_binding=2;
+}
+
 static SCM snd0_unbind(SCM scm_x2,SCM symname){
-  t_snd_pd_workaround *x2=GET_POINTER(scm_x2);
-  pd_unbind((t_pd *)x2,MAKE_SYM(symname));
-  scm_unprotect_object(x2->func);
-  pd_free((t_pd*)x2);
+  struct dispatch d;
+  SCM func;
+
+  if(snd_pd_is_binding!=0){
+    int num_retries=0;
+    scm_gc();
+    while(snd_pd_is_binding!=0){
+      num_retries++;
+      if(num_retries>(1000000/50)*5){
+	post("snd0_unbind: Waited 5 seconds for pd. Something is probably wrong. Could not unbind.");
+	RU_;
+      }
+      usleep(50);
+    }
+  }
+  snd_pd_is_binding=1;
+
+  d.func=pd0_unbind;
+  d.data.x2=GET_POINTER(scm_x2);
+  d.data2.symbol=MAKE_SYM(symname);
+  func=d.data.x2->func;
+  snd0_send_message(&d);
+
+  if(snd_pd_is_binding!=2){
+    int num_retries=0;
+    scm_gc();
+    while(snd_pd_is_binding!=2){
+      num_retries++;
+      if(num_retries>(1000000/50)*5){
+	post("snd0_unbind: Waited 5 seconds for pd. Something is probably wrong. Could not unbind.");
+	RU_;
+      }
+      usleep(50);
+    }
+  }
+
+  scm_unprotect_object(func);
+
+  snd_pd_is_binding=0;
   RU_;
 }
+
 
 
 
@@ -818,9 +931,9 @@ static void *snd0_init(void *arg){
 }
 
 static void pd0_init(void){
-  rb_snd_to_pd = jack_ringbuffer_create(1024);
-  rb_pd_to_snd = jack_ringbuffer_create(1024);
-  rb_anything  = jack_ringbuffer_create(1024);
+  rb_snd_to_pd = jack_ringbuffer_create(sizeof(struct dispatch)*1024);
+  rb_pd_to_snd = jack_ringbuffer_create(sizeof(struct dispatch)*1024);
+  rb_anything  = jack_ringbuffer_create(1024*64);
 
   //scm_init_guile();
 
