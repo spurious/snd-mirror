@@ -191,8 +191,15 @@ AC_ARG_WITH(snd-as-pd-external,
 	   [with_jack=yes]
 	   AC_DEFINE(SND_AS_PD_EXTERNAL)
 	   MAKE_TARGET=external
-	fi)
 
+    	   case "$host" in
+             *-apple-*)
+ 	       CFLAGS="$CFLAGS -DPD -I. -bundle -undefined suppress -flat_namespace"
+ 	     ;;
+           esac
+
+	fi)
+# TODO: mac switches for pd-ext
 
 
 #--------------------------------------------------------------------------------
@@ -1348,7 +1355,7 @@ JACK_FLAGS=""
 
 # we need the sndlib.h equivalents to try to find the native sound support (see config.guess)
 # this only matters for those cases where we've implemented the audio code in audio.c
-# test for ALSA courtesy of Paul Barton-Davis
+# test for ALSA courtesy of Paul Davis
 # test for ESD courtesy of Nick Bailey
 # test for BSD courtesy of Steven Schultz
 # test for Jack courtesy of Kjetil S. Matheussen

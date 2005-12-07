@@ -55,6 +55,7 @@
     <li><a href="#sndinstruments">Instruments</a>
     </ul>
   <li><a href="#sndwithcm">Snd and Common Music</a>
+  <li><a href="#sndwithpd">Snd and Pd</a>
   <li><a href="#sndwithmotif">Snd and Motif</a>
   <li><a href="#sndwithgtk">Snd and Gtk</a>
   <li><a href="#sndwithnogui">Snd with no GUI and as script engine</a>
@@ -516,7 +517,7 @@ latter are (configure --help):
 
 <tr><td colspan=2>Debugging etc</td><td></td></tr>
 <tr><td></td><td>--with-snd-as-widget</td><td>make Snd a loadable widget, not a standalone program</td></tr>
-<!-- TODO: snd-as-pd-external -->
+<tr><td></td><td>--with-snd-as-pd-external</td><td>make Snd a loadable pd external, not a standalone program</td></tr>
 <tr><td></td><td>--with-profiling</td><td>include profiling (branch counting) machinery, default: no (only for debugging)</td></tr>
 <tr><td></td><td>--enable-snd-debug</td><td>include internal Snd debugging functions, default: no (not useful if not actually debugging!) </td></tr>
 <tr><td></td><td>--disable-largefile</td><td>omit support for large (64-bit byte address) files</td></tr>
@@ -1258,6 +1259,9 @@ Test 23 in snd-test.scm has a with-sound that includes most of these instruments
 <!-- TODO: update the CM docs to reflect definstrument-hook -->
 <table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndwithcm">Snd and Common Music</a></h3></td></tr></table>
 
+<p>(This is obsolete -- the connection to CM is now much tighter...)
+</p>
+
 <p>You can load Common Music into Snd, but the connection to
 Snd's definstrument macro is not yet as tight as it is in the Common Lisp
 CLM:
@@ -1293,6 +1297,12 @@ CLM:
 <em class=listener>"test.snd"</em>
 </pre>
 
+<br><br>
+<table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndwithpd">Snd and Pd</a></h3></td></tr></table>
+
+<p>Snd can be used as a Pd "external".  Use the --with-snd-as-pd-external switch, and make sure
+the configure script can find Guile 1.7.n.  help-snd.pd has examples.
+</p>
 
 <br><br>
 <table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndwithmotif">Snd and Motif</a></h3></td></tr></table>

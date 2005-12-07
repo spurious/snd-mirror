@@ -6805,6 +6805,8 @@ There are approximately a bazillion ways to scale samples in Snd; here's a potpo
        (<a class=quiet href="clm.html#convolve">convolve</a> cnv (lambda (dir) 
                        (<a class=quiet href="#readsample">read-sample</a> sf)))))))
 
+(vct->channel (poly* (channel->vct 0 (frames)) (vct 2.0))) ; poly.scm (sound = polynomial coeffs)
+
 (let* ((len (<a class=quiet href="#frames">frames</a>))
        (fsize (expt 2 (ceiling (/ (log len) (log 2)))))
        (rl (<a class=quiet href="#channel_to_vct">channel-&gt;vct</a> 0 fsize))

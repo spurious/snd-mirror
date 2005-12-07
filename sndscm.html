@@ -170,12 +170,12 @@ Waveshaping is described in Le Brun, "Digital Waveshaping Synthesis", JAES 1979 
 The lines
 </p>
 <pre>
-           ...
-	   (coeffs (<a class=quiet href="clm.html#partials-&gt;polynomial">partials-&gt;polynomial</a> (normalize-partials partials)))
-           ...
-		     (<a class=quiet href="clm.html#polynomial">polynomial</a> coeffs
-				 (<a class=quiet href="clm.html#oscil">oscil</a> os (<a class=quiet href="clm.html#env">env</a> gls-env))))))
-				 <!-- ((( -->
+   ...
+   (coeffs (<a class=quiet href="clm.html#partials-&gt;polynomial">partials-&gt;polynomial</a> (normalize-partials partials)))
+   ...
+	     (<a class=quiet href="clm.html#polynomial">polynomial</a> coeffs
+			 (<a class=quiet href="clm.html#oscil">oscil</a> os (<a class=quiet href="clm.html#env">env</a> gls-env))))))
+			 <!-- ((( -->
 </pre>
 <p>setup and run the waveshaping synthesis (in this case it's just a fast
 additive synthesis).  <b>partials-&gt;polynomial</b> calculates the Chebyshev
@@ -278,7 +278,7 @@ instrument: bird { f: start f: dur f: freq f: freq-skew f: amp freq-env amp-enve
   <em class=emdef>za</em> time dur freq amp length1 length2 feedback feedforward
   <em class=emdef>bes-fm</em> beg dur freq amp ratio index
 </pre>
-<p>
+<p>Test 23 in snd-test.scm has examples of using these instruments.
 <b>fofins</b> is an implementation of FOF synthesis, taken originally from
 fof.c of Perry Cook and the article
 "Synthesis of the Singing Voice" by Bennett and Rodet in
@@ -1011,7 +1011,7 @@ The sound effect itself is the callback function of the given option:
 effects in more detail.  The code is straightforward, and
 it's not hard to try them out.
 </p>	
-<p>The Ruby/Motif version of this is in effects.rb.
+<p>The Ruby version of this is in effects.rb.
 </p>
 <br>
 
@@ -2827,6 +2827,13 @@ The last two functions, <b>poly-gcd</b> and <b>poly-roots</b>, are
 just for fun.
 </p>
 
+<p>You can treat a sound as a set of polynomial coefficients; then, for example,
+convolution the infinitely slow way is <b>poly*</b>:
+</p>
+<pre>
+(vct->channel (poly* (channel->vct 0 (frames)) (vct 2.0)))
+</pre>
+<br>
 
 <A NAME="popupdoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>popup.scm, popup.rb, and gtk-popup.scm</h2></td></tr></table>
 <pre>

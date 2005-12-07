@@ -4814,16 +4814,10 @@ Here is my clm-init.lisp:</p>
 (setf (volume) 1.0)
 ;;; dac output volume
 
-(setf *print-array* nil)
-;;; keep lisp from printing out endless arrays in trace/zoom, etc
-
 (setf *clm-search-list* 
   (append *clm-search-list* 
-	  (list "/me/cl/oboe.snd" 
-		"/me/mus/hdr/aiff-8.snd" 
-		"/me/snd/now.snd" 
-		"/snd1/zap/test.snd" 
-		"/snd1/snds/test.snd")))
+	  (list "/home/bil/cl/oboe.snd"
+		"/home/bil/test/sounds/test.snd")))
 ;;; these are my standard sound file directories -- by including 
 ;;; these in the search list I don't need to remember where each 
 ;;; file happens to be.  The file names are just fillers --

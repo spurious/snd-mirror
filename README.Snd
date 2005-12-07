@@ -65,6 +65,7 @@ The configure program has several Snd-related arguments:
                                by built-in code.
 
    --with-snd-as-widget      make Snd a loadable widget, not a standalone program
+   --with-snd-as-pd-external make Snd a loadable pd external, not a standalone program
 
    --with-ruby               use Ruby as the extension language
      --with-ruby-prefix      set location of Ruby

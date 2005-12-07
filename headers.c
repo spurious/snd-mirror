@@ -130,7 +130,7 @@ int mus_header_initialize (void)
 	  (loop_modes == NULL) || (loop_starts == NULL) || (loop_ends == NULL))
 	return(mus_error(MUS_MEMORY_ALLOCATION_FAILED, "mus_header_initialize: buffer allocation failed"));
     }
-  return(0);
+  return(MUS_NO_ERROR);
 }
 
 

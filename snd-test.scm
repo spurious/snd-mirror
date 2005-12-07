@@ -12284,6 +12284,10 @@ EDITS: 5
     (let ((vals (poly-roots (poly-reduce (poly* (vct 1 1) (poly* (poly* (vct 2 1) (vct -3 1)) (poly* (vct 1 1) (vct -2 1))))))))
       (if (not (feql vals (list 3.0 -1.0 -1.0 -2.0 2.0))) (snd-display ";poly-roots n(6): ~A" vals)))
     
+    (let ((vals1 (convolution (vct 1 2 3 0 0 0 0 0) (vct 1 2 3 0 0 0 0 0) 8))
+	  (vals2 (poly* (vct 1 2 3 0) (vct 1 2 3 0))))
+      (if (not (vequal vals1 vals2))
+	  (snd-display ";poly* convolve: ~A ~A" vals1 vals2)))
     ))
   
 (define (jc-reverb decay-dur low-pass volume amp-env)
@@ -12981,6 +12985,16 @@ EDITS: 5
 	(if (or (not (vequal (car val) (vct 0.000 1.000 0.000 0.000 0.000)))
 		(not (vequal (cadr val) (vct 1.000 2.000 3.000 0.000 0.000))))
 	    (snd-display ";poly/ 12: ~A" val)))
+
+      (let ((ind (open-sound "1a.snd")))
+	(let ((v1 (channel->vct 0 100 ind 0))
+	      (v2 (channel->vct 0 100 ind 0)))
+	  (let ((vals (car (poly/ v1 v2)))
+		(res (make-vct 100)))
+	    (vct-set! res 0 1.0)
+	    (if (not (vequal vals res))
+		(snd-display ";poly1 1a: ~A" vals))))
+	(close-sound ind))
 
       (let ((val (poly-derivative (vct 0.5 1.0 2.0 4.0))))
 	(if (not (vequal val (vct 1.000 4.000 12.000))) (snd-display ";poly-derivative: ~A" val)))
@@ -18858,6 +18872,7 @@ EDITS: 5
 	  (jc-reverb 1.0 #f .1 #f) 
 	  (play-and-wait 0 nind)
 	  (voiced->unvoiced 1.0 256 2.0 2.0) 
+	  (pulse-voice 80 20.0 1.0 1024 0.01)
 	  (map-chan (fltit))
 	  (close-sound oboe-index))
 	(if (not (sound? nind)) (snd-display ";close sound clobbered ~A?" nind))
@@ -27000,6 +27015,7 @@ EDITS: 5
 	      (len (1- (frames ind 0))))
 	  (map-channel (lambda (val) 
 			 (sound-interp reader (* len (+ 0.5 (* 0.5 (oscil osc))))))))
+	(undo)
 
 	(env-sound-interp '(0 0 1 1))
 	(if (not (vequal (channel->vct) (vct 0.000 0.053 0.105 0.158 0.211 0.263 0.316 0.368 0.421 0.474 
