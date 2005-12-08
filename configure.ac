@@ -181,7 +181,7 @@ AC_ARG_WITH(snd-as-widget,
 
 AC_ARG_WITH(snd-as-pd-external,
 	[  --with-snd-as-pd-external	  make Snd a loadable pd external, not a standalone program],
-  	if test "$with_snd_as_pd_external" = yes ; then
+  	[if test "$with_snd_as_pd_external" = yes ; then
 	   if test "$with_motif" = yes || test "$with_gtk" = yes ; then
 	      AC_MSG_ERROR(When making snd as a pd external, motif or gtk can not be used.)
 	   fi
@@ -198,8 +198,7 @@ AC_ARG_WITH(snd-as-pd-external,
  	     ;;
            esac
 
-	fi)
-# TODO: mac switches for pd-ext
+	fi])
 
 
 #--------------------------------------------------------------------------------

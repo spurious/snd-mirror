@@ -3291,14 +3291,13 @@ _ACEOF
 	   MAKE_TARGET=external
 
     	   case "$host" in
-             *-apple-*
-fi;
+             *-apple-*)
  	       CFLAGS="$CFLAGS -DPD -I. -bundle -undefined suppress -flat_namespace"
  	     ;;
            esac
 
-	fi)
-# TODO: mac switches for pd-ext
+	fi
+fi;
 
 
 #--------------------------------------------------------------------------------
