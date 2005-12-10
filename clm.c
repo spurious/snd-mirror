@@ -106,19 +106,10 @@ int mus_set_file_buffer_size(int size) {clm_file_buffer_size = size; return(size
 static char describe_buffer[DESCRIBE_BUFFER_SIZE];
 #define STR_SIZE 128
 
-#if DEBUGGING
-#define clm_calloc(Num, Size, What) clm_calloc_1(Num, Size, What, __FILE__, __LINE__)
-static void *clm_calloc_1(int num, int size, const char* what, const char *file, int line)
-#else
 static void *clm_calloc(int num, int size, const char* what)
-#endif
 {
   register void *mem;
-#if DEBUGGING
-  mem = mem_calloc(num, size, what, file, line);
-#else
   mem = CALLOC(num, size);
-#endif
   if (mem == 0)
     mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate %s", what);
   return(mem);

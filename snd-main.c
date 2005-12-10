@@ -367,23 +367,13 @@ static void pcp_sl(FILE *fd, const char *name, Float val1, Float val2, int chan)
 
 void save_options(FILE *fd)
 {
-#if HAVE_STRFTIME
-  time_t ts;
-  char time_buf[TIME_STR_SIZE];
-#endif
   char *locale = NULL;
 
 #if HAVE_SETLOCALE
   locale = copy_string(setlocale(LC_NUMERIC, "C")); /* must use decimal point in floats since Scheme assumes that format */
 #endif
 
-#if HAVE_STRFTIME
-  time(&ts);
-  strftime(time_buf, TIME_STR_SIZE, STRFTIME_FORMAT, localtime(&ts));
-  fprintf(fd, "\n%s Snd %s (%s) options saved %s\n", XEN_COMMENT_STRING, SND_VERSION, SND_DATE, time_buf);
-#else
-  fprintf(fd, "\n%s Snd %s (%s)\n", XEN_COMMENT_STRING, SND_VERSION, SND_DATE);
-#endif
+  fprintf(fd, "\n%s Snd %s (%s) options saved %s\n", XEN_COMMENT_STRING, SND_VERSION, SND_DATE, snd_local_time());
 
   if (transform_size(ss) != DEFAULT_TRANSFORM_SIZE) pss_sd(fd, S_transform_size, transform_size(ss));
   if (minibuffer_history_length(ss) != DEFAULT_MINIBUFFER_HISTORY_LENGTH) pss_sd(fd, S_minibuffer_history_length, minibuffer_history_length(ss));

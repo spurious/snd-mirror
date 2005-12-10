@@ -5,7 +5,6 @@ static GtkWidget *preferences_dialog = NULL;
 
 static bool prefs_helping = false, prefs_unsaved = false;
 static char *prefs_saved_filename = NULL;
-static char *prefs_time = NULL;
 static char *include_load_path = NULL;
 
 #define HELP_WAIT_TIME ((guint32)500)
@@ -1338,16 +1337,9 @@ static void prefs_set_dialog_title(const char *filename)
       prefs_saved_filename = copy_string(filename);
     }
   if (prefs_saved_filename)
-    {
-      if (prefs_time)
-	str = mus_format("Preferences%s (%s: saved in %s)\n",
-			 (prefs_unsaved) ? "*" : "",
-			 prefs_time,
-			 prefs_saved_filename);
-      else str = mus_format("Preferences%s (saved in %s)\n",
-			    (prefs_unsaved) ? "*" : "",
-			    prefs_saved_filename);
-    }
+    str = mus_format("Preferences%s (saved in %s)\n",
+		     (prefs_unsaved) ? "*" : "",
+		     prefs_saved_filename);
   else str = mus_format("Preferences%s",
 			(prefs_unsaved) ? "*" : "");
   gtk_window_set_title(GTK_WINDOW(preferences_dialog), str);
@@ -1369,11 +1361,6 @@ static void preferences_reset_callback(GtkWidget *w, gpointer context)
       FREE(prefs_saved_filename);
       FREE(fullname);
       prefs_saved_filename = NULL;
-      if (prefs_time)
-	{
-	  FREE(prefs_time);
-	  prefs_time = NULL;
-	}
     }
   prefs_set_dialog_title(NULL);
 }

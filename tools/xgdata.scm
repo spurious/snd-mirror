@@ -2866,7 +2866,6 @@
 
 ;;;(CFNC "void gtk_text_attributes_ref GtkTextAttributes* values")
 ;;; return type changed 2.8.6
-;;; TODO: add this: (CFNC-286 "GtkTextAttributes* gtk_text_attributes_ref GtkTextAttributes* values")
 
 (CCAST "GTK_TEXT_TAG_TABLE(obj)" "GtkTextTagTable*")
 (CCHK "GTK_IS_TEXT_TAG_TABLE(obj)" "GtkTextTagTable*")
@@ -5556,6 +5555,8 @@
 
 
 #!
+;;; TODO: add this: (CFNC-290 "GtkTextAttributes* gtk_text_attributes_ref GtkTextAttributes* values")
+
 ;;; handle these when gtk changes in some ascertainable manner
 ;;; Pango 1.9.1 to 1.11
 

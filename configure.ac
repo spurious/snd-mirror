@@ -550,6 +550,16 @@ else
     LIBS="$LIBS $X_PRE_LIBS $X_POST_LIBS"
     CFLAGS="$CFLAGS $XFLAGS"
 
+    AC_MSG_CHECKING([whether libXm requires libpng etc])
+    AC_TRY_LINK_FUNC(XmCreateForm,
+	AC_MSG_RESULT(no),
+	[
+	  AC_MSG_RESULT(yes)
+	  X_PRE_LIBS="$X_PRE_LIBS -lXmu -lXft -L/usr/local/lib -liconv -lpng -ljpeg"
+	  TEST_PRE_LIBS="$TEST_PRE_LIBS -lXmu -lXft -L/usr/local/lib -liconv -lpng -ljpeg"
+	],
+	$TEST_LIBS)
+
     if test "$with_editres" = yes ; then
 	AC_CHECK_LIB(Xmu, _XEditResCheckMessages, 
 			[AC_DEFINE(WITH_EDITRES)

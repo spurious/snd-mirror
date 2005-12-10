@@ -82,14 +82,6 @@ static void save_prefs(const char *filename, char *load_path_name)
     }
   else snd_error("can't save preferences: %s %s", filename, snd_io_strerror());
   FREE(fullname);
-#if HAVE_STRFTIME
-  {
-    time_t ts;
-    time(&ts);
-    if (!prefs_time) prefs_time = (char *)CALLOC(TIME_STR_SIZE, sizeof(char));
-    strftime(prefs_time, TIME_STR_SIZE, "%H:%M", localtime(&ts));
-  }
-#endif
   prefs_unsaved = false;
   prefs_set_dialog_title(filename);
 }

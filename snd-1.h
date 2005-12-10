@@ -1360,6 +1360,8 @@ Float in_dB(Float min_dB, Float lin_dB, Float py);
 char *copy_string(const char *str);
 int snd_strlen(const char *str);
 char *snd_strcat(char *errmsg, const char *str, int *err_size);
+char *snd_local_time(void);
+char *snd_strftime(const char *format, time_t date);
 char *snd_io_strerror(void);
 char *snd_open_strerror(void);
 char *string_to_colon(char *val);

@@ -66,7 +66,6 @@ typedef struct Wdesc {
   Widget wg;
 } Wdesc;
 
-static char timbuf[TIME_STR_SIZE];
 static file_data *recdat;
 
 static vu_t **rec_in_VU = NULL;       /* from rec in to associated meter */
@@ -97,24 +96,9 @@ static int current_vu_label = 0;
 
 static void record_report(Widget text, ...)
 {
-  /* place time-stamped message in text window */
-#if HAVE_STRFTIME
-  time_t ts;
-#endif
-  XmTextPosition pos, textpos = 0;
+  XmTextPosition textpos = 0;
   va_list ap;
-  static char *msgbuf = NULL;
   char *nextstr;
-  if (msgbuf == NULL) msgbuf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
-#if HAVE_STRFTIME
-  time(&ts);
-  strftime(timbuf, TIME_STR_SIZE, "%H:%M:%S", localtime(&ts));
-  mus_snprintf(msgbuf, PRINT_BUFFER_SIZE, "\n[%s] ", timbuf);
-#endif
-  pos = XmTextGetLastPosition(text);
-  if (pos == 0) 
-    XmTextSetString(text, msgbuf);
-  else XmTextInsert(text, pos, msgbuf);
   va_start(ap, text);
   while ((nextstr = va_arg(ap, char *)))
     {
@@ -772,9 +756,10 @@ static void set_vu_val (vu_t *vu, Float val)
   display_vu_meter(vu);
   if (val > vu->max_val)
     {
+      char buf[64];
       vu->max_val = val;
-      mus_snprintf(timbuf, TIME_STR_SIZE, "%.3f", val);
-      set_label(vu->max_button, timbuf);
+      mus_snprintf(buf, 64, "%.3f", val);
+      set_label(vu->max_button, buf);
     }
 }
 
@@ -1223,8 +1208,11 @@ static void make_file_info_pane(recorder_info *rp, Widget file_pane, int ndevs)
   XtSetArg(args[n], XmNrecomputeSize, false); n++;
   XtSetArg(args[n], XmNcolumns, 6); n++;
   rec_size_text = make_textfield_widget("rectext", file_form, args, n, NOT_ACTIVATABLE, NO_COMPLETER);
-  mus_snprintf(timbuf, TIME_STR_SIZE, "%d", rp->buffer_size);
-  XmTextSetString(rec_size_text, timbuf);
+  {
+    char buf[64];
+    mus_snprintf(buf, 64, "%d", rp->buffer_size);
+    XmTextSetString(rec_size_text, buf);
+  }
 
   n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
@@ -1352,8 +1340,9 @@ static void make_file_info_pane(recorder_info *rp, Widget file_pane, int ndevs)
 
 void reflect_recorder_duration(Float new_dur)
 {
-  mus_snprintf(timbuf, TIME_STR_SIZE, "%.2f", new_dur);
-  set_label(file_duration, timbuf);
+  char buf[64];
+  mus_snprintf(buf, 64, "%.2f", new_dur);
+  set_label(file_duration, buf);
 }
 
 void lock_recording_audio(void)

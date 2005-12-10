@@ -67,8 +67,6 @@ typedef struct Wdesc {
 
 static GdkGC *draw_gc, *vu_gc;
 
-static char timbuf[TIME_STR_SIZE];
-
 static file_data *recdat;
 
 static vu_t **rec_in_VU = NULL;       /* from rec in to associated meter */
@@ -100,18 +98,8 @@ static int current_vu_label = 0;
 
 static void record_report(GtkWidget *text, ...)
 {
-  /* place time-stamped message in text window */
-  time_t ts;
   va_list ap;
   char *nextstr;
-  static char *msgbuf = NULL;
-  if (msgbuf == NULL) msgbuf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
-#if HAVE_STRFTIME
-  time(&ts);
-  strftime(timbuf, TIME_STR_SIZE, "%H:%M:%S", localtime(&ts));
-  mus_snprintf(msgbuf, PRINT_BUFFER_SIZE, "\n[%s] ", timbuf);
-#endif
-  sg_text_insert(text, msgbuf);
   va_start(ap, text);
   while ((nextstr = va_arg(ap, char *)))
     sg_text_insert(text, nextstr);
@@ -559,9 +547,10 @@ static void set_vu_val (vu_t *vu, Float val)
   display_vu_meter(vu);
   if (val > vu->max_val)
     {
+      char buf[64];
       vu->max_val = val;
-      mus_snprintf(timbuf, TIME_STR_SIZE, "%.3f", val);
-      set_label(vu->max_button, timbuf);
+      mus_snprintf(buf, 64, "%.3f", val);
+      set_label(vu->max_button, buf);
     }
 }
 
@@ -937,8 +926,9 @@ static void make_file_info_pane(recorder_info *rp, GtkWidget *file_pane, int nde
 
 void reflect_recorder_duration(Float new_dur)
 {
-  mus_snprintf(timbuf, TIME_STR_SIZE, "%.2f", new_dur);
-  set_label(file_duration, timbuf);
+  char buf[64];
+  mus_snprintf(buf, 64, "%.2f", new_dur);
+  set_label(file_duration, buf);
 }
 
 void lock_recording_audio(void)

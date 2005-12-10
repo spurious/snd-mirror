@@ -40,9 +40,6 @@ static char *previous_locale = NULL;
 
 static int start_ps_graph(char *output, char *title) 
 { 
-#if HAVE_STRFTIME
-  time_t ts;
-#endif
   ps_fd = CREAT(output, 0666);
   if (ps_fd == -1) return(-1);
   if (!pbuf) pbuf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
@@ -54,14 +51,11 @@ static int start_ps_graph(char *output, char *title)
 #endif
 
   mus_snprintf(pbuf, PRINT_BUFFER_SIZE, 
-	       "%%!PS-Adobe-2.0 EPSF-2.0\n%%%%Title: %s\n%%%%Creator: Snd: %s\n%%%%CreationDate: ", 
-	       title, SND_DATE);
+	       "%%!PS-Adobe-2.0 EPSF-2.0\n%%%%Title: %s\n%%%%Creator: Snd: %s\n%%%%CreationDate: %s", 
+	       title, 
+	       SND_DATE,
+	       snd_local_time());
   ps_write(pbuf);
-#if HAVE_STRFTIME
-  time(&ts);
-  strftime(pbuf, PRINT_BUFFER_SIZE, STRFTIME_FORMAT, localtime(&ts));
-  ps_write(pbuf);
-#endif
   mus_snprintf(pbuf, PRINT_BUFFER_SIZE, 
 	       "\n%%%%BoundingBox:(atend)\n%%%%EndComments\n%%%%EndProlog\n%%%%Page: 1 1\n");
   ps_write(pbuf);

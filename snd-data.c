@@ -937,11 +937,9 @@ static char *display_maxamps(const char *filename, int chans)
   return(ampstr);
 }
 
-static char timestr[TIME_STR_SIZE];
-#define INFO_BUFFER_SIZE 1024
-
 void display_info(snd_info *sp)
 {
+  #define INFO_BUFFER_SIZE 1024
   if (sp)
     {
       file_info *hdr;
@@ -962,9 +960,6 @@ void display_info(snd_info *sp)
 	  if (mus_sound_maxamp_exists(sp->filename))
 	    ampstr = display_maxamps(sp->filename, sp->nchans);
 	  buffer = (char *)CALLOC(INFO_BUFFER_SIZE, sizeof(char));
-#if HAVE_STRFTIME
-	  strftime(timestr, TIME_STR_SIZE, STRFTIME_FORMAT, localtime(&(sp->write_date)));
-#endif
 	  mus_snprintf(buffer, INFO_BUFFER_SIZE, 
 		       _("srate: %d\nchans: %d\nlength: %.3f (" PRId64 " %s)\ntype: %s\nformat: %s\nwritten: %s%s%s%s\n"),
 		       hdr->srate,
@@ -974,7 +969,7 @@ void display_info(snd_info *sp)
 		       (hdr->chans == 1) ? _("samples") : _("frames"),
 		       mus_header_type_name(hdr->type),
 		       mus_data_format_name(hdr->format),
-		       timestr,
+		       snd_strftime(STRFTIME_FORMAT, sp->write_date),
 		       (ampstr) ? ampstr : "",
 		       (quoted_comment) ? _("\ncomment: ") : "",
 		       (quoted_comment) ? quoted_comment : "");

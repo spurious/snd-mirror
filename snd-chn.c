@@ -6441,17 +6441,7 @@ static void write_transform_peaks(FILE *fd, chan_info *ucp)
   /* put (sync'd) peak info in (possibly temporary) file */
   int i, chn;
   sync_info *si = NULL;
-#if HAVE_STRFTIME
-  char *timbuf;
-  time_t ts;
-  timbuf = (char *)CALLOC(TIME_STR_SIZE, sizeof(char));
-  time(&ts);
-  strftime(timbuf, TIME_STR_SIZE, STRFTIME_FORMAT, localtime(&ts));
-  fprintf(fd, _("Snd: fft peaks (%s)\n\n"), timbuf);
-  FREE(timbuf);
-#else
-  fprintf(fd, _("Snd: fft peaks\n\n"));
-#endif
+  fprintf(fd, _("Snd: fft peaks (%s)\n\n"), snd_local_time());
   si = sync_to_chan(ucp);
   for (chn = 0; chn < si->chans; chn++)
     {

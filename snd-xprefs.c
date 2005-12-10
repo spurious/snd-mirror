@@ -26,7 +26,6 @@
 static Widget preferences_dialog = NULL;
 static bool prefs_helping = false, prefs_unsaved = false;
 static char *prefs_saved_filename = NULL;
-static char *prefs_time = NULL;
 static char *include_load_path = NULL;
 
 #define MID_POSITION 40
@@ -1559,16 +1558,9 @@ static void prefs_set_dialog_title(const char *filename)
       prefs_saved_filename = copy_string(filename);
     }
   if (prefs_saved_filename)
-    {
-      if (prefs_time)
-	str = mus_format("Preferences%s (%s: saved in %s)\n",
-			 (prefs_unsaved) ? "*" : "",
-			 prefs_time,
-			 prefs_saved_filename);
-      else str = mus_format("Preferences%s (saved in %s)\n",
-			    (prefs_unsaved) ? "*" : "",
-			    prefs_saved_filename);
-    }
+    str = mus_format("Preferences%s (saved in %s)\n",
+		     (prefs_unsaved) ? "*" : "",
+		     prefs_saved_filename);
   else str = mus_format("Preferences%s",
 			(prefs_unsaved) ? "*" : "");
   title = XmStringCreate(str, XmFONTLIST_DEFAULT_TAG);
@@ -1594,11 +1586,6 @@ static void preferences_reset_callback(Widget w, XtPointer context, XtPointer in
       FREE(prefs_saved_filename);
       FREE(fullname);
       prefs_saved_filename = NULL;
-      if (prefs_time)
-	{
-	  FREE(prefs_time);
-	  prefs_time = NULL;
-	}
     }
   prefs_set_dialog_title(NULL);
 }
@@ -4735,6 +4722,7 @@ static void recorder_out_format_choice(prefs_info *prf)
 
 
 
+#if (XmREVISION <= 2)
 
 /* ---------------- help-button-color ---------------- */
 
@@ -4844,7 +4832,7 @@ static void pushed_button_color_func(prefs_info *prf, float r, float g, float b)
   FREE(tmp);
 }
 
-
+#endif
 
 
 /* ---------------- preferences dialog ---------------- */
@@ -5928,6 +5916,7 @@ widget_t start_preferences_dialog(void)
 
   current_sep = make_inter_topic_separator(topics);
 
+#if (XmREVISION <= 2)
   /* -------- silly stuff -------- */
   {
     Widget silly_box, silly_label;
@@ -5977,8 +5966,9 @@ widget_t start_preferences_dialog(void)
 				   silly_box, current_sep,
 				   pushed_button_color_func);
     remember_pref(prf, reflect_pushed_button_color, NULL);
-
   }
+#endif
+
 #if DEBUGGING
   fprintf(stderr, "top: %d\n", prefs_top);
 #endif

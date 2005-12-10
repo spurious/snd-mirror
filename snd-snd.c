@@ -1168,8 +1168,6 @@ void add_sound_data(char *filename, snd_info *sp, channel_graph_t graphed)
 }
 
 
-static char timebuf[TIME_STR_SIZE];
-
 #if HAVE_READLINK
 static char *link_file = NULL;
 static char *linked_file(char *link_name)
@@ -1203,14 +1201,6 @@ void sp_name_click(snd_info *sp)
 	  bool linked = false;
 	  linked = link_p(sp->filename);
 	  dur = (Float)((double)(hdr->samples) / (double)(hdr->chans * hdr->srate));
-#if HAVE_STRFTIME
-	  strftime(timebuf,
-		   TIME_STR_SIZE,
-		   STRFTIME_FORMAT,
-		   localtime(&(sp->write_date)));
-#else
-	  sprintf(timebuf, " ");
-#endif
 	  report_in_minibuffer(sp, "%d, %d chan%s, %.3f sec%s, %s: %s, %s%s%s%s",
 			       hdr->srate,
 			       hdr->chans,
@@ -1219,7 +1209,7 @@ void sp_name_click(snd_info *sp)
 			       ((dur == 1.0) ? "" : "s"),
 			       mus_header_type_to_string(hdr->type),
 			       mus_data_format_to_string(hdr->format),
-			       timebuf,
+			       snd_strftime(STRFTIME_FORMAT, sp->write_date),
 			       (linked) ? ", (link to " : "",
 #if HAVE_READLINK
 			       (linked) ? linked_file(sp->filename) : "",

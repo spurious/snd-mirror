@@ -361,24 +361,21 @@ char *run_save_state_hook(char *file)
  *    xramp        376  0.009         371   0.009 
  *    cosine       476  0.012         511   0.012 ; cosine-channel-via-ptree
  *    xramp2       682  0.016         672   0.016 
- *    xen          3600 0.087         3650  0.088 
  *
- * The "xen" timings refer to unoptimized ptrees -- this option removed 5-Jan-05.
- *
- * (3.2 GHz):
- *    straight     21   0.001
- *    ramp         24   0.001
- *    ramp2        27   0.001
- *    ramp3        38   0.001
- *    ramp4        35   0.001
- *    ptree-zero   46   0.001
- *    ptree        52   0.001
- *    ptreec       80   0.002
- *    ptree2       105  0.003
- *    ptree3       129  0.003
- *    xramp        152  0.004
- *    xramp2       290  0.007
- *    cosine       304  0.007
+ * (3.2 GHz):          -ffast-math    (int)  (double)
+ *    straight     21    20           18       26
+ *    ramp         24    21           20       26
+ *    ramp2        27    22           21       27
+ *    ramp3        38    24           22       29
+ *    ramp4        35    44           24       30
+ *    ptree-zero   46    47           48       61
+ *    ptree        52    58           53       71
+ *    ptreec       80    80           76       93
+ *    ptree2       105  100          102      107
+ *    ptree3       129  125          122      157
+ *    xramp        152   94           86      140 (91)
+ *    xramp2       290  148          149      242 (154)
+ *    cosine       304  270          284      355 (290)
  */
 
 typedef struct ed_fragment {
@@ -3623,7 +3620,6 @@ static void setup_ramp4(snd_fd *sf, double rmp0, double rmp1)
   sf->curval4 = rmp0 + sf->incr4 * sf->frag_pos;
 }
 
-/* static Float to_float(snd_fd *sf) {return(MUS_SAMPLE_TO_FLOAT(read_sample(sf)));} */
 static mus_sample_t to_sample(snd_fd *sf) {return(MUS_FLOAT_TO_SAMPLE(read_sample_to_float(sf)));}
 
 static void choose_accessor(snd_fd *sf)
@@ -8424,7 +8420,6 @@ static XEN g_set_samples(XEN samp_0, XEN samps, XEN vect, XEN snd_n, XEN chn_n, 
 
 void check_saved_temp_file(const char *type, XEN filename, XEN date_and_length)
 {
-  char old_time_buf[TIME_STR_SIZE], new_time_buf[TIME_STR_SIZE];
   char *file;
   time_t old_time, new_time;
   off_t old_bytes, new_bytes;
@@ -8438,22 +8433,19 @@ void check_saved_temp_file(const char *type, XEN filename, XEN date_and_length)
       if ((new_time != old_time) || (new_bytes != old_bytes))
 	{
 	  char *buf = NULL;
-	  if (new_time != old_time)
-	    {
-	      strftime(old_time_buf, TIME_STR_SIZE, STRFTIME_FORMAT, localtime(&old_time));
-	      strftime(new_time_buf, TIME_STR_SIZE, STRFTIME_FORMAT, localtime(&new_time));
-	    }
 	  if (old_time != new_time)
 	    {
 	      if (old_bytes != new_bytes)
 		buf = mus_format("Saved %s temp file %s: original write date: %s, current: %s, original length: " OFF_TD "bytes, current: " OFF_TD,
 				 type, file,
-				 old_time_buf, new_time_buf,
+				 snd_strftime(STRFTIME_FORMAT, old_time),
+				 snd_strftime(STRFTIME_FORMAT, new_time),
 				 old_bytes, new_bytes);
 	      else 
 		buf = mus_format("Saved %s temp file %s: original write date: %s, current: %s",
 				 type, file,
-				 old_time_buf, new_time_buf);
+				 snd_strftime(STRFTIME_FORMAT, old_time),
+				 snd_strftime(STRFTIME_FORMAT, new_time));
 	    }
 	  else buf = mus_format("Saved %s temp file %s: original length: " OFF_TD "bytes, current: " OFF_TD,
 				 type, file,

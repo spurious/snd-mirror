@@ -12082,6 +12082,68 @@ fi
     LIBS="$LIBS $X_PRE_LIBS $X_POST_LIBS"
     CFLAGS="$CFLAGS $XFLAGS"
 
+    echo "$as_me:$LINENO: checking whether libXm requires libpng etc" >&5
+echo $ECHO_N "checking whether libXm requires libpng etc... $ECHO_C" >&6
+    cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char XmCreateForm ();
+int
+main ()
+{
+XmCreateForm ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+
+	  echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6
+	  X_PRE_LIBS="$X_PRE_LIBS -lXmu -lXft -L/usr/local/lib -liconv -lpng -ljpeg"
+	  TEST_PRE_LIBS="$TEST_PRE_LIBS -lXmu -lXft -L/usr/local/lib -liconv -lpng -ljpeg"
+
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+
     if test "$with_editres" = yes ; then
 	echo "$as_me:$LINENO: checking for _XEditResCheckMessages in -lXmu" >&5
 echo $ECHO_N "checking for _XEditResCheckMessages in -lXmu... $ECHO_C" >&6

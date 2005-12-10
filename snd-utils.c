@@ -107,6 +107,31 @@ char *snd_strcat(char *errmsg, const char *str, int *size)
   return(errmsg);
 }
 
+#define TIME_STR_SIZE 64
+static char time_buf[TIME_STR_SIZE];
+
+char *snd_local_time(void)
+{
+#if HAVE_STRFTIME
+  time_t ts;
+  time(&ts);
+  strftime(time_buf, TIME_STR_SIZE, STRFTIME_FORMAT, localtime(&ts));
+  return(time_buf);
+#else
+  return(" ");
+#endif
+}
+
+char *snd_strftime(const char *format, time_t date)
+{
+#if HAVE_STRFTIME
+  strftime(time_buf, TIME_STR_SIZE, format, localtime(&date));
+  return(time_buf);
+#else
+  return(" ");
+#endif
+}
+
 char *snd_io_strerror(void) /* "snd_strerror" is exported by ALSA! */
 {
   if (ss->local_errno != 0)
@@ -1064,8 +1089,6 @@ void mem_report(void)
   bool have_stacks = false;
   int *sums, *ptrs;
   FILE *Fp;
-  time_t ts;
-  char time_buf[TIME_STR_SIZE];
   if (ss->search_tree)
     {
       free_ptree(ss->search_tree);
@@ -1095,12 +1118,10 @@ void mem_report(void)
   Fp = fopen("memlog", "w");
   if (Fp == NULL) return;
 
-  time(&ts);
-  strftime(time_buf, TIME_STR_SIZE, STRFTIME_FORMAT, localtime(&ts));
   {
     char *str;
     str = mem_stats(0);
-    fprintf(Fp, "memlog: %s: %s\n\n", time_buf, str);
+    fprintf(Fp, "memlog: %s: %s\n\n", snd_local_time(), str);
     free(str);
   }
 

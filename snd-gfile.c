@@ -119,8 +119,6 @@ static void post_sound_info(GtkWidget *info1, GtkWidget *info2, const char *file
 {
   /* filename is known[strongly believed] to be a sound file, etc */
   char *buf;
-  char timestr[64];
-  time_t date;
 
   buf = (char *)CALLOC(LABEL_BUFFER_SIZE, sizeof(char));
   mus_snprintf(buf, LABEL_BUFFER_SIZE, "%s%s%d chan%s, %d Hz, %.3f secs",
@@ -132,17 +130,10 @@ static void post_sound_info(GtkWidget *info1, GtkWidget *info2, const char *file
 	       mus_sound_duration(filename));
   CHANGE_INFO(info1, buf);
   SET_INFO_SIZE(info1, 1 + strlen(buf));
-
-  date = mus_sound_write_date(filename);
-#if HAVE_STRFTIME
-  strftime(timestr, 64, ", %d-%b-%Y", localtime(&date));
-#else
-  sprintf(timestr, "");
-#endif
   mus_snprintf(buf, LABEL_BUFFER_SIZE, "%s, %s%s",
 	       mus_header_type_name(mus_sound_header_type(filename)),
 	       short_data_format_name(mus_sound_data_format(filename), filename),
-	       timestr);
+	       snd_strftime(", %d-%b-%Y", mus_sound_write_date(filename)));
   CHANGE_INFO(info2, buf);
   SET_INFO_SIZE(info2, 1 + strlen(buf));
 
