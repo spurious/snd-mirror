@@ -215,7 +215,7 @@ static key_entry *user_keymap = NULL;
 static int keymap_size = 0;
 static int keymap_top = 0;
 
-static int in_user_keymap(int key, int state, bool cx_extended)
+int in_user_keymap(int key, int state, bool cx_extended)
 {
   int i;
   if (keymap_top == 0) return(-1);
@@ -352,7 +352,7 @@ char *key_binding_description(int key, int state, bool cx_extended)
 #endif
       if (user_keymap[pos].origin)
 	return(user_keymap[pos].origin);
-      return("indescribable user-defined action"); /* NULL would mean "no binding" */
+      return("something indescribable"); /* NULL would mean "no binding" */
     }
   for (pos = 0; pos < NUM_BUILT_IN_KEY_BINDINGS; pos++)
     if ((built_in_key_bindings[pos].key == key) && 

@@ -1598,6 +1598,7 @@ void printout_to_minibuffer(const char *msg, void *data);
 void clear_minibuffer(snd_info *sp);
 void clear_minibuffer_prompt(snd_info *sp);
 void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta);
+int in_user_keymap(int key, int state, bool cx_extended);
 char *key_binding_description(int key, int state, bool cx_extended);
 char *make_key_name(char *buf, int buf_size, int key, int state, bool extended);
 void map_over_key_bindings(bool (*func)(int, int, bool, XEN));

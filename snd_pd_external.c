@@ -45,6 +45,7 @@
 
 #define MAKE_STRING(a) scm_mem2string(a,strlen(a))
 #define EVAL(a) scm_eval_string(MAKE_STRING(a))
+#define CATCH_EVAL(a,error) snd_catch_any(eval_str_wrapper,a,error)
 
 #define MAKE_SYM(a) gensym(SCM_SYMBOL_CHARS(a))
 
@@ -108,17 +109,12 @@ static char *version = "Snd " VERSION " made by Bill Schottstaedt, bil@ccrma.sta
 
 static t_class *snd_pd_class, *snd_pd_workaroundclass;
 
-static SCM pd_backtrace_run;
-static SCM pd_backtrace_runx;
-static SCM pd_backtrace_run1;
-static SCM pd_backtrace_run2;
-static SCM pd_backtrace_run3;
-static SCM pd_backtrace_run4;
 static SCM eval_string_func;
 
 static t_clock *snd_pd_clock;
 
-static pthread_t pthread;
+static pthread_t pthread={0};
+static pthread_t pthread_repl={0};
 static jack_ringbuffer_t *rb_snd_to_pd;
 static jack_ringbuffer_t *rb_pd_to_snd;
 static pthread_cond_t thread_cond={{0}};
@@ -129,7 +125,6 @@ struct dispatch{
   t_snd_pd *x;
   union{
     char *filename;
-    t_float number;
     int inlet_num;
     int outlet_num;
     t_class **class;
@@ -164,8 +159,13 @@ static void snd0_eval2(char *string){
   }
   evalstring=new;
 }
-static void snd0_eval_file(FILE *file){
+static void snd0_eval_file(char *filename){
+  FILE *file=fopen(filename,"r");
   char line[50000];
+  if(file==NULL){
+    fprintf(stderr,"Error! snd_pd_external.c/snd0_eval_file: Could not open file \"%s\".\n",filename);
+    return;
+  }
   for(;;){
     int c=fgetc(file);
     if(c==EOF) break;
@@ -173,6 +173,7 @@ static void snd0_eval_file(FILE *file){
     fgets(line,49999,file);
     snd0_eval2(line);
   }
+  fclose(file);
 }
 static SCM snd0_eval_do(void){
   //post(evalstring);
@@ -209,6 +210,7 @@ static void pd0_das_dispatcher(void *something){
 static void snd0_send_message(struct dispatch *d){
   jack_ringbuffer_t *rb=rb_snd_to_pd;
   size_t bytes;
+
  tryagain:
   if(jack_ringbuffer_write_space(rb)<sizeof(struct dispatch)){
     scm_gc();
@@ -219,7 +221,7 @@ static void snd0_send_message(struct dispatch *d){
   }
   if((bytes=jack_ringbuffer_write (rb, (char*)d, sizeof(struct dispatch))) < sizeof(struct dispatch)){
     if(bytes>0)
-      post("Catastrophe snd0_send_message!!! (please report this to k.s.matheussen@notam02.uio.no");
+      post("Catastrophe snd0_send_message!!! (please report this to k.s.matheussen@notam02.no");
     goto tryagain;
   }
 }
@@ -232,6 +234,9 @@ static void snd0_send_message(struct dispatch *d){
  *****************************************************************************************************
  *****************************************************************************************************/
 
+static volatile int snd_pd_is_repling=0;
+static char repl_some[500];
+
 static void snd0_das_dispatcher(void){
   jack_ringbuffer_t *rb=rb_pd_to_snd;
   struct dispatch d;
@@ -242,9 +247,27 @@ static void snd0_das_dispatcher(void){
       jack_ringbuffer_read (rb, (char *)&d, sizeof(struct dispatch));
       d.func(&d);
     }
+    if(snd_pd_is_repling==1){
+      snd_eval_stdin_str(repl_some);
+      snd_pd_is_repling=0;
+    }
     pthread_cond_wait (&thread_cond, &thread_mutex);
   }
 }
+
+
+static void *read_eval_print_loop(void *arg){
+  printf("snd-pd> ");
+  while(1){
+    fgets(repl_some,499,stdin);
+    snd_pd_is_repling=1;
+    pthread_cond_broadcast(&thread_cond);
+    while(snd_pd_is_repling==1)
+      usleep(100);
+  }
+  return NULL;
+}
+
 
 static void pd0_send_message(struct dispatch *d){
   jack_ringbuffer_t *rb=rb_pd_to_snd;
@@ -252,18 +275,20 @@ static void pd0_send_message(struct dispatch *d){
 
   if(jack_ringbuffer_write_space(rb)<sizeof(struct dispatch)){
     post("Error. Ringbuffer full. Could not send message to SND.");
+    post("This behaviour could be changed. Please send me a note if giving up is the wrong behaviour for you. k.s.matheussen@notam02.no");
     goto end;
   }
 
   if( (bytes=jack_ringbuffer_write (rb, (char*)d, sizeof(struct dispatch))) < sizeof(struct dispatch)){
     if(bytes>0)
-      post("Catastrophe pd0_send_message!!! (please report this to k.s.matheussen@notam02.uio.no");
+      post("Catastrophe pd0_send_message!!! (please report this to k.s.matheussen@notam02.no");
   }
 
  end:
   pthread_cond_broadcast(&thread_cond);
 
 }
+
 
 
 
@@ -309,7 +334,8 @@ static void snd0_anything_do(struct dispatch *d){
 
   if(index>=0){
     // Inlet
-    scm_call_3(d->x->inlet_func,MAKE_INTEGER(index),scm_string_to_symbol(MAKE_STRING(s->s_name)),applyarg);
+    //scm_call_3(d->x->inlet_func,MAKE_INTEGER(index),scm_string_to_symbol(MAKE_STRING(s->s_name)),applyarg);
+    g_call3(d->x->inlet_func,MAKE_INTEGER(index),scm_string_to_symbol(MAKE_STRING(s->s_name)),applyarg,"Inlet\n");
   }else{
     // Binding
     if(s!=&s_float && s!=&s_list && s!=&s_symbol){
@@ -317,7 +343,8 @@ static void snd0_anything_do(struct dispatch *d){
     }
     if(s!=&s_list && GET_INTEGER(scm_length(applyarg))==1)
       applyarg=SCM_CAR(applyarg);
-    scm_call_1(d->data2.func,applyarg);
+    //scm_call_1(d->data2.func,applyarg);
+    g_call1(d->data2.func,applyarg,"Binding or inlet.\n");
   }
 }
 
@@ -381,36 +408,12 @@ static void pd0_anything_first(t_snd_pd *x,t_symbol *s, t_int argc, t_atom* argv
 
 /*****************************************************************************************************
  *****************************************************************************************************
- *    Initialization, called from the guile side.
- *****************************************************************************************************
- *****************************************************************************************************/
-
-#if 0
-static SCM snd0_inited_p(SCM instance){
-  t_snd_pd *x=GET_X(instance);
-  if(x->isinited==true) return SCM_BOOL_T;
-  return SCM_BOOL_F;
-}
-#endif
-
-static SCM snd0_get_num_inlets(SCM instance){
-  t_snd_pd *x=GET_X(instance);
-  return MAKE_INTEGER(x->num_ins);
-}
-static SCM snd0_get_num_outlets(SCM instance){
-  t_snd_pd *x=GET_X(instance);
-  return MAKE_INTEGER(x->num_outs);
-}
-
-
-
-/*****************************************************************************************************
- *****************************************************************************************************
  *    Binding and unbinding. Called from the guile side. 
  *****************************************************************************************************
  *****************************************************************************************************/
 
 static volatile int snd_pd_is_binding=0;
+static volatile int snd_pd_is_unbinding=0;
 static t_snd_pd_workaround *snd_pd_bind_x2;
 
 static void pd0_bind(struct dispatch *d){
@@ -422,78 +425,48 @@ static void pd0_bind(struct dispatch *d){
   pd_bind((t_pd*)x2, d->data2.symbol);
 
   snd_pd_bind_x2=x2;
-  snd_pd_is_binding=2;
+  snd_pd_is_binding=0;
 }
 
 static SCM snd0_bind(SCM symname,SCM func){
   struct dispatch d;
-  SCM ret;
+
+  snd_pd_is_binding=1;
 
   scm_protect_object(func);
-
-  //post("Trying to bind %s",SCM_SYMBOL_CHARS(symname));
-
-  if(snd_pd_is_binding!=0){
-    int num_retries=0;
-    scm_gc();
-    while(snd_pd_is_binding!=0){
-      num_retries++;
-      if(num_retries>(1000000/50)*5){
-	post("snd0_unbind: Waited 5 seconds for pd. Something is probably wrong. Could not unbind.");
-	RU_;
-      }
-      usleep(50);
-    }
-  }
-  snd_pd_is_binding=1;
 
   d.func=pd0_bind;
   d.data.func=func;
   d.data2.symbol=MAKE_SYM(symname);
   snd0_send_message(&d);
 
-  if(snd_pd_is_binding!=2){
-    int num_retries=0;
-    scm_gc();
-    while(snd_pd_is_binding!=2){
-      num_retries++;
-      if(num_retries>(1000000/50)*5){
-	post("snd0_unbind: Waited 5 seconds for pd. Something is probably wrong. Could not unbind.");
-	RU_;
-      }
-      usleep(50);
-    }
-  }
-  ret=MAKE_POINTER(snd_pd_bind_x2);
-
-  snd_pd_is_binding=0;
-
-  return ret;
-}
-
-static void pd0_unbind(struct dispatch *d){
-  pd_unbind((t_pd *)d->data.x2,d->data2.symbol);
-  pd_free((t_pd*)d->data.x2);
-  snd_pd_is_binding=2;
-}
-
-static SCM snd0_unbind(SCM scm_x2,SCM symname){
-  struct dispatch d;
-  SCM func;
-
   if(snd_pd_is_binding!=0){
     int num_retries=0;
     scm_gc();
     while(snd_pd_is_binding!=0){
       num_retries++;
       if(num_retries>(1000000/50)*5){
-	post("snd0_unbind: Waited 5 seconds for pd. Something is probably wrong. Could not unbind.");
+	post("snd0_bind: Waited 5 seconds for pd. Something is probably wrong. Could not bind.");
 	RU_;
       }
       usleep(50);
     }
   }
-  snd_pd_is_binding=1;
+
+  return MAKE_POINTER(snd_pd_bind_x2);
+}
+
+static void pd0_unbind(struct dispatch *d){
+  pd_unbind((t_pd *)d->data.x2,d->data2.symbol);
+  pd_free((t_pd*)d->data.x2);
+  snd_pd_is_unbinding=0;
+}
+
+static SCM snd0_unbind(SCM scm_x2,SCM symname){
+  struct dispatch d;
+  SCM func;
+
+  snd_pd_is_unbinding=1;
 
   d.func=pd0_unbind;
   d.data.x2=GET_POINTER(scm_x2);
@@ -501,10 +474,10 @@ static SCM snd0_unbind(SCM scm_x2,SCM symname){
   func=d.data.x2->func;
   snd0_send_message(&d);
 
-  if(snd_pd_is_binding!=2){
+  if(snd_pd_is_unbinding!=0){
     int num_retries=0;
     scm_gc();
-    while(snd_pd_is_binding!=2){
+    while(snd_pd_is_unbinding!=0){
       num_retries++;
       if(num_retries>(1000000/50)*5){
 	post("snd0_unbind: Waited 5 seconds for pd. Something is probably wrong. Could not unbind.");
@@ -516,7 +489,6 @@ static SCM snd0_unbind(SCM scm_x2,SCM symname){
 
   scm_unprotect_object(func);
 
-  snd_pd_is_binding=0;
   RU_;
 }
 
@@ -760,135 +732,9 @@ static SCM snd0_get_symbol(SCM symname){
 
 
 static void *snd0_init(void *arg){
-  char *command=
-    //#include "global_scm.txt"
-
-"(debug-enable 'debug)\n"
-"(debug-enable 'trace)\n"
-"(debug-enable 'backtrace)\n"
-"(use-modules (ice-9 stack-catch))\n"
-"(set! (show-backtrace) #t)\n"
-"(debug-enable 'debug)\n"
-"(if #t\n"
-"    (begin\n"
-"      (read-enable 'positions)\n"
-"      (debug-enable 'debug)\n"
-"      (debug-enable 'backtrace)\n"
-"      (debug-set! frames 8)\n"
-"      (debug-set! depth 50)))\n"
-"(define (pd-load-if-exists filename)\n"
-"  (if (access? filename F_OK)\n"
-"      (load filename)))\n"
-"(define (pd-display . args)\n"
-"  (if (not (null? args))\n"
-"      (begin\n"
-"	(display (car args))\n"
-"	(apply pd-display (cdr args)))\n"
-"      (newline)))\n"
-"(define (pd-filter proc list)\n"
-"  (if (null? list)\n"
-"      '()\n"
-"      (if (proc (car list))\n"
-"	  (cons (car list) (pd-filter proc (cdr list)))\n"
-"	  (pd-filter proc (cdr list)))))\n"
-"(define (pd-for init pred least add proc)\n"
-"  (if (pred init least)\n"
-"      (begin\n"
-"	(proc init)\n"
-"	(pd-for (+ add init) pred least add proc))))\n"
-"(define (pd-check-number number message)\n"
-"  (if (number? number)\n"
-"      #t\n"
-"      (begin\n"
-"	(pd-display message \": \" number \" is not a number\")\n"
-"	#f)))\n"
-"(define pd-global-bindings '())\n"
-"(define (pd-bind-do symbol func bindings)\n"
-"  (if (or (not (symbol? symbol))\n"
-"	  (not (procedure? func)))\n"
-"      (begin\n"
-"	(pd-display \"Wrong arguments for pd-bind\")\n"
-"	bindings)\n"
-"      (cons (list symbol \n"
-"		  func\n"
-"		  (pd-c-bind symbol func))\n"
-"	    bindings)))\n"
-"(define (pd-unbind-do symbol bindings)\n"
-"  (if (not (symbol? symbol))\n"
-"      (begin\n"
-"	(pd-display \"Wrong arguments for pd-unbind\")\n"
-"	bindings)\n"
-"      (let ((binding (assq symbol bindings)))\n"
-"	(pd-c-unbind (caddr binding) symbol)\n"
-"	(pd-filter (lambda (x) (not (eq? symbol (car x))))\n"
-"		   bindings))))\n"
-"(define (pd-bind symbol func)\n"
-"  (set! pd-global-bindings (pd-bind-do symbol func pd-global-bindings)))\n"
-"(define (pd-unbind symbol)\n"
-"  (set! pd-global-bindings (pd-unbind-do symbol pd-global-bindings)))\n"
-"(define (pd-send symbol firstarg . args)\n"
-"  (if (or (symbol? symbol)\n"
-"	  (number? symbol))\n"
-"      (cond ((> (length args) 0) (pd-c-send-list symbol (cons firstarg args)))\n"
-"	    ((list? firstarg) (pd-c-send-list symbol firstarg))\n"
-"	    ((number? firstarg) (pd-c-send-number symbol firstarg))\n"
-"	    ((string? firstarg) (pd-c-send-string symbol firstarg))\n"
-"	    ((eq? 'bang firstarg) (pd-c-send-bang symbol))\n"
-"	    ((symbol? firstarg) (pd-c-send-symbol symbol firstarg))\n"
-"	    (else\n"
-"	     (pd-display \"Unknown argument to pd-outlet-or-send:\" firstarg)))))\n"
-"(define (pd-get-symbol sym)\n"
-"  (if (not (symbol? sym))\n"
-"      (pd-display sym \" is not a scheme symbol\")\n"
-"      (pd-c-get-symbol sym)))\n"
-"(define (pd-backtrace-eval string)\n"
-"  (eval-string string))\n"
-"(define (pd-display-errorfunc key . args)\n"
-"  (let ((dasstack (make-stack #t)))\n"
-"    (display-backtrace dasstack (current-output-port) #f #f)\n"
-"					;(display (stack-ref (make-stack #t) 1))\n"
-"					;(display (stack-length (make-stack #t)))\n"
-"    (display key)(newline)\n"
-"    (display args)\n"
-"    (newline))\n"
-"  0)\n"
-"(define (pd-backtrace-run thunk)\n"
-"  (stack-catch #t\n"
-"	       thunk\n"
-"	       pd-display-errorfunc))\n"
-"(define (pd-backtrace-runx func arg1) \n"
-"  (stack-catch #t\n"
-"	       (lambda x\n"
-"		 (apply func x))\n"
-"	       pd-display-errorfunc))\n"
-"(define (pd-backtrace-run1 func arg1)\n"
-"  (func arg1))\n"
-"(define (pd-backtrace-run2 func arg1 arg2)\n"
-"  (stack-catch #t\n"
-"	       (lambda ()\n"
-"		 (func arg1 arg2))\n"
-"	       pd-display-errorfunc))\n"
-"(define (pd-backtrace-run3 func arg1 arg2 arg3)\n"
-"  (stack-catch #t\n"
-"	       (lambda ()\n"
-"		 (func arg1 arg2 arg3))\n"
-"	       pd-display-errorfunc))\n"
-"(define (pd-backtrace-run4 func arg1 arg2 arg3 arg4)\n"
-"  (stack-catch #t\n"
-"	       (lambda ()\n"
-"		 (func arg1 arg2 arg3 arg4))\n"
-"	       pd-display-errorfunc))\n"
-"(pd-backtrace-run1 pd-load-if-exists \"/etc/.k_guile.scm\")\n"
-"(pd-backtrace-run1 pd-load-if-exists (string-append (getenv \"HOME\") \"/.k_guile.scm\"))\n"
-
-    ;
-
   scm_init_guile();
   snd_pd_main();
 
-  //scm_c_define_gsubr("pd-c-inited?",1,0,0,snd0_inited_p);
-  scm_c_define_gsubr("pd-c-get-num-inlets",1,0,0,snd0_get_num_inlets);
-  scm_c_define_gsubr("pd-c-get-num-outlets",1,0,0,snd0_get_num_outlets);
   scm_c_define_gsubr("pd-c-bind",2,0,0,snd0_bind);
   scm_c_define_gsubr("pd-c-unbind",2,0,0,snd0_unbind);
   scm_c_define_gsubr("pd-c-outlet-number",3,0,0,snd0_outlet_number);
@@ -903,27 +749,13 @@ static void *snd0_init(void *arg){
   scm_c_define_gsubr("pd-c-send-bang",1,0,0,snd0_send_bang);
   scm_c_define_gsubr("pd-c-get-symbol",1,0,0,snd0_get_symbol);
 
-  EVAL(command);
-
-  pd_backtrace_run=EVAL("pd-backtrace-run");
-  scm_permanent_object(pd_backtrace_run);
-
-  pd_backtrace_runx=EVAL("pd-backtrace-runx");
-  scm_permanent_object(pd_backtrace_runx);
-
-  pd_backtrace_run1=EVAL("pd-backtrace-run1");
-  scm_permanent_object(pd_backtrace_run1);
-
-  pd_backtrace_run2=EVAL("pd-backtrace-run2");
-  scm_permanent_object(pd_backtrace_run2);
-
-  pd_backtrace_run3=EVAL("pd-backtrace-run3");
-  scm_permanent_object(pd_backtrace_run3);
-
-  pd_backtrace_run4=EVAL("pd-backtrace-run4");
-  scm_permanent_object(pd_backtrace_run4);
+  EVAL("(if (not (provided? 'snd-pd-global.scm)) (load-from-path \"pd-global.scm\"))");
 
   eval_string_func=EVAL("eval-string");
+
+  if(pthread_create(&pthread_repl,NULL,read_eval_print_loop,NULL)!=0){
+    post("Could not make pthread. (disaster!)\n");
+  }  
 
   snd0_das_dispatcher();
 
@@ -955,119 +787,21 @@ static void pd0_init(void){
 static void snd0_load(struct dispatch *d){
   SCM evalret;
   bool ret=false;
-  
+  char code[500];
+  char errormessage[500];
+
   FILE *file=fopen(d->data.filename,"r");
   if(file==NULL){
     post("file \"%s\" not found.\n",d->data.filename);
-    d->x->isworking=false;  
-    goto end;
+    goto exit;
   }
-  d->x->isworking=true;
+  fclose(file);
 
 
   // Let the file live in its own name-space (or something like that).
-  snd0_eval2("(define (pd-instance-func pd-instance)");
-  snd0_eval2(
-	     //#include "local_scm.txt"
-"(define pd-num-inlets (pd-c-get-num-inlets pd-instance))\n"
-"(define pd-num-outlets (pd-c-get-num-outlets pd-instance))\n"
-"(define (pd-legaloutlet outlet-num)\n"
-"  (if (and (< outlet-num pd-num-outlets)\n"
-"	   (>= outlet-num 0))\n"
-"      #t\n"
-"      (begin\n"
-"	(pd-display \"outlet-num out of range\")\n"
-"	#f)))\n"
-"(define (pd-legalinlet inlet-num)\n"
-"  (if (and (< inlet-num pd-num-inlets)\n"
-"	   (>= inlet-num 0))\n"
-"      #t\n"
-"      (begin\n"
-"	(pd-display \"inlet-num out of range\")\n"
-"	#f)))\n"
-"(define pd-inlet-vector (make-vector (pd-c-get-num-inlets pd-instance) '()))\n"
-"(define pd-inlet-anyvector (make-vector 1 '()))\n"
-"(define (pd-inlet-func inlet-num symbol args)\n"
-"  (let ((inlet-func (assq symbol \n"
-"			  (vector-ref pd-inlet-vector\n"
-"				      inlet-num))))\n"
-"    (if (not inlet-func)\n"
-"	(begin\n"
-"	  (set! inlet-func (assq 'any\n"
-"				 (vector-ref pd-inlet-vector inlet-num)))\n"
-"	  (set! args (cons symbol args))))\n"
-"    (if inlet-func\n"
-"	(apply (cadr inlet-func) args)\n"
-"	(pd-display \"No function defined for handling <\" symbol \"> to inlet \" inlet-num))))\n"
-"(define (pd-inlet inlet-num symbol func)\n"
-"  (if (not (procedure? func))\n"
-"      (pd-display \"Wrong argument to pd-inlet: \" func \" is not a procedure\")\n"
-"      (if (and (pd-check-number inlet-num \"pd-inlet\")\n"
-"	       (pd-legalinlet inlet-num))\n"
-"	  (let ((inlet-funcs (vector-ref (if (eq? symbol 'any)\n"
-"					     pd-inlet-anyvector\n"
-"					     pd-inlet-vector)\n"
-"					 inlet-num)))\n"
-"	    (vector-set! pd-inlet-vector \n"
-"			 inlet-num\n"
-"			 (cons (list symbol func)\n"
-"			       inlet-funcs))))))\n"
-"(define (pd-inlets new-num-inlets)\n"
-"  (pd-display \"ai\" new-num-inlets)\n"
-"  (let ((num-inlets (if (pd-c-inited? pd-instance)\n"
-"			(pd-c-get-num-inlets pd-instance)\n"
-"			new-num-inlets)))\n"
-"    (if (pd-check-number num-inlets \"pd-inlets\")\n"
-"	(if (<= num-inlets 0)\n"
-"	    (pd-display \"num-inlets must be greater than 0, not \" num-inlets)\n"
-"	    (begin\n"
-"	      (set! pd-num-inlets num-inlets)\n"
-"	      (set! pd-inlet-vector (make-vector num-inlets '()))\n"
-"	      (pd-c-inlets pd-instance num-inlets))))))\n"
-"(define (pd-outlets new-num-outlets)\n"
-"  (let ((num-outlets (if (pd-c-inited? pd-instance)\n"
-"			 (pd-c-get-num-outlets pd-instance)\n"
-"			 new-num-outlets)))\n"
-"    (if (pd-check-number num-outlets \"pd-outlets\")\n"
-"	(if (<= num-outlets 0)\n"
-"	    (pd-display \"num-outlets must be greater than 0, not \" num-outlets)\n"
-"	    (begin\n"
-"	      (set! pd-num-outlets num-outlets)\n"
-"	      (pd-c-outlets pd-instance num-outlets))))))\n"
-"(define (pd-outlet outlet-num firstarg . args)\n"
-"  (if (pd-legaloutlet outlet-num)\n"
-"      (cond ((> (length args) 0) (pd-c-outlet-list pd-instance outlet-num issymbol (cons firstarg args)))\n"
-"	    ((list? firstarg) (pd-c-outlet-list pd-instance outlet-num firstarg))\n"
-"	    ((number? firstarg) (pd-c-outlet-number pd-instance outlet-num firstarg))\n"
-"	    ((string? firstarg) (pd-c-outlet-string pd-instance outlet-num firstarg))\n"
-"	    ((eq? 'bang firstarg) (pd-c-outlet-bang pd-instance outlet-num))\n"
-"	    ((symbol? firstarg) (pd-c-outlet-symbol pd-instance outlet-num firstarg))\n"
-"	    (else\n"
-"	     (pd-display \"Unknown argument to pd-outlet-or-send:\" firstarg)))))\n"
-"(define pd-local-bindings '())\n"
-"(define (pd-bind symbol func)\n"
-"  (set! pd-local-bindings (pd-bind-do symbol func pd-local-bindings)))\n"
-"(define (pd-unbind symbol)\n"
-"  (set! pd-local-bindings (pd-unbind-do symbol pd-local-bindings)))\n"
-"(define (pd-unbind-all)\n"
-"  (if (not (null? pd-local-bindings))\n"
-"      (begin\n"
-"	(pd-unbind (car (car pd-local-bindings)))\n"
-"	(pd-unbind-all))))\n"
-"(define pd-destroy-func #f)\n"
-"(define (pd-set-destroy-func thunk)\n"
-"  (if (not (procedure? thunk))\n"
-"      (pd-display \"Wrong argument to pd-set-destroy-func: \" thunk \" is not a procedure.\")\n"
-"      (set! pd-destroy-func thunk)))\n"
-"(define (pd-cleanup-func)\n"
-"  (if pd-destroy-func\n"
-"      (begin\n"
-"	(pd-destroy-func)\n"
-"	(set! pd-destroy-func #f)))\n"
-"  (pd-unbind-all))\n"
-
-);
-  snd0_eval_file(file);
+  snd0_eval2("(define (pd-instance-func pd-instance pd-num-inlets pd-num-outlets)");
+  snd0_eval_file("pd-local.scm");
+  snd0_eval_file(d->data.filename);
   snd0_eval2("  (cons pd-inlet-func pd-cleanup-func))");
   snd0_eval2("1");
 
@@ -1076,8 +810,11 @@ static void snd0_load(struct dispatch *d){
     goto exit;
   }
 
-  evalret=scm_call_2(pd_backtrace_run1,EVAL("pd-instance-func"),MAKE_POINTER(d->x));
-  if(INTEGER_P(evalret)){
+  sprintf(code,"(pd-instance-func %d %d %d)",(int)d->x,d->x->num_ins,d->x->num_outs);
+  sprintf(errormessage,"When loading file \"%s\"\n",d->data.filename);
+  evalret=CATCH_EVAL(code,errormessage);
+  
+  if(!SCM_CONSP(evalret)){
     post("Failed.");
     goto exit;
   }
@@ -1087,10 +824,11 @@ static void snd0_load(struct dispatch *d){
   scm_gc_protect_object(d->x->cleanup_func);
 
   ret=true;
+  post("\"%s\" loaded by snd.",d->data.filename);
 
  exit:
-  fclose(file);
- end:
+  d->x->isworking=ret;
+  
   //  return ret;
   return;
 }
@@ -1154,7 +892,8 @@ static void *pd0_new(t_symbol *s, t_int argc, t_atom* argv){
 
 static void snd0_free(struct dispatch *d){
   if(d->x->isworking==true){
-    scm_call_1(pd_backtrace_run,d->x->cleanup_func);
+    g_call0(d->x->cleanup_func,"cleanup func.\n");
+    //scm_call_1(pd_backtrace_run,d->x->cleanup_func);
     scm_gc_unprotect_object(d->x->inlet_func);
     scm_gc_unprotect_object(d->x->cleanup_func);
   }
@@ -1187,20 +926,17 @@ static void pd0_free(t_snd_pd *x){
 
 
 static void snd0_reload(struct dispatch *d){
-  scm_call_1(pd_backtrace_run,d->x->cleanup_func);
-  scm_gc_unprotect_object(d->x->inlet_func);
-  scm_gc_unprotect_object(d->x->cleanup_func);
+  //scm_call_1(pd_backtrace_run,d->x->cleanup_func);
+  if(d->x->isworking==true){
+    g_call0(d->x->cleanup_func,"in snd0_reload\n");
+    scm_gc_unprotect_object(d->x->inlet_func);
+    scm_gc_unprotect_object(d->x->cleanup_func);
+  }
   snd0_load(d);
 }
 
 static void pd0_reload(t_snd_pd *x){
   struct dispatch d;
-
-  if(x->isworking==false){
-    post("Object not functional. No scheme file was loaded.");
-    return;
-  }
-
   d.func=snd0_reload;
   d.x=x;
   d.data.filename=x->filename;
@@ -1208,7 +944,8 @@ static void pd0_reload(t_snd_pd *x){
 }
 
 static void snd0_eval(struct dispatch *d){
-  scm_call_2(pd_backtrace_run1,eval_string_func,MAKE_STRING(d->data2.symbol->s_name));
+  //scm_call_2(pd_backtrace_run1,eval_string_func,MAKE_STRING(d->data2.symbol->s_name));
+  g_call1(eval_string_func,MAKE_STRING(d->data2.symbol->s_name),"in snd0_eval\n");
 }
 
 static void pd0_eval(t_snd_pd *x,t_symbol *s){

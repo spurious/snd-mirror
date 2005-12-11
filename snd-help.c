@@ -460,6 +460,24 @@ NULL);
 
 /* ---------------- help menu help texts ---------------- */
 
+static bool append_key_help(const char *name, int key, int state, bool cx_extended, bool first_time)
+{
+  int pos;
+  pos = in_user_keymap(key, state, cx_extended);
+  if (pos != -1)
+    {
+      char *msg;
+      msg = mus_format("%s%s is bound to %s",
+		       (first_time) ? "\n\ncurrently " : "\n          ",
+		       name,
+		       key_binding_description(key, state, cx_extended));
+      snd_help_append(msg);
+      FREE(msg);
+      return(false);
+    }
+  return(first_time);
+}
+
 void find_help(void) 
 {
   snd_help_with_xrefs("Find", 
@@ -468,8 +486,7 @@ void find_help(void)
 C-s or C-r, the minibuffer below the graph is activated and you are asked for the search expression. \
 The expression is a function that takes one argument, the current sample value, and returns #t when it finds a match. \
 To look for the next sample that is greater than .1, (lambda (y) (> y .1)).  The cursor then moves \
-to the next such sample, if any. Successive C-s's or C-r's repeat the search.  C-x C-s can redefine the \
-search pattern, which is also cleared by various other commands, much as in Emacs. \
+to the next such sample, if any. Successive C-s's or C-r's repeat the search.\
 \n\n\
 Normally, the search applies only to the current channel. To search all current files at once, use the Edit:Find dialog.",
 #else
@@ -479,9 +496,12 @@ the searching mechanisms are disabled.",
 		      WITH_WORD_WRAP,
 		      snd_xrefs("Search"),
 		      snd_xref_urls("Search"));
+
+  append_key_help("C-r", snd_K_r, snd_ControlMask, false,
+    append_key_help("C-s", snd_K_s, snd_ControlMask, false, true));
 }
 
-/* SOMEDAY: key command help lists omitted if rebound */
+/* TODO: flag rest of rebound keys */
 
 void undo_help(void) 
 {
@@ -578,6 +598,9 @@ applied to the entire file. \
 		      WITH_WORD_WRAP,
 		      snd_xrefs("Envelope"),
 		      snd_xref_urls("Envelope"));
+
+  append_key_help("C-x a", snd_K_a, 0, true,
+    append_key_help("C-x C-a", snd_K_s, snd_ControlMask, true, true));
 }
 
 void fft_help(void)
@@ -663,7 +686,11 @@ The keyboard commands associated with the control panel are: \
 		      WITH_WORD_WRAP,
 		      control_xrefs,
 		      NULL);
+
   global_control_panel_state();
+
+  append_key_help("C-x C-o", snd_K_o, snd_ControlMask, true,
+    append_key_help("C-x C-c", snd_K_c, snd_ControlMask, true, true));
 }
 
 void marks_help(void) 
@@ -1443,8 +1470,8 @@ void view_files_dialog_help(void)
   snd_help_with_xrefs("File Browser",
 "The View:Files dialog provides a list of sounds and various things to do with them.\
 The play button plays the file. \
-Double click a file name, and that file is opened in Snd. The 'update' button runs through the files \
-list checking for files that have been deleted or moved behind Snd's back. 'Clear' clears the files list. \
+Double click a file name, and that file is opened in Snd.  You can also mix or insert the \
+selected file with amplitude envelopes and so on. \
 \n\n\
 Files can be added to the list via the -p startup switch, and by the functions " S_add_file_to_view_files_list " \
 and " S_add_directory_to_view_files_list ". \

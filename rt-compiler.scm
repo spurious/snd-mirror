@@ -76,16 +76,23 @@ and run simple lisp[4] functions.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (eval-c  (string-append "-I" snd-header-files-path)
+	 "#include <config.h>"
 	 "#include <clm.h>"
 	 "#include <xen.h>"
 	 "#include <clm2xen.h>"
 	 "#include <vct.h>"
-	 
+
+	 "extern mus_any *g_get_mus_any(XEN os);"
+
 	 (<SCM> rt_set_float (lambda ((<SCM> das_float) (<SCM> newval))
 			       (set! (SCM_REAL_VALUE das_float) (GET_FLOAT newval))
 			       (return SCM_UNDEFINED)))
 	 (<SCM> gakk (lambda ((<SCM> scm))
 		       (return (MAKE_POINTER (XEN_TO_MUS_ANY scm)))))
+		       ;;(return (MAKE_POINTER (g_get_mus_any scm)))))
+		       ;;(printf (string "ai: %d %d %d %d\\n") (cast <int> scm) (XEN_TO_MUS_XEN scm) (XEN_OBJECT_REF scm) (g_get_mus_any scm))
+		       ;;(return SCM_UNDEFINED)))
+	 ;;		       (return (MAKE_POINTER (XEN_TO_MUS_ANY scm)))))
 	 (<SCM> gakk15 (lambda ((<SCM> scm))
 			 (return (MAKE_POINTER (SCM_SMOB_DATA scm)))))
 	 (<SCM> gakk2 (lambda ((<SCM> sym) (<SCM> toplevel))
@@ -2793,7 +2800,9 @@ and run simple lisp[4] functions.
 		     (c-display "rt-compiler/<rt-type>. Wrong type. \"" varname "\" with value \"" var "\" is not a" rt-type ".")
 		     (throw 'wrong-type))
 		   (if transformfunc
-		       (transformfunc var)
+		       (begin
+			 (transformfunc var)
+			 )
 		       var))))
       (if (and (list? ret)
 	       (eq? 'extra-gc-var (car ret)))
@@ -4612,6 +4621,7 @@ and run simple lisp[4] functions.
 
 
 (eval-c (string-append "-I" snd-header-files-path " " (string #\`) "pkg-config --libs sndfile" (string #\`) )
+	"#include <config.h>"
 	"#include <clm.h>"
 	"#include <xen.h>"
 	"#include <clm2xen.h>"
@@ -5368,6 +5378,7 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
 
 
 (eval-c (<-> "-I" snd-header-files-path " ")
+	"#include <config.h>"
 	"#include <ladspa.h>"
 	"#include <clm.h>"
 	"#include <xen.h>"
@@ -5792,6 +5803,7 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
 (define *rt-rb-overlap* 10) ;; 10% overlap
 
 (eval-c (<-> "-I" snd-header-files-path " -ffast-math ")
+	"#include <config.h>"
 	"#include <clm.h>"
 	"#include <xen.h>"
 	"#include <vct.h>"
@@ -6730,11 +6742,10 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
 				  (varname (car (cadr setter)))
 				  (type (-> (cadr (cadr setter)) c-type)))
 			      `(<void> ,funcname (lambda ((<struct-RT_Globals-*> rt_globals) (,type das_var))
-						   ;;(fprintf stderr (string "setting: <something> for: %u\\n") (cast <unsigned-int> rt_globals))
 						   (set! ,(symbol-append 'rt_globals-> varname) das_var)))))
 			  setternames)
 
-		  ;; Setter for the buses
+		   ;; Setter for the buses
 		   ,@(map (lambda (setter)
 			    (let ((type (car setter))
 				  (funcname (cadr (cdddr setter)))
@@ -7043,9 +7054,7 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
 													'*in-bus*)
 												    ret))))
 											extpointers)))))
-				       
-				       ;;(c-display "hm?" ,isoutdefined?);;isoutdefined?)
-				       
+
 				       ;; Make sure these never dissapear.
 				       (if ,isoutdefined?
 					   (hashq-set! extra-gc-vars (gensym) out-bus))
@@ -7058,14 +7067,14 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
 						       (extvar (cadr setter))
 						       (name (cadddr extvar))
 						       (type (cadr extvar)))
-						  `(,funcname procarg
-							      (->2 ,type transform
-								   ,name
-								   ',name
-								   (lambda (var)
-								     (hashq-set! extra-gc-vars (gensym) var))))))
+						  `(begin
+						     (,funcname procarg
+								(->2 ,type transform
+								     ,name
+								     ',name
+								     (lambda (var)
+								       (hashq-set! extra-gc-vars (gensym) var)))))))
 					      setternames)
-				       
 
 				       ;; Setting all Guile bus variables (tranforming vars Guile->RT)				       
 				       ;;((<struct-rt_bus-*> renamed_var__3 renamed_var__3_mirror out-bus rt_gen529))
@@ -7165,6 +7174,7 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
 				       ret)))))))
 	  
 	  (apply eval-c-non-macro (append (list (<-> "-I" snd-header-files-path " -ffast-math ") ;; "-ffast-math") ;; " -Werror "
+						"#include <config.h>"
 						"#include <math.h>"
 						"#include <clm.h>"
 						"#include <xen.h>"
@@ -7285,6 +7295,7 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
 
 (define-macro (definstrument def . body)
   ;; First compile up any rt-code.
+  ;;(c-display "Oh yeah")
   (let ((rt-funcs '()))
     
     (define (add-rt-func code)

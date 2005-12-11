@@ -1210,7 +1210,7 @@ But, perhaps that last one shouldn't be allowed to work.
 							 ((string=? "SCM" type) "/* */")
 							 ((string=? "JMP_BUF" type) "/* *")
 							 (else
-							  `(SCM_ASSERT ,(cond ((string=? "STRING" type) `(|| (scm_is_false ,name) (XEN_STRING_P ,name)))
+							  `(SCM_ASSERT ,(cond ((string=? "STRING" type) `(|| (scm_is_false ,name) (IS_STRING_P ,name)))
 									      ((string=? "POINTER" type) `(POINTER_P ,name))
 									      ((string=? "INTEGER" type) `(== SCM_BOOL_T (scm_number_p ,name)))
 									      ((string=? "FLOAT" type) `(== SCM_BOOL_T (scm_number_p ,name)))
@@ -1605,14 +1605,22 @@ int fgetc (FILE
     (close fd)
     (if eval-c-verbose
 	(c-display "Compiling" sourcefile))
-    (system (<-> *eval-c-compiler* " -O3 -fPIC -shared -o " libfile " " sourcefile " "
-		 (if (string=? *eval-c-compiler* "icc")
-		     "-L/opt/intel_cc_80/lib /opt/intel_cc_80/lib/libimf.a"
-		     (<-> "-Wall " (if (getenv "CFLAGS") (getenv "CFLAGS") "") " " (if (getenv "LDFLAGS") (getenv "LDFLAGS") "") " "))
-		 (string #\`) guile-config " compile" (string #\`) " "
-		 compile-options))
-    (dynamic-call "das_init" (dynamic-link libfile))
-    (system (<-> "rm " libfile))
+    (if #f
+	(c-display (<-> *eval-c-compiler* " -O3 -fPIC -shared -o " libfile " " sourcefile " "
+			(if (string=? *eval-c-compiler* "icc")
+			    "-L/opt/intel_cc_80/lib /opt/intel_cc_80/lib/libimf.a"
+			    (<-> "-Wall " (if (getenv "CFLAGS") (getenv "CFLAGS") "") " " (if (getenv "LDFLAGS") (getenv "LDFLAGS") "") " "))
+			(string #\`) guile-config " compile" (string #\`) " "
+			compile-options)))
+    (if (= 0 (system (<-> *eval-c-compiler* " -O3 -fPIC -shared -o " libfile " " sourcefile " "
+			  (if (string=? *eval-c-compiler* "icc")
+			      "-L/opt/intel_cc_80/lib /opt/intel_cc_80/lib/libimf.a"
+			      (<-> "-Wall " (if (getenv "CFLAGS") (getenv "CFLAGS") "") " " (if (getenv "LDFLAGS") (getenv "LDFLAGS") "") " "))
+			  (string #\`) guile-config " compile" (string #\`) " "
+			  compile-options)))
+	(begin
+	  (dynamic-call "das_init" (dynamic-link libfile))
+	  (system (<-> "rm " libfile))))
     (if eval-c-cleanup
 	(system (<-> "rm " sourcefile))
 	(if eval-c-lazy-cleanup
@@ -1679,13 +1687,12 @@ int fgetc (FILE
     "#define MAKE_FLOAT(a) scm_make_real((double)a)"
     "#define GET_SCM(a) (a)"
     "#define MAKE_SCM(a) (a)"
-    "#define POINTER_P(a) (scm_is_false(a) || ((SCM_BOOL_T == scm_list_p(a)) && (XEN_STRING_P(SCM_CAR(a)) || SCM_SYMBOLP(SCM_CAR(a))) && SCM_NULLP(SCM_CDR(SCM_CDR(a))) && (SCM_BOOL_T ==scm_number_p(SCM_CAR(SCM_CDR(a))))))"
+    "#define POINTER_P(a) (scm_is_false(a) || ((SCM_BOOL_T == scm_list_p(a)) && (IS_STRING_P(SCM_CAR(a)) || SCM_SYMBOLP(SCM_CAR(a))) && SCM_NULLP(SCM_CDR(SCM_CDR(a))) && (SCM_BOOL_T ==scm_number_p(SCM_CAR(SCM_CDR(a))))))"
     "#if HAVE_SCM_C_MAKE_RECTANGULAR"
-    "#  define XEN_STRING_P(Arg)           scm_is_string(Arg)"
+    "#  define IS_STRING_P(Arg)           scm_is_string(Arg)"
     "#else"
-    "#  define XEN_STRING_P(Arg)           (SCM_STRINGP(Arg))"
+    "#  define IS_STRING_P(Arg)           (SCM_STRINGP(Arg))"
     "#endif"
-    
     ,@temp
     
     "void das_init(){"
@@ -1720,7 +1727,13 @@ int fgetc (FILE
   `(eval-c ""
 	   (public (,ret-type ,(car def) (lambda ,(cadr def)
 					   ,@(cddr def))))))
+#!
+(load-from-path "eval-c.scm")
 
+(eval-c ""
+	(run-now
+	 (printf (string "Hello world!\\n"))))
+!#
 
 (eval-c ""
 	(<void-*> a_pointer)
@@ -1769,6 +1782,7 @@ int fgetc (FILE
 	;;(run-now
 	;; (scm_c_define_gsubr (string "NULL") 0 0 0 c_NULL)
 	))
+
 
 
 (define ec-pointer->integer cadr)
