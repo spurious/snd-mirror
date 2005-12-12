@@ -9636,11 +9636,38 @@ The list itself is <a href="#soundfileextensions">sound-file-extensions</a>.
 <tr><td colspan=2>
 <code><a class=def name="bindkey">bind-key</a> (key state func <i>extended origin</i>) </code></td></tr>
 <tr><td></td><td>
+<p>
 Cause <i>key</i> (an integer) with modifiers <i>state</i> (and preceding C-x if <i>extended</i>) to evaluate <i>func</i>
 when the graph widget has keyboard "focus".  If bind-key seems to be a no-op, try clicking in the graph to
 force it to take the focus.
 If <i>origin</i> is included, it is the name reported if an error occurs.  The default is a description of the key.
 If you include a documentation string in the function, it is included in the Help menu's Key Bindings output.
+</p>
+<p>
+The function (<i>func</i> above) should take zero or one arguments and
+return one of the cursor choices telling Snd what 
+action (if any) to take after evaluating <i>code</i>.  
+Possible return values are:
+<br><pre>
+  cursor-in-view  cursor-on-left  cursor-on-right  cursor-in-middle  keyboard-no-action
+</pre>
+</td></tr>
+<tr><td></td><td>
+If the function takes one argument, 
+that argument is the count (the C-u number prefixed to the keyboard command)
+defaulting to 1 if no prefix is typed.  
+</p>
+<p>
+The modifier <i>state</i> is a combination of shift = 1, control = 4, and meta = 8.
+One "gotcha" in key specifications is that you need to remember to include the shift bit (1) even in cases
+where the shift seems obvious; for example
+</p>
+<pre>(bind-key (char-&gt;integer #\&gt;) 0 ...)
+</pre>
+<p>won't do what you want. Instead, use
+</p>
+<pre>(bind-key (char-&gt;integer #\&gt;) 1 ...)
+</pre>
 
 </td></tr><tr><td></td><td>
 <table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
@@ -9670,31 +9697,6 @@ If you include a documentation string in the function, it is included in the Hel
             cursor-in-view))
 </pre></td></tr></table></td></tr>
 <tr><td></td><td>
-
-The modifier state is a combination of control = 4 and meta = 8, 
-so the first bind-key above causes C-a to print "hi" in the listener.  The 
-value returned should be one of the cursor choices telling Snd what 
-action (if any) to take after evaluating <i>code</i>.  
-Possible return values are:
-<br><pre>
-  cursor-in-view  cursor-on-left  cursor-on-right  cursor-in-middle  keyboard-no-action
-</pre>
-</td></tr>
-<tr><td></td><td>
-The function bound to a key can take either no arguments (as above), or one
-argument.  In the latter case, the argument is the count (the C-u number prefixed to the keyboard command)
-defaulting to 1 if no prefix is typed.  For example, there used to be a "line-size" variable
-setting how how many samples to jump for the C-p and C-n keys.  We can implement the same idea:
-</td></tr>
-
-<tr><td></td><td>
-<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
-(define line-size 128)
-(<em class=red>bind-key</em> (char-&gt;integer #\n) 4 
-  (lambda (arg) "move cursor ahead 128 samples" (set! (<a class=quiet href="#cursor">cursor</a>) (+ (<a class=quiet href="#cursor">cursor</a>) (* line-size arg)))))
-(<em class=red>bind-key</em> (char-&gt;integer #\p) 4 
-  (lambda (arg) "move cursor back 128 samples" (set! (<a class=quiet href="#cursor">cursor</a>) (- (<a class=quiet href="#cursor">cursor</a>) (* line-size arg)))))
-</pre></td></tr></table></td></tr>
 
 <tr><td></td><td>
 <A NAME="extendedpiano"></A>We can use bind-key to turn the keyboard into a sort of extended piano:
@@ -10828,6 +10830,9 @@ are:</p>
     (set! (<a class=quiet href="#selectedgraphcolor">selected-graph-color</a>) beige)
     (set! (<a class=quiet href="#selecteddatacolor">selected-data-color</a>) blue)
 </pre>
+<p>The buttons colors (help-button-color, etc) only work in a few cases (Motif, 2.n where
+"n" is less than 3).  I should probably deprecate them.
+</p>
 <br>
 
 <p>In addition, the various transforms can be displayed using colormaps.  The following

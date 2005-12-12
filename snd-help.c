@@ -501,8 +501,6 @@ the searching mechanisms are disabled.",
     append_key_help("C-s", snd_K_s, snd_ControlMask, false, true));
 }
 
-/* TODO: flag rest of rebound keys */
-
 void undo_help(void) 
 {
   snd_help_with_xrefs("Undo and Redo", 
@@ -523,6 +521,13 @@ In the listener, C-M-g deletes all text, and C-_ deletes back to the previous co
 		      WITH_WORD_WRAP,
 		      snd_xrefs("Undo"),
 		      snd_xref_urls("Undo"));
+
+  append_key_help("C-M-g", snd_K_g, snd_ControlMask | snd_MetaMask, false,
+    append_key_help("C-_", snd_K_underscore, snd_ControlMask, false,
+      append_key_help("C-x C-u", snd_K_u, snd_ControlMask, true,
+        append_key_help("C-x C-r", snd_K_r, snd_ControlMask, true,
+          append_key_help("C-x u", snd_K_u, 0, true,
+	    append_key_help("C-x r", snd_K_r, 0, true, true))))));
 }
 
 static char *sync_xrefs[4] = {
@@ -720,6 +725,12 @@ than 0) will move together when one is moved, and so on.  The following keyboard
 		      WITH_WORD_WRAP, 
 		      snd_xrefs("Mark"),
 		      snd_xref_urls("Mark"));
+
+  append_key_help("C-x j", snd_K_j, 0, true,
+    append_key_help("C-j", snd_K_j, snd_ControlMask, false,
+      append_key_help("C-x C-m", snd_K_m, snd_ControlMask, true,
+        append_key_help("C-x /", snd_K_slash, 0, true,
+	  append_key_help("C-m", snd_K_m, snd_ControlMask, false, true)))));
 }
 
 void mix_help(void) 
@@ -750,6 +761,9 @@ A set of associated mixes is called a 'track' in Snd, and there's a help menu it
 		      WITH_WORD_WRAP, 
 		      snd_xrefs("Mix"),
 		      snd_xref_urls("Mix"));
+
+  append_key_help("C-x q", snd_K_q, 0, true,
+    append_key_help("C-x C-q", snd_K_q, snd_ControlMask, true, true));
 }
 
 void track_help(void) 
@@ -1014,6 +1028,8 @@ Except in the browsers, what is actually played depends on the control panel.",
 		      WITH_WORD_WRAP,
 		      snd_xrefs("Play"),
 		      snd_xref_urls("Play"));
+
+  append_key_help("C-q", snd_K_q, snd_ControlMask, true, true);
 }
 
 void reverb_help(void)
@@ -1040,6 +1056,10 @@ If you want Snd to ask before overwriting a file in any case, set the variable "
 		      WITH_WORD_WRAP,
 		      snd_xrefs("Save"),
 		      snd_xref_urls("Save"));
+
+  append_key_help("C-x w", snd_K_w, 0, true,
+    append_key_help("C-x C-w", snd_K_w, snd_ControlMask, true,
+      append_key_help("C-x C-s", snd_K_s, snd_ControlMask, true, true)));
 }
 
 void filter_help(void)
@@ -1069,6 +1089,10 @@ zero sample at the cursor",
 		      WITH_WORD_WRAP,
 		      snd_xrefs("Insert"),
 		      snd_xref_urls("Insert"));
+
+  append_key_help("C-x i", snd_K_i, 0, true,
+    append_key_help("C-o", snd_K_o, snd_ControlMask, false,
+      append_key_help("C-x C-i", snd_K_i, snd_ControlMask, true, true)));
 }
 
 void delete_help(void)
@@ -1078,6 +1102,9 @@ void delete_help(void)
 		      WITH_WORD_WRAP,
 		      snd_xrefs("Delete"),
 		      snd_xref_urls("Delete"));
+
+  append_key_help("C-w", snd_K_w, snd_ControlMask, false,
+    append_key_help("C-d", snd_K_d, snd_ControlMask, false, true));
 }
 
 
@@ -1128,6 +1155,8 @@ improve the fit.  In this case, the X axis goes from 0 Hz to half the sampling r
 		      WITH_WORD_WRAP,
 		      snd_xrefs("Envelope"),
 		      snd_xref_urls("Envelope"));
+
+  append_key_help("C-x C-a", snd_K_a, snd_ControlMask, true, true);
 }
 
 void transform_dialog_help(void)
@@ -1509,6 +1538,8 @@ continue the definition.",
 		      WITH_WORD_WRAP,
 		      snd_xrefs("Region"),
 		      snd_xref_urls("Region"));
+
+  append_key_help("C-[space]", snd_K_space, snd_ControlMask, false, true);
 }
 
 static void selection_help(void)

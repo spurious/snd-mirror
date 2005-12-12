@@ -442,15 +442,15 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
 
 
 #ifndef SND_AS_WIDGET
-#ifndef SND_AS_PD_EXTERNAL
-  #if HAVE_GUILE
-  int main(int argc, char *argv[])
-   {
-     scm_boot_guile(argc, argv, snd_main, 0);
-     return(0);
-   }
+  #ifndef SND_AS_PD_EXTERNAL
+    #if HAVE_GUILE
+    int main(int argc, char *argv[])
+     {
+       scm_boot_guile(argc, argv, snd_main, 0);
+       return(0);
+     }
+    #endif
   #endif
-#endif
 #endif
 
 #ifdef SND_AS_PD_EXTERNAL

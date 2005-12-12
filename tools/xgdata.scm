@@ -5555,7 +5555,7 @@
 
 
 #!
-;;; TODO: add this: (CFNC-290 "GtkTextAttributes* gtk_text_attributes_ref GtkTextAttributes* values")
+(CFNC-290 "GtkTextAttributes* gtk_text_attributes_ref GtkTextAttributes* values")
 
 ;;; handle these when gtk changes in some ascertainable manner
 ;;; Pango 1.9.1 to 1.11
