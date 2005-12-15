@@ -2920,7 +2920,7 @@ static XEN g_gsl_ellipj(XEN u, XEN m)
 		    C_TO_XEN_DOUBLE(dn)));
 }
 
-#if HAVE_COMPLEX_TRIG
+#if HAVE_COMPLEX_TRIG && HAVE_GUILE
 #include <gsl/gsl_poly.h>
 #include <complex.h>
 
@@ -3135,7 +3135,7 @@ XEN_NARGIFY_1(g_i0_w, g_i0)
 #if HAVE_GSL
 XEN_NARGIFY_1(g_gsl_ellipk_w, g_gsl_ellipk)
 XEN_NARGIFY_2(g_gsl_ellipj_w, g_gsl_ellipj)
-#if HAVE_COMPLEX_TRIG
+#if HAVE_COMPLEX_TRIG && HAVE_GUILE
 XEN_NARGIFY_1(g_gsl_roots_w, g_gsl_roots)
 #endif
 #endif
@@ -3317,7 +3317,7 @@ XEN_NARGIFY_1(g_gsl_roots_w, g_gsl_roots)
 #if HAVE_GSL
 #define g_gsl_ellipk_w g_gsl_ellipk
 #define g_gsl_ellipj_w g_gsl_ellipj
-#if HAVE_COMPLEX_TRIG
+#if HAVE_COMPLEX_TRIG && HAVE_GUILE
 #define g_gsl_roots_w g_gsl_roots
 #endif
 #endif
@@ -3618,7 +3618,7 @@ void g_initialize_gh(void)
 #if HAVE_GSL
   XEN_DEFINE_PROCEDURE("gsl-ellipk", g_gsl_ellipk_w, 1, 0, 0, H_gsl_ellipk);
   XEN_DEFINE_PROCEDURE("gsl-ellipj", g_gsl_ellipj_w, 2, 0, 0, H_gsl_ellipj);
-#if HAVE_COMPLEX_TRIG
+#if HAVE_COMPLEX_TRIG && HAVE_GUILE
   XEN_DEFINE_PROCEDURE("gsl-roots",  g_gsl_roots_w,  1, 0, 0, H_gsl_roots);
 #endif
 #endif
