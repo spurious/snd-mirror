@@ -363,3 +363,19 @@
     (lambda ()
       (apropos (if (string? val) val (object->string val))))))
 
+(define (make-iir-low-pass-1 fc)
+  (let* ((theta (/ (* 2 pi fc) (mus-srate)))
+	 (gamma (/ (cos theta) (+ 1.0 (sin theta))))
+	 (xc (/ (- 1.0 gamma) 2.0)))
+    (make-filter 2 
+		 (vct xc xc) 
+		 (vct 0.0 (- gamma)))))
+
+(define (make-iir-high-pass-1 fc)
+  (let* ((theta (/ (* 2 pi fc) (mus-srate)))
+	 (gamma (/ (cos theta) (+ 1.0 (sin theta))))
+	 (xc (/ (+ 1.0 gamma) 2.0)))
+    (make-filter 2 
+		 (vct xc (- xc)) 
+		 (vct 0.0 (- gamma)))))
+

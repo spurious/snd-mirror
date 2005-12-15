@@ -2824,18 +2824,21 @@ static XEN g_fmod(XEN a, XEN b)
 #if HAVE_SPECIAL_FUNCTIONS
 static XEN g_j0(XEN x)
 {
+  #define H_j0 "(j0 x) returns the regular cylindrical bessel function J0(x)"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ONLY_ARG, "j0", " a number");
   return(C_TO_XEN_DOUBLE(j0(XEN_TO_C_DOUBLE(x))));
 }
 
 static XEN g_j1(XEN x)
 {
+  #define H_j1 "(j1 x) returns the regular cylindrical bessel function J1(x)"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ONLY_ARG, "j1", " a number");
   return(C_TO_XEN_DOUBLE(j1(XEN_TO_C_DOUBLE(x))));
 }
 
 static XEN g_jn(XEN order, XEN x)
 {
+  #define H_jn "(jn n x) returns the regular cylindrical bessel function Jn(x)"
   XEN_ASSERT_TYPE(XEN_INTEGER_P(order), x, XEN_ARG_1, "jn", " an int");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ARG_2, "jn", " a number");
   return(C_TO_XEN_DOUBLE(jn(XEN_TO_C_INT(order), XEN_TO_C_DOUBLE(x))));
@@ -2843,18 +2846,21 @@ static XEN g_jn(XEN order, XEN x)
 
 static XEN g_y0(XEN x)
 {
+  #define H_y0 "(y0 x) returns the irregular cylindrical bessel function Y0(x)"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ONLY_ARG, "y0", " a number");
   return(C_TO_XEN_DOUBLE(y0(XEN_TO_C_DOUBLE(x))));
 }
 
 static XEN g_y1(XEN x)
 {
+  #define H_y1 "(y1 x) returns the irregular cylindrical bessel function Y1(x)"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ONLY_ARG, "y1", " a number");
   return(C_TO_XEN_DOUBLE(y1(XEN_TO_C_DOUBLE(x))));
 }
 
 static XEN g_yn(XEN order, XEN x)
 {
+  #define H_yn "(yn n x) returns the irregular cylindrical bessel function Yn(x)"
   XEN_ASSERT_TYPE(XEN_INTEGER_P(order), x, XEN_ARG_1, "yn", " an int");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ARG_2, "yn", " a number");
   return(C_TO_XEN_DOUBLE(yn(XEN_TO_C_INT(order), XEN_TO_C_DOUBLE(x))));
@@ -2862,29 +2868,92 @@ static XEN g_yn(XEN order, XEN x)
 
 static XEN g_erf(XEN x)
 {
+  #define H_erf "(erf x) returns the error function erf(x)"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ONLY_ARG, "erf", " a number");
   return(C_TO_XEN_DOUBLE(erf(XEN_TO_C_DOUBLE(x))));
 }
 
 static XEN g_erfc(XEN x)
 {
+  #define H_erfc "(erfc x) returns the complementary error function erfc(x)"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ONLY_ARG, "erfc", " a number");
   return(C_TO_XEN_DOUBLE(erfc(XEN_TO_C_DOUBLE(x))));
 }
 
 static XEN g_lgamma(XEN x)
 {
+  #define H_lgamma "(lgamma x) returns the log of the gamma function at x"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ONLY_ARG, "lgamma", " a number");
   return(C_TO_XEN_DOUBLE(lgamma(XEN_TO_C_DOUBLE(x))));
 }
-
 #endif
 
 static XEN g_i0(XEN x)
 {
+  #define H_i0 "(i0 x) returns the modified cylindrical bessel function I0(x)"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ONLY_ARG, "i0", " a number");
   return(C_TO_XEN_DOUBLE(mus_bessi0(XEN_TO_C_DOUBLE(x))));
 }
+
+#if HAVE_GSL
+
+#include <gsl/gsl_sf_ellint.h>
+static XEN g_gsl_ellipk(XEN k)
+{
+  #define H_gsl_ellipk "(gsl-ellipk k) returns the complete elliptic integral k"
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(k), k, XEN_ONLY_ARG, "gsl-ellipk", "a number");
+  return(C_TO_XEN_DOUBLE(gsl_sf_ellint_Kcomp(sqrt(XEN_TO_C_DOUBLE(k)), GSL_PREC_APPROX)));
+}
+
+#include <gsl/gsl_sf_elljac.h>
+static XEN g_gsl_ellipj(XEN u, XEN m)
+{
+  #define H_gsl_ellipj "(gsl-ellipj u m) returns the Jacobian elliptic functions sn, cn, and dn of u and m"
+  double sn = 0.0, cn = 0.0, dn = 0.0;
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(u), u, XEN_ARG_1, "gsl-ellipj", "a number");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(m), m, XEN_ARG_2, "gsl-ellipj", "a number");
+  gsl_sf_elljac_e(XEN_TO_C_DOUBLE(u),
+		  XEN_TO_C_DOUBLE(m),
+		  &sn, &cn, &dn);
+  return(XEN_LIST_3(C_TO_XEN_DOUBLE(sn),
+		    C_TO_XEN_DOUBLE(cn),
+		    C_TO_XEN_DOUBLE(dn)));
+}
+
+#if HAVE_COMPLEX_TRIG
+#include <gsl/gsl_poly.h>
+#include <complex.h>
+
+static XEN g_gsl_roots(XEN poly)
+{
+  #define H_gsl_roots "(gsl-roots poly) -> roots of poly"
+  int i, n, loc;
+  double *p;
+  double complex *z;
+  gsl_poly_complex_workspace *w;
+  XEN result;
+  XEN_ASSERT_TYPE(XEN_VECTOR_P(poly), poly, XEN_ONLY_ARG, "gsl-roots", "a vector");
+  n = XEN_VECTOR_LENGTH(poly);
+  w = gsl_poly_complex_workspace_alloc(n);
+  z = (double complex *)calloc(n, sizeof(double complex));
+  p = (double *)calloc(n, sizeof(double));
+  for (i = 0; i < n; i++)
+    p[i] = XEN_TO_C_DOUBLE(XEN_VECTOR_REF(poly, i));
+  gsl_poly_complex_solve(p, n, w, (gsl_complex_packed_ptr)z);
+  gsl_poly_complex_workspace_free (w);
+  result = XEN_MAKE_VECTOR(n - 1, XEN_ZERO);
+  loc = snd_protect(result);
+  for (i = 0; i < n - 1; i++)
+    if (__imag__(z[i]) != 0.0)
+      XEN_VECTOR_SET(result, i, C_TO_XEN_COMPLEX(z[i]));
+    else XEN_VECTOR_SET(result, i, C_TO_XEN_DOUBLE(__real__(z[i])));
+  free(z);
+  free(p);
+  snd_unprotect_at(loc);
+  return(result);
+}
+#endif
+#endif
 
 
 
@@ -3063,6 +3132,13 @@ XEN_NARGIFY_1(g_erfc_w, g_erfc)
 XEN_NARGIFY_1(g_lgamma_w, g_lgamma)
 #endif
 XEN_NARGIFY_1(g_i0_w, g_i0)
+#if HAVE_GSL
+XEN_NARGIFY_1(g_gsl_ellipk_w, g_gsl_ellipk)
+XEN_NARGIFY_2(g_gsl_ellipj_w, g_gsl_ellipj)
+#if HAVE_COMPLEX_TRIG
+XEN_NARGIFY_1(g_gsl_roots_w, g_gsl_roots)
+#endif
+#endif
 
 #else
 #if HAVE_SCHEME && HAVE_DLFCN_H
@@ -3238,7 +3314,13 @@ XEN_NARGIFY_1(g_i0_w, g_i0)
 #define g_lgamma_w g_lgamma
 #endif
 #define g_i0_w g_i0
-
+#if HAVE_GSL
+#define g_gsl_ellipk_w g_gsl_ellipk
+#define g_gsl_ellipj_w g_gsl_ellipj
+#if HAVE_COMPLEX_TRIG
+#define g_gsl_roots_w g_gsl_roots
+#endif
+#endif
 #endif
 
 
@@ -3522,17 +3604,24 @@ void g_initialize_gh(void)
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_just_sounds, g_just_sounds_w, H_just_sounds, S_setB S_just_sounds, g_set_just_sounds_w,  0, 0, 1, 0);
 
 #if HAVE_SPECIAL_FUNCTIONS
-  XEN_DEFINE_PROCEDURE("bes-j0", g_j0_w,     1, 0, 0, "j0");
-  XEN_DEFINE_PROCEDURE("bes-j1", g_j1_w,     1, 0, 0, "j1");
-  XEN_DEFINE_PROCEDURE("bes-jn", g_jn_w,     2, 0, 0, "jn");
-  XEN_DEFINE_PROCEDURE("bes-y0", g_y0_w,     1, 0, 0, "y0");
-  XEN_DEFINE_PROCEDURE("bes-y1", g_y1_w,     1, 0, 0, "y1");
-  XEN_DEFINE_PROCEDURE("bes-yn", g_yn_w,     2, 0, 0, "yn");
-  XEN_DEFINE_PROCEDURE("erf",    g_erf_w,    1, 0, 0, "erf");
-  XEN_DEFINE_PROCEDURE("erfc",   g_erfc_w,   1, 0, 0, "erfc");
-  XEN_DEFINE_PROCEDURE("lgamma", g_lgamma_w, 1, 0, 0, "lgamma");
+  XEN_DEFINE_PROCEDURE("bes-j0", g_j0_w,     1, 0, 0, H_j0);
+  XEN_DEFINE_PROCEDURE("bes-j1", g_j1_w,     1, 0, 0, H_j1);
+  XEN_DEFINE_PROCEDURE("bes-jn", g_jn_w,     2, 0, 0, H_jn);
+  XEN_DEFINE_PROCEDURE("bes-y0", g_y0_w,     1, 0, 0, H_y0);
+  XEN_DEFINE_PROCEDURE("bes-y1", g_y1_w,     1, 0, 0, H_y1);
+  XEN_DEFINE_PROCEDURE("bes-yn", g_yn_w,     2, 0, 0, H_yn);
+  XEN_DEFINE_PROCEDURE("erf",    g_erf_w,    1, 0, 0, H_erf);
+  XEN_DEFINE_PROCEDURE("erfc",   g_erfc_w,   1, 0, 0, H_erfc);
+  XEN_DEFINE_PROCEDURE("lgamma", g_lgamma_w, 1, 0, 0, H_lgamma);
 #endif
-  XEN_DEFINE_PROCEDURE("bes-i0", g_i0_w,     1, 0, 0, "i0");
+  XEN_DEFINE_PROCEDURE("bes-i0", g_i0_w,     1, 0, 0, H_i0);
+#if HAVE_GSL
+  XEN_DEFINE_PROCEDURE("gsl-ellipk", g_gsl_ellipk_w, 1, 0, 0, H_gsl_ellipk);
+  XEN_DEFINE_PROCEDURE("gsl-ellipj", g_gsl_ellipj_w, 2, 0, 0, H_gsl_ellipj);
+#if HAVE_COMPLEX_TRIG
+  XEN_DEFINE_PROCEDURE("gsl-roots",  g_gsl_roots_w,  1, 0, 0, H_gsl_roots);
+#endif
+#endif
 
 #if HAVE_SCHEME
   #define H_during_open_hook S_during_open_hook " (fd name reason): called after file is opened, \
@@ -3756,6 +3845,9 @@ that name is presented in the New File dialog."
 
 #if HAVE_ALSA
   XEN_YES_WE_HAVE("alsa");
+#endif
+#if HAVE_GSL
+  XEN_YES_WE_HAVE("gsl");
 #endif
 
   XEN_YES_WE_HAVE("snd");

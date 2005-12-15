@@ -990,22 +990,6 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 	       (vct a0 a1 a2) 
 	       (vct 0.0 b1 b2)))
 
-(define (make-iir-low-pass-1 fc)
-  (let* ((theta (/ (* 2 pi fc) (mus-srate)))
-	 (gamma (/ (cos theta) (+ 1.0 (sin theta))))
-	 (xc (/ (- 1.0 gamma) 2.0)))
-    (make-filter 2 
-		 (vct xc xc) 
-		 (vct 0.0 (- gamma)))))
-
-(define (make-iir-high-pass-1 fc)
-  (let* ((theta (/ (* 2 pi fc) (mus-srate)))
-	 (gamma (/ (cos theta) (+ 1.0 (sin theta))))
-	 (xc (/ (+ 1.0 gamma) 2.0)))
-    (make-filter 2 
-		 (vct xc (- xc)) 
-		 (vct 0.0 (- gamma)))))
-
 (define* (make-iir-low-pass-2 fc #:optional din) ; din=(sqrt 2.0) for example (suggested range 0.2.. 10)
   (let* ((theta (/ (* 2 pi fc) (mus-srate)))
 	 (d (or din (sqrt 2.0)))
@@ -1129,8 +1113,8 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 	(set! xcoeffs (cons (vct (* 2 alpha) (* 4 alpha) (* 2 alpha)) xcoeffs))
 	(set! ycoeffs (cons (vct 1.0 (* -2.0 gamma) (* 2.0 beta)) ycoeffs))))
     (make-filter (1+ (* 2 M))
-		 (cascade->canonical (reverse xcoeffs))
-		 (cascade->canonical (reverse ycoeffs)))))
+		 (cascade->canonical xcoeffs)
+		 (cascade->canonical ycoeffs))))
 	 
 (define (make-butter-hp M fc)
   ;; order is M*2, fc is cutoff freq (Hz)
@@ -1149,8 +1133,8 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 	(set! xcoeffs (cons (vct (* 2 alpha) (* -4 alpha) (* 2 alpha)) xcoeffs))
 	(set! ycoeffs (cons (vct 1.0 (* -2.0 gamma) (* 2.0 beta)) ycoeffs))))
     (make-filter (1+ (* 2 M))
-		 (cascade->canonical (reverse xcoeffs))
-		 (cascade->canonical (reverse ycoeffs)))))
+		 (cascade->canonical xcoeffs)
+		 (cascade->canonical ycoeffs))))
 	 
 (define (make-butter-bp M f1 f2)
   ;; order is M*2, f1 and f2 are band edge freqs (Hz)
@@ -1188,8 +1172,8 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 	      (set! k (1+ k))
 	      (set! j 1)))))
     (make-filter (1+ (* 2 M))
-		 (cascade->canonical (reverse xcoeffs))
-		 (cascade->canonical (reverse ycoeffs)))))
+		 (cascade->canonical xcoeffs)
+		 (cascade->canonical ycoeffs))))
 	 
 (define (make-butter-bs M f1 f2)
   ;; order is M*2, f1 and f2 are band edge freqs (Hz)
@@ -1227,8 +1211,8 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 	      (set! k (1+ k))
 	      (set! j 1)))))
     (make-filter (1+ (* 2 M))
-		 (cascade->canonical (reverse xcoeffs))
-		 (cascade->canonical (reverse ycoeffs)))))
+		 (cascade->canonical xcoeffs)
+		 (cascade->canonical ycoeffs))))
 	 
 
 ;;; -------- notch filters

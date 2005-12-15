@@ -376,11 +376,11 @@ AC_SUBST(FFTW_CFLAGS)
 #  I'm currently using the data type "complex double" though the header seems to prefer "double complex" and
 #  the gcc documentation mentions _Complex double.
 #
-if test "$with_gsl" != yes; then
-  LIBS="$LIBS -lm"
-  AC_MSG_CHECKING(for complex trig)
-  AC_LINK_IFELSE(
-	[AC_LANG_PROGRAM(
+
+LIBS="$LIBS -lm"
+AC_MSG_CHECKING(for complex trig)
+AC_LINK_IFELSE(
+  	[AC_LANG_PROGRAM(
         	[#include <complex.h>],
 		[ _Complex double val; 
                   double rl, im;
@@ -392,11 +392,8 @@ if test "$with_gsl" != yes; then
         [
  	 AC_DEFINE(HAVE_COMPLEX_TRIG)
 	 AC_MSG_RESULT(yes)
-         with_gsl=no
     	],
 	[AC_MSG_RESULT(no)])
-fi
-
 
 
 #--------------------------------------------------------------------------------
