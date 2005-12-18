@@ -428,6 +428,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+19-Dec:  analog-filter.scm: Butterworth, Chebyshev, inverse-Chebyshev, Bessel(-Thompson), Elliptic filters.\n\
 5-Dec:   snd_pd_external.c and other changes for Pd, thanks to Kjetil.\n\
          sinc-train (clm.html), reverse-by-blocks and reverse-within-blocks (examp.scm), pulse-voice (examp.scm).\n\
 28-Nov:  snd 7.17.\n\
