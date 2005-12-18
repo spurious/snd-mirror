@@ -1,19 +1,14 @@
-;;; various analog filters, based primarily on Anders Johansson's (GPL'd) code
+;;; various even order analog filters, based primarily on Anders Johansson's (GPL'd) code
 ;;;
-;;; butterworth-lowpass|highpass|bandstop|bandpass, even order (but numerical trouble if order > ca 16)
-;;; chebyshev-lowpass|highpass|bandstop|bandpass, even order
-;;; inverse-chebyshev-lowpass|highpass|bandstop|bandpass, even order
+;;; butterworth-lowpass|highpass|bandstop|bandpass
+;;; chebyshev-lowpass|highpass|bandstop|bandpass
+;;; inverse-chebyshev-lowpass|highpass|bandstop|bandpass
 ;;;
 ;;; if GSL included in Snd:
-;;; elliptic-lowpass|highpass|bandstop|bandpass, even order (needs scaling fixups, massive debugging... and balance)
-;;; bessel-lowpass|highpass|bandstop|bandpass, even order (needs scaling fixups, massive debugging... and balance)
-
+;;; bessel-lowpass|highpass|bandstop|bandpass
+;;; elliptic-lowpass|highpass|bandstop|bandpass
 
 (load "t.scm") 
-
-
-;;; TODO: use gsl-roots to test poly-roots (poly coeffs are stored in same order)
-
 
 (if (not (defined? 'cascade->canonical)) ; dsp.scm normally
     (define (cascade->canonical A)
@@ -40,7 +35,6 @@
 	      ((= j (+ 3 (* 2 i))))
 	    (vct-set! a1 j (vct-ref d j))))
 	a1)))
-    
 
 (define* (analog->digital n num den fz)
   (let* ((g 1.0)
@@ -244,79 +238,41 @@
 
 ;;; ---------------- Bessel ---------------- 
 
-;;; TODO: scaling is wrong, and even-order screws up imag=0 check
-
 (define (bessel-prototype n)
+
+  (define (fact n)
+    (let ((x 1))
+      (do ((i 2 (1+ i)))
+	  ((> i n))
+	(set! x (* x i)))
+      x))
+  (define (bessel-i n)
+    (let ((cs (make-vct (+ n 1))))
+      (do ((i 0 (1+ i)))
+	  ((> i n))
+	(vct-set! cs i (/ (fact (- (* 2 n) i))
+			  (* (expt 2 (- n i))
+			     (fact i)
+			     (fact (- n i))))))
+      cs))
+
   (let* ((len (/ (* n 3) 2))
 	 (num (make-vct len))
 	 (den (make-vct len))
-	 (mn 0.0)
-	 (eps 0.0000001))
-    (if (= n 1)
-	(begin
-	  (vct-set! num 0 0.0)
-	  (vct-set! num 1 1.0)
-	  (vct-set! den 0 1.0)
-	  (vct-set! den 1 1.0))
-	(let* ((b1 (make-vct (+ n 1)))
-	       (b2 (make-vct (+ n 1))))
-	  (vct-set! b1 0 1.0)
-	  (vct-set! b2 0 1.0)
-	  (vct-set! b2 1 1.0)
-	  
-	  (do ((i 2 (1+ i)))
-	      ((>= i (1+ n)))
-	    (let ((b b1))
-	      (do ((l (- i 2) (1- l)))
-		  ((< l 0))
-		(vct-set! b (+ l 2) (vct-ref b1 l)))
-	      (vct-set! b1 0 0.0)
-	      (vct-set! b 0 0.0)
-	      (do ((l 0 (1+ l)))
-		  ((>= l i))
-		(vct-set! b l (+ (vct-ref b l) (* (- (* 2.0 i) 1.0) (vct-ref b2 l)))))
-	      (set! b1 b2)
-	      (set! b2 b)))
-
-	  (set! mn (expt (vct-ref b2 0) (/ 1.0 n)))
-	  (let* ((p (gsl-roots (vct->vector b2))))
-
-	    (display (format #f ";roots: ~A~%" p))
-	    
-	    (do ((i 0 (1+ i)))
-		((>= i n))
-	      (do ((j 0 (1+ j)))
-		  ((>= j (1- n)))
-		(if (> (magnitude (vector-ref p j))
-		       (magnitude (vector-ref p (+ j 1))))
-		    (let ((tmp (vector-ref p (+ j 1))))
-		      (vector-set! p (1+ j) (vector-ref p j))
-		      (vector-set! p j tmp)))))
-
-	    (do ((i 0 (1+ i)))
-		((>= i n))
-	      (vector-set! p i (/ (vector-ref p i) mn)))
-
-	    (do ((j 0)
-		 (i 0))
-		((>= i n))
-	      (if (> (imag-part (vector-ref p i)) eps)
-		  (begin
-		    (vct-set! num (+ j 0) 0.0)
-		    (vct-set! num (+ j 1) 0.0)
-		    (vct-set! num (+ j 2) 1.0)
-		    (vct-set! den (+ j 0) 1.0)
-		    (vct-set! den (+ j 1) (* -2.0 (real-part (vector-ref p i))))
-		    (vct-set! den (+ j 2) (real-part (* (vector-ref p i) (vector-ref p (+ i 1)))))
-		    (set! j (+ j 3))
-		    (set! i (+ i 2)))
-		  (begin
-
-		    (display (format #f ";zero imag: ~A ~A~%" (vector-ref p i) i))
-
-		    (vct-set! den 1 (- (real-part (vector-ref p i))))
-		    (set! i (+ i 1))))))))
-	  
+	 (b2 (bessel-i n)))
+    (let* ((p (gsl-roots (vct->vector b2))))
+      (do ((i 0 (1+ i)))
+	  ((= i n))
+	(vector-set! p i (/ (vector-ref p i) (expt (vct-ref b2 0) (/ 1.0 n)))))
+      (do ((j 0 (+ j 3))
+	   (i 0 (+ i 2)))
+	  ((>= i n))
+	(vct-set! num (+ j 0) 0.0)
+	(vct-set! num (+ j 1) 0.0)
+	(vct-set! num (+ j 2) 1.0)
+	(vct-set! den (+ j 0) 1.0)
+	(vct-set! den (+ j 1) (* -2.0 (real-part (vector-ref p i))))
+	(vct-set! den (+ j 2) (real-part (* (vector-ref p i) (vector-ref p (+ i 1)))))))
     (list num den)))
 
 (define (make-bessel-lowpass n fc) ; n = order, fc = cutoff freq (srate = 1.0)
@@ -432,35 +388,32 @@
 	     (cn (cadr vals))
 	     (dn (caddr vals)))
 
-	(do ((i 0)
-	     (j 0 (+ j 3))
-	     (ctr 0))
+	(do ((i 0 (+ i 2))
+	     (j 0 (+ j 3)))
 	    ((>= i n))
 	  (let* ((p (/ (- (+ (* (vct-ref cv (+ j 1)) (vct-ref cv (+ j 2)) sn cn)
 			     (* 0.0+i (vct-ref cv (+ j 0)) dn)))
 		       (- 1.0 (* (vct-ref cv (+ j 2)) sn
 				 (vct-ref cv (+ j 2)) sn)))))
-	    (if (> (abs (imag-part p)) eps)
+
 		(let ((pp (* p (make-rectangular (real-part p) (- (imag-part p))))))
 		  (set! g (* g pp))
-		  (vct-set! den (+ ctr 0) 1.0)
-		  (vct-set! den (+ ctr 1) (* -2.0 (real-part p)))
-		  (vct-set! den (+ ctr 2) pp)
-		  (set! i (+ i 2))
-		  (set! ctr (+ ctr 3)))
-		(begin
-		  (set! g (* g (real-part p)))
-		  (vct-set! den 1 (- (real-part p)))
-		  (set! i (+ i 1)))))))) ; it starts at 0 above even in odd case
+		  (vct-set! den (+ j 0) 1.0)
+		  (vct-set! den (+ j 1) (* -2.0 (real-part p)))
+		  (vct-set! den (+ j 2) pp))))))
+
 
     (set! g (/ g (sqrt (+ 1.0 (* e e)))))
     (set! g (abs g))
+
+    (snd-display ";g: ~A" g)
+
     (list num den)))
 
 (define* (make-elliptic-lowpass n fc #:optional (ripple 1.0) (loss-dB 60.0)) ; n = order, fc = cutoff freq (srate = 1.0)
   (if (odd? n) (set! n (1+ n)))
   (let* ((proto (elliptic-prototype n ripple loss-dB))
-	 (coeffs (analog->digital n (cadr proto) (caddr proto) fc)))
+	 (coeffs (analog->digital n (car proto) (cadr proto) fc)))
     (make-filter :xcoeffs (car coeffs) :ycoeffs (cadr coeffs))))
 
 (define* (make-elliptic-highpass n fc #:optional (ripple 1.0) (loss-dB 60.0)) ; n = order, fc = cutoff freq (srate = 1.0)
@@ -508,6 +461,8 @@
 	(close-sound ind)
 	(list mx resp))))
 
+(define (af-tests)
+
   (define (filter-response-max f1)
     (let ((mx 0.0)
 	  (signal 1.0))
@@ -516,9 +471,6 @@
 	(set! mx (max mx (abs (f1 signal))))
 	(set! signal 0.0))
       mx))
-
-(define (af-tests)
-
 
   (define (filter-equal? f1 f2) ; equalp in clm2xen is too restrictive
     (and (= (mus-order f1) (mus-order f2))
@@ -910,14 +862,70 @@
       (if (not (vequal (cadr vals) (vct 0.505 0.325 0.000 0.000 0.000 0.000 0.000 0.000 0.270 0.506)))
 	  (snd-display ";inverse-chebyshev bs 8 .1 .4 90 spect: ~A" (cadr vals))))
 
+
+    ;; ---------------- bessel ----------------
+    ;; checked poly coeff tables, but the prototype has scaling built in
+
+    (if (provided? 'gsl)
+	(begin
+    (let* ((f1 (make-bessel-lowpass 4 .1))
+	   (vals (sweep->bins f1 10)))
+      (if (fneq (car vals) .5) (snd-display ";bessel lp 4 .1 max: ~A" (car vals)))
+      (if (not (vequal (cadr vals) (vct 0.500 0.417 0.209 0.062 0.018 0.005 0.001 0.000 0.000 0.000)))
+	  (snd-display ";bessel lp 4 .1 spect: ~A" (cadr vals))))
+
+    (let* ((f1 (make-bessel-lowpass 8 .1))
+	   (vals (sweep->bins f1 10)))
+      (if (fneq (car vals) .5) (snd-display ";bessel lp 8 max: ~A" (car vals)))
+      (if (not (vequal (cadr vals) (vct 0.499 0.365 0.116 0.010 0.001 0.000 0.000 0.000 0.000 0.000)))
+	  (snd-display ";bessel lp 8 .1 spect: ~A" (cadr vals))))
+    (let* ((f1 (make-bessel-lowpass 12 .25))
+	   (vals (sweep->bins f1 10)))
+      (if (fneq (car vals) .5) (snd-display ";bessel lp 12 max: ~A" (car vals)))
+      (if (not (vequal (cadr vals) (vct 0.500 0.477 0.410 0.309 0.185 0.063 0.006 0.000 0.000 0.000)))
+	  (snd-display ";bessel lp 12 .25 spect: ~A" (cadr vals))))
+    (let* ((f1 (make-bessel-lowpass 10 .4))
+	   (vals (sweep->bins f1 10)))
+      (if (fneq (car vals) .5) (snd-display ";bessel lp 10 max: ~A" (car vals)))
+      (if (not (vequal (cadr vals) (vct 0.500 0.498 0.491 0.479 0.458 0.423 0.364 0.259 0.086 0.001)))
+	  (snd-display ";bessel lp 10 .4 spect: ~A" (cadr vals))))
+
+    (do ((i 2 (+ i 2)))
+	((= i 12))
+      (do ((j .1 (+ j .1)))
+	  ((>= j .45))
+	(let* ((f1 (make-bessel-lowpass i j))
+	       (mx (filter-response-max f1)))
+	  (if (> mx 1.0)
+	      (snd-display ";bess low max ~A ~A: ~A" i j mx)))))
+
+    (let* ((f1 (make-bessel-highpass 8 .1))
+	   (vals (sweep->bins f1 10)))
+      (if (fneq (car vals) .5) (snd-display ";bessel hp 8 max: ~A" (car vals)))
+      (if (not (vequal (cadr vals) (vct 0.001 0.115 0.290 0.386 0.435 0.465 0.483 0.493 0.498 0.500)))
+	  (snd-display ";bessel hp 8 .1 spect: ~A" (cadr vals))))
+    (let* ((f1 (make-bessel-highpass 12 .25))
+	   (vals (sweep->bins f1 10)))
+      (if (fneq (car vals) .5) (snd-display ";bessel hp 12 max: ~A" (car vals)))
+      (if (not (vequal (cadr vals) (vct 0.000 0.000 0.000 0.006 0.063 0.181 0.309 0.410 0.477 0.500)))
+	  (snd-display ";bessel hp 12 .25 spect: ~A" (cadr vals))))
+    (let* ((f1 (make-bessel-highpass 10 .4))
+	   (vals (sweep->bins f1 10)))
+      (if (ffneq (car vals) .5) (snd-display ";bessel hp 10 max: ~A" (car vals)))
+      (if (not (vequal (cadr vals) (vct 0.000 0.000 0.000 0.000 0.000 0.000 0.004 0.084 0.343 0.499)))
+	  (snd-display ";bessel hp 10 .4 spect: ~A" (cadr vals))))
+
+    (let* ((f1 (make-bessel-bandpass 4 .1 .2))
+	   (vals (sweep->bins f1 10)))
+      (if (> (abs (- (car vals) .245)) .05) (snd-display ";bessel bp 4 max: ~A" (car vals)))
+      (if (not (vequal (cadr vals) (vct 0.023 0.176 0.245 0.244 0.179 0.085 0.031 0.008 0.001 0.000)))
+	  (snd-display ";bessel bp 4 .1 .2 spect: ~A" (cadr vals))))
+
+    (let* ((f1 (make-bessel-bandstop 12 .1 .2))
+	   (vals (sweep->bins f1 10)))
+      (if (> (abs (- (car vals) .5)) .05) (snd-display ";bessel bs 12 max: ~A" (car vals)))
+      (if (not (vequal (cadr vals) (vct 0.498 0.325 0.065 0.066 0.177 0.297 0.389 0.452 0.488 0.500)))
+	  (snd-display ";bessel bs 12 .1 .2 spect: ~A" (cadr vals))))
+
       ))
-#!
-
-(load "poly.scm")
-(define (test-roots-via-gsl)
-  (do ((i 2 (1+ i)))
-      ((= i 5))
-    (do ((j 
-
-
-!#
+))
