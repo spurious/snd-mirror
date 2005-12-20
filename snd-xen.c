@@ -2920,6 +2920,17 @@ static XEN g_gsl_ellipj(XEN u, XEN m)
 		    C_TO_XEN_DOUBLE(dn)));
 }
 
+#if DEBUGGING && HAVE_GUILE
+/* use gsl gegenbauer to check our function */
+#include <gsl/gsl_sf_gegenbauer.h>
+static XEN g_gsl_gegenbauer(XEN n, XEN lambda, XEN x)
+{
+  gsl_sf_result val;
+  gsl_sf_gegenpoly_n_e(XEN_TO_C_INT(n), XEN_TO_C_DOUBLE(lambda), XEN_TO_C_DOUBLE(x), &val);
+  return(C_TO_XEN_DOUBLE(val.val));
+}
+#endif
+
 #if HAVE_COMPLEX_TRIG && HAVE_GUILE
 #include <gsl/gsl_poly.h>
 #include <complex.h>
@@ -3618,6 +3629,9 @@ void g_initialize_gh(void)
 #if HAVE_GSL
   XEN_DEFINE_PROCEDURE("gsl-ellipk", g_gsl_ellipk_w, 1, 0, 0, H_gsl_ellipk);
   XEN_DEFINE_PROCEDURE("gsl-ellipj", g_gsl_ellipj_w, 2, 0, 0, H_gsl_ellipj);
+#if DEBUGGING && HAVE_GUILE
+  XEN_DEFINE_PROCEDURE("gsl-gegenbauer",  g_gsl_gegenbauer,  3, 0, 0, "internal test func");
+#endif
 #if HAVE_COMPLEX_TRIG && HAVE_GUILE
   XEN_DEFINE_PROCEDURE("gsl-roots",  g_gsl_roots_w,  1, 0, 0, H_gsl_roots);
 #endif

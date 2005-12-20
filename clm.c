@@ -7210,19 +7210,19 @@ double mus_bessi0(Float x)
 }
 #endif
 
-/* TODO: numerical troubles if alpha>8 and beta>.5 in 1024 ultra? */
 static Float ultraspherical(int n, Float x, Float lambda)
 {
+  /* this is also the algorithm used in gsl gegenbauer.c -- slow but not as bad as using the binomials! */
   Float fn1, fn2 = 1.0, fn = 1.0;
   int k;
-  if (n == 0)
-    return(1.0);
-  if (n == 1)
-    return(2.0 * x * lambda);
-  fn1 = 2.0 * x * lambda; /* or x if lambda == 0? */
+  if (n == 0) return(1.0);
+  if (lambda == 0.0)
+    fn1 = 2.0 * x;
+  else fn1 = 2.0 * x * lambda;
+  if (n == 1) return(fn1);
   for (k = 2; k <= n; k++)
     {
-      fn = ((2.0 * x * (k + lambda - 1) * fn1) - ((k + (2 * lambda) - 2) * fn2)) / (Float)k;
+      fn = ((2.0 * x * (k + lambda - 1.0) * fn1) - ((k + (2.0 * lambda) - 2.0) * fn2)) / (Float)k;
       fn2 = fn1;
       fn1 = fn;
     }
@@ -7371,9 +7371,6 @@ Float *mus_make_fft_window_with_window(mus_fft_window_t type, int size, Float be
     case MUS_SAMARAKI_WINDOW:
     case MUS_DOLPH_CHEBYSHEV_WINDOW:
       /* "Design of Ultraspherical Window Functions with Prescribed Spectral Characteristics", Bergen and Antoniou, EURASIP JASP 2004" */
-
-      /* TODO: tests + matlab dssp? */
-
       if (type == MUS_ULTRASPHERICAL_WINDOW)
 	{
 	  if (mu == 0.0)
@@ -7385,11 +7382,10 @@ Float *mus_make_fft_window_with_window(mus_fft_window_t type, int size, Float be
 	    }
 	}
 
-#if 1 && HAVE_COMPLEX_TRIG
+#if HAVE_COMPLEX_TRIG
       {
 	Float *rl, *im;
 	Float pk = 0.0;
-	complex double val = 0.0;
 	double alpha;
 	freq = M_PI / (Float)size;
 	if (beta < 0.2) beta = 0.2;
@@ -7401,21 +7397,19 @@ Float *mus_make_fft_window_with_window(mus_fft_window_t type, int size, Float be
 	    switch (type)
 	      {
 	      case MUS_DOLPH_CHEBYSHEV_WINDOW:
-		val = ccos(cacos(alpha * cos(angle)) * size); /* here is Tn (Chebyshev polynomial 1st kind */
+		rl[i] = creal(ccos(cacos(alpha * cos(angle)) * size)); /* here is Tn (Chebyshev polynomial 1st kind */
 		break;
 	      case MUS_SAMARAKI_WINDOW:
-		/* Samaraki window uses Un here instead */
-		val = csin(cacos(alpha * cos(angle)) * (size + 1.0)) / csin(cacos(alpha * cos(angle)));
+		/* Samaraki window uses Un instead */
+		rl[i] = creal(csin(cacos(alpha * cos(angle)) * (size + 1.0)) / csin(cacos(alpha * cos(angle))));
 		break;
 	      case MUS_ULTRASPHERICAL_WINDOW:
 		/* Cn here */
-		val = ultraspherical(size, alpha * cos(angle), mu);
+		rl[i] = ultraspherical(size, alpha * cos(angle), mu);
 		break;
 	      default: 
 		break;
 	      }
-	    rl[i] = creal(val);
-	    im[i] = cimag(val);
 	  }
 	mus_fft(rl, im, size, -1);    /* can be 1 here */
 	pk = 0.0;
@@ -7443,7 +7437,6 @@ Float *mus_make_fft_window_with_window(mus_fft_window_t type, int size, Float be
       {
 	Float *rl, *im;
 	Float pk;
-	gsl_complex val;
 	double alpha;
 	freq = M_PI / (Float)size;
 	if (beta < 0.2) beta = 0.2;
@@ -7458,29 +7451,27 @@ Float *mus_make_fft_window_with_window(mus_fft_window_t type, int size, Float be
 	    switch (type)
 	      {
 	      case MUS_DOLPH_CHEBYSHEV_WINDOW:
-		val = gsl_complex_cos(
-			gsl_complex_mul_real(
-			  gsl_complex_arccos_real(alpha * cos(angle)),
-			  (double)size));
+		rl[i] = GSL_REAL(gsl_complex_cos(
+			           gsl_complex_mul_real(
+			             gsl_complex_arccos_real(alpha * cos(angle)),
+				     (double)size)));
 		break;
 	      case MUS_SAMARAKI_WINDOW:
-		val = gsl_complex_div(
-		        gsl_complex_sin(
-			  gsl_complex_mul_real(
-			    gsl_complex_arccos_real(alpha * cos(angle)),
-			    (double)(size + 1.0))),
-			gsl_complex_sin(
-			  gsl_complex_arccos_real(alpha * cos(angle))));
+		rl[i] = GSL_REAL(gsl_complex_div(
+		                   gsl_complex_sin(
+			             gsl_complex_mul_real(
+			               gsl_complex_arccos_real(alpha * cos(angle)),
+				       (double)(size + 1.0))),
+				   gsl_complex_sin(
+				     gsl_complex_arccos_real(alpha * cos(angle)))));
 		break;
 	      case MUS_ULTRASPHERICAL_WINDOW:
-		val = ultraspherical(size, alpha * cos(angle), mu);
+		rl[i] = ultraspherical(size, alpha * cos(angle), mu);
 		break;
 	      default: 
 		break;
 	      }
 
-	    rl[i] = GSL_REAL(val);
-	    im[i] = GSL_IMAG(val); /* always essentially 0.0 */
 	  }
 	mus_fft(rl, im, size, -1);    /* can be 1 here */
 	pk = 0.0;

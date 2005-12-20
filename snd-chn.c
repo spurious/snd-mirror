@@ -5577,7 +5577,6 @@ static XEN g_fft_window_alpha(XEN snd, XEN chn)
   return(C_TO_XEN_DOUBLE(fft_window_alpha(ss)));
 }
 
-/* TODO: does fft alpha need bounds check? */
 static XEN g_set_fft_window_alpha(XEN val, XEN snd, XEN chn) 
 {
   Float alpha;

@@ -1870,7 +1870,7 @@ if test "$enable_snd_debug" = yes ; then
       if test "$CC" = "g++" ; then
         CFLAGS="$CFLAGS -O -g3 -Wredundant-decls -Wcast-align -Wpointer-arith -Wimplicit -Wreturn-type -Wunused-label -Wunused-variable -Wunused-value -Wcomment -Wformat -Wunused-function -Wuninitialized -Wparentheses -Wall"
       else
-        CFLAGS="$CFLAGS -O -g3 -Wredundant-decls -Wcast-align -Wmissing-prototypes -Wpointer-arith -Wimplicit -Wreturn-type -Wunused-label -Wunused-variable -Wunused-value -Wcomment -Wformat -Wunused-function -Wuninitialized -Wparentheses -Wall -Wdeclaration-after-statement -Wmissing-field-initializers'"
+        CFLAGS="$CFLAGS -O -g3 -Wredundant-decls -Wcast-align -Wmissing-prototypes -Wpointer-arith -Wimplicit -Wreturn-type -Wunused-label -Wunused-variable -Wunused-value -Wcomment -Wformat -Wunused-function -Wuninitialized -Wparentheses -Wall -Wdeclaration-after-statement -Wmissing-field-initializers"
       fi
     fi
   fi

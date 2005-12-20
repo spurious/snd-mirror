@@ -621,26 +621,31 @@ the real and imaginary parts of the data; len should be a power of 2, dir = 1 fo
   return(xen_return_first(url, uim));
 }
 
-static XEN g_make_fft_window(XEN type, XEN size, XEN ubeta)
+/* TODO: check lisp-case of make-fft-window, if any */
+static XEN g_make_fft_window(XEN type, XEN size, XEN ubeta, XEN ualpha)
 {
-  #define H_make_fft_window "(" S_make_fft_window " type size (beta 0.0)): -> fft data window (a vct). \
+  #define H_make_fft_window "(" S_make_fft_window " type size (beta 0.0) (alpha 0.0)): -> fft data window (a vct). \
 type is one of the sndlib fft window identifiers such as " S_kaiser_window ", beta \
 is the window family parameter, if any:\n\
      (set! v1 (make-fft-window hamming-window 256))"
 
-  Float beta = 0.0;
+  Float beta = 0.0, alpha = 0.0;
   int n;
   mus_fft_window_t t;
+  Float *data;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(type), type, XEN_ARG_1, S_make_fft_window, "an integer (window type)");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(size), size, XEN_ARG_2, S_make_fft_window, "an integer");
   if (XEN_NUMBER_P(ubeta)) beta = XEN_TO_C_DOUBLE(ubeta);
+  if (XEN_NUMBER_P(ualpha)) alpha = XEN_TO_C_DOUBLE(ualpha);
   n = XEN_TO_C_INT(size);
   if (n <= 0)
     XEN_OUT_OF_RANGE_ERROR(S_make_fft_window, 2, size, "size ~A <= 0?");
   t = (mus_fft_window_t)XEN_TO_C_INT(type);
   if (!(MUS_FFT_WINDOW_OK(t)))
     XEN_OUT_OF_RANGE_ERROR(S_make_fft_window, 1, type, "~A: unknown fft window");
-  return(make_vct(n, mus_make_fft_window(t, n, beta)));
+  data = (Float *)CALLOC(n, sizeof(Float));
+  mus_make_fft_window_with_window(t, n, beta, alpha, data);
+  return(make_vct(n, data));
 }
 
 static XEN g_spectrum(XEN url, XEN uim, XEN uwin, XEN utype)
@@ -5333,7 +5338,7 @@ XEN_NARGIFY_2(g_edot_product_w, g_edot_product)
 XEN_NARGIFY_1(g_clear_array_w, g_clear_array)
 XEN_NARGIFY_2(g_polynomial_w, g_polynomial)
 XEN_ARGIFY_3(g_multiply_arrays_w, g_multiply_arrays)
-XEN_ARGIFY_3(g_make_fft_window_w, g_make_fft_window)
+XEN_ARGIFY_4(g_make_fft_window_w, g_make_fft_window)
 XEN_ARGIFY_4(g_mus_fft_w, g_mus_fft)
 XEN_ARGIFY_4(g_spectrum_w, g_spectrum)
 XEN_ARGIFY_3(g_convolution_w, g_convolution)
@@ -5922,7 +5927,7 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_clear_array,          g_clear_array_w,          1, 0, 0, H_clear_array);
   XEN_DEFINE_PROCEDURE(S_polynomial,           g_polynomial_w,           2, 0, 0, H_polynomial);
   XEN_DEFINE_PROCEDURE(S_multiply_arrays,      g_multiply_arrays_w,      2, 1, 0, H_multiply_arrays);
-  XEN_DEFINE_PROCEDURE(S_make_fft_window,      g_make_fft_window_w,      2, 1, 0, H_make_fft_window);
+  XEN_DEFINE_PROCEDURE(S_make_fft_window,      g_make_fft_window_w,      2, 2, 0, H_make_fft_window);
   XEN_DEFINE_PROCEDURE(S_mus_fft,              g_mus_fft_w,              2, 2, 0, H_mus_fft);
   XEN_DEFINE_PROCEDURE(S_spectrum,             g_spectrum_w,             3, 1, 0, H_mus_spectrum); 
   XEN_DEFINE_PROCEDURE(S_convolution,          g_convolution_w,          2, 1, 0, H_mus_convolution);
