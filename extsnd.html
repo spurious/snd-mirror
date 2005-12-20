@@ -4960,8 +4960,8 @@ rectangular-window   hann-window          welch-window        parzen-window
 bartlett-window      hamming-window       blackman2-window    blackman3-window
 blackman4-window     exponential-window   riemann-window      kaiser-window
 cauchy-window        poisson-window       gaussian-window     tukey-window
-dolph-chebyshev-window (only if your C supports complex trig functions (cacos etc), or GSL is loaded)
-hann-poisson-window  connes-window
+dolph-chebyshev-window hann-poisson-window  connes-window     samaraki-window
+ultraspherical-window
 </pre>
 <p>The Hann window is sometimes called Hanning in the DSP literature, apparently
 as a sort of in-joke.  
@@ -4971,6 +4971,20 @@ IEEE, Vol. 66, No. 1, January 1978, with updates from: Albert H. Nuttall, 'Some 
 of Acoustics, Speech, and Signal Processing, Vol. ASSP-29, 1, February 1981. 
 <small>The Dolph-Chebyshev window, as implemented here, doesn't work with very large windows (i.e. 1 million or more samples).</small>
 </p>
+</td></tr>
+<tr><td colspan=2></td></tr>
+
+
+<!-- fft-window-alpha -->
+<tr><td colspan=2>
+<code><a class=def name="fftalpha">fft-window-alpha</a> (<em class=narg>snd chn</em>)</code>
+</td></tr>
+<tr><td></td><td>
+The ultraspherical window has two "family" parameters; the one named "mu" is called "beta" here,
+to parallel its use in related windows; the other one, named "x<sub>mu</sub>" is named "alpha" here,
+for no good reason.  <b>fft-window-alpha</b> sets the shape of the side lobes; see
+"Design of Ultraspherical Window Functions with Prescribed Spectral Characteristics", Bergen and Antoniou, EURASIP JASP 2004,
+also available on-line, for details.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -5058,6 +5072,7 @@ lowpass filter: make-lowpass in dsp.scm<br>
 highpass filter: make-highpass in dsp.scm<br>
 bandpass filter: make-bandpass in dsp.scm<br>
 bandstop filter: make-bandstop in dsp.scm<br>
+the usual analog filters (Butterworth, Chebyshev, Bessel, Elliptic): analog-filter.scm<br>
 Butterworth filters: make-butter-high-pass, make-butter-low etc in dsp.scm, used in new-effects.scm<br>
 IIR filters of various orders/kinds: dsp.scm<br>
 Hilbert transform: make-hilbert-transform in dsp.scm<br>
@@ -6805,7 +6820,7 @@ There are approximately a bazillion ways to scale samples in Snd; here's a potpo
        (<a class=quiet href="clm.html#convolve">convolve</a> cnv (lambda (dir) 
                        (<a class=quiet href="#readsample">read-sample</a> sf)))))))
 
-(vct->channel (poly* (channel->vct 0 (frames)) (vct 2.0))) ; poly.scm (sound = polynomial coeffs)
+(vct-&gt;channel (poly* (channel-&gt;vct 0 (frames)) (vct 2.0))) ; poly.scm (sound = polynomial coeffs)
 
 (let* ((len (<a class=quiet href="#frames">frames</a>))
        (fsize (expt 2 (ceiling (/ (log len) (log 2)))))
@@ -8941,6 +8956,7 @@ return #t if <i>type</i> refers to an active transform type.
 
 </table>
 
+<!-- TODO: alpha here -->
 <p>Other related variables and functions:</p>
 <table cellpadding=0 celspacing=10 border=0>
 <tr><td width=200><a href="#transformgraphp"><small>transform-graph?</small></a></td><td width=200><a href="#showfftpeaks"><small>show-transform-peaks</small></a></td><td><a href="#transformsample"><small>transform-sample</small></a></td></tr>
@@ -9696,7 +9712,6 @@ where the shift seems obvious; for example
             (set! (<a class=quiet href="#sample">sample</a> (<a class=quiet href="#cursor">cursor</a>)) (* 0.5 (+ (<a class=quiet href="#sample">sample</a> (1- (<a class=quiet href="#cursor">cursor</a>))) (<a class=quiet href="#sample">sample</a> (1+ (<a class=quiet href="#cursor">cursor</a>)))))) 
             cursor-in-view))
 </pre></td></tr></table></td></tr>
-<tr><td></td><td>
 
 <tr><td></td><td>
 <A NAME="extendedpiano"></A>We can use bind-key to turn the keyboard into a sort of extended piano:
@@ -10511,7 +10526,8 @@ to put the date and time in the Snd title bar.
   bartlett-window        hamming-window        blackman2-window     blackman3-window
   blackman4-window       exponential-window    riemann-window       kaiser-window
   cauchy-window          poisson-window        gaussian-window      tukey-window
-  dolph-chebyshev-window hann-poisson-window   connes-window
+  dolph-chebyshev-window hann-poisson-window   connes-window        samaraki-window
+  ultraspherical-window
 </pre><br>
 
 <p><b>Zoom Focus</b> style (<a href="#zoomfocusstyle">zoom-focus-style</a>):</p>

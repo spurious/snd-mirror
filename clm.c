@@ -7210,9 +7210,28 @@ double mus_bessi0(Float x)
 }
 #endif
 
+/* TODO: numerical troubles if alpha>8 and beta>.5 in 1024 ultra? */
+static Float ultraspherical(int n, Float x, Float lambda)
+{
+  Float fn1, fn2 = 1.0, fn = 1.0;
+  int k;
+  if (n == 0)
+    return(1.0);
+  if (n == 1)
+    return(2.0 * x * lambda);
+  fn1 = 2.0 * x * lambda; /* or x if lambda == 0? */
+  for (k = 2; k <= n; k++)
+    {
+      fn = ((2.0 * x * (k + lambda - 1) * fn1) - ((k + (2 * lambda) - 2) * fn2)) / (Float)k;
+      fn2 = fn1;
+      fn1 = fn;
+    }
+  return(fn);
+}
+
 static Float sqr(Float x) {return(x * x);}
 
-Float *mus_make_fft_window_with_window(mus_fft_window_t type, int size, Float beta, Float *window)
+Float *mus_make_fft_window_with_window(mus_fft_window_t type, int size, Float beta, Float mu, Float *window)
 {
   /* mostly taken from
    *    Fredric J. Harris, "On the Use of Windows for Harmonic Analysis with the
@@ -7348,67 +7367,53 @@ Float *mus_make_fft_window_with_window(mus_fft_window_t type, int size, Float be
 	  else window[j] = (window[i] = .5 * (1.0 - cos(M_PI * i / cx)));
 	}
       break;
+    case MUS_ULTRASPHERICAL_WINDOW:
+    case MUS_SAMARAKI_WINDOW:
     case MUS_DOLPH_CHEBYSHEV_WINDOW:
-#if HAVE_GSL
-      {
-	Float *rl, *im;
-	Float pk;
-	gsl_complex val;
-	double den, alpha;
-	freq = M_PI / (Float)size;
-	if (beta < 0.2) beta = 0.2;
-	alpha = GSL_REAL(gsl_complex_cosh(
-			   gsl_complex_mul_real(
-			     gsl_complex_arccosh_real(pow(10.0, beta)),
-			     (double)(1.0 / (Float)size))));
-	den = 1.0 / GSL_REAL(gsl_complex_cosh(
-			       gsl_complex_mul_real(
-                                 gsl_complex_arccosh_real(alpha),
-				 (double)size)));
-	/* den(ominator) not really needed -- we're normalizing to 1.0 */
-	rl = (Float *)clm_calloc(size, sizeof(Float), "Dolph-Chebyshev buffer");
-	im = (Float *)clm_calloc(size, sizeof(Float), "Dolph-Chebyshev buffer");
-	for (i = 0, angle = 0.0; i < size; i++, angle += freq)
-	  {
-	    val = gsl_complex_mul_real(
-		    gsl_complex_cos(
-		      gsl_complex_mul_real(
-		        gsl_complex_arccos_real(alpha * cos(angle)),
-		        (double)size)),
-		    den);
-	    rl[i] = GSL_REAL(val);
-	    im[i] = GSL_IMAG(val); /* always essentially 0.0 */
-	  }
-	mus_fft(rl, im, size, -1);    /* can be 1 here */
-	pk = 0.0;
-	for (i = 0; i < size; i++) 
-	  if (pk < rl[i]) 
-	    pk = rl[i];
-	if ((pk != 0.0) && (pk != 1.0))
-	  for (i = 0, j = size / 2; i < size; i++) 
+      /* "Design of Ultraspherical Window Functions with Prescribed Spectral Characteristics", Bergen and Antoniou, EURASIP JASP 2004" */
+
+      /* TODO: tests + matlab dssp? */
+
+      if (type == MUS_ULTRASPHERICAL_WINDOW)
+	{
+	  if (mu == 0.0)
+	    type = MUS_DOLPH_CHEBYSHEV_WINDOW;
+	  else
 	    {
-	      window[i] = rl[j++] / pk;
-	      if (j == size) j = 0;
+	      if (mu == 1.0)
+		type = MUS_SAMARAKI_WINDOW;
 	    }
-	FREE(rl);
-	FREE(im);
-      }
-#else
-#if HAVE_COMPLEX_TRIG
+	}
+
+#if 1 && HAVE_COMPLEX_TRIG
       {
 	Float *rl, *im;
-	Float pk;
-	complex double val;
-	double den, alpha;
+	Float pk = 0.0;
+	complex double val = 0.0;
+	double alpha;
 	freq = M_PI / (Float)size;
 	if (beta < 0.2) beta = 0.2;
 	alpha = ccosh(cacosh(pow(10.0, beta)) / (Float)size);
-	den = 1.0 / ccosh(cacosh(alpha) * size);
-	rl = (Float *)clm_calloc(size, sizeof(Float), "Dolph-Chebyshev buffer");
-	im = (Float *)clm_calloc(size, sizeof(Float), "Dolph-Chebyshev buffer");
+	rl = (Float *)clm_calloc(size, sizeof(Float), "ifft window buffer");
+	im = (Float *)clm_calloc(size, sizeof(Float), "ifft window buffer");
 	for (i = 0, angle = 0.0; i < size; i++, angle += freq)
 	  {
-	    val = ccos(cacos(alpha * cos(angle)) * size) * den;
+	    switch (type)
+	      {
+	      case MUS_DOLPH_CHEBYSHEV_WINDOW:
+		val = ccos(cacos(alpha * cos(angle)) * size); /* here is Tn (Chebyshev polynomial 1st kind */
+		break;
+	      case MUS_SAMARAKI_WINDOW:
+		/* Samaraki window uses Un here instead */
+		val = csin(cacos(alpha * cos(angle)) * (size + 1.0)) / csin(cacos(alpha * cos(angle)));
+		break;
+	      case MUS_ULTRASPHERICAL_WINDOW:
+		/* Cn here */
+		val = ultraspherical(size, alpha * cos(angle), mu);
+		break;
+	      default: 
+		break;
+	      }
 	    rl[i] = creal(val);
 	    im[i] = cimag(val);
 	  }
@@ -7418,16 +7423,87 @@ Float *mus_make_fft_window_with_window(mus_fft_window_t type, int size, Float be
 	  if (pk < rl[i]) 
 	    pk = rl[i];
 	if ((pk != 0.0) && (pk != 1.0))
-	  for (i = 0, j = size / 2; i < size; i++) 
-	    {
-	      window[i] = rl[j++] / pk;
-	      if (j == size) j = 0;
-	    }
+	  {
+	    for (i = 0, j = size / 2; i < size; i++) 
+	      {
+		window[i] = rl[j++] / pk;
+		if (j == size) j = 0;
+	      }
+	  }
+	else
+	  {
+	    memcpy((void *)window, (void *)rl, size * sizeof(Float));
+	  }
+
 	FREE(rl);
 	FREE(im);
       }
 #else
-      mus_error(MUS_NO_SUCH_FFT_WINDOW, "Dolph-Chebyshev window needs the complex trig support");
+#if HAVE_GSL
+      {
+	Float *rl, *im;
+	Float pk;
+	gsl_complex val;
+	double alpha;
+	freq = M_PI / (Float)size;
+	if (beta < 0.2) beta = 0.2;
+	alpha = GSL_REAL(gsl_complex_cosh(
+			   gsl_complex_mul_real(
+			     gsl_complex_arccosh_real(pow(10.0, beta)),
+			     (double)(1.0 / (Float)size))));
+	rl = (Float *)clm_calloc(size, sizeof(Float), "ifft window buffer");
+	im = (Float *)clm_calloc(size, sizeof(Float), "ifft window buffer");
+	for (i = 0, angle = 0.0; i < size; i++, angle += freq)
+	  {
+	    switch (type)
+	      {
+	      case MUS_DOLPH_CHEBYSHEV_WINDOW:
+		val = gsl_complex_cos(
+			gsl_complex_mul_real(
+			  gsl_complex_arccos_real(alpha * cos(angle)),
+			  (double)size));
+		break;
+	      case MUS_SAMARAKI_WINDOW:
+		val = gsl_complex_div(
+		        gsl_complex_sin(
+			  gsl_complex_mul_real(
+			    gsl_complex_arccos_real(alpha * cos(angle)),
+			    (double)(size + 1.0))),
+			gsl_complex_sin(
+			  gsl_complex_arccos_real(alpha * cos(angle))));
+		break;
+	      case MUS_ULTRASPHERICAL_WINDOW:
+		val = ultraspherical(size, alpha * cos(angle), mu);
+		break;
+	      default: 
+		break;
+	      }
+
+	    rl[i] = GSL_REAL(val);
+	    im[i] = GSL_IMAG(val); /* always essentially 0.0 */
+	  }
+	mus_fft(rl, im, size, -1);    /* can be 1 here */
+	pk = 0.0;
+	for (i = 0; i < size; i++) 
+	  if (pk < rl[i]) 
+	    pk = rl[i];
+	if ((pk != 0.0) && (pk != 1.0))
+	  {
+	    for (i = 0, j = size / 2; i < size; i++) 
+	      {
+		window[i] = rl[j++] / pk;
+		if (j == size) j = 0;
+	      }
+	  }
+	else
+	  {
+	    memcpy((void *)window, (void *)rl, size * sizeof(Float));
+	  }
+	FREE(rl);
+	FREE(im);
+      }
+#else
+      mus_error(MUS_NO_SUCH_FFT_WINDOW, "Dolph-Chebyshev, Samaraki, and Ultraspherical windows need complex trig support");
 #endif
 #endif
       break;
@@ -7440,7 +7516,7 @@ Float *mus_make_fft_window_with_window(mus_fft_window_t type, int size, Float be
 
 Float *mus_make_fft_window(mus_fft_window_t type, int size, Float beta)
 {
-  return(mus_make_fft_window_with_window(type, size, beta, (Float *)clm_calloc(size, sizeof(Float), S_make_fft_window)));
+  return(mus_make_fft_window_with_window(type, size, beta, 0.0, (Float *)clm_calloc(size, sizeof(Float), S_make_fft_window)));
 }
 
 Float *mus_spectrum(Float *rdat, Float *idat, Float *window, int n, int type)

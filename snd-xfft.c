@@ -3,7 +3,7 @@
 #include "snd.h"
 
 static Widget transform_dialog = NULL; /* main dialog shell */
-static Widget type_list, size_list, wavelet_list, window_list, window_beta_scale;
+static Widget type_list, size_list, wavelet_list, window_list, window_beta_scale, window_alpha_scale;
 static Widget db_button, peaks_button, logfreq_button, sono_button, spectro_button, normo_button, normalize_button, selection_button;
 static Widget graph_label, graph_drawer;
 static Widget peak_txt, db_txt, freq_base_txt;
@@ -22,9 +22,10 @@ static char *TRANSFORM_SIZES[NUM_TRANSFORM_SIZES] =
 static int transform_sizes[NUM_TRANSFORM_SIZES] = 
   {32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 65536, 262144, 1048576, 4194304};
 
-static char *FFT_WINDOWS[NUM_FFT_WINDOWS] = 
+static char *FFT_WINDOWS[MUS_NUM_WINDOWS] = 
   {"Rectangular", "Hann", "Welch", "Parzen", "Bartlett", "Hamming", "Blackman2", "Blackman3", "Blackman4",
-   "Exponential", "Riemann", "Kaiser", "Cauchy", "Poisson", "Gaussian", "Tukey", "Dolph-Chebyshev", "Hann-Poisson", "Connes"};
+   "Exponential", "Riemann", "Kaiser", "Cauchy", "Poisson", "Gaussian", "Tukey", "Dolph-Chebyshev", "Hann-Poisson", "Connes",
+   "Samaraki", "Ultraspherical"};
 
 static Float fp_dB(Float py)
 {
@@ -117,7 +118,9 @@ static void graph_redisplay(void)
 static void get_fft_window_data(void)
 {
   int i;
-  mus_make_fft_window_with_window(fft_window(ss), GRAPH_SIZE, fft_window_beta(ss) * fft_beta_max(fft_window(ss)), current_graph_data);
+  mus_make_fft_window_with_window(fft_window(ss), GRAPH_SIZE, 
+				  fft_window_beta(ss) * fft_beta_max(fft_window(ss)), 
+				  fft_window_alpha(ss), current_graph_data);
   memset((void *)current_graph_fftr, 0, GRAPH_SIZE * 2 * sizeof(Float));
   memset((void *)current_graph_ffti, 0, GRAPH_SIZE * 2 * sizeof(Float));
   memcpy((void *)current_graph_fftr, (void *)current_graph_data, GRAPH_SIZE * sizeof(Float));
@@ -180,6 +183,9 @@ static void window_browse_callback(Widget w, XtPointer context, XtPointer info)
       if (fft_window_beta_in_use(fft_window(ss)))
 	XtVaSetValues(window_beta_scale, XmNbackground, ss->sgx->highlight_color, NULL);
       else XtVaSetValues(window_beta_scale, XmNbackground, ss->sgx->basic_color, NULL);
+      if (fft_window_alpha_in_use(fft_window(ss)))
+	XtVaSetValues(window_alpha_scale, XmNbackground, ss->sgx->highlight_color, NULL);
+      else XtVaSetValues(window_alpha_scale, XmNbackground, ss->sgx->basic_color, NULL);
     }
 }
 
@@ -318,6 +324,23 @@ static void beta_callback(Widget w, XtPointer context, XtPointer info)
   in_set_fft_window_beta((Float)(cb->value) / 100.0);
   chans_field(FCP_BETA, (Float)(cb->value) / 100.0);
   if (fft_window_beta_in_use(fft_window(ss)))
+    {
+      get_fft_window_data();
+      graph_redisplay();
+      if (transform_type(ss) == FOURIER) 
+	for_each_chan(calculate_fft);
+    }
+} 
+
+#define FFT_WINDOW_ALPHA_SCALER 100.0
+
+static void alpha_callback(Widget w, XtPointer context, XtPointer info)
+{
+  XmScaleCallbackStruct *cb = (XmScaleCallbackStruct *)info;
+  ASSERT_WIDGET_TYPE(XmIsScale(w), w);
+  in_set_fft_window_alpha((Float)(cb->value) / FFT_WINDOW_ALPHA_SCALER);
+  chans_field(FCP_ALPHA, (Float)(cb->value) / FFT_WINDOW_ALPHA_SCALER);
+  if (fft_window_alpha_in_use(fft_window(ss)))
     {
       get_fft_window_data();
       graph_redisplay();
@@ -493,7 +516,7 @@ Widget fire_up_transform_dialog(bool managed)
       Arg args[32];
       XmString sizes[NUM_TRANSFORM_SIZES];
       XmString wavelets[NUM_WAVELETS];
-      XmString windows[NUM_FFT_WINDOWS];
+      XmString windows[MUS_NUM_WINDOWS];
       XGCValues gv;
       XtCallbackList n1, n2;
       int size_pos = 1;
@@ -997,6 +1020,22 @@ Widget fire_up_transform_dialog(bool managed)
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNshowValue, true); n++;
       XtSetArg(args[n], XmNdecimalPoints, 2); n++;
+      XtSetArg(args[n], XmNmaximum, 1000); n++;
+      XtSetArg(args[n], XmNvalue, (int)(FFT_WINDOW_ALPHA_SCALER * fft_window_alpha(ss))); n++;
+      XtSetArg(args[n], XmNdragCallback, n1 = make_callback_list(alpha_callback, NULL)); n++;
+      XtSetArg(args[n], XmNvalueChangedCallback, n2 = make_callback_list(alpha_callback, NULL)); n++;
+      window_alpha_scale = XtCreateManagedWidget("alpha-scale", xmScaleWidgetClass, window_form, args, n);
+
+      n = 0;
+      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
+      XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_WIDGET); n++;
+      XtSetArg(args[n], XmNbottomWidget, window_alpha_scale); n++;
+      XtSetArg(args[n], XmNtopAttachment, XmATTACH_NONE); n++;
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNshowValue, true); n++;
+      XtSetArg(args[n], XmNdecimalPoints, 2); n++;
       XtSetArg(args[n], XmNvalue, 100 * fft_window_beta(ss)); n++;
       XtSetArg(args[n], XmNdragCallback, n1 = make_callback_list(beta_callback, NULL)); n++;
       XtSetArg(args[n], XmNvalueChangedCallback, n2 = make_callback_list(beta_callback, NULL)); n++;
@@ -1022,14 +1061,14 @@ Widget fire_up_transform_dialog(bool managed)
       XtSetArg(args[n], XmNtopItemPosition, ((int)fft_window(ss) > 2) ? ((int)fft_window(ss) - 1) : ((int)fft_window(ss) + 1)); n++;
       window_list = XmCreateScrolledList(window_form, "window-list", args, n);
       if (!(ss->using_schemes)) XtVaSetValues(window_list, XmNbackground, ss->sgx->white, XmNforeground, ss->sgx->black, NULL);
-      for (i = 0; i < NUM_FFT_WINDOWS; i++)
+      for (i = 0; i < MUS_NUM_WINDOWS; i++)
 	windows[i] = XmStringCreate(FFT_WINDOWS[i], XmFONTLIST_DEFAULT_TAG);
       XtVaSetValues(window_list, 
 		    XmNitems, windows, 
-		    XmNitemCount, NUM_FFT_WINDOWS, 
+		    XmNitemCount, MUS_NUM_WINDOWS, 
 		    XmNvisibleItemCount, 5, 
 		    NULL);
-      for (i = 0; i < NUM_FFT_WINDOWS; i++) 
+      for (i = 0; i < MUS_NUM_WINDOWS; i++) 
 	XmStringFree(windows[i]);
       XtManageChild(window_list); 
       XtAddCallback(window_list, XmNbrowseSelectionCallback, window_browse_callback, NULL);
@@ -1100,6 +1139,8 @@ Widget fire_up_transform_dialog(bool managed)
 
       if (fft_window_beta_in_use(fft_window(ss))) 
 	XtVaSetValues(window_beta_scale, XmNbackground, ss->sgx->highlight_color, NULL);
+      if (fft_window_alpha_in_use(fft_window(ss))) 
+	XtVaSetValues(window_alpha_scale, XmNbackground, ss->sgx->highlight_color, NULL);
 
       FREE(n1);
       FREE(n2);
@@ -1142,6 +1183,20 @@ void set_fft_window_beta(Float val)
   if (transform_dialog) 
     {
       XmScaleSetValue(window_beta_scale, (int)(100 * val));
+      get_fft_window_data();
+      graph_redisplay();
+    }
+  if (!(ss->graph_hook_active)) 
+    for_each_chan(calculate_fft);
+}
+
+void set_fft_window_alpha(Float val)
+{
+  in_set_fft_window_alpha(val);
+  chans_field(FCP_ALPHA, val);
+  if (transform_dialog) 
+    {
+      XmScaleSetValue(window_alpha_scale, (int)(FFT_WINDOW_ALPHA_SCALER * val));
       get_fft_window_data();
       graph_redisplay();
     }
@@ -1208,6 +1263,9 @@ void set_fft_window(mus_fft_window_t val)
       if (fft_window_beta_in_use(val))
 	XtVaSetValues(window_beta_scale, XmNbackground, ss->sgx->highlight_color, NULL);
       else XtVaSetValues(window_beta_scale, XmNbackground, ss->sgx->basic_color, NULL);
+      if (fft_window_alpha_in_use(val))
+	XtVaSetValues(window_alpha_scale, XmNbackground, ss->sgx->highlight_color, NULL);
+      else XtVaSetValues(window_alpha_scale, XmNbackground, ss->sgx->basic_color, NULL);
     }
 }
   

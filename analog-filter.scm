@@ -7,6 +7,10 @@
 ;;; if GSL included in Snd:
 ;;; bessel-lowpass|highpass|bandstop|bandpass
 ;;; elliptic-lowpass|highpass|bandstop|bandpass
+;;;
+;;; build Snd --with-doubles and --with-float-samples --with-gsl for best results
+
+(provide 'snd-analog-filter.scm)
 
 (if (not (defined? 'cascade->canonical)) ; dsp.scm normally
     (define (cascade->canonical A)
@@ -365,7 +369,6 @@
 	    (vct-set! num (+ j 0) 1.0)
 	    (vct-set! num (+ j 1) (* -2.0 (real-part z)))
 	    (vct-set! num (+ j 2) pz))))
-
       (let* ((optarg0 (* k1p k1p))
 	     (optarg1 (/ 1.0 e))
 	     (minf (minimize-function findv 0.0 (/ 1.0 e) optarg0 optarg1))

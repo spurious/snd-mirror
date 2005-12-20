@@ -2032,7 +2032,7 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
 	    if (file_exists)
 	      ofile = snd_tempnam();
 	    else ofile = copy_string(tmpfile);
-	    io_err = save_region(region_dialog_region(), ofile, type, format, srate, comment);
+	    io_err = save_region(region_dialog_region(), ofile, type, format, comment);
 	    if (io_err == IO_NO_ERROR)
 	      io_err = move_file(ofile, fullname);
 	    FREE(ofile);
@@ -3658,12 +3658,12 @@ static void view_files_drop_watcher(GtkWidget *w, const char *str, int x, int y,
 
 static void view_files_open_selected_callback(GtkWidget *w, gpointer context) 
 {
-  view_files_open_selected_files(w, (view_files_info *)context);
+  view_files_open_selected_files((view_files_info *)context);
 }
 
 static void view_files_remove_selected_callback(GtkWidget *w, gpointer context) 
 {
-  view_files_remove_selected_files(w, (view_files_info *)context);
+  view_files_remove_selected_files((view_files_info *)context);
 }
 
 off_t vf_location(view_files_info *vdat)

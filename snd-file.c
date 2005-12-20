@@ -1254,6 +1254,7 @@ static void copy_chan_info(chan_info *ncp, chan_info *ocp)
   ncp->spectro_start = ocp->spectro_start;
   ncp->lin_dB = ocp->lin_dB;
   ncp->min_dB = ocp->min_dB;
+  ncp->fft_window_alpha = ocp->fft_window_alpha;
   ncp->fft_window_beta = ocp->fft_window_beta;
   ncp->beats_per_minute = ocp->beats_per_minute;
   ncp->beats_per_measure = ocp->beats_per_measure;
@@ -3880,7 +3881,7 @@ static void view_files_add_file(widget_t dialog, const char *filename)
     }
 }
 
-void view_files_open_selected_files(widget_t w, view_files_info *vdat)
+void view_files_open_selected_files(view_files_info *vdat)
 {
   snd_info *sp = NULL;
   ss->open_requestor = FROM_VIEW_FILES;
@@ -3893,7 +3894,7 @@ void view_files_open_selected_files(widget_t w, view_files_info *vdat)
     }
 }
 
-void view_files_remove_selected_files(widget_t w, view_files_info *vdat)
+void view_files_remove_selected_files(view_files_info *vdat)
 {
   int i, loc;
   for (i = 0; i < vdat->currently_selected_files; i++)

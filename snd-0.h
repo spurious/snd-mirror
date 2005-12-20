@@ -198,7 +198,7 @@ typedef enum {IO_NO_ERROR, IO_SAVE_HOOK_CANCELLATION, IO_BAD_CHANNEL, IO_BAD_EDI
 #define SERIOUS_IO_ERROR(Err) ((Err != IO_NO_ERROR) && (Err != IO_EDIT_HOOK_CANCELLATION) && (Err != IO_SAVE_HOOK_CANCELLATION) && (Err != IO_INTERRUPTED) && (Err != IO_WRITE_CANCELLATION) && (Err != IO_NEED_WRITE_CONFIRMATION) && (Err != IO_NO_CHANGES))
 
 #if DEBUGGING
-#define ASSERT_IO_ERROR(Err, Location) if ((Err < 0) || (Err >= IO_ERROR_NUM)) {fprintf(stderr, "%s: bogus io error: %d\n", Location, Err); abort();}
+#define ASSERT_IO_ERROR(Err, Location) if (Err >= IO_ERROR_NUM) {fprintf(stderr, "%s: bogus io error: %d\n", Location, Err); abort();}
 #else
   #define ASSERT_IO_ERROR(Err, Location)
 #endif
@@ -300,10 +300,9 @@ typedef enum {PRINT_SND, PRINT_ENV} print_choice_t;
 typedef enum {SND_DATA_NO_DATA, SND_DATA_FILE, SND_DATA_BUFFER} snd_data_file_t;
 typedef enum {SOUNDS_VERTICAL, SOUNDS_HORIZONTAL, SOUNDS_IN_NOTEBOOK, SOUNDS_IN_SEPARATE_WINDOWS} sound_style_t;
 enum {FOURIER, WAVELET, WALSH, AUTOCORRELATION, CEPSTRUM, HAAR}; /* not typedef'd -- grows as new ones are added */
-#define NUM_FFT_WINDOWS 19
 #define NUM_WAVELETS 48
 
-typedef enum {FCP_X_ANGLE, FCP_X_SCALE, FCP_Y_ANGLE, FCP_Y_SCALE, FCP_Z_ANGLE, FCP_Z_SCALE, FCP_CUTOFF, FCP_START, FCP_BETA, FCP_BEATS} fcp_t;
+typedef enum {FCP_X_ANGLE, FCP_X_SCALE, FCP_Y_ANGLE, FCP_Y_SCALE, FCP_Z_ANGLE, FCP_Z_SCALE, FCP_CUTOFF, FCP_START, FCP_ALPHA, FCP_BETA, FCP_BEATS} fcp_t;
 typedef enum {TIME_AXIS_INFO, TRANSFORM_AXIS_INFO, LISP_AXIS_INFO} axis_info_t;
 typedef enum {COLOR_POSITION, COLOR_ZOOM} slider_choice_t;
 typedef enum {MINI_OFF, MINI_CURSOR, MINI_FIND, MINI_PROMPT, MINI_REPORT, MINI_USER} minibuffer_choice_t;
@@ -526,6 +525,10 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_SAVE_AS_DIALOG, F
 #define color_scale(ss) ss->Color_Scale
 #define in_set_color_scale(a) ss->Color_Scale = a
 #define DEFAULT_COLOR_SCALE 1.0
+
+#define fft_window_alpha(ss) ss->Fft_Window_Alpha
+#define in_set_fft_window_alpha(a) ss->Fft_Window_Alpha = a
+#define DEFAULT_FFT_WINDOW_ALPHA 0.0
 
 #define fft_window_beta(ss) ss->Fft_Window_Beta
 #define in_set_fft_window_beta(a) ss->Fft_Window_Beta = a

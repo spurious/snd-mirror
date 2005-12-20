@@ -905,6 +905,7 @@
 
 
 ;;; -------- IIR filters
+;;; see analog-filter.scm for the usual suspects
 
 ;;; -------- Butterworth filters (see also further below -- make-butter-lp et al)
 ;;;

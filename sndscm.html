@@ -48,7 +48,7 @@
 <tr><td><a href="#dlocsigdoc">dlocsig.rb</a></td>                      <td>moving sounds (Michael Scholz)</td></tr>
 <tr><td><a href="#dlpdoc">additional menus, etc</a></td>               <td>GUI improvements from Dave Phillips</td></tr>
 <tr><td><a href="#drawdoc">draw.scm, draw.rb</a></td>                  <td>graphics additions</td></tr>
-<tr><td><a href="#dspdoc">dsp.scm, dsp.rb</a></td>                     <td>various DSP-related procedures</td></tr>
+<tr><td><a href="#dspdoc">dsp.scm, dsp.rb, analog-filter.scm</a></td>  <td>various DSP-related procedures</td></tr>
 <tr><td><a href="#editmenudoc">edit-menu.scm</a></td>                  <td>Edit menu additions</td></tr>
 <tr><td><a href="#dotsnd">edit123.scm, snd_conffile.scm</a></td>       <td>.snd examples (Tom Roth, Kjetil S. Matheussen)</td></tr>
 <tr><td><a href="#effectsdoc">new-effects.scm, gtk-effects.scm, effects.rb</a></td><td>an Effects menu</td></tr>
@@ -571,7 +571,7 @@ the listener?
 </p>
 <br>
 
-<A NAME="dspdoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>dsp.scm, dsp.rb</h2></td></tr></table>
+<A NAME="dspdoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>dsp.scm, dsp.rb, analog-filter-scm</h2></td></tr></table>
 
 <p>A DSP grabbag, mostly filters.
 </p>
@@ -643,6 +643,13 @@ the listener?
   <tr><td><a class=def href="#windowedmaxamp">windowed-maxamp</a> gen y</td>              <td>envelope follower -- returns maxamp of last n samps</td></tr>
   <tr><td><a class=def href="#harmonicizer">harmonicizer</a> freq coeffs pairs ...</td>   <td>split each harmonic into a set of harmonics</td></tr>
   <tr><td><em class=emdef>linear-src-channel</em></td>                                    <td>linear sampling rate conversion</td></tr>
+
+  <tr><td colspan=2><center>In analog-filter.scm:</center></td></tr>
+  <tr><td><a class=def href="#analogfilters">make-butterworth-*</a> freq</td><td>Butterworth filters</td></tr>
+  <tr><td><a class=def href="#analogfilters">make-chebyshev-*</a> freq</td><td>Chebyshev filters</td></tr>
+  <tr><td><a class=def href="#analogfilters">make-inverse-chebyshev-*</a> freq</td><td>Inverse Chebyshev filters</td></tr>
+  <tr><td><a class=def href="#analogfilters">make-bessel-*</a> freq</td><td>Bessel-Thompson filters</td></tr>
+  <tr><td><a class=def href="#analogfilters">make-elliptic-*</a> freq</td><td>Elliptic filters</td></tr>
 </table>
 
 <p><A class=def NAME="exdolph">dolph</A> is the Dolph-Chebyshev fft data window, taken
@@ -661,8 +668,6 @@ is the same as <code>(* 2 (/ (<em class=red>goertzel</em> 440.0 0 (frames)) (fra
 <a class=def NAME="makebutterlowpass"></a>
 <a class=def NAME="makebutterbandpass"></a>
 <a class=def NAME="makebutterbandreject"></a>
-<a class=def NAME="makeiirhighpass"></a>
-<a class=def NAME="makeiirlowpass"></a>
 <a class=def NAME="makeiirhighpass2"></a>
 <a class=def NAME="makeiirlowpass2"></a>
 <a class=def NAME="makeiirbandpass2"></a>
@@ -750,7 +755,7 @@ Three other similar functions are <b>sum-of-n-sines</b>,
 <b>sum-of-n-odd-sines</b>, and <b>sum-of-n-odd-cosines</b>.
 <A class=def NAME="kosinesummation">kosine-summation</A> is a variation on <b>cosine-summation</b>; it includes
 a sort of "FM index" parameter (named "k", hence the generator name) to vary the harmonic content at run-time.
-There is also a <a href="clm.html#sinc-train>sinc-train</a> generator in clm.html.
+There is also a <a href="clm.html#sinc-train">sinc-train</a> generator in clm.html.
 </p>
 
 <p><A class=def NAME="brightenslightly1">brighten-slightly</A> is a slight simplification of contrast-enhancement.
@@ -910,6 +915,11 @@ CLM (Scheme): mus-rand-seed (settable)<br>
 <br>
 </small></blockquote>
 </td></tr></TABLE>
+<br>
+<p><A NAME="analogfilters"></a>analog-filter.scm has the usual analog filters: Butterworth, Chebyshev, inverse Chebyshev, Bessel,
+and Elliptic filters in lowpass, highpass, bandpass, and bandstop versions.  Each of the associated
+"make" functions returns a function ready for use as a filter (using the CLM filter generator).
+</p>
 <br>
 
 <A NAME="editmenudoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>edit-menu.scm</h2></td></tr></table>
@@ -2829,7 +2839,7 @@ just for fun.
 convolution the infinitely slow way is <b>poly*</b>:
 </p>
 <pre>
-(vct->channel (poly* (channel->vct 0 (frames)) (vct 2.0)))
+(vct->channel (poly* (channel-&gt;vct 0 (frames)) (vct 2.0)))
 </pre>
 <br>
 

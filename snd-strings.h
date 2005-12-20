@@ -200,6 +200,7 @@
 #define S_fft_log_frequency             "fft-log-frequency"
 #define S_fft_log_magnitude             "fft-log-magnitude"
 #define S_fft_window                    "fft-window"
+#define S_fft_window_alpha              "fft-window-alpha"
 #define S_fft_window_beta               "fft-window-beta"
 #define S_file_filters                  "file-filters"
 #define S_file_sorters                  "file-sorters"

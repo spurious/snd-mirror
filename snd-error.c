@@ -10,8 +10,7 @@ static char *io_error_names[] = {"no error", "save-hook cancellation", "bad chan
 
 const char *io_error_name(io_error_t err)
 {
-  if ((err >= 0) &&
-      (err < IO_ERROR_NUM))
+  if (err < IO_ERROR_NUM)
     return(io_error_names[(int)err]);
 #if DEBUGGING
   fprintf(stderr, "unknown io_error: %d\n", err);

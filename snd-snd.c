@@ -202,7 +202,7 @@ static env_state *make_env_state(chan_info *cp, off_t samples)
 	  /* 160e6 = about a hour at 44KHz */
 	  val = (int)(log((double)(es->samples)));
 	  if (val > 20) val = 20;
-	  ep->amp_env_size = snd_ipow2(val);
+	  ep->amp_env_size = snd_int_pow2(val);
 	  ep->samps_per_bin = (int)(ceil((double)(es->samples) / (double)(ep->amp_env_size)));
 	  ep->data_max = (mus_sample_t *)CALLOC(ep->amp_env_size, sizeof(mus_sample_t));
 	  ep->data_min = (mus_sample_t *)CALLOC(ep->amp_env_size, sizeof(mus_sample_t));
@@ -991,7 +991,7 @@ void amp_env_insert_zeros(chan_info *cp, off_t beg, off_t num, int pos)
       cur_samps = cp->samples[cp->edit_ctr];
       val = (int)(log((double)(cur_samps)));
       if (val > 20) val = 20;
-      val = snd_ipow2(val);
+      val = snd_int_pow2(val);
       subsamp = val / old_ep->amp_env_size;
       if (subsamp != 1) return;
       new_ep = (env_info *)CALLOC(1, sizeof(env_info));

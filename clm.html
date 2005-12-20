@@ -1052,12 +1052,12 @@ work when it doesn't matter.
 </pre>
 </td></tr></table>
 
-<p>Almost identical is the following (scheme) <A NAME="sinc-train">sinc-train</A> generator:
+<p>Almost identical is the following (scheme) <A NAME="sinc-train">sinc-train</a> generator:
 </p>
 <table border=2 bordercolor="tan" hspace=40 cellpadding=8 cellspacing=3><tr><td>
 <pre>
 (define* (make-sinc-train #:optional (frequency 440.0) (width #f))
-  (let ((range (or width (* pi (- (* 2 (inexact->exact (floor (/ (mus-srate) (* 2.2 frequency))))) 1)))))
+  (let ((range (or width (* pi (- (* 2 (inexact-&gt;exact (floor (/ (mus-srate) (* 2.2 frequency))))) 1)))))
     ;; 2.2 leaves a bit of space before srate/2, (* 3 pi) is the minimum width, normally
     (list (- (* range 0.5))
 	  range
@@ -1070,7 +1070,7 @@ work when it doesn't matter.
 	 (frq (caddr gen))
 	 (val (if (= ang 0.0) 1.0 (/ (sin ang) ang)))
 	 (new-ang (+ ang frq fm)))
-    (if (> new-ang top)
+    (if (&gt; new-ang top)
 	(list-set! gen 0 (- new-ang range))
 	(list-set! gen 0 new-ang))
     val))
@@ -2384,6 +2384,8 @@ loaded by default.  Among these are:</p>
 <p>
 green.cl defines several special purpose noise generators.
 butterworth.cl has several Butterworth filters.  
+(See analog-filter.scm in the Snd package for functions to design all the usual analog filters;
+the output is compatible with CLM's filter generator).
 </p>
 <br>
 

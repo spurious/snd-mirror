@@ -485,8 +485,8 @@ int find_and_sort_transform_peaks(Float *buf, fft_peak *found, int num_peaks, in
   return(k);
 }
 
-static Float beta_maxes[NUM_FFT_WINDOWS] = {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,
-					    1.0, 1.0, 15.0, 10.0, 10.0, 10.0, 1.0, 18.0, 10.0, 1.0};
+static Float beta_maxes[MUS_NUM_WINDOWS] = {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,
+					    1.0, 1.0, 15.0, 10.0, 10.0, 10.0, 1.0, 18.0, 10.0, 1.0, 18.0, 18.0};
 Float fft_beta_max(mus_fft_window_t win) {return(beta_maxes[(int)win]);}
 
 
@@ -773,7 +773,7 @@ typedef struct fft_state {
   chan_info *cp;
   Float *window;
   Float *data;
-  Float beta;
+  Float alpha, beta;
   int wavelet_choice, transform_type;
   off_t beg, databeg, datalen;
   off_t losamp;
@@ -1101,6 +1101,7 @@ void cp_free_fft_state(chan_info *cp)
 }
 
 bool fft_window_beta_in_use(mus_fft_window_t win) {return(win >= MUS_KAISER_WINDOW);}
+bool fft_window_alpha_in_use(mus_fft_window_t win) {return(win == MUS_ULTRASPHERICAL_WINDOW);}
 
 static fft_state *make_fft_state(chan_info *cp, bool force_recalc)
 {
@@ -1119,7 +1120,7 @@ static fft_state *make_fft_state(chan_info *cp, bool force_recalc)
       dlen = selection_len();
       /* these need to be handled at the same time, and not re-examined until the next call */
       /* if we're sweeping the mouse defining the selection, by the time we get to apply_fft, selection_len() can change */
-      fftsize = snd_2pow2(dlen * (1 + cp->zero_pad));
+      fftsize = snd_to_int_pow2(dlen * (1 + cp->zero_pad));
       if (fftsize < 2) fftsize = 2;
       cp->selection_transform_size = fftsize;
     }
@@ -1127,7 +1128,7 @@ static fft_state *make_fft_state(chan_info *cp, bool force_recalc)
     {
       if ((cp->zero_pad == 0) && (POWER_OF_2_P(cp->transform_size)))
 	fftsize = cp->transform_size;
-      else fftsize = snd_ipow2((int)(ceil(log((Float)(cp->transform_size * (1 + cp->zero_pad))) / log(2.0))));
+      else fftsize = snd_int_pow2((int)(ceil(log((Float)(cp->transform_size * (1 + cp->zero_pad))) / log(2.0))));
       if (fftsize < 2) fftsize = 2;
       cp->selection_transform_size = 0;
     }
@@ -1139,6 +1140,7 @@ static fft_state *make_fft_state(chan_info *cp, bool force_recalc)
 	  (fs->size == fftsize) &&
 	  (fs->transform_type == cp->transform_type) &&
 	  (fs->wintype == cp->fft_window) &&
+	  ((!(fft_window_alpha_in_use(fs->wintype))) || (fs->alpha == cp->fft_window_alpha)) &&
 	  ((!(fft_window_beta_in_use(fs->wintype))) || (fs->beta == cp->fft_window_beta)) &&
 	  (fs->dBing == cp->fft_log_magnitude) &&
 	  (fs->lfreq == cp->fft_log_frequency) &&
@@ -1166,6 +1168,7 @@ static fft_state *make_fft_state(chan_info *cp, bool force_recalc)
       fs->wavelet_choice = cp->wavelet_type;
       fs->transform_type = cp->transform_type;
       fs->graph_type = cp->transform_graph_type;
+      fs->alpha = cp->fft_window_alpha;
       fs->beta = cp->fft_window_beta;
     }
   fs->done = reuse_old;
@@ -1178,14 +1181,16 @@ static fft_state *make_fft_state(chan_info *cp, bool force_recalc)
 static int last_size = 0, last_zero = 0;
 static mus_fft_window_t last_wintype = MUS_RECTANGULAR_WINDOW;
 static Float last_beta = 0.0;
+static Float last_alpha = 0.0;
 static Float *last_window = NULL;
 
-static fft_info *make_fft_info(int size, mus_fft_window_t window, Float beta)
+static fft_info *make_fft_info(int size, mus_fft_window_t window, Float alpha, Float beta)
 {
   fft_info *fp;
   fp = (fft_info *)CALLOC(1, sizeof(fft_info));
   fp->size = size;
   fp->window = window;
+  fp->alpha = alpha;
   fp->beta = beta;
   fp->xlabel = NULL;
   fp->data = (Float *)CALLOC(size + 1, sizeof(Float)); /*  + 1 for complex storage or starts at 1 or something */
@@ -1224,7 +1229,7 @@ static void one_fft(fft_state *fs)
       fp = cp->fft;
       if (!fp)                              /* associated channel hasn't done any ffts yet, so there's no struct */
 	{
-	  cp->fft = make_fft_info(fs->size, fs->wintype, 0.0);
+	  cp->fft = make_fft_info(fs->size, fs->wintype, fs->alpha, fs->beta); /* TODO: beta arg was 0.0 here? 20-Dec-05 */
 	  fp = cp->fft;
 	}
       else
@@ -1244,14 +1249,20 @@ static void one_fft(fft_state *fs)
 	  if ((fs->wintype != last_wintype) ||
 	      (fs->size != last_size) ||
 	      (fs->beta != last_beta) ||
+	      (fs->alpha != last_alpha) ||
 	      (fs->pad_zero != last_zero))
 	    {
 	      if (last_window) FREE(last_window);
 	      last_window = (Float *)CALLOC(fs->size, sizeof(Float));
 	      if (cp->selection_transform_size > 0)
-		mus_make_fft_window_with_window(fs->wintype, cp->selection_transform_size, fs->beta * beta_maxes[fs->wintype], last_window);
-	      else mus_make_fft_window_with_window(fs->wintype, cp->transform_size, fs->beta * beta_maxes[fs->wintype], last_window);
+		mus_make_fft_window_with_window(fs->wintype, cp->selection_transform_size, 
+						fs->beta * beta_maxes[fs->wintype], 
+						fs->alpha, last_window);
+	      else mus_make_fft_window_with_window(fs->wintype, cp->transform_size, 
+						   fs->beta * beta_maxes[fs->wintype], 
+						   fs->alpha, last_window);
 	      last_size = fs->size;
+	      last_alpha = fs->alpha;
 	      last_beta = fs->beta;
 	      last_wintype = fs->wintype;
 	      last_zero = fs->pad_zero;
@@ -1424,7 +1435,7 @@ static sono_slice_t set_up_sonogram(sonogram_state *sg)
       si = (sono_info *)CALLOC(1, sizeof(sono_info));
       cp->sonogram_data = si;
       si->total_bins = sg->spectrum_size;
-      si->total_slices = snd_2pow2(sg->outlim);
+      si->total_slices = snd_to_int_pow2(sg->outlim);
       si->begs = (off_t *)CALLOC(si->total_slices, sizeof(off_t));
       si->data = (Float **)CALLOC(si->total_slices, sizeof(Float *));
       for (i = 0; i < si->total_slices; i++) si->data[i] = (Float *)CALLOC(si->total_bins, sizeof(Float));
@@ -1439,7 +1450,7 @@ static sono_slice_t set_up_sonogram(sonogram_state *sg)
 	      FREE(si->data[i]); 
 	      si->data[i] = NULL;
 	    }
-	tempsize = snd_2pow2(sg->outlim);
+	tempsize = snd_to_int_pow2(sg->outlim);
 	if (si->total_slices < tempsize) 
 	  {
 	    FREE(si->data);

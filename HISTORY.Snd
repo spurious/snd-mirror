@@ -4,6 +4,8 @@ Snd change log
 2006 ----------------------------------------------------------------
 
   19-Dec:    analog-filter.scm: Butterworth, Chebyshev, inverse-Chebyshev, Bessel(-Thompson), Elliptic filters.
+             new fft windows: samaraki and ultraspherical (related to the dolph-chebyshev window).
+	     fft-window-alpha (ultraspherical xmu parameter).
   5-Dec:     snd_pd_external.c and other changes for Pd, thanks to Kjetil.
              sinc-train (clm.html), reverse-by-blocks and reverse-within-blocks (examp.scm), pulse-voice (examp.scm).
   28-Nov:    snd 7.17.

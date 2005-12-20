@@ -156,6 +156,7 @@ void snd_set_global_defaults(bool need_cleanup)
   ss->Transform_Size = DEFAULT_TRANSFORM_SIZE;
   ss->Minibuffer_History_Length = DEFAULT_MINIBUFFER_HISTORY_LENGTH;
   ss->Fft_Window = DEFAULT_FFT_WINDOW;
+  ss->Fft_Window_Alpha = DEFAULT_FFT_WINDOW_ALPHA;
   ss->Fft_Window_Beta = DEFAULT_FFT_WINDOW_BETA;
   ss->Transform_Graph_Type = DEFAULT_TRANSFORM_GRAPH_TYPE;
   ss->Sinc_Width = DEFAULT_SINC_WIDTH;

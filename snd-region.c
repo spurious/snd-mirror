@@ -1091,7 +1091,7 @@ void save_region_backpointer(snd_info *sp)
     }
 }
 
-io_error_t save_region(int rg, const char *name, int type, int format, int srate, const char *comment)
+io_error_t save_region(int rg, const char *name, int type, int format, const char *comment)
 {
   region *r;
   off_t oloc, iloc, ioff, frames, cursamples;
@@ -1524,7 +1524,7 @@ using data format (default depends on machine byte order), header type (" S_mus_
 	}
     }
   redirect_snd_error_to(save_region_to_xen_error, NULL);
-  save_region(rg, name, header_type, data_format, region_srate(rg), com);
+  save_region(rg, name, header_type, data_format, com);
   redirect_snd_error_to(NULL, NULL);
   if (name) FREE(name);
   return(args[orig_arg[0] - 1]); /* -> filename, parallel save-selection */

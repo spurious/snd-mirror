@@ -432,7 +432,8 @@
 	   (sizes (list 16 64 256 1024 4096 16384 65536 262144 1048576))
 	   (windows (list rectangular-window hann-window welch-window parzen-window bartlett-window hamming-window blackman2-window 
 			  blackman3-window blackman4-window exponential-window riemann-window kaiser-window cauchy-window 
-			  poisson-window gaussian-window tukey-window dolph-chebyshev-window hann-poisson-window connes-window))
+			  poisson-window gaussian-window tukey-window dolph-chebyshev-window hann-poisson-window connes-window
+			  samaraki-window ultraspherical-window))
 	   (types (list fourier-transform wavelet-transform autocorrelation cepstrum walsh-transform haar-transform))
 	   
 	   (fft-popup-menu #f)
@@ -515,7 +516,8 @@
 				      (lambda (w data) 
 					(set! (fft-window graph-popup-snd (choose-chan)) val))))
 			      (list "Rectangular" "Hann" "Welch" "Parzen" "Bartlett" "Hamming" "Blackman2" "Blackman3" "Blackman4"
-				    "Exponential" "Riemann" "Kaiser" "Cauchy" "Poisson" "Gaussian" "Tukey" "Dolph-Chebyshev" "Hann-Poisson" "Connes")
+				    "Exponential" "Riemann" "Kaiser" "Cauchy" "Poisson" "Gaussian" "Tukey" "Dolph-Chebyshev" "Hann-Poisson" 
+				    "Connes" "Samaraki" "Ultraspherical")
 			      windows)
 			 'fft-windows)))
 		(list "Transform type"

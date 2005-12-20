@@ -311,11 +311,12 @@ static void init_keywords(void)
 
 /* ---------------- AM and simple stuff ---------------- */
 
-static char *FFT_WINDOW_CONSTANTS[19] = {S_rectangular_window, S_hann_window, S_welch_window, S_parzen_window, S_bartlett_window,
-					 S_hamming_window, S_blackman2_window, S_blackman3_window, S_blackman4_window,
-					 S_exponential_window, S_riemann_window, S_kaiser_window, S_cauchy_window,
-					 S_poisson_window, S_gaussian_window, S_tukey_window, S_dolph_chebyshev_window,
-					 S_connes_window, S_hann_poisson_window
+static char *FFT_WINDOW_CONSTANTS[MUS_NUM_WINDOWS] = 
+    {S_rectangular_window, S_hann_window, S_welch_window, S_parzen_window, S_bartlett_window,
+     S_hamming_window, S_blackman2_window, S_blackman3_window, S_blackman4_window,
+     S_exponential_window, S_riemann_window, S_kaiser_window, S_cauchy_window,
+     S_poisson_window, S_gaussian_window, S_tukey_window, S_dolph_chebyshev_window,
+     S_hann_poisson_window, S_connes_window, S_samaraki_window, S_ultraspherical_window
 };
 
 char *mus_fft_window_name(mus_fft_window_t i) {return(FFT_WINDOW_CONSTANTS[(int)i]);}
@@ -5947,9 +5948,11 @@ void mus_xen_init(void)
   #define H_poisson_window         "window based on exp(-angle)"
   #define H_gaussian_window        "window based on exp(-sqr(angle))"
   #define H_tukey_window           "window based on truncated cosine"
-  #define H_dolph_chebyshev_window "window from inverse fft"
+  #define H_dolph_chebyshev_window "window from inverse fft (using Chebyshev Tn)"
   #define H_connes_window          "triangle window squared twice"
   #define H_hann_poisson_window    "poisson window * hann window"
+  #define H_samaraki_window        "window from inverse fft (using Chebyshev Un)"
+  #define H_ultraspherical_window  "window from inverse fft (using Ultraspherical Cn)"
 
   XEN_DEFINE_CONSTANT(S_rectangular_window,     MUS_RECTANGULAR_WINDOW,     H_rectangular_window);
   XEN_DEFINE_CONSTANT(S_hann_window,            MUS_HANN_WINDOW,            H_hann_window);
@@ -5970,6 +5973,8 @@ void mus_xen_init(void)
   XEN_DEFINE_CONSTANT(S_dolph_chebyshev_window, MUS_DOLPH_CHEBYSHEV_WINDOW, H_dolph_chebyshev_window);
   XEN_DEFINE_CONSTANT(S_connes_window,          MUS_CONNES_WINDOW,          H_connes_window);
   XEN_DEFINE_CONSTANT(S_hann_poisson_window,    MUS_HANN_POISSON_WINDOW,    H_hann_poisson_window);
+  XEN_DEFINE_CONSTANT(S_samaraki_window,        MUS_SAMARAKI_WINDOW,        H_samaraki_window);
+  XEN_DEFINE_CONSTANT(S_ultraspherical_window,  MUS_ULTRASPHERICAL_WINDOW,  H_ultraspherical_window);
 
   XEN_DEFINE_CONSTANT(S_mus_interp_linear,      MUS_INTERP_LINEAR,          "locsig/delay linear interpolation");
   XEN_DEFINE_CONSTANT(S_mus_interp_sinusoidal,  MUS_INTERP_SINUSOIDAL,      "locsig sinusoidal interpolation");
@@ -6530,6 +6535,7 @@ the closer the radius is to 1.0, the narrower the resonance."
 	       S_rectangular_window,
 	       S_riemann_window,
 	       S_ring_modulate,
+	       S_samaraki_window,
 	       S_sample_to_file,
 	       S_sample_to_file_p,
 	       S_sample_to_frame,
@@ -6561,6 +6567,7 @@ the closer the radius is to 1.0, the narrower the resonance."
 	       S_two_pole_p,
 	       S_two_zero,
 	       S_two_zero_p,
+	       S_ultraspherical_window,
 	       S_wave_train,
 	       S_wave_train_p,
 	       S_waveshape,

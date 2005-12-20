@@ -2,10 +2,12 @@
 #define CLM_H
 
 #define MUS_VERSION 3
-#define MUS_REVISION 19
-#define MUS_DATE "1-Nov-05"
+#define MUS_REVISION 20
+#define MUS_DATE "20-Dec-05"
 
 /*
+ * 20-Dec:     samaraki and ultraspherical windows.
+ *               this required a non-backwards-compatible additional argument in mus_make_fft_window_with_window.
  * 1-Nov:      mus_filter_set_x|ycoeffs, mus_filter_set_order (needed by Snd).
  * 1-May:      mus-scaler|feedback ok with delay and average.
  * 18-Apr:     mus_set_environ.
@@ -234,18 +236,18 @@ typedef struct mus_any_class {
 } mus_any_class;
 
 typedef enum {MUS_INTERP_NONE, MUS_INTERP_LINEAR, MUS_INTERP_SINUSOIDAL, MUS_INTERP_ALL_PASS, 
-	      MUS_INTERP_LAGRANGE, MUS_INTERP_BEZIER, MUS_INTERP_HERMITE} mus_interp_t;
+	      MUS_INTERP_LAGRANGE, MUS_INTERP_BEZIER, MUS_INTERP_HERMITE, MUS_NUM_INTERPS} mus_interp_t;
 
 typedef enum {MUS_RECTANGULAR_WINDOW, MUS_HANN_WINDOW, MUS_WELCH_WINDOW, MUS_PARZEN_WINDOW, MUS_BARTLETT_WINDOW,
 	      MUS_HAMMING_WINDOW, MUS_BLACKMAN2_WINDOW, MUS_BLACKMAN3_WINDOW, MUS_BLACKMAN4_WINDOW,
 	      MUS_EXPONENTIAL_WINDOW, MUS_RIEMANN_WINDOW, MUS_KAISER_WINDOW, MUS_CAUCHY_WINDOW, MUS_POISSON_WINDOW,
 	      MUS_GAUSSIAN_WINDOW, MUS_TUKEY_WINDOW, MUS_DOLPH_CHEBYSHEV_WINDOW, MUS_HANN_POISSON_WINDOW, 
-	      MUS_CONNES_WINDOW} mus_fft_window_t;
+	      MUS_CONNES_WINDOW, MUS_SAMARAKI_WINDOW, MUS_ULTRASPHERICAL_WINDOW, MUS_NUM_WINDOWS} mus_fft_window_t;
 
 typedef enum {MUS_CHEBYSHEV_OBSOLETE_KIND, MUS_CHEBYSHEV_FIRST_KIND, MUS_CHEBYSHEV_SECOND_KIND} mus_polynomial_t;
 
-#define MUS_INTERP_TYPE_OK(Interp) ((Interp) <= MUS_INTERP_HERMITE)
-#define MUS_FFT_WINDOW_OK(Window) ((Window) <= MUS_CONNES_WINDOW)
+#define MUS_INTERP_TYPE_OK(Interp) ((Interp) <= MUS_NUM_INTERPS)
+#define MUS_FFT_WINDOW_OK(Window) ((Window) < MUS_NUM_WINDOWS)
 #if defined(__GNUC__) && (!(defined(__cplusplus)))
   #define MUS_RUN(GEN, ARG_1, ARG_2) ({ mus_any *_clm_h_1 = (mus_any *)(GEN); \
                                        ((*((_clm_h_1->core)->run))(_clm_h_1, ARG_1, ARG_2)); })
@@ -591,7 +593,7 @@ void mus_fft(Float *rl, Float *im, int n, int is);
 void mus_fftw(Float *rl, int n, int dir);
 #endif
 Float *mus_make_fft_window(mus_fft_window_t type, int size, Float beta);
-Float *mus_make_fft_window_with_window(mus_fft_window_t type, int size, Float beta, Float *window);
+Float *mus_make_fft_window_with_window(mus_fft_window_t type, int size, Float beta, Float mu, Float *window);
 Float *mus_convolution(Float* rl1, Float* rl2, int n);
 void mus_convolve_files(const char *file1, const char *file2, Float maxamp, const char *output_file);
 

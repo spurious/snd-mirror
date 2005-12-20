@@ -3547,9 +3547,10 @@ static void transform_type_from_text(prefs_info *prf)
 
 /* -------- fft-window -------- */
 
-static const char *fft_windows[NUM_FFT_WINDOWS] = 
+static const char *fft_windows[MUS_NUM_WINDOWS] = 
   {"Rectangular", "Hann", "Welch", "Parzen", "Bartlett", "Hamming", "Blackman2", "Blackman3", "Blackman4",
-   "Exponential", "Riemann", "Kaiser", "Cauchy", "Poisson", "Gaussian", "Tukey", "Dolph-Chebyshev", "Hann-Poisson", "Connes"};
+   "Exponential", "Riemann", "Kaiser", "Cauchy", "Poisson", "Gaussian", "Tukey", "Dolph-Chebyshev", "Hann-Poisson", "Connes",
+   "Samaraki", "Ultraspherical"};
 
 static list_completer_info *fft_window_completer_info = NULL;
 
@@ -3565,8 +3566,8 @@ static char *fft_window_completer(char *text, void *data)
       fft_window_completer_info = (list_completer_info *)CALLOC(1, sizeof(list_completer_info));
       fft_window_completer_info->exact_match = false;
       fft_window_completer_info->values = (char **)fft_windows;
-      fft_window_completer_info->num_values = NUM_FFT_WINDOWS;
-      fft_window_completer_info->values_size = NUM_FFT_WINDOWS;
+      fft_window_completer_info->num_values = MUS_NUM_WINDOWS;
+      fft_window_completer_info->values_size = MUS_NUM_WINDOWS;
     }
   return(list_completer(text, (void *)fft_window_completer_info));
 }
@@ -3574,7 +3575,7 @@ static char *fft_window_completer(char *text, void *data)
 static void fft_window_from_menu(prefs_info *prf, char *value)
 {
   int i;
-  for (i = 0; i < NUM_FFT_WINDOWS; i++)
+  for (i = 0; i < MUS_NUM_WINDOWS; i++)
     if (strcmp(value, fft_windows[i]) == 0)
       {
 	in_set_fft_window((mus_fft_window_t)i);
@@ -3597,7 +3598,7 @@ static void fft_window_from_text(prefs_info *prf)
       if (snd_strlen(trimmed_str) > 0)
 	{
 	  int curpos = -1;
-	  for (i = 0; i < NUM_FFT_WINDOWS; i++)
+	  for (i = 0; i < MUS_NUM_WINDOWS; i++)
 	    if (STRCMP(trimmed_str, fft_windows[i]) == 0)
 	      {
 		curpos = i;
@@ -5543,7 +5544,7 @@ widget_t start_preferences_dialog(void)
 
     current_sep = make_inter_variable_separator(fft_box, prf->label);
     prf = prefs_row_with_list("data window", S_fft_window, fft_windows[(int)fft_window(ss)],
-			      fft_windows, NUM_FFT_WINDOWS,
+			      fft_windows, MUS_NUM_WINDOWS,
 			      fft_box, current_sep,
 			      fft_window_from_text,
 			      fft_window_completer, NULL,

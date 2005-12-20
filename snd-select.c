@@ -760,7 +760,7 @@ io_error_t save_selection(const char *ofile, int type, int format, int srate, co
       bool copy_ok = false;
       bps = mus_bytes_per_sample(format);
       num = dur * bps * chans;
-      no_space = disk_space_p(sp, num, ofile);
+      no_space = disk_space_p(num, ofile);
       if (no_space != DISK_SPACE_OK)
 	{
 	  snd_close(ofd, ofile);

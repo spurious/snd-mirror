@@ -495,6 +495,7 @@ void save_options(FILE *fd)
   if (audio_input_device(ss) != DEFAULT_AUDIO_INPUT_DEVICE) pss_sd(fd, S_audio_input_device, audio_input_device(ss));
   if (audio_output_device(ss) != DEFAULT_AUDIO_OUTPUT_DEVICE) pss_sd(fd, S_audio_output_device, audio_output_device(ss));
 
+  if (fneq(fft_window_alpha(ss), DEFAULT_FFT_WINDOW_ALPHA)) pss_sf(fd, S_fft_window_alpha, fft_window_alpha(ss));
   if (fneq(fft_window_beta(ss), DEFAULT_FFT_WINDOW_BETA)) pss_sf(fd, S_fft_window_beta, fft_window_beta(ss));
   if (fneq(min_dB(ss), DEFAULT_MIN_DB)) pss_sf(fd, S_min_dB, min_dB(ss));
   if (fneq(log_freq_start(ss), DEFAULT_LOG_FREQ_START)) pss_sf(fd, S_log_freq_start, log_freq_start(ss));
@@ -906,6 +907,7 @@ static void save_sound_state (snd_info *sp, void *ptr)
       if (fneq(cp->spectro_z_scale, spectro_z_scale(ss))) pcp_sf(fd, S_spectro_z_scale, cp->spectro_z_scale, chan);
       if (fneq(cp->spectro_cutoff, spectro_cutoff(ss))) pcp_sf(fd, S_spectro_cutoff, cp->spectro_cutoff, chan);
       if (fneq(cp->spectro_start, spectro_start(ss))) pcp_sf(fd, S_spectro_start, cp->spectro_start, chan);
+      if (fneq(cp->fft_window_alpha, fft_window_alpha(ss))) pcp_sf(fd, S_fft_window_alpha, cp->fft_window_alpha, chan);
       if (fneq(cp->fft_window_beta, fft_window_beta(ss))) pcp_sf(fd, S_fft_window_beta, cp->fft_window_beta, chan);
       if (cp->spectro_hop != spectro_hop(ss)) pcp_sd(fd, S_spectro_hop, cp->spectro_hop, chan);
       if (cp->transform_size != transform_size(ss)) pcp_sd(fd, S_transform_size, cp->transform_size, chan);

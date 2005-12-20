@@ -256,6 +256,7 @@ void chans_field(fcp_t field, Float val)
 	    case FCP_Z_SCALE: sp->chans[j]->spectro_z_scale = val;                       break;
 	    case FCP_START:   sp->chans[j]->spectro_start = mus_fclamp(0.0, val, 1.0);   break; 
 	    case FCP_CUTOFF:  sp->chans[j]->spectro_cutoff = mus_fclamp(0.0, val, 1.0);  break;
+	    case FCP_ALPHA:   sp->chans[j]->fft_window_alpha = mus_fclamp(0.0, val, 10.0); break;
 	    case FCP_BETA:    sp->chans[j]->fft_window_beta = mus_fclamp(0.0, val, 1.0); break;
 	    case FCP_BEATS:   if (val > 0.0) sp->chans[j]->beats_per_minute = val;       break;
 	    }
@@ -4388,7 +4389,7 @@ typedef enum {CP_GRAPH_TRANSFORM_P, CP_GRAPH_TIME_P, CP_FRAMES, CP_CURSOR, CP_GR
 	      CP_MIN_DB, CP_SPECTRO_X_ANGLE, CP_SPECTRO_Y_ANGLE, CP_SPECTRO_Z_ANGLE, CP_SPECTRO_X_SCALE, CP_SPECTRO_Y_SCALE, CP_SPECTRO_Z_SCALE,
 	      CP_SPECTRO_CUTOFF, CP_SPECTRO_START, CP_FFT_WINDOW_BETA, CP_AP_SX, CP_AP_SY, CP_AP_ZX, CP_AP_ZY, CP_MAXAMP, CP_EDPOS_MAXAMP,
 	      CP_BEATS_PER_MINUTE, CP_EDPOS_CURSOR, CP_SHOW_GRID, CP_SHOW_SONOGRAM_CURSOR, CP_GRID_DENSITY, CP_MAXAMP_POSITION,
-	      CP_EDPOS_MAXAMP_POSITION, CP_BEATS_PER_MEASURE
+	      CP_EDPOS_MAXAMP_POSITION, CP_BEATS_PER_MEASURE, CP_FFT_WINDOW_ALPHA
 } cp_field_t;
 
 static XEN cp_edpos;
@@ -4554,6 +4555,7 @@ static XEN channel_get(XEN snd_n, XEN chn_n, cp_field_t fld, char *caller)
 	    case CP_SPECTRO_Z_SCALE:  return(C_TO_XEN_DOUBLE(cp->spectro_z_scale));        break;
 	    case CP_SPECTRO_CUTOFF:   return(C_TO_XEN_DOUBLE(cp->spectro_cutoff));         break;
 	    case CP_SPECTRO_START:    return(C_TO_XEN_DOUBLE(cp->spectro_start));          break;
+	    case CP_FFT_WINDOW_ALPHA: return(C_TO_XEN_DOUBLE(cp->fft_window_alpha));       break;
 	    case CP_FFT_WINDOW_BETA:  return(C_TO_XEN_DOUBLE(cp->fft_window_beta));        break;
 	    case CP_BEATS_PER_MINUTE: return(C_TO_XEN_DOUBLE(cp->beats_per_minute));       break;
 	    case CP_BEATS_PER_MEASURE: return(C_TO_XEN_INT(cp->beats_per_measure));        break;
@@ -4961,6 +4963,11 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, cp_field_t fld, char *calle
       cp->spectro_start = XEN_TO_C_DOUBLE(on); /* range checked already */
       calculate_fft(cp); 
       return(C_TO_XEN_DOUBLE(cp->spectro_start));   
+      break;
+    case CP_FFT_WINDOW_ALPHA:        
+      cp->fft_window_alpha = XEN_TO_C_DOUBLE(on);
+      calculate_fft(cp); 
+      return(C_TO_XEN_DOUBLE(cp->fft_window_alpha));             
       break;
     case CP_FFT_WINDOW_BETA:        
       cp->fft_window_beta = XEN_TO_C_DOUBLE(on); /* range checked already */
@@ -5562,6 +5569,30 @@ static XEN g_set_fft_window_beta(XEN val, XEN snd, XEN chn)
 
 WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_fft_window_beta_reversed, g_set_fft_window_beta)
 
+static XEN g_fft_window_alpha(XEN snd, XEN chn) 
+{
+  #define H_fft_window_alpha "(" S_fft_window_alpha " (snd #f) (chn #f)): fft window alpha parameter value"
+  if (XEN_BOUND_P(snd))
+    return(channel_get(snd, chn, CP_FFT_WINDOW_ALPHA, S_fft_window_alpha));
+  return(C_TO_XEN_DOUBLE(fft_window_alpha(ss)));
+}
+
+/* TODO: does fft alpha need bounds check? */
+static XEN g_set_fft_window_alpha(XEN val, XEN snd, XEN chn) 
+{
+  Float alpha;
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_1, S_setB S_fft_window_alpha, "a number"); 
+  alpha = XEN_TO_C_DOUBLE(val);
+  if ((alpha < 0.0) || (alpha > 10.0))
+    XEN_OUT_OF_RANGE_ERROR(S_setB S_fft_window_alpha, 1, val, "~A, must be between 0.0 and 10.0");
+  if (XEN_BOUND_P(snd))
+    return(channel_set(snd, chn, val, CP_FFT_WINDOW_ALPHA, S_setB S_fft_window_alpha));
+  set_fft_window_alpha(alpha);
+  return(C_TO_XEN_DOUBLE(fft_window_alpha(ss)));
+}
+
+WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_fft_window_alpha_reversed, g_set_fft_window_alpha)
+
 static XEN g_spectro_cutoff(XEN snd, XEN chn) 
 {
   #define H_spectro_cutoff "(" S_spectro_cutoff " (snd #f) (chn #f)): max frequency shown in spectra (1.0 = srate/2)"
@@ -6003,7 +6034,7 @@ static XEN g_set_transform_size(XEN val, XEN snd, XEN chn)
   if (len <= 0)
     XEN_OUT_OF_RANGE_ERROR(S_setB S_transform_size, 1, val, "size ~A, but must be > 0");
   if (!(POWER_OF_2_P(len)))
-    len = snd_ipow2((int)(log(len + 1) / log(2.0)));
+    len = snd_int_pow2((int)(log(len + 1) / log(2.0)));
   if (len <= 0) return(XEN_FALSE);
   if (XEN_BOUND_P(snd))
     return(channel_set(snd, chn, val, CP_TRANSFORM_SIZE, S_setB S_transform_size));
@@ -6044,7 +6075,8 @@ choices are: " S_rectangular_window ", " S_hann_window ", " S_welch_window ", " 
 " S_bartlett_window ", " S_hamming_window ", " S_blackman2_window ", " S_blackman3_window ", \
 " S_blackman4_window ", " S_exponential_window ", " S_riemann_window ", " S_kaiser_window ", \
 " S_cauchy_window ", " S_poisson_window ", " S_gaussian_window ", " S_tukey_window ", \
-" S_dolph_chebyshev_window " (if GSL is loaded), " S_hann_poisson_window ", " S_connes_window "."
+" S_dolph_chebyshev_window ", " S_hann_poisson_window ", " S_connes_window ", \
+" S_samaraki_window ", and " S_ultraspherical_window "."
 
   if (XEN_BOUND_P(snd))
     return(channel_get(snd, chn, CP_FFT_WINDOW, S_fft_window));
@@ -7108,6 +7140,8 @@ XEN_ARGIFY_2(g_spectro_z_angle_w, g_spectro_z_angle)
 XEN_ARGIFY_3(g_set_spectro_z_angle_w, g_set_spectro_z_angle)
 XEN_ARGIFY_2(g_spectro_z_scale_w, g_spectro_z_scale)
 XEN_ARGIFY_3(g_set_spectro_z_scale_w, g_set_spectro_z_scale)
+XEN_ARGIFY_2(g_fft_window_alpha_w, g_fft_window_alpha)
+XEN_ARGIFY_3(g_set_fft_window_alpha_w, g_set_fft_window_alpha)
 XEN_ARGIFY_2(g_fft_window_beta_w, g_fft_window_beta)
 XEN_ARGIFY_3(g_set_fft_window_beta_w, g_set_fft_window_beta)
 XEN_ARGIFY_2(g_spectro_hop_w, g_spectro_hop)
@@ -7251,6 +7285,8 @@ XEN_ARGIFY_2(g_update_transform_graph_w, g_update_transform_graph)
 #define g_set_spectro_z_scale_w g_set_spectro_z_scale
 #define g_fft_window_beta_w g_fft_window_beta
 #define g_set_fft_window_beta_w g_set_fft_window_beta
+#define g_fft_window_alpha_w g_fft_window_alpha
+#define g_set_fft_window_alpha_w g_set_fft_window_alpha
 #define g_spectro_hop_w g_spectro_hop
 #define g_set_spectro_hop_w g_set_spectro_hop
 #define g_transform_size_w g_transform_size
@@ -7461,6 +7497,9 @@ void g_init_chn(void)
   
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_fft_window_beta, g_fft_window_beta_w, H_fft_window_beta,
 					    S_setB S_fft_window_beta, g_set_fft_window_beta_w, g_set_fft_window_beta_reversed, 0, 2, 1, 2);
+  
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_fft_window_alpha, g_fft_window_alpha_w, H_fft_window_alpha,
+					    S_setB S_fft_window_alpha, g_set_fft_window_alpha_w, g_set_fft_window_alpha_reversed, 0, 2, 1, 2);
   
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_spectro_hop, g_spectro_hop_w, H_spectro_hop,
 					    S_setB S_spectro_hop, g_set_spectro_hop_w, g_set_spectro_hop_reversed, 0, 2, 1, 2);

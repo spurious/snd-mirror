@@ -1,35 +1,35 @@
 ;;; Snd tests
 ;;;
-;;;  test 0: constants                          [440]
-;;;  test 1: defaults                           [1011]
-;;;  test 2: headers                            [1211]
-;;;  test 3: variables                          [1515]
-;;;  test 4: sndlib                             [1979]
-;;;  test 5: simple overall checks              [3974]
-;;;  test 6: vcts                               [11349]
-;;;  test 7: colors                             [11659]
-;;;  test 8: clm                                [12161]
-;;;  test 9: mix                                [19620]
-;;;  test 10: marks                             [22726]
-;;;  test 11: dialogs                           [23429]
-;;;  test 12: extensions                        [23810]
-;;;  test 13: menus, edit lists, hooks, etc     [24238]
-;;;  test 14: all together now                  [25630]
-;;;  test 15: chan-local vars                   [26697]
-;;;  test 16: regularized funcs                 [27959]
-;;;  test 17: dialogs and graphics              [32325]
-;;;  test 18: enved                             [32400]
-;;;  test 19: save and restore                  [32420]
-;;;  test 20: transforms                        [33901]
-;;;  test 21: new stuff                         [35562]
-;;;  test 22: run                               [36438]
-;;;  test 23: with-sound                        [41939]
-;;;  test 24: user-interface                    [42956]
-;;;  test 25: X/Xt/Xm                           [46091]
-;;;  test 26: Gtk                               [50604]
-;;;  test 27: GL                                [54656]
-;;;  test 28: errors                            [54766]
-;;;  test all done                              [56892]
+;;;  test 0: constants                          [442]
+;;;  test 1: defaults                           [1013]
+;;;  test 2: headers                            [1213]
+;;;  test 3: variables                          [1517]
+;;;  test 4: sndlib                             [1981]
+;;;  test 5: simple overall checks              [3986]
+;;;  test 6: vcts                               [11362]
+;;;  test 7: colors                             [11672]
+;;;  test 8: clm                                [12174]
+;;;  test 9: mix                                [20239]
+;;;  test 10: marks                             [23345]
+;;;  test 11: dialogs                           [24048]
+;;;  test 12: extensions                        [24429]
+;;;  test 13: menus, edit lists, hooks, etc     [24857]
+;;;  test 14: all together now                  [26249]
+;;;  test 15: chan-local vars                   [27316]
+;;;  test 16: regularized funcs                 [28590]
+;;;  test 17: dialogs and graphics              [32956]
+;;;  test 18: enved                             [33031]
+;;;  test 19: save and restore                  [33051]
+;;;  test 20: transforms                        [34536]
+;;;  test 21: new stuff                         [36197]
+;;;  test 22: run                               [37073]
+;;;  test 23: with-sound                        [42574]
+;;;  test 24: user-interface                    [43622]
+;;;  test 25: X/Xt/Xm                           [46759]
+;;;  test 26: Gtk                               [51272]
+;;;  test 27: GL                                [55324]
+;;;  test 28: errors                            [55434]
+;;;  test all done                              [57561]
 ;;;
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 ;;; need all html example code in autotests
@@ -498,6 +498,8 @@
 	'poisson-window poisson-window 13
 	'rectangular-window rectangular-window 0 
 	'riemann-window riemann-window 10 
+	'samaraki-window samaraki-window 19
+	'ultraspherical-window ultraspherical-window 20
 	'graph-as-sonogram graph-as-sonogram 1
 	'graph-as-spectrogram graph-as-spectrogram 2 
         'graph-once graph-once 0
@@ -748,6 +750,9 @@
       (set! (eps-size) (eps-size))
       (if (fneq (eps-size)  1.0)
 	  (snd-display ";eps-size set def: ~A" (eps-size)))
+      (set! (fft-window-alpha) (fft-window-alpha))
+      (if (fneq (fft-window-alpha)  0.0 )
+	  (snd-display ";fft-window-alpha set def: ~A" (fft-window-alpha)))
       (set! (fft-window-beta) (fft-window-beta))
       (if (fneq (fft-window-beta)  0.0 )
 	  (snd-display ";fft-window-beta set def: ~A" (fft-window-beta)))
@@ -1099,6 +1104,7 @@
 	'expand-control-length (expand-control-length) 0.15
 	'expand-control-ramp (expand-control-ramp) 0.4
 	'expand-control? (without-errors (expand-control?)) 'no-such-sound
+	'fft-window-alpha (fft-window-alpha) 0.0 
 	'fft-window-beta (fft-window-beta) 0.0 
 	'fft-log-frequency (fft-log-frequency) #f 
 	'fft-log-magnitude (fft-log-magnitude) #f 
@@ -1690,6 +1696,7 @@
 	  (list 'expand-control-length expand-control-length 0.15 0.2)
 	  (list 'expand-control-ramp expand-control-ramp 0.4 0.2)
 	  (list 'expand-control? expand-control? #f #t)
+	  (list 'fft-window-alpha fft-window-alpha 0.0  1.0)
 	  (list 'fft-window-beta fft-window-beta 0.0  0.5)
 	  (list 'fft-log-frequency fft-log-frequency #f #t)
 	  (list 'fft-log-magnitude fft-log-magnitude #f #t)
@@ -1820,6 +1827,7 @@
 	  (list 'expand-control-hop expand-control-hop 0.05 '(-1.0))
 	  (list 'expand-control-length expand-control-length 0.15 '(-1.0 0.0))
 	  (list 'expand-control-ramp expand-control-ramp 0.4 '(-1.0 1.0 123.123))
+	  (list 'fft-window-alpha fft-window-alpha 0.0  '(-1.0 123.123))
 	  (list 'fft-window-beta fft-window-beta 0.0  '(-1.0 123.123))
 	  (list 'transform-size transform-size 512 '(-1 0))
 	  (list 'zero-pad zero-pad 0 '(-1 -123))
@@ -12176,6 +12184,596 @@ EDITS: 5
 (if (not (provided? 'snd-moog.scm)) (load "moog.scm"))
 (if (not (provided? 'snd-mixer.scm)) (load "mixer.scm"))
 (if (not (provided? 'snd-poly.scm)) (load "poly.scm"))
+(if (not (provided? 'snd-analog-filter.scm)) (load "analog-filter.scm"))
+
+(define (analog-filter-tests)
+
+  (define (sweep->bins flt bins)
+    (let ((ind (new-sound "test.snd" mus-next mus-bfloat 22050 1 #f 22050)))
+      (let ((phase 0.0)
+	    (freq 0.0)
+	    (incr (/ pi 22050)))
+	(map-channel 
+	 (lambda (y)
+	   (let ((val (sin phase))) 
+	     (set! phase (+ phase freq)) 
+	     (set! freq (+ freq incr))
+	     (* .5 val)))))
+      (map-channel flt)
+      (let* ((mx (maxamp))
+	     (resp (make-vct bins))
+	     (size (inexact->exact (round (/ 22050 bins)))))
+	(do ((i 0 (1+ i)))
+	    ((= i bins))
+	  (let ((data (channel->vct (* i size) size)))
+	    (vct-set! resp i (vct-peak data))))
+	(close-sound ind)
+	(list mx resp))))
+
+  (define (filter-response-max f1)
+    (let ((mx 0.0)
+	  (signal 1.0))
+      (do ((i 0 (1+ i)))
+	  ((= i 1000))
+	(set! mx (max mx (abs (f1 signal))))
+	(set! signal 0.0))
+      mx))
+
+  (define (filter-equal? f1 f2) ; equalp in clm2xen is too restrictive
+    (and (= (mus-order f1) (mus-order f2))
+	 (vequal (mus-xcoeffs f1) (mus-xcoeffs f2))
+	 (vequal (mus-ycoeffs f1) (mus-ycoeffs f2))))
+
+  ;; ---------------- butterworth tests ----------------
+
+  (let ((poles (list (vct 1.000 1.414 1.000) ; numerous references provide these tables (y[0] is ignored)
+		     (vct 1.000 1.848 1.000 1.000 0.765 1.000)
+		     (vct 1.000 1.932 1.000 1.000 1.414 1.000 1.000 0.518 1.000)
+		     (vct 1.000 1.962 1.000 1.000 1.663 1.000 1.000 1.111 1.000 1.000 0.390 1.000)
+		     (vct 1.000 1.975 1.000 1.000 1.782 1.000 1.000 1.414 1.000 1.000 0.908 1.000 1.000 0.313 1.000))))
+    (do ((i 2 (+ i 2))
+	 (k 0 (1+ k)))
+	((>= i 12))
+      (let ((vals (butterworth-prototype i)))
+	(if (not (vequal (cadr vals) (list-ref poles k)))
+	    (snd-display ";butterworth prototype poles ~A: ~A (~A)" i (cadr vals) (list-ref poles k)))
+	(let ((zeros (make-vct (* (1- i) 3))))
+	  (do ((j 2 (+ j 3)))
+	      ((>= j (* (1- i) 3)))
+	    (vct-set! zeros j 1.0))
+	  (if (not (vequal (car vals) zeros))
+	      (snd-display ";butterworth prototype zeros ~A: ~A (~A)" i (car vals) zeros)))))
+    (do ((cutoff .1 (+ cutoff .1))
+	 (m 0 (1+ m)))
+	((= m 3))
+      (do ((i 2 (+ i 2))
+	   (k 1 (+ k 1)))
+	  ((= i 16))
+	(let ((local (make-butterworth-lowpass i cutoff))
+	      (dsp (make-butter-lp k (* (mus-srate) cutoff))))
+	  (if (not (filter-equal? local dsp))
+	      (snd-display ";butterworth lowpass ~A ~A ~A" cutoff local dsp)))
+	(let ((local (make-butterworth-highpass i cutoff))
+	      (dsp (make-butter-hp k (* (mus-srate) cutoff))))
+	  (if (not (filter-equal? local dsp))
+	      (snd-display ";butterworth highpass ~A ~A ~A" cutoff local dsp)))))
+
+    (let* ((f1 (make-butterworth-lowpass 8 .1))
+	   (vals (sweep->bins f1 10)))
+      (if (fneq (car vals) .5) (snd-display ";butterworth lp 8 max: ~A" (car vals)))
+      (if (not (vequal (cadr vals) (vct 0.500 0.500 0.359 0.014 0.001 0.000 0.000 0.000 0.000 0.000)))
+	  (snd-display ";butterworth lp 8 .1 spect: ~A" (cadr vals))))
+    (let* ((f1 (make-butterworth-lowpass 12 .25))
+	   (vals (sweep->bins f1 10)))
+      (if (fneq (car vals) .5) (snd-display ";butterworth lp 12 max: ~A" (car vals)))
+      (if (not (vequal (cadr vals) (vct 0.500 0.500 0.500 0.500 0.499 0.358 0.010 0.000 0.000 0.000)))
+	  (snd-display ";butterworth lp 12 .25 spect: ~A" (cadr vals))))
+    (let* ((f1 (make-butterworth-lowpass 10 .4))
+	   (vals (sweep->bins f1 10)))
+      (if (fneq (car vals) .5) (snd-display ";butterworth lp 10 max: ~A" (car vals)))
+      (if (not (vequal (cadr vals) (vct 0.500 0.500 0.500 0.500 0.500 0.500 0.500 0.499 0.361 0.001)))
+	  (snd-display ";butterworth lp 10 .4 spect: ~A" (cadr vals))))
+
+    (do ((i 2 (+ i 2)))
+	((= i 12))
+      (do ((j .1 (+ j .1)))
+	  ((>= j .45))
+	(let* ((f1 (make-butterworth-lowpass i j))
+	       (mx (filter-response-max f1)))
+	  (if (> mx 1.0)
+	      (snd-display ";butter low max ~A ~A: ~A" i j mx)))))
+
+    (let* ((f1 (make-butterworth-highpass 8 .1))
+	   (vals (sweep->bins f1 10)))
+      (if (fneq (car vals) .5) (snd-display ";butterworth hp 8 max: ~A" (car vals)))
+      (if (not (vequal (cadr vals) (vct 0.001 0.348 0.500 0.500 0.500 0.500 0.500 0.500 0.500 0.500)))
+	  (snd-display ";butterworth hp 8 .1 spect: ~A" (cadr vals))))
+    (let* ((f1 (make-butterworth-highpass 12 .25))
+	   (vals (sweep->bins f1 10)))
+      (if (fneq (car vals) .5) (snd-display ";butterworth hp 12 max: ~A" (car vals)))
+      (if (not (vequal (cadr vals) (vct 0.000 0.000 0.000 0.011 0.348 0.500 0.500 0.500 0.500 0.500)))
+	  (snd-display ";butterworth hp 12 .25 spect: ~A" (cadr vals))))
+    (let* ((f1 (make-butterworth-highpass 10 .4))
+	   (vals (sweep->bins f1 10)))
+      (if (fneq (car vals) .5) (snd-display ";butterworth hp 10 max: ~A" (car vals)))
+      (if (not (vequal (cadr vals) (vct 0.000 0.000 0.000 0.000 0.000 0.000 0.005 0.343 0.501 0.501)))
+	  (snd-display ";butterworth hp 10 .4 spect: ~A" (cadr vals))))
+
+    (let* ((f1 (make-butterworth-bandpass 4 .1 .2))
+	   (vals (sweep->bins f1 10)))
+      (if (> (abs (- (car vals) .5)) .05) (snd-display ";butterworth bp 4 max: ~A" (car vals)))
+      (if (not (vequal (cadr vals) (vct 0.028 0.350 0.481 0.479 0.346 0.132 0.038 0.009 0.002 0.000)))
+	  (snd-display ";butterworth bp 4 .1 .2 spect: ~A" (cadr vals))))
+    (let* ((f1 (make-butterworth-bandpass 12 .1 .2))
+	   (vals (sweep->bins f1 10)))
+      (if (> (abs (- (car vals) .5)) .05) (snd-display ";butterworth bp 12 max: ~A" (car vals)))
+      (if (not (vequal (cadr vals) (vct 0.006 0.317 0.501 0.500 0.358 0.009 0.000 0.000 0.000 0.000)))
+	  (snd-display ";butterworth bp 12 .1 .2 spect: ~A" (cadr vals))))
+    (let* ((f1 (make-butterworth-bandpass 8 .3 .4))
+	   (vals (sweep->bins f1 10)))
+      (if (> (abs (- (car vals) .5)) .05) (snd-display ";butterworth bp 8 max: ~A" (car vals)))
+      (if (not (vequal (cadr vals) (vct 0.000 0.000 0.000 0.003 0.034 0.344 0.499 0.499 0.353 0.002)))
+	  (snd-display ";butterworth bp 8 .3 .4 spect: ~A" (cadr vals))))
+
+    (do ((i 2 (+ i 2)))
+	((= i 12))
+      (do ((j .1 (+ j .1)))
+	  ((>= j .45))
+	(let* ((f1 (make-butterworth-highpass i j))
+	       (mx (filter-response-max f1)))
+	  (if (> mx 1.0)
+	      (snd-display ";butter high max ~A ~A: ~A" i j mx)))))
+
+    (let* ((f1 (make-butterworth-bandstop 4 .1 .2))
+	   (vals (sweep->bins f1 10)))
+      (if (> (abs (- (car vals) .5)) .05) (snd-display ";butterworth bs 4 max: ~A" (car vals)))
+      (if (not (vequal (cadr vals) (vct 0.500 0.500 0.347 0.339 0.481 0.499 0.500 0.500 0.500 0.500)))
+	  (snd-display ";butterworth bs 4 .1 .2 spect: ~A" (cadr vals))))
+    (let* ((f1 (make-butterworth-bandstop 12 .1 .2))
+	   (vals (sweep->bins f1 10)))
+      (if (> (abs (- (car vals) .5)) .05) (snd-display ";butterworth bs 12 max: ~A" (car vals)))
+      (if (and (not (vequal (cadr vals) (vct 0.503 0.503 0.364 0.334 0.500 0.500 0.500 0.500 0.500 0.500)))
+	       (not (vequal (cadr vals) (vct 0.502 0.503 0.365 0.334 0.500 0.500 0.500 0.500 0.500 0.500))))
+	  (snd-display ";butterworth bs 12 .1 .2 spect: ~A" (cadr vals))))
+    (let* ((f1 (make-butterworth-bandstop 8 .3 .4))
+	   (vals (sweep->bins f1 10)))
+      (if (> (abs (- (car vals) .5)) .05) (snd-display ";butterworth bs 8 max: ~A" (car vals)))
+      (if (not (vequal (cadr vals) (vct 0.500 0.500 0.500 0.500 0.500 0.498 0.354 0.332 0.500 0.500)))
+	  (snd-display ";butterworth bs 8 .3 .4 spect: ~A" (cadr vals))))
+
+
+    ;; ---------------- Chebyshev ----------------
+
+    ;; ripple .01 .1 1 for 2..10 even
+
+    (let ((poles-01 (list (vct 1.000 4.456 10.426)
+			  (vct 1.000 0.822 2.006 1.000 1.984 1.299)
+			  (vct 1.000 0.343 1.372 1.000 0.937 0.939 1.000 1.280 0.506)
+			  (vct 1.000 0.189 1.196 1.000 0.537 0.925 1.000 0.804 0.542 1.000 0.948 0.272)
+			  (vct 1.000 0.119 1.121 1.000 0.347 0.940 1.000 0.540 0.646 1.000 0.680 0.352 1.000 0.754 0.170)))
+	  (zeros    (list (vct 0.000 0.000 1.000)
+			  (vct 0.000 0.000 0.250 0.000 0.000 1.000)
+			  (vct 0.000 0.000 0.062 0.000 0.000 1.000 0.000 0.000 1.000)
+			  (vct 0.000 0.000 0.016 0.000 0.000 1.000 0.000 0.000 1.000 0.000 0.000 1.000)
+			  (vct 0.000 0.000 0.004 0.000 0.000 1.000 0.000 0.000 1.000 0.000 0.000 1.000 0.000 0.000 1.000)))
+	  (poles-1  (list (vct 1.000 2.372 3.314)
+			  (vct 1.000 0.528 1.330 1.000 1.275 0.623)
+			  (vct 1.000 0.229 1.129 1.000 0.627 0.696 1.000 0.856 0.263)
+			  (vct 1.000 0.128 1.069 1.000 0.364 0.799 1.000 0.545 0.416 1.000 0.643 0.146)
+			  (vct 1.000 0.082 1.044 1.000 0.237 0.862 1.000 0.369 0.568 1.000 0.465 0.274 1.000 0.515 0.092)))
+	  (poles-10 (list (vct 1.000 1.098 1.103)
+			  (vct 1.000 0.279 0.987 1.000 0.674 0.279)
+			  (vct 1.000 0.124 0.991 1.000 0.340 0.558 1.000 0.464 0.125)
+			  (vct 1.000 0.070 0.994 1.000 0.199 0.724 1.000 0.298 0.341 1.000 0.352 0.070)
+			  (vct 1.000 0.045 0.996 1.000 0.130 0.814 1.000 0.203 0.521 1.000 0.255 0.227 1.000 0.283 0.045))))
+      (do ((i 2 (+ i 2))
+	   (k 0 (1+ k)))
+	  ((>= i 12))
+	(let ((vals (chebyshev-prototype i .01)))
+	  (if (not (vequal (cadr vals) (list-ref poles-01 k)))
+	      (snd-display ";chebyshev prototype .01 poles ~A: ~A (~A)" i (cadr vals) (list-ref poles-01 k))))
+	(let ((vals (chebyshev-prototype i .1)))
+	  (if (not (vequal (cadr vals) (list-ref poles-1 k)))
+	      (snd-display ";chebyshev prototype .1 poles ~A: ~A (~A)" i (cadr vals) (list-ref poles-1 k))))
+	(let ((vals (chebyshev-prototype i)))
+	  (if (not (vequal (cadr vals) (list-ref poles-10 k)))
+	      (snd-display ";chebyshev prototype 1 poles ~A: ~A (~A)" i (cadr vals) (list-ref poles-10 k)))
+	  (if (not (vequal (car vals) (list-ref zeros k)))
+	      (snd-display ";chebyshev prototype .01 zeros ~A: ~A (~A)" i (car vals) (list-ref zeros k))))))
+
+    (let* ((f1 (make-chebyshev-lowpass 8 .1))
+	   (vals (sweep->bins f1 10)))
+      (if (ffneq (car vals) .51) (snd-display ";chebyshev lp 8 max: ~A" (car vals)))
+      (if (and (not (vequal (cadr vals) (vct 0.508 0.512 0.468 0.001 0.000 0.000 0.000 0.000 0.000 0.000)))
+	       (not (vequal (cadr vals) (vct 0.507 0.512 0.467 0.001 0.000 0.000 0.000 0.000 0.000 0.000))))
+	  (snd-display ";chebyshev lp 8 .1 spect: ~A" (cadr vals))))
+    (let* ((f1 (make-chebyshev-lowpass 12 .25))
+	   (vals (sweep->bins f1 10)))
+      (if (ffneq (car vals) .51) (snd-display ";chebyshev lp 12 max: ~A" (car vals)))
+      (if (not (vequal (cadr vals) (vct 0.509 0.500 0.508 0.508 0.507 0.413 0.000 0.000 0.000 0.000)))
+	  (snd-display ";chebyshev lp 12 .25 spect: ~A" (cadr vals))))
+    (let* ((f1 (make-chebyshev-lowpass 10 .4))
+	   (vals (sweep->bins f1 10)))
+      (if (ffneq (car vals) .51) (snd-display ";chebyshev lp 10 max: ~A" (car vals)))
+      (if (not (vequal (cadr vals) (vct 0.465 0.493 0.509 0.508 0.477 0.507 0.508 0.507 0.431 0.000)))
+	  (snd-display ";chebyshev lp 10 .4 spect: ~A" (cadr vals))))
+
+    (do ((i 2 (+ i 2)))
+	((= i 10))
+      (do ((j .1 (+ j .1)))
+	  ((>= j .45))
+	(let* ((f1 (make-chebyshev-lowpass i j))
+	       (mx (filter-response-max f1)))
+	  (if (> mx 1.0)
+	      (snd-display ";cheby low max ~A ~A: ~A" i j mx)))))
+
+    (let* ((f1 (make-chebyshev-lowpass 8 .1 .01))
+	   (vals (sweep->bins f1 10)))
+      (if (ffneq (car vals) .49) (snd-display ";chebyshev lp 8 .1 .01 max: ~A" (car vals)))
+      (if (not (vequal (cadr vals) (vct 0.492 0.491 0.483 0.006 0.000 0.000 0.000 0.000 0.000 0.000)))
+	  (snd-display ";chebyshev lp 8 .1 .01 spect: ~A" (cadr vals))))
+    (let* ((f1 (make-chebyshev-lowpass 12 .25 .1))
+	   (vals (sweep->bins f1 10)))
+      (if (ffneq (car vals) .49) (snd-display ";chebyshev lp 12 .1 max: ~A" (car vals)))
+      (if (not (vequal (cadr vals) (vct 0.488 0.488 0.488 0.488 0.487 0.403 0.000 0.000 0.000 0.000)))
+	  (snd-display ";chebyshev lp 12 .25 .1 spect: ~A" (cadr vals))))
+    (let* ((f1 (make-chebyshev-lowpass 10 .4 .001))
+	   (vals (sweep->bins f1 10)))
+      (if (ffneq (car vals) .49) (snd-display ";chebyshev lp 10 .001 max: ~A" (car vals)))
+      (if (not (vequal (cadr vals) (vct 0.497 0.497 0.497 0.497 0.497 0.497 0.497 0.497 0.488 0.000)))
+	  (snd-display ";chebyshev lp 10 .4 .001 spect: ~A" (cadr vals))))
+
+    (let* ((f1 (make-chebyshev-highpass 8 .1))
+	   (vals (sweep->bins f1 10)))
+      (if (ffneq (car vals) .55) (snd-display ";chebyshev hp 8 max: ~A" (car vals)))
+      (if (not (vequal (cadr vals) (vct 0.000 0.341 0.551 0.509 0.466 0.501 0.509 0.505 0.481 0.461)))
+	  (snd-display ";chebyshev hp 8 .1 spect: ~A" (cadr vals))))
+    (let* ((f1 (make-chebyshev-highpass 12 .25))
+	   (vals (sweep->bins f1 10)))
+      (if (ffneq (car vals) .55) (snd-display ";chebyshev hp 12 max: ~A" (car vals)))
+      (if (not (vequal (cadr vals) (vct 0.000 0.000 0.000 0.000 0.299 0.554 0.509 0.509 0.500 0.509)))
+	  (snd-display ";chebyshev hp 12 .25 spect: ~A" (cadr vals))))
+    (let* ((f1 (make-chebyshev-highpass 10 .4))
+	   (vals (sweep->bins f1 10)))
+      (if (ffneq (car vals) .78) (snd-display ";chebyshev hp 10 max: ~A" (car vals)))
+      (if (and (not (vequal (cadr vals) (vct 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.297 0.786 0.677)))
+	       (not (vequal (cadr vals) (vct 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.301 0.788 0.660))))
+	  (snd-display ";chebyshev hp 10 .4 spect: ~A" (cadr vals))))
+
+    (let* ((f1 (make-chebyshev-highpass 8 .1 .01))
+	   (vals (sweep->bins f1 10)))
+      (if (ffneq (car vals) .49) (snd-display ";chebyshev hp 8 .1 .01 max: ~A" (car vals)))
+      (if (not (vequal (cadr vals) (vct 0.000 0.498 0.498 0.492 0.491 0.492 0.492 0.492 0.491 0.491)))
+	  (snd-display ";chebyshev hp 8 .1 .01 spect: ~A" (cadr vals))))
+    (let* ((f1 (make-chebyshev-highpass 12 .25 .1))
+	   (vals (sweep->bins f1 10)))
+      (if (ffneq (car vals) .51) (snd-display ";chebyshev hp 12 .1 max: ~A" (car vals)))
+      (if (not (vequal (cadr vals) (vct 0.000 0.000 0.000 0.000 0.453 0.516 0.489 0.489 0.488 0.488)))
+	  (snd-display ";chebyshev hp 12 .25 .1 spect: ~A" (cadr vals))))
+    (let* ((f1 (make-chebyshev-highpass 10 .4 .001))
+	   (vals (sweep->bins f1 10)))
+      (if (ffneq (car vals) .5) (snd-display ";chebyshev hp 10 .001 max: ~A" (car vals)))
+      (if (and (not (vequal (cadr vals) (vct 0.000 0.000 0.000 0.000 0.000 0.000 0.002 0.501 0.504 0.504)))
+	       (not (vequal (cadr vals) (vct 0.000 0.000 0.000 0.000 0.000 0.000 0.002 0.503 0.505 0.504))))
+	  (snd-display ";chebyshev hp 10 .4 .001 spect: ~A" (cadr vals))))
+
+    (do ((i 2 (+ i 2)))
+	((= i 10))
+      (do ((j .1 (+ j .1)))
+	  ((>= j .45))
+	(let* ((f1 (make-chebyshev-highpass i j))
+	       (mx (filter-response-max f1)))
+	  (if (> mx 1.0)
+	      (snd-display ";cheby high max ~A ~A: ~A" i j mx)))))
+
+    (let* ((f1 (make-chebyshev-bandpass 4 .1 .2))
+	   (vals (sweep->bins f1 10)))
+      (if (> (abs (- (car vals) .5)) .05) (snd-display ";chebyshev bp 4 max: ~A" (car vals)))
+      (if (not (vequal (cadr vals) (vct 0.009 0.449 0.509 0.505 0.442 0.065 0.013 0.003 0.000 0.000)))
+	  (snd-display ";chebyshev bp 4 .1 .2 spect: ~A" (cadr vals))))
+    (let* ((f1 (make-chebyshev-bandpass 6 .1 .2))
+	   (vals (sweep->bins f1 10)))
+      (if (> (abs (- (car vals) .5)) .05) (snd-display ";chebyshev bp 6 max: ~A" (car vals)))
+      (if (not (vequal (cadr vals) (vct 0.001 0.376 0.505 0.498 0.412 0.011 0.001 0.000 0.000 0.000)))
+	  (snd-display ";chebyshev bp 6 .1 .2 spect: ~A" (cadr vals))))
+    (let* ((f1 (make-chebyshev-bandpass 8 .3 .4))
+	   (vals (sweep->bins f1 10)))
+      (if (> (abs (- (car vals) .5)) .05) (snd-display ";chebyshev bp 8 max: ~A" (car vals)))
+      (if (not (vequal (cadr vals) (vct 0.000 0.000 0.000 0.000 0.002 0.363 0.517 0.513 0.433 0.000)))
+	  (snd-display ";chebyshev bp 8 .3 .4 spect: ~A" (cadr vals))))
+    (let* ((f1 (make-chebyshev-bandpass 8 .2 .2 .01))
+	   (vals (sweep->bins f1 10)))
+      (if (> (abs (- (car vals) .5)) .05) (snd-display ";chebyshev bp 10 .2 max: ~A" (car vals)))
+      (if (not (vequal (cadr vals) (vct 0.000 0.000 0.015 0.483 0.482 0.021 0.001 0.000 0.000 0.000)))
+	  (snd-display ";chebyshev bp 10 .2 spect: ~A" (cadr vals))))
+
+    (let* ((f1 (make-chebyshev-bandstop 4 .1 .4))
+	   (vals (sweep->bins f1 10)))
+      (if (> (abs (- (car vals) .5)) .05) (snd-display ";chebyshev bs 4 max: ~A" (car vals)))
+      (if (not (vequal (cadr vals) (vct 0.509 0.505 0.447 0.033 0.006 0.006 0.033 0.445 0.512 0.509)))
+	  (snd-display ";chebyshev bs 4 .1 .4 spect: ~A" (cadr vals))))
+    (let* ((f1 (make-chebyshev-bandstop 8 .1 .4))
+	   (vals (sweep->bins f1 10)))
+      (if (> (abs (- (car vals) .51)) .05) (snd-display ";chebyshev bs 8 max: ~A" (car vals)))
+      (if (and (not (vequal (cadr vals) (vct 0.508 0.512 0.468 0.001 0.000 0.000 0.001 0.345 0.551 0.507)))
+	       (not (vequal (cadr vals) (vct 0.507 0.512 0.467 0.001 0.000 0.000 0.001 0.344 0.549 0.508))))
+	  (snd-display ";chebyshev bs 8 .1 .4 spect: ~A" (cadr vals))))
+    (let* ((f1 (make-chebyshev-bandstop 8 .1 .4 .01))
+	   (vals (sweep->bins f1 10)))
+      (if (> (abs (- (car vals) .5)) .05) (snd-display ";chebyshev bs 8 .01 max: ~A" (car vals)))
+      (if (not (vequal (cadr vals) (vct 0.492 0.491 0.483 0.006 0.000 0.000 0.006 0.494 0.495 0.492)))
+	  (snd-display ";chebyshev bs 8 .1 .4 .01 spect: ~A" (cadr vals))))
+
+
+    ;; ---------------- inverse-chebyshev ----------------
+
+    (let* ((f1 (make-inverse-chebyshev-lowpass 8 .1))
+	   (vals (sweep->bins f1 10)))
+      (if (ffneq (car vals) .51) (snd-display ";inverse-chebyshev lp 8 max: ~A" (car vals)))
+      (if (not (vequal (cadr vals) (vct 0.501 0.496 0.001 0.000 0.001 0.000 0.000 0.000 0.000 0.001)))
+	  (snd-display ";inverse-chebyshev lp 8 .1 spect: ~A" (cadr vals))))
+    (let* ((f1 (make-inverse-chebyshev-lowpass 12 .25))
+	   (vals (sweep->bins f1 10)))
+      (if (ffneq (car vals) .51) (snd-display ";inverse-chebyshev lp 12 max: ~A" (car vals)))
+      (if (not (vequal (cadr vals) (vct 0.500 0.500 0.500 0.500 0.496 0.001 0.001 0.001 0.001 0.001)))
+	  (snd-display ";inverse-chebyshev lp 12 .25 spect: ~A" (cadr vals))))
+    (let* ((f1 (make-inverse-chebyshev-lowpass 10 .4))
+	   (vals (sweep->bins f1 10)))
+      (if (ffneq (car vals) .51) (snd-display ";inverse-chebyshev lp 10 max: ~A" (car vals)))
+      (if (not (vequal (cadr vals) (vct 0.500 0.500 0.500 0.500 0.500 0.500 0.500 0.497 0.001 0.001)))
+	  (snd-display ";inverse-chebyshev lp 10 .4 spect: ~A" (cadr vals))))
+    (let* ((f1 (make-inverse-chebyshev-lowpass 10 .4 120))
+	   (vals (sweep->bins f1 10)))
+      (if (ffneq (car vals) .51) (snd-display ";inverse-chebyshev lp 10 max: ~A" (car vals)))
+      (if (not (vequal (cadr vals) (vct 0.501 0.501 0.501 0.501 0.501 0.500 0.345 0.007 0.000 0.000)))
+	  (snd-display ";inverse-chebyshev lp 10 .4 120 spect: ~A" (cadr vals))))
+    (let* ((f1 (make-inverse-chebyshev-lowpass 10 .4 10))
+	   (vals (sweep->bins f1 10)))
+      (if (ffneq (car vals) .51) (snd-display ";inverse-chebyshev lp 10 max: ~A" (car vals)))
+      (if (and (not (vequal (cadr vals) (vct 0.500 0.500 0.500 0.500 0.500 0.500 0.500 0.500 0.372 0.302)))
+	       (not (vequal (cadr vals) (vct 0.500 0.500 0.500 0.500 0.500 0.500 0.500 0.500 0.373 0.283))))
+	  (snd-display ";inverse-chebyshev lp 10 .4 10 spect: ~A" (cadr vals))))
+
+    (do ((i 2 (+ i 2)))
+	((= i 10))
+      (do ((j .1 (+ j .1)))
+	  ((>= j .45))
+	(let* ((f1 (make-inverse-chebyshev-lowpass i j))
+	       (mx (filter-response-max f1)))
+	  (if (> mx 1.0)
+	      (snd-display ";inv cheby low max ~A ~A: ~A" i j mx)))))
+    
+    (let* ((f1 (make-inverse-chebyshev-highpass 8 .1))
+	   (vals (sweep->bins f1 10)))
+      (if (ffneq (car vals) .51) (snd-display ";inverse-chebyshev hp 8 max: ~A" (car vals)))
+      (if (not (vequal (cadr vals) (vct 0.001 0.001 0.440 0.505 0.505 0.503 0.502 0.501 0.501 0.501)))
+	  (snd-display ";inverse-chebyshev hp 8 .1 spect: ~A" (cadr vals))))
+    (let* ((f1 (make-inverse-chebyshev-highpass 12 .25))
+	   (vals (sweep->bins f1 10)))
+      (if (ffneq (car vals) .51) (snd-display ";inverse-chebyshev hp 12 max: ~A" (car vals)))
+      (if (not (vequal (cadr vals) (vct 0.001 0.001 0.001 0.001 0.001 0.505 0.506 0.503 0.501 0.501)))
+	  (snd-display ";inverse-chebyshev hp 12 .25 spect: ~A" (cadr vals))))
+    (let* ((f1 (make-inverse-chebyshev-highpass 10 .4))
+	   (vals (sweep->bins f1 10)))
+      (if (ffneq (car vals) .51) (snd-display ";inverse-chebyshev hp 10 .4 max: ~A" (car vals)))
+      (if (not (vequal (cadr vals) (vct 0.000 0.000 0.000 0.001 0.001 0.001 0.001 0.001 0.503 0.503)))
+	  (snd-display ";inverse-chebyshev hp 10 .4 spect: ~A" (cadr vals))))
+    (let* ((f1 (make-inverse-chebyshev-highpass 10 .1 120))
+	   (vals (sweep->bins f1 10)))
+      (if (ffneq (car vals) .51) (snd-display ";inverse-chebyshev hp 10 .1 120 max: ~A" (car vals)))
+      (if (not (vequal (cadr vals) (vct 0.000 0.000 0.007 0.328 0.502 0.502 0.502 0.501 0.501 0.501)))
+	  (snd-display ";inverse-chebyshev hp 10 .1 120 spect: ~A" (cadr vals))))
+    (let* ((f1 (make-inverse-chebyshev-highpass 10 .1 10))
+	   (vals (sweep->bins f1 10)))
+      (if (ffneq (car vals) .55) (snd-display ";inverse-chebyshev hp 10 .1 10 max: ~A" (car vals)))
+      (if (and (not (vequal (cadr vals) (vct 0.366 0.312 0.558 0.504 0.502 0.501 0.501 0.500 0.500 0.500)))
+	       (not (vequal (cadr vals) (vct 0.370 0.324 0.547 0.504 0.502 0.501 0.501 0.500 0.500 0.500))))
+	  (snd-display ";inverse-chebyshev hp 10 .1 10 spect: ~A" (cadr vals))))
+
+    (do ((i 2 (+ i 2)))
+	((= i 10))
+      (do ((j .1 (+ j .1)))
+	  ((>= j .45))
+	(let* ((f1 (make-inverse-chebyshev-highpass i j))
+	       (mx (filter-response-max f1)))
+	  (if (> mx 1.0)
+	      (snd-display ";inv cheby high max ~A ~A: ~A" i j mx)))))
+
+    (let* ((f1 (make-inverse-chebyshev-bandpass 10 .1 .2))
+	   (vals (sweep->bins f1 10)))
+      (if (> (abs (- (car vals) .5)) .05) (snd-display ";inverse-chebyshev bp 4 max: ~A" (car vals)))
+      (if (not (vequal (cadr vals) (vct 0.001 0.001 0.498 0.485 0.001 0.001 0.000 0.001 0.000 0.001)))
+	  (snd-display ";inverse-chebyshev bp 10 .1 .2 spect: ~A" (cadr vals))))
+    (let* ((f1 (make-inverse-chebyshev-bandpass 10 .1 .2 30))
+	   (vals (sweep->bins f1 10)))
+      (if (> (abs (- (car vals) .5)) .05) (snd-display ";inverse-chebyshev bp 6 max: ~A" (car vals)))
+      (if (not (vequal (cadr vals) (vct 0.026 0.025 0.509 0.505 0.020 0.016 0.012 0.016 0.011 0.016)))
+	  (snd-display ";inverse-chebyshev bp 10 .1 .2 30 spect: ~A" (cadr vals))))
+    (let* ((f1 (make-inverse-chebyshev-bandpass 8 .1 .4))
+	   (vals (sweep->bins f1 10)))
+      (if (> (abs (- (car vals) .5)) .05) (snd-display ";inverse-chebyshev bp 8 max: ~A" (car vals)))
+      (if (not (vequal (cadr vals) (vct 0.001 0.001 0.440 0.506 0.505 0.503 0.502 0.434 0.001 0.001)))
+	  (snd-display ";inverse-chebyshev bp 8 .1 .4 spect: ~A" (cadr vals))))
+    (let* ((f1 (make-inverse-chebyshev-bandpass 8 .3 .4 40))
+	   (vals (sweep->bins f1 10)))
+      (if (> (abs (- (car vals) .5)) .05) (snd-display ";inverse-chebyshev bp 10 .2 max: ~A" (car vals)))
+      (if (not (vequal (cadr vals) (vct 0.002 0.005 0.007 0.007 0.005 0.005 0.503 0.505 0.006 0.005)))
+	  (snd-display ";inverse-chebyshev bp 10 .2 spect: ~A" (cadr vals))))
+
+    (let* ((f1 (make-inverse-chebyshev-bandstop 4 .1 .4))
+	   (vals (sweep->bins f1 10)))
+      (if (> (abs (- (car vals) .5)) .05) (snd-display ";inverse-chebyshev bs 4 max: ~A" (car vals)))
+      (if (not (vequal (cadr vals) (vct 0.500 0.054 0.001 0.001 0.000 0.000 0.000 0.001 0.055 0.503)))
+	  (snd-display ";inverse-chebyshev bs 4 .1 .4 spect: ~A" (cadr vals))))
+    (let* ((f1 (make-inverse-chebyshev-bandstop 8 .1 .4))
+	   (vals (sweep->bins f1 10)))
+      (if (> (abs (- (car vals) .5)) .05) (snd-display ";inverse-chebyshev bs 8 max: ~A" (car vals)))
+      (if (not (vequal (cadr vals) (vct 0.501 0.496 0.001 0.001 0.000 0.000 0.000 0.001 0.507 0.506)))
+	  (snd-display ";inverse-chebyshev bs 8 .1 .4 spect: ~A" (cadr vals))))
+    (let* ((f1 (make-inverse-chebyshev-bandstop 8 .1 .4 90))
+	   (vals (sweep->bins f1 10)))
+      (if (> (abs (- (car vals) .5)) .05) (snd-display ";inverse-chebyshev bs 8 90 max: ~A" (car vals)))
+      (if (and (not (vequal (cadr vals) (vct 0.505 0.325 0.000 0.000 0.000 0.000 0.000 0.000 0.270 0.506)))
+	       (not (vequal (cadr vals) (vct 0.506 0.328 0.000 0.000 0.000 0.000 0.000 0.000 0.269 0.509))))
+	  (snd-display ";inverse-chebyshev bs 8 .1 .4 90 spect: ~A" (cadr vals))))
+
+
+    ;; ---------------- bessel ----------------
+
+    ;; checked poly coeff tables, but the prototype has scaling built in
+
+    (if (provided? 'gsl)
+	(begin
+    (let* ((f1 (make-bessel-lowpass 4 .1))
+	   (vals (sweep->bins f1 10)))
+      (if (fneq (car vals) .5) (snd-display ";bessel lp 4 .1 max: ~A" (car vals)))
+      (if (not (vequal (cadr vals) (vct 0.500 0.417 0.209 0.062 0.018 0.005 0.001 0.000 0.000 0.000)))
+	  (snd-display ";bessel lp 4 .1 spect: ~A" (cadr vals))))
+
+    (let* ((f1 (make-bessel-lowpass 8 .1))
+	   (vals (sweep->bins f1 10)))
+      (if (fneq (car vals) .5) (snd-display ";bessel lp 8 max: ~A" (car vals)))
+      (if (not (vequal (cadr vals) (vct 0.499 0.365 0.116 0.010 0.001 0.000 0.000 0.000 0.000 0.000)))
+	  (snd-display ";bessel lp 8 .1 spect: ~A" (cadr vals))))
+    (let* ((f1 (make-bessel-lowpass 12 .25))
+	   (vals (sweep->bins f1 10)))
+      (if (fneq (car vals) .5) (snd-display ";bessel lp 12 max: ~A" (car vals)))
+      (if (not (vequal (cadr vals) (vct 0.500 0.477 0.410 0.309 0.185 0.063 0.006 0.000 0.000 0.000)))
+	  (snd-display ";bessel lp 12 .25 spect: ~A" (cadr vals))))
+    (let* ((f1 (make-bessel-lowpass 10 .4))
+	   (vals (sweep->bins f1 10)))
+      (if (fneq (car vals) .5) (snd-display ";bessel lp 10 max: ~A" (car vals)))
+      (if (not (vequal (cadr vals) (vct 0.500 0.498 0.491 0.479 0.458 0.423 0.364 0.259 0.086 0.001)))
+	  (snd-display ";bessel lp 10 .4 spect: ~A" (cadr vals))))
+
+    (do ((i 2 (+ i 2)))
+	((= i 12))
+      (do ((j .1 (+ j .1)))
+	  ((>= j .45))
+	(let* ((f1 (make-bessel-lowpass i j))
+	       (mx (filter-response-max f1)))
+	  (if (> mx 1.0)
+	      (snd-display ";bess low max ~A ~A: ~A" i j mx)))))
+
+    (let* ((f1 (make-bessel-highpass 8 .1))
+	   (vals (sweep->bins f1 10)))
+      (if (fneq (car vals) .5) (snd-display ";bessel hp 8 max: ~A" (car vals)))
+      (if (not (vequal (cadr vals) (vct 0.001 0.115 0.290 0.386 0.435 0.465 0.483 0.493 0.498 0.500)))
+	  (snd-display ";bessel hp 8 .1 spect: ~A" (cadr vals))))
+    (let* ((f1 (make-bessel-highpass 12 .25))
+	   (vals (sweep->bins f1 10)))
+      (if (fneq (car vals) .5) (snd-display ";bessel hp 12 max: ~A" (car vals)))
+      (if (not (vequal (cadr vals) (vct 0.000 0.000 0.000 0.006 0.063 0.181 0.309 0.410 0.477 0.500)))
+	  (snd-display ";bessel hp 12 .25 spect: ~A" (cadr vals))))
+    (let* ((f1 (make-bessel-highpass 10 .4))
+	   (vals (sweep->bins f1 10)))
+      (if (ffneq (car vals) .5) (snd-display ";bessel hp 10 max: ~A" (car vals)))
+      (if (not (vequal (cadr vals) (vct 0.000 0.000 0.000 0.000 0.000 0.000 0.004 0.084 0.343 0.499)))
+	  (snd-display ";bessel hp 10 .4 spect: ~A" (cadr vals))))
+
+    (let* ((f1 (make-bessel-bandpass 4 .1 .2))
+	   (vals (sweep->bins f1 10)))
+      (if (> (abs (- (car vals) .245)) .05) (snd-display ";bessel bp 4 max: ~A" (car vals)))
+      (if (not (vequal (cadr vals) (vct 0.023 0.176 0.245 0.244 0.179 0.085 0.031 0.008 0.001 0.000)))
+	  (snd-display ";bessel bp 4 .1 .2 spect: ~A" (cadr vals))))
+
+    (let* ((f1 (make-bessel-bandstop 12 .1 .2))
+	   (vals (sweep->bins f1 10)))
+      (if (> (abs (- (car vals) .5)) .05) (snd-display ";bessel bs 12 max: ~A" (car vals)))
+      (if (not (vequal (cadr vals) (vct 0.498 0.325 0.065 0.066 0.177 0.297 0.389 0.452 0.488 0.500)))
+	  (snd-display ";bessel bs 12 .1 .2 spect: ~A" (cadr vals))))
+
+    ;; ---------------- elliptic ----------------
+    
+    (let* ((f1 (make-elliptic-lowpass 8 .1))
+	   (vals (sweep->bins f1 10)))
+      (if (> (abs (- (car vals) .5)) .1) (snd-display ";elliptic lp 8 max: ~A" (car vals)))
+      (if (not (vequal (cadr vals) (vct 0.500 0.515 0.379 0.000 0.000 0.000 0.000 0.000 0.000 0.000)))
+	  (snd-display ";elliptic lp 8 .1 spect: ~A" (cadr vals))))
+    (let* ((f1 (make-elliptic-lowpass 12 .25))
+	   (vals (sweep->bins f1 10)))
+      (if (> (abs (- (car vals) .5)) .1) (snd-display ";elliptic lp 12 max: ~A" (car vals)))
+      (if (not (vequal (cadr vals) (vct 0.476 0.500 0.491 0.499 0.494 0.412 0.003 0.001 0.000 0.000)))
+	  (snd-display ";elliptic lp 12 .25 spect: ~A" (cadr vals))))
+    (let* ((f1 (make-elliptic-lowpass 4 .4))
+	   (vals (sweep->bins f1 10)))
+      (if (> (abs (- (car vals) .5)) .1) (snd-display ";elliptic lp 4 max: ~A" (car vals)))
+      (if (not (vequal (cadr vals) (vct 0.447 0.453 0.462 0.477 0.494 0.500 0.497 0.496 0.445 0.003)))
+	  (snd-display ";elliptic lp 4 .4 spect: ~A" (cadr vals))))
+    (let* ((f1 (make-elliptic-lowpass 8 .1 .1))
+	   (vals (sweep->bins f1 10)))
+      (if (> (abs (- (car vals) .5)) .1) (snd-display ";elliptic lp 8 .1 max: ~A" (car vals)))
+      (if (not (vequal (cadr vals) (vct 0.500 0.499 0.475 0.000 0.000 0.000 0.000 0.000 0.000 0.000)))
+	  (snd-display ";elliptic lp 8 .1 .1 spect: ~A" (cadr vals))))
+    (let* ((f1 (make-elliptic-lowpass 8 .1 .1 90))
+	   (vals (sweep->bins f1 10)))
+      (if (> (abs (- (car vals) .5)) .1) (snd-display ";elliptic lp 8 .1 90 max: ~A" (car vals)))
+      (if (not (vequal (cadr vals) (vct 0.500 0.499 0.475 0.000 0.000 0.000 0.000 0.000 0.000 0.000)))
+	  (snd-display ";elliptic lp 8 .1 .1 90 spect: ~A" (cadr vals))))
+    (let* ((f1 (make-elliptic-lowpass 8 .25 .01 90))
+	   (vals (sweep->bins f1 10)))
+      (if (> (abs (- (car vals) .5)) .1) (snd-display ";elliptic lp 8 .25 90 max: ~A" (car vals)))
+      (if (not (vequal (cadr vals) (vct 0.500 0.500 0.500 0.500 0.499 0.495 0.001 0.000 0.000 0.000)))
+	  (snd-display ";elliptic lp 8 .25 .1 90 spect: ~A" (cadr vals))))
+
+    (let* ((f1 (make-elliptic-highpass 4 .1))
+	   (vals (sweep->bins f1 10)))
+      (if (> (abs (- (car vals) .5)) .1) (snd-display ";elliptic hp 4 max: ~A" (car vals)))
+      (if (not (vequal (cadr vals) (vct 0.004 0.438 0.516 0.499 0.502 0.495 0.478 0.463 0.453 0.447)))
+	  (snd-display ";elliptic hp 4 .1 spect: ~A" (cadr vals))))
+    (let* ((f1 (make-elliptic-highpass 12 .25))
+	   (vals (sweep->bins f1 10)))
+      ;(if (> (abs (- (car vals) .5)) .1) (snd-display ";elliptic hp 12 max: ~A" (car vals)))
+      (if (not (vequal (cadr vals) (vct 0.000 0.001 0.001 0.001 0.026 0.934 0.518 0.495 0.503 0.477)))
+	  (snd-display ";elliptic hp 12 .25 spect: ~A" (cadr vals))))
+    (let* ((f1 (make-elliptic-highpass 12 .25 .01 90))
+	   (vals (sweep->bins f1 10)))
+      (if (> (abs (- (car vals) .5)) .1) (snd-display ";elliptic hp 12 90 max: ~A" (car vals)))
+      (if (not (vequal (cadr vals) (vct 0.000 0.000 0.000 0.000 0.499 0.517 0.503 0.501 0.500 0.500)))
+	  (snd-display ";elliptic hp 12 .25 90 spect: ~A" (cadr vals))))
+    (let* ((f1 (make-elliptic-highpass 4 .4))
+	   (vals (sweep->bins f1 10)))
+      (if (> (abs (- (car vals) .5)) .1) (snd-display ";elliptic hp 4 max: ~A" (car vals)))
+      (if (not (vequal (cadr vals) (vct 0.000 0.000 0.000 0.001 0.001 0.002 0.023 0.447 0.515 0.502)))
+	  (snd-display ";elliptic hp 4 .4 spect: ~A" (cadr vals))))
+    (let* ((f1 (make-elliptic-highpass 8 .1 .1))
+	   (vals (sweep->bins f1 10)))
+      (if (> (abs (- (car vals) .5)) .1) (snd-display ";elliptic hp 8 .1 max: ~A" (car vals)))
+      (if (not (vequal (cadr vals) (vct 0.000 0.478 0.553 0.506 0.499 0.501 0.501 0.499 0.497 0.495)))
+	  (snd-display ";elliptic hp 8 .1 .1 spect: ~A" (cadr vals))))
+    (let* ((f1 (make-elliptic-highpass 8 .1 .1 90))
+	   (vals (sweep->bins f1 10)))
+      (if (> (abs (- (car vals) .5)) .1) (snd-display ";elliptic hp 8 .1 90 max: ~A" (car vals)))
+      (if (not (vequal (cadr vals) (vct 0.000 0.478 0.554 0.506 0.499 0.501 0.501 0.499 0.497 0.495)))
+	  (snd-display ";elliptic hp 8 .1 .1 90 spect: ~A" (cadr vals))))
+    (let* ((f1 (make-elliptic-highpass 8 .25 .01 90))
+	   (vals (sweep->bins f1 10)))
+      (if (> (abs (- (car vals) .5)) .1) (snd-display ";elliptic hp 8 .25 90 max: ~A" (car vals)))
+      (if (not (vequal (cadr vals) (vct 0.000 0.000 0.000 0.001 0.516 0.517 0.507 0.503 0.501 0.500)))
+	  (snd-display ";elliptic hp 8 .25 .1 90 spect: ~A" (cadr vals))))
+    
+    (let* ((f1 (make-elliptic-bandpass 4 .1 .2 .1))
+	   (vals (sweep->bins f1 10)))
+      (if (> (abs (- (car vals) .5)) .1) (snd-display ";elliptic bp 4 max: ~A" (car vals)))
+      (if (not (vequal (cadr vals) (vct 0.036 0.546 0.550 0.510 0.501 0.032 0.024 0.009 0.021 0.024)))
+	  (snd-display ";elliptic bp 4 .1 .2 spect: ~A" (cadr vals))))
+    (let* ((f1 (make-elliptic-bandpass 6 .1 .2 .1 90))
+	   (vals (sweep->bins f1 10)))
+      (if (> (abs (- (car vals) .5)) .1) (snd-display ";elliptic bp 6 max: ~A" (car vals)))
+      (if (not (vequal (cadr vals) (vct 0.002 0.511 0.532 0.503 0.492 0.003 0.001 0.001 0.001 0.001)))
+	  (snd-display ";elliptic bp 6 .1 .2 90 spect: ~A" (cadr vals))))
+
+    (let* ((f1 (make-elliptic-bandstop 4 .1 .3 .1))
+	   (vals (sweep->bins f1 10)))
+      (if (> (abs (- (car vals) .5)) .1) (snd-display ";elliptic bs 4 max: ~A" (car vals)))
+      (if (not (vequal (cadr vals) (vct 0.499 0.502 0.498 0.037 0.050 0.540 0.544 0.527 0.526 0.521)))
+	  (snd-display ";elliptic bs 4 .1 .2 spect: ~A" (cadr vals))))
+    (let* ((f1 (make-elliptic-bandstop 8 .1 .3 .1 120))
+	   (vals (sweep->bins f1 10)))
+      (if (> (abs (- (car vals) .5)) .1) (snd-display ";elliptic bs 8 max: ~A" (car vals)))
+      (if (not (vequal (cadr vals) (vct 0.500 0.499 0.476 0.000 0.000 0.495 0.526 0.505 0.501 0.501)))
+	  (snd-display ";elliptic bs 8 .1 .2 spect: ~A" (cadr vals))))
+      ))))
 
 (define (poly-roots-tests)
   (letrec ((ceql (lambda (a b)
@@ -14738,6 +15336,8 @@ EDITS: 5
 		     (not (vequal sp (vct 0.664 0.689 0.955 0.982 0.992 0.996 0.999 1.000 0.999 0.998))))
 		(snd-display ";bs rough spectrum: ~A" sp)))
 	  (undo))
+
+	(analog-filter-tests)
 	
 	(let ((v (spectrum->coeffs 10 (vct 0 1.0 0 0 0 0 0 0 1.0 0)))
 	      (v1 (make-fir-coeffs 10 (vct 0 1.0 0 0 0 0 0 0 1.0 0))))
@@ -14936,7 +15536,8 @@ EDITS: 5
 	  (let ((sp (rough-spectrum ind)))
 	    (if (and (not (vequal sp (vct 0.0505 0.982 1.000 1.000 0.998 0.998 0.999 0.998 0.996 0.999)))
 		     (not (vequal sp (vct 0.051 0.982 1.000 1.000 0.998 0.998 0.998 0.999 0.997 0.995)))
-		     (not (vequal sp (vct 0.051 0.991 1.000 1.000 0.998 0.998 0.999 0.999 0.997 0.995))))
+		     (not (vequal sp (vct 0.051 0.991 1.000 1.000 0.998 0.998 0.999 0.999 0.997 0.995)))
+		     (not (vequal sp (vct 0.045 0.970 1.000 1.000 0.998 0.998 0.999 0.999 0.997 0.995))))
 		(snd-display ";bhp rough spectrum: ~A" sp)))
 	  (undo))
 	
@@ -14962,11 +15563,6 @@ EDITS: 5
 	      (snd-display ";butter bp: ~A" v))
 	  (set! b (make-butter-bp 4 1000.0 1500.0))
 	  (map-channel (lambda (y) (filter b y)))
-	  (let ((sp (rough-spectrum ind)))
-	    (if (and (not (vequal sp (vct 0.026 1.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000)))
-		     (not (vequal sp (vct  0.022 1.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000)))
-		     (not (vequal sp (vct 0.042 1.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000))))
-		(snd-display ";bp 4 rough spectrum: ~A" sp)))
 	  (undo))
 	
 	(let ((b (make-butter-bs 4 440.0 500.0))
@@ -14978,14 +15574,6 @@ EDITS: 5
 	      (snd-display ";butter bs: ~A" v))
 	  (set! b (make-butter-bs 4 1000.0 1500.0))
 	  (map-channel (lambda (y) (filter b y)))
-	  (let ((sp (rough-spectrum ind)))
-	    (if (and (not (vequal sp (vct 0.798 0.657 1.000 0.997 0.996 0.997 0.997 0.996 0.995 0.998)))
-		     (not (vequal sp (vct 0.795 0.668 1.000 0.997 0.996 0.997 0.997 0.997 0.995 0.994)))
-		     (not (vequal sp (vct 0.801 0.698 1.000 0.997 0.996 0.997 0.997 0.997 0.995 0.994)))
-		     (not (vequal sp (vct 0.884 0.586 1.000 0.996 0.996 0.997 0.997 0.997 0.995 0.994)))
-		     (not (vequal sp (vct 0.798 0.686 1.000 0.997 0.996 0.997 0.997 0.997 0.995 0.994)))
-		     (not (vequal sp (vct 0.793 0.667 1.000 0.997 0.996 0.997 0.997 0.997 0.995 0.994))))
-		(snd-display ";bs 4 rough spectrum: ~A" sp))) ; gad!
 	  (undo))
 	
 	(close-sound ind))
@@ -15936,6 +16524,16 @@ EDITS: 5
       (let ((gen (make-fft-window hann-poisson-window 16)))
 	(if (not (vequal gen (vct 0.000 0.038 0.146 0.309 0.500 0.691 0.854 1.000 1.000 0.854 0.691 0.500 0.309 0.146 0.038 0.000)))
 	    (snd-display ";tukey window: ~A" gen)))
+      (let ((gen (make-fft-window samaraki-window 16)))
+	(if (not (vequal gen (vct 1.000 0.531 0.559 0.583 0.604 0.620 0.631 0.638 0.640 0.638 0.631 0.620 0.604 0.583 0.559 0.531)))
+	    (snd-display ";samaraki window: ~A" gen)))
+      (let ((gen (make-fft-window ultraspherical-window 16)))
+	(if (not (vequal gen (vct 1.000 0.033 0.034 0.035 0.036 0.036 0.037 0.037 0.037 0.037 0.037 0.036 0.036 0.035 0.034 0.033)))
+	    (snd-display ";ultraspherical window: ~A" gen)))
+      (let ((gen (make-fft-window dolph-chebyshev-window 16)))
+	(if (not (vequal gen (vct 1.000 0.033 0.034 0.035 0.036 0.036 0.037 0.037 0.037 0.037 0.037 0.036 0.036 0.035 0.034 0.033)))
+	    (snd-display ";dolph-chebyshev window: ~A" gen)))
+
       (without-errors
        (let ((gen (make-fft-window dolph-chebyshev-window 16 1.0)))
 	 (if (not (vequal gen (vct 1.000 0.274 0.334 0.393 0.446 0.491 0.525 0.546 0.553 0.546 0.525 0.491 0.446 0.393 0.334 0.274)))
@@ -26516,6 +27114,7 @@ EDITS: 5
 		(list 'expand-control-length expand-control-length #t 0.1 0.25)
 		(list 'expand-control-ramp expand-control-ramp #t 0.1 0.4)
 		(list 'expand-control? expand-control? #t #f #t)
+		(list 'fft-window-alpha fft-window-alpha #f 0.0  1.0)
 		(list 'fft-window-beta fft-window-beta #f 0.0  1.0)
 		(list 'fft-log-frequency fft-log-frequency #f #f #t)
 		(list 'fft-log-magnitude fft-log-magnitude #f #f #t)
@@ -26631,7 +27230,7 @@ EDITS: 5
 
 (define funcs (list time-graph-type wavo-hop wavo-trace max-transform-peaks show-transform-peaks zero-pad transform-graph-type fft-window 
 		    verbose-cursor fft-log-frequency fft-log-magnitude min-dB
-		    wavelet-type transform-size fft-window-beta transform-type 
+		    wavelet-type transform-size fft-window-alpha fft-window-beta transform-type 
 		    transform-normalization show-mix-waveforms graph-style dot-size show-axes show-y-zero show-grid show-marks grid-density
 		    spectro-x-angle spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle spectro-z-scale
 		    spectro-hop spectro-cutoff spectro-start graphs-horizontal x-axis-style beats-per-minute beats-per-measure
@@ -26639,7 +27238,7 @@ EDITS: 5
 		    ))
 (define func-names (list 'time-graph-type 'wavo-hop 'wavo-trace 'max-transform-peaks 'show-transform-peaks 'zero-pad 'transform-graph-type 'fft-window
 			 'verbose-cursor 'fft-log-frequency 'fft-log-magnitude 'min-dB
-			 'wavelet-type 'transform-size 'fft-window-beta 'transform-type
+			 'wavelet-type 'transform-size 'fft-window-alpha 'fft-window-beta 'transform-type
 			 'transform-normalization 'show-mix-waveforms 'graph-style 'dot-size 'show-axes 'show-y-zero 'show-grid 'show-marks 'grid-density
 			 'spectro-x-angle 'spectro-x-scale 'spectro-y-angle 'spectro-y-scale 'spectro-z-angle 'spectro-z-scale
 			 'spectro-hop 'spectro-cutoff 'spectro-start 'graphs-horizontal 'x-axis-style 'beats-per-minute 'beats-per-measure
@@ -26647,7 +27246,7 @@ EDITS: 5
 			 ))
 (define new-values (list graph-as-wavogram 12 512 3 #t 32 graph-as-sonogram cauchy-window
 			 #t #t #t -120.0
-			 3 32 .5 autocorrelation
+			 3 32 .5 .5 autocorrelation
 			 0 #t graph-lollipops 8 show-no-axes #t #t #f 1.0
 			 32.0 .5 32.0 .5 32.0 .5
 			 14 .3 .1 #f x-axis-in-samples 120.0 3
@@ -36059,6 +36658,7 @@ EDITS: 1
 		(list y-position-slider 'y-position-slider ind-1 ind-2 0.5 (lambda (a b) (< (abs (- a b)) .01)) feql #t #f)
 		(list x-zoom-slider 'x-zoom-slider ind-1 ind-2 0.2 (lambda (a b) (< (abs (- a b)) .01)) feql #t #f)
 		(list y-zoom-slider 'y-zoom-slider ind-1 ind-2 0.2 (lambda (a b) (< (abs (- a b)) .01)) feql #t #f)
+		(list fft-window-alpha 'fft-window-alpha ind-1 ind-2 0.5 (lambda (a b) (< (abs (- a b)) .01)) feql #t #t)
 		(list fft-window-beta 'fft-window-beta ind-1 ind-2 0.5 (lambda (a b) (< (abs (- a b)) .01)) feql #t #t)
 		(list spectro-cutoff 'spectro-cutoff ind-1 ind-2 0.2 (lambda (a b) (< (abs (- a b)) .01)) feql #t #t)
 		(list spectro-start 'spectro-start ind-1 ind-2 0.1 (lambda (a b) (< (abs (- a b)) .01)) feql #t #t)
@@ -45165,6 +45765,7 @@ EDITS: 1
 				    show-selection-transform)
 			      (list #f #f #f #f #t #t
 				    #t #t #t))
+		    ;; TODO: move alpha scale (also explicit tests of beta/alpha settings using binomial stuff)
 		    (move-scale beta 32)
 		    (if (fneq (fft-window-beta) .32)
 			(snd-display ";moved fft-beta: ~A ~A" (fft-window-beta) (XmScaleGetValue beta)))
@@ -54992,7 +55593,7 @@ EDITS: 1
 		     env-sound enved-envelope enved-base enved-clip? enved-in-dB enved-dialog enved-style enved-power
 		     enved-target enved-waveform-color enved-wave? eps-file eps-left-margin 
 		     eps-bottom-margin eps-size expand-control expand-control-hop expand-control-jitter expand-control-length expand-control-ramp
-		     expand-control? fft fft-window-beta fft-log-frequency fft-log-magnitude transform-size disk-kspace
+		     expand-control? fft fft-window-alpha fft-window-beta fft-log-frequency fft-log-magnitude transform-size disk-kspace
 		     transform-graph-type fft-window transform-graph? view-files-dialog mix-file-dialog file-name fill-polygon
 		     fill-rectangle filter-sound filter-control-in-dB filter-control-envelope enved-filter-order enved-filter
 		     filter-control-in-hz filter-control-order filter-selection filter-channel filter-control-waveform-color filter-control? find-channel
@@ -55148,7 +55749,7 @@ EDITS: 1
 			 enved-envelope enved-base enved-clip? enved-in-dB enved-style enved-power
 			 enved-target enved-waveform-color enved-wave? eps-file eps-left-margin eps-bottom-margin eps-size
 			 expand-control expand-control-hop expand-control-jitter expand-control-length expand-control-ramp expand-control?
-			 fft-window-beta fft-log-frequency fft-log-magnitude transform-size transform-graph-type fft-window
+			 fft-window-alpha fft-window-beta fft-log-frequency fft-log-magnitude transform-size transform-graph-type fft-window
 			 transform-graph? filter-control-in-dB filter-control-envelope enved-filter-order enved-filter 
 			 filter-control-in-hz filter-control-order filter-control-waveform-color filter-control?  foreground-color
 			 graph-color graph-cursor graph-style lisp-graph? graphs-horizontal highlight-color
@@ -55646,7 +56247,7 @@ EDITS: 1
 			    (set! ctr (+ ctr 1))))
 			(list channel-widgets count-matches cursor channel-properties
 			      cursor-follows-play cursor-position cursor-size cursor-style delete-sample display-edits dot-size
-			      draw-dots draw-lines edit-fragment edit-position edit-tree edits fft-window-beta fft-log-frequency
+			      draw-dots draw-lines edit-fragment edit-position edit-tree edits fft-window-alpha fft-window-beta fft-log-frequency
 			      fft-log-magnitude transform-size transform-graph-type fft-window transform-graph? find-channel
 			      graph graph-style lisp-graph? insert-region insert-sound
 			      time-graph-style lisp-graph-style transform-graph-style
@@ -55673,7 +56274,7 @@ EDITS: 1
 			    (set! ctr (+ ctr 1))))
 			(list channel-widgets count-matches cursor channel-properties
 			      cursor-position cursor-size cursor-style delete-sample display-edits dot-size draw-dots draw-lines
-			      edit-fragment edit-position edit-tree edits fft-window-beta fft-log-frequency fft-log-magnitude
+			      edit-fragment edit-position edit-tree edits fft-window-alpha fft-window-beta fft-log-frequency fft-log-magnitude
 			      transform-size transform-graph-type fft-window transform-graph? find-channel
 			      graph graph-style lisp-graph? insert-region insert-sound left-sample
 			      time-graph-style lisp-graph-style transform-graph-style
@@ -55700,7 +56301,7 @@ EDITS: 1
 			    (set! ctr (+ ctr 1))))
 			(list channel-widgets cursor cursor-follows-play channel-properties
 			      cursor-position cursor-size cursor-style delete-sample display-edits dot-size edit-fragment
-			      edit-position edit-tree edits env-sound fft-window-beta fft-log-frequency fft-log-magnitude
+			      edit-position edit-tree edits env-sound fft-window-alpha fft-window-beta fft-log-frequency fft-log-magnitude
 			      transform-size transform-graph-type fft-window transform-graph? filter-sound
 			      graph-data graph-style lisp-graph? insert-region left-sample
 			      time-graph-style lisp-graph-style transform-graph-style
@@ -55757,7 +56358,7 @@ EDITS: 1
 				(snd-display ";~D: chn procs ~A: ~A" ctr n tag))
 			    (set! ctr (+ ctr 1))))
 			(list channel-widgets cursor cursor-position cursor-size cursor-style display-edits
-			      dot-size edit-position edit-tree edits fft-window-beta fft-log-frequency fft-log-magnitude
+			      dot-size edit-position edit-tree edits fft-window-alpha fft-window-beta fft-log-frequency fft-log-magnitude
 			      transform-size transform-graph-type fft-window transform-graph? graph-style lisp-graph? left-sample
 			      time-graph-style lisp-graph-style transform-graph-style
 			      make-graph-data max-transform-peaks maxamp maxamp-position min-dB transform-normalization peak-env-info
@@ -55782,7 +56383,7 @@ EDITS: 1
 				(snd-display ";~D: set chn procs ~A: ~A" ctr n tag))
 			    (set! ctr (+ ctr 1))))
 			(list channel-widgets cursor cursor-position display-edits dot-size edit-tree edits
-			      fft-window-beta fft-log-frequency fft-log-magnitude transform-size transform-graph-type fft-window
+			      fft-window-alpha fft-window-beta fft-log-frequency fft-log-magnitude transform-size transform-graph-type fft-window
 			      transform-graph? graph-style lisp-graph? left-sample make-graph-data max-transform-peaks maxamp maxamp-position
 			      time-graph-style lisp-graph-style transform-graph-style
 			      min-dB transform-normalization peak-env-info reverse-sound right-sample show-axes  grid-density

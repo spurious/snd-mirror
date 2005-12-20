@@ -118,6 +118,7 @@ GtkWidget *get_help_menu_widget(void);
 /* -------- snd-gfft.c -------- */
 
 void set_fft_window_beta(Float val);
+void set_fft_window_alpha(Float val);
 void set_transform_size(int val);
 void set_fft_window(mus_fft_window_t val);
 void set_wavelet_type(int val);

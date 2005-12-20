@@ -429,6 +429,8 @@ void about_snd_help(void)
 		"\nRecent changes include:\n\
 \n\
 19-Dec:  analog-filter.scm: Butterworth, Chebyshev, inverse-Chebyshev, Bessel(-Thompson), Elliptic filters.\n\
+         new fft windows: samaraki and ultraspherical (related to the dolph-chebyshev window)\n\
+         fft-window-alpha (ultraspherical window parameter).\n\
 5-Dec:   snd_pd_external.c and other changes for Pd, thanks to Kjetil.\n\
          sinc-train (clm.html), reverse-by-blocks and reverse-within-blocks (examp.scm), pulse-voice (examp.scm).\n\
 28-Nov:  snd 7.17.\n\
@@ -628,7 +630,7 @@ of Acoustics, Speech, and Signal Processing, Vol. ASSP-29, 1, February 1981. \
 Nearly all the transform-related choices are set by the transform dialog launched from the Options \
 Menu Transform item. Most of this dialog should be self-explanatory.  Some of the windows take an \
 additional parameter sometimes known as alpha or beta.  This can be set by the scale next to the fft window graph in the \
-transform dialog, or via " S_fft_window_beta ". \
+transform dialog, or via " S_fft_window_alpha " and " S_fft_window_beta ". \
 \n\n\
 The FFT display is activated by setting the 'f' button on the channel's window.  It then updates \
 itself each time the time domain waveform moves or changes.  \
@@ -1170,7 +1172,7 @@ next is a panel of buttons that sets various display-oriented choices; the lower
 sets the current wavelet, when relevant; next is the fft data window choice; and next to it is a \
 graph of the current fft window; when the window has an associated parameter (sometimes known as \
 'alpha' or 'beta'), the slider beneath the window list is highlighted and can be used to choose the \
-desired member of that family of windows. \
+desired member of that family of windows. The lower (second) scale sets the 'mu' parameter in the ultraspherical window. \
 \n\n\
 If the 'selection' button is not set, the FFT is taken from the start (the left edge) of the \
 current window and is updated as the window bounds change; otherwise the FFT is taken over the extent \
@@ -1957,7 +1959,7 @@ bool snd_topic_help(const char *topic)
 	      min_loc = i;
 	    }
 	}
-    if (min_diff < snd_ilog2(topic_len)) /* was topic_len / 2, but this gives too much leeway for substitutions */
+    if (min_diff < snd_int_log2(topic_len)) /* was topic_len / 2, but this gives too much leeway for substitutions */
       {
 	(*help_funcs[min_loc])();
 	return(true);
@@ -2324,7 +2326,7 @@ and its value is returned."
 	      help_text = XEN_OBJECT_HELP(text);
 	    }
 	}
-      topic_min = snd_ilog2(snd_strlen(subject));
+      topic_min = snd_int_log2(snd_strlen(subject));
 
     HELP_LOOP:
       if (XEN_FALSE_P(help_text))

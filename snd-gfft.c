@@ -5,8 +5,8 @@
 static GtkWidget *transform_dialog = NULL; /* main dialog shell */
 static GtkWidget *transform_list = NULL, *size_list, *window_list, *wavelet_list, *outer_table,
                  *db_button, *peaks_button, *logfreq_button, *sono_button, *spectro_button, *normal_fft_button, *normalize_button, *selection_button,
-                 *window_beta_scale, *graph_drawer = NULL, *graph_frame = NULL;
-static GtkObject *beta_adj;
+                 *window_beta_scale, *window_alpha_scale, *graph_drawer = NULL, *graph_frame = NULL;
+static GtkObject *beta_adj, *alpha_adj;
 static GdkGC *gc = NULL, *fgc = NULL;
 static bool ignore_callbacks;
 
@@ -21,9 +21,10 @@ static char *TRANSFORM_SIZES[NUM_TRANSFORM_SIZES] =
 static int transform_sizes[NUM_TRANSFORM_SIZES] = 
   {32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 65536, 262144, 1048576, 4194304};
 
-static char *FFT_WINDOWS[NUM_FFT_WINDOWS] = 
+static char *FFT_WINDOWS[MUS_NUM_WINDOWS] = 
   {"Rectangular", "Hann", "Welch", "Parzen", "Bartlett", "Hamming", "Blackman2", "Blackman3", "Blackman4",
-   "Exponential", "Riemann", "Kaiser", "Cauchy", "Poisson", "Gaussian", "Tukey", "Dolph-Chebyshev", "Hann-Poisson", "Connes"};
+   "Exponential", "Riemann", "Kaiser", "Cauchy", "Poisson", "Gaussian", "Tukey", "Dolph-Chebyshev", "Hann-Poisson", "Connes",
+   "Samaraki", "Ultraspherical"};
 
 static Float fp_dB(Float py)
 {
@@ -106,7 +107,9 @@ static void graph_redisplay(void)
 static void get_fft_window_data(void)
 {
   int i;
-  mus_make_fft_window_with_window(fft_window(ss), GRAPH_SIZE, fft_window_beta(ss) * fft_beta_max(fft_window(ss)), current_graph_data);
+  mus_make_fft_window_with_window(fft_window(ss), GRAPH_SIZE, 
+				  fft_window_beta(ss) * fft_beta_max(fft_window(ss)), 
+				  fft_window_alpha(ss), current_graph_data);
   memset((void *)current_graph_fftr, 0, GRAPH_SIZE * 2 * sizeof(Float));
   memset((void *)current_graph_ffti, 0, GRAPH_SIZE * 2 * sizeof(Float));
   memcpy((void *)current_graph_fftr, (void *)current_graph_data, GRAPH_SIZE * sizeof(Float));
@@ -199,7 +202,7 @@ static void window_browse_callback(GtkTreeSelection *selection, gpointer *gp)
   GtkTreeModel *model;
   if (!(gtk_tree_selection_get_selected(selection, &model, &iter))) return;
   gtk_tree_model_get(model, &iter, 0, &value, -1);
-  for (i = 0; i < NUM_FFT_WINDOWS; i++)
+  for (i = 0; i < MUS_NUM_WINDOWS; i++)
     if (strcmp(value, FFT_WINDOWS[i]) == 0)
       {
 	gfft_window(i);
@@ -333,6 +336,19 @@ static void beta_callback(GtkAdjustment *adj, gpointer context)
   in_set_fft_window_beta((Float)(adj->value));
   chans_field(FCP_BETA, (Float)(adj->value));
   if (fft_window_beta_in_use(fft_window(ss)))
+    {
+      get_fft_window_data();
+      graph_redisplay();
+      if (transform_type(ss) == FOURIER) 
+	for_each_chan(calculate_fft);
+    }
+} 
+
+static void alpha_callback(GtkAdjustment *adj, gpointer context)
+{
+  in_set_fft_window_alpha((Float)(adj->value));
+  chans_field(FCP_ALPHA, (Float)(adj->value));
+  if (fft_window_alpha_in_use(fft_window(ss)))
     {
       get_fft_window_data();
       graph_redisplay();
@@ -594,9 +610,9 @@ GtkWidget *fire_up_transform_dialog(bool managed)
       gtk_widget_show(wavelet_list);
 
       /* WINDOW */
-      window_box = gtk_table_new(2, 2, false);
+      window_box = gtk_table_new(2, 3, false);
       gtk_table_attach_defaults(GTK_TABLE(outer_table), window_box, 1, 2, 3, 6);
-      window_list = sg_make_list(_("window"), window_box, TABLE_ATTACH, NULL, NUM_FFT_WINDOWS, FFT_WINDOWS, 
+      window_list = sg_make_list(_("window"), window_box, TABLE_ATTACH, NULL, MUS_NUM_WINDOWS, FFT_WINDOWS, 
 				 GTK_SIGNAL_FUNC(window_browse_callback), 0, 1, 0, 1);
 
       beta_adj = gtk_adjustment_new(0.0, 0.0, 1.01, 0.001, 0.01, .01);
@@ -612,6 +628,20 @@ GtkWidget *fire_up_transform_dialog(bool managed)
 		       (GtkAttachOptions)(GTK_FILL), 
 		       0, 0);
 
+      alpha_adj = gtk_adjustment_new(0.0, 0.0, 1.01, 0.001, 0.01, .01);
+      window_alpha_scale = gtk_hscale_new(GTK_ADJUSTMENT(alpha_adj));
+      GTK_WIDGET_UNSET_FLAGS(window_alpha_scale, GTK_CAN_FOCUS);
+      gtk_range_set_update_policy(GTK_RANGE(GTK_SCALE(window_alpha_scale)), GTK_UPDATE_CONTINUOUS);
+      gtk_scale_set_digits(GTK_SCALE(window_alpha_scale), 2);
+      gtk_scale_set_value_pos(GTK_SCALE(window_alpha_scale), GTK_POS_TOP);
+      gtk_scale_set_draw_value(GTK_SCALE(window_alpha_scale), true);
+      SG_SIGNAL_CONNECT(alpha_adj, "value_changed", alpha_callback, NULL);
+      gtk_table_attach(GTK_TABLE(window_box), window_alpha_scale, 0, 1, 2, 3,
+		       (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), 
+		       (GtkAttachOptions)(GTK_FILL), 
+		       0, 0);
+
+      gtk_widget_show(window_alpha_scale);
       gtk_widget_show(window_beta_scale);
       gtk_widget_show(window_list);
       gtk_widget_show(window_box);
@@ -692,6 +722,19 @@ void set_fft_window_beta(Float val)
   if (transform_dialog) 
     {
       gtk_adjustment_set_value(GTK_ADJUSTMENT(beta_adj), val);
+      get_fft_window_data();
+      graph_redisplay();
+    }
+  if (!(ss->graph_hook_active)) for_each_chan(calculate_fft);
+}
+
+void set_fft_window_alpha(Float val)
+{
+  in_set_fft_window_alpha(val);
+  chans_field(FCP_ALPHA, val);
+  if (transform_dialog) 
+    {
+      gtk_adjustment_set_value(GTK_ADJUSTMENT(alpha_adj), val);
       get_fft_window_data();
       graph_redisplay();
     }

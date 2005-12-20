@@ -22,32 +22,34 @@ off_t snd_abs_off_t(off_t val)
   return((val < 0) ? -val : val);
 }
 
+/* PERHAPS: off_t versions of the power-of-2 stuff for huge fft's etc */
+
 #define POW2_SIZE 31
-static int pow2s[POW2_SIZE] = {1, 2, 4, 8, 16, 32, 64, 128, 256, 
-			       512, 1024, 2048, 4096, 8192, 16384, 32768, 65536, 
-			       131072, 262144, 524288, 1048576, 2097152, 4194304, 8388608, 16777216, 
-			       33554432, 67108864, 134217728, 268435456, 536870912, 1073741824};
-int snd_ipow2(int n)
+static int ipow2s[POW2_SIZE] = {1, 2, 4, 8, 16, 32, 64, 128, 256, 
+				512, 1024, 2048, 4096, 8192, 16384, 32768, 65536, 
+				131072, 262144, 524288, 1048576, 2097152, 4194304, 8388608, 16777216, 
+				33554432, 67108864, 134217728, 268435456, 536870912, 1073741824};
+int snd_int_pow2(int n)
 {
-  return(pow2s[n]);
+  return(ipow2s[n]);
 }
 
-int snd_2pow2(int n)
+int snd_to_int_pow2(int n)
 {
   /* round up to next power of 2 */
   int i;
   for (i = 0; i < POW2_SIZE; i++)
-    if (pow2s[i] >= n)
-      return(pow2s[i]);
+    if (ipow2s[i] >= n)
+      return(ipow2s[i]);
   return(0);
 }
 
-int snd_ilog2(int n)
+int snd_int_log2(int n)
 {
   /* round down */
   int i;
   for (i = 1; i < POW2_SIZE; i++)
-    if (pow2s[i] > n)
+    if (ipow2s[i] > n)
       return(i - 1);
   return(0);
 }
@@ -107,8 +109,10 @@ char *snd_strcat(char *errmsg, const char *str, int *size)
   return(errmsg);
 }
 
+#if HAVE_STRFTIME
 #define TIME_STR_SIZE 64
 static char time_buf[TIME_STR_SIZE];
+#endif
 
 char *snd_local_time(void)
 {
@@ -270,7 +274,7 @@ char *vstr(const char *format, va_list ap)
   return(buf);
 }
 
-disk_space_t disk_space_p(snd_info *sp, off_t bytes, const char *filename)
+disk_space_t disk_space_p(off_t bytes, const char *filename)
 {
   off_t kfree, kneeded;
   kfree = disk_kspace(filename);

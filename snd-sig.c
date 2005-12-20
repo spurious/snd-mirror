@@ -337,7 +337,7 @@ static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp, XE
 			{
 			  int ipow;
 			  ipow = (int)(ceil(log(filtersize + filesize) / log(2.0))) + 1;
-			  fftsize = snd_ipow2(ipow);
+			  fftsize = snd_int_pow2(ipow);
 			  ok = true;
 			  c_convolve(ofile, amp, scfd,
 				     mus_sound_data_location(saved_chan_file),
@@ -1175,7 +1175,7 @@ void display_frequency_response(env *e, axis_info *ap, axis_context *gax, int or
   x1 = ap->x_axis_x0;
   coeffs = get_filter_coeffs(order, e);
   if (!coeffs) return;
-  fsize = 2 * snd_2pow2((pts > order) ? pts : order); /* *2 for 1/2 frqs */
+  fsize = 2 * snd_to_int_pow2((pts > order) ? pts : order); /* *2 for 1/2 frqs */
   rl = (Float *)CALLOC(fsize, sizeof(Float));
   im = (Float *)CALLOC(fsize, sizeof(Float));
   for (i = 0, j = order - 1; i < order / 2; i++, j -= 2) rl[j] = coeffs[i]; /* by 2 from 1 for 1/2 bins */
@@ -1331,7 +1331,7 @@ static char *convolution_filter(chan_info *cp, int order, env *e, snd_fd *sf, of
   sp = cp->sound;
   dur += order;
   if (dur < TWO_30)
-    fsize = snd_2pow2(dur);
+    fsize = snd_to_int_pow2(dur);
   else fsize = TWO_30;
   ofile = snd_tempnam();
   hdr = make_temp_header(ofile, SND_SRATE(sp), 1, dur, (char *)origin);
@@ -1364,7 +1364,7 @@ static char *convolution_filter(chan_info *cp, int order, env *e, snd_fd *sf, of
       reporting = ((sp) && (dur > REPORTING_SIZE) && (!(cp->squelch_update)));
       if (order == 0) order = 65536; /* presumably fsize is enormous here, so no MIN needed */
       if (!(POWER_OF_2_P(order)))
-	order = snd_2pow2(order);
+	order = snd_to_int_pow2(order);
       fsize = 2 * order; /* need room for convolution */
       if (precalculated_coeffs)
 	fltdat = precalculated_coeffs;
@@ -4711,7 +4711,7 @@ If sign is -1, perform inverse fft.  Incoming data is in vcts."
     {
       int ipow;
       ipow = (int)ceil(log(n + 1) / log(2.0)); /* ceil because we're assuming below that n2 >= n */
-      n2 = snd_ipow2(ipow);
+      n2 = snd_int_pow2(ipow);
       rl = (Float *)CALLOC(n2, sizeof(Float));
       im = (Float *)CALLOC(n2, sizeof(Float));
       need_free = true;
@@ -4763,7 +4763,7 @@ magnitude spectrum of data (a vct), in data if in-place, using fft-window win an
   if (b < 0.0) b = 0.0; else if (b > 1.0) b = 1.0;
   idat = (Float *)CALLOC(n, sizeof(Float));
   window = (Float *)CALLOC(n, sizeof(Float));
-  mus_make_fft_window_with_window(wtype, n, b * fft_beta_max(wtype), window);
+  mus_make_fft_window_with_window(wtype, n, b * fft_beta_max(wtype), 0.0, window);
   for (i = 0; i < n; i++) rdat[i] *= window[i];
   FREE(window);
   n2 = n / 2;

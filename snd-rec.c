@@ -1665,11 +1665,10 @@ int rec_output_chans(void)
   return(rp->out_chans);
 }
 
-int rec_set_output_chans(int chans)
+void rec_set_output_chans(int chans)
 {
   init_recorder(); 
   rp->out_chans = chans;
-  return(chans);
 }
 
 static XEN g_recorder_out_chans(void) {return(C_TO_XEN_INT(rec_output_chans()));}
@@ -1709,11 +1708,10 @@ int rec_output_data_format(void)
   return(rp->output_data_format);
 }
 
-int rec_set_output_data_format(int f)
+void rec_set_output_data_format(int f)
 {
   init_recorder(); 
   rp->output_data_format = f;
-  return(f);
 }
 
 static XEN g_recorder_out_data_format(void) {return(C_TO_XEN_INT(rec_output_data_format()));}
@@ -1735,11 +1733,10 @@ int rec_output_header_type(void)
   return(rp->output_header_type);
 }
 
-int rec_set_output_header_type(int h)
+void rec_set_output_header_type(int h)
 {
   init_recorder(); 
   rp->output_header_type = h;
-  return(h);
 }
 
 static XEN g_recorder_out_header_type(void) {return(C_TO_XEN_INT(rec_output_header_type()));}
