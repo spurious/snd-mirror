@@ -621,7 +621,6 @@ the real and imaginary parts of the data; len should be a power of 2, dir = 1 fo
   return(xen_return_first(url, uim));
 }
 
-/* TODO: check lisp-case of make-fft-window, if any */
 static XEN g_make_fft_window(XEN type, XEN size, XEN ubeta, XEN ualpha)
 {
   #define H_make_fft_window "(" S_make_fft_window " type size (beta 0.0) (alpha 0.0)): -> fft data window (a vct). \

@@ -121,7 +121,6 @@ view_files_info *new_view_files_dialog(void);
 void view_files_update_list(view_files_info *vdat);
 void add_directory_to_view_files_list(view_files_info *vdat, const char *dirname);
 void add_file_to_view_files_list(view_files_info *vdat, const char *filename, const char *fullname);
-view_files_info *vf_dialog_to_info(widget_t dialog);
 void vf_mix_insert_buttons_set_sensitive(view_files_info *vdat, bool sensitive);
 void vf_open_remove_buttons_set_sensitive(view_files_info *vdat, bool sensitive);
 #if (!HAVE_FAM)

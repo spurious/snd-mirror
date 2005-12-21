@@ -2503,7 +2503,7 @@ static int vf_dialog_to_index(widget_t dialog)
   return(-1);
 }
 
-view_files_info *vf_dialog_to_info(widget_t dialog)
+static view_files_info *vf_dialog_to_info(widget_t dialog)
 {
   int index;
   index = vf_dialog_to_index(dialog);

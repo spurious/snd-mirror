@@ -1298,13 +1298,6 @@ To use the defaults, click the 'Reset' button.",
     }
 }
 
-/* PERHAPS completions embedded as pull down menu */
-/*    this could be handled locally like errors -- local pulldown menu (with continuations etc)
- */
-
-/*  appears to be Name_completion in snd-xlistener, so triggered via XtAction TAB (different from Listener_completion)
- */
-
 void completion_dialog_help(void)
 {
   snd_help("completion",

@@ -127,6 +127,15 @@ static void create_completion_help_dialog(char *title)
   set_dialog_widget(COMPLETION_DIALOG, completion_help_dialog);
 }
 
+/* TODO: in all cases, completion help dialog should be in upper right corner (out of the way), and should unpost on any undirected action */
+/*         in dialog cases (open file) it should be in the upper right of the dialog, and should go away if the dialog does! */
+
+/*    this could be handled locally like errors -- local window (with continuations etc)
+ *  appears to be Name_completion in snd-xlistener, so triggered via XtAction TAB (different from Listener_completion)
+ *  Name_completion has cmpwids[i] so it can tell where the tab came from
+ */
+
+
 void snd_completion_help(int matches, char **buffer)
 {
   int i;

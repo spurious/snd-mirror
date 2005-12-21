@@ -43,64 +43,38 @@
  *     win32-specific functions
  *
  * HISTORY:
- *     21-Jul:    gtk 2.7.3.
- *     9-Jul:     gtk 2.7.2.  Collapse 2.3.1 to 2.3.5 into 2.3.6, 2.5.1 to 2.5.5 into 2.5.6.
- *     5-Jul:     gtk 2.7.1.
- *     23-Jun:    gtk 2.7.0.
+ *     9-Jul:     Collapse 2.3.* into 2.3.6, 2.5.* into 2.5.6.
  *     13-Jun:    folded xg-ruby.c into xg.c.
  *     21-Feb:    changed libxm to libxg, xm-version to xg-version.
  *     10-Jan:    plugged some memory leaks.
  *     4-Jan:     removed deprecated XEN_VECTOR_ELEMENTS.
  *     --------
- *     30-Dec:    gtk 2.6.0.
  *     8-Dec:     added some g_log handler funcs.
  *     6-Dec:     added check for lost callback context.
  *                tightened type (pointer) checking considerably (#f only acceptable if explicit @ used in xgdata.scm).
- *                gtk 2.5.6 and pango 1.7.0.
  *     3-Dec:     changed GPOINTER cast func to accept non-lists.
- *     15-Nov:    gtk 2.5.5.
- *     29-Oct:    gtk 2.5.4.
- *     27-Aug:    gtk 2.5.2. removed the PANGO_ENGINE and PANGO_BACKEND stuff.
- *     5-Aug:     gtk 2.5.1.
- *     21-Jul:    gtk 2.5.0.
+ *     27-Aug:    removed the PANGO_ENGINE and PANGO_BACKEND stuff.
  *     2-Jun:     gdk_atom_name needs to free return value
  *     28-May:    GtkFileSelection struct support put back in -- need ok_button et al.
  *     14-Apr:    make-target-entry.
  *     4-Apr:     various additions, deletions, and bugfixes for snd-test 26
  *     29-Mar:    support for some ... args.
  *     22-Mar:    g_source_remove and related changes.
- *     11-Mar:    gtk 2.3.6.
- *     4-Mar:     gtk 2.3.5.
- *     26-Feb:    gtk 3.2.4.
  *     12-Feb:    g_list_nth_data (Kjetil S. Matheussen).
- *     6-Feb:     gtk 2.3.2.
  *     --------
- *     16-Dec:    gtk 2.3.1.
- *     1-Dec:     gtk 2.3.
- *     15-Sep:    removed client_window GtkIMMulticontext struct field (for Gtk 2.2.4).
+ *     15-Sep:    removed client_window GtkIMMulticontext struct field.
  *     26-May:    removed nugatory GdkInputFunction stuff and some unused type converters.
- *     7-Apr:     GTK_RC_STYLE has two incompatible definitions in gtk! (gtkwidget.h, gtkrc.h) -- will use int case.
  *     1-Apr:     gdk_property_get uses scm_mem2string in some cases now.
  *     31-Mar:    gchar* -> xen string bugfix (thanks to Friedrich Delgado Friedrichs).
  *     10-Mar:    Ruby Xm_Version.
- *     6-Jan:     gtk 2.2.
  *     --------
  *     18-Nov:    Ruby/Gtk bugfixes.
- *     28-Oct:    gtk 2.1 additions.
  *     25-Oct:    removed (deprecated) gdk_set_pointer_hooks
  *     31-Jul:    removed GTK 1.n support
  *     24-Jul:    changed Guile prefix (R5RS reserves vertical-bar).
  *     19-Jul:    XG_FIELD_PRE for change from using vertical-bar (reserved in R5RS)
  *     2-Jun:     removed deprecated and broken stuff
- *     4-Apr:     minor changes for Gtk 2.0.2
- *     13-Mar:    Gtk 2.0.0
  *     12-Mar:    support for GtkDestroyNotify callbacks
- *     27-Feb:    remove gtk_tree_view_column_cell_render, gtk_tree_view_column_cell_focus, 
- *                  gtk_tree_view_column_cell_draw_focus and gtk_tree_view_column_cell_set_dirty (privatized in 1.3.15)
- *                add (on HAVE-* switches) gtk_file_selection_get_selections, gtk_file_selection_set_select_multiple
- *                  and gtk_file_selection_get_select_multiple (new functions in 1.3.15)
- *                  also gtk_tree_path_new_first void and gtk_tree_model_get_iter_first (new names in 1.3.15)
- *     26-Feb:    Gtk 1.2.10 support, also 1.3.15
  *     25-Feb:    dialog example in libxm.html
  *                Ruby support via xg-ruby.c
  *     21-Feb:    #f=NULL throughout, gdk-pixbuf, GTypes.
@@ -13381,13 +13355,6 @@ static XEN gxg_gtk_text_attributes_unref(XEN values)
   #define H_gtk_text_attributes_unref "void gtk_text_attributes_unref(GtkTextAttributes* values)"
   XEN_ASSERT_TYPE(XEN_GtkTextAttributes__P(values), values, 1, "gtk_text_attributes_unref", "GtkTextAttributes*");
   gtk_text_attributes_unref(XEN_TO_C_GtkTextAttributes_(values));
-  return(XEN_FALSE);
-}
-static XEN gxg_gtk_text_attributes_ref(XEN values)
-{
-  #define H_gtk_text_attributes_ref "void gtk_text_attributes_ref(GtkTextAttributes* values)"
-  XEN_ASSERT_TYPE(XEN_GtkTextAttributes__P(values), values, 1, "gtk_text_attributes_ref", "GtkTextAttributes*");
-  gtk_text_attributes_ref(XEN_TO_C_GtkTextAttributes_(values));
   return(XEN_FALSE);
 }
 static XEN gxg_gtk_text_tag_table_get_type(void)
@@ -28932,7 +28899,6 @@ XEN_NARGIFY_0(gxg_gtk_text_attributes_new_w, gxg_gtk_text_attributes_new)
 XEN_NARGIFY_1(gxg_gtk_text_attributes_copy_w, gxg_gtk_text_attributes_copy)
 XEN_NARGIFY_2(gxg_gtk_text_attributes_copy_values_w, gxg_gtk_text_attributes_copy_values)
 XEN_NARGIFY_1(gxg_gtk_text_attributes_unref_w, gxg_gtk_text_attributes_unref)
-XEN_NARGIFY_1(gxg_gtk_text_attributes_ref_w, gxg_gtk_text_attributes_ref)
 XEN_NARGIFY_0(gxg_gtk_text_tag_table_get_type_w, gxg_gtk_text_tag_table_get_type)
 XEN_NARGIFY_0(gxg_gtk_text_tag_table_new_w, gxg_gtk_text_tag_table_new)
 XEN_NARGIFY_2(gxg_gtk_text_tag_table_add_w, gxg_gtk_text_tag_table_add)
@@ -32495,7 +32461,6 @@ XEN_NARGIFY_0(gxg_make_PangoLogAttr_w, gxg_make_PangoLogAttr)
 #define gxg_gtk_text_attributes_copy_w gxg_gtk_text_attributes_copy
 #define gxg_gtk_text_attributes_copy_values_w gxg_gtk_text_attributes_copy_values
 #define gxg_gtk_text_attributes_unref_w gxg_gtk_text_attributes_unref
-#define gxg_gtk_text_attributes_ref_w gxg_gtk_text_attributes_ref
 #define gxg_gtk_text_tag_table_get_type_w gxg_gtk_text_tag_table_get_type
 #define gxg_gtk_text_tag_table_new_w gxg_gtk_text_tag_table_new
 #define gxg_gtk_text_tag_table_add_w gxg_gtk_text_tag_table_add
@@ -36065,7 +36030,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_text_attributes_copy, gxg_gtk_text_attributes_copy_w, 1, 0, 0, H_gtk_text_attributes_copy);
   XG_DEFINE_PROCEDURE(gtk_text_attributes_copy_values, gxg_gtk_text_attributes_copy_values_w, 2, 0, 0, H_gtk_text_attributes_copy_values);
   XG_DEFINE_PROCEDURE(gtk_text_attributes_unref, gxg_gtk_text_attributes_unref_w, 1, 0, 0, H_gtk_text_attributes_unref);
-  XG_DEFINE_PROCEDURE(gtk_text_attributes_ref, gxg_gtk_text_attributes_ref_w, 1, 0, 0, H_gtk_text_attributes_ref);
   XG_DEFINE_PROCEDURE(gtk_text_tag_table_get_type, gxg_gtk_text_tag_table_get_type_w, 0, 0, 0, H_gtk_text_tag_table_get_type);
   XG_DEFINE_PROCEDURE(gtk_text_tag_table_new, gxg_gtk_text_tag_table_new_w, 0, 0, 0, H_gtk_text_tag_table_new);
   XG_DEFINE_PROCEDURE(gtk_text_tag_table_add, gxg_gtk_text_tag_table_add_w, 2, 0, 0, H_gtk_text_tag_table_add);
@@ -39886,7 +39850,7 @@ static bool xg_already_inited = false;
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("22-Sep-05"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("21-Dec-05"));
       xg_already_inited = true;
 #if WITH_GTK_AND_X11
       Init_libx11();

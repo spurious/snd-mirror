@@ -665,7 +665,6 @@ char *list_completer(char *text, void *data)
 	    current_match = i;
 	  }
     }
-  /* PERHAPS: should we set up the match list here? */
   FREE(trimmed_text);
   if (matches != 1)
     return(copy_string(text));
