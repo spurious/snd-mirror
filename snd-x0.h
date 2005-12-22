@@ -149,7 +149,7 @@ typedef struct {
   Widget *dialogs;
   int num_dialogs, dialogs_size;
   Cursor graph_cursor, wait_cursor;
-  Widget completion_requestor, requestor_dialog;
+  Widget completion_requestor, completion_requestor_dialog, requestor_dialog;
 #if HAVE_GL
   GLXContext cx;
 #endif

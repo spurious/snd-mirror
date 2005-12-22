@@ -5,9 +5,9 @@
 
 static Widget listener_text = NULL;
 
-static Widget completion_help_dialog = NULL, completion_help_list = NULL;
+static Widget completions_dialog = NULL, completions_list = NULL;
 
-static void completion_help_help_callback(Widget w, XtPointer context, XtPointer info) 
+static void completions_help_callback(Widget w, XtPointer context, XtPointer info) 
 {
   completion_dialog_help();
 }
@@ -17,10 +17,11 @@ static void unpost_completion_from_activate(Widget w, XtPointer context, XtPoint
 
 static void unpost_completion(Widget w)
 {
-  XtUnmanageChild(completion_help_dialog);
+  XtUnmanageChild(completions_dialog);
   XtRemoveCallback(w, XmNmodifyVerifyCallback, unpost_completion_from_modify, NULL);
   XtRemoveCallback(w, XmNactivateCallback, unpost_completion_from_activate, NULL);
-  ss->sgx->completion_requestor = NULL;    
+  ss->sgx->completion_requestor = NULL;
+  ss->sgx->completion_requestor_dialog = NULL;    
 }
 
 static void unpost_completion_from_activate(Widget w, XtPointer context, XtPointer info)
@@ -35,7 +36,7 @@ static void unpost_completion_from_modify(Widget w, XtPointer context, XtPointer
   unpost_completion(w);
 }
 
-static void completion_help_browse_callback(Widget w, XtPointer context, XtPointer info) 
+static void completions_browse_callback(Widget w, XtPointer context, XtPointer info) 
 {
   int i, j, old_len, new_len;
   char *text = NULL, *old_text = NULL;
@@ -75,7 +76,7 @@ static void completion_help_browse_callback(Widget w, XtPointer context, XtPoint
   unpost_completion(requestor);
 }
 
-static void help_completion_ok_callback(Widget w, XtPointer context, XtPointer info) 
+static void completions_ok_callback(Widget w, XtPointer context, XtPointer info) 
 {
   Widget requestor;
   if (ss->sgx->completion_requestor == NULL) 
@@ -84,7 +85,7 @@ static void help_completion_ok_callback(Widget w, XtPointer context, XtPointer i
   unpost_completion(requestor);
 }
 
-static void create_completion_help_dialog(char *title)
+static void create_completions_dialog(char *title)
 {
   Arg args[20];
   int n;
@@ -97,67 +98,65 @@ static void create_completion_help_dialog(char *title)
   XtSetArg(args[n], XmNresizePolicy, XmRESIZE_GROW); n++;
   XtSetArg(args[n], XmNnoResize, false); n++;
   /* XtSetArg(args[n], XmNtransient, false); n++; */
-  completion_help_dialog = XmCreateMessageDialog(MAIN_PANE(ss), "snd-completion-help", args, n);
+  completions_dialog = XmCreateMessageDialog(MAIN_PANE(ss), "snd-completion-help", args, n);
 
-  XtUnmanageChild(XmMessageBoxGetChild(completion_help_dialog, XmDIALOG_CANCEL_BUTTON));
-  XtUnmanageChild(XmMessageBoxGetChild(completion_help_dialog, XmDIALOG_SYMBOL_LABEL));
+  XtUnmanageChild(XmMessageBoxGetChild(completions_dialog, XmDIALOG_CANCEL_BUTTON));
+  XtUnmanageChild(XmMessageBoxGetChild(completions_dialog, XmDIALOG_SYMBOL_LABEL));
   XmStringFree(titlestr);
 
   n = 0;
-  completion_help_list = XmCreateScrolledList(completion_help_dialog, "completion-help-text", args, n);
-  if (!(ss->using_schemes)) XtVaSetValues(completion_help_list, XmNbackground, ss->sgx->white, XmNforeground, ss->sgx->black, NULL);
+  completions_list = XmCreateScrolledList(completions_dialog, "completion-help-text", args, n);
+  if (!(ss->using_schemes)) XtVaSetValues(completions_list, XmNbackground, ss->sgx->white, XmNforeground, ss->sgx->black, NULL);
 
-  XtManageChild(completion_help_list);
+  XtManageChild(completions_list);
 
-  XtAddCallback(completion_help_list, XmNbrowseSelectionCallback, completion_help_browse_callback, NULL);
-  XtAddCallback(completion_help_dialog, XmNhelpCallback, completion_help_help_callback, NULL);
-  XtAddCallback(completion_help_dialog, XmNokCallback, help_completion_ok_callback, NULL);
+  XtAddCallback(completions_list, XmNbrowseSelectionCallback, completions_browse_callback, NULL);
+  XtAddCallback(completions_dialog, XmNhelpCallback, completions_help_callback, NULL);
+  XtAddCallback(completions_dialog, XmNokCallback, completions_ok_callback, NULL);
 
-  XtManageChild(completion_help_dialog);
+  XtManageChild(completions_dialog);
 
   if (!(ss->using_schemes))
     {
-      map_over_children(completion_help_dialog, set_main_color_of_widget, NULL);
-      XtVaSetValues(completion_help_list, XmNbackground, ss->sgx->white, XmNforeground, ss->sgx->black, NULL);
-      XtVaSetValues(XmMessageBoxGetChild(completion_help_dialog, XmDIALOG_OK_BUTTON), XmNarmColor, ss->sgx->pushed_button_color, NULL);
-      XtVaSetValues(XmMessageBoxGetChild(completion_help_dialog, XmDIALOG_HELP_BUTTON), XmNarmColor, ss->sgx->pushed_button_color, NULL);
-      XtVaSetValues(XmMessageBoxGetChild(completion_help_dialog, XmDIALOG_OK_BUTTON), XmNbackground, ss->sgx->quit_button_color, NULL);
-      XtVaSetValues(XmMessageBoxGetChild(completion_help_dialog, XmDIALOG_HELP_BUTTON), XmNbackground, ss->sgx->help_button_color, NULL);
+      map_over_children(completions_dialog, set_main_color_of_widget, NULL);
+      XtVaSetValues(completions_list, XmNbackground, ss->sgx->white, XmNforeground, ss->sgx->black, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(completions_dialog, XmDIALOG_OK_BUTTON), XmNarmColor, ss->sgx->pushed_button_color, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(completions_dialog, XmDIALOG_HELP_BUTTON), XmNarmColor, ss->sgx->pushed_button_color, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(completions_dialog, XmDIALOG_OK_BUTTON), XmNbackground, ss->sgx->quit_button_color, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(completions_dialog, XmDIALOG_HELP_BUTTON), XmNbackground, ss->sgx->help_button_color, NULL);
     }
-  set_dialog_widget(COMPLETION_DIALOG, completion_help_dialog);
+  set_dialog_widget(COMPLETION_DIALOG, completions_dialog);
 }
 
-/* TODO: in all cases, completion help dialog should be in upper right corner (out of the way), and should unpost on any undirected action */
-/*         in dialog cases (open file) it should be in the upper right of the dialog, and should go away if the dialog does! */
-
-/*    this could be handled locally like errors -- local window (with continuations etc)
- *  appears to be Name_completion in snd-xlistener, so triggered via XtAction TAB (different from Listener_completion)
- *  Name_completion has cmpwids[i] so it can tell where the tab came from
- */
-
+static void unpost_completion_dialog(Widget w, XtPointer context, XtPointer info)
+{
+  XtRemoveCallback(w, XmNcancelCallback, unpost_completion_dialog, NULL);
+  if (ss->sgx->completion_requestor)
+    unpost_completion(ss->sgx->completion_requestor);
+}
 
 void snd_completion_help(int matches, char **buffer)
 {
   int i;
   Dimension w, h;
   XmString *match;
-  if (completion_help_dialog)
-    XtManageChild(completion_help_dialog);
-  else create_completion_help_dialog(_("Completions"));
+  if (completions_dialog)
+    XtManageChild(completions_dialog);
+  else create_completions_dialog(_("Completions"));
   match = (XmString *)CALLOC(matches, sizeof(XmString));
   for (i = 0; i < matches; i++) 
     match[i] = XmStringCreate(buffer[i], XmFONTLIST_DEFAULT_TAG);
-  XtVaSetValues(completion_help_list, 
+  XtVaSetValues(completions_list, 
 		XmNitems, match, 
 		XmNitemCount, matches, 
 		XmNvisibleItemCount, mus_iclamp(1, matches, 12), 
 		NULL);
-  XtVaGetValues(completion_help_list, 
+  XtVaGetValues(completions_list, 
 		XmNwidth, &w, 
 		XmNheight, &h, 
 		NULL);
   if ((w < 100) || (h < 100)) 
-    XtVaSetValues(completion_help_dialog, 
+    XtVaSetValues(completions_dialog, 
 		  XmNwidth, 200,
 		  XmNheight, 200, 
 		  NULL);
@@ -167,11 +166,25 @@ void snd_completion_help(int matches, char **buffer)
 
   {
     Widget requestor;
+    Position rx, ry;
+    Dimension rw;
     if (ss->sgx->completion_requestor == NULL) 
       requestor = listener_text;
     else requestor = ss->sgx->completion_requestor;
     XtAddCallback(requestor, XmNmodifyVerifyCallback, unpost_completion_from_modify, NULL);
     XtAddCallback(requestor, XmNactivateCallback, unpost_completion_from_activate, NULL);
+    if (ss->sgx->completion_requestor_dialog)
+      XtAddCallback(ss->sgx->completion_requestor_dialog, XmNcancelCallback, unpost_completion_dialog, NULL);
+
+    if (requestor == listener_text)
+      {
+	XtVaGetValues(requestor, XmNwidth, &rw, XmNx, &rx, XmNy, &ry, NULL);
+	XtVaSetValues(completions_dialog, 
+		      XmNx, rx + rw,
+		      XmNy, ry,
+		      NULL);
+      }
+    /* otherwise position is handled in name completion */
   }
 }
 
@@ -455,6 +468,25 @@ static void add_completer_widget(Widget w, int row)
     }
 }
 
+static Widget widget_to_dialog(Widget w)
+{
+  /* find dialog parent of w, if any */
+  while (w)
+    {
+      w = XtParent(w);
+      if (w)
+	{
+	  if ((XmIsFileSelectionBox(w)) ||     /* file selection dialog */
+	      (XmIsMessageBox(w)))             /* includes template dialog */
+	    return(w);
+	  if ((XmIsDialogShell(w)) ||
+	      (XtIsApplicationShell(w)))
+	    return(NULL);
+	}
+    }
+  return(NULL);
+}
+
 static void Name_completion(Widget w, XEvent *event, char **str, Cardinal *num) 
 {
   /* non-listener tab completion */
@@ -494,26 +526,26 @@ static void Name_completion(Widget w, XEvent *event, char **str, Cardinal *num)
 	  XmUpdateDisplay(w);
 	  if (matches > 1) 
 	    {
-	      bool need_position;
+	      bool need_position = false;
 	      char *search_text;
 	      ss->sgx->completion_requestor = w;
+	      ss->sgx->completion_requestor_dialog = widget_to_dialog(w);
 	      set_save_completions(true);
 	      search_text = complete_text(old_text, data);
 	      if (search_text) FREE(search_text);
-	      need_position = (completion_help_dialog == NULL);
+	      if ((!completions_dialog) ||
+		  (!(XtIsManaged(completions_dialog))))
+		need_position = true;
 	      display_completions();
 	      set_save_completions(false);
 	      if (need_position)
 		{
-		  Position wx, wy;
+		  Dimension ww;
 		  int xoff, yoff; 
 		  Window wn;
-		  /* try to position the newly popped up help window below the text field */
-		  XtVaGetValues(w, XmNx, &wx, XmNy, &wy, NULL);
+		  XtVaGetValues(completions_dialog, XmNwidth, &ww, NULL);
 		  XTranslateCoordinates(XtDisplay(w), XtWindow(w), DefaultRootWindow(XtDisplay(w)), 0, 0, &xoff, &yoff, &wn);
-		  wx += xoff; 
-		  wy += yoff;
-		  XtVaSetValues(completion_help_dialog, XmNx, wx, XmNy, wy + 40, NULL);
+		  XtVaSetValues(completions_dialog, XmNx, xoff - ww - 40, XmNy, yoff, NULL);
 		}
 	    }
 	  else
@@ -601,6 +633,7 @@ static void Listener_completion(Widget w, XEvent *event, char **str, Cardinal *n
   int beg, end, len, matches = 0;
   char *old_text;
   ss->sgx->completion_requestor = listener_text;
+  ss->sgx->completion_requestor_dialog = NULL;
   beg = printout_end + 1;
   end = XmTextGetLastPosition(w);
   if (end <= beg) return;
@@ -640,7 +673,7 @@ static void Listener_completion(Widget w, XEvent *event, char **str, Cardinal *n
 	      FREE(new_text); 
 	      new_text = NULL;
 	    }
-	  need_position = (completion_help_dialog == NULL);
+	  need_position = (completions_dialog == NULL);
 	  display_completions();
 	  set_save_completions(false);
 	  if (need_position)
@@ -653,7 +686,7 @@ static void Listener_completion(Widget w, XEvent *event, char **str, Cardinal *n
 	      XTranslateCoordinates(XtDisplay(w), XtWindow(w), DefaultRootWindow(XtDisplay(w)), 0, 0, &xoff, &yoff, &wn);
 	      wx += xoff; 
 	      wy += yoff;
-	      XtVaSetValues(completion_help_dialog, XmNx, wx, XmNy, wy + 140, NULL);
+	      XtVaSetValues(completions_dialog, XmNx, wx, XmNy, wy + 140, NULL);
 	    }
 	}
       if (file_text) FREE(file_text);

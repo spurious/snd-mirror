@@ -308,11 +308,8 @@ void clear_possible_completions(void)
 
 static list_completer_info *srate_info = NULL;
 
-void add_srate_to_completion_list(int srate)
+static void init_srate_list(void)
 {
-  char *str;
-  str = (char *)CALLOC(16, sizeof(char));
-  mus_snprintf(str, 16, "%d", srate);
   if (srate_info == NULL)
     {
       int loc = 0;
@@ -320,33 +317,39 @@ void add_srate_to_completion_list(int srate)
       srate_info->exact_match = true;
       srate_info->values_size = 16;
       srate_info->values = (char **)CALLOC(srate_info->values_size, sizeof(char *));
-      if (srate != 44100) srate_info->values[loc++] = copy_string("44100");
-      if (srate != 22050) srate_info->values[loc++] = copy_string("22050");
-      if (srate != 8000) srate_info->values[loc++] = copy_string("8000");
-      if (srate != 48000) srate_info->values[loc++] = copy_string("48000");
+      srate_info->values[loc++] = copy_string("44100");
+      srate_info->values[loc++] = copy_string("22050");
+      srate_info->values[loc++] = copy_string("8000");
+      srate_info->values[loc++] = copy_string("48000");
       srate_info->num_values = loc;
     }
-  else
+}
+
+void add_srate_to_completion_list(int srate)
+{
+  char *str;
+  int i;
+  init_srate_list();
+  str = (char *)CALLOC(16, sizeof(char));
+  mus_snprintf(str, 16, "%d", srate);
+  for (i = 0; i < srate_info->num_values; i++)
+    if (strcmp(srate_info->values[i], str) == 0)
+      {
+	FREE(str);
+	return;
+      }
+  if (srate_info->num_values >= srate_info->values_size)
     {
-      int i;
-      for (i = 0; i < srate_info->num_values; i++)
-	if (strcmp(srate_info->values[i], str) == 0)
-	  {
-	    FREE(str);
-	    return;
-	  }
-      if (srate_info->num_values >= srate_info->values_size)
-	{
-	  srate_info->values_size += 16;
-	  srate_info->values = (char **)REALLOC(srate_info->values, srate_info->values_size * sizeof(char *));
-	  for (i = srate_info->num_values; i < srate_info->values_size; i++) srate_info->values[i] = NULL;
-	}
+      srate_info->values_size += 16;
+      srate_info->values = (char **)REALLOC(srate_info->values, srate_info->values_size * sizeof(char *));
+      for (i = srate_info->num_values; i < srate_info->values_size; i++) srate_info->values[i] = NULL;
     }
   srate_info->values[srate_info->num_values++] = str;
 }
 
 char *srate_completer(char *text, void * data)
 {
+  init_srate_list();
   return(list_completer(text, (void *)srate_info));
 }
 

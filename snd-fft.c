@@ -1229,7 +1229,7 @@ static void one_fft(fft_state *fs)
       fp = cp->fft;
       if (!fp)                              /* associated channel hasn't done any ffts yet, so there's no struct */
 	{
-	  cp->fft = make_fft_info(fs->size, fs->wintype, fs->alpha, fs->beta); /* TODO: beta arg was 0.0 here? 20-Dec-05 */
+	  cp->fft = make_fft_info(fs->size, fs->wintype, fs->alpha, fs->beta);
 	  fp = cp->fft;
 	}
       else
