@@ -978,6 +978,7 @@ void save_state(const char *save_state_name)
   if (append_new_state)
     save_fd = FOPEN(fullname, "a");
   else save_fd = FOPEN(fullname, "w");
+  if (fullname) {FREE(fullname); fullname = NULL;}
   if (save_fd == NULL)
     {
       snd_error(_("can't write %s: %s"), save_state_name, snd_io_strerror());

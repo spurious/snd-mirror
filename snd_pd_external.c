@@ -47,10 +47,11 @@
 #define EVAL(a) scm_eval_string(MAKE_STRING(a))
 #define CATCH_EVAL(a,error) snd_catch_any(eval_str_wrapper,a,error)
 
-#define MAKE_SYM(a) gensym(SCM_SYMBOL_CHARS(a))
+#define MAKE_SYM(a) snd0_gensym(SCM_SYMBOL_CHARS(a))
 
 #define MAKE_POINTER(a) scm_ulong2num((unsigned long)a)
-#define GET_POINTER(a) (void *)scm_num2ulong(a,0,"GET_POINTER()")
+#define GET_POINTER(a) (void*)scm_num2ulong(a,0,"GET_POINTER()")
+#define GET_POINTER_rt(a) (void *)scm_num2ulong(SCM_CAR(SCM_CDR(a)),0,"GET_POINTER()")
 
 #define GET_X(a) ((t_snd_pd *)GET_POINTER(a))
 
@@ -59,6 +60,7 @@
 
 
 #include "m_pd.h"
+#include <s_stuff.h>
 #include <jack/ringbuffer.h>
 
 #include <stdio.h>
@@ -73,7 +75,7 @@ struct snd_pd_workaround;
 
 typedef struct snd_pd
 {
-  t_object x_ob;
+  t_object x_obj;
 
   int num_ins;
   int num_outs;
@@ -84,13 +86,18 @@ typedef struct snd_pd
   SCM inlet_func;
   SCM cleanup_func;
 
+  void* inbus;
+  void* outbus;
+
   char *filename;
 
   bool isworking;
+
+  float x_float;
 } t_snd_pd;
 
 typedef struct snd_pd_workaround{
-  t_object x_ob;
+  t_object x_obj;
   t_snd_pd *x;
   t_inlet *inlet;
   int index;
@@ -117,8 +124,8 @@ static pthread_t pthread={0};
 static pthread_t pthread_repl={0};
 static jack_ringbuffer_t *rb_snd_to_pd;
 static jack_ringbuffer_t *rb_pd_to_snd;
-static pthread_cond_t thread_cond={{0}};
-static pthread_mutex_t thread_mutex={0};
+static pthread_cond_t thread_cond=PTHREAD_COND_INITIALIZER;
+static pthread_mutex_t thread_mutex=PTHREAD_MUTEX_INITIALIZER;
 
 struct dispatch{
   void (*func)(struct dispatch *d);
@@ -138,6 +145,25 @@ struct dispatch{
     SCM func;
   }data2;
 };
+
+
+
+t_symbol *snd0_gensym(char *symbol){
+  t_symbol *ret;
+  struct sched_param par;
+  par.sched_priority = sched_get_priority_max(SCHED_FIFO);
+  //post("gensyming for %s\n",symbol);
+  if(sched_setscheduler(0,SCHED_FIFO,&par)==-1){
+    post("snd0_gensym: Unable to aquire SCHED_FIFO priority");
+  }
+  //sys_lock();
+  ret=gensym(symbol);
+  //sys_unlock();
+  sched_setscheduler(0,SCHED_OTHER,&par);
+  //post("Got it");
+  return ret;
+}
+
 
 
 /*****************************************************************************************************
@@ -234,11 +260,12 @@ static void snd0_send_message(struct dispatch *d){
  *****************************************************************************************************
  *****************************************************************************************************/
 
-static volatile int snd_pd_is_repling=0;
-static char repl_some[500];
+static jack_ringbuffer_t *rb_repl;
 
 static void snd0_das_dispatcher(void){
   jack_ringbuffer_t *rb=rb_pd_to_snd;
+  char repl_some[500];
+  int bytes;
   struct dispatch d;
   while(1){
     //fprintf(stderr,"snd0: waiting for something to dispatch\n");
@@ -247,9 +274,9 @@ static void snd0_das_dispatcher(void){
       jack_ringbuffer_read (rb, (char *)&d, sizeof(struct dispatch));
       d.func(&d);
     }
-    if(snd_pd_is_repling==1){
+    while((bytes=jack_ringbuffer_read(rb_repl,repl_some,498))>0){
+      repl_some[bytes]=0;
       snd_eval_stdin_str(repl_some);
-      snd_pd_is_repling=0;
     }
     pthread_cond_wait (&thread_cond, &thread_mutex);
   }
@@ -257,16 +284,22 @@ static void snd0_das_dispatcher(void){
 
 
 static void *read_eval_print_loop(void *arg){
-  printf("snd-pd> ");
+  char repl_some[500];
+  int len;
   while(1){
     fgets(repl_some,499,stdin);
-    snd_pd_is_repling=1;
+    len=strlen(repl_some);
+    if(len>497)
+      fprintf(stderr,"WARNING, repl buffer probably too small. Please report to k.s.matheussen@notam02.no\n");
+    while(jack_ringbuffer_write_space(rb_repl)<len){
+      usleep(50000);
+    }
+    jack_ringbuffer_write(rb_repl,repl_some,len);
     pthread_cond_broadcast(&thread_cond);
-    while(snd_pd_is_repling==1)
-      usleep(100);
   }
   return NULL;
 }
+
 
 
 static void pd0_send_message(struct dispatch *d){
@@ -424,6 +457,7 @@ static void pd0_bind(struct dispatch *d){
   x2->func=d->data.func;
   pd_bind((t_pd*)x2, d->data2.symbol);
 
+  //post("pd0_bind \"%s\"",d->data2.symbol->s_name);
   snd_pd_bind_x2=x2;
   snd_pd_is_binding=0;
 }
@@ -431,6 +465,7 @@ static void pd0_bind(struct dispatch *d){
 static SCM snd0_bind(SCM symname,SCM func){
   struct dispatch d;
 
+  //post("Trying to bind \"%s\"",SCM_SYMBOL_CHARS(symname));
   snd_pd_is_binding=1;
 
   scm_protect_object(func);
@@ -445,11 +480,11 @@ static SCM snd0_bind(SCM symname,SCM func){
     scm_gc();
     while(snd_pd_is_binding!=0){
       num_retries++;
-      if(num_retries>(1000000/50)*5){
-	post("snd0_bind: Waited 5 seconds for pd. Something is probably wrong. Could not bind.");
+      if(num_retries>(1000000/50000)*5){
+	post("snd0_bind: Waited 5 seconds for pd. Something is probably wrong. Could not bind(?).");
 	RU_;
       }
-      usleep(50);
+      usleep(50000);
     }
   }
 
@@ -479,11 +514,11 @@ static SCM snd0_unbind(SCM scm_x2,SCM symname){
     scm_gc();
     while(snd_pd_is_unbinding!=0){
       num_retries++;
-      if(num_retries>(1000000/50)*5){
+      if(num_retries>(1000000/50000)*5){
 	post("snd0_unbind: Waited 5 seconds for pd. Something is probably wrong. Could not unbind.");
 	RU_;
       }
-      usleep(50);
+      usleep(50000);
     }
   }
 
@@ -558,10 +593,10 @@ static void snd0_make_list(SCM val){
       SETFLOAT(to,(float)GET_INTEGER(el));
     }else{
       if(SCM_UNBNDP(el)){
-	SETSYMBOL(to,gensym("undefined"));
+	SETSYMBOL(to,snd0_gensym("undefined"));
       }else{
 	if(SCM_STRINGP(el)){
-	  SETSYMBOL(to,gensym(SCM_STRING_CHARS(el)));
+	  SETSYMBOL(to,snd0_gensym(SCM_STRING_CHARS(el)));
 	}else{
 	  if(SCM_SYMBOLP(el)){
 	    SETSYMBOL(to,MAKE_SYM(el));
@@ -590,11 +625,11 @@ static SCM snd0_outlet_list(SCM instance,SCM outlet,SCM val){
     scm_gc();
     while(snd_pd_atom_in_use==1){
       num_retries++;
-      if(num_retries>(1000000/50)*5){
+      if(num_retries>(1000000/50000)*5){
 	post("snd0_outlet_list: Waited 5 seconds for pd to process a list. Something is probably wrong. Could not send list to outlet.");
 	RU_;
       }
-      usleep(50);
+      usleep(50000);
     }
   }
   snd_pd_atom_in_use=1;
@@ -619,11 +654,11 @@ static SCM snd0_send_list(SCM symbol,SCM val){
     scm_gc();
     while(snd_pd_atom_in_use==1){
       num_retries++;
-      if(num_retries>(1000000/50)*5){
+      if(num_retries>(1000000/50000)*5){
 	post("snd0_send_list: Waited 5 seconds for pd to process a list. Something is probably wrong. Could not send list to receiver.");
 	RU_;
       }
-      usleep(50);
+      usleep(50000);
     }
   }
   snd_pd_atom_in_use=1;
@@ -675,7 +710,7 @@ static SCM snd0_outlet_string(SCM instance,SCM outlet,SCM val){
   d.func=pd0_outlet_symbol;
   d.x=GET_X(instance);
   d.data.outlet_num=GET_INTEGER(outlet);
-  d.data2.symbol=gensym(SCM_STRING_CHARS(val));
+  d.data2.symbol=snd0_gensym(SCM_STRING_CHARS(val));
   snd0_send_message(&d);
   RU_;
 }
@@ -685,7 +720,7 @@ static SCM snd0_send_string(SCM symbol,SCM val){
       struct dispatch d;
       d.func=pd0_send_symbol;
       d.data.class=s;
-      d.data2.symbol=gensym(SCM_STRING_CHARS(val));
+      d.data2.symbol=snd0_gensym(SCM_STRING_CHARS(val));
       snd0_send_message(&d);
     }
   RU_;
@@ -749,8 +784,10 @@ static void *snd0_init(void *arg){
   scm_c_define_gsubr("pd-c-send-bang",1,0,0,snd0_send_bang);
   scm_c_define_gsubr("pd-c-get-symbol",1,0,0,snd0_get_symbol);
 
-  EVAL("(if (not (provided? 'snd-pd-global.scm)) (load-from-path \"pd-global.scm\"))");
-
+  
+  EVAL("(set! %load-path (cons \"" SND_PD_PATH "\" %load-path))"
+       "(if (not (provided? 'snd-pd-global.scm)) (load-from-path \"pd-global.scm\"))");
+  
   eval_string_func=EVAL("eval-string");
 
   if(pthread_create(&pthread_repl,NULL,read_eval_print_loop,NULL)!=0){
@@ -766,6 +803,10 @@ static void pd0_init(void){
   rb_snd_to_pd = jack_ringbuffer_create(sizeof(struct dispatch)*1024);
   rb_pd_to_snd = jack_ringbuffer_create(sizeof(struct dispatch)*1024);
   rb_anything  = jack_ringbuffer_create(1024*64);
+  rb_repl  = jack_ringbuffer_create(504);
+
+  snd_pd_clock = clock_new(NULL,(t_method)pd0_das_dispatcher);
+  clock_delay(snd_pd_clock, 1.0);
 
   //scm_init_guile();
 
@@ -773,6 +814,74 @@ static void pd0_init(void){
     post("Could not make pthread. (disaster!)\n");
   }  
   return;
+}
+
+
+
+
+
+/*****************************************************************************************************
+ *****************************************************************************************************
+ *    DSP
+ *****************************************************************************************************
+ *****************************************************************************************************/
+
+typedef void (*PD_RT_PROCESS)(int num_ins,float **ins,int num_outs,float **outs,void *inbus,void *outbus,int nframes);
+static PD_RT_PROCESS pd_rt_process=NULL;
+typedef void (*PD_RT_RUN)(int nframes);
+static PD_RT_RUN pd_rt_run=NULL;
+
+extern void snd_pd_set_rt_funcs(PD_RT_RUN r,PD_RT_PROCESS p){
+  pd_rt_run=r;
+  pd_rt_process=p;
+}
+
+static t_int *snd_pd_perform(t_int *w){
+  t_snd_pd *x=(t_snd_pd*)w[1];
+  int ch,lokke;
+  int length=(int)w[2];
+  //t_float *ins[x->num_ins];
+  //t_float *outs[x->num_outs];
+  t_float **ins;
+  t_float **outs;
+  static double last_time=0.0;
+
+  ins=(t_float**)&w[3];
+  outs=(t_float**)&w[3+x->num_ins];
+
+  if(x->isworking==true){
+    if(pd_rt_run!=NULL  && (0 || last_time!=clock_getlogicaltime())){
+      last_time=clock_getlogicaltime();
+      pd_rt_run(length);
+    }
+
+    if(pd_rt_process!=NULL){
+      pd_rt_process(x->num_ins,ins,x->num_outs,outs,x->inbus,x->outbus,length);
+    } 
+  }else{
+    for(ch=0;ch<x->num_outs;ch++){
+      memset(outs[ch],0,sizeof(t_float)*length);
+    }
+  }
+
+  return w+x->num_ins+x->num_outs+3;
+}
+
+static void snd_pd_dsp(t_snd_pd *x, t_signal **sp)
+{
+  int vec[x->num_ins+x->num_outs+2];
+  int lokke=0;
+  vec[0]=(int)x;
+  vec[1]=(int)sp[0]->s_n;
+
+  int i;
+  for (i = 2; i < x->num_ins+x->num_outs+2; i++) {
+    vec[i] = (t_int)(sp[i - 1]->s_vec);
+  }
+
+  dsp_addv(snd_pd_perform,
+	   x->num_ins+x->num_outs+2,
+	   vec);
 }
 
 
@@ -799,10 +908,13 @@ static void snd0_load(struct dispatch *d){
 
 
   // Let the file live in its own name-space (or something like that).
-  snd0_eval2("(define (pd-instance-func pd-instance pd-num-inlets pd-num-outlets)");
+  snd0_eval2("(pd-fixfunction (pd-instance-func pd-instance pd-num-inlets pd-num-outlets)");
   snd0_eval_file("pd-local.scm");
   snd0_eval_file(d->data.filename);
-  snd0_eval2("  (cons pd-inlet-func pd-cleanup-func))");
+  snd0_eval2("  (list pd-inlet-func pd-cleanup-func (if (defined? '*rt-engine*)"
+	                                               "(SCM_SMOB_DATA *in-bus*) (list \"POINTER\" 0))"
+	                                           "(if (defined? '*rt-engine*)"
+	                                               "(SCM_SMOB_DATA *out-bus*) (list \"POINTER\" 0))))");
   snd0_eval2("1");
 
   if(1!=GET_INTEGER(snd0_eval_do())){
@@ -819,7 +931,9 @@ static void snd0_load(struct dispatch *d){
     goto exit;
   }
   d->x->inlet_func=SCM_CAR(evalret);
-  d->x->cleanup_func=SCM_CDR(evalret);
+  d->x->cleanup_func=SCM_CAR(SCM_CDR(evalret));
+  d->x->inbus=GET_POINTER_rt(SCM_CAR(SCM_CDR(SCM_CDR(evalret))));
+  d->x->outbus=GET_POINTER_rt(SCM_CAR(SCM_CDR(SCM_CDR(SCM_CDR(evalret)))));
   scm_gc_protect_object(d->x->inlet_func);
   scm_gc_protect_object(d->x->cleanup_func);
 
@@ -868,18 +982,28 @@ static void *pd0_new(t_symbol *s, t_int argc, t_atom* argv){
     x->inlets[lokke]=x2;
     x2->x=x;
     x2->index=lokke;
-    x2->inlet=inlet_new(&x->x_ob,(t_pd*)x2,0,0);
+    x2->inlet=inlet_new(&x->x_obj,(t_pd*)x2,0,0);
+    //x2->inlet=inlet_new(&x->x_obj,(t_pd*)x2,&s_signal,&s_signal);
+    //inlet_new(&x->x_obj, &x->x_obj.ob_pd, &s_signal, &s_signal);
   }
-  
+  for(lokke=0;lokke<x->num_ins;lokke++){
+    inlet_new(&x->x_obj, &x->x_obj.ob_pd, &s_signal, &s_signal);
+  }
+
   /************* outlets ****************/
   x->num_outs=1;
   if(argc>2)
     x->num_outs=atom_getfloatarg(2,argc,argv);
   x->outlets=calloc(sizeof(t_outlet*),x->num_outs);
-  
+
   for(lokke=0;lokke<x->num_outs;lokke++){
-    x->outlets[lokke] = outlet_new(&x->x_ob, gensym("anything"));
+    x->outlets[lokke] = outlet_new(&x->x_obj, gensym("anything"));
   }
+
+  for(lokke=0;lokke<x->num_outs;lokke++){
+    outlet_new(&x->x_obj, gensym("signal"));
+  }
+
 
 
   if(pd0_load(x,x->filename)==true){
@@ -992,8 +1116,20 @@ void snd_setup(void){ // (pd0_setup)
   snd_pd_workaroundclass=class_new(gensym("indexworkaround"),NULL,NULL,sizeof(t_snd_pd_workaround),CLASS_PD|CLASS_NOINLET, A_NULL);
   class_addanything(snd_pd_workaroundclass,pd0_anything);
 
-  snd_pd_clock = clock_new(NULL,(t_method)pd0_das_dispatcher);
-  clock_delay(snd_pd_clock, 1.0);
+  //	    class_domainsignalin(snd_pd_class, -1);
+  //	    class_addfloat(snd_pd_class, 0);
+
+  //CLASS_MAINSIGNALIN(snd_pd_class, t_snd_pd, x_float);
+  class_addmethod(snd_pd_class, (t_method)snd_pd_dsp, gensym("dsp"), 0);
+
+
+  /* Following 6 lines taken from the plugin external source. -Kjetil. */
+  /* We have to make a "null" callback for signal input to the first
+     inlet or otherwise Pd'll gracefully fuck the inlets up */
+  class_addmethod (snd_pd_class,
+		   nullfn,
+		   gensym ("signal"),
+		   0);
 
   atexit(pd0_at_exit);
   signal(SIGINT,finish);

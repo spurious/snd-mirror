@@ -452,7 +452,7 @@ size_t jack_ringbuffer_write_space(const jack_ringbuffer_t *rb);
   
   )
 
-
+(define rt-callback-type "typedef void (*Callback)(void *arg,jack_client_t *client,int is_running,int num_frames,int base_time,float samplerate)")
 
 (eval-c ""
 	"#include <jack/jack.h>"
@@ -461,7 +461,7 @@ size_t jack_ringbuffer_write_space(const jack_ringbuffer_t *rb);
 	
 	(shared-struct <Jack_Arg>)
 
-	"typedef void (*Callback)(void *arg,jack_client_t *client,int is_running,int num_frames,int base_time,float samplerate)"
+	,rt-callback-type
 
 	(functions->public
 	 (<int> jack_rt_process_dummy (lambda ((<jack_nframes_t> nframes)
@@ -635,6 +635,124 @@ size_t jack_ringbuffer_write_space(const jack_ringbuffer_t *rb);
 !#
 
 
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;; PD ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;(define-ec-struct <PD_Arg>
+;  <void-*> rt_callback
+;  )
+
+(eval-c ""
+
+	"#include <jack/jack.h>"
+	
+	,rt-callback-type
+	,bus-struct
+	"extern float sys_getsr(void)"
+	
+	(<int> base_time 0)
+	(<void-*> engine)
+	(<Callback> callback)
+
+	(public
+	 (<void> pd_rt_init (lambda ((<void-*> das_engine)
+				     (<Callback> das_callback))
+			      (set! engine das_engine)
+			      (set! callback das_callback)))
+	 (<float> pd_rt_get_samplerate (lambda ()
+					 (return (sys_getsr))))
+	 (<int> pd_rt_get_time (lambda ()
+				 (return base_time))))
+				 
+	
+	(functions->public
+	 ;; Run the engine.
+	 (<void> pd_rt_run (lambda ((<int> nframes))
+				 (callback engine
+					   NULL
+					   1
+					   nframes
+					   base_time
+					   (sys_getsr))
+				 (+= base_time nframes)))
+
+	 
+	 ;; Copy pd-buffers in and out of "*out-bus*" and "*in-bus*".
+	 ;; Theres a unique "*out-bus*" bus and "*in-bus*" bus for each pd-object.
+	 (<void> pd_rt_process (lambda ((<int> num_ins)
+					(<float**> ins)
+					(<int> num_outs)
+					(<float**> outs)
+					(<void*> das_inbus)
+					(<void*> das_outbus)
+					(<int> nframes))
+				 (<int> lokke 0)
+				 (<struct-rt_bus-*> in_bus das_inbus)
+				 (<struct-rt_bus-*> out_bus das_outbus)
+
+				 (set! num_outs (MIN num_outs num_ins))
+				 (set! num_ins num_outs)
+				 
+				 ;; pd-inlets -> "*in-bus*"
+				 (for-each 0 nframes
+					   (lambda (n)
+					     (for-each 0 num_ins
+						       (lambda (ch)
+							 (set! in_bus->data[lokke].val
+							       ins[ch][n])
+							 (set! in_bus->data[lokke].last_written_to
+							       base_time)
+							 lokke++))))
+				 ;; "*out-bus*" -> pd-outlets
+				 (set! lokke 0)
+				 (for-each 0 nframes
+					   (lambda (n)
+					     (for-each 0 num_outs
+						       (lambda (ch)
+							 (set! outs[ch][n] out_bus->data[lokke].val)
+							 lokke++))))
+				 ;; 0 -> "*out-bus*"
+				 (for-each 0 (* nframes num_outs)
+					   (lambda (n)
+					     (set! out_bus->data[n].val 0.0f)
+					     (set! out_bus->data[n].last_written_to base_time))))))
+				 
+	"typedef void (*PD_RT_RUN)(int nframes)"
+	"typedef void (*PD_RT_PROCESS)(int num_ins,float **ins,int num_outs,float **outs,int nframes)"
+	"extern void snd_pd_set_rt_funcs(PD_RT_RUN r,PD_RT_PROCESS p)"
+	(proto->public
+	 "void snd_pd_set_rt_funcs(PD_RT_RUN r,PD_RT_PROCESS p);"))
+
+
+
+(def-class (<pd-rt-driver> rt_callback c-engine)
+  (def-method (start)
+    (c-display "<pd-rt-driver>: starting!"))
+  
+  (def-method (stop)
+    (c-display "<pd-rt-driver>: stop."))
+
+  (def-method (pause)
+    (c-display "<pd-rt-driver>: pause."))
+
+  (def-method (continue)
+    (c-display "<pd-rt-driver>: continue."))
+
+  (def-method (destructor)
+    (c-display "<pd-rt-driver> ending"))
+
+  (def-method (get-frame-time time)
+    (* time (pd_rt_get_samplerate)))
+  (def-method (get-time)
+    (/ (pd_rt_get_time) (pd_rt_get_samplerate)))
+
+  ;;(set! (-> c-engine samplerate) (pd_rt_get_samplerate))
+  )
 
 
 
@@ -1083,7 +1201,7 @@ procfuncs=sorted
 							       (rt_remove_procfunc_do engine procfunc))
 
 							   ;; Check if too many cpu-cycles are used.
-							   (if (> (jack_frames_since_cycle_start client) max_cycle_usage)
+							   (if (&& client (> (jack_frames_since_cycle_start client) max_cycle_usage))
 							       (begin
 								 engine->num_max_cpu_interrupts++
 								 break))
@@ -1221,15 +1339,27 @@ procfuncs=sorted
   )
 
 
-(define *rt-engine* (<rt-engine> (lambda (rt-arg)
+(define *rt-jack-engine* (<rt-engine> (lambda (rt-arg)
 				   (<jack-rt-driver> *rt-num-input-ports* *rt-num-output-ports* (rt_callback) rt-arg))))
 
+(define *rt-pd-engine* (let ((res (<rt-engine> (lambda (c-engine)
+						 (pd_rt_init c-engine (rt_callback))
+						 (<pd-rt-driver> (rt_callback) c-engine)))))
+			 (snd_pd_set_rt_funcs (pd_rt_run) (pd_rt_process))
+			 (-> res samplerate (pd_rt_get_samplerate))
+			 res))
+
+
+(define *rt-engine* *rt-jack-engine*)
+
 (add-hook! exit-hook (lambda args
-		       (-> *rt-engine* destructor)))
+		       (-> *rt-jack-engine* destructor)))
+(add-hook! exit-hook (lambda args
+		       (-> *rt-pd-engine* destructor)))
 
 
-(set! *out-bus* (-> *rt-engine* out-bus))
-(set! *in-bus* (-> *rt-engine* in-bus))
+(set! *out-bus* (-> *rt-jack-engine* out-bus))
+(set! *in-bus* (-> *rt-jack-engine* in-bus))
 
 (-> *rt-engine* start)
 
@@ -1314,7 +1444,7 @@ procfuncs=sorted
 	 (-> *rt-engine* num_lost_events)
 	 (-> *rt-engine* num_events)
 	 (-> *rt-engine* num_procfuncs)
-	 (jack_cpu_load (-> *rt-engine* get-client))
+	 (jack_cpu_load (-> *rt-jack-engine* get-client))
 	 (-> *rt-engine* num_max_cpu_interrupts)))
 
   

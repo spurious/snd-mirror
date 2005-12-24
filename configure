@@ -3283,6 +3283,7 @@ echo "$as_me: error: When making snd as a pd external" >&2;}
 echo "$as_me: error: When making snd as a pd external" >&2;}
    { (exit ruby can not be used as extension language.); exit ruby can not be used as extension language.; }; }
 	   fi
+	   CFLAGS="$CFLAGS -DSND_PD_PATH=\\\"\""`pwd`"\"\\\" "
 	   with_jack=yes
 	   cat >>confdefs.h <<\_ACEOF
 #define SND_AS_PD_EXTERNAL 1
@@ -17907,6 +17908,9 @@ _ACEOF
 
       fi
     fi
+    if test "$with_snd_as_pd_external" = yes ; then
+       GUILE_LIBS="${GUILE_CONFIG_path}../lib/libguile.a  -lltdl -lgmp -lcrypt -lm -lltdl"
+    fi
   fi
 else
   cat >>confdefs.h <<\_ACEOF
@@ -22126,6 +22130,11 @@ if test "$ac_snd_have_extension_language" = no ; then
     fi
     { echo "$as_me:$LINENO: WARNING: Snd needs either an extension language (Guile or Ruby), or a graphics toolkit (Gtk or Motif), or preferably both.  All four packages are available free, normally prepackaged and ready-to-use.  As currently configured, this version of Snd is useless." >&5
 echo "$as_me: WARNING: Snd needs either an extension language (Guile or Ruby), or a graphics toolkit (Gtk or Motif), or preferably both.  All four packages are available free, normally prepackaged and ready-to-use.  As currently configured, this version of Snd is useless." >&2;}
+    if test "$with_snd_as_pd_external" = yes ; then
+       { { echo "$as_me:$LINENO: error: Guile is needed when making snd as a pd external." >&5
+echo "$as_me: error: Guile is needed when making snd as a pd external." >&2;}
+   { (exit 1); exit 1; }; }
+    fi
   fi
 fi
 

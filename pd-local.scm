@@ -23,6 +23,18 @@
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; DSP-Engine and buses
+;;
+;;
+(if (defined? '*rt-engine*)
+    (begin
+      (set! *rt-engine* *rt-pd-engine*)
+      (set! *out-bus* (make-bus pd-num-outlets))
+      (set! *in-bus* (make-bus pd-num-outlets))))
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Argument checking
 ;;
 ;;
@@ -88,7 +100,7 @@
 ;;
 (define (pd-outlet outlet-num firstarg . args)
   (if (pd-legaloutlet outlet-num)
-      (cond ((> (length args) 0) (pd-c-outlet-list pd-instance outlet-num issymbol (cons firstarg args)))
+      (cond ((not (null? args)) (pd-c-outlet-list pd-instance outlet-num issymbol (cons firstarg args)))
 	    ((list? firstarg) (pd-c-outlet-list pd-instance outlet-num firstarg))
 	    ((number? firstarg) (pd-c-outlet-number pd-instance outlet-num firstarg))
 	    ((string? firstarg) (pd-c-outlet-string pd-instance outlet-num firstarg))

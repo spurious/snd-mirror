@@ -629,7 +629,7 @@ static file_dialog_info *make_file_dialog(bool read_only, char *title, char *sel
   file_dialog_info *fd;
   Arg args[20];
   int n;
-  XmString s1, s2, ok_label, filter_list_label, cancel_label, filter_button_label;
+  XmString s1, s2, ok_label, filter_list_label, cancel_label, filter_button_label, just_sounds_lab = NULL;
   Widget wtmp = NULL, rc1, rc2;
   fd = (file_dialog_info *)CALLOC(1, sizeof(file_dialog_info));
   fd->fp = (file_pattern_info *)CALLOC(1, sizeof(file_pattern_info));
@@ -658,10 +658,13 @@ static file_dialog_info *make_file_dialog(bool read_only, char *title, char *sel
 
   if (just_sounds(ss))
     {
-      XmString lab;
-      lab = XmStringCreate(_("Sound Files"), XmFONTLIST_DEFAULT_TAG);
-      XtSetArg(args[n], XmNfileListLabelString, lab); n++;
-      XmStringFree(lab);
+      just_sounds_lab = XmStringCreate(_("Sound Files"), XmFONTLIST_DEFAULT_TAG);
+      XtSetArg(args[n], XmNfileListLabelString, just_sounds_lab); n++;
+      /* don't free the label here!  Apparently Motif uses a reference counting scheme to decide when to release
+       *   an XmString's memory, but the increment for this setting doesn't take place until the widget is
+       *   created below.  If XmStringFree precedes that call, there is trouble (at least in valgrind) when
+       *   the freed string is finally accessed during XmCreateFileSelectionDialog.
+       */
     }
 
   fd->dialog = XmCreateFileSelectionDialog(w, title, args, n);
@@ -674,6 +677,8 @@ static file_dialog_info *make_file_dialog(bool read_only, char *title, char *sel
   XmStringFree(filter_list_label);
   XmStringFree(filter_button_label);
   XmStringFree(cancel_label);
+  if (just_sounds(ss))
+    XmStringFree(just_sounds_lab);
 
   rc1 = XtVaCreateManagedWidget("filebuttons-rc1", 
 				xmRowColumnWidgetClass, fd->dialog,
@@ -4798,7 +4803,6 @@ widget_t start_view_files_dialog_1(view_files_info *vdat, bool managed)
       XtAddCallback(reset_button, XmNactivateCallback, view_files_reset_callback, (XtPointer)vdat);
 
       XmStringFree(xhelp);
-
       XmStringFree(xdismiss);
       XmStringFree(titlestr);
       XmStringFree(new_viewer_str);

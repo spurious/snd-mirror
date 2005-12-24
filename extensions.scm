@@ -803,7 +803,7 @@ If 'check' is #f, the hooks are removed."
    (format #f "ramp-expt ~A ~A ~A ~A ~A ~A" rmp0 rmp1 exponent symmetric beg dur)))
 
 (define* (env-expt-channel env exponent #:optional (symmetric #t) (beg 0) dur snd chn edpos)
-  "(env-expt-channel env exponent #:optional (symmetric #t) (beg 0) dur snd chn edpos) connects env'e dots with x^exponent curves"
+  "(env-expt-channel env exponent #:optional (symmetric #t) (beg 0) dur snd chn edpos) connects env's dots with x^exponent curves"
   (if (= exponent 1.0)
       (env-channel env beg dur snd chn edpos)
       (any-env-channel env 

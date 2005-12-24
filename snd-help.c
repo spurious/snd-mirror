@@ -1800,15 +1800,32 @@ static int levenstein(const char *s1, const char *s2)
   return(val);
 }
 
-/* PERHAPS: since help-names is alphabetized (tnames in index.cl), we could use binary search rather than linear in snd-url and others */
+static int help_name_to_url(const char *name)
+{
+  int i, l = 0, u = HELP_NAMES_SIZE - 1;
+  while (true)
+    {
+      int comp;
+      if (u < l) return(-1);
+      i = (l + u) / 2;
+      comp = STRCMP(help_names[i], name);
+      if (comp == 0) return(i);
+      if (comp < 0)
+	l = i + 1;
+      else u = i - 1;
+    }
+  return(-1);
+}
+
 char *snd_url(const char *name)
 {
   /* (snd-url "save-sound-as") -> "extsnd.html#savesoundas" */
   int i;
   if (help_names) /* no ext lang, but wily user typed play-selection to the help dialog... */
-    for (i = 0; i < HELP_NAMES_SIZE; i++)
-      if (STRCMP(help_names[i], name) == 0)
-	return(help_urls[i]);
+    {
+      i = help_name_to_url(name);
+      if (i >= 0) return(help_urls[i]);
+    }
   return(NULL);
 }
 

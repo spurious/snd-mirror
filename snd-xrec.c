@@ -232,7 +232,7 @@ static void remember_widcon(Widget w, int dev)
   widcons[widcon_ctr++]->w = w;
 }
 
-void make_recorder_icons_transparent_again(Pixel old_color, Pixel new_color)
+void make_recorder_icons_transparent_again(Pixel new_color)
 {
   if (pixmaps_allocated)
     {

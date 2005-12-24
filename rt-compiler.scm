@@ -6994,7 +6994,7 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
 
 
 
-(define (rt-2 term)
+(define* (rt-2 term #:key (engine *rt-engine*))
   (let ((rt-3-result (rt-3 term))
 	(orgargs (cadr term)))
     (if (not rt-3-result)
@@ -7053,7 +7053,8 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
 													'in-bus
 													'*in-bus*)
 												    ret))))
-											extpointers)))))
+											extpointers))
+							     ,engine)))
 
 				       ;; Make sure these never dissapear.
 				       (if ,isoutdefined?
@@ -7225,10 +7226,10 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
 
 ;; rt-1 + compiled code cache handling.
 (define rt-cached-funcs (make-hash-table 997))
-(define (rt-1 term)
+(define* (rt-1 term #:key (engine *rt-engine*))
   (let* ((key (list term
 		    (rt-safety)               ;; Everything that can change the compiled output must be in the key.
-		    (-> *rt-engine* samplerate))) ;; If saving to disk, the result of (version) and (snd-version) must be added as well. (and probably some more)
+		    (-> engine samplerate))) ;; If saving to disk, the result of (version) and (snd-version) must be added as well. (and probably some more)
 	 (cached (hash-ref rt-cached-funcs key)))
     (if cached
 	cached

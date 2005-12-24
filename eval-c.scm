@@ -1612,15 +1612,20 @@ int fgetc (FILE
 			    (<-> "-Wall " (if (getenv "CFLAGS") (getenv "CFLAGS") "") " " (if (getenv "LDFLAGS") (getenv "LDFLAGS") "") " "))
 			(string #\`) guile-config " compile" (string #\`) " "
 			compile-options)))
-    (if (= 0 (system (<-> *eval-c-compiler* " -O3 -fPIC -shared -o " libfile " " sourcefile " "
-			  (if (string=? *eval-c-compiler* "icc")
-			      "-L/opt/intel_cc_80/lib /opt/intel_cc_80/lib/libimf.a"
-			      (<-> "-Wall " (if (getenv "CFLAGS") (getenv "CFLAGS") "") " " (if (getenv "LDFLAGS") (getenv "LDFLAGS") "") " "))
-			  (string #\`) guile-config " compile" (string #\`) " "
-			  compile-options)))
+    (if (not (= 0 (system (<-> *eval-c-compiler* " -O3 -fPIC -shared -o " libfile " " sourcefile " "
+			       (if (string=? *eval-c-compiler* "icc")
+				   "-L/opt/intel_cc_80/lib /opt/intel_cc_80/lib/libimf.a"
+				   (<-> "-Wall " (if (getenv "CFLAGS") (getenv "CFLAGS") "") " " (if (getenv "LDFLAGS") (getenv "LDFLAGS") "") " "))
+			       (string #\`) guile-config " compile" (string #\`) " "
+			       compile-options))))
 	(begin
-	  (dynamic-call "das_init" (dynamic-link libfile))
-	  (system (<-> "rm " libfile))))
+	  (if eval-c-lazy-cleanup
+	      (set! eval-c-filestobedeleted (cons sourcefile eval-c-filestobedeleted)))
+	  (throw 'compilation-failed)))
+
+    (dynamic-call "das_init" (dynamic-link libfile))
+    (system (<-> "rm " libfile))
+
     (if eval-c-cleanup
 	(system (<-> "rm " sourcefile))
 	(if eval-c-lazy-cleanup

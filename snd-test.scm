@@ -16578,7 +16578,8 @@ EDITS: 5
 	(let ((val1 (vector->vct (dolph-1 16 1.0)))
 	      (val2 (make-fft-window dolph-chebyshev-window 16 1.0)))
 	  (if (not (vequal val1 val2)) (snd-display ";dolph-1/dolph 1: ~A ~A" val1 val2)))
-	(if (provided? 'gsl)
+	(if (and (provided? 'gsl)
+		 (defined? 'gsl-gegenbauer))
 	    (begin
 	      (let ((val1 (multra 16 1.0 1.0))
 		    (val2 (make-fft-window samaraki-window 16 1.0)))

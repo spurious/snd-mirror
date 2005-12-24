@@ -7025,6 +7025,8 @@ io_error_t save_edits_and_update_display(snd_info *sp)
   if (access(sp->filename, W_OK))
     {
       sa = free_axes_data(sa);
+      if (ofile) FREE(ofile);
+      if (old_cursors) FREE(old_cursors);
       return(IO_WRITE_PROTECTED);
     }
 #endif

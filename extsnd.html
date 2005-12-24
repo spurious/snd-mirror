@@ -8894,7 +8894,7 @@ Here's an example that displays a histogram of the current values in 16 bins:
 </pre></td></tr></table></td></tr>
 
 <tr><td></td><td>
-And an example that ties the Hilbert transform in dsp.scm into the user-interface:
+This code ties the Hilbert transform in dsp.scm into the user-interface:
 </td></tr>
 
 <tr><td></td><td>
@@ -8909,6 +8909,20 @@ And an example that ties the Hilbert transform in dsp.scm into the user-interfac
        (<a class=quiet href="#makevct">make-vct</a> len) 
        (lambda () 
 	 (<a class=quiet href="clm.html#fir-filter">fir-filter</a> flt (<a class=quiet href="#readsample">read-sample</a> fd)))))))
+</pre></td></tr></table></td></tr>
+
+<tr><td></td><td>
+If GSL is included in Snd (via the --wth-gsl configuration switch), the following code ties in the (slow) Hankel transform:
+</td></tr>
+
+<tr><td></td><td>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
+(<em class=red>add-transform</em> "Hankel" "Hankel" 0.0 1.0
+   (lambda (n rd)
+      (let ((v (<a class=quiet href="#makevct">make-vct</a> n)))
+         (do ((i 0 (1+ i))) ((= i n)) (<a class=quiet href="#vctset">vct-set!</a> v i (rd)))
+         (gsl-dht n v 1.0 1.0)
+         v)))
 </pre></td></tr></table></td></tr>
 
 <!-- autocorrelate -->

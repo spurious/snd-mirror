@@ -27,7 +27,6 @@
 
 (use-modules (ice-9 stack-catch))
 
-
 (set! (show-backtrace) #t)
 (debug-enable 'debug)
 (if #t
@@ -37,6 +36,49 @@
       (debug-enable 'backtrace)
       (debug-set! frames 8)
       (debug-set! depth 50)))
+
+
+(if (not (provided? 'snd-rt-compiler.scm)) (load-from-path "rt-compiler.scm"))
+(if (not (provided? 'snd-oo.scm)) (load-from-path "oo.scm"))
+
+;(load-from-path "rt-compiler.scm")
+;(set! *rt-engine* *rt-pd-engine*)
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Macro to rearrange a function so that its possible to put defines
+;; after expressions. (workaround for a horrible flaw in the scheme language)
+;;
+(define-macro (pd-fixfunction header . body)
+  (define definestuff '(define define* def-class definstrument))
+  `(define ,header
+     (letrec* (,@(map (lambda (term)
+			(if (member (car term) definestuff)
+			    (if (pair? (cadr term))
+				`(,(car (cadr term)) (lambda ,(cdr (cadr term))
+						       ,@(cddr term)))
+				(cdr term))
+			    `(,(gensym) ,term)))
+		      (reverse! (cdr (reverse body)))))
+       ,(car (reverse body)))))
+
+#!
+(macroexpand '(pd-fixfunction (name ai ai2)
+			      (define aiai (- 2 4 4))
+			      (aiai1)
+			      (define (gakk a b . c) 5)
+			      (aiai2)))
+->
+(define (name ai ai2)
+  (letrec* ((aiai (- 2 4 4))
+	    (#{\ g20}# (aiai1))
+	    (gakk (lambda (a)
+		    5)))
+    (aiai2)))
+
+!#
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -62,10 +104,9 @@
 	  (pd-filter proc (cdr list)))))
 
 (define (pd-for init pred least add proc)
-  (if (pred init least)
-      (begin
-	(proc init)
-	(pd-for (+ add init) pred least add proc))))
+  (do ((n init (+ n add)))
+      ((not (pred n least)))
+    (proc n)))
 
 
 

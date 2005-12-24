@@ -645,6 +645,7 @@ static void stop_playing_with_toggle(dac_info *dp, dac_toggle_t toggle, with_hoo
     }
   if ((sp) && (IS_PLAYER(sp))) 
     {
+      if (dp->sp == sp) dp->sp = NULL; /* free_player frees it */
       free_player(sp); 
       sp = NULL;
     }

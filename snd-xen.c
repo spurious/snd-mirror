@@ -1038,9 +1038,11 @@ static bool snd_load_init_file_1(const char *filename)
 {
   char *expr, *fullname;
   XEN result;
+  bool happy = false;
   fullname = mus_expand_filename(filename);
   if (mus_file_probe(fullname))
     {
+      happy = true;
 #if HAVE_SCHEME
       expr = mus_format("(load %s)", fullname);
 #endif
@@ -1067,11 +1069,9 @@ static bool snd_load_init_file_1(const char *filename)
 	  snd_unprotect_at(loc);
 	}
 #endif
-
-      return(true);
     }
   if (fullname) FREE(fullname);
-  return(false);
+  return(happy);
 }
 
 void snd_load_init_file(bool no_global, bool no_init)
@@ -2543,7 +2543,7 @@ void set_basic_color(color_t color)
 
 #if HAVE_XPM && USE_MOTIF
   make_sound_icons_transparent_again(old_color, ss->sgx->basic_color);
-  make_recorder_icons_transparent_again(old_color, ss->sgx->basic_color);
+  make_recorder_icons_transparent_again(ss->sgx->basic_color);
   make_mixer_icons_transparent_again(old_color, ss->sgx->basic_color);
 #endif
 }
@@ -2931,6 +2931,39 @@ static XEN g_gsl_gegenbauer(XEN n, XEN lambda, XEN x)
 }
 #endif
 
+#include <gsl/gsl_dht.h>
+static XEN g_gsl_dht(XEN size, XEN data, XEN nu, XEN xmax)
+{
+  #define H_gsl_dht "(gsl-dht size data nu xmax) -> Hankel transform of data (a vct)"
+  int n;
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(size), size, XEN_ARG_1, "gsl-dht", "an integer");
+  XEN_ASSERT_TYPE(VCT_P(data), data, XEN_ARG_2, "gsl-dht", "a vct");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(nu), nu, XEN_ARG_3, "gsl-dht", "a number");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(xmax), xmax, XEN_ARG_4, "gsl-dht", "a number");
+  n = XEN_TO_C_INT(size);
+  if (n <= 0)
+    XEN_OUT_OF_RANGE_ERROR("gsl-dht", XEN_ARG_1, size, "must be > 0");
+  else
+    {
+      double *indata, *outdata;
+      int i;
+      vct *v;
+      gsl_dht *t = gsl_dht_new(n, XEN_TO_C_DOUBLE(nu), XEN_TO_C_DOUBLE(xmax));
+      indata = (double *)CALLOC(n, sizeof(double));
+      outdata = (double *)CALLOC(n, sizeof(double));
+      v = TO_VCT(data);
+      for (i = 0; i < n; i++)
+	indata[i] = v->data[i];
+      gsl_dht_apply(t, indata, outdata);
+      for (i = 0; i < n; i++)
+	v->data[i] = outdata[i];
+      gsl_dht_free(t);
+      FREE(indata);
+      FREE(outdata);
+    }
+  return(data);
+}
+
 #if HAVE_COMPLEX_TRIG && HAVE_GUILE
 #include <gsl/gsl_poly.h>
 #include <complex.h>
@@ -3146,6 +3179,7 @@ XEN_NARGIFY_1(g_i0_w, g_i0)
 #if HAVE_GSL
 XEN_NARGIFY_1(g_gsl_ellipk_w, g_gsl_ellipk)
 XEN_NARGIFY_2(g_gsl_ellipj_w, g_gsl_ellipj)
+XEN_NARGIFY_4(g_gsl_dht_w, g_gsl_dht)
 #if HAVE_COMPLEX_TRIG && HAVE_GUILE
 XEN_NARGIFY_1(g_gsl_roots_w, g_gsl_roots)
 #endif
@@ -3328,6 +3362,7 @@ XEN_NARGIFY_1(g_gsl_roots_w, g_gsl_roots)
 #if HAVE_GSL
 #define g_gsl_ellipk_w g_gsl_ellipk
 #define g_gsl_ellipj_w g_gsl_ellipj
+#define g_gsl_dht_w g_gsl_dht
 #if HAVE_COMPLEX_TRIG && HAVE_GUILE
 #define g_gsl_roots_w g_gsl_roots
 #endif
@@ -3629,6 +3664,7 @@ void g_initialize_gh(void)
 #if HAVE_GSL
   XEN_DEFINE_PROCEDURE("gsl-ellipk", g_gsl_ellipk_w, 1, 0, 0, H_gsl_ellipk);
   XEN_DEFINE_PROCEDURE("gsl-ellipj", g_gsl_ellipj_w, 2, 0, 0, H_gsl_ellipj);
+  XEN_DEFINE_PROCEDURE("gsl-dht",    g_gsl_dht_w,    4, 0, 0, H_gsl_dht);
 #if DEBUGGING && HAVE_GUILE
   XEN_DEFINE_PROCEDURE("gsl-gegenbauer",  g_gsl_gegenbauer,  3, 0, 0, "internal test func");
 #endif
