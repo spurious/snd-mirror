@@ -444,7 +444,7 @@ the overall background color of Snd to red.  <a href="sndscm.html#rgbdoc">rgb.sc
 (you probably don't want to load the whole thing; just use the names as needed). 
 </p>
 
-<p>help-button-color and friends only work in a few cases (Motif, 2.n where n < 3), so I may
+<p>help-button-color and friends only work in a few cases (Motif, 2.n where n &lt; 3), so I may
 deprecate them someday.
 </p>
 
@@ -496,7 +496,7 @@ latter are (configure --help):
 
 <tr><td colspan=2>Numerical choices</td><td></td></tr>
 <tr><td></td><td>--with-doubles</td><td>use doubles throughout (default: no)</td></tr>
-<tr><td></td><td>--with-float-samples</td><td>use floats or doubles as the internal sample representation (default: no)</td></tr>
+<tr><td></td><td>--with-float-samples</td><td>use floats or doubles as the internal sample representation (default: yes)</td></tr>
 <tr><td></td><td>--with-sample-width=N</td><td>if not float samples, use N bits for ints (default: 24, must be between 16 and 31)</td></tr>
 <tr><td colspan=2><hr></td><td></td></tr>
 
@@ -548,7 +548,7 @@ Here at CCRMA, we normally use:
 <p>and, since I'm usually running the CVS Guile, I use:
 </p>
 <pre>
-  ./configure CFLAGS="-Wall" GUILE_CONFIG_path=/home/bil/test/bin --with-float-samples --with-gl --with-static-xm
+  ./configure CFLAGS="-Wall" GUILE_CONFIG_path=/home/bil/test/bin --with-gl --with-static-xm
 </pre>
 <p>
 There are many more examples in tools/compsnd.

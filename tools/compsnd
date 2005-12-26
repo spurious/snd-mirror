@@ -116,7 +116,7 @@ echo ' -------------------------------- gtk -------------------------------- '
 make allclean
 rm -f snd
 rm -f config.cache
-echo ' CFLAGS="-Wall" --with-gtk '
+echo ' CFLAGS="-Wall -Wextra" --with-gtk '
 ./configure --quiet CFLAGS="-Wall" --with-gtk
 make
 echo ' '
@@ -205,16 +205,31 @@ echo ' '
 ./snd --version
 
 echo ' '
-echo ' '
-echo ' -------------------------------- configure --with-float-samples test -------------------------------- '
+echo ' -------------------------------- configure --with-doubles test int samples -------------------------------- '
 make allclean
 rm -f snd
 rm -f config.cache
 rm -f makefile
 rm -f config.h
 rm -f sndinfo
-echo ' CFLAGS="-Wall"  --with-float-samples --without-ladspa --with-gl --with-modules --without-gsl --without-xpm '
-./configure --quiet CFLAGS="-Wall"  --with-float-samples --without-ladspa --with-gl --with-modules --without-gsl --without-xpm
+echo ' CFLAGS="-Wall"  --with-doubles '
+./configure --quiet CFLAGS="-Wall"  --with-doubles --without-float-samples
+make
+echo ' '
+echo ' '
+./snd --version
+
+echo ' '
+echo ' '
+echo ' -------------------------------- configure --without-float-samples test -------------------------------- '
+make allclean
+rm -f snd
+rm -f config.cache
+rm -f makefile
+rm -f config.h
+rm -f sndinfo
+echo ' CFLAGS="-Wall"  --without-float-samples --without-ladspa --with-gl --with-modules --without-gsl --without-xpm '
+./configure --quiet CFLAGS="-Wall"  --without-float-samples --without-ladspa --with-gl --with-modules --without-gsl --without-xpm
 make
 echo ' '
 echo ' '
@@ -230,8 +245,8 @@ rm -f config.cache
 rm -f makefile
 rm -f config.h
 rm -f sndinfo
-echo ' CFLAGS="-Wall"  --with-sample-width=32 --with-just-gl --with-static-motif --without-fftw '
-./configure --quiet CFLAGS="-Wall"  --with-sample-width=32 --with-just-gl --with-static-motif --without-fftw
+echo ' CFLAGS="-Wall"  --without-float-samples --with-sample-width=32 --with-just-gl --with-static-motif --without-fftw '
+./configure --quiet CFLAGS="-Wall"  --without-float-samples --with-sample-width=32 --with-just-gl --with-static-motif --without-fftw
 make
 echo ' '
 echo ' '
@@ -246,8 +261,8 @@ rm -f config.cache
 rm -f makefile
 rm -f config.h
 rm -f sndinfo
-echo ' CFLAGS="-Wall"  --with-sample-width=28 '
-./configure --quiet CFLAGS="-Wall"  --with-sample-width=28
+echo ' CFLAGS="-Wall"  --without-float-samples --with-sample-width=28 '
+./configure --quiet CFLAGS="-Wall"  --without-float-samples --with-sample-width=28
 make
 echo ' '
 echo ' '
@@ -262,8 +277,8 @@ rm -f config.cache
 rm -f makefile
 rm -f config.h
 rm -f sndinfo
-echo ' CFLAGS="-Wall"  --with-sample-width=16 '
-./configure --quiet CFLAGS="-Wall"  --with-sample-width=16
+echo ' CFLAGS="-Wall"  --without-float-samples --with-sample-width=16 '
+./configure --quiet CFLAGS="-Wall"  --without-float-samples --with-sample-width=16
 make
 echo ' '
 echo ' '

@@ -45792,7 +45792,8 @@ EDITS: 1
 		  
 		  ;; ---------------- transform dialog ----------------
 		  (let* ((transd (list-ref (dialog-widgets) 5))
-			 (beta (find-child transd "beta-scale")))
+			 (beta (find-child transd "beta-scale"))
+			 (alpha (find-child transd "alpha-scale")))
 		    ;; push all the buttons
 		    (for-each (lambda (name check off2)
 				(let ((button (find-child transd name)))
@@ -45820,10 +45821,12 @@ EDITS: 1
 				    show-selection-transform)
 			      (list #f #f #f #f #t #t
 				    #t #t #t))
-		    ;; TODO: move alpha scale (also explicit tests of beta/alpha settings using binomial stuff)
 		    (move-scale beta 32)
 		    (if (fneq (fft-window-beta) .32)
 			(snd-display ";moved fft-beta: ~A ~A" (fft-window-beta) (XmScaleGetValue beta)))
+		    (move-scale alpha 62)
+		    (if (fneq (fft-window-alpha) .62)
+			(snd-display ";moved fft-alpha: ~A ~A" (fft-window-alpha) (XmScaleGetValue alpha)))
 		    ;; click all the lists
 		    (for-each (lambda (name check)
 				(let ((lst (find-child transd name)))
