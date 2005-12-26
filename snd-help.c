@@ -428,6 +428,10 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+26-Dec:  help-snd-fm.pd and pd-fm.scm thanks to Kjetil.\n\
+         default sample type is now float. This should only affect the \"peak-env\" files which will\n\
+           need to be rebuilt (just delete the current peak files, and they'll be rebuilt as needed\n\
+           automatically).\n\
 19-Dec:  analog-filter.scm: Butterworth, Chebyshev, inverse-Chebyshev, Bessel(-Thompson), Elliptic filters.\n\
          new fft windows: samaraki and ultraspherical (related to the dolph-chebyshev window)\n\
          fft-window-alpha (ultraspherical window parameter).\n\
@@ -435,11 +439,6 @@ void about_snd_help(void)
          sinc-train (clm.html), reverse-by-blocks and reverse-within-blocks (examp.scm), pulse-voice (examp.scm).\n\
 28-Nov:  snd 7.17.\n\
 21-Nov:  if --with-float-samples and --with-doubles, the internal sample data type is double.\n\
-18-Nov:  moved snd-apropos to snd7.scm.\n\
-15-Nov:  sync-max.\n\
-12-Nov:  all dlp directory files moved to main directory (to simplify load-path handling).\n\
-         SND_PATH environment variable (optional load path directory list).\n\
-3-Nov:   ws.scm definstrument macro changed to support :notehook arg in with-sound, and *definstrument-hook* for CM.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",

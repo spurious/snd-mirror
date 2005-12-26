@@ -1646,7 +1646,8 @@ order (it is the size of the arrays).
 <p>dsp.scm in the Snd package has a number of filter design functions,
 and various specializations of the filter generators, including such
 perennial favorites as biquad, butterworth, hilbert transform, and
-notch filters. 
+notch filters. Similarly, analog-filter.scm in the Snd tarball has
+the usual IIR suspects: Butterworth, Chebyshev, Bessel, and Elliptic filters.
 As a simple example,
 say we want to put a spectral envelope on a noise source.</p>
 
@@ -3013,6 +3014,9 @@ a simple instrument such as:</p>
 </pre>
 </td></tr></table>
 <p>This modulates the sound but keeps the output maxamp the same as the input.
+There is a similar function in sndscm.html that does this kind of scaling throughout the sound,
+resulting in a steady modulation, rather than an intensification of just the peaks -- see
+<a href="sndscm.html#windowedmaxamp">windowed-maxamp</a>.
 </p>
 <br>
 
@@ -3214,8 +3218,6 @@ The following instruments live in *.ins files in the CLM
 directory (see also the file <a href="ins">ins</a>), and in various
 *.scm, *.rb, and *.fs files in the Snd tarball.
 </p>
-
-<!-- TODO: fixup somehow for web access -->
 
 <table border=8 bordercolor="lightgreen" cellpadding=2>
 <tr><th width=120>instrument</th><th>function</th><th>CL</th><th>Scheme</th><th>Ruby</th><th>Forth</th></tr>
@@ -3426,7 +3428,7 @@ directory (see also the file <a href="ins">ins</a>), and in various
 
 <tr><td>mlb-voice</td>         
     <td>fm (originally waveshaping) voice (Marc LeBrun)</td>      
-    <td><a href="mlbvoi.ins">mlbvoi.ins</a></td>    S
+    <td><a href="mlbvoi.ins">mlbvoi.ins</a></td>
 	<td><a href="clm-ins.scm">clm-ins.scm</a></td>
 	<td><a href="clm-ins.rb">clm-ins.rb</a></td>
 	<td><a href="gfm/clm-ins.fs">clm-ins.fs</a></td>

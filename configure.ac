@@ -38,7 +38,7 @@ AC_DEFINE_UNQUOTED(SND_HOST, "$host")
 #   --with-snd-as-widget  make Snd a loadable widget, not a standalone program
 #   --with-snd-as-pd-external  make Snd a loadable pd external, not a standalone program
 #   --with-doubles        use doubles throughout (default is floats)
-#   --with-float-samples  represent samples internally as floats 
+#   --with-float-samples  represent samples internally as floats or doubles (default=yes)
 #   --enable-snd-debug    include Snd internal debugging stuff
 #   --disable-deprecated  do not include any deprecated stuff (in gtk, motif, guile, sndlib, clm, etc)
 #   --with-ladspa         include LADSPA plugin support (Linux)
@@ -83,7 +83,6 @@ AC_ARG_WITH(jack,        [  --with-jack		  use JACK])
 AC_ARG_WITH(static-alsa, [  --with-static-alsa	  use ALSA statically loaded])
 AC_ARG_WITH(gtk,         [  --with-gtk		  use Gtk+ to build Snd])
 AC_ARG_WITH(no-gui,      [  --with-no-gui  	  make Snd without any graphics support])
-AC_ARG_WITH(doubles,     [  --with-doubles	  use doubles throughout])
 AC_ARG_WITH(static-gsl,  [  --with-static-gsl	  use libgsl.a to build Snd (for obsolete RPM version)])
 AC_ARG_WITH(static-xm,   [  --with-static-xm	  include the xm module])
 AC_ARG_WITH(static-xg,   [  --with-static-xg	  include the xg module])
@@ -99,6 +98,8 @@ AC_ARG_WITH(x11,	 [  --with-x11		  include X funcs from xm.c with xg.c -- for X 
 AC_ARG_WITH(hobbit,      [  --with-hobbit 	  include hobbit-style function arity checking, default=no])
 AC_ARG_WITH(builtin-gtkrc,[  --with-builtin-gtkrc	  include built-in gtkrc fallbacks, default=yes])
 AC_ARG_WITH(midi,        [  --with-midi		  include sndlib midi module])
+AC_ARG_WITH(doubles,     [  --with-doubles	  use doubles throughout])
+AC_ARG_WITH(float-samples, [  --with-float-samples	  use floats (or doubles) as the internal sample respresentation, default=yes])
 
 # these are primarily for testing
 AC_ARG_WITH(gsl,         [  --with-gsl		  use GSL, default=yes if no complex trig support in C compiler])
@@ -108,11 +109,37 @@ AC_ARG_WITH(xp,          [  --with-xp		  use xp, default=no])
 AC_ARG_WITH(fam,         [  --with-fam		  use libfam (Gamin), default=yes])
 AC_ARG_WITH(profiling,   [  --with-profiling	  include profiling machinery, default=no, for internal testing])
 
+
+# -------- internal sample data type --------
+
+# sample-width only applies to the int case (ignored if float)
+LOCAL_SNDLIB_BITS="24"
+AC_ARG_WITH(sample-width,
+	[  --with-sample-width=N   use N bits of samples],
+	[AC_MSG_RESULT(Using $with_sample_width bit samples)
+	 AC_DEFINE_UNQUOTED(MUS_SAMPLE_BITS, $with_sample_width)
+         LOCAL_SNDLIB_BITS=$with_sample_width
+	],
+	[AC_DEFINE(MUS_SAMPLE_BITS, 24)]
+	)
+
+if test "$with_float_samples" != no ; then
+  AC_DEFINE(SNDLIB_USE_FLOATS, 1)
+  if test "$with_doubles" = yes ; then
+    LOCAL_SNDLIB_BITS="8"
+  else
+    LOCAL_SNDLIB_BITS="4"
+  fi
+else
+  AC_DEFINE(SNDLIB_USE_FLOATS, 0)
+fi
+
 if test "$with_doubles" = yes ; then
   AC_DEFINE(Float,double)
 else
   AC_DEFINE(Float,float)
 fi
+
 
 if test "$with_hobbit" = yes ; then
   AC_DEFINE(WITH_HOBBIT)
@@ -125,30 +152,6 @@ fi
 if test "$with_static_xg" = yes ; then
   with_static_xm=yes
 fi
-
-LOCAL_SNDLIB_BITS="24"
-AC_ARG_WITH(float-samples,
-	[  --with-float-samples	  use floats as the internal sample respresentation],
-  	[if test "$with_float_samples" = yes ; then
-	    AC_DEFINE(SNDLIB_USE_FLOATS, 1)
-	    if test "$with_doubles" = yes ; then
-              LOCAL_SNDLIB_BITS="8"
-            else
-              LOCAL_SNDLIB_BITS="4"
-            fi
-         else
-	    AC_DEFINE(SNDLIB_USE_FLOATS, 0)
-	 fi],
-	[AC_DEFINE(SNDLIB_USE_FLOATS, 0)])
-
-AC_ARG_WITH(sample-width,
-	[  --with-sample-width=N   use N bits of samples],
-	[AC_MSG_RESULT(Using $with_sample_width bit samples)
-	 AC_DEFINE_UNQUOTED(MUS_SAMPLE_BITS, $with_sample_width)
-         LOCAL_SNDLIB_BITS=$with_sample_width
-	],
-	[AC_DEFINE(MUS_SAMPLE_BITS, 24)]
-	)
 
 AC_ARG_WITH(motif-prefix,[  --with-motif-prefix=PFX where Motif is installed],
             motif_prefix="$withval", motif_prefix="")
@@ -188,6 +191,7 @@ AC_ARG_WITH(snd-as-pd-external,
 	   if test "$with_ruby" = yes ; then
 	      AC_MSG_ERROR(When making snd as a pd external, ruby can not be used as extension language.)
 	   fi
+	   CFLAGS="$CFLAGS -DSND_PD_PATH=\\\"\""`pwd`"\"\\\" "
 	   [with_jack=yes]
 	   AC_DEFINE(SND_AS_PD_EXTERNAL)
 	   MAKE_TARGET=external
@@ -1338,6 +1342,9 @@ if test $GUILE_CONFIG_works = yes; then
         AC_DEFINE(WITH_RUN)
       fi
     fi
+    if test "$with_snd_as_pd_external" = yes ; then
+       GUILE_LIBS="${GUILE_CONFIG_path}../lib/libguile.a  -lltdl -lgmp -lcrypt -lm -lltdl"
+    fi
   fi
 else
   AC_DEFINE(HAVE_GUILE,0)
@@ -1907,6 +1914,9 @@ if test "$ac_snd_have_extension_language" = no ; then
       LDFLAGS="$LDFLAGS -ldl"
     fi
     AC_MSG_WARN([Snd needs either an extension language (Guile or Ruby), or a graphics toolkit (Gtk or Motif), or preferably both.  All four packages are available free, normally prepackaged and ready-to-use.  As currently configured, this version of Snd is useless.])
+    if test "$with_snd_as_pd_external" = yes ; then	
+       AC_MSG_ERROR(Guile is needed when making snd as a pd external.)
+    fi
   fi
 fi
 

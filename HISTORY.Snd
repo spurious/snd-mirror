@@ -3,6 +3,8 @@ Snd change log
 
 2006 ----------------------------------------------------------------
 
+  26-Dec:    help-snd-fm.pd and pd-fm.scm thanks to Kjetil.
+	     default sample type is now float.
   19-Dec:    analog-filter.scm: Butterworth, Chebyshev, inverse-Chebyshev, Bessel(-Thompson), Elliptic filters.
              new fft windows: samaraki and ultraspherical (related to the dolph-chebyshev window).
 	     fft-window-alpha (ultraspherical xmu parameter).

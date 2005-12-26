@@ -538,7 +538,6 @@ static sound_file *fill_sf_record(const char *name, sound_file *sf)
       sf->base_detune = mus_header_base_detune();
       sf->base_note = mus_header_base_note();
     }
-  /* aux comments */
   previous_sf = sf;
   return(sf);
 }

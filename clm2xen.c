@@ -439,10 +439,15 @@ static XEN g_amplitude_modulate(XEN val1, XEN val2, XEN val3)
 
 static XEN g_contrast_enhancement(XEN val1, XEN val2) 
 {
-  #define H_contrast_enhancement "(" S_contrast_enhancement " sig index): sin(sig * pi / 2 + index * sin(sig * 2 * pi))"
+  Float index = 1.0; /* this is the default in clm.html and mus.lisp */
+  #define H_contrast_enhancement "(" S_contrast_enhancement " sig (index 1.0)): sin(sig * pi / 2 + index * sin(sig * 2 * pi))"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val1), val1, XEN_ARG_1, S_contrast_enhancement, "a number");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val2), val2, XEN_ARG_2, S_contrast_enhancement, "a number");
-  return(C_TO_XEN_DOUBLE(mus_contrast_enhancement(XEN_TO_C_DOUBLE(val1), XEN_TO_C_DOUBLE(val2))));
+  if (XEN_BOUND_P(val2))
+    {
+      XEN_ASSERT_TYPE(XEN_NUMBER_P(val2), val2, XEN_ARG_2, S_contrast_enhancement, "a number");
+      index = XEN_TO_C_DOUBLE(val2);
+    }
+  return(C_TO_XEN_DOUBLE(mus_contrast_enhancement(XEN_TO_C_DOUBLE(val1), index)));
 }
 
 static XEN g_dot_product(XEN val1, XEN val2, XEN size) 
@@ -5329,7 +5334,7 @@ XEN_NARGIFY_1(g_seconds_to_samples_w, g_seconds_to_samples)
 XEN_NARGIFY_1(g_samples_to_seconds_w, g_samples_to_seconds)
 XEN_NARGIFY_2(g_ring_modulate_w, g_ring_modulate)
 XEN_NARGIFY_3(g_amplitude_modulate_w, g_amplitude_modulate)
-XEN_NARGIFY_2(g_contrast_enhancement_w, g_contrast_enhancement)
+XEN_ARGIFY_2(g_contrast_enhancement_w, g_contrast_enhancement)
 XEN_ARGIFY_3(g_dot_product_w, g_dot_product)
 #if HAVE_COMPLEX_TRIG && (HAVE_SCM_MAKE_COMPLEX || HAVE_SCM_C_MAKE_RECTANGULAR)
 XEN_NARGIFY_2(g_edot_product_w, g_edot_product)
@@ -5918,7 +5923,7 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_samples_to_seconds,   g_samples_to_seconds_w,   1, 0, 0, H_samples_to_seconds);
   XEN_DEFINE_PROCEDURE(S_ring_modulate,        g_ring_modulate_w,        2, 0, 0, H_ring_modulate);
   XEN_DEFINE_PROCEDURE(S_amplitude_modulate,   g_amplitude_modulate_w,   3, 0, 0, H_amplitude_modulate);
-  XEN_DEFINE_PROCEDURE(S_contrast_enhancement, g_contrast_enhancement_w, 2, 0, 0, H_contrast_enhancement);
+  XEN_DEFINE_PROCEDURE(S_contrast_enhancement, g_contrast_enhancement_w, 1, 1, 0, H_contrast_enhancement);
   XEN_DEFINE_PROCEDURE(S_dot_product,          g_dot_product_w,          2, 1, 0, H_dot_product);
 #if HAVE_COMPLEX_TRIG && (HAVE_SCM_MAKE_COMPLEX || HAVE_SCM_C_MAKE_RECTANGULAR)
   XEN_DEFINE_PROCEDURE(S_edot_product,         g_edot_product_w,         2, 0, 0, H_edot_product);

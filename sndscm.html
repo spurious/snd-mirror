@@ -873,7 +873,19 @@ of the delay generator that produces an envelope that tracks the peak amplitude 
 and <code>(windowed-maxamp gen y)</code> then returns the envelope traced out by the signal "y".
 The harmonicizer (below) uses this generator to normalize an in-coming signal to 1.0
 so that the Chebyshev polynomials it is driving will produce a full spectrum at all times.
+Here is a similar, but simpler, example; we use the windowed-maxamp generator to track the
+current peak amplitude over a small window, use that value to drive a contrast-enhancement
+generator (so that its output is always fully modulated), and rescale by the same value
+upon output (to track the original sound's amplitude envelope):
 </p>
+<pre>
+(define (intensify index)
+  (let* ((mx (<em class=red>make-windowed-maxamp</em>))
+	 (flt (<a class=quiet href="#makelowpass">make-lowpass</a> (* pi .1) 8))) ; smooth the maxamp signal
+    (map-channel (lambda (y)
+		   (let ((amp (max .1 (<a class=quiet href="clm.html#fir-filter">fir-filter</a> flt (<em class=red>windowed-maxamp</em> mx y)))))
+		     (* amp (<a class=quiet href="clm.html#contrast-enhancement">contrast-enhancement</a> (/ y amp) index)))))))
+</pre>
 
 <p><a class=def name="harmonicizer">harmonicizer</a> splits a sound into separate sinusoids, then splits each such harmonic
 into a set of harmonics, then reassembles the sound.  The basic idea is very similar to

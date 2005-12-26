@@ -66,8 +66,8 @@ make sndrecord
 # GUILE_CONFIG_path=/home/bil/test/bin 
 echo ' -------------------------------- basic configure test/bin -------------------------------- '
 make allclean
-echo ' CFLAGS="-Wall" GUILE_CONFIG_path=/home/bil/test/bin -Wdeclaration-after-statement -Wextra -Wmissing-field-initializers'
-./configure --quiet CFLAGS="-Wall" GUILE_CONFIG_path=/home/bil/test/bin
+echo ' CFLAGS="-Wall" GUILE_CONFIG_path=/home/bil/test/bin -Wdeclaration-after-statement -Wmissing-field-initializers'
+./configure --quiet CFLAGS="-Wall -Wextra" GUILE_CONFIG_path=/home/bil/test/bin
 make
 make xm
 snd --version

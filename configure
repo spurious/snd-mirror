@@ -868,7 +868,6 @@ Optional Packages:
   --with-static-alsa	  use ALSA statically loaded
   --with-gtk		  use Gtk+ to build Snd
   --with-no-gui  	  make Snd without any graphics support
-  --with-doubles	  use doubles throughout
   --with-static-gsl	  use libgsl.a to build Snd (for obsolete RPM version)
   --with-static-xm	  include the xm module
   --with-static-xg	  include the xg module
@@ -884,13 +883,14 @@ Optional Packages:
   --with-hobbit 	  include hobbit-style function arity checking, default=no
   --with-builtin-gtkrc	  include built-in gtkrc fallbacks, default=yes
   --with-midi		  include sndlib midi module
+  --with-doubles	  use doubles throughout
+  --with-float-samples	  use floats (or doubles) as the internal sample respresentation, default=yes
   --with-gsl		  use GSL, default=yes if no complex trig support in C compiler
   --with-fftw		  use fftw, default=yes
   --with-xpm		  use xpm, default=yes
   --with-xp		  use xp, default=no
   --with-fam		  use libfam (Gamin), default=yes
   --with-profiling	  include profiling machinery, default=no, for internal testing
-  --with-float-samples	  use floats as the internal sample respresentation
   --with-sample-width=N   use N bits of samples
   --with-motif-prefix=PFX where Motif is installed
   --with-temp-dir	  directory to use for temp files
@@ -2921,7 +2921,7 @@ _ACEOF
 #   --with-snd-as-widget  make Snd a loadable widget, not a standalone program
 #   --with-snd-as-pd-external  make Snd a loadable pd external, not a standalone program
 #   --with-doubles        use doubles throughout (default is floats)
-#   --with-float-samples  represent samples internally as floats
+#   --with-float-samples  represent samples internally as floats or doubles (default=yes)
 #   --enable-snd-debug    include Snd internal debugging stuff
 #   --disable-deprecated  do not include any deprecated stuff (in gtk, motif, guile, sndlib, clm, etc)
 #   --with-ladspa         include LADSPA plugin support (Linux)
@@ -2994,12 +2994,6 @@ fi;
 # Check whether --with-no-gui or --without-no-gui was given.
 if test "${with_no_gui+set}" = set; then
   withval="$with_no_gui"
-
-fi;
-
-# Check whether --with-doubles or --without-doubles was given.
-if test "${with_doubles+set}" = set; then
-  withval="$with_doubles"
 
 fi;
 
@@ -3093,6 +3087,18 @@ if test "${with_midi+set}" = set; then
 
 fi;
 
+# Check whether --with-doubles or --without-doubles was given.
+if test "${with_doubles+set}" = set; then
+  withval="$with_doubles"
+
+fi;
+
+# Check whether --with-float-samples or --without-float-samples was given.
+if test "${with_float_samples+set}" = set; then
+  withval="$with_float_samples"
+
+fi;
+
 # these are primarily for testing
 
 # Check whether --with-gsl or --without-gsl was given.
@@ -3131,64 +3137,11 @@ if test "${with_profiling+set}" = set; then
 
 fi;
 
-if test "$with_doubles" = yes ; then
-  cat >>confdefs.h <<\_ACEOF
-#define Float double
-_ACEOF
 
-else
-  cat >>confdefs.h <<\_ACEOF
-#define Float float
-_ACEOF
+# -------- internal sample data type --------
 
-fi
-
-if test "$with_hobbit" = yes ; then
-  cat >>confdefs.h <<\_ACEOF
-#define WITH_HOBBIT 1
-_ACEOF
-
-fi
-
-if test "$with_builtin_gtkrc" != no; then
-  cat >>confdefs.h <<\_ACEOF
-#define WITH_BUILTIN_GTKRC 1
-_ACEOF
-
-fi
-
-if test "$with_static_xg" = yes ; then
-  with_static_xm=yes
-fi
-
+# sample-width only applies to the int case (ignored if float)
 LOCAL_SNDLIB_BITS="24"
-
-# Check whether --with-float-samples or --without-float-samples was given.
-if test "${with_float_samples+set}" = set; then
-  withval="$with_float_samples"
-  if test "$with_float_samples" = yes ; then
-	    cat >>confdefs.h <<\_ACEOF
-#define SNDLIB_USE_FLOATS 1
-_ACEOF
-
-	    if test "$with_doubles" = yes ; then
-              LOCAL_SNDLIB_BITS="8"
-            else
-              LOCAL_SNDLIB_BITS="4"
-            fi
-         else
-	    cat >>confdefs.h <<\_ACEOF
-#define SNDLIB_USE_FLOATS 0
-_ACEOF
-
-	 fi
-else
-  cat >>confdefs.h <<\_ACEOF
-#define SNDLIB_USE_FLOATS 0
-_ACEOF
-
-fi;
-
 
 # Check whether --with-sample-width or --without-sample-width was given.
 if test "${with_sample_width+set}" = set; then
@@ -3208,6 +3161,54 @@ _ACEOF
 
 
 fi;
+
+if test "$with_float_samples" != no ; then
+  cat >>confdefs.h <<\_ACEOF
+#define SNDLIB_USE_FLOATS 1
+_ACEOF
+
+  if test "$with_doubles" = yes ; then
+    LOCAL_SNDLIB_BITS="8"
+  else
+    LOCAL_SNDLIB_BITS="4"
+  fi
+else
+  cat >>confdefs.h <<\_ACEOF
+#define SNDLIB_USE_FLOATS 0
+_ACEOF
+
+fi
+
+if test "$with_doubles" = yes ; then
+  cat >>confdefs.h <<\_ACEOF
+#define Float double
+_ACEOF
+
+else
+  cat >>confdefs.h <<\_ACEOF
+#define Float float
+_ACEOF
+
+fi
+
+
+if test "$with_hobbit" = yes ; then
+  cat >>confdefs.h <<\_ACEOF
+#define WITH_HOBBIT 1
+_ACEOF
+
+fi
+
+if test "$with_builtin_gtkrc" != no; then
+  cat >>confdefs.h <<\_ACEOF
+#define WITH_BUILTIN_GTKRC 1
+_ACEOF
+
+fi
+
+if test "$with_static_xg" = yes ; then
+  with_static_xm=yes
+fi
 
 
 # Check whether --with-motif-prefix or --without-motif-prefix was given.
