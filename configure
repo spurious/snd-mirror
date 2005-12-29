@@ -5926,7 +5926,7 @@ _ACEOF
 #define MUS_AUDIO_COMPATIBLE_FORMAT MUS_BSHORT
 _ACEOF
 
-		 if test "$with_float_samples" = yes ; then
+		 if test "$with_float_samples" != no ; then
 		    if test "$with_doubles" = yes ; then
                       cat >>confdefs.h <<\_ACEOF
 #define MUS_OUT_FORMAT MUS_BDOUBLE
@@ -5954,7 +5954,7 @@ _ACEOF
 #define MUS_AUDIO_COMPATIBLE_FORMAT MUS_LSHORT
 _ACEOF
 
-		 if test "$with_float_samples" = yes ; then
+		 if test "$with_float_samples" != no ; then
 		    if test "$with_doubles" = yes ; then
                       cat >>confdefs.h <<\_ACEOF
 #define MUS_OUT_FORMAT MUS_LDOUBLE
@@ -22093,7 +22093,7 @@ if test "$enable_snd_debug" = yes ; then
       if test "$CC" = "g++" ; then
         CFLAGS="$CFLAGS -O -g3 -Wredundant-decls -Wcast-align -Wpointer-arith -Wimplicit -Wreturn-type -Wunused-label -Wunused-variable -Wunused-value -Wcomment -Wformat -Wunused-function -Wuninitialized -Wparentheses -Wall"
       else
-        CFLAGS="$CFLAGS -O -g3 -Wredundant-decls -Wcast-align -Wmissing-prototypes -Wpointer-arith -Wimplicit -Wreturn-type -Wunused-label -Wunused-variable -Wunused-value -Wcomment -Wformat -Wunused-function -Wuninitialized -Wparentheses -Wall -Wdeclaration-after-statement -Wmissing-field-initializers"
+        CFLAGS="$CFLAGS -O -g3 -Wredundant-decls -Wcast-align -Wmissing-prototypes -Wpointer-arith -Wimplicit -Wreturn-type -Wunused-label -Wunused-variable -Wunused-value -Wcomment -Wformat -Wunused-function -Wuninitialized -Wparentheses -Wall"
       fi
     fi
   fi

@@ -76,9 +76,10 @@ off_t beg_to_sample(XEN beg, const char *caller)
 {
   off_t start;
   start = XEN_TO_C_OFF_T_OR_ELSE(beg, 0);
-  if (start < 0) XEN_ERROR(NO_SUCH_SAMPLE,
-			   XEN_LIST_2(C_TO_XEN_STRING(caller),
-				      beg));
+  if (start < 0) 
+    XEN_ERROR(NO_SUCH_SAMPLE,
+	      XEN_LIST_2(C_TO_XEN_STRING(caller),
+			 beg));
   return(start);
 }
 

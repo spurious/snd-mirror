@@ -3020,6 +3020,17 @@ void goto_mix(chan_info *cp, int count)
 		}
 	    }
 	}
+      if (j == 0) 
+	{
+	  FREE(css);
+	  return;
+	}
+      if (j == 1)
+	{
+	  cursor_moveto(cp, css[0]);
+	  FREE(css);
+	  return;
+	}
       qsort((void *)css, j, sizeof(off_t), compare_mix_states);
       /* now find where we are via CURSOR(cp) and go forward or back as per count */
       if (count > 0)
@@ -4343,9 +4354,12 @@ track-id is the track value for each newly created mix."
     {
       track_num = XEN_TO_C_INT(track_id);
       if ((track_num > 0) && (!(track_p(track_num))))
-	XEN_ERROR(NO_SUCH_TRACK,
-		  XEN_LIST_2(C_TO_XEN_STRING(S_mix),
-			     track_id));
+	{
+	  if (name) FREE(name);
+	  XEN_ERROR(NO_SUCH_TRACK,
+		    XEN_LIST_2(C_TO_XEN_STRING(S_mix),
+			       track_id));
+	}
     }
   if (((!(XEN_INTEGER_P(file_chn))) || (XEN_TO_C_INT(file_chn) == 0)) &&
       (!(XEN_INTEGER_P(chn_n))))
@@ -4368,19 +4382,25 @@ track-id is the track value for each newly created mix."
     {
       chans = mus_sound_chans(name);
       if (chans <= 0)
-	XEN_ERROR(BAD_HEADER,
-		  XEN_LIST_4(C_TO_XEN_STRING(S_mix),
-			     file,
-			     C_TO_XEN_STRING("chans <= 0"),
-			     C_TO_XEN_INT(chans)));
+	{
+	  if (name) FREE(name);
+	  XEN_ERROR(BAD_HEADER,
+		    XEN_LIST_4(C_TO_XEN_STRING(S_mix),
+			       file,
+			       C_TO_XEN_STRING("chans <= 0"),
+			       C_TO_XEN_INT(chans)));
+	}
       file_channel = XEN_TO_C_INT_OR_ELSE(file_chn, 0);
       if (file_channel >= chans)
-	XEN_ERROR(NO_SUCH_CHANNEL,
-		  XEN_LIST_3(C_TO_XEN_STRING(S_mix),
-			     C_TO_XEN_STRING("chan: ~A, ~A chans: ~A"),
-			     XEN_LIST_3(file_chn,
-					file,
-					C_TO_XEN_INT(chans))));
+	{
+	  if (name) FREE(name);
+	  XEN_ERROR(NO_SUCH_CHANNEL,
+		    XEN_LIST_3(C_TO_XEN_STRING(S_mix),
+			       C_TO_XEN_STRING("chan: ~A, ~A chans: ~A"),
+			       XEN_LIST_3(file_chn,
+					  file,
+					  C_TO_XEN_INT(chans))));
+	}
       if (chans > 0)
 	{
 	  char *origin;
@@ -4402,10 +4422,13 @@ track-id is the track value for each newly created mix."
 	  else
 	    {
 	      if (ss->local_errno != 0)
-		XEN_ERROR(MUS_MISC_ERROR,
-			  XEN_LIST_3(C_TO_XEN_STRING(S_mix),
-				     file,
-				     C_TO_XEN_STRING(snd_io_strerror())));
+		{
+		  if (name) FREE(name);
+		  XEN_ERROR(MUS_MISC_ERROR,
+			    XEN_LIST_3(C_TO_XEN_STRING(S_mix),
+				       file,
+				       C_TO_XEN_STRING(snd_io_strerror())));
+		}
 	    }
 	}
       else 

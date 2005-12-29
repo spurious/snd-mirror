@@ -1523,7 +1523,7 @@ using data format (default depends on machine byte order), header type (" S_mus_
 	  else header_type = MUS_RAW;
 	}
     }
-  redirect_snd_error_to(save_region_to_xen_error, NULL);
+  redirect_snd_error_to(save_region_to_xen_error, NULL); /* could perhaps pass name here for free in case of error */
   save_region(rg, name, header_type, data_format, com);
   redirect_snd_error_to(NULL, NULL);
   if (name) FREE(name);

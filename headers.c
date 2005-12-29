@@ -63,6 +63,8 @@
  *
  * If anyone has information on any other header or data formats, I would be most interested in it,
  * but only if it can be included in this file.
+ *
+ * ivc format appears to have 16 bytes of header (-1 5 0 0 0 0 -> mulaw) followed by mulaw or alaw data
  */
 
 #include <config.h>

@@ -5131,46 +5131,66 @@ it in conjunction with mixer to scale/envelope all the various ins and outs. \
 	osamps = mus_sound_frames(infile);
       else osamps = mus_length(inf);
       if (osamps < 0)
-	XEN_ERROR(BAD_HEADER,
-		  XEN_LIST_3(C_TO_XEN_STRING(S_mus_mix),
-			     in,
-			     C_TO_XEN_STRING("input frames < 0")));
+	{
+	  if (infile) free(infile);
+	  if (outfile) free(outfile);
+	  XEN_ERROR(BAD_HEADER,
+		    XEN_LIST_3(C_TO_XEN_STRING(S_mus_mix),
+			       in,
+			       C_TO_XEN_STRING("input frames < 0")));
+	}
     }
   if (infile)
     in_chans = mus_sound_chans(infile);
   else in_chans = mus_channels(inf);
   if (in_chans <= 0)
-    XEN_ERROR(BAD_HEADER,
-	      XEN_LIST_3(C_TO_XEN_STRING(S_mus_mix),
-			 in,
-			 C_TO_XEN_STRING("input chans <= 0")));
+    {
+	  if (infile) free(infile);
+	  if (outfile) free(outfile);
+	  XEN_ERROR(BAD_HEADER,
+		    XEN_LIST_3(C_TO_XEN_STRING(S_mus_mix),
+			       in,
+			       C_TO_XEN_STRING("input chans <= 0")));
+    }
   if (outfile)
     out_chans = mus_sound_chans(outfile);
   else out_chans = mus_channels(outf);
   if (out_chans <= 0)
-    XEN_ERROR(BAD_HEADER,
-	      XEN_LIST_3(C_TO_XEN_STRING(S_mus_mix),
-			 out,
-			 C_TO_XEN_STRING("output chans <= 0")));
+    {	  
+      if (infile) free(infile);
+      if (outfile) free(outfile);
+      XEN_ERROR(BAD_HEADER,
+		XEN_LIST_3(C_TO_XEN_STRING(S_mus_mix),
+			   out,
+			   C_TO_XEN_STRING("output chans <= 0")));
+    }
   if ((XEN_BOUND_P(envs)) && (!(XEN_FALSE_P(envs))))
     {
       int in_len = 0, out_len, j;
       /* pack into a C-style array of arrays of env pointers */
       in_len = XEN_VECTOR_LENGTH(envs);
       if (in_len == 0)
-	XEN_ERROR(BAD_TYPE,
-		  XEN_LIST_3(C_TO_XEN_STRING(S_mus_mix),
-			     envs,
-			     C_TO_XEN_STRING("env vector can't be empty")));
+	{
+	  if (infile) free(infile);
+	  if (outfile) free(outfile);
+	  XEN_ERROR(BAD_TYPE,
+		    XEN_LIST_3(C_TO_XEN_STRING(S_mus_mix),
+			       envs,
+			       C_TO_XEN_STRING("env vector can't be empty")));
+	}
       for (i = 0; i < in_len; i++)
 	{
 	  XEN datum;
 	  datum = XEN_VECTOR_REF(envs, i);
 	  if (!(XEN_VECTOR_P(datum)))
-	    XEN_ERROR(BAD_TYPE,
-		      XEN_LIST_3(C_TO_XEN_STRING(S_mus_mix),
-				 datum,
-				 C_TO_XEN_STRING("each element of env vector must be a vector (of envelopes)")));
+	    {
+	      if (infile) free(infile);
+	      if (outfile) free(outfile);
+	      XEN_ERROR(BAD_TYPE,
+			XEN_LIST_3(C_TO_XEN_STRING(S_mus_mix),
+				   datum,
+				   C_TO_XEN_STRING("each element of env vector must be a vector (of envelopes)")));
+	    }
 	}
       out_len = XEN_VECTOR_LENGTH(XEN_VECTOR_REF(envs, 0));
       if (in_len < in_chans) in_size = in_chans; else in_size = in_len;

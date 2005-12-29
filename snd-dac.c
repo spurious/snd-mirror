@@ -645,8 +645,23 @@ static void stop_playing_with_toggle(dac_info *dp, dac_toggle_t toggle, with_hoo
     }
   if ((sp) && (IS_PLAYER(sp))) 
     {
-      if (dp->sp == sp) dp->sp = NULL; /* free_player frees it */
-      free_player(sp); 
+      int k;
+      bool free_ok = true;
+      dp->sp = NULL; /* free_player frees it */
+      for (k = dp->slot + 1; k < dac_max_sounds; k++)
+	{
+	  dac_info *ndp;
+	  ndp = play_list[k];
+	  if ((ndp) &&
+	      (ndp->sp) &&
+	      (ndp->sp == sp))
+	    {
+	      free_ok = false;
+	      break;
+	    }
+	}
+      if (free_ok) 
+	free_player(sp); 
       sp = NULL;
     }
   free_dac_info(dp, reason); /* this will call the stop-function, if any */
@@ -2452,9 +2467,6 @@ snd_info *player(int index)
 
 static void free_player(snd_info *sp)
 {
-#if DEBUGGING
-  if (!(IS_PLAYER(sp))) {fprintf(stderr, "free %d as a player?", sp->index);}
-#endif
   if (players)
     {
       players[PLAYER(sp)] = NULL;

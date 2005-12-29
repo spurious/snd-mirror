@@ -4,8 +4,7 @@
 /* preferences dialog; layout design taken from webmail
  */
 
-/* TODO: keybinding sets (to mimic other editors)
-   SOMEDAY: completions and sscanf->string_to_* for better checks (xmnmessage?)
+/* SOMEDAY: completions and sscanf->string_to_* for better checks (xmnmessage?)
    SOMEDAY: gtk side of icon box (are there others?)
    TODO: ruby extensions.rb side of set_global_sync
 
