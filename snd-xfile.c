@@ -14,8 +14,6 @@
 
 
 /* PERHAPS: if user changes raw file with dialog up -- adding header for example, should we automatically open it? or reflect in panel?
- * PERHAPS: (alert_new_file): handle all directory update decisions through FAM (region/select/file/edits)
- * TODO: various file/directory lists: tie into fam/gamin -- add xen call?
  * TODO: what if running src, uses its check-event to open raw data -- where is control?
  *          -> src is interrupted apparently and file open completes
  *       or similarly, stops at "ok", starts src, clicks ok?
@@ -103,68 +101,59 @@ typedef struct file_pattern_info {
   bool in_just_sounds_update;
   Widget dialog, just_sounds_button;
   XmSearchProc default_search_proc;
-  char *save_dir,*last_dir;
+  char *save_dir, *last_dir;
   dir *sound_files, *current_files;
   char *last_pattern, *full_pathname;
   fam_info *directory_watcher;
 } file_pattern_info;
 
 #if HAVE_FAM
-# if 0
 static void watch_current_directory_contents(struct fam_info *fp, FAMEvent *fe)
 {
-  /* if file deleted, and dialog is active, remove from file list (if it's in it),
-   *         added, add to list
-   * if dialog inactive, set "force re-read" flag, and notice it when remanaged: File:*, dialog starters like open-file-dialog
-   */
-
-  /* if file is deleted, respond in some debonair manner */
-  fprintf(stderr,"%s: %s\n", fam_event_name(fe->code), fe->filename);
-
   switch (fe->code)
     {
-    case FAMChanged:
     case FAMDeleted:
     case FAMCreated:
     case FAMMoved:
+      if (just_sounds(ss))
+	{
+	  if (sound_file_p(fe->filename))
+	    alert_new_file();
+	}
+      else alert_new_file();
       break;
-
     default:
       /* ignore the rest */
       break;
     }
-  
 }
 #endif
 
 static void default_file_search(Widget dialog, XmFileSelectionBoxCallbackStruct *info)
 {
-#if 0
+#if HAVE_FAM
   char *our_dir;
 #endif
   file_pattern_info *fp;
   ASSERT_WIDGET_TYPE(XmIsFileSelectionBox(dialog), dialog);
   XtVaGetValues(dialog, XmNuserData, &fp, NULL);
   (*(fp->default_search_proc))(dialog, info);
-
-#if 0
+#if HAVE_FAM
   our_dir = (char *)XmStringUnparse(info->dir, NULL, XmCHARSET_TEXT, XmCHARSET_TEXT, NULL, 0, XmOUTPUT_ALL);
-  fprintf(stderr,"search %s (%s)\n", our_dir, fp->last_dir);
   /* if it's not the same as fp->last_dir, we need to unmonitor last_dir and monitor this one */
-  if (strcmp(our_dir, fp->last_dir) != 0)
+  if ((fp->last_dir == NULL) ||
+      (strcmp(our_dir, fp->last_dir) != 0))
     {
       if (fp->directory_watcher)
 	fam_unmonitor_file(fp->last_dir, fp->directory_watcher); /* filename normally ignored */
       fp->directory_watcher = fam_monitor_directory(our_dir, (void *)fp, watch_current_directory_contents);
-      fprintf(stderr,"monitoring %s\n", our_dir);
+      if (fp->last_dir) FREE(fp->last_dir);
+      fp->last_dir = copy_string(our_dir);
+      fp->reread_directory = false;
     }
-  /* fp->last_dir = copy_string(our_dir); */
-  /* last_dir currently refers to the saved just_sounds list */
-
   XtFree(our_dir);
 #endif
 }
-#endif
 
 static int string_compare(const void *ss1, const void *ss2)
 {
@@ -622,6 +611,14 @@ static void unfocus_filename_text_callback(Widget w, XtPointer context, XtPointe
   XtRemoveCallback(w, XmNvalueChangedCallback, watch_filename_change, context);
 }
 
+static void update_file_list(Widget w, XtPointer context, XtPointer info) 
+{
+  file_dialog_info *fd = (file_dialog_info *)context;
+  fd->fp->reread_directory = true;
+  force_directory_reread(fd->dialog);
+  fd->fp->reread_directory = false;
+}
+
 static file_dialog_info *make_file_dialog(bool read_only, char *title, char *select_title, 
 					  XtCallbackProc file_ok_proc, XtCallbackProc file_help_proc)
 {
@@ -726,15 +723,23 @@ static file_dialog_info *make_file_dialog(bool read_only, char *title, char *sel
       XtVaSetValues(fd->dp->play_button, XmNselectColor, ss->sgx->pushed_button_color, NULL);
     }
   XtVaGetValues(fd->dialog, XmNfileSearchProc, &(fd->fp->default_search_proc), NULL);
+
 #if HAVE_FAM
-  /* save default search proc, then add a wrapper for it */
   XtVaSetValues(fd->dialog, XmNfileSearchProc, default_file_search, NULL);
-  /* XmNdirectory is the initial directory -- need to add a monitor for it */
+  {
+    char *our_dir;
+    XmString cur_dir;
+    XtVaGetValues(fd->dialog, XmNdirectory, &cur_dir, NULL);
+    our_dir = (char *)XmStringUnparse(cur_dir, NULL, XmCHARSET_TEXT, XmCHARSET_TEXT, NULL, 0, XmOUTPUT_ALL);
+    fd->fp->directory_watcher = fam_monitor_directory(our_dir, (void *)(fd->fp), watch_current_directory_contents);
+    /* don't set last_dir yet */
+  }
 #endif
 
   XtAddCallback(fd->dialog, XmNokCallback, file_ok_proc, (XtPointer)fd);
   XtAddCallback(fd->dialog, XmNcancelCallback, file_cancel_callback, (XtPointer)(fd->dp));
   XtAddCallback(fd->dialog, XmNhelpCallback, file_help_proc, NULL);
+  XtAddCallback(fd->dialog, XmNapplyCallback, update_file_list, (XtPointer)fd);
   XtAddCallback(XmFileSelectionBoxGetChild(fd->dialog, XmDIALOG_LIST),
 		XmNbrowseSelectionCallback, file_dialog_select_callback, (XtPointer)fd);
 
@@ -941,11 +946,11 @@ widget_t make_open_file_dialog(bool read_only, bool managed)
 	  XmStringFree(s2);
 	  odat->file_dialog_read_only = read_only;
 	}
-    }
-  if (odat->fp->reread_directory) 
-    {
-      force_directory_reread(odat->dialog);
-      odat->fp->reread_directory = false;
+      if (odat->fp->reread_directory) 
+	{
+	  force_directory_reread(odat->dialog);
+	  odat->fp->reread_directory = false;
+	}
     }
   if ((managed) && (!(XtIsManaged(odat->dialog))))
     XtManageChild(odat->dialog);
@@ -1042,6 +1047,14 @@ widget_t make_mix_file_dialog(bool managed)
 	}
       mdat->open_file_watcher_loc = add_ss_watcher(SS_FILE_OPEN_WATCHER, file_open_file_watcher, (void *)mdat);
     }
+  else
+    {
+      if (mdat->fp->reread_directory) 
+	{
+	  force_directory_reread(mdat->dialog);
+	  mdat->fp->reread_directory = false;
+	}
+    }
   if ((managed) && (!XtIsManaged(mdat->dialog)))
     XtManageChild(mdat->dialog);
   return(mdat->dialog);
@@ -1127,6 +1140,14 @@ widget_t make_insert_file_dialog(bool managed)
 	}
       idat->open_file_watcher_loc = add_ss_watcher(SS_FILE_OPEN_WATCHER, file_open_file_watcher, (void *)idat);
     }
+  else
+    {
+      if (idat->fp->reread_directory) 
+	{
+	  force_directory_reread(idat->dialog);
+	  idat->fp->reread_directory = false;
+	}
+    }
   if ((managed) && (!XtIsManaged(idat->dialog)))
     XtManageChild(idat->dialog);
   return(idat->dialog);
@@ -1148,11 +1169,32 @@ void set_open_file_play_button(bool val)
 void alert_new_file(void) 
 {
   if (odat)
-    odat->fp->reread_directory = true;
+    {
+      odat->fp->reread_directory = true;
+      if (XtIsManaged(odat->dialog))
+	{
+	  force_directory_reread(odat->dialog);
+	  odat->fp->reread_directory = false;
+	}
+    }
   if (mdat)
-    mdat->fp->reread_directory = true;
+    {
+      mdat->fp->reread_directory = true;
+      if (XtIsManaged(mdat->dialog))
+	{
+	  force_directory_reread(mdat->dialog);
+	  mdat->fp->reread_directory = false;
+	}
+    }
   if (idat)
-    idat->fp->reread_directory = true;
+    {
+      idat->fp->reread_directory = true;
+      if (XtIsManaged(idat->dialog))
+	{
+	  force_directory_reread(idat->dialog);
+	  idat->fp->reread_directory = false;
+	}
+    }
 }
 
 void reflect_just_sounds(void)

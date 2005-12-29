@@ -203,11 +203,17 @@ static char *xm_version(void)
 }
 
 #if HAVE_GL
+#if (!JUST_GL)
+ void Init_libgl(void);
+#endif
 static char *gl_version(void)
 {
   XEN gl_val = XEN_FALSE;
+#if (!JUST_GL)
+  Init_libgl(); /* define the version string, if ./snd --version */
+#endif
 #if HAVE_SCHEME
-  gl_val = XEN_EVAL_C_STRING("(and (provided? 'gl) gl-version)");
+  gl_val = XEN_EVAL_C_STRING("(and (provided? 'gl) gl-version)"); /* this refers to gl.c, not the GL library */
 #endif
 #if HAVE_RUBY
   if (rb_const_defined(rb_cObject, rb_intern("Gl_Version")))
@@ -217,40 +223,78 @@ static char *gl_version(void)
     {
       char *version = NULL;
       version = (char *)CALLOC(32, sizeof(char));
-      mus_snprintf(version, 32, "\n    gl: %s", XEN_TO_C_STRING(gl_val));
+      mus_snprintf(version, 32, " (snd gl module: %s)", XEN_TO_C_STRING(gl_val));
       if (snd_itoa_ctr < snd_itoa_size) snd_itoa_strs[snd_itoa_ctr++] = version;
       return(version);
     }
   return("");
 }
 
+#if USE_GTK
+  #include <X11/Xlib.h>
+  #include <X11/Xutil.h>
+  #include <GL/gl.h>
+  #include <GL/glx.h>
+#endif
+
 static char *glx_version(void)
 {
+  #define VERSION_SIZE 128
   int major = 0, minor = 0;
   char *version;
-  if (ss->sgx == NULL) return(""); /* snd --help for example */
-  version = (char *)CALLOC(128, sizeof(char));
+  version = (char *)CALLOC(VERSION_SIZE, sizeof(char));
+  if (ss->sgx == NULL) /* snd --help for example */
+    {
+#if HAVE_X
+      /* Mesa has version.h with all the info we want at compile time, but insists on hiding it! */
+      /*   so we go to the trouble of creating a context... */
+      int glAttribs[] = {GLX_DOUBLEBUFFER, GLX_RGBA, GLX_DEPTH_SIZE, 1, None};
+      Display *dpy;
+      XVisualInfo *visInfo;
+      int scrn;
+      Window win;
+      GLXContext glCtx;
+      dpy = XOpenDisplay(NULL);
+      if (!dpy) return("");
+      scrn = DefaultScreen(dpy);
+      visInfo = glXChooseVisual(dpy, scrn, glAttribs);
+      if (!visInfo) return("");
+      glCtx = glXCreateContext(dpy, visInfo, 0, True);
+      if (!glCtx) return("");
+      win = XCreateSimpleWindow(dpy, RootWindow(dpy, scrn), 0, 0, 1, 1, 0, 0, 0);
+      glXMakeCurrent(dpy, win, glCtx);
+      mus_snprintf(version, VERSION_SIZE, " %s", glGetString(GL_VERSION));
+      return(version);
+#else
+      return("");
+#endif
+    }
+
 #if USE_MOTIF
   if (MAIN_DISPLAY(ss) != NULL)
     {
       if (ss->sgx->cx)
 	{
 	  glXMakeCurrent(MAIN_DISPLAY(ss), XtWindow(ss->sgx->mainshell), ss->sgx->cx);
-	  mus_snprintf(version, 128, " %s", glGetString(GL_VERSION));
+	  mus_snprintf(version, VERSION_SIZE, " %s", glGetString(GL_VERSION));
 	}
       else 
 	{
 	  glXQueryVersion(MAIN_DISPLAY(ss), &major, &minor);
-	  mus_snprintf(version, 128, " %d.%d", major, minor);
+	  mus_snprintf(version, VERSION_SIZE, " %d.%d", major, minor);
 	}
     }
 #else
   if (gdk_gl_query_extension() != 0)
     {
-      gdk_gl_query_version (&major, &minor);
-      mus_snprintf(version, 128, " %d.%d", major, minor);
+      const GLubyte *glstring;
+      glstring = glGetString(GL_VERSION); /* might exist, if user has run a GL spectrogram or something */
+      gdk_gl_query_version(&major, &minor);
+      mus_snprintf(version, VERSION_SIZE, " %s%sGtkGL version: %d.%d", 
+		   (glstring) ? (char *)glstring : "", (glstring) ? ", " : "",
+		   major, minor);
     }
-  else mus_snprintf(version, 128, "gtkGL not supported?");
+  else mus_snprintf(version, VERSION_SIZE, " gtkGL not supported?");
 #endif
   if (snd_itoa_ctr < snd_itoa_size) snd_itoa_strs[snd_itoa_ctr++] = version;
   return(version);
@@ -329,8 +373,8 @@ char *version_info(void)
 	  " (with x11)",
 #endif
 #if HAVE_GL
-	  gl_version(),
 	  "\n    OpenGL", glx_version(),
+	  gl_version(),
   #if USE_GTK
 	  ", gtkglext ",
     #ifdef GTKGLEXT_MAJOR_VERSION

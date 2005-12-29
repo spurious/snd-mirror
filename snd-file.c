@@ -1444,7 +1444,9 @@ static snd_info *snd_update_1(snd_info *sp, const char *ur_filename)
 
   /* no mus_sound_forget here because we may be simply re-interpreting the existing data (set! (data-format) ...) etc */
   /* this normalizes the fft/lisp/wave state so we need to reset it after reopen */
+#if (!HAVE_FAM)
   alert_new_file();
+#endif
   ss->reloading_updated_file = (old_index + 1);
   ss->open_requestor = FROM_UPDATE;
   nsp = snd_open_file(filename, read_only);
@@ -3130,8 +3132,6 @@ static void view_files_monitor_directory(view_files_info *vdat, const char *dirn
 /* what about temps coming and going -- should we just add a need-update switch for later remanage? */
 /*   remanagement only through start_view_files_dialog -- this file */
 /*   perhaps ss->making|deleting_temp_file -> ignore this fam event? */
-/* alert_new_file: edits (snd_make_file), here (snd_update_1), save-region|selection -- I guess save-as goes through snd_make_file? */
-
 
 void add_directory_to_view_files_list(view_files_info *vdat, const char *dirname)
 {

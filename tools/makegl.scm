@@ -927,8 +927,8 @@
 
 (hey "/* -------------------------------- initialization -------------------------------- */~%~%")
 (hey "static bool gl_already_inited = false;~%~%")
-(hey " void Init_libgl(void);~%")
-(hey " void Init_libgl(void)~%")
+(hey "void Init_libgl(void);~%")
+(hey "void Init_libgl(void)~%")
 (hey "{~%")
 (hey "  if (!gl_already_inited)~%")
 (hey "    {~%")

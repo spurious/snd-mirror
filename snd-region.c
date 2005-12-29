@@ -1152,9 +1152,14 @@ io_error_t save_region(int rg, const char *name, int type, int format, const cha
 	      if (err != 0)
 		snd_warning("can't close %s input!", S_save_region);
 	      err = mus_file_close(ofd);
+#if HAVE_FAM
+	      if (err != 0)
+		snd_error("%s %d: %s %s", S_save_region, rg, r->filename, snd_io_strerror());
+#else
 	      if (err == 0)
 		alert_new_file();
 	      else snd_error("%s %d: %s %s", S_save_region, rg, r->filename, snd_io_strerror());
+#endif
 	    }
 	  else snd_error("%s %d: %s %s", S_save_region, rg, r->filename, snd_io_strerror());
 	}

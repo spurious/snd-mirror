@@ -779,6 +779,7 @@ static void filter_drawer_button_press(Widget w, XtPointer context, XEvent *even
   snd_info *sp = (snd_info *)context;
   XButtonEvent *ev = (XButtonEvent *)event;
   env_editor *edp;
+  if (!(sp->filter_control_envelope)) return;
 #ifdef MUS_MAC_OSX
   press_x = ev->x;
   press_y = ev->y;

@@ -5943,8 +5943,8 @@ static void define_integers(void)
 
 static bool gl_already_inited = false;
 
- void Init_libgl(void);
- void Init_libgl(void)
+void Init_libgl(void);
+void Init_libgl(void)
 {
   if (!gl_already_inited)
     {
