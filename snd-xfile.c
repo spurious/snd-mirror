@@ -43,30 +43,12 @@ static void color_file_selection_box(Widget w)
 		    XmNforeground, ss->sgx->black, 
 		    NULL);
 
-      XtVaSetValues(XtNameToWidget(w, "Apply"),  XmNarmColor,   ss->sgx->pushed_button_color, NULL);
       XtVaSetValues(XtNameToWidget(w, "Cancel"), XmNarmColor,   ss->sgx->pushed_button_color, NULL);
       XtVaSetValues(XtNameToWidget(w, "Help"),   XmNarmColor,   ss->sgx->pushed_button_color, NULL);
       XtVaSetValues(XtNameToWidget(w, "OK"),     XmNarmColor,   ss->sgx->pushed_button_color, NULL);
-      XtVaSetValues(XtNameToWidget(w, "Apply"),  XmNbackground, ss->sgx->reset_button_color,  NULL);
       XtVaSetValues(XtNameToWidget(w, "Cancel"), XmNbackground, ss->sgx->quit_button_color,   NULL);
       XtVaSetValues(XtNameToWidget(w, "Help"),   XmNbackground, ss->sgx->help_button_color,   NULL);
       XtVaSetValues(XtNameToWidget(w, "OK"),     XmNbackground, ss->sgx->doit_button_color,   NULL);
-
-      ltmp = XtNameToWidget(w, "FilterLabel");
-      if (!ltmp) ltmp = XmFileSelectionBoxGetChild(w, XmDIALOG_FILTER_LABEL);
-      XtVaSetValues(ltmp, XmNbackground, ss->sgx->reset_button_color, NULL);
-
-      ltmp = XtNameToWidget(w, "Selection");
-      if (!ltmp) ltmp = XmFileSelectionBoxGetChild(w, XmDIALOG_SELECTION_LABEL);
-      XtVaSetValues(ltmp, XmNbackground, ss->sgx->help_button_color, NULL);
-
-      ltmp = XtNameToWidget(w, "Dir");
-      if (!ltmp) ltmp = XmFileSelectionBoxGetChild(w, XmDIALOG_DIR_LIST_LABEL);
-      XtVaSetValues(ltmp, XmNbackground, ss->sgx->doit_button_color, NULL);
-
-      ltmp = XtNameToWidget(w, "Items");
-      if (!ltmp) ltmp = XmFileSelectionBoxGetChild(w, XmDIALOG_LIST_LABEL);
-      XtVaSetValues(ltmp, XmNbackground, ss->sgx->quit_button_color, NULL);
 
       wtmp = XtNameToWidget(w, "Text");
       if (!wtmp) wtmp = XmFileSelectionBoxGetChild(w, XmDIALOG_TEXT);
@@ -174,7 +156,6 @@ static void sound_file_search(Widget dialog, XmFileSelectionBoxCallbackStruct *d
   int i;
   bool filter_callback;
   ASSERT_WIDGET_TYPE(XmIsFileSelectionBox(dialog), dialog);
-
   XtVaGetValues(dialog, XmNuserData, &fp, NULL);
   pattern = (char *)XmStringUnparse(data->pattern, NULL, XmCHARSET_TEXT, XmCHARSET_TEXT, NULL, 0, XmOUTPUT_ALL);
   our_dir = (char *)XmStringUnparse(data->dir,     NULL, XmCHARSET_TEXT, XmCHARSET_TEXT, NULL, 0, XmOUTPUT_ALL);
@@ -294,22 +275,23 @@ static void force_directory_reread(Widget dialog)
   XmFileSelectionDoSearch(dialog, dirmask);
   XmStringFree(dirmask);
   XmTextSetString(name_field, filename);
-  if (filename) XtFree(filename);
+  if (filename) 
+    {
+      XmTextSetCursorPosition(name_field, snd_strlen(filename));
+      XtFree(filename);
+    }
 }
 
 static void just_sounds_callback(Widget w, XtPointer context, XtPointer info) 
 {
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info;
   file_pattern_info *fp = (file_pattern_info *)context;
-  XmString lab;
   ASSERT_WIDGET_TYPE(XmIsToggleButton(w), w);
   ASSERT_WIDGET_TYPE(XmIsFileSelectionBox(fp->dialog), fp->dialog);
-  lab = XmStringCreate((char *)((cb->set) ? _("Sound Files") : _("Files")), XmFONTLIST_DEFAULT_TAG);
   if (cb->set)
     {
       XtVaSetValues(fp->dialog, 
 		    XmNfileSearchProc, sound_file_search,
-		    XmNfileListLabelString, lab,
 		    NULL);
     }
   else XtVaSetValues(fp->dialog, 
@@ -318,9 +300,7 @@ static void just_sounds_callback(Widget w, XtPointer context, XtPointer info)
 #else
 		     XmNfileSearchProc, fp->default_search_proc,
 #endif
-		     XmNfileListLabelString, lab,
 		     NULL);
-  XmStringFree(lab);
   fp->resort_file_list = true;
   fp->in_just_sounds_update = true;
   force_directory_reread(fp->dialog);
@@ -401,6 +381,20 @@ static void add_play_and_just_sounds_buttons(Widget dialog, Widget parent, file_
 }
 
 
+
+static void file_change_directory_callback(Widget w, XtPointer context, XtPointer info) 
+{
+  Widget ftmp;
+  file_pattern_info *fp = (file_pattern_info *)context;
+  ftmp = XtNameToWidget(fp->dialog, "FilterText");
+  if (!ftmp) ftmp = XmFileSelectionBoxGetChild(fp->dialog, XmDIALOG_FILTER_TEXT);
+  if (ftmp)
+    {
+      fp->reread_directory = true;
+      force_directory_reread(fp->dialog);
+      fp->reread_directory = false;
+    }
+}
 
 /* -------- File Open/View/Mix Dialogs -------- */
 
@@ -611,14 +605,6 @@ static void unfocus_filename_text_callback(Widget w, XtPointer context, XtPointe
   XtRemoveCallback(w, XmNvalueChangedCallback, watch_filename_change, context);
 }
 
-static void update_file_list(Widget w, XtPointer context, XtPointer info) 
-{
-  file_dialog_info *fd = (file_dialog_info *)context;
-  fd->fp->reread_directory = true;
-  force_directory_reread(fd->dialog);
-  fd->fp->reread_directory = false;
-}
-
 static file_dialog_info *make_file_dialog(bool read_only, char *title, char *select_title, 
 					  XtCallbackProc file_ok_proc, XtCallbackProc file_help_proc)
 {
@@ -626,7 +612,7 @@ static file_dialog_info *make_file_dialog(bool read_only, char *title, char *sel
   file_dialog_info *fd;
   Arg args[20];
   int n;
-  XmString s1, s2, ok_label, filter_list_label, cancel_label, filter_button_label, just_sounds_lab = NULL;
+  XmString s1, s2, ok_label, filter_list_label, cancel_label;
   Widget wtmp = NULL, rc1, rc2;
   fd = (file_dialog_info *)CALLOC(1, sizeof(file_dialog_info));
   fd->fp = (file_pattern_info *)CALLOC(1, sizeof(file_pattern_info));
@@ -642,40 +628,29 @@ static file_dialog_info *make_file_dialog(bool read_only, char *title, char *sel
   s2 = XmStringCreate(title, XmFONTLIST_DEFAULT_TAG);
   ok_label = XmStringCreate(title, XmFONTLIST_DEFAULT_TAG);
   filter_list_label = XmStringCreate(_("files listed:"), XmFONTLIST_DEFAULT_TAG);
-  filter_button_label = XmStringCreate(_("Update"), XmFONTLIST_DEFAULT_TAG);
   cancel_label = XmStringCreate(_("Dismiss"), XmFONTLIST_DEFAULT_TAG);
 
   XtSetArg(args[n], XmNokLabelString, ok_label); n++;
   XtSetArg(args[n], XmNselectionLabelString, s1); n++;
   XtSetArg(args[n], XmNdialogTitle, s2); n++;
   XtSetArg(args[n], XmNfilterLabelString, filter_list_label); n++;
-  XtSetArg(args[n], XmNapplyLabelString, filter_button_label); n++;
+  XtSetArg(args[n], XmNfileFilterStyle, XmFILTER_HIDDEN_FILES); n++;
   XtSetArg(args[n], XmNcancelLabelString, cancel_label); n++;
   XtSetArg(args[n], XmNuserData, (XtPointer)(fd->fp)); n++;
-
-  if (just_sounds(ss))
-    {
-      just_sounds_lab = XmStringCreate(_("Sound Files"), XmFONTLIST_DEFAULT_TAG);
-      XtSetArg(args[n], XmNfileListLabelString, just_sounds_lab); n++;
-      /* don't free the label here!  Apparently Motif uses a reference counting scheme to decide when to release
-       *   an XmString's memory, but the increment for this setting doesn't take place until the widget is
-       *   created below.  If XmStringFree precedes that call, there is trouble (at least in valgrind) when
-       *   the freed string is finally accessed during XmCreateFileSelectionDialog.
-       */
-    }
 
   fd->dialog = XmCreateFileSelectionDialog(w, title, args, n);
   fd->fp->dialog = fd->dialog;
   fd->dp->dialog = fd->dialog;
 
+  XtUnmanageChild(XmFileSelectionBoxGetChild(fd->dialog, XmDIALOG_DIR_LIST_LABEL));
+  XtUnmanageChild(XmFileSelectionBoxGetChild(fd->dialog, XmDIALOG_LIST_LABEL));
+  XtUnmanageChild(XmFileSelectionBoxGetChild(fd->dialog, XmDIALOG_APPLY_BUTTON));
+
   XmStringFree(s1);
   XmStringFree(s2);
   XmStringFree(ok_label);
   XmStringFree(filter_list_label);
-  XmStringFree(filter_button_label);
   XmStringFree(cancel_label);
-  if (just_sounds(ss))
-    XmStringFree(just_sounds_lab);
 
   rc1 = XtVaCreateManagedWidget("filebuttons-rc1", 
 				xmRowColumnWidgetClass, fd->dialog,
@@ -739,9 +714,11 @@ static file_dialog_info *make_file_dialog(bool read_only, char *title, char *sel
   XtAddCallback(fd->dialog, XmNokCallback, file_ok_proc, (XtPointer)fd);
   XtAddCallback(fd->dialog, XmNcancelCallback, file_cancel_callback, (XtPointer)(fd->dp));
   XtAddCallback(fd->dialog, XmNhelpCallback, file_help_proc, NULL);
-  XtAddCallback(fd->dialog, XmNapplyCallback, update_file_list, (XtPointer)fd);
   XtAddCallback(XmFileSelectionBoxGetChild(fd->dialog, XmDIALOG_LIST),
 		XmNbrowseSelectionCallback, file_dialog_select_callback, (XtPointer)fd);
+
+  wtmp = XmFileSelectionBoxGetChild(fd->dialog, XmDIALOG_DIR_LIST);
+  if (wtmp) XtAddCallback(wtmp, XmNbrowseSelectionCallback, file_change_directory_callback, (XtPointer)(fd->fp));
 
   {
     Atom wm_delete_window;
@@ -920,8 +897,14 @@ widget_t make_open_file_dialog(bool read_only, bool managed)
     }
   if (!odat)
     {
+      XmString cancel_label;
       odat = make_file_dialog(read_only, title, select_title, file_open_ok_callback, open_file_help_callback);
       set_dialog_widget(FILE_OPEN_DIALOG, odat->dialog);
+
+      cancel_label = XmStringCreate(_("Cancel"), XmFONTLIST_DEFAULT_TAG);
+      XtVaSetValues(odat->dialog, XmNcancelLabelString, cancel_label, NULL);
+      XmStringFree(cancel_label);
+
       if (just_sounds(ss)) 
 	{
 	  XtVaSetValues(odat->dialog, 
@@ -2417,7 +2400,7 @@ static void make_save_as_dialog(save_as_dialog_info *sd, char *sound_name, int h
       Arg args[32];
       int n;
       XmString xmstr1, xmstr2, s1;
-      XmString filter_list_label, cancel_label, filter_button_label;
+      XmString filter_list_label, cancel_label;
       Widget extractB, mainform;
 
       n = 0;
@@ -2437,10 +2420,7 @@ static void make_save_as_dialog(save_as_dialog_info *sd, char *sound_name, int h
       filter_list_label = XmStringCreate(_("files listed:"), XmFONTLIST_DEFAULT_TAG);
       XtSetArg(args[n], XmNfilterLabelString, filter_list_label); n++;
 
-      filter_button_label = XmStringCreate(_("Update"), XmFONTLIST_DEFAULT_TAG);
-      XtSetArg(args[n], XmNapplyLabelString, filter_button_label); n++;
-
-      cancel_label = XmStringCreate(_("Dismiss"), XmFONTLIST_DEFAULT_TAG);
+      cancel_label = XmStringCreate(_("Cancel"), XmFONTLIST_DEFAULT_TAG);
       XtSetArg(args[n], XmNcancelLabelString, cancel_label); n++;
 
       sd->fp = (file_pattern_info *)CALLOC(1, sizeof(file_pattern_info));
@@ -2454,15 +2434,43 @@ static void make_save_as_dialog(save_as_dialog_info *sd, char *sound_name, int h
       XtSetArg(args[n], XmNallowOverlap, false); n++;
       XtSetArg(args[n], XmNheight, 600); n++;
       XtSetArg(args[n], XmNuserData, (XtPointer)sd->fp); n++;
+      XtSetArg(args[n], XmNfileFilterStyle, XmFILTER_HIDDEN_FILES); n++;
       sd->dialog = XmCreateFileSelectionDialog(MAIN_SHELL(ss), "save-as", args, n);
+      sd->fp->dialog = sd->dialog;
+      sd->dp->dialog = sd->dialog;
+
       FREE(file_string);
+
+      XtUnmanageChild(XmFileSelectionBoxGetChild(sd->dialog, XmDIALOG_DIR_LIST_LABEL));
+      XtUnmanageChild(XmFileSelectionBoxGetChild(sd->dialog, XmDIALOG_LIST_LABEL));
+      XtUnmanageChild(XmFileSelectionBoxGetChild(sd->dialog, XmDIALOG_APPLY_BUTTON));
 
       XmStringFree(s1);
       XmStringFree(xmstr1);
       XmStringFree(xmstr2);
       XmStringFree(filter_list_label);
-      XmStringFree(filter_button_label);
       XmStringFree(cancel_label);
+
+      XtVaGetValues(sd->dialog, XmNfileSearchProc, &(sd->fp->default_search_proc), NULL);
+#if HAVE_FAM
+      XtVaSetValues(sd->dialog, XmNfileSearchProc, default_file_search, NULL);
+      {
+	char *our_dir;
+	XmString cur_dir;
+	XtVaGetValues(sd->dialog, XmNdirectory, &cur_dir, NULL);
+	our_dir = (char *)XmStringUnparse(cur_dir, NULL, XmCHARSET_TEXT, XmCHARSET_TEXT, NULL, 0, XmOUTPUT_ALL);
+	sd->fp->directory_watcher = fam_monitor_directory(our_dir, (void *)(sd->fp), watch_current_directory_contents);
+	/* don't set last_dir yet */
+      }
+#endif
+      if (just_sounds(ss)) 
+	{
+	  XtVaSetValues(sd->dialog, 
+			XmNfileSearchProc, sound_file_search, 
+			NULL);
+	  sd->fp->resort_file_list = true;
+	  force_directory_reread(sd->dialog);
+	}
 
       sd->filename_widget = XtNameToWidget(sd->dialog, "Text");
       if (!(sd->filename_widget)) sd->filename_widget = XmFileSelectionBoxGetChild(sd->dialog, XmDIALOG_TEXT);
@@ -2470,9 +2478,6 @@ static void make_save_as_dialog(save_as_dialog_info *sd, char *sound_name, int h
       XtAddCallback(sd->dialog, XmNhelpCallback, save_as_help_callback, (XtPointer)sd);
       XtAddCallback(sd->dialog, XmNcancelCallback, save_as_cancel_callback, (XtPointer)sd);
       XtAddCallback(sd->dialog, XmNokCallback, save_as_ok_callback, (XtPointer)sd);
-
-      sd->fp->dialog = sd->dialog;
-      sd->dp->dialog = sd->dialog;
 
       mainform = XtVaCreateManagedWidget("filebuttons-mainform", xmFormWidgetClass, sd->dialog, NULL);
       add_play_and_just_sounds_buttons(sd->dialog, mainform, sd->fp, sd->dp);
@@ -2505,6 +2510,12 @@ static void make_save_as_dialog(save_as_dialog_info *sd, char *sound_name, int h
       XtAddCallback(XmFileSelectionBoxGetChild(sd->dialog, XmDIALOG_LIST),
 		    XmNbrowseSelectionCallback, save_as_dialog_select_callback, (XtPointer)(sd->dp));
       XtAddCallback(sd->filename_widget, XmNvalueChangedCallback, save_as_file_exists_check, (XtPointer)(sd->dialog));
+
+      {
+	Widget wtmp;
+	wtmp = XmFileSelectionBoxGetChild(sd->dialog, XmDIALOG_DIR_LIST);
+	if (wtmp) XtAddCallback(wtmp, XmNbrowseSelectionCallback, file_change_directory_callback, (XtPointer)(sd->fp));
+      }
 
       /* this must come after the file data panel so that Motif puts it in the button box, not the main work area */
       if (sd->type != REGION_SAVE_AS)

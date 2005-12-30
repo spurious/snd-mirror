@@ -179,7 +179,23 @@ Box: (install-searcher (lambda (file) (= (mus-sound-srate file) 44100)))"
 ;;; here's a fancier version that gets rid of the useless directory list,
 ;;;   and shows multi-channel files in color
 
-(define install-searcher-with-colors
+;;; TODO: install-searcher-wit-colors no longer works
+(define (install-searcher-with-colors proc)
+
+  (define match-sound-files
+    (lambda args
+      (let* ((func (car args))
+	     (matches '()))
+	(for-each
+	 (lambda (file)
+	   (if (func file)
+	       (set! matches (cons file matches))))
+	 (sound-files-in-directory (if (null? (cdr args)) "." (cadr args))))
+	matches)))
+
+  (define (XmString->string str)
+    (cadr (XmStringGetLtoR str XmFONTLIST_DEFAULT_TAG)))
+
   (let* ((dialog (open-file-dialog #f))
 	 ;; (XtGetValues dialog (XmNfileSearchProc 0)) to get the default
 	 (shell (cadr (main-widgets)))
@@ -207,50 +223,38 @@ Box: (install-searcher (lambda (file) (= (mus-sound-srate file) 44100)))"
 			     tags pixels)
 			(length tags)
 			XmMERGE_NEW)))
-    (lambda (proc)
-      (define match-sound-files
-	(lambda args
-	  (let* ((func (car args))
-		 (matches '()))
-	    (for-each
-	     (lambda (file)
-	       (if (func file)
-		   (set! matches (cons file matches))))
-	     (sound-files-in-directory (if (null? (cdr args)) "." (cadr args))))
-	    matches)))
-      (define (XmString->string str)
-	(cadr (XmStringGetLtoR str XmFONTLIST_DEFAULT_TAG)))
-      (XtSetValues dialog
-		   (list XmNfileSearchProc
-			 (lambda (widget info)
-			   (let* ((dir (XmString->string (.dir info)))  ; may need filter text here?
-				  (files (sort (map 
-						(lambda (n) 
-						  (string-append dir n)) 
-						(match-sound-files proc dir))
-					       string<?))               ; alphabetical order
-				  (fileTable (map
-					      (lambda (n)
-						(XmStringGenerate 
-						 n #f XmCHARSET_TEXT 
-						 (if (= (mus-sound-chans n) 1)
-						     "one"
-						     (if (= (mus-sound-chans n) 2)
-							 "two"
-							 (if (= (mus-sound-chans n) 4)
-							     "four"
-							     "three")))))
-					      files)))
-			     (XtSetValues widget
-					  (list XmNfileListItems fileTable
-						XmNfileListItemCount (length files)
-						XmNlistUpdated #t))
-			     (for-each (lambda (n) (XmStringFree n)) fileTable)))))
-      (XtUnmanageChild (XmFileSelectionBoxGetChild dialog XmDIALOG_DIR_LIST))
-      (XtUnmanageChild (XmFileSelectionBoxGetChild dialog XmDIALOG_DIR_LIST_LABEL))
-      (XtSetValues (XmFileSelectionBoxGetChild dialog XmDIALOG_LIST)
-		   (list XmNrenderTable rendertable))
-      (XmFileSelectionDoSearch dialog #f))))
+
+    (XtSetValues dialog
+		 (list XmNfileSearchProc
+		       (lambda (widget info)
+			 (let* ((dir (XmString->string (.dir info)))  ; may need filter text here?
+				(files (sort (map 
+					      (lambda (n) 
+						(string-append dir n)) 
+					      (match-sound-files proc dir))
+					     string<?))               ; alphabetical order
+				(fileTable (map
+					    (lambda (n)
+					      (XmStringGenerate 
+					       n #f XmCHARSET_TEXT 
+					       (if (= (mus-sound-chans n) 1)
+						   "one"
+						   (if (= (mus-sound-chans n) 2)
+						       "two"
+						       (if (= (mus-sound-chans n) 4)
+							   "four"
+							   "three")))))
+					    files)))
+			   (XtSetValues widget
+					(list XmNfileListItems fileTable
+					      XmNfileListItemCount (length files)
+					      XmNlistUpdated #t))
+			   (for-each (lambda (n) (XmStringFree n)) fileTable)))))
+    (XtUnmanageChild (XmFileSelectionBoxGetChild dialog XmDIALOG_DIR_LIST))
+    (XtUnmanageChild (XmFileSelectionBoxGetChild dialog XmDIALOG_DIR_LIST_LABEL))
+    (XtSetValues (XmFileSelectionBoxGetChild dialog XmDIALOG_LIST)
+		 (list XmNrenderTable rendertable))
+    (XmFileSelectionDoSearch dialog #f)))
     
 ;(install-searcher-with-colors (lambda (file) #t))
 
@@ -259,37 +263,35 @@ Box: (install-searcher (lambda (file) (= (mus-sound-srate file) 44100)))"
 ;;;
 ;;; change File:Open (or File:Mix) so that clicking "ok" does not "unmanage" the dialog
 
-(define keep-file-dialog-open-upon-ok
-  (let* ((dialog (open-file-dialog #f)))
-    (lambda ()
-      (XtRemoveAllCallbacks dialog XmNokCallback) ; remove built-in version
-      (XtAddCallback dialog XmNokCallback
-		     (lambda (widget context info)
-		       ;; same as built-in "ok" callback, but does not "unmanage" the dialog
-		       (let ((filename (cadr (XmStringGetLtoR (.value info) XmFONTLIST_DEFAULT_TAG))))
-			 (if (file-exists? filename)
-			     (if (not (file-is-directory? filename))
-				 (let ((snd (open-sound filename)))
-				   (select-channel 0))
-				 (snd-error (format #f "~S is a directory" filename)))
-			     (snd-error (format #f "no such file: ~A" filename))))))
-      'ok))) ; prettier in listener than printing out a callback procedure
+(define (keep-file-dialog-open-upon-ok)
+  (let ((dialog (open-file-dialog #f)))
+    (XtRemoveAllCallbacks dialog XmNokCallback) ; remove built-in version
+    (XtAddCallback dialog XmNokCallback
+		   (lambda (widget context info)
+		     ;; same as built-in "ok" callback, but does not "unmanage" the dialog
+		     (let ((filename (cadr (XmStringGetLtoR (.value info) XmFONTLIST_DEFAULT_TAG))))
+		       (if (file-exists? filename)
+			   (if (not (file-is-directory? filename))
+			       (let ((snd (open-sound filename)))
+				 (select-channel 0))
+			       (snd-error (format #f "~S is a directory" filename)))
+			   (snd-error (format #f "no such file: ~A" filename))))))
+    'ok)) ; prettier in listener than printing out a callback procedure
 
-(define use-pan-mix-in-mix-menu
+(define (use-pan-mix-in-mix-menu)
   ;; use pan-mix rather than mix in the File:Mix menu
-  (let* ((dialog (mix-file-dialog #f)))
-    (lambda ()
-      (XtRemoveAllCallbacks dialog XmNokCallback) ; remove built-in version
-      (XtAddCallback dialog XmNokCallback
-		     (lambda (widget context info)
-		       ;; same as built-in "ok" callback, but uses pan-mix, not mix
-		       (let ((filename (cadr (XmStringGetLtoR (.value info) XmFONTLIST_DEFAULT_TAG))))
-			 (if (file-exists? filename)
-			     (if (not (file-is-directory? filename))
-				 (pan-mix filename (or (cursor) 0))
-				 (snd-error (format #f "~S is a directory" filename)))
-			     (snd-error (format #f "no such file: ~A" filename))))))
-      'ok)))
+  (let ((dialog (mix-file-dialog #f)))
+    (XtRemoveAllCallbacks dialog XmNokCallback) ; remove built-in version
+    (XtAddCallback dialog XmNokCallback
+		   (lambda (widget context info)
+		     ;; same as built-in "ok" callback, but uses pan-mix, not mix
+		     (let ((filename (cadr (XmStringGetLtoR (.value info) XmFONTLIST_DEFAULT_TAG))))
+		       (if (file-exists? filename)
+			   (if (not (file-is-directory? filename))
+			       (pan-mix filename (or (cursor) 0))
+			       (snd-error (format #f "~S is a directory" filename)))
+			   (snd-error (format #f "no such file: ~A" filename))))))
+    'ok))
 
 
 

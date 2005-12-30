@@ -1010,7 +1010,9 @@ pulse train that would then be passed through formant filters (see pulse-voice i
 see also legendre-summation and friends in dsp.scm. "Trigonometric Delights" by Eli Maor has
 a derivation of a sum-of-sines formula and a neat
 geometric explanation.  For a derivation of the sum-of-cosines formula, see "Fourier
-Analysis" by Stein and Shakarchi.
+Analysis" by Stein and Shakarchi, or multiply the left side (the cosines) by sin(x/2), use the trig
+formula 2sin(a)cos(b) = sin(b+a)-sin(b-a), and notice that all the terms in the series
+cancel except the last.
 </p>
 <table border align=left hspace=40 cellpadding=4>
 <tr><td colspan=2><center>sum-of-cosines methods</center></td></tr>

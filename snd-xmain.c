@@ -38,11 +38,11 @@
 #define DOIT_BUTTON_COLOR    "palegreen2"
 #define DOIT_AGAIN_BUTTON_COLOR "darkolivegreen1"
 #endif
-#define HELP_BUTTON_COLOR    "lightsteelblue2"
-#define QUIT_BUTTON_COLOR    "lightsalmon1"
-#define RESET_BUTTON_COLOR   "lightsalmon2"
-#define DOIT_BUTTON_COLOR    "wheat"
-#define DOIT_AGAIN_BUTTON_COLOR "burlywood"
+#define HELP_BUTTON_COLOR    "ivory1"
+#define QUIT_BUTTON_COLOR    "ivory1"
+#define RESET_BUTTON_COLOR   "ivory1"
+#define DOIT_BUTTON_COLOR    "ivory1"
+#define DOIT_AGAIN_BUTTON_COLOR "ivory1"
 
 #define CHANNEL_SASH_INDENT -10
 #define CHANNEL_SASH_SIZE 0
