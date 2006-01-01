@@ -237,6 +237,7 @@ void map_over_children (Widget w, void (*func)(Widget w, void *ptr), void *userp
 void clear_window(axis_context *ax);
 void raise_dialog(Widget w);
 void set_main_color_of_widget (Widget w, void *userptr);
+char *get_label(Widget label);
 void set_label(Widget label, const char *str);
 void set_title(const char *title);
 void goto_window(Widget text);

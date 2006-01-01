@@ -545,13 +545,24 @@ If the variable <a href="extsnd.html#autoupdate">auto-update</a> is #t (the defa
 automatically updates any such file. 
 </p>
 
-<p>In the file selection dialog, there's a button marked
-'Sound files only' (<a href="extsnd.html#justsounds">just-sounds</a>).  If it is set, 
-the file dialog lists only those files whose extensions are on the sound-file-extension list.
+<p>
+
+The file selection dialog is slightly different from the Motif or Gtk default.  If you single click
+in the directory list, that directory is immediately opened and displayed.  Also there are
+a variety of context-sensitive popup menus to handle special chores such as setting the
+current sort routine (right click over the file list), jump to any higher level directory (right click
+in the directory list), choose a recently opened file (click in the filename text widget), or
+return to a previous list of files (click in the filter text widget).
+The 'sound files only' button filters out all non-sound files from the files list, using the
+extension; you can add to the list of sound file extensions via <a href="extsnd.html#addsoundfileextension">add-sound-file-extension</a>.
 The built-in extensions are
-"snd", "wav", "aiff", "aif", "au", "aifc", "voc", and "wve". To add
-an extension to this list, use <a href="extsnd.html#addsoundfileextension">add-sound-file-extension</a>.
-In the Motif version of Snd, you can also apply an arbitrary function to each such filename, making the 
+"snd", "wav", "aiff", "aif", "au", "aifc", "voc", and "wve". 
+When a sound file is selected, information about it is posted under the lists, and a 'play'
+button is displayed.  If you have libgamin (fam), it is tied into the file list, so what you
+see should always be up-to-date. The name field has TAB completion, of course, and also
+watches as you type a new name, reflecting that partial name by moving the file list to
+display possible matches.
+You can also apply an arbitrary function to each such filename, making the 
 filter as fancy as you like (see <a href="extsnd.html#justsoundshook">just-sounds-hook</a>).
 </p>
 <!-- INDEX formats:Headers and Data formats -->

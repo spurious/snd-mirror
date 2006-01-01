@@ -1384,11 +1384,12 @@ void open_file_dialog_help(void)
 {
 #if USE_MOTIF
   snd_help_with_xrefs("Open File",
-"The file selection dialog is slightly different from the built-in one.  If you single click \
+"The file selection dialog is slightly different from the Motif default.  If you single click \
 in the directory list, that directory is immediately opened and displayed.  Also there are \
 a variety of context-sensitive popup menus to handle special chores such as setting the \
-current sort routine (middle click over the file list), jump to any higher level directory (middle click \
-in the directory list), or choose a recently opened file (click in the filename text widget). \
+current sort routine (right click over the file list), jump to any higher level directory (right click \
+in the directory list), or choose a recently opened file (click in the filename text widget), or \
+return to a previous list of files (click in the filter text widget). \
 The 'sound files only' button filters out all non-sound files from the files list (using the \
 extension -- you can add to the list of sound file extensions via " S_add_sound_file_extension ". \
 When a sound file is selected, information about it is posted under the lists, and a 'play' \

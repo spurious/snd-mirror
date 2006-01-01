@@ -247,6 +247,17 @@ void set_label(Widget label, const char *str)
   XmStringFree(s1);
 }
 
+char *get_label(Widget label)
+{
+  char *text;
+  XmString str = NULL;
+  XtVaGetValues(label, XmNlabelString, &str, NULL);
+  if (XmStringEmpty(str)) return(NULL);
+  text = (char *)XmStringUnparse(str, NULL, XmCHARSET_TEXT, XmCHARSET_TEXT, NULL, 0, XmOUTPUT_ALL);
+  XmStringFree(str);
+  return(text);
+}
+
 void set_button_label(Widget label, const char *str) {set_label(label, str);}
 
 void set_title(const char *title)

@@ -48,9 +48,12 @@ static void color_file_selection_box(Widget w)
       XtVaSetValues(XmFileSelectionBoxGetChild(w, XmDIALOG_CANCEL_BUTTON), XmNarmColor,   ss->sgx->pushed_button_color, NULL);
       XtVaSetValues(XmFileSelectionBoxGetChild(w, XmDIALOG_HELP_BUTTON),   XmNarmColor,   ss->sgx->pushed_button_color, NULL);
       XtVaSetValues(XmFileSelectionBoxGetChild(w, XmDIALOG_OK_BUTTON),     XmNarmColor,   ss->sgx->pushed_button_color, NULL);
+      XtVaSetValues(XmFileSelectionBoxGetChild(w, XmDIALOG_APPLY_BUTTON),  XmNarmColor,   ss->sgx->pushed_button_color, NULL);
       XtVaSetValues(XmFileSelectionBoxGetChild(w, XmDIALOG_CANCEL_BUTTON), XmNbackground, ss->sgx->quit_button_color,   NULL);
       XtVaSetValues(XmFileSelectionBoxGetChild(w, XmDIALOG_HELP_BUTTON),   XmNbackground, ss->sgx->help_button_color,   NULL);
       XtVaSetValues(XmFileSelectionBoxGetChild(w, XmDIALOG_OK_BUTTON),     XmNbackground, ss->sgx->doit_button_color,   NULL);
+      XtVaSetValues(XmFileSelectionBoxGetChild(w, XmDIALOG_APPLY_BUTTON),  XmNbackground, ss->sgx->doit_button_color,   NULL);
+      /* "Filter" button strikes me as useless, but it needs to exist or <cr> in the filter text widget activates "Open" */
 
       wtmp = XmFileSelectionBoxGetChild(w, XmDIALOG_TEXT);
       if (wtmp)
@@ -447,15 +450,19 @@ typedef struct file_dialog_info {
   fam_info *info_filename_watcher;     /* watch for change in selected file and repost info */
   char *info_filename;
   Widget file_text_popup, file_list_popup, file_dir_popup, file_filter_popup, file_info_popup;
+  Widget file_text_popup_label, file_filter_popup_label, file_dir_popup_label, file_list_popup_label, file_info_popup_label;
+
   /* text:    history of previous choices,
    * list:    sort and filter choices
-   * dir:     higher level dir choices, perhaps previous also
+   * dir:     higher level dir choices
    * filter:  history of previous choices
    * info:    play, sort, filter
    */
+
   char **file_text_names, **file_filter_names;
   Widget *file_text_items, *file_filter_items, *file_dir_items, *file_info_items;
 } file_dialog_info;
+
 
 static void open_file_help_callback (Widget w, XtPointer context, XtPointer info) 
 {
@@ -645,18 +652,20 @@ static void unfocus_filename_text_callback(Widget w, XtPointer context, XtPointe
   XtRemoveCallback(w, XmNvalueChangedCallback, watch_filename_change, context);
 }
 
+
+/* ---------------- popup menus ---------------- */
+
+/* file popup */
 static void file_text_item_activate_callback(Widget w, XtPointer context, XtPointer info)
 {
   file_dialog_info *fd = (file_dialog_info *)context;
-  XmString str = NULL;
   char *filename;
-  XtVaGetValues(w, XmNlabelString, &str, NULL);
-  if (XmStringEmpty(str)) return;
-  filename = (char *)XmStringUnparse(str, NULL, XmCHARSET_TEXT, XmCHARSET_TEXT, NULL, 0, XmOUTPUT_ALL);
-  XmStringFree(str);
+  filename = get_label(w);
   XmTextFieldSetString(XmFileSelectionBoxGetChild(fd->dialog, XmDIALOG_TEXT), filename);
   if (filename) XtFree(filename);
 }
+
+#define FILE_TEXT_POPUP_LABEL "previous files"
 
 static void file_text_popup_callback(Widget w, XtPointer context, XtPointer info)
 {
@@ -667,14 +676,9 @@ static void file_text_popup_callback(Widget w, XtPointer context, XtPointer info
   if (e->type == ButtonPress)
     {
       /* position menu to match current text widget, show previous choices, if any else "[no previous choices]" */
+      /*     XmMenuPosition(popup_menu, event) happens automatically */
       /* should max len be user-var? history-length? (replace minibuffer-history-length?) */
-      /* add to list if opened and not in list
-       *  remove from list if too many entries, or file deleted
-       *  dont display in menu if already open or same as text widget value
-       */
-      /* this happens automatically
-        XmMenuPosition(popup_menu, event);
-      */
+
       char *current_filename;
       int i, filenames_to_display = 0;
 
@@ -690,31 +694,211 @@ static void file_text_popup_callback(Widget w, XtPointer context, XtPointer info
 	      XtAddCallback(fd->file_text_items[i], XmNactivateCallback, file_text_item_activate_callback, (void *)fd);
 	    }
 	}
+
       current_filename = XmTextFieldGetString(XmFileSelectionBoxGetChild(fd->dialog, XmDIALOG_TEXT)); 
       /* w is probably ok here (assumes only text triggers this) */
+
       for (i = 0; i < FILENAME_LIST_SIZE; i++)
 	if ((fd->file_text_names[i]) &&
 	    (mus_file_probe(fd->file_text_names[i])) &&
 	    ((current_filename == NULL) || (strcmp(fd->file_text_names[i], current_filename) != 0)))
 	  {
-	    XmString str;
-	    str = XmStringCreateLocalized(fd->file_text_names[i]);
-	    XtVaSetValues(fd->file_text_items[filenames_to_display], XmNlabelString, str, NULL);
+	    set_label(fd->file_text_items[filenames_to_display], fd->file_text_names[i]);
 	    XtManageChild(fd->file_text_items[filenames_to_display]);
-	    XmStringFree(str);
 	    filenames_to_display++;
 	  }
+
       for (i = filenames_to_display; i < FILENAME_LIST_SIZE; i++)
 	if ((fd->file_text_items[i]) &&
 	    (XtIsManaged(fd->file_text_items[i])))
 	  XtUnmanageChild(fd->file_text_items[i]);
       XtFree(current_filename);
+      /*
+      if (filenames_to_display == 0)
+	set_label(fd->file_text_popup_label, "no " FILE_TEXT_POPUP_LABEL);
+      else set_label(fd->file_text_popup_label, FILE_TEXT_POPUP_LABEL);
+      */
       cb->menuToPost = fd->file_text_popup;
-
-      /* TODO: if no files, "no previous files" as label */
-      /* PERHAPS: position the menu below text field? */
     }
 }
+
+/* filter popup */
+static void file_filter_text_activate_callback(Widget w, XtPointer context, XtPointer info)
+{
+  file_dialog_info *fd = (file_dialog_info *)context;
+  char *filter;
+  filter = XmTextFieldGetString(w);
+  if (filter)
+    {
+      remember_filename(filter, fd->file_filter_names);
+      XtFree(filter);
+    }
+}
+
+static void file_filter_item_activate_callback(Widget w, XtPointer context, XtPointer info)
+{
+  file_dialog_info *fd = (file_dialog_info *)context;
+  XmPushButtonCallbackStruct *cb = (XmPushButtonCallbackStruct *)info;
+  char *filtername;
+  filtername = get_label(w);
+  XmTextFieldSetString(XmFileSelectionBoxGetChild(fd->dialog, XmDIALOG_FILTER_TEXT), filtername);
+  XtCallActionProc(XmFileSelectionBoxGetChild(fd->dialog, XmDIALOG_FILTER_TEXT), "activate", cb->event, NULL, 0);
+  if (filtername) XtFree(filtername);
+}
+
+#define FILE_FILTER_POPUP_LABEL "previous filters"
+
+static void file_filter_popup_callback(Widget w, XtPointer context, XtPointer info)
+{
+  file_dialog_info *fd = (file_dialog_info *)context;
+  XmPopupHandlerCallbackStruct *cb = (XmPopupHandlerCallbackStruct *)info;
+  XEvent *e;
+  e = cb->event;
+  if (e->type == ButtonPress)
+    {
+      char *current_filtername;
+      int i, filternames_to_display = 0;
+
+      if (fd->file_filter_items == NULL)
+	{
+	  int n = 0;
+	  Arg args[12];
+	  fd->file_filter_items = (Widget *)CALLOC(FILENAME_LIST_SIZE, sizeof(Widget));
+	  if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->lighter_blue); n++;}
+	  for (i = 0; i < FILENAME_LIST_SIZE; i++)
+	    {
+	      fd->file_filter_items[i] = XtCreateWidget("", xmPushButtonWidgetClass, fd->file_filter_popup, args, n);
+	      XtAddCallback(fd->file_filter_items[i], XmNactivateCallback, file_filter_item_activate_callback, (void *)fd);
+	    }
+	}
+
+      current_filtername = XmTextFieldGetString(XmFileSelectionBoxGetChild(fd->dialog, XmDIALOG_FILTER_TEXT)); 
+
+      for (i = 0; i < FILENAME_LIST_SIZE; i++)
+	if ((fd->file_filter_names[i]) &&
+	    ((current_filtername == NULL) || (strcmp(fd->file_filter_names[i], current_filtername) != 0)))
+	  {
+	    set_label(fd->file_filter_items[filternames_to_display], fd->file_filter_names[i]);
+	    XtManageChild(fd->file_filter_items[filternames_to_display]);
+	    filternames_to_display++;
+	  }
+
+      for (i = filternames_to_display; i < FILENAME_LIST_SIZE; i++)
+	if ((fd->file_filter_items[i]) &&
+	    (XtIsManaged(fd->file_filter_items[i])))
+	  XtUnmanageChild(fd->file_filter_items[i]);
+      XtFree(current_filtername);
+      /*
+      if (filternames_to_display == 0)
+	set_label(fd->file_filter_popup_label, "no " FILE_FILTER_POPUP_LABEL);
+      else set_label(fd->file_filter_popup_label, FILE_FILTER_POPUP_LABEL);
+      */
+      cb->menuToPost = fd->file_filter_popup;
+    }
+}
+
+/* dir list popup */
+
+static void file_dir_item_activate_callback(Widget w, XtPointer context, XtPointer info)
+{
+  file_dialog_info *fd = (file_dialog_info *)context;
+  XmPushButtonCallbackStruct *cb = (XmPushButtonCallbackStruct *)info;
+  char *name, *filter;
+  name = get_label(w);
+  filter = mus_format("%s/*", name);
+  XmTextFieldSetString(XmFileSelectionBoxGetChild(fd->dialog, XmDIALOG_FILTER_TEXT), filter);
+  XtCallActionProc(XmFileSelectionBoxGetChild(fd->dialog, XmDIALOG_FILTER_TEXT), "activate", cb->event, NULL, 0);
+  if (name) XtFree(name);
+  FREE(filter);
+}
+
+#define FILE_DIR_POPUP_LABEL "dirs"
+
+/* dir_items, but strs generated on the fly, current in filter text */
+
+static void file_dir_popup_callback(Widget w, XtPointer context, XtPointer info)
+{
+  file_dialog_info *fd = (file_dialog_info *)context;
+  XmPopupHandlerCallbackStruct *cb = (XmPopupHandlerCallbackStruct *)info;
+  XEvent *e;
+  e = cb->event;
+  if (e->type == ButtonPress)
+    {
+      char *current_filename = NULL;
+      int i, dirs_to_display = 0, len = 0;
+
+      if (fd->file_dir_items == NULL)
+	{
+	  int n = 0;
+	  Arg args[12];
+	  fd->file_dir_items = (Widget *)CALLOC(FILENAME_LIST_SIZE, sizeof(Widget));
+	  if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->lighter_blue); n++;}
+	  for (i = 0; i < FILENAME_LIST_SIZE; i++)
+	    {
+	      fd->file_dir_items[i] = XtCreateWidget("", xmPushButtonWidgetClass, fd->file_dir_popup, args, n);
+	      XtAddCallback(fd->file_dir_items[i], XmNactivateCallback, file_dir_item_activate_callback, (void *)fd);
+	    }
+	}
+
+      {
+	XmStringTable items;
+	int num_dirs;
+	XtVaGetValues(fd->dialog, XmNdirListItems, &items, XmNdirListItemCount, &num_dirs, NULL);
+	if (num_dirs > 0)
+	  current_filename = (char *)XmStringUnparse(items[0], NULL, XmCHARSET_TEXT, XmCHARSET_TEXT, NULL, 0, XmOUTPUT_ALL);
+      }
+      if (!current_filename)
+	{
+	  current_filename = XmTextFieldGetString(XmFileSelectionBoxGetChild(fd->dialog, XmDIALOG_FILTER_TEXT));
+	  if (!current_filename) 
+	    current_filename = XmTextFieldGetString(XmFileSelectionBoxGetChild(fd->dialog, XmDIALOG_TEXT));
+	}
+
+      if (current_filename)
+	{
+	  len = strlen(current_filename);
+	  for (i = 0; i < len; i++)
+	    if (current_filename[i] == '/')
+	      dirs_to_display++;
+
+	  if (dirs_to_display > FILENAME_LIST_SIZE)
+	    dirs_to_display = FILENAME_LIST_SIZE;
+
+	  if (dirs_to_display > 0)
+	    {
+	      char **dirs;
+	      int j = 1;
+	      dirs = (char **)CALLOC(dirs_to_display, sizeof(char *));
+	      dirs[0] = strdup("/");
+	      for (i = 1; i < len; i++)
+		if (current_filename[i] == '/')
+		  {
+		    dirs[j] = (char *)calloc(i + 1, sizeof(char));
+		    strncpy(dirs[j], (const char *)current_filename, i);
+		    j++;
+		  }
+
+	      for (i = 0; i < dirs_to_display; i++)
+		{
+		  set_label(fd->file_dir_items[i], dirs[i]);
+		  XtManageChild(fd->file_dir_items[i]);
+		  free(dirs[i]);
+		}
+	      FREE(dirs);
+	    }
+	}
+
+      for (i = dirs_to_display; i < FILENAME_LIST_SIZE; i++)
+	if ((fd->file_dir_items[i]) &&
+	    (XtIsManaged(fd->file_dir_items[i])))
+	  XtUnmanageChild(fd->file_dir_items[i]);
+      XtFree(current_filename);
+
+      cb->menuToPost = fd->file_dir_popup;
+    }
+}
+
+
 
 static file_dialog_info *make_file_dialog(bool read_only, char *title, char *select_title, 
 					  XtCallbackProc file_ok_proc, XtCallbackProc file_help_proc)
@@ -760,7 +944,6 @@ static file_dialog_info *make_file_dialog(bool read_only, char *title, char *sel
 
   XtUnmanageChild(XmFileSelectionBoxGetChild(fd->dialog, XmDIALOG_DIR_LIST_LABEL)); /* these are obvious */
   XtUnmanageChild(XmFileSelectionBoxGetChild(fd->dialog, XmDIALOG_LIST_LABEL));
-  XtUnmanageChild(XmFileSelectionBoxGetChild(fd->dialog, XmDIALOG_APPLY_BUTTON));   /* type <cr>!! */
 
   XmStringFree(s1);
   XmStringFree(s2);
@@ -867,18 +1050,47 @@ static file_dialog_info *make_file_dialog(bool read_only, char *title, char *sel
    * 
    */
 
-  XtAddCallback(XmFileSelectionBoxGetChild(fd->dialog, XmDIALOG_TEXT), XmNpopupHandlerCallback, file_text_popup_callback, (void *)fd);
+  /* TODO: both text and filter added to save-as */
 
   n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;}
-  XtSetArg(args[n], XmNpopupEnabled, XmPOPUP_AUTOMATIC_RECURSIVE); n++;
+  XtSetArg(args[n], XmNpopupEnabled, XmPOPUP_AUTOMATIC); n++;
 
+  /* file text */
+  /* TODO: could these be triggered via mouse locs from the main dialog? */
+  XtAddCallback(XmFileSelectionBoxGetChild(fd->dialog, XmDIALOG_TEXT), XmNpopupHandlerCallback, file_text_popup_callback, (void *)fd);
   fd->file_text_popup = XmCreatePopupMenu(XmFileSelectionBoxGetChild(fd->dialog, XmDIALOG_TEXT), "file-text-popup", args, n);
   fd->file_text_names = make_filename_list();
-  XtCreateManagedWidget("previous files", xmLabelWidgetClass, fd->file_text_popup, args, n);
+  fd->file_text_popup_label = XtCreateManagedWidget(FILE_TEXT_POPUP_LABEL, xmLabelWidgetClass, fd->file_text_popup, args, n);
   XtCreateManagedWidget("sep", xmSeparatorWidgetClass, fd->file_text_popup, args, n);
 
-  /* file_list_popup, file_dir_popup, file_filter_popup, file_info_popup */
+  /* filter text */
+  XtAddCallback(XmFileSelectionBoxGetChild(fd->dialog, XmDIALOG_FILTER_TEXT), XmNpopupHandlerCallback, file_filter_popup_callback, (void *)fd);
+  fd->file_filter_popup = XmCreatePopupMenu(XmFileSelectionBoxGetChild(fd->dialog, XmDIALOG_FILTER_TEXT), "file-filter-popup", args, n);
+  fd->file_filter_names = make_filename_list();
+  fd->file_filter_popup_label = XtCreateManagedWidget(FILE_FILTER_POPUP_LABEL, xmLabelWidgetClass, fd->file_filter_popup, args, n);
+  XtCreateManagedWidget("sep", xmSeparatorWidgetClass, fd->file_filter_popup, args, n);
+  {
+    char *startup_filter;
+    startup_filter = XmTextFieldGetString(XmFileSelectionBoxGetChild(fd->dialog, XmDIALOG_FILTER_TEXT));
+    if (startup_filter) 
+      {
+	remember_filename(startup_filter, fd->file_filter_names);
+	XtFree(startup_filter);
+      }
+  }
+  XtAddCallback(XmFileSelectionBoxGetChild(fd->dialog, XmDIALOG_FILTER_TEXT), XmNactivateCallback, file_filter_text_activate_callback, (void *)fd);
+
+  /* file directory */
+  XtAddCallback(XmFileSelectionBoxGetChild(fd->dialog, XmDIALOG_DIR_LIST), XmNpopupHandlerCallback, file_dir_popup_callback, (void *)fd);
+  fd->file_dir_popup = XmCreatePopupMenu(XmFileSelectionBoxGetChild(fd->dialog, XmDIALOG_DIR_LIST), "file-dir-popup", args, n);
+  fd->file_dir_popup_label = XtCreateManagedWidget(FILE_DIR_POPUP_LABEL, xmLabelWidgetClass, fd->file_dir_popup, args, n);
+  XtCreateManagedWidget("sep", xmSeparatorWidgetClass, fd->file_dir_popup, args, n);
+  
+
+
+
+  /* file_list_popup, file_info_popup */
 
   return(fd);
 }
@@ -1004,7 +1216,6 @@ static void file_open_ok_callback(Widget w, XtPointer context, XtPointer info)
 	  ss->open_requestor = FROM_OPEN_DIALOG;
 	  ss->open_requestor_data = NULL;
 	  sp = snd_open_file(filename, fd->file_dialog_read_only);
-	  remember_filename(filename, fd->file_text_names);
 	  redirect_snd_error_to(NULL, NULL);
 	  if (sp) 
 	    {
@@ -2607,7 +2818,6 @@ static void make_save_as_dialog(save_as_dialog_info *sd, char *sound_name, int h
 
       XtUnmanageChild(XmFileSelectionBoxGetChild(sd->dialog, XmDIALOG_DIR_LIST_LABEL));
       XtUnmanageChild(XmFileSelectionBoxGetChild(sd->dialog, XmDIALOG_LIST_LABEL));
-      XtUnmanageChild(XmFileSelectionBoxGetChild(sd->dialog, XmDIALOG_APPLY_BUTTON));
 
       XmStringFree(s1);
       XmStringFree(xmstr1);
@@ -4083,13 +4293,8 @@ static void mouse_leave_label_or_enter(vf_row *r, XEN hook, const char *caller)
 	label = ((view_files_info *)(r->vdat))->full_names[r->pos];
       else
 	{
-	  XmString s1 = NULL;
-	  /* it's a bit tedious to get the current button label... */
-	  XtVaGetValues(r->nm, XmNlabelString, &s1, NULL);
-	  if (XmStringEmpty(s1)) return;
-	  label = (char *)XmStringUnparse(s1, NULL, XmCHARSET_TEXT, XmCHARSET_TEXT, NULL, 0, XmOUTPUT_ALL);
+	  label = get_label(r->nm);
 	  if (label) need_free = true;
-	  XmStringFree(s1);
 	}
       if (label)
 	run_hook(hook,
