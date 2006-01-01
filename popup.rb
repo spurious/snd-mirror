@@ -218,7 +218,7 @@ If it returns non-nil or non-false, the menu will be posted.")
   private
   def create(where, &body)
     @menu = if provided? :xm
-              RXmCreatePopupMenu(@parent, @label, [RXmNpopupEnabled, true] + @args)
+              RXmCreatePopupMenu(@parent, @label, [RXmNpopupEnabled, RXmPOPUP_AUTOMATIC] + @args)
             else
               Rgtk_menu_new()
             end

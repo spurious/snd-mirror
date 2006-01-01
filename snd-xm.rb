@@ -2593,7 +2593,7 @@ class Main_popup_menu < Menu
     super(name, parent, args)
     @parent = parent
     if provided? :xm
-      @menu = RXmCreatePopupMenu(@parent, "popup-menu", [RXmNpopupEnabled, true] + @args)
+      @menu = RXmCreatePopupMenu(@parent, "popup-menu", [RXmNpopupEnabled, RXmPOPUP_AUTOMATIC] + @args)
       RXtAddEventHandler(@parent, RButtonPressMask, false,
                          lambda do |w, c, i, f|
                            if Rbutton(i) == 3

@@ -11,6 +11,10 @@
 ;;;    (change-listener-popup-color new-color) to change its color
 ;;; a popup menu is also added to each edit history pane to display the "spreadsheet" edit-list->function menu
 
+
+;;; TODO: add a 'clear' item to the listener menu
+
+
 (use-modules (ice-9 common-list) (ice-9 format))
 (provide 'snd-popup.scm)
 
@@ -73,7 +77,7 @@
     (make-popup-menu 
      "selection-popup"
      (caddr (main-widgets))
-     (list XmNpopupEnabled #t
+     (list XmNpopupEnabled XmPOPUP_AUTOMATIC
 	   XmNbackground (highlight-color))
      (list
       (list "Selection" xmLabelWidgetClass      every-menu)
@@ -241,7 +245,7 @@
     (make-popup-menu 
      "graph-popup"
      (caddr (main-widgets))
-     (list XmNpopupEnabled #t
+     (list XmNpopupEnabled XmPOPUP_AUTOMATIC
 	   XmNbackground (highlight-color))
      (list
 
@@ -486,7 +490,7 @@
   ;; used within graph if pointer is in the fft graph
   (let* ((every-menu (list XmNbackground (highlight-color)))
 	 (fft-popup (XmCreatePopupMenu (caddr (main-widgets)) "fft-popup"
-		       (append (list XmNpopupEnabled #t) every-menu))))
+		       (append (list XmNpopupEnabled XmPOPUP_AUTOMATIC) every-menu))))
 
     (define (choose-chan)
       (if (= (channel-style graph-popup-snd) channels-separate) graph-popup-chn #t))
@@ -697,7 +701,7 @@ all saved edit lists."
 (define edit-history-menu
   (let* ((every-menu (list XmNbackground (highlight-color)))
 	 (edhist-popup (XmCreatePopupMenu (caddr (main-widgets)) "edhist-popup"
-					  (append (list XmNpopupEnabled #t) every-menu))))
+					  (append (list XmNpopupEnabled XmPOPUP_AUTOMATIC) every-menu))))
     (XtCreateManagedWidget "Edits" xmLabelWidgetClass edhist-popup every-menu)
     (XtCreateManagedWidget "sep" xmSeparatorWidgetClass edhist-popup every-menu)
     (let ((edhist-save (XtCreateManagedWidget "Save" xmPushButtonWidgetClass edhist-popup every-menu)))
@@ -930,7 +934,7 @@ color name, an xm Pixel, a snd color, or a list of rgb values (as in Snd's make-
 			 (list-ref (main-widgets) 4))))
 	 (every-menu (list XmNbackground (highlight-color)))
 	 (listener-popup (XmCreatePopupMenu listener "listener-popup"
-			   (append (list XmNpopupEnabled #t) every-menu))))
+			   (append (list XmNpopupEnabled XmPOPUP_AUTOMATIC) every-menu))))
 
     (define (edited snds)
       (remove-if (lambda (n) 

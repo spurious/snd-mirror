@@ -50682,7 +50682,7 @@ EDITS: 1
 		    (list XmNpacking XM_UCHAR) (list XmNpageDecrementCallback XM_CALLBACK) (list XmNpageIncrement XM_INT)
 		    (list XmNpageIncrementCallback XM_CALLBACK) (list XmNpaneMaximum XM_DIMENSION) (list XmNpaneMinimum XM_DIMENSION)
 		    (list XmNpattern XM_STRING_OR_XMSTRING) (list XmNpendingDelete XM_BOOLEAN) (list XmNpixmap XM_PIXMAP)
-		    (list XmNpopdownCallback XM_CALLBACK) (list XmNpopupCallback XM_CALLBACK) (list XmNpopupEnabled XM_BOOLEAN)
+		    (list XmNpopdownCallback XM_CALLBACK) (list XmNpopupCallback XM_CALLBACK) (list XmNpopupEnabled XM_INT)
 		    (list XmNpositionIndex XM_SHORT) (list XmNpostFromButton XM_INT) (list XmNpreeditType XM_STRING)
 		    (list XmNprocessingDirection XM_UCHAR) (list XmNpromptString XM_XMSTRING) (list XmNpushButtonEnabled XM_BOOLEAN)
 		    (list XmNqualifySearchDataProc XM_QUALIFY_CALLBACK) (list XmNradioAlwaysOne XM_BOOLEAN) (list XmNradioBehavior XM_BOOLEAN)

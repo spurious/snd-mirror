@@ -391,7 +391,7 @@ static void create_help_monolog(void)
       XtSetArg(args[n], XmNloadModel, XmLOAD_IMMEDIATE); n++;
     }
   XtSetArg(args[n], XmNrenditionBackground, ss->sgx->white); n++;
-  XtSetArg(args[n], XmNrenditionForeground, ss->sgx->quit_button_color); n++;
+  XtSetArg(args[n], XmNrenditionForeground, ss->sgx->red); n++;
   texts[0] = XmRenditionCreate(help_text, "url_text", args, n);
   XtSetArg(args[n - 1], XmNrenditionForeground, ss->sgx->black); 
   texts[1] = XmRenditionCreate(help_text, "normal_text", args, n);

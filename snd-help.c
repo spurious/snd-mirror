@@ -1377,14 +1377,37 @@ static char *open_file_xrefs[7] = {
   "keep dialog active after opening: {keep-file-dialog-open-upon-ok} in snd-motif.scm",
   NULL};
 
+
+/* TODO: this prose needs to be in the mix/insert/save-as etc cases as well */
+
 void open_file_dialog_help(void)
 {
+#if USE_MOTIF
   snd_help_with_xrefs("Open File",
-"The file will be opened in a new pane, if it's a sound file. \
-If you click the 'Sound Files Only' button, only those files in the current directory that look vaguely like sound files will be displayed.",
+"The file selection dialog is slightly different from the built-in one.  If you single click \
+in the directory list, that directory is immediately opened and displayed.  Also there are \
+a variety of context-sensitive popup menus to handle special chores such as setting the \
+current sort routine (middle click over the file list), jump to any higher level directory (middle click \
+in the directory list), or choose a recently opened file (click in the filename text widget). \
+The 'sound files only' button filters out all non-sound files from the files list (using the \
+extension -- you can add to the list of sound file extensions via " S_add_sound_file_extension ". \
+When a sound file is selected, information about it is posted under the lists, and a 'play' \
+button is displayed.  If you have libgamin (fam), it is tied into the file list, so what you \
+see should always be up-to-date. The name field has <TAB> completion, of course, and also \
+watches as you type a new name, reflecting that partial name by moving the file list to \
+display possible matches.",
 		      WITH_WORD_WRAP,
 		      open_file_xrefs,
 		      NULL);
+#else
+  snd_help_with_xrefs("Open File",
+"The file selection dialog will be changed to mimic the Motif version soon -- currently \
+I use either the Gtk file selection dialog, or the file chooser dialog; both are \
+ugly, and indescribably stupid (deliberately so in the file chooser case). ",
+		      WITH_WORD_WRAP,
+		      open_file_xrefs,
+		      NULL);
+#endif
 }
 
 void mix_file_dialog_help(void)

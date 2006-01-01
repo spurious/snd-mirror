@@ -5,10 +5,12 @@
 
 #include <config.h>
 
-#define XM_DATE "16-Sep-05"
+#define XM_DATE "1-Jan-06"
 
 /* HISTORY: 
  *
+ *   1-Jan-06:  XmNpopupEnabled resource type changed from boolean to int (enum) (Motif docs bug).
+ *   --------
  *   16-Sep:    XmUNSPECIFIED_PIXEL and friends should be unsigned long (not int).
  *   17-Aug:    XtSetArg 3rd arg should be 0, not NULL (type mismatch if 64-bit).
  *   14-June:   various xen-related updates (XEN_DEFINE).
@@ -27908,7 +27910,7 @@ static void define_strings(void)
   DEFINE_RESOURCE(XmNpixmap, XM_PIXMAP);
   DEFINE_RESOURCE(XmNpopdownCallback, XM_CALLBACK);
   DEFINE_RESOURCE(XmNpopupCallback, XM_CALLBACK);
-  DEFINE_RESOURCE(XmNpopupEnabled, XM_BOOLEAN);
+  DEFINE_RESOURCE(XmNpopupEnabled, XM_INT); /* docs say boolean, but that is incorrect -- see rowcolumn docs */
   DEFINE_RESOURCE(XmNpositionIndex, XM_SHORT);
   DEFINE_RESOURCE(XmNpostFromButton, XM_INT);
   DEFINE_RESOURCE(XmNpreeditType, XM_STRING);
