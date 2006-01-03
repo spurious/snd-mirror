@@ -2,6 +2,13 @@
 #include "sndlib-strings.h"
 #include "clm-strings.h"
 
+/* TODO: audio setup help -- could check mutes/vols etc and report suspicious settings */
+/*       also the ALSA env vars, mus_audio_report etc */
+/*       also in special unsupported cases, like x86 solaris */
+/*       perhaps put bad vals in red? */
+/* PERHAPS: in linux make --with-alsa the default
+ */
+
 #if USE_MOTIF
   #include <X11/IntrinsicP.h>
   #if HAVE_XPM
@@ -472,6 +479,8 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+2-Jan:   removed the various sorting indices (sort-by-name|size|date|entry), and changed \n\
+           the way the user-defined sorter works.\n\
 26-Dec:  help-snd-fm.pd and pd-fm.scm thanks to Kjetil.\n\
          default sample type is now float. This should only affect the \"peak-env\" files which will\n\
            need to be rebuilt (just delete the current peak files, and they'll be rebuilt as needed\n\
@@ -1569,9 +1578,8 @@ Files can be added to the list via the -p startup switch, and by the functions "
 and " S_add_directory_to_view_files_list ". \
 \n\n\
 The 'sort' label on the right activates a menu of sorting choices; 'name' sorts the \
-files list alphabetically, 'date' sorts by date written, 'size' sorts by the \
-number of samples in the sound, and 'entry' sorts by the order the sound appears in the \
-absence of explicit sorting.  The variable " S_view_files_sort " refers to this menu.",
+files list alphabetically, 'date' sorts by date written, and 'size' sorts by the \
+number of samples in the sound. The variable " S_view_files_sort " refers to this menu.",
 		      WITH_WORD_WRAP,
 		      view_files_xrefs,
 		      NULL);

@@ -16,6 +16,8 @@
   #endif
 #endif
 
+
+/* -------------------------------- basic file attributes -------------------------------- */
 #if USE_STATVFS
   #include <sys/statvfs.h>
 #endif
@@ -110,6 +112,135 @@ time_t file_write_date(const char *filename)
   return((time_t)(statbuf.st_mtime));
 }
 
+/* -------------------------------- sorters -------------------------------- */
+
+/* sort files list by name (aphabetical), or some number (date written, size), or by xen proc */
+
+static int sort_a_to_z(const void *a, const void *b)
+{
+  sort_info *d1 = *(sort_info **)a;
+  sort_info *d2 = *(sort_info **)b;
+  return(strcmp(d1->a1, d2->a1));
+}
+
+static int sort_z_to_a(const void *a, const void *b)
+{
+  return(-sort_a_to_z(a, b));
+}
+
+static int sort_small_to_big(const void *a, const void *b)
+{
+  sort_info *d1 = *(sort_info **)a;
+  sort_info *d2 = *(sort_info **)b;
+  if (d1->samps > d2->samps) 
+    return(1); 
+  else 
+    {
+      if (d1->samps == d2->samps) 
+	return(0); 
+      else return(-1);
+    }
+}
+
+static int sort_big_to_small(const void *a, const void *b)
+{
+  return(-sort_small_to_big(a, b));
+}
+
+static int sort_new_to_old(const void *a, const void *b)
+{
+  sort_info *d1 = *(sort_info **)a;
+  sort_info *d2 = *(sort_info **)b;
+  if (d1->time < d2->time) 
+    return(1); 
+  else 
+    {
+      if (d1->time == d2->time) 
+	return(0); 
+      else return(-1);
+    }
+}
+
+static XEN sorter_func;
+static int sort_xen(const void *a, const void *b)
+{
+  /* sorter function gets two names, returns -1, 0, or 1 just like the other comparators */
+  sort_info *d1 = *(sort_info **)a;
+  sort_info *d2 = *(sort_info **)b;
+  return(XEN_TO_C_INT(XEN_CALL_2(sorter_func, C_TO_XEN_STRING(d1->a2), C_TO_XEN_STRING(d2->a2), "sort func")));
+}
+
+static void ignore_mus_error(int type, char *msg)
+{
+  /* squelch error */
+}
+
+static int sort_old_to_new(const void *a, const void *b)
+{
+  return(-sort_new_to_old(a, b));
+}
+
+void snd_sort(int sorter, sort_info **data, int len)
+{
+  int i, sorter_pos;
+  switch (sorter)
+    {
+    case SORT_A_TO_Z: 
+      qsort((void *)data, len, sizeof(sort_info *), sort_a_to_z);
+      break;
+    case SORT_Z_TO_A: 
+      qsort((void *)data, len, sizeof(sort_info *), sort_z_to_a);
+      break;
+    case SORT_NEW_TO_OLD:
+      for (i = 0; i < len; i++) 
+	data[i]->time = file_write_date(data[i]->a2);
+      qsort((void *)data, len, sizeof(sort_info *), sort_new_to_old);
+      break;
+    case SORT_OLD_TO_NEW:
+      for (i = 0; i < len; i++) 
+	data[i]->time = file_write_date(data[i]->a2);
+      qsort((void *)data, len, sizeof(sort_info *), sort_old_to_new);
+      break;
+    case SORT_SMALL_TO_BIG:
+      mus_error_set_handler(ignore_mus_error);
+      for (i = 0; i < len; i++)
+	{
+	  data[i]->samps = mus_sound_samples(data[i]->a2);
+	  if (data[i]->samps < 0) data[i]->samps = 0;
+	}
+      mus_error_set_handler(mus_error_to_snd);
+      qsort((void *)data, len, sizeof(sort_info *), sort_small_to_big);
+      break;
+    case SORT_BIG_TO_SMALL:
+      /* TODO: here if not sound file, use bytes */
+      mus_error_set_handler(ignore_mus_error);
+      for (i = 0; i < len; i++)
+	{
+	  data[i]->samps = mus_sound_samples(data[i]->a2);
+	  if (data[i]->samps < 0) data[i]->samps = 0;
+	}
+      mus_error_set_handler(mus_error_to_snd);
+      qsort((void *)data, len, sizeof(sort_info *), sort_big_to_small);
+      break;
+    default:
+    case SORT_XEN:
+      /* sorter is SORT_XEN + index into file_sorters list */
+      /*   that list is a vector of pairs (name proc) */
+      sorter_pos = sorter - SORT_XEN;
+      if ((sorter_pos >= 0) &&
+	  (sorter_pos < ss->file_sorters_size))
+	{
+	  sorter_func = XEN_CADR(XEN_VECTOR_REF(ss->file_sorters, sorter_pos));
+	  qsort((void *)data, len, sizeof(sort_info *), sort_xen);
+	}
+      /* TODO: else complain */
+      /* TODO: colorize file list by chans or something */
+      break;
+    }
+}
+
+
+/* -------------------------------- open sound file -------------------------------- */
 
 static int fallback_srate = 0, fallback_chans = 0, fallback_format = MUS_UNKNOWN;
 static int original_srate = 0, original_chans = 0, original_format = MUS_UNKNOWN;
@@ -2460,8 +2591,6 @@ view_files_info *new_view_files_dialog(void)
       vdat->end = -1;
       vdat->names = NULL;
       vdat->full_names = NULL;
-      vdat->curtime = 0;
-      vdat->times = NULL;
       vdat->selected_files = NULL;
       vdat->selected_files_size = 0;
       vdat->location_choice = VF_AT_CURSOR;
@@ -2874,7 +3003,7 @@ void view_files_reflect_sort_items(void)
 		  }
 		XtVaSetValues(vdat->sort_items[j], 
 			      XmNlabelString, s1,
-			      XmNuserData, i + SORT_BY_PROC, /* this is an index into the file_sorters list, not the widget list */
+			      XmNuserData, i + SORT_XEN, /* this is an index into the file_sorters list, not the widget list */
 			      NULL);
 		XtManageChild(vdat->sort_items[j]);
 	      }
@@ -2907,7 +3036,7 @@ void view_files_reflect_sort_items(void)
 #else
 		  long data;
 #endif
-		  data = i + SORT_BY_PROC;
+		  data = i + SORT_XEN;
 		  set_user_data(G_OBJECT(vdat->sort_items[j]), 
 				(gpointer)data); /* this is an index into the file_sorters list, not the widget list */
 		}
@@ -2940,19 +3069,16 @@ static void vf_add_file(view_files_info *vdat, const char *filename, const char 
 	{
 	  vdat->names = (char **)CALLOC(new_size, sizeof(char *));
 	  vdat->full_names = (char **)CALLOC(new_size, sizeof(char *));
-	  vdat->times = (int *)CALLOC(new_size, sizeof(int));
 	}
       else
 	{
 	  int i;
 	  vdat->names = (char **)REALLOC(vdat->names, new_size * sizeof(char *));
 	  vdat->full_names = (char **)REALLOC(vdat->full_names, new_size * sizeof(char *));
-	  vdat->times = (int *)REALLOC(vdat->times, new_size * sizeof(int));
 	  for (i = vdat->size; i < new_size; i++) 
 	    {
 	      vdat->names[i] = NULL; 
 	      vdat->full_names[i] = NULL; 
-	      vdat->times[i] = 0;
 	    }
 	}
       if (vdat->file_list_entries == NULL)
@@ -2967,7 +3093,6 @@ static void vf_add_file(view_files_info *vdat, const char *filename, const char 
     }
   vdat->names[vdat->end] = copy_string(filename);
   vdat->full_names[vdat->end] = copy_string(fullname);
-  vdat->times[vdat->end] = vdat->curtime++;
 }
 
 void add_file_to_view_files_list(view_files_info *vdat, const char *filename, const char *fullname)
@@ -3168,148 +3293,31 @@ void add_directory_to_view_files_list(view_files_info *vdat, const char *dirname
     }
 }
 
-/* sort view_files list by name (aphabetical), or some number (date written, size, entry order, srate? type?) */
-
-typedef struct {
-  int vals, times;
-  off_t samps;
-  char *a1, *a2;
-} heapdata;
-
-static int alphabet_compare(const void *a, const void *b)
-{
-  heapdata *d1 = *(heapdata **)a;
-  heapdata *d2 = *(heapdata **)b;
-  return(strcmp(d1->a1, d2->a1));
-}
-
-static int greater_compare(const void *a, const void *b)
-{
-  heapdata *d1 = *(heapdata **)a;
-  heapdata *d2 = *(heapdata **)b;
-  if (d1->samps > d2->samps) 
-    return(1); 
-  else 
-    {
-      if (d1->samps == d2->samps) 
-	return(0); 
-      else return(-1);
-    }
-}
-
-static int less_compare(const void *a, const void *b)
-{
-  heapdata *d1 = *(heapdata **)a;
-  heapdata *d2 = *(heapdata **)b;
-  if (d1->vals < d2->vals) 
-    return(1); 
-  else 
-    {
-      if (d1->vals == d2->vals) 
-	return(0); 
-      else return(-1);
-    }
-}
-
-static void ignore_mus_error(int type, char *msg)
-{
-  /* squelch error */
-}
-
 static void view_files_sort_list(view_files_info *vdat)
 {
   if (vdat->end >= 0)
     {
-      heapdata **data;
+      sort_info **data;
       int i, len;
+
       len = vdat->end + 1;
-      data = (heapdata **)CALLOC(len, sizeof(heapdata *));
+      data = (sort_info **)CALLOC(len, sizeof(sort_info *));
+
       for (i = 0; i < len; i++)
 	{
-	  data[i] = (heapdata *)CALLOC(1, sizeof(heapdata));
+	  data[i] = (sort_info *)CALLOC(1, sizeof(sort_info));
 	  data[i]->a1 = vdat->names[i];
 	  data[i]->a2 = vdat->full_names[i];
-	  data[i]->times = vdat->times[i];
 	}
-      switch (vdat->sorter)
+
+      snd_sort(vdat->sorter, data, len);
+
+      for (i = 0; i < len; i++)
 	{
-	case SORT_BY_NAME: 
-	  qsort((void *)data, vdat->end + 1, sizeof(heapdata *), alphabet_compare);
-	  break;
-	case SORT_BY_DATE:
-	  for (i = 0; i <= vdat->end; i++) 
-	    data[i]->vals = file_write_date(vdat->full_names[i]);
-	  qsort((void *)data, vdat->end + 1, sizeof(heapdata *), less_compare);
-	  break;
-	case SORT_BY_SIZE:
-	  mus_error_set_handler(ignore_mus_error);
-	  for (i = 0; i <= vdat->end; i++)
-	    {
-	      data[i]->samps = mus_sound_samples(vdat->full_names[i]);
-	      if (data[i]->samps < 0) data[i]->samps = 0;
-	    }
-	  mus_error_set_handler(mus_error_to_snd);
-	  qsort((void *)data, vdat->end + 1, sizeof(heapdata *), greater_compare);
-	  break;
-	case SORT_BY_ENTRY:
-	  for (i = 0; i <= vdat->end; i++) 
-	    data[i]->vals = vdat->times[i];
-	  qsort((void *)data, vdat->end + 1, sizeof(heapdata *), less_compare);
-	  break;
-	default:
-	  {
-	    int sorter_pos;
-	    /* sorter is SORT_BY_PROC + index into file_sorters list */
-	    sorter_pos = vdat->sorter - SORT_BY_PROC;
-	    if ((sorter_pos >= 0) &&
-		(sorter_pos < ss->file_sorters_size))
-	      {
-		XEN proc;
-		proc = XEN_VECTOR_REF(ss->file_sorters, sorter_pos);
-		if (XEN_PAIR_P(proc))
-		  {
-		    XEN file_list;
-		    int j, gc_loc;
-		    char *name;
-		    proc = XEN_CDR(proc);
-		    file_list = XEN_EMPTY_LIST;
-		    for (i = vdat->end; i >= 0; i--) 
-		      file_list = XEN_CONS(C_TO_XEN_STRING(vdat->full_names[i]), file_list);
-		    gc_loc = snd_protect(file_list);
-		    file_list = XEN_COPY_ARG(XEN_CALL_1(proc, file_list, "view files sort"));
-		    snd_unprotect_at(gc_loc);         /* unprotect old version */
-		    gc_loc = snd_protect(file_list);  /* protect new */
-		    if (XEN_LIST_P(file_list))
-		      {
-			for (i = 0; (i < len) && (XEN_NOT_NULL_P(file_list)); i++, file_list = XEN_CDR(file_list))
-			  {
-			    name = XEN_TO_C_STRING(XEN_CAR(file_list));
-			    for (j = 0; j < len; j++)
-			      if (strcmp(data[j]->a2, name) == 0)
-				{
-				  vdat->names[i] = data[j]->a1;
-				  vdat->full_names[i] = data[j]->a2;
-				  vdat->times[i] = data[j]->times;
-				}
-			  }
-		      }
-		    snd_unprotect_at(gc_loc);
-		  }
-	      }
-	    for (i = 0; i < len; i++) FREE(data[i]);
-	    break;
-	  }
+	  vdat->names[i] = data[i]->a1;
+	  vdat->full_names[i] = data[i]->a2;
+	  FREE(data[i]);
 	}
-
-      if (vdat->sorter < SORT_BY_PROC)
-	for (i = 0; i < len; i++)
-	  {
-	    vdat->names[i] = data[i]->a1;
-	    vdat->full_names[i] = data[i]->a2;
-	    vdat->times[i] = data[i]->times;
-	    FREE(data[i]);
-	  }
-
       FREE(data);
     }
 }
@@ -3378,7 +3386,6 @@ void view_files_clear_list(view_files_info *vdat)
 	    vdat->full_names[i] = NULL;
 	  }
       vdat->end = -1;
-      vdat->curtime = 0;
 #if (!HAVE_FAM)
       vf_clear_button_set_sensitive(vdat, false);
 #endif
@@ -3417,7 +3424,6 @@ void view_files_update_list(view_files_info *vdat)
 		vdat->names[i] = NULL;
 		vdat->full_names[j] = vdat->full_names[i];
 		vdat->full_names[i] = NULL;
-		vdat->times[j] = vdat->times[i];
 	      }
 	    j++;
 	  }
@@ -3719,24 +3725,6 @@ widget_t start_view_files_dialog(bool managed, bool make_new)
   return(start_view_files_dialog_1(new_view_files_dialog(), managed));
 }
 
-static char *view_files_sort_name(int sort_choice)
-{
-  static char *num = NULL;
-  if (sort_choice < SORT_BY_PROC)
-    {
-      switch (sort_choice)
-	{
-	case SORT_BY_NAME:  return(S_sort_files_by_name);  break;
-	case SORT_BY_SIZE:  return(S_sort_files_by_size);  break;
-	case SORT_BY_DATE:  return(S_sort_files_by_date);  break;
-	case SORT_BY_ENTRY: return(S_sort_files_by_entry); break;
-	}
-    }
-  if (!num) num = (char *)CALLOC(32, sizeof(char));
-  mus_snprintf(num, 32, "%d", sort_choice);
-  return(num);
-}
-
 void save_view_files_dialogs(FILE *fd) 
 {
 #if HAVE_EXTENSION_LANGUAGE
@@ -3778,7 +3766,7 @@ void save_view_files_dialogs(FILE *fd)
 	    fprintf(fd, "  (set! (view-files-amp-env vf) %s)\n", env_to_string(vdat->amp_env));
 	  }
 	/* assume file-sorters are set up already */
-	fprintf(fd, "  (set! (view-files-sort vf) %s)\n", view_files_sort_name(vdat->sorter));	    
+	fprintf(fd, "  (set! (view-files-sort vf) %d)\n", vdat->sorter);	    
 	fprintf(fd, ")\n");
 #endif
 #if HAVE_RUBY
@@ -3998,9 +3986,7 @@ static XEN g_view_files_sort(XEN dialog)
 
 static XEN g_set_view_files_sort(XEN dialog, XEN val) 
 {
-  #define H_view_files_sort "(" S_view_files_sort "): default sort choice in View:files dialog (" S_sort_files_by_name ", \
-" S_sort_files_by_date ", " S_sort_files_by_size ", " S_sort_files_by_entry ", or an index returned by " S_add_file_sorter "."
-
+  #define H_view_files_sort "(" S_view_files_sort "): sort choice in View:files dialog."
   int choice;
   XEN sort_choice;
 
@@ -4008,7 +3994,7 @@ static XEN g_set_view_files_sort(XEN dialog, XEN val)
   XEN_ASSERT_TYPE(XEN_INTEGER_P(sort_choice), sort_choice, XEN_ARG_1, S_setB S_view_files_sort, "an integer"); 
   choice = XEN_TO_C_INT(sort_choice);
   if ((choice < 0) ||
-      (choice >= ss->file_sorters_size))
+      (choice >= (ss->file_sorters_size + SORT_XEN)))
     XEN_OUT_OF_RANGE_ERROR(S_setB S_view_files_sort, 2, sort_choice, "must be a valid file-sorter index");
 
   if (XEN_BOUND_P(val))
@@ -4536,21 +4522,6 @@ static XEN g_info_dialog(XEN subject, XEN msg)
 #define INITIAL_FILE_FILTERS_SIZE 4
 #define INITIAL_FILE_SORTERS_SIZE 4
 
-static XEN g_vector_to_list(XEN vect)
-{
-  int i, len;
-  XEN lst = XEN_EMPTY_LIST;
-  len = XEN_VECTOR_LENGTH(vect);
-  for (i = len - 1; i >= 0; i--)
-    {
-      XEN ref;
-      ref = XEN_VECTOR_REF(vect, i);
-      if (XEN_LIST_P(ref))
-	lst = XEN_CONS(ref, lst);
-    }
-  return(lst);
-}
-
 static XEN g_expand_vector(XEN vector, int new_size)
 {
   int i, len;
@@ -4567,12 +4538,6 @@ static XEN g_expand_vector(XEN vector, int new_size)
   XEN_UNPROTECT_FROM_GC(vector);
 #endif
   return(new_vect);
-}
-
-static XEN g_file_filters(void)
-{
-  #define H_file_filters "(" S_file_filters ") -> list of current user-defined file filters"
-  return(g_vector_to_list(ss->file_filters));
 }
 
 static bool file_filter_ok(XEN name, XEN proc, const char *caller)
@@ -4592,33 +4557,6 @@ static bool file_filter_ok(XEN name, XEN proc, const char *caller)
   return(true);
 }
 
-static XEN g_set_file_filters(XEN new_list)
-{
-  int i, len;
-  XEN_ASSERT_TYPE(XEN_LIST_P(new_list), new_list, XEN_ONLY_ARG, S_setB S_file_filters, "a list of (name proc) lists"); 
-  len = XEN_VECTOR_LENGTH(ss->file_filters);
-  for (i = 0; i < len; i++)
-    XEN_VECTOR_SET(ss->file_filters, i, XEN_FALSE);
-  len = XEN_LIST_LENGTH(new_list);
-  if (len > ss->file_filters_size)
-    {
-      ss->file_filters_size = len * 2;
-      ss->file_filters = g_expand_vector(ss->file_filters, ss->file_filters_size);
-    }
-  for (i = 0; i < len; i++)
-    {
-      XEN element;
-      int loc;
-      element = XEN_LIST_REF(new_list, i);
-      XEN_ASSERT_TYPE(XEN_LIST_P(element), element, i, S_setB S_file_filters, "a list: (name  func)");
-      loc = snd_protect(element);
-      if (file_filter_ok(XEN_CAR(element), XEN_CADR(element), S_setB S_file_filters))
-	XEN_VECTOR_SET(ss->file_filters, i, XEN_LIST_REF(new_list, i));
-      snd_unprotect_at(loc);
-    }
-  return(g_vector_to_list(ss->file_filters));
-}
-
 static XEN g_add_file_filter(XEN name, XEN proc)
 {
   #define H_add_file_filter "(" S_add_file_filter " name proc) -- add proc with identifier name to file filter list"
@@ -4631,78 +4569,52 @@ static XEN g_add_file_filter(XEN name, XEN proc)
 	  if (XEN_FALSE_P(XEN_VECTOR_REF(ss->file_filters, i)))
 	    {
 	      XEN_VECTOR_SET(ss->file_filters, i, XEN_LIST_2(name, proc));
-	      return(g_vector_to_list(ss->file_filters));
+	      return(C_TO_XEN_INT(i));
 	    }
 	}
       ss->file_filters_size = len * 2;
       ss->file_filters = g_expand_vector(ss->file_filters, ss->file_filters_size);
       XEN_VECTOR_SET(ss->file_filters, len, XEN_LIST_2(name, proc));
+      return(C_TO_XEN_INT(len));
     }
-  return(g_vector_to_list(ss->file_filters));
+  return(XEN_FALSE);
 }
 
-static XEN g_delete_file_filter(XEN name)
+static XEN g_delete_file_filter(XEN index)
 {
-  #define H_delete_file_filter "(" S_delete_file_filter " name) -- delete proc with identifier name from file filter list"
-  int i;
-  char *c_name;
-  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ONLY_ARG, S_delete_file_filter, "a file-sorter proc name");   
-  c_name = XEN_TO_C_STRING(name);
-  for (i = 0; i < ss->file_filters_size; i++)
+  #define H_delete_file_filter "(" S_delete_file_filter " index) -- delete proc with identifier index from file filter list"
+  int pos;
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(index), index, XEN_ONLY_ARG, S_delete_file_filter, "a file-filter function index");   
+  pos = XEN_TO_C_INT(index);
+  if ((pos >= 0) &&
+      (pos < ss->file_filters_size))
+    XEN_VECTOR_SET(ss->file_filters, pos, XEN_FALSE);
+  return(index);
+}
+
+static bool file_sorter_ok(XEN name, XEN proc, const char *caller)
+{
+  char *errmsg;
+  XEN errstr;
+  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_1, caller, "a string");   
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(proc), proc, XEN_ARG_2, caller, "a procedure of 2 args (file1 and file2)");
+  errmsg = procedure_ok(proc, 2, caller, "function", 2);
+  if (errmsg)
     {
-      XEN ref;
-      ref = XEN_VECTOR_REF(ss->file_filters, i);
-      if ((XEN_LIST_P(ref)) &&
-	  (strcmp(XEN_TO_C_STRING(XEN_CAR(ref)), c_name) == 0))
-	XEN_VECTOR_SET(ss->file_filters, i, XEN_FALSE);
+      errstr = C_TO_XEN_STRING(errmsg);
+      FREE(errmsg);
+      snd_bad_arity_error(caller, errstr, proc);
+      return(false);
     }
-  return(g_vector_to_list(ss->file_filters));
-}
-
-
-#define file_sorter_ok(A, B, C) file_filter_ok(A, B, C)
-
-static XEN g_file_sorters(void)
-{
-  #define H_file_sorters "(" S_file_sorters ") -> list of current user-defined file sorters"
-  return(g_vector_to_list(ss->file_sorters));
+  return(true);
 }
 
 void view_files_change_sort_items(void);
 
-static XEN g_set_file_sorters(XEN new_list)
-{
-  int i, len;
-  XEN_ASSERT_TYPE(XEN_LIST_P(new_list), new_list, XEN_ONLY_ARG, S_setB S_file_sorters, "a list of (name proc) list"); 
-  len = XEN_VECTOR_LENGTH(ss->file_sorters);
-  for (i = 0; i < len; i++)
-    XEN_VECTOR_SET(ss->file_sorters, i, XEN_FALSE);
-  len = XEN_LIST_LENGTH(new_list);
-  if (len > ss->file_sorters_size)
-    {
-      ss->file_sorters_size = len * 2;
-      ss->file_sorters = g_expand_vector(ss->file_sorters, ss->file_sorters_size);
-    }
-  for (i = 0; i < len; i++)
-    {
-      XEN element;
-      int loc;
-      element = XEN_LIST_REF(new_list, i);
-      XEN_ASSERT_TYPE(XEN_LIST_P(element), element, i, S_setB S_file_sorters, "a list: (name func)");
-      loc = snd_protect(element);
-      if (file_sorter_ok(XEN_CAR(element), XEN_CADR(element), S_setB S_file_sorters))
-	XEN_VECTOR_SET(ss->file_sorters, i, XEN_LIST_REF(new_list, i));
-      snd_unprotect_at(loc);
-    }
-  view_files_reflect_sort_items();
-  return(g_vector_to_list(ss->file_sorters));
-}
-
 static XEN g_add_file_sorter(XEN name, XEN proc)
 {
-  #define H_add_file_sorter "(" S_add_file_sorter " name proc) -- add proc with identifier name to file sorter list"
-  int i, len;
-  bool happy = false;
+  #define H_add_file_sorter "(" S_add_file_sorter " name proc) -- add proc with identifier name to file sorter list, returns its index"
+  int i, len, choice = -1;
   XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_1, S_add_file_sorter, "a string");   
   XEN_ASSERT_TYPE(XEN_PROCEDURE_P(proc), proc, XEN_ARG_2, S_add_file_sorter, "a procedure");
   if (file_sorter_ok(name, proc, S_add_file_sorter))
@@ -4713,38 +4625,33 @@ static XEN g_add_file_sorter(XEN name, XEN proc)
 	  if (XEN_FALSE_P(XEN_VECTOR_REF(ss->file_sorters, i)))
 	    {
 	      XEN_VECTOR_SET(ss->file_sorters, i, XEN_LIST_2(name, proc));
-	      happy = true;
+	      choice = i;
 	      break;
 	    }
 	}
-      if (!happy)
+      if (choice == -1)
 	{
 	  ss->file_sorters_size = len * 2;
 	  ss->file_sorters = g_expand_vector(ss->file_sorters, ss->file_sorters_size);
 	  XEN_VECTOR_SET(ss->file_sorters, len, XEN_LIST_2(name, proc));
+	  choice = len;
 	}
       view_files_reflect_sort_items();
     }
-  return(g_vector_to_list(ss->file_sorters));
+  return(C_TO_XEN_INT(choice + SORT_XEN));
 }
 
-static XEN g_delete_file_sorter(XEN name)
+static XEN g_delete_file_sorter(XEN index)
 {
-  #define H_delete_file_sorter "(" S_delete_file_sorter " name) -- delete proc with identifier name from file sorter list"
-  int i;
-  char *c_name;
-  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ONLY_ARG, S_delete_file_sorter, "a file-sorter proc name");   
-  c_name = XEN_TO_C_STRING(name);
-  for (i = 0; i < ss->file_sorters_size; i++)
-    {
-      XEN ref;
-      ref = XEN_VECTOR_REF(ss->file_sorters, i);
-      if ((XEN_LIST_P(ref)) &&
-	  (strcmp(XEN_TO_C_STRING(XEN_CAR(ref)), c_name) == 0))
-	XEN_VECTOR_SET(ss->file_sorters, i, XEN_FALSE);
-    }
+  #define H_delete_file_sorter "(" S_delete_file_sorter " index) -- delete proc with identifier name from file sorter list"
+  int pos;
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(index), index, XEN_ONLY_ARG, S_delete_file_sorter, "a file-sorter index");   
+  pos = XEN_TO_C_INT(index);
+  if ((pos >= SORT_XEN) &&
+      ((pos - SORT_XEN) < ss->file_sorters_size))
+    XEN_VECTOR_SET(ss->file_sorters, pos - SORT_XEN, XEN_FALSE);
   view_files_reflect_sort_items();
-  return(g_vector_to_list(ss->file_sorters));
+  return(index);
 }
 
 
@@ -4783,12 +4690,8 @@ XEN_NARGIFY_1(g_view_files_selected_files_w, g_view_files_selected_files)
 XEN_NARGIFY_1(g_view_files_files_w, g_view_files_files)
 XEN_NARGIFY_2(g_view_files_set_selected_files_w, g_view_files_set_selected_files)
 XEN_NARGIFY_2(g_view_files_set_files_w, g_view_files_set_files)
-XEN_NARGIFY_0(g_file_filters_w, g_file_filters)
-XEN_NARGIFY_1(g_set_file_filters_w, g_set_file_filters)
 XEN_NARGIFY_1(g_delete_file_filter_w, g_delete_file_filter)
 XEN_NARGIFY_2(g_add_file_filter_w, g_add_file_filter)
-XEN_NARGIFY_0(g_file_sorters_w, g_file_sorters)
-XEN_NARGIFY_1(g_set_file_sorters_w, g_set_file_sorters)
 XEN_NARGIFY_1(g_delete_file_sorter_w, g_delete_file_sorter)
 XEN_NARGIFY_2(g_add_file_sorter_w, g_add_file_sorter)
 #else
@@ -4826,23 +4729,14 @@ XEN_NARGIFY_2(g_add_file_sorter_w, g_add_file_sorter)
 #define g_view_files_files_w g_view_files_files
 #define g_view_files_set_selected_files_w g_view_files_set_selected_files
 #define g_view_files_set_files_w g_view_files_set_files
-#define g_file_filters_w g_file_filters
-#define g_set_file_filters_w g_set_file_filters
 #define g_delete_file_filter_w g_delete_file_filter
 #define g_add_file_filter_w g_add_file_filter
-#define g_file_sorters_w g_file_sorters
-#define g_set_file_sorters_w g_set_file_sorters
 #define g_delete_file_sorter_w g_delete_file_sorter
 #define g_add_file_sorter_w g_add_file_sorter
 #endif
 
 void g_init_file(void)
 {
-  XEN_DEFINE_CONSTANT(S_sort_files_by_name, SORT_BY_NAME, "file-sorter choice to sort alphabetically");
-  XEN_DEFINE_CONSTANT(S_sort_files_by_date, SORT_BY_DATE, "file-sorter choice to sort by write date");
-  XEN_DEFINE_CONSTANT(S_sort_files_by_size, SORT_BY_SIZE, "file-sorter choice to sort by size");
-  XEN_DEFINE_CONSTANT(S_sort_files_by_entry, SORT_BY_ENTRY, "file-sorter choice to sort by directory order");
-
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_view_files_amp, g_view_files_amp_w, H_view_files_amp,
 				   S_setB S_view_files_amp, g_view_files_set_amp_w,  1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_view_files_amp_env, g_view_files_amp_env_w, H_view_files_amp_env,
@@ -4946,13 +4840,9 @@ files list of the View Files dialog.  If it returns #t, the default action, open
   XEN_PROTECT_FROM_GC(ss->file_filters);
   XEN_PROTECT_FROM_GC(ss->file_sorters);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_file_filters, g_file_filters_w, H_file_filters,
-				   S_setB S_file_filters, g_set_file_filters_w,  0, 0, 1, 0);
   XEN_DEFINE_PROCEDURE(S_add_file_filter,    g_add_file_filter_w,                2, 0, 0, H_add_file_filter);
   XEN_DEFINE_PROCEDURE(S_delete_file_filter, g_delete_file_filter_w,             1, 0, 0, H_delete_file_filter);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_file_sorters, g_file_sorters_w, H_file_sorters,
-				   S_setB S_file_sorters, g_set_file_sorters_w,  0, 0, 1, 0);
   XEN_DEFINE_PROCEDURE(S_add_file_sorter,    g_add_file_sorter_w,                2, 0, 0, H_add_file_sorter);
   XEN_DEFINE_PROCEDURE(S_delete_file_sorter, g_delete_file_sorter_w,             1, 0, 0, H_delete_file_sorter);
 

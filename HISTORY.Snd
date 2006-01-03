@@ -1,6 +1,8 @@
 Snd change log
 
 
+  2-Jan:     removed the various sorting indices (sort-by-name|size|date|entry), and changed the way the user-defined sorter works.
+
 2006 ----------------------------------------------------------------
 
   26-Dec:    help-snd-fm.pd and pd-fm.scm thanks to Kjetil.

@@ -458,7 +458,7 @@ def finish_snd_test
   $overall_start_time.stop
   Snd.regions.apply(:forget_region)
   Snd.tracks.apply(:free_track)
-  set_view_files_sort(Sort_files_by_name)
+  set_view_files_sort(0)
   clear_sincs
   stop_playing
   reset_almost_all_hooks
@@ -1024,10 +1024,6 @@ def test00
       [:Show_x_axis, 2],
       [:Show_all_axes_unlabelled, 3],
       [:Show_x_axis_unlabelled, 4],
-      [:Sort_files_by_name, 0],
-      [:Sort_files_by_size, 2],
-      [:Sort_files_by_date, 1],
-      [:Sort_files_by_entry, 3],
       # sndlib constants
       [:Mus_unsupported, 0],
       [:Mus_next, 1],
@@ -1121,7 +1117,7 @@ def test00
       [:region_graph_style, Graph_lines],
       [:ask_before_overwrite, false],
       [:audio_output_device, 0],
-      [:view_files_sort, Sort_files_by_name],
+      [:view_files_sort, 0],
       [:auto_resize, true],
       [:auto_update, false],
       [:channel_style, 1],
@@ -23200,8 +23196,8 @@ def test11
     selected_file = false
     if fneq(vfamp, 1.0) then snd_display("vf amp: %s", vfamp) end
     if fneq(vfs, 1.0) then snd_display("vf speed: %s", vfs) end
-    if vfsort != Sort_files_by_name then snd_display("vf sort: %s", vfsort) end
-    if vfsort1 != Sort_files_by_name then snd_display("vf sort(d): %s", vfsort1) end
+    if vfsort != 0 then snd_display("vf sort: %s", vfsort) end
+    if vfsort1 != 0 then snd_display("vf sort(d): %s", vfsort1) end
     if vfe != [0.0, 1.0, 1.0, 1.0] then snd_display("vf amp env: %s", vfe) end
     unless array?(vffiles) then snd_display("vf files: %s", vffiles) end
     unless array?(vfsel) or vfsel.nil? then snd_display("vf selected files: %s", vfsel.inspect) end
@@ -23216,18 +23212,18 @@ def test11
     if (res = view_files_speed_style(dialog)) != Speed_control_as_ratio
       snd_display("vf speed_style set: %s", res)
     end
-    set_view_files_sort(dialog, Sort_files_by_size)
-    if (res = view_files_sort) != Sort_files_by_name
+    set_view_files_sort(dialog, 2)
+    if (res = view_files_sort) != 0
       snd_display("vf global sort after local set: %s", res)
     end
-    if (res = view_files_sort(dialog)) != Sort_files_by_size
+    if (res = view_files_sort(dialog)) != 2
       snd_display("vf local sort after local set: %s", res)
     end
-    set_view_files_sort(Sort_files_by_date)
-    if (res = view_files_sort) != Sort_files_by_date
+    set_view_files_sort(4)
+    if (res = view_files_sort) != 4
       snd_display("vf global sort after global set: %s", res)
     end
-    if (res = view_files_sort(dialog)) != Sort_files_by_size
+    if (res = view_files_sort(dialog)) != 2
       snd_display("vf local sort after global set: %s", res)
     end
     set_view_files_files(dialog, ["oboe.snd", "1a.snd", "pistol.snd", "storm.snd"])

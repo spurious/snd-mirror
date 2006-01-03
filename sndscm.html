@@ -1926,7 +1926,7 @@ The <i>func</i> is passed one argument, the sound file name.
 <table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (for-each-sound-file
   (lambda (n) 
-    (if (&gt; (<a class=quiet href="extsnd.html#soundduration">mus-sound-duration</a> n) 10.0) 
+    (if (&gt; (<a class=quiet href="extsnd.html#mussoundduration">mus-sound-duration</a> n) 10.0) 
       (<a class=quiet href="extsnd.html#sndprint">snd-print</a> n)))
   (<a class=quiet href="extsnd.html#soundfilesindirectory"><em class=red>sound-files-in-directory</em></a> "."))
 </pre></td></tr></table>
@@ -2851,7 +2851,7 @@ just for fun.
 convolution the infinitely slow way is <b>poly*</b>:
 </p>
 <pre>
-(vct->channel (poly* (channel-&gt;vct 0 (frames)) (vct 2.0)))
+(vct-&gt;channel (poly* (channel-&gt;vct 0 (frames)) (vct 2.0)))
 </pre>
 <br>
 

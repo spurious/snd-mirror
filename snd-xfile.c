@@ -18,12 +18,13 @@
  *          -> src is interrupted apparently and file open completes
  *       or similarly, stops at "ok", starts src, clicks ok?
  * PERHAPS: audio:settings for display, perhaps reset -- as opposed to using the recorder
- * TODO: add|delete-file-filter, file-filters tied to all file dialogs (panel of radio buttons where just sounds is now)
- *       the sorters could be handled similarly -- a panel of radio buttons with name chosen by default
- *       would need local versions of the sort_choice variable -- use default searcher for all choices
- *    handle these as popups, also recent file list, higher level dir list, etc
+ * TODO: add|delete-file-filter, file-filters|sorters tied to all file dialogs (via popup)
  * TODO: check just-sounds more carefully in snd-test
  */
+
+
+#define FSB_BOX(Dialog, Child) XmFileSelectionBoxGetChild(Dialog, Child)
+#define MSG_BOX(Dialog, Child) XmMessageBoxGetChild(Dialog, Child)
 
 
 /* ---------------- open/mix/insert/save-as dialogs ---------------- */
@@ -36,26 +37,28 @@ static void color_file_selection_box(Widget w)
     {
       Widget wtmp;
       map_over_children(w, set_main_color_of_widget, NULL);
-      XtVaSetValues(XmFileSelectionBoxGetChild(w, XmDIALOG_DIR_LIST), 
+      XtVaSetValues(FSB_BOX(w, XmDIALOG_DIR_LIST), 
 		    XmNbackground, ss->sgx->white, 
 		    XmNforeground, ss->sgx->black, 
 		    NULL);
-      XtVaSetValues(XmFileSelectionBoxGetChild(w, XmDIALOG_LIST), 
+      XtVaSetValues(FSB_BOX(w, XmDIALOG_LIST), 
 		    XmNbackground, ss->sgx->white, 
 		    XmNforeground, ss->sgx->black, 
 		    NULL);
 
-      XtVaSetValues(XmFileSelectionBoxGetChild(w, XmDIALOG_CANCEL_BUTTON), XmNarmColor,   ss->sgx->pushed_button_color, NULL);
-      XtVaSetValues(XmFileSelectionBoxGetChild(w, XmDIALOG_HELP_BUTTON),   XmNarmColor,   ss->sgx->pushed_button_color, NULL);
-      XtVaSetValues(XmFileSelectionBoxGetChild(w, XmDIALOG_OK_BUTTON),     XmNarmColor,   ss->sgx->pushed_button_color, NULL);
-      XtVaSetValues(XmFileSelectionBoxGetChild(w, XmDIALOG_APPLY_BUTTON),  XmNarmColor,   ss->sgx->pushed_button_color, NULL);
-      XtVaSetValues(XmFileSelectionBoxGetChild(w, XmDIALOG_CANCEL_BUTTON), XmNbackground, ss->sgx->quit_button_color,   NULL);
-      XtVaSetValues(XmFileSelectionBoxGetChild(w, XmDIALOG_HELP_BUTTON),   XmNbackground, ss->sgx->help_button_color,   NULL);
-      XtVaSetValues(XmFileSelectionBoxGetChild(w, XmDIALOG_OK_BUTTON),     XmNbackground, ss->sgx->doit_button_color,   NULL);
-      XtVaSetValues(XmFileSelectionBoxGetChild(w, XmDIALOG_APPLY_BUTTON),  XmNbackground, ss->sgx->doit_button_color,   NULL);
-      /* "Filter" button strikes me as useless, but it needs to exist or <cr> in the filter text widget activates "Open" */
+      XtVaSetValues(FSB_BOX(w, XmDIALOG_CANCEL_BUTTON), XmNarmColor,   ss->sgx->pushed_button_color, NULL);
+      XtVaSetValues(FSB_BOX(w, XmDIALOG_HELP_BUTTON),   XmNarmColor,   ss->sgx->pushed_button_color, NULL);
+      XtVaSetValues(FSB_BOX(w, XmDIALOG_OK_BUTTON),     XmNarmColor,   ss->sgx->pushed_button_color, NULL);
+      XtVaSetValues(FSB_BOX(w, XmDIALOG_CANCEL_BUTTON), XmNbackground, ss->sgx->quit_button_color,   NULL);
+      XtVaSetValues(FSB_BOX(w, XmDIALOG_HELP_BUTTON),   XmNbackground, ss->sgx->help_button_color,   NULL);
+      XtVaSetValues(FSB_BOX(w, XmDIALOG_OK_BUTTON),     XmNbackground, ss->sgx->doit_button_color,   NULL);
 
-      wtmp = XmFileSelectionBoxGetChild(w, XmDIALOG_TEXT);
+      XtVaSetValues(FSB_BOX(w, XmDIALOG_APPLY_BUTTON),  XmNarmColor,   ss->sgx->pushed_button_color, NULL);
+      XtVaSetValues(FSB_BOX(w, XmDIALOG_APPLY_BUTTON),  XmNbackground, ss->sgx->doit_button_color,   NULL);
+      /* "Filter" (Apply) button strikes me as useless, but it needs to exist or <cr> in the filter text widget activates "Open" */
+      /*    I guess it keeps the dialog as a whole from being too narrow... */
+
+      wtmp = FSB_BOX(w, XmDIALOG_TEXT);
       if (wtmp)
 	{
 	  XtVaSetValues(wtmp,     XmNhighlightThickness,  1,                          NULL);
@@ -65,7 +68,7 @@ static void color_file_selection_box(Widget w)
 	  XtAddEventHandler(wtmp, LeaveWindowMask, false, mouse_leave_text_callback,  NULL);
 	}
 
-      wtmp = XmFileSelectionBoxGetChild(w, XmDIALOG_FILTER_TEXT);	
+      wtmp = FSB_BOX(w, XmDIALOG_FILTER_TEXT);	
       if (wtmp)
 	{
 	  XtVaSetValues(wtmp,     XmNhighlightThickness,  1,                          NULL);
@@ -77,8 +80,29 @@ static void color_file_selection_box(Widget w)
     }
 }
 
+static void force_directory_reread(Widget dialog)
+{
+  /* force update, but make sure the filename is not reset to its (dumb) default */
+  XmString dirmask;
+  Widget name_field;
+  char *filename = NULL;
+  ASSERT_WIDGET_TYPE(XmIsFileSelectionBox(dialog), dialog);
+  name_field = FSB_BOX(dialog, XmDIALOG_TEXT);
+  filename = XmTextGetString(name_field);
+  XtVaGetValues(dialog, XmNdirMask, &dirmask, NULL);
+  XmFileSelectionDoSearch(dialog, dirmask);
+  XmStringFree(dirmask);
+  XmTextSetString(name_field, filename);
+  if (filename) 
+    {
+      XmTextSetCursorPosition(name_field, snd_strlen(filename));
+      XtFree(filename);
+    }
+}
 
-/* -------- filename lists -------- */
+
+
+/* -------- popups, filename lists -------- */
 
 #define FILENAME_LIST_SIZE 16
 
@@ -119,8 +143,350 @@ static char **make_filename_list(void)
   return((char **)CALLOC(FILENAME_LIST_SIZE, sizeof(char *)));
 }
 
+typedef struct file_popup_info {
+  Widget dialog;
+  Widget file_text_popup, file_list_popup, file_dir_popup, file_filter_popup, file_info_popup;
+  Widget file_text_popup_label, file_filter_popup_label, file_dir_popup_label, file_list_popup_label, file_info_popup_label;
 
-/* -------- just-sounds file list handlers -------- */
+  /* text:    history of previous choices,
+   * list:    sort and filter choices
+   * dir:     higher level dir choices
+   * filter:  history of previous choices
+   * info:    play?, sort, filter
+   */
+
+  char **file_text_names, **file_filter_names;
+  Widget *file_text_items, *file_filter_items, *file_dir_items, *file_info_items;
+} file_popup_info;
+
+/* file popup */
+static void file_text_item_activate_callback(Widget w, XtPointer context, XtPointer info)
+{
+  file_popup_info *fd = (file_popup_info *)context;
+  char *filename;
+  filename = get_label(w);
+  XmTextFieldSetString(FSB_BOX(fd->dialog, XmDIALOG_TEXT), filename);
+  if (filename) XtFree(filename);
+}
+
+#define FILE_TEXT_POPUP_LABEL "previous files"
+
+static void file_text_popup_callback(Widget w, XtPointer context, XtPointer info)
+{
+  file_popup_info *fd = (file_popup_info *)context;
+  XmPopupHandlerCallbackStruct *cb = (XmPopupHandlerCallbackStruct *)info;
+  XEvent *e;
+  e = cb->event;
+  if (e->type == ButtonPress)
+    {
+      /* position menu to match current text widget, show previous choices, if any else "[no previous choices]" */
+      /*     XmMenuPosition(popup_menu, event) happens automatically */
+      /* should max len be user-var? history-length? (replace minibuffer-history-length?) */
+
+      char *current_filename;
+      int i, filenames_to_display = 0;
+
+      if (fd->file_text_items == NULL)
+	{
+	  int n = 0;
+	  Arg args[12];
+	  fd->file_text_items = (Widget *)CALLOC(FILENAME_LIST_SIZE, sizeof(Widget));
+	  if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->lighter_blue); n++;}
+	  for (i = 0; i < FILENAME_LIST_SIZE; i++)
+	    {
+	      fd->file_text_items[i] = XtCreateWidget("", xmPushButtonWidgetClass, fd->file_text_popup, args, n);
+	      XtAddCallback(fd->file_text_items[i], XmNactivateCallback, file_text_item_activate_callback, (void *)fd);
+	    }
+	}
+
+      current_filename = XmTextFieldGetString(FSB_BOX(fd->dialog, XmDIALOG_TEXT)); 
+      /* w is probably ok here (assumes only text triggers this) */
+
+      for (i = 0; i < FILENAME_LIST_SIZE; i++)
+	if ((fd->file_text_names[i]) &&
+	    (mus_file_probe(fd->file_text_names[i])) &&
+	    ((current_filename == NULL) || (strcmp(fd->file_text_names[i], current_filename) != 0)))
+	  {
+	    set_label(fd->file_text_items[filenames_to_display], fd->file_text_names[i]);
+	    XtManageChild(fd->file_text_items[filenames_to_display]);
+	    filenames_to_display++;
+	  }
+
+      for (i = filenames_to_display; i < FILENAME_LIST_SIZE; i++)
+	if ((fd->file_text_items[i]) &&
+	    (XtIsManaged(fd->file_text_items[i])))
+	  XtUnmanageChild(fd->file_text_items[i]);
+      XtFree(current_filename);
+      /*
+      if (filenames_to_display == 0)
+	set_label(fd->file_text_popup_label, "no " FILE_TEXT_POPUP_LABEL);
+      else set_label(fd->file_text_popup_label, FILE_TEXT_POPUP_LABEL);
+      */
+      cb->menuToPost = fd->file_text_popup;
+    }
+}
+
+/* filter popup */
+static void file_filter_text_activate_callback(Widget w, XtPointer context, XtPointer info)
+{
+  file_popup_info *fd = (file_popup_info *)context;
+  char *filter;
+  filter = XmTextFieldGetString(w);
+  if (filter)
+    {
+      remember_filename(filter, fd->file_filter_names);
+      XtFree(filter);
+    }
+}
+
+static void file_filter_item_activate_callback(Widget w, XtPointer context, XtPointer info)
+{
+  file_popup_info *fd = (file_popup_info *)context;
+  Widget text;
+  XmPushButtonCallbackStruct *cb = (XmPushButtonCallbackStruct *)info;
+  char *filtername;
+  filtername = get_label(w);
+  text = FSB_BOX(fd->dialog, XmDIALOG_FILTER_TEXT);
+  XmTextFieldSetString(text, filtername);
+  goto_window(text);
+  XtCallActionProc(text, "activate", cb->event, NULL, 0);
+  if (filtername) XtFree(filtername);
+}
+
+#define FILE_FILTER_POPUP_LABEL "previous filters"
+
+static void file_filter_popup_callback(Widget w, XtPointer context, XtPointer info)
+{
+  file_popup_info *fd = (file_popup_info *)context;
+  XmPopupHandlerCallbackStruct *cb = (XmPopupHandlerCallbackStruct *)info;
+  XEvent *e;
+  e = cb->event;
+  if (e->type == ButtonPress)
+    {
+      char *current_filtername;
+      int i, filternames_to_display = 0;
+
+      if (fd->file_filter_items == NULL)
+	{
+	  int n = 0;
+	  Arg args[12];
+	  fd->file_filter_items = (Widget *)CALLOC(FILENAME_LIST_SIZE, sizeof(Widget));
+	  if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->lighter_blue); n++;}
+	  for (i = 0; i < FILENAME_LIST_SIZE; i++)
+	    {
+	      fd->file_filter_items[i] = XtCreateWidget("", xmPushButtonWidgetClass, fd->file_filter_popup, args, n);
+	      XtAddCallback(fd->file_filter_items[i], XmNactivateCallback, file_filter_item_activate_callback, (void *)fd);
+	    }
+	}
+
+      current_filtername = XmTextFieldGetString(FSB_BOX(fd->dialog, XmDIALOG_FILTER_TEXT)); 
+
+      for (i = 0; i < FILENAME_LIST_SIZE; i++)
+	if ((fd->file_filter_names[i]) &&
+	    ((current_filtername == NULL) || (strcmp(fd->file_filter_names[i], current_filtername) != 0)))
+	  {
+	    set_label(fd->file_filter_items[filternames_to_display], fd->file_filter_names[i]);
+	    XtManageChild(fd->file_filter_items[filternames_to_display]);
+	    filternames_to_display++;
+	  }
+
+      for (i = filternames_to_display; i < FILENAME_LIST_SIZE; i++)
+	if ((fd->file_filter_items[i]) &&
+	    (XtIsManaged(fd->file_filter_items[i])))
+	  XtUnmanageChild(fd->file_filter_items[i]);
+      XtFree(current_filtername);
+      /*
+      if (filternames_to_display == 0)
+	set_label(fd->file_filter_popup_label, "no " FILE_FILTER_POPUP_LABEL);
+      else set_label(fd->file_filter_popup_label, FILE_FILTER_POPUP_LABEL);
+      */
+      cb->menuToPost = fd->file_filter_popup;
+    }
+}
+
+/* dir list popup */
+
+static void file_dir_item_activate_callback(Widget w, XtPointer context, XtPointer info)
+{
+  file_popup_info *fd = (file_popup_info *)context;
+  XmPushButtonCallbackStruct *cb = (XmPushButtonCallbackStruct *)info;
+  char *name, *filter;
+  Widget text;
+  name = get_label(w);
+  filter = mus_format("%s/*", name);
+  text = FSB_BOX(fd->dialog, XmDIALOG_FILTER_TEXT);
+  XmTextFieldSetString(text, filter);
+  goto_window(text);
+  XtCallActionProc(text, "activate", cb->event, NULL, 0);
+  if (name) XtFree(name);
+  FREE(filter);
+}
+
+#define FILE_DIR_POPUP_LABEL "dirs"
+
+/* dir_items, but strs generated on the fly, current in filter text */
+
+static void file_dir_popup_callback(Widget w, XtPointer context, XtPointer info)
+{
+  file_popup_info *fd = (file_popup_info *)context;
+  XmPopupHandlerCallbackStruct *cb = (XmPopupHandlerCallbackStruct *)info;
+  XEvent *e;
+  e = cb->event;
+  if (e->type == ButtonPress)
+    {
+      char *current_filename = NULL;
+      int i, dirs_to_display = 0, len = 0;
+
+      if (fd->file_dir_items == NULL)
+	{
+	  int n = 0;
+	  Arg args[12];
+	  fd->file_dir_items = (Widget *)CALLOC(FILENAME_LIST_SIZE, sizeof(Widget));
+	  if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->lighter_blue); n++;}
+	  for (i = 0; i < FILENAME_LIST_SIZE; i++)
+	    {
+	      fd->file_dir_items[i] = XtCreateWidget("", xmPushButtonWidgetClass, fd->file_dir_popup, args, n);
+	      XtAddCallback(fd->file_dir_items[i], XmNactivateCallback, file_dir_item_activate_callback, (void *)fd);
+	    }
+	}
+
+      {
+	XmStringTable items;
+	int num_dirs;
+	XtVaGetValues(fd->dialog, XmNdirListItems, &items, XmNdirListItemCount, &num_dirs, NULL);
+	if (num_dirs > 0)
+	  current_filename = (char *)XmStringUnparse(items[0], NULL, XmCHARSET_TEXT, XmCHARSET_TEXT, NULL, 0, XmOUTPUT_ALL);
+      }
+      if (!current_filename)
+	{
+	  current_filename = XmTextFieldGetString(FSB_BOX(fd->dialog, XmDIALOG_FILTER_TEXT));
+	  if (!current_filename) 
+	    current_filename = XmTextFieldGetString(FSB_BOX(fd->dialog, XmDIALOG_TEXT));
+	}
+
+      if (current_filename)
+	{
+	  len = strlen(current_filename);
+	  for (i = 0; i < len; i++)
+	    if (current_filename[i] == '/')
+	      dirs_to_display++;
+
+	  if (dirs_to_display > FILENAME_LIST_SIZE)
+	    dirs_to_display = FILENAME_LIST_SIZE;
+
+	  if (dirs_to_display > 0)
+	    {
+	      char **dirs;
+	      int j = 1;
+	      dirs = (char **)CALLOC(dirs_to_display, sizeof(char *));
+	      dirs[0] = strdup("/");
+	      for (i = 1; i < len; i++)
+		if (current_filename[i] == '/')
+		  {
+		    dirs[j] = (char *)calloc(i + 1, sizeof(char));
+		    strncpy(dirs[j], (const char *)current_filename, i);
+		    j++;
+		  }
+
+	      for (i = 0; i < dirs_to_display; i++)
+		{
+		  set_label(fd->file_dir_items[i], dirs[i]);
+		  XtManageChild(fd->file_dir_items[i]);
+		  free(dirs[i]);
+		}
+	      FREE(dirs);
+	    }
+	}
+
+      for (i = dirs_to_display; i < FILENAME_LIST_SIZE; i++)
+	if ((fd->file_dir_items[i]) &&
+	    (XtIsManaged(fd->file_dir_items[i])))
+	  XtUnmanageChild(fd->file_dir_items[i]);
+      XtFree(current_filename);
+
+      cb->menuToPost = fd->file_dir_popup;
+    }
+}
+
+static void add_file_popups(file_popup_info *fd)
+{
+  int n;
+  Arg args[20];
+
+  /* from lib/Xm.RCPopup.c:
+   * When a user creates a new popup menu then we will install a particular
+   * event handler on the menu's widget parent. Along with this we install
+   * a grab on the button specified in XmNmenuPost or XmNwhichButton.   [XmNmenuPost is a string = translation table syntax, <Btn3Down. is default]
+   *                                                                    [XmNwhichButton is obsolete]
+   * The posting algorithm is as follows: 
+   * 
+   * 1. On receipt of a posting event, the handler will search the child
+   * list for a candidate widget or gadget, and track the most specific
+   * popup menu available (these can be found in the popup list). The
+   * criteria for a match includes matching the XmNmenuPost information.
+   * 
+   * 2. Matching criteria include: 
+   * 
+   *    * The menu must have XmNpopupEnabled set to either
+   *      XmPOPUP_AUTOMATIC or XmPOPUP_AUTOMATIC_RECURSIVE.  
+   * 
+   *    * The popup menu is chosen according to creation order. If there is
+   *      more than one, the first correct match is chosen.  
+   * 
+   *    * If the popup menu is found in a parent of the target widget, and
+   *      the popup menu must also have XmNpopupEnabled set to 
+   *      XmPOPUP_AUTOMATIC_RECURSIVE to match.                         [sigh -- no one actually reads comments...]
+   * 
+   * 3. Once a selection is made, if the menu's parent widget has a
+   * popupHandlerCallback, it is invoked. The callback allows the user to
+   * determine if a more specific menu is necessary, such as would be the
+   * case in a graphical manipulation environment, and includes all the
+   * necessary information.  
+   * 
+   */
+
+  n = 0;
+  if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;}
+  XtSetArg(args[n], XmNpopupEnabled, XmPOPUP_AUTOMATIC); n++;
+
+  /* file text */
+  /* TODO: could these be triggered via mouse locs from the main dialog? */
+  XtAddCallback(FSB_BOX(fd->dialog, XmDIALOG_TEXT), XmNpopupHandlerCallback, file_text_popup_callback, (void *)fd);
+  fd->file_text_popup = XmCreatePopupMenu(FSB_BOX(fd->dialog, XmDIALOG_TEXT), "file-text-popup", args, n);
+  fd->file_text_names = make_filename_list();
+  fd->file_text_popup_label = XtCreateManagedWidget(FILE_TEXT_POPUP_LABEL, xmLabelWidgetClass, fd->file_text_popup, args, n);
+  XtCreateManagedWidget("sep", xmSeparatorWidgetClass, fd->file_text_popup, args, n);
+
+  /* filter text */
+  XtAddCallback(FSB_BOX(fd->dialog, XmDIALOG_FILTER_TEXT), XmNpopupHandlerCallback, file_filter_popup_callback, (void *)fd);
+  fd->file_filter_popup = XmCreatePopupMenu(FSB_BOX(fd->dialog, XmDIALOG_FILTER_TEXT), "file-filter-popup", args, n);
+  fd->file_filter_names = make_filename_list();
+  fd->file_filter_popup_label = XtCreateManagedWidget(FILE_FILTER_POPUP_LABEL, xmLabelWidgetClass, fd->file_filter_popup, args, n);
+  XtCreateManagedWidget("sep", xmSeparatorWidgetClass, fd->file_filter_popup, args, n);
+  {
+    char *startup_filter;
+    startup_filter = XmTextFieldGetString(FSB_BOX(fd->dialog, XmDIALOG_FILTER_TEXT));
+    if (startup_filter) 
+      {
+	remember_filename(startup_filter, fd->file_filter_names);
+	XtFree(startup_filter);
+      }
+  }
+  XtAddCallback(FSB_BOX(fd->dialog, XmDIALOG_FILTER_TEXT), XmNactivateCallback, file_filter_text_activate_callback, (void *)fd);
+
+  /* file directory */
+  XtAddCallback(FSB_BOX(fd->dialog, XmDIALOG_DIR_LIST), XmNpopupHandlerCallback, file_dir_popup_callback, (void *)fd);
+  fd->file_dir_popup = XmCreatePopupMenu(FSB_BOX(fd->dialog, XmDIALOG_DIR_LIST), "file-dir-popup", args, n);
+  fd->file_dir_popup_label = XtCreateManagedWidget(FILE_DIR_POPUP_LABEL, xmLabelWidgetClass, fd->file_dir_popup, args, n);
+  XtCreateManagedWidget("sep", xmSeparatorWidgetClass, fd->file_dir_popup, args, n);
+  
+
+  /* file_list_popup, file_info_popup */
+}
+
+
+
+/* ---------------- just-sounds (file-filters) ---------------- */
 
 typedef struct file_pattern_info {
   /* just-sounds file lists */
@@ -134,6 +500,14 @@ typedef struct file_pattern_info {
   char *last_pattern, *full_pathname;
   fam_info *directory_watcher;
 } file_pattern_info;
+
+static void file_change_directory_callback(Widget w, XtPointer context, XtPointer info) 
+{
+  file_pattern_info *fp = (file_pattern_info *)context;
+  fp->reread_directory = true;
+  force_directory_reread(fp->dialog);
+  fp->reread_directory = false;
+}
 
 #if HAVE_FAM
 static void watch_current_directory_contents(struct fam_info *fp, FAMEvent *fe)
@@ -266,17 +640,6 @@ static void sound_file_search(Widget dialog, XmFileSelectionBoxCallbackStruct *d
 	{
 	  qsort((void *)(cdp->files), cdp->len, sizeof(char *), string_compare);
 	  names = (XmString *)CALLOC(cdp->len, sizeof(XmString));
-
-#ifdef MUS_SGI
-	  /* this is true only if the SGI "enhanced FSB" is in use, I hope */
-	  if (!(XtNameToWidget(dialog, "Text"))) 
-	    fp->save_dir = fp->full_pathname;
-	  /* can't use SgDIALOG_FINDER here as suggested by SGI "Integration Guide" because
-	   * XmFileSelectionBoxGetChild(dialog, SgDIALOG_FINDER)) generates an error if
-	   * snd was loaded without -lSgm.
-	   */
-#endif
-
 	  for (i = 0; i < cdp->len; i++) 
 	    {
 	      char *sp, *sn;
@@ -304,28 +667,6 @@ static void sound_file_search(Widget dialog, XmFileSelectionBoxCallbackStruct *d
   if (our_dir) XtFree(our_dir);
   if (pattern) XtFree(pattern);
   fp->resort_file_list = false;
-}
-
-static void force_directory_reread(Widget dialog)
-{
-  /* force update, but make sure the filename is not reset to its (dumb) default */
-  XmString dirmask;
-  Widget name_field;
-  char *filename = NULL;
-  ASSERT_WIDGET_TYPE(XmIsFileSelectionBox(dialog), dialog);
-  name_field = XtNameToWidget(dialog, "Text");
-  if (!name_field) 
-    name_field = XmFileSelectionBoxGetChild(dialog, XmDIALOG_TEXT);
-  filename = XmTextGetString(name_field);
-  XtVaGetValues(dialog, XmNdirMask, &dirmask, NULL);
-  XmFileSelectionDoSearch(dialog, dirmask);
-  XmStringFree(dirmask);
-  XmTextSetString(name_field, filename);
-  if (filename) 
-    {
-      XmTextSetCursorPosition(name_field, snd_strlen(filename));
-      XtFree(filename);
-    }
 }
 
 static void just_sounds_callback(Widget w, XtPointer context, XtPointer info) 
@@ -388,9 +729,7 @@ static void play_selected_callback(Widget w, XtPointer context, XtPointer info)
       if ((dp->player) && 
 	  (dp->player->playing)) 
 	stop_playing_sound(dp->player, PLAY_BUTTON_UNSET);
-      wtmp = XtNameToWidget(dp->dialog, "Text");
-      if (!wtmp) 
-	wtmp = XmFileSelectionBoxGetChild(dp->dialog, XmDIALOG_TEXT);
+      wtmp = FSB_BOX(dp->dialog, XmDIALOG_TEXT);
       filename = XmTextGetString(wtmp);
       if (filename)
 	{
@@ -410,28 +749,24 @@ static void play_selected_callback(Widget w, XtPointer context, XtPointer info)
 static void add_play_and_just_sounds_buttons(Widget dialog, Widget parent, file_pattern_info *fp, dialog_play_info *dp)
 {
   Widget rc;
-  rc = XtVaCreateManagedWidget("filebuttons-rc", 
-			       xmRowColumnWidgetClass, parent,
-			       XmNorientation, XmHORIZONTAL,
-			       NULL);
-  fp->just_sounds_button = XtVaCreateManagedWidget(_("sound files only"), xmToggleButtonWidgetClass, rc,
-						   XmNset, just_sounds(ss),
-						   XmNalignment, XmALIGNMENT_BEGINNING,
-						   NULL);
-  dp->play_button = XtVaCreateWidget(_("play selected sound"), xmToggleButtonWidgetClass, rc,
-				     XmNalignment, XmALIGNMENT_END,
-				     NULL);
+  int n;
+  Arg args[12];
+
+  n = 0;
+  XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
+  rc = XtCreateManagedWidget("filebuttons-rc", xmRowColumnWidgetClass, parent, args, n);
+
+  n = 0;
+  XtSetArg(args[n], XmNset, just_sounds(ss)); n++;
+  XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;
+  fp->just_sounds_button = XtCreateManagedWidget(_("sound files only"), xmToggleButtonWidgetClass, rc, args, n);
+
+  n = 0;
+  XtSetArg(args[n], XmNalignment, XmALIGNMENT_END); n++;
+  dp->play_button = XtCreateWidget(_("play selected sound"), xmToggleButtonWidgetClass, rc, args, n);
 
   XtAddCallback(dp->play_button, XmNvalueChangedCallback, play_selected_callback, (XtPointer)dp);
   XtAddCallback(fp->just_sounds_button, XmNvalueChangedCallback, just_sounds_callback, (XtPointer)fp);
-}
-
-static void file_change_directory_callback(Widget w, XtPointer context, XtPointer info) 
-{
-  file_pattern_info *fp = (file_pattern_info *)context;
-  fp->reread_directory = true;
-  force_directory_reread(fp->dialog);
-  fp->reread_directory = false;
 }
 
 
@@ -449,20 +784,8 @@ typedef struct file_dialog_info {
   char *unsound_dirname, *unsound_filename;
   fam_info *info_filename_watcher;     /* watch for change in selected file and repost info */
   char *info_filename;
-  Widget file_text_popup, file_list_popup, file_dir_popup, file_filter_popup, file_info_popup;
-  Widget file_text_popup_label, file_filter_popup_label, file_dir_popup_label, file_list_popup_label, file_info_popup_label;
-
-  /* text:    history of previous choices,
-   * list:    sort and filter choices
-   * dir:     higher level dir choices
-   * filter:  history of previous choices
-   * info:    play, sort, filter
-   */
-
-  char **file_text_names, **file_filter_names;
-  Widget *file_text_items, *file_filter_items, *file_dir_items, *file_info_items;
+  file_popup_info *fpop;
 } file_dialog_info;
-
 
 static void open_file_help_callback (Widget w, XtPointer context, XtPointer info) 
 {
@@ -607,7 +930,7 @@ static void watch_filename_change(Widget w, XtPointer context, XtPointer info)
       int num_files = 0, i, pos = -1, l, u;
       char *file_list_file = NULL;
 
-      file_list = XmFileSelectionBoxGetChild(fd->dialog, XmDIALOG_LIST);
+      file_list = FSB_BOX(fd->dialog, XmDIALOG_LIST);
       XtVaGetValues(fd->dialog,
 		    XmNfileListItemCount, &num_files,
 		    XmNfileListItems, &files, /* do not free */
@@ -652,253 +975,24 @@ static void unfocus_filename_text_callback(Widget w, XtPointer context, XtPointe
   XtRemoveCallback(w, XmNvalueChangedCallback, watch_filename_change, context);
 }
 
-
-/* ---------------- popup menus ---------------- */
-
-/* file popup */
-static void file_text_item_activate_callback(Widget w, XtPointer context, XtPointer info)
+static bool file_is_directory(Widget dialog)
 {
-  file_dialog_info *fd = (file_dialog_info *)context;
-  char *filename;
-  filename = get_label(w);
-  XmTextFieldSetString(XmFileSelectionBoxGetChild(fd->dialog, XmDIALOG_TEXT), filename);
+  Widget txt;
+  char *filename = NULL;
+  bool is_dir;
+  txt = FSB_BOX(dialog, XmDIALOG_TEXT);
+  filename = XmTextGetString(txt);
+  is_dir = ((!filename) || (directory_p(filename)));
   if (filename) XtFree(filename);
+  return(is_dir);
 }
 
-#define FILE_TEXT_POPUP_LABEL "previous files"
-
-static void file_text_popup_callback(Widget w, XtPointer context, XtPointer info)
+static void reflect_text_in_open_button(Widget w, XtPointer context, XtPointer info)
 {
   file_dialog_info *fd = (file_dialog_info *)context;
-  XmPopupHandlerCallbackStruct *cb = (XmPopupHandlerCallbackStruct *)info;
-  XEvent *e;
-  e = cb->event;
-  if (e->type == ButtonPress)
-    {
-      /* position menu to match current text widget, show previous choices, if any else "[no previous choices]" */
-      /*     XmMenuPosition(popup_menu, event) happens automatically */
-      /* should max len be user-var? history-length? (replace minibuffer-history-length?) */
-
-      char *current_filename;
-      int i, filenames_to_display = 0;
-
-      if (fd->file_text_items == NULL)
-	{
-	  int n = 0;
-	  Arg args[12];
-	  fd->file_text_items = (Widget *)CALLOC(FILENAME_LIST_SIZE, sizeof(Widget));
-	  if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->lighter_blue); n++;}
-	  for (i = 0; i < FILENAME_LIST_SIZE; i++)
-	    {
-	      fd->file_text_items[i] = XtCreateWidget("", xmPushButtonWidgetClass, fd->file_text_popup, args, n);
-	      XtAddCallback(fd->file_text_items[i], XmNactivateCallback, file_text_item_activate_callback, (void *)fd);
-	    }
-	}
-
-      current_filename = XmTextFieldGetString(XmFileSelectionBoxGetChild(fd->dialog, XmDIALOG_TEXT)); 
-      /* w is probably ok here (assumes only text triggers this) */
-
-      for (i = 0; i < FILENAME_LIST_SIZE; i++)
-	if ((fd->file_text_names[i]) &&
-	    (mus_file_probe(fd->file_text_names[i])) &&
-	    ((current_filename == NULL) || (strcmp(fd->file_text_names[i], current_filename) != 0)))
-	  {
-	    set_label(fd->file_text_items[filenames_to_display], fd->file_text_names[i]);
-	    XtManageChild(fd->file_text_items[filenames_to_display]);
-	    filenames_to_display++;
-	  }
-
-      for (i = filenames_to_display; i < FILENAME_LIST_SIZE; i++)
-	if ((fd->file_text_items[i]) &&
-	    (XtIsManaged(fd->file_text_items[i])))
-	  XtUnmanageChild(fd->file_text_items[i]);
-      XtFree(current_filename);
-      /*
-      if (filenames_to_display == 0)
-	set_label(fd->file_text_popup_label, "no " FILE_TEXT_POPUP_LABEL);
-      else set_label(fd->file_text_popup_label, FILE_TEXT_POPUP_LABEL);
-      */
-      cb->menuToPost = fd->file_text_popup;
-    }
+  /* w here is the text widget, not the button */
+  XtSetSensitive(FSB_BOX(fd->dialog, XmDIALOG_OK_BUTTON), (!(file_is_directory(fd->dialog))));
 }
-
-/* filter popup */
-static void file_filter_text_activate_callback(Widget w, XtPointer context, XtPointer info)
-{
-  file_dialog_info *fd = (file_dialog_info *)context;
-  char *filter;
-  filter = XmTextFieldGetString(w);
-  if (filter)
-    {
-      remember_filename(filter, fd->file_filter_names);
-      XtFree(filter);
-    }
-}
-
-static void file_filter_item_activate_callback(Widget w, XtPointer context, XtPointer info)
-{
-  file_dialog_info *fd = (file_dialog_info *)context;
-  XmPushButtonCallbackStruct *cb = (XmPushButtonCallbackStruct *)info;
-  char *filtername;
-  filtername = get_label(w);
-  XmTextFieldSetString(XmFileSelectionBoxGetChild(fd->dialog, XmDIALOG_FILTER_TEXT), filtername);
-  XtCallActionProc(XmFileSelectionBoxGetChild(fd->dialog, XmDIALOG_FILTER_TEXT), "activate", cb->event, NULL, 0);
-  if (filtername) XtFree(filtername);
-}
-
-#define FILE_FILTER_POPUP_LABEL "previous filters"
-
-static void file_filter_popup_callback(Widget w, XtPointer context, XtPointer info)
-{
-  file_dialog_info *fd = (file_dialog_info *)context;
-  XmPopupHandlerCallbackStruct *cb = (XmPopupHandlerCallbackStruct *)info;
-  XEvent *e;
-  e = cb->event;
-  if (e->type == ButtonPress)
-    {
-      char *current_filtername;
-      int i, filternames_to_display = 0;
-
-      if (fd->file_filter_items == NULL)
-	{
-	  int n = 0;
-	  Arg args[12];
-	  fd->file_filter_items = (Widget *)CALLOC(FILENAME_LIST_SIZE, sizeof(Widget));
-	  if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->lighter_blue); n++;}
-	  for (i = 0; i < FILENAME_LIST_SIZE; i++)
-	    {
-	      fd->file_filter_items[i] = XtCreateWidget("", xmPushButtonWidgetClass, fd->file_filter_popup, args, n);
-	      XtAddCallback(fd->file_filter_items[i], XmNactivateCallback, file_filter_item_activate_callback, (void *)fd);
-	    }
-	}
-
-      current_filtername = XmTextFieldGetString(XmFileSelectionBoxGetChild(fd->dialog, XmDIALOG_FILTER_TEXT)); 
-
-      for (i = 0; i < FILENAME_LIST_SIZE; i++)
-	if ((fd->file_filter_names[i]) &&
-	    ((current_filtername == NULL) || (strcmp(fd->file_filter_names[i], current_filtername) != 0)))
-	  {
-	    set_label(fd->file_filter_items[filternames_to_display], fd->file_filter_names[i]);
-	    XtManageChild(fd->file_filter_items[filternames_to_display]);
-	    filternames_to_display++;
-	  }
-
-      for (i = filternames_to_display; i < FILENAME_LIST_SIZE; i++)
-	if ((fd->file_filter_items[i]) &&
-	    (XtIsManaged(fd->file_filter_items[i])))
-	  XtUnmanageChild(fd->file_filter_items[i]);
-      XtFree(current_filtername);
-      /*
-      if (filternames_to_display == 0)
-	set_label(fd->file_filter_popup_label, "no " FILE_FILTER_POPUP_LABEL);
-      else set_label(fd->file_filter_popup_label, FILE_FILTER_POPUP_LABEL);
-      */
-      cb->menuToPost = fd->file_filter_popup;
-    }
-}
-
-/* dir list popup */
-
-static void file_dir_item_activate_callback(Widget w, XtPointer context, XtPointer info)
-{
-  file_dialog_info *fd = (file_dialog_info *)context;
-  XmPushButtonCallbackStruct *cb = (XmPushButtonCallbackStruct *)info;
-  char *name, *filter;
-  name = get_label(w);
-  filter = mus_format("%s/*", name);
-  XmTextFieldSetString(XmFileSelectionBoxGetChild(fd->dialog, XmDIALOG_FILTER_TEXT), filter);
-  XtCallActionProc(XmFileSelectionBoxGetChild(fd->dialog, XmDIALOG_FILTER_TEXT), "activate", cb->event, NULL, 0);
-  if (name) XtFree(name);
-  FREE(filter);
-}
-
-#define FILE_DIR_POPUP_LABEL "dirs"
-
-/* dir_items, but strs generated on the fly, current in filter text */
-
-static void file_dir_popup_callback(Widget w, XtPointer context, XtPointer info)
-{
-  file_dialog_info *fd = (file_dialog_info *)context;
-  XmPopupHandlerCallbackStruct *cb = (XmPopupHandlerCallbackStruct *)info;
-  XEvent *e;
-  e = cb->event;
-  if (e->type == ButtonPress)
-    {
-      char *current_filename = NULL;
-      int i, dirs_to_display = 0, len = 0;
-
-      if (fd->file_dir_items == NULL)
-	{
-	  int n = 0;
-	  Arg args[12];
-	  fd->file_dir_items = (Widget *)CALLOC(FILENAME_LIST_SIZE, sizeof(Widget));
-	  if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->lighter_blue); n++;}
-	  for (i = 0; i < FILENAME_LIST_SIZE; i++)
-	    {
-	      fd->file_dir_items[i] = XtCreateWidget("", xmPushButtonWidgetClass, fd->file_dir_popup, args, n);
-	      XtAddCallback(fd->file_dir_items[i], XmNactivateCallback, file_dir_item_activate_callback, (void *)fd);
-	    }
-	}
-
-      {
-	XmStringTable items;
-	int num_dirs;
-	XtVaGetValues(fd->dialog, XmNdirListItems, &items, XmNdirListItemCount, &num_dirs, NULL);
-	if (num_dirs > 0)
-	  current_filename = (char *)XmStringUnparse(items[0], NULL, XmCHARSET_TEXT, XmCHARSET_TEXT, NULL, 0, XmOUTPUT_ALL);
-      }
-      if (!current_filename)
-	{
-	  current_filename = XmTextFieldGetString(XmFileSelectionBoxGetChild(fd->dialog, XmDIALOG_FILTER_TEXT));
-	  if (!current_filename) 
-	    current_filename = XmTextFieldGetString(XmFileSelectionBoxGetChild(fd->dialog, XmDIALOG_TEXT));
-	}
-
-      if (current_filename)
-	{
-	  len = strlen(current_filename);
-	  for (i = 0; i < len; i++)
-	    if (current_filename[i] == '/')
-	      dirs_to_display++;
-
-	  if (dirs_to_display > FILENAME_LIST_SIZE)
-	    dirs_to_display = FILENAME_LIST_SIZE;
-
-	  if (dirs_to_display > 0)
-	    {
-	      char **dirs;
-	      int j = 1;
-	      dirs = (char **)CALLOC(dirs_to_display, sizeof(char *));
-	      dirs[0] = strdup("/");
-	      for (i = 1; i < len; i++)
-		if (current_filename[i] == '/')
-		  {
-		    dirs[j] = (char *)calloc(i + 1, sizeof(char));
-		    strncpy(dirs[j], (const char *)current_filename, i);
-		    j++;
-		  }
-
-	      for (i = 0; i < dirs_to_display; i++)
-		{
-		  set_label(fd->file_dir_items[i], dirs[i]);
-		  XtManageChild(fd->file_dir_items[i]);
-		  free(dirs[i]);
-		}
-	      FREE(dirs);
-	    }
-	}
-
-      for (i = dirs_to_display; i < FILENAME_LIST_SIZE; i++)
-	if ((fd->file_dir_items[i]) &&
-	    (XtIsManaged(fd->file_dir_items[i])))
-	  XtUnmanageChild(fd->file_dir_items[i]);
-      XtFree(current_filename);
-
-      cb->menuToPost = fd->file_dir_popup;
-    }
-}
-
-
 
 static file_dialog_info *make_file_dialog(bool read_only, char *title, char *select_title, 
 					  XtCallbackProc file_ok_proc, XtCallbackProc file_help_proc)
@@ -919,6 +1013,7 @@ static file_dialog_info *make_file_dialog(bool read_only, char *title, char *sel
   fd->fp->in_just_sounds_update = false;
   fd->dp = (dialog_play_info *)CALLOC(1, sizeof(dialog_play_info));
   fd->file_dialog_read_only = read_only;
+  fd->fpop = (file_popup_info *)CALLOC(1, sizeof(file_popup_info));
   w = MAIN_SHELL(ss);
 
   /* -------- titles -- 'Dismiss' is changed later to 'Cancel' in some cases */
@@ -941,9 +1036,10 @@ static file_dialog_info *make_file_dialog(bool read_only, char *title, char *sel
   fd->dialog = XmCreateFileSelectionDialog(w, title, args, n);
   fd->fp->dialog = fd->dialog;
   fd->dp->dialog = fd->dialog;
+  fd->fpop->dialog = fd->dialog;
 
-  XtUnmanageChild(XmFileSelectionBoxGetChild(fd->dialog, XmDIALOG_DIR_LIST_LABEL)); /* these are obvious */
-  XtUnmanageChild(XmFileSelectionBoxGetChild(fd->dialog, XmDIALOG_LIST_LABEL));
+  XtUnmanageChild(FSB_BOX(fd->dialog, XmDIALOG_DIR_LIST_LABEL)); /* these are obvious */
+  XtUnmanageChild(FSB_BOX(fd->dialog, XmDIALOG_LIST_LABEL));
 
   XmStringFree(s1);
   XmStringFree(s2);
@@ -977,12 +1073,12 @@ static file_dialog_info *make_file_dialog(bool read_only, char *title, char *sel
     }
 
   /* -------- completions */
-  wtmp = XmFileSelectionBoxGetChild(fd->dialog, XmDIALOG_TEXT);
+  wtmp = FSB_BOX(fd->dialog, XmDIALOG_TEXT);
   add_completer_to_textfield(wtmp, add_completer_func(sound_filename_completer, NULL));
   XtAddCallback(wtmp, XmNfocusCallback, focus_filename_text_callback, (XtPointer)fd);
   XtAddCallback(wtmp, XmNlosingFocusCallback, unfocus_filename_text_callback, (XtPointer)fd);
 
-  wtmp = XmFileSelectionBoxGetChild(fd->dialog, XmDIALOG_FILTER_TEXT);
+  wtmp = FSB_BOX(fd->dialog, XmDIALOG_FILTER_TEXT);
   add_completer_to_textfield(wtmp, add_completer_func(filename_completer, NULL));
   XtAddCallback(wtmp, XmNvalueChangedCallback, unpost_if_filter_changed, (XtPointer)fd);
 
@@ -1005,10 +1101,10 @@ static file_dialog_info *make_file_dialog(bool read_only, char *title, char *sel
   XtAddCallback(fd->dialog, XmNokCallback, file_ok_proc, (XtPointer)fd);
   XtAddCallback(fd->dialog, XmNcancelCallback, file_cancel_callback, (XtPointer)(fd->dp));
   XtAddCallback(fd->dialog, XmNhelpCallback, file_help_proc, NULL);
-  XtAddCallback(XmFileSelectionBoxGetChild(fd->dialog, XmDIALOG_LIST), XmNbrowseSelectionCallback, file_dialog_select_callback, (XtPointer)fd);
+  XtAddCallback(FSB_BOX(fd->dialog, XmDIALOG_LIST), XmNbrowseSelectionCallback, file_dialog_select_callback, (XtPointer)fd);
 
   /* -------- single click in directory list */
-  XtAddCallback(XmFileSelectionBoxGetChild(fd->dialog, XmDIALOG_DIR_LIST), XmNbrowseSelectionCallback, file_change_directory_callback, (XtPointer)(fd->fp));
+  XtAddCallback(FSB_BOX(fd->dialog, XmDIALOG_DIR_LIST), XmNbrowseSelectionCallback, file_change_directory_callback, (XtPointer)(fd->fp));
 
   /* -------- the WM 'close' button */
   {
@@ -1018,79 +1114,10 @@ static file_dialog_info *make_file_dialog(bool read_only, char *title, char *sel
   }
 
   /* -------- special popups */
-  /* from lib/Xm.RCPopup.c:
-   * When a user creates a new popup menu then we will install a particular
-   * event handler on the menu's widget parent. Along with this we install
-   * a grab on the button specified in XmNmenuPost or XmNwhichButton.   [XmNmenuPost is a string = translation table syntax, <Btn3Down. is default]
-   *                                                                    [XmNwhichButton is obsolete]
-   * The posting algorithm is as follows: 
-   * 
-   * 1. On receipt of a posting event, the handler will search the child
-   * list for a candidate widget or gadget, and track the most specific
-   * popup menu available (these can be found in the popup list). The
-   * criteria for a match includes matching the XmNmenuPost information.
-   * 
-   * 2. Matching criteria include: 
-   * 
-   *    * The menu must have XmNpopupEnabled set to either
-   *      XmPOPUP_AUTOMATIC or XmPOPUP_AUTOMATIC_RECURSIVE.  
-   * 
-   *    * The popup menu is chosen according to creation order. If there is
-   *      more than one, the first correct match is chosen.  
-   * 
-   *    * If the popup menu is found in a parent of the target widget, and
-   *      the popup menu must also have XmNpopupEnabled set to 
-   *      XmPOPUP_AUTOMATIC_RECURSIVE to match.                         [sigh -- no one actually reads comments...]
-   * 
-   * 3. Once a selection is made, if the menu's parent widget has a
-   * popupHandlerCallback, it is invoked. The callback allows the user to
-   * determine if a more specific menu is necessary, such as would be the
-   * case in a graphical manipulation environment, and includes all the
-   * necessary information.  
-   * 
-   */
+  add_file_popups(fd->fpop);
 
-  /* TODO: both text and filter added to save-as */
-
-  n = 0;
-  if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;}
-  XtSetArg(args[n], XmNpopupEnabled, XmPOPUP_AUTOMATIC); n++;
-
-  /* file text */
-  /* TODO: could these be triggered via mouse locs from the main dialog? */
-  XtAddCallback(XmFileSelectionBoxGetChild(fd->dialog, XmDIALOG_TEXT), XmNpopupHandlerCallback, file_text_popup_callback, (void *)fd);
-  fd->file_text_popup = XmCreatePopupMenu(XmFileSelectionBoxGetChild(fd->dialog, XmDIALOG_TEXT), "file-text-popup", args, n);
-  fd->file_text_names = make_filename_list();
-  fd->file_text_popup_label = XtCreateManagedWidget(FILE_TEXT_POPUP_LABEL, xmLabelWidgetClass, fd->file_text_popup, args, n);
-  XtCreateManagedWidget("sep", xmSeparatorWidgetClass, fd->file_text_popup, args, n);
-
-  /* filter text */
-  XtAddCallback(XmFileSelectionBoxGetChild(fd->dialog, XmDIALOG_FILTER_TEXT), XmNpopupHandlerCallback, file_filter_popup_callback, (void *)fd);
-  fd->file_filter_popup = XmCreatePopupMenu(XmFileSelectionBoxGetChild(fd->dialog, XmDIALOG_FILTER_TEXT), "file-filter-popup", args, n);
-  fd->file_filter_names = make_filename_list();
-  fd->file_filter_popup_label = XtCreateManagedWidget(FILE_FILTER_POPUP_LABEL, xmLabelWidgetClass, fd->file_filter_popup, args, n);
-  XtCreateManagedWidget("sep", xmSeparatorWidgetClass, fd->file_filter_popup, args, n);
-  {
-    char *startup_filter;
-    startup_filter = XmTextFieldGetString(XmFileSelectionBoxGetChild(fd->dialog, XmDIALOG_FILTER_TEXT));
-    if (startup_filter) 
-      {
-	remember_filename(startup_filter, fd->file_filter_names);
-	XtFree(startup_filter);
-      }
-  }
-  XtAddCallback(XmFileSelectionBoxGetChild(fd->dialog, XmDIALOG_FILTER_TEXT), XmNactivateCallback, file_filter_text_activate_callback, (void *)fd);
-
-  /* file directory */
-  XtAddCallback(XmFileSelectionBoxGetChild(fd->dialog, XmDIALOG_DIR_LIST), XmNpopupHandlerCallback, file_dir_popup_callback, (void *)fd);
-  fd->file_dir_popup = XmCreatePopupMenu(XmFileSelectionBoxGetChild(fd->dialog, XmDIALOG_DIR_LIST), "file-dir-popup", args, n);
-  fd->file_dir_popup_label = XtCreateManagedWidget(FILE_DIR_POPUP_LABEL, xmLabelWidgetClass, fd->file_dir_popup, args, n);
-  XtCreateManagedWidget("sep", xmSeparatorWidgetClass, fd->file_dir_popup, args, n);
-  
-
-
-
-  /* file_list_popup, file_info_popup */
+  XtSetSensitive(FSB_BOX(fd->dialog, XmDIALOG_OK_BUTTON), (!(file_is_directory(fd->dialog))));
+  XtAddCallback(FSB_BOX(fd->dialog, XmDIALOG_TEXT), XmNvalueChangedCallback, reflect_text_in_open_button, (void *)fd);
 
   return(fd);
 }
@@ -1122,9 +1149,7 @@ static void unpost_open_modify_error(file_dialog_info *fd)
   Widget dialog_filename_text;
   if (XtIsManaged(fd->info_frame))
     XtUnmanageChild(fd->info_frame);
-  dialog_filename_text = XtNameToWidget(fd->dialog, "Text");
-  if (!dialog_filename_text) 
-    dialog_filename_text = XmFileSelectionBoxGetChild(fd->dialog, XmDIALOG_TEXT);
+  dialog_filename_text = FSB_BOX(fd->dialog, XmDIALOG_TEXT);
   if (dialog_filename_text) 
     XtRemoveCallback(dialog_filename_text, XmNmodifyVerifyCallback, open_modify_callback, (XtPointer)fd);
 #if HAVE_FAM
@@ -1149,9 +1174,7 @@ static void open_modify_callback(Widget w, XtPointer context, XtPointer info)
 static void clear_error_if_open_changes(Widget dialog, void *data)
 {
   Widget dialog_filename_text;
-  dialog_filename_text = XtNameToWidget(dialog, "Text");
-  if (!dialog_filename_text) 
-    dialog_filename_text = XmFileSelectionBoxGetChild(dialog, XmDIALOG_TEXT);
+  dialog_filename_text = FSB_BOX(dialog, XmDIALOG_TEXT);
   if (dialog_filename_text) 
     XtAddCallback(dialog_filename_text, XmNmodifyVerifyCallback, open_modify_callback, (XtPointer)data);
 }
@@ -1199,6 +1222,7 @@ static void file_open_ok_callback(Widget w, XtPointer context, XtPointer info)
   XmFileSelectionBoxCallbackStruct *cbs = (XmFileSelectionBoxCallbackStruct *)info;
   char *filename = NULL;
   ASSERT_WIDGET_TYPE(XmIsFileSelectionBox(w), w);
+
   filename = (char *)XmStringUnparse(cbs->value, NULL, XmCHARSET_TEXT, XmCHARSET_TEXT, NULL, 0, XmOUTPUT_ALL);
   if ((!filename) || (!(*filename)))
     {
@@ -1220,7 +1244,7 @@ static void file_open_ok_callback(Widget w, XtPointer context, XtPointer info)
 	  if (sp) 
 	    {
 	      XtUnmanageChild(w);
-	      remember_filename(filename, fd->file_text_names);
+	      remember_filename(filename, fd->fpop->file_text_names);
 	      select_channel(sp, 0);
 	    }
 	  else
@@ -1317,6 +1341,7 @@ static void file_mix_ok_callback(Widget w, XtPointer context, XtPointer info)
   file_dialog_info *fd = (file_dialog_info *)context;
   char *filename = NULL;
   ASSERT_WIDGET_TYPE(XmIsFileSelectionBox(w), w);
+  
   filename = (char *)XmStringUnparse(cbs->value, NULL, XmCHARSET_TEXT, XmCHARSET_TEXT, NULL, 0, XmOUTPUT_ALL);
   if ((!filename) || (!(*filename)))
     {
@@ -1351,7 +1376,7 @@ static void file_mix_ok_callback(Widget w, XtPointer context, XtPointer info)
 	  else 
 	    {
 	      report_in_minibuffer(sp, _("%s mixed in at cursor"), filename);
-	      remember_filename(filename, fd->file_text_names);
+	      remember_filename(filename, fd->fpop->file_text_names);
 	    }
 	  if (filename) XtFree(filename);
 	}
@@ -1379,7 +1404,7 @@ static void file_open_file_watcher(ss_watcher_reason_t reason, int loc)
   fdat = (file_dialog_info *)(data->context);
   if ((fdat->dialog) &&
       (XtIsManaged(fdat->dialog)))
-    set_sensitive(XmFileSelectionBoxGetChild(fdat->dialog, XmDIALOG_OK_BUTTON), (bool)any_selected_sound());
+    set_sensitive(FSB_BOX(fdat->dialog, XmDIALOG_OK_BUTTON), (bool)any_selected_sound());
 }
 
 static file_dialog_info *mdat = NULL;
@@ -1423,6 +1448,7 @@ static void file_insert_ok_callback(Widget w, XtPointer context, XtPointer info)
   file_dialog_info *fd = (file_dialog_info *)context;
   char *filename = NULL;
   ASSERT_WIDGET_TYPE(XmIsFileSelectionBox(w), w);
+  
   filename = (char *)XmStringUnparse(cbs->value, NULL, XmCHARSET_TEXT, XmCHARSET_TEXT, NULL, 0, XmOUTPUT_ALL);
   if ((!filename) || (!(*filename)))
     {
@@ -1459,7 +1485,7 @@ static void file_insert_ok_callback(Widget w, XtPointer context, XtPointer info)
 	  else 
 	    {
 	      report_in_minibuffer(sp, _("%s inserted at cursor"), filename);
-	      remember_filename(filename, fd->file_text_names);
+	      remember_filename(filename, fd->fpop->file_text_names);
 	    }
 	  if (filename) XtFree(filename);
 	}
@@ -1787,8 +1813,7 @@ static void filename_modify_callback(Widget w, XtPointer context, XtPointer info
   Widget dialog_filename_text;
   ASSERT_WIDGET_TYPE(XmIsFileSelectionBox(fd->dialog), fd->dialog);
   clear_dialog_error(fd);
-  dialog_filename_text = XtNameToWidget(fd->dialog, "Text");
-  if (!dialog_filename_text) dialog_filename_text = XmFileSelectionBoxGetChild(fd->dialog, XmDIALOG_TEXT);
+  dialog_filename_text = FSB_BOX(fd->dialog, XmDIALOG_TEXT);
   if (dialog_filename_text) XtRemoveCallback(dialog_filename_text, XmNmodifyVerifyCallback, filename_modify_callback, context);
   cbs->doit = true;
 }
@@ -1797,8 +1822,7 @@ static void clear_error_if_filename_changes(Widget dialog, void *data)
 {
   Widget dialog_filename_text;
   ASSERT_WIDGET_TYPE(XmIsFileSelectionBox(dialog), dialog);
-  dialog_filename_text = XtNameToWidget(dialog, "Text");
-  if (!dialog_filename_text) dialog_filename_text = XmFileSelectionBoxGetChild(dialog, XmDIALOG_TEXT);
+  dialog_filename_text = FSB_BOX(dialog, XmDIALOG_TEXT);
   if (dialog_filename_text) 
     XtAddCallback(dialog_filename_text, XmNmodifyVerifyCallback, filename_modify_callback, (XtPointer)data);
 }
@@ -2330,13 +2354,14 @@ static void unreflect_file_data_panel_change(file_data *fd, void *data, void (*c
 
 typedef struct {
   file_data *panel_data;
-  Widget dialog, filename_widget;
+  Widget dialog, filename_widget, extractB;
   char *filename;
   save_dialog_t type;
   file_pattern_info *fp;
   dialog_play_info *dp;
   fam_info *file_watcher;
   int selection_watcher_loc;
+  file_popup_info *fpop;
 } save_as_dialog_info;
 
 static save_as_dialog_info *save_sound_as = NULL, *save_selection_as = NULL, *save_region_as = NULL;
@@ -2663,6 +2688,7 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
 	  snd_remove(tmpfile, REMOVE_FROM_CACHE);
 	  FREE(tmpfile);
 	}
+      remember_filename(fullname, sd->fpop->file_text_names);
 
       if (!file_exists)
 	force_directory_reread(sd->dialog);
@@ -2766,6 +2792,20 @@ static void save_as_file_exists_check(Widget w, XtPointer context, XtPointer inf
   if (filename) XtFree(filename);
 }
 
+static void reflect_text_in_save_button(Widget w, XtPointer context, XtPointer info)
+{
+  save_as_dialog_info *sd = (save_as_dialog_info *)context;
+  /* w here is text widget, not button */
+  XtSetSensitive(FSB_BOX(sd->dialog, XmDIALOG_OK_BUTTON), (!(file_is_directory(sd->dialog))));
+}
+
+static void reflect_text_in_extract_button(Widget w, XtPointer context, XtPointer info)
+{
+  save_as_dialog_info *sd = (save_as_dialog_info *)context;
+  /* w here is text widget, not button */
+  XtSetSensitive(sd->extractB, (!(file_is_directory(sd->dialog))));
+}
+
 static void make_save_as_dialog(save_as_dialog_info *sd, char *sound_name, int header_type, int format_type)
 {
   char *file_string;
@@ -2801,6 +2841,7 @@ static void make_save_as_dialog(save_as_dialog_info *sd, char *sound_name, int h
       sd->fp = (file_pattern_info *)CALLOC(1, sizeof(file_pattern_info));
       sd->fp->in_just_sounds_update = false;
       sd->dp = (dialog_play_info *)CALLOC(1, sizeof(dialog_play_info));
+      sd->fpop = (file_popup_info *)CALLOC(1, sizeof(file_popup_info));
 
       XtSetArg(args[n], XmNresizePolicy, XmRESIZE_GROW); n++;
       XtSetArg(args[n], XmNnoResize, false); n++;
@@ -2813,11 +2854,12 @@ static void make_save_as_dialog(save_as_dialog_info *sd, char *sound_name, int h
       sd->dialog = XmCreateFileSelectionDialog(MAIN_SHELL(ss), "save-as", args, n);
       sd->fp->dialog = sd->dialog;
       sd->dp->dialog = sd->dialog;
+      sd->fpop->dialog = sd->dialog;
 
       FREE(file_string);
 
-      XtUnmanageChild(XmFileSelectionBoxGetChild(sd->dialog, XmDIALOG_DIR_LIST_LABEL));
-      XtUnmanageChild(XmFileSelectionBoxGetChild(sd->dialog, XmDIALOG_LIST_LABEL));
+      XtUnmanageChild(FSB_BOX(sd->dialog, XmDIALOG_DIR_LIST_LABEL));
+      XtUnmanageChild(FSB_BOX(sd->dialog, XmDIALOG_LIST_LABEL));
 
       XmStringFree(s1);
       XmStringFree(xmstr1);
@@ -2846,9 +2888,7 @@ static void make_save_as_dialog(save_as_dialog_info *sd, char *sound_name, int h
 	  force_directory_reread(sd->dialog);
 	}
 
-      sd->filename_widget = XtNameToWidget(sd->dialog, "Text");
-      if (!(sd->filename_widget)) sd->filename_widget = XmFileSelectionBoxGetChild(sd->dialog, XmDIALOG_TEXT);
-
+      sd->filename_widget = FSB_BOX(sd->dialog, XmDIALOG_TEXT);
       XtAddCallback(sd->dialog, XmNhelpCallback, save_as_help_callback, (XtPointer)sd);
       XtAddCallback(sd->dialog, XmNcancelCallback, save_as_cancel_callback, (XtPointer)sd);
       XtAddCallback(sd->dialog, XmNokCallback, save_as_ok_callback, (XtPointer)sd);
@@ -2881,15 +2921,17 @@ static void make_save_as_dialog(save_as_dialog_info *sd, char *sound_name, int h
 	  XtVaSetValues(sd->fp->just_sounds_button, XmNselectColor, ss->sgx->pushed_button_color, NULL);
 	  XtVaSetValues(sd->dp->play_button, XmNselectColor, ss->sgx->pushed_button_color, NULL);
 	}
-      XtAddCallback(XmFileSelectionBoxGetChild(sd->dialog, XmDIALOG_LIST),
+      XtAddCallback(FSB_BOX(sd->dialog, XmDIALOG_LIST),
 		    XmNbrowseSelectionCallback, save_as_dialog_select_callback, (XtPointer)(sd->dp));
       XtAddCallback(sd->filename_widget, XmNvalueChangedCallback, save_as_file_exists_check, (XtPointer)(sd->dialog));
 
       {
 	Widget wtmp;
-	wtmp = XmFileSelectionBoxGetChild(sd->dialog, XmDIALOG_DIR_LIST);
+	wtmp = FSB_BOX(sd->dialog, XmDIALOG_DIR_LIST);
 	if (wtmp) XtAddCallback(wtmp, XmNbrowseSelectionCallback, file_change_directory_callback, (XtPointer)(sd->fp));
       }
+
+      add_file_popups(sd->fpop);
 
       /* this must come after the file data panel so that Motif puts it in the button box, not the main work area */
       if (sd->type != REGION_SAVE_AS)
@@ -2902,7 +2944,15 @@ static void make_save_as_dialog(save_as_dialog_info *sd, char *sound_name, int h
 	    }
 	  extractB = XtCreateManagedWidget(_("Extract"), xmPushButtonGadgetClass, sd->dialog, args, n);
 	  XtAddCallback(extractB, XmNactivateCallback, save_as_extract_callback, (XtPointer)sd);
+	  sd->extractB = extractB;
+
+	  XtSetSensitive(extractB, (!(file_is_directory(sd->dialog))));
+	  XtAddCallback(FSB_BOX(sd->dialog, XmDIALOG_TEXT), XmNvalueChangedCallback, reflect_text_in_extract_button, (void *)sd);
 	}
+
+      XtSetSensitive(FSB_BOX(sd->dialog, XmDIALOG_OK_BUTTON), (!(file_is_directory(sd->dialog))));
+      XtAddCallback(FSB_BOX(sd->dialog, XmDIALOG_TEXT), XmNvalueChangedCallback, reflect_text_in_save_button, (void *)sd);
+
       XtManageChild(sd->dialog);
       switch (sd->type)
 	{
@@ -3376,12 +3426,12 @@ void make_new_file_dialog(void)
 	}
       if (!(ss->using_schemes))
 	{
-	  XtVaSetValues(XmMessageBoxGetChild(new_file_dialog, XmDIALOG_OK_BUTTON),     XmNarmColor,   ss->sgx->pushed_button_color, NULL);
-	  XtVaSetValues(XmMessageBoxGetChild(new_file_dialog, XmDIALOG_CANCEL_BUTTON), XmNarmColor,   ss->sgx->pushed_button_color, NULL);
-	  XtVaSetValues(XmMessageBoxGetChild(new_file_dialog, XmDIALOG_HELP_BUTTON),   XmNarmColor,   ss->sgx->pushed_button_color, NULL);
-	  XtVaSetValues(XmMessageBoxGetChild(new_file_dialog, XmDIALOG_OK_BUTTON),     XmNbackground, ss->sgx->doit_button_color,   NULL);
-	  XtVaSetValues(XmMessageBoxGetChild(new_file_dialog, XmDIALOG_CANCEL_BUTTON), XmNbackground, ss->sgx->quit_button_color,   NULL);
-	  XtVaSetValues(XmMessageBoxGetChild(new_file_dialog, XmDIALOG_HELP_BUTTON),   XmNbackground, ss->sgx->help_button_color,   NULL);
+	  XtVaSetValues(MSG_BOX(new_file_dialog, XmDIALOG_OK_BUTTON),     XmNarmColor,   ss->sgx->pushed_button_color, NULL);
+	  XtVaSetValues(MSG_BOX(new_file_dialog, XmDIALOG_CANCEL_BUTTON), XmNarmColor,   ss->sgx->pushed_button_color, NULL);
+	  XtVaSetValues(MSG_BOX(new_file_dialog, XmDIALOG_HELP_BUTTON),   XmNarmColor,   ss->sgx->pushed_button_color, NULL);
+	  XtVaSetValues(MSG_BOX(new_file_dialog, XmDIALOG_OK_BUTTON),     XmNbackground, ss->sgx->doit_button_color,   NULL);
+	  XtVaSetValues(MSG_BOX(new_file_dialog, XmDIALOG_CANCEL_BUTTON), XmNbackground, ss->sgx->quit_button_color,   NULL);
+	  XtVaSetValues(MSG_BOX(new_file_dialog, XmDIALOG_HELP_BUTTON),   XmNbackground, ss->sgx->help_button_color,   NULL);
 	}
       set_dialog_widget(NEW_FILE_DIALOG, new_file_dialog);
       XtUnmanageChild(ndat->error_text); 
@@ -3486,7 +3536,7 @@ static XmString make_header_dialog_title(edhead_info *ep, snd_info *sp)
 	mus_snprintf(str, PRINT_BUFFER_SIZE, _("Add header to (write-protected) %s"), sp->short_filename);
       else mus_snprintf(str, PRINT_BUFFER_SIZE, _("Edit header of (write-protected) %s"), sp->short_filename);
       if (ep->dialog)
-	set_sensitive(XmMessageBoxGetChild(ep->dialog, XmDIALOG_OK_BUTTON), (sp->hdr->type == MUS_RAW));
+	set_sensitive(MSG_BOX(ep->dialog, XmDIALOG_OK_BUTTON), (sp->hdr->type == MUS_RAW));
     }
   else 
     {
@@ -3494,7 +3544,7 @@ static XmString make_header_dialog_title(edhead_info *ep, snd_info *sp)
 	mus_snprintf(str, PRINT_BUFFER_SIZE, _("Add header to %s"), sp->short_filename);
       else mus_snprintf(str, PRINT_BUFFER_SIZE, _("Edit header of %s"), sp->short_filename);
       if (ep->dialog)
-	set_sensitive(XmMessageBoxGetChild(ep->dialog, XmDIALOG_OK_BUTTON), ep->panel_changed);
+	set_sensitive(MSG_BOX(ep->dialog, XmDIALOG_OK_BUTTON), ep->panel_changed);
     }
   xstr = XmStringCreate(str, XmFONTLIST_DEFAULT_TAG);
   FREE(str);
@@ -3510,7 +3560,7 @@ static void edit_header_set_ok_sensitive(Widget w, XtPointer context, XtPointer 
 {
   edhead_info *ep = (edhead_info *)context;
   if (!(ep->sp->file_read_only))
-    set_sensitive(XmMessageBoxGetChild(ep->dialog, XmDIALOG_OK_BUTTON), true);
+    set_sensitive(MSG_BOX(ep->dialog, XmDIALOG_OK_BUTTON), true);
   ep->panel_changed = true;
 }
 
@@ -3627,7 +3677,7 @@ static void edit_header_ok_callback(Widget w, XtPointer context, XtPointer info)
   edhead_info *ep = (edhead_info *)context;
   if ((ep->sp) && (ep->sp->active))
     {
-      if (XmGetFocusWidget(ep->dialog) == XmMessageBoxGetChild(ep->dialog, XmDIALOG_OK_BUTTON))
+      if (XmGetFocusWidget(ep->dialog) == MSG_BOX(ep->dialog, XmDIALOG_OK_BUTTON))
 	{
 	  bool ok;
 	  redirect_snd_error_to(post_file_dialog_error, (void *)(ep->edat));
@@ -3647,7 +3697,7 @@ static void edit_header_ok_callback(Widget w, XtPointer context, XtPointer info)
 	    {
 	      if (!ok)
 		{
-		  set_sensitive(XmMessageBoxGetChild(ep->dialog, XmDIALOG_OK_BUTTON), false);
+		  set_sensitive(MSG_BOX(ep->dialog, XmDIALOG_OK_BUTTON), false);
 		  return;
 		}
 	    }
@@ -3759,12 +3809,12 @@ Widget edit_header(snd_info *sp)
       if (!(ss->using_schemes)) 
 	{
 	  map_over_children(ep->dialog, set_main_color_of_widget, NULL);
-	  XtVaSetValues(XmMessageBoxGetChild(ep->dialog, XmDIALOG_OK_BUTTON),     XmNarmColor,   ss->sgx->pushed_button_color, NULL);
-	  XtVaSetValues(XmMessageBoxGetChild(ep->dialog, XmDIALOG_CANCEL_BUTTON), XmNarmColor,   ss->sgx->pushed_button_color, NULL);
-	  XtVaSetValues(XmMessageBoxGetChild(ep->dialog, XmDIALOG_HELP_BUTTON),   XmNarmColor,   ss->sgx->pushed_button_color, NULL);
-	  XtVaSetValues(XmMessageBoxGetChild(ep->dialog, XmDIALOG_OK_BUTTON),     XmNbackground, ss->sgx->doit_button_color,   NULL);
-	  XtVaSetValues(XmMessageBoxGetChild(ep->dialog, XmDIALOG_CANCEL_BUTTON), XmNbackground, ss->sgx->quit_button_color,   NULL);
-	  XtVaSetValues(XmMessageBoxGetChild(ep->dialog, XmDIALOG_HELP_BUTTON),   XmNbackground, ss->sgx->help_button_color,   NULL);
+	  XtVaSetValues(MSG_BOX(ep->dialog, XmDIALOG_OK_BUTTON),     XmNarmColor,   ss->sgx->pushed_button_color, NULL);
+	  XtVaSetValues(MSG_BOX(ep->dialog, XmDIALOG_CANCEL_BUTTON), XmNarmColor,   ss->sgx->pushed_button_color, NULL);
+	  XtVaSetValues(MSG_BOX(ep->dialog, XmDIALOG_HELP_BUTTON),   XmNarmColor,   ss->sgx->pushed_button_color, NULL);
+	  XtVaSetValues(MSG_BOX(ep->dialog, XmDIALOG_OK_BUTTON),     XmNbackground, ss->sgx->doit_button_color,   NULL);
+	  XtVaSetValues(MSG_BOX(ep->dialog, XmDIALOG_CANCEL_BUTTON), XmNbackground, ss->sgx->quit_button_color,   NULL);
+	  XtVaSetValues(MSG_BOX(ep->dialog, XmDIALOG_HELP_BUTTON),   XmNbackground, ss->sgx->help_button_color,   NULL);
 	  XtVaSetValues(ep->edat->header_list, XmNbackground, ss->sgx->white, XmNforeground, ss->sgx->black, NULL);
 	  XtVaSetValues(ep->edat->format_list, XmNbackground, ss->sgx->white, XmNforeground, ss->sgx->black, NULL);
 	}
@@ -3794,7 +3844,7 @@ Widget edit_header(snd_info *sp)
       raise_dialog(ep->dialog);
       clear_dialog_error(ep->edat);
     }
-  set_sensitive(XmMessageBoxGetChild(ep->dialog, XmDIALOG_OK_BUTTON), (hdr->type == MUS_RAW)); /* nothing needs to be saved when we start */
+  set_sensitive(MSG_BOX(ep->dialog, XmDIALOG_OK_BUTTON), (hdr->type == MUS_RAW)); /* nothing needs to be saved when we start */
   XmStringFree(xstr4);
   if (!(XtIsManaged(ep->dialog))) XtManageChild(ep->dialog);
   reflect_file_data_panel_change(ep->edat, (void *)ep, edit_header_set_ok_sensitive);
@@ -4111,12 +4161,12 @@ static void make_raw_data_dialog(raw_info *rp, const char *filename, const char 
   map_over_children(rp->dialog, set_main_color_of_widget, NULL);
   if (!(ss->using_schemes)) 
     {
-      XtVaSetValues(XmMessageBoxGetChild(rp->dialog, XmDIALOG_OK_BUTTON),     XmNarmColor,   ss->sgx->pushed_button_color, NULL);
-      XtVaSetValues(XmMessageBoxGetChild(rp->dialog, XmDIALOG_CANCEL_BUTTON), XmNarmColor,   ss->sgx->pushed_button_color, NULL);
-      XtVaSetValues(XmMessageBoxGetChild(rp->dialog, XmDIALOG_HELP_BUTTON),   XmNarmColor,   ss->sgx->pushed_button_color, NULL);
-      XtVaSetValues(XmMessageBoxGetChild(rp->dialog, XmDIALOG_OK_BUTTON),     XmNbackground, ss->sgx->doit_button_color,   NULL);
-      XtVaSetValues(XmMessageBoxGetChild(rp->dialog, XmDIALOG_CANCEL_BUTTON), XmNbackground, ss->sgx->quit_button_color,   NULL);
-      XtVaSetValues(XmMessageBoxGetChild(rp->dialog, XmDIALOG_HELP_BUTTON),   XmNbackground, ss->sgx->help_button_color,   NULL);
+      XtVaSetValues(MSG_BOX(rp->dialog, XmDIALOG_OK_BUTTON),     XmNarmColor,   ss->sgx->pushed_button_color, NULL);
+      XtVaSetValues(MSG_BOX(rp->dialog, XmDIALOG_CANCEL_BUTTON), XmNarmColor,   ss->sgx->pushed_button_color, NULL);
+      XtVaSetValues(MSG_BOX(rp->dialog, XmDIALOG_HELP_BUTTON),   XmNarmColor,   ss->sgx->pushed_button_color, NULL);
+      XtVaSetValues(MSG_BOX(rp->dialog, XmDIALOG_OK_BUTTON),     XmNbackground, ss->sgx->doit_button_color,   NULL);
+      XtVaSetValues(MSG_BOX(rp->dialog, XmDIALOG_CANCEL_BUTTON), XmNbackground, ss->sgx->quit_button_color,   NULL);
+      XtVaSetValues(MSG_BOX(rp->dialog, XmDIALOG_HELP_BUTTON),   XmNbackground, ss->sgx->help_button_color,   NULL);
       XtVaSetValues(reset_button, XmNselectColor, ss->sgx->pushed_button_color, NULL);
       XtVaSetValues(rp->rdat->format_list, XmNbackground, ss->sgx->white, XmNforeground, ss->sgx->black, NULL);
     }
@@ -4163,7 +4213,7 @@ void raw_data_dialog_to_file_info(const char *filename, char *title, char *info,
   if (rp->help) FREE(rp->help);
   if (info)
     {
-      XtVaSetValues(XmMessageBoxGetChild(rp->dialog, XmDIALOG_HELP_BUTTON), 
+      XtVaSetValues(MSG_BOX(rp->dialog, XmDIALOG_HELP_BUTTON), 
 		    XmNbackground, ss->sgx->green, 
 		    NULL);
       rp->help = copy_string(info);
@@ -4171,7 +4221,7 @@ void raw_data_dialog_to_file_info(const char *filename, char *title, char *info,
     }
   else
     {
-      XtVaSetValues(XmMessageBoxGetChild(rp->dialog, XmDIALOG_HELP_BUTTON), 
+      XtVaSetValues(MSG_BOX(rp->dialog, XmDIALOG_HELP_BUTTON), 
 		    XmNbackground, ss->sgx->help_button_color, 
 		    NULL);
       rp->help = NULL;
@@ -4203,12 +4253,12 @@ static void create_post_it_monolog(void)
   XtSetArg(args[n], XmNtransient, false); n++;
   post_it_dialog = XmCreateMessageDialog(MAIN_PANE(ss), "info", args, n);
 
-  XtUnmanageChild(XmMessageBoxGetChild(post_it_dialog, XmDIALOG_CANCEL_BUTTON));
-  XtUnmanageChild(XmMessageBoxGetChild(post_it_dialog, XmDIALOG_HELP_BUTTON));
-  XtUnmanageChild(XmMessageBoxGetChild(post_it_dialog, XmDIALOG_SYMBOL_LABEL));
+  XtUnmanageChild(MSG_BOX(post_it_dialog, XmDIALOG_CANCEL_BUTTON));
+  XtUnmanageChild(MSG_BOX(post_it_dialog, XmDIALOG_HELP_BUTTON));
+  XtUnmanageChild(MSG_BOX(post_it_dialog, XmDIALOG_SYMBOL_LABEL));
 
   if (!(ss->using_schemes))
-    XtVaSetValues(XmMessageBoxGetChild(post_it_dialog, XmDIALOG_MESSAGE_LABEL), XmNbackground, ss->sgx->help_button_color, NULL);
+    XtVaSetValues(MSG_BOX(post_it_dialog, XmDIALOG_MESSAGE_LABEL), XmNbackground, ss->sgx->help_button_color, NULL);
       
   n = 0;
   XtSetArg(args[n], XmNeditMode, XmMULTI_LINE_EDIT); n++;
@@ -4228,8 +4278,8 @@ static void create_post_it_monolog(void)
     {
       map_over_children(post_it_dialog, set_main_color_of_widget, NULL);
       XtVaSetValues(post_it_text, XmNbackground, ss->sgx->white, XmNforeground, ss->sgx->black, NULL);
-      XtVaSetValues(XmMessageBoxGetChild(post_it_dialog, XmDIALOG_OK_BUTTON), XmNarmColor, ss->sgx->pushed_button_color, NULL);
-      XtVaSetValues(XmMessageBoxGetChild(post_it_dialog, XmDIALOG_OK_BUTTON), XmNbackground, ss->sgx->quit_button_color, NULL);
+      XtVaSetValues(MSG_BOX(post_it_dialog, XmDIALOG_OK_BUTTON), XmNarmColor, ss->sgx->pushed_button_color, NULL);
+      XtVaSetValues(MSG_BOX(post_it_dialog, XmDIALOG_OK_BUTTON), XmNbackground, ss->sgx->quit_button_color, NULL);
     }
   set_dialog_widget(POST_IT_DIALOG, post_it_dialog);
 }
@@ -4535,7 +4585,7 @@ static void view_files_dismiss_callback(Widget w, XtPointer context, XtPointer i
   view_files_info *vdat = (view_files_info *)context;
   Widget active_widget;
   active_widget = XmGetFocusWidget(vdat->dialog);
-  if (active_widget == XmMessageBoxGetChild(vdat->dialog, XmDIALOG_OK_BUTTON))
+  if (active_widget == MSG_BOX(vdat->dialog, XmDIALOG_OK_BUTTON))
     XtUnmanageChild(vdat->dialog);
 }
 
@@ -4580,32 +4630,57 @@ static void sort_vf(view_files_info *vdat, int sort_choice)
   view_files_display_list(vdat);
 }
 
-static void sort_view_files_by_name(Widget w, XtPointer context, XtPointer info) 
+static void sort_view_files_a_to_z(Widget w, XtPointer context, XtPointer info) 
 {
-  sort_vf((view_files_info *)context, SORT_BY_NAME);
+  sort_vf((view_files_info *)context, SORT_A_TO_Z);
 }
 
-static void sort_view_files_by_date(Widget w, XtPointer context, XtPointer info) 
+static void sort_view_files_z_to_a(Widget w, XtPointer context, XtPointer info) 
 {
-  sort_vf((view_files_info *)context, SORT_BY_DATE);
+  sort_vf((view_files_info *)context, SORT_Z_TO_A);
 }
 
-static void sort_view_files_by_size(Widget w, XtPointer context, XtPointer info) 
+static void sort_view_files_new_to_old(Widget w, XtPointer context, XtPointer info) 
 {
-  sort_vf((view_files_info *)context, SORT_BY_SIZE);
+  sort_vf((view_files_info *)context, SORT_NEW_TO_OLD);
 }
 
-static void sort_view_files_by_entry_order(Widget w, XtPointer context, XtPointer info) 
+static void sort_view_files_old_to_new(Widget w, XtPointer context, XtPointer info) 
 {
-  sort_vf((view_files_info *)context, SORT_BY_ENTRY);
+  sort_vf((view_files_info *)context, SORT_OLD_TO_NEW);
 }
 
-static void sort_view_files_by_procedure(Widget w, XtPointer context, XtPointer info) 
+static void sort_view_files_big_to_small(Widget w, XtPointer context, XtPointer info) 
+{
+  sort_vf((view_files_info *)context, SORT_BIG_TO_SMALL);
+}
+
+static void sort_view_files_small_to_big(Widget w, XtPointer context, XtPointer info) 
+{
+  sort_vf((view_files_info *)context, SORT_SMALL_TO_BIG);
+}
+
+static void sort_view_files_xen(Widget w, XtPointer context, XtPointer info) 
 {
   int index;
   XtVaGetValues(w, XmNuserData, &index, NULL); /* index is location in list of file-sorters */
   sort_vf((view_files_info *)context, index);
 }
+
+void vf_reflect_sort_choice_in_menu(view_files_info *vdat)
+{
+  int i;
+  set_sensitive(vdat->a_to_z, vdat->sorter != SORT_A_TO_Z);
+  set_sensitive(vdat->z_to_a, vdat->sorter != SORT_Z_TO_A);
+  set_sensitive(vdat->new_to_old, vdat->sorter != SORT_NEW_TO_OLD);
+  set_sensitive(vdat->old_to_new, vdat->sorter != SORT_OLD_TO_NEW);
+  set_sensitive(vdat->small_to_big, vdat->sorter != SORT_SMALL_TO_BIG);
+  set_sensitive(vdat->big_to_small, vdat->sorter != SORT_BIG_TO_SMALL);
+  for (i = 0; i < vdat->sort_items_size; i++)
+    if (XtIsManaged(vdat->sort_items[i]))
+      set_sensitive(vdat->sort_items[i], vdat->sorter != (SORT_XEN + i));
+}
+
 
 void view_files_add_file_or_directory(view_files_info *vdat, const char *file_or_dir)
 {
@@ -5157,24 +5232,13 @@ static void white_mouse_enter_text_callback(Widget w, XtPointer context, XEvent 
   XtVaSetValues(w, XmNcursorPositionVisible, true, NULL);
 }
 
-void vf_reflect_sort_choice_in_menu(view_files_info *vdat)
-{
-  int i;
-  set_sensitive(vdat->by_name, vdat->sorter != SORT_BY_NAME);
-  set_sensitive(vdat->by_date, vdat->sorter != SORT_BY_DATE);
-  set_sensitive(vdat->by_size, vdat->sorter != SORT_BY_SIZE);
-  set_sensitive(vdat->by_entry, vdat->sorter != SORT_BY_ENTRY);
-  for (i = 0; i < vdat->sort_items_size; i++)
-    if (XtIsManaged(vdat->sort_items[i]))
-      set_sensitive(vdat->sort_items[i], vdat->sorter != (SORT_BY_PROC + i));
-}
-
 static void view_files_reset_callback(Widget w, XtPointer context, XtPointer info) 
 {
   view_files_info *vdat = (view_files_info *)context;
   vf_set_amp(vdat, 1.0);
   vf_set_speed(vdat, 1.0);
   vf_set_amp_env(vdat, default_env(1.0, 1.0));
+  sort_vf(vdat, view_files_sort(ss)); /* TODO: is this the right thing? */
 }
 
 widget_t start_view_files_dialog_1(view_files_info *vdat, bool managed)
@@ -5231,12 +5295,12 @@ widget_t start_view_files_dialog_1(view_files_info *vdat, bool managed)
 
       if (!(ss->using_schemes))
 	{
-	  XtVaSetValues(XmMessageBoxGetChild(vdat->dialog, XmDIALOG_OK_BUTTON),     XmNarmColor,   ss->sgx->pushed_button_color, NULL);
-	  XtVaSetValues(XmMessageBoxGetChild(vdat->dialog, XmDIALOG_HELP_BUTTON),   XmNarmColor,   ss->sgx->pushed_button_color, NULL);
-	  XtVaSetValues(XmMessageBoxGetChild(vdat->dialog, XmDIALOG_CANCEL_BUTTON), XmNarmColor,   ss->sgx->pushed_button_color,  NULL);
-	  XtVaSetValues(XmMessageBoxGetChild(vdat->dialog, XmDIALOG_OK_BUTTON),     XmNbackground, ss->sgx->quit_button_color,   NULL);
-	  XtVaSetValues(XmMessageBoxGetChild(vdat->dialog, XmDIALOG_HELP_BUTTON),   XmNbackground, ss->sgx->help_button_color,   NULL);
-	  XtVaSetValues(XmMessageBoxGetChild(vdat->dialog, XmDIALOG_CANCEL_BUTTON), XmNbackground, ss->sgx->doit_button_color,  NULL);
+	  XtVaSetValues(MSG_BOX(vdat->dialog, XmDIALOG_OK_BUTTON),     XmNarmColor,   ss->sgx->pushed_button_color, NULL);
+	  XtVaSetValues(MSG_BOX(vdat->dialog, XmDIALOG_HELP_BUTTON),   XmNarmColor,   ss->sgx->pushed_button_color, NULL);
+	  XtVaSetValues(MSG_BOX(vdat->dialog, XmDIALOG_CANCEL_BUTTON), XmNarmColor,   ss->sgx->pushed_button_color,  NULL);
+	  XtVaSetValues(MSG_BOX(vdat->dialog, XmDIALOG_OK_BUTTON),     XmNbackground, ss->sgx->quit_button_color,   NULL);
+	  XtVaSetValues(MSG_BOX(vdat->dialog, XmDIALOG_HELP_BUTTON),   XmNbackground, ss->sgx->help_button_color,   NULL);
+	  XtVaSetValues(MSG_BOX(vdat->dialog, XmDIALOG_CANCEL_BUTTON), XmNbackground, ss->sgx->doit_button_color,  NULL);
 	}
 
       n = 0;
@@ -5245,7 +5309,7 @@ widget_t start_view_files_dialog_1(view_files_info *vdat, bool managed)
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_WIDGET); n++;
-      XtSetArg(args[n], XmNbottomWidget, XmMessageBoxGetChild(vdat->dialog, XmDIALOG_SEPARATOR)); n++;
+      XtSetArg(args[n], XmNbottomWidget, MSG_BOX(vdat->dialog, XmDIALOG_SEPARATOR)); n++;
       XtSetArg(args[n], XmNsashIndent, 2); n++;
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
       XtSetArg(args[n], XmNspacing, 24); n++;
@@ -5848,10 +5912,12 @@ widget_t start_view_files_dialog_1(view_files_info *vdat, bool managed)
       
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
-      vdat->by_name =  XtCreateManagedWidget(_("name"),  xmPushButtonWidgetClass, vdat->smenu, args, n);
-      vdat->by_date =  XtCreateManagedWidget(_("date"),  xmPushButtonWidgetClass, vdat->smenu, args, n);
-      vdat->by_size =  XtCreateManagedWidget(_("size"),  xmPushButtonWidgetClass, vdat->smenu, args, n);
-      vdat->by_entry = XtCreateManagedWidget(_("entry"), xmPushButtonWidgetClass, vdat->smenu, args, n);
+      vdat->a_to_z =        XtCreateManagedWidget(_("a..z"),       xmPushButtonWidgetClass, vdat->smenu, args, n);
+      vdat->z_to_a =        XtCreateManagedWidget(_("z..a"),       xmPushButtonWidgetClass, vdat->smenu, args, n);
+      vdat->new_to_old =    XtCreateManagedWidget(_("new..old"),   xmPushButtonWidgetClass, vdat->smenu, args, n);
+      vdat->old_to_new =    XtCreateManagedWidget(_("old..new"),   xmPushButtonWidgetClass, vdat->smenu, args, n);
+      vdat->small_to_big =  XtCreateManagedWidget(_("small..big"), xmPushButtonWidgetClass, vdat->smenu, args, n);
+      vdat->big_to_small =  XtCreateManagedWidget(_("big..small"), xmPushButtonWidgetClass, vdat->smenu, args, n);
 
       vdat->sort_items_size = 4;
       vdat->sort_items = (Widget *)CALLOC(vdat->sort_items_size, sizeof(Widget));
@@ -5881,14 +5947,18 @@ widget_t start_view_files_dialog_1(view_files_info *vdat, bool managed)
 
       if (managed) view_files_display_list(vdat);
 
-      XtAddCallback(vdat->by_name,  XmNactivateCallback, sort_view_files_by_name,        (XtPointer)vdat);
-      XtAddCallback(vdat->by_date,  XmNactivateCallback, sort_view_files_by_date,        (XtPointer)vdat);
-      XtAddCallback(vdat->by_size,  XmNactivateCallback, sort_view_files_by_size,        (XtPointer)vdat);
-      XtAddCallback(vdat->by_entry, XmNactivateCallback, sort_view_files_by_entry_order, (XtPointer)vdat);
+      XtAddCallback(vdat->a_to_z,       XmNactivateCallback, sort_view_files_a_to_z,       (XtPointer)vdat);
+      XtAddCallback(vdat->z_to_a,       XmNactivateCallback, sort_view_files_z_to_a,       (XtPointer)vdat);
+      XtAddCallback(vdat->new_to_old,   XmNactivateCallback, sort_view_files_new_to_old,   (XtPointer)vdat);
+      XtAddCallback(vdat->old_to_new,   XmNactivateCallback, sort_view_files_old_to_new,   (XtPointer)vdat);
+      XtAddCallback(vdat->small_to_big, XmNactivateCallback, sort_view_files_small_to_big, (XtPointer)vdat);
+      XtAddCallback(vdat->big_to_small, XmNactivateCallback, sort_view_files_big_to_small, (XtPointer)vdat);
+      vf_reflect_sort_choice_in_menu(vdat);
+
       {
 	int i;
 	for (i = 0; i < vdat->sort_items_size; i++)
-	  XtAddCallback(vdat->sort_items[i], XmNactivateCallback, sort_view_files_by_procedure, (XtPointer)vdat);
+	  XtAddCallback(vdat->sort_items[i], XmNactivateCallback, sort_view_files_xen, (XtPointer)vdat);
       }
       /* XtAddCallback(sort_cascade_menu, XmNcascadingCallback, vf_display_sort_items, (XtPointer)vdat); -- segfaults */
 

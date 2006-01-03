@@ -29,11 +29,6 @@
 
 /*****************************************************************************/
 
-/* FIXME: Repository is not threadsafe. */
-/* FIXME: Memory checking is non-existent. */
-
-/*****************************************************************************/
-
 typedef struct {
   char *m_pcPackedFilename;
   const char *m_pcLabel;
@@ -73,9 +68,6 @@ static void isLADSPAPluginSupported(const LADSPA_Descriptor *psDescriptor) {
 
 /* Assumes repository initialised, returns NULL if not found. */
 static const LADSPA_Descriptor *findLADSPADescriptor(const char *pcPackedFilename, const char *pcLabel) {
-
-  /* FIXME: Could be using hashtables, binary chops etc. Instead we simply scan the table. */
-
   long lIndex;
   LADSPAPluginInfo *psInfo;
   for (lIndex = 0; lIndex < g_lLADSPARepositoryCount; lIndex++) {
@@ -285,10 +277,6 @@ static void loadLADSPA() {
     pcBuffer = NULL;
   }
 
-  /* FIXME: It might be nice to qsort the data in the repository by
-   *  filename+label at this point to provide organised results from
-   *  list-ladspa.
-   */
 }
 
 /*****************************************************************************/
@@ -521,8 +509,6 @@ a user interface edit the parameter in a useful way."
 
 /*****************************************************************************/
 
-/* FIXME: We could improve this function to receive a list of plugin configurations for chain processing. */
-
 #define S_apply_ladspa "apply-ladspa"
 
 static XEN g_apply_ladspa(XEN reader,
@@ -666,7 +652,6 @@ Information about about parameters can be acquired using " S_analyse_ladspa "."
     iPortDescriptor = psDescriptor->PortDescriptors[lPortIndex];
     if (LADSPA_IS_PORT_CONTROL(iPortDescriptor)
 	&& LADSPA_IS_PORT_INPUT(iPortDescriptor)) {
-      /* FIXME: uninformative error. */
       XEN_ASSERT_TYPE(XEN_NUMBER_P(XEN_CAR(xenParameters)),
 		      ladspa_plugin_configuration,
 		      XEN_ARG_2,

@@ -542,11 +542,6 @@
 	'show-all-axes-unlabelled show-all-axes-unlabelled 3
 	'show-x-axis-unlabelled show-x-axis-unlabelled 4
 
-	'sort-files-by-name sort-files-by-name 0
-	'sort-files-by-size sort-files-by-size 2
-	'sort-files-by-date sort-files-by-date 1
-	'sort-files-by-entry sort-files-by-entry 3
-	
 	;; sndlib constants
 	'mus-unsupported mus-unsupported 0
 	'mus-next mus-next 1
@@ -998,7 +993,7 @@
       (if (not (equal? (audio-output-device)  0 )) 
 	  (snd-display ";audio-output-device set def: ~A" (audio-output-device)))
       (set! (view-files-sort) (view-files-sort))
-      (if (not (= (view-files-sort) sort-files-by-name))
+      (if (not (= (view-files-sort) 0))
 	  (snd-display ";view-files-sort def: ~A" (view-files-sort)))
       
       (if (not (provided? 'snd-gtk))
@@ -1904,78 +1899,7 @@
       (close-sound ind) 
       (dismiss-all-dialogs)
       
-      (let ((fs (file-sorters)))
-	(if (not (null? fs)) (snd-display ";file-sorters: ~A" fs))
-	(add-file-sorter 
-	 "duration"
-	 (lambda (lst)
-	   (sort lst 
-		 (lambda (a b)
-		   (> (mus-sound-duration a) (mus-sound-duration b))))))
-	(if (null? (file-sorters)) (snd-display ";add-file-sorter didn't"))
-	(if (not (string=? (caar (file-sorters)) "duration"))
-	    (snd-display ";add-file-sorter: ~A" (file-sorters)))
-	(delete-file-sorter "duration")
-	(if (not (null? (file-sorters))) (snd-display ";delete-file-sorter didn't"))
-	(set! (file-sorters) (list (list "duration" 
-					 (lambda (lst)
-					   (sort lst 
-						 (lambda (a b)
-						   (> (mus-sound-duration a) (mus-sound-duration b))))))))
-	(if (null? (file-sorters)) (snd-display ";set file-sorter didn't"))
-	(if (not (string=? (caar (file-sorters)) "duration"))
-	    (snd-display ";set file-sorter: ~A" (file-sorters)))
-	(set! (file-sorters) '())
-	(if (not (null? (file-sorters))) (snd-display ";set file-sorter nil didn't")))
-      
-      (let ((fs (file-filters)))
-	(if (not (null? fs)) (snd-display ";file-filters: ~A" fs))
-	(add-file-filter 
-	 "duration"
-	 (lambda (a)
-	   (> (mus-sound-duration a) 1.0)))
-	(if (null? (file-filters)) (snd-display ";add-file-filter didn't"))
-	(if (not (string=? (caar (file-filters)) "duration"))
-	    (snd-display ";add-file-filter: ~A" (file-filters)))
-	(delete-file-filter "duration")
-	(if (not (null? (file-filters))) (snd-display ";delete-file-filter didn't"))
-	(set! (file-filters) (list (list "duration" 
-					 (lambda (a)
-					   (> (mus-sound-duration a) 1.0)))))
-	(if (null? (file-filters)) (snd-display ";set file-filter didn't"))
-	(if (not (string=? (caar (file-filters)) "duration"))
-	    (snd-display ";set file-filter: ~A" (file-filters)))
-	(set! (file-filters) '())
-	(if (not (null? (file-filters))) (snd-display ";set file-filter nil didn't")))
-      
-      (let ((tag (catch #t
-			(lambda ()
-			  (add-file-sorter 123 (lambda () "oops")))
-			(lambda args args))))
-	(if (not (equal? (car tag) 'wrong-type-arg))
-	    (snd-display ";file-sorter bad car: ~A" tag)))
-      
-      (let ((tag (catch #t
-			(lambda ()
-			  (add-file-filter "no-good" (lambda () "oops")))
-			(lambda args args))))
-	(if (not (equal? (car tag) 'bad-arity))
-	    (snd-display ";file-sorter bad cadr: ~A" tag)))
-      
-      (let ((tag (catch #t
-			(lambda ()
-			  (set! (file-sorters) (list (list 123 (lambda (a) a)))))
-			(lambda args args))))
-	(if (not (equal? (car tag) 'wrong-type-arg))
-	    (snd-display ";set file-sorters bad car: ~A" tag)))
-      
-      (let ((tag (catch #t
-			(lambda ()
-			  (set! (file-filters) (list (list "hi" (lambda (a) a)) (list 123 (lambda (b) b)))))
-			(lambda args args))))
-	(if (not (equal? (car tag) 'wrong-type-arg))
-	    (snd-display ";set file-filters bad car: ~A" tag)))
-
+      ;; TODO: replace old file-sorters/filters tests
       (if (provided? 'snd-debug)
 	  (begin
 	    (snd-stdin-test "(set! (enved-filter-order) 12)")
@@ -24430,8 +24354,8 @@ EDITS: 5
 	      (selected-file #f))
 	  (if (fneq vfamp 1.0) (snd-display ";vf amp: ~A" vfamp))
 	  (if (fneq vfs 1.0) (snd-display ";vf spd: ~A" vfs))
-	  (if (not (= vfsort sort-files-by-name)) (snd-display ";vf sort: ~A" vfsort))
-	  (if (not (= vfsort1 sort-files-by-name)) (snd-display ";vf sort(d): ~A" vfsort1))
+	  (if (not (= vfsort 0)) (snd-display ";vf sort: ~A" vfsort))
+	  (if (not (= vfsort1 0)) (snd-display ";vf sort(d): ~A" vfsort1))
 	  (if (not (feql vfe (list 0.0 1.0 1.0 1.0))) (snd-display ";vf amp env: ~A" vfe))
 	  (if (not (list? vffiles)) (snd-display ";vf files: ~A" vffiles))
 	  (if (not (list? vfsel)) (snd-display ";vf selected files: ~A" vfsel))
@@ -24444,12 +24368,12 @@ EDITS: 5
 	  (set! (view-files-speed-style dialog) speed-control-as-ratio)
 	  (if (not (= (view-files-speed-style dialog) speed-control-as-ratio))
 	      (snd-display ";vf speed-style set: ~A" (view-files-speed-style dialog)))
-	  (set! (view-files-sort dialog) sort-files-by-size)
-	  (if (not (= (view-files-sort) sort-files-by-name)) (snd-display ";vf global sort after local set: ~A" (view-files-sort)))
-	  (if (not (= (view-files-sort dialog) sort-files-by-size)) (snd-display ";vf local sort after local set: ~A" (view-files-sort dialog)))
-	  (set! (view-files-sort) sort-files-by-date)
-	  (if (not (= (view-files-sort) sort-files-by-date)) (snd-display ";vf global sort after global set: ~A" (view-files-sort)))    
-	  (if (not (= (view-files-sort dialog) sort-files-by-size)) (snd-display ";vf local sort after global set: ~A" (view-files-sort dialog)))
+	  (set! (view-files-sort dialog) 2)
+	  (if (not (= (view-files-sort) 0)) (snd-display ";vf global sort after local set: ~A" (view-files-sort)))
+	  (if (not (= (view-files-sort dialog) 2)) (snd-display ";vf local sort after local set: ~A" (view-files-sort dialog)))
+	  (set! (view-files-sort) 4)
+	  (if (not (= (view-files-sort) 4)) (snd-display ";vf global sort after global set: ~A" (view-files-sort)))    
+	  (if (not (= (view-files-sort dialog) 2)) (snd-display ";vf local sort after global set: ~A" (view-files-sort dialog)))
 	  (set! (view-files-files dialog) (list "oboe.snd" "1a.snd" "pistol.snd" "storm.snd"))
 	  (if (or (and (not (member "1a.snd" (view-files-files dialog)))
 		       (not (member (string-append home-dir "/cl/1a.snd") (view-files-files dialog))))
@@ -46145,16 +46069,12 @@ EDITS: 1
 						    (force-event)))))
 			    (let ((update (find-child filed "Update")))
 			      (if update (click-button update) (force-event)))))
-		      (let ((name (find-child option-holder "name"))
-			    (date (find-child option-holder "date"))
-			    (size (find-child option-holder "size"))
-			    (entry (find-child option-holder "entry"))
-			    ;(proc (find-child option-holder "proc"))
+		      (let ((name (find-child option-holder "a..z"))
+			    (date (find-child option-holder "new..old"))
+			    (size (find-child option-holder "big..small"))
 			    )
 			(XtCallCallbacks date XmNactivateCallback (snd-global-state))
 			(XtCallCallbacks size XmNactivateCallback (snd-global-state))
-			(XtCallCallbacks entry XmNactivateCallback (snd-global-state))
-			;(if (XtIsSensitive proc) (XtCallCallbacks entry XmNactivateCallback (snd-global-state)))
 			(XtCallCallbacks name XmNactivateCallback (snd-global-state)))
 		      (if (XmMessageBoxGetChild filed XmDIALOG_CANCEL_BUTTON)
 			  (begin (click-button (XmMessageBoxGetChild filed XmDIALOG_CANCEL_BUTTON)) (force-event)))     ;clear
@@ -57711,7 +57631,7 @@ EDITS: 1
    (lambda (n)
      (forget-region n))
    regs))
-(set! (view-files-sort) sort-files-by-name)
+(set! (view-files-sort) 0)
 
 (if (file-exists? "saved-snd.scm") (delete-file "saved-snd.scm"))
 (gc)(gc)

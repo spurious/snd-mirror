@@ -209,7 +209,7 @@ typedef enum {SP_ANY_WATCHER, SP_READ_ONLY_WATCHER, SP_REVERT_WATCHER} sp_watche
 typedef enum {SP_READ_ONLY_CHANGED, SP_IS_CLOSING, SP_REVERTED} sp_watcher_reason_t;
 typedef enum {SELECTION_INACTIVE, SELECTION_ACTIVE, SELECTION_CHANGED, SELECTION_IN_DOUBT} selection_watcher_reason_t;
 typedef enum {WITH_READABLE_HEADERS, WITH_WRITABLE_HEADERS, WITH_BUILTIN_HEADERS} header_choice_t;
-enum {SORT_BY_NAME, SORT_BY_DATE, SORT_BY_SIZE, SORT_BY_ENTRY, SORT_BY_PROC};
+enum {SORT_A_TO_Z, SORT_Z_TO_A, SORT_NEW_TO_OLD, SORT_OLD_TO_NEW, SORT_SMALL_TO_BIG, SORT_BIG_TO_SMALL, SORT_XEN};
 
 #define FORCE_REFFT true
 #define DONT_FORCE_REFFT false
@@ -889,7 +889,7 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_SAVE_AS_DIALOG, F
 
 #define view_files_sort(ss) ss->View_Files_Sort
 #define set_view_files_sort(a) ss->View_Files_Sort = a
-#define DEFAULT_VIEW_FILES_SORT SORT_BY_NAME
+#define DEFAULT_VIEW_FILES_SORT SORT_A_TO_Z
 
 #define enved_clip_p(ss) ss->enved->clip_p
 #define in_set_enved_clip_p(a) ss->enved->clip_p = a

@@ -1039,7 +1039,7 @@ This provides an opportunity to set sndlib prescaling values:
 <table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (add-hook! <em class=red>during-open-hook</em>
   (lambda (fd name reason)
-    (if (= (<a class=quiet href="#soundheadertype">mus-sound-header-type</a> name) <a class=quiet href="#headertype">mus-raw</a>)
+    (if (= (<a class=quiet href="#mussoundheadertype">mus-sound-header-type</a> name) <a class=quiet href="#headertype">mus-raw</a>)
         (set! (<a href="#musfileprescaler">mus-file-prescaler</a> fd) 500.0))))
 </pre></td></tr></table></td></tr>
 
@@ -1187,9 +1187,9 @@ just-sounds button is set. Return #f to filter out <i>filename</i>.
 <table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (add-hook! <em class=red>just-sounds-hook</em>
   (lambda (name) ;display only stereo files in file selection dialog
-    (and (not (= (<a class=quiet href="#soundheadertype">mus-sound-header-type</a> name) <a class=quiet href="#headertype">mus-raw</a>))
+    (and (not (= (<a class=quiet href="#mussoundheadertype">mus-sound-header-type</a> name) <a class=quiet href="#headertype">mus-raw</a>))
          ;;any unrecognized file is considered "raw"
-         (= (<a class=quiet href="#soundchans">mus-sound-chans</a> name) 2))))
+         (= (<a class=quiet href="#mussoundchans">mus-sound-chans</a> name) 2))))
 </pre></td></tr></table></td></tr>
 <tr><td></td><td colspan=2>
 This works only in Motif or Gtk versions 2.3 and higher.
@@ -1638,7 +1638,7 @@ If it returns a string (a filename), that file is opened instead of the original
 <table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (add-hook! <em class=red>open-hook</em>
   (lambda (filename)
-    (if (= (<a class=quiet href="#soundheadertype">mus-sound-header-type</a> filename) <a class=quiet href="#headertype">mus-raw</a>)
+    (if (= (<a class=quiet href="#mussoundheadertype">mus-sound-header-type</a> filename) <a class=quiet href="#headertype">mus-raw</a>)
         ;; check for "OggS" first word, if found, translate to something Snd can read
 	(if (call-with-input-file filename 
 	      (lambda (fd)
@@ -2636,7 +2636,7 @@ set by: <code>(set! (mus-header-raw-defaults) (list 22050 4 mus-lint))</code>, o
 <tr><td></td><td>make a new 'mus-error choice, returning its id</td></tr>
 
 <!-- mus-sound-chans -->
-<tr><td colspan=2><code><a class=def name="soundchans">mus-sound-chans</a> (filename)</code></td></tr>
+<tr><td colspan=2><code><a class=def name="mussoundchans">mus-sound-chans</a> (filename)</code></td></tr>
 <tr><td></td><td>number of channels in <i>filename</i> (settable)</td></tr>
 
 <!-- mus-sound-close-input -->
@@ -2648,39 +2648,39 @@ set by: <code>(set! (mus-header-raw-defaults) (list 22050 4 mus-lint))</code>, o
 <tr><td></td><td>close sound file and update its length indication, if any</td></tr>
 
 <!-- mus-sound-comment -->
-<tr><td colspan=2><code><a class=def name="soundcomment">mus-sound-comment</a> (filename)</code></td></tr>
+<tr><td colspan=2><code><a class=def name="mussoundcomment">mus-sound-comment</a> (filename)</code></td></tr>
 <tr><td></td><td>header comment, if any</td></tr>
 
 <!-- mus-sound-data-format -->
-<tr><td colspan=2><code><a class=def name="sounddataformat">mus-sound-data-format</a> (filename)</code></td></tr>
+<tr><td colspan=2><code><a class=def name="mussounddataformat">mus-sound-data-format</a> (filename)</code></td></tr>
 <tr><td></td><td>data format (e.g. <i>mus-bshort</i>) (settable)</td></tr>
 
 <!-- mus-sound-data-location -->
-<tr><td colspan=2><code><a class=def name="sounddatalocation">mus-sound-data-location</a> (filename)</code></td></tr>
+<tr><td colspan=2><code><a class=def name="mussounddatalocation">mus-sound-data-location</a> (filename)</code></td></tr>
 <tr><td></td><td>location of first sample (bytes) (settable)</td></tr>
 
 <!-- mus-sound-datum-size -->
-<tr><td colspan=2><code><a class=def name="sounddatumsize">mus-sound-datum-size</a> (filename)</code></td></tr>
+<tr><td colspan=2><code><a class=def name="mussounddatumsize">mus-sound-datum-size</a> (filename)</code></td></tr>
 <tr><td></td><td>size in bytes of each sample in <i>filename</i>.</td></tr>
 
 <!-- mus-sound-duration -->
-<tr><td colspan=2><code><a class=def name="soundduration">mus-sound-duration</a> (filename)</code></td></tr>
+<tr><td colspan=2><code><a class=def name="mussoundduration">mus-sound-duration</a> (filename)</code></td></tr>
 <tr><td></td><td>duration of sound in seconds</td></tr>
 
 <!-- mus-sound-forget -->
-<tr><td colspan=2><code><a class=def name="soundforget">mus-sound-forget</a> (filename)</code></td></tr>
+<tr><td colspan=2><code><a class=def name="mussoundforget">mus-sound-forget</a> (filename)</code></td></tr>
 <tr><td></td><td>remove <i>filename</i> from the sound cache (presumably the file has been deleted or something).</td></tr>
 
 <!-- mus-sound-frames -->
-<tr><td colspan=2><code><a class=def name="soundframes">mus-sound-frames</a> (filename)</code></td></tr>
+<tr><td colspan=2><code><a class=def name="mussoundframes">mus-sound-frames</a> (filename)</code></td></tr>
 <tr><td></td><td>frames of sound according to header (can be incorrect)</td></tr>
 
 <!-- mus-sound-header-type -->
-<tr><td colspan=2><code><a class=def name="soundheadertype">mus-sound-header-type</a> (filename)</code></td></tr>
+<tr><td colspan=2><code><a class=def name="mussoundheadertype">mus-sound-header-type</a> (filename)</code></td></tr>
 <tr><td></td><td>header type (e.g. <i>mus-aifc</i>) (settable)</td></tr>
 
 <!-- mus-sound-length -->
-<tr><td colspan=2><code><a class=def name="soundlength">mus-sound-length</a> (filename)</code></td></tr>
+<tr><td colspan=2><code><a class=def name="mussoundlength">mus-sound-length</a> (filename)</code></td></tr>
 <tr><td></td><td>true file length (bytes)</td></tr>
 
 <!-- mus-sound-loop-info -->
@@ -2709,7 +2709,7 @@ in the sound cache; if it isn't, a call on mus-sound-maxamp has to open and read
 <td>create a new sound file with the indicated attributes, return "fd"</td></tr>
 
 <!-- mus-sound-prune -->
-<tr><td colspan=2><code><a class=def name="soundprune">mus-sound-prune</a> ()</code></td></tr>
+<tr><td colspan=2><code><a class=def name="mussoundprune">mus-sound-prune</a> ()</code></td></tr>
 <tr><td></td><td>remove all defunct (non-existent) files from the sound cache.</td></tr>
 
 <!-- mus-sound-read -->
@@ -2729,7 +2729,7 @@ accommodate the read</td></tr>
 <tr><td></td><td>print the current sound header data table to the file given or stdout if none is specified.</td></tr>
 
 <!-- mus-sound-samples -->
-<tr><td colspan=2><code><a class=def name="soundsamples">mus-sound-samples</a> (filename)</code></td></tr>
+<tr><td colspan=2><code><a class=def name="mussoundsamples">mus-sound-samples</a> (filename)</code></td></tr>
 <tr><td></td><td>number of samples in sound according to header (can be incorrect) (settable)</td></tr>
 
 <!-- mus-sound-seek-frame -->
@@ -2737,11 +2737,11 @@ accommodate the read</td></tr>
 <tr><td></td><td>move to <i>frame</i> in sound file <i>fd</i></td></tr>
 
 <!-- mus-sound-srate -->
-<tr><td colspan=2><code><a class=def name="soundsrate">mus-sound-srate</a> (filename)</code></td></tr>
+<tr><td colspan=2><code><a class=def name="mussoundsrate">mus-sound-srate</a> (filename)</code></td></tr>
 <tr><td></td><td>sampling rate (settable)</td></tr>
 
 <!-- mus-sound-type-specifier -->
-<tr><td colspan=2><code><a class=def name="soundtypespecifier">mus-sound-type-specifier</a> (filename)</code></td></tr>
+<tr><td colspan=2><code><a class=def name="mussoundtypespecifier">mus-sound-type-specifier</a> (filename)</code></td></tr>
 <tr><td></td><td>original type indication of <i>filename</i>.</td></tr>
 
 <!-- mus-sound-write -->
@@ -2750,7 +2750,7 @@ accommodate the read</td></tr>
 <td>write data to sound file <i>fd</i></td></tr>
 
 <!-- mus-sound-write-date -->
-<tr><td colspan=2><code><a class=def name="soundwritedate">mus-sound-write-date</a> (filename)</code></td></tr>
+<tr><td colspan=2><code><a class=def name="mussoundwritedate">mus-sound-write-date</a> (filename)</code></td></tr>
 <tr><td></td><td>sound's write date:
 </td></tr><tr><td></td><td>
 <pre>
@@ -2779,13 +2779,13 @@ throw 'mus-error upon encountering an error, rather than returning -1 like the u
   (lambda (file)
     (string-append 
      file
-     ": chans: " (number-&gt;string (<a class=quiet href="#soundchans">mus-sound-chans</a> file))
-     ", srate: " (number-&gt;string (<a class=quiet href="#soundsrate">mus-sound-srate</a> file))
-     ", " (<a class=quiet href="#musheadertypename">mus-header-type-name</a> (<a class=quiet href="#soundheadertype">mus-sound-header-type</a> file))
-     ", " (<a class=quiet href="#musdataformatname">mus-data-format-name</a> (<a class=quiet href="#sounddataformat">mus-sound-data-format</a> file))
+     ": chans: " (number-&gt;string (<a class=quiet href="#mussoundchans">mus-sound-chans</a> file))
+     ", srate: " (number-&gt;string (<a class=quiet href="#mussoundsrate">mus-sound-srate</a> file))
+     ", " (<a class=quiet href="#musheadertypename">mus-header-type-name</a> (<a class=quiet href="#mussoundheadertype">mus-sound-header-type</a> file))
+     ", " (<a class=quiet href="#musdataformatname">mus-data-format-name</a> (<a class=quiet href="#mussounddataformat">mus-sound-data-format</a> file))
      ", len: " (number-&gt;string 
-                (/ (<a class=quiet href="#soundsamples">mus-sound-samples</a> file) 
-                   (* (<a class=quiet href="#soundchans">mus-sound-chans</a> file) (<a class=quiet href="#soundsrate">mus-sound-srate</a> file)))))))
+                (/ (<a class=quiet href="#mussoundsamples">mus-sound-samples</a> file) 
+                   (* (<a class=quiet href="#mussoundchans">mus-sound-chans</a> file) (<a class=quiet href="#mussoundsrate">mus-sound-srate</a> file)))))))
 </pre></td></tr></table>
 <br>
 
@@ -4468,7 +4468,7 @@ which is the same as <code>(for-each close-sound (<a class=quiet href="#sounds">
 </td></tr>
 <tr><td></td><td>
 <i>snd</i>'s comment, if any (this refers initially to the file's header which can often contain a comment, identical
-to <a href="#soundcomment">mus-sound-comment</a>).  If you set it, the header is not updated until the sound is saved.
+to <a href="#mussoundcomment">mus-sound-comment</a>).  If you set it, the header is not updated until the sound is saved.
 If the new comment is the only change you want to make, you can save the new header via the Edit:Edit Header menu option.
 </td></tr>
 <tr><td colspan=2></td></tr>
@@ -4730,8 +4730,8 @@ or (an alternative that sets the underlying database entry, rather than the curr
 <table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (add-hook! <a class=quiet href="#openhook">open-hook</a> 
   (lambda (name)
-    (if (= (<a class=quiet href="#sounddataformat">mus-sound-data-format</a> name) mus-lint)
-        (set! (<a class=quiet href="#sounddataformat">mus-sound-data-format</a> name) mus-lintn))
+    (if (= (<a class=quiet href="#mussounddataformat">mus-sound-data-format</a> name) mus-lint)
+        (set! (<a class=quiet href="#mussounddataformat">mus-sound-data-format</a> name) mus-lintn))
     #f))
 </pre></td></tr></table>
 </td></tr>
@@ -4741,7 +4741,7 @@ To deal with MPEG, OGG, Flac, or Speex files, see examp.scm (<a class=quiet href
 Octave/WaveLab ASCII files can be translated by read-ascii (examp.scm).
 <br><br>
 To turn a data-format number into a string, use <a href="#musdataformatname">mus-data-format-name</a>. To get
-the data format of some sound file, use <a href="#sounddataformat">mus-sound-data-format</a>.
+the data format of some sound file, use <a href="#mussounddataformat">mus-sound-data-format</a>.
 The default output (<a class=quiet href="#newsound">new-sound</a>, 
 <a class=quiet href="#savesoundas">save-sound-as</a>) data-format is <a href="#defaultoutputdataformat">default-output-data-format</a>.
 </td></tr>
@@ -4756,7 +4756,7 @@ The default output (<a class=quiet href="#newsound">new-sound</a>,
 <tr><td></td><td>
 The location of the sound samples (an offset in bytes) in the file represented by <i>snd</i>.  In a raw (headerless) file,
 this is 0, but normally the data comes after some portion of the header.  
-To get the data-location of some sound file, use <a href="#sounddatalocation">mus-sound-data-location</a>.
+To get the data-location of some sound file, use <a href="#mussounddatalocation">mus-sound-data-location</a>.
 If you set this field (you don't want to do this!), the underlying file is immediately rewritten.
 </td></tr>
 <tr><td colspan=2></td></tr>
@@ -4796,7 +4796,7 @@ delete a track or all tracks: <a href="#deletetrack">delete-track</a><br>
 delete a mark or all marks: <a href="#deletemark">delete-mark</a><br>
 delete a colormap: <a href="#deletecolormap">delete-colormap</a><br>
 delete samples: <a href="#deletesamples">delete-samples</a><br>
-remove a file from the sound cache: <a href="#soundforget">mus-sound-forget</a><br>
+remove a file from the sound cache: <a href="#mussoundforget">mus-sound-forget</a><br>
 remove a menu item: <a href="#removefrommenu">remove-from-menu</a> or remove-main-menu in snd-motif.scm<br>
 add a 'delete' option to the file selection dialog: <a href="sndscm.html#adddeleteoption">add-delete-option</a><br>
 Scheme delete funcs: remove-if assoc-remove! hash-remove! delete-if! delete! string-delete<br>
@@ -5301,7 +5301,7 @@ mus-ircam, and mus-raw.  For technical descriptions of the headers,
 see headers.c; for actual sound files, see sf.tar.gz at ccrma-ftp.
 <br><br>
 To turn a type number into a string, use <a href="#musheadertypename">mus-header-type-name</a>. To get
-the header type of some sound file, use <a href="#soundheadertype">mus-sound-header-type</a>.
+the header type of some sound file, use <a href="#mussoundheadertype">mus-sound-header-type</a>.
 If you set the header-type, the sound file is rewritten with the new header.  The default output
 (<a class=quiet href="#newsound">new-sound</a>, 
 <a class=quiet href="#savesoundas">save-sound-as</a>) header type is <a href="#defaultoutputheadertype">default-output-header-type</a>.
@@ -7027,7 +7027,7 @@ it's probably simpler to use <a href="clm.html#with-sound">with-sound</a> (see a
 			      (<a class=quiet href="clm.html#out-any">out-any</a> samp (<a class=quiet href="clm.html#src">src</a> s incr (lambda (dir) (<a class=quiet href="#readsample">read-sample</a> rd))) 0 *output*)
 			      (if (= (modulo samp 2205) 0)
 				  (set! incr (+ 2.0 (<a class=quiet href="clm.html#oscil">oscil</a> o)))))))))
-	 (len (<a class=quiet href="#soundframes">mus-sound-frames</a> tempfile)))
+	 (len (<a class=quiet href="#mussoundframes">mus-sound-frames</a> tempfile)))
     (<em class=red>set-samples</em> 0 (1- len) tempfile #f #f #t "step-src" 0 #f #t)))
 </pre></td></tr></table>
 </td></tr>
@@ -7397,7 +7397,7 @@ reflect the new srate, but any current edits are simply flushed.  This is consis
 with the other header fields (data-format, etc), but can be annoying.
 <br><br>
 There are several srates floating around in Snd.  <code>(srate snd)</code> returns the
-sampling rate of a particular (currently open) sound. <code>(<a class=quiet href="#soundsrate">mus-sound-srate</a> filename)</code> returns a sound file's sampling
+sampling rate of a particular (currently open) sound. <code>(<a class=quiet href="#mussoundsrate">mus-sound-srate</a> filename)</code> returns a sound file's sampling
 rate.  <code>mus-srate</code> is associated with the CLM package (setting the implicit srate for oscil etc).  
 <code>default-output-srate</code> is the default sampling rate used when opening new files.  <code>enved-srate</code>
 is a constant that can be assigned to the envelope editor's <code>enved-target</code> (to apply an envelope to 
@@ -9420,8 +9420,6 @@ View:Files <a href="snd.html#viewfiles">dialog</a> and return the dialog widget.
 <tr><td colspan=2><code><a class=def name="viewfilessort">view-files-sort</a> (<i>dialog</i>)</code></td></tr>
 <tr><td></td><td>Either the local (<i>dialog</i>-specific) sort choice, or (if <i>dialog</i> is omitted),
 the default (global) sort function choice in the View:Files dialog.
-The choices are <i>sort-files-by-name</i>, <i>sort-files-by-date</i>, <i>sort-files-by-size</i>, <i>sort-files-by-entry</i> (directory order),
-or the index of any file-sorter.
 </td></tr>
 
 <!-- view-files-speed -->
@@ -9637,6 +9635,7 @@ add <i>func</i> to the file-filter list under the name <i>name</i>.  Some dialog
 a "filter" menu to remove uninteresting files from the file list ("just sounds" for example).  You can add your own filters to this
 menu with add-file-filter.  The name appears as the menu item label corresponding to the function.
 The function should take one argument, a file name, and return #t to retain that file in the file list.
+add-file-filter returns an integer to identify <i>func</i> in other contexts.
 </td></tr>
 
 <!-- add-file-sorter -->
@@ -9646,9 +9645,22 @@ The function should take one argument, a file name, and return #t to retain that
 add <i>func</i> to the file-sorter list under the name <i>name</i>.  Some dialog file lists include
 a "sort" menu to reorder the files in the file list.  You can add your own sort functions to this
 menu with add-file-sorter.  The name appears as the menu item label corresponding to the function.
-The function should take one argument, a list of file names, and return a list of those names
-sorted in some way.
-</td></tr>
+The new sorter's index is returned; it is an integer for use with functions such as <a href="#viewfilessort">view-files-sort</a>.
+The function should take two arguments, each a filename, and return a strcmp-like number describing
+how to sort the pair.  The following adds a sorter named "duration" that sorts files from shorter
+to longer:
+</td></tr><tr><td></td><td>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
+  (<em class=red>add-file-sorter</em>
+   "duration"
+   (lambda (a b)
+     "sorts by duration from short to long"
+     (let ((dur1 (<a class=quiet href="#mussoundduration">mus-sound-duration</a> a))
+	   (dur2 (<a class=quiet href="#mussoundduration">mus-sound-duration</a> b)))
+       (if (&gt; dur1 dur2) 1
+	   (if (&lt; dur1 dur2) -1 0)))))
+</pre></td></tr></table></td></tr>
+
 
 <!-- add-sound-file-extension -->
 <tr><td colspan=2>
@@ -10038,16 +10050,17 @@ non-CLM users might prefer <a href="#defineenvelope">define-envelope</a>.
 
 <!-- delete-file-filter -->
 <tr><td colspan=2>
-<code><a class=def name="deletefilefilter">delete-file-filter</a> (name)</code></td></tr>
+<code><a class=def name="deletefilefilter">delete-file-filter</a> (index)</code></td></tr>
 <tr><td></td><td>
-delete <i>name</i> (and its corresponding function) from the file-filter list. 
+delete the filter associated with <i>index</i> from the file-filter list. 
 </td></tr>
 
 <!-- delete-file-sorter -->
 <tr><td colspan=2>
-<code><a class=def name="deletefilesorter">delete-file-sorter</a> (name)</code></td></tr>
+<code><a class=def name="deletefilesorter">delete-file-sorter</a> (index)</code></td></tr>
 <tr><td></td><td>
-delete <i>name</i> (and its corresponding function) from the file-sorter list. 
+delete the file-sorter associated with <i>index</i> from the file-sorter list. <i>index</i> is an
+integer returned by <a href="#addfilesorter">add-file-sorter</a>.
 </td></tr>
 
 <!-- equalize-panes -->
@@ -10069,23 +10082,6 @@ This function is specific to the Motif version of Snd.
 <code><a class=def name="exit">exit</a> (<i>exit-value</i>)</code></td></tr>
 <tr><td></td><td>
 exit Snd.  Guile's exit function is renamed %exit.
-</td></tr>
-
-<!-- file-filters -->
-<tr><td colspan=2>
-<code><a class=def name="filefilters">file-filters</a> ()</code></td></tr>
-<tr><td></td><td>
-the file filters list (settable); a list of lists: (list "name" func), where the
-function takes one argument, a file name, and returns #t to retain that file in
-the file list.
-</td></tr>
-
-<!-- file-sorters -->
-<tr><td colspan=2>
-<code><a class=def name="filesorters">file-sorters</a> ()</code></td></tr>
-<tr><td></td><td>
-the file sorters list (settable); a list of lists: (list "name" func), where the
-function takes one argument, a list of file names, and returns that list suitably sorted.
 </td></tr>
 
 <!-- goto-listener-end -->
@@ -10124,7 +10120,6 @@ if <i>just-sounds</i> is #t,
 the file lists displayed by the file selection dialogs are filtered to show just
 sound files (see <a href="#addsoundfileextension">add-sound-file-extension</a> and
 <a href="#justsoundshook">just-sounds-hook</a>).
-See also <a href="#filefilters">file-filters</a>.
 </td></tr>
 
 <!-- in -->
@@ -10454,8 +10449,8 @@ prints the names of all the stereo AIFC files it finds:
 <table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (for-each
   (lambda (filename)
-    (if (and (= (<a class=quiet href="#soundheadertype">mus-sound-header-type</a> filename) <a class=quiet href="#headertype">mus-aifc</a>)
-             (= (<a class=quiet href="#soundchans">mus-sound-chans</a> filename) 2))
+    (if (and (= (<a class=quiet href="#mussoundheadertype">mus-sound-header-type</a> filename) <a class=quiet href="#headertype">mus-aifc</a>)
+             (= (<a class=quiet href="#mussoundchans">mus-sound-chans</a> filename) 2))
         (<a class=quiet href="#sndprint">snd-print</a> (format #f "~%~A" filename))))
   (<em class=red>sound-files-in-directory</em>))
 </pre></td></tr></table></td></tr>
@@ -10606,16 +10601,6 @@ to put the date and time in the Snd title bar.
   prism-colormap           autumn-colormap   winter-colormap  spring-colormap
   summer-colormap          rainbow-colormap  flag-colormap
 </pre>
-
-<p><b>File Sort</b> choice (<a href="#viewfilessort">view-files-sort</a>):</p>
-<pre>
-  sort-files-by-name   sort-files-by-date   sort-files-by-size  sort-files-by-entry
-  or an index returned by <a href="#addfilesorter">add-file-sorter</a>.
-</pre>
-<p><b>sort-files-by-entry</b> is the "unsort" choice -- it just presents files
-in the order they occur in the directory.  "by-date" refers to date written.
-"by-size" refers to number of frames.
-</p>
 
 <br>
 <table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="snderrors">Errors and Debugging</a></h3></td></tr></table>

@@ -379,3 +379,7 @@
 		 (vct xc (- xc)) 
 		 (vct 0.0 (- gamma)))))
 
+(define sort-files-by-name 0)
+(define sort-files-by-date 2)
+(define sort-files-by-size 4)
+(define sort-files-by-entry -1) ; no longer implemented

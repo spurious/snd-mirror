@@ -1147,19 +1147,19 @@ constants and functions described above into Scheme.
   (lambda (file)
     (string-append
      file
-     ": chans: " (number-&gt;string (<a class=quiet href="extsnd.html#soundchans">mus-sound-chans</a> file))
-     ", srate: " (number-&gt;string (<a class=quiet href="extsnd.html#soundsrate">mus-sound-srate</a> file))
-     ", " (<a class=quiet href="extsnd.html#musheadertypename">mus-header-type-name</a> (<a class=quiet href="extsnd.html#soundheadertype">mus-sound-header-type</a> file))
-     ", " (<a class=quiet href="extsnd.html#musdataformatname">mus-data-format-name</a> (<a class=quiet href="extsnd.html#sounddataformat">mus-sound-data-format</a> file))
+     ": chans: " (number-&gt;string (<a class=quiet href="extsnd.html#mussoundchans">mus-sound-chans</a> file))
+     ", srate: " (number-&gt;string (<a class=quiet href="extsnd.html#mussoundsrate">mus-sound-srate</a> file))
+     ", " (<a class=quiet href="extsnd.html#musheadertypename">mus-header-type-name</a> (<a class=quiet href="extsnd.html#mussoundheadertype">mus-sound-header-type</a> file))
+     ", " (<a class=quiet href="extsnd.html#musdataformatname">mus-data-format-name</a> (<a class=quiet href="extsnd.html#mussounddataformat">mus-sound-data-format</a> file))
      ", len: " (number-&gt;string
-                (/ (<a class=quiet href="extsnd.html#soundsamples">mus-sound-samples</a> file)
-                   (* (<a class=quiet href="extsnd.html#soundchans">mus-sound-chans</a> file) (<a class=quiet href="extsnd.html#soundsrate">mus-sound-srate</a> file)))))))
+                (/ (<a class=quiet href="extsnd.html#mussoundsamples">mus-sound-samples</a> file)
+                   (* (<a class=quiet href="extsnd.html#mussoundchans">mus-sound-chans</a> file) (<a class=quiet href="extsnd.html#mussoundsrate">mus-sound-srate</a> file)))))))
 
 ;;; this function reads the first 32 samples of a file, returning the 30th in channel 0
 (define read-sample-30 
   (lambda (file)
     (let* ((fd (<a class=quiet href="extsnd.html#mussoundopeninput">mus-sound-open-input</a> file))
-	   (<a class=quiet href="extsnd.html#chans">chans</a> (<a class=quiet href="extsnd.html#soundchans">mus-sound-chans</a> file))
+	   (<a class=quiet href="extsnd.html#chans">chans</a> (<a class=quiet href="extsnd.html#mussoundchans">mus-sound-chans</a> file))
 	   (data (<a class=quiet href="extsnd.html#makesounddata">make-sound-data</a> chans 32)))
       (<a class=quiet href="extsnd.html#mussoundread">mus-sound-read</a> fd 0 31 chans data)
       ;; we could use sound-data-&gt;vct here to return all the samples
@@ -1178,13 +1178,13 @@ constants and functions described above into Scheme.
 (define play-sound
   (lambda (file)
     (let* ((sound-fd (<a class=quiet href="extsnd.html#mussoundopeninput">mus-sound-open-input</a> file))
-	   (<a class=quiet href="extsnd.html#chans">chans</a> (<a class=quiet href="extsnd.html#soundchans">mus-sound-chans</a> file))
-	   (<a class=quiet href="extsnd.html#frames">frames</a> (<a class=quiet href="extsnd.html#soundframes">mus-sound-frames</a> file))
+	   (<a class=quiet href="extsnd.html#chans">chans</a> (<a class=quiet href="extsnd.html#mussoundchans">mus-sound-chans</a> file))
+	   (<a class=quiet href="extsnd.html#frames">frames</a> (<a class=quiet href="extsnd.html#mussoundframes">mus-sound-frames</a> file))
 	   (bufsize 256)
 	   (data (<a class=quiet href="extsnd.html#makesounddata">make-sound-data</a> chans bufsize))
 	   (bytes (* bufsize chans 2)))
       (<a class=quiet href="extsnd.html#mussoundread">mus-sound-read</a> sound-fd 0 (1- bufsize) chans data)
-      (let ((audio-fd (<a class=quiet href="extsnd.html#musaudioopenoutput">mus-audio-open-output</a> mus-audio-default (<a class=quiet href="extsnd.html#soundsrate">mus-sound-srate</a> file) chans mus-lshort bytes)))
+      (let ((audio-fd (<a class=quiet href="extsnd.html#musaudioopenoutput">mus-audio-open-output</a> mus-audio-default (<a class=quiet href="extsnd.html#mussoundsrate">mus-sound-srate</a> file) chans mus-lshort bytes)))
 	(do ((i 0 (+ i bufsize)))
 	    ((&gt;= i frames))
 	  (<a class=quiet href="extsnd.html#musaudiowrite">mus-audio-write</a> audio-fd data bufsize)
@@ -1197,7 +1197,7 @@ constants and functions described above into Scheme.
 <pre>
 guile&gt; (define lib (<em class=red>dynamic-link</em> "/home/bil/sndlib/sndlib.so"))
 guile&gt; (<em class=red>dynamic-call</em> "mus_sndlib_xen_initialize" lib)
-guile&gt; (<a class=quiet href="extsnd.html#soundsrate">mus-sound-srate</a> "/home/bil/cl/oboe.snd")
+guile&gt; (<a class=quiet href="extsnd.html#mussoundsrate">mus-sound-srate</a> "/home/bil/cl/oboe.snd")
 22050
 guile&gt; (<em class=red>dynamic-call</em> "mus_xen_init" lib)
 guile&gt; (define osc (<a class=quiet href="clm.html#make-oscil">make-oscil</a> 440))

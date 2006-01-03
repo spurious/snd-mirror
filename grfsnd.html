@@ -1459,8 +1459,8 @@ match-sound-files from extensions.scm):
 					       XmNfileListItemCount (length files)
 					       XmNlistUpdated #t)))))))
 
-;(install-searcher (lambda (file) (= (<a class=quiet href="extsnd.html#soundsrate">mus-sound-srate</a> file) 44100)))
-;(install-searcher (lambda (file) (= (<a class=quiet href="extsnd.html#soundchans">mus-sound-chans</a> file) 4)))
+;(install-searcher (lambda (file) (= (<a class=quiet href="extsnd.html#mussoundsrate">mus-sound-srate</a> file) 44100)))
+;(install-searcher (lambda (file) (= (<a class=quiet href="extsnd.html#mussoundchans">mus-sound-chans</a> file) 4)))
 </pre></td></tr></table>
 
 <p>Now click the 'Filter' button to see only those files that fit the procedure in
@@ -1639,7 +1639,7 @@ the following displays all the comments it finds:
   (do ((arg (+ (<a class=quiet href="extsnd.html#scriptarg">script-arg</a>) 1) (1+ arg)))
       ((= arg (length (<a class=quiet href="extsnd.html#scriptargs">script-args</a>))))
     (let ((name (list-ref (<a class=quiet href="extsnd.html#scriptargs">script-args</a>) arg)))
-      (display (format #f "~A: ~A~%" name (<a class=quiet href="extsnd.html#soundcomment">mus-sound-comment</a> name))))))
+      (display (format #f "~A: ~A~%" name (<a class=quiet href="extsnd.html#mussoundcomment">mus-sound-comment</a> name))))))
 (<a class=quiet href="extsnd.html#exit">exit</a>)
 </pre></td></tr></table>
 
@@ -1674,7 +1674,7 @@ than 40 seconds in duration, and truncates them to 40 seconds:
   (do ((arg (+ (<a class=quiet href="extsnd.html#scriptarg">script-arg</a>) 1) (1+ arg)))
       ((= arg (length (<a class=quiet href="extsnd.html#scriptargs">script-args</a>))))
     (let* ((name (list-ref (<a class=quiet href="extsnd.html#scriptargs">script-args</a>) arg)))
-      (if (&gt; (<a class=quiet href="extsnd.html#soundduration">mus-sound-duration</a> name) 40.0)
+      (if (&gt; (<a class=quiet href="extsnd.html#mussoundduration">mus-sound-duration</a> name) 40.0)
 	  (let* ((ind (<a class=quiet href="extsnd.html#opensound">open-sound</a> name)))
 	    (set! (<a class=quiet href="extsnd.html#frames">frames</a> ind) (* 40 (<a class=quiet href="extsnd.html#srate">srate</a> ind)))
 	    (<a class=quiet href="extsnd.html#savesound">save-sound</a> ind)
@@ -1701,7 +1701,7 @@ into a bunch of mono files:
 (if (= (length (<a class=quiet href="extsnd.html#scriptargs">script-args</a>)) 2)
   (display "usage: split.scm filename")
   (let* ((name (list-ref (<a class=quiet href="extsnd.html#scriptargs">script-args</a>) (1+ (<a class=quiet href="extsnd.html#scriptarg">script-arg</a>))))
-	 (chns (<a class=quiet href="extsnd.html#soundchans">mus-sound-chans</a> name)))
+	 (chns (<a class=quiet href="extsnd.html#mussoundchans">mus-sound-chans</a> name)))
     (if (&gt; chns 1)
 	(let ((ind (<a class=quiet href="extsnd.html#opensound">open-sound</a> name)))
 	  (do ((i 0 (1+ i)))

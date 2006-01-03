@@ -17,9 +17,8 @@ typedef struct {
   int size;
   char **names;
   char **full_names;
-  int *times;
   int end;
-  int curtime, sorter;
+  int sorter;
   int *selected_files;
   int selected_files_size;
   int currently_selected_files;
@@ -66,10 +65,12 @@ typedef struct {
   widget_t speed_number; 
   widget_t speed_scrollbar;
   widget_t env_drawer;
-  widget_t by_name; 
-  widget_t by_date; 
-  widget_t by_size; 
-  widget_t by_entry;
+  widget_t a_to_z; 
+  widget_t z_to_a; 
+  widget_t new_to_old; 
+  widget_t old_to_new; 
+  widget_t small_to_big; 
+  widget_t big_to_small; 
   widget_t smenu; 
   widget_t current_play_button;
   widget_t amp_event; 
@@ -157,5 +158,13 @@ bool edit_header_callback(snd_info *sp, file_data *edit_header_data,
 
 
 void raw_data_dialog_to_file_info(const char *filename, char *title, char *info, bool read_only, bool selected);
+
+typedef struct {
+  time_t time;
+  off_t samps;
+  char *a1, *a2; /* a2 is just along for the ride */
+} sort_info;
+
+void snd_sort(int sorter, sort_info **data, int len);
 
 #endif

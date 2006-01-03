@@ -1548,6 +1548,8 @@ file_data *make_file_data_panel(GtkWidget *parent, char *name,
   gtk_box_pack_start(GTK_BOX(form), scbox, false, false, 4);
   gtk_widget_show(scbox);
 
+  /* TODO: srate/channels drop-down menus seem to be broken */
+
   /* srate label is drop-down menu */
   sbar = gtk_menu_bar_new();
   gtk_box_pack_start(GTK_BOX(scbox), sbar, false, false, 0);
@@ -3592,37 +3594,62 @@ static void view_files_update_callback(GtkWidget *w, gpointer context)
 
 static void sort_vf(view_files_info *vdat, int sort_choice)
 {
-  vdat->sorter = SORT_BY_NAME;
+  vdat->sorter = sort_choice;
   vf_reflect_sort_choice_in_menu(vdat);
   view_files_display_list(vdat);
 }
 
-static void sort_view_files_by_name(GtkWidget *w, gpointer context) 
+static void sort_view_files_a_to_z(GtkWidget *w, gpointer context)
 {
-  sort_vf((view_files_info *)context, SORT_BY_NAME);
+  sort_vf((view_files_info *)context, SORT_A_TO_Z);
 }
 
-static void sort_view_files_by_date(GtkWidget *w, gpointer context) 
+static void sort_view_files_z_to_a(GtkWidget *w, gpointer context)
 {
-  sort_vf((view_files_info *)context, SORT_BY_DATE);
+  sort_vf((view_files_info *)context, SORT_Z_TO_A);
 }
 
-static void sort_view_files_by_size(GtkWidget *w, gpointer context) 
+static void sort_view_files_new_to_old(GtkWidget *w, gpointer context)
 {
-  sort_vf((view_files_info *)context, SORT_BY_SIZE);
+  sort_vf((view_files_info *)context, SORT_NEW_TO_OLD);
 }
 
-static void sort_view_files_by_entry_order(GtkWidget *w, gpointer context) 
+static void sort_view_files_old_to_new(GtkWidget *w, gpointer context)
 {
-  sort_vf((view_files_info *)context, SORT_BY_ENTRY);
+  sort_vf((view_files_info *)context, SORT_OLD_TO_NEW);
 }
 
-static void sort_view_files_by_procedure(GtkWidget *w, gpointer context) 
+static void sort_view_files_big_to_small(GtkWidget *w, gpointer context)
+{
+  sort_vf((view_files_info *)context, SORT_BIG_TO_SMALL);
+}
+
+static void sort_view_files_small_to_big(GtkWidget *w, gpointer context)
+{
+  sort_vf((view_files_info *)context, SORT_SMALL_TO_BIG);
+}
+
+static void sort_view_files_xen(GtkWidget *w, gpointer context)
 {
   long index;
   index = (long)get_user_data(G_OBJECT(w));
   sort_vf((view_files_info *)context, (int)index);
 }
+
+void vf_reflect_sort_choice_in_menu(view_files_info *vdat)
+{
+  int i;
+  set_sensitive(vdat->a_to_z, vdat->sorter != SORT_A_TO_Z);
+  set_sensitive(vdat->z_to_a, vdat->sorter != SORT_Z_TO_A);
+  set_sensitive(vdat->new_to_old, vdat->sorter != SORT_NEW_TO_OLD);
+  set_sensitive(vdat->old_to_new, vdat->sorter != SORT_OLD_TO_NEW);
+  set_sensitive(vdat->small_to_big, vdat->sorter != SORT_SMALL_TO_BIG);
+  set_sensitive(vdat->big_to_small, vdat->sorter != SORT_BIG_TO_SMALL);
+  for (i = 0; i < vdat->sort_items_size; i++)
+    if (GTK_WIDGET_VISIBLE(vdat->sort_items[i]))
+      set_sensitive(vdat->sort_items[i], vdat->sorter != (SORT_XEN + i));
+}
+
 
 void view_files_add_file_or_directory(view_files_info *vdat, const char *file_or_dir)
 {
@@ -4125,26 +4152,13 @@ static gboolean vf_amp_env_resize_callback(GtkWidget *w, GdkEventConfigure *ev, 
   return(false);
 }
 
-
-
-void vf_reflect_sort_choice_in_menu(view_files_info *vdat)
-{
-  int i;
-  set_sensitive(vdat->by_name, vdat->sorter != SORT_BY_NAME);
-  set_sensitive(vdat->by_date, vdat->sorter != SORT_BY_DATE);
-  set_sensitive(vdat->by_size, vdat->sorter != SORT_BY_SIZE);
-  set_sensitive(vdat->by_entry, vdat->sorter != SORT_BY_ENTRY);
-  for (i = 0; i < vdat->sort_items_size; i++)
-    if (GTK_WIDGET_VISIBLE(vdat->sort_items[i]))
-      set_sensitive(vdat->sort_items[i], vdat->sorter != (SORT_BY_PROC + i));
-}
-
 static void view_files_reset_callback(GtkWidget *w, gpointer context) 
 {
   view_files_info *vdat = (view_files_info *)context;
   vf_set_amp(vdat, 1.0);
   vf_set_speed(vdat, 1.0);
   vf_set_amp_env(vdat, default_env(1.0, 1.0));
+  sort_vf(vdat, view_files_sort(ss));
 }
 
 GtkWidget *start_view_files_dialog_1(view_files_info *vdat, bool managed)
@@ -4254,15 +4268,19 @@ GtkWidget *start_view_files_dialog_1(view_files_info *vdat, bool managed)
       gtk_widget_show(sbar);
 
       vdat->smenu = gtk_menu_new();
-      vdat->by_name = gtk_menu_item_new_with_label(_("name"));
-      vdat->by_date = gtk_menu_item_new_with_label(_("date"));
-      vdat->by_size = gtk_menu_item_new_with_label(_("size"));
-      vdat->by_entry = gtk_menu_item_new_with_label(_("entry"));
+      vdat->a_to_z = gtk_menu_item_new_with_label(_("a..z"));
+      vdat->z_to_a = gtk_menu_item_new_with_label(_("z..a"));
+      vdat->new_to_old = gtk_menu_item_new_with_label(_("new..old"));
+      vdat->old_to_new = gtk_menu_item_new_with_label(_("old..new"));
+      vdat->small_to_big = gtk_menu_item_new_with_label(_("small..big"));
+      vdat->big_to_small = gtk_menu_item_new_with_label(_("big..small"));
 
-      gtk_menu_shell_append(GTK_MENU_SHELL(vdat->smenu), vdat->by_name);
-      gtk_menu_shell_append(GTK_MENU_SHELL(vdat->smenu), vdat->by_date);
-      gtk_menu_shell_append(GTK_MENU_SHELL(vdat->smenu), vdat->by_size);
-      gtk_menu_shell_append(GTK_MENU_SHELL(vdat->smenu), vdat->by_entry);
+      gtk_menu_shell_append(GTK_MENU_SHELL(vdat->smenu), vdat->a_to_z);
+      gtk_menu_shell_append(GTK_MENU_SHELL(vdat->smenu), vdat->z_to_a);
+      gtk_menu_shell_append(GTK_MENU_SHELL(vdat->smenu), vdat->new_to_old);
+      gtk_menu_shell_append(GTK_MENU_SHELL(vdat->smenu), vdat->old_to_new);
+      gtk_menu_shell_append(GTK_MENU_SHELL(vdat->smenu), vdat->small_to_big);
+      gtk_menu_shell_append(GTK_MENU_SHELL(vdat->smenu), vdat->big_to_small);
 
       vdat->sort_items_size = 4;
       vdat->sort_items = (GtkWidget **)CALLOC(vdat->sort_items_size, sizeof(GtkWidget *));
@@ -4272,25 +4290,29 @@ GtkWidget *start_view_files_dialog_1(view_files_info *vdat, bool managed)
 	  gtk_menu_shell_append(GTK_MENU_SHELL(vdat->smenu), vdat->sort_items[i]);
 	}
 
-      gtk_widget_show(vdat->by_name);
-      gtk_widget_show(vdat->by_date);
-      gtk_widget_show(vdat->by_size);
-      gtk_widget_show(vdat->by_entry);
+      gtk_widget_show(vdat->a_to_z);
+      gtk_widget_show(vdat->z_to_a);
+      gtk_widget_show(vdat->new_to_old);
+      gtk_widget_show(vdat->old_to_new);
+      gtk_widget_show(vdat->small_to_big);
+      gtk_widget_show(vdat->big_to_small);
 
       sitem = gtk_menu_item_new_with_label(_("sort"));
       gtk_widget_show(sitem);
       gtk_menu_item_set_submenu(GTK_MENU_ITEM(sitem), vdat->smenu);
       gtk_menu_shell_append(GTK_MENU_SHELL(sbar), sitem);
 
-      SG_SIGNAL_CONNECT(vdat->by_name,  "activate", sort_view_files_by_name, (gpointer)vdat);
-      SG_SIGNAL_CONNECT(vdat->by_date,  "activate", sort_view_files_by_date, (gpointer)vdat);
-      SG_SIGNAL_CONNECT(vdat->by_size,  "activate", sort_view_files_by_size, (gpointer)vdat);
-      SG_SIGNAL_CONNECT(vdat->by_entry,  "activate", sort_view_files_by_entry_order, (gpointer)vdat);
+      SG_SIGNAL_CONNECT(vdat->a_to_z,        "activate", sort_view_files_a_to_z, (gpointer)vdat);
+      SG_SIGNAL_CONNECT(vdat->z_to_a,        "activate", sort_view_files_z_to_a, (gpointer)vdat);
+      SG_SIGNAL_CONNECT(vdat->new_to_old,    "activate", sort_view_files_new_to_old, (gpointer)vdat);
+      SG_SIGNAL_CONNECT(vdat->old_to_new,    "activate", sort_view_files_old_to_new, (gpointer)vdat);
+      SG_SIGNAL_CONNECT(vdat->small_to_big,  "activate", sort_view_files_small_to_big, (gpointer)vdat);
+      SG_SIGNAL_CONNECT(vdat->big_to_small,  "activate", sort_view_files_big_to_small, (gpointer)vdat);
 
       {
 	int i;
 	for (i = 0; i < vdat->sort_items_size; i++)
-	  SG_SIGNAL_CONNECT(vdat->sort_items[i],  "activate", sort_view_files_by_procedure, (gpointer)vdat);
+	  SG_SIGNAL_CONNECT(vdat->sort_items[i],  "activate", sort_view_files_xen, (gpointer)vdat);
       }
 
       vdat->file_list = gtk_vbox_new(false, 0);
