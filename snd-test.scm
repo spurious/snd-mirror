@@ -55621,7 +55621,7 @@ EDITS: 1
 (if with-gui
     (begin
       (define procs (list 
-		     add-mark add-sound-file-extension sound-file-extensions add-to-main-menu add-to-menu add-transform amp-control
+		     add-mark add-sound-file-extension sound-file-extensions sound-file? add-to-main-menu add-to-menu add-transform amp-control
 		     as-one-edit ask-before-overwrite audio-input-device audio-output-device ; add-player
 		     auto-resize auto-update autocorrelate axis-info axis-label-font axis-numbers-font
 		     basic-color bind-key bomb c-g? apply-controls change-samples-with-origin channel-style

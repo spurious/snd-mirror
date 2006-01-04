@@ -581,6 +581,7 @@
 #define S_snd_warning                   "snd-warning"
 #define S_snd_warning_hook              "snd-warning-hook"
 #define S_sound_file_extensions         "sound-file-extensions"
+#define S_sound_file_p                  "sound-file?"
 #define S_sound_files_in_directory      "sound-files-in-directory"
 #define S_sound_loop_info               "sound-loop-info"
 #define S_sound_p                       "sound?"

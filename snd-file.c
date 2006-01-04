@@ -254,7 +254,7 @@ void snd_sort(int sorter, sort_info **data, int len)
 	  qsort((void *)data, len, sizeof(sort_info *), sort_xen);
 	}
       /* TODO: else complain */
-      /* TODO: colorize file list by chans or something */
+
       break;
     }
 }
@@ -4691,6 +4691,13 @@ static XEN g_delete_file_sorter(XEN index)
   return(index);
 }
 
+static XEN g_sound_file_p(XEN name)
+{
+  #define H_sound_file_p "(" S_sound_file_p " name) -> #t if name has a known sound file extension"
+  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ONLY_ARG, S_sound_file_p, "a filename");   
+  return(C_TO_XEN_BOOLEAN(sound_file_p(XEN_TO_C_STRING(name))));
+}
+
 
 #ifdef XEN_ARGIFY_1
 XEN_ARGIFY_1(g_view_files_sort_w, g_view_files_sort)
@@ -4731,6 +4738,7 @@ XEN_NARGIFY_1(g_delete_file_filter_w, g_delete_file_filter)
 XEN_NARGIFY_2(g_add_file_filter_w, g_add_file_filter)
 XEN_NARGIFY_1(g_delete_file_sorter_w, g_delete_file_sorter)
 XEN_NARGIFY_2(g_add_file_sorter_w, g_add_file_sorter)
+XEN_NARGIFY_1(g_sound_file_p_w, g_sound_file_p)
 #else
 #define g_view_files_sort_w g_view_files_sort
 #define g_set_view_files_sort_w g_set_view_files_sort
@@ -4770,7 +4778,10 @@ XEN_NARGIFY_2(g_add_file_sorter_w, g_add_file_sorter)
 #define g_add_file_filter_w g_add_file_filter
 #define g_delete_file_sorter_w g_delete_file_sorter
 #define g_add_file_sorter_w g_add_file_sorter
+#define g_sound_file_p_w g_sound_file_p
 #endif
+
+/* TODO: test sound-file? */
 
 void g_init_file(void)
 {
@@ -4791,6 +4802,7 @@ void g_init_file(void)
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_sound_file_extensions, g_sound_file_extensions_w, H_sound_file_extensions,
 				   S_setB S_sound_file_extensions, g_set_sound_file_extensions_w,  0, 0, 1, 0);
 
+  XEN_DEFINE_PROCEDURE(S_sound_file_p,                     g_sound_file_p_w,                     1, 0, 0, H_sound_file_p);
   XEN_DEFINE_PROCEDURE(S_file_write_date,                  g_file_write_date_w,                  1, 0, 0, H_file_write_date);
   XEN_DEFINE_PROCEDURE(S_soundfont_info,                   g_soundfont_info_w,                   0, 1, 0, H_soundfont_info);
   XEN_DEFINE_PROCEDURE(S_add_directory_to_view_files_list, g_add_directory_to_view_files_list_w, 1, 1, 0, H_add_directory_to_view_files_list);

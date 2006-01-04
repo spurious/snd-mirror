@@ -9606,6 +9606,7 @@ add the sound files in directory <i>dir</i> to the list of files in the View:Fil
 add <i>file</i> to the list of files in the View:Files dialog.
 </td></tr>
 
+
 <!-- add-file-filter -->
 <tr><td colspan=2>
 <code><a class=def name="addfilefilter">add-file-filter</a> (name func)</code></td></tr>
@@ -9615,7 +9616,16 @@ a "filter" menu to remove uninteresting files from the file list ("just sounds" 
 menu with add-file-filter.  The name appears as the menu item label corresponding to the function.
 The function should take one argument, a file name, and return #t to retain that file in the file list.
 add-file-filter returns an integer to identify <i>func</i> in other contexts.
-</td></tr>
+</td></tr><tr><td></td><td>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
+(<em class=red>add-file-filter</em>
+ "mono"
+ (lambda (a)
+   "filter out all but mono sound files"
+   (and (<a class=quiet href="#soundfilep">sound-file?</a> a)
+	(= (<a class=quiet href="#mussoundchannels">mus-sound-channels</a> a) 1))))
+</pre></td></tr></table></td></tr>
+
 
 <!-- add-file-sorter -->
 <tr><td colspan=2>
@@ -9633,7 +9643,7 @@ to longer:
   (<em class=red>add-file-sorter</em>
    "duration"
    (lambda (a b)
-     "sorts by duration from short to long"
+     "sort by duration from short to long"
      (let ((dur1 (<a class=quiet href="#mussoundduration">mus-sound-duration</a> a))
 	   (dur2 (<a class=quiet href="#mussoundduration">mus-sound-duration</a> b)))
        (if (&gt; dur1 dur2) 1
@@ -10410,6 +10420,13 @@ This is the list of sound file extensions used by the "just-sounds" buttons and
 <a href="#soundfilesindirectory">sound-files-in-directory</a> to try to recognize
 sound files.  It is settable, a list of extensions as strings:
 <code>(set! (sound-file-extensions) (list "snd" "aiff" "aif" "wav" "au" "aifc" "voc" "wve" "WAV" "sf2"))</code>
+</td></tr>
+
+<!-- sound-file? -->
+<tr><td colspan=2>
+<code><a class=def name="soundfilep">sound-file?</a> (filename)</code></td></tr>
+<tr><td></td><td>
+Returns #t if <i>filename</i> has an extension that matches one in the <a href="#soundfileextensions">sound-file-extensions</a> list.
 </td></tr>
 
 <!-- sound-files-in-directory -->

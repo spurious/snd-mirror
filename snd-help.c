@@ -479,6 +479,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+5-Jan:   sound-file? for easier file-filter definition.\n\
 2-Jan:   removed the various sorting indices (sort-by-name|size|date|entry), and changed \n\
            the way the user-defined sorter works.  Also removed just-sounds-hook.\n\
 26-Dec:  help-snd-fm.pd and pd-fm.scm thanks to Kjetil.\n\
