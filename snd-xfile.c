@@ -417,7 +417,7 @@ static void add_file_popups(file_popup_info *fd)
   /* from lib/Xm.RCPopup.c:
    * When a user creates a new popup menu then we will install a particular
    * event handler on the menu's widget parent. Along with this we install
-   * a grab on the button specified in XmNmenuPost or XmNwhichButton.   [XmNmenuPost is a string = translation table syntax, <Btn3Down. is default]
+   * a grab on the button specified in XmNmenuPost or XmNwhichButton.   [XmNmenuPost is a string = translation table syntax, <Btn3Down> is default]
    *                                                                    [XmNwhichButton is obsolete]
    * The posting algorithm is as follows: 
    * 
@@ -542,19 +542,20 @@ static void snd_directory_reader(Widget dialog, XmFileSelectionBoxCallbackStruct
   int i;
   char *pattern = NULL, *our_dir = NULL;
   ASSERT_WIDGET_TYPE(XmIsFileSelectionBox(dialog), dialog);
-
+#if DEBUGGING
   fprintf(stderr,"snd directory read\n");
-
+#endif
   XtVaGetValues(dialog, XmNuserData, &fp, NULL);
   pattern = (char *)XmStringUnparse(info->pattern, NULL, XmCHARSET_TEXT, XmCHARSET_TEXT, NULL, 0, XmOUTPUT_ALL);
   our_dir = (char *)XmStringUnparse(info->dir,     NULL, XmCHARSET_TEXT, XmCHARSET_TEXT, NULL, 0, XmOUTPUT_ALL);
-
+#if DEBUGGING
   fprintf(stderr,"dir: %s, pattern: %s\n", our_dir, pattern);
-
+#endif
   if (strcmp(pattern, "*") == 0)
     {
+#if DEBUGGING
       fprintf(stderr,"no pattern: %d\n", fp->filter_choice);
-
+#endif
       if (fp->filter_choice == NO_FILE_FILTER)
 	cur_dir = find_files_in_dir(our_dir);
       else cur_dir = find_filtered_files_in_dir(our_dir, sound_file_p); /* TODO: fp->filter_choice */
@@ -564,9 +565,9 @@ static void snd_directory_reader(Widget dialog, XmFileSelectionBoxCallbackStruct
   fp->current_files = cur_dir;
 
   if (pattern) XtFree(pattern);
-
+#if DEBUGGING
   fprintf(stderr,"cur_dir %s: %d files\n", cur_dir->dir_name, cur_dir->len);
-  
+#endif
   if (cur_dir->len > 0)
     {
       snd_sort(fp->sorter_choice, cur_dir->files, cur_dir->len);

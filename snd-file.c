@@ -316,9 +316,9 @@ dir_info *find_files_in_dir(const char *name)
 #else
   DIR *dpos;
   dir_info *dp = NULL;
-
+#if DEBUGGING
   fprintf(stderr,"find files in %s\n", name);
-
+#endif
   dpos = opendir(name);
   if (dpos)
     {
@@ -347,9 +347,9 @@ dir_info *find_filtered_files_in_dir(const char *name, bool (*filter)(char *file
 #else
   DIR *dpos;
   dir_info *dp = NULL;
-
+#if DEBUGGING
   fprintf(stderr,"find filtered files in %s\n", name);
-
+#endif
   if ((dpos = opendir(name)) != NULL)
     {
       struct dirent *dirp;
@@ -376,7 +376,9 @@ static dir_info *find_files_from_pattern(dir_info *dp, char *pattern);
 dir_info *find_filtered_files_in_dir_with_pattern(const char *name, bool (*filter)(char *filename), const char *pattern)
 {
   dir_info *full_dir, *pattern_dir;
+#if DEBUGGING
   fprintf(stderr,"find via pattern");
+#endif
   if (filter)
     full_dir = find_filtered_files_in_dir(name, filter);
   else full_dir = find_files_in_dir(name);
