@@ -114,13 +114,33 @@ time_t file_write_date(const char *filename)
 
 /* -------------------------------- sorters -------------------------------- */
 
+sort_info *free_sort_info(sort_info *ptr)
+{
+  if (ptr)
+    {
+      if (ptr->filename) FREE(ptr->filename);
+      if (ptr->full_filename) FREE(ptr->full_filename);
+      FREE(ptr);
+    }
+  return(NULL);
+}
+
+sort_info *make_sort_info(const char *filename, const char *full_filename)
+{
+  sort_info *ptr;
+  ptr = (sort_info *)CALLOC(1, sizeof(sort_info));
+  ptr->filename = copy_string(filename);
+  ptr->full_filename = copy_string(full_filename);
+  return(ptr);
+}
+
 /* sort files list by name (aphabetical), or some number (date written, size), or by xen proc */
 
 static int sort_a_to_z(const void *a, const void *b)
 {
   sort_info *d1 = *(sort_info **)a;
   sort_info *d2 = *(sort_info **)b;
-  return(strcmp(d1->a1, d2->a1));
+  return(strcmp(d1->filename, d2->filename));
 }
 
 static int sort_z_to_a(const void *a, const void *b)
@@ -167,7 +187,7 @@ static int sort_xen(const void *a, const void *b)
   /* sorter function gets two names, returns -1, 0, or 1 just like the other comparators */
   sort_info *d1 = *(sort_info **)a;
   sort_info *d2 = *(sort_info **)b;
-  return(XEN_TO_C_INT(XEN_CALL_2(sorter_func, C_TO_XEN_STRING(d1->a2), C_TO_XEN_STRING(d2->a2), "sort func")));
+  return(XEN_TO_C_INT(XEN_CALL_2(sorter_func, C_TO_XEN_STRING(d1->full_filename), C_TO_XEN_STRING(d2->full_filename), "sort func")));
 }
 
 static void ignore_mus_error(int type, char *msg)
@@ -193,19 +213,19 @@ void snd_sort(int sorter, sort_info **data, int len)
       break;
     case SORT_NEW_TO_OLD:
       for (i = 0; i < len; i++) 
-	data[i]->time = file_write_date(data[i]->a2);
+	data[i]->time = file_write_date(data[i]->full_filename);
       qsort((void *)data, len, sizeof(sort_info *), sort_new_to_old);
       break;
     case SORT_OLD_TO_NEW:
       for (i = 0; i < len; i++) 
-	data[i]->time = file_write_date(data[i]->a2);
+	data[i]->time = file_write_date(data[i]->full_filename);
       qsort((void *)data, len, sizeof(sort_info *), sort_old_to_new);
       break;
     case SORT_SMALL_TO_BIG:
       mus_error_set_handler(ignore_mus_error);
       for (i = 0; i < len; i++)
 	{
-	  data[i]->samps = mus_sound_samples(data[i]->a2);
+	  data[i]->samps = mus_sound_samples(data[i]->full_filename);
 	  if (data[i]->samps < 0) data[i]->samps = 0;
 	}
       mus_error_set_handler(mus_error_to_snd);
@@ -216,7 +236,7 @@ void snd_sort(int sorter, sort_info **data, int len)
       mus_error_set_handler(ignore_mus_error);
       for (i = 0; i < len; i++)
 	{
-	  data[i]->samps = mus_sound_samples(data[i]->a2);
+	  data[i]->samps = mus_sound_samples(data[i]->full_filename);
 	  if (data[i]->samps < 0) data[i]->samps = 0;
 	}
       mus_error_set_handler(mus_error_to_snd);
@@ -238,6 +258,350 @@ void snd_sort(int sorter, sort_info **data, int len)
       break;
     }
 }
+
+
+/* -------------------------------- directory readers -------------------------------- */
+
+static dir_info *make_dir_info(const char *name)
+{
+  dir_info *dp;
+  dp = (dir_info *)CALLOC(1, sizeof(dir_info));
+  dp->files = (sort_info **)CALLOC(32, sizeof(sort_info *));
+  dp->dir_name = copy_string(name);
+  dp->len = 0;
+  dp->size = 32;
+  return(dp);
+}
+
+dir_info *free_dir_info(dir_info *dp)
+{
+  if (dp->dir_name) FREE(dp->dir_name);
+  if (dp->files)
+    {
+      int i;
+      for (i = 0; i < dp->len; i++) 
+	if (dp->files[i]) 
+	  dp->files[i] = free_sort_info(dp->files[i]);
+      FREE(dp->files);
+    }
+  FREE(dp);
+  return(NULL);
+}
+  
+static void add_full_filename_to_dir_info(dir_info *dp, const char *name, const char *fullname)
+{
+  dp->files[dp->len] = make_sort_info(name, fullname);
+  dp->len++;
+  if (dp->len == dp->size) 
+    {
+      int i;
+      dp->size += 32;
+      dp->files = (sort_info **)REALLOC(dp->files, dp->size * sizeof(sort_info *));
+      for (i = dp->size - 32; i < dp->size; i++) dp->files[i] = NULL;
+    }
+}
+
+static void add_filename_to_dir_info(dir_info *dp, const char *name)
+{
+  char *fullname;
+  fullname = mus_format("%s%s", dp->dir_name, name);
+  add_full_filename_to_dir_info(dp, name, fullname);
+  FREE(fullname);
+}
+
+dir_info *find_files_in_dir(const char *name)
+{
+#if (!HAVE_OPENDIR)
+  return(NULL);
+#else
+  DIR *dpos;
+  dir_info *dp = NULL;
+
+  fprintf(stderr,"find files in %s\n", name);
+
+  dpos = opendir(name);
+  if (dpos)
+    {
+      struct dirent *dirp;
+      dp = make_dir_info(name);
+      while ((dirp = readdir(dpos)) != NULL)
+	if ((dirp->d_name[0] != '.') &&
+	    (!(directory_p(dirp->d_name))))
+	  add_filename_to_dir_info(dp, dirp->d_name);
+#if CLOSEDIR_VOID
+      closedir(dpos);
+#else
+      if (closedir(dpos) != 0) 
+	snd_error(_("closedir %s failed (%s)!"),
+		  name, snd_io_strerror());
+#endif
+    }
+  return(dp);
+#endif
+}
+
+dir_info *find_filtered_files_in_dir(const char *name, bool (*filter)(char *filename))
+{
+#if (!HAVE_OPENDIR)
+  return(NULL);
+#else
+  DIR *dpos;
+  dir_info *dp = NULL;
+
+  fprintf(stderr,"find filtered files in %s\n", name);
+
+  if ((dpos = opendir(name)) != NULL)
+    {
+      struct dirent *dirp;
+      dp = make_dir_info(name);
+      while ((dirp = readdir(dpos)) != NULL)
+	if ((dirp->d_name[0] != '.') &&
+	    (!(directory_p(dirp->d_name))) &&
+	    (filter(dirp->d_name)))
+	  add_filename_to_dir_info(dp, dirp->d_name);
+#if CLOSEDIR_VOID
+      closedir(dpos);
+#else
+      if (closedir(dpos) != 0) 
+	snd_error(_("closedir %s failed (%s)!"),
+		  name, snd_io_strerror());
+#endif
+    }
+  return(dp);
+#endif
+}
+
+static dir_info *find_files_from_pattern(dir_info *dp, char *pattern);
+
+dir_info *find_filtered_files_in_dir_with_pattern(const char *name, bool (*filter)(char *filename), const char *pattern)
+{
+  dir_info *full_dir, *pattern_dir;
+  fprintf(stderr,"find via pattern");
+  if (filter)
+    full_dir = find_filtered_files_in_dir(name, filter);
+  else full_dir = find_files_in_dir(name);
+  pattern_dir = find_files_from_pattern(full_dir, (char *)pattern);
+  free_dir_info(full_dir);
+  return(pattern_dir);
+}
+
+
+/* -------- sound file extensions list -------- */
+
+static char **sound_file_extensions = NULL;
+static int sound_file_extensions_size = 0;
+static int sound_file_extensions_end = 0;
+static int default_sound_file_extensions = 0;
+
+static void add_sound_file_extension(const char *ext)
+{
+  int i;
+  for (i = 0; i < sound_file_extensions_end; i++)
+    if (strcmp(ext, sound_file_extensions[i]) == 0)
+      return;
+  if (sound_file_extensions_end == sound_file_extensions_size)
+    {
+      sound_file_extensions_size += 8;
+      if (sound_file_extensions == NULL)
+	sound_file_extensions = (char **)CALLOC(sound_file_extensions_size, sizeof(char *));
+      else sound_file_extensions = (char **)REALLOC(sound_file_extensions, sound_file_extensions_size * sizeof(char *));
+    }
+  sound_file_extensions[sound_file_extensions_end] = copy_string(ext);
+  sound_file_extensions_end++;
+}
+
+void init_sound_file_extensions(void)
+{
+  add_sound_file_extension("snd");
+  add_sound_file_extension("aiff");
+  add_sound_file_extension("aif");
+  add_sound_file_extension("wav");
+  add_sound_file_extension("WAV");
+  add_sound_file_extension("au");
+  add_sound_file_extension("aifc");
+  add_sound_file_extension("voc");
+  add_sound_file_extension("wve");
+  add_sound_file_extension("sf2");
+#if HAVE_OGG
+  add_sound_file_extension("ogg");
+#endif
+#if HAVE_SPEEX
+  add_sound_file_extension("speex"); /* ?? */
+#endif
+#if HAVE_FLAC
+  add_sound_file_extension("flac");
+#endif
+#if HAVE_MIDI
+  add_sound_file_extension("mid");
+#endif
+#if HAVE_MPEG
+  add_sound_file_extension("mpeg");
+#endif
+  default_sound_file_extensions = sound_file_extensions_end;
+}
+
+void save_added_sound_file_extensions(FILE *fd)
+{
+  int i;
+  if (sound_file_extensions_end > default_sound_file_extensions)
+    for (i = default_sound_file_extensions; i < sound_file_extensions_end; i++)
+      {
+#if HAVE_SCHEME
+	fprintf(fd, "(%s \"%s\")\n", S_add_sound_file_extension, sound_file_extensions[i]);
+#endif
+#if HAVE_RUBY
+	fprintf(fd, "%s(\"%s\")\n", TO_PROC_NAME(S_add_sound_file_extension), sound_file_extensions[i]);
+#endif
+      }
+}
+
+bool sound_file_p(char *name) /* can't be const (compiler confusion) */
+{
+  int i;
+  char *dot, *sp;
+  dot = NULL;
+  for (sp = name; (*sp) != '\0'; sp++) 
+    if ((*sp) == '.') 
+      dot = (++sp);
+  if (dot)
+    for (i = 0; i < sound_file_extensions_end; i++)
+      if (strcmp(dot, sound_file_extensions[i]) == 0)
+	return(true);
+  return(false);
+}
+
+
+static int local_error = MUS_NO_ERROR;
+static char *local_error_msg = NULL;
+static mus_error_handler_t *old_error_handler;
+static void local_error2snd(int type, char *msg) 
+{
+  local_error = type;
+  if (local_error_msg) free(local_error_msg);
+  if (msg)
+    local_error_msg = strdup(msg);
+  else local_error_msg = NULL;
+}
+
+bool plausible_sound_file_p(const char *name)
+{
+  if (empty_file_p(name)) return(false);
+  int err = MUS_NO_ERROR;
+  old_error_handler = mus_error_set_handler(local_error2snd);
+  err = mus_header_read(name);
+  mus_error_set_handler(old_error_handler);
+  return((err == MUS_NO_ERROR) &&
+	 (mus_header_type() != MUS_RAW));
+}
+
+static dir_info *find_sound_files_in_dir(const char *name)
+{
+  return(find_filtered_files_in_dir(name, sound_file_p));
+}
+
+static bool names_match(char *filename, char *pattern)
+{
+  /* just "*" for wildcards here */
+  char *sn, *sp;
+  sn = filename;
+  sp = pattern;
+  if ((!sn) || (!sp)) 
+    {
+      if ((sn) || (sp)) 
+	return(false); 
+      else return(true);
+    }
+  while ((*sn) && (*sp))
+    {
+      if ((*sp) == '*') 
+	{
+	  sp++; 
+	  while ((*sp) == '*') sp++; 
+	  if (!(*sp)) return(true);
+	  while ((*sn) && ((*sn) != (*sp))) sn++;
+	  if (!(*sn)) return(false);
+	}
+      else 
+	{
+	  if ((*sn) != (*sp)) return(false);
+	  sn++; 
+	  sp++;
+	}
+    }
+  return(true);
+}
+
+static dir_info *find_files_from_pattern(dir_info *dp, char *pattern)
+{
+  int i;
+  dir_info *ndp;
+  ndp = make_dir_info(dp->dir_name);
+  for (i = 0; i < dp->len; i++)
+    if (names_match(dp->files[i]->filename, pattern))
+      add_filename_to_dir_info(ndp, dp->files[i]->filename);
+  return(ndp);
+}
+
+
+/* -------------------------------- Snd title (lists open sounds) -------------------------------- */
+
+typedef struct {
+  int active_sounds;
+  char **names;
+  int *sounds;
+} active_sound_list;
+
+static void add_sound_to_active_list (snd_info *sp, void *sptr1)
+{
+  active_sound_list *sptr = (active_sound_list *)sptr1;
+  sptr->names[sptr->active_sounds] = sp->filename;
+  sptr->sounds[sptr->active_sounds] = sp->index;
+  (sptr->active_sounds)++;
+}
+
+void reflect_file_change_in_title(void)
+{
+  char *title_buffer = NULL;
+  active_sound_list *alist;
+  int i, j, len;
+  alist = (active_sound_list *)CALLOC(1, sizeof(active_sound_list));
+  alist->sounds = (int *)CALLOC(ss->max_sounds, sizeof(int));
+  alist->names = (char **)CALLOC(ss->max_sounds, sizeof(char *));
+  for_each_sound(add_sound_to_active_list, alist);
+  len = snd_strlen(ss->startup_title) + 32;
+  if (alist->active_sounds > 0)
+    {
+      if (alist->active_sounds < 4) 
+	j = alist->active_sounds; 
+      else j = 4;
+      for (i = 0; i < j; i++)
+	len += snd_strlen(filename_without_directory(alist->names[i]));
+    }
+  title_buffer = (char *)CALLOC(len, sizeof(char));
+  mus_snprintf(title_buffer, len, "%s%s", 
+	       ss->startup_title, 
+	       ((alist->active_sounds > 0) ? ": " : ""));
+  if (alist->active_sounds > 0)
+    {
+      if (alist->active_sounds < 4) 
+	j = alist->active_sounds; 
+      else j = 4;
+      for (i = 0; i < j; i++)
+	{
+	  strcat(title_buffer, filename_without_directory(alist->names[i]));
+	  if (i < j - 1)
+	    strcat(title_buffer, ", ");
+	}
+      if (alist->active_sounds > 4) 
+	strcat(title_buffer, "...");
+    }
+  set_title(title_buffer);
+  FREE(title_buffer);
+  FREE(alist->sounds);
+  FREE(alist->names);
+  FREE(alist);
+}
+
 
 
 /* -------------------------------- open sound file -------------------------------- */
@@ -577,310 +941,6 @@ file_info *free_file_info(file_info *hdr)
 /* mus_header_read here (or stripped-down equivalent) was very slow, and is just as easy to
  * fool as an extension check (file might start with the word ".snd" or whatever).
  */
-
-static dir *make_dir(const char *name)
-{
-  dir *dp;
-  dp = (dir *)CALLOC(1, sizeof(dir));
-  dp->files = (char **)CALLOC(32, sizeof(char *));
-  dp->name = copy_string(name);
-  dp->len = 0;
-  dp->size = 32;
-  return(dp);
-}
-
-dir *free_dir (dir *dp)
-{
-  if (dp->name) FREE(dp->name);
-  if (dp->files)
-    {
-      int i;
-      for (i = 0; i < dp->len; i++) 
-	if (dp->files[i]) 
-	  FREE(dp->files[i]);
-      FREE(dp->files);
-    }
-  FREE(dp);
-  return(NULL);
-}
-  
-static void add_snd_file_to_dir_list(dir *dp, const char *name)
-{
-  dp->files[dp->len] = copy_string(name);
-  dp->len++;
-  if (dp->len == dp->size) 
-    {
-      int i;
-      dp->size += 32;
-      dp->files = (char **)REALLOC(dp->files, dp->size * sizeof(char *));
-      for (i = dp->size - 32; i < dp->size; i++) dp->files[i] = NULL;
-    }
-}
-
-
-/* -------- sound file extensions list -------- */
-
-static char **sound_file_extensions = NULL;
-static int sound_file_extensions_size = 0;
-static int sound_file_extensions_end = 0;
-static int default_sound_file_extensions = 0;
-
-static void add_sound_file_extension(const char *ext)
-{
-  int i;
-  for (i = 0; i < sound_file_extensions_end; i++)
-    if (strcmp(ext, sound_file_extensions[i]) == 0)
-      return;
-  if (sound_file_extensions_end == sound_file_extensions_size)
-    {
-      sound_file_extensions_size += 8;
-      if (sound_file_extensions == NULL)
-	sound_file_extensions = (char **)CALLOC(sound_file_extensions_size, sizeof(char *));
-      else sound_file_extensions = (char **)REALLOC(sound_file_extensions, sound_file_extensions_size * sizeof(char *));
-    }
-  sound_file_extensions[sound_file_extensions_end] = copy_string(ext);
-  sound_file_extensions_end++;
-}
-
-void init_sound_file_extensions(void)
-{
-  add_sound_file_extension("snd");
-  add_sound_file_extension("aiff");
-  add_sound_file_extension("aif");
-  add_sound_file_extension("wav");
-  add_sound_file_extension("WAV");
-  add_sound_file_extension("au");
-  add_sound_file_extension("aifc");
-  add_sound_file_extension("voc");
-  add_sound_file_extension("wve");
-  add_sound_file_extension("sf2");
-#if HAVE_OGG
-  add_sound_file_extension("ogg");
-#endif
-#if HAVE_SPEEX
-  add_sound_file_extension("speex"); /* ?? */
-#endif
-#if HAVE_FLAC
-  add_sound_file_extension("flac");
-#endif
-#if HAVE_MIDI
-  add_sound_file_extension("mid");
-#endif
-#if HAVE_MPEG
-  add_sound_file_extension("mpeg");
-#endif
-  default_sound_file_extensions = sound_file_extensions_end;
-}
-
-void save_added_sound_file_extensions(FILE *fd)
-{
-  int i;
-  if (sound_file_extensions_end > default_sound_file_extensions)
-    for (i = default_sound_file_extensions; i < sound_file_extensions_end; i++)
-      {
-#if HAVE_SCHEME
-	fprintf(fd, "(%s \"%s\")\n", S_add_sound_file_extension, sound_file_extensions[i]);
-#endif
-#if HAVE_RUBY
-	fprintf(fd, "%s(\"%s\")\n", TO_PROC_NAME(S_add_sound_file_extension), sound_file_extensions[i]);
-#endif
-      }
-}
-
-
-static XEN just_sounds_hook;
-
-bool run_just_sounds_hook(const char *name)
-{
-  XEN res = XEN_TRUE;
-  if (XEN_HOOKED(just_sounds_hook))
-    res = run_or_hook(just_sounds_hook,
-		      XEN_LIST_1(C_TO_XEN_STRING(name)),
-		      S_just_sounds_hook);
-  return(XEN_TRUE_P(res));
-}
-
-
-bool sound_file_p(char *name) /* can't be const (compiler confusion) */
-{
-  int i;
-  char *dot, *sp;
-  dot = NULL;
-  for (sp = name; (*sp) != '\0'; sp++) 
-    if ((*sp) == '.') 
-      dot = (++sp);
-  if (dot)
-    for (i = 0; i < sound_file_extensions_end; i++)
-      if (strcmp(dot, sound_file_extensions[i]) == 0)
-	return(true);
-  return(false);
-}
-
-
-static int local_error = MUS_NO_ERROR;
-static char *local_error_msg = NULL;
-static mus_error_handler_t *old_error_handler;
-static void local_error2snd(int type, char *msg) 
-{
-  local_error = type;
-  if (local_error_msg) free(local_error_msg);
-  if (msg)
-    local_error_msg = strdup(msg);
-  else local_error_msg = NULL;
-}
-
-bool plausible_sound_file_p(const char *name)
-{
-  int err = MUS_NO_ERROR;
-  old_error_handler = mus_error_set_handler(local_error2snd);
-  err = mus_header_read(name);
-  mus_error_set_handler(old_error_handler);
-  return((err == MUS_NO_ERROR) &&
-	 (mus_header_type() != MUS_RAW));
-}
-
-dir *find_sound_files_in_dir(const char *name)
-{
-#if (!HAVE_OPENDIR)
-  return(NULL);
-#else
-  DIR *dpos;
-  dir *dp = NULL;
-  if ((dpos = opendir(name)) != NULL)
-    {
-      struct dirent *dirp;
-      dp = make_dir(name);
-      while ((dirp = readdir(dpos)) != NULL)
-	if (dirp->d_name[0] != '.')
-	  {
-	    int i;
-	    char *dot, *sp;
-	    dot = NULL;
-	    for (sp = dirp->d_name; (*sp) != '\0'; sp++) 
-	      if ((*sp) == '.') 
-		dot = (++sp);
-	    if (dot)
-	      for (i = 0; i < sound_file_extensions_end; i++)
-		if ((strcmp(dot, sound_file_extensions[i]) == 0) && 
-		    (!(empty_file_p(dirp->d_name))))
-		  {
-		    if (run_just_sounds_hook(dirp->d_name))
-		      add_snd_file_to_dir_list(dp, dirp->d_name);
-		    break;
-		  }
-	  }
-#if CLOSEDIR_VOID
-      closedir(dpos);
-#else
-      if (closedir(dpos) != 0) 
-	snd_error(_("closedir %s failed (%s)!"),
-		  name, snd_io_strerror());
-#endif
-    }
-  return(dp);
-#endif
-}
-
-static bool names_match(char *filename, char *pattern)
-{
-  /* just "*" for wildcards here */
-  char *sn, *sp;
-  sn = filename;
-  sp = pattern;
-  if ((!sn) || (!sp)) 
-    {
-      if ((sn) || (sp)) 
-	return(false); 
-      else return(true);
-    }
-  while ((*sn) && (*sp))
-    {
-      if ((*sp) == '*') 
-	{
-	  sp++; 
-	  while ((*sp) == '*') sp++; 
-	  if (!(*sp)) return(true);
-	  while ((*sn) && ((*sn) != (*sp))) sn++;
-	  if (!(*sn)) return(false);
-	}
-      else 
-	{
-	  if ((*sn) != (*sp)) return(false);
-	  sn++; 
-	  sp++;
-	}
-    }
-  return(true);
-}
-
-dir *filter_sound_files(dir *dp, char *pattern)
-{
-  int i;
-  dir *ndp;
-  ndp = make_dir("");
-  for (i = 0; i < dp->len; i++)
-    if (names_match(dp->files[i], pattern)) 
-      add_snd_file_to_dir_list(ndp, dp->files[i]);
-  return(ndp);
-}
-
-
-typedef struct {
-  int active_sounds;
-  char **names;
-  int *sounds;
-} active_sound_list;
-
-static void add_sound_to_active_list (snd_info *sp, void *sptr1)
-{
-  active_sound_list *sptr = (active_sound_list *)sptr1;
-  sptr->names[sptr->active_sounds] = sp->filename;
-  sptr->sounds[sptr->active_sounds] = sp->index;
-  (sptr->active_sounds)++;
-}
-
-void reflect_file_change_in_title(void)
-{
-  char *title_buffer = NULL;
-  active_sound_list *alist;
-  int i, j, len;
-  alist = (active_sound_list *)CALLOC(1, sizeof(active_sound_list));
-  alist->sounds = (int *)CALLOC(ss->max_sounds, sizeof(int));
-  alist->names = (char **)CALLOC(ss->max_sounds, sizeof(char *));
-  for_each_sound(add_sound_to_active_list, alist);
-  len = snd_strlen(ss->startup_title) + 32;
-  if (alist->active_sounds > 0)
-    {
-      if (alist->active_sounds < 4) 
-	j = alist->active_sounds; 
-      else j = 4;
-      for (i = 0; i < j; i++)
-	len += snd_strlen(filename_without_directory(alist->names[i]));
-    }
-  title_buffer = (char *)CALLOC(len, sizeof(char));
-  mus_snprintf(title_buffer, len, "%s%s", 
-	       ss->startup_title, 
-	       ((alist->active_sounds > 0) ? ": " : ""));
-  if (alist->active_sounds > 0)
-    {
-      if (alist->active_sounds < 4) 
-	j = alist->active_sounds; 
-      else j = 4;
-      for (i = 0; i < j; i++)
-	{
-	  strcat(title_buffer, filename_without_directory(alist->names[i]));
-	  if (i < j - 1)
-	    strcat(title_buffer, ", ");
-	}
-      if (alist->active_sounds > 4) 
-	strcat(title_buffer, "...");
-    }
-  set_title(title_buffer);
-  FREE(title_buffer);
-  FREE(alist->sounds);
-  FREE(alist->names);
-  FREE(alist);
-}
 
 static void fam_sp_action(struct fam_info *fp, FAMEvent *fe)
 {
@@ -3261,35 +3321,15 @@ static void view_files_monitor_directory(view_files_info *vdat, const char *dirn
 void add_directory_to_view_files_list(view_files_info *vdat, const char *dirname)
 {
   /* I think all directory additions come through here */
-  dir *sound_files = NULL;
+  dir_info *sound_files = NULL;
   view_files_monitor_directory(vdat, dirname);
   sound_files = find_sound_files_in_dir(dirname);
   if ((sound_files) && (sound_files->len > 0))
     {
-      char *fullpathname = NULL;
-      char **fullnames;
-      int i, end;
-      /* fprintf(stderr,"path: %s\n", dirname); */
-      fullpathname = (char *)CALLOC(FILENAME_MAX, sizeof(char));
-      strcpy(fullpathname, dirname);
-      if (dirname[strlen(dirname) - 1] != '/') 
-	strcat(fullpathname, "/");
-      end = strlen(fullpathname);
-      fullnames = (char **)CALLOC(sound_files->len, sizeof(char *));
+      int i;
       for (i = 0; i < sound_files->len; i++) 
-	{
-	  fullnames[i] = copy_string(strcat(fullpathname, sound_files->files[i]));
-	  fullpathname[end] = '\0';
-	}
-      for (i = 0; i < sound_files->len; i++) 
-	{
-	  add_file_to_view_files_list(vdat, sound_files->files[i], fullnames[i]);
-	  FREE(fullnames[i]); 
-	  fullnames[i] = NULL;
-	}
-      FREE(fullnames);
-      free_dir(sound_files);
-      FREE(fullpathname);
+	add_file_to_view_files_list(vdat, sound_files->files[i]->filename, sound_files->files[i]->full_filename);
+      free_dir_info(sound_files);
     }
 }
 
@@ -3306,16 +3346,16 @@ static void view_files_sort_list(view_files_info *vdat)
       for (i = 0; i < len; i++)
 	{
 	  data[i] = (sort_info *)CALLOC(1, sizeof(sort_info));
-	  data[i]->a1 = vdat->names[i];
-	  data[i]->a2 = vdat->full_names[i];
+	  data[i]->filename = vdat->names[i];
+	  data[i]->full_filename = vdat->full_names[i];
 	}
 
       snd_sort(vdat->sorter, data, len);
 
       for (i = 0; i < len; i++)
 	{
-	  vdat->names[i] = data[i]->a1;
-	  vdat->full_names[i] = data[i]->a2;
+	  vdat->names[i] = data[i]->filename;
+	  vdat->full_names[i] = data[i]->full_filename;
 	  FREE(data[i]);
 	}
       FREE(data);
@@ -3798,7 +3838,7 @@ void save_view_files_dialogs(FILE *fd)
 	    fprintf(fd, "  set_view_files_amp_env(vf, %s)\n", env_to_string(vdat->amp_env));
 	  }
 	/* assume file-sorters are set up already */
-	fprintf(fd, "  set_view_files_sort(vf, %s)\n", TO_VAR_NAME(view_files_sort_name(vdat->sorter)));	    
+	fprintf(fd, "  set_view_files_sort(vf, %d)\n", vdat->sorter);	    
 	fprintf(fd, "\n");
 #endif
       }
@@ -4414,14 +4454,14 @@ static XEN g_sound_files_in_directory(XEN dirname)
   else name = ".";
   if (name)
     {
-      dir *dp = NULL;
+      dir_info *dp = NULL;
       dp = find_sound_files_in_dir(name);
       if (dp)
 	{
 	  int i;
 	  for (i = dp->len - 1; i >= 0; i--)
-	    res = XEN_CONS(C_TO_XEN_STRING(dp->files[i]), res);
-	  free_dir(dp);
+	    res = XEN_CONS(C_TO_XEN_STRING(dp->files[i]->filename), res);
+	  free_dir_info(dp);
 	}
     }
   return(xen_return_first(res, dirname));
@@ -4511,11 +4551,6 @@ static XEN g_info_dialog(XEN subject, XEN msg)
   return(XEN_WRAP_WIDGET(w));
 }
 
-
-/* TODO: implement add|delete-file-filters|sorters 
- *         view-files[|open|mix|insert?]-file-filter (default: just-sounds)
- *         similarly for *-sort, except that vf case is already done
- */
 
 /* -------- file-filters and file-sorters -------- */
 
@@ -4786,9 +4821,6 @@ If it returns #t, the file is not closed."
 
   #define H_close_hook S_close_hook " (snd): called each time a file is closed (before the close)."
 
-  #define H_just_sounds_hook S_just_sounds_hook " (filename): called on each file (after the sound file extension check) if \
-the " S_just_sounds " button is set. Return #f to filter out filename. "
-
   #define H_bad_header_hook S_bad_header_hook " (filename): called if a file has some bogus-looking header. \
 Return #t to give up on that file."
 
@@ -4801,7 +4833,6 @@ before File:Save as or " S_save_sound_as ". Provides a way to fixup a sound just
   open_hook =           XEN_DEFINE_HOOK(S_open_hook, 1,           H_open_hook);           /* arg = filename */
   before_close_hook =   XEN_DEFINE_HOOK(S_before_close_hook, 1,   H_before_close_hook);   /* arg = sound index */
   close_hook =          XEN_DEFINE_HOOK(S_close_hook, 1,          H_close_hook);          /* arg = sound index */
-  just_sounds_hook =    XEN_DEFINE_HOOK(S_just_sounds_hook, 1,    H_just_sounds_hook);    /* arg = filename */
   bad_header_hook =     XEN_DEFINE_HOOK(S_bad_header_hook, 1,     H_bad_header_hook);     /* arg = filename */
   after_save_as_hook =  XEN_DEFINE_HOOK(S_after_save_as_hook, 3,  H_after_save_as_hook);  /* args: index filename from-dialog */
   before_save_as_hook = XEN_DEFINE_HOOK(S_before_save_as_hook, 7, H_before_save_as_hook); /* args: index filename selection srate type format comment */

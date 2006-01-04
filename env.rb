@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Sat Sep 20 23:24:17 CEST 2003
-# Changed: Sun Nov 06 01:21:40 CET 2005
+# Changed: Wed Dec 21 21:02:51 CET 2005
 
 # Commentary:
 #
@@ -48,14 +48,12 @@
 #    make_octaves_env(env, *args)
 #
 # class Peak_env
-#  initialize(dir)
-#  saved_info(snd)
-#  set_saved_info(snd, new_info)
+#  initialize
 #  info_file_name(snd, chn)
 #  save_info_at_close(snd)
 #  restore_info_upon_open(snd, chn, dur)
 #  
-# install_save_peak_env(dir)
+# install_save_peak_env
 # uninstall_save_peak_env
 
 # Code:
@@ -696,26 +694,12 @@ $save_peak_env_info_p = true
 $save_peak_env_info_directory = "~/peaks"
 
 class Peak_env
-  Peak = Struct.new("Peak", :name, :format, :chans)
-  
-  def initialize(dir = ENV["HOME"] + "/.peaks")
-    @saved_peak_info = []
-    @save_info_directory = dir
-  end
-
-  def saved_info(snd)
-    name = file_name(snd)
-    @saved_peak_info.detect do |n| n.name == name end
-  end
-
-  def set_saved_info(snd, new_info)
-    name = file_name(snd)
-    @saved_peak_info.delete_if do |n| n.name == name end
-    @saved_peak_info.push(new_info)
+  def initialize
+    @saved_peak_info = {}
   end
 
   def info_file_name(snd, chn)
-    format("%s/%s-%d.peaks", @save_info_directory, file_name(snd).tr("/\\", "_")[1..-1], chn)
+    format("%s/%s-ruby-peaks-%d", $save_peak_env_info_directory, file_name(snd).tr("/\\", "_"), chn)
   end
 
   # intended as a $close_hook function
@@ -727,11 +711,12 @@ class Peak_env
         if (not File.exists?(peak_file)) or
             file_write_date(peak_file) < file_write_date(file_name(snd))
           unless saved
-            set_saved_info(snd, Peak.new(file_name(snd), data_format(snd), channels(snd)))
+            @saved_peak_info[file_name(snd)] =
+              {:data_format, data_format(snd),
+              :channels, channels(snd)}
             saved = true
-          else
-            Snd.catch(:no_such_envelope) do write_peak_env_info_file(snd, chn, peak_file) end
           end
+          Snd.catch(:no_such_envelope) do write_peak_env_info_file(snd, chn, peak_file) end
         end
       end
     end
@@ -739,12 +724,14 @@ class Peak_env
 
   # intended as an $initial_graph_hook_function
   def restore_info_upon_open(snd, chn, dur)
-    if (not (peak_info = saved_info(snd))) or
-        (data_format(snd) == peak_info.format and channels(snd) == peak_info.chans)
+    if (not (peak_info = @saved_peak_info[file_name(snd)])) or
+        (data_format(snd) == peak_info[:data_format] and channels(snd) == peak_info[:channels])
       peak_file = mus_expand_filename(info_file_name(snd, chn))
       if File.exists?(peak_file) and
           file_write_date(peak_file) > file_write_date(file_name(snd))
-        set_saved_info(snd, Peak.new(file_name(snd), data_format(snd), channels(snd)))
+        @saved_peak_info[file_name(snd)] =
+          {:data_format, data_format(snd),
+          :channels, channels(snd)}
         read_peak_env_info_file(snd, chn, peak_file)
       end
     end
@@ -752,8 +739,8 @@ class Peak_env
   end
 end
 
-def install_save_peak_env(dir = ENV["HOME"] + "/.peaks")
-  peak_env = Peak_env.new(dir)
+def install_save_peak_env
+  peak_env = Peak_env.new
   hook_name = "peak-env"
   $update_hook.add_hook!(hook_name) do |snd|
     if $save_peak_env_info_p
@@ -763,14 +750,11 @@ def install_save_peak_env(dir = ENV["HOME"] + "/.peaks")
       end
     end
   end
-  $after_open_hook.add_hook!(hook_name) do |snd|
-    peak_env.save_info_at_close(snd)
+  $initial_graph_hook.add_hook!(hook_name) do |snd, chn, dur|
+      peak_env.restore_info_upon_open(snd, chn, dur)
   end
   $close_hook.add_hook!(hook_name) do |snd|
     peak_env.save_info_at_close(snd)
-  end
-  $initial_graph_hook.add_hook!(hook_name) do |snd, chn, dur|
-      peak_env.restore_info_upon_open(snd, chn, dur)
   end
   $exit_hook.add_hook!(hook_name) do
     Snd.sounds.each do |snd| peak_env.save_info_at_close(snd) end
@@ -778,7 +762,7 @@ def install_save_peak_env(dir = ENV["HOME"] + "/.peaks")
 end
 
 def uninstall_save_peak_env
-  [$update_hook, $close_hook, $initial_graph_hook, $exit_hook].apply(:remove_hook!, "peak-env")
+  [$update_hook, $initial_graph_hook, $close_hook, $exit_hook].apply(:remove_hook!, "peak-env")
 end
 
 # env.rb ends here

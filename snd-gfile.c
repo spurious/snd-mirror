@@ -47,8 +47,7 @@ static GtkFileFilter *all_files_filter, *sound_files_filter;
 static int sound_files_only_filter(const GtkFileFilterInfo *filter_info, gpointer data)
 {
   /* apparently I never see the folders in the filter, and can't select "files only" mode. */
-  return((int)((sound_file_p((char *)(filter_info->display_name))) && 
-	       (run_just_sounds_hook(filter_info->filename))));
+  return((int)((sound_file_p((char *)(filter_info->display_name)))));
 }
 #endif
 

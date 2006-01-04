@@ -2,7 +2,7 @@
 
 # Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Wed Feb 25 05:31:02 CET 2004
-# Changed: Fri Nov 18 00:14:49 CET 2005
+# Changed: Mon Jan 02 20:59:16 CET 2006
 
 # Commentary:
 #
@@ -431,7 +431,8 @@ returns a widget named 'name', if one can be found in the widget hierarchy benea
   # 
   # show_smpte_label
   #
-  
+
+  $smpte_is_on = false          # for prefs
   $smpte_frames_per_second = 24.0
   Smpte_draw_label_hook_name = "draw-smpte-label"
 
@@ -512,10 +513,9 @@ returns a widget named 'name', if one can be found in the widget hierarchy benea
       x = axinf[10]
       y = axinf[13]
       grf_width = axinf[12] - x
-      grf_heigth = axinf[11] - y
-      if grf_heigth > 2 * @height and grf_width > 1.5 * @width and time_graph?(snd, chn)
+      grf_height = axinf[11] - y
+      if grf_height > 2 * @height and grf_width > 1.5 * @width and time_graph?(snd, chn)
         smpte = self.smpte_label(axinf.car, srate(snd))
-        samp = axinf.car
         fill_rectangle(x, y, @width, 2, snd, chn)
         fill_rectangle(x, y + @height, @width, 2, snd, chn)
         fill_rectangle(x, y, 2, @height, snd, chn)
@@ -539,11 +539,11 @@ of the leftmost sample")
         end
         update_time_graph(true, true)
       end
-      true
+      $smpte_is_on = true
     else
       $after_graph_hook.remove_hook!(Smpte_draw_label_hook_name)
       update_time_graph(true, true)
-      false
+      $smpte_is_on = false
     end
   end
     
@@ -1244,10 +1244,10 @@ module Snd_Motif
            "display_widget_tree(widget, spaces=\"\")  \
 displays the hierarchy of widgets beneath 'widget'" )
   def display_widget_tree(widget, spaces = "")
-    unless (name = RXtName(widget)).null?
+    if (name = RXtName(widget)).null?
       name = "<unnamed>"
     end
-    Snd.display("%s%s\n", spaces, name)
+    Snd.display("%s%s", spaces, name)
     if RXtIsComposite(widget)
       (get_xtvalue(widget, RXmNchildren) or []).each do |w|
         display_widget_tree(w, spaces + "  ")
@@ -1346,7 +1346,7 @@ adds a label to the minibuffer area showing the current free space (for use with
       mark_pane.make_list(snd, chn)
     end
     $close_hook.add_hook!("unremark") do |snd|
-      chans(snd).times do |chn|
+      channels(snd).times do |chn|
         mark_pane.deactivate_channel(snd, chn)
       end
     end
@@ -1463,6 +1463,10 @@ adds a label to the minibuffer area showing the current free space (for use with
       end
     end
 
+    def list(snd, chn)
+      find(snd, chn, @mark_lists)
+    end
+
     private
     def find(snd, chn, dats)
       if val = dats.detect do |dat| snd == dat.car and chn == dat.cadr end
@@ -1479,10 +1483,6 @@ adds a label to the minibuffer area showing the current free space (for use with
     def set_length(snd, chn, len)
       @mark_list_lengths.delete_if do |dat| snd == dat.car and chn == dat.cadr end
       @mark_list_lengths.push([snd, chn, len])
-    end
-
-    def list(snd, chn)
-      find(snd, chn, @mark_lists)
     end
 
     def set_list(snd, chn, wid)
@@ -2593,7 +2593,8 @@ class Main_popup_menu < Menu
     super(name, parent, args)
     @parent = parent
     if provided? :xm
-      @menu = RXmCreatePopupMenu(@parent, "popup-menu", [RXmNpopupEnabled, RXmPOPUP_AUTOMATIC] + @args)
+      @menu = RXmCreatePopupMenu(@parent, "popup-menu",
+                                 [RXmNpopupEnabled, RXmPOPUP_AUTOMATIC] + @args)
       RXtAddEventHandler(@parent, RButtonPressMask, false,
                          lambda do |w, c, i, f|
                            if Rbutton(i) == 3

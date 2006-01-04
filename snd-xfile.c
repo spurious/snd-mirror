@@ -20,8 +20,8 @@
  * PERHAPS: audio:settings for display, perhaps reset -- as opposed to using the recorder
  * TODO: add|delete-file-filter, file-filters|sorters tied to all file dialogs (via popup)
  * TODO: check just-sounds more carefully in snd-test
+ * TODO: if fam change, just change the filelist and redisplay
  */
-
 
 #define FSB_BOX(Dialog, Child) XmFileSelectionBoxGetChild(Dialog, Child)
 #define MSG_BOX(Dialog, Child) XmMessageBoxGetChild(Dialog, Child)
@@ -155,8 +155,9 @@ typedef struct file_popup_info {
    * info:    play?, sort, filter
    */
 
-  char **file_text_names, **file_filter_names;
-  Widget *file_text_items, *file_filter_items, *file_dir_items, *file_info_items;
+  /* file_filter here refers to the dialog filter field, not file-filters */
+  char **file_text_names, **file_filter_names;                   /* history of choices as array of strings */
+  Widget *file_text_items, *file_filter_items, *file_dir_items;  /* menu items */
 } file_popup_info;
 
 /* file popup */
@@ -485,21 +486,22 @@ static void add_file_popups(file_popup_info *fd)
 }
 
 
+/* TODO: should "none" and "just sounds" be built-in filters? */
 
 /* ---------------- just-sounds (file-filters) ---------------- */
 
 typedef struct file_pattern_info {
   /* just-sounds file lists */
-  bool resort_file_list; 
   bool reread_directory;
   bool in_just_sounds_update;
   Widget dialog, just_sounds_button;
-  XmSearchProc default_search_proc;
-  char *save_dir, *last_dir;
-  dir *sound_files, *current_files;
-  char *last_pattern, *full_pathname;
+  char *last_dir;
+  dir_info *current_files;
   fam_info *directory_watcher;
+  int filter_choice, sorter_choice;
 } file_pattern_info;
+
+enum {NO_FILE_FILTER, JUST_SOUNDS_FILTER};
 
 static void file_change_directory_callback(Widget w, XtPointer context, XtPointer info) 
 {
@@ -531,142 +533,75 @@ static void watch_current_directory_contents(struct fam_info *fp, FAMEvent *fe)
 }
 #endif
 
-static void default_file_search(Widget dialog, XmFileSelectionBoxCallbackStruct *info)
+static void snd_directory_reader(Widget dialog, XmFileSelectionBoxCallbackStruct *info)
 {
-#if HAVE_FAM
-  char *our_dir;
-#endif
+  /* replaces the FSB searchProc */
   file_pattern_info *fp;
-  ASSERT_WIDGET_TYPE(XmIsFileSelectionBox(dialog), dialog);
-  XtVaGetValues(dialog, XmNuserData, &fp, NULL);
-  (*(fp->default_search_proc))(dialog, info);
-#if HAVE_FAM
-  our_dir = (char *)XmStringUnparse(info->dir, NULL, XmCHARSET_TEXT, XmCHARSET_TEXT, NULL, 0, XmOUTPUT_ALL);
-  /* if it's not the same as fp->last_dir, we need to unmonitor last_dir and monitor this one */
-  if ((fp->last_dir == NULL) ||
-      (strcmp(our_dir, fp->last_dir) != 0))
-    {
-      if (fp->directory_watcher)
-	fam_unmonitor_file(fp->last_dir, fp->directory_watcher); /* filename normally ignored */
-      fp->directory_watcher = fam_monitor_directory(our_dir, (void *)fp, watch_current_directory_contents);
-      if (fp->last_dir) FREE(fp->last_dir);
-      fp->last_dir = copy_string(our_dir);
-      fp->reread_directory = false;
-    }
-  XtFree(our_dir);
-#endif
-}
-
-static int string_compare(const void *ss1, const void *ss2)
-{
-  return(strcmp((*((char **)ss1)), (*((char **)ss2))));
-}
-
-static void sound_file_search(Widget dialog, XmFileSelectionBoxCallbackStruct *data)
-{
-  /* generate list of sound files, set XmNfileListItems, XmNfileListItemCount, XmNlistUpdated
-   * the latter if new file list generated -- if no files, XmNfileListItems NULL, Count 0
-   *
-   * the pattern (file name mask) only matters if the filter button is hit, 
-   * it appears to be "*" until the filter is invoked.
-   */
-  char *pattern = NULL, *our_dir = NULL;
-  dir *cdp;
-  file_pattern_info *fp;
+  dir_info *cur_dir = NULL;
+  XmString *names = NULL;
   int i;
-  bool filter_callback;
+  char *pattern = NULL, *our_dir = NULL;
   ASSERT_WIDGET_TYPE(XmIsFileSelectionBox(dialog), dialog);
-  XtVaGetValues(dialog, XmNuserData, &fp, NULL);
-  pattern = (char *)XmStringUnparse(data->pattern, NULL, XmCHARSET_TEXT, XmCHARSET_TEXT, NULL, 0, XmOUTPUT_ALL);
-  our_dir = (char *)XmStringUnparse(data->dir,     NULL, XmCHARSET_TEXT, XmCHARSET_TEXT, NULL, 0, XmOUTPUT_ALL);
 
-  if (fp->full_pathname == NULL) 
-    fp->full_pathname = (char *)CALLOC(512, sizeof(char));
-  filter_callback = (strcmp(pattern, "*") != 0);
-  if (!filter_callback)
+  fprintf(stderr,"snd directory read\n");
+
+  XtVaGetValues(dialog, XmNuserData, &fp, NULL);
+  pattern = (char *)XmStringUnparse(info->pattern, NULL, XmCHARSET_TEXT, XmCHARSET_TEXT, NULL, 0, XmOUTPUT_ALL);
+  our_dir = (char *)XmStringUnparse(info->dir,     NULL, XmCHARSET_TEXT, XmCHARSET_TEXT, NULL, 0, XmOUTPUT_ALL);
+
+  fprintf(stderr,"dir: %s, pattern: %s\n", our_dir, pattern);
+
+  if (strcmp(pattern, "*") == 0)
     {
-      if ((fp->last_dir == NULL) || 
-	  (strcmp(our_dir, fp->last_dir) != 0) || 
-	  (fp->reread_directory))
-	{
-	  if (fp->current_files) 
-	    fp->current_files = free_dir(fp->current_files);
-	  if (fp->last_dir) 
-	    {
-	      FREE(fp->last_dir); 
-	      fp->last_dir = NULL;
-	    }
-	  fp->last_dir = copy_string(our_dir);
-	  strcpy(fp->full_pathname, our_dir);
-	  fp->save_dir = (char *)(fp->full_pathname + snd_strlen(our_dir));
-	  if (fp->sound_files) 
-	    free_dir(fp->sound_files);
-	  fp->sound_files = find_sound_files_in_dir(our_dir);
-	  fp->resort_file_list = true;
-	}
-      if (fp->last_pattern)
-	{
-	  FREE(fp->last_pattern);
-	  fp->last_pattern = NULL;
-	}
-      cdp = fp->sound_files;
+      fprintf(stderr,"no pattern: %d\n", fp->filter_choice);
+
+      if (fp->filter_choice == NO_FILE_FILTER)
+	cur_dir = find_files_in_dir(our_dir);
+      else cur_dir = find_filtered_files_in_dir(our_dir, sound_file_p); /* TODO: fp->filter_choice */
     }
-  else 
-    {
-      if ((fp->last_pattern == NULL) || 
-	  (strcmp(pattern, fp->last_pattern) != 0) || 
-	  (fp->reread_directory))
-	  {
-	    if (fp->last_pattern) 
-	      {
-		FREE(fp->last_pattern); 
-		fp->last_pattern = NULL;
-	      }
-	    fp->last_pattern = copy_string(pattern);
-	    if (fp->current_files)  
-	      fp->current_files = free_dir(fp->current_files);
-	    if ((fp->sound_files) && 
-		(fp->sound_files->len > 0)) 
-	      fp->current_files = filter_sound_files(fp->sound_files, pattern);
-	    fp->resort_file_list = true;
-	  }
-      cdp = fp->current_files;
-    }  
-  fp->reread_directory = false;
-  if (fp->resort_file_list)
-    {
-      XmString *names = NULL;
-      if ((cdp) && (cdp->len > 0))
-	{
-	  qsort((void *)(cdp->files), cdp->len, sizeof(char *), string_compare);
-	  names = (XmString *)CALLOC(cdp->len, sizeof(XmString));
-	  for (i = 0; i < cdp->len; i++) 
-	    {
-	      char *sp, *sn;
-	      for (sp = fp->save_dir, sn = cdp->files[i]; ((*sp) = (*sn)) != '\0'; sp++, sn++);
-	      /* save_dir is a pointer into fullpathname after the directory portion */
-	      /*   this is unreadable code! -- it's basically sprintf(fullpathname, "%s%s", our_dir, cdp->files[i]) I think */
-	      names[i] = XmStringCreate(fp->full_pathname, XmFONTLIST_DEFAULT_TAG);
-	    }
-	}
-      else names = NULL;
-      if (cdp) 
-	XtVaSetValues(dialog, 
-		      XmNfileListItems, names, 
-		      XmNfileListItemCount, cdp->len, 
-		      XmNlistUpdated, true, 
-		      NULL);
-      if (names)
-	{
-	  for (i = 0; i < cdp->len; i++) 
-	    if (names[i]) 
-	      XmStringFree(names[i]);
-	  FREE(names);
-	}
-    }
-  if (our_dir) XtFree(our_dir);
+  else cur_dir = find_filtered_files_in_dir_with_pattern(our_dir, sound_file_p, pattern); /* TODO: might be no filter except pattern */
+  if (fp->current_files) free_dir_info(fp->current_files);
+  fp->current_files = cur_dir;
+
   if (pattern) XtFree(pattern);
-  fp->resort_file_list = false;
+
+  fprintf(stderr,"cur_dir %s: %d files\n", cur_dir->dir_name, cur_dir->len);
+  
+  if (cur_dir->len > 0)
+    {
+      snd_sort(fp->sorter_choice, cur_dir->files, cur_dir->len);
+      names = (XmString *)CALLOC(cur_dir->len, sizeof(XmString));
+      for (i = 0; i < cur_dir->len; i++) 
+	names[i] = XmStringCreate(cur_dir->files[i]->full_filename, XmFONTLIST_DEFAULT_TAG);
+    }
+  XtVaSetValues(dialog, 
+		XmNfileListItems, names, 
+		XmNfileListItemCount, cur_dir->len, 
+		XmNlistUpdated, true, 
+		NULL);
+  if (names)
+    {
+      for (i = 0; i < cur_dir->len; i++) 
+	if (names[i]) 
+	  XmStringFree(names[i]);
+      FREE(names);
+    }
+
+#if HAVE_FAM
+  {
+    if ((fp->last_dir == NULL) ||
+	(strcmp(our_dir, fp->last_dir) != 0))
+      {
+	if (fp->directory_watcher)
+	  fam_unmonitor_file(fp->last_dir, fp->directory_watcher); /* filename normally ignored */
+	fp->directory_watcher = fam_monitor_directory(our_dir, (void *)fp, watch_current_directory_contents);
+	if (fp->last_dir) FREE(fp->last_dir);
+	fp->last_dir = copy_string(our_dir);
+	fp->reread_directory = false;
+      }
+  }
+#endif
+  if (our_dir) XtFree(our_dir);
 }
 
 static void just_sounds_callback(Widget w, XtPointer context, XtPointer info) 
@@ -676,19 +611,8 @@ static void just_sounds_callback(Widget w, XtPointer context, XtPointer info)
   ASSERT_WIDGET_TYPE(XmIsToggleButton(w), w);
   ASSERT_WIDGET_TYPE(XmIsFileSelectionBox(fp->dialog), fp->dialog);
   if (cb->set)
-    {
-      XtVaSetValues(fp->dialog, 
-		    XmNfileSearchProc, sound_file_search,
-		    NULL);
-    }
-  else XtVaSetValues(fp->dialog, 
-#if HAVE_FAM
-		     XmNfileSearchProc, default_file_search,
-#else
-		     XmNfileSearchProc, fp->default_search_proc,
-#endif
-		     NULL);
-  fp->resort_file_list = true;
+    fp->filter_choice = JUST_SOUNDS_FILTER;
+  else fp->filter_choice = NO_FILE_FILTER;
   fp->in_just_sounds_update = true;
   force_directory_reread(fp->dialog);
   fp->in_just_sounds_update = false;
@@ -1011,6 +935,10 @@ static file_dialog_info *make_file_dialog(bool read_only, char *title, char *sel
   fd = (file_dialog_info *)CALLOC(1, sizeof(file_dialog_info));
   fd->fp = (file_pattern_info *)CALLOC(1, sizeof(file_pattern_info));
   fd->fp->in_just_sounds_update = false;
+  if (just_sounds(ss))
+    fd->fp->filter_choice = JUST_SOUNDS_FILTER;
+  else fd->fp->filter_choice = NO_FILE_FILTER;
+
   fd->dp = (dialog_play_info *)CALLOC(1, sizeof(dialog_play_info));
   fd->file_dialog_read_only = read_only;
   fd->fpop = (file_popup_info *)CALLOC(1, sizeof(file_popup_info));
@@ -1026,12 +954,13 @@ static file_dialog_info *make_file_dialog(bool read_only, char *title, char *sel
   n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
   XtSetArg(args[n], XmNokLabelString, ok_label); n++;
-  XtSetArg(args[n], XmNselectionLabelString, s1); n++;                             /* "open", "mix", "insert" */
+  XtSetArg(args[n], XmNselectionLabelString, s1); n++;                    /* "open", "mix", "insert" */
   XtSetArg(args[n], XmNdialogTitle, s2); n++;
-  XtSetArg(args[n], XmNfilterLabelString, filter_list_label); n++;                 /* default label 'Filter' is confusing in this context */
-  XtSetArg(args[n], XmNfileFilterStyle, XmFILTER_HIDDEN_FILES); n++;               /* the dot files mostly just get in the way */
+  XtSetArg(args[n], XmNfilterLabelString, filter_list_label); n++;        /* default label 'Filter' is confusing in this context */
+  XtSetArg(args[n], XmNfileFilterStyle, XmFILTER_HIDDEN_FILES); n++;      /* the dot files mostly just get in the way */
   XtSetArg(args[n], XmNcancelLabelString, cancel_label); n++;
   XtSetArg(args[n], XmNuserData, (XtPointer)(fd->fp)); n++;
+  XtSetArg(args[n], XmNfileSearchProc, snd_directory_reader); n++;        /* over-ride Motif's directory reader altogether */      
 
   fd->dialog = XmCreateFileSelectionDialog(w, title, args, n);
   fd->fp->dialog = fd->dialog;
@@ -1083,10 +1012,7 @@ static file_dialog_info *make_file_dialog(bool read_only, char *title, char *sel
   XtAddCallback(wtmp, XmNvalueChangedCallback, unpost_if_filter_changed, (XtPointer)fd);
 
   /* -------- fam/gamin */
-  XtVaGetValues(fd->dialog, XmNfileSearchProc, &(fd->fp->default_search_proc), NULL);
-
 #if HAVE_FAM
-  XtVaSetValues(fd->dialog, XmNfileSearchProc, default_file_search, NULL);
   {
     char *our_dir;
     XmString cur_dir;
@@ -1295,15 +1221,6 @@ widget_t make_open_file_dialog(bool read_only, bool managed)
       cancel_label = XmStringCreate(_("Cancel"), XmFONTLIST_DEFAULT_TAG);
       XtVaSetValues(odat->dialog, XmNcancelLabelString, cancel_label, NULL);
       XmStringFree(cancel_label);
-
-      if (just_sounds(ss)) 
-	{
-	  XtVaSetValues(odat->dialog, 
-			XmNfileSearchProc, sound_file_search, 
-			NULL);
-	  odat->fp->resort_file_list = true;
-	  force_directory_reread(odat->dialog);
-	}
     }
   else
     {
@@ -1416,14 +1333,6 @@ widget_t make_mix_file_dialog(bool managed)
     {
       mdat = make_file_dialog(true, _("Mix Sound"), _("mix in:"), file_mix_ok_callback, mix_file_help_callback);
       set_dialog_widget(FILE_MIX_DIALOG, mdat->dialog);
-      if (just_sounds(ss)) 
-	{
-	  XtVaSetValues(mdat->dialog, 
-			XmNfileSearchProc, sound_file_search, 
-			NULL);
-	  mdat->fp->resort_file_list = true;
-	  force_directory_reread(mdat->dialog);
-	}
       mdat->open_file_watcher_loc = add_ss_watcher(SS_FILE_OPEN_WATCHER, file_open_file_watcher, (void *)mdat);
     }
   else
@@ -1514,14 +1423,6 @@ widget_t make_insert_file_dialog(bool managed)
     {
       idat = make_file_dialog(true, _("Insert Sound"), _("insert:"), file_insert_ok_callback, insert_file_help_callback);
       set_dialog_widget(FILE_INSERT_DIALOG, idat->dialog);
-      if (just_sounds(ss)) 
-	{
-	  XtVaSetValues(idat->dialog, 
-			XmNfileSearchProc, sound_file_search, 
-			NULL);
-	  idat->fp->resort_file_list = true;
-	  force_directory_reread(idat->dialog);
-	}
       idat->open_file_watcher_loc = add_ss_watcher(SS_FILE_OPEN_WATCHER, file_open_file_watcher, (void *)idat);
     }
   else
@@ -2840,6 +2741,10 @@ static void make_save_as_dialog(save_as_dialog_info *sd, char *sound_name, int h
 
       sd->fp = (file_pattern_info *)CALLOC(1, sizeof(file_pattern_info));
       sd->fp->in_just_sounds_update = false;
+      if (just_sounds(ss))
+	sd->fp->filter_choice = JUST_SOUNDS_FILTER;
+      else sd->fp->filter_choice = NO_FILE_FILTER;
+
       sd->dp = (dialog_play_info *)CALLOC(1, sizeof(dialog_play_info));
       sd->fpop = (file_popup_info *)CALLOC(1, sizeof(file_popup_info));
 
@@ -2851,6 +2756,8 @@ static void make_save_as_dialog(save_as_dialog_info *sd, char *sound_name, int h
       XtSetArg(args[n], XmNheight, 600); n++;
       XtSetArg(args[n], XmNuserData, (XtPointer)sd->fp); n++;
       XtSetArg(args[n], XmNfileFilterStyle, XmFILTER_HIDDEN_FILES); n++;
+      XtSetArg(args[n], XmNfileSearchProc, snd_directory_reader); n++;        /* over-ride Motif's directory reader altogether */      
+
       sd->dialog = XmCreateFileSelectionDialog(MAIN_SHELL(ss), "save-as", args, n);
       sd->fp->dialog = sd->dialog;
       sd->dp->dialog = sd->dialog;
@@ -2867,9 +2774,7 @@ static void make_save_as_dialog(save_as_dialog_info *sd, char *sound_name, int h
       XmStringFree(filter_list_label);
       XmStringFree(cancel_label);
 
-      XtVaGetValues(sd->dialog, XmNfileSearchProc, &(sd->fp->default_search_proc), NULL);
 #if HAVE_FAM
-      XtVaSetValues(sd->dialog, XmNfileSearchProc, default_file_search, NULL);
       {
 	char *our_dir;
 	XmString cur_dir;
@@ -2879,14 +2784,6 @@ static void make_save_as_dialog(save_as_dialog_info *sd, char *sound_name, int h
 	/* don't set last_dir yet */
       }
 #endif
-      if (just_sounds(ss)) 
-	{
-	  XtVaSetValues(sd->dialog, 
-			XmNfileSearchProc, sound_file_search, 
-			NULL);
-	  sd->fp->resort_file_list = true;
-	  force_directory_reread(sd->dialog);
-	}
 
       sd->filename_widget = FSB_BOX(sd->dialog, XmDIALOG_TEXT);
       XtAddCallback(sd->dialog, XmNhelpCallback, save_as_help_callback, (XtPointer)sd);

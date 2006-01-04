@@ -271,7 +271,6 @@
 #define S_insert_silence                "insert-silence"
 #define S_insert_sound                  "insert-sound"
 #define S_just_sounds                   "just-sounds"
-#define S_just_sounds_hook              "just-sounds-hook"
 #define S_key                           "key"
 #define S_key_binding                   "key-binding"
 #define S_key_press_hook                "key-press-hook"

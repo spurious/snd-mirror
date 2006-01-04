@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Wed Sep 04 18:34:00 CEST 2002
-# Changed: Sat Nov 05 18:19:11 CET 2005
+# Changed: Wed Jan 04 03:40:54 CET 2006
 
 # Commentary:
 #
@@ -87,10 +87,15 @@
 #  scale!(scl)
 #  to_vector
 #  car
+#  car=
 #  cadr
+#  cadr=
 #  caddr
+#  caddr=
 #  cadddr
+#  cadddr=
 #  caddddr
+#  caddddr=
 #  cdr
 #  step(n)
 #  apply(func, *rest, &body)
@@ -369,11 +374,13 @@
 #  expsnd(gr_env, snd = false, chn = false)
 #  cross_synthesis(cross_snd, amp, fftsize, r)
 #  voiced2unvoiced(amp, fftsize, r, temp, snd = false, chn = false)
+#  pulse_voice(cosin, freq, amp, fftsize, r, snd, chn)
 #  cnvtest(snd0, snd1, amp)
 #
 #  swap_selection_channels
 #  make_sound_interp(start, snd = false, chn = false)
 #  sound_interp(func, loc)
+#  sound_via_sound(snd1, snd2)
 #  env_sound_interp(envelope, time_scale = 1.0, snd = false, chn = false)
 #  title_with_date
 #  filtered_env(en, snd = false, chn = false)
@@ -426,6 +433,9 @@
 #  scramble_channels(*new_order)
 #  scramble_channel(silence)
 #
+#  reverse_by_blocks(block_len, snd, chn)
+#  reverse_within_blocks(block_len, snd, chn)
+#  
 # class Moog_filter < Musgen (moog.scm)
 #   initialize(freq, q)
 #   frequency=(freq)
@@ -559,7 +569,7 @@ def ignore(*rest)
   nil
 end
 
-# backward compatibility aliases (mostly from snd7.scm)
+# backward compatibility aliases and constants (mostly from snd7.scm)
 if provided? :snd
   alias save_options                    save_state
   alias delete_samples_with_origin      delete_samples
@@ -572,6 +582,10 @@ if provided? :snd
   alias recorder_in_format              recorder_in_data_format
   alias recorder_out_format             recorder_out_data_format
   alias recorder_out_type               recorder_out_header_type
+  Sort_files_by_name = 0
+  Sort_files_by_date = 2
+  Sort_files_by_size = 4
+  Sort_files_by_entry = -1
 end
 
 # enum("foo", :bar, "FOO_BAR")
@@ -987,21 +1001,40 @@ class Array
   def car
     self[0]
   end
+  
+  def car=(val)
+    self[0] = val
+  end
 
   def cadr
     self[1]
+  end
+
+  def cadr=(val)
+    self[1] = val
   end
 
   def caddr
     self[2]
   end
 
+  def caddr=(val)
+    self[2] = val
+  end
+
   def cadddr
     self[3]
+  end
+  def cadddr=(val)
+    self[3] = val
   end
 
   def caddddr
     self[4]
+  end
+
+  def caddddr=(val)
+    self[4] = val
   end
 
   def cdr
@@ -2081,29 +2114,25 @@ def install_eval_hooks(file, retval, input, hook, &reset_cursor)
   reset_cursor and reset_cursor.call
   $exit_hook.add_hook!(file) do prompt.reset end
   hook.add_hook!(file) do |line|
-    if line.null?
-      false
-    else
-      eval_line << line << "\n"
-      eval_level += Snd_eval.count_level(line)
-      if eval_level.negative?
-        eval_level = 0
+    eval_line << line << "\n"
+    eval_level += Snd_eval.count_level(line)
+    if eval_level.negative?
+      eval_level = 0
+      eval_line = ""
+    end
+    prompt.update(eval_level)
+    if eval_level.zero?
+      set_snd_input(input)
+      begin
+        Snd.display(eval(eval_line, TOPLEVEL_BINDING, file, 1).inspect)
+      rescue Interrupt, ScriptError, StandardError 
+        Snd.display(verbose_message_string(true, "# ", file))
+      ensure
         eval_line = ""
       end
-      prompt.update(eval_level)
-      if eval_level.zero?
-        set_snd_input(input)
-        begin
-          Snd.display(eval(eval_line, TOPLEVEL_BINDING, file, 1).inspect)
-        rescue Interrupt, ScriptError, StandardError 
-          Snd.display(verbose_message_string(true, "# ", file))
-        ensure
-          eval_line = ""
-        end
-      end
-      reset_cursor and reset_cursor.call
-      retval
     end
+    reset_cursor and reset_cursor.call
+    retval
   end
 end
 
@@ -4155,6 +4184,55 @@ turns a vocal sound into whispering: voiced2unvoiced(1.0, 256, 2.0, 2.0)")
     end
   end
 
+  # very similar but use sum-of-cosines (glottal pulse train?) instead of white noise
+
+  add_help(:pulse_voice,
+           "pulse_voice(cosin, freq=440.0, amp=1.0, fftsize=256, r=2.0, snd=false, chn=false) \
+uses sum-of-cosines to manipulate speech sounds")
+  def pulse_voice(cosin, freq = 440.0, amp = 1.0, fftsize = 256, r = 2.0, snd = false, chn = false)
+    freq_inc = fftsize / 2
+    fdr = make_vct(fftsize)
+    fdi = make_vct(fftsize)
+    spectr = make_vct(freq_inc)
+    pulse = make_sum_of_cosines(cosin, freq)
+    inctr = 0
+    ctr = freq_inc
+    radius = 1.0 - r / fftsize
+    bin = srate(snd) / fftsize
+    len = frames(snd, chn)
+    out_data = make_vct(len)
+    old_peak_amp = new_peak_amp = 0.0
+    formants = make_array(freq_inc) do |i| make_formant(radius, i * bin) end
+    callcc do |brk|
+      outdata.map do |i|
+        outval = 0.0
+        if ctr == freq_inc
+          if c_g? then brk.call("interrupted") end
+          fdr = channel2vct(inctr, fftsize, snd, chn)
+          pk = vct_peak(fdr)
+          if pk > old_peak_amp then old_peak_amp = pk end
+          spectrum(fdr, fdi, false, 2)
+          inctr += freq_inc
+          vct_subtract!(fdr, spectr)
+          vct_scale!(fdr, 1.0 / freq_inc)
+          ctr = 0
+        end
+        ctr += 1
+        vct_add!(spectr, fdr)
+        outval = formant_bank(spectr, formants(sum_of_cosines(pulse)))
+        if outval.abs > new_peak_amp then new_peak_amp = outval.abs end
+        outval
+      end
+      vct_scale!(out_data, amp * (old_peak_amp / new_peak_amp))
+      vct2channel(out_data, 0, len, snd, chn)
+    end
+  end
+  # pulse_voice(80,   20.0, 1.0, 1024, 0.01)
+  # pulse_voice(80,  120.0, 1.0, 1024, 0.2)
+  # pulse_voice(30,  240.0, 1.0, 1024, 0.1)
+  # pulse_voice(30,  240.0, 1.0, 2048)
+  # pulse_voice( 6, 1000.0, 1.0,  512)
+
   # convolution example
 
   add_help(:cnvtest,
@@ -4229,12 +4307,12 @@ an interpolating reader for snd's channel chn")
     curend = start + bufsize
     lambda do |loc|
       if loc < curbeg
-        curbeg = buf4size + (loc - bufsize)
+        curbeg = [buf4size + (loc - bufsize), 0].max
         curend = curbeg + bufsize
         data = channel2vct(curbeg, bufsize, snd, chn)
       else
         if loc > curend
-          curbeg = loc - buf4size
+          curbeg = [loc - buf4size, 0].max
           curend = curbeg + bufsize
           data = channel2vct(curbeg, bufsize, snd, chn)
         end
@@ -4250,6 +4328,16 @@ sample at loc (interpolated if necessary) from func created by make_sound_interp
     func.call(loc)
   end
 
+  def sound_via_sound(snd1, snd2)
+    intrp = make_sound_interp(0, snd1, 0)
+    len = frames(snd1, 0) - 1
+    rd = make_sample_reader(0, snd2, 0)
+    mx = maxamp(snd2, 0)
+    map_channel(lambda do |val|
+                  sound_interp(intrp, (len * 0.5 * (1.0 + (read_sample(rd) / mx))).floor)
+                end)
+  end
+  
   # env_sound_interp takes an envelope that goes between 0 and 1
   # (y-axis), and a time-scaler (1.0 = original length) and returns a
   # new version of the data in the specified channel that follows that
@@ -5004,6 +5092,61 @@ turns the currently selected soundfont file into a bunch of files of the form sa
   ensure
     set_max_regions(old_max)
     set_with_mix_tags(old_tags)
+  end
+
+  # reorder blocks within channel
+
+  add_help(:reverse_by_blocks,
+           "reverse_by_blocks(block_len, snd=false, chn=false) \
+divide sound into block-len blocks, recombine blocks in reverse order.")
+  def reverse_by_blocks(block_len, snd = false, chn = false)
+    len = frames(snd, chn)
+    num_blocks = (len / (srate(snd) * block_len)).floor
+    if num_blocks > 1
+      actual_block_len = (len / num_blocks).ceil
+      rd = make_sample_reader(len - actual_block_len, snd, chn)
+      beg = 0
+      ctr = 1
+      map_channel(lambda do |y|
+                    val = read_sample(rd)
+                    if beg < 10
+                      val = val * beg * 0.1
+                    else
+                      if beg > actual_block_len - 10
+                        val = val * (actual_block_len - beg) * 0.1
+                      end
+                    end
+                    beg += 1
+                    if beg == actual_block_len
+                      ctr += 1
+                      beg = 0
+                      rd = make_sample_reader([len - ctr * actual_block_len, 0].max, snd, chn)
+                    end
+                    val
+                  end,
+                  0, false, snd, chn, false, format("%s(%s", get_func_name, block_len))
+    end
+  end
+
+  add_help(:reverse_within_blocks,
+           "reverse_within_blocks(block_len, snd=false, chn=false) \
+divide sound into blocks, recombine in order, but each block internally reversed.")
+  def reverse_within_blocks(block_len, snd = false, chn = false)
+    len = frames(snd, chn)
+    num_blocks = (len / (srate(snd) * block_len)).floor
+    if num_blocks > 1
+      actual_block_len = (len / num_blocks).ceil
+      no_clicks_env = [0.0, 0.0, 0.01, 1.0, 0.99, 1.0, 1.0, 0.0]
+      as_one_edit(lambda do | |
+                    0.step(len, actual_block_len) do
+                      reverse_channel(beg, actual_block_len, snd, chn)
+                      env_channel(no_clicks_env, beg, actual_block_len, snd, chn)
+                    end
+                  end,
+                  format("%s(%s", get_func_name, block_len))
+    else
+      reverse_channel(0, false, snd, chn)
+    end
   end
 end
 

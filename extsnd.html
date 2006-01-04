@@ -1175,27 +1175,6 @@ contending for access to the data.  One way around this is to save the envelope
 load peak-env.scm to make this process automatic.
 </td></tr><tr><td colspan=3></td></tr>
 
-<!-- just-sounds-hook -->
-<tr><td colspan=2>
-<code><a class=def name="justsoundshook">just-sounds-hook</a> (filename)</code></td><td align=right><b>or</b>
-</td></tr>
-<tr><td></td><td colspan=2>
-called on each file (after the sound file extension check) if the
-just-sounds button is set. Return #f to filter out <i>filename</i>.
-</td></tr>
-<tr><td></td><td colspan=2>
-<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
-(add-hook! <em class=red>just-sounds-hook</em>
-  (lambda (name) ;display only stereo files in file selection dialog
-    (and (not (= (<a class=quiet href="#mussoundheadertype">mus-sound-header-type</a> name) <a class=quiet href="#headertype">mus-raw</a>))
-         ;;any unrecognized file is considered "raw"
-         (= (<a class=quiet href="#mussoundchans">mus-sound-chans</a> name) 2))))
-</pre></td></tr></table></td></tr>
-<tr><td></td><td colspan=2>
-This works only in Motif or Gtk versions 2.3 and higher.
-</td></tr>
-<tr><td colspan=3></td></tr>
-
 <!-- key-press-hook -->
 <tr><td colspan=2>
 <code><a class=def name="keypresshook">key-press-hook</a> (snd chn key state)</code></td><td align=right><b>or</b>
@@ -10118,8 +10097,7 @@ See <i>html</i> in index.scm.
 <tr><td width=50></td><td>In Motif and in Gtk versions 2.3 or later,
 if <i>just-sounds</i> is #t,
 the file lists displayed by the file selection dialogs are filtered to show just
-sound files (see <a href="#addsoundfileextension">add-sound-file-extension</a> and
-<a href="#justsoundshook">just-sounds-hook</a>).
+sound files (see <a href="#addsoundfileextension">add-sound-file-extension</a>).
 </td></tr>
 
 <!-- in -->

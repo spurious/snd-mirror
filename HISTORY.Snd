@@ -2,6 +2,7 @@ Snd change log
 
 
   2-Jan:     removed the various sorting indices (sort-by-name|size|date|entry), and changed the way the user-defined sorter works.
+             Also removed file-filters, file-sorters, and just-sounds-hook.
 
 2006 ----------------------------------------------------------------
 

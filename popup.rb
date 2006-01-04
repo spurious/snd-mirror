@@ -2,20 +2,21 @@
 
 # Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Thu Sep 05 22:28:49 CEST 2002
-# Last: Thu Apr 07 00:10:03 CEST 2005
+# Changed: Wed Jan 04 03:43:03 CET 2006
 
 # Commentary:
 #
 # Requires --with-motif or --with-gtk and module libxm.so or --with-static-xm!
 #
-# Tested with Snd 7.12, Motif 2.2.2, Gtk+ 2.2.1, Ruby 1.6.6, 1.6.8 and 1.9.0.
+# Tested with Snd 7.18, Motif 2.2.2, Gtk+ 2.2.1, Ruby 1.6.6, 1.6.8 and 1.9.0.
 #
 # $info_comment_hook: lambda do |file, info_string| ...; new_info_string; end
+# $edhist_save_hook:  lambda do |prc| ... end
 #
 # make_snd_popup(name, *rest) do ... end
 #
 # class Snd_popup_menu < Menu
-#   initialize(name, parent, args, where) do ... end
+#   initialize(name, parent, args, target) do ... end
 #   before_popup_hook, lambda do |snd, chn, xe| ...; flag; end
 #   entry(name, *rest) do |snd, chn, w| ... end
 #   label(name, args)
@@ -28,6 +29,8 @@
 #     values
 #     # listener
 #     children(set_cb, rest = false) do |snd| ... end             set_cb.arity == -1 or 0
+#     # edhist
+#     children(set_cb, rest = false) do |snd, chn, idx| ... end   set_cb.arity == -1 or 0
 #     # transform
 #     children(set_cb, rest = false) do |snd, chn, val| ... end   set_cb.arity == 3 (snd, chn, val)
 #
@@ -67,7 +70,7 @@
 # make_snd_popup("Listener", ...) do
 #   ...
 #   cascade("Close") do
-#     children(lambda do (sounds() or []) end) do |snd|
+#     children(lambda do Snd.sounds end) do |snd|
 #       close_sound_extend(snd)
 #     end
 #   end
@@ -98,6 +101,8 @@ require "hooks"
 require "snd-xm"
 include Snd_XM
 
+$edhist_help_edits = false       # for prefs
+
 $info_comment_hook = Hook.new("$info_comment_hook", 2, "\
 lambda do |file, info_string| ...; new_info_string; end: provides a
 way to add more information to INFO_STRING and format the comment of
@@ -116,29 +121,44 @@ $info_comment_hook.add_hook!(\"snd-init-hook\") do |file, info|
   info
 end")
 
+# calls all hook-procs as long as they return true
+class Hook
+  def run_hook_bool(*args)
+    callcc do |ret|
+      self.run_hook do |prc|
+        if prc.call(*args) != true then ret.call(false) end
+      end
+      true
+    end
+  end
+end
+
 add_help(:make_snd_popup, "make_snd_popup(name, *rest) do ... end
-    name                               # menu name
-    :parent, main_widgets[Main_pane]   # e.g. listener popup takes main_widgets[Listener_pane]
-    :where,  :channels                 # :channels, :widget, :event
-    :args,   [RXmNbackground, highlight_color] # Motif arguments")
+    name                                # menu name
+    :parent,  main_widgets[Main_pane]   # e.g. listener popup takes main_widgets[Listener_pane]
+    :target,  :channels                 # :channels, :edhist, :widget, :event
+    :args,    [RXmNbackground, highlight_color] # Motif arguments")
 def make_snd_popup(name, *rest, &body)
-  parent = get_args(rest, :parent, main_widgets[Main_pane_shell])
-  where  = get_args(rest, :where, :channels)      # Motif :channels, :widget, :event, Gtk :channels
+  parent, target = nil
+  optkey(rest, binding,
+         [:parent, main_widgets[Main_pane_shell]],
+         [:target, :channels]) # Motif :channels, :edhist, :widget, :event, Gtk :channels
   args = if provided? :xm
            get_args(rest, :args, [RXmNbackground, highlight_color])
          else
            []
          end
-  Snd_popup_menu.new(name, parent, args, where, &body)
+  Snd_popup_menu.new(name, parent, args, target, &body)
 end
 
 class Snd_popup_menu < Menu
-  def initialize(name, parent, args, where = nil, &body)
+  def initialize(name, parent, args, target, &body)
     super(name, parent, args)
     @parent = parent
     @values = []
     @popups = []
     @widget_names = {}
+    @target = target
     @before_popup_hook = Hook.new("@before_popup_hook", 3, "\
 lambda do |snd, chn, xe| ... flag end: called before posting a popup menu.
 
@@ -151,15 +171,15 @@ as well as the return value.  The menu will be posted in every case.
 
 On event-handler popups (see nb.rb): SND, CHN, and XE are meaningless.
 If it returns non-nil or non-false, the menu will be posted.")
-    if symbol?(where)
+    if symbol?(@target)
       # no `create' on Cascade.new
-      create(where, &body)
+      create(&body)
     end
   end
   attr_reader :before_popup_hook
   
   def entry(name, *rest, &body)
-    prc = get_args(rest, :proc, nil)
+    procedure = optkey(rest, :procedure)
     if provided? :xm
       args = get_args(rest, :args, @args)
       child = RXtCreateManagedWidget(name, RxmPushButtonWidgetClass, @menu, args)
@@ -190,7 +210,7 @@ If it returns non-nil or non-false, the menu will be posted.")
       end
     end
     @widget_names[child] = name
-    prc.call(child) if proc?(prc)
+    proc?(procedure) and procedure.call(child)
     child
   end
 
@@ -201,7 +221,7 @@ If it returns non-nil or non-false, the menu will be posted.")
   end
   
   def cascade(name, args = @args, &body)
-    cas = Cascade.new(name, @menu, args)
+    cas = Cascade.new(name, @menu, args, @target)
     cas.instance_eval(&body) if block_given?
     @values.push(cas.values)
     cas
@@ -216,7 +236,7 @@ If it returns non-nil or non-false, the menu will be posted.")
   end
   
   private
-  def create(where, &body)
+  def create(&body)
     @menu = if provided? :xm
               RXmCreatePopupMenu(@parent, @label, [RXmNpopupEnabled, RXmPOPUP_AUTOMATIC] + @args)
             else
@@ -227,104 +247,122 @@ If it returns non-nil or non-false, the menu will be posted.")
       separator
     end
     instance_eval(&body) if block_given?
-    if provided? :xm
-      case where
-      when :channels
-        (sounds() or []).each do |snd| set_channel_popup(snd) end
-        let(format("%s-popup", (@label or "channels"))) do |hook_name|
+    case @target
+    when :channels, :edhist
+      if provided?(:xm) or (provided?(:xg) and @target == :edhist)
+        Snd.sounds.each do |snd| set_channel_popup(snd) end
+        let(format("%s-popup", (@label or "channels").downcase.tr(" ", "-"))) do |hook_name|
           $after_open_hook.add_hook!(hook_name) do |snd| set_channel_popup(snd) end
         end
-      when :widget
-        set_widget_popup
-      when :event
-        set_event_popup
+      else                      # gtk :channels
+        set_gtk_channel_popup
       end
-    else
-      set_channel_popup
+    when :widget
+      set_widget_popup
+    when :event
+      set_event_popup
     end
   end
 
-  if provided? :xm
-    def channel_cb(w, c, i)
-      snd, chn = *c
-      e = Revent(i)
-      if RButtonPress == Rtype(e)
-        if @before_popup_hook.empty?
-          Rset_menuToPost(i, @menu)
-        else
-          xe = Rx_root(e) - RXtTranslateCoords(w, 0, 0)[0]
-          if channel_style(snd) == Channels_combined
-            ye = Ry(e)
-            if channel_style(snd) == Channels_combined
-              ye = Ry(e)
-              chn = if (cn = (0...channels(snd)).detect do |cc| ye < axis_info(snd, cc)[14] end)
-                      cn - 1
-                    else
-                      channels(snd) - 1
-                    end
+  def set_channel_popup(snd)
+    channels(snd).times do |chn|
+      unless @popups.detect do |c| c == [snd, chn] end
+        @popups.push([snd, chn])
+        if @target == :edhist
+          if provided? :xm
+            RXtAddCallback(channel_widgets(snd, chn)[Edhist],
+                           RXmNpopupHandlerCallback,
+                           lambda do |w, c, i|
+                             if Rtype(Revent(i)) == RButtonPress
+                               @before_popup_hook.call(snd, chn, w)
+                               Rset_menuToPost(i, @menu)
+                             end
+                           end)
+          else
+            add_event_handler(channel_widgets(snd, chn)[Edhist], "button_press_event") do |w, e, d|
+              if Rbutton(b = RGDK_EVENT_BUTTON(e)) == 3
+                @before_popup_hook.call(snd, chn, w)
+                Rgtk_widget_show(@menu)
+                Rgtk_menu_popup(RGTK_MENU(@menu), false, false, false, false, Rbutton(b), Rtime(b))
+                true
+              else
+                false
+              end
             end
-            unless chn.between?(0, channels(snd) - 1)
-              # in case of chans(new-snd) < chans(old-snd)
-              # and new-snd has the same index like closed old-snd
-              chn = channels(snd) - 1
-            end
-          end
-          if @before_popup_hook.call(snd, chn, xe)
-            Rset_menuToPost(i, @menu)
           end
         end
-      end
-    end
-      
-    def set_channel_popup(snd)
-      channels(snd).times do |chn|
-        unless @popups.detect do |c| c == [snd, chn] end
-          @popups.push([snd, chn])
+        if @target == :channels and provided? :xm
           RXtAddCallback(channel_widgets(snd, chn)[Graph],
                          RXmNpopupHandlerCallback,
-                         lambda do |w, c, i| channel_cb(w, c, i) end,
-                         [snd, chn])
-        end
-      end
-    end
-  else
-    def set_channel_popup
-      $gtk_popup_hook.add_hook!("popup-rb-hook") do |widget, event, data, snd, chn|
-        if snd
-          e = RGDK_EVENT_BUTTON(event)
-          if @before_popup_hook.empty?
-            Rgtk_widget_show(@menu)
-            Rgtk_menu_popup(RGTK_MENU(@menu), false, false, false, false, Rbutton(e), Rtime(e))
-          else
-            if channel_style(snd) == Channels_combined
-              chn = if (cn = (0...channels(snd)).detect do |cc|
-                          Ry(e) < axis_info(snd, cc)[14]
-                        end)
-                      cn - 1
-                    else
-                      channels(snd) - 1
-                    end
-            end
-            if @before_popup_hook.call(snd, chn, Rx(e))
-              Rgtk_widget_show(@menu)
-              Rgtk_menu_popup(RGTK_MENU(@menu), false, false, false, false, Rbutton(e), Rtime(e))
-            end
-          end
-          true
-        else
-          false
+                         lambda do |w, c, i|
+                           if Rtype(e = Revent(i)) == RButtonPress
+                             if @target == :channels and @before_popup_hook.empty?
+                               Rset_menuToPost(i, @menu)
+                             else
+                               xe = Rx_root(e) - RXtTranslateCoords(w, 0, 0)[0]
+                               if channel_style(snd) == Channels_combined
+                                 ye = Ry(e)
+                                 if channel_style(snd) == Channels_combined
+                                   ye = Ry(e)
+                                   chn = if (cn = (0...channels(snd)).detect do |cc|
+                                               ye < axis_info(snd, cc)[14]
+                                             end)
+                                           cn - 1
+                                         else
+                                           channels(snd) - 1
+                                         end
+                                 end
+                                 unless chn.between?(0, channels(snd) - 1)
+                                   # in case of chans(new-snd) < chans(old-snd)
+                                   # and new-snd has the same index like closed old-snd
+                                   chn = channels(snd) - 1
+                                 end
+                               end
+                               if @before_popup_hook.run_hook_bool(snd, chn, xe)
+                                 Rset_menuToPost(i, @menu)
+                               end
+                             end
+                           end
+                         end)
         end
       end
     end
   end
 
+  def set_gtk_channel_popup
+    $gtk_popup_hook.add_hook!("popup-rb-hook") do |widget, event, data, snd, chn|
+      if snd
+        b = RGDK_EVENT_BUTTON(event)
+        if @before_popup_hook.empty?
+          Rgtk_widget_show(@menu)
+          Rgtk_menu_popup(RGTK_MENU(@menu), false, false, false, false, Rbutton(b), Rtime(b))
+        else
+          if channel_style(snd) == Channels_combined
+            chn = if (cn = (0...channels(snd)).detect do |cc| Ry(b) < axis_info(snd, cc)[14] end)
+                    cn - 1
+                  else
+                    channels(snd) - 1
+                  end
+          end
+          if @before_popup_hook.run_hook_bool(snd, chn, Rx(b))
+            Rgtk_widget_show(@menu)
+            Rgtk_menu_popup(RGTK_MENU(@menu), false, false, false, false, Rbutton(b), Rtime(b))
+          end
+        end
+        true
+      else
+        false
+      end
+    end
+  end
+  
   if provided? :xm
     # e.g. on listener
     def set_widget_popup
       RXtAddCallback(@parent, RXmNpopupHandlerCallback,
                      lambda do |w, c, i|
-                       if RButtonPress == Rtype(Revent(i))
-                         @before_popup_hook.call(nil, nil, nil)
+                       if Rtype(Revent(i)) == RButtonPress
+                         @before_popup_hook.call(selected_sound, selected_channel, w)
                          Rset_menuToPost(i, @menu)
                        end
                      end)
@@ -335,7 +373,7 @@ If it returns non-nil or non-false, the menu will be posted.")
       RXtAddEventHandler(@parent, RButtonPressMask, false,
                          lambda do |w, c, i, f|
                            if Rbutton(i) == 3
-                             if @before_popup_hook.empty? or @before_popup_hook.call(nil, nil, nil)
+                             if @before_popup_hook.run_hook_bool(w, c, i)
                                RXmMenuPosition(@menu, i)
                                RXtManageChild(@menu)
                              end
@@ -345,8 +383,8 @@ If it returns non-nil or non-false, the menu will be posted.")
   end
   
   class Cascade < Snd_popup_menu
-    def initialize(name, parent, args)
-      super
+    def initialize(name, parent, args, target)
+      super(name, parent, args, nil)
       if provided? :xm
         @menu = RXmCreatePulldownMenu(@parent, @label, @args)
         @cascade = RXtCreateManagedWidget(@label, RxmCascadeButtonWidgetClass, @parent,
@@ -359,63 +397,136 @@ If it returns non-nil or non-false, the menu will be posted.")
         Rgtk_menu_item_set_submenu(RGTK_MENU_ITEM(@cascade), @menu)
       end
       @children = []
+      @target = target
     end
     attr_reader :values
     
     def children(set_cb, rest = false, &body)
-      if proc?(set_cb) and proc?(body)
-        case set_cb.arity
-        when -1, 0
-          if provided? :xm
-            add_with_arity_1(rest, set_cb, &body)
-          end
-        when 3
-          add_with_arity_3(rest, set_cb, &body)
-        end
-      else
-        error("%s#%s: set_cb or block missing (%s, %s)",
-              self.class, get_func_name, set_cb.inspect, body.inspect)
+      assert_type(proc?(set_cb), set_cb, 0, "a proc")
+      assert_type(proc?(body), body, 2, "a proc")
+      case set_cb.arity
+      when -1, 0
+        add_with_arity_1(rest, set_cb, &body)
+      when 3
+        add_with_arity_3(rest, set_cb, &body)
       end
     end
 
     private
     # listener: set_cb.arity == 0|-1, body.arity == 1 (snd)
+    #   edhist: set_cb.arity == 0|-1, body.arity == 3 (snd, chn, index)
     def add_with_arity_1(no_widget, set_cb, &body)
-      if no_widget
-        widget = false
-      else
-        widget = RXtCreateManagedWidget(@label, RxmPushButtonWidgetClass, @parent, @args)
-        RXtAddCallback(widget, RXmNactivateCallback,
-                       lambda do |w, c, i| body.call(set_cb.call.first) end)
+      if provided? :xm
+        if no_widget
+          widget = false
+        else
+          widget = RXtCreateManagedWidget(@label, RxmPushButtonWidgetClass, @parent, @args)
+          RXtAddCallback(widget, RXmNactivateCallback,
+                         lambda do |w, c, i| body.call(set_cb.call.first) end)
+        end
+        RXtAddCallback(@cascade, RXmNcascadingCallback,
+                       lambda do |w, c, i|
+                         @children.each do |child| RXtUnmanageChild(child) end
+                         snds = set_cb.call.reverse
+                         clen = @children.length
+                         slen = snds.length
+                         if clen < slen
+                           (clen...slen).each do |numb|
+                             child = RXtCreateManagedWidget(numb.to_s,
+                                                            RxmPushButtonWidgetClass,
+                                                            @menu, @args)
+                             RXtAddCallback(child, RXmNactivateCallback,
+                                            lambda do |w, c, i|
+                                              if @target == :edhist
+                                                body.call(selected_sound,
+                                                          selected_channel,
+                                                          RXtVaGetValues(w, [RXmNuserData, 0]).cadr)
+                                              else
+                                                body.call(find_sound(current_label(w)))
+                                              end
+                                            end)
+                             RXtVaSetValues(child, [RXmNuserData, @children.length])
+                             @children.push(child)
+                           end
+                         end
+                         if slen.nonzero?
+                           if @target == :edhist
+                             @children.zip(snds) do |child, label|
+                               break unless label
+                               if string?(label)
+                                 change_label(child, label)
+                               else
+                                 change_label(child,
+                                              format("%s[%d]",
+                                                     short_file_name(label.car), label.cadr))
+                               end
+                               RXtManageChild(child)
+                             end
+                           else
+                             @children.zip(snds) do |child, snd|
+                               break unless snd
+                               change_label(child, short_file_name(snd))
+                               RXtManageChild(child)
+                             end
+                           end
+                         end
+                       end)
+      else                      # gtk
+        if no_widget
+          widget = false
+        else
+          widget = Rgtk_menu_item_new_with_label(@label)
+          Rgtk_menu_shell_append(RGTK_MENU_SHELL(@parent), widget)
+          Rgtk_widget_show(widget)
+          add_callback(widget, "activate") do |w, d|
+            body.call(body.call(set_cb.call.first))
+          end
+        end
+        add_callback(@cascade, "activate") do |w, c|
+          @children.each do |child| Rgtk_widget_hide(child) end
+          snds = set_cb.call.reverse
+          clen = @children.length
+          slen = snds.length
+          if clen < slen
+            (clen...slen).each do |numb|
+              child = Rgtk_menu_item_new_with_label(numb.to_s)
+              Rgtk_menu_shell_append(RGTK_MENU_SHELL(@menu), child)
+              add_callback(child, "activate") do |w, d|
+                if @target == :edhist
+                  body.call(selected_sound, selected_channel, clen) # @children.length before push
+                else
+                  body.call(find_sound(current_label(w)))
+                end
+              end
+              @children.push(child)
+            end
+          end
+          if slen.nonzero?
+            if @target == :edhist
+              @children.zip(snds) do |child, label|
+                break unless label
+                if string?(label)
+                  change_label(child, label)
+                else
+                  change_label(child,
+                               format("%s[%d]",
+                                      short_file_name(label.car), label.cadr))
+                end
+                Rgtk_widget_show(child)
+              end
+            else
+              @children.zip(snds) do |child, snd|
+                break unless snd
+                change_label(child, short_file_name(snd))
+                Rgtk_widget_show(child)
+              end
+            end
+          end
+          false
+        end
       end
-      RXtAddCallback(@cascade, RXmNcascadingCallback,
-                     lambda do |w, c, i|
-                       @children.each do |child| RXtUnmanageChild(child) end
-                       snds = set_cb.call.reverse
-                       clen = @children.length
-                       slen = snds.length
-                       if clen < slen
-                         (clen...slen).each do |numb|
-                           child = RXtCreateManagedWidget(numb.to_s,
-                                                          RxmPushButtonWidgetClass,
-                                                          @menu, @args)
-                           RXtAddCallback(child, RXmNactivateCallback,
-                                          lambda do |w, c, i|
-                                            body.call(find_sound(current_label(w)))
-                                          end)
-                           @children.push(child)
-                         end
-                       end
-                       if slen.nonzero?
-                         @children.zip(snds) do |child, snd|
-                           break unless snd
-                           change_label(child, short_file_name(snd))
-                           RXtManageChild(child)
-                         end
-                       end
-                     end)
       @values = [widget, @menu, @cascade, set_cb]
-    end if provided? :xm
+    end
     
     # transform: set_cb.arity and body.arity == 3 (snd, chn, val)
     def add_with_arity_3(list, set_cb, &body)
@@ -458,7 +569,7 @@ If it returns non-nil or non-false, the menu will be posted.")
   end
 end
 
-# Example menus; Selection, Graph and Transform popup work with Motif
+# Example menus; Selection, Graph, Transform, and Edhist popup work with Motif
 # as well as with Gtk, Listener popup works only with Motif.
 unless defined? $__private_popup_menu__ and $__private_popup_menu__
   #
@@ -513,7 +624,7 @@ unless defined? $__private_popup_menu__ and $__private_popup_menu__
     entry("Zero") do |snd, chn, w| scale_selection_by(0.0) end
     entry("Crop") do |snd, chn, w|
       sndlist = []
-      sounds().each do |snd|
+      Snd.sounds.each do |snd|
         channels(snd).times do |i|
           sndlist.push([snd, i]) if selection_member?(snd, i)
         end
@@ -552,6 +663,18 @@ unless defined? $__private_popup_menu__ and $__private_popup_menu__
         add_mark(pos + len, snd, chn)
       end
     end
+    entry("Selection Info") do |snd, chn, w|
+      beg = selection_position
+      len = selection_frames
+      sr = srate.to_f
+      str  = format("    start: %d, %.3f", beg, beg / sr)
+      str += format("      end: %d, %.3f", beg + len, (beg + len) / sr)
+      str += format(" duration: %d, %.3f", len, len / sr)
+      str += format("    chans: %d", selection_chans)
+      str += format("   maxamp: %.3f", selection_maxamp)
+    end
+    entry("Apply controls") do |snd, chn, w| apply_controls(snd, 2) end # 2 == selection
+    entry("Reset controls") do |snd, chn, w| reset_controls end
     entry("Unselect") do |snd, chn, w| set_selection_member?(false, true) end
     entry("Revert") do |snd, chn, w| reverse_selection end
     entry("Mix") do |snd, chn, w| mix_selection(cursor()) end
@@ -600,7 +723,7 @@ unless defined? $__private_popup_menu__ and $__private_popup_menu__
         change_label(stop_widget, "Play") if widget?(stop_widget)
       end
     end
-    entry("Play", :proc, lambda do |w| stop_widget = w end) do |snd, chn, w|
+    entry("Play", :procedure, lambda do |w| stop_widget = w end) do |snd, chn, w|
       if stopping
         stopping = false
         change_label(w, "Play")
@@ -635,13 +758,13 @@ unless defined? $__private_popup_menu__ and $__private_popup_menu__
     entry("Redo") do |snd, chn, w| redo_edit(1, snd, chn) end if defined? redo_edit
     entry("Revert") do |snd, chn, w| revert_sound(snd) end
     entry("Open") do |snd, chn, w| open_file_dialog end
-    entry("Close") do |snd, chn, w| close_sound_extend(snd) end
     entry("Save") do |snd, chn, w| save_sound(snd) end
     entry("Save as") do |snd, chn, w|
       select_sound(snd)
       save_sound_dialog
     end
     entry("Update") do |snd, chn, w| update_sound(snd) end
+    entry("Close") do |snd, chn, w| close_sound_extend(snd) end
     entry("Mix selection") do |snd, chn, w| mix_selection(cursor(snd, chn), snd, chn) end
     entry("Insert selection") do |snd, chn, w| insert_selection(cursor(snd, chn), snd, chn) end
     entry("Replace with selection") do |snd, chn, w|
@@ -658,6 +781,8 @@ unless defined? $__private_popup_menu__ and $__private_popup_menu__
     entry("Select all") do |snd, chn, w| select_all(snd, chn) end
     entry("Unselect") do |snd, chn, w| set_selection_member?(false, true) end
     entry("Equalize panes") do |snd, chn, w| equalize_panes end
+    entry("Apply controls") do |snd, chn, w| apply_controls end
+    entry("Reset controls") do |snd, chn, w| reset_controls end
     entry("Info") do |snd, chn, w|
       file = file_name(snd)
       date = Time.at(mus_sound_write_date(file)).localtime.strftime("%a %d-%b-%y %H:%M %Z")
@@ -758,7 +883,7 @@ written: %s\n", channels(snd), srate(snd), frames(snd) / srate(snd).to_f,
           when "Play channel"
             channels(snd) > 1 ? show_widget(w) : hide_widget(w)
           when "Equalize panes"
-            [sounds().length, channels(snd)].max > 1 ? show_widget(w) : hide_widget(w)
+            [Snd.sounds.length, channels(snd)].max > 1 ? show_widget(w) : hide_widget(w)
           when "Redo"
             eds[1] > 0 ? show_widget(w) : hide_widget(w)
           when "Mix selection", "Insert selection", "Unselect", "Replace with selection"
@@ -808,10 +933,9 @@ written: %s\n", channels(snd), srate(snd), frames(snd) / srate(snd).to_f,
     cascade("Graph type") do
       children(lambda do |snd, chn, val|
                  transform_graph_type(snd, chn) != val
-               end, [
-                 ["once", Graph_once],
-                 ["sonogram", Graph_as_sonogram],
-                 ["spectrogram", Graph_as_spectrogram]]) do |snd, chn, val|
+               end, [["once", Graph_once],
+                     ["sonogram", Graph_as_sonogram],
+                     ["spectrogram", Graph_as_spectrogram]]) do |snd, chn, val|
         set_transform_graph_type(val, snd, choose_chan.call(snd, chn))
       end
     end
@@ -828,50 +952,49 @@ written: %s\n", channels(snd), srate(snd), frames(snd) / srate(snd).to_f,
     cascade("Window") do
       children(lambda do |snd, chn, val|
                  fft_window(snd, chn) != val
-               end, [
-                 ["Rectangular", Rectangular_window],
-                 ["Hann", Hann_window],
-                 ["Welch", Welch_window],
-                 ["Parzen", Parzen_window],
-                 ["Bartlett", Bartlett_window],
-                 ["Hamming", Hamming_window],
-                 ["Blackman2", Blackman2_window],
-                 ["Blackman3", Blackman3_window],
-                 ["Blackman4", Blackman4_window],
-                 ["Exponential", Exponential_window],
-                 ["Riemann", Riemann_window],
-                 ["Kaiser", Kaiser_window],
-                 ["Cauchy", Cauchy_window],
-                 ["Poisson", Poisson_window],
-                 ["Gaussian", Gaussian_window],
-                 ["Tukey", Tukey_window],
-                 ["Dolph-Chebyshev", Dolph_chebyshev_window],
-                 ["Hann-Poisson", Hann_poisson_window],
-                 ["Connes", Connes_window]]) do |snd, chn, val|
+               end, [["Rectangular", Rectangular_window],
+                     ["Hann", Hann_window],
+                     ["Welch", Welch_window],
+                     ["Parzen", Parzen_window],
+                     ["Bartlett", Bartlett_window],
+                     ["Hamming", Hamming_window],
+                     ["Blackman2", Blackman2_window],
+                     ["Blackman3", Blackman3_window],
+                     ["Blackman4", Blackman4_window],
+                     ["Exponential", Exponential_window],
+                     ["Riemann", Riemann_window],
+                     ["Kaiser", Kaiser_window],
+                     ["Cauchy", Cauchy_window],
+                     ["Poisson", Poisson_window],
+                     ["Gaussian", Gaussian_window],
+                     ["Tukey", Tukey_window],
+                     ["Dolph-Chebyshev", Dolph_chebyshev_window],
+                     ["Hann-Poisson", Hann_poisson_window],
+                     ["Connes", Connes_window],
+                     ["Samaraki", Samaraki_window],
+                     ["Ultraspherical", Ultraspherical_window]]) do |snd, chn, val|
         set_fft_window(val, snd, choose_chan.call(snd, chn))
       end
     end
     cascade("Transform type") do
       children(lambda do |snd, chn, val|
                  transform_type(snd, chn) != val
-               end, [
-                 ["Fourier", Fourier_transform],
-                 ["Autocorrelate", Autocorrelation],
-                 ["Cepstrum", Cepstrum],
-                 ["Walsh", Walsh_transform],
-                 ["Haar", Haar_transform],
-                 ["Wavelet", Wavelet_transform]]) do |snd, chn, val|
+               end, [["Fourier", Fourier_transform],
+                     ["Autocorrelate", Autocorrelation],
+                     ["Cepstrum", Cepstrum],
+                     ["Walsh", Walsh_transform],
+                     ["Haar", Haar_transform],
+                     ["Wavelet", Wavelet_transform]]) do |snd, chn, val|
         set_transform_type(val, snd, choose_chan.call(snd, chn))
       end
       cascade("Wavelet type") do
         children(lambda do |snd, chn, val|
                    wavelet_type(snd, chn) != val
-                 end, [
-                   "daub4", "daub6", "daub8", "daub10",
-                   "daub12", "daub14", "daub16", "daub18",
-                   "daub20", "battle-lemarie", "burt-adelson",
-                   "beylkin", "coif2", "coif4", "coif6",
-                   "sym2", "sym3", "sym4", "sym5", "sym6"].map_with_index do |v, idx|
+                 end, ["daub4", "daub6", "daub8", "daub10",
+                       "daub12", "daub14", "daub16", "daub18",
+                       "daub20", "battle-lemarie", "burt-adelson",
+                       "beylkin", "coif2", "coif4", "coif6",
+                       "sym2", "sym3", "sym4", "sym5", "sym6"].map_with_index do |v, idx|
                    [v, idx]
                  end) do |snd, chn, val|
           set_wavelet_type(val, snd, choose_chan.call(snd, chn))
@@ -908,11 +1031,78 @@ written: %s\n", channels(snd), srate(snd), frames(snd) / srate(snd).to_f,
   end
 
   #
+  # Edit History Popup
+  #
+  make_snd_popup("Edits", :target, :edhist) do
+    funcs = []
+    widgets = []
+    make_hook("$edhist_save_hook", 1,
+              "lambda do |prc| ... end:  for debugging; \
+called in menu entry Save with new delivered PROC from edit_list2function as only argument, e.g.\n\
+$edhist_save_hook.add_hook!(\"edhist save\") do |prc| Snd.display(prc.source) end")
+    $close_hook.add_hook!("edhist-close") do |snd|
+      name = short_file_name(snd)
+      channels(snd).times do |chn|
+        if old_val = funcs.assoc([snd, chn])
+          old_val.car = format("%s[%d]", name, chn)
+        end
+      end
+    end
+    entry("Save")    do |snd, chn, w|
+      cur_edits = edits(snd, chn)
+      new_func = edit_list2function(snd, chn, cur_edits.car + 1, cur_edits.apply(:+))
+      $edhist_save_hook.call(new_func)
+      if old_val = funcs.assoc([snd, chn])
+        old_val.cadr = new_func
+      else
+        funcs.push([[snd, chn], new_func])
+      end
+    end
+    entry("Reapply") do |snd, chn, w|
+      (val = funcs.assoc([snd, chn])) and proc?(prc = val.cadr) and prc.call(snd, chn)
+    end
+    cascade("Apply") do
+      children(lambda do funcs.map do |vals| vals.car end end, true) do |snd, chn, index|
+        index.between?(0, funcs.length - 1) and funcs[index].cadr.call(snd, chn)
+      end
+    end
+    entry("Clear")   do |snd, chn, w| funcs = [] end
+    separator
+    entry("Help")    do |snd, chn, w|
+      help_dialog("Edit History Functions",
+                  "This popup menu gives access to the edit-list function handlers in Snd.  \
+At any time you can backup in the edit list, 'save' the current trailing edits, make some \
+new set of edits, then 'reapply' the saved edits.  The 'apply' choice gives access to all \
+currently saved edit lists -- any such list can be applied to any channel.  'Clear' deletes \
+all saved edit lists.",
+                  ["{edit lists}" "{edit-list->function}"],
+                  ["extsnd.html#editlists" "extsnd.html#editlist_to_function"])
+    end
+    before_popup_hook.add_hook!("edhist popup") do |snd, chn, wid|
+      each_value do |val| funcs.empty? ? hide_widget(val.caddr) : show_widget(val.caddr) end
+      each_entry do |w|
+        set_sensitive(w, case widget_name(w)
+                         when "Save"
+                           (edits(snd,
+                                  (main_widgets[Notebook_outer_pane] ? false : chn)).apply(:+) > 0)
+                         when "Reapply"
+                           (not funcs.assoc([snd, chn]).nil?)
+                         when "Clear"
+                           (not funcs.empty?)
+                         else
+                           true
+                         end)
+      end
+      true
+    end
+  end
+
+  #
   # Listener Popup (only with Motif)
   #
   if provided? :xm
     make_snd_popup("Listener",
-                   :where, :widget,
+                   :target, :widget,
                    :parent, if widget?(w = main_widgets[Listener_pane])
                               w
                             else
@@ -920,17 +1110,13 @@ written: %s\n", channels(snd), srate(snd), frames(snd) / srate(snd).to_f,
                               set_show_listener(false)
                               main_widgets[Listener_pane]
                             end) do
-      identity = lambda do (sounds() or []) end
+      identity = lambda do Snd.sounds end
       edited = lambda do
-        if snds = sounds()
-          snds.delete_if do |snd|
-            (0...channels(snd)).detect do |chn| edits(snd, chn).first.zero? end
-          end
-        else
-          []
+        Snd.sounds.delete_if do |snd|
+          (0...channels(snd)).detect do |chn| edits(snd, chn).first.zero? end
         end
       end
-      focused = lambda do (snds = (sounds() or [])).length > 1 ? snds : [] end
+      focused = lambda do (snds = Snd.sounds).length > 1 ? snds : [] end
       cascade("Play") do
         children(identity) do |snd| play(0, snd) end
       end
@@ -952,7 +1138,7 @@ written: %s\n", channels(snd), srate(snd), frames(snd) / srate(snd).to_f,
           else
             pane = sound_widgets(snd)[Main_pane]
             RXtVaSetValues(main_widgets[Top_level_shell], [RXmNallowShellResize, false])
-            sounds().each do |them| hide_widget(sound_widgets(them)[Main_pane]) end
+            Snd.sounds.each do |them| hide_widget(sound_widgets(them)[Main_pane]) end
             show_widget(pane)
             RXtVaSetValues(main_widgets[Top_level_shell], [RXmNallowShellResize, auto_resize])
           end
@@ -990,7 +1176,7 @@ written: %s\n", channels(snd), srate(snd), frames(snd) / srate(snd).to_f,
           if widget?(w)
             case name = widget_name(w)
             when "Equalize panes"
-              (sounds() or []).length > 1 ? show_widget(w) : hide_widget(w)
+              Snd.sounds.length > 1 ? show_widget(w) : hide_widget(w)
             when "Help"
               if subject = listener_selection
                 change_label(w, format("Help on %s", subject.inspect))
@@ -1004,6 +1190,7 @@ written: %s\n", channels(snd), srate(snd), frames(snd) / srate(snd).to_f,
       end
     end
   end
+  $edhist_help_edits = true
 end
 
 # popup.rb ends here

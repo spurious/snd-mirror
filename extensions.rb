@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Sat Jan 03 17:30:23 CET 2004
-# Changed: Fri Nov 18 00:51:14 CET 2005
+# Changed: Tue Dec 27 02:53:47 CET 2005
 
 # Commentary:
 # 
@@ -51,6 +51,8 @@
 #  scale_sound_by(scl, beg, dur, snd, chn, edpos)
 #  scale_sound_to(norm, beg, dur, snd, chn)
 #  mixer_scale(mx, scl, nmx)
+#  make_iir_low_pass_1(fc)
+#  make_iir_high_pass_1(fc)
 #
 # module Extensions
 #  channel_property(key, snd, chn)
@@ -132,11 +134,12 @@
 #  mono_files2stereo(new_name, chan1_name, chan2_name)
 #  stereo2mono(orig_snd, chan1_name, chan2_name)
 #
-#  focus_follow_mouse()
+#  focus_follows_mouse()
 #  prefs_activate_initial_bounds(beg, dur, full)
 #  prefs_deactivate_initial_bounds
 #  with_reopen_menu
 #  with_buffers_menu
+#  set_global_sync(choice)
 
 # Comments are mostly taken from extensions.scm.
 
@@ -745,6 +748,22 @@ turns a sound-data object's data into a list of lists (one for each channel)")
 
   alias mixer_scale mixer_multiply
   alias mus_error_to_string mus_error_type2string
+
+  def make_iir_low_pass_1(fc)
+    fc = fc.to_f
+    theta = (2 * PI * fc) / mus_srate()
+    gamma = cos(theta) / (1.0 + sin(theta))
+    xc = (1.0 - gamma) / 2.0
+    make_filter(2, vct(xc, xc), vct(0.0, -gamma))
+  end
+
+  def make_iir_high_pass_1(fc)
+    fc = fc.to_f
+    theta = (2 * PI * fc) / mus_srate()
+    gamma = cos(theta) / (1.0 + sin(theta))
+    xc = (1.0 + gamma) / 2.0
+    make_filter(2, vct(xc, -xc), vct(0.0, -gamma))
+  end
 end
 
 include Compatibility
@@ -1726,7 +1745,7 @@ connects env's dots with x^2 curves")
   end
 
   add_help(:env_expt_channel,
-           "env_expt_channel(env, exponent, [symmetric=true, [beg=0, [dur=false, [snd=false, [chn=false, [edpos=false]]]]]]) connects env'e dots with x^exponent curves")
+           "env_expt_channel(env, exponent, [symmetric=true, [beg=0, [dur=false, [snd=false, [chn=false, [edpos=false]]]]]])  connects env's dots with x^exponent curves")
   def env_expt_channel(env, exponent, symmetric = true,
                        beg = 0, dur = false, snd = false, chn = false, edpos = false)
     if exponent == 1.0
@@ -1922,8 +1941,9 @@ applies contrast enhancement to the sound" )
       brief_name = short_file_name(snd)
       long_name = file_name(snd)
       unless(@reopen_names.member?(brief_name))
-        if @reopen_names.empty?
+        if @reopen_names.member?(@reopen_empty)
           remove_from_menu(@reopen_menu, @reopen_empty)
+          @reopen_names = []
         end
         add_to_menu(@reopen_menu,
                     brief_name,
@@ -1947,9 +1967,9 @@ applies contrast enhancement to the sound" )
         @reopen_names.delete(brief_name)
       end
       if @reopen_names.empty?
-        add_to_menu(@reopen_menu, @reopen_empty, lambda do | | end)
+        add_to_menu(@reopen_menu, @reopen_empty, lambda do | | end, 0)
+        @reopen_names.push(@reopen_empty)
       end
-      false
     end
   end
 
@@ -1975,23 +1995,44 @@ applies contrast enhancement to the sound" )
     end
 
     def open_buffer(file)
-      if @buffer_names.empty?
+      if @buffer_names.member?(@buffer_empty)
         remove_from_menu(@buffer_menu, @buffer_empty)
+        @buffer_names = []
       end
       add_to_menu(@buffer_menu,
                   file,
                   lambda do | |
                     if sound?(ind = find_sound(file)) then select_sound(ind) end
-                  end)
+                  end,
+                  -1)
       @buffer_names.push(file)
-      false
     end
 
     def close_buffer(snd)
       remove_from_menu(@buffer_menu, file_name(snd))
       @buffer_names.delete(file_name(snd))
       if @buffer_names.empty?
-        add_to_menu(@buffer_menu, @buffer_empty, lambda do | | end)
+        add_to_menu(@buffer_menu, @buffer_empty, lambda do | | end, 0)
+        @buffer_names.push(@buffer_empty)
+      end
+      false
+    end
+  end
+
+  # global sync (for prefs dialog)
+
+  $global_sync_choice = 0       # global var so that we can reflect
+                                # the current setting in prefs dialog
+  def set_global_sync(choice)
+    $global_sync_choice = choice
+    if choice.nonzero? and (not $after_open_hook.member?("global-sync"))
+      $after_open_hook.add_hook!("global-sync") do |snd|
+        case $global_sync_choice
+        when 1
+          set_sync(1, snd)
+        when 2
+          set_sync(sync_max + 1, snd)
+        end
       end
     end
   end

@@ -754,22 +754,12 @@ static bool find_peak_envs(void)
 
 static bool find_context_sensitive_popup(void)
 {
-#if HAVE_SCHEME
   return(XEN_DEFINED_P("edhist-help-edits")); /* defined in both cases */
-#endif
-#if HAVE_RUBY
-  return(XEN_DEFINED_P("Snd_popup_menu"));
-#endif
 }
 
 static bool find_effects_menu(void)
 {
-#if HAVE_SCHEME
   return(XEN_DEFINED_P("effects-menu"));
-#endif
-#if HAVE_RUBY
-  return(XEN_DEFINED_P("Effects"));
-#endif
 }
 
 #if HAVE_SCHEME
@@ -804,8 +794,13 @@ static bool find_reopen_menu(void)
 
 static bool find_smpte(void)
 {
-  return((XEN_DEFINED_P("smpte-is-on")) &&
-	 (!(XEN_FALSE_P(XEN_EVAL_C_STRING("(smpte-is-on)"))))); /* "member" of hook-list -> a list if successful */
+#if HAVE_SCHEME 
+  return((XEN_DEFINED_P("smpte-is-on")) && 
+	 (!(XEN_FALSE_P(XEN_EVAL_C_STRING("(smpte-is-on)"))))); /* "member" of hook-list -> a list if successful */ 
+#else 
+  return((XEN_DEFINED_P("smpte-is-on")) && 
+	 XEN_TO_C_BOOLEAN(XEN_EVAL_C_STRING(TO_PROC_NAME("smpte-is-on")))); /* "member" of hook-list -> true */ 
+#endif 
 }
 
 #if HAVE_SCHEME

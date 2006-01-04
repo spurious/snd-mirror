@@ -2,7 +2,7 @@
 
 # Translator: Michael Scholz <scholz-micha@gmx.de>
 # Created: Tue Apr 05 00:17:04 CEST 2005
-# Changed: Sun Nov 06 01:02:45 CET 2005
+# Changed: Sat Nov 19 16:39:52 CET 2005
 
 # Commentary:
 #
@@ -17,14 +17,12 @@
 #  overlay_sounds(*rest)
 #  samples_via_colormap(snd, chn)
 #
-#  class Current_window
-#   initialize
-#   update_location(snd)
-#   display_location(snd, chn)
-#   click_location(snd, chn, button, state, x, y, axis)
-#
+#  update_current_window_location(snd)
+#  display_current_window_location(snd, chn)
+#  click_current_window_location(snd, chn, button, state, x, y, axis)
 #  make_current_window_display
 #  close_current_window_display
+#  
 #  smart_line_cursor(snd, chn, ax)
 #  click_for_listener_help(pos)
 #  
@@ -172,217 +170,244 @@ displays time domain graph using current colormap (just an example of colormap-r
   end
 
   # inset overall waveform; if click, move to that location
-
   $current_window_display_is_running = false # for prefs
   
-  class Current_window
-    def initialize
-      @inset_width = 0.2
-      @inset_heigth = 0.25
-    end
-    attr_reader :inset_width, :inset_heigth
-
-    def update_location(snd)
-      if $current_window_display_is_running
-        channels(snd).times do |chn|
-          if vals = channel_property(:inset_envelope, snd, chn)
-            vals[2] = -2
-          end
-        end
-      end
-      false
-    end
-
-    def display_location(snd, chn)
-      if $current_window_display_is_running and time_graph?(snd, chn)
-        axinf = axis_info(snd, chn)
-        grf_width = axinf[12]
-        width = (Float(@inset_width) * grf_width).round
-        x_offset = (grf_width - width).to_i
-        grf_height = axinf[11] - axinf[13]
-        height = (Float(@inset_heigth) * grf_height).round
-        chan_offset = axinf[13] - 10
-        y_offset = chan_offset + (height / 2.0).round
-        grf_chn = (channel_style(snd) == Channels_separate ? chn : 0)
-        new_peaks = axinf[19]
-        data0 = false
-        data1 = false
-        if width > 10 and height > 10 and frames(snd, chn) > 0 and
-            (chn == 0 or channel_style(snd) != Channels_superimposed)
-          fill_rectangle(x_offset, chan_offset + height, width, 2, snd, grf_chn)
-          fill_rectangle(x_offset, chan_offset, 2, height, snd, grf_chn)
-          rx = (width * (Float(right_sample(snd, chn)) / frames(snd, chn))).round
-          lx = (width * (Float(left_sample(snd, chn)) / frames(snd, chn))).round
-          fill_rectangle(x_offset + lx, chan_offset, [1, rx - lx].max, height, snd, grf_chn,
-                         Selection_context)
-          if (old_env = channel_property(:inset_envelope, snd, chn)) and
-              (not new_peaks) and
-              width == old_env[0] and
-              height == old_env[1] and
-              y_offset == old_env[5] and
-              edit_position(snd, chn) == old_env[2]
-            data0, data1 = old_env[3, 2]
-          else
-            data = make_graph_data(snd, chn, Current_edit_position, 0, frames(snd, chn))
-            data_max = (vct?(data) ? data.peak : data.map do |d| d.peak end.max)
-            data_scaler = (data_max > 0.0 ? (height / (2 * data_max)) : 0.0)
-            new_len = width * 2
-            data_len = (vct?(data) ? data.length : data.first.length)
-            step = data_len / width
-            if data_len > width
-              data0 = make_array(new_len)
-              data1 = ((not vct?(data)) and make_array(new_len))
-              i = 0
-              j = 0
-              max_y = -data_max
-              min_y = data_max
-              stepper = 0.0
-              until data_len == i or new_len == j
-                if data1
-                  max_y = [max_y, data[1][i]].max
-                  min_y = [min_y, data[0][i]].min
-                else
-                  max_y = [max_y, data[i]].max
-                end
-                stepper += 1.0
-                if stepper >= step
-                  data0[j] = x_offset
-                  data0[j + 1] = (y_offset - max_y * Float(data_scaler)).round
-                  max_y = -data_max
-                  if data1
-                    data1[j] = x_offset
-                    data1[j + 1] = (y_offset - min_y * Float(data_scaler)).round
-                    min_y = data_max
-                  end
-                  x_offset += 1
-                  stepper -= step
-                  j += 2
-                end
-                i += 1
-              end
-              while j < new_len
-                data0[j] = data0[j - 2]
-                data0[j + 1] = data0[j - 1]
-                if data1
-                  data1[j] = data1[j - 2]
-                  data1[j + 1] = data1[j - 1]
-                end
-                j += 2
-              end
-            else
-              xstep = width / data_len
-              data0 = make_array(data_len * 2)
-              data1 = ((not vct?(data)) and make_array(data_len * 2))
-              j = 0
-              xj = x_offset
-              data_len.times do |i|
-                data0[j] = xj.round
-                if data1
-                  data0[j + 1] = (y_offset - data[1][i] * Float(data_scaler)).round
-                  data1[j] = xj.floor
-                  data1[j + 1] = (y_offset - data[0][i] * Float(data_scaler)).round
-                else
-                  data0[j + 1] = (y_offset - data[i] * Float(data_scaler)).round
-                end
-                j += 2
-                xj += xstep
-              end
-            end
-            set_channel_property(:inset_envelope,
-                                 [width, height, edit_position(snd, chn), data0, data1, y_offset],
-                                 snd, chn)
-          end
-          draw_lines(data0, snd, grf_chn)
-          data1 and draw_lines(data1, snd, grf_chn)
-        end
+  Inset_width = 0.2
+  Inset_height = 0.25
+  
+  def update_current_window_location(snd)
+    channels(snd).times do |chn|
+      if vals = channel_property(:inset_envelope, snd, chn)
+        vals[:edit_position] = -2 # set edit_position to impossible value
       end
     end
-
-    def click_location(snd, chn, button, state, x, y, axis)
-      if $current_window_display_is_running and (axis == Time_graph)
-        axinf = axis_info(snd, chn)
-        grf_width = axinf[12]
-        width = (Float(@inset_width) * grf_width).round
-        x_offset = (grf_width - width).to_i
-        grf_height = axinf[11] - axinf[13]
-        height = (Float(@inset_heigth) * grf_height).round
-        chan_offset = axinf[13] - 10
-        y_offset = chan_offset + (height / 2.0).round
-        if width > 0 and
-            x.between?(x_offset, grf_width) and
-            y.between?(chan_offset, chan_offset + height)
-          samp = (Float(frames(snd, chn)) * ((x - Float(x_offset)) / width)).round
-          ls = left_sample(snd, chn)
-          rs = right_sample(snd, chn)
-          set_cursor(samp, snd, chn)
-          if samp.between?(ls, rs)
-            rsamp = [[0, samp - (0.5 * (ls - rs)).round].max, frames(snd, chn) - 1].min
-            set_right_sample(rsamp, snd, chn)
-          end
-          update_time_graph
-          true
+    false
+  end
+  
+  def display_current_window_location(snd, chn)
+    if time_graph?(snd, chn)
+      axinf = axis_info(snd, chn)
+      grf_width = axinf[12]
+      width = (Inset_width * Float(grf_width)).round
+      x_offset = (grf_width - width).to_i
+      grf_height = axinf[11] - axinf[13]
+      height = (Inset_height * Float(grf_height)).round
+      chan_offset = axinf[13] - 10
+      y_offset = chan_offset + (height * 0.5).round
+      grf_chn = ((channel_style(snd) == Channels_separate) ? chn : 0)
+      new_peaks = axinf[19]
+      if width > 10 and height > 10 and frames(snd, chn) > 0 and
+          (chn == 0 or channel_style(snd) != Channels_superimposed)
+        fill_rectangle(x_offset, chan_offset + height, width, 2, snd, grf_chn)
+        fill_rectangle(x_offset, chan_offset, 2, height, snd, grf_chn)
+        frms = frames(snd, chn).to_f
+        rx = (width * (right_sample(snd, chn) / frms)).round
+        lx = (width * (left_sample(snd, chn) / frms)).round
+        fill_rectangle(x_offset + lx,
+                       chan_offset,
+                       [1, rx - lx].max,
+                       height,
+                       snd,
+                       grf_chn,
+                       Selection_context)
+        if (old_env = channel_property(:inset_envelope, snd, chn)) and
+            (not new_peaks) and
+            width == old_env[:width] and
+            height == old_env[:height] and
+            y_offset == old_env[:y_offset] and
+            edit_position(snd, chn) == old_env[:edit_position]
+          data0 = old_env[:data0]
+          data1 = old_env[:data1]
         else
-          false
+          data = make_graph_data(snd, chn, Current_edit_position, 0, frames(snd, chn))
+          data_max = (vct?(data) ? data.peak : data.map do |v| v.peak end.max)
+          data_scaler = ((data_max > 0.0) ? (height / (2.0 * data_max)) : 0.0)
+          new_len = width * 2
+          data_len = (vct?(data) ? data.length : data.car.length)
+          step = (data_len / width.to_f).to_i
+          if data_len > width
+            data0 = make_array(new_len)
+            data1 = ((not vct?(data)) and make_array(new_len))
+            i = 0
+            j = 0
+            max_y = -data_max
+            min_y = data_max
+            stepper = 0.0
+            until data_len == i or new_len == j
+              if data1
+                max_y = [max_y, data.cadr[i]].max
+                min_y = [min_y, data.car[i]].min
+              else
+                max_y = [max_y, data[i]].max
+              end
+              stepper += 1.0
+              if stepper >= step
+                data0[j] = x_offset
+                data0[j + 1] = (y_offset - max_y * Float(data_scaler)).round
+                max_y = -data_max
+                if data1
+                  data1[j] = x_offset
+                  data1[j + 1] = (y_offset - min_y * Float(data_scaler)).round
+                  min_y = data_max
+                end
+                x_offset += 1
+                stepper -= step
+                j += 2
+              end
+              i += 1
+            end
+            while j < new_len
+              data0[j] = data0[j - 2]
+              data0[j + 1] = data0[j - 1]
+              if data1
+                data1[j] = data1[j - 2]
+                data1[j + 1] = data1[j - 1]
+              end
+              j += 2
+            end
+          else
+            xstep = (width.to_f / data_len).to_i
+            data0 = make_array(data_len * 2)
+            data1 = ((not vct?(data)) and make_array(data_len * 2))
+            j = 0
+            xj = x_offset
+            data_len.times do |i|
+              data0[j] = xj.round
+              if data1
+                data0[j + 1] = (y_offset - data.cadr[i] * Float(data_scaler)).round
+                data1[j] = xj.floor
+                data1[j + 1] = (y_offset - data.car[i] * Float(data_scaler)).round
+              else
+                data0[j + 1] = (y_offset - data[i] * Float(data_scaler)).round
+              end
+              j += 2
+              xj += xstep
+            end
+          end
+          set_channel_property(:inset_envelope,
+                               {:width, width,
+                                 :height, height,
+                                 :edit_position, edit_position(snd, chn),
+                                 :data0, data0,
+                                 :data1, data1,
+                                 :y_offset, y_offset},
+                               snd, chn)
         end
-      else
-        false
+        draw_lines(data0, snd, grf_chn)
+        data1 and draw_lines(data1, snd, grf_chn)
       end
     end
   end
+  
+  def click_current_window_location(snd, chn, button, state, x, y, axis)
+    if axis == Time_graph
+      axinf = axis_info(snd, chn)
+      grf_width = axinf[12]
+      width = (Inset_width * Float(grf_width)).round
+      x_offset = (grf_width - width).to_i
+      grf_height = axinf[11] - axinf[13]
+      height = (Inset_height * Float(grf_height)).round
+      chan_offset = axinf[13] - 10
+      y_offset = chan_offset + (height * 0.5).round
+      if width > 0 and
+          x >= x_offset and
+          x <= grf_width and
+          y >= chan_offset and
+          y <= (chan_offset + height)
+        samp = (Float(frames(snd, chn)) * ((x - Float(x_offset)) / width)).round
+        ls = left_sample(snd, chn)
+        rs = right_sample(snd, chn)
+        set_cursor(samp, snd, chn)
+        if (samp < ls) or (samp > rs)
+          rsamp = [[0, samp - (0.5 * (ls - rs)).round].max, frames(snd, chn) - 1].min
+          set_right_sample(rsamp, snd, chn)
+        end
+        update_time_graph(snd, chn)
+        # FIXME:
+        # Is smpte the reason for the need of the repetition of
+        # fill_rectangles (update_time_graph() -> $after_graph_hook)?
+        grf_chn = ((channel_style(snd) == Channels_separate) ? chn : 0)
+        fill_rectangle(x_offset, chan_offset + height, width, 2, snd, grf_chn)
+        fill_rectangle(x_offset, chan_offset, 2, height, snd, grf_chn)
+        frms = frames(snd, chn).to_f
+        rx = (width * (right_sample(snd, chn) / frms)).round
+        lx = (width * (left_sample(snd, chn) / frms)).round
+        fill_rectangle(x_offset + lx,
+                       chan_offset,
+                       [1, rx - lx].max,
+                       height,
+                       snd,
+                       grf_chn,
+                       Selection_context)
+        true
+      else
+        false
+      end
+    else
+      false
+    end
+  end
 
+  CWD_name = "current-window-display"
+  
+  add_help(:make_current_window_display,
+           "make_current_window_display()  \
+Display in upper right corner the overall current sound and where the current window fits in it.")
   def make_current_window_display
-    $current_window_display_is_running = true
-    hook_name = format("%s", Current_window)
-    unless $after_graph_hook.member?(hook_name)
-      cw = Current_window.new
-      $after_open_hook.add_hook!(hook_name) do |snd|
+    unless $current_window_display_is_running
+      $after_open_hook.add_hook!(CWD_name) do |snd|
         channels(snd).times do |chn|
           set_channel_property_save_state_ignore(:inset_envelope, snd, chn)
-          undo_hook(snd, chn).add_hook!(get_func_name) do | |
+          undo_hook(snd, chn).add_hook!(CWD_name + chn.to_s) do | |
             if vals = channel_property(:inset_envelope, snd, chn)
-              vals[2] = -2
+              vals[:edit_position] = -2 # set edit_position to impossible value
             end
           end
         end
       end
-      $after_graph_hook.add_hook!(hook_name) do |snd, chn|
-        cw.display_location(snd, chn)
+      if RUBY_VERSION >= "1.9.0"
+        $after_graph_hook.add_hook!(CWD_name, &method(:display_current_window_location).to_proc)
+        $mouse_click_hook.add_hook!(CWD_name, &method(:click_current_window_location).to_proc)
+        $update_hook.add_hook!(CWD_name, &method(:update_current_window_location).to_proc)
+      else
+        $after_graph_hook.add_hook!(CWD_name) do |snd, chn|
+          display_current_window_location(snd, chn)
+        end
+        $mouse_click_hook.add_hook!(CWD_name) do |snd, chn, button, state, x, y, axis|
+          click_current_window_location(snd, chn, button, state, x, y, axis)
+        end
+        $update_hook.add_hook!(CWD_name) do |snd|
+          update_current_window_location(snd)
+        end
       end
-      $mouse_click_hook.add_hook!(hook_name) do |snd, chn, button, state, x, y, axis|
-        cw.click_location(snd, chn, button, state, x, y, axis)
-      end
-      $update_hook.add_hook!(hook_name) do |snd|
-        cw.update_location(snd)
-      end
-      true
-    else
-      false
+      $current_window_display_is_running = true
     end
   end
 
   def close_current_window_display
-    hook_name = format("%s", Current_window)
-    if $after_graph_hook.member?(hook_name)
-      $after_open_hook.remove_hook!(hook_name)
-      $after_graph_hook.remove_hook!(hook_name)
-      $mouse_click_hook.remove_hook!(hook_name)
-      $update_hook.remove_hook!(hook_name)
-      true
-    else
-      false
+    if $current_window_display_is_running
+      $after_open_hook.remove_hook!(CWD_name)
+      $after_graph_hook.remove_hook!(CWD_name)
+      $mouse_click_hook.remove_hook!(CWD_name)
+      $update_hook.remove_hook!(CWD_name)
+      Snd.sounds.each do |snd|
+        channels(snd).times do |chn|
+          undo_hook(snd, chn).remove_hook!(CWD_name + chn.to_s)
+        end
+      end
+      $current_window_display_is_running = false
     end
   end
 
   add_help(:smart_line_cursor,
            "smart_line_cursor(snd, chn, ax)  \
 is a cursor_style function that tries not to overwrite the thumbnail graph \
-in the upper right corner")
+in the upper right corner.")
   def smart_line_cursor(snd, chn, ax)
-    cw = Current_window.new
     x, y = cursor_position
     x0, y0, x1, y1 = axis_info(snd, chn, ax)[10, 4]
-    inset_x0 = x1 * (1.0 - cw.inset_width)
-    inset_y0 = (y1 - 10.0) + (cw.inset_heigth * (y0 - y1))
+    inset_x0 = x1 * (1.0 - Inset_width)
+    inset_y0 = (y1 - 10.0) + (Inset_height * (y0 - y1))
     if x > (inset_x0 - 5)
       draw_line(x, y0, x, inset_y0 + 5, snd, chn, Cursor_context)
     else

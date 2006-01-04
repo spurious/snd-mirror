@@ -39160,7 +39160,7 @@ def test0128
     :save_state_hook, :new_sound_hook, :mus_error_hook, :mouse_enter_graph_hook,
     :mouse_leave_graph_hook, :open_raw_sound_hook, :select_channel_hook,
     :output_name_hook, :after_open_hook, :close_hook, :draw_mark_hook,
-    :just_sounds_hook, :mark_click_hook, :listener_click_hook, :mix_click_hook,
+    :mark_click_hook, :listener_click_hook, :mix_click_hook,
     :after_save_state_hook, :before_save_state_hook, :mark_hook, :mark_drag_hook,
     :mark_drag_triangle_hook, :mix_drag_hook, :name_click_hook, :after_apply_hook,
     :open_hook, :output_comment_hook, :help_hook, :play_hook, :dac_hook,

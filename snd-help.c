@@ -480,7 +480,7 @@ void about_snd_help(void)
 		"\nRecent changes include:\n\
 \n\
 2-Jan:   removed the various sorting indices (sort-by-name|size|date|entry), and changed \n\
-           the way the user-defined sorter works.\n\
+           the way the user-defined sorter works.  Also removed just-sounds-hook.\n\
 26-Dec:  help-snd-fm.pd and pd-fm.scm thanks to Kjetil.\n\
          default sample type is now float. This should only affect the \"peak-env\" files which will\n\
            need to be rebuilt (just delete the current peak files, and they'll be rebuilt as needed\n\
@@ -1382,7 +1382,7 @@ static char *open_file_xrefs[7] = {
   "add to sound file extension list (for '" S_just_sounds "'): {" S_add_sound_file_extension "}",
   "specialize open: {" S_open_hook "}, {" S_after_open_hook "}, etc",
   "start the file dialog: {" S_open_file_dialog "}",
-  "specialize file list: {" S_just_sounds_hook "}, {install-searcher} in snd-motif.scm",
+  "specialize file list: {install-searcher} in snd-motif.scm",
   "keep dialog active after opening: {keep-file-dialog-open-upon-ok} in snd-motif.scm",
   NULL};
 

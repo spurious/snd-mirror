@@ -148,7 +148,6 @@ need a String or Symbol, not %s"
   $close_hook                   = Hook.new("$close_hook", 1)
   $drop_hook                    = Hook.new("$drop_hook", 1)
   $update_hook                  = Hook.new("$update_hook", 1)
-  $just_sounds_hook             = Hook.new("$just_sounds_hook", 1)
   $mark_click_hook              = Hook.new("$mark_click_hook", 1)
   $mark_drag_hook               = Hook.new("$mark_drag_hook", 1)
   $name_click_hook              = Hook.new("$name_click_hook", 1)
@@ -277,7 +276,6 @@ if defined? $after_graph_hook
     $close_hook,
     $drop_hook,
     $update_hook,
-    $just_sounds_hook,
     $mark_click_hook,
     $mark_drag_hook,
     $name_click_hook,

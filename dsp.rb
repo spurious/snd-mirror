@@ -2,7 +2,7 @@
 
 # Translator: Michael Scholz <scholz-micha@gmx.de>
 # Created: Mon Mar 07 13:50:44 CET 2005
-# Last: Tue Jun 28 01:27:24 CEST 2005
+# Changed: Sat Dec 17 01:16:43 CET 2005
 
 # Commentary:
 #
@@ -82,8 +82,6 @@
 #  make_butter_band_reject(freq, band)
 
 #  make_biquad(a0, a1, a2, b1, b2)
-#  make_iir_low_pass_1(fc)
-#  make_iir_high_pass_1(fc)
 #  make_iir_low_pass_2(fc, din = false)
 #  make_iir_high_pass_2(fc, din = false)
 #  make_iir_band_pass_2(f1, f2)
@@ -1082,23 +1080,7 @@ makes a band-reject Butterworth filter with low edge at 'freq' and width 'band'"
     make_filter(3, vct(a0, a1, a2), vct(0.0, b1, b2))
   end
 
-  def make_iir_low_pass_1(fc)
-    fc = fc.to_f
-    theta = (2 * PI * fc) / mus_srate()
-    gamma = cos(theta) / (1.0 + sin(theta))
-    xc = (1.0 - gamma) / 2.0
-    make_filter(2, vct(xc, xc), vct(0.0, -gamma))
-  end
-
-  def make_iir_high_pass_1(fc)
-    fc = fc.to_f
-    theta = (2 * PI * fc) / mus_srate()
-    gamma = cos(theta) / (1.0 + sin(theta))
-    xc = (1.0 + gamma) / 2.0
-    make_filter(2, vct(xc, -xc), vct(0.0, -gamma))
-  end
-
-  # din=(sqrt 2.0) for example (suggested range 0.2.. 10)
+  # din=(sqrt 2.0) for example (suggested range 0.2...10)
   def make_iir_low_pass_2(fc, din = false)
     fc = fc.to_f
     theta = (TWO_PI * fc) / mus_srate()

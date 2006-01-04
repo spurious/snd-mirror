@@ -2,13 +2,13 @@
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Fri Feb 07 23:56:21 CET 2003
-# Last: Wed May 18 18:50:39 CEST 2005
+# Changed: Wed Jan 04 03:45:56 CET 2006
 
 # Commentary:
 #
 # Requires --with-moitf or --with-gtk and module libxm.so or --with-static-xm!
 #
-# Tested with Snd 7.12, Motif 2.2.2, Gtk+ 2.2.1, Ruby 1.6.6, 1.6.8 and 1.9.0.
+# Tested with Snd 7.18, Motif 2.2.2, Gtk+ 2.2.1, Ruby 1.6.6, 1.6.8 and 1.9.0.
 #
 # module Effects (see new-effects.scm)
 #  plausible_mark_samples
@@ -51,6 +51,8 @@ require "rubber"
 include Rubber
 include Math
 require "hooks"
+
+$effects_menu = false           # for prefs
 
 unless $selection_changed_hook.member?("selection-buttons-effects-hook")
   $selection_changed_hook.add_hook!("selection-buttons-effects-hook") do | |
@@ -2402,6 +2404,7 @@ unless defined? $__private_snd_menu__ and $__private_snd_menu__
       false
     end
   end
+  $effects_menu = true
 end
 
 # effects.rb ends here

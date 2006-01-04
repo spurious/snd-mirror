@@ -498,13 +498,6 @@ typedef struct snd_state {
 extern snd_state *ss;
 
 typedef struct {
-  char **files;
-  char *name;
-  int len;
-  int size;
-} dir;
-
-typedef struct {
   int chans;
   off_t *begs;
   chan_info **cps;
