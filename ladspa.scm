@@ -55,6 +55,9 @@
 
 (use-modules (ice-9 threads))
 
+(if (or (not (provided? 'threads))
+	(not (defined? 'call-with-new-thread)))
+    (snd-warning "ladspa.scm needs support for threads in Guile."))
 
 ;; Increase this number if you can't preview sound because of large latency in the system.
 ;; Note, this is not the latency, just the maximum buffer size. The only bad consequence about

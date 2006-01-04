@@ -171,10 +171,12 @@ typedef struct {
   int size;
 } dir_info;
 
+enum {NO_FILE_FILTER, JUST_SOUNDS_FILTER};
+
 dir_info *free_dir_info (dir_info *dp);
 dir_info *filter_files_from_pattern(dir_info *dp, char *pattern);
 dir_info *find_files_in_dir(const char *name);
-dir_info *find_filtered_files_in_dir(const char *name, bool (*filter)(char *filename));
-dir_info *find_filtered_files_in_dir_with_pattern(const char *name, bool (*filter)(char *filename), const char *pattern);
+dir_info *find_filtered_files_in_dir(const char *name, int filter_choice);
+dir_info *find_filtered_files_in_dir_with_pattern(const char *name, int filter_choice, const char *pattern);
 
 #endif

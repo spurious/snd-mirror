@@ -18,7 +18,6 @@
  *          -> src is interrupted apparently and file open completes
  *       or similarly, stops at "ok", starts src, clicks ok?
  * PERHAPS: audio:settings for display, perhaps reset -- as opposed to using the recorder
- * TODO: file-filters tied to all file dialogs (via popup)
  * TODO: check just-sounds more carefully in snd-test
  */
 
@@ -158,13 +157,12 @@ typedef struct file_pattern_info {
  *   list:    sort and filter choices
  *   dir:     higher level dir choices
  *   filter:  history of previous choices
- *   info:    sort, filter
  */
 
 typedef struct file_popup_info {
   Widget dialog;
-  Widget file_text_popup, file_list_popup, file_dir_popup, file_filter_popup, file_info_popup;
-  Widget file_text_popup_label, file_filter_popup_label, file_dir_popup_label, file_list_popup_label, file_info_popup_label;
+  Widget file_text_popup, file_list_popup, file_dir_popup, file_filter_popup;
+  Widget file_text_popup_label, file_filter_popup_label, file_dir_popup_label, file_list_popup_label;
   /* file_filter here refers to the dialog filter field, not file-filters */
   char **file_text_names, **file_filter_names;                   /* history of choices as array of strings */
   Widget *file_text_items, *file_filter_items, *file_dir_items, *file_list_items;  /* menu items */
@@ -423,13 +421,28 @@ static void file_dir_popup_callback(Widget w, XtPointer context, XtPointer info)
 
 #define FILE_LIST_POPUP_LABEL "sort/filter"
 
+#define FILE_FILTER_OFFSET 1024
+
 static void sort_files_and_redisplay(file_pattern_info *fp);
 
 static void file_list_item_activate_callback(Widget w, XtPointer context, XtPointer info)
 {
   file_popup_info *fd = (file_popup_info *)context;
-  XtVaGetValues(w, XmNuserData, &(fd->fp->sorter_choice), NULL);
-  sort_files_and_redisplay(fd->fp);
+  int choice = 0;
+  XtVaGetValues(w, XmNuserData, &choice, NULL);
+  if (choice >= FILE_FILTER_OFFSET)
+    {
+      XmToggleButtonSetState(fd->fp->just_sounds_button, false, false);
+      fd->fp->filter_choice = choice - FILE_FILTER_OFFSET + 2;
+      fd->fp->in_just_sounds_update = true;
+      force_directory_reread(fd->fp->dialog);
+      fd->fp->in_just_sounds_update = false;
+    }
+  else
+    {
+      fd->fp->sorter_choice = choice;
+      sort_files_and_redisplay(fd->fp);
+    }
 }
 
 static Widget make_file_list_item(file_popup_info *fd, int choice)
@@ -450,9 +463,7 @@ static Widget make_file_list_item(file_popup_info *fd, int choice)
     case 3: item_label = "old..new";   break;
     case 4: item_label = "small..big"; break;
     case 5: item_label = "big..small"; break;
-    default:
-      item_label = XEN_TO_C_STRING(XEN_CAR(XEN_VECTOR_REF(ss->file_sorters, choice - SORT_XEN)));
-      break;
+    default: item_label = "unused";    break;
     }
 
   XtSetArg(args[n], XmNuserData, (XtPointer)choice);           /* userData is index into sorters list */
@@ -469,7 +480,7 @@ static void file_list_popup_callback(Widget w, XtPointer context, XtPointer info
   e = cb->event;
   if (e->type == ButtonPress)
     {
-      int i;
+      int i, items_len;
       if (fd->file_list_items == NULL)
 	{
 	  /* set up the default menu items */
@@ -486,31 +497,56 @@ static void file_list_popup_callback(Widget w, XtPointer context, XtPointer info
 	for (i = SORT_XEN; i < fd->file_list_items_size; i++)
 	  XtUnmanageChild(fd->file_list_items[i]);
 
-      /* check for added sort functions (allocate more items if needed) */
+      /* check for added sort and filter functions (allocate more items if needed) */
       {
-	int extra_sorters = 0;
+	int extra_sorters = 0, extra_filters = 0;
 	for (i = 0; i < ss->file_sorters_size; i++)
 	  if (!(XEN_FALSE_P(XEN_VECTOR_REF(ss->file_sorters, i))))
 	    extra_sorters++;
+	for (i = 0; i < ss->file_filters_size; i++)
+	  if (!(XEN_FALSE_P(XEN_VECTOR_REF(ss->file_filters, i))))
+	    extra_filters++;
 
-	if ((extra_sorters + SORT_XEN) > fd->file_list_items_size)
+	items_len = SORT_XEN + extra_sorters + extra_filters;
+
+	if (items_len > fd->file_list_items_size)
 	  {
-	    fd->file_list_items = (Widget *)REALLOC(fd->file_list_items, (extra_sorters + SORT_XEN) * sizeof(Widget));
-	    for (i = fd->file_list_items_size; i < extra_sorters + SORT_XEN; i++)
+	    fd->file_list_items = (Widget *)REALLOC(fd->file_list_items, items_len * sizeof(Widget));
+	    for (i = fd->file_list_items_size; i < items_len; i++)
 	      fd->file_list_items[i] = make_file_list_item(fd, i);
-	    fd->file_list_items_size = SORT_XEN + extra_sorters;
+	    fd->file_list_items_size = items_len;
 	  }
       }
 
-      /* make sure all the added sorter labels are correct and items active */
+      /* make sure all the added sorter labels are correct, bg blue, and items active */
       if (fd->file_list_items_size > SORT_XEN)
 	{
 	  int k = SORT_XEN;
-	  for (i = SORT_XEN; i < fd->file_list_items_size; i++)
+
+	  /* sorters */
+	  for (i = 0; i < ss->file_sorters_size; i++)
 	    {
-	      if (!(XEN_FALSE_P(XEN_VECTOR_REF(ss->file_sorters, i - SORT_XEN))))
+	      if (!(XEN_FALSE_P(XEN_VECTOR_REF(ss->file_sorters, i))))
 		{
-		  set_label(fd->file_list_items[k], XEN_TO_C_STRING(XEN_CAR(XEN_VECTOR_REF(ss->file_sorters, i - SORT_XEN))));
+		  set_label(fd->file_list_items[k], XEN_TO_C_STRING(XEN_CAR(XEN_VECTOR_REF(ss->file_sorters, i))));
+		  XtVaSetValues(fd->file_list_items[k], 
+				XmNbackground, ss->sgx->lighter_blue,
+				XmNuserData, (XtPointer)i,
+				NULL);
+		  if (!(XtIsManaged(fd->file_list_items[k])))
+		    XtManageChild(fd->file_list_items[k]);
+		  k++;
+		}
+	    }
+	  
+	  for (i = 0; i < ss->file_filters_size; i++)
+	    {
+	      if (!(XEN_FALSE_P(XEN_VECTOR_REF(ss->file_filters, i))))
+		{
+		  set_label(fd->file_list_items[k], XEN_TO_C_STRING(XEN_CAR(XEN_VECTOR_REF(ss->file_filters, i))));
+		  XtVaSetValues(fd->file_list_items[k], XmNbackground, ss->sgx->light_blue, 
+				XmNuserData, (XtPointer)(i + FILE_FILTER_OFFSET),
+				NULL);
 		  if (!(XtIsManaged(fd->file_list_items[k])))
 		    XtManageChild(fd->file_list_items[k]);
 		  k++;
@@ -564,7 +600,6 @@ static void add_file_popups(file_popup_info *fd)
   XtSetArg(args[n], XmNpopupEnabled, XmPOPUP_AUTOMATIC); n++;
 
   /* file text */
-  /* TODO: could these be triggered via mouse locs from the main dialog? */
   XtAddCallback(FSB_BOX(fd->dialog, XmDIALOG_TEXT), XmNpopupHandlerCallback, file_text_popup_callback, (void *)fd);
   fd->file_text_popup = XmCreatePopupMenu(FSB_BOX(fd->dialog, XmDIALOG_TEXT), "file-text-popup", args, n);
   fd->file_text_names = make_filename_list();
@@ -599,16 +634,10 @@ static void add_file_popups(file_popup_info *fd)
   fd->file_list_popup = XmCreatePopupMenu(FSB_BOX(fd->dialog, XmDIALOG_LIST), "file-list-popup", args, n);
   fd->file_list_popup_label = XtCreateManagedWidget(FILE_LIST_POPUP_LABEL, xmLabelWidgetClass, fd->file_list_popup, args, n);
   XtCreateManagedWidget("sep", xmSeparatorWidgetClass, fd->file_list_popup, args, n);
-
-  /* file_info_popup */
 }
 
 
-/* TODO: should "none" and "just sounds" be built-in filters? */
-
 /* ---------------- just-sounds (file-filters) ---------------- */
-
-enum {NO_FILE_FILTER, JUST_SOUNDS_FILTER};
 
 static void file_change_directory_callback(Widget w, XtPointer context, XtPointer info) 
 {
@@ -706,28 +735,18 @@ static void snd_directory_reader(Widget dialog, XmFileSelectionBoxCallbackStruct
   pattern = (char *)XmStringUnparse(info->pattern, NULL, XmCHARSET_TEXT, XmCHARSET_TEXT, NULL, 0, XmOUTPUT_ALL);
   our_dir = (char *)XmStringUnparse(info->dir,     NULL, XmCHARSET_TEXT, XmCHARSET_TEXT, NULL, 0, XmOUTPUT_ALL);
 
-#if DEBUGGING
-  fprintf(stderr,"dir: %s, pattern: %s\n", our_dir, pattern);
-#endif
+  /* get current directory contents, given filter and pattern */
   if (strcmp(pattern, "*") == 0)
     {
-#if DEBUGGING
-      fprintf(stderr,"no pattern: %d\n", fp->filter_choice);
-#endif
-
-      /* get current directory contents, given filter and pattern */
       if (fp->filter_choice == NO_FILE_FILTER)
 	cur_dir = find_files_in_dir(our_dir);
-      else cur_dir = find_filtered_files_in_dir(our_dir, sound_file_p); /* TODO: fp->filter_choice */
+      else cur_dir = find_filtered_files_in_dir(our_dir, fp->filter_choice);
     }
-  else cur_dir = find_filtered_files_in_dir_with_pattern(our_dir, sound_file_p, pattern); /* TODO: might be no filter except pattern */
+  else cur_dir = find_filtered_files_in_dir_with_pattern(our_dir, fp->filter_choice, pattern);
 
   if (fp->current_files) free_dir_info(fp->current_files);
   fp->current_files = cur_dir;
   if (pattern) XtFree(pattern);
-#if DEBUGGING
-  fprintf(stderr,"cur_dir %s: %d files\n", cur_dir->dir_name, cur_dir->len);
-#endif
 
   /* post the sorted list in the dialog -- alphabetize by default */
   sort_files_and_redisplay(fp);

@@ -316,9 +316,6 @@ dir_info *find_files_in_dir(const char *name)
 #else
   DIR *dpos;
   dir_info *dp = NULL;
-#if DEBUGGING
-  fprintf(stderr,"find files in %s\n", name);
-#endif
   dpos = opendir(name);
   if (dpos)
     {
@@ -340,25 +337,44 @@ dir_info *find_files_in_dir(const char *name)
 #endif
 }
 
-dir_info *find_filtered_files_in_dir(const char *name, bool (*filter)(char *filename))
+static XEN filter_func;
+static bool filter_xen(char *name)
 {
+  return(XEN_TO_C_BOOLEAN(XEN_CALL_1(filter_func, C_TO_XEN_STRING(name), "filter func")));
+}
+
+dir_info *find_filtered_files_in_dir(const char *name, int filter_choice)
+{
+  bool (*filter)(char *filename);
 #if (!HAVE_OPENDIR)
   return(NULL);
 #else
   DIR *dpos;
   dir_info *dp = NULL;
-#if DEBUGGING
-  fprintf(stderr,"find filtered files in %s\n", name);
-#endif
   if ((dpos = opendir(name)) != NULL)
     {
       struct dirent *dirp;
+      
+      if (filter_choice == JUST_SOUNDS_FILTER)
+	filter = sound_file_p;
+      else
+	{
+	  int filter_pos;
+	  filter = filter_xen;
+	  filter_pos = filter_choice - 2;
+	  if ((filter_pos >= 0) &&
+	      (filter_pos < ss->file_filters_size))
+	    filter_func = XEN_CADR(XEN_VECTOR_REF(ss->file_filters, filter_pos));
+	  /* TODO: else complain */
+	}
+
       dp = make_dir_info(name);
       while ((dirp = readdir(dpos)) != NULL)
 	if ((dirp->d_name[0] != '.') &&
 	    (!(directory_p(dirp->d_name))) &&
 	    (filter(dirp->d_name)))
 	  add_filename_to_dir_info(dp, dirp->d_name);
+
 #if CLOSEDIR_VOID
       closedir(dpos);
 #else
@@ -373,14 +389,11 @@ dir_info *find_filtered_files_in_dir(const char *name, bool (*filter)(char *file
 
 static dir_info *find_files_from_pattern(dir_info *dp, char *pattern);
 
-dir_info *find_filtered_files_in_dir_with_pattern(const char *name, bool (*filter)(char *filename), const char *pattern)
+dir_info *find_filtered_files_in_dir_with_pattern(const char *name, int filter_choice, const char *pattern)
 {
   dir_info *full_dir, *pattern_dir;
-#if DEBUGGING
-  fprintf(stderr,"find via pattern");
-#endif
-  if (filter)
-    full_dir = find_filtered_files_in_dir(name, filter);
+  if (filter_choice != NO_FILE_FILTER)
+    full_dir = find_filtered_files_in_dir(name, filter_choice);
   else full_dir = find_files_in_dir(name);
   pattern_dir = find_files_from_pattern(full_dir, (char *)pattern);
   free_dir_info(full_dir);
@@ -498,7 +511,7 @@ bool plausible_sound_file_p(const char *name)
 
 static dir_info *find_sound_files_in_dir(const char *name)
 {
-  return(find_filtered_files_in_dir(name, sound_file_p));
+  return(find_filtered_files_in_dir(name, JUST_SOUNDS_FILTER));
 }
 
 static bool names_match(char *filename, char *pattern)
