@@ -12,44 +12,8 @@
    View:Files
 */
 
-/* it would be nice if there were some way in gtk to...
- *   filter the file list in the FileSelectionDialog
- *   change the label (to "Sound Files") of the FileSelection Files list
- *   filter out local directories in the file_filter (FileChooser)
- *   get some indication that the user clicked 'Save' when there's no filename (FileChooser) 
- *   get a text entry widget for the file name in Open mode in the FileChooser (I'll have to add this by hand)
- */
 
-
-/* TODO: play button and file filters in save-as
- * TODO: separate funcs to add play/just-sounds buttons (if the latter is possible)
- * PERHAPS: make file_chooser/file_selection a run-time choice somehow? -- file_chooser is really ugly and stupid...
- * TODO: FileSelection: reflect filename change in selection list and in info
- * TODO: FileSelection (+chooser if entry): cancel info in mix/open if filename in textfield doesn't match selected file 
- *       FileSelection (+chooser if entry): update info as file name is typed, as in write-protected case 
- * TODO: FileChooser: add entry for filename in Open case (with completion)
- */
-
-
-#ifndef HAVE_GFCDN
-  #if DEBUGGING
-     #define HAVE_GFCDN 0
-  #else
-     #define HAVE_GFCDN HAVE_GTK_FILE_CHOOSER_DIALOG_NEW
-  #endif
-#endif
-
-/* -------- just-sounds file list handlers -------- */
-
-#if HAVE_GFCDN
-static GtkFileFilter *all_files_filter, *sound_files_filter;
-
-static int sound_files_only_filter(const GtkFileFilterInfo *filter_info, gpointer data)
-{
-  /* apparently I never see the folders in the filter, and can't select "files only" mode. */
-  return((int)((sound_file_p((char *)(filter_info->display_name)))));
-}
-#endif
+/* EVERYTHING HERE IS ABOUT TO CHANGE! -- NO MORE GODDAMN GTK FILE CHOOSER/SELECTION! I FEEL BETTER ALREADY */
 
 
 /* -------- play selected file handlers -------- */
@@ -197,149 +161,6 @@ static void watch_info_file(struct fam_info *fp, FAMEvent *fe)
 }
 #endif
 
-#if HAVE_GFCDN
-
-static char *snd_filer_get_filename(GtkWidget *dialog)
-{
-  gchar *tmp;
-  char *str;
-  tmp = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
-  str = copy_string((char *)tmp);
-  g_free(tmp);
-  /* copy then g_free here so that we can use FREE in both cases */
-  return(str);
-}
-
-typedef void (*Callback_Func)(GtkWidget *w, gpointer ptr);
-
-typedef struct {
-  Callback_Func ok;
-  Callback_Func cancel;
-  Callback_Func help;
-  Callback_Func extract;
-  void *fd;
-} filer_response_t;
-
-static filer_response_t *wrap_filer_callbacks(Callback_Func ok, Callback_Func cancel, Callback_Func help, Callback_Func extract,
-					      void *fd)
-{
-  filer_response_t *fr;
-  fr = (filer_response_t *)CALLOC(1, sizeof(filer_response_t));
-  fr->ok = ok;
-  fr->cancel = cancel;
-  fr->help = help;
-  fr->extract = extract;
-  fr->fd = fd;
-  return(fr);
-}
-
-static void chooser_response_callback(GtkDialog *dialog, gint response_id)
-{
-  filer_response_t *fr;
-  fr = (filer_response_t *)get_user_data(G_OBJECT(dialog));
-  /*
-  fprintf(stderr, "reponse: %p %d (%d)\n", fr, response_id, GTK_RESPONSE_OK);
-  */
-  if (response_id == GTK_RESPONSE_OK)
-    (*(fr->ok))(GTK_WIDGET(dialog), (gpointer)(fr->fd));
-  else
-    {
-      if (response_id == GTK_RESPONSE_APPLY)
-	(*(fr->extract))(GTK_WIDGET(dialog), (gpointer)(fr->fd));
-      else
-	{
-	  if (response_id == GTK_RESPONSE_CANCEL)
-	    (*(fr->cancel))(GTK_WIDGET(dialog), (gpointer)(fr->fd));
-	  else
-	    {
-	      if (response_id == GTK_RESPONSE_HELP)
-		(*(fr->help))(GTK_WIDGET(dialog), (gpointer)(fr->fd));
-	    }
-	}
-    }
-}
-
-static GtkWidget *file_chooser_button(GtkFileChooserDialog *dialog, int response)
-{
-  /* find a given dialog button -- this code borrowed from gtk/gtkfilechooserdialog.c */
-  /*    dialog uses button_new_from_stock to create these */
-  GtkWidget *result = NULL;
-
-#if HAVE_GTK_DIALOG_GET_RESPONSE_FOR_WIDGET
-  GList *children, *l;
-  children = gtk_container_get_children(GTK_CONTAINER(GTK_DIALOG(dialog)->action_area));
-  for (l = children; l; l = l->next)
-    {
-      GtkWidget *widget;
-      int response_id;
-      widget = GTK_WIDGET(l->data);
-      response_id = gtk_dialog_get_response_for_widget(GTK_DIALOG(dialog), widget);
-      if (response_id == response)
-	{
-	  result = widget;
-	  break;
-	}
-    }
-  g_list_free(children);
-#endif
-
-  return(result);
-}
-
-static GtkWidget *snd_filer_new(char *title, bool saving, 
-				GtkSignalFunc gdelete, Callback_Func ok, Callback_Func cancel, Callback_Func help, Callback_Func extract,
-				gpointer fd)
-{
-  GtkWidget *new_dialog;
-  if (extract)
-    {
-      GtkWidget *button;
-      new_dialog = gtk_file_chooser_dialog_new(title, NULL, 
-					       GTK_FILE_CHOOSER_ACTION_SAVE,
-					       GTK_STOCK_SAVE,   GTK_RESPONSE_OK,
-					       GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
-					       GTK_STOCK_HELP,   GTK_RESPONSE_HELP,
-					       NULL);
-      /* can't use varargs above for "extract" because they assume the label is in the gtk-stock */
-      /* this code from gtk_dialog_add_button with "with_label" in place of "from_stock" */
-      button = gtk_button_new_with_label(_("Extract"));
-      gtk_widget_set_name(button, "doit_again_button");
-      GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
-      gtk_widget_show(button);
-      gtk_dialog_add_action_widget(GTK_DIALOG(new_dialog), button, GTK_RESPONSE_APPLY);
-    }
-  else new_dialog = gtk_file_chooser_dialog_new(title, NULL, 
-						(saving) ? GTK_FILE_CHOOSER_ACTION_SAVE : GTK_FILE_CHOOSER_ACTION_OPEN,
-						(saving) ? GTK_STOCK_SAVE : GTK_STOCK_OPEN, GTK_RESPONSE_OK,
-						GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
-						GTK_STOCK_HELP,   GTK_RESPONSE_HELP,
-						NULL);
-  gtk_window_set_default_size(GTK_WINDOW(new_dialog), 600, 600);
-  gtk_file_chooser_set_select_multiple(GTK_FILE_CHOOSER(new_dialog), false);
-
-  set_user_data(G_OBJECT(new_dialog), (gpointer)wrap_filer_callbacks(ok, cancel, help, extract, (void *)fd));
-  SG_SIGNAL_CONNECT(new_dialog, "response", chooser_response_callback, NULL); /* why include the pointer here? it is dropped by gtk! */
-
-  if (gdelete)
-    {
-      /* this has to be separate (not handled as a "response") because the latter deletes the goddamn widget!! */
-      SG_SIGNAL_CONNECT(new_dialog, "delete_event", gdelete, fd);
-    }
-
-  {
-    GtkWidget *button;
-    button = file_chooser_button(GTK_FILE_CHOOSER_DIALOG(new_dialog), GTK_RESPONSE_OK);
-    if (button) gtk_widget_set_name(button, "doit_button");
-    button = file_chooser_button(GTK_FILE_CHOOSER_DIALOG(new_dialog), GTK_RESPONSE_CANCEL);
-    if (button) gtk_widget_set_name(button, "quit_button");
-    button = file_chooser_button(GTK_FILE_CHOOSER_DIALOG(new_dialog), GTK_RESPONSE_HELP);
-    if (button) gtk_widget_set_name(button, "help_button");
-  }
-  return(new_dialog);
-}
-
-#else
-
 #define Callback_Func GtkSignalFunc
 static void unpad(gpointer w, gpointer data)
 {
@@ -418,29 +239,17 @@ static GtkWidget *snd_filer_new(char *title, bool saving,
   if (filer->fileop_ren_file) gtk_widget_set_name(filer->fileop_ren_file, "reset_button");
   return(new_dialog);
 }
-#endif
 
 
 /* -------- File Open/View/Mix/ Dialogs -------- */
 
 void alert_new_file(void) {}
 
-#if HAVE_GFCDN
-static void update_info_callback(GtkFileChooser *chooser)
-{
-  char *filename;
-  file_dialog_info *fd;
-  fd = (file_dialog_info *)g_object_get_data(G_OBJECT(chooser), "snd-dialog");
-  filename = (char *)gtk_file_chooser_get_filename(chooser);
-
-#else
-
 static void dialog_select_callback(GtkTreeSelection *selection, gpointer context)
 {
   char *filename = NULL;
   file_dialog_info *fd = (file_dialog_info *)context;
   filename = snd_filer_get_filename(fd->dialog);
-#endif
 
   if ((filename) && 
       (!(directory_p(filename))) &&
@@ -466,86 +275,8 @@ static void dialog_select_callback(GtkTreeSelection *selection, gpointer context
     {
       unpost_file_info(fd);
     }
-#if (!HAVE_GFCDN)
   if (filename) FREE(filename);
-#endif
 }
-
-#if HAVE_GFCDN
-static file_dialog_info *make_file_dialog(int read_only, char *title, snd_dialog_t which_dialog, 
-					  Callback_Func file_ok_proc,
-					  GtkSignalFunc file_delete_proc,
-					  Callback_Func file_dismiss_proc,
-					  Callback_Func file_help_proc)
-{
-  file_dialog_info *fd;
-  GtkWidget *center_info;
-  fd = (file_dialog_info *)CALLOC(1, sizeof(file_dialog_info));
-  fd->dp = (dialog_play_info *)CALLOC(1, sizeof(dialog_play_info));
-  fd->file_dialog_read_only = read_only;
-  fd->dialog = snd_filer_new(title, false, file_delete_proc, file_ok_proc, file_dismiss_proc, file_help_proc, NULL, (gpointer)fd);
-  fd->dp->dialog = fd->dialog;
-  g_object_set_data(G_OBJECT(fd->dialog), "snd-dialog", (gpointer)fd);
-
-  center_info = gtk_hbox_new(true, 10);
-  gtk_widget_show(center_info);
-
-  fd->frame = gtk_frame_new(NULL);
-  gtk_frame_set_shadow_type(GTK_FRAME(fd->frame), GTK_SHADOW_ETCHED_IN);
-  gtk_container_set_border_width(GTK_CONTAINER(fd->frame), 1);
-  gtk_widget_modify_bg(fd->frame, GTK_STATE_NORMAL, ss->sgx->black);
-  gtk_widget_show(fd->frame);
-  gtk_box_pack_start(GTK_BOX(center_info), fd->frame, false, false, 10 + INFO_MARGIN);
-
-  gtk_file_chooser_set_extra_widget(GTK_FILE_CHOOSER(fd->dialog), center_info);
-
-  fd->vbox = gtk_vbox_new(false, 0);
-  gtk_container_add(GTK_CONTAINER(fd->frame), fd->vbox);
-
-  fd->info1 = NEW_INFO();
-  gtk_box_pack_start(GTK_BOX(fd->vbox), fd->info1, false, true, INFO_MARGIN);
-
-  fd->info2 = NEW_INFO();
-  gtk_box_pack_start(GTK_BOX(fd->vbox), fd->info2, false, true, INFO_MARGIN);
-
-  fd->dp->play_button = gtk_check_button_new_with_label(_("play selected sound"));
-  gtk_box_pack_start(GTK_BOX(fd->vbox), fd->dp->play_button, false, true, 2);
-  SG_SIGNAL_CONNECT(fd->dp->play_button, "toggled", play_selected_callback, fd->dp);
-  SG_SIGNAL_CONNECT(fd->dialog, "selection-changed", update_info_callback, fd);
-
-  all_files_filter = gtk_file_filter_new();
-  gtk_file_filter_set_name(all_files_filter, "All Files");
-  gtk_file_filter_add_pattern(all_files_filter, "*");
-  gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(fd->dialog), all_files_filter);
-  
-  sound_files_filter = gtk_file_filter_new();
-  gtk_file_filter_set_name(sound_files_filter, "sound files only");
-  gtk_file_filter_add_custom(sound_files_filter, 
-			     (GtkFileFilterFlags)(GTK_FILE_FILTER_DISPLAY_NAME | GTK_FILE_FILTER_FILENAME), 
-			     sound_files_only_filter, 
-			     NULL, NULL);
-  gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(fd->dialog), sound_files_filter);
-  if (just_sounds(ss))
-    gtk_file_chooser_set_filter(GTK_FILE_CHOOSER(fd->dialog), sound_files_filter);
-  else gtk_file_chooser_set_filter(GTK_FILE_CHOOSER(fd->dialog), all_files_filter);
-
-  set_dialog_widget(which_dialog, fd->dialog);
-
-  CHANGE_INFO(fd->info1,"");
-  CHANGE_INFO(fd->info2,"");
-  /* SET_INFO_SIZE(fd->info1,9);
-   * SET_INFO_SIZE(fd->info2,9);
-   */
-  gtk_widget_show(fd->frame);
-  gtk_widget_show(fd->vbox);
-  gtk_widget_show(fd->info1);
-  gtk_widget_show(fd->info2);
-  gtk_widget_show(fd->dp->play_button);
-
-  return(fd);
-}
-
-#else
 
 static file_dialog_info *make_file_dialog(int read_only, char *title, snd_dialog_t which_dialog, 
 					  Callback_Func file_ok_proc,
@@ -606,8 +337,6 @@ static file_dialog_info *make_file_dialog(int read_only, char *title, snd_dialog
   return(fd);
 }
 
-#endif
-
 static void file_open_error(const char *error_msg, void *ufd)
 {
   /* called from snd_error, redirecting error handling to the dialog */
@@ -638,19 +367,6 @@ static void clear_file_error_label(file_dialog_info *fd)
 #endif
 }
 
-#if HAVE_GFCDN
-static gulong file_error_handler_id = 0;
-static void open_modify_callback(GtkFileChooser *dialog, gpointer data)
-{
-  file_dialog_info *fd = (file_dialog_info *)data;
-  clear_file_error_label(fd);
-  if (file_error_handler_id)
-    {
-      g_signal_handler_disconnect(dialog, file_error_handler_id);
-      file_error_handler_id = 0;
-    }
-}
-#else
 /* key press event here, not key release -- the latter is triggered by the <return> release
  *   that triggered the error, so our error is immediately erased
  */
@@ -685,17 +401,11 @@ static void open_modify_selection_changed(GtkTreeSelection *selection, gpointer 
   clear_open_handlers(fd->dialog);
 }
 
-#endif
-
 static void clear_error_if_open_changes(GtkWidget *dialog, void *data)
 {
-#if HAVE_GFCDN
-  file_error_handler_id = g_signal_connect(dialog, "selection-changed", G_CALLBACK(open_modify_callback), (gpointer)data);
-#else
   selection_changed_handler_id = g_signal_connect(gtk_tree_view_get_selection(GTK_TREE_VIEW(GTK_FILE_SELECTION(dialog)->file_list)), "changed",
 						  G_CALLBACK(open_modify_selection_changed), data);
   key_press_handler_id = SG_SIGNAL_CONNECT(GTK_FILE_SELECTION(dialog)->selection_entry, "key_press_event", open_modify_key_press, data);
-#endif
 }
 
 #if HAVE_FAM
@@ -1006,14 +716,6 @@ void set_open_file_play_button(bool val)
 
 void reflect_just_sounds(void)
 {
-#if HAVE_GFCDN
-  if (odat)
-    gtk_file_chooser_set_filter(GTK_FILE_CHOOSER(odat->dialog), (just_sounds(ss)) ? sound_files_filter : all_files_filter);
-  if (mdat)
-    gtk_file_chooser_set_filter(GTK_FILE_CHOOSER(mdat->dialog), (just_sounds(ss)) ? sound_files_filter : all_files_filter);
-  if (idat)
-    gtk_file_chooser_set_filter(GTK_FILE_CHOOSER(idat->dialog), (just_sounds(ss)) ? sound_files_filter : all_files_filter);
-#endif
 }
 
 
@@ -1255,19 +957,6 @@ static void post_file_dialog_error(const char *error_msg, void *ufd)
   show_dialog_error(fd);
 }
 
-#if HAVE_GFCDN
-static gulong filename_modify_handler_id = 0;
-static void filename_modify_callback(GtkFileChooser *dialog, gpointer data)
-{
-  file_data *fd = (file_data *)data;
-  clear_dialog_error(fd);
-  if (filename_modify_handler_id)
-    {
-      g_signal_handler_disconnect(dialog, filename_modify_handler_id);
-      filename_modify_handler_id = 0;
-    }
-}
-#else
 /* key press event here, not key release -- the latter is triggered by the <return> release
  *   that triggered the error, so our error is immediately erased
  */
@@ -1299,17 +988,12 @@ static void filename_modify_selection_changed(GtkTreeSelection *selection, gpoin
   clear_dialog_error(fd);
   clear_filename_handlers(fd->dialog);
 }
-#endif
 
 static void clear_error_if_filename_changes(GtkWidget *dialog, void *data)
 {
-#if HAVE_GFCDN
-  filename_modify_handler_id = g_signal_connect(dialog, "selection-changed", G_CALLBACK(filename_modify_callback), (gpointer)data);
-#else
   selection_changed_filename_handler_id = g_signal_connect(gtk_tree_view_get_selection(GTK_TREE_VIEW(GTK_FILE_SELECTION(dialog)->file_list)), "changed",
 							   G_CALLBACK(filename_modify_selection_changed), data);
   key_press_filename_handler_id = SG_SIGNAL_CONNECT(GTK_FILE_SELECTION(dialog)->selection_entry, "key_press_event", filename_modify_key_press, data);
-#endif
 }
 
 static gulong chans_key_press_handler_id = 0;
@@ -1749,16 +1433,7 @@ void reflect_region_in_save_as_dialog(void)
 
 static void save_as_undoit(save_as_dialog_info *sd)
 {
-#if HAVE_GFCDN
-  {
-    GtkWidget *ok_button;
-    ok_button = file_chooser_button(GTK_FILE_CHOOSER_DIALOG(sd->dialog), GTK_RESPONSE_OK);
-    if (ok_button)
-      gtk_button_set_label(GTK_BUTTON(ok_button), GTK_STOCK_SAVE);
-  }
-#else
   set_button_label((GTK_FILE_SELECTION(sd->dialog))->ok_button, _("Save"));
-#endif
   if ((sd->filename_watcher_id > 0) && (sd->filename_widget))
     {
       g_signal_handler_disconnect(sd->filename_widget, sd->filename_watcher_id);
@@ -1960,25 +1635,12 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
 	      msg = mus_format(_("%s exists%s. To overwrite it, click '%s'"), 
 			       str,
 			       (parlous_sp) ? ", and has unsaved edits" : "",
-#if HAVE_GFCDN
-			       "Yes"
-#else
 			       "DoIt"
-#endif
 			       );
 	      sd->file_watcher = fam_monitor_file(fullname, (void *)sd, watch_save_as_file);
 	      post_file_dialog_error((const char *)msg, (void *)(sd->panel_data));
 	      clear_error_if_save_as_filename_changes(sd->dialog, (void *)(sd->panel_data));
-#if HAVE_GFCDN
-	      {
-		GtkWidget *ok_button;
-		ok_button = file_chooser_button(GTK_FILE_CHOOSER_DIALOG(sd->dialog), GTK_RESPONSE_OK);
-		if (ok_button)
-		  gtk_button_set_label(GTK_BUTTON(ok_button), GTK_STOCK_YES);
-	      }
-#else
 	      set_button_label((GTK_FILE_SELECTION(sd->dialog))->ok_button, _("DoIt"));
-#endif
 	      FREE(msg);
 	      FREE(fullname);
 	      if (comment) FREE(comment);
@@ -2092,9 +1754,6 @@ static void save_as_extract_callback(GtkWidget *w, gpointer data)
   save_or_extract((save_as_dialog_info *)data, false);
 }
 
-
-/* TODO: in gtk filesel if out name exists, you have to click save twice! -- how to disable this stupidity? */
-
 static void save_as_cancel_callback(GtkWidget *w, gpointer data)
 { 
   save_as_dialog_info *sd = (save_as_dialog_info *)data;
@@ -2115,7 +1774,6 @@ static gint save_as_delete_callback(GtkWidget *w, GdkEvent *event, gpointer cont
 
 /* TODO: if "not found" error, use fam to watch for creation and erase message */
 
-#if (!HAVE_GFCDN)
 static void save_as_file_exists_check(GtkWidget *w, gpointer context)
 {
   /* a "changed" callback for the text field */
@@ -2151,7 +1809,6 @@ static void save_as_file_exists_check(GtkWidget *w, gpointer context)
       gtk_label_set_text(GTK_LABEL(label), msg);
     }
 }
-#endif
 
 static void make_save_as_dialog(save_as_dialog_info *sd, char *sound_name, int header_type, int format_type)
 {
@@ -2177,13 +1834,9 @@ static void make_save_as_dialog(save_as_dialog_info *sd, char *sound_name, int h
 				      NULL, /* no extract here */
 				      (gpointer)sd); /* needs fixup below */
       fbox = gtk_vbox_new(false, 0);
-#if HAVE_GFCDN
-      gtk_file_chooser_set_extra_widget(GTK_FILE_CHOOSER(sd->dialog), fbox);
-#else
       gtk_box_pack_start(GTK_BOX(GTK_FILE_SELECTION(sd->dialog)->main_vbox), fbox, true, true, 0);
       SG_SIGNAL_CONNECT((GTK_FILE_SELECTION(sd->dialog))->selection_entry, "changed", save_as_file_exists_check, (gpointer)sd);
       sd->filename_widget = (GTK_FILE_SELECTION(sd->dialog))->selection_entry;
-#endif
 
       gtk_widget_show(fbox);
       sd->panel_data = make_file_data_panel(fbox, "data-form", 
@@ -2211,15 +1864,6 @@ static void make_save_as_dialog(save_as_dialog_info *sd, char *sound_name, int h
 	  snd_error("internal screw up");
 	  break;
 	}
-#if HAVE_GFCDN
-      {
-	filer_response_t *fr;
-	fr = (filer_response_t *)get_user_data(G_OBJECT(sd->dialog));
-	fr->fd = (void *)sd;
-      }
-#else
-
-#endif
       SG_SIGNAL_CONNECT(sd->dialog, "delete_event", save_as_delete_callback, (void *)sd);
     }
   else
@@ -2227,7 +1871,7 @@ static void make_save_as_dialog(save_as_dialog_info *sd, char *sound_name, int h
       gtk_window_set_title(GTK_WINDOW(sd->dialog), file_string);
     }
   FREE(file_string);
-#if (!HAVE_GFCDN)
+
   {
     GtkWidget *label, *entry;
     entry = (GTK_FILE_SELECTION(sd->dialog))->selection_entry;
@@ -2239,7 +1883,7 @@ static void make_save_as_dialog(save_as_dialog_info *sd, char *sound_name, int h
 	FREE(file_string);
       }
   }
-#endif
+
 }
 
 widget_t make_sound_save_as_dialog(bool managed)

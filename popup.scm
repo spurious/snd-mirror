@@ -11,10 +11,6 @@
 ;;;    (change-listener-popup-color new-color) to change its color
 ;;; a popup menu is also added to each edit history pane to display the "spreadsheet" edit-list->function menu
 
-
-;;; TODO: add a 'clear' item to the listener menu
-
-
 (use-modules (ice-9 common-list) (ice-9 format))
 (provide 'snd-popup.scm)
 
@@ -964,12 +960,16 @@ color name, an xm Pixel, a snd color, or a list of rgb values (as in Snd's make-
 			      (help (and selected (snd-help selected))))
 			 (if help (help-dialog selected help)))))
 		   help-widget)
+		 
+		 (let ((clear-widget (XtCreateManagedWidget "Clear listener" xmPushButtonWidgetClass listener-popup every-menu)))
+		   (XtAddCallback clear-widget XmNactivateCallback (lambda (w c i) (clear-listener)))
+		   clear-widget)
 
 		 (let ((open-widget (XtCreateManagedWidget "Open" xmPushButtonWidgetClass listener-popup every-menu)))
 		   (XtAddCallback open-widget XmNactivateCallback (lambda (w c i) (open-file-dialog)))
 		   open-widget)
 		 
-		 (make-popdown-entry "Close" listener-popup close-sound every-menu identity #t)
+		 (make-popdown-entry "Close" listener-popup close-sound every-menu #f #t)
 		 (make-popdown-entry "Save" listener-popup save-sound every-menu edited #t)
 		 (make-popdown-entry "Revert" listener-popup revert-sound every-menu edited #t)
 
@@ -1006,7 +1006,9 @@ color name, an xm Pixel, a snd color, or a list of rgb values (as in Snd's make-
 		       (let ((top-one (list-ref n 1))
 			     (top-two (list-ref n 2))
 			     (top-two-cascade (list-ref n 3))
-			     (len (length ((list-ref n 4) (sounds)))))
+			     (len (if (list-ref n 4)
+				      (length ((list-ref n 4) (sounds)))
+				      0)))
 			 (XtUnmanageChild top-two)
 			 (XtUnmanageChild top-two-cascade)
 			 (if top-one (XtUnmanageChild top-one))

@@ -112,6 +112,46 @@ time_t file_write_date(const char *filename)
   return((time_t)(statbuf.st_mtime));
 }
 
+/* -------- popup filename lists -------- */
+
+void forget_filename(const char *filename, char **names)
+{
+  int i, j = 0;
+  for (i = 0; i < FILENAME_LIST_SIZE; i++)
+    if ((names[i]) &&
+	(strcmp(names[i], filename) == 0))
+      {
+	FREE(names[i]);
+	names[i] = NULL;
+      }
+  for (i = 0; i < FILENAME_LIST_SIZE; i++)
+    if (names[i])
+      {
+	if (i != j) 
+	  {
+	    names[j] = names[i];
+	    names[i] = NULL;
+	  }
+	j++;
+      }
+}
+
+void remember_filename(const char *filename, char **names)
+{
+  int i;
+  forget_filename(filename, names); /* clear out old copy, if any, then compact the list */
+  if (names[FILENAME_LIST_SIZE - 1]) FREE(names[FILENAME_LIST_SIZE - 1]);
+  for (i = FILENAME_LIST_SIZE - 1; i > 0; i--) 
+    names[i] = names[i - 1];
+  names[0] = copy_string(filename);
+}
+
+char **make_filename_list(void)
+{
+  return((char **)CALLOC(FILENAME_LIST_SIZE, sizeof(char *)));
+}
+
+
 /* -------------------------------- sorters -------------------------------- */
 
 sort_info *free_sort_info(sort_info *ptr)

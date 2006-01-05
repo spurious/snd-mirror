@@ -100,46 +100,7 @@ static void force_directory_reread(Widget dialog)
 
 
 
-/* -------- popups, filename lists -------- */
-
-#define FILENAME_LIST_SIZE 16
-
-static void forget_filename(const char *filename, char **names)
-{
-  int i, j = 0;
-  for (i = 0; i < FILENAME_LIST_SIZE; i++)
-    if ((names[i]) &&
-	(strcmp(names[i], filename) == 0))
-      {
-	FREE(names[i]);
-	names[i] = NULL;
-      }
-  for (i = 0; i < FILENAME_LIST_SIZE; i++)
-    if (names[i])
-      {
-	if (i != j) 
-	  {
-	    names[j] = names[i];
-	    names[i] = NULL;
-	  }
-	j++;
-      }
-}
-
-static void remember_filename(const char *filename, char **names)
-{
-  int i;
-  forget_filename(filename, names); /* clear out old copy, if any, then compact the list */
-  if (names[FILENAME_LIST_SIZE - 1]) FREE(names[FILENAME_LIST_SIZE - 1]);
-  for (i = FILENAME_LIST_SIZE - 1; i > 0; i--) 
-    names[i] = names[i - 1];
-  names[0] = copy_string(filename);
-}
-
-static char **make_filename_list(void)
-{
-  return((char **)CALLOC(FILENAME_LIST_SIZE, sizeof(char *)));
-}
+/* -------- popups -------- */
 
 typedef struct file_pattern_info {
   /* just-sounds file lists */
@@ -5303,7 +5264,7 @@ static void view_files_reset_callback(Widget w, XtPointer context, XtPointer inf
   vf_set_amp(vdat, 1.0);
   vf_set_speed(vdat, 1.0);
   vf_set_amp_env(vdat, default_env(1.0, 1.0));
-  sort_vf(vdat, view_files_sort(ss)); /* TODO: is this the right thing? */
+  sort_vf(vdat, view_files_sort(ss));
 }
 
 widget_t start_view_files_dialog_1(view_files_info *vdat, bool managed)
@@ -5859,7 +5820,6 @@ widget_t start_view_files_dialog_1(view_files_info *vdat, bool managed)
       vdat->add_text = make_textfield_widget("add-text", viewform, args, n, ACTIVATABLE, add_completer_func(filename_completer, NULL));
       XtAddCallback(vdat->add_text, XmNactivateCallback, view_files_add_files, (XtPointer)vdat);
       
-      /* SOMEDAY: file filters here also */
 #if (!HAVE_FAM)
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}

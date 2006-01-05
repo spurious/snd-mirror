@@ -145,7 +145,6 @@ int snd_encode(int type, const char *input_filename, const char *output_filename
 snd_info *file_is_open_elsewhere_and_has_unsaved_edits(snd_info *sp, const char *fullname);
 bool plausible_sound_file_p(const char *name);
 snd_info *finish_opening_sound(snd_info *sp, bool selected);
-bool run_just_sounds_hook(const char *name);
 
 bool edit_header_callback(snd_info *sp, file_data *edit_header_data, 
 			  void (*outer_handler)(const char *error_msg, void *ufd),
@@ -174,9 +173,14 @@ typedef struct {
 enum {NO_FILE_FILTER, JUST_SOUNDS_FILTER};
 
 dir_info *free_dir_info (dir_info *dp);
-dir_info *filter_files_from_pattern(dir_info *dp, char *pattern);
 dir_info *find_files_in_dir(const char *name);
 dir_info *find_filtered_files_in_dir(const char *name, int filter_choice);
 dir_info *find_filtered_files_in_dir_with_pattern(const char *name, int filter_choice, const char *pattern);
+
+#define FILENAME_LIST_SIZE 16
+
+void forget_filename(const char *filename, char **names);
+void remember_filename(const char *filename, char **names);
+char **make_filename_list(void);
 
 #endif
