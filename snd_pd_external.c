@@ -49,17 +49,29 @@
 
 #define MAKE_SYM(a) snd0_gensym(SCM_SYMBOL_CHARS(a))
 
-#define MAKE_POINTER(a) scm_ulong2num((unsigned long)a)
-#define GET_POINTER(a) (void*)scm_num2ulong(a,0,"GET_POINTER()")
-#define GET_POINTER_rt(a) (void *)scm_num2ulong(SCM_CAR(SCM_CDR(a)),0,"GET_POINTER()")
+#if 0
+#  define MAKE_STRING_rt(a) scm_protect_object(scm_mem2string(a,strlen(a)))
+#  define GET_POINTER3(a) (scm_is_false(a)?NULL:(void *)scm_num2ulong(a,0,"GET_POINTER3()"))
+#  define GET_POINTER(a) (scm_is_false(a)?NULL:GET_POINTER3(SCM_CAR(SCM_CDR(a))))
+#  define GET_POINTER2(a) GET_POINTER(a)
+#  define MAKE_POINTER(a) scm_cons(MAKE_STRING_rt("A_POINTER"),scm_cons(scm_ulong2num((unsigned long)a),SCM_EOL))
+
+#  define GET_POINTER_rt(a) GET_POINTER(a)
+
+#else
+
+#  define MAKE_POINTER(a) scm_ulong2num((unsigned long)a)
+#  define GET_POINTER(a) (void*)scm_num2ulong(a,0,"GET_POINTER()")
+#  define GET_POINTER_rt(a) (void *)scm_num2ulong(SCM_CAR(SCM_CDR(a)),0,"GET_POINTER()")
+
+#endif
 
 #define GET_X(a) ((t_snd_pd *)GET_POINTER(a))
 
 #define RU_ return SCM_UNSPECIFIED
 
 
-
-#include "m_pd.h"
+#include <m_pd.h>
 #include <s_stuff.h>
 #include <jack/ringbuffer.h>
 
@@ -70,47 +82,7 @@
 #include <stdbool.h>
 #include <stdarg.h>
 
-
-struct snd_pd_workaround;
-
-typedef struct snd_pd
-{
-  t_object x_obj;
-
-  int num_ins;
-  int num_outs;
-
-  struct snd_pd_workaround **inlets;
-  t_outlet **outlets;
-
-  SCM inlet_func;
-  SCM cleanup_func;
-
-  void* inbus;
-  void* outbus;
-
-  char *filename;
-
-  bool isworking;
-
-  float x_float;
-} t_snd_pd;
-
-typedef struct snd_pd_workaround{
-  t_object x_obj;
-  t_snd_pd *x;
-  t_inlet *inlet;
-  int index;
-  SCM func;
-} t_snd_pd_workaround;
-
-
-
-
-#define KG_MAX(a,b) (((a)>(b))?(a):(b))
-#define KG_MIN(a,b) (((a)<(b))?(a):(b))
-
-
+#include "snd_pd_external.h"
 
 static char *version = "Snd " VERSION " made by Bill Schottstaedt, bil@ccrma.stanford.edu.\nSnd as a PD external made by Kjetil S. Matheussen, kjetil@ccrma.stanford.edu.";
 
@@ -769,6 +741,7 @@ static SCM snd0_get_symbol(SCM symname){
 static void *snd0_init(void *arg){
   scm_init_guile();
   snd_pd_main();
+  XEN_YES_WE_HAVE("snd-pd-external");
 
   scm_c_define_gsubr("pd-c-bind",2,0,0,snd0_bind);
   scm_c_define_gsubr("pd-c-unbind",2,0,0,snd0_unbind);

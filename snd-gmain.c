@@ -700,7 +700,7 @@ style \"default_button\" = \"default\"\n\
 \n\
 style \"default_menu\" = \"default\"\n\
 {\n\
-#  bg[NORMAL] = { 1.0, 1.0, 0.94 }\n\
+  bg[NORMAL] = { 1.0, 1.0, 0.94 }\n\
 }\n\
 \n\
 style \"default_pane\" = \"default\"\n\
@@ -775,40 +775,40 @@ widget \"*.listener_text\" style \"listener\"\n\
 \n\
 style \"help\" = \"default_button\"\n\
 {\n\
-#  bg[NORMAL] = { 0.73, 0.82, 0.93 }\n\
-#  bg[PRELIGHT] = { 0.73, 0.82, 0.93 }\n\
+  bg[NORMAL] = { 1.0, 1.0, 0.94 }\n\
+  bg[PRELIGHT] = { 1.0, 1.0, 0.94 }\n\
 }\n\
 \n\
 widget \"*.help_button\" style \"help\"\n\
 \n\
 style \"quit\" = \"default_button\"\n\
 {\n\
-#  bg[NORMAL] = { 0.8, 0.36, 0.36 }\n\
-#  bg[PRELIGHT] = { 0.8, 0.36, 0.36 }\n\
+  bg[NORMAL] = { 1.0, 1.0, 0.94 }\n\
+  bg[PRELIGHT] = { 1.0, 1.0, 0.94 }\n\
 }\n\
 \n\
 widget \"*.quit_button\" style \"quit\"\n\
 \n\
 style \"doit\" = \"default_button\"\n\
 {\n\
-#  bg[NORMAL] = { 0.56, 0.93, 0.56 }\n\
-#  bg[PRELIGHT] = { 0.56, 0.93, 0.56 }\n\
+  bg[NORMAL] = { 1.0, 1.0, 0.94 }\n\
+  bg[PRELIGHT] = { 1.0, 1.0, 0.94 }\n\
 }\n\
 \n\
 widget \"*.doit_button\" style \"doit\"\n\
 \n\
 style \"doit_again\" = \"default_button\"\n\
 {\n\
-#  bg[NORMAL] = { 0.79, 1.0, 0.44 }\n\
-#  bg[PRELIGHT] = { 0.79, 1.0, 0.44 }\n\
+  bg[NORMAL] = { 1.0, 1.0, 0.94 }\n\
+  bg[PRELIGHT] = { 1.0, 1.0, 0.94 }\n\
 }\n\
 \n\
 widget \"*.doit_again_button\" style \"doit_again\"\n\
 \n\
 style \"reset\" = \"default_button\"\n\
 {\n\
-#  bg[NORMAL] = { 1.0, 0.85, 0.24 }\n\
-#  bg[PRELIGHT] = { 1.0, 0.85, 0.24 }\n\
+  bg[NORMAL] = { 1.0, 1.0, 0.94 }\n\
+  bg[PRELIGHT] = { 1.0, 1.0, 0.94 }\n\
 }\n\
 \n\
 widget \"*.reset_button\" style \"reset\"\n\

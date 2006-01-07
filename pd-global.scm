@@ -181,6 +181,30 @@
       (pd-c-get-symbol sym)))
 
 
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; RT support
+(rt-ec-function <t_snd_pd-*> rt_get_pd_instance (lambda ((<SCM> instance))
+						  (return (cast <t_snd_pd-*> (scm_num2ulong instance 0 (string "rt_get_pd_instance"))))))
+(<rt-func> 'rt_get_pd_instance '<void-*> '(<SCM>))
+
+(<rt-type> '<t_snd_pd-*>
+	   number?
+	   'rt_get_pd_instance
+	   #:transformfunc (lambda (address)
+			     (list "A_POINTER" address)))
+
+(rt-ec-function <void> rt_pd_outlet (lambda ((<t_snd_pd-*> instance)
+					     (<int> outlet_num)
+					     (<float> val))
+				      (outlet_float instance->outlets[outlet_num] val)))
+(<rt-func> 'rt_pd_outlet '<void> '(<t_snd_pd-*> <int> <float))
+
+(define-rt-macro (pd-outlet outlet_num val)
+  `(rt_pd_outlet pd-instance ,outlet_num ,val))
+							       
+
 #!
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

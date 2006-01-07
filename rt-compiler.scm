@@ -1838,6 +1838,8 @@ and run simple lisp[4] functions.
 									  varname type (-> rt-type rt-type) ))))
 		       (set-car! (cdr old) (-> rt-type get-most-spesific-type type)))
 		   (set-car! (cddr old) (or iswriting (caddr old)))
+		   (if (not (cadr old))
+		       (c-display "Error. Something is wrong with the variable" old "in function rt-insert-types."))
 		   (-> (cadr old) rt-type)))
 	     (let ((rt-type (hashq-ref rt-types type)))
 	       (if (not rt-type)
@@ -3216,13 +3218,13 @@ and run simple lisp[4] functions.
 
   ;; scm_to_mus_any
   (rt-ec-function <mus_any-*> rt_scm_to_mus_any (lambda (,rt-globalvardecl (<SCM> name))
-					       (if (mus_xen_p name)
-						   (return (cast <void-*> (XEN_TO_MUS_ANY name)))
-						   (if (not (SCM_SMOB_PREDICATE rt_readin_tag name))
-						       (begin
-							 (rt_error rt_globals (string "Variable is not a CLM generator or rt-readin generator"))
-							 (return NULL))
-						       (return (cast <void-*> (SCM_SMOB_DATA name)))))))
+						  (if (mus_xen_p name)
+						      (return (cast <void-*> (XEN_TO_MUS_ANY name)))
+						      (if (not (SCM_SMOB_PREDICATE rt_readin_tag name))
+							  (begin
+							    (rt_error rt_globals (string "Variable is not a CLM generator or rt-readin generator"))
+							    (return NULL))
+							  (return (cast <void-*> (SCM_SMOB_DATA name)))))))
   (<rt-func> 'rt_scm_to_mus_any '<mus_any-*> '(<SCM>) #:needs-rt-globals #t)
   
 
@@ -7183,6 +7185,12 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
 						"#include <clm2xen.h>"
 						"#include <ladspa.h>"
 
+						(if (provided? 'snd-pd-external)
+						    "#include <m_pd.h>"
+						    "")
+						(if (provided? 'snd-pd-external)
+						    "#include <snd_pd_external.h>"						
+						    "")
 						"typedef struct {
                                                  mus_any_class *core;
                                                  int chans;
@@ -7528,6 +7536,7 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
 (rt-funcall a)
 
 
+(provided? 'snd-pd-external)
 
 !#
 

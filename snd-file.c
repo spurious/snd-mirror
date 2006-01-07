@@ -103,6 +103,24 @@ static bool empty_file_p(const char *filename)
   return(false);
 }
 
+static off_t file_bytes(const char *filename)
+{
+#if HAVE_LSTAT
+  struct stat statbuf;
+  if (lstat(filename, &statbuf) >= 0) 
+    return(statbuf.st_size);
+#endif
+  {
+    int chan;
+    off_t bytes;
+    chan = mus_file_open_read(filename);
+    if (chan == -1) return(0);
+    bytes = lseek(chan, 0L, SEEK_END);
+    CLOSE(chan, filename);
+    return(bytes);
+  }
+}
+
 time_t file_write_date(const char *filename)
 {
   struct stat statbuf;
@@ -221,6 +239,11 @@ static int sort_new_to_old(const void *a, const void *b)
     }
 }
 
+static int sort_old_to_new(const void *a, const void *b)
+{
+  return(-sort_new_to_old(a, b));
+}
+
 static XEN sorter_func;
 static int sort_xen(const void *a, const void *b)
 {
@@ -228,16 +251,6 @@ static int sort_xen(const void *a, const void *b)
   sort_info *d1 = *(sort_info **)a;
   sort_info *d2 = *(sort_info **)b;
   return(XEN_TO_C_INT(XEN_CALL_2(sorter_func, C_TO_XEN_STRING(d1->full_filename), C_TO_XEN_STRING(d2->full_filename), "sort func")));
-}
-
-static void ignore_mus_error(int type, char *msg)
-{
-  /* squelch error */
-}
-
-static int sort_old_to_new(const void *a, const void *b)
-{
-  return(-sort_new_to_old(a, b));
 }
 
 void snd_sort(int sorter, sort_info **data, int len)
@@ -262,24 +275,13 @@ void snd_sort(int sorter, sort_info **data, int len)
       qsort((void *)data, len, sizeof(sort_info *), sort_old_to_new);
       break;
     case SORT_SMALL_TO_BIG:
-      mus_error_set_handler(ignore_mus_error);
       for (i = 0; i < len; i++)
-	{
-	  data[i]->samps = mus_sound_samples(data[i]->full_filename);
-	  if (data[i]->samps < 0) data[i]->samps = 0;
-	}
-      mus_error_set_handler(mus_error_to_snd);
+	data[i]->samps = file_bytes(data[i]->full_filename);
       qsort((void *)data, len, sizeof(sort_info *), sort_small_to_big);
       break;
     case SORT_BIG_TO_SMALL:
-      /* TODO: here if not sound file, use bytes */
-      mus_error_set_handler(ignore_mus_error);
       for (i = 0; i < len; i++)
-	{
-	  data[i]->samps = mus_sound_samples(data[i]->full_filename);
-	  if (data[i]->samps < 0) data[i]->samps = 0;
-	}
-      mus_error_set_handler(mus_error_to_snd);
+	data[i]->samps = file_bytes(data[i]->full_filename);
       qsort((void *)data, len, sizeof(sort_info *), sort_big_to_small);
       break;
     default:
@@ -290,11 +292,14 @@ void snd_sort(int sorter, sort_info **data, int len)
       if ((sorter_pos >= 0) &&
 	  (sorter_pos < ss->file_sorters_size))
 	{
-	  sorter_func = XEN_CADR(XEN_VECTOR_REF(ss->file_sorters, sorter_pos));
-	  qsort((void *)data, len, sizeof(sort_info *), sort_xen);
+	  if (XEN_LIST_P(XEN_VECTOR_REF(ss->file_sorters, sorter_pos)))
+	    {
+	      sorter_func = XEN_CADR(XEN_VECTOR_REF(ss->file_sorters, sorter_pos));
+	      qsort((void *)data, len, sizeof(sort_info *), sort_xen);
+	      return;
+	    }
 	}
-      /* TODO: else complain */
-
+      snd_warning("no such file-sorter (%d)", sorter_pos);
       break;
     }
 }
@@ -344,7 +349,9 @@ static void add_full_filename_to_dir_info(dir_info *dp, const char *name, const 
 static void add_filename_to_dir_info(dir_info *dp, const char *name)
 {
   char *fullname;
-  fullname = mus_format("%s%s", dp->dir_name, name);
+  fullname = (char *)CALLOC(strlen(dp->dir_name) + strlen(name) + 2, sizeof(char));
+  strcpy(fullname, dp->dir_name);
+  strcat(fullname, name);
   add_full_filename_to_dir_info(dp, name, fullname);
   FREE(fullname);
 }
@@ -359,12 +366,62 @@ dir_info *find_files_in_dir(const char *name)
   dpos = opendir(name);
   if (dpos)
     {
+      char *fullname;
+      int fullname_start = 0;
       struct dirent *dirp;
       dp = make_dir_info(name);
+      fullname = (char *)CALLOC(PATH_MAX, sizeof(char));
+      strcpy(fullname, name);
+      fullname_start = strlen(name);
       while ((dirp = readdir(dpos)) != NULL)
-	if ((dirp->d_name[0] != '.') &&
-	    (!(directory_p(dirp->d_name))))
-	  add_filename_to_dir_info(dp, dirp->d_name);
+	if (dirp->d_name[0] != '.')
+	  {
+	    strcat(fullname, dirp->d_name);
+	    if (!(directory_p(fullname)))
+	      add_filename_to_dir_info(dp, dirp->d_name);
+	    fullname[fullname_start] = '\0';
+	  }
+      FREE(fullname);
+#if CLOSEDIR_VOID
+      closedir(dpos);
+#else
+      if (closedir(dpos) != 0) 
+	snd_error(_("closedir %s failed (%s)!"),
+		  name, snd_io_strerror());
+#endif
+    }
+  return(dp);
+#endif
+}
+
+dir_info *find_directories_in_dir(const char *name)
+{
+#if (!HAVE_OPENDIR)
+  return(NULL);
+#else
+  DIR *dpos;
+  dir_info *dp = NULL;
+  dpos = opendir(name);
+  if (dpos)
+    {
+      char *fullname;
+      int fullname_start = 0;
+      struct dirent *dirp;
+      dp = make_dir_info(name);
+      fullname = (char *)CALLOC(PATH_MAX, sizeof(char));
+      strcpy(fullname, name);
+      fullname_start = strlen(name);
+      if (strcmp(name, "/") != 0)
+	add_filename_to_dir_info(dp, ".."); /* always back pointer */
+      while ((dirp = readdir(dpos)) != NULL)
+	if (dirp->d_name[0] != '.')
+	  {
+	    strcat(fullname, dirp->d_name);
+	    if (directory_p(fullname))
+	      add_filename_to_dir_info(dp, dirp->d_name);
+	    fullname[fullname_start] = '\0';
+	  }
+      FREE(fullname);
 #if CLOSEDIR_VOID
       closedir(dpos);
 #else
@@ -405,7 +462,11 @@ dir_info *find_filtered_files_in_dir(const char *name, int filter_choice)
 	  if ((filter_pos >= 0) &&
 	      (filter_pos < ss->file_filters_size))
 	    filter_func = XEN_CADR(XEN_VECTOR_REF(ss->file_filters, filter_pos));
-	  /* TODO: else complain */
+	  else
+	    {
+	      snd_warning("no such file-filter (%d)", filter_pos);
+	      return(find_files_in_dir(name));
+	    }
 	}
 
       dp = make_dir_info(name);
@@ -4833,8 +4894,6 @@ XEN_NARGIFY_1(g_sound_file_p_w, g_sound_file_p)
 #define g_add_file_sorter_w g_add_file_sorter
 #define g_sound_file_p_w g_sound_file_p
 #endif
-
-/* TODO: test sound-file? */
 
 void g_init_file(void)
 {

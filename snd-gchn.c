@@ -693,7 +693,7 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Gtk
 	  cw[W_main_window] = gtk_hpaned_new();
 	  gtk_container_set_border_width(GTK_CONTAINER(cw[W_main_window]), 2);
 	  gtk_box_pack_start(GTK_BOX(w_snd_pane_box(sp)), cw[W_main_window], true, true, 0);
-	  cw[W_edhist] = sg_make_list(_("Edits"), cw[W_main_window], PANED_ADD, (gpointer)cp, 0, NULL,
+	  cw[W_edhist] = sg_make_list(_("Edits"), cw[W_main_window], PANED_ADD1, (gpointer)cp, 0, NULL,
 				      GTK_SIGNAL_FUNC(history_select_callback), 0, 0, 0, 0);
 	  gtk_widget_show(cw[W_edhist]);
 	}

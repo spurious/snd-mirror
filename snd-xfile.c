@@ -98,6 +98,15 @@ static void force_directory_reread(Widget dialog)
     }
 }
 
+static void force_directory_reread_and_let_filename_change(Widget dialog)
+{
+  XmString dirmask;
+  ASSERT_WIDGET_TYPE(XmIsFileSelectionBox(dialog), dialog);
+  XtVaGetValues(dialog, XmNdirMask, &dirmask, NULL);
+  XmFileSelectionDoSearch(dialog, dirmask);
+  XmStringFree(dirmask);
+}
+
 
 
 /* -------- popups -------- */
@@ -604,7 +613,7 @@ static void file_change_directory_callback(Widget w, XtPointer context, XtPointe
 {
   file_pattern_info *fp = (file_pattern_info *)context;
   fp->reread_directory = true;
-  force_directory_reread(fp->dialog);
+  force_directory_reread_and_let_filename_change(fp->dialog);
   fp->reread_directory = false;
 }
 
@@ -686,9 +695,6 @@ static void snd_directory_reader(Widget dialog, XmFileSelectionBoxCallbackStruct
   dir_info *cur_dir = NULL;
   char *pattern = NULL, *our_dir = NULL;
   ASSERT_WIDGET_TYPE(XmIsFileSelectionBox(dialog), dialog);
-#if DEBUGGING
-  fprintf(stderr,"snd directory read\n");
-#endif
 
   XtVaGetValues(dialog, XmNuserData, &fp, NULL);
   if (!(fp->dialog)) fp->dialog = dialog; /* can be null at initialization */

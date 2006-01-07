@@ -618,8 +618,11 @@ GtkWidget *sg_make_list(const char *title, GtkWidget *parent, widget_add_t paned
 
   switch (paned)
     {
-    case PANED_ADD: 
+    case PANED_ADD1: 
       gtk_paned_add1(GTK_PANED(parent), scrolled_win); 
+      break;
+    case PANED_ADD2: 
+      gtk_paned_add2(GTK_PANED(parent), scrolled_win); 
       break;
     case BOX_PACK: 
       gtk_box_pack_start(GTK_BOX(parent), scrolled_win, true, true, 0); 

@@ -1390,7 +1390,7 @@ char *mus_expand_filename(const char *filename)
       {
 	found_one = false;
 	len = strlen(file_name_buf);
-	for (i = 0; i < len - 4; i++)
+	for (i = 0; i < len - 3; i++)
 	  if (file_name_buf[i] == '/')
 	    {
 	      if ((file_name_buf[i + 1] == '.') &&

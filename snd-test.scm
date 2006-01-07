@@ -36285,6 +36285,10 @@ EDITS: 1
     (begin
       (run-hook before-test-hook 21)
 
+      (if (not (sound-file? "oboe.snd")) (snd-display ";oboe.snd not a sound file?"))
+      (if (not (sound-file? "4.aiff")) (snd-display ";4.aiff not a sound file?"))
+      (if (sound-file? "snd.h") (snd-display ";snd.h is a sound-file?"))
+
       (let ((ind1 (open-sound "oboe.snd")))
 	(save-sound-as "test.snd" ind1)
 	(let ((ind2 (open-sound "test.snd")))
