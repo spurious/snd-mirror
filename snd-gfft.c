@@ -2,10 +2,10 @@
 
 #include "snd.h"
 
+slist *transform_list = NULL, *size_list = NULL, *window_list = NULL, *wavelet_list = NULL;
 static GtkWidget *transform_dialog = NULL; /* main dialog shell */
-static GtkWidget *transform_list = NULL, *size_list, *window_list, *wavelet_list, *outer_table,
-                 *db_button, *peaks_button, *logfreq_button, *sono_button, *spectro_button, *normal_fft_button, *normalize_button, *selection_button,
-                 *window_beta_scale, *window_alpha_scale, *graph_drawer = NULL, *graph_frame = NULL;
+static GtkWidget *outer_table, *db_button, *peaks_button, *logfreq_button, *sono_button, *spectro_button, *normal_fft_button;
+static GtkWidget *normalize_button, *selection_button, *window_beta_scale, *window_alpha_scale, *graph_drawer = NULL, *graph_frame = NULL;
 static GtkObject *beta_adj, *alpha_adj;
 static GdkGC *gc = NULL, *fgc = NULL;
 static bool ignore_callbacks;
@@ -127,7 +127,8 @@ static void chans_transform_size(chan_info *cp, void *ptr)
     cp->fft->size = size;
 }
 
-static void gfft_size(int row)
+
+static void size_browse_callback(const char *name, int row, void *data)
 {
   int size;
   for_each_chan(force_fft_clear);
@@ -142,22 +143,10 @@ static void gfft_size(int row)
   graph_redisplay();
 }
 
-static void size_browse_callback(GtkTreeSelection *selection, gpointer *gp)
-{
-  GtkTreeIter iter;
-  gint *indices;
-  GtkTreePath *path;
-  GtkTreeModel *model;
-  if (!(gtk_tree_selection_get_selected(selection, &model, &iter))) return;
-  path = gtk_tree_model_get_path(model, &iter);
-  indices = gtk_tree_path_get_indices(path);
-  gfft_size(indices[0]);
-  gtk_tree_path_free(path);
-}
-
 static void chans_wavelet_type(chan_info *cp, void *ptr) {cp->wavelet_type = (*((int *)ptr));}
 
-static void gfft_wavelet(int row)
+
+static void wavelet_browse_callback(const char *name, int row, void *data)
 {
   in_set_wavelet_type(row);
   for_each_chan_1(chans_wavelet_type, (void *)(&row));
@@ -165,25 +154,7 @@ static void gfft_wavelet(int row)
     for_each_chan(calculate_fft);
 }
 
-static void wavelet_browse_callback(GtkTreeSelection *selection, gpointer *gp)
-{
-  GtkTreeIter iter;
-  gchar *value = NULL;
-  int i;
-  GtkTreeModel *model;
-  if (!(gtk_tree_selection_get_selected(selection, &model, &iter))) return;
-  gtk_tree_model_get(model, &iter, 0, &value, -1);
-  for (i = 0; i < NUM_WAVELETS; i++)
-    if (strcmp(value, wavelet_name(i)) == 0)
-      {
-	gfft_wavelet(i);
-	g_free(value);
-	return;
-      }
-  if (value) g_free(value);
-}
-
-static void gfft_window(int row)
+static void window_browse_callback(const char *name, int row, void *data)
 {
   in_set_fft_window((mus_fft_window_t)row);
   for_each_chan(calculate_fft);
@@ -194,51 +165,14 @@ static void gfft_window(int row)
   graph_redisplay();
 }
 
-static void window_browse_callback(GtkTreeSelection *selection, gpointer *gp)
-{
-  GtkTreeIter iter;
-  gchar *value = NULL;
-  int i;
-  GtkTreeModel *model;
-  if (!(gtk_tree_selection_get_selected(selection, &model, &iter))) return;
-  gtk_tree_model_get(model, &iter, 0, &value, -1);
-  for (i = 0; i < MUS_NUM_WINDOWS; i++)
-    if (strcmp(value, FFT_WINDOWS[i]) == 0)
-      {
-	gfft_window(i);
-	g_free(value);
-	return;
-      }
-  if (value) g_free(value);
-}
-
 static void chans_transform_type(chan_info *cp, void *ptr) {cp->transform_type = (*((int *)ptr));}
 
-static void gfft_transform(int row)
+static void transform_browse_callback(const char *name, int row, void *data)
 {
   for_each_chan(force_fft_clear);
   in_set_transform_type(row);
   for_each_chan_1(chans_transform_type, (void *)(&row));
   for_each_chan(calculate_fft);
-}
-
-static void transform_browse_callback(GtkTreeSelection *selection, gpointer *gp)
-{
-  GtkTreeIter iter;
-  gchar *value = NULL;
-  int i, num;
-  GtkTreeModel *model;
-  if (!(gtk_tree_selection_get_selected(selection, &model, &iter))) return;
-  gtk_tree_model_get(model, &iter, 0, &value, -1);
-  num = max_transform_type();
-  for (i = 0; i < num; i++)
-    if (strcmp(value, transform_name(i)) == 0)
-      {
-	gfft_transform(i);
-	g_free(value);
-	return;
-      }
-  if (value) g_free(value);
 }
 
 static void normal_fft_callback(GtkWidget *w, gpointer context)
@@ -437,12 +371,6 @@ void reflect_min_db_in_transform_dialog(void)
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(db_txt), (gfloat)(-(min_dB(ss))));
 }
 
-/*
-#define BUTTON_HEIGHT 20
-#define BUTTON_WIDTH 40
-*/
-/* for some reason gtk puts a mile and a half of padding around buttons */
-
 GtkWidget *fire_up_transform_dialog(bool managed)
 {
   bool need_callback = false;
@@ -500,11 +428,16 @@ GtkWidget *fire_up_transform_dialog(bool managed)
 
       /* TYPE */
       make_transform_type_list();
+#if HAVE_GTK_BUTTON_SET_ALIGNMENT
+      gtk_entry_set_alignment(GTK_ENTRY(transform_list->label), 0.4);
+#endif
 
       /* SIZE */
-      size_list = sg_make_list(_("size"), outer_table, TABLE_ATTACH, NULL, NUM_TRANSFORM_SIZES, TRANSFORM_SIZES, 
-			       GTK_SIGNAL_FUNC(size_browse_callback), 1, 2, 0, 3);
-      gtk_widget_show(size_list);
+      size_list = slist_new_with_title_and_table_data(_("size"), outer_table, TRANSFORM_SIZES, NUM_TRANSFORM_SIZES, TABLE_ATTACH,
+						      size_browse_callback, NULL, 1, 2, 0, 3);
+#if HAVE_GTK_BUTTON_SET_ALIGNMENT
+      gtk_entry_set_alignment(GTK_ENTRY(size_list->label), 0.4);
+#endif
 
       /* DISPLAY */
       display_frame = gtk_frame_new(_("display"));
@@ -567,8 +500,11 @@ GtkWidget *fire_up_transform_dialog(bool managed)
 	GtkWidget *pk_lab, *db_lab, *lf_lab;
 	GtkObject *pk_vals, *db_vals, *lf_vals;
 
-	pk_lab = gtk_label_new(_("max peaks:"));
+	pk_lab = snd_gtk_label_new(_("max peaks:"), ss->sgx->highlight_color);
 	gtk_box_pack_start(GTK_BOX(buttons), pk_lab, false, false, 0);
+#if HAVE_GTK_BUTTON_SET_ALIGNMENT
+	gtk_entry_set_alignment(GTK_ENTRY(pk_lab), 0.4);
+#endif
 	gtk_widget_show(pk_lab);
       
 	pk_vals = gtk_adjustment_new(max_transform_peaks(ss), 2, 1000, 2, 10, 0);
@@ -578,8 +514,11 @@ GtkWidget *fire_up_transform_dialog(bool managed)
 	SG_SIGNAL_CONNECT(pk_vals, "value_changed", max_peaks_callback, (gpointer)peaks_txt);
 	gtk_widget_show(peaks_txt);
 
-	db_lab = gtk_label_new(_("min dB:"));
+	db_lab = snd_gtk_label_new(_("min dB:"), ss->sgx->highlight_color);
 	gtk_box_pack_start(GTK_BOX(buttons), db_lab, false, false, 0);
+#if HAVE_GTK_BUTTON_SET_ALIGNMENT
+	gtk_entry_set_alignment(GTK_ENTRY(db_lab), 0.4);
+#endif
 	gtk_widget_show(db_lab);
       
 	db_vals = gtk_adjustment_new((int)(-(min_dB(ss))), 2, 1000, 2, 10, 0); /* can't be negative!! */
@@ -589,8 +528,11 @@ GtkWidget *fire_up_transform_dialog(bool managed)
 	SG_SIGNAL_CONNECT(db_vals, "value_changed", min_db_callback, (gpointer)db_txt);
 	gtk_widget_show(db_txt);
 
-	lf_lab = gtk_label_new(_("log freq start:"));
+	lf_lab = snd_gtk_label_new(_("log freq start:"), ss->sgx->highlight_color);
 	gtk_box_pack_start(GTK_BOX(buttons), lf_lab, false, false, 0);
+#if HAVE_GTK_BUTTON_SET_ALIGNMENT
+	gtk_entry_set_alignment(GTK_ENTRY(lf_lab), 0.4);
+#endif
 	gtk_widget_show(lf_lab);
       
 	lf_vals = gtk_adjustment_new((int)(log_freq_start(ss)), 1, 1000, 1, 10, 0);
@@ -605,15 +547,20 @@ GtkWidget *fire_up_transform_dialog(bool managed)
       gtk_widget_show(display_frame);
 
       /* WAVELET */
-      wavelet_list = sg_make_list(_("wavelet"), outer_table, TABLE_ATTACH, NULL, NUM_WAVELETS, wavelet_names(),
-				  GTK_SIGNAL_FUNC(wavelet_browse_callback), 0, 1, 3, 6);
-      gtk_widget_show(wavelet_list);
+      wavelet_list = slist_new_with_title_and_table_data(_("wavelet"), outer_table, wavelet_names(), NUM_WAVELETS, TABLE_ATTACH,
+							 wavelet_browse_callback, NULL, 0, 1, 3, 6);
+#if HAVE_GTK_BUTTON_SET_ALIGNMENT
+      gtk_entry_set_alignment(GTK_ENTRY(wavelet_list->label), 0.4);
+#endif
 
       /* WINDOW */
       window_box = gtk_table_new(2, 3, false);
       gtk_table_attach_defaults(GTK_TABLE(outer_table), window_box, 1, 2, 3, 6);
-      window_list = sg_make_list(_("window"), window_box, TABLE_ATTACH, NULL, MUS_NUM_WINDOWS, FFT_WINDOWS, 
-				 GTK_SIGNAL_FUNC(window_browse_callback), 0, 1, 0, 1);
+      window_list = slist_new_with_title_and_table_data(_("window"), window_box, FFT_WINDOWS, MUS_NUM_WINDOWS, TABLE_ATTACH,
+							window_browse_callback, NULL, 0, 1, 0, 1);
+#if HAVE_GTK_BUTTON_SET_ALIGNMENT
+      gtk_entry_set_alignment(GTK_ENTRY(window_list->label), 0.4);
+#endif
 
       beta_adj = gtk_adjustment_new(0.0, 0.0, 1.01, 0.001, 0.01, .01);
       window_beta_scale = gtk_hscale_new(GTK_ADJUSTMENT(beta_adj));
@@ -643,7 +590,6 @@ GtkWidget *fire_up_transform_dialog(bool managed)
 
       gtk_widget_show(window_alpha_scale);
       gtk_widget_show(window_beta_scale);
-      gtk_widget_show(window_list);
       gtk_widget_show(window_box);
 
 
@@ -668,15 +614,6 @@ GtkWidget *fire_up_transform_dialog(bool managed)
       gtk_widget_show(graph_drawer);
       gtk_widget_show(graph_frame);
 
-      sg_list_select(transform_list, transform_type_to_position(transform_type(ss)));
-      for (i = 0; i < NUM_TRANSFORM_SIZES; i++)
-	if (transform_sizes[i] == transform_size(ss))
-	  {
-	    sg_list_select(size_list, i);
-	    sg_list_moveto(size_list, i);
-	    break;
-	  }
-
       ignore_callbacks = true;
       if (transform_graph_type(ss) == GRAPH_ONCE) set_toggle_button(normal_fft_button, true, false, NULL);
       if (transform_graph_type(ss) == GRAPH_AS_SONOGRAM) set_toggle_button(sono_button, true, false, NULL);
@@ -688,13 +625,24 @@ GtkWidget *fire_up_transform_dialog(bool managed)
       set_toggle_button(logfreq_button, fft_log_frequency(ss), false, NULL);
       set_toggle_button(normalize_button, (transform_normalization(ss) != DONT_NORMALIZE), false, NULL);
       set_toggle_button(selection_button, show_selection_transform(ss), false, NULL);
-      sg_list_select(window_list, (int)fft_window(ss));
-      sg_list_moveto(window_list, (int)fft_window(ss));
-      sg_list_select(wavelet_list, wavelet_type(ss));
-      sg_list_moveto(wavelet_list, wavelet_type(ss));
+
       need_callback = true;
       gtk_widget_show(outer_table);
       set_dialog_widget(TRANSFORM_DIALOG, transform_dialog);
+
+      slist_select(window_list, (int)fft_window(ss));
+      slist_moveto(window_list, (int)fft_window(ss));
+      slist_select(wavelet_list, wavelet_type(ss));
+      slist_moveto(wavelet_list, wavelet_type(ss));
+
+      slist_select(transform_list, transform_type_to_position(transform_type(ss)));
+      for (i = 0; i < NUM_TRANSFORM_SIZES; i++)
+	if (transform_sizes[i] == transform_size(ss))
+	  {
+	    slist_select(size_list, i);
+	    slist_moveto(size_list, i);
+	    break;
+	  }
     }
   else raise_dialog(transform_dialog);
   if (managed) gtk_widget_show(transform_dialog);
@@ -752,8 +700,8 @@ void set_transform_size(int val)
       for (i = 0; i < NUM_TRANSFORM_SIZES; i++)
 	if (transform_sizes[i] == val)
 	  {
-	    sg_list_select(size_list, i);
-	    sg_list_moveto(size_list, i);
+	    slist_select(size_list, i);
+	    slist_moveto(size_list, i);
 	    break;
 	  }
     }
@@ -766,8 +714,8 @@ void set_fft_window(mus_fft_window_t val)
   if (!(ss->graph_hook_active)) for_each_chan(calculate_fft);
   if ((transform_dialog) && (graph_drawer))
     {
-      sg_list_select(window_list, (int)val);
-      sg_list_moveto(window_list, (int)val);
+      slist_select(window_list, (int)val);
+      slist_moveto(window_list, (int)val);
       if (graph_frame) 
 	gtk_frame_set_label(GTK_FRAME(graph_frame),
 			    FFT_WINDOWS[val]);
@@ -786,7 +734,7 @@ void set_transform_type(int val)
       if (!(ss->graph_hook_active)) 
 	for_each_chan(calculate_fft);
       if (transform_dialog) 
-	sg_list_select(transform_list, transform_type_to_position(val));
+	slist_select(transform_list, transform_type_to_position(val));
     }
 }
 
@@ -794,8 +742,8 @@ void set_wavelet_type(int val)
 {
   if (transform_dialog) 
     {
-      sg_list_select(wavelet_list, val);
-      sg_list_moveto(wavelet_list, val);
+      slist_select(wavelet_list, val);
+      slist_moveto(wavelet_list, val);
     }
   in_set_wavelet_type(val);
   for_each_chan_1(chans_wavelet_type, (void *)(&val));
@@ -891,18 +839,15 @@ void make_transform_type_list(void)
 	    transform_names[j++] = transform_name(i);
 	  }
       if (!transform_list)
-	transform_list = sg_make_list(_("type"), outer_table, TABLE_ATTACH, NULL, j, transform_names, 
-				      GTK_SIGNAL_FUNC(transform_browse_callback), 0, 1, 0, 3);
+	transform_list = slist_new_with_title_and_table_data(_("type"), outer_table, transform_names, j, TABLE_ATTACH,
+							     transform_browse_callback, NULL, 0, 1, 0, 3);
       else
 	{
-	  GtkListStore *w;
-	  w = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(transform_list)));
-	  gtk_list_store_clear(w);
+	  slist_clear(transform_list);
 	  for (i = 0; i < j; i++)
-	    sg_list_append(transform_list, transform_names[i]);
-	  sg_list_select(transform_list, transform_type_to_position(transform_type(ss)));
+	    slist_append(transform_list, transform_names[i]);
+	  slist_select(transform_list, transform_type_to_position(transform_type(ss)));
 	}
-      gtk_widget_show(transform_list);
       FREE(transform_names);
     }
 }

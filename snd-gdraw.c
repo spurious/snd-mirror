@@ -556,13 +556,12 @@ static void check_color_hook(void)
 
 typedef struct {
   GtkWidget *dialog;
-  GtkWidget *list; 
   GtkWidget *scale; 
   GtkObject *scale_adj;
   GtkWidget *invert;
   GtkWidget *cutoff;
   GtkObject *cutoff_adj;
-
+  slist *list;
 } color_chooser_info;
 
 static color_chooser_info *ccd = NULL;
@@ -622,35 +621,17 @@ void set_color_scale(Float val)
   if (!(ss->graph_hook_active)) for_each_chan(update_graph_setting_fft_changed);
 }
 
-static void list_color_callback(GtkTreeSelection *selection, gpointer *gp)
+static void list_color_callback(const char *name, int row, void *data)
 {
-  GtkTreeIter iter;
-  gchar *value = NULL;
-  GtkTreeModel *model;
-  if (!(gtk_tree_selection_get_selected(selection, &model, &iter))) return;
-  gtk_tree_model_get(model, &iter, 0, &value, -1);
-  if (value)
-    {
-      int i, size;
-      size = num_colormaps();
-      for (i = 0; i < size; i++)
-	if ((colormap_name(i)) &&
-	    (strcmp(value, colormap_name(i)) == 0))
-	  {
-	    in_set_color_map(i);
-	    for_each_chan(update_graph_setting_fft_changed);
-	    g_free(value);
-	    return;
-	  }
-      g_free(value);
-      check_color_hook();
-    }
+  in_set_color_map(row);
+  for_each_chan(update_graph_setting_fft_changed);
+  check_color_hook();
 }
 
 void set_color_map(int val)
 {
   in_set_color_map(val);
-  if ((ccd) && (val >= 0)) sg_list_select(ccd->list, val);
+  if ((ccd) && (val >= 0)) slist_select(ccd->list, val);
   check_color_hook();
   if (!(ss->graph_hook_active)) for_each_chan(update_graph_setting_fft_changed);
 }
@@ -692,16 +673,10 @@ void reflect_color_list(bool setup_time)
   if ((ccd) && (ccd->list))
     {
       int i, size;
-      GtkTreeIter iter;
-      GtkListStore *model;
       size = num_colormaps();
-      model = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(ccd->list)));
-      gtk_list_store_clear(model);
+      slist_clear(ccd->list);
       for (i = 0; i < size; i++) 
-	{
-	  gtk_list_store_append(model, &iter);
-	  gtk_list_store_set(model, &iter, 0, colormap_name(i), -1);
-	}
+	slist_append(ccd->list, colormap_name(i));
     }
 }
 
@@ -710,7 +685,7 @@ static void start_view_color_dialog(bool managed)
   if (!ccd)
     {
       GtkWidget *light_label, *dark_label, *help_button, *dismiss_button;
-      GtkWidget *outer_table, *scale_box, *cutoff_box, *cutoff_label, *colormap_box;
+      GtkWidget *outer_table, *scale_box, *cutoff_box, *cutoff_label;
 
       /* create color chooser dialog window */
       ccd = (color_chooser_info *)CALLOC(1, sizeof(color_chooser_info));
@@ -735,11 +710,16 @@ static void start_view_color_dialog(bool managed)
       gtk_widget_show(dismiss_button);
       gtk_widget_show(help_button);
 
-      outer_table = gtk_table_new(3, 2, false);
+      outer_table = gtk_table_new(5, 2, false);
+      gtk_table_set_col_spacing(GTK_TABLE(outer_table), 1, 100);
+      gtk_table_set_col_spacing(GTK_TABLE(outer_table), 0, 100);
       gtk_container_add(GTK_CONTAINER(GTK_DIALOG(ccd->dialog)->vbox), outer_table);
 
       scale_box = gtk_table_new(2, 2, false);
-      gtk_table_attach_defaults(GTK_TABLE(outer_table), scale_box, 0, 1, 0, 1);
+      gtk_table_attach(GTK_TABLE(outer_table), scale_box, 0, 3, 0, 1,
+		       (GtkAttachOptions)(GTK_FILL | GTK_EXPAND), 
+		       (GtkAttachOptions)(GTK_FILL | GTK_EXPAND | GTK_SHRINK), 
+		       10, 0);
       
       ccd->scale_adj = gtk_adjustment_new(50.0, 0.0, 101.0, 0.1, 1.0, 1.0);
       ccd->scale = gtk_hscale_new(GTK_ADJUSTMENT(ccd->scale_adj));
@@ -750,11 +730,13 @@ static void start_view_color_dialog(bool managed)
       gtk_scale_set_value_pos(GTK_SCALE(ccd->scale), GTK_POS_TOP);
       gtk_scale_set_draw_value(GTK_SCALE(ccd->scale), true);
       gtk_table_attach_defaults(GTK_TABLE(scale_box), ccd->scale, 0, 2, 0, 1);
+
       SG_SIGNAL_CONNECT(ccd->scale_adj, "value_changed", scale_color_callback, NULL);
 
       light_label = gtk_label_new(_("light"));
       gtk_misc_set_alignment(GTK_MISC (light_label), 0.05, 0.0);
       gtk_table_attach_defaults(GTK_TABLE(scale_box), light_label, 0, 1, 1, 2);
+
       dark_label = gtk_label_new(_("dark"));
       gtk_misc_set_alignment(GTK_MISC(dark_label), 0.95, 0.0);
       gtk_table_attach_defaults(GTK_TABLE(scale_box), dark_label, 1, 2, 1, 2);
@@ -765,7 +747,10 @@ static void start_view_color_dialog(bool managed)
       gtk_widget_show(scale_box);
 
       cutoff_box = gtk_table_new(2, 2, false);
-      gtk_table_attach_defaults(GTK_TABLE(outer_table), cutoff_box, 0, 1, 1, 2);
+      gtk_table_attach(GTK_TABLE(outer_table), cutoff_box, 0, 3, 1, 2,
+		       (GtkAttachOptions)(GTK_FILL | GTK_EXPAND), 
+		       (GtkAttachOptions)(GTK_FILL | GTK_EXPAND | GTK_SHRINK), 
+		       10, 0);
 
       ccd->cutoff_adj = gtk_adjustment_new(color_cutoff(ss), 0.0, 1.01, 0.001, 0.01, .01);
       ccd->cutoff = gtk_hscale_new(GTK_ADJUSTMENT(ccd->cutoff_adj));
@@ -791,28 +776,20 @@ static void start_view_color_dialog(bool managed)
       gtk_widget_show(ccd->invert);
       set_toggle_button(ccd->invert, color_inverted(ss), false, NULL);
 
-      colormap_box = gtk_vbox_new(false, 0);
-      gtk_table_attach(GTK_TABLE(outer_table), colormap_box, 1, 2, 0, 3,
-		       (GtkAttachOptions)(GTK_FILL | GTK_EXPAND),
-		       (GtkAttachOptions)(GTK_FILL | GTK_EXPAND), 
-		       10, 4);
-
       {
 	char **names;
 	int i, size;
 	size = num_colormaps();
 	names = (char **)CALLOC(size, sizeof(char *));
 	for (i = 0; i < size; i++) names[i] = colormap_name(i);
-	ccd->list = sg_make_list(S_colormap, colormap_box, BOX_PACK, NULL, size, names,
-				 GTK_SIGNAL_FUNC(list_color_callback), 0, 0, 0, 0);
+	ccd->list = slist_new_with_title_and_table_data(S_colormap, outer_table, names, size, TABLE_ATTACH, 
+							list_color_callback, (void *)ccd, 3, 4, 0, 3);
 	FREE(names);
       }
-      gtk_widget_show(ccd->list);
-      gtk_widget_show(colormap_box);
 
       gtk_widget_show(outer_table);
       set_dialog_widget(COLOR_DIALOG, ccd->dialog);
-      if (color_map(ss) != 0) sg_list_select(ccd->list, color_map(ss));
+      if (color_map(ss) != 0) slist_select(ccd->list, color_map(ss));
     }
   else raise_dialog(ccd->dialog);
   if (managed) gtk_widget_show(ccd->dialog);
@@ -825,7 +802,7 @@ void view_color_callback(GtkWidget *w, gpointer context)
 
 bool color_dialog_is_active(void)
 {
-  return((ccd) && (ccd->dialog) && (GTK_WIDGET_VISIBLE(ccd->dialog))); /* ismanaged ...? */
+  return((ccd) && (ccd->dialog) && (GTK_WIDGET_VISIBLE(ccd->dialog)));
 }
 
 GtkWidget *start_color_dialog(bool managed)

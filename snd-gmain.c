@@ -690,6 +690,8 @@ style \"default\"\n\
   GtkPaned::handle_size = 6\n\
   GtkButton::default_border = { 0, 0, 0, 0 }\n\
   GtkButton::default_outside_border = { 0, 0, 0, 0 }\n\
+  xthickness = 1\n\
+  ythickness = 1\n\
 }\n\
 \n\
 style \"default_button\" = \"default\"\n\
@@ -735,7 +737,7 @@ style \"default_slider\" = \"default\"\n\
   bg[ACTIVE] = { 0.80, 0.80, 0.75 }\n\
   bg[PRELIGHT] = { 0.70, 0.70, 0.64 }\n\
 \n\
-  GtkRange::slider_width = 10\n\
+  GtkRange::slider_width = 13\n\
   GtkRange::stepper_size = 10\n\
 }\n\
 \n\
@@ -813,6 +815,32 @@ style \"reset\" = \"default_button\"\n\
 \n\
 widget \"*.reset_button\" style \"reset\"\n\
 widget \"*.the_unpane\" style \"default\"\n\
+style \"white_button\" = \"default_button\"\n\
+{\n\
+  bg[NORMAL] = { 1.0, 1.0, 1.0 }\n\
+  bg[PRELIGHT] = { 1.0, 1.0, 1.0 }\n\
+  bg[PRELIGHT] = { 0.94, 0.97, 1.0 }\n\
+  fg[PRELIGHT] = { 0.0,  0.0,  0.0}\n\
+  GtkButton::default-border = { 0, 0, 0, 0 }\n\
+  GtkButton::default_outside_border = { 0, 0, 0, 0 }\n\
+  GtkButton::focus_line_width = 0\n\
+  GtkButton::focus_padding = 0\n\
+  xthickness = 0\n\
+  ythickness = 0\n\
+}\n\
+\n\
+widget \"*.white_button\" style \"white_button\"\n\
+style \"env_button\" = \"default_button\"\n\
+{\n\
+  GtkButton::default_border = { 0, 0, 0, 0 }\n\
+  GtkButton::default_outside_border = { 0, 0, 0, 0 }\n\
+  GtkButton::focus_line_width = 0\n\
+  GtkButton::focus_padding = 0\n\
+  xthickness = 0\n\
+  ythickness = 0\n\
+}\n\
+\n\
+widget \"*.env_button\" style \"env_button\"\n\
 ");
       }
 #endif

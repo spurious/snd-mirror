@@ -16,7 +16,8 @@ static gint delete_help_dialog(GtkWidget *w, GdkEvent *event, gpointer context)
 #define HELP_COLUMNS 56
 /* these set the initial size of the (non XmHTML) help dialog text area */
 
-static GtkWidget *help_text = NULL, *related_items = NULL;
+static GtkWidget *help_text = NULL;
+slist *related_items = NULL;
 static char *original_help_text = NULL;
 
 /* gtk_text_buffer_insert_with_tags_by_name (buffer, &iter, "some text in red", -1, "red_foreground", NULL); */
@@ -184,53 +185,19 @@ static char *find_highlighted_text(const char *value)
   return(NULL);
 }
 
-static void help_browse_callback(GtkTreeSelection *selection, gpointer *gp)
+static void help_browse_callback(const char *name, int row, void *data)
 {
-  GtkTreeIter iter;
-  gchar *value = NULL;
-  GtkTreeModel *model;
-  if (!(gtk_tree_selection_get_selected(selection, &model, &iter))) return;
-  gtk_tree_model_get(model, &iter, 0, &value, -1);
-  if (value)
+  char *topic = NULL;
+  topic = find_highlighted_text(name);
+  if (topic)
     {
-      char *topic = NULL;
-      topic = find_highlighted_text(value);
-      if (topic)
-	{
-	  name_to_html_viewer(topic);
-	  FREE(topic);
-	}
-      else
-	{
-	  if (value)
-	    new_help(value);
-	}
+      name_to_html_viewer(topic);
+      FREE(topic);
     }
-  g_free(value);
-}
-
-static void double_callback(GtkTreeView *tree_view, GtkTreePath *path, GtkTreeViewColumn *column, gpointer data)
-{
-  GtkTreeModel *model = gtk_tree_view_get_model(tree_view);
-  GtkTreeIter iter;
-  gchar *value;
-  gtk_tree_model_get_iter(model, &iter, path);
-  gtk_tree_model_get(model, &iter, 0, &value, -1);
-  if (value)
+  else
     {
-      gchar *topic;
-      topic = find_highlighted_text(value);
-      if (topic)
-	{
-	  name_to_html_viewer(topic);
-	  FREE(topic);
-	}
-      else
-	{
-	  if (value)
-	    name_to_html_viewer(value);
-	}
-      g_free(value);
+      if (name)
+	new_help(name);
     }
 }
 
@@ -302,12 +269,10 @@ static void create_help_monolog(void)
   gtk_text_view_set_left_margin(GTK_TEXT_VIEW(help_text), 10);
   SG_SIGNAL_CONNECT(help_text, "button_release_event", text_release_callback, NULL);
 
-  related_items = sg_make_list(_("related topics"), 
-			       GTK_DIALOG(help_dialog)->vbox, 
-			       BOX_PACK, NULL, 0, NULL,
-			       GTK_SIGNAL_FUNC(help_browse_callback), 0, 0, 0, 0);
-  gtk_widget_add_events(related_items, GDK_ALL_EVENTS_MASK);
-  SG_SIGNAL_CONNECT(related_items, "row_activated", double_callback, NULL);
+  related_items = slist_new_with_title(_("related topics"), 
+				       GTK_DIALOG(help_dialog)->vbox,
+				       NULL, 0, BOX_PACK,
+				       help_browse_callback, NULL);
 
   hbox = gtk_hbox_new(false, 0);
   gtk_box_pack_start(GTK_BOX(GTK_DIALOG(help_dialog)->vbox), hbox, false, false, 10); 
@@ -341,7 +306,7 @@ GtkWidget *snd_help(const char *subject, const char *helpstr, with_word_wrap_t w
       if (new_help) FREE(new_help);
     }
   else add_help_text(help_text, helpstr);
-  gtk_list_store_clear(GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(related_items))));
+  slist_clear(related_items);
   if (help_needed) add_pattern_to_help_history(subject);
   gtk_widget_set_sensitive(help_next_button, (help_history_pos < help_history_size) && (help_history[help_history_pos]));
   gtk_widget_set_sensitive(help_previous_button, (help_history_pos > 1));
@@ -356,7 +321,7 @@ GtkWidget *snd_help_with_xrefs(const char *subject, const char *helpstr, with_wo
     {
       int i;
       for (i = 0; (xrefs[i]); i++)
-	sg_list_append(related_items, xrefs[i]);
+	slist_append(related_items, xrefs[i]);
     }
   return(w);
 }

@@ -16,29 +16,31 @@ static void ps_flush(int fd)
     {
       write(fd, nbuf, nbuf_ctr);
       nbuf_ctr = 0;
+      memset((void *)nbuf, 0, NBUF_SIZE);
     }
 }
 
-static void ps_write(char *buf)
+static void ps_write(const char *buf)
 {
   /* sending tiny buffers over the net is a total loss -- grab a bunch at a time */
+  int i, len;
   if (!nbuf)
     {
       nbuf = (char *)CALLOC(NBUF_SIZE, sizeof(char));
       nbuf_ctr = 0;
     }
-  while (*buf)
+  len = snd_strlen(buf);
+  for (i = 0; i < len; i++)
     {
-      nbuf[nbuf_ctr] = (*buf);
-      buf++;
-      nbuf_ctr++;
+      nbuf[nbuf_ctr++] = buf[i];
       if (nbuf_ctr == NBUF_SIZE) ps_flush(ps_fd);
     }
+  memset((void *)buf, 0, PRINT_BUFFER_SIZE);
 }
 
 static char *previous_locale = NULL;
 
-static int start_ps_graph(char *output, char *title) 
+static int start_ps_graph(const char *output, const char *title) 
 { 
   ps_fd = CREAT(output, 0666);
   if (ps_fd == -1) return(-1);
@@ -408,7 +410,7 @@ void ps_fill_rectangle (axis_info *ap, int x0, int y0, int width, int height)
   ps_write(pbuf);
 }
 
-void ps_draw_string (axis_info *ap, int x0, int y0, char *str) 
+void ps_draw_string (axis_info *ap, int x0, int y0, const char *str) 
 {
   int px0, py0;
   px0 = x0 + bx0;
@@ -452,7 +454,7 @@ void ps_set_tiny_numbers_font(void)
 
 #define PRINTED_VERTICAL_SPACING 25 
 
-static char *snd_print_or_error(char *output)
+static char *snd_print_or_error(const char *output)
 {
   if ((output) && (*output))
     {
@@ -501,7 +503,7 @@ static char *snd_print_or_error(char *output)
   else return(copy_string(_("print sound: eps file name needed")));
 }
 
-bool snd_print(char *output)
+bool snd_print(const char *output)
 {
   char *error;
   error = snd_print_or_error(output);
@@ -514,7 +516,7 @@ bool snd_print(char *output)
   return(true);
 }
 
-void region_print(char *output, char* title, chan_info *cp)
+void region_print(const char *output, const char* title, chan_info *cp)
 {
   if ((output) && (*output))
     {
@@ -530,7 +532,7 @@ void region_print(char *output, char* title, chan_info *cp)
   else snd_error_without_format(_("print region: eps file name needed"));
 }
 
-void print_enved(char *output, int y0)
+void print_enved(const char *output, int y0)
 {
   if ((output) && (*output))
     {

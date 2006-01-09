@@ -577,128 +577,6 @@ GtkWidget *make_scrolled_text(GtkWidget *parent, bool editable, GtkWidget *paner
   return(new_text);
 }
 
-GtkWidget *sg_make_list(const char *title, GtkWidget *parent, widget_add_t paned, gpointer gp, 
-			int num_items, char **items, GtkSignalFunc callback, int t1, int t2, int t3, int t4)
-{
-  GtkWidget *list;
-  int i;
-  GtkListStore *model;
-  GtkTreeIter iter;
-  GtkTreeViewColumn *column;
-  GtkWidget *scrolled_win;
-  GtkCellRenderer *celler;
-
-  model = gtk_list_store_new(1, G_TYPE_STRING);
-  list = gtk_tree_view_new_with_model(GTK_TREE_MODEL(model));
-  celler = gtk_cell_renderer_text_new();
-  celler->ypad = 0;
-  column = gtk_tree_view_column_new_with_attributes(title, celler, "text", 0, NULL);
-  gtk_tree_view_column_set_sizing(column, GTK_TREE_VIEW_COLUMN_AUTOSIZE);
-
-  {
-    GtkWidget *gad;
-    char *padded_title;
-    padded_title = (char *)CALLOC(16 + snd_strlen(title), sizeof(char));
-    sprintf(padded_title, "    %s", title);
-    gad = snd_gtk_label_new(padded_title, ss->sgx->highlight_color);
-    FREE(padded_title);
-    gtk_widget_show(gad);
-    gtk_tree_view_column_set_widget(column, gad);
-    gtk_widget_set_size_request(gad, -1, 16);
-  }
-
-  gtk_tree_view_append_column(GTK_TREE_VIEW(list), column);
-  scrolled_win = gtk_scrolled_window_new(NULL, NULL);
-  gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(scrolled_win), GTK_SHADOW_IN);  
-  gtk_container_add(GTK_CONTAINER(scrolled_win), list);
-  gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled_win), GTK_POLICY_AUTOMATIC, GTK_POLICY_ALWAYS);
-  gtk_container_set_border_width(GTK_CONTAINER(scrolled_win), 0);
-  if (callback)
-    SG_SIGNAL_CONNECT(gtk_tree_view_get_selection(GTK_TREE_VIEW(list)), "changed", callback, gp);
-
-  switch (paned)
-    {
-    case PANED_ADD1: 
-      gtk_paned_add1(GTK_PANED(parent), scrolled_win); 
-      break;
-    case PANED_ADD2: 
-      gtk_paned_add2(GTK_PANED(parent), scrolled_win); 
-      break;
-    case BOX_PACK: 
-      gtk_box_pack_start(GTK_BOX(parent), scrolled_win, true, true, 0); 
-      break;
-    case TABLE_ATTACH: 
-      gtk_table_attach(GTK_TABLE(parent), scrolled_win, t1, t2, t3, t4,
-		       (GtkAttachOptions)(GTK_FILL | GTK_EXPAND), 
-		       (GtkAttachOptions)(GTK_FILL | GTK_EXPAND | GTK_SHRINK), 
-		       0, 0);
-      break;
-    case CONTAINER_ADD: 
-      gtk_container_add(GTK_CONTAINER(parent), scrolled_win); 
-      break;
-    }
-  gtk_widget_show(list);
-  gtk_widget_show(scrolled_win);
-  for (i = 0; i < num_items; i++) 
-    {
-      gtk_list_store_append(model, &iter);
-      gtk_list_store_set(model, &iter, 0, items[i], -1);
-    }
-  return(list);
-}
-
-void sg_list_append(GtkWidget *lst, const char *val)
-{
-  GtkTreeIter iter;
-  GtkListStore *w;
-  w = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(lst)));
-  gtk_list_store_append(w, &iter);
-  gtk_list_store_set(w, &iter, 0, val, -1);
-}
-
-void sg_list_insert(GtkWidget *lst, int row, const char *val)
-{
-  GtkTreeIter iter;
-  GtkListStore *w;
-  w = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(lst)));
-  gtk_list_store_insert(w, &iter, row);
-  gtk_list_store_set(w, &iter, 0, val, -1);
-}
-
-#if 0
-static void sg_list_set_text(GtkWidget *lst, int row, char *val)
-{
-  GtkTreeIter iter;
-  GtkListStore *w;
-  w = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(lst)));
-  gtk_tree_model_iter_nth_child(GTK_TREE_MODEL(w), &iter, NULL, row);
-  gtk_list_store_set(w, &iter, 0, val, -1);
-}
-#endif
-
-void sg_list_select(GtkWidget *lst, int row)
-{
-  GtkTreeIter iter;
-  GtkTreeModel *w;
-  GtkTreeSelection *tree;
-  w = gtk_tree_view_get_model(GTK_TREE_VIEW(lst));
-  gtk_tree_model_iter_nth_child(GTK_TREE_MODEL(w), &iter, NULL, row);
-  tree = gtk_tree_view_get_selection(GTK_TREE_VIEW(lst));
-  gtk_tree_selection_select_iter(tree, &iter);
-}
-
-void sg_list_moveto(GtkWidget *lst, int row)
-{
-  GtkTreeIter iter;
-  GtkTreeModel *w;
-  GtkTreePath *path;
-  w = gtk_tree_view_get_model(GTK_TREE_VIEW(lst));
-  gtk_tree_model_iter_nth_child(GTK_TREE_MODEL(w), &iter, NULL, row);
-  path = gtk_tree_model_get_path(w, &iter);
-  gtk_tree_view_scroll_to_cell(GTK_TREE_VIEW(lst), path, NULL, true, 0.5, 0.5);
-  gtk_tree_path_free(path);
-}
-
 void sg_make_resizable(GtkWidget *w)
 {
   if (GTK_IS_DIALOG(w))
@@ -802,6 +680,7 @@ void ensure_scrolled_window_row_visible(widget_t list, int row, int num_rows)
 {
   /* view files file list */
   /*   called in snd-file.c on vdat->file_list which is a vbox; its parent is a viewport */
+  /* also used in slist_moveto below */
   GtkWidget *parent;
   GtkAdjustment *v;
   gdouble maximum, size, new_value, minimum;
@@ -821,4 +700,205 @@ void ensure_scrolled_window_row_visible(widget_t list, int row, int num_rows)
     }
   if (new_value != v->value)
     gtk_adjustment_set_value(v, new_value);
+}
+
+
+/* ---------------- scrolled list replacement ---------------- */
+
+static void slist_item_clicked(GtkWidget *w, gpointer gp)
+{
+  slist *lst = (slist *)gp;
+  slist_select(lst, slist_row(w));
+  if (lst->select_callback)
+    (*(lst->select_callback))((const char *)gtk_button_get_label(GTK_BUTTON(w)), /* do not free this!! */
+			      slist_row(w),
+			      lst->select_callback_data);
+}
+
+static GtkWidget *slist_new_item(slist *lst, const char *label, int row)
+{
+  GtkWidget *item;
+  item = gtk_button_new_with_label(label);
+  gtk_widget_set_name(item, "white_button");
+  slist_set_row(item, row);
+  gtk_button_set_relief(GTK_BUTTON(item), GTK_RELIEF_HALF);
+#if HAVE_GTK_BUTTON_SET_ALIGNMENT
+  gtk_button_set_alignment(GTK_BUTTON(item), 0.05, 1.0);
+#endif
+  gtk_box_pack_start(GTK_BOX(lst->topics), item, false, false, 0);
+  SG_SIGNAL_CONNECT(item, "clicked", slist_item_clicked, (gpointer)lst);
+  gtk_widget_show(item);
+  return(item);
+}
+
+slist *slist_new_with_title_and_table_data(const char *title,
+					   GtkWidget *parent, char **initial_items, int num_items, widget_add_t paned,
+					   void (*click_callback)(const char *name, int row, void *data),
+					   void *click_data,
+					   int t1, int t2, int t3, int t4)
+{
+  slist *lst;
+  GtkWidget *topw;
+  int i;
+  lst = (slist *)CALLOC(1, sizeof(slist));
+  lst->selected_item = SLIST_NO_ITEM_SELECTED;
+  lst->select_callback = click_callback;
+  lst->select_callback_data = click_data;
+
+  if (title)
+    {
+      lst->box = gtk_vbox_new(false, 0);
+
+      lst->label = snd_gtk_label_new(title, ss->sgx->highlight_color);
+      /* gtk_entry_set_width_chars(GTK_ENTRY(lst->label), 2 + strlen(title)); */
+      gtk_box_pack_start(GTK_BOX(lst->box), lst->label, false, false, 0);
+      topw = lst->box;
+    }
+
+  lst->topics = gtk_vbox_new(false, 0);
+  lst->scroller = gtk_scrolled_window_new(NULL, NULL);
+  if (!title) 
+    topw = lst->scroller;
+  else gtk_box_pack_start(GTK_BOX(lst->box), lst->scroller, true, true, 0);
+
+  switch (paned)
+    {
+    case PANED_ADD1: 
+      gtk_paned_add1(GTK_PANED(parent), topw);
+      break;
+    case PANED_ADD2: 
+      gtk_paned_add2(GTK_PANED(parent), topw);
+      break;
+    case BOX_PACK: 
+      gtk_box_pack_start(GTK_BOX(parent), topw, true, true, 0); 
+      break;
+    case TABLE_ATTACH: 
+      gtk_table_attach(GTK_TABLE(parent), topw, t1, t2, t3, t4,
+		       (GtkAttachOptions)(GTK_FILL | GTK_EXPAND), 
+		       (GtkAttachOptions)(GTK_FILL | GTK_EXPAND | GTK_SHRINK), 
+		       0, 0);
+      break;
+    case CONTAINER_ADD: 
+      gtk_container_add(GTK_CONTAINER(parent), topw); 
+      break;
+    }
+
+  gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(lst->scroller), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+  gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(lst->scroller), lst->topics);
+
+  if (title)
+    {
+      gtk_widget_show(lst->label);
+      gtk_widget_show(lst->box);
+    }
+  gtk_widget_show(lst->topics);
+  gtk_widget_show(lst->scroller);
+
+  if (num_items > 0)
+    {
+      lst->items = (GtkWidget **)CALLOC(num_items, sizeof(GtkWidget *));
+      lst->items_size = num_items;
+      lst->num_items = num_items;
+      for (i = 0; i < num_items; i++)
+	lst->items[i] = slist_new_item(lst, initial_items[i], i);
+    }
+  return(lst);
+}
+
+slist *slist_new_with_table_data(GtkWidget *parent, char **initial_items, int num_items, widget_add_t paned,
+				 void (*click_callback)(const char *name, int row, void *data),
+				 void *click_data,
+				 int t1, int t2, int t3, int t4)
+{
+  return(slist_new_with_title_and_table_data(NULL, parent, initial_items, num_items, paned, click_callback, click_data, t1, t2, t3, t4));
+}
+
+slist *slist_new(GtkWidget *parent, char **initial_items, int num_items, widget_add_t paned,
+		 void (*click_callback)(const char *name, int row, void *data),
+		 void *click_data)
+{
+  return(slist_new_with_title_and_table_data(NULL, parent, initial_items, num_items, paned, click_callback, click_data, 0, 0, 0, 0));
+}
+
+slist *slist_new_with_title(const char *title,
+			    GtkWidget *parent, char **initial_items, int num_items, widget_add_t paned,
+			    void (*click_callback)(const char *name, int row, void *data),
+			    void *click_data)
+{
+  return(slist_new_with_title_and_table_data(title, parent, initial_items, num_items, paned, click_callback, click_data, 0, 0, 0, 0));
+}
+
+void slist_clear(slist *lst)
+{
+  int i;
+  for (i = 0; i < lst->num_items; i++)
+    if (GTK_WIDGET_VISIBLE(lst->items[i]))
+      gtk_widget_hide(lst->items[i]);
+  lst->num_items = 0;
+  if (lst->selected_item != SLIST_NO_ITEM_SELECTED)
+    gtk_widget_modify_bg(lst->items[lst->selected_item], GTK_STATE_NORMAL, ss->sgx->white);
+  lst->selected_item = SLIST_NO_ITEM_SELECTED;
+}
+
+int slist_row(GtkWidget *item)
+{
+  gpointer gdata;
+  gdata = g_object_get_data(G_OBJECT(item), "slist-row");
+  return(((int *)gdata)[0]);
+}
+
+void slist_set_row(GtkWidget *item, int row)
+{
+  int *gdata;
+  gdata = (int *)MALLOC(sizeof(int));
+  gdata[0] = row;
+  g_object_set_data(G_OBJECT(item), "slist-row", (gpointer)gdata);
+}
+
+#define INITIAL_SLIST_LENGTH 8
+
+void slist_append(slist *lst, const char *name)
+{
+  int loc = 0;
+  if (lst->items_size == 0)
+    {
+      lst->items = (GtkWidget **)CALLOC(INITIAL_SLIST_LENGTH, sizeof(GtkWidget *));
+      lst->items_size = INITIAL_SLIST_LENGTH;
+      lst->num_items = 0;
+    }
+  if (lst->num_items == lst->items_size)
+    {
+      int i;
+      lst->items_size += INITIAL_SLIST_LENGTH;
+      lst->items = (GtkWidget **)REALLOC(lst->items, lst->items_size * sizeof(GtkWidget *));
+      for (i = lst->num_items; i < lst->items_size; i++) lst->items[i] = NULL;
+    }
+  loc = lst->num_items++;
+  if (lst->items[loc] == NULL)
+    lst->items[loc] = slist_new_item(lst, name, loc);
+  else 
+    {
+      gtk_button_set_label(GTK_BUTTON(lst->items[loc]), name); /* gtkbutton.c strdups name */
+      gtk_widget_show(lst->items[loc]);
+    }
+}
+
+void slist_moveto(slist *lst, int row)
+{
+  ensure_scrolled_window_row_visible(lst->topics, row, lst->num_items);
+}
+
+void slist_select(slist *lst, int row)
+{
+  if (lst->selected_item != SLIST_NO_ITEM_SELECTED)
+    gtk_widget_modify_bg(lst->items[lst->selected_item], GTK_STATE_NORMAL, ss->sgx->white);
+  gtk_widget_modify_bg(lst->items[row], GTK_STATE_NORMAL, ss->sgx->light_blue);
+  lst->selected_item = row;
+}
+
+char *slist_selection(slist *lst)
+{
+  if (lst->selected_item != SLIST_NO_ITEM_SELECTED)
+    return((char *)gtk_button_get_label(GTK_BUTTON(lst->items[lst->selected_item])));
+  return(NULL);
 }

@@ -2,7 +2,6 @@
 
 enum {
     W_main_window,
-    W_edhist, 
     W_graph_window,
     W_wf_buttons,
       W_f, W_w,
@@ -29,7 +28,7 @@ GtkWidget *channel_f(chan_info *cp)          {return(cp->cgx->chan_widgets[W_f])
 GtkWidget *channel_up_arrow(chan_info *cp)   {return(cp->cgx->chan_widgets[W_up_ev]);}
 GtkWidget *channel_down_arrow(chan_info *cp) {return(cp->cgx->chan_widgets[W_down_ev]);}
 
-#define EDIT_HISTORY_LIST(Cp) (Cp->cgx)->chan_widgets[W_edhist]
+#define EDIT_HISTORY_LIST(Cp) (Cp->cgx)->edhist_list
 
 static GtkWidget *channel_main_pane(chan_info *cp) {return(cp->cgx->chan_widgets[W_main_window]);}
 static GtkObject *gsy_adj(chan_info *cp)           {return(cp->cgx->chan_adjs[W_gsy_adj]);}
@@ -376,36 +375,27 @@ static void show_gz_scrollbars(snd_info *sp)
 
 /* edit history support */
 
-static bool flush_select = false;
-
-static void history_select_callback(GtkTreeSelection *selection, gpointer *gp)
+static void history_select_callback(const char *name, int row, void *data)
 {
-  GtkTreeIter iter;
-  GtkTreeModel *model;
-  GtkTreePath *path;
-  gint *indices;
-  if (flush_select) return;
-  if (!(gtk_tree_selection_get_selected(selection, &model, &iter))) return;
-  path = gtk_tree_model_get_path(model, &iter);
-  indices = gtk_tree_path_get_indices(path);
-  if (indices[0] == 0)
-  flush_select = true;
-  edit_history_select((chan_info *)gp, indices[0]);
-  flush_select = false;
-  gtk_tree_path_free(path);
+  edit_history_select((chan_info *)data, row);
 }
 
-static void remake_edit_history(GtkWidget *lst, chan_info *cp)
+static void remake_edit_history(chan_info *cp)
 {
   snd_info *sp;
   int i, eds;
   char *str;
-  gtk_list_store_clear(GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(lst))));
+  slist *lst;
+  if ((!cp) || (!(cp->cgx)) || (!(cp->active))) return;
+  lst = EDIT_HISTORY_LIST(cp);
+  if (!lst) return;
+  slist_clear(lst);
   sp = cp->sound;
 #if DEBUGGING
   if ((!sp) || (!(sp->active)) || (sp->inuse != SOUND_NORMAL))
     fprintf(stderr, "trouble in remake_edit_history: %p %d %d\n", sp, (sp) ? sp->active : -1, (sp) ? sp->inuse : -1);
 #endif
+
   if (sp->channel_style != CHANNELS_SEPARATE)
     {
       int k, all_eds = 0, ed, filelen;
@@ -431,17 +421,14 @@ static void remake_edit_history(GtkWidget *lst, chan_info *cp)
 	    {
 	      ncp->edhist_base = ed++;
 	      sprintf(title, "chan %d: %s", k + 1, sp->filename);
-	      sg_list_append(lst, title);
+	      slist_append(lst, title);
 	      eds = ncp->edit_ctr;
 	      while ((eds < (ncp->edit_size - 1)) && (ncp->edits[eds + 1])) eds++;
 	      for (i = 1; i <= eds; i++, ed++) 
-		{
-		  str = edit_to_string(ncp, i);
-		  sg_list_append(lst, str);
-		}
+		slist_append(lst, str = edit_to_string(ncp, i));
 	      if (k < sp->nchans - 1)
 		{
-		  sg_list_append(lst, "______________________________"); 
+		  slist_append(lst, "______________________________"); 
 		  ed++; 
 		} 
 	    }
@@ -455,12 +442,9 @@ static void remake_edit_history(GtkWidget *lst, chan_info *cp)
       if (eds >= 0)
 	{
 	  str = sp->filename;
-	  sg_list_append(lst, str);
+	  slist_append(lst, str);
 	  for (i = 1; i <= eds; i++) 
-	    {
-	      str = edit_to_string(cp, i);
-	      sg_list_append(lst, str);
-	    }
+	    slist_append(lst, str = edit_to_string(cp, i));
 	}
     }
   goto_graph(cp);
@@ -474,7 +458,7 @@ static void remake_edit_history(GtkWidget *lst, chan_info *cp)
 void reflect_edit_history_change(chan_info *cp)
 {
   /* new edit so it is added, and any trailing lines removed */
-  GtkWidget *lst;
+  slist *lst;
   snd_info *sp;
   if ((cp->in_as_one_edit) || (cp->cgx == NULL)) return;
   sp = cp->sound;
@@ -483,16 +467,9 @@ void reflect_edit_history_change(chan_info *cp)
       chan_info *ncp;
       ncp = sp->chans[0];
       if ((ncp) && (ncp->sound))
-	{
-	  lst = EDIT_HISTORY_LIST(ncp);
-	  if (lst) remake_edit_history(lst, ncp);
-	}
+	remake_edit_history(ncp);
     }
-  else
-    {
-      lst = EDIT_HISTORY_LIST(cp);
-      if (lst) remake_edit_history(lst, cp);
-    }
+  else remake_edit_history(cp);
 }
 
 void reflect_edit_counter_change(chan_info *cp)
@@ -508,17 +485,13 @@ void reflect_edit_counter_change(chan_info *cp)
     {
       chan_info *ncp;
       ncp = sp->chans[0];
-      flush_select = true;
-      sg_list_select(EDIT_HISTORY_LIST(ncp), cp->edit_ctr + cp->edhist_base);
-      flush_select = false;
+      slist_select(EDIT_HISTORY_LIST(ncp), cp->edit_ctr + cp->edhist_base);
     }
   else
     {
-      flush_select = true;
-      sg_list_select(EDIT_HISTORY_LIST(cp), cp->edit_ctr);
-      sg_list_moveto(EDIT_HISTORY_LIST(cp), cp->edit_ctr);
+      slist_select(EDIT_HISTORY_LIST(cp), cp->edit_ctr);
+      slist_moveto(EDIT_HISTORY_LIST(cp), cp->edit_ctr);
       goto_graph(cp);
-      flush_select = false;
     }
 }
 
@@ -693,9 +666,7 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Gtk
 	  cw[W_main_window] = gtk_hpaned_new();
 	  gtk_container_set_border_width(GTK_CONTAINER(cw[W_main_window]), 2);
 	  gtk_box_pack_start(GTK_BOX(w_snd_pane_box(sp)), cw[W_main_window], true, true, 0);
-	  cw[W_edhist] = sg_make_list(_("Edits"), cw[W_main_window], PANED_ADD1, (gpointer)cp, 0, NULL,
-				      GTK_SIGNAL_FUNC(history_select_callback), 0, 0, 0, 0);
-	  gtk_widget_show(cw[W_edhist]);
+	  cp->cgx->edhist_list = slist_new_with_title(_("Edits"), cw[W_main_window], NULL, 0, PANED_ADD1, history_select_callback, (void *)cp);
 	}
       else cw[W_main_window] = main;
 
@@ -957,12 +928,7 @@ void change_channel_style(snd_info *sp, channel_style_t new_style)
 	  int i;
 	  int height[1];
 	  if ((new_style == CHANNELS_SEPARATE) || (old_style == CHANNELS_SEPARATE))
-	    {
-	      GtkWidget* lst;
-	      lst = EDIT_HISTORY_LIST(sp->chans[0]);
-	      if (lst)
-		remake_edit_history(lst, sp->chans[0]);
-	    }
+	    remake_edit_history(sp->chans[0]);
 
 	  if (old_style == CHANNELS_COMBINED)
 	    {
@@ -1083,7 +1049,7 @@ edhist (8)gsy (9)gzy (10)main (11)sx_adj (12)sy_adj (13)zx_adj (14)zy_adj (15)gs
 	     XEN_CONS(XEN_WRAP_WIDGET(channel_sy(cp)),
 	      XEN_CONS(XEN_WRAP_WIDGET(channel_zx(cp)),
 	       XEN_CONS(XEN_WRAP_WIDGET(channel_zy(cp)),
-		XEN_CONS(XEN_WRAP_WIDGET(EDIT_HISTORY_LIST(cp)),
+		XEN_CONS(XEN_WRAP_WIDGET(EDIT_HISTORY_LIST(cp)->topics),
 		 XEN_CONS(XEN_WRAP_WIDGET(channel_gsy(cp)),
 		  XEN_CONS(XEN_WRAP_WIDGET(channel_gzy(cp)),
 		   XEN_CONS(XEN_WRAP_WIDGET(channel_main_pane(cp)),

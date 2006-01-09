@@ -66,6 +66,16 @@ typedef struct {
   GtkWidget *w;
 } axis_context;
 
+typedef struct slist {
+  GtkWidget *scroller, *topics, *label, *box;
+  GtkWidget **items;
+  int num_items, items_size, selected_item;
+  void (*select_callback)(const char *name, int row, void *data);
+  void *select_callback_data;
+} slist;
+
+#define SLIST_NO_ITEM_SELECTED -1
+
 typedef struct {
   /* we need two versions of each GC because the selected channel's colors can be different from the unselected channels' */
   GtkWidget **chan_widgets;
@@ -75,6 +85,7 @@ typedef struct {
   struct env_state *amp_env_state;
   axis_context *ax;
   bool selected;
+  slist *edhist_list;
 } chan_context;
 
 typedef struct {
@@ -91,13 +102,14 @@ typedef struct {
 typedef enum {NOT_A_SCANF_WIDGET, SRATE_WIDGET, CHANS_WIDGET, DATA_LOCATION_WIDGET, SAMPLES_WIDGET} scanf_widget_t;
 
 typedef struct {
-  GtkWidget *header_list, *format_list, *srate_text, *chans_text, *comment_text, *location_text, *samples_text, *error_text,*dialog;
+  GtkWidget *srate_text, *chans_text, *comment_text, *location_text, *samples_text, *error_text,*dialog;
   int current_type, current_format, formats, header_pos, format_pos;
   scanf_widget_t scanf_widget, error_widget;
   bool extracting;
   gulong *reflection_ids;
   int num_header_types;
   char **header_short_names;
+  slist *header_list, *format_list;
 } file_data;
 
 typedef struct {

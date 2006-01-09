@@ -693,15 +693,15 @@ void ps_fg(axis_context *ax);
 void ps_draw_line (axis_info *ap, int x0, int y0, int x1, int y1);
 void ps_draw_spectro_line(axis_info *ap, int color, Float x0, Float y0, Float x1, Float y1);
 void ps_fill_rectangle (axis_info *ap, int x0, int y0, int width, int height);
-void ps_draw_string (axis_info *ap, int x0, int y0, char *str);
+void ps_draw_string (axis_info *ap, int x0, int y0, const char *str);
 void ps_set_number_font(void);
 void ps_set_label_font(void);
 void ps_set_bold_peak_numbers_font(void);
 void ps_set_peak_numbers_font(void);
 void ps_set_tiny_numbers_font(void);
-bool snd_print(char *output);
-void region_print(char *output, char* title, chan_info *cp);
-void print_enved(char *output, int y0);
+bool snd_print(const char *output);
+void region_print(const char *output, const char* title, chan_info *cp);
+void print_enved(const char *output, int y0);
 void g_init_print(void);
 
 
@@ -1315,7 +1315,7 @@ file_info *make_file_info(const char *fullname, bool read_only, bool selected);
 file_info *free_file_info(file_info *hdr);
 file_info *copy_header(const char *fullname, file_info *ohdr);
 file_info *make_temp_header(const char *fullname, int srate, int chans, off_t samples, const char *caller);
-bool sound_file_p(char *name);
+bool sound_file_p(const char *name);
 void init_sound_file_extensions(void);
 void save_added_sound_file_extensions(FILE *fd);
 snd_info *snd_open_file(const char *filename, bool read_only);

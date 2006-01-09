@@ -1,48 +1,34 @@
 #include "snd.h"
 
 static GtkWidget *completion_dialog = NULL;
-static bool first_time = true;
-static GtkWidget *listener_text = NULL, *completion_list = NULL;
+static GtkWidget *listener_text = NULL;
+static slist *completion_list = NULL;
 static int printout_end;
 #define LISTENER_BUFFER gtk_text_view_get_buffer(GTK_TEXT_VIEW(listener_text))
 
 /* SOMEDAY: it appears that the gtk side's completion affects only the listener, and has no auto-unpost code */
 
-static void list_completions_callback(GtkTreeSelection *selection, gpointer *gp)
+static void list_completions_callback(const char *name, int row, void *data)
 {
-  GtkTreeIter iter;
-  gchar *value = NULL;
-  GtkTreeModel *model;
   int beg, end, i, j, old_len, new_len;
   char *old_text;
-  if (first_time)
-    {
-      GtkTreeSelection *tree;
-      first_time = false;
-      tree = gtk_tree_view_get_selection(GTK_TREE_VIEW(completion_list));
-      gtk_tree_selection_unselect_all(tree);
-      return;
-    }
-  if (!(gtk_tree_selection_get_selected(selection, &model, &iter))) return;
-  gtk_tree_model_get(model, &iter, 0, &value, -1);
   beg = printout_end + 1;
   end = gtk_text_buffer_get_char_count(LISTENER_BUFFER);
   old_text = sg_get_text(listener_text, beg, end);
   old_len = snd_strlen(old_text);
-  new_len = snd_strlen(value);
+  new_len = snd_strlen(name);
   for (i = old_len - 1, j = new_len - 1; j >= 0; j--)
     {
-      if (old_text[i] != value[j])
+      if (old_text[i] != name[j])
 	{
 	  i = old_len - 1;
-	  if (old_text[i] == value[j]) i--;
+	  if (old_text[i] == name[j]) i--;
 	}
       else i--;
     }
-  append_listener_text(0, (char *)(value - 1 + old_len - i));
+  append_listener_text(0, (char *)(name - 1 + old_len - i));
   if (old_text) g_free(old_text);
   gtk_widget_hide(completion_dialog);
-  if (value) g_free(value);
 }
 
 static void dismiss_completion_callback(GtkWidget *w, gpointer context)
@@ -63,7 +49,6 @@ static gint delete_completion_dialog(GtkWidget *w, GdkEvent *event, gpointer con
 
 static void start_completion_dialog(int num_items, char **items)
 {
-  GtkTreeSelection *tree;
   if (!completion_dialog)
     {
       GtkWidget *help_button, *dismiss_button;
@@ -88,33 +73,17 @@ static void start_completion_dialog(int num_items, char **items)
       gtk_widget_show(dismiss_button);
       gtk_widget_show(help_button);
   
-      first_time = true;
-      completion_list = sg_make_list(_("Completions"), 
-				     GTK_DIALOG(completion_dialog)->vbox,
-				     CONTAINER_ADD,
-				     NULL,
-				     num_items, items,
-				     GTK_SIGNAL_FUNC(list_completions_callback),
-				     0, 0, 0, 0);
-
+      completion_list = slist_new(GTK_DIALOG(completion_dialog)->vbox, items, num_items, CONTAINER_ADD, list_completions_callback, NULL);
       set_dialog_widget(COMPLETION_DIALOG, completion_dialog);
     }
   else 
     {
       int i;
-      GtkTreeIter iter;
-      GtkListStore *model;
-      model = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(completion_list)));
-      gtk_list_store_clear(model);
+      slist_clear(completion_list);
       for (i = 0; i < num_items; i++) 
-	{
-	  gtk_list_store_append(model, &iter);
-	  gtk_list_store_set(model, &iter, 0, items[i], -1);
-	}
+	slist_append(completion_list, items[i]);
       raise_dialog(completion_dialog);
     }
-  tree = gtk_tree_view_get_selection(GTK_TREE_VIEW(completion_list));
-  gtk_tree_selection_unselect_all(tree);
   gtk_widget_show(completion_dialog);
 }
 
@@ -707,7 +676,10 @@ GtkWidget *snd_entry_new(GtkWidget *container, snd_entry_bg_t with_white_backgro
   gtk_box_pack_start(GTK_BOX(container), text, true, true, 2);
   gtk_widget_show(text);
   if (with_white_background == WITH_WHITE_BACKGROUND) 
-    gtk_widget_modify_bg(text, GTK_STATE_NORMAL, ss->sgx->white);
+    {
+      gtk_widget_modify_bg(text, GTK_STATE_NORMAL, ss->sgx->white);
+      gtk_widget_modify_base(text, GTK_STATE_SELECTED, ss->sgx->white); 
+    }
   connect_mouse_to_text(text);
   return(text);
 }

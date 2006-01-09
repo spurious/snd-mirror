@@ -880,6 +880,7 @@ else
 	  CFLAGS="$OLD_CFLAGS"
 	], ,$GTK_LIBS)
 	# gtk 2.3.6
+	AC_CHECK_LIB(m, gtk_button_set_alignment, [AC_DEFINE(HAVE_GTK_BUTTON_SET_ALIGNMENT)], ,$GTK_LIBS)
 	# gtk 2.4.0|1|2|3|4: no API changes
 	AC_CHECK_LIB(m, gtk_about_dialog_new, [AC_DEFINE(HAVE_GTK_ABOUT_DIALOG_NEW)], ,$GTK_LIBS)
 	# gtk 2.5.0

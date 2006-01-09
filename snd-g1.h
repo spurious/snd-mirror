@@ -317,17 +317,9 @@ char *sg_get_text(GtkWidget *w, int start, int end);
 void sg_set_cursor(GtkWidget *w, int position);
 void sg_text_insert(GtkWidget *w, const char *text);
 int sg_cursor_position(GtkWidget *w);
-void sg_list_append(GtkWidget *w, const char *val);
-void sg_list_insert(GtkWidget *w, int row, const char *val);
-void sg_list_select(GtkWidget *lst, int row);
-void sg_list_moveto(GtkWidget *lst, int row);
-
 GtkWidget *make_scrolled_text(GtkWidget *parent, bool editable, GtkWidget *paner);
-GtkWidget *sg_make_list(const char *title, GtkWidget *parent, widget_add_t paned, gpointer gp, int num_items, char **items, 
-			GtkSignalFunc callback, int t1, int t2, int t3, int t4);
 void sg_text_delete(GtkWidget *w, int start, int end);
 void sg_make_resizable(GtkWidget *w);
-
 Cessator add_work_proc(GtkFunction func, gpointer data);
 GtkWidget *snd_gtk_dialog_new(void);
 GtkWidget *snd_gtk_label_new(const char *label, GdkColor *color);
@@ -338,6 +330,29 @@ void rotate_text(GdkDrawable *wn, GdkGC *gc, PangoFontDescription *font, char *t
 void draw_rotated_axis_label(chan_info *cp, GdkGC *gc, char *text, gint x0, gint y0);
 void ensure_scrolled_window_row_visible(widget_t list, int pos, int num_rows);
 
+slist *slist_new_with_table_data(GtkWidget *parent, char **initial_items, int num_items, widget_add_t paned,
+				 void (*click_callback)(const char *name, int row, void *data),
+				 void *click_data,
+				 int t1, int t2, int t3, int t4);
+slist *slist_new_with_title_and_table_data(const char *title,
+					   GtkWidget *parent, char **initial_items, int num_items, widget_add_t paned,
+					   void (*click_callback)(const char *name, int row, void *data),
+					   void *click_data,
+					   int t1, int t2, int t3, int t4);
+slist *slist_new(GtkWidget *parent, char **initial_items, int num_items, widget_add_t paned,
+		 void (*click_callback)(const char *name, int row, void *data),
+		 void *click_data);
+slist *slist_new_with_title(const char *title,
+			    GtkWidget *parent, char **initial_items, int num_items, widget_add_t paned,
+			    void (*click_callback)(const char *name, int row, void *data),
+			    void *click_data);
+int slist_row(GtkWidget *item);
+void slist_set_row(GtkWidget *item, int row);
+void slist_clear(slist *lst);
+void slist_append(slist *lst, const char *name);
+void slist_moveto(slist *lst, int row);
+void slist_select(slist *lst, int row);
+char *slist_selection(slist *lst);
 
 
 /* -------- snd-gsnd.c -------- */

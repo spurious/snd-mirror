@@ -333,7 +333,7 @@ dir_info *free_dir_info(dir_info *dp)
   return(NULL);
 }
   
-static void add_full_filename_to_dir_info(dir_info *dp, const char *name, const char *fullname)
+static void add_filename_to_dir_info(dir_info *dp, const char *name, const char *fullname)
 {
   dp->files[dp->len] = make_sort_info(name, fullname);
   dp->len++;
@@ -346,14 +346,28 @@ static void add_full_filename_to_dir_info(dir_info *dp, const char *name, const 
     }
 }
 
-static void add_filename_to_dir_info(dir_info *dp, const char *name)
+static void load_dir(DIR *dpos, dir_info *dp, bool (*filter)(const char *filename))
 {
+  struct dirent *dirp;
   char *fullname;
-  fullname = (char *)CALLOC(strlen(dp->dir_name) + strlen(name) + 2, sizeof(char));
+  int fullname_start = 0;
+  fullname = (char *)CALLOC(PATH_MAX, sizeof(char));
   strcpy(fullname, dp->dir_name);
-  strcat(fullname, name);
-  add_full_filename_to_dir_info(dp, name, fullname);
+  fullname_start = strlen(dp->dir_name);
+  while ((dirp = readdir(dpos)) != NULL)
+    if (dirp->d_name[0] != '.')
+      {
+	strcat(fullname, dirp->d_name);
+	if (filter(fullname))
+	  add_filename_to_dir_info(dp, dirp->d_name, fullname);
+	fullname[fullname_start] = '\0';
+      }
   FREE(fullname);
+}
+
+static bool not_directory_p(const char *name)
+{
+  return(!(directory_p(name)));
 }
 
 dir_info *find_files_in_dir(const char *name)
@@ -366,22 +380,8 @@ dir_info *find_files_in_dir(const char *name)
   dpos = opendir(name);
   if (dpos)
     {
-      char *fullname;
-      int fullname_start = 0;
-      struct dirent *dirp;
       dp = make_dir_info(name);
-      fullname = (char *)CALLOC(PATH_MAX, sizeof(char));
-      strcpy(fullname, name);
-      fullname_start = strlen(name);
-      while ((dirp = readdir(dpos)) != NULL)
-	if (dirp->d_name[0] != '.')
-	  {
-	    strcat(fullname, dirp->d_name);
-	    if (!(directory_p(fullname)))
-	      add_filename_to_dir_info(dp, dirp->d_name);
-	    fullname[fullname_start] = '\0';
-	  }
-      FREE(fullname);
+      load_dir(dpos, dp, not_directory_p);
 #if CLOSEDIR_VOID
       closedir(dpos);
 #else
@@ -404,24 +404,17 @@ dir_info *find_directories_in_dir(const char *name)
   dpos = opendir(name);
   if (dpos)
     {
-      char *fullname;
-      int fullname_start = 0;
-      struct dirent *dirp;
       dp = make_dir_info(name);
-      fullname = (char *)CALLOC(PATH_MAX, sizeof(char));
-      strcpy(fullname, name);
-      fullname_start = strlen(name);
       if (strcmp(name, "/") != 0)
-	add_filename_to_dir_info(dp, ".."); /* always back pointer */
-      while ((dirp = readdir(dpos)) != NULL)
-	if (dirp->d_name[0] != '.')
-	  {
-	    strcat(fullname, dirp->d_name);
-	    if (directory_p(fullname))
-	      add_filename_to_dir_info(dp, dirp->d_name);
-	    fullname[fullname_start] = '\0';
-	  }
-      FREE(fullname);
+	{
+	  char *fullname;
+	  fullname = (char *)CALLOC(PATH_MAX, sizeof(char));
+	  strcpy(fullname, name);
+	  strcat(fullname, "..");
+	  add_filename_to_dir_info(dp, "..", fullname); /* always back pointer */
+	  FREE(fullname);
+	}
+      load_dir(dpos, dp, directory_p);
 #if CLOSEDIR_VOID
       closedir(dpos);
 #else
@@ -435,14 +428,14 @@ dir_info *find_directories_in_dir(const char *name)
 }
 
 static XEN filter_func;
-static bool filter_xen(char *name)
+static bool filter_xen(const char *name)
 {
   return(XEN_TO_C_BOOLEAN(XEN_CALL_1(filter_func, C_TO_XEN_STRING(name), "filter func")));
 }
 
 dir_info *find_filtered_files_in_dir(const char *name, int filter_choice)
 {
-  bool (*filter)(char *filename);
+  bool (*filter)(const char *filename);
 #if (!HAVE_OPENDIR)
   return(NULL);
 #else
@@ -450,8 +443,6 @@ dir_info *find_filtered_files_in_dir(const char *name, int filter_choice)
   dir_info *dp = NULL;
   if ((dpos = opendir(name)) != NULL)
     {
-      struct dirent *dirp;
-      
       if (filter_choice == JUST_SOUNDS_FILTER)
 	filter = sound_file_p;
       else
@@ -470,11 +461,7 @@ dir_info *find_filtered_files_in_dir(const char *name, int filter_choice)
 	}
 
       dp = make_dir_info(name);
-      while ((dirp = readdir(dpos)) != NULL)
-	if ((dirp->d_name[0] != '.') &&
-	    (!(directory_p(dirp->d_name))) &&
-	    (filter(dirp->d_name)))
-	  add_filename_to_dir_info(dp, dirp->d_name);
+      load_dir(dpos, dp, filter);
 
 #if CLOSEDIR_VOID
       closedir(dpos);
@@ -488,7 +475,7 @@ dir_info *find_filtered_files_in_dir(const char *name, int filter_choice)
 #endif
 }
 
-static dir_info *find_files_from_pattern(dir_info *dp, char *pattern);
+static dir_info *find_files_from_pattern(dir_info *dp, const char *pattern);
 
 dir_info *find_filtered_files_in_dir_with_pattern(const char *name, int filter_choice, const char *pattern)
 {
@@ -496,7 +483,7 @@ dir_info *find_filtered_files_in_dir_with_pattern(const char *name, int filter_c
   if (filter_choice != NO_FILE_FILTER)
     full_dir = find_filtered_files_in_dir(name, filter_choice);
   else full_dir = find_files_in_dir(name);
-  pattern_dir = find_files_from_pattern(full_dir, (char *)pattern);
+  pattern_dir = find_files_from_pattern(full_dir, pattern);
   free_dir_info(full_dir);
   return(pattern_dir);
 }
@@ -571,10 +558,10 @@ void save_added_sound_file_extensions(FILE *fd)
       }
 }
 
-bool sound_file_p(char *name) /* can't be const (compiler confusion) */
+bool sound_file_p(const char *name)
 {
   int i;
-  char *dot, *sp;
+  const char *dot, *sp;
   dot = NULL;
   for (sp = name; (*sp) != '\0'; sp++) 
     if ((*sp) == '.') 
@@ -615,10 +602,10 @@ static dir_info *find_sound_files_in_dir(const char *name)
   return(find_filtered_files_in_dir(name, JUST_SOUNDS_FILTER));
 }
 
-static bool names_match(char *filename, char *pattern)
+static bool names_match(const char *filename, const char *pattern)
 {
   /* just "*" for wildcards here */
-  char *sn, *sp;
+  const char *sn, *sp;
   sn = filename;
   sp = pattern;
   if ((!sn) || (!sp)) 
@@ -647,14 +634,14 @@ static bool names_match(char *filename, char *pattern)
   return(true);
 }
 
-static dir_info *find_files_from_pattern(dir_info *dp, char *pattern)
+static dir_info *find_files_from_pattern(dir_info *dp, const char *pattern)
 {
   int i;
   dir_info *ndp;
   ndp = make_dir_info(dp->dir_name);
   for (i = 0; i < dp->len; i++)
     if (names_match(dp->files[i]->filename, pattern))
-      add_filename_to_dir_info(ndp, dp->files[i]->filename);
+      add_filename_to_dir_info(ndp, dp->files[i]->filename, dp->files[i]->full_filename);
   return(ndp);
 }
 

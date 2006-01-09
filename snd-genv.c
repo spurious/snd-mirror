@@ -5,10 +5,11 @@
 static GtkWidget *enved_dialog = NULL;
 static GtkWidget *applyB, *apply2B, *cancelB, *drawer, *showB, *saveB, *resetB, *firB = NULL;
 static GtkWidget *revertB, *undoB, *redoB, *printB, *brktxtL, *brkpixL, *graphB, *fltB, *ampB, *srcB, *rbrow, *clipB, *deleteB;
-static GtkWidget *nameL, *textL, *env_list, *dBB, *orderL;
+static GtkWidget *nameL, *textL, *dBB, *orderL;
 static GtkWidget *expB, *linB, *lerow, *baseScale, *baseLabel, *baseValue, *selectionB, *selrow, *revrow, *unrow, *saverow;
 static GtkObject *baseAdj, *orderAdj;
 static GdkGC *gc, *rgc, *ggc;
+static slist *env_list = NULL;
 
 static GdkPixmap *blank = NULL;
 
@@ -96,13 +97,10 @@ void make_scrolled_env_list (void)
 {
   int n, size;
   size = enved_all_envs_top();
-  gtk_list_store_clear(GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(env_list))));
+  slist_clear(env_list);
   for (n = 0; n < size; n++) 
-    {
-      char *str;
-      str = enved_all_names(n);
-      sg_list_append(env_list, str);
-    }
+    slist_append(env_list, enved_all_names(n));
+  gtk_widget_show(env_list->scroller);
 }
 
 void alert_enved_amp_env(snd_info *sp)
@@ -432,7 +430,7 @@ static gboolean drawer_button_press(GtkWidget *w, GdkEventButton *ev, gpointer d
     {
       int pos;
       pos = hit_env((int)(ev->x), (int)(ev->y), env_window_width, env_window_height);
-      sg_list_select(env_list, pos);
+      slist_select(env_list, pos);
       if ((pos >= 0) && 
 	  (pos < enved_all_envs_top())) 
 	{
@@ -627,27 +625,9 @@ static void print_button_pressed(GtkWidget *w, gpointer context)
   file_print_callback(w, context);
 }
 
-static void env_browse_callback(GtkTreeSelection *selection, gpointer *gp)
+static void env_browse_callback(const char *name, int row, void *data)
 {
-  GtkTreeIter iter;
-  gchar *value = NULL;
-  int size, n;
-  GtkTreeModel *model;
-  if (!(gtk_tree_selection_get_selected(selection, &model, &iter))) return;
-  gtk_tree_model_get(model, &iter, 0, &value, -1);
-  size = enved_all_envs_top();
-  for (n = 0; n < size; n++) 
-    {
-      char *str;
-      str = enved_all_names(n);
-      if (strcmp(str, value) == 0)
-	{
-	  select_or_edit_env(n);
-	  g_free(value);
-	  return;
-	}
-    }
-  if (value) g_free(value);
+  select_or_edit_env(row);
 }
 
 static void graph_button_callback(GtkWidget *w, gpointer context)
@@ -854,6 +834,8 @@ GtkWidget *create_envelope_editor (void)
       gtk_widget_show(drawer);
 
       showB = gtk_button_new_with_label(_("view envs"));
+      gtk_widget_set_name(showB, "env_button");
+      gtk_button_set_relief(GTK_BUTTON(showB), GTK_RELIEF_HALF);
       gtk_box_pack_start(GTK_BOX(leftbox), showB, false, false, BB_MARGIN);
       SG_SIGNAL_CONNECT(showB, "clicked", show_button_pressed, NULL);
       gtk_widget_show(showB);
@@ -863,11 +845,15 @@ GtkWidget *create_envelope_editor (void)
       gtk_widget_show(saverow);
 
       saveB = gtk_button_new_with_label(_(" save "));
+      gtk_widget_set_name(saveB, "env_button");
+      gtk_button_set_relief(GTK_BUTTON(saveB), GTK_RELIEF_HALF);
       gtk_box_pack_start(GTK_BOX(saverow), saveB, true, true, BB_MARGIN);
       SG_SIGNAL_CONNECT(saveB, "clicked", save_button_pressed, NULL);
       gtk_widget_show(saveB);
 
       printB = gtk_button_new_with_label(_(" print  "));
+      gtk_widget_set_name(printB, "env_button");
+      gtk_button_set_relief(GTK_BUTTON(printB), GTK_RELIEF_HALF);
       gtk_box_pack_start(GTK_BOX(saverow), printB, true, true, BB_MARGIN);
       SG_SIGNAL_CONNECT(printB, "clicked", print_button_pressed, NULL);
       gtk_widget_show(printB);
@@ -877,11 +863,15 @@ GtkWidget *create_envelope_editor (void)
       gtk_widget_show(revrow);
 
       revertB = gtk_button_new_with_label(_("revert "));
+      gtk_widget_set_name(revertB, "env_button");
+      gtk_button_set_relief(GTK_BUTTON(revertB), GTK_RELIEF_HALF);
       gtk_box_pack_start(GTK_BOX(revrow), revertB, true, true, BB_MARGIN);
       SG_SIGNAL_CONNECT(revertB, "clicked", revert_button_pressed, NULL);
       gtk_widget_show(revertB);
 
       deleteB = gtk_button_new_with_label(_("delete"));
+      gtk_widget_set_name(deleteB, "env_button");
+      gtk_button_set_relief(GTK_BUTTON(deleteB), GTK_RELIEF_HALF);
       gtk_box_pack_start(GTK_BOX(revrow), deleteB, true, true, BB_MARGIN);
       SG_SIGNAL_CONNECT(deleteB, "clicked", delete_button_pressed, NULL);
       gtk_widget_show(deleteB);
@@ -891,11 +881,15 @@ GtkWidget *create_envelope_editor (void)
       gtk_widget_show(unrow);
 
       undoB = gtk_button_new_with_label(_(" undo "));
+      gtk_widget_set_name(undoB, "env_button");
+      gtk_button_set_relief(GTK_BUTTON(undoB), GTK_RELIEF_HALF);
       gtk_box_pack_start(GTK_BOX(unrow), undoB, true, true, BB_MARGIN);
       SG_SIGNAL_CONNECT(undoB, "clicked", undo_button_pressed, NULL);
       gtk_widget_show(undoB);
 
       redoB = gtk_button_new_with_label(_(" redo "));
+      gtk_widget_set_name(redoB, "env_button");
+      gtk_button_set_relief(GTK_BUTTON(redoB), GTK_RELIEF_HALF);
       gtk_box_pack_start(GTK_BOX(unrow), redoB, true, true, BB_MARGIN);
       SG_SIGNAL_CONNECT(redoB, "clicked", redo_button_pressed, NULL);
       gtk_widget_show(redoB);
@@ -905,16 +899,22 @@ GtkWidget *create_envelope_editor (void)
       gtk_widget_show(rbrow);
 
       ampB = gtk_button_new_with_label(_("amp"));
+      gtk_widget_set_name(ampB, "env_button");
+      gtk_button_set_relief(GTK_BUTTON(ampB), GTK_RELIEF_HALF);
       gtk_box_pack_start(GTK_BOX(rbrow), ampB, true, true, BB_MARGIN);
       SG_SIGNAL_CONNECT(ampB, "clicked", amp_button_pressed, NULL);
       gtk_widget_show(ampB);
 
       fltB = gtk_button_new_with_label(_("flt"));
+      gtk_widget_set_name(fltB, "env_button");
+      gtk_button_set_relief(GTK_BUTTON(fltB), GTK_RELIEF_HALF);
       gtk_box_pack_start(GTK_BOX(rbrow), fltB, true, true, BB_MARGIN);
       SG_SIGNAL_CONNECT(fltB, "clicked", flt_button_pressed, NULL);
       gtk_widget_show(fltB);
 
       srcB = gtk_button_new_with_label(_("src"));
+      gtk_widget_set_name(srcB, "env_button");
+      gtk_button_set_relief(GTK_BUTTON(srcB), GTK_RELIEF_HALF);
       gtk_box_pack_start(GTK_BOX(rbrow), srcB, true, true, BB_MARGIN);
       SG_SIGNAL_CONNECT(srcB, "clicked", src_button_pressed, NULL);
       gtk_widget_show(srcB);
@@ -924,11 +924,15 @@ GtkWidget *create_envelope_editor (void)
       gtk_widget_show(lerow);
 
       linB = gtk_button_new_with_label(_("lin"));
+      gtk_widget_set_name(linB, "env_button");
+      gtk_button_set_relief(GTK_BUTTON(linB), GTK_RELIEF_HALF);
       gtk_box_pack_start(GTK_BOX(lerow), linB, true, true, BB_MARGIN);
       SG_SIGNAL_CONNECT(linB, "clicked", lin_button_pressed, NULL);
       gtk_widget_show(linB);
 
       expB = gtk_button_new_with_label(_("exp"));
+      gtk_widget_set_name(expB, "env_button");
+      gtk_button_set_relief(GTK_BUTTON(expB), GTK_RELIEF_HALF);
       gtk_box_pack_start(GTK_BOX(lerow), expB, true, true, BB_MARGIN);
       SG_SIGNAL_CONNECT(expB, "clicked", exp_button_pressed, NULL);
       gtk_widget_show(expB);
@@ -938,13 +942,14 @@ GtkWidget *create_envelope_editor (void)
       gtk_widget_show(selrow);
 
       selectionB = gtk_button_new_with_label(_("selection"));
+      gtk_widget_set_name(selectionB, "env_button");
+      gtk_button_set_relief(GTK_BUTTON(selectionB), GTK_RELIEF_HALF);
       gtk_box_pack_start(GTK_BOX(selrow), selectionB, true, true, BB_MARGIN);
       SG_SIGNAL_CONNECT(selectionB, "clicked", selection_button_pressed, NULL);
-       gtk_widget_show(selectionB);
+      gtk_widget_show(selectionB);
 
-      env_list = sg_make_list(_("envs:"), leftbox, BOX_PACK, NULL, 0, NULL, GTK_SIGNAL_FUNC(env_browse_callback),0,0,0,0);
+      env_list = slist_new_with_title(_("envs:"), leftbox, NULL, 0, BOX_PACK, env_browse_callback, NULL);
       if (enved_all_envs_top() > 0) make_scrolled_env_list();
-      gtk_widget_show(env_list);
 
       toprow = gtk_hbox_new(false, 0);
       gtk_box_pack_start(GTK_BOX(bottombox), toprow, false, false, 0);
@@ -1211,7 +1216,7 @@ static XEN g_enved_dialog_widgets(void)
 				XEN_CONS(XEN_WRAP_WIDGET(linB),
 				 XEN_CONS(XEN_WRAP_WIDGET(selectionB),
 				  XEN_CONS(XEN_WRAP_WIDGET(resetB),
-				   XEN_CONS(XEN_WRAP_WIDGET(env_list),
+				   XEN_CONS(XEN_WRAP_WIDGET(env_list->topics),
 				    XEN_CONS(XEN_WRAP_WIDGET(firB),
 				     XEN_EMPTY_LIST)))))))))))))))))))))))))));
   return(XEN_EMPTY_LIST);
