@@ -1079,8 +1079,8 @@ static void start_view_orientation_dialog(bool managed)
       reset_button = gtk_button_new_from_stock(GTK_STOCK_REVERT_TO_SAVED);
       gtk_widget_set_name(reset_button, "reset_button");
 
-      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(oid->dialog)->action_area), reset_button, false, true, 10);
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(oid->dialog)->action_area), dismiss_button, false, true, 10);
+      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(oid->dialog)->action_area), reset_button, false, true, 10);
       gtk_box_pack_end(GTK_BOX(GTK_DIALOG(oid->dialog)->action_area), help_button, false, true, 10);
       SG_SIGNAL_CONNECT(reset_button, "clicked", reset_orientation_callback, oid);
       SG_SIGNAL_CONNECT(dismiss_button, "clicked", dismiss_orientation_callback, oid);

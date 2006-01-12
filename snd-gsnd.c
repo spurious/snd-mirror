@@ -318,6 +318,12 @@ static gboolean minibuffer_key_callback(GtkWidget *w, GdkEventKey *event, gpoint
       clear_minibuffer(sp);
       return(true);
     }
+  if (event->keyval == GDK_Tab)
+    {
+      gtk_entry_set_text(GTK_ENTRY(w), info_completer((char *)gtk_entry_get_text(GTK_ENTRY(w)), data));
+      gtk_editable_set_position(GTK_EDITABLE(w), snd_strlen((char *)gtk_entry_get_text(GTK_ENTRY(w))));
+      return(true);
+    }
   return(false);
 }
 

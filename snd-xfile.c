@@ -502,7 +502,7 @@ static void file_list_popup_callback(Widget w, XtPointer context, XtPointer info
 		  set_label(fd->file_list_items[k], XEN_TO_C_STRING(XEN_CAR(XEN_VECTOR_REF(ss->file_sorters, i))));
 		  XtVaSetValues(fd->file_list_items[k], 
 				XmNbackground, ss->sgx->lighter_blue,
-				XmNuserData, i,
+				XmNuserData, SORT_XEN + i,
 				NULL);
 		  if (!(XtIsManaged(fd->file_list_items[k])))
 		    XtManageChild(fd->file_list_items[k]);
@@ -3026,6 +3026,7 @@ widget_t make_sound_save_as_dialog(bool managed)
 
   if (!save_sound_as)
     save_sound_as = new_save_as_dialog_info(SOUND_SAVE_AS);
+  /* TODO: do this (and below) need to check force reread flag? */
   sd = save_sound_as;
 
   sp = any_selected_sound();

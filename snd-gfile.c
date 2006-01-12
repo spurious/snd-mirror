@@ -12,15 +12,12 @@
    View:Files
 */
 
-/* TODO: minibuffer completion is broken (what about other?) */
-/* TODO: go-back icon invisible if not active */
-/* TODO: is cancel ignored after clicking menu top? */
-/* TODO: "ok" insensitive until filename ok */
-
-/* check fam during unmanaged, modify text -> moveto, sorters/filters, colorize?, other dialog button order (help at end at least)
+/* TODO: is cancel ignored after clicking menu top? any non-menu click
+ * TODO: just-sounds button got unset but effect continues?
+ * TODO: how to undo choice of a filter?
+ * TODO: added srates in drop down [srate_completer in snd-completion -- Motif side as well here]
+ * TODO: clear error stuff is commented out currently
  */
-
-/* PERHAPS: use "parent directory" rather than "..", and in Motif "[no matching files]" rather than "[   ]" */
 
 
 /* ---------------- file selector replacement ---------------- */
@@ -47,8 +44,6 @@ typedef struct fsb {
   int filter_choice, sorter_choice;
 
   /* popup info */
-  bool in_just_sounds_update; /* TODO: is this needed? */
-
   char **file_text_names, **file_filter_names;
   GtkWidget **file_text_items, **file_filter_items, **file_dir_items, **file_list_items;  /* menu items */
   int file_list_items_size;
@@ -147,7 +142,7 @@ static void fsb_update_lists(fsb *fs)
   else files = find_filtered_files_in_dir_with_pattern(fs->directory_name, fs->filter_choice, pattern);
 
   if (files->len > 1)
-    snd_sort(0, files->files, files->len); /* TODO: sorter choice here */
+    snd_sort(fs->sorter_choice, files->files, files->len);
 
   if (files->len == 0)
     slist_append(fs->file_list, NO_MATCHING_FILES);
@@ -271,6 +266,12 @@ static void fsb_files_popup_activate_callback(GtkWidget *w, gpointer context)
   reflect_file_in_popup((fsb *)context);
 }
 
+static void reflect_filter_in_popup(fsb *fs);
+static void fsb_filters_popup_activate_callback(GtkWidget *w, gpointer context)
+{
+  reflect_filter_in_popup((fsb *)context);
+}
+
 static bool fsb_directory_button_press_callback(GdkEventButton *ev, void *data);
 static bool fsb_files_button_press_callback(GdkEventButton *ev, void *data);
 
@@ -373,11 +374,12 @@ static fsb *make_fsb(const char *title, const char *file_lab, const char *ok_lab
     gtk_widget_show(fs->filters_mbar);
 
     fs->filters_menu = gtk_menu_new();
-    image = gtk_image_new_from_stock(GTK_STOCK_REVERT_TO_SAVED, GTK_ICON_SIZE_MENU);
+    image = g_object_ref(gtk_image_new_from_stock(GTK_STOCK_REVERT_TO_SAVED, GTK_ICON_SIZE_MENU));
     fs->filters_mitem = gtk_image_menu_item_new();
     gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(fs->filters_mitem), image);
     gtk_menu_item_set_submenu(GTK_MENU_ITEM(fs->filters_mitem), fs->filters_menu);
     gtk_menu_shell_append(GTK_MENU_SHELL(fs->filters_mbar), fs->filters_mitem);
+    SG_SIGNAL_CONNECT(fs->filters_mitem, "activate", fsb_filters_popup_activate_callback, (gpointer)fs);
     gtk_widget_show(image);
     gtk_widget_show(fs->filters_mitem);
   }
@@ -435,7 +437,7 @@ static fsb *make_fsb(const char *title, const char *file_lab, const char *ok_lab
     gtk_widget_show(fs->files_mbar);
 
     fs->files_menu = gtk_menu_new();
-    image = gtk_image_new_from_stock(GTK_STOCK_REVERT_TO_SAVED, GTK_ICON_SIZE_MENU);
+    image = g_object_ref(gtk_image_new_from_stock(GTK_STOCK_REVERT_TO_SAVED, GTK_ICON_SIZE_MENU));
     fs->files_mitem = gtk_image_menu_item_new();
     gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(fs->files_mitem), image);
     gtk_menu_item_set_submenu(GTK_MENU_ITEM(fs->files_mitem), fs->files_menu);
@@ -671,9 +673,7 @@ static void file_list_item_activate_callback(GtkWidget *w, gpointer context)
     {
       set_toggle_button(fs->just_sounds_button, false, false, (void *)fs);
       fs->filter_choice = choice - FILE_FILTER_OFFSET + 2;
-      fs->in_just_sounds_update = true; /* protect against unwanted text modify callback */
       force_directory_reread(fs);
-      fs->in_just_sounds_update = false;
     }
   else
     {
@@ -762,7 +762,7 @@ static bool fsb_files_button_press_callback(GdkEventButton *ev, void *data)
 		{
 		  gtk_label_set_text(GTK_LABEL(gtk_bin_get_child(GTK_BIN(fs->file_list_items[k]))),
 				     XEN_TO_C_STRING(XEN_CAR(XEN_VECTOR_REF(ss->file_sorters, i))));
-		  reset_user_int_data(G_OBJECT(fs->file_list_items[k]), i);
+		  reset_user_int_data(G_OBJECT(fs->file_list_items[k]), SORT_XEN + i);
 		  gtk_widget_modify_bg(fs->file_list_items[k], GTK_STATE_NORMAL, ss->sgx->lighter_blue);
 		  if (!(GTK_WIDGET_VISIBLE(fs->file_list_items[k])))
 		    gtk_widget_show(fs->file_list_items[k]);
@@ -831,9 +831,7 @@ static void just_sounds_callback(GtkWidget *w, gpointer data)
   if (GTK_TOGGLE_BUTTON(w)->active)
     fs->filter_choice = JUST_SOUNDS_FILTER;
   else fs->filter_choice = NO_FILE_FILTER;
-  fs->in_just_sounds_update = true;
   force_directory_reread(fs);
-  fs->in_just_sounds_update = false;
 }
 
 
@@ -886,6 +884,13 @@ static void play_selected_callback(GtkWidget *w, gpointer data)
   else file_dialog_stop_playing(dp);
 }
 
+
+static bool file_is_directory(fsb *fs)
+{
+  char *filename;
+  filename = fsb_file_text(fs);
+  return((!filename) || (directory_p(filename)));
+}
 
 #define NEW_INFO() snd_gtk_label_new(NULL, ss->sgx->highlight_color)
 #define CHANGE_INFO(Widget, Message) gtk_entry_set_text(GTK_ENTRY(Widget), Message)
@@ -1036,6 +1041,7 @@ void reflect_just_sounds(void)
 static void dialog_directory_select_callback(const char *dirname, void *context)
 {
   file_dialog_info *fd = (file_dialog_info *)context;
+  set_sensitive(fd->fs->ok_button, (!(file_is_directory(fd->fs))));
   unpost_file_info(fd);
 }
 
@@ -1068,6 +1074,7 @@ static void dialog_select_callback(const char *filename, void *context)
     {
       unpost_file_info(fd);
     }
+  set_sensitive(fd->fs->ok_button, (!(file_is_directory(fd->fs))));
 }
 
 static void open_innards(GtkWidget *vbox, void *data)
@@ -1101,6 +1108,53 @@ static void open_innards(GtkWidget *vbox, void *data)
   gtk_widget_show(fd->info2);
 }
 
+static gboolean reflect_text_in_open_button(GtkWidget *w, GdkEventKey *event, gpointer data)
+{
+  file_dialog_info *fd = (file_dialog_info *)data;
+  fsb *fs;
+  char *filename = NULL;
+  fs = fd->fs;
+
+  set_sensitive(fs->ok_button, (!(file_is_directory(fs))));
+
+  /* try to find the current partial filename in the files list, and move to it if found */
+  /* try to move file list to show possible matches,
+   *   if a sound file, show info
+   */
+  filename = fsb_file_text(fs);
+  if ((filename) && (*filename))
+    {
+      int i, pos = -1, l = 0, u;
+      dir_info *cur_dir;
+      cur_dir = fs->current_files;
+      u = cur_dir->len - 1;
+      while (true)
+	{
+	  int comp;
+	  if (u < l) break;
+	  i = (l + u) / 2;
+	  comp = strcmp(cur_dir->files[i]->full_filename, filename);
+	  if (comp == 0)
+	    {
+	      pos = i;
+	      break;
+	    }
+	  if (comp < 0) /* files[i]->full_filename less than filename */
+	    l = i + 1;
+	  else u = i - 1;
+	}
+      slist_moveto(fs->file_list, pos);
+      if ((mus_file_probe(filename)) && 
+	  (!directory_p(filename)))
+	{
+	  if (sound_file_p(filename))
+	    post_sound_info(fd->info1, fd->info2, filename, true);
+	}
+    }
+
+  return(false);
+}
+
 static file_dialog_info *make_file_dialog(int read_only, const char *title, const char *file_title, const char *ok_title,
 					  snd_dialog_t which_dialog, 
 					  GtkSignalFunc file_ok_proc,
@@ -1118,7 +1172,6 @@ static file_dialog_info *make_file_dialog(int read_only, const char *title, cons
 
   fd->fs = make_fsb(title, file_title, ok_title, open_innards, (void *)fd, stock, false);
   fs = fd->fs;
-  fs->in_just_sounds_update = false;
   fd->dp->fs = fs;
 
   SG_SIGNAL_CONNECT(fs->help_button, "clicked", file_help_proc, (gpointer)fd);
@@ -1155,6 +1208,10 @@ static file_dialog_info *make_file_dialog(int read_only, const char *title, cons
   CHANGE_INFO(fd->info2,"");
 
   SG_SIGNAL_CONNECT(fs->file_text, "activate", file_ok_proc, (gpointer)fd);
+
+  set_sensitive(fs->ok_button, (!(file_is_directory(fs))));
+  SG_SIGNAL_CONNECT(fs->file_text, "key_release_event", reflect_text_in_open_button, (gpointer)fd);
+
   set_dialog_widget(which_dialog, fs->dialog);
 
   return(fd);
@@ -1351,6 +1408,11 @@ widget_t make_open_file_dialog(bool read_only, bool managed)
 	  gtk_window_set_title(GTK_WINDOW(odat->fs->dialog), (char *)((read_only) ? _("View") : _("Open")));
 	  odat->file_dialog_read_only = read_only;
 	}
+      if (odat->fs->reread_directory) 
+	{
+	  force_directory_reread(odat->fs);
+	  odat->fs->reread_directory = false;
+	}
     }
   if (managed) gtk_widget_show(odat->fs->dialog);
   return(odat->fs->dialog);
@@ -1433,8 +1495,15 @@ widget_t make_mix_file_dialog(bool managed)
 			    (GtkSignalFunc)file_mix_cancel_callback,
 			    (GtkSignalFunc)file_mix_help_callback,
 			    NULL);
+  else
+    {
+      if (mdat->fs->reread_directory) 
+	{
+	  force_directory_reread(mdat->fs);
+	  mdat->fs->reread_directory = false;
+	}
+    }
   if (managed) gtk_widget_show(mdat->fs->dialog);
-  /* the ok button is special (gtk_dialog_add_button -> gtk_button_new_from_stock), so we can't change it */
   return(mdat->fs->dialog);
 }
 
@@ -1520,6 +1589,14 @@ widget_t make_insert_file_dialog(bool managed)
 			    (GtkSignalFunc)file_insert_cancel_callback,
 			    (GtkSignalFunc)file_insert_help_callback,
 			    NULL);
+  else
+    {
+      if (idat->fs->reread_directory) 
+	{
+	  force_directory_reread(idat->fs);
+	  idat->fs->reread_directory = false;
+	}
+    }
   if (managed) gtk_widget_show(idat->fs->dialog);
   return(idat->fs->dialog);
 }
@@ -1943,6 +2020,11 @@ static void c4_callback(GtkWidget *w, gpointer context)
     gtk_entry_set_text(GTK_ENTRY(fd->chans_text), (fd->extracting) ? "4" : "8");
 }
 
+static void srate_popup_callback(GtkWidget *w, gpointer context)
+{
+  /* TODO: tack on added srates */
+}
+
 file_data *make_file_data_panel(GtkWidget *parent, char *name, 
 				dialog_channels_t with_chan, 
 				int header_type, int data_format,
@@ -2000,14 +2082,17 @@ file_data *make_file_data_panel(GtkWidget *parent, char *name,
   gtk_box_pack_start(GTK_BOX(form), scbox, false, false, 4);
   gtk_widget_show(scbox);
 
-  /* TODO: srate/channels drop-down menus seem to be broken */
-
-  /* srate label is drop-down menu */
+  /* srate label is drop-down menu, but (sigh) you have to click in the label text, not the empty portion */
   sbar = gtk_menu_bar_new();
   gtk_box_pack_start(GTK_BOX(scbox), sbar, false, false, 0);
   gtk_widget_show(sbar);
 
   smenu = gtk_menu_new();
+  sitem = gtk_menu_item_new_with_label(_("srate:"));
+  gtk_menu_item_set_submenu(GTK_MENU_ITEM(sitem), smenu);
+  gtk_menu_shell_append(GTK_MENU_SHELL(sbar), sitem);
+  gtk_widget_show(sitem);
+
   s8 = gtk_menu_item_new_with_label("8000");
   s22 = gtk_menu_item_new_with_label("22050");
   s44 = gtk_menu_item_new_with_label("44100");
@@ -2023,18 +2108,14 @@ file_data *make_file_data_panel(GtkWidget *parent, char *name,
   gtk_widget_show(s44);
   gtk_widget_show(s48);
 
-  sitem = gtk_menu_item_new_with_label(_("srate:"));
-  gtk_widget_show(sitem);
-  gtk_menu_item_set_submenu(GTK_MENU_ITEM(sitem), smenu);
-  gtk_menu_shell_append(GTK_MENU_SHELL(sbar), sitem);
-
   fdat->srate_text = snd_entry_new(scbox, WITH_WHITE_BACKGROUND);
-  SG_SIGNAL_CONNECT(fdat->srate_text, "key_press_event", data_panel_srate_key_press, NULL);
+  SG_SIGNAL_CONNECT(fdat->srate_text, "key_press_event", data_panel_srate_key_press, NULL); /* srate completer */
 
-  SG_SIGNAL_CONNECT(s8,  "activate", s8_callback, (gpointer)fdat);
-  SG_SIGNAL_CONNECT(s22,  "activate", s22_callback, (gpointer)fdat);
-  SG_SIGNAL_CONNECT(s44,  "activate", s44_callback, (gpointer)fdat);
-  SG_SIGNAL_CONNECT(s48,  "activate", s48_callback, (gpointer)fdat);
+  SG_SIGNAL_CONNECT(s8, "activate", s8_callback, (gpointer)fdat);
+  SG_SIGNAL_CONNECT(s22, "activate", s22_callback, (gpointer)fdat);
+  SG_SIGNAL_CONNECT(s44, "activate", s44_callback, (gpointer)fdat);
+  SG_SIGNAL_CONNECT(s48, "activate", s48_callback, (gpointer)fdat);
+  SG_SIGNAL_CONNECT(sitem, "activate", srate_popup_callback, (gpointer)fdat);
 
   /* chans */
   /* chan also a drop-down menu */
@@ -2532,6 +2613,13 @@ static void save_as_help_callback(GtkWidget *w, gpointer data)
   save_as_dialog_help();
 }
 
+static void save_as_dialog_select_callback(const char *filename, void *data)
+{
+  fsb *fs = (fsb *)data;
+  set_sensitive(fs->ok_button, (!(file_is_directory(fs))));
+  if (fs->extract_button) set_sensitive(fs->extract_button, (!(file_is_directory(fs))));
+}
+
 static gint save_as_delete_callback(GtkWidget *w, GdkEvent *event, gpointer context)
 {
   save_as_dialog_info *sd = (save_as_dialog_info *)context;
@@ -2584,6 +2672,20 @@ static void save_innards(GtkWidget *vbox, void *data)
 					    WITH_WRITABLE_HEADERS);
 }
 
+static gboolean reflect_text_in_save_button(GtkWidget *w, GdkEventKey *event, gpointer data)
+{
+  fsb *fs = (fsb *)data;
+  set_sensitive(fs->ok_button, (!(file_is_directory(fs))));
+  return(false);
+}
+
+static gboolean reflect_text_in_extract_button(GtkWidget *w, GdkEventKey *event, gpointer data)
+{
+  fsb *fs = (fsb *)data;
+  set_sensitive(fs->extract_button, (!(file_is_directory(fs))));
+  return(false);
+}
+
 static void make_save_as_dialog(save_as_dialog_info *sd, char *sound_name, int header_type, int format_type)
 {
   char *file_string;
@@ -2591,36 +2693,52 @@ static void make_save_as_dialog(save_as_dialog_info *sd, char *sound_name, int h
   file_string = mus_format(_("save %s"), sound_name);
   if (!(sd->fs))
     {
+      fsb *fs;
       sd->header_type = header_type;
       sd->format_type = format_type;
       sd->fs = make_fsb(file_string, "save as:", NULL, save_innards, (void *)sd, GTK_STOCK_SAVE_AS, (sd->type != REGION_SAVE_AS));
+      fs = sd->fs;
 
       if (sd->type != REGION_SAVE_AS)
-	SG_SIGNAL_CONNECT(sd->fs->extract_button, "clicked", save_as_extract_callback, (void *)sd);
+	SG_SIGNAL_CONNECT(fs->extract_button, "clicked", save_as_extract_callback, (void *)sd);
 
-      SG_SIGNAL_CONNECT(sd->fs->help_button, "clicked", save_as_help_callback, (gpointer)sd);
-      SG_SIGNAL_CONNECT(sd->fs->file_text, "key_press_event", filer_key_press, NULL);
-      SG_SIGNAL_CONNECT(sd->fs->ok_button, "clicked", save_as_ok_callback, (gpointer)sd);
-      SG_SIGNAL_CONNECT(sd->fs->cancel_button, "clicked", save_as_cancel_callback, (gpointer)sd);
-      SG_SIGNAL_CONNECT(sd->fs->file_text, "changed", save_as_file_exists_check, (gpointer)sd);
+      SG_SIGNAL_CONNECT(fs->help_button, "clicked", save_as_help_callback, (gpointer)sd);
+      SG_SIGNAL_CONNECT(fs->file_text, "key_press_event", filer_key_press, NULL);
+      SG_SIGNAL_CONNECT(fs->ok_button, "clicked", save_as_ok_callback, (gpointer)sd);
+      SG_SIGNAL_CONNECT(fs->cancel_button, "clicked", save_as_cancel_callback, (gpointer)sd);
+      SG_SIGNAL_CONNECT(fs->file_text, "changed", save_as_file_exists_check, (gpointer)sd);
 
-      sd->panel_data->dialog = sd->fs->dialog;
+      fs->file_select_data = (void *)fs;
+      fs->file_select_callback = save_as_dialog_select_callback;
+      fs->directory_select_data = (void *)fs;
+      fs->directory_select_callback = save_as_dialog_select_callback;
+
+      sd->panel_data->dialog = fs->dialog;
       switch (sd->type)
 	{
 	case SOUND_SAVE_AS:
-	  set_dialog_widget(SOUND_SAVE_AS_DIALOG, sd->fs->dialog);
+	  set_dialog_widget(SOUND_SAVE_AS_DIALOG, fs->dialog);
 	  break;
 	case SELECTION_SAVE_AS:
-	  set_dialog_widget(SELECTION_SAVE_AS_DIALOG, sd->fs->dialog);
+	  set_dialog_widget(SELECTION_SAVE_AS_DIALOG, fs->dialog);
 	  break;
 	case REGION_SAVE_AS:
-	  set_dialog_widget(REGION_SAVE_AS_DIALOG, sd->fs->dialog);
+	  set_dialog_widget(REGION_SAVE_AS_DIALOG, fs->dialog);
 	  break;
 	default:
 	  snd_error("internal screw up");
 	  break;
 	}
-      SG_SIGNAL_CONNECT(sd->fs->dialog, "delete_event", save_as_delete_callback, (void *)sd);
+      SG_SIGNAL_CONNECT(fs->dialog, "delete_event", save_as_delete_callback, (void *)sd);
+
+      set_sensitive(fs->ok_button, (!(file_is_directory(fs))));
+      SG_SIGNAL_CONNECT(fs->file_text, "key_release_event", reflect_text_in_save_button, (gpointer)fs);
+
+      if (sd->type != REGION_SAVE_AS)
+	{
+	  set_sensitive(fs->extract_button, (!(file_is_directory(fs))));
+	  SG_SIGNAL_CONNECT(fs->file_text, "key_release_event", reflect_text_in_extract_button, (gpointer)fs);
+	}
     }
   else
     {
@@ -2973,8 +3091,8 @@ static void make_raw_data_dialog(raw_info *rp, const char *filename, const char 
   gtk_widget_set_name(okB, "doit_button");
 
   gtk_box_pack_start(GTK_BOX(GTK_DIALOG(rp->dialog)->action_area), okB, true, true, 10);
-  gtk_box_pack_start(GTK_BOX(GTK_DIALOG(rp->dialog)->action_area), resetB, true, true, 10);
   gtk_box_pack_start(GTK_BOX(GTK_DIALOG(rp->dialog)->action_area), cancelB, true, true, 10);
+  gtk_box_pack_start(GTK_BOX(GTK_DIALOG(rp->dialog)->action_area), resetB, true, true, 10);
   gtk_box_pack_end(GTK_BOX(GTK_DIALOG(rp->dialog)->action_area), helpB, true, true, 10);
 
   mus_header_raw_defaults(&raw_srate, &raw_chans, &raw_data_format); /* pick up defaults */
@@ -3255,8 +3373,8 @@ void make_new_file_dialog(void)
       gtk_widget_set_name(reset_button, "reset_button");
 
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(new_file_dialog)->action_area), new_file_ok_button, true, true, 10);
-      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(new_file_dialog)->action_area), reset_button, true, true, 10);
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(new_file_dialog)->action_area), cancel_button, true, true, 10);
+      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(new_file_dialog)->action_area), reset_button, true, true, 10);
       gtk_box_pack_end(GTK_BOX(GTK_DIALOG(new_file_dialog)->action_area), help_button, true, true, 10);
 
       hform = gtk_hbox_new(false, 0);
@@ -3599,8 +3717,8 @@ GtkWidget *edit_header(snd_info *sp)
       ep->save_button = gtk_button_new_from_stock(GTK_STOCK_SAVE);
       gtk_widget_set_name(ep->save_button, "doit_button");
 
-      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(ep->dialog)->action_area), cancel_button, true, true, 10);
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(ep->dialog)->action_area), ep->save_button, true, true, 10);
+      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(ep->dialog)->action_area), cancel_button, true, true, 10);
       gtk_box_pack_end(GTK_BOX(GTK_DIALOG(ep->dialog)->action_area), help_button, true, true, 10);
 
       ep->edat = make_file_data_panel(GTK_DIALOG(ep->dialog)->vbox, _("Edit Header"), 
@@ -4579,9 +4697,9 @@ GtkWidget *start_view_files_dialog_1(view_files_info *vdat, bool managed)
       resetB = gtk_button_new_with_label(_("Reset"));
       gtk_widget_set_name(resetB, "reset_button");
 
+      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(vdat->dialog)->action_area), newB, true, true, 10);
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(vdat->dialog)->action_area), dismissB, true, true, 10);
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(vdat->dialog)->action_area), resetB, true, true, 10);
-      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(vdat->dialog)->action_area), newB, true, true, 10);
       gtk_box_pack_end(GTK_BOX(GTK_DIALOG(vdat->dialog)->action_area), helpB, true, true, 10);
 
       SG_SIGNAL_CONNECT(vdat->dialog, "delete_event", view_files_delete_callback, (gpointer)vdat);

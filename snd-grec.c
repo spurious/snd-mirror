@@ -1935,9 +1935,9 @@ widget_t snd_record_file(void)
       record_button = gtk_button_new_with_label(_("Record"));
       gtk_widget_set_name(record_button, "doit_button");
 
+      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(recorder)->action_area), record_button, true, true, 10);
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(recorder)->action_area), dismiss_button, true, true, 10);
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(recorder)->action_area), reset_button, true, true, 10);
-      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(recorder)->action_area), record_button, true, true, 10);
       gtk_box_pack_end(GTK_BOX(GTK_DIALOG(recorder)->action_area), help_button, true, true, 10);
 
       SG_SIGNAL_CONNECT(dismiss_button, "clicked", dismiss_record_callback, NULL);
