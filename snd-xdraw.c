@@ -768,14 +768,14 @@ static void start_view_color_dialog(bool managed)
       Arg args[32];
       int n;
       XmString xhelp, xdismiss, xcutoff, xinvert, titlestr;
-      Widget mainform, list_label, light_label, sep, sep1;
+      Widget mainform, light_label, sep, sep1;
 
       /* create color chooser dialog window */
       ccd = (color_chooser_info *)CALLOC(1, sizeof(color_chooser_info));
 
       xdismiss = XmStringCreate(_("Dismiss"), XmFONTLIST_DEFAULT_TAG); /* needed by template dialog */
       xhelp = XmStringCreate(_("Help"), XmFONTLIST_DEFAULT_TAG);
-      titlestr = XmStringCreate(_("Color Editor"), XmFONTLIST_DEFAULT_TAG);
+      titlestr = XmStringCreate(_("Color"), XmFONTLIST_DEFAULT_TAG);
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
       XtSetArg(args[n], XmNcancelLabelString, xdismiss); n++;
@@ -812,18 +812,11 @@ static void start_view_color_dialog(bool managed)
 
       n = 0;
       if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
-      XtSetArg(args[n], XmNleftAttachment, XmATTACH_NONE); n++;
-      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_POSITION); n++;
+      XtSetArg(args[n], XmNleftPosition, 60); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
-      list_label = XtCreateManagedWidget(S_colormap, xmLabelWidgetClass, mainform, args, n);
-      
-      n = 0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
-      XtSetArg(args[n], XmNleftAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
-      XtSetArg(args[n], XmNtopWidget, list_label); n++;
+
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNlistMarginWidth, 3); n++;
       ccd->list = XmCreateScrolledList(mainform, "colormap-list", args, n);

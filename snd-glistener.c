@@ -73,7 +73,8 @@ static void start_completion_dialog(int num_items, char **items)
       gtk_widget_show(dismiss_button);
       gtk_widget_show(help_button);
   
-      completion_list = slist_new(GTK_DIALOG(completion_dialog)->vbox, items, num_items, CONTAINER_ADD, list_completions_callback, NULL);
+      completion_list = slist_new(GTK_DIALOG(completion_dialog)->vbox, items, num_items, CONTAINER_ADD);
+      completion_list->select_callback = list_completions_callback;
       set_dialog_widget(COMPLETION_DIALOG, completion_dialog);
     }
   else 

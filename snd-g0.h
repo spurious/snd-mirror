@@ -72,6 +72,8 @@ typedef struct slist {
   int num_items, items_size, selected_item;
   void (*select_callback)(const char *name, int row, void *data);
   void *select_callback_data;
+  bool (*button_press_callback)(GdkEventButton *event, void *data);
+  void *button_press_callback_data;
 } slist;
 
 #define SLIST_NO_ITEM_SELECTED -1

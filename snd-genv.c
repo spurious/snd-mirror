@@ -338,8 +338,8 @@ static void reflect_segment_state (void)
 {
   if (enved_dialog)
     {
-      gtk_widget_modify_bg(expB, GTK_STATE_NORMAL, (enved_style(ss) == ENVELOPE_EXPONENTIAL) ? ss->sgx->yellow : ss->sgx->basic_color);
-      gtk_widget_modify_bg(linB, GTK_STATE_NORMAL, (enved_style(ss) == ENVELOPE_LINEAR) ? ss->sgx->yellow : ss->sgx->basic_color);
+      gtk_widget_modify_bg(expB, GTK_STATE_NORMAL, (enved_style(ss) == ENVELOPE_EXPONENTIAL) ? ss->sgx->yellow : ss->sgx->lighter_blue);
+      gtk_widget_modify_bg(linB, GTK_STATE_NORMAL, (enved_style(ss) == ENVELOPE_LINEAR) ? ss->sgx->yellow : ss->sgx->lighter_blue);
       if ((active_env) && (!(showing_all_envs))) env_redisplay();
     }
 }
@@ -499,7 +499,7 @@ static void show_button_pressed(GtkWidget *w, gpointer context)
 static void selection_button_pressed(GtkWidget *w, gpointer context)
 {
   apply_to_selection = (!apply_to_selection);
-  gtk_widget_modify_bg(selectionB, GTK_STATE_NORMAL, (apply_to_selection) ? ss->sgx->yellow : ss->sgx->basic_color);
+  gtk_widget_modify_bg(selectionB, GTK_STATE_NORMAL, (apply_to_selection) ? ss->sgx->yellow : ss->sgx->lighter_blue);
   set_sensitive(apply2B, true);
   if ((enved_wave_p(ss)) && 
       (!showing_all_envs)) 
@@ -555,9 +555,9 @@ static void redo_button_pressed(GtkWidget *w, gpointer context)
 static void reflect_apply_state (void)
 {
   gtk_label_set_text(GTK_LABEL(nameL), _(env_names[enved_target(ss)]));
-  gtk_widget_modify_bg(ampB, GTK_STATE_NORMAL, (enved_target(ss) == ENVED_AMPLITUDE) ? ss->sgx->yellow : ss->sgx->basic_color);
-  gtk_widget_modify_bg(fltB, GTK_STATE_NORMAL, (enved_target(ss) == ENVED_SPECTRUM) ? ss->sgx->yellow : ss->sgx->basic_color);
-  gtk_widget_modify_bg(srcB, GTK_STATE_NORMAL, (enved_target(ss) == ENVED_SRATE) ? ss->sgx->yellow : ss->sgx->basic_color);
+  gtk_widget_modify_bg(ampB, GTK_STATE_NORMAL, (enved_target(ss) == ENVED_AMPLITUDE) ? ss->sgx->yellow : ss->sgx->lighter_blue);
+  gtk_widget_modify_bg(fltB, GTK_STATE_NORMAL, (enved_target(ss) == ENVED_SPECTRUM) ? ss->sgx->yellow : ss->sgx->lighter_blue);
+  gtk_widget_modify_bg(srcB, GTK_STATE_NORMAL, (enved_target(ss) == ENVED_SRATE) ? ss->sgx->yellow : ss->sgx->lighter_blue);
   if ((!showing_all_envs) && (enved_wave_p(ss))) env_redisplay();
 }
 
@@ -948,7 +948,8 @@ GtkWidget *create_envelope_editor (void)
       SG_SIGNAL_CONNECT(selectionB, "clicked", selection_button_pressed, NULL);
       gtk_widget_show(selectionB);
 
-      env_list = slist_new_with_title(_("envs:"), leftbox, NULL, 0, BOX_PACK, env_browse_callback, NULL);
+      env_list = slist_new_with_title(_("envs:"), leftbox, NULL, 0, BOX_PACK);
+      env_list->select_callback = env_browse_callback;
       if (enved_all_envs_top() > 0) make_scrolled_env_list();
 
       toprow = gtk_hbox_new(false, 0);
@@ -1122,7 +1123,7 @@ static void enved_reflect_selection(bool on)
       if ((apply_to_selection) && (!on))
 	{
 	  apply_to_selection = false;
-	  gtk_widget_modify_bg(selectionB, GTK_STATE_NORMAL, ss->sgx->basic_color);
+	  gtk_widget_modify_bg(selectionB, GTK_STATE_NORMAL, ss->sgx->lighter_blue);
 	}
       if ((enved_target(ss) != ENVED_SPECTRUM) && 
 	  (enved_wave_p(ss)) && 

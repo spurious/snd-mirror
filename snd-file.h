@@ -171,6 +171,7 @@ typedef struct {
 } dir_info;
 
 enum {NO_FILE_FILTER, JUST_SOUNDS_FILTER};
+#define PARENT_DIRECTORY ".."
 
 dir_info *free_dir_info (dir_info *dp);
 dir_info *find_files_in_dir(const char *name);

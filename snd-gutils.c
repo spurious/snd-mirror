@@ -715,6 +715,14 @@ static void slist_item_clicked(GtkWidget *w, gpointer gp)
 			      lst->select_callback_data);
 }
 
+static gboolean slist_item_button_pressed(GtkWidget *w, GdkEventButton *ev, gpointer data)
+{
+  slist *lst = (slist *)data;
+  if (lst->button_press_callback)
+    return((*(lst->button_press_callback))(ev, lst->button_press_callback_data));
+  return(false);
+}
+
 static GtkWidget *slist_new_item(slist *lst, const char *label, int row)
 {
   GtkWidget *item;
@@ -727,30 +735,26 @@ static GtkWidget *slist_new_item(slist *lst, const char *label, int row)
 #endif
   gtk_box_pack_start(GTK_BOX(lst->topics), item, false, false, 0);
   SG_SIGNAL_CONNECT(item, "clicked", slist_item_clicked, (gpointer)lst);
+  SG_SIGNAL_CONNECT(item, "button_press_event", slist_item_button_pressed, (gpointer)lst);
   gtk_widget_show(item);
   return(item);
 }
 
 slist *slist_new_with_title_and_table_data(const char *title,
 					   GtkWidget *parent, char **initial_items, int num_items, widget_add_t paned,
-					   void (*click_callback)(const char *name, int row, void *data),
-					   void *click_data,
 					   int t1, int t2, int t3, int t4)
 {
   slist *lst;
-  GtkWidget *topw;
+  GtkWidget *topw = NULL;
   int i;
   lst = (slist *)CALLOC(1, sizeof(slist));
   lst->selected_item = SLIST_NO_ITEM_SELECTED;
-  lst->select_callback = click_callback;
-  lst->select_callback_data = click_data;
 
   if (title)
     {
       lst->box = gtk_vbox_new(false, 0);
 
       lst->label = snd_gtk_label_new(title, ss->sgx->highlight_color);
-      /* gtk_entry_set_width_chars(GTK_ENTRY(lst->label), 2 + strlen(title)); */
       gtk_box_pack_start(GTK_BOX(lst->box), lst->label, false, false, 0);
       topw = lst->box;
     }
@@ -805,27 +809,19 @@ slist *slist_new_with_title_and_table_data(const char *title,
   return(lst);
 }
 
-slist *slist_new_with_table_data(GtkWidget *parent, char **initial_items, int num_items, widget_add_t paned,
-				 void (*click_callback)(const char *name, int row, void *data),
-				 void *click_data,
-				 int t1, int t2, int t3, int t4)
+slist *slist_new_with_table_data(GtkWidget *parent, char **initial_items, int num_items, widget_add_t paned, int t1, int t2, int t3, int t4)
 {
-  return(slist_new_with_title_and_table_data(NULL, parent, initial_items, num_items, paned, click_callback, click_data, t1, t2, t3, t4));
+  return(slist_new_with_title_and_table_data(NULL, parent, initial_items, num_items, paned, t1, t2, t3, t4));
 }
 
-slist *slist_new(GtkWidget *parent, char **initial_items, int num_items, widget_add_t paned,
-		 void (*click_callback)(const char *name, int row, void *data),
-		 void *click_data)
+slist *slist_new(GtkWidget *parent, char **initial_items, int num_items, widget_add_t paned)
 {
-  return(slist_new_with_title_and_table_data(NULL, parent, initial_items, num_items, paned, click_callback, click_data, 0, 0, 0, 0));
+  return(slist_new_with_title_and_table_data(NULL, parent, initial_items, num_items, paned, 0, 0, 0, 0));
 }
 
-slist *slist_new_with_title(const char *title,
-			    GtkWidget *parent, char **initial_items, int num_items, widget_add_t paned,
-			    void (*click_callback)(const char *name, int row, void *data),
-			    void *click_data)
+slist *slist_new_with_title(const char *title, GtkWidget *parent, char **initial_items, int num_items, widget_add_t paned)
 {
-  return(slist_new_with_title_and_table_data(title, parent, initial_items, num_items, paned, click_callback, click_data, 0, 0, 0, 0));
+  return(slist_new_with_title_and_table_data(title, parent, initial_items, num_items, paned, 0, 0, 0, 0));
 }
 
 void slist_clear(slist *lst)
@@ -892,7 +888,8 @@ void slist_select(slist *lst, int row)
 {
   if (lst->selected_item != SLIST_NO_ITEM_SELECTED)
     gtk_widget_modify_bg(lst->items[lst->selected_item], GTK_STATE_NORMAL, ss->sgx->white);
-  gtk_widget_modify_bg(lst->items[row], GTK_STATE_NORMAL, ss->sgx->light_blue);
+  if (row != SLIST_NO_ITEM_SELECTED)
+    gtk_widget_modify_bg(lst->items[row], GTK_STATE_NORMAL, ss->sgx->light_blue);
   lst->selected_item = row;
 }
 

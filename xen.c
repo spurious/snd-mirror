@@ -89,7 +89,7 @@ void xen_gc_mark(XEN val)
 
 double xen_to_c_double(XEN a) 
 {
-  double num;
+  double num = 0.0;
 #if HAVE_SCM_TO_SIGNED_INTEGER
   num = scm_to_double(a);
 #else

@@ -410,8 +410,8 @@ dir_info *find_directories_in_dir(const char *name)
 	  char *fullname;
 	  fullname = (char *)CALLOC(PATH_MAX, sizeof(char));
 	  strcpy(fullname, name);
-	  strcat(fullname, "..");
-	  add_filename_to_dir_info(dp, "..", fullname); /* always back pointer */
+	  strcat(fullname, PARENT_DIRECTORY);
+	  add_filename_to_dir_info(dp, PARENT_DIRECTORY, fullname); /* always back pointer */
 	  FREE(fullname);
 	}
       load_dir(dpos, dp, directory_p);
@@ -1927,38 +1927,38 @@ static char **ogg_data_formats = NULL, **flac_data_formats = NULL, **speex_data_
 void initialize_format_lists(void)
 {
   int i;
-  next_data_formats = (char **)CALLOC(NUM_NEXT_FORMATS, sizeof(char *));
+  next_data_formats = (char **)calloc(NUM_NEXT_FORMATS, sizeof(char *));
   for (i = 0; i < NUM_NEXT_FORMATS; i++) next_data_formats[i] = (char *)mus_data_format_to_string(next_dfs[i]);
-  ircam_data_formats = (char **)CALLOC(NUM_IRCAM_FORMATS, sizeof(char *));
+  ircam_data_formats = (char **)calloc(NUM_IRCAM_FORMATS, sizeof(char *));
   for (i = 0; i < NUM_IRCAM_FORMATS; i++) ircam_data_formats[i] = (char *)mus_data_format_to_string(ircam_dfs[i]);
-  wave_data_formats = (char **)CALLOC(NUM_WAVE_FORMATS, sizeof(char *));
+  wave_data_formats = (char **)calloc(NUM_WAVE_FORMATS, sizeof(char *));
   for (i = 0; i < NUM_WAVE_FORMATS; i++) wave_data_formats[i] = (char *)mus_data_format_to_string(wave_dfs[i]);
-  aiff_data_formats = (char **)CALLOC(NUM_AIFF_FORMATS, sizeof(char *));
+  aiff_data_formats = (char **)calloc(NUM_AIFF_FORMATS, sizeof(char *));
   for (i = 0; i < NUM_AIFF_FORMATS; i++) aiff_data_formats[i] = (char *)mus_data_format_to_string(aiff_dfs[i]);
-  aifc_data_formats = (char **)CALLOC(NUM_AIFC_FORMATS, sizeof(char *));
+  aifc_data_formats = (char **)calloc(NUM_AIFC_FORMATS, sizeof(char *));
   for (i = 0; i < NUM_AIFC_FORMATS; i++) aifc_data_formats[i] = (char *)mus_data_format_to_string(aifc_dfs[i]);
-  nist_data_formats = (char **)CALLOC(NUM_NIST_FORMATS, sizeof(char *));
+  nist_data_formats = (char **)calloc(NUM_NIST_FORMATS, sizeof(char *));
   for (i = 0; i < NUM_NIST_FORMATS; i++) nist_data_formats[i] = (char *)mus_data_format_to_string(nist_dfs[i]);
-  raw_data_formats = (char **)CALLOC(NUM_RAW_FORMATS, sizeof(char *));
+  raw_data_formats = (char **)calloc(NUM_RAW_FORMATS, sizeof(char *));
   for (i = 0; i < NUM_RAW_FORMATS; i++) raw_data_formats[i] = (char *)mus_data_format_to_string(raw_dfs[i]);
 #if HAVE_OGG
-  ogg_data_formats = (char **)CALLOC(NUM_OGG_FORMATS, sizeof(char *));
+  ogg_data_formats = (char **)calloc(NUM_OGG_FORMATS, sizeof(char *));
   for (i = 0; i < NUM_OGG_FORMATS; i++) ogg_data_formats[i] = (char *)mus_data_format_to_string(ogg_dfs[i]);
 #endif
 #if HAVE_FLAC
-  flac_data_formats = (char **)CALLOC(NUM_FLAC_FORMATS, sizeof(char *));
+  flac_data_formats = (char **)calloc(NUM_FLAC_FORMATS, sizeof(char *));
   for (i = 0; i < NUM_FLAC_FORMATS; i++) flac_data_formats[i] = (char *)mus_data_format_to_string(flac_dfs[i]);
 #endif
 #if HAVE_SPEEX
-  speex_data_formats = (char **)CALLOC(NUM_SPEEX_FORMATS, sizeof(char *));
+  speex_data_formats = (char **)calloc(NUM_SPEEX_FORMATS, sizeof(char *));
   for (i = 0; i < NUM_SPEEX_FORMATS; i++) speex_data_formats[i] = (char *)mus_data_format_to_string(speex_dfs[i]);
 #endif
 #if HAVE_MPEG
-  mpeg_data_formats = (char **)CALLOC(NUM_MPEG_FORMATS, sizeof(char *));
+  mpeg_data_formats = (char **)calloc(NUM_MPEG_FORMATS, sizeof(char *));
   for (i = 0; i < NUM_MPEG_FORMATS; i++) mpeg_data_formats[i] = (char *)mus_data_format_to_string(mpeg_dfs[i]);
 #endif
 #if HAVE_TIMIDITY
-  midi_data_formats = (char **)CALLOC(NUM_MIDI_FORMATS, sizeof(char *));
+  midi_data_formats = (char **)calloc(NUM_MIDI_FORMATS, sizeof(char *));
   for (i = 0; i < NUM_MIDI_FORMATS; i++) midi_data_formats[i] = (char *)mus_data_format_to_string(midi_dfs[i]);
 #endif
 }
@@ -1983,7 +1983,7 @@ char **short_writable_headers(int *len)
   int i;
   if (!writable_headers)
     {
-      writable_headers = (char **)CALLOC(NUM_POSSIBLE_HEADERS, sizeof(char *));
+      writable_headers = (char **)calloc(NUM_POSSIBLE_HEADERS, sizeof(char *));
       for (i = 0; i < NUM_BUILTIN_HEADERS; i++)
 	writable_headers[i] = builtin_headers[i];
 #if HAVE_OGG
@@ -2020,7 +2020,7 @@ char **short_readable_headers(int *len)
   int i;
   if (!readable_headers)
     {
-      readable_headers = (char **)CALLOC(NUM_POSSIBLE_HEADERS, sizeof(char *));
+      readable_headers = (char **)calloc(NUM_POSSIBLE_HEADERS, sizeof(char *));
       for (i = 0; i < NUM_BUILTIN_HEADERS; i++)
 	readable_headers[i] = builtin_headers[i];
 #if HAVE_OGG

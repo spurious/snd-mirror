@@ -691,7 +691,7 @@ static void start_view_color_dialog(bool managed)
       ccd = (color_chooser_info *)CALLOC(1, sizeof(color_chooser_info));
       ccd->dialog = snd_gtk_dialog_new();
       SG_SIGNAL_CONNECT(ccd->dialog, "delete_event", delete_color_dialog, NULL);
-      gtk_window_set_title(GTK_WINDOW(ccd->dialog), _("Color Editor"));
+      gtk_window_set_title(GTK_WINDOW(ccd->dialog), _("Color"));
       sg_make_resizable(ccd->dialog);
       gtk_container_set_border_width (GTK_CONTAINER(ccd->dialog), 4);
       gtk_widget_realize(ccd->dialog);
@@ -782,8 +782,9 @@ static void start_view_color_dialog(bool managed)
 	size = num_colormaps();
 	names = (char **)CALLOC(size, sizeof(char *));
 	for (i = 0; i < size; i++) names[i] = colormap_name(i);
-	ccd->list = slist_new_with_title_and_table_data(S_colormap, outer_table, names, size, TABLE_ATTACH, 
-							list_color_callback, (void *)ccd, 3, 4, 0, 3);
+	ccd->list = slist_new_with_title_and_table_data(S_colormap, outer_table, names, size, TABLE_ATTACH, 3, 4, 0, 3);
+	ccd->list->select_callback = list_color_callback;
+	ccd->list->select_callback_data = (void *)ccd;
 	FREE(names);
       }
 

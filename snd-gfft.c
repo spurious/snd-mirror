@@ -433,8 +433,8 @@ GtkWidget *fire_up_transform_dialog(bool managed)
 #endif
 
       /* SIZE */
-      size_list = slist_new_with_title_and_table_data(_("size"), outer_table, TRANSFORM_SIZES, NUM_TRANSFORM_SIZES, TABLE_ATTACH,
-						      size_browse_callback, NULL, 1, 2, 0, 3);
+      size_list = slist_new_with_title_and_table_data(_("size"), outer_table, TRANSFORM_SIZES, NUM_TRANSFORM_SIZES, TABLE_ATTACH, 1, 2, 0, 3);
+      size_list->select_callback = size_browse_callback;
 #if HAVE_GTK_BUTTON_SET_ALIGNMENT
       gtk_entry_set_alignment(GTK_ENTRY(size_list->label), 0.4);
 #endif
@@ -547,8 +547,8 @@ GtkWidget *fire_up_transform_dialog(bool managed)
       gtk_widget_show(display_frame);
 
       /* WAVELET */
-      wavelet_list = slist_new_with_title_and_table_data(_("wavelet"), outer_table, wavelet_names(), NUM_WAVELETS, TABLE_ATTACH,
-							 wavelet_browse_callback, NULL, 0, 1, 3, 6);
+      wavelet_list = slist_new_with_title_and_table_data(_("wavelet"), outer_table, wavelet_names(), NUM_WAVELETS, TABLE_ATTACH, 0, 1, 3, 6);
+      wavelet_list->select_callback = wavelet_browse_callback;
 #if HAVE_GTK_BUTTON_SET_ALIGNMENT
       gtk_entry_set_alignment(GTK_ENTRY(wavelet_list->label), 0.4);
 #endif
@@ -556,8 +556,8 @@ GtkWidget *fire_up_transform_dialog(bool managed)
       /* WINDOW */
       window_box = gtk_table_new(2, 3, false);
       gtk_table_attach_defaults(GTK_TABLE(outer_table), window_box, 1, 2, 3, 6);
-      window_list = slist_new_with_title_and_table_data(_("window"), window_box, FFT_WINDOWS, MUS_NUM_WINDOWS, TABLE_ATTACH,
-							window_browse_callback, NULL, 0, 1, 0, 1);
+      window_list = slist_new_with_title_and_table_data(_("window"), window_box, FFT_WINDOWS, MUS_NUM_WINDOWS, TABLE_ATTACH, 0, 1, 0, 1);
+      window_list->select_callback = window_browse_callback;
 #if HAVE_GTK_BUTTON_SET_ALIGNMENT
       gtk_entry_set_alignment(GTK_ENTRY(window_list->label), 0.4);
 #endif
@@ -839,8 +839,10 @@ void make_transform_type_list(void)
 	    transform_names[j++] = transform_name(i);
 	  }
       if (!transform_list)
-	transform_list = slist_new_with_title_and_table_data(_("type"), outer_table, transform_names, j, TABLE_ATTACH,
-							     transform_browse_callback, NULL, 0, 1, 0, 3);
+	{
+	  transform_list = slist_new_with_title_and_table_data(_("type"), outer_table, transform_names, j, TABLE_ATTACH, 0, 1, 0, 3);
+	  transform_list->select_callback = transform_browse_callback;
+	}
       else
 	{
 	  slist_clear(transform_list);

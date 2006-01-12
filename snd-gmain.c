@@ -818,7 +818,6 @@ widget \"*.the_unpane\" style \"default\"\n\
 style \"white_button\" = \"default_button\"\n\
 {\n\
   bg[NORMAL] = { 1.0, 1.0, 1.0 }\n\
-  bg[PRELIGHT] = { 1.0, 1.0, 1.0 }\n\
   bg[PRELIGHT] = { 0.94, 0.97, 1.0 }\n\
   fg[PRELIGHT] = { 0.0,  0.0,  0.0}\n\
   GtkButton::default-border = { 0, 0, 0, 0 }\n\
@@ -832,6 +831,8 @@ style \"white_button\" = \"default_button\"\n\
 widget \"*.white_button\" style \"white_button\"\n\
 style \"env_button\" = \"default_button\"\n\
 {\n\
+  bg[NORMAL] = { 0.94, 0.97, 1.0 }\n\
+  bg[INSENSITIVE] = { 0.94, 0.97, 1.0 }\n\
   GtkButton::default_border = { 0, 0, 0, 0 }\n\
   GtkButton::default_outside_border = { 0, 0, 0, 0 }\n\
   GtkButton::focus_line_width = 0\n\

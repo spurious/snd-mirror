@@ -331,21 +331,12 @@ void draw_rotated_axis_label(chan_info *cp, GdkGC *gc, char *text, gint x0, gint
 void ensure_scrolled_window_row_visible(widget_t list, int pos, int num_rows);
 
 slist *slist_new_with_table_data(GtkWidget *parent, char **initial_items, int num_items, widget_add_t paned,
-				 void (*click_callback)(const char *name, int row, void *data),
-				 void *click_data,
 				 int t1, int t2, int t3, int t4);
 slist *slist_new_with_title_and_table_data(const char *title,
 					   GtkWidget *parent, char **initial_items, int num_items, widget_add_t paned,
-					   void (*click_callback)(const char *name, int row, void *data),
-					   void *click_data,
 					   int t1, int t2, int t3, int t4);
-slist *slist_new(GtkWidget *parent, char **initial_items, int num_items, widget_add_t paned,
-		 void (*click_callback)(const char *name, int row, void *data),
-		 void *click_data);
-slist *slist_new_with_title(const char *title,
-			    GtkWidget *parent, char **initial_items, int num_items, widget_add_t paned,
-			    void (*click_callback)(const char *name, int row, void *data),
-			    void *click_data);
+slist *slist_new(GtkWidget *parent, char **initial_items, int num_items, widget_add_t paned);
+slist *slist_new_with_title(const char *title, GtkWidget *parent, char **initial_items, int num_items, widget_add_t paned);
 int slist_row(GtkWidget *item);
 void slist_set_row(GtkWidget *item, int row);
 void slist_clear(slist *lst);

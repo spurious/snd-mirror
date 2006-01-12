@@ -458,7 +458,6 @@ static void remake_edit_history(chan_info *cp)
 void reflect_edit_history_change(chan_info *cp)
 {
   /* new edit so it is added, and any trailing lines removed */
-  slist *lst;
   snd_info *sp;
   if ((cp->in_as_one_edit) || (cp->cgx == NULL)) return;
   sp = cp->sound;
@@ -666,7 +665,9 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Gtk
 	  cw[W_main_window] = gtk_hpaned_new();
 	  gtk_container_set_border_width(GTK_CONTAINER(cw[W_main_window]), 2);
 	  gtk_box_pack_start(GTK_BOX(w_snd_pane_box(sp)), cw[W_main_window], true, true, 0);
-	  cp->cgx->edhist_list = slist_new_with_title(_("Edits"), cw[W_main_window], NULL, 0, PANED_ADD1, history_select_callback, (void *)cp);
+	  cp->cgx->edhist_list = slist_new_with_title(_("Edits"), cw[W_main_window], NULL, 0, PANED_ADD1);
+	  cp->cgx->edhist_list->select_callback = history_select_callback;
+	  cp->cgx->edhist_list->select_callback_data = (void *)cp;
 	}
       else cw[W_main_window] = main;
 
@@ -1049,7 +1050,7 @@ edhist (8)gsy (9)gzy (10)main (11)sx_adj (12)sy_adj (13)zx_adj (14)zy_adj (15)gs
 	     XEN_CONS(XEN_WRAP_WIDGET(channel_sy(cp)),
 	      XEN_CONS(XEN_WRAP_WIDGET(channel_zx(cp)),
 	       XEN_CONS(XEN_WRAP_WIDGET(channel_zy(cp)),
-		XEN_CONS(XEN_WRAP_WIDGET(EDIT_HISTORY_LIST(cp)->topics),
+		XEN_CONS((EDIT_HISTORY_LIST(cp)) ? XEN_WRAP_WIDGET(EDIT_HISTORY_LIST(cp)->topics) : XEN_FALSE,
 		 XEN_CONS(XEN_WRAP_WIDGET(channel_gsy(cp)),
 		  XEN_CONS(XEN_WRAP_WIDGET(channel_gzy(cp)),
 		   XEN_CONS(XEN_WRAP_WIDGET(channel_main_pane(cp)),

@@ -269,10 +269,8 @@ static void create_help_monolog(void)
   gtk_text_view_set_left_margin(GTK_TEXT_VIEW(help_text), 10);
   SG_SIGNAL_CONNECT(help_text, "button_release_event", text_release_callback, NULL);
 
-  related_items = slist_new_with_title(_("related topics"), 
-				       GTK_DIALOG(help_dialog)->vbox,
-				       NULL, 0, BOX_PACK,
-				       help_browse_callback, NULL);
+  related_items = slist_new_with_title(_("related topics"), GTK_DIALOG(help_dialog)->vbox, NULL, 0, BOX_PACK);
+  related_items->select_callback = help_browse_callback;
 
   hbox = gtk_hbox_new(false, 0);
   gtk_box_pack_start(GTK_BOX(GTK_DIALOG(help_dialog)->vbox), hbox, false, false, 10); 

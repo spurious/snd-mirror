@@ -19,6 +19,7 @@
  *       or similarly, stops at "ok", starts src, clicks ok?
  * PERHAPS: audio:settings for display, perhaps reset -- as opposed to using the recorder
  * TODO: check just-sounds more carefully in snd-test
+ * TODO: how to remap button 3 on Mac?
  */
 
 #define FSB_BOX(Dialog, Child) XmFileSelectionBoxGetChild(Dialog, Child)
@@ -436,7 +437,7 @@ static Widget make_file_list_item(file_popup_info *fd, int choice)
     default: item_label = "unused";    break;
     }
 
-  XtSetArg(args[n], XmNuserData, (XtPointer)choice);           /* userData is index into sorters list */
+  XtSetArg(args[n], XmNuserData, choice);           /* userData is index into sorters list */
   w = XtCreateManagedWidget(item_label, xmPushButtonWidgetClass, fd->file_list_popup, args, n + 1);
   XtAddCallback(w, XmNactivateCallback, file_list_item_activate_callback, (void *)fd);
   return(w);
@@ -501,7 +502,7 @@ static void file_list_popup_callback(Widget w, XtPointer context, XtPointer info
 		  set_label(fd->file_list_items[k], XEN_TO_C_STRING(XEN_CAR(XEN_VECTOR_REF(ss->file_sorters, i))));
 		  XtVaSetValues(fd->file_list_items[k], 
 				XmNbackground, ss->sgx->lighter_blue,
-				XmNuserData, (XtPointer)i,
+				XmNuserData, i,
 				NULL);
 		  if (!(XtIsManaged(fd->file_list_items[k])))
 		    XtManageChild(fd->file_list_items[k]);
@@ -515,7 +516,7 @@ static void file_list_popup_callback(Widget w, XtPointer context, XtPointer info
 		{
 		  set_label(fd->file_list_items[k], XEN_TO_C_STRING(XEN_CAR(XEN_VECTOR_REF(ss->file_filters, i))));
 		  XtVaSetValues(fd->file_list_items[k], XmNbackground, ss->sgx->light_blue, 
-				XmNuserData, (XtPointer)(i + FILE_FILTER_OFFSET),
+				XmNuserData, i + FILE_FILTER_OFFSET,
 				NULL);
 		  if (!(XtIsManaged(fd->file_list_items[k])))
 		    XtManageChild(fd->file_list_items[k]);
