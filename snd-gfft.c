@@ -395,10 +395,10 @@ GtkWidget *fire_up_transform_dialog(bool managed)
       dismiss_button = gtk_button_new_from_stock(GTK_STOCK_QUIT);
       gtk_widget_set_name(dismiss_button, "quit_button");
 
-      color_button = gtk_button_new_with_label(_("Color"));
+      color_button = sg_button_new_from_stock_with_label(_("Color"), GTK_STOCK_SELECT_COLOR);
       gtk_widget_set_name(color_button, "doit_button");
 
-      orient_button = gtk_button_new_with_label(_("Orientation"));
+      orient_button = sg_button_new_from_stock_with_label(_("Orientation"), GTK_STOCK_PROPERTIES);
       gtk_widget_set_name(orient_button, "doit_again_button");
 
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(transform_dialog)->action_area), color_button, false, true, 10);

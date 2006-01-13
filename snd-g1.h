@@ -312,6 +312,8 @@ void set_user_int_data(GObject *obj, int data);
 void reset_user_int_data(GObject *obj, int data);
 gpointer get_user_data(GObject *obj);
 int get_user_int_data(GObject *obj);
+void set_stock_button_label(GtkWidget *w, const char *new_label);
+GtkWidget *sg_button_new_from_stock_with_label(const char *text, gchar *stock_id);
 
 char *sg_get_text(GtkWidget *w, int start, int end);
 void sg_set_cursor(GtkWidget *w, int position);

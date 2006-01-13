@@ -588,8 +588,8 @@ static void local_error2snd(int type, char *msg)
 
 bool plausible_sound_file_p(const char *name)
 {
-  if (empty_file_p(name)) return(false);
   int err = MUS_NO_ERROR;
+  if (empty_file_p(name)) return(false);
   old_error_handler = mus_error_set_handler(local_error2snd);
   err = mus_header_read(name);
   mus_error_set_handler(old_error_handler);

@@ -635,7 +635,7 @@ GtkWidget *make_mix_dialog(void)
       SG_SIGNAL_CONNECT(nextb, "clicked", mix_next_callback, NULL);
       gtk_widget_show(nextb);
 
-      apply_button = gtk_button_new_with_label(_("Apply Env"));
+      apply_button = sg_button_new_from_stock_with_label(_("Apply Env"), GTK_STOCK_APPLY);
       gtk_widget_set_name(apply_button, "doit_again_button");
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(mix_dialog)->action_area), apply_button, false, true, 10);
       SG_SIGNAL_CONNECT(apply_button, "clicked", apply_mix_dialog, NULL);
@@ -1607,7 +1607,7 @@ GtkWidget *make_track_dialog(void)
       SG_SIGNAL_CONNECT(track_nextb, "clicked", track_next_callback, NULL);
       gtk_widget_show(track_nextb);
 
-      apply_button = gtk_button_new_with_label(_("Apply Env"));
+      apply_button = sg_button_new_from_stock_with_label(_("Apply Env"), GTK_STOCK_APPLY);
       gtk_widget_set_name(apply_button, "doit_again_button");
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(track_dialog)->action_area), apply_button, false, true, 10);
       SG_SIGNAL_CONNECT(apply_button, "clicked", apply_track_dialog, NULL);

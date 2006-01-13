@@ -1,8 +1,6 @@
 #include "snd.h"
 #include "snd-menu.h"
 
-/* PERHAPS: use gtk stock images here */
-
 static const char *ml[NUM_MENU_WIDGETS];
 
 void set_menu_label(GtkWidget *w, const char *label) {if (w) set_button_label(w, label);}
@@ -226,83 +224,98 @@ GtkWidget *add_menu(void)
   ml[f_cascade_menu] = NULL;
   gtk_menu_item_set_submenu(GTK_MENU_ITEM(file_menu), file_cascade_menu);
 
-  /* stock images here perhaps, but are they compatible with scm uses of button label? */
   file_open_menu = gtk_image_menu_item_new_with_label(_("Open"));
   ml[f_open_menu] = _("Open");
   gtk_menu_shell_append(GTK_MENU_SHELL(file_cascade_menu), file_open_menu);
+  gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(file_open_menu), gtk_image_new_from_stock(GTK_STOCK_OPEN, GTK_ICON_SIZE_MENU));
   gtk_widget_show(file_open_menu);
   SG_SIGNAL_CONNECT(file_open_menu, "activate", file_open_callback, NULL);
 
-  file_close_menu = gtk_menu_item_new_with_label(_("Close"));
+  file_close_menu = gtk_image_menu_item_new_with_label(_("Close"));
   ml[f_close_menu] = _("Close");
   gtk_menu_shell_append(GTK_MENU_SHELL(file_cascade_menu), file_close_menu);
+  gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(file_close_menu), gtk_image_new_from_stock(GTK_STOCK_CLOSE, GTK_ICON_SIZE_MENU));
   gtk_widget_show(file_close_menu);
   set_sensitive(file_close_menu, false);
   SG_SIGNAL_CONNECT(file_close_menu, "activate", file_close_callback, NULL);
   
-  file_save_menu = gtk_menu_item_new_with_label(_("Save"));
+  file_save_menu = gtk_image_menu_item_new_with_label(_("Save"));
   ml[f_save_menu] = _("Save");
   gtk_menu_shell_append(GTK_MENU_SHELL(file_cascade_menu), file_save_menu);
+  gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(file_save_menu), gtk_image_new_from_stock(GTK_STOCK_SAVE, GTK_ICON_SIZE_MENU));
   gtk_widget_show(file_save_menu);
   set_sensitive(file_save_menu, false);
   SG_SIGNAL_CONNECT(file_save_menu, "activate", file_save_callback, NULL);
   
-  file_save_as_menu = gtk_menu_item_new_with_label(_("Save as"));
+  file_save_as_menu = gtk_image_menu_item_new_with_label(_("Save as"));
   ml[f_save_as_menu] = _("Save as");
   gtk_menu_shell_append(GTK_MENU_SHELL(file_cascade_menu), file_save_as_menu);
+  gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(file_save_as_menu), gtk_image_new_from_stock(GTK_STOCK_SAVE_AS, GTK_ICON_SIZE_MENU));
   gtk_widget_show(file_save_as_menu);
   set_sensitive(file_save_as_menu, false);
   SG_SIGNAL_CONNECT(file_save_as_menu, "activate", file_save_as_callback, NULL);
   
-  file_revert_menu = gtk_menu_item_new_with_label(_("Revert"));
+  file_revert_menu = gtk_image_menu_item_new_with_label(_("Revert"));
   ml[f_revert_menu] = _("Revert");
   gtk_menu_shell_append(GTK_MENU_SHELL(file_cascade_menu), file_revert_menu);
+  gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(file_revert_menu), gtk_image_new_from_stock(GTK_STOCK_REVERT_TO_SAVED, GTK_ICON_SIZE_MENU));
   gtk_widget_show(file_revert_menu);
   set_sensitive(file_revert_menu, false);
   SG_SIGNAL_CONNECT(file_revert_menu, "activate", file_revert_callback, NULL);
   
-  file_mix_menu = gtk_menu_item_new_with_label(_("Mix"));
+  file_mix_menu = gtk_image_menu_item_new_with_label(_("Mix"));
   ml[f_mix_menu] = _("Mix");
   gtk_menu_shell_append(GTK_MENU_SHELL(file_cascade_menu), file_mix_menu);
+  gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(file_mix_menu), gtk_image_new_from_stock(GTK_STOCK_ADD, GTK_ICON_SIZE_MENU));
   gtk_widget_show(file_mix_menu);
   set_sensitive(file_mix_menu, false);
   SG_SIGNAL_CONNECT(file_mix_menu, "activate", file_mix_callback_1, NULL);
 
-  file_insert_menu = gtk_menu_item_new_with_label(_("Insert"));
+  file_insert_menu = gtk_image_menu_item_new_with_label(_("Insert"));
   ml[f_insert_menu] = _("Insert");
   gtk_menu_shell_append(GTK_MENU_SHELL(file_cascade_menu), file_insert_menu);
+  gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(file_insert_menu), gtk_image_new_from_stock(GTK_STOCK_PASTE, GTK_ICON_SIZE_MENU));
   gtk_widget_show(file_insert_menu);
   set_sensitive(file_insert_menu, false);
   SG_SIGNAL_CONNECT(file_insert_menu, "activate", file_insert_callback_1, NULL);
 
-  file_update_menu = gtk_menu_item_new_with_label(_("Update"));
+  file_update_menu = gtk_image_menu_item_new_with_label(_("Update"));
   ml[f_update_menu] = _("Update");
   gtk_menu_shell_append(GTK_MENU_SHELL(file_cascade_menu), file_update_menu);
+  gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(file_update_menu), gtk_image_new_from_stock(GTK_STOCK_REFRESH, GTK_ICON_SIZE_MENU));
   gtk_widget_show(file_update_menu);
   set_sensitive(file_update_menu, false);
   SG_SIGNAL_CONNECT(file_update_menu, "activate", file_update_callback, NULL);
 
-  file_new_menu = gtk_menu_item_new_with_label(_("New"));
+  file_new_menu = gtk_image_menu_item_new_with_label(_("New"));
   ml[f_new_menu] = _("New");
   gtk_menu_shell_append(GTK_MENU_SHELL(file_cascade_menu), file_new_menu);
+  gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(file_new_menu), gtk_image_new_from_stock(GTK_STOCK_NEW, GTK_ICON_SIZE_MENU));
   gtk_widget_show(file_new_menu);
   SG_SIGNAL_CONNECT(file_new_menu, "activate", file_new_callback, NULL);
 
-  file_record_menu = gtk_menu_item_new_with_label(_("Record"));
+  file_record_menu = gtk_image_menu_item_new_with_label(_("Record"));
   ml[f_record_menu] = _("Record");
   gtk_menu_shell_append(GTK_MENU_SHELL(file_cascade_menu), file_record_menu);
+#ifdef GTK_STOCK_MEDIA_RECORD
+  gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(file_record_menu), gtk_image_new_from_stock(GTK_STOCK_MEDIA_RECORD, GTK_ICON_SIZE_MENU));
+#else
+  gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(file_record_menu), gtk_image_new_from_stock(GTK_STOCK_MEDIA_EXECUTE, GTK_ICON_SIZE_MENU));
+#endif
   gtk_widget_show(file_record_menu);
   SG_SIGNAL_CONNECT(file_record_menu, "activate", file_record_callback, NULL);
 
-  file_view_menu = gtk_menu_item_new_with_label(_("View"));
+  file_view_menu = gtk_image_menu_item_new_with_label(_("View"));
   ml[f_view_menu] = _("View");
   gtk_menu_shell_append(GTK_MENU_SHELL(file_cascade_menu), file_view_menu);
+  gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(file_view_menu), gtk_image_new_from_stock(GTK_STOCK_OPEN, GTK_ICON_SIZE_MENU));
   gtk_widget_show(file_view_menu);
   SG_SIGNAL_CONNECT(file_view_menu, "activate", file_view_callback, NULL);
 
-  file_print_menu = gtk_menu_item_new_with_label(_("Print"));
+  file_print_menu = gtk_image_menu_item_new_with_label(_("Print"));
   ml[f_print_menu] = _("Print");
   gtk_menu_shell_append(GTK_MENU_SHELL(file_cascade_menu), file_print_menu);
+  gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(file_print_menu), gtk_image_new_from_stock(GTK_STOCK_PRINT, GTK_ICON_SIZE_MENU));
   gtk_widget_show(file_print_menu);
   set_sensitive(file_print_menu, false);
   SG_SIGNAL_CONNECT(file_print_menu, "activate", file_print_callback_1, NULL);
@@ -313,9 +326,10 @@ GtkWidget *add_menu(void)
   gtk_widget_show(file_sep_menu);
   gtk_widget_modify_bg(file_sep_menu, GTK_STATE_NORMAL, ss->sgx->black);
 
-  file_exit_menu = gtk_menu_item_new_with_label(_("Exit"));
+  file_exit_menu = gtk_image_menu_item_new_with_label(_("Exit"));
   ml[f_exit_menu] = _("Exit");
   gtk_menu_shell_append(GTK_MENU_SHELL(file_cascade_menu), file_exit_menu);
+  gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(file_exit_menu), gtk_image_new_from_stock(GTK_STOCK_QUIT, GTK_ICON_SIZE_MENU));
   gtk_widget_show(file_exit_menu);
   SG_SIGNAL_CONNECT(file_exit_menu, "activate", file_exit_callback, NULL);
 
@@ -330,24 +344,27 @@ GtkWidget *add_menu(void)
   ml[e_cascade_menu] = NULL;
   gtk_menu_item_set_submenu(GTK_MENU_ITEM(edit_menu), edit_cascade_menu);
   
-  edit_undo_menu = gtk_menu_item_new_with_label(_("Undo"));
+  edit_undo_menu = gtk_image_menu_item_new_with_label(_("Undo"));
   ml[e_undo_menu] = _("Undo");
   gtk_menu_shell_append(GTK_MENU_SHELL(edit_cascade_menu), edit_undo_menu);
+  gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(edit_undo_menu), gtk_image_new_from_stock(GTK_STOCK_UNDO, GTK_ICON_SIZE_MENU));
   gtk_widget_show(edit_undo_menu);
   set_sensitive(edit_undo_menu, false);
   SG_SIGNAL_CONNECT(edit_undo_menu, "activate", edit_undo_callback, NULL);
 
-  edit_redo_menu = gtk_menu_item_new_with_label(_("Redo"));
+  edit_redo_menu = gtk_image_menu_item_new_with_label(_("Redo"));
   ml[e_redo_menu] = _("Redo");
   gtk_menu_shell_append(GTK_MENU_SHELL(edit_cascade_menu), edit_redo_menu);
+  gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(edit_redo_menu), gtk_image_new_from_stock(GTK_STOCK_REDO, GTK_ICON_SIZE_MENU));
   gtk_widget_show(edit_redo_menu);
   set_sensitive(edit_redo_menu, false);
   SG_SIGNAL_CONNECT(edit_redo_menu, "activate", edit_redo_callback, NULL);
 
 #if HAVE_EXTENSION_LANGUAGE
-  edit_find_menu = gtk_menu_item_new_with_label(_("Find"));
+  edit_find_menu = gtk_image_menu_item_new_with_label(_("Find"));
   ml[e_find_menu] = _("Find");
   gtk_menu_shell_append(GTK_MENU_SHELL(edit_cascade_menu), edit_find_menu);
+  gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(edit_find_menu), gtk_image_new_from_stock(GTK_STOCK_FIND, GTK_ICON_SIZE_MENU));
   gtk_widget_show(edit_find_menu);
   set_sensitive(edit_find_menu, false);
   SG_SIGNAL_CONNECT(edit_find_menu, "activate", edit_find_callback_1, NULL);
@@ -359,44 +376,54 @@ GtkWidget *add_menu(void)
   gtk_widget_show(edit_select_sep_menu);
   gtk_widget_modify_bg(edit_select_sep_menu, GTK_STATE_NORMAL, ss->sgx->black);
 
-  edit_cut_menu = gtk_menu_item_new_with_label(_("Delete Selection"));
+  edit_cut_menu = gtk_image_menu_item_new_with_label(_("Delete Selection"));
   ml[e_cut_menu] = _("Delete Selection");
   gtk_menu_shell_append(GTK_MENU_SHELL(edit_cascade_menu), edit_cut_menu);
+  gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(edit_cut_menu), gtk_image_new_from_stock(GTK_STOCK_CUT, GTK_ICON_SIZE_MENU));
   gtk_widget_show(edit_cut_menu);
   set_sensitive(edit_cut_menu, false);
   SG_SIGNAL_CONNECT(edit_cut_menu, "activate", edit_cut_callback, NULL);
 
-  edit_paste_menu = gtk_menu_item_new_with_label(_("Insert Selection"));
+  edit_paste_menu = gtk_image_menu_item_new_with_label(_("Insert Selection"));
   ml[e_paste_menu] = _("Insert Selection");
   gtk_menu_shell_append(GTK_MENU_SHELL(edit_cascade_menu), edit_paste_menu);
+  gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(edit_paste_menu), gtk_image_new_from_stock(GTK_STOCK_PASTE, GTK_ICON_SIZE_MENU));
   gtk_widget_show(edit_paste_menu);
   set_sensitive(edit_paste_menu, false);
   SG_SIGNAL_CONNECT(edit_paste_menu, "activate", edit_paste_callback, NULL);
 
-  edit_mix_menu = gtk_menu_item_new_with_label(_("Mix Selection"));
+  edit_mix_menu = gtk_image_menu_item_new_with_label(_("Mix Selection"));
   ml[e_mix_menu] = _("Mix Selection");
   gtk_menu_shell_append(GTK_MENU_SHELL(edit_cascade_menu), edit_mix_menu);
+  gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(edit_mix_menu), gtk_image_new_from_stock(GTK_STOCK_ADD, GTK_ICON_SIZE_MENU));
   gtk_widget_show(edit_mix_menu);
   set_sensitive(edit_mix_menu, false);
   SG_SIGNAL_CONNECT(edit_mix_menu, "activate", edit_mix_callback, NULL);
 
-  edit_play_menu = gtk_menu_item_new_with_label(_("Play Selection"));
+  edit_play_menu = gtk_image_menu_item_new_with_label(_("Play Selection"));
   ml[e_play_menu] = _("Play Selection");
   gtk_menu_shell_append(GTK_MENU_SHELL(edit_cascade_menu), edit_play_menu);
+#ifdef GTK_STOCK_MEDIA_PLAY
+  gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(edit_play_menu), gtk_image_new_from_stock(GTK_STOCK_MEDIA_PLAY, GTK_ICON_SIZE_MENU));
+#else
+  gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(edit_undo_menu), gtk_image_new_from_stock(GTK_STOCK_EXECUTE, GTK_ICON_SIZE_MENU));
+#endif
   gtk_widget_show(edit_play_menu);
   set_sensitive(edit_play_menu, false);
   SG_SIGNAL_CONNECT(edit_play_menu, "activate", edit_play_callback, NULL);
 
-  edit_save_as_menu = gtk_menu_item_new_with_label(_("Save Selection"));
+  edit_save_as_menu = gtk_image_menu_item_new_with_label(_("Save Selection"));
   ml[e_save_as_menu] = _("Save Selection");
   gtk_menu_shell_append(GTK_MENU_SHELL(edit_cascade_menu), edit_save_as_menu);
+  gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(edit_save_as_menu), gtk_image_new_from_stock(GTK_STOCK_SAVE_AS, GTK_ICON_SIZE_MENU));
   gtk_widget_show(edit_save_as_menu);
   set_sensitive(edit_save_as_menu, false);
   SG_SIGNAL_CONNECT(edit_save_as_menu, "activate", edit_save_as_callback, NULL);
 
-  edit_select_all_menu = gtk_menu_item_new_with_label(_("Select all"));
+  edit_select_all_menu = gtk_image_menu_item_new_with_label(_("Select all"));
   ml[e_select_all_menu] = _("Select all");
   gtk_menu_shell_append(GTK_MENU_SHELL(edit_cascade_menu), edit_select_all_menu);
+  gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(edit_select_all_menu), gtk_image_new_from_stock(GTK_STOCK_BOLD, GTK_ICON_SIZE_MENU));
   gtk_widget_show(edit_select_all_menu);
   set_sensitive(edit_select_all_menu, false);
   SG_SIGNAL_CONNECT(edit_select_all_menu, "activate", edit_select_all_callback, NULL);
@@ -407,15 +434,21 @@ GtkWidget *add_menu(void)
   gtk_widget_show(edit_edit_sep_menu);
   gtk_widget_modify_bg(edit_edit_sep_menu, GTK_STATE_NORMAL, ss->sgx->black);
 
-  edit_env_menu = gtk_menu_item_new_with_label(_("Edit Envelope"));
+  edit_env_menu = gtk_image_menu_item_new_with_label(_("Edit Envelope"));
   ml[e_env_menu] = _("Edit Envelope");
   gtk_menu_shell_append(GTK_MENU_SHELL(edit_cascade_menu), edit_env_menu);
+  gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(edit_env_menu), gtk_image_new_from_stock(GTK_STOCK_APPLY, GTK_ICON_SIZE_MENU));
   gtk_widget_show(edit_env_menu);
   SG_SIGNAL_CONNECT(edit_env_menu, "activate", edit_envelope_callback, NULL);
 
-  edit_header_menu = gtk_menu_item_new_with_label(_("Edit Header"));
+  edit_header_menu = gtk_image_menu_item_new_with_label(_("Edit Header"));
   ml[e_header_menu] = _("Edit Header");
   gtk_menu_shell_append(GTK_MENU_SHELL(edit_cascade_menu), edit_header_menu);
+#ifdef GTK_STOCK_EDIT
+  gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(edit_header_menu), gtk_image_new_from_stock(GTK_STOCK_EDIT, GTK_ICON_SIZE_MENU));
+#else
+  gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(edit_header_menu), gtk_image_new_from_stock(GTK_STOCK_CONVERT, GTK_ICON_SIZE_MENU));
+#endif
   gtk_widget_show(edit_header_menu);
   set_sensitive(edit_header_menu, false);
   SG_SIGNAL_CONNECT(edit_header_menu, "activate", edit_header_callback_1, NULL);
@@ -431,54 +464,66 @@ GtkWidget *add_menu(void)
   ml[v_cascade_menu] = NULL;
   gtk_menu_item_set_submenu(GTK_MENU_ITEM(view_menu), view_cascade_menu);
 
-  view_controls_menu = gtk_menu_item_new_with_label(_("Show controls"));
+  view_controls_menu = gtk_image_menu_item_new_with_label(_("Show controls"));
   ml[v_controls_menu] = _("Show controls");
   gtk_menu_shell_append(GTK_MENU_SHELL(view_cascade_menu), view_controls_menu);
+  gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(view_controls_menu), gtk_image_new_from_stock(GTK_STOCK_APPLY, GTK_ICON_SIZE_MENU));
   gtk_widget_show(view_controls_menu);
   SG_SIGNAL_CONNECT(view_controls_menu, "activate", view_controls_callback, NULL);
 
 #if HAVE_EXTENSION_LANGUAGE
-  view_listener_menu = gtk_menu_item_new_with_label(_("Open listener"));
+  view_listener_menu = gtk_image_menu_item_new_with_label(_("Open listener"));
   ml[v_listener_menu] = _("Open listener");
   gtk_menu_shell_append(GTK_MENU_SHELL(view_cascade_menu), view_listener_menu);
+  gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(view_listener_menu), gtk_image_new_from_stock(GTK_STOCK_EXECUTE, GTK_ICON_SIZE_MENU));
   gtk_widget_show(view_listener_menu);
   SG_SIGNAL_CONNECT(view_listener_menu, "activate", view_listener_callback, NULL);
 #endif
 
-  view_mix_dialog_menu = gtk_menu_item_new_with_label(_("Mixes"));
+  view_mix_dialog_menu = gtk_image_menu_item_new_with_label(_("Mixes"));
   ml[v_mix_dialog_menu] = _("Mixes");
   gtk_menu_shell_append(GTK_MENU_SHELL(view_cascade_menu), view_mix_dialog_menu);
+  gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(view_mix_dialog_menu), gtk_image_new_from_stock(GTK_STOCK_ADD, GTK_ICON_SIZE_MENU));
   gtk_widget_show(view_mix_dialog_menu);
   SG_SIGNAL_CONNECT(view_mix_dialog_menu, "activate", view_mix_dialog_callback, NULL);
 
-  view_track_dialog_menu = gtk_menu_item_new_with_label(_("Tracks"));
+  view_track_dialog_menu = gtk_image_menu_item_new_with_label(_("Tracks"));
   ml[v_track_dialog_menu] = _("Tracks");
   gtk_menu_shell_append(GTK_MENU_SHELL(view_cascade_menu), view_track_dialog_menu);
+  gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(view_track_dialog_menu), gtk_image_new_from_stock(GTK_STOCK_BOLD, GTK_ICON_SIZE_MENU));
   gtk_widget_show(view_track_dialog_menu);
   SG_SIGNAL_CONNECT(view_track_dialog_menu, "activate", view_track_dialog_callback, NULL);
 
-  view_region_menu = gtk_menu_item_new_with_label(_("Regions"));
+  view_region_menu = gtk_image_menu_item_new_with_label(_("Regions"));
   ml[v_region_menu] = _("Regions");
   gtk_menu_shell_append(GTK_MENU_SHELL(view_cascade_menu), view_region_menu);
+  gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(view_region_menu), gtk_image_new_from_stock(GTK_STOCK_CUT, GTK_ICON_SIZE_MENU));
   gtk_widget_show(view_region_menu);
   SG_SIGNAL_CONNECT(view_region_menu, "activate", view_region_callback_1, NULL);
   set_sensitive(view_region_menu, false);
 
-  view_files_menu = gtk_menu_item_new_with_label(_("Files"));
+  view_files_menu = gtk_image_menu_item_new_with_label(_("Files"));
   ml[v_files_menu] = _("Files");
   gtk_menu_shell_append(GTK_MENU_SHELL(view_cascade_menu), view_files_menu);
+#ifdef GTK_STOCK_FILE
+  gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(view_files_menu), gtk_image_new_from_stock(GTK_STOCK_FILE, GTK_ICON_SIZE_MENU));
+#else
+  gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(view_files_menu), gtk_image_new_from_stock(GTK_STOCK_HOME, GTK_ICON_SIZE_MENU));
+#endif
   gtk_widget_show(view_files_menu);
   SG_SIGNAL_CONNECT(view_files_menu, "activate", view_files_callback, NULL);
 
-  view_color_menu = gtk_menu_item_new_with_label(_("Color"));
+  view_color_menu = gtk_image_menu_item_new_with_label(_("Color"));
   ml[v_color_menu] = _("Color");
   gtk_menu_shell_append(GTK_MENU_SHELL(view_cascade_menu), view_color_menu);
+  gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(view_color_menu), gtk_image_new_from_stock(GTK_STOCK_SELECT_COLOR, GTK_ICON_SIZE_MENU));
   gtk_widget_show(view_color_menu);
   SG_SIGNAL_CONNECT(view_color_menu, "activate", view_color_callback_1, NULL);
 
-  view_orientation_menu = gtk_menu_item_new_with_label(_("Orientation"));
+  view_orientation_menu = gtk_image_menu_item_new_with_label(_("Orientation"));
   ml[v_orientation_menu] = _("Orientation");
   gtk_menu_shell_append(GTK_MENU_SHELL(view_cascade_menu), view_orientation_menu);
+  gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(view_orientation_menu), gtk_image_new_from_stock(GTK_STOCK_PREFERENCES, GTK_ICON_SIZE_MENU));
   gtk_widget_show(view_orientation_menu);
   SG_SIGNAL_CONNECT(view_orientation_menu, "activate", view_orientation_callback_1, NULL);
 
@@ -542,7 +587,6 @@ GtkWidget *add_menu(void)
 
   view_combine_menu = gtk_menu_item_new_with_label(_("Channel style"));
   ml[v_combine_menu] = _("Channel style");
-  gtk_menu_shell_append(GTK_MENU_SHELL(view_cascade_menu), view_combine_menu);
   gtk_widget_show(view_combine_menu);
 
   view_combine_cascade_menu = gtk_menu_new();
@@ -1000,51 +1044,62 @@ static void create_popup_menu(guint button, Tempus time)
       popup_menu = gtk_menu_new();
       gtk_widget_show(popup_menu);
 
-      popup_play_menu = gtk_menu_item_new_with_label(_("Play"));
+      popup_play_menu = gtk_image_menu_item_new_with_label(_("Play"));
       pl[W_pop_play] = _("Play");
       gtk_menu_shell_append(GTK_MENU_SHELL(popup_menu), popup_play_menu);
+#ifdef GTK_STOCK_MEDIA_PLAY
+      gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(popup_play_menu), gtk_image_new_from_stock(GTK_STOCK_MEDIA_PLAY, GTK_ICON_SIZE_MENU));
+#else
+      gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(popup_play_menu), gtk_image_new_from_stock(GTK_STOCK_EXECUTE, GTK_ICON_SIZE_MENU));
+#endif
       SG_SIGNAL_CONNECT(popup_play_menu, "activate", popup_play_callback, NULL);
       set_sensitive(popup_play_menu, (ss->active_sounds > 0));
       gtk_widget_show(popup_play_menu);
 
-      popup_undo_menu = gtk_menu_item_new_with_label(_("Undo"));
+      popup_undo_menu = gtk_image_menu_item_new_with_label(_("Undo"));
       pl[W_pop_undo] = _("Undo");
       gtk_menu_shell_append(GTK_MENU_SHELL(popup_menu), popup_undo_menu);
+      gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(popup_undo_menu), gtk_image_new_from_stock(GTK_STOCK_UNDO, GTK_ICON_SIZE_MENU));
       SG_SIGNAL_CONNECT(popup_undo_menu, "activate", popup_undo_callback, NULL);
       set_sensitive(popup_undo_menu, undo_possible);
       gtk_widget_show(popup_undo_menu);
       
-      popup_redo_menu = gtk_menu_item_new_with_label(_("Redo"));
+      popup_redo_menu = gtk_image_menu_item_new_with_label(_("Redo"));
       pl[W_pop_redo] = _("Redo");
       gtk_menu_shell_append(GTK_MENU_SHELL(popup_menu), popup_redo_menu);
+      gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(popup_redo_menu), gtk_image_new_from_stock(GTK_STOCK_REDO, GTK_ICON_SIZE_MENU));
       SG_SIGNAL_CONNECT(popup_redo_menu, "activate", popup_redo_callback, NULL);
       set_sensitive(popup_redo_menu, redo_possible);
       gtk_widget_show(popup_redo_menu);
       
-      popup_save_menu = gtk_menu_item_new_with_label(_("Save"));
+      popup_save_menu = gtk_image_menu_item_new_with_label(_("Save"));
       pl[W_pop_save] = _("Save");
       gtk_menu_shell_append(GTK_MENU_SHELL(popup_menu), popup_save_menu);
+      gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(popup_save_menu), gtk_image_new_from_stock(GTK_STOCK_SAVE, GTK_ICON_SIZE_MENU));
       SG_SIGNAL_CONNECT(popup_save_menu, "activate", popup_save_callback, NULL);
       set_sensitive(popup_save_menu, (ss->active_sounds > 0));
       gtk_widget_show(popup_save_menu);
 
-      popup_info_menu = gtk_menu_item_new_with_label(_("Info"));
+      popup_info_menu = gtk_image_menu_item_new_with_label(_("Info"));
       pl[W_pop_info] = _("Info");
       gtk_menu_shell_append(GTK_MENU_SHELL(popup_menu), popup_info_menu);
+      gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(popup_info_menu), gtk_image_new_from_stock(GTK_STOCK_HELP, GTK_ICON_SIZE_MENU));
       SG_SIGNAL_CONNECT(popup_info_menu, "activate", popup_info_callback, NULL);
       set_sensitive(popup_info_menu, (ss->active_sounds > 0));
       gtk_widget_show(popup_info_menu);
 
-      popup_apply_menu = gtk_menu_item_new_with_label(_("Apply controls"));
+      popup_apply_menu = gtk_image_menu_item_new_with_label(_("Apply controls"));
       pl[W_pop_apply] = _("Apply controls");
       gtk_menu_shell_append(GTK_MENU_SHELL(popup_menu), popup_apply_menu);
+      gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(popup_apply_menu), gtk_image_new_from_stock(GTK_STOCK_APPLY, GTK_ICON_SIZE_MENU));
       SG_SIGNAL_CONNECT(popup_apply_menu, "activate", popup_apply_callback, NULL);
       set_sensitive(popup_apply_menu, true);
       gtk_widget_show(popup_apply_menu);
 
-      popup_reset_menu = gtk_menu_item_new_with_label(_("Reset controls"));
+      popup_reset_menu = gtk_image_menu_item_new_with_label(_("Reset controls"));
       pl[W_pop_reset] = _("Reset controls");
       gtk_menu_shell_append(GTK_MENU_SHELL(popup_menu), popup_reset_menu);
+      gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(popup_reset_menu), gtk_image_new_from_stock(GTK_STOCK_REVERT_TO_SAVED, GTK_ICON_SIZE_MENU));
       SG_SIGNAL_CONNECT(popup_reset_menu, "activate", popup_reset_callback, NULL);
       set_sensitive(popup_reset_menu, true);
       gtk_widget_show(popup_reset_menu);

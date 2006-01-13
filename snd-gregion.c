@@ -83,10 +83,10 @@ static void unhighlight_region(void)
     {
       regrow *oldr;
       oldr = region_row(current_region);
-      gtk_widget_modify_bg(oldr->nm, GTK_STATE_NORMAL, ss->sgx->basic_color);
-      gtk_widget_modify_base(oldr->nm, GTK_STATE_NORMAL, ss->sgx->basic_color);
-      gtk_widget_modify_bg(oldr->rw, GTK_STATE_NORMAL, ss->sgx->basic_color);
-      gtk_widget_modify_base(oldr->rw, GTK_STATE_NORMAL, ss->sgx->basic_color);
+      gtk_widget_modify_bg(oldr->nm, GTK_STATE_NORMAL, ss->sgx->highlight_color);
+      gtk_widget_modify_base(oldr->nm, GTK_STATE_NORMAL, ss->sgx->highlight_color);
+      gtk_widget_modify_bg(oldr->rw, GTK_STATE_NORMAL, ss->sgx->highlight_color);
+      gtk_widget_modify_base(oldr->rw, GTK_STATE_NORMAL, ss->sgx->highlight_color);
     }
 }
 
@@ -333,6 +333,8 @@ static regrow *make_regrow(GtkWidget *ww, GtkSignalFunc play_callback, GtkSignal
   /* assume "ww" is a vbox widget in this case */
   r->rw = gtk_hbox_new(false, 0);
   gtk_box_pack_start(GTK_BOX(ww), r->rw, false, false, 0);
+  gtk_widget_modify_bg(r->rw, GTK_STATE_NORMAL, ss->sgx->highlight_color);
+  gtk_widget_modify_base(r->rw, GTK_STATE_NORMAL, ss->sgx->highlight_color);
   gtk_widget_show(r->rw);
 
   r->pl = gtk_check_button_new();
@@ -347,6 +349,8 @@ static regrow *make_regrow(GtkWidget *ww, GtkSignalFunc play_callback, GtkSignal
   SG_SIGNAL_CONNECT(r->nm, "enter_notify_event", label_enter_callback, r);
   SG_SIGNAL_CONNECT(r->nm, "leave_notify_event", label_leave_callback, r);
   set_user_data(G_OBJECT(r->nm), (gpointer)r);
+  gtk_widget_modify_bg(r->nm, GTK_STATE_NORMAL, ss->sgx->highlight_color);
+  gtk_widget_modify_base(r->nm, GTK_STATE_NORMAL, ss->sgx->highlight_color);
   gtk_widget_show(r->nm);
 
   return(r);
@@ -377,13 +381,13 @@ static void make_region_dialog(void)
   dismiss_button = gtk_button_new_from_stock(GTK_STOCK_QUIT);
   gtk_widget_set_name(dismiss_button, "quit_button");
 
-  insert_button = gtk_button_new_with_label(_("Insert"));
+  insert_button = sg_button_new_from_stock_with_label(_("Insert"), GTK_STOCK_PASTE);
   gtk_widget_set_name(insert_button, "doit_button");
 
-  mix_button = gtk_button_new_with_label(_("Mix"));
+  mix_button = sg_button_new_from_stock_with_label(_("Mix"), GTK_STOCK_ADD);
   gtk_widget_set_name(mix_button, "doit_again_button");
 
-  save_as_button = gtk_button_new_with_label(_("Save as"));
+  save_as_button = gtk_button_new_from_stock(GTK_STOCK_SAVE_AS);
   gtk_widget_set_name(save_as_button, "reset_button");
 
   gtk_box_pack_start(GTK_BOX(GTK_DIALOG(region_dialog)->action_area), dismiss_button, true, true, 4);

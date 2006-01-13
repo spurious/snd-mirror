@@ -150,7 +150,7 @@ static void apply_enved(void)
 	{
 	  set_sensitive(applyB, false);
 	  set_sensitive(apply2B, false);
-	  set_button_label(cancelB, _("Stop"));
+	  set_stock_button_label(cancelB, _("Stop"));
 	  force_update(cancelB);
 	  switch (enved_target(ss))
 	    {
@@ -203,7 +203,7 @@ static void apply_enved(void)
 	    }
 	  set_sensitive(applyB, true);
 	  set_sensitive(apply2B, true);
-	  set_button_label(cancelB, _("Dismiss"));
+	  set_stock_button_label(cancelB, _("Dismiss"));
 	}
     }
 }
@@ -779,16 +779,16 @@ GtkWidget *create_envelope_editor (void)
       helpB = gtk_button_new_from_stock(GTK_STOCK_HELP);
       gtk_widget_set_name(helpB, "help_button");
 
-      cancelB = gtk_button_new_with_label("Dismiss");
+      cancelB = sg_button_new_from_stock_with_label("Dismiss", GTK_STOCK_QUIT);
       gtk_widget_set_name(cancelB, "quit_button");
 
-      applyB = gtk_button_new_with_label(_("Apply"));
+      applyB = gtk_button_new_from_stock(GTK_STOCK_APPLY);
       gtk_widget_set_name(applyB, "doit_button");
 
-      apply2B = gtk_button_new_with_label(_("Undo&Apply"));
+      apply2B = sg_button_new_from_stock_with_label(_("Undo&Apply"), GTK_STOCK_UNDO);
       gtk_widget_set_name(apply2B, "doit_again_button");
 
-      resetB = gtk_button_new_with_label(_("Reset"));
+      resetB = sg_button_new_from_stock_with_label(_("Reset"), GTK_STOCK_REFRESH);
       gtk_widget_set_name(resetB, "reset_button");
 
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(enved_dialog)->action_area), applyB, false, true, 10);

@@ -80,7 +80,7 @@ static void print_ok_callback(GtkWidget *w, gpointer context)
       bool print_it;
       if (ss->print_choice == PRINT_SND)
 	{
-	  set_button_label(print_ok_button, _("Stop"));
+	  set_stock_button_label(print_ok_button, _("Stop"));
 	  nsp = any_selected_sound();
 	  mus_snprintf(print_string, PRINT_BUFFER_SIZE, _("printing %s"), nsp->short_filename);
 	  set_label(print_message, print_string);
@@ -135,7 +135,7 @@ static void print_ok_callback(GtkWidget *w, gpointer context)
   printing = NOT_PRINTING;
   if (ss->print_choice == PRINT_SND)
     {
-      set_button_label(print_ok_button, _("Print"));
+      set_stock_button_label(print_ok_button, _("Print"));
       mus_snprintf(print_string, PRINT_BUFFER_SIZE, _("print %s"), nsp->short_filename);
       set_label(print_message, print_string);
     }
@@ -163,7 +163,7 @@ static void start_print_dialog(void)
       dismiss_button = gtk_button_new_from_stock(GTK_STOCK_QUIT);
       gtk_widget_set_name(dismiss_button, "quit_button");
 
-      print_ok_button = gtk_button_new_with_label(_("Print"));
+      print_ok_button = sg_button_new_from_stock_with_label(_("Print"), GTK_STOCK_PRINT);
       gtk_widget_set_name(print_ok_button, "doit_button");
 
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(print_dialog)->action_area), print_ok_button, true, true, 4);

@@ -636,7 +636,7 @@ static void internal_trigger_set(Float val)
   rp->triggering = (val > 0.0);
   rp->triggered = (!rp->triggering);
   if (!(rp->recording)) /* else wait for current session to end (via click) */
-    set_button_label(record_button, (rp->triggering) ? _("Triggered Record") : _("Record"));
+    set_stock_button_label(record_button, (rp->triggering) ? _("Triggered Record") : _("Record"));
 }
 
 static void change_trigger_callback(GtkAdjustment *adj, gpointer context)
@@ -947,7 +947,7 @@ void unlock_recording_audio(void)
     {
       set_sensitive(record_button, true);
       set_sensitive(reset_button, true);
-      set_button_label(reset_button, _("Restart"));
+      set_stock_button_label(reset_button, _("Restart"));
     }
 }
 
@@ -1653,9 +1653,9 @@ static void reset_record_callback(GtkWidget *w, gpointer context)
       rp->recording = false;
       rp->triggered = (!rp->triggering);
       sensitize_control_buttons();
-      set_button_label(reset_button, _("Reset"));
+      set_stock_button_label(reset_button, _("Reset"));
       gtk_widget_modify_bg(record_button, GTK_STATE_NORMAL, ss->sgx->basic_color);
-      set_button_label(record_button, (rp->triggering) ? _("Triggered Record") : _("Record"));
+      set_stock_button_label(record_button, (rp->triggering) ? _("Triggered Record") : _("Record"));
       mus_file_close(rp->output_file_descriptor);
       rp->output_file_descriptor = -1;
       str = just_filename(rp->output_file);
@@ -1683,7 +1683,7 @@ static void reset_record_callback(GtkWidget *w, gpointer context)
       if (!(rp->taking_input))            /* restart */
 	{
 	  fire_up_recorder();
-	  set_button_label(reset_button, _("Reset"));
+	  set_stock_button_label(reset_button, _("Reset"));
 	}
     }
 }
@@ -1710,8 +1710,8 @@ void finish_recording(recorder_info *rp)
   Float duration;
   sensitize_control_buttons();
   gtk_widget_modify_bg(record_button, GTK_STATE_NORMAL, ss->sgx->basic_color);
-  set_button_label(reset_button, _("Reset"));
-  set_button_label(record_button, (rp->triggering) ? _("Triggered Record") : _("Record"));
+  set_stock_button_label(reset_button, _("Reset"));
+  set_stock_button_label(record_button, (rp->triggering) ? _("Triggered Record") : _("Record"));
   mus_file_close(rp->output_file_descriptor);
   mus_header_change_data_size(rp->output_file,
 			      rp->output_header_type,
@@ -1857,8 +1857,8 @@ static void record_button_callback(GtkWidget *w, gpointer context)
 	    }
 	}
       gtk_widget_modify_bg(record_button, GTK_STATE_NORMAL, ss->sgx->red);
-      set_button_label(reset_button, _("Cancel"));
-      set_button_label(record_button, _("Done"));
+      set_stock_button_label(reset_button, _("Cancel"));
+      set_stock_button_label(record_button, _("Done"));
       recorder_start_output_file(comment);
       if (comment) FREE(comment);
     }
@@ -1929,10 +1929,18 @@ widget_t snd_record_file(void)
       dismiss_button = gtk_button_new_from_stock(GTK_STOCK_QUIT);
       gtk_widget_set_name(dismiss_button, "quit_button");
 
-      reset_button = gtk_button_new_with_label(_("Reset"));
+#ifdef GTK_STOCK_MEDIA_STOP
+      reset_button = sg_button_new_from_stock_with_label(_("Reset"), GTK_STOCK_MEDIA_STOP);
+#else
+      reset_button = sg_button_new_from_stock_with_label(_("Reset"), GTK_STOCK_REFRESH);
+#endif
       gtk_widget_set_name(reset_button, "reset_button");
 
-      record_button = gtk_button_new_with_label(_("Record"));
+#ifdef GTK_STOCK_MEDIA_RECORD
+      record_button = sg_button_new_from_stock_with_label(_("Record"), GTK_STOCK_MEDIA_RECORD);
+#else
+      record_button = sg_button_new_from_stock_with_label(_("Record"), GTK_STOCK_EXECUTE);
+#endif
       gtk_widget_set_name(record_button, "doit_button");
 
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(recorder)->action_area), record_button, true, true, 10);

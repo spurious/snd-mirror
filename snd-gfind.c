@@ -62,6 +62,8 @@ static void edit_find_help(GtkWidget *w, gpointer context)
   find_dialog_help();
 } 
 
+void set_stock_button_label(GtkWidget *w, const char *new_label);
+
 static void edit_find_find(read_direction_t direction, GtkWidget *w, gpointer context) 
 { /* "Find" is the label here */
   char *str, *buf = NULL;
@@ -111,11 +113,11 @@ static void edit_find_find(read_direction_t direction, GtkWidget *w, gpointer co
     }
   if ((XEN_PROCEDURE_P(ss->search_proc)) || (ss->search_tree))
     {
-      set_button_label(cancelB, _("Stop"));
+      set_stock_button_label(cancelB, _("Stop"));
       redirect_xen_error_to(stop_search_if_error, NULL);
       str = global_search(direction);
       redirect_xen_error_to(NULL, NULL);
-      set_button_label(cancelB, _("Dismiss"));
+      set_stock_button_label(cancelB, _("Dismiss"));
       if ((str) && (*str)) set_label(edit_find_label, str);
     }
 } 
@@ -141,7 +143,7 @@ static void make_edit_find_dialog(bool managed)
       help_button = gtk_button_new_from_stock(GTK_STOCK_HELP);
       gtk_widget_set_name(help_button, "help_button");
 
-      cancelB = gtk_button_new_with_label(_("Dismiss")); /* not stock here -- label changes to Stop later */
+      cancelB = sg_button_new_from_stock_with_label(_("Dismiss"), GTK_STOCK_QUIT);
       gtk_widget_set_name(cancelB, "quit_button");
 
       previous_button = gtk_button_new_from_stock(GTK_STOCK_GO_BACK);

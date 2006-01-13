@@ -16,7 +16,6 @@
  * TODO: just-sounds button got unset but effect continues?
  * TODO: how to undo choice of a filter?
  * TODO: added srates in drop down [srate_completer in snd-completion -- Motif side as well here]
- * TODO: clear error stuff is commented out currently
  */
 
 
@@ -319,17 +318,21 @@ static fsb *make_fsb(const char *title, const char *file_lab, const char *ok_lab
   fs->cancel_button = gtk_button_new_from_stock(GTK_STOCK_CANCEL);
   gtk_widget_set_name(fs->cancel_button, "quit_button");
 
-  fs->filter_button = gtk_button_new_with_label(_("Filter"));
+  fs->filter_button = sg_button_new_from_stock_with_label(_("Filter"), GTK_STOCK_REFRESH);
   gtk_widget_set_name(fs->filter_button, "reset_button");
 
   if (with_extract)
     {
-      fs->extract_button = gtk_button_new_with_label(_("Extract"));
+      fs->extract_button = sg_button_new_from_stock_with_label(_("Extract"), GTK_STOCK_CUT);
       gtk_widget_set_name(fs->extract_button, "doit_again_button");
     }
 
   if (ok_lab)
-    fs->ok_button = gtk_button_new_with_label(ok_lab);
+    {
+      if (stock)
+	fs->ok_button = sg_button_new_from_stock_with_label(ok_lab, stock);
+      else fs->ok_button = gtk_button_new_with_label(ok_lab);
+    }
   else fs->ok_button = gtk_button_new_from_stock(stock);
   gtk_widget_set_name(fs->ok_button, "doit_button");
 
@@ -374,7 +377,7 @@ static fsb *make_fsb(const char *title, const char *file_lab, const char *ok_lab
     gtk_widget_show(fs->filters_mbar);
 
     fs->filters_menu = gtk_menu_new();
-    image = g_object_ref(gtk_image_new_from_stock(GTK_STOCK_REVERT_TO_SAVED, GTK_ICON_SIZE_MENU));
+    image = (GtkWidget *)g_object_ref(gtk_image_new_from_stock(GTK_STOCK_REVERT_TO_SAVED, GTK_ICON_SIZE_MENU));
     fs->filters_mitem = gtk_image_menu_item_new();
     gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(fs->filters_mitem), image);
     gtk_menu_item_set_submenu(GTK_MENU_ITEM(fs->filters_mitem), fs->filters_menu);
@@ -437,7 +440,7 @@ static fsb *make_fsb(const char *title, const char *file_lab, const char *ok_lab
     gtk_widget_show(fs->files_mbar);
 
     fs->files_menu = gtk_menu_new();
-    image = g_object_ref(gtk_image_new_from_stock(GTK_STOCK_REVERT_TO_SAVED, GTK_ICON_SIZE_MENU));
+    image = (GtkWidget *)g_object_ref(gtk_image_new_from_stock(GTK_STOCK_REVERT_TO_SAVED, GTK_ICON_SIZE_MENU));
     fs->files_mitem = gtk_image_menu_item_new();
     gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(fs->files_mitem), image);
     gtk_menu_item_set_submenu(GTK_MENU_ITEM(fs->files_mitem), fs->files_menu);
@@ -493,7 +496,9 @@ static void file_text_item_activate_callback(GtkWidget *w, gpointer context)
 {
   fsb *fs = (fsb *)context;
   fsb_file_set_text(fs, (const char *)(fs->file_text_names[get_user_int_data(G_OBJECT(w))]));
-  /* TODO: reflect in info and selection (slist_moveto) */
+
+  /* TODO: get directory, if not = current, reload lists, find this file in file lists and select, posting info */
+
 }
 
 static void reflect_file_in_popup(fsb *fs)
@@ -952,13 +957,8 @@ static void repost_sound_info(file_dialog_info *fd)
 {
   if ((mus_file_probe(fd->info_filename)) &&
       (plausible_sound_file_p(fd->info_filename)))
-    {
-      post_sound_info(fd->info1, fd->info2, fd->info_filename, true);
-    }
-  else
-    {
-      unpost_file_info(fd);
-    }
+    post_sound_info(fd->info1, fd->info2, fd->info_filename, true);
+  else unpost_file_info(fd);
 }
 
 static void watch_info_file(struct fam_info *fp, FAMEvent *fe)
@@ -971,7 +971,6 @@ static void watch_info_file(struct fam_info *fp, FAMEvent *fe)
     case FAMMoved:
       repost_sound_info((file_dialog_info *)(fp->data));
       break;
-
     default:
       /* ignore the rest */
       break;
@@ -1060,7 +1059,6 @@ static void dialog_select_callback(const char *filename, void *context)
       gtk_widget_show(fd->info2);
       gtk_widget_show(fd->dp->play_button);
 #if HAVE_FAM
-      /* TODO: is this the right thing? */
       if (fd->info_filename_watcher)
 	{
 	  fd->info_filename_watcher = fam_unmonitor_file(fd->info_filename, fd->info_filename_watcher);
@@ -1245,7 +1243,7 @@ static void clear_file_error_label(file_dialog_info *fd)
 /* key press event here, not key release -- the latter is triggered by the <return> release
  *   that triggered the error, so our error is immediately erased
  */
-static gulong key_press_handler_id = 0, selection_changed_handler_id = 0;
+static gulong key_press_handler_id = 0;
 
 static void clear_open_handlers(fsb *fs)
 {
@@ -1253,10 +1251,6 @@ static void clear_open_handlers(fsb *fs)
     {
       g_signal_handler_disconnect(fs->file_text, key_press_handler_id);
       key_press_handler_id = 0;
-    }
-  if (selection_changed_handler_id)
-    {
-      selection_changed_handler_id = 0;
     }
 }
 
@@ -1268,16 +1262,9 @@ static gboolean open_modify_key_press(GtkWidget *w, GdkEventKey *event, gpointer
   return(false);
 }
 
-static void open_modify_selection_changed(GtkWidget *w, gpointer data)
-{
-  file_dialog_info *fd = (file_dialog_info *)data;
-  clear_file_error_label(fd);
-  clear_open_handlers(fd->fs);
-}
-
 static void clear_error_if_open_changes(fsb *fs, void *data)
 {
-  /* TODO: select add-on here */
+  /* TODO: if file selected (or dir?) clear error also */
   key_press_handler_id = SG_SIGNAL_CONNECT(fs->file_text, "key_press_event", open_modify_key_press, data);
 }
 
@@ -1494,7 +1481,7 @@ widget_t make_mix_file_dialog(bool managed)
 			    (GtkSignalFunc)file_mix_delete_callback,
 			    (GtkSignalFunc)file_mix_cancel_callback,
 			    (GtkSignalFunc)file_mix_help_callback,
-			    NULL);
+			    GTK_STOCK_ADD);
   else
     {
       if (mdat->fs->reread_directory) 
@@ -1588,7 +1575,7 @@ widget_t make_insert_file_dialog(bool managed)
 			    (GtkSignalFunc)file_insert_delete_callback,
 			    (GtkSignalFunc)file_insert_cancel_callback,
 			    (GtkSignalFunc)file_insert_help_callback,
-			    NULL);
+			    GTK_STOCK_PASTE);
   else
     {
       if (idat->fs->reread_directory) 
@@ -1838,7 +1825,8 @@ static void post_file_dialog_error(const char *error_msg, void *ufd)
 /* key press event here, not key release -- the latter is triggered by the <return> release
  *   that triggered the error, so our error is immediately erased
  */
-static gulong key_press_filename_handler_id = 0, selection_changed_filename_handler_id = 0;
+static gulong key_press_filename_handler_id = 0;
+
 static void clear_filename_handlers(fsb *fs)
 {
   if (key_press_filename_handler_id)
@@ -1846,30 +1834,10 @@ static void clear_filename_handlers(fsb *fs)
       g_signal_handler_disconnect(fs->file_text, key_press_filename_handler_id);
       key_press_filename_handler_id = 0;
     }
-  if (selection_changed_filename_handler_id)
-    {
-      /* TODO select clear err */
-    }
+  /* TODO: select file/dir should also clear error */
 }
 
-static gboolean filename_modify_key_press(GtkWidget *w, GdkEventKey *event, gpointer data)
-{
-  file_data *fd = (file_data *)data;  
-  clear_dialog_error(fd);
-  /*
-  clear_filename_handlers(fd->fs);
-  */
-  return(false);
-}
-
-static void filename_modify_selection_changed(GtkWidget *w, gpointer data)
-{
-  file_data *fd = (file_data *)data;
-  clear_dialog_error(fd);
-  /*
-  clear_filename_handlers(fd->fs);
-  */
-}
+static gboolean filename_modify_key_press(GtkWidget *w, GdkEventKey *event, gpointer data);
 
 static void clear_error_if_filename_changes(fsb *fs, void *data)
 {
@@ -2250,6 +2218,14 @@ typedef struct {
 
 static save_as_dialog_info *save_sound_as = NULL, *save_selection_as = NULL, *save_region_as = NULL;
 
+static gboolean filename_modify_key_press(GtkWidget *w, GdkEventKey *event, gpointer data)
+{
+  save_as_dialog_info *sd = (save_as_dialog_info *)data;
+  clear_dialog_error(sd->panel_data);
+  clear_filename_handlers(sd->fs);
+  return(false);
+}
+
 static save_as_dialog_info *new_save_as_dialog_info(save_dialog_t type)
 {
   save_as_dialog_info *sd;
@@ -2327,10 +2303,9 @@ static void watch_save_as_file(struct fam_info *fp, FAMEvent *fe)
 
 static void save_as_watch_user_read_only(struct snd_info *sp, sp_watcher_reason_t reason, int loc)
 {
-  file_data *pdat = (file_data *)(sp->watchers[loc]->context);
-  /*
-  clear_dialog_error(pdat->panel_data);
-  */
+  save_as_dialog_info *sd;
+  sd = (save_as_dialog_info *)(sp->watchers[loc]->context);
+  clear_dialog_error(sd->panel_data);
   remove_sp_watcher(sp, loc);
 }
 
@@ -2372,7 +2347,7 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
 	msg = _("nothing to save");
       else msg = _("nothing to extract");
       post_file_dialog_error((const char *)msg, (void *)(sd->panel_data));
-      clear_error_if_filename_changes(sd->fs, (void *)(sd->panel_data));
+      clear_error_if_filename_changes(sd->fs, (void *)sd);
       return;
     }
 
@@ -2384,7 +2359,7 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
 	msg = _("can't save: no file name given");
       else msg = _("can't extract: no file name given");
       post_file_dialog_error((const char *)msg, (void *)(sd->panel_data));
-      clear_error_if_filename_changes(sd->fs, (void *)(sd->panel_data));
+      clear_error_if_filename_changes(sd->fs, (void *)sd);
       return;
     }
 
@@ -2443,7 +2418,7 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
     {
       msg = mus_format(_("%s cancelled by %s"), (saving) ? "save" : "extract", S_before_save_as_hook);
       post_file_dialog_error((const char *)msg, (void *)(sd->panel_data));
-      clear_error_if_filename_changes(sd->fs, (void *)(sd->panel_data));      
+      clear_error_if_filename_changes(sd->fs, (void *)sd);      
       FREE(msg);
       FREE(fullname);
       if (comment) FREE(comment);
@@ -2460,9 +2435,9 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
 	{
 	  msg = mus_format(_("can't overwrite %s (it is write-protected)"), sp->short_filename);
 	  post_file_dialog_error((const char *)msg, (void *)(sd->panel_data));
-	  clear_error_if_filename_changes(sd->fs, (void *)(sd->panel_data)); 
+	  clear_error_if_filename_changes(sd->fs, (void *)sd); 
 	  if (sp->user_read_only)
-	    add_sp_watcher(sp, SP_READ_ONLY_WATCHER, save_as_watch_user_read_only, (void *)(sd->panel_data));
+	    add_sp_watcher(sp, SP_READ_ONLY_WATCHER, save_as_watch_user_read_only, (void *)sd);
 	  FREE(msg);
 	  FREE(fullname);
 	  if (comment) FREE(comment);
@@ -2585,7 +2560,7 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
     {
       msg = mus_format("%s as %s: %s (%s)", (saving) ? "save" : "extract chan", str, io_error_name(io_err), snd_io_strerror());
       post_file_dialog_error((const char *)msg, (void *)(sd->panel_data));
-      clear_error_if_filename_changes(sd->fs, (void *)(sd->panel_data));
+      clear_error_if_filename_changes(sd->fs, (void *)sd);
       FREE(msg);
     }
   FREE(fullname);
@@ -3084,7 +3059,7 @@ static void make_raw_data_dialog(raw_info *rp, const char *filename, const char 
   cancelB = gtk_button_new_from_stock(GTK_STOCK_CANCEL);
   gtk_widget_set_name(cancelB, "quit_button");
 
-  resetB = gtk_button_new_with_label(_("Reset"));
+  resetB = sg_button_new_from_stock_with_label(_("Reset"), GTK_STOCK_REFRESH);
   gtk_widget_set_name(resetB, "reset_button");
 
   okB = gtk_button_new_from_stock(GTK_STOCK_OK);
@@ -3188,7 +3163,7 @@ static void new_file_undoit(void)
 	  new_file_handler_id = 0;
 	}
     }
-  set_button_label(new_file_ok_button, _("Ok"));
+  set_stock_button_label(new_file_ok_button, _("Ok"));
   new_file_watcher = fam_unmonitor_file(new_file_filename, new_file_watcher);
 }
 
@@ -3257,7 +3232,7 @@ static void new_file_ok_callback(GtkWidget *w, gpointer context)
 	    {
 	      msg = mus_format(_("%s exists. If you want to overwrite it, click 'DoIt'"), newer_name);
 	      new_file_watcher = fam_monitor_file(new_file_filename, NULL, watch_new_file);
-	      set_button_label(new_file_ok_button, _("DoIt"));
+	      set_stock_button_label(new_file_ok_button, _("DoIt"));
 	      post_file_dialog_error((const char *)msg, (void *)ndat);
 	      clear_error_if_new_filename_changes(new_file_dialog, (void *)ndat);
 	      FREE(msg);
@@ -3366,10 +3341,10 @@ void make_new_file_dialog(void)
       cancel_button = gtk_button_new_from_stock(GTK_STOCK_CANCEL);
       gtk_widget_set_name(cancel_button, "quit_button");
 
-      new_file_ok_button = gtk_button_new_with_label(_("Ok"));
+      new_file_ok_button = sg_button_new_from_stock_with_label(_("Ok"), GTK_STOCK_NEW);
       gtk_widget_set_name(new_file_ok_button, "doit_button");
 
-      reset_button = gtk_button_new_with_label(_("Reset"));
+      reset_button = sg_button_new_from_stock_with_label(_("Reset"), GTK_STOCK_REFRESH);
       gtk_widget_set_name(reset_button, "reset_button");
 
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(new_file_dialog)->action_area), new_file_ok_button, true, true, 10);
@@ -4694,7 +4669,7 @@ GtkWidget *start_view_files_dialog_1(view_files_info *vdat, bool managed)
       dismissB = gtk_button_new_from_stock(GTK_STOCK_QUIT);
       gtk_widget_set_name(dismissB, "quit_button");
 
-      resetB = gtk_button_new_with_label(_("Reset"));
+      resetB = sg_button_new_from_stock_with_label(_("Reset"), GTK_STOCK_REFRESH);
       gtk_widget_set_name(resetB, "reset_button");
 
       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(vdat->dialog)->action_area), newB, true, true, 10);
@@ -4885,8 +4860,8 @@ GtkWidget *start_view_files_dialog_1(view_files_info *vdat, bool managed)
 	gtk_box_pack_start(GTK_BOX(leftform), lbox, false, false, 0);
 	gtk_widget_show(lbox);
 
-	vdat->openB = gtk_button_new_with_label(_("Open"));
-	vdat->removeB = gtk_button_new_with_label(_("Unlist"));
+	vdat->openB = gtk_button_new_from_stock(GTK_STOCK_OPEN);
+	vdat->removeB = sg_button_new_from_stock_with_label(_("Unlist"), GTK_STOCK_REMOVE);
 
 	gtk_box_pack_start(GTK_BOX(lbox), vdat->openB, true, true, 1);
 	gtk_box_pack_end(GTK_BOX(lbox), vdat->removeB, true, true, 1);
@@ -4914,8 +4889,8 @@ GtkWidget *start_view_files_dialog_1(view_files_info *vdat, bool managed)
 	gtk_box_pack_start(GTK_BOX(lbox2), lbox1, false, false, 0);
 	gtk_widget_show(lbox1);
 
-	vdat->mixB = gtk_button_new_with_label(_("Mix"));
-	vdat->insertB = gtk_button_new_with_label(_("Insert"));
+	vdat->mixB = sg_button_new_from_stock_with_label(_("Mix"), GTK_STOCK_ADD);
+	vdat->insertB = sg_button_new_from_stock_with_label(_("Insert"), GTK_STOCK_PASTE);
 
 	gtk_box_pack_start(GTK_BOX(lbox1), vdat->mixB, true, true, 1);
 	gtk_box_pack_end(GTK_BOX(lbox1), vdat->insertB, true, true, 1);

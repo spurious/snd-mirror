@@ -208,6 +208,26 @@ void raise_dialog(GtkWidget *w)
   gtk_window_present(GTK_WINDOW(w));
 }
 
+static void set_stock_button_label_1(gpointer w, gpointer label)
+{
+  if (GTK_IS_LABEL(w))
+    {
+      gtk_widget_hide(w);
+      gtk_label_set_text(GTK_LABEL(w), (char *)label);
+      gtk_widget_show(w);
+    }
+  else
+    {
+      if (GTK_IS_CONTAINER(w))
+	g_list_foreach(gtk_container_get_children(GTK_CONTAINER(w)), set_stock_button_label_1, label);
+    }
+}
+
+void set_stock_button_label(GtkWidget *w, const char *new_label)
+{
+  set_stock_button_label_1((gpointer)w, (gpointer)new_label);
+}
+		     
 void set_button_label(GtkWidget *label, const char *str)
 {
   gtk_label_set_text(GTK_LABEL(GTK_BIN(label)->child), str);
@@ -702,6 +722,25 @@ void ensure_scrolled_window_row_visible(widget_t list, int row, int num_rows)
     gtk_adjustment_set_value(v, new_value);
 }
 
+GtkWidget *sg_button_new_from_stock_with_label(const char *text, gchar *stock_id)
+{
+  /* borrowed from gtk/gtkbutton.c */
+  GtkWidget *button, *image, *label, *hbox, *align;
+  button = gtk_button_new();
+  label = gtk_label_new(text);
+  image = (GtkWidget *)g_object_ref(gtk_image_new_from_stock(stock_id, GTK_ICON_SIZE_BUTTON));
+  hbox = gtk_hbox_new(false, 2);
+  align = gtk_alignment_new (0.5, 0.5, 0.0, 0.0);
+  gtk_box_pack_start(GTK_BOX(hbox), image, false, false, 0);
+  gtk_box_pack_end(GTK_BOX(hbox), label, false, false, 0);
+  gtk_container_add(GTK_CONTAINER(button), align);
+  gtk_container_add(GTK_CONTAINER(align), hbox);
+  gtk_widget_show_all(align);
+  g_object_unref(image);
+  return(button);
+}
+  
+
 
 /* ---------------- scrolled list replacement ---------------- */
 
@@ -899,3 +938,4 @@ char *slist_selection(slist *lst)
     return((char *)gtk_button_get_label(GTK_BUTTON(lst->items[lst->selected_item])));
   return(NULL);
 }
+
