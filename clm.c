@@ -7210,6 +7210,7 @@ double mus_bessi0(Float x)
 }
 #endif
 
+#if HAVE_COMPLEX_TRIG || HAVE_GSL
 static Float ultraspherical(int n, Float x, Float lambda)
 {
   /* this is also the algorithm used in gsl gegenbauer.c -- slow but not as bad as using the binomials! */
@@ -7228,6 +7229,7 @@ static Float ultraspherical(int n, Float x, Float lambda)
     }
   return(fn);
 }
+#endif
 
 static Float sqr(Float x) {return(x * x);}
 

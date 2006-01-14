@@ -1155,6 +1155,7 @@ static file_dialog_info *make_file_dialog(bool read_only, char *title, char *sel
     our_dir = (char *)XmStringUnparse(cur_dir, NULL, XmCHARSET_TEXT, XmCHARSET_TEXT, NULL, 0, XmOUTPUT_ALL);
     fd->fp->directory_watcher = fam_monitor_directory(our_dir, (void *)(fd->fp), watch_current_directory_contents);
     /* don't set last_dir yet */
+    XtFree(our_dir);
   }
 #endif
 
@@ -2918,6 +2919,7 @@ static void make_save_as_dialog(save_as_dialog_info *sd, char *sound_name, int h
 	our_dir = (char *)XmStringUnparse(cur_dir, NULL, XmCHARSET_TEXT, XmCHARSET_TEXT, NULL, 0, XmOUTPUT_ALL);
 	sd->fp->directory_watcher = fam_monitor_directory(our_dir, (void *)(sd->fp), watch_current_directory_contents);
 	/* don't set last_dir yet */
+	XtFree(our_dir);
       }
 #endif
 

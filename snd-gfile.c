@@ -12,9 +12,7 @@
    View:Files
 */
 
-/* TODO: is cancel ignored after clicking menu top? any non-menu click
- * TODO: just-sounds button got unset but effect continues?
- * TODO: how to undo choice of a filter?
+/* TODO: how to undo choice of a filter?
  * TODO: added srates in drop down [srate_completer in snd-completion -- Motif side as well here]
  */
 
@@ -544,8 +542,14 @@ static void reflect_file_in_popup(fsb *fs)
 static void file_filter_item_activate_callback(GtkWidget *w, gpointer context)
 {
   fsb *fs = (fsb *)context;
-  fsb_filter_set_text(fs, (const char *)(fs->file_filter_names[get_user_int_data(G_OBJECT(w))]));
-  force_directory_reread(fs);
+  char *filter;
+  filter = fs->file_filter_names[get_user_int_data(G_OBJECT(w))];
+  fsb_filter_set_text(fs, (const char *)filter);
+  if (fs->directory_name) FREE(fs->directory_name);
+  fs->directory_name = just_directory(filter); /* this allocates */
+  fsb_file_set_text(fs, fs->directory_name);
+  fsb_update_lists(fs);
+  remember_filename(filter, fs->file_filter_names);
 }
 
 static void reflect_filter_in_popup(fsb *fs)

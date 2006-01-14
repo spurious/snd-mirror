@@ -479,6 +479,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+15-Jan:  snd 7.18.\n\
 5-Jan:   sound-file? for easier file-filter definition.\n\
 2-Jan:   removed the various sorting indices (sort-by-name|size|date|entry), and changed \n\
            the way the user-defined sorter works.  Also removed just-sounds-hook.\n\
@@ -491,8 +492,6 @@ void about_snd_help(void)
          fft-window-alpha (ultraspherical window parameter).\n\
 5-Dec:   snd_pd_external.c and other changes for Pd, thanks to Kjetil.\n\
          sinc-train (clm.html), reverse-by-blocks and reverse-within-blocks (examp.scm), pulse-voice (examp.scm).\n\
-28-Nov:  snd 7.17.\n\
-21-Nov:  if --with-float-samples and --with-doubles, the internal sample data type is double.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",

@@ -62,8 +62,6 @@ static void edit_find_help(GtkWidget *w, gpointer context)
   find_dialog_help();
 } 
 
-void set_stock_button_label(GtkWidget *w, const char *new_label);
-
 static void edit_find_find(read_direction_t direction, GtkWidget *w, gpointer context) 
 { /* "Find" is the label here */
   char *str, *buf = NULL;

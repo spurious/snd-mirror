@@ -215,7 +215,7 @@ char *global_search(read_direction_t direction)
 	      else cursor_move(cp, -fd->inc);
 	      /* now in its own info window show find state, and update graph if needed */
 	      show_cursor_info(cp);
-	      mus_snprintf(search_message, PRINT_BUFFER_SIZE, "found at " PRId64, CURSOR(cp));
+	      mus_snprintf(search_message, PRINT_BUFFER_SIZE, "found at " OFF_TD, CURSOR(cp));
 	    }
 	}
       ss->stopped_explicitly = false;
@@ -503,7 +503,7 @@ void cursor_search(chan_info *cp, int count)
 		  char *s1, *s2, *msg;
 		  s1 = prettyf(chn_sample(samp, cp, cp->edit_ctr), 2);
 		  s2 = prettyf((double)samp / (double)SND_SRATE(sp), 2);
-		  msg = mus_format("%s at %s (" PRId64 ")", s1, s2, samp);
+		  msg = mus_format("%s at %s (" OFF_TD ")", s1, s2, samp);
 		  display_minibuffer_error(sp, msg);
 		  FREE(s1);
 		  FREE(s2);

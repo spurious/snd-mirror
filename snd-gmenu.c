@@ -300,7 +300,7 @@ GtkWidget *add_menu(void)
 #ifdef GTK_STOCK_MEDIA_RECORD
   gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(file_record_menu), gtk_image_new_from_stock(GTK_STOCK_MEDIA_RECORD, GTK_ICON_SIZE_MENU));
 #else
-  gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(file_record_menu), gtk_image_new_from_stock(GTK_STOCK_MEDIA_EXECUTE, GTK_ICON_SIZE_MENU));
+  gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(file_record_menu), gtk_image_new_from_stock(GTK_STOCK_EXECUTE, GTK_ICON_SIZE_MENU));
 #endif
   gtk_widget_show(file_record_menu);
   SG_SIGNAL_CONNECT(file_record_menu, "activate", file_record_callback, NULL);

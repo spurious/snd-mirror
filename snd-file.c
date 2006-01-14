@@ -2644,7 +2644,7 @@ static char *raw_data_explanation(const char *filename, file_info *hdr, char **i
   reason_str = snd_strcat(reason_str, tmp_str, &len);
 
   /* samples */
-  mus_snprintf(tmp_str, LABEL_BUFFER_SIZE, "\nlength: %.3f (" PRId64 " samples, " PRId64 " bytes total)",
+  mus_snprintf(tmp_str, LABEL_BUFFER_SIZE, "\nlength: %.3f (" OFF_TD " samples, " OFF_TD " bytes total)",
 	       (float)((double)(hdr->samples) / (float)(hdr->chans * hdr->srate)),
 	       hdr->samples,
 	       mus_sound_length(filename));

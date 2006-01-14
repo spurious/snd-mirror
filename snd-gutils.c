@@ -208,8 +208,9 @@ void raise_dialog(GtkWidget *w)
   gtk_window_present(GTK_WINDOW(w));
 }
 
-static void set_stock_button_label_1(gpointer w, gpointer label)
+static void set_stock_button_label_1(gpointer w1, gpointer label)
 {
+  GtkWidget *w = (GtkWidget *)w1;
   if (GTK_IS_LABEL(w))
     {
       gtk_widget_hide(w);

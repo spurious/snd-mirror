@@ -1,35 +1,49 @@
-Snd 7.17
+Snd 7.18
 
-Mike made many improvements in the ruby support
+snd_pd_external.c, help-snd-fm.pd, and pd-fm.scm and other changes for Pd, thanks to Kjetil.
 
-Kjetil added a -volume argument to sndplay
+Many more improvements thanks to Mike.
 
-all dlp directory files moved to main directory (to simplify load-path handling)
+default sample type is now float. This should only affect the "peak-env" files which will
+  need to be rebuilt (just delete the current peak files, and they'll be rebuilt as needed
+  automatically).
 
-added: *clm-notehook* and *definstrument-hook* added to Guile version of with-sound (thanks to Rick)
-       the rest of the preferences dialog
-       mus-header-raw-defaults
-       sync-max
-       SND_PATH environment variable (optional load path directory list)
+analog-filter.scm: Butterworth, Chebyshev, inverse-Chebyshev, Bessel(-Thompson), Elliptic filters.
+  (These functions are based on code of Anders Johansson)
 
-if --with-float-samples and --with-doubles, the internal sample data type is double.
-  (this also affects CLM)
+new fft windows: samaraki and ultraspherical (related to the dolph-chebyshev window)
+  ultraspherical window has an additional parameter (side lobe shape) named
+  fft-window-alpha here (to parallel fft-window-beta).
 
-moved snd-apropos to snd7.scm.
+new sound effects:
+  sinc-train (clm.html)
+  reverse-by-blocks and reverse-within-blocks (examp.scm)
+  pulse-voice (examp.scm)
 
-clm: fixed various instruments that were using mus-location with src:
-         backandforth.ins, scratch in ug1.ins, granular.ins, various test ins.
-     added optional srate envelope arg to fullmix.
-     Rick added clm.asd.
-     Fernando updated dlocsig and friends.
-     *clm-tempfile-data-format* and *clm-tempfile-header-type*.
+moved make-iir-low|high-pass-1 to snd7.scm (from dsp.scm)
 
-cmn: *dynamics-minimum-vertical-separation* added by Anders.
-     Anders also added support for dy0 and dy1 messages in wedge.lisp.
-     Rick added cmn.asd.
-     *dot-vertical-spacing*
+removed the various sorting indices (sort-by-name|size|date|entry), and changed 
+  the way the user-defined sorter works. (snd7.scm defines the old names).
+  Also removed (unimplemented, but documented) file-sorters list, and the
+  now useless just-sounds-hook.  added sound-file? for easier file-filter definition.
 
-checked: ACL 8.0, openmcl 1.0, cmucl 19c, clisp 2.35 (cmn), gtk 2.8.7
+in both Motif and Gtk, the file selection dialogs have been changed -- there are
+  fewer visible widgets, but popup menus are scattered around to handle uncommon 
+  chores (sorting, filtering, etc).  libgamin is connected to the file list as 
+  elsewhere.  Right-click in the file list brings up a menu of sorting/filtering 
+  choices; in the directory list it brings up a menu that splits out the parent 
+  directories (single-click in the directory list moves to that directory);
+  in the file and filter entry widgets it brings up a list of previous choices.  
+  If you type in the file entry widget, the file list tries to move to the apparent choice.
+  The "preview area" is as before -- a description of the selected sound file,
+  with "play" and "just-sounds" buttons. 
 
-with much help from Mike, R Mattes, Rick, Anders, J Reyes, Kjetil, T Blechmann
-   	J Rundall, H Fugal, Fernando, J Sandgren, M Klingbeil
+In the xm module, XmNpopupEnabled is now an enum (it was boolean -- I was following
+  the incorrect info in the Motif docs -- use XmPOPUP_AUTOMATIC rather than #t).
+
+the happy buttons have hunkered down for the winter.
+
+checked: gtk 2.8.8|9|10, sbcl 0.9.7|8, clisp 2.36|7 (cmn), motif 2.3.0, ruby 1.8.4, 
+         Mesa 6.4.1 (openGL), gamin 0.1.7 (fam)
+
+with much help from: Kjetil, Mike, Russell Aspinwall
