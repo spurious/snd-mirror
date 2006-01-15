@@ -1387,13 +1387,10 @@ static char *open_file_xrefs[7] = {
   NULL};
 
 
-/* TODO: this prose needs to be in the mix/insert/save-as etc cases as well */
-
 void open_file_dialog_help(void)
 {
-#if USE_MOTIF
   snd_help_with_xrefs("Open File",
-"The file selection dialog is slightly different from the Motif default.  If you single click \
+"The file selection dialog is slightly different from the Gtk or Motif default.  If you single click \
 in the directory list, that directory is immediately opened and displayed.  Also there are \
 a variety of context-sensitive popup menus to handle special chores such as setting the \
 current sort routine (right click over the file list), jump to any higher level directory (right click \
@@ -1409,15 +1406,6 @@ display possible matches.",
 		      WITH_WORD_WRAP,
 		      open_file_xrefs,
 		      NULL);
-#else
-  snd_help_with_xrefs("Open File",
-"The file selection dialog will be changed to mimic the Motif version soon -- currently \
-I use either the Gtk file selection dialog, or the file chooser dialog; both are \
-ugly, and indescribably stupid (deliberately so in the file chooser case). ",
-		      WITH_WORD_WRAP,
-		      open_file_xrefs,
-		      NULL);
-#endif
 }
 
 void mix_file_dialog_help(void)

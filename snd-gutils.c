@@ -234,16 +234,6 @@ void set_button_label(GtkWidget *label, const char *str)
   gtk_label_set_text(GTK_LABEL(GTK_BIN(label)->child), str);
 }
 
-#if 0
-void set_button_image(GtkWidget *button, gchar *stock)
-{
-  GtkWidget *image;
-  image = gtk_button_get_image(GTK_BUTTON(button)); /* 256 */
-  gtk_image_set_from_stock(GTK_IMAGE(image), stock, GTK_ICON_SIZE_BUTTON);
-  gtk_button_set_image(GTK_BUTTON(button), GTK_IMAGE(image)); /* 256 */
-}
-#endif
-
 void set_label(GtkWidget *label, const char *str)
 {
   gtk_label_set_text(GTK_LABEL(label), str);

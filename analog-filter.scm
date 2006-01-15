@@ -8,7 +8,7 @@
 ;;; bessel-lowpass|highpass|bandstop|bandpass
 ;;; elliptic-lowpass|highpass|bandstop|bandpass
 ;;;
-;;; build Snd --with-doubles and --with-float-samples --with-gsl for best results
+;;; build Snd --with-doubles --with-gsl for best results
 
 (provide 'snd-analog-filter.scm)
 

@@ -72,7 +72,7 @@
 
 
 #include <m_pd.h>
-#include <s_stuff.h>
+//#include <s_stuff.h>
 #include <jack/ringbuffer.h>
 
 #include <stdio.h>
@@ -842,7 +842,7 @@ static t_int *snd_pd_perform(t_int *w){
 
 static void snd_pd_dsp(t_snd_pd *x, t_signal **sp)
 {
-  int vec[x->num_ins+x->num_outs+2];
+  t_int vec[x->num_ins+x->num_outs+2];
   int lokke=0;
   vec[0]=(int)x;
   vec[1]=(int)sp[0]->s_n;
@@ -882,12 +882,16 @@ static void snd0_load(struct dispatch *d){
 
   // Let the file live in its own name-space (or something like that).
   snd0_eval2("(pd-fixfunction (pd-instance-func pd-instance pd-num-inlets pd-num-outlets)");
-  snd0_eval_file("pd-local.scm");
+  snd0_eval_file(SND_PD_PATH "/pd-local.scm");
   snd0_eval_file(d->data.filename);
   snd0_eval2("  (list pd-inlet-func pd-cleanup-func (if (defined? '*rt-engine*)"
-	                                               "(SCM_SMOB_DATA *in-bus*) (list \"POINTER\" 0))"
+	                                               "*in-bus* 0)"
 	                                           "(if (defined? '*rt-engine*)"
-	                                               "(SCM_SMOB_DATA *out-bus*) (list \"POINTER\" 0))))");
+	                                               "*out-bus* 0)))");
+  //  snd0_eval2("  (list pd-inlet-func pd-cleanup-func (if (defined? '*rt-engine*)"
+  //	                                               "(SCM_SMOB_DATA *in-bus*) (list \"POINTER\" 0))"
+  //	                                           "(if (defined? '*rt-engine*)"
+  //	                                               "(SCM_SMOB_DATA *out-bus*) (list \"POINTER\" 0))))");
   snd0_eval2("1");
 
   if(1!=GET_INTEGER(snd0_eval_do())){
@@ -897,18 +901,24 @@ static void snd0_load(struct dispatch *d){
 
   sprintf(code,"(pd-instance-func %d %d %d)",(int)d->x,d->x->num_ins,d->x->num_outs);
   sprintf(errormessage,"When loading file \"%s\"\n",d->data.filename);
-  evalret=CATCH_EVAL(code,errormessage);
-  
+  evalret=CATCH_EVAL(code,errormessage);  
+
   if(!SCM_CONSP(evalret)){
     post("Failed.");
     goto exit;
   }
   d->x->inlet_func=SCM_CAR(evalret);
   d->x->cleanup_func=SCM_CAR(SCM_CDR(evalret));
-  d->x->inbus=GET_POINTER_rt(SCM_CAR(SCM_CDR(SCM_CDR(evalret))));
-  d->x->outbus=GET_POINTER_rt(SCM_CAR(SCM_CDR(SCM_CDR(SCM_CDR(evalret)))));
+  d->x->scm_inbus=SCM_CAR(SCM_CDR(SCM_CDR(evalret)));
+  d->x->scm_outbus=SCM_CAR(SCM_CDR(SCM_CDR(SCM_CDR(evalret))));
+
   scm_gc_protect_object(d->x->inlet_func);
   scm_gc_protect_object(d->x->cleanup_func);
+  scm_gc_protect_object(d->x->scm_inbus);
+  scm_gc_protect_object(d->x->scm_outbus);
+
+  d->x->inbus=SCM_SMOB_DATA(d->x->scm_inbus);
+  d->x->outbus=SCM_SMOB_DATA(d->x->scm_outbus);
 
   ret=true;
   post("\"%s\" loaded by snd.",d->data.filename);
@@ -990,9 +1000,10 @@ static void *pd0_new(t_symbol *s, t_int argc, t_atom* argv){
 static void snd0_free(struct dispatch *d){
   if(d->x->isworking==true){
     g_call0(d->x->cleanup_func,"cleanup func.\n");
-    //scm_call_1(pd_backtrace_run,d->x->cleanup_func);
     scm_gc_unprotect_object(d->x->inlet_func);
     scm_gc_unprotect_object(d->x->cleanup_func);
+    scm_gc_unprotect_object(d->x->scm_inbus);
+    scm_gc_unprotect_object(d->x->scm_outbus);
   }
 
   free(d->x->inlets);

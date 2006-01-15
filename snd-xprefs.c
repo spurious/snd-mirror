@@ -1540,7 +1540,7 @@ You can also request help on a given topic by clicking the variable name on the 
 
 static void preferences_quit_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  /* PERHAPS: if helping, should we unmanage the help dialog as well? */
+  /* if helping, should we unmanage the help dialog as well? */
   prefs_helping = false;
   clear_prefs_dialog_error();
   if (XmGetFocusWidget(preferences_dialog) == XmMessageBoxGetChild(preferences_dialog, XmDIALOG_OK_BUTTON))

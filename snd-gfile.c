@@ -14,6 +14,7 @@
 
 /* TODO: how to undo choice of a filter?
  * TODO: added srates in drop down [srate_completer in snd-completion -- Motif side as well here]
+ * TODO: no listener activation except cursor at end? (is this the case in Motif too?)
  */
 
 
@@ -26,6 +27,7 @@ typedef struct fsb {
   GtkWidget *file_label, *file_text, *ok_button, *filter_button, *cancel_button, *help_button, *extract_button;
   GtkWidget *panes, *dirs_menu, *sorters_menu;
   GtkWidget *files_mbar, *files_mitem, *files_menu, *filters_mbar, *filters_mitem, *filters_menu;
+
   char *directory_name, *file_name;
   slist *directory_list, *file_list;
   void (*file_select_callback)(const char *filename, void *data);

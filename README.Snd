@@ -680,13 +680,6 @@ The ccrma-ftp images osx-10.2-snd to osx-10.4-snd need only guile 1.6.4;
 
     setenv GUILE_LOAD_PATH /Users/Mozart/Desktop/guile-1.6.4
 
-Loading xm.c (--with-static-xm etc) is problematic on Mac.  If you use
-the libXm.dylib from openMotif, you'll probably need the langinfo
-library as well (motifzone has this in the package "darwin-extras");
-you need to add -llanginfo to the makefile (but -lXm will work in this
-case).  If you use libXm.a from ccrma-ftp, you'll need to go to
-config.h and set the macro HAVE_XmToolTipGetLabel to 0.
-
 
 The dac-size variable seems to matter a lot in OSX.  If you're
 getting distorted playback, try various powers of 2.  It defaults

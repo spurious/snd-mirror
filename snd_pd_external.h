@@ -25,6 +25,11 @@ typedef struct snd_pd
   bool isworking;
 
   float x_float;
+
+  // Keep pointer to these to be able to unprotect from the garbage collector when freeing the object.
+  SCM scm_inbus;
+  SCM scm_outbus;
+
 } t_snd_pd;
 
 typedef struct snd_pd_workaround{
