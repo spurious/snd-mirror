@@ -804,6 +804,8 @@ Information about about parameters can be acquired using " S_analyse_ladspa "."
   hdr = free_file_info(hdr);
   if (!(ss->stopped_explicitly))
     {
+      if (outchans > 1)
+	remember_temp(ofile, outchans);
       for (i = 0, j = 0; i < outchans; i++)
 	{
 	  off_t beg;

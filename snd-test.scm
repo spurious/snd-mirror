@@ -37,6 +37,19 @@
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
+
+(define tests 1)
+(define keep-going #f)
+(define all-args #f) ; huge arg testing
+(define with-big-file #t)
+
+
+(if (not (defined? 'snd-test)) (define snd-test -1))
+(define full-test (< snd-test 0))
+(define total-tests 28)
+(if (not (defined? 'with-exit)) (define with-exit (< snd-test 0)))
+(define test-number -1)
+
 (define original-save-dir (or (save-dir) "/zap/snd"))
 (define original-temp-dir (or (temp-dir) "/zap/tmp"))
 
@@ -109,17 +122,6 @@
 
 
 ;(setlocale LC_ALL "de_DE")
-
-(define tests 1)
-(define keep-going #t)
-(define all-args #f) ; huge arg testing
-(define with-big-file #t)
-
-(if (not (defined? 'snd-test)) (define snd-test -1))
-(define full-test (< snd-test 0))
-(define total-tests 28)
-(if (not (defined? 'with-exit)) (define with-exit (< snd-test 0)))
-(define test-number -1)
 
 (set! (with-background-processes) #f)
 (set! (show-backtrace) #t)
@@ -350,9 +352,26 @@
 					;(if (defined? 'mem-report) (mem-report))
 			      ))
 
-;(add-hook! after-test-hook (lambda (n) (snd-display ";...~D" n)))
+
+(define (clear-save-state-files)
+  (let ((regs (regions)))
+    (for-each
+     (lambda (n)
+       (forget-region n))
+     regs))
+
+  (system (format #f "sndinfo ~A/snd_*" (or (temp-dir) original-temp-dir)))
+
+  (system (format #f "rm -f ~A/snd_*" (or (save-dir) original-save-dir)))
+  (if (file-exists? "/var/tmp") 
+      (system (format #f "rm -f /var/tmp/snd_save_*")))
+  (if (file-exists? "/tmp") 
+      (system (format #f "rm -f /tmp/snd_save_*")))
+  (mus-sound-prune))
+
 (add-hook! after-test-hook
 	   (lambda (n)
+	     (clear-save-state-files)
 	     (gc)(gc)
 	     (if (not (null? (sounds)))
 		 (begin
@@ -7743,7 +7762,7 @@ EDITS: 5
 	      (delete-file "temp.dat")
 	      (snd-display ";save-region file disappeared?"))
 	  (play-region r0 #t) ;needs to be #t here or it never gets run
-	  (if (not (= (length (regions)) 2)) (snd-display ";regions: ~A?" (regions)))
+	  (if (not (= (length (regions)) 1)) (snd-display ";regions: ~A?" (regions)))
 	  (if (not (selection-member? index)) (snd-display ";selection-member?: ~A" (selection-member? index)))
 	  (if (not (= (region-srate r0) 22050)) (snd-display ";region-srate: ~A?" (region-srate r0)))
 	  (if (not (= (region-chans r0) 1)) (snd-display ";region-chans: ~A?" (region-chans r0)))
@@ -7889,7 +7908,7 @@ EDITS: 5
 	    (if (fneq (maxamp index 0) 0.0) (snd-display ";invert+mix->~A" (maxamp)))
 	    (revert-sound index)
 	    (select-all index) 
-	    (if (not (= (length (regions)) 3)) (snd-display ";regions(2): ~A?" (regions)))
+	    (if (not (= (length (regions)) 2)) (snd-display ";regions(2): ~A?" (regions)))
 	    (scale-selection-to .5) 
 	    (set! newmaxa (maxamp index))
 	    (if (fneq newmaxa .5) (snd-display ";scale-selection-to: ~A?" newmaxa))
@@ -57664,23 +57683,32 @@ EDITS: 1
     (begin
       (display (format #f "ls ~A/snd_* | wc~%" original-save-dir))
       (system (format #f "ls ~A/snd_* | wc" original-save-dir))
-      (system (format #f "rm ~A/snd_*" original-save-dir))))
+      (system (format #f "rm -f ~A/snd_*" original-save-dir))))
 
 (if (file-exists? original-temp-dir)
     (begin
       (display (format #f "ls ~A/snd_* | wc~%" original-temp-dir))
       (system (format #f "ls ~A/snd_* | wc" original-temp-dir))
       (system (format #f "sndinfo ~A/snd_*" original-temp-dir))
-      (system (format #f "rm ~A/snd_*" original-temp-dir))))
+      (system (format #f "rm -f ~A/snd_*" original-temp-dir))))
 
 (if (file-exists? "/tmp")
-    (begin ; -noinit possibly
+    (begin
       (display (format #f "ls /tmp/snd_* | wc~%"))
       (system "ls /tmp/snd_* | wc")
 					;(system "sndinfo /tmp/snd_*") ; not a bug -- save_dir null will write to /tmp
-      (system "rm /tmp/snd_*")
-      (system "ls /tmp/file*.snd | wc") ; these are externally created perhaps 
-      (system "rm /tmp/file*.snd")))
+      (system "rm -f /tmp/snd_*")
+      (system "ls /tmp/file*.snd | wc")
+      (system "rm -f /tmp/file*.snd")))
+
+(if (file-exists? "/var/tmp")
+    (begin
+      (display (format #f "ls /var/tmp/snd_* | wc~%"))
+      (system "ls /var/tmp/snd_* | wc")
+      (system "rm -f /var/tmp/snd_*")
+      (system "ls /var/tmp/file*.snd | wc")
+      (system "rm -f /var/tmp/file*.snd")))
+
 
 (mus-sound-prune)
 (close-output-port optimizer-log)

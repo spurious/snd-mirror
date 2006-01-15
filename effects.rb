@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Fri Feb 07 23:56:21 CET 2003
-# Changed: Wed Jan 04 03:45:56 CET 2006
+# Changed: Thu Jan 05 02:50:22 CET 2006
 
 # Commentary:
 #
@@ -1358,25 +1358,26 @@ Values greater than 1.0 speed up file play, negative values reverse it.",
                              set_scale_value(sliders[3].scale, @ramp_scale = ramp_scale, 100.0)
                              set_scale_value(sliders[4].scale, @pitch_scale = pitch_scale, 100.0)
                            end) do |w, c, i|
-          save_controls
-          reset_controls
-          set_speed_control(@pitch_scale)
+          snd = selected_sound
+          save_controls(snd)
+          reset_controls(snd)
+          set_speed_control(@pitch_scale, snd)
           new_time = @pitch_scale * @time_scale.to_f
           if new_time != 1.0
-            set_expand_control?(true)
-            set_expand_control(new_time)
-            set_expand_control_hop(@hop_size)
-            set_expand_control_length(@segment_length)
-            set_expand_control_ramp(@ramp_scale)
+            set_expand_control?(true, snd)
+            set_expand_control(new_time, snd)
+            set_expand_control_hop(@hop_size, snd)
+            set_expand_control_length(@segment_length, snd)
+            set_expand_control_ramp(@ramp_scale, snd)
           end
           if @target == :marks
             if ms = plausible_mark_samples
-              apply_controls(selected_sound, 0, ms[0], 1 + (ms[1] - ms[0]))
+              apply_controls(snd, 0, ms[0], 1 + (ms[1] - ms[0]))
             end
           else
-            apply_controls(selected_sound, (@target == :sound ? 0 : 2))
+            apply_controls(snd, (@target == :sound ? 0 : 2))
           end
-          restore_controls
+          restore_controls(snd)
         end
         sliders[0] = @dlg.add_slider("time scale", 0.0, time_scale, 5.0, 100) do |w, c, i|
           @time_scale = get_scale_value(w, i, 100.0)
@@ -1639,20 +1640,21 @@ Move the sliders to change the reverb parameters.",
                              set_scale_value(sliders[1].scale, @filter = init_filter, 100.0)
                              set_scale_value(sliders[2].scale, @feedback = init_feedback, 100.0)
                            end) do |w, c, i|
-          save_controls
-          reset_controls
-          set_reverb_control?(true)
-          set_reverb_control_scale(@amount)
-          set_reverb_control_lowpass(@filter)
-          set_reverb_control_feedback(@feedback)
+          snd = selected_sound
+          save_controls(snd)
+          reset_controls(snd)
+          set_reverb_control?(true, snd)
+          set_reverb_control_scale(@amount, snd)
+          set_reverb_control_lowpass(@filter, snd)
+          set_reverb_control_feedback(@feedback, snd)
           if @target == :marks
             if ms = plausible_mark_samples
-              apply_controls(selected_sound, 0, ms[0], 1 + (ms[1] - ms[0]))
+              apply_controls(snd, 0, ms[0], 1 + (ms[1] - ms[0]))
             end
           else
-            apply_controls(selected_sound, (@target == :sound ? 0 : 2))
+            apply_controls(snd, (@target == :sound ? 0 : 2))
           end
-          restore_controls
+          restore_controls(snd)
         end
         sliders[0] = @dlg.add_slider("reverb amount", 0.0, init_amount, 1.0, 100) do |w, c, i|
           @amount = get_scale_value(w, i, 100.0)

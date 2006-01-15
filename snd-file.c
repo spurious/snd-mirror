@@ -176,8 +176,8 @@ sort_info *free_sort_info(sort_info *ptr)
 {
   if (ptr)
     {
-      if (ptr->filename) FREE(ptr->filename);
-      if (ptr->full_filename) FREE(ptr->full_filename);
+      if (ptr->filename) free(ptr->filename);
+      if (ptr->full_filename) free(ptr->full_filename);
       FREE(ptr);
     }
   return(NULL);
@@ -187,8 +187,8 @@ sort_info *make_sort_info(const char *filename, const char *full_filename)
 {
   sort_info *ptr;
   ptr = (sort_info *)CALLOC(1, sizeof(sort_info));
-  ptr->filename = copy_string(filename);
-  ptr->full_filename = copy_string(full_filename);
+  ptr->filename = strdup(filename); /* not copy_string -> these are glomming up the memleak reporting */
+  ptr->full_filename = strdup(full_filename);
   return(ptr);
 }
 
@@ -3623,7 +3623,7 @@ int vf_mix(view_files_info *vdat)
 	  vf_post_error(tempfile, (void *)vdat);
 	  id_or_error = MIX_FILE_NO_TEMP_FILE;
 	}
-      else
+      else /* TODO: do we need remember_temp here? */
 	id_or_error = mix_complete_file(sp, vdat->beg, 
 					tempfile,
 					with_mix_tags(ss), 

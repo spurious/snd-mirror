@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <scholz-micha@gmx.de>
 # Created: Wed Sep 04 18:34:00 CEST 2002
-# Changed: Wed Jan 04 03:40:54 CET 2006
+# Changed: Mon Jan 09 02:50:48 CET 2006
 
 # Commentary:
 #
@@ -434,7 +434,7 @@
 #  scramble_channel(silence)
 #
 #  reverse_by_blocks(block_len, snd, chn)
-#  reverse_within_blocks(block_len, snd, chn)
+#  reverse_with_blocks(block_len, snd, chn)
 #  
 # class Moog_filter < Musgen (moog.scm)
 #   initialize(freq, q)
@@ -4204,7 +4204,7 @@ uses sum-of-cosines to manipulate speech sounds")
     old_peak_amp = new_peak_amp = 0.0
     formants = make_array(freq_inc) do |i| make_formant(radius, i * bin) end
     callcc do |brk|
-      outdata.map do |i|
+      out_data.map do |i|
         outval = 0.0
         if ctr == freq_inc
           if c_g? then brk.call("interrupted") end
@@ -4219,7 +4219,7 @@ uses sum-of-cosines to manipulate speech sounds")
         end
         ctr += 1
         vct_add!(spectr, fdr)
-        outval = formant_bank(spectr, formants(sum_of_cosines(pulse)))
+        outval = formant_bank(spectr, formants, sum_of_cosines(pulse))
         if outval.abs > new_peak_amp then new_peak_amp = outval.abs end
         outval
       end
@@ -5128,10 +5128,10 @@ divide sound into block-len blocks, recombine blocks in reverse order.")
     end
   end
 
-  add_help(:reverse_within_blocks,
-           "reverse_within_blocks(block_len, snd=false, chn=false) \
+  add_help(:reverse_with_blocks,
+           "reverse_with_blocks(block_len, snd=false, chn=false) \
 divide sound into blocks, recombine in order, but each block internally reversed.")
-  def reverse_within_blocks(block_len, snd = false, chn = false)
+  def reverse_with_blocks(block_len, snd = false, chn = false)
     len = frames(snd, chn)
     num_blocks = (len / (srate(snd) * block_len)).floor
     if num_blocks > 1

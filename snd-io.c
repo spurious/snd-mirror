@@ -582,10 +582,13 @@ static void forget_temp(const char *filename, int chan)
 	      FREE(tmp->ticks);
 	      FREE(tmp);
 	      tempfiles[i] = NULL;
+	      return;
 	    }
-	  return;
 	}
     }
+#if DEBUGGING
+  fprintf(stderr,"can't forget %s!\n", filename);
+#endif
 }
 
 static void tick_temp(const char *filename, int chan)
