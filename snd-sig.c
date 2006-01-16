@@ -1041,6 +1041,7 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, off_t beg, off_t 
   else
     {
       string_to_minibuffer(sp, _("src interrupted"));
+      /* should we remove the temp file here? */
       ss->stopped_explicitly = false;
     }
   if (old_marks) FREE(old_marks);

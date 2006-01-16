@@ -139,6 +139,8 @@
 ;;;
 ;;;    (install-searcher (lambda (file) (= (mus-sound-srate file) 44100)))
 ;;;    (install-searcher (lambda (file) (= (mus-sound-chans file) 4)))
+;;;
+;;; this is obsolete -- use the file-filter mechanism instead
 
 (define (install-searcher proc)
   "(install-searcher proc) replaces the current file search procedure in the File Selection 
@@ -179,7 +181,6 @@ Box: (install-searcher (lambda (file) (= (mus-sound-srate file) 44100)))"
 ;;; here's a fancier version that gets rid of the useless directory list,
 ;;;   and shows multi-channel files in color
 
-;;; TODO: install-searcher-wit-colors no longer works
 (define (install-searcher-with-colors proc)
 
   (define match-sound-files

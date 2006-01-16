@@ -19,7 +19,7 @@
  *       or similarly, stops at "ok", starts src, clicks ok?
  * PERHAPS: audio:settings for display, perhaps reset -- as opposed to using the recorder
  * TODO: check just-sounds more carefully in snd-test
- * TODO: how to remap button 3 on Mac?
+ * TODO: how to remap button 3 on Mac? (button 3 coded in -- how to see changed action?
  */
 
 #define FSB_BOX(Dialog, Child) XmFileSelectionBoxGetChild(Dialog, Child)
@@ -1948,6 +1948,42 @@ static void srate_drop(Widget w, XtPointer context, XtPointer info)
   XmTextSetString(fd->srate_text, sr);
 }
 
+static void add_srate_menu(file_data *fd, char *srate_name)
+{
+  int n;
+  Arg args[12];
+  if (fd->srates_size == 0)
+    {
+      fd->srates_size = 8;
+      fd->srates = (Widget *)CALLOC(fd->srates_size, sizeof(Widget));
+    }
+  else
+    {
+      if (fd->srates_size == fd->num_srates)
+	{
+	  fd->srates_size += 8;
+	  fd->srates = (Widget *)REALLOC(fd->srates, fd->srates_size * sizeof(Widget));
+	}
+    }
+  n = 0;
+  if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;}
+  fd->srates[fd->num_srates] = XtCreateManagedWidget(srate_name, xmPushButtonWidgetClass, fd->smenu, args, n);
+  XtAddCallback(fd->srates[fd->num_srates++], XmNactivateCallback, srate_drop, (XtPointer)fd);
+}
+
+static void make_srate_menu(Widget w, XtPointer context, XtPointer info) 
+{
+  file_data *fd = (file_data *)context;
+  list_completer_info *cur_srates;
+  cur_srates = srate_list();
+  if (fd->num_srates < cur_srates->num_values)
+    {
+      int i;
+      for (i = fd->num_srates; i < cur_srates->num_values; i++)
+	add_srate_menu(fd, cur_srates->values[i]);
+    }
+}
+
 static void chans_drop(Widget w, XtPointer context, XtPointer info) 
 {
   file_data *fd = (file_data *)context;
@@ -1968,7 +2004,7 @@ file_data *make_file_data_panel(Widget parent, char *name, Arg *in_args, int in_
 {
   Widget form, header_label, data_label, srate_label, chans_label, sep1, sep2 = NULL, sep3, sep4;
   Widget comment_label = NULL, location_label, samples_label;
-  Widget smenu, s8, s22, s44, s48, cmenu, c1 = NULL, c2 = NULL, c4 = NULL, c8 = NULL;
+  Widget scascade, cmenu, c1 = NULL, c2 = NULL, c4 = NULL, c8 = NULL;
   file_data *fdat;
   Arg args[32];
   int i, n;
@@ -2125,22 +2161,15 @@ file_data *make_file_data_panel(Widget parent, char *name, Arg *in_args, int in_
 
   n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;}
-  smenu = XmCreatePulldownMenu(srate_label, _("srate:"), args, n);
+  fdat->smenu = XmCreatePulldownMenu(srate_label, _("srate:"), args, n);
 
   n = 0;
   if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;}
-  XtSetArg(args[n], XmNsubMenuId, smenu); n++;
+  XtSetArg(args[n], XmNsubMenuId, fdat->smenu); n++;
   XtSetArg(args[n], XmNshadowThickness, 0); n++;
   XtSetArg(args[n], XmNhighlightThickness, 0); n++;
   XtSetArg(args[n], XmNmarginHeight, 1); n++;
-  XtCreateManagedWidget(_("srate:"), xmCascadeButtonWidgetClass, srate_label, args, n);
-      
-  n = 0;
-  if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;}
-  s8 = XtCreateManagedWidget("8000",  xmPushButtonWidgetClass, smenu, args, n);
-  s22 = XtCreateManagedWidget("22050",  xmPushButtonWidgetClass, smenu, args, n);
-  s44 = XtCreateManagedWidget("44100",  xmPushButtonWidgetClass, smenu, args, n);
-  s48 = XtCreateManagedWidget("48000", xmPushButtonWidgetClass, smenu, args, n);
+  scascade = XtCreateManagedWidget(_("srate:"), xmCascadeButtonWidgetClass, srate_label, args, n);
   XtManageChild(srate_label);
 
   n = 0;
@@ -2335,10 +2364,7 @@ file_data *make_file_data_panel(Widget parent, char *name, Arg *in_args, int in_
     }
   else fdat->comment_text = NULL;
 
-  XtAddCallback(s8, XmNactivateCallback, srate_drop, (XtPointer)fdat);
-  XtAddCallback(s22, XmNactivateCallback, srate_drop, (XtPointer)fdat);
-  XtAddCallback(s44, XmNactivateCallback, srate_drop, (XtPointer)fdat);
-  XtAddCallback(s48, XmNactivateCallback, srate_drop, (XtPointer)fdat);
+  XtAddCallback(scascade, XmNcascadingCallback, make_srate_menu, (XtPointer)fdat);
 
   if (with_chan != WITHOUT_CHANNELS_FIELD)
     {

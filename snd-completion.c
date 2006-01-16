@@ -325,6 +325,20 @@ static void init_srate_list(void)
     }
 }
 
+char *srate_list_to_string(int row)
+{
+  if ((srate_info) &&
+      (srate_info->num_values > row))
+    return(srate_info->values[row]);
+  return(NULL);
+}
+
+list_completer_info *srate_list(void)
+{
+  init_srate_list();
+  return(srate_info);
+}
+
 void add_srate_to_completion_list(int srate)
 {
   char *str;

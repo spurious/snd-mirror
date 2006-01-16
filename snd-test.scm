@@ -359,9 +359,7 @@
      (lambda (n)
        (forget-region n))
      regs))
-
-  (system (format #f "sndinfo ~A/snd_*" (or (temp-dir) original-temp-dir)))
-
+  ;(system (format #f "sndinfo ~A/snd_*" (or (temp-dir) original-temp-dir)))
   (system (format #f "rm -f ~A/snd_*" (or (save-dir) original-save-dir)))
   (if (file-exists? "/var/tmp") 
       (system (format #f "rm -f /var/tmp/snd_save_*")))
@@ -42667,7 +42665,7 @@ EDITS: 1
 	 (o (make-oscil 2205.0))
 	 (s (make-src :srate 0.0))
 	 (incr (+ 2.0 (oscil o)))	  
-	 (tempfile (with-sound (:output (snd-tempnam) :srate (srate) :to-snd #f)
+	 (tempfile (with-sound (:output (snd-tempnam) :srate (srate) :to-snd #f :comment "step-src")
 		     (run (lambda ()
 			    (do ((samp 0 (1+ samp)))
 				((or (c-g?) 
@@ -54065,7 +54063,7 @@ EDITS: 1
 		  (pango_layout_set_attributes _PangoLayout_ _PangoAttrList_)
 		  (pango_context_set_language _PangoContext_ _PangoLanguage_)
 		  (let* ((_PangoAttrList_1 (pango_attr_list_copy _PangoAttrList_))
-			 (_PangoAttribute_1 (pango_attribute_copy _PangoAttribute_))
+;			 (_PangoAttribute_1 (pango_attribute_copy _PangoAttribute_))a
 			 (_PangoAttrIterator_ (pango_attr_list_get_iterator _PangoAttrList_))
 			 (_PangoAttrIterator_1 (pango_attr_iterator_copy _PangoAttrIterator_))
 			 (_PangoAttribute_16 (pango_attr_iterator_get _PangoAttrIterator_ PANGO_ATTR_SIZE))

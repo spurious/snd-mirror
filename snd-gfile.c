@@ -13,8 +13,6 @@
 */
 
 /* TODO: how to undo choice of a filter?
- * TODO: added srates in drop down [srate_completer in snd-completion -- Motif side as well here]
- * TODO: no listener activation except cursor at end? (is this the case in Motif too?)
  */
 
 
@@ -494,11 +492,33 @@ static void force_directory_reread(fsb *fs)
 /* file popup */
 static void file_text_item_activate_callback(GtkWidget *w, gpointer context)
 {
+  int i;
   fsb *fs = (fsb *)context;
-  fsb_file_set_text(fs, (const char *)(fs->file_text_names[get_user_int_data(G_OBJECT(w))]));
+  char *current_directory, *current_filename;
 
-  /* TODO: get directory, if not = current, reload lists, find this file in file lists and select, posting info */
+  current_filename = copy_string((char *)(fs->file_text_names[get_user_int_data(G_OBJECT(w))]));
+  current_directory = just_directory(current_filename);
 
+  if ((!(fs->directory_name)) || (strcmp(current_directory, fs->directory_name) != 0))
+    {
+      if (fs->directory_name) FREE(fs->directory_name);
+      fs->directory_name = current_directory;
+      fsb_filter_set_text_with_directory(fs, "*");
+      fsb_update_lists(fs);
+    }
+
+  for (i = 0; i < fs->current_files->len; i++)
+    if ((fs->current_files->files[i]->full_filename) &&
+	(strcmp(current_filename, fs->current_files->files[i]->full_filename) == 0))
+      {
+	slist_select(fs->file_list, i);        /* doesn't call select callback, but I think we want it in this case */
+	if (fs->file_list->select_callback)
+	  (*(fs->file_list->select_callback))((const char *)(fs->current_files->files[i]->filename),
+					      i,
+					      fs->file_list->select_callback_data);
+	break;
+      }
+  FREE(current_filename);
 }
 
 static void reflect_file_in_popup(fsb *fs)
@@ -945,10 +965,13 @@ typedef struct file_dialog_info {
   char *info_filename;
 } file_dialog_info;
 
+static void clear_open_handlers(fsb *fs);
+
 static void unpost_file_info(file_dialog_info *fd)
 {
   CHANGE_INFO(fd->info1,"");
   CHANGE_INFO(fd->info2,"");
+  clear_open_handlers(fd->fs);
 #if HAVE_FAM
   if (fd->info_filename_watcher)
     {
@@ -1053,6 +1076,7 @@ static void dialog_directory_select_callback(const char *dirname, void *context)
 static void dialog_select_callback(const char *filename, void *context)
 {
   file_dialog_info *fd = (file_dialog_info *)context;
+
   unpost_file_info(fd);
   if ((filename) && 
       (!(directory_p(filename))) &&
@@ -1065,11 +1089,6 @@ static void dialog_select_callback(const char *filename, void *context)
       gtk_widget_show(fd->info2);
       gtk_widget_show(fd->dp->play_button);
 #if HAVE_FAM
-      if (fd->info_filename_watcher)
-	{
-	  fd->info_filename_watcher = fam_unmonitor_file(fd->info_filename, fd->info_filename_watcher);
-	  if (fd->info_filename) {FREE(fd->info_filename); fd->info_filename = NULL;}
-	}
       fd->info_filename = copy_string(filename);
       fd->info_filename_watcher = fam_monitor_file(fd->info_filename, (void *)fd, watch_info_file);
 #endif
@@ -1270,8 +1289,8 @@ static gboolean open_modify_key_press(GtkWidget *w, GdkEventKey *event, gpointer
 
 static void clear_error_if_open_changes(fsb *fs, void *data)
 {
-  /* TODO: if file selected (or dir?) clear error also */
-  key_press_handler_id = SG_SIGNAL_CONNECT(fs->file_text, "key_press_event", open_modify_key_press, data);
+  if (!key_press_handler_id)
+    key_press_handler_id = SG_SIGNAL_CONNECT(fs->file_text, "key_press_event", open_modify_key_press, data);
 }
 
 #if HAVE_FAM
@@ -1938,34 +1957,6 @@ static void update_data_format_list(const char *name, int row, void *data)
   fd->current_format = data_format_from_position(fd->header_pos, row);
 }
 
-static void s8_callback(GtkWidget *w, gpointer context) 
-{
-  file_data *fd = (file_data *)context;
-  if (fd->srate_text)
-    gtk_entry_set_text(GTK_ENTRY(fd->srate_text), "8000");
-}
-
-static void s22_callback(GtkWidget *w, gpointer context) 
-{
-  file_data *fd = (file_data *)context;
-  if (fd->srate_text)
-    gtk_entry_set_text(GTK_ENTRY(fd->srate_text), "22050");
-}
-
-static void s44_callback(GtkWidget *w, gpointer context) 
-{
-  file_data *fd = (file_data *)context;
-  if (fd->srate_text)
-    gtk_entry_set_text(GTK_ENTRY(fd->srate_text), "41000");
-}
-
-static void s48_callback(GtkWidget *w, gpointer context) 
-{
-  file_data *fd = (file_data *)context;
-  if (fd->srate_text)
-    gtk_entry_set_text(GTK_ENTRY(fd->srate_text), "48000");
-}
-
 static void c1_callback(GtkWidget *w, gpointer context) 
 {
   file_data *fd = (file_data *)context;
@@ -1994,9 +1985,49 @@ static void c4_callback(GtkWidget *w, gpointer context)
     gtk_entry_set_text(GTK_ENTRY(fd->chans_text), (fd->extracting) ? "4" : "8");
 }
 
-static void srate_popup_callback(GtkWidget *w, gpointer context)
+static void srate_drop(GtkWidget *w, gpointer context) 
 {
-  /* TODO: tack on added srates */
+  file_data *fd = (file_data *)context;
+  if (fd->srate_text)
+    gtk_entry_set_text(GTK_ENTRY(fd->srate_text), srate_list_to_string(get_user_int_data(G_OBJECT(w))));
+}
+
+static void add_srate_menu(file_data *fd, char *srate_name)
+{
+  GtkWidget *sr;
+  if (fd->srates_size == 0)
+    {
+      fd->srates_size = 8;
+      fd->srates = (GtkWidget **)CALLOC(fd->srates_size, sizeof(GtkWidget *));
+    }
+  else
+    {
+      if (fd->srates_size == fd->num_srates)
+	{
+	  fd->srates_size += 8;
+	  fd->srates = (GtkWidget **)REALLOC(fd->srates, fd->srates_size * sizeof(GtkWidget *));
+	}
+    }
+  sr = gtk_menu_item_new_with_label(srate_name);
+  gtk_menu_shell_append(GTK_MENU_SHELL(fd->smenu), sr);
+  gtk_widget_modify_bg(sr, GTK_STATE_NORMAL, ss->sgx->highlight_color);
+  set_user_int_data(G_OBJECT(sr), fd->num_srates);
+  gtk_widget_show(sr);
+  SG_SIGNAL_CONNECT(sr, "activate", srate_drop, (gpointer)fd);
+  fd->srates[fd->num_srates++] = sr;
+}
+
+static void make_srate_menu(GtkWidget *w, gpointer context) 
+{
+  file_data *fd = (file_data *)context;
+  list_completer_info *cur_srates;
+  cur_srates = srate_list();
+  if (fd->num_srates < cur_srates->num_values)
+    {
+      int i;
+      for (i = fd->num_srates; i < cur_srates->num_values; i++)
+	add_srate_menu(fd, cur_srates->values[i]);
+    }
 }
 
 file_data *make_file_data_panel(GtkWidget *parent, char *name, 
@@ -2013,8 +2044,7 @@ file_data *make_file_data_panel(GtkWidget *parent, char *name,
   file_data *fdat;
   int nformats = 0, nheaders = 0;
   char **formats = NULL, **headers = NULL;
-  GtkWidget *s8, *s22, *s44, *s48;
-  GtkWidget *sbar, *sitem, *smenu;
+  GtkWidget *sbar, *sitem;
 
   switch (header_choice)
     {
@@ -2061,35 +2091,15 @@ file_data *make_file_data_panel(GtkWidget *parent, char *name,
   gtk_box_pack_start(GTK_BOX(scbox), sbar, false, false, 0);
   gtk_widget_show(sbar);
 
-  smenu = gtk_menu_new();
+  fdat->smenu = gtk_menu_new();
   sitem = gtk_menu_item_new_with_label(_("srate:"));
-  gtk_menu_item_set_submenu(GTK_MENU_ITEM(sitem), smenu);
+  gtk_menu_item_set_submenu(GTK_MENU_ITEM(sitem), fdat->smenu);
   gtk_menu_shell_append(GTK_MENU_SHELL(sbar), sitem);
   gtk_widget_show(sitem);
 
-  s8 = gtk_menu_item_new_with_label("8000");
-  s22 = gtk_menu_item_new_with_label("22050");
-  s44 = gtk_menu_item_new_with_label("44100");
-  s48 = gtk_menu_item_new_with_label("48000");
-
-  gtk_menu_shell_append(GTK_MENU_SHELL(smenu), s8);
-  gtk_menu_shell_append(GTK_MENU_SHELL(smenu), s22);
-  gtk_menu_shell_append(GTK_MENU_SHELL(smenu), s44);
-  gtk_menu_shell_append(GTK_MENU_SHELL(smenu), s48);
-
-  gtk_widget_show(s8);
-  gtk_widget_show(s22);
-  gtk_widget_show(s44);
-  gtk_widget_show(s48);
-
   fdat->srate_text = snd_entry_new(scbox, WITH_WHITE_BACKGROUND);
   SG_SIGNAL_CONNECT(fdat->srate_text, "key_press_event", data_panel_srate_key_press, NULL); /* srate completer */
-
-  SG_SIGNAL_CONNECT(s8, "activate", s8_callback, (gpointer)fdat);
-  SG_SIGNAL_CONNECT(s22, "activate", s22_callback, (gpointer)fdat);
-  SG_SIGNAL_CONNECT(s44, "activate", s44_callback, (gpointer)fdat);
-  SG_SIGNAL_CONNECT(s48, "activate", s48_callback, (gpointer)fdat);
-  SG_SIGNAL_CONNECT(sitem, "activate", srate_popup_callback, (gpointer)fdat);
+  SG_SIGNAL_CONNECT(sitem, "activate", make_srate_menu, (gpointer)fdat);
 
   /* chans */
   /* chan also a drop-down menu */
@@ -2122,6 +2132,11 @@ file_data *make_file_data_panel(GtkWidget *parent, char *name,
       gtk_menu_shell_append(GTK_MENU_SHELL(cmenu), c2);
       gtk_menu_shell_append(GTK_MENU_SHELL(cmenu), c3);
       gtk_menu_shell_append(GTK_MENU_SHELL(cmenu), c4);
+
+      gtk_widget_modify_bg(c1, GTK_STATE_NORMAL, ss->sgx->highlight_color);
+      gtk_widget_modify_bg(c2, GTK_STATE_NORMAL, ss->sgx->highlight_color);
+      gtk_widget_modify_bg(c3, GTK_STATE_NORMAL, ss->sgx->highlight_color);
+      gtk_widget_modify_bg(c4, GTK_STATE_NORMAL, ss->sgx->highlight_color);
 
       gtk_widget_show(c1);
       gtk_widget_show(c2);

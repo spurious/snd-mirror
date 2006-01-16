@@ -677,6 +677,8 @@ char *info_completer(char *text, void *data);
 char *complete_listener_text(char *old_text, int end, bool *try_completion, char **to_file_text);
 bool separator_char_p(char c);
 void add_srate_to_completion_list(int srate);
+list_completer_info *srate_list(void);
+char *srate_list_to_string(int row);
 
 
 /* -------- snd-print.c -------- */
