@@ -1769,3 +1769,25 @@
    obj:/usr/X11R6/lib/libXm.so.3.0.1
    obj:/usr/X11R6/lib/libXt.so.6.0
 }
+
+{
+   scmx1
+   Memcheck:Cond
+   fun:scm_i_mark_weak_vectors*
+}
+
+{
+   scmx2
+   Memcheck:Cond
+   fun:scm_i_remove_weaks_*
+}
+
+{
+   scmx3
+   Memcheck:Cond
+   fun:scm_i_mark_weak_vectors*
+}
+
+
+
+

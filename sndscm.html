@@ -39,7 +39,8 @@
 <A NAME="introduction"></a>
 
 <table border=8 bordercolor="lightsteelblue" cellpadding=4>
-<tr><td width=100><a href="#autosavedoc">autosave.scm</a></td>         <td>auto-save support</td></tr>
+<tr><td width=100><a href="#analogfilterdoc">analog-filter.scm</a></td><td>standard analog filters (Butterworth, Elliptic...)</td></tr>
+<tr><td><a href="#autosavedoc">autosave.scm</a></td>                   <td>auto-save support</td></tr>
 <tr><td><a href="#bessdoc">bess.scm, bess.rb</a></td>                  <td>FM demo</td></tr>
 <tr><td><a href="#bess1doc">bess1.scm, bess1.rb</a></td>               <td>FM violin demo</td></tr>
 <tr><td><a href="#birddoc">bird.scm, bird.rb</a></td>                  <td>North-American birds</td></tr>
@@ -112,6 +113,23 @@
 To use any of these files, (load &lt;file&gt;); for example <code>(load "v.scm")</code>.  To start Snd with
 the file already loaded, <code>snd -l v.scm</code>, or put the load statement in ~/.snd.
 </p>
+
+<A NAME="analogfilterdoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>analog-filter.scm</h2></td></tr></table>
+<br>
+<table border=1 cellpadding=3>
+  <tr><td><a class=def href="#analogfilters">make-butterworth-*</a> freq</td><td>Butterworth filters</td></tr>
+  <tr><td><a class=def href="#analogfilters">make-chebyshev-*</a> freq</td><td>Chebyshev filters</td></tr>
+  <tr><td><a class=def href="#analogfilters">make-inverse-chebyshev-*</a> freq</td><td>Inverse Chebyshev filters</td></tr>
+  <tr><td><a class=def href="#analogfilters">make-bessel-*</a> freq</td><td>Bessel-Thompson filters</td></tr>
+  <tr><td><a class=def href="#analogfilters">make-elliptic-*</a> freq</td><td>Elliptic filters</td></tr>
+</table>
+
+<p><A NAME="analogfilters"></a>analog-filter.scm has the usual analog filters: Butterworth, Chebyshev, inverse Chebyshev, Bessel,
+and Elliptic filters in lowpass, highpass, bandpass, and bandstop versions.  Each of the associated
+"make" functions returns a function ready for use as a filter (using the CLM filter generator).
+</p>
+<br>
+
 
 <A NAME="autosavedoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>autosave.scm</h2></td></tr></table>
 
@@ -571,7 +589,7 @@ the listener?
 </p>
 <br>
 
-<A NAME="dspdoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>dsp.scm, dsp.rb, analog-filter-scm</h2></td></tr></table>
+<A NAME="dspdoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>dsp.scm, dsp.rb</h2></td></tr></table>
 
 <p>A DSP grabbag, mostly filters.
 </p>
@@ -643,13 +661,6 @@ the listener?
   <tr><td><a class=def href="#windowedmaxamp">windowed-maxamp</a> gen y</td>              <td>envelope follower -- returns maxamp of last n samps</td></tr>
   <tr><td><a class=def href="#harmonicizer">harmonicizer</a> freq coeffs pairs ...</td>   <td>split each harmonic into a set of harmonics</td></tr>
   <tr><td><em class=emdef>linear-src-channel</em></td>                                    <td>linear sampling rate conversion</td></tr>
-
-  <tr><td colspan=2><center>In analog-filter.scm:</center></td></tr>
-  <tr><td><a class=def href="#analogfilters">make-butterworth-*</a> freq</td><td>Butterworth filters</td></tr>
-  <tr><td><a class=def href="#analogfilters">make-chebyshev-*</a> freq</td><td>Chebyshev filters</td></tr>
-  <tr><td><a class=def href="#analogfilters">make-inverse-chebyshev-*</a> freq</td><td>Inverse Chebyshev filters</td></tr>
-  <tr><td><a class=def href="#analogfilters">make-bessel-*</a> freq</td><td>Bessel-Thompson filters</td></tr>
-  <tr><td><a class=def href="#analogfilters">make-elliptic-*</a> freq</td><td>Elliptic filters</td></tr>
 </table>
 
 <p><A class=def NAME="exdolph">dolph</A> is the Dolph-Chebyshev fft data window, taken
@@ -927,11 +938,6 @@ CLM (Scheme): mus-rand-seed (settable)<br>
 <br>
 </small></blockquote>
 </td></tr></TABLE>
-<br>
-<p><A NAME="analogfilters"></a>analog-filter.scm has the usual analog filters: Butterworth, Chebyshev, inverse Chebyshev, Bessel,
-and Elliptic filters in lowpass, highpass, bandpass, and bandstop versions.  Each of the associated
-"make" functions returns a function ready for use as a filter (using the CLM filter generator).
-</p>
 <br>
 
 <A NAME="editmenudoc"></a><table width="100%" border=1><tr><td bgcolor="beige" align="center" valign="middle"><h2>edit-menu.scm</h2></td></tr></table>

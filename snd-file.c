@@ -560,16 +560,25 @@ void save_added_sound_file_extensions(FILE *fd)
 
 bool sound_file_p(const char *name)
 {
-  int i;
-  const char *dot, *sp;
-  dot = NULL;
-  for (sp = name; (*sp) != '\0'; sp++) 
-    if ((*sp) == '.') 
-      dot = (++sp);
-  if (dot)
-    for (i = 0; i < sound_file_extensions_end; i++)
-      if (strcmp(dot, sound_file_extensions[i]) == 0)
+  int i, dot_loc = -1, len;
+  if (!name) return(false);
+  len = strlen(name);
+  for (i = 0; i < len; i++)
+    if (name[i] == '.')
+      {
+	dot_loc = i;
+	break;
+      }
+  /* dot_loc is last dot in the name */
+  if ((dot_loc > 0) &&
+      (dot_loc < len - 1))
+    {
+      const char *ext;
+      ext = (const char *)(name + dot_loc + 1);
+      for (i = 0; i < sound_file_extensions_end; i++)
+	if (strcmp(ext, sound_file_extensions[i]) == 0)
 	return(true);
+    }
   return(false);
 }
 
@@ -4553,8 +4562,8 @@ static XEN g_sound_files_in_directory(XEN dirname)
   XEN res = XEN_EMPTY_LIST;
   XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(dirname), dirname, XEN_ONLY_ARG, S_sound_files_in_directory, "a string");
   if (XEN_STRING_P(dirname))
-    name = XEN_TO_C_STRING(dirname);
-  else name = ".";
+    name = mus_expand_filename(XEN_TO_C_STRING(dirname));
+  else name = mus_expand_filename(".");
   if (name)
     {
       dir_info *dp = NULL;
@@ -4566,6 +4575,7 @@ static XEN g_sound_files_in_directory(XEN dirname)
 	    res = XEN_CONS(C_TO_XEN_STRING(dp->files[i]->filename), res);
 	  free_dir_info(dp);
 	}
+      FREE(name);
     }
   return(xen_return_first(res, dirname));
 }

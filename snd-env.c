@@ -94,6 +94,7 @@ char *env_to_string(env *e)
       expr_buf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
       for (i = 0, j = 0; i < e->pts; i++, j += 2)
 	{
+	  if (fabs(e->data[j + 1]) < .0000001) e->data[j + 1] = 0.0; /* try to get rid of -0.000 */
 #if HAVE_RUBY
 	  mus_snprintf(expr_buf, PRINT_BUFFER_SIZE, "%s%.3f, %.3f", (first) ? "" : ", ", e->data[j], e->data[j + 1]);
 #endif

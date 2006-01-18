@@ -14,6 +14,8 @@ enum {
     NUM_CHAN_WIDGETS
 };
 
+/* TODO: if index is reused, edit_history pane remains open? */
+
 enum {W_zy_adj, W_zx_adj, W_sy_adj, W_sx_adj, W_gzy_adj, W_gsy_adj, NUM_CHAN_ADJS};
 
 GtkWidget *channel_graph(chan_info *cp)      {return(cp->cgx->chan_widgets[W_graph]);}
@@ -387,6 +389,7 @@ static void remake_edit_history(chan_info *cp)
   char *str;
   slist *lst;
   if ((!cp) || (!(cp->cgx)) || (!(cp->active))) return;
+  if (cp->squelch_update) return;
   lst = EDIT_HISTORY_LIST(cp);
   if (!lst) return;
   slist_clear(lst);
@@ -395,23 +398,11 @@ static void remake_edit_history(chan_info *cp)
   if ((!sp) || (!(sp->active)) || (sp->inuse != SOUND_NORMAL))
     fprintf(stderr, "trouble in remake_edit_history: %p %d %d\n", sp, (sp) ? sp->active : -1, (sp) ? sp->inuse : -1);
 #endif
-
   if (sp->channel_style != CHANNELS_SEPARATE)
     {
-      int k, all_eds = 0, ed, filelen;
+      int k, ed, filelen;
       char *title;
       chan_info *ncp;
-      for (k = 0; k < sp->nchans; k++)
-	{
-	  ncp = sp->chans[k];
-	  if ((ncp) && (ncp->sound))
-	    {
-	      eds = ncp->edit_ctr;
-	      while ((eds < (ncp->edit_size - 1)) && (ncp->edits[eds + 1])) eds++;
-	      all_eds += eds;
-	    }
-	}
-      all_eds += 3 * sp->nchans;
       filelen = 16 + strlen(sp->filename);
       title = (char *)CALLOC(filelen, sizeof(char));
       for (k = 0, ed = 0; k < sp->nchans; k++)
@@ -433,6 +424,9 @@ static void remake_edit_history(chan_info *cp)
 		} 
 	    }
 	}
+      if (sp->selected_channel == NO_SELECTION)
+	slist_select(lst, cp->edhist_base + cp->edit_ctr);
+      else slist_select(lst, sp->chans[sp->selected_channel]->edhist_base + sp->chans[sp->selected_channel]->edit_ctr);
       FREE(title);
     }
   else
@@ -446,13 +440,13 @@ static void remake_edit_history(chan_info *cp)
 	  for (i = 1; i <= eds; i++) 
 	    slist_append(lst, str = edit_to_string(cp, i));
 	}
+      slist_select(lst, cp->edit_ctr);
     }
   goto_graph(cp);
 }
 
 /* the edit-history list is managed even when squelch-update is #t, slowing down edits, but ...
- *   (insert a long anti-gtk diatribe here)
- *   if the list is not always up-to-date, confusion reigns.
+ *   TODO: -- is this still necessary after change to slists??
  */
 
 void reflect_edit_history_change(chan_info *cp)
@@ -475,6 +469,7 @@ void reflect_edit_counter_change(chan_info *cp)
 {
   /* undo/redo/revert -- change which line is highlighted */
   snd_info *sp;
+  if (cp->squelch_update) return;
   if (cp->cgx == NULL) return;
   sp = cp->sound;
   if ((cp->edit_ctr == 0) &&
@@ -665,7 +660,7 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Gtk
 	  cw[W_main_window] = gtk_hpaned_new();
 	  gtk_container_set_border_width(GTK_CONTAINER(cw[W_main_window]), 2);
 	  gtk_box_pack_start(GTK_BOX(w_snd_pane_box(sp)), cw[W_main_window], true, true, 0);
-	  cp->cgx->edhist_list = slist_new_with_title(_("Edits"), cw[W_main_window], NULL, 0, PANED_ADD1);
+	  cp->cgx->edhist_list = slist_new(cw[W_main_window], NULL, 0, PANED_ADD1);
 	  cp->cgx->edhist_list->select_callback = history_select_callback;
 	  cp->cgx->edhist_list->select_callback_data = (void *)cp;
 	}
@@ -902,6 +897,7 @@ void cleanup_cw(chan_info *cp)
     {
       chan_context *cx;
       GtkWidget **cw;
+      if (EDIT_HISTORY_LIST(cp)) slist_clear(EDIT_HISTORY_LIST(cp));
       cx = cp->cgx;
       cx->selected = false;
       cw = cx->chan_widgets;

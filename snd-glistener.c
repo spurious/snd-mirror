@@ -7,6 +7,10 @@ static int printout_end;
 #define LISTENER_BUFFER gtk_text_view_get_buffer(GTK_TEXT_VIEW(listener_text))
 
 /* SOMEDAY: it appears that the gtk side's completion affects only the listener, and has no auto-unpost code */
+/* TODO: cr not at end has no effect (two crs = activation)
+ * TODO: if cursor at end, it disappears!
+ * TODO: the double "(" bug is still with us
+ */
 
 static void list_completions_callback(const char *name, int row, void *data)
 {

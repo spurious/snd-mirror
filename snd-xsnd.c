@@ -1,5 +1,9 @@
 #include "snd.h"
 
+/* TODO: the name section has two pane sashes that behave strangely -- can't go up sometimes etc
+ *       (is that a pane all to itself for some reason? -- error msg?)
+ */
+
 #if HAVE_XPM
   #include <X11/xpm.h>
 #endif

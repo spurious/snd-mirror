@@ -2,6 +2,8 @@
 
 /* envelope editor and viewer */
 
+/* TODO: bg of coords label is wrong, and it needs to maintain one size */
+
 static GtkWidget *enved_dialog = NULL;
 static GtkWidget *applyB, *apply2B, *cancelB, *drawer, *showB, *saveB, *resetB, *firB = NULL;
 static GtkWidget *revertB, *undoB, *redoB, *printB, *brktxtL, *brkpixL, *graphB, *fltB, *ampB, *srcB, *rbrow, *clipB, *deleteB;

@@ -1,5 +1,10 @@
 #include "snd.h"
 
+/* TODO: debugging info, click error handling -> no help found?
+ * TODO: back button ignores just previous case?
+ * TODO: mix menu points to mix-menu.scm, and gets no help if gtk (same for all scm cases, I think)
+ */
+
 static GtkWidget *help_dialog = NULL;
 static void dismiss_help_dialog(GtkWidget *w, gpointer context) {gtk_widget_hide(help_dialog);}
 

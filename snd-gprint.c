@@ -196,7 +196,7 @@ static void start_print_dialog(void)
       gtk_widget_show(print_eps_or_lpr);
       set_dialog_widget(PRINT_DIALOG, print_dialog);
 
-      print_error_text = snd_gtk_label_new(NULL, ss->sgx->highlight_color);
+      print_error_text = snd_gtk_entry_label_new(NULL, ss->sgx->highlight_color);
       gtk_box_pack_end(GTK_BOX(GTK_DIALOG(print_dialog)->vbox), print_error_text, false, false, 0);
       gtk_widget_hide(print_error_text);
     }

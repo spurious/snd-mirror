@@ -842,6 +842,20 @@ style \"env_button\" = \"default_button\"\n\
 }\n\
 \n\
 widget \"*.env_button\" style \"env_button\"\n\
+style \"label_button\" = \"default_button\"\n\
+{\n\
+  bg[NORMAL] = { 1.0, 1.0, 0.94 }\n\
+  bg[PRELIGHT] = { 1.0, 1.0, 0.94 }\n\
+  fg[PRELIGHT] = { 0.0,  0.0,  0.0}\n\
+\n\
+  GtkButton::default_border = { 0, 0, 0, 0 }\n\
+  GtkButton::default_outside_border = { 0, 0, 0, 0 }\n\
+  GtkButton::focus_line_width = 0\n\
+  GtkButton::focus_padding = 0\n\
+  xthickness = 0\n\
+  ythickness = 0\n\
+}\n\
+widget \"*.label_button\" style \"label_button\"\n\
 ");
       }
 #endif

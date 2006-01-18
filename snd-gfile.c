@@ -13,6 +13,9 @@
 */
 
 /* TODO: how to undo choice of a filter?
+ * TODO: vf dialog slightly bigger in height (env squashed)
+ * PERHAPS: light blue bg for the vf mix/insert box? -- kinda drab right now, and looks squeezed
+ * TODO: menu item for view files doesn't raise it to the top? or is this a very fast pointer decision by the WM?
  */
 
 
@@ -923,7 +926,7 @@ static bool file_is_directory(fsb *fs)
   return((!filename) || (directory_p(filename)));
 }
 
-#define NEW_INFO() snd_gtk_label_new(NULL, ss->sgx->highlight_color)
+#define NEW_INFO() snd_gtk_entry_label_new(NULL, ss->sgx->highlight_color)
 #define CHANGE_INFO(Widget, Message) gtk_entry_set_text(GTK_ENTRY(Widget), Message)
 #define SET_INFO_SIZE(Widget, Size) gtk_entry_set_width_chars(GTK_ENTRY(Widget), Size)
 
@@ -2092,7 +2095,7 @@ file_data *make_file_data_panel(GtkWidget *parent, char *name,
   gtk_widget_show(sbar);
 
   fdat->smenu = gtk_menu_new();
-  sitem = gtk_menu_item_new_with_label(_("srate:"));
+  sitem = gtk_menu_item_new_with_label(_("            srate:"));
   gtk_menu_item_set_submenu(GTK_MENU_ITEM(sitem), fdat->smenu);
   gtk_menu_shell_append(GTK_MENU_SHELL(sbar), sitem);
   gtk_widget_show(sitem);
@@ -2143,7 +2146,7 @@ file_data *make_file_data_panel(GtkWidget *parent, char *name,
       gtk_widget_show(c3);
       gtk_widget_show(c4);
 
-      citem = gtk_menu_item_new_with_label((gchar *)((with_chan == WITH_CHANNELS_FIELD) ? _("channels:") : _("extract channel:")));
+      citem = gtk_menu_item_new_with_label((gchar *)((with_chan == WITH_CHANNELS_FIELD) ? _("           channels:") : _("    extract channel:")));
       gtk_widget_show(citem);
       gtk_menu_item_set_submenu(GTK_MENU_ITEM(citem), cmenu);
       gtk_menu_shell_append(GTK_MENU_SHELL(cbar), citem);
@@ -2158,7 +2161,7 @@ file_data *make_file_data_panel(GtkWidget *parent, char *name,
       if (with_loc == WITH_DATA_LOCATION_FIELD)
 	{
 	  GtkWidget *loclab;
-	  loclab = snd_gtk_label_new(_("location:"), ss->sgx->highlight_color);
+	  loclab = snd_gtk_highlight_label_new(_("location:"));
 	  gtk_box_pack_start(GTK_BOX(scbox), loclab, false, false, 0);
 	  gtk_widget_show(loclab);
 
@@ -2170,7 +2173,7 @@ file_data *make_file_data_panel(GtkWidget *parent, char *name,
   if (with_samples == WITH_SAMPLES_FIELD)
     {
       GtkWidget *samplab;
-      samplab = snd_gtk_label_new(_("samples:"), ss->sgx->highlight_color);
+      samplab = snd_gtk_highlight_label_new(_("samples:"));
       gtk_box_pack_start(GTK_BOX(scbox), samplab, false, false, 0);
       gtk_widget_show(samplab);
 
@@ -2195,8 +2198,7 @@ file_data *make_file_data_panel(GtkWidget *parent, char *name,
 	  gtk_box_pack_start(GTK_BOX(parent), combox, true, true, 4);
 	  gtk_widget_show(combox);
 
-	  comment_label = snd_gtk_label_new(_("comment:"), ss->sgx->highlight_color);
-	  gtk_entry_set_width_chars(GTK_ENTRY(comment_label), 2 + strlen(_("comment:")));
+	  comment_label = snd_gtk_highlight_label_new(_("comment:"));
 	  gtk_box_pack_start(GTK_BOX(combox), comment_label, false, false, 0);
 	  gtk_widget_show(comment_label);
 	}
@@ -2214,7 +2216,7 @@ file_data *make_file_data_panel(GtkWidget *parent, char *name,
   /* error */
   if (with_error == WITH_ERROR_FIELD)
     {
-      fdat->error_text = snd_gtk_label_new(NULL, ss->sgx->highlight_color);
+      fdat->error_text = snd_gtk_entry_label_new(NULL, ss->sgx->highlight_color);
       gtk_box_pack_end(GTK_BOX(parent), fdat->error_text, false, false, 0);
       gtk_widget_hide(fdat->error_text);
     }
@@ -4737,7 +4739,7 @@ GtkWidget *start_view_files_dialog_1(view_files_info *vdat, bool managed)
 
       /* files section: play files | files */
 
-      rlw = snd_gtk_label_new(_("files"), ss->sgx->highlight_color);
+      rlw = snd_gtk_highlight_label_new(_("files"));
       gtk_box_pack_start(GTK_BOX(fileform), rlw, false, false, 0);
       gtk_widget_show(rlw);
 
@@ -4855,7 +4857,7 @@ GtkWidget *start_view_files_dialog_1(view_files_info *vdat, bool managed)
 	GtkWidget *ltop_sep, *lbox, *frame;
 	GtkWidget *lbox1, *lbox2, *lbox3, *lbox4, *lbox5;
 
-	vdat->left_title = snd_gtk_label_new(_("(no files selected)"), ss->sgx->highlight_color);
+	vdat->left_title = snd_gtk_entry_label_new(_("(no files selected)"), ss->sgx->highlight_color);
 	gtk_box_pack_start(GTK_BOX(leftform), vdat->left_title, false, false, 0);
 #if HAVE_GTK_ENTRY_SET_ALIGNMENT
 	gtk_entry_set_alignment(GTK_ENTRY(vdat->left_title), 0.5);

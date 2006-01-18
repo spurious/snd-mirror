@@ -37,11 +37,161 @@
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
-
 (define tests 1)
 (define keep-going #f)
 (define all-args #f) ; huge arg testing
 (define with-big-file #t)
+
+
+;;; TODO: check just-sounds more carefully
+;;; TODO: replace old file-sorters/filters tests
+;;; TODO: ruby valgrind snd-test.rb 
+;;; SOMEDAY: gix guile random in 64-bit case
+;;; SOMEDAY: why does freeBSD get memory corruption occasionally? (need valgrind ideally)
+;;; SOMEDAY: check the tests that are currently reporting troubles
+
+#!
+;;; --------------------------------------------------------------------------------
+;;; motif side (noinit):
+
+;test 3
+;window x: 775 /= 123?
+;window y: 345 /= 321?12
+10
+
+;test 4/home/bil/cl/test.snd does not seem to be a sound file?/home/bil/cl/test.snd does not seem to be a sound file?/home/bil/cl/test.snd does not seem to be a sound file?
+;test 5can't print openGL graphics yetcan't print openGL graphics yetcan't print openGL graphics yetcan't print openGL graphics yetcan't print openGL graphics yetchannel-style did not change: 2 -> 0
+
+;test 6
+;test 13
+;set window-property vu-size (should be 0.5): 1.0top: 110
+;snd-error-hook not called?folding 3 chans into 2 
+;test 14
+;test 15remove /tmp/snd_27637_1545.snd: No such file or directoryremove /tmp/snd_27637_1545.snd: No such file or directory
+;test 16
+
+;test 21
+;show-grid set arg (2): #t #t
+;show-grid set 2 channel-func: #t #t
+;show-grid set (2) channel-func: #t #t
+;show-sonogram-cursor set arg (2): #t #t
+;show-sonogram-cursor set 2 channel-func: #t #t
+;show-sonogram-cursor set (2) channel-func: #t #t
+;cursor-follows-play set arg (2): #t #t
+;cursor-follows-play overwrote global: #t #t
+;test 22
+;test 24
+;C-x C-( report-in-minibuffer: ?
+;C-x C-( again report-in-minibuffer: ?
+;M-x with filename completion: (mus-sound-frames "pistol.read-error: (scm_lreadr #<unknown port>:3104:3: Unknown # object: ~S (<) #f)unbound-variable: (#f Unbound variable: ~S (read-error) #f)unbound-variable: (#f Unbound variable: ~S (A>BC) #f)
+;no help dialog at all!mus-error: (can't open /home/bil/cl/pistol.
+
+
+: No such file or directory)
+;frs not defined
+;recorder-file after hook: /home/bil/cl/fmv.aif
+;saved new-env: (0.0 1.0 25.0 0.400000005960464 50.0 1.0 75.0 0.600000023841858 100.0 0.0)?
+;enved mid-click to delete: (0.0 1.0 25.0 0.400000005960464 75.0 0.600000023841858 100.0 0.0)?
+;color dialog list 6: 5
+;toggle sono-button on
+;toggle spectro-button on
+;no listener leave?
+;edit-header -> 8000? 8beg: 1.000000, dur: 0.100000
+
+;test 25
+[-------------------------;XGetWindowAttributes map_installed: #f---]
+[-------------------------;all_event_masks: e28033------------------]
+Xt warning: string, conversionError: oops hi
+Xt warning: string, conversionError: oops: %s hi
+
+;XGetKeyboardMapping: ((KeySym 100) (KeySym 68) (KeySym 0) (KeySym 0) (KeySym 0) (KeySym 0))
+;XmListPosToBounds: (#t 2 24 596 19)
+;test 26
+;test 27
+;test 28close sound file: Bad file descriptorclose sound file: Bad file descriptor
+[-------------------------;check-error-tag cant-open-file from (lambda () (save-region (car (regions)) /bad/baddy.snd)): cannot-save]
+/hiho/hihoout-of-range: (vct-ref index ~A too high? (512))
+;open read-protected sound: 2
+;test 28: open sounds: (test.snd);all done!
+
+
+;;; --------------------------------------------------------------------------------
+;;; gtk side:
+
+;test 1
+;tiny-font /= 6x12 (Monospace 8)
+;test 2
+;test 3
+;window width: 219 /= 300?
+;window height: 28 /= 300?
+;window x: 72 /= 123?
+;window y: 24 /= 321?12
+10
+
+;test 4
+;mus-sound-write-date oboe.snd: 16-Jan 08:22 PST?
+;mus-sound-write-date pistol.snd: 16-Jan 08:22 PST?
+;oboe: file-write-date: 16-Jan-2006 08:22?/home/bil/snd-7/test.snd does not seem to be a sound file?/home/bil/snd-7/test.snd does not seem to be a sound file?/home/bil/snd-7/test.snd does not seem to be a sound file?
+;test 5channel-style did not change: 2 -> 0
+
+;test 6
+;test 7
+;set foreground cursor color: (GdkColor_ 279853152) (GdkColor_ 279895984)
+;set foreground-color: (GdkColor_ 279895840) (GdkColor_ 182443392)
+;set foreground-color with ind: (GdkColor_ 279950288) (GdkColor_ 182443392)
+;test 8
+;test 9
+;mix-color 69 (GdkColor_ 173615040) = (GdkColor_ 281606160) ((GdkColor_ 175182896))?
+;set mix-color: (GdkColor_ 279162960) (GdkColor_ 279162960) (GdkColor_ 280983200) (GdkColor_ 175182896)
+;test 10
+;test 11
+;vf files set: (/home/bil/snd-7/storm.snd /home/bil/snd-7/pistol.snd /home/bil/snd-7/1a.snd /home/bil/snd-7/oboe.snd)
+;vf selected files set: (/home/bil/snd-7/1a.snd)
+;test 12
+;map|for-each-sound-file(s): () ()
+;test 13
+;set window-property vu-size (should be 0.5): 1.0
+;no widgets added?
+;after-save-as-hook name: /home/bil/snd-7/test.snd (/home/bil/cl/test.snd)
+;snd-error-hook not called?folding 3 chans into 2 
+;test 14
+;test 15
+;transform selection peak: 31.3261985778809
+;test 16
+;saved delete edpos max: 4.8828125e-4 0.147
+
+;test 19
+;edit-list->function 10a: (lambda (snd chn) (insert-sound "/home/bil/snd-7/pistol.snd" 1000 0 snd chn))
+;edit-list->function 11: (lambda (snd chn) (insert-samples 1000 41623 "/home/bil/snd-7/pistol.snd" snd chn))
+;test 20
+;test 21
+;show-grid set arg (2): #t #t
+;show-grid set 2 channel-func: #t #t
+;show-grid set (2) channel-func: #t #t
+;show-sonogram-cursor set arg (2): #t #t
+;show-sonogram-cursor set 2 channel-func: #t #t
+;show-sonogram-cursor set (2) channel-func: #t #t
+;show-controls set arg (2): #t #t
+;show-controls overwrote global: #t #t
+;cursor-follows-play set arg (2): #t #t
+;cursor-follows-play overwrote global: #t #t
+;test 22
+;test 26
+;entry layout offsets: (4 -10)
+;layout offsets: (-20 -24)
+;dialog folder uri: file:///home/bil/snd-7
+;gtkactions: (GtkAction_ 290415176) #f
+;tree col fix wid:1
+;about dialog translator_credits: About Dialog
+[-----------------------;pango underlines: -1024 1024 4096 1024---------------------]
+:1: error: unexpected character `/', expected keyword - e.g. `style'
+;test 28close sound file: Bad file descriptorclose sound file: Bad file descriptor
+;check-error-tag cant-open-file from (lambda () (save-region (car (regions)) /bad/baddy.snd)): cannot-save/hiho/hiho
+(snd:28166): Gtk-WARNING **: Attempting to add a widget with type GtkTable to a GtkWindow, but as a GtkBin subclass a GtkWindow can only contain one widget at a time; it already contains a widget of type GtkVBox
+out-of-range: (vct-ref index ~A too high? (16))
+;open read-protected sound: 2
+;test 28: open sounds: (test.snd);all done!
+!#
 
 
 (if (not (defined? 'snd-test)) (define snd-test -1))
@@ -1916,7 +2066,6 @@
       (close-sound ind) 
       (dismiss-all-dialogs)
       
-      ;; TODO: replace old file-sorters/filters tests
       (if (provided? 'snd-debug)
 	  (begin
 	    (snd-stdin-test "(set! (enved-filter-order) 12)")
@@ -3924,6 +4073,15 @@
 	  (close-sound file))
         (delete-file "test.aif")
         (mus-sound-forget "test.aif")
+
+	(let ((files (sound-files-in-directory cwd)))
+	  (if (null? files) (snd-display ";no sound files in ~A?" cwd))
+	  (let ((files1 (sound-files-in-directory)))
+	    (if (not (equal? files files1)) (snd-display ";different sound files in ~A and default?" cwd))
+	    (let ((files2 (sound-files-in-directory ".")))
+	      (if (or (not (equal? files1 files2))
+		      (not (equal? files files2)))
+		  (snd-display ";sound-files-in-directory dot: ~A but ~A" files2 files)))))
 
       (reset-hook! bad-header-hook)
       (reset-hook! open-raw-sound-hook)
@@ -10485,6 +10643,15 @@ EDITS: 5
 		  (vct-set! data i (read-sample sf)))
 		data))
 	    
+	    (if (and (provided? 'snd-motif)
+		     (provided? 'xm))
+		(let* ((edhist (list-ref (channel-widgets ind 0) 7))
+		       (edp (XtParent edhist))
+		       (pmax (cadr (XtVaGetValues edp (list XmNpaneMaximum 0)))))
+		  (XtUnmanageChild edp) 
+		  (XtVaSetValues edp (list XmNpaneMinimum 100)) 
+		  (XtManageChild edp)))
+
 	    (set! (squelch-update ind) #t)
 
 	    (do ((k 0 (1+ k)))
@@ -11011,6 +11178,13 @@ EDITS: 5
 				 op3)))
 			  op2))
 		       op1)))))
+	    (if (and (provided? 'snd-motif)
+		     (provided? 'xm))
+		(let* ((edhist (list-ref (channel-widgets ind 0) 7))
+		       (edp (XtParent edhist)))
+		  (XtUnmanageChild edp) 
+		  (XtVaSetValues edp (list XmNpaneMinimum 1))  ; not 0 here -- Xt warnings
+		  (XtManageChild edp)))
 	    (set! (squelch-update ind) #f)
 	    (close-sound ind))
 	  
@@ -11303,6 +11477,7 @@ EDITS: 5
 	    (close-sound ind0)
 	    (close-sound ind1))
 	  ))
+      (clear-save-state-files)
       )
       (run-hook after-test-hook 5)
       ))
@@ -26090,6 +26265,15 @@ EDITS: 5
 			      (list 'xramp-channel (lambda () 
 						     (xramp-channel .5 1.0 32.0 123 456 ind 0))))))
 	
+	(if (and (provided? 'snd-motif)
+		 (provided? 'xm))
+	    (let* ((edhist (list-ref (channel-widgets ind 0) 7))
+		   (edp (XtParent edhist))
+		   (pmax (cadr (XtVaGetValues edp (list XmNpaneMaximum 0)))))
+	      (XtUnmanageChild edp) 
+	      (XtVaSetValues edp (list XmNpaneMinimum 100)) 
+	      (XtManageChild edp)))
+
 	(add-hook! (edit-hook ind 0) 
 		   (lambda () 
 		     (set! edit-hook-ctr (1+ edit-hook-ctr)) 
@@ -26137,6 +26321,15 @@ EDITS: 5
 	     (revert-sound ind)
 	     (if (not (equal? (mixes ind 0) '())) (snd-display ";~A: mixes: ~A" name (mixes ind 0)))))
 	 all-tests)
+
+	(if (and (provided? 'snd-motif)
+		 (provided? 'xm))
+	    (let* ((edhist (list-ref (channel-widgets ind 0) 7))
+		   (edp (XtParent edhist)))
+	      (XtUnmanageChild edp) 
+	      (XtVaSetValues edp (list XmNpaneMinimum 1))  ; not 0 here -- Xt warnings
+	      (XtManageChild edp)))
+
 	(close-sound ind))
 
       (add-hook! mouse-enter-text-hook
@@ -47186,11 +47379,13 @@ EDITS: 1
 		(if (.backing_store attr) (snd-display ";XGetWindowAttributes backing_store: ~A" (.backing_store attr)))
 		(if (.override_redirect attr) (snd-display ";XGetWindowAttributes override_redirect: ~A" (.override_redirect attr)))
 		(if (.save_under attr) (snd-display ";XGetWindowAttributes save_under: ~A" (.save_under attr)))
-		(if (not (.map_installed attr)) (snd-display ";XGetWindowAttributes map_installed: ~A" (.map_installed attr)))
+		(if (.map_installed attr) (snd-display ";XGetWindowAttributes map_installed: ~A" (.map_installed attr)))
 		(if (not (equal? (.backing_pixel attr) (list 'Pixel 0))) (snd-display ";XGetWindowAttributes backing_pixel: ~A" (.backing_pixel attr)))
 		(if (not (= (.map_state attr) 2)) (snd-display ";XGetWindowAttributes map_state: ~A" (.map_state attr)))
 		(if (not (= (.your_event_mask attr) #x628033)) (snd-display ";your_event_mask: ~X" (.your_event_mask attr)))
-		(if (not (= (.all_event_masks attr) #x628033)) (snd-display ";all_event_masks: ~X" (.all_event_masks attr)))
+		(if (and (not (= (.all_event_masks attr) #x628033)) 
+			 (not (= (.all_event_masks attr) #xe28033)))
+		    (snd-display ";all_event_masks: ~X" (.all_event_masks attr)))
 		(if (not (Screen? (.screen attr))) (snd-display ";XGetWindowAttributes screen: ~A" (.screen attr)))
 		(if (and (not (= (.do_not_propagate_mask attr) 0)) 
 			 (not (= (.do_not_propagate_mask attr) 8204)))
@@ -54421,7 +54616,8 @@ EDITS: 1
 		(gtk_cell_view_set_model (GTK_CELL_VIEW cell1) (GTK_TREE_MODEL store))
 		(gtk_cell_view_set_background_color (GTK_CELL_VIEW cell1) (basic-color))
 					;(gtk_cell_view_set_cell_data (GTK_CELL_VIEW cell1))
-		(gtk_cell_view_get_cell_renderers (GTK_CELL_VIEW cell1))))
+					;(gtk_cell_view_get_cell_renderers (GTK_CELL_VIEW cell1))
+		))
 
 	    (let* ((_PangoLanguage_ (pango_language_from_string "de"))
 		   (_PangoContext_ (gdk_pango_context_get))
@@ -54434,7 +54630,7 @@ EDITS: 1
 		    (int1 (pango_font_metrics_get_underline_thickness _PangoFontMetrics_))
 		    (int2 (pango_font_metrics_get_strikethrough_position _PangoFontMetrics_))
 		    (int3 (pango_font_metrics_get_strikethrough_thickness _PangoFontMetrics_)))
-		(if (or (not (= int0 -1024)) (not (= int1 1024)) (not (= int2 3072)) (not (= int3 1024)))
+		(if (or (not (= int0 -1024)) (not (= int1 1024)) (and (not (= int2 3072)) (not (= int2 4096))) (not (= int3 1024)))
 		    (snd-display ";pango underlines: ~A ~A ~A ~A" int0 int1 int2 int3)))
 	      (if (not _PangoScript) (snd-display ";pango script: ~A" _PangoScript))
 	      (pango_script_iter_get_range _PangoScriptIter_)
@@ -54970,7 +55166,7 @@ EDITS: 1
 	      gtk_table_get_default_row_spacing gtk_table_get_homogeneous gtk_table_get_row_spacing gtk_table_get_type gtk_table_new
 	      gtk_table_resize gtk_table_set_col_spacing gtk_table_set_col_spacings gtk_table_set_homogeneous gtk_table_set_row_spacing
 	      gtk_table_set_row_spacings gtk_target_list_add gtk_target_list_add_image_targets gtk_target_list_add_table gtk_target_list_add_text_targets
-	      gtk_target_list_add_uri_targets gtk_target_list_find gtk_target_list_new gtk_target_list_ref gtk_target_list_remove
+	      gtk_target_list_add_uri_targets gtk_target_list_find gtk_target_list_ref gtk_target_list_remove ;gtk_target_list_new
 	      gtk_target_list_unref gtk_tearoff_menu_item_get_type gtk_tearoff_menu_item_new gtk_text_attributes_copy gtk_text_attributes_copy_values
 	      gtk_text_attributes_new gtk_text_attributes_unref gtk_text_buffer_add_selection_clipboard gtk_text_buffer_apply_tag
 	      gtk_text_buffer_apply_tag_by_name gtk_text_buffer_backspace gtk_text_buffer_begin_user_action 
@@ -56919,7 +57115,7 @@ EDITS: 1
 	      (check-error-tag 'no-such-region (lambda () (save-region 1234 "/bad/baddy.snd")))
 	      (make-region 0 100 ind 0)
 	      (check-error-tag 'cannot-save (lambda () (save-selection "/bad/baddy.snd")))
-	      (check-error-tag 'cant-open-file (lambda () (save-region (car (regions)) "/bad/baddy.snd")))
+	      (check-error-tag 'cannot-save (lambda () (save-region (car (regions)) "/bad/baddy.snd")))
 	      (check-error-tag 'no-such-track (lambda () (make-track-sample-reader 0 1234 0)))
 	      (check-error-tag 'no-such-track (lambda () (make-track-sample-reader 1234 0 0)))
 	      (check-error-tag 'no-such-mix (lambda () (make-mix-sample-reader 1234)))
@@ -57539,6 +57735,10 @@ EDITS: 1
 		  (system "chmod 644 test.snd")
 		  (delete-file "test.snd")))
 
+	     (if (not (null? (sounds)))
+		 (begin
+		   (snd-display ";test ~D: open sounds after loops: ~A" n (map short-file-name (sounds)))
+		   (for-each close-sound (sounds))))
 	    
 	    (copy-file "oboe.snd" "test.snd")
 	    (let ((ind (open-sound "test.snd")))
@@ -57575,6 +57775,11 @@ EDITS: 1
 		(if (not (eq? tag 'cannot-save))
 		    (snd-display ";save protected sound msg: ~A" tag)))
 	      (close-sound ind))
+
+	     (if (not (null? (sounds)))
+		 (begin
+		   (snd-display ";test ~D: open sounds after first chmod tests: ~A" n (map short-file-name (sounds)))
+		   (for-each close-sound (sounds))))
 
 	    (system "chmod 644 test.snd")
 	    (delete-file "test.snd")
@@ -57719,6 +57924,7 @@ EDITS: 1
     (system "cp memlog memlog.full"))
 
 (if (and full-test
+	 (= tests 1)
 	 (file-exists? "oldopt.log"))
     (system "diff -w optimizer.log oldopt.log"))
 

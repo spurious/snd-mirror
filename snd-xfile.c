@@ -18,7 +18,6 @@
  *          -> src is interrupted apparently and file open completes
  *       or similarly, stops at "ok", starts src, clicks ok?
  * PERHAPS: audio:settings for display, perhaps reset -- as opposed to using the recorder
- * TODO: check just-sounds more carefully in snd-test
  * TODO: how to remap button 3 on Mac? (button 3 coded in -- how to see changed action?
  */
 

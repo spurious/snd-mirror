@@ -2,6 +2,8 @@
 
 (provide 'snd-snd7.scm)
 
+(use-modules (ice-9 session)) ; for apropos
+
 (define free-mix-sample-reader free-sample-reader)
 (define free-track-sample-reader free-sample-reader)
 (define (inspect-sample-reader rd) (format #f "~A" rd))

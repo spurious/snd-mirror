@@ -4,7 +4,7 @@ enum {W_top, W_form, W_main_window, W_edhist, W_wf_buttons, W_f, W_w, W_left_scr
       W_bottom_scrollers, W_sx, W_zx, W_graph, W_gzy, W_gsy,
       NUM_CHAN_WIDGETS
 };
-/* #define NUM_CHAN_WIDGETS 16 */
+
 #define DEFAULT_EDIT_HISTORY_WIDTH 1
 
 Widget channel_main_pane(chan_info *cp)
@@ -544,6 +544,7 @@ static void remake_edit_history(Widget lst, chan_info *cp, int from_graph)
   snd_info *sp;
   int i, eds;
   XmString *edits;
+  if (cp->squelch_update) return;
   XmListDeleteAllItems(lst);
   sp = cp->sound;
   if (sp->channel_style != CHANNELS_SEPARATE)
@@ -635,6 +636,7 @@ void reflect_edit_history_change(chan_info *cp)
   /* new edit so it is added, and any trailing lines removed */
   snd_info *sp;
   Widget lst;
+  if (cp->squelch_update) return;
   if ((cp->in_as_one_edit) || (cp->cgx == NULL)) return;
   sp = cp->sound;
   lst = EDIT_HISTORY_LIST(cp);
@@ -700,6 +702,7 @@ void reflect_edit_counter_change(chan_info *cp)
 {
   /* undo/redo/revert -- change which line is highlighted */
   Widget lst;
+  if (cp->squelch_update) return;
   if (cp->cgx == NULL) return;
   lst = EDIT_HISTORY_LIST(cp);
   if ((lst) && (widget_width(lst) > 1))

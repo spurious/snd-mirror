@@ -617,11 +617,18 @@ GtkWidget *snd_gtk_dialog_new(void)
   return(w);
 }
 
-GtkWidget *snd_gtk_label_new(const char *label, GdkColor *color)
+GtkWidget *snd_gtk_highlight_label_new(const char *label)
 {
   GtkWidget *rlw;
-  /* -------------------------------- fUn WiTh DuMb SoFtWaRe!!  -------------------------------- */
-  /* this is what goddamn gtk forces us to use -- all I want is a label with a background color! */
+  rlw = gtk_button_new_with_label(label);
+  gtk_widget_set_name(rlw, "label_button");
+  gtk_button_set_relief(GTK_BUTTON(rlw), GTK_RELIEF_HALF);
+  return(rlw);
+}
+
+GtkWidget *snd_gtk_entry_label_new(const char *label, GdkColor *color)
+{
+  GtkWidget *rlw;
   rlw = gtk_entry_new();
   gtk_entry_set_has_frame(GTK_ENTRY(rlw), false);
   if (label) gtk_entry_set_text(GTK_ENTRY(rlw), label);
@@ -784,7 +791,7 @@ slist *slist_new_with_title_and_table_data(const char *title,
     {
       lst->box = gtk_vbox_new(false, 0);
 
-      lst->label = snd_gtk_label_new(title, ss->sgx->highlight_color);
+      lst->label = snd_gtk_highlight_label_new(title);
       gtk_box_pack_start(GTK_BOX(lst->box), lst->label, false, false, 0);
       topw = lst->box;
     }
@@ -857,9 +864,12 @@ slist *slist_new_with_title(const char *title, GtkWidget *parent, char **initial
 void slist_clear(slist *lst)
 {
   int i;
-  for (i = 0; i < lst->num_items; i++)
-    if (GTK_WIDGET_VISIBLE(lst->items[i]))
-      gtk_widget_hide(lst->items[i]);
+  for (i = 0; i < lst->items_size; i++)
+    if (lst->items[i])
+      {
+	gtk_widget_hide(lst->items[i]);
+	gtk_button_set_label(GTK_BUTTON(lst->items[i]), " ");
+      }
   lst->num_items = 0;
   if (lst->selected_item != SLIST_NO_ITEM_SELECTED)
     gtk_widget_modify_bg(lst->items[lst->selected_item], GTK_STATE_NORMAL, ss->sgx->white);

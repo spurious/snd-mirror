@@ -1,5 +1,13 @@
 #include "snd.h"
 
+/* TODO: show controls doesn't fully open the control panel, clobbering even the sash
+ * TODO: hide listener doesn't close the associated panel, show doesn't open it
+ * TODO: controls have too much space
+ * TODO: mark name is in xor'd color and is at wrong vertical position
+ * TODO: completion broken in minibuffer [motif side too, but ok in M-X:]
+ * TODO: does squelch-output actually work in gtk version?
+ */
+
 enum {W_pane, W_pane_box, W_control_panel,
       W_name_form, W_name, W_name_event, W_name_pix, W_info_label, W_info, W_info_sep,
       W_play, W_sync, W_unite,
@@ -236,18 +244,12 @@ static void make_pixmaps(void)
 
 static gboolean name_pix_expose(GtkWidget *w, GdkEventExpose *ev, gpointer data)
 {
-  /*
   snd_info *sp = (snd_info *)data;
-    Gdk-CRITICAL **: gdk_draw_drawable: assertion `src != NULL' failed
-    #3  0x403f94e8 in gdk_draw_drawable (drawable=0x878dfe0, gc=0x8600430, 
-        src=0x0, xsrc=0, ysrc=0, xdest=0, ydest=4, width=16, height=16)
-        at gdkdraw.c:666
-	
-	... typical...
-
-  if (NAME_PIX(sp))
+  if ((sp) &&
+      (sp->sgx) &&
+      (sp->sgx->file_pix) &&
+      (NAME_PIX(sp)))
     gdk_draw_drawable(GDK_DRAWABLE(NAME_PIX(sp)->window), ss->sgx->basic_gc, sp->sgx->file_pix, 0, 0, 0, 4, 16, 16);
-  */
   return(false);
 }
 
@@ -1474,7 +1476,7 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
 
       /* -------- minibuffer error display -------- */
 
-      ERROR_INFO(sp) = snd_gtk_label_new(NULL, ss->sgx->highlight_color);
+      ERROR_INFO(sp) = snd_gtk_entry_label_new(NULL, ss->sgx->highlight_color);
       gtk_container_add(GTK_CONTAINER(ERROR_INFO_FRAME(sp)), ERROR_INFO(sp));
       gtk_widget_show(ERROR_INFO(sp));
 

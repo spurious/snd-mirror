@@ -1,5 +1,8 @@
 /* transform settings dialog */
 
+/* TODO: max peaks et al aren't white-upon-focus? */
+/* TODO: initial window choice moveto seems to be lost? */
+
 #include "snd.h"
 
 slist *transform_list = NULL, *size_list = NULL, *window_list = NULL, *wavelet_list = NULL;
@@ -428,16 +431,10 @@ GtkWidget *fire_up_transform_dialog(bool managed)
 
       /* TYPE */
       make_transform_type_list();
-#if HAVE_GTK_BUTTON_SET_ALIGNMENT
-      gtk_entry_set_alignment(GTK_ENTRY(transform_list->label), 0.4);
-#endif
 
       /* SIZE */
       size_list = slist_new_with_title_and_table_data(_("size"), outer_table, TRANSFORM_SIZES, NUM_TRANSFORM_SIZES, TABLE_ATTACH, 1, 2, 0, 3);
       size_list->select_callback = size_browse_callback;
-#if HAVE_GTK_BUTTON_SET_ALIGNMENT
-      gtk_entry_set_alignment(GTK_ENTRY(size_list->label), 0.4);
-#endif
 
       /* DISPLAY */
       display_frame = gtk_frame_new(_("display"));
@@ -500,11 +497,8 @@ GtkWidget *fire_up_transform_dialog(bool managed)
 	GtkWidget *pk_lab, *db_lab, *lf_lab;
 	GtkObject *pk_vals, *db_vals, *lf_vals;
 
-	pk_lab = snd_gtk_label_new(_("max peaks:"), ss->sgx->highlight_color);
+	pk_lab = snd_gtk_highlight_label_new(_("max peaks:"));
 	gtk_box_pack_start(GTK_BOX(buttons), pk_lab, false, false, 0);
-#if HAVE_GTK_BUTTON_SET_ALIGNMENT
-	gtk_entry_set_alignment(GTK_ENTRY(pk_lab), 0.4);
-#endif
 	gtk_widget_show(pk_lab);
       
 	pk_vals = gtk_adjustment_new(max_transform_peaks(ss), 2, 1000, 2, 10, 0);
@@ -514,11 +508,8 @@ GtkWidget *fire_up_transform_dialog(bool managed)
 	SG_SIGNAL_CONNECT(pk_vals, "value_changed", max_peaks_callback, (gpointer)peaks_txt);
 	gtk_widget_show(peaks_txt);
 
-	db_lab = snd_gtk_label_new(_("min dB:"), ss->sgx->highlight_color);
+	db_lab = snd_gtk_highlight_label_new(_("min dB:"));
 	gtk_box_pack_start(GTK_BOX(buttons), db_lab, false, false, 0);
-#if HAVE_GTK_BUTTON_SET_ALIGNMENT
-	gtk_entry_set_alignment(GTK_ENTRY(db_lab), 0.4);
-#endif
 	gtk_widget_show(db_lab);
       
 	db_vals = gtk_adjustment_new((int)(-(min_dB(ss))), 2, 1000, 2, 10, 0); /* can't be negative!! */
@@ -528,11 +519,8 @@ GtkWidget *fire_up_transform_dialog(bool managed)
 	SG_SIGNAL_CONNECT(db_vals, "value_changed", min_db_callback, (gpointer)db_txt);
 	gtk_widget_show(db_txt);
 
-	lf_lab = snd_gtk_label_new(_("log freq start:"), ss->sgx->highlight_color);
+	lf_lab = snd_gtk_highlight_label_new(_("log freq start:"));
 	gtk_box_pack_start(GTK_BOX(buttons), lf_lab, false, false, 0);
-#if HAVE_GTK_BUTTON_SET_ALIGNMENT
-	gtk_entry_set_alignment(GTK_ENTRY(lf_lab), 0.4);
-#endif
 	gtk_widget_show(lf_lab);
       
 	lf_vals = gtk_adjustment_new((int)(log_freq_start(ss)), 1, 1000, 1, 10, 0);
@@ -549,18 +537,12 @@ GtkWidget *fire_up_transform_dialog(bool managed)
       /* WAVELET */
       wavelet_list = slist_new_with_title_and_table_data(_("wavelet"), outer_table, wavelet_names(), NUM_WAVELETS, TABLE_ATTACH, 0, 1, 3, 6);
       wavelet_list->select_callback = wavelet_browse_callback;
-#if HAVE_GTK_BUTTON_SET_ALIGNMENT
-      gtk_entry_set_alignment(GTK_ENTRY(wavelet_list->label), 0.4);
-#endif
 
       /* WINDOW */
       window_box = gtk_table_new(2, 3, false);
       gtk_table_attach_defaults(GTK_TABLE(outer_table), window_box, 1, 2, 3, 6);
       window_list = slist_new_with_title_and_table_data(_("window"), window_box, FFT_WINDOWS, MUS_NUM_WINDOWS, TABLE_ATTACH, 0, 1, 0, 1);
       window_list->select_callback = window_browse_callback;
-#if HAVE_GTK_BUTTON_SET_ALIGNMENT
-      gtk_entry_set_alignment(GTK_ENTRY(window_list->label), 0.4);
-#endif
 
       beta_adj = gtk_adjustment_new(0.0, 0.0, 1.01, 0.001, 0.01, .01);
       window_beta_scale = gtk_hscale_new(GTK_ADJUSTMENT(beta_adj));
