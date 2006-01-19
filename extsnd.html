@@ -23,7 +23,6 @@
 
 <body bgcolor=white>
 
-<!-- TODO: some of the tables look bad on the Mac -->
 <!-- TODO: list pd stuff in the main table -->
 
 <!-- I'm using A NAME (i.e caps) where the entity should be ignored by the indexer (index.cl) -->
@@ -291,9 +290,12 @@ function. </p>
 
 <table border=0 cellspacing=6>
 
+<tr><td width=100></td><td width=100></td><td></td></tr>
+<!-- this width info is needed in Safari -->
+
 <!-- ask-before-overwrite -->
 <tr><td colspan=2><code><a class=def name="askbeforeoverwrite">ask-before-overwrite</a></code></td>
-<td width><code>#f</code></td></tr>
+<td><code>#f</code></td></tr>
 <tr><td></td><td colspan=2>should Snd ask before overwriting an existing file.</td></tr>
 <tr><td colspan=3></td></tr>
 

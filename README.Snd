@@ -56,6 +56,7 @@ The configure program has several Snd-related arguments:
                                You'll need this (or need to make xm and load xm.so
                                at runtime) if you want to use Dave Phillips'
                                extensions described in the tutorial.
+     --with-static-xg        same as above, but refers to the gtk xg module.      
          
    --with-static-gsl         try to load GSL statically
                                GSL is loaded in any case, if it is available, and the

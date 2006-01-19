@@ -1,8 +1,6 @@
 #include "snd.h"
 
-/* TODO: debugging info, click error handling -> no help found?
- * TODO: back button ignores just previous case?
- * TODO: mix menu points to mix-menu.scm, and gets no help if gtk (same for all scm cases, I think)
+/* TODO: back button ignores just previous case?
  */
 
 static GtkWidget *help_dialog = NULL;
@@ -24,6 +22,7 @@ static gint delete_help_dialog(GtkWidget *w, GdkEvent *event, gpointer context)
 static GtkWidget *help_text = NULL;
 slist *related_items = NULL;
 static char *original_help_text = NULL;
+static char **help_urls = NULL;
 
 /* gtk_text_buffer_insert_with_tags_by_name (buffer, &iter, "some text in red", -1, "red_foreground", NULL); */
 
@@ -193,16 +192,21 @@ static char *find_highlighted_text(const char *value)
 static void help_browse_callback(const char *name, int row, void *data)
 {
   char *topic = NULL;
-  topic = find_highlighted_text(name);
-  if (topic)
-    {
-      name_to_html_viewer(topic);
-      FREE(topic);
-    }
+  if ((help_urls) && (help_urls[row]))
+    url_to_html_viewer(help_urls[row]);
   else
     {
-      if (name)
-	new_help(name);
+      topic = find_highlighted_text(name);
+      if (topic)
+	{
+	  name_to_html_viewer(topic);
+	  FREE(topic);
+	}
+      else
+	{
+	  if (name)
+	    new_help(name);
+	}
     }
 }
 
@@ -319,6 +323,7 @@ GtkWidget *snd_help(const char *subject, const char *helpstr, with_word_wrap_t w
 GtkWidget *snd_help_with_xrefs(const char *subject, const char *helpstr, with_word_wrap_t with_wrap, char **xrefs, char **urls)
 {
   GtkWidget *w;
+  help_urls = urls;
   w = snd_help(subject, helpstr, with_wrap);
   if (xrefs)
     {

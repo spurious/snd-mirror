@@ -3632,12 +3632,16 @@ int vf_mix(view_files_info *vdat)
 	  vf_post_error(tempfile, (void *)vdat);
 	  id_or_error = MIX_FILE_NO_TEMP_FILE;
 	}
-      else /* TODO: do we need remember_temp here? */
-	id_or_error = mix_complete_file(sp, vdat->beg, 
-					tempfile,
-					with_mix_tags(ss), 
-					(sp->nchans > 1) ? MULTICHANNEL_DELETION : DELETE_ME,
-					0, true); /* all-chans = true */
+      else
+	{ 
+	  if (sp->nchans > 1)
+	    remember_temp(tempfile, sp->nchans);
+	  id_or_error = mix_complete_file(sp, vdat->beg, 
+					  tempfile,
+					  with_mix_tags(ss), 
+					  (sp->nchans > 1) ? MULTICHANNEL_DELETION : DELETE_ME,
+					  0, true); /* all-chans = true */
+	}
       FREE(tempfile);
       for (i = 0; i < len; i++)
 	FREE(selected_files[i]);
@@ -3711,6 +3715,8 @@ bool vf_insert(view_files_info *vdat)
       else
 	{
 	  vf_clear_error(vdat);
+	  if (sp->nchans > 1)
+	    remember_temp(tempfile, sp->nchans);
 	  ok = insert_complete_file(sp, 
 				    tempfile,
 				    vdat->beg,
