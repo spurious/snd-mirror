@@ -1,11 +1,7 @@
 #include "snd.h"
 
 /* TODO: show controls doesn't fully open the control panel, clobbering even the sash
- * TODO: hide listener doesn't close the associated panel, show doesn't open it
  * TODO: controls have too much space
- * TODO: mark name is in xor'd color and is at wrong vertical position
- * TODO: completion broken in minibuffer [motif side too, but ok in M-X:]
- * TODO: does squelch-output actually work in gtk version?
  */
 
 enum {W_pane, W_pane_box, W_control_panel,
@@ -1696,6 +1692,8 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       gtk_box_pack_start(GTK_BOX(FILTER_HBOX(sp)), FILTER_ORDER_TEXT(sp), false, false, 2);
       gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(FILTER_ORDER_TEXT(sp)), true);
       SG_SIGNAL_CONNECT(FILTER_ADJUSTMENT(sp), "value_changed", filter_order_callback, sp);
+      SG_SIGNAL_CONNECT(FILTER_ORDER_TEXT(sp), "enter_notify_event", spin_button_focus_callback, NULL);
+      SG_SIGNAL_CONNECT(FILTER_ORDER_TEXT(sp), "leave_notify_event", spin_button_unfocus_callback, NULL);
       gtk_widget_show(FILTER_ORDER_TEXT(sp));
       
       FILTER_COEFFS_TEXT(sp) = snd_entry_new(FILTER_HBOX(sp), WITH_DEFAULT_BACKGROUND);
@@ -1891,7 +1889,7 @@ void finish_progress_report(snd_info *sp, enved_progress_t from_enved)
 {
   if (sp->inuse != SOUND_NORMAL) return;
   if (from_enved == FROM_ENVED)
-    display_enved_progress(NULL, blank);
+    display_enved_progress(NULL, NULL);
   else snd_file_glasses_icon(sp, false, 0);
   if (!(ss->stopped_explicitly)) clear_minibuffer(sp);
 }

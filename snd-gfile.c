@@ -13,9 +13,7 @@
 */
 
 /* TODO: how to undo choice of a filter?
- * TODO: vf dialog slightly bigger in height (env squashed)
  * PERHAPS: light blue bg for the vf mix/insert box? -- kinda drab right now, and looks squeezed
- * TODO: menu item for view files doesn't raise it to the top? or is this a very fast pointer decision by the WM?
  */
 
 
@@ -4680,8 +4678,8 @@ GtkWidget *start_view_files_dialog_1(view_files_info *vdat, bool managed)
       gtk_window_set_title(GTK_WINDOW(vdat->dialog), _("Files"));
       sg_make_resizable(vdat->dialog);
       gtk_container_set_border_width (GTK_CONTAINER(vdat->dialog), 10);
-      /* gtk_window_resize(GTK_WINDOW(vdat->dialog), 400, 200); */
       gtk_widget_realize(vdat->dialog);
+      gtk_window_resize(GTK_WINDOW(vdat->dialog), 500, 540);
 
       helpB = gtk_button_new_from_stock(GTK_STOCK_HELP);
       gtk_widget_set_name(helpB, "help_button");
@@ -4928,19 +4926,16 @@ GtkWidget *start_view_files_dialog_1(view_files_info *vdat, bool managed)
 	gtk_box_pack_start(GTK_BOX(lbox2), vdat->at_cursor_button, false, false, 0);
 	gtk_widget_show(vdat->at_cursor_button);
 	SG_SIGNAL_CONNECT(vdat->at_cursor_button, "clicked", view_files_at_cursor_callback, (gpointer)vdat);
-	/* gtk_widget_set_size_request(GTK_WIDGET(vdat->at_cursor_button), BUTTON_WIDTH, BUTTON_HEIGHT); */
 
 	vdat->at_end_button = gtk_radio_button_new_with_label(gtk_radio_button_get_group(GTK_RADIO_BUTTON(vdat->at_cursor_button)), _("at end"));
 	gtk_box_pack_start(GTK_BOX(lbox2), vdat->at_end_button, false, false, 0);
 	gtk_widget_show(vdat->at_end_button);
 	SG_SIGNAL_CONNECT(vdat->at_end_button, "clicked", view_files_at_end_callback, (gpointer)vdat);
-	/* gtk_widget_set_size_request(GTK_WIDGET(vdat->at_end_button), BUTTON_WIDTH, BUTTON_HEIGHT); */
 
 	vdat->at_beginning_button = gtk_radio_button_new_with_label(gtk_radio_button_get_group(GTK_RADIO_BUTTON(vdat->at_cursor_button)), _("at beginning"));
 	gtk_box_pack_start(GTK_BOX(lbox2), vdat->at_beginning_button, false, false, 0);
 	gtk_widget_show(vdat->at_beginning_button);
 	SG_SIGNAL_CONNECT(vdat->at_beginning_button, "clicked", view_files_at_beginning_callback, (gpointer)vdat);
-	/* gtk_widget_set_size_request(GTK_WIDGET(vdat->at_beginning_button), BUTTON_WIDTH, BUTTON_HEIGHT); */
 
 	lbox5 = gtk_hbox_new(false, 0);
 	gtk_box_pack_start(GTK_BOX(lbox2), lbox5, false, false, 0);
@@ -4958,7 +4953,6 @@ GtkWidget *start_view_files_dialog_1(view_files_info *vdat, bool managed)
 	gtk_box_pack_start(GTK_BOX(lbox3), vdat->at_sample_button, false, false, 0);
 	gtk_widget_show(vdat->at_sample_button);
 	SG_SIGNAL_CONNECT(vdat->at_sample_button, "clicked", view_files_at_sample_callback, (gpointer)vdat);
-	/* gtk_widget_set_size_request(GTK_WIDGET(vdat->at_sample_button), BUTTON_WIDTH, BUTTON_HEIGHT); */
 
 	vdat->at_sample_text = snd_entry_new(lbox4, WITH_WHITE_BACKGROUND);
 	gtk_widget_show(vdat->at_sample_text);
@@ -4967,7 +4961,6 @@ GtkWidget *start_view_files_dialog_1(view_files_info *vdat, bool managed)
 	gtk_box_pack_end(GTK_BOX(lbox3), vdat->at_mark_button, false, false, 0);
 	gtk_widget_show(vdat->at_mark_button);
 	SG_SIGNAL_CONNECT(vdat->at_mark_button, "clicked", view_files_at_mark_callback, (gpointer)vdat);
-	/* gtk_widget_set_size_request(GTK_WIDGET(vdat->at_mark_button), BUTTON_WIDTH, BUTTON_HEIGHT); */
 
 	vdat->at_sample_text = snd_entry_new(lbox4, WITH_WHITE_BACKGROUND);
 	gtk_widget_show(vdat->at_sample_text);
@@ -5070,7 +5063,7 @@ GtkWidget *start_view_files_dialog_1(view_files_info *vdat, bool managed)
   if (managed) 
     {
       view_files_display_list(vdat);
-      gtk_widget_show(vdat->dialog);
+      raise_dialog(vdat->dialog);
     }
   return(vdat->dialog);
 }

@@ -885,7 +885,7 @@ Optional Packages:
   --with-midi		  include sndlib midi module
   --with-doubles	  use doubles throughout
   --with-float-samples	  use floats (or doubles) as the internal sample respresentation, default=yes
-  --with-gsl		  use GSL, default=yes if no complex trig support in C compiler
+  --with-gsl		  use GSL, default=yes
   --with-fftw		  use fftw, default=yes
   --with-xpm		  use xpm, default=yes
   --with-xp		  use xp, default=no
@@ -18234,6 +18234,10 @@ _ACEOF
         AUDIO_LIB="`esd-config --libs`"
 #       ESD_CFLAGS="`esd-config --cflags`"
 
+        if test "$with_alsa" = yes || test "$with_static_alsa" = yes ; then
+	  { echo "$as_me:$LINENO: WARNING: esd takes precedence over alsa -- the two are not compatible" >&5
+echo "$as_me: WARNING: esd takes precedence over alsa -- the two are not compatible" >&2;}
+        fi
         audio_system=ESD
 
 else
@@ -19928,6 +19932,7 @@ fi
 #--------------------------------------------------------------------------------
 #
 # look for sndlib-config, check mus_sample_bits against current choice [with-float-sample, with-sample-width]
+#   also language (Guile, Ruby) needs to match (what about versions!) and audio choice
 # check against needed version (17.2 for now -- need c_vct_copy in vct.c)
 # set SNDLIB_FILES and SNDLIB_LIB
 
@@ -20076,6 +20081,11 @@ echo "$as_me:$LINENO: result: $ac_cv_lib_sndlib_c_vct_copy" >&5
 echo "${ECHO_T}$ac_cv_lib_sndlib_c_vct_copy" >&6
 if test $ac_cv_lib_sndlib_c_vct_copy = yes; then
 
+	SNDLIB_AUDIO_CHOICE=`$SNDLIB_CONFIG --audio`
+        if test "$SNDLIB_AUDIO_CHOICE" != "$audio_system" ; then
+	  { echo "$as_me:$LINENO: WARNING: libsndlib.so audio choice is $SNDLIB_AUDIO_CHOICE, but the current choice is $audio_system" >&5
+echo "$as_me: WARNING: libsndlib.so audio choice is $SNDLIB_AUDIO_CHOICE, but the current choice is $audio_system" >&2;}
+        fi
 	SNDLIB_BITS=`$SNDLIB_CONFIG --bits`
 	if test "$SNDLIB_BITS" = "$LOCAL_SNDLIB_BITS" ; then
           SNDLIB_LANGUAGE=`$SNDLIB_CONFIG --language`

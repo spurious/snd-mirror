@@ -2163,6 +2163,12 @@ static int prepare_mix_amp_env(mix_info *md, Float scl, int yoff, off_t newbeg, 
   return(j);
 }
 
+#if USE_MOTIF
+  #define STRING_Y_OFFSET 3
+#else
+  #define STRING_Y_OFFSET -6
+#endif
+
 static void draw_mix_tag(mix_info *md)
 {
   chan_info *cp;
@@ -2181,9 +2187,9 @@ static void draw_mix_tag(mix_info *md)
   if (cp->printing) ps_set_tiny_numbers_font();
   mus_snprintf(lab, 16, "%d", md->id);
   if (md->tagx > 0)
-    draw_string(ax, md->tagx - width, md->tagy + height + 3, lab, strlen(lab));
-  draw_string(ax, md->x - width, md->y + height + 3, lab, strlen(lab));
-  if (cp->printing) ps_draw_string(cp->axis, md->x - width, md->y + height + 3, lab);
+    draw_string(ax, md->tagx - width, md->tagy + height + STRING_Y_OFFSET, lab, strlen(lab));
+  draw_string(ax, md->x - width, md->y + height + STRING_Y_OFFSET, lab, strlen(lab));
+  if (cp->printing) ps_draw_string(cp->axis, md->x - width, md->y + height + STRING_Y_OFFSET, lab);
   md->tagx = md->x;
   md->tagy = md->y;
 }

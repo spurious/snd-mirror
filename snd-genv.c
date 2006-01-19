@@ -2,18 +2,14 @@
 
 /* envelope editor and viewer */
 
-/* TODO: bg of coords label is wrong, and it needs to maintain one size */
-
 static GtkWidget *enved_dialog = NULL;
 static GtkWidget *applyB, *apply2B, *cancelB, *drawer, *showB, *saveB, *resetB, *firB = NULL;
 static GtkWidget *revertB, *undoB, *redoB, *printB, *brktxtL, *brkpixL, *graphB, *fltB, *ampB, *srcB, *rbrow, *clipB, *deleteB;
 static GtkWidget *nameL, *textL, *dBB, *orderL;
 static GtkWidget *expB, *linB, *lerow, *baseScale, *baseLabel, *baseValue, *selectionB, *selrow, *revrow, *unrow, *saverow;
 static GtkObject *baseAdj, *orderAdj;
-static GdkGC *gc, *rgc, *ggc;
+static GdkGC *gc, *rgc, *ggc, *hgc;
 static slist *env_list = NULL;
-
-static GdkPixmap *blank = NULL;
 
 static char *env_names[3] = {N_("amp env:"), N_("flt env:"), N_("src env:")};
 
@@ -257,7 +253,7 @@ static gint unpost_genv_error(gpointer data)
 
 static void errors_to_genv_text(const char *msg, void *data)
 {
-  gtk_label_set_text(GTK_LABEL(brktxtL), msg);
+  set_button_label(brktxtL, msg);
   g_timeout_add_full(0, (guint32)5000, unpost_genv_error, NULL, NULL);
 }
 
@@ -367,10 +363,12 @@ static void select_or_edit_env(int pos)
   set_sensitive(deleteB, true);
 }
 
+#define BLANK_LABEL "              "
+
 static void clear_point_label(void)
 {
-  gdk_draw_drawable(GDK_DRAWABLE(brkpixL->window), ss->sgx->basic_gc, blank, 0, 0, 0, 4, 18, 16);
-  gtk_label_set_text(GTK_LABEL(brktxtL), "");
+  gdk_draw_rectangle(GDK_DRAWABLE(brkpixL->window), hgc, true, 0, 4, 24, 24);
+  set_button_label(brktxtL, BLANK_LABEL);
 }
 
 static char brkpt_buf[LABEL_BUFFER_SIZE];
@@ -380,19 +378,22 @@ void enved_display_point_label(Float x, Float y)
   if ((enved_in_dB(ss)) && (min_dB(ss) < -60))
     mus_snprintf(brkpt_buf, LABEL_BUFFER_SIZE, "%.3f : %.5f", x, y);
   else mus_snprintf(brkpt_buf, LABEL_BUFFER_SIZE, "%.3f : %.3f", x, y);
-  gtk_label_set_text(GTK_LABEL(brktxtL), brkpt_buf);
+  set_button_label(brktxtL, brkpt_buf);
 }
 
 void display_enved_progress(char *str, GdkPixmap *pix)
 {
-  if (pix == NULL)
-    gtk_label_set_text(GTK_LABEL(brktxtL), str);
-  else gdk_draw_drawable(GDK_DRAWABLE(brkpixL->window), ss->sgx->basic_gc, pix, 0, 0, 0, 4, 18, 16);
+  if (pix)
+    gdk_draw_drawable(GDK_DRAWABLE(brkpixL->window), hgc, pix, 0, 0, 0, 8, 16, 16);
+  else gdk_draw_rectangle(GDK_DRAWABLE(brkpixL->window), hgc, true, 0, 4, 24, 24);
+  if (str)
+    set_button_label(brktxtL, str);
+  else set_button_label(brktxtL, BLANK_LABEL);
 }
 
 static gboolean brkpixL_expose(GtkWidget *w, GdkEventExpose *ev, gpointer data)
 {
-  gdk_draw_drawable(GDK_DRAWABLE(brkpixL->window), ss->sgx->basic_gc, blank, 0, 0, 0, 4, 16, 16);
+  gdk_draw_rectangle(GDK_DRAWABLE(brkpixL->window), hgc, true, 0, 4, 24, 24);
   return(false);
 }
 
@@ -778,6 +779,10 @@ GtkWidget *create_envelope_editor (void)
       gdk_gc_set_background(ggc, ss->sgx->white);
       gdk_gc_set_foreground(ggc, ss->sgx->enved_waveform_color);
 
+      hgc = gdk_gc_new(MAIN_WINDOW(ss));
+      gdk_gc_set_background(hgc, ss->sgx->highlight_color);
+      gdk_gc_set_foreground(hgc, ss->sgx->highlight_color);
+
       helpB = gtk_button_new_from_stock(GTK_STOCK_HELP);
       gtk_widget_set_name(helpB, "help_button");
 
@@ -969,15 +974,15 @@ GtkWidget *create_envelope_editor (void)
       textL = snd_entry_new(toprow, WITH_WHITE_BACKGROUND);
       SG_SIGNAL_CONNECT(textL, "activate", text_field_activated, NULL);
 
-      blank = gdk_pixmap_create_from_xpm_d(MAIN_WINDOW(ss), NULL, NULL, blank_bits());
       brkpixL = gtk_drawing_area_new();
+      gtk_widget_modify_bg(brkpixL, GTK_STATE_NORMAL, ss->sgx->highlight_color);
       gtk_widget_set_events(brkpixL, GDK_EXPOSURE_MASK);
       gtk_widget_set_size_request(brkpixL, 16, 16);
       gtk_box_pack_start(GTK_BOX(toprow), brkpixL, false, false, 0);
       gtk_widget_show(brkpixL);
       SG_SIGNAL_CONNECT(brkpixL, "expose_event", brkpixL_expose, NULL);
       
-      brktxtL = gtk_label_new(NULL);
+      brktxtL = snd_gtk_highlight_label_new(BLANK_LABEL); /* not NULL!  gtk only creates the label child if not null */
       gtk_box_pack_start(GTK_BOX(toprow), brktxtL, false, false, 0);
       gtk_widget_show(brktxtL);
 
@@ -1017,6 +1022,8 @@ GtkWidget *create_envelope_editor (void)
       gtk_box_pack_end(GTK_BOX(bottomrow), orderL, false, false, 4);
       gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(orderL), true);
       SG_SIGNAL_CONNECT(orderAdj, "value_changed", enved_filter_order_callback, NULL);
+      SG_SIGNAL_CONNECT(orderL, "enter_notify_event", spin_button_focus_callback, NULL);
+      SG_SIGNAL_CONNECT(orderL, "leave_notify_event", spin_button_unfocus_callback, NULL);
       gtk_widget_show(orderL);
 
       firB = gtk_button_new_with_label((FIR_p) ? "fir" : "fft");

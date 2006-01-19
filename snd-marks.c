@@ -8,6 +8,8 @@
  * "current" can change at any time.
  */
 
+/* TODO: mark name is in xor'd color in gtk */
+
 typedef mark *mark_map_func(chan_info *cp, mark *mp, void *m);
 
 static XEN mark_drag_hook;
@@ -189,6 +191,12 @@ void marks_off(chan_info *cp)
 
 static XEN draw_mark_hook;
 
+#if USE_MOTIF
+  #define STRING_Y_OFFSET 6
+#else
+  #define STRING_Y_OFFSET -6
+#endif
+
 static void draw_mark_1(chan_info *cp, axis_info *ap, mark *mp, bool show)
 {
   /* fields are samp and name */
@@ -224,7 +232,7 @@ static void draw_mark_1(chan_info *cp, axis_info *ap, mark *mp, bool show)
   #endif
 #endif
       len = mark_name_width(mp->name);
-      draw_string(ax, (int)(cx - 0.5 * len), y1 + 6, mp->name, strlen(mp->name));
+      draw_string(ax, (int)(cx - 0.5 * len), y1 + STRING_Y_OFFSET, mp->name, strlen(mp->name));
     }
   fill_rectangle(ax,
 		 cx - mark_tag_width(ss), top,

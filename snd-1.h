@@ -346,7 +346,7 @@ typedef struct snd_info {
   char *filing_filename;
   bool prompting, loading, finding_mark, selectioning;
   printing_t printing;
-  off_t macroing;
+  off_t macro_count;
   minibuffer_choice_t minibuffer_on;
   bool user_read_only, file_read_only;
   chan_info **chans;

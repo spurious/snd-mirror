@@ -1,8 +1,5 @@
 /* transform settings dialog */
 
-/* TODO: max peaks et al aren't white-upon-focus? */
-/* TODO: initial window choice moveto seems to be lost? */
-
 #include "snd.h"
 
 slist *transform_list = NULL, *size_list = NULL, *window_list = NULL, *wavelet_list = NULL;
@@ -374,13 +371,24 @@ void reflect_min_db_in_transform_dialog(void)
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(db_txt), (gfloat)(-(min_dB(ss))));
 }
 
+gboolean spin_button_focus_callback(GtkWidget *w, GdkEventCrossing *ev, gpointer unknown)
+{
+  gtk_widget_modify_base(w, GTK_STATE_NORMAL, ss->sgx->white);
+  return(false);
+}
+
+gboolean spin_button_unfocus_callback(GtkWidget *w, GdkEventCrossing *ev, gpointer unknown)
+{
+  gtk_widget_modify_base(w, GTK_STATE_NORMAL, ss->sgx->basic_color);
+  return(false);
+}
+
 GtkWidget *fire_up_transform_dialog(bool managed)
 {
-  bool need_callback = false;
+  bool need_callback = false, need_moveto = true;
   if (!transform_dialog)
     {
       GtkWidget *buttons;
-      int i;
       GtkWidget *display_frame, *help_button, *dismiss_button;
       GtkWidget *window_box, *orient_button, *color_button;
 
@@ -506,6 +514,8 @@ GtkWidget *fire_up_transform_dialog(bool managed)
 	gtk_box_pack_start(GTK_BOX(buttons), peaks_txt, false, false, 0);
 	gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(peaks_txt), true);
 	SG_SIGNAL_CONNECT(pk_vals, "value_changed", max_peaks_callback, (gpointer)peaks_txt);
+	SG_SIGNAL_CONNECT(peaks_txt, "enter_notify_event", spin_button_focus_callback, NULL);
+	SG_SIGNAL_CONNECT(peaks_txt, "leave_notify_event", spin_button_unfocus_callback, NULL);
 	gtk_widget_show(peaks_txt);
 
 	db_lab = snd_gtk_highlight_label_new(_("min dB:"));
@@ -517,6 +527,8 @@ GtkWidget *fire_up_transform_dialog(bool managed)
 	gtk_box_pack_start(GTK_BOX(buttons), db_txt, false, false, 0);
 	gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(db_txt), true);
 	SG_SIGNAL_CONNECT(db_vals, "value_changed", min_db_callback, (gpointer)db_txt);
+	SG_SIGNAL_CONNECT(db_txt, "enter_notify_event", spin_button_focus_callback, NULL);
+	SG_SIGNAL_CONNECT(db_txt, "leave_notify_event", spin_button_unfocus_callback, NULL);
 	gtk_widget_show(db_txt);
 
 	lf_lab = snd_gtk_highlight_label_new(_("log freq start:"));
@@ -528,6 +540,9 @@ GtkWidget *fire_up_transform_dialog(bool managed)
 	gtk_box_pack_start(GTK_BOX(buttons), lf_txt, false, false, 0);
 	gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(lf_txt), true);
 	SG_SIGNAL_CONNECT(lf_vals, "value_changed", log_freq_callback, (gpointer)lf_txt);
+	SG_SIGNAL_CONNECT(lf_txt, "enter_notify_event", spin_button_focus_callback, NULL);
+	SG_SIGNAL_CONNECT(lf_txt, "leave_notify_event", spin_button_unfocus_callback, NULL);
+
 	gtk_widget_show(lf_txt);
       }
 
@@ -611,24 +626,34 @@ GtkWidget *fire_up_transform_dialog(bool managed)
       need_callback = true;
       gtk_widget_show(outer_table);
       set_dialog_widget(TRANSFORM_DIALOG, transform_dialog);
-
-      slist_select(window_list, (int)fft_window(ss));
-      slist_moveto(window_list, (int)fft_window(ss));
-      slist_select(wavelet_list, wavelet_type(ss));
-      slist_moveto(wavelet_list, wavelet_type(ss));
-
-      slist_select(transform_list, transform_type_to_position(transform_type(ss)));
-      for (i = 0; i < NUM_TRANSFORM_SIZES; i++)
-	if (transform_sizes[i] == transform_size(ss))
-	  {
-	    slist_select(size_list, i);
-	    slist_moveto(size_list, i);
-	    break;
-	  }
     }
-  else raise_dialog(transform_dialog);
-  if (managed) gtk_widget_show(transform_dialog);
+  else 
+    {
+      raise_dialog(transform_dialog);
+      need_moveto = false;
+    }
+  if (managed) 
+    {
+      gtk_widget_show(transform_dialog);
+      if (need_moveto)
+	{
+	  int i;
+	  slist_select(window_list, (int)fft_window(ss));
+	  slist_moveto(window_list, (int)fft_window(ss));
 
+	  slist_select(wavelet_list, wavelet_type(ss));
+	  slist_moveto(wavelet_list, wavelet_type(ss));
+
+	  slist_select(transform_list, transform_type_to_position(transform_type(ss)));
+	  for (i = 0; i < NUM_TRANSFORM_SIZES; i++)
+	    if (transform_sizes[i] == transform_size(ss))
+	      {
+		slist_select(size_list, i);
+		slist_moveto(size_list, i);
+		break;
+	      }
+	}
+    }
   if (need_callback)
     {
       get_fft_window_data();
@@ -636,6 +661,7 @@ GtkWidget *fire_up_transform_dialog(bool managed)
       SG_SIGNAL_CONNECT(graph_drawer, "configure_event", graph_configure_callback, NULL);
       need_callback = false;
     }
+
   return(transform_dialog);
 }
 

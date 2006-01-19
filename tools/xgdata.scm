@@ -5571,6 +5571,8 @@
 (CLNG-290 "PANGO_TYPE_ITEM")
 (CLNG-290 "PANGO_TYPE_LAYOUT_LINE")
 
+11.2: + double pango_matrix_get_font_scale_factor (PangoMatrix *matrix);
+
 (CFNC-290 "PangoAttrList* pango_attr_list_ref PangoAttrList* list")
 (CFNC-290 "void pango_cairo_context_set_hinting PangoContext* context gboolean hinting")
 (CFNC-290 "gboolean pango_cairo_context_get_hinting PangoContext* context")

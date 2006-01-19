@@ -492,49 +492,43 @@ char *info_completer(char *text, void *data)
   snd_info *sp = (snd_info *)data;
   if (sp)
     {
+      char *new_text = NULL;
       if (sp->searching) return(copy_string(text));      /* C-s or C-r so as above */
       if ((sp->marking) || (sp->finding_mark)) return(copy_string(text)); /* C-x C-m etc */
       if (sp->printing) return(copy_string(text));       /* C-x C-d so anything is possible */
       if (sp->amping) return(env_name_completer(text, NULL));
       if (use_sound_filename_completer(sp->filing)) return(sound_filename_completer(text, NULL));
       if (sp->loading) return(filename_completer(text, NULL)); /* C-x C-l */
-      if (sp->macroing) 
+
+      new_text = command_completer(text, NULL);
+      if (get_completion_matches() == 0)
 	{
-	  char *new_text;
-	  new_text = command_completer(text, NULL);
-	  if (get_completion_matches() == 0)
+	  int i, beg, parens, len;
+	  beg = 0;
+	  parens = 0;  	                                 /* filename would have to be a string in this context */
+	  len = snd_strlen(text);
+	  for (i = 0; i < len; i++)
+	    if (text[i] == '\"')
+	      {
+		beg = i + 1;
+		parens++;
+		break;
+	      }
+	  if ((beg > 0) && (parens & 1))                 /* i.e. there is a string and we're in it */
 	    {
-	      int i, beg, parens, len;
-	      beg = 0;
-	      parens = 0;
-	                                                /* filename would have to be a string in this context */
-	      len = snd_strlen(text);
-	      for (i = 0; i < len; i++)
-		if (text[i] == '\"')
-		  {
-		    beg = i + 1;
-		    parens++;
-		    break;
-		  }
-	      if ((beg > 0) && (parens & 1))            /* i.e. there is a string and we're in it */
-		{
-		  char *new_file;
-		  if (new_text) FREE(new_text);
-		  new_file = filename_completer((char *)(text + beg), NULL);
-		  len = beg + 2 + snd_strlen(new_file);
-		  new_text = (char *)CALLOC(len, sizeof(char));
-		  strncpy(new_text, text, beg);
-		  strcat(new_text, new_file);
-		  if (new_file) FREE(new_file);
-		  return(new_text);
-		}
-	      else return(new_text);
+	      char *new_file;
+	      if (new_text) FREE(new_text);
+	      new_file = filename_completer((char *)(text + beg), NULL);
+	      len = beg + 2 + snd_strlen(new_file);
+	      new_text = (char *)CALLOC(len, sizeof(char));
+	      strncpy(new_text, text, beg);
+	      strcat(new_text, new_file);
+	      if (new_file) FREE(new_file);
 	    }
-	  else return(new_text);
 	}
-      return(copy_string(text));
+      return(new_text);
     }
-  else return(command_completer(text, NULL));
+  return(command_completer(text, NULL));
 }
 
 static int find_indentation(char *str, int loc)

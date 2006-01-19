@@ -503,7 +503,7 @@ void clear_minibuffer(snd_info *sp)
   sp->minibuffer_on = MINI_OFF;
   sp->loading = false;
   sp->amping = 0;
-  sp->macroing = 0;
+  sp->macro_count = 0;
   sp->prompting = false;
 }
 
@@ -1071,15 +1071,15 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 	  return;
 	}
 #if HAVE_EXTENSION_LANGUAGE
-      if (sp->macroing)
+      if (sp->macro_count)
 	{
 	  redirect_snd_print_to(printout_to_minibuffer, (void *)sp);
 	  redirect_errors_to(errors_to_minibuffer, (void *)sp);
-	  execute_named_macro(active_chan, str, sp->macroing);
+	  execute_named_macro(active_chan, str, sp->macro_count);
 	  /* if this is a close command from the current minibuffer, the sound may not exist when we return */
 	  redirect_everything_to(NULL, NULL);
 	  if (sp == NULL) return;
-	  sp->macroing = 0;
+	  sp->macro_count = 0;
 	  return;
 	}
 #endif
@@ -1381,7 +1381,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
     {
       /* named macros invoked and saved here */
       prompt(sp, "M-x:", NULL);
-      sp->macroing = count;
+      sp->macro_count = count;
       return;
     }
   hashloc = in_user_keymap(keysym, state, extended_mode);
@@ -1905,7 +1905,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 		else 
 		  {
 		    prompt(sp, "M-x:", buf);
-		    sp->macroing = count;
+		    sp->macro_count = count;
 		    clear_search = false;
 		  }
 	      }

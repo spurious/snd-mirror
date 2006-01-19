@@ -137,7 +137,8 @@ void set_transform_graph_type(graph_type_t val);
 void reflect_peaks_in_transform_dialog(void);
 void reflect_log_freq_start_in_transform_dialog(void);
 void reflect_min_db_in_transform_dialog(void);
-
+gboolean spin_button_focus_callback(GtkWidget *w, GdkEventCrossing *ev, gpointer unknown);
+gboolean spin_button_unfocus_callback(GtkWidget *w, GdkEventCrossing *ev, gpointer unknown);
 
 
 /* -------- snd-gdrop.c -------- */

@@ -1386,6 +1386,9 @@ if test "$with_esd" = yes ; then
         AUDIO_LIB="`esd-config --libs`"
 #       ESD_CFLAGS="`esd-config --cflags`"
 	AC_SUBST(AUDIO_LIB)
+        if test "$with_alsa" = yes || test "$with_static_alsa" = yes ; then
+	  AC_MSG_WARN([esd takes precedence over alsa -- the two are not compatible])
+        fi
         audio_system=ESD
       ],
       [AC_MSG_WARN(can't find the ESD header files)])],
@@ -1759,6 +1762,7 @@ fi
 #--------------------------------------------------------------------------------
 #
 # look for sndlib-config, check mus_sample_bits against current choice [with-float-sample, with-sample-width]
+#   also language (Guile, Ruby) needs to match (what about versions!) and audio choice
 # check against needed version (17.2 for now -- need c_vct_copy in vct.c)
 # set SNDLIB_FILES and SNDLIB_LIB
 
@@ -1795,6 +1799,10 @@ if test "$with_shared_sndlib" = yes; then
     CFLAGS="$CFLAGS -L$SNDLIB_PREFIX/lib"
     AC_CHECK_LIB(sndlib, c_vct_copy,
       [
+	SNDLIB_AUDIO_CHOICE=`$SNDLIB_CONFIG --audio`
+        if test "$SNDLIB_AUDIO_CHOICE" != "$audio_system" ; then
+	  AC_MSG_WARN([libsndlib.so audio choice is $SNDLIB_AUDIO_CHOICE, but the current choice is $audio_system])
+        fi
 	SNDLIB_BITS=`$SNDLIB_CONFIG --bits`
 	if test "$SNDLIB_BITS" = "$LOCAL_SNDLIB_BITS" ; then
           SNDLIB_LANGUAGE=`$SNDLIB_CONFIG --language`

@@ -1,6 +1,6 @@
 #include "snd.h"
 
-/* TODO: dragged mix doesn't erase index correctly, and index is not at the right height, and is in xor'd color
+/* TODO: dragged mix doesn't erase index correctly, and index is in xor'd color
  */
 
 /* ---------------- mix dialog ---------------- */

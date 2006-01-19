@@ -14,8 +14,6 @@ enum {
     NUM_CHAN_WIDGETS
 };
 
-/* TODO: if index is reused, edit_history pane remains open? */
-
 enum {W_zy_adj, W_zx_adj, W_sy_adj, W_sx_adj, W_gzy_adj, W_gsy_adj, NUM_CHAN_ADJS};
 
 GtkWidget *channel_graph(chan_info *cp)      {return(cp->cgx->chan_widgets[W_graph]);}
@@ -444,10 +442,6 @@ static void remake_edit_history(chan_info *cp)
     }
   goto_graph(cp);
 }
-
-/* the edit-history list is managed even when squelch-update is #t, slowing down edits, but ...
- *   TODO: -- is this still necessary after change to slists??
- */
 
 void reflect_edit_history_change(chan_info *cp)
 {
@@ -897,7 +891,11 @@ void cleanup_cw(chan_info *cp)
     {
       chan_context *cx;
       GtkWidget **cw;
-      if (EDIT_HISTORY_LIST(cp)) slist_clear(EDIT_HISTORY_LIST(cp));
+      if (EDIT_HISTORY_LIST(cp)) 
+	{
+	  slist_clear(EDIT_HISTORY_LIST(cp));
+	  gtk_paned_set_position(GTK_PANED(cp->cgx->chan_widgets[W_main_window]), 1);
+	}
       cx = cp->cgx;
       cx->selected = false;
       cw = cx->chan_widgets;

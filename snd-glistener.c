@@ -827,6 +827,7 @@ static void make_command_widget(int height)
       SG_SIGNAL_CONNECT(listener_text, "leave_notify_event", listener_unfocus_callback, NULL);
       ss->sgx->listener_pane = listener_text;
       sg_text_insert(listener_text, listener_prompt(ss));
+      gtk_widget_show(listener_text);
     }
 }
 
@@ -855,11 +856,16 @@ void handle_listener(bool open)
     {
       if (!listener_text)
 	make_command_widget(100);
-      else gtk_widget_show(listener_text);
+      else
+	{
+	  if (sound_style(ss) != SOUNDS_IN_SEPARATE_WINDOWS)
+	    gtk_paned_set_position(GTK_PANED(SOUND_PANE(ss)), (gint)(widget_height(SOUND_PANE(ss)) * .75));
+	}
     }
   else
     {
-      gtk_widget_hide(listener_text);
+      if (sound_style(ss) != SOUNDS_IN_SEPARATE_WINDOWS)
+	gtk_paned_set_position(GTK_PANED(SOUND_PANE(ss)), widget_height(SOUND_PANE(ss)));
     }
 }
 
