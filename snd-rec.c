@@ -452,18 +452,33 @@ void save_recorder_state(FILE *fd)
   if (rp->in_chans != DEFAULT_RECORDER_IN_CHANS) fprintf(fd, "set_%s %d\n", TO_PROC_NAME(S_recorder_in_chans), rp->in_chans);
   if ((rp->output_data_format != DEFAULT_RECORDER_OUT_DATA_FORMAT) &&
       (MUS_DATA_FORMAT_OK(rp->output_data_format)))
-    fprintf(fd, "set_%s %s\n", 
-	    TO_PROC_NAME(S_recorder_out_data_format), 
-	    mus_data_format_to_string(rp->output_data_format));
+    {
+      char *tmp;
+      tmp = mus_data_format_to_string(rp->output_data_format);
+      fprintf(fd, "set_%s %s\n", 
+	      TO_PROC_NAME(S_recorder_out_data_format), 
+	      tmp);
+      if (tmp) free(tmp);
+    }
   if (MUS_HEADER_TYPE_OK(rp->output_header_type))
-    fprintf(fd, "set_%s %s\n", 
-	    TO_PROC_NAME(S_recorder_out_header_type), 
-	    mus_header_type_to_string(rp->output_header_type));
+    {
+      char *tmp;
+      tmp = mus_header_type_to_string(rp->output_header_type);
+      fprintf(fd, "set_%s %s\n", 
+	      TO_PROC_NAME(S_recorder_out_header_type), 
+	      tmp);
+      if (tmp) free(tmp);
+    }
   if ((rp->in_format != DEFAULT_RECORDER_IN_DATA_FORMAT) &&
       (MUS_DATA_FORMAT_OK(rp->in_format)))
-    fprintf(fd, "set_%s %s\n", 
-	    TO_PROC_NAME(S_recorder_in_data_format),
-	    mus_data_format_to_string(rp->in_format));
+    {
+      char *tmp;
+      tmp = mus_data_format_to_string(rp->in_format);
+      fprintf(fd, "set_%s %s\n", 
+	      TO_PROC_NAME(S_recorder_in_data_format),
+	      tmp);
+      if (tmp) free(tmp);
+    }
   if (in_device != MUS_AUDIO_DEFAULT) fprintf(fd, "set_%s %d\n", TO_PROC_NAME(S_recorder_in_device), in_device);
   if (rp->srate != DEFAULT_RECORDER_SRATE) fprintf(fd, "set_%s %d\n", TO_PROC_NAME(S_recorder_srate), rp->srate);
   if (rp->output_file != NULL) fprintf(fd, "set_%s \"%s\"\n", TO_PROC_NAME(S_recorder_file), rp->output_file);

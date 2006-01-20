@@ -390,8 +390,10 @@ static void file_dir_popup_callback(Widget w, XtPointer context, XtPointer info)
 }
 
 #define FILE_LIST_POPUP_LABEL "sort/filter"
+#define NO_FILTER_LABEL "no filter"
 
 #define FILE_FILTER_OFFSET 1024
+#define NO_FILE_FILTER_OFFSET 2048
 
 static void sort_files_and_redisplay(file_pattern_info *fp);
 
@@ -403,7 +405,9 @@ static void file_list_item_activate_callback(Widget w, XtPointer context, XtPoin
   if (choice >= FILE_FILTER_OFFSET)
     {
       XmToggleButtonSetState(fd->fp->just_sounds_button, false, false);
-      fd->fp->filter_choice = choice - FILE_FILTER_OFFSET + 2;
+      if (choice == NO_FILE_FILTER_OFFSET)
+	fd->fp->filter_choice = NO_FILE_FILTER;
+      else fd->fp->filter_choice = choice - FILE_FILTER_OFFSET + 2;
       fd->fp->in_just_sounds_update = true;
       force_directory_reread(fd->fp->dialog);
       fd->fp->in_just_sounds_update = false;
@@ -478,6 +482,7 @@ static void file_list_popup_callback(Widget w, XtPointer context, XtPointer info
 	    extra_filters++;
 
 	items_len = SORT_XEN + extra_sorters + extra_filters;
+	if (fd->fp->filter_choice != NO_FILE_FILTER) items_len++;
 
 	if (items_len > fd->file_list_items_size)
 	  {
@@ -522,8 +527,19 @@ static void file_list_popup_callback(Widget w, XtPointer context, XtPointer info
 		  k++;
 		}
 	    }
-	}
 
+	  /* add "no filter" item if currently filtered */
+	  if (fd->fp->filter_choice != NO_FILE_FILTER)
+	    {
+	      set_label(fd->file_list_items[k], NO_FILTER_LABEL);
+	      XtVaSetValues(fd->file_list_items[k], XmNbackground, ss->sgx->light_blue, 
+			    XmNuserData, NO_FILE_FILTER_OFFSET,
+			    NULL);
+	      if (!(XtIsManaged(fd->file_list_items[k])))
+		XtManageChild(fd->file_list_items[k]);
+	    }
+	  
+	}
       cb->menuToPost = fd->file_list_popup;
     }
 }

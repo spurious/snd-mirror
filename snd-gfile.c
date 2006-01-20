@@ -12,8 +12,7 @@
    View:Files
 */
 
-/* TODO: how to undo choice of a filter?
- * PERHAPS: light blue bg for the vf mix/insert box? -- kinda drab right now, and looks squeezed
+/* PERHAPS: light blue bg for the vf mix/insert box? -- kinda drab right now, and looks squeezed
  */
 
 
@@ -692,7 +691,10 @@ static bool fsb_directory_button_press_callback(GdkEventButton *ev, void *data)
   return(false);
 }
 
+#define NO_FILTER_LABEL "no filter"
+
 #define FILE_FILTER_OFFSET 1024
+#define NO_FILE_FILTER_OFFSET 2048
 
 static void sort_files_and_redisplay(fsb *fs);
 
@@ -704,7 +706,9 @@ static void file_list_item_activate_callback(GtkWidget *w, gpointer context)
   if (choice >= FILE_FILTER_OFFSET)
     {
       set_toggle_button(fs->just_sounds_button, false, false, (void *)fs);
-      fs->filter_choice = choice - FILE_FILTER_OFFSET + 2;
+      if (choice == NO_FILE_FILTER_OFFSET)
+	fs->filter_choice = NO_FILE_FILTER;
+      else fs->filter_choice = choice - FILE_FILTER_OFFSET + 2;
       force_directory_reread(fs);
     }
   else
@@ -772,6 +776,7 @@ static bool fsb_files_button_press_callback(GdkEventButton *ev, void *data)
 	    extra_filters++;
 
 	items_len = SORT_XEN + extra_sorters + extra_filters;
+	if (fs->filter_choice != NO_FILE_FILTER) items_len++;
 
 	if (items_len > fs->file_list_items_size)
 	  {
@@ -815,6 +820,17 @@ static bool fsb_files_button_press_callback(GdkEventButton *ev, void *data)
 		  k++;
 		}
 	    }
+
+	  /* add "no filter" item if currently filtered */
+	  if (fs->filter_choice != NO_FILE_FILTER)
+	    {
+	      gtk_label_set_text(GTK_LABEL(gtk_bin_get_child(GTK_BIN(fs->file_list_items[k]))), NO_FILTER_LABEL);
+	      reset_user_int_data(G_OBJECT(fs->file_list_items[k]), NO_FILE_FILTER_OFFSET);
+	      gtk_widget_modify_bg(fs->file_list_items[k], GTK_STATE_NORMAL, ss->sgx->light_blue);
+	      if (!(GTK_WIDGET_VISIBLE(fs->file_list_items[k])))
+		gtk_widget_show(fs->file_list_items[k]);
+	    }
+
 	}
       gtk_menu_popup(GTK_MENU(fs->files_menu), NULL, NULL, NULL, NULL, ev->button, ev->time);
     }

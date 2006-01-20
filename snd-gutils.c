@@ -613,7 +613,7 @@ GtkWidget *snd_gtk_dialog_new(void)
 {
   GtkWidget *w;
   w = gtk_dialog_new();
-  g_object_ref(w);  /* don't ask... */
+  g_object_ref(w); 
   return(w);
 }
 

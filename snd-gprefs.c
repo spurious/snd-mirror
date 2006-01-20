@@ -1269,7 +1269,14 @@ static GtkWidget *make_top_level_label(const char *label, GtkWidget *parent)
 {
   GtkWidget *w;
   ASSERT_WIDGET_TYPE(GTK_IS_VBOX(parent), parent);
-  w = snd_gtk_entry_label_new(label, ss->sgx->light_blue); /* TODO: can this be a variant pf highlight_label? */
+#if HAVE_GTK_BUTTON_SET_ALIGNMENT
+  w = snd_gtk_highlight_label_new(label);
+  gtk_button_set_alignment(GTK_BUTTON(w), 0.01, 0.5);
+  gtk_widget_modify_bg(w, GTK_STATE_NORMAL, ss->sgx->light_blue);
+  gtk_widget_modify_bg(w, GTK_STATE_PRELIGHT, ss->sgx->light_blue);
+#else
+  w = snd_gtk_entry_label_new(label, ss->sgx->light_blue);
+#endif
   gtk_box_pack_start(GTK_BOX(parent), w, false, false, 0);
   gtk_widget_show(w);
   return(w);
@@ -1292,7 +1299,12 @@ static GtkWidget *make_inner_label(const char *label, GtkWidget *parent)
 {
   GtkWidget *w;
   ASSERT_WIDGET_TYPE(GTK_IS_VBOX(parent), parent);
-  w = snd_gtk_entry_label_new(label, ss->sgx->highlight_color); /* TODO: can this be highlight_label? */
+#if HAVE_GTK_BUTTON_SET_ALIGNMENT
+  w = snd_gtk_highlight_label_new(label);
+  gtk_button_set_alignment(GTK_BUTTON(w), 0.0, 0.5);
+#else
+  w = snd_gtk_entry_label_new(label, ss->sgx->highlight_color);
+#endif
   gtk_box_pack_start(GTK_BOX(parent), w, false, false, 0);
   gtk_widget_show(w);
   return(w);

@@ -5969,10 +5969,6 @@ widget_t start_preferences_dialog(void)
   }
 #endif
 
-#if DEBUGGING
-  fprintf(stderr, "top: %d\n", prefs_top);
-#endif
-
   {
     Atom wm_delete_window;
     wm_delete_window = XmInternAtom(MAIN_DISPLAY(ss), "WM_DELETE_WINDOW", false);
