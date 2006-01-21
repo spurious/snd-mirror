@@ -275,10 +275,6 @@ void set_sound_channel_style(snd_info *sp, channel_style_t val)
     case CHANNELS_COMBINED:     combine_sound(sp);     break;
     case CHANNELS_SUPERIMPOSED: superimpose_sound(sp); break;
     }
-#if DEBUGGING
-  if (sp->channel_style != val) 
-    fprintf(stderr,"channel-style did not change: %d -> %d\n", (int)val, (int)(sp->channel_style));
-#endif
 }
 
 bool chan_fft_in_progress(chan_info *cp)
@@ -2224,6 +2220,8 @@ static void gl_spectrogram(sono_info *si, int gl_fft_list, Float cutoff, bool us
 }
 #endif
 
+static bool gl_warned_already = false;
+
 static bool make_spectrogram(chan_info *cp)
 {
   sono_info *si;
@@ -2269,7 +2267,12 @@ static bool make_spectrogram(chan_info *cp)
 #endif
 	  fp = cp->fft;
 	  fap = fp->axis; 
-	  if (cp->printing) snd_warning(_("can't print openGL graphics yet"));
+	  if ((cp->printing) &&
+	      (!gl_warned_already))
+	    {
+	      gl_warned_already = true;
+	      snd_warning(_("can't print openGL graphics yet"));
+	    }
 #if USE_MOTIF
 	  glXMakeCurrent(MAIN_DISPLAY(ss), XtWindow(channel_graph(cp)), ss->sgx->cx);
 #else

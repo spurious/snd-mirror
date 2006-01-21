@@ -12,10 +12,6 @@
    View:Files
 */
 
-/* PERHAPS: light blue bg for the vf mix/insert box? -- kinda drab right now, and looks squeezed
- */
-
-
 /* ---------------- file selector replacement ---------------- */
 
 typedef struct fsb {
@@ -85,19 +81,26 @@ static void fsb_file_set_text(fsb *fs, const char *file)
 }
 
 #if HAVE_FAM
-static void watch_current_directory_contents(struct fam_info *fp, FAMEvent *fe)
+static void force_directory_reread(fsb *fs);
+static void watch_current_directory_contents(struct fam_info *famp, FAMEvent *fe)
 {
   switch (fe->code)
     {
     case FAMDeleted:
     case FAMCreated:
     case FAMMoved:
-      if (just_sounds(ss))
+      if ((!(just_sounds(ss))) ||
+	  (sound_file_p(fe->filename)))
 	{
-	  if (sound_file_p(fe->filename))
-	    alert_new_file();
+	  fsb *fs = (fsb *)(famp->data);
+	  fs->reread_directory = true;
+	  if ((fs->dialog) &&
+	      (GTK_WIDGET_VISIBLE(fs->dialog)))
+	    {
+	      force_directory_reread(fs);
+	      fs->reread_directory = false;
+	    }
 	}
-      else alert_new_file();
       break;
     default:
       /* ignore the rest */
@@ -1042,6 +1045,7 @@ static file_dialog_info *odat = NULL; /* open file */
 static file_dialog_info *mdat = NULL; /* mix file */
 static file_dialog_info *idat = NULL; /* insert file */
 
+#if (!HAVE_FAM)
 void alert_new_file(void) 
 {
   if (odat)
@@ -1072,6 +1076,7 @@ void alert_new_file(void)
 	}
     }
 }
+#endif
 
 void reflect_just_sounds(void)
 {
@@ -2785,6 +2790,11 @@ widget_t make_sound_save_as_dialog(bool managed)
 				   IGNORE_CHANS, IGNORE_DATA_LOCATION, IGNORE_SAMPLES,
 				   com = output_comment(hdr));
   if (com) FREE(com);
+  if (sd->fs->reread_directory) 
+    {
+      force_directory_reread(sd->fs);
+      sd->fs->reread_directory = false;
+    }
   if (managed) gtk_widget_show(sd->fs->dialog);
   return(sd->fs->dialog);
 }
@@ -2807,6 +2817,11 @@ widget_t make_selection_save_as_dialog(bool managed)
 				   selection_srate(), 
 				   IGNORE_CHANS, IGNORE_DATA_LOCATION, IGNORE_SAMPLES, 
 				   NULL);
+  if (sd->fs->reread_directory) 
+    {
+      force_directory_reread(sd->fs);
+      sd->fs->reread_directory = false;
+    }
   if (managed) gtk_widget_show(sd->fs->dialog);
   return(sd->fs->dialog);
 }
@@ -2831,8 +2846,13 @@ widget_t make_region_save_as_dialog(bool managed)
 				   region_srate(region_dialog_region()), 
 				   IGNORE_CHANS, IGNORE_DATA_LOCATION, IGNORE_SAMPLES, 
 				   comment);
-  if (managed) gtk_widget_show(sd->fs->dialog);
   if (comment) FREE(comment);
+  if (sd->fs->reread_directory) 
+    {
+      force_directory_reread(sd->fs);
+      sd->fs->reread_directory = false;
+    }
+  if (managed) gtk_widget_show(sd->fs->dialog);
   return(sd->fs->dialog);
 }
 
@@ -3928,11 +3948,13 @@ static vf_row *make_vf_row(view_files_info *vdat, GtkSignalFunc play_callback, G
   gtk_widget_show(r->rw);
 
   r->pl = gtk_check_button_new();
+  gtk_widget_modify_bg(r->pl, GTK_STATE_PRELIGHT, ss->sgx->lighter_blue);
   gtk_box_pack_start(GTK_BOX(r->rw), r->pl, false, false, 2);
   SG_SIGNAL_CONNECT(r->pl, "toggled", play_callback, r);
   gtk_widget_show(r->pl);
 
   r->nm = gtk_button_new_with_label("");
+  gtk_widget_modify_bg(r->nm, GTK_STATE_PRELIGHT, ss->sgx->lighter_blue);
   sg_left_justify_button(r->nm);
   gtk_box_pack_start(GTK_BOX(r->rw), r->nm, true, true, 2);
 
@@ -4939,16 +4961,19 @@ GtkWidget *start_view_files_dialog_1(view_files_info *vdat, bool managed)
 	gtk_widget_show(vdat->insertB);
 
 	vdat->at_cursor_button = gtk_radio_button_new_with_label(NULL, _("at cursor"));
+	gtk_widget_modify_bg(vdat->at_cursor_button, GTK_STATE_PRELIGHT, ss->sgx->lighter_blue);
 	gtk_box_pack_start(GTK_BOX(lbox2), vdat->at_cursor_button, false, false, 0);
 	gtk_widget_show(vdat->at_cursor_button);
 	SG_SIGNAL_CONNECT(vdat->at_cursor_button, "clicked", view_files_at_cursor_callback, (gpointer)vdat);
 
 	vdat->at_end_button = gtk_radio_button_new_with_label(gtk_radio_button_get_group(GTK_RADIO_BUTTON(vdat->at_cursor_button)), _("at end"));
+	gtk_widget_modify_bg(vdat->at_end_button, GTK_STATE_PRELIGHT, ss->sgx->lighter_blue);
 	gtk_box_pack_start(GTK_BOX(lbox2), vdat->at_end_button, false, false, 0);
 	gtk_widget_show(vdat->at_end_button);
 	SG_SIGNAL_CONNECT(vdat->at_end_button, "clicked", view_files_at_end_callback, (gpointer)vdat);
 
 	vdat->at_beginning_button = gtk_radio_button_new_with_label(gtk_radio_button_get_group(GTK_RADIO_BUTTON(vdat->at_cursor_button)), _("at beginning"));
+	gtk_widget_modify_bg(vdat->at_beginning_button, GTK_STATE_PRELIGHT, ss->sgx->lighter_blue);
 	gtk_box_pack_start(GTK_BOX(lbox2), vdat->at_beginning_button, false, false, 0);
 	gtk_widget_show(vdat->at_beginning_button);
 	SG_SIGNAL_CONNECT(vdat->at_beginning_button, "clicked", view_files_at_beginning_callback, (gpointer)vdat);
@@ -4966,6 +4991,7 @@ GtkWidget *start_view_files_dialog_1(view_files_info *vdat, bool managed)
 	gtk_widget_show(lbox4);
 
 	vdat->at_sample_button = gtk_radio_button_new_with_label(gtk_radio_button_get_group(GTK_RADIO_BUTTON(vdat->at_cursor_button)), _("at sample"));
+	gtk_widget_modify_bg(vdat->at_sample_button, GTK_STATE_PRELIGHT, ss->sgx->lighter_blue);
 	gtk_box_pack_start(GTK_BOX(lbox3), vdat->at_sample_button, false, false, 0);
 	gtk_widget_show(vdat->at_sample_button);
 	SG_SIGNAL_CONNECT(vdat->at_sample_button, "clicked", view_files_at_sample_callback, (gpointer)vdat);
@@ -4974,6 +5000,7 @@ GtkWidget *start_view_files_dialog_1(view_files_info *vdat, bool managed)
 	gtk_widget_show(vdat->at_sample_text);
 
 	vdat->at_mark_button = gtk_radio_button_new_with_label(gtk_radio_button_get_group(GTK_RADIO_BUTTON(vdat->at_cursor_button)), _("at mark"));
+	gtk_widget_modify_bg(vdat->at_mark_button, GTK_STATE_PRELIGHT, ss->sgx->lighter_blue);
 	gtk_box_pack_end(GTK_BOX(lbox3), vdat->at_mark_button, false, false, 0);
 	gtk_widget_show(vdat->at_mark_button);
 	SG_SIGNAL_CONNECT(vdat->at_mark_button, "clicked", view_files_at_mark_callback, (gpointer)vdat);

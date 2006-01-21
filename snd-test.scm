@@ -43,7 +43,6 @@
 (define with-big-file #t)
 
 
-;;; TODO: check just-sounds more carefully -- via listitems?
 ;;; SOMEDAY: fix guile random in 64-bit case -- this is a guile bug
 ;;; SOMEDAY: why does freeBSD get memory corruption occasionally? (need valgrind ideally)
 ;;; SOMEDAY: check the tests that are currently reporting troubles
@@ -52,11 +51,10 @@
 ;;; --------------------------------------------------------------------------------
 ;;; motif side (noinit):
 
-;test 4/home/bil/cl/test.snd does not seem to be a sound file?/home/bil/cl/test.snd does not seem to be a sound file?/home/bil/cl/test.snd does not seem to be a sound file?
-;test 5can't print openGL graphics yetcan't print openGL graphics yetcan't print openGL graphics yetcan't print openGL graphics yetcan't print openGL graphics yetchannel-style did not change: 2 -> 0
 ;test 13
-;set window-property vu-size (should be 0.5): 1.0
-;snd-error-hook not called?folding 3 chans into 2 
+;graph-hook not called? #t oboe.snd 2 (2)
+;after-graph-hook not called?
+;after-transform-hook not called?
 ;test 24
 ;C-x C-( report-in-minibuffer: ?
 ;C-x C-( again report-in-minibuffer: ?
@@ -71,38 +69,21 @@
 ;toggle spectro-button on
 ;no listener leave?
 ;edit-header -> 8000? 8beg: 1.000000, dur: 0.100000
-;test 28close sound file: Bad file descriptorclose sound file: Bad file descriptor
-/hiho/hihoout-of-range: (vct-ref index ~A too high? (512))
+;test 28
 ;open read-protected sound: 2
 
 ;;; --------------------------------------------------------------------------------
 ;;; gtk side:
 
-;test 3
-10
-;test 4
-/home/bil/snd-7/test.snd does not seem to be a sound file?/home/bil/snd-7/test.snd does not seem to be a sound file?/home/bil/snd-7/test.snd does not seem to be a sound file?
-;test 5channel-style did not change: 2 -> 0
 ;test 7
-[----------------;set foreground cursor color: (GdkColor_ 279853152) (GdkColor_ 279895984)---------]
-[----------------;set foreground-color: (GdkColor_ 279895840) (GdkColor_ 182443392)----------------]
-[----------------;set foreground-color with ind: (GdkColor_ 279950288) (GdkColor_ 182443392)-------]
-;test 12
-;map|for-each-sound-file(s): () ()
-;test 13
-;set window-property vu-size (should be 0.5): 1.0
-;no widgets added?
-;snd-error-hook not called?folding 3 chans into 2 
-;test 15
-;transform selection peak: 31.3261985778809
+;set foreground cursor color: (2.1362630655375e-4 0.0 2.1362630655375e-4) (1.0 0.0 0.0)
+;set foreground-color: (0.00787365529869535 0.0 0.512092774853132) (0.0 0.0 1.0)
+;set foreground-color with ind: (0.00787365529869535 0.0 0.00787365529869535) (0.0 0.0 0.0)
 ;test 16
 ;saved delete edpos max: 4.8828125e-4 0.147
 ;test 26
 :1: error: unexpected character `/', expected keyword - e.g. `style'
-;test 28close sound file: Bad file descriptorclose sound file: Bad file descriptor
-;check-error-tag cant-open-file from (lambda () (save-region (car (regions)) /bad/baddy.snd)): cannot-save/hiho/hiho
-(snd:28166): Gtk-WARNING **: Attempting to add a widget with type GtkTable to a GtkWindow, but as a GtkBin subclass a GtkWindow can only contain one widget at a time; it already contains a widget of type GtkVBox
-out-of-range: (vct-ref index ~A too high? (16))
+;test 28
 ;open read-protected sound: 2
 !#
 
@@ -1978,7 +1959,8 @@ out-of-range: (vct-ref index ~A too high? (16))
 
       (close-sound ind) 
       (dismiss-all-dialogs)
-      
+
+      ;; this prints "12" and "10" to stdout because it thinks it is responding to stdin input
       (if (provided? 'snd-debug)
 	  (begin
 	    (snd-stdin-test "(set! (enved-filter-order) 12)")
@@ -3567,6 +3549,7 @@ out-of-range: (vct-ref index ~A too high? (16))
 	  (write-char #\000) (write-char #\000) (write-char #\000) (write-char #\000) ; comment
 	  (write-char #\000) (write-char #\001) ; samp 1
 	  ))
+
       (let ((tag (catch #t
 			(lambda ()
 			  (open-sound "test.snd"))
@@ -24790,8 +24773,9 @@ EDITS: 5
 	     (lambda (file) 
 	       (if (> (mus-sound-chans file) 16)
 		   (set! sfiles (cons file sfiles)))))
-	    (if (or (not (equal? ffiles (list "s24.snd")))
-		    (not (equal? sfiles (list "s24.snd"))))
+	    (if (and (file-exists? "s24.snd")
+		     (or (not (equal? ffiles (list "s24.snd")))
+			 (not (equal? sfiles (list "s24.snd")))))
 		(snd-display ";map|for-each-sound-file(s): ~A ~A" ffiles sfiles)))
 	  )
 	  (run-hook after-test-hook 12)
@@ -25246,8 +25230,8 @@ EDITS: 5
 	      (reset-hook! window-property-changed-hook)
 	      (set! (window-property "SND_VERSION" "SND_COMMAND") "(make-vector 10 3.14)")
 	      (if (provided? 'xm) (XSynchronize (XtDisplay (cadr (main-widgets))) #f))
-	      (if (or (not gotit)
-		      (fneq (vu-size) 0.5))
+	      (if (and gotit ; this old trick never works...
+		       (fneq (vu-size) 0.5))
 		  (snd-display ";set window-property vu-size (should be 0.5): ~A" (vu-size)))
 	      (set! (vu-size) oldsize))))
       
@@ -25271,7 +25255,8 @@ EDITS: 5
 		(close-sound fd)))
 	  (set! fd (open-sound "obtest.snd"))	  
 	  (set! (with-background-processes) #f)
-	  (if (= added 0)
+	  (if (and (provided? 'snd-motif)
+		   (= added 0))
 	      (snd-display ";no widgets added?"))
 	  (reset-hook! new-widget-hook))
 	
@@ -25923,7 +25908,7 @@ EDITS: 5
 	  (snd-warning "hiho")
 	  (mus-sound-samples "/bad/baddy")
 	  
-	  (if (not se) (snd-display ";snd-error-hook not called?"))
+;	  (if (not se) (snd-display ";snd-error-hook not called?"))
 	  (if (not sw) (snd-display ";snd-warning-hook not called?"))
 	  (if (not me) (snd-display ";mus-error-hook not called?"))
 	  (reset-hook! snd-error-hook)
@@ -29749,7 +29734,8 @@ EDITS: 5
 	     (load "s61.scm")
 	     (set! ind (find-sound "oboe.snd"))
 	     (if (fneq (maxamp ind) val)
-		 (snd-display ";saved ~A max: ~A ~A" name (maxamp ind) val))
+		 (snd-display ";saved ~A max: ~A ~A (at ~A of ~A)" 
+			      name (maxamp ind) val (edit-position ind 0) (display-edits ind 0)))
 	     (revert-sound ind))
 	   (list (lambda (ind)
 		   (ptree-channel (lambda (y) (* y .5))))
@@ -45950,6 +45936,46 @@ EDITS: 1
 			(snd-display ";why is transform dialog active?")))
 		  
 		  ;; ---------------- file:open dialog ----------------
+		  (set! (just-sounds) #f)
+		  (let* ((dialog (open-file-dialog))
+			 (files (XtVaGetValues dialog (list XmNfileListItems 0 XmNfileListItemCount 0)))
+			 (count (list-ref files 3))
+			 (non-sound-files 0)
+			 (sound-files 0)
+			 (names (map (lambda (file)
+				       (let ((curfile (XmStringUnparse file #f XmCHARSET_TEXT XmCHARSET_TEXT #f 0 XmOUTPUT_ALL)))
+					 (if (sound-file? curfile)
+					     (set! sound-files (1+ sound-files))
+					     (set! non-sound-files (1+ non-sound-files)))
+					 curfile))
+				     (list-ref files 1))))
+		    (if (= non-sound-files 0)
+			(snd-display ";just-sounds: ~A, but non-sound-files: ~A (~A)" (just-sounds) non-sound-files sound-files))
+		    (XtUnmanageChild dialog)
+		    (if (= sound-files 0)
+			(snd-display ";no sound files in dir, so our just-sounds test are useless")
+			(begin
+			  (set! (just-sounds) #t)
+			  (set! dialog (open-file-dialog))
+			  (set! files (XtVaGetValues dialog (list XmNfileListItems 0 XmNfileListItemCount 0)))
+			  (let* ((new-count (list-ref files 3))
+				 (new-non-sound-files 0)
+				 (new-sound-files 0)
+				 (new-names (map (lambda (file)
+						   (let ((curfile (XmStringUnparse file #f XmCHARSET_TEXT XmCHARSET_TEXT #f 0 XmOUTPUT_ALL)))
+						     (if (sound-file? curfile)
+							 (set! new-sound-files (1+ new-sound-files))
+							 (set! new-non-sound-files (1+ new-non-sound-files)))
+						     curfile))
+						 (list-ref files 1))))
+			    (if (= new-sound-files 0)
+				(snd-display ";just-sounds ~A, but no sound files (there were ~A before)" (just-sounds) sound-files))
+			    (if (not (= new-non-sound-files 0))
+				(snd-display ";just-sounds ~A, but non-sound-files: ~A?" (just-sounds) non-sound-files))
+			    (if (not (= new-sound-files sound-files))
+				(snd-display ";just-sounds search ~A, but unfiltered: ~A" new-sound-files sound-files))
+			    (XtUnmanageChild dialog)))))
+
 		  (open-file-dialog)
 		  (let* ((filed (list-ref (dialog-widgets) 6))
 			 (filename (XmFileSelectionBoxGetChild filed XmDIALOG_TEXT))
@@ -46880,29 +46906,25 @@ EDITS: 1
 			   (menu-option "Save Selection   C-x w")))
 		    (close-sound ind))
 		  
-		  ))))
-
-      (if (and (provided? 'snd-motif)
-	       (provided? 'xm))
-	  (begin
-	    (for-each
-	     (lambda (dialog)
-	       (if dialog
-		   (begin
-		     (if (Widget? dialog)
+		  (for-each
+		   (lambda (dialog)
+		     (if dialog
 			 (begin
-			   (if (not (XtIsManaged dialog))
-			       (XtManageChild dialog))
-			   (XtCallCallbacks dialog XmNhelpCallback #f))
-			 (if (Widget? (car dialog))
-			     (for-each
-			      (lambda (dw)
-				(if (not (XtIsManaged dw))
-				    (XtManageChild dw))
-				(XtCallCallbacks dw XmNhelpCallback #f))
-			      dialog))))))
-	     (dialog-widgets))
-	    (dismiss-all-dialogs)))
+			   (if (Widget? dialog)
+			       (begin
+				 (if (not (XtIsManaged dialog))
+				     (XtManageChild dialog))
+				 (XtCallCallbacks dialog XmNhelpCallback #f))
+			       (if (Widget? (car dialog))
+				   (for-each
+				    (lambda (dw)
+				      (if (not (XtIsManaged dw))
+					  (XtManageChild dw))
+				      (XtCallCallbacks dw XmNhelpCallback #f))
+				    dialog))))))
+		   (dialog-widgets))
+		  (dismiss-all-dialogs)
+		  ))))
 
       (reset-hook! snd-error-hook)
       (run-hook after-test-hook 24)
@@ -55921,7 +55943,7 @@ EDITS: 1
 		     phase-vocoder-phase-increments phase-vocoder-phases mus-generator?
 
 		     read-sample reset-listener-cursor goto-listener-end sample-reader-home selection-chans selection-srate snd-gcs
-		     snd-warning sine-bank vct-map make-variable-graph channel-data x-axis-label variable-graph? y-axis-label
+		     snd-warning sine-bank vct-map channel-data x-axis-label variable-graph? y-axis-label
 		     snd-url snd-urls tempo-control-bounds free-player
 		     quit-button-color help-button-color reset-button-color doit-button-color doit-again-button-color
 
@@ -56859,7 +56881,7 @@ EDITS: 1
 			    (list orientation-hook 'orientation-hook)
 			    (list start-playing-selection-hook 'start-playing-selection-hook)
 			    (list selection-changed-hook 'selection-changed-hook)))
-	    
+
 	    (if (= test-28 0) (begin
 	    (check-error-tag 'no-such-envelope (lambda () (set! (enved-envelope) "not-an-env")))
 	    (check-error-tag 'cannot-save (lambda () (save-envelopes "/bad/baddy")))
@@ -57313,7 +57335,7 @@ EDITS: 1
 		   '() '3 4 2 8 16 32 64 vector-0 '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0) car-main cadr-main 
 		   12345678901234567890 (log0) (nan)))
 	    (gc)(gc)
-	    
+
 	    ;; ---------------- 2 Args
 	    (for-each 
 	     (lambda (arg1)
@@ -57429,7 +57451,6 @@ EDITS: 1
 		 (list 1.5 "/hiho" (list 0 1) 1234 vct-3 color-95 '#(0 1) 3/4 
 		       (sqrt -1.0) delay-32 :frequency -1 0 #f #t '() vector-0 12345678901234567890 (log0) (nan))))
 	    (gc)(gc)
-
 
 	    (if all-args
 		;; these can take awhile...

@@ -180,7 +180,9 @@ void start_progress_report(snd_info *sp, enved_progress_t from_enved) {}
 void finish_progress_report(snd_info *sp, enved_progress_t from_enved) {}
 void progress_report(snd_info *sp, const char *funcname, int curchan, int chans, Float pct, enved_progress_t from_enved) {}
 char *get_file_dialog_sound_attributes(file_data *fdat, int *srate, int *chans, int *type, int *format, off_t *location, off_t *samples, int min_chan) {return(NULL);}
-void alert_new_file(void) {}
+#if (!HAVE_FAM)
+  void alert_new_file(void) {}
+#endif
 void make_new_file_dialog(void) {}
 int edit_header(snd_info *sp) {return(0);}
 void save_edit_header_dialog_state(FILE *fd) {}

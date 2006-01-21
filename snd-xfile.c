@@ -634,7 +634,7 @@ static void file_change_directory_callback(Widget w, XtPointer context, XtPointe
 }
 
 #if HAVE_FAM
-static void watch_current_directory_contents(struct fam_info *fp, FAMEvent *fe)
+static void watch_current_directory_contents(struct fam_info *famp, FAMEvent *fe)
 {
   switch (fe->code)
     {
@@ -644,12 +644,18 @@ static void watch_current_directory_contents(struct fam_info *fp, FAMEvent *fe)
        */
     case FAMCreated:
     case FAMMoved:
-      if (just_sounds(ss))
+      if ((!(just_sounds(ss))) ||
+	  (sound_file_p(fe->filename)))
 	{
-	  if (sound_file_p(fe->filename))
-	    alert_new_file();
+	  file_pattern_info *fp = (file_pattern_info *)(famp->data);
+	  fp->reread_directory = true;
+	  if ((fp->dialog) &&
+	      (XtIsManaged(fp->dialog)))
+	    {
+	      force_directory_reread(fp->dialog);
+	      fp->reread_directory = false;
+	    }
 	}
-      else alert_new_file();
       break;
     default:
       /* ignore the rest */
@@ -1480,7 +1486,7 @@ static file_dialog_info *mdat = NULL;
 widget_t make_mix_file_dialog(bool managed)
 {
   /* called from the menu */
-  if (mdat == NULL)
+  if (!mdat)
     {
       mdat = make_file_dialog(true, _("Mix Sound"), _("mix in:"), file_mix_ok_callback, mix_file_help_callback);
       set_dialog_widget(FILE_MIX_DIALOG, mdat->dialog);
@@ -1569,8 +1575,7 @@ static file_dialog_info *idat = NULL;
 
 widget_t make_insert_file_dialog(bool managed)
 {
-  /* called from the menu */
-  if (idat == NULL)
+  if (!idat)
     {
       idat = make_file_dialog(true, _("Insert Sound"), _("insert:"), file_insert_ok_callback, insert_file_help_callback);
       set_dialog_widget(FILE_INSERT_DIALOG, idat->dialog);
@@ -1602,8 +1607,10 @@ void set_open_file_play_button(bool val)
     XmToggleButtonSetState(idat->dp->play_button, (Boolean)val, false);
 }
 
+#if (!HAVE_FAM)
 void alert_new_file(void) 
 {
+  /* ideally this would include the save-as dialogs */
   if (odat)
     {
       odat->fp->reread_directory = true;
@@ -1632,6 +1639,7 @@ void alert_new_file(void)
 	}
     }
 }
+#endif
 
 void reflect_just_sounds(void)
 {
@@ -3069,7 +3077,6 @@ widget_t make_sound_save_as_dialog(bool managed)
 
   if (!save_sound_as)
     save_sound_as = new_save_as_dialog_info(SOUND_SAVE_AS);
-  /* TODO: do this (and below) need to check force reread flag? */
   sd = save_sound_as;
 
   sp = any_selected_sound();
@@ -3085,6 +3092,12 @@ widget_t make_sound_save_as_dialog(bool managed)
 				   IGNORE_CHANS, IGNORE_DATA_LOCATION, IGNORE_SAMPLES,
 				   com = output_comment(hdr));
   if (com) FREE(com);
+  if (sd->fp->reread_directory) 
+    {
+      force_directory_reread(sd->dialog);
+      sd->fp->reread_directory = false;
+    }
+
   if ((managed) && (!XtIsManaged(sd->dialog))) 
     XtManageChild(sd->dialog);
   return(sd->dialog);
@@ -3108,6 +3121,11 @@ widget_t make_selection_save_as_dialog(bool managed)
 				   selection_srate(), 
 				   IGNORE_CHANS, IGNORE_DATA_LOCATION, IGNORE_SAMPLES, 
 				   NULL);
+  if (sd->fp->reread_directory) 
+    {
+      force_directory_reread(sd->dialog);
+      sd->fp->reread_directory = false;
+    }
   if ((managed) && (!XtIsManaged(sd->dialog))) 
     XtManageChild(sd->dialog);
   return(sd->dialog);
@@ -3133,6 +3151,11 @@ widget_t make_region_save_as_dialog(bool managed)
 				   region_srate(region_dialog_region()), 
 				   IGNORE_CHANS, IGNORE_DATA_LOCATION, IGNORE_SAMPLES, 
 				   comment);
+  if (sd->fp->reread_directory) 
+    {
+      force_directory_reread(sd->dialog);
+      sd->fp->reread_directory = false;
+    }
   if ((managed) && (!XtIsManaged(sd->dialog))) 
     XtManageChild(sd->dialog);
   if (comment) FREE(comment);

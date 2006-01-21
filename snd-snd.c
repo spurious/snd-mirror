@@ -3263,6 +3263,15 @@ static XEN g_selected_sound(void)
   return(XEN_FALSE); /* was -1 before 26-Mar-02 */
 }
 
+static void open_sound_error_handler(const char *msg, void *data)
+{
+  redirect_snd_error_to(NULL, NULL);
+  redirect_snd_warning_to(NULL, NULL);
+  XEN_ERROR(CANT_OPEN_FILE,                         /* not quite right -- we can open it, but it's not a sound */
+	    XEN_LIST_2(C_TO_XEN_STRING((char *)data),
+		       C_TO_XEN_STRING(msg)));
+}
+
 static XEN g_open_sound(XEN filename)
 { /* returns index of new sound if successful */
   #define H_open_sound "(" S_open_sound " filename): \
@@ -3271,6 +3280,7 @@ open filename (as if opened from File:Open menu option), and return the new soun
   snd_info *sp;
   bool file_exists;
   XEN_ASSERT_TYPE(XEN_STRING_P(filename), filename, XEN_ONLY_ARG, S_open_sound, "a string");
+
   fname = XEN_TO_C_STRING(filename);
   {
     char *fullname;
@@ -3279,10 +3289,15 @@ open filename (as if opened from File:Open menu option), and return the new soun
     file_exists = mus_file_probe(fullname);
     FREE(fullname);
   }
+
   if (!file_exists)
     return(snd_no_such_file_error(S_open_sound, filename));
   ss->open_requestor = FROM_OPEN_SOUND;
+
+  redirect_snd_error_to(open_sound_error_handler, (void *)S_open_sound);
   sp = snd_open_file(fname, FILE_READ_WRITE); /* this will call mus_expand_filename */
+  redirect_snd_error_to(NULL, NULL);
+
   if (sp) 
     return(C_TO_XEN_INT(sp->index));
   /* sp NULL is not an error (open-hook func returned #t) */
@@ -4851,6 +4866,11 @@ create a new sound file 'file' (writing float data), return the file descriptor 
   return(C_TO_XEN_INT(result));
 }
 
+static void close_sound_file_warning_handler(const char *msg, void *data)
+{
+  /* no need for the warning from snd_close here -- we're returning an error indication */
+}
+
 static XEN g_close_sound_file(XEN g_fd, XEN g_bytes)
 {
   #define H_close_sound_file "(" S_close_sound_file " fd bytes): close file fd, updating its header to report 'bytes' bytes of data"
@@ -4867,7 +4887,9 @@ static XEN g_close_sound_file(XEN g_fd, XEN g_bytes)
   hdr = get_temp_header(fd);
   if (hdr == NULL) 
     {
+      redirect_snd_warning_to(close_sound_file_warning_handler, (void *)S_close_sound_file); /* squelch unnecessary warning */
       snd_close(fd, "sound file");
+      redirect_snd_warning_to(NULL, NULL);
       return(snd_no_such_file_error(S_close_sound_file, g_fd));
     }
   io_err = close_temp_file(hdr->name, fd, hdr->type, bytes);

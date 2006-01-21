@@ -1,19 +1,22 @@
 #include "snd.h"
 
-/* TODO: back button ignores just previous case?
+/* TODO: back button ignores just previous case? -- needs url because motif-xmstring pattern search isn't usable
  */
 
+/* ---------------- HELP MONOLOG ---------------- */
+
 static GtkWidget *help_dialog = NULL;
-static void dismiss_help_dialog(GtkWidget *w, gpointer context) {gtk_widget_hide(help_dialog);}
+
+static void dismiss_help_dialog(GtkWidget *w, gpointer context) 
+{
+  gtk_widget_hide(help_dialog);
+}
 
 static gint delete_help_dialog(GtkWidget *w, GdkEvent *event, gpointer context) 
 {
   gtk_widget_hide(help_dialog);
   return(true);
 }
-
-
-/* ---------------- HELP MONOLOG ---------------- */
 
 #define HELP_ROWS 12
 #define HELP_COLUMNS 56
@@ -46,8 +49,8 @@ int help_text_width(const char *txt, int start, int end)
 }
 
 static with_word_wrap_t outer_with_wrap = WITHOUT_WORD_WRAP;
-
 static int old_help_text_width = 0;
+
 static gboolean help_expose_callback(GtkWidget *w, GdkEventExpose *ev, gpointer data)
 {
   int curwid;
@@ -56,7 +59,8 @@ static gboolean help_expose_callback(GtkWidget *w, GdkEventExpose *ev, gpointer 
     old_help_text_width = curwid;
   else
     {
-      if ((outer_with_wrap == WITH_WORD_WRAP) && (abs(curwid - old_help_text_width) > 50))
+      if ((outer_with_wrap == WITH_WORD_WRAP) && 
+	  (abs(curwid - old_help_text_width) > 50))
 	{
 	  char *cur_help_str = NULL, *new_help_str = NULL;
 	  fprintf(stderr,"diff: %d\n", (curwid - old_help_text_width));
@@ -76,7 +80,7 @@ static bool new_help(const char *pattern)
 {
   char *url;
   char **xrefs;
-  url = snd_url(pattern);
+  url = snd_url(pattern); /* TODO: does this make any sense -- we get the url, then ignore it? (same code in xhelp) */
   if (url)
     {
       /* given name, find doc string, if any */

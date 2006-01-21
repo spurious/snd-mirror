@@ -246,7 +246,9 @@ void clear_minibuffer_error(snd_info *sp);
 /* -------- snd-xfile.c -------- */
 
 char *get_file_dialog_sound_attributes(file_data *fdat, int *srate, int *chans, int *type, int *format, off_t *location, off_t *samples, int min_chan);
-void alert_new_file(void);
+#if (!HAVE_FAM)
+  void alert_new_file(void);
+#endif
 void make_new_file_dialog(void);
 int edit_header(snd_info *sp);
 void save_edit_header_dialog_state(FILE *fd);

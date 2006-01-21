@@ -235,7 +235,7 @@ enum {MUS_NO_ERROR, MUS_NO_FREQUENCY, MUS_NO_PHASE, MUS_NO_GEN, MUS_NO_LENGTH,
     #undef FOPEN
   #endif
   #if USE_SND
-    #define OPEN(File, Flags, Mode) snd_open((File), (Flags))
+    #define OPEN(File, Flags, Mode) snd_open((File), (Flags), 0)
   #else
     #define OPEN(File, Flags, Mode) open((File), (Flags))
   #endif

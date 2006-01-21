@@ -134,13 +134,29 @@ static Float **make_base_rgb(int size)
   return(rgb);
 }
 
+static const char *add_colormap_func_error_msg = NULL;
+static bool add_colormap_func_hit_error = false;
+static void add_colormap_func_error(const char *msg, void *data)
+{
+  add_colormap_func_hit_error = true;
+  add_colormap_func_error_msg = msg;
+}
+
 static Float **make_xen_colormap(int size, XEN lambda)
 {
   XEN xrgb;
   Float **rgb = NULL;
+  add_colormap_func_hit_error = false;
+  redirect_xen_error_to(add_colormap_func_error, NULL);
   xrgb = XEN_CALL_1(lambda,
 		    C_TO_XEN_INT(size),
-		    "colormap maker");
+		    S_add_colormap);
+  redirect_xen_error_to(NULL, NULL);
+  if (add_colormap_func_hit_error)
+    XEN_ERROR(MUS_MISC_ERROR,
+	      XEN_LIST_3(C_TO_XEN_STRING(S_add_colormap),
+			 C_TO_XEN_STRING("function error:"),
+			 C_TO_XEN_STRING(add_colormap_func_error_msg)));
   if (XEN_LIST_P(xrgb))
     {
       vct *xr, *xg, *xb;
