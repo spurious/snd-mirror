@@ -1881,7 +1881,6 @@ static void clear_filename_handlers(fsb *fs)
       g_signal_handler_disconnect(fs->file_text, key_press_filename_handler_id);
       key_press_filename_handler_id = 0;
     }
-  /* TODO: select file/dir should also clear error */
 }
 
 static gboolean filename_modify_key_press(GtkWidget *w, GdkEventKey *event, gpointer data);
@@ -2632,9 +2631,11 @@ static void save_as_help_callback(GtkWidget *w, gpointer data)
 
 static void save_as_dialog_select_callback(const char *filename, void *data)
 {
-  fsb *fs = (fsb *)data;
-  set_sensitive(fs->ok_button, (!(file_is_directory(fs))));
-  if (fs->extract_button) set_sensitive(fs->extract_button, (!(file_is_directory(fs))));
+  save_as_dialog_info *sd = (save_as_dialog_info *)data;
+  clear_filename_handlers(sd->fs);
+  clear_dialog_error(sd->panel_data);
+  set_sensitive(sd->fs->ok_button, (!(file_is_directory(sd->fs))));
+  if (sd->fs->extract_button) set_sensitive(sd->fs->extract_button, (!(file_is_directory(sd->fs))));
 }
 
 static gint save_as_delete_callback(GtkWidget *w, GdkEvent *event, gpointer context)
@@ -2643,8 +2644,6 @@ static gint save_as_delete_callback(GtkWidget *w, GdkEvent *event, gpointer cont
   gtk_widget_hide(sd->fs->dialog);
   return(true);
 }
-
-/* TODO: if "not found" error, use fam to watch for creation and erase message */
 
 static void save_as_file_exists_check(GtkWidget *w, gpointer context)
 {
@@ -2725,9 +2724,9 @@ static void make_save_as_dialog(save_as_dialog_info *sd, char *sound_name, int h
       SG_SIGNAL_CONNECT(fs->cancel_button, "clicked", save_as_cancel_callback, (gpointer)sd);
       SG_SIGNAL_CONNECT(fs->file_text, "changed", save_as_file_exists_check, (gpointer)sd);
 
-      fs->file_select_data = (void *)fs;
+      fs->file_select_data = (void *)sd;
       fs->file_select_callback = save_as_dialog_select_callback;
-      fs->directory_select_data = (void *)fs;
+      fs->directory_select_data = (void *)sd;
       fs->directory_select_callback = save_as_dialog_select_callback;
 
       sd->panel_data->dialog = fs->dialog;

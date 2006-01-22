@@ -1,7 +1,6 @@
 #include "snd.h"
 
-/* TODO: the name section has two pane sashes that behave strangely -- can't go up sometimes etc
- *       (is that a pane all to itself for some reason? -- error msg?)
+/* TODO: name box pane handling is not intuitive -- if show-controls #f, the sash is not functional
  */
 
 #if HAVE_XPM
@@ -2593,6 +2592,8 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
   if (old_name)
     report_in_minibuffer(sp, _("(translated %s)"), old_name);
   if (!(ss->using_schemes)) map_over_children(SOUND_PANE(ss), color_sashes, NULL);
+  /* TODO: if multi channel I think some sashes are not colored? */
+  /* TODO: if a pane is not moveable via a given sash, that sash should be basic color if displayed at all */
   if (!(auto_resize(ss))) equalize_all_panes(); 
 
   if (sound_style(ss) != SOUNDS_IN_SEPARATE_WINDOWS)

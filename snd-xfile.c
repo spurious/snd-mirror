@@ -18,7 +18,6 @@
  *          -> src is interrupted apparently and file open completes
  *       or similarly, stops at "ok", starts src, clicks ok?
  * PERHAPS: audio:settings for display, perhaps reset -- as opposed to using the recorder
- * TODO: how to remap button 3 on Mac? (button 3 coded in -- how to see changed action?
  */
 
 #define FSB_BOX(Dialog, Child) XmFileSelectionBoxGetChild(Dialog, Child)
@@ -110,6 +109,11 @@ static void force_directory_reread_and_let_filename_change(Widget dialog)
 
 
 /* -------- popups -------- */
+
+/* I think there is no way to get a key action to popup one of these menus -- Xm/RowColumn.c
+ *   appears to insist on a button event, and any change to that via XmNmenuPost gets an
+ *   error.  Perhaps we should notice the POPUP_BUTTON setting however?
+ */
 
 typedef struct file_pattern_info {
   /* just-sounds file lists */

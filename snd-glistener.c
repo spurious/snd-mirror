@@ -6,10 +6,11 @@ static slist *completion_list = NULL;
 static int printout_end;
 #define LISTENER_BUFFER gtk_text_view_get_buffer(GTK_TEXT_VIEW(listener_text))
 
-/* SOMEDAY: listener completion dialog has no auto-unpost code */
 /* TODO: cr not at end has no effect (two crs = activation)
  * TODO: the double "(" bug is still with us, but how to make it happen repeatably?
  */
+
+static bool listener_awaiting_completion = false;
 
 static void list_completions_callback(const char *name, int row, void *data)
 {
@@ -29,6 +30,7 @@ static void list_completions_callback(const char *name, int row, void *data)
 	}
       else i--;
     }
+  listener_awaiting_completion = false;
   append_listener_text(0, (char *)(name - 1 + old_len - i));
   if (old_text) g_free(old_text);
   gtk_widget_hide(completion_dialog);
@@ -36,6 +38,7 @@ static void list_completions_callback(const char *name, int row, void *data)
 
 static void dismiss_completion_callback(GtkWidget *w, gpointer context)
 {
+  listener_awaiting_completion = false;
   gtk_widget_hide(completion_dialog);
 }
 
@@ -46,6 +49,7 @@ static void help_completion_callback(GtkWidget *w, gpointer context)
 
 static gint delete_completion_dialog(GtkWidget *w, GdkEvent *event, gpointer context)
 {
+  listener_awaiting_completion = false;
   gtk_widget_hide(completion_dialog);
   return(true);
 }
@@ -160,6 +164,7 @@ static void listener_completion(int end)
 	      new_text = NULL;
 	    }
 	  display_completions();
+	  listener_awaiting_completion = true;
 	  set_save_completions(false);
 	}
       if (file_text) FREE(file_text);
@@ -462,6 +467,12 @@ static gboolean listener_key_release(GtkWidget *w, GdkEventKey *event, gpointer 
 
 static gboolean listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer data)
 {
+  if ((completion_dialog) &&
+      (listener_awaiting_completion))
+    {
+      gtk_widget_hide(completion_dialog);
+      listener_awaiting_completion = false;
+    }
   if (ss->sgx->graph_is_active) 
     {
       chan_info *cp;

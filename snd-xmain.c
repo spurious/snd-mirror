@@ -1,5 +1,8 @@
 #include "snd.h"
 
+/* TODO: remove using_schemes (useSchemes) throughout */
+
+
 #define FALLBACK_FONT "fixed"
 #define DEFAULT_FONTLIST "9x15"
 

@@ -734,6 +734,7 @@ static XtActionsRec acts[NUM_ACTS] = {
 };
 
 /* translation tables for emacs compatibility and better inter-widget communication */
+/* these values are listed in lib/Xm/Transltns.c */
 
 /* for textfield (single-line) widgets */
 static char TextTrans2[] =
