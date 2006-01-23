@@ -3167,7 +3167,7 @@ void view_files_reflect_sort_items(void)
 		    int n = 0, k, old_size;
 		    Arg args[20];
 		    old_size = vdat->sort_items_size;
-		    if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
+		    XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
 		    vdat->sort_items_size += 4;
 		    vdat->sort_items = (Widget *)REALLOC(vdat->sort_items, vdat->sort_items_size * sizeof(Widget));
 		    for (k = old_size; k < vdat->sort_items_size; k++)

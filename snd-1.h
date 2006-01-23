@@ -392,9 +392,6 @@ typedef struct snd_state {
   int file_sorters_size, file_filters_size;
   XEN file_sorters, file_filters;
   int catch_exists, file_sorters_loc, file_filters_loc, search_proc_loc, local_errno, local_open_errno;
-#if (!USE_GTK)
-  bool using_schemes;
-#endif
   state_context *sgx;
   int position_slider_width, zoom_slider_width, toggle_size, channel_sash_indent, sash_size, channel_sash_size, sash_indent;
   char *init_file;

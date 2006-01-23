@@ -134,12 +134,12 @@ static Float **make_base_rgb(int size)
   return(rgb);
 }
 
-static const char *add_colormap_func_error_msg = NULL;
+static char *add_colormap_func_error_msg = NULL;
 static bool add_colormap_func_hit_error = false;
 static void add_colormap_func_error(const char *msg, void *data)
 {
   add_colormap_func_hit_error = true;
-  add_colormap_func_error_msg = msg;
+  add_colormap_func_error_msg = copy_string(msg); /* msg itself is freed by the error handler in snd-xen.c */
 }
 
 static Float **make_xen_colormap(int size, XEN lambda)
@@ -153,10 +153,20 @@ static Float **make_xen_colormap(int size, XEN lambda)
 		    S_add_colormap);
   redirect_xen_error_to(NULL, NULL);
   if (add_colormap_func_hit_error)
-    XEN_ERROR(MUS_MISC_ERROR,
-	      XEN_LIST_3(C_TO_XEN_STRING(S_add_colormap),
-			 C_TO_XEN_STRING("function error:"),
-			 C_TO_XEN_STRING(add_colormap_func_error_msg)));
+    {
+      XEN str;
+      if (add_colormap_func_error_msg)
+	{
+	  str = C_TO_XEN_STRING(add_colormap_func_error_msg);
+	  FREE(add_colormap_func_error_msg);
+	  add_colormap_func_error_msg = NULL;
+	}
+      else str = XEN_FALSE;
+      XEN_ERROR(MUS_MISC_ERROR,
+		XEN_LIST_3(C_TO_XEN_STRING(S_add_colormap),
+			   C_TO_XEN_STRING("function error:"),
+			   str));
+    }
   if (XEN_LIST_P(xrgb))
     {
       vct *xr, *xg, *xb;

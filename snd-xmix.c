@@ -461,7 +461,7 @@ bool mix_play_stopped(void) {return(!mix_playing);}
 
 void reflect_mix_play_stop(void)
 {
-  if ((mix_play) && (!(ss->using_schemes)))
+  if (mix_play)
     {
       XmChangeColor(mix_play, ss->sgx->basic_color);
       XmChangeColor(mix_track_play, ss->sgx->basic_color);
@@ -477,7 +477,7 @@ static void mix_dialog_play_callback(Widget w, XtPointer context, XtPointer info
     {
       if (!(mix_ok(mix_dialog_id))) return;
       mix_playing = true;
-      if ((mix_play) && (!(ss->using_schemes))) XmChangeColor(mix_play, ss->sgx->pushed_button_color);
+      if (mix_play) XmChangeColor(mix_play, ss->sgx->pushed_button_color);
       mix_dialog_mix_play(mix_dialog_id);
     }
 }
@@ -490,7 +490,7 @@ static void mix_track_dialog_play_callback(Widget w, XtPointer context, XtPointe
     {
       if (!(mix_ok(mix_dialog_id))) return;
       mix_playing = true;
-      if ((mix_track_play) && (!(ss->using_schemes))) XmChangeColor(mix_track_play, ss->sgx->pushed_button_color);
+      if (mix_track_play) XmChangeColor(mix_track_play, ss->sgx->pushed_button_color);
       mix_dialog_track_play(mix_dialog_id);
     }
 }
@@ -557,8 +557,7 @@ static void mix_dialog_pan_callback(Widget w, XtPointer context, XtPointer info)
   bool inverted;
   if (!(mix_ok_and_unlocked(mix_dialog_id))) return;
   inverted = (!(mix_dialog_mix_inverted(mix_dialog_id)));
-  if (!(ss->using_schemes))
-    XmChangeColor(w_mix_pan, (inverted) ? ss->sgx->yellow : ss->sgx->highlight_color);
+  XmChangeColor(w_mix_pan, (inverted) ? ss->sgx->yellow : ss->sgx->highlight_color);
   mix_dialog_set_mix_inverted(mix_dialog_id, inverted);
 }
 
@@ -613,7 +612,7 @@ Widget make_mix_dialog(void)
       xtitle = XmStringCreate(_("Mixes"), XmFONTLIST_DEFAULT_TAG);
 
       n = 0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
+      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNokLabelString, xdismiss); n++;
       XtSetArg(args[n], XmNcancelLabelString, xapply); n++;
       XtSetArg(args[n], XmNhelpLabelString, xhelp); n++;
@@ -625,23 +624,17 @@ Widget make_mix_dialog(void)
       mix_dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), _("Mixes"), args, n);
 
       n = 0;
-      if (!(ss->using_schemes)) 
-	{
-	  XtSetArg(args[n], XmNbackground, ss->sgx->doit_again_button_color); n++;
-	  XtSetArg(args[n], XmNarmColor, ss->sgx->pushed_button_color); n++;
-	}
+      XtSetArg(args[n], XmNbackground, ss->sgx->doit_again_button_color); n++;
+      XtSetArg(args[n], XmNarmColor, ss->sgx->pushed_button_color); n++;
       previousb = XtCreateManagedWidget(_("Previous"), xmPushButtonGadgetClass, mix_dialog, args, n);
       if (previous_mix_id(mix_dialog_id) == INVALID_MIX_ID) 
 	set_sensitive(previousb, false);
       XtAddCallback(previousb, XmNactivateCallback, mix_previous_callback, NULL);
 
       n = 0;
-      if (!(ss->using_schemes)) 
-	{
-	  XtSetArg(args[n], XmNbackground, ss->sgx->reset_button_color); n++;
-	  XtSetArg(args[n], XmNforeground, ss->sgx->black); n++;
-	  XtSetArg(args[n], XmNarmColor, ss->sgx->pushed_button_color); n++;
-	}
+      XtSetArg(args[n], XmNbackground, ss->sgx->reset_button_color); n++;
+      XtSetArg(args[n], XmNforeground, ss->sgx->black); n++;
+      XtSetArg(args[n], XmNarmColor, ss->sgx->pushed_button_color); n++;
       nextb = XtCreateManagedWidget(_("Next"), xmPushButtonGadgetClass, mix_dialog, args, n);
       XtAddCallback(nextb, XmNactivateCallback, mix_next_callback, NULL);
       if (next_mix_id(mix_dialog_id) == INVALID_MIX_ID) 
@@ -656,18 +649,15 @@ Widget make_mix_dialog(void)
       XmStringFree(xdismiss);
       XmStringFree(xtitle);
 
-      if (!(ss->using_schemes))
-	{
-	  XtVaSetValues(XmMessageBoxGetChild(mix_dialog, XmDIALOG_CANCEL_BUTTON), XmNarmColor, ss->sgx->pushed_button_color, NULL);
-	  XtVaSetValues(XmMessageBoxGetChild(mix_dialog, XmDIALOG_OK_BUTTON), XmNarmColor, ss->sgx->pushed_button_color, NULL);
-	  XtVaSetValues(XmMessageBoxGetChild(mix_dialog, XmDIALOG_HELP_BUTTON), XmNarmColor, ss->sgx->pushed_button_color, NULL);
-	  XtVaSetValues(XmMessageBoxGetChild(mix_dialog, XmDIALOG_CANCEL_BUTTON), XmNbackground, ss->sgx->doit_button_color, NULL);
-	  XtVaSetValues(XmMessageBoxGetChild(mix_dialog, XmDIALOG_OK_BUTTON), XmNbackground, ss->sgx->quit_button_color, NULL);
-	  XtVaSetValues(XmMessageBoxGetChild(mix_dialog, XmDIALOG_HELP_BUTTON), XmNbackground, ss->sgx->help_button_color, NULL);
-	}
+      XtVaSetValues(XmMessageBoxGetChild(mix_dialog, XmDIALOG_CANCEL_BUTTON), XmNarmColor, ss->sgx->pushed_button_color, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(mix_dialog, XmDIALOG_OK_BUTTON), XmNarmColor, ss->sgx->pushed_button_color, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(mix_dialog, XmDIALOG_HELP_BUTTON), XmNarmColor, ss->sgx->pushed_button_color, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(mix_dialog, XmDIALOG_CANCEL_BUTTON), XmNbackground, ss->sgx->doit_button_color, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(mix_dialog, XmDIALOG_OK_BUTTON), XmNbackground, ss->sgx->quit_button_color, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(mix_dialog, XmDIALOG_HELP_BUTTON), XmNbackground, ss->sgx->help_button_color, NULL);
 
       n = 0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
+      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
@@ -676,7 +666,7 @@ Widget make_mix_dialog(void)
       mainform = XtCreateManagedWidget("formd", xmFormWidgetClass, mix_dialog, args, n);
 
       n = 0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
+      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
@@ -687,7 +677,7 @@ Widget make_mix_dialog(void)
       mix_frame = XtCreateManagedWidget("mix-frame", xmFrameWidgetClass, mainform, args, n);
 
       n = 0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;}
+      XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
@@ -696,11 +686,11 @@ Widget make_mix_dialog(void)
       mix_row = XtCreateManagedWidget("mix-dialog-row", xmRowColumnWidgetClass, mix_frame, args, n);
 
       n = 0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;}
+      XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
       XtCreateManagedWidget(_("mix:"), xmLabelWidgetClass, mix_row, args, n);
 
       n = 0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
+      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNresizeWidth, false); n++;
       XtSetArg(args[n], XmNcolumns, 3); n++;
       XtSetArg(args[n], XmNrecomputeSize, false); n++;
@@ -710,7 +700,7 @@ Widget make_mix_dialog(void)
       XmTextSetString(w_id, "0");
 
       n = 0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
+      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       w_beg = make_textfield_widget("mix-times", mix_row, args, n, ACTIVATABLE, NO_COMPLETER);
       XmTextSetString(w_beg, "0.000 : 1.000");
 
@@ -720,15 +710,15 @@ Widget make_mix_dialog(void)
       pan_r = make_pixmap(pan_bits, pan_width, pan_height, mixer_depth, gc);
 
       n = 0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;}
+      XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
       XtSetArg(args[n], XmNlabelType, XmPIXMAP); n++;
       XtSetArg(args[n], XmNlabelPixmap, speaker_r); n++;
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNarmColor, ss->sgx->pushed_button_color); n++;}
+      XtSetArg(args[n], XmNarmColor, ss->sgx->pushed_button_color); n++;
       mix_play = XtCreateManagedWidget("mix-play", xmPushButtonWidgetClass, mix_row, args, n);
       XtAddCallback(mix_play, XmNactivateCallback, mix_dialog_play_callback, NULL);
 
       n = 0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
+      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_NONE); n++;
@@ -739,7 +729,7 @@ Widget make_mix_dialog(void)
       track_frame = XtCreateManagedWidget("mix-track-frame", xmFrameWidgetClass, mainform, args, n);
 
       n = 0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;}
+      XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
@@ -748,11 +738,11 @@ Widget make_mix_dialog(void)
       track_row = XtCreateManagedWidget("mix-track-dialog-row", xmRowColumnWidgetClass, track_frame, args, n);
 
       n = 0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;}
+      XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
       XtCreateManagedWidget(_("track:"), xmLabelWidgetClass, track_row, args, n);
 
       n = 0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
+      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNresizeWidth, false); n++;
       XtSetArg(args[n], XmNcolumns, 3); n++;
       XtSetArg(args[n], XmNrecomputeSize, false); n++;
@@ -762,24 +752,24 @@ Widget make_mix_dialog(void)
       XmTextSetString(w_track, "0");
 
       n = 0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;}
+      XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
       XtSetArg(args[n], XmNlabelType, XmPIXMAP); n++;
       XtSetArg(args[n], XmNlabelPixmap, speaker_r); n++;
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNarmColor, ss->sgx->pushed_button_color); n++;}
+      XtSetArg(args[n], XmNarmColor, ss->sgx->pushed_button_color); n++;
       mix_track_play = XtCreateManagedWidget("mix-track-play", xmPushButtonWidgetClass, track_row, args, n);
       XtAddCallback(mix_track_play, XmNactivateCallback, mix_track_dialog_play_callback, NULL);
 
       n = 0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;}
+      XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
       XtSetArg(args[n], XmNlabelType, XmPIXMAP); n++;
       XtSetArg(args[n], XmNlabelPixmap, pan_r); n++;
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNarmColor, ss->sgx->yellow); n++;}
+      XtSetArg(args[n], XmNarmColor, ss->sgx->yellow); n++;
       w_mix_pan = XtCreateManagedWidget("mix-pan", xmPushButtonWidgetClass, track_row, args, n);
       XtAddCallback(w_mix_pan, XmNactivateCallback, mix_dialog_pan_callback, NULL);
 
       /* separator before sliders */
       n = 0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
+      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNtopWidget, mix_row); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
@@ -793,7 +783,7 @@ Widget make_mix_dialog(void)
       /* SPEED */
       n = 0;
       s1 = XmStringCreate(_("speed:"), XmFONTLIST_DEFAULT_TAG);
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
+      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNtopWidget, sep); n++;
@@ -811,7 +801,7 @@ Widget make_mix_dialog(void)
 
       n = 0;
       s1 = initial_speed_label(speed_control_style(ss));
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
+      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
       XtSetArg(args[n], XmNtopWidget, w_speed_label); n++;
@@ -829,7 +819,7 @@ Widget make_mix_dialog(void)
       XmStringFree(s1);
 
       n = 0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->position_color); n++;}
+      XtSetArg(args[n], XmNbackground, ss->sgx->position_color); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
       XtSetArg(args[n], XmNtopWidget, w_speed_number); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
@@ -861,7 +851,7 @@ Widget make_mix_dialog(void)
 	  n = 0;
 	  mus_snprintf(amplab, LABEL_BUFFER_SIZE, _("amp %d:"), i);
 	  s1 = XmStringCreate(amplab, XmFONTLIST_DEFAULT_TAG);
-	  if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
+	  XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
 	  XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
 	  XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
 	  XtSetArg(args[n], XmNtopWidget, last_label); n++;
@@ -880,7 +870,7 @@ Widget make_mix_dialog(void)
 
 	  n = 0;
 	  s1 = XmStringCreate("1.00", XmFONTLIST_DEFAULT_TAG);
-	  if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
+	  XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
 	  XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
 	  XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
 	  XtSetArg(args[n], XmNtopWidget, last_number); n++;
@@ -894,7 +884,7 @@ Widget make_mix_dialog(void)
 	  XmStringFree(s1);
 
 	  n = 0;      
-	  if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->position_color); n++;}
+	  XtSetArg(args[n], XmNbackground, ss->sgx->position_color); n++;
 	  XtSetArg(args[n], XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
 	  XtSetArg(args[n], XmNtopWidget, w_amp_numbers[i]); n++;
 	  XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
@@ -916,7 +906,7 @@ Widget make_mix_dialog(void)
 
       /* separator before envelopes */
       n = 0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
+      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNtopWidget, last_label); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
@@ -929,20 +919,18 @@ Widget make_mix_dialog(void)
 
       /* button box for dB clip wave */
       n = 0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
+      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNtopWidget, w_sep1); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-
       XtSetArg(args[n], XmNshadowType, XmSHADOW_ETCHED_IN); n++;
       XtSetArg(args[n], XmNshadowThickness, 4); n++;
-
       w_dB_frame = XtCreateManagedWidget("mix-dB-frame", xmFrameWidgetClass, mainform, args, n);
 
       n = 0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;}
+      XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
@@ -950,11 +938,8 @@ Widget make_mix_dialog(void)
       w_dB_row = XtCreateManagedWidget("mix-dB-row", xmRowColumnWidgetClass, w_dB_frame, args, n);
 
       n = 0;
-      if (!(ss->using_schemes)) 
-	{
-	  XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
-	  XtSetArg(args[n], XmNselectColor, ss->sgx->pushed_button_color); n++;
-	}
+      XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
+      XtSetArg(args[n], XmNselectColor, ss->sgx->pushed_button_color); n++;
       if (ss->toggle_size > 0) {XtSetArg(args[n], XmNindicatorSize, ss->toggle_size); n++;}
 
       w_clip = make_togglebutton_widget(_("clip"), w_dB_row, args, n);
@@ -969,7 +954,7 @@ Widget make_mix_dialog(void)
 
 
       n = 0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
+      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
@@ -980,13 +965,13 @@ Widget make_mix_dialog(void)
       error_frame = XtCreateManagedWidget("error-frame", xmFrameWidgetClass, mainform, args, n);
 
       n = 0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;}
+      XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
       error_label = XtCreateManagedWidget("", xmLabelWidgetClass, error_frame, args, n);
 
       
       /* amp env */
       n = 0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
+      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNtopWidget, w_sep1); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
@@ -1000,7 +985,7 @@ Widget make_mix_dialog(void)
       w_env_frame = XtCreateManagedWidget("mix-amp-env-frame", xmFrameWidgetClass, mainform, args, n);
 
       n = 0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;}
+      XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
@@ -1081,12 +1066,10 @@ static void update_mix_dialog(int mix_id)
 	  if (chans == 0) return;
 	  if (chans > 8) chans = 8; 
 	  set_sensitive(XmMessageBoxGetChild(mix_dialog, XmDIALOG_CANCEL_BUTTON), true);
-	  if (!(ss->using_schemes))
-	    {
-	      if (mix_dialog_mix_inverted(mix_dialog_id))
-		XmChangeColor(w_mix_pan, ss->sgx->yellow);
-	      else XmChangeColor(w_mix_pan, ss->sgx->highlight_color);
-	    }
+
+	  if (mix_dialog_mix_inverted(mix_dialog_id))
+	    XmChangeColor(w_mix_pan, ss->sgx->yellow);
+	  else XmChangeColor(w_mix_pan, ss->sgx->highlight_color);
 	}
       else
 	{
@@ -1653,7 +1636,7 @@ bool track_play_stopped(void) {return(!track_playing);}
 
 void reflect_track_play_stop(void)
 {
-  if ((w_track_track_play) && (!(ss->using_schemes)))
+  if (w_track_track_play)
     XmChangeColor(w_track_track_play, ss->sgx->basic_color);
   track_playing = false;
 }
@@ -1666,7 +1649,7 @@ static void track_dialog_play_callback(Widget w, XtPointer context, XtPointer in
     {
       if (!(track_p(track_dialog_id))) return;
       track_playing = true;
-      if ((w_track_track_play) && (!(ss->using_schemes))) XmChangeColor(w_track_track_play, ss->sgx->pushed_button_color);
+      if (w_track_track_play) XmChangeColor(w_track_track_play, ss->sgx->pushed_button_color);
       track_dialog_play(track_dialog_id);
     }
 }
@@ -1744,7 +1727,7 @@ Widget make_track_dialog(void)
       xtitle = XmStringCreate(_("Tracks"), XmFONTLIST_DEFAULT_TAG);
 
       n = 0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
+      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNokLabelString, xdismiss); n++;
       XtSetArg(args[n], XmNcancelLabelString, xapply); n++;
       XtSetArg(args[n], XmNhelpLabelString, xhelp); n++;
@@ -1757,11 +1740,8 @@ Widget make_track_dialog(void)
       track_dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), _("Tracks"), args, n);
 
       n = 0;
-      if (!(ss->using_schemes)) 
-	{
-	  XtSetArg(args[n], XmNbackground, ss->sgx->doit_again_button_color); n++;
-	  XtSetArg(args[n], XmNarmColor, ss->sgx->pushed_button_color); n++;
-	}
+      XtSetArg(args[n], XmNbackground, ss->sgx->doit_again_button_color); n++;
+      XtSetArg(args[n], XmNarmColor, ss->sgx->pushed_button_color); n++;
 
       track_previousb = XtCreateManagedWidget(_("Previous"), xmPushButtonGadgetClass, track_dialog, args, n);
       if (previous_track_id(track_dialog_id) == INVALID_TRACK_ID) 
@@ -1769,16 +1749,9 @@ Widget make_track_dialog(void)
       XtAddCallback(track_previousb, XmNactivateCallback, track_previous_callback, NULL);
 
       n = 0;
-      if (!(ss->using_schemes)) 
-	{
-	  XtSetArg(args[n], XmNbackground, ss->sgx->reset_button_color); n++;
-	  XtSetArg(args[n], XmNforeground, ss->sgx->black); n++;
-	  XtSetArg(args[n], XmNarmColor, ss->sgx->pushed_button_color); n++;
-	}
-
-      XtAddCallback(track_dialog, XmNokCallback, dismiss_track_dialog_callback, NULL);
-      XtAddCallback(track_dialog, XmNcancelCallback, apply_track_dialog_callback, NULL);
-      XtAddCallback(track_dialog, XmNhelpCallback, help_track_dialog_callback, NULL);
+      XtSetArg(args[n], XmNbackground, ss->sgx->reset_button_color); n++;
+      XtSetArg(args[n], XmNforeground, ss->sgx->black); n++;
+      XtSetArg(args[n], XmNarmColor, ss->sgx->pushed_button_color); n++;
 
       track_nextb = XtCreateManagedWidget(_("Next"), xmPushButtonGadgetClass, track_dialog, args, n);
       XtAddCallback(track_nextb, XmNactivateCallback, track_next_callback, NULL);
@@ -1790,18 +1763,19 @@ Widget make_track_dialog(void)
       XmStringFree(xdismiss);
       XmStringFree(xtitle);
 
-      if (!(ss->using_schemes))
-	{
-	  XtVaSetValues(XmMessageBoxGetChild(track_dialog, XmDIALOG_CANCEL_BUTTON), XmNarmColor, ss->sgx->pushed_button_color, NULL);
-	  XtVaSetValues(XmMessageBoxGetChild(track_dialog, XmDIALOG_OK_BUTTON), XmNarmColor, ss->sgx->pushed_button_color, NULL);
-	  XtVaSetValues(XmMessageBoxGetChild(track_dialog, XmDIALOG_HELP_BUTTON), XmNarmColor, ss->sgx->pushed_button_color, NULL);
-	  XtVaSetValues(XmMessageBoxGetChild(track_dialog, XmDIALOG_CANCEL_BUTTON), XmNbackground, ss->sgx->doit_button_color, NULL);
-	  XtVaSetValues(XmMessageBoxGetChild(track_dialog, XmDIALOG_OK_BUTTON), XmNbackground, ss->sgx->quit_button_color, NULL);
-	  XtVaSetValues(XmMessageBoxGetChild(track_dialog, XmDIALOG_HELP_BUTTON), XmNbackground, ss->sgx->help_button_color, NULL);
-	}
+      XtAddCallback(track_dialog, XmNokCallback, dismiss_track_dialog_callback, NULL);
+      XtAddCallback(track_dialog, XmNcancelCallback, apply_track_dialog_callback, NULL);
+      XtAddCallback(track_dialog, XmNhelpCallback, help_track_dialog_callback, NULL);
+
+      XtVaSetValues(XmMessageBoxGetChild(track_dialog, XmDIALOG_CANCEL_BUTTON), XmNarmColor, ss->sgx->pushed_button_color, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(track_dialog, XmDIALOG_OK_BUTTON), XmNarmColor, ss->sgx->pushed_button_color, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(track_dialog, XmDIALOG_HELP_BUTTON), XmNarmColor, ss->sgx->pushed_button_color, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(track_dialog, XmDIALOG_CANCEL_BUTTON), XmNbackground, ss->sgx->doit_button_color, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(track_dialog, XmDIALOG_OK_BUTTON), XmNbackground, ss->sgx->quit_button_color, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(track_dialog, XmDIALOG_HELP_BUTTON), XmNbackground, ss->sgx->help_button_color, NULL);
 
       n = 0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
+      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
@@ -1810,7 +1784,7 @@ Widget make_track_dialog(void)
       mainform = XtCreateManagedWidget("formd", xmFormWidgetClass, track_dialog, args, n);
 
       n = 0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
+      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
@@ -1821,7 +1795,7 @@ Widget make_track_dialog(void)
       w_track_frame = XtCreateManagedWidget("track-frame", xmFrameWidgetClass, mainform, args, n);
 
       n = 0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;}
+      XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
@@ -1830,11 +1804,11 @@ Widget make_track_dialog(void)
       track_row = XtCreateManagedWidget("track-dialog-row", xmRowColumnWidgetClass, w_track_frame, args, n);
 
       n = 0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;}
+      XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
       XtCreateManagedWidget(_("track:"), xmLabelWidgetClass, track_row, args, n);
 
       n = 0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
+      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNresizeWidth, false); n++;
       XtSetArg(args[n], XmNcolumns, 3); n++;
       XtSetArg(args[n], XmNrecomputeSize, false); n++;
@@ -1844,7 +1818,7 @@ Widget make_track_dialog(void)
       XmTextSetString(w_track_id, "0");
 
       n = 0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
+      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       w_track_beg = make_textfield_widget("track-times", track_row, args, n, ACTIVATABLE, NO_COMPLETER);
       XmTextSetString(w_track_beg, "0.000 : 1.000");
 
@@ -1853,15 +1827,15 @@ Widget make_track_dialog(void)
       track_speaker_r = make_pixmap(p_track_speaker_bits, p_track_speaker_width, p_track_speaker_height, track_depth, track_gc);
 
       n = 0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;}
+      XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
       XtSetArg(args[n], XmNlabelType, XmPIXMAP); n++;
       XtSetArg(args[n], XmNlabelPixmap, track_speaker_r); n++;
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNarmColor, ss->sgx->pushed_button_color); n++;}
+      XtSetArg(args[n], XmNarmColor, ss->sgx->pushed_button_color); n++;
       w_track_track_play = XtCreateManagedWidget("track-play", xmPushButtonWidgetClass, track_row, args, n);
       XtAddCallback(w_track_track_play, XmNactivateCallback, track_dialog_play_callback, NULL);
 
       n = 0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
+      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_NONE); n++;
@@ -1872,7 +1846,7 @@ Widget make_track_dialog(void)
       track_track_frame = XtCreateManagedWidget("track-frame", xmFrameWidgetClass, mainform, args, n);
 
       n = 0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;}
+      XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
@@ -1881,11 +1855,11 @@ Widget make_track_dialog(void)
       track_track_row = XtCreateManagedWidget("track-dialog-row", xmRowColumnWidgetClass, track_track_frame, args, n);
 
       n = 0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;}
+      XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
       XtCreateManagedWidget(_("track:"), xmLabelWidgetClass, track_track_row, args, n);
 
       n = 0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
+      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNresizeWidth, false); n++;
       XtSetArg(args[n], XmNcolumns, 3); n++;
       XtSetArg(args[n], XmNrecomputeSize, false); n++;
@@ -1897,7 +1871,7 @@ Widget make_track_dialog(void)
 
       /* separator before sliders */
       n = 0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
+      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNtopWidget, track_track_row); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
@@ -1909,11 +1883,7 @@ Widget make_track_dialog(void)
       sep2 = XtCreateManagedWidget("track-dialog-sep", xmSeparatorWidgetClass, mainform, args, n);
 
       n = 0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
-      /*
-      XtSetArg(args[n], XmNresizeWidth, false); n++;
-      XtSetArg(args[n], XmNrecomputeSize, false); n++;
-      */
+      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNtopWidget, sep2); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
@@ -1923,7 +1893,7 @@ Widget make_track_dialog(void)
       set_label(w_track_text, "");
 	
       n = 0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
+      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNtopWidget, w_track_text); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
@@ -1938,7 +1908,7 @@ Widget make_track_dialog(void)
       /* SPEED */
       n = 0;
       s1 = XmStringCreate(_("speed:"), XmFONTLIST_DEFAULT_TAG);
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
+      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNtopWidget, sep); n++;
@@ -1956,7 +1926,7 @@ Widget make_track_dialog(void)
 
       n = 0;
       s1 = initial_speed_label(speed_control_style(ss));
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
+      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
       XtSetArg(args[n], XmNtopWidget, w_track_speed_label); n++;
@@ -1974,7 +1944,7 @@ Widget make_track_dialog(void)
       XmStringFree(s1);
 
       n = 0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->position_color); n++;}
+      XtSetArg(args[n], XmNbackground, ss->sgx->position_color); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
       XtSetArg(args[n], XmNtopWidget, w_track_speed_number); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
@@ -1996,7 +1966,7 @@ Widget make_track_dialog(void)
       /* TEMPO */
       n = 0;
       s1 = XmStringCreate(_("tempo:"), XmFONTLIST_DEFAULT_TAG);
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
+      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNtopWidget, w_track_speed_label); n++;
@@ -2014,7 +1984,7 @@ Widget make_track_dialog(void)
       
       n = 0;
       s1 = XmStringCreate("1.00", XmFONTLIST_DEFAULT_TAG);
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
+      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNtopWidget, w_track_speed_number); n++;
@@ -2028,7 +1998,7 @@ Widget make_track_dialog(void)
       XmStringFree(s1);
       
       n = 0;      
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->position_color); n++;}
+      XtSetArg(args[n], XmNbackground, ss->sgx->position_color); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
       XtSetArg(args[n], XmNtopWidget, w_track_tempo_number); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
@@ -2048,7 +2018,7 @@ Widget make_track_dialog(void)
       /* AMP */
       n = 0;
       s1 = XmStringCreate(_("amp:"), XmFONTLIST_DEFAULT_TAG);
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
+      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNtopWidget, w_track_tempo_label); n++;
@@ -2066,7 +2036,7 @@ Widget make_track_dialog(void)
       
       n = 0;
       s1 = XmStringCreate("1.00", XmFONTLIST_DEFAULT_TAG);
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
+      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNtopWidget, w_track_tempo_number); n++;
@@ -2080,7 +2050,7 @@ Widget make_track_dialog(void)
       XmStringFree(s1);
       
       n = 0;      
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->position_color); n++;}
+      XtSetArg(args[n], XmNbackground, ss->sgx->position_color); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
       XtSetArg(args[n], XmNtopWidget, w_track_amp_number); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
@@ -2099,7 +2069,7 @@ Widget make_track_dialog(void)
       
       /* separator before envelope */
       n = 0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
+      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNtopWidget, w_track_amp_label); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
@@ -2112,7 +2082,7 @@ Widget make_track_dialog(void)
       
       /* button box for dB clip wave */
       n = 0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
+      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNtopWidget, w_track_sep1); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
@@ -2123,7 +2093,7 @@ Widget make_track_dialog(void)
       w_dB_frame = XtCreateManagedWidget("track-dB-frame", xmFrameWidgetClass, mainform, args, n);
 
       n = 0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;}
+      XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
@@ -2131,11 +2101,8 @@ Widget make_track_dialog(void)
       w_dB_row = XtCreateManagedWidget("track-dB-row", xmRowColumnWidgetClass, w_dB_frame, args, n);
 
       n = 0;
-      if (!(ss->using_schemes)) 
-	{
-	  XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
-	  XtSetArg(args[n], XmNselectColor, ss->sgx->pushed_button_color); n++;
-	}
+      XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
+      XtSetArg(args[n], XmNselectColor, ss->sgx->pushed_button_color); n++;
       if (ss->toggle_size > 0) {XtSetArg(args[n], XmNindicatorSize, ss->toggle_size); n++;}
 
       w_clip = make_togglebutton_widget(_("clip"), w_dB_row, args, n);
@@ -2149,7 +2116,7 @@ Widget make_track_dialog(void)
       XtAddCallback(w_dB, XmNvalueChangedCallback, track_dB_callback, NULL);
 
       n = 0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
+      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
@@ -2160,13 +2127,13 @@ Widget make_track_dialog(void)
       track_error_frame = XtCreateManagedWidget("track-error-frame", xmFrameWidgetClass, mainform, args, n);
 
       n = 0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;}
+      XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
       track_error_label = XtCreateManagedWidget("", xmLabelWidgetClass, track_error_frame, args, n);
 
 
       /* amp env */
       n = 0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
+      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNtopWidget, w_track_sep1); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
@@ -2179,7 +2146,7 @@ Widget make_track_dialog(void)
       w_track_env_frame = XtCreateManagedWidget("track-amp-env-frame", xmFrameWidgetClass, mainform, args, n);
 
       n = 0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;}
+      XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;

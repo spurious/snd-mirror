@@ -202,12 +202,12 @@ static void menu_drag_watcher(Widget w, const char *str, Position x, Position y,
     case DRAG_ENTER:
       new_title = mus_format("%s: drop to open file", ss->startup_title);
       XtVaSetValues(MAIN_SHELL(ss), XmNtitle, (char*)new_title, NULL);
-      if (!(ss->using_schemes)) XmChangeColor(w, ss->sgx->pushed_button_color);
+      XmChangeColor(w, ss->sgx->pushed_button_color);
       FREE(new_title);
       break;
     case DRAG_LEAVE:
       reflect_file_change_in_title();
-      if (!(ss->using_schemes)) XmChangeColor(w, ss->sgx->highlight_color);
+      XmChangeColor(w, ss->sgx->highlight_color);
       break;
     default:
       break;
@@ -237,12 +237,10 @@ Widget add_menu(void)
 
   ss->sgx->mw = (Widget *)calloc(NUM_MENU_WIDGETS, sizeof(Widget));
 
-  if (!(ss->using_schemes))
-    {
-      XtSetArg(main_args[main_n], XmNbackground, ss->sgx->basic_color); main_n++;
-      XtSetArg(high_args[high_n], XmNbackground, ss->sgx->highlight_color); high_n++;
-      XtSetArg(in_args[in_n], XmNbackground, ss->sgx->basic_color); in_n++;
-    }
+  XtSetArg(main_args[main_n], XmNbackground, ss->sgx->basic_color); main_n++;
+  XtSetArg(high_args[high_n], XmNbackground, ss->sgx->highlight_color); high_n++;
+  XtSetArg(in_args[in_n], XmNbackground, ss->sgx->basic_color); in_n++;
+
   start_high_n = high_n;
   XtSetArg(in_args[in_n], XmNsensitive, false); in_n++;
   
@@ -316,7 +314,7 @@ Widget add_menu(void)
   XtVaSetValues(file_print_menu, XmNmnemonic, 'P', NULL);
 
   j = 0;
-  if (!(ss->using_schemes)) {XtSetArg(sep_args[j], XmNbackground, ss->sgx->basic_color); j++;}
+  XtSetArg(sep_args[j], XmNbackground, ss->sgx->basic_color); j++;
   XtSetArg(sep_args[j], XmNseparatorType, XmSHADOW_ETCHED_IN); j++;
   file_sep_menu = XtCreateManagedWidget("", xmSeparatorWidgetClass, file_menu, sep_args, j);
 
@@ -741,14 +739,14 @@ void create_popup_menu(void)
       ss->sgx->pw = (Widget *)calloc(NUM_POPUP_WIDGETS, sizeof(Widget));
 
       n = 0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;}
+      XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
       mainp = MAIN_PANE(ss);
       XtSetArg(args[n], XmNpopupEnabled, XmPOPUP_AUTOMATIC_RECURSIVE); n++;
       XtSetArg(args[n], XmNuserData, 5);
       popup_menu = XmCreatePopupMenu(mainp, "popup-menu", args, n + 1);
 
       n = 0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;}
+      XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
 
       pop = XtCreateManagedWidget("Snd", xmLabelWidgetClass, popup_menu, args, n);
       sep = XtCreateManagedWidget("sep", xmSeparatorWidgetClass, popup_menu, args, n);
@@ -902,12 +900,12 @@ int g_add_to_main_menu(char *label, int slot)
   if (auto_resize(ss)) XtVaSetValues(MAIN_SHELL(ss), XmNallowShellResize, false, NULL);
   new_menu++;
   n = 0;
-  if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
+  XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
   XtSetArg(args[n], XmNuserData, PACK_MENU_DATA(slot, new_menu)); n++;
   m = XmCreatePulldownMenu(main_menu, label, args, n);
 
   n = 0;
-  if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;}
+  XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
   XtSetArg(args[n], XmNsubMenuId, m); n++;
   XtSetArg(args[n], XmNuserData, PACK_MENU_DATA(slot, new_menu)); n++;
   cas = XtCreateManagedWidget(label, xmCascadeButtonWidgetClass, main_menu, args, n);
@@ -945,7 +943,7 @@ Widget g_add_to_menu(int which_menu, char *label, int callb, int position)
 	      return(m);
 	    }
 	}
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
+      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       if (position >= 0) {XtSetArg(args[n], XmNpositionIndex, position); n++;}
       XtSetArg(args[n], XmNuserData, PACK_MENU_DATA(callb, which_menu)); n++;
       m = XtCreateManagedWidget(label, xmPushButtonWidgetClass, menw, args, n);
@@ -953,7 +951,7 @@ Widget g_add_to_menu(int which_menu, char *label, int callb, int position)
     }
   else
     {
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
+      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       if (position >= 0) {XtSetArg(args[n], XmNpositionIndex, position); n++;}
       m = XtCreateManagedWidget("sep", xmSeparatorWidgetClass, menw, args, n);
     }

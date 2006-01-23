@@ -1,8 +1,5 @@
 #include "snd.h"
 
-/* TODO: remove using_schemes (useSchemes) throughout */
-
-
 #define FALLBACK_FONT "fixed"
 #define DEFAULT_FONTLIST "9x15"
 
@@ -78,7 +75,6 @@
 #define AUTO_RESIZE_DEFAULT 1
 
 /* /usr/lib/X11/rgb.txt, /usr/lib/X11/fonts/Type1/fonts.dir, /usr/lib/X11/fonts/misc */
-/* schemes are in /usr/lib/X11/schemes */
 
 typedef struct {
   char *highlight_color;
@@ -107,7 +103,6 @@ typedef struct {
   char *green_color;
   char *light_blue_color;
   char *lighter_blue_color;
-  char *use_schemes;
   char *peaks_font;
   char *listener_font;
   char *bold_peaks_font;
@@ -159,7 +154,6 @@ static XtResource resources[] = {
   {"markcolor", "Markcolor", XmRString, sizeof(char *), XtOffset(sndres *, mark_color), XmRString, (XtPointer)MARK_COLOR},
   {"sashcolor", "Sashcolor", XmRString, sizeof(char *), XtOffset(sndres *, sash_color), XmRString, (XtPointer)SASH_COLOR},
   {"pushedbuttoncolor", "Pushedbuttoncolor", XmRString, sizeof(char *), XtOffset(sndres *, pushed_button_color), XmRString, (XtPointer)PUSHED_BUTTON_COLOR},
-  {"useSchemes", "UseSchemes", XmRString, sizeof(char *), XtOffset(sndres *, use_schemes), XmRString, (XtPointer)"none"},
   {"peaksFont", "PeaksFont", XmRString, sizeof(char *), XtOffset(sndres *, peaks_font), XmRString, (XtPointer)DEFAULT_PEAKS_FONT},
   {"listenerFont", "ListenerFont", XmRString, sizeof(char *), XtOffset(sndres *, listener_font), XmRString, (XtPointer)NULL},
   {"boldpeaksFont", "BoldPeaksFont", XmRString, sizeof(char *), XtOffset(sndres *, bold_peaks_font), XmRString, (XtPointer)DEFAULT_BOLD_PEAKS_FONT},
@@ -815,8 +809,6 @@ void snd_doit(int argc, char **argv)
   ss->batch_mode = batch;
   if (batch) XtSetMappedWhenManaged(shell, 0);
   set_html_dir(copy_string(snd_rs.html_dir));
-  ss->using_schemes = ((snd_rs.use_schemes) &&
-		       ((strcmp(snd_rs.use_schemes, "all") == 0) || (strcmp(snd_rs.use_schemes, "All") == 0)));
   set_auto_resize(snd_rs.auto_resize);
   ss->zoom_slider_width = snd_rs.zoom_slider_width;
   ss->position_slider_width = snd_rs.position_slider_width;
@@ -941,12 +933,12 @@ void snd_doit(int argc, char **argv)
       (!(set_listener_font(snd_rs.listener_font))))
     fprintf(stderr, _("can't find listener font %s"), snd_rs.listener_font);
 
-  if (!(ss->using_schemes)) XtVaSetValues(shell, XmNbackground, sx->basic_color, NULL);
+  XtVaSetValues(shell, XmNbackground, sx->basic_color, NULL);
   set_color_map(snd_rs.spectrogram_color);
 
 #ifndef SND_AS_WIDGET
   n = 0;
-  if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
+  XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
   n = attach_all_sides(args, n);
   XtSetArg(args[n], XmNallowResize, true); n++;
   sx->mainpane = XtCreateManagedWidget("mainpane", xmFormWidgetClass, shell, args, n);
@@ -956,7 +948,7 @@ void snd_doit(int argc, char **argv)
   menu = add_menu();
 
   n = 0;
-  if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
+  XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNtopWidget, menu); n++;
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
@@ -973,7 +965,7 @@ void snd_doit(int argc, char **argv)
       sx->soundpanebox = XtCreateManagedWidget("soundpane", xmPanedWindowWidgetClass, sx->mainpane, args, n);
 
       n = 0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
+      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNsashHeight, ss->sash_size); n++;
       XtSetArg(args[n], XmNsashWidth, ss->sash_size); n++;
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
@@ -991,7 +983,7 @@ void snd_doit(int argc, char **argv)
       sx->soundpanebox = XtCreateManagedWidget("soundpane", xmPanedWindowWidgetClass, sx->mainpane, args, n);
 
       n = 0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
+      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNframeBackground, sx->zoom_color); n++;
       XtSetArg(args[n], XmNbindingType, XmNONE); n++;
       XtSetArg(args[n], XmNbackPagePlacement, XmTOP_RIGHT); n++;

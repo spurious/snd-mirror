@@ -777,7 +777,7 @@ static void start_view_color_dialog(bool managed)
       xhelp = XmStringCreate(_("Help"), XmFONTLIST_DEFAULT_TAG);
       titlestr = XmStringCreate(_("Color"), XmFONTLIST_DEFAULT_TAG);
       n = 0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
+      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNcancelLabelString, xdismiss); n++;
       XtSetArg(args[n], XmNhelpLabelString, xhelp); n++;
       XtSetArg(args[n], XmNautoUnmanage, false); n++;
@@ -793,16 +793,13 @@ static void start_view_color_dialog(bool managed)
       XmStringFree(xdismiss);
       XmStringFree(titlestr);
 
-      if (!(ss->using_schemes))
-	{
-	  XtVaSetValues(XmMessageBoxGetChild(ccd->dialog, XmDIALOG_CANCEL_BUTTON), XmNarmColor, ss->sgx->pushed_button_color, NULL);
-	  XtVaSetValues(XmMessageBoxGetChild(ccd->dialog, XmDIALOG_HELP_BUTTON), XmNarmColor, ss->sgx->pushed_button_color, NULL);
-	  XtVaSetValues(XmMessageBoxGetChild(ccd->dialog, XmDIALOG_CANCEL_BUTTON), XmNbackground, ss->sgx->quit_button_color, NULL);
-	  XtVaSetValues(XmMessageBoxGetChild(ccd->dialog, XmDIALOG_HELP_BUTTON), XmNbackground, ss->sgx->help_button_color, NULL);
-	}
+      XtVaSetValues(XmMessageBoxGetChild(ccd->dialog, XmDIALOG_CANCEL_BUTTON), XmNarmColor, ss->sgx->pushed_button_color, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(ccd->dialog, XmDIALOG_HELP_BUTTON), XmNarmColor, ss->sgx->pushed_button_color, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(ccd->dialog, XmDIALOG_CANCEL_BUTTON), XmNbackground, ss->sgx->quit_button_color, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(ccd->dialog, XmDIALOG_HELP_BUTTON), XmNbackground, ss->sgx->help_button_color, NULL);
 
       n = 0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
+      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
@@ -811,7 +808,7 @@ static void start_view_color_dialog(bool managed)
       mainform = XtCreateManagedWidget("formd", xmFormWidgetClass, ccd->dialog, args, n);
 
       n = 0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
+      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_POSITION); n++;
       XtSetArg(args[n], XmNleftPosition, 60); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
@@ -820,18 +817,17 @@ static void start_view_color_dialog(bool managed)
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNlistMarginWidth, 3); n++;
       ccd->list = XmCreateScrolledList(mainform, "colormap-list", args, n);
-      if (!(ss->using_schemes)) 
-	XtVaSetValues(ccd->list, 
-		      XmNbackground, ss->sgx->white, 
-		      XmNforeground, ss->sgx->black, 
-		      NULL);
+      XtVaSetValues(ccd->list, 
+		    XmNbackground, ss->sgx->white, 
+		    XmNforeground, ss->sgx->black, 
+		    NULL);
       reflect_color_list(true);
       XtAddCallback(ccd->list, XmNbrowseSelectionCallback, list_color_callback, NULL);
       XtManageChild(ccd->list);
       XmListSelectPos(ccd->list, color_map(ss) + 1, false);
 
       n = 0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
+      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNrightWidget, ccd->list); n++;
@@ -845,7 +841,7 @@ static void start_view_color_dialog(bool managed)
 
       /* this horizontal separator exists solely to keep the "light" label from clobbering the "dark" label! */
       n = 0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
+      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
@@ -857,7 +853,7 @@ static void start_view_color_dialog(bool managed)
       sep1 = XtCreateManagedWidget("sep1", xmSeparatorWidgetClass, mainform, args, n);
 
       n = 0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
+      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNrightWidget, sep); n++;
@@ -872,7 +868,7 @@ static void start_view_color_dialog(bool managed)
       XtAddCallback(ccd->scale, XmNdragCallback, scale_color_callback, NULL);
 
       n = 0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
+      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
@@ -881,7 +877,7 @@ static void start_view_color_dialog(bool managed)
       light_label = XtCreateManagedWidget(_("light"), xmLabelWidgetClass, mainform, args, n);
 
       n = 0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
+      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNrightWidget, sep); n++;
@@ -891,7 +887,7 @@ static void start_view_color_dialog(bool managed)
       XtCreateManagedWidget(_("dark"), xmLabelWidgetClass, mainform, args, n);
 
       n = 0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
+      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNrightWidget, sep); n++;
@@ -911,11 +907,8 @@ static void start_view_color_dialog(bool managed)
       XmStringFree(xcutoff);
 
       n = 0;
-      if (!(ss->using_schemes)) 
-	{
-	  XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
-	  XtSetArg(args[n], XmNselectColor, ss->sgx->pushed_button_color); n++;
-	}
+      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
+      XtSetArg(args[n], XmNselectColor, ss->sgx->pushed_button_color); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
@@ -1249,7 +1242,7 @@ static void start_view_orientation_dialog(bool managed)
       titlestr = XmStringCreate(_("Spectrogram Orientation"), XmFONTLIST_DEFAULT_TAG);
 
       n = 0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
+      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNcancelLabelString, xdismiss); n++;
       XtSetArg(args[n], XmNhelpLabelString, xhelp); n++;
       XtSetArg(args[n], XmNokLabelString, xreset); n++;
@@ -1268,18 +1261,15 @@ static void start_view_orientation_dialog(bool managed)
       XmStringFree(titlestr);
       XmStringFree(xreset);
 
-      if (!(ss->using_schemes))
-	{
-	  XtVaSetValues(XmMessageBoxGetChild(oid->dialog, XmDIALOG_OK_BUTTON), XmNarmColor, ss->sgx->pushed_button_color, NULL);
-	  XtVaSetValues(XmMessageBoxGetChild(oid->dialog, XmDIALOG_CANCEL_BUTTON), XmNarmColor, ss->sgx->pushed_button_color, NULL);
-	  XtVaSetValues(XmMessageBoxGetChild(oid->dialog, XmDIALOG_HELP_BUTTON), XmNarmColor, ss->sgx->pushed_button_color, NULL);
-	  XtVaSetValues(XmMessageBoxGetChild(oid->dialog, XmDIALOG_OK_BUTTON), XmNbackground, ss->sgx->reset_button_color, NULL);
-	  XtVaSetValues(XmMessageBoxGetChild(oid->dialog, XmDIALOG_CANCEL_BUTTON), XmNbackground, ss->sgx->quit_button_color, NULL);
-	  XtVaSetValues(XmMessageBoxGetChild(oid->dialog, XmDIALOG_HELP_BUTTON), XmNbackground, ss->sgx->help_button_color, NULL);
-	}
+      XtVaSetValues(XmMessageBoxGetChild(oid->dialog, XmDIALOG_OK_BUTTON), XmNarmColor, ss->sgx->pushed_button_color, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(oid->dialog, XmDIALOG_CANCEL_BUTTON), XmNarmColor, ss->sgx->pushed_button_color, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(oid->dialog, XmDIALOG_HELP_BUTTON), XmNarmColor, ss->sgx->pushed_button_color, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(oid->dialog, XmDIALOG_OK_BUTTON), XmNbackground, ss->sgx->reset_button_color, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(oid->dialog, XmDIALOG_CANCEL_BUTTON), XmNbackground, ss->sgx->quit_button_color, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(oid->dialog, XmDIALOG_HELP_BUTTON), XmNbackground, ss->sgx->help_button_color, NULL);
 
       n = 0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
+      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
@@ -1288,7 +1278,7 @@ static void start_view_orientation_dialog(bool managed)
       mainform = XtCreateManagedWidget("formd", xmFormWidgetClass, oid->dialog, args, n);
       
       n = 0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
+      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_POSITION); n++;
       XtSetArg(args[n], XmNrightPosition, 50); n++;
@@ -1298,7 +1288,7 @@ static void start_view_orientation_dialog(bool managed)
       leftbox = XtCreateManagedWidget("leftb", xmRowColumnWidgetClass, mainform, args, n);
       
       n = 0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
+      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNleftWidget, leftbox); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
@@ -1310,7 +1300,7 @@ static void start_view_orientation_dialog(bool managed)
       /* left box */
       n = 0;
       xstr = XmStringCreate(_("x angle"), XmFONTLIST_DEFAULT_TAG);
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
+      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
       XtSetArg(args[n], XmNshowValue, true); n++;
       XtSetArg(args[n], XmNvalue, fixup_angle(spectro_x_angle(ss))); n++;
@@ -1323,7 +1313,7 @@ static void start_view_orientation_dialog(bool managed)
 
       n = 0;
       xstr = XmStringCreate(_("y angle"), XmFONTLIST_DEFAULT_TAG);
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
+      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
       XtSetArg(args[n], XmNshowValue, true); n++;
       XtSetArg(args[n], XmNvalue, fixup_angle(spectro_y_angle(ss))); n++;
@@ -1336,7 +1326,7 @@ static void start_view_orientation_dialog(bool managed)
 
       n = 0;
       xstr = XmStringCreate(_("z angle"), XmFONTLIST_DEFAULT_TAG);
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
+      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
       XtSetArg(args[n], XmNshowValue, true); n++;
       XtSetArg(args[n], XmNvalue, fixup_angle(spectro_z_angle(ss))); n++;
@@ -1349,7 +1339,7 @@ static void start_view_orientation_dialog(bool managed)
 
       n = 0;
       xstr = XmStringCreate(_("hop"), XmFONTLIST_DEFAULT_TAG);
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
+      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
       XtSetArg(args[n], XmNshowValue, true); n++;
       XtSetArg(args[n], XmNvalue, mus_iclamp(1, spectro_hop(ss), HOP_MAX)); n++;
@@ -1363,7 +1353,7 @@ static void start_view_orientation_dialog(bool managed)
       /* right box */
       n = 0;
       xstr = XmStringCreate(_("x scale"), XmFONTLIST_DEFAULT_TAG);
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
+      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
       XtSetArg(args[n], XmNshowValue, true); n++;
       XtSetArg(args[n], XmNmaximum, (int)(100 * SPECTRO_X_SCALE_MAX)); n++;
@@ -1377,7 +1367,7 @@ static void start_view_orientation_dialog(bool managed)
 
       n = 0;
       xstr = XmStringCreate(_("y scale"), XmFONTLIST_DEFAULT_TAG);
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
+      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
       XtSetArg(args[n], XmNshowValue, true); n++;
       XtSetArg(args[n], XmNmaximum, (int)(100 * SPECTRO_Y_SCALE_MAX)); n++;
@@ -1391,7 +1381,7 @@ static void start_view_orientation_dialog(bool managed)
 
       n = 0;
       xstr = XmStringCreate(_("z scale"), XmFONTLIST_DEFAULT_TAG);
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
+      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
       XtSetArg(args[n], XmNshowValue, true); n++;
       XtSetArg(args[n], XmNdecimalPoints, 2); n++;
@@ -1405,7 +1395,7 @@ static void start_view_orientation_dialog(bool managed)
 
       n = 0;
       xstr = XmStringCreate(_("percent of spectrum"), XmFONTLIST_DEFAULT_TAG);
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
+      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
       XtSetArg(args[n], XmNshowValue, true); n++;
       XtSetArg(args[n], XmNvalue, (int)(spectro_cutoff(ss) * 100)); n++;
@@ -1417,11 +1407,8 @@ static void start_view_orientation_dialog(bool managed)
 
 #if HAVE_GL
       n = 0;
-      if (!(ss->using_schemes)) 
-	{
-	  XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
-	  XtSetArg(args[n], XmNselectColor, ss->sgx->pushed_button_color); n++;
-	}
+      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
+      XtSetArg(args[n], XmNselectColor, ss->sgx->pushed_button_color); n++;
       XtSetArg(args[n], XmNset, with_gl(ss)); n++;
       glstr = XmStringCreate(_("use OpenGL"), XmFONTLIST_DEFAULT_TAG);
       XtSetArg(args[n], XmNlabelString, glstr); n++;

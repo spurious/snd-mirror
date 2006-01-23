@@ -45,47 +45,6 @@
 
 ;;; SOMEDAY: fix guile random in 64-bit case -- this is a guile bug
 ;;; SOMEDAY: why does freeBSD get memory corruption occasionally? (need valgrind ideally)
-;;; SOMEDAY: check the tests that are currently reporting troubles
-
-#!
-;;; --------------------------------------------------------------------------------
-;;; motif side (noinit):
-
-;test 13
-;graph-hook not called? #t oboe.snd 2 (2)
-;after-graph-hook not called?
-;after-transform-hook not called?
-;test 24
-;C-x C-( report-in-minibuffer: ?
-;C-x C-( again report-in-minibuffer: ?
-;M-x with filename completion: (mus-sound-frames "pistol.read-error: (scm_lreadr #<unknown port>:3104:3: Unknown # object: ~S (<) #f)unbound-variable: (#f Unbound variable: ~S (read-error) #f)unbound-variable: (#f Unbound variable: ~S (A>BC) #f)
-;no help dialog at all!mus-error: (can't open /home/bil/cl/pistol.
-: No such file or directory)
-;frs not defined
-;recorder-file after hook: /home/bil/cl/fmv.aif
-;saved new-env: (0.0 1.0 25.0 0.400000005960464 50.0 1.0 75.0 0.600000023841858 100.0 0.0)?
-;enved mid-click to delete: (0.0 1.0 25.0 0.400000005960464 75.0 0.600000023841858 100.0 0.0)?
-;toggle sono-button on
-;toggle spectro-button on
-;no listener leave?
-;edit-header -> 8000? 8beg: 1.000000, dur: 0.100000
-;test 28
-;open read-protected sound: 2
-
-;;; --------------------------------------------------------------------------------
-;;; gtk side:
-
-;test 7
-;set foreground cursor color: (2.1362630655375e-4 0.0 2.1362630655375e-4) (1.0 0.0 0.0)
-;set foreground-color: (0.00787365529869535 0.0 0.512092774853132) (0.0 0.0 1.0)
-;set foreground-color with ind: (0.00787365529869535 0.0 0.00787365529869535) (0.0 0.0 0.0)
-;test 16
-;saved delete edpos max: 4.8828125e-4 0.147
-;test 26
-:1: error: unexpected character `/', expected keyword - e.g. `style'
-;test 28
-;open read-protected sound: 2
-!#
 
 
 (if (not (defined? 'snd-test)) (define snd-test -1))
@@ -25697,6 +25656,18 @@ EDITS: 5
 	  (set! (time-graph? ind 0) #t)
 	  (update-time-graph ind 0)
 	  (update-transform-graph ind 0)
+
+	  (if (not gr)
+	      (if (and (provided? 'snd-motif) (provided? 'xm))
+		  (do ((i 0 (1+ i))
+		       (happy #f)
+		       (app (car (main-widgets))))
+		      ((or happy (= i 1000)))
+		    (let ((msk (XtAppPending app)))
+		      (if (= (logand msk (logior XtIMXEvent XtIMAlternateInput)) 0)
+			  (set! happy #t)
+			  (XtDispatchEvent (XtAppNextEvent app)))))))
+
 	  (if (not gr) (snd-display ";graph-hook not called? ~A ~A ~A ~A" (time-graph? ind) (short-file-name ind) ind (sounds)))
 	  (if (not agr) (snd-display ";after-graph-hook not called?"))
 	  (if (not gbf) (snd-display ";before-transform-hook not called?"))
@@ -44602,9 +44573,10 @@ EDITS: 1
 		    (let ((helpd (list-ref (dialog-widgets) 15)))
 		      (if helpd
 			  (if (not (XtIsManaged helpd))
-			      (snd-display ";help completion dialog isn't active?")
+			      (snd-display ";completion dialog isn't active?")
 			      (XtUnmanageChild helpd))
-			  (snd-display ";no help dialog at all!")))
+			  (if (not (list-ref (dialog-widgets) 15))
+			      (snd-display ";no completion dialog!"))))
 		    (key-event lst (char->integer #\a) 4)
 		    (key-event lst (char->integer #\k) 4)
 		    (widget-string lst "(open-sound ")
@@ -53110,6 +53082,7 @@ EDITS: 1
 	      (gtk_color_selection_get_previous_color _GtkColorSelection_ _GdkColor_)
 	      (gtk_color_selection_palette_to_string _GdkColor_ 0)
 	      (gtk_file_selection_complete _GtkFileSelection_ "/home/bil/cl/test.sn")
+
 	      (gtk_file_chooser_select_filename _GtkFileChooser_ (string-append home-dir "/test.snd"))
 	      (gtk_file_chooser_set_uri _GtkFileChooser_ (string-append home-dir "/test.snd"))
 	      (gtk_file_chooser_select_uri _GtkFileChooser_ (string-append home-dir "/test.snd"))
@@ -53526,7 +53499,6 @@ EDITS: 1
 	      (gtk_misc_set_padding _GtkMisc_ 0 1)
 	      (let ((vals (gtk_misc_get_padding _GtkMisc_)))
 		(if (not (equal? vals (list 0 1))) (snd-display ";misc pad: ~A" vals))))
-
 	    (let* ((_GdkDisplay_ (gdk_display_get_default))
 		   (vals (gdk_display_get_maximal_cursor_size _GdkDisplay_))
 		   (_GdkAtom (gdk_atom_intern "PRIMARY" #f))
@@ -54526,7 +54498,7 @@ EDITS: 1
 		    (gchar (gtk_combo_box_get_active_text _GtkComboBox_)))
 		(if (or (not (= gint0 0)) (not (= gint1 -1))  (not (= gint2 -1)))
 		    (snd-display ";combo gints: ~A ~A ~A" gint0 gint1 gint2))))
-	    
+
 	    ;; taken from gtk demo dir
 	    (let ((vbox (gtk_vbox_new #f 0)))
 	      (let ((tool_bar (gtk_toolbar_new)))
@@ -54587,7 +54559,7 @@ EDITS: 1
 					      store)
 			    (gtk_container_add (GTK_CONTAINER sw) icon_view)
 			    (gtk_widget_grab_focus icon_view)))))))))
-	    
+
 	    (let ((store (gtk_list_store_new 2 (list G_TYPE_STRING G_TYPE_BOOLEAN))))
 	      (let ((cell0 (gtk_cell_view_new))
 		    (cell1 (gtk_cell_view_new_with_text "hiho")))
@@ -55111,7 +55083,7 @@ EDITS: 1
 	      gtk_range_get_update_policy gtk_range_get_value gtk_range_set_adjustment gtk_range_set_increments gtk_range_set_inverted
 	      gtk_range_set_range gtk_range_set_update_policy gtk_range_set_value gtk_rc_add_default_file gtk_rc_get_default_files
 	      gtk_rc_get_im_module_file gtk_rc_get_im_module_path gtk_rc_get_module_dir gtk_rc_get_style gtk_rc_get_theme_dir
-	      gtk_rc_parse gtk_rc_parse_color gtk_rc_parse_priority gtk_rc_parse_state gtk_rc_parse_string
+	      gtk_rc_parse gtk_rc_parse_color gtk_rc_parse_priority gtk_rc_parse_state ;gtk_rc_parse_string
 	      gtk_rc_reparse_all gtk_rc_scanner_new gtk_rc_set_default_files gtk_rc_style_copy gtk_rc_style_get_type
 	      gtk_rc_style_new gtk_rc_style_ref gtk_rc_style_unref gtk_requisition_copy gtk_requisition_free
 	      gtk_requisition_get_type gtk_ruler_draw_pos gtk_ruler_draw_ticks gtk_ruler_get_metric gtk_ruler_get_range
@@ -55497,7 +55469,11 @@ EDITS: 1
 			   (lambda () 
 			     (if (c-g?) (abort))
 			     (n arg))
-			   (lambda args (car args))))
+			   (lambda args 
+			     (if (and (not (eq? (car args) 'wrong-type-arg))
+				      (not (eq? (car args) 'out-of-range)))
+				 (snd-display ";1 arg: ~A ~A" args n))
+			     (car args))))
 		  gtk-procs1))
 	       (list 1.5 "/hiho" (list 0 1) 1234  '#(0 1) 3/4 'mus-error (sqrt -1.0) (make-delay 32)
 		     (lambda () #t) (make-sound-data 2 3) :order 0 1 -1 (make-hook 2) #f #t '() (make-vector 0) 12345678901234567890))
@@ -55514,7 +55490,8 @@ EDITS: 1
 			      (lambda () 
 				(if (c-g?) (abort))
 				(n arg1 arg2))
-			      (lambda args (car args))))
+			      (lambda args 
+				(car args))))
 		     gtk-procs2))
 		  (list 1.5 "/hiho" (list 0 1) 1234  '#(0 1) 3/4 
 			(sqrt -1.0) (make-delay 32) :feedback -1 0 #f #t '() (make-vector 0) 12345678901234567890)))

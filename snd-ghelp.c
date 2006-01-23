@@ -80,7 +80,7 @@ static bool new_help(const char *pattern)
 {
   char *url;
   char **xrefs;
-  url = snd_url(pattern); /* TODO: does this make any sense -- we get the url, then ignore it? (same code in xhelp) */
+  url = snd_url(pattern);
   if (url)
     {
       /* given name, find doc string, if any */
@@ -96,6 +96,8 @@ static bool new_help(const char *pattern)
 	  if (xrefs) FREE(xrefs);
 	  return(true);
 	}
+      url_to_html_viewer(url);
+      return(true);
     }
   if (!(snd_topic_help(pattern)))
     {

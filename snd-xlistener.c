@@ -93,7 +93,7 @@ static void create_completions_dialog(char *title)
   titlestr = XmStringCreate(title, XmFONTLIST_DEFAULT_TAG);
 
   n = 0;
-  if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
+  XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
   XtSetArg(args[n], XmNdialogTitle, titlestr); n++;
   XtSetArg(args[n], XmNresizePolicy, XmRESIZE_GROW); n++;
   XtSetArg(args[n], XmNnoResize, false); n++;
@@ -106,7 +106,7 @@ static void create_completions_dialog(char *title)
 
   n = 0;
   completions_list = XmCreateScrolledList(completions_dialog, "completion-help-text", args, n);
-  if (!(ss->using_schemes)) XtVaSetValues(completions_list, XmNbackground, ss->sgx->white, XmNforeground, ss->sgx->black, NULL);
+  XtVaSetValues(completions_list, XmNbackground, ss->sgx->white, XmNforeground, ss->sgx->black, NULL);
 
   XtManageChild(completions_list);
 
@@ -116,15 +116,13 @@ static void create_completions_dialog(char *title)
 
   XtManageChild(completions_dialog);
 
-  if (!(ss->using_schemes))
-    {
-      map_over_children(completions_dialog, set_main_color_of_widget, NULL);
-      XtVaSetValues(completions_list, XmNbackground, ss->sgx->white, XmNforeground, ss->sgx->black, NULL);
-      XtVaSetValues(XmMessageBoxGetChild(completions_dialog, XmDIALOG_OK_BUTTON), XmNarmColor, ss->sgx->pushed_button_color, NULL);
-      XtVaSetValues(XmMessageBoxGetChild(completions_dialog, XmDIALOG_HELP_BUTTON), XmNarmColor, ss->sgx->pushed_button_color, NULL);
-      XtVaSetValues(XmMessageBoxGetChild(completions_dialog, XmDIALOG_OK_BUTTON), XmNbackground, ss->sgx->quit_button_color, NULL);
-      XtVaSetValues(XmMessageBoxGetChild(completions_dialog, XmDIALOG_HELP_BUTTON), XmNbackground, ss->sgx->help_button_color, NULL);
-    }
+  map_over_children(completions_dialog, set_main_color_of_widget, NULL);
+  XtVaSetValues(completions_list, XmNbackground, ss->sgx->white, XmNforeground, ss->sgx->black, NULL);
+  XtVaSetValues(XmMessageBoxGetChild(completions_dialog, XmDIALOG_OK_BUTTON), XmNarmColor, ss->sgx->pushed_button_color, NULL);
+  XtVaSetValues(XmMessageBoxGetChild(completions_dialog, XmDIALOG_HELP_BUTTON), XmNarmColor, ss->sgx->pushed_button_color, NULL);
+  XtVaSetValues(XmMessageBoxGetChild(completions_dialog, XmDIALOG_OK_BUTTON), XmNbackground, ss->sgx->quit_button_color, NULL);
+  XtVaSetValues(XmMessageBoxGetChild(completions_dialog, XmDIALOG_HELP_BUTTON), XmNbackground, ss->sgx->help_button_color, NULL);
+
   set_dialog_widget(COMPLETION_DIALOG, completions_dialog);
 }
 
@@ -194,15 +192,13 @@ void snd_completion_help(int matches, char **buffer)
 
 void textfield_focus_callback(Widget w, XtPointer context, XtPointer info)
 {
-  if (!(ss->using_schemes)) 
-    XtVaSetValues(w, XmNbackground, ss->sgx->text_focus_color, NULL);
+  XtVaSetValues(w, XmNbackground, ss->sgx->text_focus_color, NULL);
   XtVaSetValues(w, XmNcursorPositionVisible, true, NULL);
 }
 
 void textfield_unfocus_callback(Widget w, XtPointer context, XtPointer info)
 {
-  if (!(ss->using_schemes)) 
-    XtVaSetValues(w, XmNbackground, ss->sgx->basic_color, NULL);
+  XtVaSetValues(w, XmNbackground, ss->sgx->basic_color, NULL);
   XtVaSetValues(w, XmNcursorPositionVisible, false, NULL);
 }
 
@@ -314,11 +310,9 @@ static void B1_press(Widget w, XEvent *event, char **str, Cardinal *num)
   XButtonEvent *ev = (XButtonEvent *)event;
   XmProcessTraversal(w, XmTRAVERSE_CURRENT);
   /* we're replacing the built-in take_focus action here, so do it by hand, but leave listener blue, so to speak */
-  if ((!(ss->using_schemes)) && 
-      (w != listener_text))
+  if (w != listener_text)
     XtVaSetValues(w, XmNbackground, ss->sgx->white, NULL);
-  if (w == listener_text) 
-    XmTextClearSelection(listener_text, CurrentTime); /* should this happen in other windows as well? */
+  else XmTextClearSelection(listener_text, CurrentTime); /* should this happen in other windows as well? */
   pos = XmTextXYToPos(w, (Position)(ev->x), (Position)(ev->y));
   XmTextSetCursorPosition(w, pos);
   down_pos = pos;
@@ -1193,11 +1187,8 @@ static void make_command_widget(int height)
       /* this widget is not redundant at least in Metroworks Motif */
 
       n = 0;
-      if (!(ss->using_schemes)) 
-	{
-	  XtSetArg(args[n], XmNbackground, ss->sgx->listener_color); n++;
-	  XtSetArg(args[n], XmNforeground, ss->sgx->listener_text_color); n++;
-	}
+      XtSetArg(args[n], XmNbackground, ss->sgx->listener_color); n++;
+      XtSetArg(args[n], XmNforeground, ss->sgx->listener_text_color); n++;
       if (ss->sgx->listener_fontlist) {XtSetArg(args[n], XM_FONT_RESOURCE, ss->sgx->listener_fontlist); n++;}
       n = attach_all_sides(args, n);
       XtSetArg(args[n], XmNeditMode, XmMULTI_LINE_EDIT); n++;
@@ -1225,14 +1216,12 @@ static void make_command_widget(int height)
       XtAddEventHandler(lisp_window, EnterWindowMask, false, listener_focus_callback, NULL);
       XtAddEventHandler(lisp_window, LeaveWindowMask, false, listener_unfocus_callback, NULL);
       
-      if (!(ss->using_schemes))
-	{
-	  XmChangeColor(lisp_window, ss->sgx->basic_color);
-	  XtVaGetValues(lisp_window, XmNverticalScrollBar, &wv, XmNhorizontalScrollBar, &wh, NULL);
-	  XmChangeColor(wv, ss->sgx->basic_color);
-	  XmChangeColor(wh, ss->sgx->basic_color);
-	  map_over_children(SOUND_PANE(ss), color_sashes, NULL);
-	}
+      XmChangeColor(lisp_window, ss->sgx->basic_color);
+      XtVaGetValues(lisp_window, XmNverticalScrollBar, &wv, XmNhorizontalScrollBar, &wh, NULL);
+      XmChangeColor(wv, ss->sgx->basic_color);
+      XmChangeColor(wh, ss->sgx->basic_color);
+      map_over_children(SOUND_PANE(ss), color_sashes, NULL);
+
       if (auto_resize(ss))
 	XtVaSetValues(MAIN_SHELL(ss), XmNallowShellResize, true, NULL);
     }

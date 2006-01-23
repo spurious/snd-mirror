@@ -188,7 +188,7 @@ static void start_print_dialog(XmString xmstr4, bool managed)
       int n;
 
       n = 0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
+      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       xmstr1 = XmStringCreate(_("Print"), XmFONTLIST_DEFAULT_TAG);  /* "ok" here is confusing -- might mean, ok I'm done */
       xmstr2 = XmStringCreate(_("Help"), XmFONTLIST_DEFAULT_TAG);
       xmstr3 = XmStringCreate(_("Dismiss"), XmFONTLIST_DEFAULT_TAG);
@@ -245,7 +245,7 @@ static void start_print_dialog(XmString xmstr4, bool managed)
       /* error display */
 
       n = 0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;}
+      XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNtopWidget, print_eps_or_lpr); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
@@ -256,12 +256,12 @@ static void start_print_dialog(XmString xmstr4, bool managed)
       error_info_box = XtCreateWidget("error-box", xmRowColumnWidgetClass, rc, args, n);
 
       n = 0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;}
+      XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
       XtSetArg(args[n], XmNmarginHeight, 4); n++;
       error_info_frame = XtCreateManagedWidget("error-frame", xmFrameWidgetClass, error_info_box, args, n);
 
       n = 0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;}
+      XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;
       error_info = XtCreateManagedWidget("error-info", xmLabelWidgetClass, error_info_frame, args, n);
 
@@ -269,17 +269,15 @@ static void start_print_dialog(XmString xmstr4, bool managed)
 
       if (managed) XtManageChild(print_dialog);
 
-      if (!(ss->using_schemes))	
-	{
-	  map_over_children(print_dialog, set_main_color_of_widget, NULL);
-	  XtVaSetValues(XmMessageBoxGetChild(print_dialog, XmDIALOG_OK_BUTTON), XmNarmColor, ss->sgx->pushed_button_color, NULL);
-	  XtVaSetValues(XmMessageBoxGetChild(print_dialog, XmDIALOG_CANCEL_BUTTON), XmNarmColor, ss->sgx->pushed_button_color, NULL);
-	  XtVaSetValues(XmMessageBoxGetChild(print_dialog, XmDIALOG_HELP_BUTTON), XmNarmColor, ss->sgx->pushed_button_color, NULL);
-	  XtVaSetValues(XmMessageBoxGetChild(print_dialog, XmDIALOG_OK_BUTTON), XmNbackground, ss->sgx->doit_button_color, NULL);
-	  XtVaSetValues(XmMessageBoxGetChild(print_dialog, XmDIALOG_CANCEL_BUTTON), XmNbackground, ss->sgx->quit_button_color, NULL);
-	  XtVaSetValues(XmMessageBoxGetChild(print_dialog, XmDIALOG_HELP_BUTTON), XmNbackground, ss->sgx->help_button_color, NULL);
-	  XtVaSetValues(print_eps_or_lpr, XmNselectColor, ss->sgx->pushed_button_color, NULL);
-	}
+      map_over_children(print_dialog, set_main_color_of_widget, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(print_dialog, XmDIALOG_OK_BUTTON),     XmNarmColor,   ss->sgx->pushed_button_color, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(print_dialog, XmDIALOG_CANCEL_BUTTON), XmNarmColor,   ss->sgx->pushed_button_color, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(print_dialog, XmDIALOG_HELP_BUTTON),   XmNarmColor,   ss->sgx->pushed_button_color, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(print_dialog, XmDIALOG_OK_BUTTON),     XmNbackground, ss->sgx->doit_button_color, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(print_dialog, XmDIALOG_CANCEL_BUTTON), XmNbackground, ss->sgx->quit_button_color, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(print_dialog, XmDIALOG_HELP_BUTTON),   XmNbackground, ss->sgx->help_button_color, NULL);
+      XtVaSetValues(print_eps_or_lpr, XmNselectColor, ss->sgx->pushed_button_color, NULL);
+
       set_dialog_widget(PRINT_DIALOG, print_dialog);
     }
   else

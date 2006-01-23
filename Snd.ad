@@ -40,7 +40,6 @@
 *resetbuttoncolor:     goldenrod1
 *doitbuttoncolor:      palegreen2
 *doitagainbuttoncolor: darkolivegreen1
-*useSchemes:           none
 *axisLabelFont:        -*-times-medium-r-*-*-14-*-*-*-*-*-iso8859-1
 *axisNumbersFont:      -*-courier-medium-r-*-*-14-*-*-*-*-*-iso8859-1
 *initFile:             ~/.snd

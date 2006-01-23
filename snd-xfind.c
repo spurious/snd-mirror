@@ -156,7 +156,7 @@ static void make_edit_find_dialog(bool managed)
       XmString xmstr1, xmstr3, titlestr;
 
       n = 0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
+      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       xmstr1 = XmStringCreate(_("Dismiss"), XmFONTLIST_DEFAULT_TAG);
       xmstr3 = XmStringCreate(_("Previous"), XmFONTLIST_DEFAULT_TAG);
       titlestr = XmStringCreate(_("Find"), XmFONTLIST_DEFAULT_TAG);
@@ -181,11 +181,8 @@ static void make_edit_find_dialog(bool managed)
       XtAddCallback(edit_find_dialog, XmNokCallback, edit_find_cancel_callback, NULL);
       
       n = 0;
-      if (!(ss->using_schemes)) 
-	{
-	  XtSetArg(args[n], XmNbackground, ss->sgx->doit_button_color); n++;
-	  XtSetArg(args[n], XmNarmColor, ss->sgx->pushed_button_color); n++;
-	}
+      XtSetArg(args[n], XmNbackground, ss->sgx->doit_button_color); n++;
+      XtSetArg(args[n], XmNarmColor, ss->sgx->pushed_button_color); n++;
       findnextB = XtCreateManagedWidget(_("Next"), xmPushButtonGadgetClass, edit_find_dialog, args, n);
       XtAddCallback(findnextB, XmNactivateCallback, edit_find_next_callback, NULL);
       
@@ -215,7 +212,7 @@ static void make_edit_find_dialog(bool managed)
       edit_find_label = XtCreateManagedWidget("global search", xmLabelWidgetClass, rc, args, n);
       
       n = 0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;}
+      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNtopWidget, edit_find_label); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
@@ -227,19 +224,17 @@ static void make_edit_find_dialog(bool managed)
       find_error_frame = XtCreateManagedWidget("find-error-frame", xmFrameWidgetClass, rc, args, n);
 
       n = 0;
-      if (!(ss->using_schemes)) {XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;}
+      XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
       find_error_label = XtCreateManagedWidget("", xmLabelWidgetClass, find_error_frame, args, n);
       
-      if (!(ss->using_schemes)) 
-	{
-	  map_over_children(edit_find_dialog, set_main_color_of_widget, NULL);
-	  XtVaSetValues(XmMessageBoxGetChild(edit_find_dialog, XmDIALOG_OK_BUTTON), XmNarmColor, ss->sgx->pushed_button_color, NULL);
-	  XtVaSetValues(XmMessageBoxGetChild(edit_find_dialog, XmDIALOG_CANCEL_BUTTON), XmNarmColor, ss->sgx->pushed_button_color, NULL);
-	  XtVaSetValues(XmMessageBoxGetChild(edit_find_dialog, XmDIALOG_HELP_BUTTON), XmNarmColor, ss->sgx->pushed_button_color, NULL);
-	  XtVaSetValues(XmMessageBoxGetChild(edit_find_dialog, XmDIALOG_OK_BUTTON), XmNbackground, ss->sgx->quit_button_color, NULL);
-	  XtVaSetValues(XmMessageBoxGetChild(edit_find_dialog, XmDIALOG_CANCEL_BUTTON), XmNbackground, ss->sgx->doit_again_button_color, NULL);
-	  XtVaSetValues(XmMessageBoxGetChild(edit_find_dialog, XmDIALOG_HELP_BUTTON), XmNbackground, ss->sgx->help_button_color, NULL);
-	}
+      map_over_children(edit_find_dialog, set_main_color_of_widget, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(edit_find_dialog, XmDIALOG_OK_BUTTON), XmNarmColor, ss->sgx->pushed_button_color, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(edit_find_dialog, XmDIALOG_CANCEL_BUTTON), XmNarmColor, ss->sgx->pushed_button_color, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(edit_find_dialog, XmDIALOG_HELP_BUTTON), XmNarmColor, ss->sgx->pushed_button_color, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(edit_find_dialog, XmDIALOG_OK_BUTTON), XmNbackground, ss->sgx->quit_button_color, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(edit_find_dialog, XmDIALOG_CANCEL_BUTTON), XmNbackground, ss->sgx->doit_again_button_color, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(edit_find_dialog, XmDIALOG_HELP_BUTTON), XmNbackground, ss->sgx->help_button_color, NULL);
+
       cancelB = XmMessageBoxGetChild(edit_find_dialog, XmDIALOG_OK_BUTTON);
       set_dialog_widget(FIND_DIALOG, edit_find_dialog);
 

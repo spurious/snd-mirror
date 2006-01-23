@@ -6,8 +6,8 @@ static slist *completion_list = NULL;
 static int printout_end;
 #define LISTENER_BUFFER gtk_text_view_get_buffer(GTK_TEXT_VIEW(listener_text))
 
-/* TODO: cr not at end has no effect (two crs = activation)
- * TODO: the double "(" bug is still with us, but how to make it happen repeatably?
+/* TODO: the double "(" bug is still with us, but how to make it happen repeatably?
+ * TODO: cursor reposition via mouse -> cursor not displayed
  */
 
 static bool listener_awaiting_completion = false;
