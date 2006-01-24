@@ -1,16 +1,16 @@
 #include "snd.h"
 
-void draw_line (axis_context *ax, int x0, int y0, int x1, int y1) 
+void draw_line(axis_context *ax, int x0, int y0, int x1, int y1) 
 {
   XDrawLine(ax->dp, ax->wn, ax->gc, x0, y0, x1, y1);
 }
 
-void fill_rectangle (axis_context *ax, int x0, int y0, int width, int height)
+void fill_rectangle(axis_context *ax, int x0, int y0, int width, int height)
 {
   XFillRectangle(ax->dp, ax->wn, ax->gc, x0, y0, width, height);
 }
 
-void erase_rectangle (chan_info *cp, axis_context *ax, int x0, int y0, int width, int height)
+void erase_rectangle(chan_info *cp, axis_context *ax, int x0, int y0, int width, int height)
 {
 #if DEBUGGING
   if ((!ax) || (!(ax->wn))) {fprintf(stderr, "ax trouble"); abort();}
@@ -18,13 +18,13 @@ void erase_rectangle (chan_info *cp, axis_context *ax, int x0, int y0, int width
   XFillRectangle(ax->dp, ax->wn, erase_GC(cp), x0, y0, width, height);
 }
 
-void draw_string (axis_context *ax, int x0, int y0, char *str, int len)
+void draw_string(axis_context *ax, int x0, int y0, const char *str, int len)
 {
   if ((str) && (*str))
     XDrawString(ax->dp, ax->wn, ax->gc, x0, y0, str, len);
 }
 
-void gtk_style_draw_string (axis_context *ax, int x0, int y0, char *str, int len)
+void gtk_style_draw_string(axis_context *ax, int x0, int y0, const char *str, int len)
 {
   /* for callers of Scheme-level draw-string, the Motif and Gtk versions should agree on where "y0" is */
   XGCValues gv;

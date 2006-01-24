@@ -5478,7 +5478,7 @@ void extend_edit_list(chan_info *cp, int edpos)
   after_edit(cp);
 }
 
-bool file_insert_samples(off_t beg, off_t num, char *inserted_file, chan_info *cp, int chan, file_delete_t auto_delete, const char *origin, int edpos)
+bool file_insert_samples(off_t beg, off_t num, const char *inserted_file, chan_info *cp, int chan, file_delete_t auto_delete, const char *origin, int edpos)
 {
   off_t len;
   ed_fragment *cb;
@@ -5748,7 +5748,7 @@ static ed_list *change_samples_in_list(off_t beg, off_t num, int pos, chan_info 
   return(new_state);
 }
 
-bool file_mix_change_samples(off_t beg, off_t num, char *tempfile, chan_info *cp, int chan, 
+bool file_mix_change_samples(off_t beg, off_t num, const char *tempfile, chan_info *cp, int chan, 
 			     file_delete_t auto_delete, lock_mix_t lock, const char *origin, int edpos, bool with_mix)
 {
   file_info *hdr;
@@ -5811,14 +5811,14 @@ bool file_mix_change_samples(off_t beg, off_t num, char *tempfile, chan_info *cp
   return(true);
 }
 
-bool file_change_samples(off_t beg, off_t num, char *tempfile, chan_info *cp, int chan, 
+bool file_change_samples(off_t beg, off_t num, const char *tempfile, chan_info *cp, int chan, 
 			 file_delete_t auto_delete, lock_mix_t lock, const char *origin, int edpos)
 {
   return(file_mix_change_samples(beg, num, tempfile, cp, chan, auto_delete, lock, origin, edpos, false));
 }
 
 
-bool file_override_samples(off_t num, char *tempfile, chan_info *cp, int chan, file_delete_t auto_delete, lock_mix_t lock, const char *origin)
+bool file_override_samples(off_t num, const char *tempfile, chan_info *cp, int chan, file_delete_t auto_delete, lock_mix_t lock, const char *origin)
 {
   file_info *hdr;
   hdr = make_file_info(tempfile, FILE_READ_ONLY, FILE_NOT_SELECTED);
@@ -7064,7 +7064,7 @@ io_error_t save_edits_and_update_display(snd_info *sp)
   return(IO_NO_ERROR);
 }
 
-io_error_t save_edits_without_display(snd_info *sp, char *new_name, int type, int format, int srate, char *comment, int pos)
+io_error_t save_edits_without_display(snd_info *sp, const char *new_name, int type, int format, int srate, const char *comment, int pos)
 { 
   /* assume we've already checked for (over)write permissions, and header-type+data-format writable,
    */
@@ -7125,7 +7125,7 @@ io_error_t save_edits_without_display(snd_info *sp, char *new_name, int type, in
   return(err);
 }
 
-io_error_t save_channel_edits(chan_info *cp, char *ofile, int pos)
+io_error_t save_channel_edits(chan_info *cp, const char *ofile, int pos)
 {
   /* channel extraction -- does not (normally) cause reversion of edits, or change of in-window file, etc */
   snd_info *sp;

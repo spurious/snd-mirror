@@ -1409,6 +1409,10 @@ static void post_prefs_error(const char *msg, void *data)
   prf->erase_id = SG_SIGNAL_CONNECT(prf->text, "changed", clear_prefs_error, (gpointer)prf);
 }
 
+#ifdef __GNUC__
+static void va_post_prefs_error(const char *msg, void *data, ...) __attribute__ ((format (printf, 1, 0)));
+#endif
+
 static void va_post_prefs_error(const char *msg, void *data, ...)
 {
   char *buf;

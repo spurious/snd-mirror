@@ -7,7 +7,7 @@ static int printout_end;
 #define LISTENER_BUFFER gtk_text_view_get_buffer(GTK_TEXT_VIEW(listener_text))
 
 /* TODO: the double "(" bug is still with us, but how to make it happen repeatably?
- * TODO: cursor reposition via mouse -> cursor not displayed
+ * TODO: cursor reposition via mouse -> cursor not displayed (but second click shows it? -- is this a gtk feature?)
  */
 
 static bool listener_awaiting_completion = false;
@@ -603,26 +603,7 @@ static XEN listener_click_hook;
 static gboolean listener_button_press(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
   ss->sgx->graph_is_active = false;
-  /* this code from gedit/src/gedit-view.c.
-   *    click in listener can place cursor (and autoscroll window) at any random place!
-   *    so we have to explicitly find the correct place and put the cursor there.
-   */
-  {
-    gint x, y;
-    GtkTextIter iter;
-    GtkTextIter start, end;
-    GtkTextView *view = (GtkTextView *)w;
-    gtk_text_view_window_to_buffer_coords(view, GTK_TEXT_WINDOW_TEXT, (gint)(ev->x), (gint)(ev->y), &x, &y);
-    gtk_text_view_get_iter_at_location(view, &iter, x, y);
-    if (!(gtk_text_buffer_get_selection_bounds(gtk_text_view_get_buffer(view), &start, &end) &&          
-	  gtk_text_iter_in_range(&iter, &start, &end)))
-      gtk_text_buffer_place_cursor(gtk_text_view_get_buffer(view), &iter);
-    if (XEN_HOOKED(listener_click_hook))
-      run_hook(listener_click_hook,
-	       XEN_LIST_1(C_TO_XEN_INT((int)gtk_text_iter_get_offset(&iter))),
-	       S_listener_click_hook);
-  }
-  goto_listener();
+  /* goto_listener(); */
   check_parens();
   return(false);
 }

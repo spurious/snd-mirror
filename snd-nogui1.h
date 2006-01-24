@@ -20,7 +20,7 @@ void fill_rectangle (axis_context *ax, int x0, int y0, int width, int height);
 void erase_rectangle (chan_info *cp, axis_context *ax, int x0, int y0, int width, int height);
 void fill_polygon(axis_context *ax, int points, ...);
 void draw_polygon(axis_context *ax, int points, ...);
-void draw_string (axis_context *ax, int x0, int y0, char *str, int len);
+void draw_string (axis_context *ax, int x0, int y0, const char *str, int len);
 void draw_arc(axis_context *ax, int x, int y, int size);
 void set_grf_points(int xi, int j, int ymin, int ymax);
 void set_grf_point(int xi, int j, int yi);
@@ -233,7 +233,7 @@ void set_sound_pane_file_label(snd_info *sp, char *str);
 void reflect_amp_env_completion(snd_info *sp);
 void sound_show_controls(snd_info *sp);
 void sound_hide_controls(snd_info *sp);
-bool control_panel_open(snd_info *sp);
+bool control_panel_is_open(snd_info *sp);
 void start_progress_report(snd_info *sp, enved_progress_t from_enved);
 void finish_progress_report(snd_info *sp, enved_progress_t from_enved);
 void progress_report(snd_info *sp, const char *funcname, int curchan, int chans, Float pct, enved_progress_t from_enved);
@@ -272,7 +272,7 @@ void save_file_dialog_state(FILE *fd);
 
 axis_info *enved_make_axis(const char *name, axis_context *ax, int ex0, int ey0, int width, int height, 
 			   Float xmin, Float xmax, Float ymin, Float ymax, printing_t printing);
-void display_enved_env_with_selection(env *e, char *name, int x0, int y0, int width, int height, bool dots, printing_t printing);
+void display_enved_env_with_selection(env *e, const char *name, int x0, int y0, int width, int height, bool dots, printing_t printing);
 void set_enved_redo_sensitive(bool val);
 void set_enved_revert_sensitive(bool val);
 void set_enved_undo_sensitive(bool val);

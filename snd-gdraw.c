@@ -1,24 +1,24 @@
 #include "snd.h"
 
-void draw_line (axis_context *ax, int x0, int y0, int x1, int y1) 
+void draw_line(axis_context *ax, int x0, int y0, int x1, int y1) 
 {
   if (ax->wn == NULL) return;
   gdk_draw_line(ax->wn, ax->gc, (gint)x0, (gint)y0, (gint)x1, (gint)y1);
 }
 
-void fill_rectangle (axis_context *ax, int x0, int y0, int width, int height)
+void fill_rectangle(axis_context *ax, int x0, int y0, int width, int height)
 {
   if (ax->wn == NULL) return;
   gdk_draw_rectangle(ax->wn, ax->gc, true, (gint)x0, (gint)y0, (gint)width, (gint)height);
 }
 
-void erase_rectangle (chan_info *cp, axis_context *ax, int x0, int y0, int width, int height)
+void erase_rectangle(chan_info *cp, axis_context *ax, int x0, int y0, int width, int height)
 {
   if (ax->wn == NULL) return;
   gdk_draw_rectangle(ax->wn, erase_GC(cp), true, (gint)x0, (gint)y0, (gint)width, (gint)height);
 }
 
-void draw_string (axis_context *ax, int x0, int y0, char *str, int len)
+void draw_string(axis_context *ax, int x0, int y0, const char *str, int len)
 {
   PangoLayout *layout = NULL;
   PangoContext *ctx;

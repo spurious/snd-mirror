@@ -10339,7 +10339,7 @@ static bool vowel_p(char b)
   return((b == 'a') || (b == 'e') || (b == 'i') || (b == 'o') || (b == 'u'));
 }
 
-static xen_value *arg_warn(ptree *prog, char *funcname, int arg_num, xen_value **args, const char *correct_type)
+static xen_value *arg_warn(ptree *prog, const char *funcname, int arg_num, xen_value **args, const char *correct_type)
 {
   char *xb, *tb;
   xb = describe_xen_value(args[arg_num], prog);

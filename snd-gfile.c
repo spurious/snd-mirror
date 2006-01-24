@@ -2051,7 +2051,7 @@ static void make_srate_menu(GtkWidget *w, gpointer context)
     }
 }
 
-file_data *make_file_data_panel(GtkWidget *parent, char *name, 
+file_data *make_file_data_panel(GtkWidget *parent, const char *name, 
 				dialog_channels_t with_chan, 
 				int header_type, int data_format,
 				dialog_data_location_t with_loc, 

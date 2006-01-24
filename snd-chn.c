@@ -2218,9 +2218,10 @@ static void gl_spectrogram(sono_info *si, int gl_fft_list, Float cutoff, bool us
   js = NULL;
   glEndList();
 }
-#endif
 
 static bool gl_warned_already = false;
+
+#endif
 
 static bool make_spectrogram(chan_info *cp)
 {
@@ -4398,7 +4399,7 @@ typedef enum {CP_GRAPH_TRANSFORM_P, CP_GRAPH_TIME_P, CP_FRAMES, CP_CURSOR, CP_GR
 static XEN cp_edpos;
 static int cp_edpos_loc = NOT_A_GC_LOC;
 
-static XEN channel_get(XEN snd_n, XEN chn_n, cp_field_t fld, char *caller)
+static XEN channel_get(XEN snd_n, XEN chn_n, cp_field_t fld, const char *caller)
 {
   chan_info *cp;
   snd_info *sp = NULL;
@@ -4606,7 +4607,7 @@ static bool call_update_graph = true;
 #define MAX_SPECTRO_ANGLE 360.0
 #define MIN_SPECTRO_ANGLE -360.0
 
-static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, cp_field_t fld, char *caller)
+static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, cp_field_t fld, const char *caller)
 {
   chan_info *cp;
   int val = 0;

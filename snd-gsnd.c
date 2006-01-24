@@ -1824,6 +1824,7 @@ void snd_info_cleanup(snd_info *sp)
 void sound_show_controls(snd_info *sp)
 {
   gtk_widget_show_all(CONTROL_PANEL(sp));
+  /* control panel is pane 2 of SND_PANE(sp); PANE_BOX is pane 1 */
 }
 
 void sound_hide_controls(snd_info *sp)
@@ -1831,9 +1832,10 @@ void sound_hide_controls(snd_info *sp)
   gtk_widget_hide_all(CONTROL_PANEL(sp));
 }
 
-bool control_panel_open(snd_info *sp)
+bool control_panel_is_open(snd_info *sp)
 {
-  return((GTK_WIDGET_MAPPED(CONTROL_PANEL(sp))) && (GTK_WIDGET_VISIBLE(CONTROL_PANEL(sp))));
+  return((GTK_WIDGET_MAPPED(CONTROL_PANEL(sp))) && 
+	 (GTK_WIDGET_VISIBLE(CONTROL_PANEL(sp))));
 }
 
 

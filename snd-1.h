@@ -804,17 +804,17 @@ void after_edit(chan_info *cp);
 bool extend_with_zeros(chan_info *cp, off_t beg, off_t num, int edpos);
 void extend_edit_list(chan_info *cp, int edpos);
 bool insert_samples(off_t beg, off_t num, mus_sample_t *vals, chan_info *cp, const char *origin, int edpos);
-bool file_insert_samples(off_t beg, off_t num, char *tempfile, chan_info *cp, int chan, 
+bool file_insert_samples(off_t beg, off_t num, const char *tempfile, chan_info *cp, int chan, 
 			 file_delete_t auto_delete, const char *origin, int edpos);
 bool insert_complete_file_at_cursor(snd_info *sp, const char *filename);
 bool insert_complete_file(snd_info *sp, const char *str, off_t chan_beg, file_delete_t auto_delete);
 bool delete_samples(off_t beg, off_t num, chan_info *cp, int edpos);
 bool change_samples(off_t beg, off_t num, mus_sample_t *vals, chan_info *cp, lock_mix_t lock, const char *origin, int edpos);
-bool file_change_samples(off_t beg, off_t num, char *tempfile, chan_info *cp, int chan, 
+bool file_change_samples(off_t beg, off_t num, const char *tempfile, chan_info *cp, int chan, 
 			 file_delete_t auto_delete, lock_mix_t lock, const char *origin, int edpos);
-bool file_mix_change_samples(off_t beg, off_t num, char *tempfile, chan_info *cp, int chan, 
+bool file_mix_change_samples(off_t beg, off_t num, const char *tempfile, chan_info *cp, int chan, 
 			     file_delete_t auto_delete, lock_mix_t lock, const char *origin, int edpos, bool with_mix);
-bool file_override_samples(off_t num, char *tempfile, chan_info *cp, int chan, 
+bool file_override_samples(off_t num, const char *tempfile, chan_info *cp, int chan, 
 			   file_delete_t auto_delete, lock_mix_t lock, const char *origin);
 Float chn_sample(off_t samp, chan_info *cp, int pos);
 void check_saved_temp_file(const char *type, XEN filename, XEN date_and_length);
@@ -846,12 +846,12 @@ void undo_edit_with_sync(chan_info *cp, int count);
 void redo_edit_with_sync(chan_info *cp, int count);
 void undo_edit(chan_info *cp, int count);
 void redo_edit(chan_info *cp, int count);
-io_error_t save_channel_edits(chan_info *cp, char *ofile, int pos);
+io_error_t save_channel_edits(chan_info *cp, const char *ofile, int pos);
 io_error_t save_edits(snd_info *sp);
 io_error_t save_edits_without_asking(snd_info *sp);
 void save_edits_with_prompt(snd_info *sp);
 io_error_t save_edits_and_update_display(snd_info *sp);
-io_error_t save_edits_without_display(snd_info *sp, char *new_name, int type, int format, int srate, char *comment, int pos);
+io_error_t save_edits_without_display(snd_info *sp, const char *new_name, int type, int format, int srate, const char *comment, int pos);
 void revert_edits(chan_info *cp);
 off_t current_location(snd_fd *sf);
 void g_init_edits(void);
@@ -883,7 +883,7 @@ bool fft_window_alpha_in_use(mus_fft_window_t win);
 void free_sono_info (chan_info *cp);
 void sono_update(chan_info *cp);
 void set_spectro_cutoff_and_redisplay(Float val);
-void c_convolve(char *fname, Float amp, int filec, off_t filehdr, int filterc, off_t filterhdr, int filtersize,
+void c_convolve(const char *fname, Float amp, int filec, off_t filehdr, int filterc, off_t filterhdr, int filtersize,
 		 int fftsize, int filter_chans, int filter_chan, int data_size, snd_info *gsp, enved_progress_t from_enved, int ip, int total_chans);
 void *make_sonogram_state(chan_info *cp, bool force_recalc);
 void single_fft(chan_info *cp, bool update_display, bool force_recalc);
@@ -893,7 +893,7 @@ void g_init_fft(void);
 Float fft_beta_max(mus_fft_window_t win);
 void cp_free_fft_state(chan_info *cp);
 void autocorrelation(Float *data, int n);
-void set_fft_info_xlabel(chan_info *cp, char *new_label);
+void set_fft_info_xlabel(chan_info *cp, const char *new_label);
 void fourier_spectrum(snd_fd *sf, Float *data, int fft_size, int data_len, Float *window);
 char *wavelet_name(int i);
 char **wavelet_names(void);
@@ -945,7 +945,7 @@ void snd_unprotect_at(int loc);
 XEN run_or_hook (XEN hook, XEN args, const char *caller);
 XEN run_progn_hook (XEN hook, XEN args, const char *caller);
 XEN run_hook(XEN hook, XEN args, const char *caller);
-void during_open(int fd, char *file, open_reason_t reason);
+void during_open(int fd, const char *file, open_reason_t reason);
 void after_open(int index);
 char *output_name(const char *current_name);
 bool listener_print_p(const char *msg);
@@ -966,7 +966,7 @@ off_t string_to_off_t(char *str, off_t lo, const char *field_name);
 char *output_comment(file_info *hdr);
 void snd_load_init_file(bool nog, bool noi);
 void snd_load_file(char *filename);
-void snd_report_result(XEN result, char *buf);
+void snd_report_result(XEN result, const char *buf);
 void snd_report_listener_result(XEN form);
 void snd_eval_stdin_str(char *buf);
 void clear_stdin(void);
@@ -1290,13 +1290,13 @@ void amp_env_scale_selection_by(chan_info *cp, Float scl, off_t beg, off_t num, 
 env_info *amp_env_copy(chan_info *cp, bool reversed, int edpos);
 env_info *amp_env_section(chan_info *cp, off_t beg, off_t num, int edpos);
 void pick_one_bin(env_info *ep, int bin, off_t cursamp, chan_info *cp, int edpos);
-void remember_mini_string(snd_info *sp, char *str);
+void remember_mini_string(snd_info *sp, const char *str);
 void restore_mini_string(snd_info *s, bool back);
 void clear_mini_strings(snd_info *sp);
-void remember_filter_string(snd_info *sp, char *str);
+void remember_filter_string(snd_info *sp, const char *str);
 void restore_filter_string(snd_info *s, bool back);
 void clear_filter_strings(snd_info *sp);
-void remember_listener_string(char *str);
+void remember_listener_string(const char *str);
 void restore_listener_string(bool back);
 void set_channel_style(channel_style_t val);
 
@@ -1354,7 +1354,6 @@ char *copy_string(const char *str);
 int snd_strlen(const char *str);
 char *snd_strcat(char *errmsg, const char *str, int *err_size);
 char *snd_local_time(void);
-char *snd_strftime(const char *format, time_t date);
 char *snd_io_strerror(void);
 char *snd_open_strerror(void);
 char *string_to_colon(char *val);
@@ -1363,7 +1362,13 @@ char *just_filename(char *name);
 char *just_directory(const char *name);
 bool directory_exists(char *name);
 char *file_to_string(const char *filename);
-char *vstr(const char *format, va_list ap);
+#ifdef __GNUC__
+  char *vstr(const char *format, va_list ap)  __attribute__ ((format (printf, 1, 0)));
+  char *snd_strftime(const char *format, time_t date) __attribute__ ((format (strftime, 1, 0)));
+#else
+  char *vstr(const char *format, va_list ap);
+  char *snd_strftime(const char *format, time_t date);
+#endif
 disk_space_t disk_space_p(off_t bytes, const char *filename);
 const char *short_data_format_name(int sndlib_format, const char *filename);
 char *prettyf(Float num, int tens);

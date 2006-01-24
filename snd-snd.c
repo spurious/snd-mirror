@@ -1170,7 +1170,7 @@ void add_sound_data(char *filename, snd_info *sp, channel_graph_t graphed)
 
 #if HAVE_READLINK
 static char *link_file = NULL;
-static char *linked_file(char *link_name)
+static char *linked_file(const char *link_name)
 {
   int bytes;
   #define READLINK_FILE_SIZE 256
@@ -1420,7 +1420,7 @@ typedef struct mini_history {
 static mini_history *listener_history = NULL;
 typedef enum {MINIBUFFER, FILTER_TEXT, LISTENER_TEXT} mini_history_t;
 
-static void remember_string(snd_info *sp, char *str, mini_history_t which)
+static void remember_string(snd_info *sp, const char *str, mini_history_t which)
 {
   /* sp can be NULL */
   mini_history *mh = NULL;
@@ -1452,9 +1452,9 @@ static void remember_string(snd_info *sp, char *str, mini_history_t which)
   mh->first_time = true;
 }
 
-void remember_mini_string(snd_info *sp, char *str) {remember_string(sp, str, MINIBUFFER);}
-void remember_filter_string(snd_info *sp, char *str) {remember_string(sp, str, FILTER_TEXT);}
-void remember_listener_string(char *str) {remember_string(NULL, str, LISTENER_TEXT);}
+void remember_mini_string(snd_info *sp, const char *str) {remember_string(sp, str, MINIBUFFER);}
+void remember_filter_string(snd_info *sp, const char *str) {remember_string(sp, str, FILTER_TEXT);}
+void remember_listener_string(const char *str) {remember_string(NULL, str, LISTENER_TEXT);}
 
 static void restore_string(snd_info *sp, bool back, mini_history_t which)
 {
@@ -2167,7 +2167,7 @@ static XEN sound_get(XEN snd_n, sp_field_t fld, const char *caller)
 	} 
       break;
     case SP_CURSOR_FOLLOWS_PLAY: return(C_TO_XEN_BOOLEAN(sp->cursor_follows_play));    break;
-    case SP_SHOW_CONTROLS:       if (!(IS_PLAYER(sp))) return(C_TO_XEN_BOOLEAN(control_panel_open(sp))); break;
+    case SP_SHOW_CONTROLS:       if (!(IS_PLAYER(sp))) return(C_TO_XEN_BOOLEAN(control_panel_is_open(sp))); break;
     case SP_SPEED_TONES:         return(C_TO_XEN_INT(sp->speed_control_tones));        break;
     case SP_SPEED_STYLE:         return(C_TO_XEN_INT((int)(sp->speed_control_style))); break;
     case SP_COMMENT:             return(C_TO_XEN_STRING(sp->hdr->comment));            break;
@@ -2235,7 +2235,7 @@ static XEN sound_get(XEN snd_n, sp_field_t fld, const char *caller)
   return(XEN_FALSE);
 }
 
-static XEN sound_get_global(XEN snd_n, sp_field_t fld, char *caller)
+static XEN sound_get_global(XEN snd_n, sp_field_t fld, const char *caller)
 {
   if (XEN_NOT_BOUND_P(snd_n))
     switch (fld)
@@ -2266,7 +2266,7 @@ static XEN sound_get_global(XEN snd_n, sp_field_t fld, char *caller)
   return(sound_get(snd_n, fld, caller));
 }
 
-static XEN sound_set(XEN snd_n, XEN val, sp_field_t fld, char *caller)
+static XEN sound_set(XEN snd_n, XEN val, sp_field_t fld, const char *caller)
 {
   snd_info *sp;
   int i, ival;
@@ -2626,7 +2626,7 @@ static XEN sound_set(XEN snd_n, XEN val, sp_field_t fld, char *caller)
   return(val);
 }
 
-static XEN sound_set_global(XEN snd_n, XEN val, sp_field_t fld, char *caller)
+static XEN sound_set_global(XEN snd_n, XEN val, sp_field_t fld, const char *caller)
 {
   Float fval;
   if (XEN_NOT_BOUND_P(snd_n))
@@ -2745,7 +2745,7 @@ static XEN g_channels(XEN snd_n)
   return(sound_get(snd_n, SP_NCHANS, S_channels));
 }
 
-static XEN check_number(XEN val, char *caller)
+static XEN check_number(XEN val, const char *caller)
 {
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_1, caller, "a number");
   return(val);
@@ -4351,7 +4351,7 @@ static XEN g_write_peak_env_info_file(XEN snd, XEN chn, XEN name)
 typedef enum {PEAK_ENV_NO_ERROR, PEAK_ENV_BAD_HEADER, PEAK_ENV_BAD_FORMAT, PEAK_ENV_BAD_SIZE, PEAK_ENV_NO_FILE, PEAK_ENV_NO_DATA} peak_env_error_t;
 static char *peak_env_error[6] = {"no error", "bad header", "bad format", "bad size", "no file", "no data in file"};
 
-static env_info *get_peak_env_info(char *fullname, peak_env_error_t *error)
+static env_info *get_peak_env_info(const char *fullname, peak_env_error_t *error)
 {
   env_info *ep;
   int fd, bytes, hdr = 0;

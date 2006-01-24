@@ -22,7 +22,7 @@ void fill_rectangle (axis_context *ax, int x0, int y0, int width, int height);
 void erase_rectangle (chan_info *cp, axis_context *ax, int x0, int y0, int width, int height);
 void fill_polygon(axis_context *ax, int points, ...);
 void draw_polygon(axis_context *ax, int points, ...);
-void draw_string (axis_context *ax, int x0, int y0, char *str, int len);
+void draw_string (axis_context *ax, int x0, int y0, const char *str, int len);
 void draw_arc(axis_context *ax, int x, int y, int size);
 void set_grf_points(Locus xi, int j, Locus ymin, Locus ymax);
 void set_grf_point(Locus xi, int j, Locus yi);
@@ -396,7 +396,7 @@ void set_sound_pane_file_label(snd_info *sp, char *str);
 void snd_info_cleanup(snd_info *sp);
 void sound_show_controls(snd_info *sp);
 void sound_hide_controls(snd_info *sp);
-bool control_panel_open(snd_info *sp);
+bool control_panel_is_open(snd_info *sp);
 void show_controls(void);
 void hide_controls(void);
 void start_progress_report(snd_info *sp, enved_progress_t from_enved);
@@ -428,7 +428,7 @@ void show_track_background_wave(int pts, bool two_sided);
 
 axis_info *enved_make_axis(const char *name, axis_context *ax, int ex0, int ey0, int width, int height, 
 			   Float xmin, Float xmax, Float ymin, Float ymax, printing_t printing);
-void display_enved_env_with_selection(env *e, char *name, int x0, int y0, int width, int height, bool dots, printing_t printing);
+void display_enved_env_with_selection(env *e, const char *name, int x0, int y0, int width, int height, bool dots, printing_t printing);
 void set_enved_redo_sensitive(bool val);
 void set_enved_revert_sensitive(bool val);
 void set_enved_undo_sensitive(bool val);
@@ -483,7 +483,7 @@ char *get_file_dialog_sound_attributes(file_data *fdat, int *srate, int *chans, 
   void alert_new_file(void);
 #endif
 widget_t make_open_file_dialog(bool read_only, bool managed);
-file_data *make_file_data_panel(GtkWidget *parent, char *name, 
+file_data *make_file_data_panel(GtkWidget *parent, const char *name, 
 				dialog_channels_t with_chan, 
 				int header_type, int data_format,
 				dialog_data_location_t with_loc, dialog_samples_t with_samples,

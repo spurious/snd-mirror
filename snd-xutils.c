@@ -286,7 +286,6 @@ XtCallbackList make_callback_list(XtCallbackProc callback, XtPointer closure)
 void color_sashes(Widget w, void *ptr)
 {
   if ((XtIsWidget(w)) && 
-      (XtIsManaged(w)) && 
       (XtIsSubclass(w, xmSashWidgetClass)))
     XmChangeColor(w, (Pixel)ss->sgx->sash_color);
 }

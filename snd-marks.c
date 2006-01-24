@@ -1935,7 +1935,7 @@ static XEN g_restore_marks(XEN size, XEN snd, XEN chn, XEN marklist)
 
 typedef enum {MARK_SAMPLE, MARK_NAME, MARK_SYNC, MARK_HOME} mark_field_t;
 
-static XEN mark_get(XEN n, mark_field_t fld, XEN pos_n, char *caller)
+static XEN mark_get(XEN n, mark_field_t fld, XEN pos_n, const char *caller)
 {
   int pos;
   chan_info *ncp[1];
@@ -1965,7 +1965,7 @@ static XEN mark_get(XEN n, mark_field_t fld, XEN pos_n, char *caller)
   return(XEN_FALSE);
 }
 
-static XEN mark_set(XEN mark_n, XEN val, mark_field_t fld, char *caller)
+static XEN mark_set(XEN mark_n, XEN val, mark_field_t fld, const char *caller)
 {
   chan_info *cp[1];
   mark *m;

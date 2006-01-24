@@ -908,7 +908,7 @@ static char *gl_print(XEN result)
   return(newbuf);
 }
 
-void snd_report_result(XEN result, char *buf)
+void snd_report_result(XEN result, const char *buf)
 {
   /* kbd macros, startup evalled args */
   char *str = NULL;
@@ -1441,7 +1441,7 @@ static XEN g_set_show_backtrace(XEN val)
   return(C_TO_XEN_BOOLEAN(show_backtrace(ss)));
 }
 
-static int snd_access(char *dir, char *caller)
+static int snd_access(char *dir, const char *caller)
 {
   int err;
   char *temp;
@@ -2610,7 +2610,7 @@ XEN run_or_hook (XEN hook, XEN args, const char *caller)
   return(xen_return_first(hook_result, args));
 }
 
-void during_open(int fd, char *file, open_reason_t reason)
+void during_open(int fd, const char *file, open_reason_t reason)
 {
   if (XEN_HOOKED(during_open_hook))
     run_hook(during_open_hook,

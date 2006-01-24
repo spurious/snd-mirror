@@ -1970,7 +1970,7 @@ static void srate_drop(Widget w, XtPointer context, XtPointer info)
   XmTextSetString(fd->srate_text, sr);
 }
 
-static void add_srate_menu(file_data *fd, char *srate_name)
+static void add_srate_menu(file_data *fd, const char *srate_name)
 {
   int n;
   Arg args[12];
@@ -2016,7 +2016,7 @@ static void chans_drop(Widget w, XtPointer context, XtPointer info)
 
 #define PANEL_COMMENT_SPACE 8
 
-file_data *make_file_data_panel(Widget parent, char *name, Arg *in_args, int in_n, 
+file_data *make_file_data_panel(Widget parent, const char *name, Arg *in_args, int in_n, 
 				dialog_channels_t with_chan, 
 				int header_type, int data_format,
 				dialog_data_location_t with_loc, dialog_samples_t with_samples,

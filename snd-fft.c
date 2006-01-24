@@ -540,7 +540,7 @@ static added_transform *new_transform(void)
   return(added_transforms[loc]);
 }
 
-static int add_transform(char *name, char *xlabel, Float lo, Float hi, XEN proc)
+static int add_transform(const char *name, const char *xlabel, Float lo, Float hi, XEN proc)
 {
   added_transform *af;
   af = new_transform();
@@ -1197,7 +1197,7 @@ static fft_info *make_fft_info(int size, mus_fft_window_t window, Float alpha, F
   return(fp);
 }
 
-void set_fft_info_xlabel(chan_info *cp, char *new_label)
+void set_fft_info_xlabel(chan_info *cp, const char *new_label)
 {
   if ((cp) && (cp->fft))
     {
@@ -1652,7 +1652,7 @@ static void spectral_multiply (Float* rl1, Float* rl2, int n)
     }
 }
 
-void c_convolve(char *fname, Float amp, int filec, off_t filehdr, int filterc, off_t filterhdr, int filtersize,
+void c_convolve(const char *fname, Float amp, int filec, off_t filehdr, int filterc, off_t filterhdr, int filtersize,
 		int fftsize, int filter_chans, int filter_chan, int data_size, snd_info *gsp, enved_progress_t from_enved, int ip, int total_chans)
 {
   int tempfile;

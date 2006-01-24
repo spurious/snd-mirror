@@ -2170,7 +2170,7 @@ void apply_filter(chan_info *ncp, int order, env *e, enved_progress_t from_enved
     }
 }
 
-static char *reverse_channel(chan_info *cp, snd_fd *sf, off_t beg, off_t dur, XEN edp, char *caller, int arg_pos)
+static char *reverse_channel(chan_info *cp, snd_fd *sf, off_t beg, off_t dur, XEN edp, const char *caller, int arg_pos)
 {
   snd_info *sp;
   env_info *ep = NULL;
@@ -3263,10 +3263,10 @@ char *scale_and_src(char **files, int len, int max_chans, Float amp, Float speed
 #define MUS_OUTA_1(Frame, Val, Fd) ((*(Fd->core)->write_sample))(Fd, Frame, 0, Val)
 /* avoids all the CLM error checking */
 
-static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN snd, XEN chn, XEN edpos, XEN s_dur, char *fallback_caller) 
+static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN snd, XEN chn, XEN edpos, XEN s_dur, const char *fallback_caller) 
 { 
   chan_info *cp;
-  char *caller;
+  const char *caller;
   off_t beg = 0, end = 0, dur = 0;
   off_t num;
   int rpt = 0, i, pos;

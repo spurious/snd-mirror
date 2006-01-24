@@ -51,7 +51,7 @@ axis_info *enved_make_axis(const char *name, axis_context *ax,
   return(axis);
 }
 
-static void display_env(env *e, char *name, GC cur_gc, int x0, int y0, int width, int height, bool dots, printing_t printing)
+static void display_env(env *e, const char *name, GC cur_gc, int x0, int y0, int width, int height, bool dots, printing_t printing)
 {
   axis_context *ax = NULL;  
   ax = (axis_context *)CALLOC(1, sizeof(axis_context));
@@ -64,7 +64,7 @@ static void display_env(env *e, char *name, GC cur_gc, int x0, int y0, int width
   ax = free_axis_context(ax);
 }
 
-void display_enved_env_with_selection(env *e, char *name, int x0, int y0, int width, int height, bool dots, printing_t printing)
+void display_enved_env_with_selection(env *e, const char *name, int x0, int y0, int width, int height, bool dots, printing_t printing)
 {
   display_env(e, name, (selected_env == e) ? rgc : gc, x0, y0, width, height, dots, printing);
 }

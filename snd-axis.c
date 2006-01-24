@@ -348,7 +348,7 @@ static void draw_vertical_grid_line(int x, axis_info *ap, axis_context *ax)
   set_foreground_color(ax, old_color);
 }
 
-static void draw_label(char *label, int x, int y, axis_info *ap, axis_context *ax, printing_t printing)
+static void draw_label(const char *label, int x, int y, axis_info *ap, axis_context *ax, printing_t printing)
 {
   draw_string(ax, x, y, label, snd_strlen(label));
   if (printing) 
@@ -369,7 +369,7 @@ static void draw_horizontal_tick(int x0, int x1, int y, axis_info *ap, axis_cont
   if (include_grid) draw_horizontal_grid_line(y, ap, ax);
 }
 
-static void draw_log_tick_label(char *label, int logx, int x_label_width, int right_border_width, axis_info *ap, axis_context *ax, printing_t printing)
+static void draw_log_tick_label(const char *label, int logx, int x_label_width, int right_border_width, axis_info *ap, axis_context *ax, printing_t printing)
 {
   /* is there room for a label? */
   /* the main label is at ap->x_label_x to that plus x_label_width */

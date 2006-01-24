@@ -138,7 +138,7 @@ static void save_macro_1(named_macro *nm, FILE *fd)
 #endif
 }
 
-static bool execute_named_macro_1(chan_info *cp, char *name, off_t count)
+static bool execute_named_macro_1(chan_info *cp, const char *name, off_t count)
 {
   int k;
   for (k = 0; k < named_macro_ctr; k++)
@@ -168,7 +168,7 @@ static bool execute_named_macro_1(chan_info *cp, char *name, off_t count)
   return(false);
 }
 
-static void execute_named_macro(chan_info *cp, char *name, off_t count)
+static void execute_named_macro(chan_info *cp, const char *name, off_t count)
 {
   if (!(execute_named_macro_1(cp, name, count)))
     /* not a macro...*/
@@ -178,7 +178,7 @@ static void execute_named_macro(chan_info *cp, char *name, off_t count)
       XEN form, result = XEN_UNDEFINED;
       one_edit = cp->edit_ctr + 1;
       redirect_errors_to(errors_to_minibuffer, (void *)(cp->sound));
-      form = string_to_form(name);
+      form = string_to_form((void *)name);
       redirect_errors_to(NULL, NULL);
       form_loc = snd_protect(form);
       for (i = 0; i < count; i++)
@@ -384,7 +384,7 @@ static XEN g_key_binding(XEN key, XEN state, XEN cx_extended)
   return(XEN_UNDEFINED);
 }
 
-static void set_keymap_entry(int key, int state, int args, XEN func, bool cx_extended, char *origin)
+static void set_keymap_entry(int key, int state, int args, XEN func, bool cx_extended, const char *origin)
 {
   int i;
   i = in_user_keymap(key, state, cx_extended);

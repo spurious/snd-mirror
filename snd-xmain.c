@@ -595,7 +595,8 @@ color_t get_in_between_color(color_t fg, color_t bg)
   return(new_color.pixel);
 }
 
-static Pixel get_color(Widget shell, char *rs_color, char *defined_color, char *fallback_color, char *second_fallback_color, bool use_white)
+static Pixel get_color(Widget shell, const char *rs_color, const char *defined_color, 
+		       const char *fallback_color, const char *second_fallback_color, bool use_white)
 {
   Colormap cmap;
   Display *dpy;
@@ -960,6 +961,7 @@ void snd_doit(int argc, char **argv)
     case SOUNDS_IN_SEPARATE_WINDOWS:
       sx->soundpane = XtCreateManagedWidget("soundpane", xmFormWidgetClass, sx->mainpane, args, n);
       break;
+
     case SOUNDS_HORIZONTAL:
       XtSetArg(args[n], XmNorientation, XmVERTICAL); n++;
       sx->soundpanebox = XtCreateManagedWidget("soundpane", xmPanedWindowWidgetClass, sx->mainpane, args, n);
@@ -972,12 +974,14 @@ void snd_doit(int argc, char **argv)
       XtSetArg(args[n], XmNsashIndent, ss->sash_indent); n++;
       sx->soundpane = XtCreateManagedWidget("soundpane", xmPanedWindowWidgetClass, sx->soundpanebox, args, n);
       break;
+
     case SOUNDS_VERTICAL:
       XtSetArg(args[n], XmNsashHeight, ss->sash_size); n++;
       XtSetArg(args[n], XmNsashWidth, ss->sash_size); n++;
       XtSetArg(args[n], XmNsashIndent, ss->sash_indent); n++;
       sx->soundpane = XtCreateManagedWidget("soundpane", xmPanedWindowWidgetClass, sx->mainpane, args, n);
       break;
+
     case SOUNDS_IN_NOTEBOOK:
       XtSetArg(args[n], XmNorientation, XmVERTICAL); n++;
       sx->soundpanebox = XtCreateManagedWidget("soundpane", xmPanedWindowWidgetClass, sx->mainpane, args, n);

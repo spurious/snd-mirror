@@ -57736,7 +57736,8 @@ EDITS: 1
 		   (catch #t
 			  (lambda () (open-sound "test.snd"))
 			  (lambda args (car args)))))
-	      (if (not (eq? tag 'no-such-file))
+	      (if (and (not (eq? tag 'no-such-file))
+		       (not (eq? tag 'mus-error)))
 		  (begin
 		    (snd-display ";open read-protected sound worked!: ~A" tag)
 		    (close-sound tag))))

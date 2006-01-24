@@ -2576,8 +2576,6 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
   if (old_name)
     report_in_minibuffer(sp, _("(translated %s)"), old_name);
   map_over_children(SOUND_PANE(ss), color_sashes, NULL);
-  /* TODO: if multi channel I think some sashes are not colored? */
-  /* TODO: if a pane is not moveable via a given sash, that sash should be basic color if displayed at all */
   if (!(auto_resize(ss))) equalize_all_panes(); 
 
   if (sound_style(ss) != SOUNDS_IN_SEPARATE_WINDOWS)
@@ -2912,7 +2910,7 @@ void sound_hide_controls(snd_info *sp)
   XtUnmanageChild(CONTROLS(sp));
 }
 
-bool control_panel_open(snd_info *sp)
+bool control_panel_is_open(snd_info *sp)
 {
   return((bool)(XtIsManaged(CONTROLS(sp))));
 }

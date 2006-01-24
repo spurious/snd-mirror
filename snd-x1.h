@@ -22,8 +22,8 @@ void fill_rectangle (axis_context *ax, int x0, int y0, int width, int height);
 void erase_rectangle (chan_info *cp, axis_context *ax, int x0, int y0, int width, int height);
 void fill_polygon(axis_context *ax, int points, ...);
 void draw_polygon(axis_context *ax, int points, ...);
-void draw_string (axis_context *ax, int x0, int y0, char *str, int len);
-void gtk_style_draw_string (axis_context *ax, int x0, int y0, char *str, int len);
+void draw_string (axis_context *ax, int x0, int y0, const char *str, int len);
+void gtk_style_draw_string (axis_context *ax, int x0, int y0, const char *str, int len);
 void draw_arc(axis_context *ax, int x, int y, int size);
 void set_grf_points(Locus xi, int j, Locus ymin, Locus ymax);
 void set_grf_point(Locus xi, int j, Locus yi);
@@ -368,7 +368,7 @@ void reflect_amp_env_in_progress(snd_info *sp);
 void equalize_all_panes(void);
 void sound_show_controls(snd_info *sp);
 void sound_hide_controls(snd_info *sp);
-bool control_panel_open(snd_info *sp);
+bool control_panel_is_open(snd_info *sp);
 void show_controls(void);
 void hide_controls(void);
 void start_progress_report(snd_info *sp, enved_progress_t from_enved);
@@ -385,7 +385,7 @@ void clear_minibuffer_error(snd_info *sp);
 /* -------- snd-xfile.c -------- */
 
 char *get_file_dialog_sound_attributes(file_data *fdat, int *srate, int *chans, int *type, int *format, off_t *location, off_t *samples, int min_chan);
-file_data *make_file_data_panel(Widget parent, char *name, Arg *args, int n, dialog_channels_t with_chan, 
+file_data *make_file_data_panel(Widget parent, const char *name, Arg *args, int n, dialog_channels_t with_chan, 
 				int header_type, int data_format, dialog_data_location_t with_loc, 
 				dialog_samples_t with_samples, dialog_error_t with_error, 
 				dialog_header_type_t with_header_type, dialog_comment_t with_comment,
@@ -420,7 +420,7 @@ void reflect_region_in_save_as_dialog(void);
 
 axis_info *enved_make_axis(const char *name, axis_context *ax, int ex0, int ey0, int width, int height, 
 			   Float xmin, Float xmax, Float ymin, Float ymax, printing_t printing);
-void display_enved_env_with_selection(env *e, char *name, int x0, int y0, int width, int height, bool dots, printing_t printing);
+void display_enved_env_with_selection(env *e, const char *name, int x0, int y0, int width, int height, bool dots, printing_t printing);
 void set_enved_redo_sensitive(bool val);
 void set_enved_revert_sensitive(bool val);
 void set_enved_undo_sensitive(bool val);

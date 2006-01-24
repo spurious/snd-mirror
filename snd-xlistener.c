@@ -1266,10 +1266,7 @@ void handle_listener(bool open)
 	    }
 	}
     }
-  else
-    {
-      XtUnmanageChild(listener_pane);
-    }
+  else XtUnmanageChild(listener_pane);
 }
 
 bool listener_exists(void)
