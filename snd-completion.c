@@ -255,7 +255,7 @@ static int possible_completions_ctr = 0;
 
 void set_save_completions(bool save) {save_completions = save;}
 
-void add_possible_completion(char *text)
+void add_possible_completion(const char *text)
 {
   if (save_completions)
     {

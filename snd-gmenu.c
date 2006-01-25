@@ -1176,7 +1176,7 @@ GtkWidget *menu_widget(int which_menu)
   return(NULL);
 }
 
-static void add_option(GtkWidget *w, int which_menu, char *label, int callb)
+static void add_option(GtkWidget *w, int which_menu, const char *label, int callb)
 {
   if (added_options_pos == added_options_size)
     {
@@ -1209,7 +1209,7 @@ static void add_option(GtkWidget *w, int which_menu, char *label, int callb)
   added_options_pos++;
 }
 
-static int remove_option(int which_menu, char *label)
+static int remove_option(int which_menu, const char *label)
 {
   int i;
   for (i = 0; i < added_options_pos; i++)
@@ -1268,7 +1268,7 @@ GtkWidget *get_help_menu_widget(void)
   return(help_cascade_menu);
 }
 
-GtkWidget *g_add_to_menu(int which_menu, char *label, int callb, int position)
+GtkWidget *g_add_to_menu(int which_menu, const char *label, int callb, int position)
 {
   GtkWidget *m, *menw;
    switch (which_menu)
@@ -1301,7 +1301,7 @@ GtkWidget *g_add_to_menu(int which_menu, char *label, int callb, int position)
   return(m);
 }
 
-int g_remove_from_menu(int which_menu, char *label)
+int g_remove_from_menu(int which_menu, const char *label)
 {
   return(remove_option(which_menu, label));
 }

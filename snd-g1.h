@@ -330,8 +330,8 @@ GtkWidget *snd_gtk_highlight_label_new(const char *label);
 void widget_int_to_text(GtkWidget *w, int val);
 void widget_float_to_text(GtkWidget *w, Float val);
 void widget_off_t_to_text(GtkWidget *w, off_t val);
-void rotate_text(GdkDrawable *wn, GdkGC *gc, PangoFontDescription *font, char *text, int angle, gint x0, gint y0);
-void draw_rotated_axis_label(chan_info *cp, GdkGC *gc, char *text, gint x0, gint y0);
+void rotate_text(GdkDrawable *wn, GdkGC *gc, PangoFontDescription *font, const char *text, int angle, gint x0, gint y0);
+void draw_rotated_axis_label(chan_info *cp, GdkGC *gc, const char *text, gint x0, gint y0);
 void ensure_scrolled_window_row_visible(widget_t list, int pos, int num_rows);
 
 slist *slist_new_with_table_data(GtkWidget *parent, char **initial_items, int num_items, widget_add_t paned,

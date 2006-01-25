@@ -667,7 +667,7 @@ void widget_off_t_to_text(GtkWidget *w, off_t val)
   FREE(str);
 }
 
-void rotate_text(GdkDrawable *wn, GdkGC *gc, PangoFontDescription *font, char *text, int angle, gint x0, gint y0)
+void rotate_text(GdkDrawable *wn, GdkGC *gc, PangoFontDescription *font, const char *text, int angle, gint x0, gint y0)
 {
 #if HAVE_PANGO_MATRIX_ROTATE
   PangoLayout *layout;
@@ -685,7 +685,7 @@ void rotate_text(GdkDrawable *wn, GdkGC *gc, PangoFontDescription *font, char *t
 #endif
 }
 
-void draw_rotated_axis_label(chan_info *cp, GdkGC *gc, char *text, gint x0, gint y0)
+void draw_rotated_axis_label(chan_info *cp, GdkGC *gc, const char *text, gint x0, gint y0)
 {
   GtkWidget *w;
   if ((cp->chan > 0) && (cp->sound->channel_style == CHANNELS_COMBINED))

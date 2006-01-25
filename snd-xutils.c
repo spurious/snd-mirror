@@ -290,8 +290,6 @@ void color_sashes(Widget w, void *ptr)
     XmChangeColor(w, (Pixel)ss->sgx->sash_color);
 }
 
-/* SOMEDAY: replace all check-for-events with background processes */
-
 void check_for_event(void)
 {
   /* this is needed to force label updates and provide interrupts from long computations */
@@ -396,9 +394,7 @@ void color_selected_data(Pixel color)
 
 void recolor_graph(chan_info *cp, bool selected)
 {
-  state_context *sx;
-  sx = ss->sgx;
-  XtVaSetValues(channel_graph(cp), XmNbackground, (selected) ? sx->selected_graph_color : sx->graph_color, NULL);
+  XtVaSetValues(channel_graph(cp), XmNbackground, (selected) ? ss->sgx->selected_graph_color : ss->sgx->graph_color, NULL);
 }
 
 void set_mix_color(Pixel color)
@@ -418,8 +414,15 @@ char *XpmGetErrorString(int err);
 char *XpmGetErrorString(int err) {return("");}
 #endif
 
-void set_sensitive(Widget wid, bool val) {if (wid) XtSetSensitive(wid, val);}
-void set_toggle_button(Widget wid, bool val, bool passed, void *data) {XmToggleButtonSetState(wid, (Boolean)val, (Boolean)passed);}
+void set_sensitive(Widget wid, bool val) 
+{
+  if (wid) XtSetSensitive(wid, val);
+}
+
+void set_toggle_button(Widget wid, bool val, bool passed, void *data) 
+{
+  XmToggleButtonSetState(wid, (Boolean)val, (Boolean)passed);
+}
 
 Dimension widget_height(Widget w)
 {
@@ -483,9 +486,6 @@ void fixup_axis_context(axis_context *ax, Widget w, GC gc)
 {
   ax->dp = XtDisplay(w);
   ax->wn = XtWindow(w);
-#if DEBUGGING
-  if (!(ax->wn)) {fprintf(stderr, "fixup axis widget %p's window is null?", w); abort();}
-#endif
   if (gc) ax->gc = gc;
 }
 
@@ -552,7 +552,7 @@ void widget_off_t_to_text(Widget w, off_t val)
   FREE(str);
 }
 
-Pixmap rotate_text (Widget w, char *str, XFontStruct *font, Float angle_in_degrees, int *nw, int *nh, Pixel bg, Pixel fg, GC d_gc)
+Pixmap rotate_text (Widget w, const char *str, XFontStruct *font, Float angle_in_degrees, int *nw, int *nh, Pixel bg, Pixel fg, GC d_gc)
 {
   /* rotate clockwise by angle_in_degrees degrees (i.e. 45 points text south-east), 
    * new bounding box (text centered in it) returned in nw and nh
@@ -663,7 +663,7 @@ Pixmap rotate_text (Widget w, char *str, XFontStruct *font, Float angle_in_degre
   return(rotpix);
 }
 
-void draw_rotated_axis_label(chan_info *cp, GC gc, char *text, int x0, int y0)
+void draw_rotated_axis_label(chan_info *cp, GC gc, const char *text, int x0, int y0)
 {
   Pixmap pix;
   int h, w;

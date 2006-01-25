@@ -179,8 +179,8 @@ void save_state_from_menu(void);
 void unprotect_callback(int slot);
 
 int g_add_to_main_menu(char *label, int slot);
-widget_t g_add_to_menu(int which_menu, char *label, int callb, int position);
-int g_remove_from_menu(int which_menu, char *label);
+widget_t g_add_to_menu(int which_menu, const char *label, int callb, int position);
+int g_remove_from_menu(int which_menu, const char *label);
 void g_snd_callback(int callb);
 
 #endif

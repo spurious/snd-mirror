@@ -872,7 +872,7 @@ static bool clobber_menu(Widget w, void *lab)
   return(false);
 }
 
-int g_remove_from_menu(int which_menu, char *label)
+int g_remove_from_menu(int which_menu, const char *label)
 {
   Widget top_menu;
   top_menu = menu_widget(which_menu);
@@ -884,7 +884,7 @@ int g_remove_from_menu(int which_menu, char *label)
   return(INVALID_MENU);
 }
 
-static void set_widget_name(Widget w, char *new_name)
+static void set_widget_name(Widget w, const char *new_name)
 {
   /* based on XtName in Xt/Intrinsic.c, Xt/Create.c, and Xt/ResourceI.h */
   w->core.xrm_name = XrmStringToName(new_name);
@@ -915,7 +915,7 @@ int g_add_to_main_menu(char *label, int slot)
   return(new_menu);
 }
 
-Widget g_add_to_menu(int which_menu, char *label, int callb, int position)
+Widget g_add_to_menu(int which_menu, const char *label, int callb, int position)
 {
   Widget m, menw;
   Arg args[12];

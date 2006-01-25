@@ -36595,6 +36595,8 @@ EDITS: 1
       (set! (show-sonogram-cursor) #f)
       (set! (cursor-follows-play) #f)
       (set! (show-controls) #f)
+      (set! (speed-control-tones) 12)
+      (set! (wavelet-type) 0)
       
       (letrec ((test-sound-func-1
 		(lambda (func name ind-1 ind-2 new-val eq-func leq-func settable channel global)
@@ -57740,7 +57742,7 @@ EDITS: 1
 		       (not (eq? tag 'mus-error)))
 		  (begin
 		    (snd-display ";open read-protected sound worked!: ~A" tag)
-		    (close-sound tag))))
+		    (if (sound? tag) (close-sound tag)))))
 	    (system "chmod 644 test.snd")
 	    (delete-file "test.snd")
 

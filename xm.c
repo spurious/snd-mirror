@@ -1342,7 +1342,7 @@ static XRectangle *XEN_TO_C_XRectangles(XEN v_1, int len)
 static XEN wrap_callback_struct(int type, XtPointer info);
 static int map_over_protected_elements(bool (*func)(XEN val, int loc, unsigned long fid), unsigned long id);
 static XEN xm_protected_element(int loc);
-static int callback_struct_type(Widget w, char *name);
+static int callback_struct_type(Widget w, const char *name);
 static void xm_unprotect(XEN obj);
 
 enum {CALLBACK_TYPE, CALLBACK_FUNC, CALLBACK_DATA, CALLBACK_STRUCT_TYPE, CALLBACK_GC_LOC};
@@ -2224,7 +2224,7 @@ static void fixup_args(Widget w, Arg *args, int len)
     }
 }
 
-static int xmstringtable_length(Widget w, char *name)
+static int xmstringtable_length(Widget w, const char *name)
 {
   /* it's not safe here to search for 0 as end of table, so where possible we'll match resources with counts */
   int len = 0;
@@ -16232,7 +16232,7 @@ static XEN wrap_callback_struct(int type, XtPointer info)
   return(XEN_FALSE);
 }
 
-static int callback_struct_type(Widget w, char *name)
+static int callback_struct_type(Widget w, const char *name)
 {
   if (strcmp(name, XmNdestinationCallback) == 0) return(GXM_Destination);
   if (strcmp(name, XmNpopupHandlerCallback) == 0) return (GXM_Popup);

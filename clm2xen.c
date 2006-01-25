@@ -3831,7 +3831,7 @@ static XEN g_frame_to_file_p(XEN obj)
   return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && (mus_frame_to_file_p(XEN_TO_MUS_ANY(obj)))));
 }
 
-static XEN g_in_any_1(char *caller, XEN frame, XEN chan, XEN inp)
+static XEN g_in_any_1(const char *caller, XEN frame, XEN chan, XEN inp)
 {
   XEN_ASSERT_TYPE(XEN_NUMBER_P(frame), frame, XEN_ARG_1, caller, "a number");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(chan), chan, XEN_ARG_2, caller, "an integer");
@@ -3857,7 +3857,7 @@ static XEN g_inb(XEN frame, XEN inp)
   return(g_in_any_1(S_inb, frame, C_TO_XEN_INT(1), inp));
 }
 
-static XEN g_out_any_1(char *caller, XEN frame, XEN chan, XEN val, XEN outp)
+static XEN g_out_any_1(const char *caller, XEN frame, XEN chan, XEN val, XEN outp)
 {
   XEN_ASSERT_TYPE(XEN_NUMBER_P(frame), frame, XEN_ARG_1, caller, "a number");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(chan), chan, XEN_ARG_2, caller, "an integer");

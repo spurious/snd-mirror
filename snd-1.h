@@ -662,7 +662,7 @@ int add_completer_func(char *(*func)(char *text, void *context), void *data);
 int get_completion_matches(void);
 void set_completion_matches(int matches);
 void set_save_completions(bool save);
-void add_possible_completion(char *text);
+void add_possible_completion(const char *text);
 void display_completions(void);
 char *complete_text(char *text, int func);
 void clear_possible_completions(void);

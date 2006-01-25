@@ -8,7 +8,7 @@ make clean
 cp makefile gcat.makefile
 cp config.h gcat.config.h
 
-./configure --with-static-xm --enable-snd-debug --with-float-samples --with-profiling GUILE_CONFIG_path=/home/bil/test/bin CFLAGS="-DDESCRIBE_PTREE"
+./configure --with-static-xm --enable-snd-debug --with-profiling GUILE_CONFIG_path=/home/bil/test/bin CFLAGS="-DDESCRIBE_PTREE"
 make
 
 ./snd --help
