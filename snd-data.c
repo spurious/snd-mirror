@@ -587,23 +587,6 @@ void for_each_sound_chan(snd_info *sp, void (*func)(chan_info *))
       (*func)(cp);
 }
 
-void map_over_sounds(bool (*func)(snd_info *, void *), void *userptr)
-{
-  /* true = abort map, skips inactive sounds */
-  int i;
-  bool val = false;
-  for (i = 0; i < ss->max_sounds; i++)
-    {
-      snd_info *sp;
-      sp = ss->sounds[i];
-      if ((sp) && (sp->inuse == SOUND_NORMAL))
-	{
-	  val = (*func)(sp, userptr);
-	  if (val) return;
-	}
-    }
-}
-
 void for_each_sound(void (*func)(snd_info *, void *), void *userptr)
 {
   int i;

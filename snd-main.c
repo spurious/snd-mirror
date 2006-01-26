@@ -322,7 +322,7 @@ static void pss_sq(FILE *fd, const char *name, const char *val) {fprintf(fd, "se
 static void pss_sd(FILE *fd, const char *name, int val)   {fprintf(fd, "set_%s(%d)\n", TO_PROC_NAME(name), val);}
 static void pss_sf(FILE *fd, const char *name, Float val) {fprintf(fd, "set_%s(%.4f)\n", TO_PROC_NAME(name), val);}
 static void pss_sl(FILE *fd, const char *name, Float val1, Float val2) 
-  {fprintf(fd, "%sset_%s([%f, %f])\n", white_space, TO_PROC_NAME(name), val1, val2);}
+  {fprintf(fd, "set_%s([%f, %f])\n", TO_PROC_NAME(name), val1, val2);}
 
 static void psp_ss(FILE *fd, const char *name, const char *val) {fprintf(fd, "%sset_%s(%s, sfile)\n", white_space, TO_PROC_NAME(name), val);}
 static void psp_sd(FILE *fd, const char *name, int val)   {fprintf(fd, "%sset_%s(%d, sfile)\n", white_space, TO_PROC_NAME(name), val);}
@@ -337,12 +337,13 @@ static void pcp_sf(FILE *fd, const char *name, Float val, int chan) {fprintf(fd,
 static void pcp_sl(FILE *fd, const char *name, Float val1, Float val2, int chan) 
   {fprintf(fd, "%sset_%s([%f, %f], sfile, %d)\n", white_space, TO_PROC_NAME(name), val1, val2, chan);}
 #endif
+
 #if HAVE_SCHEME || (!HAVE_EXTENSION_LANGUAGE)
 static void pss_ss(FILE *fd, const char *name, const char *val) {fprintf(fd, "(set! (%s) %s)\n", name, val);}
 static void pss_sq(FILE *fd, const char *name, const char *val) {fprintf(fd, "(set! (%s) \"%s\")\n", name, val);}
 static void pss_sd(FILE *fd, const char *name, int val)   {fprintf(fd, "(set! (%s) %d)\n", name, val);}
 static void pss_sf(FILE *fd, const char *name, Float val) {fprintf(fd, "(set! (%s) %.4f)\n", name, val);}
-static void pss_sl(FILE *fd, const char *name, Float val1, Float val2) {fprintf(fd, "%s(set! (%s) (list %f %f))\n", white_space, name, val1, val2);}
+static void pss_sl(FILE *fd, const char *name, Float val1, Float val2) {fprintf(fd, "(set! (%s) (list %f %f))\n", name, val1, val2);}
 
 static void psp_ss(FILE *fd, const char *name, const char *val) 
   {b_ok = true; fprintf(fd, "%s(set! (%s sfile) %s)\n", white_space, name, val);}

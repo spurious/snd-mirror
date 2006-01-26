@@ -130,6 +130,25 @@ time_t file_write_date(const char *filename)
   return((time_t)(statbuf.st_mtime));
 }
 
+void map_over_sounds(bool (*func)(snd_info *, void *), void *userptr)
+{
+  /* true = abort map, skips inactive sounds */
+  int i;
+  for (i = 0; i < ss->max_sounds; i++)
+    {
+      snd_info *sp;
+      sp = ss->sounds[i];
+      if ((sp) && (sp->inuse == SOUND_NORMAL))
+	{
+	  bool val;
+	  val = (*func)(sp, userptr);
+	  if (val) return;
+	}
+    }
+}
+
+
+
 /* -------- popup filename lists -------- */
 
 void forget_filename(const char *filename, char **names)

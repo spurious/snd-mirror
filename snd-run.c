@@ -10788,8 +10788,12 @@ static xen_value *lookup_generalized_set(ptree *prog, XEN acc_form, xen_value *i
   return(NULL);
 }
 
-typedef enum {NO_PTREE_DISPLAY, STDERR_PTREE_DISPLAY, LISTENER_PTREE_DISPLAY} ptree_display_t;
-static ptree_display_t ptree_on = NO_PTREE_DISPLAY;
+typedef enum {NO_PTREE_DISPLAY, STDERR_PTREE_DISPLAY, LISTENER_PTREE_DISPLAY, GCAT_PTREE_WITHOUT_DISPLAY} ptree_display_t;
+#ifndef DESCRIBE_PTREE_INIT
+  static ptree_display_t ptree_on = NO_PTREE_DISPLAY;
+#else
+  static ptree_display_t ptree_on = DESCRIBE_PTREE_INIT;
+#endif
 static XEN g_show_ptree(XEN on)
 {
   ptree_on = (ptree_display_t)XEN_TO_C_INT(on);

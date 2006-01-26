@@ -223,10 +223,10 @@ static XEN g_snd_error(XEN msg)
   #define H_snd_error "(" S_snd_error " str): throws a 'snd-error error"
   XEN_ASSERT_TYPE(XEN_STRING_P(msg), msg, XEN_ONLY_ARG, S_snd_error, "a string");
 
-  /* xen error will call snd-error-hook and avoid redirection */
-  XEN_ERROR(XEN_ERROR_TYPE("snd-error"),
-	    XEN_LIST_2(C_TO_XEN_STRING(S_snd_error),
-		       msg));
+  if (!(run_snd_error_hook(XEN_TO_C_STRING(msg)))) /* have to call this before the throw, else we end up at top level */
+    XEN_ERROR(XEN_ERROR_TYPE("snd-error"),
+	      XEN_LIST_2(C_TO_XEN_STRING(S_snd_error),
+			 msg));
   return(msg);
 }
   

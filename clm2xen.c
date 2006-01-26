@@ -2568,7 +2568,7 @@ static XEN g_formant_bank(XEN amps, XEN gens, XEN inp)
     {
       XEN datum;
       datum = XEN_VECTOR_REF(gens, i);
-      if (MUS_XEN_P(datum))
+      if ((MUS_XEN_P(datum)) && (mus_formant_p(XEN_TO_MUS_ANY(datum))))
 	gs[i] = XEN_TO_MUS_ANY(datum);
       else 
 	{

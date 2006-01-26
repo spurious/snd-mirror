@@ -752,7 +752,6 @@ snd_info *make_basic_snd_info(int chans);
 void initialize_control_panel(snd_info *sp);
 void free_snd_info(snd_info *sp);
 snd_info *completely_free_snd_info(snd_info *sp);
-void map_over_sounds (bool (*func)(snd_info *, void *), void *userptr);
 bool map_over_chans (bool (*func)(chan_info *, void *), void *userptr);
 void for_each_chan(void (*func)(chan_info *));
 void for_each_chan_1(void (*func)(chan_info *, void *), void *userptr);

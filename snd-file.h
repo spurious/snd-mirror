@@ -150,6 +150,7 @@ bool edit_header_callback(snd_info *sp, file_data *edit_header_data,
 			  void (*outer_handler)(const char *error_msg, void *ufd),
 			  void (*inner_handler)(const char *error_msg, void *ufd));
 
+void map_over_sounds(bool (*func)(snd_info *, void *), void *userptr);
 
 void raw_data_dialog_to_file_info(const char *filename, char *title, char *info, bool read_only, bool selected);
 

@@ -305,10 +305,10 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
   XEN port;
   int port_gc_loc, stack_gc_loc;
   XEN stack = XEN_FALSE;
-  char *name_buf = NULL;
+  char *name_buf = NULL, *tag_name = NULL;
   bool need_comma = false;
-  if ((XEN_SYMBOL_P(tag)) &&
-      (strcmp(XEN_SYMBOL_TO_C_STRING(tag), "snd-top-level") == 0))
+  if (XEN_SYMBOL_P(tag)) tag_name = XEN_SYMBOL_TO_C_STRING(tag);
+  if ((tag_name) && (strcmp(tag_name, "snd-top-level") == 0))
     return(throw_args); /* not an error -- just a way to exit the current context */
 
   port = scm_mkstrport(XEN_ZERO, 
@@ -419,17 +419,20 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
   XEN_FLUSH_PORT(port); /* needed to get rid of trailing garbage chars?? -- might be pointless now */
   name_buf = copy_string(XEN_TO_C_STRING(XEN_PORT_TO_STRING(port)));
 
-  if (!(run_snd_error_hook(name_buf)))
+  if ((!tag_name) || (strcmp(tag_name, "snd-error") != 0)) /* otherwise an explicit snd-error call which has run the hook already */
     {
-      if (ss->xen_error_handler)
-	call_xen_error_handler(name_buf);
-      else
+      if (!(run_snd_error_hook(name_buf)))
 	{
-	  if (listener_exists())
-	    listener_append_and_prompt(name_buf);
-	  if (!(listener_is_visible()))
-	    snd_error_without_redirection_or_hook(name_buf);
-	  /* we're in xen_error from the redirection point of view and we already checked snd-error-hook */
+	  if (ss->xen_error_handler)
+	    call_xen_error_handler(name_buf);
+	  else
+	    {
+	      if (listener_exists())
+		listener_append_and_prompt(name_buf);
+	      if (!(listener_is_visible()))
+		snd_error_without_redirection_or_hook(name_buf);
+	      /* we're in xen_error from the redirection point of view and we already checked snd-error-hook */
+	    }
 	}
     }
   snd_unprotect_at(port_gc_loc);

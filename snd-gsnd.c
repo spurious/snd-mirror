@@ -1,7 +1,7 @@
 #include "snd.h"
 
-/* TODO: show controls doesn't fully open the control panel, clobbering even the sash
- * TODO: controls have too much space
+/* show controls doesn't fully open the control panel, clobbering even the sash: unfixable.
+ * TODO: controls have too much margin etc
  */
 
 enum {W_pane, W_pane_box, W_control_panel,
@@ -1825,6 +1825,7 @@ void sound_show_controls(snd_info *sp)
 {
   gtk_widget_show_all(CONTROL_PANEL(sp));
   /* control panel is pane 2 of SND_PANE(sp); PANE_BOX is pane 1 */
+  /* gtk_paned_set_position(GTK_PANED(SOUND_PANE(ss)), (gint)(widget_height(SOUND_PANE(ss)) * .75)); (glistener) */
 }
 
 void sound_hide_controls(snd_info *sp)

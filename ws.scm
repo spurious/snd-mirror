@@ -340,7 +340,10 @@ returning you to the true top-level."
 		 (set! cur-sync (and cur (sync cur)))
 		 (if cur 
 		     (set! snd-output (update-sound cur))
-		     (set! snd-output (open-sound output-1)))
+		     (if (= header-type mus-raw)
+			 (set! snd-output (open-raw-sound output-1 channels srate data-format))
+			 ;; open-sound here would either ask for raw settings or use possibly irrelevant defaults
+			 (set! snd-output (open-sound output-1))))
 		 (set! (sync snd-output) #t)))
 	   (if statistics
 	       ((if to-snd snd-print display)

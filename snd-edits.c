@@ -8587,7 +8587,7 @@ static XEN g_change_samples_with_origin(XEN samp_0, XEN samps, XEN origin, XEN v
   XEN_ASSERT_TYPE(XEN_OFF_T_P(samp_0), samp_0, XEN_ARG_1, S_change_samples_with_origin, "an integer");
   XEN_ASSERT_TYPE(XEN_OFF_T_P(samps), samps, XEN_ARG_2, S_change_samples_with_origin, "an integer");
   XEN_ASSERT_TYPE(XEN_STRING_P(origin), origin, XEN_ARG_3, S_change_samples_with_origin, "a string");
-  XEN_ASSERT_TYPE((XEN_VECTOR_P(vect)) || (XEN_STRING_P(vect)), vect, XEN_ARG_4, S_change_samples_with_origin, "a vector or a string");
+  XEN_ASSERT_TYPE(XEN_STRING_P(vect), vect, XEN_ARG_4, S_change_samples_with_origin, "a filename");
   ASSERT_CHANNEL(S_change_samples_with_origin, snd_n, chn_n, 5);
   cp = get_cp(snd_n, chn_n, S_change_samples_with_origin);
   if (!cp) return(XEN_FALSE);
@@ -8595,30 +8595,12 @@ static XEN g_change_samples_with_origin(XEN samp_0, XEN samps, XEN origin, XEN v
   len = XEN_TO_C_OFF_T_OR_ELSE(samps, 0);
   if (len <= 0) return(XEN_FALSE);
   pos = to_c_edit_position(cp, edpos, S_change_samples_with_origin, 7);
-  if (XEN_VECTOR_P(vect))
-    {
-      mus_sample_t *ivals;
-      ivals = (mus_sample_t *)MALLOC(len * sizeof(mus_sample_t));
-      if (len > (off_t)(XEN_VECTOR_LENGTH(vect))) len = XEN_VECTOR_LENGTH(vect);
-      if (len <= 0) return(XEN_FALSE); /* should this be an error? */
-#if SNDLIB_USE_FLOATS
-      for (i = 0; i < len; i++) ivals[i] = XEN_TO_C_DOUBLE(XEN_VECTOR_REF(vect, i));
-#else
-      for (i = 0; i < len; i++) ivals[i] = XEN_TO_C_INT_OR_ELSE(XEN_VECTOR_REF(vect, i), 0);
-#endif
-      change_samples(beg, len, ivals, cp, LOCK_MIXES, XEN_TO_C_STRING(origin), pos);
-      FREE(ivals);
-    }
-  else
-    {
-      /* string = filename here */
-      check_saved_temp_file("sound", vect, date);
-      file_change_samples(beg, len,
-			  XEN_TO_C_STRING(vect),
-			  cp, 0, DONT_DELETE_ME, LOCK_MIXES,
-			  XEN_TO_C_STRING(origin), 
-			  pos);
-    }
+  check_saved_temp_file("sound", vect, date);
+  file_change_samples(beg, len,
+		      XEN_TO_C_STRING(vect),
+		      cp, 0, DONT_DELETE_ME, LOCK_MIXES,
+		      XEN_TO_C_STRING(origin), 
+		      pos);
   update_graph(cp);
   return(xen_return_first(vect, origin));
 }
@@ -8831,7 +8813,7 @@ static XEN g_insert_samples_with_origin(XEN samp, XEN samps, XEN origin, XEN vec
   XEN_ASSERT_TYPE(XEN_INTEGER_P(samp), samp, XEN_ARG_1, S_insert_samples_with_origin, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(samps), samps, XEN_ARG_2, S_insert_samples_with_origin, "an integer");
   XEN_ASSERT_TYPE(XEN_STRING_P(origin), origin, XEN_ARG_3, S_insert_samples_with_origin, "a string");
-  XEN_ASSERT_TYPE((XEN_VECTOR_P(vect)) || (XEN_STRING_P(vect)), vect, XEN_ARG_4, S_insert_samples_with_origin, "a vector or a string");
+  XEN_ASSERT_TYPE(XEN_STRING_P(vect), vect, XEN_ARG_4, S_insert_samples_with_origin, "a filename");
   ASSERT_CHANNEL(S_insert_samples_with_origin, snd_n, chn_n, 5);
   cp = get_cp(snd_n, chn_n, S_insert_samples_with_origin);
   if (!cp) return(XEN_FALSE);
@@ -8839,26 +8821,8 @@ static XEN g_insert_samples_with_origin(XEN samp, XEN samps, XEN origin, XEN vec
   len = XEN_TO_C_OFF_T_OR_ELSE(samps, 0);
   if (len <= 0) return(samps);
   pos = to_c_edit_position(cp, edpos, S_insert_samples_with_origin, 7);
-  if (XEN_VECTOR_P(vect))
-    {
-      mus_sample_t *ivals;
-      int i;
-      ivals = (mus_sample_t *)MALLOC(len * sizeof(mus_sample_t));
-      if (len > (off_t)(XEN_VECTOR_LENGTH(vect))) len = XEN_VECTOR_LENGTH(vect);
-      if (len <= 0) return(XEN_FALSE); /* should this be an error? */
-#if SNDLIB_USE_FLOATS
-      for (i = 0; i < len; i++) ivals[i] = XEN_TO_C_DOUBLE(XEN_VECTOR_REF(vect, i));
-#else
-      for (i = 0; i < len; i++) ivals[i] = XEN_TO_C_INT_OR_ELSE(XEN_VECTOR_REF(vect, i), MUS_SAMPLE_0);
-#endif
-      insert_samples(beg, len, ivals, cp, XEN_TO_C_STRING(origin), pos);
-      FREE(ivals);
-    }
-  else 
-    {
-      check_saved_temp_file("sound", vect, date);
-      file_insert_samples(beg, len, XEN_TO_C_STRING(vect), cp, 0, DONT_DELETE_ME, XEN_TO_C_STRING(origin), pos);
-    }
+  check_saved_temp_file("sound", vect, date);
+  file_insert_samples(beg, len, XEN_TO_C_STRING(vect), cp, 0, DONT_DELETE_ME, XEN_TO_C_STRING(origin), pos);
   update_graph(cp);
   return(xen_return_first(C_TO_XEN_OFF_T(len), vect));
 }
