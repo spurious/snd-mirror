@@ -494,10 +494,13 @@ void snd_rb_raise(XEN tag, XEN throw_args)
     }
   /* rb_raise(err, msg); */
 
-  if (!(run_snd_error_hook(msg)))
+  if (strcmp(rb_id2name(tag), "Snd_error") != 0)
     {
-      if (ss->xen_error_handler)
-	call_xen_error_handler(msg);
+      if (!(run_snd_error_hook(msg)))
+	{
+	  if (ss->xen_error_handler)
+	    call_xen_error_handler(msg);
+	}
     }
   rb_raise(err, msg);
 }

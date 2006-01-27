@@ -1080,9 +1080,11 @@ void save_region_backpointer(snd_info *sp)
   r->filename = snd_tempnam();
   io_err = copy_file(r->editor_name, r->filename);
   if (io_err != IO_NO_ERROR)
-    snd_error(_("can't make region temp file (%s: %s)"), 
-	      r->filename, 
-	      snd_io_strerror());
+    {
+      if (io_err == IO_CANT_OPEN_FILE)
+	snd_error(_("can't find edited region temp file (%s: %s)"), r->editor_name, snd_io_strerror());
+      else snd_error(_("can't make region temp file (%s: %s)"), r->filename, snd_io_strerror());
+    }
   else
     {
       make_region_readable(r);

@@ -15219,16 +15219,16 @@ EDITS: 5
 	      (snd-display ";mus-xcoeffs: ~A ~A?" xs ys))))
       
       (let ((var (catch #t (lambda () (make-filter :order 2 :xcoeffs (vct 1.0 0.5) :ycoeffs (vct 2.0 1.0 0.5))) (lambda args args))))
-	(if (not (eq? (car var) 'wrong-type-arg))
+	(if (not (eq? (car var) 'mus-error))
 	    (snd-display ";make-filter bad coeffs: ~A" var)))
       (let ((var (catch #t (lambda () (make-filter :order 0 :xcoeffs (vct 1.0 0.5))) (lambda args args))))
 	(if (not (eq? (car var) 'out-of-range))
 	    (snd-display ";make-filter bad order: ~A" var)))
       (let ((var (catch #t (lambda () (make-fir-filter :order 22 :xcoeffs (vct 1.0 0.5))) (lambda args args))))
-	(if (not (eq? (car var) 'wrong-type-arg))
+	(if (not (eq? (car var) 'mus-error))
 	    (snd-display ";make-fir-filter bad coeffs: ~A" var)))
       (let ((var (catch #t (lambda () (make-iir-filter :order 22 :ycoeffs (vct 1.0 0.5))) (lambda args args))))
-	(if (not (eq? (car var) 'wrong-type-arg))
+	(if (not (eq? (car var) 'mus-error))
 	    (snd-display ";make-iir-filter bad coeffs: ~A" var)))
       (let ((var (catch #t (lambda () (make-fir-filter -1)) (lambda args args))))
 	(if (not (eq? (car var) 'out-of-range))
@@ -20296,6 +20296,25 @@ EDITS: 5
 	(harmonicizer 550.0 (list 1 .5 2 .3 3 .2) 10)
 	(close-sound ind))
       
+      (let ((arglist '()))
+	(do ((i 0 (1+ i)))
+	    ((= i 16))
+	  (set! arglist (cons 440.0 (cons :frequency arglist))))
+	(set! arglist (reverse arglist))
+	(for-each
+	 (lambda (make name)
+	   (let ((tag (catch #t
+			     (lambda () (apply make arglist))
+			     (lambda args (car args)))))
+	     (if (not (eq? tag 'mus-error))
+		 (snd-display ";long arglist to ~A: ~A" name tag))))
+	 (list make-wave-train make-polyshape make-delay make-average make-comb make-notch
+	       make-rand make-rand-interp make-table-lookup make-sine-summation make-env
+	       make-readin make-locsig make-granulate make-convolve make-phase-vocoder)
+	 (list 'make-wave-train 'make-polyshape 'make-delay 'make-average 'make-comb 'make-notch
+	       'make-rand 'make-rand-interp 'make-table-lookup 'make-sine-summation 'make-env
+	       'make-readin 'make-locsig 'make-granulate 'make-convolve 'make-phase-vocoder)))
+
       (run-hook after-test-hook 8)
       ))
 
@@ -33302,6 +33321,46 @@ EDITS: 1
 	(if (not (equal? (edit-fragment 1) '("ptree-channel" "ptree" 0 50828)))
 	    (snd-display ";save-edit-history ptree 1: ~A?" (edit-fragment 1)))
 	(close-sound nind))
+      
+      (let ((ind (open-sound "oboe.snd")))
+	(set! (speed-control ind) 2/3)
+	(set! (filter-control-envelope ind) (list 0.0 0.0 1.0 1.0))
+	(set! (sound-property :hi ind) 12345)
+	(insert-samples 0 100 (make-vct 100 .1) ind 0) ; need data to force save-state-hook to be called
+	(reset-hook! save-state-hook)
+	(add-hook! save-state-hook (lambda (filename) "savehook.snd"))
+	(save-state "s61.scm")
+	(close-sound ind)
+	(if (not (file-exists? "savehook.snd"))
+	    (snd-display ";save-state-hook redirect failed? ~A" (hook->list save-state-hook))
+	    (begin
+	      (load "s61.scm")
+	      (set! ind (find-sound "oboe.snd"))
+	      (if (not (sound? ind))
+		  (snd-display ";save-state after hook restored but no sound?")
+		  (begin
+		    (if (fneq (speed-control ind) .6667) (snd-display ";save-state w/hook speed: ~A" (speed-control ind)))
+		    (if (not (= (sound-property :hi ind) 12345)) (snd-display ";save-state w/hook hi: ~A" (sound-property :hi ind)))
+		    (if (not (feql (filter-control-envelope ind) (list 0.0 0.0 1.0 1.0)))
+			(snd-display ";save-state w/hook filter env: ~A" (filter-control-envelope ind)))
+		    ;; now check that save-state-hook is not called by other funcs
+		    (reset-hook! save-state-hook)
+		    (add-hook! save-state-hook (lambda (file) (snd-display ";bogus save-state-hook call!") "edit-list-to-function-saved.snd"))
+		    (let ((func (edit-list->function ind 0)))
+		      (if (file-exists? "edit-list-to-function-saved.snd")
+			  (begin
+			    (snd-display ";edit-list->function called save-state-hook")
+			    (delete-file "edit-list-to-function-saved.snd"))))
+		    (save-edit-history "save-edit-history-saved.scm" ind 0)
+		    (if (file-exists? "edit-list-to-function-saved.snd")
+			(begin
+			  (snd-display ";save-edit-history called save-state-hook")
+			  (delete-file "edit-list-to-function-saved.snd")))
+		    (delete-file "save-edit-history-saved.scm")
+		    (delete-file "savehook.snd")
+		    (close-sound ind)))))
+	(delete-file "s61.scm")
+	(reset-hook! save-state-hook))
       
       (add-sound-file-extension "ogg")
       (add-sound-file-extension "OGG")
@@ -57007,7 +57066,7 @@ EDITS: 1
 	    (check-error-tag 'bad-header (lambda () (set! (mus-sound-maxamp (string-append sf-dir "bad_chans.snd")) '(0.0 0.0))))
 	    (check-error-tag 'no-such-sound (lambda () (restore-marks 123 123 123 '())))
 	    (check-error-tag 'mus-error (lambda () (play (string-append sf-dir "midi60.mid"))))
-	    (check-error-tag 'wrong-type-arg (lambda () (make-iir-filter :order 32 :ycoeffs (make-vct 4))))
+	    (check-error-tag 'mus-error (lambda () (make-iir-filter :order 32 :ycoeffs (make-vct 4))))
 	    (check-error-tag 'mus-error (lambda () (make-iir-filter :coeffs (make-vct 4) :ycoeffs (make-vct 4))))
 	    (check-error-tag 'mus-error (lambda () (make-fir-filter :coeffs (make-vct 4) :xcoeffs (make-vct 4))))
 	    (check-error-tag 'out-of-range (lambda () (make-table-lookup :size 123456789)))
@@ -57287,7 +57346,7 @@ EDITS: 1
 	    (check-error-tag 'wrong-type-arg (lambda () (send-mozilla -1)))
 	    (check-error-tag 'bad-header (lambda () (file->array (string-append sf-dir "bad_chans.snd") 0 0 123 (make-vct 123))))
 	    (check-error-tag 'bad-header (lambda () (make-readin (string-append sf-dir "bad_chans.snd"))))
-	    (check-error-tag 'wrong-type-arg (lambda () (make-iir-filter 30 (make-vct 3))))
+	    (check-error-tag 'mus-error (lambda () (make-iir-filter 30 (make-vct 3))))
 	    (check-error-tag 'out-of-range (lambda () (make-wave-train :size (expt 2 30))))
 	    (check-error-tag 'out-of-range (lambda () (set! (mus-srate) 0.0)))
 	    (check-error-tag 'out-of-range (lambda () (set! (mus-srate) -1000)))
@@ -57314,8 +57373,10 @@ EDITS: 1
 	    (check-error-tag 'mus-error (lambda () (let ((f (make-filter 3 :xcoeffs vct-3 :ycoeffs vct-3))) (mus-ycoeff f 4))))
 	    (check-error-tag 'mus-error (lambda () (let ((f (make-filter 3 :xcoeffs vct-3 :ycoeffs vct-3))) (set! (mus-xcoeff f 4) 1.0))))
 	    (check-error-tag 'mus-error (lambda () (let ((f (make-filter 3 :xcoeffs vct-3 :ycoeffs vct-3))) (set! (mus-ycoeff f 4) 1.0))))
-	    (check-error-tag 'wrong-type-arg (lambda () (make-filter :ycoeffs (make-vct 4) :order 12)))
+	    (check-error-tag 'mus-error (lambda () (make-filter :ycoeffs (make-vct 4) :order 12)))
 	    (check-error-tag 'mus-error (lambda () (let ((hi (make-oscil))) (set! (mus-offset hi) 1))))
+	    (check-error-tag 'out-of-range (lambda () (make-locsig :channels (expt 2 30))))
+	    (check-error-tag 'out-of-range (lambda () (make-src :width 3000)))
 	    (check-error-tag 'out-of-range (lambda () (make-frame -1)))
 	    (check-error-tag 'mus-error (lambda () (let ((hi (make-frame 2 .1 .2))) (frame-ref hi 3))))
 	    (check-error-tag 'out-of-range (lambda () (make-scalar-mixer 0 .1)))

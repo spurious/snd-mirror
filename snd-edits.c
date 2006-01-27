@@ -4529,11 +4529,18 @@ static void fprintf_with_possible_embedded_string(FILE *fd, const char *str)
   fputc('"', fd);
 }
 
-static char *edit_list_data_to_temp_file(chan_info *cp, ed_list *ed, file_delete_t delete_me)
+static char *edit_list_data_to_temp_file(chan_info *cp, ed_list *ed, file_delete_t delete_me, bool with_save_state_hook)
 {
   snd_data *sd;
   char *ofile;
-  ofile = shorter_tempnam(save_dir(ss), "snd_");
+  if (with_save_state_hook)
+    {
+      char *nfile;
+      nfile = shorter_tempnam(save_dir(ss), "snd_");
+      ofile = run_save_state_hook(nfile);
+      FREE(nfile);
+    }
+  else ofile = shorter_tempnam(save_dir(ss), "snd_");
   sd = cp->sounds[ed->sound_location];
   if (sd->type == SND_DATA_BUFFER)
     mus_array_to_file(ofile, sd->buffered_data, ed->len, 22050, 1);
@@ -4542,16 +4549,17 @@ static char *edit_list_data_to_temp_file(chan_info *cp, ed_list *ed, file_delete
       io_error_t io_err;
       io_err = copy_file(sd->filename, ofile);
       if (io_err != IO_NO_ERROR)
-	snd_warning("%s edit list temp file %s: %s",
-		    io_error_name(io_err),
-		    ofile,
-		    snd_io_strerror());
+	{
+	  if (io_err == IO_CANT_OPEN_FILE)
+	    snd_warning("%s edit list original temp file %s: %s", io_error_name(io_err), sd->filename, snd_io_strerror());
+	  else snd_warning("%s edit list saved temp file %s: %s", io_error_name(io_err), ofile, snd_io_strerror());
+	}
     }
   if (delete_me == DELETE_ME) remember_temp(ofile, 1); /* deletion upon exit (forget_temps) if a temp (edit-list->function, but not save-state) */
   return(ofile);
 }
 
-void edit_history_to_file(FILE *fd, chan_info *cp)
+void edit_history_to_file(FILE *fd, chan_info *cp, bool with_save_state_hook)
 {
   /* write edit list as a guile|ruby program to fd (open for writing) for subsequent load */
   /*   the entire current list is written, then the edit_ctr is fixed up to reflect its current state */
@@ -4577,9 +4585,13 @@ void edit_history_to_file(FILE *fd, chan_info *cp)
 	      char *nfile = NULL, *ofile = NULL;
 	      off_t len;
 	      io_error_t io_err;
-	      ofile = shorter_tempnam(save_dir(ss), "snd_");
-	      nfile = run_save_state_hook(ofile);
-	      FREE(ofile);
+	      if (with_save_state_hook)
+		{
+		  ofile = shorter_tempnam(save_dir(ss), "snd_");
+		  nfile = run_save_state_hook(ofile);
+		  FREE(ofile);
+		}
+	      else nfile = shorter_tempnam(save_dir(ss), "snd_");
 	      len = cp->samples[i];
 	      io_err = channel_to_file(cp, nfile, i);
 
@@ -4630,7 +4642,7 @@ void edit_history_to_file(FILE *fd, chan_info *cp)
 		    fprintf_with_possible_embedded_string(fd, ed->origin);
 		  else fprintf(fd, "\"%s\"", S_insert_samples);
 		  fprintf(fd, PROC_SEP);
-		  nfile = edit_list_data_to_temp_file(cp, ed, DONT_DELETE_ME);
+		  nfile = edit_list_data_to_temp_file(cp, ed, DONT_DELETE_ME, with_save_state_hook);
 		  fprintf(fd, "\"%s\"" PROC_SEP "sfile" PROC_SEP "%d", nfile, cp->chan);
 		  break;
 		case DELETION_EDIT:
@@ -4650,7 +4662,7 @@ void edit_history_to_file(FILE *fd, chan_info *cp)
 		    fprintf_with_possible_embedded_string(fd, ed->origin);
 		  else fprintf(fd, "\"\"");
 		  fprintf(fd, PROC_SEP);
-		  nfile = edit_list_data_to_temp_file(cp, ed, DONT_DELETE_ME);
+		  nfile = edit_list_data_to_temp_file(cp, ed, DONT_DELETE_ME, with_save_state_hook);
 		  fprintf(fd, "\"%s\"" PROC_SEP "sfile" PROC_SEP "%d", nfile, cp->chan);
 		  break;
 		case EXTEND_EDIT:
@@ -4800,7 +4812,7 @@ static char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
 		    {
 		      /* save data in temp file, use insert-samples with file name */
 		      char *ofile;
-		      ofile = edit_list_data_to_temp_file(cp, ed, DELETE_ME);
+		      ofile = edit_list_data_to_temp_file(cp, ed, DELETE_ME, false);
 		      function = mus_format("%s (%s " OFF_TD " " OFF_TD " \"%s\" snd chn)", function, S_insert_samples, ed->beg, ed->len, ofile);
 		      FREE(ofile);
 		    }
@@ -4811,7 +4823,7 @@ static char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
 		    {
 		      /* save data in temp file, use set-samples with file name */
 		      char *ofile;
-		      ofile = edit_list_data_to_temp_file(cp, ed, DELETE_ME);
+		      ofile = edit_list_data_to_temp_file(cp, ed, DELETE_ME, false);
 		      function = mus_format("%s (set-samples " OFF_TD " " OFF_TD " \"%s\" snd chn)", function, ed->beg, ed->len, ofile);
 		      FREE(ofile);
 		    }
@@ -4923,7 +4935,7 @@ static char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
  		      /* from HAVE_SCHEME above */
  		      /* save data in temp file, use insert-samples with file name */
  		      char *ofile;
- 		      ofile = edit_list_data_to_temp_file(cp, ed, DELETE_ME);
+ 		      ofile = edit_list_data_to_temp_file(cp, ed, DELETE_ME, false);
  		      function = mus_format("%s %s(" OFF_TD ", " OFF_TD ", \"%s\", snd, chn)", function, TO_PROC_NAME(S_insert_samples), ed->beg, ed->len, ofile);
  		      FREE(ofile);
  		    }
@@ -4935,7 +4947,7 @@ static char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
  		      /* from HAVE_SCHEME above */
  		      /* save data in temp file, use set-samples with file name */
  		      char *ofile;
- 		      ofile = edit_list_data_to_temp_file(cp, ed, DELETE_ME);
+ 		      ofile = edit_list_data_to_temp_file(cp, ed, DELETE_ME, false);
  		      function = mus_format("%s set_samples(" OFF_TD ", " OFF_TD ", \"%s\", snd, chn)", function, ed->beg, ed->len, ofile);
  		      FREE(ofile);
  		    }
@@ -7918,7 +7930,7 @@ static XEN g_save_edit_history(XEN filename, XEN snd, XEN chn)
 	{
 	  cp = get_cp(snd, chn, S_save_edit_history);
 	  if (!cp) return(XEN_FALSE);
-	  edit_history_to_file(fd, cp);
+	  edit_history_to_file(fd, cp, false);
 	}
       else
 	{
@@ -7929,7 +7941,7 @@ static XEN g_save_edit_history(XEN filename, XEN snd, XEN chn)
 	      sp = get_sp(snd, NO_PLAYERS);
 	      if (sp)
 		for (i = 0; i < sp->nchans; i++)
-		  edit_history_to_file(fd, sp->chans[i]);
+		  edit_history_to_file(fd, sp->chans[i], false);
 	    }
 	  else
 	    {
@@ -7939,7 +7951,7 @@ static XEN g_save_edit_history(XEN filename, XEN snd, XEN chn)
 		  sp = ss->sounds[i];
 		  if ((sp) && (sp->inuse == SOUND_NORMAL))
 		    for (j = 0; j < sp->nchans; j++)
-		      edit_history_to_file(fd, sp->chans[j]);
+		      edit_history_to_file(fd, sp->chans[j], false);
 		}
 	    }
 	}
@@ -8583,7 +8595,7 @@ static XEN g_change_samples_with_origin(XEN samp_0, XEN samps, XEN origin, XEN v
 {
   chan_info *cp;
   int pos;
-  off_t beg, i, len;
+  off_t beg, len;
   XEN_ASSERT_TYPE(XEN_OFF_T_P(samp_0), samp_0, XEN_ARG_1, S_change_samples_with_origin, "an integer");
   XEN_ASSERT_TYPE(XEN_OFF_T_P(samps), samps, XEN_ARG_2, S_change_samples_with_origin, "an integer");
   XEN_ASSERT_TYPE(XEN_STRING_P(origin), origin, XEN_ARG_3, S_change_samples_with_origin, "a string");

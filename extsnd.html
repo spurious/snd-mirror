@@ -1799,12 +1799,13 @@ the file is being saved under a new name (as in <a href="#savesoundas">save-soun
 </td></tr>
 <tr><td></td><td colspan=2>
 called each time the <a href="#savestate">save-state</a>
-mechanism is about to create a new temporary file to save some edit history sample values.
-<i>temp-filename</i> is the current temporary file name.
-If the hook returns a string, it is treated as the new temp filename.  This hook provides a way to
-keep track of which files are in a given saved state batch, and a way to rename or redirect those files.
-The default naming scheme simply increments a counter and places everything in the <a href="#savedir">save-dir</a>;
-without the save-state-hook, if you are saving several states, it can be a pain sometimes to decide which files are no longer needed.
+mechanism is about to create a new temporary file to save some edit history sample values; that is,
+each channel's edit history data is saved in a separate temporary file, and this hooks provides
+a way to specify the name of that file.
+<i>temp-filename</i> is the temporary file name that will be used unless
+the hook returns a different one (as a string).  This hook provides a way to
+keep track of which files are used in a given saved state batch, so
+that later cleanup is easier to manage.
 </td></tr>
 <tr><td colspan=3></td></tr>
 

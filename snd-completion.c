@@ -1,6 +1,9 @@
 #include "snd.h"
 #include "sndlib-strings.h"
 
+/* SOMEDAY: hyper completion: if in hook func and 1st arg only look for hooks etc
+ */
+
 static char *current_match = NULL;
 
 #if HAVE_GUILE

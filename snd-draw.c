@@ -488,10 +488,6 @@ static XEN g_dialog_widgets(void)
 void set_dialog_widget(snd_dialog_t which, widget_t wid)
 {
   state_context *sx;
-#if DEBUGGING
-  if (which >= NUM_DIALOGS)
-    fprintf(stderr, "set %d dialog of %d\n", which, NUM_DIALOGS);
-#endif
   sx = ss->sgx;
   if (sx->dialogs == NULL)
     {

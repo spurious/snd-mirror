@@ -937,7 +937,7 @@ static void save_sound_state (snd_info *sp, void *ptr)
 	{
 	  save_property_list(fd, XEN_VECTOR_REF(cp->properties, 0), chan);
 	}
-      edit_history_to_file(fd, cp);
+      edit_history_to_file(fd, cp, true);
       check_selection(fd, cp);
       if (selected_channel() == cp)
 	{

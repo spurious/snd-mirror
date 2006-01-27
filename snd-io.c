@@ -113,7 +113,7 @@ io_error_t copy_file(const char *oldname, const char *newname)
   if (ofd == -1) 
     {
       snd_close(ifd, oldname);
-      return(IO_CANT_OPEN_FILE);
+      return(IO_CANT_CREATE_FILE);
     }
   buf = (char *)CALLOC(8192, sizeof(char));
   while ((bytes = read(ifd, buf, 8192)))

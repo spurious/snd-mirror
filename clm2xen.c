@@ -2631,8 +2631,6 @@ with chans samples, each sample set from the trailing arguments (defaulting to 0
 	XEN_OUT_OF_RANGE_ERROR(S_make_frame, XEN_ARG_1, cararg, "chans ~A <= 0?");
       if (len > (size + 1)) 
 	mus_misc_error(S_make_frame, "extra trailing args?", arglist);
-      if (size <= 0) 
-	XEN_OUT_OF_RANGE_ERROR(S_make_frame, XEN_ARG_1, C_TO_XEN_INT(size), "size ~A <= 0?");
       if (size > MUS_MAX_CHANS) 
 	XEN_OUT_OF_RANGE_ERROR(S_make_frame, XEN_ARG_1, C_TO_XEN_INT(size), "size ~A too big");
     }
@@ -2649,7 +2647,7 @@ with chans samples, each sample set from the trailing arguments (defaulting to 0
 	    else
 	      {
 		mus_free(ge);
-		XEN_WRONG_TYPE_ARG_ERROR(S_make_frame, i, XEN_CAR(lst), "not a number?");
+		XEN_WRONG_TYPE_ARG_ERROR(S_make_frame, i, XEN_CAR(lst), "a number");
 	      }
 	}
       return(mus_xen_to_object(_mus_wrap_one_vct_wrapped(ge)));
@@ -2967,7 +2965,7 @@ with chans inputs and outputs, initializing the scalars from the rest of the arg
   if (len == 0) mus_misc_error(S_make_mixer, "need at least 1 arg", arglist);
   cararg = XEN_CAR(arglist);
   if (!(XEN_NUMBER_P(cararg)))
-    XEN_WRONG_TYPE_ARG_ERROR(S_make_mixer, 1, cararg, "integer = number of chans");
+    XEN_WRONG_TYPE_ARG_ERROR(S_make_mixer, 1, cararg, "an integer = number of chans");
   size = XEN_TO_C_INT_OR_ELSE(cararg, 0);
   if (size <= 0) XEN_OUT_OF_RANGE_ERROR(S_make_mixer, 1, cararg, "chans ~A <= 0?");
   if (size > MUS_MAX_CHANS) XEN_OUT_OF_RANGE_ERROR(S_make_mixer, 1, cararg, "chans ~A too big");
@@ -2991,7 +2989,7 @@ with chans inputs and outputs, initializing the scalars from the rest of the arg
 	      else
 		{
 		  mus_free(ge);
-		  XEN_WRONG_TYPE_ARG_ERROR(S_make_mixer, i, XEN_CAR(lst), "not a number?");
+		  XEN_WRONG_TYPE_ARG_ERROR(S_make_mixer, i, XEN_CAR(lst), "a number");
 		}
 	      k++;
 	      if (k == size)
@@ -3606,18 +3604,30 @@ static XEN g_make_filter_1(xclm_fir_t choice, XEN arg1, XEN arg2, XEN arg3, XEN 
   else
     {
       if ((x) && (order > x->length))
-	XEN_WRONG_TYPE_ARG_ERROR(caller, 2, XEN_LIST_2(keys[0], keys[1]), "xcoeffs must match order");
+	{
+	  XEN_ERROR(MUS_MISC_ERROR,
+		    XEN_LIST_3(C_TO_XEN_STRING(caller),
+			       C_TO_XEN_STRING("xcoeffs must match order"),
+			       XEN_LIST_4(C_TO_XEN_STRING("order:"), keys[0], 
+					  C_TO_XEN_STRING("xcoeffs:"), keys[1])));
+	}
       else
 	{
 	  if ((y) && (order > y->length))
-	    {
-	      if (choice == G_IIR_FILTER)
-		XEN_WRONG_TYPE_ARG_ERROR(caller, 2, XEN_LIST_2(keys[0], keys[1]), "ycoeffs must match order");
-	      else XEN_WRONG_TYPE_ARG_ERROR(caller, 3, XEN_LIST_2(keys[0], keys[2]), "ycoeffs must match order");
-	    }
+	    XEN_ERROR(MUS_MISC_ERROR,
+		      XEN_LIST_3(C_TO_XEN_STRING(caller),
+				 C_TO_XEN_STRING("ycoeffs must match order"),
+				 XEN_LIST_4(C_TO_XEN_STRING("order:"), keys[0], 
+					    C_TO_XEN_STRING("ycoeffs:"), keys[2])));
 	  else
-	    if ((x) && (y) && (x->length != y->length))
-	      XEN_WRONG_TYPE_ARG_ERROR(caller, 1, XEN_LIST_2(keys[1], keys[2]), "coeffs must be same length");
+	    {
+	      if ((x) && (y) && (x->length != y->length))
+		XEN_ERROR(MUS_MISC_ERROR,
+			  XEN_LIST_3(C_TO_XEN_STRING(caller),
+				     C_TO_XEN_STRING("coeffs must be same length"),
+				     XEN_LIST_4(C_TO_XEN_STRING("x len:"), C_TO_XEN_INT(x->length),
+						C_TO_XEN_STRING("y len:"), C_TO_XEN_INT(y->length))));
+	    }
 	}
     }
   switch (choice)
