@@ -300,6 +300,11 @@ snd_io *make_file_state(int fd, file_info *hdr, int chan, off_t beg, int suggest
   io = (snd_io *)CALLOC(1, sizeof(snd_io)); /* only creation point */
 #if DEBUGGING
   add_io(io);
+  if (hdr->chans <= chan) /* eventual memerr */
+    {
+      fprintf(stderr, "make_file_state (snd-io.c 303): chan %d of %d\n", chan, hdr->chans);
+      abort();
+    }
 #endif
   io->arrays = (mus_sample_t **)CALLOC(hdr->chans, sizeof(mus_sample_t *));
   io->fd = fd;

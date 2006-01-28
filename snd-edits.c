@@ -8404,6 +8404,12 @@ the new data's end."
       if (!mus_file_probe(fname))
 	return(snd_no_such_file_error(caller, vect));
       inchan = XEN_TO_C_INT_OR_ELSE(infile_chan, 0);
+      if ((inchan < 0) ||
+	  (inchan >= mus_sound_chans(fname)))
+	XEN_ERROR(NO_SUCH_CHANNEL,
+		  XEN_LIST_3(C_TO_XEN_STRING(caller),
+			     vect,
+			     infile_chan));
       if (XEN_BOOLEAN_P(auto_delete)) delete_file = XEN_TO_C_BOOLEAN(auto_delete);
       if ((beg == 0) && 
 	  ((len > curlen) || override))
@@ -8517,7 +8523,7 @@ static XEN samples_to_vct_1(XEN samp_0, XEN samps, XEN snd_n, XEN chn_n, XEN edp
   if (len <= 0) XEN_OUT_OF_RANGE_ERROR(caller, 2, samps, "samples ~A <= 0?");
   fvals = (Float *)MALLOC(len * sizeof(Float));
   if (len < num_to_read) num_to_read = (int)len; /* we often want fewer than 2048 samps (MIX_FILE_BUFFER_SIZE) */
-                                            /* but this has less effect than I thought -- affects only copy case */
+                                                 /* but this has less effect than I thought -- affects only copy case */
   sf = init_sample_read_any_with_bufsize(beg, cp, READ_FORWARD, pos, num_to_read);
   if (sf)
     {

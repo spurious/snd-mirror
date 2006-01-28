@@ -1,11 +1,12 @@
 #include "snd.h"
 
-static char *io_error_names[] = {"no error", "save-hook cancellation", "bad channel", "bad edit position", "read protected", 
+static char *io_error_names[IO_ERROR_NUM] = {"no error", "save-hook cancellation", "bad channel", "bad edit position", "read protected", 
 				 "no file", "bad location", "can't reopen file", "too many open files", "unknown sndlib error", 
 				 "no memory", "can't open", "no filename", "bad data format", "bad header type", "sndlib uninitialized", 
 				 "not a sound file", "file closed", "write error", "read error", "interrupted", "can't close", 
 				 "bad header", "disk full", "write protected", "write cancellation", "can't move", "can't remove", 
-				 "can't read selection file", "can't open", "need write confirmation", "no changes", "io edit-hook cancellation"
+				 "can't read selection file", "can't open", "need write confirmation", "no changes", "io edit-hook cancellation",
+				 "can't create file"
 };
 
 const char *io_error_name(io_error_t err)

@@ -1,35 +1,35 @@
 ;;; Snd tests
 ;;;
-;;;  test 0: constants                          [442]
-;;;  test 1: defaults                           [1013]
-;;;  test 2: headers                            [1213]
-;;;  test 3: variables                          [1517]
-;;;  test 4: sndlib                             [1981]
-;;;  test 5: simple overall checks              [3986]
-;;;  test 6: vcts                               [11362]
-;;;  test 7: colors                             [11672]
-;;;  test 8: clm                                [12174]
-;;;  test 9: mix                                [20239]
-;;;  test 10: marks                             [23345]
-;;;  test 11: dialogs                           [24048]
-;;;  test 12: extensions                        [24429]
-;;;  test 13: menus, edit lists, hooks, etc     [24857]
-;;;  test 14: all together now                  [26249]
-;;;  test 15: chan-local vars                   [27316]
-;;;  test 16: regularized funcs                 [28590]
-;;;  test 17: dialogs and graphics              [32956]
-;;;  test 18: enved                             [33031]
-;;;  test 19: save and restore                  [33051]
-;;;  test 20: transforms                        [34536]
-;;;  test 21: new stuff                         [36197]
-;;;  test 22: run                               [37073]
-;;;  test 23: with-sound                        [42574]
-;;;  test 24: user-interface                    [43622]
-;;;  test 25: X/Xt/Xm                           [46759]
-;;;  test 26: Gtk                               [51272]
-;;;  test 27: GL                                [55324]
-;;;  test 28: errors                            [55434]
-;;;  test all done                              [57561]
+;;;  test 0: constants                          [462]
+;;;  test 1: defaults                           [1033]
+;;;  test 2: headers                            [1234]
+;;;  test 3: variables                          [1538]
+;;;  test 4: sndlib                             [1933]
+;;;  test 5: simple overall checks              [4017]
+;;;  test 6: vcts                               [11410]
+;;;  test 7: colors                             [11720]
+;;;  test 8: clm                                [12222]
+;;;  test 9: mix                                [20392]
+;;;  test 10: marks                             [23499]
+;;;  test 11: dialogs                           [24202]
+;;;  test 12: extensions                        [24588]
+;;;  test 13: menus, edit lists, hooks, etc     [25016]
+;;;  test 14: all together now                  [26442]
+;;;  test 15: chan-local vars                   [27510]
+;;;  test 16: regularized funcs                 [28784]
+;;;  test 17: dialogs and graphics              [33151]
+;;;  test 18: enved                             [33226]
+;;;  test 19: save and restore                  [33246]
+;;;  test 20: transforms                        [34842]
+;;;  test 21: new stuff                         [36516]
+;;;  test 22: run                               [37403]
+;;;  test 23: with-sound                        [42896]
+;;;  test 24: user-interface                    [43984]
+;;;  test 25: X/Xt/Xm                           [47213]
+;;;  test 26: Gtk                               [51794]
+;;;  test 27: GL                                [55866]
+;;;  test 28: errors                            [55976]
+;;;  test all done                              [58108]
 ;;;
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 ;;; need all html example code in autotests
@@ -2090,7 +2090,6 @@
 	  (if (and m1 (= clmtest 0)) (snd-display ";oboe: mus-sound-maxamp-exists before maxamp: ~A" m1))
 	  (if (not (mus-sound-maxamp-exists? "oboe.snd")) 
 	      (snd-display ";oboe: mus-sound-maxamp-exists after maxamp: ~A" (mus-sound-maxamp-exists? "oboe.snd")))
-;	  (mus-audio-set-oss-buffers 4 12)
 
 	  (let ((vals (mus-header-raw-defaults)))
 	    (if (or (not (list? vals))
@@ -2337,6 +2336,76 @@
 	  (set! (transform-normalization) normalize-by-channel)
 	  (if (not (= (transform-normalization) normalize-by-channel))
 	      (snd-display ";set-transform-normalization channel -> ~A" (transform-normalization)))
+	  
+	  (let ((ind (new-sound "fmv.snd" mus-next mus-bshort 22050 1 "set-samples test" 100)))
+	    (set! (samples 10 3) (make-vct 3 .1))
+	    (if (not (vequal (channel->vct 0 20 ind 0) (vct 0 0 0 0 0 0 0 0 0 0 .1 .1 .1 0 0 0 0 0 0 0)))
+		(snd-display ";1 set samples 0 for .1: ~A" (channel->vct 0 20 ind 0)))
+	    (set! (samples 20 3 ind 0) (make-vct 3 .1))
+	    (if (not (vequal (channel->vct 10 20 ind 0) (vct .1 .1 .1 0 0 0 0 0 0 0 .1 .1 .1 0 0 0 0 0 0 0)))
+		(snd-display ";2 set samples 10 for .1: ~A" (channel->vct 10 20 ind 0)))
+	    (set! (samples 30 3 ind 0 #f "a name") (make-vct 3 .1))
+	    (if (not (vequal (channel->vct 20 20 ind 0) (vct .1 .1 .1 0 0 0 0 0 0 0 .1 .1 .1 0 0 0 0 0 0 0)))
+		(snd-display ";3 set samples 20 for .1: ~A" (channel->vct 20 20 ind 0)))
+	    (set! (samples 0 3 ind 0 #f "a name" 0 1) (make-vct 3 .2))
+	    (if (not (vequal (channel->vct 0 20 ind 0) (vct .2 .2 .2 0 0 0 0 0 0 0 .1 .1 .1 0 0 0 0 0 0 0)))
+		(snd-display ";4 set samples 0 at 1 for .1: ~A" (channel->vct 0 20 ind 0)))
+	    (if (not (vequal (channel->vct 20 20 ind 0) (make-vct 20 0.0)))
+		(snd-display ";5 set samples 20 at 1 for .1: ~A" (channel->vct 0 20 ind 0)))
+	    (let ((nd (new-sound "fmv1.snd" :channels 2)))
+	      (vct->channel (make-vct 10 .5) 0 10 nd 0)
+	      (vct->channel (make-vct 10 .3) 0 10 nd 1)
+	      (save-sound-as "fmv1.snd" nd)
+	      (close-sound nd))
+	    (if (not (file-exists? "fmv1.snd")) (snd-display ";fmv1 not saved??"))
+	    (set! (samples 0 10 ind 0 #f "another name" 1) "fmv1.snd")
+	    (if (not (vequal (channel->vct 0 20 ind 0) (vct .3 .3 .3 .3 .3 .3 .3 .3 .3 .3 .1 .1 .1 0 0 0 0 0 0 0)))
+		(snd-display ";6 set samples 0 at 1 for .1: ~A" (channel->vct 0 20 ind 0)))
+	    (set! (samples 5 6 ind 0 #f "another name 7" 0) "fmv1.snd")
+	    (if (not (vequal (channel->vct 0 20 ind 0) (vct .3 .3 .3 .3 .3 .5 .5 .5 .5 .5 .5 .1 .1 0 0 0 0 0 0 0)))
+		(snd-display ";7 set samples 0 at 1 for .1: ~A" (channel->vct 0 20 ind 0)))
+	    (revert-sound ind)
+	    (set! (samples 0 10 ind 0 #f "another name 8" 1 0 #f) "fmv1.snd")
+	    (if (not (vequal (channel->vct 0 20 ind 0) (vct .3 .3 .3 .3 .3 .3 .3 .3 .3 .3 0 0 0 0 0 0 0 0 0 0)))
+		(snd-display ";8 set samples 0 at 1 for .1: ~A" (channel->vct 0 20 ind 0)))
+	    (set! (samples 10 10 ind 0 #f "another name 9" 0 0) "fmv1.snd")
+	    (if (not (vequal (channel->vct 0 20 ind 0) (vct 0 0 0 0 0 0 0 0 0 0 .5 .5 .5 .5 .5 .5 .5 .5 .5 .5)))
+		(snd-display ";9 set samples 0 at 1 for .1: ~A" (channel->vct 0 20 ind 0)))
+	    (set! (samples 20 10) "fmv1.snd")
+	    (if (not (vequal (channel->vct 10 20 ind 0) (make-vct 20 .5)))
+		(snd-display ";10 set samples 0 at 1 for .1: ~A" (channel->vct 10 20 ind 0)))
+	    (revert-sound ind)
+	    (set! (samples 0 10 ind 0 #t "another name" 1 0 #f) "fmv1.snd")
+	    (if (not (= (frames ind 0) 10)) (snd-display ";11 set-samples truncate to ~A" (frames ind 0)))
+	    (revert-sound ind)
+	    (delete-file "fmv1.snd")
+	    
+	    ;; now try to confuse it
+	    (let ((tag (catch #t 
+			      (lambda () (set! (samples 0 10 ind 0) "fmv1.snd"))
+			      (lambda args (car args)))))
+	      (if (not (eq? tag 'no-such-file)) (snd-display ";set-samples, no such file: ~A" tag)))
+	    (let ((nd (new-sound "fmv1.snd" :channels 1)))
+	      (vct->channel (make-vct 10 .5) 0 10 nd 0)
+	      (save-sound-as "fmv1.snd" nd)
+	      (close-sound nd))
+	    (let ((tag (catch #t
+			      (lambda () (set! (samples 0 10 ind 0 #f "another name" 1) "fmv1.snd")) ; chan 1 does not exist
+			      (lambda args (car args)))))
+	      (if (not (eq? tag 'no-such-channel)) (snd-display ";set-samples no such channel: ~A" tag)))
+	    (let ((tag (catch #t
+			      (lambda () (set! (samples 0 10 ind 0 #f "another name" -1) "fmv1.snd"))
+			      (lambda args (car args)))))
+	      (if (not (eq? tag 'no-such-channel)) (snd-display ";set-samples no such channel (-1): ~A" tag)))
+	    (let ((tag (catch #t
+			      (lambda () (set! (samples 0 -10) "fmv1.snd"))
+			      (lambda args (car args)))))
+	      (if (not (eq? tag 'wrong-type-arg)) (snd-display ";set-samples (-10): ~A" tag)))
+	    (let ((tag (catch #t
+			      (lambda () (set! (samples -10 10) "fmv1.snd"))
+			      (lambda args (car args)))))
+	      (if (not (eq? tag 'no-such-sample)) (snd-display ";set-samples (beg -10): ~A" tag)))
+	    (close-sound ind))
 	  
 	  (let ((len 100))
 	    (for-each
@@ -33137,6 +33206,19 @@ EDITS: 1
 	(update-time-graph ind 0)
 	(reset-hook! after-graph-hook)
 	(reset-hook! lisp-graph-hook)
+
+	(reset-hook! lisp-graph-hook)
+	(let ((ind (open-sound "oboe.snd")))
+	  (set! (time-graph? ind 0) #f)
+	  (graph (list (vct 0 1 2) (vct 3 2 1) (vct 1 2 3) (vct 1 1 1) (vct 0 1 0) (vct 3 1 2)))
+	  (update-lisp-graph)
+	  (add-hook! lisp-graph-hook (lambda (snd chn)
+				       (list (basic-color) (zoom-color) (data-color) (selected-data-color) (mix-color))))
+	  (graph (list (vct 0 1 2) (vct 3 2 1) (vct 1 2 3) (vct 1 1 1) (vct 0 1 0) (vct 3 1 2)))
+	  (update-lisp-graph)
+	  (reset-hook! lisp-graph-hook)
+	  (close-sound ind))
+
 	(let* ((ind1 (open-sound "2.snd"))
 	       (wids3 (channel-widgets ind1 0))
 	       (wids4 (channel-widgets ind1 1)))
@@ -36102,6 +36184,19 @@ EDITS: 1
 	      (if (not (= (transform-type ind 0) fourier-transform)) 
 		  (snd-display ";after delete-transform ~A -> ~A" ftype (transform-type ind 0)))
 	      (close-sound ind))
+	    
+	    (if (defined? 'gsl-dht)
+		(begin
+		  (add-transform "Hankel" "Hankel" 0.0 1.0
+				 (lambda (n rd)
+				   (let ((v (make-vct n)))
+				     (do ((i 0 (1+ i))) ((= i n)) (vct-set! v i (rd)))
+				     (gsl-dht n v 1.0 1.0)
+				     v)))
+		  (let* ((n 16) 
+			 (v (make-vct n)))
+		    (do ((i 0 (1+ i))) ((= i n)) (vct-set! v i 1.0))
+		    (gsl-dht n v 1.0 1.0))))
 	    
 	    (let ((ind1 (open-sound "oboe.snd")))
 	      (set! (time-graph-style ind1 0) graph-lollipops)
@@ -41972,9 +42067,9 @@ EDITS: 1
 	(if (fneq val 0.5) (snd-display ";run sample->frame no frame: ~A" val)))
       
 ;      (show-ptree 2)
-;      (run (lambda () (oscil unique-generator)))
+      (run (lambda () (oscil unique-generator))) ; needed below
 ;      (show-ptree 0)
-      
+     
       (let ((tag (catch #t 
 			(lambda () 
 			  (run-eval '(lambda (a) (declare (pair a)) (car a))  ; apparently deliberate
@@ -42077,10 +42172,10 @@ EDITS: 1
 	    (snd-display ";run format gen 0: ~A" val)))
       (let ((val (run (lambda () (format #f "~A" unique-generator)))))
 	(if (not (string=? val "#<oscil freq: 440.000Hz, phase: 0.125>"))
-	    (snd-display ";run format gen 1: ~A" val)))
+	    (snd-display ";run format gen phase 1: ~A" val)))
       (let ((val (run-eval '(format #f "~A" unique-generator))))
 	(if (not (string=? val "#<oscil freq: 440.000Hz, phase: 0.125>"))
-	    (snd-display ";run format gen 2: ~A" val)))
+	    (snd-display ";run format gen phase 2: ~A" val)))
       
       (let ((make-procs (list
 			 make-all-pass make-asymmetric-fm make-average
@@ -42102,7 +42197,7 @@ EDITS: 1
 		  (val2 (run (lambda () (format #f "~A" gen)))))
 	     (gc)(gc)
 	     (if (not (string=? val1 val2))
-		 (snd-display ";run format gen: ~A ~A" val1 val2))))
+		 (snd-display ";run format gen: format: ~A, run format: ~A (~A)" val1 val2 gen))))
 	 make-procs))
       
       (let ((val1 (run-eval '(format #f "~A" (make-all-pass))))
@@ -45418,6 +45513,7 @@ EDITS: 1
 		    (delete-file "fmv1.snd")
 		    (mus-sound-forget "fmv1.snd")))
 	      (if (not (sound? ind)) (set! ind (open-sound "4.aiff")))
+	      (set! (channel-style ind) channels-separate)
 	      (select-sound ind)
 	      (select-channel 1)
 	      (set! (selection-member? #t) #f)
@@ -45452,12 +45548,17 @@ EDITS: 1
 				 snd chn key state
 				 ind 1 (char->integer #\f) 4
 				 (axis-info ind 1 lisp-graph))))
-	      (if (provided? 'snd-debug)
+	      (if (defined? 'top-sash)
 		  (for-each
 		   (lambda (sash)
 		     (if (Widget? sash)
 			 (drag-event sash 1 0 1 1 1 100)))
 		   (top-sash)))
+	      (if (defined? 'watch-sash)
+		  (let ((s2 (open-sound "2a.snd")))
+		    (set! (channel-style s2) channels-separate)
+		    (watch-sash)
+		    (close-sound s2)))
 	      (close-sound ind))
 	    
 	    ;; -------- filter envelope editor
@@ -46199,6 +46300,39 @@ EDITS: 1
 			    )))
 		    (click-button (XmFileSelectionBoxGetChild filed XmDIALOG_CANCEL_BUTTON)) (force-event))
 		  
+		  (reset-hook! bad-header-hook)
+		  (let ((tag (catch #t (lambda () (open-sound (string-append sf-dir "bad_chans.snd"))) (lambda args (car args)))))
+		    (if (not (eq? tag 'bad-header)) (snd-display ";bad-header open-sound: ~A" tag)))
+		  (let* ((dialog (open-file-dialog #t))
+			 (filename (XmFileSelectionBoxGetChild dialog XmDIALOG_TEXT)))
+		    (XmTextSetString filename (string-append sf-dir "bad_chans.snd"))
+		    (let* ((e (XEvent ButtonPress))
+			   (dpy (XtDisplay dialog))
+			   (window (XtWindow dialog)))
+		      (set! (.type e) ButtonPress)
+		      (set! (.window e) window)
+		      (set! (.display e) dpy)
+		      (set! (.root e) (RootWindow dpy (DefaultScreen dpy)))
+		      (set! (.x e) 1)
+		      (set! (.y e) 1)
+		      (set! (.x_root e) 0)
+		      (set! (.y_root e) 0)
+		      (set! (.state e) 0)
+		      (set! (.button e) 1)
+		      (set! (.time e) (list 'Time CurrentTime))
+		      (set! (.same_screen e) #t)
+		      (set! (.subwindow e) (list 'Window None))
+		      (XtCallActionProc filename "activate" e #f 0)
+		      ;; now the bad header dialog is up
+		      (let ((rdialog (list-ref (dialog-widgets) 9)))
+			(if (not rdialog) 
+			    (snd-display ";bad header no dialog?")
+			    (begin
+			      (click-button (XmMessageBoxGetChild rdialog XmDIALOG_CANCEL_BUTTON)) (force-event)
+			      (if (XtIsManaged rdialog) (XtUnmanageChild rdialog)))))
+		      (click-button (XmFileSelectionBoxGetChild dialog XmDIALOG_CANCEL_BUTTON)) (force-event)))
+		  (add-hook! bad-header-hook (lambda (n) #t))
+
 		  ;; ---------------- file save-as dialog ----------------
 		  (set! (default-output-chans) 1)
 		  (set! (default-output-data-format) mus-bshort)
@@ -58046,6 +58180,8 @@ EDITS: 1
 
 
 (mus-sound-prune)
+(mus-audio-set-oss-buffers 4 12)
+
 (close-output-port optimizer-log)
 ;(mus-sound-report-cache "sound-cache")
 
