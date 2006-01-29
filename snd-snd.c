@@ -2019,10 +2019,14 @@ static XEN g_sound_p(XEN snd_n)
 {
   #define H_sound_p "(" S_sound_p " (index 0)): #t if sound associated with 'index' is active (accessible)"
   snd_info *sp;
-  sp = get_sp(snd_n, PLAYERS_OK);
-  return(C_TO_XEN_BOOLEAN((sp) && 
-			  (snd_ok(sp)) &&
-			  (sp->inuse == SOUND_NORMAL)));
+  if (XEN_INTEGER_P(snd_n))
+    {
+      sp = get_sp(snd_n, PLAYERS_OK);
+      return(C_TO_XEN_BOOLEAN((sp) && 
+			      (snd_ok(sp)) &&
+			      (sp->inuse == SOUND_NORMAL)));
+    }
+  return(XEN_FALSE);
 }
 
 #if WITH_RUN

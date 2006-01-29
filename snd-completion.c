@@ -2,6 +2,9 @@
 #include "sndlib-strings.h"
 
 /* SOMEDAY: hyper completion: if in hook func and 1st arg only look for hooks etc
+ *          could add a completion func property to each function, completer would
+ *          call it (if exists) with current string etc -- this could be brought
+ *          up bit-by-bit.
  */
 
 static char *current_match = NULL;

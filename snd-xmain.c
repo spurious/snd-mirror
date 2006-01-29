@@ -245,6 +245,9 @@ static void minify_maxify_window(Widget w, XtPointer context, XEvent *event, Boo
    * Also, ideally we'd equalize/relative-panes upon maxify, but ICCC thinks maxify
    *   is the same as map (i.e. from iconified state), and the only difference
    *   I can see in the mwm code is the window size.
+   *
+   * a rumor in the air that what we need is to catch StructureNotify event, then
+   *   check in that for UnmapNotify
    */
   if (ev->type == UnmapNotify) 
     {

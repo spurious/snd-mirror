@@ -3814,6 +3814,7 @@ bool key_press_callback(chan_info *ncp, int x, int y, int key_state, int keysym)
   /* called by every key-intercepting widget in the entire sound pane */
   chan_info *cp;
   snd_info *sp;
+  if (!ncp) return(false);
   cp = virtual_selected_channel(ncp);
   sp = cp->sound;
   select_channel(sp, cp->chan);

@@ -1190,8 +1190,18 @@ cache info to the file given or stdout"
       char *name;
       name = XEN_TO_C_STRING(file);
       fd = FOPEN(local_mus_expand_filename(name), "w");
-      mus_sound_report_cache(fd);
-      FCLOSE(fd, name);
+      if (fd)
+	{
+	  mus_sound_report_cache(fd);
+	  FCLOSE(fd, name);
+	}
+      else
+	{
+	  XEN_ERROR(XEN_ERROR_TYPE("cannot-save"),
+		    XEN_LIST_3(C_TO_XEN_STRING(S_mus_sound_report_cache),
+			       file,
+			       C_TO_XEN_STRING(STRERROR(errno))));
+	}
       return(file);
     }
   return(res);

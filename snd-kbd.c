@@ -829,7 +829,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 		    }
 		  else
 		    {
-		      /* C-x C_f <name-of-nonexistent-file> -> open new sound */
+		      /* C-x C-f <name-of-nonexistent-file> -> open new sound */
 		      nsp = snd_new_file(filename, 
 					 default_output_header_type(ss),
 					 default_output_data_format(ss),

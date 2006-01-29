@@ -160,7 +160,7 @@ static mark *find_previous_mark_1(chan_info *cp, mark *mp, void *m)
   if (mp->samp < (*((off_t *)m))) return(mp); else return(NULL);
 }
 
-static mark *find_previous_mark (off_t current_sample, chan_info *cp)
+static mark *find_previous_mark(off_t current_sample, chan_info *cp)
 {
   return(map_over_marks(cp, find_previous_mark_1, (void *)(&current_sample), READ_BACKWARD));
 }
@@ -170,7 +170,7 @@ static mark *find_next_mark_1(chan_info *cp, mark *mp, void *m)
   if (mp->samp > (*((off_t *)m))) return(mp); else return(NULL);
 }
 
-static mark *find_next_mark (off_t current_sample, chan_info *cp)
+static mark *find_next_mark(off_t current_sample, chan_info *cp)
 {
   return(map_over_marks(cp, find_next_mark_1, (void *)(&current_sample), READ_FORWARD));
 }
