@@ -4291,6 +4291,7 @@ total requested buffer size is %d frames, minimum allowed is %d, maximum is %d",
 			      mus_format("%s: %s: cannot set channels to %d", 
 					 c__FUNCTION__, alsa_name, chans)));
     }
+#if 0
     r = snd_pcm_hw_params_set_rate_near(handle, hw_params, srate, 0);
     if (r < 0) {
 	snd_pcm_close(handle);
@@ -4305,6 +4306,27 @@ total requested buffer size is %d frames, minimum allowed is %d, maximum is %d",
 		      c__FUNCTION__, alsa_name, srate, r);
 	}
     }
+#endif
+    /* bil: this apparently changed at some point -- it now takes a pointer and is declared "internal" */
+    {
+      int new_srate = 0;
+      new_srate = srate;
+      r = snd_pcm_hw_params_set_rate_near(handle, hw_params, &new_srate, 0);
+      if (r < 0) {
+	snd_pcm_close(handle);
+	handles[alsa_stream] = NULL;
+	alsa_dump_configuration(alsa_name, hw_params, sw_params);
+	return(alsa_mus_error(MUS_AUDIO_CONFIGURATION_NOT_AVAILABLE, 
+			      mus_format("%s: %s: cannot set sampling rate near %d", 
+					 c__FUNCTION__, alsa_name, srate)));
+      } else {
+	if (new_srate != srate) {
+	    mus_print("%s: %s: could not set rate to exactly %d, set to %d instead",
+		      c__FUNCTION__, alsa_name, srate, new_srate);
+	}
+      }
+    }
+
     err = snd_pcm_hw_params(handle, hw_params);
     if (err < 0) {
 	snd_pcm_close(handle);
