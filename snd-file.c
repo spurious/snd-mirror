@@ -4689,6 +4689,15 @@ static XEN g_info_dialog(XEN subject, XEN msg)
   return(XEN_WRAP_WIDGET(w));
 }
 
+static XEN g_new_sound_dialog(XEN managed)
+{
+  widget_t w;
+#define H_new_sound_dialog "(" S_new_sound_dialog "): start the File New sound dialog"
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(managed), managed, XEN_ONLY_ARG, S_new_sound_dialog, "a boolean");
+  w = make_new_file_dialog(XEN_TO_C_BOOLEAN(managed));
+  return(XEN_WRAP_WIDGET(w));
+}
+
 
 /* -------- file-filters and file-sorters -------- */
 
@@ -4857,6 +4866,7 @@ XEN_ARGIFY_1(g_edit_header_dialog_w, g_edit_header_dialog)
 XEN_ARGIFY_1(g_save_selection_dialog_w, g_save_selection_dialog)
 XEN_ARGIFY_1(g_save_region_dialog_w, g_save_region_dialog)
 XEN_ARGIFY_1(g_save_sound_dialog_w, g_save_sound_dialog)
+XEN_ARGIFY_1(g_new_sound_dialog_w, g_new_sound_dialog)
 XEN_NARGIFY_2(g_info_dialog_w, g_info_dialog)
 XEN_NARGIFY_1(g_view_files_amp_w, g_view_files_amp)
 XEN_NARGIFY_2(g_view_files_set_amp_w, g_view_files_set_amp)
@@ -4897,6 +4907,7 @@ XEN_NARGIFY_1(g_sound_file_p_w, g_sound_file_p)
 #define g_save_selection_dialog_w g_save_selection_dialog
 #define g_save_region_dialog_w g_save_region_dialog
 #define g_save_sound_dialog_w g_save_sound_dialog
+#define g_new_sound_dialog_w g_new_sound_dialog
 #define g_info_dialog_w g_info_dialog
 #define g_view_files_amp_w g_view_files_amp
 #define g_view_files_set_amp_w g_view_files_set_amp
@@ -4950,6 +4961,7 @@ void g_init_file(void)
   XEN_DEFINE_PROCEDURE(S_save_selection_dialog,            g_save_selection_dialog_w,            0, 1, 0, H_save_selection_dialog);
   XEN_DEFINE_PROCEDURE(S_save_region_dialog,               g_save_region_dialog_w,               0, 1, 0, H_save_region_dialog);
   XEN_DEFINE_PROCEDURE(S_save_sound_dialog,                g_save_sound_dialog_w,                0, 1, 0, H_save_sound_dialog);
+  XEN_DEFINE_PROCEDURE(S_new_sound_dialog,                 g_new_sound_dialog_w,                 0, 1, 0, H_new_sound_dialog);
   XEN_DEFINE_PROCEDURE(S_info_dialog,                      g_info_dialog_w,                      2, 0, 0, H_info_dialog);
   XEN_DEFINE_PROCEDURE(S_disk_kspace,                      g_disk_kspace_w,                      1, 0, 0, H_disk_kspace);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_sound_loop_info,      g_sound_loop_info_w, H_sound_loop_info,

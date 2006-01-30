@@ -18,6 +18,7 @@
  *          -> src is interrupted apparently and file open completes
  *       or similarly, stops at "ok", starts src, clicks ok?
  * PERHAPS: audio:settings for display, perhaps reset -- as opposed to using the recorder
+ * PERHAPS: in Save-as dialogs, a "New Directory" button would be useful
  */
 
 #define FSB_BOX(Dialog, Child) XmFileSelectionBoxGetChild(Dialog, Child)
@@ -3416,7 +3417,7 @@ static void new_file_help_callback(Widget w, XtPointer context, XtPointer info)
   new_file_dialog_help();
 }
 
-void make_new_file_dialog(void)
+widget_t make_new_file_dialog(bool managed)
 {
   if (!new_file_dialog)
     {
@@ -3540,8 +3541,10 @@ void make_new_file_dialog(void)
 	}
     }
 #endif
-  if (!(XtIsManaged(new_file_dialog))) 
+  if ((managed) && 
+      (!(XtIsManaged(new_file_dialog))))
     XtManageChild(new_file_dialog);
+  return(new_file_dialog);
 }
 
 

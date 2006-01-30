@@ -5,10 +5,11 @@
 
 #include <config.h>
 
-#define XM_DATE "1-Jan-06"
+#define XM_DATE "30-Jan-06"
 
 /* HISTORY: 
  *
+ *   30-Jan:    removed XmMultiList.
  *   1-Jan-06:  XmNpopupEnabled resource type changed from boolean to int (enum) (Motif docs bug).
  *   --------
  *   16-Sep:    XmUNSPECIFIED_PIXEL and friends should be unsigned long (not int).
@@ -181,9 +182,6 @@
 #endif
 #if HAVE_XmCreateDataField
   #include <Xm/DataF.h>
-#endif
-#if HAVE_XmCreateMultiList
-  #include <Xm/MultiList.h>
 #endif
 #if HAVE_XmCreateTabStack
   #include <Xm/TabStack.h>
@@ -585,10 +583,6 @@ XM_TYPE_PTR_NO_p(XmToggleButtonCallbackStruct, XmToggleButtonCallbackStruct *)
 #if HAVE_XmCreateDataField
 XM_TYPE_PTR_NO_p(XmDataFieldCallbackStruct, XmDataFieldCallbackStruct *)
 #endif
-#if HAVE_XmCreateMultiList
-XM_TYPE_PTR_NO_p(XmMultiListCallbackStruct, XmMultiListCallbackStruct *)
-XM_TYPE_PTR_NO_p(XmMultiListRowInfo, XmMultiListRowInfo *)
-#endif
 #if HAVE_XmCreateTabStack
 XM_TYPE_PTR_NO_p(XmTabStackCallbackStruct, XmTabStackCallbackStruct *)
 #endif
@@ -760,9 +754,6 @@ XM_Make(XmDragStartCallbackStruct)
 #if HAVE_XmCreateDataField
 XM_Make(XmDataFieldCallbackStruct)
 #endif
-#if HAVE_XmCreateMultiList
-XM_Make(XmMultiListCallbackStruct)
-#endif
 #if HAVE_XmCreateTabStack
 XM_Make(XmTabStackCallbackStruct)
 #endif
@@ -823,9 +814,6 @@ static void define_makes(void)
   XM_Declare(XmDragStartCallbackStruct);
 #if HAVE_XmCreateDataField
   XM_Declare(XmDataFieldCallbackStruct);
-#endif
-#if HAVE_XmCreateMultiList
-  XM_Declare(XmMultiListCallbackStruct);
 #endif
 #if HAVE_XmCreateTabStack
   XM_Declare(XmTabStackCallbackStruct);
@@ -2060,12 +2048,6 @@ static Arg *XEN_TO_C_Args(XEN inargl)
 	  XEN_ASSERT_TYPE(XEN_LIST_P(value), value, XEN_ONLY_ARG, name, "a list of XRectangles");
 	  XtSetArg(args[i], name, (XtArgVal)(XEN_TO_C_XRectangles(value, XEN_LIST_LENGTH(value))));
 	  break;
-#if HAVE_XmCreateMultiList
-	case XM_ROW_INFO:
-	  XEN_ASSERT_TYPE(XEN_XmMultiListRowInfo_P(value), value, XEN_ONLY_ARG, name, "XmMultiListRowInfo*");
-	  XtSetArg(args[i], name, (XtArgVal)(XEN_TO_C_XmMultiListRowInfo(value)));
-	  break;
-#endif
 	case XM_CURSOR:
 	  XEN_ASSERT_TYPE(XEN_Cursor_P(value), value, XEN_ONLY_ARG, name, "a cursor"); 
 	  XtSetArg(args[i], name, (XtArgVal)(XEN_TO_C_Cursor(value)));
@@ -2340,9 +2322,6 @@ static XEN C_TO_XEN_ANY(Widget w, Arg arg)
       break;
 #if (!XM_DISABLE_DEPRECATED)
     case XM_FONTLIST:	      return(C_TO_XEN_XmFontList((XmFontList)(*((XmFontList *)(arg.value)))));
-#endif
-#if HAVE_XmCreateMultiList
-    case XM_ROW_INFO:         return(C_TO_XEN_XmMultiListRowInfo((XmMultiListRowInfo *)(*((XmMultiListRowInfo **)(arg.value)))));
 #endif
     case XM_COLORMAP:	      return(C_TO_XEN_Colormap((*((Colormap *)(arg.value)))));
     case XM_KEYSYM:	      return(C_TO_XEN_KeySym((*((KeySym *)(arg.value)))));
@@ -5294,140 +5273,6 @@ static XEN gxm_XmToolTipGetLabel(XEN arg1)
   #define H_XmToolTipGetLabel "Widget XmToolTipGetLabel(Widget wid) apparently returns the tooltip label associated with its argument"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, XEN_ONLY_ARG, "XmToolTipGetLabel", "Widget");
   return(C_TO_XEN_Widget(XmToolTipGetLabel(XEN_TO_C_Widget(arg1))));
-}
-#endif
-
-#if HAVE_XmCreateMultiList
-
-#ifndef XmIsMultiList
-#define XmIsMultiList(w) (XtIsSubclass(w, xmMultiListWidgetClass))
-#endif
-
-static XEN gxm_XmCreateMultiList(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
-{
-  #define H_XmCreateMultiList "Widget XmCreateMultiList(Widget parent, String name, ArgList arglist, Cardinal argcount) \
-The MultiList widget creation function"
-  /* see comment under XmCreateDropDown */
-#ifdef _XmExt18List_h
-  return(gxm_new_widget("XmCreateMultiList", XmCreateExtended18List, arg1, arg2, arg3, arg4));
-#else
-  return(gxm_new_widget("XmCreateMultiList", XmCreateMultiList, arg1, arg2, arg3, arg4));
-#endif
-}
-
-static XEN gxm_XmIsMultiList(XEN arg)
-{
-  #define H_XmIsMultiList "XmIsMultiList(arg) -> #t if arg is a MultiList widget"
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsMultiList", "Widget");
-  return(C_TO_XEN_BOOLEAN(XmIsMultiList(XEN_TO_C_Widget(arg))));
-}
-
-static XEN gxm_XmMultiListUnselectAllItems(XEN arg)
-{
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmMultiListUnselectAllItems", "Widget");
-  XmMultiListUnselectAllItems(XEN_TO_C_Widget(arg));
-  return(XEN_FALSE);
-}
-
-static XEN gxm_XmMultiListDeselectAllItems(XEN arg)
-{
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmMultiListDeselectAllItems", "Widget");
-  XmMultiListDeselectAllItems(XEN_TO_C_Widget(arg));
-  return(XEN_FALSE);
-}
-
-static XEN gxm_XmMultiListSelectAllItems(XEN arg, XEN arg1)
-{
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 1, "XmMultiListSelectAllItems", "Widget");
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(arg1), arg1, 2, "XmMultiListSelectAllItems", "boolean");
-  XmMultiListSelectAllItems(XEN_TO_C_Widget(arg), XEN_TO_C_BOOLEAN(arg1));
-  return(XEN_FALSE);
-}
-
-static XEN gxm_XmMultiListDeselectRow(XEN arg, XEN arg1)
-{
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 1, "XmMultiListDeselectRow", "Widget");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg1), arg1, 2, "XmMultiListDeselectRow", "int");
-  XmMultiListDeselectRow(XEN_TO_C_Widget(arg), XEN_TO_C_INT(arg1));
-  return(XEN_FALSE);
-}
-
-static XEN gxm_XmMultiListToggleRow(XEN arg, XEN arg1)
-{
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 1, "XmMultiListToggleRow", "Widget");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg1), arg1, 2, "XmMultiListToggleRow", "int");
-  XmMultiListToggleRow(XEN_TO_C_Widget(arg), (short)XEN_TO_C_INT(arg1));
-  return(XEN_FALSE);
-}
-
-static XEN gxm_XmMultiListMakeRowVisible(XEN arg, XEN arg1)
-{
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 1, "XmMultiListMakeRowVisible", "Widget");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg1), arg1, 2, "XmMultiListMakeRowVisible", "int");
-  XmMultiListMakeRowVisible(XEN_TO_C_Widget(arg), XEN_TO_C_INT(arg1));
-  return(XEN_FALSE);
-}
-
-static XEN gxm_XmMultiListSelectRow(XEN arg, XEN arg1, XEN arg2)
-{
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 1, "XmMultiListSelectRow", "Widget");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg1), arg1, 2, "XmMultiListSelectRow", "int");
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(arg2), arg2, 3, "XmMultiListSelectRow", "boolean");
-  XmMultiListSelectRow(XEN_TO_C_Widget(arg), XEN_TO_C_INT(arg1), XEN_TO_C_BOOLEAN(arg2));
-  return(XEN_FALSE);
-}
-
-static XEN gxm_XmMultiListUnselectItem(XEN arg, XEN arg1)
-{
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 1, "XmMultiListUnselectItem", "Widget");
-  XEN_ASSERT_TYPE(XEN_XmMultiListRowInfo_P(arg1), arg1, 2, "XmMultiListUnselectItem", "XmMultiListRowInfo*");
-  XmMultiListUnselectItem(XEN_TO_C_Widget(arg), XEN_TO_C_XmMultiListRowInfo(arg1));
-  return(XEN_FALSE);
-}
-
-static XEN gxm_XmMultiListDeselectItem(XEN arg, XEN arg1)
-{
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 1, "XmMultiListDeselectItem", "Widget");
-  XEN_ASSERT_TYPE(XEN_XmMultiListRowInfo_P(arg1), arg1, 2, "XmMultiListDeselectItem", "XmMultiListRowInfo*");
-  XmMultiListDeselectItem(XEN_TO_C_Widget(arg), XEN_TO_C_XmMultiListRowInfo(arg1));
-  return(XEN_FALSE);
-}
-
-static XEN gxm_XmMultiListDeselectItems(XEN arg, XEN arg1, XEN arg2)
-{
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 1, "XmMultiListDeselectItems", "Widget");
-  XEN_ASSERT_TYPE(XEN_XmString_P(arg1), arg1, 2, "XmMultiListDeselectItems", "XmString");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 3, "XmMultiListDeselectItems", "int");
-  XmMultiListDeselectItems(XEN_TO_C_Widget(arg), XEN_TO_C_XmString(arg1), XEN_TO_C_INT(arg2));
-  return(XEN_FALSE);
-}
-
-static XEN gxm_XmMultiListSelectItems(XEN arg, XEN arg1, XEN arg2, XEN arg3)
-{
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 1, "XmMultiListSelectItems", "Widget");
-  XEN_ASSERT_TYPE(XEN_XmString_P(arg1), arg1, 2, "XmMultiListSelectItems", "XmString");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 3, "XmMultiListSelectItems", "int");
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(arg3), arg3, 4, "XmMultiListSelectItems", "boolean");
-  XmMultiListSelectItems(XEN_TO_C_Widget(arg), XEN_TO_C_XmString(arg1), XEN_TO_C_INT(arg2), XEN_TO_C_BOOLEAN(arg3));
-  return(XEN_FALSE);
-}
-
-static XEN gxm_XmMultiListGetSelectedRows(XEN arg)
-{
-  XEN lst = XEN_EMPTY_LIST;
-  int i;
-  XmMultiListRowInfo **rows;
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 1, "XmMultiListGetSelectedRows", "Widget");
-  rows = XmMultiListGetSelectedRows(XEN_TO_C_Widget(arg));
-  if (rows)
-    {
-      int len;
-      for (len = 0; (rows[len]) ;len++);
-      for (i = len - 1; i >= 0; i--)
-	lst = XEN_CONS(C_TO_XEN_XmMultiListRowInfo(rows[i]), lst);
-    }
-  /* free rows? */
-  return(lst);
 }
 #endif
 
@@ -16173,7 +16018,7 @@ enum {
   GXM_Drawing, GXM_Drawn, GXM_Drop_Finish, GXM_Drop_Proc, GXM_DropSite_Enter, GXM_DropSite_Leave, GXM_Drop_Start,
   GXM_File, GXM_List, GXM_Notebook, GXM_Operation, GXM_Popup, GXM_PushButton, GXM_RowColumn, GXM_Scale,
   GXM_ScrollBar, GXM_Selection, GXM_SpinBox, GXM_ToggleButton, GXM_TopLevel_Enter, GXM_TopLevel_Leave,
-  GXM_Traverse, GXM_Verify, GXM_DataField, GXM_MultiList, GXM_TabStack
+  GXM_Traverse, GXM_Verify, GXM_DataField, GXM_TabStack
 };
 
 static XEN wrap_callback_struct(int type, XtPointer info)
@@ -16221,9 +16066,6 @@ static XEN wrap_callback_struct(int type, XtPointer info)
     case GXM_Traverse:          return(C_TO_XEN_XmTraverseObscuredCallbackStruct((XmTraverseObscuredCallbackStruct *)info));
 #if HAVE_XmCreateDataField
     case GXM_DataField:         return(C_TO_XEN_XmDataFieldCallbackStruct((XmDataFieldCallbackStruct *)info));
-#endif
-#if HAVE_XmCreateMultiList
-    case GXM_MultiList:         return(C_TO_XEN_XmMultiListCallbackStruct((XmMultiListCallbackStruct *)info));
 #endif
 #if HAVE_XmCreateTabStack
     case GXM_TabStack:          return(C_TO_XEN_XmTabStackCallbackStruct((XmTabStackCallbackStruct *)info));
@@ -21485,9 +21327,6 @@ static XEN gxm_data(XEN ptr)
 #if HAVE_XPM
   if (XEN_XpmImage_P(ptr)) return(C_TO_XEN_ULONG((unsigned long)((XEN_TO_C_XpmImage(ptr))->data)));
 #endif
-#if HAVE_XmCreateMultiList
-  if (XEN_XmMultiListRowInfo_P(ptr)) return(C_TO_XEN_ULONG((unsigned long)((XEN_TO_C_XmMultiListRowInfo(ptr))->data)));
-#endif
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "data", "XpmImage");
   return(XEN_FALSE);
 }
@@ -21496,14 +21335,25 @@ static XEN gxm_set_data(XEN ptr, XEN val)
 {
   int i, len = 0;
   char *str;
-  XM_SET_FIELD_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ARG_2, "data", "a string");
+  XM_SET_FIELD_ASSERT_TYPE(XEN_STRING_P(val) || XEN_LIST_P(val), val, XEN_ARG_2, "data", "a string or a list of longs");
   XM_SET_FIELD_ASSERT_TYPE(XEN_XClientMessageEvent_P(ptr), ptr, XEN_ARG_1, "data", "XClientMessageEvent");
-  str = XEN_TO_C_STRING(val);
-  if (str)
-    len = strlen(str);
-  if (len > 19) len = 19;
-  for (i = 0; i < len; i++)
-    (XEN_TO_C_XClientMessageEvent(ptr))->data.b[i] = str[i];
+  if (XEN_STRING_P(val))
+    {
+      str = XEN_TO_C_STRING(val);
+      if (str)
+	len = strlen(str);
+      if (len > 19) len = 19;
+      for (i = 0; i < len; i++)
+	(XEN_TO_C_XClientMessageEvent(ptr))->data.b[i] = str[i];
+    }
+  else
+    {
+      int i, len;
+      len = XEN_LIST_LENGTH(val);
+      if (len > 5) len = 5;  /* only room here for 5 ints */
+      for (i = 0; i < len; i++)
+	(XEN_TO_C_XClientMessageEvent(ptr))->data.l[i] = XEN_TO_C_INT(XEN_LIST_REF(val, i));
+    }
   return(val);
 }
 
@@ -21547,40 +21397,6 @@ static XEN gxm_accept(XEN ptr)
 static XEN gxm_selected_child(XEN ptr)
 {
   if (XEN_XmTabStackCallbackStruct_P(ptr)) return(C_TO_XEN_Widget((XEN_TO_C_XmTabStackCallbackStruct(ptr))->selected_child));
-  return(XEN_FALSE);
-}
-#endif
-#if HAVE_XmCreateMultiList
-static XEN gxm_string(XEN ptr)
-{
-  if (XEN_XmMultiListCallbackStruct_P(ptr)) return(C_TO_XEN_STRING((XEN_TO_C_XmMultiListCallbackStruct(ptr))->string));
-  return(XEN_FALSE);
-}
-static XEN gxm_column(XEN ptr)
-{
-  if (XEN_XmMultiListCallbackStruct_P(ptr)) return(C_TO_XEN_INT((XEN_TO_C_XmMultiListCallbackStruct(ptr))->column));
-  return(XEN_FALSE);
-}
-static XEN gxm_row(XEN ptr)
-{
-  if (XEN_XmMultiListCallbackStruct_P(ptr)) return(C_TO_XEN_XmMultiListRowInfo((XEN_TO_C_XmMultiListCallbackStruct(ptr))->row));
-  return(XEN_FALSE);
-}
-static XEN gxm_selected(XEN ptr)
-{
-  if (XEN_XmMultiListRowInfo_P(ptr)) return(C_TO_XEN_BOOLEAN((XEN_TO_C_XmMultiListRowInfo(ptr))->selected));
-  return(XEN_FALSE);
-}
-static XEN gxm_pixmap(XEN ptr)
-{
-  if (XEN_XmMultiListRowInfo_P(ptr)) return(C_TO_XEN_Pixmap((XEN_TO_C_XmMultiListRowInfo(ptr))->pixmap));
-  return(XEN_FALSE);
-}
-static XEN gxm_values(XEN ptr)
-{
-/* how to get length?
-  if (XEN_XmMultiListRowInfo_P(ptr)) return(C_TO_XEN_XmStringTable((XEN_TO_C_XmMultiListRowInfo(ptr))->values));
-*/
   return(XEN_FALSE);
 }
 #endif
@@ -23364,22 +23180,6 @@ static XEN gxm_page_number(XEN ptr)
   XEN_NARGIFY_1(gxm_XmIsButtonBox_w, gxm_XmIsButtonBox)
   XEN_ARGIFY_4(gxm_XmCreateButtonBox_w, gxm_XmCreateButtonBox)
 #endif
-#if HAVE_XmCreateMultiList
-  XEN_NARGIFY_1(gxm_XmIsMultiList_w, gxm_XmIsMultiList)
-  XEN_ARGIFY_4(gxm_XmCreateMultiList_w, gxm_XmCreateMultiList)
-  XEN_NARGIFY_1(gxm_XmMultiListDeselectAllItems_w, gxm_XmMultiListDeselectAllItems)
-  XEN_NARGIFY_1(gxm_XmMultiListUnselectAllItems_w, gxm_XmMultiListUnselectAllItems)
-  XEN_NARGIFY_2(gxm_XmMultiListSelectAllItems_w, gxm_XmMultiListSelectAllItems)
-  XEN_NARGIFY_2(gxm_XmMultiListDeselectRow_w, gxm_XmMultiListDeselectRow)
-  XEN_NARGIFY_2(gxm_XmMultiListToggleRow_w, gxm_XmMultiListToggleRow)
-  XEN_NARGIFY_2(gxm_XmMultiListMakeRowVisible_w, gxm_XmMultiListMakeRowVisible)
-  XEN_NARGIFY_3(gxm_XmMultiListSelectRow_w, gxm_XmMultiListSelectRow)
-  XEN_NARGIFY_2(gxm_XmMultiListUnselectItem_w, gxm_XmMultiListUnselectItem)
-  XEN_NARGIFY_2(gxm_XmMultiListDeselectItem_w, gxm_XmMultiListDeselectItem)
-  XEN_NARGIFY_3(gxm_XmMultiListDeselectItems_w, gxm_XmMultiListDeselectItems)
-  XEN_NARGIFY_4(gxm_XmMultiListSelectItems_w, gxm_XmMultiListSelectItems)
-  XEN_NARGIFY_1(gxm_XmMultiListGetSelectedRows_w, gxm_XmMultiListGetSelectedRows)
-#endif
 #if HAVE_XmCreateTabStack
   XEN_ARGIFY_4(gxm_XmCreateTabStack_w, gxm_XmCreateTabStack)
   XEN_NARGIFY_1(gxm_XmIsTabStack_w, gxm_XmIsTabStack)
@@ -23951,14 +23751,6 @@ static XEN gxm_page_number(XEN ptr)
 #endif
 #if HAVE_XmCreateTabStack
   XEN_NARGIFY_1(gxm_selected_child_w, gxm_selected_child)
-#endif
-#if HAVE_XmCreateMultiList
-  XEN_NARGIFY_1(gxm_string_w, gxm_string)
-  XEN_NARGIFY_1(gxm_column_w, gxm_column)
-  XEN_NARGIFY_1(gxm_row_w, gxm_row)
-  XEN_NARGIFY_1(gxm_values_w, gxm_values)
-  XEN_NARGIFY_1(gxm_pixmap_w, gxm_pixmap)
-  XEN_NARGIFY_1(gxm_selected_w, gxm_selected)
 #endif
 
 #if HAVE_XPM
@@ -25145,22 +24937,6 @@ static XEN gxm_page_number(XEN ptr)
   #define gxm_XmIsButtonBox_w gxm_XmIsButtonBox
   #define gxm_XmCreateButtonBox_w gxm_XmCreateButtonBox
 #endif
-#if HAVE_XmCreateMultiList
-  #define gxm_XmIsMultiList_w gxm_XmIsMultiList
-  #define gxm_XmCreateMultiList_w gxm_XmCreateMultiList
-  #define gxm_XmMultiListDeselectAllItems_w gxm_XmMultiListDeselectAllItems
-  #define gxm_XmMultiListUnselectAllItems_w gxm_XmMultiListUnselectAllItems
-  #define gxm_XmMultiListSelectAllItems_w gxm_XmMultiListSelectAllItems
-  #define gxm_XmMultiListDeselectRow_w gxm_XmMultiListDeselectRow
-  #define gxm_XmMultiListToggleRow_w gxm_XmMultiListToggleRow
-  #define gxm_XmMultiListMakeRowVisible_w gxm_XmMultiListMakeRowVisible
-  #define gxm_XmMultiListSelectRow_w gxm_XmMultiListSelectRow
-  #define gxm_XmMultiListUnselectItem_w gxm_XmMultiListUnselectItem
-  #define gxm_XmMultiListDeselectItem_w gxm_XmMultiListDeselectItem
-  #define gxm_XmMultiListDeselectItems_w gxm_XmMultiListDeselectItems
-  #define gxm_XmMultiListSelectItems_w gxm_XmMultiListSelectItems
-  #define gxm_XmMultiListGetSelectedRows_w gxm_XmMultiListGetSelectedRows
-#endif
 #if HAVE_XmCreateTabStack
   #define gxm_XmCreateTabStack_w gxm_XmCreateTabStack
   #define gxm_XmIsTabStack_w gxm_XmIsTabStack
@@ -25732,14 +25508,6 @@ static XEN gxm_page_number(XEN ptr)
 #endif
 #if HAVE_XmCreateTabStack
   #define gxm_selected_child_w gxm_selected_child
-#endif
-#if HAVE_XmCreateMultiList
-  #define gxm_string_w gxm_string
-  #define gxm_column_w gxm_column
-  #define gxm_row_w gxm_row
-  #define gxm_values_w gxm_values
-  #define gxm_pixmap_w gxm_pixmap
-  #define gxm_selected_w gxm_selected
 #endif
 
 #if HAVE_XPM
@@ -26933,22 +26701,6 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XmDataFieldSetEditable, gxm_XmDataFieldSetEditable_w, 2, 0, 0, NULL);
   XM_DEFINE_PROCEDURE(XmDataFieldSetInsertionPosition, gxm_XmDataFieldSetInsertionPosition_w, 2, 0, 0, NULL);
 #endif
-#if HAVE_XmCreateMultiList
-  XM_DEFINE_PROCEDURE(XmIsMultiList, gxm_XmIsMultiList_w, 1, 0, 0, H_XmIsMultiList);
-  XM_DEFINE_PROCEDURE(XmCreateMultiList, gxm_XmCreateMultiList_w, 3, 1, 0, H_XmCreateMultiList);
-  XM_DEFINE_PROCEDURE(XmMultiListDeselectAllItems, gxm_XmMultiListDeselectAllItems_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmMultiListUnselectAllItems, gxm_XmMultiListUnselectAllItems_w, 1, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmMultiListSelectAllItems, gxm_XmMultiListSelectAllItems_w, 2, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmMultiListDeselectRow, gxm_XmMultiListDeselectRow_w, 2, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmMultiListToggleRow, gxm_XmMultiListToggleRow_w, 2, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmMultiListMakeRowVisible, gxm_XmMultiListMakeRowVisible_w, 2, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmMultiListSelectRow, gxm_XmMultiListSelectRow_w, 3, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmMultiListUnselectItem, gxm_XmMultiListUnselectItem_w, 2, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmMultiListDeselectItem, gxm_XmMultiListDeselectItem_w, 2, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmMultiListDeselectItems, gxm_XmMultiListDeselectItems_w, 3, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmMultiListSelectItems, gxm_XmMultiListSelectItems_w, 4, 0, 0, NULL);
-  XM_DEFINE_PROCEDURE(XmMultiListGetSelectedRows, gxm_XmMultiListGetSelectedRows_w, 1, 0, 0, NULL);
-#endif
 #if HAVE_XmCreateTabStack
   XM_DEFINE_PROCEDURE(XmIsTabStack, gxm_XmIsTabStack_w, 1, 0, 0, H_XmIsTabStack);
   XM_DEFINE_PROCEDURE(XmTabStackGetSelectedTab, gxm_XmTabStackGetSelectedTab_w, 1, 0, 0, NULL);
@@ -26977,9 +26729,6 @@ static void define_procedures(void)
 #endif
 #if HAVE_XmCreateButtonBox
   XM_DEFINE_PROCEDURE(XmButtonBox?, gxm_XmIsButtonBox_w, 1, 0, 0, H_XmIsButtonBox);
-#endif
-#if HAVE_XmCreateMultiList
-  XM_DEFINE_PROCEDURE(XmMultiList?, gxm_XmIsMultiList_w, 1, 0, 0, H_XmIsMultiList);
 #endif
 #if HAVE_XmCreateTabStack
   XM_DEFINE_PROCEDURE(XmTabStack?, gxm_XmIsTabStack_w, 1, 0, 0, H_XmIsTabStack);
@@ -27452,14 +27201,6 @@ static void define_structs(void)
 #endif
 #if HAVE_XmCreateTabStack
   XM_DEFINE_READER(selected_child, gxm_selected_child_w, 1, 0, 0);
-#endif
-#if HAVE_XmCreateMultiList
-  XM_DEFINE_READER(string, gxm_string_w, 1, 0, 0);
-  XM_DEFINE_READER(column, gxm_column_w, 1, 0, 0);
-  XM_DEFINE_READER(row, gxm_row_w, 1, 0, 0);
-  XM_DEFINE_READER(values, gxm_values_w, 1, 0, 0);
-  XM_DEFINE_READER(pixmap, gxm_pixmap_w, 1, 0, 0);
-  XM_DEFINE_READER(selected, gxm_selected_w, 1, 0, 0);
 #endif
 #if HAVE_XPM
   XM_DEFINE_ACCESSOR(valuemask, gxm_valuemask_w, set_valuemask, gxm_set_valuemask_w, 1, 0, 2, 0);
@@ -28406,32 +28147,6 @@ static void define_strings(void)
   DEFINE_RESOURCE(XmNverify, XM_BOOLEAN);
   DEFINE_RESOURCE(XmNverifyTextCallback, XM_CALLBACK);
   DEFINE_RESOURCE(XmNverticalMargin, XM_DIMENSION);
-#endif
-#if HAVE_XmCreateMultiList
-  #ifndef XmNcolumnTitles
-    #define XmNcolumnTitles "columnTitles"
-    #define XmNdoubleClickCallback "doubleClickCallback"
-    #define XmNentryData "entryData"
-    #define XmNfindLabel "findLabel"
-    #define XmNfirstColumn "firstColumn"
-    #define XmNfirstColumnPixmaps "firstColumnPixmaps"
-    #define XmNfirstRow "firstRow"
-    #define XmNnumRows "numRows"
-    #define XmNselectedColumn "selectedColumn"
-    #define XmNshowFind "showFind"
-  /* #define XmNsingleSelection "singleSelection" */
-  #endif
-  DEFINE_RESOURCE(XmNcolumnTitles, XM_STRING_TABLE);
-  DEFINE_RESOURCE(XmNdoubleClickCallback, XM_CALLBACK);
-  DEFINE_RESOURCE(XmNentryData, XM_ROW_INFO);
-  DEFINE_RESOURCE(XmNfindLabel, XM_XMSTRING);
-  DEFINE_RESOURCE(XmNfirstColumn, XM_SHORT);
-  DEFINE_RESOURCE(XmNfirstColumnPixmaps, XM_BOOLEAN);
-  DEFINE_RESOURCE(XmNfirstRow, XM_SHORT);
-  DEFINE_RESOURCE(XmNnumRows, XM_SHORT);
-  DEFINE_RESOURCE(XmNselectedColumn, XM_SHORT);
-  DEFINE_RESOURCE(XmNshowFind, XM_BOOLEAN);
-  /* DEFINE_RESOURCE(XmNsingleSelection, XM_CALLBACK); */
 #endif
 #if HAVE_XmCreateTabStack
   #ifndef XmNstackedEffect
@@ -30282,9 +29997,6 @@ static void define_pointers(void)
 #endif
 #if HAVE_XmCreateDataField
   DEFINE_POINTER(xmDataFieldWidgetClass);
-#endif
-#if HAVE_XmCreateMultiList
-  DEFINE_POINTER(xmMultiListWidgetClass);
 #endif
 #if HAVE_XmCreateTabStack
   DEFINE_POINTER(xmTabStackWidgetClass);

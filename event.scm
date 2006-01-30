@@ -328,3 +328,20 @@
 
 (define (beep)
   (XBell (XtDisplay (cadr (main-widgets))) 100))
+
+(define wm-delete-event
+  (let ((e (XEvent ClientMessage)))
+    (lambda (widget)
+      (let ((dpy (XtDisplay widget))
+	    (window (XtWindow widget)))
+	(set! (.type e) ClientMessage)
+	(set! (.window e) window)
+	(set! (.display e) dpy)
+	(set! (.data e) (list (cadr (XmInternAtom dpy "WM_DELETE_WINDOW" #f)) CurrentTime)) ; longs
+	(set! (.format e) 32)
+	(set! (.message_type e) (XmInternAtom dpy "WM_PROTOCOLS" #f))
+	(let ((err (XSendEvent dpy window #f NoEventMask e)))
+	  (if (= err 0)
+	      (display (format #f "[client-event error] " err)))
+	  (XFlush dpy))))))
+

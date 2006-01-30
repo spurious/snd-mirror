@@ -8,7 +8,7 @@ make clean
 cp makefile gcat.makefile
 cp config.h gcat.config.h
 
-./configure --with-static-xm --enable-snd-debug --with-profiling GUILE_CONFIG_path=/home/bil/test/bin CFLAGS="-DDESCRIBE_PTREE"
+./configure --with-static-xm --enable-snd-debug --with-profiling GUILE_CONFIG_path=/home/bil/test/bin CFLAGS="-DDESCRIBE_PTREE -DDESCRIBE_PTREE_INIT=3"
 make
 
 ./snd --help
@@ -21,7 +21,7 @@ make
 ./gcat-test.scm 6
 ./gcat-test.scm 7
 ./snd -separate oboe.snd pistol.snd -l snd-test 4
-./snd -noinit -noglob -nostdin -horizontal oboe.snd pistol.snd -l snd-test 4
+./snd -noinit -noglob -nostdin -horizontal -p . oboe.snd pistol.snd -l snd-test 4
 ./snd -notebook -title "hi" -e "(display (+ 1 2))" oboe.snd pistol.snd -l snd-test 14
 ./snd -e "(begin (recorder-dialog) (view-files-dialog) (exit))"
 ./snd -e "(add-hook! start-hook (lambda (n) #t))" oboe.snd
@@ -56,3 +56,18 @@ make
 
 lines.scm
 fgrep '######' gcall | wc
+
+echo '----------------------------------------' >> gpound
+echo 'not called: ' >> gpound
+egrep -c "  #####:.*:{" gcall >> gpound
+echo 'called once: ' >> gpound
+egrep -c "  1:.*:{" gcall >> gpound
+echo 'called twice: ' >> gpound
+egrep -c "  2:.*:{" gcall >> gpound
+echo 'called thrice: ' >> gpound
+egrep -c "  3:.*:{" gcall >> gpound
+echo '----------------------------------------' >> gpound
+egrep -B 1 "#####:.*:{" gcall >> gpound
+egrep -B 1 "  1:.*:{" gcall >> gpound
+egrep -B 1 "  2:.*:{" gcall >> gpound
+egrep -B 1 "  3:.*:{" gcall >> gpound

@@ -9,7 +9,7 @@ void set_menu_label(Widget w, const char *label) {if (w) set_button_label(w, lab
 static void file_menu_update_1(Widget w, XtPointer info, XtPointer context) {file_menu_update();}
 static void file_open_callback(Widget w, XtPointer info, XtPointer context) {make_open_file_dialog(false, true);}
 static void file_view_callback(Widget w, XtPointer info, XtPointer context) {make_open_file_dialog(true, true);}
-static void file_new_callback(Widget w, XtPointer info, XtPointer context) {make_new_file_dialog();}
+static void file_new_callback(Widget w, XtPointer info, XtPointer context) {make_new_file_dialog(true);}
 static void file_record_callback(Widget w, XtPointer info, XtPointer context) {snd_record_file();}
 static void file_close_callback(Widget w, XtPointer info, XtPointer context) {if (any_selected_sound()) snd_close_file(any_selected_sound());}
 static void file_save_callback(Widget w, XtPointer info, XtPointer context) {if (any_selected_sound()) save_edits_with_prompt(any_selected_sound());}

@@ -397,7 +397,7 @@ widget_t make_open_file_dialog(bool read_only, bool managed);
 widget_t make_sound_save_as_dialog(bool managed);
 widget_t make_selection_save_as_dialog(bool managed);
 widget_t make_region_save_as_dialog(bool managed);
-void make_new_file_dialog(void);
+widget_t make_new_file_dialog(bool managed);
 void mouse_enter_label(Widget w, XtPointer context, XEvent *event, Boolean *flag);
 void mouse_leave_label(Widget w, XtPointer context, XEvent *event, Boolean *flag);
 Widget edit_header(snd_info *sp);

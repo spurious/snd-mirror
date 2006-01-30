@@ -479,6 +479,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+30-Jan:  new-sound-dialog.\n\
 15-Jan:  snd 7.18.\n\
 5-Jan:   sound-file? for easier file-filter definition.\n\
 2-Jan:   removed the various sorting indices (sort-by-name|size|date|entry), and changed \n\

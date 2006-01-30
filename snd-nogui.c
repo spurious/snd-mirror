@@ -183,7 +183,7 @@ char *get_file_dialog_sound_attributes(file_data *fdat, int *srate, int *chans, 
 #if (!HAVE_FAM)
   void alert_new_file(void) {}
 #endif
-void make_new_file_dialog(void) {}
+widget_t make_new_file_dialog(bool managed) {return(0);}
 int edit_header(snd_info *sp) {return(0);}
 void save_edit_header_dialog_state(FILE *fd) {}
 void cleanup_edit_header_watcher(void) {}

@@ -1,5 +1,6 @@
 Snd change log
 
+  30-Jan:    new-sound-dialog.
   15-Jan:    snd 7.18.
   5-Jan:     sound-file? for easier file-filter definition.
   2-Jan:     removed the sorting indices (sort-by-name|size|date|entry), and changed the way the user-defined sorter works.

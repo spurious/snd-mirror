@@ -156,7 +156,6 @@
 #undef HAVE_XM_XP
 #undef HAVE_MOTIF
 #undef HAVE_XmToolTipGetLabel
-#undef HAVE_XmCreateMultiList
 #undef HAVE_XmCreateDataField
 #undef HAVE_XmCreateButtonBox
 #undef HAVE_XmCreateTabStack

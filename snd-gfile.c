@@ -3378,7 +3378,7 @@ static void new_file_help_callback(GtkWidget *w, gpointer context)
   new_file_dialog_help();
 }
 
-void make_new_file_dialog(void)
+widget_t make_new_file_dialog(bool managed)
 {
   char *newname;
   if (!new_file_dialog)
@@ -3463,7 +3463,9 @@ void make_new_file_dialog(void)
 	}
     }
 #endif
-  gtk_widget_show(new_file_dialog);
+  if (managed)
+    gtk_widget_show(new_file_dialog);
+  return(new_file_dialog);
 }
 
 

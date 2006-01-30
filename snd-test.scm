@@ -46226,19 +46226,13 @@ EDITS: 1
 					(if (not (check))
 					    (snd-display ";toggle ~A on" name)))
 				      (snd-display ";no ~A togglebutton widget in transform dialog?" name))))
-			      (list "normo-button" "sono-button" "spectro-button" "normo-button" "peaks-button" "db-button" 
-				    "logfreq-button" "normalize-button" "selection-button")
-			      (list (lambda () (= (transform-graph-type) graph-once))
-				    (lambda () (= (transform-graph-type) graph-as-sonogram))
-				    (lambda () (= (transform-graph-type) graph-as-spectrogram))
-				    (lambda () (= (transform-graph-type) graph-once))
-				    show-transform-peaks
+			      (list "peaks-button" "db-button" "logfreq-button" "normalize-button" "selection-button")
+			      (list show-transform-peaks
 				    fft-log-magnitude
 				    fft-log-frequency
 				    (lambda () (= (transform-normalization) 1))
 				    show-selection-transform)
-			      (list #f #f #f #f #t #t
-				    #t #t #t))
+			      (list #t #t #t #t #t))
 		    (move-scale beta 32)
 		    (if (fneq (fft-window-beta) .32)
 			(snd-display ";moved fft-beta: ~A ~A" (fft-window-beta) (XmScaleGetValue beta)))
@@ -46282,6 +46276,30 @@ EDITS: 1
 		    (if (XtIsManaged transd)
 			(snd-display ";why is transform dialog active?")))
 		  
+		  (transform-dialog)
+		  (let* ((transd (list-ref (dialog-widgets) 5))
+
+			 (lfb (find-child transd "lfb"))
+			 (db (find-child transd "db"))
+			 (peaks (find-child transd "max-peaks"))
+
+			 (normo (find-child transd "normo-button"))
+			 (sono (find-child transd "sono-button"))
+			 (spectro (find-child transd "spectro-button"))
+			 )
+		    (XmTextFieldSetString lfb "60.0")
+		    (XtCallCallbacks lfb XmNactivateCallback #f)
+		    (XmTextFieldSetString db "-90.0")
+		    (XtCallCallbacks db XmNactivateCallback #f)
+		    (XmTextFieldSetString peaks "60")
+		    (XtCallCallbacks peaks XmNactivateCallback #f)
+
+		    (XtCallCallbacks sono XmNdisarmCallback #f)
+		    (XtCallCallbacks spectro XmNdisarmCallback #f)
+		    (XtCallCallbacks normo XmNdisarmCallback #f)
+		    (click-button (XmMessageBoxGetChild transd XmDIALOG_OK_BUTTON)) (force-event)
+		    )
+
 		  ;; ---------------- file:open dialog ----------------
 		  (set! (just-sounds) #f)
 		  (let* ((dialog (open-file-dialog))
@@ -46587,6 +46605,81 @@ EDITS: 1
 			  (snd-display ";cancelled save-as wrote a file?")))
 		    (close-sound ind))
 		  
+		  ;; ---------------- file new dialog ----------------
+		  (set! (default-output-chans) 1)
+		  (set! (default-output-data-format) mus-bshort)
+		  (set! (default-output-srate) 22050)
+		  (set! (default-output-header-type) mus-next)
+		  
+                  (if (file-exists? "test.snd") (delete-file "test.snd"))
+		  
+		  (let ((wid (new-sound-dialog)))
+		    (if (not (equal? wid (list-ref (dialog-widgets) 10)))
+			(snd-display ";new-sound-dialog -> ~A ~A" wid (list-ref (dialog-widgets) 10))))
+		  (let* ((newdlog (list-ref (dialog-widgets) 10))
+			 (ok (XmMessageBoxGetChild newdlog XmDIALOG_OK_BUTTON))
+			 (filetext (find-child newdlog "newtext")))
+		    (XmTextSetString filetext "test.snd")
+		    (click-button ok) (force-event)
+		    (if (not (file-exists? "test.snd"))
+			(snd-display ";file test.snd not new?"))
+		    (if (XtIsManaged newdlog)
+			(snd-display ";after new, file dialog still active?")))
+		  (let ((ind (find-sound "test.snd")))
+		    (if (not (sound? ind))
+			(snd-display ";new sound dialog no new sound?")
+			(begin
+			  (if (not (= (srate ind) 22050)) (snd-display ";new file dialog srate: ~A" (srate ind)))
+			  (if (not (= (chans ind) 1)) (snd-display ";new file dialog chans: ~A" (chans ind)))
+			  (if (not (= (data-format ind) mus-bshort)) (snd-display ";new file dialog format: ~A" (data-format ind)))
+			  (if (not (= (header-type ind) mus-next)) (snd-display ";new file dialog type: ~A" (header-type ind)))
+			  (close-sound ind))))
+		  (if (file-exists? "test.snd") (delete-file "test.snd"))
+		  (new-sound-dialog)
+		  (let* ((newdlog (list-ref (dialog-widgets) 10))
+			 (types (find-child newdlog "header-type")) ; list
+			 (formats (find-child newdlog "data-format")) ; list
+			 (srtxt (find-child newdlog "srate-text")) 
+			 (comtxt (find-child newdlog "comment-text"))
+			 (cancel (XmMessageBoxGetChild newdlog XmDIALOG_CANCEL_BUTTON))
+			 (ok (XmMessageBoxGetChild newdlog XmDIALOG_OK_BUTTON))
+			 (filetext (find-child newdlog "newtext")))
+		    (do ((i 1 (1+ i)))
+			((= i 7))
+		      (XmListSelectPos types i #t))
+		    (XmListSelectPos types 2 #t)
+		    (XmListSelectPos formats 2 #t)
+		    (XmTextSetString filetext "test.snd")
+		    (XmTextSetString srtxt "(* 2 22050)")
+		    (XmTextSetString comtxt "This is a test of the file new dialog")
+		    (click-button ok) (force-event)
+		    (if (not (file-exists? "test.snd"))
+			(snd-display ";file 2 test.snd not newdlog?"))
+		    (if (XtIsManaged newdlog)
+			(snd-display ";after save, file dialog still active?"))
+		    (if (file-exists? "test.snd")
+			(let ((ind1 (find-sound "test.snd")))
+			  (if (not (= (header-type ind1) mus-aifc))
+			      (snd-display ";new aifc header type? ~A" (mus-header-type-name (header-type ind1))))
+			  (if (not (= (data-format ind1) mus-mulaw))
+			      (snd-display ";new mulaw data format? ~A" (mus-data-format-name (data-format ind1))))
+			  (if (not (= (srate ind1) 44100))
+			      (snd-display ";new 44100 srate? ~A" (srate ind1)))
+			  (if (or (not (string? (comment ind1)))
+				  (not (string=? (comment ind1) "This is a test of the file new dialog")))
+			      (snd-display ";new comment: ~A" (comment ind1)))
+			  (close-sound ind1))))
+		  (if (file-exists? "test.snd") (delete-file "test.snd"))
+		  (new-sound-dialog)
+		  (let* ((newdlog (list-ref (dialog-widgets) 10))
+			 (filetext (find-child newdlog "newtext"))
+			 (cancel (XmMessageBoxGetChild newdlog XmDIALOG_CANCEL_BUTTON)))
+		    (click-button cancel) (force-event)
+		    (if (XtIsManaged newdlog)
+			(snd-display ";after cancel, new file dialog still active?"))
+		    (if (file-exists? "test.snd")
+			(snd-display ";cancelled new wrote a file?")))
+
 		  ;; ---------------- edit save-as dialog ----------------
 		  (let ((ind (open-sound "oboe.snd")))
 		    (if (file-exists? "test.snd") (delete-file "test.snd"))
@@ -46946,15 +47039,34 @@ EDITS: 1
 		  ;; ---------------- help dialog ----------------
 		  (help-dialog "Test" "snd-test here")
 		  (let* ((helpd (list-ref (dialog-widgets) 14))
-			 (txt (find-child helpd "help-search")))
-		    (if (Widget? txt)
-			(begin
-			  (XmTextFieldSetString txt "reverb")
-			  (XtCallCallbacks txt XmNactivateCallback #f)))
-		    (click-button (XmMessageBoxGetChild helpd XmDIALOG_OK_BUTTON)) (force-event)
+			 (txt (find-child helpd "help-search"))
+			 (lst (find-child helpd "help-list"))
+			 (back (find-child helpd "Back"))
+			 (forward (XmMessageBoxGetChild helpd XmDIALOG_CANCEL_BUTTON))
+			 (quit (XmMessageBoxGetChild helpd XmDIALOG_OK_BUTTON))
+			 (help-xrefs (list "Mark" "Mix" "Region" "Selection" "Cursor" "Tracking cursor" "Delete" "Envelope" "Filter"
+					   "Search" "Insert" "Maxamp" "Play" "Reverse" "Save" "Smooth" "Resample" "FFT" "Reverb"
+					   "Src" "Find" "Undo" "Redo" "Sync" "Control panel" "Record" "Header" "Key" "Track" "Copy"
+					   "Noise Reduction" "Window Size" "Color" "Control" "Random Numbers")))
+		    (for-each (lambda (topic)
+				(XmTextFieldSetString txt topic)
+				(XtCallCallbacks txt XmNactivateCallback #f))
+			      help-xrefs)
+		    (click-button back) (force-event)
+		    (click-button forward) (force-event)
+		    (XmTextFieldSetString txt "open-sound")
+		    (XtCallCallbacks txt XmNactivateCallback #f)
+		    (let* ((help-data (XtVaGetValues lst (list XmNitems 0)))
+			   (help-names (map (lambda (str)
+					      (XmStringUnparse str #f XmCHARSET_TEXT XmCHARSET_TEXT #f 0 XmOUTPUT_ALL))
+					    (cadr help-data))))
+		      (XmListSelectPos lst 1 #t)
+		      (if (not (equal? help-names (list "open-file-dialog" "open-hook" "open-raw-sound" "open-raw-sound-hook" "open-sound" "open-sound-file")))
+			  (snd-display ";help-dialog data: ~A" help-names)))
+		    (click-button quit) (force-event)
 		    (if (XtIsManaged helpd)
 			(snd-display ";help still active?")))
-		  
+
 		  ;; ---------------- info dialog ----------------
 		  (let ((wid (info-dialog "Test" "snd-test here")))
 		    (if (not (equal? wid (list-ref (dialog-widgets) 20)))
@@ -48736,6 +48848,8 @@ EDITS: 1
 	    (if (not (= (XtGetMultiClickTime (XtDisplay (cadr (main-widgets)))) 250))
 		(snd-display ";XtSetMultiClickTime: ~A" (XtGetMultiClickTime (XtDisplay (cadr (main-widgets))))))
 	    (XtGetResourceList xmListWidgetClass)
+	    (let ((wid1 (XtCreateWidget "wid1" xmPushButtonWidgetClass (cadr (main-widgets)) '())))
+	      (XtDestroyWidget wid1))
 
 	    (let ((hook-id (XtAppAddActionHook 
 			    (car (main-widgets))
@@ -48910,6 +49024,10 @@ EDITS: 1
 	      (XtCallActionProc listener "listener-completion" (XEvent) #f 0)
 	      (XtCallActionProc listener "no-op" (XEvent) #f 0)
 	      (XtCallActionProc listener "delete-region" (XEvent) #f 0)
+	      (XtCallActionProc listener "listener-g" (XEvent) #f 0)
+	      (XtCallActionProc listener "listener-clear" (XEvent) #f 0)
+	      (XtCallActionProc listener "b1-press" (XEvent) #f 0)
+	      (XtCallActionProc listener "delete-to-previous-command" (XEvent) #f 0)
 	      (let ((BEvent (XEvent ButtonPress)))
 		(set! (.x BEvent) 10)
 		(set! (.y BEvent) 10)
@@ -50664,6 +50782,16 @@ EDITS: 1
 					  (XKeycodeToKeysym dpy (list 'KeyCode XK_b) 0)
 					  0  (lambda (w c i) #f) '())
 	      
+	      (if (defined? 'XmToolTipGetLabel)
+		  (let ((wid1 (XtCreateManagedWidget "wid1" xmPushButtonWidgetClass mainform
+						     (list XmNtoolTipString (XmStringCreateLocalized "tooltip")
+							   XmNtoolTipPostDelay 100
+							   XmNtoolTipPostDuration 500
+							   XmNtoolTipEnable #t
+							   XmNanimate #f))))
+		    (let ((tip (XmToolTipGetLabel wid1)))
+		      (if (not (Widget? tip)) (snd-display ";tooltip label: ~A" tip)))))
+
 	      (if (not (XmIsMotifWMRunning (cadr (main-widgets)))) (snd-display ";not XmIsMotifWMRunning?"))
 	      (install-searcher (lambda (file) (= (mus-sound-srate file) 44100)))
 	      (zync)

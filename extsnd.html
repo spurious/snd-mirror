@@ -9183,6 +9183,12 @@ Return the dialog widget.
 Return the dialog widget.
 </td></tr>
 
+<!-- new-sound-dialog -->
+<tr><td colspan=2><code><a class=def name="newsounddialog">new-sound-dialog</a> (<i>managed</i>) </code></td></tr>
+<tr><td></td><td>create and (if <i>managed</i> which defaults to #t)
+start the File New sound dialog; return the dialog widget.
+</td></tr>
+
 <!-- open-file-dialog -->
 <tr><td colspan=2><code><a class=def name="openfiledialog">open-file-dialog</a> (<i>managed</i>)</code></td></tr>
 <tr><td></td><td>create and (if <i>managed</i> which defaults to #t) activate the File:Open dialog (see snd-motif.scm for examples).
@@ -9467,6 +9473,8 @@ Here is a partial list of the dialogs scattered around Snd.
 
 <tr><td></td><td colspan=2>Save sound</td><td>File:<a href="snd.html#savefile">Save as</a></td>
     <td><a href="#savesounddialog">save-sound-dialog</a>, <a href="#savehook">save-hook</a>, <a href="#savesoundas">save-sound-as</a></td><td></td></tr>
+<tr><td></td><td colspan=2>New sound</td><td>File:<a href="snd.html#newfile">New</a></td>
+    <td><a href="#newsounddialog">new-sound-dialog</a>, <a href="#newsound">new-sound</a></td><td></td></tr>
 <tr><td></td><td colspan=2>Mix sound</td><td>File:<a href="snd.html#mixingfiles">Mix</a></td>
     <td><a href="#mix">mix</a></td><td></td></tr>
 <tr><td></td><td colspan=2>Record</td><td>File:<a href="snd.html#recordfile">Record</a></td>
@@ -11000,7 +11008,7 @@ The four "-widgets" procedures return lists of possibly useful widgets:
   dialog-widgets:  '(0:color_dialog 1:orientation_dialog 2:enved_dialog 3:#f
                      4:#f 5:transform_dialog 6:file_open_dialog 
                      7:sound_save_as_dialog 8:view_files_dialog 9:raw_data_dialog 
-                     10:new_file_dialog 11:file_mix_dialog 12:edit_header_dialog 
+                     10:new_sound_dialog 11:file_mix_dialog 12:edit_header_dialog 
                      13:find_dialog 14:help_dialog 15:completion_dialog 16:view_mixes_dialog
                      17:print_dialog 18:recorder_dialog 19:view_regions_dialog, 20:info_dialog
                      21:view_tracks_dialog 22:selection_save_as_dialog, 23:insert_file_dialog,
