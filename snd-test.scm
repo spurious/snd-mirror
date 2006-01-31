@@ -5,31 +5,31 @@
 ;;;  test 2: headers                            [1234]
 ;;;  test 3: variables                          [1538]
 ;;;  test 4: sndlib                             [1933]
-;;;  test 5: simple overall checks              [4017]
-;;;  test 6: vcts                               [11410]
-;;;  test 7: colors                             [11720]
-;;;  test 8: clm                                [12222]
-;;;  test 9: mix                                [20392]
-;;;  test 10: marks                             [23499]
-;;;  test 11: dialogs                           [24202]
-;;;  test 12: extensions                        [24588]
-;;;  test 13: menus, edit lists, hooks, etc     [25016]
-;;;  test 14: all together now                  [26442]
-;;;  test 15: chan-local vars                   [27510]
-;;;  test 16: regularized funcs                 [28784]
-;;;  test 17: dialogs and graphics              [33151]
-;;;  test 18: enved                             [33226]
-;;;  test 19: save and restore                  [33246]
-;;;  test 20: transforms                        [34842]
-;;;  test 21: new stuff                         [36516]
-;;;  test 22: run                               [37403]
-;;;  test 23: with-sound                        [42896]
-;;;  test 24: user-interface                    [43984]
-;;;  test 25: X/Xt/Xm                           [47213]
-;;;  test 26: Gtk                               [51794]
-;;;  test 27: GL                                [55866]
-;;;  test 28: errors                            [55976]
-;;;  test all done                              [58108]
+;;;  test 5: simple overall checks              [4019]
+;;;  test 6: vcts                               [11424]
+;;;  test 7: colors                             [11734]
+;;;  test 8: clm                                [12236]
+;;;  test 9: mix                                [20406]
+;;;  test 10: marks                             [23513]
+;;;  test 11: dialogs                           [24216]
+;;;  test 12: extensions                        [24602]
+;;;  test 13: menus, edit lists, hooks, etc     [25030]
+;;;  test 14: all together now                  [26456]
+;;;  test 15: chan-local vars                   [27524]
+;;;  test 16: regularized funcs                 [28798]
+;;;  test 17: dialogs and graphics              [33165]
+;;;  test 18: enved                             [33253]
+;;;  test 19: save and restore                  [33273]
+;;;  test 20: transforms                        [34869]
+;;;  test 21: new stuff                         [36543]
+;;;  test 22: run                               [37431]
+;;;  test 23: with-sound                        [42947]
+;;;  test 24: user-interface                    [44035]
+;;;  test 25: X/Xt/Xm                           [47486]
+;;;  test 26: Gtk                               [52064]
+;;;  test 27: GL                                [56136]
+;;;  test 28: errors                            [56246]
+;;;  test all done                              [58382]
 ;;;
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 ;;; need all html example code in autotests
@@ -42,10 +42,7 @@
 (define all-args #f) ; huge arg testing
 (define with-big-file #t)
 
-
-;;; SOMEDAY: fix guile random in 64-bit case -- this is a guile bug
 ;;; SOMEDAY: why does freeBSD get memory corruption occasionally? (need valgrind ideally)
-
 
 (if (not (defined? 'snd-test)) (define snd-test -1))
 (define full-test (< snd-test 0))
@@ -47313,12 +47310,20 @@ EDITS: 1
 					    (XtCallCallbacks w XmNactivateCallback #f))
 					  (if (XmIsToggleButton w)
 					      (XmToggleButtonSetValue w XmSET #t)
-					      (if (or (XmIsPushButton w)
-						      (XmIsArrowButton w))
+					      (if (XmIsPushButton w)
 						  (if (XtIsSensitive w)
 						      (click-button w #t 0))
-						  (if (XmIsScale w)
-						      (move-scale w 50)))))))
+						  (if (XmIsArrowButton w)
+						      (begin
+							(click-button w #t 0)
+; these need the prf pointer
+;							(if (not (= (XtHasCallbacks w XmNarmCallback) XtCallbackHasNone))
+;							    (XtCallCallbacks w XmNarmCallback (prefs-pointer)))
+;							(if (not (= (XtHasCallbacks w XmNdisarmCallback) XtCallbackHasNone))
+;							    (XtCallCallbacks w XmNdisarmCallback (prefs-pointer)))
+							)
+						      (if (XmIsScale w)
+							  (move-scale w 50))))))))
 		    
 		    (XtCallCallbacks save-button XmNactivateCallback #f)
 		    (if (not (file-exists? "/home/bil/.snd_prefs_guile"))
@@ -50782,16 +50787,6 @@ EDITS: 1
 					  (XKeycodeToKeysym dpy (list 'KeyCode XK_b) 0)
 					  0  (lambda (w c i) #f) '())
 	      
-	      (if (defined? 'XmToolTipGetLabel)
-		  (let ((wid1 (XtCreateManagedWidget "wid1" xmPushButtonWidgetClass mainform
-						     (list XmNtoolTipString (XmStringCreateLocalized "tooltip")
-							   XmNtoolTipPostDelay 100
-							   XmNtoolTipPostDuration 500
-							   XmNtoolTipEnable #t
-							   XmNanimate #f))))
-		    (let ((tip (XmToolTipGetLabel wid1)))
-		      (if (not (Widget? tip)) (snd-display ";tooltip label: ~A" tip)))))
-
 	      (if (not (XmIsMotifWMRunning (cadr (main-widgets)))) (snd-display ";not XmIsMotifWMRunning?"))
 	      (install-searcher (lambda (file) (= (mus-sound-srate file) 44100)))
 	      (zync)
@@ -51058,27 +51053,18 @@ EDITS: 1
 			    (let ((tab (XmTabStackGetSelectedTab w1)))
 			      (XmTabStackSelectTab w1 #f)
 			      w1))
-			  #f))
-		     (fntlst
-		      (if (defined? 'XmIsMultiList)
-			  (let ((w1 (XmCreateMultiList mainform "hiho" '())))
-			    (if (or (not (XmIsMultiList w1))
-				    (not (XmMultiList? w1)))
-				(snd-display ";XmIsMultiList: ~A ~A ~A" w1 (XmIsMultiList w1) (XmMultiList? w1)))
-			    (XmMultiListUnselectAllItems w1)
-			    (XmMultiListDeselectAllItems w1)
-			    (XmMultiListSelectAllItems w1 #f)
-					;XmMultiListDeselectRow
-					;XmMultiListSelectRow
-					;XmMultiListToggleRow
-					;XmMultiListMakeRowVisible
-					;XmMultiListUnselectItem
-					;XmMultiListDeselectItem
-					;XmMultiListDeselectItems
-					;XmMultiListSelectItems
-					;XmMultiListGetSelectedRows
-			    w1)
 			  #f)))
+
+		(if (defined? 'XmToolTipGetLabel)
+		    (let ((wid1 (XtCreateManagedWidget "wid1" xmPushButtonWidgetClass mainform
+						       (list XmNtoolTipString (XmStringCreateLocalized "tooltip")
+							     XmNtoolTipPostDelay 100
+							     XmNtoolTipPostDuration 500
+							     XmNtoolTipEnable #t
+							     XmNanimate #f))))
+		      (let ((tip (XmToolTipGetLabel wid1)))
+			(if (not (Widget? tip)) (snd-display ";tooltip label: ~A" tip)))))
+
 		(XtManageChild new-dialog)
 		(XtUnmanageChild new-dialog)))
 
@@ -56487,7 +56473,7 @@ EDITS: 1
 		     make-pulse-train make-rand make-rand-interp make-readin make-sample->file make-sawtooth-wave
 		     make-sine-summation make-square-wave make-src make-sum-of-cosines make-sum-of-sines make-ssb-am make-table-lookup make-triangle-wave
 		     make-two-pole make-two-zero make-wave-train make-waveshape make-zpolar mixer* mixer-ref mixer-set! mixer? mixer+
-		     multiply-arrays mus-array-print-length mus-channel mus-channels make-polyshape
+		     multiply-arrays mus-array-print-length mus-channel mus-channels make-polyshape polyshape?
 		     mus-close mus-cosines mus-data mus-feedback mus-feedforward mus-fft mus-formant-radius mus-frequency
 		     mus-hop mus-increment mus-input? mus-file-name mus-length mus-location mus-mix mus-order mus-output?  mus-phase
 		     mus-ramp mus-random mus-scaler mus-srate mus-xcoeffs mus-ycoeffs notch notch? one-pole one-pole?

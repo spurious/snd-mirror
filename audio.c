@@ -4291,13 +4291,7 @@ total requested buffer size is %d frames, minimum allowed is %d, maximum is %d",
 			      mus_format("%s: %s: cannot set channels to %d", 
 					 c__FUNCTION__, alsa_name, chans)));
     }
-
-    /* perhaps need this info to choose correct set_rate_near:
-       #define SND_LIB_MAJOR
-       #define SND_LIB_MINOR
-       #define SND_LIB_SUBMINOR
-    */
-#if 0
+#if 1
     r = snd_pcm_hw_params_set_rate_near(handle, hw_params, srate, 0);
     if (r < 0) {
 	snd_pcm_close(handle);
@@ -4312,7 +4306,7 @@ total requested buffer size is %d frames, minimum allowed is %d, maximum is %d",
 		      c__FUNCTION__, alsa_name, srate, r);
 	}
     }
-#endif
+#else
     /* bil: this apparently changed at some point -- it now takes a pointer and is declared "internal" */
     {
       unsigned int new_srate = 0;
@@ -4332,7 +4326,7 @@ total requested buffer size is %d frames, minimum allowed is %d, maximum is %d",
 	}
       }
     }
-
+#endif
     err = snd_pcm_hw_params(handle, hw_params);
     if (err < 0) {
 	snd_pcm_close(handle);
