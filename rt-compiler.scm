@@ -3388,6 +3388,20 @@ and run simple lisp[4] functions.
   (let ((x (rt-gensym))
 	(y (rt-gensym))
 	(z (rt-gensym)))
+    `(let* ((,x (the <int> ,a))
+	    (,y (the <int> ,b))
+	    (,z (the <int> (remainder ,x ,y))))
+       (if (or (and (negative? ,y)
+		    (positive? ,z))
+	       (and (positive? ,y)
+		    (negative? ,z)))
+	   (+ ,z ,y)
+	   ,z))))
+#!
+(define-rt-macro (modulo a b)
+  (let ((x (rt-gensym))
+	(y (rt-gensym))
+	(z (rt-gensym)))
     `(let* ((,x ,a)
 	    (,y ,b)
 	    (,z (remainder ,x ,y)))
@@ -3397,6 +3411,7 @@ and run simple lisp[4] functions.
 		    (negative? ,z)))
 	   (+ ,z ,y)
 	   ,z))))
+!#
 
 (define-c-macro (rt-/// . rest)
   `(/ ,@rest))
@@ -5719,15 +5734,16 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
 
 
 ;; SCM->ladspa converter
-(rt-ec-function <struct-mus_rt_readin-*> rt_scm_to_ladspa
+(rt-ec-function <struct-mus_rt_readin-*> rt_scm_to_rt_ladspa
 	     (lambda (,rt-globalvardecl (<SCM> name))
+	       (<SCM> ladspa (SCM_CAR (SCM_CDR name)))
 	       ,(if (rt-is-safety?)
-		    `(if (not (SCM_SMOB_PREDICATE rt_ladspa_tag name))
+		    `(if (not (SCM_SMOB_PREDICATE rt_ladspa_tag ladspa))
 			 (begin
 			   (rt_error rt_globals (string "Variable is not an rt-ladspa object"))
 			   (return NULL))
-			 (return (cast <void-*> (SCM_SMOB_DATA name))))
-		    `(return (cast <void-*> (SCM_SMOB_DATA name))))))
+			 (return (cast <void-*> (SCM_SMOB_DATA ladspa))))
+		    `(return (cast <void-*> (SCM_SMOB_DATA ladspa))))))
 (<rt-func> 'rt_scm_to_rt_ladspa '<ladspa> '(<SCM>) #:needs-rt-globals #t)
 
 
@@ -6297,7 +6313,7 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
 			 (rt-vct-ref/vct-ref ,das-vct (rt-castint/castint ,pos)))
       (let ((x (rt-gensym)))
 	`(let ((,x ,pos))
-	   (rt-vct-legal-pos ,das-vct ,pos "vct-ref"
+	   (rt-vct-legal-pos ,das-vct ,x "vct-ref"
 			     (rt-vct-ref/vct-ref ,das-vct (rt-castint/castint ,x)))))))
 
 
@@ -6760,7 +6776,8 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
 		  
 		   (<nonstatic-extern-scm_t_bits> rt_readin_tag)
 		   (<nonstatic-extern-scm_t_bits> rt_bus_tag)
-
+		   (<nonstatic-extern-scm_t_bits> rt_ladspa_tag)
+		   
 		   "extern float rt_readin(struct mus_rt_readin*)"
 		   "extern void rt_receive_midi(struct RT_Globals *,int,snd_seq_t*,void (*)(struct RT_Globals *, int, int, int))"
 
@@ -7375,6 +7392,7 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
 
 
 
+(c-display "#:RT-Compiler loaded successfully...")
 
 
 #!

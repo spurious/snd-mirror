@@ -101,6 +101,7 @@
 #undef MUS_WINDOZE
 #undef HAVE_OSS
 #undef HAVE_ALSA
+#undef HAVE_NEW_ALSA
 #undef HAVE_JACK
 #undef HAVE_SAM_9407
 #undef MUS_MAC_OSX

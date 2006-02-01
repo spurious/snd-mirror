@@ -3366,6 +3366,9 @@ static int probe_api(void)
 
 /* ------------------------------- ALSA ----------------------------------------- */
 /*
+ * added HAVE_NEW_ALSA, and changed various calls to reflect the new calling sequences (all under HAVE_NEW_ALSA)
+ *    -- Bill 31-Jan-06
+ *
  * error handling (mus_error) changed by Bill 14-Nov-02
  * 0.5 support removed by Bill 24-Mar-02
  *
@@ -3437,10 +3440,21 @@ static int probe_api(void)
 #define AUDIO_OK
 #endif
 
+/*
+TODO: alsa segfault:
+         /home/bil/snd-77/ setenv SNDLIB_ALSA_DEVICE "hw:0,1"
+         /home/bil/snd-77/ ./snd ~/cl/oboe.snd
+         ALSA lib pcm_hw.c:1055:(snd_pcm_hw_open) open /dev/snd/pcmC0D1c failed: No such file or directory
+         ALSA lib pcm_hw.c:1055:(snd_pcm_hw_open) open /dev/snd/pcmC0D1c failed: No such file or directory
+         Segmentation fault (core dumped)
+*/
+
 #include <sys/ioctl.h>
 
-#define ALSA_PCM_OLD_HW_PARAMS_API
-#define ALSA_PCM_OLD_SW_PARAMS_API
+#if (!HAVE_NEW_ALSA)
+  #define ALSA_PCM_OLD_HW_PARAMS_API
+  #define ALSA_PCM_OLD_SW_PARAMS_API
+#endif
 
 #if HAVE_ALSA_ASOUNDLIB_H
   #include <alsa/asoundlib.h>
@@ -4009,7 +4023,11 @@ static int alsa_mus_audio_initialize(void)
     char *cname;
     int value; 
     int dir;
+#if HAVE_NEW_ALSA
+    unsigned int min_periods, max_periods, min_rec_periods, max_rec_periods;
+#else
     snd_pcm_uframes_t min_periods, max_periods, min_rec_periods, max_rec_periods;
+#endif
     snd_pcm_uframes_t min_buffer_size, max_buffer_size, min_rec_buffer_size, max_rec_buffer_size;
     if (audio_initialized) {
 	return(0);
@@ -4084,11 +4102,21 @@ static int alsa_mus_audio_initialize(void)
      * separately, and they might interact when being set, but it is better
      * than not checking at all anything 
      */
+#if HAVE_NEW_ALSA
+    snd_pcm_hw_params_get_periods_min(alsa_hw_params[SND_PCM_STREAM_PLAYBACK], &min_periods, &dir);
+    snd_pcm_hw_params_get_periods_max(alsa_hw_params[SND_PCM_STREAM_PLAYBACK], &max_periods, &dir);
+#else
     min_periods = snd_pcm_hw_params_get_periods_min(alsa_hw_params[SND_PCM_STREAM_PLAYBACK], &dir);
     max_periods = snd_pcm_hw_params_get_periods_max(alsa_hw_params[SND_PCM_STREAM_PLAYBACK], &dir);
+#endif
     if (alsa_hw_params[SND_PCM_STREAM_CAPTURE] != NULL) {
+#if HAVE_NEW_ALSA
+        snd_pcm_hw_params_get_periods_min(alsa_hw_params[SND_PCM_STREAM_CAPTURE], &min_rec_periods, &dir);
+        snd_pcm_hw_params_get_periods_max(alsa_hw_params[SND_PCM_STREAM_CAPTURE], &max_rec_periods, &dir);
+#else
         min_rec_periods = snd_pcm_hw_params_get_periods_min(alsa_hw_params[SND_PCM_STREAM_CAPTURE], &dir);
 	max_rec_periods = snd_pcm_hw_params_get_periods_max(alsa_hw_params[SND_PCM_STREAM_CAPTURE], &dir);
+#endif
 	if (max_periods > max_rec_periods) {
 	    max_periods = max_rec_periods;
 	}
@@ -4108,11 +4136,21 @@ static int alsa_mus_audio_initialize(void)
 			      max_periods) == MUS_NO_ERROR) {
 	alsa_periods = value;
     }
+#if HAVE_NEW_ALSA
+    snd_pcm_hw_params_get_buffer_size_min(alsa_hw_params[SND_PCM_STREAM_PLAYBACK], &min_buffer_size);
+    snd_pcm_hw_params_get_buffer_size_max(alsa_hw_params[SND_PCM_STREAM_PLAYBACK], &max_buffer_size);
+#else
     min_buffer_size = snd_pcm_hw_params_get_buffer_size_min(alsa_hw_params[SND_PCM_STREAM_PLAYBACK]);
     max_buffer_size = snd_pcm_hw_params_get_buffer_size_max(alsa_hw_params[SND_PCM_STREAM_PLAYBACK]);
+#endif
     if (alsa_hw_params[SND_PCM_STREAM_CAPTURE] != NULL) {
+#if HAVE_NEW_ALSA
+        snd_pcm_hw_params_get_buffer_size_min(alsa_hw_params[SND_PCM_STREAM_CAPTURE], &min_rec_buffer_size);
+        snd_pcm_hw_params_get_buffer_size_max(alsa_hw_params[SND_PCM_STREAM_CAPTURE], &max_rec_buffer_size);
+#else
         min_rec_buffer_size = snd_pcm_hw_params_get_buffer_size_min(alsa_hw_params[SND_PCM_STREAM_CAPTURE]);
 	max_rec_buffer_size = snd_pcm_hw_params_get_buffer_size_max(alsa_hw_params[SND_PCM_STREAM_CAPTURE]);
+#endif
 	if (max_buffer_size > max_rec_buffer_size) {
 	    max_buffer_size = max_rec_buffer_size;
 	}
@@ -4249,9 +4287,15 @@ static int alsa_audio_open(int ur_dev, int srate, int chans, int format, int siz
     err = snd_pcm_hw_params_set_periods(handle, hw_params, periods, 0);
     if (err < 0) {
 	int dir;
+#if HAVE_NEW_ALSA
+ 	unsigned int min, max;
+ 	snd_pcm_hw_params_get_periods_min(hw_params, &min, &dir);
+ 	snd_pcm_hw_params_get_periods_max(hw_params, &max, &dir);
+#else
 	snd_pcm_uframes_t min, max;
 	min = snd_pcm_hw_params_get_periods_min(hw_params, &dir);
 	max = snd_pcm_hw_params_get_periods_max(hw_params, &dir);
+#endif
 	snd_pcm_close(handle);
 	handles[alsa_stream] = NULL;
 	alsa_dump_configuration(alsa_name, hw_params, sw_params);
@@ -4263,8 +4307,13 @@ static int alsa_audio_open(int ur_dev, int srate, int chans, int format, int siz
     err = snd_pcm_hw_params_set_buffer_size(handle, hw_params, frames*periods);
     if (err < 0) {
 	snd_pcm_uframes_t min, max;
+#if HAVE_NEW_ALSA
+ 	snd_pcm_hw_params_get_buffer_size_min(hw_params, &min);
+ 	snd_pcm_hw_params_get_buffer_size_max(hw_params, &max);
+#else
 	min = snd_pcm_hw_params_get_buffer_size_min(hw_params);
 	max = snd_pcm_hw_params_get_buffer_size_max(hw_params);
+#endif
 	snd_pcm_close(handle);
 	handles[alsa_stream] = NULL;
 	alsa_dump_configuration(alsa_name, hw_params, sw_params);
@@ -4291,7 +4340,26 @@ total requested buffer size is %d frames, minimum allowed is %d, maximum is %d",
 			      mus_format("%s: %s: cannot set channels to %d", 
 					 c__FUNCTION__, alsa_name, chans)));
     }
-#if 1
+#if HAVE_NEW_ALSA
+    {
+      unsigned int new_rate;
+      new_rate = srate;
+      r = snd_pcm_hw_params_set_rate_near(handle, hw_params, &new_rate, 0);
+      if (r < 0) {
+	snd_pcm_close(handle);
+	handles[alsa_stream] = NULL;
+	alsa_dump_configuration(alsa_name, hw_params, sw_params);
+	return(alsa_mus_error(MUS_AUDIO_CONFIGURATION_NOT_AVAILABLE, 
+			      mus_format("%s: %s: cannot set sampling rate near %d", 
+					 c__FUNCTION__, alsa_name, srate)));
+      } else {
+	if (new_rate != srate) {
+	    mus_print("%s: %s: could not set rate to exactly %d, set to %d instead",
+		      c__FUNCTION__, alsa_name, srate, new_rate);
+	}
+      }
+    }
+#else
     r = snd_pcm_hw_params_set_rate_near(handle, hw_params, srate, 0);
     if (r < 0) {
 	snd_pcm_close(handle);
@@ -4305,26 +4373,6 @@ total requested buffer size is %d frames, minimum allowed is %d, maximum is %d",
 	    mus_print("%s: %s: could not set rate to exactly %d, set to %d instead",
 		      c__FUNCTION__, alsa_name, srate, r);
 	}
-    }
-#else
-    /* bil: this apparently changed at some point -- it now takes a pointer and is declared "internal" */
-    {
-      unsigned int new_srate = 0;
-      new_srate = (unsigned int)srate;
-      r = snd_pcm_hw_params_set_rate_near(handle, hw_params, &new_srate, 0);
-      if (r < 0) {
-	snd_pcm_close(handle);
-	handles[alsa_stream] = NULL;
-	alsa_dump_configuration(alsa_name, hw_params, sw_params);
-	return(alsa_mus_error(MUS_AUDIO_CONFIGURATION_NOT_AVAILABLE, 
-			      mus_format("%s: %s: cannot set sampling rate near %d", 
-					 c__FUNCTION__, alsa_name, srate)));
-      } else {
-	if (new_srate != srate) {
-	    mus_print("%s: %s: could not set rate to exactly %d, set to %d instead",
-		      c__FUNCTION__, alsa_name, srate, new_srate);
-	}
-      }
     }
 #endif
     err = snd_pcm_hw_params(handle, hw_params);
@@ -4524,8 +4572,16 @@ static int alsa_mus_audio_mixer_read(int ur_dev, int field, int chan, float *val
 	} else {
 	    val[0] = (float)alsa_samples_per_channel;
 	    if (chan > 1) {
+#if HAVE_NEW_ALSA
+ 	        snd_pcm_uframes_t tmp = 0;
+ 	        snd_pcm_hw_params_get_buffer_size_min(alsa_hw_params[alsa_stream], &tmp); 
+ 	        val[1] = (float)tmp;
+ 	        snd_pcm_hw_params_get_buffer_size_max(alsa_hw_params[alsa_stream], &tmp); 
+ 	        val[2] = (float)tmp;
+#else
 	        val[1] = (float)snd_pcm_hw_params_get_buffer_size_min(alsa_hw_params[alsa_stream]); 
 		val[2] = (float)snd_pcm_hw_params_get_buffer_size_max(alsa_hw_params[alsa_stream]); 
+#endif
 	    }
 	}
 	break;
@@ -4534,7 +4590,12 @@ static int alsa_mus_audio_mixer_read(int ur_dev, int field, int chan, float *val
 	if (card>0 || alsa_device>0) {
 	    return(alsa_mus_error(MUS_AUDIO_CANT_READ, NULL));
 	} else {
+#if HAVE_NEW_ALSA
+ 	    unsigned int max_channels = 0;
+ 	    snd_pcm_hw_params_get_channels_max(alsa_hw_params[alsa_stream], &max_channels);
+#else
 	    int max_channels = snd_pcm_hw_params_get_channels_max(alsa_hw_params[alsa_stream]);
+#endif
 	    if (alsa_stream == SND_PCM_STREAM_CAPTURE &&
 		max_channels > alsa_max_capture_channels) {
 		/* limit number of capture channels to a reasonable maximum, if the user
@@ -4549,7 +4610,13 @@ static int alsa_mus_audio_mixer_read(int ur_dev, int field, int chan, float *val
 	    }
 	    val[0] = (float)max_channels;
 	    if (chan > 1) {
+#if HAVE_NEW_ALSA
+ 	        unsigned int tmp = 0;
+ 	        snd_pcm_hw_params_get_channels_min(alsa_hw_params[alsa_stream], &tmp); 
+ 	        val[1] = (float)tmp;
+#else
 	        val[1] = (float)snd_pcm_hw_params_get_channels_min(alsa_hw_params[alsa_stream]); 
+#endif
 		val[2] = (float)max_channels;
 	    }
 	}
@@ -4562,8 +4629,16 @@ static int alsa_mus_audio_mixer_read(int ur_dev, int field, int chan, float *val
 	    int dir = 0;
 	    val[0] = 44100;
 	    if (chan > 1) {
+#if HAVE_NEW_ALSA
+ 	        unsigned int tmp;
+ 	        snd_pcm_hw_params_get_rate_min(alsa_hw_params[alsa_stream], &tmp, &dir); 
+ 	        val[1] = (float)tmp;
+ 	        snd_pcm_hw_params_get_rate_max(alsa_hw_params[alsa_stream], &tmp, &dir); 
+ 	        val[2] = (float)tmp;
+#else
 	        val[1] = (float)snd_pcm_hw_params_get_rate_min(alsa_hw_params[alsa_stream], &dir); 
 		val[2] = (float)snd_pcm_hw_params_get_rate_max(alsa_hw_params[alsa_stream], &dir); 
+#endif
 	    }
 	}
 	break;

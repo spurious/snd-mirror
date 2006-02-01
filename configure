@@ -864,6 +864,7 @@ Optional Packages:
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
   --with-esd		  use ESD
   --with-alsa		  use ALSA
+  --with-oss		  use OSS
   --with-jack		  use JACK
   --with-static-alsa	  use ALSA statically loaded
   --with-gtk		  use Gtk+ to build Snd
@@ -2916,6 +2917,7 @@ _ACEOF
 #   --with-static-motif   use Motif statically loaded (for RPM generation)
 #   --with-gtk            use Gtk+
 #   --with-alsa           use ALSA if possible
+#   --with-oss            use OSS (the default)
 #   --with-jack           use Jack
 #   --with-static-alsa    use ALSA statically loaded (for RPM generation)
 #   --with-snd-as-widget  make Snd a loadable widget, not a standalone program
@@ -2970,6 +2972,12 @@ fi;
 # Check whether --with-alsa or --without-alsa was given.
 if test "${with_alsa+set}" = set; then
   withval="$with_alsa"
+
+fi;
+
+# Check whether --with-oss or --without-oss was given.
+if test "${with_oss+set}" = set; then
+  withval="$with_oss"
 
 fi;
 
@@ -18210,6 +18218,7 @@ _ACEOF
 	if test "$GCC" = yes ; then
 	  SO_FLAGS="-fPIC $SO_FLAGS"
         fi
+
         audio_system=OSS
 
 	if test "$with_alsa" = yes || test "$with_static_alsa" = yes ; then
@@ -18794,6 +18803,7 @@ _ACEOF
 	    	      AUDIO_LIB="-lasound"
 		    fi
 
+
                     # snd_config_get_id argnum changed in Nov-01
                     snd_config_get_id_args=1
                     echo "$as_me:$LINENO: checking snd_config_get_id args" >&5
@@ -18850,6 +18860,64 @@ echo "${ECHO_T}$snd_config_get_id_args" >&6
 #define SND_CONFIG_GET_ID_ARGS $snd_config_get_id_args
 _ACEOF
 
+
+                    echo "$as_me:$LINENO: checking for newer alsa calling sequences" >&5
+echo $ECHO_N "checking for newer alsa calling sequences... $ECHO_C" >&6
+                    cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+#include <alsa/asoundlib.h>
+int
+main ()
+{
+snd_pcm_hw_params_t *hw_params;
+			  	        unsigned int tmp;
+					int dir;
+				        snd_pcm_hw_params_get_rate_max(hw_params, &tmp, &dir)
+
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  cat >>confdefs.h <<\_ACEOF
+#define HAVE_NEW_ALSA 1
+_ACEOF
+
+                        echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
 
 		    if test "$with_jack" = yes ; then
 		      if test "$with_static_alsa" = yes ; then

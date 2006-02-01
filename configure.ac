@@ -33,6 +33,7 @@ AC_DEFINE_UNQUOTED(SND_HOST, "$host")
 #   --with-static-motif   use Motif statically loaded (for RPM generation)
 #   --with-gtk            use Gtk+	
 #   --with-alsa           use ALSA if possible
+#   --with-oss            use OSS (the default)
 #   --with-jack           use Jack
 #   --with-static-alsa    use ALSA statically loaded (for RPM generation)
 #   --with-snd-as-widget  make Snd a loadable widget, not a standalone program
@@ -79,6 +80,7 @@ AC_DEFINE_UNQUOTED(SND_HOST, "$host")
 
 AC_ARG_WITH(esd,         [  --with-esd		  use ESD])
 AC_ARG_WITH(alsa,        [  --with-alsa		  use ALSA])
+AC_ARG_WITH(oss,         [  --with-oss		  use OSS])
 AC_ARG_WITH(jack,        [  --with-jack		  use JACK])
 AC_ARG_WITH(static-alsa, [  --with-static-alsa	  use ALSA statically loaded])
 AC_ARG_WITH(gtk,         [  --with-gtk		  use Gtk+ to build Snd])
@@ -1394,6 +1396,7 @@ case "$host" in
 	if test "$GCC" = yes ; then
 	  SO_FLAGS="-fPIC $SO_FLAGS"
         fi
+
         audio_system=OSS
 
 	if test "$with_alsa" = yes || test "$with_static_alsa" = yes ; then
@@ -1456,6 +1459,7 @@ case "$host" in
 	    	      AUDIO_LIB="-lasound"
 		    fi
 	    	    AC_SUBST(AUDIO_LIB)
+
                     # snd_config_get_id argnum changed in Nov-01
                     snd_config_get_id_args=1
                     AC_MSG_CHECKING([snd_config_get_id args])
@@ -1467,6 +1471,18 @@ case "$host" in
        		      snd_config_get_id_args=2)
                     AC_MSG_RESULT($snd_config_get_id_args)
                     AC_DEFINE_UNQUOTED(SND_CONFIG_GET_ID_ARGS,$snd_config_get_id_args)
+
+                    AC_MSG_CHECKING([for newer alsa calling sequences])
+                    AC_COMPILE_IFELSE(
+		      [AC_LANG_PROGRAM([#include <alsa/asoundlib.h>],
+	             		       [snd_pcm_hw_params_t *hw_params;
+			  	        unsigned int tmp;
+					int dir;
+				        snd_pcm_hw_params_get_rate_max(hw_params, &tmp, &dir)
+				       ])],
+		       [AC_DEFINE(HAVE_NEW_ALSA)
+                        AC_MSG_RESULT(yes)],
+		       [AC_MSG_RESULT(no)])
 
 		    if test "$with_jack" = yes ; then 
 		      if test "$with_static_alsa" = yes ; then
