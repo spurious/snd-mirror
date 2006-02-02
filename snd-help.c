@@ -479,6 +479,10 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+2-Feb:   mus_audio_sun_outputs -> mus_sun_set_outputs, added mus_netbsd_set_outputs.\n\
+         mus_audio_set_oss_buffers -> mus_oss_set_buffers.\n\
+         changed ALSA environment variable names to use MUS, not SNDLIB.\n\
+         changed ALSA default device to \"default\" from \"hw:0\"\n\
 30-Jan:  new-sound-dialog.\n\
 15-Jan:  snd 7.18.\n\
 5-Jan:   sound-file? for easier file-filter definition.\n\
@@ -491,8 +495,6 @@ void about_snd_help(void)
 19-Dec:  analog-filter.scm: Butterworth, Chebyshev, inverse-Chebyshev, Bessel(-Thompson), Elliptic filters.\n\
          new fft windows: samaraki and ultraspherical (related to the dolph-chebyshev window)\n\
          fft-window-alpha (ultraspherical window parameter).\n\
-5-Dec:   snd_pd_external.c and other changes for Pd, thanks to Kjetil.\n\
-         sinc-train (clm.html), reverse-by-blocks and reverse-within-blocks (examp.scm), pulse-voice (examp.scm).\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",

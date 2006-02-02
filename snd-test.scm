@@ -2179,7 +2179,8 @@
 	      (if (not (equal? (mus-sound-loop-info "fmv1.snd") (list 1200 1400 0 0 2 1 1 0)))
 		  (snd-display ";saved null loop-info (no mode1): ~A" (mus-sound-loop-info "fmv1.snd")))))
 	  
-	  (if (mus-audio-sun-outputs 1 2 3) (snd-display ";mus-audio-sun-outputs: ~A" (mus-audio-sun-outputs 1 2 3)))
+	  (if (mus-sun-set-outputs 1 2 3) (snd-display ";mus-sun-set-outputs: ~A" (mus-sun-set-outputs 1 2 3)))
+	  (if (mus-netbsd-set-outputs 1 2 3) (snd-display ";mus-netbsd-set-outputs: ~A" (mus-netbsd-set-outputs 1 2 3)))
 	  
 	  (if com (snd-display ";oboe: mus-sound-comment ~A?" com))
 	  (let ((fsnd (string-append sf-dir "nasahal8.wav")))
@@ -56452,7 +56453,10 @@ EDITS: 1
 		     mus-sound-samples mus-sound-frames mus-sound-duration mus-sound-datum-size mus-sound-data-location data-size
 		     mus-sound-chans mus-sound-srate mus-sound-header-type mus-sound-data-format mus-sound-length
 		     mus-sound-type-specifier mus-header-type-name mus-data-format-name mus-sound-comment mus-sound-write-date
-		     mus-bytes-per-sample mus-sound-loop-info mus-audio-report mus-audio-sun-outputs
+		     mus-bytes-per-sample mus-sound-loop-info mus-audio-report mus-sun-set-outputs mus-netbsd-set-outputs
+		     ;mus-alsa-buffers mus-alsa-buffer-size 
+		     mus-alsa-squelch-warning
+		     ;mus-alsa-device mus-alsa-playback-device mus-alsa-capture-device 
 		     mus-sound-maxamp mus-sound-maxamp-exists? 
 		     ;mus-sound-open-input mus-sound-open-output
 		     ;mus-sound-reopen-output mus-sound-close-input mus-sound-close-output mus-sound-read mus-sound-write
@@ -58446,7 +58450,7 @@ EDITS: 1
 
 
 (mus-sound-prune)
-(mus-audio-set-oss-buffers 4 12)
+(mus-oss-set-buffers 4 12)
 
 (close-output-port optimizer-log)
 ;(mus-sound-report-cache "sound-cache")

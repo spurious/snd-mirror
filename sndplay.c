@@ -45,7 +45,7 @@ static char x_string[2] = {'x','\0'};
   a = atoi(arg);
   arg = strtok(NULL, x_string);
   b = atoi(arg);
-  mus_audio_set_oss_buffers(a, b);
+  mus_oss_set_buffers(a, b);
 #endif
 }
 

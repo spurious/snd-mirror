@@ -178,6 +178,7 @@ is included in the <a href="http://ccrma.stanford.edu/planetccrma/software/">Pla
     <li><a href="grfsnd.html#sndwithnogui">Snd with no GUI and as script engine</a>
     <li><a href="grfsnd.html#sndandruby">Snd with Ruby</a>
     <li><a href="grfsnd.html#sndandladspa">Snd and LADSPA plugins</a>
+    <li><a href="grfsnd.html#sndandalsa">Snd and ALSA</a>
     <li><a href="grfsnd.html#sndandx">Driving Snd remotely</a>
     <li><a href="grfsnd.html#sndandgl">Snd and OpenGL</a>
     <li><a href="grfsnd.html#sndandgdb">Snd and gdb</a>
@@ -1593,10 +1594,10 @@ interruptions while playing a sound (stereo 44.1 kHz sounds can be problematic),
 try using a very large dac buffer.  Use set! to change this:
 <code>(set! (<a class=quiet href="extsnd.html#dacsize">dac-size</a>) 65536)</code>.
 If you're getting clicks in Linux despite a large dac-size, try setting the OSS fragment sizes by hand: <code>
-(<a class=quiet href="extsnd.html#setossbuffers">mus-audio-set-oss-buffers</a> fragments fragment-size)</code>. OSS's
+(<a class=quiet href="extsnd.html#musosssetbuffers">mus-oss-set-buffers</a> fragments fragment-size)</code>. OSS's
 defaults are 16 and 12 which make the control panel controls very sluggish.  Snd used to
 default to 4 and 12, but this seems to cause trouble for a variety of new sound cards.
-My initialization file uses <code>(mus-audio-set-oss-buffers 2 12)</code>.
+My initialization file uses <code>(mus-oss-set-buffers 2 12)</code>.
 </p>
 
 

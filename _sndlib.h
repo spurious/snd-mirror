@@ -391,21 +391,36 @@ int mus_audio_read_buffers(int line, int frames, int chans, mus_sample_t **bufs,
 int mus_audio_mixer_read(int dev, int field, int chan, float *val);
 int mus_audio_mixer_write(int dev, int field, int chan, float *val);
 int mus_audio_initialize(void);
+
 #if HAVE_OSS || HAVE_ALSA
-int mus_audio_reinitialize(void); /* 29-Aug-01 for CLM/Snd bugfix? */
+  int mus_audio_reinitialize(void); /* 29-Aug-01 for CLM/Snd bugfix? */
+  char *mus_alsa_playback_device(void);
+  char *mus_alsa_set_playback_device(const char *name);
+  char *mus_alsa_capture_device(void);
+  char *mus_alsa_set_capture_device(const char *name);
+  char *mus_alsa_device(void);
+  char *mus_alsa_set_device(const char *name);
+  int mus_alsa_buffer_size(void);
+  int mus_alsa_set_buffer_size(int size);
+  int mus_alsa_buffers(void);
+  int mus_alsa_set_buffers(int num);
+  bool mus_alsa_squelch_warning(void);
+  bool mus_alsa_set_squelch_warning(bool val);
+  int mus_audio_api(void);
+  void mus_oss_set_buffers(int num, int size);
 #endif
+
 int mus_audio_systems(void);
 char *mus_audio_system_name(int sys);
 char *mus_audio_moniker(void);
-
-#if (HAVE_OSS || HAVE_ALSA)
-  void mus_audio_set_oss_buffers(int num, int size);
-  int mus_audio_api(void);
-#endif
 int mus_audio_compatible_format(int dev);
 
-#if MUS_SUN || MUS_NETBSD
-  void mus_audio_sun_outputs(int speakers, int headphones, int line_out);
+#if MUS_SUN
+  void mus_sun_set_outputs(int speakers, int headphones, int line_out);
+#endif
+
+#if MUS_NETBSD
+  void mus_netbsd_set_outputs(int speakers, int headphones, int line_out);
 #endif
 
 #if (!HAVE_STRERROR)

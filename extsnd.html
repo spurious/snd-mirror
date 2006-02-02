@@ -2453,9 +2453,52 @@ See play.scm and rtio.scm. The most important Sndlib functions for Snd are:</p>
 <!-- -------------------------------- SNDLIB TABLE -------------------------------- -->
 
 <table border=0 cellspacing=12>
+<!-- mus-alsa-buffers -->
+<tr><td colspan=2><code><a class=def name="musalsabuffers">mus-alsa-buffers</a> ()</code></td></tr>
+<tr><td width=50><br>
+</td><td>
+Number of buffers ("periods") used in ALSA. (A settable variable).
+</td></tr>
+
+<!-- mus-alsa-buffer-size -->
+<tr><td colspan=2><code><a class=def name="musalsabuffersize">mus-alsa-buffer-size</a> ()</code></td></tr>
+<tr><td><br>
+</td><td>
+Buffer size used in ALSA. (A settable variable).
+</td></tr>
+
+<!-- mus-alsa-device -->
+<tr><td colspan=2><code><a class=def name="musalsadevice">mus-alsa-device</a> ()</code></td></tr>
+<tr><td width><br>
+</td><td>
+ALSA audio device. (A settable variable).
+</td></tr>
+
+<!-- mus-alsa-capture-device -->
+<tr><td colspan=2><code><a class=def name="musalsacapturedevice">mus-alsa-capture-device</a> ()</code></td></tr>
+<tr><td width><br>
+</td><td>
+ALSA audio capture (recording) device. (A settable variable).
+</td></tr>
+
+<!-- mus-alsa-playback-device -->
+<tr><td colspan=2><code><a class=def name="musalsaplaybackdevice">mus-alsa-playback-device</a> ()</code></td></tr>
+<tr><td width><br>
+</td><td>
+ALSA audio playback-device. (A settable variable).
+</td></tr>
+
+<!-- mus-alsa-squelch-warning -->
+<tr><td colspan=2><code><a class=def name="musalsasquelchwarning">mus-alsa-squelch-warning</a> ()</code></td></tr>
+<tr><td width><br>
+</td><td>
+Whether to squelch warnings from ALSA about srate mismatches. (A settable variable).
+</td></tr>
+
+
 <!-- mus-audio-close -->
 <tr><td colspan=2><code><a class=def name="musaudioclose">mus-audio-close</a> (line)</code></td></tr>
-<tr><td width=50><br>
+<tr><td><br>
 </td><td>close audio port <i>line</i></td></tr>
 
 <!-- mus-audio-describe -->
@@ -2532,14 +2575,6 @@ mus_sample_t) by mus-audio-read.</td></tr>
 <tr><td></td><td>
 return a string describing the current audio hardware state. <a href="#musaudiodescribe">mus-audio-describe</a>
 prints out the same string.
-</td></tr>
-
-<!-- mus-audio-sun-outputs -->
-<tr><td colspan=2><code><a class=def name="musaudiosunoutputs">mus-audio-sun-outputs</a> (speakers headphones line-out)</code></td></tr>
-<tr><td></td>
-<td>(Sun only)
-set the current Sun audio outputs.
-Each entry should be either 0 (turn off device) or 1 (turn it on).
 </td></tr>
 
 <!-- mus-audio-write -->
@@ -2620,6 +2655,15 @@ set by: <code>(set! (mus-header-raw-defaults) (list 22050 4 mus-lint))</code>, o
 <!-- mus-make-error -->
 <tr><td colspan=2><code><a class=def name="musmakeerror">mus-make-error</a> (error-string)</code></td></tr>
 <tr><td></td><td>make a new 'mus-error choice, returning its id</td></tr>
+
+<!-- mus-oss-set-buffers -->
+<tr><td colspan=2><code><a class=def name="musosssetbuffers">mus-oss-set-buffers</a> (num size)</code></td></tr>
+<tr><td></td><td>in Linux (OSS), this sets the number and size of the OSS fragments.
+The default (as of 21-May-01) is to accept whatever OSS chooses: I believe this is normally
+equivalent to <code>(mus-oss-set-buffers 16 12)</code>.  This default makes the control panel controls very sluggish.  
+Snd used to call <code>(mus-oss-set-buffers 4 12)</code> as its default, 
+but this seems to cause trouble for a variety of new sound cards.
+My initialization file includes <code>(mus-oss-set-buffers 2 12)</code>.</td></tr>
 
 <!-- mus-sound-chans -->
 <tr><td colspan=2><code><a class=def name="mussoundchans">mus-sound-chans</a> (filename)</code></td></tr>
@@ -2744,14 +2788,14 @@ accommodate the read</td></tr>
     <em class=listener>"18-Oct 06:56 PDT"</em>
 </pre></td></tr>
 
-<!-- mus-audio-set-oss-buffers -->
-<tr><td colspan=2><code><a class=def name="setossbuffers">mus-audio-set-oss-buffers</a> (num size)</code></td></tr>
-<tr><td></td><td>in Linux (OSS), this sets the number and size of the OSS fragments.
-The default (as of 21-May-01) is to accept whatever OSS chooses: I believe this is normally
-equivalent to <code>(mus-audio-set-oss-buffers 16 12)</code>.  This default makes the control panel controls very sluggish.  
-Snd used to call <code>(mus-audio-set-oss-buffers 4 12)</code> as its default, 
-but this seems to cause trouble for a variety of new sound cards.
-My initialization file includes <code>(mus-audio-set-oss-buffers 2 12)</code>.</td></tr>
+<!-- mus-sun-set-outputs -->
+<tr><td colspan=2><code><a class=def name="mussunsetoutputs">mus-sun-set-outputs</a> (speakers headphones line-out)</code></td></tr>
+<tr><td></td>
+<td>
+set the current Sun audio outputs.
+Each entry should be either 0 (turn off the device) or 1 (turn it on).
+On NetBSD, use <a class=def a name="musnetbsdsetoutputs">mus-netbsd-set-outputs</a>.
+</td></tr>
 
 </table>
 
@@ -4552,7 +4596,7 @@ set <a href="#cursorlocationoffset">cursor-location-offset</a> to reflect the nu
 of buffering you think you probably have.  A positive cursor-location-offset delays the cursor's 
 apparent progress (if playing forwards).  In OSS, you can make a pretty good guess by setting
 it to the number of fragments times half the size of the fragments (since these are bytes, and
-cursor-location-offset is in terms of samples).  If you have <code>(mus-audio-set-oss-buffers 4 12)</code>,
+cursor-location-offset is in terms of samples).  If you have <code>(mus-oss-set-buffers 4 12)</code>,
 try <code>(set! (cursor-location-offset) (* 4 (expt 2 11)))</code>.
 
 <!-- INDEX trackingcursors:Tracking cursors -->

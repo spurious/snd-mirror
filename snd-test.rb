@@ -2243,7 +2243,7 @@ def test004(formats)
     snd_display("oboe: mus_sound_maxamp_exists? after maxamp: %s?",
                 mus_sound_maxamp_exists?(oboe_snd))
   end
-  # mus_audio_set_oss_buffers(4, 12)
+  # mus_oss_set_buffers(4, 12)
   #
   if !array?(res = mus_header_raw_defaults) or res.length != 3
     snd_display("mus_header_raw_defaults: %s?", res)
@@ -38838,7 +38838,7 @@ Procs = [:add_mark, :add_sound_file_extension, :sound_file?, :add_to_main_menu, 
   :mus_sound_data_location, :data_size, :mus_sound_chans, :mus_sound_srate,
   :mus_sound_header_type, :mus_sound_data_format, :mus_sound_length, :mus_sound_type_specifier,
   :mus_header_type_name, :mus_data_format_name, :mus_sound_comment, :mus_sound_write_date,
-  :mus_bytes_per_sample, :mus_sound_loop_info, :mus_audio_report, :mus_audio_sun_outputs,
+  :mus_bytes_per_sample, :mus_sound_loop_info, :mus_audio_report, :mus_sun_set_outputs,
   :mus_sound_maxamp, :mus_sound_maxamp_exists?, :mus_file_prescaler, :mus_file_data_clipped,
   :average, :average?, :make_average, :mus_expand_filename, :make_sound_data, :sound_data_ref,
   :sound_data_set!, :sound_data?, :sound_data_length, :sound_data_maxamp, :sound_data_chans,

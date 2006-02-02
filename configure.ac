@@ -295,7 +295,6 @@ AC_LINK_IFELSE(
 
 AC_PATH_PROG(PKG_CONFIG, pkg-config, no)
 
-
 # check for pthreads 
 AC_ARG_ENABLE(threads,
   [  --enable-threads      include pthread support],
@@ -308,8 +307,6 @@ AC_ARG_ENABLE(threads,
       AC_MSG_WARN([can't enable threads -- can't find pthread.h])
     fi
   fi)
-
-
 
 # look for special functions in libm
 AC_CHECK_LIB(m, jn, 
@@ -416,6 +413,7 @@ if test "$GSL_CONFIG" = "no" ; then
 else
   GSL_CFLAGS=`$GSL_CONFIG --cflags`
   GSL_PREFIX=`$GSL_CONFIG --prefix`
+
   if test "$with_static_gsl" = yes ; then
     AC_CHECK_FILE($GSL_PREFIX/lib/libgsl.a,
 	[GSL_LIBS="$GSL_PREFIX/lib/libgsl.a"],
@@ -425,8 +423,10 @@ else
   else
     GSL_LIBS=`$GSL_CONFIG --libs`
   fi
+
   gsl_version="`$GSL_CONFIG --version`"
   AC_MSG_RESULT($gsl_version)
+
   if test "`$GSL_CONFIG --version`" = "0.6" || test "`$GSL_CONFIG --version`" = "0.7" || test "`$GSL_CONFIG --version`" = "0.5"; then
     AC_MSG_WARN([Snd needs GSL 0.8 or later])
   else
@@ -436,6 +436,7 @@ else
     AC_DEFINE(HAVE_GSL)
     AC_DEFINE_UNQUOTED(MUS_GSL_VERSION,"${gsl_version}")
   fi
+
 fi
 fi
 AC_SUBST(GSL_LIBS)
@@ -592,6 +593,7 @@ else
 	  ac_snd_have_gui=yes
  	  AC_DEFINE(USE_MOTIF)  # for Snd
 	  AC_DEFINE(HAVE_MOTIF) # for xm
+
 	  if test "$with_xpm" != no; then
   	    AC_CHECK_LIB(Xpm, XpmReadFileToPixmap,
               [
@@ -602,12 +604,15 @@ else
    	    AC_CHECK_LIB(Xpm, XpmGetErrorString,           [AC_DEFINE(HAVE_XPM_GET_ERROR_STRING)], ,             $TEST_LIBS)
    	    AC_CHECK_LIB(Xpm, XpmCreateXpmImageFromPixmap, [AC_DEFINE(HAVE_XPM_CREATE_XPM_IMAGE_FROM_PIXMAP)], , $TEST_LIBS)
 	  fi
+
 	  if test "$with_static_xm" = yes ; then
   	    GX_FILES="XM_O_FILES"
 	    AC_DEFINE(HAVE_STATIC_XM)
           fi
+
 	  AC_SUBST(XLIBS)
 	  AC_SUBST(XFLAGS)
+
           AC_MSG_CHECKING(for XmDataField)
           AC_LINK_IFELSE(
 	    [AC_LANG_PROGRAM(
@@ -621,6 +626,7 @@ else
 	     AC_MSG_RESULT(yes)
     	    ],
 	    [AC_MSG_RESULT(no)])
+
           AC_MSG_CHECKING(for XmButtonBox)
           AC_LINK_IFELSE(
 	    [AC_LANG_PROGRAM(
@@ -634,6 +640,7 @@ else
 	     AC_MSG_RESULT(yes)
     	    ],
 	    [AC_MSG_RESULT(no)])
+
           AC_MSG_CHECKING(for XmTabStack)
           AC_LINK_IFELSE(
 	    [AC_LANG_PROGRAM(
@@ -649,6 +656,7 @@ else
 	     AC_MSG_RESULT(yes)
     	    ],
 	    [AC_MSG_RESULT(no)])
+
           AC_MSG_CHECKING(for XmTabStackXYToWidget)
           AC_LINK_IFELSE(
 	    [AC_LANG_PROGRAM(
@@ -663,6 +671,7 @@ else
 	     AC_MSG_RESULT(yes)
     	    ],
 	    [AC_MSG_RESULT(no)])
+
           AC_MSG_CHECKING(for XmColumn)
           AC_LINK_IFELSE(
 	    [AC_LANG_PROGRAM(
@@ -677,6 +686,7 @@ else
 	     AC_MSG_RESULT(yes)
     	    ],
 	    [AC_MSG_RESULT(no)])
+
           AC_MSG_CHECKING(for XmColumnGetChildLabel)
           AC_LINK_IFELSE(
 	    [AC_LANG_PROGRAM(
@@ -691,6 +701,7 @@ else
 	     AC_MSG_RESULT(yes)
     	    ],
 	    [AC_MSG_RESULT(no)])
+
           AC_MSG_CHECKING(for XmDropDown)
           AC_LINK_IFELSE(
 	    [AC_LANG_PROGRAM(
@@ -704,6 +715,7 @@ else
 	     AC_MSG_RESULT(yes)
     	    ],
 	    [AC_MSG_RESULT(no)])
+
           AC_MSG_CHECKING(for XmCreateFontSelector)
           AC_LINK_IFELSE(
 	    [AC_LANG_PROGRAM(
@@ -717,6 +729,7 @@ else
 	     AC_MSG_RESULT(yes)
     	    ],
 	    [AC_MSG_RESULT(no)])
+
           AC_MSG_CHECKING(for XmCreateColorSelector)
           AC_LINK_IFELSE(
 	    [AC_LANG_PROGRAM(
@@ -730,6 +743,7 @@ else
 	     AC_MSG_RESULT(yes)
     	    ],
 	    [AC_MSG_RESULT(no)])
+
           AC_MSG_CHECKING(for XmToolTipGetLabel)
           AC_LINK_IFELSE(
 	    [AC_LANG_PROGRAM(
@@ -772,6 +786,7 @@ else
 	       with_motif=no
               ])
 	    ])
+
 	  if test "$with_xp" = yes; then
 	    AC_MSG_CHECKING([for XmPrint support])
 	    AC_COMPILE_IFELSE(
@@ -951,6 +966,7 @@ if test "$with_gl" = yes || test "$with_just_gl" = yes ; then
        OLD_CFLAGS="$CFLAGS"
        CFLAGS="-I/usr/X11R6/include $CFLAGS"
        # can't use AC_CHECK_HEADER here (GL/gl.h includes GL/glext.h, so the -I business has to be set up first)
+
        AC_MSG_CHECKING([for /usr/X11R6/include/GL/gl.h])
        AC_COMPILE_IFELSE(
          [AC_LANG_PROGRAM([#include <GL/gl.h>],
@@ -961,6 +977,7 @@ if test "$with_gl" = yes || test "$with_just_gl" = yes ; then
             AC_MSG_RESULT(yes)
            ],
          [AC_MSG_WARN(can't find GL headers)])])
+
     # motif uses built-in support, but gtk uses gtkglext, so we need to check for the latter
     if test "$have_gl" = yes ; then
       GL_LIBS="-lGLU -lGL"
@@ -1462,7 +1479,7 @@ case "$host" in
 
                     # snd_config_get_id argnum changed in Nov-01
                     snd_config_get_id_args=1
-                    AC_MSG_CHECKING([snd_config_get_id args])
+                    AC_MSG_CHECKING([alsa snd_config_get_id args])
                     AC_COMPILE_IFELSE(
 		      [AC_LANG_PROGRAM([#include <alsa/asoundlib.h>],
 	             		       [snd_config_t *c; 

@@ -367,17 +367,17 @@ On recording, here's a note from Fernando from cmdist:
     variables:
     
     - searched for in the following order:
-      SNDLIB_ALSA_PLAYBACK_DEVICE
+      MUS_ALSA_PLAYBACK_DEVICE
          defines the name of the playback device
-      SNDLIB_ALSA_CAPTURE_DEVICE
+      MUS_ALSA_CAPTURE_DEVICE
          defines the name of the capture device
-      SNDLIB_ALSA_DEVICE
+      MUS_ALSA_DEVICE
          defines the name of the playback and capture device
       use the first two if the playback and capture devices are different or the
       third if they are the same.
     
     So you could try:
-      SNDLIB_ALSA_DEVICE="hw:0,2" snd
+      MUS_ALSA_DEVICE="hw:0,2" snd
     if you are using bash as your shell
     
     This should use the digital i/o as the input output device.  It would also

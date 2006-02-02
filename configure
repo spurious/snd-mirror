@@ -9613,7 +9613,6 @@ echo "${ECHO_T}no" >&6
 fi
 
 
-
 # check for pthreads
 # Check whether --enable-threads or --disable-threads was given.
 if test "${enable_threads+set}" = set; then
@@ -9632,8 +9631,6 @@ echo "$as_me: WARNING: can't enable threads -- can't find pthread.h" >&2;}
     fi
   fi
 fi;
-
-
 
 # look for special functions in libm
 echo "$as_me:$LINENO: checking for jn in -lm" >&5
@@ -10202,6 +10199,7 @@ echo "${ECHO_T}no" >&6
 else
   GSL_CFLAGS=`$GSL_CONFIG --cflags`
   GSL_PREFIX=`$GSL_CONFIG --prefix`
+
   if test "$with_static_gsl" = yes ; then
     as_ac_File=`echo "ac_cv_file_$GSL_PREFIX/lib/libgsl.a" | $as_tr_sh`
 echo "$as_me:$LINENO: checking for $GSL_PREFIX/lib/libgsl.a" >&5
@@ -10233,9 +10231,11 @@ fi
   else
     GSL_LIBS=`$GSL_CONFIG --libs`
   fi
+
   gsl_version="`$GSL_CONFIG --version`"
   echo "$as_me:$LINENO: result: $gsl_version" >&5
 echo "${ECHO_T}$gsl_version" >&6
+
   if test "`$GSL_CONFIG --version`" = "0.6" || test "`$GSL_CONFIG --version`" = "0.7" || test "`$GSL_CONFIG --version`" = "0.5"; then
     { echo "$as_me:$LINENO: WARNING: Snd needs GSL 0.8 or later" >&5
 echo "$as_me: WARNING: Snd needs GSL 0.8 or later" >&2;}
@@ -10252,6 +10252,7 @@ _ACEOF
 _ACEOF
 
   fi
+
 fi
 fi
 
@@ -12371,6 +12372,7 @@ _ACEOF
 #define HAVE_MOTIF 1
 _ACEOF
  # for xm
+
 	  if test "$with_xpm" != no; then
   	    echo "$as_me:$LINENO: checking for XpmReadFileToPixmap in -lXpm" >&5
 echo $ECHO_N "checking for XpmReadFileToPixmap in -lXpm... $ECHO_C" >&6
@@ -12590,6 +12592,7 @@ _ACEOF
 fi
 
 	  fi
+
 	  if test "$with_static_xm" = yes ; then
   	    GX_FILES="XM_O_FILES"
 	    cat >>confdefs.h <<\_ACEOF
@@ -12597,6 +12600,8 @@ fi
 _ACEOF
 
           fi
+
+
 
 
           echo "$as_me:$LINENO: checking for XmDataField" >&5
@@ -12658,6 +12663,7 @@ echo "${ECHO_T}no" >&6
 fi
 rm -f conftest.err conftest.$ac_objext \
       conftest$ac_exeext conftest.$ac_ext
+
           echo "$as_me:$LINENO: checking for XmButtonBox" >&5
 echo $ECHO_N "checking for XmButtonBox... $ECHO_C" >&6
           cat >conftest.$ac_ext <<_ACEOF
@@ -12717,6 +12723,7 @@ echo "${ECHO_T}no" >&6
 fi
 rm -f conftest.err conftest.$ac_objext \
       conftest$ac_exeext conftest.$ac_ext
+
           echo "$as_me:$LINENO: checking for XmTabStack" >&5
 echo $ECHO_N "checking for XmTabStack... $ECHO_C" >&6
           cat >conftest.$ac_ext <<_ACEOF
@@ -12778,6 +12785,7 @@ echo "${ECHO_T}no" >&6
 fi
 rm -f conftest.err conftest.$ac_objext \
       conftest$ac_exeext conftest.$ac_ext
+
           echo "$as_me:$LINENO: checking for XmTabStackXYToWidget" >&5
 echo $ECHO_N "checking for XmTabStackXYToWidget... $ECHO_C" >&6
           cat >conftest.$ac_ext <<_ACEOF
@@ -12838,6 +12846,7 @@ echo "${ECHO_T}no" >&6
 fi
 rm -f conftest.err conftest.$ac_objext \
       conftest$ac_exeext conftest.$ac_ext
+
           echo "$as_me:$LINENO: checking for XmColumn" >&5
 echo $ECHO_N "checking for XmColumn... $ECHO_C" >&6
           cat >conftest.$ac_ext <<_ACEOF
@@ -12898,6 +12907,7 @@ echo "${ECHO_T}no" >&6
 fi
 rm -f conftest.err conftest.$ac_objext \
       conftest$ac_exeext conftest.$ac_ext
+
           echo "$as_me:$LINENO: checking for XmColumnGetChildLabel" >&5
 echo $ECHO_N "checking for XmColumnGetChildLabel... $ECHO_C" >&6
           cat >conftest.$ac_ext <<_ACEOF
@@ -12958,6 +12968,7 @@ echo "${ECHO_T}no" >&6
 fi
 rm -f conftest.err conftest.$ac_objext \
       conftest$ac_exeext conftest.$ac_ext
+
           echo "$as_me:$LINENO: checking for XmDropDown" >&5
 echo $ECHO_N "checking for XmDropDown... $ECHO_C" >&6
           cat >conftest.$ac_ext <<_ACEOF
@@ -13017,6 +13028,7 @@ echo "${ECHO_T}no" >&6
 fi
 rm -f conftest.err conftest.$ac_objext \
       conftest$ac_exeext conftest.$ac_ext
+
           echo "$as_me:$LINENO: checking for XmCreateFontSelector" >&5
 echo $ECHO_N "checking for XmCreateFontSelector... $ECHO_C" >&6
           cat >conftest.$ac_ext <<_ACEOF
@@ -13076,6 +13088,7 @@ echo "${ECHO_T}no" >&6
 fi
 rm -f conftest.err conftest.$ac_objext \
       conftest$ac_exeext conftest.$ac_ext
+
           echo "$as_me:$LINENO: checking for XmCreateColorSelector" >&5
 echo $ECHO_N "checking for XmCreateColorSelector... $ECHO_C" >&6
           cat >conftest.$ac_ext <<_ACEOF
@@ -13135,6 +13148,7 @@ echo "${ECHO_T}no" >&6
 fi
 rm -f conftest.err conftest.$ac_objext \
       conftest$ac_exeext conftest.$ac_ext
+
           echo "$as_me:$LINENO: checking for XmToolTipGetLabel" >&5
 echo $ECHO_N "checking for XmToolTipGetLabel... $ECHO_C" >&6
           cat >conftest.$ac_ext <<_ACEOF
@@ -13313,6 +13327,7 @@ rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
 
 fi
 rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+
 	  if test "$with_xp" = yes; then
 	    echo "$as_me:$LINENO: checking for XmPrint support" >&5
 echo $ECHO_N "checking for XmPrint support... $ECHO_C" >&6
@@ -14822,6 +14837,7 @@ else
        OLD_CFLAGS="$CFLAGS"
        CFLAGS="-I/usr/X11R6/include $CFLAGS"
        # can't use AC_CHECK_HEADER here (GL/gl.h includes GL/glext.h, so the -I business has to be set up first)
+
        echo "$as_me:$LINENO: checking for /usr/X11R6/include/GL/gl.h" >&5
 echo $ECHO_N "checking for /usr/X11R6/include/GL/gl.h... $ECHO_C" >&6
        cat >conftest.$ac_ext <<_ACEOF
@@ -14876,6 +14892,7 @@ echo "$as_me: WARNING: can't find GL headers" >&2;}
 fi
 rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
 fi
+
 
 
     # motif uses built-in support, but gtk uses gtkglext, so we need to check for the latter
@@ -18806,8 +18823,8 @@ _ACEOF
 
                     # snd_config_get_id argnum changed in Nov-01
                     snd_config_get_id_args=1
-                    echo "$as_me:$LINENO: checking snd_config_get_id args" >&5
-echo $ECHO_N "checking snd_config_get_id args... $ECHO_C" >&6
+                    echo "$as_me:$LINENO: checking alsa snd_config_get_id args" >&5
+echo $ECHO_N "checking alsa snd_config_get_id args... $ECHO_C" >&6
                     cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF

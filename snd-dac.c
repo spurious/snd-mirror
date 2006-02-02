@@ -1705,9 +1705,7 @@ static void scan_audio_devices(void)
 					  MUS_AUDIO_PORT, 
 					  ALSA_MAX_DEVICES, val)) != MUS_NO_ERROR) 
 	    {
-	      stop_playing_all_sounds_without_hook(PLAY_ERROR);
-	      snd_error("%s[%d] %s: mus_audio_mixer_read", 
-			__FILE__, __LINE__, c__FUNCTION__);
+	      snd_warning("can't get audio device info of %d", card);
 	    }
 	  devs = (int)(val[0]);
 	  /* scan all devices in the card */
@@ -1719,9 +1717,7 @@ static void scan_audio_devices(void)
 					      0, 
 					      &direction)) != MUS_NO_ERROR) 
 		{
-		  stop_playing_all_sounds_without_hook(PLAY_ERROR);
-		  snd_error(_("%s: can't read direction, ignoring device %d"), 
-			    c__FUNCTION__, dev);
+		  snd_warning("can't read direction, ignoring device %d", dev);
 		  direction = 0;
 		} 
 	      else 
@@ -1755,6 +1751,10 @@ static void scan_audio_devices(void)
 		}
 	    }
 	}
+    }
+  if (index == 0)
+    {
+      snd_warning("can't find any playable device");
     }
   alsa_devices_available = index;
 }

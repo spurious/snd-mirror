@@ -305,36 +305,158 @@ static XEN g_mus_sound_duration(XEN gfilename)
 
 }
 
-static XEN g_mus_audio_sun_outputs(XEN speakers, XEN headphones, XEN line_out)
+static XEN g_mus_sun_set_outputs(XEN speakers, XEN headphones, XEN line_out)
 {
-  #define H_mus_audio_sun_outputs "(" S_mus_audio_sun_outputs " speaker headphones line-out): set the current Sun audio outputs. \
+  #define H_mus_sun_set_outputs "(" S_mus_sun_set_outputs " speaker headphones line-out): set the current Sun audio outputs. \
 Each entry should be either 0 (turn off device) or 1 (turn it on)."
 #ifdef MUS_SUN
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(speakers), speakers, XEN_ARG_1, S_mus_audio_sun_outputs, "an integer");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(headphones), headphones, XEN_ARG_2, S_mus_audio_sun_outputs, "an integer");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(line_out), line_out, XEN_ARG_3, S_mus_audio_sun_outputs, "an integer");
-  mus_audio_sun_outputs(XEN_TO_C_INT(speakers),
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(speakers), speakers, XEN_ARG_1, S_mus_sun_set_outputs, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(headphones), headphones, XEN_ARG_2, S_mus_sun_set_outputs, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(line_out), line_out, XEN_ARG_3, S_mus_sun_set_outputs, "an integer");
+  mus_sun_set_outputs(XEN_TO_C_INT(speakers),
 			XEN_TO_C_INT(headphones),
 			XEN_TO_C_INT(line_out));
 #endif
   return(XEN_FALSE);
 }
 
-static XEN g_mus_audio_set_oss_buffers(XEN num, XEN size)
+static XEN g_mus_netbsd_set_outputs(XEN speakers, XEN headphones, XEN line_out)
 {
-  #define H_mus_audio_set_oss_buffers "(" S_mus_audio_set_oss_buffers " num size): set Linux OSS 'fragment' number and size. \
-If Snd's controls seem sluggish, try (" S_mus_audio_set_oss_buffers " 4 12) or even (" S_mus_audio_set_oss_buffers " 2 12). \
+  #define H_mus_netbsd_set_outputs "(" S_mus_netbsd_set_outputs " speaker headphones line-out): set the current netBSD audio outputs. \
+Each entry should be either 0 (turn off device) or 1 (turn it on)."
+#ifdef MUS_SUN
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(speakers), speakers, XEN_ARG_1, S_mus_netbsd_set_outputs, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(headphones), headphones, XEN_ARG_2, S_mus_netbsd_set_outputs, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(line_out), line_out, XEN_ARG_3, S_mus_netbsd_set_outputs, "an integer");
+  mus_netbsd_set_outputs(XEN_TO_C_INT(speakers),
+			 XEN_TO_C_INT(headphones),
+			 XEN_TO_C_INT(line_out));
+#endif
+  return(XEN_FALSE);
+}
+
+static XEN g_mus_oss_set_buffers(XEN num, XEN size)
+{
+  #define H_mus_oss_set_buffers "(" S_mus_oss_set_buffers " num size): set Linux OSS 'fragment' number and size. \
+If Snd's controls seem sluggish, try (" S_mus_oss_set_buffers " 4 12) or even (" S_mus_oss_set_buffers " 2 12). \
 This reduces the on-card buffering, but may introduce clicks."
 
 #if (HAVE_OSS || HAVE_ALSA)
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(num), num, XEN_ARG_1, S_mus_audio_set_oss_buffers, "an integer");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(size), size, XEN_ARG_2, S_mus_audio_set_oss_buffers, "an integer");
-  mus_audio_set_oss_buffers(XEN_TO_C_INT(num),
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(num), num, XEN_ARG_1, S_mus_oss_set_buffers, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(size), size, XEN_ARG_2, S_mus_oss_set_buffers, "an integer");
+  mus_oss_set_buffers(XEN_TO_C_INT(num),
 			    XEN_TO_C_INT(size));
 #endif
   return(XEN_FALSE);
 }
 
+static XEN g_mus_alsa_buffers(void)
+{
+  #define H_mus_alsa_buffers "(" S_mus_alsa_buffers ") -> current number of ALSA periods."
+#if HAVE_ALSA
+  return(C_TO_XEN_INT(mus_alsa_buffers()));
+#endif
+  return(XEN_FALSE);
+}
+
+static XEN g_mus_alsa_set_buffers(XEN val)
+{
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_mus_alsa_buffers, "an integer");
+#if HAVE_ALSA
+  return(C_TO_XEN_INT(mus_alsa_set_buffers(XEN_TO_C_INT(val))));
+#endif
+  return(XEN_FALSE);
+}
+
+static XEN g_mus_alsa_buffer_size(void)
+{
+  #define H_mus_alsa_buffer_size "(" S_mus_alsa_buffer_size ") -> current size of ALSA buffers."
+#if HAVE_ALSA
+  return(C_TO_XEN_INT(mus_alsa_buffer_size()));
+#endif
+  return(XEN_FALSE);
+}
+
+static XEN g_mus_alsa_set_buffer_size(XEN val)
+{
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_mus_alsa_buffer_size, "an integer");
+#if HAVE_ALSA
+  return(C_TO_XEN_INT(mus_alsa_set_buffer_size(XEN_TO_C_INT(val))));
+#endif
+  return(XEN_FALSE);
+}
+
+static XEN g_mus_alsa_device(void)
+{
+  #define H_mus_alsa_device "(" S_mus_alsa_device ") -> current ALSA device."
+#if HAVE_ALSA
+  return(C_TO_XEN_STRING(mus_alsa_device()));
+#endif
+  return(XEN_FALSE);
+}
+
+static XEN g_mus_alsa_set_device(XEN val)
+{
+  XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, S_setB S_mus_alsa_device, "a string (ALSA device name)");
+#if HAVE_ALSA
+  return(C_TO_XEN_STRING(mus_alsa_set_device(XEN_TO_C_STRING(val))));
+#endif
+  return(XEN_FALSE);
+}
+
+static XEN g_mus_alsa_playback_device(void)
+{
+  #define H_mus_alsa_playback_device "(" S_mus_alsa_playback_device ") -> current ALSA playback device."
+#if HAVE_ALSA
+  return(C_TO_XEN_STRING(mus_alsa_playback_device()));
+#endif
+  return(XEN_FALSE);
+}
+
+static XEN g_mus_alsa_set_playback_device(XEN val)
+{
+  XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, S_setB S_mus_alsa_playback_device, "a string (ALSA device name)");
+#if HAVE_ALSA
+  return(C_TO_XEN_STRING(mus_alsa_set_playback_device(XEN_TO_C_STRING(val))));
+#endif
+  return(XEN_FALSE);
+}
+
+static XEN g_mus_alsa_capture_device(void)
+{
+  #define H_mus_alsa_capture_device "(" S_mus_alsa_capture_device ") -> current ALSA capture device."
+#if HAVE_ALSA
+  return(C_TO_XEN_STRING(mus_alsa_capture_device()));
+#endif
+  return(XEN_FALSE);
+}
+
+static XEN g_mus_alsa_set_capture_device(XEN val)
+{
+  XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, S_setB S_mus_alsa_capture_device, "a string (ALSA device name)");
+#if HAVE_ALSA
+  return(C_TO_XEN_STRING(mus_alsa_set_capture_device(XEN_TO_C_STRING(val))));
+#endif
+  return(XEN_FALSE);
+}
+
+static XEN g_mus_alsa_squelch_warning(void)
+{
+  #define H_mus_alsa_squelch_warning "(" S_mus_alsa_squelch_warning ") -> whether to squelch ALSA srate mismatch warnings."
+#if HAVE_ALSA
+  return(C_TO_XEN_BOOLEAN(mus_alsa_squelch_warning()));
+#endif
+  return(XEN_FALSE);
+}
+
+static XEN g_mus_alsa_set_squelch_warning(XEN val)
+{
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, XEN_ONLY_ARG, S_setB S_mus_alsa_squelch_warning, "a boolean");
+#if HAVE_ALSA
+  return(C_TO_XEN_BOOLEAN(mus_alsa_set_squelch_warning(XEN_TO_C_BOOLEAN(val))));
+#endif
+  return(XEN_FALSE);
+}
 
 
 static XEN g_mus_sound_maxamp_exists(XEN file)
@@ -1366,7 +1488,8 @@ XEN_NARGIFY_1(g_mus_sound_maxamp_w, g_mus_sound_maxamp)
 XEN_NARGIFY_2(g_mus_sound_set_maxamp_w, g_mus_sound_set_maxamp)
 XEN_NARGIFY_1(g_mus_sound_maxamp_exists_w, g_mus_sound_maxamp_exists)
 XEN_NARGIFY_0(g_mus_audio_report_w, g_mus_audio_report)
-XEN_NARGIFY_3(g_mus_audio_sun_outputs_w, g_mus_audio_sun_outputs)
+XEN_NARGIFY_3(g_mus_sun_set_outputs_w, g_mus_sun_set_outputs)
+XEN_NARGIFY_3(g_mus_netbsd_set_outputs_w, g_mus_netbsd_set_outputs)
 XEN_NARGIFY_1(g_mus_sound_open_input_w, g_mus_sound_open_input)
 XEN_NARGIFY_1(g_mus_sound_close_input_w, g_mus_sound_close_input)
 XEN_NARGIFY_1(g_mus_make_error_w, g_mus_make_error)
@@ -1395,9 +1518,21 @@ XEN_ARGIFY_1(g_mus_sound_report_cache_w, g_mus_sound_report_cache)
 XEN_NARGIFY_1(g_mus_sound_forget_w, g_mus_sound_forget)
 XEN_NARGIFY_0(g_mus_sound_prune_w, g_mus_sound_prune)
 XEN_NARGIFY_1(g_mus_error_type_to_string_w, g_mus_error_type_to_string)
-XEN_NARGIFY_2(g_mus_audio_set_oss_buffers_w, g_mus_audio_set_oss_buffers)
+XEN_NARGIFY_2(g_mus_oss_set_buffers_w, g_mus_oss_set_buffers)
 XEN_NARGIFY_5(g_array_to_file_w, g_array_to_file)
 XEN_NARGIFY_5(g_file_to_array_w, g_file_to_array)
+XEN_NARGIFY_0(g_mus_alsa_buffers_w, g_mus_alsa_buffers)
+XEN_NARGIFY_1(g_mus_alsa_set_buffers_w, g_mus_alsa_set_buffers)
+XEN_NARGIFY_0(g_mus_alsa_buffer_size_w, g_mus_alsa_buffer_size)
+XEN_NARGIFY_1(g_mus_alsa_set_buffer_size_w, g_mus_alsa_set_buffer_size)
+XEN_NARGIFY_0(g_mus_alsa_device_w, g_mus_alsa_device)
+XEN_NARGIFY_1(g_mus_alsa_set_device_w, g_mus_alsa_set_device)
+XEN_NARGIFY_0(g_mus_alsa_playback_device_w, g_mus_alsa_playback_device)
+XEN_NARGIFY_1(g_mus_alsa_set_playback_device_w, g_mus_alsa_set_playback_device)
+XEN_NARGIFY_0(g_mus_alsa_capture_device_w, g_mus_alsa_capture_device)
+XEN_NARGIFY_1(g_mus_alsa_set_capture_device_w, g_mus_alsa_set_capture_device)
+XEN_NARGIFY_0(g_mus_alsa_squelch_warning_w, g_mus_alsa_squelch_warning)
+XEN_NARGIFY_1(g_mus_alsa_set_squelch_warning_w, g_mus_alsa_set_squelch_warning)
 #if HAVE_OSS
   XEN_NARGIFY_0(g_mus_audio_reinitialize_w, g_mus_audio_reinitialize)
 #endif
@@ -1441,7 +1576,8 @@ XEN_NARGIFY_5(g_file_to_array_w, g_file_to_array)
 #define g_mus_sound_set_maxamp_w g_mus_sound_set_maxamp
 #define g_mus_sound_maxamp_exists_w g_mus_sound_maxamp_exists
 #define g_mus_audio_report_w g_mus_audio_report
-#define g_mus_audio_sun_outputs_w g_mus_audio_sun_outputs
+#define g_mus_sun_set_outputs_w g_mus_sun_set_outputs
+#define g_mus_netbsd_set_outputs_w g_mus_netbsd_set_outputs
 #define g_mus_sound_open_input_w g_mus_sound_open_input
 #define g_mus_sound_close_input_w g_mus_sound_close_input
 #define g_mus_make_error_w g_mus_make_error
@@ -1470,9 +1606,21 @@ XEN_NARGIFY_5(g_file_to_array_w, g_file_to_array)
 #define g_mus_sound_forget_w g_mus_sound_forget
 #define g_mus_sound_prune_w g_mus_sound_prune
 #define g_mus_error_type_to_string_w g_mus_error_type_to_string
-#define g_mus_audio_set_oss_buffers_w g_mus_audio_set_oss_buffers
+#define g_mus_oss_set_buffers_w g_mus_oss_set_buffers
 #define g_array_to_file_w g_array_to_file
 #define g_file_to_array_w g_file_to_array
+#define g_mus_alsa_buffers_w g_mus_alsa_buffers
+#define g_mus_alsa_set_buffers_w g_mus_alsa_set_buffers
+#define g_mus_alsa_buffer_size_w g_mus_alsa_buffer_size
+#define g_mus_alsa_set_buffer_size_w g_mus_alsa_set_buffer_size
+#define g_mus_alsa_device_w g_mus_alsa_device
+#define g_mus_alsa_set_device_w g_mus_alsa_set_device
+#define g_mus_alsa_playback_device_w g_mus_alsa_playback_device
+#define g_mus_alsa_set_playback_device_w g_mus_alsa_set_playback_device
+#define g_mus_alsa_capture_device_w g_mus_alsa_capture_device
+#define g_mus_alsa_set_capture_device_w g_mus_alsa_set_capture_device
+#define g_mus_alsa_squelch_warning_w g_mus_alsa_squelch_warning
+#define g_mus_alsa_set_squelch_warning_w g_mus_alsa_set_squelch_warning
 #if HAVE_OSS
   #define g_mus_audio_reinitialize_w g_mus_audio_reinitialize
 #endif
@@ -1721,7 +1869,8 @@ void mus_sndlib_xen_initialize(void)
   XEN_DEFINE_PROCEDURE(S_mus_sound_prune,          g_mus_sound_prune_w,            0, 0, 0, H_mus_sound_prune);
   XEN_DEFINE_PROCEDURE(S_mus_make_error,           g_mus_make_error_w,             1, 0, 0, H_mus_make_error);
   XEN_DEFINE_PROCEDURE(S_mus_audio_report,         g_mus_audio_report_w,           0, 0, 0, H_mus_audio_report);
-  XEN_DEFINE_PROCEDURE(S_mus_audio_sun_outputs,    g_mus_audio_sun_outputs_w,      3, 0, 0, H_mus_audio_sun_outputs);
+  XEN_DEFINE_PROCEDURE(S_mus_sun_set_outputs,      g_mus_sun_set_outputs_w,        3, 0, 0, H_mus_sun_set_outputs);
+  XEN_DEFINE_PROCEDURE(S_mus_netbsd_set_outputs,   g_mus_netbsd_set_outputs_w,     3, 0, 0, H_mus_netbsd_set_outputs);
   XEN_DEFINE_PROCEDURE(S_mus_sound_open_input,     g_mus_sound_open_input_w,       1, 0, 0, H_mus_sound_open_input);
   XEN_DEFINE_PROCEDURE(S_mus_sound_close_input,    g_mus_sound_close_input_w,      1, 0, 0, H_mus_sound_close_input);
   XEN_DEFINE_PROCEDURE(S_mus_audio_close,          g_mus_audio_close_w,            1, 0, 0, H_mus_audio_close);
@@ -1741,7 +1890,7 @@ void mus_sndlib_xen_initialize(void)
   XEN_DEFINE_PROCEDURE(S_mus_audio_open_input,     g_mus_audio_open_input_w,       5, 0, 0, H_mus_audio_open_input);
   XEN_DEFINE_PROCEDURE(S_mus_sound_report_cache,   g_mus_sound_report_cache_w,     0, 1, 0, H_mus_sound_report_cache);
   XEN_DEFINE_PROCEDURE(S_mus_error_type_to_string, g_mus_error_type_to_string_w,   1, 0, 0, H_mus_error_type_to_string);
-  XEN_DEFINE_PROCEDURE(S_mus_audio_set_oss_buffers, g_mus_audio_set_oss_buffers_w, 2, 0, 0, H_mus_audio_set_oss_buffers);
+  XEN_DEFINE_PROCEDURE(S_mus_oss_set_buffers,      g_mus_oss_set_buffers_w,        2, 0, 0, H_mus_oss_set_buffers);
   XEN_DEFINE_PROCEDURE(S_array_to_file,            g_array_to_file_w,              5, 0, 0, H_array_to_file);
   XEN_DEFINE_PROCEDURE(S_file_to_array,            g_file_to_array_w,              5, 0, 0, H_file_to_array);
 
@@ -1759,6 +1908,21 @@ void mus_sndlib_xen_initialize(void)
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_sound_maxamp, g_mus_sound_maxamp_w, H_mus_sound_maxamp,
 				   S_setB S_mus_sound_maxamp, g_mus_sound_set_maxamp_w, 1, 0, 2, 0);
+
+  /* these are no-ops if not ALSA, but that makes it easier to maintain global initialization files */
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_alsa_buffers, g_mus_alsa_buffers_w, H_mus_alsa_buffers,
+				   S_setB S_mus_alsa_buffers, g_mus_alsa_set_buffers_w, 0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_alsa_buffer_size, g_mus_alsa_buffer_size_w, H_mus_alsa_buffer_size,
+				   S_setB S_mus_alsa_buffer_size, g_mus_alsa_set_buffer_size_w, 0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_alsa_device, g_mus_alsa_device_w, H_mus_alsa_device,
+				   S_setB S_mus_alsa_device, g_mus_alsa_set_device_w, 0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_alsa_playback_device, g_mus_alsa_playback_device_w, H_mus_alsa_playback_device,
+				   S_setB S_mus_alsa_playback_device, g_mus_alsa_set_playback_device_w, 0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_alsa_capture_device, g_mus_alsa_capture_device_w, H_mus_alsa_capture_device,
+				   S_setB S_mus_alsa_capture_device, g_mus_alsa_set_capture_device_w, 0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_alsa_squelch_warning, g_mus_alsa_squelch_warning_w, H_mus_alsa_squelch_warning,
+				   S_setB S_mus_alsa_squelch_warning, g_mus_alsa_set_squelch_warning_w, 0, 0, 1, 0);
+
 
 #if HAVE_OSS
   XEN_DEFINE_PROCEDURE(S_mus_audio_reinitialize,   g_mus_audio_reinitialize_w, 0, 0, 0,  H_mus_audio_reinitialize);
@@ -1782,6 +1946,12 @@ void mus_sndlib_xen_initialize(void)
 	       S_mus_aifc,
 	       S_mus_aiff,
 	       S_mus_alaw,
+	       S_mus_alsa_buffer_size,
+	       S_mus_alsa_buffers,
+	       S_mus_alsa_capture_device,
+	       S_mus_alsa_device,
+	       S_mus_alsa_playback_device,
+	       S_mus_alsa_squelch_warning,
 	       S_mus_audio_adat_in,
 	       S_mus_audio_adat_out,
 	       S_mus_audio_aes_in,
@@ -1826,12 +1996,10 @@ void mus_sndlib_xen_initialize(void)
 #endif
 	       S_mus_audio_report,
 	       S_mus_audio_samples_per_channel,
-	       S_mus_audio_set_oss_buffers,
 	       S_mus_audio_spdif_in,
 	       S_mus_audio_spdif_out,
 	       S_mus_audio_speakers,
 	       S_mus_audio_srate,
-	       S_mus_audio_sun_outputs,
 	       S_mus_audio_synth,
 	       S_mus_audio_systems,
 	       S_mus_audio_treble,
@@ -1866,8 +2034,10 @@ void mus_sndlib_xen_initialize(void)
 	       S_mus_lintn,
 	       S_mus_lshort,
 	       S_mus_mulaw,
+	       S_mus_netbsd_set_outputs,
 	       S_mus_next,
 	       S_mus_nist,
+	       S_mus_oss_set_buffers,
 	       S_mus_out_format,
 	       S_mus_raw,
 	       S_mus_riff,
@@ -1899,6 +2069,7 @@ void mus_sndlib_xen_initialize(void)
 	       S_mus_sound_write,
 	       S_mus_sound_write_date,
 	       S_mus_soundfont,
+	       S_mus_sun_set_outputs,
 	       S_mus_svx,
 	       S_mus_ubshort,
 	       S_mus_ubyte,

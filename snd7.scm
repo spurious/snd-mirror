@@ -385,3 +385,7 @@
 (define sort-files-by-date 2)
 (define sort-files-by-size 4)
 (define sort-files-by-entry -1) ; no longer implemented
+
+(define mus-audio-sun-outputs mus-sun-set-outputs)
+(define mus-audio-set-oss-buffers mus-oss-set-buffers)
+

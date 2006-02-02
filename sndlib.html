@@ -1102,8 +1102,6 @@ constants and functions described above into Scheme.
 
   mus-audio-describe ()                    describe audio hardware state
   mus-audio-report ()                      return audio hardware state as a string
-  mus-audio-set-oss-buffers (num size)     in Linux (OSS) sets the number and size of the OSS "fragments"
-  mus-audio-sun-outputs (speaker headphones line-out) On the Sun, cause output to go to the chosen devices
   mus-audio-reinitialize                   force re-check of available audio devices
 
   mus-sound-open-input (filename)          open filename (a sound file) returning an integer ("fd" below)
@@ -1132,6 +1130,9 @@ constants and functions described above into Scheme.
                                            write new state for <i>device</i>'s <i>field</i> -- see mus_audio_mixer_write above.
   mus-audio-systems ()                     returns how many separate "systems" (soundcards) it can find.  To specify
                                            a particular system in the "device" parameters, add (ash system 16) to the device.
+  mus-oss-set-buffers (num size)           in Linux (OSS) sets the number and size of the OSS "fragments"
+  mus-sun-set-outputs (speaker headphones line-out) On the Sun, cause output to go to the chosen devices
+  mus-netbsd-set-outputs (speaker headphones line-out) On netBSD, cause output to go to the chosen devices
 
   make-sound-data (chans, frames)      return a sound-data object with <i>chans</i> arrays, each of length <i>frames</i>
   sound-data-ref (obj chan frame)      return (as a float) the sample in channel <i>chan</i> at location <i>frame</i>

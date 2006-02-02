@@ -230,7 +230,7 @@
     (XtRealizeWidget shell)
 
     ;; send fm data to dac
-    (mus-audio-set-oss-buffers 4 12) ; a no-op except in OSS/Linux
+    (mus-oss-set-buffers 4 12) ; a no-op except in OSS/Linux
     (let* ((bufsize 256)
 	   (srate 22050)
 	   (chans 1)

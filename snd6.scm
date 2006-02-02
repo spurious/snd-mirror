@@ -17,7 +17,7 @@
 (define normalize-transform-by-sound   normalize-by-sound)
 (define normalize-transform-globally   normalize-globally)
 
-(define set-oss-buffers mus-audio-set-oss-buffers)
+(define set-oss-buffers mus-oss-set-buffers)
 (define hanning-window hann-window)
 
 (define (max-sounds) (apply max (sounds)))

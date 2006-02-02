@@ -1,5 +1,9 @@
 Snd change log
 
+  2-Feb:     mus_audio_sun_outputs -> mus_sun_set_outputs, added mus_netbsd_set_outputs.
+             mus_audio_set_oss_buffers -> mus_oss_set_buffers.
+             changed ALSA environment variable names to use MUS, not SNDLIB.
+             changed ALSA default device to "default" from "hw:0"
   30-Jan:    new-sound-dialog.
   15-Jan:    snd 7.18.
   5-Jan:     sound-file? for easier file-filter definition.

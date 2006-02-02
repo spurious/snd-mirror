@@ -1374,7 +1374,7 @@ static bool fragments_locked = false;
  * this changed 22-May-01: these are causing more trouble than they're worth
  */
 
-static void oss_mus_audio_set_oss_buffers(int num, int size) {FRAGMENTS = num; FRAGMENT_SIZE = size; fragments_locked = true;}
+static void oss_mus_oss_set_buffers(int num, int size) {FRAGMENTS = num; FRAGMENT_SIZE = size; fragments_locked = true;}
 
 #define MAX_SOUNDCARDS 8
 #define MAX_DSPS 8
@@ -3231,7 +3231,7 @@ static int (*vect_mus_audio_initialize)(void);
  */
 
 /* vectors for the rest of the sndlib api */
-static void  (*vect_mus_audio_set_oss_buffers)(int num, int size);
+static void  (*vect_mus_oss_set_buffers)(int num, int size);
 static int   (*vect_mus_audio_systems)(void);
 static char* (*vect_mus_audio_system_name)(int system);
 static char* (*vect_mus_audio_moniker)(void);
@@ -3250,9 +3250,9 @@ int mus_audio_initialize(void)
   return(probe_api());
 }
 
-void mus_audio_set_oss_buffers(int num, int size) 
+void mus_oss_set_buffers(int num, int size) 
 {
-  vect_mus_audio_set_oss_buffers(num, size);
+  vect_mus_oss_set_buffers(num, size);
 }
 
 int mus_audio_systems(void) 
@@ -3340,7 +3340,7 @@ static int probe_api(void)
   /* go for the oss api */
   api = OSS_API;
   vect_mus_audio_initialize = oss_mus_audio_initialize;
-  vect_mus_audio_set_oss_buffers = oss_mus_audio_set_oss_buffers;
+  vect_mus_oss_set_buffers = oss_mus_oss_set_buffers;
   vect_mus_audio_systems = oss_mus_audio_systems;
   vect_mus_audio_system_name = oss_mus_audio_system_name;
   vect_mus_audio_moniker = oss_mus_audio_moniker;
@@ -3367,7 +3367,10 @@ static int probe_api(void)
 /* ------------------------------- ALSA ----------------------------------------- */
 /*
  * added HAVE_NEW_ALSA, and changed various calls to reflect the new calling sequences (all under HAVE_NEW_ALSA)
- *    -- Bill 31-Jan-06
+ *   also scheme/ruby tie-ins, and other such changes.  Changed the names of the environment variables to use MUS, not SNDLIB.
+ * reformatted to be like the rest of the code
+ * changed default device to "default"
+ *    -- Bill 2-Feb-06
  *
  * error handling (mus_error) changed by Bill 14-Nov-02
  * 0.5 support removed by Bill 24-Mar-02
@@ -3379,23 +3382,23 @@ static int probe_api(void)
  *  cards and devices at the hardware level. Which device it uses can be defined by:
  *
  *  - setting variables in the environment (searched for in the following order):
- *    SNDLIB_ALSA_PLAYBACK_DEVICE
+ *    MUS_ALSA_PLAYBACK_DEVICE
  *       defines the name of the playback device
- *    SNDLIB_ALSA_CAPTURE_DEVICE
+ *    MUS_ALSA_CAPTURE_DEVICE
  *       defines the name of the capture device
- *    SNDLIB_ALSA_DEVICE
+ *    MUS_ALSA_DEVICE
  *       defines the name of the playback and capture device
  *    use the first two if the playback and capture devices are different or the
  *    third if they are the same. 
  *  - if no variables are found in the environment sndlib tries to probe for a
  *    default device named "sndlib" (in alsa 0.9 devices are configured in 
  *    /usr/share/alsa/alsa.conf or in ~/.asoundrc)
- *  - if "sndlib" is not a valid device "hw:0,0" is used (which by default should
+ *  - if "sndlib" is not a valid device "hw:0,0" was used [but now it looks for "default"] (which by default should
  *    point to the first device of the first card
  *
  *  Some default settings are controllable through the environment as well:
- *    SNDLIB_ALSA_BUFFER_SIZE = size of each buffer in frames
- *    SNDLIB_ALSA_BUFFERS = number of buffers
+ *    MUS_ALSA_BUFFER_SIZE = size of each buffer in frames
+ *    MUS_ALSA_BUFFERS = number of buffers
  *
  * changed 18-Sep-00 by Bill: new error handling: old mus_audio_error folded into
  *  mus_error; mus_error itself should be used only for "real" errors -- things
@@ -3412,18 +3415,6 @@ static int probe_api(void)
  *     based on original 0.4.x code by Paul Barton-Davis (not much left of it :-)
  *     also Bill's code and Jaroslav Kysela (aplay.c and friends)
  *
- * Other files changed:
- *   sndlib.h:
- *     added MUS_AUDIO_SAMPLES_PER_CHANNEL
- *   snd-scm.c and snd-noscm.c:
- *     removed HAVE_ALSA in #if's, it would appear that clear_audio_inputs,
- *     dsp_reset, dsp_devices and set_dsp_devices are OSS specific
- *   snd-dac.c:
- *     changed DAC_BUFFER_SIZE to MAX_DAC_BUFFER_SIZE and created static variable
- *     dac_buffer_size so that larger alsa fragments can be accommodated (the 
- *     alsa write function only accepts integer multiples of the fragment size, 
- *     that is, we cannot write half a buffer in one call). 
- *
  * Changes:
  * 04/25/2000: finished major rework, snd-dac now automatically decides which
  *             device or devices it uses for playback. Multiple device use is
@@ -3439,15 +3430,6 @@ static int probe_api(void)
 #if (!HAVE_OSS)
 #define AUDIO_OK
 #endif
-
-/*
-TODO: alsa segfault:
-         /home/bil/snd-77/ setenv SNDLIB_ALSA_DEVICE "hw:0,1"
-         /home/bil/snd-77/ ./snd ~/cl/oboe.snd
-         ALSA lib pcm_hw.c:1055:(snd_pcm_hw_open) open /dev/snd/pcmC0D1c failed: No such file or directory
-         ALSA lib pcm_hw.c:1055:(snd_pcm_hw_open) open /dev/snd/pcmC0D1c failed: No such file or directory
-         Segmentation fault (core dumped)
-*/
 
 #include <sys/ioctl.h>
 
@@ -3466,6 +3448,15 @@ TODO: alsa segfault:
   #error ALSA version is too old -- audio.c needs 0.9 or later
 #endif
 
+/* define environment variable names */
+#define MUS_ALSA_PLAYBACK_DEVICE_ENV_NAME "MUS_ALSA_PLAYBACK_DEVICE"
+#define MUS_ALSA_CAPTURE_DEVICE_ENV_NAME  "MUS_ALSA_CAPTURE_DEVICE"
+#define MUS_ALSA_DEVICE_ENV_NAME          "MUS_ALSA_DEVICE"
+#define MUS_ALSA_BUFFERS_ENV_NAME         "MUS_ALSA_BUFFERS"
+#define MUS_ALSA_BUFFER_SIZE_ENV_NAME     "MUS_ALSA_BUFFER_SIZE"
+#define MUS_ALSA_TRACE_ENV_NAME           "MUS_ALSA_TRACE"
+
+
 static int alsa_mus_error(int type, char *message)
 {
   if (message)
@@ -3478,10 +3469,9 @@ static int alsa_mus_error(int type, char *message)
 
 /* prototypes for the alsa sndlib functions */
 static int   alsa_mus_audio_initialize(void);
-static void  alsa_mus_audio_set_oss_buffers(int num, int size);
+static void  alsa_mus_oss_set_buffers(int num, int size);
 static int   alsa_mus_audio_systems(void);
 static char* alsa_mus_audio_system_name(int system);
-/* static char* alsa_mus_audio_moniker(void); */ /* moved above */
 static int   alsa_mus_audio_open_output(int ur_dev, int srate, int chans, int format, int size);
 static int   alsa_mus_audio_open_input(int ur_dev, int srate, int chans, int format, int requested_size);
 static int   alsa_mus_audio_write(int id, char *buf, int bytes);
@@ -3496,18 +3486,18 @@ static void  alsa_describe_audio_state_1(void);
 static int probe_api(void) 
 {
 #if HAVE_JACK
-  int jackprobe = jack_mus_audio_initialize();
+  int jackprobe;
+  jackprobe = jack_mus_audio_initialize();
   if (jackprobe == MUS_ERROR)
     {
-      /* printf("Using the ALSA OR OSS API instead.\n"); */
-      {
 #endif
     int card = -1;
-    if (snd_card_next(&card) >= 0 && card >= 0) {
+    if ((snd_card_next(&card) >= 0) && (card >= 0))
+      {
 	/* the alsa library has detected one or more cards */
 	api = ALSA_API;
 	vect_mus_audio_initialize = alsa_mus_audio_initialize;
-	vect_mus_audio_set_oss_buffers = alsa_mus_audio_set_oss_buffers;
+	vect_mus_oss_set_buffers = alsa_mus_oss_set_buffers;
 	vect_mus_audio_systems = alsa_mus_audio_systems;
 	vect_mus_audio_system_name = alsa_mus_audio_system_name;
 	vect_mus_audio_moniker = alsa_mus_audio_moniker;
@@ -3519,11 +3509,13 @@ static int probe_api(void)
 	vect_mus_audio_mixer_read = alsa_mus_audio_mixer_read;
 	vect_mus_audio_mixer_write = alsa_mus_audio_mixer_write;
 	vect_describe_audio_state_1 = alsa_describe_audio_state_1;
-    } else {
+      } 
+    else 
+      {
 	/* go for the oss api */
         api = OSS_API;
 	vect_mus_audio_initialize = oss_mus_audio_initialize;
-	vect_mus_audio_set_oss_buffers = oss_mus_audio_set_oss_buffers;
+	vect_mus_oss_set_buffers = oss_mus_oss_set_buffers;
 	vect_mus_audio_systems = oss_mus_audio_systems;
 	vect_mus_audio_system_name = oss_mus_audio_system_name;
 	vect_mus_audio_moniker = oss_mus_audio_moniker;
@@ -3535,13 +3527,12 @@ static int probe_api(void)
 	vect_mus_audio_mixer_read = oss_mus_audio_mixer_read;
 	vect_mus_audio_mixer_write = oss_mus_audio_mixer_write;
 	vect_describe_audio_state_1 = oss_describe_audio_state_1;
-    }
+      }
     /* will the _real_ mus_audio_initialize please stand up? */
     return(vect_mus_audio_initialize());
 #if HAVE_JACK
-      }
     }
-  return jackprobe;
+  return(jackprobe);
 #endif
 }
 
@@ -3559,18 +3550,17 @@ static int alsa_samples_per_channel = 1024;
 
 static int alsa_trace = 0;
 
-/* static char dev_name[64]; */
-
 /* this should go away as it is oss specific */
 
 static int fragment_size = 512; 
 static int fragments = 4;
 
-static void alsa_mus_audio_set_oss_buffers (int num, int size) {
-    fragments = num; 
-    fragment_size = size; 
+static void alsa_mus_oss_set_buffers (int num, int size) 
+{
+  fragments = num; 
+  fragment_size = size; 
 #if DEBUGGING
-    mus_print("set_oss_buffers: %d fragments or size %d", num, size);
+  mus_print("set_oss_buffers: %d fragments or size %d", num, size);
 #endif
 }
 
@@ -3582,91 +3572,56 @@ static void alsa_mus_audio_set_oss_buffers (int num, int size) {
 
 static snd_pcm_format_t to_alsa_format(int snd_format)
 {
-    switch (snd_format) {
-    case MUS_BYTE: 
-	return(SND_PCM_FORMAT_S8); 
-    case MUS_UBYTE: 
-	return(SND_PCM_FORMAT_U8); 
-    case MUS_MULAW: 
-	return(SND_PCM_FORMAT_MU_LAW); 
-    case MUS_ALAW: 
-	return(SND_PCM_FORMAT_A_LAW); 
-    case MUS_BSHORT: 
-	return(SND_PCM_FORMAT_S16_BE); 
-    case MUS_LSHORT: 
-	return(SND_PCM_FORMAT_S16_LE); 
-    case MUS_UBSHORT: 
-	return(SND_PCM_FORMAT_U16_BE); 
-    case MUS_ULSHORT: 
-	return(SND_PCM_FORMAT_U16_LE); 
-    case MUS_B24INT: 
-	return(SND_PCM_FORMAT_S24_BE); 
-    case MUS_L24INT: 
-	return(SND_PCM_FORMAT_S24_LE); 
-    case MUS_BINT: 
-	return(SND_PCM_FORMAT_S32_BE); 
-    case MUS_LINT: 
-	return(SND_PCM_FORMAT_S32_LE); 
-    case MUS_BINTN: 
-	return(SND_PCM_FORMAT_S32_BE); 
-    case MUS_LINTN: 
-	return(SND_PCM_FORMAT_S32_LE); 
-    case MUS_BFLOAT: 
-	return(SND_PCM_FORMAT_FLOAT_BE); 
-    case MUS_LFLOAT: 
-	return(SND_PCM_FORMAT_FLOAT_LE); 
-    case MUS_BDOUBLE: 
-	return(SND_PCM_FORMAT_FLOAT64_BE); 
-    case MUS_LDOUBLE: 
-	return(SND_PCM_FORMAT_FLOAT64_LE); 
+  switch (snd_format) 
+    {
+    case MUS_BYTE:     return(SND_PCM_FORMAT_S8); 
+    case MUS_UBYTE:    return(SND_PCM_FORMAT_U8); 
+    case MUS_MULAW:    return(SND_PCM_FORMAT_MU_LAW); 
+    case MUS_ALAW:     return(SND_PCM_FORMAT_A_LAW); 
+    case MUS_BSHORT:   return(SND_PCM_FORMAT_S16_BE); 
+    case MUS_LSHORT:   return(SND_PCM_FORMAT_S16_LE); 
+    case MUS_UBSHORT:  return(SND_PCM_FORMAT_U16_BE); 
+    case MUS_ULSHORT:  return(SND_PCM_FORMAT_U16_LE); 
+    case MUS_B24INT:   return(SND_PCM_FORMAT_S24_BE); 
+    case MUS_L24INT:   return(SND_PCM_FORMAT_S24_LE); 
+    case MUS_BINT:     return(SND_PCM_FORMAT_S32_BE); 
+    case MUS_LINT:     return(SND_PCM_FORMAT_S32_LE); 
+    case MUS_BINTN:    return(SND_PCM_FORMAT_S32_BE); 
+    case MUS_LINTN:    return(SND_PCM_FORMAT_S32_LE); 
+    case MUS_BFLOAT:   return(SND_PCM_FORMAT_FLOAT_BE); 
+    case MUS_LFLOAT:   return(SND_PCM_FORMAT_FLOAT_LE); 
+    case MUS_BDOUBLE:  return(SND_PCM_FORMAT_FLOAT64_BE); 
+    case MUS_LDOUBLE:  return(SND_PCM_FORMAT_FLOAT64_LE); 
     }
-    return((snd_pcm_format_t)MUS_ERROR);
+  return((snd_pcm_format_t)MUS_ERROR);
 }
 
 /* FIXME: this is not taking yet into account the 
  * number of bits that a given alsa format is actually
- * using... */
+ * using... 
+ */
 
 static int to_mus_format(int alsa_format) 
 {
   /* alsa format definitions from asoundlib.h (0.9 cvs 6/27/2001) */
   switch (alsa_format)
     {
-    case SND_PCM_FORMAT_S8:
-      return(MUS_BYTE);
-    case SND_PCM_FORMAT_U8:
-      return(MUS_UBYTE);
-    case SND_PCM_FORMAT_S16_LE:
-      return(MUS_LSHORT);
-    case SND_PCM_FORMAT_S16_BE:
-      return(MUS_BSHORT);
-    case SND_PCM_FORMAT_U16_LE:
-      return(MUS_ULSHORT);
-    case SND_PCM_FORMAT_U16_BE:
-      return(MUS_UBSHORT);
-    case SND_PCM_FORMAT_S24_LE:
-      return(MUS_L24INT);
-    case SND_PCM_FORMAT_S24_BE:
-      return(MUS_B24INT);
-    case SND_PCM_FORMAT_S32_LE:
-      /* choose the 32bit normalized format 
-       * plays 24bit and 16bit files with same
-       * upper amplitude bound (for 24 bit cards) */
-      return(MUS_LINTN);
-    case SND_PCM_FORMAT_S32_BE:
-      return(MUS_BINTN);
-    case SND_PCM_FORMAT_FLOAT_LE:
-      return(MUS_LFLOAT);
-    case SND_PCM_FORMAT_FLOAT_BE:
-      return(MUS_BFLOAT);
-    case SND_PCM_FORMAT_FLOAT64_LE:
-      return(MUS_LDOUBLE);
-    case SND_PCM_FORMAT_FLOAT64_BE:
-      return(MUS_BDOUBLE);
-    case SND_PCM_FORMAT_MU_LAW:
-      return(MUS_MULAW);
-    case SND_PCM_FORMAT_A_LAW:
-      return(MUS_ALAW);
+    case SND_PCM_FORMAT_S8:         return(MUS_BYTE);
+    case SND_PCM_FORMAT_U8:         return(MUS_UBYTE);
+    case SND_PCM_FORMAT_S16_LE:     return(MUS_LSHORT);
+    case SND_PCM_FORMAT_S16_BE:     return(MUS_BSHORT);
+    case SND_PCM_FORMAT_U16_LE:     return(MUS_ULSHORT);
+    case SND_PCM_FORMAT_U16_BE:     return(MUS_UBSHORT);
+    case SND_PCM_FORMAT_S24_LE:     return(MUS_L24INT);
+    case SND_PCM_FORMAT_S24_BE:     return(MUS_B24INT);
+    case SND_PCM_FORMAT_S32_LE:     return(MUS_LINTN); /* 32bit normalized plays 24bit and 16bit files with same amplitude bound (for 24 bit cards) */
+    case SND_PCM_FORMAT_S32_BE:     return(MUS_BINTN);
+    case SND_PCM_FORMAT_FLOAT_LE:   return(MUS_LFLOAT);
+    case SND_PCM_FORMAT_FLOAT_BE:   return(MUS_BFLOAT);
+    case SND_PCM_FORMAT_FLOAT64_LE: return(MUS_LDOUBLE);
+    case SND_PCM_FORMAT_FLOAT64_BE: return(MUS_BDOUBLE);
+    case SND_PCM_FORMAT_MU_LAW:     return(MUS_MULAW);
+    case SND_PCM_FORMAT_A_LAW:      return(MUS_ALAW);
     /* formats with no translation in snd */
     case SND_PCM_FORMAT_U24_LE:
     case SND_PCM_FORMAT_U24_BE:
@@ -3684,11 +3639,13 @@ static int to_mus_format(int alsa_format)
 }
 
 /* convert a sndlib device into an alsa device number and channel
- * [has to be coordinated with following function!] */
+ * [has to be coordinated with following function!] 
+ */
 
 /* very simplistic approach, device mapping should also depend
  * on which card we're dealing with, digital i/o devices should
- * be identified as such and so on */
+ * be identified as such and so on 
+ */
 
 /* NOTE: in the Delta1010 digital i/o is just a pair of channels
  * in the 10 channel playback frame or 12 channel capture frame,
@@ -3697,43 +3654,44 @@ static int to_mus_format(int alsa_format)
 
 static int to_alsa_device(int dev, int *adev, snd_pcm_stream_t *achan)
 {
-    switch(dev) {
-	/* default values are a problem because the concept does
-	 * not imply a direction (playback or capture). This works
-	 * fine as long as both directions of a device are symetric,
-	 * the Midiman 1010, for example, has 10 channel frames for
-	 * playback and 12 channel frames for capture and breaks 
-	 * the recorder (probes the default, defaults to output, 
-	 * uses the values for input). 
-	 */
+  switch(dev) 
+    {
+      /* default values are a problem because the concept does
+       * not imply a direction (playback or capture). This works
+       * fine as long as both directions of a device are symetric,
+       * the Midiman 1010, for example, has 10 channel frames for
+       * playback and 12 channel frames for capture and breaks 
+       * the recorder (probes the default, defaults to output, 
+       * uses the values for input). 
+       */
     case MUS_AUDIO_DEFAULT:
     case MUS_AUDIO_DUPLEX_DEFAULT:
     case MUS_AUDIO_LINE_OUT:
-	/* analog output */
-	(*adev) =0;
-	(*achan) =SND_PCM_STREAM_PLAYBACK;
-	break;
+      /* analog output */
+      (*adev) =0;
+      (*achan) =SND_PCM_STREAM_PLAYBACK;
+      break;
     case MUS_AUDIO_AUX_OUTPUT:
-	/* extra analog output */
-	(*adev) =1;
-	(*achan) =SND_PCM_STREAM_PLAYBACK;
-	break;
+      /* extra analog output */
+      (*adev) =1;
+      (*achan) =SND_PCM_STREAM_PLAYBACK;
+      break;
     case MUS_AUDIO_DAC_OUT:
-	/* analog outputs */
-	(*adev) =2;
-	(*achan) =SND_PCM_STREAM_PLAYBACK;
-	break;
+      /* analog outputs */
+      (*adev) =2;
+      (*achan) =SND_PCM_STREAM_PLAYBACK;
+      break;
     case MUS_AUDIO_MICROPHONE:
     case MUS_AUDIO_LINE_IN:
-	/* analog input */
-	(*adev) =0;
-	(*achan) =SND_PCM_STREAM_CAPTURE;
-	break;
+      /* analog input */
+      (*adev) =0;
+      (*achan) =SND_PCM_STREAM_CAPTURE;
+      break;
     case MUS_AUDIO_AUX_INPUT:
-	/* extra analog input */
-	(*adev) =1;
-	(*achan) =SND_PCM_STREAM_CAPTURE;
-	break;
+      /* extra analog input */
+      (*adev) =1;
+      (*achan) =SND_PCM_STREAM_CAPTURE;
+      break;
     case MUS_AUDIO_DIGITAL_OUT:
     case MUS_AUDIO_SPDIF_OUT:
     case MUS_AUDIO_AES_OUT:
@@ -3750,10 +3708,10 @@ static int to_alsa_device(int dev, int *adev, snd_pcm_stream_t *achan)
     case MUS_AUDIO_LINE3:
     case MUS_AUDIO_CD:
     default:
-	return(MUS_ERROR);
-	break;
+      return(MUS_ERROR);
+      break;
     }
-    return(0);
+  return(0);
 }
 
 /* convert an alsa device into a sndlib device 
@@ -3766,37 +3724,42 @@ static int to_alsa_device(int dev, int *adev, snd_pcm_stream_t *achan)
  * devices - how to differentiate them in alsa?
  */
 
-static int to_sndlib_device(int dev, int channel) {
-    switch (channel) {
+static int to_sndlib_device(int dev, int channel) 
+{
+  switch (channel) 
+    {
     case SND_PCM_STREAM_PLAYBACK:
-	switch (dev) {
-	/* works only for the first three outputs */
+      switch (dev) 
+	{
+	  /* works only for the first three outputs */
 	case 0: return(MUS_AUDIO_LINE_OUT);
 	case 1: return(MUS_AUDIO_AUX_OUTPUT);
 	case 2: return(MUS_AUDIO_DAC_OUT);
 	default:
-	    return(MUS_ERROR);
+	  return(MUS_ERROR);
 	}
     case SND_PCM_STREAM_CAPTURE:
-	switch (dev) {
+      switch (dev) 
+	{
 	case 0: return(MUS_AUDIO_LINE_IN);
 	case 1: return(MUS_AUDIO_AUX_INPUT);
 	default:
-	    return(MUS_ERROR);
+	  return(MUS_ERROR);
 	}
-	break;
+      break;
     }
-    return(MUS_ERROR);
+  return(MUS_ERROR);
 }
 
-/* set schedulling priority to SCHED_FIFO 
- * this will only work if the program that uses sndlib is run as root or is suid root */
+/* set scheduling priority to SCHED_FIFO 
+ * this will only work if the program that uses sndlib is run as root or is suid root 
+ */
 
 /* return the number of cards that are available */
 
 static int alsa_mus_audio_systems(void) 
 {
-    return(sound_cards);
+  return(sound_cards);
 }
 
 /* return the type of driver we're dealing with */
@@ -3808,10 +3771,9 @@ static char *alsa_mus_audio_moniker(void)
   return(version_name);
 }
 
-
 /* handles for both directions of the virtual device */
 
-static snd_pcm_t* handles[2];
+static snd_pcm_t *handles[2];
 
 /* hardware and software parameter sctructure pointers */
 
@@ -3831,36 +3793,74 @@ char *alsa_sndlib_device_name = "sndlib";
 
 /* second default for playback and capture: hardware pcm, first card, first device */
 
-char *alsa_default_playback_device_name = "hw:0,0";
-char *alsa_default_capture_device_name = "hw:0,0";
+/* bil: I think the default should be the alsa default -- that way ordinary users will get sound,
+ *      and experts can still set it to hw:0 or whatever.
+ */
+char *alsa_default_playback_device_name = "default";
+char *alsa_default_capture_device_name = "default";
+
 
 /* pcms used by sndlib, playback and capture */
 
 char *alsa_playback_device_name = NULL;
 char *alsa_capture_device_name = NULL;
 
+
+/* -------- tie these names into scheme/ruby -------- */
+
+static bool alsa_squelch_warning = false;
+char *mus_alsa_playback_device(void) {return(alsa_playback_device_name);}
+char *mus_alsa_set_playback_device(const char *name) {alsa_playback_device_name = strdup(name); return(alsa_playback_device_name);}
+char *mus_alsa_capture_device(void) {return(alsa_capture_device_name);}
+char *mus_alsa_set_capture_device(const char *name) {alsa_capture_device_name = strdup(name); return(alsa_capture_device_name);}
+char *mus_alsa_device(void) {return(alsa_sndlib_device_name);}
+char *mus_alsa_set_device(const char *name) {alsa_sndlib_device_name = strdup(name); return(alsa_sndlib_device_name);}
+int mus_alsa_buffer_size(void) {return(alsa_samples_per_channel);}
+int mus_alsa_set_buffer_size(int size) {alsa_samples_per_channel = size; return(size);}
+int mus_alsa_buffers(void) {return(alsa_periods);}
+int mus_alsa_set_buffers(int num) {alsa_periods = num; return(num);}
+bool mus_alsa_squelch_warning(void) {return(alsa_squelch_warning);}
+bool mus_alsa_set_squelch_warning(bool val) {alsa_squelch_warning = val; return(val);}
+
+
+
+/* TODO: should "sndlib" device name be special -- this is a virtual device I think
+ * TODO: the "set" cases need validation as below -- does alsa give us reasonable errors?
+ * TODO: perhaps mus_alsa_provide_interpolation? + autointerp at snd-dac level?
+ * TODO: alsa grfsnd.html section, test
+ * TODO: doc alsa devices
+ * TODO: reformat other ALSA sections
+ * TODO: mus-audio-open-output (play.scm? -- snd-test 13) hangs in alsa
+ * TODO: also other similar tests needed (what about sun|oss range checks?)
+ * TODO: also perhaps a revamped info proc here -- readable list of devices and so on 
+ */
+
+
+/* ---------------- */
+
+
 /* return the name of a given system */
 
 static char *alsa_mus_audio_system_name(int system) 
 {
-    return(alsa_playback_device_name);
+  return(alsa_playback_device_name);
 }
 
 #if 0
 static void alsa_dump_hardware_params(snd_pcm_hw_params_t *params, const char *msg) 
 {
-    snd_output_t *out;
-    snd_output_stdio_attach(&out, stderr, 0);
-    fprintf(stderr, "%s\n", msg);
-    snd_pcm_hw_params_dump(params, out);
+  snd_output_t *out;
+  snd_output_stdio_attach(&out, stderr, 0);
+  fprintf(stderr, "%s\n", msg);
+  snd_pcm_hw_params_dump(params, out);
 }
 
 static void alsa_dump_software_params(snd_pcm_sw_params_t *params, const char *msg) 
 {
-    snd_output_t *out;
-    snd_output_stdio_attach(&out, stderr, 0);
-    fprintf(stderr, "%s\n", msg);
-    snd_pcm_sw_params_dump(params, out);
+  snd_output_t *out;
+  snd_output_stdio_attach(&out, stderr, 0);
+  fprintf(stderr, "%s\n", msg);
+  snd_pcm_sw_params_dump(params, out);
 }
 #endif
 
@@ -3868,354 +3868,385 @@ static void alsa_dump_software_params(snd_pcm_sw_params_t *params, const char *m
 
 static snd_pcm_hw_params_t * alsa_get_hardware_params(char *name, snd_pcm_stream_t stream, int mode)
 {
-    int err;
-    snd_pcm_t *handle;
-    if ((err = snd_pcm_open(&handle, name, stream, mode | SND_PCM_NONBLOCK))!=0) {
+  int err;
+  snd_pcm_t *handle;
+  if ((err = snd_pcm_open(&handle, name, stream, mode | SND_PCM_NONBLOCK)) != 0) 
+    {
       alsa_mus_error(MUS_AUDIO_CANT_OPEN, 
 		     mus_format("%s: open pcm %s for stream %d: %s",
 				c__FUNCTION__, name, stream, snd_strerror(err)));
       return(NULL);
-    } else {
-	snd_pcm_hw_params_t *params;
-	params = (snd_pcm_hw_params_t *)calloc(1, snd_pcm_hw_params_sizeof());
-	if (params == NULL) {
-	    snd_pcm_close(handle);
-	    alsa_mus_error(MUS_AUDIO_CONFIGURATION_NOT_AVAILABLE, 
-			   mus_format("%s: could not allocate memory for hardware params", c__FUNCTION__));
-	} else {
-	    err = snd_pcm_hw_params_any(handle, params);
-	    if (err < 0) {
-		snd_pcm_close(handle);
-		alsa_mus_error(MUS_AUDIO_CONFIGURATION_NOT_AVAILABLE, 
-			       mus_format("%s: snd_pcm_hw_params_any: pcm %s, stream %d, error: %s",
-					  c__FUNCTION__, name, stream, snd_strerror(err)));
-	    } else {
-		snd_pcm_close(handle);
-		return(params);
+    }
+  else 
+    {
+      snd_pcm_hw_params_t *params;
+      params = (snd_pcm_hw_params_t *)calloc(1, snd_pcm_hw_params_sizeof());
+      if (params == NULL) 
+	{
+	  snd_pcm_close(handle);
+	  alsa_mus_error(MUS_AUDIO_CONFIGURATION_NOT_AVAILABLE, 
+			 mus_format("%s: could not allocate memory for hardware params", c__FUNCTION__));
+	} 
+      else 
+	{
+	  err = snd_pcm_hw_params_any(handle, params);
+	  if (err < 0) 
+	    {
+	      snd_pcm_close(handle);
+	      alsa_mus_error(MUS_AUDIO_CONFIGURATION_NOT_AVAILABLE, 
+			     mus_format("%s: snd_pcm_hw_params_any: pcm %s, stream %d, error: %s",
+					c__FUNCTION__, name, stream, snd_strerror(err)));
+	    } 
+	  else 
+	    {
+	      snd_pcm_close(handle);
+	      return(params);
 	    }
 	}
     }
-    return(NULL);
+  return(NULL);
 }
 
 /* allocate software params structure */
 
 static snd_pcm_sw_params_t * alsa_allocate_software_params(void)
 {
-    snd_pcm_sw_params_t *params;
-    params = (snd_pcm_sw_params_t *)calloc(1, snd_pcm_sw_params_sizeof());
-    if (params == NULL) {
-	alsa_mus_error(MUS_AUDIO_CONFIGURATION_NOT_AVAILABLE, 
-		       mus_format("%s: could not allocate memory for software params", c__FUNCTION__));
-    } else {
-	return(params);
-    }
-    return(NULL);
+  snd_pcm_sw_params_t *params = NULL;
+  params = (snd_pcm_sw_params_t *)calloc(1, snd_pcm_sw_params_sizeof());
+  if (params == NULL) 
+    {
+      alsa_mus_error(MUS_AUDIO_CONFIGURATION_NOT_AVAILABLE, 
+		     mus_format("%s: could not allocate memory for software params", c__FUNCTION__));
+    } 
+  return(params);
 }
 
 /* probe a device name against the list of available pcm devices */
 
 #ifndef SND_CONFIG_GET_ID_ARGS
-  #define SND_CONFIG_GET_ID_ARGS 1
+#define SND_CONFIG_GET_ID_ARGS 1
 #endif
 
 static int alsa_probe_device_name(char *name)
 {
-    snd_config_t *conf;
-    snd_config_iterator_t pos, next;
-    int err;
-
-    err = snd_config_update();
-    if (err < 0) {
-	mus_print("%s: snd_config_update: %s", c__FUNCTION__, snd_strerror(err));
-	return(MUS_ERROR);
+  snd_config_t *conf;
+  snd_config_iterator_t pos, next;
+  int err;
+  
+  err = snd_config_update();
+  if (err < 0) 
+    {
+      mus_print("%s: snd_config_update: %s", c__FUNCTION__, snd_strerror(err));
+      return(MUS_ERROR);
     }
-    err = snd_config_search(snd_config, "pcm", &conf);
-    if (err < 0) {
-	mus_print("%s: snd_config_search: %s", c__FUNCTION__, snd_strerror(err));
-	return(MUS_ERROR);
+  err = snd_config_search(snd_config, "pcm", &conf);
+  if (err < 0) 
+    {
+      mus_print("%s: snd_config_search: %s", c__FUNCTION__, snd_strerror(err));
+      return(MUS_ERROR);
     }
-    snd_config_for_each(pos, next, conf) {
-	snd_config_t *c = snd_config_iterator_entry(pos);
+  snd_config_for_each(pos, next, conf) 
+    {
+      snd_config_t *c = snd_config_iterator_entry(pos);
 #if (SND_CONFIG_GET_ID_ARGS == 2)
-	const char *id;
-	int err = snd_config_get_id(c, &id);
-	if (err == 0) {
-	    int result = strncmp(name, id, strlen(id));
-	    if (result == 0 &&
-		(name[strlen(id)] == '\0' || name[strlen(id)] == ':')) {
-		return(MUS_NO_ERROR);
-	    }}
-#else
-	const char *id = snd_config_get_id(c);
+      const char *id;
+      int err = snd_config_get_id(c, &id);
+      if (err == 0) {
 	int result = strncmp(name, id, strlen(id));
 	if (result == 0 &&
-	    (name[strlen(id)] == '\0' || name[strlen(id)] == ':')) {
+	    (name[strlen(id)] == '\0' || name[strlen(id)] == ':')) 
+	  {
 	    return(MUS_NO_ERROR);
+	  }
+      }
+#else
+      const char *id = snd_config_get_id(c);
+      int result = strncmp(name, id, strlen(id));
+      if (result == 0 &&
+	  (name[strlen(id)] == '\0' || name[strlen(id)] == ':')) 
+	{
+	  return(MUS_NO_ERROR);
 	}
 #endif
     }
-    return(MUS_ERROR);
+  return(MUS_ERROR);
 }
 
 /* check a device name against the list of available pcm devices */
 
 static int alsa_check_device_name(char *name)
 {
-    if (alsa_probe_device_name(name) == MUS_ERROR) {
-	return(alsa_mus_error(MUS_AUDIO_CANT_READ, 
-			      mus_format("%s: could not find device \"%s\" in configuration", 
-					 c__FUNCTION__, name)));
-    } else {
-	return(MUS_NO_ERROR);
-    }
+  if (alsa_probe_device_name(name) == MUS_ERROR) 
+    {
+      return(alsa_mus_error(MUS_AUDIO_CANT_READ, 
+			    mus_format("%s: could not find device \"%s\" in configuration", 
+				       c__FUNCTION__, name)));
+    } 
+  return(MUS_NO_ERROR);
 }
 
 /* get a device name from the environment */
 
 static char *alsa_get_device_from_env(char *name)
 {
-    char *string = getenv(name);
-    if (string != NULL) {
-	if (alsa_check_device_name(string) == MUS_NO_ERROR) {
-	    return(string);
-	}
-    }
-    return(NULL);
+  char *string = getenv(name);
+  if (string) 
+    if (alsa_check_device_name(string) == MUS_NO_ERROR) 
+      return(string);
+  return(NULL);
 }
 
 /* get an integer from the environment */
 
 static int alsa_get_int_from_env(char *name, int *value, int min, int max)
 {
-    char *string = getenv(name);
-    if (string != NULL) {
-	char *end;
-	long int result = strtol(string, &end, 10);
-	if (result < min || result > max) {
-	    return(alsa_mus_error(MUS_AUDIO_CANT_READ, 
-				  mus_format("%s: %s ignored: out of range, value=%d, min=%d, max=%d",
-					     c__FUNCTION__, name, (int)result, min, max)));
-	} else if (errno == ERANGE) {
-	    return(alsa_mus_error(MUS_AUDIO_CANT_READ, 
-				  mus_format("%s: %s ignored: strlol conversion out of range",
-					     c__FUNCTION__, name)));
-	} else {
-	    if (*string != '\0' && *end == '\0') {
-		*value = (int)result;
-		return(MUS_NO_ERROR);
-	    } else {
-		return(alsa_mus_error(MUS_AUDIO_CANT_READ, 
-				      mus_format("%s: %s ignored: value is \"%s\", not an integer",
-						 c__FUNCTION__, name, string)));
+  char *string = getenv(name);
+  if (string) 
+    {
+      char *end;
+      long int result = strtol(string, &end, 10);
+      if (result < min || result > max) 
+	{
+	  return(alsa_mus_error(MUS_AUDIO_CANT_READ, 
+				mus_format("%s: %s ignored: out of range, value=%d, min=%d, max=%d",
+					   c__FUNCTION__, name, (int)result, min, max)));
+	} 
+      else 
+	{
+	  if (errno == ERANGE) 
+	    {
+	      return(alsa_mus_error(MUS_AUDIO_CANT_READ, 
+				    mus_format("%s: %s ignored: strlol conversion out of range",
+					       c__FUNCTION__, name)));
+	    } 
+	  else 
+	    {
+	      if ((*string != '\0') && (*end == '\0'))
+		{
+		  *value = (int)result;
+		  return(MUS_NO_ERROR);
+		} 
+	      else 
+		{
+		  return(alsa_mus_error(MUS_AUDIO_CANT_READ, 
+					mus_format("%s: %s ignored: value is \"%s\", not an integer",
+						   c__FUNCTION__, name, string)));
+		}
 	    }
 	}
     }
-    return(MUS_ERROR);
+  return(MUS_ERROR);
 }
 
 /* initialize the audio subsystem */
 
 static int alsa_mus_audio_initialize(void) 
 {
-    char *name = NULL;
-    char *pname;
-    char *cname;
-    int value; 
-    int dir;
+  char *name = NULL;
+  char *pname;
+  char *cname;
+  int value; 
+  int dir;
 #if HAVE_NEW_ALSA
-    unsigned int min_periods, max_periods, min_rec_periods, max_rec_periods;
+  unsigned int min_periods, max_periods, min_rec_periods, max_rec_periods;
 #else
-    snd_pcm_uframes_t min_periods, max_periods, min_rec_periods, max_rec_periods;
+  snd_pcm_uframes_t min_periods, max_periods, min_rec_periods, max_rec_periods;
 #endif
-    snd_pcm_uframes_t min_buffer_size, max_buffer_size, min_rec_buffer_size, max_rec_buffer_size;
-    if (audio_initialized) {
-	return(0);
-    }
-    /* allocate various things */
-    dev_name = (char *)CALLOC(LABEL_BUFFER_SIZE, sizeof(char));
-    sound_cards = 0;
-    /* get trace flag from environment */
-    if (alsa_get_int_from_env("SNDLIB_ALSA_TRACE", &value, 0, 1) == MUS_NO_ERROR) {
-	alsa_trace = value;
-    }
-    /* try to get device names from environment */
-    pname = alsa_get_device_from_env("SNDLIB_ALSA_PLAYBACK_DEVICE");
-    if (name != NULL) {
-	alsa_playback_device_name = pname;
-    }
-    cname = alsa_get_device_from_env("SNDLIB_ALSA_CAPTURE_DEVICE");
-    if (cname != NULL) {
-	alsa_capture_device_name = cname;
-    }
-    name = alsa_get_device_from_env("SNDLIB_ALSA_DEVICE");
-    if (name != NULL) {
-	if (alsa_playback_device_name == NULL) {
-	    alsa_playback_device_name = name;
-	}
-	if (alsa_capture_device_name == NULL) {
-	    alsa_capture_device_name = name;
-	}
-    }
-    /* if no device name set yet, try for special sndlib name first */
-    if (alsa_playback_device_name == NULL) {
-	if (alsa_probe_device_name(alsa_sndlib_device_name) == MUS_NO_ERROR) {
-	    alsa_playback_device_name = alsa_sndlib_device_name;
-	}
-    }
-    if (alsa_capture_device_name == NULL) {
-	if (alsa_probe_device_name(alsa_sndlib_device_name) == MUS_NO_ERROR) {
-	    alsa_capture_device_name = alsa_sndlib_device_name;
-	}
-    }
-    /* if no device name set yet, default to the first hardware card and device */
-    if (alsa_playback_device_name == NULL) {
-	alsa_playback_device_name = alsa_default_playback_device_name;
-    }
-    if (alsa_capture_device_name == NULL) {
-	alsa_capture_device_name = alsa_default_capture_device_name;
-    }
-    /* playback stream parameters */
-    alsa_hw_params[SND_PCM_STREAM_PLAYBACK] = 
-	alsa_get_hardware_params(alsa_playback_device_name, SND_PCM_STREAM_PLAYBACK, alsa_open_mode);
-    if (alsa_hw_params[SND_PCM_STREAM_PLAYBACK] != NULL) {
-	alsa_sw_params[SND_PCM_STREAM_PLAYBACK] = 
-	    alsa_allocate_software_params();
-	sound_cards = 1;
-    }
-    /* capture stream parameters */
-    alsa_hw_params[SND_PCM_STREAM_CAPTURE] = 
-	alsa_get_hardware_params(alsa_capture_device_name, SND_PCM_STREAM_CAPTURE, alsa_open_mode);
-    if (alsa_hw_params[SND_PCM_STREAM_CAPTURE] != NULL) {
-	alsa_sw_params[SND_PCM_STREAM_CAPTURE] = 
-	    alsa_allocate_software_params();
-	sound_cards = 1;
+  snd_pcm_uframes_t min_buffer_size, max_buffer_size, min_rec_buffer_size, max_rec_buffer_size;
+
+  if (audio_initialized) 
+    return(0);
+
+  /* allocate various things */
+  dev_name = (char *)CALLOC(LABEL_BUFFER_SIZE, sizeof(char));
+  sound_cards = 0;
+
+  /* get trace flag from environment */
+  if (alsa_get_int_from_env(MUS_ALSA_TRACE_ENV_NAME, &value, 0, 1) == MUS_NO_ERROR) 
+    alsa_trace = value;
+
+  /* try to get device names from environment */
+  pname = alsa_get_device_from_env(MUS_ALSA_PLAYBACK_DEVICE_ENV_NAME);
+  if (pname) 
+    alsa_playback_device_name = pname;
+
+  cname = alsa_get_device_from_env(MUS_ALSA_CAPTURE_DEVICE_ENV_NAME);
+  if (cname) 
+    alsa_capture_device_name = cname;
+    
+  name = alsa_get_device_from_env(MUS_ALSA_DEVICE_ENV_NAME);
+  if (name) 
+    {
+      if (!alsa_playback_device_name) 
+	alsa_playback_device_name = name;
+
+      if (!alsa_capture_device_name) 
+	alsa_capture_device_name = name;
     }
 
-    if ((alsa_hw_params[SND_PCM_STREAM_CAPTURE] == NULL) ||
-	(alsa_hw_params[SND_PCM_STREAM_PLAYBACK] == NULL))
-      return(MUS_ERROR);
+  /* if no device name set yet, try for special sndlib name first */
+  if (!alsa_playback_device_name) 
+    {
+      if (alsa_probe_device_name(alsa_sndlib_device_name) == MUS_NO_ERROR) 
+	alsa_playback_device_name = alsa_sndlib_device_name;
+    }
 
-    /* check validity of default periods and buffer size, adjust if necessary 
-     *
-     * this might not always work because periods and buffer size are checked
-     * separately, and they might interact when being set, but it is better
-     * than not checking at all anything 
-     */
+  if (!alsa_capture_device_name) 
+    {
+      if (alsa_probe_device_name(alsa_sndlib_device_name) == MUS_NO_ERROR) 
+	alsa_capture_device_name = alsa_sndlib_device_name;
+    }
+
+  /* if no device name set yet, default to the first hardware card and device */
+  if (!alsa_playback_device_name) 
+    alsa_playback_device_name = alsa_default_playback_device_name;
+
+  if (!alsa_capture_device_name) 
+    alsa_capture_device_name = alsa_default_capture_device_name;
+    
+  /* playback stream parameters */
+  alsa_hw_params[SND_PCM_STREAM_PLAYBACK] = alsa_get_hardware_params(alsa_playback_device_name, SND_PCM_STREAM_PLAYBACK, alsa_open_mode);
+  if (alsa_hw_params[SND_PCM_STREAM_PLAYBACK]) 
+    {
+      alsa_sw_params[SND_PCM_STREAM_PLAYBACK] = alsa_allocate_software_params();
+      sound_cards = 1;
+    }
+
+  /* capture stream parameters */
+  alsa_hw_params[SND_PCM_STREAM_CAPTURE] = alsa_get_hardware_params(alsa_capture_device_name, SND_PCM_STREAM_CAPTURE, alsa_open_mode);
+  if (alsa_hw_params[SND_PCM_STREAM_CAPTURE]) 
+    {
+      alsa_sw_params[SND_PCM_STREAM_CAPTURE] = alsa_allocate_software_params();
+      sound_cards = 1;
+    }
+  
+  if ((!alsa_hw_params[SND_PCM_STREAM_CAPTURE]) ||
+      (!alsa_hw_params[SND_PCM_STREAM_PLAYBACK]))
+    return(MUS_ERROR);
+  
+  /* check validity of default periods and buffer size, adjust if necessary 
+   *
+   * this might not always work because periods and buffer size are checked
+   * separately, and they might interact when being set, but it is better
+   * than not checking at all anything 
+   */
 #if HAVE_NEW_ALSA
-    snd_pcm_hw_params_get_periods_min(alsa_hw_params[SND_PCM_STREAM_PLAYBACK], &min_periods, &dir);
-    snd_pcm_hw_params_get_periods_max(alsa_hw_params[SND_PCM_STREAM_PLAYBACK], &max_periods, &dir);
+  snd_pcm_hw_params_get_periods_min(alsa_hw_params[SND_PCM_STREAM_PLAYBACK], &min_periods, &dir);
+  snd_pcm_hw_params_get_periods_max(alsa_hw_params[SND_PCM_STREAM_PLAYBACK], &max_periods, &dir);
 #else
-    min_periods = snd_pcm_hw_params_get_periods_min(alsa_hw_params[SND_PCM_STREAM_PLAYBACK], &dir);
-    max_periods = snd_pcm_hw_params_get_periods_max(alsa_hw_params[SND_PCM_STREAM_PLAYBACK], &dir);
+  min_periods = snd_pcm_hw_params_get_periods_min(alsa_hw_params[SND_PCM_STREAM_PLAYBACK], &dir);
+  max_periods = snd_pcm_hw_params_get_periods_max(alsa_hw_params[SND_PCM_STREAM_PLAYBACK], &dir);
 #endif
-    if (alsa_hw_params[SND_PCM_STREAM_CAPTURE] != NULL) {
+  if (alsa_hw_params[SND_PCM_STREAM_CAPTURE]) 
+    {
 #if HAVE_NEW_ALSA
-        snd_pcm_hw_params_get_periods_min(alsa_hw_params[SND_PCM_STREAM_CAPTURE], &min_rec_periods, &dir);
-        snd_pcm_hw_params_get_periods_max(alsa_hw_params[SND_PCM_STREAM_CAPTURE], &max_rec_periods, &dir);
+      snd_pcm_hw_params_get_periods_min(alsa_hw_params[SND_PCM_STREAM_CAPTURE], &min_rec_periods, &dir);
+      snd_pcm_hw_params_get_periods_max(alsa_hw_params[SND_PCM_STREAM_CAPTURE], &max_rec_periods, &dir);
 #else
-        min_rec_periods = snd_pcm_hw_params_get_periods_min(alsa_hw_params[SND_PCM_STREAM_CAPTURE], &dir);
-	max_rec_periods = snd_pcm_hw_params_get_periods_max(alsa_hw_params[SND_PCM_STREAM_CAPTURE], &dir);
+      min_rec_periods = snd_pcm_hw_params_get_periods_min(alsa_hw_params[SND_PCM_STREAM_CAPTURE], &dir);
+      max_rec_periods = snd_pcm_hw_params_get_periods_max(alsa_hw_params[SND_PCM_STREAM_CAPTURE], &dir);
 #endif
-	if (max_periods > max_rec_periods) {
-	    max_periods = max_rec_periods;
-	}
-	if (min_periods < min_rec_periods) {
-	    min_periods = min_rec_periods;
-	}
+      if (max_periods > max_rec_periods) 
+	max_periods = max_rec_periods;
+
+      if (min_periods < min_rec_periods) 
+	min_periods = min_rec_periods;
     }
-    if (alsa_periods > max_periods) {
-        alsa_periods = max_periods;
-    }
-    if (alsa_periods < min_periods) {
-        alsa_periods = min_periods;
-    }
-    /* get number of buffers from environment, override if possible */
-    if (alsa_get_int_from_env("SNDLIB_ALSA_BUFFERS", &value, 
-			      min_periods, 
-			      max_periods) == MUS_NO_ERROR) {
-	alsa_periods = value;
-    }
+
+  if (alsa_periods > max_periods) 
+    alsa_periods = max_periods;
+
+  if (alsa_periods < min_periods) 
+    alsa_periods = min_periods;
+
+  /* get number of buffers from environment, override if possible */
+  if (alsa_get_int_from_env(MUS_ALSA_BUFFERS_ENV_NAME, &value, 
+			    min_periods, 
+			    max_periods) == MUS_NO_ERROR) 
+    alsa_periods = value;
+
 #if HAVE_NEW_ALSA
-    snd_pcm_hw_params_get_buffer_size_min(alsa_hw_params[SND_PCM_STREAM_PLAYBACK], &min_buffer_size);
-    snd_pcm_hw_params_get_buffer_size_max(alsa_hw_params[SND_PCM_STREAM_PLAYBACK], &max_buffer_size);
+  snd_pcm_hw_params_get_buffer_size_min(alsa_hw_params[SND_PCM_STREAM_PLAYBACK], &min_buffer_size);
+  snd_pcm_hw_params_get_buffer_size_max(alsa_hw_params[SND_PCM_STREAM_PLAYBACK], &max_buffer_size);
 #else
-    min_buffer_size = snd_pcm_hw_params_get_buffer_size_min(alsa_hw_params[SND_PCM_STREAM_PLAYBACK]);
-    max_buffer_size = snd_pcm_hw_params_get_buffer_size_max(alsa_hw_params[SND_PCM_STREAM_PLAYBACK]);
+  min_buffer_size = snd_pcm_hw_params_get_buffer_size_min(alsa_hw_params[SND_PCM_STREAM_PLAYBACK]);
+  max_buffer_size = snd_pcm_hw_params_get_buffer_size_max(alsa_hw_params[SND_PCM_STREAM_PLAYBACK]);
 #endif
-    if (alsa_hw_params[SND_PCM_STREAM_CAPTURE] != NULL) {
+  if (alsa_hw_params[SND_PCM_STREAM_CAPTURE]) 
+    {
 #if HAVE_NEW_ALSA
-        snd_pcm_hw_params_get_buffer_size_min(alsa_hw_params[SND_PCM_STREAM_CAPTURE], &min_rec_buffer_size);
-        snd_pcm_hw_params_get_buffer_size_max(alsa_hw_params[SND_PCM_STREAM_CAPTURE], &max_rec_buffer_size);
+      snd_pcm_hw_params_get_buffer_size_min(alsa_hw_params[SND_PCM_STREAM_CAPTURE], &min_rec_buffer_size);
+      snd_pcm_hw_params_get_buffer_size_max(alsa_hw_params[SND_PCM_STREAM_CAPTURE], &max_rec_buffer_size);
 #else
-        min_rec_buffer_size = snd_pcm_hw_params_get_buffer_size_min(alsa_hw_params[SND_PCM_STREAM_CAPTURE]);
-	max_rec_buffer_size = snd_pcm_hw_params_get_buffer_size_max(alsa_hw_params[SND_PCM_STREAM_CAPTURE]);
+      min_rec_buffer_size = snd_pcm_hw_params_get_buffer_size_min(alsa_hw_params[SND_PCM_STREAM_CAPTURE]);
+      max_rec_buffer_size = snd_pcm_hw_params_get_buffer_size_max(alsa_hw_params[SND_PCM_STREAM_CAPTURE]);
 #endif
-	if (max_buffer_size > max_rec_buffer_size) {
-	    max_buffer_size = max_rec_buffer_size;
-	}
-	if (min_buffer_size < min_rec_buffer_size) {
-	    min_buffer_size = min_rec_buffer_size;
-	}
+      if (max_buffer_size > max_rec_buffer_size) 
+	max_buffer_size = max_rec_buffer_size;
+
+      if (min_buffer_size < min_rec_buffer_size) 
+	min_buffer_size = min_rec_buffer_size;
     }
-    if (alsa_samples_per_channel*alsa_periods > max_buffer_size) {
-        alsa_samples_per_channel = max_buffer_size/alsa_periods;
-    }
-    if (alsa_samples_per_channel*alsa_periods < min_buffer_size) {
-        alsa_samples_per_channel = min_buffer_size/alsa_periods;
-    }
-    /* get buffer size from environment, override if possible */
-    if (alsa_get_int_from_env("SNDLIB_ALSA_BUFFER_SIZE", &value, 
-			      min_buffer_size/alsa_periods, 
-			      max_buffer_size/alsa_periods) == MUS_NO_ERROR) {
-	alsa_samples_per_channel = value;
-    }
-    audio_initialized = true;
-    return 0;
+  if (alsa_samples_per_channel*alsa_periods > max_buffer_size) 
+    alsa_samples_per_channel = max_buffer_size/alsa_periods;
+
+  if (alsa_samples_per_channel*alsa_periods < min_buffer_size) 
+    alsa_samples_per_channel = min_buffer_size/alsa_periods;
+
+  /* get buffer size from environment, override if possible */
+  if (alsa_get_int_from_env(MUS_ALSA_BUFFER_SIZE_ENV_NAME, &value, 
+			    min_buffer_size/alsa_periods, 
+			    max_buffer_size/alsa_periods) == MUS_NO_ERROR) 
+    alsa_samples_per_channel = value;
+
+  audio_initialized = true;
+  return(0);
 }
 
 /* dump current hardware and software configuration */
 
-
 static void alsa_dump_configuration(char *name, snd_pcm_hw_params_t *hw_params, snd_pcm_sw_params_t *sw_params)
 {
-    int err; 
-    char *str;
-    size_t len;
-    snd_output_t *buf;
+  int err; 
+  char *str;
+  size_t len;
+  snd_output_t *buf;
+
 #if (SND_LIB_MAJOR == 0) || ((SND_LIB_MAJOR == 1) && (SND_LIB_MINOR == 0) && (SND_LIB_SUBMINOR < 8))
-    return; /* avoid Alsa bug */
+  return; /* avoid Alsa bug */
 #endif
-    err = snd_output_buffer_open(&buf);
-    if (err < 0) {
-	mus_print("%s: could not open dump buffer: %s", 
-		  c__FUNCTION__, snd_strerror(err));
-    } else {
-	if (hw_params != NULL) {
-	    snd_output_puts(buf, "hw_params status of ");
-	    snd_output_puts(buf, name);
-	    snd_output_puts(buf, "\n");
-	    err = snd_pcm_hw_params_dump(hw_params, buf);
-	    if (err < 0) {
-		mus_print("%s: snd_pcm_hw_params_dump: %s", c__FUNCTION__, snd_strerror(err));
-	    }
+
+  err = snd_output_buffer_open(&buf);
+  if (err < 0) 
+    {
+      mus_print("%s: could not open dump buffer: %s", 
+		c__FUNCTION__, snd_strerror(err));
+    } 
+  else 
+    {
+      if (hw_params) 
+	{
+	  snd_output_puts(buf, "hw_params status of ");
+	  snd_output_puts(buf, name);
+	  snd_output_puts(buf, "\n");
+	  err = snd_pcm_hw_params_dump(hw_params, buf);
+	  if (err < 0) 
+	    mus_print("%s: snd_pcm_hw_params_dump: %s", c__FUNCTION__, snd_strerror(err));
 	}
-	if (sw_params != NULL) {
-	    snd_output_puts(buf, "sw_params status of ");
-	    snd_output_puts(buf, name);
-	    snd_output_puts(buf, "\n");
-	    err = snd_pcm_sw_params_dump(sw_params, buf);
-	    if (err < 0) {
-		mus_print("%s: snd_pcm_hw_params_dump: %s", c__FUNCTION__, snd_strerror(err));
-	    }
+      if (sw_params) 
+	{
+	  snd_output_puts(buf, "sw_params status of ");
+	  snd_output_puts(buf, name);
+	  snd_output_puts(buf, "\n");
+	  err = snd_pcm_sw_params_dump(sw_params, buf);
+	  if (err < 0) 
+	    mus_print("%s: snd_pcm_hw_params_dump: %s", c__FUNCTION__, snd_strerror(err));
 	}
-	snd_output_putc(buf, '\0');
-	len = snd_output_buffer_string(buf, &str);
-	if (len > 1) {
-	    mus_print("%s: status of %s\n%s", c__FUNCTION__,
-		      name, str);
-	}
-	snd_output_close(buf);
+      snd_output_putc(buf, '\0');
+      len = snd_output_buffer_string(buf, &str);
+      if (len > 1) 
+	mus_print("%s: status of %s\n%s", c__FUNCTION__, name, str);
+      snd_output_close(buf);
     }
 }
 
@@ -4223,195 +4254,217 @@ static void alsa_dump_configuration(char *name, snd_pcm_hw_params_t *hw_params, 
 
 static int alsa_audio_open(int ur_dev, int srate, int chans, int format, int size)
 {
-    int card, device, alsa_device;
-    snd_pcm_format_t alsa_format;
-    snd_pcm_stream_t alsa_stream;
-    char *alsa_name;
-    int frames, periods;
-    int err;
-    unsigned int r;
-    snd_pcm_t *handle;
-    snd_pcm_hw_params_t *hw_params = NULL;
-    snd_pcm_sw_params_t *sw_params = NULL;
+  int card, device, alsa_device;
+  snd_pcm_format_t alsa_format;
+  snd_pcm_stream_t alsa_stream;
+  char *alsa_name;
+  int frames, periods;
+  int err;
+  unsigned int r;
+  snd_pcm_t *handle;
+  snd_pcm_hw_params_t *hw_params = NULL;
+  snd_pcm_sw_params_t *sw_params = NULL;
+  
+  if ((!audio_initialized) && 
+      (mus_audio_initialize() != MUS_NO_ERROR))
+    return(MUS_ERROR);
+  if (chans <= 0) return(MUS_ERROR);
+  
+  if (alsa_trace) 
+    mus_print("%s: %x rate=%d, chans=%d, format=%d:%s, size=%d", 
+	      c__FUNCTION__, ur_dev, srate, chans, format, 
+	      mus_audio_format_name(format), size);
 
-    if ((!audio_initialized) && (mus_audio_initialize() != MUS_NO_ERROR))
-      return(MUS_ERROR);
-    if (chans <= 0) return(MUS_ERROR);
+  card = MUS_AUDIO_SYSTEM(ur_dev);
+  device = MUS_AUDIO_DEVICE(ur_dev);
 
-    if (alsa_trace) mus_print("%s: %x rate=%d, chans=%d, format=%d:%s, size=%d", 
-			       c__FUNCTION__, ur_dev, srate, chans, format, 
-			      mus_audio_format_name(format), size);
-    card = MUS_AUDIO_SYSTEM(ur_dev);
-    device = MUS_AUDIO_DEVICE(ur_dev);
-    if ((err = to_alsa_device(device, &alsa_device, &alsa_stream))<0) {
-	return(alsa_mus_error(MUS_AUDIO_DEVICE_NOT_AVAILABLE, 
-			      mus_format("%s: cannot translate device %s<%d> to alsa",
-					 c__FUNCTION__, mus_audio_device_name(device), device)));
-    }
-    if ((alsa_format = to_alsa_format(format)) == (snd_pcm_format_t)MUS_ERROR) {
-	return(alsa_mus_error(MUS_AUDIO_FORMAT_NOT_AVAILABLE, 
-			      mus_format("%s: could not change %s<%d> to alsa format", 
-					 c__FUNCTION__, mus_audio_format_name(format), format)));
-    }
-    alsa_name = (alsa_stream == SND_PCM_STREAM_PLAYBACK)?
-	alsa_playback_device_name:
-	alsa_capture_device_name;
-    if ((err = snd_pcm_open(&handle, alsa_name, alsa_stream, alsa_open_mode))!=0) {
-	snd_pcm_close(handle);
-	return(alsa_mus_error(MUS_AUDIO_CANT_OPEN, 
-			      mus_format("%s: open pcm %s (%s) stream %s: %s", c__FUNCTION__,
-					 mus_audio_device_name(device), alsa_name, snd_pcm_stream_name(alsa_stream), 
-					 snd_strerror(err))));
-    }
-    handles[alsa_stream] = handle;
-    hw_params = alsa_hw_params[alsa_stream];
-    sw_params = alsa_sw_params[alsa_stream];
-    if ((err = snd_pcm_hw_params_any(handle, hw_params)) < 0) {
-	snd_pcm_close(handle);
-	handles[alsa_stream] = NULL;
-	alsa_dump_configuration(alsa_name, hw_params, sw_params);
-	return(alsa_mus_error(MUS_AUDIO_CONFIGURATION_NOT_AVAILABLE, 
-			      mus_format("%s: no parameter configurations available for %s", 
-					 c__FUNCTION__, alsa_name)));
-    }
-    err = snd_pcm_hw_params_set_access(handle, hw_params, alsa_interleave);
-    if (err < 0) {
-	snd_pcm_close(handle);
-	handles[alsa_stream] = NULL;
-	alsa_dump_configuration(alsa_name, hw_params, sw_params);
-	return(alsa_mus_error(MUS_AUDIO_CONFIGURATION_NOT_AVAILABLE, 
-			      mus_format("%s: %s: access type %s not available", 
-					 c__FUNCTION__, alsa_name, snd_pcm_access_name(alsa_interleave))));
-    }
-    periods = alsa_periods;
-    err = snd_pcm_hw_params_set_periods(handle, hw_params, periods, 0);
-    if (err < 0) {
-	int dir;
-#if HAVE_NEW_ALSA
- 	unsigned int min, max;
- 	snd_pcm_hw_params_get_periods_min(hw_params, &min, &dir);
- 	snd_pcm_hw_params_get_periods_max(hw_params, &max, &dir);
-#else
-	snd_pcm_uframes_t min, max;
-	min = snd_pcm_hw_params_get_periods_min(hw_params, &dir);
-	max = snd_pcm_hw_params_get_periods_max(hw_params, &dir);
-#endif
-	snd_pcm_close(handle);
-	handles[alsa_stream] = NULL;
-	alsa_dump_configuration(alsa_name, hw_params, sw_params);
-	return(alsa_mus_error(MUS_AUDIO_CONFIGURATION_NOT_AVAILABLE, 
-			      mus_format("%s: %s: cannot set number of periods to %d, min is %d, max is %d", 
-					 c__FUNCTION__, alsa_name, periods, (int)min, (int)max)));
-    }
-    frames = size/chans/mus_bytes_per_sample(format);
-    err = snd_pcm_hw_params_set_buffer_size(handle, hw_params, frames*periods);
-    if (err < 0) {
-	snd_pcm_uframes_t min, max;
-#if HAVE_NEW_ALSA
- 	snd_pcm_hw_params_get_buffer_size_min(hw_params, &min);
- 	snd_pcm_hw_params_get_buffer_size_max(hw_params, &max);
-#else
-	min = snd_pcm_hw_params_get_buffer_size_min(hw_params);
-	max = snd_pcm_hw_params_get_buffer_size_max(hw_params);
-#endif
-	snd_pcm_close(handle);
-	handles[alsa_stream] = NULL;
-	alsa_dump_configuration(alsa_name, hw_params, sw_params);
-	return(alsa_mus_error(MUS_AUDIO_CONFIGURATION_NOT_AVAILABLE, 
-			      mus_format("%s: %s: cannot set buffer size to %d periods of %d frames; \
-total requested buffer size is %d frames, minimum allowed is %d, maximum is %d", 
-					 c__FUNCTION__, alsa_name, periods, frames, periods*frames, (int)min, (int)max)));
-    }
-    err = snd_pcm_hw_params_set_format(handle, hw_params, alsa_format);
-    if (err < 0) {
-	snd_pcm_close(handle);
-	handles[alsa_stream] = NULL;
-	alsa_dump_configuration(alsa_name, hw_params, sw_params);
-	return(alsa_mus_error(MUS_AUDIO_CONFIGURATION_NOT_AVAILABLE, 
-			      mus_format("%s: %s: cannot set format to %s", 
-					 c__FUNCTION__, alsa_name, snd_pcm_format_name(alsa_format))));
-    }
-    err = snd_pcm_hw_params_set_channels(handle, hw_params, chans);
-    if (err < 0) {
-	snd_pcm_close(handle);
-	handles[alsa_stream] = NULL;
-	alsa_dump_configuration(alsa_name, hw_params, sw_params);
-	return(alsa_mus_error(MUS_AUDIO_CONFIGURATION_NOT_AVAILABLE, 
-			      mus_format("%s: %s: cannot set channels to %d", 
-					 c__FUNCTION__, alsa_name, chans)));
-    }
-#if HAVE_NEW_ALSA
+  if ((err = to_alsa_device(device, &alsa_device, &alsa_stream)) < 0) 
     {
-      unsigned int new_rate;
-      new_rate = srate;
-      r = snd_pcm_hw_params_set_rate_near(handle, hw_params, &new_rate, 0);
-      if (r < 0) {
+      return(alsa_mus_error(MUS_AUDIO_DEVICE_NOT_AVAILABLE, 
+			    mus_format("%s: cannot translate device %s<%d> to alsa",
+				       c__FUNCTION__, mus_audio_device_name(device), device)));
+    }
+  if ((alsa_format = to_alsa_format(format)) == (snd_pcm_format_t)MUS_ERROR) 
+    {
+      return(alsa_mus_error(MUS_AUDIO_FORMAT_NOT_AVAILABLE, 
+			    mus_format("%s: could not change %s<%d> to alsa format", 
+				       c__FUNCTION__, mus_audio_format_name(format), format)));
+    }
+
+  alsa_name = (alsa_stream == SND_PCM_STREAM_PLAYBACK) ? alsa_playback_device_name : alsa_capture_device_name;
+  if ((err = snd_pcm_open(&handle, alsa_name, alsa_stream, alsa_open_mode)) != 0) 
+    {
+      snd_pcm_close(handle);
+      return(alsa_mus_error(MUS_AUDIO_CANT_OPEN, 
+			    mus_format("%s: open pcm %s (%s) stream %s: %s", c__FUNCTION__,
+				       mus_audio_device_name(device), alsa_name, snd_pcm_stream_name(alsa_stream), 
+				       snd_strerror(err))));
+    }
+  handles[alsa_stream] = handle;
+  hw_params = alsa_hw_params[alsa_stream];
+  sw_params = alsa_sw_params[alsa_stream];
+  if ((err = snd_pcm_hw_params_any(handle, hw_params)) < 0) 
+    {
+      snd_pcm_close(handle);
+      handles[alsa_stream] = NULL;
+      alsa_dump_configuration(alsa_name, hw_params, sw_params);
+      return(alsa_mus_error(MUS_AUDIO_CONFIGURATION_NOT_AVAILABLE, 
+			    mus_format("%s: no parameter configurations available for %s", 
+				       c__FUNCTION__, alsa_name)));
+    }
+  err = snd_pcm_hw_params_set_access(handle, hw_params, alsa_interleave);
+  if (err < 0) 
+    {
+      snd_pcm_close(handle);
+      handles[alsa_stream] = NULL;
+      alsa_dump_configuration(alsa_name, hw_params, sw_params);
+      return(alsa_mus_error(MUS_AUDIO_CONFIGURATION_NOT_AVAILABLE, 
+			    mus_format("%s: %s: access type %s not available", 
+				       c__FUNCTION__, alsa_name, snd_pcm_access_name(alsa_interleave))));
+    }
+  periods = alsa_periods;
+  err = snd_pcm_hw_params_set_periods(handle, hw_params, periods, 0);
+  if (err < 0) 
+    {
+      int dir;
+#if HAVE_NEW_ALSA
+      unsigned int min, max;
+      snd_pcm_hw_params_get_periods_min(hw_params, &min, &dir);
+      snd_pcm_hw_params_get_periods_max(hw_params, &max, &dir);
+#else
+      snd_pcm_uframes_t min, max;
+      min = snd_pcm_hw_params_get_periods_min(hw_params, &dir);
+      max = snd_pcm_hw_params_get_periods_max(hw_params, &dir);
+#endif
+      snd_pcm_close(handle);
+      handles[alsa_stream] = NULL;
+      alsa_dump_configuration(alsa_name, hw_params, sw_params);
+      return(alsa_mus_error(MUS_AUDIO_CONFIGURATION_NOT_AVAILABLE, 
+			    mus_format("%s: %s: cannot set number of periods to %d, min is %d, max is %d", 
+				       c__FUNCTION__, alsa_name, periods, (int)min, (int)max)));
+    }
+  frames = size / chans / mus_bytes_per_sample(format);
+  err = snd_pcm_hw_params_set_buffer_size(handle, hw_params, frames*periods);
+  if (err < 0) 
+    {
+      snd_pcm_uframes_t min, max;
+#if HAVE_NEW_ALSA
+      snd_pcm_hw_params_get_buffer_size_min(hw_params, &min);
+      snd_pcm_hw_params_get_buffer_size_max(hw_params, &max);
+#else
+      min = snd_pcm_hw_params_get_buffer_size_min(hw_params);
+      max = snd_pcm_hw_params_get_buffer_size_max(hw_params);
+#endif
+      snd_pcm_close(handle);
+      handles[alsa_stream] = NULL;
+      alsa_dump_configuration(alsa_name, hw_params, sw_params);
+      return(alsa_mus_error(MUS_AUDIO_CONFIGURATION_NOT_AVAILABLE, 
+			    mus_format("%s: %s: cannot set buffer size to %d periods of %d frames; \
+total requested buffer size is %d frames, minimum allowed is %d, maximum is %d", 
+				       c__FUNCTION__, alsa_name, periods, frames, periods*frames, (int)min, (int)max)));
+    }
+  err = snd_pcm_hw_params_set_format(handle, hw_params, alsa_format);
+  if (err < 0) 
+    {
+      snd_pcm_close(handle);
+      handles[alsa_stream] = NULL;
+      alsa_dump_configuration(alsa_name, hw_params, sw_params);
+      return(alsa_mus_error(MUS_AUDIO_CONFIGURATION_NOT_AVAILABLE, 
+			    mus_format("%s: %s: cannot set format to %s", 
+				       c__FUNCTION__, alsa_name, snd_pcm_format_name(alsa_format))));
+    }
+  err = snd_pcm_hw_params_set_channels(handle, hw_params, chans);
+  if (err < 0) 
+    {
+      snd_pcm_close(handle);
+      handles[alsa_stream] = NULL;
+      alsa_dump_configuration(alsa_name, hw_params, sw_params);
+      return(alsa_mus_error(MUS_AUDIO_CONFIGURATION_NOT_AVAILABLE, 
+			    mus_format("%s: %s: cannot set channels to %d", 
+				       c__FUNCTION__, alsa_name, chans)));
+    }
+#if HAVE_NEW_ALSA
+  {
+    unsigned int new_rate;
+    new_rate = srate;
+    r = snd_pcm_hw_params_set_rate_near(handle, hw_params, &new_rate, 0);
+    if (r < 0) 
+      {
 	snd_pcm_close(handle);
 	handles[alsa_stream] = NULL;
 	alsa_dump_configuration(alsa_name, hw_params, sw_params);
 	return(alsa_mus_error(MUS_AUDIO_CONFIGURATION_NOT_AVAILABLE, 
 			      mus_format("%s: %s: cannot set sampling rate near %d", 
 					 c__FUNCTION__, alsa_name, srate)));
-      } else {
-	if (new_rate != srate) {
+      } 
+    else 
+      {
+	if ((new_rate != srate) && (!alsa_squelch_warning))
+	  {
 	    mus_print("%s: %s: could not set rate to exactly %d, set to %d instead",
 		      c__FUNCTION__, alsa_name, srate, new_rate);
-	}
+	  }
       }
-    }
+  }
 #else
-    r = snd_pcm_hw_params_set_rate_near(handle, hw_params, srate, 0);
-    if (r < 0) {
-	snd_pcm_close(handle);
-	handles[alsa_stream] = NULL;
-	alsa_dump_configuration(alsa_name, hw_params, sw_params);
-	return(alsa_mus_error(MUS_AUDIO_CONFIGURATION_NOT_AVAILABLE, 
-			      mus_format("%s: %s: cannot set sampling rate near %d", 
-					 c__FUNCTION__, alsa_name, srate)));
-    } else {
-	if (r != srate) {
-	    mus_print("%s: %s: could not set rate to exactly %d, set to %d instead",
-		      c__FUNCTION__, alsa_name, srate, r);
+  r = snd_pcm_hw_params_set_rate_near(handle, hw_params, srate, 0);
+  if (r < 0) 
+    {
+      snd_pcm_close(handle);
+      handles[alsa_stream] = NULL;
+      alsa_dump_configuration(alsa_name, hw_params, sw_params);
+      return(alsa_mus_error(MUS_AUDIO_CONFIGURATION_NOT_AVAILABLE, 
+			    mus_format("%s: %s: cannot set sampling rate near %d", 
+				       c__FUNCTION__, alsa_name, srate)));
+    } 
+  else 
+    {
+      if (r != srate) 
+	{
+	  mus_print("%s: %s: could not set rate to exactly %d, set to %d instead",
+		    c__FUNCTION__, alsa_name, srate, r);
 	}
     }
 #endif
-    err = snd_pcm_hw_params(handle, hw_params);
-    if (err < 0) {
-	snd_pcm_close(handle);
-	handles[alsa_stream] = NULL;
-	alsa_dump_configuration(alsa_name, hw_params, sw_params);
-	return(alsa_mus_error(MUS_AUDIO_CONFIGURATION_NOT_AVAILABLE, 
-			      mus_format("%s: cannot set hardware parameters for %s", 
-					 c__FUNCTION__, alsa_name)));
+  err = snd_pcm_hw_params(handle, hw_params);
+  if (err < 0) 
+    {
+      snd_pcm_close(handle);
+      handles[alsa_stream] = NULL;
+      alsa_dump_configuration(alsa_name, hw_params, sw_params);
+      return(alsa_mus_error(MUS_AUDIO_CONFIGURATION_NOT_AVAILABLE, 
+			    mus_format("%s: cannot set hardware parameters for %s", 
+				       c__FUNCTION__, alsa_name)));
     }
-    snd_pcm_sw_params_current(handle, sw_params);
-    err = snd_pcm_sw_params(handle, sw_params);
-    if (err < 0) {
-	snd_pcm_close(handle);
-	handles[alsa_stream] = NULL;
-	alsa_dump_configuration(alsa_name, hw_params, sw_params);
-	return(alsa_mus_error(MUS_AUDIO_CONFIGURATION_NOT_AVAILABLE, 
-			      mus_format("%s: cannot set software parameters for %s", 
-					 c__FUNCTION__, alsa_name)));
+  snd_pcm_sw_params_current(handle, sw_params);
+  err = snd_pcm_sw_params(handle, sw_params);
+  if (err < 0) 
+    {
+      snd_pcm_close(handle);
+      handles[alsa_stream] = NULL;
+      alsa_dump_configuration(alsa_name, hw_params, sw_params);
+      return(alsa_mus_error(MUS_AUDIO_CONFIGURATION_NOT_AVAILABLE, 
+			    mus_format("%s: cannot set software parameters for %s", 
+				       c__FUNCTION__, alsa_name)));
     }
-
-    /* for now the id for the stream is the direction identifier, that is
-       not a problem because we only advertise one card with two devices */
-    return(alsa_stream);
+  
+  /* for now the id for the stream is the direction identifier, that is
+     not a problem because we only advertise one card with two devices */
+  return(alsa_stream);
 }
 
 /* sndlib support for opening output devices */
 
 static int alsa_mus_audio_open_output(int ur_dev, int srate, int chans, int format, int size)
 {
-    return(alsa_audio_open(ur_dev, srate, chans, format, size));
+  return(alsa_audio_open(ur_dev, srate, chans, format, size));
 }
 
 /* sndlib support for opening input devices */
 
 static int alsa_mus_audio_open_input(int ur_dev, int srate, int chans, int format, int size)
 {
-    return(alsa_audio_open(ur_dev, srate, chans, format, size));
+  return(alsa_audio_open(ur_dev, srate, chans, format, size));
 }
 
 /* sndlib support for closing a device */
@@ -4420,307 +4473,346 @@ static int alsa_mus_audio_open_input(int ur_dev, int srate, int chans, int forma
 
 static int alsa_mus_audio_close(int id)
 {
-    int err = 0;
-    if (alsa_trace) mus_print( "%s: %d", c__FUNCTION__, id); 
-    if (handles[id] != NULL) {
-	err = snd_pcm_drain(handles[id]);
-	if (err != 0) {
-	    mus_print("%s: snd_pcm_drain: %s", 
-		      c__FUNCTION__, snd_strerror(err)); 
+  int err = 0;
+  if (alsa_trace) mus_print( "%s: %d", c__FUNCTION__, id); 
+  if (handles[id]) 
+    {
+      err = snd_pcm_drain(handles[id]);
+      if (err != 0) 
+	{
+	  mus_print("%s: snd_pcm_drain: %s", 
+		    c__FUNCTION__, snd_strerror(err)); 
 	}
-	err = snd_pcm_close(handles[id]);
-	if (err != 0) {
-	    return(alsa_mus_error(MUS_AUDIO_CANT_CLOSE, 
-				  mus_format("%s: snd_pcm_close: %s", 
-					     c__FUNCTION__, snd_strerror(err)))); 
+      err = snd_pcm_close(handles[id]);
+      if (err != 0) 
+	{
+	  return(alsa_mus_error(MUS_AUDIO_CANT_CLOSE, 
+				mus_format("%s: snd_pcm_close: %s", 
+					   c__FUNCTION__, snd_strerror(err)))); 
 	}
-	handles[id] = NULL;
+      handles[id] = NULL;
     }
-    return(MUS_NO_ERROR);
+  return(MUS_NO_ERROR);
 }
 
 /* recover from underruns or overruns */
 
 static int recover_from_xrun(int id)
 {
-    int err;
-    snd_pcm_status_t *status;
-    snd_pcm_state_t state;
-    snd_pcm_status_alloca(&status);
-    err = snd_pcm_status(handles[id], status);
-    if (err < 0) {
-	mus_print("%s: snd_pcm_status: %s", c__FUNCTION__, snd_strerror(err));
-	return(MUS_ERROR);
+  int err;
+  snd_pcm_status_t *status;
+  snd_pcm_state_t state;
+  snd_pcm_status_alloca(&status);
+  err = snd_pcm_status(handles[id], status);
+  if (err < 0) 
+    {
+      mus_print("%s: snd_pcm_status: %s", c__FUNCTION__, snd_strerror(err));
+      return(MUS_ERROR);
     }
-    state = snd_pcm_status_get_state(status);
-    if (state == SND_PCM_STATE_XRUN) {
-	mus_print("%s: [under|over]run detected", c__FUNCTION__);
-	err = snd_pcm_prepare(handles[id]);
-	if (err < 0) {
-	    mus_print("%s: snd_pcm_prepare: %s", c__FUNCTION__, snd_strerror(err));
-	} else {
-	    return(MUS_NO_ERROR);
-	}
-    } else {
-	mus_print("%s: error, current state is %s", c__FUNCTION__, snd_pcm_state_name(state));
+  state = snd_pcm_status_get_state(status);
+  if (state == SND_PCM_STATE_XRUN) 
+    {
+      mus_print("%s: [under|over]run detected", c__FUNCTION__);
+      err = snd_pcm_prepare(handles[id]);
+      if (err < 0) 
+	mus_print("%s: snd_pcm_prepare: %s", c__FUNCTION__, snd_strerror(err));
+      else return(MUS_NO_ERROR);
     }
-    return(MUS_ERROR);
+  else mus_print("%s: error, current state is %s", c__FUNCTION__, snd_pcm_state_name(state));
+  return(MUS_ERROR);
 }
 
 /* sndlib support for writing a buffer to an output device */
 
 static int alsa_mus_audio_write(int id, char *buf, int bytes)
 {
-    snd_pcm_sframes_t status;
-    int frames = snd_pcm_bytes_to_frames(handles[id], bytes);
-    status = snd_pcm_writei(handles[id], buf, frames);
-    if (status == -EAGAIN || (status >= 0 && status < frames)) {
-	snd_pcm_wait(handles[id], 1000);
-    } else if (status == -EPIPE) {
+  snd_pcm_sframes_t status;
+  int frames = snd_pcm_bytes_to_frames(handles[id], bytes);
+  status = snd_pcm_writei(handles[id], buf, frames);
+  if ((status == -EAGAIN) || 
+      ((status >= 0) && (status < frames)))
+    snd_pcm_wait(handles[id], 1000);
+  else
+    {
+      if (status == -EPIPE) 
 	return(recover_from_xrun(id));
-    } else if (status < 0) {
-	mus_print("%s: snd_pcm_writei: %s", c__FUNCTION__, snd_strerror(status));
-	return(MUS_ERROR);
+      else 
+	{
+	  if (status < 0) 
+	    {
+	      mus_print("%s: snd_pcm_writei: %s", c__FUNCTION__, snd_strerror(status));
+	      return(MUS_ERROR);
+	    }
+	}
     }
-    return(MUS_NO_ERROR);
+  return(MUS_NO_ERROR);
 }
 
 /* sndlib support for reading a buffer from an input device */
 
 static int alsa_mus_audio_read(int id, char *buf, int bytes)
 {
-    snd_pcm_sframes_t status;
-    int frames = snd_pcm_bytes_to_frames(handles[id], bytes);
-
-    status = snd_pcm_readi(handles[id], buf, frames);
-    if (status == -EAGAIN || (status >= 0 && status < frames)) {
-	snd_pcm_wait(handles[id], 1000);
-    } else if (status == -EPIPE) {
+  snd_pcm_sframes_t status;
+  int frames = snd_pcm_bytes_to_frames(handles[id], bytes);
+  
+  status = snd_pcm_readi(handles[id], buf, frames);
+  if ((status == -EAGAIN) || 
+      ((status >= 0) && (status < frames)))
+    snd_pcm_wait(handles[id], 1000);
+  else 
+    {
+      if (status == -EPIPE) 
 	return(recover_from_xrun(id));
-    } else if (status < 0) {
-	mus_print("%s: snd_pcm_readi: %s", c__FUNCTION__, snd_strerror(status));
-	return(MUS_ERROR);
+      else 
+	{
+	  if (status < 0) 
+	    {
+	      mus_print("%s: snd_pcm_readi: %s", c__FUNCTION__, snd_strerror(status));
+	      return(MUS_ERROR);
+	    }
+	}
     }
-    return(MUS_NO_ERROR);
+  return(MUS_NO_ERROR);
 }
 
 /* read state of the audio hardware */
 
 static int alsa_mus_audio_mixer_read(int ur_dev, int field, int chan, float *val)
 {
-    int card;
-    int device;
-    int alsa_device;
-    snd_pcm_stream_t alsa_stream;
-    int f, err;
+  int card;
+  int device;
+  int alsa_device;
+  snd_pcm_stream_t alsa_stream;
+  int f, err;
+  
+  if ((!audio_initialized) && 
+      (mus_audio_initialize() != MUS_NO_ERROR))
+    return(MUS_ERROR);
+  
+  card = MUS_AUDIO_SYSTEM(ur_dev);
+  device = MUS_AUDIO_DEVICE(ur_dev);
+  if (alsa_trace) 
+    mus_print( "%s: card=%d, dev=%s<%d>, field=%s<%d>, chan=%d",
+	       c__FUNCTION__, card, mus_audio_device_name(device), device, 
+	       mus_audio_device_name(field), field, 
+	       chan);
+  /* for now do not implement mixer interface */
+  if (device == MUS_AUDIO_MIXER) 
+    {
+      val[0] = 0;
+      return(MUS_NO_ERROR);
+    }
+  /* MUS_AUDIO_PORT probes for devices and should not depend on the
+   * device which was used in the ur_dev argument, we process this
+   * before trying to map the device to an alsa device */
+  
+  if (field == MUS_AUDIO_PORT) 
+    {
+      /* under 0.9 we only advertise at most two devices, one for playback 
+	 and another one for capture */
+      /* int dev;  */
+      int i = 1;
+      if (alsa_hw_params[SND_PCM_STREAM_PLAYBACK]) 
+	val[i++] = (float)to_sndlib_device(0, SND_PCM_STREAM_PLAYBACK);
 
-    if ((!audio_initialized) && (mus_audio_initialize() != MUS_NO_ERROR))
+      if (alsa_hw_params[SND_PCM_STREAM_CAPTURE]) 
+	val[i++] = (float)to_sndlib_device(0, SND_PCM_STREAM_CAPTURE);
+
+      val[0]=(float)(i - 1);
+      return(MUS_NO_ERROR);
+    }
+  /* map the mus device to an alsa device and channel */
+  if ((err = to_alsa_device(device, &alsa_device, &alsa_stream)) < 0) 
+    {
+      /* FIXME: snd-dac still probes some non-existing devices, specifically
+       * MUS_AUDIO_DAC_FILTER, do not report error till that's fixed */
+      if (alsa_trace) 
+	{
+	  mus_print("%s: cannot translate device %s<%d> to alsa, field=%s<%d>",
+		    c__FUNCTION__, 
+		    mus_audio_device_name(device), device, 
+		    mus_audio_device_name(field), field);
+	}
       return(MUS_ERROR);
-
-    card = MUS_AUDIO_SYSTEM(ur_dev);
-    device = MUS_AUDIO_DEVICE(ur_dev);
-    if (alsa_trace) mus_print( "%s: card=%d, dev=%s<%d>, field=%s<%d>, chan=%d",
-			       c__FUNCTION__, card, mus_audio_device_name(device), device, 
-			       mus_audio_device_name(field), field, 
-			       chan);
-    /* for now do not implement mixer interface */
-    if (device==MUS_AUDIO_MIXER) {
-	val[0] = 0;
-	return(MUS_NO_ERROR);
     }
-    /* MUS_AUDIO_PORT probes for devices and should not depend on the
-     * device which was used in the ur_dev argument, we process this
-     * before trying to map the device to an alsa device */
-
-    if (field==MUS_AUDIO_PORT) {
-	/* under 0.9 we only advertise at most two devices, one for playback 
-	   and another one for capture */
-	/* int dev;  */
-	int i = 1;
-	if (alsa_hw_params[SND_PCM_STREAM_PLAYBACK] != NULL) {
-	    val[i++] = (float)to_sndlib_device(0, SND_PCM_STREAM_PLAYBACK);
-	}
-	if (alsa_hw_params[SND_PCM_STREAM_CAPTURE] != NULL) {
-	    val[i++] = (float)to_sndlib_device(0, SND_PCM_STREAM_CAPTURE);
-	}
-	val[0]=(float)(i-1);
-	return(MUS_NO_ERROR);
-    }
-    /* map the mus device to an alsa device and channel */
-    if ((err = to_alsa_device(device, &alsa_device, &alsa_stream))<0) {
-        /* FIXME: snd-dac still probes some non-existing devices, specifically
-	 * MUS_AUDIO_DAC_FILTER, do not report error till that's fixed */
-        if (alsa_trace) {
-	    mus_print("%s: cannot translate device %s<%d> to alsa, field=%s<%d>",
-		      c__FUNCTION__, 
-		      mus_audio_device_name(device), device, 
-		      mus_audio_device_name(field), field);
-	}
-	return(MUS_ERROR);
-    }
-    if (alsa_trace) mus_print("%s:         adev=%d, achan=%d",
-			       c__FUNCTION__, alsa_device, alsa_stream);
-    switch (field) {
+  if (alsa_trace) mus_print("%s:         adev=%d, achan=%d", c__FUNCTION__, alsa_device, alsa_stream);
+  switch (field) 
+    {
     case MUS_AUDIO_AMP: 
-	/* amplitude value */
-	val[0] = 1.0;
-	break;
+      /* amplitude value */
+      val[0] = 1.0;
+      break;
     case MUS_AUDIO_SAMPLES_PER_CHANNEL: 
-	/* samples per channel */
-	if (card>0 || alsa_device>0) {
-	    return(alsa_mus_error(MUS_AUDIO_CANT_READ, NULL));
-	} else {
-	    val[0] = (float)alsa_samples_per_channel;
-	    if (chan > 1) {
+      /* samples per channel */
+      if (card > 0 || alsa_device > 0) 
+	return(alsa_mus_error(MUS_AUDIO_CANT_READ, NULL));
+      else 
+	{
+	  val[0] = (float)alsa_samples_per_channel;
+	  if (chan > 1) 
+	    {
 #if HAVE_NEW_ALSA
- 	        snd_pcm_uframes_t tmp = 0;
- 	        snd_pcm_hw_params_get_buffer_size_min(alsa_hw_params[alsa_stream], &tmp); 
- 	        val[1] = (float)tmp;
- 	        snd_pcm_hw_params_get_buffer_size_max(alsa_hw_params[alsa_stream], &tmp); 
- 	        val[2] = (float)tmp;
+	      snd_pcm_uframes_t tmp = 0;
+	      snd_pcm_hw_params_get_buffer_size_min(alsa_hw_params[alsa_stream], &tmp); 
+	      val[1] = (float)tmp;
+	      snd_pcm_hw_params_get_buffer_size_max(alsa_hw_params[alsa_stream], &tmp); 
+	      val[2] = (float)tmp;
 #else
-	        val[1] = (float)snd_pcm_hw_params_get_buffer_size_min(alsa_hw_params[alsa_stream]); 
-		val[2] = (float)snd_pcm_hw_params_get_buffer_size_max(alsa_hw_params[alsa_stream]); 
+	      val[1] = (float)snd_pcm_hw_params_get_buffer_size_min(alsa_hw_params[alsa_stream]); 
+	      val[2] = (float)snd_pcm_hw_params_get_buffer_size_max(alsa_hw_params[alsa_stream]); 
 #endif
 	    }
 	}
-	break;
+      break;
     case MUS_AUDIO_CHANNEL: 
-	/* number of channels */
-	if (card>0 || alsa_device>0) {
-	    return(alsa_mus_error(MUS_AUDIO_CANT_READ, NULL));
-	} else {
+      /* number of channels */
+      if (card > 0 || alsa_device > 0) 
+	return(alsa_mus_error(MUS_AUDIO_CANT_READ, NULL));
+      else 
+	{
 #if HAVE_NEW_ALSA
- 	    unsigned int max_channels = 0;
- 	    snd_pcm_hw_params_get_channels_max(alsa_hw_params[alsa_stream], &max_channels);
+	  unsigned int max_channels = 0;
+	  snd_pcm_hw_params_get_channels_max(alsa_hw_params[alsa_stream], &max_channels);
 #else
-	    int max_channels = snd_pcm_hw_params_get_channels_max(alsa_hw_params[alsa_stream]);
+	  int max_channels = snd_pcm_hw_params_get_channels_max(alsa_hw_params[alsa_stream]);
 #endif
-	    if (alsa_stream == SND_PCM_STREAM_CAPTURE &&
-		max_channels > alsa_max_capture_channels) {
-		/* limit number of capture channels to a reasonable maximum, if the user
-		   specifies a plug pcm as the capture pcm then the returned number of channels
-		   would be MAXINT (or whatever the name is for a really big number). At this
-		   point there is no support in the alsa api to distinguish between default
-		   parameters or those that have been set by a user on purpose, of for querying
-		   the hardware pcm device that is hidden by the plug device to see what is the
-		   real number of channels for the device we are dealing with. We could also try
-		   to flag this as an error to the user and exit the program */
-		max_channels = alsa_max_capture_channels;
+	  if ((alsa_stream == SND_PCM_STREAM_CAPTURE) &&
+	      (max_channels > alsa_max_capture_channels))
+	    {
+	      /* limit number of capture channels to a reasonable maximum, if the user
+		 specifies a plug pcm as the capture pcm then the returned number of channels
+		 would be MAXINT (or whatever the name is for a really big number). At this
+		 point there is no support in the alsa api to distinguish between default
+		 parameters or those that have been set by a user on purpose, of for querying
+		 the hardware pcm device that is hidden by the plug device to see what is the
+		 real number of channels for the device we are dealing with. We could also try
+		 to flag this as an error to the user and exit the program */
+	      max_channels = alsa_max_capture_channels;
 	    }
-	    val[0] = (float)max_channels;
-	    if (chan > 1) {
+	  val[0] = (float)max_channels;
+	  if (chan > 1) 
+	    {
 #if HAVE_NEW_ALSA
- 	        unsigned int tmp = 0;
- 	        snd_pcm_hw_params_get_channels_min(alsa_hw_params[alsa_stream], &tmp); 
- 	        val[1] = (float)tmp;
+	      unsigned int tmp = 0;
+	      snd_pcm_hw_params_get_channels_min(alsa_hw_params[alsa_stream], &tmp); 
+	      val[1] = (float)tmp;
 #else
-	        val[1] = (float)snd_pcm_hw_params_get_channels_min(alsa_hw_params[alsa_stream]); 
+	      val[1] = (float)snd_pcm_hw_params_get_channels_min(alsa_hw_params[alsa_stream]); 
 #endif
-		val[2] = (float)max_channels;
+	      val[2] = (float)max_channels;
 	    }
 	}
-	break;
+      break;
     case MUS_AUDIO_SRATE: 
-	/* supported sample rates */
-	if (card>0 || alsa_device>0) {
-	    return(alsa_mus_error(MUS_AUDIO_CANT_READ, NULL));
-	} else {
-	    int dir = 0;
-	    val[0] = 44100;
-	    if (chan > 1) {
+      /* supported sample rates */
+      if (card > 0 || alsa_device > 0) 
+	return(alsa_mus_error(MUS_AUDIO_CANT_READ, NULL));
+      else 
+	{
+	  int dir = 0;
+	  val[0] = 44100;
+	  if (chan > 1) 
+	    {
 #if HAVE_NEW_ALSA
- 	        unsigned int tmp;
- 	        snd_pcm_hw_params_get_rate_min(alsa_hw_params[alsa_stream], &tmp, &dir); 
- 	        val[1] = (float)tmp;
- 	        snd_pcm_hw_params_get_rate_max(alsa_hw_params[alsa_stream], &tmp, &dir); 
- 	        val[2] = (float)tmp;
+	      unsigned int tmp;
+	      snd_pcm_hw_params_get_rate_min(alsa_hw_params[alsa_stream], &tmp, &dir); 
+	      val[1] = (float)tmp;
+	      snd_pcm_hw_params_get_rate_max(alsa_hw_params[alsa_stream], &tmp, &dir); 
+	      val[2] = (float)tmp;
 #else
-	        val[1] = (float)snd_pcm_hw_params_get_rate_min(alsa_hw_params[alsa_stream], &dir); 
-		val[2] = (float)snd_pcm_hw_params_get_rate_max(alsa_hw_params[alsa_stream], &dir); 
+	      val[1] = (float)snd_pcm_hw_params_get_rate_min(alsa_hw_params[alsa_stream], &dir); 
+	      val[2] = (float)snd_pcm_hw_params_get_rate_max(alsa_hw_params[alsa_stream], &dir); 
 #endif
 	    }
 	}
-	break;
+      break;
     case MUS_AUDIO_FORMAT:
-	/* supported formats */
-	if (card>0 || alsa_device>0) {
-	    return(alsa_mus_error(MUS_AUDIO_CANT_READ, NULL));
-	} else {
-	    int format;
-	    snd_pcm_format_mask_t *mask;
-	    snd_pcm_format_mask_alloca(&mask);
-	    snd_pcm_hw_params_get_format_mask(alsa_hw_params[alsa_stream], mask); 
-	    for (format=0, f=1; format<SND_PCM_FORMAT_LAST; format++) {
-		err = snd_pcm_format_mask_test(mask, (snd_pcm_format_t)format);
-		if (err>0) {
-		    if (f < chan && (to_mus_format(format)!=MUS_ERROR)) {
-			val[f++] = (float)to_mus_format(format);
-		    }
+      /* supported formats */
+      if (card > 0 || alsa_device > 0) 
+	return(alsa_mus_error(MUS_AUDIO_CANT_READ, NULL));
+      else 
+	{
+	  int format;
+	  snd_pcm_format_mask_t *mask;
+	  snd_pcm_format_mask_alloca(&mask);
+	  snd_pcm_hw_params_get_format_mask(alsa_hw_params[alsa_stream], mask); 
+	  for (format = 0, f = 1; format < SND_PCM_FORMAT_LAST; format++) 
+	    {
+	      err = snd_pcm_format_mask_test(mask, (snd_pcm_format_t)format);
+	      if (err > 0) 
+		{
+		  if ((f < chan) && 
+		      (to_mus_format(format)!=MUS_ERROR))
+		    val[f++] = (float)to_mus_format(format);
 		}
 	    }
-	    val[0] = f-1;
+	  val[0] = f - 1;
 	}
-	break;                
+      break;                
     case MUS_AUDIO_DIRECTION: 
-	/* direction of this device */
-	if (card>0 || alsa_device>0) {
-	    return(alsa_mus_error(MUS_AUDIO_CANT_READ, NULL));
-	} else {
-	    /* 0-->playback, 1-->capture */
-	    val[0] = (float)alsa_stream;
-	}
-	break;
-    default: 
+      /* direction of this device */
+      if (card > 0 || alsa_device > 0) 
 	return(alsa_mus_error(MUS_AUDIO_CANT_READ, NULL));
-	break;
+      else 
+	{
+	  /* 0-->playback, 1-->capture */
+	  val[0] = (float)alsa_stream;
+	}
+      break;
+    default: 
+      return(alsa_mus_error(MUS_AUDIO_CANT_READ, NULL));
+      break;
     }
-    return(MUS_NO_ERROR);
+  return(MUS_NO_ERROR);
 }
 
 static int alsa_mus_audio_mixer_write(int ur_dev, int field, int chan, float *val)
 {
-	return(MUS_NO_ERROR);
+  return(MUS_NO_ERROR);
 }
 
 static void alsa_describe_audio_state_1(void)
 {
-    int err; 
-    char *str;
-    size_t len;
-    snd_config_t *conf;
-    snd_output_t *buf = NULL;
+  int err; 
+  char *str;
+  size_t len;
+  snd_config_t *conf;
+  snd_output_t *buf = NULL;
 #if (SND_LIB_MAJOR == 0) || ((SND_LIB_MAJOR == 1) && (SND_LIB_MINOR == 0) && (SND_LIB_SUBMINOR < 8))
-    return; /* avoid Alsa bug */
+  return; /* avoid Alsa bug */
 #endif
-    err = snd_config_update();
-    if (err < 0) {
-	mus_print("%s: snd_config_update: %s", 
-		  c__FUNCTION__, snd_strerror(err));
-	return;
+  err = snd_config_update();
+  if (err < 0) 
+    {
+      mus_print("%s: snd_config_update: %s", 
+		c__FUNCTION__, snd_strerror(err));
+      return;
     }
-    err = snd_output_buffer_open(&buf);
-    if (err < 0) {
-	mus_print("%s: could not open dump buffer: %s", 
-		  c__FUNCTION__, snd_strerror(err));
-    } else {
-	err = snd_config_search(snd_config, "pcm", &conf);
-	if (err < 0) {
-	    mus_print("%s: snd_config_search: could not find at least one pcm: %s", 
-		      c__FUNCTION__, snd_strerror(err));
-	    return;
+  err = snd_output_buffer_open(&buf);
+  if (err < 0) 
+    {
+      mus_print("%s: could not open dump buffer: %s", 
+		c__FUNCTION__, snd_strerror(err));
+    } 
+  else 
+    {
+      err = snd_config_search(snd_config, "pcm", &conf);
+      if (err < 0) 
+	{
+	  mus_print("%s: snd_config_search: could not find at least one pcm: %s", 
+		    c__FUNCTION__, snd_strerror(err));
+	  return;
 	}
-	snd_output_puts(buf, "PCM list:\n");
-	snd_config_save(conf, buf);
-	snd_output_putc(buf, '\0');
-	len = snd_output_buffer_string(buf, &str);
-	if (len > 1) {
-	    pprint(str);
-	}
-	snd_output_close(buf);
+      snd_output_puts(buf, "PCM list:\n");
+      snd_config_save(conf, buf);
+      snd_output_putc(buf, '\0');
+      len = snd_output_buffer_string(buf, &str);
+      if (len > 1) 
+	pprint(str);
+      snd_output_close(buf);
     }
 }
-	   
+
 #endif /* HAVE_ALSA */
 
 
@@ -4742,12 +4834,12 @@ static void alsa_describe_audio_state_1(void)
 #include <sys/filio.h>
 
 #ifdef SUNOS
-  #include <sun/audioio.h>
+#include <sun/audioio.h>
 #else
-  #include <sys/audioio.h>
+#include <sys/audioio.h>
 #endif
 #if HAVE_SYS_MIXER_H
-  #include <sys/mixer.h>
+#include <sys/mixer.h>
 #endif
 
 int mus_audio_initialize(void) {return(MUS_NO_ERROR);}
@@ -4756,7 +4848,7 @@ char *mus_audio_system_name(int system) {return("Sun");}
 
 static int sun_default_outputs = (AUDIO_HEADPHONE | AUDIO_LINE_OUT | AUDIO_SPEAKER);
 
-void mus_audio_sun_outputs(int speakers, int headphones, int line_out)
+void mus_sun_set_outputs(int speakers, int headphones, int line_out)
 {
   sun_default_outputs = 0;
   if (speakers) sun_default_outputs |= AUDIO_SPEAKER;
@@ -8124,7 +8216,7 @@ static int sndjack_read_dev;
 
 /* prototypes for the jack sndlib functions */
 static int   jack_mus_audio_initialize(void);
-static void  jack_mus_audio_set_oss_buffers(int num, int size);
+static void  jack_mus_oss_set_buffers(int num, int size);
 static int   jack_mus_audio_systems(void);
 static char* jack_mus_audio_system_name(int system);
 static char* jack_mus_audio_moniker(void);
@@ -8162,7 +8254,7 @@ static int jack_mus_audio_initialize(void) {
 
   api = JACK_API;
   vect_mus_audio_initialize = jack_mus_audio_initialize;
-  vect_mus_audio_set_oss_buffers = jack_mus_audio_set_oss_buffers;
+  vect_mus_oss_set_buffers = jack_mus_oss_set_buffers;
   vect_mus_audio_systems = jack_mus_audio_systems;
   vect_mus_audio_system_name = jack_mus_audio_system_name;
   vect_mus_audio_moniker = jack_mus_audio_moniker;
@@ -8186,7 +8278,7 @@ static int jack_mus_audio_initialize(void) {
 }
 
 // ??
-static void  jack_mus_audio_set_oss_buffers(int num, int size){
+static void  jack_mus_oss_set_buffers(int num, int size){
 }
 
 static int jack_mus_isrunning=0;
@@ -8984,7 +9076,7 @@ int mus_audio_close(int line)
 
 static int netbsd_default_outputs = (AUDIO_HEADPHONE | AUDIO_LINE_OUT | AUDIO_SPEAKER);
 
-void mus_audio_sun_outputs(int speakers, int headphones, int line_out)
+void mus_netbsd_set_outputs(int speakers, int headphones, int line_out)
 {
   netbsd_default_outputs = 0;
   if (speakers) netbsd_default_outputs |= AUDIO_SPEAKER;
