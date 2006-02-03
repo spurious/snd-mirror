@@ -3448,15 +3448,6 @@ static int probe_api(void)
   #error ALSA version is too old -- audio.c needs 0.9 or later
 #endif
 
-/* define environment variable names */
-#define MUS_ALSA_PLAYBACK_DEVICE_ENV_NAME "MUS_ALSA_PLAYBACK_DEVICE"
-#define MUS_ALSA_CAPTURE_DEVICE_ENV_NAME  "MUS_ALSA_CAPTURE_DEVICE"
-#define MUS_ALSA_DEVICE_ENV_NAME          "MUS_ALSA_DEVICE"
-#define MUS_ALSA_BUFFERS_ENV_NAME         "MUS_ALSA_BUFFERS"
-#define MUS_ALSA_BUFFER_SIZE_ENV_NAME     "MUS_ALSA_BUFFER_SIZE"
-#define MUS_ALSA_TRACE_ENV_NAME           "MUS_ALSA_TRACE"
-
-
 static int alsa_mus_error(int type, char *message)
 {
   if (message)
@@ -3535,38 +3526,6 @@ static int probe_api(void)
   return(jackprobe);
 #endif
 }
-
-/* size of buffer in number of samples per channel, 
- * at 44100 approximately 5.9mSecs
- */
-
-static int alsa_samples_per_channel = 1024;
-
-/* whether we want to trace calls 
- *
- * set to "1" to print function trace information in the 
- * snd error window
- */
-
-static int alsa_trace = 0;
-
-/* this should go away as it is oss specific */
-
-static int fragment_size = 512; 
-static int fragments = 4;
-
-static void alsa_mus_oss_set_buffers (int num, int size) 
-{
-  fragments = num; 
-  fragment_size = size; 
-#if DEBUGGING
-  mus_print("set_oss_buffers: %d fragments or size %d", num, size);
-#endif
-}
-
-/* total number of soundcards in our setup, set by initialize_audio */
-
-/* static int sound_cards = 0; */
 
 /* convert a sndlib sample format to an alsa sample format */
 
@@ -3668,29 +3627,29 @@ static int to_alsa_device(int dev, int *adev, snd_pcm_stream_t *achan)
     case MUS_AUDIO_DUPLEX_DEFAULT:
     case MUS_AUDIO_LINE_OUT:
       /* analog output */
-      (*adev) =0;
-      (*achan) =SND_PCM_STREAM_PLAYBACK;
+      (*adev) = 0;
+      (*achan) = SND_PCM_STREAM_PLAYBACK;
       break;
     case MUS_AUDIO_AUX_OUTPUT:
       /* extra analog output */
-      (*adev) =1;
-      (*achan) =SND_PCM_STREAM_PLAYBACK;
+      (*adev) = 1;
+      (*achan) = SND_PCM_STREAM_PLAYBACK;
       break;
     case MUS_AUDIO_DAC_OUT:
       /* analog outputs */
-      (*adev) =2;
-      (*achan) =SND_PCM_STREAM_PLAYBACK;
+      (*adev) = 2;
+      (*achan) = SND_PCM_STREAM_PLAYBACK;
       break;
     case MUS_AUDIO_MICROPHONE:
     case MUS_AUDIO_LINE_IN:
       /* analog input */
-      (*adev) =0;
-      (*achan) =SND_PCM_STREAM_CAPTURE;
+      (*adev) = 0;
+      (*achan) = SND_PCM_STREAM_CAPTURE;
       break;
     case MUS_AUDIO_AUX_INPUT:
       /* extra analog input */
-      (*adev) =1;
-      (*achan) =SND_PCM_STREAM_CAPTURE;
+      (*adev) = 1;
+      (*achan) = SND_PCM_STREAM_CAPTURE;
       break;
     case MUS_AUDIO_DIGITAL_OUT:
     case MUS_AUDIO_SPDIF_OUT:
@@ -3751,100 +3710,6 @@ static int to_sndlib_device(int dev, int channel)
   return(MUS_ERROR);
 }
 
-/* set scheduling priority to SCHED_FIFO 
- * this will only work if the program that uses sndlib is run as root or is suid root 
- */
-
-/* return the number of cards that are available */
-
-static int alsa_mus_audio_systems(void) 
-{
-  return(sound_cards);
-}
-
-/* return the type of driver we're dealing with */
-
-static char *alsa_mus_audio_moniker(void)
-{
-  if (version_name == NULL) version_name = (char *)CALLOC(LABEL_BUFFER_SIZE, sizeof(char));
-  mus_snprintf(version_name, LABEL_BUFFER_SIZE, "ALSA %s", SND_LIB_VERSION_STR);
-  return(version_name);
-}
-
-/* handles for both directions of the virtual device */
-
-static snd_pcm_t *handles[2];
-
-/* hardware and software parameter sctructure pointers */
-
-static snd_pcm_hw_params_t *alsa_hw_params[2];
-static snd_pcm_sw_params_t *alsa_sw_params[2];
-
-/* some defaults */
-
-static int alsa_open_mode = SND_PCM_ASYNC;
-static int alsa_periods = 3;
-static snd_pcm_access_t alsa_interleave = SND_PCM_ACCESS_RW_INTERLEAVED;
-static int alsa_max_capture_channels = 32;
-
-/* first default name for pcm configuration */
-
-char *alsa_sndlib_device_name = "sndlib";
-
-/* second default for playback and capture: hardware pcm, first card, first device */
-
-/* bil: I think the default should be the alsa default -- that way ordinary users will get sound,
- *      and experts can still set it to hw:0 or whatever.
- */
-char *alsa_default_playback_device_name = "default";
-char *alsa_default_capture_device_name = "default";
-
-
-/* pcms used by sndlib, playback and capture */
-
-char *alsa_playback_device_name = NULL;
-char *alsa_capture_device_name = NULL;
-
-
-/* -------- tie these names into scheme/ruby -------- */
-
-static bool alsa_squelch_warning = false;
-char *mus_alsa_playback_device(void) {return(alsa_playback_device_name);}
-char *mus_alsa_set_playback_device(const char *name) {alsa_playback_device_name = strdup(name); return(alsa_playback_device_name);}
-char *mus_alsa_capture_device(void) {return(alsa_capture_device_name);}
-char *mus_alsa_set_capture_device(const char *name) {alsa_capture_device_name = strdup(name); return(alsa_capture_device_name);}
-char *mus_alsa_device(void) {return(alsa_sndlib_device_name);}
-char *mus_alsa_set_device(const char *name) {alsa_sndlib_device_name = strdup(name); return(alsa_sndlib_device_name);}
-int mus_alsa_buffer_size(void) {return(alsa_samples_per_channel);}
-int mus_alsa_set_buffer_size(int size) {alsa_samples_per_channel = size; return(size);}
-int mus_alsa_buffers(void) {return(alsa_periods);}
-int mus_alsa_set_buffers(int num) {alsa_periods = num; return(num);}
-bool mus_alsa_squelch_warning(void) {return(alsa_squelch_warning);}
-bool mus_alsa_set_squelch_warning(bool val) {alsa_squelch_warning = val; return(val);}
-
-
-
-/* TODO: should "sndlib" device name be special -- this is a virtual device I think
- * TODO: the "set" cases need validation as below -- does alsa give us reasonable errors?
- * TODO: perhaps mus_alsa_provide_interpolation? + autointerp at snd-dac level?
- * TODO: alsa grfsnd.html section, test
- * TODO: doc alsa devices
- * TODO: reformat other ALSA sections
- * TODO: mus-audio-open-output (play.scm? -- snd-test 13) hangs in alsa
- * TODO: also other similar tests needed (what about sun|oss range checks?)
- * TODO: also perhaps a revamped info proc here -- readable list of devices and so on 
- */
-
-
-/* ---------------- */
-
-
-/* return the name of a given system */
-
-static char *alsa_mus_audio_system_name(int system) 
-{
-  return(alsa_playback_device_name);
-}
 
 #if 0
 static void alsa_dump_hardware_params(snd_pcm_hw_params_t *params, const char *msg) 
@@ -3864,9 +3729,57 @@ static void alsa_dump_software_params(snd_pcm_sw_params_t *params, const char *m
 }
 #endif
 
+
+/* dump current hardware and software configuration */
+
+static void alsa_dump_configuration(char *name, snd_pcm_hw_params_t *hw_params, snd_pcm_sw_params_t *sw_params)
+{
+  int err; 
+  char *str;
+  size_t len;
+  snd_output_t *buf;
+
+#if (SND_LIB_MAJOR == 0) || ((SND_LIB_MAJOR == 1) && (SND_LIB_MINOR == 0) && (SND_LIB_SUBMINOR < 8))
+  return; /* avoid Alsa bug */
+#endif
+
+  err = snd_output_buffer_open(&buf);
+  if (err < 0) 
+    {
+      mus_print("%s: could not open dump buffer: %s", 
+		c__FUNCTION__, snd_strerror(err));
+    } 
+  else 
+    {
+      if (hw_params) 
+	{
+	  snd_output_puts(buf, "hw_params status of ");
+	  snd_output_puts(buf, name);
+	  snd_output_puts(buf, "\n");
+	  err = snd_pcm_hw_params_dump(hw_params, buf);
+	  if (err < 0) 
+	    mus_print("%s: snd_pcm_hw_params_dump: %s", c__FUNCTION__, snd_strerror(err));
+	}
+      if (sw_params) 
+	{
+	  snd_output_puts(buf, "sw_params status of ");
+	  snd_output_puts(buf, name);
+	  snd_output_puts(buf, "\n");
+	  err = snd_pcm_sw_params_dump(sw_params, buf);
+	  if (err < 0) 
+	    mus_print("%s: snd_pcm_hw_params_dump: %s", c__FUNCTION__, snd_strerror(err));
+	}
+      snd_output_putc(buf, '\0');
+      len = snd_output_buffer_string(buf, &str);
+      if (len > 1) 
+	mus_print("%s: status of %s\n%s", c__FUNCTION__, name, str);
+      snd_output_close(buf);
+    }
+}
+
 /* get hardware params for a pcm */
 
-static snd_pcm_hw_params_t * alsa_get_hardware_params(char *name, snd_pcm_stream_t stream, int mode)
+static snd_pcm_hw_params_t *alsa_get_hardware_params(const char *name, snd_pcm_stream_t stream, int mode)
 {
   int err;
   snd_pcm_t *handle;
@@ -3909,7 +3822,7 @@ static snd_pcm_hw_params_t * alsa_get_hardware_params(char *name, snd_pcm_stream
 
 /* allocate software params structure */
 
-static snd_pcm_sw_params_t * alsa_allocate_software_params(void)
+static snd_pcm_sw_params_t *alsa_get_software_params(void)
 {
   snd_pcm_sw_params_t *params = NULL;
   params = (snd_pcm_sw_params_t *)calloc(1, snd_pcm_sw_params_sizeof());
@@ -3924,10 +3837,10 @@ static snd_pcm_sw_params_t * alsa_allocate_software_params(void)
 /* probe a device name against the list of available pcm devices */
 
 #ifndef SND_CONFIG_GET_ID_ARGS
-#define SND_CONFIG_GET_ID_ARGS 1
+  #define SND_CONFIG_GET_ID_ARGS 1
 #endif
 
-static int alsa_probe_device_name(char *name)
+static int alsa_probe_device_name(const char *name)
 {
   snd_config_t *conf;
   snd_config_iterator_t pos, next;
@@ -3939,12 +3852,14 @@ static int alsa_probe_device_name(char *name)
       mus_print("%s: snd_config_update: %s", c__FUNCTION__, snd_strerror(err));
       return(MUS_ERROR);
     }
+
   err = snd_config_search(snd_config, "pcm", &conf);
   if (err < 0) 
     {
       mus_print("%s: snd_config_search: %s", c__FUNCTION__, snd_strerror(err));
       return(MUS_ERROR);
     }
+
   snd_config_for_each(pos, next, conf) 
     {
       snd_config_t *c = snd_config_iterator_entry(pos);
@@ -3974,7 +3889,7 @@ static int alsa_probe_device_name(char *name)
 
 /* check a device name against the list of available pcm devices */
 
-static int alsa_check_device_name(char *name)
+static int alsa_check_device_name(const char *name)
 {
   if (alsa_probe_device_name(name) == MUS_ERROR) 
     {
@@ -3985,9 +3900,340 @@ static int alsa_check_device_name(char *name)
   return(MUS_NO_ERROR);
 }
 
+
+/* set scheduling priority to SCHED_FIFO 
+ * this will only work if the program that uses sndlib is run as root or is suid root 
+ */
+
+/* size of buffer in number of samples per channel, 
+ * at 44100 approximately 5.9mSecs
+ */
+
+static int alsa_samples_per_channel = 1024;
+
+/* whether we want to trace calls 
+ *
+ * set to "1" to print function trace information in the 
+ * snd error window
+ */
+
+static int alsa_trace = 0;
+
+/* this should go away as it is oss specific */
+
+static int fragment_size = 512; 
+static int fragments = 4;
+
+static void alsa_mus_oss_set_buffers (int num, int size) 
+{
+  fragments = num; 
+  fragment_size = size; 
+#if DEBUGGING
+  mus_print("set_oss_buffers: %d fragments or size %d", num, size);
+#endif
+}
+
+/* total number of soundcards in our setup, set by initialize_audio */
+
+/* static int sound_cards = 0; */
+
+/* return the number of cards that are available */
+
+static int alsa_mus_audio_systems(void) 
+{
+  return(sound_cards);
+}
+
+/* return the type of driver we're dealing with */
+
+static char *alsa_mus_audio_moniker(void)
+{
+  if (version_name == NULL) version_name = (char *)CALLOC(LABEL_BUFFER_SIZE, sizeof(char));
+  mus_snprintf(version_name, LABEL_BUFFER_SIZE, "ALSA %s", SND_LIB_VERSION_STR);
+  return(version_name);
+}
+
+/* handles for both directions of the virtual device */
+
+static snd_pcm_t *handles[2] = {NULL, NULL};
+
+/* hardware and software parameter sctructure pointers */
+
+static snd_pcm_hw_params_t *alsa_hw_params[2] = {NULL, NULL}; /* avoid bogus free */
+static snd_pcm_sw_params_t *alsa_sw_params[2] = {NULL, NULL};
+
+/* some defaults */
+
+static int alsa_open_mode = SND_PCM_ASYNC;
+static int alsa_periods = 3;
+static snd_pcm_access_t alsa_interleave = SND_PCM_ACCESS_RW_INTERLEAVED;
+static int alsa_max_capture_channels = 32;
+
+/* first default name for pcm configuration */
+
+static char *alsa_sndlib_device_name = "sndlib";
+
+/* second default for playback and capture: hardware pcm, first card, first device */
+
+/* bil: I think the default should be the alsa default -- that way ordinary users will get sound,
+ *      and experts can still set it to hw:0 or whatever.  This is a problem in the recorder,
+ *      but there I'll check for the device name "default" and limit chans to 2.
+ */
+static char *alsa_default_playback_device_name = "default";
+static char *alsa_default_capture_device_name = "default";
+
+
+/* pcms used by sndlib, playback and capture */
+
+static char *alsa_playback_device_name = NULL;
+static char *alsa_capture_device_name = NULL;
+
+
+/* -------- tie these names into scheme/ruby -------- */
+
+static int alsa_get_max_buffers(void)
+{
+  unsigned int max_periods = 0, max_rec_periods = 0;
+  int dir = 0;
+#if HAVE_NEW_ALSA
+  snd_pcm_hw_params_get_periods_max(alsa_hw_params[SND_PCM_STREAM_PLAYBACK], &max_periods, &dir);
+#else
+  max_periods = snd_pcm_hw_params_get_periods_max(alsa_hw_params[SND_PCM_STREAM_PLAYBACK], &dir);
+#endif
+  if (alsa_hw_params[SND_PCM_STREAM_CAPTURE]) 
+    {
+#if HAVE_NEW_ALSA
+      snd_pcm_hw_params_get_periods_max(alsa_hw_params[SND_PCM_STREAM_CAPTURE], &max_rec_periods, &dir);
+#else
+      max_rec_periods = snd_pcm_hw_params_get_periods_max(alsa_hw_params[SND_PCM_STREAM_CAPTURE], &dir);
+#endif
+      if (max_periods > max_rec_periods) 
+	max_periods = max_rec_periods;
+    }
+  return(max_periods);
+}
+
+static int alsa_get_min_buffers(void)
+{
+  unsigned int min_periods = 0, min_rec_periods = 0;
+  int dir = 0;
+#if HAVE_NEW_ALSA
+  snd_pcm_hw_params_get_periods_min(alsa_hw_params[SND_PCM_STREAM_PLAYBACK], &min_periods, &dir);
+#else
+  min_periods = snd_pcm_hw_params_get_periods_min(alsa_hw_params[SND_PCM_STREAM_PLAYBACK], &dir);
+#endif
+  if (alsa_hw_params[SND_PCM_STREAM_CAPTURE]) 
+    {
+#if HAVE_NEW_ALSA
+      snd_pcm_hw_params_get_periods_min(alsa_hw_params[SND_PCM_STREAM_CAPTURE], &min_rec_periods, &dir);
+#else
+      min_rec_periods = snd_pcm_hw_params_get_periods_min(alsa_hw_params[SND_PCM_STREAM_CAPTURE], &dir);
+#endif
+      if (min_periods < min_rec_periods) 
+	min_periods = min_rec_periods;
+    }
+  return(min_periods);
+}
+
+static int alsa_clamp_buffers(int bufs)
+{
+  int minb, maxb;
+  minb = alsa_get_min_buffers();
+  maxb = alsa_get_max_buffers();
+  if (bufs > maxb)
+    bufs = maxb;
+  if (bufs < minb)
+    bufs = minb;
+  return(bufs);
+}
+
+static snd_pcm_uframes_t alsa_get_min_buffer_size(void)
+{
+  snd_pcm_uframes_t min_buffer_size = 0, min_rec_buffer_size = 0;
+#if HAVE_NEW_ALSA
+  snd_pcm_hw_params_get_buffer_size_min(alsa_hw_params[SND_PCM_STREAM_PLAYBACK], &min_buffer_size);
+#else
+  min_buffer_size = snd_pcm_hw_params_get_buffer_size_min(alsa_hw_params[SND_PCM_STREAM_PLAYBACK]);
+#endif
+  if (alsa_hw_params[SND_PCM_STREAM_CAPTURE]) 
+    {
+#if HAVE_NEW_ALSA
+      snd_pcm_hw_params_get_buffer_size_min(alsa_hw_params[SND_PCM_STREAM_CAPTURE], &min_rec_buffer_size);
+#else
+      min_rec_buffer_size = snd_pcm_hw_params_get_buffer_size_min(alsa_hw_params[SND_PCM_STREAM_CAPTURE]);
+#endif
+
+      if (min_buffer_size < min_rec_buffer_size) 
+	min_buffer_size = min_rec_buffer_size;
+    }
+  return(min_buffer_size);
+}
+
+static snd_pcm_uframes_t alsa_get_max_buffer_size(void)
+{
+  snd_pcm_uframes_t max_buffer_size = 0, max_rec_buffer_size = 0;
+#if HAVE_NEW_ALSA
+  snd_pcm_hw_params_get_buffer_size_max(alsa_hw_params[SND_PCM_STREAM_PLAYBACK], &max_buffer_size);
+#else
+  max_buffer_size = snd_pcm_hw_params_get_buffer_size_max(alsa_hw_params[SND_PCM_STREAM_PLAYBACK]);
+#endif
+  if (alsa_hw_params[SND_PCM_STREAM_CAPTURE]) 
+    {
+#if HAVE_NEW_ALSA
+      snd_pcm_hw_params_get_buffer_size_max(alsa_hw_params[SND_PCM_STREAM_CAPTURE], &max_rec_buffer_size);
+#else
+      max_rec_buffer_size = snd_pcm_hw_params_get_buffer_size_max(alsa_hw_params[SND_PCM_STREAM_CAPTURE]);
+#endif
+      if (max_buffer_size > max_rec_buffer_size) 
+	max_buffer_size = max_rec_buffer_size;
+    }
+  return(max_buffer_size);
+}
+
+static int alsa_clamp_buffer_size(int buf_size)
+{
+  int minb, maxb;
+  minb = alsa_get_min_buffer_size();
+  maxb = alsa_get_max_buffer_size();
+  if (buf_size > maxb)
+    buf_size = maxb;
+  if (buf_size < minb)
+    buf_size = minb;
+  return(buf_size);
+}
+
+static bool alsa_set_playback_parameters(void)
+{
+  /* playback stream parameters */
+  if (alsa_hw_params[SND_PCM_STREAM_PLAYBACK]) free(alsa_hw_params[SND_PCM_STREAM_PLAYBACK]);
+  alsa_hw_params[SND_PCM_STREAM_PLAYBACK] = alsa_get_hardware_params(alsa_playback_device_name, SND_PCM_STREAM_PLAYBACK, alsa_open_mode);
+  if (alsa_hw_params[SND_PCM_STREAM_PLAYBACK]) 
+    {
+      snd_pcm_uframes_t size;
+      if (alsa_sw_params[SND_PCM_STREAM_PLAYBACK]) free(alsa_sw_params[SND_PCM_STREAM_PLAYBACK]);
+      alsa_sw_params[SND_PCM_STREAM_PLAYBACK] = alsa_get_software_params();
+      sound_cards = 1;
+      alsa_periods = alsa_clamp_buffers(alsa_periods);
+      size = alsa_clamp_buffer_size(alsa_samples_per_channel * alsa_periods);
+      alsa_samples_per_channel = size / alsa_periods;
+    }
+  return(alsa_hw_params[SND_PCM_STREAM_PLAYBACK] && alsa_sw_params[SND_PCM_STREAM_PLAYBACK]);
+}
+
+static bool alsa_set_capture_parameters(void)
+{  
+  /* capture stream parameters */
+  if (alsa_hw_params[SND_PCM_STREAM_CAPTURE]) free(alsa_hw_params[SND_PCM_STREAM_CAPTURE]);
+  alsa_hw_params[SND_PCM_STREAM_CAPTURE] = alsa_get_hardware_params(alsa_capture_device_name, SND_PCM_STREAM_CAPTURE, alsa_open_mode);
+  if (alsa_hw_params[SND_PCM_STREAM_CAPTURE]) 
+    {
+      snd_pcm_uframes_t size;
+      if (alsa_sw_params[SND_PCM_STREAM_CAPTURE]) free(alsa_sw_params[SND_PCM_STREAM_CAPTURE]);
+      alsa_sw_params[SND_PCM_STREAM_CAPTURE] = alsa_get_software_params();
+      sound_cards = 1;
+      alsa_periods = alsa_clamp_buffers(alsa_periods);
+      size = alsa_clamp_buffer_size(alsa_samples_per_channel * alsa_periods);
+      alsa_samples_per_channel = size / alsa_periods;
+    }
+  return(alsa_hw_params[SND_PCM_STREAM_CAPTURE] && alsa_sw_params[SND_PCM_STREAM_CAPTURE]);
+}
+
+
+char *mus_alsa_playback_device(void) {return(alsa_playback_device_name);}
+char *mus_alsa_set_playback_device(const char *name) 
+{
+  if (alsa_check_device_name(name))
+    {
+      char *old_name = alsa_playback_device_name;
+      alsa_playback_device_name = strdup(name); 
+      if (!alsa_set_playback_parameters())
+	{
+	  alsa_playback_device_name = old_name; /* try to back out of the mistake */
+	  alsa_set_playback_parameters();
+	}
+    }
+  return(alsa_playback_device_name);
+}
+
+char *mus_alsa_capture_device(void) {return(alsa_capture_device_name);}
+char *mus_alsa_set_capture_device(const char *name) 
+{
+  if (alsa_check_device_name(name))
+    {
+      char *old_name = alsa_capture_device_name;
+      alsa_capture_device_name = strdup(name); 
+      if (!alsa_set_capture_parameters())
+	{
+	  alsa_capture_device_name = old_name;
+	  alsa_set_capture_parameters();
+	}
+    }
+  return(alsa_capture_device_name);
+}
+
+char *mus_alsa_device(void) {return(alsa_sndlib_device_name);}
+char *mus_alsa_set_device(const char *name) 
+{
+  if (alsa_check_device_name(name))
+    {
+      alsa_sndlib_device_name = strdup(name);
+      mus_alsa_set_playback_device(name);
+      mus_alsa_set_capture_device(name);
+    }
+  return(alsa_sndlib_device_name);
+}
+
+int mus_alsa_buffer_size(void) {return(alsa_samples_per_channel);}
+int mus_alsa_set_buffer_size(int size) 
+{
+  snd_pcm_uframes_t bsize;
+  bsize = alsa_clamp_buffer_size(size * alsa_periods);
+  alsa_samples_per_channel = bsize / alsa_periods;
+  return(alsa_samples_per_channel);
+}
+
+int mus_alsa_buffers(void) {return(alsa_periods);}
+int mus_alsa_set_buffers(int num) 
+{
+  snd_pcm_uframes_t size;
+  alsa_periods = alsa_clamp_buffers(num);
+  size = alsa_clamp_buffer_size(alsa_samples_per_channel * alsa_periods);
+  alsa_samples_per_channel = size / alsa_periods;
+  return(alsa_periods);
+}
+
+static bool alsa_squelch_warning = false;
+bool mus_alsa_squelch_warning(void) {return(alsa_squelch_warning);}
+bool mus_alsa_set_squelch_warning(bool val) 
+{
+  alsa_squelch_warning = val; 
+  return(val);
+}
+
+
+
+/* TODO: perhaps mus_alsa_provide_interpolation? + autointerp at snd-dac level?
+ * TODO: tests needed (what about sun|oss range checks?)
+ * TODO: if user sets device, snd-dac should not ignore it and go searching for a better one
+ * TODO: why the blip in playback? play-sound function is ok in this regard
+ * TODO: is user sets recorder-in-chans, we should just use it?
+ */
+
+
+/* ---------------- */
+
+
+
+/* return the name of a given system */
+
+static char *alsa_mus_audio_system_name(int system) 
+{
+  return(alsa_playback_device_name);
+}
+
 /* get a device name from the environment */
 
-static char *alsa_get_device_from_env(char *name)
+static char *alsa_get_device_from_env(const char *name)
 {
   char *string = getenv(name);
   if (string) 
@@ -3998,7 +4244,7 @@ static char *alsa_get_device_from_env(char *name)
 
 /* get an integer from the environment */
 
-static int alsa_get_int_from_env(char *name, int *value, int min, int max)
+static int alsa_get_int_from_env(const char *name, int *value, int min, int max)
 {
   char *string = getenv(name);
   if (string) 
@@ -4040,19 +4286,22 @@ static int alsa_get_int_from_env(char *name, int *value, int min, int max)
 
 /* initialize the audio subsystem */
 
+/* define environment variable names */
+#define MUS_ALSA_PLAYBACK_DEVICE_ENV_NAME "MUS_ALSA_PLAYBACK_DEVICE"
+#define MUS_ALSA_CAPTURE_DEVICE_ENV_NAME  "MUS_ALSA_CAPTURE_DEVICE"
+#define MUS_ALSA_DEVICE_ENV_NAME          "MUS_ALSA_DEVICE"
+#define MUS_ALSA_BUFFERS_ENV_NAME         "MUS_ALSA_BUFFERS"
+#define MUS_ALSA_BUFFER_SIZE_ENV_NAME     "MUS_ALSA_BUFFER_SIZE"
+#define MUS_ALSA_TRACE_ENV_NAME           "MUS_ALSA_TRACE"
+
 static int alsa_mus_audio_initialize(void) 
 {
   char *name = NULL;
   char *pname;
   char *cname;
   int value; 
-  int dir;
-#if HAVE_NEW_ALSA
-  unsigned int min_periods, max_periods, min_rec_periods, max_rec_periods;
-#else
-  snd_pcm_uframes_t min_periods, max_periods, min_rec_periods, max_rec_periods;
-#endif
-  snd_pcm_uframes_t min_buffer_size, max_buffer_size, min_rec_buffer_size, max_rec_buffer_size;
+  int min_periods, max_periods;
+  snd_pcm_uframes_t min_buffer_size, max_buffer_size;
 
   if (audio_initialized) 
     return(0);
@@ -4104,22 +4353,9 @@ static int alsa_mus_audio_initialize(void)
   if (!alsa_capture_device_name) 
     alsa_capture_device_name = alsa_default_capture_device_name;
     
-  /* playback stream parameters */
-  alsa_hw_params[SND_PCM_STREAM_PLAYBACK] = alsa_get_hardware_params(alsa_playback_device_name, SND_PCM_STREAM_PLAYBACK, alsa_open_mode);
-  if (alsa_hw_params[SND_PCM_STREAM_PLAYBACK]) 
-    {
-      alsa_sw_params[SND_PCM_STREAM_PLAYBACK] = alsa_allocate_software_params();
-      sound_cards = 1;
-    }
+  alsa_set_playback_parameters();
+  alsa_set_capture_parameters();
 
-  /* capture stream parameters */
-  alsa_hw_params[SND_PCM_STREAM_CAPTURE] = alsa_get_hardware_params(alsa_capture_device_name, SND_PCM_STREAM_CAPTURE, alsa_open_mode);
-  if (alsa_hw_params[SND_PCM_STREAM_CAPTURE]) 
-    {
-      alsa_sw_params[SND_PCM_STREAM_CAPTURE] = alsa_allocate_software_params();
-      sound_cards = 1;
-    }
-  
   if ((!alsa_hw_params[SND_PCM_STREAM_CAPTURE]) ||
       (!alsa_hw_params[SND_PCM_STREAM_PLAYBACK]))
     return(MUS_ERROR);
@@ -4130,28 +4366,9 @@ static int alsa_mus_audio_initialize(void)
    * separately, and they might interact when being set, but it is better
    * than not checking at all anything 
    */
-#if HAVE_NEW_ALSA
-  snd_pcm_hw_params_get_periods_min(alsa_hw_params[SND_PCM_STREAM_PLAYBACK], &min_periods, &dir);
-  snd_pcm_hw_params_get_periods_max(alsa_hw_params[SND_PCM_STREAM_PLAYBACK], &max_periods, &dir);
-#else
-  min_periods = snd_pcm_hw_params_get_periods_min(alsa_hw_params[SND_PCM_STREAM_PLAYBACK], &dir);
-  max_periods = snd_pcm_hw_params_get_periods_max(alsa_hw_params[SND_PCM_STREAM_PLAYBACK], &dir);
-#endif
-  if (alsa_hw_params[SND_PCM_STREAM_CAPTURE]) 
-    {
-#if HAVE_NEW_ALSA
-      snd_pcm_hw_params_get_periods_min(alsa_hw_params[SND_PCM_STREAM_CAPTURE], &min_rec_periods, &dir);
-      snd_pcm_hw_params_get_periods_max(alsa_hw_params[SND_PCM_STREAM_CAPTURE], &max_rec_periods, &dir);
-#else
-      min_rec_periods = snd_pcm_hw_params_get_periods_min(alsa_hw_params[SND_PCM_STREAM_CAPTURE], &dir);
-      max_rec_periods = snd_pcm_hw_params_get_periods_max(alsa_hw_params[SND_PCM_STREAM_CAPTURE], &dir);
-#endif
-      if (max_periods > max_rec_periods) 
-	max_periods = max_rec_periods;
 
-      if (min_periods < min_rec_periods) 
-	min_periods = min_rec_periods;
-    }
+  min_periods = alsa_get_min_buffers();
+  max_periods = alsa_get_max_buffers();
 
   if (alsa_periods > max_periods) 
     alsa_periods = max_periods;
@@ -4165,89 +4382,24 @@ static int alsa_mus_audio_initialize(void)
 			    max_periods) == MUS_NO_ERROR) 
     alsa_periods = value;
 
-#if HAVE_NEW_ALSA
-  snd_pcm_hw_params_get_buffer_size_min(alsa_hw_params[SND_PCM_STREAM_PLAYBACK], &min_buffer_size);
-  snd_pcm_hw_params_get_buffer_size_max(alsa_hw_params[SND_PCM_STREAM_PLAYBACK], &max_buffer_size);
-#else
-  min_buffer_size = snd_pcm_hw_params_get_buffer_size_min(alsa_hw_params[SND_PCM_STREAM_PLAYBACK]);
-  max_buffer_size = snd_pcm_hw_params_get_buffer_size_max(alsa_hw_params[SND_PCM_STREAM_PLAYBACK]);
-#endif
-  if (alsa_hw_params[SND_PCM_STREAM_CAPTURE]) 
-    {
-#if HAVE_NEW_ALSA
-      snd_pcm_hw_params_get_buffer_size_min(alsa_hw_params[SND_PCM_STREAM_CAPTURE], &min_rec_buffer_size);
-      snd_pcm_hw_params_get_buffer_size_max(alsa_hw_params[SND_PCM_STREAM_CAPTURE], &max_rec_buffer_size);
-#else
-      min_rec_buffer_size = snd_pcm_hw_params_get_buffer_size_min(alsa_hw_params[SND_PCM_STREAM_CAPTURE]);
-      max_rec_buffer_size = snd_pcm_hw_params_get_buffer_size_max(alsa_hw_params[SND_PCM_STREAM_CAPTURE]);
-#endif
-      if (max_buffer_size > max_rec_buffer_size) 
-	max_buffer_size = max_rec_buffer_size;
 
-      if (min_buffer_size < min_rec_buffer_size) 
-	min_buffer_size = min_rec_buffer_size;
-    }
-  if (alsa_samples_per_channel*alsa_periods > max_buffer_size) 
-    alsa_samples_per_channel = max_buffer_size/alsa_periods;
+  min_buffer_size = alsa_get_min_buffer_size();
+  max_buffer_size = alsa_get_max_buffer_size();
 
-  if (alsa_samples_per_channel*alsa_periods < min_buffer_size) 
-    alsa_samples_per_channel = min_buffer_size/alsa_periods;
+  if (alsa_samples_per_channel * alsa_periods > max_buffer_size) 
+    alsa_samples_per_channel = max_buffer_size / alsa_periods;
+
+  if (alsa_samples_per_channel * alsa_periods < min_buffer_size) 
+    alsa_samples_per_channel = min_buffer_size / alsa_periods;
 
   /* get buffer size from environment, override if possible */
   if (alsa_get_int_from_env(MUS_ALSA_BUFFER_SIZE_ENV_NAME, &value, 
-			    min_buffer_size/alsa_periods, 
-			    max_buffer_size/alsa_periods) == MUS_NO_ERROR) 
+			    min_buffer_size / alsa_periods, 
+			    max_buffer_size / alsa_periods) == MUS_NO_ERROR) 
     alsa_samples_per_channel = value;
 
   audio_initialized = true;
   return(0);
-}
-
-/* dump current hardware and software configuration */
-
-static void alsa_dump_configuration(char *name, snd_pcm_hw_params_t *hw_params, snd_pcm_sw_params_t *sw_params)
-{
-  int err; 
-  char *str;
-  size_t len;
-  snd_output_t *buf;
-
-#if (SND_LIB_MAJOR == 0) || ((SND_LIB_MAJOR == 1) && (SND_LIB_MINOR == 0) && (SND_LIB_SUBMINOR < 8))
-  return; /* avoid Alsa bug */
-#endif
-
-  err = snd_output_buffer_open(&buf);
-  if (err < 0) 
-    {
-      mus_print("%s: could not open dump buffer: %s", 
-		c__FUNCTION__, snd_strerror(err));
-    } 
-  else 
-    {
-      if (hw_params) 
-	{
-	  snd_output_puts(buf, "hw_params status of ");
-	  snd_output_puts(buf, name);
-	  snd_output_puts(buf, "\n");
-	  err = snd_pcm_hw_params_dump(hw_params, buf);
-	  if (err < 0) 
-	    mus_print("%s: snd_pcm_hw_params_dump: %s", c__FUNCTION__, snd_strerror(err));
-	}
-      if (sw_params) 
-	{
-	  snd_output_puts(buf, "sw_params status of ");
-	  snd_output_puts(buf, name);
-	  snd_output_puts(buf, "\n");
-	  err = snd_pcm_sw_params_dump(sw_params, buf);
-	  if (err < 0) 
-	    mus_print("%s: snd_pcm_hw_params_dump: %s", c__FUNCTION__, snd_strerror(err));
-	}
-      snd_output_putc(buf, '\0');
-      len = snd_output_buffer_string(buf, &str);
-      if (len > 1) 
-	mus_print("%s: status of %s\n%s", c__FUNCTION__, name, str);
-      snd_output_close(buf);
-    }
 }
 
 /* open an input or output stream */
@@ -4326,34 +4478,34 @@ static int alsa_audio_open(int ur_dev, int srate, int chans, int format, int siz
   err = snd_pcm_hw_params_set_periods(handle, hw_params, periods, 0);
   if (err < 0) 
     {
+      unsigned int minp, maxp;
       int dir;
 #if HAVE_NEW_ALSA
-      unsigned int min, max;
-      snd_pcm_hw_params_get_periods_min(hw_params, &min, &dir);
-      snd_pcm_hw_params_get_periods_max(hw_params, &max, &dir);
+      snd_pcm_hw_params_get_periods_min(hw_params, &minp, &dir);
+      snd_pcm_hw_params_get_periods_max(hw_params, &maxp, &dir);
 #else
-      snd_pcm_uframes_t min, max;
-      min = snd_pcm_hw_params_get_periods_min(hw_params, &dir);
-      max = snd_pcm_hw_params_get_periods_max(hw_params, &dir);
+      minp = snd_pcm_hw_params_get_periods_min(hw_params, &dir);
+      maxp = snd_pcm_hw_params_get_periods_max(hw_params, &dir);
 #endif
       snd_pcm_close(handle);
       handles[alsa_stream] = NULL;
       alsa_dump_configuration(alsa_name, hw_params, sw_params);
       return(alsa_mus_error(MUS_AUDIO_CONFIGURATION_NOT_AVAILABLE, 
 			    mus_format("%s: %s: cannot set number of periods to %d, min is %d, max is %d", 
-				       c__FUNCTION__, alsa_name, periods, (int)min, (int)max)));
+				       c__FUNCTION__, alsa_name, periods, (int)minp, (int)maxp)));
     }
+
   frames = size / chans / mus_bytes_per_sample(format);
-  err = snd_pcm_hw_params_set_buffer_size(handle, hw_params, frames*periods);
+  err = snd_pcm_hw_params_set_buffer_size(handle, hw_params, frames * periods);
   if (err < 0) 
     {
-      snd_pcm_uframes_t min, max;
+      snd_pcm_uframes_t minp, maxp;
 #if HAVE_NEW_ALSA
-      snd_pcm_hw_params_get_buffer_size_min(hw_params, &min);
-      snd_pcm_hw_params_get_buffer_size_max(hw_params, &max);
+      snd_pcm_hw_params_get_buffer_size_min(hw_params, &minp);
+      snd_pcm_hw_params_get_buffer_size_max(hw_params, &maxp);
 #else
-      min = snd_pcm_hw_params_get_buffer_size_min(hw_params);
-      max = snd_pcm_hw_params_get_buffer_size_max(hw_params);
+      minp = snd_pcm_hw_params_get_buffer_size_min(hw_params);
+      maxp = snd_pcm_hw_params_get_buffer_size_max(hw_params);
 #endif
       snd_pcm_close(handle);
       handles[alsa_stream] = NULL;
@@ -4361,8 +4513,9 @@ static int alsa_audio_open(int ur_dev, int srate, int chans, int format, int siz
       return(alsa_mus_error(MUS_AUDIO_CONFIGURATION_NOT_AVAILABLE, 
 			    mus_format("%s: %s: cannot set buffer size to %d periods of %d frames; \
 total requested buffer size is %d frames, minimum allowed is %d, maximum is %d", 
-				       c__FUNCTION__, alsa_name, periods, frames, periods*frames, (int)min, (int)max)));
+				       c__FUNCTION__, alsa_name, periods, frames, periods * frames, (int)minp, (int)maxp)));
     }
+
   err = snd_pcm_hw_params_set_format(handle, hw_params, alsa_format);
   if (err < 0) 
     {
@@ -4373,6 +4526,7 @@ total requested buffer size is %d frames, minimum allowed is %d, maximum is %d",
 			    mus_format("%s: %s: cannot set format to %s", 
 				       c__FUNCTION__, alsa_name, snd_pcm_format_name(alsa_format))));
     }
+
   err = snd_pcm_hw_params_set_channels(handle, hw_params, chans);
   if (err < 0) 
     {
@@ -4426,6 +4580,7 @@ total requested buffer size is %d frames, minimum allowed is %d, maximum is %d",
 	}
     }
 #endif
+
   err = snd_pcm_hw_params(handle, hw_params);
   if (err < 0) 
     {
@@ -4436,6 +4591,7 @@ total requested buffer size is %d frames, minimum allowed is %d, maximum is %d",
 			    mus_format("%s: cannot set hardware parameters for %s", 
 				       c__FUNCTION__, alsa_name)));
     }
+
   snd_pcm_sw_params_current(handle, sw_params);
   err = snd_pcm_sw_params(handle, sw_params);
   if (err < 0) 
@@ -4670,36 +4826,47 @@ static int alsa_mus_audio_mixer_read(int ur_dev, int field, int chan, float *val
 	return(alsa_mus_error(MUS_AUDIO_CANT_READ, NULL));
       else 
 	{
-#if HAVE_NEW_ALSA
-	  unsigned int max_channels = 0;
-	  snd_pcm_hw_params_get_channels_max(alsa_hw_params[alsa_stream], &max_channels);
-#else
-	  int max_channels = snd_pcm_hw_params_get_channels_max(alsa_hw_params[alsa_stream]);
-#endif
+
 	  if ((alsa_stream == SND_PCM_STREAM_CAPTURE) &&
-	      (max_channels > alsa_max_capture_channels))
+	      (alsa_capture_device_name) &&
+	      (strcmp(alsa_capture_device_name, "default") == 0))
 	    {
-	      /* limit number of capture channels to a reasonable maximum, if the user
-		 specifies a plug pcm as the capture pcm then the returned number of channels
-		 would be MAXINT (or whatever the name is for a really big number). At this
-		 point there is no support in the alsa api to distinguish between default
-		 parameters or those that have been set by a user on purpose, of for querying
-		 the hardware pcm device that is hidden by the plug device to see what is the
-		 real number of channels for the device we are dealing with. We could also try
-		 to flag this as an error to the user and exit the program */
-	      max_channels = alsa_max_capture_channels;
+	      val[0] = 2;
 	    }
-	  val[0] = (float)max_channels;
-	  if (chan > 1) 
+	  else
 	    {
+
 #if HAVE_NEW_ALSA
-	      unsigned int tmp = 0;
-	      snd_pcm_hw_params_get_channels_min(alsa_hw_params[alsa_stream], &tmp); 
-	      val[1] = (float)tmp;
+	      unsigned int max_channels = 0;
+	      snd_pcm_hw_params_get_channels_max(alsa_hw_params[alsa_stream], &max_channels);
 #else
-	      val[1] = (float)snd_pcm_hw_params_get_channels_min(alsa_hw_params[alsa_stream]); 
+	      int max_channels = snd_pcm_hw_params_get_channels_max(alsa_hw_params[alsa_stream]);
 #endif
-	      val[2] = (float)max_channels;
+	      if ((alsa_stream == SND_PCM_STREAM_CAPTURE) &&
+		  (max_channels > alsa_max_capture_channels))
+		{
+		  /* limit number of capture channels to a reasonable maximum, if the user
+		     specifies a plug pcm as the capture pcm then the returned number of channels
+		     would be MAXINT (or whatever the name is for a really big number). At this
+		     point there is no support in the alsa api to distinguish between default
+		     parameters or those that have been set by a user on purpose, of for querying
+		     the hardware pcm device that is hidden by the plug device to see what is the
+		     real number of channels for the device we are dealing with. We could also try
+		     to flag this as an error to the user and exit the program */
+		  max_channels = alsa_max_capture_channels;
+		}
+	      val[0] = (float)max_channels;
+	      if (chan > 1) 
+		{
+#if HAVE_NEW_ALSA
+		  unsigned int tmp = 0;
+		  snd_pcm_hw_params_get_channels_min(alsa_hw_params[alsa_stream], &tmp); 
+		  val[1] = (float)tmp;
+#else
+		  val[1] = (float)snd_pcm_hw_params_get_channels_min(alsa_hw_params[alsa_stream]); 
+#endif
+		  val[2] = (float)max_channels;
+		}
 	    }
 	}
       break;

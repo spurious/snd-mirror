@@ -2060,124 +2060,65 @@ This is a problem only if you're calling ladpsa-connect-port yourself.
 
 <p>
 (This section is a lightly edited copy of some notes Fernando sent me).
+The default ALSA device in Snd is "default".  This virtual device tries to play sounds at any sampling rate,
+provide any number of input channels, handle data format conversions, and so on.  Experts will probably
+want to use the "hw:0" device instead (this is the first hardware device; "hw:1" is the second, and so on),
+but in that case, ALSA provides only whatever sampling rates the hardware provides. 
+To change the device, or the internal buffering amounts, you can either set up environment
+variables, or use the parallel Scheme/Ruby variables mus-alsa-*. The environment
+variables are:
 </p>
+<table>
+<tr><td width=250>MUS_ALSA_PLAYBACK_DEVICE</td><td>name of playback device ("default")</td></tr>
+<tr><td>MUS_ALSA_CAPTURE_DEVICE</td><td>name of capture (recording) device ("default")</td></tr>
+<tr><td>MUS_ALSA_DEVICE</td><td>name of the playback and capture device ("sndlib")</td></tr>
+<tr><td>MUS_ALSA_BUFFERS</td><td>number of "periods" (buffers) used</td></tr>
+<tr><td>MUS_ALSA_BUFFER_SIZE</td><td>number of samples per channel per buffer</td></tr>
+</table>
+<p>
+These can be set either in your shell initialization file (~/.cshrc for tcsh), or in the
+shell:
+</p>
+<pre>
+setenv MUS_ALSA_DEVICE "hw:0"   ; tcsh
+MUS_ALSA_DEVICE=hw:0            ; bash
+</pre>
+<p>
+or run Snd with a temporary setting:
+</p>
+<pre>
+MUS_ALSA_DEVICE=plughw:0 snd somefile.wav
+</pre>
+<p>
+The parallel variables (for ~/.snd and friends, or at any time in the listener), are:
+</p>
+<table>
+<tr><td width=250>mus-alsa-playback-device</td><td>name of playback device ("default")</td></tr>
+<tr><td>mus-alsa-capture-device</td><td>name of capture (recording) device ("default")</td></tr>
+<tr><td>mus-alsa-device</td><td>name of the playback and capture device ("sndlib")</td></tr>
+<tr><td>mus-alsa-buffers</td><td>number of "periods" (buffers) used</td></tr>
+<tr><td>mus-alsa-buffer-size</td><td>number of samples per channel per buffer</td></tr>
+</table>
+<p>
+So, to use the "plughw" device, we could:
+</p>
+<pre>
+(set! (mus-alsa-device) "plughw:0")
+</pre>
+<p>
+Similarly, if you know which device you want to record from (say your arecord command is
+"arecord -D hw:0.2", you can tell Snd's recorder to use that device via:
+</p>
+<pre>
+setenv MUS_ALSA_CAPTURE_DEVICE "hw:0.2"
 
-<!--
+or
 
-This could be as simple as what actual alsa device is being used by each 
-program. The alsa code I wrote a while back for sndlib is using, by 
-default, the hardware device (that would be "hw:0" for the first card, 
-"hw:1" for the second and so on and so forth). That is the most 
-efficient access method as it uses the internal snd code for format 
-conversion and channel count matching. But it does not do sample rate 
-conversion. 
-
-The default alsa device used by most programs is "default" which, by 
-default, uses the "plughw" layer in alsa. Those devices do conversions 
-for the programs that use them, they can do format conversion (16 bit to 
-24 bit and so on and so forth), channel number matching (ie: playing a 
-stereo stream in a card that needs to be sent always 8 channels) and 
-sample rate conversion (awfully sounding linear interpolation only so 
-far). 
-
-But if you use the "plughw" layer you will get more latency, I think. 
-
-Anyway, I think aplay uses "plughw" by default because it uses the 
-"default" device (arghhh, I hope this is not as confusing as it sounds), 
-which by default points to the plughw device for the first card. 
-
-Sigh... 
-
-So, to try things out you should: 
-- use aplay, but pointing it to the hardware device: 
-   aplay --device=hw:0 somefile.wav 
- this should exhibit the same behavior that snd has by default (ie: it 
- should only be able to play back 48khz soundfiles in your hardware) 
-
-- or use snd and point it to the plughw device: 
-   MUS_ALSA_DEVICE=plughw:0 snd somefile.wav 
- that should make it possible to play other sampling rates (albeit with 
- pretty bad quality as the srate converter uses linear interpolation). 
-
-<tr><td>MUS_ALSA_PLAYBACK_DEVICE</td><td>name of playback device (Alsa only)</td></tr>
-<tr><td>MUS_ALSA_CAPTURE_DEVICE</td><td>name of capture device (Alsa only)</td></tr>
-<tr><td>MUS_ALSA_DEVICE</td><td>name of the playback and capture device (Alsa only)</td></tr>
-<tr><td>MUS_ALSA_BUFFERS</td><td>number of "periods" used (Alsa only)</td></tr>
-<tr><td>MUS_ALSA_BUFFER_SIZE</td><td>number of samples per channel per buffer (Alsa only)</td></tr>
-
-[memory slowly coming back] Another reason I did not use plughw by 
-default in sndlib is that at the time I wrote the software it was 
-impossible to divine the characteristics of the hardware device that is 
-_behind_ the plugin layer. So, if you ask alsa how many channels you can 
-record from the plughw layer it happily answers some insane number like 
-20 million channels. That throws a monkey wrench inside snd, which then 
-tries to display 20 million beautiful vu meters    It is/was not 
-possible to ask the question "how many real channels do I have" or "what 
-is the real device behing the plughw device". Those questions don't 
-necessarily have a single straight answer due to the configurability of 
-alsa - you can, for example, agregate devices into one virtual device 
-and so on and so forth. I don't know if the internal structure of alsa 
-has changed in the meantime and would make that possible. I started 
-discussions about this on the alsa list but nothing came out of them... 
-
-Let me know what happens... 
--- Fernando 
-
-
-
-/home/bil/cl/ aplay --device=hw:0 oboe.snd
-Playing Sparc Audio 'oboe.snd' : Signed 16 bit Big Endian, Rate 22050 Hz, Mono
-aplay: set_params:857: Sample format non available
-
-
-/home/bil/snd-77/ setenv MUS_ALSA_DEVICE "plughw:0"
-/home/bil/snd-77/ ./snd ~/cl/oboe.snd
-:;alsa_audio_open: plughw:0: could not set rate to exactly 22050, set to 22100 instead
-
-
-On recording, here's a note from Fernando from cmdist:
-
-    > Recently I installed a sound card with digital in (with cmi8738 chip)
-    > in my linux system with alsa. With 'arecord -D hw:0.2' I can succesfully record
-    > from my digital input. How can I do the same with with Snd? The
-    > digital inputs do not appear on the record window. I compiled Snd with alsa support.
-    
-    You could try to set up an environment variable before starting snd to 
-    point to that particular device. This is the way snd reacts to env 
-    variables:
-    
-    - searched for in the following order:
-      MUS_ALSA_PLAYBACK_DEVICE
-         defines the name of the playback device
-      MUS_ALSA_CAPTURE_DEVICE
-         defines the name of the capture device
-      MUS_ALSA_DEVICE
-         defines the name of the playback and capture device
-      use the first two if the playback and capture devices are different or the
-      third if they are the same.
-    
-    So you could try:
-      MUS_ALSA_DEVICE="hw:0,2" snd
-    if you are using bash as your shell
-    
-    This should use the digital i/o as the input output device.  It would also
-    be possible to concatenate several devices using a definition in the
-    .asoundrc file but that would involve understanding its arcane
-    configuration language, which I don't. The current snd alss 0.9 code only
-    looks at the first device it finds (normally hw:0,0).
-    
-    -- Fernando
-
-
-alsa-specific variables in Snd:
-
-mus-alsa-device
-mus-alsa-playback-device
-mus-alsa-capture-device
-mus-alsa-buffers
-mus-alsa-buffer-size
-mus-alsa-squelch-warning
--->
+(set! (mus-alsa-capture-device) "hw:0.2"
+</pre>
+<p>It's also possible to define your own device, apparently, but that part
+of ALSA is beyond my ken.
+</p>
 
 <br>
 

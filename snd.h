@@ -26,9 +26,7 @@
 #if HAVE_STRING_H
   #include <string.h>
 #endif
-#if HAVE_VPRINTF
-  #include <stdarg.h>
-#endif
+#include <stdarg.h>
 #include <time.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -73,7 +71,7 @@
 
 #include "snd-strings.h"
 
-#define SND_DATE "3-Feb-06"
+#define SND_DATE "6-Feb-06"
 #define SND_VERSION "7.19"
 #define SND_MAJOR_VERSION "7"
 #define SND_MINOR_VERSION "19"
