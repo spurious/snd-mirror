@@ -309,13 +309,13 @@ static XEN g_mus_sun_set_outputs(XEN speakers, XEN headphones, XEN line_out)
 {
   #define H_mus_sun_set_outputs "(" S_mus_sun_set_outputs " speaker headphones line-out): set the current Sun audio outputs. \
 Each entry should be either 0 (turn off device) or 1 (turn it on)."
-#ifdef MUS_SUN
   XEN_ASSERT_TYPE(XEN_INTEGER_P(speakers), speakers, XEN_ARG_1, S_mus_sun_set_outputs, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(headphones), headphones, XEN_ARG_2, S_mus_sun_set_outputs, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(line_out), line_out, XEN_ARG_3, S_mus_sun_set_outputs, "an integer");
+#ifdef MUS_SUN
   mus_sun_set_outputs(XEN_TO_C_INT(speakers),
-			XEN_TO_C_INT(headphones),
-			XEN_TO_C_INT(line_out));
+		      XEN_TO_C_INT(headphones),
+		      XEN_TO_C_INT(line_out));
 #endif
   return(XEN_FALSE);
 }
@@ -324,10 +324,10 @@ static XEN g_mus_netbsd_set_outputs(XEN speakers, XEN headphones, XEN line_out)
 {
   #define H_mus_netbsd_set_outputs "(" S_mus_netbsd_set_outputs " speaker headphones line-out): set the current netBSD audio outputs. \
 Each entry should be either 0 (turn off device) or 1 (turn it on)."
-#ifdef MUS_SUN
   XEN_ASSERT_TYPE(XEN_INTEGER_P(speakers), speakers, XEN_ARG_1, S_mus_netbsd_set_outputs, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(headphones), headphones, XEN_ARG_2, S_mus_netbsd_set_outputs, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(line_out), line_out, XEN_ARG_3, S_mus_netbsd_set_outputs, "an integer");
+#ifdef MUS_NETBSD
   mus_netbsd_set_outputs(XEN_TO_C_INT(speakers),
 			 XEN_TO_C_INT(headphones),
 			 XEN_TO_C_INT(line_out));

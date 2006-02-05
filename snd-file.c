@@ -26,11 +26,7 @@
   #include <sys/param.h>
 #endif
 
-/* to handle mount.h correctly in autoconf I'd need to specialize the header checker for
- *   whatever headers mount.h needs, which I assume depends on the OS -- not worth the
- *   trouble!  Perhaps there's a better way to handle disk-kspace?
- */
-#if MUS_MAC_OSX || __bsdi__ || MUS_NETBSD
+#if HAVE_SYS_MOUNT_H && (MUS_MAC_OSX || __bsdi__ || MUS_NETBSD)
   #include <sys/mount.h>
 #endif
 

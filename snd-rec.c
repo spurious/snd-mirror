@@ -777,7 +777,7 @@ void fire_up_recorder(void)
 	{
 	  sys = rp->ordered_systems[i];
 	  dev = rp->ordered_devices[i];
-	  sysdev = MUS_AUDIO_PACK_SYSTEM(sys)|dev;
+	  sysdev = MUS_AUDIO_PACK_SYSTEM(sys) | dev;
 	  if ((err = mus_audio_mixer_read(sysdev, MUS_AUDIO_DIRECTION, 0, &direction)) == MUS_NO_ERROR) 
 	    {
 	      if ((int)direction == 1)
@@ -813,7 +813,7 @@ void fire_up_recorder(void)
 	{
 	  sys = rp->ordered_systems[i];
 	  dev = rp->ordered_devices[i];
-	  sysdev = MUS_AUDIO_PACK_SYSTEM(sys)|dev;
+	  sysdev = MUS_AUDIO_PACK_SYSTEM(sys) | dev;
 	  if ((err = mus_audio_mixer_read(sysdev, MUS_AUDIO_DIRECTION, 0, &direction)) == MUS_NO_ERROR) 
 	    {
 	      if ((int)direction == 0)
@@ -826,7 +826,6 @@ void fire_up_recorder(void)
 			rp->hd_audio_out_chans = MAX_OUT_CHANS;
 		      /* this is a user-set field that shouldn't be overwritten (it refers to the output file/user interface) */
 		      /* rp->out_chans = rp->hd_audio_out_chans; */
-		      /* ??? CHANGED HERE */
 		    }
 		  monitor_data_format = mus_audio_compatible_format(sysdev);
 		  size = mus_bytes_per_sample(monitor_data_format);
@@ -1131,7 +1130,7 @@ void recorder_characterize_devices(int devs, int output_devices)
 	  device = (int)audval[i + 1];
 	  /* FIXME: have not looked to see if oss sndlib supports MUS_AUDIO_DIRECTION */
 	  if ((mus_audio_api() == ALSA_API && 
-	       ((err = mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(system)|device, MUS_AUDIO_DIRECTION, 0, &direction)) == MUS_NO_ERROR) &&
+	       ((err = mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(system) | device, MUS_AUDIO_DIRECTION, 0, &direction)) == MUS_NO_ERROR) &&
 	       (int)direction == 1) 
 	      ||
 	      (mus_audio_api() == OSS_API &&

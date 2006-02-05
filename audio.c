@@ -3368,9 +3368,9 @@ static int probe_api(void)
 /*
  * added HAVE_NEW_ALSA, and changed various calls to reflect the new calling sequences (all under HAVE_NEW_ALSA)
  *   also scheme/ruby tie-ins, and other such changes.  Changed the names of the environment variables to use MUS, not SNDLIB.
- * reformatted to be like the rest of the code
+ * reformatted and reorganized to be like the rest of the code
  * changed default device to "default"
- *    -- Bill 2-Feb-06
+ *    -- Bill 3-Feb-06
  *
  * error handling (mus_error) changed by Bill 14-Nov-02
  * 0.5 support removed by Bill 24-Mar-02
@@ -3447,16 +3447,6 @@ static int probe_api(void)
 #if SND_LIB_VERSION < ((0<<16)|(6<<8)|(0))
   #error ALSA version is too old -- audio.c needs 0.9 or later
 #endif
-
-static int alsa_mus_error(int type, char *message)
-{
-  if (message)
-    {
-      mus_print(message);
-      FREE(message);
-    }
-  return(MUS_ERROR);
-}
 
 /* prototypes for the alsa sndlib functions */
 static int   alsa_mus_audio_initialize(void);
@@ -3710,6 +3700,16 @@ static int to_sndlib_device(int dev, int channel)
   return(MUS_ERROR);
 }
 
+
+static int alsa_mus_error(int type, char *message)
+{
+  if (message)
+    {
+      mus_print(message);
+      FREE(message);
+    }
+  return(MUS_ERROR);
+}
 
 #if 0
 static void alsa_dump_hardware_params(snd_pcm_hw_params_t *params, const char *msg) 
@@ -4142,7 +4142,7 @@ static bool alsa_set_capture_parameters(void)
 char *mus_alsa_playback_device(void) {return(alsa_playback_device_name);}
 char *mus_alsa_set_playback_device(const char *name) 
 {
-  if (alsa_check_device_name(name))
+  if (alsa_check_device_name(name) == MUS_NO_ERROR)
     {
       char *old_name = alsa_playback_device_name;
       alsa_playback_device_name = strdup(name); 
@@ -4158,7 +4158,7 @@ char *mus_alsa_set_playback_device(const char *name)
 char *mus_alsa_capture_device(void) {return(alsa_capture_device_name);}
 char *mus_alsa_set_capture_device(const char *name) 
 {
-  if (alsa_check_device_name(name))
+  if (alsa_check_device_name(name) == MUS_NO_ERROR)
     {
       char *old_name = alsa_capture_device_name;
       alsa_capture_device_name = strdup(name); 
@@ -4174,7 +4174,7 @@ char *mus_alsa_set_capture_device(const char *name)
 char *mus_alsa_device(void) {return(alsa_sndlib_device_name);}
 char *mus_alsa_set_device(const char *name) 
 {
-  if (alsa_check_device_name(name))
+  if (alsa_check_device_name(name) == MUS_NO_ERROR)
     {
       alsa_sndlib_device_name = strdup(name);
       mus_alsa_set_playback_device(name);
@@ -4213,10 +4213,12 @@ bool mus_alsa_set_squelch_warning(bool val)
 
 
 /* TODO: perhaps mus_alsa_provide_interpolation? + autointerp at snd-dac level?
- * TODO: tests needed (what about sun|oss range checks?)
- * TODO: if user sets device, snd-dac should not ignore it and go searching for a better one
+ * TODO: if user sets device, snd-dac should not ignore it and go searching for a better one (does this happen?)
  * TODO: why the blip in playback? play-sound function is ok in this regard
- * TODO: is user sets recorder-in-chans, we should just use it?
+ * TODO: if user sets recorder-in-chans, we should just use it?
+ * TODO: something is wrong in recorder if bufs set (error message makes no sense):
+ * ;alsa_audio_open: default: cannot set buffer size to 3 periods of 1024 frames; 
+ *    total requested buffer size is 3072 frames, minimum allowed is 4, maximum is 733007751
  */
 
 
