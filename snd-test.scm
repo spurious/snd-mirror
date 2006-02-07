@@ -38,7 +38,7 @@
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
 (define tests 1)
-(define keep-going #f)
+(define keep-going #t)
 (define all-args #f) ; huge arg testing
 (define with-big-file #t)
 
@@ -26128,13 +26128,14 @@ EDITS: 5
 ;	(delete-file "fmv.snd")
 ;	(delete-file "fmv1.snd"))
 
-      (let ((in1 (open-sound "oboe.snd"))
-	    (in2 (open-sound "2.snd")))
-	(set! (sync in1) 1)
-	(set! (sync in2) 1)
-	(play-and-wait 0 #f #f #t)
-	(close-sound in1)
-	(close-sound in2))
+      (if (not (provided? 'alsa))
+	  (let ((in1 (open-sound "oboe.snd"))
+		(in2 (open-sound "2.snd")))
+	    (set! (sync in1) 1)
+	    (set! (sync in2) 1)
+	    (play-and-wait 0 #f #f #t)
+	    (close-sound in1)
+	    (close-sound in2)))
 
       (let* ((ind (open-sound "oboe.snd"))
 	     (edit-hook-ctr 0)

@@ -1752,10 +1752,11 @@ static void scan_audio_devices(void)
 	    }
 	}
     }
+#if 0
   if (index == 0)
-    {
-      snd_warning("can't find any playable device");
-    }
+    snd_warning("can't find any playable device");
+  /* this seems to happen all the time? */
+#endif
   alsa_devices_available = index;
 }
 

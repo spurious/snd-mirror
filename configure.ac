@@ -193,7 +193,7 @@ AC_ARG_WITH(snd-as-pd-external,
 	   if test "$with_ruby" = yes ; then
 	      AC_MSG_ERROR(When making snd as a pd external, ruby can not be used as extension language.)
 	   fi
-	   CFLAGS="$CFLAGS -DSND_PD_PATH=\\\"\""`pwd`"\"\\\" "
+	   CFLAGS="$CFLAGS -DSND_PD_PATH=\\\"`pwd`\\\""
 	   [with_jack=yes]
 	   AC_DEFINE(SND_AS_PD_EXTERNAL)
 	   MAKE_TARGET=external

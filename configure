@@ -3292,7 +3292,7 @@ echo "$as_me: error: When making snd as a pd external" >&2;}
 echo "$as_me: error: When making snd as a pd external" >&2;}
    { (exit ruby can not be used as extension language.); exit ruby can not be used as extension language.; }; }
 	   fi
-	   CFLAGS="$CFLAGS -DSND_PD_PATH=\\\"\""`pwd`"\"\\\" "
+	   CFLAGS="$CFLAGS -DSND_PD_PATH=\\\"`pwd`\\\""
 	   with_jack=yes
 	   cat >>confdefs.h <<\_ACEOF
 #define SND_AS_PD_EXTERNAL 1
