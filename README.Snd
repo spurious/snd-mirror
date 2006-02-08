@@ -120,6 +120,7 @@ Version info:
   if Ruby, Ruby 1.6.4 or later
   if GSL, version 0.8 or later
   if gtkglext, version 1.0 or later
+  if gamin, version 0.1.0 or later
 
 
 ----------------------------------------------------------------

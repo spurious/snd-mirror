@@ -479,6 +479,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+9-Feb:   Bill Sack's pd-stochastic.scm and snd-stochastic.pd.\n\
 2-Feb:   mus_audio_sun_outputs -> mus_sun_set_outputs, added mus_netbsd_set_outputs.\n\
          mus_audio_set_oss_buffers -> mus_oss_set_buffers.\n\
          changed ALSA environment variable names to use MUS, not SNDLIB.\n\

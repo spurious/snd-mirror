@@ -1351,6 +1351,7 @@ Here are brief descriptions of the functions:
     <i>thunk</i> is called before the object is destroyed or reloaded. 
     Local function.
 </pre>
+<img src="stochastic.png" alt="snd with pd">
 
 <br><br>
 <table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndwithmotif">Snd and Motif</a></h3></td></tr></table>
@@ -2150,14 +2151,14 @@ So, to use the "plughw" device, we could:
 </pre>
 <p>
 Similarly, if you know which device you want to record from (say your arecord command is
-"arecord -D hw:0.2", you can tell Snd's recorder to use that device via:
+"arecord -D hw:0.2"), you can tell Snd's recorder to use that device via:
 </p>
 <pre>
 setenv MUS_ALSA_CAPTURE_DEVICE "hw:0.2"
 
 or
 
-(set! (mus-alsa-capture-device) "hw:0.2"
+(set! (mus-alsa-capture-device) "hw:0.2")
 </pre>
 <p>It's also possible to define your own device, apparently, but that part
 of ALSA is beyond my ken.
