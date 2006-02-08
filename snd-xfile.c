@@ -18,7 +18,7 @@
  *          -> src is interrupted apparently and file open completes
  *       or similarly, stops at "ok", starts src, clicks ok?
  * PERHAPS: audio:settings for display, perhaps reset -- as opposed to using the recorder
- * PERHAPS: in Save-as dialogs, a "New Directory" button would be useful
+ * PERHAPS: in Save-as dialogs, a "New Directory" button would be useful -- but where to put this? (mac-like drop-down?)
  */
 
 #define FSB_BOX(Dialog, Child) XmFileSelectionBoxGetChild(Dialog, Child)

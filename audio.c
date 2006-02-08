@@ -16,6 +16,8 @@
  *    audio describers
  */
 
+/* TODO: no sound output in MacIntel? */
+
 /*
  * void mus_audio_describe(void) describes the audio hardware state.
  * char *mus_audio_report(void) returns the same information as a string.

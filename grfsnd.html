@@ -1305,9 +1305,52 @@ CLM:
 <br><br>
 <table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndwithpd">Snd and Pd</a></h3></td></tr></table>
 
-<p>Snd can be used as a Pd "external".  Use the --with-snd-as-pd-external switch, and make sure
-the configure script can find Guile 1.7.n.  help-snd.pd has examples.
+<p>Snd can be built to be used as a Pd "external".  Use the --with-snd-as-pd-external switch, and make sure
+the configure script can find Guile 1.7.n.  If you have several versions of Guile, use the
+GUILE_CONFIG_path variable to select the latest:
 </p>
+<pre>
+./configure --with-snd-as-pd-external GUILE_CONFIG_path=/home/bil/test/bin
+</pre>
+<p>
+help-snd.pd and snd-help-fm.pd have example patches.
+Here are brief descriptions of the functions:
+</p>
+<pre>
+(<b>pd-inlet</b> inlet-num type func)
+    <i>func</i> is a function that is called when the object receives a message to the inlet <i>inlet-num</i> of type 
+      <i>type</i>. Normal values for <i>type</i> are 'float, 'list, 'bang, etc. 
+    add.scm, inout.scm 
+    Local function. 
+
+(<b>pd-outlet</b> outlet-num arg0 arg1 ...) 
+    Sends one or more values to outlet <i>outlet-num</i>. The arguments can be of any kind. 
+    add.scm, inout.scm 
+    Local function. 
+
+(<b>pd-bind</b> symbol func) 
+    Pd messages sent to <i>symbol</i> arrive at the <i>func</i> function. 
+    send_receive.scm 
+    Both local and global 
+
+(<b>pd-unbind</b> symbol) 
+    Stop receiving messages sent to <i>symbol</i>. 
+    Both local and global. For the local version, all bindings are automatically unbound when the object is destroyed or reloaded. 
+
+(<b>pd-send</b> symbol arg0 arg1 ...) 
+    Sends one or more values to receivers for <i>symbol</i>. <i>symbol</i> can either be a scheme or a pd symbol. 
+    send_receive.scm 
+    Global function. 
+
+(<b>pd-get-symbol</b> symbol) 
+    Returns the pd symbol for the scheme symbol <i>symbol</i>. pd-send works faster when a pd symbol is used instead of a scheme symbol. 
+    send_receive.scm 
+    Global function. 
+
+(<b>pd-set-destroy-func</b> thunk) 
+    <i>thunk</i> is called before the object is destroyed or reloaded. 
+    Local function.
+</pre>
 
 <br><br>
 <table width="100%" border=1><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndwithmotif">Snd and Motif</a></h3></td></tr></table>

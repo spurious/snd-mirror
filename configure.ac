@@ -1051,11 +1051,16 @@ if test "$ac_snd_have_gui" != no ; then
     if test x$PKG_CONFIG != xno && $PKG_CONFIG gamin --exists ; then
        gamin_version="`$PKG_CONFIG gamin --modversion`"
        AC_MSG_RESULT($gamin_version)
-       AC_DEFINE_UNQUOTED(MUS_GAMIN_VERSION,"${gamin_version}")
-       FAM_LIB="`$PKG_CONFIG gamin --libs`"
-       AC_DEFINE(HAVE_FAM_H)
-       AC_DEFINE(HAVE_FAM)
-       AC_DEFINE(HAVE_FAM_NO_EXISTS)
+       # before version 0.0.18, gamin.pc messed up the --libs result, so we'll just insist on a later version
+       if $PKG_CONFIG --atleast-version 0.1.0 gamin; then
+         AC_DEFINE_UNQUOTED(MUS_GAMIN_VERSION,"${gamin_version}")
+         FAM_LIB="`$PKG_CONFIG gamin --libs`"
+         AC_DEFINE(HAVE_FAM_H)
+         AC_DEFINE(HAVE_FAM)
+         AC_DEFINE(HAVE_FAM_NO_EXISTS)
+       else
+	AC_MSG_WARN([need gamin version 0.1.0 or later])
+       fi
     else
       AC_MSG_RESULT(no)
       AC_CHECK_HEADER(fam.h,

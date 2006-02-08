@@ -15139,23 +15139,29 @@ echo $ECHO_N "checking for Gamin... $ECHO_C" >&6
        gamin_version="`$PKG_CONFIG gamin --modversion`"
        echo "$as_me:$LINENO: result: $gamin_version" >&5
 echo "${ECHO_T}$gamin_version" >&6
-       cat >>confdefs.h <<_ACEOF
+       # before version 0.0.18, gamin.pc messed up the --libs result, so we'll just insist on a later version
+       if $PKG_CONFIG --atleast-version 0.1.0 gamin; then
+         cat >>confdefs.h <<_ACEOF
 #define MUS_GAMIN_VERSION "${gamin_version}"
 _ACEOF
 
-       FAM_LIB="`$PKG_CONFIG gamin --libs`"
-       cat >>confdefs.h <<\_ACEOF
+         FAM_LIB="`$PKG_CONFIG gamin --libs`"
+         cat >>confdefs.h <<\_ACEOF
 #define HAVE_FAM_H 1
 _ACEOF
 
-       cat >>confdefs.h <<\_ACEOF
+         cat >>confdefs.h <<\_ACEOF
 #define HAVE_FAM 1
 _ACEOF
 
-       cat >>confdefs.h <<\_ACEOF
+         cat >>confdefs.h <<\_ACEOF
 #define HAVE_FAM_NO_EXISTS 1
 _ACEOF
 
+       else
+	{ echo "$as_me:$LINENO: WARNING: need gamin version 0.1.0 or later" >&5
+echo "$as_me: WARNING: need gamin version 0.1.0 or later" >&2;}
+       fi
     else
       echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6
