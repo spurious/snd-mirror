@@ -18007,8 +18007,10 @@ _ACEOF
       fi
     fi
     if test "$with_snd_as_pd_external" = yes ; then
-       GUILE_LIBS="${GUILE_CONFIG_path}../lib/libguile.a  -lltdl -lgmp -lcrypt -lm -lltdl"
+      GUILE_LIBS="`${GUILE_CONFIG_path}${GUILE_name} -c '(display (string-append (cdr (assoc (quote libdir) %guile-build-info)) "/libguile.a -lltdl -lgmp -lcrypt"))'`"
     fi
+
+
   fi
 else
   cat >>confdefs.h <<\_ACEOF
