@@ -329,7 +329,9 @@
 (define (beep)
   (XBell (XtDisplay (cadr (main-widgets))) 100))
 
+#!
 (define wm-delete-event
+  ;; this works on the main window, but I can't see how to get it to work on dialogs
   (let ((e (XEvent ClientMessage)))
     (lambda (widget)
       (let ((dpy (XtDisplay widget))
@@ -344,4 +346,4 @@
 	  (if (= err 0)
 	      (display (format #f "[client-event error] " err)))
 	  (XFlush dpy))))))
-
+!#

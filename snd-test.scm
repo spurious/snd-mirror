@@ -38,7 +38,7 @@
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
 (define tests 1)
-(define keep-going #t)
+(define keep-going #f)
 (define all-args #f) ; huge arg testing
 (define with-big-file #t)
 
@@ -4021,7 +4021,7 @@
 	    (if defwarn (snd-display ";mus-alsa-squelch-warning: ~A" defwarn))
 	    (if (not (= defbufs 3)) (snd-display ";mus-alsa-buffers: ~A" defbufs))
 	    (if (not (= defsize 1024)) (snd-display ";mus-alsa-buffer-size: ~A" defsize))
-	    (if (not (string=? defdev "sndlib")) (snd-display ";mus-alsa-device: ~A" defdev))      
+	    (if (not (string=? defdev "default")) (snd-display ";mus-alsa-device: ~A" defdev))     ; actually starts as "sndlib" 
 	    (if (not (string=? defplay "default")) (snd-display ";mus-alsa-playback-device: ~A" defplay))      
 	    (if (not (string=? defrec "default")) (snd-display ";mus-alsa-capture-device: ~A" defrec))
 	    (set! (mus-alsa-device) "hw:0")
@@ -47057,6 +47057,20 @@ EDITS: 1
 			  (click-button (XmMessageBoxGetChild editd XmDIALOG_CANCEL_BUTTON)) (force-event))
 			(close-sound ind)))
 		  (if (file-exists? "test.aiff") (delete-file "test.aiff"))
+		  (let ((ind (open-sound "oboe.snd")))
+		    (if (file-exists? "fmv.snd") (delete-file "fmv.snd"))
+		    (save-sound-as "fmv.snd" ind)
+		    (close-sound ind)
+		    (set! ind (open-sound "fmv.snd"))
+		    (let* ((dialog (edit-header-dialog))
+			   (ok (XmMessageBoxGetChild dialog XmDIALOG_OK_BUTTON))
+			   (cancel (XmMessageBoxGetChild dialog XmDIALOG_CANCEL_BUTTON))
+			   (types (find-child dialog "header-type")))
+		      (click-button ok) (force-event)
+		      (if (XtIsManaged dialog) 
+			  (click-button cancel))
+		      (force-event)
+		      (close-sound ind)))
 		  
 		  ;; ---------------- edit:find dialog ----------------
 			(find-dialog)
@@ -49095,6 +49109,12 @@ EDITS: 1
 		(XtUnmanageChild sctrls)
 		(set! (widget-size sctrls) (list (car wh) (* (cadr wh) 3)))
 		(XtManageChild sctrls)
+
+		(let ((speed (find-child sctrls "speed-number"))
+		      (amp (find-child sctrls "amp")))
+		  (click-button speed) (force-event)
+		  (drag-event amp 1 0 1 1 150 150))
+
 		(for-each-child sctrls
 				(lambda (w)
 				  (let* ((e (XEvent ButtonPress))
