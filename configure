@@ -15606,9 +15606,9 @@ fi
 
 
               OLD_LIBS="$LIBS"
-    	      LIBS="$GUILE_LIBS"
+    	      LIBS="$GUILE_LIBS $LIBS"
               OLD_CFLAGS="$CFLAGS"
-              CFLAGS="$GUILE_CFLAGS -lm"
+              CFLAGS="$GUILE_CFLAGS -lm $CFLAGS"
               echo "$as_me:$LINENO: checking for rb_gc_disable in -lruby" >&5
 echo $ECHO_N "checking for rb_gc_disable in -lruby... $ECHO_C" >&6
 if test "${ac_cv_lib_ruby_rb_gc_disable+set}" = set; then
@@ -16028,9 +16028,9 @@ _ACEOF
     ac_snd_have_extension_language=yes
 
     OLD_LIBS="$LIBS"
-    LIBS="$GUILE_LIBS"
+    LIBS="$GUILE_LIBS $LIBS"
     OLD_CFLAGS="$CFLAGS"
-    CFLAGS="$GUILE_CFLAGS"
+    CFLAGS="$GUILE_CFLAGS $CFLAGS"
     GNAME="guile"
 
 # special Mac OSX stuff -- need to protect against multiple -lguile's, add -all_load, and add -lguile-ltdl

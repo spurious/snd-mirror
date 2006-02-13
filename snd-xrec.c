@@ -2894,7 +2894,6 @@ widget_t snd_record_file(void)
   XGCValues v;
   Drawable wn;
   state_context *sx;
-  pane_t *p;
   recorder_info *rp;
   rp = get_recorder_info();
 
@@ -3024,6 +3023,8 @@ widget_t snd_record_file(void)
       XtSetArg(args[n], XmNallowResize, true); n++;
 
       file_info_pane = XtCreateManagedWidget("file-pane", xmFormWidgetClass, rec_panes, args, n);
+
+      XtSetArg(args[n], XmNmaximum, 40); n++;
       message_pane = XtCreateManagedWidget("msg-pane", xmFormWidgetClass, rec_panes, args, n);
 
       make_file_info_pane(rp, file_info_pane, rp->ordered_devices_size);
@@ -3032,10 +3033,7 @@ widget_t snd_record_file(void)
 
       /* loop through all panes reading p->pane_size and */
       for (i = 0; i < rp->ordered_devices_size; i++)
-	{
-	  p = all_panes[i];
-	  XtVaSetValues(p->pane, XmNpaneMaximum, p->pane_size, NULL);
-	}
+	XtVaSetValues(all_panes[i]->pane, XmNpaneMaximum, all_panes[i]->pane_size, NULL);
 
       /* in case caller closes (via window menu) dialog: */
       wm_delete = XmInternAtom(XtDisplay(recorder), "WM_DELETE_WINDOW", false);
@@ -3043,19 +3041,24 @@ widget_t snd_record_file(void)
 
       set_dialog_widget(RECORDER_DIALOG, recorder);
       initialize_recorder(rp);
+
+      for (i = 0; i < rp->ordered_devices_size; i++)
+	XtVaSetValues(all_panes[i]->pane, 
+		      XmNpaneMaximum, LOTSA_PIXELS,  /* release max once we're set up so user can do what he wants */
+		      NULL); 
+
+      XtVaSetValues(message_pane, 
+		    XmNpaneMinimum, 1,
+		    XmNpaneMaximum, 200,
+		    NULL);
     }
   else 
     {
       if (!XtIsManaged(recorder)) XtManageChild(recorder);
       raise_dialog(recorder);
     }
-  XtVaSetValues(message_pane, XmNpaneMinimum, 1, NULL);
-  for (i = 0; i < rp->ordered_devices_size; i++)
-    {
-      p = all_panes[i];
-      XtVaSetValues(p->pane, XmNpaneMaximum, LOTSA_PIXELS, NULL); /* release max once we're set up so user can do what he wants */
-    }
   if (!(rp->taking_input)) fire_up_recorder();
+
   return(recorder);
 }
 

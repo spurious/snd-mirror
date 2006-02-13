@@ -4100,15 +4100,20 @@ static bool alsa_set_playback_parameters(void)
   if (alsa_hw_params[SND_PCM_STREAM_PLAYBACK]) 
     {
       snd_pcm_uframes_t size;
+      int old_buffers;
+      old_buffers = alsa_buffers;
       if (alsa_sw_params[SND_PCM_STREAM_PLAYBACK]) free(alsa_sw_params[SND_PCM_STREAM_PLAYBACK]);
       alsa_sw_params[SND_PCM_STREAM_PLAYBACK] = alsa_get_software_params();
       sound_cards = 1;
       alsa_buffers = alsa_clamp_buffers(alsa_buffers);
-      if (alsa_buffers > 0)
+      if (alsa_buffers <= 0)
 	{
-	  size = alsa_clamp_buffer_size(alsa_samples_per_channel * alsa_buffers);
-	  alsa_samples_per_channel = size / alsa_buffers;
+	  alsa_buffers = old_buffers;
+	  return(false);
 	}
+      size = alsa_clamp_buffer_size(alsa_samples_per_channel * alsa_buffers);
+      if (size <= 0) return(false);
+      alsa_samples_per_channel = size / alsa_buffers;
     }
   return(alsa_hw_params[SND_PCM_STREAM_PLAYBACK] && alsa_sw_params[SND_PCM_STREAM_PLAYBACK]);
 }
@@ -4121,15 +4126,20 @@ static bool alsa_set_capture_parameters(void)
   if (alsa_hw_params[SND_PCM_STREAM_CAPTURE]) 
     {
       snd_pcm_uframes_t size;
+      int old_buffers;
+      old_buffers = alsa_buffers;
       if (alsa_sw_params[SND_PCM_STREAM_CAPTURE]) free(alsa_sw_params[SND_PCM_STREAM_CAPTURE]);
       alsa_sw_params[SND_PCM_STREAM_CAPTURE] = alsa_get_software_params();
       sound_cards = 1;
       alsa_buffers = alsa_clamp_buffers(alsa_buffers);
-      if (alsa_buffers > 0)
+      if (alsa_buffers <= 0)
 	{
-	  size = alsa_clamp_buffer_size(alsa_samples_per_channel * alsa_buffers);
-	  alsa_samples_per_channel = size / alsa_buffers;
+	  alsa_buffers = old_buffers;
+	  return(false);
 	}
+      size = alsa_clamp_buffer_size(alsa_samples_per_channel * alsa_buffers);
+      if (size <= 0) return(false);
+      alsa_samples_per_channel = size / alsa_buffers;
     }
   return(alsa_hw_params[SND_PCM_STREAM_CAPTURE] && alsa_sw_params[SND_PCM_STREAM_CAPTURE]);
 }
@@ -4183,6 +4193,7 @@ int mus_alsa_buffer_size(void) {return(alsa_samples_per_channel);}
 int mus_alsa_set_buffer_size(int size) 
 {
   snd_pcm_uframes_t bsize;
+  if (alsa_buffers == 0) alsa_buffers = 1;
   if (size > 0)
     {
       bsize = alsa_clamp_buffer_size(size * alsa_buffers);
@@ -4198,8 +4209,11 @@ int mus_alsa_set_buffers(int num)
   if (num > 0)
     {
       alsa_buffers = alsa_clamp_buffers(num);
-      size = alsa_clamp_buffer_size(alsa_samples_per_channel * alsa_buffers);
-      alsa_samples_per_channel = size / alsa_buffers;
+      if (alsa_buffers > 0)
+	{
+	  size = alsa_clamp_buffer_size(alsa_samples_per_channel * alsa_buffers);
+	  alsa_samples_per_channel = size / alsa_buffers;
+	}
     }
   return(alsa_buffers);
 }
@@ -4221,6 +4235,7 @@ bool mus_alsa_set_squelch_warning(bool val)
  * TODO: something is wrong in recorder if bufs set (error message makes no sense):
  * ;alsa_audio_open: default: cannot set buffer size to 3 periods of 1024 frames; 
  *    total requested buffer size is 3072 frames, minimum allowed is 4, maximum is 733007751
+ * TODO: split playback and capture -- do these need initialization at all?
  */
 
 
@@ -4627,9 +4642,12 @@ static int alsa_mus_audio_open_input(int ur_dev, int srate, int chans, int forma
 
 /* to force it to stop, snd_pcm_drop */
 
+static bool xrun_warned = false;
+
 static int alsa_mus_audio_close(int id)
 {
   int err = 0;
+  xrun_warned = false;
   if (alsa_trace) mus_print( "%s: %d", c__FUNCTION__, id); 
   if (handles[id]) 
     {
@@ -4664,7 +4682,11 @@ static int recover_from_xrun(int id)
   state = snd_pcm_status_get_state(status);
   if (state == SND_PCM_STATE_XRUN) 
     {
-      mus_print("[under|over]run detected");
+      if (!xrun_warned)
+	{
+	  xrun_warned = true;
+	  mus_print("[under|over]run detected");
+	}
       err = snd_pcm_prepare(handles[id]);
       if (err < 0) 
 	mus_print("snd_pcm_prepare: %s", snd_strerror(err));

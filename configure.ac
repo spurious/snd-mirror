@@ -1158,9 +1158,9 @@ AC_ARG_WITH(ruby,
               AC_SUBST(GUILE_CFLAGS)
 
               OLD_LIBS="$LIBS"
-    	      LIBS="$GUILE_LIBS"
+    	      LIBS="$GUILE_LIBS $LIBS"
               OLD_CFLAGS="$CFLAGS"
-              CFLAGS="$GUILE_CFLAGS -lm"
+              CFLAGS="$GUILE_CFLAGS -lm $CFLAGS"
               AC_CHECK_LIB(ruby, rb_gc_disable, [AC_DEFINE(HAVE_RB_GC_DISABLE)])
 	      AC_CHECK_LIB(ruby, rb_ary_dup, [AC_DEFINE(HAVE_RB_ARY_DUP)])
 
@@ -1292,9 +1292,9 @@ if test $GUILE_CONFIG_works = yes; then
     ac_snd_have_extension_language=yes
 
     OLD_LIBS="$LIBS"
-    LIBS="$GUILE_LIBS"
+    LIBS="$GUILE_LIBS $LIBS"
     OLD_CFLAGS="$CFLAGS"
-    CFLAGS="$GUILE_CFLAGS"
+    CFLAGS="$GUILE_CFLAGS $CFLAGS"
     GNAME="guile"
 
 # special Mac OSX stuff -- need to protect against multiple -lguile's, add -all_load, and add -lguile-ltdl

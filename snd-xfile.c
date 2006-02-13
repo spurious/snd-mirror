@@ -5560,7 +5560,7 @@ widget_t start_view_files_dialog_1(view_files_info *vdat, bool managed)
       XtSetArg(args[n], XmNlabelString, bstr); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;
       XtSetArg(args[n], XmNindicatorType, XmONE_OF_MANY); n++;
-      vdat->at_end_button = make_togglebutton_widget("at_end-button", bform, args, n);
+      vdat->at_end_button = make_togglebutton_widget("at-end-button", bform, args, n);
       XtAddCallback(vdat->at_end_button, XmNdisarmCallback, view_files_at_end_callback, (XtPointer)vdat);
       XmStringFree(bstr);
 
@@ -5627,7 +5627,7 @@ widget_t start_view_files_dialog_1(view_files_info *vdat, bool managed)
       XtSetArg(args[n], XmNlabelString, bstr); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;
       XtSetArg(args[n], XmNindicatorType, XmONE_OF_MANY); n++;
-      vdat->at_mark_button = make_togglebutton_widget("at-beginning-button", bform, args, n);
+      vdat->at_mark_button = make_togglebutton_widget("at-mark-button", bform, args, n);
       XtAddCallback(vdat->at_mark_button, XmNdisarmCallback, view_files_at_mark_callback, (XtPointer)vdat);
       XmStringFree(bstr);
 
@@ -5712,7 +5712,7 @@ widget_t start_view_files_dialog_1(view_files_info *vdat, bool managed)
       XtSetArg(args[n], XmNvalue, vf_amp_to_scroll(1.0)); n++;
       XtSetArg(args[n], XmNvalueChangedCallback, n2 = make_callback_list(vf_amp_valuechanged_callback, (XtPointer)vdat)); n++;
       XtSetArg(args[n], XmNdragCallback, n3 = make_callback_list(vf_amp_drag_callback, (XtPointer)vdat)); n++;
-      vdat->amp_scrollbar = XtCreateManagedWidget("amp", xmScrollBarWidgetClass, leftform, args, n);
+      vdat->amp_scrollbar = XtCreateManagedWidget("amp-scroll", xmScrollBarWidgetClass, leftform, args, n);
 
       n = 0;
       /* SPEED */

@@ -3089,6 +3089,22 @@ static XEN g_sash(void)
       lst = XEN_CONS(XEN_WRAP_WIDGET(sashes[i]), lst);
   return(lst);
 }
+
+static XEN g_watch_sash(void)
+{
+  /* for autotests -- no way to do this via event.scm etc */
+  SashCallDataRec *call_data;
+  call_data = (SashCallDataRec *)CALLOC(1, sizeof(SashCallDataRec));
+  call_data->num_params = 1;
+  call_data->params = (String *)CALLOC(1, sizeof(String));
+  call_data->params[0] = (String)"Start";
+  watch_sash(NULL, NULL, (XtPointer)call_data);
+  call_data->params[0] = (String)"Commit";
+  watch_sash(NULL, NULL, (XtPointer)call_data);
+  FREE(call_data->params);
+  FREE(call_data);
+  return(XEN_FALSE);
+}
 #endif
 
 #ifdef XEN_ARGIFY_1
@@ -3102,6 +3118,7 @@ void g_init_gxsnd(void)
   XEN_DEFINE_PROCEDURE(S_sound_widgets,  g_sound_widgets_w,  0, 1, 0, H_sound_widgets);
 #if DEBUGGING && HAVE_GUILE && WITH_RELATIVE_PANES
   XEN_DEFINE_PROCEDURE("top-sash", g_sash, 0, 0, 0, "autotest func");
+  XEN_DEFINE_PROCEDURE("watch-sash", g_watch_sash, 0, 0, 0, "autotest func");
 #endif
 }
 

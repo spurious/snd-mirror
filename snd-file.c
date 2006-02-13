@@ -2880,8 +2880,12 @@ static char **view_files_set_selected_files(widget_t dialog, char **files, int l
 		view_files_run_select_hook(vdat->dialog, (const char *)(files[i]));
 	      }
 	  }
+      vf_mix_insert_buttons_set_sensitive(vdat, 
+					  ((vdat->currently_selected_files > 0) &&
+					   (any_selected_sound())));
+      vf_open_remove_buttons_set_sensitive(vdat, 
+					   (vdat->currently_selected_files > 0));
     }
-  /* display not needed, I think */
   return(files);
 }
 
