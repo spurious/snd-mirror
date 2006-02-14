@@ -1354,7 +1354,7 @@ static XEN g_region_maxamp(XEN n)
 
 static XEN g_region_maxamp_position(XEN n) 
 {
-  #define H_region_maxamp_position "(" S_region_maxamp " (reg 0)): first sample where region maxamp occurs"
+  #define H_region_maxamp_position "(" S_region_maxamp_position " (reg 0)): first sample where region maxamp occurs"
   XEN_ASSERT_TYPE(XEN_REGION_IF_BOUND_P(n), n, XEN_ONLY_ARG, S_region_maxamp_position, "a region id");
   return(region_get(REGION_MAXAMP_POSITION, n, S_region_maxamp_position));
 }

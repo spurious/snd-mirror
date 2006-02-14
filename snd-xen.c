@@ -3872,7 +3872,11 @@ that name is presented in the New File dialog."
       /* this code stolen from ruby.c */
       extern VALUE rb_load_path;
       char *str;
-      char buf[FILENAME_MAX];
+      #ifndef FILENAME_MAX
+        char buf[1024];
+      #else
+        char buf[FILENAME_MAX]; /* bits/stdio_lim.h or iso/stdio_iso.h -- looks like trouble! */
+      #endif
       int i, j = 0, len;
       str = RUBY_SEARCH_PATH;
       len = snd_strlen(str);

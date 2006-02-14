@@ -4712,7 +4712,9 @@ mix data (a vct) into snd's channel chn starting at beg; return the new mix id"
 	  track_num = XEN_TO_C_INT(track_id);
 	  if ((track_num > 0) && (!(track_p(track_num))))
 	    {
+#if (!SNDLIB_USE_FLOATS)
 	      FREE(data);
+#endif
 	      cp->edit_hook_checked = false;
 	      XEN_ERROR(NO_SUCH_TRACK,
 			XEN_LIST_2(C_TO_XEN_STRING(S_mix_vct),
@@ -7143,8 +7145,7 @@ static XEN g_set_track_speed_style(XEN n, XEN speed)
   XEN_ASSERT_TYPE(XEN_INTEGER_P(speed), speed, XEN_ARG_2, S_setB S_track_speed_style, "an integer"); 
   spd = (speed_style_t)XEN_TO_C_INT(speed);
   if (spd > SPEED_CONTROL_AS_SEMITONE)
-    XEN_OUT_OF_RANGE_ERROR(S_setB S_track_speed_style, 
-			   1, speed, 
+    XEN_OUT_OF_RANGE_ERROR(S_setB S_track_speed_style, 1, speed, 
 			   "~A, but must be " S_speed_control_as_float ", " S_speed_control_as_ratio ", or " S_speed_control_as_semitone);
   set_track_speed_style(track_id, spd, false);
   return(speed);
@@ -7551,11 +7552,11 @@ the copy at 'beg' which defaults to the copied track's position."
   int new_id, old_id;
   off_t old_pos, pos;
   new_id = xen_to_c_track(id, S_copy_track);
-  ASSERT_SAMPLE_TYPE(S_copy_mix, beg, 2);
+  ASSERT_SAMPLE_TYPE(S_copy_track, beg, 2);
   old_id = XEN_TO_C_INT(id);
   if (!(track_p(old_id)))
     XEN_ERROR(NO_SUCH_TRACK,
-	      XEN_LIST_2(C_TO_XEN_STRING(S_copy_mix),
+	      XEN_LIST_2(C_TO_XEN_STRING(S_copy_track),
 			 id));
   old_pos = track_position(old_id, -1);
   pos = XEN_TO_C_OFF_T_OR_ELSE(beg, old_pos);

@@ -2018,13 +2018,13 @@ a new one is created.  If normalize is #t, the resulting waveform goes between -
 	      XEN_LIST_3(C_TO_XEN_STRING(S_phase_partials_to_wave), 
 			 C_TO_XEN_STRING("partials list empty?"),
 			 partials));
-  if (len & 1)
+  if ((len % 3) != 0)
     XEN_ERROR(BAD_TYPE,
 	      XEN_LIST_3(C_TO_XEN_STRING(S_phase_partials_to_wave), 
-			 C_TO_XEN_STRING("odd length partials list?"),
+			 C_TO_XEN_STRING("partials list should have 3 entries for each harmonic (number amp phase)"),
 			 partials));
   if (!(XEN_NUMBER_P(XEN_CAR(partials))))
-    XEN_ASSERT_TYPE(false, partials, XEN_ARG_1, S_phase_partials_to_wave, "a list of numbers (partial numbers with amplitudes)");
+    XEN_ASSERT_TYPE(false, partials, XEN_ARG_1, S_phase_partials_to_wave, "a list of numbers (partial numbers with amplitudes and phases)");
   if ((XEN_NOT_BOUND_P(utable)) || (!(VCT_P(utable))))
     {
       wave = (Float *)CALLOC(clm_table_size, sizeof(Float));

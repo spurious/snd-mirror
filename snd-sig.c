@@ -5081,7 +5081,7 @@ applies an FIR filter to snd's channel chn. 'env' is the frequency response enve
     caller = XEN_TO_C_STRING(origin);
   errstr = filter_channel(cp, order_1, e_1, beg_1, dur_1, edpos_1, caller, truncate_1, coeffs);
   if (e_1) free_env(e_1);
-  if (errstr)
+  if (errstr) /* this will only happen if the temp file is unwritable */
     XEN_ERROR(MUS_MISC_ERROR,
 	      XEN_LIST_2(C_TO_XEN_STRING(S_filter_channel),
 			 C_TO_XEN_STRING(errstr)));

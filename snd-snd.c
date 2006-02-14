@@ -4913,7 +4913,7 @@ static XEN g_close_sound_file(XEN g_fd, XEN g_bytes)
   return(XEN_FALSE);
 }
 
-static XEN g_vct2soundfile(XEN g_fd, XEN obj, XEN g_nums)
+static XEN g_vct_to_sound_file(XEN g_fd, XEN obj, XEN g_nums)
 {
   #define H_vct_to_sound_file "(" S_vct_to_sound_file " fd vct-obj samps): write samps samples from vct-obj to the sound file fd"
   int fd, nums, i;
@@ -5097,7 +5097,7 @@ XEN_ARGIFY_1(g_finish_progress_report_w, g_finish_progress_report)
 XEN_ARGIFY_5(g_progress_report_w, g_progress_report)
 XEN_VARGIFY(g_open_sound_file_w, g_open_sound_file)
 XEN_NARGIFY_2(g_close_sound_file_w, g_close_sound_file)
-XEN_NARGIFY_3(g_vct2soundfile_w, g_vct2soundfile)
+XEN_NARGIFY_3(g_vct_to_sound_file_w, g_vct_to_sound_file)
 XEN_ARGIFY_1(g_equalize_panes_w, g_equalize_panes)
 #else
 #define g_sound_p_w g_sound_p
@@ -5221,7 +5221,7 @@ XEN_ARGIFY_1(g_equalize_panes_w, g_equalize_panes)
 #define g_progress_report_w g_progress_report
 #define g_open_sound_file_w g_open_sound_file
 #define g_close_sound_file_w g_close_sound_file
-#define g_vct2soundfile_w g_vct2soundfile
+#define g_vct_to_sound_file_w g_vct_to_sound_file
 #define g_equalize_panes_w g_equalize_panes
 #endif
 
@@ -5423,6 +5423,6 @@ If it returns #t, the usual informative minibuffer babbling is squelched."
   XEN_DEFINE_PROCEDURE(S_channel_amp_envs,         g_channel_amp_envs_w,         0, 5, 0, H_channel_amp_envs);
   XEN_DEFINE_PROCEDURE(S_open_sound_file,          g_open_sound_file_w,          0, 0, 1, H_open_sound_file);
   XEN_DEFINE_PROCEDURE(S_close_sound_file,         g_close_sound_file_w,         2, 0, 0, H_close_sound_file);
-  XEN_DEFINE_PROCEDURE(S_vct_to_sound_file,        g_vct2soundfile_w,            3, 0, 0, H_vct_to_sound_file);
+  XEN_DEFINE_PROCEDURE(S_vct_to_sound_file,        g_vct_to_sound_file_w,        3, 0, 0, H_vct_to_sound_file);
   XEN_DEFINE_PROCEDURE(S_equalize_panes,           g_equalize_panes_w,           0, 1, 0, H_equalize_panes);
 }

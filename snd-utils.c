@@ -964,7 +964,8 @@ static void *forget_pointer(void *ptr, const char *func, const char *file, int l
 	if (mem_top < last_forgotten) last_forgotten = mem_top + 1;
 	return(rtp);
       }
-  fprintf(stderr, "forget %p ", ptr); mem_report(); abort();
+  fprintf(stderr, "forget %p ", ptr); 
+  abort();
   return(NULL);
 }
 
@@ -1232,12 +1233,12 @@ void stop_timing(void) {fprintf(stderr, "time: %d ",(int)((clock() - start) * 10
 #endif
 
 #if HAVE_GUILE
-#define S_file2string "file->string"
+#define S_file_to_string "file->string"
 static XEN g_file_to_string(XEN name)
 { 
   char *contents;
   XEN val = XEN_FALSE;
-  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ONLY_ARG, S_file2string, "a string");
+  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ONLY_ARG, S_file_to_string, "a string");
   contents = file_to_string(XEN_TO_C_STRING(name));
   val = C_TO_XEN_STRING(contents);
   FREE(contents);
@@ -1265,7 +1266,7 @@ void g_init_utils(void)
 {
   decimal_pt = local_decimal_point();
 #if HAVE_GUILE
-  XEN_DEFINE_PROCEDURE(S_file2string, g_file_to_string, 1, 0, 0, "file contents as string");
+  XEN_DEFINE_PROCEDURE(S_file_to_string, g_file_to_string, 1, 0, 0, "file contents as string");
 #endif
 
 #if DEBUGGING

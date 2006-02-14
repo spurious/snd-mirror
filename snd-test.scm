@@ -1,35 +1,35 @@
 ;;; Snd tests
 ;;;
-;;;  test 0: constants                          [462]
-;;;  test 1: defaults                           [1033]
-;;;  test 2: headers                            [1234]
-;;;  test 3: variables                          [1538]
-;;;  test 4: sndlib                             [1933]
-;;;  test 5: simple overall checks              [4019]
-;;;  test 6: vcts                               [11424]
-;;;  test 7: colors                             [11734]
-;;;  test 8: clm                                [12236]
-;;;  test 9: mix                                [20406]
-;;;  test 10: marks                             [23513]
-;;;  test 11: dialogs                           [24216]
-;;;  test 12: extensions                        [24602]
-;;;  test 13: menus, edit lists, hooks, etc     [25030]
-;;;  test 14: all together now                  [26456]
-;;;  test 15: chan-local vars                   [27524]
-;;;  test 16: regularized funcs                 [28798]
-;;;  test 17: dialogs and graphics              [33165]
-;;;  test 18: enved                             [33253]
-;;;  test 19: save and restore                  [33273]
-;;;  test 20: transforms                        [34869]
-;;;  test 21: new stuff                         [36543]
-;;;  test 22: run                               [37431]
-;;;  test 23: with-sound                        [42947]
-;;;  test 24: user-interface                    [44035]
-;;;  test 25: X/Xt/Xm                           [47486]
-;;;  test 26: Gtk                               [52064]
-;;;  test 27: GL                                [56136]
-;;;  test 28: errors                            [56246]
-;;;  test all done                              [58382]
+;;;  test 0: constants                          [459]
+;;;  test 1: defaults                           [1030]
+;;;  test 2: headers                            [1231]
+;;;  test 3: variables                          [1535]
+;;;  test 4: sndlib                             [1930]
+;;;  test 5: simple overall checks              [4060]
+;;;  test 6: vcts                               [11465]
+;;;  test 7: colors                             [11775]
+;;;  test 8: clm                                [12277]
+;;;  test 9: mix                                [20447]
+;;;  test 10: marks                             [23554]
+;;;  test 11: dialogs                           [24257]
+;;;  test 12: extensions                        [24643]
+;;;  test 13: menus, edit lists, hooks, etc     [25071]
+;;;  test 14: all together now                  [26498]
+;;;  test 15: chan-local vars                   [27566]
+;;;  test 16: regularized funcs                 [28840]
+;;;  test 17: dialogs and graphics              [33207]
+;;;  test 18: enved                             [33295]
+;;;  test 19: save and restore                  [33315]
+;;;  test 20: transforms                        [34911]
+;;;  test 21: new stuff                         [36585]
+;;;  test 22: run                               [37473]
+;;;  test 23: with-sound                        [42989]
+;;;  test 24: user-interface                    [44077]
+;;;  test 25: X/Xt/Xm                           [47661]
+;;;  test 26: Gtk                               [52245]
+;;;  test 27: GL                                [56317]
+;;;  test 28: errors                            [56427]
+;;;  test all done                              [58566]
 ;;;
 ;;; how to send ourselves a drop?  (button2 on menu is only the first half -- how to force 2nd?)
 ;;; need all html example code in autotests
@@ -7852,6 +7852,8 @@ EDITS: 5
 	(if (not (string=? (short-file-name index) "oboe.snd")) (snd-display ";oboe short name: ~S?" (short-file-name index)))
 	(let ((matches (count-matches (lambda (a) (> a .125)))))
 	  (if (not (= matches 1313)) (snd-display ";count-matches: ~A?" matches)))
+	(let ((matches (count-matches (lambda (y) (let ((a (list .1 .2))) (> y (car a))))))) ; force xen not ptree
+	  (if (not (= matches 2851)) (snd-display ";unopt count-matches: ~A?" matches)))
 	(let ((spot (find-channel (lambda (a) (> a .13)))))
 	  (if (or (null? spot) (not (= (cadr spot) 8862))) (snd-display ";find: ~A?" spot)))
 	(set! (right-sample) 3000) 
@@ -7949,7 +7951,10 @@ EDITS: 5
 	       (chns (region-chans reg))
 	       (var (catch #t (lambda () (make-region-sample-reader 0 reg (+ chns 1))) (lambda args args))))
 	  (if (not (eq? (car var) 'no-such-channel))
-	      (snd-display ";make-region-sample-reader bad chan (2): ~A ~A" var (regions))))
+	      (snd-display ";make-region-sample-reader bad chan (2): ~A ~A" var (regions)))
+	  (let ((tag (catch #t (lambda () (make-region-sample-reader 0 reg 0 -2)) (lambda args args))))
+	    (if (not (eq? (car tag) 'no-such-direction))
+		(snd-display ";make-region-sample-reader bad dir (-2): ~A" tag))))
 	
 	(revert-sound index)
 	(insert-sample 100 .5 index) 
@@ -9988,6 +9993,10 @@ EDITS: 5
 	    (let ((tag (catch #t (lambda () (src s 1.0 (lambda (a b) a))) (lambda args (car args)))))
 	      (if (not (eq? tag 'bad-arity)) 
 		  (snd-display ";src bad func: ~A" tag))))
+	  (let ((tag (catch #t (lambda () (src-channel 120000.0)) (lambda args args))))
+	    (if (not (eq? (car tag) 'mus-error)) (snd-display ";src-channel crazy srate: ~A" tag)))
+	  (let ((tag (catch #t (lambda () (filter-sound (make-snd->sample))) (lambda args args))))
+	    (if (not (eq? (car tag) 'mus-error)) (snd-display ";filter-sound + un-run gen: ~A" tag)))
 	  (revert-sound index)
 	  (vct->channel v 0 10 index 1)
 	  (vct->channel v 10 10 index 1)
@@ -16996,7 +17005,40 @@ EDITS: 5
 		(fneq (vct-peak (partials->wave '(1 1 2 1 3 1 4 1) #f #t)) 1.0))
 	    (snd-display ";normalized partials?"))
 	(set! (mus-data gen) (phase-partials->wave (list 1 1 0 2 1 (* pi .5)) #f #t)))
-      
+
+      (let ((tag (catch #t (lambda () (phase-partials->wave (list 1 .3 2 .2))) (lambda args (car args)))))
+	(if (not (eq? tag 'bad-type)) (snd-display ";bad length arg to phase-partials->wave: ~A" tag)))
+      (let ((tag (catch #t (lambda () (phase-partials->wave (list "hiho" .3 2 .2))) (lambda args (car args)))))
+	(if (not (eq? tag 'bad-type)) (snd-display ";bad harmonic arg to phase-partials->wave: ~A" tag)))
+      (let ((tag (catch #t (lambda () (phase-partials->wave (list))) (lambda args (car args)))))
+	(if (not (eq? tag 'no-data)) (snd-display ";nil list to phase-partials->wave: ~A" tag)))
+
+      (let ((vals (phase-partials->wave (list 1 1 0) (make-vct 16) #f)))
+	(do ((i 0 (1+ i)))
+	    ((= i 16))
+	  (if (fneq (vct-ref vals i) (sin (/ (* 2 3.14159 i) 16)))
+	      (snd-display ";phase-partials->wave 1 1 0 at ~D: ~A ~A" i (vct-ref vals i) (sin (/ (* 2 3.14159 i) 16))))))
+
+      (let ((vals (phase-partials->wave (list 1 1 (* .25 3.14159)) (make-vct 16) #f)))
+	(do ((i 0 (1+ i)))
+	    ((= i 16))
+	  (if (fneq (vct-ref vals i) (sin (+ (* .25 3.14159) (/ (* 2 3.14159 i) 16))))
+	      (snd-display ";phase-partials->wave 1 1 .25 at ~D: ~A ~A" i (vct-ref vals i) (sin (+ (* .25 3.14159) (/ (* 2 3.14159 i) 16)))))))
+
+      (let ((vals (phase-partials->wave (list 1 1 0 2 1 0) (make-vct 16) #f)))
+	(do ((i 0 (1+ i)))
+	    ((= i 16))
+	  (if (fneq (vct-ref vals i) (+ (sin (/ (* 2 3.14159 i) 16)) (sin (/ (* 4 3.14159 i) 16))))
+	      (snd-display ";phase-partials->wave 1 1 0 2 1 0 at ~D: ~A ~A" i (vct-ref vals i) 
+			   (+ (sin (/ (* 2 3.14159 i) 16)) (sin (/ (* 4 3.14159 i) 16)))))))
+
+      (let ((vals (phase-partials->wave (list 1 1 0 2 1 (* .5 3.14159)) (make-vct 16) #f)))
+	(do ((i 0 (1+ i)))
+	    ((= i 16))
+	  (if (fneq (vct-ref vals i) (+ (sin (/ (* 2 3.14159 i) 16)) (sin (+ (* .5 3.14159) (/ (* 4 3.14159 i) 16)))))
+	      (snd-display ";phase-partials->wave 1 1 0 2 1 .5 at ~D: ~A ~A" i (vct-ref vals i) 
+			   (+ (sin (/ (* 2 3.14159 i) 16)) (sin (+ (* .5 3.14159) (/ (* 4 3.14159 i) 16))))))))
+
       (test-gen-equal (make-table-lookup 440.0 :wave (partials->wave '(1 1 2 1)))
 		      (make-table-lookup 440.0 :wave (partials->wave '(1 1 2 1)))
 		      (make-table-lookup 100.0 :wave (partials->wave '(1 1 2 1))))
@@ -17005,7 +17047,7 @@ EDITS: 5
 		      (make-table-lookup 440.0 :wave (partials->wave '(1 1 2 .5))))
       (let ((tag (catch #t (lambda () (partials->wave (list .5 .3 .2))) (lambda args (car args)))))
 	(if (not (eq? tag 'bad-type)) (snd-display ";odd length arg to partials->wave: ~A" tag)))
-      
+
       (let ((hi (make-table-lookup :size 256)))
 	(if (not (= (mus-length hi) 256)) (snd-display ";table-lookup set length: ~A?" (mus-length hi))))
       (let ((tag (catch #t (lambda () (make-table-lookup :size 0)) (lambda args (car args)))))
@@ -17110,7 +17152,9 @@ EDITS: 5
       (test-gen-equal (make-waveshape 440.0 :partials '(1 1)) (make-waveshape 440.0 :partials '(1 1)) (make-waveshape 4400.0 :partials '(1 1 2 .5)))
       (let ((tag (catch #t (lambda () (partials->waveshape (list .5 .3 .2))) (lambda args (car args)))))
 	(if (not (eq? tag 'bad-type)) (snd-display ";odd length arg to partials->waveshape: ~A" tag)))
-      
+      (let ((tag (catch #t (lambda () (phase-partials->wave (list 1 .3 2 .2))) (lambda args (car args)))))
+	(if (not (eq? tag 'bad-type)) (snd-display ";bad length arg to phase-partials->wave: ~A" tag)))
+
       (let ((d11 (partials->waveshape '(1 1) 16)))
 	(if (not (vequal d11 (vct -1.000 -0.867 -0.733 -0.600 -0.467 -0.333 -0.200 -0.067 0.067 0.200 0.333 0.467 0.600 0.733 0.867 1.000)))
 	    (snd-display ";partials->waveshape 1 1: ~A" d11))
@@ -20543,6 +20587,18 @@ EDITS: 5
 				  (lambda () (play-track 1231233 0))
 				  (lambda args (car args)))))
 		  (if (not (eq? tag 'no-such-track)) (snd-display ";play-track bad track index: ~A" tag)))
+
+		(let ((tag (catch #t
+				  (lambda () (mix "oboe.snd" 0 0 (car (sounds)) 0 #f #f 123123))
+				  (lambda args (car args)))))
+		  (if (not (eq? tag 'no-such-track)) (snd-display ";mix bad track index: ~A" tag)))
+		(let ((tag (catch #t
+				  (lambda () (mix-vct (make-vct 3 .1) 0 (car (sounds)) 0 #t "bad mix-vct" 123123))
+				  (lambda args (car args)))))
+		  (if (not (eq? tag 'no-such-track)) (snd-display ";mix-vct bad track index: ~A" tag)))
+                (let ((tag (catch #t
+				  (lambda () (track trk 123)) (lambda args args))))
+		  (if (not (eq? (car tag) 'no-such-channel)) (snd-display ";track bad chan: ~A" tag)))
 		(play-track trk))
 	      (set! (mix-tag-position mix-id) 30) 
 	      (set! (mix-amp-env mix-id 0) '(0.0 0.0 1.0 1.0)) 
@@ -20840,6 +20896,9 @@ EDITS: 5
 	    (set! (track-speed-style tr1) speed-control-as-semitone)
 	    (if (not (= (track-speed-style tr1) speed-control-as-semitone))
 		(snd-display ";set track-speed-style: ~A" (track-speed-style tr1)))
+	    (let ((tag (catch #t (lambda () (set! (track-speed-style tr1) 123)) (lambda args (car args)))))
+	      (if (not (eq? tag 'out-of-range)) (snd-display ";set track-speed-style bad val: ~A" tag)))
+
 	    (if (not (vequal (track->vct tr1) (mix->vct (car id1))))
 		(snd-display ";1 track->vct ~A ~A" (track->vct tr1) (mix->vct (car id1))))
 	    (set! (track-amp tr1) 0.0)
@@ -21614,6 +21673,9 @@ EDITS: 5
 	
 	(let ((tag (catch #t (lambda () (copy-track 0)) (lambda args (car args)))))
 	  (if (not (eq? tag 'no-such-track)) (snd-display ";copy-track 0: ~A" tag)))
+	(let ((tag (catch #t (lambda () (copy-track 123123)) (lambda args (car args)))))
+	  (if (not (eq? tag 'no-such-track)) (snd-display ";copy-track 123123: ~A" tag)))
+
 	(let* ((mix1 (mix-vct (make-vct 10 1.0) 100))
 	       (track0 (make-track))
 	       (track1 (make-track mix1)))
@@ -22123,6 +22185,8 @@ EDITS: 5
 		  (if (not (= 3 (edit-position ind 0)))
 		      (snd-display ";mix-region w/track not atomic?: ~A" (edit-position ind 0)))
 		  (if (fneq (maxamp ind 0) 0.56) (snd-display ";mix-region+track maxamp: ~A" (maxamp ind 0)))
+		  (let ((tag (catch #t (lambda () (mix-region 900 rid ind 0 123123)) (lambda args args))))
+		    (if (not (eq? (car tag) 'no-such-track)) (snd-display ";mix-region bad track: ~A" tag)))
 		  (undo)
 		  (if (fneq (maxamp ind 0) 0.5) (snd-display ";mix-region+track undo maxamp: ~A" (maxamp ind 0)))
 		  (redo)
@@ -27950,6 +28014,9 @@ EDITS: 5
 	  (if (not (= (length (sound-properties id)) (+ len 2)))
 	      (snd-display ";sound-properties: ~A?" (sound-properties id))))
 	
+	(let ((tag (catch #t (lambda () (map-channel (lambda (y) "hiho"))) (lambda args args))))
+	  (if (not (eq? (car tag) 'bad-type)) (snd-display ";map-channel bad val: ~A" tag)))
+
 	(close-sound id))
       
       (let ((id (open-sound "oboe.snd")))
@@ -28164,7 +28231,7 @@ EDITS: 5
 		     (lambda (fr)
 		       (set! (amp-control player) (env e))
 		       (if (fneq (amp-control ind) 1.0) (snd-display ";amp-control snd: ~A" (amp-control ind)))
-		       (if (> (abs (- (amp-control player) (exact->inexact (/ samp len)))) .02)
+		       (if (> (abs (- (amp-control player) (exact->inexact (/ samp len)))) .05)
 			   (snd-display ";amp-control player: ~A ~A" (amp-control player) (exact->inexact (/ samp len))))
 		       (set! samp (+ samp incr))))
 	  (start-playing 1 (srate ind)))
@@ -46516,13 +46583,13 @@ EDITS: 1
 				  (XtIsManaged (list-ref (dialog-widgets) 6)))))
 		      (force-event))
 		    (click-button (XmFileSelectionBoxGetChild (list-ref (dialog-widgets) 6) XmDIALOG_CANCEL_BUTTON)) (force-event)
-		    
-		    (let ((ind (open-sound "oboe.snd")))
-		      (key-event shell (char->integer #\E) 8)
-		      (key-event shell (char->integer #\V) 8)
-		      (key-event shell (char->integer #\F) 8)
-		      (key-event edit-menu (char->integer #\v) 0) (force-event)
-		      (close-sound ind))
+
+;		    (let ((ind (open-sound "oboe.snd")))
+;		      (key-event shell (char->integer #\E) 8)
+;		      (key-event shell (char->integer #\V) 8)
+;		      (key-event shell (char->integer #\F) 8)
+;		      (key-event edit-menu (char->integer #\v) 0) (force-event)
+;		      (close-sound ind))
 		    
 		    (let* ((filed (list-ref (dialog-widgets) 6))
 			   (files (XmFileSelectionBoxGetChild filed XmDIALOG_LIST))
