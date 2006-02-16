@@ -406,21 +406,21 @@ void mus_ldouble_to_char(unsigned char *j, double x)
 typedef struct {
   char *name;
   int data_format, bytes_per_sample, chans, header_type;
-  bool data_clipped;
+  bool clipping;
   off_t data_location;
-  float prescaler;
+  Float prescaler;
 } io_fd;
 
 static int io_fd_size = 0;
 static io_fd **io_fds = NULL;
 #define IO_FD_ALLOC_SIZE 8
-static bool file_data_clipped_default = false;
-static Float file_prescaler_default = 1.0;
+static bool clipping_default = false;
+static Float prescaler_default = 1.0;
 
-bool mus_file_data_clipped_default(void) {return(file_data_clipped_default);}
-bool mus_file_set_data_clipped_default(bool new_value) {file_data_clipped_default = new_value; return(new_value);}
-Float mus_file_prescaler_default(void) {return(file_prescaler_default);}
-Float mus_file_set_prescaler_default(Float new_value) {file_prescaler_default = new_value; return(new_value);}
+bool mus_clipping(void) {return(clipping_default);}
+bool mus_set_clipping(bool new_value) {clipping_default = new_value; return(new_value);}
+Float mus_prescaler(void) {return(prescaler_default);}
+Float mus_set_prescaler(Float new_value) {prescaler_default = new_value; return(new_value);}
 
 int mus_file_open_descriptors(int tfd, const char *name, int format, int size /* datum size */, off_t location, int chans, int type)
 {
@@ -453,8 +453,8 @@ int mus_file_open_descriptors(int tfd, const char *name, int format, int size /*
     fprintf(stderr, "format trouble in mus_file_open_descriptors: %d != %d\n", size, mus_bytes_per_sample(format));
 #endif
   fd->data_location = location;
-  fd->data_clipped = file_data_clipped_default;
-  fd->prescaler = file_prescaler_default;
+  fd->clipping = clipping_default;
+  fd->prescaler = prescaler_default;
   fd->header_type = type;
   fd->chans = chans;
   if (name)
@@ -465,20 +465,20 @@ int mus_file_open_descriptors(int tfd, const char *name, int format, int size /*
   return(MUS_NO_ERROR);
 }
 
-bool mus_file_data_clipped(int tfd)
+bool mus_file_clipping(int tfd)
 {
   io_fd *fd;
   if ((io_fds == NULL) || (tfd >= io_fd_size) || (tfd < 0) || (io_fds[tfd] == NULL)) return(false);
   fd = io_fds[tfd];
-  return(fd->data_clipped);
+  return(fd->clipping);
 }
 
-int mus_file_set_data_clipped(int tfd, bool clipped)
+int mus_file_set_clipping(int tfd, bool clipped)
 {
   io_fd *fd;
   if ((io_fds == NULL) || (tfd >= io_fd_size) || (tfd < 0) || (io_fds[tfd] == NULL)) return(MUS_FILE_DESCRIPTORS_NOT_INITIALIZED);
   fd = io_fds[tfd];
-  fd->data_clipped = clipped;
+  fd->clipping = clipped;
   return(MUS_NO_ERROR);
 }
 
@@ -499,7 +499,7 @@ int mus_file_header_type(int tfd)
   return(fd->header_type);
 }
 
-float mus_file_prescaler(int tfd) 
+Float mus_file_prescaler(int tfd) 
 {
   io_fd *fd;
   if ((io_fds == NULL) || (tfd >= io_fd_size) || (tfd < 0) || (io_fds[tfd] == NULL)) return(0.0);
@@ -507,7 +507,7 @@ float mus_file_prescaler(int tfd)
   return(fd->prescaler);
 }
 
-float mus_file_set_prescaler(int tfd, float val) 
+Float mus_file_set_prescaler(int tfd, Float val) 
 {
   io_fd *fd;
   if ((io_fds == NULL) || (tfd >= io_fd_size) || (tfd < 0) || (io_fds[tfd] == NULL)) return(0.0);
@@ -1074,7 +1074,7 @@ static int mus_write_1(int tfd, int beg, int end, int chans, mus_sample_t **bufs
 
       siz = fd->bytes_per_sample;
       data_format = fd->data_format;
-      clipping = fd->data_clipped;
+      clipping = fd->clipping;
 
       if ((data_format == MUS_OUT_FORMAT) && (chans == 1) && (!clipping) && (beg == 0))
 	{
@@ -1271,8 +1271,8 @@ void mus_reset_io_c(void)
 {
   io_fd_size = 0;
   io_fds = NULL;
-  file_data_clipped_default = false;
-  file_prescaler_default = 1.0;
+  clipping_default = false;
+  prescaler_default = 1.0;
 }
 
 

@@ -479,6 +479,8 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+17-Feb:  mus-file-data-clipped -> mus-clipping, added mus-file-clipping for local settings\n\
+         mus-prescaler (global) alongside previous mus-file-prescaler\n\
 9-Feb:   Bill Sack's pd-stochastic.scm and snd-stochastic.pd.\n\
 2-Feb:   mus_audio_sun_outputs -> mus_sun_set_outputs, added mus_netbsd_set_outputs.\n\
          mus_audio_set_oss_buffers -> mus_oss_set_buffers.\n\
@@ -489,13 +491,6 @@ void about_snd_help(void)
 5-Jan:   sound-file? for easier file-filter definition.\n\
 2-Jan:   removed the various sorting indices (sort-by-name|size|date|entry), and changed \n\
            the way the user-defined sorter works.  Also removed just-sounds-hook.\n\
-26-Dec:  help-snd-fm.pd and pd-fm.scm thanks to Kjetil.\n\
-         default sample type is now float. This should only affect the \"peak-env\" files which will\n\
-           need to be rebuilt (just delete the current peak files, and they'll be rebuilt as needed\n\
-           automatically).\n\
-19-Dec:  analog-filter.scm: Butterworth, Chebyshev, inverse-Chebyshev, Bessel(-Thompson), Elliptic filters.\n\
-         new fft windows: samaraki and ultraspherical (related to the dolph-chebyshev window)\n\
-         fft-window-alpha (ultraspherical window parameter).\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*: \n'", features, "\n\n",

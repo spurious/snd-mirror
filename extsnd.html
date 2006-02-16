@@ -2589,6 +2589,12 @@ format by mus-audio-write.</td></tr>
 number of bytes in each sample of <i>data-format</i>.
 </td></tr>
 
+<!-- mus-clipping -->
+<tr><td colspan=2><code><a class=def name="musclipping">mus-clipping</a> ()</code></td></tr>
+<tr><td></td><td>The default low-level clipping choice while accessing sound data.
+The default is #f which makes clipping very obvious (it will cause wrap-around).
+</td></tr>
+
 <!-- mus-data-format-name -->
 <tr><td colspan=2><code><a class=def name="musdataformatname">mus-data-format-name</a> (format)</code></td></tr>
 <tr><td></td><td>convert <i>format</i> from an integer to an explanatory string, e.g. "16-bit big endian linear".  The sndlib data formats are:</td></tr>
@@ -2616,9 +2622,9 @@ return a brief string description of <i>error</i> (a mus-error return type).
 <tr><td></td><td>expand <i>name</i> into its 'absolute' pathname; that is, replace '~' with the current home directory,
 and whatever else seems appropriate.</td></tr>
 
-<!-- mus-file-data-clipped -->
-<tr><td colspan=2><code><a class=def name="musfiledataclipped">mus-file-data-clipped</a> ()</code></td></tr>
-<tr><td></td><td>The default low-level clipping choice while accessing sound data.
+<!-- mus-file-clipping -->
+<tr><td colspan=2><code><a class=def name="musfileclipping">mus-file-clipping</a> (fd)</code></td></tr>
+<tr><td></td><td>The clipping choice for the file 'fd'.
 The default is #f which makes clipping very obvious (it will cause wrap-around).
 </td></tr>
 
@@ -2664,6 +2670,11 @@ equivalent to <code>(mus-oss-set-buffers 16 12)</code>.  This default makes the 
 Snd used to call <code>(mus-oss-set-buffers 4 12)</code> as its default, 
 but this seems to cause trouble for a variety of new sound cards.
 My initialization file includes <code>(mus-oss-set-buffers 2 12)</code>.</td></tr>
+
+<!-- mus-prescaler -->
+<tr><td colspan=2><code><a class=def name="musprescaler">mus-prescaler</a> ()</code></td></tr>
+<tr><td></td><td>The global default prescaling value for reading data from a file (see <a href="#musfileprescaler">mus-file-prescaler</a>).
+</td></tr>
 
 <!-- mus-sound-chans -->
 <tr><td colspan=2><code><a class=def name="mussoundchans">mus-sound-chans</a> (filename)</code></td></tr>

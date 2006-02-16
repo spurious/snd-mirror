@@ -1473,7 +1473,7 @@ void recorder_start_output_file(const char *comment)
 			    oloc,
 			    rp->out_chans,
 			    rp->output_header_type);
-  mus_file_set_data_clipped(rp->output_file_descriptor, data_clipped(ss));
+  mus_file_set_clipping(rp->output_file_descriptor, data_clipped(ss));
   lseek(rp->output_file_descriptor, oloc, SEEK_SET);
   rp->total_output_frames = 0;
   duration_label_update_frames = rp->srate / 4;

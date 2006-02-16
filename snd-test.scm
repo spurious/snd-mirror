@@ -1141,7 +1141,8 @@
 	'max-transform-peaks (max-transform-peaks) 100
 	'max-regions (max-regions) 16 
 	'min-dB (min-dB) -60.0 
-	'mus-file-data-clipped (mus-file-data-clipped) #f
+	'mus-clipping (mus-clipping) #f
+	'mus-prescaler (mus-prescaler) 1.0
 	'log-freq-start (log-freq-start) 32.0
 	'selection-creates-region (selection-creates-region) #t 
 	'transform-normalization (transform-normalization) normalize-by-channel
@@ -56703,7 +56704,7 @@ EDITS: 1
 		     ;mus-sound-open-input mus-sound-open-output
 		     ;mus-sound-reopen-output mus-sound-close-input mus-sound-close-output mus-sound-read mus-sound-write
 		     ;mus-sound-seek-frame 
-		     mus-file-prescaler mus-file-data-clipped mus-header-raw-defaults average average? make-average
+		     mus-file-prescaler mus-prescaler mus-clipping mus-file-clipping mus-header-raw-defaults average average? make-average
 		     mus-expand-filename make-sound-data sound-data-ref sound-data-set!  sound-data? sound-data-length
 		     sound-data-maxamp sound-data-chans sound-data->vct vct->sound-data all-pass all-pass? amplitude-modulate
 		     array->file array-interp mus-interpolate asymmetric-fm asymmetric-fm? sound-data->sound-data
@@ -56839,7 +56840,7 @@ EDITS: 1
 			 (if (defined? 'window-property) window-property widget-size)
 
 			 mixer-ref frame-ref locsig-ref locsig-reverb-ref
-			 mus-file-prescaler mus-file-data-clipped mus-header-raw-defaults
+			 mus-file-prescaler mus-prescaler mus-clipping mus-file-clipping mus-header-raw-defaults
 			 ))
       
       (define make-procs (list

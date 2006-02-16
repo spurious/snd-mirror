@@ -4864,7 +4864,7 @@ create a new sound file 'file' (writing float data), return the file descriptor 
 		XEN_LIST_2(C_TO_XEN_STRING(S_open_sound_file),
 			   errmsg));
     }
-  mus_file_set_data_clipped(result, data_clipped(ss));
+  mus_file_set_clipping(result, data_clipped(ss));
   set_temp_fd(result, hdr);
   if (filename) FREE(filename);
   return(C_TO_XEN_INT(result));

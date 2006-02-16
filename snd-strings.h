@@ -1,6 +1,8 @@
 #ifndef SND_STRINGS_H
 #define SND_STRINGS_H
 
+#define S_data_clipped "data-clipped"
+
 #define S_abort                         "abort"
 #define S_add_colormap                  "add-colormap"
 #define S_add_directory_to_view_files_list "add-directory-to-view-files-list"
@@ -63,6 +65,7 @@
 #define S_chans                         "chans"
 #define S_clear_listener                "clear-listener"
 #define S_clear_minibuffer              "clear-minibuffer"
+#define S_clipping                      "clipping"
 #define S_clm_channel                   "clm-channel"
 #define S_close_hook                    "close-hook"
 #define S_close_sound                   "close-sound"
@@ -112,8 +115,8 @@
 #define S_dac_combines_channels         "dac-combines-channels"
 #define S_dac_hook                      "dac-hook"
 #define S_dac_is_running                "dac-is-running"
+#define S_dac_is_pausing                "dac-is-pausing"
 #define S_dac_size                      "dac-size"
-#define S_data_clipped                  "data-clipped"
 #define S_data_color                    "data-color"
 #define S_data_format                   "data-format"
 #define S_data_location                 "data-location"
@@ -390,6 +393,7 @@
 #define S_output_comment_hook           "output-comment-hook"
 #define S_output_name_hook              "output-name-hook"
 #define S_pad_channel                   "pad-channel"
+#define S_pausing                       "pausing"
 #define S_peak_env_info                 "peak-env-info"
 #define S_peaks                         "peaks"
 #define S_peaks_font                    "peaks-font"
@@ -397,6 +401,7 @@
 #define S_play_and_wait                 "play-and-wait"
 #define S_play_channel                  "play-channel"
 #define S_play_hook                     "play-hook"
+#define S_playing                       "playing"
 #define S_play_mix                      "play-mix"
 #define S_play_region                   "play-region"
 #define S_play_selection                "play-selection"

@@ -1002,8 +1002,8 @@ see headers.c or sndlib.h for details.  The next functions handle various IO cal
   int mus_file_read_any (int tfd, int beg, int chans, int nints, mus_sample_t **bufs, mus_sample_t *cm)
   int mus_file_write_zeros (int tfd, off_t num)
   int mus_file_write (int tfd, int beg, int end, int chans, mus_sample_t **bufs)
-  float mus_file_prescaler(int tfd)
-  float mus_file_set_prescaler(int tfd, float val)
+  Float mus_file_prescaler(int tfd)
+  Float mus_file_set_prescaler(int tfd, Float val)
 </pre>
 <p>The prescaler functions are useful in several pathological cases.
 If you're reading float data that is extremely soft (i.e. max amp
@@ -1115,7 +1115,8 @@ constants and functions described above into Scheme.
                                            <i>sdata</i> is a sound-data object that should be able to accommodate the read
   mus-sound-write (fd beg end chans sdata) write data to sound file <i>fd</i>
   mus-sound-seek-frame (fd frame)          move to <i>frame</i> in sound file <i>fd</i>
-  mus-file-data-clipped (fd)               whether output is clipped
+  mus-file-clipping (fd)                   whether output is clipped in file 'fd'
+  mus-clipping ()                          global clipping choice
 
   mus-audio-open-output (device srate chans format bufsize)
                                            open audio port <i>device</i> ready for output with the indicated attributes

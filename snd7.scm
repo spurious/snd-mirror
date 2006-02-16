@@ -389,3 +389,11 @@
 (define mus-audio-sun-outputs mus-sun-set-outputs)
 (define mus-audio-set-oss-buffers mus-oss-set-buffers)
 
+;;; this was actually referring to the default (global) value, not file-specific
+(if (not (defined? 'mus-file-data-clipped)) 
+    (define mus-file-data-clipped
+      (make-procedure-with-setter
+       (lambda ()
+	 (mus-clipping))
+       (lambda (val)
+	 (set! (mus-clipping) val)))))

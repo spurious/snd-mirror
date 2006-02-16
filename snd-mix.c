@@ -983,7 +983,6 @@ static char *save_as_temp_file(mus_sample_t **raw_data, int chans, int len, int 
     }
   ofd = snd_reopen_write(newname);
   snd_file_open_descriptors(ofd, newname, format, 28, chans, MUS_NEXT);
-  /* mus_file_set_data_clipped(ofd, data_clipped(ss)); */
   lseek(ofd, 28, SEEK_SET);
   no_space = disk_space_p(len * chans * mus_bytes_per_sample(format), newname);
   if (no_space == DISK_SPACE_OK)

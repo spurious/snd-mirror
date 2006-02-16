@@ -449,18 +449,20 @@ int mus_file_write_file(int tfd, int beg, int end, int chans, mus_sample_t **buf
 int mus_file_write_buffer(int charbuf_data_format, int beg, int end, int chans, mus_sample_t **bufs, char *charbuf, bool clipped);
 char *mus_expand_filename(const char *name);
 
-bool mus_file_data_clipped(int tfd);
-int mus_file_set_data_clipped(int tfd, bool clipped);
+bool mus_clipping(void);
+bool mus_set_clipping(bool new_value);
+bool mus_file_clipping(int tfd);
+int mus_file_set_clipping(int tfd, bool clipped);
+
 int mus_file_set_header_type(int tfd, int type);
 int mus_file_header_type(int tfd);
 char *mus_file_fd_name(int tfd);
 int mus_file_set_chans(int tfd, int chans);
-float mus_file_prescaler(int tfd);
-float mus_file_set_prescaler(int tfd, float val);
-bool mus_file_data_clipped_default(void);
-bool mus_file_set_data_clipped_default(bool new_value);
-Float mus_file_prescaler_default(void);
-Float mus_file_set_prescaler_default(Float new_value);
+
+Float mus_file_prescaler(int tfd);
+Float mus_file_set_prescaler(int tfd, Float val);
+Float mus_prescaler(void);
+Float mus_set_prescaler(Float new_value);
 
 void mus_bint_to_char(unsigned char *j, int x);
 int mus_char_to_bint(const unsigned char *inp);
@@ -586,6 +588,12 @@ int fileno(FILE *fp);
 
 #if (!SNDLIB_DISABLE_DEPRECATED)
   #define MUS_COMPATIBLE_FORMAT MUS_AUDIO_COMPATIBLE_FORMAT
+  #define mus_file_data_clipped(Tfd) mus_file_clipping(Tfd)
+  #define mus_file_set_data_clipped(Tfd, Clipping) mus_file_set_clipping(Tfd, Clipping)
+  #define mus_file_data_clipped_default() mus_clipping()
+  #define mus_file_set_data_clipped_default(Val) mus_set_clipping(Val)
+  #define mus_file_prescaler_default(void) (float)mus_prescaler()
+  #define mus_file_set_prescaler_default(Val) mus_set_prescaler((Float)Val)
 #endif
 
 #ifdef __cplusplus

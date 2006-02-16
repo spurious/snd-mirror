@@ -1,33 +1,15 @@
 #include "snd.h"
 
-/* enved-in-dB should be enved-in-dB? (similarly filter-control-in-dB?),
-   also ask-before-overwrite, auto-resize, data-clipped, dac-is-running,
-   dac-combines-channels, cursor-follows-play, 
-   filter-control-in-hz, selection-creates-region, squelch-update,
-   verbose-cursor, with-background-processes, with-mix-tags,
-   with-relative-panes, with-gl, mus-file-data-clipped -- too many!
- */
-
 #define ENVED_DOT_SIZE 10
 
 XEN envelope_base_sym;
 #if HAVE_GUILE
   #define XEN_VARIABLE_PROPERTY(Obj, Prop)          scm_object_property(Obj, Prop)
   #define XEN_SET_VARIABLE_PROPERTY(Obj, Prop, Val) scm_set_object_property_x(XEN_VARIABLE_REF(Obj), Prop, Val)
-/*
-  #define XEN_OBJECT_PROPERTY(Obj, Prop)            scm_object_property(Obj, Prop)
-*/
-  #if DEBUGGING
-    #define XEN_SET_OBJECT_PROPERTY(Obj, Prop, Val)   scm_set_object_property_x(Obj, Prop, Val)
-  #endif
 #endif
 #if HAVE_RUBY
   #define XEN_VARIABLE_PROPERTY(Obj, Prop)          rb_property(rb_obj_id(Obj), Prop)
   #define XEN_SET_VARIABLE_PROPERTY(Obj, Prop, Val) rb_set_property(rb_obj_id(Obj), Prop, Val)
-/*
-  #define XEN_OBJECT_PROPERTY(Obj, Prop)            rb_property(rb_obj_id(Obj), Prop)
-  #define XEN_SET_OBJECT_PROPERTY(Obj, Prop, Val)   rb_set_property(rb_obj_id(Obj), Prop, Val)
-*/
 #endif
 #if (!HAVE_EXTENSION_LANGUAGE)
   #define XEN_VARIABLE_PROPERTY(Obj, Prop)          0
@@ -341,6 +323,7 @@ env *invert_env(env *e)
 #if DEBUGGING && HAVE_GUILE
 static XEN g_invert_env(XEN e)
 {
+  #define XEN_SET_OBJECT_PROPERTY(Obj, Prop, Val)   scm_set_object_property_x(Obj, Prop, Val)
   env *temp1, *temp2;
   XEN res;
   temp1 = xen_to_env(e);

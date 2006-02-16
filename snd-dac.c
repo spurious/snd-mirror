@@ -1009,7 +1009,16 @@ static dac_info *play_channel_1(chan_info *cp, off_t start, off_t end, play_proc
   /* just plays one channel (ignores possible sync), includes start-hook */
   snd_info *sp = NULL;
   dac_info *dp = NULL;
-  if ((background == NOT_IN_BACKGROUND) && (play_list_members > 0)) return(NULL);
+#if 0
+  if ((background == NOT_IN_BACKGROUND) && (play_list_members > 0))
+    {
+      /* play called during previous pause, etc -- not sure what is the right thing here,
+	 but to return NULL is not right -- if user pauses, then (play (cursor)) during the
+	 pause, the return NULL effectively turns the play call into a no-op.
+       */
+      stop_playing_all_sounds(PLAY_CALLED);
+    }
+#endif
   sp = cp->sound;
   if (sp->inuse == SOUND_IDLE) return(NULL);
   if (call_start_playing_hook(sp)) return(NULL);
@@ -1036,6 +1045,7 @@ static dac_info *play_sound_1(snd_info *sp, off_t start, off_t end, play_process
   /* just plays one sound (ignores possible sync) */
   int i, pos;
   dac_info *dp = NULL, *rtn_dp = NULL;
+
   if ((background == NOT_IN_BACKGROUND) && 
       (play_list_members > 0)) 
     return(NULL);
@@ -1186,8 +1196,32 @@ static int choose_dac_op (dac_info *dp, snd_info *sp)
 static int cursor_time;
 /* can't move cursor on each dac buffer -- causes clicks */
 
+/* TODO: dac-is-pausing, settable, dac-is-running = #f?, or set to #t to set it running 0's?
+   or change to playing, pausing? -- could have snd chn args as well -- region|track|mix|selection-playing/pausing
+   stop-playing + chn arg (how to stop playing others? player=-index as snd)
+
+   deprecate dac-is-running
+   
+   playing?, pausing?
+   (playing?) -> #t or #f if dac is active
+
+   (play-list) -> list of player descriptors (can this include [snd chn start end] + region/selection stuff?
+   or does (players) already provide this? -- indirectly but player-position needed
+   (if (dac-is-running) (stop-playing))
+
+   or dac-is-running: no=0, running=1, paused=2
+
+   ask-before-overwrite, auto-resize, data-clipped [clipping?], dac-is-running,
+   dac-combines-channels, cursor-follows-play [(cursor-)tracking?], 
+   selection-creates-region, squelch-update [displaying?],
+   verbose-cursor [cursor-verbose?], with-mix-tags [mixes-tagged?],
+   snd: pausing playing
+
+   added mus-prescaler mus-file-clipping (local -- old was global) TEST
+ */
+
 static bool dac_pausing = false;
-void toggle_dac_pausing(void) {dac_pausing = (!dac_pausing); play_button_pause(dac_pausing);}
+void toggle_dac_pausing(void) {dac_pausing = (!dac_pausing); play_button_pause(dac_pausing);} /* only snd-kbd.c */
 bool play_in_progress(void) {return(play_list_members > 0);}
 
 static unsigned char **audio_bytes = NULL;

@@ -1114,7 +1114,7 @@ io_error_t save_region(int rg, const char *name, int type, int format, const cha
       if (ofd != -1)
 	{
 	  snd_file_open_descriptors(ofd, name, format, oloc, r->chans, type);
-	  mus_file_set_data_clipped(ofd, data_clipped(ss));
+	  mus_file_set_clipping(ofd, data_clipped(ss));
 	  lseek(ofd, oloc, SEEK_SET);
 	  /* copy r->filename with possible header/data format changes */
 	  ifd = snd_open_read(r->filename);

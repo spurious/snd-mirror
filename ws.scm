@@ -261,9 +261,9 @@ returning you to the true top-level."
        (if (equal? clipped 'unset)
 	   (if (and (or scaled-by scaled-to)
 		    (member data-format (list mus-bfloat mus-lfloat mus-bdouble mus-ldouble)))
-	       (set! (mus-file-data-clipped) #f)
-	       (set! (mus-file-data-clipped) *clm-clipped*))
-	   (set! (mus-file-data-clipped) clipped))
+	       (set! (mus-clipping) #f)
+	       (set! (mus-clipping) *clm-clipped*))
+	   (set! (mus-clipping) clipped))
        (set! (mus-srate) srate))
 
      (lambda ()
