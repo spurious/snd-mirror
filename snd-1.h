@@ -447,7 +447,7 @@ typedef struct snd_state {
   env_type_t Enved_Style;
   int Graph_Cursor, Mix_Tag_Width, Mix_Tag_Height, Mark_Tag_Height, Mark_Tag_Width, Minibuffer_History_Length;
   enved_target_t Enved_Target;
-  bool Data_Clipped, Show_Indices, Just_Sounds;
+  bool Clipping, Show_Indices, Just_Sounds;
   int Cursor_Size;
   cursor_style_t Cursor_Style;
   bool Filter_Control_In_Db, Filter_Control_In_Hz, Show_Sonogram_Cursor;

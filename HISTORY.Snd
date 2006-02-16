@@ -1,6 +1,7 @@
 Snd change log
 
   17-Feb:    mus-file-data-clipped -> mus-clipping, added mus-file-clipping for local settings
+             data-clipped -> clipping
              mus-prescaler (global) alongside previous mus-file-prescaler
   9-Feb:     Bill Sack's stochastic.scm and snd-stochastic.pd, stochastic.png in grfsnd.html.
   2-Feb:     mus_audio_sun_outputs -> mus_sun_set_outputs, added mus_netbsd_set_outputs.

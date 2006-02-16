@@ -230,7 +230,7 @@ void snd_set_global_defaults(bool need_cleanup)
   ss->Show_Marks = DEFAULT_SHOW_MARKS;
   ss->Show_Indices = DEFAULT_SHOW_INDICES;
   ss->Show_Backtrace = DEFAULT_SHOW_BACKTRACE;
-  ss->Data_Clipped = DEFAULT_DATA_CLIPPED;
+  ss->Clipping = DEFAULT_CLIPPING;
   ss->Fft_Log_Magnitude = DEFAULT_FFT_LOG_MAGNITUDE;
   ss->Fft_Log_Frequency = DEFAULT_FFT_LOG_FREQUENCY;
   ss->Channel_Style = DEFAULT_CHANNEL_STYLE;

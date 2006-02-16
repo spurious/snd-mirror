@@ -4379,7 +4379,7 @@ static io_error_t snd_make_file(const char *ofile, int chans, file_info *hdr, sn
   ofd = open_temp_file(ofile, chans, hdr, &io_err);
   if (ofd == -1) 
     return(io_err);
-  mus_file_set_clipping(ofd, data_clipped(ss));
+  mus_file_set_clipping(ofd, clipping(ss));
   datumb = mus_bytes_per_sample(hdr->format);
   obufs = (mus_sample_t **)MALLOC(chans * sizeof(mus_sample_t *));
   ss->stopped_explicitly = false;

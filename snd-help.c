@@ -480,6 +480,7 @@ void about_snd_help(void)
 		"\nRecent changes include:\n\
 \n\
 17-Feb:  mus-file-data-clipped -> mus-clipping, added mus-file-clipping for local settings\n\
+         data-clipped -> clipping\n\
          mus-prescaler (global) alongside previous mus-file-prescaler\n\
 9-Feb:   Bill Sack's pd-stochastic.scm and snd-stochastic.pd.\n\
 2-Feb:   mus_audio_sun_outputs -> mus_sun_set_outputs, added mus_netbsd_set_outputs.\n\

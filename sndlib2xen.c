@@ -1943,11 +1943,10 @@ void mus_sndlib_xen_initialize(void)
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_clipping, g_mus_clipping_w, H_mus_clipping,
 				   S_setB S_mus_clipping, g_mus_set_clipping_w, 0, 0, 1, 0);
-
-  /* backwards compatibility... */
+#if (!SNDLIB_DISABLE_DEPRECATED)
   XEN_DEFINE_PROCEDURE_WITH_SETTER("mus-file-data-clipped", g_mus_clipping_w, H_mus_clipping,
 				   S_setB "mus-file-data-clipped", g_mus_set_clipping_w, 0, 0, 1, 0);
-
+#endif
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_file_clipping, g_mus_file_clipping_w, H_mus_file_clipping,
 				   S_setB S_mus_file_clipping, g_mus_file_set_clipping_w, 1, 0, 2, 0);
 

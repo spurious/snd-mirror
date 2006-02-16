@@ -1301,7 +1301,7 @@ static Cessate read_adc(void)
       (output_bufs) && 
       (ochns <= rp->hd_audio_out_chans))
     {
-      mus_file_write_buffer(monitor_data_format, 0, out_frame - 1, rp->hd_audio_out_chans, output_bufs, monitor_buf, data_clipped(ss));
+      mus_file_write_buffer(monitor_data_format, 0, out_frame - 1, rp->hd_audio_out_chans, output_bufs, monitor_buf, clipping(ss));
       mus_audio_write(rp->monitor_port, 
 		      monitor_buf, 
 		      rp->buffer_size * rp->hd_audio_out_chans * mus_bytes_per_sample(monitor_data_format));
@@ -1424,7 +1424,7 @@ static Cessate read_adc(void)
       (output_bufs) && 
       (ochns == rp->hd_audio_out_chans))
     {
-      mus_file_write_buffer(rp->output_data_format, 0, out_frame - 1, rp->hd_audio_out_chans, output_bufs, raw_input_bufs[0], data_clipped(ss));
+      mus_file_write_buffer(rp->output_data_format, 0, out_frame - 1, rp->hd_audio_out_chans, output_bufs, raw_input_bufs[0], clipping(ss));
       mus_audio_write(rp->monitor_port, 
 		      raw_input_bufs[0], 
 		      out_frame * rp->hd_audio_out_chans * mus_bytes_per_sample(rp->output_data_format));
@@ -1473,7 +1473,7 @@ void recorder_start_output_file(const char *comment)
 			    oloc,
 			    rp->out_chans,
 			    rp->output_header_type);
-  mus_file_set_clipping(rp->output_file_descriptor, data_clipped(ss));
+  mus_file_set_clipping(rp->output_file_descriptor, clipping(ss));
   lseek(rp->output_file_descriptor, oloc, SEEK_SET);
   rp->total_output_frames = 0;
   duration_label_update_frames = rp->srate / 4;

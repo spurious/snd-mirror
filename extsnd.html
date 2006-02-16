@@ -378,8 +378,8 @@ mark play triangle.  (Some audio choices, ALSA in particular, may ignore dac-siz
 </td></tr>
 <tr><td colspan=3></td></tr>
 
-<!-- data-clipped -->
-<tr><td colspan=2><code><a class=def name="dataclipped">data-clipped</a></code></td>
+<!-- clipping -->
+<tr><td colspan=2><code><a class=def name="clipping">clipping</a></code></td>
 <td><code>#f</code></td></tr>
 <tr><td></td><td colspan=2>If #t, output values are clipped to fit the current sndlib sample
 representation's notion of -1.0 to just less than 1.0.  The default
@@ -1763,7 +1763,7 @@ distinguish Snd responses from user-typing, or add arbitrarily fancy prompts, et
 </td></tr>
 <tr><td></td><td colspan=2>
 called each time a line is typed into the listener (it is triggered by the carriage return).
-If it returns #t, Snd assumes you've dealt the text yourself, and does not try to evaluate it.
+If it returns #t, Snd assumes you've dealt with the text yourself, and does not try to evaluate it.
 This is intended to make it possible to read user-typing in the listener.
 </td></tr>
 <tr><td></td><td colspan=2>

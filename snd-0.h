@@ -934,9 +934,9 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_SAVE_AS_DIALOG, F
 
 #define in_graph_cursor(ss) ss->Graph_Cursor
 
-#define data_clipped(ss) ss->Data_Clipped
-#define set_data_clipped(a) ss->Data_Clipped = a
-#define DEFAULT_DATA_CLIPPED false
+#define clipping(ss) ss->Clipping
+#define set_clipping(a) ss->Clipping = a
+#define DEFAULT_CLIPPING false
 
 #define html_dir(ss) ss->HTML_Dir
 #define set_html_dir_1(a) ss->HTML_Dir = a

@@ -1205,19 +1205,12 @@ static int cursor_time;
    playing?, pausing?
    (playing?) -> #t or #f if dac is active
 
-   (play-list) -> list of player descriptors (can this include [snd chn start end] + region/selection stuff?
-   or does (players) already provide this? -- indirectly but player-position needed
    (if (dac-is-running) (stop-playing))
-
    or dac-is-running: no=0, running=1, paused=2
 
-   ask-before-overwrite, auto-resize, data-clipped [clipping?], dac-is-running,
+   ask-before-overwrite, auto-resize, dac-is-running,
    dac-combines-channels, cursor-follows-play [(cursor-)tracking?], 
-   selection-creates-region, squelch-update [displaying?],
    verbose-cursor [cursor-verbose?], with-mix-tags [mixes-tagged?],
-   snd: pausing playing
-
-   added mus-prescaler mus-file-clipping (local -- old was global) TEST
  */
 
 static bool dac_pausing = false;
@@ -1562,7 +1555,7 @@ static int fill_dac_buffers(int write_ok)
 				      snd_dacp->chans_per_device[i],
 				      dev_bufs,
 				      (char *)(audio_bytes[i]),
-				      data_clipped(ss));
+				      clipping(ss));
 		dev_bufs += snd_dacp->chans_per_device[i];
 	      }
 	  for (i = 0; i < snd_dacp->devices; i++)
@@ -1575,7 +1568,7 @@ static int fill_dac_buffers(int write_ok)
 #else
       if (write_ok == WRITE_TO_DAC) 
 	{
-	  mus_file_write_buffer(snd_dacp->out_format, 0, frames - 1, snd_dacp->channels, dac_buffers, (char *)(audio_bytes[0]), data_clipped(ss));
+	  mus_file_write_buffer(snd_dacp->out_format, 0, frames - 1, snd_dacp->channels, dac_buffers, (char *)(audio_bytes[0]), clipping(ss));
 	  bytes = snd_dacp->channels * frames * mus_bytes_per_sample(snd_dacp->out_format);
 	  mus_audio_write(dev_fd[0], (char *)(audio_bytes[0]), bytes);
 	}

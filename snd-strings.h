@@ -1,8 +1,6 @@
 #ifndef SND_STRINGS_H
 #define SND_STRINGS_H
 
-#define S_data_clipped "data-clipped"
-
 #define S_abort                         "abort"
 #define S_add_colormap                  "add-colormap"
 #define S_add_directory_to_view_files_list "add-directory-to-view-files-list"

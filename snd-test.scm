@@ -694,9 +694,9 @@
       (set! (minibuffer-history-length) (minibuffer-history-length))
       (if (not (equal? (minibuffer-history-length)  8)) 
 	  (snd-display ";minibuffer-history-length set def: ~A" (minibuffer-history-length)))
-      (set! (data-clipped) (data-clipped))
-      (if (not (equal? (data-clipped)  #f )) 
-	  (snd-display ";data-clipped set def: ~A" (data-clipped)))
+      (set! (clipping) (clipping))
+      (if (not (equal? (clipping)  #f )) 
+	  (snd-display ";clipping set def: ~A" (clipping)))
       (set! (default-output-chans) (default-output-chans))
       (if (not (equal? (default-output-chans)  1 )) 
 	  (snd-display ";default-output-chans set def: ~A" (default-output-chans)))
@@ -1089,7 +1089,7 @@
 	'dac-combines-channels (dac-combines-channels) #t
 	'dac-size (dac-size) 256 
 	'minibuffer-history-length (minibuffer-history-length) 8
-	'data-clipped (data-clipped) #f 
+	'clipping (clipping) #f 
 	'default-output-chans (default-output-chans) 1 
 	'default-output-data-format (default-output-data-format) mus-bshort
 	'default-output-srate (default-output-srate) 22050 
@@ -1685,7 +1685,7 @@
 	  (list 'dac-combines-channels dac-combines-channels #t #f)
 	  (list 'dac-size dac-size 256 512)
 	  (list 'minibuffer-history-length minibuffer-history-length 8 16)
-	  (list 'data-clipped data-clipped #f #t)
+	  (list 'clipping clipping #f #t)
 	  (list 'default-output-chans default-output-chans 1 2)
 	  (list 'default-output-data-format default-output-data-format 1 1)
 	  (list 'default-output-srate default-output-srate 22050 44100)
@@ -1737,6 +1737,8 @@
 	  (list 'mix-tag-width mix-tag-width 6 20)
 	  (list 'mark-tag-height mark-tag-height 4 20)
 	  (list 'mark-tag-width mark-tag-width 10 20)
+	  (list 'mus-prescaler mus-prescaler 1.0 100.0)
+	  (list 'mus-clipping mus-clipping #f #t)
 	  (list 'selection-creates-region selection-creates-region #t #f)
 	  (list 'transform-normalization transform-normalization normalize-by-channel dont-normalize)
 	  (list 'view-files-sort view-files-sort 0 1)
@@ -3126,9 +3128,9 @@
 		(snd-display ";re-read/write: ~A?" (sound-data->list sdata)))
 	    (mus-sound-close-input fd)
 	    
-	    ;; check data-clipped choices
+	    ;; check clipping choices
 	    (let ((ind (view-sound "oboe.snd")))
-	      (set! (data-clipped) #f)
+	      (set! (clipping) #f)
 	      (map-channel (lambda (y) (* y 10.0)) 0 (frames) ind 0)
 	      (save-sound-as "test.snd" ind mus-next mus-bfloat)
 	      (undo 1 ind 0)
@@ -3137,7 +3139,7 @@
 		    (snd-display ";clipping 0: ~A ~A" (maxamp ind1 0) (maxamp ind 0)))
 		(close-sound ind1))
 	      (delete-file "test.snd")
-	      (set! (data-clipped) #t)
+	      (set! (clipping) #t)
 	      (map-channel (lambda (y) (* y 10.0)) 0 (frames) ind 0)
 	      (save-sound-as "test.snd" ind mus-next mus-bfloat)
 	      (undo 1 ind 0)
@@ -3146,7 +3148,7 @@
 		    (snd-display ";clipping 1: ~A ~A" (maxamp ind1 0) (maxamp ind 0)))
 		(close-sound ind1))
 	      (delete-file "test.snd")
-	      (set! (data-clipped) #f)
+	      (set! (clipping) #f)
 	      (let ((mx (maxamp ind)))
 		(map-channel (lambda (y) (+ y (- 1.001 mx))) 0 (frames) ind 0)
 		(save-sound-as "test.snd" ind mus-next mus-bshort)
@@ -3156,7 +3158,7 @@
 		      (snd-display ";clipping 2: ~A" baddy))
 		  (close-sound ind1))
 		(delete-file "test.snd")
-		(set! (data-clipped) #t)
+		(set! (clipping) #t)
 		(save-sound-as "test.snd" ind mus-next mus-bshort)
 		(let* ((ind1 (open-sound "test.snd"))
 		       (baddy (scan-channel (lambda (y) (< y 0.0)))))
@@ -3164,7 +3166,7 @@
 		      (snd-display ";clipping 3: ~A" baddy))
 		  (close-sound ind1))
 		(delete-file "test.snd")
-		(set! (data-clipped) #f))
+		(set! (clipping) #f))
 	      (close-sound ind))
 	    
 	    (delete-file "fmv.snd")
@@ -16792,7 +16794,8 @@ EDITS: 5
 	  (do ((i 0 (1+ i)))
 	      ((= i 10))
 	    (let ((val (env gen)))
-	      (if (fneq val (vct-ref v i)) (snd-display ";neg exp env: ~D ~A" i val)))))
+	      (if (fneq val (vct-ref v i)) (snd-display ";neg exp env: ~D ~A" i val))))
+	  (mus-apply gen))
 	
 	(let ((e (make-env '(0 0 1 1) :end 9)))
 	  (if (fneq (env-interp 1.0 e) 1.0) (snd-display ";env-interp 0011 at 1: ~A" (env-interp 1.0 e)))
@@ -17633,7 +17636,8 @@ EDITS: 5
 	(if (or (fneq (vct-ref v0 1) -0.009) (fneq (vct-ref v0 7) .029)) (snd-display ";file->sample output: ~A" v0))
 	(if (fneq (mus-increment gen) 0.0) (snd-display ";file->sample increment: ~A" (mus-increment gen)))
 	(set! (mus-increment gen) 1.0)
-	(if (fneq (mus-increment gen) 1.0) (snd-display ";file->sample set increment: ~A" (mus-increment gen))))
+	(if (fneq (mus-increment gen) 1.0) (snd-display ";file->sample set increment: ~A" (mus-increment gen)))
+	(mus-reset gen)) ; a no-op I hope
       
       (let* ((ind (open-sound "oboe.snd"))
 	     (gen (make-snd->sample ind))
@@ -20575,6 +20579,9 @@ EDITS: 5
 	      (set! (mix-speed-style mix-id) speed-control-as-ratio)
 	      (if (not (= (mix-speed-style mix-id) speed-control-as-ratio)) 
 		  (snd-display ";set mix-speed-style: ~A" (mix-speed-style mix-id)))
+	      (let ((tag (catch #t (lambda () (set! (mix-speed-style mix-id) 123123)) (lambda args args))))
+		(if (not (eq? (cat tag) 'out-of-range)) (snd-display ";set mix-speed-style bad arg: ~A" tag)))
+
 	      (let ((trk (make-track mix-id)))
 		(let ((tag (catch #t
 				  (lambda () (play-track 1231233))
@@ -27395,7 +27402,7 @@ EDITS: 5
 		(list 'cursor-follows-play cursor-follows-play #f #f #t)
 		(list 'cursor-size cursor-size #f 15 25)
 		(list 'cursor-style cursor-style #f cursor-cross cursor-line)
-		(list 'data-clipped data-clipped #f #f #t)
+		(list 'clipping clipping #f #f #t)
 		(list 'default-output-chans default-output-chans #f 1 8)
 					;(list 'default-output-data-format default-output-data-format #f 1 12)
 		(list 'default-output-srate default-output-srate #f 22050 44100)
@@ -27509,7 +27516,7 @@ EDITS: 5
       )
     )
 
-(set! (data-clipped) #f)
+(set! (clipping) #f)
 
 (define prefix-it
   (lambda (n id)
@@ -36320,7 +36327,9 @@ EDITS: 1
 		  (let* ((n 16) 
 			 (v (make-vct n)))
 		    (do ((i 0 (1+ i))) ((= i n)) (vct-set! v i 1.0))
-		    (gsl-dht n v 1.0 1.0))))
+		    (gsl-dht n v 1.0 1.0))
+		  (let ((tag (catch #t (lambda () (gsl-dht -1 (make-vct 3) 1.0 1.0)) (lambda args args))))
+		    (if (not (eq? (car tag) 'out-of-range)) (snd-display ";gsl-dht bad size: ~A" tag)))))
 	    
 	    (let ((ind1 (open-sound "oboe.snd")))
 	      (set! (time-graph-style ind1 0) graph-lollipops)
@@ -56629,7 +56638,7 @@ EDITS: 1
 		     amp-control-bounds speed-control-bounds expand-control-bounds contrast-control-bounds
 		     reverb-control-length-bounds reverb-control-scale-bounds cursor-update-interval cursor-location-offset
 		     auto-update-interval count-matches current-font cursor cursor-color cursor-follows-play cursor-size
-		     cursor-style dac-combines-channels dac-size data-clipped data-color data-format data-location data-size
+		     cursor-style dac-combines-channels dac-size clipping data-color data-format data-location data-size
 		     default-output-chans default-output-data-format default-output-srate default-output-header-type define-envelope
 		     delete-mark delete-marks forget-region delete-sample delete-samples
 		     delete-selection dialog-widgets display-edits dot-size draw-dot draw-dots draw-line
@@ -56791,7 +56800,7 @@ EDITS: 1
 			 amp-control-bounds speed-control-bounds expand-control-bounds contrast-control-bounds
 			 reverb-control-length-bounds reverb-control-scale-bounds cursor-update-interval cursor-location-offset
 			 contrast-control? auto-update-interval current-font cursor cursor-color channel-properties
-			 cursor-follows-play cursor-size cursor-style dac-combines-channels dac-size data-clipped data-color
+			 cursor-follows-play cursor-size cursor-style dac-combines-channels dac-size clipping data-color
 			 default-output-chans default-output-data-format default-output-srate default-output-header-type dot-size
 			 enved-envelope enved-base enved-clip? enved-in-dB enved-style enved-power
 			 enved-target enved-waveform-color enved-wave? eps-file eps-left-margin eps-bottom-margin eps-size
@@ -57579,7 +57588,7 @@ EDITS: 1
 			(list enved-filter-order enved-filter filter-control-waveform-color ask-before-overwrite
 			      auto-resize auto-update axis-label-font axis-numbers-font basic-color bind-key
 			      channel-style color-cutoff color-dialog color-inverted color-scale
-			      cursor-color dac-combines-channels dac-size data-clipped data-color default-output-chans 
+			      cursor-color dac-combines-channels dac-size clipping data-color default-output-chans 
 			      default-output-data-format default-output-srate default-output-header-type enved-envelope enved-base
 			      enved-clip? enved-in-dB enved-dialog enved-style  enved-power enved-target
 			      enved-waveform-color enved-wave? eps-file eps-left-margin eps-bottom-margin eps-size

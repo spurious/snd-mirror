@@ -528,7 +528,7 @@ bool scale_to(snd_info *sp, chan_info *cp, Float *ur_scalers, int len, bool over
 	      else val = channel_maxamp(ncp, AT_CURRENT_EDIT_POSITION);
 	      if (val > maxamp) maxamp = val;
 	    }
-	  if ((!(data_clipped(ss))) && 
+	  if ((!(clipping(ss))) && 
 	      (scalers[0] == 1.0) &&
 	      (datum_size <= 2))
 	    {
@@ -557,7 +557,7 @@ bool scale_to(snd_info *sp, chan_info *cp, Float *ur_scalers, int len, bool over
 	      if (val > maxamp) maxamp = val;
 	      if (val != 0.0)
 		{
-		  if ((!(data_clipped(ss))) && 
+		  if ((!(clipping(ss))) && 
 		      (scalers[i] == 1.0) && 
 		      (datum_size <= 2))
 		    {

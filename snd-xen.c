@@ -1617,15 +1617,14 @@ static XEN g_set_with_background_processes(XEN val)
   return(C_TO_XEN_BOOLEAN(with_background_processes(ss)));
 }
 
-/* data-clipped -> clip-data? -- this is from sndlib */
-static XEN g_data_clipped(void) {return(C_TO_XEN_BOOLEAN(data_clipped(ss)));}
-static XEN g_set_data_clipped(XEN val) 
+static XEN g_clipping(void) {return(C_TO_XEN_BOOLEAN(clipping(ss)));}
+static XEN g_set_clipping(XEN val) 
 {
-  #define H_data_clipped "(" S_data_clipped "): #t if Snd should clip output values to the current \
+  #define H_clipping "(" S_clipping "): #t if Snd should clip output values to the current \
 output data format's maximum. The default (#f) allows them to wrap-around which makes a very loud click"
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, XEN_ONLY_ARG, S_setB S_data_clipped, "a boolean");
-  set_data_clipped(XEN_TO_C_BOOLEAN(val));
-  return(C_TO_XEN_BOOLEAN(data_clipped(ss)));
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, XEN_ONLY_ARG, S_setB S_clipping, "a boolean");
+  set_clipping(XEN_TO_C_BOOLEAN(val));
+  return(C_TO_XEN_BOOLEAN(clipping(ss)));
 }
 
 static XEN g_zoom_focus_style(void) 
@@ -3074,8 +3073,8 @@ XEN_NARGIFY_0(g_with_relative_panes_w, g_with_relative_panes)
 XEN_NARGIFY_1(g_set_with_relative_panes_w, g_set_with_relative_panes)
 XEN_NARGIFY_0(g_with_background_processes_w, g_with_background_processes)
 XEN_NARGIFY_1(g_set_with_background_processes_w, g_set_with_background_processes)
-XEN_NARGIFY_0(g_data_clipped_w, g_data_clipped)
-XEN_NARGIFY_1(g_set_data_clipped_w, g_set_data_clipped)
+XEN_NARGIFY_0(g_clipping_w, g_clipping)
+XEN_NARGIFY_1(g_set_clipping_w, g_set_clipping)
 XEN_NARGIFY_0(g_window_x_w, g_window_x)
 XEN_NARGIFY_1(g_set_window_x_w, g_set_window_x)
 XEN_NARGIFY_0(g_window_y_w, g_window_y)
@@ -3258,8 +3257,8 @@ XEN_NARGIFY_1(g_gsl_roots_w, g_gsl_roots)
 #define g_set_with_relative_panes_w g_set_with_relative_panes
 #define g_with_background_processes_w g_with_background_processes
 #define g_set_with_background_processes_w g_set_with_background_processes
-#define g_data_clipped_w g_data_clipped
-#define g_set_data_clipped_w g_set_data_clipped
+#define g_clipping_w g_clipping
+#define g_set_clipping_w g_set_clipping
 #define g_window_x_w g_window_x
 #define g_set_window_x_w g_set_window_x
 #define g_window_y_w g_window_y
@@ -3527,8 +3526,11 @@ void g_initialize_gh(void)
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_with_background_processes, g_with_background_processes_w, H_with_background_processes,
 				   S_setB S_with_background_processes, g_set_with_background_processes_w,  0, 0, 1, 0);
 
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_data_clipped, g_data_clipped_w, H_data_clipped,
-				   S_setB S_data_clipped, g_set_data_clipped_w,  0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_clipping, g_clipping_w, H_clipping,
+				   S_setB S_clipping, g_set_clipping_w,  0, 0, 1, 0);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER("data-clipped", g_clipping_w, H_clipping,
+				   S_setB "data-clipped", g_set_clipping_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_window_x, g_window_x_w, H_window_x,
 				   S_setB S_window_x, g_set_window_x_w,  0, 0, 1, 0);

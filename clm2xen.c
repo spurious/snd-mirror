@@ -5138,6 +5138,7 @@ it in conjunction with mixer to scale/envelope all the various ins and outs. \
 			       C_TO_XEN_STRING("input frames < 0")));
 	}
     }
+  if (osamps == 0) return(XEN_FALSE);
   if (infile)
     in_chans = mus_sound_chans(infile);
   else in_chans = mus_channels(inf);

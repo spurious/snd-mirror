@@ -2,8 +2,8 @@
 #define SNDLIB_H
 
 #define SNDLIB_VERSION 19
-#define SNDLIB_REVISION 16
-#define SNDLIB_DATE "21-Nov-05"
+#define SNDLIB_REVISION 17
+#define SNDLIB_DATE "17-Feb-06"
 
 #include <config.h>
 

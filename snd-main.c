@@ -443,7 +443,7 @@ void save_options(FILE *fd)
   if (show_sonogram_cursor(ss) != DEFAULT_SHOW_SONOGRAM_CURSOR) pss_ss(fd, S_show_sonogram_cursor, b2s(show_sonogram_cursor(ss)));
   if (show_axes(ss) != DEFAULT_SHOW_AXES) pss_ss(fd, S_show_axes, show_axes2string(show_axes(ss)));
   if (show_marks(ss) != DEFAULT_SHOW_MARKS) pss_ss(fd, S_show_marks, b2s(show_marks(ss)));
-  if (data_clipped(ss) != DEFAULT_DATA_CLIPPED) pss_ss(fd, S_data_clipped, b2s(data_clipped(ss)));
+  if (clipping(ss) != DEFAULT_CLIPPING) pss_ss(fd, S_clipping, b2s(clipping(ss)));
   if (view_files_sort(ss) != DEFAULT_VIEW_FILES_SORT) pss_sd(fd, S_view_files_sort, view_files_sort(ss));
   if (fft_log_magnitude(ss) != DEFAULT_FFT_LOG_MAGNITUDE) pss_ss(fd, S_fft_log_magnitude, b2s(fft_log_magnitude(ss)));
   if (fft_log_frequency(ss) != DEFAULT_FFT_LOG_FREQUENCY) pss_ss(fd, S_fft_log_frequency, b2s(fft_log_frequency(ss)));

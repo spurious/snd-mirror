@@ -397,3 +397,11 @@
 	 (mus-clipping))
        (lambda (val)
 	 (set! (mus-clipping) val)))))
+
+(if (not (defined? 'data-clipped))
+    (define data-clipped
+      (make-procedure-with-setter
+       (lambda ()
+	 (clipping))
+       (lambda (val)
+	 (set! (clipping) val)))))
