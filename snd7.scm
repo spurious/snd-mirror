@@ -405,3 +405,5 @@
 	 (clipping))
        (lambda (val)
 	 (set! (clipping) val)))))
+
+(define (dac-is-running) (playing))

@@ -658,61 +658,6 @@ struct mus_xen *_mus_wrap_one_vct(mus_any *ge);
 struct mus_xen *_mus_wrap_one_vct_wrapped(mus_any *ge);
 /* end internal stuff */
 
-#if 0
-#define mus_clear_filter_state(Gen) mus_reset(Gen)
-#define mus_restart_env(Gen) mus_reset(Gen)
-#define mus_radians2hz(Radians) mus_radians_to_hz(Radians)
-#define mus_hz2radians(Hz) mus_hz_to_radians(Hz)
-#define mus_degrees2radians(Degrees) mus_degrees_to_radians(Degrees)
-#define mus_radians2degrees(Radians) mus_radians_to_hz(Radians)
-#define mus_db2linear(X) mus_db_to_linear(X)
-#define mus_linear2db(X) mus_linear_to_db(X)
-#define mus_rectangular2polar(Real, Imag, Size) mus_rectangular_to_polar(Real, Imag, Size)
-#define mus_polar2rectangular(Real, Imag, Size) mus_polar_to_rectangular(Real, Imag, Size)
-#define mus_partials2wave(Data, Partials, Table, Size, Normalize) mus_partials_to_wave(Data, Partials, Table, Size, Normalize)
-#define mus_phasepartials2wave(Data, Partials, Table, Size, Normalize) mus_phase_partials_to_wave(Data, Partials, Table, Size, Normalize)
-#define mus_partials2waveshape(Npartials, Partials, Size, Table) mus_partials_to_waveshape(Npartials, Partials, Size, Table)
-#define mus_partials2polynomial(Npartials, Partials, Kind) mus_partials_to_polynomial(Npartials, Partials, Kind)
-#define mus_frame2frame(Fr, In, Out) mus_frame_to_frame(Fr, In, Out)
-#define mus_sample2frame(Fr, In, Out) mus_sample_to_frame(Fr, In, Out)
-#define mus_frame2sample(fr, In) mus_frame_to_sample(fr, In)
-#define mus_file2sample_p(Ptr) mus_file_to_sample_p(Ptr)
-#define mus_make_file2sample(Filename) mus_make_file_to_sample(Filename)
-#define mus_file2sample(Ptr, Samp, Chan) mus_file_to_sample(Ptr, Samp, Chan)
-#define mus_make_file2frame(Filename) mus_make_file_to_frame(Filename)
-#define mus_file2frame_p(Ptr) mus_file_to_frame_p(Ptr)
-#define mus_file2frame(Ptr, Samp, Fr) mus_file_to_frame(Ptr, Samp, Fr)
-#define mus_sample2file_p(Ptr) mus_sample_to_file_p(Ptr)
-#define mus_make_sample2file(Filename, Chans, Format, Type) mus_make_sample_to_file(Filename, Chans, Format, Type)
-#define mus_make_sample2file_with_comment(Filename, Chans, Format, Type, Comment) mus_make_sample_to_file_with_comment(Filename, Chans, Format, Type, Comment)
-#define mus_sample2file(Ptr, Samp, Chan, Val) mus_sample_to_file(Ptr, Samp, Chan, Val)
-#define mus_continue_sample2file(Filename) mus_continue_sample_to_file(Filename)
-#define mus_make_frame2file(Filename, Chans, Format, Type) mus_make_frame_to_file(Filename, Chans, Format, Type)
-#define mus_frame2file_p(Ptr) mus_frame_to_file_p(Ptr)
-#define mus_frame2file(Ptr, Samp, Data) mus_frame_to_file(Ptr, Samp, Data)
-#define mus_sin(Phase) sin(Phase)
-#define MUS_LINEAR 1
-#define MUS_SINUSOIDAL 2
-#define mus_a0(Gen) mus_xcoeff(Gen, 0)
-#define mus_set_a0(Gen, Val) mus_set_xcoeff(Gen, 0, Val)
-#define mus_a1(Gen) mus_xcoeff(Gen, 1)
-#define mus_set_a1(Gen, Val) mus_set_xcoeff(Gen, 1, Val)
-#define mus_a2(Gen) mus_xcoeff(Gen, 2)
-#define mus_set_a2(Gen, Val) mus_set_xcoeff(Gen, 2, Val)
-#define mus_b1(Gen) mus_ycoeff(Gen, 1)
-#define mus_set_b1(Gen, Val) mus_set_ycoeff(Gen, 1, Val)
-#define mus_b2(Gen) mus_ycoeff(Gen, 2)
-#define mus_set_b2(Gen, Val) mus_set_ycoeff(Gen, 2, Val)
-#define mus_ina(Samp, Inp) mus_in_any(Samp, 0, Inp)
-#define mus_inb(Samp, Inp) mus_in_any(Samp, 1, Inp)
-#define mus_outa(Samp, Val, Outp) mus_out_any(Samp, Val, 0, Outp)
-#define mus_outb(Samp, Val, Outp) mus_out_any(Samp, Val, 1, Outp)
-#define mus_outc(Samp, Val, Outp) mus_out_any(Samp, Val, 2, Outp)
-#define mus_outd(Samp, Val, Outp) mus_out_any(Samp, Val, 3, Outp)
-#define mus_inspect(Gen) mus_describe(Gen)
-#endif
-
-
 #ifdef __cplusplus
 }
 #endif

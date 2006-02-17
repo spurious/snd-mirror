@@ -391,7 +391,7 @@ typedef struct snd_state {
   XEN search_proc;
   int file_sorters_size, file_filters_size;
   XEN file_sorters, file_filters;
-  int catch_exists, file_sorters_loc, file_filters_loc, search_proc_loc, local_errno, local_open_errno;
+  int catch_exists, search_proc_loc, local_errno, local_open_errno;
   state_context *sgx;
   int position_slider_width, zoom_slider_width, toggle_size, channel_sash_indent, sash_size, channel_sash_size, sash_indent;
   char *init_file;

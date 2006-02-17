@@ -4239,7 +4239,7 @@
       
       (set! (optimization) max-optimization) ; these trees assume optimization is on
       
-      (if (dac-is-running) (snd-display ";dac is running??"))
+      (if (playing) (snd-display ";dac is running??"))
       (do ((clmtest 0 (1+ clmtest))) ((= clmtest tests)) 
 	(log-mem clmtest)
 
@@ -20580,7 +20580,7 @@ EDITS: 5
 	      (if (not (= (mix-speed-style mix-id) speed-control-as-ratio)) 
 		  (snd-display ";set mix-speed-style: ~A" (mix-speed-style mix-id)))
 	      (let ((tag (catch #t (lambda () (set! (mix-speed-style mix-id) 123123)) (lambda args args))))
-		(if (not (eq? (cat tag) 'out-of-range)) (snd-display ";set mix-speed-style bad arg: ~A" tag)))
+		(if (not (eq? (car tag) 'out-of-range)) (snd-display ";set mix-speed-style bad arg: ~A" tag)))
 
 	      (let ((trk (make-track mix-id)))
 		(let ((tag (catch #t
@@ -56762,7 +56762,7 @@ EDITS: 1
 		     track tracks track? make-track track-amp track-position track-frames track-speed track-tempo track-amp-env
 		     track-track delete-track delete-mix track-color free-track track-speed-style
 
-		     delay-tick dac-is-running draw-axes copy-mix copy-track copy-sample-reader html-dir html-program
+		     delay-tick playing pausing draw-axes copy-mix copy-track copy-sample-reader html-dir html-program
 		     lock-track make-fir-coeffs make-identity-mixer mus-interp-type mus-make-error mus-run phase-vocoder
 		     player-home redo-edit undo-edit widget-position widget-size 
 		     (if (defined? 'window-property) window-property identity)

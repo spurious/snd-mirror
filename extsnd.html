@@ -5890,6 +5890,25 @@ no disk space or memory is needed.
 <tr><td colspan=2></td></tr>
 
 
+<!-- pausing -->
+<tr><td colspan=2>
+<code><a class=def name="pausing">pausing</a> ()</code></td></tr>
+<tr><td></td><td>
+#t if sound output is currently paused.  You can unpause the sound by setting <b>pausing</b> to #f,
+and pause it by setting <b>pausing</b> to #f.  If you pause a sound (via C-click of the play button, for example),
+then call <a href="#play">play</a> (via a key binding perhaps), the sound remains paused by default.  To
+cancel the current pause and restart with the new play command:
+<br><br>
+<table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
+(bind-key (char-&gt;integer #\p) 0
+  (lambda ()
+    (if (<em class=red>pausing</em>) (stop-playing))
+    (play)))
+</pre></td></tr></table>
+</td></tr>
+<tr><td colspan=2></td></tr>
+
+
 <!-- peak-env-info -->
 <tr><td colspan=2>
 <code><a class=def name="peakenvinfo">peak-env-info</a> (<i>snd chn pos</i>)</code>
@@ -5979,8 +5998,8 @@ play a mix: <a href="#playmix">play-mix</a>, play button in Mix dialog<br>
 play a track: <a href="#playtrack">play-track</a><br>
 play from mark: click or drag triangle (control-click for all chans)<br>
 play continuously between two marks: <a href="sndscm.html#exloopbetweenmarks">loop-it</a><br>
-stop playing: C-g, C-t, <a href="#stopplaying">stop-playing</a><br>
-pause or resume playback: space<br>
+stop playing: C-g, C-t, <a href="#stopplaying">stop-playing</a>, set <a href="#playing">playing</a> to #f<br>
+pause or resume playback: space, set <a href="#pausing">pausing</a><br>
 play repeatedly: <a href="sndscm.html#explayoften">play-often</a><br>
 play repeatedly until C-g: <a href="sndscm.html#explayuntilcg">play-until-c-g</a><br>
 play region repeatedly: <a href="sndscm.html#explayregionforever">play-region-forever</a><br>
@@ -6045,6 +6064,19 @@ If <i>pos</i> is given, play at that edit position.
 return a list of the sound index and channel number associated with <a href="#makeplayer">player</a>.
 </td></tr>
 <tr><td colspan=2></td></tr>
+
+
+<!-- playing -->
+<tr><td colspan=2>
+<code><a class=def name="playing">playing</a> ()</code></td></tr>
+<tr><td></td><td>
+#t if sound output is currently in progress.  You can also start playing by setting <b>playing</b> to #t (equivalent
+to calling <a href="#startplaying">start-playing</a> with default arguments), and stop by setting it to #f
+(equivalent to <a href="#stopplaying">stop-playing</a>).
+<br><br>
+<b>playing</b> only notices Snd-instigated "play" processes;
+<a href="#musaudioopenoutput">mus-audio-open-output</a> is invisible to it.
+</td></tr>
 
 
 <!-- players -->
@@ -10085,15 +10117,6 @@ See examp.scm and play.scm for other examples.
 <code><a class=def name="cgx">c-g!</a> ()</code></td></tr>
 <tr><td></td><td>
 simulate typing C-g (intended for use with bind-key to remap C-g).
-</td></tr>
-
-<!-- dac-is-running -->
-<tr><td colspan=2>
-<code><a class=def name="dacisrunning">dac-is-running</a> ()</code></td></tr>
-<tr><td></td><td>
-#t if sound output is currently in progress.  dac-is-running only notices Snd-instigated "play" processes;
-if you open the DAC via <a href="#musaudioopenoutput">mus-audio-open-output</a> and
-send it output via <a href="#musaudiowrite">mus-audio-write</a>, dac-is-running will not notice.
 </td></tr>
 
 <!-- defvar -->

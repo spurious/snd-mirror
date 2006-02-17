@@ -70,8 +70,6 @@
 #define SND_GSL_ERROR        XEN_ERROR_TYPE("gsl-error")
 #define NO_SUCH_COLORMAP     XEN_ERROR_TYPE("no-such-colormap")
 #define CANT_OPEN_FILE       XEN_ERROR_TYPE("cant-open-file")
-#define CANT_CLOSE_FILE      XEN_ERROR_TYPE("cant-close-file")
-#define CANT_DELETE_FILE     XEN_ERROR_TYPE("cant-delete-file")
 #define CANT_UPDATE_FILE     XEN_ERROR_TYPE("cant-update-file")
 
 #ifndef Float
@@ -233,8 +231,6 @@ enum {SORT_A_TO_Z, SORT_Z_TO_A, SORT_NEW_TO_OLD, SORT_OLD_TO_NEW, SORT_SMALL_TO_
   #define PROC_OPEN "("
   #define PROC_CLOSE ")"
   #define PROC_SEP ", "
-  #define VECTOR_OPEN "["
-  #define VECTOR_CLOSE "]"
   #define LIST_OPEN "["
   #define LIST_CLOSE "]"
   #define BPAREN ""
@@ -249,8 +245,6 @@ enum {SORT_A_TO_Z, SORT_Z_TO_A, SORT_NEW_TO_OLD, SORT_OLD_TO_NEW, SORT_SMALL_TO_
   #define PROC_OPEN " "
   #define PROC_CLOSE ""
   #define PROC_SEP " "
-  #define VECTOR_OPEN "'#("
-  #define VECTOR_CLOSE ")"
   #define LIST_OPEN "(list "
   #define LIST_CLOSE ")"
   #define BPAREN "("
@@ -309,7 +303,7 @@ typedef enum {COLOR_POSITION, COLOR_ZOOM} slider_choice_t;
 typedef enum {MINI_OFF, MINI_CURSOR, MINI_FIND, MINI_PROMPT, MINI_REPORT, MINI_USER} minibuffer_choice_t;
 
 typedef enum {PLAY_COMPLETE, PLAY_CLOSE, PLAY_BUTTON_UNSET, PLAY_STOP_CALLED, PLAY_C_G, PLAY_NO_CHANNEL,
-	      PLAY_ERROR, PLAY_APPLY, PLAY_EDIT, PLAY_C_T, PLAY_CALLED} play_stop_t;
+	      PLAY_ERROR, PLAY_APPLY, PLAY_EDIT, PLAY_C_T} play_stop_t;
 
 typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_SAVE_AS_DIALOG, FROM_DRAG_AND_DROP, FROM_OPEN_DIALOG,
 	      FROM_RECORDER, FROM_KEYBOARD, FROM_STARTUP, FROM_REGION_EDIT, FROM_NEW_FILE_DIALOG, FROM_OPEN_SOUND, 
@@ -874,7 +868,6 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_SAVE_AS_DIALOG, F
 #define channel_style(ss) ss->Channel_Style
 #define in_set_channel_style(a) ss->Channel_Style = a
 #define DEFAULT_CHANNEL_STYLE CHANNELS_COMBINED
-#define DEFAULT_MONO_CHANNEL_STYLE CHANNELS_SEPARATE
 
 #define sound_style(ss) ss->Sound_Style
 #define set_sound_style(a) ss->Sound_Style = a

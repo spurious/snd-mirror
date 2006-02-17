@@ -16,12 +16,6 @@
 #define XM_FONT_RESOURCE XmNrenderTable
 #define XM_FONT_FREE XmRenderTableFree
 
-#ifdef MUS_SGI
-  #define CLOSED_CTRLS_HEIGHT 22
-#else
-  #define CLOSED_CTRLS_HEIGHT 19
-#endif
-
 #define LOTSA_PIXELS 10000
 #define XEN_WRAP_WIDGET(Value)       ((Value) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("Widget"), C_TO_XEN_ULONG((unsigned long)Value)) : XEN_FALSE)
 #define XEN_WRAP_WINDOW(Value)       ((Value) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("Window"), C_TO_XEN_ULONG((unsigned long)Value)) : XEN_FALSE)

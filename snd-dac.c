@@ -775,7 +775,7 @@ void stop_playing_region(int n, play_stop_t reason)
     }
 }
 
-static bool dac_is_running(void)
+static bool playing(void)
 {
   int i;
   if (play_list)
@@ -1009,16 +1009,6 @@ static dac_info *play_channel_1(chan_info *cp, off_t start, off_t end, play_proc
   /* just plays one channel (ignores possible sync), includes start-hook */
   snd_info *sp = NULL;
   dac_info *dp = NULL;
-#if 0
-  if ((background == NOT_IN_BACKGROUND) && (play_list_members > 0))
-    {
-      /* play called during previous pause, etc -- not sure what is the right thing here,
-	 but to return NULL is not right -- if user pauses, then (play (cursor)) during the
-	 pause, the return NULL effectively turns the play call into a no-op.
-       */
-      stop_playing_all_sounds(PLAY_CALLED);
-    }
-#endif
   sp = cp->sound;
   if (sp->inuse == SOUND_IDLE) return(NULL);
   if (call_start_playing_hook(sp)) return(NULL);
@@ -1196,25 +1186,17 @@ static int choose_dac_op (dac_info *dp, snd_info *sp)
 static int cursor_time;
 /* can't move cursor on each dac buffer -- causes clicks */
 
-/* TODO: dac-is-pausing, settable, dac-is-running = #f?, or set to #t to set it running 0's?
-   or change to playing, pausing? -- could have snd chn args as well -- region|track|mix|selection-playing/pausing
-   stop-playing + chn arg (how to stop playing others? player=-index as snd)
+/* SOMEDAY: fix these names:
 
-   deprecate dac-is-running
-   
-   playing?, pausing?
-   (playing?) -> #t or #f if dac is active
+   [with-]ask-before-overwrite, [with-]auto-resize,
+   dac-combines-channels, cursor-follows-play [[with-tracking-](cursor-)tracking?], 
+   verbose-cursor [cursor-verbose?][with-verbose-cursor],
 
-   (if (dac-is-running) (stop-playing))
-   or dac-is-running: no=0, running=1, paused=2
-
-   ask-before-overwrite, auto-resize, dac-is-running,
-   dac-combines-channels, cursor-follows-play [(cursor-)tracking?], 
-   verbose-cursor [cursor-verbose?], with-mix-tags [mixes-tagged?],
+   dac-hook dac-size dac-combines-channels stop-dac-hook
  */
 
 static bool dac_pausing = false;
-void toggle_dac_pausing(void) {dac_pausing = (!dac_pausing); play_button_pause(dac_pausing);} /* only snd-kbd.c */
+void toggle_dac_pausing(void) {dac_pausing = (!dac_pausing); play_button_pause(dac_pausing);} /* only below and snd-kbd.c */
 bool play_in_progress(void) {return(play_list_members > 0);}
 
 static unsigned char **audio_bytes = NULL;
@@ -2758,10 +2740,35 @@ variable is #t, the extra channels are mixed into the available ones; otherwise 
   return(C_TO_XEN_BOOLEAN(dac_combines_channels(ss)));
 }
 
-static XEN g_dac_is_running(void) 
+static XEN g_playing(void) 
 {
-  #define H_dac_is_running "(" S_dac_is_running "): #t is sound output is in progress."
-  return(C_TO_XEN_BOOLEAN(dac_is_running()));
+  #define H_playing "(" S_playing "): #t if sound output is in progress."
+  return(C_TO_XEN_BOOLEAN(playing()));
+}
+
+static XEN g_set_playing(XEN on)
+{
+  bool starting = false;
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(on), on, XEN_ONLY_ARG, S_setB S_playing, "a boolean");
+  starting = XEN_TO_C_BOOLEAN(on);
+  if (starting)
+    start_dac((int)mus_srate(), 1, IN_BACKGROUND, DEFAULT_REVERB_CONTROL_DECAY); /* how to get plausible srate chans here? */
+  else stop_playing_all_sounds(PLAY_STOP_CALLED);
+  return(on);
+}
+
+static XEN g_pausing(void)
+{
+  #define H_pausing "(" S_pausing "): #t if sound output is currently pausing (settable."
+  return(C_TO_XEN_BOOLEAN(dac_pausing));
+}
+
+static XEN g_set_pausing(XEN pause)
+{
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(pause), pause, XEN_ONLY_ARG, S_setB S_pausing, "a boolean");
+  dac_pausing = XEN_TO_C_BOOLEAN(pause);
+  play_button_pause(dac_pausing);
+  return(pause);
 }
 
 static XEN g_cursor_update_interval(void) {return(C_TO_XEN_DOUBLE(cursor_update_interval(ss)));}
@@ -2807,7 +2814,10 @@ XEN_NARGIFY_0(g_dac_size_w, g_dac_size)
 XEN_NARGIFY_1(g_set_dac_size_w, g_set_dac_size)
 XEN_NARGIFY_0(g_dac_combines_channels_w, g_dac_combines_channels)
 XEN_NARGIFY_1(g_set_dac_combines_channels_w, g_set_dac_combines_channels)
-XEN_NARGIFY_0(g_dac_is_running_w, g_dac_is_running)
+XEN_NARGIFY_0(g_playing_w, g_playing)
+XEN_NARGIFY_1(g_set_playing_w, g_set_playing)
+XEN_NARGIFY_0(g_pausing_w, g_pausing)
+XEN_NARGIFY_1(g_set_pausing_w, g_set_pausing)
 XEN_NARGIFY_0(g_cursor_update_interval_w, g_cursor_update_interval)
 XEN_NARGIFY_1(g_set_cursor_update_interval_w, g_set_cursor_update_interval)
 XEN_NARGIFY_0(g_cursor_location_offset_w, g_cursor_location_offset)
@@ -2830,7 +2840,10 @@ XEN_NARGIFY_1(g_set_cursor_location_offset_w, g_set_cursor_location_offset)
 #define g_set_dac_size_w g_set_dac_size
 #define g_dac_combines_channels_w g_dac_combines_channels
 #define g_set_dac_combines_channels_w g_set_dac_combines_channels
-#define g_dac_is_running_w g_dac_is_running
+#define g_playing_w g_playing
+#define g_set_playing_w g_set_playing
+#define g_pausing_w g_pausing
+#define g_set_pausing_w g_set_pausing
 #define g_cursor_update_interval_w g_cursor_update_interval
 #define g_set_cursor_update_interval_w g_set_cursor_update_interval
 #define g_cursor_location_offset_w g_cursor_location_offset
@@ -2844,7 +2857,9 @@ void g_init_dac(void)
   XEN_DEFINE_PROCEDURE(S_play_selection, g_play_selection_w, 0, 2, 0, H_play_selection);
   XEN_DEFINE_PROCEDURE(S_play_and_wait,  g_play_and_wait_w,  0, 8, 0, H_play_and_wait);
   XEN_DEFINE_PROCEDURE(S_stop_playing,   g_stop_playing_w,   0, 1, 0, H_stop_playing);
-  XEN_DEFINE_PROCEDURE(S_dac_is_running, g_dac_is_running_w, 0, 0, 0, H_dac_is_running);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_pausing, g_pausing_w, H_pausing, S_setB S_pausing, g_set_pausing_w, 0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_playing, g_playing_w, H_playing, S_setB S_playing, g_set_playing_w, 0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE(S_make_player,    g_make_player_w,    0, 2, 0, H_make_player);
   XEN_DEFINE_PROCEDURE(S_add_player,     g_add_player_w,     1, 5, 0, H_add_player);

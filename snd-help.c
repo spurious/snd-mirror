@@ -482,6 +482,9 @@ void about_snd_help(void)
 17-Feb:  mus-file-data-clipped -> mus-clipping, added mus-file-clipping for local settings\n\
          data-clipped -> clipping\n\
          mus-prescaler (global) alongside previous mus-file-prescaler\n\
+         added pausing -- returns #t if DAC is paused, can be set to #t or #f to start/stop pausing\n\
+           similarly playing -- #t if DAC is running (may be paused), settable to start/stop playing\n\
+           removed dac-is-running (it's in snd7.scm)\n\
 9-Feb:   Bill Sack's pd-stochastic.scm and snd-stochastic.pd.\n\
 2-Feb:   mus_audio_sun_outputs -> mus_sun_set_outputs, added mus_netbsd_set_outputs.\n\
          mus_audio_set_oss_buffers -> mus_oss_set_buffers.\n\
