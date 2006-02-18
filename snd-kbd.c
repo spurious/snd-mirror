@@ -855,7 +855,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 	      clear_minibuffer_prompt(sp);
 	      set_minibuffer_string(sp, NULL, true);
 	      sp->minibuffer_on = MINI_OFF;
-	      if (strcasecmp(str, "yes") != 0)
+	      if (STRCMP(str, "yes") != 0)
 		{
 		  if (sp->filing_filename)
 		    {
@@ -916,7 +916,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 	      clear_minibuffer_prompt(sp);
 	      set_minibuffer_string(sp, NULL, true);
 	      sp->minibuffer_on = MINI_OFF;
-	      if (strcasecmp(str, "yes") != 0)
+	      if (STRCMP(str, "yes") != 0)
 		{
 		  if (sp->filing_filename)
 		    {

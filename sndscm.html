@@ -5114,11 +5114,11 @@ So I bound a few keys:
 
 (define (play-from-cursor-with-tracking current)
   ;; patterned after pfc in extsnd.html
-  (let ((old-tracking (<a class=quiet href="extsnd.html#cursorfollowsplay">cursor-follows-play</a>)))
-    (set! (<a class=quiet href="extsnd.html#cursorfollowsplay">cursor-follows-play</a>) #t)
+  (let ((old-tracking (<a class=quiet href="extsnd.html#withtrackingcursor">with-tracking-cursor</a>)))
+    (set! (<a class=quiet href="extsnd.html#withtrackingcursor">with-tracking-cursor</a>) #t)
     (add-hook! <a class=quiet href="extsnd.html#stopplayinghook">stop-playing-hook</a> 
 	       (lambda (snd)
-		 (set! (<a class=quiet href="extsnd.html#cursorfollowsplay">cursor-follows-play</a>) old-tracking)))
+		 (set! (<a class=quiet href="extsnd.html#withtrackingcursor">with-tracking-cursor</a>) old-tracking)))
     (<a class=quiet href="extsnd.html#play">play</a> (<a class=quiet href="extsnd.html#cursor">cursor</a>) #f #f #f #f (if current #f (1- (<a class=quiet href="extsnd.html#editposition">edit-position</a>))))))
 
 (<a class=quiet href="extsnd.html#bindkey">bind-key</a> (char-&gt;integer #\p) 0 (lambda () "play from cursor" (play-from-cursor #t) keyboard-no-action))

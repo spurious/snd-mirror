@@ -1188,9 +1188,13 @@ static int cursor_time;
 
 /* SOMEDAY: fix these names:
 
-   [with-]ask-before-overwrite, [with-]auto-resize,
-   dac-combines-channels, cursor-follows-play [[with-tracking-](cursor-)tracking?], 
-   verbose-cursor [cursor-verbose?][with-verbose-cursor],
+   [with-]ask-before-overwrite
+   [with-]auto-resize
+   dac-combines-channels [play-all-channels?]
+
+   finish these two [cursor-info has details]:
+     cursor-follows-play -> with-tracking-cursor
+     verbose-cursor -> with-verbose-cursor
 
    dac-hook dac-size dac-combines-channels stop-dac-hook
  */

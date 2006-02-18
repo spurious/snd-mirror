@@ -224,6 +224,7 @@ AC_CHECK_HEADER([sys/mount.h], [], [], [#if HAVE_SYS_PARAM_H
 				        #include <sys/param.h>
 				        #endif
 				       ])
+# this still screws up in netBSD!
 
 AC_CHECK_HEADER(/usr/local/lib/oss/include/sys/soundcard.h,[AC_DEFINE(USR_LOCAL_LIB_OSS)])
 AC_CHECK_HEADER(/usr/lib/oss/include/sys/soundcard.h,[AC_DEFINE(USR_LIB_OSS)])
@@ -246,7 +247,15 @@ AC_TYPE_PID_T
 AC_STRUCT_TM
 AC_C_BIGENDIAN( [AC_DEFINE(MUS_LITTLE_ENDIAN, 0)
 		 AC_DEFINE(WORDS_BIGENDIAN)
-		 AC_DEFINE(MUS_AUDIO_COMPATIBLE_FORMAT, MUS_BSHORT)
+#		 AC_DEFINE(MUS_AUDIO_COMPATIBLE_FORMAT, MUS_BSHORT)
+    		 case "$host" in
+      		  *-apple-*)
+        		AC_DEFINE(MUS_AUDIO_COMPATIBLE_FORMAT, MUS_BFLOAT)
+        		;;
+      		  *)
+			AC_DEFINE(MUS_AUDIO_COMPATIBLE_FORMAT, MUS_BSHORT)
+			;;
+    		 esac
 		 if test "$with_float_samples" != no ; then
 		    if test "$with_doubles" = yes ; then
                       AC_DEFINE(MUS_OUT_FORMAT, MUS_BDOUBLE)
@@ -258,7 +267,16 @@ AC_C_BIGENDIAN( [AC_DEFINE(MUS_LITTLE_ENDIAN, 0)
  		 fi
  		],
 		[AC_DEFINE(MUS_LITTLE_ENDIAN, 1)
-    	         AC_DEFINE(MUS_AUDIO_COMPATIBLE_FORMAT, MUS_LSHORT)
+#    	         AC_DEFINE(MUS_AUDIO_COMPATIBLE_FORMAT, MUS_LSHORT)
+# TODO: update sndlib configure for macintel
+    		 case "$host" in
+      		  *-apple-*)
+        		AC_DEFINE(MUS_AUDIO_COMPATIBLE_FORMAT, MUS_LFLOAT)
+        		;;
+      		  *)
+			AC_DEFINE(MUS_AUDIO_COMPATIBLE_FORMAT, MUS_LSHORT)
+			;;
+    		 esac
 		 if test "$with_float_samples" != no ; then
 		    if test "$with_doubles" = yes ; then
                       AC_DEFINE(MUS_OUT_FORMAT, MUS_LDOUBLE)
@@ -597,8 +615,6 @@ else
 	[
 	  with_motif=yes
 	  ac_snd_have_gui=yes
- 	  AC_DEFINE(USE_MOTIF)  # for Snd
-	  AC_DEFINE(HAVE_MOTIF) # for xm
 
 	  if test "$with_xpm" != no; then
   	    AC_CHECK_LIB(Xpm, XpmReadFileToPixmap,
@@ -822,6 +838,11 @@ else
     if test "$with_gtk" != no ; then
       with_gtk=yes
     fi
+  fi
+
+  if test "$with_motif" = yes ; then
+    AC_DEFINE(USE_MOTIF)  # for Snd
+    AC_DEFINE(HAVE_MOTIF) # for xm
   fi
 
 

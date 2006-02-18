@@ -341,7 +341,7 @@ if libfam is loaded (the default if it is available), auto-update-interval is ig
 <tr><td colspan=2><code><a class=def name="cursorlocationoffset">cursor-location-offset</a></code></td>
 <td><code>0.05</code></td></tr>
 <tr><td></td><td colspan=2>Offset (in samples) between Snd's notion of the location of the tracking cursor
-(cursor-follows-play in Snd jargon) and the actual (DAC-relative) location.
+(with-tracking-cursor in Snd jargon) and the actual (DAC-relative) location.
 Since, in general, Snd can't tell how many samples of buffering there are between itself
 and the speakers (audio cards have varying amounts), its notion of where to place the
 tracking cursor can be wrong by an almost arbitrary amount.  If you have some idea
@@ -353,7 +353,7 @@ of the buffering amount, you can correct this error via cursor-location-offset.
 <tr><td colspan=2><code><a class=def name="cursorupdateinterval">cursor-update-interval</a></code></td>
 <td><code>0.05</code></td></tr>
 <tr><td></td><td colspan=2>Time (seconds) between 
-cursor updates if <a href="#cursorfollowsplay">cursor-follows-play</a>.
+cursor updates if <a href="#withtrackingcursor">with-tracking-cursor</a>.
 </td></tr>
 <tr><td colspan=3></td></tr>
 
@@ -4582,7 +4582,7 @@ mark in that it moves if you delete or insert samples in front of it.
 <TABLE border=3 bordercolor="tan" hspace=40><tr><td>
 <blockquote><small>
 <br>
-Tracking cursor: <a href="#cursorfollowsplay">cursor-follows-play</a><br>
+Tracking cursor: <a href="#withtrackingcursor">with-tracking-cursor</a> (cursor-follows-play was the old name)<br>
 Change cursor shape or size: <a href="#cursorstyle">cursor-style</a>, <a href="#cursorsize">cursor-size</a><br>
 Cursor moving keys: <a href="snd.html#movecursor">Moving the Cursor</a><br>
 Display data about sample under cursor: <a href="#verbosecursor">verbose cursor</a><br>
@@ -4592,39 +4592,14 @@ Display data about sample under cursor: <a href="#verbosecursor">verbose cursor<
 </td></tr>
 <tr><td colspan=2></td></tr>
 
+
 <!-- cursor-follows-play -->
 <tr><td colspan=2>
 <code><a class=def name="cursorfollowsplay">cursor-follows-play</a> (<em class=narg>snd</em>)</code>
 </td></tr>
 <tr><td></td><td>
-#t if cursor is following along in the sound as it plays.  To make this the default:<br><br>
-<code>(set! (cursor-follows-play) #t)</code>.<br><br>
-A better name for this might be <i>with-tracking-cursor</i>, but the word "track" already has too many meanings in this context;
-The interval (in seconds) between cursor updates is set by <a href="#cursorupdateinterval">cursor-update-interval</a>
-which defaults to 0.05.  The accuracy of the cursor in reflecting the sound coming out the speakers
-depends on the amount of buffering in your audio system.  If Snd's displayed location is off,
-set <a href="#cursorlocationoffset">cursor-location-offset</a> to reflect the number of samples
-of buffering you think you probably have.  A positive cursor-location-offset delays the cursor's 
-apparent progress (if playing forwards).  In OSS, you can make a pretty good guess by setting
-it to the number of fragments times half the size of the fragments (since these are bytes, and
-cursor-location-offset is in terms of samples).  If you have <code>(mus-oss-set-buffers 4 12)</code>,
-try <code>(set! (cursor-location-offset) (* 4 (expt 2 11)))</code>.
-
-<!-- INDEX trackingcursors:Tracking cursors -->
-<A NAME="trackingcursors"></a>
-<br><br>
-<TABLE border=3 bordercolor="tan" hspace=40><tr><td>
-<blockquote><small>
-<br>
-play from the current cursor position with a tracking cursor:  <a href="#pfc">pfc</a><br>
-display tracking cursor as a full height vertical line: <a href="#cursorstyle">cursor-style</a><br>
-track play once: control-click 'play'. (You can add a mark at the current tracking cursor location during the play with C-m)<br>
-leave the cursor at the final position after tracking play: if-cursor-follows-play-it-stays-where-play-stopped in examp.scm<br>
-tracking cursor accuracy: <a href="#cursorlocationoffset">cursor-location-offset</a><br>
-tracking cursor updating: <a href="#cursorupdateinterval">cursor-update-interval</a><br>
-<br>
-</small></blockquote>
-</td></tr></TABLE>
+#t if cursor is following along in the sound as it plays.  The new name of this variable
+is <a href="#withtrackingcursor">with-tracking-cursor</a>.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -4662,7 +4637,7 @@ cursor size (pixels); defaults to 15. <code>(set! (cursor-size) 30)</code> makes
 cursor style (<i>cursor-cross</i> or <i>cursor-line</i>)
 The normal shape is a "+" sign; the cursor-line is a vertical line.
 The following hooks set the cursor-style to cursor-line while playing if
-cursor-follows-play is #t:
+with-tracking-cursor is #t:
 </td></tr>
 
 <tr><td></td><td>
@@ -4675,7 +4650,7 @@ cursor-follows-play is #t:
 
 (add-hook! <a class=quiet href="#startplayinghook">start-playing-hook</a> 
   (lambda (snd) 
-    (if (<a class=quiet href="#cursorfollowsplay">cursor-follows-play</a> snd) 
+    (if (<a class=quiet href="#withtrackingcursor">with-tracking-cursor</a> snd) 
         (set-sound-cursor snd <em class=red>cursor-line</em>))))
 
 (add-hook! <a class=quiet href="#stopplayinghook">stop-playing-hook</a> 
@@ -5976,11 +5951,11 @@ the "P" key to play the previous version of the current sound:<br><br>
 The following code plays from the cursor with a moving ("tracking") cursor:<br><br>
 <table border=1 cellpadding=5><tr><td bgcolor="GhostWhite"><pre>
 (define (<A NAME="pfc">pfc</a>)
-  (let ((old-tracking (<a class=quiet href="#cursorfollowsplay">cursor-follows-play</a>)))
-    (set! (<a class=quiet href="#cursorfollowsplay">cursor-follows-play</a>) #t)
+  (let ((old-tracking (<a class=quiet href="#withtrackingcursor">with-tracking-cursor</a>)))
+    (set! (<a class=quiet href="#withtrackingcursor">with-tracking-cursor</a>) #t)
     (add-hook! <a class=quiet href="#stopplayinghook">stop-playing-hook</a> 
 	       (lambda (snd)
-		 (set! (<a class=quiet href="#cursorfollowsplay">cursor-follows-play</a>) old-tracking)))
+		 (set! (<a class=quiet href="#withtrackingcursor">with-tracking-cursor</a>) old-tracking)))
     (<em class=red>play</em> (<a class=quiet href="#cursor">cursor</a>))))
 </pre></td></tr></table>
 
@@ -7942,7 +7917,8 @@ open <i>filename</i> read-only (you can edit the sound within Snd, but you can't
 <tr><td></td><td>
 If #t, the cursor's position and other information is constantly 
 displayed in the minibuffer.  This is the View:Verbose cursor option 
-(default: #f).
+(default: #f).  The new name of this variable is <a href="#withverbosecursor">with-verbose-cursor</a>; 
+eventually "verbose-cursor" will be retired.
 </td></tr>
 <tr><td colspan=2></td></tr>
 
@@ -7977,6 +7953,55 @@ the smaller this number, the more traces can be displayed (default: 3).  See <a 
 </td></tr>
 <tr><td></td><td>
 This sets the length (in samples) of each wavogram trace (default: 64).  See <a href="#wavo">time-graph-type</a>.
+</td></tr>
+<tr><td colspan=2></td></tr>
+
+
+<!-- with-tracking-cursor -->
+<tr><td colspan=2>
+<code><a class=def name="withtrackingcursor">with-tracking-cursor</a> (<em class=narg>snd</em>)</code>
+</td></tr>
+<tr><td></td><td>
+#t if cursor is following along in the sound as it plays.  To make this the default:<br><br>
+<code>(set! (with-tracking-cursor) #t)</code>.<br><br>
+The old name of this variable (which still works) was cursor-follows-play.
+The interval (in seconds) between cursor updates is set by <a href="#cursorupdateinterval">cursor-update-interval</a>
+which defaults to 0.05.  The accuracy of the cursor in reflecting the sound coming out the speakers
+depends on the amount of buffering in your audio system.  If Snd's displayed location is off,
+set <a href="#cursorlocationoffset">cursor-location-offset</a> to reflect the number of samples
+of buffering you think you probably have.  A positive cursor-location-offset delays the cursor's 
+apparent progress (if playing forwards).  In OSS, you can make a pretty good guess by setting
+it to the number of fragments times half the size of the fragments (since these are bytes, and
+cursor-location-offset is in terms of samples).  If you have <code>(mus-oss-set-buffers 4 12)</code>,
+try <code>(set! (cursor-location-offset) (* 4 (expt 2 11)))</code>.
+
+<!-- INDEX trackingcursors:Tracking cursors -->
+<A NAME="trackingcursors"></a>
+<br><br>
+<TABLE border=3 bordercolor="tan" hspace=40><tr><td>
+<blockquote><small>
+<br>
+play from the current cursor position with a tracking cursor:  <a href="#pfc">pfc</a><br>
+display tracking cursor as a full height vertical line: <a href="#cursorstyle">cursor-style</a><br>
+track play once: control-click 'play'. (You can add a mark at the current tracking cursor location during the play with C-m)<br>
+leave the cursor at the final position after tracking play: if-cursor-follows-play-it-stays-where-play-stopped in examp.scm<br>
+tracking cursor accuracy: <a href="#cursorlocationoffset">cursor-location-offset</a><br>
+tracking cursor updating: <a href="#cursorupdateinterval">cursor-update-interval</a><br>
+<br>
+</small></blockquote>
+</td></tr></TABLE>
+</td></tr>
+<tr><td colspan=2></td></tr>
+
+
+<!-- with-verbose-cursor -->
+<tr><td colspan=2>
+<code><a class=def name="withverbosecursor">with-verbose-cursor</a> (<em class=narg>snd chn</em>)</code>
+</td></tr>
+<tr><td></td><td>
+If #t, the cursor's position and other information is constantly 
+displayed in the minibuffer.  This is the View:Verbose cursor option 
+(default: #f).  The old name of this variable was <a href="#verbosecursor">verbose-cursor</a>.
 </td></tr>
 <tr><td colspan=2></td></tr>
 

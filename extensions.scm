@@ -419,7 +419,7 @@ If 'check' is #f, the hooks are removed."
   "(remember-sound-state) remembers the state of a sound when it is closed, and if it is subsquently re-opened, restores that state"
 
   (let ((states '())
-	(sound-funcs (list sync cursor-follows-play selected-channel show-controls read-only
+	(sound-funcs (list sync with-tracking-cursor selected-channel show-controls read-only
 			   contrast-control? expand-control? reverb-control? filter-control?
 			   amp-control amp-control-bounds
 			   contrast-control contrast-control-amp contrast-control-bounds
@@ -431,7 +431,7 @@ If 'check' is #f, the hooks are removed."
 
 	(channel-funcs (list time-graph? transform-graph? lisp-graph? x-bounds y-bounds cursor cursor-size
 			     cursor-style show-marks show-y-zero show-grid wavo-hop wavo-trace max-transform-peaks
-			     show-transform-peaks fft-log-frequency fft-log-magnitude verbose-cursor zero-pad
+			     show-transform-peaks fft-log-frequency fft-log-magnitude with-verbose-cursor zero-pad
 			     wavelet-type min-dB transform-size transform-graph-type time-graph-type fft-window
 			     transform-type transform-normalization time-graph-style show-mix-waveforms dot-size
 			     x-axis-style show-axes graphs-horizontal lisp-graph-style transform-graph-style

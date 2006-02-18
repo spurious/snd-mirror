@@ -26,7 +26,7 @@
   #include <sys/param.h>
 #endif
 
-#if HAVE_SYS_MOUNT_H && (MUS_MAC_OSX || __bsdi__ || MUS_NETBSD)
+#if (HAVE_SYS_MOUNT_H && MUS_MAC_OSX) || __bsdi__ || MUS_NETBSD
   #include <sys/mount.h>
 #endif
 
@@ -46,11 +46,11 @@ off_t disk_kspace (const char *filename)
   return(err);
 }
 #else
-off_t disk_kspace (const char *filename) {return(1234567);}
+off_t disk_kspace(const char *filename) {return(1234567);}
 #endif
 #else
 
-off_t disk_kspace (const char *filename)
+off_t disk_kspace(const char *filename)
 {
 #if MUS_SUN
   statvfs_t buf; /* else dumb compiler complaint */
@@ -71,22 +71,27 @@ off_t disk_kspace (const char *filename)
 
 bool link_p(const char *filename)
 {
-#if HAVE_LSTAT
   struct stat statbuf;
-  if (lstat(filename, &statbuf) >= 0) 
-    return((bool)(S_ISLNK(statbuf.st_mode)));
+#if HAVE_LSTAT
+  return((lstat(filename, &statbuf) >= 0) &&
+	 (S_ISLNK(statbuf.st_mode)));
+#else
+  return((stat(filename, &statbuf) == 0) && 
+	 (S_ISLNK(statbuf.st_mode)));
 #endif
-  return(false);
 }
 
 bool directory_p(const char *filename)
 {
-#if HAVE_LSTAT
   struct stat statbuf;
-  if (lstat(filename, &statbuf) >= 0) 
-    return((bool)(S_ISDIR(statbuf.st_mode)));
-#endif
+#if HAVE_LSTAT
+  return((lstat(filename, &statbuf) >= 0) &&
+	 (S_ISDIR(statbuf.st_mode)));
   return(false);
+#else
+  return((stat(filename, &statbuf) == 0) && 
+	 (S_ISDIR(statbuf.st_mode)));
+#endif
 }
 
 static bool empty_file_p(const char *filename)
@@ -105,16 +110,16 @@ static off_t file_bytes(const char *filename)
   struct stat statbuf;
   if (lstat(filename, &statbuf) >= 0) 
     return(statbuf.st_size);
+  return(0);
+#else
+  int chan;
+  off_t bytes;
+  chan = mus_file_open_read(filename);
+  if (chan == -1) return(0);
+  bytes = lseek(chan, 0L, SEEK_END);
+  CLOSE(chan, filename);
+  return(bytes);
 #endif
-  {
-    int chan;
-    off_t bytes;
-    chan = mus_file_open_read(filename);
-    if (chan == -1) return(0);
-    bytes = lseek(chan, 0L, SEEK_END);
-    CLOSE(chan, filename);
-    return(bytes);
-  }
 }
 
 time_t file_write_date(const char *filename)
@@ -409,6 +414,7 @@ dir_info *find_files_in_dir(const char *name)
 #endif
 }
 
+#if USE_GTK
 dir_info *find_directories_in_dir(const char *name)
 {
 #if (!HAVE_OPENDIR)
@@ -441,6 +447,7 @@ dir_info *find_directories_in_dir(const char *name)
   return(dp);
 #endif
 }
+#endif
 
 static XEN filter_func;
 static bool filter_xen(const char *name)

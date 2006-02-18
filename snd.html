@@ -272,7 +272,7 @@ is included in the <a href="http://ccrma.stanford.edu/planetccrma/software/">Pla
 <tr>
 <td><a href="#recordfile">Record</a></td>
 <td><a href="#editenvelope">Edit Envelope</a></td>
-<td><a href="extsnd.html#verbosecursor">Verbose cursor</a></td>
+<td><a href="extsnd.html#withverbosecursor">Verbose cursor</a></td>
 <td></td>
 <td><a href="#viewfft">FFT</a></td>
 </tr>
@@ -736,7 +736,7 @@ flushed (but see the function check-for-unsaved-edits in <a href="sndscm.html#ex
 <tr><td><a href="#orientationbrowser">Orientation</a></td><td>a browser that sets spectrogram and wavogram orientation</td><td></td></tr>
 <tr><td><a href="#unitebutton">Channel style</a></td><td>separate, combined or superimposed channels</td><td></td></tr>
 <tr><td><a href="#viewdots">Graph style</a></td><td>use dots, lines, filled polygons etc in the data displays</td><td></td></tr>
-<tr><td><a href="extsnd.html#verbosecursor">Verbose cursor</a></td><td>describe the current sample every time the cursor moves</td><td></td></tr>
+<tr><td><a href="extsnd.html#withverbosecursor">Verbose cursor</a></td><td>describe the current sample every time the cursor moves</td><td></td></tr>
 <tr><td><a href="#menuequalizepanes">Equalize Panes</a></td><td>cleanup current Snd display</td><td></td></tr>
 <tr><td><a href="#viewy0">Show y=0</a></td><td>show or hide the y=0 line</td><td></td></tr>
 <tr><td><a href="extsnd.html#xaxisstyle">X axis units</a></td><td>x axis labelled in seconds, samples, percent of total</td><td></td></tr>
@@ -748,8 +748,8 @@ flushed (but see the function check-for-unsaved-edits in <a href="sndscm.html#ex
         <!-- I(combine channels):A(unitebutton) --><!-- I(describe file):M(Popup: Info)(viewinfo) -->
         <!-- I(describe file):A(viewinfo) --><!-- I(describe file):O(Edit: Edit Header)(viewinfo) -->
         <!-- I(dots or lines):M(View: Dots)(viewdots) --><!-- I(dots or lines):O(dot-size: numberpad '.', '0')(dotsize) -->
-        <!-- I(y=0 line):M(View: Show y=0)(viewy0) --><!-- I(describe sample):M(View: Verbose cursor)(verbosecursor) -->
-        <!-- I(describe sample):L(verbose-cursor)(verbosecursor) --><!-- I(describe sample):A(verbosecursor) -->
+        <!-- I(y=0 line):M(View: Show y=0)(viewy0) --><!-- I(describe sample):M(View: Verbose cursor)(withverbosecursor) -->
+        <!-- I(describe sample):L(with-verbose-cursor)(withverbosecursor) --><!-- I(describe sample):A(withverbosecursor) -->
         <!-- I(examine regions):M(View: Regions)(regionbrowser) --><!-- I(color):M(View: Color)(colorbrowser) -->
         <!-- I(orientation):M(View: Orientation)(orientationbrowser) -->
         <!-- I(file lists):M(View: Files)(prevfiles) -->
@@ -903,7 +903,7 @@ axis is draggable -- put the mouse on the axis and
 drag it either way to change the range (this is equivalent
 to changing the variable <a href="extsnd.html#spectrocutoff">spectro-cutoff</a>).  You can also click
 on any point in the fft to get the associated fft value at that point
-displayed; if verbose-cursor is on, you can
+displayed; if with-verbose-cursor is on, you can
 drag the mouse through the fft display and the
 description in the minibuffer will be constantly
 updated.
@@ -1602,7 +1602,7 @@ My initialization file uses <code>(mus-oss-set-buffers 2 12)</code>.
 
 
 	<!-- I(tracking cursor):O(control click 'play')(trackingcursor) -->
-	<!-- I(tracking cursor):L(cursor-follows-play)(cursorfollowsplay) -->
+	<!-- I(tracking cursor):L(with-tracking-cursor)(withtrackingcursor) -->
 	<!-- I(tracking cursor):A(trackingcursor) -->
 
 <A NAME="cq"></a><p>The keyboard commands for playing are:</p>
@@ -2379,7 +2379,7 @@ panel are:</p>
   <tr><td><a href="#editoperations">delete samples</a></td><td><small>Edit: <a href="#editcut">Cut</a></small></td><td><a href="#ck"><small>Cd, Ch, Ck</small></a></td><td><a href="extsnd.html#deletesamples"><small>delete-samples</small></a></td><td><br></td></tr>
   <tr><td><a href="extsnd.html#musaudiodescribe">describe audio</a></td><td><br></td><td><br></td><td><a href="extsnd.html#musaudiodescribe"><small>mus-audio-describe</small></a></td><td><br></td></tr>
   <tr><td><a href="#viewinfo">describe file</a></td><td><small>Popup: <a href="#viewinfo">Info</a></small></td><td><br></td><td><a href="extsnd.html#sndinfo"><small>info</small></a></td><td><a href="#viewinfo"><small>Edit: Edit Header</small></a></td></tr>
-  <tr><td><a href="extsnd.html#verbosecursor">describe sample</a></td><td><small>View: <a href="extsnd.html#verbosecursor">Verbose cursor</a></small></td><td><a href="#ci"><small>Ci</small></a></td><td><a href="extsnd.html#verbosecursor"><small>verbose-cursor</small></a></td><td><br></td></tr>
+  <tr><td><a href="extsnd.html#withverbosecursor">describe sample</a></td><td><small>View: <a href="extsnd.html#withverbosecursor">Verbose cursor</a></small></td><td><a href="#ci"><small>Ci</small></a></td><td><a href="extsnd.html#withverbosecursor"><small>with-verbose-cursor</small></a></td><td><br></td></tr>
   <tr><td><a href="#viewdots">dots or lines</a></td><td><small>View: <a href="#viewdots">Dots</a></small></td><td><br></td><td><a href="extsnd.html#graphstyle"><small>graph-style</small></a></td><td><a href="extsnd.html#dotsize"><small>dot-size: numberpad '.', '0'</small></a></td></tr>
   <tr><td><a href="#editenvelope">edit env</a></td><td><small>Edit: <a href="#editenvelope">Edit Env</a></small></td><td><br></td><td><a href="extsnd.html#enveddialog"><small>enved-dialog</small></a></td><td><a href="extsnd.html#envedhook"><small>enved-hook</small></a></td></tr>
   <tr><td><a href="#editheader">edit header</a></td><td><small>Edit: <a href="#editheader">Edit Header</a></small></td><td><br></td><td><a href="extsnd.html#editheaderdialog"><small>edit-header-dialog</small></a></td><td><br></td></tr>
@@ -2455,7 +2455,7 @@ panel are:</p>
   <tr><td><a href="extsnd.html#srcsound">srate conversion</a></td><td><small>Edit: <a href="#editenvelope">Edit Env</a></small></td><td><br></td><td><a href="extsnd.html#srcsound"><small>src-sound</small></a></td><td><a href="extsnd.html#srcsoundselection"><small>src-selection</small></a></td></tr>
   <tr><td><a href="extsnd.html#swapchannels">swap channels</a></td><td><br></td><td><br></td><td><a href="extsnd.html#swapchannels"><small>swap-channels</small></a></td><td><br></td></tr>
   <tr><td><a href="#ktempdir">temp directory</a></td><td><br></td><td><a href="#ktempdir"><small>Cx d</small></a></td><td><a href="extsnd.html#tempdir"><small>temp-dir</small></a></td><td><small>TMPDIR or /var/tmp</small></td></tr>
-  <tr><td><a href="#trackingcursor">tracking cursor</a></td><td><br></td><td><br></td><td><a href="extsnd.html#cursorfollowsplay"><small>cursor-follows-play</small></a></td><td><a href="#trackingcursor"><small>control click 'play'</small></a></td></tr>
+  <tr><td><a href="#trackingcursor">tracking cursor</a></td><td><br></td><td><br></td><td><a href="extsnd.html#withtrackingcursor"><small>with-tracking-cursor</small></a></td><td><a href="#trackingcursor"><small>control click 'play'</small></a></td></tr>
   <tr><td><a href="sndscm.html#editmenudoc">trim sound</a></td><td><small>Edit: <a href="sndscm.html#editmenudoc">Trim</a></small></td><td><br></td><td><br></td><td><br></td></tr>
   <tr><td><a href="#undoredo">undo edit</a></td><td><small>Edit: <a href="#undoredo">Undo</a></small></td><td><a href="#cxcu"><small>C_ or Cx Cu</small></a></td><td><a href="extsnd.html#undo"><small>undo</small></a></td><td><small>Popup: Undo</small></td></tr>
   <tr><td><a href="#updatefile">update file</a></td><td><small>File: <a href="#updatefile">Update</a></small></td><td><small>[Home]</small></td><td><a href="extsnd.html#updatesound"><small>update</small></a></td><td><a href="extsnd.html#autoupdateinterval"><small>auto-update</small></a></td></tr>

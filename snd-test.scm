@@ -947,9 +947,9 @@
       (set! (clm-table-size) (clm-table-size))
       (if (not (equal? (clm-table-size) 512)) 
 	  (snd-display ";clm-table-size set def: ~A" (clm-table-size)))
-      (set! (verbose-cursor) (verbose-cursor))
-      (if (not (equal? (verbose-cursor)  #f)) 
-	  (snd-display ";verbose-cursor set def: ~A" (verbose-cursor)))
+      (set! (with-verbose-cursor) (with-verbose-cursor))
+      (if (not (equal? (with-verbose-cursor)  #f)) 
+	  (snd-display ";with-verbose-cursor set def: ~A" (with-verbose-cursor)))
       (set! (vu-font) (vu-font))
       (if (not (equal? (vu-font)  #f )) 
 	  (snd-display ";vu-font set def: ~A" (vu-font)))
@@ -1083,7 +1083,7 @@
 	'auto-update-interval (auto-update-interval) 60.0 
 	'cursor-update-interval (cursor-update-interval) 0.05
 	'cursor-location-offset (cursor-location-offset) 0
-	'cursor-follows-play (cursor-follows-play) #f
+	'with-tracking-cursor (with-tracking-cursor) #f
 	'cursor-size (cursor-size) 15
 	'cursor-style (cursor-style) cursor-cross
 	'dac-combines-channels (dac-combines-channels) #t
@@ -1198,7 +1198,7 @@
 	'optimization (optimization) 0
 	'run-safety (run-safety) 0
 	'clm-table-size (clm-table-size) 512
-	'verbose-cursor (verbose-cursor) #f
+	'with-verbose-cursor (with-verbose-cursor) #f
 	'vu-font (vu-font) #f 
 	'vu-font-size (vu-font-size) 1.0 
 	'vu-size (vu-size) 1.0 
@@ -1679,7 +1679,7 @@
 	  (list 'auto-update-interval auto-update-interval 60.0 120.0)
 	  (list 'cursor-update-interval cursor-update-interval 0.05 0.10)
 	  (list 'cursor-location-offset cursor-location-offset 0 32768)
-	  (list 'cursor-follows-play cursor-follows-play #f #t)
+	  (list 'with-tracking-cursor with-tracking-cursor #f #t)
 	  (list 'cursor-size cursor-size 15 30)
 	  (list 'cursor-style cursor-style cursor-cross cursor-line)
 	  (list 'dac-combines-channels dac-combines-channels #t #f)
@@ -1786,7 +1786,7 @@
 	  (list 'sync sync 0 1)
 	  (list 'tiny-font tiny-font "6x12" "9x15")
 	  (list 'transform-type transform-type 0 1)
-	  (list 'verbose-cursor verbose-cursor #f #t)
+	  (list 'with-verbose-cursor with-verbose-cursor #f #t)
 	  (list 'vu-size vu-size 1.0 2.0)
 	  (list 'vu-font-size vu-font-size 1.0 2.0)
 	  (list 'wavelet-type wavelet-type 0 1)
@@ -7693,6 +7693,9 @@ EDITS: 5
 	(set! (y-axis-label index 0 lisp-graph) "no lamp")
 	(if (not (string=? (y-axis-label index 0 lisp-graph) "no lamp")) (snd-display ";lisp y-axis-label: ~A" (y-axis-label index 0 lisp-graph)))
 	(set! (y-axis-label) #f)
+	(set! (y-axis-label index 0) "no amp")
+	(if (not (string=? (y-axis-label) "no amp")) (snd-display ";time y-axis-label (time): ~A" (y-axis-label index 0 time-graph)))
+	(set! (y-axis-label index) #f)
 
 	(graph-data (make-vct 4))
 	(update-lisp-graph)
@@ -10154,10 +10157,10 @@ EDITS: 5
 	    (map-channel (lambda (y) 0.5))
 	    (env-sound '(0 0 1 1 2 0))
 	    (fp 1.0 0.3 20)
-	    (let ((old-curse (cursor-follows-play)))
-	      (set! (cursor-follows-play) #t)
+	    (let ((old-curse (with-tracking-cursor)))
+	      (set! (with-tracking-cursor) #t)
 	      (play-and-wait)
-	      (set! (cursor-follows-play) old-curse))
+	      (set! (with-tracking-cursor) old-curse))
 	    (close-sound ind))
 	  (let ((ind (new-sound "test.snd" mus-next mus-bfloat 22050 1)))
 	    (for-each
@@ -23916,14 +23919,14 @@ EDITS: 5
 			(s2 (open-sound "oboe.snd")))
 		    (add-mark 123 s1 0)
 		    (add-mark 321 s2 0)
-		    (set! (verbose-cursor) #t)
+		    (set! (with-verbose-cursor) #t)
 		    (if (file-exists? "s61.scm") (delete-file "s61.scm"))
 		    (save-state "s61.scm")
-		    (set! (verbose-cursor) #f)
+		    (set! (with-verbose-cursor) #f)
 		    (close-sound s1)
 		    (close-sound s2))
 		  (load "s61.scm")
-		  (if (not (verbose-cursor)) (snd-display ";save-state verbose-cursor?"))
+		  (if (not (with-verbose-cursor)) (snd-display ";save-state with-verbose-cursor?"))
 		  (let ((s1 (find-sound "oboe.snd" 0))
 			(s2 (find-sound "oboe.snd" 1)))
 		    (if (or (not (sound? s1)) (not (sound? s2)))
@@ -27399,7 +27402,7 @@ EDITS: 5
 		(list 'auto-update-interval auto-update-interval #f 60.0 120.0)
 		(list 'cursor-update-interval cursor-update-interval #f 0.05 .1)
 		(list 'cursor-location-offset cursor-location-offset #f 0 1024)
-		(list 'cursor-follows-play cursor-follows-play #f #f #t)
+		(list 'with-tracking-cursor with-tracking-cursor #f #f #t)
 		(list 'cursor-size cursor-size #f 15 25)
 		(list 'cursor-style cursor-style #f cursor-cross cursor-line)
 		(list 'clipping clipping #f #f #t)
@@ -27479,7 +27482,7 @@ EDITS: 5
 		(list 'speed-control-tones speed-control-tones #f 2 100)
 		(list 'sync sync #t 0 5)
 		(list 'transform-type transform-type #f fourier-transform (if (<= tests 10) 6 3))
-		(list 'verbose-cursor verbose-cursor #f #f #t)
+		(list 'with-verbose-cursor with-verbose-cursor #f #f #t)
 		(list 'wavelet-type wavelet-type #f 0 10)
 		(list 'time-graph? time-graph? #t #f #t)
 		(list 'x-axis-style x-axis-style #f 0 2)
@@ -27536,7 +27539,7 @@ EDITS: 5
 	(key (char->integer (string-ref ns i)) 0 id)))))
 
 (define funcs (list time-graph-type wavo-hop wavo-trace max-transform-peaks show-transform-peaks zero-pad transform-graph-type fft-window 
-		    verbose-cursor fft-log-frequency fft-log-magnitude min-dB
+		    with-verbose-cursor fft-log-frequency fft-log-magnitude min-dB
 		    wavelet-type transform-size fft-window-alpha fft-window-beta transform-type 
 		    transform-normalization show-mix-waveforms graph-style dot-size show-axes show-y-zero show-grid show-marks grid-density
 		    spectro-x-angle spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle spectro-z-scale
@@ -27544,7 +27547,7 @@ EDITS: 5
 		    cursor-size cursor-style show-sonogram-cursor
 		    ))
 (define func-names (list 'time-graph-type 'wavo-hop 'wavo-trace 'max-transform-peaks 'show-transform-peaks 'zero-pad 'transform-graph-type 'fft-window
-			 'verbose-cursor 'fft-log-frequency 'fft-log-magnitude 'min-dB
+			 'with-verbose-cursor 'fft-log-frequency 'fft-log-magnitude 'min-dB
 			 'wavelet-type 'transform-size 'fft-window-alpha 'fft-window-beta 'transform-type
 			 'transform-normalization 'show-mix-waveforms 'graph-style 'dot-size 'show-axes 'show-y-zero 'show-grid 'show-marks 'grid-density
 			 'spectro-x-angle 'spectro-x-scale 'spectro-y-angle 'spectro-y-scale 'spectro-z-angle 'spectro-z-scale
@@ -33780,11 +33783,11 @@ EDITS: 1
       (let* ((ind (open-sound "oboe.snd"))
 	     (funcs (list transform-graph-type time-graph-type show-axes transform-normalization
 			  graph-style x-axis-style spectro-x-scale transform-size fft-window
-			  dot-size max-transform-peaks verbose-cursor zero-pad min-dB spectro-hop spectro-cutoff
+			  dot-size max-transform-peaks with-verbose-cursor zero-pad min-dB spectro-hop spectro-cutoff
 			  cursor-size cursor-style))
 	     (func-names (list 'transform-graph-type 'time-graph-type 'show-axes 'transform-normalization
 			       'graph-style 'x-axis-style 'spectro-x-scale 'transform-size 'fft-window
-			       'dot-size 'max-transform-peaks 'verbose-cursor 'zero-pad 'min-dB 'spectro-hop 'spectro-cutoff
+			       'dot-size 'max-transform-peaks 'with-verbose-cursor 'zero-pad 'min-dB 'spectro-hop 'spectro-cutoff
 			       'cursor-size 'cursor-style))
 	     (old-globals (map (lambda (func) (func)) funcs))
 	     (new-globals (list graph-as-sonogram graph-as-wavogram show-all-axes normalize-by-sound
@@ -36959,10 +36962,10 @@ EDITS: 1
       (set! (show-transform-peaks) #f)
       (set! (fft-log-frequency) #f)
       (set! (fft-log-magnitude) #f)
-      (set! (verbose-cursor) #f)
+      (set! (with-verbose-cursor) #f)
       (set! (show-grid) #f)
       (set! (show-sonogram-cursor) #f)
-      (set! (cursor-follows-play) #f)
+      (set! (with-tracking-cursor) #f)
       (set! (show-controls) #f)
       (set! (speed-control-tones) 12)
       (set! (wavelet-type) 0)
@@ -37166,7 +37169,7 @@ EDITS: 1
 		(list fft-log-frequency 'fft-log-frequency ind-1 ind-2 #t equal? equal? #t #t)
 		(list fft-log-magnitude 'fft-log-magnitude ind-1 ind-2 #t equal? equal? #t #t)
 		(list show-mix-waveforms 'show-mix-waveforms ind-1 ind-2 #f equal? equal? #t #t)
-		(list verbose-cursor 'verbose-cursor ind-1 ind-2 #t equal? equal? #t #t)
+		(list with-verbose-cursor 'with-verbose-cursor ind-1 ind-2 #t equal? equal? #t #t)
 		
 		)))
 	    (update-time-graph #t #t)
@@ -37234,7 +37237,7 @@ EDITS: 1
 	    (list filter-control-in-dB 'filter-control-in-dB ind-1 ind-2 #t eq? equal?)
 	    (list filter-control-in-hz 'filter-control-in-hz ind-1 ind-2 #t eq? equal?)
 	    (list show-controls 'show-controls ind-1 ind-2 #t eq? equal?)
-	    (list cursor-follows-play 'cursor-follows-play ind-1 ind-2 #t eq? equal?)
+	    (list with-tracking-cursor 'with-tracking-cursor ind-1 ind-2 #t eq? equal?)
 
 	    (list speed-control-tones 'speed-control-tones ind-1 ind-2 14 = equal?)
 	    (list speed-control-style 'speed-control-style ind-1 ind-2 speed-control-as-semitone = equal?)
@@ -56637,7 +56640,7 @@ EDITS: 1
 		     contrast-control? convolve-selection-with convolve-with channel-properties 
 		     amp-control-bounds speed-control-bounds expand-control-bounds contrast-control-bounds
 		     reverb-control-length-bounds reverb-control-scale-bounds cursor-update-interval cursor-location-offset
-		     auto-update-interval count-matches current-font cursor cursor-color cursor-follows-play cursor-size
+		     auto-update-interval count-matches current-font cursor cursor-color with-tracking-cursor cursor-size
 		     cursor-style dac-combines-channels dac-size clipping data-color data-format data-location data-size
 		     default-output-chans default-output-data-format default-output-srate default-output-header-type define-envelope
 		     delete-mark delete-marks forget-region delete-sample delete-samples
@@ -56697,7 +56700,7 @@ EDITS: 1
 		     text-focus-color tiny-font track-sample-reader?  region-sample-reader? transform-dialog transform-sample
 		     transform->vct transform-frames transform-type trap-segfault optimization unbind-key undo
 		     update-transform-graph update-time-graph update-lisp-graph update-sound run-safety clm-table-size
-		     vct->sound-file verbose-cursor view-sound vu-font vu-font-size vu-size wavelet-type
+		     vct->sound-file with-verbose-cursor view-sound vu-font vu-font-size vu-size wavelet-type
 		     time-graph?  time-graph-type wavo-hop wavo-trace window-height window-width window-x window-y
 		     with-mix-tags with-relative-panes with-gl write-peak-env-info-file x-axis-style beats-per-measure
 		     beats-per-minute x-bounds x-position-slider x->position x-zoom-slider mus-header-type->string mus-data-format->string
@@ -56800,7 +56803,7 @@ EDITS: 1
 			 amp-control-bounds speed-control-bounds expand-control-bounds contrast-control-bounds
 			 reverb-control-length-bounds reverb-control-scale-bounds cursor-update-interval cursor-location-offset
 			 contrast-control? auto-update-interval current-font cursor cursor-color channel-properties
-			 cursor-follows-play cursor-size cursor-style dac-combines-channels dac-size clipping data-color
+			 with-tracking-cursor cursor-size cursor-style dac-combines-channels dac-size clipping data-color
 			 default-output-chans default-output-data-format default-output-srate default-output-header-type dot-size
 			 enved-envelope enved-base enved-clip? enved-in-dB enved-style enved-power
 			 enved-target enved-waveform-color enved-wave? eps-file eps-left-margin eps-bottom-margin eps-size
@@ -56828,7 +56831,7 @@ EDITS: 1
 			 show-y-zero show-grid show-sonogram-cursor sinc-width spectro-cutoff spectro-hop spectro-start spectro-x-angle  grid-density
 			 spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle spectro-z-scale speed-control
 			 speed-control-style speed-control-tones squelch-update sync sound-properties temp-dir text-focus-color tiny-font y-bounds
-			 transform-type trap-segfault optimization verbose-cursor vu-font vu-font-size vu-size wavelet-type x-bounds
+			 transform-type trap-segfault optimization with-verbose-cursor vu-font vu-font-size vu-size wavelet-type x-bounds
 			 time-graph? wavo-hop wavo-trace with-gl with-mix-tags x-axis-style beats-per-minute zero-pad zoom-color zoom-focus-style 
 			 with-relative-panes  window-x window-y window-width window-height mix-dialog-mix track-dialog-track beats-per-measure
 			 channels chans colormap comment data-format data-location data-size edit-position frames header-type maxamp
@@ -57302,7 +57305,7 @@ EDITS: 1
 				(snd-display ";~D: chn (no snd) procs ~A: ~A" ctr n tag))
 			    (set! ctr (+ ctr 1))))
 			(list channel-widgets count-matches cursor channel-properties
-			      cursor-follows-play cursor-position cursor-size cursor-style delete-sample display-edits dot-size
+			      with-tracking-cursor cursor-position cursor-size cursor-style delete-sample display-edits dot-size
 			      draw-dots draw-lines edit-fragment edit-position edit-tree edits fft-window-alpha fft-window-beta fft-log-frequency
 			      fft-log-magnitude transform-size transform-graph-type fft-window transform-graph? find-channel
 			      graph graph-style lisp-graph? insert-region insert-sound
@@ -57355,7 +57358,7 @@ EDITS: 1
 			    (if (not (eq? tag 'no-such-sound))
 				(snd-display ";~D: chn procs ~A: ~A" ctr n tag))
 			    (set! ctr (+ ctr 1))))
-			(list channel-widgets cursor cursor-follows-play channel-properties
+			(list channel-widgets cursor with-tracking-cursor channel-properties
 			      cursor-position cursor-size cursor-style delete-sample display-edits dot-size edit-fragment
 			      edit-position edit-tree edits env-sound fft-window-alpha fft-window-beta fft-log-frequency fft-log-magnitude
 			      transform-size transform-graph-type fft-window transform-graph? filter-sound
@@ -57602,7 +57605,7 @@ EDITS: 1
 			      selected-channel selected-data-color selected-graph-color 
 			      selected-sound selection-creates-region show-backtrace show-controls show-indices show-listener
 			      show-selection-transform sinc-width temp-dir text-focus-color tiny-font
-			      trap-segfault optimization unbind-key verbose-cursor vu-font vu-font-size vu-size window-height beats-per-measure
+			      trap-segfault optimization unbind-key with-verbose-cursor vu-font vu-font-size vu-size window-height beats-per-measure
 			      window-width window-x window-y with-gl with-mix-tags x-axis-style beats-per-minute zoom-color mix-tag-height
 			      mix-tag-width with-relative-panes run-safety clm-table-size mark-tag-width mark-tag-height
 			      quit-button-color help-button-color reset-button-color doit-button-color doit-again-button-color

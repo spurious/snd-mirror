@@ -6826,6 +6826,7 @@ int mus_audio_mixer_write(int ur_dev, int field, int chan, float *val)
  */
 
 /* TODO: make bigger buffers work right -- is it possible to set the audio device buffer size? */
+/* TODO: no output, overflowed input on MacIntel */
 
 #ifdef MUS_MAC_OSX
 #define AUDIO_OK 1
@@ -7611,7 +7612,11 @@ int mus_audio_mixer_read(int dev1, int field, int chan, float *val)
     case MUS_AUDIO_FORMAT:
       /* never actually used except perhaps play.scm */
       val[0] = 1.0;
+#if MUS_LITTLE_ENDIAN
+      val[1] = MUS_LFLOAT;
+#else
       val[1] = MUS_BFLOAT;
+#endif
       break;
     case MUS_AUDIO_PORT:
       i = 0;
@@ -8620,7 +8625,7 @@ int jack_mus_audio_write(int line, char *buf, int bytes){
   int outlen=0;
 
   for(ch=0;ch<sndjack_num_channels_inuse;ch++){
-    int len;
+    int len = 0;
     float *buf2=sndjack_srcratio==1.0?sndjack_buffer[ch]:sndjack_srcbuffer;
 
     switch(sndjack_format){

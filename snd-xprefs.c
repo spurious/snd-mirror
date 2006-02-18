@@ -2617,7 +2617,7 @@ static void raw_data_format_from_text(prefs_info *prf)
       int i, srate = 0, chans = 0, format = 0;
       mus_header_raw_defaults(&srate, &chans, &format);
       for (i = 0; i < NUM_RAW_DATA_FORMATS; i++)
-	if (strcasecmp(raw_data_format_choices[i], str) == 0)
+	if (STRCMP(raw_data_format_choices[i], str) == 0)
 	  {
 	    mus_header_set_raw_defaults(srate, chans, i + 1); /* skipping MUS_UNKNOWN = 0 */
 	    XtFree(str);
@@ -2633,7 +2633,7 @@ static void raw_data_format_from_menu(prefs_info *prf, char *value)
   int i, srate = 0, chans = 0, format = 0;
   mus_header_raw_defaults(&srate, &chans, &format);
   for (i = 0; i < NUM_RAW_DATA_FORMATS; i++)
-    if (strcasecmp(raw_data_format_choices[i], value) == 0)
+    if (STRCMP(raw_data_format_choices[i], value) == 0)
       {
 	mus_header_set_raw_defaults(srate, chans, i + 1);
 	XmTextFieldSetString(prf->text, raw_data_format_choices[i]);

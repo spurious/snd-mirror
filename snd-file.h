@@ -176,9 +176,11 @@ enum {NO_FILE_FILTER, JUST_SOUNDS_FILTER};
 
 dir_info *free_dir_info (dir_info *dp);
 dir_info *find_files_in_dir(const char *name);
-dir_info *find_directories_in_dir(const char *name);
 dir_info *find_filtered_files_in_dir(const char *name, int filter_choice);
 dir_info *find_filtered_files_in_dir_with_pattern(const char *name, int filter_choice, const char *pattern);
+#if USE_GTK
+  dir_info *find_directories_in_dir(const char *name);
+#endif
 
 #define FILENAME_LIST_SIZE 16
 

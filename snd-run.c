@@ -5979,7 +5979,7 @@ static bool str_ci_ ## CName ## _n(ptree *pt, xen_value **args, int num_args) \
 { \
   int i; \
   for (i = 2; i <= num_args; i++) \
-    if (strcasecmp(pt->strs[args[i - 1]->addr], pt->strs[args[i]->addr]) COp 0) \
+    if (STRCMP(pt->strs[args[i - 1]->addr], pt->strs[args[i]->addr]) COp 0) \
       return(false); \
   return(true); \
 } \
@@ -5990,7 +5990,7 @@ static void string_ci_ ## CName ## _n(int *args, ptree *pt) \
   n = pt->ints[args[1]]; \
   BOOL_RESULT = (Int)true; \
   for (i = 2; i <= n; i++) \
-    if (strcasecmp(pt->strs[args[i]], pt->strs[args[i + 1]]) COp 0) \
+    if (STRCMP(pt->strs[args[i]], pt->strs[args[i + 1]]) COp 0) \
       { \
 	BOOL_RESULT = (Int)false; \
 	break; \
