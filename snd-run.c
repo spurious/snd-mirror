@@ -5381,10 +5381,11 @@ static void random_f_1(int *args, ptree *pt) {FLOAT_RESULT = mus_frandom_1();}
 static char *descr_random_f_1(int *args, ptree *pt) {return(mus_format( FLT_PT " = random(1.0)", args[0], FLOAT_RESULT));}
 
 static void random_mf(int *args, ptree *pt) {FLOAT_RESULT = mus_random(FLOAT_ARG_1);}
-static char *descr_random_mf(int *args, ptree *pt) {return(mus_format( FLT_PT " = mus-random(" FLT_PT ")", args[0], FLOAT_RESULT, args[1], FLOAT_ARG_1));}
+static char *descr_random_mf(int *args, ptree *pt) {return(mus_format( FLT_PT " = " S_mus_random" (" FLT_PT ")", 
+								       args[0], FLOAT_RESULT, args[1], FLOAT_ARG_1));}
 
 static void random_mf_1(int *args, ptree *pt) {FLOAT_RESULT = mus_random_1();}
-static char *descr_random_mf_1(int *args, ptree *pt) {return(mus_format( FLT_PT " = mus-random(1.0)", args[0], FLOAT_RESULT));}
+static char *descr_random_mf_1(int *args, ptree *pt) {return(mus_format( FLT_PT " = " S_mus_random "(1.0)", args[0], FLOAT_RESULT));}
 
 static void random_i(int *args, ptree *pt) {INT_RESULT = mus_irandom(INT_ARG_1);}
 static char *descr_random_i(int *args, ptree *pt) {return(mus_format( INT_PT " = random(" INT_PT ")", args[0], INT_RESULT, args[1], INT_ARG_1));}
@@ -6415,7 +6416,7 @@ static void add_mark_i(int *args, ptree *pt)
 
 static char *descr_add_mark_i(int *args, ptree *pt) 
 {
-  return(mus_format( INT_PT " = add-mark(" INT_PT ", " INT_PT ", " INT_PT ")", 
+  return(mus_format( INT_PT " = " S_add_mark "(" INT_PT ", " INT_PT ", " INT_PT ")", 
 		     args[0], INT_RESULT, args[1], INT_ARG_1, args[2], INT_ARG_2, args[3], INT_ARG_3));
 }
 
@@ -6556,7 +6557,7 @@ static void c_g_p(int *args, ptree *pt)
 
 static char *descr_c_g_p(int *args, ptree *pt)
 {
-  return(mus_format( BOOL_PT " = c-g?()", args[0], B2S(BOOL_RESULT)));
+  return(mus_format( BOOL_PT " = " S_c_g "()", args[0], B2S(BOOL_RESULT)));
 }
 
 static xen_value *c_g_p_1(ptree *pt, xen_value **args, int num_args)
@@ -6663,7 +6664,7 @@ static char *descr_reader(int *args, ptree *pt, const char *which)
 {
   return(mus_format( FLT_PT " = %s(" RD_PT ")", args[0], FLOAT_RESULT, which, args[1], DESC_READER_ARG_1));
 }
-static char *descr_reader_f(int *args, ptree *pt) {return(descr_reader(args, pt, "read-sample"));}
+static char *descr_reader_f(int *args, ptree *pt) {return(descr_reader(args, pt, S_read_sample));}
 static xen_value *reader_0(ptree *prog, xen_value **args, xen_value *sf)
 {
   if (args[0]) FREE(args[0]);
@@ -6673,26 +6674,26 @@ static xen_value *reader_0(ptree *prog, xen_value **args, xen_value *sf)
 }
 static xen_value *reader_1(ptree *prog, xen_value **args, int num_args) {return(package(prog, R_FLOAT, reader_f, descr_reader_f, args, 1));}
 
-static char *descr_next_reader_f(int *args, ptree *pt) {return(descr_reader(args, pt, "next-sample"));}
+static char *descr_next_reader_f(int *args, ptree *pt) {return(descr_reader(args, pt, S_next_sample));}
 static void next_reader_f(int *args, ptree *pt) {FLOAT_RESULT = protected_next_sample_to_float(READER_ARG_1);}
 static xen_value *next_sample_1(ptree *prog, xen_value **args, int num_args) {return(package(prog, R_FLOAT, next_reader_f, descr_next_reader_f, args, 1));}
 
-static char *descr_previous_reader_f(int *args, ptree *pt) {return(descr_reader(args, pt, "previous-sample"));}
+static char *descr_previous_reader_f(int *args, ptree *pt) {return(descr_reader(args, pt, S_previous_sample));}
 static void previous_reader_f(int *args, ptree *pt) {FLOAT_RESULT = protected_previous_sample_to_float(READER_ARG_1);}
 static xen_value *previous_sample_1(ptree *prog, xen_value **args, int num_args) {return(package(prog, R_FLOAT, previous_reader_f, descr_previous_reader_f, args, 1));}
 
 
 static char *descr_reader_at_end_b_s(int *args, ptree *pt)
 {
-  return(mus_format( BOOL_PT " = sample-reader-at-end?(" RD_PT ")", args[0], B2S(BOOL_RESULT), args[1], DESC_READER_ARG_1));
+  return(mus_format( BOOL_PT " = " S_sample_reader_at_end_p "(" RD_PT ")", args[0], B2S(BOOL_RESULT), args[1], DESC_READER_ARG_1));
 }
 static char *descr_reader_at_end_b_m(int *args, ptree *pt)
 {
-  return(mus_format( BOOL_PT " = (mix-)sample-reader-at-end?(" RD_PT ")", args[0], B2S(BOOL_RESULT), args[1], DESC_MIX_READER_ARG_1));
+  return(mus_format( BOOL_PT " = (mix-)" S_sample_reader_at_end_p "(" RD_PT ")", args[0], B2S(BOOL_RESULT), args[1], DESC_MIX_READER_ARG_1));
 }
 static char *descr_reader_at_end_b_t(int *args, ptree *pt)
 {
-  return(mus_format( BOOL_PT " = (track-)sample-reader-at-end?(" RD_PT ")", args[0], B2S(BOOL_RESULT), args[1], DESC_TRACK_READER_ARG_1));
+  return(mus_format( BOOL_PT " = (track-)" S_sample_reader_at_end_p "(" RD_PT ")", args[0], B2S(BOOL_RESULT), args[1], DESC_TRACK_READER_ARG_1));
 }
 
 static void reader_at_end_b_s(int *args, ptree *pt) {BOOL_RESULT = READER_ARG_1->at_eof;}
@@ -6713,7 +6714,7 @@ static xen_value *sample_reader_at_end_p_1(ptree *prog, xen_value **args, int nu
 
 static char *descr_make_sample_reader_r(int *args, ptree *pt)
 {
-  return(mus_format( RD_PT " = make-sample-reader(" INT_PT ", " INT_PT ", " INT_PT ", " INT_PT ", " INT_PT ")",
+  return(mus_format( RD_PT " = " S_make_sample_reader "(" INT_PT ", " INT_PT ", " INT_PT ", " INT_PT ", " INT_PT ")",
 		    args[0], DESC_READER_RESULT, 
 		    args[1], INT_ARG_1, args[2], INT_ARG_2, args[3], INT_ARG_3, args[4], INT_ARG_4, args[5], INT_ARG_5));
 }
@@ -6764,7 +6765,7 @@ static xen_value *make_sample_reader_1(ptree *pt, xen_value **args, int num_args
 
 static char *descr_make_region_sample_reader_r(int *args, ptree *pt)
 {
-  return(mus_format( RD_PT " = make-region-sample-reader(" INT_PT ", " INT_PT ", " INT_PT ")",
+  return(mus_format( RD_PT " = " S_make_region_sample_reader "(" INT_PT ", " INT_PT ", " INT_PT ")",
 		    args[0], DESC_READER_RESULT, args[1], INT_ARG_1, args[2], INT_ARG_2, args[3], INT_ARG_3));
 }
 static void make_region_sample_reader_r(int *args, ptree *pt) 
@@ -6788,7 +6789,7 @@ static char *descr_mix_reader(int *args, ptree *pt, const char *which)
 {
   return(mus_format( FLT_PT " = %s(" MF_PT ")", args[0], FLOAT_RESULT, which, args[1], DESC_MIX_READER_ARG_1));
 }
-static char *descr_mix_reader_f(int *args, ptree *pt) {return(descr_mix_reader(args, pt, "read-mix-sample"));}
+static char *descr_mix_reader_f(int *args, ptree *pt) {return(descr_mix_reader(args, pt, S_read_mix_sample));}
 static xen_value *mix_reader_0(ptree *prog, xen_value **args, xen_value *sf)
 {
   if (args[0]) FREE(args[0]);
@@ -6803,12 +6804,12 @@ static xen_value *mix_reader_1(ptree *prog, xen_value **args, int num_args)
 
 static char *descr_make_mix_sample_reader_r2(int *args, ptree *pt)
 {
-  return(mus_format( MF_PT " = make-mix-sample-reader(" INT_PT ", " INT_PT ")",
+  return(mus_format( MF_PT " = " S_make_mix_sample_reader "(" INT_PT ", " INT_PT ")",
 		    args[0], DESC_MIX_READER_RESULT, args[1], INT_ARG_1, args[2], INT_ARG_2));
 }
 static char *descr_make_mix_sample_reader_r1(int *args, ptree *pt)
 {
-  return(mus_format( MF_PT " = make-mix-sample-reader(" INT_PT ", 0)", args[0], DESC_MIX_READER_RESULT, args[1], INT_ARG_1));
+  return(mus_format( MF_PT " = " S_make_mix_sample_reader "(" INT_PT ", 0)", args[0], DESC_MIX_READER_RESULT, args[1], INT_ARG_1));
 }
 static void make_mix_sample_reader_r2(int *args, ptree *pt) {MIX_READER_RESULT = run_make_mix_sample_reader(INT_ARG_1, INT_ARG_2);}
 static void make_mix_sample_reader_r1(int *args, ptree *pt) {MIX_READER_RESULT = run_make_mix_sample_reader(INT_ARG_1, 0);}
@@ -6829,7 +6830,7 @@ static char *descr_track_reader(int *args, ptree *pt, const char *which)
 {
   return(mus_format( FLT_PT " = %s(" TF_PT ")", args[0], FLOAT_RESULT, which, args[1], DESC_TRACK_READER_ARG_1));
 }
-static char *descr_track_reader_f(int *args, ptree *pt) {return(descr_track_reader(args, pt, "read-track-sample"));}
+static char *descr_track_reader_f(int *args, ptree *pt) {return(descr_track_reader(args, pt, S_read_track_sample));}
 static xen_value *track_reader_0(ptree *prog, xen_value **args, xen_value *sf)
 {
   if (args[0]) FREE(args[0]);
@@ -6841,17 +6842,17 @@ static xen_value *track_reader_1(ptree *prog, xen_value **args, int num_args) {r
 
 static char *descr_make_track_sample_reader_r3(int *args, ptree *pt)
 {
-  return(mus_format( TF_PT " = make-track-sample-reader(" INT_PT ", " INT_PT ", " INT_PT ")",
+  return(mus_format( TF_PT " = " S_make_track_sample_reader "(" INT_PT ", " INT_PT ", " INT_PT ")",
 		     args[0], DESC_TRACK_READER_RESULT, args[1], INT_ARG_1, args[2], INT_ARG_2, args[3], INT_ARG_3));
 }
 static char *descr_make_track_sample_reader_r2(int *args, ptree *pt)
 {
-  return(mus_format( TF_PT " = make-track-sample-reader(" INT_PT ", " INT_PT ", 0)",
+  return(mus_format( TF_PT " = " S_make_track_sample_reader "(" INT_PT ", " INT_PT ", 0)",
 		    args[0], DESC_TRACK_READER_RESULT, args[1], INT_ARG_1, args[2], INT_ARG_2));
 }
 static char *descr_make_track_sample_reader_r1(int *args, ptree *pt)
 {
-  return(mus_format( TF_PT " = make-track-sample-reader(" INT_PT ", 0, 0)", args[0], DESC_TRACK_READER_RESULT, args[1], INT_ARG_1));
+  return(mus_format( TF_PT " = " S_make_track_sample_reader "(" INT_PT ", 0, 0)", args[0], DESC_TRACK_READER_RESULT, args[1], INT_ARG_1));
 }
 static void make_track_sample_reader_r3(int *args, ptree *pt) {TRACK_READER_RESULT = run_make_track_sample_reader(INT_ARG_1, INT_ARG_2, INT_ARG_3);}
 static void make_track_sample_reader_r2(int *args, ptree *pt) {TRACK_READER_RESULT = run_make_track_sample_reader(INT_ARG_1, INT_ARG_2, 0);}
@@ -7432,7 +7433,7 @@ static char *descr_sound_data_check_index(int *args, ptree *pt)
 static void sound_data_length_i(int *args, ptree *pt) {INT_RESULT = SOUND_DATA_ARG_1->length;}
 static char *descr_sound_data_length_i(int *args, ptree *pt) 
 {
-  return(mus_format( INT_PT " = sound-data-length(" SD_PT ")", args[0], INT_RESULT, args[1], DESC_SOUND_DATA_ARG_1));
+  return(mus_format( INT_PT " = " S_sound_data_length "(" SD_PT ")", args[0], INT_RESULT, args[1], DESC_SOUND_DATA_ARG_1));
 }
 static xen_value *sound_data_length_1(ptree *prog, xen_value **args, int num_args)
 {
@@ -7443,7 +7444,7 @@ static xen_value *sound_data_length_1(ptree *prog, xen_value **args, int num_arg
 static void sound_data_chans_i(int *args, ptree *pt) {INT_RESULT = SOUND_DATA_ARG_1->chans;}
 static char *descr_sound_data_chans_i(int *args, ptree *pt) 
 {
-  return(mus_format( INT_PT " = sound-data-chans(" SD_PT ")", args[0], INT_RESULT, args[1], DESC_SOUND_DATA_ARG_1));
+  return(mus_format( INT_PT " = " S_sound_data_chans "(" SD_PT ")", args[0], INT_RESULT, args[1], DESC_SOUND_DATA_ARG_1));
 }
 static xen_value *sound_data_chans_1(ptree *prog, xen_value **args, int num_args)
 {
@@ -7797,7 +7798,7 @@ GEN_P_1(output)
 
 static char *descr_close_0(int *args, ptree *pt)
 {
-  return(mus_format( INT_PT " = mus-close(" CLM_PT ")", args[0], INT_RESULT, args[1], DESC_CLM_ARG_1));
+  return(mus_format( INT_PT " = " S_mus_close "(" CLM_PT ")", args[0], INT_RESULT, args[1], DESC_CLM_ARG_1));
 }
 static void close_0(int *args, ptree *pt) {INT_RESULT = mus_close_file(CLM_ARG_1);}
 static xen_value *mus_close_0(ptree *prog, xen_value **args, int num_args)
@@ -7807,7 +7808,7 @@ static xen_value *mus_close_0(ptree *prog, xen_value **args, int num_args)
 
 static char *descr_reset_0(int *args, ptree *pt)
 {
-  return(mus_format("mus-reset(" CLM_PT ")", args[1], DESC_CLM_ARG_1));
+  return(mus_format(S_mus_reset "(" CLM_PT ")", args[1], DESC_CLM_ARG_1));
 }
 static void reset_0(int *args, ptree *pt) {mus_reset(CLM_ARG_1);}
 static xen_value *mus_reset_0(ptree *prog, xen_value **args, int num_args)
@@ -7832,7 +7833,7 @@ static xen_value *set_formant_radius_and_frequency_1(ptree *prog, xen_value **ar
 }
 
 
-static char *descr_move_locsig_2f(int *args, ptree *pt) {return(descr_gen(args, pt, "move-locsig", 2));}
+static char *descr_move_locsig_2f(int *args, ptree *pt) {return(descr_gen(args, pt, S_move_locsig, 2));}
 static void move_locsig_2f(int *args, ptree *pt) {mus_move_locsig(CLM_ARG_1, FLOAT_ARG_2, FLOAT_ARG_3);}  
 static xen_value *move_locsig_1(ptree *prog, xen_value **args, int num_args)
 { 
@@ -7912,7 +7913,7 @@ SET_GEN0(locsig_reverb_set, locsig)
 
 static char *descr_mixer_ref_0(int *args, ptree *pt)
 {
-  return(mus_format( FLT_PT " = mixer-ref(" CLM_PT ", " INT_PT ", " INT_PT ")", 
+  return(mus_format( FLT_PT " = " S_mixer_ref "(" CLM_PT ", " INT_PT ", " INT_PT ")", 
 		    args[0], FLOAT_RESULT, args[1], DESC_CLM_ARG_1, args[2], INT_ARG_2, args[3], INT_ARG_3));
 }
 static void mixer_ref_0(int *args, ptree *pt) {FLOAT_RESULT = mus_mixer_ref(CLM_ARG_1, INT_ARG_2, INT_ARG_3);}
@@ -7923,7 +7924,7 @@ static xen_value *mixer_ref_1(ptree *prog, xen_value **args, int num_args)
 }
 static char *descr_mixer_set_0(int *args, ptree *pt)
 {
-  return(mus_format("mixer-set!(" CLM_PT ", " INT_PT ", " INT_PT ", " FLT_PT ")", 
+  return(mus_format(S_mixer_set "(" CLM_PT ", " INT_PT ", " INT_PT ", " FLT_PT ")", 
 		    args[1], DESC_CLM_ARG_1, args[2], INT_ARG_2, args[3], INT_ARG_3, args[4], FLOAT_ARG_4));
 }
 static void mixer_set_0(int *args, ptree *pt) 
@@ -7932,7 +7933,7 @@ static void mixer_set_0(int *args, ptree *pt)
 }
 static char *descr_mixer_set_i(int *args, ptree *pt)
 {
-  return(mus_format("mixer-set!(" CLM_PT ", " INT_PT ", " INT_PT ", " INT_PT ")", 
+  return(mus_format(S_mixer_set "(" CLM_PT ", " INT_PT ", " INT_PT ", " INT_PT ")", 
 		    args[1], DESC_CLM_ARG_1, args[2], INT_ARG_2, args[3], INT_ARG_3, args[4], INT_ARG_4));
 }
 static void mixer_set_i(int *args, ptree *pt) 
@@ -7957,14 +7958,14 @@ static void mixer_set_1(ptree *prog, xen_value *in_v, xen_value *in_v1, xen_valu
 
 static char *descr_xcoeff_0(int *args, ptree *pt)
 {
-  return(mus_format( FLT_PT " = mus-xcoeff(" CLM_PT ", " INT_PT ")", args[0], FLOAT_RESULT, args[1], DESC_CLM_ARG_1, args[2], INT_ARG_2));
+  return(mus_format( FLT_PT " = " S_mus_xcoeff "(" CLM_PT ", " INT_PT ")", args[0], FLOAT_RESULT, args[1], DESC_CLM_ARG_1, args[2], INT_ARG_2));
 }
 static void xcoeff_0(int *args, ptree *pt) {FLOAT_RESULT = mus_xcoeff(CLM_ARG_1, INT_ARG_2);}
 static xen_value *mus_xcoeff_1(ptree *prog, xen_value **args, int num_args) {return(package(prog, R_FLOAT, xcoeff_0, descr_xcoeff_0, args, 2));}
 
 static char *descr_set_xcoeff_0(int *args, ptree *pt)
 {
-  return(mus_format("mus-set-xcoeff(" CLM_PT ", " INT_PT ", " FLT_PT ")", args[1], DESC_CLM_ARG_1, args[2], INT_ARG_2, args[3], FLOAT_ARG_3));
+  return(mus_format(S_setB S_mus_xcoeff "(" CLM_PT ", " INT_PT ", " FLT_PT ")", args[1], DESC_CLM_ARG_1, args[2], INT_ARG_2, args[3], FLOAT_ARG_3));
 }
 static void set_xcoeff_0(int *args, ptree *pt) {mus_set_xcoeff(CLM_ARG_1, INT_ARG_2, FLOAT_ARG_3);}
 static void mus_set_xcoeff_1(ptree *prog, xen_value *in_v, xen_value *in_v1, xen_value *in_v2, xen_value *v)
@@ -7975,14 +7976,14 @@ static void mus_set_xcoeff_1(ptree *prog, xen_value *in_v, xen_value *in_v1, xen
 
 static char *descr_ycoeff_0(int *args, ptree *pt)
 {
-  return(mus_format( FLT_PT " = mus-ycoeff(" CLM_PT ", " INT_PT ")", args[0], FLOAT_RESULT, args[1], DESC_CLM_ARG_1, args[2], INT_ARG_2));
+  return(mus_format( FLT_PT " = " S_mus_ycoeff "(" CLM_PT ", " INT_PT ")", args[0], FLOAT_RESULT, args[1], DESC_CLM_ARG_1, args[2], INT_ARG_2));
 }
 static void ycoeff_0(int *args, ptree *pt) {FLOAT_RESULT = mus_ycoeff(CLM_ARG_1, INT_ARG_2);}
 static xen_value *mus_ycoeff_1(ptree *prog, xen_value **args, int num_args) {return(package(prog, R_FLOAT, ycoeff_0, descr_ycoeff_0, args, 2));}
 
 static char *descr_set_ycoeff_0(int *args, ptree *pt)
 {
-  return(mus_format("mus-set-ycoeff(" CLM_PT ", " INT_PT ", " FLT_PT ")", args[1], DESC_CLM_ARG_1, args[2], INT_ARG_2, args[3], FLOAT_ARG_3));
+  return(mus_format(S_setB S_mus_ycoeff "(" CLM_PT ", " INT_PT ", " FLT_PT ")", args[1], DESC_CLM_ARG_1, args[2], INT_ARG_2, args[3], FLOAT_ARG_3));
 }
 static void set_ycoeff_0(int *args, ptree *pt) {mus_set_ycoeff(CLM_ARG_1, INT_ARG_2, FLOAT_ARG_3);}
 static void mus_set_ycoeff_1(ptree *prog, xen_value *in_v, xen_value *in_v1, xen_value *in_v2, xen_value *v)
@@ -8045,7 +8046,7 @@ static xen_value *polynomial_1(ptree *prog, xen_value **args, int num_args) {ret
 /* ---------------- mus-fft ---------------- */
 static char *descr_mus_fft_2v(int *args, ptree *pt) 
 {
-  return(mus_format("mus-fft(" VCT_PT ", " VCT_PT ")", args[1], DESC_VCT_ARG_1, args[2], DESC_VCT_ARG_2));
+  return(mus_format(S_mus_fft "(" VCT_PT ", " VCT_PT ")", args[1], DESC_VCT_ARG_1, args[2], DESC_VCT_ARG_2));
 }
 static void mus_fft_2v(int *args, ptree *pt) 
 {
@@ -8054,7 +8055,7 @@ static void mus_fft_2v(int *args, ptree *pt)
 }
 static char *descr_mus_fft_2v_1(int *args, ptree *pt) 
 {
-  return(mus_format("mus-fft(" VCT_PT ", " VCT_PT ", " INT_PT ")", args[1], DESC_VCT_ARG_1, args[2], DESC_VCT_ARG_2, args[3], INT_ARG_3));
+  return(mus_format(S_mus_fft "(" VCT_PT ", " VCT_PT ", " INT_PT ")", args[1], DESC_VCT_ARG_1, args[2], DESC_VCT_ARG_2, args[3], INT_ARG_3));
 }
 static void mus_fft_2v_1(int *args, ptree *pt) 
 {
@@ -8063,7 +8064,7 @@ static void mus_fft_2v_1(int *args, ptree *pt)
 }
 static char *descr_mus_fft_2v_2(int *args, ptree *pt) 
 {
-  return(mus_format("mus-fft(" VCT_PT ", " VCT_PT ", " INT_PT ", " INT_PT ")", 
+  return(mus_format(S_mus_fft "(" VCT_PT ", " VCT_PT ", " INT_PT ", " INT_PT ")", 
 		    args[1], DESC_VCT_ARG_1, args[2], DESC_VCT_ARG_2, args[3], INT_ARG_3, args[4], INT_ARG_4));
 }
 static void mus_fft_2v_2(int *args, ptree *pt) 
@@ -8192,7 +8193,7 @@ static xen_value *locsig_1(ptree *prog, xen_value **args, int num_args)
 /* ---------------- env-interp ---------------- */
 static char *descr_env_interp_2(int *args, ptree *pt) 
 {
-  return(mus_format( FLT_PT " = env-interp(" FLT_PT ", " CLM_PT ")", args[0], FLOAT_RESULT, args[1], FLOAT_ARG_1, args[2], DESC_CLM_ARG_2));
+  return(mus_format( FLT_PT " = " S_env_interp "(" FLT_PT ", " CLM_PT ")", args[0], FLOAT_RESULT, args[1], FLOAT_ARG_1, args[2], DESC_CLM_ARG_2));
 }
 static void env_interp_2(int *args, ptree *pt) {FLOAT_RESULT = mus_env_interp(FLOAT_ARG_1, CLM_ARG_2);}
 static xen_value *env_interp_1(ptree *prog, xen_value **args, int num_args) 
@@ -8381,7 +8382,7 @@ static xen_value *file_to_frame_1(ptree *prog, xen_value **args, int num_args)
 
 static char *descr_outa_3(int *args, ptree *pt)
 {
-  return(mus_format( FLT_PT " = outa(" INT_PT ", " FLT_PT ", " CLM_PT ")",
+  return(mus_format( FLT_PT " = " S_outa "(" INT_PT ", " FLT_PT ", " CLM_PT ")",
 		    args[0], FLOAT_RESULT, args[1], INT_ARG_1, args[2], FLOAT_ARG_2, args[3], DESC_CLM_ARG_3));
 }
 static void outa_3(int *args, ptree *pt) {FLOAT_RESULT = mus_out_any(INT_ARG_1, FLOAT_ARG_2, 0, CLM_ARG_3);}
@@ -8389,7 +8390,7 @@ static xen_value *outa_1(ptree *prog, xen_value **args, int num_args) {return(pa
 
 static char *descr_outb_3(int *args, ptree *pt)
 {
-  return(mus_format( FLT_PT " = outb(" INT_PT ", " FLT_PT ", " CLM_PT ")",
+  return(mus_format( FLT_PT " = " S_outb "(" INT_PT ", " FLT_PT ", " CLM_PT ")",
 		    args[0], FLOAT_RESULT, args[1], INT_ARG_1, args[2], FLOAT_ARG_2, args[3], DESC_CLM_ARG_3));
 }
 static void outb_3(int *args, ptree *pt) {FLOAT_RESULT = mus_out_any(INT_ARG_1, FLOAT_ARG_2, 1, CLM_ARG_3);}
@@ -8397,7 +8398,7 @@ static xen_value *outb_1(ptree *prog, xen_value **args, int num_args) {return(pa
 
 static char *descr_outc_3(int *args, ptree *pt)
 {
-  return(mus_format( FLT_PT " = outc(" INT_PT ", " FLT_PT ", " CLM_PT ")",
+  return(mus_format( FLT_PT " = " S_outc "(" INT_PT ", " FLT_PT ", " CLM_PT ")",
 		    args[0], FLOAT_RESULT, args[1], INT_ARG_1, args[2], FLOAT_ARG_2, args[3], DESC_CLM_ARG_3));
 }
 static void outc_3(int *args, ptree *pt) {FLOAT_RESULT = mus_out_any(INT_ARG_1, FLOAT_ARG_2, 2, CLM_ARG_3);}
@@ -8405,7 +8406,7 @@ static xen_value *outc_1(ptree *prog, xen_value **args, int num_args) {return(pa
 
 static char *descr_outd_3(int *args, ptree *pt)
 {
-  return(mus_format( FLT_PT " = outd(" INT_PT ", " FLT_PT ", " CLM_PT ")",
+  return(mus_format( FLT_PT " = " S_outd "(" INT_PT ", " FLT_PT ", " CLM_PT ")",
 		    args[0], FLOAT_RESULT, args[1], INT_ARG_1, args[2], FLOAT_ARG_2, args[3], DESC_CLM_ARG_3));
 }
 static void outd_3(int *args, ptree *pt) {FLOAT_RESULT = mus_out_any(INT_ARG_1, FLOAT_ARG_2, 3, CLM_ARG_3);}
@@ -8413,7 +8414,7 @@ static xen_value *outd_1(ptree *prog, xen_value **args, int num_args) {return(pa
 
 static char *descr_out_any_4(int *args, ptree *pt)
 {
-  return(mus_format( FLT_PT " = out-any(" INT_PT ", " FLT_PT ", " INT_PT ", " CLM_PT ")",
+  return(mus_format( FLT_PT " = " S_out_any "(" INT_PT ", " FLT_PT ", " INT_PT ", " CLM_PT ")",
 		    args[0], FLOAT_RESULT, args[1], INT_ARG_1, args[2], FLOAT_ARG_2, args[3], INT_ARG_3, args[4], DESC_CLM_ARG_4));
 }
 static void out_any_4(int *args, ptree *pt) {FLOAT_RESULT = mus_out_any(INT_ARG_1, FLOAT_ARG_2, INT_ARG_3, CLM_ARG_4);} 
@@ -8427,21 +8428,21 @@ static xen_value *out_any_1(ptree *prog, xen_value **args, int num_args)
 
 static char *descr_ina_2(int *args, ptree *pt)
 {
-  return(mus_format( FLT_PT " = ina(" INT_PT ", " CLM_PT ")", args[0], FLOAT_RESULT, args[1], INT_ARG_1, args[2], DESC_CLM_ARG_2));
+  return(mus_format( FLT_PT " = " S_ina "(" INT_PT ", " CLM_PT ")", args[0], FLOAT_RESULT, args[1], INT_ARG_1, args[2], DESC_CLM_ARG_2));
 }
 static void ina_2(int *args, ptree *pt) {FLOAT_RESULT = mus_in_any(INT_ARG_1, 0, CLM_ARG_2);}
 static xen_value *ina_1(ptree *prog, xen_value **args, int num_args) {return(package(prog, R_FLOAT, ina_2, descr_ina_2, args, 2));}
 
 static char *descr_inb_2(int *args, ptree *pt)
 {
-  return(mus_format( FLT_PT " = inb(" INT_PT ", " CLM_PT ")", args[0], FLOAT_RESULT, args[1], INT_ARG_1, args[2], DESC_CLM_ARG_2));
+  return(mus_format( FLT_PT " = " S_inb "(" INT_PT ", " CLM_PT ")", args[0], FLOAT_RESULT, args[1], INT_ARG_1, args[2], DESC_CLM_ARG_2));
 }
 static void inb_2(int *args, ptree *pt) {FLOAT_RESULT = mus_in_any(INT_ARG_1, 1, CLM_ARG_2);}
 static xen_value *inb_1(ptree *prog, xen_value **args, int num_args) {return(package(prog, R_FLOAT, inb_2, descr_inb_2, args, 2));}
 
 static char *descr_in_any_3(int *args, ptree *pt)
 {
-  return(mus_format( FLT_PT " = in-any(" INT_PT ", " INT_PT ", " CLM_PT ")",
+  return(mus_format( FLT_PT " = " S_in_any "(" INT_PT ", " INT_PT ", " CLM_PT ")",
 		    args[0], FLOAT_RESULT, args[1], INT_ARG_1, args[2], INT_ARG_2, args[3], DESC_CLM_ARG_3));
 }
 static void in_any_3(int *args, ptree *pt) {FLOAT_RESULT = mus_in_any(INT_ARG_1, INT_ARG_2, CLM_ARG_3);}
@@ -8456,7 +8457,7 @@ static xen_value *in_any_1(ptree *prog, xen_value **args, int num_args)
 /* ---------------- array-interp ---------------- */
 static char *descr_array_interp_1f(int *args, ptree *pt) 
 {
-  return(mus_format( FLT_PT " = array-interp(" VCT_PT ", " FLT_PT ")", args[0], FLOAT_RESULT, args[1], DESC_VCT_ARG_1, args[2], FLOAT_ARG_2));
+  return(mus_format( FLT_PT " = " S_array_interp "(" VCT_PT ", " FLT_PT ")", args[0], FLOAT_RESULT, args[1], DESC_VCT_ARG_1, args[2], FLOAT_ARG_2));
 }
 static void array_interp_1f(int *args, ptree *pt) 
 {
@@ -8464,7 +8465,7 @@ static void array_interp_1f(int *args, ptree *pt)
 }
 static char *descr_array_interp_2f(int *args, ptree *pt) 
 {
-  return(mus_format( FLT_PT " = array-interp(" VCT_PT ", " FLT_PT ", " INT_PT ")", 
+  return(mus_format( FLT_PT " = " S_array_interp "(" VCT_PT ", " FLT_PT ", " INT_PT ")", 
 		     args[0], FLOAT_RESULT, args[1], DESC_VCT_ARG_1, args[2], FLOAT_ARG_2, args[3], INT_ARG_3));
 }
 static void array_interp_2f(int *args, ptree *pt) {FLOAT_RESULT = mus_array_interp(VCT_ARG_1->data, FLOAT_ARG_2, INT_ARG_3);}
@@ -8477,7 +8478,7 @@ static xen_value *array_interp_1(ptree *prog, xen_value **args, int num_args)
 /* ---------------- mus-interpolate ---------------- */
 static char *descr_mus_interpolate_3f(int *args, ptree *pt) 
 {
-  return(mus_format( FLT_PT " = mus-interpolate(" INT_PT ", " FLT_PT ", " VCT_PT ")", 
+  return(mus_format( FLT_PT " = "S_mus_interpolate "(" INT_PT ", " FLT_PT ", " VCT_PT ")", 
 		     args[0], FLOAT_RESULT, args[1], INT_ARG_1, args[2], FLOAT_ARG_2, args[3], DESC_VCT_ARG_3));
 }
 static void mus_interpolate_3f(int *args, ptree *pt) 
@@ -8486,7 +8487,7 @@ static void mus_interpolate_3f(int *args, ptree *pt)
 }
 static char *descr_mus_interpolate_4f(int *args, ptree *pt) 
 {
-  return(mus_format( FLT_PT " = mus-interpolate(" INT_PT ", " FLT_PT ", " VCT_PT ", " INT_PT ")", 
+  return(mus_format( FLT_PT " = " S_mus_interpolate "(" INT_PT ", " FLT_PT ", " VCT_PT ", " INT_PT ")", 
 		     args[0], FLOAT_RESULT, args[1], INT_ARG_1, args[2], FLOAT_ARG_2, args[3], DESC_VCT_ARG_3, args[4], INT_ARG_4));
 }
 static void mus_interpolate_4f(int *args, ptree *pt) 
@@ -8495,7 +8496,7 @@ static void mus_interpolate_4f(int *args, ptree *pt)
 }
 static char *descr_mus_interpolate_5f(int *args, ptree *pt) 
 {
-  return(mus_format( FLT_PT " = mus-interpolate(" INT_PT ", " FLT_PT ", " VCT_PT ", " INT_PT ", " FLT_PT ")", 
+  return(mus_format( FLT_PT " = " S_mus_interpolate "(" INT_PT ", " FLT_PT ", " VCT_PT ", " INT_PT ", " FLT_PT ")", 
 		     args[0], FLOAT_RESULT, args[1], INT_ARG_1, args[2], FLOAT_ARG_2, args[3], DESC_VCT_ARG_3, args[4], INT_ARG_4, args[5], FLOAT_ARG_5));
 }
 static void mus_interpolate_5f(int *args, ptree *pt) 
@@ -8930,7 +8931,7 @@ static Float pv_synthesize(void *arg)
 
 static char *descr_phase_vocoder_5f(int *args, ptree *pt)
 {
-  return(mus_format( FLT_PT " = phase-vocoder(" CLM_PT ", " FNC_PT ", " FNC_PT ", " FNC_PT ", " FNC_PT ")",
+  return(mus_format( FLT_PT " = " S_phase_vocoder "(" CLM_PT ", " FNC_PT ", " FNC_PT ", " FNC_PT ", " FNC_PT ")",
 		     args[0], FLOAT_RESULT, 
 		     args[2], DESC_CLM_ARG_2, 
 		     (INT_ARG_1 & 1) ? args[3] : 0, (INT_ARG_1 & 1) ? DESC_FNC_ARG_3 : 0,
@@ -8955,7 +8956,7 @@ static void phase_vocoder_5f(int *args, ptree *pt)
 }
 static char *descr_phase_vocoder_1f(int *args, ptree *pt)
 {
-  return(mus_format( FLT_PT " = phase-vocoder(" CLM_PT ", " FNC_PT ")", args[0], FLOAT_RESULT, args[1], DESC_CLM_ARG_1, args[2], DESC_FNC_ARG_2));
+  return(mus_format( FLT_PT " = " S_phase_vocoder "(" CLM_PT ", " FNC_PT ")", args[0], FLOAT_RESULT, args[1], DESC_CLM_ARG_1, args[2], DESC_FNC_ARG_2));
 }
 static void phase_vocoder_1f(int *args, ptree *pt)
 {
@@ -8964,7 +8965,7 @@ static void phase_vocoder_1f(int *args, ptree *pt)
 }
 static char *descr_phase_vocoder_0f(int *args, ptree *pt)
 {
-  return(mus_format( FLT_PT " = phase-vocoder(" CLM_PT ")", args[0], FLOAT_RESULT, args[1], DESC_CLM_ARG_1));
+  return(mus_format( FLT_PT " = " S_phase_vocoder "(" CLM_PT ")", args[0], FLOAT_RESULT, args[1], DESC_CLM_ARG_1));
 }
 static void phase_vocoder_0f(int *args, ptree *pt) {FLOAT_RESULT = mus_phase_vocoder(CLM_ARG_1, NULL);}
 static xen_value *phase_vocoder_1(ptree *prog, xen_value **args, int num_args)
@@ -9090,7 +9091,7 @@ INT_GEN0(phase_vocoder_outctr)
   /* this code needs to be folded into generalized set! */
 static char *descr_pv_set_outctr(int *args, ptree *pt)
 {
-  return(mus_format("phase-vocoder-set-outctr(" CLM_PT ", " INT_PT ")" , args[0], DESC_CLM_RESULT, args[1], INT_ARG_1));
+  return(mus_format(S_setB S_phase_vocoder_outctr "(" CLM_PT ", " INT_PT ")" , args[0], DESC_CLM_RESULT, args[1], INT_ARG_1));
 }
 static void pv_set_outctr(int *args, ptree *pt) {mus_phase_vocoder_set_outctr(CLM_RESULT, INT_ARG_1);}
 static xen_value *mus_phase_vocoder_set_outctr_1(ptree *prog, xen_value **args, int num_args)
@@ -9105,7 +9106,7 @@ static xen_value *mus_phase_vocoder_set_outctr_1(ptree *prog, xen_value **args, 
 static void contrast_enhancement_f(int *args, ptree *pt) {FLOAT_RESULT = mus_contrast_enhancement(FLOAT_ARG_1, FLOAT_ARG_2);}
 static char *descr_contrast_enhancement_f(int *args, ptree *pt) 
 {
-  return(mus_format( FLT_PT " = contrast-enhancement(" FLT_PT ", " FLT_PT ")", args[0], FLOAT_RESULT, args[1], FLOAT_ARG_1, args[2], FLOAT_ARG_2));
+  return(mus_format( FLT_PT " = " S_contrast_enhancement "(" FLT_PT ", " FLT_PT ")", args[0], FLOAT_RESULT, args[1], FLOAT_ARG_1, args[2], FLOAT_ARG_2));
 }
 static xen_value *contrast_enhancement_1(ptree *prog, xen_value **args, int num_args)
 {
@@ -9119,7 +9120,7 @@ static xen_value *contrast_enhancement_1(ptree *prog, xen_value **args, int num_
 static void ring_modulate_f(int *args, ptree *pt) {FLOAT_RESULT = mus_ring_modulate(FLOAT_ARG_1, FLOAT_ARG_2);}
 static char *descr_ring_modulate_f(int *args, ptree *pt) 
 {
-  return(mus_format( FLT_PT " = ring-modulate(" FLT_PT ", " FLT_PT ")", args[0], FLOAT_RESULT, args[1], FLOAT_ARG_1, args[2], FLOAT_ARG_2));
+  return(mus_format( FLT_PT " = " S_ring_modulate "(" FLT_PT ", " FLT_PT ")", args[0], FLOAT_RESULT, args[1], FLOAT_ARG_1, args[2], FLOAT_ARG_2));
 }
 static xen_value *ring_modulate_1(ptree *prog, xen_value **args, int num_args)
 {
@@ -9133,7 +9134,7 @@ static xen_value *ring_modulate_1(ptree *prog, xen_value **args, int num_args)
 static void amplitude_modulate_f(int *args, ptree *pt) {FLOAT_RESULT = mus_amplitude_modulate(FLOAT_ARG_1, FLOAT_ARG_2, FLOAT_ARG_3);}
 static char *descr_amplitude_modulate_f(int *args, ptree *pt) 
 {
-  return(mus_format( FLT_PT " = amplitude-modulate(" FLT_PT ", " FLT_PT ", " FLT_PT ")", 
+  return(mus_format( FLT_PT " = " S_amplitude_modulate "(" FLT_PT ", " FLT_PT ", " FLT_PT ")", 
 		    args[0], FLOAT_RESULT, args[1], FLOAT_ARG_1, args[2], FLOAT_ARG_2, args[3], FLOAT_ARG_3));
 }
 static xen_value *amplitude_modulate_1(ptree *prog, xen_value **args, int num_args)
@@ -9171,7 +9172,7 @@ SND_STR_OP(mus_sound_forget)
 static void mus_sound_duration_f(int *args, ptree *pt) {FLOAT_RESULT = mus_sound_duration(STRING_ARG_1);}
 static char *descr_mus_sound_duration_f(int *args, ptree *pt)
 {
-  return(mus_format( FLT_PT " = sound-duration(" STR_PT ")", args[0], FLOAT_RESULT, args[1], STRING_ARG_1));
+  return(mus_format( FLT_PT " = " S_mus_sound_duration "(" STR_PT ")", args[0], FLOAT_RESULT, args[1], STRING_ARG_1));
 }
 static xen_value *mus_sound_duration_1(ptree *prog, xen_value **args, int num_args)
 {
@@ -9185,7 +9186,7 @@ static void mus_sound_comment_f(int *args, ptree *pt)
 }
 static char *descr_mus_sound_comment_f(int *args, ptree *pt)
 {
-  return(mus_format( STR_PT " = sound-comment(" STR_PT ")", args[0], STRING_RESULT, args[1], STRING_ARG_1));
+  return(mus_format( STR_PT " = " S_mus_sound_comment "(" STR_PT ")", args[0], STRING_RESULT, args[1], STRING_ARG_1));
 }
 static xen_value *mus_sound_comment_1(ptree *prog, xen_value **args, int num_args)
 {
@@ -9199,7 +9200,7 @@ static void mus_header_type_name_f(int *args, ptree *pt)
 }
 static char *descr_mus_header_type_name_f(int *args, ptree *pt)
 {
-  return(mus_format( STR_PT " = header-type-name(" INT_PT ")", args[0], STRING_RESULT, args[1], INT_ARG_1));
+  return(mus_format( STR_PT " = " S_mus_header_type_name "(" INT_PT ")", args[0], STRING_RESULT, args[1], INT_ARG_1));
 }
 static xen_value *mus_header_type_name_1(ptree *prog, xen_value **args, int num_args)
 {
@@ -9213,7 +9214,7 @@ static void mus_data_format_name_f(int *args, ptree *pt)
 }
 static char *descr_mus_data_format_name_f(int *args, ptree *pt)
 {
-  return(mus_format( STR_PT " = data-format-name(" INT_PT ")", args[0], STRING_RESULT, args[1], INT_ARG_1));
+  return(mus_format( STR_PT " = " S_mus_data_format_name "(" INT_PT ")", args[0], STRING_RESULT, args[1], INT_ARG_1));
 }
 static xen_value *mus_data_format_name_1(ptree *prog, xen_value **args, int num_args)
 {
@@ -9228,7 +9229,7 @@ static void mus_header_type_to_string_f(int *args, ptree *pt)
 }
 static char *descr_mus_header_type_to_string_f(int *args, ptree *pt)
 {
-  return(mus_format( STR_PT " = header-type->string(" INT_PT ")", args[0], STRING_RESULT, args[1], INT_ARG_1));
+  return(mus_format( STR_PT " = " S_mus_header_type_to_string "(" INT_PT ")", args[0], STRING_RESULT, args[1], INT_ARG_1));
 }
 static xen_value *mus_header_type_to_string_1(ptree *prog, xen_value **args, int num_args)
 {
@@ -9242,7 +9243,7 @@ static void mus_data_format_to_string_f(int *args, ptree *pt)
 }
 static char *descr_mus_data_format_to_string_f(int *args, ptree *pt)
 {
-  return(mus_format( STR_PT " = data-format->string(" INT_PT ")", args[0], STRING_RESULT, args[1], INT_ARG_1));
+  return(mus_format( STR_PT " = " S_mus_data_format_to_string "(" INT_PT ")", args[0], STRING_RESULT, args[1], INT_ARG_1));
 }
 static xen_value *mus_data_format_to_string_1(ptree *prog, xen_value **args, int num_args)
 {
@@ -9253,7 +9254,7 @@ static xen_value *mus_data_format_to_string_1(ptree *prog, xen_value **args, int
 /* ---------------- formant-bank ---------------- */
 static char *descr_formant_bank_f(int *args, ptree *pt) 
 {
-  return(mus_format( FLT_PT " = formant-bank(" VCT_PT ", " VECT_PT ", " FLT_PT ")", 
+  return(mus_format( FLT_PT " = " S_formant_bank "(" VCT_PT ", " VECT_PT ", " FLT_PT ")", 
 		    args[0], FLOAT_RESULT, args[1], DESC_VCT_ARG_1, args[2], DESC_VECT_ARG_2, args[3], FLOAT_ARG_3));
 }
 static void formant_bank_f(int *args, ptree *pt) 
@@ -9271,16 +9272,16 @@ static xen_value *formant_bank_1(ptree *prog, xen_value **args, int num_args)
 
 
 /* ---------------- mus-srate ---------------- */
-static char *descr_srate_f(int *args, ptree *pt) {return(mus_format( FLT_PT " = mus-srate", args[0], FLOAT_RESULT));}
+static char *descr_srate_f(int *args, ptree *pt) {return(mus_format( FLT_PT " = " S_mus_srate, args[0], FLOAT_RESULT));}
 static void srate_f(int *args, ptree *pt) {FLOAT_RESULT = mus_srate();}
 static xen_value *mus_srate_1(ptree *prog, xen_value **args, int num_args) 
 {
   return(package(prog, R_FLOAT, srate_f, descr_srate_f, args, 0));
 }
 
-static char *descr_set_srate_f(int *args, ptree *pt) {return(mus_format("mus-srate = " FLT_PT , args[1], FLOAT_ARG_1));}
+static char *descr_set_srate_f(int *args, ptree *pt) {return(mus_format(S_mus_srate " = " FLT_PT , args[1], FLOAT_ARG_1));}
 static void set_srate_f(int *args, ptree *pt) {mus_set_srate(FLOAT_ARG_1); FLOAT_RESULT = mus_srate();}
-static char *descr_set_srate_i(int *args, ptree *pt) {return(mus_format("mus-srate = " INT_PT , args[1], INT_ARG_1));}
+static char *descr_set_srate_i(int *args, ptree *pt) {return(mus_format(S_mus_srate " = " INT_PT , args[1], INT_ARG_1));}
 static void set_srate_i(int *args, ptree *pt) {mus_set_srate((Float)INT_ARG_1); FLOAT_RESULT = mus_srate();}
 static void mus_set_srate_1(ptree *prog, xen_value *in_v, xen_value *in_v1, xen_value *in_v2, xen_value *v)
 {
@@ -11630,7 +11631,7 @@ in multi-channel situations where you want the optimization that vct-map! provid
   XEN_ASSERT_TYPE(XEN_PROCEDURE_P(code) && (XEN_REQUIRED_ARGS_OK(code, 0)), code, XEN_ARG_1, S_vct_map, "a thunk");
   len = XEN_LIST_LENGTH(arglist);
   if (len == 0)
-    mus_misc_error(S_vct_map, "no vcts passed to vct-map", arglist);
+    mus_misc_error(S_vct_map, "no vcts passed to " S_vct_map, arglist);
   vs = (vct **)CALLOC(len, sizeof(vct *));
   for (i = 0; i < len; i++, arglist = XEN_CDR(arglist))
     {
@@ -11750,7 +11751,7 @@ void g_init_run(void)
 #if WITH_RUN
   #define H_optimization_hook S_optimization_hook " (msg): called if the run macro encounters \
 something it can't optimize.  'msg' is a string description of the offending form:\n\
-  (add-hook! optimization-hook (lambda (msg) (snd-print msg)))\n\
+  (add-hook! " S_optimization_hook " (lambda (msg) (" S_snd_print " msg)))\n\
 You can often slightly rewrite the form to make run happy."
 #else
 #define H_optimization_hook S_optimization_hook " (msg): this hook is ignored because 'run' is not included in this version of Snd."

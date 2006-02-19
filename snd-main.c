@@ -433,7 +433,7 @@ void save_options(FILE *fd)
   if (fneq(auto_update_interval(ss), DEFAULT_AUTO_UPDATE_INTERVAL)) pss_sf(fd, S_auto_update_interval, auto_update_interval(ss));
   if (fneq(cursor_update_interval(ss), DEFAULT_CURSOR_UPDATE_INTERVAL)) pss_sf(fd, S_cursor_update_interval, cursor_update_interval(ss));
   if (cursor_location_offset(ss) != DEFAULT_CURSOR_LOCATION_OFFSET) pss_sd(fd, S_cursor_location_offset, cursor_location_offset(ss));
-  if (verbose_cursor(ss) != DEFAULT_VERBOSE_CURSOR) pss_ss(fd, S_verbose_cursor, b2s(verbose_cursor(ss)));
+  if (verbose_cursor(ss) != DEFAULT_VERBOSE_CURSOR) pss_ss(fd, S_with_verbose_cursor, b2s(verbose_cursor(ss)));
   if (show_indices(ss) != DEFAULT_SHOW_INDICES) pss_ss(fd, S_show_indices, b2s(show_indices(ss)));
   if (show_backtrace(ss) != DEFAULT_SHOW_BACKTRACE) pss_ss(fd, S_show_backtrace, b2s(show_backtrace(ss)));
   if (show_transform_peaks(ss) != DEFAULT_SHOW_TRANSFORM_PEAKS) pss_ss(fd, S_show_transform_peaks, b2s(show_transform_peaks(ss)));
@@ -549,8 +549,8 @@ void save_options(FILE *fd)
   if (filter_control_order(ss) != DEFAULT_FILTER_CONTROL_ORDER) pss_sd(fd, S_filter_control_order, filter_control_order(ss));
   if (filter_control_in_dB(ss) != DEFAULT_FILTER_CONTROL_IN_DB) pss_ss(fd, S_filter_control_in_dB, b2s(filter_control_in_dB(ss)));
   if (filter_control_in_hz(ss) != DEFAULT_FILTER_CONTROL_IN_HZ) pss_ss(fd, S_filter_control_in_hz, b2s(filter_control_in_hz(ss)));
-  if (cursor_follows_play(ss) != DEFAULT_CURSOR_FOLLOWS_PLAY)
-    pss_ss(fd, S_cursor_follows_play, b2s((bool)(cursor_follows_play(ss)))); /* a boolean from the user's point of view */
+  if (with_tracking_cursor(ss) != DEFAULT_WITH_TRACKING_CURSOR)
+    pss_ss(fd, S_with_tracking_cursor, b2s((bool)(with_tracking_cursor(ss)))); /* a boolean from the user's point of view */
   if ((fneq(tempo_control_min(ss), DEFAULT_TEMPO_CONTROL_MIN)) ||
       (fneq(tempo_control_max(ss), DEFAULT_TEMPO_CONTROL_MAX)))
     pss_sl(fd, S_tempo_control_bounds, tempo_control_min(ss), tempo_control_max(ss));
@@ -865,8 +865,8 @@ static void save_sound_state (snd_info *sp, void *ptr)
       psp_ss(fd, S_filter_control_envelope, tmpstr = env_to_string(sp->filter_control_envelope));
       if (tmpstr) FREE(tmpstr);
     }
-  if (sp->cursor_follows_play != DONT_FOLLOW) 
-    psp_ss(fd, S_cursor_follows_play, b2s((bool)(sp->cursor_follows_play))); /* a boolean from the user's point of view */
+  if (sp->with_tracking_cursor != DONT_TRACK) 
+    psp_ss(fd, S_with_tracking_cursor, b2s((bool)(sp->with_tracking_cursor))); /* a boolean from the user's point of view */
 
   if ((XEN_VECTOR_P(sp->properties)) &&
       (XEN_LIST_P(XEN_VECTOR_REF(sp->properties, 0))) &&
@@ -896,7 +896,7 @@ static void save_sound_state (snd_info *sp, void *ptr)
       if (cp->show_transform_peaks != show_transform_peaks(ss)) pcp_ss(fd, S_show_transform_peaks, b2s(cp->show_transform_peaks), chan);
       if (cp->fft_log_frequency != fft_log_frequency(ss)) pcp_ss(fd, S_fft_log_frequency, b2s(cp->fft_log_frequency), chan);
       if (cp->fft_log_magnitude != fft_log_magnitude(ss)) pcp_ss(fd, S_fft_log_magnitude, b2s(cp->fft_log_magnitude), chan);
-      if (cp->verbose_cursor != verbose_cursor(ss)) pcp_ss(fd, S_verbose_cursor, b2s(cp->verbose_cursor), chan);
+      if (cp->verbose_cursor != verbose_cursor(ss)) pcp_ss(fd, S_with_verbose_cursor, b2s(cp->verbose_cursor), chan);
       if (cp->zero_pad != zero_pad(ss)) pcp_sd(fd, S_zero_pad, cp->zero_pad, chan);
       if (cp->wavelet_type != wavelet_type(ss)) pcp_sd(fd, S_wavelet_type, cp->wavelet_type, chan);
       if (fneq(cp->min_dB, min_dB(ss))) pcp_sf(fd, S_min_dB, cp->min_dB, chan);

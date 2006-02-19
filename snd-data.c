@@ -340,7 +340,7 @@ snd_info *make_snd_info(snd_info *sip, const char *filename, file_info *hdr, int
   sp->delete_me = NULL;
   sp->name_string = NULL;
   sp->active = true;
-  sp->cursor_follows_play = cursor_follows_play(ss);
+  sp->with_tracking_cursor = with_tracking_cursor(ss);
   return(sp);
 }
 

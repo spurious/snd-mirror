@@ -5120,10 +5120,10 @@ void g_init_gxfile(void)
 The 'type' is 1 for view-files, and 2 for regions. The 'position' \
 is the scrolled list position of the label. The label itself is 'label'. We could use the 'finfo' procedure in examp.scm \
 to popup file info as follows: \n\
-(add-hook! mouse-enter-label-hook\n\
+(add-hook! " S_mouse_enter_label_hook "\n\
   (lambda (type position name)\n\
     (if (not (= type 2))\n\
-        (info-dialog name (finfo name)))))\n\
+        (" S_info_dialog " name (finfo name)))))\n\
 See also nb.scm."
 #endif
 #if HAVE_RUBY

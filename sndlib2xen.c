@@ -1074,7 +1074,7 @@ static XEN g_mus_audio_open_output(XEN dev, XEN srate, XEN chans, XEN format, XE
   #define H_mus_audio_open_output "(" S_mus_audio_open_output " device srate chans format bytes): \
 open the audio device ready for output at the given srate and so on; \
 return the audio line number:\n\
-  (set! line (mus-audio-open-output mus-audio-default 22050 1 mus-lshort 256)"
+  (set! line (" S_mus_audio_open_output " " S_mus_audio_default " 22050 1 " S_mus_lshort " 256)"
 
   int line, idev, ifmt, isize, israte, ichans;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(dev), dev, XEN_ARG_1, S_mus_audio_open_output, "an integer");
@@ -1207,9 +1207,9 @@ The device is the nominal audio device, normally " S_mus_audio_default ". The fi
 to get the devices max available chans, the field would be " S_mus_audio_channel ". The channel arg, when relevant, specifies \
 which channel we want info on or the 'vals' vct length. \
 The requested info will be written into 'vals': \
-  (let ((vals (make-vct 32)))\n\
-    (mus-audio-mixer-read mus-audio-default mus-audio-format 32 vals))\n\
-sets (vct-ref vals 0) to the default device's desired audio sample data format."
+  (let ((vals (" S_make_vct " 32)))\n\
+    (" S_mus_audio_mixer_read " " S_mus_audio_default " " S_mus_audio_format " 32 vals))\n\
+sets (" S_vct_ref " vals 0) to the default device's desired audio sample data format."
 
   int val, i, len;
   float *fvals;

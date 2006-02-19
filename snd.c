@@ -293,7 +293,7 @@ void snd_set_global_defaults(bool need_cleanup)
   ss->Tempo_Control_Min = DEFAULT_TEMPO_CONTROL_MIN;
   ss->Tempo_Control_Max = DEFAULT_TEMPO_CONTROL_MAX;
   ss->Show_Controls = DEFAULT_SHOW_CONTROLS;
-  ss->Cursor_Follows_Play = DEFAULT_CURSOR_FOLLOWS_PLAY;
+  ss->With_Tracking_Cursor = DEFAULT_WITH_TRACKING_CURSOR;
   ss->Just_Sounds = DEFAULT_JUST_SOUNDS;
 }
 

@@ -839,7 +839,7 @@ void amp_env_ptree(chan_info *cp, struct ptree *pt, int pos, XEN init_func)
 	  vlo = c_vct_copy((vct *)(XEN_OBJECT_REF(XEN_CALL_2(init_func,
 							     C_TO_XEN_OFF_T(0),
 							     C_TO_XEN_OFF_T(new_ep->amp_env_size),
-							     "ptree-channel init func"))));
+							     S_ptree_channel " init func"))));
 	  vhi = c_vct_copy(vlo);
 	}
       for (i = 0; i < new_ep->amp_env_size; i++) 
@@ -923,7 +923,7 @@ void amp_env_ptree_selection(chan_info *cp, struct ptree *pt, off_t beg, off_t n
 			  vlo = c_vct_copy((vct *)(XEN_OBJECT_REF(XEN_CALL_2(init_func,
 									     C_TO_XEN_OFF_T((off_t)((Float)(cursamp - beg) / (Float)(num))),
 									     C_TO_XEN_OFF_T((off_t)(num / new_ep->samps_per_bin)),
-									     "ptree-channel init func"))));
+									     S_ptree_channel " init func"))));
 			  vhi = c_vct_copy(vlo);
 			  inited = true;
 			}
@@ -2110,7 +2110,7 @@ static XEN g_bomb(XEN snd, XEN on)
 
 typedef enum {SP_SYNC, SP_READ_ONLY, SP_NCHANS, SP_CONTRASTING, SP_EXPANDING, SP_REVERBING, SP_FILTERING, SP_FILTER_ORDER,
 	      SP_SRATE, SP_DATA_FORMAT, SP_DATA_LOCATION, SP_HEADER_TYPE, SP_SAVE_CONTROLS, SP_RESTORE_CONTROLS, SP_SELECTED_CHANNEL,
-	      SP_COMMENT, SP_FILE_NAME, SP_SHORT_FILE_NAME, SP_CLOSE, SP_UPDATE, SP_CURSOR_FOLLOWS_PLAY, SP_SHOW_CONTROLS,
+	      SP_COMMENT, SP_FILE_NAME, SP_SHORT_FILE_NAME, SP_CLOSE, SP_UPDATE, SP_WITH_TRACKING_CURSOR, SP_SHOW_CONTROLS,
 	      SP_FILTER_DBING, SP_SPEED_TONES, SP_SPEED_STYLE, SP_RESET_CONTROLS,
 	      SP_AMP, SP_CONTRAST, SP_CONTRAST_AMP, SP_EXPAND, SP_EXPAND_LENGTH, SP_EXPAND_RAMP, SP_EXPAND_HOP,
 	      SP_SPEED, SP_REVERB_LENGTH, SP_REVERB_FEEDBACK, SP_REVERB_SCALE, SP_REVERB_LOW_PASS,
@@ -2170,7 +2170,7 @@ static XEN sound_get(XEN snd_n, sp_field_t fld, const char *caller)
 	  if (sp) return(C_TO_XEN_INT(sp->index));
 	} 
       break;
-    case SP_CURSOR_FOLLOWS_PLAY: return(C_TO_XEN_BOOLEAN(sp->cursor_follows_play));    break;
+    case SP_WITH_TRACKING_CURSOR: return(C_TO_XEN_BOOLEAN(sp->with_tracking_cursor));    break;
     case SP_SHOW_CONTROLS:       if (!(IS_PLAYER(sp))) return(C_TO_XEN_BOOLEAN(control_panel_is_open(sp))); break;
     case SP_SPEED_TONES:         return(C_TO_XEN_INT(sp->speed_control_tones));        break;
     case SP_SPEED_STYLE:         return(C_TO_XEN_INT((int)(sp->speed_control_style))); break;
@@ -2247,7 +2247,7 @@ static XEN sound_get_global(XEN snd_n, sp_field_t fld, const char *caller)
       case SP_FILTER_DBING:        return(C_TO_XEN_BOOLEAN(filter_control_in_dB(ss)));   break;
       case SP_FILTER_HZING:        return(C_TO_XEN_BOOLEAN(filter_control_in_hz(ss)));   break;
       case SP_FILTER_ORDER:        return(C_TO_XEN_INT(filter_control_order(ss)));       break;
-      case SP_CURSOR_FOLLOWS_PLAY: return(C_TO_XEN_BOOLEAN(cursor_follows_play(ss)));    break;
+      case SP_WITH_TRACKING_CURSOR: return(C_TO_XEN_BOOLEAN(with_tracking_cursor(ss)));    break;
       case SP_SHOW_CONTROLS:       return(C_TO_XEN_BOOLEAN(in_show_controls(ss)));       break;
       case SP_SPEED_TONES:         return(C_TO_XEN_INT(speed_control_tones(ss)));        break;
       case SP_SPEED_STYLE:         return(C_TO_XEN_INT((int)(speed_control_style(ss)))); break;
@@ -2326,10 +2326,10 @@ static XEN sound_set(XEN snd_n, XEN val, sp_field_t fld, const char *caller)
     case SP_FILTER_ORDER:
       set_filter_order(sp, XEN_TO_C_INT(val));
       break;
-    case SP_CURSOR_FOLLOWS_PLAY:
+    case SP_WITH_TRACKING_CURSOR:
       if (XEN_TO_C_BOOLEAN(val))
-	sp->cursor_follows_play = FOLLOW_ALWAYS; /* ??? */
-      else sp->cursor_follows_play = DONT_FOLLOW;
+	sp->with_tracking_cursor = ALWAYS_TRACK; /* ??? */
+      else sp->with_tracking_cursor = DONT_TRACK;
       break;
     case SP_SHOW_CONTROLS:
       if (!(IS_PLAYER(sp))) 
@@ -2649,10 +2649,10 @@ static XEN sound_set_global(XEN snd_n, XEN val, sp_field_t fld, const char *call
 	  in_set_filter_control_order(ss, XEN_TO_C_INT(val));
 	return(sound_set(XEN_TRUE, val, fld, caller));
 	break;
-      case SP_CURSOR_FOLLOWS_PLAY:
+      case SP_WITH_TRACKING_CURSOR:
 	if (XEN_TO_C_BOOLEAN(val))
-	  in_set_cursor_follows_play(ss, FOLLOW_ALWAYS); /* ??? */
-	else in_set_cursor_follows_play(ss, DONT_FOLLOW);
+	  in_set_with_tracking_cursor(ss, ALWAYS_TRACK); /* ??? */
+	else in_set_with_tracking_cursor(ss, DONT_TRACK);
 	return(sound_set(XEN_TRUE, val, fld, caller));
 	break;
       case SP_SHOW_CONTROLS:
@@ -3084,19 +3084,19 @@ static XEN name_reversed(XEN arg1, XEN arg2) \
 
 WITH_REVERSED_ARGS(g_set_filter_control_order_reversed, g_set_filter_control_order)
 
-static XEN g_cursor_follows_play(XEN snd_n) 
+static XEN g_with_tracking_cursor(XEN snd_n) 
 {
-  #define H_cursor_follows_play "("  S_cursor_follows_play " (snd)): #t if cursor moves along in waveform display as sound is played (#f)"
-  return(sound_get_global(snd_n, SP_CURSOR_FOLLOWS_PLAY, S_cursor_follows_play));
+  #define H_with_tracking_cursor "("  S_with_tracking_cursor " (snd)): #t if cursor moves along in waveform display as sound is played (#f)"
+  return(sound_get_global(snd_n, SP_WITH_TRACKING_CURSOR, S_with_tracking_cursor));
 }
 
-static XEN g_set_cursor_follows_play(XEN on, XEN snd_n) 
+static XEN g_set_with_tracking_cursor(XEN on, XEN snd_n) 
 {
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(on), on, XEN_ARG_1, S_setB S_cursor_follows_play, "a boolean");
-  return(sound_set_global(snd_n, on, SP_CURSOR_FOLLOWS_PLAY, S_setB S_cursor_follows_play));
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(on), on, XEN_ARG_1, S_setB S_with_tracking_cursor, "a boolean");
+  return(sound_set_global(snd_n, on, SP_WITH_TRACKING_CURSOR, S_setB S_with_tracking_cursor));
 }
 
-WITH_REVERSED_BOOLEAN_ARGS(g_set_cursor_follows_play_reversed, g_set_cursor_follows_play)
+WITH_REVERSED_BOOLEAN_ARGS(g_set_with_tracking_cursor_reversed, g_set_with_tracking_cursor)
 
 static XEN g_show_controls(XEN snd_n) 
 {
@@ -3411,7 +3411,7 @@ static XEN g_save_sound_as(XEN arglist)
   #define H_save_sound_as "("  S_save_sound_as " :file :sound :header-type :data-format :srate :channel :edit-position :comment): \
 save sound in file using the indicated attributes.  If channel is specified, only that channel is saved (extracted). \
 Omitted arguments take their value from the sound being saved.\n\
-  (save-sound-as \"test.snd\" index mus-next mus-bshort)"
+  (" S_save_sound_as " \"test.snd\" index " S_mus_next " " S_mus_bshort ")"
 
   snd_info *sp;
   file_info *hdr;
@@ -3543,7 +3543,7 @@ static XEN g_new_sound(XEN arglist)
   #define H_new_sound "(" S_new_sound " :file :header-type :data-format :srate :channels :comment :size): \
 create a new sound file with the indicated attributes; if any are omitted, the corresponding default-output variable is used. \
 The 'size' argument sets the number of samples (zeros) in the newly created sound. \n\
-  (new-sound \"test.snd\" mus-next mus-bshort 22050 1 \"no comment\" 22050)"
+  (" S_new_sound " \"test.snd\" " S_mus_next " " S_mus_bshort " 22050 1 \"no comment\" 22050)"
 
   snd_info *sp = NULL; 
   int ht, df, sr, ch, err;
@@ -3990,7 +3990,7 @@ WITH_REVERSED_ARGS(g_set_reverb_control_lowpass_reversed, g_set_reverb_control_l
 
 static XEN g_reverb_control_decay(XEN snd)
 {
-  #define H_reverb_control_decay "(" S_reverb_control_decay " (snd)): apply-controls reverb decay time (1.0 seconds)"
+  #define H_reverb_control_decay "(" S_reverb_control_decay " (snd)): " S_apply_controls " reverb decay time (1.0 seconds)"
   return(sound_get_global(snd, SP_REVERB_DECAY, S_reverb_control_decay));
 }
 
@@ -5016,8 +5016,8 @@ XEN_ARGIFY_4(g_apply_controls_w, g_apply_controls)
 XEN_ARGIFY_6(g_controls_to_channel_w, g_controls_to_channel)
 XEN_ARGIFY_1(g_filter_control_envelope_w, g_filter_control_envelope)
 XEN_ARGIFY_2(g_set_filter_control_envelope_w, g_set_filter_control_envelope)
-XEN_ARGIFY_1(g_cursor_follows_play_w, g_cursor_follows_play)
-XEN_ARGIFY_2(g_set_cursor_follows_play_w, g_set_cursor_follows_play)
+XEN_ARGIFY_1(g_with_tracking_cursor_w, g_with_tracking_cursor)
+XEN_ARGIFY_2(g_set_with_tracking_cursor_w, g_set_with_tracking_cursor)
 XEN_ARGIFY_1(g_show_controls_w, g_show_controls)
 XEN_ARGIFY_2(g_set_show_controls_w, g_set_show_controls)
 XEN_ARGIFY_1(g_sync_w, g_sync)
@@ -5140,8 +5140,8 @@ XEN_ARGIFY_1(g_equalize_panes_w, g_equalize_panes)
 #define g_controls_to_channel_w g_controls_to_channel
 #define g_filter_control_envelope_w g_filter_control_envelope
 #define g_set_filter_control_envelope_w g_set_filter_control_envelope
-#define g_cursor_follows_play_w g_cursor_follows_play
-#define g_set_cursor_follows_play_w g_set_cursor_follows_play
+#define g_with_tracking_cursor_w g_with_tracking_cursor
+#define g_set_with_tracking_cursor_w g_set_with_tracking_cursor
 #define g_show_controls_w g_show_controls
 #define g_set_show_controls_w g_set_show_controls
 #define g_sync_w g_sync
@@ -5289,12 +5289,12 @@ If it returns #t, the usual informative minibuffer babbling is squelched."
 					    S_setB S_filter_control_envelope, g_set_filter_control_envelope_w, g_set_filter_control_envelope_reversed, 
 					    0, 1, 1, 1);
 
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_cursor_follows_play, g_cursor_follows_play_w, H_cursor_follows_play,
-					    S_setB S_cursor_follows_play, g_set_cursor_follows_play_w, g_set_cursor_follows_play_reversed, 0, 1, 1, 1);
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER("cursor-follows-play", g_with_tracking_cursor_w, H_with_tracking_cursor,
+					    S_setB "cursor-follows-play", g_set_with_tracking_cursor_w, g_set_with_tracking_cursor_reversed, 0, 1, 1, 1);
 
   /* a synonym for now */
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_with_tracking_cursor, g_cursor_follows_play_w, H_cursor_follows_play,
-					    S_setB S_with_tracking_cursor, g_set_cursor_follows_play_w, g_set_cursor_follows_play_reversed, 0, 1, 1, 1);
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_with_tracking_cursor, g_with_tracking_cursor_w, H_with_tracking_cursor,
+					    S_setB S_with_tracking_cursor, g_set_with_tracking_cursor_w, g_set_with_tracking_cursor_reversed, 0, 1, 1, 1);
 
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_show_controls, g_show_controls_w, H_show_controls,
 					    S_setB S_show_controls, g_set_show_controls_w, g_set_show_controls_reversed, 0, 1, 1, 1);

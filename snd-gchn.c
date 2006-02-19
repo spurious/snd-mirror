@@ -1070,9 +1070,9 @@ void g_init_gxchn(void)
 #if HAVE_SCHEME
   #define H_mouse_enter_graph_hook S_mouse_enter_graph_hook " (snd chn): called when the mouse \
 enters the drawing area (graph pane) of the given channel.\n\
-  (add-hook! mouse-enter-graph-hook\n\
+  (add-hook! " S_mouse_enter_graph_hook "\n\
     (lambda (snd chn)\n\
-      (focus-widget (car (channel-widgets snd chn)))))"
+      (" S_focus_widget " (car (" S_channel_widgets " snd chn)))))"
 
   #define H_mouse_leave_graph_hook S_mouse_leave_graph_hook " (snd chn): called when the mouse \
 leaves the drawing area (graph pane) of the given channel."

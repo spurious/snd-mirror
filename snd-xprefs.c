@@ -2026,18 +2026,18 @@ static void verbose_cursor_toggle(prefs_info *prf)
   in_set_verbose_cursor(XmToggleButtonGetState(prf->toggle) == XmSET);
 }
 
-/* ---------------- cursor-follows-play ---------------- */
+/* ---------------- with-tracking-cursor ---------------- */
 
-static void reflect_cursor_follows_play(prefs_info *prf) 
+static void reflect_with_tracking_cursor(prefs_info *prf) 
 {
-  XmToggleButtonSetState(prf->toggle, cursor_follows_play(ss), false);
+  XmToggleButtonSetState(prf->toggle, with_tracking_cursor(ss), false);
   int_to_textfield(prf->rtxt, cursor_location_offset(ss));
   float_to_textfield(prf->text, cursor_update_interval(ss));
 }
 
-static void cursor_follows_play_toggle(prefs_info *prf)
+static void with_tracking_cursor_toggle(prefs_info *prf)
 {
-  in_set_cursor_follows_play(ss, (XmToggleButtonGetState(prf->toggle) == XmSET) ? FOLLOW_ALWAYS : DONT_FOLLOW);
+  in_set_with_tracking_cursor(ss, (XmToggleButtonGetState(prf->toggle) == XmSET) ? ALWAYS_TRACK : DONT_TRACK);
 }
 
 static void cursor_location_text(prefs_info *prf)
@@ -5250,7 +5250,7 @@ widget_t start_preferences_dialog(void)
 
     cursor_label = make_inner_label("  cursor options", dpy_box, current_sep);
 
-    prf = prefs_row_with_toggle("report cursor location as it moves", S_verbose_cursor,
+    prf = prefs_row_with_toggle("report cursor location as it moves", S_with_verbose_cursor,
 				verbose_cursor(ss), 
 				dpy_box, cursor_label, 
 				verbose_cursor_toggle);
@@ -5261,14 +5261,14 @@ widget_t start_preferences_dialog(void)
       char *str1;
       str = mus_format("%.2f", cursor_update_interval(ss));
       str1 = mus_format("%d", cursor_location_offset(ss));
-      prf = prefs_row_with_toggle_with_two_texts("track current location while playing", S_cursor_follows_play,
-						 cursor_follows_play(ss), 
+      prf = prefs_row_with_toggle_with_two_texts("track current location while playing", S_with_tracking_cursor,
+						 with_tracking_cursor(ss), 
 						 "update:", str,
 						 "offset:", str1, 8, 
 						 dpy_box, current_sep,
-						 cursor_follows_play_toggle,
+						 with_tracking_cursor_toggle,
 						 cursor_location_text);
-      remember_pref(prf, reflect_cursor_follows_play, NULL);
+      remember_pref(prf, reflect_with_tracking_cursor, NULL);
       FREE(str);
       FREE(str1);
     }

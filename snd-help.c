@@ -1235,7 +1235,7 @@ of the selection, if any is active in the current channel.  The fft data is scal
 between 0.0 and 1.0 unless the fft normalization is off. The full frequency axis is normally \
 displayed, but the axis is 'draggable' -- put the mouse on the axis and drag it either way to change \
 the range (this is equivalent to changing the variable " S_spectro_cutoff "). You can also click on \
-any point in the fft to get the associated fft data displayed; if " S_verbose_cursor " is on, you can \
+any point in the fft to get the associated fft data displayed; if " S_with_verbose_cursor " is on, you can \
 drag the mouse through the fft display and the description in the minibuffer will be constantly updated. \
 \n\n\
 The harmonic analysis function is normally the Fourier Transform, but others are available, \
@@ -1381,7 +1381,7 @@ than 'Save'.",
 }
 
 static char *open_file_xrefs[7] = {
-  "open file: {open-sound}",
+  "open file: {" S_open_sound "}",
   "add to sound file extension list (for '" S_just_sounds "'): {" S_add_sound_file_extension "}",
   "specialize open: {" S_open_hook "}, {" S_after_open_hook "}, etc",
   "start the file dialog: {" S_open_file_dialog "}",
@@ -1628,7 +1628,7 @@ static void tracking_cursor_help(void)
 {
   snd_help_with_xrefs("Tracking cursor",
 "If you want the cursor to follow along more-or-less in time while \
-playing a sound, set " S_cursor_follows_play " to #t. See also 'Cursor'",
+playing a sound, set " S_with_tracking_cursor " to #t. See also 'Cursor'",
 		      WITH_WORD_WRAP,
 		      snd_xrefs("Tracking cursor"),
 		      snd_xref_urls("Tracking cursor"));

@@ -1633,7 +1633,7 @@ static void copy_snd_info(snd_info *nsp, snd_info *osp)
   nsp->selected_channel = osp->selected_channel;
   nsp->channel_style = osp->channel_style;
   nsp->sync = osp->sync;
-  nsp->cursor_follows_play = osp->cursor_follows_play;
+  nsp->with_tracking_cursor = osp->with_tracking_cursor;
   nsp->search_tree = osp->search_tree;
   osp->search_tree = NULL;
   nsp->search_expr = osp->search_expr;
@@ -3922,16 +3922,16 @@ void save_view_files_dialogs(FILE *fd)
 	int k;
 	vdat = view_files_infos[i];
 #if HAVE_SCHEME
-	fprintf(fd, "(let ((vf (view-files-dialog #t #t)))\n");
+	fprintf(fd, "(let ((vf (" S_view_files_dialog " #t #t)))\n");
 	if (vdat->full_names)
 	  {
-	    fprintf(fd, "  (set! (view-files-files vf) (list");
+	    fprintf(fd, "  (set! (" S_view_files_files " vf) (list");
 	    for (k = 0; k <= vdat->end; k++)
 	      fprintf(fd, " \"%s\"", vdat->full_names[k]);
 	    fprintf(fd, "))\n");
 	    if (vdat->currently_selected_files > 0)
 	      {
-		fprintf(fd, "  (set! (view-files-selected-files vf) (list");
+		fprintf(fd, "  (set! (" S_view_files_selected_files " vf) (list");
 		for (k = 0; k < vdat->currently_selected_files; k++)
 		  fprintf(fd, " \"%s\"", vdat->full_names[vdat->selected_files[k]]);
 		fprintf(fd, "))\n");
@@ -3939,18 +3939,18 @@ void save_view_files_dialogs(FILE *fd)
 	  }
 	if (!(snd_feq(vdat->amp, 1.0)))
 	  {
-	    fprintf(fd, "  (set! (view-files-amp vf) %.3f)\n", vdat->amp);
+	    fprintf(fd, "  (set! (" S_view_files_amp " vf) %.3f)\n", vdat->amp);
 	  }
 	if (!(snd_feq(vdat->speed, 1.0)))
 	  {
-	    fprintf(fd, "  (set! (view-files-speed vf) %.3f)\n", vdat->speed);
+	    fprintf(fd, "  (set! (" S_view_files_speed " vf) %.3f)\n", vdat->speed);
 	  }
 	if (!(default_env_p(vdat->amp_env)))
 	  {
-	    fprintf(fd, "  (set! (view-files-amp-env vf) %s)\n", env_to_string(vdat->amp_env));
+	    fprintf(fd, "  (set! (" S_view_files_amp_env " vf) %s)\n", env_to_string(vdat->amp_env));
 	  }
 	/* assume file-sorters are set up already */
-	fprintf(fd, "  (set! (view-files-sort vf) %d)\n", vdat->sorter);	    
+	fprintf(fd, "  (set! (" S_view_files_sort " vf) %d)\n", vdat->sorter);	    
 	fprintf(fd, ")\n");
 #endif
 #if HAVE_RUBY
@@ -4392,7 +4392,7 @@ static XEN g_file_write_date(XEN file)
   #define H_file_write_date "(" S_file_write_date " file): write date of file"
 #else
   #define H_file_write_date "(" S_file_write_date " file) -> write date in the same format as \
-current-time:\n(strftime \"%a %d-%b-%Y %H:%M %Z\" (localtime (file-write-date \"oboe.snd\")))\n\
+current-time:\n(strftime \"%a %d-%b-%Y %H:%M %Z\" (localtime (" S_file_write_date " \"oboe.snd\")))\n\
 Equivalent to Guile (stat:mtime (stat file))"
 #endif
 

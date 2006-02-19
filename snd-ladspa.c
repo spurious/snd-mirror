@@ -286,7 +286,7 @@ static char *ladspa_xrefs[6] = {
   "LADSPA overview: {LADSPA}",
   "info on specific plugin: {analyze-ladspa}",
   "apply plugin: {apply-ladspa}",
-  "plugin directory: {ladspa-dir}",
+  "plugin directory: {" S_ladspa_dir "}",
   "GUI for plugins: see ladspa.scm",
   NULL};
 

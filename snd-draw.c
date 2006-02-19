@@ -380,7 +380,7 @@ static XEN g_make_graph_data(XEN snd, XEN chn, XEN edpos, XEN lo, XEN hi)
   #define H_make_graph_data "(" S_make_graph_data " (snd #f) (chn #f) (edpos #f) (low #f) (high #f)): \
 return either a vct (if the graph has one trace), or a list of two vcts (the two sides of the envelope graph). \
 'edpos' defaults to the " S_current_edit_position ", 'low' defaults to the current window left sample, and \
-'high' defaults to the current rightmost sample. (graph-data (make-graph-data)) reimplements the time domain graph."
+'high' defaults to the current rightmost sample. (" S_graph_data " (" S_make_graph_data ")) reimplements the time domain graph."
 
   chan_info *cp;
   ASSERT_CHANNEL(S_make_graph_data, snd, chn, 1);

@@ -2143,7 +2143,7 @@ static XEN g_bind_key(XEN key, XEN state, XEN code, XEN cx_extended, XEN origin)
 causes 'key' (an integer) \
 when typed with 'modifiers' (1:shift, 4:control, 8:meta) (and C-x if extended) to invoke 'func', a function of \
 zero or one arguments. If the function takes one argument, it is passed the preceding C-u number, if any. \
-The function should return one of the cursor choices (e.g. cursor-no-action).  'origin' is \
+The function should return one of the cursor choices (e.g. " S_keyboard_no_action ").  'origin' is \
 the name reported if an error occurs."
   
   return(g_bind_key_1(key, state, code, cx_extended, origin, S_bind_key));
@@ -2208,9 +2208,9 @@ then when the user eventually responds, invoke the function callback, if any, wi
 returned as a string; otherwise it is evaluated first as Scheme code.  For example, the following fragment asks for \
 a yes-or-no response, then takes some action:\n\n\
   (define* (yes-or-no question action-if-yes action-if-no #:optional snd)\n\
-    (prompt-in-minibuffer question\n\
+    (" S_prompt_in_minibuffer " question\n\
 			  (lambda (response)\n\
-                            (clear-minibuffer)\n\
+                            (" S_clear_minibuffer ")\n\
 			    (if (string=? response \"yes\")\n\
 			        (action-if-yes snd)\n\
 			        (action-if-no snd)))\n\

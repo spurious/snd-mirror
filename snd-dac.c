@@ -595,7 +595,7 @@ static void stop_playing_with_toggle(dac_info *dp, dac_toggle_t toggle, with_hoo
       if (sp->playing == 0) sp_stopping = true;
       if (sp_stopping)
 	{
-	  if ((sp->inuse == SOUND_NORMAL) && (sp->cursor_follows_play != DONT_FOLLOW) && (sp->index >= 0))
+	  if ((sp->inuse == SOUND_NORMAL) && (sp->with_tracking_cursor != DONT_TRACK) && (sp->index >= 0))
 	    {
 	      int i;
 	      for (i = 0; i < sp->nchans; i++)
@@ -605,8 +605,8 @@ static void stop_playing_with_toggle(dac_info *dp, dac_toggle_t toggle, with_hoo
 					  sp->chans[i]->original_window_size);
 	    }
 	  /* this is needed to get the original window/cursor location displayed after playing */
-	  if (sp->cursor_follows_play == FOLLOW_ONCE)
-	    sp->cursor_follows_play = DONT_FOLLOW;
+	  if (sp->with_tracking_cursor == TRACK_ONCE)
+	    sp->with_tracking_cursor = DONT_TRACK;
 	}
       /* if ctrl-click play, c-t, c-q -> this flag is still set from aborted previous play, so clear at c-t (or c-g) */
     }
@@ -919,7 +919,7 @@ static dac_info *add_channel_to_play_list(chan_info *cp, snd_info *sp, off_t sta
       if (sp) 
 	{
 	  sp->playing++;
-	  if (sp->cursor_follows_play != DONT_FOLLOW)
+	  if (sp->with_tracking_cursor != DONT_TRACK)
 	    {
 	      cp->original_cursor = CURSOR(cp);
 	      if (cp->axis)
@@ -1191,11 +1191,7 @@ static int cursor_time;
    [with-]ask-before-overwrite
    [with-]auto-resize
    dac-combines-channels [play-all-channels?]
-
-   finish these two [cursor-info has details]:
-     cursor-follows-play -> with-tracking-cursor
-     verbose-cursor -> with-verbose-cursor
-
+   finish verbose-cursor -> with-verbose-cursor?
    dac-hook dac-size dac-combines-channels stop-dac-hook
  */
 
@@ -1288,7 +1284,7 @@ static int fill_dac_buffers(int write_ok)
 	      sp = dp->sp; /* can be nil if region playing */
 	      if ((sp) && 
 		  (cursor_change) && 
-		  (sp->cursor_follows_play != DONT_FOLLOW) &&
+		  (sp->with_tracking_cursor != DONT_TRACK) &&
 		  (!(dp->chn_fd->at_eof)) &&
 		  (dp->chn_fd->cb))
 		{
@@ -2779,7 +2775,7 @@ static XEN g_cursor_update_interval(void) {return(C_TO_XEN_DOUBLE(cursor_update_
 static XEN g_set_cursor_update_interval(XEN val) 
 {
   Float ctime;
-  #define H_cursor_update_interval "(" S_cursor_update_interval "): time (seconds) between cursor updates if cursor-follows-play."
+  #define H_cursor_update_interval "(" S_cursor_update_interval "): time (seconds) between cursor updates if " S_with_tracking_cursor "."
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_setB S_cursor_update_interval, "a number"); 
   ctime = XEN_TO_C_DOUBLE(val);
   if ((ctime < 0.0) || (ctime > (24 * 3600)))

@@ -905,7 +905,7 @@ void focus_x_axis_change(axis_info *ap, chan_info *cp, int focus_style)
 					      C_TO_XEN_DOUBLE(ap->x0),
 					      C_TO_XEN_DOUBLE(ap->x1),
 					      C_TO_XEN_DOUBLE(ap->x_ambit),
-					      "zoom-focus-style procedure"));
+					      S_zoom_focus_style " procedure"));
 	  break;
 	case ZOOM_FOCUS_RIGHT:   
 	  ap->x0 = ap->x1 - ap->zx * ap->x_ambit; 
@@ -3137,7 +3137,7 @@ static void display_channel_data_with_size(chan_info *cp,
 		cp->show_grid,
 		WITH_LINEAR_AXES);
       if (XEN_PROCEDURE_P(pixel_list))
-	XEN_CALL_0(pixel_list, "lisp-graph");
+	XEN_CALL_0(pixel_list, S_lisp_graph);
       else make_lisp_graph(cp, pixel_list);
       if (!(XEN_FALSE_P(pixel_list))) snd_unprotect_at(pixel_loc);
     }
@@ -3279,7 +3279,7 @@ static void draw_cursor(chan_info *cp)
 		 C_TO_XEN_INT(cp->sound->index),
 		 C_TO_XEN_INT(cp->chan),
 		 C_TO_XEN_INT((int)TIME_AXIS_INFO),
-		 "cursor-style procedure");
+		 S_cursor_style " procedure");
       break;
     }
 }
@@ -5160,8 +5160,7 @@ static XEN g_cursor_style(XEN snd_n, XEN chn_n)
   #define H_cursor_style "(" S_cursor_style " (snd #f) (chn #f)): current cursor style in snd's channel chn. \
 Possible values are " S_cursor_cross " (default), " S_cursor_line " (a vertical line), or a procedure of three arguments, the \
 sound index, channel number, and graph (always " S_time_graph ").  The procedure \
-should draw the cursor at the current cursor position using the \
-cursor-context whenever it is called."
+should draw the cursor at the current cursor position using the " S_cursor_context " whenever it is called."
 
   if (XEN_BOUND_P(snd_n))
     return(channel_get(snd_n, chn_n, CP_CURSOR_STYLE, S_cursor_style));
@@ -5379,28 +5378,28 @@ WITH_REVERSED_CHANNEL_ARGS(g_set_ap_zy_reversed, g_set_ap_zy)
 
 static XEN g_edit_hook(XEN snd_n, XEN chn_n) 
 {
-  #define H_edit_hook "(" S_edit_hook " (snd #f) (chn #f)): snd's channel chn's edit-hook. \
+  #define H_edit_hook "(" S_edit_hook " (snd #f) (chn #f)): snd's channel chn's " S_edit_hook ". \
 This is a channel-specific hook variable; the hook procedures are thunks -- they should take no \
 arguments. " S_edit_hook " is called just before any attempt to edit the channel's data; if it returns #t, \
 the edit is aborted. \n\
-  (add-hook! (edit-hook snd chn) (lambda () (snd-print \"about to edit\") #f))"
+  (add-hook! (" S_edit_hook " snd chn) (lambda () (" S_snd_print " \"about to edit\") #f))"
 
   return(channel_get(snd_n, chn_n, CP_EDIT_HOOK, S_edit_hook));
 }
 
 static XEN g_after_edit_hook(XEN snd_n, XEN chn_n) 
 {
-  #define H_after_edit_hook "(" S_after_edit_hook " (snd #f) (chn #f)): snd's channel chn's after-edit-hook. \
+  #define H_after_edit_hook "(" S_after_edit_hook " (snd #f) (chn #f)): snd's channel chn's " S_after_edit_hook ". \
 This is a channel-specific hook variable; the hook procedures are thunks -- they should take no \
 arguments. " S_after_edit_hook " is called after an edit, but before " S_after_graph_hook ". \n\
-  (add-hook! (after-edit-hook snd chn) (lambda () (snd-print \"just edited\")))"
+  (add-hook! (" S_after_edit_hook " snd chn) (lambda () (" S_snd_print " \"just edited\")))"
 
   return(channel_get(snd_n, chn_n, CP_AFTER_EDIT_HOOK, S_after_edit_hook));
 }
 
 static XEN g_undo_hook(XEN snd_n, XEN chn_n) 
 {
-  #define H_undo_hook "(" S_undo_hook " (snd #f) (chn #f)): snd's channel chn's undo-hook. \
+  #define H_undo_hook "(" S_undo_hook " (snd #f) (chn #f)): snd's channel chn's " S_undo_hook ". \
 This is a channel-specific hook variable; the hook procedures are thunks -- they should take no \
 arguments. " S_undo_hook " is called just after any undo, redo, or revert that affects the channel."
 
@@ -5928,9 +5927,9 @@ WITH_REVERSED_BOOLEAN_CHANNEL_ARGS(g_set_show_mix_waveforms_reversed, g_set_show
 
 static XEN g_verbose_cursor(XEN snd, XEN chn)
 {
-  #define H_verbose_cursor "(" S_verbose_cursor " (snd #f) (chn #f)): #t if the cursor's position and so on is displayed in the minibuffer"
+  #define H_verbose_cursor "(" S_with_verbose_cursor " (snd #f) (chn #f)): #t if the cursor's position and so on is displayed in the minibuffer"
   if (XEN_BOUND_P(snd))
-    return(channel_get(snd, chn, CP_VERBOSE_CURSOR, S_verbose_cursor));
+    return(channel_get(snd, chn, CP_VERBOSE_CURSOR, S_with_verbose_cursor));
   return(C_TO_XEN_BOOLEAN(verbose_cursor(ss)));
 }
 
@@ -5950,9 +5949,9 @@ void set_verbose_cursor(bool val)
 
 static XEN g_set_verbose_cursor(XEN on, XEN snd, XEN chn)
 {
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(on), on, XEN_ARG_1, S_setB S_verbose_cursor, "a boolean");
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(on), on, XEN_ARG_1, S_setB S_with_verbose_cursor, "a boolean");
   if (XEN_BOUND_P(snd))
-    return(channel_set(snd, chn, on, CP_VERBOSE_CURSOR, S_setB S_verbose_cursor));
+    return(channel_set(snd, chn, on, CP_VERBOSE_CURSOR, S_setB S_with_verbose_cursor));
   set_verbose_cursor(XEN_TO_C_BOOLEAN(on));
   return(C_TO_XEN_BOOLEAN(verbose_cursor(ss)));
 }
@@ -7460,8 +7459,8 @@ void g_init_chn(void)
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_zero_pad, g_zero_pad_w, H_zero_pad,
 					    S_setB S_zero_pad, g_set_zero_pad_w, g_set_zero_pad_reversed, 0, 2, 1, 2);
   
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_verbose_cursor, g_verbose_cursor_w, H_verbose_cursor,
-					    S_setB S_verbose_cursor, g_set_verbose_cursor_w, g_set_verbose_cursor_reversed, 0, 2, 1, 2);
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER("verbose-cursor", g_verbose_cursor_w, H_verbose_cursor,
+					    S_setB "verbose-cursor", g_set_verbose_cursor_w, g_set_verbose_cursor_reversed, 0, 2, 1, 2);
   
   /* a synonym for now */
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_with_verbose_cursor, g_verbose_cursor_w, H_verbose_cursor,

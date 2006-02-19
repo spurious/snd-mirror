@@ -3970,7 +3970,7 @@ static XEN g_scan_chan(XEN proc, XEN beg, XEN end, XEN snd, XEN chn, XEN edpos)
 apply 'func' to samples in current channel (or the specified channel). \
 'func' is a function of one argument, the current sample. \
 if 'func' returns non-#f, the scan stops, and the value is returned to the caller with the sample number.\n\
-  (scan-chan (lambda (x) (> x .1)))"
+  (" S_scan_chan " (lambda (x) (> x .1)))"
 
   ASSERT_CHANNEL(S_scan_chan, snd, chn, 4); 
   return(g_sp_scan(proc, beg, end, snd, chn, S_scan_chan, false, edpos, 6, XEN_FALSE));
@@ -3982,7 +3982,7 @@ static XEN g_scan_channel(XEN proc, XEN beg, XEN dur, XEN snd, XEN chn, XEN edpo
 apply func to samples in current channel (or the specified channel) \
 func is a function of one argument, the current sample. \
 if func returns non-#f, the scan stops, and the value is returned to the caller with the sample number. \n\
-  (scan-channel (lambda (x) (> x .1)))"
+  (" S_scan_channel " (lambda (x) (> x .1)))"
 
   ASSERT_CHANNEL(S_scan_channel, snd, chn, 4); 
   return(g_sp_scan(proc, beg, XEN_FALSE, snd, chn, S_scan_channel, false, edpos, 6, (XEN_BOUND_P(dur)) ? dur : XEN_FALSE));
@@ -3992,7 +3992,7 @@ static XEN g_map_chan(XEN proc, XEN s_beg, XEN s_end, XEN org, XEN snd, XEN chn,
 {
 #define H_map_chan "(" S_map_chan " func (start 0) (end len) (edname #f) (snd #f) (chn #f) (edpos #f)): \
 apply func to samples in current channel; edname is the edit history name for this editing operation.\n\
-  (map-chan abs)"
+  (" S_map_chan " abs)"
   return(g_map_chan_1(proc, s_beg, s_end, org, snd, chn, edpos, XEN_FALSE, S_map_chan));
 }
 
@@ -4000,7 +4000,7 @@ static XEN g_map_channel(XEN proc, XEN s_beg, XEN s_dur, XEN snd, XEN chn, XEN e
 {
   #define H_map_channel "(" S_map_channel " func (start 0) (dur len) (snd #f) (chn #f) (edpos #f) (edname #f)): \
 apply func to samples in current channel; edname is the edit history name for this editing operation.\n\
-  (map-channel abs)"
+  (" S_map_channel " abs)"
   return(g_map_chan_1(proc, s_beg, XEN_FALSE, org, snd, chn, edpos, (XEN_BOUND_P(s_dur)) ? s_dur : XEN_FALSE, S_map_channel));
 }
 

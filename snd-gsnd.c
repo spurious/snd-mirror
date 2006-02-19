@@ -386,17 +386,17 @@ static void play_button_click_callback(GtkWidget *w, gpointer data)
   on = (bool)(GTK_TOGGLE_BUTTON(w)->active);
   if (sp->playing) 
     stop_playing_sound_no_toggle(sp, PLAY_BUTTON_UNSET);
-  if (sp->cursor_follows_play != FOLLOW_ALWAYS)         /* can be set in init file */
+  if (sp->with_tracking_cursor != ALWAYS_TRACK)         /* can be set in init file */
     {
       if ((on) && (last_play_state & (snd_ControlMask | snd_MetaMask)))
-	sp->cursor_follows_play = FOLLOW_ONCE;
-      else sp->cursor_follows_play = DONT_FOLLOW;
+	sp->with_tracking_cursor = TRACK_ONCE;
+      else sp->with_tracking_cursor = DONT_TRACK;
     }
   cp = any_selected_channel(sp);
   goto_graph(cp);
   if (on) 
     {
-      if (sp->cursor_follows_play != DONT_FOLLOW) 
+      if (sp->with_tracking_cursor != DONT_TRACK) 
 	set_button_base(w, ss->sgx->green);
       else set_button_base(w, ss->sgx->white);
       play_sound(sp, 0, NO_END_SPECIFIED);
@@ -416,7 +416,7 @@ static void set_play_button_pause(snd_info *sp, void *ptr)
       if (pd->pausing)
 	set_button_base(w, ss->sgx->red);
       else 
-	if (sp->cursor_follows_play != DONT_FOLLOW)
+	if (sp->with_tracking_cursor != DONT_TRACK)
 	  set_button_base(w, ss->sgx->green); 
 	else set_button_base(w, ss->sgx->white);
     }

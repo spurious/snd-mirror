@@ -357,7 +357,7 @@ typedef struct snd_info {
   bool need_update, file_unreadable; /* current in-core data does not match actual file (someone wrote it behind our back) */
   channel_style_t channel_style;
   int allocated_chans, selectpos; 
-  tracking_cursor_t cursor_follows_play;
+  tracking_cursor_t with_tracking_cursor;
   struct region *edited_region;
   struct dialog_play_info *delete_me;
   chan_info *lacp;
@@ -463,7 +463,7 @@ typedef struct snd_state {
   int Filter_Control_Order, Cursor_Location_Offset;
   Float Tempo_Control_Min, Tempo_Control_Max, Min_dB;
   bool Show_Controls;
-  tracking_cursor_t Cursor_Follows_Play;
+  tracking_cursor_t With_Tracking_Cursor;
   XEN cursor_proc;
   int cursor_proc_loc;
   XEN zoom_focus_proc;

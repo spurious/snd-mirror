@@ -3538,7 +3538,7 @@ static void get_sf_closure(snd_fd *sf)
       sf->closure1 = XEN_CALL_2(proc,
 			       C_TO_XEN_OFF_T(sf->frag_pos + READER_PTREE_POSITION(sf)),
 			       C_TO_XEN_OFF_T(READER_PTREE_DUR(sf)),
-			       "ptree-channel init func");
+			       S_ptree_channel " init func");
       if (XEN_BOUND_P(sf->closure1))
 	sf->protect1 = snd_protect(sf->closure1);
     }
@@ -3560,7 +3560,7 @@ static void get_sf_closure2(snd_fd *sf)
       sf->closure2 = XEN_CALL_2(proc,
 				C_TO_XEN_OFF_T(sf->frag_pos + READER_PTREE2_POSITION(sf)),
 				C_TO_XEN_OFF_T(READER_PTREE2_DUR(sf)),
-				"ptree-channel init func");
+				S_ptree_channel " init func");
       if (XEN_BOUND_P(sf->closure2))
 	sf->protect2 = snd_protect(sf->closure2);
     }
@@ -3582,7 +3582,7 @@ static void get_sf_closure3(snd_fd *sf)
       sf->closure3 = XEN_CALL_2(proc,
 				C_TO_XEN_OFF_T(sf->frag_pos + READER_PTREE3_POSITION(sf)),
 				C_TO_XEN_OFF_T(READER_PTREE3_DUR(sf)),
-				"ptree-channel init func");
+				S_ptree_channel " init func");
       if (XEN_BOUND_P(sf->closure3))
 	sf->protect3 = snd_protect(sf->closure3);
     }
@@ -7413,7 +7413,7 @@ static XEN g_display_edits(XEN snd, XEN chn, XEN edpos, XEN with_source)
 
 static XEN g_edit_fragment(XEN uctr, XEN snd, XEN chn)
 {
-  #define H_edit_fragment "(" S_edit_fragment " (ctr current-edit-position) (snd #f) (chn #f)): edit history entry at ctr \
+  #define H_edit_fragment "(" S_edit_fragment " (ctr " S_current_edit_position ") (snd #f) (chn #f)): edit history entry at ctr \
 associated with snd's channel chn; the returned value is a list (origin type start-sample samps)"
 
   chan_info *cp;
@@ -8627,7 +8627,7 @@ static XEN g_insert_sound(XEN file, XEN ubeg, XEN file_chn, XEN snd_n, XEN chn_n
 {
   #define H_insert_sound "(" S_insert_sound " file (beg 0) (file-chan 0) (snd #f) (chn #f) (edpos #f) (auto-delete #f)): \
 insert channel file-chan of file (or all chans if file-chan is not given) into snd's channel chn at beg or at the cursor position.\n\
-  (insert-sound \"oboe.snd\" 1000)\n\
+  (" S_insert_sound " \"oboe.snd\" 1000)\n\
 inserts all of oboe.snd starting at sample 1000."
 
   chan_info *cp;

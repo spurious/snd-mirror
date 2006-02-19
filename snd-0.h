@@ -260,7 +260,7 @@ enum {SORT_A_TO_Z, SORT_Z_TO_A, SORT_NEW_TO_OLD, SORT_OLD_TO_NEW, SORT_SMALL_TO_
 #define NO_LIST -1
 
 typedef enum {READ_FORWARD, READ_BACKWARD} read_direction_t;
-typedef enum {DONT_FOLLOW, FOLLOW_ALWAYS, FOLLOW_ONCE} tracking_cursor_t;
+typedef enum {DONT_TRACK, ALWAYS_TRACK, TRACK_ONCE} tracking_cursor_t;
 typedef enum {DONT_UPDATE_DISPLAY, UPDATE_DISPLAY} cut_selection_regraph_t;
 typedef enum {NOT_FROM_ENVED, FROM_ENVED} enved_progress_t;
 typedef enum {SEARCH_OK, SEARCH_FAILED} search_result_t;
@@ -434,9 +434,9 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_SAVE_AS_DIALOG, F
 #define in_set_show_controls(ss, val) ss->Show_Controls = val
 #define DEFAULT_SHOW_CONTROLS false
 
-#define cursor_follows_play(ss) ss->Cursor_Follows_Play
-#define in_set_cursor_follows_play(ss, val) ss->Cursor_Follows_Play = val
-#define DEFAULT_CURSOR_FOLLOWS_PLAY DONT_FOLLOW
+#define with_tracking_cursor(ss) ss->With_Tracking_Cursor
+#define in_set_with_tracking_cursor(ss, val) ss->With_Tracking_Cursor = val
+#define DEFAULT_WITH_TRACKING_CURSOR DONT_TRACK
 
 #define just_sounds(ss) ss->Just_Sounds
 #define set_just_sounds(val) ss->Just_Sounds = val
