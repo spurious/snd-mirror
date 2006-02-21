@@ -105,7 +105,7 @@
 	    (play 0 #f #f #f #f #f play-once))))
     (play 0 #f #f #f #f #f play-once)))
 
-;(bind-key (char->integer #\p) 0 (lambda (n) "play often" (play-often (max 1 n))))
+;(bind-key #\p 0 (lambda (n) "play often" (play-often (max 1 n))))
 
 
 ;;; -------- play sound until c-g
@@ -130,7 +130,7 @@
   (play-region reg #f play-region-again))
 
 
-;(bind-key (char->integer #\p) 0 (lambda (n) "play region forever" (play-region-forever (list-ref (regions) (max 0 n)))))
+;(bind-key #\p 0 (lambda (n) "play region forever" (play-region-forever (list-ref (regions) (max 0 n)))))
 
 
 ;;; -------- play while looping continuously between two movable marks
@@ -182,8 +182,8 @@
 
 (define stop-dac stop-playing)
 
-;(bind-key (char->integer #\o) 0 (lambda () "play oboe" (play "oboe.snd")))
-;(bind-key (char->integer #\p) 0 (lambda () "play pistol" (play "pistol.snd")))
+;(bind-key #\o 0 (lambda () "play oboe" (play "oboe.snd")))
+;(bind-key #\p 0 (lambda () "play pistol" (play "pistol.snd")))
 
 ;;; in this particular case, there's no need to hold the DAC open
 ;;;   but maybe this will come in handy someday

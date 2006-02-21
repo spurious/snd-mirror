@@ -647,6 +647,7 @@
 #define S_track_speed_style             "track-speed-style"
 #define S_track_tempo                   "track-tempo"
 #define S_track_track                   "track-track"
+#define S_tracking_cursor_style         "tracking-cursor-style"
 #define S_tracks                        "tracks"
 #define S_transform_dialog              "transform-dialog"
 #define S_transform_frames              "transform-frames"

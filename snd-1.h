@@ -1598,7 +1598,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta);
 int in_user_keymap(int key, int state, bool cx_extended);
 char *key_binding_description(int key, int state, bool cx_extended);
 char *make_key_name(char *buf, int buf_size, int key, int state, bool extended);
-void map_over_key_bindings(bool (*func)(int, int, bool, XEN));
+void map_over_key_bindings(bool (*func)(int key, int state, bool cx, char *pinfo, XEN xf));
 void keyboard_command (chan_info *cp, int keysym, int state);
 void control_g(snd_info *sp);
 void g_init_kbd(void);

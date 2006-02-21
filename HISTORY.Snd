@@ -1,5 +1,9 @@
 Snd change log
 
+  21-Feb:    bind-key now takes a character or string 1st arg (as well as an integer); if a string, it's treated
+               as the X/Gtk key name (e.g. "Home" or "plus").  It also has a 6th optional arg, a preferences
+               dialog name (so that the dialog can reflect current key bindings by functionality).
+             with-tracking-cursor and with-verbose-cursor as synonyms for cursor-follows-play and verbose-cursor.
   17-Feb:    mus-file-data-clipped -> mus-clipping, added mus-file-clipping for local settings
              data-clipped -> clipping
              mus-prescaler (global) alongside previous mus-file-prescaler

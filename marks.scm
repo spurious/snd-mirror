@@ -273,7 +273,7 @@
 			  ((= k len) (vct->channel new-data beg len snd chan))
 			(vct-set! new-data k (func (vct-ref old-data k))))))))))))
 
-;(bind-key (char->integer #\m) 0 (lambda () "eval between marks" (prompt-in-minibuffer "mark eval:" eval-between-marks)))
+;(bind-key #\m 0 (lambda () "eval between marks" (prompt-in-minibuffer "mark eval:" eval-between-marks)))
 
 
 ;;; -------- snap-marks

@@ -623,7 +623,7 @@ this can be confusing if fft normalization is on (the default)"
 		keyboard-no-action)
 	      (report-in-minibuffer "no mark in window"))))))
 
-;(bind-key (char->integer #\m) 0 (lambda () "align window left edge with mark" (first-mark-in-window-at-left)))
+;(bind-key #\m 0 (lambda () "align window left edge with mark" (first-mark-in-window-at-left)))
 
 
 ;;; -------- flash selected data red and green
@@ -1784,7 +1784,7 @@ as env moves to 0.0, low-pass gets more intense; amplitude and low-pass amount m
 		       (if (= last-height 0) (- (window-height) 10) last-height))
   #f)
 
-;(bind-key (char->integer #\b) 0 switch-to-buf #t)
+;(bind-key #\b 0 switch-to-buf #t)
 ;(add-hook! close-hook xb-close)
 ;(add-hook! after-open-hook xb-open)	    
 

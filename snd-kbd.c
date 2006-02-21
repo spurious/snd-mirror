@@ -1,14 +1,14 @@
 #include "snd.h"
 
-static bool defining_macro = false;
+
+/* -------- Keyboard Macros -------- */
+
 #define MIN_KEY_CODE 0
 #define MAX_KEY_CODE 65535
 #define MIN_KEY_STATE 0
 #define MAX_KEY_STATE 15
 
-/* -------- Keyboard Macros -------- */
-/* optimized for the most common case (pure keyboard commands) */
-
+static bool defining_macro = false;
 static int macro_cmd_size = 0;
 static int macro_size = 0;
 typedef struct {int keysym; int state;} macro_cmd;
@@ -138,6 +138,13 @@ static void save_macro_1(named_macro *nm, FILE *fd)
 #endif
 }
 
+void save_macro_state (FILE *fd)
+{
+  int i;
+  for (i = 0; i < named_macro_ctr; i++) 
+    save_macro_1(named_macros[i], fd);
+}
+
 static bool execute_named_macro_1(chan_info *cp, const char *name, off_t count)
 {
   int k;
@@ -201,13 +208,16 @@ static void execute_named_macro(chan_info *cp, const char *name, off_t count)
     }
 }
 
+
+/* ---------------- key bindings ---------------- */
+
 typedef struct {
   int key; 
   int state; 
   int args; 
   XEN func; 
   bool cx_extended; /* Sun/Forte C defines "extended" somewhere */
-  char *origin;
+  char *origin, *prefs_info;
   int gc_loc;
 } key_entry; 
 
@@ -221,106 +231,106 @@ int in_user_keymap(int key, int state, bool cx_extended)
   if (keymap_top == 0) return(-1);
   for (i = 0; i < keymap_top; i++)
     if ((user_keymap[i].key == key) && 
-	(user_keymap[i].state == state) && 
+	(user_keymap[i].state == state) &&
 	(user_keymap[i].cx_extended == cx_extended) && 
 	(XEN_BOUND_P(user_keymap[i].func)))
       return(i);
   return(-1);
 }
 
-void map_over_key_bindings(bool (*func)(int, int, bool, XEN))
+void map_over_key_bindings(bool (*func)(int key, int state, bool cx, char *pinfo, XEN xf))
 {
   int i;
   for (i = 0; i < keymap_top; i++)
     if (XEN_BOUND_P(user_keymap[i].func))
       {
 	bool val;
-	val = (*func)(user_keymap[i].key, user_keymap[i].state, user_keymap[i].cx_extended, user_keymap[i].func);
+	val = (*func)(user_keymap[i].key, user_keymap[i].state, user_keymap[i].cx_extended, user_keymap[i].prefs_info, user_keymap[i].func);
 	if (val) return;
       }
 }
 
 #define NUM_BUILT_IN_KEY_BINDINGS 76
 static key_entry built_in_key_bindings[NUM_BUILT_IN_KEY_BINDINGS] = {
-  {snd_K_Down,    0, 0, XEN_FALSE, false, "zoom out", -1},
-  {snd_K_Up,      0, 0, XEN_FALSE, false, "zoom in", -1},
-  {snd_K_Left,    0, 0, XEN_FALSE, false, "move window left", -1},
-  {snd_K_Right,   0, 0, XEN_FALSE, false, "move window right", -1},
-  {snd_K_less,    0, 0, XEN_FALSE, false, "move cursor to sample 0", -1},
-  {snd_K_greater, 0, 0, XEN_FALSE, false, "move cursor to last sample", -1},
+  {snd_K_Down,    0, 0, XEN_FALSE, false, "zoom out",                                                    NULL, -1},
+  {snd_K_Up,      0, 0, XEN_FALSE, false, "zoom in",                                                     NULL, -1},
+  {snd_K_Left,    0, 0, XEN_FALSE, false, "move window left",                                            NULL, -1},
+  {snd_K_Right,   0, 0, XEN_FALSE, false, "move window right",                                           NULL, -1},
+  {snd_K_less,    0, 0, XEN_FALSE, false, "move cursor to sample 0",                                     NULL, -1},
+  {snd_K_greater, 0, 0, XEN_FALSE, false, "move cursor to last sample",                                  NULL, -1},
 
-  {snd_K_less,       snd_ControlMask, 0, XEN_FALSE, false, "move cursor to sample 0", -1},
-  {snd_K_greater,    snd_ControlMask, 0, XEN_FALSE, false, "move cursor to last sample", -1},
-  {snd_K_a,          snd_ControlMask, 0, XEN_FALSE, false, "move cursor to window start", -1},
-  {snd_K_b,          snd_ControlMask, 0, XEN_FALSE, false, "move cursor back one sample", -1},
-  {snd_K_d,          snd_ControlMask, 0, XEN_FALSE, false, "delete sample at cursor", -1},
-  {snd_K_e,          snd_ControlMask, 0, XEN_FALSE, false, "move cursor to window end", -1},
-  {snd_K_f,          snd_ControlMask, 0, XEN_FALSE, false, "move cursor ahead one sample", -1},
-  {snd_K_g,          snd_ControlMask, 0, XEN_FALSE, false, "abort current command", -1},
-  {snd_K_h,          snd_ControlMask, 0, XEN_FALSE, false, "delete previous sample", -1},
-  {snd_K_i,          snd_ControlMask, 0, XEN_FALSE, false, "display cursor info", -1},
-  {snd_K_j,          snd_ControlMask, 0, XEN_FALSE, false, "goto mark", -1},
-  {snd_K_k,          snd_ControlMask, 0, XEN_FALSE, false, "delete one line's worth of samples", -1},
-  {snd_K_l,          snd_ControlMask, 0, XEN_FALSE, false, "position window so cursor is in the middle", -1},
-  {snd_K_m,          snd_ControlMask, 0, XEN_FALSE, false, "place (or remove) mark at cursor location", -1},
-  {snd_K_n,          snd_ControlMask, 0, XEN_FALSE, false, "move cursor ahead one 'line'", -1},
-  {snd_K_o,          snd_ControlMask, 0, XEN_FALSE, false, "insert one zero sample at cursor", -1},
-  {snd_K_p,          snd_ControlMask, 0, XEN_FALSE, false, "move cursor back one 'line'", -1},
-  {snd_K_q,          snd_ControlMask, 0, XEN_FALSE, false, "play current channel starting at cursor", -1},
-  {snd_K_r,          snd_ControlMask, 0, XEN_FALSE, false, "search backwards", -1},
-  {snd_K_s,          snd_ControlMask, 0, XEN_FALSE, false, "search forwards", -1},
-  {snd_K_t,          snd_ControlMask, 0, XEN_FALSE, false, "stop playing", -1},
-  {snd_K_u,          snd_ControlMask, 0, XEN_FALSE, false, "start arg count definition.", -1},
-  {snd_K_v,          snd_ControlMask, 0, XEN_FALSE, false, "move cursor to mid-window", -1},
-  {snd_K_w,          snd_ControlMask, 0, XEN_FALSE, false, "delete selection", -1},
-  {snd_K_y,          snd_ControlMask, 0, XEN_FALSE, false, "insert selection.", -1},
-  {snd_K_z,          snd_ControlMask, 0, XEN_FALSE, false, "set sample at cursor to 0.0", -1},
-  {snd_K_underscore, snd_ControlMask, 0, XEN_FALSE, false, "undo", -1},
-  {snd_K_space,      snd_ControlMask, 0, XEN_FALSE, false, "start selection definition", -1},
-  {snd_K_g,          snd_ControlMask | snd_MetaMask, 0, XEN_FALSE, false, "clear listener", -1},
-  {snd_K_less,       snd_MetaMask,    0, XEN_FALSE, false, "move cursor to sample 0", -1},
-  {snd_K_greater,    snd_MetaMask,    0, XEN_FALSE, false, "move cursor to last sample", -1},
+  {snd_K_less,       snd_ControlMask, 0, XEN_FALSE, false, "move cursor to sample 0",                    NULL, -1},
+  {snd_K_greater,    snd_ControlMask, 0, XEN_FALSE, false, "move cursor to last sample",                 NULL, -1},
+  {snd_K_a,          snd_ControlMask, 0, XEN_FALSE, false, "move cursor to window start",                NULL, -1},
+  {snd_K_b,          snd_ControlMask, 0, XEN_FALSE, false, "move cursor back one sample",                NULL, -1},
+  {snd_K_d,          snd_ControlMask, 0, XEN_FALSE, false, "delete sample at cursor",                    NULL, -1},
+  {snd_K_e,          snd_ControlMask, 0, XEN_FALSE, false, "move cursor to window end",                  NULL, -1},
+  {snd_K_f,          snd_ControlMask, 0, XEN_FALSE, false, "move cursor ahead one sample",               NULL, -1},
+  {snd_K_g,          snd_ControlMask, 0, XEN_FALSE, false, "abort current command",                      NULL, -1},
+  {snd_K_h,          snd_ControlMask, 0, XEN_FALSE, false, "delete previous sample",                     NULL, -1},
+  {snd_K_i,          snd_ControlMask, 0, XEN_FALSE, false, "display cursor info",                        NULL, -1},
+  {snd_K_j,          snd_ControlMask, 0, XEN_FALSE, false, "goto mark",                                  NULL, -1},
+  {snd_K_k,          snd_ControlMask, 0, XEN_FALSE, false, "delete one line's worth of samples",         NULL, -1},
+  {snd_K_l,          snd_ControlMask, 0, XEN_FALSE, false, "position window so cursor is in the middle", NULL, -1},
+  {snd_K_m,          snd_ControlMask, 0, XEN_FALSE, false, "place (or remove) mark at cursor location",  NULL, -1},
+  {snd_K_n,          snd_ControlMask, 0, XEN_FALSE, false, "move cursor ahead one 'line'",               NULL, -1},
+  {snd_K_o,          snd_ControlMask, 0, XEN_FALSE, false, "insert one zero sample at cursor",           NULL, -1},
+  {snd_K_p,          snd_ControlMask, 0, XEN_FALSE, false, "move cursor back one 'line'",                NULL, -1},
+  {snd_K_q,          snd_ControlMask, 0, XEN_FALSE, false, "play current channel starting at cursor",    NULL, -1},
+  {snd_K_r,          snd_ControlMask, 0, XEN_FALSE, false, "search backwards",                           NULL, -1},
+  {snd_K_s,          snd_ControlMask, 0, XEN_FALSE, false, "search forwards",                            NULL, -1},
+  {snd_K_t,          snd_ControlMask, 0, XEN_FALSE, false, "stop playing",                               NULL, -1},
+  {snd_K_u,          snd_ControlMask, 0, XEN_FALSE, false, "start arg count definition.",                NULL, -1},
+  {snd_K_v,          snd_ControlMask, 0, XEN_FALSE, false, "move cursor to mid-window",                  NULL, -1},
+  {snd_K_w,          snd_ControlMask, 0, XEN_FALSE, false, "delete selection",                           NULL, -1},
+  {snd_K_y,          snd_ControlMask, 0, XEN_FALSE, false, "insert selection.",                          NULL, -1},
+  {snd_K_z,          snd_ControlMask, 0, XEN_FALSE, false, "set sample at cursor to 0.0",                NULL, -1},
+  {snd_K_underscore, snd_ControlMask, 0, XEN_FALSE, false, "undo",                                       NULL, -1},
+  {snd_K_space,      snd_ControlMask, 0, XEN_FALSE, false, "start selection definition",                 NULL, -1},
+  {snd_K_g,          snd_ControlMask | snd_MetaMask, 0, XEN_FALSE, false, "clear listener",              NULL, -1},
+  {snd_K_less,       snd_MetaMask,    0, XEN_FALSE, false, "move cursor to sample 0",                    NULL, -1},
+  {snd_K_greater,    snd_MetaMask,    0, XEN_FALSE, false, "move cursor to last sample",                 NULL, -1},
 
-  {snd_K_a,          0, 0, XEN_FALSE, true, "apply envelope to selection", -1},
-  {snd_K_b,          0, 0, XEN_FALSE, true, "position window so cursor is on left margin", -1},
-  {snd_K_c,          0, 0, XEN_FALSE, true, "define selection from cursor to nth mark", -1},
-  {snd_K_d,          0, 0, XEN_FALSE, true, "set temp dir name", -1},
-  {snd_K_e,          0, 0, XEN_FALSE, true, "execute keyboard macro", -1},
-  {snd_K_f,          0, 0, XEN_FALSE, true, "position window so cursor is on right margin", -1},
-  {snd_K_i,          0, 0, XEN_FALSE, true, "insert region", -1},
-  {snd_K_j,          0, 0, XEN_FALSE, true, "goto named mark", -1},
-  {snd_K_k,          0, 0, XEN_FALSE, true, "close file", -1},
-  {snd_K_l,          0, 0, XEN_FALSE, true, "position selection in mid-view", -1},
-  {snd_K_o,          0, 0, XEN_FALSE, true, "move to next or previous graph", -1},
-  {snd_K_p,          0, 0, XEN_FALSE, true, "play selection or region n", -1},
-  {snd_K_q,          0, 0, XEN_FALSE, true, "mix in selection", -1},
-  {snd_K_r,          0, 0, XEN_FALSE, true, "redo", -1},
-  {snd_K_u,          0, 0, XEN_FALSE, true, "undo", -1},
-  {snd_K_v,          0, 0, XEN_FALSE, true, "position window over selection", -1},
-  {snd_K_w,          0, 0, XEN_FALSE, true, "save selection as file", -1},
-  {snd_K_z,          0, 0, XEN_FALSE, true, "smooth selection", -1},
-  {snd_K_slash,      0, 0, XEN_FALSE, true, "place named mark", -1},
-  {snd_K_openparen,  0, 0, XEN_FALSE, true, "begin keyboard macro definition", -1},
-  {snd_K_closeparen, 0, 0, XEN_FALSE, true, "end keyboard macro definition", -1},
+  {snd_K_a,          0, 0, XEN_FALSE, true, "apply envelope to selection",                               NULL, -1},
+  {snd_K_b,          0, 0, XEN_FALSE, true, "position window so cursor is on left margin",               NULL, -1},
+  {snd_K_c,          0, 0, XEN_FALSE, true, "define selection from cursor to nth mark",                  NULL, -1},
+  {snd_K_d,          0, 0, XEN_FALSE, true, "set temp dir name",                                         NULL, -1},
+  {snd_K_e,          0, 0, XEN_FALSE, true, "execute keyboard macro",                                    NULL, -1},
+  {snd_K_f,          0, 0, XEN_FALSE, true, "position window so cursor is on right margin",              NULL, -1},
+  {snd_K_i,          0, 0, XEN_FALSE, true, "insert region",                                             NULL, -1},
+  {snd_K_j,          0, 0, XEN_FALSE, true, "goto named mark",                                           NULL, -1},
+  {snd_K_k,          0, 0, XEN_FALSE, true, "close file",                                                NULL, -1},
+  {snd_K_l,          0, 0, XEN_FALSE, true, "position selection in mid-view",                            NULL, -1},
+  {snd_K_o,          0, 0, XEN_FALSE, true, "move to next or previous graph",                            NULL, -1},
+  {snd_K_p,          0, 0, XEN_FALSE, true, "play selection or region n",                                NULL, -1},
+  {snd_K_q,          0, 0, XEN_FALSE, true, "mix in selection",                                          NULL, -1},
+  {snd_K_r,          0, 0, XEN_FALSE, true, "redo",                                                      NULL, -1},
+  {snd_K_u,          0, 0, XEN_FALSE, true, "undo",                                                      NULL, -1},
+  {snd_K_v,          0, 0, XEN_FALSE, true, "position window over selection",                            NULL, -1},
+  {snd_K_w,          0, 0, XEN_FALSE, true, "save selection as file",                                    NULL, -1},
+  {snd_K_z,          0, 0, XEN_FALSE, true, "smooth selection",                                          NULL, -1},
+  {snd_K_slash,      0, 0, XEN_FALSE, true, "place named mark",                                          NULL, -1},
+  {snd_K_openparen,  0, 0, XEN_FALSE, true, "begin keyboard macro definition",                           NULL, -1},
+  {snd_K_closeparen, 0, 0, XEN_FALSE, true, "end keyboard macro definition",                             NULL, -1},
 
-  {snd_K_a, snd_ControlMask, 0, XEN_FALSE, true, "apply envelope", -1},
-  {snd_K_b, snd_ControlMask, 0, XEN_FALSE, true, "set x window bounds (preceded by 1 arg)", -1},
-  {snd_K_c, snd_ControlMask, 0, XEN_FALSE, true, "hide control panel", -1},
-  {snd_K_d, snd_ControlMask, 0, XEN_FALSE, true, "print", -1},
-  {snd_K_e, snd_ControlMask, 0, XEN_FALSE, true, "give last keyboard macro a name", -1},
-  {snd_K_f, snd_ControlMask, 0, XEN_FALSE, true, "open file", -1},
-  {snd_K_g, snd_ControlMask, 0, XEN_FALSE, true, "abort command", -1},
-  {snd_K_i, snd_ControlMask, 0, XEN_FALSE, true, "insert file", -1},
-  {snd_K_m, snd_ControlMask, 0, XEN_FALSE, true, "add named mark", -1},
-  {snd_K_o, snd_ControlMask, 0, XEN_FALSE, true, "show control panel", -1},
-  {snd_K_p, snd_ControlMask, 0, XEN_FALSE, true, "set window size (preceded by 1 arg)", -1},
-  {snd_K_q, snd_ControlMask, 0, XEN_FALSE, true, "mix in file", -1},
-  {snd_K_r, snd_ControlMask, 0, XEN_FALSE, true, "redo", -1},
-  {snd_K_s, snd_ControlMask, 0, XEN_FALSE, true, "save file", -1},
-  {snd_K_u, snd_ControlMask, 0, XEN_FALSE, true, "undo", -1},
-  {snd_K_v, snd_ControlMask, 0, XEN_FALSE, true, "set window size as percentage of total", -1},
-  {snd_K_w, snd_ControlMask, 0, XEN_FALSE, true, "save current channel in file", -1},
-  {snd_K_z, snd_ControlMask, 0, XEN_FALSE, true, "smooth using cosine", -1},
+  {snd_K_a, snd_ControlMask, 0, XEN_FALSE, true, "apply envelope",                                       NULL, -1},
+  {snd_K_b, snd_ControlMask, 0, XEN_FALSE, true, "set x window bounds (preceded by 1 arg)",              NULL, -1},
+  {snd_K_c, snd_ControlMask, 0, XEN_FALSE, true, "hide control panel",                                   NULL, -1},
+  {snd_K_d, snd_ControlMask, 0, XEN_FALSE, true, "print",                                                NULL, -1},
+  {snd_K_e, snd_ControlMask, 0, XEN_FALSE, true, "give last keyboard macro a name",                      NULL, -1},
+  {snd_K_f, snd_ControlMask, 0, XEN_FALSE, true, "open file",                                            NULL, -1},
+  {snd_K_g, snd_ControlMask, 0, XEN_FALSE, true, "abort command",                                        NULL, -1},
+  {snd_K_i, snd_ControlMask, 0, XEN_FALSE, true, "insert file",                                          NULL, -1},
+  {snd_K_m, snd_ControlMask, 0, XEN_FALSE, true, "add named mark",                                       NULL, -1},
+  {snd_K_o, snd_ControlMask, 0, XEN_FALSE, true, "show control panel",                                   NULL, -1},
+  {snd_K_p, snd_ControlMask, 0, XEN_FALSE, true, "set window size (preceded by 1 arg)",                  NULL, -1},
+  {snd_K_q, snd_ControlMask, 0, XEN_FALSE, true, "mix in file",                                          NULL, -1},
+  {snd_K_r, snd_ControlMask, 0, XEN_FALSE, true, "redo",                                                 NULL, -1},
+  {snd_K_s, snd_ControlMask, 0, XEN_FALSE, true, "save file",                                            NULL, -1},
+  {snd_K_u, snd_ControlMask, 0, XEN_FALSE, true, "undo",                                                 NULL, -1},
+  {snd_K_v, snd_ControlMask, 0, XEN_FALSE, true, "set window size as percentage of total",               NULL, -1},
+  {snd_K_w, snd_ControlMask, 0, XEN_FALSE, true, "save current channel in file",                         NULL, -1},
+  {snd_K_z, snd_ControlMask, 0, XEN_FALSE, true, "smooth using cosine",                                  NULL, -1},
 };
 
 char *key_binding_description(int key, int state, bool cx_extended)
@@ -330,7 +340,7 @@ char *key_binding_description(int key, int state, bool cx_extended)
       (state < MIN_KEY_STATE) || (state > MAX_KEY_STATE))
     return(NULL);
   pos = in_user_keymap(key, state, cx_extended);
-  if (pos < 0) pos = in_user_keymap(key, state | 1, cx_extended);
+  if (pos < 0) pos = in_user_keymap(key, state, cx_extended);
   if (pos >= 0)
     {
 #if HAVE_GUILE
@@ -362,29 +372,7 @@ char *key_binding_description(int key, int state, bool cx_extended)
   return(NULL);
 }
 
-static XEN g_key_binding(XEN key, XEN state, XEN cx_extended)
-{
-  #define H_key_binding "(" S_key_binding " key (state 0) (extended #f)): function bound to this key"
-  int i, k, s;
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(key), key, XEN_ARG_1, S_key_binding, "an integer");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(state), state, XEN_ARG_2, S_key_binding, "an integer");
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(cx_extended), cx_extended, XEN_ARG_3, S_key_binding, "a boolean");
-  k = XEN_TO_C_INT(key);
-  s = XEN_TO_C_INT_OR_ELSE(state, 0);
-  if ((k < MIN_KEY_CODE) || (k > MAX_KEY_CODE) ||
-      (s < MIN_KEY_STATE) || (s > MAX_KEY_STATE))
-    XEN_ERROR(NO_SUCH_KEY,
-	      XEN_LIST_3(C_TO_XEN_STRING(S_key_binding),
-			 C_TO_XEN_STRING("key: ~A, state: ~A"),
-			 XEN_LIST_2(key,
-				    state)));
-  i = in_user_keymap(k, s, XEN_TRUE_P(cx_extended));
-  if (i >= 0) 
-    return(user_keymap[i].func);
-  return(XEN_UNDEFINED);
-}
-
-static void set_keymap_entry(int key, int state, int args, XEN func, bool cx_extended, const char *origin)
+static void set_keymap_entry(int key, int state, int args, XEN func, bool cx_extended, const char *origin, const char *prefs_info)
 {
   int i;
   i = in_user_keymap(key, state, cx_extended);
@@ -396,7 +384,8 @@ static void set_keymap_entry(int key, int state, int args, XEN func, bool cx_ext
 	  if (keymap_top == 0)
 	    {
 	      user_keymap = (key_entry *)CALLOC(keymap_size, sizeof(key_entry));
-	      for (i = 0; i < keymap_size; i++) user_keymap[i].func = XEN_UNDEFINED;
+	      for (i = 0; i < keymap_size; i++) 
+		user_keymap[i].func = XEN_UNDEFINED;
 	    }
 	  else 
 	    {
@@ -408,6 +397,7 @@ static void set_keymap_entry(int key, int state, int args, XEN func, bool cx_ext
 		  user_keymap[i].func = XEN_UNDEFINED;
 		  user_keymap[i].cx_extended = false;
 		  user_keymap[i].origin = NULL;
+		  user_keymap[i].prefs_info = NULL;
 		  user_keymap[i].gc_loc = NOT_A_GC_LOC;
 		}
 	    }
@@ -432,8 +422,14 @@ static void set_keymap_entry(int key, int state, int args, XEN func, bool cx_ext
 	  FREE(user_keymap[i].origin);
 	  user_keymap[i].origin = NULL;
 	}
+      if (user_keymap[i].prefs_info)
+	{
+	  FREE(user_keymap[i].prefs_info);
+	  user_keymap[i].prefs_info = NULL;
+	}
     }
   user_keymap[i].origin = copy_string(origin);
+  user_keymap[i].prefs_info = copy_string(prefs_info);
   user_keymap[i].args = args;
   user_keymap[i].func = func;
   if (XEN_PROCEDURE_P(func)) 
@@ -459,12 +455,7 @@ static void call_user_keymap(int hashedsym, int count)
   handle_cursor(selected_channel(), res);
 }
 
-void save_macro_state (FILE *fd)
-{
-  int i;
-  for (i = 0; i < named_macro_ctr; i++) 
-    save_macro_1(named_macros[i], fd);
-}
+/* ---------------- minibuffer ---------------- */
 
 void string_to_minibuffer(snd_info *sp, const char *buf)
 {
@@ -543,119 +534,14 @@ static void prompt_named_mark(chan_info *cp)
   sp->marking = CURSOR(cp) + 1; /*  + 1 so it's not confused with 0 (if (sp->marking)...) */
 }
 
-
-static chan_info *goto_next_graph (chan_info *cp, int count);
-
-static chan_info *goto_previous_graph (chan_info *cp, int count)
+void errors_to_minibuffer(const char *msg, void *data)
 {
-  snd_info *sp;
-  chan_info *ncp, *vcp;
-  int i, k, j, chan;
-  if (count == 0) return(cp);
-  sp = cp->sound;
-  if (sp->inuse != SOUND_NORMAL) return(cp);
-  vcp = virtual_selected_channel(cp);
-  chan = vcp->chan;
-  ncp = NULL;
-  if (count < 0) 
-    k = -count; 
-  else return(goto_next_graph(cp, count)); 
-  if (chan > 0)
-    {
-      /* goto previous channel in current sound */
-      k -= chan;
-      if (k <= 0)
-	ncp = sp->chans[chan + count];
-    }
-  while (k > 0)
-    {
-      /* look for previous sound, (wrap around) */
-      /* goto channel n */
-      for (i = (sp->index - 1); i >= 0; i--)
-	if ((snd_ok(ss->sounds[i])) && (ss->sounds[i]->inuse == SOUND_NORMAL))
-	  {
-	    sp = (snd_info *)(ss->sounds[i]);
-	    j = k;
-	    k -= sp->nchans;
-	    if (k <= 0)
-	      ncp = sp->chans[sp->nchans - j];
-	    break;
-	  }
-      if (k > 0)
-	for (i = ss->max_sounds - 1; i >= sp->index; i--)
-	  if ((snd_ok(ss->sounds[i])) && (ss->sounds[i]->inuse == SOUND_NORMAL))
-	    {
-	      sp = (snd_info *)(ss->sounds[i]);
-	      j = k;
-	      k -= sp->nchans;
-	      if (k <= 0)
-		ncp = sp->chans[sp->nchans - j];
-	      break;
-	    }
-    }
-  if (ncp == vcp) return(ncp);
-  if (!ncp) snd_error_without_format("goto previous graph failed!");
-  select_channel(ncp->sound, ncp->chan);
-#if USE_MOTIF
-  equalize_sound_panes(ncp->sound, ncp, false);
-#endif
-  return(ncp);
+  display_minibuffer_error((snd_info *)data, msg);
 }
 
-static chan_info *goto_next_graph (chan_info *cp, int count)
+void printout_to_minibuffer(const char *msg, void *data)
 {
-  snd_info *sp;
-  chan_info *ncp, *vcp;
-  int i, k, j, chan;
-  if (count == 0) return(cp);
-  sp = cp->sound;
-  if (sp->inuse != SOUND_NORMAL) return(cp);
-  vcp = virtual_selected_channel(cp);
-  chan = vcp->chan;
-  ncp = NULL;
-  if (count < 0) 
-    return(goto_previous_graph(cp, count)); 
-  k = count;
-  if (chan < (sp->nchans - 1))
-    {
-      /* goto next channel in current sound */
-      k -= (sp->nchans-chan - 1);
-      if (k <= 0)
-	ncp = sp->chans[chan + count];
-    }
-  while (k > 0)
-    {
-      /* look for next sound, (wrap around) */
-      /* goto channel 0 */
-      for (i = (sp->index + 1); i < ss->max_sounds; i++)
-	if ((snd_ok(ss->sounds[i])) && (ss->sounds[i]->inuse == SOUND_NORMAL))
-	  {
-	    sp = (snd_info *)(ss->sounds[i]);
-	    j = k;
-	    k -= sp->nchans;
-	    if (k <= 0)
-	      ncp = sp->chans[j - 1];
-	    break;
-	  }
-      if (k > 0)
-	for (i = 0; i <= sp->index; i++)
-	  if ((snd_ok(ss->sounds[i])) && (ss->sounds[i]->inuse == SOUND_NORMAL))
-	    {
-	      sp = (snd_info *)(ss->sounds[i]);
-	      j = k;
-	      k -= sp->nchans;
-	      if (k <= 0)
-		ncp = sp->chans[j - 1];
-	      break;
-	    }
-    }
-  if (ncp == vcp) return(ncp);
-  if (!ncp) snd_error_without_format("goto next graph failed!");
-  select_channel(ncp->sound, ncp->chan);
-#if USE_MOTIF
-  equalize_sound_panes(ncp->sound, ncp, false);
-#endif
-  return(ncp);
+  string_to_minibuffer((snd_info *)data, msg);
 }
 
 
@@ -673,17 +559,6 @@ static chan_info *goto_next_graph (chan_info *cp, int count)
     #include <ndir.h>
   #endif
 #endif
-
-
-void errors_to_minibuffer(const char *msg, void *data)
-{
-  display_minibuffer_error((snd_info *)data, msg);
-}
-
-void printout_to_minibuffer(const char *msg, void *data)
-{
-  string_to_minibuffer((snd_info *)data, msg);
-}
 
 void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 {
@@ -1137,6 +1012,9 @@ static void stop_fft_in_progress(chan_info *cp)
     }
 }
 
+
+/* ---------------- other kbd built-in commands ---------------- */
+
 static void cursor_moveto_end(chan_info *cp)
 {
   cursor_moveto(cp, CURRENT_SAMPLES(cp) - 1);
@@ -1198,6 +1076,120 @@ static void window_frames_selection(chan_info *cp)
     }
 }
 
+static chan_info *goto_next_graph (chan_info *cp, int count);
+
+static chan_info *goto_previous_graph (chan_info *cp, int count)
+{
+  snd_info *sp;
+  chan_info *ncp, *vcp;
+  int i, k, j, chan;
+  if (count == 0) return(cp);
+  sp = cp->sound;
+  if (sp->inuse != SOUND_NORMAL) return(cp);
+  vcp = virtual_selected_channel(cp);
+  chan = vcp->chan;
+  ncp = NULL;
+  if (count < 0) 
+    k = -count; 
+  else return(goto_next_graph(cp, count)); 
+  if (chan > 0)
+    {
+      /* goto previous channel in current sound */
+      k -= chan;
+      if (k <= 0)
+	ncp = sp->chans[chan + count];
+    }
+  while (k > 0)
+    {
+      /* look for previous sound, (wrap around) */
+      /* goto channel n */
+      for (i = (sp->index - 1); i >= 0; i--)
+	if ((snd_ok(ss->sounds[i])) && (ss->sounds[i]->inuse == SOUND_NORMAL))
+	  {
+	    sp = (snd_info *)(ss->sounds[i]);
+	    j = k;
+	    k -= sp->nchans;
+	    if (k <= 0)
+	      ncp = sp->chans[sp->nchans - j];
+	    break;
+	  }
+      if (k > 0)
+	for (i = ss->max_sounds - 1; i >= sp->index; i--)
+	  if ((snd_ok(ss->sounds[i])) && (ss->sounds[i]->inuse == SOUND_NORMAL))
+	    {
+	      sp = (snd_info *)(ss->sounds[i]);
+	      j = k;
+	      k -= sp->nchans;
+	      if (k <= 0)
+		ncp = sp->chans[sp->nchans - j];
+	      break;
+	    }
+    }
+  if (ncp == vcp) return(ncp);
+  if (!ncp) snd_error_without_format("goto previous graph failed!");
+  select_channel(ncp->sound, ncp->chan);
+#if USE_MOTIF
+  equalize_sound_panes(ncp->sound, ncp, false);
+#endif
+  return(ncp);
+}
+
+static chan_info *goto_next_graph (chan_info *cp, int count)
+{
+  snd_info *sp;
+  chan_info *ncp, *vcp;
+  int i, k, j, chan;
+  if (count == 0) return(cp);
+  sp = cp->sound;
+  if (sp->inuse != SOUND_NORMAL) return(cp);
+  vcp = virtual_selected_channel(cp);
+  chan = vcp->chan;
+  ncp = NULL;
+  if (count < 0) 
+    return(goto_previous_graph(cp, count)); 
+  k = count;
+  if (chan < (sp->nchans - 1))
+    {
+      /* goto next channel in current sound */
+      k -= (sp->nchans-chan - 1);
+      if (k <= 0)
+	ncp = sp->chans[chan + count];
+    }
+  while (k > 0)
+    {
+      /* look for next sound, (wrap around) */
+      /* goto channel 0 */
+      for (i = (sp->index + 1); i < ss->max_sounds; i++)
+	if ((snd_ok(ss->sounds[i])) && (ss->sounds[i]->inuse == SOUND_NORMAL))
+	  {
+	    sp = (snd_info *)(ss->sounds[i]);
+	    j = k;
+	    k -= sp->nchans;
+	    if (k <= 0)
+	      ncp = sp->chans[j - 1];
+	    break;
+	  }
+      if (k > 0)
+	for (i = 0; i <= sp->index; i++)
+	  if ((snd_ok(ss->sounds[i])) && (ss->sounds[i]->inuse == SOUND_NORMAL))
+	    {
+	      sp = (snd_info *)(ss->sounds[i]);
+	      j = k;
+	      k -= sp->nchans;
+	      if (k <= 0)
+		ncp = sp->chans[j - 1];
+	      break;
+	    }
+    }
+  if (ncp == vcp) return(ncp);
+  if (!ncp) snd_error_without_format("goto next graph failed!");
+  select_channel(ncp->sound, ncp->chan);
+#if USE_MOTIF
+  equalize_sound_panes(ncp->sound, ncp, false);
+#endif
+  return(ncp);
+}
+
 void save_edits_with_prompt(snd_info *sp)
 {
   io_error_t err;
@@ -1210,6 +1202,9 @@ void save_edits_with_prompt(snd_info *sp)
       sp->filing = SAVE_EDITS_FILING; 
     }
 }
+
+
+/* ---------------- key response ---------------- */
 
 static off_t get_count_1(char *number_buffer, int number_ctr, bool dot_seen, chan_info *cp)
 {
@@ -1318,7 +1313,7 @@ void control_g(snd_info *sp)
 }
 
 #ifndef SND_KEYMASK
-  #define SND_KEYMASK (snd_ShiftMask | snd_ControlMask | snd_MetaMask)
+  #define SND_KEYMASK (snd_ControlMask | snd_MetaMask)
 #endif
 
 void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
@@ -1331,6 +1326,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
   static off_t count = 1;
   static bool got_count = false;
   static bool m = false;
+  int shift = 0;
   bool dont_clear_minibuffer = false, cursor_searching = false, clear_search = true;
   int hashloc, i, state;
   off_t loc;
@@ -1345,6 +1341,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
   ap = cp->axis;
   if (keysym >= snd_K_Shift_L) return;
   /* this happens when the user presses Control or Shift etc prior to hitting the actual (modified) key */
+  shift = unmasked_state & snd_ShiftMask;
   state = unmasked_state & SND_KEYMASK; /* mask off stuff we don't care about */
   if (defining_macro) continue_macro(keysym, state);
   if (!m) count = 1; else m = false;
@@ -1560,16 +1557,16 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 	      cursor_zeros(cp, count, OVER_SOUND); 
 	      break;
 	    case snd_K_Right: 
-	      sx_incremented(cp, state_amount(state)); 
+	      sx_incremented(cp, state_amount(state | shift));
 	      break;
 	    case snd_K_Left: 
-	      sx_incremented(cp, -state_amount(state)); 
+	      sx_incremented(cp, -state_amount(state | shift)); 
 	      break;
 	    case snd_K_Up: 
-	      zx_incremented(cp, 1.0 + state_amount(state)); 
+	      zx_incremented(cp, 1.0 + state_amount(state | shift)); 
 	      break;
 	    case snd_K_Down: 
-	      zx_incremented(cp, 1.0 / (1.0 + state_amount(state))); 
+	      zx_incremented(cp, 1.0 / (1.0 + state_amount(state | shift))); 
 	      break;
 	    case snd_K_0: case snd_K_1: case snd_K_2: case snd_K_3: case snd_K_4:
 	    case snd_K_5: case snd_K_6: case snd_K_7: case snd_K_8: case snd_K_9: 
@@ -1737,16 +1734,16 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 	      cos_smooth(cp, CURSOR(cp), ext_count, OVER_SOUND); 
 	      break;
 	    case snd_K_Right: 
-	      sx_incremented(cp, state_amount(state)); 
+	      sx_incremented(cp, state_amount(state | shift));
 	      break;
 	    case snd_K_Left:  
-	      sx_incremented(cp, -state_amount(state)); 
+	      sx_incremented(cp, -state_amount(state | shift)); 
 	      break;
 	    case snd_K_Up: 
-	      zx_incremented(cp, 1.0 + state_amount(state)); 
+	      zx_incremented(cp, 1.0 + state_amount(state | shift)); 
 	      break;
 	    case snd_K_Down: 
-	      zx_incremented(cp, 1.0 / (1.0 + state_amount(state))); 
+	      zx_incremented(cp, 1.0 / (1.0 + state_amount(state | shift))); 
 	      break;
 	    default:
 	      report_in_minibuffer(sp, _("C-x C-%s undefined"), key_to_name(keysym));
@@ -1797,16 +1794,16 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 	      number_ctr = 1; 
 	      break;
 	    case snd_K_Right: 
-	      sx_incremented(cp, state_amount(state)); 
+	      sx_incremented(cp, state_amount(state | shift)); 
 	      break;
 	    case snd_K_Left:  
-	      sx_incremented(cp, -state_amount(state)); 
+	      sx_incremented(cp, -state_amount(state | shift)); 
 	      break;
 	    case snd_K_Up:    
-	      zx_incremented(cp, 1.0 + state_amount(state)); 
+	      zx_incremented(cp, 1.0 + state_amount(state | shift)); 
 	      break;
 	    case snd_K_Down: 
-	      zx_incremented(cp, 1.0 / (1.0 + state_amount(state))); 
+	      zx_incremented(cp, 1.0 / (1.0 + state_amount(state | shift))); 
 	      break;
 	    case snd_K_Home: 
 	      redirect_everything_to(printout_to_minibuffer, (void *)sp);
@@ -2019,16 +2016,16 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 		  else string_to_minibuffer(sp, _("no active selection"));
 		  break;
 		case snd_K_Right:   
-		  sx_incremented(cp, state_amount(state));
+		  sx_incremented(cp, state_amount(state | shift));
 		  break;
 		case snd_K_Left:
-		  sx_incremented(cp, -state_amount(state));
+		  sx_incremented(cp, -state_amount(state | shift));
 		  break;
 		case snd_K_Up:
-		  zx_incremented(cp, 1.0 + state_amount(state));
+		  zx_incremented(cp, 1.0 + state_amount(state | shift));
 		  break;
 		case snd_K_Down:
-		  zx_incremented(cp, 1.0 / (1.0 + state_amount(state)));
+		  zx_incremented(cp, 1.0 / (1.0 + state_amount(state | shift)));
 		  break;
 		case snd_K_less:
 		  cp->cursor_on = true; 
@@ -2084,6 +2081,9 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
     }
 }
 
+
+/* ---------------- Xen kbd bindings ---------------- */
+
 char *make_key_name(char *buf, int buf_size, int key, int state, bool extended)
 {
   mus_snprintf(buf, buf_size, "%s%s%s",
@@ -2098,30 +2098,72 @@ char *make_key_name(char *buf, int buf_size, int key, int state, bool extended)
   return(buf);
 }
 
-static XEN g_bind_key_1(XEN key, XEN state, XEN code, XEN cx_extended, XEN origin, const char *caller)
+static int key_name_to_key(XEN key)
 {
-  int args, k, s;
-  bool e;
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(key), key, XEN_ARG_1, caller, "an integer");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(state), state, XEN_ARG_2, caller, "an integer");
-  XEN_ASSERT_TYPE((XEN_FALSE_P(code) || XEN_PROCEDURE_P(code)), code, XEN_ARG_3, caller, "#f or a procedure");
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(cx_extended), cx_extended, XEN_ARG_4, caller, "a boolean");
-  k = XEN_TO_C_INT(key);
-  s = XEN_TO_C_INT(state);
-  e = (XEN_TRUE_P(cx_extended));
+  if (XEN_INTEGER_P(key))
+    return(XEN_TO_C_INT(key)); /* includes 0xffc0 style keys */
+  if (XEN_CHAR_P(key))
+    return((int)(XEN_TO_C_CHAR(key)));
+#if USE_MOTIF
+  return((int)XStringToKeysym(XEN_TO_C_STRING(key)));  /* these are the X/Gtk names: not "+" but "plus" etc */
+#else
+  #if USE_GTK
+  return((int)gdk_keyval_from_name(XEN_TO_C_STRING(key)));
+  #else
+  snd_error("can't translate a key name to a key in this version of Snd.");
+  #endif
+#endif
+  return(0);
+}
+
+static XEN check_for_key_error(int k, int s, const char *caller)
+{
   if ((k < MIN_KEY_CODE) || (k > MAX_KEY_CODE) ||
       (s < MIN_KEY_STATE) || (s > MAX_KEY_STATE))
     XEN_ERROR(NO_SUCH_KEY,
 	      XEN_LIST_3(C_TO_XEN_STRING(caller),
 			 C_TO_XEN_STRING("key: ~A, state: ~A"),
-			 XEN_LIST_2(key,
-				    state)));
-  if ((k >= 65) && (k <= 90) && ((s & 1) == 0)) s |= 1;
+			 XEN_LIST_2(C_TO_XEN_INT(k),
+				    C_TO_XEN_INT(s))));
+  return(XEN_FALSE);
+}
+
+static XEN g_key_binding(XEN key, XEN state, XEN cx_extended)
+{
+  #define H_key_binding "(" S_key_binding " key (state 0) (extended #f)): function bound to this key"
+  int i, k, s;
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(key) || XEN_CHAR_P(key) || XEN_STRING_P(key), key, XEN_ARG_1, S_key_binding, "an integer, character, or string");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(state), state, XEN_ARG_2, S_key_binding, "an integer");
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(cx_extended), cx_extended, XEN_ARG_3, S_key_binding, "a boolean");
+  k = key_name_to_key(key);
+  s = XEN_TO_C_INT_OR_ELSE(state, 0) & 0xfffe; /* no shift bit */
+  check_for_key_error(k, s, S_key_binding);
+  i = in_user_keymap(k, s, XEN_TRUE_P(cx_extended));
+  if (i >= 0) 
+    return(user_keymap[i].func);
+  return(XEN_UNDEFINED);
+}
+
+static XEN g_bind_key_1(XEN key, XEN state, XEN code, XEN cx_extended, XEN origin, XEN prefs_info, const char *caller)
+{
+  int args, k = 0, s;
+  bool e;
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(key) || XEN_STRING_P(key) || XEN_CHAR_P(key), key, XEN_ARG_1, caller, "an integer, char, or string");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(state), state, XEN_ARG_2, caller, "an integer");
+  XEN_ASSERT_TYPE((XEN_FALSE_P(code) || XEN_PROCEDURE_P(code)), code, XEN_ARG_3, caller, "#f or a procedure");
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(cx_extended), cx_extended, XEN_ARG_4, caller, "a boolean");
+  XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(origin), origin, XEN_ARG_5, caller, "a string");
+  XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(prefs_info), prefs_info, XEN_ARG_6, caller, "a string");
+  k = key_name_to_key(key);
+  s = XEN_TO_C_INT(state) & 0xfffe; /* get rid of shift bit */
+  check_for_key_error(k, s, caller);
+  e = (XEN_TRUE_P(cx_extended));
   if (XEN_FALSE_P(code))
-    set_keymap_entry(k, s, 0, XEN_UNDEFINED, e, NULL);
+    set_keymap_entry(k, s, 0, XEN_UNDEFINED, e, NULL, NULL);
   else 
     {
       char buf[256];
+      char *comment = NULL, *prefs = NULL;
       args = XEN_REQUIRED_ARGS(code);
       if (args > 1)
 	{
@@ -2132,27 +2174,31 @@ static XEN g_bind_key_1(XEN key, XEN state, XEN code, XEN cx_extended, XEN origi
 	  FREE(errstr);
 	  return(snd_bad_arity_error(caller, errmsg, code));
 	}
-      set_keymap_entry(k, s, args, code, e, (XEN_STRING_P(origin)) ? XEN_TO_C_STRING(origin) : make_key_name(buf, 256, k, s, e));
+      if (XEN_STRING_P(origin)) comment = XEN_TO_C_STRING(origin); else comment = make_key_name(buf, 256, k, s, e);
+      if (XEN_STRING_P(prefs_info)) prefs = XEN_TO_C_STRING(prefs_info);
+      set_keymap_entry(k, s, args, code, e, comment, prefs);
     }
   return(code);
 }
 
-static XEN g_bind_key(XEN key, XEN state, XEN code, XEN cx_extended, XEN origin)
+static XEN g_bind_key(XEN key, XEN state, XEN code, XEN cx_extended, XEN origin, XEN prefs_info)
 {
-  #define H_bind_key "(" S_bind_key " key modifiers func (extended #f) (origin [key-name]): \
-causes 'key' (an integer) \
-when typed with 'modifiers' (1:shift, 4:control, 8:meta) (and C-x if extended) to invoke 'func', a function of \
+  #define H_bind_key "(" S_bind_key " key modifiers func (extended #f) origin prefs-info: \
+causes 'key' (an integer, character, or string) \
+when typed with 'modifiers' (0:none, 4:control, 8:meta) (and C-x if extended) to invoke 'func', a function of \
 zero or one arguments. If the function takes one argument, it is passed the preceding C-u number, if any. \
 The function should return one of the cursor choices (e.g. " S_keyboard_no_action ").  'origin' is \
-the name reported if an error occurs."
+the name reported if an error occurs. The 'key' argument can be the X/Gtk name of the key (e.g. \"plus\" for \"+\" or \"Home\"), \
+the character on the key (#\a), or the integer corresponding to that character: (\"(char->integer #\a)\" in Scheme, \
+or \"?a\" in Ruby."
   
-  return(g_bind_key_1(key, state, code, cx_extended, origin, S_bind_key));
+  return(g_bind_key_1(key, state, code, cx_extended, origin, prefs_info, S_bind_key));
 }
 
 static XEN g_unbind_key(XEN key, XEN state, XEN cx_extended)
 {
   #define H_unbind_key "(" S_unbind_key " key state (extended #f)): undo the effect of a prior " S_bind_key " call."
-  return(g_bind_key_1(key, state, XEN_FALSE, cx_extended, XEN_UNDEFINED, S_unbind_key));
+  return(g_bind_key_1(key, state, XEN_FALSE, cx_extended, XEN_UNDEFINED, XEN_UNDEFINED, S_unbind_key));
 }
 
 static XEN g_key(XEN kbd, XEN buckybits, XEN snd, XEN chn)
@@ -2160,20 +2206,14 @@ static XEN g_key(XEN kbd, XEN buckybits, XEN snd, XEN chn)
   #define H_key "(" S_key " key modifiers (snd #f) (chn #f)): simulate typing 'key' with 'modifiers' in snd's channel chn"
   chan_info *cp;
   int k, s;
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(kbd), kbd, XEN_ARG_1, S_key, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(kbd) || XEN_CHAR_P(kbd) || XEN_STRING_P(kbd), kbd, XEN_ARG_1, S_key, "an integer, character, or string");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(buckybits), buckybits, XEN_ARG_2, S_key, "an integer");
   ASSERT_CHANNEL(S_key, snd, chn, 3);
   cp = get_cp(snd, chn, S_key);
   if (!cp) return(XEN_FALSE);
-  k = XEN_TO_C_INT(kbd);
+  k = key_name_to_key(kbd);
   s = XEN_TO_C_INT(buckybits);
-  if ((k < MIN_KEY_CODE) || (k > MAX_KEY_CODE) ||
-      (s < MIN_KEY_STATE) || (s > MAX_KEY_STATE))
-    XEN_ERROR(NO_SUCH_KEY,
-	      XEN_LIST_3(C_TO_XEN_STRING(S_key),
-			 C_TO_XEN_STRING("key: ~A, state: ~A"),
-			 XEN_LIST_2(kbd,
-				    buckybits)));
+  check_for_key_error(k, s, S_key);
   keyboard_command(cp, k, s);
   return(kbd);
 }
@@ -2308,7 +2348,7 @@ static XEN g_snd_simulate_keystroke(XEN snd, XEN chn, XEN key, XEN state)
 
 #ifdef XEN_ARGIFY_1
 XEN_ARGIFY_3(g_key_binding_w, g_key_binding)
-XEN_ARGIFY_5(g_bind_key_w, g_bind_key)
+XEN_ARGIFY_6(g_bind_key_w, g_bind_key)
 XEN_ARGIFY_3(g_unbind_key_w, g_unbind_key)
 XEN_ARGIFY_4(g_key_w, g_key)
 XEN_NARGIFY_1(g_save_macros_w, g_save_macros)
@@ -2345,7 +2385,7 @@ void g_init_kbd(void)
   XEN_DEFINE_CONSTANT(S_keyboard_no_action,      KEYBOARD_NO_ACTION,                  H_keyboard_no_action);
 
   XEN_DEFINE_PROCEDURE(S_key_binding,            g_key_binding_w,            1, 2, 0, H_key_binding);
-  XEN_DEFINE_PROCEDURE(S_bind_key,               g_bind_key_w,               3, 2, 0, H_bind_key);
+  XEN_DEFINE_PROCEDURE(S_bind_key,               g_bind_key_w,               3, 3, 0, H_bind_key);
   XEN_DEFINE_PROCEDURE(S_unbind_key,             g_unbind_key_w,             2, 1, 0, H_unbind_key);
   XEN_DEFINE_PROCEDURE(S_key,                    g_key_w,                    2, 2, 0, H_key);
   XEN_DEFINE_PROCEDURE(S_save_macros,            g_save_macros_w,            1, 0, 0, H_save_macros);

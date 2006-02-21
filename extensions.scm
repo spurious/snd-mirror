@@ -312,12 +312,12 @@ to end of channel, beg defaults to 0, snd defaults to the currently selected sou
 ;;;   hopefully with a function of one argument, the current selection sample
 ;;;   the value returned by the function becomes the new selection value.
 
-(bind-key (char->integer #\x) 0
-	  (lambda () "eval over selection"
-	    (if (selection?)
-		(prompt-in-minibuffer "selection eval:" eval-over-selection)
-		(report-in-minibuffer "no selection")))
-	  #t)
+(bind-key #\x 0
+  (lambda () "eval over selection"
+    (if (selection?)
+	(prompt-in-minibuffer "selection eval:" eval-over-selection)
+	(report-in-minibuffer "no selection")))
+  #t)
 
 (define eval-over-selection 
   (lambda (func)
@@ -1055,4 +1055,3 @@ If 'check' is #f, the hooks are removed."
   (if (and (not (= choice 0))
 	   (not (member global-sync-func (hook->list after-open-hook))))
       (add-hook! after-open-hook global-sync-func)))
-

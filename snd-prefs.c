@@ -100,6 +100,28 @@ static char *trim_string(const char *str)
   return(trimmed_str);
 }
 
+static char key_buf[16];
+static char *possibly_quote(char *key)
+{
+  int i, j, len;
+  len = snd_strlen(key);
+  if (len > 12) len = 12;
+  for (i = 0, j = 0; i < len; i++)
+    if (!(isspace(key[i])))
+      {
+	if ((j == 0) && (isalpha(key[i])))
+	  key_buf[j++] = '\"';
+	key_buf[j++] = key[i];
+      }
+  if ((key_buf[0] == '\"') && (key_buf[j - 1] != '\"'))
+    key_buf[j++] = '\"';
+  key_buf[j++] = '\0';
+#if DEBUGGING
+  fprintf(stderr,"return key %s\n", key_buf);
+#endif
+  return(key_buf);
+}
+
 static char *raw_data_format_to_string(int format)
 {
   /* the "mus-" prefix carries no information in this context, so strip it off */
@@ -469,10 +491,19 @@ static void smpte_label_help(prefs_info *prf)
 static void mark_pane_help(prefs_info *prf)
 {
   snd_help(prf->var_name,
-	   "This options adds a pane to each channel window containing information about that channel's marks.",
+	   "This option adds a pane to each channel window containing information about that channel's marks.",
 	   WITH_WORD_WRAP);
 }
 #endif
+
+static void play_from_cursor_help(prefs_info *prf)
+{
+  snd_help("play from cursor",
+	   "By default, C-q plays the current channel from the cursor, but one often wants to play the entire \
+sound; this option binds a key for that purpose, and also overrides the pause setting.  The new binding does \
+not take effect until you type return in the text widget.",
+	   WITH_WORD_WRAP);
+}
 
 
 
@@ -674,7 +705,30 @@ static void save_show_listener_1(prefs_info *prf, FILE *fd)
 }
 
 
+
 /* ---------------- find functions ---------------- */
+
+static char *pfc_key = NULL;
+static bool pfc_c = false, pfc_m = false, pfc_x = false;
+
+static bool find_pfc_binding(int key, int state, bool cx, char *prefs_data, XEN func)
+{
+  if ((prefs_data) && (*prefs_data) && (strcmp(prefs_data, "play-from-cursor") == 0))
+    {
+#if USE_MOTIF
+      pfc_key = XKeysymToString(key); /* no free! */
+#else
+  #if USE_GTK
+      pfc_key = gdk_keyval_name(key);
+  #endif
+#endif
+      pfc_c = state & snd_ControlMask;
+      pfc_m = state & snd_MetaMask;
+      pfc_x = cx;
+      return(true);
+    }
+  return(false);
+}
 
 static char *find_sources(void) /* returns full filename if found else null */
 {

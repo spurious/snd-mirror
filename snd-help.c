@@ -479,6 +479,10 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+21-Feb:  bind-key now takes a character or string 1st arg (as well as an integer); if a string, it's treated\n\
+           as the X/Gtk key name (e.g. \"Home\" or \"plus\").  It also has a 6th optional arg, a preferences\n\
+           dialog name (so that the dialog can reflect current key bindings by functionality).\n\
+         with-tracking-cursor and with-verbose-cursor as synonyms for cursor-follows-play and verbose-cursor.\n\
 17-Feb:  mus-file-data-clipped -> mus-clipping, added mus-file-clipping for local settings\n\
          data-clipped -> clipping\n\
          mus-prescaler (global) alongside previous mus-file-prescaler\n\
@@ -1002,35 +1006,35 @@ static void show_key_help(int key, int state, bool cx, char *help)
     }
 }
 
-static bool find_unbuckified_keys(int key, int state, bool cx, XEN func)
+static bool find_unbuckified_keys(int key, int state, bool cx, char *ignored, XEN func)
 {
   if ((key > 256) && (state == 0) && (!cx) && (XEN_BOUND_P(func)))
     show_key_help(key, state, cx, key_binding_description(key, state, cx));
   return(false);
 }
 
-static bool find_buckified_keys(int key, int state, bool cx, XEN func)
+static bool find_buckified_keys(int key, int state, bool cx, char *ignored, XEN func)
 {
   if ((key > 256) && (state == snd_ControlMask) && (!cx) && (XEN_BOUND_P(func)))
     show_key_help(key, state, cx, key_binding_description(key, state, cx));
   return(false);
 }
 
-static bool find_unbuckified_cx_keys(int key, int state, bool cx, XEN func)
+static bool find_unbuckified_cx_keys(int key, int state, bool cx, char *ignored, XEN func)
 {
   if ((key > 256) && (state == 0) && (cx) && (XEN_BOUND_P(func)))
     show_key_help(key, state, cx, key_binding_description(key, state, cx));
   return(false);
 }
 
-static bool find_buckified_cx_keys(int key, int state, bool cx, XEN func)
+static bool find_buckified_cx_keys(int key, int state, bool cx, char *ignored, XEN func)
 {
   if ((key > 256) && (state == snd_ControlMask) && (cx) && (XEN_BOUND_P(func)))
     show_key_help(key, state, cx, key_binding_description(key, state, cx));
   return(false);
 }
 
-static bool find_leftover_keys(int key, int state, bool cx, XEN func)
+static bool find_leftover_keys(int key, int state, bool cx, char *ignored, XEN func)
 {
   if ((key > 256) && (state & snd_MetaMask))
     show_key_help(key, state, cx, key_binding_description(key, state, cx));

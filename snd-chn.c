@@ -3,6 +3,8 @@
 #include "clm-strings.h"
 
 /* 
+ * TODO: tracking-cursor-style (prefs too)
+ *
  * TODO: overlay of rms env
  *       fill in two-sided with colormap choice based on rms of underlying pixels (same for line graph?) -- would want peak-env style support
  * TODO: bark scale as axis or color as above: Fletcher-Munson post-process fft data -- is there a hook that would allow this?

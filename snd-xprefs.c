@@ -7,6 +7,7 @@
 /* SOMEDAY: completions and sscanf->string_to_* for better checks (xmnmessage?)
    SOMEDAY: gtk side of icon box (are there others?)
    TODO: ruby extensions.rb side of set_global_sync
+   TODO: various additional key bindings? 
 
    abandoned:
        preset packages: dlp, ksm
@@ -14,8 +15,6 @@
          how to tie into emacs?
        sound file extensions (text + some display of current set)
          will need same gui for load path, perhaps for vf dirs: drop down scrolled list?
-       various additional key bindings? 
-         move-one-pixel zoom-one-pixel - how to specify fancy keys?
        audio mixer settings? -> volume in some mode (snd6.scm has OSS version)
          "startup dac volume" -- but this will be confusing since we don't notice mute settings etc
        clm instruments? -- surely user should learn about the listener...
@@ -47,7 +46,7 @@ static char *include_load_path = NULL;
 #define STARTUP_HEIGHT 800
 
 typedef struct prefs_info {
-  Widget label, text, arrow_up, arrow_down, arrow_right, error, toggle, scale, toggle2;
+  Widget label, text, arrow_up, arrow_down, arrow_right, error, toggle, scale, toggle2, toggle3;
   Widget color, rscl, gscl, bscl, rtxt, gtxt, btxt, list_menu, radio_button;
   bool got_error;
   XtIntervalId help_id, power_id;
@@ -746,9 +745,48 @@ static prefs_info *prefs_row_with_text_with_toggle(const char *label, const char
   sep1 = make_row_inner_separator(8, prf->text, box, top_widget);
   lab1 = make_row_inner_label(prf, toggle_label, sep1, box, top_widget);
   prf->toggle = make_row_toggle(prf, current_value, lab1, box, top_widget);  
-  help = make_row_help(prf, varname, box, top_widget, prf->text);
+  help = make_row_help(prf, varname, box, top_widget, prf->toggle);
   
   XtAddCallback(prf->toggle, XmNvalueChangedCallback, call_toggle_func, (XtPointer)prf);
+  XtAddCallback(prf->text, XmNactivateCallback, call_text_func, (XtPointer)prf);
+
+  return(prf);
+}
+
+
+/* ---------------- text with toggle ---------------- */
+
+static prefs_info *prefs_row_with_text_and_three_toggles(const char *label, const char *varname,
+							 const char *text_label, int cols,
+							 const char *toggle1_label, const char *toggle2_label, const char *toggle3_label,
+							 const char *text_value, 
+							 bool toggle1_value, bool toggle2_value, bool toggle3_value,
+							 Widget box, Widget top_widget, 
+							 void (*text_func)(prefs_info *prf))
+{
+  prefs_info *prf = NULL;
+  Widget sep, sep1, lab1, sep2, lab2, lab3, sep3, lab4, help;
+  prf = (prefs_info *)CALLOC(1, sizeof(prefs_info));
+  prf->var_name = varname;
+  prf->toggle_func = text_func;
+  prf->toggle2_func = text_func;
+  prf->text_func = text_func;
+
+  prf->label = make_row_label(prf, label, box, top_widget);
+  sep = make_row_middle_separator(prf->label, box, top_widget);
+  lab3 = make_row_inner_label(prf, text_label, sep, box, top_widget);
+  prf->text = make_row_text(prf, text_value, cols, lab3, box, top_widget);
+  sep1 = make_row_inner_separator(12, prf->text, box, top_widget);
+  lab1 = make_row_inner_label(prf, toggle1_label, sep1, box, top_widget);
+  prf->toggle = make_row_toggle(prf, toggle1_value, lab1, box, top_widget);  
+  sep2 = make_row_inner_separator(4, prf->toggle, box, top_widget);
+  lab2 = make_row_inner_label(prf, toggle2_label, sep2, box, top_widget);
+  prf->toggle2 = make_row_toggle(prf, toggle2_value, lab2, box, top_widget);
+  sep3 = make_row_inner_separator(4, prf->toggle2, box, top_widget);
+  lab4 = make_row_inner_label(prf, toggle3_label, sep3, box, top_widget);
+  prf->toggle3 = make_row_toggle(prf, toggle2_value, lab4, box, top_widget);
+  help = make_row_help(prf, varname, box, top_widget, prf->toggle3);
+  
   XtAddCallback(prf->text, XmNactivateCallback, call_text_func, (XtPointer)prf);
 
   return(prf);
@@ -2062,6 +2100,86 @@ static void cursor_location_text(prefs_info *prf)
     }
 }
 
+/* ---------------- play from cursor ---------------- */
+
+static void reflect_play_from_cursor(prefs_info *prf)
+{
+  /* find "play-from-cursor" in the prefs_info of the key bindings table,
+   *   if any, get associated key/c/m/cx settings and reflect in dialog
+   */
+  pfc_key = NULL;
+  pfc_c = false;
+  pfc_m = false;
+  pfc_x = false;
+  map_over_key_bindings(find_pfc_binding);
+  XmToggleButtonSetState(prf->toggle, pfc_c, false);
+  XmToggleButtonSetState(prf->toggle2, pfc_m, false);
+  XmToggleButtonSetState(prf->toggle3, pfc_x, false);
+  XmTextFieldSetString(prf->text, pfc_key);
+}
+
+static char *make_pfc_binding(char *key, bool ctrl, bool meta, bool cx)
+{
+#if HAVE_SCHEME
+  return(mus_format("(bind-key %s %d (lambda () (set! (pausing) #f) (play (cursor))) %s \"play sound from cursor\" \"play-from-cursor\")\n", 
+		    possibly_quote(key), 
+		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
+		    (cx) ? "#t" : "#f"));
+#endif
+#if HAVE_RUBY
+  /* TODO: ruby pfc */
+  return(NULL);
+#endif
+}
+
+static void save_pfc_binding(prefs_info *prf, FILE *fd)
+{
+  /* pick up possible binding even if no <cr> */
+  char *key, *expr;
+  key = XmTextFieldGetString(prf->text);
+  if ((key) && (*key))
+    {
+      expr = make_pfc_binding(key, 
+			      XmToggleButtonGetState(prf->toggle) == XmSET, 
+			      XmToggleButtonGetState(prf->toggle2) == XmSET,
+			      XmToggleButtonGetState(prf->toggle3) == XmSET);
+      fprintf(fd, expr);
+      FREE(expr);
+      XtFree(key);
+    }
+}
+
+static void bind_play_from_cursor(prefs_info *prf)
+{
+  char *key, *expr;
+  bool ctrl, meta, cx;
+  key = XmTextFieldGetString(prf->text);
+  ctrl = (XmToggleButtonGetState(prf->toggle) == XmSET);
+  meta = (XmToggleButtonGetState(prf->toggle2) == XmSET);
+  cx = (XmToggleButtonGetState(prf->toggle3) == XmSET);
+  if ((key) && (*key))
+    {
+      expr = make_pfc_binding(key, ctrl, meta, cx);
+      XtFree(key);
+    }
+  else
+    {
+      expr = mus_format("(unbind-key %s %d %s)",
+			possibly_quote(key), 
+			((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
+			(cx) ? "#t" : "#f");
+    }
+  XEN_EVAL_C_STRING(expr);
+  FREE(expr);
+
+  /* PERHAPS: key bindings for align to mark or center on (complete) section etc
+   *          view full file, go to max amp, go to zero crossing (back)
+   *          zoom (by pixel?), go to sound (i.e. skip silence or hiss)
+   *          exit, mix|insert at cursor, delete selection, save edits, select all, revert edits
+   *          
+   * TODO: with-tracking-cursor overrides pfc examples etc
+   */
+}
 
 /* ---------------- cursor-size ---------------- */
 
@@ -5274,7 +5392,20 @@ widget_t start_preferences_dialog(void)
     }
 
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
-    
+    pfc_key = NULL;
+    pfc_c = false;
+    pfc_m = false;
+    pfc_x = false;
+    map_over_key_bindings(find_pfc_binding);
+    prf = prefs_row_with_text_and_three_toggles("key for 'play all chans from cursor'", S_play, 
+						"key:", 8, "ctrl:", "meta:",  "C-x:",
+						pfc_key, pfc_c, pfc_m, pfc_x,
+						dpy_box, current_sep,
+						bind_play_from_cursor);
+    remember_pref(prf, reflect_play_from_cursor, save_pfc_binding);
+    prf->help_func = play_from_cursor_help;
+
+    current_sep = make_inter_variable_separator(dpy_box, prf->label);
     str = mus_format("%d", cursor_size(ss));
     prf = prefs_row_with_number("size", S_cursor_size,
 				str, 4, 
