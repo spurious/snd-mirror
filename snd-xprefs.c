@@ -768,8 +768,6 @@ static prefs_info *prefs_row_with_text_and_three_toggles(const char *label, cons
   Widget sep, sep1, lab1, sep2, lab2, lab3, sep3, lab4, help;
   prf = (prefs_info *)CALLOC(1, sizeof(prefs_info));
   prf->var_name = varname;
-  prf->toggle_func = text_func;
-  prf->toggle2_func = text_func;
   prf->text_func = text_func;
 
   prf->label = make_row_label(prf, label, box, top_widget);
@@ -2116,20 +2114,6 @@ static void reflect_play_from_cursor(prefs_info *prf)
   XmToggleButtonSetState(prf->toggle2, pfc_m, false);
   XmToggleButtonSetState(prf->toggle3, pfc_x, false);
   XmTextFieldSetString(prf->text, pfc_key);
-}
-
-static char *make_pfc_binding(char *key, bool ctrl, bool meta, bool cx)
-{
-#if HAVE_SCHEME
-  return(mus_format("(bind-key %s %d (lambda () (set! (pausing) #f) (play (cursor))) %s \"play sound from cursor\" \"play-from-cursor\")\n", 
-		    possibly_quote(key), 
-		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
-		    (cx) ? "#t" : "#f"));
-#endif
-#if HAVE_RUBY
-  /* TODO: ruby pfc */
-  return(NULL);
-#endif
 }
 
 static void save_pfc_binding(prefs_info *prf, FILE *fd)

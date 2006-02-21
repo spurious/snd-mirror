@@ -704,6 +704,23 @@ static void save_show_listener_1(prefs_info *prf, FILE *fd)
 #endif
 }
 
+static char *make_pfc_binding(char *key, bool ctrl, bool meta, bool cx)
+{
+#if HAVE_SCHEME
+  return(mus_format("(bind-key %s %d (lambda () (set! (pausing) #f) (play (cursor))) %s \"play sound from cursor\" \"play-from-cursor\")\n", 
+		    possibly_quote(key), 
+		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
+		    (cx) ? "#t" : "#f"));
+#endif
+#if HAVE_RUBY
+  return(mus_format("bind_key(%s, %d, lambda do\n  set_pausing(false)\n  play(cursor())\n  end, %s, \"play sound from cursor\", \"play-from-cursor\")\n", 
+		    possibly_quote(key), 
+		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
+		    (cx) ? "true" : "false"));
+#endif
+  return(NULL);
+}
+
 
 
 /* ---------------- find functions ---------------- */

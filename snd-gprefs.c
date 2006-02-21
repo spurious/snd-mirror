@@ -16,7 +16,7 @@ static char *include_load_path = NULL;
 #define STARTUP_HEIGHT 800
 
 typedef struct prefs_info {
-  GtkWidget *label, *text, *arrow_up, *arrow_down, *arrow_right, *error, *toggle, *scale, *toggle2;
+  GtkWidget *label, *text, *arrow_up, *arrow_down, *arrow_right, *error, *toggle, *scale, *toggle2, *toggle3;
   GtkWidget *color, *rscl, *gscl, *bscl, *rtxt, *gtxt, *btxt, *list_menu, *radio_button, *helper;
   GtkObject *adj, *radj, *gadj, *badj;
   GtkWidget **radio_buttons;
@@ -29,6 +29,7 @@ typedef struct prefs_info {
   GtkSizeGroup *color_texts, *color_scales;
   void (*toggle_func)(struct prefs_info *prf);
   void (*toggle2_func)(struct prefs_info *prf);
+  void (*toggle3_func)(struct prefs_info *prf);
   void (*scale_func)(struct prefs_info *prf);
   void (*arrow_up_func)(struct prefs_info *prf);
   void (*arrow_down_func)(struct prefs_info *prf);
@@ -649,6 +650,52 @@ static prefs_info *prefs_row_with_text_with_toggle(const char *label, const char
   SG_SIGNAL_CONNECT(prf->toggle, "toggled", call_toggle_func, (gpointer)prf);
   SG_SIGNAL_CONNECT(prf->text, "activate", call_text_func, (gpointer)prf);
 
+  return(prf);
+}
+
+
+/* ---------------- text with three toggle ---------------- */
+
+static prefs_info *prefs_row_with_text_and_three_toggles(const char *label, const char *varname,
+							 const char *text_label, int cols,
+							 const char *toggle1_label, const char *toggle2_label, const char *toggle3_label,
+							 const char *text_value, 
+							 bool toggle1_value, bool toggle2_value, bool toggle3_value,
+							 GtkWidget *box,
+							 void (*text_func)(prefs_info *prf))
+{
+  prefs_info *prf = NULL;
+  GtkWidget *sep, *sep1, *sep2, *sep3, *lab1, *lab2, *lab3, *lab4, *hb, *row, *help;
+
+  prf = (prefs_info *)CALLOC(1, sizeof(prefs_info));
+  prf->var_name = varname;
+  prf->text_func = text_func;
+
+  row = gtk_hbox_new(false, 0);
+  gtk_box_pack_start(GTK_BOX(box), row, false, false, 0);
+  gtk_widget_show(row);
+
+  prf->label = make_row_label(prf, label, row);
+  hb = gtk_hbox_new(false, 0);
+  gtk_size_group_add_widget(widgets_group, hb);
+  gtk_box_pack_start(GTK_BOX(row), hb, false, false, 0);
+  gtk_widget_show(hb);
+
+  sep = make_row_middle_separator(hb);
+  lab4 = make_row_inner_label(prf, text_label, hb);
+  prf->text = make_row_text(prf, text_value, cols, hb);
+  sep1 = make_row_inner_separator(12, hb);
+  lab1 = make_row_inner_label(prf, toggle1_label, hb);
+  prf->toggle = make_row_toggle(prf, toggle1_value, hb);  
+  sep2 = make_row_inner_separator(4, hb);
+  lab2 = make_row_inner_label(prf, toggle2_label, hb);
+  prf->toggle2 = make_row_toggle(prf, toggle2_value, hb);  
+  sep3 = make_row_inner_separator(4, hb);
+  lab3 = make_row_inner_label(prf, toggle3_label, hb);
+  prf->toggle3 = make_row_toggle(prf, toggle3_value, hb);  
+  help = make_row_help(prf, varname, row);
+  
+  SG_SIGNAL_CONNECT(prf->text, "activate", call_text_func, (gpointer)prf);
   return(prf);
 }
 
@@ -1835,6 +1882,59 @@ static void cursor_location_text(prefs_info *prf)
 	  set_cursor_location_offset(loc);
 	}
     }
+}
+
+
+/* ---------------- play from cursor ---------------- */
+
+static void reflect_play_from_cursor(prefs_info *prf)
+{
+  /* find "play-from-cursor" in the prefs_info of the key bindings table,
+   *   if any, get associated key/c/m/cx settings and reflect in dialog
+   */
+  pfc_key = NULL;
+  pfc_c = false;
+  pfc_m = false;
+  pfc_x = false;
+  map_over_key_bindings(find_pfc_binding);
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(prf->toggle), pfc_c);
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(prf->toggle2), pfc_m);
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(prf->toggle3), pfc_x);
+  sg_entry_set_text(GTK_ENTRY(prf->text), pfc_key);
+}
+
+static void save_pfc_binding(prefs_info *prf, FILE *fd)
+{
+  /* pick up possible binding even if no <cr> */
+  char *key, *expr;
+  key = (char *)gtk_entry_get_text(GTK_ENTRY(prf->text));
+  if ((key) && (*key))
+    {
+      expr = make_pfc_binding(key, 
+			      gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prf->toggle)),
+			      gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prf->toggle2)),
+			      gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prf->toggle3)));
+      fprintf(fd, expr);
+      FREE(expr);
+    }
+}
+
+static void bind_play_from_cursor(prefs_info *prf)
+{
+  char *key, *expr;
+  bool ctrl, meta, cx;
+  key = (char *)gtk_entry_get_text(GTK_ENTRY(prf->text));
+  ctrl = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prf->toggle));
+  meta = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prf->toggle2));
+  cx = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prf->toggle3));
+  if ((key) && (*key))
+    expr = make_pfc_binding(key, ctrl, meta, cx);
+  else expr = mus_format("(unbind-key %s %d %s)",
+			 possibly_quote(key), 
+			 ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
+			 (cx) ? "#t" : "#f");
+  XEN_EVAL_C_STRING(expr);
+  FREE(expr);
 }
 
 
@@ -4698,6 +4798,20 @@ widget_t start_preferences_dialog(void)
       FREE(str);
       FREE(str1);
     }
+
+    current_sep = make_inter_variable_separator(dpy_box);
+    pfc_key = NULL;
+    pfc_c = false;
+    pfc_m = false;
+    pfc_x = false;
+    map_over_key_bindings(find_pfc_binding);
+    prf = prefs_row_with_text_and_three_toggles("key for 'play all chans from cursor'", S_play, 
+						"key:", 8, "ctrl:", "meta:",  "C-x:",
+						pfc_key, pfc_c, pfc_m, pfc_x,
+						dpy_box,
+						bind_play_from_cursor);
+    remember_pref(prf, reflect_play_from_cursor, save_pfc_binding);
+    prf->help_func = play_from_cursor_help;
 
     current_sep = make_inter_variable_separator(dpy_box);
     str = mus_format("%d", cursor_size(ss));
